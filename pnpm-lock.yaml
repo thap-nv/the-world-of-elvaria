@@ -59,6 +59,9 @@ importers:
       '@elvaria/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@elvaria/eventlog':
+        specifier: workspace:*
+        version: link:../../packages/eventlog
       '@elvaria/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n

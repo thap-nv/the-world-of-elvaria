@@ -13,6 +13,7 @@ import type { Character, CharacterClass, CharacterId, Registry, Tribe } from '@e
 
 import { textOption } from '../args.ts';
 import { EXIT } from '../command.ts';
+import { recordCharacterCreated } from '../events.ts';
 import { registryIssueLines, storeIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { nameIn } from '../labels.ts';
@@ -137,6 +138,7 @@ async function runCharacterAdd(input: CommandInput, cli: CliContext): Promise<Ex
     storeIssueLines(ctx.t, written.error).forEach(ctx.io.err);
     return EXIT.failed;
   }
+  await recordCharacterCreated(ctx, written.value);
   const { klass, tribe } = choices;
   const params = {
     name: choices.name,

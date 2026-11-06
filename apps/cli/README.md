@@ -11,7 +11,8 @@
 - Sends every quest change as an inbox command (`create_quest`, `confirm`, `cancel`, `archive`, `edit_quest`;
   ADR 0005), after checking ids against the registry and the quest against the transition table.
 - Writes new files the Steward does not own: `kingdom.json` (`init`, then `tribes[].tool` from `doctor`), a
-  territory, a newly summoned character (create only, never overwrite).
+  territory, a newly summoned character (create only, never overwrite). Those two are also logged
+  (`territory.attached`, `character.created`, with the view after the change, P0-09), so the world sees them.
 - `doctor`: finds each tribe's CLI (`--tool <tribe>=<path>`, the pinned path, then PATH; npm `.cmd` shims run as
   `node <script>`), pins path and version, refuses Antigravity without `--acknowledge-terms` (ADR 0018), checks
   git, the registry (`missingRegistryFiles`) and each territory.
@@ -24,7 +25,8 @@
 
 ## Depends on
 
-- `@elvaria/domain` (schemas, ids, transition table), `@elvaria/store` (kingdom folder, inbox, migrate),
+- `@elvaria/domain` (schemas, ids, transition table, views), `@elvaria/store` (kingdom folder, inbox, migrate),
+  `@elvaria/eventlog` (append, redact),
   `@elvaria/registry-default` (`REGISTRY_ROOT`, `registryFiles()` for `init`), `@elvaria/i18n`.
 
 ## How to test

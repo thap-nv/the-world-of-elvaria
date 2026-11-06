@@ -11,6 +11,7 @@ import { comparePath, toPortable } from '@elvaria/store';
 
 import { textOption } from '../args.ts';
 import { EXIT } from '../command.ts';
+import { recordTerritoryAttached } from '../events.ts';
 import { storeIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { gitIn } from '../process/git.ts';
@@ -135,6 +136,7 @@ async function runTerritoryAdd(input: CommandInput, cli: CliContext): Promise<Ex
     storeIssueLines(ctx.t, written.error).forEach(ctx.io.err);
     return EXIT.failed;
   }
+  await recordTerritoryAttached(ctx, written.value);
   ctx.io.out(ctx.t('cli.territory.added', { name, id, path: territory.path }));
   if (vcs.type === 'git') ctx.io.out(ctx.t('cli.territory.git', { branch: vcs.default_branch ?? '' }));
   return EXIT.ok;
