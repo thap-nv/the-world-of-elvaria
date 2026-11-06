@@ -8,8 +8,10 @@ Mũi tên `A --> B`: mã chạy của A import B (kể cả `import type`). Bả
 flowchart TD
   config["config"]
   domain["domain"]
+  store["store"]
   registry_default["registry-default"]
   i18n["i18n"]
+  store --> domain
   registry_default --> domain
 ```
 
@@ -17,7 +19,7 @@ flowchart TD
 |---|---|---|---|
 | `config` | `packages/config` | — | — (chỉ dùng khi dev) |
 | `domain` | `packages/domain` | — | — |
-| `store` | chưa có | | `domain`, `eventlog` |
+| `store` | `packages/store` | `domain` | `domain`, `eventlog` |
 | `registry-default` | `packages/registry-default` | `domain` | `domain` |
 | `runner-core` | chưa có | | `domain`, `store`, `eventlog` |
 | `runner-claude` | chưa có | | `runner-core` |

@@ -14,7 +14,7 @@ Windows is the main OS and macOS the second. On Windows, Claude Code runs string
 - `child_process.spawn` always with `shell: false`. `elvaria doctor` resolves absolute executables; an npm `.cmd` shim is read and run as `node <js>`.
 - Kill tree in `runner-core/src/process/kill-tree.ts`: `taskkill /PID <pid> /T /F` on Windows, SIGTERM then SIGKILL on macOS.
 - Paths: `node:path` everywhere, `/` inside data files, case-insensitive comparison on Windows; `.gitattributes` sets `* text=auto eol=lf`.
-- Atomic write = temp file + `rename`, retried up to 5 times on EPERM (antivirus, indexer); file locks with `proper-lockfile`.
+- Atomic write = temp file + `rename`, retried on EPERM, EACCES or EBUSY (antivirus, indexer, a reader holding the file) within a 10 s time budget; file locks with `proper-lockfile`. (Amended 2026-11-06, P0-06: the first number, 5 retries, lost about one write in 200 on Windows while another process kept reading the file.)
 - The event log is tailed by polling `fs.stat` size every 500 ms with a cursor; no `fs.watch`, no chokidar.
 - Notifications go through `Bell`; `node-notifier` covers Windows toasts and macOS Notification Center.
 - CI matrix: `windows-latest`, `macos-latest`, `ubuntu-latest`.

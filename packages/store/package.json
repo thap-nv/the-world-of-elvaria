@@ -1,0 +1,26 @@
+{
+  "name": "@elvaria/store",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The kingdom directory on disk: layout, atomic writes under file locks, migrations, inbox, init.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@elvaria/domain": "workspace:*",
+    "proper-lockfile": "^4.1.2"
+  },
+  "devDependencies": {
+    "@elvaria/config": "workspace:*",
+    "@types/node": "^24.19.2",
+    "@types/proper-lockfile": "^4.1.4",
+    "@vitest/coverage-v8": "^5.1.0",
+    "typescript": "~5.9.3",
+    "vitest": "^5.1.0"
+  }
+}

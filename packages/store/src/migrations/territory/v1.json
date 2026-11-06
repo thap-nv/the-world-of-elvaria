@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "id": "dc1-se-team",
+  "name": "dc1-se-team",
+  "path": "D:/Dummy/Tool - DC1/dc1-se-team",
+  "kind": "code",
+  "vcs": {
+    "type": "git",
+    "default_branch": "main",
+    "remote": "https://github.com/thap-nv/dc1-se-team.git"
+  },
+  "worktree_dir": ".elvaria/worktrees",
+  "max_concurrent": 1,
+  "context_files": ["CLAUDE.md", "README.md", ".claude/rules/*.md"],
+  "commands": {
+    "setup": "pnpm install --prefer-offline",
+    "test": "pnpm test",
+    "lint": "pnpm lint",
+    "typecheck": "pnpm typecheck"
+  },
+  "checks": [
+    {
+      "id": "lint",
+      "run": "pnpm lint",
+      "when": ["**/*.ts", "**/*.tsx"],
+      "timeout_minutes": 10
+    },
+    {
+      "id": "typecheck",
+      "run": "pnpm -r typecheck",
+      "when": ["apps/**", "packages/**"],
+      "timeout_minutes": 10
+    },
+    {
+      "id": "unit",
+      "run": "pnpm -r test",
+      "when": ["packages/shared/**", "apps/**/*.ts"],
+      "timeout_minutes": 15
+    },
+    {
+      "id": "openapi",
+      "run": "pnpm api:openapi",
+      "when": ["apps/api/src/modules/**"],
+      "timeout_minutes": 5
+    },
+    {
+      "id": "i18n",
+      "run": "pnpm i18n:check",
+      "when": ["apps/web/src/locales/**", "packages/shared/src/content/**"],
+      "timeout_minutes": 5
+    },
+    {
+      "id": "e2e",
+      "run": "pnpm e2e",
+      "when": ["apps/web/src/routes/**", "apps/web/src/features/**"],
+      "exclusive": true,
+      "timeout_minutes": 60,
+      "cleanup": "pnpm e2e:reset"
+    }
+  ],
+  "laws": {
+    "forbidden_paths": [".env", ".env.*", "infra/secrets/**"],
+    "forbidden_commands": [
+      "git\\s+(-C\\s+\\S+\\s+)?push",
+      "drizzle-kit\\s+(drop|push)",
+      "docker\\s+compose\\s+.*down\\s+-v"
+    ],
+    "read_before_write": [
+      "packages/shared/src/scoring/**",
+      "packages/shared/src/auth/**",
+      "apps/api/src/infra/db/migrations/**"
+    ],
+    "rank_floor": [
+      {
+        "glob": "packages/shared/src/auth/permissions.ts",
+        "min_rank": "B"
+      }
+    ]
+  },
+  "secrets_allowed": [],
+  "buildings": [],
+  "health": {
+    "ci": "green",
+    "open_bugs": 0
+  },
+  "surveyed_at": "2026-11-06T10:00:00+07:00"
+}
