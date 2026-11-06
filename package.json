@@ -20,7 +20,7 @@
     "docs:gen": "node scripts/docs-gen.mjs",
     "docs:check": "node scripts/docs-check.mjs",
     "i18n:check": "node scripts/i18n-check.mjs",
-    "elvaria": "node scripts/not-yet.mjs P0-08",
+    "elvaria": "node apps/cli/src/cli.ts",
     "prepare": "husky"
   },
   "lint-staged": {
