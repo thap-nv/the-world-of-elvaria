@@ -1,6 +1,6 @@
 # ADR 0022 · Tests in the world: tag-chosen ritual for tests as a product, a scratch plot for the judge, heavy checks once per party
 
-- Status: proposed · 2026-11-06 (awaiting the owner)
+- Status: accepted · 2026-11-06
 - Amends: [ADR 0008](0008-separation-of-duties.md) (verifier tools), [ADR 0011](0011-one-judge-class-per-tribe.md) (ritual chosen by kind)
 - Related: [implementation-plan.md](../implementation-plan.md) §3.15, §9.1 item 29; [product plan 0.7](../ke-hoach-dung-elvaria-0.7.md) §5 "Test trong thế giới"
 
@@ -12,7 +12,7 @@ Two accepted decisions stand in the way: the ritual follows the kind alone (`kin
 
 ## Decision
 
-- A kind may carry `ritual_overrides: [{tags_any, ritual}]`; the first override whose tags meet the quest's tags wins, otherwise `kinds[kind].ritual`. `ritualOf(quest, registry)` is a pure domain function; still data, no switch in the core (ADR 0016). Defaults: `build` and `refactor` → `mutation_check` for tags `e2e` or `integration`; tag `integration` joins `tags.json`.
+- A kind may carry `ritual_overrides: [{tags_any, ritual}]`; the first override whose tags meet the quest's tags wins, otherwise `kinds[kind].ritual`. `ritualOf(quest, registry)` is a pure domain function; still data, no switch in the core (ADR 0016). Defaults: `build` and `refactor` → `mutation_check` for tags `e2e` or `integration`; tag `integration` joins `tags.json`. The ritual the product plan calls Thử tường is displayed as "Thả quái thử thành" (owner's choice; names are theme and i18n data).
 - A ritual may declare `scratch_plot: true`. Its verifier then works in a disposable worktree `<quest-id>-verify` made from the quest branch, after `commands.setup` and the optional `commands.reset` (clean DB, containers). Only there does `ToolPolicy` grant Edit/Write; hooks deny commit and push, and the plot is removed after the verdict. The quest branch never changes, so "the doer does not judge, the judge does not produce" still holds.
 - New ritual steps `rerun_clean`, `break_and_expect_red`, `flake_check`, `coverage_not_lower`; new `fail_kind: flaky`, on which the Steward opens a `fix` quest.
 - `territory.checks[].defer_to_merge` (default false): skipped in a party part, run by the merge quest.

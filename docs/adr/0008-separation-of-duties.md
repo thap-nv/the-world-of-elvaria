@@ -3,7 +3,7 @@
 - Status: accepted · 2026-11-06
 - Related: [implementation-plan.md](../implementation-plan.md) §3.2, §3.12, §9.1 item 17; [verdict.schema.json](../schemas/verdict.schema.json)
 - Amended by: [ADR 0020](0020-class-skill-scripture-tags-and-parties.md) (nobody who worked on a party verifies a quest of that party)
-- Amendment proposed: [ADR 0022](0022-tests-in-the-world.md) (a judge may edit a disposable scratch plot to break code for the Thử tường ritual)
+- Amended by: [ADR 0022](0022-tests-in-the-world.md) (a judge may edit a disposable scratch plot to break code for the Thử tường ritual)
 
 ## Context
 
