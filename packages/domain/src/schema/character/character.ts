@@ -67,6 +67,11 @@ const CharacterFieldsSchema = z.strictObject({
   ),
   // Required although a new character starts at 1: the v1 contract keeps the level explicit in the file.
   level: z.int().min(1).max(CHARACTER_LEVEL_MAX).meta({ default: 1 }),
+  level_since: DateTimeSchema.optional().meta(
+    describe(
+      'When the level last changed. levelChange counts only the verdicts after it, so a level changes at most once per 10 verdicts up (5 down) instead of on every verdict while the rate stays high. Absent: every verdict in the window counts (the level was set at summoning).',
+    ),
+  ),
   reputation: z.strictObject({
     window: verdictWindow().meta({
       default: [],
@@ -174,7 +179,7 @@ export const CharacterSchema = CharacterFieldsSchema.superRefine(checkStatus).me
   title: 'Character',
   description:
     'characters/<id>/character.json: one agent as a character with one class (fixed for life), one tribe and one model. Personal scripture lives next to it in scripture.md. Skills are not attached to characters: they live in temple/skills and are loaded per quest by tag. Gear tier, pool, model family, reputation and per-tag pass/fail counts and the title are derived by pure functions in packages/domain (gearTierOf, poolOf, familyOf, reputationOf, affinityOf, titleOf) and are never stored.',
-  $comment: `${GENERATED_NOTE} Not expressible here: class must exist in registry/classes.json; vow_no_production must be true when the class is_verifier or is_monk; level changes only through levelChange(window, level).`,
+  $comment: `${GENERATED_NOTE} Not expressible here: class must exist in registry/classes.json; vow_no_production must be true when the class is_verifier or is_monk; level and level_since change only through levelChange (packages/domain/src/character/level.ts).`,
   // The same rules as checkStatus, for readers of the JSON contract.
   allOf: [
     {

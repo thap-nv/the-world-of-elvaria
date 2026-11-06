@@ -12,7 +12,8 @@
   `partyIssues` checks the invariants of a party across its quests; `renderQuestTransitionTable` renders the
   table of implementation-plan §2.5.
 - Runs the character state machine (`src/character/`, `transitionCharacter`) and derives what is never stored:
-  `reputationOf`, `affinityOf`, `titleOf`.
+  `reputationOf`, `affinityOf`, `titleOf`. Decides levels: `canTake` (which ranks a level takes) and
+  `levelChange` (counting only the verdicts since the last change, `level_since`).
 - Maps the domain onto the design system (implementation-plan §2.7): `statusToneOf`, `characterToneOf`, and
   `bannerOf` (`src/world/`), the one band the HUD shows.
 - Gives the core types every package builds on: `Result`, branded ids (`QuestId`, `TribeId`, ...), `Clock` and

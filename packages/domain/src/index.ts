@@ -1,5 +1,6 @@
 export * from './character/character-tone.ts';
 export * from './character/constants.ts';
+export * from './character/level.ts';
 export * from './character/reputation.ts';
 export * from './character/transition.ts';
 export * from './character/transitions.ts';
