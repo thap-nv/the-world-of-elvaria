@@ -971,7 +971,7 @@ Mỗi task: một phiên Claude Code làm xong, có test chứng minh. Thứ t�
 | C | P0-10, rồi P0-11 | P0-04 → P0-09 |
 | Giai đoạn 1 | Sau P1-01, bốn luồng: steward (P1-03 → phần steward của P1-04, P1-05 → P1-14); runner-core (P1-06, P1-07, P1-10); adapter (P1-09 sau P1-02 + P1-08; P1-12b sau P1-12a; P1-12c); Tể tướng (P1-13). P1-11, P1-15, P1-16, P1-17 đi tuần tự | P0-11 (cổng: phiên mới làm được P1-01 chỉ từ CLAUDE.md) |
 
-Khi merge nhánh song song: §11 và `p/domain/src/index.ts` giữ cả hai phía; `pnpm-lock.yaml` thì chạy lại `pnpm install`. P0-07 nên merge sớm, vì nhánh nào merge sau nó phải qua `docs:check`.
+Khi merge nhánh song song: trước khi merge PR, cập nhật nhánh bằng `git merge origin/main`, **không rebase**, vì rebase đổi hash của commit triển khai mà ô Trạng thái ở §8 đã ghi. Conflict thì §11 và `p/domain/src/index.ts` giữ cả hai phía; `pnpm-lock.yaml` thì chạy lại `pnpm install`. Rồi `pnpm check`, push, CI xanh 3 OS mới merge PR (merge commit). P0-07 nên merge sớm, vì nhánh nào merge sau nó phải qua `docs:check`.
 
 ### Giai đoạn 0 — Xương sống và sa bàn
 
@@ -1128,3 +1128,4 @@ Không còn câu hỏi mở.
 | 2026-11-06 | Cập nhật theo kế hoạch sản phẩm 0.7 (test trong thế giới): §3.15, ADR 0022 (`proposed`), §9.1 mục 29, P1-01 và P1-18 bổ sung, task mới P1-20 (Thử tường) và P1-21 (Khảo hạch mù), cả hai sau mốc giai đoạn 1. Mọi tài liệu trỏ tới `ke-hoach-dung-elvaria-0.7.md`; bản 0.6 giữ trong `docs/` làm lịch sử |
 | 2026-11-06 | Người dùng chốt ADR 0022 (`accepted`): nghi thức chọn theo kind và tag (`ritual_overrides`, tag `integration`), đất nháp cho người chấm, `fail_kind: flaky`, `defer_to_merge`, Khảo hạch mù trên máy đội. Nghi thức "Thử tường" của 0.7 mang tên hiển thị **Thả quái thử thành** |
 | 2026-11-06 | Người dùng chốt chạy task song song (§8 "Chạy song song"): mỗi task một nhánh tách từ `main`, một worktree, một phiên; 3–4 nhánh cùng lúc; đợt A = P0-04, P0-06, P0-07, thêm P0-05 khi một nhánh xong; spike P1-02, P1-12a chạy khi người dùng ngồi máy. Gỡ ba chỗ kế hoạch vướng khi tách việc: P0-10 tạo `planTick` tối thiểu trong `domain/src/dispatch` (P1-03 mở rộng) và lấy kết quả của nhân vật từ bảng kịch bản thuần trong `sandbox` thay cho `FakeRunner`, DAG không đổi (§7); P0-04 xuất hàm thuần render bảng §2.5, nhánh merge sau trong hai nhánh P0-04, P0-07 nối nó vào `docs:gen`; P0-11 vẫn là cổng trước P1-01 |
+| 2026-11-06 | Người dùng chốt: nhánh song song cập nhật bằng `git merge origin/main`, không rebase, để hash commit triển khai ghi ở §8 vẫn đúng (§8 "Chạy song song") |
