@@ -19,6 +19,8 @@ export const TZ = 'Asia/Ho_Chi_Minh';
 
 export interface TestIo extends CliIo {
   readonly printed: { readonly out: string[]; readonly err: string[] };
+  /** Every wait asked for, in milliseconds; none is waited. */
+  readonly slept: number[];
 }
 
 /** What a child process needs from the real environment to start on this OS (git, node). */
@@ -46,6 +48,7 @@ let seed = 0;
 export function testIo(overrides: Partial<CliIo> = {}): TestIo {
   const out: string[] = [];
   const err: string[] = [];
+  const slept: number[] = [];
   return {
     out: (line) => out.push(line),
     err: (line) => err.push(line),
@@ -56,6 +59,10 @@ export function testIo(overrides: Partial<CliIo> = {}): TestIo {
     platform: process.platform,
     nodePath: process.execPath,
     clock: fixedClock(NOW),
+    sleep: (ms) => {
+      slept.push(ms);
+      return Promise.resolve();
+    },
     random: {
       bytes: (count) => {
         seed += 1;
@@ -63,6 +70,7 @@ export function testIo(overrides: Partial<CliIo> = {}): TestIo {
       },
     },
     printed: { out, err },
+    slept,
     ...overrides,
   };
 }

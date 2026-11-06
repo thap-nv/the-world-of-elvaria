@@ -1,0 +1,25 @@
+{
+  "name": "@elvaria/hooks",
+  "version": "0.0.0",
+  "private": true,
+  "description": "elvaria-hook: the hook every agent CLI calls. Turns hook payloads into events, guards territory laws, asks for the handover letter.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "pnpm --filter @elvaria/eventlog build && tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "pnpm build && vitest run --coverage"
+  },
+  "dependencies": {
+    "@elvaria/eventlog": "workspace:*"
+  },
+  "devDependencies": {
+    "@elvaria/config": "workspace:*",
+    "@types/node": "^24.19.2",
+    "@vitest/coverage-v8": "^5.1.0",
+    "typescript": "~5.9.3",
+    "vitest": "^5.1.0"
+  }
+}
