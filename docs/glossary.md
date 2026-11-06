@@ -54,7 +54,7 @@ Luật (ADR 0014, [implementation-plan](implementation-plan.md) §2.7 và §4.1)
 | Bậc chạy | Execution tier | `tier` | Quest chạy bằng script hay bằng phiên agent. | `quest.tier` |
 | Bậc script | Script tier | `script` | Không gọi model; chạy script trong catalog; mana 0. | `quest.tier`, `quest.script`, `registry/scripts.json` |
 | Phiên mới | Session tier | `session` | Một phiên agent cấp cao nhất mới cho quest. | `quest.tier` |
-| Học trò | Apprentice | `apprentice` / `subagent` | Sub-agent nhân vật gọi trong phiên của mình; `apprentice` là tên agent duy nhất được phép, `subagent` là nhóm event. | `--agents`, event `agent.subagent.*` |
+| Học đồ | Apprentice | `apprentice` / `subagent` | Sub-agent nhân vật gọi trong phiên của mình; `apprentice` là tên agent duy nhất được phép, `subagent` là nhóm event. | `--agents`, event `agent.subagent.*` |
 | Đất riêng / lều trại | Plot / camp | `plot` | Worktree hoặc thư mục riêng của một quest. | `quest.plot`, `PlotManager` |
 | Nhánh quest | Quest branch | `quest/<id>` | Nhánh git của worktree. | `quest.plot.branch` |
 | Giao hàng | Delivery | `deliver` | Đưa kết quả ra theo quy ước của kind. | `quest.deliverable`, event `delivery.sent` |
@@ -328,7 +328,7 @@ Mọi giá trị enum xuất hiện trong [schemas/](schemas/) có ở bảng n�
 | Nhóm | Type | Nghĩa (VI) |
 |---|---|---|
 | Quest | `quest.drafted`, `quest.created`, `quest.claimed`, `quest.released`, `quest.started`, `quest.submitted`, `quest.returned`, `quest.verdict`, `quest.done`, `quest.sealed`, `quest.archived`, `quest.blocked`, `quest.unblocked`, `quest.paused`, `quest.resumed`, `quest.infirmary`, `quest.delivered` | mỗi chuyển trạng thái của quest (§2.5 của implementation-plan) |
-| Phiên agent | `agent.session.start`, `agent.session.end`, `agent.tool`, `agent.tool.blocked`, `agent.subagent.start`, `agent.subagent.end`, `agent.subagent.overrun`, `agent.compact`, `agent.notification` | những gì phiên CLI làm, do hook và stream ghi; `overrun` = học trò quá `subagent_max_minutes`; `compact` = ngồi thiền |
+| Phiên agent | `agent.session.start`, `agent.session.end`, `agent.tool`, `agent.tool.blocked`, `agent.subagent.start`, `agent.subagent.end`, `agent.subagent.overrun`, `agent.compact`, `agent.notification` | những gì phiên CLI làm, do hook và stream ghi; `overrun` = học đồ quá `subagent_max_minutes`; `compact` = ngồi thiền |
 | Phán quyết | `verdict.pass`, `verdict.fail`, `verdict.partial` | kết quả nghiệm thu |
 | Mana | `mana.level`, `mana.warning`, `mana.exhausted`, `mana.restored`, `mana.probe`, `mana.signal` | số đo, cảnh báo, hết, hồi sinh, thăm dò, tín hiệu hết trong băng (429, `StopFailure`) |
 | Nhân vật | `character.created`, `character.sleep`, `character.wake`, `character.meditate`, `character.suspend`, `character.release`, `character.swamp`, `character.level_up`, `character.level_down` | |
