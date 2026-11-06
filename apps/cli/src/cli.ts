@@ -6,4 +6,11 @@ import process from 'node:process';
 import { nodeIo } from './node-io.ts';
 import { runCli } from './run-cli.ts';
 
+// A reader that stops early (`elvaria sandbox replay … | head`) closes the pipe: the command ends there, quietly,
+// instead of with a stack trace on stderr.
+process.stdout.on('error', (error: NodeJS.ErrnoException) => {
+  if (error.code !== 'EPIPE') throw error;
+  process.exit(0);
+});
+
 process.exitCode = await runCli(process.argv.slice(2), nodeIo());

@@ -16,6 +16,8 @@ import type { Env } from './io.ts';
 import type { TempDir } from '../test/cli.ts';
 
 const CLI = fileURLToPath(new URL('../dist/cli.js', import.meta.url));
+/** The fake day of the sandbox specs: a fixed date keeps its file name the same on every run. */
+const DAY = '2026-11-06';
 
 interface Outcome {
   readonly code: number | null;
@@ -134,6 +136,47 @@ describe('node dist/cli.js', () => {
         ),
     );
     expect(kinds.sort()).toEqual(['cancel', 'confirm', 'create_quest', 'edit_quest']);
+  });
+
+  it('generates a fake day and replays it as a timeline: the milestone of stage 0 (§8)', async () => {
+    const generate = await elvaria(
+      env,
+      'sandbox',
+      'generate',
+      '--day',
+      'busy',
+      '--seed',
+      '42',
+      '--date',
+      DAY,
+    );
+    expect(generate).toMatchObject({ code: 0, stderr: '' });
+    const file = path.join(kingdom, 'events', 'sandbox', `${DAY}.jsonl`);
+    expect(generate.stdout).toContain(file);
+    // Fast enough for CI: the whole day plays in well under a second.
+    const replay = await elvaria(env, 'sandbox', 'replay', file, '--speed', '1000000');
+    expect(replay).toMatchObject({ code: 0, stderr: '' });
+    const lines = replay.stdout.trimEnd().split(/\r?\n/);
+    const count = (await readFile(file, 'utf8')).trimEnd().split('\n').length;
+    expect(lines[0]).toMatch(/^── DỮ LIỆU GIẢ · ngày 2026-11-06 · \d+ dòng · 08:30–/);
+    expect(lines[1]).toBe('08:30:00  Lãnh thổ «Web Portal» gia nhập vương quốc');
+    expect(lines.at(-1)).toBe(`── hết ngày giả: ${count} dòng ──`);
+    expect(lines).toHaveLength(count + 2);
+  });
+
+  it('stops quietly when the reader of a replay closes the pipe', async () => {
+    const file = path.join(kingdom, 'events', 'sandbox', `${DAY}.jsonl`);
+    const child = spawn(process.execPath, [CLI, 'sandbox', 'replay', file, '--speed', '2000'], {
+      env,
+      shell: false,
+      windowsHide: true,
+    });
+    let stderr = '';
+    child.stderr.setEncoding('utf8').on('data', (chunk: string) => (stderr += chunk));
+    // Like `| head`: read the first lines, then go away while the replay is still writing.
+    child.stdout.once('data', () => child.stdout.destroy());
+    const code = await new Promise<number | null>((resolve) => child.on('close', resolve));
+    expect({ code, stderr }).toEqual({ code: 0, stderr: '' });
   });
 
   it('migrates, and exits 2 on a wrong command line', async () => {

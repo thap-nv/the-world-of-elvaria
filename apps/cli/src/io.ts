@@ -21,5 +21,7 @@ export interface CliIo {
   /** Absolute path of the running Node, to start an npm `.cmd` shim's script without a shell (ADR 0015). */
   readonly nodePath: string;
   readonly clock: Clock;
+  /** Waits `ms` milliseconds: a sandbox replay paces its lines with it; tests pass one that returns at once. */
+  readonly sleep: (ms: number) => Promise<void>;
   readonly random: RandomSource;
 }
