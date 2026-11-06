@@ -83,7 +83,7 @@ Luật (ADR 0014, [implementation-plan](implementation-plan.md) §2.7 và §4.1)
 | Trả bài | Return | `returned` / `return` | Quest không đạt, quay lại người làm kèm ghi chú. | trạng thái `returned`, lệnh `return` |
 | Dấu vua | Royal seal | `seal` | Người dùng duyệt; nặng gấp 3 phán quyết của agent. | `quest.seal`, lệnh `seal` |
 | Cầu dao | Circuit breaker | `breaker` | Trần thời gian, token, lượt, số lần thử của một attempt. | `kingdom.breakers`, outcome `breaker` |
-| Lạc đầm lầy | Lost in the swamp | `swamp` | Nhân vật bị cầu dao thời gian cắt. | `character.status` |
+| Sa lầy | Bogged down | `swamp` | Nhân vật kẹt tại chỗ đang làm khi cầu dao (thời gian, token, lượt) ngắt phiên, trong lúc Quản sự dừng tiến trình và lưu việc dở; hiển thị «Sa lầy trong nhiệm vụ {quest}». Là trạng thái, không phải nơi chốn. | `character.status` |
 | Trạm quân y | Infirmary | `infirmary` | Quest dừng hẳn, chờ người dùng quyết. | `quest.status` |
 | Mana | Mana | `mana` | Hạn mức dùng của một tài khoản/pool. | `kingdom.mana`, event `mana.*` |
 | Trần mana | Mana cap | `mana.cap_pct` | Mức dùng tối đa thế giới được chạm (mặc định 98%). | `kingdom.mana` |
@@ -201,7 +201,7 @@ Danh hiệu của `judge` (chuỗi hiển thị, không phải id): Thợ cả (
 | Ngủ (hết mana) | `sleeping_mana` | `c-sleeping` → `character-sleeping` |
 | Thiền | `meditating` | `c-meditating` → `character-meditating` |
 | Đình chỉ | `suspended` | `c-suspended` → `character-suspended` |
-| Lạc đầm lầy | `swamp` | `c-swamp` → `character-swamp` |
+| Sa lầy | `swamp` | `c-swamp` → `character-swamp` |
 
 `character.status_before_sleep` chỉ nhận `idle`, `working`, `reviewing`.
 

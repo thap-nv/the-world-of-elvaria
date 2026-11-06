@@ -518,10 +518,10 @@
               "used_in": "`kingdom.breakers`, outcome `breaker`"
             },
             {
-              "vi": "Lạc đầm lầy",
-              "en": "Lost in the swamp",
+              "vi": "Sa lầy",
+              "en": "Bogged down",
               "id": ["swamp"],
-              "definition": "Nhân vật bị cầu dao thời gian cắt.",
+              "definition": "Nhân vật kẹt tại chỗ đang làm khi cầu dao (thời gian, token, lượt) ngắt phiên, trong lúc Quản sự dừng tiến trình và lưu việc dở; hiển thị «Sa lầy trong nhiệm vụ {quest}». Là trạng thái, không phải nơi chốn.",
               "used_in": "`character.status`"
             },
             {
@@ -1229,7 +1229,7 @@
               "icon": "`c-suspended` → `character-suspended`"
             },
             {
-              "vi": "Lạc đầm lầy",
+              "vi": "Sa lầy",
               "id": ["swamp"],
               "icon": "`c-swamp` → `character-swamp`"
             }
