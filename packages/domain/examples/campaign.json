@@ -1,0 +1,44 @@
+[
+  {
+    "version": 1,
+    "id": "c_20261110_5m8q2r",
+    "name": "Phát hành v1.4",
+    "mode": "offense",
+    "fronts": [
+      {
+        "id": "web",
+        "name": "Mặt trận web",
+        "goal": "L5 chờ xác nhận nổi bật trên dashboard",
+        "quest_ids": ["q_20261110_2a4b6c", "q_20261110_8d9e7f"]
+      },
+      {
+        "id": "docs",
+        "name": "Mặt trận tài liệu",
+        "goal": "docs/architecture.md khớp ADR 0014-0018",
+        "quest_ids": ["q_20261110_3g5h7j"]
+      }
+    ],
+    "victory_conditions": [
+      {
+        "id": "all-fronts",
+        "text": "Mọi quest của hai mặt trận xong",
+        "check": {
+          "type": "all_quests_done"
+        },
+        "met": false
+      },
+      {
+        "id": "ci-green",
+        "text": "pnpm check xanh trên nhánh main",
+        "check": {
+          "type": "command",
+          "run": "pnpm check"
+        },
+        "met": false
+      }
+    ],
+    "status": "active",
+    "declared_at": "2026-11-10T09:00:00+07:00",
+    "deadline": "2026-11-21T18:00:00+07:00"
+  }
+]

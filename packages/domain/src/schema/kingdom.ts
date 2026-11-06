@@ -1,4 +1,4 @@
-// kingdom.json v1: the owner's settings for one kingdom (docs/schemas/kingdom.schema.json, implementation-plan §2.3).
+// kingdom.json v1: the owner's settings for one kingdom (implementation-plan §2.3).
 import { z } from 'zod';
 
 import {
@@ -10,167 +10,213 @@ import {
   SCHEDULE_DEFAULTS,
 } from '../constants.ts';
 import { isTimeZone } from '../core/clock.ts';
-import { REGISTRY_ID_PATTERN, TribeIdSchema } from '../core/ids.ts';
 import {
   AbsPathSchema,
   DateTimeSchema,
-  ModelSlugSchema,
+  GENERATED_NOTE,
   NameSchema,
-  NonEmptyStringSchema,
   RankSchema,
   rejectDuplicateIds,
 } from './common.ts';
+import { TribeSchema } from './tribe.ts';
 
-/** A built-in adapter (claude_code, antigravity, gemini_cli, codex_cli) or a kingdom file adapters/<name>.mjs. */
-const ADAPTER_PATTERN = /^(?:[a-z][a-z0-9_]*|adapters\/[a-z0-9][a-z0-9-]*\.mjs)$/;
+const describe = (description: string) => ({ description });
 
-const TribeToolSchema = z.strictObject({
-  path: AbsPathSchema,
-  version: NonEmptyStringSchema,
-  default_model: ModelSlugSchema.optional(),
-  auth: z.enum(['login', 'api_key']).default('login'),
-  terms_acknowledged_at: DateTimeSchema.optional(),
-});
-
-export const TribeSchema = z
+const ManaSchema = z
   .strictObject({
-    id: TribeIdSchema,
-    adapter: z.string().regex(ADAPTER_PATTERN),
-    enabled: z.boolean().default(true),
-    max_concurrent: z.int().min(1).default(1),
-    tool: TribeToolSchema.optional(),
-    pools: z
-      .record(z.string().regex(REGISTRY_ID_PATTERN), z.strictObject({ enabled: z.boolean() }))
-      .optional(),
-    budget: z
-      .strictObject({
-        tokens_5h: z.int().min(1).optional(),
-        tokens_7d: z.int().min(1).optional(),
-        usd_week: z.number().positive().optional(),
-      })
-      .optional(),
+    cap_pct: z.number().min(1).max(100).default(MANA_DEFAULTS.cap_pct),
+    king_reserve_pct: z.number().min(0).max(MANA_MARGIN_MAX_PCT).default(MANA_DEFAULTS.king_reserve_pct),
+    warn_margin_pct: z.number().min(0).max(MANA_MARGIN_MAX_PCT).default(MANA_DEFAULTS.warn_margin_pct),
+    probe_interval_minutes: z.int().min(1).max(MINUTES_PER_DAY).default(MANA_DEFAULTS.probe_interval_minutes),
+    reassign_after_hours: z
+      .int()
+      .min(1)
+      .nullable()
+      .default(null)
+      .meta(
+        describe(
+          'If set, a quest in paused_mana longer than this may be reassigned to another character by rule. null = never (principle 6 keeps the assignee).',
+        ),
+      ),
   })
-  .superRefine((tribe, ctx) => {
-    // The v1 contract's two conditionals (kingdom.schema.json, $defs.tribe.allOf).
-    // Gemini CLI no longer serves consumer accounts: it runs only with a paid API key (ADR 0018).
-    if (tribe.adapter === 'gemini_cli' && tribe.tool !== undefined && tribe.tool.auth !== 'api_key') {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['tool', 'auth'],
-        message: 'adapter gemini_cli needs auth = api_key',
-      });
-    }
-    // A paid key has no hard cap of its own, so the weekly spend ceiling is the only one.
-    if (tribe.tool?.auth === 'api_key' && tribe.budget?.usd_week === undefined) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['budget', 'usd_week'],
-        message: 'auth = api_key needs budget.usd_week',
-      });
-    }
+  .meta({
+    $comment:
+      'Intake threshold per pool = min(cap_pct, 100 - king_reserve_pct). The world never takes new quests at or above it; a warning fires warn_margin_pct points earlier.',
   });
-
-/** Intake threshold per pool = min(cap_pct, 100 - king_reserve_pct) (implementation-plan §3.5). */
-const ManaSchema = z.strictObject({
-  cap_pct: z.number().min(1).max(100).default(MANA_DEFAULTS.cap_pct),
-  king_reserve_pct: z.number().min(0).max(MANA_MARGIN_MAX_PCT).default(MANA_DEFAULTS.king_reserve_pct),
-  warn_margin_pct: z.number().min(0).max(MANA_MARGIN_MAX_PCT).default(MANA_DEFAULTS.warn_margin_pct),
-  probe_interval_minutes: z.int().min(1).max(MINUTES_PER_DAY).default(MANA_DEFAULTS.probe_interval_minutes),
-  // null = never: principle 6 keeps the assignee of a quest paused for mana.
-  reassign_after_hours: z.int().min(1).nullable().default(null),
-});
 
 const BreakersSchema = z.strictObject({
   attempt_minutes: z
     .strictObject({
-      low: z.int().min(1).default(BREAKER_DEFAULTS.attempt_minutes_low),
-      high: z.int().min(1).default(BREAKER_DEFAULTS.attempt_minutes_high),
+      low: z
+        .int()
+        .min(1)
+        .default(BREAKER_DEFAULTS.attempt_minutes_low)
+        .meta(describe('Ranks below high_rank_from.')),
+      high: z
+        .int()
+        .min(1)
+        .default(BREAKER_DEFAULTS.attempt_minutes_high)
+        .meta(describe('Ranks from high_rank_from up, and territories with an exclusive e2e check.')),
     })
     .prefault({}),
   high_rank_from: RankSchema.default(BREAKER_DEFAULTS.high_rank_from),
   max_attempts: z.int().min(1).default(BREAKER_DEFAULTS.max_attempts),
-  mana_multiplier: z.number().positive().default(BREAKER_DEFAULTS.mana_multiplier),
+  mana_multiplier: z
+    .number()
+    .positive()
+    .default(BREAKER_DEFAULTS.mana_multiplier)
+    .meta(describe('quest.budget.max_tokens = estimate.tokens x mana_multiplier.')),
   same_fail_suspend: z.int().min(1).default(BREAKER_DEFAULTS.same_fail_suspend),
   patrol_weekly_pct: z.number().min(0).max(100).default(BREAKER_DEFAULTS.patrol_weekly_pct),
   max_turns: z.int().min(1).default(BREAKER_DEFAULTS.max_turns),
-  subagent_max_minutes: z.int().min(1).default(BREAKER_DEFAULTS.subagent_max_minutes),
-  subagent_max_turns: z.int().min(1).default(BREAKER_DEFAULTS.subagent_max_turns),
-  context_budget_tokens: z.int().min(1).default(BREAKER_DEFAULTS.context_budget_tokens),
+  subagent_max_minutes: z
+    .int()
+    .min(1)
+    .default(BREAKER_DEFAULTS.subagent_max_minutes)
+    .meta(
+      describe(
+        'Measured only (hook SubagentStart/Stop); overrun emits agent.subagent.overrun and counts against the parent quest.',
+      ),
+    ),
+  subagent_max_turns: z
+    .int()
+    .min(1)
+    .default(BREAKER_DEFAULTS.subagent_max_turns)
+    .meta(describe('The enforceable apprentice breaker: maxTurns of the `apprentice` agent definition.')),
+  context_budget_tokens: z
+    .int()
+    .min(1)
+    .default(BREAKER_DEFAULTS.context_budget_tokens)
+    .meta(describe('The Chancellor splits work so one quest fits one context (principle 13).')),
 });
 
-// Jobs run inside the Steward (no cron or Task Scheduler); none exists in stage 1, so all default to off.
-const ScheduleSchema = z.strictObject({
-  chronicle: z
-    .strictObject({
-      enabled: z.boolean().default(false),
-      at: z
-        .string()
-        .regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/)
-        .default(SCHEDULE_DEFAULTS.chronicle_at),
-    })
-    .prefault({}),
-  temple: z
-    .strictObject({
-      enabled: z.boolean().default(false),
-      every_quests: z.int().min(1).default(SCHEDULE_DEFAULTS.temple_every_quests),
-      weekly: z.boolean().default(true),
-    })
-    .prefault({}),
-  patrol: z
-    .strictObject({
-      enabled: z.boolean().default(false),
-      // ISO 8601 duration in days, hours and minutes.
-      every: z
-        .string()
-        .regex(/^P(?:[0-9]+D)?(?:T(?:[0-9]+H)?(?:[0-9]+M)?)?$/)
-        .default(SCHEDULE_DEFAULTS.patrol_every),
-    })
-    .prefault({}),
-});
+const ScheduleSchema = z
+  .strictObject({
+    chronicle: z
+      .strictObject({
+        enabled: z.boolean().default(false),
+        at: z
+          .string()
+          .regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/)
+          .default(SCHEDULE_DEFAULTS.chronicle_at),
+      })
+      .prefault({}),
+    temple: z
+      .strictObject({
+        enabled: z.boolean().default(false),
+        every_quests: z.int().min(1).default(SCHEDULE_DEFAULTS.temple_every_quests),
+        weekly: z.boolean().default(true),
+      })
+      .prefault({}),
+    patrol: z
+      .strictObject({
+        enabled: z.boolean().default(false),
+        every: z
+          .string()
+          .regex(/^P(?:[0-9]+D)?(?:T(?:[0-9]+H)?(?:[0-9]+M)?)?$/)
+          .default(SCHEDULE_DEFAULTS.patrol_every)
+          .meta(describe('ISO-8601 duration.')),
+      })
+      .prefault({}),
+  })
+  .meta({
+    $comment:
+      'Scheduled jobs run inside the Steward (no cron, Task Scheduler or launchd). The job list is empty in stage 1, so every job defaults to disabled.',
+  });
 
 const DispatchSchema = z.strictObject({
   tick_seconds: z.int().min(1).default(DISPATCH_DEFAULTS.tick_seconds),
   fairness: z.enum(['round_robin_territory']).default('round_robin_territory'),
-  verifier_same_family: z.enum(['different_model', 'machine_only']).default('different_model'),
-  // Off by default: revival is a fresh session from handover.md (principle 13, ADR 0017).
-  resume_after_mana: z.boolean().default(false),
+  verifier_same_family: z
+    .enum(['different_model', 'machine_only'])
+    .default('different_model')
+    .meta(
+      describe(
+        'When no verifier of another model family is free: different_model requires a different model slug; machine_only lets the Steward issue a machine verdict (never pass with a failing check).',
+      ),
+    ),
+  resume_after_mana: z
+    .boolean()
+    .default(false)
+    .meta(
+      describe(
+        'Revive with `--resume <session>` instead of a fresh session built from handover.md. Off by default (principle 13, ADR 0017).',
+      ),
+    ),
 });
 
-export const KingdomSchema = z.strictObject({
-  version: z.literal(1),
-  name: NameSchema,
-  created_at: DateTimeSchema,
-  // Event files are named by local day, so a typo here would scatter one day over two files.
-  tz: z
-    .string()
-    .regex(/^[A-Za-z]+(?:\/[A-Za-z0-9_+-]+)*$/)
-    .refine(isTimeZone, { message: 'unknown IANA time zone' }),
-  owner: z.strictObject({
-    profession: z.enum(['developer', 'ba', 'marketing', 'researcher', 'other']),
-    locale: z.enum(['vi', 'en']).default('vi'),
-  }),
-  paths: z.strictObject({ treasury: AbsPathSchema }),
-  tribes: z.array(TribeSchema).min(1).superRefine(rejectDuplicateIds),
-  mana: ManaSchema,
-  breakers: BreakersSchema,
-  schedule: ScheduleSchema,
-  dispatch: DispatchSchema,
-  bell: z.strictObject({
-    desktop: z.boolean().default(true),
-    web_push: z.boolean().default(false),
-    // Chosen in stage 2; null until then.
-    messaging: z.null().default(null),
-  }),
-  tunnel: z.strictObject({
-    enabled: z.boolean().default(false),
-    kind: z.enum(['tailscale', 'cloudflare']).optional(),
-  }),
-  theme: z.string().regex(/^[a-z][a-z0-9-]*$/),
-  ui: z.strictObject({
-    mode: z.enum(['night', 'day']).default('night'),
-    eco: z.boolean().default(false),
-  }),
-});
+export const KingdomSchema = z
+  .strictObject({
+    version: z.literal(1),
+    name: NameSchema.meta(describe('Kingdom name chosen by the owner; rendered with `.elv-name` (24ch).')),
+    created_at: DateTimeSchema,
+    tz: z
+      .string()
+      .regex(/^[A-Za-z]+(?:\/[A-Za-z0-9_+-]+)*$/)
+      .refine(isTimeZone, { message: 'unknown IANA time zone' })
+      .meta(
+        describe(
+          'IANA time zone of the machine (e.g. Asia/Ho_Chi_Minh). Event files are named by local day; recording tz keeps replays consistent.',
+        ),
+      ),
+    owner: z.strictObject({
+      profession: z.enum(['developer', 'ba', 'marketing', 'researcher', 'other']),
+      locale: z
+        .enum(['vi', 'en'])
+        .default('vi')
+        .meta(
+          describe(
+            'Language of everything the owner reads: handover letters, verdict notes, blocked questions, chronicle, bell, UI.',
+          ),
+        ),
+    }),
+    paths: z.strictObject({
+      treasury: AbsPathSchema.meta(
+        describe(
+          'Treasury file (secrets), always outside the kingdom, e.g. ~/.elvaria/treasury.json resolved to an absolute path.',
+        ),
+      ),
+    }),
+    tribes: z
+      .array(TribeSchema)
+      .min(1)
+      .superRefine(rejectDuplicateIds)
+      .meta(
+        describe(
+          "Tribes (product plan 0.6, tribe contract): one entry per account the owner signs in to on this machine. Adding a tribe = an adapter (built in, or a file adapters/<name>.mjs in the kingdom) + a theme entry (name, mana colour, sprites, crest) + the owner's own login; the core and existing characters do not change. `elvaria init` writes claude (claude_code) and gemini (antigravity). The Steward reads each adapter's capabilities at start and narrows what that tribe may take (implementation-plan §3.14). Ids are unique (zod).",
+        ),
+      ),
+    mana: ManaSchema,
+    breakers: BreakersSchema,
+    schedule: ScheduleSchema,
+    dispatch: DispatchSchema,
+    bell: z.strictObject({
+      desktop: z.boolean().default(true),
+      web_push: z.boolean().default(false),
+      messaging: z
+        .null()
+        .default(null)
+        .meta(describe('Messaging channel, chosen in stage 2; null until then.')),
+    }),
+    tunnel: z.strictObject({
+      enabled: z.boolean().default(false),
+      kind: z.enum(['tailscale', 'cloudflare']).optional(),
+    }),
+    // Required, as in v1: init writes 'fantasy'; the annotation keeps that visible in the contract.
+    theme: z
+      .string()
+      .regex(/^[a-z][a-z0-9-]*$/)
+      .meta({ default: 'fantasy' }),
+    ui: z.strictObject({
+      mode: z.enum(['night', 'day']).default('night'),
+      eco: z.boolean().default(false),
+    }),
+  })
+  .meta({
+    title: 'Kingdom',
+    description:
+      "kingdom.json at the root of a kingdom directory (one machine, one user, one kingdom). The kingdom directory is chosen with `elvaria init --kingdom <dir>` and lives outside the Elvaria repo. Holds the owner's settings: tribes (one per signed-in account, each run by an adapter), mana cap and king's reserve, circuit breakers, schedules, dispatch policy, bell channels, tunnel, theme and UI mode. `elvaria doctor` fills `tribes[].tool`.",
+    $comment: `${GENERATED_NOTE} Paths inside kingdom files are relative to the kingdom directory with '/' separators; the only absolute paths are territory.path and paths.treasury (implementation-plan §2.1). Not expressible here: tz must be a time zone Intl knows.`,
+  });
 
-export type Tribe = z.infer<typeof TribeSchema>;
 export type Kingdom = z.infer<typeof KingdomSchema>;

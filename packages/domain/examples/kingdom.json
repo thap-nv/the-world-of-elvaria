@@ -1,0 +1,116 @@
+[
+  {
+    "version": 1,
+    "name": "Vương quốc Bình Minh",
+    "created_at": "2026-11-06T09:00:00+07:00",
+    "tz": "Asia/Ho_Chi_Minh",
+    "owner": {
+      "profession": "developer",
+      "locale": "vi"
+    },
+    "paths": {
+      "treasury": "C:/Users/thapn/.elvaria/treasury.json"
+    },
+    "tribes": [
+      {
+        "id": "claude",
+        "adapter": "claude_code",
+        "enabled": true,
+        "max_concurrent": 2,
+        "tool": {
+          "path": "C:/Users/thapn/.vscode/extensions/anthropic.claude-code-2.1.318-win32-x64/resources/native-binary/claude.exe",
+          "version": "2.1.318",
+          "default_model": "claude-sonnet-5-5",
+          "auth": "login"
+        },
+        "budget": {
+          "tokens_5h": 4000000,
+          "tokens_7d": 60000000
+        }
+      },
+      {
+        "id": "gemini",
+        "adapter": "antigravity",
+        "enabled": true,
+        "max_concurrent": 1,
+        "tool": {
+          "path": "C:/Users/thapn/.gemini/bin/agy.exe",
+          "version": "1.5.1",
+          "default_model": "gemini-4-argon-medium",
+          "auth": "login",
+          "terms_acknowledged_at": "2026-11-06T13:10:00+07:00"
+        },
+        "pools": {
+          "gemini_models": {
+            "enabled": true
+          },
+          "claude_gpt_models": {
+            "enabled": false
+          }
+        }
+      },
+      {
+        "id": "codex",
+        "adapter": "codex_cli",
+        "enabled": false,
+        "max_concurrent": 1
+      }
+    ],
+    "mana": {
+      "cap_pct": 98,
+      "king_reserve_pct": 2,
+      "warn_margin_pct": 10,
+      "probe_interval_minutes": 15,
+      "reassign_after_hours": null
+    },
+    "breakers": {
+      "attempt_minutes": {
+        "low": 45,
+        "high": 120
+      },
+      "high_rank_from": "B",
+      "max_attempts": 3,
+      "mana_multiplier": 2,
+      "same_fail_suspend": 3,
+      "patrol_weekly_pct": 10,
+      "max_turns": 200,
+      "subagent_max_minutes": 5,
+      "subagent_max_turns": 30,
+      "context_budget_tokens": 120000
+    },
+    "schedule": {
+      "chronicle": {
+        "enabled": false,
+        "at": "21:00"
+      },
+      "temple": {
+        "enabled": false,
+        "every_quests": 10,
+        "weekly": true
+      },
+      "patrol": {
+        "enabled": false,
+        "every": "P1D"
+      }
+    },
+    "dispatch": {
+      "tick_seconds": 5,
+      "fairness": "round_robin_territory",
+      "verifier_same_family": "different_model",
+      "resume_after_mana": false
+    },
+    "bell": {
+      "desktop": true,
+      "web_push": false,
+      "messaging": null
+    },
+    "tunnel": {
+      "enabled": false
+    },
+    "theme": "fantasy",
+    "ui": {
+      "mode": "night",
+      "eco": false
+    }
+  }
+]

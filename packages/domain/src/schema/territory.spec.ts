@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import contract from '../../../../docs/schemas/territory.schema.json' with { type: 'json' };
+import examples from '../../examples/territory.json' with { type: 'json' };
 import { TerritorySchema } from './territory.ts';
 
-const [example] = contract.examples;
+const [example] = examples;
 
 const minimal = {
   version: 1,

@@ -1,0 +1,180 @@
+[
+  {
+    "version": 1,
+    "id": "q_20261106_7k3m2a",
+    "title": "Thêm script pnpm check",
+    "description": "Thêm script `pnpm check` gom lint + typecheck + test + i18n:check đúng như README mô tả ở mục kiểm tra trước khi push; cập nhật README.",
+    "kind": "build",
+    "rank": "D",
+    "class_required": "knight",
+    "tags": ["infra"],
+    "territory": "dc1-se-team",
+    "status": "review",
+    "tier": "session",
+    "assignee": "thorn",
+    "verifier": "brann",
+    "campaign_id": null,
+    "parent_id": null,
+    "depends_on": [],
+    "budget": {
+      "max_minutes": 45,
+      "max_tokens": 400000,
+      "max_attempts": 3
+    },
+    "estimate": {
+      "tokens": 200000,
+      "minutes": 30
+    },
+    "attempts": 1,
+    "attempt_log": [
+      {
+        "n": 1,
+        "character": "thorn",
+        "role": "assignee",
+        "started_at": "2026-11-06T09:12:03+07:00",
+        "ended_at": "2026-11-06T09:41:20+07:00",
+        "outcome": "submitted",
+        "session_id": "6f1c2d9e-3b4a-4c8e-9f0a-1b2c3d4e5f60",
+        "tokens": 182340,
+        "run_dir": ".runs/q_20261106_7k3m2a-1"
+      },
+      {
+        "n": 1,
+        "character": "brann",
+        "role": "verifier",
+        "started_at": "2026-11-06T09:43:00+07:00",
+        "session_id": "0a9b8c7d-6e5f-4a3b-8c2d-1e0f9a8b7c6d",
+        "run_dir": ".runs/q_20261106_7k3m2a-1/verify"
+      }
+    ],
+    "plot": {
+      "type": "worktree",
+      "path": "D:/Dummy/Tool - DC1/dc1-se-team/.elvaria/worktrees/q_20261106_7k3m2a",
+      "branch": "quest/q_20261106_7k3m2a"
+    },
+    "deliverable": {
+      "type": "branch",
+      "branch": "quest/q_20261106_7k3m2a"
+    },
+    "seal_required": true,
+    "secrets_required": [],
+    "checks_run": ["lint", "typecheck", "unit"],
+    "created_by": "chancellor",
+    "created_at": "2026-11-06T09:05:00+07:00",
+    "updated_at": "2026-11-06T09:43:00+07:00"
+  },
+  {
+    "version": 1,
+    "id": "q_20261106_9p4r8d",
+    "title": "Kiểm tra link nội bộ",
+    "description": "Kiểm tra mọi link nội bộ trong README.md, docs/**/*.md và CLAUDE.md; mỗi link là một đơn vị, link chết mở quest con.",
+    "kind": "batch",
+    "rank": "E",
+    "tags": ["docs"],
+    "territory": "dc1-se-team",
+    "status": "done",
+    "tier": "script",
+    "script": {
+      "id": "link-check",
+      "params": {
+        "globs": ["README.md", "docs/**/*.md", "CLAUDE.md"]
+      }
+    },
+    "assignee": null,
+    "verifier": null,
+    "depends_on": [],
+    "budget": {
+      "max_minutes": 10,
+      "max_tokens": 0,
+      "max_attempts": 1
+    },
+    "estimate": {
+      "tokens": 0,
+      "minutes": 2
+    },
+    "attempts": 1,
+    "attempt_log": [
+      {
+        "n": 1,
+        "character": null,
+        "role": "assignee",
+        "started_at": "2026-11-06T10:00:00+07:00",
+        "ended_at": "2026-11-06T10:01:12+07:00",
+        "outcome": "submitted",
+        "run_dir": ".runs/q_20261106_9p4r8d-1"
+      }
+    ],
+    "plot": {
+      "type": "worktree",
+      "path": "D:/Dummy/Tool - DC1/dc1-se-team/.elvaria/worktrees/q_20261106_9p4r8d",
+      "branch": "quest/q_20261106_9p4r8d"
+    },
+    "deliverable": {
+      "type": "report",
+      "path": ".runs/q_20261106_9p4r8d-1/report.json",
+      "delivered_at": "2026-11-06T10:01:30+07:00"
+    },
+    "seal_required": false,
+    "secrets_required": [],
+    "checks_run": [],
+    "units": [
+      {
+        "id": "u001",
+        "label": "README.md -> docs/architecture.md",
+        "outcome": "done"
+      },
+      {
+        "id": "u002",
+        "label": "docs/runbook.md -> docs/deploy.md",
+        "outcome": "not_done",
+        "child_quest": "q_20261106_3h7w2x"
+      }
+    ],
+    "created_by": "chancellor",
+    "created_at": "2026-11-06T09:58:00+07:00",
+    "updated_at": "2026-11-06T10:01:30+07:00"
+  },
+  {
+    "version": 1,
+    "id": "q_20261107_2w6t9c",
+    "title": "Màn xác nhận L5: phần web",
+    "description": "Dựng màn xác nhận L5 trong apps/web theo hợp đồng OpenAPI của đội; chuỗi qua t() cả VI và EN.",
+    "kind": "build",
+    "rank": "C",
+    "class_required": "knight",
+    "tags": ["frontend"],
+    "party_id": "q_20261107_5m2k8p",
+    "party_role": "part",
+    "contract": "apps/api/openapi.json",
+    "territory": "dc1-se-team",
+    "status": "open",
+    "tier": "session",
+    "assignee": null,
+    "verifier": null,
+    "parent_id": "q_20261107_5m2k8p",
+    "depends_on": ["q_20261107_5m2k8p"],
+    "budget": {
+      "max_minutes": 45,
+      "max_tokens": 300000,
+      "max_attempts": 3
+    },
+    "estimate": {
+      "tokens": 150000,
+      "minutes": 35
+    },
+    "attempts": 0,
+    "attempt_log": [],
+    "plot": {
+      "type": "none"
+    },
+    "deliverable": {
+      "type": "branch"
+    },
+    "seal_required": true,
+    "secrets_required": [],
+    "checks_run": [],
+    "created_by": "council",
+    "created_at": "2026-11-07T08:30:00+07:00",
+    "updated_at": "2026-11-07T08:30:00+07:00"
+  }
+]

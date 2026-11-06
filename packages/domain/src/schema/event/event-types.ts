@@ -1,0 +1,66 @@
+// The v1 event type catalogue (implementation-plan §2.3, glossary §12). It documents the log and names what
+// renderers draw; it never restricts `type`, because readers keep unknown types (forward compatible, ADR 0003).
+
+export const EVENT_TYPES = [
+  'quest.drafted',
+  'quest.created',
+  'quest.claimed',
+  'quest.released',
+  'quest.started',
+  'quest.submitted',
+  'quest.returned',
+  'quest.verdict',
+  'quest.done',
+  'quest.sealed',
+  'quest.archived',
+  'quest.blocked',
+  'quest.unblocked',
+  'quest.paused',
+  'quest.resumed',
+  'quest.infirmary',
+  'quest.delivered',
+  'agent.session.start',
+  'agent.session.end',
+  'agent.tool',
+  'agent.tool.blocked',
+  'agent.subagent.start',
+  'agent.subagent.end',
+  'agent.subagent.overrun',
+  'agent.compact',
+  'agent.notification',
+  'verdict.pass',
+  'verdict.fail',
+  'verdict.partial',
+  'mana.level',
+  'mana.warning',
+  'mana.exhausted',
+  'mana.restored',
+  'mana.probe',
+  'mana.signal',
+  'character.created',
+  'character.sleep',
+  'character.wake',
+  'character.meditate',
+  'character.suspend',
+  'character.release',
+  'character.swamp',
+  'character.level_up',
+  'character.level_down',
+  'command.received',
+  'command.applied',
+  'command.rejected',
+  'delivery.sent',
+  'chronicle.written',
+  'territory.attached',
+  'territory.surveyed',
+  'territory.health',
+  'sandbox.replay.start',
+  'sandbox.replay.end',
+] as const;
+
+export type EventType = (typeof EVENT_TYPES)[number];
+
+const KNOWN: ReadonlySet<string> = new Set(EVENT_TYPES);
+
+/** True for a type of the v1 catalogue; renderers skip every other type instead of failing on it. */
+export const isKnownEventType = (type: string): type is EventType => KNOWN.has(type);

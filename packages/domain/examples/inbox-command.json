@@ -1,0 +1,64 @@
+[
+  {
+    "version": 1,
+    "id": "01JCFB7Q2R8S4T6V9W3X5Y1Z0A",
+    "ts": "2026-11-06T19:45:00+07:00",
+    "kind": "seal",
+    "source": "lite",
+    "payload": {
+      "quest": "q_20261106_7k3m2a",
+      "note": "Đã xem diff trên điện thoại."
+    }
+  },
+  {
+    "version": 1,
+    "id": "01JCFC3D5E7F9G1H3J5K7M9N2P",
+    "ts": "2026-11-06T09:20:00+07:00",
+    "kind": "create_quest",
+    "source": "cli",
+    "payload": {
+      "draft": true,
+      "title": "Kiểm tra link nội bộ",
+      "description": "Kiểm tra mọi link nội bộ trong README.md, docs/**/*.md và CLAUDE.md.",
+      "kind": "batch",
+      "rank": "E",
+      "territory": "dc1-se-team",
+      "tier": "script",
+      "script": {
+        "id": "link-check",
+        "params": {
+          "globs": ["README.md", "docs/**/*.md", "CLAUDE.md"]
+        }
+      },
+      "tags": ["docs"],
+      "estimate": {
+        "tokens": 0,
+        "minutes": 2
+      },
+      "seal_required": false,
+      "created_by": "chancellor"
+    }
+  },
+  {
+    "version": 1,
+    "id": "01JCFD8E2F4G6H8J0K2M4N6P8Q",
+    "ts": "2026-11-06T20:05:00+07:00",
+    "kind": "return",
+    "source": "herald",
+    "payload": {
+      "quest": "q_20261106_7k3m2a",
+      "notes": "README vẫn ghi lệnh cũ ở mục kiểm tra trước khi push; sửa rồi nộp lại."
+    }
+  },
+  {
+    "version": 1,
+    "id": "01JCFE1F3G5H7J9K1M3N5P7Q9R",
+    "ts": "2026-11-07T07:50:00+07:00",
+    "kind": "pin_tag",
+    "source": "herald",
+    "payload": {
+      "character": "thorn",
+      "tag": "frontend"
+    }
+  }
+]

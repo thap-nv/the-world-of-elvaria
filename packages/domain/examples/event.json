@@ -1,0 +1,37 @@
+[
+  {
+    "v": 1,
+    "id": "01JCF8X4Z6Q3W9N2M5R7T8V0YB",
+    "ts": "2026-11-06T09:12:03+07:00",
+    "type": "agent.tool",
+    "actor": {
+      "kind": "character",
+      "id": "thorn"
+    },
+    "quest": "q_20261106_7k3m2a",
+    "attempt": 1,
+    "territory": "dc1-se-team",
+    "session": "6f1c2d9e-3b4a-4c8e-9f0a-1b2c3d4e5f60",
+    "data": {
+      "tool": "write",
+      "path": "src/auth/login.ts"
+    }
+  },
+  {
+    "v": 1,
+    "id": "01JCF9A2B3C4D5E6F7G8H9J0KM",
+    "ts": "2026-11-06T12:39:17+07:00",
+    "type": "mana.level",
+    "actor": {
+      "kind": "steward"
+    },
+    "data": {
+      "tribe": "gemini",
+      "pool": "gemini_models",
+      "window": "five_hour",
+      "used_pct": 42,
+      "resets_at": "2026-11-06T17:39:17+07:00",
+      "source": "rate_limits"
+    }
+  }
+]

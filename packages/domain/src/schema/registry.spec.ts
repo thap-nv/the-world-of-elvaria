@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import classContract from '../../../../docs/schemas/class.schema.json' with { type: 'json' };
-import kindContract from '../../../../docs/schemas/kind.schema.json' with { type: 'json' };
-import ritualContract from '../../../../docs/schemas/ritual.schema.json' with { type: 'json' };
-import scriptContract from '../../../../docs/schemas/script.schema.json' with { type: 'json' };
-import tagContract from '../../../../docs/schemas/tag.schema.json' with { type: 'json' };
+import classExamples from '../../examples/class.json' with { type: 'json' };
+import kindExamples from '../../examples/kind.json' with { type: 'json' };
+import ritualExamples from '../../examples/ritual.json' with { type: 'json' };
+import scriptExamples from '../../examples/script.json' with { type: 'json' };
+import tagExamples from '../../examples/tag.json' with { type: 'json' };
 import * as domain from '../index.ts';
 import { parseRegistry, REGISTRY_FILES } from './registry.ts';
 import {
@@ -91,11 +91,11 @@ function issuesAfter(change: (files: Files) => void): string[] {
 
 describe('registry entry schemas', () => {
   it('accept the examples of the v1 contracts', () => {
-    expect(KindsFileSchema.parse(kindContract.examples[0])).toEqual(kindContract.examples[0]);
-    expect(ClassesFileSchema.parse(classContract.examples[0])).toEqual(classContract.examples[0]);
-    expect(RitualsFileSchema.parse(ritualContract.examples[0])).toEqual(ritualContract.examples[0]);
-    expect(ScriptsFileSchema.parse(scriptContract.examples[0])).toEqual(scriptContract.examples[0]);
-    expect(TagsFileSchema.parse(tagContract.examples[0])).toEqual(tagContract.examples[0]);
+    expect(KindsFileSchema.parse(kindExamples[0])).toEqual(kindExamples[0]);
+    expect(ClassesFileSchema.parse(classExamples[0])).toEqual(classExamples[0]);
+    expect(RitualsFileSchema.parse(ritualExamples[0])).toEqual(ritualExamples[0]);
+    expect(ScriptsFileSchema.parse(scriptExamples[0])).toEqual(scriptExamples[0]);
+    expect(TagsFileSchema.parse(tagExamples[0])).toEqual(tagExamples[0]);
   });
 });
 
