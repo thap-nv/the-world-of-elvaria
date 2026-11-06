@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "tags": [
+    {
+      "id": "docs",
+      "name_vi": "Tài liệu",
+      "name_en": "Documentation",
+      "description": "Markdown docs, specs, READMEs, ADRs."
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "scripts": [
+    {
+      "id": "count-files",
+      "name_vi": "Đếm file",
+      "name_en": "Count files",
+      "description": "Counts files and lines per folder for the given globs.",
+      "entry": "scripts/count-files.mjs",
+      "params_schema": {
+        "type": "object",
+        "required": ["globs"],
+        "properties": {
+          "globs": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+        },
+        "additionalProperties": false
+      },
+      "kinds": ["document"],
+      "produces": "report",
+      "timeout_minutes": 5
+    }
+  ]
+}

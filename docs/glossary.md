@@ -1,6 +1,6 @@
 # Bảng thuật ngữ Elvaria
 
-Ngày: 2026-11-06 · Bản viết tay, là đầu vào của task P0-07. Từ P0-07, nguồn máy đọc là `packages/i18n/src/glossary.json` và file này được **sinh** từ đó bằng `pnpm docs:gen` (CI kiểm drift). Lúc đó, sửa thuật ngữ trong `glossary.json`, không sửa ở đây.
+> Sinh từ `packages/i18n/src/glossary.json` bằng `pnpm docs:gen`, CI kiểm drift: sửa nguồn rồi chạy lại lệnh, không sửa file này.
 
 Luật (ADR 0014, [implementation-plan](implementation-plan.md) §2.7 và §4.1):
 
@@ -322,7 +322,7 @@ Mọi giá trị enum xuất hiện trong [schemas/](schemas/) có ở bảng n�
 
 ## 12. Danh mục event type (v1)
 
-`type` là chuỗi `nhóm.hành_động`; type chưa biết được giữ nguyên và bỏ qua khi vẽ. Danh mục chính xác và payload: [schemas/event.schema.json](schemas/event.schema.json); từ P0-07 sinh thành `docs/events.md`.
+`type` là chuỗi `nhóm.hành_động`; type chưa biết được giữ nguyên và bỏ qua khi vẽ. Danh mục chính xác và payload: [events.md](events.md) (sinh từ domain) và [schemas/event.schema.json](schemas/event.schema.json).
 
 | Nhóm | Type | Nghĩa (VI) |
 |---|---|---|
@@ -382,7 +382,7 @@ Bước nghi thức (`ritual.steps[]`):
 
 ## 14. Từ cấm trong identifier
 
-Đã có từ chính thức, nên không dùng từ bên trái trong identifier, khóa JSON hay id dữ liệu (`pnpm docs:check` quét từ P0-07). Văn xuôi trong tài liệu không bị cấm.
+Đã có từ chính thức, nên không dùng từ bên trái trong identifier, khóa JSON hay id dữ liệu. `pnpm docs:check` quét mã chạy và dữ liệu (identifier, khóa JSON, chuỗi dạng id), trừ test, fixture, file cấu hình công cụ và chuỗi văn xuôi; hai từ chỉ cấm theo một nghĩa (`budget`, `agent`) để review bắt, không quét. Văn xuôi trong tài liệu không bị cấm.
 
 | Từ cấm | Dùng thay |
 |---|---|
@@ -400,4 +400,12 @@ Bước nghi thức (`ritual.steps[]`):
 | `budget` khi nói về mức mana | `mana` (`budget` chỉ dùng như mục 3) |
 | `agent` khi nói về nhân vật | `character` (nhóm event `agent.*` nói về phiên CLI, không phải nhân vật) |
 
-Id "màu mè" bị thay bằng từ thông dụng: `exorcise` → `fix`, `fortify` → `refactor`, `proclaim` → `publish`, `divine` → `analyze`, `conquer` → `integrate`.
+Id "màu mè" bị thay bằng từ thông dụng; `pnpm docs:check` cũng chặn chúng:
+
+| Id "màu mè" | Dùng thay |
+|---|---|
+| `exorcise` | `fix` |
+| `fortify` | `refactor` |
+| `proclaim` | `publish` |
+| `divine` | `analyze` |
+| `conquer` | `integrate` |

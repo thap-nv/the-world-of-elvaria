@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "messages": {
+    "locale.en": "English",
+    "locale.vi": "Tiếng Việt",
+    "sandbox.fake_data": "FAKE DATA"
+  }
+}
