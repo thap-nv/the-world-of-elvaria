@@ -4,25 +4,25 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { findTaskTitle, notYetMessage, run } from './not-yet.mjs';
+import { findPlanItemTitle, notYetMessage, run } from './not-yet.mjs';
 
 const SCRIPT = fileURLToPath(new URL('not-yet.mjs', import.meta.url));
 const PLAN = readFileSync(new URL('../docs/implementation-plan.md', import.meta.url), 'utf8');
 
-describe('findTaskTitle', () => {
+describe('findPlanItemTitle', () => {
   it('reads the task cell of a §8 row as plain text', () => {
-    expect(findTaskTitle(PLAN, 'P0-03')).toMatch(/^Schema quest/);
+    expect(findPlanItemTitle(PLAN, 'P0-03')).toMatch(/^Schema quest/);
   });
 
   it('drops markdown links and code ticks, and shortens long titles', () => {
     const plan = `| P9-99 | Read [the plan](x.md) and run \`pnpm check\` | files | done | todo |`;
-    expect(findTaskTitle(plan, 'P9-99')).toBe('Read the plan and run pnpm check');
+    expect(findPlanItemTitle(plan, 'P9-99')).toBe('Read the plan and run pnpm check');
     const long = `| P9-98 | ${'a'.repeat(300)} | f | d | s |`;
-    expect(findTaskTitle(long, 'P9-98')).toHaveLength(160);
+    expect(findPlanItemTitle(long, 'P9-98')).toHaveLength(160);
   });
 
   it('returns undefined for a task the plan does not have', () => {
-    expect(findTaskTitle(PLAN, 'P9-99')).toBeUndefined();
+    expect(findPlanItemTitle(PLAN, 'P9-99')).toBeUndefined();
   });
 });
 
