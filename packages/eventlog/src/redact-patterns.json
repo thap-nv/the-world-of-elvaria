@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "patterns": [
+    {
+      "id": "private_key",
+      "description": "PEM private key block, also one cut off before its END line.",
+      "regex": "-----BEGIN[A-Z0-9 ]*PRIVATE KEY-----[\\s\\S]*?(?:-----END[A-Z0-9 ]*PRIVATE KEY-----|$)",
+      "flags": ""
+    },
+    {
+      "id": "jwt",
+      "description": "JSON Web Token: base64url header and payload that both start with {\".",
+      "regex": "eyJ[A-Za-z0-9_-]+\\.eyJ[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]*",
+      "flags": ""
+    },
+    {
+      "id": "anthropic_api_key",
+      "description": "Anthropic API key.",
+      "regex": "sk-ant-[A-Za-z0-9_-]{20,}",
+      "flags": ""
+    },
+    {
+      "id": "openai_api_key",
+      "description": "OpenAI API key (Codex tribe): project, service account and admin keys, and the older sk- form.",
+      "regex": "sk-(?:(?:proj|svcacct|admin)-[A-Za-z0-9_-]{20,}|[A-Za-z0-9]{32,})",
+      "flags": ""
+    },
+    {
+      "id": "google_api_key",
+      "description": "Google API key, which AI Studio issues for Gemini.",
+      "regex": "AIza[0-9A-Za-z_-]{35}",
+      "flags": ""
+    },
+    {
+      "id": "github_fine_grained_token",
+      "description": "GitHub fine-grained personal access token.",
+      "regex": "github_pat_[A-Za-z0-9_]{22,}",
+      "flags": ""
+    },
+    {
+      "id": "github_token",
+      "description": "GitHub personal, OAuth, user-to-server, server-to-server and refresh tokens.",
+      "regex": "gh[pousr]_[A-Za-z0-9]{36,}",
+      "flags": ""
+    },
+    {
+      "id": "slack_token",
+      "description": "Slack bot, user, app and refresh tokens.",
+      "regex": "xox[baprs]-[A-Za-z0-9-]{10,}",
+      "flags": ""
+    },
+    {
+      "id": "aws_access_key_id",
+      "description": "AWS access key id, long-term (AKIA) or temporary (ASIA).",
+      "regex": "(?:AKIA|ASIA)[0-9A-Z]{16}",
+      "flags": ""
+    },
+    {
+      "id": "bearer_token",
+      "description": "Opaque token after Bearer, as in an Authorization header; the word Bearer stays.",
+      "regex": "(?<keep>bearer\\s+)[A-Za-z0-9._~+/-]{16,}=*",
+      "flags": "i"
+    },
+    {
+      "id": "url_credentials",
+      "description": "Password in a URL (postgres://user:password@host, https://user:token@host); the user stays.",
+      "regex": "(?<keep>[a-z][a-z0-9+.-]*://[^\\s:/@]+:)[^\\s@/]+(?=@)",
+      "flags": "i"
+    },
+    {
+      "id": "secret_assignment",
+      "description": "Value of at least 12 characters assigned to a token, secret, password or key name; the name stays.",
+      "regex": "(?<keep>(?:token|secret|passw(?:or)?d|api[_-]?key|access[_-]?key|private[_-]?key)[\"']?\\s*[:=]\\s*[\"']?)[^\\s\"'`]{12,}",
+      "flags": "i"
+    }
+  ]
+}
