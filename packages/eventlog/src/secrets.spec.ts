@@ -6,7 +6,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { tempDir } from '../test/temp.ts';
-import { DAY_1, QUEST, makeEvent } from './__fixtures__/events.ts';
+import { DAY_1, QUEST, QUEST_VIEW, makeEvent } from './__fixtures__/events.ts';
 import { KNOWN_SECRET, SECRET_SAMPLES } from './__fixtures__/secrets.ts';
 import { openEventLog, openJournal } from './event-log.ts';
 import { REDACTED, createRedactor, redactDeep } from './redact.ts';
@@ -21,7 +21,7 @@ function transcript(): Event[] {
     makeEvent(DAY_1, 4 * n, { data: { tool: 'bash', command: line, exit: 1 } }),
     makeEvent(DAY_1, 4 * n + 1, { type: 'agent.tool.blocked', data: { tool: 'bash', reason: line } }),
     makeEvent(DAY_1, 4 * n + 2, { data: { tool: 'write', path: line } }),
-    makeEvent(DAY_1, 4 * n + 3, { type: 'quest.infirmary', data: { reason: line } }),
+    makeEvent(DAY_1, 4 * n + 3, { type: 'quest.infirmary', data: { reason: line, quest: QUEST_VIEW } }),
   ]);
 }
 

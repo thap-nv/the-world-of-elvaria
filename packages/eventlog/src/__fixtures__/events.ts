@@ -1,10 +1,38 @@
 // Valid events for the specs, built through the domain's EventSchema so a fixture can never be malformed.
 // Times are in the kingdom's zone (+07:00, no daylight saving), as a writer stamps them (§2.1).
-import { EventSchema, formatUlid, zonedTime } from '@elvaria/domain';
+import { EventSchema, QuestViewSchema, formatUlid, zonedTime } from '@elvaria/domain';
 import type { Event, Instant } from '@elvaria/domain';
 
 export const TZ = 'Asia/Ho_Chi_Minh';
 export const QUEST = 'q_20261106_7k3m2a';
+
+/** QUEST as a quest line states it after its move (P0-09: every quest.* line carries the quest's view). */
+export const QUEST_VIEW = QuestViewSchema.parse({
+  id: QUEST,
+  title: 'Thêm script pnpm check',
+  kind: 'build',
+  rank: 'D',
+  territory: 'dc1-se-team',
+  status: 'infirmary',
+  tier: 'session',
+  class_required: 'knight',
+  tags: ['infra'],
+  assignee: 'thorn',
+  verifier: null,
+  attempts: 3,
+  max_attempts: 3,
+  seal_required: false,
+  sealed_at: null,
+  question: null,
+  party_id: null,
+  party_role: null,
+  campaign_id: null,
+  parent_id: null,
+  depends_on: [],
+  delivered_at: null,
+  created_at: '2026-11-06T08:30:00+07:00',
+  updated_at: '2026-11-06T13:00:00+07:00',
+});
 
 const zone = zonedTime(TZ);
 if (!zone.ok) throw new Error(`fixture time zone ${TZ} is unknown`);

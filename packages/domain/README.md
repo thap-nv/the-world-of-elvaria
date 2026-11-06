@@ -17,6 +17,9 @@
   verdicts since the last change, `level_since`).
 - Maps the domain onto the design system (implementation-plan §2.7): `statusToneOf`, `characterToneOf`, and
   `bannerOf` (`src/world/`), the one band the HUD shows.
+- Builds the world state (`src/world/`) from the files (`worldStateOf`) or the log (`reduce`): every event that
+  changes what the world shows carries the view after it (`questViewOf`, ...; `questLogTypeOf` names quest
+  lines). `snapshotOf` / `readSnapshot` version the snapshot; `src/protocol/` is the herald's WebSocket protocol.
 - Gives the core types every package builds on: `Result`, branded ids (`QuestId`, `TribeId`, ...), `Clock` and
   `Instant`, `zonedTime` (local day and ISO offset in `kingdom.tz`), `IdSource` (ULIDs and dated ids).
 - Names every number it decides with in `src/constants.ts` and the `constants.ts` of each folder.
@@ -45,6 +48,9 @@ The schema specs parse the `examples` of the v1 contracts in `docs/schemas/`, so
 from the reviewed contract fails here first. The state-machine specs explore every quest the machine reaches
 from a draft in ten events and take long seeded random walks (`src/quest/__fixtures__/quests.ts`): no move
 outside the table, every row reachable, guards never overlap.
+
+`src/world/replay.spec.ts` replays a fake day of a scripted Steward (`src/world/__fixtures__/`): after every
+line, the state reduced from the log equals `worldStateOf` of the files at that moment.
 
 Specs cannot read files: the domain's program has no Node types. The one file a spec needs, the design
 system's `elvaria.css` (whose `data-status` values must be the tones of `statusToneOf`), is read by
