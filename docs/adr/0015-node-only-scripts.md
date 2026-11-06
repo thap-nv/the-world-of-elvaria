@@ -5,12 +5,12 @@
 
 ## Context
 
-Windows is the main OS and macOS the second. On Windows, Claude Code runs string hooks with Git Bash or PowerShell, Antigravity and Gemini CLI use PowerShell, and exec-form hooks cannot spawn `.cmd` shims. The product plan (§8) already says: everything is Node, no bash, no PowerShell.
+Windows is the main OS and macOS the second. On Windows, Claude Code runs string hooks with Git Bash or PowerShell, Gemini CLI uses PowerShell, Antigravity runs hooks with `cmd /c` and agent commands with PowerShell (spike P1-12a), and exec-form hooks cannot spawn `.cmd` shims. The product plan (§8) already says: everything is Node, no bash, no PowerShell.
 
 ## Decision
 
 - Every script is Node (`scripts/*.mjs`, `tsx` for TypeScript). No `.sh`, `.ps1` or `.cmd` files in the repo; `pnpm docs:check` rejects them. Husky hooks call `node` or `pnpm`.
-- Hooks are configured as `node` plus an absolute script path (Claude exec form `{"command": "node", "args": [...]}`); hook code normalizes backslashes in paths.
+- Hooks are configured as `node` plus an absolute script path (Claude exec form `{"command": "node", "args": [...]}`); hook code normalizes backslashes in paths. (Amended 2026-11-06, P1-12a: Antigravity runs a hook's `command` string with `cmd /c` on Windows and turns `"` into `\"`, so a quoted absolute path never reaches node. Its generated `.agents/hooks.json` says `node elvaria-hook.mjs <Event>`, and a generated shim of that name in `.agents/`, the hook's working directory, imports the absolute hook; see [the spike](../spikes/antigravity-2026-11.md).)
 - `child_process.spawn` always with `shell: false`. `elvaria doctor` resolves absolute executables; an npm `.cmd` shim is read and run as `node <js>`.
 - Kill tree in `runner-core/src/process/kill-tree.ts`: `taskkill /PID <pid> /T /F` on Windows, SIGTERM then SIGKILL on macOS.
 - Paths: `node:path` everywhere, `/` inside data files, case-insensitive comparison on Windows; `.gitattributes` sets `* text=auto eol=lf`.

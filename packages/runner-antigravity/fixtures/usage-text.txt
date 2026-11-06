@@ -1,0 +1,5 @@
+Gemini Models	Weekly Limit Remaining	100%	2026-11-13T14:49:06Z
+Gemini Models	Five Hour Limit Remaining	100%	2026-11-06T19:49:06Z
+Claude and GPT models	Weekly Limit Remaining	100%	2026-11-13T14:49:06Z
+Claude and GPT models	Five Hour Limit Remaining	100%	2026-11-06T19:49:06Z
+Gemini 4 Argon	Gemini 4 Argon Weekly Limit	98%	2026-11-13T14:47:50Z
