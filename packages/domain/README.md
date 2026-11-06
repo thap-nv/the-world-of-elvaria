@@ -15,6 +15,9 @@
   `reputationOf`, `affinityOf`, `titleOf`. Decides levels: `canTake` (which ranks the Steward may give a level),
   `aboveCeiling` (a stretch that makes the quest wait for the royal seal) and `levelChange` (counting only the
   verdicts since the last change, `level_since`).
+- Plans the Steward's tick (`src/dispatch/`): `planTick(snapshot, now)` returns the claims of one tick, the
+  minimal form of P0-10 that the sandbox runs and P1-03 extends (class, level by `canTake`, enabled and awake
+  tribe, dependencies done; script-tier quests to the Steward).
 - Maps the domain onto the design system (implementation-plan §2.7): `statusToneOf`, `characterToneOf`, and
   `bannerOf` (`src/world/`), the one band the HUD shows.
 - Builds the world state (`src/world/`) from the files (`worldStateOf`) or the log (`reduce`): every event that

@@ -17,6 +17,7 @@
     "@elvaria/eventlog": "workspace:*",
     "@elvaria/i18n": "workspace:*",
     "@elvaria/registry-default": "workspace:*",
+    "@elvaria/sandbox": "workspace:*",
     "@elvaria/store": "workspace:*"
   },
   "devDependencies": {

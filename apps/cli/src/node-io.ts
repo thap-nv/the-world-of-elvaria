@@ -3,6 +3,7 @@
 import { randomBytes } from 'node:crypto';
 import os from 'node:os';
 import process from 'node:process';
+import { setTimeout as delay } from 'node:timers/promises';
 
 import { InstantSchema } from '@elvaria/domain';
 
@@ -33,6 +34,9 @@ export function nodeIo(): CliIo {
     platform: process.platform,
     nodePath: process.execPath,
     clock: { now: () => InstantSchema.parse(Date.now()) },
+    sleep: async (ms) => {
+      await delay(ms);
+    },
     random: { bytes: (count) => new Uint8Array(randomBytes(count)) },
   };
 }
