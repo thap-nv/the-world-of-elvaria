@@ -90,11 +90,20 @@ export async function foundKingdom(dir: string, io = testIo(), ...extra: string[
   return kingdom;
 }
 
-/** git, run directly, for building fixture repos. */
+/**
+ * The environment without git's own variables. Git exports GIT_DIR and friends to its hooks, and these specs run
+ * in the pre-push hook: a git started with them acts on the repo being pushed instead of the fixture. It did once:
+ * an empty commit on the branch, core.bare = true in the shared config, origin/HEAD moved.
+ */
+export const envWithoutGit = (): NodeJS.ProcessEnv =>
+  Object.fromEntries(Object.entries(process.env).filter(([name]) => !/^GIT_/i.test(name)));
+
+/** git, run directly, for building fixture repos; never with the caller's GIT_* variables. */
 export const git = (cwd: string, ...args: string[]): string =>
   execFileSync('git', ['-c', 'user.name=Test', '-c', 'user.email=test@example.com', ...args], {
     cwd,
     encoding: 'utf8',
+    env: envWithoutGit(),
   }).trim();
 
 /** A new git repo on branch main, without commits. */

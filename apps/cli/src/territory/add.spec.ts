@@ -1,10 +1,21 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import process from 'node:process';
 
 import { TerritorySchema } from '@elvaria/domain';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, git, gitRepo, pathWithoutGit, printed, run, tempDir, testIo } from '../../test/cli.ts';
+import {
+  baseEnv,
+  foundKingdom,
+  git,
+  gitRepo,
+  pathWithoutGit,
+  printed,
+  run,
+  tempDir,
+  testIo,
+} from '../../test/cli.ts';
 import { slugOf } from './add.ts';
 import { withoutCredentials } from './git-info.ts';
 import type { TempDir } from '../../test/cli.ts';
@@ -155,5 +166,33 @@ describe('elvaria territory add', () => {
     expect(io.printed.out[0]).toMatch(/^ID\s+Name\s+Kind\s+Branch\s+Path$/);
     expect(io.printed.out[1]).toMatch(/^repo\s+repo\s+code\s+main\s+/);
     expect(io.printed.err).toEqual(['territories/broken/territory.json is not valid JSON.']);
+  });
+});
+
+describe('inside a git hook, where git has exported GIT_DIR (the pre-push hook runs these specs)', () => {
+  let dir: TempDir;
+  let saved: string | undefined;
+  beforeEach(async () => {
+    dir = await tempDir();
+    saved = process.env.GIT_DIR;
+  });
+  afterEach(async () => {
+    if (saved === undefined) delete process.env.GIT_DIR;
+    else process.env.GIT_DIR = saved;
+    await dir.remove();
+  });
+
+  it("never touches the hook's repo: fixtures and the CLI work in their own folder", async () => {
+    const outer = await gitRepo(path.join(dir.root, 'outer'));
+    process.env.GIT_DIR = path.join(outer, '.git');
+    const kingdom = await foundKingdom(dir.root);
+    const repo = await gitRepo(path.join(dir.root, 'inner'));
+    git(repo, 'commit', '-q', '--allow-empty', '-m', 'inner');
+    const io = testIo({ env: { ...baseEnv(), GIT_DIR: process.env.GIT_DIR } });
+    expect(await run(io, 'territory', 'add', repo, '--kingdom', kingdom)).toBe(0);
+    expect(printed(io)).not.toContain('inside the git repo');
+    expect(git(outer, 'rev-list', '--all')).toBe('');
+    expect(git(outer, 'config', 'core.bare')).toBe('false');
+    expect(git(repo, 'log', '--format=%s')).toBe('inner');
   });
 });
