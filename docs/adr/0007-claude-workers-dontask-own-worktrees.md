@@ -18,7 +18,7 @@
 - Elvaria manages worktrees itself: `git worktree add <repo>/<worktree_dir>/<quest-id> -b quest/<quest-id>`, default `worktree_dir = .elvaria/worktrees`, shared by both tribes.
 - Deny rules and the PreToolUse hook are a fence, not a sandbox, and the repo's CLAUDE.md says so. A string rule like `Bash(git push:*)` misses `git -C . push`, so the hook matches normalized regexes.
 - Territory hooks (for example dc1's `guard-bash.mjs`) keep running; Elvaria adds to them and never overrides.
-- File rules are scoped to the worktree: `Read(./**)`, `Edit(./**)`, `Write(./**)`, never a bare tool name. `--tools <class tools>` decides which tools exist and `--strict-mcp-config` drops MCP servers. Settings carry `autoMemoryEnabled: false`: long memory lives in the journal (principle 13), not in a memory every quest of the repo shares. The runner validates the settings it generates and treats a session whose Elvaria `SessionStart` hook did not record it as broken (killed, `infirmary`). (Amended 2026-11-06, P1-02, pending the owner; implementation-plan §11.)
+- File rules are scoped to the worktree: `Read(./**)`, `Edit(./**)`, `Write(./**)`, never a bare tool name. `--tools <class tools>` decides which tools exist and `--strict-mcp-config` drops MCP servers. Settings carry `autoMemoryEnabled: false`: long memory lives in the journal (principle 13), not in a memory every quest of the repo shares. The runner validates the settings it generates and treats a session whose Elvaria `SessionStart` hook did not record it as broken (killed, `infirmary`). (Amended 2026-11-06, P1-02, confirmed by the owner; implementation-plan §11.)
 
 ## Consequences
 
