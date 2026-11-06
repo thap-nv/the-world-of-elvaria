@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "kinds": [
+    {
+      "id": "document",
+      "name_vi": "Soạn thảo",
+      "name_en": "Document",
+      "deliverable_type": "file",
+      "ritual": "editorial_review",
+      "checks_default": ["links_alive", "toc", "terminology"],
+      "seal_default": true,
+      "classes_allowed": ["scribe"]
+    }
+  ]
+}

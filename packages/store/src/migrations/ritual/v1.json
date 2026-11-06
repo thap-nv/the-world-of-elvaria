@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "rituals": [
+    {
+      "id": "editorial_review",
+      "name_vi": "Thủ thư trưởng duyệt bản thảo",
+      "name_en": "Head librarian's review",
+      "steps": ["run_checks", "read_handover", "read_diff", "cross_check_sources", "judge", "write_verdict"],
+      "pass_rule": "all_checks_and_agent",
+      "max_seconds": 1800
+    }
+  ]
+}
