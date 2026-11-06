@@ -5,7 +5,8 @@ import type { CampaignId, TribeId } from '../core/ids.ts';
 import type { Campaign } from '../schema/campaign/campaign.ts';
 
 /** Whether a tribe's CLI can take quests: installed and logged in (`elvaria doctor`, mana probes). */
-export type ToolState = 'ready' | 'missing' | 'logged_out';
+export const TOOL_STATES = ['ready', 'missing', 'logged_out'] as const;
+export type ToolState = (typeof TOOL_STATES)[number];
 
 /**
  * What the band is derived from: mana × tools × sandbox flag × defense (§2.7). The world state (P0-09) holds
