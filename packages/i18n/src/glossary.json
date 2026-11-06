@@ -316,7 +316,7 @@
               "used_in": "`quest.tier`"
             },
             {
-              "vi": "Học trò",
+              "vi": "Học đồ",
               "en": "Apprentice",
               "id": ["apprentice", "subagent"],
               "definition": "Sub-agent nhân vật gọi trong phiên của mình; `apprentice` là tên agent duy nhất được phép, `subagent` là nhóm event.",
@@ -1854,7 +1854,7 @@
                 "agent.compact",
                 "agent.notification"
               ],
-              "meaning": "những gì phiên CLI làm, do hook và stream ghi; `overrun` = học trò quá `subagent_max_minutes`; `compact` = ngồi thiền"
+              "meaning": "những gì phiên CLI làm, do hook và stream ghi; `overrun` = học đồ quá `subagent_max_minutes`; `compact` = ngồi thiền"
             },
             {
               "group": "Phán quyết",
