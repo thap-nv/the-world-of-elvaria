@@ -25,6 +25,7 @@ const ID_SHAPED = /^[a-z0-9_@$./-][^\s]*$/;
 export const ALLOWED = new Map([
   ['projectService', 'typescript-eslint parser option'],
   ['dc1-se-team', 'the first territory: a real repository, named by its owner'],
+  ['CLAUDE_PROJECT_DIR', 'Claude Code hook variable, used in .claude/settings.json'],
 ]);
 
 /** @param {string} path */

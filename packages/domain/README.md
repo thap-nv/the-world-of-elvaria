@@ -2,8 +2,10 @@
 
 ## Does
 
-- Holds the zod schemas that are the source of the data contracts (ADR 0003): `kingdom`, `territory` and the
-  registry files (`kinds`, `classes`, `rituals`, `scripts`, `tags`), with their TypeScript types.
+- Holds the zod schemas that are the source of the 17 data contracts (ADR 0003, `CONTRACTS` in
+  `src/schema/contracts.ts`): kingdom, territory, quest, character, campaign, verdict, lesson, event,
+  inbox-command, the five registry files, skill, quest-draft and world-map, with their TypeScript types.
+  `pnpm schemas` writes `docs/schemas/` from them; each contract's `examples` live in `examples/`.
 - Checks a registry across its five files (`parseRegistry`, `checkRegistry`): unknown ritual, class, kind or
   step, duplicate ids, a verifier allowed to take work, a class and a kind that disagree.
 - Runs the quest state machine (`src/quest/`): the table of moves is data (`QUEST_TRANSITIONS`), and
@@ -47,8 +49,8 @@
 pnpm --filter @elvaria/domain test   # vitest with a 100 % coverage gate
 ```
 
-The schema specs parse the `examples` of the v1 contracts in `docs/schemas/`, so a zod change that drifts
-from the reviewed contract fails here first. The state-machine specs explore every quest the machine reaches
+The schema specs parse every contract's `examples/<name>.json`, the one source of the contract's `examples`,
+so a zod change that refuses a reviewed example fails here first. The state-machine specs explore every quest the machine reaches
 from a draft in ten events and take long seeded random walks (`src/quest/__fixtures__/quests.ts`): no move
 outside the table, every row reachable, guards never overlap.
 

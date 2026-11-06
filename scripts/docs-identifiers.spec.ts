@@ -28,6 +28,7 @@ describe('wordsOf', () => {
     expect(ALLOWED.has('projectService')).toBe(true);
     expect(wordsOf('projectService')).toEqual([]);
     expect(wordsOf('repo/dc1-se-team/src')).toEqual(['repo', 'src']);
+    expect(wordsOf('${CLAUDE_PROJECT_DIR}/.claude/hooks/x.mjs')).toEqual(['claude', 'hooks', 'x', 'mjs']);
   });
 });
 

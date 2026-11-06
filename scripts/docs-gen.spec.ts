@@ -93,13 +93,14 @@ describe('docs:gen', () => {
     }
   });
 
-  it('generates the glossary, the event catalogue, the dependency graph and the quest transition table', () => {
+  it('generates the glossary, the event catalogue, the dependency graph, the CLI reference and the quest transition table', () => {
     expect(
       GENERATORS.map(({ file, region }) => (region === undefined ? file : `${file} (${region})`)),
     ).toEqual([
       'docs/glossary.md',
       'docs/events.md',
       'docs/dependency-graph.md',
+      'docs/cli.md',
       'docs/implementation-plan.md (quest-transitions)',
     ]);
   });
