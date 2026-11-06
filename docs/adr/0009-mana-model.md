@@ -1,23 +1,26 @@
 # ADR 0009 · Mana model: cap and king's reserve, three gauge sources, sleep/wake keeps the assignee
 
-- Status: accepted · 2026-11-06
-- Related: [implementation-plan.md](../implementation-plan.md) §3.5, §9.1 items 8–9; [kingdom.schema.json](../schemas/kingdom.schema.json)
+- Status: accepted · 2026-11-06 · updated 2026-11-06 with spike P1-02 (Claude Code 2.1.318)
+- Related: [implementation-plan.md](../implementation-plan.md) §3.5, §9.1 items 8–9; [kingdom.schema.json](../schemas/kingdom.schema.json); [spike P1-02](../spikes/claude-2026-11.md)
 
 ## Context
 
 Principle 6: two accounts (Claude Code; Antigravity), never rotated; the world uses up to the user's cap and always leaves the king's reserve. The product plan (§7) reads Claude `rate_limits` from status line data, but that is documented only for the status line, not for `-p`. Antigravity `agy -p /usage` (checked on this machine) prints remaining % and reset time per pool: "Gemini Models" and "Claude and GPT models", each with five-hour and weekly windows, plus a weekly cap for Gemini 4 Argon.
 
+Spike P1-02 (Claude Code 2.1.318, claude.ai Team account): the status line never runs under `-p`. The same data reaches a headless session two other ways: each session's stream-json carries one `rate_limit_event` after its first API response (`unifiedWindows.five_hour` / `seven_day`: `utilization` 0–1, `resetsAt` epoch seconds, `status`), and `claude -p "/usage"` prints session, weekly and a per-model weekly line (`Current week (Fable)`) with no model call (`num_turns: 0`, cost 0). `modelUsage` in `result` has one entry per model, sub-agents included. No 429 happened; its signals stay unobserved until P1-16.
+
 ## Decision
 
 - `kingdom.mana`: `cap_pct = 98`, `king_reserve_pct = 2`, `warn_margin_pct = 10`, `probe_interval_minutes = 15`. Threshold = `min(cap_pct, 100 − king_reserve_pct)`, computed per pool (`poolOf(tribe, model)`: the tribe id for a one-pool account such as `claude`; Antigravity: `gemini_models`, `claude_gpt_models`).
-- `ManaGauge.read()` returns one `ManaReading` per (pool, window) with `source`: `rate_limits` (Claude only if spike P1-02 proves it under `-p`; Antigravity via `/usage`), `estimate` (summed `modelUsage`/`usage` against `kingdom.tribes[].budget`), or `signal` (StopFailure `rate_limit`, repeated `api_retry` rate limits, quota errors).
+- `ManaGauge.read()` returns one `ManaReading` per (pool, window) with `source`: `rate_limits`, `estimate` (summed `modelUsage`/`usage` against `kingdom.tribes[].budget`), or `signal` (StopFailure `rate_limit`, repeated `api_retry` rate limits, quota errors).
+- `rate_limits` for Claude: every session's `rate_limit_event` (`used_pct = utilization × 100`, `resets_at = resetsAt`), and `claude -p "/usage"` every `probe_interval_minutes` and after each session ends, parsed with a fixture-tested parser that falls back to `estimate`. Antigravity: `agy -p /usage`. A per-model weekly line binds only the characters on that model, like the Argon cap. (Amended 2026-11-06, P1-02, pending the owner; implementation-plan §11.)
 - `decideManaState` → `ok | warning | closed | asleep`. `closed`: no new quests, running work continues. `asleep`: the pool sleeps; running quests go to `paused_mana` after a WIP commit and keep their assignee.
-- While asleep the Steward runs the cheapest probe every `probe_interval_minutes` or at `resets_at`; success → `mana.restored`, the same character resumes (ADR 0017). An inbox `wake` probes at once.
+- While asleep the Steward runs the cheapest probe every `probe_interval_minutes` or at `resets_at`; success → `mana.restored`, the same character resumes (ADR 0017). An inbox `wake` probes at once. For Claude the probe reads `/usage` first (no mana) and makes the one-turn model call only when `/usage` says the window has room. (Amended 2026-11-06, P1-02, pending the owner.)
 - `mana.reassign_after_hours` defaults to `null` (never). Elvaria never switches or rotates accounts; revival is the user's job.
 - Scheduled jobs and probes count against mana and emit `mana.probe` / `mana.level`.
 
 ## Consequences
 
-- The gauge works without status line data and gets sharper when a source exists.
+- The gauge works without status line data and gets sharper when a source exists. For Claude, `rate_limits` is now the main source; `/usage` text has the machine's time zone and no year, so `resetsAt` from the stream wins when both exist.
 - One pool asleep does not stop the other.
-- Revisit after spike P1-02: status line under `-p`, `rate_limits` availability, shape of 429 signals.
+- Still open after P1-02 (P1-16, the deliberate mana run): real `system/api_retry` and `StopFailure` `rate_limit`, `rate_limit_event` with `status` other than `allowed`, and calibrating `tribes[claude].budget` against `modelUsage` while no other session shares the account.
