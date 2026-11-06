@@ -1,0 +1,5 @@
+root agent idle; waiting up to 20s for 1 background task(s)
+terminating 1 background task(s) on exit
+[agy] print timeout after 20s with 1 background task(s) still running; terminating them
+error: print timeout after 20s while the agent was waiting on 1 background task(s); the response may be incomplete; terminated c98a2039-b2b9-4dc1-9c4e-bc3144de0029/task-2 (node -e "setTimeout(()=>{},60000)", running 5s)
+AGY_ERROR: {"short_error":"print timeout after 20s while the agent was waiting on 1 background task(s); the response may be incomplete; terminated c98a2039-b2b9-4dc1-9c4e-bc3144de0029/task-2 (node -e \"setTimeout(()=\u003e{},60000)\", running 5s)","status":"DEADLINE_EXCEEDED","retryable":false,"reason":"print_timeout","tasks":[{"id":"c98a2039-b2b9-4dc1-9c4e-bc3144de0029/task-2","description":"node -e \"setTimeout(()=\u003e{},60000)\"","elapsed_seconds":5,"log_uri":"file:///C:/Users/elvaria/.gemini/antigravity-cli/brain/c98a2039-b2b9-4dc1-9c4e-bc3144de0029/.system_generated/tasks/task-2.log"}]}
