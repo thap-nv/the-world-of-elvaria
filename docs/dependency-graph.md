@@ -11,8 +11,13 @@ flowchart TD
   store["store"]
   registry_default["registry-default"]
   i18n["i18n"]
+  cli["cli"]
   store --> domain
   registry_default --> domain
+  cli --> domain
+  cli --> i18n
+  cli --> registry_default
+  cli --> store
 ```
 
 | Workspace | Thư mục | Import thật | Được phép (`boundaries.mjs`) |
@@ -37,4 +42,4 @@ flowchart TD
 | `ui` | chưa có | | `domain`, `i18n`, `ui-kit` |
 | `world` | chưa có | | `domain`, `i18n`, `ui-kit`, `ui` |
 | `lite` | chưa có | | `domain`, `i18n`, `ui-kit`, `ui` |
-| `cli` | chưa có | | `domain`, `eventlog`, `store`, `registry-default`, `runner-core`, `runner-claude`, `runner-antigravity`, `runner-gemini`, `runner-codex`, `hooks`, `steward`, `chancellor`, `sandbox`, `herald`, `i18n` |
+| `cli` | `apps/cli` | `domain`, `i18n`, `registry-default`, `store` | `domain`, `eventlog`, `store`, `registry-default`, `runner-core`, `runner-claude`, `runner-antigravity`, `runner-gemini`, `runner-codex`, `hooks`, `steward`, `chancellor`, `sandbox`, `herald`, `i18n` |

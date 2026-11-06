@@ -5,7 +5,10 @@ import { run } from './i18n-check.mjs';
 
 describe('i18n:check', () => {
   it('passes on the shipped locale files and glossary', () => {
-    expect(run()).toEqual({ code: 0, text: 'i18n:check: 3 keys in vi, en; glossary.json well-formed' });
+    // Counted, not written down: every task adds strings (P0-08 added the CLI's).
+    const keys = Object.keys(LOCALE_FILES.vi.messages).length;
+    expect(keys).toBeGreaterThan(3);
+    expect(run()).toEqual({ code: 0, text: `i18n:check: ${keys} keys in vi, en; glossary.json well-formed` });
   });
 
   it('fails on an English key Vietnamese does not have, and on a malformed glossary', () => {

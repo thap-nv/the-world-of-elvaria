@@ -9,6 +9,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 import { NOT_RUNTIME, boundaryConfigs, pureDomainConfig } from './eslint-boundaries.mjs';
+import { cliOutputConfig } from './eslint-i18n.mjs';
 
 const TESTS = ['**/*.spec.ts'];
 // Tools load these through a default export.
@@ -101,6 +102,7 @@ export function elvaria({ root }) {
     ...boundaryConfigs(),
     pureDomainConfig([NO_ENUM, NO_CLASS]),
     NAMED_NUMBERS,
+    cliOutputConfig(),
     {
       // A suite is one describe callback; its size is bounded by max-lines on the file instead.
       name: 'elvaria/tests',

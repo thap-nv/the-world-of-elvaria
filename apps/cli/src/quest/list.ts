@@ -1,0 +1,80 @@
+// `elvaria quest list`: the quest board, oldest first (ids sort by day). Commands still in the inbox are counted
+// under it, because a quest the owner just added exists only as a command until the Steward's next tick.
+import { QUEST_STATUSES } from '@elvaria/domain';
+import type { Quest, QuestStatus, Registry } from '@elvaria/domain';
+
+import { textOptions, textOption } from '../args.ts';
+import { EXIT } from '../command.ts';
+import { openKingdomContext } from '../kingdom-context.ts';
+import { QUEST_STATUS_LABEL, nameIn } from '../labels.ts';
+import { NONE, printListing } from '../listing.ts';
+import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
+import type { KingdomContext } from '../kingdom-context.ts';
+
+const isStatus = (value: string): value is QuestStatus =>
+  (QUEST_STATUSES as readonly string[]).includes(value);
+
+/** Display name of a kind in the owner's language; the id when the registry cannot be read. */
+export function kindName(ctx: KingdomContext, registry: Registry | undefined, kind: string): string {
+  const entry = registry?.kinds.find((candidate) => candidate.id === kind);
+  return entry === undefined ? kind : nameIn(ctx.locale, entry);
+}
+
+const questRow = (ctx: KingdomContext, registry: Registry | undefined, quest: Quest): string[] => [
+  quest.id,
+  ctx.t(QUEST_STATUS_LABEL[quest.status]),
+  quest.rank,
+  kindName(ctx, registry, quest.kind),
+  quest.territory,
+  quest.assignee ?? NONE,
+  quest.title,
+];
+
+async function runQuestList(input: CommandInput, cli: CliContext): Promise<ExitCode> {
+  const ctx = await openKingdomContext(input, cli);
+  if (ctx === undefined) return EXIT.failed;
+  const statuses = textOptions(input, 'status');
+  const unknown = statuses.find((status) => !isStatus(status));
+  if (unknown !== undefined) {
+    ctx.io.err(
+      ctx.t('cli.error.unknown', { option: '--status', value: unknown, choices: QUEST_STATUSES.join(', ') }),
+    );
+    return EXIT.usage;
+  }
+  const territory = textOption(input, 'territory');
+  const registry = await ctx.store.loadRegistry();
+  const { items, issues } = await ctx.store.quests.list();
+  const shown = items.filter(
+    (quest) =>
+      (statuses.length === 0 || statuses.includes(quest.status)) &&
+      (territory === undefined || quest.territory === territory),
+  );
+  const code = printListing(ctx, {
+    header: [
+      'cli.column.id',
+      'cli.column.status',
+      'cli.column.rank',
+      'cli.column.kind',
+      'cli.column.territory',
+      'cli.column.assignee',
+      'cli.column.title',
+    ],
+    rows: shown.map((quest) => questRow(ctx, registry.ok ? registry.value : undefined, quest)),
+    issues,
+    empty: 'cli.quest.list.none',
+  });
+  const waiting = (await ctx.store.inbox.read()).length;
+  if (waiting > 0) ctx.io.out(ctx.t('cli.quest.list.waiting', { count: waiting }));
+  return code;
+}
+
+export const QUEST_LIST: CommandSpec = {
+  name: ['quest', 'list'],
+  summary: 'cli.quest.list.summary',
+  args: [],
+  options: {
+    status: { type: 'string', value: '<status>', multiple: true, help: 'cli.quest.list.option.status' },
+    territory: { type: 'string', value: '<id>', help: 'cli.quest.list.option.territory' },
+  },
+  run: runQuestList,
+};
