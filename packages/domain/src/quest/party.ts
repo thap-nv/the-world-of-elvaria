@@ -86,10 +86,10 @@ const charactersIn = (quest: Quest, role: 'assignee' | 'verifier'): CharacterId[
  * characters stay apart, whichever came first.
  */
 const membersNeverJudge: Rule = (party) => {
-  const workers = new Set(party.members.flatMap((quest) => charactersIn(quest, 'assignee')));
+  const assignees = new Set(party.members.flatMap((quest) => charactersIn(quest, 'assignee')));
   return party.members.flatMap((quest) =>
     [...new Set(charactersIn(quest, 'verifier'))]
-      .filter((verifier) => workers.has(verifier))
+      .filter((verifier) => assignees.has(verifier))
       .map((verifier) =>
         issue(
           party,
