@@ -8,3 +8,5 @@ coverage/
 .DS_Store
 Thumbs.db
 *.log
+# Claude Code writes the owner's "always allow" choices here; they belong to one machine, not to the repo.
+.claude/settings.local.json

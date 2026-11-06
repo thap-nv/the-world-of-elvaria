@@ -39,7 +39,7 @@ Cây đầy đủ và luật phụ thuộc: [docs/implementation-plan.md](docs/i
 | `apps/world`, `apps/lite` | giai đoạn 3, 2 | Thế giới Three.js; khách nhẹ 2D cho điện thoại |
 | `themes/fantasy` | giai đoạn 4 | Dữ liệu theme: icon, danh hiệu, tòa nhà; `LICENSES.md` |
 | `scripts/` | P0-01 | Công cụ của repo: `gen-schemas.mjs`, `docs-gen.mjs` + `docs-*.mjs`, `docs-check.mjs`, `i18n-check.mjs`, `docs-note.mjs` (commitlint), mỗi file có spec |
-| `.claude/` | P0-11 | `settings.json` bật ba hook của repo trong `hooks/`; `rules/` là luật theo vùng code (frontmatter `paths`) |
+| `.claude/` | P0-11 | `settings.json` bật bốn hook của repo trong `hooks/`; `rules/` là luật theo vùng code (frontmatter `paths`) |
 | `design/` | — | Bàn giao thiết kế v0.2 — bản gốc đầu tiên, giữ nguyên làm lịch sử, không build ([design/DESIGN-HANDOFF.md](design/DESIGN-HANDOFF.md)). Từ giai đoạn 2, sửa thiết kế trong `packages/ui-kit` / `packages/ui` |
 | `docs/` | — | Kế hoạch, [ADR](docs/adr/), [tra cứu CLI](docs/reference/cli-facts-2026-11-06.md), [spike](docs/spikes/), brief thiết kế; file sinh ra: [schema JSON](docs/schemas/), [glossary](docs/glossary.md), [events](docs/events.md), [cli](docs/cli.md), [dependency graph](docs/dependency-graph.md) |
 
@@ -85,9 +85,10 @@ ELVARIA_LIVE=1 pnpm --filter @elvaria/runner-claude test              # smoke v�
 
 ### Hook của repo / Repo hooks
 
-[.claude/settings.json](.claude/settings.json) bật ba hook Node (dạng exec, không shell; test trong `pnpm test`):
+[.claude/settings.json](.claude/settings.json) bật bốn hook Node (dạng exec, không shell; test trong `pnpm test`):
 
 - `guard-bash.mjs` (trước Bash/PowerShell) chặn: force push, `--no-verify` / `git commit -n` / tắt husky, `git rebase` và `git pull --rebase`, `git stash` trần / `stash pop` / `drop` không ref / `clear` (stash dùng chung giữa mọi worktree: dùng commit WIP, hoặc `git stash push -m <tag>` rồi `git stash apply <sha>`), `--dangerously-skip-permissions`, xóa đệ quy ngoài checkout và thư mục tạm. Luật khớp cả thân heredoc: ghi file bằng Edit/Write, đừng bằng heredoc.
+- `guard-edit.mjs` (trước Edit/Write/MultiEdit) chặn sửa tay file sinh (`docs/schemas/**`, bốn file của `pnpm docs:gen`), vùng `<!-- docs:gen … -->` của một file `.md`, `design/**` và `docs/ke-hoach-dung-elvaria-*.md`. Lệnh shell ghi vào các file đó thì nó không thấy: vẫn là điều cấm.
 - `typecheck-touched.mjs` (sau Edit/Write) chạy `tsc -p` của workspace sở hữu file vừa sửa và trả lỗi về ngay.
 - `stop-checks.mjs` (khi kết thúc lượt) chạy `pnpm boundaries` nếu import, `dependencies` hay `boundaries.mjs` đổi, và `pnpm i18n:check` nếu locale hay glossary đổi.
 

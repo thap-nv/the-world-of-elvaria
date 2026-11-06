@@ -89,7 +89,7 @@ describe('.claude/settings.json', () => {
   it('runs each hook in exec form, node plus a script that exists, through ${CLAUDE_PROJECT_DIR}', () => {
     // Claude Code 2.1.318 expands `${CLAUDE_PROJECT_DIR}` in exec-form args but not `$CLAUDE_PROJECT_DIR`
     // (checked with a SessionStart hook under a model that does not exist, implementation-plan §5.1).
-    expect(hooks).toHaveLength(3);
+    expect(hooks).toHaveLength(4);
     for (const hook of hooks) {
       expect(hook.command).toBe('node');
       const [script] = hook.args;
