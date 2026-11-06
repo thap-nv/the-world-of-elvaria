@@ -1,0 +1,8 @@
+{
+  "name": "@elvaria/store",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "vitest": "*"
+  }
+}

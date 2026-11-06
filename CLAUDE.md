@@ -7,7 +7,7 @@ Guide for AI agents (and people) working in this repo. Read it all before changi
 
 Elvaria là một thế giới fantasy low-poly chạy trên máy cá nhân (Windows và macOS); mỗi AI agent là một nhân vật có nghề, nhận việc thật (code, tài liệu, nghiên cứu) trên những repo người dùng gắn vào, làm trong worktree riêng, và được một nhân vật khác nghiệm thu trong một phiên mới. Lõi là một tiến trình Node (Quản sự) điều phối Claude Code và Antigravity CLI ở chế độ headless; trạng thái là file trong một thư mục kingdom ngoài repo; thế giới 3D chỉ nghe event log. Kế hoạch sản phẩm: [docs/ke-hoach-dung-elvaria-0.6.md](docs/ke-hoach-dung-elvaria-0.6.md) (mục 2 — 13 nguyên tắc — là bất biến). Kế hoạch triển khai: [docs/implementation-plan.md](docs/implementation-plan.md).
 
-**Trạng thái hiện tại (2026-11-06): repo chỉ có tài liệu và thiết kế, chưa có code.** Bắt đầu từ task P0-01. Cách làm một task:
+**Trạng thái hiện tại: xem cột Trạng thái ở §8; task tiếp theo là dòng `chưa làm` đầu tiên.** P0-01 (2026-11-06) dựng khung monorepo: `pnpm check` chạy được, `packages/config` có bảng phụ thuộc; chưa có package lõi nào. Cách làm một task:
 
 1. Mở bảng task ở [docs/implementation-plan.md](docs/implementation-plan.md) §8, đọc đúng một dòng: task, file chạm, điều kiện xong.
 2. Đọc các mục kế hoạch và ADR mà dòng đó (và phần code bạn sắp sửa) trỏ tới. Dữ kiện về CLI nằm ở [docs/reference/cli-facts-2026-11-06.md](docs/reference/cli-facts-2026-11-06.md); đừng tra lại điều đã có ở đó, trừ khi phiên bản CLI đã đổi.

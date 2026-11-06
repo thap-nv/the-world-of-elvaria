@@ -1,0 +1,9 @@
+pnpm-lock.yaml
+dist/
+coverage/
+# The design handoff v0.2 stays as delivered (CLAUDE.md, ADR 0019).
+design/
+# Prose with compact hand-written tables, which Prettier would pad row by row; docs:check (P0-07) gates it.
+# docs/schemas/ is the hand-written v1 contract until P0-03, then generator output.
+docs/
+CLAUDE.md
