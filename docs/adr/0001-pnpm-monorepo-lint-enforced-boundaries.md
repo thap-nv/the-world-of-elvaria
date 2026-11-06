@@ -5,7 +5,7 @@
 
 ## Context
 
-Elvaria has three layers (work engine, event bus, world renderer; principle 1 of [the product plan](../ke-hoach-dung-elvaria-0.6.md)). The renderer must never call back into the work engine. A folder convention does not survive many agent sessions: an import that crosses a layer looks harmless in a diff. The first territory, dc1-se-team, already uses pnpm 10, Node 24 and ESLint 9, so the user and the agents know this tooling.
+Elvaria has three layers (work engine, event bus, world renderer; principle 1 of [the product plan](../ke-hoach-dung-elvaria-0.7.md)). The renderer must never call back into the work engine. A folder convention does not survive many agent sessions: an import that crosses a layer looks harmless in a diff. The first territory, dc1-se-team, already uses pnpm 10, Node 24 and ESLint 9, so the user and the agents know this tooling.
 
 ## Decision
 

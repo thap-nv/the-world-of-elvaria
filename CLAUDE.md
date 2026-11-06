@@ -69,7 +69,7 @@ ELVARIA_LIVE=1 pnpm --filter @elvaria/runner-claude test             # smoke v�
 - **Ba tầng tách biệt.** Tầng việc (domain, store, runner-*, steward, chancellor) không biết renderer tồn tại. Tầng thế giới (herald, world, lite, ui) chỉ đọc event log + snapshot và **ghi lệnh vào `inbox/`**; không bao giờ gọi tầng việc. Luật phụ thuộc ở `packages/config/boundaries.mjs`; ESLint và `pnpm boundaries` chặn import sai.
 - **Domain không IO.** Không `node:*`, `fs`, `process.env`, `Date.now`, `Math.random`, `setTimeout` trong `packages/domain`; clock và id tiêm vào (`Clock`, `IdSource`). Domain trả `Result<T, E>`, không throw. Quyết định (chọn người, chọn verifier, cầu dao, mana, `planTick`) là hàm thuần trong domain; steward chỉ thực thi.
 - **Chỉ Quản sự ghi trạng thái quest** (`quests/*.json`, `characters/*.json`). CLI, Sứ giả, điện thoại và Tể tướng ghi lệnh vào `inbox/<ulid>.json` (ADR 0005).
-- **Người làm không phán.** Verifier ≠ assignee và ≠ mọi người từng làm quest đó (với đội: mọi người từng làm bất kỳ quest nào của đội); phiên mới; ưu tiên khác họ model; kiểm tra máy chạy trước và là trọng tài chính (check fail ⇒ fail). Verifier không có Edit/Write (ADR 0008, 0020).
+- **Người làm không phán.** Verifier ≠ assignee và ≠ mọi người từng làm quest đó (với đội: mọi người từng làm bất kỳ quest nào của đội); phiên mới; ưu tiên khác họ model; kiểm tra máy chạy trước và là trọng tài chính (check fail ⇒ fail). Verifier không có Edit/Write (ADR 0008, 0020), trừ trong đất nháp dùng một lần của nghi thức Thả quái thử thành: không commit, không push, xóa sau verdict, nhánh quest không đổi (ADR 0022).
 - **Một quest, một context.** Hồi sinh = phiên mới từ `handover.md` + `journal.jsonl` + git; không `--resume` trừ khi `dispatch.resume_after_mana = true`. Cái gì máy làm được thì dùng bậc script trong catalog, không gọi model (ADR 0017).
 - **Thuật ngữ theo [docs/glossary.md](docs/glossary.md).** Identifier và mọi id dữ liệu là tiếng Anh: `snake_case` cho khóa/enum JSON, `kebab-case` cho id icon/asset/file, `camelCase`/`PascalCase` trong TS. Dùng đúng từ trong cột "id" (`steward`, không `dispatcher`; `seal`, không `approve`). Chất fantasy chỉ ở chuỗi hiển thị qua i18n (ADR 0014).
 - **Ngôn ngữ.** Code, comment, commit, ADR, prompt nhân vật: tiếng Anh. Tài liệu trong `docs/` (trừ ADR): tiếng Việt. Chuỗi cho người dùng: qua `t()`, có cả `vi` và `en`.
@@ -107,7 +107,7 @@ Trước khi sửa các file sau, đọc file đó, test của nó và ADR liên
 - Thêm script `.sh`, `.ps1`, `.cmd`; dùng `shell: true`.
 - Truyền `process.env` nguyên khối vào tiến trình con; đưa secret vào prompt, journal, log hay event.
 - Cho Elvaria quyền `git push` hoặc merge tự động (giai đoạn 1); dùng `--dangerously-skip-permissions`, `--bare` hay `--worktree` của CLI; parse transcript của CLI.
-- Sửa `design/**` (bản gốc v0.2, giữ nguyên; thiết kế đổi trong `ui-kit`/`ui`, bản bàn giao mới vào thư mục mới) hoặc `docs/ke-hoach-dung-elvaria-0.6.md` (kế hoạch sản phẩm; người dùng sửa).
+- Sửa `design/**` (bản gốc v0.2, giữ nguyên; thiết kế đổi trong `ui-kit`/`ui`, bản bàn giao mới vào thư mục mới) hoặc `docs/ke-hoach-dung-elvaria-*.md` (kế hoạch sản phẩm, mọi phiên bản; người dùng sửa).
 - Sửa file ngoài phạm vi task. Nếu thấy cần, ghi thành đề xuất trong commit hoặc vào implementation-plan.
 
 ## Change impact / Ảnh hưởng thay đổi

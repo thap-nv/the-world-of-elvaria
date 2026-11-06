@@ -2,7 +2,7 @@
 
 - Status: accepted · 2026-11-06
 - Amends: [ADR 0008](0008-separation-of-duties.md) (party members never judge the party), [ADR 0016](0016-registry-data-not-code.md) (adds `registry/tags.json`)
-- Related: [implementation-plan.md](../implementation-plan.md) §2.3, §3.13, §9.1 items 20–23; [product plan 0.6](../ke-hoach-dung-elvaria-0.6.md) §4, §6
+- Related: [implementation-plan.md](../implementation-plan.md) §2.3, §3.13, §9.1 items 20–23; [product plan 0.7](../ke-hoach-dung-elvaria-0.7.md) §4, §6
 
 ## Context
 
