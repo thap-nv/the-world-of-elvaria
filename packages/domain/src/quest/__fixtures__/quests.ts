@@ -63,7 +63,12 @@ export function draftQuest(variant: Variant = SESSION): Quest {
   });
 }
 
-type Payload<T extends QuestEventType> = Omit<QuestEventOf<T>, 'type' | 'at'>;
+// Distributive, so a claim keeps both shapes (a character with its level, or nobody).
+type Payload<T extends QuestEventType> =
+  QuestEventOf<T> extends infer E ? (E extends unknown ? Omit<E, 'type' | 'at'> : never) : never;
+
+/** The level of every character in the fixtures: its ceiling is D, the rank of the fixture quest. */
+export const LEVEL = 3;
 
 /** A payload the quest can take: claim names a character only for a session-tier quest. */
 export function payloadOf<T extends QuestEventType>(type: T, quest: Quest): Payload<T> {
@@ -87,8 +92,8 @@ export function payloadOf<T extends QuestEventType>(type: T, quest: Quest): Payl
     start: { session_id: 's-start' },
     redispatch: {},
     mana_restored: {},
-    claim: { assignee: quest.tier === 'session' ? THORN : null },
-    reassign: { assignee: ELLA },
+    claim: quest.tier === 'session' ? { assignee: THORN, level: LEVEL } : { assignee: null },
+    reassign: { assignee: ELLA, level: LEVEL },
     block: { question: 'Bản EN dùng giọng nào?' },
     ask: { question: 'Giữ API cũ không?' },
     breaker: { trip: 'tokens' },

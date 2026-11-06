@@ -69,6 +69,12 @@ interface SessionStart {
   readonly session_id?: string;
 }
 
+/** The character that takes the quest, and its level at that moment (character.level). */
+interface TakenBy {
+  readonly assignee: CharacterId;
+  readonly level: number;
+}
+
 // Distributive over T: one union member per event type, so `Extract<QuestEvent, { type: 'x' }>` works.
 type Shaped<T extends string, Extra> = T extends string ? Timed & Extra & { readonly type: T } : never;
 
@@ -76,9 +82,12 @@ export type QuestEvent =
   | Shaped<(typeof PLAIN)[number], unknown>
   | Shaped<(typeof RUN_ENDS)[number], RunEnd>
   | Shaped<(typeof SESSION_STARTS)[number], SessionStart>
-  /** `assignee` is a character for a session-tier quest and null for a script-tier one (the Steward runs it). */
-  | Shaped<'claim', { readonly assignee: CharacterId | null }>
-  | Shaped<'reassign', { readonly assignee: CharacterId }>
+  /**
+   * A session-tier quest is claimed by a character, whose level comes along: taking a rank above its ceiling
+   * makes the quest wait for the royal seal. A script-tier quest is claimed by nobody (the Steward runs it).
+   */
+  | Shaped<'claim', TakenBy | { readonly assignee: null }>
+  | Shaped<'reassign', TakenBy>
   | Shaped<'block', { readonly question: string }>
   | Shaped<'ask', RunEnd & { readonly question: string }>
   | Shaped<'breaker', RunEnd & { readonly trip: BreakerTrip }>

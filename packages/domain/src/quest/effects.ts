@@ -1,8 +1,10 @@
 // What an event changes in a quest besides its status (implementation-plan §2.5): who holds it, the attempt
 // counter, the attempt log, the question, the seal, the delivery. One effect per event type; the row of
 // QUEST_TRANSITIONS has already been chosen, and `to` is its target status.
+import { aboveCeiling } from '../character/level.ts';
 import { err, ok } from '../core/result.ts';
 import { closeRun, currentRun, entryOf } from './attempt-log.ts';
+import type { CharacterId } from '../core/ids.ts';
 import type { Result } from '../core/result.ts';
 import type { Role } from '../schema/common.ts';
 import type { Attempt } from '../schema/quest/quest-parts.ts';
@@ -61,11 +63,21 @@ function resume(quest: Quest, at: string, session_id: string | undefined): Quest
 
 const askedAt = (question: string, at: string) => ({ question, asked_at: at });
 
+/**
+ * A character takes the quest. Above its level's ceiling the quest waits for the royal seal, whoever chose the
+ * character (owner, after P0-04); the machine never lowers seal_required again.
+ */
+const takenBy = (quest: Quest, by: { readonly assignee: CharacterId; readonly level: number }): Quest => ({
+  ...quest,
+  assignee: by.assignee,
+  seal_required: quest.seal_required || aboveCeiling(by.level, quest.rank),
+});
+
 function claim(quest: Quest, event: QuestEventOf<'claim'>): Result<Quest, QuestTransitionError> {
-  const needsCharacter = quest.tier === 'session';
-  if (needsCharacter !== (event.assignee !== null))
-    return err({ code: 'invalid_event', reason: 'assignee_for_tier' });
-  return ok({ ...quest, assignee: event.assignee });
+  const mismatch = { code: 'invalid_event', reason: 'assignee_for_tier' } as const;
+  if (event.assignee === null)
+    return quest.tier === 'script' ? ok({ ...quest, assignee: null }) : err(mismatch);
+  return quest.tier === 'session' ? ok(takenBy(quest, event)) : err(mismatch);
 }
 
 function answer(
@@ -106,7 +118,7 @@ const EFFECTS: { readonly [T in QuestEventType]: Effect<T> } = {
   release: (quest) => ok({ ...quest, assignee: null }),
   // The owner hands the quest to someone new; out of the infirmary that someone gets the full attempt budget.
   reassign: (quest, event) =>
-    ok({ ...quest, assignee: event.assignee, ...(quest.status === 'infirmary' ? { attempts: 0 } : {}) }),
+    ok({ ...takenBy(quest, event), ...(quest.status === 'infirmary' ? { attempts: 0 } : {}) }),
   block: (quest, event) => ok({ ...quest, blocked: askedAt(event.question, event.at) }),
   start: startAttempt,
   redispatch: startAttempt,

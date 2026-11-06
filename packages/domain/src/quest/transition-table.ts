@@ -34,8 +34,10 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
   'draft.confirm': 'Tể tướng tạo draft; `elvaria quest add` tạo thẳng open',
   'draft.discard': 'lệnh `archive`',
   'open.claim':
-    'có người rảnh đúng nghề, đủ cấp, tộc còn mana, `depends_on` xong; bậc script: `assignee = null`, actor là Quản sự',
+    'có người rảnh đúng nghề, đủ cấp (`canTake`), tộc còn mana, `depends_on` xong; nhận vượt hạng trần của cấp ⇒ `seal_required`; bậc script: `assignee = null`, actor là Quản sự',
   'open.block': '`depends_on` chưa xong hoặc câu hỏi của Tể tướng chưa trả lời; ghi `blocked.question`',
+  'open.reassign.session':
+    'lệnh `reassign` có `character`: người dùng giao thẳng, không xét `canTake`; vượt hạng trần ⇒ `seal_required`; `depends_on` vẫn phải xong trước `start`',
   'open.cancel': 'lệnh `cancel`; mọi trạng thái chưa xong đều hủy được',
   'claimed.start': 'đất riêng xong, phiên mở; `attempts` +1, mở lượt mới `n` trong `attempt_log`',
   'claimed.release': 'spawn lỗi; `attempts` không tăng, bỏ `assignee`',
@@ -52,7 +54,8 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
     'người dùng đình chỉ nhân vật (§2.6); lượt kết thúc `returned`; người dùng giao lại',
   'working.cancel': 'kill, giữ worktree; lượt kết thúc `cancelled`',
   'paused_mana.mana_restored': 'cùng nhân vật, phiên mới từ handover, cùng lượt `n` (§3.5)',
-  'paused_mana.reassign': 'người dùng đổi người',
+  'paused_mana.reassign':
+    'người dùng đổi người; mọi `reassign` vượt hạng trần của cấp người mới ⇒ `seal_required`',
   'blocked.answer.has_assignee':
     'câu trả lời ghi vào `blocked.answer` và handover.md; phiên mới, cùng lượt `n`',
   'blocked.unblock.no_assignee': '`depends_on` xong',

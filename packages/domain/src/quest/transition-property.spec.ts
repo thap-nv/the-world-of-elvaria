@@ -112,12 +112,19 @@ describe('the quest state machine, over every state it reaches', () => {
 
 const pick = <T>(random: () => number, items: readonly T[]): T => items[Math.floor(random() * items.length)]!;
 const PEOPLE = [THORN, ELLA, BRANN] as const;
+const LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 
 /** An event with a random payload, valid or not: walks must also survive what the machine refuses. */
 function randomEvent(random: () => number, type: QuestEventType, quest: Quest, minute: number): QuestEvent {
   const event = eventOf(type, quest, at(minute));
-  if (event.type === 'claim') return { ...event, assignee: pick(random, [...PEOPLE, null]) };
-  if (event.type === 'reassign') return { ...event, assignee: pick(random, PEOPLE) };
+  if (event.type === 'claim') {
+    const who = pick(random, [...PEOPLE, null]);
+    return who === null
+      ? { type: 'claim', at: event.at, assignee: null }
+      : { type: 'claim', at: event.at, assignee: who, level: pick(random, LEVELS) };
+  }
+  if (event.type === 'reassign')
+    return { ...event, assignee: pick(random, PEOPLE), level: pick(random, LEVELS) };
   if (event.type === 'assign_verifier') return { ...event, verifier: pick(random, PEOPLE) };
   if (event.type === 'breaker') return { ...event, trip: pick(random, BREAKER_TRIPS) };
   return event;

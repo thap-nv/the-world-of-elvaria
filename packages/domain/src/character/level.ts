@@ -17,14 +17,25 @@ import type { Character } from '../schema/character/character.ts';
 /** The highest rank a level takes as a matter of course; a level outside 1–10 (never in a valid file) takes F. */
 export const rankCeilingOf = (level: number): Rank => RANK_CEILING_BY_LEVEL[level - 1] ?? 'F';
 
+/** How many ranks `rank` lies above what `level` takes as a matter of course; 0 or less when within. */
+const ranksAbove = (level: number, rank: Rank): number =>
+  RANKS.indexOf(rank) - RANKS.indexOf(rankCeilingOf(level));
+
 /**
- * Whether a character of `level` may take a quest of `rank`: up to its ceiling, one rank above only when
- * `nobodyElse` of the required class is free, never two above.
+ * Whether the Steward may give a character of `level` a quest of `rank`: up to its ceiling, one rank above only
+ * when `nobodyElse` of the required class is free, never two above. The owner naming a character (reassign with
+ * a character) is not bound by it: the level limits the Steward's own choice only.
  */
 export function canTake(level: number, rank: Rank, nobodyElse: boolean): boolean {
-  const above = RANKS.indexOf(rank) - RANKS.indexOf(rankCeilingOf(level));
+  const above = ranksAbove(level, rank);
   return above <= 0 || (above === 1 && nobodyElse);
 }
+
+/**
+ * A quest taken above the level's ceiling, by the "nobody else" rule or by the owner's choice: it waits for the
+ * royal seal, which stands in for the trust the character has not earned yet (owner, after P0-04).
+ */
+export const aboveCeiling = (level: number, rank: Rank): boolean => ranksAbove(level, rank) > 0;
 
 /**
  * The level after the latest verdict. Only verdicts after `level_since` count, so a level moves at most once per

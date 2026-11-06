@@ -61,6 +61,8 @@ export const QUEST_TRANSITIONS: readonly QuestTransitionRow[] = [
   { from: 'draft', event: 'discard', actors: U, to: 'archived' },
   { from: 'open', event: 'claim', actors: S, to: 'claimed' },
   { from: 'open', event: 'block', actors: S, to: 'blocked' },
+  // The owner names the character; the level bounds only the Steward's own choice (canTake).
+  { from: 'open', event: 'reassign', actors: U, guard: 'session', to: 'claimed' },
   { from: 'open', event: 'cancel', actors: U, to: 'archived' },
   { from: 'claimed', event: 'start', actors: S, to: 'working' },
   { from: 'claimed', event: 'release', actors: S, to: 'open' },
