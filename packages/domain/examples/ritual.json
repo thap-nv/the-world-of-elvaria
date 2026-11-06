@@ -1,0 +1,109 @@
+[
+  {
+    "version": 1,
+    "rituals": [
+      {
+        "id": "build_review",
+        "name_vi": "Thợ cả khám công trình",
+        "name_en": "Master builder's inspection",
+        "steps": ["run_checks", "read_handover", "read_diff", "judge", "write_verdict"],
+        "pass_rule": "all_checks_and_agent",
+        "max_seconds": 1800
+      },
+      {
+        "id": "source_check",
+        "name_vi": "Đánh sinh vật canh giữ",
+        "name_en": "Face the guardian",
+        "steps": ["run_checks", "read_handover", "check_sources", "judge", "write_verdict"],
+        "pass_rule": "all_checks_and_agent",
+        "max_seconds": 1800
+      },
+      {
+        "id": "regression_check",
+        "name_vi": "Săn và đặt bẫy",
+        "name_en": "Hunt and set the trap",
+        "steps": [
+          "run_checks",
+          "read_handover",
+          "read_diff",
+          "check_regression_test",
+          "judge",
+          "write_verdict"
+        ],
+        "pass_rule": "all_checks_and_agent",
+        "max_seconds": 1800
+      },
+      {
+        "id": "stress_test",
+        "name_vi": "Thử bão",
+        "name_en": "Storm trial",
+        "steps": ["run_checks", "compare_before_after", "read_diff", "judge", "write_verdict"],
+        "pass_rule": "all_checks_and_agent",
+        "max_seconds": 2400
+      },
+      {
+        "id": "editorial_review",
+        "name_vi": "Thủ thư trưởng duyệt bản thảo",
+        "name_en": "Head librarian's review",
+        "steps": [
+          "run_checks",
+          "read_handover",
+          "read_diff",
+          "cross_check_sources",
+          "judge",
+          "write_verdict"
+        ],
+        "pass_rule": "all_checks_and_agent",
+        "max_seconds": 1800
+      },
+      {
+        "id": "audience_review",
+        "name_vi": "Dân chúng phản ứng",
+        "name_en": "The crowd responds",
+        "steps": ["run_checks", "read_draft", "score_tone_checklist", "write_verdict"],
+        "pass_rule": "all_checks_and_agent",
+        "max_seconds": 1200
+      },
+      {
+        "id": "recompute",
+        "name_vi": "Chiêm tinh gia thứ hai tính lại",
+        "name_en": "Second astrologer recomputes",
+        "steps": ["run_checks", "rerun_from_source", "compare_numbers", "write_verdict"],
+        "pass_rule": "all_checks_and_agent",
+        "max_seconds": 1800
+      },
+      {
+        "id": "council_review",
+        "name_vi": "Hội đồng biểu quyết",
+        "name_en": "Council vote",
+        "steps": ["run_checks", "read_plan", "challenge_scope", "judge", "write_verdict"],
+        "pass_rule": "all_checks_and_agent",
+        "max_seconds": 1800
+      },
+      {
+        "id": "stability_check",
+        "name_vi": "Lập đồn và cắm cờ",
+        "name_en": "Hold the fort",
+        "steps": ["run_checks", "read_handover", "judge", "write_verdict"],
+        "pass_rule": "all_checks_and_agent",
+        "max_seconds": 1800
+      },
+      {
+        "id": "sign_off",
+        "name_vi": "Ký hiệp ước",
+        "name_en": "Sign the treaty",
+        "steps": ["read_draft", "judge", "write_verdict"],
+        "pass_rule": "agent_only",
+        "max_seconds": 900
+      },
+      {
+        "id": "unit_tally",
+        "name_vi": "Điểm quân sau trận",
+        "name_en": "Muster after battle",
+        "steps": ["run_checks", "tally_units", "write_verdict"],
+        "pass_rule": "checks_only",
+        "max_seconds": 600
+      }
+    ]
+  }
+]

@@ -1,0 +1,79 @@
+// inbox-command v1: inbox/<ulid>.json, one owner action waiting for the Steward (ADR 0005).
+// A discriminated union on `kind`: zod picks the payload schema from the kind and TypeScript narrows `payload`
+// the same way. The contract therefore lists one `oneOf` branch per kind where v1 wrote an if/then per kind;
+// both accept exactly the same files, because every branch fixes `kind` to one value.
+import { z } from 'zod';
+
+import { UlidSchema } from '../../core/ids.ts';
+import { DateTimeSchema, GENERATED_NOTE } from '../common.ts';
+import {
+  AnswerPayloadSchema,
+  AttachTerritoryPayloadSchema,
+  CharacterPayloadSchema,
+  CharacterReasonPayloadSchema,
+  CloseCampaignPayloadSchema,
+  CreateQuestPayloadSchema,
+  DeclareCampaignPayloadSchema,
+  EditQuestPayloadSchema,
+  PinTagPayloadSchema,
+  QuestPayloadSchema,
+  QuestReasonPayloadSchema,
+  ReassignPayloadSchema,
+  ReturnPayloadSchema,
+  SealPayloadSchema,
+  SetRankPayloadSchema,
+  WakePayloadSchema,
+} from './payloads.ts';
+
+export const COMMAND_SOURCES = ['cli', 'herald', 'lite'] as const;
+const SourceSchema = z.enum(COMMAND_SOURCES);
+
+/** One branch of the union: the common fields, in the contract's order, with `kind` fixed. */
+const command = <K extends string, P extends z.ZodType>(kind: K, payload: P) =>
+  z.strictObject({
+    version: z.literal(1),
+    id: UlidSchema,
+    ts: DateTimeSchema,
+    kind: z.literal(kind),
+    source: SourceSchema,
+    payload,
+  });
+
+// In the order of the v1 `kind` enum, so the contract reads like the glossary (§9).
+export const InboxCommandSchema = z
+  .discriminatedUnion('kind', [
+    command('confirm', QuestPayloadSchema),
+    command('seal', SealPayloadSchema),
+    command('return', ReturnPayloadSchema),
+    command('retry', QuestPayloadSchema),
+    command('cancel', QuestReasonPayloadSchema),
+    command('archive', QuestReasonPayloadSchema),
+    command('summon', CharacterPayloadSchema),
+    command('wake', WakePayloadSchema),
+    command('suspend', CharacterReasonPayloadSchema),
+    command('release', CharacterPayloadSchema),
+    command('reassign', ReassignPayloadSchema),
+    command('send_to_temple', CharacterPayloadSchema),
+    command('declare_campaign', DeclareCampaignPayloadSchema),
+    command('close_campaign', CloseCampaignPayloadSchema),
+    command('create_quest', CreateQuestPayloadSchema),
+    command('answer', AnswerPayloadSchema),
+    command('set_rank', SetRankPayloadSchema),
+    command('attach_territory', AttachTerritoryPayloadSchema),
+    command('edit_quest', EditQuestPayloadSchema),
+    command('pin_tag', PinTagPayloadSchema),
+  ])
+  .meta({
+    title: 'Inbox command',
+    description:
+      "inbox/<ulid>.json: one command from the owner (CLI, Herald, lite phone client) waiting for the Steward, the single writer of quest state (ADR 0005). The Steward applies commands in id order at the start of every tick, appends command.applied or command.rejected, and moves the file to inbox/done/. Idempotent: a command id that already has a command.applied event is skipped. Kinds match the design's action icons (seal, return, summon, suspend, reassign, archive, temple, declare) plus the lifecycle commands the state machine needs.",
+    $comment: `${GENERATED_NOTE} One oneOf branch per kind: each fixes \`kind\` and gives its payload. confirm (draft -> open) and edit_quest (\`elvaria quest edit\`) are additions to the plan's §2.3 list, required by the single-writer rule; pin_tag (pin a character to an expertise tag, product plan 0.5 §6) was added with plan 0.5. archive covers discard (draft), reject (awaiting_seal) and archive (done, infirmary); the Steward picks the transition from the quest's current status. edit_quest is rejected when the quest's updated_at differs from expected_updated_at.`,
+  });
+
+/** A parsed command; `switch (command.kind)` narrows `payload`. */
+export type InboxCommand = z.infer<typeof InboxCommandSchema>;
+/** What a writer (CLI, Herald, Chancellor) may put in the file: payload defaults may be left out. */
+export type InboxCommandInput = z.input<typeof InboxCommandSchema>;
+export type InboxCommandKind = InboxCommand['kind'];
+export type InboxCommandOf<K extends InboxCommandKind> = Extract<InboxCommand, { kind: K }>;
+export type CommandPayload<K extends InboxCommandKind> = InboxCommandOf<K>['payload'];

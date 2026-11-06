@@ -1,0 +1,58 @@
+[
+  {
+    "version": 1,
+    "generated_at": "2026-11-20T10:00:00+07:00",
+    "regions": [
+      {
+        "id": "dc1-se-team",
+        "territory": "dc1-se-team",
+        "anchor": {
+          "x": 0,
+          "z": 0
+        },
+        "bounds": [
+          {
+            "x": -120,
+            "z": -90
+          },
+          {
+            "x": 130,
+            "z": -80
+          },
+          {
+            "x": 140,
+            "z": 100
+          },
+          {
+            "x": -110,
+            "z": 95
+          }
+        ],
+        "roads_to": ["the-world-of-elvaria"]
+      },
+      {
+        "id": "the-world-of-elvaria",
+        "territory": "the-world-of-elvaria",
+        "anchor": {
+          "x": 320,
+          "z": 40
+        },
+        "bounds": [
+          {
+            "x": 220,
+            "z": -40
+          },
+          {
+            "x": 420,
+            "z": -30
+          },
+          {
+            "x": 410,
+            "z": 130
+          }
+        ],
+        "roads_to": ["dc1-se-team"]
+      }
+    ]
+  }
+]

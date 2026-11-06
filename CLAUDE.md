@@ -115,7 +115,7 @@ Trước khi sửa các file sau, đọc file đó, test của nó và ADR liên
 | Bạn đụng vào | Phải chạy |
 |---|---|
 | `packages/domain/**` | `pnpm -r test` và `pnpm typecheck` (mọi package dùng domain; coverage domain 100%) |
-| `packages/domain/src/schema/**` | `pnpm schemas`, commit `docs/schemas/**` cùng lúc; migration mới + fixture `v<n>.json` trong `packages/store`; `pnpm test` |
+| `packages/domain/src/schema/**`, `packages/domain/examples/**` | `pnpm schemas`, commit `docs/schemas/**` cùng lúc; migration mới + fixture `v<n>.json` trong `packages/store`; `pnpm test` |
 | `packages/runner-*/**` | `pnpm --filter <package> test` (CLI giả); đổi argv/settings/parse thì thêm `ELVARIA_LIVE=1 pnpm --filter <package> test` |
 | `packages/hooks/**` | `pnpm --filter @elvaria/hooks test` (gồm benchmark khởi động < 100 ms) |
 | `packages/eventlog/**` | `pnpm --filter @elvaria/eventlog test` (fixture 12 loại secret phải bị che) |

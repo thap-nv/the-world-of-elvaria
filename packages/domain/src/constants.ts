@@ -5,6 +5,14 @@
 export const NAME_MAX_LENGTH = 24;
 export const TAG_NAME_MAX_LENGTH = 40;
 export const TAG_DESCRIPTION_MAX_LENGTH = 200;
+// Shared by quest, quest-draft and the create_quest / declare_campaign commands.
+export const QUEST_TITLE_MAX_LENGTH = 120;
+/** Tags rank candidates by reputation per tag (character.skill_affinity), so a quest carries only a few. */
+export const QUEST_TAGS_MAX = 6;
+/** The Chancellor asks one short follow-up question, not a questionnaire. */
+export const QUESTION_MAX_LENGTH = 300;
+/** A campaign name is a headline ("Phát hành v1.4"), wider than the 24ch of character and territory names. */
+export const CAMPAIGN_NAME_MAX_LENGTH = 60;
 
 // Ids (implementation-plan §2.1).
 /** Crockford base32 without i, l, o, u, lowercase: readable in logs and never mistaken for 1 or 0. */

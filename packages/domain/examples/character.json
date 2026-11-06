@@ -1,0 +1,102 @@
+[
+  {
+    "version": 1,
+    "id": "thorn",
+    "name": "Thorn",
+    "class": "knight",
+    "tribe": "claude",
+    "model": "claude-sonnet-5-5",
+    "level": 3,
+    "reputation": {
+      "window": [
+        {
+          "verdict_id": "q_20261105_4c8n2d-1",
+          "result": "pass",
+          "by_human": false,
+          "at": "2026-11-05T16:20:00+07:00"
+        },
+        {
+          "verdict_id": "q_20261105_4c8n2d-2",
+          "result": "pass",
+          "by_human": true,
+          "at": "2026-11-05T18:02:00+07:00"
+        }
+      ]
+    },
+    "skill_affinity": {
+      "frontend": {
+        "window": [
+          {
+            "verdict_id": "q_20261105_4c8n2d-1",
+            "result": "pass",
+            "by_human": false,
+            "at": "2026-11-05T16:20:00+07:00"
+          },
+          {
+            "verdict_id": "q_20261105_4c8n2d-2",
+            "result": "pass",
+            "by_human": true,
+            "at": "2026-11-05T18:02:00+07:00"
+          }
+        ]
+      },
+      "i18n": {
+        "window": [
+          {
+            "verdict_id": "q_20261105_4c8n2d-2",
+            "result": "pass",
+            "by_human": true,
+            "at": "2026-11-05T18:02:00+07:00"
+          }
+        ]
+      }
+    },
+    "pinned_tag": null,
+    "status": "working",
+    "status_since": "2026-11-06T09:12:03+07:00",
+    "current": {
+      "quest": "q_20261106_7k3m2a",
+      "role": "assignee"
+    },
+    "vow_no_production": false,
+    "consecutive_fail": {
+      "count": 0
+    },
+    "stats": {
+      "quests_done": 4,
+      "tokens_today": 182340,
+      "tokens_day": "2026-11-06",
+      "last_active_at": "2026-11-06T09:41:20+07:00"
+    },
+    "created_at": "2026-11-05T08:00:00+07:00"
+  },
+  {
+    "version": 1,
+    "id": "sable",
+    "name": "Sable",
+    "class": "judge",
+    "tribe": "gemini",
+    "model": "gemini-4-argon-high",
+    "level": 1,
+    "reputation": {
+      "window": []
+    },
+    "status": "sleeping_mana",
+    "status_since": "2026-11-06T11:30:00+07:00",
+    "status_before_sleep": "idle",
+    "current": null,
+    "vow_no_production": true,
+    "tools": {
+      "deny": ["WebFetch"]
+    },
+    "consecutive_fail": {
+      "count": 0
+    },
+    "stats": {
+      "quests_done": 0,
+      "tokens_today": 0,
+      "tokens_day": "2026-11-06"
+    },
+    "created_at": "2026-11-06T08:00:00+07:00"
+  }
+]
