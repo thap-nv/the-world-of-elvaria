@@ -10,9 +10,9 @@ Two CLIs (Claude Code; Antigravity CLI, with Gemini CLI as fallback) change flag
 ## Decision
 
 - `interface AgentRunner { tribe; adapter; capabilities; spawn(req); probe(); doctor() }` lives in `runner-core`. `RunningSession` exposes `signals` (usage, rate_limit, text), `wait(): RunResult` and `kill(reason)`.
-- `runner-core` owns everything shared: `buildPrompt` (templates, snapshot-tested), `ToolPolicy` from class + territory laws + role, `PlotManager`, `runChecks`, `normalize` (CLI output → `RunnerSignal` and events), `redact`, the treasury, kill-tree.
+- `runner-core` owns everything shared: `buildPrompt` (templates, snapshot-tested), `ToolPolicy` from class + territory laws + role, `PlotManager`, `runChecks`, `normalize` (CLI output → `RunnerSignal` and events), `redact`, the treasury, kill-tree. (Amended 2026-11-07, P0-11: `redact` lives in `@elvaria/eventlog` (P0-05), because the hook may load nothing else; runner-core uses it. The hook's command comes from `hookCommand()` of `@elvaria/hooks`, which `apps/cli` hands to the runners, since adapters may not import `hooks` (P1-08).)
 - Adapters (`runner-claude`, `runner-antigravity`, `runner-gemini`) only translate `SpawnRequest` into argv/env/settings and CLI output into signals. Each stays under 300 lines.
-- CLIs are pinned: `elvaria doctor` writes the absolute path and version into `kingdom.tribes[].tool`; a different version at spawn time raises a warning. Adapter fixtures are kept per CLI version.
+- CLIs are pinned: `elvaria doctor` writes the absolute path and version into `kingdom.tribes[].tool`; a different version at spawn time raises a warning. Adapter fixtures are kept per CLI version. (P0-08: `doctor` only warns on a changed version or path until `--pin`; a pinned file that is gone is an error.)
 - Observation is Elvaria hooks plus `stream-json` only. Transcripts (`~/.claude/projects/…`, Antigravity and Gemini session files) have undocumented formats and are never parsed.
 - Tests use fake CLIs (`fake-claude.mjs`, `fake-agy.mjs`, `fake-gemini.mjs`) replaying redacted real streams; `ELVARIA_LIVE=1` adds a real `probe()` smoke test.
 

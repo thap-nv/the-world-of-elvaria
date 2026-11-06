@@ -5,6 +5,7 @@ import process from 'node:process';
 
 import { renderQuestTransitionTable } from '@elvaria/domain';
 
+import { renderCli } from './docs-cli.mjs';
 import { renderEvents } from './docs-events.mjs';
 import { renderGlossary } from './docs-glossary.mjs';
 import { renderDependencyGraph } from './docs-graph.mjs';
@@ -22,6 +23,8 @@ export const GENERATORS = [
   { file: 'docs/glossary.md', render: () => renderGlossary() },
   { file: 'docs/events.md', render: () => renderEvents() },
   { file: 'docs/dependency-graph.md', render: renderDependencyGraph },
+  // The command table drives parsing and --help, so the reference is rendered from it too (decided after P0-08).
+  { file: 'docs/cli.md', render: () => renderCli() },
   // The quest state machine is data in the domain (QUEST_TRANSITIONS); the plan shows it, never restates it.
   {
     file: 'docs/implementation-plan.md',

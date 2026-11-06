@@ -4,7 +4,8 @@
 
 - Ships the `elvaria` command, the only composition root (implementation-plan §1.1): `init`, `doctor`,
   `territory add|list`, `character add|list`, `quest add|list|show|confirm|cancel|edit`, `sandbox generate|replay`,
-  `migrate`. The command table (`src/commands.ts`) drives parsing (`util.parseArgs`) and help.
+  `migrate`. The command table (`src/commands.ts`) drives parsing (`util.parseArgs`), help, and the reference
+  `docs/cli.md` that `pnpm docs:gen` renders from it (`scripts/docs-cli.mjs`).
 - Prints everything through `t()` of `@elvaria/i18n`, in `kingdom.owner.locale` unless `--locale vi|en` is given;
   `i18next/no-literal-string` (`packages/config/eslint-i18n.mjs`) guards it. Store and registry issues are
   translated by their `code`.

@@ -9,11 +9,11 @@ Principle 7: mappings are data. The product plan (§5) has 11 quest kinds plus C
 
 ## Decision
 
-- `registry/kinds.json`, `classes.json`, `rituals.json` and `scripts.json` live in the kingdom, each with a `version` and a schema. Defaults ship in `@elvaria/registry-default` and are copied at `elvaria init`; the user may edit them.
+- `registry/kinds.json`, `classes.json`, `rituals.json` and `scripts.json` live in the kingdom, each with a `version` and a schema. Defaults ship in `@elvaria/registry-default` and are copied at `elvaria init`; the user may edit them. (`tags.json` joined them with ADR 0020; `parseRegistry` checks the five files against each other.)
 - Domain treats `KindId`, `ClassId`, `RitualId` and `ScriptId` as strings validated against the loaded registry. There is no `switch` on kind in the core.
 - Ids are English; display names (`name_vi`, `name_en`) are fields, never ids.
 - Adding a kind = rows in `kinds.json` and `rituals.json` + theme mapping. Adding a theme = a `themes/<name>/` directory.
-- Tier `script` only runs entries from the catalog `registry/scripts.json` (`entry` `.mjs`, `params_schema`, `kinds[]`, `produces: report | units | check`, `timeout_minutes`). Defaults: `link-check`, `run-check`, `count-files`, `diff-stat`, `compare-numbers`, each with tests.
+- Tier `script` only runs entries from the catalog `registry/scripts.json` (`entry` `.mjs`, `params_schema`, `kinds[]`, `produces: report | units | check`, `timeout_minutes`). Defaults: `link-check`, `run-check`, `count-files`, `diff-stat`, `compare-numbers`, each with tests. (P0-02: a script runs as `node <entry> --params <json> [--context <json>]` in the plot, with Node built-ins only, and prints one JSON line; `run-check` gets the check's argv from the Steward in `--context`, never from params.)
 - A script a model writes and then runs is a session, not the script tier.
 
 ## Consequences
