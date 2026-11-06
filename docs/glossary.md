@@ -279,16 +279,16 @@ Mọi giá trị enum xuất hiện trong [schemas/](schemas/) có ở bảng n�
 | `units[].outcome` | `pending`, `done`, `not_done`, `needs_user`, `debt` | chưa xử lý / xác quái / bia mộ / thương binh / đổ nát |
 | `verdict.result` | `pass`, `fail`, `partial` | đạt / không đạt / dở dang (người kế đọc tiếp) |
 | `verdict.fail_kind` (cũng `consecutive_fail.fail_kind`) | `tests_fail`, `scope_creep`, `missing_i18n`, `wrong_facts`, `incomplete`, `style`, `unsafe`, `other` | loại lỗi, để đếm "cùng loại" |
-| `verdict.verifier_id` (giá trị đặc biệt) | `user`, `machine` | dấu vua / verdict máy |
+| `verdict.verifier_id` (giá trị đặc biệt) | `user`, `machine` | dấu vua / verdict máy; không nhân vật nào được mang id này |
 | `campaign.mode` | `offense`, `defense` | tấn công (release, launch) / phòng thủ (sự cố) |
 | `campaign.status` | `declared`, `active`, `won`, `lost`, `retro_pending`, `closed` | |
 | `close_campaign.outcome` | `won`, `lost` | |
 | `victory_conditions[].check.type` | `all_quests_done`, `command` | |
 | `lesson.source` | `monk`, `user` | Thầy tu viết / người dùng tự thêm |
-| `lesson.owner` (giá trị đặc biệt) | `temple` | kinh chung |
+| `lesson.owner` (giá trị đặc biệt) | `temple` | kinh chung; không nhân vật nào được mang id này |
 | `party_role` (quest, quest-draft) | `contract`, `part`, `merge` | quest hợp đồng / phần / quest ghép |
 | `skill.source` | `monk`, `user` | Thầy tu viết / người dùng viết |
-| `skill.scope` (giá trị đặc biệt) | `global` | áp dụng mọi lãnh thổ; nếu không thì là id một lãnh thổ |
+| `skill.scope` (giá trị đặc biệt) | `global` | áp dụng mọi lãnh thổ; nếu không thì là id một lãnh thổ; không lãnh thổ nào được mang id `global` |
 | `actor.kind` | `character`, `user`, `steward`, `chancellor`, `herald`, `system` | |
 | `owner.profession` | `developer`, `ba`, `marketing`, `researcher`, `other` | |
 | `owner.locale` | `vi`, `en` | ngôn ngữ của mọi thứ người dùng đọc |

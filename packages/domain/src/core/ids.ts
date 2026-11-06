@@ -23,8 +23,26 @@ export const CampaignIdSchema = z.string().regex(CAMPAIGN_ID_PATTERN).brand<'Cam
 export const LessonIdSchema = z.string().regex(LESSON_ID_PATTERN).brand<'LessonId'>();
 export const VerdictIdSchema = z.string().regex(VERDICT_ID_PATTERN).brand<'VerdictId'>();
 export const UlidSchema = z.string().regex(ULID_PATTERN).brand<'Ulid'>();
-export const CharacterIdSchema = z.string().regex(SLUG_PATTERN).brand<'CharacterId'>();
-export const TerritoryIdSchema = z.string().regex(SLUG_PATTERN).brand<'TerritoryId'>();
+/**
+ * Words other fields put where a character id goes: verdict.verifier_id (`user`, `machine`) and lesson.owner
+ * (`temple`). A character with one of these names would make those fields ambiguous.
+ */
+export const RESERVED_CHARACTER_IDS = ['user', 'machine', 'temple'] as const;
+/** skill.scope says `global` for "every territory", so no territory may be called that. */
+export const RESERVED_TERRITORY_IDS = ['global'] as const;
+
+/** A slug that is none of `reserved`; the contract states it as `not: { enum }`. */
+const unreservedSlug = (reserved: readonly string[]) => {
+  const taken = new Set(reserved);
+  return z
+    .string()
+    .regex(SLUG_PATTERN)
+    .refine((id) => !taken.has(id), { message: `reserved name: ${reserved.join(', ')} have another meaning` })
+    .meta({ not: { enum: [...reserved] } });
+};
+
+export const CharacterIdSchema = unreservedSlug(RESERVED_CHARACTER_IDS).brand<'CharacterId'>();
+export const TerritoryIdSchema = unreservedSlug(RESERVED_TERRITORY_IDS).brand<'TerritoryId'>();
 export const TribeIdSchema = z.string().regex(REGISTRY_ID_PATTERN).brand<'TribeId'>();
 export const KindIdSchema = z.string().regex(REGISTRY_ID_PATTERN).brand<'KindId'>();
 export const ClassIdSchema = z.string().regex(REGISTRY_ID_PATTERN).brand<'ClassId'>();

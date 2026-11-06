@@ -5,6 +5,7 @@ import {
   QuestIdSchema,
   ScriptIdSchema,
   TagIdSchema,
+  TerritoryIdSchema,
   UlidSchema,
   VerdictIdSchema,
 } from './ids.ts';
@@ -21,6 +22,18 @@ describe('branded ids', () => {
   ])('accepts the documented form and rejects near misses', (schema, good, bad) => {
     expect(schema.safeParse(good).success).toBe(true);
     for (const value of bad) expect(schema.safeParse(value).success).toBe(false);
+  });
+});
+
+describe('reserved names', () => {
+  it.each(['user', 'machine', 'temple'])('refuses %s as a character id: other fields use it', (id) => {
+    expect(CharacterIdSchema.safeParse(id).success).toBe(false);
+  });
+
+  it('refuses global as a territory id, and lets the names be used the other way round', () => {
+    expect(TerritoryIdSchema.safeParse('global').success).toBe(false);
+    expect(TerritoryIdSchema.safeParse('temple').success).toBe(true);
+    expect(CharacterIdSchema.safeParse('global').success).toBe(true);
   });
 });
 

@@ -20,6 +20,7 @@ const KEY_ORDER = [
   'enum',
   'format',
   'pattern',
+  'not',
   'minLength',
   'maxLength',
   'minimum',

@@ -21,7 +21,12 @@
     "id": {
       "description": "Slug chosen by the owner; defaults to the repo folder name.",
       "type": "string",
-      "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$"
+      "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+      "not": {
+        "enum": [
+          "global"
+        ]
+      }
     },
     "name": {
       "type": "string",

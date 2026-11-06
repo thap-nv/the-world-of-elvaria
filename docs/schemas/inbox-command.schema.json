@@ -350,7 +350,14 @@
           "properties": {
             "character": {
               "type": "string",
-              "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$"
+              "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+              "not": {
+                "enum": [
+                  "user",
+                  "machine",
+                  "temple"
+                ]
+              }
             }
           }
         }
@@ -447,7 +454,14 @@
           "properties": {
             "character": {
               "type": "string",
-              "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$"
+              "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+              "not": {
+                "enum": [
+                  "user",
+                  "machine",
+                  "temple"
+                ]
+              }
             },
             "reason": {
               "type": "string"
@@ -498,7 +512,14 @@
           "properties": {
             "character": {
               "type": "string",
-              "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$"
+              "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+              "not": {
+                "enum": [
+                  "user",
+                  "machine",
+                  "temple"
+                ]
+              }
             }
           }
         }
@@ -551,7 +572,14 @@
             },
             "character": {
               "type": "string",
-              "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$"
+              "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+              "not": {
+                "enum": [
+                  "user",
+                  "machine",
+                  "temple"
+                ]
+              }
             }
           }
         }
@@ -599,7 +627,14 @@
           "properties": {
             "character": {
               "type": "string",
-              "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$"
+              "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+              "not": {
+                "enum": [
+                  "user",
+                  "machine",
+                  "temple"
+                ]
+              }
             }
           }
         }
@@ -788,7 +823,12 @@
             },
             "territory": {
               "type": "string",
-              "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$"
+              "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+              "not": {
+                "enum": [
+                  "global"
+                ]
+              }
             },
             "tier": {
               "enum": [
@@ -1092,7 +1132,12 @@
             },
             "id": {
               "type": "string",
-              "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$"
+              "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+              "not": {
+                "enum": [
+                  "global"
+                ]
+              }
             }
           }
         }
@@ -1275,7 +1320,14 @@
           "properties": {
             "character": {
               "type": "string",
-              "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$"
+              "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+              "not": {
+                "enum": [
+                  "user",
+                  "machine",
+                  "temple"
+                ]
+              }
             },
             "tag": {
               "type": [
