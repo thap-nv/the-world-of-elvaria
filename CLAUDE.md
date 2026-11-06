@@ -87,7 +87,7 @@ ELVARIA_LIVE=1 pnpm --filter @elvaria/runner-claude test             # smoke v�
 
 Trước khi sửa các file sau, đọc file đó, test của nó và ADR liên quan, rồi nói rõ trong commit vì sao phải đổi:
 
-- `packages/domain/src/quest/transitions.ts` (máy trạng thái quest; implementation-plan §2.5)
+- `packages/domain/src/quest/transitions.ts`, `transition.ts`, `effects.ts` (máy trạng thái quest: bảng, hàm, hiệu ứng; implementation-plan §2.5)
 - `packages/domain/src/verify/**` (luật tách vai; ADR 0008)
 - `packages/domain/src/mana/**` (mô hình mana; ADR 0009)
 - `packages/eventlog/src/redact*` (che secret; ADR 0013)

@@ -343,66 +343,97 @@ Trạng thái: `draft, open, claimed, working, review, returned, awaiting_seal, 
 
 Tác nhân: **U** người dùng (qua inbox), **S** Quản sự, **R** runner/hook (thay mặt nhân vật), **V** người nghiệm thu (qua runner), **M** mana monitor (trong Quản sự).
 
-| Từ | Sự kiện | Ai | Đến | Ghi chú |
-|---|---|---|---|---|
-| draft | confirm | U | open | Tể tướng tạo draft; `elvaria quest add` tạo thẳng open |
-| draft | discard | U | archived | lệnh `archive` |
-| open | claim | S | claimed | có người rảnh đúng nghề, đủ cấp, tộc còn mana, `depends_on` xong |
-| open | block (deps/unanswered) | S | blocked | |
-| open | cancel | U | archived | |
-| claimed | start (runner lên) | S | working | đất riêng xong, phiên mở |
-| claimed | release (spawn lỗi) | S | open | attempts không tăng |
-| working | submit | R | review | có handover.md; mọi thay đổi đã commit vào nhánh |
-| working | ask (cần người) | R | blocked | `blocked.question` |
-| working | mana_out | M | paused_mana | giữ assignee |
-| working | breaker (time/turns/tokens) | S | infirmary | kill tree, event `quest.infirmary` kèm lý do; nhân vật → swamp rồi idle |
-| working | crash, attempts < max | S | returned | outcome=crash, cùng nhân vật thử lại |
-| working | crash, attempts = max | S | infirmary | |
-| working | cancel | U | archived | kill, giữ worktree |
-| paused_mana | mana_restored | M | working | cùng nhân vật, phiên mới từ handover (§3.5) |
-| paused_mana | reassign | U | claimed | người dùng mới được đổi người |
-| blocked | answer / deps done | U/S | working (nếu có assignee) \| open | câu trả lời ghi vào handover.md |
-| review | verdict pass, !seal_required | V | done | |
-| review | verdict pass, seal_required | V | awaiting_seal | chuông |
-| review | verdict fail, attempts < max | V | returned | notes bắt buộc, fail_kind |
-| review | verdict fail, attempts = max | V | infirmary | chuông |
-| review | verifier mana_out | M | review | verifier=null, verdict `partial` lưu `progress`; người kế đọc tiếp |
-| review | verifier breaker | S | review | như trên |
-| returned | redispatch | S | working | attempts+1, cùng assignee, prompt kèm notes |
-| returned | reassign | U | claimed | |
-| awaiting_seal | seal | U | done | `seal`, verdict `by_human=true` (nặng ×3) |
-| awaiting_seal | return(notes) | U | returned | |
-| awaiting_seal | reject | U | archived | lệnh `archive` |
-| done | deliver | S | done (`deliverable.delivered_at`) | giao hàng theo kind; không là trạng thái riêng để không nhân đôi |
-| done | archive | U/S (sau N ngày) | archived | xóa worktree khi archive, không sớm hơn |
-| infirmary | retry | U | open | attempts=0, giữ attempt_log |
-| infirmary | reassign | U | claimed | |
-| infirmary | archive | U | archived | |
-| archived | — | | | terminal |
+<!-- docs:gen quest-transitions begin: renderQuestTransitionTable (packages/domain/src/quest/transition-table.ts); edit the code, not this table -->
+| Từ | Sự kiện | Điều kiện | Ai | Đến | Ghi chú |
+|---|---|---|---|---|---|
+| draft | `confirm` |  | U | open | Tể tướng tạo draft; `elvaria quest add` tạo thẳng open |
+| draft | `discard` |  | U | archived | lệnh `archive` |
+| open | `claim` |  | S | claimed | có người rảnh đúng nghề, đủ cấp, tộc còn mana, `depends_on` xong; bậc script: `assignee = null`, actor là Quản sự |
+| open | `block` |  | S | blocked | `depends_on` chưa xong hoặc câu hỏi của Tể tướng chưa trả lời; ghi `blocked.question` |
+| open | `cancel` |  | U | archived | lệnh `cancel`; mọi trạng thái chưa xong đều hủy được |
+| claimed | `start` |  | S | working | đất riêng xong, phiên mở; `attempts` +1, mở lượt mới `n` trong `attempt_log` |
+| claimed | `release` |  | S | open | spawn lỗi; `attempts` không tăng, bỏ `assignee` |
+| claimed | `cancel` |  | U | archived |  |
+| working | `submit` | `tier = session` | R | review | có handover.md; mọi thay đổi đã commit vào nhánh; lượt kết thúc `submitted` |
+| working | `submit` | `tier = script` | S | review | script chạy xong trong plot, output vào `.runs/` + journal.jsonl |
+| working | `ask` |  | R | blocked | ghi `blocked.question`; lượt kết thúc `blocked` |
+| working | `mana_out` | `tier = session` | M | paused_mana | giữ `assignee`; lượt kết thúc `paused` |
+| working | `breaker` |  | S | infirmary | kill tree, event `quest.infirmary` kèm lý do; lượt `timeout` (thời gian) hoặc `breaker` (token, lượt); nhân vật → swamp rồi idle |
+| working | `crash` | `tier = session`, `attempts < max_attempts` | S | returned | outcome `crash`, cùng nhân vật thử lại |
+| working | `crash` | `tier = script` hoặc `attempts ≥ max_attempts` | S | infirmary | bậc script: lỗi script vào thẳng trạm quân y (lỗi của Elvaria hoặc dữ liệu) |
+| working | `suspend` | `tier = session` | U | returned | người dùng đình chỉ nhân vật (§2.6); lượt kết thúc `returned`; người dùng giao lại |
+| working | `cancel` |  | U | archived | kill, giữ worktree; lượt kết thúc `cancelled` |
+| paused_mana | `mana_restored` |  | M | working | cùng nhân vật, phiên mới từ handover, cùng lượt `n` (§3.5) |
+| paused_mana | `reassign` |  | U | claimed | người dùng đổi người |
+| paused_mana | `cancel` |  | U | archived |  |
+| blocked | `answer` | có `assignee` | U | working | câu trả lời ghi vào `blocked.answer` và handover.md; phiên mới, cùng lượt `n` |
+| blocked | `answer` | không có `assignee` | U | open |  |
+| blocked | `unblock` | không có `assignee` | S | open | `depends_on` xong |
+| blocked | `cancel` |  | U | archived |  |
+| review | `assign_verifier` | `tier = session`, chưa có `verifier` | S | review | `selectVerifier` (§3.2), mở lượt vai verifier; quest bậc script không bao giờ có verifier là nhân vật |
+| review | `verdict_pass` | `!seal_required` | V/S | done | verdict của verifier, hoặc của máy (`machine`) khi không có verifier (ADR 0008) |
+| review | `verdict_pass` | `seal_required` | V/S | awaiting_seal | chuông |
+| review | `verdict_fail` | `tier = session`, `attempts < max_attempts` | V/S | returned | notes bắt buộc, `fail_kind`; bỏ `verifier`, lần nộp sau chọn người chấm mới |
+| review | `verdict_fail` | `tier = script` hoặc `attempts ≥ max_attempts` | V/S | infirmary | chuông; bậc script không có `returned` |
+| review | `mana_out` | có `verifier` | M | review | `verifier = null`, verdict `partial` lưu `progress`; người kế đọc tiếp |
+| review | `breaker` | có `verifier` | S | review | như trên |
+| review | `suspend` | có `verifier` | U | review | như trên, khi người dùng đình chỉ người chấm |
+| review | `cancel` |  | U | archived |  |
+| returned | `redispatch` |  | S | working | `attempts` +1, lượt mới, cùng `assignee`, prompt kèm notes |
+| returned | `reassign` |  | U | claimed |  |
+| returned | `cancel` |  | U | archived |  |
+| awaiting_seal | `seal` |  | U | done | `seal`, verdict `by_human = true` (nặng ×3) |
+| awaiting_seal | `return` | `tier = session` | U | returned | lệnh `return` kèm ghi chú; bỏ `verifier` |
+| awaiting_seal | `reject` |  | U | archived | lệnh `archive` |
+| done | `deliver` | chưa có `deliverable.delivered_at` | S | done | giao hàng theo kind, ghi `deliverable.delivered_at`; không là trạng thái riêng để không nhân đôi |
+| done | `archive` |  | U/S | archived | Quản sự sau N ngày; xóa worktree khi archive, không sớm hơn |
+| infirmary | `retry` |  | U | open | `attempts = 0`, bỏ `assignee`, giữ `attempt_log` |
+| infirmary | `reassign` | `tier = session` | U | claimed | người mới có đủ `max_attempts` (`attempts = 0`) |
+| infirmary | `archive` |  | U | archived | lệnh `archive` |
+| archived | — |  |  |  | trạng thái cuối |
+<!-- docs:gen quest-transitions end -->
 
 Đường đi của quest **bậc script**: `open → claimed (S, assignee null) → working (S chạy registry/scripts/<id>.mjs trong plot, output vào .runs/ + journal.jsonl) → review → done | awaiting_seal`, verdict `verifier_id: "machine"` lập từ exit code + `produces`. Không có `returned`/`paused_mana` (không có model để hết mana); lỗi script → `infirmary` ngay (lỗi của Elvaria hoặc dữ liệu, không phải của nhân vật). Script `produces: units` sinh `units[]` cho quest Trận đánh; mỗi unit cần phán đoán → Quản sự mở quest con bậc session (model rẻ), không phải học trò.
 
-Bất biến (zod refine + test; phần biểu diễn được đã có trong schema): `verifier ≠ assignee`; `tier = session` và `status ∈ {claimed, working, review, returned, awaiting_seal, paused_mana}` ⇒ có `assignee`; `tier = script` ⇒ `assignee = null` và có `script`; `status = review` ⇒ `attempts ≥ 1`; có `seal` ⇒ `status ∈ {done, archived}`; `status = blocked` ⇒ có `blocked`. Bảng chuyển là **dữ liệu** trong `domain/src/quest/transitions.ts`; `transition(quest, event, actor)` trả `Result<Quest, TransitionError>`; test duyệt toàn bộ bảng + property test "không có chuyển nào ngoài bảng". Từ P0-04, bảng trong mục này được sinh từ code bằng `pnpm docs:gen`.
+Bất biến (zod refine + test; phần biểu diễn được đã có trong schema): `verifier ≠ assignee`; `tier = session` và `status ∈ {claimed, working, review, returned, awaiting_seal, paused_mana}` ⇒ có `assignee`; `tier = script` ⇒ `assignee = null` và có `script`; `status = review` ⇒ `attempts ≥ 1`; có `seal` ⇒ `status ∈ {done, archived}`; `status = blocked` ⇒ có `blocked`. Hai chỗ schema v1 để hở do máy trạng thái giữ (chốt sau P0-03; `questTierIssues` trong `domain/src/quest/invariants.ts`): `tier = script` ⇒ `verifier = null` (máy chấm, không bao giờ là nhân vật) và `tier = session` ⇒ không có `script`; `transition()` từ chối quest phạm một trong hai, và không hàng nào sinh ra quest như vậy (`assign_verifier` chỉ cho bậc session, không hàng nào thêm `script`).
+
+Bảng chuyển là **dữ liệu** trong `domain/src/quest/transitions.ts` (`QUEST_TRANSITIONS`; điều kiện là hàm thuần có tên trong `QUEST_GUARDS`). `transition(quest, event, actor)` trả `Result<Quest, QuestTransitionError>`: tìm đúng một hàng theo trạng thái, sự kiện và điều kiện; kiểm actor có trong hàng, R chỉ nói thay khi có `assignee`, V chỉ khi có `verifier`, S chỉ lập verdict máy khi không có verifier (ADR 0008); áp hiệu ứng của sự kiện (`effects.ts`: người giữ quest, `attempts`, `attempt_log`, `blocked`, `seal`, `delivered_at`); rồi validate kết quả bằng schema quest. Sự kiện mang thời gian của nó (`at`), nên hàm vẫn thuần. Mã lỗi: `invalid_quest`, `no_transition`, `guard_failed`, `actor_not_allowed`, `actor_not_holding`, `invalid_event` (`assignee_for_tier`, `verifier_worked`), `invalid_result`.
+
+`attempts` và lượt chạy `n`: `attempts` là số lần thử tính vào `budget.max_attempts` (`start`, `redispatch` +1; `retry` và `reassign` từ trạm quân y đưa về 0). `n` trong `attempt_log` là số thứ tự lượt chạy suốt đời quest và không bao giờ lùi, vì verdict id (`<quest>-<n>`) và thư mục `.runs/<quest>-<n>` phải duy nhất cả khi `retry` đưa `attempts` về 0. Phiên mới của cùng một lần thử (hồi mana, trả lời câu hỏi) thêm một mục cùng `n`; người chấm có mục vai verifier cùng `n` với lần thử nó chấm (`.runs/<quest>-<n>/verify`). Một mục đang mở (chưa có `ended_at`) đúng khi quest `working` (vai assignee) hoặc `review` có verifier (vai verifier).
+
+Bất biến của đội cần nhiều file quest nên nằm ngoài `transition()`: `partyIssues(quests)` trong `domain/src/quest/party.ts` báo thiếu quest hợp đồng; thành viên khác lãnh thổ với hợp đồng (phần và quest ghép tách worktree từ nhánh hợp đồng, §3.3); phần không `depends_on` quest hợp đồng; nhiều hơn một quest ghép, hoặc quest ghép không chờ mọi phần (§3.13); và người từng làm với người từng chấm của đội không rời nhau, bất kể ai đến trước (ADR 0020). Quản sự kiểm sau mỗi thay đổi trên quest của đội; sa bàn kiểm mọi ngày giả.
+
+Test: property test duyệt mọi quest mà máy đạt được từ draft trong 10 sự kiện (8 biến thể bậc × dấu vua × ngân sách lượt; mọi sự kiện × mọi actor) và 60 random walk có seed: không chuyển nào ngoài bảng, mọi hàng đều đi được, điều kiện của các hàng chung (trạng thái, sự kiện) không bao giờ cùng đúng, `attempt_log` khớp trạng thái. Bảng trong mục này được sinh từ code bằng `renderQuestTransitionTable` (`domain/src/quest/transition-table.ts`, ghi chú tiếng Việt nằm cạnh hàm đó); nhánh merge sau trong hai nhánh P0-04, P0-07 nối hàm vào `pnpm docs:gen` để thay phần giữa hai marker `docs:gen quest-transitions`.
 
 ### 2.6 Máy trạng thái nhân vật
 
+Bảng là dữ liệu `CHARACTER_TRANSITIONS` trong `domain/src/character/transitions.ts`; `transitionCharacter(character, event)` tìm hàng, đổi `status`, `status_since` (giữ nguyên khi trạng thái không đổi), `current` và `status_before_sleep` (chỉ tồn tại khi đang ngủ), rồi validate bằng schema nhân vật. Quản sự áp sự kiện nhân vật cùng lúc với sự kiện quest tương ứng (§2.5).
+
 | Từ | Sự kiện | Đến |
 |---|---|---|
-| idle | claim | working |
-| idle | assign_verify | reviewing |
-| working | submit / ask / cancel | idle |
+| idle | claim | working (`current` = quest, vai assignee) |
+| idle | assign_verify | reviewing (`current` vai verifier) |
+| working | submit / ask | idle |
+| working / meditating | cancel / crash / unassign | idle |
 | working | compact_start | meditating |
 | meditating | compact_end | working |
-| working | breaker_time | swamp |
+| working / meditating | breaker (thời gian, token, lượt) | swamp (giữ `current`) |
 | swamp | quest_infirmary | idle |
-| reviewing | verdict | idle |
-| working / reviewing / idle | mana_out (cả tộc) | sleeping_mana (ghi `status_before_sleep`) |
+| reviewing | verdict / breaker / cancel / unassign | idle (người chấm gặp cầu dao để lại verdict `partial`, không vào trạm quân y) |
+| idle | mana_out (cả pool) | sleeping_mana (`status_before_sleep = idle`) |
+| working / meditating | mana_out | sleeping_mana (`status_before_sleep = working`, giữ `current`) |
+| reviewing | mana_out | sleeping_mana (`status_before_sleep = idle`, bỏ `current`: quest đã bỏ verifier, §2.5) |
+| sleeping_mana | unassign | sleeping_mana (`status_before_sleep = idle`, bỏ `current`) |
 | sleeping_mana | mana_restored | `status_before_sleep` |
-| idle | 3 fail cùng loại | suspended |
-| suspended | temple_done / user release | idle |
-| bất kỳ | user suspend | suspended (quest → returned kèm lý do) |
+| idle | fail_streak (`same_fail_suspend` lần cùng `fail_kind`) / send_to_temple | suspended |
+| suspended | temple_done / release | idle |
+| mọi trạng thái trừ suspended | suspend (người dùng) | suspended (quest → returned nếu là người làm, về review không verifier nếu là người chấm) |
 
-Cấp và danh tiếng là hàm thuần: `reputationOf(window)`, `levelChange(window, level)` (≥ 10 phán quyết, ≥ 85% thì lên, < 60% thì xuống; dấu vua ×3), `canTake(level, rank, nobodyElse)` (quest cao hơn một bậc khi không còn ai; hơn hai bậc thì không). Chuyên môn cũng vậy: `affinityOf(skill_affinity, tags)` (điểm của nhân vật trên các tag của quest, cùng trọng số dấu vua ×3) và `titleOf(character)` (tag ghim, nếu không thì tag có danh tiếng cao nhất đủ ngưỡng). Cấp vẫn tính trên `reputation` chung; danh tiếng theo tag chỉ dùng để xếp hạng và đặt danh hiệu.
+`unassign` là khi Quản sự lấy quest khỏi nhân vật: spawn lỗi (quest `release`) hoặc người dùng giao quest cho người khác. `status_before_sleep = reviewing` vẫn hợp lệ trong schema (file cũ) và vẫn được đánh thức đúng, nhưng máy trạng thái không ghi nó nữa.
+
+Danh tiếng là hàm thuần (`domain/src/character/reputation.ts`): `reputationOf(window)` trả `{verdicts, pct}`, `pct` là tỉ lệ đạt có trọng số 0–100 (dấu vua ×3, `null` khi chưa có phán quyết; đúng là `--rep` của vòng avatar), `verdicts` đếm mỗi phán quyết một lần. Chuyên môn cũng vậy: `affinityOf(skill_affinity, tags)` gộp cửa sổ của các tag của quest rồi tính như trên, và `titleOf(character)` = tag ghim, nếu không thì tag đủ ngưỡng có tỉ lệ cao nhất (hòa thì nhiều phán quyết hơn, rồi id tag), nếu không thì không có danh hiệu. Ngưỡng danh hiệu là ngưỡng lên cấp áp trên riêng tag đó: ≥ 10 phán quyết và ≥ 85% (`TITLE_MIN_*`, `domain/src/character/constants.ts`). Cấp vẫn tính trên `reputation` chung; danh tiếng theo tag chỉ dùng để xếp hạng và đặt danh hiệu.
+
+`levelChange(window, level)` (≥ 10 phán quyết, ≥ 85% thì lên, < 60% thì xuống; dấu vua ×3) và `canTake(level, rank, nobodyElse)` (quest cao hơn một bậc khi không còn ai; hơn hai bậc thì không) chưa làm ở P0-04 vì còn hai câu hỏi (§10).
 
 ### 2.7 Hợp đồng dữ liệu ↔ design system v0.2
 
@@ -410,8 +441,8 @@ Cấp và danh tiếng là hàm thuần: `reputationOf(window)`, `levelChange(wi
 
 | Thiết kế (`elvaria.css`, `Icons.dc.html`) | Domain / dữ liệu | Cách ánh xạ |
 |---|---|---|
-| `data-status` 8 tông: `open, working, review, done, returned, sleep, infirmary, seal` | 12 trạng thái quest (§2.5) | `statusToneOf(status)` thuần trong `domain/src/quest/status-tone.ts`: draft/open/blocked/archived → `open`; claimed/working → `working`; review → `review`; returned → `returned`; awaiting_seal → `seal`; done → `done`; paused_mana → `sleep`; infirmary → `infirmary`. Test: mọi trạng thái có tông; mọi tông có ít nhất một trạng thái; danh sách tông đọc từ CSS |
-| icon nhân vật `c-working, c-reviewing, c-sleeping, c-meditating, c-suspended, c-swamp` (6, không có idle) | 7 trạng thái nhân vật | `characterToneOf(status)`: idle → `null` (không icon) |
+| `data-status` 8 tông: `open, working, review, done, returned, sleep, infirmary, seal` | 12 trạng thái quest (§2.5) | `statusToneOf(status)` thuần trong `domain/src/quest/status-tone.ts`: draft/open/blocked/archived → `open`; claimed/working → `working`; review → `review`; returned → `returned`; awaiting_seal → `seal`; done → `done`; paused_mana → `sleep`; infirmary → `infirmary`. Test: mọi trạng thái có tông; mọi tông có ít nhất một trạng thái; danh sách tông đọc từ CSS (spec của domain không đọc được file, nên `packages/domain/vitest.config.mjs` đọc CSS nguồn hiện hành và đưa vào spec qua `provide`/`inject` của vitest) |
+| icon nhân vật `c-working, c-reviewing, c-sleeping, c-meditating, c-suspended, c-swamp` (6, không có idle) | 7 trạng thái nhân vật | `characterToneOf(status)` trong `domain/src/character/character-tone.ts`: idle → `null` (không icon) |
 | icon dạng trong nguồn thiết kế: `kien-tao, tham-hiem, tru-ta, gia-co, soan-thao, rao-truyen, chiem-nghiem, nghi-hoi, chinh-phuc, ngoai-giao, tran-danh, chien-tranh` (slug VI) | id kind EN: `build, research, fix, refactor, document, publish, analyze, plan, integrate, negotiate, batch` + entity `campaign` | `scripts/gen-icons.mjs` **đổi tên khi sinh** theo bảng cố định `scripts/icon-names.json` (`kien-tao → kind-build`, `tru-ta → kind-fix`, `chien-tranh → kind-campaign`…); icon thiết kế chưa có trong bảng ⇒ lệnh fail. Code chỉ thấy id EN; `themes/fantasy/kinds.json`: `{ id: "fix", icon: "kind-fix", building: "hunting-ground", … }`; chuỗi hiển thị ("Trừ tà" / "Exorcism") nằm trong i18n |
 | icon nghề `te-tuong, phap-su, hiep-si, nguoi-lun, elf-trinh-sat, thu-ky, nha-tho, chiem-tinh-gia, su-than, tho-ca, thu-thu-truong, thay-tu` | class EN: `chancellor, mage, knight, dwarf, scout, scribe, bard, astrologer, envoy, judge, monk` | sinh thành `class-chancellor … class-monk`; hai icon nghiệm thu thành `class-judge-build` (tho-ca) và `class-judge-document` (thu-thu-truong). `themes/fantasy/classes.json`: `judge` có `icon_by_kind` (build/fix/refactor/integrate/batch → `class-judge-build`; document/research/publish/negotiate → `class-judge-document`; analyze → `class-astrologer`; plan → `class-mage`) và `title_by_kind` (khóa i18n: Thợ cả, Thủ thư trưởng, Chiêm tinh gia thứ hai, Trọng tài, Hiền giả) |
 | huy hiệu tộc `fac-silver` / `fac-fire`, màu `--elv-fac-silver` / `--elv-fac-fire` | `character.tribe` (id mở) | sinh thành `tribe-silver` / `tribe-fire`; `themes/fantasy/tribes.json` theo tribe id: `{ claude: { crest: "tribe-silver", color: "--elv-fac-silver", name_key: "tribe.silver" }, gemini: { crest: "tribe-fire", … } }`; tộc chưa có mục theme (ví dụ `codex` vừa thêm) dùng huy hiệu `tribe-neutral` và màu trung tính cho tới khi có (§3.14) |
@@ -420,7 +451,7 @@ Cấp và danh tiếng là hàm thuần: `reputationOf(window)`, `levelChange(wi
 | `.elv-mana__cap` (trần), `.elv-mana__warn` (cảnh báo) | `mana.cap_pct`, `warn_margin_pct`, `king_reserve_pct` | HUD vẽ từ `ManaReading[]`; thanh theo tộc dùng **pool chính** (`gemini_models`), pool phụ hiện trong tooltip/Cài đặt — thiết kế cần hai thanh (§9.1 mục 19) |
 | `.elv-name` 24ch | `kingdom.name`, `territory.name`, `character.name` ≤ 24 | zod `max(24)` |
 | màn Cài đặt: mana_cap, king_reserve, 4 cầu dao, 3 kênh chuông, đường hầm, tiết kiệm, theme, 3 lịch, ngày/đêm | `kingdom.json` | đều đã có trường; **thiết kế còn thiếu**: `owner.locale`, `tools.gemini.kind` + `terms_acknowledged_at`, `territory.worktree_dir`, `subagent_max_*`, `resume_after_mana` → nhóm "Công cụ & nâng cao" (§9.1 mục 19) |
-| `scene` của HUD: default, cả tộc ngủ, CLI chưa đăng nhập, sa bàn, phòng thủ | `WorldState.banner` suy từ mana × tools × cờ sandbox × incident | selector thuần `bannerOf(state)` trong domain, dùng cho cả world và lite |
+| `scene` của HUD: default, cả tộc ngủ, CLI chưa đăng nhập, sa bàn, phòng thủ | `WorldState.banner` suy từ mana × tools × cờ sandbox × incident | selector thuần `bannerOf(state)` trong `domain/src/world/banner.ts`, dùng cho cả world và lite. HUD chỉ có chỗ cho một dải, nên trả một dải hoặc `null`, theo thứ tự: `sandbox` (dữ liệu giả không bao giờ được trông như thật) > `defense` (chiến dịch `mode = defense` đang `declared`/`active`) > `tool_unavailable` (CLI của tộc đang bật `missing` hoặc `logged_out`, cần người dùng) > `asleep` (pool hết mana của tộc đang bật, tự hồi). Đầu vào `BannerSource = {sandbox, tribes[{id, enabled, tool}], pools[{tribe, pool, asleep}], campaigns[{id, mode, status}]}`; `WorldState` của P0-09 mang các trường này |
 | icon hành động `act-seal, act-return, act-summon, act-suspend, act-reassign, act-archive, act-temple, act-declare`; trạng thái `q-*`, `c-*` | kind của inbox command; tông trạng thái | sinh thành `action-seal …`, `quest-open …`, `character-working …`; 1:1 với §2.3 và `statusToneOf` |
 
 **Quy tắc đặt id** (áp dụng cho mọi dữ liệu và code): id là **tiếng Anh chuẩn**, động từ/danh từ thông dụng; `snake_case` cho khóa và giá trị enum trong JSON, `kebab-case` cho id icon/asset/file (kể cả id script vì nó là tên file), `camelCase`/`PascalCase` trong TS. Không slug tiếng Việt, không từ "màu mè" (`exorcise`, `fortify`, `proclaim`, `divine`, `conquer`). Chất fantasy chỉ nằm ở chuỗi hiển thị (i18n, `title_key` của theme). Tên nghề (`knight`, `scout`, `judge`, `monk`…) và tên vai hệ thống (`chancellor`, `steward`, `herald`) giữ nguyên vì đó là ngôn ngữ chung của sản phẩm (như `pod`, `helm` của Kubernetes); câu hỏi đổi tên nghề sang vai kỹ thuật vẫn mở ở §10. (ADR 0014)
@@ -1099,7 +1130,10 @@ Kế hoạch sản phẩm 0.7 (như 0.6) còn vài chỗ viết theo hiện tr�
 
 Không có câu hỏi nào chặn giai đoạn 0.
 
-Không còn câu hỏi mở.
+Mở từ P0-04 (chặn `canTake` của P1-03 và `levelChange` của giai đoạn 5, không chặn giai đoạn 0):
+
+1. **Cấp ↔ hạng.** Kế hoạch sản phẩm nói "cấp 1–10 tương ứng hạng F→S", nhưng 10 cấp không chia đều cho 7 hạng. Cần bảng cấp → hạng cao nhất được nhận (ví dụ 1 F, 2 E, 3–4 D, 5–6 C, 7–8 B, 9 A, 10 S) để `canTake` biết "cao hơn một bậc".
+2. **Lên cấp liên tiếp.** "≥ 10 phán quyết, ≥ 85% thì lên" vẫn đúng sau phán quyết kế tiếp, nên nếu tính sau mỗi phán quyết thì nhân vật lên cấp liên tục. Cần luật: xóa cửa sổ khi đổi cấp, hoặc chỉ đếm phán quyết từ lần đổi cấp trước, hoặc cách khác.
 
 Đã trả lời (2026-11-06): tên nghề trong id giữ danh từ fantasy tiếng Anh (`knight, scout, scribe, bard, astrologer, envoy, mage, dwarf, judge, monk`); ADR 0019 chấp nhận, với sửa đổi: `design/` chỉ là bản gốc đầu tiên, sau khi nhập thì `ui-kit`/`ui` là nguồn và thiết kế đổi được trong lúc code.
 
@@ -1128,3 +1162,4 @@ Không còn câu hỏi mở.
 | 2026-11-06 | Cập nhật theo kế hoạch sản phẩm 0.7 (test trong thế giới): §3.15, ADR 0022 (`proposed`), §9.1 mục 29, P1-01 và P1-18 bổ sung, task mới P1-20 (Thử tường) và P1-21 (Khảo hạch mù), cả hai sau mốc giai đoạn 1. Mọi tài liệu trỏ tới `ke-hoach-dung-elvaria-0.7.md`; bản 0.6 giữ trong `docs/` làm lịch sử |
 | 2026-11-06 | Người dùng chốt ADR 0022 (`accepted`): nghi thức chọn theo kind và tag (`ritual_overrides`, tag `integration`), đất nháp cho người chấm, `fail_kind: flaky`, `defer_to_merge`, Khảo hạch mù trên máy đội. Nghi thức "Thử tường" của 0.7 mang tên hiển thị **Thả quái thử thành** |
 | 2026-11-06 | Người dùng chốt chạy task song song (§8 "Chạy song song"): mỗi task một nhánh tách từ `main`, một worktree, một phiên; 3–4 nhánh cùng lúc; đợt A = P0-04, P0-06, P0-07, thêm P0-05 khi một nhánh xong; spike P1-02, P1-12a chạy khi người dùng ngồi máy. Gỡ ba chỗ kế hoạch vướng khi tách việc: P0-10 tạo `planTick` tối thiểu trong `domain/src/dispatch` (P1-03 mở rộng) và lấy kết quả của nhân vật từ bảng kịch bản thuần trong `sandbox` thay cho `FakeRunner`, DAG không đổi (§7); P0-04 xuất hàm thuần render bảng §2.5, nhánh merge sau trong hai nhánh P0-04, P0-07 nối nó vào `docs:gen`; P0-11 vẫn là cổng trước P1-01 |
+| 2026-11-06 | P0-04 (máy trạng thái quest + nhân vật), chỗ thực tế khác kế hoạch, chờ người dùng chốt: (1) bảng §2.5 thêm hàng — `cancel` từ `claimed, blocked, paused_mana, review, returned` (trước đó lệnh `cancel` chỉ đi từ open/working, nên người dùng không bỏ được quest đang chờ), `suspend` từ working (→ returned) và review (bỏ verifier) cho khớp §2.6, `assign_verifier` (review → review: gán người chấm đổi quest mà chưa có hàng), `submit` tách R (bậc session) / S (bậc script), `unblock` (S, deps xong) tách khỏi `answer` (U), cột "Điều kiện" mới; (2) `reassign` từ trạm quân y đưa `attempts` về 0, `return` của người dùng chỉ cho bậc session; (3) lượt chạy `n` không lùi, khác `attempts` (verdict id và `.runs/` không trùng sau `retry`); (4) luật actor: R cần `assignee`, V cần `verifier`, S chỉ lập verdict máy khi không có verifier; (5) §2.6: mọi cầu dao (không chỉ thời gian) → swamp, thêm `crash` và `unassign`, meditating cư xử như working, người chấm hết mana ngủ với `status_before_sleep = idle` vì quest đã bỏ verifier, người chấm gặp cầu dao về idle; (6) ngưỡng danh hiệu = ngưỡng lên cấp trên tag (10 phán quyết, 85%); (7) `bannerOf` trả một dải theo thứ tự sandbox > defense > tool_unavailable > asleep; (8) `levelChange`, `canTake` hoãn vì hai câu hỏi ở §10; (9) spec domain đọc `elvaria.css` qua `provide` của vitest; fixture spec ở `src/**/__fixtures__/`, ngoài coverage |
