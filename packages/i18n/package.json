@@ -1,0 +1,20 @@
+{
+  "name": "@elvaria/i18n",
+  "version": "0.0.0",
+  "private": true,
+  "description": "VI/EN display strings for the CLI and the UI, and the glossary that fixes every term (glossary.json).",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@elvaria/config": "workspace:*",
+    "@vitest/coverage-v8": "^5.1.0",
+    "typescript": "~5.9.3",
+    "vitest": "^5.1.0"
+  }
+}

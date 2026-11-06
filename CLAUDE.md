@@ -71,7 +71,7 @@ ELVARIA_LIVE=1 pnpm --filter @elvaria/runner-claude test             # smoke v�
 - **Chỉ Quản sự ghi trạng thái quest** (`quests/*.json`, `characters/*.json`). CLI, Sứ giả, điện thoại và Tể tướng ghi lệnh vào `inbox/<ulid>.json` (ADR 0005).
 - **Người làm không phán.** Verifier ≠ assignee và ≠ mọi người từng làm quest đó (với đội: mọi người từng làm bất kỳ quest nào của đội); phiên mới; ưu tiên khác họ model; kiểm tra máy chạy trước và là trọng tài chính (check fail ⇒ fail). Verifier không có Edit/Write (ADR 0008, 0020), trừ trong đất nháp dùng một lần của nghi thức Thả quái thử thành: không commit, không push, xóa sau verdict, nhánh quest không đổi (ADR 0022).
 - **Một quest, một context.** Hồi sinh = phiên mới từ `handover.md` + `journal.jsonl` + git; không `--resume` trừ khi `dispatch.resume_after_mana = true`. Cái gì máy làm được thì dùng bậc script trong catalog, không gọi model (ADR 0017).
-- **Thuật ngữ theo [docs/glossary.md](docs/glossary.md).** Identifier và mọi id dữ liệu là tiếng Anh: `snake_case` cho khóa/enum JSON, `kebab-case` cho id icon/asset/file, `camelCase`/`PascalCase` trong TS. Dùng đúng từ trong cột "id" (`steward`, không `dispatcher`; `seal`, không `approve`). Chất fantasy chỉ ở chuỗi hiển thị qua i18n (ADR 0014).
+- **Thuật ngữ theo [docs/glossary.md](docs/glossary.md)** (sinh từ `packages/i18n/src/glossary.json`: sửa thuật ngữ ở đó rồi `pnpm docs:gen`, không sửa file `.md`). Identifier và mọi id dữ liệu là tiếng Anh: `snake_case` cho khóa/enum JSON, `kebab-case` cho id icon/asset/file, `camelCase`/`PascalCase` trong TS. Dùng đúng từ trong cột "id" (`steward`, không `dispatcher`; `seal`, không `approve`). Chất fantasy chỉ ở chuỗi hiển thị qua i18n (ADR 0014).
 - **Ngôn ngữ.** Code, comment, commit, ADR, prompt nhân vật: tiếng Anh. Tài liệu trong `docs/` (trừ ADR): tiếng Việt. Chuỗi cho người dùng: qua `t()`, có cả `vi` và `en`.
 - **Dữ liệu có schema.** Mỗi file JSON có `version`; mỗi dòng event có `v`. Schema nguồn là zod trong `packages/domain/src/schema`; `docs/schemas/` là đầu ra sinh (ADR 0003). Đổi không tương thích = tăng version + migration + fixture.
 - **Dạng nhiệm vụ, nghề, nghi thức, script, tag là dữ liệu registry**, không phải code: không `switch` theo kind trong lõi (ADR 0016).
@@ -120,7 +120,7 @@ Trước khi sửa các file sau, đọc file đó, test của nó và ADR liên
 | `packages/hooks/**` | `pnpm --filter @elvaria/hooks test` (gồm benchmark khởi động < 100 ms) |
 | `packages/eventlog/**` | `pnpm --filter @elvaria/eventlog test` (fixture 12 loại secret phải bị che) |
 | `packages/config/boundaries.mjs`, `dependencies` trong `package.json`, import giữa package | `pnpm boundaries` và `pnpm lint` |
-| `docs/glossary.md`, `packages/i18n/**` | `pnpm docs:check` và `pnpm i18n:check` |
+| `packages/i18n/**` (thuật ngữ ở `src/glossary.json`; `docs/glossary.md` là file sinh, không sửa tay) | `pnpm docs:gen`, `pnpm docs:check` và `pnpm i18n:check` |
 | `docs/**`, `CLAUDE.md`, README của package | `pnpm docs:check` |
 | Bất kỳ thứ gì, trước khi báo xong | `pnpm check` |
 
@@ -129,6 +129,6 @@ Trước khi sửa các file sau, đọc file đó, test của nó và ADR liên
 - Test cho thay đổi, chạy xanh: lint, typecheck, unit, boundaries, schemas drift, docs:check (`pnpm check`).
 - Chạy được trên Windows **và** macOS (CI matrix xanh); ca riêng của một OS có test riêng.
 - README của package chạm vào vẫn đủ 4 mục *Does* / *Does not* / *Depends on* / *How to test*.
-- ADR mới hoặc cập nhật nếu đổi một quyết định đã ghi; glossary cập nhật nếu thêm thuật ngữ.
+- ADR mới hoặc cập nhật nếu đổi một quyết định đã ghi; `glossary.json` cập nhật (rồi `pnpm docs:gen`) nếu thêm thuật ngữ.
 - Cột Trạng thái của task trong [docs/implementation-plan.md](docs/implementation-plan.md) §8 đã đổi; kế hoạch đã sửa nếu thực tế khác.
 - Diff không có thay đổi ngoài phạm vi task.
