@@ -1,7 +1,8 @@
 // Claude Code hook payloads (stdin), one per event Elvaria registers, shaped after the hooks reference of Claude
-// Code 2.1.318 (code.claude.com/docs/en/hooks, read 2026-11-06). Spike P1-02 records real ones; until then
-// these are the contract the specs hold the hook to. Paths are Windows paths: the hook must read backslashes
-// on every OS (cli-facts §1.5).
+// Code 2.1.318 (code.claude.com/docs/en/hooks, read 2026-11-06), so every event has a case with every field.
+// The payloads Claude Code really sent are in packages/runner-claude/fixtures/hook-payloads.jsonl (spike
+// P1-02, real-payloads.spec.ts); PostToolUseFailure, PreCompact, PostCompact and Notification were not seen
+// there. Paths are Windows paths: the hook must read backslashes on every OS (cli-facts §1.5).
 
 export const QUEST = 'q_20261106_7k3m2a';
 export const CHARACTER = 'thorn';
@@ -89,8 +90,8 @@ export const EXPECTED_TYPES: Readonly<Record<ClaudeEvent, readonly string[]>> = 
   PostToolUseFailure: ['agent.tool'],
   Stop: [],
   StopFailure: ['mana.signal'],
-  SubagentStart: ['agent.subagent.start'],
-  SubagentStop: ['agent.subagent.end'],
+  SubagentStart: [],
+  SubagentStop: [],
   PreCompact: ['agent.compact'],
   PostCompact: ['agent.compact'],
   Notification: ['agent.notification'],

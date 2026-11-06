@@ -1,5 +1,6 @@
-// One hook call, from stdin to exit code, with every input passed in so specs run it in-process
-// (implementation-plan §3.6). elvaria-hook.ts wires it to the real process.
+// One hook call, from stdin to stdout and stderr, with every input passed in so specs run it in-process
+// (implementation-plan §3.6). elvaria-hook.ts wires it to the real process. The exit code is always 0: a
+// decision travels as JSON on stdout (draft.ts).
 import { translateClaude } from './claude/translate.ts';
 import { loadContext } from './context.ts';
 import { errorText } from './draft.ts';
@@ -20,9 +21,9 @@ export interface HookIo {
 }
 
 export interface HookOutcome {
-  /** 2 only when a law blocks (PreToolUse) or the handover letter is missing (Stop); 0 otherwise. */
-  readonly exitCode: 0 | 2;
-  /** On exit 2 the reason, which the CLI hands to the agent; else notes for the run's log. */
+  /** The decision as one JSON line when the call is stopped (a law, the apprentice rule, the letter); else ''. */
+  readonly stdout: string;
+  /** Notes for the run's log: missing context, failed writes. Never read as a decision. */
   readonly stderr: string;
 }
 
@@ -44,9 +45,9 @@ const notes = (problems: readonly string[]): string =>
 
 export async function runHook(io: HookIo): Promise<HookOutcome> {
   const payload = payloadOf(io.stdin);
-  if (payload === undefined) return { exitCode: 0, stderr: notes(['stdin is not a JSON object; ignored']) };
+  if (payload === undefined) return { stdout: '', stderr: notes(['stdin is not a JSON object; ignored']) };
   const ctx = loadContext(io.env, io.argv);
-  const result = translateClaude(payload, ctx, io.now);
+  const result = translateClaude(payload, ctx);
   const session =
     typeof payload.session_id === 'string' && payload.session_id !== '' ? payload.session_id : undefined;
   let written: string[];
@@ -59,7 +60,8 @@ export async function runHook(io: HookIo): Promise<HookOutcome> {
   } catch (error) {
     written = [`events not written: ${errorText(error)}`];
   }
-  // On exit 2 the CLI shows stderr to the agent as the reason: only the reason goes there.
-  if (result.block !== undefined) return { exitCode: 2, stderr: `${result.block}\n` };
-  return { exitCode: 0, stderr: notes([...ctx.problems, ...result.problems, ...written]) };
+  return {
+    stdout: result.decision === undefined ? '' : `${JSON.stringify(result.decision)}\n`,
+    stderr: notes([...ctx.problems, ...result.problems, ...written]),
+  };
 }

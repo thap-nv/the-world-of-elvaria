@@ -1,5 +1,6 @@
 // Each of the twelve Claude Code events (cli-facts §1.4) with a fake stdin payload → the drafts it yields
-// (implementation-plan §3.6, §3.10). Lines on disk are checked against the schema in run-hook.spec.ts.
+// (implementation-plan §3.6, §3.10). Lines on disk are checked against the schema in run-hook.spec.ts; the
+// payloads Claude Code really sent are run in real-payloads.spec.ts.
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
@@ -13,12 +14,12 @@ import {
 import { tempKingdom } from '../__fixtures__/temp.ts';
 import { loadContext } from '../context.ts';
 import { compileLaws } from '../laws.ts';
+import { APPRENTICE } from './tool-events.ts';
 import { CLAUDE_HOOK_EVENTS, modelSlugOf, snakeIdOf, translateClaude } from './translate.ts';
 import type { TempKingdom } from '../__fixtures__/temp.ts';
 import type { ClaudeEvent } from '../__fixtures__/claude-payloads.ts';
 import type { HookContext } from '../context.ts';
-
-const NOW = Date.parse('2026-11-06T02:12:03Z');
+import type { Translation } from '../draft.ts';
 
 let kingdom: TempKingdom;
 let ctx: HookContext;
@@ -28,10 +29,19 @@ beforeEach(async () => {
 });
 afterEach(() => kingdom.remove());
 
-const dataOf = (event: ClaudeEvent, fields = {}, at = NOW) => {
-  const result = translateClaude(payload(event, fields), ctx, at);
+const dataOf = (event: ClaudeEvent, fields = {}) => {
+  const result = translateClaude(payload(event, fields), ctx);
   expect(result.drafts).toHaveLength(1);
   return result.drafts[0]?.data;
+};
+
+/** The reason of a PreToolUse `deny`, as Claude Code reads it from stdout. */
+const denyReason = (result: Translation): string | undefined => {
+  const output = result.decision?.hookSpecificOutput as
+    { hookEventName: string; permissionDecision: string; permissionDecisionReason: string } | undefined;
+  if (output === undefined) return undefined;
+  expect(output).toMatchObject({ hookEventName: 'PreToolUse', permissionDecision: 'deny' });
+  return output.permissionDecisionReason;
 };
 
 describe('translateClaude', () => {
@@ -40,22 +50,29 @@ describe('translateClaude', () => {
   });
 
   it.each(Object.keys(PAYLOADS) as ClaudeEvent[])(
-    '%s yields its lines and never blocks a verifier',
+    '%s yields its lines and never stops a verifier',
     (event) => {
-      const result = translateClaude(PAYLOADS[event], ctx, NOW);
+      const result = translateClaude(PAYLOADS[event], ctx);
       expect(result.drafts.map(({ type }) => type)).toEqual(EXPECTED_TYPES[event]);
-      expect(result.block).toBeUndefined();
+      expect(result.decision).toBeUndefined();
     },
   );
 
   it('ignores events it does not register and payloads without an event', () => {
-    for (const raw of [{ hook_event_name: 'UserPromptSubmit' }, { hook_event_name: 'constructor' }, {}]) {
-      expect(translateClaude(raw, ctx, NOW)).toEqual({ drafts: [], block: undefined, problems: [] });
+    for (const raw of [{ hook_event_name: 'InstructionsLoaded' }, { hook_event_name: 'constructor' }, {}]) {
+      expect(translateClaude(raw, ctx)).toEqual({ drafts: [], decision: undefined, problems: [] });
     }
   });
 
-  it('SessionStart: session and model slug', () => {
+  it('SessionStart: session and model slug, the runner model when the payload has none', () => {
     expect(dataOf('SessionStart')).toEqual({ session: SESSION, model: 'claude-opus-5-5' });
+    // Under -p Claude Code sends no model (spike P1-02); the runner passes it.
+    ctx = { ...ctx, model: 'claude-sonnet-5-5' };
+    expect(dataOf('SessionStart', { model: undefined })).toEqual({
+      session: SESSION,
+      model: 'claude-sonnet-5-5',
+    });
+    ctx = { ...ctx, model: undefined };
     expect(dataOf('SessionStart', { model: undefined, session_id: undefined })).toEqual({
       session: 'unknown',
       model: 'unknown',
@@ -82,9 +99,7 @@ describe('translateClaude', () => {
       path: 'D:/kingdom/quests/q/handover.md',
     });
     expect(dataOf('PostToolUse', { tool_name: 'TodoWrite', tool_input: {}, duration_ms: undefined })).toEqual(
-      {
-        tool: 'other',
-      },
+      { tool: 'other' },
     );
   });
 
@@ -95,11 +110,7 @@ describe('translateClaude', () => {
       exit: 1,
       duration_ms: 4187,
     });
-    const edit = {
-      tool_name: 'Edit',
-      tool_input: { file_path: `${PLOT}\\a.ts` },
-      error: 'x',
-    };
+    const edit = { tool_name: 'Edit', tool_input: { file_path: `${PLOT}\\a.ts` }, error: 'x' };
     expect(dataOf('PostToolUseFailure', edit)).toEqual({ tool: 'write', path: 'a.ts', duration_ms: 4187 });
   });
 
@@ -108,17 +119,11 @@ describe('translateClaude', () => {
     expect(dataOf('StopFailure', { error: undefined })).toEqual({ error: 'unknown', source: 'stop_failure' });
   });
 
-  it('SubagentStart and SubagentStop: the apprentice and how long it ran', () => {
-    expect(dataOf('SubagentStart')).toEqual({ agent_type: 'apprentice' });
-    expect(dataOf('SubagentStop', {}, NOW + 95_000)).toEqual({
-      agent_type: 'apprentice',
-      duration_ms: 95_000,
-    });
-    // The start is forgotten once read; a stop without a start reads 0.
-    expect(dataOf('SubagentStop', {}, NOW + 99_000)).toEqual({ agent_type: 'apprentice', duration_ms: 0 });
-    expect(dataOf('SubagentStart', { agent_id: '../../x', agent_type: undefined })).toEqual({
-      agent_type: 'unknown',
-    });
+  it('SubagentStart and SubagentStop write nothing: the runner reads sub-agents from the stream', () => {
+    for (const event of ['SubagentStart', 'SubagentStop'] as const) {
+      const explore = payload(event, { agent_type: 'Explore' });
+      expect(translateClaude(explore, ctx)).toEqual({ drafts: [], decision: undefined, problems: [] });
+    }
   });
 
   it('PreCompact and PostCompact: phase and trigger, never the summary', () => {
@@ -133,41 +138,55 @@ describe('translateClaude', () => {
     });
     expect(
       dataOf('Notification', { title: 'Waiting', message: undefined, notification_type: undefined }),
-    ).toEqual({
-      notification_type: 'unknown',
-      message: '',
-      title: 'Waiting',
-    });
+    ).toEqual({ notification_type: 'unknown', message: '', title: 'Waiting' });
   });
 });
 
 describe('PreToolUse', () => {
   const pre = (tool_name: string, tool_input: Record<string, unknown>) =>
-    translateClaude(payload('PreToolUse', { tool_name, tool_input }), ctx, NOW);
+    translateClaude(payload('PreToolUse', { tool_name, tool_input }), ctx);
 
-  it('blocks a forbidden path given with backslashes, and logs agent.tool.blocked', () => {
+  it('denies a forbidden path given with backslashes, on stdout, and logs agent.tool.blocked', () => {
     const result = pre('Write', { file_path: `${PLOT}\\.env`, content: 'X=1' });
-    expect(result.block).toMatch(/^Elvaria law of this territory: .*\.env is a forbidden path \(\.env\)/);
+    expect(denyReason(result)).toMatch(
+      /^Elvaria law of this territory: .*\.env is a forbidden path \(\.env\)/,
+    );
     expect(result.drafts.map(({ type, data }) => [type, data.tool])).toEqual([
       ['agent.tool.blocked', 'write'],
     ]);
     expect(result.drafts[0]?.data.reason).toMatch(/\.env is a forbidden path/);
   });
 
-  it('blocks a forbidden command and a shell read of a forbidden file', () => {
-    expect(pre('Bash', { command: 'git push origin HEAD' }).block).toMatch(/forbidden pattern/);
-    expect(pre('PowerShell', { command: 'Get-Content .env' }).block).toMatch(/forbidden path/);
-    expect(pre('Grep', { pattern: 'KEY', glob: '.env' }).block).toMatch(/forbidden path/);
+  it('denies a forbidden command and a shell read of a forbidden file', () => {
+    expect(denyReason(pre('Bash', { command: 'git push origin HEAD' }))).toMatch(/forbidden pattern/);
+    expect(denyReason(pre('PowerShell', { command: 'Get-Content .env' }))).toMatch(/forbidden path/);
+    expect(denyReason(pre('Grep', { pattern: 'KEY', glob: '.env' }))).toMatch(/forbidden path/);
   });
 
   it('lets a lawful call through without a line', () => {
-    expect(pre('Bash', { command: 'pnpm test' })).toEqual({ drafts: [], block: undefined, problems: [] });
+    expect(pre('Bash', { command: 'pnpm test' })).toEqual({ drafts: [], decision: undefined, problems: [] });
   });
 
-  it('blocks file and shell tools while the laws are unknown, and nothing else', () => {
+  it('denies file and shell tools while the laws are unknown, and nothing else', () => {
     ctx = { ...ctx, laws: { paths: [], commands: [], broken: 'policy x: not found' } };
-    expect(pre('Edit', { file_path: 'a.ts' }).block).toMatch(/laws could not be loaded/);
-    expect(pre('WebSearch', { query: 'zod' }).block).toBeUndefined();
+    expect(denyReason(pre('Edit', { file_path: 'a.ts' }))).toMatch(/laws could not be loaded/);
+    expect(pre('WebSearch', { query: 'zod' }).decision).toBeUndefined();
+  });
+
+  it('lets the apprentice through and denies every other sub-agent, laws or not (§3.12)', () => {
+    expect(pre('Agent', { prompt: 'x', subagent_type: APPRENTICE }).decision).toBeUndefined();
+    ctx = { ...ctx, laws: { paths: [], commands: [], broken: 'policy x: not found' } };
+    for (const [tool, input] of [
+      ['Agent', { prompt: 'x', subagent_type: 'Explore' }],
+      ['Task', { prompt: 'x', subagent_type: 'general-purpose' }],
+      ['Agent', { prompt: 'x' }],
+    ] as const) {
+      const result = pre(tool, input);
+      expect(denyReason(result)).toMatch(/^Elvaria rule: .*not allowed; the only sub-agent is apprentice/);
+      expect(result.drafts.map(({ type, data }) => [type, data.tool])).toEqual([
+        ['agent.tool.blocked', 'other'],
+      ]);
+    }
   });
 });
 

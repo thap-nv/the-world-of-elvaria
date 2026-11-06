@@ -46,7 +46,12 @@ function runBuilt(stdin: unknown, env: HookEnv, options: { policy?: string; prel
     env: { ...baseEnv(), ...env },
     encoding: 'utf8',
   });
-  return { status: result.status, stderr: result.stderr, ms: performance.now() - started };
+  return {
+    status: result.status,
+    stdout: result.stdout,
+    stderr: result.stderr,
+    ms: performance.now() - started,
+  };
 }
 
 const median = (values: number[]): number =>
@@ -66,24 +71,28 @@ afterEach(() => kingdom.remove());
 describe('the built hook', () => {
   it('turns every Claude event on stdin into its lines', async () => {
     for (const event of Object.keys(PAYLOADS) as ClaudeEvent[]) {
-      const { status, stderr } = runBuilt(PAYLOADS[event], kingdom.env());
-      expect({ event, status, stderr }).toEqual({ event, status: 0, stderr: '' });
+      const { status, stdout, stderr } = runBuilt(PAYLOADS[event], kingdom.env());
+      expect({ event, status, stdout, stderr }).toEqual({ event, status: 0, stdout: '', stderr: '' });
     }
     const { events, issues } = await kingdom.log();
     expect(issues).toEqual([]);
     expect(events.map(({ type }) => type).sort()).toEqual(Object.values(EXPECTED_TYPES).flat().sort());
   });
 
-  it('blocks a backslash path to .env with exit 2 and the reason on stderr', async () => {
+  it('denies a backslash path to .env with a JSON decision on stdout and exit 0', async () => {
     const policy = path.join(kingdom.runDir, 'policy.json');
     await writeFile(policy, JSON.stringify({ version: 1, laws: DC1_LAWS }), 'utf8');
     const write = payload('PreToolUse', {
       tool_name: 'Write',
       tool_input: { file_path: 'C:\\Users\\dev\\dc1-se-team\\.elvaria\\worktrees\\q\\.env', content: 'X=1' },
     });
-    const { status, stderr } = runBuilt(write, kingdom.env(), { policy });
-    expect(status).toBe(2);
-    expect(stderr).toMatch(/^Elvaria law of this territory: .*forbidden path \(\.env\)/);
+    const { status, stdout, stderr } = runBuilt(write, kingdom.env(), { policy });
+    expect({ status, stderr }).toEqual({ status: 0, stderr: '' });
+    const decision = JSON.parse(stdout) as { hookSpecificOutput: Record<string, string> };
+    expect(decision.hookSpecificOutput.permissionDecision).toBe('deny');
+    expect(decision.hookSpecificOutput.permissionDecisionReason).toMatch(
+      /^Elvaria law of this territory: .*forbidden path \(\.env\)/,
+    );
     expect((await kingdom.log()).events.map(({ type }) => type)).toEqual(['agent.tool.blocked']);
   });
 

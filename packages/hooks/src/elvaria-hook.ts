@@ -40,10 +40,12 @@ try {
     now: Date.now(),
     tsFormat: processZoneTs,
   });
+  if (outcome.stdout !== '') process.stdout.write(outcome.stdout);
   if (outcome.stderr !== '') process.stderr.write(outcome.stderr);
-  process.exitCode = outcome.exitCode;
+  process.exitCode = 0;
 } catch (error) {
-  // A bug in the hook: exit 1 is a non-blocking error the CLI reports, never a silent pass or a fake block.
+  // A bug in the hook: exit 1 is an error the CLI reports (a PreToolUse declared with onFailure: block stops
+  // the call), never a silent pass or a made-up decision.
   process.stderr.write(
     `elvaria-hook: ${error instanceof Error ? (error.stack ?? error.message) : String(error)}\n`,
   );

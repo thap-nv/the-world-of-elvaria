@@ -12,6 +12,7 @@ import { loadContext } from './context.ts';
 import { STOP_BLOCK_LIMIT, fingerprintOf, recordHandoverStart, stopGate } from './handover.ts';
 import type { TempKingdom } from './__fixtures__/temp.ts';
 import type { HookContext } from './context.ts';
+import type { Translation } from './draft.ts';
 
 let kingdom: TempKingdom;
 let ctx: HookContext;
@@ -21,9 +22,14 @@ beforeEach(async () => {
 });
 afterEach(() => kingdom.remove());
 
-const start = (session = 'sess-1') =>
-  translateClaude({ ...PAYLOADS.SessionStart, session_id: session }, ctx, 0);
-const stop = (session = 'sess-1') => translateClaude({ ...PAYLOADS.Stop, session_id: session }, ctx, 0);
+const start = (session = 'sess-1') => translateClaude({ ...PAYLOADS.SessionStart, session_id: session }, ctx);
+const stop = (session = 'sess-1') => translateClaude({ ...PAYLOADS.Stop, session_id: session }, ctx);
+/** The reason of a Stop `block` decision, as Claude Code reads it from stdout. */
+const reasonOf = (result: Translation): string | undefined => {
+  if (result.decision === undefined) return undefined;
+  expect(result.decision.decision).toBe('block');
+  return typeof result.decision.reason === 'string' ? result.decision.reason : undefined;
+};
 const typesOf = (result: ReturnType<typeof stop>) =>
   result.drafts.map(({ data }) => (data as { notification_type: string }).notification_type);
 
@@ -33,17 +39,17 @@ describe('Stop gate', () => {
     start();
     for (let count = 1; count <= STOP_BLOCK_LIMIT; count += 1) {
       const result = stop();
-      expect(result.block).toMatch(/update the handover letter before finishing/);
-      expect(result.block).toContain(path.join(kingdom.root, 'quests'));
+      expect(reasonOf(result)).toMatch(/update the handover letter before finishing/);
+      expect(reasonOf(result)).toContain(path.join(kingdom.root, 'quests'));
       expect(typesOf(result)).toEqual(['handover_required']);
     }
     const last = stop();
-    expect(last.block).toBeUndefined();
+    expect(reasonOf(last)).toBeUndefined();
     expect(typesOf(last)).toEqual(['handover_unchanged']);
   });
 
   it('blocks when there is no letter at all, even without a recorded start', () => {
-    expect(stop().block).toBeDefined();
+    expect(reasonOf(stop())).toBeDefined();
   });
 
   it('counts per session: a revived session is asked again', async () => {
@@ -51,7 +57,7 @@ describe('Stop gate', () => {
     start('first');
     for (let count = 0; count <= STOP_BLOCK_LIMIT; count += 1) stop('first');
     start('revived');
-    expect(stop('revived').block).toBeDefined();
+    expect(reasonOf(stop('revived'))).toBeDefined();
   });
 
   it('lets an assignee finish once the letter changed, judged against the start of the attempt', async () => {
@@ -65,14 +71,14 @@ describe('Stop gate', () => {
 
   it('lets an existing letter pass when no start was recorded', async () => {
     await kingdom.writeHandover('# Bàn giao\n');
-    expect(stop().block).toBeUndefined();
+    expect(reasonOf(stop())).toBeUndefined();
   });
 
   it('leaves verifiers and sessions without a quest alone', () => {
     ctx = { ...ctx, role: 'verifier' };
-    expect(stop().block).toBeUndefined();
+    expect(reasonOf(stop())).toBeUndefined();
     ctx = { ...ctx, role: 'assignee', quest: undefined };
-    expect(stop().block).toBeUndefined();
+    expect(reasonOf(stop())).toBeUndefined();
     expect(recordHandoverStart(ctx)).toEqual([]);
   });
 
@@ -82,14 +88,14 @@ describe('Stop gate', () => {
       path.join(kingdom.runDir, 'hook', 'stop-blocks.json'),
       '{"version":1,"sessions":{"sess-1":"x"}}',
     );
-    expect(stop().block).toBeDefined();
+    expect(reasonOf(stop())).toBeDefined();
   });
 
   it('lets the session end when it cannot tell', async () => {
     // A folder where the letter should be: reading it fails with EISDIR, not ENOENT.
     await mkdir(path.join(kingdom.root, 'quests', ctx.quest ?? '', 'handover.md'), { recursive: true });
     const result = stopGate(ctx, 'sess-1');
-    expect(result.block).toBeUndefined();
+    expect(reasonOf(result)).toBeUndefined();
     expect(result.problems).toEqual([expect.stringMatching(/^handover check failed/)]);
     expect(recordHandoverStart(ctx)).toEqual([expect.stringMatching(/could not record/)]);
   });

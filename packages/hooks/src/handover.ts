@@ -4,7 +4,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { errorText, notification, translation } from './draft.ts';
+import { blockStop, errorText, notification, translation } from './draft.ts';
 import { readState, stateFile, writeState } from './run-state.ts';
 import type { HookContext } from './context.ts';
 import type { Translation } from './draft.ts';
@@ -101,7 +101,9 @@ export function stopGate(ctx: HookContext, session: string): Translation {
     }
     writeState(file, { sessions: { ...sessions, [session]: count + 1 } });
     const message = `Stop blocked (${count + 1}/${STOP_BLOCK_LIMIT}): handover.md unchanged since the attempt started.`;
-    return translation([notification('handover_required', message)], { block: blockReason(gate.letter) });
+    return translation([notification('handover_required', message)], {
+      decision: blockStop(blockReason(gate.letter)),
+    });
   } catch (error) {
     // The gate is a reminder, not a fence: when it cannot tell, the session may end.
     return translation([], { problems: [`handover check failed: ${errorText(error)}`] });

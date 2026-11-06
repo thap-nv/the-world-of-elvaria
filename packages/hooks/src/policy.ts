@@ -15,6 +15,8 @@ export interface HookPolicy {
   readonly attempt?: number;
   readonly character?: string;
   readonly role?: string;
+  /** The model the runner passed (`--model`): Claude's SessionStart payload under `-p` has none. */
+  readonly model?: string;
   /** IANA zone of the kingdom (`kingdom.tz`): the day file of every line follows it (§2.1). */
   readonly tz?: string;
   /** `territory.laws`; other law kinds may be present and are not the hook's to enforce. */
@@ -24,7 +26,7 @@ export interface HookPolicy {
 export type PolicyResult =
   { readonly ok: true; readonly policy: HookPolicy } | { readonly ok: false; readonly problem: string };
 
-const STRING_FIELDS = ['kingdom', 'quest', 'character', 'role', 'tz'] as const;
+const STRING_FIELDS = ['kingdom', 'quest', 'character', 'role', 'model', 'tz'] as const;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);

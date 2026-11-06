@@ -33,8 +33,9 @@ describe('loadContext', () => {
   };
 
   it('reads the session from env and builds the run folder from it', () => {
-    const ctx = loadContext(kingdom.env({ ELVARIA_ROLE: 'assignee' }), []);
+    const ctx = loadContext(kingdom.env({ ELVARIA_ROLE: 'assignee', ELVARIA_MODEL: 'claude-opus-5-5' }), []);
     expect(ctx).toMatchObject({
+      model: 'claude-opus-5-5',
       kingdom: kingdom.root,
       quest: QUEST,
       attempt: 1,
@@ -55,6 +56,7 @@ describe('loadContext', () => {
       attempt: 3,
       character: 'other',
       role: 'verifier',
+      model: 'claude-sonnet-5-5',
       tz: 'Asia/Kolkata',
       laws: DC1_LAWS,
     });
@@ -64,6 +66,7 @@ describe('loadContext', () => {
       attempt: 3,
       character: CHARACTER,
       role: 'verifier',
+      model: 'claude-sonnet-5-5',
       tz: 'Asia/Kolkata',
     });
     expect(ctx.runDir).toBe(kingdom.runDir);

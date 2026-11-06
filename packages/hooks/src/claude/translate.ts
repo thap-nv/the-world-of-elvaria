@@ -2,14 +2,13 @@
 // of the event log (implementation-plan §3.6, §3.10). Lines go to the log and the quest's journal (write.ts).
 import { notification, translation, withoutUndefined } from '../draft.ts';
 import { recordHandoverStart, stopGate } from '../handover.ts';
-import { recordSubagentStart, subagentDuration } from '../subagents.ts';
 import { claudeInputOf } from './input.ts';
 import { postToolUse, postToolUseFailure, preToolUse } from './tool-events.ts';
 import type { HookContext } from '../context.ts';
 import type { Translation } from '../draft.ts';
 import type { ClaudeInput } from './input.ts';
 
-type Handler = (input: ClaudeInput, ctx: HookContext, now: number) => Translation;
+type Handler = (input: ClaudeInput, ctx: HookContext) => Translation;
 
 /** What a required id-like field reads when the CLI left it out; the line stays valid and says so. */
 const UNKNOWN = 'unknown';
@@ -24,8 +23,12 @@ export const snakeIdOf = (value: string | undefined): string => {
   return /^[a-z]/.test(id) ? id : UNKNOWN;
 };
 
+/**
+ * Under `-p` the payload has no `model` (spike P1-02, hook-payloads.jsonl), so the runner's `model` in the
+ * context stands in for it.
+ */
 function sessionStart(input: ClaudeInput, ctx: HookContext): Translation {
-  const data = { session: input.session ?? UNKNOWN, model: modelSlugOf(input.text('model')) };
+  const data = { session: input.session ?? UNKNOWN, model: modelSlugOf(input.text('model') ?? ctx.model) };
   return translation([{ type: 'agent.session.start', data }], { problems: recordHandoverStart(ctx) });
 }
 
@@ -34,20 +37,6 @@ const stopFailure: Handler = (input) =>
   translation([
     { type: 'mana.signal', data: { error: snakeIdOf(input.text('error')), source: 'stop_failure' } },
   ]);
-
-const subagentStart: Handler = (input, ctx, now) => {
-  const agentType = input.text('agent_type') ?? UNKNOWN;
-  const problems = recordSubagentStart(ctx.runDir, input.text('agent_id') ?? '', now);
-  return translation([{ type: 'agent.subagent.start', data: { agent_type: agentType } }], { problems });
-};
-
-const subagentStop: Handler = (input, ctx, now) => {
-  const data = {
-    agent_type: input.text('agent_type') ?? UNKNOWN,
-    duration_ms: subagentDuration(ctx.runDir, input.text('agent_id') ?? '', now),
-  };
-  return translation([{ type: 'agent.subagent.end', data }]);
-};
 
 /** Meditation (§3.12): the summary itself stays out, like transcripts (ADR 0010). */
 const compact =
@@ -72,8 +61,11 @@ const HANDLERS = new Map<string, Handler>([
   ['PostToolUseFailure', postToolUseFailure],
   ['Stop', (input, ctx) => stopGate(ctx, input.session ?? UNKNOWN)],
   ['StopFailure', stopFailure],
-  ['SubagentStart', subagentStart],
-  ['SubagentStop', subagentStop],
+  // agent.subagent.start/end come from the stream's system/task_* lines (runner): SubagentStop does not run
+  // when an apprentice stops at maxTurns, the very case the minutes are measured for (spike P1-02, §3.12).
+  // The sub-agent gate is PreToolUse on the Agent tool; SubagentStart cannot block.
+  ['SubagentStart', () => translation([])],
+  ['SubagentStop', () => translation([])],
   ['PreCompact', compact('pre')],
   ['PostCompact', compact('post')],
   ['Notification', notice],
@@ -82,12 +74,8 @@ const HANDLERS = new Map<string, Handler>([
 /** The events this hook handles, in the order of cli-facts §1.4. */
 export const CLAUDE_HOOK_EVENTS: readonly string[] = [...HANDLERS.keys()];
 
-/** One Claude Code hook call. Events Elvaria does not register write nothing. */
-export function translateClaude(
-  raw: Readonly<Record<string, unknown>>,
-  ctx: HookContext,
-  now: number,
-): Translation {
+/** One Claude Code hook call. Events Elvaria does not register (InstructionsLoaded, …) write nothing. */
+export function translateClaude(raw: Readonly<Record<string, unknown>>, ctx: HookContext): Translation {
   const input = claudeInputOf(raw);
-  return HANDLERS.get(input.event)?.(input, ctx, now) ?? translation([]);
+  return HANDLERS.get(input.event)?.(input, ctx) ?? translation([]);
 }

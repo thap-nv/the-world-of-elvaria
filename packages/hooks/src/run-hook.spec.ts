@@ -37,7 +37,7 @@ describe('runHook', () => {
     // One call per millisecond: each call is its own process with its own stamper, ordered by time.
     for (const [index, event] of events.entries()) {
       expect(await call(PAYLOADS[event], kingdom.env(), [], NOW + index)).toEqual({
-        exitCode: 0,
+        stdout: '',
         stderr: '',
       });
     }
@@ -82,7 +82,7 @@ describe('runHook', () => {
     expect(text).toContain('[redacted]');
   });
 
-  it('blocks a forbidden Windows path with exit 2 and the reason on stderr', async () => {
+  it('denies a forbidden Windows path with a JSON decision on stdout', async () => {
     const policy = path.join(kingdom.runDir, 'policy.json');
     await writeFile(policy, JSON.stringify({ version: 1, laws: DC1_LAWS }), 'utf8');
     const edit = payload('PreToolUse', {
@@ -90,34 +90,42 @@ describe('runHook', () => {
       tool_input: { file_path: 'C:\\Users\\dev\\dc1-se-team\\.elvaria\\worktrees\\q\\.ENV' },
     });
     const outcome = await call(edit, kingdom.env(), ['--policy', policy]);
-    expect(outcome.exitCode).toBe(2);
-    expect(outcome.stderr).toMatch(/^Elvaria law of this territory: .*\.ENV is a forbidden path \(\.env\)/);
+    expect(outcome.stderr).toBe('');
+    const decision = JSON.parse(outcome.stdout) as {
+      hookSpecificOutput: Record<string, string>;
+    };
+    expect(decision.hookSpecificOutput.hookEventName).toBe('PreToolUse');
+    expect(decision.hookSpecificOutput.permissionDecision).toBe('deny');
+    expect(decision.hookSpecificOutput.permissionDecisionReason).toMatch(
+      /^Elvaria law of this territory: .*\.ENV is a forbidden path \(\.env\)/,
+    );
     const [line] = (await kingdom.log()).events;
     expect(line).toMatchObject({ type: 'agent.tool.blocked', data: { tool: 'read' } });
   });
 
-  it('blocks the handover-less Stop of an assignee with exit 2', async () => {
+  it('blocks the handover-less Stop of an assignee with a JSON decision on stdout', async () => {
     const outcome = await call(PAYLOADS.Stop, kingdom.env({ ELVARIA_ROLE: 'assignee' }));
-    expect(outcome.exitCode).toBe(2);
-    expect(outcome.stderr).toMatch(/handover letter/);
+    const decision = JSON.parse(outcome.stdout) as { decision: string; reason: string };
+    expect(decision.decision).toBe('block');
+    expect(decision.reason).toMatch(/handover letter/);
   });
 
-  it('never blocks on a failed write: it says so on stderr and exits 0', async () => {
+  it('never stops the CLI on a failed write: it says so on stderr', async () => {
     const file = path.join(kingdom.root, 'not-a-folder');
     await writeFile(file, '', 'utf8');
     const outcome = await call(PAYLOADS.PostToolUse, kingdom.env({ ELVARIA_KINGDOM: file }));
-    expect(outcome.exitCode).toBe(0);
+    expect(outcome.stdout).toBe('');
     expect(outcome.stderr).toMatch(/^elvaria-hook: event log: /m);
     expect(outcome.stderr).toMatch(/^elvaria-hook: journal: /m);
   });
 
-  it('reports missing context and unreadable stdin without blocking', async () => {
+  it('reports missing context and unreadable stdin without stopping the CLI', async () => {
     expect(await runHook({ stdin: 'not json', env: {}, argv: [], now: NOW })).toEqual({
-      exitCode: 0,
+      stdout: '',
       stderr: 'elvaria-hook: stdin is not a JSON object; ignored\n',
     });
     const outcome = await call(PAYLOADS.PostToolUse, {});
-    expect(outcome.exitCode).toBe(0);
+    expect(outcome.stdout).toBe('');
     expect(outcome.stderr).toContain('ELVARIA_KINGDOM is not set');
     expect(outcome.stderr).toContain('not an IANA zone');
   });

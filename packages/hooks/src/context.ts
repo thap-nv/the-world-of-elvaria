@@ -21,6 +21,8 @@ export interface HookContext {
   readonly character: string | undefined;
   /** SpawnRequest.role: `assignee`, `verifier`, `chancellor`, `monk`, `bard`. */
   readonly role: string | undefined;
+  /** The model of the session, for `agent.session.start` when the CLI's payload does not say. */
+  readonly model: string | undefined;
   /** IANA zone the lines are stamped in (`kingdom.tz`); undefined: the machine's zone. */
   readonly tz: string | undefined;
   /** `.runs/<quest>-<n>/`: where the hook keeps what it must remember between calls. */
@@ -99,6 +101,7 @@ export function loadContext(env: HookEnv, argv: readonly string[]): HookContext 
     ...fields,
     character: read.shaped('ELVARIA_CHARACTER', policy.character, CHARACTER_SHAPE),
     role: read.value('ELVARIA_ROLE', policy.role),
+    model: read.value('ELVARIA_MODEL', policy.model),
     tz: read.zone(policy.tz),
     runDir: runDirOf(policyFile, fields),
     // A policy that was asked for and cannot be read leaves the laws unknown: block rather than guess.

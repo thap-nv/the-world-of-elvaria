@@ -25,6 +25,8 @@ const KINDS: Readonly<Record<string, ToolKind>> = {
 
 /** Tools whose `command` input is a shell line. */
 const SHELLS = new Set(['Bash', 'PowerShell']);
+/** The sub-agent tool: `Agent` in hook payloads, `Task` in `permission_denials` and older versions (spike P1-02). */
+const SUBAGENT_TOOLS = new Set(['Agent', 'Task']);
 /** `tool_input` keys that name a file or folder the tool reads or writes. */
 const PATH_KEYS = ['file_path', 'notebook_path', 'path'] as const;
 
@@ -36,6 +38,8 @@ export interface ToolCall {
   readonly guarded: readonly string[];
   readonly command: string | undefined;
   readonly url: string | undefined;
+  /** For the sub-agent tool, the `subagent_type` asked for (`''` when none); undefined for other tools. */
+  readonly subagent: string | undefined;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -59,6 +63,7 @@ export function toolCallOf(name: unknown, rawInput: unknown): ToolCall {
     guarded: glob === undefined ? paths : [...paths, glob],
     command: SHELLS.has(tool) ? textAt(input, 'command') : undefined,
     url: tool === 'WebFetch' ? textAt(input, 'url') : undefined,
+    subagent: SUBAGENT_TOOLS.has(tool) ? (textAt(input, 'subagent_type') ?? '') : undefined,
   };
 }
 

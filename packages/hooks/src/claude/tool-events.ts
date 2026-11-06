@@ -1,7 +1,7 @@
-// PreToolUse guards the territory laws; PostToolUse and PostToolUseFailure log `agent.tool`
-// (implementation-plan §3.6, §3.10). A guarded call that breaks a law is blocked with exit 2: Claude Code
-// reads stderr as the reason (cli-facts §1.4).
-import { translation, withoutUndefined } from '../draft.ts';
+// PreToolUse guards the territory laws and the apprentice rule; PostToolUse and PostToolUseFailure log
+// `agent.tool` (implementation-plan §3.6, §3.10, §3.12). A call that is stopped gets a JSON `deny` on stdout,
+// exit 0, which Claude Code honours even for a call its allow rules permit (spike P1-02).
+import { denyTool, translation, withoutUndefined } from '../draft.ts';
 import { commandViolation, forbiddenPathOf } from '../laws.ts';
 import { plotPath, toolCallOf } from './tools.ts';
 import type { HookContext } from '../context.ts';
@@ -9,6 +9,20 @@ import type { Translation } from '../draft.ts';
 import type { CompiledLaws } from '../laws.ts';
 import type { ClaudeInput } from './input.ts';
 import type { ToolCall } from './tools.ts';
+
+/**
+ * The one sub-agent a character may start: the apprentice of `--agents`, capped by `maxTurns` (ADR 0017).
+ * Deny rules cannot say "every agent but this one", and SubagentStart cannot block, so this check is the
+ * fence; deny rules on the built-in agents are the second one (spike P1-02, §3.12).
+ */
+export const APPRENTICE = 'apprentice';
+
+/** Why a sub-agent call breaks the apprentice rule, if it does. */
+export function subagentViolation(call: ToolCall): string | undefined {
+  if (call.subagent === undefined || call.subagent === APPRENTICE) return undefined;
+  const asked = call.subagent === '' ? 'a sub-agent without subagent_type' : `sub-agent ${call.subagent}`;
+  return `${asked} is not allowed; the only sub-agent is ${APPRENTICE}`;
+}
 
 /** Why `call` breaks the laws, if it does. Tools that name no file and run no command are not guarded. */
 export function lawViolation(call: ToolCall, laws: CompiledLaws): string | undefined {
@@ -25,10 +39,14 @@ export function lawViolation(call: ToolCall, laws: CompiledLaws): string | undef
 
 export function preToolUse(input: ClaudeInput, ctx: HookContext): Translation {
   const call = toolCallOf(input.raw.tool_name, input.raw.tool_input);
-  const reason = lawViolation(call, ctx.laws);
+  const apprenticeRule = subagentViolation(call);
+  const reason = apprenticeRule ?? lawViolation(call, ctx.laws);
   if (reason === undefined) return translation([]);
+  const source = apprenticeRule === undefined ? 'law of this territory' : 'rule';
   return translation([{ type: 'agent.tool.blocked', data: { tool: call.kind, reason } }], {
-    block: `Elvaria law of this territory: ${reason}. Do not try another way around it; if the work needs it, say so in handover.md.`,
+    decision: denyTool(
+      `Elvaria ${source}: ${reason}. Do not try another way around it; if the work needs it, say so in handover.md.`,
+    ),
   });
 }
 

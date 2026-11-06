@@ -18,6 +18,7 @@ describe('parsePolicy', () => {
       attempt: 2,
       character: 'thorn',
       role: 'assignee',
+      model: 'claude-opus-5-5',
       tz: 'Asia/Ho_Chi_Minh',
       laws: { ...DC1_LAWS, read_before_write: ['packages/shared/**'] },
     };
@@ -33,6 +34,7 @@ describe('parsePolicy', () => {
     [{ version: 2 }, 'version is 2, not 1'],
     [{}, 'version is undefined, not 1'],
     [{ version: 1, quest: 7 }, 'quest is not a string'],
+    [{ version: 1, model: ['x'] }, 'model is not a string'],
     [{ version: 1, attempt: 0 }, 'attempt is not an integer >= 1'],
     [{ version: 1, attempt: 1.5 }, 'attempt is not an integer >= 1'],
     [{ version: 1, laws: [] }, 'laws is not an object'],
