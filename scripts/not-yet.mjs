@@ -11,11 +11,11 @@ const MAX_TITLE = 160;
 /**
  * Title of a task row in the plan's §8 tables, as plain text.
  * @param {string} planText
- * @param {string} taskId e.g. `P0-03`
+ * @param {string} planItemId e.g. `P0-03`
  * @returns {string | undefined}
  */
-export function findTaskTitle(planText, taskId) {
-  const row = planText.split(/\r?\n/).find((line) => line.startsWith(`| ${taskId} |`));
+export function findPlanItemTitle(planText, planItemId) {
+  const row = planText.split(/\r?\n/).find((line) => line.startsWith(`| ${planItemId} |`));
   const cell = row?.split('|')[2]?.trim();
   if (cell === undefined || cell === '') return undefined;
   const plain = cell.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replaceAll('`', '');
@@ -24,14 +24,14 @@ export function findTaskTitle(planText, taskId) {
 
 /**
  * @param {string | undefined} script the pnpm script that ran, from npm_lifecycle_event
- * @param {string} taskId
+ * @param {string} planItemId
  * @param {string} title
  */
-export function notYetMessage(script, taskId, title) {
+export function notYetMessage(script, planItemId, title) {
   const name = script === undefined ? 'This script' : `pnpm ${script}`;
   return [
     `NOT YET: ${name} has no tool yet; nothing was checked.`,
-    `  ${taskId} builds it (${PLAN_PATH} §8): ${title}`,
+    `  ${planItemId} builds it (${PLAN_PATH} §8): ${title}`,
   ].join('\n');
 }
 
@@ -41,12 +41,12 @@ export function notYetMessage(script, taskId, title) {
  * @returns {{ code: number; text: string }}
  */
 export function run(args, script) {
-  const taskId = args[0];
-  if (taskId === undefined) return { code: 1, text: 'Usage: node scripts/not-yet.mjs <task-id>' };
-  const title = findTaskTitle(readFileSync(PLAN_URL, 'utf8'), taskId);
+  const planItemId = args[0];
+  if (planItemId === undefined) return { code: 1, text: 'Usage: node scripts/not-yet.mjs <plan-item-id>' };
+  const title = findPlanItemTitle(readFileSync(PLAN_URL, 'utf8'), planItemId);
   // A placeholder pointing at a task the plan does not have would hide the gap forever.
-  if (title === undefined) return { code: 1, text: `not-yet: no task ${taskId} in ${PLAN_PATH} §8` };
-  return { code: 0, text: notYetMessage(script, taskId, title) };
+  if (title === undefined) return { code: 1, text: `not-yet: no task ${planItemId} in ${PLAN_PATH} §8` };
+  return { code: 0, text: notYetMessage(script, planItemId, title) };
 }
 
 if (import.meta.main) {

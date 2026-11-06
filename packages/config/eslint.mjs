@@ -37,7 +37,8 @@ const NAMED_NUMBERS = {
     '@typescript-eslint/no-magic-numbers': [
       'error',
       {
-        ignore: [0, 1, -1, 100],
+        // 0n and 1n are the bigint spellings of 0 and 1 (ULID arithmetic in the domain).
+        ignore: [0, 1, -1, 100, '0n', '1n'],
         ignoreNumericLiteralTypes: true,
         ignoreTypeIndexes: true,
         ignoreReadonlyClassProperties: true,

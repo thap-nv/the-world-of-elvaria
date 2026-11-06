@@ -140,7 +140,7 @@ Luật (ADR 0014, [implementation-plan](implementation-plan.md) §2.7 và §4.1)
 | Chiến tranh / chiến dịch (vật chứa) | Campaign | `campaign` | `chien-tranh` → `kind-campaign` | Tuyên bố chiến thắng, rồi hội đồng sau chiến | — |
 | Mặt trận | Front | `front` | — | — | `campaign.fronts[]` |
 
-Bước nghi thức (`ritual.steps[]`) cũng là id `snake_case` (ví dụ `run_checks`, `read_handover`, `read_diff`, `judge`, `write_verdict`); danh sách chốt ở P0-02 trong `registry-default`.
+Bước nghi thức (`ritual.steps[]`) cũng là id `snake_case` (ví dụ `run_checks`, `read_handover`, `read_diff`, `judge`, `write_verdict`); danh sách chốt ở P0-02 là `RITUAL_STEPS` trong `packages/domain/src/constants.ts` (bảng ở mục 13), vì loader registry từ chối bước lạ.
 
 ## 6. Nghề (class)
 

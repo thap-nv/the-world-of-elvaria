@@ -1,0 +1,125 @@
+{
+  "version": 1,
+  "scripts": [
+    {
+      "id": "link-check",
+      "name_vi": "Kiểm tra link",
+      "name_en": "Link check",
+      "description": "Checks every internal link in the matched Markdown files; one unit per link, dead links are units with outcome not_done.",
+      "entry": "scripts/link-check.mjs",
+      "params_schema": {
+        "type": "object",
+        "required": ["globs"],
+        "properties": {
+          "globs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "kinds": ["batch", "document", "research"],
+      "produces": "units",
+      "timeout_minutes": 10
+    },
+    {
+      "id": "run-check",
+      "name_vi": "Chạy kiểm tra máy",
+      "name_en": "Run check",
+      "description": "Runs one territory check (checks[].id) and reports pass or fail with the log path.",
+      "entry": "scripts/run-check.mjs",
+      "params_schema": {
+        "type": "object",
+        "required": ["check_id"],
+        "properties": {
+          "check_id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "kinds": ["fix", "build", "refactor", "batch"],
+      "produces": "check",
+      "timeout_minutes": 60
+    },
+    {
+      "id": "count-files",
+      "name_vi": "Đếm file",
+      "name_en": "Count files",
+      "description": "Counts files and lines per folder for the given globs.",
+      "entry": "scripts/count-files.mjs",
+      "params_schema": {
+        "type": "object",
+        "required": ["globs"],
+        "properties": {
+          "globs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "kinds": ["analyze", "research"],
+      "produces": "report",
+      "timeout_minutes": 5
+    },
+    {
+      "id": "diff-stat",
+      "name_vi": "Thống kê diff",
+      "name_en": "Diff stat",
+      "description": "git diff --stat between two refs, as data.",
+      "entry": "scripts/diff-stat.mjs",
+      "params_schema": {
+        "type": "object",
+        "required": ["base"],
+        "properties": {
+          "base": {
+            "type": "string"
+          },
+          "head": {
+            "type": "string",
+            "default": "HEAD"
+          }
+        },
+        "additionalProperties": false
+      },
+      "kinds": ["refactor", "build", "analyze"],
+      "produces": "report",
+      "timeout_minutes": 5
+    },
+    {
+      "id": "compare-numbers",
+      "name_vi": "So khớp số",
+      "name_en": "Compare numbers",
+      "description": "Compares the numbers in two JSON files within a tolerance.",
+      "entry": "scripts/compare-numbers.mjs",
+      "params_schema": {
+        "type": "object",
+        "required": ["expected_path", "actual_path"],
+        "properties": {
+          "expected_path": {
+            "type": "string"
+          },
+          "actual_path": {
+            "type": "string"
+          },
+          "tolerance": {
+            "type": "number",
+            "minimum": 0,
+            "default": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "kinds": ["analyze"],
+      "produces": "check",
+      "timeout_minutes": 5
+    }
+  ]
+}

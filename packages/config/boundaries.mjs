@@ -71,6 +71,13 @@ export const WORKSPACES = Object.freeze({
  */
 export const DEV_ONLY = Object.freeze(['config']);
 
+/**
+ * Workspaces whose code must not see Node (the domain has no IO; the rest also runs in a browser). Their
+ * tsconfig extends tsconfig/base.json, and their vitest config is .mjs outside it: Vite's types reference
+ * @types/node, so one `vitest.config.ts` in the program would make `process` type-check everywhere.
+ */
+export const NO_NODE_TYPES = Object.freeze(['domain', 'i18n', 'ui-kit', 'ui', 'world', 'lite']);
+
 /** Every workspace's npm name is `@elvaria/<key>`; apps/cli ships the `elvaria` bin. */
 export const SCOPE = '@elvaria';
 
