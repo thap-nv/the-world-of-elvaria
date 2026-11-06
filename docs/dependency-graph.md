@@ -10,18 +10,23 @@ flowchart TD
   domain["domain"]
   store["store"]
   registry_default["registry-default"]
+  sandbox["sandbox"]
   eventlog["eventlog"]
   hooks["hooks"]
   i18n["i18n"]
   cli["cli"]
   store --> domain
   registry_default --> domain
+  sandbox --> domain
+  sandbox --> eventlog
+  sandbox --> store
   eventlog --> domain
   hooks --> eventlog
   cli --> domain
   cli --> eventlog
   cli --> i18n
   cli --> registry_default
+  cli --> sandbox
   cli --> store
 ```
 
@@ -38,7 +43,7 @@ flowchart TD
 | `runner-codex` | chưa có | | `runner-core` |
 | `steward` | chưa có | | `domain`, `store`, `eventlog`, `runner-core` |
 | `chancellor` | chưa có | | `domain`, `runner-core` |
-| `sandbox` | chưa có | | `domain`, `eventlog`, `store` |
+| `sandbox` | `packages/sandbox` | `domain`, `eventlog`, `store` | `domain`, `eventlog`, `store` |
 | `eventlog` | `packages/eventlog` | `domain` | `domain` |
 | `hooks` | `packages/hooks` | `eventlog` | `eventlog` |
 | `herald` | chưa có | | `domain`, `store`, `eventlog`, `sandbox` |
@@ -47,4 +52,4 @@ flowchart TD
 | `ui` | chưa có | | `domain`, `i18n`, `ui-kit` |
 | `world` | chưa có | | `domain`, `i18n`, `ui-kit`, `ui` |
 | `lite` | chưa có | | `domain`, `i18n`, `ui-kit`, `ui` |
-| `cli` | `apps/cli` | `domain`, `eventlog`, `i18n`, `registry-default`, `store` | `domain`, `eventlog`, `store`, `registry-default`, `runner-core`, `runner-claude`, `runner-antigravity`, `runner-gemini`, `runner-codex`, `hooks`, `steward`, `chancellor`, `sandbox`, `herald`, `i18n` |
+| `cli` | `apps/cli` | `domain`, `eventlog`, `i18n`, `registry-default`, `sandbox`, `store` | `domain`, `eventlog`, `store`, `registry-default`, `runner-core`, `runner-claude`, `runner-antigravity`, `runner-gemini`, `runner-codex`, `hooks`, `steward`, `chancellor`, `sandbox`, `herald`, `i18n` |

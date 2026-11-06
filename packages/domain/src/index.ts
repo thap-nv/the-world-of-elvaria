@@ -9,6 +9,7 @@ export * from './core/clock.ts';
 export * from './core/id-source.ts';
 export * from './core/ids.ts';
 export * from './core/result.ts';
+export * from './dispatch/plan-tick.ts';
 export * from './protocol/codec.ts';
 export * from './protocol/messages.ts';
 export * from './quest/attempt-log.ts';
