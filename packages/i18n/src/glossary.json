@@ -65,6 +65,13 @@
               "used_in": "`territories/<id>/gazetteer.md`"
             },
             {
+              "vi": "Chiếu chỉ",
+              "en": "Royal decree",
+              "id": ["decree"],
+              "definition": "Luật chung của người dùng cho mọi nhân vật, mọi vai, mọi tộc (ví dụ cách viết commit). Người dùng tự viết, tùy chọn; Elvaria chỉ đọc, đưa vào phần hướng dẫn hệ thống của prompt. Luật của lãnh thổ được ưu tiên khi mâu thuẫn.",
+              "used_in": "`<kingdom>/decree.md`"
+            },
+            {
               "vi": "Khảo sát điền địa",
               "en": "Land survey",
               "id": ["survey"],
