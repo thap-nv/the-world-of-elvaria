@@ -3,6 +3,8 @@
 // runs `pnpm docs:gen && git diff --exit-code docs/`. A new generated doc is one entry in GENERATORS.
 import process from 'node:process';
 
+import { renderQuestTransitionTable } from '@elvaria/domain';
+
 import { renderEvents } from './docs-events.mjs';
 import { renderGlossary } from './docs-glossary.mjs';
 import { renderDependencyGraph } from './docs-graph.mjs';
@@ -20,6 +22,12 @@ export const GENERATORS = [
   { file: 'docs/glossary.md', render: () => renderGlossary() },
   { file: 'docs/events.md', render: () => renderEvents() },
   { file: 'docs/dependency-graph.md', render: renderDependencyGraph },
+  // The quest state machine is data in the domain (QUEST_TRANSITIONS); the plan shows it, never restates it.
+  {
+    file: 'docs/implementation-plan.md',
+    region: 'quest-transitions',
+    render: () => `${renderQuestTransitionTable()}\n`,
+  },
 ];
 
 /** @param {unknown} error */

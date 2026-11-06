@@ -93,12 +93,22 @@ describe('docs:gen', () => {
     }
   });
 
-  it('generates the glossary, the event catalogue and the dependency graph', () => {
-    expect(GENERATORS.map((generator) => generator.file)).toEqual([
+  it('generates the glossary, the event catalogue, the dependency graph and the quest transition table', () => {
+    expect(
+      GENERATORS.map(({ file, region }) => (region === undefined ? file : `${file} (${region})`)),
+    ).toEqual([
       'docs/glossary.md',
       'docs/events.md',
       'docs/dependency-graph.md',
+      'docs/implementation-plan.md (quest-transitions)',
     ]);
+  });
+
+  it('renders the §2.5 table from QUEST_TRANSITIONS, ending in a newline for its region', async () => {
+    const quest = GENERATORS.find(({ region }) => region === 'quest-transitions');
+    const text = await quest?.render();
+    expect(text?.startsWith('| Từ | Sự kiện | Điều kiện | Ai | Đến | Ghi chú |\n')).toBe(true);
+    expect(text?.endsWith('| archived | — |  |  |  | trạng thái cuối |\n')).toBe(true);
   });
 
   it('matches what is committed in docs/ (pnpm docs:gen --check)', async () => {
