@@ -1,0 +1,2208 @@
+{
+  "version": 1,
+  "title": "Bảng thuật ngữ Elvaria",
+  "blocks": [
+    "Luật (ADR 0014, [implementation-plan](implementation-plan.md) §2.7 và §4.1):",
+    {
+      "list": [
+        "Identifier trong code dùng **đúng cột \"id\"**. Đổi một id EN đã có là thay đổi phá vỡ: cần ADR và migration.",
+        "Id là tiếng Anh thông dụng: `snake_case` cho khóa và giá trị enum trong JSON, `kebab-case` cho id icon/asset/file (kể cả id script), `camelCase`/`PascalCase` trong TypeScript. Không slug tiếng Việt, không từ \"màu mè\".",
+        "Chất fantasy chỉ nằm ở chuỗi hiển thị (cột VI/EN, qua i18n và theme).",
+        "Cột \"icon\": id trong bản thiết kế gốc (`design/project/Icons.dc.html`) → id trong code (`packages/ui-kit/src/icons.ts`, nhập một lần bằng `scripts/gen-icons.mjs` qua `scripts/icon-names.json`; sau đó icon mới thêm thẳng vào `ui-kit` với id EN). Icon HUD đã là tiếng Anh (`bell`, `settings`, `mana`, `territory`…) thì giữ nguyên id."
+      ]
+    },
+    "---"
+  ],
+  "sections": [
+    {
+      "heading": "1. Thế giới và vai hệ thống",
+      "blocks": [
+        {
+          "table": "world",
+          "columns": [
+            {
+              "key": "vi",
+              "header": "VI"
+            },
+            {
+              "key": "en",
+              "header": "EN"
+            },
+            {
+              "key": "id",
+              "header": "id",
+              "ids": " / "
+            },
+            {
+              "key": "definition",
+              "header": "Định nghĩa"
+            },
+            {
+              "key": "used_in",
+              "header": "Nơi dùng"
+            }
+          ],
+          "rows": [
+            {
+              "vi": "Vương quốc",
+              "en": "Kingdom",
+              "id": ["kingdom"],
+              "definition": "Một máy, một người dùng, một thư mục trạng thái ngoài repo.",
+              "used_in": "`kingdom.json`"
+            },
+            {
+              "vi": "Lãnh thổ / lãnh địa",
+              "en": "Territory",
+              "id": ["territory"],
+              "definition": "Một repo hoặc thư mục được gắn vào vương quốc.",
+              "used_in": "`territories/<id>/territory.json`"
+            },
+            {
+              "vi": "Địa chí",
+              "en": "Gazetteer",
+              "id": ["gazetteer"],
+              "definition": "Mô tả lãnh thổ: cấu trúc, cách build, quy ước (với dc1 là CLAUDE.md + README.md).",
+              "used_in": "`territories/<id>/gazetteer.md`"
+            },
+            {
+              "vi": "Khảo sát điền địa",
+              "en": "Land survey",
+              "id": ["survey"],
+              "definition": "Việc quét lãnh thổ để sinh tòa nhà trên bản đồ.",
+              "used_in": "event `territory.surveyed`, `territory.surveyed_at`"
+            },
+            {
+              "vi": "Mở cõi",
+              "en": "Open a realm (attach territory)",
+              "id": ["territory.attach"],
+              "definition": "Gắn một repo mới; bản đồ mọc thêm một vùng.",
+              "used_in": "lệnh `attach_territory`, event `territory.attached`"
+            },
+            {
+              "vi": "Quốc vương / Lãnh chúa",
+              "en": "The Crown (user)",
+              "id": ["user"],
+              "definition": "Người dùng, chủ vương quốc.",
+              "used_in": "`actor.kind = user`, `verifier_id = user`"
+            },
+            {
+              "vi": "Tể tướng",
+              "en": "Chancellor",
+              "id": ["chancellor"],
+              "definition": "Nhận câu lệnh tự nhiên, tách thành quest draft.",
+              "used_in": "`packages/chancellor`, class `chancellor`, `actor.kind`, `created_by`"
+            },
+            {
+              "vi": "Quản sự",
+              "en": "Steward",
+              "id": ["steward"],
+              "definition": "Tiến trình nền duy nhất ghi trạng thái quest: nhận việc, cầu dao, mana, nghiệm thu, giao hàng.",
+              "used_in": "`packages/steward`, `actor.kind`"
+            },
+            {
+              "vi": "Sứ giả",
+              "en": "Herald",
+              "id": ["herald"],
+              "definition": "World server trên localhost: đọc event log, phát qua WebSocket, ghi lệnh vào inbox.",
+              "used_in": "`packages/herald`, `actor.kind`, inbox `source`"
+            },
+            {
+              "vi": "Hệ thống",
+              "en": "System",
+              "id": ["system"],
+              "definition": "Tác nhân không phải người, không phải nhân vật (migrate, replay…).",
+              "used_in": "`actor.kind`"
+            },
+            {
+              "vi": "Hội quán / bảng nhiệm vụ",
+              "en": "Guild hall / quest board",
+              "id": ["quests/"],
+              "definition": "Nơi lưu quest và trạng thái.",
+              "used_in": "thư mục kingdom, màn Guild"
+            },
+            {
+              "vi": "Lệnh (của người dùng)",
+              "en": "Command",
+              "id": ["inbox"],
+              "definition": "File lệnh người dùng ghi cho Quản sự xử lý.",
+              "used_in": "`inbox/<ulid>.json`"
+            },
+            {
+              "vi": "Thế giới",
+              "en": "World",
+              "id": ["world"],
+              "definition": "Renderer 3D trong trình duyệt.",
+              "used_in": "`apps/world`"
+            },
+            {
+              "vi": "Khách nhẹ",
+              "en": "Lite client",
+              "id": ["lite"],
+              "definition": "Giao diện 2D cho điện thoại.",
+              "used_in": "`apps/lite`, inbox `source`"
+            },
+            {
+              "vi": "Đường hầm",
+              "en": "Tunnel",
+              "id": ["tunnel"],
+              "definition": "Lối vào Sứ giả từ xa có xác thực.",
+              "used_in": "`kingdom.tunnel`"
+            },
+            {
+              "vi": "Sa bàn",
+              "en": "Sandbox",
+              "id": ["sandbox"],
+              "definition": "Ngày giả và replay, không chạy agent, không tốn mana.",
+              "used_in": "`packages/sandbox`, event `sandbox.*`"
+            },
+            {
+              "vi": "Sự cố",
+              "en": "Incident",
+              "id": ["incident"],
+              "definition": "Báo động, chuyển thế giới sang chế độ phòng thủ.",
+              "used_in": "event `incident.*` (dành sẵn)"
+            },
+            {
+              "vi": "Tuần tra",
+              "en": "Patrol",
+              "id": ["patrol"],
+              "definition": "Việc định kỳ phát hiện vấn đề, có trần mana tuần.",
+              "used_in": "`kingdom.schedule.patrol`, `created_by`"
+            },
+            {
+              "vi": "Mùa",
+              "en": "Season",
+              "id": ["season"],
+              "definition": "Một sprint.",
+              "used_in": "theme, UI"
+            },
+            {
+              "vi": "Lễ hội / đoàn thương nhân",
+              "en": "Festival / caravan",
+              "id": [],
+              "id_note": "theme",
+              "definition": "Sự kiện nhịp sống (release / giao hàng ra ngoài), chỉ là hình ảnh.",
+              "used_in": "`themes/fantasy`"
+            },
+            {
+              "vi": "Lớp \"cần ngài\"",
+              "en": "Attention queue",
+              "id": ["attention"],
+              "definition": "Danh sách việc đang chờ người dùng quyết, theo mức khẩn.",
+              "used_in": "selector `attentionQueue(state)`"
+            },
+            {
+              "vi": "Ngai vàng",
+              "en": "Throne",
+              "id": ["throne"],
+              "definition": "Hàng đợi quest chờ dấu vua.",
+              "used_in": "màn Throne"
+            },
+            {
+              "vi": "Chuông",
+              "en": "Bell",
+              "id": ["bell"],
+              "definition": "Thông báo desktop / web push.",
+              "used_in": "`kingdom.bell`, interface `Bell`; icon `bell` → `bell`"
+            },
+            {
+              "vi": "Phòng chiến sự",
+              "en": "War room",
+              "id": ["war_room"],
+              "definition": "Màn điều hành chiến dịch.",
+              "used_in": "UI"
+            },
+            {
+              "vi": "Điểm quân",
+              "en": "Muster",
+              "id": ["muster"],
+              "definition": "Màn tổng kết sau trận.",
+              "used_in": "UI"
+            },
+            {
+              "vi": "Biên niên sử",
+              "en": "Chronicle",
+              "id": ["chronicle"],
+              "definition": "Báo cáo ngày do Nhà thơ viết từ event log.",
+              "used_in": "`chronicle/<ngày>.md`, `kingdom.schedule.chronicle`"
+            },
+            {
+              "vi": "Đền",
+              "en": "Temple",
+              "id": ["temple"],
+              "definition": "Nơi Thầy tu phản tỉnh và giữ kinh chung.",
+              "used_in": "`temple/scripture.md`, `kingdom.schedule.temple`, `lesson.owner = temple`"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "2. Quest",
+      "blocks": [
+        {
+          "table": "quest",
+          "columns": [
+            {
+              "key": "vi",
+              "header": "VI"
+            },
+            {
+              "key": "en",
+              "header": "EN"
+            },
+            {
+              "key": "id",
+              "header": "id",
+              "ids": " / "
+            },
+            {
+              "key": "definition",
+              "header": "Định nghĩa"
+            },
+            {
+              "key": "used_in",
+              "header": "Nơi dùng"
+            }
+          ],
+          "rows": [
+            {
+              "vi": "Nhiệm vụ",
+              "en": "Quest",
+              "id": ["quest"],
+              "definition": "Một đơn vị việc thật có người làm và người nghiệm thu.",
+              "used_in": "`quests/<id>.json`"
+            },
+            {
+              "vi": "Dạng nhiệm vụ",
+              "en": "Quest kind",
+              "id": ["kind"],
+              "definition": "Loại việc; quyết định nghi thức và cách giao hàng.",
+              "used_in": "`registry/kinds.json` (§5)"
+            },
+            {
+              "vi": "Hạng (F–S)",
+              "en": "Rank",
+              "id": ["rank"],
+              "definition": "Độ khó/rủi ro của quest.",
+              "used_in": "`quest.rank`"
+            },
+            {
+              "vi": "Bậc chạy",
+              "en": "Execution tier",
+              "id": ["tier"],
+              "definition": "Quest chạy bằng script hay bằng phiên agent.",
+              "used_in": "`quest.tier`"
+            },
+            {
+              "vi": "Bậc script",
+              "en": "Script tier",
+              "id": ["script"],
+              "definition": "Không gọi model; chạy script trong catalog; mana 0.",
+              "used_in": "`quest.tier`, `quest.script`, `registry/scripts.json`"
+            },
+            {
+              "vi": "Phiên mới",
+              "en": "Session tier",
+              "id": ["session"],
+              "definition": "Một phiên agent cấp cao nhất mới cho quest.",
+              "used_in": "`quest.tier`"
+            },
+            {
+              "vi": "Học trò",
+              "en": "Apprentice",
+              "id": ["apprentice", "subagent"],
+              "definition": "Sub-agent nhân vật gọi trong phiên của mình; `apprentice` là tên agent duy nhất được phép, `subagent` là nhóm event.",
+              "used_in": "`--agents`, event `agent.subagent.*`"
+            },
+            {
+              "vi": "Đất riêng / lều trại",
+              "en": "Plot / camp",
+              "id": ["plot"],
+              "definition": "Worktree hoặc thư mục riêng của một quest.",
+              "used_in": "`quest.plot`, `PlotManager`"
+            },
+            {
+              "vi": "Nhánh quest",
+              "en": "Quest branch",
+              "id": ["quest/<id>"],
+              "definition": "Nhánh git của worktree.",
+              "used_in": "`quest.plot.branch`"
+            },
+            {
+              "vi": "Giao hàng",
+              "en": "Delivery",
+              "id": ["deliver"],
+              "definition": "Đưa kết quả ra theo quy ước của kind.",
+              "used_in": "`quest.deliverable`, event `delivery.sent`"
+            },
+            {
+              "vi": "Thư bàn giao",
+              "en": "Handover letter",
+              "id": ["handover.md"],
+              "definition": "Agent viết: đang ở đâu, đã xong, chưa xong, quyết định, bước kế.",
+              "used_in": "`quests/<id>/handover.md`"
+            },
+            {
+              "vi": "Nhật ký (máy)",
+              "en": "Journal",
+              "id": ["journal.jsonl"],
+              "definition": "Event của quest do hook ghi.",
+              "used_in": "`quests/<id>/journal.jsonl`"
+            },
+            {
+              "vi": "Phụ thuộc",
+              "en": "Dependency",
+              "id": ["depends_on"],
+              "definition": "Quest phải xong trước.",
+              "used_in": "`quest.depends_on`"
+            },
+            {
+              "vi": "Đơn vị (trận đánh)",
+              "en": "Unit",
+              "id": ["unit"],
+              "definition": "Một việc nhỏ trong quest Trận đánh.",
+              "used_in": "`quest.units[]`"
+            },
+            {
+              "vi": "Nghề được nhận",
+              "en": "Required class",
+              "id": ["class_required"],
+              "definition": "Nghề mà người làm quest phải có.",
+              "used_in": "`quest.class_required`"
+            },
+            {
+              "vi": "Chuyên môn (tag)",
+              "en": "Expertise tag",
+              "id": ["tag", "tags"],
+              "definition": "Lĩnh vực của quest (frontend, backend…), từ vựng đóng; xếp hạng người làm và chọn bí kíp.",
+              "used_in": "`quest.tags`, `registry/tags.json` (§10b)"
+            },
+            {
+              "vi": "Đội",
+              "en": "Party",
+              "id": ["party"],
+              "definition": "Một việc cần nhiều chuyên môn: quest hợp đồng + các phần + quest ghép; không có file riêng.",
+              "used_in": "`quest.party_id`, `quest.party_role`"
+            },
+            {
+              "vi": "Trưởng đội",
+              "en": "Party lead",
+              "id": ["contract"],
+              "id_note": "(vai)",
+              "definition": "Pháp sư làm quest hợp đồng: viết hợp đồng và chia phần.",
+              "used_in": "`party_role = contract`"
+            },
+            {
+              "vi": "Hợp đồng",
+              "en": "Contract",
+              "id": ["contract"],
+              "definition": "Interface giữa các phần (ví dụ OpenAPI), commit trên nhánh quest hợp đồng.",
+              "used_in": "`quest.contract`"
+            },
+            {
+              "vi": "Phần (của đội)",
+              "en": "Part",
+              "id": ["part"],
+              "definition": "Một vùng, một tag chính, một nhân vật, một worktree, một verdict.",
+              "used_in": "`party_role = part`"
+            },
+            {
+              "vi": "Quest ghép",
+              "en": "Merge quest",
+              "id": ["merge"],
+              "definition": "Quest cuối của đội: hợp nhất các nhánh phần, chạy toàn bộ kiểm tra; Quản sự tự tạo.",
+              "used_in": "`party_role = merge`"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "3. Nghiệm thu, cầu dao, mana",
+      "blocks": [
+        {
+          "table": "verification",
+          "columns": [
+            {
+              "key": "vi",
+              "header": "VI"
+            },
+            {
+              "key": "en",
+              "header": "EN"
+            },
+            {
+              "key": "id",
+              "header": "id",
+              "ids": " / "
+            },
+            {
+              "key": "definition",
+              "header": "Định nghĩa"
+            },
+            {
+              "key": "used_in",
+              "header": "Nơi dùng"
+            }
+          ],
+          "rows": [
+            {
+              "vi": "Nghiệm thu",
+              "en": "Verification",
+              "id": ["verify"],
+              "definition": "Nhân vật khác, phiên mới, chấm kết quả theo nghi thức.",
+              "used_in": "`domain/src/verify`"
+            },
+            {
+              "vi": "Người nghiệm thu (Thợ cả, Thủ thư trưởng, Chiêm tinh gia thứ hai, Trọng tài, Hiền giả)",
+              "en": "Judge (titles by kind)",
+              "id": ["judge"],
+              "definition": "Một class nghiệm thu; danh hiệu hiển thị theo kind là dữ liệu theme.",
+              "used_in": "class `judge`, `quest.verifier` (ADR 0011)"
+            },
+            {
+              "vi": "Người làm",
+              "en": "Assignee",
+              "id": ["assignee"],
+              "definition": "Nhân vật nhận làm quest.",
+              "used_in": "`quest.assignee`, `role`"
+            },
+            {
+              "vi": "Nghi thức",
+              "en": "Ritual",
+              "id": ["ritual"],
+              "definition": "Các bước nghiệm thu và luật đạt của một kind.",
+              "used_in": "`registry/rituals.json` (§5)"
+            },
+            {
+              "vi": "Kiểm tra máy",
+              "en": "Machine check",
+              "id": ["check"],
+              "definition": "Lệnh của lãnh thổ chạy trước khi agent chấm; check fail ⇒ fail.",
+              "used_in": "`territory.checks`, `verdict.checks`"
+            },
+            {
+              "vi": "Máy (người chấm)",
+              "en": "Machine",
+              "id": ["machine"],
+              "definition": "Verdict do Quản sự lập từ kiểm tra máy, không có agent.",
+              "used_in": "`verdict.verifier_id = machine`"
+            },
+            {
+              "vi": "Phán quyết",
+              "en": "Verdict",
+              "id": ["verdict"],
+              "definition": "Kết quả một lần nghiệm thu.",
+              "used_in": "`verdicts/<quest>-<n>.json`"
+            },
+            {
+              "vi": "Trả bài",
+              "en": "Return",
+              "id": ["returned", "return"],
+              "definition": "Quest không đạt, quay lại người làm kèm ghi chú.",
+              "used_in": "trạng thái `returned`, lệnh `return`"
+            },
+            {
+              "vi": "Dấu vua",
+              "en": "Royal seal",
+              "id": ["seal"],
+              "definition": "Người dùng duyệt; nặng gấp 3 phán quyết của agent.",
+              "used_in": "`quest.seal`, lệnh `seal`"
+            },
+            {
+              "vi": "Cầu dao",
+              "en": "Circuit breaker",
+              "id": ["breaker"],
+              "definition": "Trần thời gian, token, lượt, số lần thử của một attempt.",
+              "used_in": "`kingdom.breakers`, outcome `breaker`"
+            },
+            {
+              "vi": "Lạc đầm lầy",
+              "en": "Lost in the swamp",
+              "id": ["swamp"],
+              "definition": "Nhân vật bị cầu dao thời gian cắt.",
+              "used_in": "`character.status`"
+            },
+            {
+              "vi": "Trạm quân y",
+              "en": "Infirmary",
+              "id": ["infirmary"],
+              "definition": "Quest dừng hẳn, chờ người dùng quyết.",
+              "used_in": "`quest.status`"
+            },
+            {
+              "vi": "Mana",
+              "en": "Mana",
+              "id": ["mana"],
+              "definition": "Hạn mức dùng của một tài khoản/pool.",
+              "used_in": "`kingdom.mana`, event `mana.*`"
+            },
+            {
+              "vi": "Trần mana",
+              "en": "Mana cap",
+              "id": ["mana.cap_pct"],
+              "definition": "Mức dùng tối đa thế giới được chạm (mặc định 98%).",
+              "used_in": "`kingdom.mana`"
+            },
+            {
+              "vi": "Phần của vua",
+              "en": "King's reserve",
+              "id": ["mana.king_reserve_pct"],
+              "definition": "Phần thế giới không bao giờ dùng (mặc định 2%).",
+              "used_in": "`kingdom.mana`"
+            },
+            {
+              "vi": "Pool mana",
+              "en": "Mana pool",
+              "id": ["pool"],
+              "definition": "Một hạn mức riêng trong một tài khoản (Antigravity có `gemini_models`, `claude_gpt_models`).",
+              "used_in": "`kingdom.tribes[].pools`, event `mana.level`"
+            },
+            {
+              "vi": "Hết mana / ngủ",
+              "en": "Mana exhausted / asleep",
+              "id": ["sleeping_mana"],
+              "definition": "Cả pool hết; nhân vật ngủ, quest tạm dừng giữ người làm.",
+              "used_in": "`character.status`, `quest.status = paused_mana`"
+            },
+            {
+              "vi": "Hồi sinh",
+              "en": "Revive",
+              "id": ["mana.restored"],
+              "definition": "Probe thành công; nhân vật tỉnh, quest chạy tiếp bằng phiên mới.",
+              "used_in": "event `mana.restored`"
+            },
+            {
+              "vi": "Thăm dò (mana)",
+              "en": "Probe",
+              "id": ["probe"],
+              "definition": "Lệnh rẻ nhất để biết tộc đã có mana lại chưa.",
+              "used_in": "`AgentRunner.probe`, event `mana.probe`"
+            },
+            {
+              "vi": "Hạn mức khai báo",
+              "en": "Declared allowance",
+              "id": ["budget"],
+              "definition": "Chỉ hai nghĩa: trần của một quest (`quest.budget`) và hạn mức người dùng khai cho một tộc (`tribes[].budget`). Mức mana hiện tại luôn gọi là `mana`.",
+              "used_in": "`quest.budget`, `kingdom.tribes[].budget`"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "4. Nhân vật",
+      "blocks": [
+        {
+          "table": "character",
+          "columns": [
+            {
+              "key": "vi",
+              "header": "VI"
+            },
+            {
+              "key": "en",
+              "header": "EN"
+            },
+            {
+              "key": "id",
+              "header": "id",
+              "ids": " / "
+            },
+            {
+              "key": "definition",
+              "header": "Định nghĩa"
+            },
+            {
+              "key": "used_in",
+              "header": "Nơi dùng"
+            }
+          ],
+          "rows": [
+            {
+              "vi": "Nhân vật",
+              "en": "Character",
+              "id": ["character"],
+              "definition": "Một agent có nghề, tộc, model, cấp.",
+              "used_in": "`characters/<id>/character.json`"
+            },
+            {
+              "vi": "Nghề",
+              "en": "Class",
+              "id": ["class"],
+              "definition": "Prompt vai trò + tool được phép + model mặc định.",
+              "used_in": "`registry/classes.json` (§6)"
+            },
+            {
+              "vi": "Tộc",
+              "en": "Tribe",
+              "id": ["tribe"],
+              "definition": "Một tài khoản người dùng tự đăng nhập + một adapter + một mục theme; tộc của nhân vật cố định suốt đời.",
+              "used_in": "`kingdom.tribes[]`, `character.tribe` (§8)"
+            },
+            {
+              "vi": "Hợp đồng tộc",
+              "en": "Tribe contract",
+              "id": [],
+              "definition": "Những gì một adapter phải và nên cung cấp để một nhà cung cấp mới thành một tộc mà không sửa lõi.",
+              "used_in": "ADR 0021, implementation-plan §3.14"
+            },
+            {
+              "vi": "Bộ chuyển (adapter)",
+              "en": "Adapter",
+              "id": ["adapter"],
+              "definition": "Lớp dịch giữa Elvaria và một CLI: package có sẵn hoặc file `adapters/<name>.mjs` của người dùng.",
+              "used_in": "`kingdom.tribes[].adapter`"
+            },
+            {
+              "vi": "Năng lực (của adapter)",
+              "en": "Capabilities",
+              "id": ["capabilities"],
+              "definition": "Adapter làm được gì; thiếu thì tộc bị thu hẹp theo `tribeLimitsOf`.",
+              "used_in": "`AgentRunner.capabilities`"
+            },
+            {
+              "vi": "Bộ test hợp đồng",
+              "en": "Conformance suite",
+              "id": ["conformance"],
+              "definition": "Bộ test mọi adapter phải qua trước khi bật tộc.",
+              "used_in": "`elvaria tribe check`"
+            },
+            {
+              "vi": "Cấp (1–10)",
+              "en": "Level",
+              "id": ["level"],
+              "definition": "Quyết định hạng quest được nhận.",
+              "used_in": "`character.level`"
+            },
+            {
+              "vi": "Bậc trang bị",
+              "en": "Gear tier",
+              "id": ["gear_tier"],
+              "definition": "Suy ra từ cấp (1–3, 4–6, 7–9, 10), không lưu.",
+              "used_in": "`gearTierOf(level)`"
+            },
+            {
+              "vi": "Danh tiếng",
+              "en": "Reputation",
+              "id": ["reputation"],
+              "definition": "Tỉ lệ đạt trong 20 phán quyết gần nhất.",
+              "used_in": "`character.reputation.window`"
+            },
+            {
+              "vi": "Kinh (riêng / chung)",
+              "en": "Scripture (personal / temple)",
+              "id": ["scripture"],
+              "definition": "Bài học dạng Markdown, mỗi dòng một bài.",
+              "used_in": "`characters/<id>/scripture.md`, `temple/scripture.md`"
+            },
+            {
+              "vi": "Bài học",
+              "en": "Lesson",
+              "id": ["lesson"],
+              "definition": "Một dòng kinh, trỏ tới một verdict.",
+              "used_in": "`lesson.schema.json`"
+            },
+            {
+              "vi": "Ngồi thiền",
+              "en": "Meditate",
+              "id": ["meditating"],
+              "definition": "Context gần đầy, agent nén lại.",
+              "used_in": "`character.status`, event `agent.compact`"
+            },
+            {
+              "vi": "Ngộ đạo",
+              "en": "Enlightenment",
+              "id": ["enlighten"],
+              "definition": "Nâng model của nhân vật (cấp ≥ 7, người dùng duyệt).",
+              "used_in": "giai đoạn 5"
+            },
+            {
+              "vi": "Đình chỉ",
+              "en": "Suspend",
+              "id": ["suspended", "suspend"],
+              "definition": "Nhân vật bị đưa về Đền.",
+              "used_in": "`character.status`, lệnh `suspend`"
+            },
+            {
+              "vi": "Triệu hồi",
+              "en": "Summon",
+              "id": ["summon"],
+              "definition": "Mở terminal của phiên để người dùng can thiệp.",
+              "used_in": "lệnh `summon`"
+            },
+            {
+              "vi": "Bí kíp",
+              "en": "Skill",
+              "id": ["skill"],
+              "definition": "Kiến thức lĩnh vực, không gắn vào nhân vật; tối đa 3 bí kíp khớp tag và lãnh thổ được nạp cho mỗi quest.",
+              "used_in": "`temple/skills/<id>/SKILL.md`, `skill.schema.json`"
+            },
+            {
+              "vi": "Danh tiếng theo tag",
+              "en": "Expertise (reputation per tag)",
+              "id": ["skill_affinity"],
+              "definition": "Cửa sổ phán quyết theo từng tag; chuyên môn là dữ liệu này, không phải nghề con.",
+              "used_in": "`character.skill_affinity`, `affinityOf`"
+            },
+            {
+              "vi": "Danh hiệu",
+              "en": "Title",
+              "id": ["title"],
+              "definition": "Chữ trên đầu nhân vật, suy ra từ tag ghim hoặc tag có danh tiếng cao nhất; không lưu.",
+              "used_in": "`titleOf(character)`, theme"
+            },
+            {
+              "vi": "Ghim chuyên môn",
+              "en": "Pin a tag",
+              "id": ["pinned_tag", "pin_tag"],
+              "definition": "Người dùng ghim nhân vật vào một chuyên môn.",
+              "used_in": "`character.pinned_tag`, lệnh `pin_tag`"
+            },
+            {
+              "vi": "Lời thề không làm",
+              "en": "Vow of no production",
+              "id": ["vow_no_production"],
+              "definition": "Nhân vật không được sửa file (judge, monk).",
+              "used_in": "`character.vow_no_production`"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "5. Dạng nhiệm vụ (kind) và nghi thức (ritual)",
+      "blocks": [
+        "11 kind mặc định trong `registry/kinds.json`. Chiến tranh (`campaign`) là vật chứa, không phải kind, nhưng có icon trong nhóm kind.",
+        {
+          "table": "kinds",
+          "columns": [
+            {
+              "key": "vi",
+              "header": "VI"
+            },
+            {
+              "key": "en",
+              "header": "EN"
+            },
+            {
+              "key": "kind",
+              "header": "kind id",
+              "ids": " / "
+            },
+            {
+              "key": "icon",
+              "header": "Icon (thiết kế → code)"
+            },
+            {
+              "key": "ritual_vi",
+              "header": "Nghi thức (VI)"
+            },
+            {
+              "key": "ritual",
+              "header": "ritual id",
+              "ids": " / "
+            }
+          ],
+          "rows": [
+            {
+              "vi": "Kiến tạo",
+              "en": "Build",
+              "kind": ["build"],
+              "icon": "`kien-tao` → `kind-build`",
+              "ritual_vi": "Thợ cả khám công trình",
+              "ritual": ["build_review"]
+            },
+            {
+              "vi": "Thám hiểm",
+              "en": "Research",
+              "kind": ["research"],
+              "icon": "`tham-hiem` → `kind-research`",
+              "ritual_vi": "Đánh sinh vật canh giữ",
+              "ritual": ["source_check"]
+            },
+            {
+              "vi": "Trừ tà",
+              "en": "Fix",
+              "kind": ["fix"],
+              "icon": "`tru-ta` → `kind-fix`",
+              "ritual_vi": "Săn và đặt bẫy",
+              "ritual": ["regression_check"]
+            },
+            {
+              "vi": "Gia cố",
+              "en": "Refactor",
+              "kind": ["refactor"],
+              "icon": "`gia-co` → `kind-refactor`",
+              "ritual_vi": "Thử bão",
+              "ritual": ["stress_test"]
+            },
+            {
+              "vi": "Soạn thảo",
+              "en": "Document",
+              "kind": ["document"],
+              "icon": "`soan-thao` → `kind-document`",
+              "ritual_vi": "Thủ thư trưởng duyệt bản thảo",
+              "ritual": ["editorial_review"]
+            },
+            {
+              "vi": "Rao truyền",
+              "en": "Publish",
+              "kind": ["publish"],
+              "icon": "`rao-truyen` → `kind-publish`",
+              "ritual_vi": "Dân chúng phản ứng",
+              "ritual": ["audience_review"]
+            },
+            {
+              "vi": "Chiêm nghiệm",
+              "en": "Analyze",
+              "kind": ["analyze"],
+              "icon": "`chiem-nghiem` → `kind-analyze`",
+              "ritual_vi": "Chiêm tinh gia thứ hai tính lại",
+              "ritual": ["recompute"]
+            },
+            {
+              "vi": "Nghị hội",
+              "en": "Plan",
+              "kind": ["plan"],
+              "icon": "`nghi-hoi` → `kind-plan`",
+              "ritual_vi": "Hội đồng biểu quyết",
+              "ritual": ["council_review"]
+            },
+            {
+              "vi": "Chinh phục",
+              "en": "Integrate",
+              "kind": ["integrate"],
+              "icon": "`chinh-phuc` → `kind-integrate`",
+              "ritual_vi": "Lập đồn và cắm cờ",
+              "ritual": ["stability_check"]
+            },
+            {
+              "vi": "Ngoại giao",
+              "en": "Negotiate",
+              "kind": ["negotiate"],
+              "icon": "`ngoai-giao` → `kind-negotiate`",
+              "ritual_vi": "Ký hiệp ước",
+              "ritual": ["sign_off"]
+            },
+            {
+              "vi": "Trận đánh",
+              "en": "Batch",
+              "kind": ["batch"],
+              "icon": "`tran-danh` → `kind-batch`",
+              "ritual_vi": "Điểm quân sau trận",
+              "ritual": ["unit_tally"]
+            },
+            {
+              "vi": "Chiến tranh / chiến dịch (vật chứa)",
+              "en": "Campaign",
+              "kind": ["campaign"],
+              "icon": "`chien-tranh` → `kind-campaign`",
+              "ritual_vi": "Tuyên bố chiến thắng, rồi hội đồng sau chiến",
+              "ritual": []
+            },
+            {
+              "vi": "Mặt trận",
+              "en": "Front",
+              "kind": ["front"],
+              "icon": "—",
+              "ritual_vi": "—",
+              "ritual": ["campaign.fronts[]"]
+            }
+          ]
+        },
+        "Bước nghi thức (`ritual.steps[]`) cũng là id `snake_case` (ví dụ `run_checks`, `read_handover`, `read_diff`, `judge`, `write_verdict`); danh sách chốt ở P0-02 là `RITUAL_STEPS` trong `packages/domain/src/constants.ts` (bảng ở mục 13), vì loader registry từ chối bước lạ.",
+        "Nghi thức chọn theo tag, không theo kind (kế hoạch sản phẩm 0.7, ADR 0022; làm ở P1-20/P1-21):",
+        {
+          "table": "rituals_by_tag",
+          "columns": [
+            {
+              "key": "vi",
+              "header": "VI"
+            },
+            {
+              "key": "en",
+              "header": "EN"
+            },
+            {
+              "key": "id",
+              "header": "id"
+            },
+            {
+              "key": "when",
+              "header": "Khi nào"
+            }
+          ],
+          "rows": [
+            {
+              "vi": "Thả quái thử thành (0.7 gọi là Thử tường)",
+              "en": "Loose a monster on the walls",
+              "id": "ritual `mutation_check`",
+              "when": "quest Kiến tạo/Gia cố có tag `e2e` hoặc `integration` (test là sản phẩm)"
+            },
+            {
+              "vi": "Đất nháp của người chấm",
+              "en": "Scratch plot",
+              "id": "`scratch_plot` (cờ của ritual), worktree `<quest-id>-verify`",
+              "when": "Thả quái thử thành: người chấm đập thử ở đây, không commit, xóa sau verdict"
+            },
+            {
+              "vi": "Khảo hạch mù",
+              "en": "Blind trial",
+              "id": "`territory.blind_trial`",
+              "when": "tùy chọn, quest hạng B+: người khác viết test chấp nhận mà không nhìn diff"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "6. Nghề (class)",
+      "blocks": [
+        "11 class mặc định trong `registry/classes.json`; thiết kế có 12 icon nghề vì `judge` có hai icon theo kind.",
+        {
+          "table": "classes",
+          "columns": [
+            {
+              "key": "vi",
+              "header": "VI"
+            },
+            {
+              "key": "en",
+              "header": "EN"
+            },
+            {
+              "key": "class",
+              "header": "class id",
+              "ids": " / "
+            },
+            {
+              "key": "icon",
+              "header": "Icon (thiết kế → code)"
+            },
+            {
+              "key": "remark",
+              "header": "Ghi chú"
+            }
+          ],
+          "rows": [
+            {
+              "vi": "Tể tướng",
+              "en": "Chancellor",
+              "class": ["chancellor"],
+              "icon": "`te-tuong` → `class-chancellor`",
+              "remark": "không làm quest"
+            },
+            {
+              "vi": "Pháp sư",
+              "en": "Mage",
+              "class": ["mage"],
+              "icon": "`phap-su` → `class-mage`",
+              "remark": "Nghị hội, chia mặt trận"
+            },
+            {
+              "vi": "Hiệp sĩ",
+              "en": "Knight",
+              "class": ["knight"],
+              "icon": "`hiep-si` → `class-knight`",
+              "remark": "viết code"
+            },
+            {
+              "vi": "Người lùn",
+              "en": "Dwarf",
+              "class": ["dwarf"],
+              "icon": "`nguoi-lun` → `class-dwarf`",
+              "remark": "build, CI, hạ tầng, tích hợp"
+            },
+            {
+              "vi": "Elf trinh sát",
+              "en": "Scout",
+              "class": ["scout"],
+              "icon": "`elf-trinh-sat` → `class-scout`",
+              "remark": "nghiên cứu, tuần tra; class duy nhất có web"
+            },
+            {
+              "vi": "Thư ký",
+              "en": "Scribe",
+              "class": ["scribe"],
+              "icon": "`thu-ky` → `class-scribe`",
+              "remark": "tài liệu"
+            },
+            {
+              "vi": "Nhà thơ",
+              "en": "Bard",
+              "class": ["bard"],
+              "icon": "`nha-tho` → `class-bard`",
+              "remark": "nội dung, biên niên sử"
+            },
+            {
+              "vi": "Chiêm tinh gia",
+              "en": "Astrologer",
+              "class": ["astrologer"],
+              "icon": "`chiem-tinh-gia` → `class-astrologer`",
+              "remark": "phân tích dữ liệu"
+            },
+            {
+              "vi": "Sứ thần",
+              "en": "Envoy",
+              "class": ["envoy"],
+              "icon": "`su-than` → `class-envoy`",
+              "remark": "thư từ, chỉ nháp"
+            },
+            {
+              "vi": "Người nghiệm thu",
+              "en": "Judge",
+              "class": ["judge"],
+              "icon": "`tho-ca` → `class-judge-build`; `thu-thu-truong` → `class-judge-document`",
+              "remark": "`is_verifier`; danh hiệu và icon theo kind là dữ liệu theme (`title_by_kind`, `icon_by_kind`)"
+            },
+            {
+              "vi": "Thầy tu",
+              "en": "Monk",
+              "class": ["monk"],
+              "icon": "`thay-tu` → `class-monk`",
+              "remark": "`is_monk`; phản tỉnh, viết kinh"
+            }
+          ]
+        },
+        "Danh hiệu của `judge` (chuỗi hiển thị, không phải id): Thợ cả (Kiến tạo), Thủ thư trưởng (Soạn thảo), Chiêm tinh gia thứ hai (Chiêm nghiệm), Trọng tài (đối kháng trong Trận đánh), Hiền giả. Bảng đầy đủ kind → danh hiệu chốt trong `themes/fantasy/classes.json` ở giai đoạn 4."
+      ]
+    },
+    {
+      "heading": "7. Trạng thái",
+      "blocks": []
+    },
+    {
+      "heading": "7.1 Trạng thái quest (`quest.status`)",
+      "level": 3,
+      "blocks": [
+        {
+          "table": "quest_statuses",
+          "columns": [
+            {
+              "key": "vi",
+              "header": "VI"
+            },
+            {
+              "key": "id",
+              "header": "id",
+              "ids": " / "
+            },
+            {
+              "key": "tone",
+              "header": "Tông `data-status`"
+            },
+            {
+              "key": "icon",
+              "header": "Icon (thiết kế → code)"
+            }
+          ],
+          "rows": [
+            {
+              "vi": "Nháp (chờ xác nhận)",
+              "id": ["draft"],
+              "tone": "`open`",
+              "icon": "—"
+            },
+            {
+              "vi": "Mở",
+              "id": ["open"],
+              "tone": "`open`",
+              "icon": "`q-open` → `quest-open`"
+            },
+            {
+              "vi": "Đã nhận",
+              "id": ["claimed"],
+              "tone": "`working`",
+              "icon": "—"
+            },
+            {
+              "vi": "Đang làm",
+              "id": ["working"],
+              "tone": "`working`",
+              "icon": "`q-working` → `quest-working`"
+            },
+            {
+              "vi": "Chờ nghiệm thu",
+              "id": ["review"],
+              "tone": "`review`",
+              "icon": "`q-review` → `quest-review`"
+            },
+            {
+              "vi": "Bị trả bài",
+              "id": ["returned"],
+              "tone": "`returned`",
+              "icon": "`q-returned` → `quest-returned`"
+            },
+            {
+              "vi": "Chờ dấu vua",
+              "id": ["awaiting_seal"],
+              "tone": "`seal`",
+              "icon": "`q-seal` → `quest-seal`"
+            },
+            {
+              "vi": "Xong",
+              "id": ["done"],
+              "tone": "`done`",
+              "icon": "`q-done` → `quest-done`"
+            },
+            {
+              "vi": "Chờ trả lời / bị chặn",
+              "id": ["blocked"],
+              "tone": "`open`",
+              "icon": "—"
+            },
+            {
+              "vi": "Tạm dừng (hết mana)",
+              "id": ["paused_mana"],
+              "tone": "`sleep`",
+              "icon": "`q-sleep` → `quest-sleep`"
+            },
+            {
+              "vi": "Trạm quân y",
+              "id": ["infirmary"],
+              "tone": "`infirmary`",
+              "icon": "`q-infirmary` → `quest-infirmary`"
+            },
+            {
+              "vi": "Lưu trữ",
+              "id": ["archived"],
+              "tone": "`open`",
+              "icon": "—"
+            }
+          ]
+        },
+        "8 tông `data-status` của `elvaria.css`: `open, working, review, done, returned, sleep, infirmary, seal` — ánh xạ bằng `statusToneOf(status)`."
+      ]
+    },
+    {
+      "heading": "7.2 Trạng thái nhân vật (`character.status`)",
+      "level": 3,
+      "blocks": [
+        {
+          "table": "character_statuses",
+          "columns": [
+            {
+              "key": "vi",
+              "header": "VI"
+            },
+            {
+              "key": "id",
+              "header": "id",
+              "ids": " / "
+            },
+            {
+              "key": "icon",
+              "header": "Icon (thiết kế → code)"
+            }
+          ],
+          "rows": [
+            {
+              "vi": "Rảnh",
+              "id": ["idle"],
+              "icon": "— (không icon)"
+            },
+            {
+              "vi": "Làm việc",
+              "id": ["working"],
+              "icon": "`c-working` → `character-working`"
+            },
+            {
+              "vi": "Nghiệm thu",
+              "id": ["reviewing"],
+              "icon": "`c-reviewing` → `character-reviewing`"
+            },
+            {
+              "vi": "Ngủ (hết mana)",
+              "id": ["sleeping_mana"],
+              "icon": "`c-sleeping` → `character-sleeping`"
+            },
+            {
+              "vi": "Thiền",
+              "id": ["meditating"],
+              "icon": "`c-meditating` → `character-meditating`"
+            },
+            {
+              "vi": "Đình chỉ",
+              "id": ["suspended"],
+              "icon": "`c-suspended` → `character-suspended`"
+            },
+            {
+              "vi": "Lạc đầm lầy",
+              "id": ["swamp"],
+              "icon": "`c-swamp` → `character-swamp`"
+            }
+          ]
+        },
+        "`character.status_before_sleep` chỉ nhận `idle`, `working`, `reviewing`."
+      ]
+    },
+    {
+      "heading": "8. Tộc (`tribe`)",
+      "blocks": [
+        "Tộc là id mở trong `kingdom.tribes[]`; `elvaria init` ghi hai tộc đầu. Thêm tộc theo hợp đồng tộc (ADR 0021).",
+        {
+          "table": "tribes",
+          "columns": [
+            {
+              "key": "vi",
+              "header": "VI (tên theme, tạm)"
+            },
+            {
+              "key": "id",
+              "header": "id",
+              "ids": " / "
+            },
+            {
+              "key": "icon",
+              "header": "Icon (thiết kế → code)"
+            },
+            {
+              "key": "adapter",
+              "header": "Adapter"
+            }
+          ],
+          "rows": [
+            {
+              "vi": "Tộc Sao Bạc",
+              "id": ["claude"],
+              "icon": "`fac-silver` → `tribe-silver`",
+              "adapter": "`claude_code` (Claude Code)"
+            },
+            {
+              "vi": "Tộc Lửa Đỏ",
+              "id": ["gemini"],
+              "icon": "`fac-fire` → `tribe-fire`",
+              "adapter": "`antigravity` (Antigravity CLI, mặc định) hoặc `gemini_cli` (Gemini CLI + API key, đường lui)"
+            },
+            {
+              "vi": "(chưa đặt tên; ví dụ)",
+              "id": ["codex"],
+              "icon": "`tribe-neutral` cho tới khi theme có huy hiệu",
+              "adapter": "`codex_cli` (Codex CLI, tùy chọn)"
+            }
+          ]
+        },
+        "Adapter có sẵn: `claude_code`, `antigravity`, `gemini_cli`, `codex_cli`; ngoài ra là file `adapters/<name>.mjs` trong kingdom.",
+        "Họ model (suy ra từ slug, không lưu): `claude`, `gemini`, `gpt` (Codex thuộc họ `gpt`) — luật tách vai so họ model trước, rồi mới so tộc (ADR 0008)."
+      ]
+    },
+    {
+      "heading": "9. Hành động của người dùng (`inbox-command.kind`)",
+      "blocks": [
+        {
+          "table": "commands",
+          "columns": [
+            {
+              "key": "vi",
+              "header": "VI"
+            },
+            {
+              "key": "id",
+              "header": "id",
+              "ids": " / "
+            },
+            {
+              "key": "icon",
+              "header": "Icon (thiết kế → code)"
+            },
+            {
+              "key": "remark",
+              "header": "Ghi chú"
+            }
+          ],
+          "rows": [
+            {
+              "vi": "Xác nhận draft",
+              "id": ["confirm"],
+              "icon": "—",
+              "remark": "`draft` → `open`"
+            },
+            {
+              "vi": "Đóng dấu",
+              "id": ["seal"],
+              "icon": "`act-seal` → `action-seal`",
+              "remark": ""
+            },
+            {
+              "vi": "Trả về",
+              "id": ["return"],
+              "icon": "`act-return` → `action-return`",
+              "remark": "bắt buộc ghi chú"
+            },
+            {
+              "vi": "Thử lại",
+              "id": ["retry"],
+              "icon": "—",
+              "remark": "từ trạm quân y"
+            },
+            {
+              "vi": "Hủy",
+              "id": ["cancel"],
+              "icon": "—",
+              "remark": ""
+            },
+            {
+              "vi": "Lưu trữ",
+              "id": ["archive"],
+              "icon": "`act-archive` → `action-archive`",
+              "remark": "cũng dùng cho bỏ draft và từ chối khi chờ dấu"
+            },
+            {
+              "vi": "Triệu hồi",
+              "id": ["summon"],
+              "icon": "`act-summon` → `action-summon`",
+              "remark": ""
+            },
+            {
+              "vi": "Đánh thức (đã đăng nhập lại)",
+              "id": ["wake"],
+              "icon": "—",
+              "remark": "probe ngay"
+            },
+            {
+              "vi": "Đình chỉ",
+              "id": ["suspend"],
+              "icon": "`act-suspend` → `action-suspend`",
+              "remark": ""
+            },
+            {
+              "vi": "Thả (hết đình chỉ)",
+              "id": ["release"],
+              "icon": "—",
+              "remark": ""
+            },
+            {
+              "vi": "Giao lại",
+              "id": ["reassign"],
+              "icon": "`act-reassign` → `action-reassign`",
+              "remark": ""
+            },
+            {
+              "vi": "Đưa về Đền",
+              "id": ["send_to_temple"],
+              "icon": "`act-temple` → `action-temple`",
+              "remark": ""
+            },
+            {
+              "vi": "Tuyên chiến",
+              "id": ["declare_campaign"],
+              "icon": "`act-declare` → `action-declare`",
+              "remark": ""
+            },
+            {
+              "vi": "Kết thúc chiến dịch",
+              "id": ["close_campaign"],
+              "icon": "—",
+              "remark": ""
+            },
+            {
+              "vi": "Tạo quest",
+              "id": ["create_quest"],
+              "icon": "—",
+              "remark": "Tể tướng gửi với `draft: true`"
+            },
+            {
+              "vi": "Trả lời câu hỏi",
+              "id": ["answer"],
+              "icon": "—",
+              "remark": "quest `blocked`"
+            },
+            {
+              "vi": "Đổi hạng",
+              "id": ["set_rank"],
+              "icon": "—",
+              "remark": ""
+            },
+            {
+              "vi": "Mở cõi",
+              "id": ["attach_territory"],
+              "icon": "—",
+              "remark": ""
+            },
+            {
+              "vi": "Sửa quest",
+              "id": ["edit_quest"],
+              "icon": "—",
+              "remark": "kèm `expected_updated_at`"
+            },
+            {
+              "vi": "Ghim chuyên môn",
+              "id": ["pin_tag"],
+              "icon": "—",
+              "remark": "`tag = null` để bỏ ghim"
+            }
+          ]
+        },
+        "Nguồn lệnh (`source`): `cli`, `herald`, `lite`."
+      ]
+    },
+    {
+      "heading": "10. Catalog script (`registry/scripts.json`)",
+      "blocks": [
+        {
+          "table": "scripts",
+          "columns": [
+            {
+              "key": "id",
+              "header": "id",
+              "ids": " / "
+            },
+            {
+              "key": "vi",
+              "header": "VI"
+            },
+            {
+              "key": "does",
+              "header": "Làm gì"
+            }
+          ],
+          "rows": [
+            {
+              "id": ["link-check"],
+              "vi": "Kiểm tra link",
+              "does": "kiểm mọi link nội bộ; `produces: units` (mỗi link một đơn vị)"
+            },
+            {
+              "id": ["run-check"],
+              "vi": "Chạy kiểm tra",
+              "does": "chạy một `checks[].id` của lãnh thổ"
+            },
+            {
+              "id": ["count-files"],
+              "vi": "Đếm file",
+              "does": "đếm file theo glob"
+            },
+            {
+              "id": ["diff-stat"],
+              "vi": "Thống kê diff",
+              "does": "thống kê thay đổi của nhánh"
+            },
+            {
+              "id": ["compare-numbers"],
+              "vi": "So khớp số",
+              "does": "so hai bộ số liệu"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "10b. Tag chuyên môn mặc định (`registry/tags.json`)",
+      "blocks": [
+        {
+          "table": "tags",
+          "columns": [
+            {
+              "key": "id",
+              "header": "id",
+              "ids": " / "
+            },
+            {
+              "key": "vi",
+              "header": "VI"
+            },
+            {
+              "key": "en",
+              "header": "EN"
+            }
+          ],
+          "rows": [
+            {
+              "id": ["frontend"],
+              "vi": "Giao diện web",
+              "en": "Frontend"
+            },
+            {
+              "id": ["backend"],
+              "vi": "Máy chủ",
+              "en": "Backend"
+            },
+            {
+              "id": ["db"],
+              "vi": "Cơ sở dữ liệu",
+              "en": "Database"
+            },
+            {
+              "id": ["infra"],
+              "vi": "Hạ tầng",
+              "en": "Infrastructure"
+            },
+            {
+              "id": ["i18n"],
+              "vi": "Đa ngôn ngữ",
+              "en": "Internationalisation"
+            },
+            {
+              "id": ["e2e"],
+              "vi": "Kiểm thử đầu-cuối",
+              "en": "End-to-end tests"
+            },
+            {
+              "id": ["docs"],
+              "vi": "Tài liệu",
+              "en": "Documentation"
+            }
+          ]
+        },
+        "Từ P1-20 (ADR 0022): thêm `integration` — Kiểm thử tích hợp — Integration tests."
+      ]
+    },
+    {
+      "heading": "11. Giá trị liệt kê trong schema",
+      "blocks": [
+        "Mọi giá trị enum xuất hiện trong [schemas/](schemas/) có ở bảng này hoặc ở một mục khác của file này.",
+        {
+          "table": "enums",
+          "columns": [
+            {
+              "key": "field",
+              "header": "Trường"
+            },
+            {
+              "key": "values",
+              "header": "Giá trị (id)"
+            },
+            {
+              "key": "meaning",
+              "header": "Nghĩa (VI)"
+            }
+          ],
+          "rows": [
+            {
+              "field": "`rank` (cũng `breakers.high_rank_from`, `laws.rank_floor[].min_rank`, `set_rank`)",
+              "values": "`F`, `E`, `D`, `C`, `B`, `A`, `S`",
+              "meaning": "hạng thấp → cao"
+            },
+            {
+              "field": "`tier`",
+              "values": "`script`, `session`",
+              "meaning": "bậc script / phiên mới"
+            },
+            {
+              "field": "`territory.kind`",
+              "values": "`code`, `docs`, `content`, `data`, `mixed`",
+              "meaning": "loại lãnh thổ"
+            },
+            {
+              "field": "`vcs.type`",
+              "values": "`git`, `none`",
+              "meaning": ""
+            },
+            {
+              "field": "`health.ci`",
+              "values": "`green`, `red`, `unknown`",
+              "meaning": "thời tiết lãnh thổ"
+            },
+            {
+              "field": "`plot.type`",
+              "values": "`worktree`, `folder`, `none`",
+              "meaning": "đất riêng"
+            },
+            {
+              "field": "`deliverable.type` (cũng `kind.deliverable_type`)",
+              "values": "`branch`, `file`, `report`, `draft`, `subquests`, `none`",
+              "meaning": "dạng giao hàng"
+            },
+            {
+              "field": "`created_by`",
+              "values": "`chancellor`, `user`, `council`, `patrol`, `battle`, `campaign`",
+              "meaning": "ai tạo quest (`council` = hội đồng Nghị hội, `battle` = Trận đánh)"
+            },
+            {
+              "field": "`role` (`attempt_log`, `character.current`)",
+              "values": "`assignee`, `verifier`",
+              "meaning": "người làm / người nghiệm thu"
+            },
+            {
+              "field": "`attempt_log.outcome`",
+              "values": "`submitted`, `returned`, `timeout`, `breaker`, `crash`, `paused`, `blocked`, `cancelled`",
+              "meaning": "kết thúc một lần thử; `timeout` = cầu dao thời gian, `breaker` = cầu dao token/lượt"
+            },
+            {
+              "field": "`units[].outcome`",
+              "values": "`pending`, `done`, `not_done`, `needs_user`, `debt`",
+              "meaning": "chưa xử lý / xác quái / bia mộ / thương binh / đổ nát"
+            },
+            {
+              "field": "`verdict.result`",
+              "values": "`pass`, `fail`, `partial`",
+              "meaning": "đạt / không đạt / dở dang (người kế đọc tiếp)"
+            },
+            {
+              "field": "`verdict.fail_kind` (cũng `consecutive_fail.fail_kind`)",
+              "values": "`tests_fail`, `scope_creep`, `missing_i18n`, `wrong_facts`, `incomplete`, `style`, `unsafe`, `other`",
+              "meaning": "loại lỗi, để đếm \"cùng loại\"; thêm `flaky` từ P1-20 (ADR 0022)"
+            },
+            {
+              "field": "`verdict.verifier_id` (giá trị đặc biệt)",
+              "values": "`user`, `machine`",
+              "meaning": "dấu vua / verdict máy; không nhân vật nào được mang id này"
+            },
+            {
+              "field": "`campaign.mode`",
+              "values": "`offense`, `defense`",
+              "meaning": "tấn công (release, launch) / phòng thủ (sự cố)"
+            },
+            {
+              "field": "`campaign.status`",
+              "values": "`declared`, `active`, `won`, `lost`, `retro_pending`, `closed`",
+              "meaning": ""
+            },
+            {
+              "field": "`close_campaign.outcome`",
+              "values": "`won`, `lost`",
+              "meaning": ""
+            },
+            {
+              "field": "`victory_conditions[].check.type`",
+              "values": "`all_quests_done`, `command`",
+              "meaning": ""
+            },
+            {
+              "field": "`lesson.source`",
+              "values": "`monk`, `user`",
+              "meaning": "Thầy tu viết / người dùng tự thêm"
+            },
+            {
+              "field": "`lesson.owner` (giá trị đặc biệt)",
+              "values": "`temple`",
+              "meaning": "kinh chung; không nhân vật nào được mang id này"
+            },
+            {
+              "field": "`party_role` (quest, quest-draft)",
+              "values": "`contract`, `part`, `merge`",
+              "meaning": "quest hợp đồng / phần / quest ghép"
+            },
+            {
+              "field": "`skill.source`",
+              "values": "`monk`, `user`",
+              "meaning": "Thầy tu viết / người dùng viết"
+            },
+            {
+              "field": "`skill.scope` (giá trị đặc biệt)",
+              "values": "`global`",
+              "meaning": "áp dụng mọi lãnh thổ; nếu không thì là id một lãnh thổ; không lãnh thổ nào được mang id `global`"
+            },
+            {
+              "field": "`actor.kind`",
+              "values": "`character`, `user`, `steward`, `chancellor`, `herald`, `system`",
+              "meaning": ""
+            },
+            {
+              "field": "`owner.profession`",
+              "values": "`developer`, `ba`, `marketing`, `researcher`, `other`",
+              "meaning": ""
+            },
+            {
+              "field": "`owner.locale`",
+              "values": "`vi`, `en`",
+              "meaning": "ngôn ngữ của mọi thứ người dùng đọc"
+            },
+            {
+              "field": "`ui.mode`",
+              "values": "`night`, `day`",
+              "meaning": ""
+            },
+            {
+              "field": "`ui.eco`",
+              "values": "boolean",
+              "meaning": "chế độ tiết kiệm"
+            },
+            {
+              "field": "`tunnel.kind`",
+              "values": "`tailscale`, `cloudflare`",
+              "meaning": ""
+            },
+            {
+              "field": "`tribes[].tool.auth`",
+              "values": "`login`, `api_key`",
+              "meaning": "đăng nhập của chính CLI (claude.ai, Google, ChatGPT) / API key từ kho bảo vật (trả phí ⇒ bắt buộc `budget.usd_week`)"
+            },
+            {
+              "field": "`tribes[].adapter` (có sẵn)",
+              "values": "`claude_code`, `antigravity`, `gemini_cli`, `codex_cli`",
+              "meaning": "hoặc `adapters/<name>.mjs`"
+            },
+            {
+              "field": "`tribes[].pools` (Antigravity)",
+              "values": "`gemini_models`, `claude_gpt_models`",
+              "meaning": "hai pool của Antigravity"
+            },
+            {
+              "field": "`dispatch.fairness`",
+              "values": "`round_robin_territory`",
+              "meaning": "xoay vòng theo lãnh thổ"
+            },
+            {
+              "field": "`dispatch.verifier_same_family`",
+              "values": "`different_model`, `machine_only`",
+              "meaning": "khi không có người chấm khác họ model"
+            },
+            {
+              "field": "`ritual.pass_rule`",
+              "values": "`all_checks_and_agent`, `checks_only`, `agent_only`",
+              "meaning": ""
+            },
+            {
+              "field": "`script.produces`",
+              "values": "`report`, `units`, `check`",
+              "meaning": ""
+            },
+            {
+              "field": "event `agent.tool` → `data.tool`",
+              "values": "`read`, `write`, `bash`, `web`, `search`, `other`",
+              "meaning": ""
+            },
+            {
+              "field": "event `agent.session.end` → `data.outcome`",
+              "values": "`completed`, `max_turns`, `budget`, `killed`, `error`",
+              "meaning": "kết thúc phiên CLI (`RunResult.outcome`); `budget` = chạm `--max-budget-usd`"
+            },
+            {
+              "field": "event `mana.level` → `data.pool`",
+              "values": "id tộc (ví dụ `claude`), `gemini_models`, `claude_gpt_models`",
+              "meaning": "tài khoản một pool dùng id tộc làm pool; Antigravity có hai pool"
+            },
+            {
+              "field": "event `mana.level` → `data.window`",
+              "values": "`five_hour`, `weekly`",
+              "meaning": "cửa sổ hạn mức"
+            },
+            {
+              "field": "event `mana.level` → `data.source`",
+              "values": "`rate_limits`, `estimate`, `signal`",
+              "meaning": "ba nguồn gauge (ADR 0009)"
+            },
+            {
+              "field": "`kingdom.schedule`",
+              "values": "`chronicle`, `temple`, `patrol`",
+              "meaning": "ba lịch, mỗi cái tắt được"
+            },
+            {
+              "field": "`kingdom.bell`",
+              "values": "`desktop`, `web_push`, `messaging`",
+              "meaning": "ba kênh chuông"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "12. Danh mục event type (v1)",
+      "blocks": [
+        "`type` là chuỗi `nhóm.hành_động`; type chưa biết được giữ nguyên và bỏ qua khi vẽ. Danh mục chính xác và payload: [events.md](events.md) (sinh từ domain) và [schemas/event.schema.json](schemas/event.schema.json).",
+        {
+          "table": "events",
+          "columns": [
+            {
+              "key": "group",
+              "header": "Nhóm"
+            },
+            {
+              "key": "types",
+              "header": "Type",
+              "ids": ", "
+            },
+            {
+              "key": "meaning",
+              "header": "Nghĩa (VI)"
+            }
+          ],
+          "rows": [
+            {
+              "group": "Quest",
+              "types": [
+                "quest.drafted",
+                "quest.created",
+                "quest.claimed",
+                "quest.released",
+                "quest.started",
+                "quest.submitted",
+                "quest.returned",
+                "quest.verdict",
+                "quest.done",
+                "quest.sealed",
+                "quest.archived",
+                "quest.blocked",
+                "quest.unblocked",
+                "quest.paused",
+                "quest.resumed",
+                "quest.infirmary",
+                "quest.delivered"
+              ],
+              "meaning": "mỗi chuyển trạng thái của quest (§2.5 của implementation-plan)"
+            },
+            {
+              "group": "Phiên agent",
+              "types": [
+                "agent.session.start",
+                "agent.session.end",
+                "agent.tool",
+                "agent.tool.blocked",
+                "agent.subagent.start",
+                "agent.subagent.end",
+                "agent.subagent.overrun",
+                "agent.compact",
+                "agent.notification"
+              ],
+              "meaning": "những gì phiên CLI làm, do hook và stream ghi; `overrun` = học trò quá `subagent_max_minutes`; `compact` = ngồi thiền"
+            },
+            {
+              "group": "Phán quyết",
+              "types": ["verdict.pass", "verdict.fail", "verdict.partial"],
+              "meaning": "kết quả nghiệm thu"
+            },
+            {
+              "group": "Mana",
+              "types": [
+                "mana.level",
+                "mana.warning",
+                "mana.exhausted",
+                "mana.restored",
+                "mana.probe",
+                "mana.signal"
+              ],
+              "meaning": "số đo, cảnh báo, hết, hồi sinh, thăm dò, tín hiệu hết trong băng (429, `StopFailure`)"
+            },
+            {
+              "group": "Nhân vật",
+              "types": [
+                "character.created",
+                "character.sleep",
+                "character.wake",
+                "character.meditate",
+                "character.suspend",
+                "character.release",
+                "character.swamp",
+                "character.level_up",
+                "character.level_down"
+              ],
+              "meaning": ""
+            },
+            {
+              "group": "Lệnh",
+              "types": ["command.received", "command.applied", "command.rejected"],
+              "meaning": "Quản sự xử lý `inbox/`"
+            },
+            {
+              "group": "Khác",
+              "types": [
+                "delivery.sent",
+                "chronicle.written",
+                "territory.attached",
+                "territory.surveyed",
+                "territory.health",
+                "sandbox.replay.start",
+                "sandbox.replay.end"
+              ],
+              "meaning": ""
+            },
+            {
+              "group": "Dành sẵn",
+              "types": ["campaign.*", "battle.*", "incident.*", "patrol.*", "party.*", "skill.*"],
+              "meaning": "giai đoạn 5; đội và bí kíp"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "13. Dữ liệu registry mặc định",
+      "blocks": [
+        "Ví dụ trong [schemas/kind.schema.json](schemas/kind.schema.json) và [schemas/ritual.schema.json](schemas/ritual.schema.json); chốt ở P0-02 trong `packages/registry-default`.",
+        "Kiểm tra mặc định theo kind (`kind.checks_default`) — tên loại kiểm tra; lãnh thổ ánh xạ chúng vào lệnh thật trong `territory.checks`:",
+        {
+          "table": "checks_default",
+          "columns": [
+            {
+              "key": "kind",
+              "header": "kind",
+              "ids": " / "
+            },
+            {
+              "key": "checks",
+              "header": "id kiểm tra",
+              "ids": ", "
+            },
+            {
+              "key": "meaning",
+              "header": "Nghĩa (VI)"
+            }
+          ],
+          "rows": [
+            {
+              "kind": ["build"],
+              "checks": ["test", "lint", "typecheck", "build"],
+              "meaning": "test, lint, kiểm kiểu, build"
+            },
+            {
+              "kind": ["research"],
+              "checks": ["links_alive", "citations"],
+              "meaning": "nguồn còn sống, số liệu có trích dẫn"
+            },
+            {
+              "kind": ["fix"],
+              "checks": ["regression_test", "test"],
+              "meaning": "có regression test mới + toàn bộ test cũ"
+            },
+            {
+              "kind": ["refactor"],
+              "checks": ["benchmark", "test", "diff_stats"],
+              "meaning": "benchmark, test, số liệu trước/sau"
+            },
+            {
+              "kind": ["document"],
+              "checks": ["links_alive", "toc", "terminology"],
+              "meaning": "link, mục lục, thuật ngữ nhất quán"
+            },
+            {
+              "kind": ["publish"],
+              "checks": ["length", "banned_words", "utm_links"],
+              "meaning": "độ dài, từ cấm, link UTM"
+            },
+            {
+              "kind": ["analyze"],
+              "checks": ["rerun_script", "numbers_match"],
+              "meaning": "chạy lại script, số khớp"
+            },
+            {
+              "kind": ["plan"],
+              "checks": ["subquests_complete"],
+              "meaning": "mọi quest con có hạng, nghề, mana"
+            },
+            {
+              "kind": ["integrate"],
+              "checks": ["stable_days", "docs_present", "owner_named", "legacy_removed"],
+              "meaning": "chạy ổn N ngày, có docs, có người phụ trách, hệ cũ đã tháo"
+            },
+            {
+              "kind": ["negotiate"],
+              "checks": [],
+              "meaning": ""
+            },
+            {
+              "kind": ["batch"],
+              "checks": ["per_unit"],
+              "meaning": "mỗi đơn vị có pass/fail riêng"
+            }
+          ]
+        },
+        "Bước nghi thức (`ritual.steps[]`):",
+        {
+          "table": "ritual_steps",
+          "columns": [
+            {
+              "key": "id",
+              "header": "id",
+              "ids": " / "
+            },
+            {
+              "key": "meaning",
+              "header": "Nghĩa (VI)"
+            }
+          ],
+          "rows": [
+            {
+              "id": ["run_checks"],
+              "meaning": "chạy kiểm tra máy (trước khi agent chấm)"
+            },
+            {
+              "id": ["read_handover"],
+              "meaning": "đọc thư bàn giao"
+            },
+            {
+              "id": ["read_diff"],
+              "meaning": "đọc diff của nhánh"
+            },
+            {
+              "id": ["read_draft"],
+              "meaning": "đọc bản nháp"
+            },
+            {
+              "id": ["read_plan"],
+              "meaning": "đọc kế hoạch và quest con"
+            },
+            {
+              "id": ["check_sources"],
+              "meaning": "kiểm từng nguồn được trích"
+            },
+            {
+              "id": ["cross_check_sources"],
+              "meaning": "đối chiếu tài liệu với nguồn gốc"
+            },
+            {
+              "id": ["check_regression_test"],
+              "meaning": "có test tái hiện lỗi và test đó xanh"
+            },
+            {
+              "id": ["compare_before_after"],
+              "meaning": "so số liệu trước/sau"
+            },
+            {
+              "id": ["score_tone_checklist"],
+              "meaning": "chấm theo checklist giọng điệu/thương hiệu"
+            },
+            {
+              "id": ["rerun_from_source"],
+              "meaning": "tính lại từ dữ liệu gốc"
+            },
+            {
+              "id": ["compare_numbers"],
+              "meaning": "so khớp số"
+            },
+            {
+              "id": ["challenge_scope"],
+              "meaning": "phản biện phạm vi"
+            },
+            {
+              "id": ["tally_units"],
+              "meaning": "điểm từng đơn vị của trận"
+            },
+            {
+              "id": ["judge"],
+              "meaning": "agent chấm theo nghi thức"
+            },
+            {
+              "id": ["write_verdict"],
+              "meaning": "ghi phán quyết"
+            },
+            {
+              "id": ["rerun_clean"],
+              "meaning": "chạy lại trong đất nháp sạch, DB sạch (từ P1-20)"
+            },
+            {
+              "id": ["break_and_expect_red"],
+              "meaning": "đập thử: làm hỏng thứ test bảo vệ, test phải đỏ (từ P1-20)"
+            },
+            {
+              "id": ["flake_check"],
+              "meaning": "chạy 3 lần, flaky thì không qua (từ P1-20)"
+            },
+            {
+              "id": ["coverage_not_lower"],
+              "meaning": "coverage không giảm so với base (từ P1-20)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "heading": "14. Từ cấm trong identifier",
+      "blocks": [
+        "Đã có từ chính thức, nên không dùng từ bên trái trong identifier, khóa JSON hay id dữ liệu. `pnpm docs:check` quét mã chạy và dữ liệu (identifier, khóa JSON, chuỗi dạng id), trừ test, fixture, file cấu hình công cụ và chuỗi văn xuôi; hai từ chỉ cấm theo một nghĩa (`budget`, `agent`) để review bắt, không quét. Văn xuôi trong tài liệu không bị cấm.",
+        {
+          "table": "banned",
+          "columns": [
+            {
+              "key": "words",
+              "header": "Từ cấm",
+              "ids": ", "
+            },
+            {
+              "key": "use",
+              "header": "Dùng thay"
+            }
+          ],
+          "rows": [
+            {
+              "words": ["dispatcher"],
+              "use": "`steward`"
+            },
+            {
+              "words": ["intake"],
+              "use": "`chancellor`"
+            },
+            {
+              "words": ["approve", "approval"],
+              "use": "`seal`"
+            },
+            {
+              "words": ["reviewer"],
+              "use": "`judge` (class), `verifier` (vai)"
+            },
+            {
+              "words": ["worker"],
+              "use": "`assignee`"
+            },
+            {
+              "words": ["task"],
+              "use": "`quest`"
+            },
+            {
+              "words": ["provider"],
+              "use": "`tribe` (tộc; \"nhà cung cấp\" chỉ dùng trong văn xuôi)"
+            },
+            {
+              "words": ["team"],
+              "use": "`party` (đội)"
+            },
+            {
+              "words": ["subclass", "specialization"],
+              "use": "`tag` (chuyên môn là danh tiếng theo tag, không phải nghề con)"
+            },
+            {
+              "words": ["project"],
+              "use": "`territory`"
+            },
+            {
+              "words": ["tester"],
+              "use": "`knight` + tag `e2e` (không có nghề tester: viết test là viết code, kế hoạch sản phẩm 0.7)"
+            },
+            {
+              "words": ["budget"],
+              "words_note": "khi nói về mức mana",
+              "use": "`mana` (`budget` chỉ dùng như mục 3)",
+              "scan": false
+            },
+            {
+              "words": ["agent"],
+              "words_note": "khi nói về nhân vật",
+              "use": "`character` (nhóm event `agent.*` nói về phiên CLI, không phải nhân vật)",
+              "scan": false
+            }
+          ]
+        },
+        "Id \"màu mè\" bị thay bằng từ thông dụng; `pnpm docs:check` cũng chặn chúng:",
+        {
+          "table": "fancy",
+          "columns": [
+            {
+              "key": "words",
+              "header": "Id \"màu mè\"",
+              "ids": ", "
+            },
+            {
+              "key": "use",
+              "header": "Dùng thay",
+              "ids": ", "
+            }
+          ],
+          "rows": [
+            {
+              "words": ["exorcise"],
+              "use": ["fix"]
+            },
+            {
+              "words": ["fortify"],
+              "use": ["refactor"]
+            },
+            {
+              "words": ["proclaim"],
+              "use": ["publish"]
+            },
+            {
+              "words": ["divine"],
+              "use": ["analyze"]
+            },
+            {
+              "words": ["conquer"],
+              "use": ["integrate"]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

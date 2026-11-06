@@ -29,11 +29,12 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm boundaries
-      # Until a task builds a generator, its script prints NOT YET and the diff stays empty.
+      # --check also fails on a generated file that was never committed, which git diff cannot see:
+      # the regenerated file would be untracked (implementation-plan §7).
       - name: docs/schemas is generated from zod (P0-03)
-        run: pnpm schemas && git diff --exit-code docs/schemas
+        run: pnpm schemas --check && pnpm schemas && git diff --exit-code docs/schemas
       - name: Generated docs are up to date (P0-07)
-        run: pnpm docs:gen && git diff --exit-code docs/
+        run: pnpm docs:gen --check && pnpm docs:gen && git diff --exit-code docs/
       - run: pnpm docs:check
       - run: pnpm i18n:check
       - run: pnpm audit --prod --audit-level high
