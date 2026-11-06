@@ -10,10 +10,12 @@ flowchart TD
   domain["domain"]
   store["store"]
   registry_default["registry-default"]
+  eventlog["eventlog"]
   i18n["i18n"]
   cli["cli"]
   store --> domain
   registry_default --> domain
+  eventlog --> domain
   cli --> domain
   cli --> i18n
   cli --> registry_default
@@ -34,7 +36,7 @@ flowchart TD
 | `steward` | chưa có | | `domain`, `store`, `eventlog`, `runner-core` |
 | `chancellor` | chưa có | | `domain`, `runner-core` |
 | `sandbox` | chưa có | | `domain`, `eventlog`, `store` |
-| `eventlog` | chưa có | | `domain` |
+| `eventlog` | `packages/eventlog` | `domain` | `domain` |
 | `hooks` | chưa có | | `eventlog` |
 | `herald` | chưa có | | `domain`, `store`, `eventlog`, `sandbox` |
 | `i18n` | `packages/i18n` | — | — |

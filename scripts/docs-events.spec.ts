@@ -53,7 +53,8 @@ describe('renderEvents', () => {
     expect(text).toContain('| `mana.level` | `tribe`: string');
     expect(text).toContain('`resets_at` (tùy chọn): string (date-time)');
     expect(text).toContain('| `command.rejected` | `command_id`: string');
-    expect(text).toContain('| `quest.done` | object mở, chưa có schema |');
+    expect(text).toContain('| `quest.done` | `quest`: object { id, title, kind, rank,');
+    expect(text).toContain('| `verdict.fail` | object mở, chưa có schema |');
   });
 
   it('links to the contract and the glossary', () => {

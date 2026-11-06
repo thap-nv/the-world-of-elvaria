@@ -1,6 +1,7 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
 
 import examples from '../../../examples/event.json' with { type: 'json' };
+import { CHARACTER_VIEW, QUEST_VIEW, TERRITORY_VIEW } from '../../world/__fixtures__/examples.ts';
 import { contractOf } from '../json-schema.ts';
 import { EVENT_DATA_SCHEMAS } from './event-data.ts';
 import { EVENT_TYPES, isKnownEventType } from './event-types.ts';
@@ -26,8 +27,45 @@ const issuesOf = (value: unknown) => {
 
 const ULID = '01JCFB7Q2R8S4T6V9W3X5Y1Z0A';
 
+// The views of the v1 examples: what the Steward writes after a change (world/*-view.ts).
+const QUEST_CHANGE = { quest: QUEST_VIEW, characters: [CHARACTER_VIEW] };
+const CHARACTER_CHANGE = { character: CHARACTER_VIEW };
+const TERRITORY_CHANGE = { territory: TERRITORY_VIEW };
+const POOL = { tribe: 'gemini', pool: 'gemini_models' };
+
 // One valid `data` per type that has a data schema: the table must name every one of them.
 const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
+  'quest.drafted': QUEST_CHANGE,
+  'quest.created': { quest: QUEST_VIEW },
+  'quest.claimed': QUEST_CHANGE,
+  'quest.released': QUEST_CHANGE,
+  'quest.started': QUEST_CHANGE,
+  'quest.submitted': QUEST_CHANGE,
+  'quest.returned': QUEST_CHANGE,
+  'quest.verdict': QUEST_CHANGE,
+  'quest.done': QUEST_CHANGE,
+  'quest.sealed': QUEST_CHANGE,
+  'quest.archived': { ...QUEST_CHANGE, characters: [] },
+  'quest.blocked': QUEST_CHANGE,
+  'quest.unblocked': QUEST_CHANGE,
+  'quest.paused': QUEST_CHANGE,
+  'quest.resumed': QUEST_CHANGE,
+  'quest.infirmary': { reason: 'breaker:time', ...QUEST_CHANGE },
+  'quest.delivered': QUEST_CHANGE,
+  'character.created': CHARACTER_CHANGE,
+  'character.sleep': CHARACTER_CHANGE,
+  'character.wake': CHARACTER_CHANGE,
+  'character.meditate': CHARACTER_CHANGE,
+  'character.suspend': CHARACTER_CHANGE,
+  'character.release': CHARACTER_CHANGE,
+  'character.swamp': CHARACTER_CHANGE,
+  'character.level_up': CHARACTER_CHANGE,
+  'character.level_down': CHARACTER_CHANGE,
+  'territory.attached': TERRITORY_CHANGE,
+  'territory.surveyed': TERRITORY_CHANGE,
+  'territory.health': TERRITORY_CHANGE,
+  'mana.exhausted': POOL,
+  'mana.restored': POOL,
   'agent.tool': { tool: 'bash', command: 'pnpm test', exit: 0, duration_ms: 5120, url: 'https://x.dev' },
   'agent.tool.blocked': { tool: 'write', reason: 'forbidden path .env' },
   'agent.session.start': { session: 'abc-123', model: 'claude-opus-4.1' },
@@ -38,7 +76,6 @@ const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
   'mana.level': { tribe: 'claude', pool: 'claude', window: 'weekly', used_pct: 0, source: 'estimate' },
   'command.applied': { command_id: ULID },
   'command.rejected': { command_id: ULID, reason: 'quest is not awaiting_seal' },
-  'quest.infirmary': { reason: 'breaker:time' },
 };
 
 describe('EventSchema', () => {
@@ -57,8 +94,13 @@ describe('EventSchema', () => {
   });
 
   it('leaves data open for a known type without a data schema', () => {
-    const created = line('quest.created', { anything: 'goes' }, { quest: 'q_20261106_7k3m2a' });
-    expect(EventSchema.parse(created)).toEqual(created);
+    const sent = line('delivery.sent', { anything: 'goes' }, { quest: 'q_20261106_7k3m2a' });
+    expect(EventSchema.parse(sent)).toEqual(sent);
+  });
+
+  it('checks data without rewriting it: an omitted `characters` stays omitted', () => {
+    const created = line('quest.created', { quest: QUEST_VIEW });
+    expect(EventSchema.parse(created).data).toEqual({ quest: QUEST_VIEW });
   });
 
   it.each([
@@ -76,7 +118,18 @@ describe('EventSchema', () => {
     ['mana.level', { ...VALID_DATA['mana.level'], resets_at: 'tomorrow' }, 'data.resets_at'],
     ['command.applied', { command_id: 'not-a-ulid' }, 'data.command_id'],
     ['command.rejected', { reason: 'stale' }, 'data.command_id'],
-    ['quest.infirmary', { reason: '' }, 'data.reason'],
+    ['quest.infirmary', { ...QUEST_CHANGE, reason: '' }, 'data.reason'],
+    ['quest.infirmary', { reason: 'breaker:time' }, 'data.quest'],
+    ['quest.claimed', {}, 'data.quest'],
+    ['quest.claimed', { quest: { ...QUEST_VIEW, assignee: undefined } }, 'data.quest.assignee'],
+    ['quest.claimed', { quest: { ...QUEST_VIEW, plot: { type: 'none' } } }, 'Unrecognized key: "plot"'],
+    ['quest.done', { quest: { ...QUEST_VIEW, status: 'finished' } }, 'data.quest.status'],
+    ['quest.started', { ...QUEST_CHANGE, characters: [{ ...CHARACTER_VIEW, level: 11 }] }, 'level'],
+    ['character.sleep', { character: { ...CHARACTER_VIEW, reputation: undefined } }, 'reputation'],
+    ['character.created', { character: { ...CHARACTER_VIEW, status: 'lost' } }, 'data.character.status'],
+    ['territory.health', { territory: { ...TERRITORY_VIEW, health: { ci: 'blue' } } }, 'health'],
+    ['mana.exhausted', { ...POOL, pool: 'Gemini Models' }, 'data.pool'],
+    ['mana.restored', { pool: 'claude' }, 'data.tribe'],
   ])('rejects %s with data %j', (type, data, expected) => {
     expect(issuesOf(line(type, data)).join('\n')).toContain(expected);
   });
@@ -93,7 +146,7 @@ describe('EventSchema', () => {
     ['a field outside the contract', { provider: 'claude' }, 'Unrecognized key: "provider"'],
     ['a line without data', { data: undefined }, 'data: Invalid input'],
   ])('rejects %s', (_, change, expected) => {
-    expect(issuesOf(line('quest.created', {}, change)).join('\n')).toContain(expected);
+    expect(issuesOf(line('delivery.sent', {}, change)).join('\n')).toContain(expected);
   });
 
   it('reports data issues under data with the code zod gave them', () => {
@@ -111,7 +164,7 @@ describe('event narrowing', () => {
 
   it('narrows data by type through isTypedEvent', () => {
     expect(isTypedEvent(toolLine!)).toBe(true);
-    expect(isTypedEvent(EventSchema.parse(line('quest.created', {})))).toBe(false);
+    expect(isTypedEvent(EventSchema.parse(line('delivery.sent', {})))).toBe(false);
     const event = toolLine!;
     if (!isTypedEvent(event)) throw new Error('expected a typed event');
     switch (event.type) {

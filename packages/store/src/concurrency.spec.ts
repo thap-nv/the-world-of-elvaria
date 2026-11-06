@@ -79,6 +79,9 @@ function runWorker(): Promise<{ code: number | null; stderr: string }> {
 }
 
 describe('concurrent writes (ADR 0004, 0015)', () => {
+  // Both specs prove that no update is lost, not how fast the lock is: 25 writers queue on one lock with
+  // back-off, and a Windows runner that also runs other packages' process-spawning specs (eventlog, since
+  // P0-05) needs a little more than vitest's default 5 s for them.
   it('loses no update when many writers in one process update the same quest', async () => {
     const writers = Array.from({ length: IN_PROCESS_WRITERS }, () =>
       store.quests.update(START.id, addMinute),
@@ -88,7 +91,7 @@ describe('concurrent writes (ADR 0004, 0015)', () => {
     expect(await failures).toEqual([]);
     expect(await minutes()).toBe(IN_PROCESS_WRITERS);
     expect(await leftovers()).toEqual([]);
-  });
+  }, 60_000);
 
   it('loses no update across processes, and a reader never sees a broken file', async () => {
     const workers = Promise.all(Array.from({ length: PROCESSES }, runWorker));

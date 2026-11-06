@@ -4,7 +4,7 @@
 
 Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là một event; log chỉ ghi thêm, không bao giờ viết lại. `type` là `nhóm.hành_động`; reader giữ nguyên type lạ, renderer bỏ qua nó. Hợp đồng đầy đủ: [schemas/event.schema.json](schemas/event.schema.json); nghĩa từng nhóm và các tiền tố dành sẵn: [glossary.md](glossary.md) mục 12.
 
-54 type trong danh mục v1, 11 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
+54 type trong danh mục v1, 41 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
 
 ## Khung một dòng
 
@@ -25,23 +25,23 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 
 | Type | `data` |
 |---|---|
-| `quest.drafted` | object mở, chưa có schema |
-| `quest.created` | object mở, chưa có schema |
-| `quest.claimed` | object mở, chưa có schema |
-| `quest.released` | object mở, chưa có schema |
-| `quest.started` | object mở, chưa có schema |
-| `quest.submitted` | object mở, chưa có schema |
-| `quest.returned` | object mở, chưa có schema |
-| `quest.verdict` | object mở, chưa có schema |
-| `quest.done` | object mở, chưa có schema |
-| `quest.sealed` | object mở, chưa có schema |
-| `quest.archived` | object mở, chưa có schema |
-| `quest.blocked` | object mở, chưa có schema |
-| `quest.unblocked` | object mở, chưa có schema |
-| `quest.paused` | object mở, chưa có schema |
-| `quest.resumed` | object mở, chưa có schema |
-| `quest.infirmary` | `reason`: string (không rỗng) — e.g. breaker:time, breaker:tokens, max_attempts, script_error. |
-| `quest.delivered` | object mở, chưa có schema |
+| `quest.drafted` | `quest`: object { id, title, kind, rank, territory, status, tier, class_required, tags, assignee, verifier, attempts, max_attempts, seal_required, sealed_at, question, party_id, party_role, campaign_id, parent_id, depends_on, delivered_at, created_at, updated_at } — The quest after this event (questViewOf). Its id is the envelope `quest`.<br>`characters` (tùy chọn): array of object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own. |
+| `quest.created` | `quest`: object { id, title, kind, rank, territory, status, tier, class_required, tags, assignee, verifier, attempts, max_attempts, seal_required, sealed_at, question, party_id, party_role, campaign_id, parent_id, depends_on, delivered_at, created_at, updated_at } — The quest after this event (questViewOf). Its id is the envelope `quest`.<br>`characters` (tùy chọn): array of object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own. |
+| `quest.claimed` | `quest`: object { id, title, kind, rank, territory, status, tier, class_required, tags, assignee, verifier, attempts, max_attempts, seal_required, sealed_at, question, party_id, party_role, campaign_id, parent_id, depends_on, delivered_at, created_at, updated_at } — The quest after this event (questViewOf). Its id is the envelope `quest`.<br>`characters` (tùy chọn): array of object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own. |
+| `quest.released` | `quest`: object { id, title, kind, rank, territory, status, tier, class_required, tags, assignee, verifier, attempts, max_attempts, seal_required, sealed_at, question, party_id, party_role, campaign_id, parent_id, depends_on, delivered_at, created_at, updated_at } — The quest after this event (questViewOf). Its id is the envelope `quest`.<br>`characters` (tùy chọn): array of object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own. |
+| `quest.started` | `quest`: object { id, title, kind, rank, territory, status, tier, class_required, tags, assignee, verifier, attempts, max_attempts, seal_required, sealed_at, question, party_id, party_role, campaign_id, parent_id, depends_on, delivered_at, created_at, updated_at } — The quest after this event (questViewOf). Its id is the envelope `quest`.<br>`characters` (tùy chọn): array of object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own. |
+| `quest.submitted` | `quest`: object { id, title, kind, rank, territory, status, tier, class_required, tags, assignee, verifier, attempts, max_attempts, seal_required, sealed_at, question, party_id, party_role, campaign_id, parent_id, depends_on, delivered_at, created_at, updated_at } — The quest after this event (questViewOf). Its id is the envelope `quest`.<br>`characters` (tùy chọn): array of object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own. |
+| `quest.returned` | `quest`: object { id, title, kind, rank, territory, status, tier, class_required, tags, assignee, verifier, attempts, max_attempts, seal_required, sealed_at, question, party_id, party_role, campaign_id, parent_id, depends_on, delivered_at, created_at, updated_at } — The quest after this event (questViewOf). Its id is the envelope `quest`.<br>`characters` (tùy chọn): array of object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own. |
+| `quest.verdict` | `quest`: object { id, title, kind, rank, territory, status, tier, class_required, tags, assignee, verifier, attempts, max_attempts, seal_required, sealed_at, question, party_id, party_role, campaign_id, parent_id, depends_on, delivered_at, created_at, updated_at } — The quest after this event (questViewOf). Its id is the envelope `quest`.<br>`characters` (tùy chọn): array of object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own. |
+| `quest.done` | `quest`: object { id, title, kind, rank, territory, status, tier, class_required, tags, assignee, verifier, attempts, max_attempts, seal_required, sealed_at, question, party_id, party_role, campaign_id, parent_id, depends_on, delivered_at, created_at, updated_at } — The quest after this event (questViewOf). Its id is the envelope `quest`.<br>`characters` (tùy chọn): array of object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own. |
+| `quest.sealed` | `quest`: object { id, title, kind, rank, territory, status, tier, class_required, tags, assignee, verifier, attempts, max_attempts, seal_required, sealed_at, question, party_id, party_role, campaign_id, parent_id, depends_on, delivered_at, created_at, updated_at } — The quest after this event (questViewOf). Its id is the envelope `quest`.<br>`characters` (tùy chọn): array of object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own. |
+| `quest.archived` | `quest`: object { id, title, kind, rank, territory, status, tier, class_required, tags, assignee, verifier, attempts, max_attempts, seal_required, sealed_at, question, party_id, party_role, campaign_id, parent_id, depends_on, delivered_at, created_at, updated_at } — The quest after this event (questViewOf). Its id is the envelope `quest`.<br>`characters` (tùy chọn): array of object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own. |
+| `quest.blocked` | `quest`: object { id, title, kind, rank, territory, status, tier, class_required, tags, assignee, verifier, attempts, max_attempts, seal_required, sealed_at, question, party_id, party_role, campaign_id, parent_id, depends_on, delivered_at, created_at, updated_at } — The quest after this event (questViewOf). Its id is the envelope `quest`.<br>`characters` (tùy chọn): array of object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own. |
+| `quest.unblocked` | `quest`: object { id, title, kind, rank, territory, status, tier, class_required, tags, assignee, verifier, attempts, max_attempts, seal_required, sealed_at, question, party_id, party_role, campaign_id, parent_id, depends_on, delivered_at, created_at, updated_at } — The quest after this event (questViewOf). Its id is the envelope `quest`.<br>`characters` (tùy chọn): array of object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own. |
+| `quest.paused` | `quest`: object { id, title, kind, rank, territory, status, tier, class_required, tags, assignee, verifier, attempts, max_attempts, seal_required, sealed_at, question, party_id, party_role, campaign_id, parent_id, depends_on, delivered_at, created_at, updated_at } — The quest after this event (questViewOf). Its id is the envelope `quest`.<br>`characters` (tùy chọn): array of object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own. |
+| `quest.resumed` | `quest`: object { id, title, kind, rank, territory, status, tier, class_required, tags, assignee, verifier, attempts, max_attempts, seal_required, sealed_at, question, party_id, party_role, campaign_id, parent_id, depends_on, delivered_at, created_at, updated_at } — The quest after this event (questViewOf). Its id is the envelope `quest`.<br>`characters` (tùy chọn): array of object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own. |
+| `quest.infirmary` | `reason`: string (không rỗng) — e.g. breaker:time, breaker:tokens, max_attempts, script_error.<br>`quest`: object { id, title, kind, rank, territory, status, tier, class_required, tags, assignee, verifier, attempts, max_attempts, seal_required, sealed_at, question, party_id, party_role, campaign_id, parent_id, depends_on, delivered_at, created_at, updated_at } — The quest after this event (questViewOf). Its id is the envelope `quest`.<br>`characters` (tùy chọn): array of object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own. |
+| `quest.delivered` | `quest`: object { id, title, kind, rank, territory, status, tier, class_required, tags, assignee, verifier, attempts, max_attempts, seal_required, sealed_at, question, party_id, party_role, campaign_id, parent_id, depends_on, delivered_at, created_at, updated_at } — The quest after this event (questViewOf). Its id is the envelope `quest`.<br>`characters` (tùy chọn): array of object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own. |
 
 ## `agent` · 9 type
 
@@ -71,8 +71,8 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 |---|---|
 | `mana.level` | `tribe`: string (khớp `^[a-z][a-z0-9_]*$`) — TribeId from kingdom.tribes[].<br>`pool`: string (khớp `^[a-z][a-z0-9_]*$`) — PoolId from poolOf(tribe, model): the tribe id for a single-pool account (claude), or the adapter's pool (antigravity: gemini_models, claude_gpt_models).<br>`window`: một trong `five_hour`, `weekly`<br>`used_pct`: number 0–100<br>`resets_at` (tùy chọn): string (date-time)<br>`source`: một trong `rate_limits`, `estimate`, `signal` |
 | `mana.warning` | object mở, chưa có schema |
-| `mana.exhausted` | object mở, chưa có schema |
-| `mana.restored` | object mở, chưa có schema |
+| `mana.exhausted` | `tribe`: string (khớp `^[a-z][a-z0-9_]*$`)<br>`pool`: string (khớp `^[a-z][a-z0-9_]*$`) |
+| `mana.restored` | `tribe`: string (khớp `^[a-z][a-z0-9_]*$`)<br>`pool`: string (khớp `^[a-z][a-z0-9_]*$`) |
 | `mana.probe` | object mở, chưa có schema |
 | `mana.signal` | `error`: string (khớp `^[a-z][a-z0-9_]*$`)<br>`source`: string (khớp `^[a-z][a-z0-9_]*$`) |
 
@@ -80,15 +80,15 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 
 | Type | `data` |
 |---|---|
-| `character.created` | object mở, chưa có schema |
-| `character.sleep` | object mở, chưa có schema |
-| `character.wake` | object mở, chưa có schema |
-| `character.meditate` | object mở, chưa có schema |
-| `character.suspend` | object mở, chưa có schema |
-| `character.release` | object mở, chưa có schema |
-| `character.swamp` | object mở, chưa có schema |
-| `character.level_up` | object mở, chưa có schema |
-| `character.level_down` | object mở, chưa có schema |
+| `character.created` | `character`: object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — The character after this event (characterViewOf). |
+| `character.sleep` | `character`: object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — The character after this event (characterViewOf). |
+| `character.wake` | `character`: object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — The character after this event (characterViewOf). |
+| `character.meditate` | `character`: object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — The character after this event (characterViewOf). |
+| `character.suspend` | `character`: object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — The character after this event (characterViewOf). |
+| `character.release` | `character`: object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — The character after this event (characterViewOf). |
+| `character.swamp` | `character`: object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — The character after this event (characterViewOf). |
+| `character.level_up` | `character`: object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — The character after this event (characterViewOf). |
+| `character.level_down` | `character`: object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — The character after this event (characterViewOf). |
 
 ## `command` · 3 type
 
@@ -114,9 +114,9 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 
 | Type | `data` |
 |---|---|
-| `territory.attached` | object mở, chưa có schema |
-| `territory.surveyed` | object mở, chưa có schema |
-| `territory.health` | object mở, chưa có schema |
+| `territory.attached` | `territory`: object { id, name, kind, health, surveyed_at } — The territory after this event (territoryViewOf). |
+| `territory.surveyed` | `territory`: object { id, name, kind, health, surveyed_at } — The territory after this event (territoryViewOf). |
+| `territory.health` | `territory`: object { id, name, kind, health, surveyed_at } — The territory after this event (territoryViewOf). |
 
 ## `sandbox` · 2 type
 

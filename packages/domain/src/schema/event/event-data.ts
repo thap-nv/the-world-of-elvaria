@@ -4,6 +4,13 @@ import { z } from 'zod';
 
 import { REGISTRY_ID_PATTERN, TribeIdSchema, UlidSchema } from '../../core/ids.ts';
 import { DateTimeSchema, NonEmptyStringSchema } from '../common.ts';
+import {
+  CharacterChangeDataSchema,
+  ManaPoolDataSchema,
+  QuestChangeDataSchema,
+  QuestInfirmaryDataSchema,
+  TerritoryChangeDataSchema,
+} from './state-data.ts';
 import type { EventType } from './event-types.ts';
 
 const describe = (description: string) => ({ description });
@@ -75,14 +82,28 @@ const ManaLevelDataSchema = z.strictObject({
 
 const CommandResultDataSchema = z.strictObject({ command_id: UlidSchema, reason: z.string().optional() });
 
-const QuestInfirmaryDataSchema = z.strictObject({
-  reason: NonEmptyStringSchema.meta(
-    describe('e.g. breaker:time, breaker:tokens, max_attempts, script_error.'),
-  ),
-});
-
-/** The data schema of each type that has one; `satisfies` keeps every key inside the v1 catalogue. */
+/**
+ * The data schema of each type that has one; `satisfies` keeps every key inside the v1 catalogue. Every type
+ * that changes what the world shows has one (state-data.ts), so the world state rebuilds from the log (P0-09).
+ */
 export const EVENT_DATA_SCHEMAS = {
+  'quest.drafted': QuestChangeDataSchema,
+  'quest.created': QuestChangeDataSchema,
+  'quest.claimed': QuestChangeDataSchema,
+  'quest.released': QuestChangeDataSchema,
+  'quest.started': QuestChangeDataSchema,
+  'quest.submitted': QuestChangeDataSchema,
+  'quest.returned': QuestChangeDataSchema,
+  'quest.verdict': QuestChangeDataSchema,
+  'quest.done': QuestChangeDataSchema,
+  'quest.sealed': QuestChangeDataSchema,
+  'quest.archived': QuestChangeDataSchema,
+  'quest.blocked': QuestChangeDataSchema,
+  'quest.unblocked': QuestChangeDataSchema,
+  'quest.paused': QuestChangeDataSchema,
+  'quest.resumed': QuestChangeDataSchema,
+  'quest.infirmary': QuestInfirmaryDataSchema,
+  'quest.delivered': QuestChangeDataSchema,
   'agent.tool': AgentToolDataSchema,
   'agent.tool.blocked': AgentToolBlockedDataSchema,
   'agent.session.start': AgentSessionStartDataSchema,
@@ -91,9 +112,22 @@ export const EVENT_DATA_SCHEMAS = {
   'agent.subagent.overrun': AgentSubagentOverrunDataSchema,
   'mana.signal': ManaSignalDataSchema,
   'mana.level': ManaLevelDataSchema,
+  'mana.exhausted': ManaPoolDataSchema,
+  'mana.restored': ManaPoolDataSchema,
+  'character.created': CharacterChangeDataSchema,
+  'character.sleep': CharacterChangeDataSchema,
+  'character.wake': CharacterChangeDataSchema,
+  'character.meditate': CharacterChangeDataSchema,
+  'character.suspend': CharacterChangeDataSchema,
+  'character.release': CharacterChangeDataSchema,
+  'character.swamp': CharacterChangeDataSchema,
+  'character.level_up': CharacterChangeDataSchema,
+  'character.level_down': CharacterChangeDataSchema,
   'command.applied': CommandResultDataSchema,
   'command.rejected': CommandResultDataSchema,
-  'quest.infirmary': QuestInfirmaryDataSchema,
+  'territory.attached': TerritoryChangeDataSchema,
+  'territory.surveyed': TerritoryChangeDataSchema,
+  'territory.health': TerritoryChangeDataSchema,
 } as const satisfies Partial<Record<EventType, z.ZodType>>;
 
 export type TypedEventType = keyof typeof EVENT_DATA_SCHEMAS;

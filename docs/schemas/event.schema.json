@@ -104,6 +104,741 @@
       "if": {
         "properties": {
           "type": {
+            "enum": [
+              "quest.drafted",
+              "quest.created",
+              "quest.claimed",
+              "quest.released",
+              "quest.started",
+              "quest.submitted",
+              "quest.returned",
+              "quest.verdict",
+              "quest.done",
+              "quest.sealed",
+              "quest.archived",
+              "quest.blocked",
+              "quest.unblocked",
+              "quest.paused",
+              "quest.resumed",
+              "quest.delivered"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "quest"
+            ],
+            "properties": {
+              "quest": {
+                "description": "The quest after this event (questViewOf). Its id is the envelope `quest`.",
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "title",
+                  "kind",
+                  "rank",
+                  "territory",
+                  "status",
+                  "tier",
+                  "class_required",
+                  "tags",
+                  "assignee",
+                  "verifier",
+                  "attempts",
+                  "max_attempts",
+                  "seal_required",
+                  "sealed_at",
+                  "question",
+                  "party_id",
+                  "party_role",
+                  "campaign_id",
+                  "parent_id",
+                  "depends_on",
+                  "delivered_at",
+                  "created_at",
+                  "updated_at"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "kind": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*$"
+                  },
+                  "rank": {
+                    "enum": [
+                      "F",
+                      "E",
+                      "D",
+                      "C",
+                      "B",
+                      "A",
+                      "S"
+                    ]
+                  },
+                  "territory": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                    "not": {
+                      "enum": [
+                        "global"
+                      ]
+                    }
+                  },
+                  "status": {
+                    "enum": [
+                      "draft",
+                      "open",
+                      "claimed",
+                      "working",
+                      "review",
+                      "returned",
+                      "awaiting_seal",
+                      "done",
+                      "blocked",
+                      "paused_mana",
+                      "infirmary",
+                      "archived"
+                    ]
+                  },
+                  "tier": {
+                    "enum": [
+                      "script",
+                      "session"
+                    ]
+                  },
+                  "class_required": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^[a-z][a-z0-9_]*$"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "maxItems": 6,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    }
+                  },
+                  "assignee": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                    "not": {
+                      "enum": [
+                        "user",
+                        "machine",
+                        "temple"
+                      ]
+                    }
+                  },
+                  "verifier": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                    "not": {
+                      "enum": [
+                        "user",
+                        "machine",
+                        "temple"
+                      ]
+                    }
+                  },
+                  "attempts": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "max_attempts": {
+                    "description": "budget.max_attempts: \"3 attempts used\" on the infirmary card.",
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "seal_required": {
+                    "type": "boolean"
+                  },
+                  "sealed_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "question": {
+                    "description": "blocked.question while it waits for the answer: the throne asks the owner to answer it.",
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "minLength": 1
+                  },
+                  "party_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                  },
+                  "party_role": {
+                    "enum": [
+                      "contract",
+                      "part",
+                      "merge"
+                    ]
+                  },
+                  "campaign_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^c_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                  },
+                  "parent_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                  },
+                  "depends_on": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                    }
+                  },
+                  "delivered_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "updated_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              },
+              "characters": {
+                "description": "Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own.",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "name",
+                    "class",
+                    "tribe",
+                    "model",
+                    "level",
+                    "status",
+                    "status_since",
+                    "current",
+                    "reputation",
+                    "title"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                      "not": {
+                        "enum": [
+                          "user",
+                          "machine",
+                          "temple"
+                        ]
+                      }
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 24
+                    },
+                    "class": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    },
+                    "tribe": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    },
+                    "model": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9][a-z0-9.-]*$"
+                    },
+                    "level": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 10
+                    },
+                    "status": {
+                      "enum": [
+                        "idle",
+                        "working",
+                        "reviewing",
+                        "sleeping_mana",
+                        "meditating",
+                        "suspended",
+                        "swamp"
+                      ]
+                    },
+                    "status_since": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "current": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "additionalProperties": false,
+                      "required": [
+                        "quest",
+                        "role"
+                      ],
+                      "properties": {
+                        "quest": {
+                          "type": "string",
+                          "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                        },
+                        "role": {
+                          "enum": [
+                            "assignee",
+                            "verifier"
+                          ]
+                        }
+                      }
+                    },
+                    "reputation": {
+                      "description": "reputationOf(reputation.window): the avatar ring (--rep); pct null before any verdict.",
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "verdicts",
+                        "pct"
+                      ],
+                      "properties": {
+                        "verdicts": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "pct": {
+                          "type": [
+                            "number",
+                            "null"
+                          ],
+                          "minimum": 0,
+                          "maximum": 100
+                        }
+                      }
+                    },
+                    "title": {
+                      "description": "titleOf(character): the tag shown over the head, if any.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "quest.infirmary"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "reason",
+              "quest"
+            ],
+            "properties": {
+              "reason": {
+                "description": "e.g. breaker:time, breaker:tokens, max_attempts, script_error.",
+                "type": "string",
+                "minLength": 1
+              },
+              "quest": {
+                "description": "The quest after this event (questViewOf). Its id is the envelope `quest`.",
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "title",
+                  "kind",
+                  "rank",
+                  "territory",
+                  "status",
+                  "tier",
+                  "class_required",
+                  "tags",
+                  "assignee",
+                  "verifier",
+                  "attempts",
+                  "max_attempts",
+                  "seal_required",
+                  "sealed_at",
+                  "question",
+                  "party_id",
+                  "party_role",
+                  "campaign_id",
+                  "parent_id",
+                  "depends_on",
+                  "delivered_at",
+                  "created_at",
+                  "updated_at"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                  },
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  },
+                  "kind": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*$"
+                  },
+                  "rank": {
+                    "enum": [
+                      "F",
+                      "E",
+                      "D",
+                      "C",
+                      "B",
+                      "A",
+                      "S"
+                    ]
+                  },
+                  "territory": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                    "not": {
+                      "enum": [
+                        "global"
+                      ]
+                    }
+                  },
+                  "status": {
+                    "enum": [
+                      "draft",
+                      "open",
+                      "claimed",
+                      "working",
+                      "review",
+                      "returned",
+                      "awaiting_seal",
+                      "done",
+                      "blocked",
+                      "paused_mana",
+                      "infirmary",
+                      "archived"
+                    ]
+                  },
+                  "tier": {
+                    "enum": [
+                      "script",
+                      "session"
+                    ]
+                  },
+                  "class_required": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^[a-z][a-z0-9_]*$"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "maxItems": 6,
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    }
+                  },
+                  "assignee": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                    "not": {
+                      "enum": [
+                        "user",
+                        "machine",
+                        "temple"
+                      ]
+                    }
+                  },
+                  "verifier": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                    "not": {
+                      "enum": [
+                        "user",
+                        "machine",
+                        "temple"
+                      ]
+                    }
+                  },
+                  "attempts": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "max_attempts": {
+                    "description": "budget.max_attempts: \"3 attempts used\" on the infirmary card.",
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "seal_required": {
+                    "type": "boolean"
+                  },
+                  "sealed_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "question": {
+                    "description": "blocked.question while it waits for the answer: the throne asks the owner to answer it.",
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "minLength": 1
+                  },
+                  "party_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                  },
+                  "party_role": {
+                    "enum": [
+                      "contract",
+                      "part",
+                      "merge"
+                    ]
+                  },
+                  "campaign_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^c_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                  },
+                  "parent_id": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                  },
+                  "depends_on": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                    }
+                  },
+                  "delivered_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  },
+                  "created_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "updated_at": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              },
+              "characters": {
+                "description": "Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own.",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "name",
+                    "class",
+                    "tribe",
+                    "model",
+                    "level",
+                    "status",
+                    "status_since",
+                    "current",
+                    "reputation",
+                    "title"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                      "not": {
+                        "enum": [
+                          "user",
+                          "machine",
+                          "temple"
+                        ]
+                      }
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 24
+                    },
+                    "class": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    },
+                    "tribe": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    },
+                    "model": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9][a-z0-9.-]*$"
+                    },
+                    "level": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 10
+                    },
+                    "status": {
+                      "enum": [
+                        "idle",
+                        "working",
+                        "reviewing",
+                        "sleeping_mana",
+                        "meditating",
+                        "suspended",
+                        "swamp"
+                      ]
+                    },
+                    "status_since": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "current": {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "additionalProperties": false,
+                      "required": [
+                        "quest",
+                        "role"
+                      ],
+                      "properties": {
+                        "quest": {
+                          "type": "string",
+                          "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                        },
+                        "role": {
+                          "enum": [
+                            "assignee",
+                            "verifier"
+                          ]
+                        }
+                      }
+                    },
+                    "reputation": {
+                      "description": "reputationOf(reputation.window): the avatar ring (--rep); pct null before any verdict.",
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "verdicts",
+                        "pct"
+                      ],
+                      "properties": {
+                        "verdicts": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "pct": {
+                          "type": [
+                            "number",
+                            "null"
+                          ],
+                          "minimum": 0,
+                          "maximum": 100
+                        }
+                      }
+                    },
+                    "title": {
+                      "description": "titleOf(character): the tag shown over the head, if any.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
             "const": "agent.tool"
           }
         }
@@ -432,6 +1167,195 @@
         "properties": {
           "type": {
             "enum": [
+              "mana.exhausted",
+              "mana.restored"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "The pool that fell asleep (mana.exhausted) or woke (mana.restored): the whole pool, every character of it (ADR 0009).",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "tribe",
+              "pool"
+            ],
+            "properties": {
+              "tribe": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "pool": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
+              "character.created",
+              "character.sleep",
+              "character.wake",
+              "character.meditate",
+              "character.suspend",
+              "character.release",
+              "character.swamp",
+              "character.level_up",
+              "character.level_down"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "character"
+            ],
+            "properties": {
+              "character": {
+                "description": "The character after this event (characterViewOf).",
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "name",
+                  "class",
+                  "tribe",
+                  "model",
+                  "level",
+                  "status",
+                  "status_since",
+                  "current",
+                  "reputation",
+                  "title"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                    "not": {
+                      "enum": [
+                        "user",
+                        "machine",
+                        "temple"
+                      ]
+                    }
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 24
+                  },
+                  "class": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*$"
+                  },
+                  "tribe": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*$"
+                  },
+                  "model": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9.-]*$"
+                  },
+                  "level": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10
+                  },
+                  "status": {
+                    "enum": [
+                      "idle",
+                      "working",
+                      "reviewing",
+                      "sleeping_mana",
+                      "meditating",
+                      "suspended",
+                      "swamp"
+                    ]
+                  },
+                  "status_since": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "current": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "additionalProperties": false,
+                    "required": [
+                      "quest",
+                      "role"
+                    ],
+                    "properties": {
+                      "quest": {
+                        "type": "string",
+                        "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                      },
+                      "role": {
+                        "enum": [
+                          "assignee",
+                          "verifier"
+                        ]
+                      }
+                    }
+                  },
+                  "reputation": {
+                    "description": "reputationOf(reputation.window): the avatar ring (--rep); pct null before any verdict.",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "verdicts",
+                      "pct"
+                    ],
+                    "properties": {
+                      "verdicts": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "pct": {
+                        "type": [
+                          "number",
+                          "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 100
+                      }
+                    }
+                  },
+                  "title": {
+                    "description": "titleOf(character): the tag shown over the head, if any.",
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^[a-z][a-z0-9_]*$"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
               "command.applied",
               "command.rejected"
             ]
@@ -463,7 +1387,11 @@
       "if": {
         "properties": {
           "type": {
-            "const": "quest.infirmary"
+            "enum": [
+              "territory.attached",
+              "territory.surveyed",
+              "territory.health"
+            ]
           }
         }
       },
@@ -473,13 +1401,81 @@
             "type": "object",
             "additionalProperties": false,
             "required": [
-              "reason"
+              "territory"
             ],
             "properties": {
-              "reason": {
-                "description": "e.g. breaker:time, breaker:tokens, max_attempts, script_error.",
-                "type": "string",
-                "minLength": 1
+              "territory": {
+                "description": "The territory after this event (territoryViewOf).",
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "name",
+                  "kind",
+                  "health",
+                  "surveyed_at"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                    "not": {
+                      "enum": [
+                        "global"
+                      ]
+                    }
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 24
+                  },
+                  "kind": {
+                    "enum": [
+                      "code",
+                      "docs",
+                      "content",
+                      "data",
+                      "mixed"
+                    ]
+                  },
+                  "health": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "ci",
+                      "open_bugs",
+                      "last_patrol_at"
+                    ],
+                    "properties": {
+                      "ci": {
+                        "enum": [
+                          "green",
+                          "red",
+                          "unknown"
+                        ]
+                      },
+                      "open_bugs": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "last_patrol_at": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      }
+                    }
+                  },
+                  "surveyed_at": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "format": "date-time"
+                  }
+                }
               }
             }
           }
