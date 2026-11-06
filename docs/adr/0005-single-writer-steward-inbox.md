@@ -14,7 +14,7 @@ The product plan's architecture diagram (§3) lets the Herald write `quests/` (S
 - At the start of each tick the Steward applies commands in id order through `transition`, appends `command.applied` or `command.rejected`, and moves the file to `inbox/done/`. A command id that is already applied is skipped (idempotent).
 - Chancellor drafts arrive the same way: a `create_quest` command with `draft: true`; confirming a draft is a command too (`confirm`).
 - A hand edit of `quests/<id>.json` while the Steward runs is detected through `updated_at`, rejected with a warning, never overwritten; `elvaria quest edit` writes a command instead.
-- A new character is the one exception: no command creates one (`summon` opens a running session's terminal), so `elvaria character add` creates `characters/<id>/character.json` itself, create only, never over an existing file. Every later change to a character is the Steward's. (Amended 2026-11-06, P0-08, pending the owner's confirmation; implementation-plan §2.3, §11.)
+- A new character is the one exception: no command creates one (`summon` opens a running session's terminal), so `elvaria character add` creates `characters/<id>/character.json` itself, create only, never over an existing file. Every later change to a character is the Steward's. (Amended 2026-11-06, P0-08, confirmed by the owner; implementation-plan §2.3, §11.)
 - Permissions do not change: remote actions still only write files, and nothing runs directly from outside.
 
 ## Consequences

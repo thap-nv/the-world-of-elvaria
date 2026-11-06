@@ -116,6 +116,20 @@ describe('elvaria doctor', () => {
     expect(printed(pinned)).toContain('✗ Tribe gemini: agy was not found on PATH.');
   });
 
+  it('fails while the pinned file is gone, e.g. after a VS Code extension update moved Claude Code', async () => {
+    const old = await fakeTool(path.join(dir.root, 'claude-code-2.1.318'), 'claude', '2.1.318');
+    await doctor(await doctorIo(bin), '--tool', `claude=${old}`, '--acknowledge-terms', 'gemini');
+    await rm(path.dirname(old), { recursive: true, force: true });
+    const moved = await doctorIo(bin);
+    expect(await doctor(moved)).toBe(1);
+    expect(printed(moved)).toContain(
+      `✗ Tribe claude: the pinned ${old.replaceAll('\\', '/')} is gone; found `,
+    );
+    expect((await readKingdom()).tribes[0]?.tool?.path).toBe(old.replaceAll('\\', '/'));
+    expect(await doctor(await doctorIo(bin), '--pin')).toBe(0);
+    expect((await readKingdom()).tribes[0]?.tool?.path).toMatch(/\/bin\/claude(\.cmd)?$/);
+  });
+
   it('says what is wrong with a tribe it cannot pin', async () => {
     const broken = path.join(dir.root, 'broken');
     await fakeTool(broken, 'claude', 'boom', 3);

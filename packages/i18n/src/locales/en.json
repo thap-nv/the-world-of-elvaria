@@ -62,6 +62,7 @@
     "cli.doctor.tool_changed": "Tribe {tribe}: found version {version} ({path}), which differs from the pinned {pinned}; keeping the pinned one.",
     "cli.doctor.tool_found": "Tribe {tribe}: {path}, version {version}.",
     "cli.doctor.tool_hint": "Show doctor the way: elvaria doctor --tool {tribe}=<path to the CLI>",
+    "cli.doctor.tool_moved": "Tribe {tribe}: the pinned {pinned_path} is gone; found {path}, version {version}. The tribe cannot run until it is pinned again.",
     "cli.doctor.tool_missing": "Tribe {tribe}: {program} was not found on PATH.",
     "cli.doctor.tool_path_bad": "Tribe {tribe}: the path given to --tool is not a file ({program}).",
     "cli.doctor.tribe_disabled": "Tribe {tribe} is disabled; skipped.",

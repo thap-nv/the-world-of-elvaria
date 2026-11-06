@@ -62,6 +62,7 @@
     "cli.doctor.tool_changed": "Tộc {tribe}: tìm thấy phiên bản {version} ({path}), khác bản đã ghim {pinned}; vẫn giữ bản đã ghim.",
     "cli.doctor.tool_found": "Tộc {tribe}: {path}, phiên bản {version}.",
     "cli.doctor.tool_hint": "Chỉ đường cho doctor: elvaria doctor --tool {tribe}=<đường dẫn tới CLI>",
+    "cli.doctor.tool_moved": "Tộc {tribe}: file đã ghim {pinned_path} không còn; tìm thấy {path}, phiên bản {version}. Tộc chưa chạy được cho tới khi ghim lại.",
     "cli.doctor.tool_missing": "Tộc {tribe}: không tìm thấy {program} trên PATH.",
     "cli.doctor.tool_path_bad": "Tộc {tribe}: đường dẫn đưa cho --tool không phải một file ({program}).",
     "cli.doctor.tribe_disabled": "Tộc {tribe} đang tắt; bỏ qua.",

@@ -77,6 +77,29 @@ function nextTool(
   };
 }
 
+/**
+ * A pinned CLI that changed. locateTool tries the pinned file before PATH, so one found on PATH means the pinned
+ * file is gone (a VS Code extension update moves Claude Code's folder): the tribe cannot run until re-pinned,
+ * which is an error. A file updated in place (agy) still runs, so a new version there is a warning.
+ */
+function changedTool(
+  tribe: Tribe,
+  found: { path: string; version: string; from: string },
+  ctx: KingdomContext,
+) {
+  const params = {
+    tribe: tribe.id,
+    pinned: tribe.tool?.version ?? '',
+    pinned_path: tribe.tool?.path ?? '',
+    version: found.version,
+    path: found.path,
+  };
+  const hint = [ctx.t('cli.doctor.pin_hint')];
+  return found.from === 'path'
+    ? finding('error', ctx.t('cli.doctor.tool_moved', params), hint)
+    : finding('warn', ctx.t('cli.doctor.tool_changed', params), hint);
+}
+
 export async function checkTribe(
   tribe: Tribe,
   ctx: KingdomContext,
@@ -88,15 +111,7 @@ export async function checkTribe(
   const found = await probe(tribe, ctx, options);
   if ('problem' in found) return { findings: [found.problem] };
   const tool = nextTool(tribe, found, ctx, options);
-  if (tool === undefined) {
-    const params = {
-      tribe: tribe.id,
-      pinned: tribe.tool?.version ?? '',
-      version: found.version,
-      path: found.path,
-    };
-    return { findings: [finding('warn', t('cli.doctor.tool_changed', params), [t('cli.doctor.pin_hint')])] };
-  }
+  if (tool === undefined) return { findings: [changedTool(tribe, found, ctx)] };
   const next = TribeSchema.safeParse({ ...tribe, tool });
   if (!next.success) {
     const details = next.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`);
