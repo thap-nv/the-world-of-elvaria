@@ -2,7 +2,7 @@
 
 Ngày: 2026-11-06 · Trạng thái: **đã duyệt**, tài liệu sống: mỗi task xong thì đánh dấu ở §8; khi thực tế khác kế hoạch, sửa kế hoạch trong cùng commit.
 
-Tài liệu này nói **cách dựng**. **Dựng cái gì** nằm ở [kế hoạch sản phẩm 0.6](ke-hoach-dung-elvaria-0.6.md), mục 2 (13 nguyên tắc) là bất biến. Giao diện nằm ở [brief thiết kế](brief-thiet-ke-giao-dien-elvaria.md) và bàn giao thiết kế v0.2 ([design/DESIGN-HANDOFF.md](../design/DESIGN-HANDOFF.md)).
+Tài liệu này nói **cách dựng**. **Dựng cái gì** nằm ở [kế hoạch sản phẩm 0.7](ke-hoach-dung-elvaria-0.7.md), mục 2 (13 nguyên tắc) là bất biến. Giao diện nằm ở [brief thiết kế](brief-thiet-ke-giao-dien-elvaria.md) và bàn giao thiết kế v0.2 ([design/DESIGN-HANDOFF.md](../design/DESIGN-HANDOFF.md)).
 
 Tài liệu đi kèm:
 
@@ -10,7 +10,7 @@ Tài liệu đi kèm:
 |---|---|
 | [reference/cli-facts-2026-11-06.md](reference/cli-facts-2026-11-06.md) | Dữ kiện đã kiểm tra về Claude Code 2.1.318, Antigravity CLI 1.5.1, Gemini CLI 0.67.0, điều khoản, máy phát triển |
 | [schemas/](schemas/) | 17 JSON Schema v1 (hợp đồng dữ liệu, §2.3) |
-| [adr/](adr/) | 21 ADR (§5.2) |
+| [adr/](adr/) | 22 ADR (§5.2) |
 | [glossary.md](glossary.md) | Bảng thuật ngữ VI ↔ EN ↔ id (§4.1, §5.3) |
 | [../CLAUDE.md](../CLAUDE.md) | Luật repo cho agent (§5.1) |
 
@@ -808,6 +808,25 @@ Từ kế hoạch sản phẩm mục 8 "Hợp đồng tộc" (ADR 0021). Một t
 
 Test: `tribeLimitsOf` theo bảng trên; `planTick` không giao quest hạng C cho tộc thiếu `tool_gate`; bộ test hợp đồng qua với `FakeRunner` và từng adapter có sẵn; adapter file giả nạp bằng `createAdapter(kit)` đi hết vòng một quest; thêm tộc thứ ba vào kingdom tạm không đổi file nhân vật nào.
 
+### 3.15 Test trong thế giới — đề xuất, chờ duyệt (ADR 0022)
+
+Từ kế hoạch sản phẩm 0.7 mục 5 "Test trong thế giới". 0.7 nói *làm gì*; cột "Cơ chế" là đề xuất *làm thế nào*, ADR 0022 đang ở trạng thái `proposed`.
+
+| 0.7 nói | Cơ chế | Mới hay đã có | Task |
+|---|---|---|---|
+| Chạy test không phải quest | kiểm tra máy của nghi thức (`runChecks`, §3.2) hoặc bậc script `run-check` (§3.12), mana 0 | đã có | — |
+| Unit ở mọi quest; integration và e2e chạy **một lần ở quest ghép** của đội | `territory.checks[].defer_to_merge` (mặc định `false`): quest phần (`party_role = part`) bỏ qua check đó; quest ghép chạy toàn bộ như §3.13 bước 5. Quest không thuộc đội chạy theo `when` như cũ | trường mới, tương thích v1 | P1-18 |
+| Test đi kèm thay đổi do người làm viết, người chấm chấm cả hai | mẫu prompt verifier của `build_review`, `regression_check`, `stress_test`: thay đổi hành vi mà không có test đi kèm (khi lãnh thổ có test) ⇒ `fail_kind: incomplete` | prompt | P1-01, P1-15 |
+| Test là sản phẩm ⇒ nghi thức **Thử tường** | quest `build`/`refactor` có tag `e2e` hoặc `integration` ⇒ ritual `mutation_check`. Dữ liệu: `kinds[].ritual_overrides: [{tags_any, ritual}]`, override đầu tiên khớp thắng, không thì `kinds[kind].ritual`; `ritualOf(quest, registry)` thuần trong domain (ADR 0016). Tag `integration` vào `tags.json` (8 tag) | schema kind + 1 tag + 1 ritual | P1-20 |
+| Chạy lại trong worktree sạch, DB sạch; không tin biên bản của người viết | ritual khai `scratch_plot: true` ⇒ verifier có **đất nháp** `<quest-id>-verify` tách từ nhánh quest; chạy `commands.setup` rồi `commands.reset` (trường mới, tùy chọn: đưa DB/container về sạch) | PlotManager + territory | P1-20 |
+| **Đập thử**: cố ý làm hỏng thứ test bảo vệ, test phải đỏ, rồi khôi phục | chỉ trong đất nháp, `ToolPolicy` mở Edit/Write cho verifier; hook chặn commit/push; đất nháp xóa sau verdict; nhánh quest không bao giờ đổi (§9.1 mục 29) | ngoại lệ có giới hạn của ADR 0008 | P1-20 |
+| Chạy 3 lần; flaky ⇒ không qua và tự sinh quest Trừ tà | bước `flake_check`; verdict `fail_kind: flaky` (giá trị mới) ⇒ Quản sự tạo quest kind `fix` | enum + steward | P1-20 |
+| Coverage không giảm | bước `coverage_not_lower`: so tóm tắt coverage của nhánh với base; cách đo chốt khi làm task (ứng viên: script `compare-numbers` trên `coverage-summary.json`) | bước mới | P1-20 |
+| **Khảo hạch mù** (tùy chọn, hạng B+ hoặc luồng quan trọng, bật theo lãnh thổ) | `territory.blind_trial: {enabled: false, min_rank: 'B'}`; dựng trên máy đội của §3.13: thêm một phần "test chấp nhận" (kind `build`, tag `e2e`, nhân vật khác, ưu tiên khác họ model) có worktree tách từ **nhánh gốc** nên không thấy diff, chỉ nhận mô tả quest + hợp đồng; quest ghép chạy cả hai bộ trên nhánh đã ghép. Tốn gấp đôi nên tắt mặc định | trường mới + dùng lại đội | P1-21 |
+| Không có nghề tester | đã đúng: viết test là viết code, `knight` có `affinityOf(e2e)` cao nhất nhận | `tester` vào danh sách từ cấm (glossary §14) | — |
+
+Bước nghi thức mới (vào `RITUAL_STEPS` ở P1-20): `rerun_clean`, `break_and_expect_red`, `flake_check`, `coverage_not_lower`. Không quest nào trong 10 quest giai đoạn 1 (kế hoạch sản phẩm mục 13) có sản phẩm là test, nên phần này làm **sau mốc giai đoạn 1**, như P1-18 và P1-19.
+
 ---
 
 ## 4. Chất lượng code — cho người và AI đọc
@@ -884,6 +903,7 @@ P0-11 bổ sung `.claude/rules/domain.md`, `runner.md`, `hooks.md` (áp dụng t
 | [0019](adr/0019-preact-ui-design-source-of-truth.md) | 2D UI is Preact + signals; `design/` is the first source of the design system, `ui-kit` owns it after the port | accepted |
 | [0020](adr/0020-class-skill-scripture-tags-and-parties.md) | Class, skill and scripture are separate; expertise is reputation per tag; work that needs several areas is a party | accepted |
 | [0021](adr/0021-tribe-contract.md) | Tribe contract: a tribe is an adapter with declared capabilities, a theme entry and the owner's own account; missing capabilities narrow what the tribe may take | accepted |
+| [0022](adr/0022-tests-in-the-world.md) | Tests in the world: tag-chosen ritual for tests as a product, a scratch plot for the judge, heavy checks once per party | proposed |
 
 ADR 0007, 0009, 0017 được cập nhật bằng số liệu sau spike P1-02; ADR 0018 sau spike P1-12a.
 
@@ -965,7 +985,7 @@ Mốc: 10 quest dc1-se-team đi hết vòng; cố tình hết mana rồi hồi s
 
 | # | Task | File chạm | Xong khi | Trạng thái |
 |---|---|---|---|---|
-| P1-01 | `p/runner-core`: interface `AgentRunner` + `AdapterCapabilities`, `FakeRunner` có kịch bản (submit/crash/hang/rate_limit/blocked), `ToolPolicy` từ class + laws + role, `buildPrompt` (mẫu assignee/verifier/resume/chancellor) snapshot, khung **bộ test hợp đồng** (conformance) chạy được với mọi adapter; `tribeLimitsOf(caps)` trong domain (§3.14) | `p/runner-core/src/{runner,policy,prompt,conformance}/**`, `p/domain/src/tribe/**` | snapshot prompt cho 4 vai; policy verifier không có Edit/Write; `FakeRunner` qua bộ test hợp đồng; bảng xuống cấp theo năng lực có test | chưa làm |
+| P1-01 | `p/runner-core`: interface `AgentRunner` + `AdapterCapabilities`, `FakeRunner` có kịch bản (submit/crash/hang/rate_limit/blocked), `ToolPolicy` từ class + laws + role, `buildPrompt` (mẫu assignee/verifier/resume/chancellor) snapshot, khung **bộ test hợp đồng** (conformance) chạy được với mọi adapter; `tribeLimitsOf(caps)` trong domain (§3.14) | `p/runner-core/src/{runner,policy,prompt,conformance}/**`, `p/domain/src/tribe/**` | snapshot prompt cho 4 vai; policy verifier không có Edit/Write; `FakeRunner` qua bộ test hợp đồng; bảng xuống cấp theo năng lực có test; mẫu verifier của `build_review`, `regression_check`, `stress_test` đòi test đi kèm thay đổi hành vi (§3.15) | chưa làm |
 | P1-02 | **Spike Claude** (chạy thật, ~2 giờ): (a) mana — status line có chạy dưới `-p` không, có `rate_limits` không, `api_retry`/`StopFailure` khi 429, đo `modelUsage`; (b) worktree trong repo — CLAUDE.md của checkout chính có bị nạp đôi không (`/context`); (c) `--agents` trong `-p` có tôn trọng `tools`/`maxTurns` của học trò không. Kết quả → cập nhật ADR 0007, 0009, 0017; ghi phiên bản CLI | `docs/adr/*.md`, `docs/spikes/claude-2026-11.md`, `p/runner-claude/fixtures/*.jsonl` (đã che) | ADR có số liệu; fixture stream-json thật cho test adapter; chốt `worktree_dir` mặc định | chưa làm |
 | P1-03 | `p/steward`: vòng tick + inbox + lock + `planTick`, `selectAssignee` (lọc theo nghề, xếp theo `affinityOf`), ghi verdict vào `reputation` + `skill_affinity`; chạy với `FakeRunner` hết vòng `open → … → done` trên kingdom tmp; kill/restart không chạy trùng | `p/steward/src/**`, `p/domain/src/dispatch/**` | test tích hợp 10 quest giả, restart giữa chừng | chưa làm |
 | P1-04 | Luật tách vai: `selectVerifier` (kể cả loại thành viên đội), `validateVerdict`, đường lui `machine_only`; steward nối review → verdict → done/returned/awaiting_seal; `elvaria seal/return` ghi inbox | `p/domain/src/verify/**`, `p/steward`, `a/cli` | property test; FakeRunner verifier; quest cần dấu chờ dấu, seal qua CLI → done; `elvaria return` hỏi ghi chú ≥ 20 ký tự và `fail_kind` (mặc định `other`), vì verdict `fail` do vua lập bắt buộc cả hai (schema verdict, chốt sau P0-03) | chưa làm |
@@ -986,7 +1006,9 @@ Mốc: 10 quest dc1-se-team đi hết vòng; cố tình hết mana rồi hồi s
 | P1-16 | **Chạy 10 quest** của kế hoạch sản phẩm mục 13 (thật), ghi `docs/guides/phase-1-report.md`: thời gian, token, verdict, lỗi gặp, **tỉ lệ ba bậc** (script/học trò/phiên); sửa kế hoạch theo thực tế. Quest #4 (link) chạy bậc script `link-check` → `units[]`, chỉ mở quest con session cho link chết cần sửa; quest #10 chạy `run-check` cho lint/typecheck/test → quest Trừ tà chỉ khi có quái. Thêm **2 quest dogfood** trên lãnh thổ Elvaria (ví dụ: README cho một package còn thiếu; thêm một script vào catalog) | `docs/**` | **Mốc giai đoạn 1**: 10/10 (+2) đi hết vòng, chỉ cần dấu vua; một lần cố tình hết mana Gemini (hoặc Claude) rồi hồi sinh, quest tiếp đúng chỗ; ≥ 2 quest hoàn toàn bậc script (mana 0) | chưa làm |
 | P1-17 | Ba bậc chạy việc (§3.12): `run-script` trong steward + verdict máy; `agents.json` học trò cho runner-claude; hook chặn `SubagentStart` lạ; `agent.subagent.overrun`; Tể tướng gán `tier`, gom và chia việc; `docs/tier-report.md` từ event log | `p/steward/src/script/**`, `p/runner-claude`, `p/hooks`, `p/chancellor`, `scripts/docs-gen.mjs` | test §3.12; quest script giả đi hết vòng với mana 0; học trò quá `maxTurns` bị cắt (test với fake-claude) | chưa làm |
 | P1-19 | **Hợp đồng tộc mở** (§3.14), làm sau mốc giai đoạn 1: nạp adapter file `adapters/<name>.mjs` (`createAdapter(kit)`), `elvaria tribe add/check/disable`, huy hiệu trung tính cho tộc chưa có theme, áp `tribeLimitsOf` trong `planTick` | `a/cli/src/tribe/**`, `p/runner-core/src/kit/**`, `p/domain/src/tribe/**` | một adapter file giả (CLI giả, thiếu `tool_gate`) qua bộ test hợp đồng, chỉ nhận quest F–D, đi hết vòng một quest | chưa làm |
-| P1-18 | **Đội** (§3.13), làm sau mốc giai đoạn 1, không thuộc mốc: quest hợp đồng → các phần + quest ghép tự tạo; worktree của phần và quest ghép tách từ nhánh hợp đồng; quest ghép merge cục bộ + chạy toàn bộ kiểm tra; `partyStatusOf`. Chạy thật một đội trên dc1-se-team (một phần `backend` + một phần `frontend`, hợp đồng OpenAPI) | `p/steward/src/{deliver,party}/**`, `p/runner-core/src/plot/**`, `p/domain/src/party/**` | test §3.13; một đội thật đi tới `awaiting_seal` của quest ghép, người chấm ngoài đội | chưa làm |
+| P1-18 | **Đội** (§3.13), làm sau mốc giai đoạn 1, không thuộc mốc: quest hợp đồng → các phần + quest ghép tự tạo; worktree của phần và quest ghép tách từ nhánh hợp đồng; quest ghép merge cục bộ + chạy toàn bộ kiểm tra; `partyStatusOf`. Chạy thật một đội trên dc1-se-team (một phần `backend` + một phần `frontend`, hợp đồng OpenAPI) | `p/steward/src/{deliver,party}/**`, `p/runner-core/src/plot/**`, `p/domain/src/party/**` | test §3.13; một đội thật đi tới `awaiting_seal` của quest ghép, người chấm ngoài đội; `checks[].defer_to_merge`: check nặng (integration, e2e) bỏ qua ở quest phần, chạy một lần ở quest ghép (§3.15) | chưa làm |
+| P1-20 | **Test là sản phẩm** (§3.15, ADR 0022), làm sau mốc giai đoạn 1: `kinds[].ritual_overrides` + `ritualOf`, tag `integration`, ritual `mutation_check` với 4 bước mới, `fail_kind: flaky` ⇒ quest `fix`, đất nháp `<quest-id>-verify` cho verifier (Edit/Write chỉ ở đó, hook chặn commit/push), `commands.reset` | `p/domain/src/{schema,verify}/**`, `p/registry-default/**`, `p/runner-core/src/{plot,policy}/**`, `p/steward`, `p/hooks` | quest e2e giả: test không đỏ khi đập thử ⇒ trả về; test flaky ⇒ fail + quest `fix` được tạo; bộ test hợp đồng chứng minh verifier không commit/push được từ đất nháp; nhánh quest không đổi sau nghiệm thu | chưa làm |
+| P1-21 | **Khảo hạch mù** (§3.15), sau P1-18: `territory.blind_trial`, phần "test chấp nhận" tách từ nhánh gốc, người viết khác họ model, quest ghép chạy cả hai bộ | `p/steward/src/party/**`, `p/domain/src/{schema,party}/**` | lãnh thổ bật `blind_trial`, quest hạng B: người viết test chấp nhận không có diff trong prompt và worktree; cả hai bộ chạy trên nhánh ghép | chưa làm |
 
 ### Giai đoạn 2–5 — đề mục và ràng buộc kiến trúc đã quyết từ bây giờ
 
@@ -1032,8 +1054,9 @@ Mốc: 10 quest dc1-se-team đi hết vòng; cố tình hết mana rồi hồi s
 26. **Năng lực thiếu thì tộc bị thu hẹp, theo luật thuần.** Bảng của kế hoạch sản phẩm thành `tribeLimitsOf(caps)` trong domain, `planTick` áp dụng. Thêm một năng lực "nên có" mà bảng chưa có: `structured_output` (Tể tướng và verifier cần; thiếu thì schema trong prompt + parse + thử lại).
 27. **Thêm tộc không đổi nhân vật cũ.** Nghề **và tộc** của nhân vật cố định suốt đời, vì danh tiếng và kinh gắn với model của tộc đó; chuyển việc sang tộc mới = triệu hồi nhân vật mới. Trách nhiệm tự điều chỉnh qua dữ liệu: luật tách vai có thêm cặp khác họ, nghiệm thu không giới hạn cấp nên judge của tộc mới chấm được ngay, người làm của tộc mới bắt đầu ở cấp 1 (§3.14).
 28. **Dữ kiện Codex lấy từ kế hoạch sản phẩm 0.6**, chưa được một phiên kỹ thuật kiểm lại; máy này chưa cài Codex (2026-11-06). Adapter Codex là task tùy chọn P1-12d, bắt đầu bằng spike như Claude và Antigravity.
+29. **Đập thử cần sửa code, mà người chấm không có Edit/Write** (kế hoạch sản phẩm 0.7, nghi thức Thử tường; ADR 0008). Đề xuất (ADR 0022, chờ duyệt): người chấm sửa trong một **đất nháp** dùng một lần tách từ nhánh quest, không commit, không push, xóa sau verdict; nhánh quest — thứ được giao — không bao giờ đổi, nên "người làm không phán, người phán không làm" vẫn giữ. Nghi thức chọn theo kind **và** tag (`ritual_overrides`), vì 0.7 xếp test-là-sản-phẩm vào Kiến tạo/Gia cố chứ không thêm kind.
 
-Kế hoạch sản phẩm 0.6 còn vài chỗ viết theo hiện trạng cũ, đọc theo tài liệu này: mục 3 và 8 ("Runner Gemini CLI", "đăng nhập Google một lần", cột "Gemini CLI · Login Google" của ma trận hợp đồng tộc) đọc là Antigravity CLI với tài khoản cá nhân; Gemini CLI chỉ còn là đường lui với API key (ADR 0018); mục 4 "Bố cục thư mục" (`journal.md`, `world/themes/`) đọc theo §2.2; mục 13 ("nạp CLAUDE.md vào GEMINI.md") đọc theo §3.8; mục 10 giai đoạn 1 "4 nhân vật" đọc là 8 (P1-15).
+Kế hoạch sản phẩm 0.7 (như 0.6) còn vài chỗ viết theo hiện trạng cũ, đọc theo tài liệu này: mục 3 và 8 ("Runner Gemini CLI", "đăng nhập Google một lần", cột "Gemini CLI · Login Google" của ma trận hợp đồng tộc) đọc là Antigravity CLI với tài khoản cá nhân; Gemini CLI chỉ còn là đường lui với API key (ADR 0018); mục 4 "Bố cục thư mục" (`journal.md`, `world/themes/`) đọc theo §2.2; mục 13 ("nạp CLAUDE.md vào GEMINI.md") đọc theo §3.8; mục 10 giai đoạn 1 "4 nhân vật" đọc là 8 (P1-15).
 
 ### 9.2 Rủi ro kỹ thuật
 
@@ -1090,3 +1113,4 @@ Không còn câu hỏi mở.
 | 2026-11-06 | Người dùng chốt sau P0-02: import tương đối viết đuôi `.ts`; giữ cả sáu luật chặt hơn v1 (§2.3); giao kèo `--context` của script (§3.12); tool và model của `mage, dwarf, bard, astrologer, envoy`; đổi identifier `taskId` trong `scripts/not-yet.mjs` thành `planItemId` (`task` là từ cấm, glossary §14) |
 | 2026-11-06 | P0-03 (17 hợp đồng sinh từ zod), chỗ thực tế khác kế hoạch: `inbox-command` sinh ra là `oneOf` 20 nhánh (mỗi `kind` một nhánh) thay cho envelope + 20 if/then của v1, cùng tập tài liệu được nhận (kiểm bằng ~9 400 tài liệu đột biến qua ajv và zod); điều kiện if/then của v1 được giữ trong `.meta()` cạnh refinement zod, phần lớn qua `Rule` (`domain/src/schema/quest/rules.ts`) để hai nửa không lệch; zod chặt hơn JSON ở các refinement JSON Schema không diễn đạt được (danh sách ở commit P0-03, chờ người dùng chốt); `FAIL_KINDS`, `ROLES`, `DELIVERABLE_TYPES` và bốn giới hạn quest/campaign gom về `common.ts` / `constants.ts` |
 | 2026-11-06 | Người dùng chốt sau P0-03: giữ mọi refinement zod chặt hơn v1 liệt kê trong commit P0-03; cấm id nhân vật `user`, `machine`, `temple` và id lãnh thổ `global` (`RESERVED_*` trong `domain/src/core/ids.ts`, hợp đồng ghi `not: {enum}`) vì các trường khác dùng chúng làm giá trị đặc biệt; `elvaria return` hỏi `fail_kind` + ghi chú ≥ 20 ký tự (P1-04); bảng chuyển trạng thái lấp hai chỗ hở của v1 (P0-04); chiều đa giác world-map chốt ở giai đoạn 3 |
+| 2026-11-06 | Cập nhật theo kế hoạch sản phẩm 0.7 (test trong thế giới): §3.15, ADR 0022 (`proposed`), §9.1 mục 29, P1-01 và P1-18 bổ sung, task mới P1-20 (Thử tường) và P1-21 (Khảo hạch mù), cả hai sau mốc giai đoạn 1. Mọi tài liệu trỏ tới `ke-hoach-dung-elvaria-0.7.md`; bản 0.6 giữ trong `docs/` làm lịch sử |

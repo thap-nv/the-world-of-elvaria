@@ -2,7 +2,7 @@
 
 - Status: accepted · 2026-11-06
 - Amends: [ADR 0006](0006-runner-adapter-behind-agentrunner.md) (adapters may also be owner files), [ADR 0018](0018-gemini-tribe-on-antigravity-cli.md) (the Gemini runner is chosen by `tribes[].adapter`)
-- Related: [implementation-plan.md](../implementation-plan.md) §3.7, §3.14, §9.1 items 24–28; [product plan 0.6](../ke-hoach-dung-elvaria-0.6.md) §8; [kingdom.schema.json](../schemas/kingdom.schema.json)
+- Related: [implementation-plan.md](../implementation-plan.md) §3.7, §3.14, §9.1 items 24–28; [product plan 0.7](../ke-hoach-dung-elvaria-0.7.md) §8; [kingdom.schema.json](../schemas/kingdom.schema.json)
 
 ## Context
 

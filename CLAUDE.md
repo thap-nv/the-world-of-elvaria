@@ -107,7 +107,7 @@ Trước khi sửa các file sau, đọc file đó, test của nó và ADR liên
 - Thêm script `.sh`, `.ps1`, `.cmd`; dùng `shell: true`.
 - Truyền `process.env` nguyên khối vào tiến trình con; đưa secret vào prompt, journal, log hay event.
 - Cho Elvaria quyền `git push` hoặc merge tự động (giai đoạn 1); dùng `--dangerously-skip-permissions`, `--bare` hay `--worktree` của CLI; parse transcript của CLI.
-- Sửa `design/**` (bản gốc v0.2, giữ nguyên; thiết kế đổi trong `ui-kit`/`ui`, bản bàn giao mới vào thư mục mới) hoặc `docs/ke-hoach-dung-elvaria-0.6.md` (kế hoạch sản phẩm; người dùng sửa).
+- Sửa `design/**` (bản gốc v0.2, giữ nguyên; thiết kế đổi trong `ui-kit`/`ui`, bản bàn giao mới vào thư mục mới) hoặc `docs/ke-hoach-dung-elvaria-*.md` (kế hoạch sản phẩm, mọi phiên bản; người dùng sửa).
 - Sửa file ngoài phạm vi task. Nếu thấy cần, ghi thành đề xuất trong commit hoặc vào implementation-plan.
 
 ## Change impact / Ảnh hưởng thay đổi

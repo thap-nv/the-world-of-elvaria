@@ -2,6 +2,7 @@
 
 - Status: accepted · 2026-11-06
 - Related: [implementation-plan.md](../implementation-plan.md) §2.7, §9.1 item 2; [class.schema.json](../schemas/class.schema.json)
+- Amendment proposed: [ADR 0022](0022-tests-in-the-world.md) (a kind may override its ritual by quest tags)
 
 ## Context
 

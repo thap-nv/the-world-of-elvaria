@@ -5,7 +5,7 @@
 
 ## Context
 
-Principle 13 ([product plan 0.6](../ke-hoach-dung-elvaria-0.6.md)): every character is a new top-level session that loads only what it needs from the journal, scripture and gazetteer; long memory lives on disk; the Chancellor splits work so one quest fits one context; what a machine can do does not call a model. The product plan (§7, "Script, sub-agent hay phiên mới") defines three tiers.
+Principle 13 ([product plan 0.7](../ke-hoach-dung-elvaria-0.7.md)): every character is a new top-level session that loads only what it needs from the journal, scripture and gazetteer; long memory lives on disk; the Chancellor splits work so one quest fits one context; what a machine can do does not call a model. The product plan (§7, "Script, sub-agent hay phiên mới") defines three tiers.
 
 ## Decision
 
