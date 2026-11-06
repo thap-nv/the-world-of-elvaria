@@ -11,7 +11,7 @@ import { elvaria } from './eslint.mjs';
 const REPO = fileURLToPath(new URL('../..', import.meta.url));
 
 // Only the boundary rules, without type information: they look at import specifiers, not types.
-const linter = new Linter({ configType: 'flat', cwd: REPO });
+const linter = new Linter({ cwd: REPO });
 const configs: Linter.Config[] = [
   { files: ['**/*.{ts,mjs}'], languageOptions: { parser: tseslint.parser } },
   ...boundaryConfigs(),
