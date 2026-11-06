@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "tags": [
+    {
+      "id": "frontend",
+      "name_vi": "Giao diện web",
+      "name_en": "Frontend",
+      "description": "UI code, components, client state, styles."
+    },
+    {
+      "id": "backend",
+      "name_vi": "Máy chủ",
+      "name_en": "Backend",
+      "description": "API, services, server-side logic."
+    },
+    {
+      "id": "db",
+      "name_vi": "Cơ sở dữ liệu",
+      "name_en": "Database",
+      "description": "Schema, migrations, queries."
+    },
+    {
+      "id": "infra",
+      "name_vi": "Hạ tầng",
+      "name_en": "Infrastructure",
+      "description": "Build, CI, Docker, deploy, tooling scripts."
+    },
+    {
+      "id": "i18n",
+      "name_vi": "Đa ngôn ngữ",
+      "name_en": "Internationalisation",
+      "description": "Locales, translated strings, language style."
+    },
+    {
+      "id": "e2e",
+      "name_vi": "Kiểm thử đầu-cuối",
+      "name_en": "End-to-end tests",
+      "description": "Browser flows, accessibility checks."
+    },
+    {
+      "id": "docs",
+      "name_vi": "Tài liệu",
+      "name_en": "Documentation",
+      "description": "Markdown docs, specs, READMEs, ADRs."
+    }
+  ]
+}

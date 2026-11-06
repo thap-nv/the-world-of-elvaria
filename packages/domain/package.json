@@ -1,0 +1,23 @@
+{
+  "name": "@elvaria/domain",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Pure core of Elvaria: schemas, ids, Result, clock and id source. No IO.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --coverage"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@elvaria/config": "workspace:*",
+    "@vitest/coverage-v8": "^5.1.0",
+    "typescript": "~5.9.3",
+    "vitest": "^5.1.0"
+  }
+}

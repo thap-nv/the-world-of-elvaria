@@ -4,7 +4,15 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { DEV_ONLY, SCOPE, WORKSPACES, forbiddenFor, packageName, workspaceDir } from './boundaries.mjs';
+import {
+  DEV_ONLY,
+  NO_NODE_TYPES,
+  SCOPE,
+  WORKSPACES,
+  forbiddenFor,
+  packageName,
+  workspaceDir,
+} from './boundaries.mjs';
 
 type Table = Readonly<Record<string, { readonly deps: readonly string[] }>>;
 
@@ -119,6 +127,7 @@ describe('the dependency table (implementation-plan §1.3)', () => {
 
   it('never makes a dev-only workspace a runtime dependency', () => {
     expect(DEV_ONLY).toEqual(['config']);
+    expect(NO_NODE_TYPES.filter((key) => !KEYS.includes(key))).toEqual([]);
     for (const key of KEYS) for (const dev of DEV_ONLY) expect(depsOf(WORKSPACES, key)).not.toContain(dev);
   });
 });
@@ -195,6 +204,22 @@ describe('workspaces on disk follow the table', () => {
       const tsconfig = (existsSync(path) ? readJson(path) : {}) as { references?: { path: string }[] };
       const referenced = (tsconfig.references ?? []).map((ref) => ref.path.split(/[\\/]/).at(-1) ?? '');
       expect(referenced.filter((dep) => !depsOf(WORKSPACES, key).includes(dep))).toEqual([]);
+    },
+  );
+
+  it.each(onDisk.filter(({ key }) => NO_NODE_TYPES.includes(key)))(
+    '$root/$key keeps Node types out of its program',
+    ({ key, root }) => {
+      const tsconfig = readJson(join(REPO, root, key, 'tsconfig.json')) as {
+        extends?: string;
+        compilerOptions?: { types?: string[] };
+        include?: string[];
+      };
+      expect(tsconfig.extends).toBe('@elvaria/config/tsconfig/base.json');
+      expect(tsconfig.compilerOptions?.types ?? []).not.toContain('node');
+      // A vitest.config.ts would pull @types/node in through Vite's types.
+      expect((tsconfig.include ?? []).filter((entry) => /config\.[cm]?ts$/.test(entry))).toEqual([]);
+      expect(existsSync(join(REPO, root, key, 'vitest.config.ts'))).toBe(false);
     },
   );
 });
