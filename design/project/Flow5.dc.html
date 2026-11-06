@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Luồng 5 — Gắn repo mới, vùng mới mọc</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./elvaria.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Grenze+Gotisch:wght@400;500;600&amp;family=Cinzel:wght@600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#D4A454}a:hover{color:#EEE4CF}
+.fl{display:flex;align-items:flex-start;gap:0;padding:32px;box-sizing:border-box;background:var(--elv-bg)}
+.st{width:504px;display:flex;flex-direction:column;gap:10px;flex:0 0 504px}
+.th{width:504px;height:315px;overflow:hidden;border:1px solid var(--elv-border-strong);border-radius:6px;background:var(--elv-map-sky)}
+.th>div{width:1440px;height:900px;transform:scale(.35);transform-origin:0 0}
+.ar{width:40px;flex:0 0 40px;display:flex;align-items:center;justify-content:center;height:315px;color:var(--elv-ink-3)}
+.cap{display:flex;gap:8px;align-items:flex-start}
+.n{width:22px;height:22px;border-radius:11px;background:var(--elv-accent);color:var(--elv-accent-ink);font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;flex:0 0 22px}
+</style>
+</helmet>
+<div class="elv fl" data-theme="night" style="width: 1656px; height: 480px">
+  <div class="st"><div class="th"><div><dc-import name="OpenRealm" theme="night" step="1" hint-size="1440px,900px"></dc-import></div></div><div class="cap"><span class="n">1</span><div><div class="elv-h3">Chọn repo, đặt tên lãnh địa</div><div class="elv-small elv-muted">Từ bảng lãnh thổ hoặc Cài đặt → Mở cõi. Tên mặc định = tên repo, tối đa 24 ký tự.</div></div></div></div>
+  <div class="ar"><svg class="elv-ic elv-ic--24" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"></path></svg></div>
+  <div class="st"><div class="th"><div><dc-import name="OpenRealm" theme="night" step="2" hint-size="1440px,900px"></dc-import></div></div><div class="cap"><span class="n">2</span><div><div class="elv-h3">Trinh sát khảo sát</div><div class="elv-small elv-muted">Tiến trình và phát hiện trong dock phải; có thể đóng bảng, khảo sát chạy nền.</div></div></div></div>
+  <div class="ar"><svg class="elv-ic elv-ic--24" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"></path></svg></div>
+  <div class="st"><div class="th"><div><dc-import name="OpenRealm" theme="night" step="3" hint-size="1440px,900px"></dc-import></div></div><div class="cap"><span class="n">3</span><div><div class="elv-h3">Vùng mới mọc ở biên</div><div class="elv-small elv-muted">Viền đồng đứt nét lúc mới mọc, đường nối về Kinh đô, toast "tới đó". Lãnh thổ xa chuyển mức icon.</div></div></div></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1656,"height":480}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

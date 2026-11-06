@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Elvaria — Phòng chiến sự</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./elvaria.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Grenze+Gotisch:wght@400;500;600&amp;family=Cinzel:wght@600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#D4A454}a:hover{color:#EEE4CF}
+</style>
+</helmet>
+<div class="elv" data-theme="{{theme}}" style="width: {{w}}px; height: {{h}}px; position: relative; overflow: hidden">
+  <div style="position: absolute; inset: 0">
+    <dc-import name="Hud" theme="{{theme}}" scene="{{hudScene}}" w="{{w}}" h="{{h}}" dock-right="{{ true }}" dock-bottom="{{ true }}" hint-size="1440px,900px"></dc-import>
+  </div>
+
+  <!-- Dock phải: thẻ chiến dịch -->
+  <div class="elv-panel elv-dock elv-dock--right">
+    <div class="elv-panel__head">
+      <svg class="elv-ic elv-ic--20" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-accent)"><path d="M4 14V6l4-3 4 3v8 M4 6h8 M8 3V1.5h3l-1 1 1 1H8 M7 14v-3h2v3"></path></svg>
+      <span class="elv-panel__title elv-panel__title--royal">Phòng chiến sự</span>
+      <button class="elv-btn elv-btn--ghost elv-btn--sm elv-btn--icon" aria-label="Đóng"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8 M12 4l-8 8"></path></svg></button>
+    </div>
+    <div class="elv-panel__body" style="padding: 0 16px; display: flex; flex-direction: column">
+
+      <div class="elv-section" style="display: flex; flex-direction: column; gap: 8px">
+        <span class="elv-row" style="gap: 8px; flex-wrap: wrap">
+          <span class="elv-chip" style="background: {{modeBg}}; color: {{modeInk}}; border-color: transparent">{{modeLabel}}</span>
+          <span class="elv-status" data-status="{{campStatus}}"><span class="elv-dot"></span>{{campStatusLabel}}</span>
+        </span>
+        <span class="elv-fantasy elv-name elv-name--2" style="max-width: none; font-size: 22px; line-height: 1.2">{{campName}}</span>
+        <span class="elv-small elv-muted">{{campSub}}</span>
+      </div>
+
+      <div class="elv-section" style="display: grid; grid-template-columns: 72px 1fr; gap: 12px; align-items: center">
+        <div style="position: relative; width: 72px; height: 72px; border-radius: 50%; background: conic-gradient({{moraleColor}} calc({{morale}} * 1%), var(--elv-surface-3) 0)">
+          <div style="position: absolute; inset: 7px; border-radius: 50%; background: var(--elv-surface); display: flex; flex-direction: column; align-items: center; justify-content: center"><span class="elv-h3 elv-num" style="font-family: var(--elv-font-body)">{{morale}}%</span><span class="elv-micro elv-dim">sĩ khí</span></div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <span class="elv-small"><b>{{moraleText}}</b></span>
+          <span class="elv-small elv-muted">{{moraleSub}}</span>
+        </div>
+      </div>
+
+      <div class="elv-section" style="display: flex; flex-direction: column; gap: 10px">
+        <span class="elv-label">Mặt trận · {{frontCount}}</span>
+        <sc-for list="{{fronts}}" as="f" hint-placeholder-count="3">
+          <div style="display: flex; flex-direction: column; gap: 5px">
+            <span class="elv-row elv-small" style="justify-content: space-between"><span><b>{{f.name}}</b> <span class="elv-muted">· {{f.goal}}</span></span><span class="elv-num elv-muted">{{f.done}}/{{f.total}}</span></span>
+            <div class="elv-progress {{f.cls}}"><i style="width: {{f.pct}}%"></i></div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div class="elv-section" style="display: flex; flex-direction: column; gap: 4px">
+        <span class="elv-label" style="margin-bottom: 4px">Điều kiện chiến thắng · kiểm tra được</span>
+        <sc-for list="{{conds}}" as="c" hint-placeholder-count="4">
+          <div class="elv-check-item {{c.cls}}"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="{{c.path}}"></path></svg><span>{{c.text}}</span></div>
+        </sc-for>
+      </div>
+    </div>
+    <div class="elv-panel__foot elv-btnrow--split">
+      <sc-if value="{{isOffense}}" hint-placeholder-val="{{ true }}">
+        <button class="elv-btn elv-btn--ghost">Đóng chiến dịch</button>
+        <button class="elv-btn elv-btn--primary" disabled><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 14V2 M3 2.5h9l-1.5 2.5 1.5 2.5H3"></path></svg>Tuyên bố chiến thắng · còn 2 điều kiện</button>
+      </sc-if>
+      <sc-if value="{{isDefense}}" hint-placeholder-val="{{ false }}">
+        <button class="elv-btn elv-btn--ghost">Hạ báo động thủ công</button>
+        <a class="elv-btn elv-btn--primary" href="Quest.dc.html" style="text-decoration: none">Theo chân Thorn</a>
+      </sc-if>
+      <sc-if value="{{isRetro}}" hint-placeholder-val="{{ false }}">
+        <button class="elv-btn elv-btn--ghost">Để sau</button>
+        <button class="elv-btn elv-btn--primary">Ban chiếu bài học → kinh chung</button>
+      </sc-if>
+    </div>
+  </div>
+
+  <!-- Dock dưới -->
+  <div class="elv-panel elv-dock elv-dock--bottom">
+    <sc-if value="{{notRetro}}" hint-placeholder-val="{{ true }}">
+      <div class="elv-panel__head" style="min-height: 40px; padding: 6px 16px">
+        <span class="elv-h3">Quest theo mặt trận</span>
+        <span class="elv-grow"></span>
+        <span class="elv-small elv-muted">{{bottomNote}}</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; min-height: 0; flex: 1">
+        <sc-for list="{{cols}}" as="col" hint-placeholder-count="3">
+          <div style="padding: 8px 12px; border-right: 1px solid var(--elv-border); display: flex; flex-direction: column; gap: 6px; overflow: auto">
+            <span class="elv-label">{{col.name}}</span>
+            <sc-for list="{{col.items}}" as="q" hint-placeholder-count="3">
+              <div class="elv-row elv-small" data-status="{{q.st}}" style="gap: 8px; padding: 5px 8px; border: 1px solid var(--elv-border); border-radius: 4px"><span class="elv-dot"></span><span class="elv-rank" data-rank="{{q.rank}}" style="transform: scale(.8)">{{q.rank}}</span><span class="elv-grow elv-ellipsis">{{q.title}}</span><span class="elv-muted elv-num">{{q.who}}</span></div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{isRetro}}" hint-placeholder-val="{{ false }}">
+      <div class="elv-panel__head" style="min-height: 40px; padding: 6px 16px">
+        <svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-accent)"><path d="M4 7.5a1.5 1.5 0 1 1 0-3a1.5 1.5 0 1 1 0 3 M12 7.5a1.5 1.5 0 1 1 0-3a1.5 1.5 0 1 1 0 3 M8 6.5a2 2 0 1 1 0-4a2 2 0 1 1 0 4 M3 13c0-2.5 2-4 5-4s5 1.5 5 4"></path></svg>
+        <span class="elv-h3">Hội đồng sau chiến · postmortem</span>
+        <span class="elv-grow"></span>
+        <span class="elv-small elv-muted">3 agent phản biện · Pháp sư Maelis chủ trì · 2/3 phiếu mới ban chiếu</span>
+      </div>
+      <div style="display: grid; grid-template-columns: 1.3fr 1fr 1fr; min-height: 0; flex: 1">
+        <div style="padding: 8px 16px; border-right: 1px solid var(--elv-border); display: flex; flex-direction: column; gap: 6px; overflow: auto">
+          <span class="elv-label">Dòng thời gian sự cố · 1h 52m</span>
+          <div class="elv-log"><span class="elv-log__time">02:10</span><svg class="elv-ic elv-log__ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-h-incident)"><path d="M9 2L4 9h4l-1 5 5-7H8z"></path></svg><span class="elv-log__text">Tuần tra đêm: CI đỏ sau 7f3a → chuông, dải phòng thủ, Trừ tà q_0150 tự sinh</span></div>
+          <div class="elv-log"><span class="elv-log__time">02:12</span><svg class="elv-ic elv-log__ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 13V7a4 4 0 0 1 8 0v6z M4 9h8 M8 9v4"></path></svg><span class="elv-log__text">Thorn nhận, tái hiện: test auth phụ thuộc giờ hệ thống</span></div>
+          <div class="elv-log"><span class="elv-log__time">02:58</span><svg class="elv-ic elv-log__ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-q-review)"><path d="M1.5 8c2-3.5 4-5 6.5-5s4.5 1.5 6.5 5c-2 3.5-4 5-6.5 5S3.5 11.5 1.5 8z M8 6a2 2 0 1 1 0 4a2 2 0 1 1 0-4"></path></svg><span class="elv-log__text">Ragnar nghiệm thu đạt; bẫy đặt, chạy lại 03:50 đạt → cleared 04:02</span></div>
+        </div>
+        <div style="padding: 8px 16px; border-right: 1px solid var(--elv-border); display: flex; flex-direction: column; gap: 6px; overflow: auto">
+          <span class="elv-label">Bài học đề xuất → kinh chung</span>
+          <div class="elv-row elv-small" style="align-items: flex-start; gap: 8px; padding: 6px 8px; border: 1px dashed var(--elv-accent); border-radius: 4px"><span class="elv-grow">Test có yếu tố thời gian phải giả lập đồng hồ; không dùng giờ thật.</span><span class="elv-micro elv-muted">3/3 phiếu</span></div>
+          <div class="elv-row elv-small" style="align-items: flex-start; gap: 8px; padding: 6px 8px; border: 1px dashed var(--elv-accent); border-radius: 4px"><span class="elv-grow">Tuần tra đêm chạy test auth trước, vì đây là nơi vỡ 3 lần gần nhất.</span><span class="elv-micro elv-muted">2/3 phiếu</span></div>
+          <div class="elv-row elv-small" style="align-items: flex-start; gap: 8px; padding: 6px 8px; border: 1px solid var(--elv-border); border-radius: 4px; opacity: .6"><span class="elv-grow">Chặn merge khi CI chưa xanh 2 lần liên tiếp.</span><span class="elv-micro elv-muted">1/3 · không đủ</span></div>
+        </div>
+        <div style="padding: 8px 16px; display: flex; flex-direction: column; gap: 6px; overflow: auto">
+          <span class="elv-label">Đổ nát → quest Gia cố tự sinh</span>
+          <div class="elv-row elv-small" data-status="open" style="gap: 8px; padding: 5px 8px; border: 1px solid var(--elv-border); border-radius: 4px"><span class="elv-dot"></span><span class="elv-rank" data-rank="D" style="transform: scale(.8)">D</span><span class="elv-grow elv-ellipsis">Gia cố: tách helper thời gian khỏi auth</span><span class="elv-muted">open</span></div>
+          <div class="elv-row elv-small" data-status="open" style="gap: 8px; padding: 5px 8px; border: 1px solid var(--elv-border); border-radius: 4px"><span class="elv-dot"></span><span class="elv-rank" data-rank="E" style="transform: scale(.8)">E</span><span class="elv-grow elv-ellipsis">Soạn thảo: ghi địa chí mục "test thời gian"</span><span class="elv-muted">open</span></div>
+          <span class="elv-small elv-dim">Đóng hội đồng → chiến dịch closed, chronicle ghi một trang.</span>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["night","day"],"default":"night","section":"Chế độ"},"variant":{"editor":"enum","options":["offense","defense","retro"],"default":"offense","section":"Chế độ chiến dịch"},"w":{"editor":"int","default":1440,"min":1280,"max":3840,"step":10,"section":"Khung"},"h":{"editor":"int","default":900,"min":720,"max":2400,"step":10,"section":"Khung"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const v = this.props.variant ?? 'offense';
+    const ok = 'M8 2a6 6 0 1 1 0 12a6 6 0 1 1 0-12 M5 8.2l2 2 4-4.5';
+    const no = 'M8 2a6 6 0 1 1 0 12a6 6 0 1 1 0-12';
+    const base = {
+      theme: this.props.theme ?? 'night', w: Number(this.props.w) || 1440, h: Number(this.props.h) || 900,
+      isOffense: v === 'offense', isDefense: v === 'defense', isRetro: v === 'retro', notRetro: v !== 'retro'
+    };
+    if (v === 'defense') return Object.assign(base, {
+      hudScene: 'defense', modeBg: 'var(--elv-h-incident)', modeInk: '#fff', modeLabel: 'PHÒNG THỦ', campStatus: 'working', campStatusLabel: 'active · 00:12:40',
+      campName: 'Sự cố: CI đỏ ở shop-api sau 7f3a', campSub: 'tự tuyên chiến bởi tuần tra đêm 02:10 · dải đỏ ở thanh trên, không popup',
+      morale: 35, moraleColor: 'var(--elv-h-incident)', moraleText: 'Đang dẹp · 1 mặt trận', moraleSub: 'Thời gian càng dài sĩ khí càng giảm; hạ báo động khi CI xanh và bẫy qua đêm đạt.',
+      frontCount: 1,
+      fronts: [{ name: 'Trừ tà', goal: 'test auth vỡ', done: 0, total: 1, pct: 35, cls: 'elv-progress--working' }],
+      conds: [{ cls: 'elv-check-item--no', path: no, text: 'CI xanh trên main' }, { cls: 'elv-check-item--no', path: no, text: 'Bẫy (regression) chạy lại qua đêm đạt' }, { cls: 'elv-check-item--ok', path: ok, text: 'Nguyên nhân gốc ghi vào journal' }],
+      bottomNote: 'Trận phòng thủ: quest sinh tại chỗ, nhân vật rảnh cùng lãnh thổ nhận ngay',
+      cols: [
+        { name: 'Trừ tà · đang làm', items: [{ st: 'working', rank: 'C', title: 'Trừ tà: CI đỏ sau 7f3a — test auth vỡ', who: 'Thorn' }] },
+        { name: 'Tạm hoãn vì phòng thủ', items: [{ st: 'open', rank: 'B', title: 'Tách module thanh toán khỏi monolith', who: 'Bramble' }, { st: 'open', rank: 'D', title: 'Báo cáo tuần: tỉ lệ chuyển đổi', who: 'Orrin' }] },
+        { name: 'Sau khi dẹp', items: [{ st: 'open', rank: 'D', title: 'Gia cố tự sinh từ đổ nát', who: '—' }, { st: 'open', rank: 'E', title: 'Hội đồng sau chiến', who: 'Maelis' }] }
+      ]
+    });
+    if (v === 'retro') return Object.assign(base, {
+      hudScene: 'cleared', modeBg: 'var(--elv-q-done)', modeInk: '#1A1714', modeLabel: 'ĐÃ THẮNG', campStatus: 'done', campStatusLabel: 'retro_pending',
+      campName: 'Sự cố: CI đỏ ở shop-api sau 7f3a', campSub: 'cleared 04:02 · 1h 52m · hội đồng sau chiến đang họp',
+      morale: 100, moraleColor: 'var(--elv-q-done)', moraleText: 'Dẹp xong · bẫy đạt', moraleSub: 'Bài học đủ phiếu sẽ vào kinh chung của Đền; đổ nát thành quest Gia cố.',
+      frontCount: 1,
+      fronts: [{ name: 'Trừ tà', goal: 'test auth vỡ', done: 1, total: 1, pct: 100, cls: 'elv-progress--done' }],
+      conds: [{ cls: 'elv-check-item--ok', path: ok, text: 'CI xanh trên main' }, { cls: 'elv-check-item--ok', path: ok, text: 'Bẫy chạy lại qua đêm đạt' }, { cls: 'elv-check-item--ok', path: ok, text: 'Nguyên nhân gốc ghi vào journal' }],
+      bottomNote: '', cols: []
+    });
+    return Object.assign(base, {
+      hudScene: 'default', modeBg: 'var(--elv-accent)', modeInk: 'var(--elv-accent-ink)', modeLabel: 'TẤN CÔNG', campStatus: 'working', campStatusLabel: 'active · ngày 9/12',
+      campName: 'Phát hành 2.4 — bộ lọc theo kho hàng', campSub: 'tuyên chiến 28/10 · hạn 09/11 · Pháp sư Maelis chia mặt trận',
+      morale: 68, moraleColor: 'var(--elv-accent)', moraleText: '9/13 quest xong · còn 3 ngày', moraleSub: 'Sĩ khí = tỉ lệ hoàn thành ÷ thời gian còn lại. Dưới 50% khi còn 1 ngày → cảnh báo.',
+      frontCount: 3,
+      fronts: [
+        { name: 'Ổn định', goal: 'auth, thanh toán', done: 4, total: 6, pct: 66, cls: 'elv-progress--working' },
+        { name: 'Tính năng kho', goal: 'bộ lọc, tổng quan', done: 3, total: 5, pct: 60, cls: 'elv-progress--working' },
+        { name: 'Tài liệu & rao truyền', goal: 'SOP, email', done: 2, total: 2, pct: 100, cls: 'elv-progress--done' }
+      ],
+      conds: [
+        { cls: 'elv-check-item--ok', path: ok, text: 'CI xanh 3 ngày liên tiếp' },
+        { cls: 'elv-check-item--no', path: no, text: '0 bug P1 mở (còn 1: q_0142)' },
+        { cls: 'elv-check-item--ok', path: ok, text: 'Địa chí shop-api cập nhật' },
+        { cls: 'elv-check-item--no', path: no, text: 'Release note đã có dấu vua' }
+      ],
+      bottomNote: 'Quản sự xoay vòng theo lãnh thổ, ưu tiên theo hạng; chiến dịch không nuốt hết mana',
+      cols: [
+        { name: 'Ổn định · 4/6', items: [{ st: 'seal', rank: 'C', title: 'Hợp nhất q_0142: lỗi 500 token hết hạn', who: 'Thorn' }, { st: 'sleep', rank: 'B', title: 'Tách module thanh toán khỏi monolith', who: 'Bramble' }, { st: 'done', rank: 'D', title: 'Gia cố: retry khi gateway timeout', who: 'Orrin' }] },
+        { name: 'Tính năng kho · 3/5', items: [{ st: 'seal', rank: 'A', title: 'Trang tổng quan đơn hàng theo mùa', who: 'Bramble' }, { st: 'working', rank: 'D', title: 'Báo cáo tuần: tỉ lệ chuyển đổi', who: 'Orrin' }, { st: 'open', rank: 'C', title: 'API lọc theo kho (phân trang)', who: '—' }] },
+        { name: 'Tài liệu & rao truyền · 2/2', items: [{ st: 'review', rank: 'E', title: 'SOP triển khai bản 2', who: 'Ilse' }, { st: 'seal', rank: 'D', title: 'Email chiến dịch "Mùa đông"', who: 'Lyra' }] }
+      ]
+    });
+  }
+}
+</script>
+</body>
+</html>

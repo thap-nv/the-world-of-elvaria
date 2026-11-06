@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Elvaria — Bản đồ 3D placeholder</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./elvaria.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Grenze+Gotisch:wght@400;500;600&amp;family=Cinzel:wght@600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#D4A454}a:hover{color:#EEE4CF}
+.mp text{font-family:"Source Sans 3",system-ui,sans-serif;font-size:11px;fill:var(--elv-map-label);letter-spacing:.04em}
+.mp .ter{font-family:"Alegreya",Georgia,serif;font-size:15px;font-weight:600;letter-spacing:.02em}
+.mp .b{fill:var(--elv-surface-3);stroke:var(--elv-border-strong);stroke-width:1}
+.mp .roof{fill:var(--elv-wood);stroke:none}
+.mp .road{fill:none;stroke:var(--elv-map-road);stroke-width:2;stroke-dasharray:6 5;stroke-linecap:round}
+.mp .ch{stroke-width:1.5;fill:var(--elv-surface)}
+.mp .nm{font-size:10px;fill:var(--elv-ink);font-weight:600}
+.mp .sign{fill:var(--elv-wood);stroke:none}
+.mp .pen{fill:var(--elv-steel)}
+.mp .ban{fill:var(--elv-accent)}
+.mp .wall{fill:none;stroke:var(--elv-steel);stroke-width:2;stroke-linejoin:round;opacity:.7}
+</style>
+</helmet>
+<div class="elv" data-theme="{{theme}}" style="width: 1440px; height: 900px; overflow: hidden; position: relative; background: var(--elv-map-sky)">
+<svg class="mp" width="1440" height="900" viewBox="0 0 1440 900" role="img" aria-label="Bản đồ thế giới (placeholder cho lớp 3D)" style="display: block">
+  <!-- mặt đất low-poly -->
+  <polygon points="0,900 0,260 180,220 360,250 520,200 700,240 880,180 1060,230 1240,190 1440,240 1440,900" fill="var(--elv-map-land-1)"></polygon>
+  <polygon points="0,420 180,380 360,420 300,560 120,600 0,560" fill="var(--elv-map-land-2)"></polygon>
+  <polygon points="360,420 520,370 700,410 760,540 600,620 420,580 300,560" fill="var(--elv-map-land-3)"></polygon>
+  <polygon points="700,410 880,350 1060,400 1000,520 820,560 760,540" fill="var(--elv-map-land-2)"></polygon>
+  <polygon points="820,560 1000,520 1120,600 1060,760 880,780 760,700" fill="var(--elv-map-land-3)"></polygon>
+  <polygon points="120,600 300,560 420,580 460,740 280,820 100,780" fill="var(--elv-map-land-3)"></polygon>
+  <polygon points="460,740 600,620 760,700 740,860 520,880" fill="var(--elv-map-land-2)"></polygon>
+  <polygon points="1060,400 1240,360 1440,420 1440,620 1240,640 1120,600 1000,520" fill="var(--elv-map-land-1)"></polygon>
+  <polygon points="880,180 1060,230 1060,400 880,350" fill="var(--elv-map-land-3)"></polygon>
+  <polygon points="1120,600 1240,640 1440,620 1440,900 1060,900 1060,760" fill="var(--elv-map-land-2)"></polygon>
+  <!-- núi phía bắc -->
+  <polygon points="140,230 220,100 300,236" fill="var(--elv-map-rock)"></polygon>
+  <polygon points="220,100 250,150 190,150" fill="var(--elv-map-snow)"></polygon>
+  <polygon points="280,240 380,90 470,240" fill="var(--elv-map-rock)"></polygon>
+  <polygon points="380,90 415,150 345,150" fill="var(--elv-map-snow)"></polygon>
+  <polygon points="470,240 540,140 620,230" fill="var(--elv-map-rock)"></polygon>
+  <polygon points="960,210 1040,80 1120,210" fill="var(--elv-map-rock)"></polygon>
+  <polygon points="1040,80 1070,135 1010,135" fill="var(--elv-map-snow)"></polygon>
+  <polygon points="1110,220 1180,120 1250,210" fill="var(--elv-map-rock)"></polygon>
+  <!-- sông -->
+  <path d="M0 300 C 180 330, 220 420, 330 460 S 520 560, 640 640 S 780 820, 900 900" fill="none" stroke="var(--elv-map-water)" stroke-width="16" stroke-linecap="round"></path>
+  <path d="M0 300 C 180 330, 220 420, 330 460 S 520 560, 640 640 S 780 820, 900 900" fill="none" stroke="var(--elv-map-sky)" stroke-width="3" stroke-dasharray="2 18" opacity=".5"></path>
+  <!-- hồ (data-lake) -->
+  <polygon points="1010,650 1080,630 1130,670 1100,720 1020,720 990,690" fill="var(--elv-map-water)"></polygon>
+  <!-- rừng: instancing, vẽ vài cụm -->
+  <g fill="var(--elv-map-land-1)" stroke="var(--elv-map-sky)" stroke-width=".5" opacity=".9">
+    <polygon points="150,680 162,650 174,680"></polygon><polygon points="170,700 182,670 194,700"></polygon><polygon points="190,675 202,645 214,675"></polygon><polygon points="140,720 152,690 164,720"></polygon><polygon points="215,705 227,675 239,705"></polygon>
+    <polygon points="1300,520 1312,490 1324,520"></polygon><polygon points="1320,545 1332,515 1344,545"></polygon><polygon points="1345,515 1357,485 1369,515"></polygon><polygon points="1280,560 1292,530 1304,560"></polygon>
+    <polygon points="600,760 612,730 624,760"></polygon><polygon points="625,785 637,755 649,785"></polygon><polygon points="580,790 592,760 604,790"></polygon>
+  </g>
+
+  <!-- đường nối (nén giữa các lãnh thổ) -->
+  <path class="road" d="M720 500 C 650 480, 580 470, 520 480"></path>
+  <path class="road" d="M740 470 C 800 420, 850 380, 900 340"></path>
+  <path class="road" d="M760 520 C 840 580, 900 620, 960 660"></path>
+  <g style="display: {{newDisplay}}">
+    <path class="road" d="M1040 660 C 1120 690, 1200 720, 1280 760" style="stroke: var(--elv-accent)"></path>
+  </g>
+
+  <!-- KINH ĐÔ: Hội quán, Ngai vàng, Đền, Phòng chiến sự -->
+  <g transform="translate(680,430)">
+    <polygon points="0,70 40,40 110,40 150,70 110,100 40,100" fill="var(--elv-map-land-3)" stroke="var(--elv-map-road)" stroke-width="1"></polygon>
+    <rect class="b" x="30" y="50" width="34" height="26"></rect><polygon class="roof" points="27,50 47,36 67,50"></polygon>
+    <rect class="b" x="72" y="46" width="40" height="30"></rect><polygon class="roof" points="69,46 92,28 115,46"></polygon>
+    <rect class="b" x="50" y="82" width="26" height="18"></rect><polygon class="roof" points="48,82 63,72 78,82"></polygon>
+    <polygon class="ban" points="92,8 92,30 100,26 108,30 108,8"></polygon><line x1="92" y1="4" x2="92" y2="32" stroke="var(--elv-ink)" stroke-width="1"></line>
+    <text class="ter" x="20" y="124">Kinh đô</text>
+    <text x="20" y="138">Hội quán · Ngai vàng · Đền · Phòng chiến sự</text>
+  </g>
+
+  <!-- LÃNH THỔ shop-api (code = thung lũng có thành) -->
+  <g transform="translate(400,400)">
+    <polygon class="wall" points="20,60 60,30 170,30 220,60 220,150 170,180 60,180 20,150 20,60"></polygon>
+    <rect class="b" x="60" y="70" width="36" height="28"></rect><polygon class="roof" points="57,70 78,54 99,70"></polygon>
+    <rect class="b" x="110" y="64" width="44" height="34"></rect><polygon class="roof" points="107,64 132,44 157,64"></polygon>
+    <rect class="b" x="80" y="116" width="30" height="22"></rect><polygon class="roof" points="78,116 95,104 112,116"></polygon>
+    <rect class="b" x="130" y="120" width="40" height="26"></rect><polygon class="roof" points="127,120 150,104 173,120"></polygon>
+    <!-- giàn giáo (công trường) -->
+    <g stroke="var(--elv-map-road)" stroke-width="1.5" fill="none"><rect x="168" y="68" width="30" height="40"></rect><line x1="168" y1="82" x2="198" y2="82"></line><line x1="168" y1="96" x2="198" y2="96"></line></g>
+    <!-- biển gỗ & cờ hiệu -->
+    <rect class="sign" x="46" y="100" width="12" height="9"></rect><line x1="52" y1="109" x2="52" y2="118" stroke="var(--elv-wood)" stroke-width="2"></line>
+    <polygon class="pen" points="104,40 104,56 112,52 120,56 120,40"></polygon><line x1="104" y1="36" x2="104" y2="60" stroke="var(--elv-ink)" stroke-width="1"></line>
+    <text class="ter" x="20" y="206">{{t1}}</text>
+    <text x="20" y="220">Công trường · Tường thành · Lò mài · 2 lều trại</text>
+  </g>
+  <!-- thời tiết shop-api -->
+  <g style="display: {{incDisplay}}">
+    <g transform="translate(420,330)" aria-label="sấm sét: sự cố">
+      <polygon points="40,130 240,120 250,210 60,220" fill="var(--elv-h-incident)" opacity=".12"></polygon>
+      <path d="M80 40 a18 18 0 0 1 34 -8 a14 14 0 0 1 26 10 h6 a10 10 0 0 1 0 20 H80 a10 10 0 0 1 0 -22z" fill="var(--elv-surface-3)" stroke="var(--elv-h-incident)" stroke-width="1.5"></path>
+      <path d="M118 64 l-10 16 h9 l-5 14 l16 -20 h-9 l6 -10z" fill="var(--elv-h-warn)" stroke="none"></path>
+      <path d="M150 40 a18 18 0 0 1 34 -8 a14 14 0 0 1 26 10 h6 a10 10 0 0 1 0 20 H150 a10 10 0 0 1 0 -22z" fill="var(--elv-surface-3)" stroke="var(--elv-h-incident)" stroke-width="1.5"></path>
+    </g>
+  </g>
+
+  <!-- LÃNH THỔ docs-portal (docs = cao nguyên thư viện) -->
+  <g transform="translate(860,250)">
+    <polygon points="0,60 60,30 180,40 200,100 140,130 20,120" fill="var(--elv-map-land-2)" stroke="var(--elv-map-road)" stroke-width="1" opacity=".9"></polygon>
+    <rect class="b" x="40" y="60" width="52" height="36"></rect><polygon class="roof" points="37,60 66,40 95,60"></polygon>
+    <g stroke="var(--elv-border-strong)" stroke-width="1"><line x1="46" y1="70" x2="86" y2="70"></line><line x1="46" y1="78" x2="86" y2="78"></line><line x1="46" y1="86" x2="86" y2="86"></line></g>
+    <rect class="b" x="110" y="66" width="30" height="24"></rect><polygon class="roof" points="108,66 125,52 142,66"></polygon>
+    <rect class="sign" x="100" y="98" width="12" height="9"></rect><line x1="106" y1="107" x2="106" y2="116" stroke="var(--elv-wood)" stroke-width="2"></line>
+    <text class="ter" x="20" y="150">{{t2}}</text>
+    <text x="20" y="164">Phòng chép sách · Thư viện · kệ 128 tài liệu</text>
+  </g>
+
+  <!-- LÃNH THỔ data-lake (data = đài thiên văn trên núi) -->
+  <g transform="translate(900,560)">
+    <polygon points="20,40 100,10 180,40 160,110 60,120" fill="var(--elv-map-rock)" stroke="var(--elv-map-road)" stroke-width="1" opacity=".85"></polygon>
+    <rect class="b" x="80" y="44" width="40" height="40"></rect><path d="M78 44 a22 22 0 0 1 44 0z" class="roof"></path>
+    <line x1="100" y1="22" x2="118" y2="8" stroke="var(--elv-steel)" stroke-width="3"></line>
+    <rect class="b" x="40" y="70" width="26" height="20"></rect><polygon class="roof" points="38,70 53,58 68,70"></polygon>
+    <!-- mây cảnh báo (backlog già) -->
+    <path d="M130 0 a14 14 0 0 1 26 -6 a11 11 0 0 1 20 8 h4 a8 8 0 0 1 0 16 H130 a8 8 0 0 1 0 -18z" fill="var(--elv-surface-3)" stroke="var(--elv-h-warn)" stroke-width="1.5"></path>
+    <text class="ter" x="20" y="150">{{t3}}</text>
+    <text x="20" y="164">Đài thiên văn · bia đá · 1 quest Chiêm nghiệm</text>
+  </g>
+
+  <!-- VÙNG SƯƠNG MÙ (Thám hiểm) -->
+  <g transform="translate(1180,400)">
+    <ellipse cx="90" cy="70" rx="110" ry="70" fill="var(--elv-map-fog)"></ellipse>
+    <ellipse cx="90" cy="70" rx="80" ry="48" fill="var(--elv-map-fog)"></ellipse>
+    <!-- Sphinx canh giữ -->
+    <path d="M70 90 l10 -30 l10 10 l10 -10 l10 30z" fill="var(--elv-surface-3)" stroke="var(--elv-ink-3)" stroke-width="1"></path>
+    <text x="40" y="150" class="ter">Vùng sương mù</text>
+    <text x="40" y="164">Sphinx · q_0147 Thám hiểm · Wren</text>
+  </g>
+
+  <!-- LÃNH ĐỊA MỚI (Mở cõi) -->
+  <g style="display: {{newDisplay}}">
+    <g transform="translate(1240,700)">
+      <polygon points="0,60 60,30 170,40 190,110 130,140 20,130" fill="var(--elv-map-land-3)" stroke="var(--elv-accent)" stroke-width="1.5" stroke-dasharray="5 4"></polygon>
+      <g stroke="var(--elv-accent)" stroke-width="1.5" fill="none"><rect x="60" y="60" width="34" height="34"></rect><line x1="60" y1="72" x2="94" y2="72"></line><line x1="60" y1="84" x2="94" y2="84"></line></g>
+      <g stroke="var(--elv-accent)" stroke-width="1.5" fill="none"><rect x="110" y="70" width="26" height="24"></rect></g>
+      <text class="ter" x="20" y="168" style="fill: var(--elv-accent)">{{t4}}</text>
+      <text x="20" y="182">đang khảo sát · 4 tòa nhà phát hiện</text>
+    </g>
+  </g>
+
+  <!-- NHÂN VẬT: viên nang có vòng màu tộc; tên nhỏ -->
+  <g transform="translate(500,470)"><circle r="7" class="ch" style="stroke: var(--elv-fac-silver)"></circle><rect x="-5" y="4" width="10" height="9" rx="3" fill="var(--elv-surface)" stroke="var(--elv-fac-silver)" stroke-width="1.5"></rect><text class="nm" x="12" y="4">Thorn</text></g>
+  <g transform="translate(560,536)"><circle r="7" class="ch" style="stroke: var(--elv-fac-fire)"></circle><rect x="-5" y="4" width="10" height="9" rx="3" fill="var(--elv-surface)" stroke="var(--elv-fac-fire)" stroke-width="1.5"></rect><text class="nm" x="12" y="4">Ragnar</text></g>
+  <g transform="translate(925,318)"><circle r="7" class="ch" style="stroke: var(--elv-fac-fire)"></circle><rect x="-5" y="4" width="10" height="9" rx="3" fill="var(--elv-surface)" stroke="var(--elv-fac-fire)" stroke-width="1.5"></rect><text class="nm" x="12" y="4">Ilse</text></g>
+  <g transform="translate(1250,440)"><circle r="7" class="ch" style="stroke: var(--elv-fac-fire)"></circle><rect x="-5" y="4" width="10" height="9" rx="3" fill="var(--elv-surface)" stroke="var(--elv-fac-fire)" stroke-width="1.5"></rect><text class="nm" x="12" y="4">Wren</text></g>
+  <g transform="translate(730,480)"><circle r="7" class="ch" style="stroke: var(--elv-fac-silver)"></circle><rect x="-5" y="4" width="10" height="9" rx="3" fill="var(--elv-surface)" stroke="var(--elv-fac-silver)" stroke-width="1.5"></rect><text class="nm" x="12" y="4">Bramble</text></g>
+  <g transform="translate(960,640)"><circle r="7" class="ch" style="stroke: var(--elv-fac-silver)"></circle><rect x="-5" y="4" width="10" height="9" rx="3" fill="var(--elv-surface)" stroke="var(--elv-fac-silver)" stroke-width="1.5"></rect><text class="nm" x="12" y="4">Orrin</text></g>
+  <!-- xe ngựa trên đường -->
+  <g transform="translate(800,400)"><rect x="-8" y="-5" width="16" height="10" rx="2" fill="var(--elv-wood)"></rect><circle cx="-5" cy="6" r="3" fill="none" stroke="var(--elv-ink-3)" stroke-width="1.5"></circle><circle cx="5" cy="6" r="3" fill="none" stroke="var(--elv-ink-3)" stroke-width="1.5"></circle></g>
+
+  <!-- nhãn placeholder -->
+  <text x="1424" y="886" text-anchor="end" style="fill: var(--elv-ink-3); font-size: 10px">Lớp 3D — placeholder Three.js · ngày/đêm theo giờ thật · 30 fps trần · tâm bản đồ không có UI</text>
+</svg>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["night","day"],"default":"night","section":"Chế độ"},"scene":{"editor":"enum","options":["default","incident","newregion"],"default":"default","section":"Cảnh"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const scene = this.props.scene ?? 'default';
+    return {
+      theme: this.props.theme ?? 'night',
+      incDisplay: scene === 'incident' ? 'inline' : 'none',
+      newDisplay: scene === 'newregion' ? 'inline' : 'none',
+      t1: 'shop-api', t2: 'docs-portal', t3: 'data-lake', t4: 'billing-svc'
+    };
+  }
+}
+</script>
+</body>
+</html>

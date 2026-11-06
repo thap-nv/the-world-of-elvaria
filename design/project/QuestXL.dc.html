@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Elvaria — Thẻ quest + Hội quán, dock đôi 2560×1600</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./elvaria.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Grenze+Gotisch:wght@400;500;600&amp;family=Cinzel:wght@600;700&amp;display=swap">
+<style>body{margin:0} a{color:#D4A454}a:hover{color:#EEE4CF}</style>
+</helmet>
+<div class="elv" data-theme="night" style="width: 2560px; height: 1600px; overflow: hidden; position: relative">
+  <dc-import name="Quest" theme="night" variant="working" w="{{ 2560 }}" h="{{ 1600 }}" dock-w="{{ 760 }}" hint-size="2560px,1600px"></dc-import>
+
+  <!-- Dock đôi: bảng thứ hai (Hội quán) đứng bên trái thẻ quest, chỉ cho phép khi khung ≥ 2200px -->
+  <div class="elv-panel elv-dock" style="top: 48px; right: 380px; bottom: 0; width: 380px; border-radius: 0; border-top: 0; border-bottom: 0">
+    <div class="elv-panel__head">
+      <svg class="elv-ic elv-ic--20" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-accent)"><path d="M3 14V5l5-3 5 3v9 M3 8h10 M6 14v-3h4v3"></path></svg>
+      <span class="elv-panel__title elv-panel__title--royal">Hội quán <span class="elv-muted" style="font-family: var(--elv-font-body); font-size: 13px; font-weight: 400">· shop-api · 5</span></span>
+      <button class="elv-btn elv-btn--ghost elv-btn--sm elv-btn--icon" aria-label="Đóng"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8 M12 4l-8 8"></path></svg></button>
+    </div>
+    <div class="elv-panel__body" style="display: flex; flex-direction: column; gap: 8px; padding: 12px 16px">
+      <div class="elv-tabs" style="overflow: hidden">
+        <button class="elv-tab elv-tab--on" style="padding: 0 8px">Tất cả<span class="elv-tab__count">24</span></button>
+        <button class="elv-tab" style="padding: 0 8px">Làm<span class="elv-tab__count">5</span></button>
+        <button class="elv-tab" style="padding: 0 8px">Nghiệm thu<span class="elv-tab__count">2</span></button>
+        <button class="elv-tab" style="padding: 0 8px">Chờ dấu<span class="elv-tab__count">3</span></button>
+      </div>
+      <span class="elv-label">Đang làm · 5</span>
+      <div class="elv-quest elv-quest--active" data-status="working">
+        <svg class="elv-ic elv-quest__kind" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 7.5a2.5 2.5 0 0 1 5 0v3a2.5 2.5 0 0 1-5 0z M8 7.5v5.5 M3 9h2.5 M10.5 9H13"></path></svg>
+        <span class="elv-quest__title">Sửa lỗi đăng nhập trả 500 khi token hết hạn</span>
+        <div class="elv-quest__right"><span class="elv-rank" data-rank="C">C</span><span class="elv-status"><span class="elv-dot"></span>working</span></div>
+        <div class="elv-quest__meta"><span>Thorn</span><span class="elv-quest__ter">shop-api</span><span class="elv-num">42 phút</span><span class="elv-num">2/3</span></div>
+      </div>
+      <div class="elv-quest" data-status="working">
+        <svg class="elv-ic elv-quest__kind" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 13.5l3.5-3.5 M4 11l6-6 2 2-6 6z M10 5l1.5-1.5 2 2L12 7z"></path></svg>
+        <span class="elv-quest__title">Báo cáo tuần: tỉ lệ chuyển đổi theo kho</span>
+        <div class="elv-quest__right"><span class="elv-rank" data-rank="D">D</span><span class="elv-status"><span class="elv-dot"></span>working</span></div>
+        <div class="elv-quest__meta"><span>Orrin</span><span class="elv-quest__ter">data-lake</span><span class="elv-num">18 phút</span><span class="elv-num">1/3</span></div>
+      </div>
+      <div class="elv-quest" data-status="review">
+        <svg class="elv-ic elv-quest__kind" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2h5.5L13 5.5V14H4z M9.5 2v3.5H13 M6.5 8.5h4 M6.5 11h4"></path></svg>
+        <span class="elv-quest__title">SOP triển khai bản 2 cho đội vận hành</span>
+        <div class="elv-quest__right"><span class="elv-rank" data-rank="E">E</span><span class="elv-status"><span class="elv-dot"></span>review</span></div>
+        <div class="elv-quest__meta"><span>Ilse → Oda</span><span class="elv-quest__ter">docs-portal</span><span class="elv-num">3 giờ</span><span class="elv-num">1/3</span></div>
+      </div>
+      <div class="elv-quest" data-status="sleep" style="opacity: .85">
+        <svg class="elv-ic elv-quest__kind" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12v9H2z M2 7h12 M2 10h12 M6 4v3 M10 7v3 M6 10v3"></path></svg>
+        <span class="elv-quest__title">Tách module thanh toán khỏi monolith</span>
+        <div class="elv-quest__right"><span class="elv-rank" data-rank="B">B</span><span class="elv-status"><span class="elv-dot"></span>ngủ</span></div>
+        <div class="elv-quest__meta"><span>Bramble</span><span class="elv-quest__ter">shop-api</span><span class="elv-num">2 giờ</span><span class="elv-num">1/3</span></div>
+      </div>
+      <div class="elv-quest" data-status="infirmary">
+        <svg class="elv-ic elv-quest__kind" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2a6 6 0 1 1 0 12a6 6 0 1 1 0-12 M10.5 5.5l-1.5 3.5-3.5 1.5 1.5-3.5z"></path></svg>
+        <span class="elv-quest__title">Khảo sát thư viện xác thực thay thế</span>
+        <div class="elv-quest__right"><span class="elv-rank" data-rank="B">B</span><span class="elv-status"><span class="elv-dot"></span>bệnh xá</span></div>
+        <div class="elv-quest__meta"><span>Wren</span><span class="elv-quest__ter">shop-api</span><span class="elv-num">2 ngày</span><span class="elv-num" style="color: var(--elv-q-infirmary)">3/3</span></div>
+      </div>
+      <span class="elv-label" style="margin-top: 4px">Chờ dấu · 3</span>
+      <div class="elv-quest" data-status="seal">
+        <svg class="elv-ic elv-quest__kind" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13l5-5 M9.5 3.5l3 3-2 2-3-3z"></path></svg>
+        <span class="elv-quest__title">Trang tổng quan đơn hàng theo mùa</span>
+        <div class="elv-quest__right"><span class="elv-rank" data-rank="A">A</span><span class="elv-status"><span class="elv-dot"></span>chờ dấu</span></div>
+        <div class="elv-quest__meta"><span>Bramble</span><span class="elv-quest__ter">shop-api</span><span class="elv-num">1 ngày</span><span class="elv-num">1/3</span></div>
+      </div>
+      <div class="elv-quest" data-status="seal">
+        <svg class="elv-ic elv-quest__kind" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6.5v3h2.5l5.5 3V3.5l-5.5 3z M12.5 6a3 3 0 0 1 0 4"></path></svg>
+        <span class="elv-quest__title">Email chiến dịch "Mùa đông" cho khách cũ</span>
+        <div class="elv-quest__right"><span class="elv-rank" data-rank="D">D</span><span class="elv-status"><span class="elv-dot"></span>chờ dấu</span></div>
+        <div class="elv-quest__meta"><span>Lyra</span><span class="elv-quest__ter">marketing-hub</span><span class="elv-num">1 giờ</span><span class="elv-num">2/3</span></div>
+      </div>
+    </div>
+    <div class="elv-panel__foot"><span class="elv-small elv-muted">Dock đôi: chỉ ở khung ≥ 2200px. Thẻ quest luôn ở cột sát mép; danh sách ở cột trong. Tâm bản đồ vẫn trống 1800px.</span></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2560,"height":1600}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Elvaria — Mở cõi</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./elvaria.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Grenze+Gotisch:wght@400;500;600&amp;family=Cinzel:wght@600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#D4A454}a:hover{color:#EEE4CF}
+</style>
+</helmet>
+<div class="elv" data-theme="{{theme}}" style="width: 1440px; height: 900px; position: relative; overflow: hidden">
+  <div style="position: absolute; inset: 0">
+    <dc-import name="Hud" theme="{{theme}}" scene="{{hudScene}}" dock-right="{{ dockRight }}" hint-size="1440px,900px"></dc-import>
+  </div>
+
+  <sc-if value="{{dockRight}}" hint-placeholder-val="{{ true }}">
+    <div class="elv-panel elv-dock elv-dock--right">
+      <div class="elv-panel__head">
+        <svg class="elv-ic elv-ic--20" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-accent)"><path d="M2 4l4-2 4 2 4-2v10l-4 2-4-2-4 2z M6 2v10 M10 4v10"></path></svg>
+        <span class="elv-panel__title">Mở cõi <span class="elv-muted" style="font-family: var(--elv-font-body); font-size: 13px; font-weight: 400">· gắn lãnh thổ mới</span></span>
+        <button class="elv-btn elv-btn--ghost elv-btn--sm elv-btn--icon" aria-label="Đóng"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8 M12 4l-8 8"></path></svg></button>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 12px 16px 0">
+        <sc-for list="{{steps}}" as="s" hint-placeholder-count="3">
+          <div style="display: flex; flex-direction: column; gap: 6px"><div style="height: 3px; border-radius: 2px; background: {{s.bar}}"></div><span class="elv-micro" style="color: {{s.ink}}">{{s.n}} · {{s.name}}</span></div>
+        </sc-for>
+      </div>
+
+      <sc-if value="{{is1}}" hint-placeholder-val="{{ true }}">
+        <div class="elv-panel__body" style="display: flex; flex-direction: column; gap: 14px">
+          <label class="elv-field"><span class="elv-label">Repo hoặc thư mục</span><span class="elv-row"><input class="elv-input elv-mono elv-grow" value="{{path}}" style="border-color: {{pathBorder}}"><button class="elv-btn">Chọn…</button></span></label>
+          <sc-if value="{{isError}}" hint-placeholder-val="{{ false }}">
+            <div class="elv-row" style="gap: 8px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--elv-h-incident); border-radius: 6px; color: var(--elv-ink)">
+              <svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-h-incident); margin-top: 2px"><path d="M8 2l6.5 11.5h-13z M8 6.5v3.5 M8 11.8v.01"></path></svg>
+              <span class="elv-small"><b>Không truy cập được thư mục.</b> Đường dẫn là ổ mạng đã ngắt, hoặc Elvaria không có quyền đọc. Trinh sát không thể khảo sát; chưa có gì được thêm vào bản đồ.<br><span class="elv-muted">Mã: EACCES · <span class="elv-mono">\\nas\projects\legacy-erp</span></span></span>
+            </div>
+            <div class="elv-row" style="gap: 8px"><button class="elv-btn">Thử lại</button><button class="elv-btn">Chọn thư mục khác</button><button class="elv-btn elv-btn--ghost">Cách cấp quyền</button></div>
+          </sc-if>
+          <sc-if value="{{notError}}" hint-placeholder-val="{{ true }}">
+            <label class="elv-field"><span class="elv-label">Tên lãnh địa · mặc định tên repo · tối đa 24 ký tự</span><input class="elv-input elv-display" style="font-size: 16px" value="billing-svc"></label>
+            <div style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border: 1px solid var(--elv-border); border-radius: 6px; background: var(--elv-surface-2)">
+              <span class="elv-label">Nhận ra</span>
+              <div class="elv-check-item elv-check-item--ok"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2a6 6 0 1 1 0 12a6 6 0 1 1 0-12 M5 8.2l2 2 4-4.5"></path></svg><span>git repo · Go · <span class="elv-mono">make test</span> → kiểm tra máy</span></div>
+              <div class="elv-check-item elv-check-item--ok"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2a6 6 0 1 1 0 12a6 6 0 1 1 0-12 M5 8.2l2 2 4-4.5"></path></svg><span>Dạng <b>code</b> → thung lũng có thành, mọc ở biên đông, đường nối về Kinh đô</span></div>
+              <div class="elv-check-item elv-check-item--no"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2a6 6 0 1 1 0 12a6 6 0 1 1 0-12"></path></svg><span>Không có CI → thời tiết "chưa rõ" tới khi tuần tra đầu</span></div>
+            </div>
+            <span class="elv-small elv-muted">Khảo sát tốn ~1.5k mana (Elf trinh sát, Lửa Đỏ 38%). Lãnh thổ thứ 4 → các vùng xa chuyển mức chi tiết "icon".</span>
+          </sc-if>
+        </div>
+        <div class="elv-panel__foot elv-btnrow--split"><button class="elv-btn elv-btn--ghost">Hủy</button><button class="elv-btn elv-btn--primary" disabled="{{errAttr}}">Cử trinh sát khảo sát</button></div>
+      </sc-if>
+
+      <sc-if value="{{is2}}" hint-placeholder-val="{{ false }}">
+        <div class="elv-panel__body" style="display: flex; flex-direction: column; gap: 12px">
+          <span class="elv-row" style="justify-content: space-between"><span class="elv-h3">Khảo sát billing-svc</span><span class="elv-small elv-num" style="color: {{pctColor}}">{{pct}}%</span></span>
+          <div class="elv-progress"><i style="width: {{pct}}%; background: {{pctColor}}"></i></div>
+          <sc-if value="{{isPartial}}" hint-placeholder-val="{{ false }}">
+            <div class="elv-row" style="gap: 8px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--elv-q-sleep); border-radius: 6px">
+              <svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-q-sleep); margin-top: 2px"><path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z"></path></svg>
+              <span class="elv-small"><b>Khảo sát dở dang.</b> Wren ngủ vì Tộc Lửa Đỏ hết mana lúc 41%. Địa chí đã ghi tới <span class="elv-mono">internal/ledger</span>; vùng đất hiện ở biên dạng phác thảo, chưa có tòa nhà. Tiếp tục khi tộc tỉnh (09:00) hoặc giao cho Elf Sao Bạc.</span>
+            </div>
+            <div class="elv-row" style="gap: 8px"><button class="elv-btn elv-btn--primary">Giao cho Elf Sao Bạc (71%)</button><button class="elv-btn elv-btn--ghost">Chờ 09:00</button></div>
+          </sc-if>
+          <sc-if value="{{notPartial}}" hint-placeholder-val="{{ true }}">
+            <span class="elv-row elv-small" style="gap: 8px"><span class="elv-avatar elv-avatar--sm" data-tier="2" style="--rep: 55"><span class="elv-avatar__ring"></span><span class="elv-avatar__frame"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5c4 2 4 9 0 11 M4 2.5v11 M4 8h9 M10.5 5.5L13 8l-2.5 2.5"></path></svg></span></span><span>Elf trinh sát <b>Wren</b> đang đi · bản đồ mọc dần ở biên đông</span></span>
+          </sc-if>
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <span class="elv-label" style="margin-bottom: 4px">Phát hiện</span>
+            <div class="elv-log"><span class="elv-log__time">00:09</span><svg class="elv-ic elv-log__ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-q-done)"><path d="M3 13l5-5 M9.5 3.5l3 3-2 2-3-3z"></path></svg><span class="elv-log__text"><em>cmd/, internal/ledger, internal/invoice</em> → 4 tòa nhà</span></div>
+            <div class="elv-log"><span class="elv-log__time">00:20</span><svg class="elv-ic elv-log__ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-q-done)"><path d="M2 4h12v9H2z M2 7h12 M2 10h12"></path></svg><span class="elv-log__text">86 test → 2 đoạn tường · không có lint</span></div>
+            <div class="elv-log"><span class="elv-log__time">00:27</span><svg class="elv-ic elv-log__ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-h-warn)"><path d="M8 2l6.5 11.5h-13z M8 6.5v3.5 M8 11.8v.01"></path></svg><span class="elv-log__text">Quy ước migrate khác shop-api → ghi vào địa chí, cảnh báo Hiệp sĩ</span></div>
+            <sc-if value="{{notPartial}}" hint-placeholder-val="{{ true }}">
+              <div class="elv-log"><span class="elv-log__time">…</span><svg class="elv-ic elv-log__ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2a6 6 0 1 1 0 12a6 6 0 1 1 0-12 M8 4.5V8l2.5 1.5"></path></svg><span class="elv-log__text elv-muted">đang đọc README và cách triển khai…</span></div>
+            </sc-if>
+          </div>
+        </div>
+        <div class="elv-panel__foot elv-btnrow--split"><button class="elv-btn elv-btn--ghost">Chạy nền, đóng bảng</button><span class="elv-small elv-muted">địa chí: <span class="elv-mono">territories/billing-svc/gazetteer.md</span></span></div>
+      </sc-if>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["night","day"],"default":"night","section":"Chế độ"},"step":{"editor":"enum","options":["1","2","3","error","partial"],"default":"2","section":"Bước"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const st = String(this.props.step ?? '2');
+    const isError = st === 'error', isPartial = st === 'partial';
+    const n = st === '3' ? 3 : (st === '2' || isPartial ? 2 : 1);
+    const names = ['Chọn repo, đặt tên', 'Trinh sát khảo sát', 'Vùng mới trên bản đồ'];
+    return {
+      theme: this.props.theme ?? 'night',
+      hudScene: st === '3' ? 'newregion' : (isPartial ? 'newregion' : 'default'),
+      dockRight: st !== '3',
+      is1: n === 1, is2: n === 2, isError, notError: !isError, isPartial, notPartial: !isPartial,
+      errAttr: isError ? true : undefined,
+      path: isError ? '\\\\nas\\projects\\legacy-erp' : 'D:\\work\\billing-svc',
+      pathBorder: isError ? 'var(--elv-h-incident)' : 'var(--elv-border-strong)',
+      pct: isPartial ? 41 : 58,
+      pctColor: isPartial ? 'var(--elv-q-sleep)' : 'var(--elv-accent)',
+      steps: names.map((name, i) => ({ n: i + 1, name, bar: i + 1 < n ? 'var(--elv-q-done)' : (i + 1 === n ? 'var(--elv-accent)' : 'var(--elv-border)'), ink: i + 1 <= n ? 'var(--elv-ink)' : 'var(--elv-ink-3)' }))
+    };
+  }
+}
+</script>
+</body>
+</html>

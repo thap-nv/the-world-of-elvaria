@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Elvaria — Điểm quân sau trận</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./elvaria.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Grenze+Gotisch:wght@400;500;600&amp;family=Cinzel:wght@600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#D4A454}a:hover{color:#EEE4CF}
+</style>
+</helmet>
+<div class="elv" data-theme="{{theme}}" style="width: 1440px; height: 900px; position: relative; overflow: hidden">
+  <div style="position: absolute; inset: 0">
+    <dc-import name="Hud" theme="{{theme}}" scene="default" dock-bottom="{{ after }}" hint-size="1440px,900px"></dc-import>
+  </div>
+
+  <!-- Trong trận: bộ đếm, không che chiến trường -->
+  <sc-if value="{{inBattle}}" hint-placeholder-val="{{ false }}">
+    <div class="elv-hud elv-hud-box" style="left: 50%; transform: translateX(-50%); top: 64px; padding: 8px 14px; display: flex; align-items: center; gap: 14px">
+      <svg class="elv-ic elv-ic--20" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-accent)"><path d="M3 3l10 10 M13 3L3 13 M3 3h2.5 M3 3v2.5 M13 3h-2.5 M13 3v2.5"></path></svg>
+      <span class="elv-h3">Trận: triage 80 issue</span>
+      <span class="elv-topbar__sep"></span>
+      <span class="elv-small"><b class="elv-num" style="color: var(--elv-q-working)">6</b> còn</span>
+      <span class="elv-small"><b class="elv-num" style="color: var(--elv-q-done)">8</b> xác quái</span>
+      <span class="elv-small"><b class="elv-num" style="color: var(--elv-q-open)">2</b> gục</span>
+      <span class="elv-small"><b class="elv-num" style="color: var(--elv-h-warn)">3</b> bị thương</span>
+      <span class="elv-topbar__sep"></span>
+      <span class="elv-small elv-muted elv-num">00:41:12 · 16 đơn vị × 5 issue · 2 Hiệp sĩ, 1 Elf</span>
+      <button class="elv-btn elv-btn--sm elv-btn--ghost">Dừng trận</button>
+    </div>
+    <div class="elv-hud elv-hud-box" style="left: 50%; transform: translateX(-50%); bottom: 88px; padding: 6px 12px">
+      <span class="elv-small elv-muted">Chiến trường ở giữa: 1 sprite = 1 nhóm 5 issue; tối đa 40 sprite; đám đông xa là texture lặp.</span>
+    </div>
+  </sc-if>
+
+  <!-- Sau trận: bốn cột -->
+  <sc-if value="{{after}}" hint-placeholder-val="{{ true }}">
+    <div class="elv-panel elv-dock elv-dock--bottom elv-dock--full">
+      <div class="elv-panel__head" style="min-height: 40px; padding: 6px 16px">
+        <svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-accent)"><path d="M3 3l10 10 M13 3L3 13 M3 3h2.5 M3 3v2.5 M13 3h-2.5 M13 3v2.5"></path></svg>
+        <span class="elv-h3">Điểm quân sau trận · Triage 80 issue</span>
+        <span class="elv-small elv-muted">· 1h 12m · 16 đơn vị · Trọng tài Sable chấm từng đơn vị</span>
+        <span class="elv-grow"></span>
+        <span class="elv-row" style="gap: 4px">
+          <button class="elv-btn elv-btn--sm"><svg class="elv-ic elv-ic--12" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 3l9 5-9 5z"></path></svg>Xem lại</button>
+          <button class="elv-btn elv-btn--sm elv-btn--ghost">1×</button>
+          <button class="elv-btn elv-btn--sm elv-btn--ghost elv-btn--on" style="background: var(--elv-surface-3)">5×</button>
+          <button class="elv-btn elv-btn--sm elv-btn--ghost">20×</button>
+        </span>
+        <span class="elv-topbar__sep"></span>
+        <button class="elv-btn elv-btn--sm elv-btn--primary">Ghi báo cáo trận</button>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); min-height: 0; flex: 1">
+        <sc-for list="{{cols}}" as="col" hint-placeholder-count="4">
+          <div style="padding: 8px 14px; border-right: 1px solid var(--elv-border); display: flex; flex-direction: column; gap: 5px; overflow: auto">
+            <span class="elv-row" style="gap: 8px"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true" style="color: {{col.color}}"><path d="{{col.path}}"></path></svg><span class="elv-label" style="color: {{col.color}}">{{col.name}}</span><span class="elv-h3 elv-num" style="font-family: var(--elv-font-body); margin-left: auto">{{col.count}}</span></span>
+            <span class="elv-micro elv-dim">{{col.sub}}</span>
+            <sc-for list="{{col.items}}" as="it" hint-placeholder-count="3">
+              <div class="elv-row elv-small" style="gap: 8px; padding: 4px 8px; border: 1px solid var(--elv-border); border-radius: 4px"><span class="elv-mono elv-dim" style="font-size: 10px">{{it.id}}</span><span class="elv-grow elv-ellipsis">{{it.title}}</span><span class="elv-muted elv-micro">{{it.meta}}</span></div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["night","day"],"default":"night","section":"Chế độ"},"variant":{"editor":"enum","options":["after","inBattle"],"default":"after","section":"Trạng thái"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const v = this.props.variant ?? 'after';
+    return {
+      theme: this.props.theme ?? 'night',
+      after: v === 'after', inBattle: v === 'inBattle',
+      cols: [
+        { name: 'Xác quái · xong', color: 'var(--elv-q-done)', count: 61, sub: 'issue đã triage, có nhãn + hạng', path: 'M8 2a6 6 0 1 1 0 12a6 6 0 1 1 0-12 M5 8.2l2 2 4-4.5',
+          items: [{ id: '#812', title: 'Lỗi làm tròn ở hóa đơn VAT', meta: 'Trừ tà · C' }, { id: '#809', title: 'Trang kho tải chậm > 3 s', meta: 'Gia cố · D' }, { id: '#801', title: 'Nút xuất CSV không bấm được', meta: 'Trừ tà · E' }, { id: '+58', title: 'xem báo cáo trận', meta: '' }] },
+        { name: 'Bia mộ · chưa xong', color: 'var(--elv-q-open)', count: 9, sub: 'đơn vị gục, tồn tại tới khi quest tương ứng xong', path: 'M4 14V6a4 4 0 0 1 8 0v8 M3 14h10 M8 7v4 M6.5 8.5h3',
+          items: [{ id: '#790', title: 'Đồng bộ kho chạy 2 lần (race)', meta: 'quá 45 phút' }, { id: '#776', title: 'Import 10k dòng hết bộ nhớ', meta: 'cần Người lùn' }, { id: '#754', title: 'Issue cũ 2021 không tái hiện', meta: 'thiếu thông tin' }] },
+        { name: 'Thương binh · chờ người', color: 'var(--elv-h-warn)', count: 6, sub: 'cần quyết định của ngài hoặc nghề khác', path: 'M3 13.5L8 3l5 10.5z M8 7v4 M6 9h4',
+          items: [{ id: '#805', title: 'Đổi tên trường API — breaking?', meta: 'cần dấu' }, { id: '#798', title: 'Yêu cầu từ khách VIP, ngoài phạm vi', meta: 'Sứ thần' }, { id: '#781', title: 'Tranh cãi mức ưu tiên P1/P2', meta: 'Nghị hội' }] },
+        { name: 'Đổ nát · nợ tạo ra', color: 'var(--elv-q-infirmary)', count: 4, sub: 'quest Gia cố tự sinh', path: 'M2 14h12 M3 14V8l3-2v8 M9 14V5l4-2v11 M6 9h3',
+          items: [{ id: 'q_0151', title: 'Gia cố: gộp 3 helper tiền tệ trùng', meta: 'open · D' }, { id: 'q_0152', title: 'Gia cố: test cho import lớn', meta: 'open · C' }, { id: 'q_0153', title: 'Soạn thảo: quy ước nhãn issue', meta: 'open · E' }] }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

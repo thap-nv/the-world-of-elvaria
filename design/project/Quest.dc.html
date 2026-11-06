@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Elvaria — Thẻ quest chi tiết</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./elvaria.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Grenze+Gotisch:wght@400;500;600&amp;family=Cinzel:wght@600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#D4A454}a:hover{color:#EEE4CF}
+</style>
+</helmet>
+<div class="elv" data-theme="{{theme}}" style="width: {{w}}px; height: {{h}}px; position: relative; overflow: hidden; --elv-dock-right-w: {{dockW}}px">
+  <div style="position: absolute; inset: 0">
+    <dc-import name="Hud" theme="{{theme}}" scene="{{hudScene}}" w="{{w}}" h="{{h}}" dock-w="{{dockW}}" dock-right="{{ true }}" dock-bottom="{{ true }}" hint-size="1440px,900px"></dc-import>
+  </div>
+
+  <!-- Dock phải: thẻ quest (luôn 380; dock đôi ở màn rộng đặt bảng thứ hai bên trái nó) -->
+  <div class="elv-panel elv-dock elv-dock--right" style="width: 380px">
+    <div class="elv-panel__head" style="align-items: flex-start; padding-top: 12px">
+      <a class="elv-btn elv-btn--ghost elv-btn--sm elv-btn--icon" href="Guild.dc.html" aria-label="Về Hội quán" style="margin-top: 2px"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3L5 8l5 5"></path></svg></a>
+      <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px">
+        <span class="elv-row elv-micro elv-muted" style="gap: 6px"><svg class="elv-ic elv-ic--12" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 7.5a2.5 2.5 0 0 1 5 0v3a2.5 2.5 0 0 1-5 0z M8 7.5v5.5 M3 9h2.5 M10.5 9H13 M4 12.5l1.5-1.5 M12 12.5l-1.5-1.5 M4 5.5l1.5 1.5 M12 5.5l-1.5 1.5 M6.5 5a1.5 1.5 0 0 1 3 0"></path></svg>Trừ tà · q_0142 · nghi thức Săn và đặt bẫy</span>
+        <span class="elv-h2 elv-name elv-name--2" style="max-width: none">Sửa lỗi đăng nhập trả 500 khi token hết hạn</span>
+      </div>
+      <span class="elv-rank elv-rank--lg" data-rank="C" style="margin: 2px 6px 0 0">C</span>
+    </div>
+
+    <div class="elv-panel__body" style="display: flex; flex-direction: column; gap: 0; padding: 0 16px">
+      <div class="elv-section elv-row" style="gap: 10px; flex-wrap: wrap">
+        <button class="elv-select" data-status="{{status}}"><span class="elv-dot"></span>{{statusLabel}}<svg class="elv-ic elv-ic--12" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"></path></svg></button>
+        <span class="elv-small elv-muted elv-num">lần <b style="color: var(--elv-ink)">2</b>/3 · 42 phút · 1.9k / ~2.1k mana</span>
+      </div>
+      <sc-if value="{{paused}}" hint-placeholder-val="{{ false }}">
+        <div class="elv-section elv-row" style="gap: 8px; color: var(--elv-q-sleep)">
+          <svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z"></path></svg>
+          <span class="elv-small">Tạm dừng vì tộc hết mana lúc 11:47. Giữ nguyên Thorn, không giao lại. Journal đã có thư bàn giao ở mốc 11:46.</span>
+        </div>
+      </sc-if>
+      <sc-if value="{{resumed}}" hint-placeholder-val="{{ false }}">
+        <div class="elv-section elv-row" style="gap: 8px; color: var(--elv-q-done)">
+          <svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2a6 6 0 1 1 0 12a6 6 0 1 1 0-12 M5 8.2l2 2 4-4.5"></path></svg>
+          <span class="elv-small">Thorn tỉnh lúc 14:02, đọc journal, làm tiếp từ mốc "đang viết regression test". Không mất việc.</span>
+        </div>
+      </sc-if>
+      <div class="elv-section">
+        <dl class="elv-kv">
+          <dt>Lãnh thổ</dt><dd><a class="elv-link elv-name" href="Territory.dc.html">shop-api</a> · Công trường</dd>
+          <dt>Người làm</dt><dd class="elv-row" style="gap: 6px; overflow: visible"><span class="elv-avatar elv-avatar--sm" data-tier="2" style="--rep: 85"><span class="elv-avatar__ring"></span><span class="elv-avatar__frame"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 13V7a4 4 0 0 1 8 0v6z M4 9h8 M8 9v4"></path></svg></span></span><a class="elv-link" href="Character.dc.html">Thorn</a> <span class="elv-muted">· Hiệp sĩ 5 · Sao Bạc</span></dd>
+          <dt>Nghiệm thu</dt><dd class="elv-row" style="gap: 6px; overflow: visible"><span class="elv-crest elv-crest--fire" style="width: 16px; height: 16px; flex-basis: 16px"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true" style="width: 10px; height: 10px"><path d="M8 2c1 2.5 4 4 4 7.5a4 4 0 0 1-8 0c0-1.5.5-2.5 1.5-3.5.3 1 .8 1.5 1.5 2C7.5 6 7.5 4 8 2z"></path></svg></span>Ragnar <span class="elv-muted">· Thợ cả · Lửa Đỏ · phiên mới</span></dd>
+          <dt>Chiến dịch</dt><dd><a class="elv-link" href="WarRoom.dc.html">Phát hành 2.4</a> · mặt trận Ổn định</dd>
+          <dt>Đất riêng</dt><dd class="elv-mono">worktree quest/q_0142</dd>
+          <dt>Cầu dao</dt><dd class="elv-num">45 phút · 3 lần · 4.2k mana</dd>
+          <dt>Dấu vua</dt><dd>Cần — hợp nhất vào main</dd>
+        </dl>
+      </div>
+      <div class="elv-section" style="display: flex; flex-direction: column; gap: 6px">
+        <span class="elv-label">Mô tả</span>
+        <span class="elv-small" style="line-height: 1.5">Khi access token hết hạn, <span class="elv-mono">POST /login</span> trả 500 thay vì 401. Bắt <span class="elv-mono">TokenExpired</span>, trả 401 kèm mã lỗi, thêm regression test; chạy toàn bộ test cũ. Đặt bẫy: test chạy lại sau một đêm.</span>
+      </div>
+      <div class="elv-section" style="display: flex; flex-direction: column; gap: 8px">
+        <span class="elv-row" style="justify-content: space-between"><span class="elv-label">Verdict lần {{verdictN}}</span><span class="elv-status" data-status="{{verdictStatus}}"><span class="elv-dot"></span>{{verdictLabel}}</span></span>
+        <div class="elv-check-item elv-check-item--ok"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2a6 6 0 1 1 0 12a6 6 0 1 1 0-12 M5 8.2l2 2 4-4.5"></path></svg><span><b>test</b> · 212 đạt · 38 s</span></div>
+        <div class="elv-check-item elv-check-item--ok"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2a6 6 0 1 1 0 12a6 6 0 1 1 0-12 M5 8.2l2 2 4-4.5"></path></svg><span><b>lint · type-check</b> · sạch</span></div>
+        <sc-if value="{{sealed}}" hint-placeholder-val="{{ false }}">
+          <div class="elv-check-item elv-check-item--ok"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2a6 6 0 1 1 0 12a6 6 0 1 1 0-12 M5 8.2l2 2 4-4.5"></path></svg><span><b>regression mới</b> · token_expired_returns_401 · đạt</span></div>
+          <div class="elv-check-item elv-check-item--ok"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2a6 6 0 1 1 0 12a6 6 0 1 1 0-12 M5 8.2l2 2 4-4.5"></path></svg><span><b>bẫy qua đêm</b> · chạy lại 03:00 · đạt</span></div>
+          <span class="elv-small" style="padding: 6px 8px; border-left: 2px solid var(--elv-q-done); color: var(--elv-ink-2)">Ragnar: "Bắt đúng ngoại lệ, test tái hiện lỗi cũ. Khám công trình: chất tải 200 req/s không nứt. Đạt."</span>
+        </sc-if>
+        <sc-if value="{{notSealed}}" hint-placeholder-val="{{ true }}">
+          <div class="elv-check-item elv-check-item--fail"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2a6 6 0 1 1 0 12a6 6 0 1 1 0-12 M5.5 5.5l5 5 M10.5 5.5l-5 5"></path></svg><span><b>regression mới</b> · thiếu — không có test tái hiện lỗi</span></div>
+          <span class="elv-small" style="padding: 6px 8px; border-left: 2px solid var(--elv-q-returned); color: var(--elv-ink-2)">Ragnar: "Sửa đúng chỗ nhưng chưa đặt bẫy: cần test gọi /login với token hết hạn và chờ 401. Trả về."</span>
+        </sc-if>
+      </div>
+      <div class="elv-section" style="display: flex; flex-direction: column; gap: 6px">
+        <span class="elv-label">Giao hàng</span>
+        <a class="elv-link elv-row elv-small" href="#" style="gap: 6px"><svg class="elv-ic elv-ic--12" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.5 9.5l3-3 M7 11l-1.5 1.5a2.5 2.5 0 0 1-3.5-3.5L3.5 7.5 M9 5l1.5-1.5a2.5 2.5 0 0 1 3.5 3.5L12.5 8.5"></path></svg>PR #418 · quest/q_0142 → main · 3 commit · +41 −6</a>
+      </div>
+    </div>
+
+    <sc-if value="{{sealed}}" hint-placeholder-val="{{ false }}">
+      <div class="elv-panel__foot" style="flex-direction: column; align-items: stretch; gap: 8px">
+        <input class="elv-input" placeholder="Ghi chú (bắt buộc khi trả về)">
+        <div class="elv-btnrow elv-btnrow--split">
+          <button class="elv-btn elv-btn--return"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M12.5 5H6a3 3 0 0 0 0 6h3 M8.5 2.5L6 5l2.5 2.5"></path></svg>Trả về</button>
+          <button class="elv-btn elv-btn--seal"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.5 3.5a1.5 1.5 0 0 1 3 0v4h2.5a1.5 1.5 0 0 1 1.5 1.5V11H2.5V9a1.5 1.5 0 0 1 1.5-1.5h2.5z M3.5 13.5h9"></path></svg>Đóng dấu hợp nhất</button>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{notSealed}}" hint-placeholder-val="{{ true }}">
+      <div class="elv-panel__foot elv-btnrow--split">
+        <span class="elv-row" style="gap: 6px">
+          <button class="elv-btn elv-btn--summon"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3h12v10H2z M4.5 6l2 2-2 2 M8 10h3"></path></svg>Triệu hồi</button>
+          <button class="elv-btn"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 5.5h9l-2.5-2.5 M14 10.5H5l2.5 2.5"></path></svg>Giao lại</button>
+        </span>
+        <button class="elv-btn elv-btn--ghost elv-btn--icon" aria-label="Thêm: lưu trữ, đổi hạng"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 8h.01 M8 8h.01 M12 8h.01"></path></svg></button>
+      </div>
+    </sc-if>
+  </div>
+
+  <!-- Dock dưới: journal -->
+  <div class="elv-panel elv-dock elv-dock--bottom">
+    <div class="elv-panel__head" style="min-height: 40px; padding: 6px 16px">
+      <div class="elv-tabs" style="border: 0">
+        <button class="elv-tab elv-tab--on" style="height: 28px">Journal</button>
+        <button class="elv-tab" style="height: 28px">Lần thử<span class="elv-tab__count">2</span></button>
+        <button class="elv-tab" style="height: 28px">Sự kiện<span class="elv-tab__count">63</span></button>
+        <button class="elv-tab" style="height: 28px">Diff</button>
+      </div>
+      <span class="elv-grow"></span>
+      <span class="elv-small elv-muted">quests/q_0142/journal.md · nguồn sự thật, không phải trí nhớ phiên</span>
+      <button class="elv-btn elv-btn--ghost elv-btn--sm elv-btn--icon" aria-label="Thu gọn"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 10l4-4 4 4"></path></svg></button>
+    </div>
+    <div style="display: grid; grid-template-columns: 300px 1fr; min-height: 0; flex: 1">
+      <div style="border-right: 1px solid var(--elv-border); padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; overflow: auto">
+        <span class="elv-label">Các lần thử</span>
+        <div class="elv-row elv-small" data-status="returned" style="gap: 8px; padding: 6px 8px; border: 1px solid var(--elv-border); border-radius: 4px"><span class="elv-dot"></span><span class="elv-grow">Lần 1 · 09:02 → 09:40 · 38 phút</span><span class="elv-muted">trả về</span></div>
+        <div class="elv-row elv-small" data-status="{{attempt2Status}}" style="gap: 8px; padding: 6px 8px; border: 1px solid var(--elv-accent); border-radius: 4px"><span class="elv-dot"></span><span class="elv-grow">Lần 2 · 09:48 → {{attempt2End}}</span><span class="elv-muted">{{attempt2Label}}</span></div>
+        <span class="elv-small elv-dim">Nghiệm thu dở dang ghi "đã kiểm tới đâu"; người sau đọc tiếp.</span>
+      </div>
+      <div class="elv-timeline" style="padding: 8px 16px 8px 30px; overflow: auto">
+        <div class="elv-log"><span class="elv-log__time">09:48</span><svg class="elv-ic elv-log__ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.5h7l3 3v8H3z M10 2.5v3h3 M5.5 8h5 M5.5 10.5h3"></path></svg><span class="elv-log__text">Đọc ghi chú trả bài của Ragnar; đọc <em>tests/auth/login.test.ts</em></span></div>
+        <div class="elv-log"><span class="elv-log__time">09:53</span><svg class="elv-ic elv-log__ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13l6.5-6.5 M13 3c-1 0-4 .5-5.5 2S5.5 9 5.5 9 9 10 11 8 13 3 13 3z"></path></svg><span class="elv-log__text">Thêm test <em>token_expired_returns_401</em>: tạo token exp = now − 1, gọi /login, chờ 401 + mã TOKEN_EXPIRED</span></div>
+        <div class="elv-log"><span class="elv-log__time">10:04</span><svg class="elv-ic elv-log__ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3h12v10H2z M4.5 6l2 2-2 2 M8 10h3"></path></svg><span class="elv-log__text">Chạy <em>npm test -- auth</em> — 1 lỗi (test mới đỏ như mong đợi), sửa <em>login.ts</em> rồi chạy lại: 213 đạt</span></div>
+        <div class="elv-log elv-log--mark"><span class="elv-log__time">10:21</span><svg class="elv-ic elv-log__ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-accent)"><path d="M8 2l1.5 4.5L14 8l-4.5 1.5L8 14l-1.5-4.5L2 8l4.5-1.5z"></path></svg><span class="elv-log__text">Mốc: {{markText}}</span></div>
+        <sc-if value="{{paused}}" hint-placeholder-val="{{ false }}">
+          <div class="elv-log"><span class="elv-log__time">11:46</span><svg class="elv-ic elv-log__ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-q-sleep)"><path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z"></path></svg><span class="elv-log__text">Thư bàn giao: đã sửa login.ts và test mới đạt; còn chạy toàn bộ test cũ và cập nhật CHANGELOG. Tộc hết mana → ngủ.</span></div>
+        </sc-if>
+        <sc-if value="{{resumed}}" hint-placeholder-val="{{ false }}">
+          <div class="elv-log"><span class="elv-log__time">14:02</span><svg class="elv-ic elv-log__ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-q-done)"><path d="M8 2a6 6 0 1 1 0 12a6 6 0 1 1 0-12 M5 8.2l2 2 4-4.5"></path></svg><span class="elv-log__text">Tỉnh dậy (mana.restored). Đọc thư bàn giao 11:46; tiếp tục: chạy toàn bộ test cũ</span></div>
+        </sc-if>
+        <sc-if value="{{sealed}}" hint-placeholder-val="{{ false }}">
+          <div class="elv-log"><span class="elv-log__time">10:40</span><svg class="elv-ic elv-log__ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-q-review)"><path d="M1.5 8c2-3.5 4-5 6.5-5s4.5 1.5 6.5 5c-2 3.5-4 5-6.5 5S3.5 11.5 1.5 8z M8 6a2 2 0 1 1 0 4a2 2 0 1 1 0-4"></path></svg><span class="elv-log__text">Ragnar (Thợ cả, Lửa Đỏ) khám công trình: chất tải, kiểm tra bẫy · verdict pass 11:05</span></div>
+          <div class="elv-log"><span class="elv-log__time">03:00</span><svg class="elv-ic elv-log__ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-q-done)"><path d="M8 2a6 6 0 1 1 0 12a6 6 0 1 1 0-12 M5 8.2l2 2 4-4.5"></path></svg><span class="elv-log__text">Bẫy qua đêm chạy lại: đạt → awaiting_seal, chuông</span></div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["night","day"],"default":"night","section":"Chế độ"},"variant":{"editor":"enum","options":["working","paused","resumed","seal"],"default":"working","section":"Trạng thái"},"dockW":{"editor":"int","default":380,"min":380,"max":760,"step":380,"section":"Dock"},"w":{"editor":"int","default":1440,"min":1280,"max":3840,"step":10,"section":"Khung"},"h":{"editor":"int","default":900,"min":720,"max":2400,"step":10,"section":"Khung"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const v = this.props.variant ?? 'working';
+    const sealed = v === 'seal';
+    const paused = v === 'paused';
+    const resumed = v === 'resumed';
+    return {
+      theme: this.props.theme ?? 'night', w: Number(this.props.w) || 1440, h: Number(this.props.h) || 900, dockW: Number(this.props.dockW) || 380,
+      hudScene: paused ? 'sleeping' : (resumed ? 'awake' : 'default'),
+      status: sealed ? 'seal' : (paused ? 'sleep' : 'working'),
+      statusLabel: sealed ? 'awaiting_seal' : (paused ? 'paused_mana' : 'working'),
+      paused, resumed, sealed, notSealed: !sealed,
+      verdictN: sealed ? 2 : 1,
+      verdictStatus: sealed ? 'done' : 'returned',
+      verdictLabel: sealed ? 'pass · Ragnar' : 'fail · Ragnar',
+      attempt2Status: sealed ? 'done' : (paused ? 'sleep' : 'working'),
+      attempt2End: sealed ? '10:21 · 33 phút' : 'đang chạy',
+      attempt2Label: sealed ? 'đạt' : (paused ? 'tạm dừng' : 'làm'),
+      markText: sealed ? 'nộp bài lần 2, chờ nghiệm thu' : 'đang viết regression test, còn CHANGELOG'
+    };
+  }
+}
+</script>
+</body>
+</html>

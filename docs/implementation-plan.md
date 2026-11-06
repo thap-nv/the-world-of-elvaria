@@ -1,0 +1,1082 @@
+# Kế hoạch triển khai Elvaria
+
+Ngày: 2026-11-06 · Trạng thái: **đã duyệt**, tài liệu sống: mỗi task xong thì đánh dấu ở §8; khi thực tế khác kế hoạch, sửa kế hoạch trong cùng commit.
+
+Tài liệu này nói **cách dựng**. **Dựng cái gì** nằm ở [kế hoạch sản phẩm 0.6](ke-hoach-dung-elvaria-0.6.md), mục 2 (13 nguyên tắc) là bất biến. Giao diện nằm ở [brief thiết kế](brief-thiet-ke-giao-dien-elvaria.md) và bàn giao thiết kế v0.2 ([design/DESIGN-HANDOFF.md](../design/DESIGN-HANDOFF.md)).
+
+Tài liệu đi kèm:
+
+| Tài liệu | Nội dung |
+|---|---|
+| [reference/cli-facts-2026-11-06.md](reference/cli-facts-2026-11-06.md) | Dữ kiện đã kiểm tra về Claude Code 2.1.318, Antigravity CLI 1.5.1, Gemini CLI 0.67.0, điều khoản, máy phát triển |
+| [schemas/](schemas/) | 17 JSON Schema v1 (hợp đồng dữ liệu, §2.3) |
+| [adr/](adr/) | 21 ADR (§5.2) |
+| [glossary.md](glossary.md) | Bảng thuật ngữ VI ↔ EN ↔ id (§4.1, §5.3) |
+| [../CLAUDE.md](../CLAUDE.md) | Luật repo cho agent (§5.1) |
+
+Mục tiêu: một repo TypeScript mà một phiên Claude Code làm được từng task một; lõi test được không cần CLI hay trình duyệt; các quyết định kiến trúc ở giai đoạn 0–1 không chặn giai đoạn 2–5.
+
+Bối cảnh khi lập kế hoạch:
+
+- Lãnh thổ đầu tiên: `D:\Dummy\Tool - DC1\dc1-se-team` (pnpm 10.34.9, Node 24, ESLint 9 strictTypeChecked, Prettier 110 cột, vitest, husky, CI 4 job). Repo này đã có `.claude/settings.json` với 3 hook Node và `.claude/rules/{api,web,content}.md`. Khi runner mở phiên trong worktree của repo đó, các hook này **vẫn chạy**: đó là luật riêng của lãnh thổ, Elvaria cộng thêm, không ghi đè.
+- Máy phát triển, phiên bản CLI và những gì chưa xác minh: [cli-facts](reference/cli-facts-2026-11-06.md) §0.
+- Thiết kế giao diện v0.2 đã có trong `design/`: `elvaria.css` (token `--elv-*`, class `.elv-*`, hai chế độ `data-theme="night|day"`), `Icons.dc.html`, `Components.dc.html`, 10 màn desktop, 4 màn điện thoại 390 px, 15 màn trạng thái, 6 luồng. Hệ quả: §1.1 (`ui-kit`, `ui`), §2.7, §7, §8 giai đoạn 2–5, §9.1 mục 18–19, ADR 0019.
+
+---
+
+## 1. Cấu trúc repo và ranh giới module
+
+### 1.1 Monorepo pnpm, ESM, một app composition root
+
+Monorepo pnpm workspaces, giống dc1-se-team nên tooling đã quen. Mỗi package là một ranh giới kiến trúc thật (package.json riêng, chỉ import được cái đã khai trong `dependencies`), không chỉ là thư mục. ESM thuần (`"type": "module"`), Node ≥ 24, package nội bộ không có build step khi dev (chạy bằng `tsx`), build `tsc` khi đóng gói CLI. (ADR 0001)
+
+```
+elvaria/
+  package.json                 # scripts gốc (P0-01): check, check:fast, lint, format, format:check, typecheck, test,
+                               #   boundaries, schemas, docs:gen, docs:check, i18n:check, elvaria
+  pnpm-workspace.yaml
+  CLAUDE.md                    # luật repo (§5.1)
+  docs/                        # implementation-plan, reference/, adr/, glossary, schemas/ (sinh ra từ P0-03), guides/, spikes/
+  scripts/                     # gen-schemas.mjs, gen-icons.mjs, icon-names.json, docs-gen.mjs, docs-check.mjs, not-yet.mjs
+  packages/
+    config/                    # @elvaria/config — tsconfig/eslint/prettier preset, boundaries.mjs (bảng phụ thuộc)
+    domain/                    # @elvaria/domain — lõi thuần, KHÔNG IO
+    eventlog/                  # @elvaria/eventlog — JSONL append/tail/redact (tầng sự kiện)
+    store/                     # @elvaria/store — đọc/ghi thư mục kingdom, lock, atomic write, migrate
+    registry-default/          # @elvaria/registry-default — kinds/classes/rituals/scripts/tags.json mặc định + scripts/*.mjs + prompts/*.md
+    runner-core/               # @elvaria/runner-core — interface AgentRunner, prompt builder, plot, checks, treasury, chuẩn hóa sự kiện
+    runner-claude/             # @elvaria/runner-claude — adapter Claude Code CLI
+    runner-antigravity/        # @elvaria/runner-antigravity — adapter Antigravity CLI (agy), mặc định cho tộc Gemini
+    runner-gemini/             # @elvaria/runner-gemini — adapter Gemini CLI + API key (đường lui)
+    runner-codex/              # @elvaria/runner-codex — adapter Codex CLI (tùy chọn, P1-12d, khi người dùng có tài khoản)
+    hooks/                     # @elvaria/hooks — một script hook nhỏ, nhanh, các CLI gọi vào
+    steward/                   # @elvaria/steward — Quản sự: dispatcher, cầu dao, mana, lịch, bậc script
+    chancellor/                # @elvaria/chancellor — Tể tướng: câu lệnh → quest draft
+    sandbox/                   # @elvaria/sandbox — sinh ngày giả, replay
+    herald/                    # @elvaria/herald — Sứ giả: HTTP + WebSocket, world state, ghi inbox
+    i18n/                      # @elvaria/i18n — chuỗi VI/EN cho CLI và UI, glossary.json
+    ui-kit/                    # @elvaria/ui-kit — elvaria.css, icons.ts, tokens.ts, fonts/ — nhập một lần từ design/, sau đó là nguồn; KHÔNG framework
+    ui/                        # @elvaria/ui — thành phần Preact dựng từ Components.dc.html, dùng chung cho world + lite
+  apps/
+    cli/                       # elvaria — composition root: init/territory/quest/character/say/seal/return/run/sandbox/doctor/migrate
+    world/                     # @elvaria/world — Three.js + Vite (giai đoạn 3)
+    lite/                      # @elvaria/lite — khách nhẹ 2D cho điện thoại (giai đoạn 2)
+  themes/
+    fantasy/                   # dữ liệu theme: kind/class/ritual → icon id, danh hiệu, tòa nhà, hoạt hình; assets; LICENSES.md
+  design/                      # bàn giao thiết kế v0.2 — bản gốc đầu tiên, giữ nguyên làm lịch sử, không build
+```
+
+17 package + 3 app (thêm `runner-codex` khi làm P1-12d). Adapter tộc còn có thể là **một file của người dùng** trong kingdom (`adapters/<name>.mjs`, §3.14), không cần package. Thư mục **kingdom** (trạng thái của người dùng) **không** nằm trong repo: người dùng chọn khi `elvaria init --kingdom <dir>`, ví dụ `D:\Dummy\Tool - Personal\Kingdom of Agents\kingdom`.
+
+### 1.2 Ba tầng ↔ package
+
+| Tầng (nguyên tắc 1) | Package | Được biết gì |
+|---|---|---|
+| Tầng việc (work engine) | domain, store, registry-default, runner-core, runner-claude, runner-antigravity, runner-gemini, steward, chancellor | Quest, nhân vật, worktree, CLI. Không biết renderer tồn tại. |
+| Tầng sự kiện (event bus) | eventlog, hooks | Chỉ biết schema Event. Không biết máy trạng thái quest, không biết renderer. |
+| Tầng thế giới (renderer) | herald, world, lite, ui, ui-kit, themes | Chỉ đọc event log + snapshot; muốn tác động thì **ghi lệnh vào inbox** (file), không gọi tầng việc. |
+
+### 1.3 Luật phụ thuộc (DAG)
+
+```
+config              ← (dev-only, mọi package)
+domain              ← ∅                                  (chỉ zod; không node:*; clock/random tiêm vào)
+eventlog            ← domain
+store               ← domain, eventlog
+registry-default    ← domain                             (dữ liệu + validate bằng schema của domain)
+runner-core         ← domain, store, eventlog
+runner-claude       ← runner-core
+runner-antigravity  ← runner-core
+runner-gemini       ← runner-core
+runner-codex        ← runner-core                        (tùy chọn)
+hooks               ← eventlog                           (KHÔNG store, KHÔNG runner — phải khởi động < 100 ms)
+steward             ← domain, store, eventlog, runner-core (chỉ interface AgentRunner; runner cụ thể tiêm từ cli)
+chancellor          ← domain, runner-core
+sandbox             ← domain, eventlog, store
+herald              ← domain, store, eventlog, sandbox    (KHÔNG steward, KHÔNG runner-*)
+i18n                ← ∅
+ui-kit              ← ∅                                  (CSS + icon + token; nhập từ design/ một lần, không import gì)
+ui                  ← domain (types), i18n, ui-kit       (Preact; không store/eventlog/IO)
+cli                 ← tất cả trừ ui-kit, ui, world, lite  (composition root duy nhất)
+world               ← domain (types + protocol), i18n, ui-kit, ui   (KHÔNG store/eventlog: chỉ nói chuyện qua WebSocket)
+lite                ← domain (types + protocol), i18n, ui-kit, ui
+```
+
+Vì sao từng cạnh:
+
+- `domain` không có IO nên test bằng vitest thuần và chạy được trong trình duyệt (world import types từ đây). Clock và random tiêm vào (`Clock`, `IdSource`) để máy trạng thái và việc chọn người là hàm thuần, test deterministic. (ADR 0002)
+- `eventlog` tách khỏi `store` để tầng sự kiện là một package nhỏ, không kéo theo logic quest; `hooks` chỉ phụ thuộc nó nên mỗi lần CLI gọi hook, Node chỉ nạp vài file.
+- `steward` không import adapter nào: nó chỉ thấy `AgentRunner` và `capabilities` của từng tộc. Thêm tộc = một adapter (package trong repo hoặc file `adapters/<name>.mjs` trong kingdom) + một mục theme + tài khoản người dùng tự đăng nhập; `apps/cli` nạp adapter theo `kingdom.tribes[].adapter`. Lõi không đổi. (ADR 0006, 0021)
+- `herald` không import `steward`: Sứ giả chỉ đọc file và ghi lệnh vào `inbox/`; Quản sự là người duy nhất đổi trạng thái quest (single writer, §3.1). Khác sơ đồ mục 3 của kế hoạch sản phẩm (SG → QB), lý do ở §9.1. (ADR 0005)
+- `world`/`lite` không chạm hệ thống file; chúng chỉ nghe WebSocket, nên "thay toàn bộ hình ảnh mà không đụng logic" là thật: xóa `apps/world`, không có gì vỡ.
+- Thêm **dạng nhiệm vụ** = thêm một mục trong `registry/kinds.json` + `rituals.json` (dữ liệu, có schema) + theme; `domain` xử lý `KindId` là chuỗi đã validate qua registry, không có `switch` theo kind trong lõi. Thêm **theme** = thêm thư mục `themes/<name>/`. (ADR 0016)
+
+### 1.4 Enforce bằng lint (một nguồn, ba lớp)
+
+1. **Nguồn duy nhất**: `packages/config/boundaries.mjs` xuất bảng `{ package: [allowed deps] }` đúng như DAG trên.
+2. **ESLint** (`packages/config/eslint.mjs`, theo mẫu dc1): từ bảng đó sinh `no-restricted-imports` cho từng package. Import một `@elvaria/*` không có trong danh sách là lỗi, kèm thông điệp "X may not import Y; see docs/implementation-plan.md §1.3". Thêm cho `domain`: cấm `node:*`, `fs`, `path`, `child_process`, `process.env`, `Date.now`, `Math.random`, `setTimeout` (`no-restricted-imports` + `no-restricted-globals` + `no-restricted-syntax`). Thêm cho `hooks`: cấm mọi import ngoài `node:fs`, `node:path`, `node:process`, `@elvaria/eventlog`.
+3. **dependency-cruiser** chạy trong `pnpm boundaries` (CI + pre-push): đọc cùng `boundaries.mjs`, kiểm thêm (a) không có vòng, (b) `package.json.dependencies` khớp import thật, (c) không import file sâu `@elvaria/x/src/...` (chỉ qua `exports`). ESLint cho phản hồi tức thì trong editor; depcruise là cổng cuối vì nhìn cả đồ thị.
+4. `tsconfig` project references theo cùng bảng: TypeScript không resolve được package chưa khai báo, thêm một lớp miễn phí.
+
+Test cho luật: `packages/config/boundaries.spec.ts` khẳng định bảng là DAG (không vòng), `domain`, `i18n` và `ui-kit` có 0 phụ thuộc, `herald` không chứa `steward`/`runner-*`.
+
+---
+
+## 2. Dữ liệu và sự kiện
+
+### 2.1 Quy ước chung
+
+- Mọi file JSON có `"version": <int>` ở cấp cao nhất, tăng khi schema đổi không tương thích. Mọi dòng event có `"v": <int>`.
+- **Nguồn schema**: zod v4 trong `packages/domain/src/schema/*.ts` (kiểu TS + validate runtime từ một chỗ). `docs/schemas/*.schema.json` được **sinh** bằng `z.toJSONSchema()` qua `pnpm schemas`; CI chạy `git diff --exit-code docs/schemas` (giống kiểm tra OpenAPI drift của dc1). Bản v1 hiện có trong [schemas/](schemas/) được viết tay ngày 2026-11-06 để duyệt; P0-03 biến chúng thành đầu ra sinh, mọi khác biệt phải có giải thích. (ADR 0003)
+- JSON Schema 2020-12, `$id` = `https://elvaria.dev/schemas/<name>/v1`, `additionalProperties: false`, có `examples`.
+- **ID**: `<prefix>_<yyyymmdd>_<6 ký tự base32 Crockford thường>` — đọc được trong event log và biên niên sử, sắp xếp theo ngày: `q_20261106_7k3m2a` (quest), `c_…` (campaign), `L_…` (bài học). Verdict id = `<quest>-<attempt>`. Nhân vật và lãnh thổ dùng slug do người dùng đặt (`thorn`, `dc1-se-team`). Event id và inbox command id là ULID (sắp theo thời gian, sinh trong `IdSource`).
+- **Thời gian**: ISO 8601 có offset. Không có `Date.now()` trong domain. `kingdom.tz` (tên IANA) cố định múi giờ cho tên file event và replay.
+- **Đường dẫn trong file**: tương đối so với thư mục kingdom, phân cách `/`; chuyển sang `path.join` khi dùng. Ngoại lệ: `territory.path` và `kingdom.paths.treasury` là tuyệt đối (người dùng chỉ), vẫn viết bằng `/`.
+- **Migrate**: `packages/store/src/migrations/<entity>/v<n>-to-v<n+1>.ts`, hàm thuần `(old: unknown) => unknown`, chuỗi hóa tự động theo `version`. Đọc file → migrate tới bản hiện tại → validate zod → dùng. Ghi lại file ở lần ghi kế tiếp; `elvaria migrate` ghi lại tất cả một lần và tạo backup `kingdom/.backup/<ts>/`. **Event log không bao giờ viết lại**: reader nâng cấp từng dòng theo `v` khi đọc; mỗi `v` cũ giữ một hàm migrate mãi mãi. Snapshot world state có `version` và bị bỏ (dựng lại từ log) nếu lệch. Test: mỗi migration có fixture `v<n>.json` + kết quả mong đợi; test "mọi fixture cũ đọc được bằng store hiện tại".
+
+### 2.2 Bố cục thư mục kingdom
+
+```
+<kingdom>/
+  kingdom.json
+  registry/                  # kinds.json, classes.json, rituals.json, scripts.json, tags.json, scripts/*.mjs — chép từ registry-default khi init, người dùng sửa được
+  territories/<id>/territory.json, gazetteer.md
+  quests/<id>.json
+  quests/<id>/handover.md    # thư bàn giao do nhân vật viết (§2.4)
+  quests/<id>/journal.jsonl  # journal máy: event của quest, do hook ghi (không tin trí nhớ agent)
+  quests/<id>/work/          # chỉ cho lãnh thổ không phải git
+  characters/<id>/character.json, scripture.md
+  campaigns/<id>.json
+  verdicts/<quest>-<n>.json
+  events/YYYY-MM-DD.jsonl
+  events/sandbox/            # ngày giả của sa bàn
+  chronicle/YYYY-MM-DD.md
+  temple/scripture.md
+  temple/skills/<id>/SKILL.md # bí kíp (+ file kèm), nạp theo tag; giai đoạn 1 chưa có (§3.13)
+  inbox/<ulid>.json          # lệnh của người dùng (CLI, Sứ giả, điện thoại) chờ Quản sự xử lý; inbox/done/ sau khi áp dụng
+  world/map.json             # giai đoạn 3
+  .runs/<quest>-<n>/         # stdout/stderr thô của CLI (đã che secret), settings.json sinh ra, prompt đã dựng, checks/*.log
+  adapters/<name>.mjs        # adapter tộc do người dùng viết (tùy chọn, §3.14)
+  .state/                    # steward.lock, cursors, mana-<tribe>.json, snapshot world state
+  .backup/
+```
+
+Worktree **không** nằm trong kingdom: ở `<repo>/.elvaria/worktrees/<quest-id>` của từng lãnh thổ (§3.3).
+
+### 2.3 Schema từng loại
+
+Hợp đồng chính xác (kiểu, mẫu id, mặc định, bất biến, ví dụ) nằm trong file schema; bảng dưới tóm tắt và ghi lý do.
+
+| Schema | File dữ liệu |
+|---|---|
+| [kingdom](schemas/kingdom.schema.json) | `kingdom.json` |
+| [territory](schemas/territory.schema.json) | `territories/<id>/territory.json` |
+| [quest](schemas/quest.schema.json) | `quests/<id>.json` |
+| [character](schemas/character.schema.json) | `characters/<id>/character.json` |
+| [campaign](schemas/campaign.schema.json) | `campaigns/<id>.json` |
+| [verdict](schemas/verdict.schema.json) | `verdicts/<quest>-<n>.json` |
+| [lesson](schemas/lesson.schema.json) | một dòng kinh đã parse |
+| [event](schemas/event.schema.json) | một dòng `events/*.jsonl`, `journal.jsonl` |
+| [inbox-command](schemas/inbox-command.schema.json) | `inbox/<ulid>.json` |
+| [kind](schemas/kind.schema.json), [class](schemas/class.schema.json), [ritual](schemas/ritual.schema.json), [script](schemas/script.schema.json), [tag](schemas/tag.schema.json) | `registry/{kinds,classes,rituals,scripts,tags}.json` |
+| [skill](schemas/skill.schema.json) | front matter của `temple/skills/<id>/SKILL.md` |
+| [quest-draft](schemas/quest-draft.schema.json) | structured output của Tể tướng (`--json-schema`) |
+| [world-map](schemas/world-map.schema.json) | `world/map.json` (giai đoạn 3) |
+
+**kingdom** (v1)
+
+| Trường | Kiểu | Ghi chú |
+|---|---|---|
+| version | 1 | |
+| name | string ≤ 24 | tên vương quốc (`.elv-name` 24ch) |
+| created_at | datetime | |
+| tz | tên múi giờ IANA | tên file event theo ngày địa phương, replay nhất quán (§6) |
+| owner | {profession: developer\|ba\|marketing\|researcher\|other, locale: vi\|en} | `locale` quyết định ngôn ngữ của mọi thứ người dùng đọc |
+| paths | {treasury: abs path} | kho bảo vật **ngoài** kingdom |
+| tribes | [{id, adapter, enabled, max_concurrent, tool?: {path, version, default_model?, auth: login\|api_key, terms_acknowledged_at?}, pools?: {<pool>: {enabled}}, budget?: {tokens_5h?, tokens_7d?, usd_week?}}] | mỗi tộc một tài khoản (hợp đồng tộc, §3.14); `init` ghi `claude` (adapter `claude_code`, max 2) và `gemini` (adapter `antigravity`, max 1, pools `gemini_models` bật / `claude_gpt_models` tắt); `doctor` điền `tool` và từ chối `antigravity` khi thiếu `terms_acknowledged_at` (ADR 0018); `auth = api_key` ⇒ bắt buộc `budget.usd_week`; `gemini_cli` ⇒ `auth = api_key` |
+| mana | {cap_pct=98, king_reserve_pct=2, warn_margin_pct=10, probe_interval_minutes=15, reassign_after_hours=null} | ngưỡng nhận việc = min(cap, 100 − reserve), tính **theo pool** của từng tộc; `tribes[].budget` là mẫu số cho nguồn `estimate` (§3.5); `claude_gpt_models` của Antigravity tắt mặc định để tộc Gemini thật sự là họ Gemini |
+| breakers | {attempt_minutes: {low=45, high=120}, high_rank_from='B', max_attempts=3, mana_multiplier=2, same_fail_suspend=3, patrol_weekly_pct=10, max_turns=200, context_budget_tokens=120000, subagent_max_minutes=5, subagent_max_turns=30} | `context_budget_tokens`: trần một quest để Tể tướng chia việc (§3.11); `subagent_max_turns` là cách enforce được, `subagent_max_minutes` chỉ đo (§3.12) |
+| schedule | {chronicle: {enabled, at}, temple: {enabled, every_quests=10, weekly}, patrol: {enabled, every}} | mỗi cái tắt được |
+| dispatch | {tick_seconds=5, fairness='round_robin_territory', verifier_same_family='different_model'\|'machine_only', resume_after_mana=false} | `resume_after_mana`: hồi sinh bằng `--resume` thay vì phiên mới (tắt mặc định theo nguyên tắc 13) |
+| bell | {desktop=true, web_push=false, messaging=null} | ba kênh như màn Cài đặt; `messaging` chọn ở giai đoạn 2 |
+| tunnel | {enabled=false, kind?: tailscale\|cloudflare} | |
+| theme | string = 'fantasy' | |
+| ui | {mode: night\|day, eco: bool} | |
+
+**territory** (v1)
+
+| Trường | Kiểu | Ghi chú |
+|---|---|---|
+| version, id (slug), name ≤ 24, path (abs), kind: code\|docs\|content\|data\|mixed | | |
+| vcs | {type: git\|none, default_branch, remote?} | |
+| worktree_dir | string, mặc định `.elvaria/worktrees` | tương đối so với `path`; mỗi quest một thư mục con `<quest-id>`; thêm vào `.git/info/exclude` khi attach; đổi sang `../<repo>.elvaria/worktrees` nếu spike P1-02 thấy CLAUDE.md của checkout chính bị nạp đôi |
+| max_concurrent | int ≥ 1, mặc định 1 | số quest chạy song song trong lãnh thổ (§3.3, §9.1 mục 10) |
+| context_files | string[] globs, mặc định `["CLAUDE.md","README.md",".claude/rules/*.md"]` | nạp cho tộc Gemini (§3.8) |
+| commands | {setup?, test?, lint?, typecheck?, build?} | `setup` chạy một lần khi dựng lều |
+| checks | [{id, run, when: glob[], exclusive: bool, timeout_minutes, cleanup?}] | bảng "đụng vào gì thì chạy gì" dạng dữ liệu; `exclusive` = không chạy song song (Docker/e2e); `cleanup` dọn sau khi bị kill (§9.2) |
+| laws | {forbidden_paths: glob[], forbidden_commands: regex[], read_before_write: glob[], rank_floor: [{glob, min_rank}]} | chặn ở runner (deny list + hook), không chỉ prompt |
+| secrets_allowed | string[] tên trong kho bảo vật | |
+| buildings | [{id, kind, source, label}] | giai đoạn 4 (khảo sát điền địa) |
+| health | {ci: green\|red\|unknown, open_bugs, last_patrol_at?} | |
+| surveyed_at | datetime? | |
+
+Không có trường `map`: hình học vùng (anchor, bounds) chỉ nằm trong `world/map.json`, LOD do Sứ giả tính lúc chạy. Một nguồn, không lệch.
+
+**quest** (v1)
+
+| Trường | Kiểu | Ghi chú |
+|---|---|---|
+| version, id, title, description | | |
+| kind | KindId (validate theo registry) | 11 dạng mặc định |
+| rank | F\|E\|D\|C\|B\|A\|S | |
+| class_required | ClassId (registry) | nghề được nhận; phải thuộc `kinds[kind].classes_allowed`; bắt buộc khi `tier = session` (thay trường `skills_required` cũ) |
+| tags | TagId[] (registry/tags.json), ≤ 6 | chuyên môn do Tể tướng gán; xếp hạng ứng viên theo `skill_affinity` và chọn bí kíp nạp vào prompt (§3.13) |
+| party_id?, party_role?: contract\|part\|merge, contract? | | thuộc đội nào (`party_id` = id quest hợp đồng), vai trong đội, đường dẫn hợp đồng trong lãnh thổ (§3.13) |
+| territory | slug | |
+| status | xem §2.5 | 12 trạng thái (có `draft`) |
+| tier | script \| session | bậc chạy (nguyên tắc 13); mặc định `session`. Học trò **không** là bậc của quest — nó xảy ra bên trong một phiên |
+| script? | {id, params} | bắt buộc khi `tier = script`; `id` từ `registry/scripts.json`; không gọi model, mana 0 |
+| assignee, verifier | character id \| null | `verifier ≠ assignee` (zod refine); `tier = session` ⇒ có `assignee` khi đang chạy; `tier = script` ⇒ `assignee = null`, actor là steward |
+| campaign_id?, parent_id?, depends_on[] | | `depends_on` chưa xong → `blocked` |
+| budget | {max_minutes, max_tokens, max_attempts} | suy từ `kingdom.breakers` + hạng, người dùng sửa được |
+| estimate | {tokens, minutes} | Tể tướng ước lượng |
+| attempts | int ≥ 0 | |
+| attempt_log | [{n, character, role: assignee\|verifier, started_at, ended_at?, outcome?: submitted\|returned\|timeout\|breaker\|crash\|paused\|blocked\|cancelled, session_id?, tokens?, run_dir}] | `timeout` = cầu dao thời gian; `breaker` = cầu dao token/lượt |
+| plot | {type: worktree\|folder\|none, path?, branch?} | đất riêng |
+| deliverable | {type: branch\|file\|report\|draft\|subquests\|none, path?, branch?, delivered_at?} | theo quy ước của kind |
+| seal_required | bool | |
+| seal? | {at, note?} | |
+| blocked? | {question, asked_at, answer?, answered_at?} | |
+| secrets_required | string[] | phải ⊆ `territory.secrets_allowed` |
+| checks_run | string[] (id) | tính sau khi làm, từ đường dẫn đã chạm |
+| units? | [{id, label, outcome: pending\|done\|not_done\|needs_user\|debt, child_quest?}] | chỉ cho kind `batch` (Trận đánh); sinh bởi script `produces: units` |
+| created_by | chancellor\|user\|council\|patrol\|battle\|campaign | |
+| created_at, updated_at | | |
+
+Không có trường `journal`: đường dẫn là quy ước `quests/<id>/`, trường thừa sẽ lệch.
+
+**character** (v1)
+
+| Trường | Kiểu | Ghi chú |
+|---|---|---|
+| version, id (slug), name ≤ 24 | | |
+| class | ClassId (registry) | |
+| tribe | TribeId (`kingdom.tribes[].id`) | tộc, **cố định suốt đời** như nghề (danh tiếng và kinh gắn với model của tộc đó); tên tộc hiển thị là theme |
+| model | slug đầy đủ của CLI (`claude-sonnet-5-5`, `gemini-4-argon-medium`, `claude-opus-5-5-low`…) | `familyOf(model)` và `poolOf(tribe, model)` là hàm suy ra trong domain, **không lưu** |
+| level | 1–10 | `gear_tier` **không lưu**: `gearTierOf(level)` |
+| reputation | {window: [{verdict_id, result, by_human, at}] ≤ 20} | pass/fail/human_* là hàm suy ra |
+| skill_affinity | {<tag>: {window: [...] ≤ 20}} | danh tiếng theo từng tag, mỗi phán quyết cộng vào cửa sổ của mọi tag của quest; pass/fail là hàm suy ra `affinityOf` |
+| pinned_tag? | TagId \| null | người dùng ghim nhân vật vào một chuyên môn (lệnh `pin_tag`). Danh hiệu **không lưu**: `titleOf(character)` = tag ghim, nếu không thì tag có danh tiếng cao nhất; chuỗi hiển thị lấy từ theme |
+| status | idle\|working\|reviewing\|sleeping_mana\|meditating\|suspended\|swamp | |
+| status_since | datetime | |
+| status_before_sleep? | idle\|working\|reviewing | trạng thái để trở về khi tộc tỉnh (§2.6) |
+| current? | {quest, role: assignee\|verifier} | |
+| vow_no_production | bool | true cho class judge và monk |
+| tools | {allow?: string[], deny?: string[]} | ghi đè mặc định của class |
+| consecutive_fail | {fail_kind?, count} | 3 lần cùng loại → suspended |
+| stats | {quests_done, tokens_today, tokens_day, last_active_at?} | |
+| created_at | | |
+
+**campaign** (v1): version, id, name, mode: offense\|defense, fronts: [{id, name, goal, quest_ids[]}], victory_conditions: [{id, text, check: {type: all_quests_done\|command, run?}, met, checked_at?}], status: declared\|active\|won\|lost\|retro_pending\|closed, declared_at, deadline?, retro_path?, closed_at?. `morale` là hàm suy ra, không lưu.
+
+**verdict** (v1): version, id = `<quest>-<n>`, quest_id, attempt, verifier_id (character id; `user` khi là dấu vua; `machine` khi verdict do Quản sự lập từ kiểm tra máy), ritual (RitualId), checks: [{id, pass, duration_ms, log_path}], result: pass\|fail\|partial, fail_kind?: tests_fail\|scope_creep\|missing_i18n\|wrong_facts\|incomplete\|style\|unsafe\|other (để đếm "cùng loại lỗi"; bắt buộc khi fail), notes (bắt buộc khi fail, cụ thể), progress?: {checked_until} (bắt buộc khi partial, để người nghiệm thu kế đọc tiếp), by_human, session_id?, created_at.
+
+**lesson** (v1) — đối tượng sau khi parse một dòng kinh. Kinh là Markdown người dùng sửa trực tiếp, mỗi bài học một dòng theo văn phạm cố định:
+
+```
+- [L_20261106_a1b2c3] Run `pnpm i18n:check` before submitting any locale change. <!-- verdict=q_20261106_7k3m2a-2 hit=2026-11-06 -->
+```
+
+Trường: version, id, owner (character id \| `temple`), text, source: monk\|user, source_verdict (bắt buộc với bài học do Thầy tu viết; dòng người dùng tự thêm không có id/comment → parser gán id, `source: user`), created_at (ngày, lấy từ id), last_hit_at? (khóa `hit=` trong comment), retired_at? (khóa `retired=`). `elvaria scripture lint` báo dòng sai văn phạm. Lý do: giữ đúng "người dùng sửa Markdown trực tiếp" mà vẫn có trường máy đọc; parser chịu lỗi.
+
+**event** (v1), một dòng JSONL:
+
+```json
+{"v":1,"id":"01JCF8X4Z6Q3W9N2M5R7T8V0YB","ts":"2026-11-06T09:12:03+07:00","type":"agent.tool","actor":{"kind":"character","id":"thorn"},"quest":"q_20261106_7k3m2a","attempt":1,"territory":"dc1-se-team","session":"…","data":{"tool":"write","path":"src/auth/login.ts"}}
+```
+
+`actor.kind`: character\|user\|steward\|chancellor\|herald\|system. `type` là chuỗi `nhóm.hành_động`; `data` có schema riêng theo type (discriminated union trong domain). Danh mục type v1:
+
+- `quest.{drafted, created, claimed, released, started, submitted, returned, verdict, done, sealed, archived, blocked, unblocked, paused, resumed, infirmary, delivered}`
+- `agent.{session.start, session.end, tool, tool.blocked, subagent.start, subagent.end, subagent.overrun, compact, notification}`
+- `verdict.{pass, fail, partial}`
+- `mana.{level, warning, exhausted, restored, probe, signal}`
+- `character.{created, sleep, wake, meditate, suspend, release, swamp, level_up, level_down}`
+- `command.{received, applied, rejected}`
+- `delivery.sent`, `chronicle.written`, `territory.{attached, surveyed, health}`, `sandbox.{replay.start, replay.end}`
+- tiền tố dành sẵn: `campaign.*`, `battle.*`, `incident.*`, `patrol.*`
+
+Type chưa biết → reader giữ nguyên, renderer bỏ qua (forward compatible).
+
+**inbox-command** (v1): version, id (ULID), ts, kind, source: cli\|herald\|lite, payload (theo kind). Kind: `confirm, seal, return, retry, cancel, archive, summon, wake, suspend, release, reassign, send_to_temple, declare_campaign, close_campaign, create_quest, answer, set_rank, attach_territory, edit_quest, pin_tag` — khớp bộ icon hành động `act-*` của thiết kế (seal, return, summon, suspend, reassign, archive, temple, declare). `confirm` (draft → open), `edit_quest` (`elvaria quest edit`, §9.2) và `pin_tag` (ghim chuyên môn, §3.13) cần có vì người dùng chỉ ghi được lệnh, không ghi được quest hay nhân vật (ADR 0005). Draft của Tể tướng cũng đi qua inbox dưới dạng `create_quest` với `draft: true`. Quản sự xử lý theo thứ tự id, idempotent (đã có `command.applied` với id này → bỏ qua).
+
+**registry**: kind ({id, name_vi, name_en, deliverable_type, ritual, checks_default, seal_default, classes_allowed[]}), class ({id, name_vi, name_en, kinds[], is_verifier, is_monk, default_tribe (gợi ý khi triệu hồi), default_model, tools: {allow[], deny[]}, prompt_file}), ritual ({id, name_vi, name_en, steps[], pass_rule: all_checks_and_agent\|checks_only\|agent_only, max_seconds}), script ({id, name_vi, name_en, description, entry (`scripts/<id>.mjs` trong registry/), params_schema (JSON Schema con), kinds[], produces: report\|units\|check, timeout_minutes}), tag ({id, name_vi, name_en, description?}). Mỗi file registry là `{version, <kinds|classes|rituals|scripts|tags>: [...]}`. Tag là từ vựng đóng: Tể tướng chỉ gán tag có trong `tags.json`, để danh tiếng theo tag không vỡ vụn thành `front-end` / `frontend`.
+
+Registry mặc định (P0-02; id xem [glossary](glossary.md)):
+
+- 11 kind: `build, research, fix, refactor, document, publish, analyze, plan, integrate, negotiate, batch`. `campaign` là vật chứa (entity riêng), không phải kind; nó chỉ có icon `kind-campaign`.
+- 11 class: `chancellor, mage, knight, dwarf, scout, scribe, bard, astrologer, envoy, judge, monk` (thiết kế có 12 icon nghề vì `judge` có hai icon theo kind, ADR 0011).
+- 11 ritual, mỗi kind một: build → `build_review`, research → `source_check`, fix → `regression_check`, refactor → `stress_test`, document → `editorial_review`, publish → `audience_review`, analyze → `recompute`, plan → `council_review`, integrate → `stability_check`, negotiate → `sign_off`, batch → `unit_tally`.
+- 5 script: `link-check`, `run-check` (chạy một `checks[].id` của lãnh thổ), `count-files`, `diff-stat`, `compare-numbers`.
+- 7 tag: `frontend, backend, db, infra, i18n, e2e, docs` (danh sách của kế hoạch sản phẩm; người dùng thêm bằng cách sửa `tags.json`).
+
+**skill** (v1) — front matter của `temple/skills/<id>/SKILL.md`: version, id (kebab-case, tên thư mục), title, description (một dòng, thành mô tả của skill theo định dạng CLI), tags[] (≥ 1), scope (`global` \| id lãnh thổ), source: monk\|user, derived_from? (id bài học; bắt buộc khi `source = monk`), max_tokens (mặc định 2000, giá trị khởi điểm), created_at, updated_at?. Đường dẫn là quy ước nên không có trường `path` (như `journal`). Nội dung viết bằng tiếng Anh như prompt nhân vật.
+
+**quest-draft** (v1): {version, drafts: [{ref, title, description, kind, rank, territory, tier, script?, class_required (khi session), tags, party_role?: contract\|part, contract?, depends_on_refs[], parent_ref?, estimate, seal_required, secrets_required, question?}]}; tối đa một draft có `question` (Tể tướng hỏi lại tối đa một câu). Cùng schema này dùng cho output của trưởng đội khi chia phần (`party_role = part`).
+
+**world-map** (v1, giai đoạn 3): {version, generated_at, regions: [{id, territory, anchor, bounds, roads_to[]}]}.
+
+### 2.4 Journal: hai nửa, không tin trí nhớ
+
+Agent tự ghi `journal.md` theo mốc (như kế hoạch sản phẩm mô tả) không tin được: quên ghi hoặc ghi sai là chuyện thường. Vì vậy (ADR 0010):
+
+- `journal.jsonl` do **hook** ghi (event của quest, agent không phải làm gì) — nguồn sự thật của "đã làm gì".
+- `handover.md` do **agent** viết theo mẫu bắt buộc (Đang ở đâu / Đã xong / Chưa xong / Quyết định đã chọn / Bước kế) — nguồn sự thật của "ý định". Prompt yêu cầu cập nhật trước khi nộp và mỗi khi sắp thiền; hook Stop chặn nộp nếu file chưa đổi kể từ lúc bắt đầu (mẫu `stop-checks.mjs` của dc1).
+- Người nghiệm thu đọc diff + `handover.md`, **không** đọc transcript (luật tách vai).
+- Hồi sinh đọc cả hai.
+
+### 2.5 Máy trạng thái quest
+
+Trạng thái: `draft, open, claimed, working, review, returned, awaiting_seal, done, blocked, paused_mana, infirmary, archived`. `draft` là bước xem trước và xác nhận mà brief yêu cầu.
+
+Tác nhân: **U** người dùng (qua inbox), **S** Quản sự, **R** runner/hook (thay mặt nhân vật), **V** người nghiệm thu (qua runner), **M** mana monitor (trong Quản sự).
+
+| Từ | Sự kiện | Ai | Đến | Ghi chú |
+|---|---|---|---|---|
+| draft | confirm | U | open | Tể tướng tạo draft; `elvaria quest add` tạo thẳng open |
+| draft | discard | U | archived | lệnh `archive` |
+| open | claim | S | claimed | có người rảnh đúng nghề, đủ cấp, tộc còn mana, `depends_on` xong |
+| open | block (deps/unanswered) | S | blocked | |
+| open | cancel | U | archived | |
+| claimed | start (runner lên) | S | working | đất riêng xong, phiên mở |
+| claimed | release (spawn lỗi) | S | open | attempts không tăng |
+| working | submit | R | review | có handover.md; mọi thay đổi đã commit vào nhánh |
+| working | ask (cần người) | R | blocked | `blocked.question` |
+| working | mana_out | M | paused_mana | giữ assignee |
+| working | breaker (time/turns/tokens) | S | infirmary | kill tree, event `quest.infirmary` kèm lý do; nhân vật → swamp rồi idle |
+| working | crash, attempts < max | S | returned | outcome=crash, cùng nhân vật thử lại |
+| working | crash, attempts = max | S | infirmary | |
+| working | cancel | U | archived | kill, giữ worktree |
+| paused_mana | mana_restored | M | working | cùng nhân vật, phiên mới từ handover (§3.5) |
+| paused_mana | reassign | U | claimed | người dùng mới được đổi người |
+| blocked | answer / deps done | U/S | working (nếu có assignee) \| open | câu trả lời ghi vào handover.md |
+| review | verdict pass, !seal_required | V | done | |
+| review | verdict pass, seal_required | V | awaiting_seal | chuông |
+| review | verdict fail, attempts < max | V | returned | notes bắt buộc, fail_kind |
+| review | verdict fail, attempts = max | V | infirmary | chuông |
+| review | verifier mana_out | M | review | verifier=null, verdict `partial` lưu `progress`; người kế đọc tiếp |
+| review | verifier breaker | S | review | như trên |
+| returned | redispatch | S | working | attempts+1, cùng assignee, prompt kèm notes |
+| returned | reassign | U | claimed | |
+| awaiting_seal | seal | U | done | `seal`, verdict `by_human=true` (nặng ×3) |
+| awaiting_seal | return(notes) | U | returned | |
+| awaiting_seal | reject | U | archived | lệnh `archive` |
+| done | deliver | S | done (`deliverable.delivered_at`) | giao hàng theo kind; không là trạng thái riêng để không nhân đôi |
+| done | archive | U/S (sau N ngày) | archived | xóa worktree khi archive, không sớm hơn |
+| infirmary | retry | U | open | attempts=0, giữ attempt_log |
+| infirmary | reassign | U | claimed | |
+| infirmary | archive | U | archived | |
+| archived | — | | | terminal |
+
+Đường đi của quest **bậc script**: `open → claimed (S, assignee null) → working (S chạy registry/scripts/<id>.mjs trong plot, output vào .runs/ + journal.jsonl) → review → done | awaiting_seal`, verdict `verifier_id: "machine"` lập từ exit code + `produces`. Không có `returned`/`paused_mana` (không có model để hết mana); lỗi script → `infirmary` ngay (lỗi của Elvaria hoặc dữ liệu, không phải của nhân vật). Script `produces: units` sinh `units[]` cho quest Trận đánh; mỗi unit cần phán đoán → Quản sự mở quest con bậc session (model rẻ), không phải học trò.
+
+Bất biến (zod refine + test; phần biểu diễn được đã có trong schema): `verifier ≠ assignee`; `tier = session` và `status ∈ {claimed, working, review, returned, awaiting_seal, paused_mana}` ⇒ có `assignee`; `tier = script` ⇒ `assignee = null` và có `script`; `status = review` ⇒ `attempts ≥ 1`; có `seal` ⇒ `status ∈ {done, archived}`; `status = blocked` ⇒ có `blocked`. Bảng chuyển là **dữ liệu** trong `domain/src/quest/transitions.ts`; `transition(quest, event, actor)` trả `Result<Quest, TransitionError>`; test duyệt toàn bộ bảng + property test "không có chuyển nào ngoài bảng". Từ P0-04, bảng trong mục này được sinh từ code bằng `pnpm docs:gen`.
+
+### 2.6 Máy trạng thái nhân vật
+
+| Từ | Sự kiện | Đến |
+|---|---|---|
+| idle | claim | working |
+| idle | assign_verify | reviewing |
+| working | submit / ask / cancel | idle |
+| working | compact_start | meditating |
+| meditating | compact_end | working |
+| working | breaker_time | swamp |
+| swamp | quest_infirmary | idle |
+| reviewing | verdict | idle |
+| working / reviewing / idle | mana_out (cả tộc) | sleeping_mana (ghi `status_before_sleep`) |
+| sleeping_mana | mana_restored | `status_before_sleep` |
+| idle | 3 fail cùng loại | suspended |
+| suspended | temple_done / user release | idle |
+| bất kỳ | user suspend | suspended (quest → returned kèm lý do) |
+
+Cấp và danh tiếng là hàm thuần: `reputationOf(window)`, `levelChange(window, level)` (≥ 10 phán quyết, ≥ 85% thì lên, < 60% thì xuống; dấu vua ×3), `canTake(level, rank, nobodyElse)` (quest cao hơn một bậc khi không còn ai; hơn hai bậc thì không). Chuyên môn cũng vậy: `affinityOf(skill_affinity, tags)` (điểm của nhân vật trên các tag của quest, cùng trọng số dấu vua ×3) và `titleOf(character)` (tag ghim, nếu không thì tag có danh tiếng cao nhất đủ ngưỡng). Cấp vẫn tính trên `reputation` chung; danh tiếng theo tag chỉ dùng để xếp hạng và đặt danh hiệu.
+
+### 2.7 Hợp đồng dữ liệu ↔ design system v0.2
+
+`design/` v0.2 là **bản gốc đầu tiên** của lớp 2D: nhập một lần vào `packages/ui-kit` ở giai đoạn 2, sau đó `ui-kit` + `ui` là nguồn và thiết kế được sửa ngay trong code, không sửa `design/` (ADR 0019). Domain không đổi tên theo thiết kế; nó có hàm và dữ liệu ánh xạ, test được, để hai bên tiến hóa độc lập:
+
+| Thiết kế (`elvaria.css`, `Icons.dc.html`) | Domain / dữ liệu | Cách ánh xạ |
+|---|---|---|
+| `data-status` 8 tông: `open, working, review, done, returned, sleep, infirmary, seal` | 12 trạng thái quest (§2.5) | `statusToneOf(status)` thuần trong `domain/src/quest/status-tone.ts`: draft/open/blocked/archived → `open`; claimed/working → `working`; review → `review`; returned → `returned`; awaiting_seal → `seal`; done → `done`; paused_mana → `sleep`; infirmary → `infirmary`. Test: mọi trạng thái có tông; mọi tông có ít nhất một trạng thái; danh sách tông đọc từ CSS |
+| icon nhân vật `c-working, c-reviewing, c-sleeping, c-meditating, c-suspended, c-swamp` (6, không có idle) | 7 trạng thái nhân vật | `characterToneOf(status)`: idle → `null` (không icon) |
+| icon dạng trong nguồn thiết kế: `kien-tao, tham-hiem, tru-ta, gia-co, soan-thao, rao-truyen, chiem-nghiem, nghi-hoi, chinh-phuc, ngoai-giao, tran-danh, chien-tranh` (slug VI) | id kind EN: `build, research, fix, refactor, document, publish, analyze, plan, integrate, negotiate, batch` + entity `campaign` | `scripts/gen-icons.mjs` **đổi tên khi sinh** theo bảng cố định `scripts/icon-names.json` (`kien-tao → kind-build`, `tru-ta → kind-fix`, `chien-tranh → kind-campaign`…); icon thiết kế chưa có trong bảng ⇒ lệnh fail. Code chỉ thấy id EN; `themes/fantasy/kinds.json`: `{ id: "fix", icon: "kind-fix", building: "hunting-ground", … }`; chuỗi hiển thị ("Trừ tà" / "Exorcism") nằm trong i18n |
+| icon nghề `te-tuong, phap-su, hiep-si, nguoi-lun, elf-trinh-sat, thu-ky, nha-tho, chiem-tinh-gia, su-than, tho-ca, thu-thu-truong, thay-tu` | class EN: `chancellor, mage, knight, dwarf, scout, scribe, bard, astrologer, envoy, judge, monk` | sinh thành `class-chancellor … class-monk`; hai icon nghiệm thu thành `class-judge-build` (tho-ca) và `class-judge-document` (thu-thu-truong). `themes/fantasy/classes.json`: `judge` có `icon_by_kind` (build/fix/refactor/integrate/batch → `class-judge-build`; document/research/publish/negotiate → `class-judge-document`; analyze → `class-astrologer`; plan → `class-mage`) và `title_by_kind` (khóa i18n: Thợ cả, Thủ thư trưởng, Chiêm tinh gia thứ hai, Trọng tài, Hiền giả) |
+| huy hiệu tộc `fac-silver` / `fac-fire`, màu `--elv-fac-silver` / `--elv-fac-fire` | `character.tribe` (id mở) | sinh thành `tribe-silver` / `tribe-fire`; `themes/fantasy/tribes.json` theo tribe id: `{ claude: { crest: "tribe-silver", color: "--elv-fac-silver", name_key: "tribe.silver" }, gemini: { crest: "tribe-fire", … } }`; tộc chưa có mục theme (ví dụ `codex` vừa thêm) dùng huy hiệu `tribe-neutral` và màu trung tính cho tới khi có (§3.14) |
+| badge hạng `data-rank="F…S"`, ba mức hình (biển gỗ / cờ hiệu / cờ lớn) | `rank` | trực tiếp; `rankTierOf(rank)` cho lớp 3D dùng cùng ba mức |
+| avatar `data-tier="1..4"`, vòng `--rep` | `gearTierOf(level)`, `reputationOf(window)` | hàm thuần |
+| `.elv-mana__cap` (trần), `.elv-mana__warn` (cảnh báo) | `mana.cap_pct`, `warn_margin_pct`, `king_reserve_pct` | HUD vẽ từ `ManaReading[]`; thanh theo tộc dùng **pool chính** (`gemini_models`), pool phụ hiện trong tooltip/Cài đặt — thiết kế cần hai thanh (§9.1 mục 19) |
+| `.elv-name` 24ch | `kingdom.name`, `territory.name`, `character.name` ≤ 24 | zod `max(24)` |
+| màn Cài đặt: mana_cap, king_reserve, 4 cầu dao, 3 kênh chuông, đường hầm, tiết kiệm, theme, 3 lịch, ngày/đêm | `kingdom.json` | đều đã có trường; **thiết kế còn thiếu**: `owner.locale`, `tools.gemini.kind` + `terms_acknowledged_at`, `territory.worktree_dir`, `subagent_max_*`, `resume_after_mana` → nhóm "Công cụ & nâng cao" (§9.1 mục 19) |
+| `scene` của HUD: default, cả tộc ngủ, CLI chưa đăng nhập, sa bàn, phòng thủ | `WorldState.banner` suy từ mana × tools × cờ sandbox × incident | selector thuần `bannerOf(state)` trong domain, dùng cho cả world và lite |
+| icon hành động `act-seal, act-return, act-summon, act-suspend, act-reassign, act-archive, act-temple, act-declare`; trạng thái `q-*`, `c-*` | kind của inbox command; tông trạng thái | sinh thành `action-seal …`, `quest-open …`, `character-working …`; 1:1 với §2.3 và `statusToneOf` |
+
+**Quy tắc đặt id** (áp dụng cho mọi dữ liệu và code): id là **tiếng Anh chuẩn**, động từ/danh từ thông dụng; `snake_case` cho khóa và giá trị enum trong JSON, `kebab-case` cho id icon/asset/file (kể cả id script vì nó là tên file), `camelCase`/`PascalCase` trong TS. Không slug tiếng Việt, không từ "màu mè" (`exorcise`, `fortify`, `proclaim`, `divine`, `conquer`). Chất fantasy chỉ nằm ở chuỗi hiển thị (i18n, `title_key` của theme). Tên nghề (`knight`, `scout`, `judge`, `monk`…) và tên vai hệ thống (`chancellor`, `steward`, `herald`) giữ nguyên vì đó là ngôn ngữ chung của sản phẩm (như `pod`, `helm` của Kubernetes); câu hỏi đổi tên nghề sang vai kỹ thuật vẫn mở ở §10. (ADR 0014)
+
+Chuỗi hiển thị trong mockup là tiếng Việt → khi port, mọi chuỗi vào `packages/i18n` (`vi.json` lấy nguyên văn từ mockup, `en.json` dịch), lint `no-literal-string` như dc1.
+
+---
+
+## 3. Cơ chế lõi giai đoạn 1
+
+Mỗi cơ chế: interface → dữ liệu đi qua → cách test. Tên hàm là tên thật sẽ dùng.
+
+### 3.0 Dữ kiện CLI
+
+Toàn bộ dữ kiện đã kiểm tra (flag, hook, mã thoát, điều khoản, máy) ở [reference/cli-facts-2026-11-06.md](reference/cli-facts-2026-11-06.md). Điều quyết định thiết kế:
+
+- **Claude Code 2.1.318**: `-p` ở chế độ Manual (từ chối mọi tool cần hỏi) ⇒ worker chạy `--permission-mode dontAsk` + allow/deny tường minh trong `--settings`. Không `--bare` (bỏ OAuth). Không `--worktree` (để lại lock) ⇒ Elvaria tự quản worktree. Hook async bị kill khi `-p` thoát ⇒ hook đồng bộ < 100 ms. Tín hiệu hết mana đáng tin nhất: `system/api_retry` với `rate_limit` và hook `StopFailure`. `rate_limits` chỉ có tài liệu cho status line ⇒ spike P1-02.
+- **Antigravity CLI 1.5.1 (`agy`)** là runner mặc định của tộc Gemini (người dùng có Google AI Pro, chọn ngày 2026-11-06): đủ headless, stream-json, `--json-schema`, `--settings` theo lần chạy, hooks; `/usage` cho hai pool mana + trần Argon. Rủi ro điều khoản ghi rõ trong ADR 0018; bật bằng `terms_acknowledged_at`.
+- **Gemini CLI 0.67.0** là đường lui (adapter `gemini_cli` + API key AI Studio): không có `--json-schema`, không có trường quota, tự nạp `.env` ⇒ phải cô lập bằng `GEMINI_CLI_HOME` + `--ignore-env`.
+- **Codex CLI** (kế hoạch sản phẩm 0.6; máy này chưa cài, chưa có tài khoản): `codex exec --json` (JSONL `thread.started`, `item.*`, `turn.completed`), `--output-last-message`, `--output-schema`, `AGENTS.md`, hook vòng đời (gồm `PreToolUse`, `PermissionRequest` chặn được; hook phải được tin cậy theo hash), sandbox `read-only`/`workspace-write`, `codex exec resume <id>`, đăng nhập CLI hoặc `CODEX_API_KEY`. Đạt bậc đầy đủ của hợp đồng tộc; chi tiết và câu hỏi mở ở [cli-facts](reference/cli-facts-2026-11-06.md) §5.
+- **Điều khoản Anthropic**: dùng binary không sửa đổi với subscription của chính người dùng là được; hạn mức giả định "mức dùng cá nhân thông thường" ⇒ có đường chuyển `tools.claude.auth = api_key`.
+
+### 3.1 Quản sự (dispatcher) — `packages/steward`
+
+Interface:
+
+```ts
+interface Steward { start(): Promise<void>; stop(): Promise<void>; tick(): Promise<TickReport> }
+interface StewardDeps {
+  store: KingdomStore; events: EventLog; runners: Record<TribeId, AgentRunner>;
+  mana: Record<TribeId, ManaGauge>; clock: Clock; ids: IdSource; bell: Bell; log: Logger;
+}
+```
+
+Một tiến trình, một vòng `tick()` mỗi `dispatch.tick_seconds` (5 s), file lock `.state/steward.lock` (proper-lockfile) để không có hai Quản sự. Mọi quyết định trong tick là **hàm thuần trong domain** nhận snapshot và trả danh sách hành động; steward chỉ thực thi:
+
+```ts
+// domain/src/dispatch/plan-tick.ts
+planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan
+// TickPlan = { claims, verifications, redispatches, breakers, wakes, deliveries, commands, scripts }
+```
+
+Thứ tự trong một tick:
+
+1. **Inbox**: đọc `inbox/*.json` theo id, áp dụng (`transition`), ghi quest, append `command.applied|rejected`, chuyển file sang `inbox/done/`. Người dùng luôn đi trước agent.
+2. **Mana**: đọc gauge mỗi tộc (§3.5). Tộc đang ngủ → tới giờ thì probe.
+3. **Cầu dao** cho các attempt đang chạy (§3.4): thời gian, token (từ stream), lượt, tiến trình chết.
+4. **Nghiệm thu**: quest `review` chưa có verifier → `selectVerifier` (§3.2) → spawn runner vai verifier.
+5. **Trả bài**: quest `returned` → cùng assignee, attempts+1 → spawn.
+6. **Nhận việc**: quest `open` xếp theo (a) xoay vòng lãnh thổ — lãnh thổ nào ít nhận gần nhất lên trước, (b) hạng cao trước, (c) tuổi. Quest `tier = script` → `run-script` (§3.12). Quest `tier = session` → `selectAssignee(quest, characters, registry, mana)`: **lọc** nhân vật rảnh có `class = class_required`, đủ cấp (`canTake`), tộc còn mana; **xếp** theo `affinityOf` trên `quest.tags` (nhân vật có `pinned_tag` thuộc tags lên trước), hòa thì ai nhàn lâu hơn trước → `claimed` → dựng lều (§3.3) → spawn → `working`. Giới hạn: `mana.tribes.<p>.max_concurrent`, `territory.max_concurrent`, và `checks.exclusive` (quest cần check exclusive không chạy song song với quest khác cùng lãnh thổ cũng cần nó).
+7. **Giao hàng**: quest `done` chưa có `delivered_at` → `deliver(kind)` (§3.9, P1-14).
+8. **Lịch** (giai đoạn 2+): chronicle/temple/patrol — interface `ScheduledJob { id; due(now, last): boolean; run(): Promise<void>; mana_class: 'cheap' }`, danh sách rỗng ở giai đoạn 1.
+
+Dữ liệu đi qua: `quests/*.json` (đọc/ghi — **chỉ steward ghi**), `characters/*.json` (ghi status), `inbox/`, `events/` (append), `.state/`.
+
+Test:
+
+- `planTick` với fixture snapshot: không ai rảnh → không claim; hai lãnh thổ có quest → luân phiên; quest hạng A khi chỉ có người cấp 5 → không nhận; tộc ngủ → không claim tộc đó; quest `review` có `verifier` null → chọn người khác assignee.
+- Steward tích hợp với `FakeRunner` (in-memory, kịch bản: nộp / crash / treo / báo rate-limit) trên kingdom tạm trong `tmp`: 10 quest giả đi hết vòng; kill steward giữa chừng rồi start lại → không mất quest, không chạy trùng (idempotency theo `attempt_log`).
+
+### 3.2 Luật tách vai — `domain/src/verify/select-verifier.ts`
+
+```ts
+selectVerifier(quest: Quest, candidates: Character[], policy: VerifierPolicy): Selection | NoVerifier
+// Selection = { character: CharacterId; reason: 'other_family' | 'same_family_other_model' | 'machine_only' }
+```
+
+Bậc ưu tiên, dừng ở bậc đầu tiên thỏa (ADR 0008):
+
+1. `character.id ≠ quest.assignee` **và** không có trong `attempt_log` với vai assignee của quest này (người từng làm rồi bị đổi cũng không được chấm); nếu quest thuộc một đội: không phải người từng làm **bất kỳ** quest nào cùng `party_id` (người chấm từng phần và người chấm quest ghép đều ở ngoài đội, §3.13);
+2. class có `is_verifier` và `kinds` chứa `quest.kind`;
+3. status `idle`, tộc còn mana;
+4. ưu tiên `familyOf(model) ≠ familyOf(assignee.model)` (họ model: `gemini` | `claude` | `gpt`, suy từ slug) — vì Antigravity chạy cả Claude và GPT, "khác tộc" của nguyên tắc 4 được định nghĩa theo **họ model**, không theo CLI; sau đó ưu tiên khác `tribe` (tài khoản/pool mana). Càng nhiều tộc, càng nhiều cặp khác họ (Codex là họ `gpt`);
+5. nếu cùng họ model: bắt buộc `model ≠ assignee.model` (khác slug, ví dụ Opus chấm Sonnet); nếu không có ai → theo `dispatch.verifier_same_family`: `machine_only` (verdict do steward lập từ kiểm tra máy, `verifier_id: "machine"`, `notes` tự sinh; **không bao giờ pass khi có check fail**) hoặc `different_model` (chờ người phù hợp).
+
+Phiên mới: runner luôn spawn phiên **mới** cho verifier (không `--resume`), cwd là worktree của quest, prompt chỉ gồm: mô tả quest, `handover.md`, `git diff <base>...HEAD --stat` và diff đầy đủ, kết quả kiểm tra máy đã chạy sẵn, nghi thức của kind, kinh của verifier. Không có transcript, không có `journal.jsonl` của người làm. Verifier có `vow_no_production`: allowlist tool chỉ Read/Grep/Glob/Bash (các lệnh check của lãnh thổ), không Edit/Write (deny trong settings, không chỉ trong prompt).
+
+Kiểm tra máy chạy **trước** khi mở phiên verifier: `runChecks(territory, touchedPaths)` chọn `checks` theo glob `when`, chạy tuần tự (exclusive có khóa), lưu log vào `.runs/<quest>-<n>/checks/<id>.log`, kết quả đưa vào prompt và vào `verdict.checks`. `pass_rule` của ritual (mặc định `all_checks_and_agent`): check fail ⇒ fail, bất kể agent nói gì.
+
+Test: property test với roster ngẫu nhiên — kết quả không bao giờ trùng assignee hoặc người từng làm; cùng họ model thì khác model; `validateVerdict(verdict, quest)` từ chối verdict có `verifier_id` ∈ {assignee, người từng làm}, verdict `pass` khi có check fail, và verdict có `session_id` không thuộc một attempt vai verifier do Quản sự spawn.
+
+### 3.3 Đất riêng — `runner-core/src/plot/`
+
+```ts
+interface PlotManager {
+  prepare(quest: Quest, territory: Territory): Promise<Plot>   // idempotent
+  status(plot: Plot): Promise<{ dirty: boolean; ahead: number; branch: string }>
+  commitAll(plot: Plot, message: string): Promise<void>       // WIP commit trước khi kill/pause
+  release(plot: Plot): Promise<void>                           // git worktree remove; chỉ khi archived
+}
+```
+
+- Lãnh thổ `vcs.type = git` (mọi kind, kể cả Soạn thảo/Thám hiểm — khác kế hoạch sản phẩm, lý do ở §9.1, ADR 0012): `git worktree add <repo>/<worktree_dir>/<quest-id> -b quest/<quest-id> <base>`, với `<base>` = `default_branch`, trừ phần và quest ghép của một đội: `<base>` = nhánh của quest hợp đồng, để mọi thành viên thấy cùng một hợp đồng (§3.13). Worktree đi cùng repo, trong thư mục riêng của repo (`.elvaria/worktrees/`), không nằm trong kingdom. Fetch trước nếu có remote; không `pull` nhánh chính của repo gốc. Chạy `commands.setup` một lần (pnpm install dùng store toàn cục nên nhanh). Đặt `git config core.longpaths true` trong repo gốc trên Windows. Khi attach lãnh thổ, ghi `.git/info/exclude` của repo gốc: `.elvaria/`, `GEMINI.md`, `.agents/hooks.json`, `.gemini/settings.json` (worktree dùng chung exclude; không sửa `.gitignore` của repo).
+- Lãnh thổ không git: `quests/<id>/work/` là plot; deliverable là bản copy có chủ đích vào `territory.path` khi giao hàng.
+- Quest id 18 ký tự giữ đường dẫn ngắn trong giới hạn Windows; `pnpm` trong worktree tạo `node_modules` riêng — chấp nhận, dọn khi archive. Rủi ro riêng của worktree trong repo: công cụ của repo gốc quét đệ quy (ESLint, tsc project, Playwright) có thể lôi `.elvaria/` vào — `territory add` kiểm `ignores` của eslint/tsconfig và cảnh báo. dc1 có `ignores: ['**/node_modules/**', …]` nên cần thêm `.elvaria/**` (một quest Gia cố nhỏ, hoặc dùng thư mục anh em).
+- Hai quest chạm cùng file không chạy song song: giai đoạn 1 đơn giản hóa thành `territory.max_concurrent` (mặc định 1 cho code) — §9.1 mục 10.
+
+Test: trên repo git tạm (`git init` trong tmp, một commit), `prepare` hai lần → cùng kết quả; `release` xóa worktree, nhánh giữ lại; `commitAll` khi dirty tạo đúng một commit; đường dẫn có khoảng trắng (như `D:\Dummy\Tool - DC1`) hoạt động.
+
+### 3.4 Cầu dao — `domain/src/breaker/`
+
+```ts
+evaluateBreakers(attempt: RunningAttempt, budget: Budget, now: Instant, usage: UsageSoFar): BreakerVerdict
+// BreakerVerdict = 'ok' | { trip: 'time' | 'tokens' | 'turns' | 'attempts'; detail }
+```
+
+- Thời gian: từ `attempt.started_at`, trần `budget.max_minutes` (45 cho F–C, 120 cho B–S; lãnh thổ có check exclusive e2e → 120).
+- Token: `usage.tokens` từ stream (`modelUsage` cộng dồn) so với `budget.max_tokens` = `estimate.tokens × mana_multiplier`; đồng thời truyền `--max-budget-usd` (Claude) để CLI tự dừng.
+- Lượt: `--max-turns` = `breakers.max_turns` (200) — hàng rào thứ hai chống lặp.
+- Khi trip: `runner.kill(attempt)` (tree-kill: `taskkill /T /F` trên Windows, SIGTERM rồi SIGKILL trên macOS), `plot.commitAll("wip: breaker <trip>")`, quest → `infirmary`, outcome `timeout` (time) hoặc `breaker` (tokens/turns), nhân vật `swamp` → `idle`, chuông.
+
+Test: thuần với clock giả; tích hợp với `FakeRunner` treo → trip time đúng phút; kill tree thật với một tiến trình con `node -e "setInterval(() => {}, 1000)"` (test riêng cho Windows và macOS trong CI matrix).
+
+### 3.5 Mana — `domain/src/mana/` + adapter trong `runner-*`
+
+```ts
+interface ManaGauge { read(): Promise<ManaReading[]>; probe(): Promise<ProbeResult> }   // một reading mỗi (pool, window)
+type ManaReading = {
+  tribe; pool: PoolId; window: 'five_hour' | 'weekly';
+  used_pct: number | null; resets_at: Instant | null;
+  source: 'rate_limits' | 'estimate' | 'signal'; observed_at: Instant; exhausted: boolean
+}
+decideManaState(readings: ManaReading[], pool: PoolId, cfg: ManaConfig): 'ok' | 'warning' | 'closed' | 'asleep'
+poolOf(tribe, model): PoolId     // một pool: = tribe id ('claude', 'codex'); antigravity: gemini-* → 'gemini_models', claude-*/gpt-* → 'claude_gpt_models'
+```
+
+(ADR 0009)
+
+- `closed` khi `used_pct ≥ min(cap_pct, 100 − king_reserve_pct)` → không nhận quest mới, việc đang chạy chạy tiếp; `warning` khi còn `warn_margin_pct` điểm tới ngưỡng; `asleep` khi nhận tín hiệu hết (StopFailure `rate_limit`, `api_retry rate_limit` ≥ 2 lần liên tiếp, Gemini 429/`RESOURCE_EXHAUSTED`, agy `status: ERROR` có quota) → cả pool ngủ, quest đang chạy → `paused_mana` (runner kill nhẹ sau `commitAll`), **giữ assignee**.
+- Nguồn đọc Claude, theo thứ tự có sẵn: (1) `rate_limits` nếu spike P1-02 chứng minh status line chạy được dưới `-p` (status line command là script Node ghi `.state/mana-claude.json`); (2) **ước lượng**: cộng dồn `modelUsage` của mọi phiên trong cửa sổ 5 giờ / 7 ngày so với `tribes[claude].budget.tokens_5h/tokens_7d` người dùng khai (hiệu chỉnh dần); (3) tín hiệu 429.
+- Nguồn đọc tộc Gemini (Antigravity, **đã kiểm trên máy**): (1) `agy -p /usage --output-format text` mỗi `probe_interval_minutes` và sau mỗi phiên kết thúc → parse bảng `<pool> \t <window> Limit Remaining \t <pct>% \t <ISO>` thành `ManaReading` theo (pool, window), `used_pct = 100 − remaining`, `source: rate_limits`; định dạng chưa cam kết ổn định ⇒ parser có fixture và đường lui sang (2); (2) ước lượng từ `usage` của `result`; (3) `status: ERROR` có quota/limit. Trạng thái tộc tính **theo pool**: pool `gemini_models` ngủ không kéo theo `claude_gpt_models`; nhân vật thuộc pool theo `poolOf(tribe, model)`.
+- Hồi sinh: khi `asleep`, mỗi `probe_interval_minutes` (hoặc đúng `resets_at` nếu biết) chạy `probe()` = lệnh rẻ nhất (`claude -p "Reply with the single word ok." --model <rẻ nhất> --max-turns 1 --tools "" --output-format json`; Antigravity: `agy -p /usage`). Thành công → `mana.restored` → nhân vật `wake` → quest `paused_mana` → `working` bằng **phiên mới**, prompt "resume" = mô tả + `handover.md` + 20 dòng cuối `journal.jsonl` + `git log/diff` của nhánh (nguyên tắc 13: trí nhớ dài nằm trên đĩa). `--resume <session_id>` chỉ khi `dispatch.resume_after_mana = true` (tối ưu token, tắt mặc định; khi bật phải truyền lại `--settings`). Người dùng bấm "đã đăng nhập lại" (lệnh `wake`) → probe ngay.
+- `mana.reassign_after_hours` (mặc định `null` = không bao giờ): nếu bật, quest `paused_mana` quá N giờ được đổi người theo luật đã khai; hệ thống vẫn không tự xoay tài khoản.
+- Mọi việc theo lịch và mọi probe đều ghi `mana.probe`/`mana.level` để biên niên sử và UI dùng.
+
+Test: `decideManaState` theo bảng ngưỡng; steward + `FakeRunner` phát `rate_limit` → tộc ngủ, quest paused giữ assignee, probe sau N phút giả → restored → cùng nhân vật tiếp tục, `attempts` không tăng.
+
+### 3.6 Hooks — `packages/hooks`
+
+Một file `elvaria-hook.mjs` (ESM, chỉ `node:fs/path/process` + `@elvaria/eventlog`), được mọi CLI gọi; đọc stdin JSON, biết ngữ cảnh qua env (`ELVARIA_KINGDOM, ELVARIA_QUEST, ELVARIA_ATTEMPT, ELVARIA_CHARACTER, ELVARIA_ROLE, ELVARIA_TRIBE`) do runner đặt khi spawn (Claude: cả env tiến trình lẫn `settings.env`) hoặc qua `--policy <file>` khi CLI không truyền env. Mỗi lần gọi: dịch payload → một `Event` (§3.10) → `redact` → append vào `events/<ngày>.jsonl` **và** `quests/<id>/journal.jsonl` → exit 0 (hoặc 2 khi chặn).
+
+Claude (trong `--settings` sinh ra tại `.runs/<quest>-<n>/settings.json`):
+
+```json
+{
+  "permissions": { "defaultMode": "dontAsk",
+                   "allow": ["Read", "Edit", "Write", "Glob", "Grep", "Bash(pnpm test:*)", "Bash(git status:*)", "..."],
+                   "deny": ["Read(./.env)", "Read(./.env.*)", "Read(./infra/secrets/**)", "Edit(./infra/secrets/**)", "Bash(git push:*)", "WebFetch", "..."] },
+  "env": { "ELVARIA_KINGDOM": "...", "ELVARIA_QUEST": "...", "CLAUDE_CODE_MAX_RETRIES": "2", "CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS": "60000" },
+  "hooks": {
+    "SessionStart": [{ "hooks": [{ "type": "command", "command": "node", "args": ["<abs>/elvaria-hook.mjs"], "timeout": 5 }] }],
+    "PreToolUse":  [{ "matcher": "Bash|Edit|Write|MultiEdit", "hooks": [{ "...same", "onFailure": "block" }] }],
+    "PostToolUse": [{ "hooks": ["...same"] }],
+    "PostToolUseFailure": [], "Stop": [], "StopFailure": [], "SubagentStart": [], "SubagentStop": [],
+    "PreCompact": [], "PostCompact": [], "Notification": [], "SessionEnd": [{ "hooks": [{ "...same", "timeout": 5 }] }]
+  }
+}
+```
+
+- `PreToolUse` là hàng rào thứ hai sau deny rules: kiểm `laws.forbidden_paths` (chuẩn hóa backslash), `laws.forbidden_commands`, ghi `agent.tool.blocked` khi chặn (exit 2 + lý do). Hook của lãnh thổ (dc1 `guard-bash.mjs`) vẫn chạy song song.
+- `Stop`: nếu vai assignee và `handover.md` chưa đổi từ lúc bắt đầu → `decision: "block"`, reason "Update handover.md (template …) before finishing" — tối đa 2 lần (đếm trong `.runs/`), sau đó cho qua và ghi `agent.notification` để verifier biết.
+- `StopFailure` → `mana.signal` (`error`); `PreCompact/PostCompact` → `agent.compact` (thiền); `SubagentStart/Stop` → `agent.subagent.*` (học trò); `Notification` → `agent.notification`.
+- Antigravity: cùng file, khai trong `<worktree>/.agents/hooks.json` sinh ra (§3.7). Gemini CLI: cùng file, khai trong `settings.json` của `GEMINI_CLI_HOME` (§3.7).
+
+Test: vitest với stdin giả cho từng sự kiện của từng CLI → đúng một dòng event, đúng schema, secret bị che; thời gian khởi động < 100 ms (benchmark trong test, ngưỡng mềm); hook chặn đúng `forbidden_paths` kể cả `C:\…\.env` dạng backslash.
+
+### 3.7 Runner — `runner-core` + các adapter
+
+```ts
+interface AgentRunner {
+  readonly tribe: TribeId
+  readonly adapter: AdapterId                       // 'claude_code' | 'antigravity' | 'gemini_cli' | 'codex_cli' | 'adapters/<name>.mjs'
+  readonly capabilities: AdapterCapabilities        // §3.14
+  spawn(req: SpawnRequest): Promise<RunningSession>
+  probe(): Promise<ProbeResult>
+  doctor(): Promise<ToolInfo>                       // path, version, auth ok?
+}
+type SpawnRequest = {
+  role: 'assignee' | 'verifier' | 'chancellor' | 'monk' | 'bard'
+  quest?: Quest; character: Character; territory?: Territory; cwd: AbsolutePath
+  prompt: BuiltPrompt; permissions: ToolPolicy; budget: Budget
+  resume?: { session_id: string }; structured?: JsonSchema; env: Record<string, string>; run_dir: AbsolutePath
+}
+interface RunningSession {
+  readonly session_id: Promise<string>; readonly pid: number
+  readonly signals: AsyncIterable<RunnerSignal>   // { kind: 'usage', tokens } | { kind: 'rate_limit' } | { kind: 'text', ... }
+  wait(): Promise<RunResult>                       // { outcome: 'completed'|'max_turns'|'budget'|'killed'|'error'; exit_code; usage; structured?; session_id; duration_ms; permission_denials }
+  kill(reason): Promise<void>
+}
+```
+
+`runner-core` làm phần chung: `buildPrompt(role, quest, character, territory, registry, scriptures, skills)` — quest + journal + kinh + địa chí + tối đa 3 bí kíp do `selectSkills` chọn (§3.13; giai đoạn 1 danh sách luôn rỗng) — mẫu trong `runner-core/prompts/*.md`, có test snapshot; `ToolPolicy` từ class + `territory.laws` + role, `PlotManager`, `runChecks`, `normalize` (stream → `RunnerSignal`), `redact`. Adapter chỉ dịch `SpawnRequest` → argv/env/settings của CLI và stream của CLI → `RunnerSignal`. (ADR 0006)
+
+**runner-claude** (adapter `claude_code`; `claude.exe` tìm qua `tribes[claude].tool.path`; `elvaria doctor` dò: PATH, `~/.local/bin`, `%APPDATA%\npm`, thư mục extension VS Code):
+
+```
+claude -p <prompt> --output-format stream-json --verbose --include-hook-events
+  --permission-mode dontAsk --settings <run_dir>/settings.json --model <model>
+  --max-turns <n> --max-budget-usd <usd> [--json-schema <schema>] [--resume <id>] [--session-id <uuid>]
+  --append-system-prompt-file <run_dir>/system.md --agents <run_dir>/agents.json
+```
+
+`agents.json` định nghĩa đúng một học trò `apprentice` (`maxTurns = breakers.subagent_max_turns`, `tools` là tập con của class, `model` rẻ, `omitClaudeMd: false`), và `permissions.deny` chứa `Agent(*)` trừ `Agent(apprentice)` ⇒ nhân vật chỉ đẻ được học trò theo mẫu; học trò không có `Agent` trong `tools` ⇒ không đẻ tiếp (§3.12).
+
+cwd = worktree. Env: tối thiểu + `ELVARIA_*` + secret được phép (§3.9). stdout parse từng dòng JSON: `system/init` → `agent.session.start` (session_id), `system/api_retry` → signal, `result` → `RunResult`. stderr → `.runs/…/stderr.log` (đã che). Tể tướng và verifier dùng `--json-schema` để có `structured_output`.
+
+**runner-antigravity** (adapter `antigravity`, mặc định cho tộc Gemini ở giai đoạn 1; `agy` tìm qua `tribes[gemini].tool.path`; phiên bản ghi khi `doctor`; auth = credentials đã đăng nhập một lần, dùng chung với hub của extension; ADR 0018):
+
+```
+<abs>/agy.exe -p <prompt> --output-format stream-json [--json-schema <file>] --model <model> --effort <low|medium|high>
+    --settings <run_dir>/settings.json --print-timeout <budget.max_minutes>m --log-file <run_dir>/agy.log
+    [--conversation <id>] [--add-dir <path>]
+```
+
+- cwd = worktree. **Không** dùng `--dangerously-skip-permissions`. Policy theo lần chạy đi qua `--settings <run_dir>/settings.json`: `permissions.allow` (`command(regex:^pnpm (test|lint|typecheck)\b)`, `write_file(src/)`, …) và `permissions.deny` (`.env`, `infra/secrets/`, `command(regex:git push)`…) sinh từ class + luật lãnh thổ; mọi thứ không khớp → `request-review` soft-deny. Hàng rào thứ hai: hook `PreToolUse` trong `<worktree>/.agents/hooks.json` (sinh ra, đã exclude): `node "<abs>/elvaria-hook.mjs" --policy "<run_dir>/policy.json"` chuẩn hóa backslash, kiểm `forbidden_paths/commands`, trả `decision: "deny"` + ghi `agent.tool.blocked`. Hook `PostToolUse`, `SessionStart`, `Stop` ghi event; `Stop` trả `decision: "continue"` + reason khi `handover.md` chưa đổi (tối đa 2 lần). Nếu spike P1-12a cho thấy `permissions.deny` không có tác dụng, hook là hàng rào deny duy nhất.
+- Context: `GEMINI.md` sinh ra ở gốc worktree với `@[Territory law](./CLAUDE.md)` và `@[rule](./.claude/rules/<x>.md)` (§3.8).
+- Output: stream-json `init` (permission_mode, model) → `agent.session.start`; `step_update` có `tool_info` → đối chiếu với hook; `result` (`status`, `usage`, `structured_output`) → `RunResult`; `status ≠ SUCCESS` + `error` có quota/limit → signal `rate_limit`. Mã thoát chưa có bảng chi tiết ⇒ dựa vào `status`.
+- Học trò: agy có subagent; trong headless chưa rõ cách giới hạn ⇒ giai đoạn 1 **cấm** qua policy cho tới khi spike xác minh.
+- Probe mana: `agy -p /usage` (§3.5).
+- Chưa xác minh (spike P1-12a, trước khi viết adapter): xem [cli-facts](reference/cli-facts-2026-11-06.md) §2.5.
+
+**runner-gemini** (adapter `gemini_cli`, đường lui, Gemini CLI 0.67.x + API key AI Studio; `gemini` tìm qua `tribes[gemini].tool.path`, trên Windows là `%APPDATA%\npm\gemini.cmd` → chạy `node <…>/gemini.js` trực tiếp):
+
+```
+GEMINI_CLI_HOME=<run_dir>/gemini-home   # chứa .gemini/settings.json sinh ra — không chạm ~/.gemini của người dùng
+GEMINI_API_KEY=<từ kho bảo vật, tên cố định "gemini_api_key">   # secret duy nhất runner tự nạp
+gemini -p <prompt> --output-format stream-json --model <model> --approval-mode auto_edit --ignore-env
+       [--resume <uuid>] [--session-id <uuid>]
+```
+
+`settings.json` sinh ra: `hooks` (BeforeTool/AfterTool/AfterAgent/SessionStart/SessionEnd/PreCompress/Notification → `node "<abs>/elvaria-hook.mjs"`, timeout 5000), `tools.core` theo class (verifier: không `write_file`/`replace`), `tools.allowed` (`run_shell_command(pnpm test)` …), `model.maxSessionTurns` = `breakers.max_turns`, `general.maxAttempts: 3`, `context.fileName: ["GEMINI.md", "CLAUDE.md"]`, `advanced.ignoreLocalEnv: true`, `security.folderTrust.enabled: false`, `security.auth.selectedType: "gemini-api-key"`, `telemetry.enabled: false`, `general.checkpointing.enabled: false`. Không tạo `.gemini/` trong worktree. stdout stream-json: `init` → session_id, `tool_use/tool_result` → signal (đối chiếu với hook), `result.stats` → usage, `error.type` có quota/rate → signal `rate_limit`; exit 53 → `max_turns`, 41 → auth, 55 → cấu hình sai (lỗi của Elvaria, không phải của quest). Structured output (Tể tướng/verifier tộc Gemini): schema trong prompt, parse `response` bằng zod, thử lại 1 lần.
+
+Mọi adapter cùng `AgentRunner`; `apps/cli` nạp adapter của từng tộc theo `kingdom.tribes[].adapter`. Đổi tộc Gemini sang Gemini CLI = đổi một trường `adapter`. Thế giới chỉ thấy tộc, không thấy CLI.
+
+Test: adapter test bằng **CLI giả** (`fixtures/fake-claude.mjs`, `fake-agy.mjs`, `fake-gemini.mjs` phát stream mẫu lấy từ phiên thật đã che) → `RunResult` đúng; `buildPrompt` snapshot; `ToolPolicy` → settings.json snapshot cho từng class; smoke test thật (tùy chọn, `ELVARIA_LIVE=1`) chạy `probe()` với CLI thật.
+
+### 3.8 Nạp CLAUDE.md của lãnh thổ cho tộc Gemini
+
+Claude Code tự đọc `CLAUDE.md`; tộc Gemini thì không. Cách làm:
+
+1. **Antigravity** (mặc định): runner sinh `GEMINI.md` ở gốc worktree (header `<!-- generated by Elvaria; not committed -->`) gồm `@[Territory law](./CLAUDE.md)` + một dòng `@[rule](./.claude/rules/<x>.md)` cho mỗi file khớp `territory.context_files` (ngoài CLAUDE.md/README.md) ⇒ agy nhúng nguyên văn, không chép, không lệch; giới hạn 24 000 byte/file, 20 000 token tổng (dc1 ~14 KB, vừa). Thêm một đoạn ngắn "You are <character>, class <class>; Elvaria law: …". Kinh và quest đi trong prompt, không nằm trong GEMINI.md, để không cache nhầm giữa các quest. Loại trừ qua `.git/info/exclude` của repo gốc (worktree dùng chung).
+2. **Gemini CLI** (đường lui): `settings.json` trong `GEMINI_CLI_HOME` của lần chạy đặt `context.fileName: ["GEMINI.md", "CLAUDE.md"]` (đã xác minh nhận mảng) ⇒ Gemini đọc **thẳng** `CLAUDE.md` của worktree và thư mục con; `GEMINI.md` sinh ra chỉ chứa `@./.claude/rules/<x>.md` và đoạn giới thiệu nhân vật.
+3. `.claude/rules/*.md` có frontmatter `paths:` (áp dụng theo file): Gemini không hiểu điều kiện ⇒ nạp tất cả; dc1 có 3 file nhỏ nên chấp nhận; lãnh thổ có nhiều rule thì `context_files` chọn lọc.
+4. Test: spawn tộc Gemini với prompt "List the required conventions you were given, verbatim headings only" trên worktree dc1 → output chứa "Convention bắt buộc / Required conventions" và "Rules · apps/api"; test với CLI giả kiểm GEMINI.md sinh đúng và bị exclude.
+
+### 3.9 Kho bảo vật — `runner-core/src/treasury/` + `eventlog/src/redact.ts`
+
+```ts
+interface Treasury { names(): Promise<string[]>; resolve(names: string[]): Promise<Record<string, string>> }
+redact(text: string, known: string[], patterns: RegExp[]): string
+```
+
+(ADR 0013)
+
+- Giai đoạn 1: file `paths.treasury` = `~/.elvaria/treasury.json` (ngoài kingdom; quyền 0600 trên macOS; trên Windows nằm trong profile người dùng), dạng `{ "name": "value" }`. Keychain (`@napi-rs/keyring`) là adapter sau, cùng interface.
+- Runner spawn CLI với **env tối thiểu** (PATH, HOME/USERPROFILE, APPDATA, LOCALAPPDATA, TEMP/TMP, SystemRoot, ComSpec, PATHEXT, LANG; + biến CLI cần để tìm credentials) + `ELVARIA_*` + đúng các tên trong `quest.secrets_required` (⊆ `territory.secrets_allowed`; Tể tướng không được tự thêm). Không bao giờ kế thừa `process.env` nguyên khối.
+- Deny rules: `Read(./.env)`, `Read(./.env.*)`, `Read(<laws.forbidden_paths>)`, `Edit(...)` tương ứng; hook PreToolUse chặn `Bash` đọc các file đó (`cat .env`, `type .env`, `Get-Content .env`) theo regex.
+- `redact`: che giá trị secret đã biết (khớp chính xác) + mẫu (`sk-ant-…`, `AIza…`, `ghp_…`, `github_pat_…`, `xox[baprs]-…`, JWT, `-----BEGIN … PRIVATE KEY`, `AKIA…`, `(?i)(token|secret|password|api[_-]?key)\s*[:=]\s*\S{12,}`) — mẫu là dữ liệu trong `eventlog/src/redact-patterns.json`. Áp dụng ở: hook (trước khi append), runner (stdout/stderr vào `.runs/`), store khi ghi `handover.md`/notes của verdict, herald trước khi gửi qua WebSocket.
+- Gemini CLI tự nạp `.env` của dự án ⇒ `--ignore-env` + `advanced.ignoreLocalEnv`; PlotManager từ chối worktree có `.gemini/.env`.
+
+Test: fixture transcript chứa 12 loại secret → 0 lần xuất hiện trong events/journal/.runs; env spawn không chứa biến ngoài allowlist (test snapshot env); quest xin secret ngoài `secrets_allowed` → bị từ chối ở `transition(claim)`.
+
+### 3.10 Chuẩn hóa sự kiện (các CLI → một schema)
+
+Bảng ánh xạ trong `runner-core/src/normalize/<adapter>.ts` (dữ liệu + test bảng):
+
+| Claude hook/stream | Gemini CLI hook | Antigravity hook/stream | Codex hook/JSONL (chưa kiểm) | Event |
+|---|---|---|---|---|
+| SessionStart / system.init | SessionStart | SessionStart / init | SessionStart / `thread.started` | agent.session.start {session, model} |
+| PostToolUse (Read/Glob/Grep) | AfterTool (read_file/…) | PostToolUse | PostToolUse | agent.tool {tool: 'read', path} |
+| PostToolUse (Edit/Write) | AfterTool (write_file/replace) | PostToolUse | PostToolUse / `item.*` | agent.tool {tool: 'write', path} |
+| PostToolUse (Bash) | AfterTool (run_shell_command) | PostToolUse | PostToolUse / `item.*` | agent.tool {tool: 'bash', command (đã che), exit?} |
+| PostToolUse (WebFetch/WebSearch) | AfterTool (web_fetch/google_web_search) | PostToolUse | PostToolUse | agent.tool {tool: 'web', url?} |
+| PreToolUse exit 2 | BeforeTool deny | PreToolUse deny | PreToolUse / PermissionRequest deny | agent.tool.blocked {tool, reason} |
+| SubagentStart/Stop | — | (spike P1-12a) | SubagentStart/Stop | agent.subagent.start/end |
+| PreCompact/PostCompact | PreCompress | — | PreCompact/PostCompact | agent.compact |
+| StopFailure, api_retry | 429 trong output | `status: ERROR` có quota | lỗi hạn mức trong JSONL (spike) | mana.signal {error} |
+| Stop / result | AfterAgent / exit | Stop / result | Stop / `turn.completed` | agent.session.end {outcome, usage} |
+
+Thế giới chỉ thấy `actor.id` (nhân vật) và `character.tribe` (tộc), không thấy tên CLI.
+
+### 3.11 Tể tướng — `packages/chancellor`
+
+`draftQuests(utterance, context: {territories, registry, roster, mana}) → QuestDraft[]` qua runner Claude vai `chancellor`, `--json-schema` [quest-draft](schemas/quest-draft.schema.json), `--tools ""` (không tool; chỉ đọc context đưa trong prompt), `--max-turns 1`. Mỗi draft → lệnh `create_quest` với `draft: true` vào inbox; Quản sự ghi `quests/<id>.json` trạng thái `draft` + event `quest.drafted` (single writer, ADR 0005). `elvaria quest confirm <id>` hoặc UI ghi lệnh `confirm` → `open`. Hỏi lại tối đa một câu: draft có `question` → quest `draft` với `blocked.question`. `elvaria quest add --kind … --rank …` tạo thẳng `open` không tốn mana (giai đoạn 0).
+
+Mỗi draft có `class_required` (nghề được nhận, trong `classes_allowed` của kind) và `tags` (chỉ từ `registry/tags.json`; prompt có danh sách tag). Việc có nhiều tag ở nhiều vùng của lãnh thổ → draft kind `plan` với `party_role: contract` (mở một đội, §3.13).
+
+Theo nguyên tắc 13, Tể tướng còn hai việc (ADR 0017): (a) gán `tier` cho mỗi draft — `script` khi khớp một mục trong `registry/scripts.json` (prompt có catalog), `session` khi cần phán đoán; (b) **gom việc tí hon** thành một quest (thường là Trận đánh với `units[]`) thay vì nhiều quest, và **chia việc dài** sao cho một quest xong trong một context (`estimate.tokens` ≤ `breakers.context_budget_tokens`, mặc định 120k; vượt → quest cha kind `plan` + quest con).
+
+Test: snapshot prompt; parse `structured_output` (fixture) → draft hợp lệ; draft có `secrets_required` lạ → bị loại; câu "kiểm tra link trong docs" → draft `tier: script, script: {id: 'link-check'}`; câu "viết lại toàn bộ docs/architecture.md theo 18 ADR" → draft cha kind `plan` + gợi ý chia.
+
+### 3.12 Ba bậc chạy việc — script, học trò, phiên mới
+
+Từ kế hoạch sản phẩm mục 7 "Script, sub-agent hay phiên mới" (ADR 0017):
+
+| Bậc | Ai quyết | Chạy ở đâu | Enforce | Mana |
+|---|---|---|---|---|
+| **Script** | Tể tướng (`tier: script`) hoặc Quản sự (khi `checks`/`produces: units`) | `steward/src/script/run-script.ts`: spawn `node registry/scripts/<id>.mjs --params <json>` trong plot, timeout `timeout_minutes`, stdout JSON theo `produces` | catalog có schema; script không có model, không có secret; kết quả là verdict máy | 0 |
+| **Học trò** (sub-agent) | Nhân vật, trong phiên của mình | Claude: `Agent(apprentice)` từ `--agents`; Antigravity: cấm cho tới khi spike P1-12a xác minh | `maxTurns = subagent_max_turns` (enforce được); phút đo bằng hook `SubagentStart/Stop` → `agent.subagent.end {duration_ms}`; quá `subagent_max_minutes` → `agent.subagent.overrun`, cộng vào cầu dao quest mẹ, prompt dặn nhân vật dừng và ghi handover để Quản sự mở quest con | tính vào quest mẹ (`modelUsage` gộp) |
+| **Phiên mới** (nhân vật) | Quản sự | `AgentRunner.spawn` cho quest/quest con | như §3.1–3.7 | quest riêng |
+
+Ba điều bất biến và cách giữ:
+
+1. *Người nghiệm thu không bao giờ là sub-agent của người làm*: verdict chỉ hợp lệ khi `verdict.session_id` ∈ `attempt_log` của một attempt vai `verifier` do Quản sự spawn (`validateVerdict`); nhân vật không có tool/quyền ghi `verdicts/`.
+2. *Sub-agent không đẻ sub-agent*: học trò không có `Agent` trong `tools`; hook `SubagentStart` với `agent_type ≠ apprentice` → exit 2 (chặn) + `agent.tool.blocked`.
+3. *Quá ngưỡng thì dừng và mở quest con*: `maxTurns` cắt cứng; overrun theo phút chỉ đo và phạt (không kill được học trò từ ngoài — §9.1 mục 15); nếu quest mẹ bị cầu dao vì học trò, `handover.md` phải ghi "việc con chưa xong" và Quản sự gợi ý quest con trong ghi chú `infirmary`.
+
+Số đo để chỉnh ngưỡng: `pnpm docs:gen` sinh `docs/tier-report.md` từ event log (token theo quest và theo bậc), là đầu vào để người dùng chỉnh `kingdom.json` sau vài tuần.
+
+Test: `run-script` với script giả (exit 0/1/timeout) → verdict máy đúng; `validateVerdict` từ chối verdict từ session không phải verifier; `agents.json` snapshot cho từng class; hook SubagentStart với `agent_type: 'Explore'` → chặn; `agent.subagent.end` quá 5 phút giả → event `overrun`.
+
+### 3.13 Chuyên môn, bí kíp và đội
+
+Từ kế hoạch sản phẩm mục 4 và 6 (ADR 0020). Nghề, bí kíp và kinh là ba thứ khác nhau:
+
+| | Là gì | Lưu ở | Ai viết | Nạp khi nào |
+|---|---|---|---|---|
+| **Nghề** (`class`) | động từ: viết code, nghiên cứu, chép sách, chấm bài; quyết định tool, model, tộc, dạng quest | `character.class`, cố định suốt đời | registry + theme | mọi quest |
+| **Bí kíp** (`skill`) | kiến thức lĩnh vực ("React + TanStack Query theo quy ước repo này", "Playwright + axe") | `temple/skills/<id>/`, không gắn vào ai | Thầy tu hoặc người dùng | theo quest: tối đa 3, khớp tag và lãnh thổ |
+| **Kinh** (`scripture`) | bài học hành vi, ngắn | `characters/<id>/scripture.md` | Thầy tu, từ phán quyết | mọi quest của nhân vật đó |
+
+**Chuyên môn là danh tiếng theo tag, không phải nghề con.** Không có "hiệp sĩ frontend" và "hiệp sĩ backend" như hai class; có hiệp sĩ với `skill_affinity`. Khi một verdict pass/fail được ghi, Quản sự thêm một mục vào `reputation.window` **và** vào `skill_affinity[tag].window` cho mỗi tag của quest (mỗi cửa sổ ≤ 20, dấu vua ×3). `selectAssignee` lọc theo `class_required` rồi xếp theo `affinityOf` (§3.1). Danh hiệu trên đầu là `titleOf(character)` — suy ra, không lưu; người dùng ghim bằng lệnh `pin_tag`. Cùng một bộ bí kíp chạy qua hai nhân vật hai model cho số liệu so sánh model theo lĩnh vực ngay trong `skill_affinity`.
+
+**Bí kíp**:
+
+```ts
+// domain/src/skill/select-skills.ts
+selectSkills(quest: Quest, skills: SkillMeta[]): SkillMeta[]   // ≤ MAX_SKILLS_PER_QUEST (3)
+```
+
+- Ứng viên: `skill.tags ∩ quest.tags ≠ ∅` và `skill.scope ∈ {global, quest.territory}`. Xếp: bí kíp của lãnh thổ trước bí kíp `global`, rồi số tag khớp, rồi `max_tokens` nhỏ hơn. Lấy tối đa 3.
+- Runner đưa bí kíp vào phiên theo định dạng skill của từng CLI (thư mục skill trong worktree, đã exclude) hoặc chèn vào prompt. Chọn cách nào được quyết khi bắt đầu giai đoạn 5 bằng một spike cho cả hai CLI: ngày 2026-11-06 **chưa kiểm** định dạng skill của Claude Code 2.1.318 dưới `-p`, cũng chưa kiểm agy 1.5.1 có skill hay không. Tổng `max_tokens` của bí kíp đã chọn tính vào `estimate`.
+- Thầy tu chỉ viết bí kíp khi một bài học lặp ở ≥ 2 nhân vật **và** là kỹ thuật chứ không phải thói quen (`derived_from` trỏ các bài học đó); người dùng viết tay thì `source: user`.
+- **Giai đoạn 1 không có bí kíp nào**: `CLAUDE.md` của lãnh thổ là bí kíp của lãnh thổ. `buildPrompt` nhận tham số `skills` từ P1-01 (luôn rỗng) để giai đoạn 5 không phải đổi interface.
+
+**Đội** (party) — một việc cần nhiều chuyên môn. Luật "một quest = một nhân vật = một context" không đổi:
+
+1. Tể tướng thấy việc có nhiều tag ở nhiều vùng → draft kind `plan`, `class_required: mage`, `party_role: contract`. Quản sự tạo quest với `party_id` = chính id của nó.
+2. Pháp sư (trưởng đội) làm quest hợp đồng trong worktree của mình: viết **hợp đồng** (với dc1-se-team là OpenAPI, vì web lấy type từ đó), commit vào `quest/<contract-id>`, rồi xuất danh sách phần bằng schema quest-draft (`party_role: part`, `contract`, mỗi phần một tag chính). Nghi thức `council_review` + kiểm tra máy trên hợp đồng.
+3. Khi giao hàng (`subquests`, P1-14), Quản sự tạo các phần (`party_id`, `depends_on` quest hợp đồng) và **tự tạo quest ghép**: kind `build`, `class_required: knight`, tags = hợp các tag của phần, `party_role: merge`, `depends_on` mọi phần, `seal_required: true`.
+4. Mỗi phần: một nhân vật, một worktree tách từ nhánh hợp đồng (§3.3), một verdict. Chạy song song khi `territory.max_concurrent` cho phép; mặc định giai đoạn 1 là 1 nên các phần chạy lần lượt, vẫn mỗi phần một context.
+5. Quest ghép: worktree tách từ nhánh hợp đồng, `git merge` từng nhánh phần (cục bộ, không push), sửa xung đột, chạy **toàn bộ** kiểm tra của lãnh thổ (kể cả e2e, integration), nghi thức `build_review`. Người dùng merge `quest/<merge-id>` vào nhánh chính bằng tay sau dấu vua (§9.1 mục 11).
+6. Người chấm từng phần và người chấm quest ghép đều **không** thuộc đội (§3.2). Đội xong khi quest ghép xong: `partyStatusOf(quests)` suy ra, không có file đội riêng.
+7. Chỉ tách khi đáng: mỗi phiên mới có chi phí cố định, nên Tể tướng không băm một việc 20 phút thành ba phiên 7 phút. Tách khi các phần ở vùng khác nhau với hợp đồng rõ, hoặc khi chạy song song tiết kiệm thời gian thật. `tier-report` đo chi phí để chỉnh luật này.
+
+Trên bản đồ (giai đoạn 3–4): đội đi chung dưới một lá cờ (theo `party_id`); quest ghép là lễ khánh thành chung.
+
+Test: `selectSkills` theo bảng (scope, số tag khớp, trần 3); `affinityOf`/`titleOf` thuần; property test `selectVerifier` không bao giờ chọn thành viên đội; steward + FakeRunner: quest hợp đồng giao hàng → các phần + quest ghép được tạo đúng `depends_on`; `PlotManager.prepare` của phần tách từ nhánh hợp đồng; quest ghép merge hai nhánh trên repo git tạm.
+
+### 3.14 Hợp đồng tộc — thêm nhà cung cấp mà không sửa lõi
+
+Từ kế hoạch sản phẩm mục 8 "Hợp đồng tộc" (ADR 0021). Một tộc = **một adapter** + **một mục theme** (tên tộc, màu mana, sprite, huy hiệu) + **một tài khoản người dùng tự đăng nhập** trên máy. Khai trong `kingdom.tribes[]`: `{id, adapter, enabled, max_concurrent, tool?, pools?, budget?}` ([schema](schemas/kingdom.schema.json)).
+
+**Adapter** có hai dạng, cùng interface `AgentRunner` (§3.7):
+
+- **Có sẵn** — package trong repo, có test: `claude_code` (`runner-claude`), `antigravity` (`runner-antigravity`), `gemini_cli` (`runner-gemini`), `codex_cli` (`runner-codex`, tùy chọn P1-12d).
+- **File của người dùng** — `<kingdom>/adapters/<name>.mjs` export `createAdapter(kit)`. `kit` là phần chung của runner-core do Elvaria tiêm vào (dựng prompt, `ToolPolicy` → cấu hình CLI, `PlotManager`, chuẩn hóa sự kiện, `redact`, spawn + kill tree, env tối thiểu), nên file không import gì và kingdom không cần `node_modules`. Chỉ `apps/cli` (composition root) nạp file này bằng `import()`.
+
+**Năng lực** (`AgentRunner.capabilities`, tĩnh theo adapter + phiên bản CLI; `doctor` in ra). Thiếu năng lực thì tộc bị thu hẹp theo hàm thuần `tribeLimitsOf(caps)` trong domain, `planTick` áp dụng:
+
+| Năng lực | Mức | Thiếu thì Elvaria làm gì |
+|---|---|---|
+| `headless` — chạy không tương tác, trả mã thoát và kết quả cuối | bắt buộc | không bật được tộc (`doctor` từ chối) |
+| `context_file` — tự nạp file chỉ dẫn (CLAUDE.md / GEMINI.md / AGENTS.md) | bắt buộc, có đường lui | runner chèn địa chí và `territory.context_files` thẳng vào prompt |
+| `events` — luồng sự kiện có cấu trúc (hook vòng đời hoặc JSON stream) | nên có | chỉ có `agent.session.start/end`: nhân vật chỉ "đang làm / xong", không đi lại, không học trò |
+| `tool_gate` — chặn tool trước khi chạy (allowlist theo nghề) | nên có | tộc chỉ nhận quest hạng F–D và không nhận quest chạm `laws.read_before_write` / `rank_floor`; handover kiểm sau phiên thay vì bằng hook Stop |
+| `usage` — báo token và tín hiệu hạn mức | nên có | mana ước lượng từ thời gian chạy; cầu dao chỉ theo phút |
+| `structured_output` — output theo JSON Schema | nên có (thêm so với kế hoạch sản phẩm) | schema trong prompt + parse zod + thử lại 1 lần; không làm Tể tướng khi còn tộc có năng lực này |
+| `resume` / `compact` | tùy | ngồi thiền = phiên mới từ handover + journal (vốn là mặc định, ADR 0017) |
+| `subagent` có giới hạn | tùy | không có học trò; việc nhỏ lẽ ra cho học trò thành quest con bậc session |
+
+**Bộ test hợp đồng** (`runner-core/src/conformance/`): một bộ test mọi adapter phải qua, có sẵn hay file — spawn/wait/kill, stream → `RunnerSignal`, `RunResult`, năng lực khai báo đúng với hành vi (khai `tool_gate` thì lệnh cấm phải bị chặn thật), `probe()`. Chạy với CLI giả trong CI, với CLI thật khi `ELVARIA_LIVE=1`. `elvaria tribe check <id>` chạy bộ này; không qua thì không bật được.
+
+**Thêm tộc sau khi vương quốc đã dựng** (ví dụ Codex):
+
+1. Người dùng cài CLI và tự đăng nhập. `elvaria tribe add codex --adapter codex_cli` ghi `kingdom.tribes[]`; `doctor` điền `tool`; `tribe check` chạy bộ test hợp đồng; xong thì `enabled: true`.
+2. Theme: thêm mục `codex` vào `themes/fantasy/tribes.json` (tên, màu mana, huy hiệu, sprite). Chưa có thì dùng huy hiệu `tribe-neutral` và màu trung tính — thế giới vẫn chạy.
+3. Triệu hồi nhân vật mới của tộc đó (`elvaria character add --tribe codex --class judge …`).
+4. **Nhân vật cũ không đổi.** Nghề và tộc của một nhân vật cố định suốt đời: danh tiếng, cấp và kinh gắn với model của tộc đó. Không có migration, vì `tribe` là id mở.
+5. **Trách nhiệm tự điều chỉnh qua dữ liệu, không qua cấu hình:** luật tách vai (§3.2) tự có thêm cặp khác họ model (Codex là họ `gpt`); nghiệm thu không giới hạn cấp nên judge của tộc mới chấm được ngay; người làm của tộc mới bắt đầu ở cấp 1, chỉ nhận hạng thấp cho tới khi có danh tiếng (`canTake`); "cả tộc ngủ cùng lúc" ít làm đứng việc hơn.
+6. Muốn dời một vai sang tộc mới (ví dụ judge chính chuyển sang Codex): triệu hồi nhân vật mới rồi đình chỉ hoặc lưu trữ nhân vật cũ. `class.default_tribe` chỉ là gợi ý khi triệu hồi.
+7. Tắt tộc (`enabled: false`): không nhận việc mới; quest đang chạy của tộc đó chạy xong; quest `paused_mana` của tộc đó chờ như khi hết mana (người dùng có thể giao lại).
+
+Test: `tribeLimitsOf` theo bảng trên; `planTick` không giao quest hạng C cho tộc thiếu `tool_gate`; bộ test hợp đồng qua với `FakeRunner` và từng adapter có sẵn; adapter file giả nạp bằng `createAdapter(kit)` đi hết vòng một quest; thêm tộc thứ ba vào kingdom tạm không đổi file nhân vật nào.
+
+---
+
+## 4. Chất lượng code — cho người và AI đọc
+
+### 4.1 Ngôn ngữ
+
+(ADR 0014)
+
+- **Identifier, comment, commit message, tên file, ADR, README package: tiếng Anh.** Hai CLI và mọi thư viện đều "nghĩ" bằng tiếng Anh; identifier có dấu không gõ được trong terminal; lint rule, lỗi TypeScript, stack trace đều tiếng Anh nên code tiếng Anh giảm chuyển ngữ trong đầu agent.
+- **Mọi id trong dữ liệu cũng là tiếng Anh chuẩn**: `kind`, `class`, `status`, `ritual`, `script`, icon, asset, khóa JSON, tên theme — từ thông dụng mà kỹ sư ngoài dự án đọc hiểu ngay (`fix`, không `exorcise`; `kind-build`, không `kien-tao`). Quy tắc chữ hoa/thường ở §2.7. Lint: `pnpm docs:check` quét mọi `.json`/`.ts` trong `registry-default`, `themes`, `ui-kit` bắt id có ký tự ngoài `[a-z0-9_-]` và id trong danh sách "màu mè" cấm; `gen-icons` fail khi icon chưa có tên EN.
+- **Thuật ngữ thế giới có bảng VI ↔ EN cố định**: [glossary.md](glossary.md), nguồn máy đọc `packages/i18n/src/glossary.json`. Identifier dùng **đúng từ EN trong bảng** (`steward`, không `dispatcher`; `chancellor`, không `intake`; `seal`, không `approve`). `pnpm docs:check` quét identifier cấm (`dispatcher`, `intake`, `approve`, `reviewer`, `worker` …); danh sách từ cấm nằm cạnh glossary.
+- **Chuỗi hiển thị (CLI và UI): song ngữ qua i18n**, VI mặc định (brief §7: "văn bản giao diện tiếng Việt; thuật ngữ thế giới giữ nguyên"). CLI dùng `packages/i18n` với `t(key)`; ESLint `i18next/no-literal-string` trong `apps/world`, `apps/lite`, và trong `apps/cli` cho phần xuất ra người dùng (tắt cho log debug). `pnpm i18n:check` so khóa VI/EN (mẫu dc1).
+- **Tài liệu người dùng** (`docs/*.md`: kế hoạch, brief, implementation-plan, glossary, reference, guides): **tiếng Việt**. ADR: tiếng Anh (mẫu dc1; agent đọc nhiều hơn người). Prompt mẫu cho nhân vật: tiếng Anh (hiệu quả token). **Những gì người dùng đọc** — `handover.md`, notes của verdict, `blocked.question`, biên niên sử, thông báo chuông, UI — viết theo `kingdom.owner.locale` (mặc định `vi`). Prompt dặn: "Write handover and notes in Vietnamese; keep identifiers, commands, paths and error text verbatim." Verifier đọc tiếng Việt tốt với cả hai họ model; phần văn xuôi tốn khoảng 1,3× token, chấp nhận.
+
+### 4.2 Quy ước duy nhất
+
+| Thứ | Quy ước | Enforce |
+|---|---|---|
+| Tên file | `kebab-case.ts`; test cạnh file `x.spec.ts`; fixture `__fixtures__/`; một export chính mỗi file, tên file = tên export (`select-verifier.ts` → `selectVerifier`) | `eslint-plugin-unicorn/filename-case` |
+| Hàm | `camelCase`, động từ đầu (`planTick`, `selectVerifier`, `redact`); hàm thuần không tiền tố; hàm IO trả `Promise` và nhận deps tường minh | review + `max-lines-per-function: 60` |
+| Kiểu | `PascalCase`; union chuỗi thay enum (`type QuestStatus = 'open' \| …`); branded id (`QuestId`) | `@typescript-eslint/naming-convention` |
+| Hằng | `UPPER_SNAKE` trong `constants.ts` của package; không magic number | `no-magic-numbers` bật trong `domain`, `steward` (bỏ qua 0, 1, -1, 100) |
+| Kích thước | file ≤ 300 dòng, hàm ≤ 60 dòng, độ sâu lồng ≤ 3 | `max-lines`, `max-lines-per-function`, `max-depth` |
+| Kiểu động | `any` cấm; `unknown` + narrow; `as` chỉ ở ranh giới IO kèm comment vì sao | `strictTypeChecked` + `no-explicit-any` + `consistent-type-assertions` |
+| Lỗi | `Result<T, E>` trong domain (không throw); throw `ElvariaError(code)` ở tầng IO với mã từ `ERROR_CODES` | `@typescript-eslint/only-throw-error` |
+| Comment | giải thích **vì sao** (ràng buộc, quyết định, bẫy đã gặp); không mô tả cái gì; link ADR khi có | review; comment trong hook của dc1 là chuẩn |
+| Commit | Conventional Commits `type(scope): why`, scope = tên package; thân nói vì sao | commitlint trong husky `commit-msg` |
+| README mỗi package | 4 mục cố định: *Does* / *Does not* / *Depends on* / *How to test* (≤ 40 dòng) | `pnpm docs:check` kiểm tồn tại + 4 heading |
+| Test | vitest; mỗi thay đổi có test cùng commit; domain coverage 100% (gate), package khác ≥ 80% | `vitest --coverage` thresholds theo package |
+| Import | `import type` tách riêng; không import file sâu của package khác; không default export | `consistent-type-imports`, `import-x/no-default-export`, boundaries |
+
+TypeScript: `packages/config/tsconfig/base.json` = bản dc1 (strict, noUncheckedIndexedAccess, noImplicitOverride, noImplicitReturns, noFallthroughCasesInSwitch, useUnknownInCatchVariables, isolatedModules) + `exactOptionalPropertyTypes`, `verbatimModuleSyntax`, `module: NodeNext`, `target: ES2023`. Prettier: bản dc1 (110 cột, single quote, trailing comma, LF).
+
+### 4.3 Chỗ khác kế hoạch sản phẩm về công nghệ
+
+- Không dùng Python ở đâu cả (kế hoạch sản phẩm mục 3 còn ghi "Node.js hoặc Python"): một ngôn ngữ, một toolchain, hook và CLI cùng runtime.
+- Không dùng SQLite ở giai đoạn 0–2 (kế hoạch ghi "SQLite khi cần truy vấn"): file JSON + event log + snapshot đủ cho một người dùng; điều kiện bật SQLite ghi trong ADR 0004.
+- Không dùng enum TypeScript; không dùng class ngoài adapter (hàm + kiểu dữ liệu dễ test và dễ cho agent sửa).
+
+---
+
+## 5. Tài liệu như code
+
+### 5.1 `CLAUDE.md` của repo Elvaria
+
+[CLAUDE.md](../CLAUDE.md) (viết 2026-11-06, theo mẫu dc1, tiêu đề song ngữ) có 8 mục: (1) Dự án là gì; (2) Bản đồ repo; (3) Lệnh; (4) Convention bắt buộc — ba tầng, domain không IO, chỉ steward ghi quest, thuật ngữ theo glossary, mỗi thay đổi có test, ADR khi đổi quyết định; (5) Đọc trước khi sửa — `domain/src/quest/transitions.ts`, `domain/src/verify/**`, `domain/src/mana/**`, `eventlog/src/redact*`, `runner-core/src/treasury/**`, `config/boundaries.mjs`, `docs/schemas/**`; (6) Cấm khi chưa có chỉ thị — `any`, `--no-verify`, import `node:*` vào domain, đổi event type đã phát mà không migrate, đổi glossary EN, thêm dependency không nêu lý do, sửa `.schema.json` bằng tay (từ P0-03), chạm `~/.claude` hay `~/.gemini` của người dùng từ code, script bash/PowerShell, truyền `process.env` nguyên khối vào tiến trình con; (7) Đụng vào gì thì chạy gì; (8) Definition of Done — test xanh (lint, typecheck, unit, boundaries, schemas, docs:check), README package cập nhật, ADR nếu đổi quyết định, không thay đổi ngoài phạm vi, chạy được trên Windows **và** macOS (CI matrix xanh).
+
+P0-11 bổ sung `.claude/rules/domain.md`, `runner.md`, `hooks.md` (áp dụng theo `paths`) và `.claude/hooks/` theo mẫu dc1 (`guard-bash.mjs` bản Elvaria, `typecheck-touched.mjs`, `stop-checks.mjs` chạy boundaries khi đụng import); `.claude/settings.json` của repo bật chúng.
+
+### 5.2 ADR
+
+`docs/adr/`, mẫu dc1 (Status / Context / Decision / Consequences), tiếng Anh, mỗi ADR ≤ 40 dòng. ADR mới khi đổi một quyết định; ADR cũ đánh `superseded by`.
+
+| # | Tiêu đề | Trạng thái |
+|---|---|---|
+| [0001](adr/0001-pnpm-monorepo-lint-enforced-boundaries.md) | pnpm monorepo with package-level architecture boundaries enforced by lint | accepted |
+| [0002](adr/0002-pure-domain-package.md) | Pure domain package: no IO, injected clock and ids | accepted |
+| [0003](adr/0003-zod-schema-source-generated-json-schema.md) | zod is the schema source; JSON Schema in docs/ is generated and drift-checked | accepted |
+| [0004](adr/0004-kingdom-state-is-files.md) | Kingdom state is files: JSON per entity, JSONL event log, no database until measured | accepted |
+| [0005](adr/0005-single-writer-steward-inbox.md) | Single writer: only the Steward mutates quest state; UI and CLI write commands to inbox/ | accepted |
+| [0006](adr/0006-runner-adapter-behind-agentrunner.md) | Runner is an adapter behind AgentRunner; CLIs are pinned and observed via hooks + stream | accepted |
+| [0007](adr/0007-claude-workers-dontask-own-worktrees.md) | Claude Code workers run with dontAsk + explicit allow/deny; Elvaria manages worktrees itself | accepted |
+| [0008](adr/0008-separation-of-duties.md) | Separation of duties: verifier ≠ assignee, fresh session, other model family first, machine checks are the primary judge | accepted |
+| [0009](adr/0009-mana-model.md) | Mana model: cap and king's reserve, three gauge sources, sleep/wake keeps the assignee | accepted |
+| [0010](adr/0010-two-file-journal.md) | Journal is two files: machine journal from hooks, handover letter from the agent | accepted |
+| [0011](adr/0011-one-judge-class-per-tribe.md) | One `judge` verifier class per tribe with ritual chosen by quest kind (titles are theme data) | accepted |
+| [0012](adr/0012-worktree-for-every-git-quest.md) | Every quest on a git territory gets a worktree, regardless of kind | accepted |
+| [0013](adr/0013-treasury-and-redaction.md) | Treasury: secrets never enter prompts, journals or logs; minimal env; redaction is data | accepted |
+| [0014](adr/0014-english-identifiers-glossary-bilingual-ui.md) | English identifiers, fixed VI↔EN glossary, bilingual UI via i18n | accepted |
+| [0015](adr/0015-node-only-scripts.md) | Node-only scripts for Windows and macOS; no bash or PowerShell in the repo | accepted |
+| [0016](adr/0016-registry-data-not-code.md) | Kinds, classes, rituals and scripts are registry data with schemas, not code | accepted |
+| [0017](adr/0017-one-quest-one-context-three-tiers.md) | One quest, one context: three execution tiers (script, apprentice, session); revival starts a fresh session from the handover letter | accepted |
+| [0018](adr/0018-gemini-tribe-on-antigravity-cli.md) | Gemini tribe runs on Antigravity CLI behind an explicit terms acknowledgement; Gemini CLI with an API key is the one-setting fallback | accepted |
+| [0019](adr/0019-preact-ui-design-source-of-truth.md) | 2D UI is Preact + signals; `design/` is the first source of the design system, `ui-kit` owns it after the port | accepted |
+| [0020](adr/0020-class-skill-scripture-tags-and-parties.md) | Class, skill and scripture are separate; expertise is reputation per tag; work that needs several areas is a party | accepted |
+| [0021](adr/0021-tribe-contract.md) | Tribe contract: a tribe is an adapter with declared capabilities, a theme entry and the owner's own account; missing capabilities narrow what the tribe may take | accepted |
+
+ADR 0007, 0009, 0017 được cập nhật bằng số liệu sau spike P1-02; ADR 0018 sau spike P1-12a.
+
+### 5.3 Glossary
+
+[glossary.md](glossary.md): bảng VI · EN · id trong code · nơi dùng · icon (thiết kế → code), danh sách giá trị enum của mọi schema, và từ cấm. Từ P0-07, nguồn máy đọc là `packages/i18n/src/glossary.json`; `docs/glossary.md` được sinh từ đó bằng `pnpm docs:gen` và drift-check (một nguồn, hai dạng). Bản hiện tại viết tay ngày 2026-11-06 và là đầu vào của P0-07.
+
+### 5.4 Giữ tài liệu đồng bộ với code
+
+- Sinh ra, không chép tay: `docs/schemas/` (từ zod), `docs/glossary.md` (từ glossary.json), `docs/dependency-graph.md` (từ dependency-cruiser), `docs/events.md` (danh mục event type + payload từ domain), `docs/cli.md` (từ định nghĩa lệnh), bảng §2.5 (từ `transitions.ts`), `docs/tier-report.md` (từ event log). `pnpm docs:gen` tạo; CI chạy `git diff --exit-code docs/`.
+- `pnpm docs:check`: README 4 mục cho mỗi package; từ cấm; ADR có Status; link nội bộ trong `docs/**/*.md` và `CLAUDE.md` còn sống (quest #4 của dc1 chính là việc này — Elvaria tự ăn thức ăn của mình); cấm `.sh/.ps1/.cmd`.
+- Mỗi commit đổi hành vi phải chạm `docs/` hoặc ghi `docs: none` trong thân commit (husky `commit-msg` kiểm, mức cảnh báo).
+- Tài liệu này là tài liệu sống: task xong thì đánh dấu ở §8; khi thực tế khác kế hoạch, sửa kế hoạch trong cùng commit.
+
+---
+
+## 6. Đa nền tảng Windows + macOS
+
+(ADR 0015)
+
+- **Mọi script là Node** (`scripts/*.mjs`, `tsx` cho TS). Không có file `.sh`, `.ps1`, `.cmd` trong repo (`pnpm docs:check` từ chối các đuôi này; husky hook gọi `node`/`pnpm`). Hook Claude khai dạng exec `node` + `args`; hook Antigravity và Gemini CLI tương tự (§3.7).
+- **Đường dẫn**: `node:path` ở mọi nơi; trong file dữ liệu luôn dùng `/`; `toPortable(p)`/`fromPortable(p)` trong `store`; so sánh đường dẫn Windows không phân biệt hoa thường (`comparePath`); worktree `<repo>/.elvaria/worktrees/<quest-id>` với id 18 ký tự; `git config core.longpaths true`; `.gitattributes` `* text=auto eol=lf`.
+- **Spawn**: `node:child_process.spawn` với `shell: false`; tìm executable kiểu `which` trong `elvaria doctor` và ghi đường dẫn tuyệt đối vào `kingdom.tools`; trên Windows nếu chỉ tìm thấy `.cmd` (npm shim) → đọc shim, chạy `node <js>` trực tiếp (không `shell: true` để khỏi lỗi quoting). Kill tree: `taskkill /PID <pid> /T /F` (Windows) / SIGTERM → SIGKILL (macOS), gói trong `runner-core/src/process/kill-tree.ts`, test trên cả hai.
+- **Thông báo**: `node-notifier` (kèm helper binary cho toast Windows và Notification Center macOS) sau interface `Bell { ring(n: Notice): Promise<void> }`; adapter `ConsoleBell` cho CI/sa bàn; web push ở giai đoạn 2 là adapter thứ ba.
+- **File lock / atomic write**: `proper-lockfile` (retry, phát hiện lock cũ) cho `.state/steward.lock` và việc ghi quest; ghi file = ghi tmp cùng thư mục → `fs.rename` (Windows: retry 5 lần khi EPERM do antivirus/indexer).
+- **Theo dõi event log**: không `fs.watch` (không tin cậy trên Windows; chokidar nặng); herald tail bằng polling `fs.stat` size 500 ms + cursor; sa bàn replay không cần watch.
+- **Ngày giờ**: `Intl` + offset thật của máy; tên file event theo ngày địa phương (`kingdom.tz`).
+- **Home dir**: `os.homedir()`; `~/.elvaria/` cho kho bảo vật và config toàn cục; không giả định `%USERPROFILE%` hay `$HOME`.
+- CI matrix `windows-latest`, `macos-latest`, `ubuntu-latest`; ca riêng của một OS dùng `it.runIf(process.platform === 'win32')`.
+
+---
+
+## 7. Công cụ và CI
+
+| Thứ | Chọn | Vì sao |
+|---|---|---|
+| Package manager | pnpm 10 (`packageManager` pin), Node 24 (`.nvmrc`), `onlyBuiltDependencies` khai rõ | như dc1; store toàn cục giúp worktree của lãnh thổ cài nhanh |
+| Build/run | `tsx` cho dev và test; `tsc -b` (project references) cho `apps/cli` khi đóng gói; chỉ ESM | không bundler cho Node; Vite cho `apps/world`/`lite` |
+| Lint | ESLint 9 flat, `typescript-eslint` strictTypeChecked + stylisticTypeChecked, `eslint-plugin-unicorn` (filename-case, prefer-node-protocol), `eslint-plugin-import-x`, boundaries từ `boundaries.mjs`, `eslint-config-prettier` | mẫu dc1 + boundaries |
+| Format | Prettier 3, config dc1 | |
+| Test | vitest, `--coverage` v8, threshold theo package; `vitest --project` cho domain/node/browser | |
+| Git hooks | husky 9: pre-commit `lint-staged` (eslint --fix, prettier); commit-msg `commitlint`; pre-push `pnpm check:fast` (typecheck + test + boundaries) | |
+| CI (GitHub Actions) | job `checks` (ubuntu): install, lint, format:check, typecheck, test, boundaries, schemas drift, docs:gen drift, docs:check, audit; job `platform` (matrix windows/macos): typecheck + test + sandbox replay smoke; job `live` (chạy tay, tùy chọn): `ELVARIA_LIVE=1` probe CLI thật | |
+| Local | `pnpm check` = tất cả như CI; `pnpm check:fast` cho pre-push | |
+| Design → code | `pnpm ui:import` (một lần, khi tạo `ui-kit` ở giai đoạn 2; dùng lại làm công cụ khi có bản thiết kế mới): chép `design/project/elvaria.css` → `packages/ui-kit/src/elvaria.css`; `scripts/gen-icons.mjs` đọc khối `renderVals()` của `design/project/Icons.dc.html` (`I(id, label, d)`) → `packages/ui-kit/src/icons.ts` (map id → path, viewBox 16, stroke 1.5, id EN qua `scripts/icon-names.json`). Sau lần nhập, sửa thiết kế trong `ui-kit`/`ui`; không kiểm drift với `design/` | `design/` là bản gốc đầu tiên, không phải nguồn vĩnh viễn: thiết kế đổi được trong lúc code (ADR 0019) |
+| UI 2D | **Preact + @preact/signals**, Vite; `packages/ui` là thành phần dựng từ `Components.dc.html` với đúng class `.elv-*`; không CSS-in-JS, không Tailwind | nhẹ (render khi cần, nhàn rỗi không tốn CPU), JSX quen với dc1 (React), mockup HTML port gần 1:1; ADR 0019 |
+| Font | tự host 4 font (Alegreya, Source Sans 3, Grenze Gotisch, Cinzel; subset `latin, vietnamese`; OFL) trong `packages/ui-kit/fonts/`, ghi `LICENSES.md` | local-first, không gọi Google Fonts khi chạy; `.elv-inscr`/Cinzel chỉ cho chuỗi ASCII — i18n check cảnh báo khóa có dấu dùng trong slot inscr |
+| Sa bàn | `elvaria sandbox generate --day busy\|quiet\|mana-out --seed 42 → events/sandbox/<ngày>.jsonl`; `elvaria sandbox replay <file> --speed 20 [--to terminal\|herald]`; terminal in dòng thời gian; herald phát qua WebSocket với cờ `sandbox: true` (UI dán nhãn "DỮ LIỆU GIẢ"); không spawn runner, không chạm `quests/` thật (kingdom tạm `--kingdom <tmp>`) | giai đoạn 0 chứng minh schema + reducer; giai đoạn 3–4 dùng cho 3D |
+
+`sandbox generate` dùng chính `transition` và `planTick` của domain với `FakeRunner` có kịch bản → mọi ngày giả đều **hợp lệ theo máy trạng thái** (không phải JSON chép tay), nên sa bàn cũng là test tích hợp của domain.
+
+---
+
+## 8. Chia việc
+
+Mỗi task: một phiên Claude Code làm xong, có test chứng minh. Thứ tự trong giai đoạn = thứ tự rủi ro. Ký hiệu: `p/` = `packages/`, `a/` = `apps/`. Cột **Trạng thái**: `chưa làm` → `đang làm` → `xong (<ngày>, <commit>)`.
+
+### Giai đoạn 0 — Xương sống và sa bàn
+
+Mốc: replay một ngày giả in ra dòng thời gian đọc được.
+
+| # | Task | File chạm | Xong khi | Trạng thái |
+|---|---|---|---|---|
+| P0-01 | Khung monorepo: pnpm workspace, `p/config` (tsconfig/eslint/prettier/boundaries.mjs), husky, commitlint, CI `checks` + `platform` matrix, `.gitattributes`, `.nvmrc`. Khai **đủ tên script gốc** dùng trong CLAUDE.md: `check, check:fast, lint, format, format:check, typecheck, test, boundaries, schemas, docs:gen, docs:check, i18n:check, elvaria`; script nào chưa có công cụ thì chạy `node scripts/not-yet.mjs <task>` (in task sẽ hiện thực nó, exit 0) | gốc, `p/config/**`, `scripts/not-yet.mjs`, `.github/workflows/ci.yml`, `.husky/*` | `pnpm check` xanh trên repo rỗng; CI xanh 3 OS; boundaries spec chứng minh DAG | chưa làm |
+| P0-02 | `p/domain` nền: `Clock`, `IdSource`, `Result`, branded id, `constants.ts`, zod schema `kingdom`, `territory`, registry (kind/class/ritual/script/tag) + `p/registry-default` dữ liệu 11 kind, 11 class, 11 ritual, 5 script (`link-check`, `run-check`, `count-files`, `diff-stat`, `compare-numbers` — mỗi script là `.mjs` thuần Node có test), 7 tag | `p/domain/src/{core,schema}/**`, `p/registry-default/**` | registry mặc định validate qua schema; lint cấm `node:*` trong domain chạy thật; 5 script chạy trên fixture | chưa làm |
+| P0-03 | Schema `quest` (kể cả `class_required`, `tags`, trường đội), `character` (kể cả `skill_affinity`, `pinned_tag`), `verdict`, `campaign`, `lesson`, `skill`, `event` (discriminated union theo type), `inbox-command`, `quest-draft`, `world-map`; `pnpm schemas` sinh `docs/schemas/*.schema.json`; CI drift | `p/domain/src/schema/**`, `docs/schemas/**`, `scripts/gen-schemas.mjs` | JSON Schema sinh ra khớp bản v1 viết tay (mọi khác biệt có giải thích trong commit); fixture hợp lệ/không hợp lệ; `examples` trong schema validate bằng ajv | chưa làm |
+| P0-04 | Máy trạng thái quest + nhân vật: `transitions.ts` dạng bảng, `transition()`, bất biến (cả bất biến của đội), property test "không chuyển ngoài bảng"; `statusToneOf`, `characterToneOf`, `bannerOf` (§2.7); `reputationOf`, `affinityOf`, `titleOf` (§2.6) | `p/domain/src/{quest,character,world}/**` | coverage 100%; bảng §2.5 sinh từ code (`docs:gen`); mọi trạng thái có tông khớp `data-status` của `elvaria.css` (test đọc danh sách từ CSS nguồn hiện hành: `design/project/elvaria.css` cho tới khi có `ui-kit`, sau đó `packages/ui-kit/src/elvaria.css`) | chưa làm |
+| P0-05 | `p/eventlog`: append JSONL theo ngày, reader có cursor + migrate theo `v`, `redact` (patterns.json + known), tail polling | `p/eventlog/**` | test ghi/đọc 10k dòng, cursor sau crash, redact fixture 12 loại secret | chưa làm |
+| P0-06 | `p/store`: layout kingdom, atomic write + lock, `readQuest/writeQuest…`, khung migration + fixture v1, inbox read/ack, `init(kingdomDir)` chép registry | `p/store/**` | test trên tmp dir, Windows + macOS CI; ghi đồng thời không hỏng file | chưa làm |
+| P0-07 | `p/i18n` + `glossary.json` (từ [glossary.md](glossary.md) hiện có) + `docs:gen` (glossary.md, events.md, dependency-graph.md) + `docs:check` (README 4 mục, từ cấm, id lint, link sống, cấm .sh/.ps1/.cmd) | `p/i18n/**`, `scripts/docs-*.mjs`, `docs/**` | CI drift xanh; cố tình thêm identifier `dispatcher` → fail | chưa làm |
+| P0-08 | `a/cli` khung: `elvaria init --kingdom <dir> --name` (ghi hai tộc mặc định), `territory add <path>`, `quest add/list/show/confirm/cancel/edit`, `character add --tribe`, `doctor` (theo `kingdom.tribes`: tìm binary, ghi `tool`, kiểm git), `migrate`; output song ngữ; lệnh ghi quest đi qua inbox | `a/cli/src/**` | e2e CLI test (spawn `node dist/cli.js` trên tmp kingdom) trên 3 OS | chưa làm |
+| P0-09 | Reducer world state: `reduce(events) → WorldState` (view quest/character/territory/mana) + snapshot có version; protocol WebSocket trong `domain/src/protocol` | `p/domain/src/{world,protocol}/**` | replay 1 ngày giả → state khớp quest files (test đối chiếu) | chưa làm |
+| P0-10 | `p/sandbox generate`: kịch bản `busy/quiet/mana-out` dùng `planTick` + `FakeRunner`; `replay --to terminal` | `p/sandbox/**`, lệnh `sandbox` trong `a/cli` | **Mốc giai đoạn 0**: `elvaria sandbox generate --day busy && elvaria sandbox replay … --speed 20` in dòng thời gian đọc được, mọi event validate | chưa làm |
+| P0-11 | Cập nhật [CLAUDE.md](../CLAUDE.md) theo lệnh thật; `.claude/rules/*`, `.claude/hooks/*` (bản Elvaria), `.claude/settings.json`; README mỗi package; rà ADR 0001–0006, 0010, 0014–0016 theo code thật | `CLAUDE.md`, `.claude/**`, `docs/adr/**`, `p/*/README.md` | `docs:check` xanh; một phiên Claude Code mới đọc CLAUDE.md và làm được P1-01 không hỏi thêm | chưa làm |
+
+### Giai đoạn 1 — Tầng việc chạy thật
+
+Mốc: 10 quest dc1-se-team đi hết vòng; cố tình hết mana rồi hồi sinh đúng chỗ. Thứ tự: **tách vai và hồi sinh trước** (hai giả định rủi ro nhất), rồi runner thật.
+
+| # | Task | File chạm | Xong khi | Trạng thái |
+|---|---|---|---|---|
+| P1-01 | `p/runner-core`: interface `AgentRunner` + `AdapterCapabilities`, `FakeRunner` có kịch bản (submit/crash/hang/rate_limit/blocked), `ToolPolicy` từ class + laws + role, `buildPrompt` (mẫu assignee/verifier/resume/chancellor) snapshot, khung **bộ test hợp đồng** (conformance) chạy được với mọi adapter; `tribeLimitsOf(caps)` trong domain (§3.14) | `p/runner-core/src/{runner,policy,prompt,conformance}/**`, `p/domain/src/tribe/**` | snapshot prompt cho 4 vai; policy verifier không có Edit/Write; `FakeRunner` qua bộ test hợp đồng; bảng xuống cấp theo năng lực có test | chưa làm |
+| P1-02 | **Spike Claude** (chạy thật, ~2 giờ): (a) mana — status line có chạy dưới `-p` không, có `rate_limits` không, `api_retry`/`StopFailure` khi 429, đo `modelUsage`; (b) worktree trong repo — CLAUDE.md của checkout chính có bị nạp đôi không (`/context`); (c) `--agents` trong `-p` có tôn trọng `tools`/`maxTurns` của học trò không. Kết quả → cập nhật ADR 0007, 0009, 0017; ghi phiên bản CLI | `docs/adr/*.md`, `docs/spikes/claude-2026-11.md`, `p/runner-claude/fixtures/*.jsonl` (đã che) | ADR có số liệu; fixture stream-json thật cho test adapter; chốt `worktree_dir` mặc định | chưa làm |
+| P1-03 | `p/steward`: vòng tick + inbox + lock + `planTick`, `selectAssignee` (lọc theo nghề, xếp theo `affinityOf`), ghi verdict vào `reputation` + `skill_affinity`; chạy với `FakeRunner` hết vòng `open → … → done` trên kingdom tmp; kill/restart không chạy trùng | `p/steward/src/**`, `p/domain/src/dispatch/**` | test tích hợp 10 quest giả, restart giữa chừng | chưa làm |
+| P1-04 | Luật tách vai: `selectVerifier` (kể cả loại thành viên đội), `validateVerdict`, đường lui `machine_only`; steward nối review → verdict → done/returned/awaiting_seal; `elvaria seal/return` ghi inbox | `p/domain/src/verify/**`, `p/steward`, `a/cli` | property test; FakeRunner verifier; quest cần dấu chờ dấu, seal qua CLI → done | chưa làm |
+| P1-05 | Mana + hồi sinh với FakeRunner: `ManaGauge`, `decideManaState`, tộc ngủ/thức theo pool, `paused_mana` giữ assignee, probe theo lịch, lệnh `wake`, hồi sinh bằng phiên mới từ handover | `p/domain/src/mana/**`, `p/steward/src/mana/**` | rate_limit giữa chừng → ngủ → probe → tiếp tục cùng người, attempts không tăng | chưa làm |
+| P1-06 | Cầu dao: `evaluateBreakers`, kill tree thật (Windows/macOS), `commitAll` trước khi kill, → infirmary + chuông (`ConsoleBell`) | `p/domain/src/breaker/**`, `p/runner-core/src/process/**` | test kill tree cả hai OS trong CI; FakeRunner treo → infirmary đúng phút | chưa làm |
+| P1-07 | `PlotManager` git worktree: prepare/status/commitAll/release, `core.longpaths`, `info/exclude`, `commands.setup`; `runChecks` theo `when` + khóa `exclusive` | `p/runner-core/src/{plot,checks}/**` | test trên repo git tmp, đường dẫn có khoảng trắng; checks chọn đúng theo glob | chưa làm |
+| P1-08 | `p/hooks/elvaria-hook.mjs`: 12 sự kiện Claude → event, PreToolUse chặn laws, Stop kiểm handover, StopFailure → `mana.signal`; benchmark khởi động | `p/hooks/**` | test stdin giả từng sự kiện; < 100 ms; đường dẫn backslash | chưa làm |
+| P1-09 | `p/runner-claude`: argv/settings/agents.json sinh ra, spawn, parse stream-json, `RunResult`, `probe`, `doctor` (tìm binary kể cả thư mục extension VS Code) | `p/runner-claude/**` | test với `fake-claude.mjs` + fixture P1-02; `ELVARIA_LIVE=1` smoke probe thật | chưa làm |
+| P1-10 | Kho bảo vật + env tối thiểu + deny rules + redact ở runner/store | `p/runner-core/src/treasury/**`, `p/store` | test env snapshot; fixture secret xuất hiện 0 lần | chưa làm |
+| P1-11 | **Quest thật đầu tiên** trên dc1-se-team: `territory add` (laws từ CLAUDE.md của dc1: forbidden_paths `.env`, `infra/secrets/**`; checks từ bảng Change impact; `max_concurrent 1`; kiểm `ignores` cho `.elvaria/**`), quest #5 (Kiến tạo `pnpm check`) với hiệp sĩ Claude + judge Claude khác model (kiểm tra máy là trọng tài chính). Rồi `territory add` **repo Elvaria** (dogfood, lãnh thổ #2; steward chạy từ `dist` của checkout chính nên agent sửa code trên nhánh không ảnh hưởng tiến trình đang chạy; không merge tự động) | kingdom của người dùng (thư mục riêng), `docs/guides/first-quest.md` | quest đi `open → review → awaiting_seal` không cần can thiệp; nhánh `quest/<id>` có commit + `handover.md` tiếng Việt; hai lãnh thổ hiện trong `elvaria territory list` | chưa làm |
+| P1-12a | **Spike Antigravity CLI** (`agy` 1.5.1, ~2 giờ, trước khi viết adapter): các câu hỏi ở [cli-facts](reference/cli-facts-2026-11-06.md) §2.5 — `-p` với stream-json và `--json-schema`; `--settings` với `permissions.allow`/`deny` (deny có hiệu lực không); hook `.agents/hooks.json` có nhận env không, chạy bằng shell nào trên Windows, `decision: auto_approve`/`deny` có vượt `request-review` không; `/usage` dạng `json` và độ ổn định khi quota < 100%; subagent trong `-p`; mã thoát; vị trí transcript; cách pin khi extension tự cập nhật; `agy models` làm `probe()` | `docs/spikes/antigravity-2026-11.md`, `p/runner-antigravity/fixtures/*.jsonl` (đã che), ADR 0018 | bảng "được / không được" cho từng điểm; fixture thật | chưa làm |
+| P1-12b | `p/runner-antigravity` theo §3.7: policy qua `--settings` + hook PreToolUse (`--policy` file), `GEMINI.md` nhúng CLAUDE.md + rules, argv, parse stream-json, `status`/`error` → outcome và signal, probe `/usage`; `doctor` bắt buộc `terms_acknowledged_at` | `p/runner-antigravity/**`, nhánh agy trong `p/hooks` | test với `fake-agy.mjs`; smoke probe thật; CLAUDE.md + rules được nạp (prompt "liệt kê convention bắt buộc"); tool ngoài allowlist bị deny (thử thật một lệnh cấm) | chưa làm |
+| P1-12c | (tùy chọn, đường lui) `p/runner-gemini` (Gemini CLI 0.67.x + API key): `GEMINI_CLI_HOME` riêng + settings sinh ra (hooks, tools.core/allowed, context.fileName, ignoreLocalEnv), parse stream-json, mã thoát → outcome, quota → signal | `p/runner-gemini/**` | test với `fake-gemini.mjs`; chỉ chạy thật nếu người dùng tạo API key | chưa làm |
+| P1-12d | (tùy chọn, khi người dùng có tài khoản Codex) **Spike Codex CLI** rồi `p/runner-codex` (adapter `codex_cli`): `codex exec --json` → `RunnerSignal`, `AGENTS.md` sinh ra nhúng luật lãnh thổ, hook sinh ra **không đổi byte giữa các lần chạy** (Codex tin cậy hook theo hash), sandbox `workspace-write`, `--output-schema` | `docs/spikes/codex-<ngày>.md`, `p/runner-codex/**` | qua bộ test hợp đồng với `fake-codex.mjs`; smoke thật; một quest thật được judge khác họ chấm | chưa làm |
+| P1-13 | Tể tướng: `draftQuests` qua `--json-schema` (gán `class_required`, `tags` từ `tags.json`, nhận ra việc cần đội), `elvaria say "<câu>"` → lệnh `create_quest` (draft) → `confirm` | `p/chancellor/**`, `a/cli` | fixture `structured_output`; câu mơ hồ → 1 câu hỏi; tag ngoài `tags.json` → draft bị loại | chưa làm |
+| P1-14 | Giao hàng theo kind (`deliver`): code → nhánh + `delivery.md` (mô tả PR) trong `.runs`; docs/report → file trong nhánh; draft → chờ dấu; subquests → quest con `open` | `p/steward/src/deliver/**` | test từng kind với FakeRunner | chưa làm |
+| P1-15 | Roster giai đoạn 1 (`elvaria character add` × 8): knight (Claude), scribe (Gemini), scout (Gemini), astrologer (Claude), bard (Claude), mage (Claude), judge (Claude), judge (Gemini); kinh rỗng; prompt vai từ registry | kingdom của người dùng, `p/registry-default/prompts/*.md` | `elvaria character list` đúng; mỗi class có prompt file | chưa làm |
+| P1-16 | **Chạy 10 quest** của kế hoạch sản phẩm mục 13 (thật), ghi `docs/guides/phase-1-report.md`: thời gian, token, verdict, lỗi gặp, **tỉ lệ ba bậc** (script/học trò/phiên); sửa kế hoạch theo thực tế. Quest #4 (link) chạy bậc script `link-check` → `units[]`, chỉ mở quest con session cho link chết cần sửa; quest #10 chạy `run-check` cho lint/typecheck/test → quest Trừ tà chỉ khi có quái. Thêm **2 quest dogfood** trên lãnh thổ Elvaria (ví dụ: README cho một package còn thiếu; thêm một script vào catalog) | `docs/**` | **Mốc giai đoạn 1**: 10/10 (+2) đi hết vòng, chỉ cần dấu vua; một lần cố tình hết mana Gemini (hoặc Claude) rồi hồi sinh, quest tiếp đúng chỗ; ≥ 2 quest hoàn toàn bậc script (mana 0) | chưa làm |
+| P1-17 | Ba bậc chạy việc (§3.12): `run-script` trong steward + verdict máy; `agents.json` học trò cho runner-claude; hook chặn `SubagentStart` lạ; `agent.subagent.overrun`; Tể tướng gán `tier`, gom và chia việc; `docs/tier-report.md` từ event log | `p/steward/src/script/**`, `p/runner-claude`, `p/hooks`, `p/chancellor`, `scripts/docs-gen.mjs` | test §3.12; quest script giả đi hết vòng với mana 0; học trò quá `maxTurns` bị cắt (test với fake-claude) | chưa làm |
+| P1-19 | **Hợp đồng tộc mở** (§3.14), làm sau mốc giai đoạn 1: nạp adapter file `adapters/<name>.mjs` (`createAdapter(kit)`), `elvaria tribe add/check/disable`, huy hiệu trung tính cho tộc chưa có theme, áp `tribeLimitsOf` trong `planTick` | `a/cli/src/tribe/**`, `p/runner-core/src/kit/**`, `p/domain/src/tribe/**` | một adapter file giả (CLI giả, thiếu `tool_gate`) qua bộ test hợp đồng, chỉ nhận quest F–D, đi hết vòng một quest | chưa làm |
+| P1-18 | **Đội** (§3.13), làm sau mốc giai đoạn 1, không thuộc mốc: quest hợp đồng → các phần + quest ghép tự tạo; worktree của phần và quest ghép tách từ nhánh hợp đồng; quest ghép merge cục bộ + chạy toàn bộ kiểm tra; `partyStatusOf`. Chạy thật một đội trên dc1-se-team (một phần `backend` + một phần `frontend`, hợp đồng OpenAPI) | `p/steward/src/{deliver,party}/**`, `p/runner-core/src/plot/**`, `p/domain/src/party/**` | test §3.13; một đội thật đi tới `awaiting_seal` của quest ghép, người chấm ngoài đội | chưa làm |
+
+### Giai đoạn 2–5 — đề mục và ràng buộc kiến trúc đã quyết từ bây giờ
+
+**Giai đoạn 2 — Sự kiện, chuông, khách nhẹ.** `p/herald` (HTTP tĩnh + WebSocket; tail event log → `reduce` → delta; nhận hành động → `inbox/`); `Bell` adapter desktop (`node-notifier`) + web push; Nhà thơ (`ScheduledJob` đầu tiên, model rẻ); `a/lite` (2D, 390 px, cùng protocol). **Thiết kế**: việc đầu tiên là `p/ui-kit` (`ui:import` từ `design/` một lần, `gen-icons`, font tự host; từ đây `ui-kit` là nguồn) và `p/ui` với các thành phần dùng ở điện thoại; port đúng thứ tự handoff §5: `MMap, MThrone, MBell, MChancellor` + trạng thái `S-MMapOffline, S-MTunnelLost, S-MThroneEmpty`; chuỗi VI vào i18n. `Flow6` là kịch bản e2e (Playwright) của mốc giai đoạn 2. Ràng buộc đã chốt: **protocol WebSocket = `{type:'snapshot', state: WorldState} | {type:'events', events: Event[]} | {type:'command', command: InboxCommand}`** sống trong `domain/src/protocol` từ P0-09, nên herald và lite không cần đổi domain. Đường hầm: herald chỉ bind `127.0.0.1`; token Bearer trong header; mọi hành động vẫn chỉ ghi inbox ⇒ loại đường hầm (Tailscale/Cloudflare) chỉ là cấu hình ngoài, không có code riêng.
+
+**Giai đoạn 3 — Thế giới xám (Three.js).** `a/world` chỉ nhận `WorldState` + `Event[]`; render-on-demand là ràng buộc đầu tiên: vòng render do `requestRender()` kích hoạt bởi event/camera/animation, không `requestAnimationFrame` liên tục; đo CPU nhàn rỗi là test tự động (Playwright + `performance.measure`). `world/map.json` ([world-map](schemas/world-map.schema.json), mức `version + regions[]` từ P0-03); LOD theo lãnh thổ do herald tính (ở tầng dữ liệu) để lite cũng dùng. Sa bàn 3D = herald replay + cờ sandbox. **Thiết kế**: port `Hud.dc.html` làm overlay HTML trên canvas Three.js (thanh trên 48, dock phải 380 / dock đôi 760 khi ≥ 2200px qua `--elv-dock-right-w`, dock dưới 240, overlay trái, khung Tể tướng canh giữa phần bản đồ), rồi `Quest, Guild, Throne, Character, Territory, Settings` và các `S-*` tương ứng; `Map.dc.html` **chỉ** để lấy bảng màu `--elv-map-*` cho material Three.js (đọc CSS variable lúc chạy để ngày/đêm đổi cả 3D); `*XL.dc.html` là bài test bố cục 2560×1600; `Flow1, Flow2` là e2e của mốc giai đoạn 3.
+
+**Giai đoạn 4 — Nghi thức và sắc đẹp.** Theme là dữ liệu `themes/<name>/{kinds,classes,rituals,buildings,tribes}.json` + assets + `LICENSES.md`; schema trong domain; `apps/world` nạp theo `kingdom.theme`; khảo sát điền địa = `ScheduledJob` + quest Thám hiểm sinh `territory.buildings[]`; "mở cõi" = `territory.attached` + vùng mới trong `world/map.json`; lớp "cần ngài" = selector thuần `attentionQueue(state)` trong domain (dùng cho world, lite, CLI). **Thiết kế**: port `FirstOpen, OpenRealm` (+ `S-OpenRealmError/Partial`), `WarRoom, Muster`, các `scene` toàn cục của HUD (`S-HudSleeping/Cli/Sandbox/Defense`); màn **Đền** và **Biên niên sử** chưa có mockup → dựng từ Panel + Timeline + Check-item theo handoff §4, đề nghị thiết kế bổ sung ở v0.3; `Flow3, Flow4, Flow5` là e2e.
+
+**Giai đoạn 5 — Đền, tuần tra, chiến dịch, trận đánh.** Monk (`ScheduledJob`), parser/writer bài học (schema từ P0-03), danh tiếng/cấp (hàm thuần từ P0-04); **bí kíp** (§3.13): spike định dạng skill của hai CLI, `selectSkills`, runner đưa bí kíp vào phiên, Thầy tu viết bí kíp từ bài học lặp ở ≥ 2 nhân vật (schema `skill` đã có từ P0-03, `buildPrompt` đã có tham số `skills` từ P1-01); patrol với trần mana tuần (gauge đã có); campaign/battle: schema đã có từ P0-03, `batch` là kind với `units[]` trong quest (hiển thị là "Trận đánh"); replay trận = sa bàn replay lọc theo quest. Không có quyết định nào ở giai đoạn 0–1 cần mở lại.
+
+---
+
+## 9. Phản biện và rủi ro
+
+### 9.1 Chỗ khác kế hoạch sản phẩm (đã chốt 2026-11-06)
+
+1. **Sứ giả không ghi `quests/`.** Sơ đồ mục 3 của kế hoạch sản phẩm có SG → QB. Hai tiến trình cùng ghi một file JSON là nguồn race khó debug trên Windows (rename đè file đang mở). Sứ giả/CLI/điện thoại ghi **lệnh** vào `inbox/`, Quản sự là người ghi duy nhất (ADR 0005). Quyền hạn không đổi, còn dễ audit hơn (mọi lệnh người dùng là một file + một event).
+2. **Một class nghiệm thu (`judge`), nghi thức theo kind.** Kế hoạch sản phẩm mục 6 có 5 class nghiệm thu (Thợ cả, Thủ thư trưởng, Chiêm tinh gia thứ hai, Trọng tài, Hiền giả) + "mỗi nhân vật một nghề". 10 quest giai đoạn 1 sẽ cần ≥ 5 verifier × 2 tộc = 10 nhân vật chỉ để chấm. Vì nghi thức đã là dữ liệu (`rituals.json`), class `judge` + `ritual = kinds[kind].ritual` cho cùng kết quả với 2 nhân vật. Tên "Thợ cả / Thủ thư trưởng…" thành **danh hiệu** hiển thị theo kind trong theme (ADR 0011).
+3. **Mọi quest trên lãnh thổ git dùng worktree**, kể cả Soạn thảo/Thám hiểm (kế hoạch sản phẩm mục 7 nói quest tài liệu dùng `quests/<id>/work/` + copy). Với dc1-se-team, `docs/testing.md` phải vào nhánh và qua PR như mọi file khác; copy vào checkout chính là ghi ngoài đất riêng, vi phạm bảng quyền hạn. `work/` chỉ cho lãnh thổ không git (ADR 0012).
+4. **Journal tách đôi** (§2.4): agent tự ghi `journal.md` không tin được; hook ghi journal máy, agent viết thư bàn giao có mẫu, hook Stop ép (ADR 0010).
+5. **`gear_tier`, `morale`, `reputation.pass/fail` không lưu** — là hàm suy ra; lưu thì lệch.
+6. **Không Python, không SQLite ở giai đoạn 0–2** (§4.3).
+7. **Thêm trạng thái `draft`** cho bước xem trước của Tể tướng (brief yêu cầu; kế hoạch sản phẩm thiếu).
+8. **`paused_mana` giữ assignee** đúng nguyên tắc 6, nhưng nếu tộc ngủ nhiều ngày (quota tuần) thì việc đứng. Thêm `mana.reassign_after_hours` (mặc định `null` = không bao giờ, người dùng bật được) — hệ thống vẫn không tự xoay tài khoản, chỉ đổi người theo luật đã khai.
+9. **Mana Claude không đọc được từ status line khi headless (chưa có tài liệu)** — kế hoạch sản phẩm mục 7 coi đó là nguồn chính. Gauge ba nguồn (§3.5) để không phụ thuộc; spike P1-02 quyết định (ADR 0009).
+10. **Luật "quest chạm cùng file không chạy song song"** cần biết file sẽ chạm *trước khi* làm — không biết được. Giai đoạn 1: `territory.max_concurrent = 1` cho lãnh thổ code; giai đoạn 2+: khóa theo `checks.exclusive` và theo thư mục khai trong quest (`scope_paths`, Tể tướng ước lượng).
+11. **Hợp nhất**: kế hoạch sản phẩm nói merge là "quest riêng có nghiệm thu". Đồng ý, nhưng giai đoạn 1 người dùng merge tay sau dấu vua (`delivery.md` có lệnh gợi ý); quest Hợp nhất tự động là giai đoạn 2 — tránh để Elvaria có quyền `git push` ở v1.
+12. **Tộc Gemini chạy `agy` với gói Google AI Pro là lựa chọn có rủi ro điều khoản** (§3.0, ADR 0018): Gemini CLI đã ngừng phục vụ tài khoản cá nhân từ 2026-06-18; FAQ Antigravity nói bọc `agy` trong ứng dụng khác "không được hỗ trợ với gói cá nhân" và phần mềm bên thứ ba truy cập Antigravity "vi phạm điều khoản". Người dùng đã chọn dùng Antigravity; Elvaria làm theo, với cờ `terms_acknowledged_at` để quyết định có chủ và có dấu vết, và giữ `runner-gemini` (API key) làm đường lui một trường cấu hình. Nếu Google chặn hoặc người dùng đổi ý: `tribes[gemini].adapter = gemini_cli` + một API key. Nguyên tắc 6 (mỗi tộc một tài khoản của người dùng, không tự xoay) giữ nguyên. Nếu tài khoản bị hạn chế, Elvaria không có cách khắc phục nào ngoài chuyển sang API key.
+13. **Gemini CLI không có flag structured output** ⇒ Tể tướng và verifier mặc định chạy tộc Claude (có `--json-schema`); tộc Gemini làm Tể tướng chỉ khi Claude ngủ (agy có `--json-schema`; Gemini CLI dùng parse + retry).
+14. **Bậc script cần catalog, không phải "script bất kỳ"**: nếu để model viết script rồi chạy thì đã là bậc session. `registry/scripts.json` + 5 script mặc định có test; thêm script = thêm file + một dòng catalog (dữ liệu, như kind). Tể tướng chỉ chọn trong catalog.
+15. **Ngưỡng học trò 5 phút không enforce được từ ngoài** với Claude Code: không có cách kill một sub-agent từ hook; `SubagentStop` chỉ cho "block/continue". Cái enforce được là `maxTurns` trong định nghĩa agent: `subagent_max_turns` (30) là cầu dao thật, `subagent_max_minutes` (5) là số đo + phạt vào quest mẹ. "Sub-agent không đẻ sub-agent" enforce bằng `tools` của học trò không có `Agent` + hook chặn — spike P1-02 xác minh Claude Code 2.1.318 tôn trọng `tools` của agent định nghĩa qua `--agents` trong `-p`.
+16. **`--resume` sau khi hết mana mâu thuẫn nhẹ với nguyên tắc 13** ("mỗi nhân vật là một phiên cấp cao nhất mới"): mặc định là phiên mới từ handover; `--resume` là tùy chọn tiết kiệm token, tắt mặc định.
+17. **"Khác nhà cung cấp" không còn trùng với "khác CLI"**: Antigravity phục vụ cả Claude Opus/Sonnet 5.5 và GPT-OSS từ pool riêng. Nếu để mặc, Elvaria có thể cho Claude (qua agy) chấm Claude (qua Claude Code) và tưởng là đã "khác tộc". Luật tách vai so **họ model** trước (§3.2); pool `claude_gpt_models` của Antigravity tắt mặc định; bật lên là một cách hợp lệ để có "Claude thứ hai" khi tộc Claude ngủ (vẫn hai tài khoản, không xoay). Kế hoạch sản phẩm mục 6 ("Tộc ngược với người làm") đọc là "họ model ngược với người làm".
+18. **Thiết kế dùng slug tiếng Việt làm id icon**: code không nhận; `gen-icons` đổi tên sang EN theo bảng khi nhập, fail khi gặp icon lạ (§2.7). Sau lần nhập, icon mới thêm thẳng vào `ui-kit` với id EN; nếu có vòng thiết kế mới, đề nghị dùng id EN ngay tại nguồn.
+19. **Thiết kế v0.2 chưa biết vài thứ kế hoạch này thêm** — phản hồi cho vòng thiết kế v0.3: (a) tộc Gemini có **hai pool mana** (+ trần Argon) → thanh mana cần dạng "pool chính + phụ" hoặc tooltip; (b) `owner.locale`, `tools.gemini.kind/terms_acknowledged_at`, `worktree_dir`, `subagent_max_*`, `resume_after_mana` → nhóm "Công cụ & nâng cao" trong Cài đặt; (c) quest **bậc script** (không nhân vật, mana 0) cần dấu hiệu riêng trên card và trong Hội quán; (d) trạng thái `blocked` (nhân vật hỏi, chờ người dùng trả lời) hiện gộp vào tông `open` — nên có mặt trong lớp "Cần ngài" với hành động "trả lời"; (e) màn Đền, Biên niên sử, danh sách nhiều chiến dịch (handoff §4 đã nhận); (f) HUD `S-HudCli` "CLI chưa đăng nhập" cần tách theo tộc (Claude hay Antigravity); (g) id icon trong nguồn đổi sang tiếng Anh (`kind-build`, `class-knight`, `quest-review`, `action-seal`, `tribe-silver`); (h) từ 0.5: danh hiệu theo chuyên môn trên đầu nhân vật, cờ đội, quest ghép. (i) từ 0.6: huy hiệu, màu mana và bộ sprite cho tộc thứ ba trở đi, hoặc một huy hiệu trung tính dùng chung. Không chặn giai đoạn 0–1.
+20. **Danh tiếng theo tag và danh hiệu không lưu số đếm.** Kế hoạch sản phẩm ghi `skill_affinity: {tag: {pass, fail, window[]}}` và trường `title`. Như mục 5: lưu thì lệch. Chỉ lưu cửa sổ phán quyết theo từng tag; pass/fail là `affinityOf`; danh hiệu là `titleOf`; thứ duy nhất người dùng đặt là `pinned_tag` (lệnh `pin_tag`).
+21. **Tag là từ vựng đóng** (`registry/tags.json`, 7 tag mặc định). Kế hoạch sản phẩm chỉ nói "do Tể tướng gán". Không có danh sách cố định thì model sẽ đặt `front-end`, `frontend`, `web-ui` cho cùng một thứ và danh tiếng theo tag vỡ vụn. Thêm tag = sửa một file registry (ADR 0016).
+22. **Bí kíp**: đường dẫn `temple/skills/<id>/SKILL.md` là quy ước, không phải trường (như `journal`); `source` là `monk | user` cho khớp `lesson.source` (Thầy tu là người viết, Đền là nơi cất). Cách nạp vào từng CLI chưa kiểm, spike ở giai đoạn 5.
+23. **Đội không có file riêng**: `party_id` là id của quest hợp đồng; trạng thái đội suy ra từ các quest. Quản sự **tự tạo** quest ghép khi quest hợp đồng giao hàng, để không phụ thuộc trí nhớ của trưởng đội. Phần và quest ghép tách worktree từ nhánh hợp đồng. Song song chỉ khi `territory.max_concurrent` cho phép (giai đoạn 1 mặc định 1). Quest ghép chỉ merge cục bộ vào nhánh của nó; merge vào nhánh chính vẫn do người dùng (mục 11). Toàn bộ luồng đội là P1-18, làm sau mốc giai đoạn 1 vì 10 quest của mốc không cần đội; schema và luật tách vai cho đội có ngay từ P0-03 / P1-04 để không phải migrate.
+24. **"Tộc" là một thực thể, không phải hằng số.** Theo hợp đồng tộc của kế hoạch sản phẩm, `kingdom.tools` và `mana.tribes` (hai khóa cố định claude/gemini) gộp thành `kingdom.tribes[]`; trường `provider` đổi thành `tribe` (id mở, không còn enum); `class.default_provider` → `default_tribe`; `dispatch.verifier_same_provider` → `verifier_same_family` (luật so họ model, không so nhà cung cấp); `auth: oauth` → `login` (đúng cho mọi CLI). Không có code nên đổi bây giờ không tốn migration.
+25. **Adapter là package trong repo hoặc một file của người dùng.** Kế hoạch sản phẩm nói "thêm tộc là việc của người dùng: một file adapter". File `adapters/<name>.mjs` trong kingdom export `createAdapter(kit)`; `kit` (phần chung của runner-core) được tiêm vào nên file không import gì. Adapter Elvaria tự viết (`claude_code`, `antigravity`, `gemini_cli`, `codex_cli`) vẫn là package có test. Mọi adapter phải qua **bộ test hợp đồng** trước khi bật.
+26. **Năng lực thiếu thì tộc bị thu hẹp, theo luật thuần.** Bảng của kế hoạch sản phẩm thành `tribeLimitsOf(caps)` trong domain, `planTick` áp dụng. Thêm một năng lực "nên có" mà bảng chưa có: `structured_output` (Tể tướng và verifier cần; thiếu thì schema trong prompt + parse + thử lại).
+27. **Thêm tộc không đổi nhân vật cũ.** Nghề **và tộc** của nhân vật cố định suốt đời, vì danh tiếng và kinh gắn với model của tộc đó; chuyển việc sang tộc mới = triệu hồi nhân vật mới. Trách nhiệm tự điều chỉnh qua dữ liệu: luật tách vai có thêm cặp khác họ, nghiệm thu không giới hạn cấp nên judge của tộc mới chấm được ngay, người làm của tộc mới bắt đầu ở cấp 1 (§3.14).
+28. **Dữ kiện Codex lấy từ kế hoạch sản phẩm 0.6**, chưa được một phiên kỹ thuật kiểm lại; máy này chưa cài Codex (2026-11-06). Adapter Codex là task tùy chọn P1-12d, bắt đầu bằng spike như Claude và Antigravity.
+
+Kế hoạch sản phẩm 0.6 còn vài chỗ viết theo hiện trạng cũ, đọc theo tài liệu này: mục 3 và 8 ("Runner Gemini CLI", "đăng nhập Google một lần", cột "Gemini CLI · Login Google" của ma trận hợp đồng tộc) đọc là Antigravity CLI với tài khoản cá nhân; Gemini CLI chỉ còn là đường lui với API key (ADR 0018); mục 4 "Bố cục thư mục" (`journal.md`, `world/themes/`) đọc theo §2.2; mục 13 ("nạp CLAUDE.md vào GEMINI.md") đọc theo §3.8; mục 10 giai đoạn 1 "4 nhân vật" đọc là 8 (P1-15).
+
+### 9.2 Rủi ro kỹ thuật
+
+| Rủi ro | Giảm nhẹ |
+|---|---|
+| `-p` ở chế độ Manual từ 2.1.302 từ chối mọi tool cần hỏi → agent "làm xong" mà không sửa gì | `dontAsk` + allowlist sinh từ class; test adapter kiểm `permission_denials` rỗng; verdict fail nếu diff rỗng mà quest là Kiến tạo |
+| Hook của lãnh thổ (dc1 `typecheck-touched` 80 s, `stop-checks` 100 s) cộng với hook Elvaria làm phiên chậm/timeout | hook Elvaria < 100 ms; cầu dao thời gian tính cả hook; `agent.tool` kèm `duration_ms` để thấy |
+| `pnpm install` mỗi worktree của dc1 (~1k file, native deps) chậm và tốn đĩa; Docker e2e không chạy song song | `commands.setup` chạy một lần, `--prefer-offline`; `checks.exclusive` + `max_concurrent 1`; archive dọn `node_modules` |
+| Windows: không sandbox; deny rule Bash là so khớp chuỗi (`Bash(git push:*)` không chặn `git -C . push`) | hook PreToolUse với regex chuẩn hóa (`git\s+(-C\s+\S+\s+)?push`); luật rõ trong CLAUDE.md: "deny là hàng rào, không phải sandbox"; secret không có trong env nên rò rỉ bị giới hạn |
+| Claude Code đổi hành vi mỗi vài ngày (2.1.316 → 318 trong 4 ngày); extension Antigravity tự cập nhật `agy` | `kingdom.tools.<p>.version` pin; `doctor` cảnh báo khi khác; adapter ≤ 300 dòng; fixture stream theo phiên bản; file cli-facts mới khi phiên bản đổi |
+| Tài khoản claude.ai (OAuth) không có API key ⇒ `--bare`, `CLAUDE_CONFIG_DIR` tách credentials, OTel… chưa chắc dùng được | giai đoạn 1 dùng config dir mặc định; spike P1-02 |
+| Prompt injection từ nội dung repo hoặc web (Thám hiểm đọc web) khiến agent chạy lệnh lạ | `WebFetch` chỉ cho class scout; deny `Bash` ngoài allowlist; verifier khác họ model; mọi lệnh ra ngoài cần dấu |
+| Hai tiến trình (steward + herald) cùng đọc event log khi file đang ghi → dòng bị cắt đôi | append một `write()` mỗi dòng (< 64 KB, atomic trên cả hai OS với append nhỏ); reader bỏ dòng cuối không kết thúc bằng `\n` |
+| Thời gian máy nhảy (ngủ đông, đổi múi giờ) làm cầu dao và lịch sai | dùng `performance.now()` cho khoảng, `Date` cho mốc; ghi `tz` vào kingdom; `due()` của lịch chịu được nhảy |
+| Kill tree trên Windows để lại lock `node_modules/.pnpm` hoặc container Docker mồ côi | `commitAll` trước khi kill; `checks[].cleanup` tùy chọn trong territory |
+| Hạn mức tộc Gemini nhỏ hoặc bị siết → "khác tộc" hiếm khi khả thi | `verifier_same_family = different_model` + kiểm tra máy là trọng tài chính; đo thực nghiệm ở P1-16 |
+| Người dùng sửa `quests/<id>.json` bằng tay khi steward đang chạy | `elvaria quest edit` ghi lệnh `edit_quest` (kèm `expected_updated_at`); steward phát hiện `updated_at` lệch → `command.rejected` + cảnh báo, không ghi đè |
+| **Điều khoản sử dụng**: Antigravity nói bọc `agy` với gói cá nhân không được hỗ trợ / vi phạm; Anthropic cho phép đăng nhập binary không sửa đổi bằng subscription nhưng hạn mức "giả định mức dùng cá nhân thông thường" | Gemini: lựa chọn của người dùng, cờ `terms_acknowledged_at`, đường lui API key; Claude: binary chính thức, không trích token, có đường chuyển `tools.claude.auth = api_key`; theo dõi mức dùng trong `tier-report` |
+| Gemini CLI tự nạp `.env` của repo (kể cả `.gemini/.env` trong thư mục tin cậy) → secret vào context | `--ignore-env` + `advanced.ignoreLocalEnv`; `GEMINI_CLI_HOME` riêng; PlotManager từ chối worktree có `.gemini/.env`; `.env` nằm trong `forbidden_paths` |
+| Trên Windows, Gemini CLI chạy `run_shell_command` bằng PowerShell còn Claude bằng Git Bash ⇒ cùng một lệnh check chạy trong hai shell khác nhau; regex `forbidden_commands` phải hiểu cả hai | `checks.run` giới hạn ở lệnh `pnpm`/`node`/`git` không dùng cú pháp shell; `forbidden_commands` test với fixture cả bash lẫn PowerShell (`Remove-Item`, `Get-Content .env`) |
+| Adapter file của người dùng là code chạy với quyền của người dùng | chỉ nạp từ `<kingdom>/adapters/`; `doctor` in đường dẫn và hash của file; bộ test hợp đồng phải qua trước khi `enabled: true`; vẫn đi qua `ToolPolicy`, env tối thiểu và `redact` của runner-core |
+| Codex tin cậy hook theo hash: hook sinh mỗi lần chạy với nội dung khác sẽ bị coi là chưa tin cậy | file hook của Codex sinh ra giống hệt nhau mọi lần (ngữ cảnh đi qua env / file `--policy`), người dùng tin cậy một lần; spike P1-12d xác minh |
+| Gemini API key trả phí: lỗi chi phí không có trần cứng | Gemini CLI không có `--max-budget` ⇒ cầu dao token của Elvaria là trần duy nhất; `tribes[].budget.usd_week` bắt buộc khi `tool.auth = api_key` (schema kiểm); cảnh báo 10 điểm trước trần |
+
+---
+
+## 10. Câu hỏi còn mở
+
+Không có câu hỏi nào chặn giai đoạn 0.
+
+Không còn câu hỏi mở.
+
+Đã trả lời (2026-11-06): tên nghề trong id giữ danh từ fantasy tiếng Anh (`knight, scout, scribe, bard, astrologer, envoy, mage, dwarf, judge, monk`); ADR 0019 chấp nhận, với sửa đổi: `design/` chỉ là bản gốc đầu tiên, sau khi nhập thì `ui-kit`/`ui` là nguồn và thiết kế đổi được trong lúc code.
+
+---
+
+## 11. Nhật ký quyết định
+
+| Ngày | Quyết định |
+|---|---|
+| 2026-11-06 | Lập kế hoạch triển khai từ kế hoạch sản phẩm 0.3 và brief thiết kế 0.2; sau đó cập nhật theo kế hoạch sản phẩm 0.4 (nguyên tắc 13 "một quest, một context", mục 7 "Script, sub-agent hay phiên mới"): thêm §3.12, `tier`/`script`, `subagent_max_*`, `resume_after_mana`, P0-02 (catalog script), P1-17, ADR 0017. Mọi tài liệu sinh ra trỏ tới `ke-hoach-dung-elvaria-0.4.md`; bản 0.3 giữ trong `docs/` làm lịch sử |
+| 2026-11-06 | Người dùng chốt toàn bộ quyết định §9.1 (mục 1–19) và 18 ADR đầu ("chốt theo bạn"); ADR 0019 chờ gật |
+| 2026-11-06 | Tộc Gemini = Antigravity CLI với tài khoản Google AI Pro của người dùng, cờ `terms_acknowledged_at`; đường lui Gemini CLI + API key (ADR 0018) |
+| 2026-11-06 | Kingdom là thư mục riêng ngoài repo; worktree ở `<repo>/.elvaria/worktrees/<quest-id>`; dogfood repo Elvaria là lãnh thổ #2 từ P1-11; ngôn ngữ người đọc theo `owner.locale`, mặc định `vi` |
+| 2026-11-06 | Bàn giao thiết kế v0.2 vào `design/`: thêm §2.7, `ui-kit`/`ui`, `gen-icons`, ADR 0019 |
+| 2026-11-06 | Khi tách kế hoạch đã duyệt thành tài liệu, sửa các chỗ kế hoạch tự mâu thuẫn: thêm `runner-antigravity` vào cây repo và DAG (17 package); P0-02 ghi 11 class (thiết kế có 12 icon vì judge có hai); `kingdom.tz`, `tools.claude.auth`, `tools.gemini.kind/terms_acknowledged_at`, `breakers.context_budget_tokens` vào schema kingdom; `territory.max_concurrent`, `checks[].cleanup`; bỏ `territory.map` (hình học chỉ ở `world/map.json`); `quest.units`, outcome `breaker`; `character.status_before_sleep`; lệnh inbox `confirm`, `edit_quest`; draft của Tể tướng đi qua inbox; event `mana.signal`, `agent.subagent.overrun`; giá trị `gemini_cli` (snake_case) thay cho `gemini-cli`; id ritual tiếng Anh thông dụng |
+| 2026-11-06 | Người dùng chốt: tên nghề trong id giữ danh từ fantasy tiếng Anh |
+| 2026-11-06 | Cập nhật theo kế hoạch sản phẩm 0.5 (nghề / bí kíp / kinh, chuyên môn theo danh tiếng tag, đội): `quest.skills_required` → `class_required` + `tags`; trường đội `party_id`, `party_role`, `contract`; `character.skill_affinity`, `pinned_tag`; schema `skill`, `tag`; lệnh `pin_tag`; §3.13; P1-18; ADR 0020. Mọi tài liệu trỏ tới `ke-hoach-dung-elvaria-0.5.md`; bản 0.4 giữ trong `docs/` làm lịch sử |
+| 2026-11-06 | ADR 0019 chấp nhận với sửa đổi của người dùng: `design/` là bản gốc đầu tiên, nhập một lần (`ui:import`), sau đó `ui-kit`/`ui` là nguồn; bỏ kiểm drift với `design/` |
+| 2026-11-06 | Cập nhật theo kế hoạch sản phẩm 0.6 (hợp đồng tộc): `kingdom.tribes[]` thay `tools` + `mana.tribes`; `provider` → `tribe`; `verifier_same_family`; `auth: login`; §3.14; `runner-codex` tùy chọn (P1-12d); P1-19; ADR 0021. Mọi tài liệu trỏ tới `ke-hoach-dung-elvaria-0.6.md` |

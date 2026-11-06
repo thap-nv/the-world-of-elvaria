@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Elvaria — Điện thoại: chuông</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./elvaria.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Grenze+Gotisch:wght@400;500;600&amp;family=Cinzel:wght@600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#D4A454}a:hover{color:#EEE4CF}
+</style>
+</helmet>
+<div class="elv" data-theme="{{theme}}" style="width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden; background: var(--elv-bg)">
+  <div class="elv-m-top">
+    <svg class="elv-ic elv-ic--20" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-accent)"><path d="M4 11h8c-1-1-1.5-2-1.5-4a2.5 2.5 0 0 0-5 0c0 2-.5 3-1.5 4z M6.5 13a1.5 1.5 0 0 0 3 0 M8 3.5V2"></path></svg>
+    <span class="elv-display elv-grow" style="font-size: 16px">Chuông <span class="elv-muted" style="font-family: var(--elv-font-body); font-size: 13px; font-weight: 400">· 4 chưa xem</span></span>
+    <button class="elv-btn elv-btn--ghost elv-btn--sm">Đã xem hết</button>
+  </div>
+
+  <div style="flex: 1; min-height: 0; overflow: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 8px">
+    <sc-if value="{{incoming}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border: 1px solid var(--elv-border-strong); border-radius: 10px; background: var(--elv-surface-2)">
+        <span class="elv-micro elv-dim">THÔNG BÁO ĐẨY · vừa xong · rung một lần</span>
+        <span class="elv-small"><b>Elvaria · Chờ dấu</b></span>
+        <span class="elv-small">Bramble nộp "Trang tổng quan đơn hàng theo mùa" — Ragnar đạt. Hợp nhất vào main cần dấu của ngài.</span>
+        <div class="elv-row" style="gap: 8px; margin-top: 2px"><a class="elv-btn elv-btn--sm elv-btn--primary" href="MThrone.dc.html" style="text-decoration: none">Mở Ngai vàng</a><button class="elv-btn elv-btn--sm elv-btn--ghost">Để sau</button></div>
+      </div>
+    </sc-if>
+
+    <span class="elv-label">Hôm nay</span>
+    <a class="elv-m-card elv-row" href="MThrone.dc.html" style="gap: 10px; align-items: flex-start; text-decoration: none; color: inherit; border-left: 3px solid var(--elv-accent)">
+      <svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-accent); margin-top: 2px"><path d="M6.5 3.5a1.5 1.5 0 0 1 3 0v4h2.5a1.5 1.5 0 0 1 1.5 1.5V11H2.5V9a1.5 1.5 0 0 1 1.5-1.5h2.5z M3.5 13.5h9"></path></svg>
+      <div class="elv-grow" style="min-width: 0; display: flex; flex-direction: column; gap: 2px"><span class="elv-small"><b>Chờ dấu</b> · Hợp nhất q_0142 vào main</span><span class="elv-small elv-muted">Thorn → Ragnar đạt · bẫy qua đêm đạt</span><span class="elv-micro elv-dim">20:49 · shop-api</span></div>
+      <span class="elv-dot" style="background: var(--elv-accent); margin-top: 6px"></span>
+    </a>
+    <a class="elv-m-card elv-row" href="MThrone.dc.html" style="gap: 10px; align-items: flex-start; text-decoration: none; color: inherit; border-left: 3px solid var(--elv-q-infirmary)">
+      <svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-q-infirmary); margin-top: 2px"><path d="M3 13.5L8 3l5 10.5z M8 7v4 M6 9h4"></path></svg>
+      <div class="elv-grow" style="min-width: 0; display: flex; flex-direction: column; gap: 2px"><span class="elv-small"><b>Quân y</b> · Wren lạc đầm lầy, q_0147 hết 3 lần thử</span><span class="elv-small elv-muted">Cần ngài: giao lại, nới cầu dao hoặc lưu trữ</span><span class="elv-micro elv-dim">19:10 · vùng sương mù</span></div>
+      <span class="elv-dot" style="background: var(--elv-accent); margin-top: 6px"></span>
+    </a>
+    <div class="elv-m-card elv-row" style="gap: 10px; align-items: flex-start; border-left: 3px solid var(--elv-q-sleep)">
+      <svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-q-sleep); margin-top: 2px"><path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z"></path></svg>
+      <div class="elv-grow" style="min-width: 0; display: flex; flex-direction: column; gap: 2px"><span class="elv-small"><b>Cả tộc Sao Bạc ngủ</b> · hết mana · 2 quest tạm dừng</span><span class="elv-small elv-muted">Hồi 14:00. Đăng nhập lại trên máy ở nhà để tỉnh sớm.</span><span class="elv-micro elv-dim">11:47 · đã tỉnh 14:02</span></div>
+    </div>
+    <div class="elv-m-card elv-row" style="gap: 10px; align-items: flex-start; border-left: 3px solid var(--elv-h-incident)">
+      <svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-h-incident); margin-top: 2px"><path d="M9 2L4 9h4l-1 5 5-7H8z"></path></svg>
+      <div class="elv-grow" style="min-width: 0; display: flex; flex-direction: column; gap: 2px"><span class="elv-small"><b>Báo động</b> · shop-api CI đỏ sau 7f3a</span><span class="elv-small elv-muted">Trừ tà q_0150 tự sinh · Thorn dẹp xong 04:02 · hội đồng sau chiến chờ</span><span class="elv-micro elv-dim">02:10 · <span style="color: var(--elv-q-done)">đã dẹp</span></span></div>
+    </div>
+
+    <span class="elv-label" style="margin-top: 6px">Hôm qua</span>
+    <div class="elv-m-card elv-row" style="gap: 10px; align-items: flex-start; opacity: .8">
+      <svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-q-done); margin-top: 2px"><path d="M8 2a6 6 0 1 1 0 12a6 6 0 1 1 0-12 M5 8.2l2 2 4-4.5"></path></svg>
+      <div class="elv-grow" style="min-width: 0; display: flex; flex-direction: column; gap: 2px"><span class="elv-small"><b>Đã đóng dấu</b> · q_0138 hợp nhất · lễ khánh thành</span><span class="elv-micro elv-dim">16:40</span></div>
+    </div>
+    <div class="elv-m-card elv-row" style="gap: 10px; align-items: flex-start; opacity: .8">
+      <svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-ink-2); margin-top: 2px"><path d="M4 2c0 4 1 6 2 8h4c1-2 2-4 2-8 M6 10v3 M10 10v3 M5 13h6"></path></svg>
+      <div class="elv-grow" style="min-width: 0; display: flex; flex-direction: column; gap: 2px"><span class="elv-small"><b>Biên niên sử</b> · ngày 05/11 đã viết · 7 quest xong, 1 trả</span><span class="elv-micro elv-dim">23:05 · Nhà thơ Lyra</span></div>
+    </div>
+    <span class="elv-small elv-dim" style="text-align: center; padding: 8px">Chuông chỉ cho: chờ dấu · bệnh xá · báo động · cả tộc ngủ. Kênh đổi trong Cài đặt.</span>
+  </div>
+
+  <nav class="elv-m-nav" style="position: relative">
+    <a href="MMap.dc.html"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4l4-2 4 2 4-2v10l-4 2-4-2-4 2z M6 2v10 M10 4v10"></path></svg>Bản đồ</a>
+    <a href="MThrone.dc.html" style="position: relative"><span class="elv-badge">3</span><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 12V5l3 2.5L8 3l3 4.5L14 5v7z M2 12h12"></path></svg>Ngai vàng</a>
+    <a class="on" href="MBell.dc.html"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 11h8c-1-1-1.5-2-1.5-4a2.5 2.5 0 0 0-5 0c0 2-.5 3-1.5 4z M6.5 13a1.5 1.5 0 0 0 3 0 M8 3.5V2"></path></svg>Chuông</a>
+    <a href="MChancellor.dc.html"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2h8v12H4z M6.5 6h3 M6.5 8.5h3"></path></svg>Tể tướng</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["night","day"],"default":"night","section":"Chế độ"},"variant":{"editor":"enum","options":["default","incoming"],"default":"incoming","section":"Trạng thái"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const v = this.props.variant ?? 'incoming';
+    return { theme: this.props.theme ?? 'night', incoming: v === 'incoming' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Luồng 1 — Ra lệnh tới đóng dấu</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./elvaria.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Grenze+Gotisch:wght@400;500;600&amp;family=Cinzel:wght@600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#D4A454}a:hover{color:#EEE4CF}
+.fl{display:flex;align-items:flex-start;gap:0;padding:32px;box-sizing:border-box;background:var(--elv-bg)}
+.st{width:504px;display:flex;flex-direction:column;gap:10px;flex:0 0 504px}
+.th{width:504px;height:315px;overflow:hidden;border:1px solid var(--elv-border-strong);border-radius:6px;background:var(--elv-map-sky)}
+.th>div{width:1440px;height:900px;transform:scale(.35);transform-origin:0 0}
+.ar{width:40px;flex:0 0 40px;display:flex;align-items:center;justify-content:center;height:315px;color:var(--elv-ink-3)}
+.cap{display:flex;gap:8px;align-items:flex-start}
+.n{width:22px;height:22px;border-radius:11px;background:var(--elv-accent);color:var(--elv-accent-ink);font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;flex:0 0 22px}
+</style>
+</helmet>
+<div class="elv fl" data-theme="night" style="width: 3288px; height: 480px">
+  <div class="st"><div class="th"><div><dc-import name="Hud" theme="night" scene="typing" hint-size="1440px,900px"></dc-import></div></div><div class="cap"><span class="n">1</span><div><div class="elv-h3">Ra lệnh</div><div class="elv-small elv-muted">Gõ <span class="elv-kbd">/</span>, khung Tể tướng mở rộng theo câu. ⏎ để tâu.</div></div></div></div>
+  <div class="ar"><svg class="elv-ic elv-ic--24" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"></path></svg></div>
+  <div class="st"><div class="th"><div><dc-import name="Hud" theme="night" scene="preview" hint-size="1440px,900px"></dc-import></div></div><div class="cap"><span class="n">2</span><div><div class="elv-h3">Xem trước quest</div><div class="elv-small elv-muted">Tể tướng tách 3 quest: dạng, hạng, lãnh thổ, mana. Sửa từng cái, xác nhận một lần.</div></div></div></div>
+  <div class="ar"><svg class="elv-ic elv-ic--24" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"></path></svg></div>
+  <div class="st"><div class="th"><div><dc-import name="Hud" theme="night" scene="claimed" hint-size="1440px,900px"></dc-import></div></div><div class="cap"><span class="n">3</span><div><div class="elv-h3">Nhân vật nhận</div><div class="elv-small elv-muted">Quản sự chọn Hiệp sĩ rảnh đúng hạng, tộc còn mana. Toast + nhân vật đi tới Công trường.</div></div></div></div>
+  <div class="ar"><svg class="elv-ic elv-ic--24" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"></path></svg></div>
+  <div class="st"><div class="th"><div><dc-import name="Quest" theme="night" variant="working" hint-size="1440px,900px"></dc-import></div></div><div class="cap"><span class="n">4</span><div><div class="elv-h3">Theo dõi journal</div><div class="elv-small elv-muted">Thẻ quest ở dock phải, journal theo mốc ở dock dưới. Nghiệm thu bởi tộc khác, phiên mới.</div></div></div></div>
+  <div class="ar"><svg class="elv-ic elv-ic--24" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"></path></svg></div>
+  <div class="st"><div class="th"><div><dc-import name="Throne" theme="night" variant="default" hint-size="1440px,900px"></dc-import></div></div><div class="cap"><span class="n">5</span><div><div class="elv-h3">Chờ dấu</div><div class="elv-small elv-muted">Verdict đạt + bẫy qua đêm đạt → awaiting_seal, chuông. Ngai vàng: hàng đợi + diff xem nhanh.</div></div></div></div>
+  <div class="ar"><svg class="elv-ic elv-ic--24" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"></path></svg></div>
+  <div class="st"><div class="th"><div><dc-import name="Throne" theme="night" variant="sealed" hint-size="1440px,900px"></dc-import></div></div><div class="cap"><span class="n">6</span><div><div class="elv-h3">Đóng dấu</div><div class="elv-small elv-muted">Hợp nhất vào main, lễ khánh thành trên bản đồ. Hàng đợi chuyển sang tấu chương kế tiếp.</div></div></div></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":3288,"height":480}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

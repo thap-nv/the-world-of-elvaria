@@ -1,0 +1,87 @@
+{
+  "v": 3,
+  "createdOnFiles": { "v": 1, "at": "2026-11-06T09:30:00Z" },
+  "title": "Elvaria — Thiết kế giao diện",
+  "launch": { "view": "canvas", "page": "ds" },
+  "pages": [
+    { "id": "ds", "name": "1 · Design system" },
+    { "id": "desktop", "name": "2 · Desktop 1440×900" },
+    { "id": "xl", "name": "2b · Desktop 2560×1600" },
+    { "id": "mobile", "name": "3 · Điện thoại 390×844" },
+    { "id": "states", "name": "4 · Trạng thái" },
+    { "id": "flows", "name": "5 · Sáu luồng" }
+  ],
+  "boards": {
+    "Main.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 1780, "page": "ds", "title": "Token: màu, chữ (+ font fantasy), khoảng cách" },
+    "Icons.dc.html": { "x": 0, "y": 2020, "w": 1440, "h": 1240, "page": "ds", "title": "Bộ icon đơn sắc 16px" },
+    "Components.dc.html": { "x": 0, "y": 3400, "w": 1440, "h": 2000, "page": "ds", "title": "Thành phần — chế độ đêm" },
+    "ComponentsDay.dc.html": { "x": 1520, "y": 3400, "w": 1440, "h": 2000, "page": "ds", "title": "Thành phần — chế độ ngày" },
+
+    "HudXL.dc.html": { "x": 0, "y": 0, "w": 2560, "h": 1600, "page": "xl", "title": "HUD 2560×1600 — giao diện giữ px, bản đồ nhận phần dư" },
+    "GuildXL.dc.html": { "x": 2680, "y": 0, "w": 2560, "h": 1600, "page": "xl", "title": "Hội quán 2560×1600" },
+    "QuestXL.dc.html": { "x": 0, "y": 1760, "w": 2560, "h": 1600, "page": "xl", "title": "Thẻ quest + Hội quán — dock đôi (≥ 2200px)" },
+    "ThroneXL.dc.html": { "x": 2680, "y": 1760, "w": 2560, "h": 1600, "page": "xl", "title": "Ngai vàng 2560×1600" },
+    "Map.dc.html": { "x": 1520, "y": 0, "w": 1440, "h": 900, "page": "ds", "title": "Bản đồ 3D — placeholder (đêm)" },
+    "MapDay.dc.html": { "x": 1520, "y": 1020, "w": 1440, "h": 900, "page": "ds", "title": "Bản đồ 3D — placeholder (ngày)" },
+
+    "Hud.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 900, "page": "desktop", "title": "HUD thường trực + bản đồ" },
+    "Guild.dc.html": { "x": 1520, "y": 0, "w": 1440, "h": 900, "page": "desktop", "title": "Hội quán — bảng nhiệm vụ" },
+    "Quest.dc.html": { "x": 3040, "y": 0, "w": 1440, "h": 900, "page": "desktop", "title": "Thẻ quest chi tiết + journal" },
+    "Character.dc.html": { "x": 0, "y": 1020, "w": 1440, "h": 900, "page": "desktop", "title": "Bảng nhân vật" },
+    "Throne.dc.html": { "x": 1520, "y": 1020, "w": 1440, "h": 900, "page": "desktop", "title": "Ngai vàng — hàng đợi chờ dấu + trạm quân y" },
+    "WarRoom.dc.html": { "x": 3040, "y": 1020, "w": 1440, "h": 900, "page": "desktop", "title": "Phòng chiến sự" },
+    "Muster.dc.html": { "x": 0, "y": 2040, "w": 1440, "h": 900, "page": "desktop", "title": "Điểm quân sau trận" },
+    "FirstOpen.dc.html": { "x": 1520, "y": 2040, "w": 1440, "h": 900, "page": "desktop", "title": "Lần đầu mở — khảo sát điền địa" },
+    "OpenRealm.dc.html": { "x": 3040, "y": 2040, "w": 1440, "h": 900, "page": "desktop", "title": "Mở cõi — gắn lãnh thổ mới" },
+    "HudDay.dc.html": { "x": 0, "y": 3060, "w": 1440, "h": 900, "page": "desktop", "title": "HUD — chế độ ngày" },
+    "Territory.dc.html": { "x": 1520, "y": 3060, "w": 1440, "h": 900, "page": "desktop", "title": "Bảng lãnh thổ / tòa nhà" },
+    "Settings.dc.html": { "x": 3040, "y": 3060, "w": 1440, "h": 900, "page": "desktop", "title": "Cài đặt" },
+
+    "MMap.dc.html": { "x": 0, "y": 0, "w": 390, "h": 844, "page": "mobile", "title": "Bản đồ 2D phẳng" },
+    "MThrone.dc.html": { "x": 470, "y": 0, "w": 390, "h": 844, "page": "mobile", "title": "Ngai vàng + trạm quân y" },
+    "MBell.dc.html": { "x": 940, "y": 0, "w": 390, "h": 844, "page": "mobile", "title": "Chuông" },
+    "MChancellor.dc.html": { "x": 1410, "y": 0, "w": 390, "h": 844, "page": "mobile", "title": "Khung Tể tướng" },
+
+    "S-HudSleeping.dc.html": { "x": 0, "y": 0, "w": 1440, "h": 900, "page": "states", "title": "Toàn cục: cả tộc đang ngủ" },
+    "S-HudCli.dc.html": { "x": 1520, "y": 0, "w": 1440, "h": 900, "page": "states", "title": "Toàn cục: CLI chưa đăng nhập" },
+    "S-HudSandbox.dc.html": { "x": 3040, "y": 0, "w": 1440, "h": 900, "page": "states", "title": "Toàn cục: sa bàn — DỮ LIỆU GIẢ" },
+    "S-HudDefense.dc.html": { "x": 4560, "y": 0, "w": 1440, "h": 900, "page": "states", "title": "Toàn cục: dải phòng thủ" },
+    "S-GuildEmpty.dc.html": { "x": 0, "y": 1020, "w": 1440, "h": 900, "page": "states", "title": "Hội quán trống" },
+    "S-ThroneEmpty.dc.html": { "x": 1520, "y": 1020, "w": 1440, "h": 900, "page": "states", "title": "Ngai vàng trống — không có tấu chương" },
+    "S-ChancellorAsk.dc.html": { "x": 3040, "y": 1020, "w": 1440, "h": 900, "page": "states", "title": "Tể tướng hỏi lại một câu" },
+    "S-ChancellorFail.dc.html": { "x": 4560, "y": 1020, "w": 1440, "h": 900, "page": "states", "title": "Tể tướng không hiểu" },
+    "S-ChancellorNoMana.dc.html": { "x": 0, "y": 2040, "w": 1440, "h": 900, "page": "states", "title": "Tể tướng: tộc hết mana" },
+    "S-CharacterSleeping.dc.html": { "x": 1520, "y": 2040, "w": 1440, "h": 900, "page": "states", "title": "Nhân vật ngủ (hết mana)" },
+    "S-OpenRealmError.dc.html": { "x": 3040, "y": 2040, "w": 1440, "h": 900, "page": "states", "title": "Mở cõi: không truy cập được thư mục" },
+    "S-OpenRealmPartial.dc.html": { "x": 4560, "y": 2040, "w": 1440, "h": 900, "page": "states", "title": "Mở cõi: khảo sát dở dang" },
+    "S-MMapOffline.dc.html": { "x": 0, "y": 3060, "w": 390, "h": 844, "page": "states", "title": "Điện thoại: máy ở nhà ngủ / offline" },
+    "S-MTunnelLost.dc.html": { "x": 470, "y": 3060, "w": 390, "h": 844, "page": "states", "title": "Điện thoại: đường hầm mất kết nối" },
+    "S-MThroneEmpty.dc.html": { "x": 940, "y": 3060, "w": 390, "h": 844, "page": "states", "title": "Điện thoại: Ngai vàng trống" },
+
+    "Flow1.dc.html": { "x": 0, "y": 0, "w": 3288, "h": 480, "page": "flows", "title": "Luồng 1 · Ra lệnh → xem trước → xác nhận → nhận → journal → đóng dấu" },
+    "Flow2.dc.html": { "x": 0, "y": 600, "w": 2200, "h": 480, "page": "flows", "title": "Luồng 2 · Hết mana → ngủ → đăng nhập lại → tỉnh" },
+    "Flow3.dc.html": { "x": 0, "y": 1200, "w": 2744, "h": 480, "page": "flows", "title": "Luồng 3 · Sự cố → chuông → phòng thủ → Trừ tà → cleared → hội đồng" },
+    "Flow4.dc.html": { "x": 0, "y": 1800, "w": 2744, "h": 480, "page": "flows", "title": "Luồng 4 · Lần đầu mở → khảo sát → thế giới" },
+    "Flow5.dc.html": { "x": 0, "y": 2400, "w": 1656, "h": 480, "page": "flows", "title": "Luồng 5 · Gắn repo → đặt tên → khảo sát → vùng mới" },
+    "Flow6.dc.html": { "x": 0, "y": 3000, "w": 964, "h": 590, "page": "flows", "title": "Luồng 6 · Điện thoại: chuông → Ngai vàng → đóng dấu → máy ở nhà tiếp tục" }
+  },
+  "order": [
+    "Main.dc.html", "Icons.dc.html", "Components.dc.html", "ComponentsDay.dc.html", "Map.dc.html", "MapDay.dc.html",
+    "HudXL.dc.html", "GuildXL.dc.html", "QuestXL.dc.html", "ThroneXL.dc.html",
+    "Hud.dc.html", "Guild.dc.html", "Quest.dc.html", "Character.dc.html", "Throne.dc.html", "WarRoom.dc.html", "Muster.dc.html", "FirstOpen.dc.html", "OpenRealm.dc.html", "HudDay.dc.html", "Territory.dc.html", "Settings.dc.html",
+    "MMap.dc.html", "MThrone.dc.html", "MBell.dc.html", "MChancellor.dc.html",
+    "S-HudSleeping.dc.html", "S-HudCli.dc.html", "S-HudSandbox.dc.html", "S-HudDefense.dc.html", "S-GuildEmpty.dc.html", "S-ThroneEmpty.dc.html", "S-ChancellorAsk.dc.html", "S-ChancellorFail.dc.html", "S-ChancellorNoMana.dc.html", "S-CharacterSleeping.dc.html", "S-OpenRealmError.dc.html", "S-OpenRealmPartial.dc.html", "S-MMapOffline.dc.html", "S-MTunnelLost.dc.html", "S-MThroneEmpty.dc.html",
+    "Flow1.dc.html", "Flow2.dc.html", "Flow3.dc.html", "Flow4.dc.html", "Flow5.dc.html", "Flow6.dc.html"
+  ],
+  "notes": {
+    "t-ds": { "x": 0, "y": -300, "text": "Design system Elvaria v0.2 — token, chữ, icon, thành phần (đêm mặc định · ngày)", "kind": "title1", "maxW": 2960, "page": "ds" },
+    "t-desktop": { "x": 0, "y": -300, "text": "Mockup desktop 1440×900 — HUD, Hội quán, Thẻ quest, Nhân vật, Ngai vàng, Chiến sự, Điểm quân, Lần đầu mở, Mở cõi", "kind": "title1", "maxW": 4480, "page": "desktop" },
+    "t-xl": { "x": 0, "y": -300, "text": "Desktop 2560×1600 — quy tắc màn lớn: chrome giữ px, bản đồ nhận phần dư, dock đôi khi ≥ 2200px", "kind": "title1", "maxW": 5240, "page": "xl" },
+    "n-xl": { "x": 5360, "y": 0, "w": 380, "text": "Quy tắc màn lớn (2560×1600):\n• Giao diện 2D không scale theo màn: thanh trên 48, dock phải 380, dock dưới 240, chữ 11–24 giữ nguyên px. Phần dư dồn cho bản đồ 3D (tâm trống rộng hơn, LOD full cho nhiều lãnh thổ hơn).\n• Ở Windows 150% (hiệu dụng 1707×1067) dùng y nguyên bố cục 1440.\n• Khung ≥ 2200px cho phép dock đôi: 2 bảng 380 cạnh nhau (thẻ quest sát mép, danh sách ở trong). Vẫn tối đa 2 cột, không bao giờ rộng hơn 760.\n• Overlay trái (mana, Cần ngài, minimap) neo góc; khung Tể tướng canh giữa phần bản đồ còn lại.\n• Trong code: HUD nhận --elv-dock-right-w (380 | 760) và lấy kích thước từ viewport; không có breakpoint chữ.", "page": "xl", "fill": "orange" },
+    "t-mobile": { "x": 0, "y": -300, "text": "Khách nhẹ điện thoại 390×844 — bản đồ 2D, Ngai vàng, chuông, Tể tướng", "kind": "title1", "maxW": 1800, "page": "mobile" },
+    "t-states": { "x": 0, "y": -300, "text": "Trạng thái trống · lỗi · hết mana · toàn cục", "kind": "title1", "maxW": 6000, "page": "states" },
+    "t-flows": { "x": 0, "y": -300, "text": "Sáu luồng chính — chuỗi màn hình", "kind": "title1", "maxW": 3288, "page": "flows" },
+    "n-assume": { "x": 3040, "y": 0, "w": 360, "text": "Giả định khi dựng:\n• Font: Alegreya (hiển thị, có dấu tiếng Việt, đọc tốt ở 14px) + Source Sans 3 (thân chữ, số liệu).\n• Bố cục dock: phải 380px (danh sách, chi tiết) · dưới 240px (journal, xem nhanh, điểm quân); tâm bản đồ trống.\n• Mọi overlay HUD nằm bên trái để không đụng dock.\n• Token = CSS variables trong project/elvaria.css, dùng thẳng trong code.\n• Tên tộc tạm: Sao Bạc (Claude) · Lửa Đỏ (Gemini).", "page": "ds", "fill": "orange" }
+  },
+  "designSystems": []
+}

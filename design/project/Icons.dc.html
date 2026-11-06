@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Elvaria — Bộ icon</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./elvaria.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Grenze+Gotisch:wght@400;500;600&amp;family=Cinzel:wght@600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#D4A454}a:hover{color:#EEE4CF}
+</style>
+</helmet>
+<div class="elv" data-theme="night" style="width: 1440px; height: 1240px; box-sizing: border-box; padding: 40px 48px; display: flex; flex-direction: column; gap: 24px; overflow: hidden">
+
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--elv-border); padding-bottom: 16px">
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <span class="elv-label">Elvaria · design system v0.2</span>
+      <h1 class="elv-h1" style="font-size: 32px">Bộ icon đơn sắc</h1>
+      <span class="elv-muted elv-body">Lưới 16×16, nét 1.5px, đầu nét tròn, không fill. Giao dạng SVG inline (<span class="elv-mono">.elv-ic</span>), màu theo <span class="elv-mono">currentColor</span>; cỡ 12 / 16 / 20 / 24. Tông hai: nét phụ dùng <span class="elv-mono">.t2</span> (55% đục).</span>
+    </div>
+    <div style="display: flex; gap: 16px; align-items: center" class="elv-muted elv-small">
+      <span>Thử ở 16px:</span>
+      <span style="display: inline-flex; gap: 8px; color: var(--elv-ink)"><sc-for list="{{sample}}" as="i" hint-placeholder-count="6"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="{{i.d}}"></path></svg></sc-for></span>
+      <span>12px:</span>
+      <span style="display: inline-flex; gap: 6px; color: var(--elv-ink-2)"><sc-for list="{{sample}}" as="i" hint-placeholder-count="6"><svg class="elv-ic elv-ic--12" viewBox="0 0 16 16" aria-hidden="true"><path d="{{i.d}}"></path></svg></sc-for></span>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 40px">
+    <sc-for list="{{groups}}" as="g" hint-placeholder-count="6">
+      <div style="display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline">
+          <span class="elv-h3">{{g.title}}</span>
+          <span class="elv-mono elv-dim" style="font-size: 10px">{{g.prefix}}</span>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px">
+          <sc-for list="{{g.items}}" as="i" hint-placeholder-count="6">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 4px 8px; border: 1px solid var(--elv-border); border-radius: 6px; background: var(--elv-surface)">
+              <svg class="elv-ic elv-ic--24" viewBox="0 0 16 16" role="img" aria-label="{{i.label}}" style="color: {{i.color}}"><path d="{{i.d}}"></path></svg>
+              <span class="elv-small" style="text-align: center; line-height: 1.2">{{i.label}}</span>
+              <span class="elv-mono elv-dim" style="font-size: 9px">{{i.id}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1240}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const c = (x, y, r) => `M${x} ${y - r}a${r} ${r} 0 1 1 0 ${2 * r}a${r} ${r} 0 1 1 0 ${-2 * r}`;
+    const ink = 'var(--elv-ink)';
+    const I = (id, label, d, color) => ({ id, label, d, color: color || ink });
+    const bell = 'M4 11h8c-1-1-1.5-2-1.5-4a2.5 2.5 0 0 0-5 0c0 2-.5 3-1.5 4z M6.5 13a1.5 1.5 0 0 0 3 0 M8 3.5V2';
+    const seal = 'M6.5 3.5a1.5 1.5 0 0 1 3 0v4h2.5a1.5 1.5 0 0 1 1.5 1.5V11H2.5V9a1.5 1.5 0 0 1 1.5-1.5h2.5z M3.5 13.5h9';
+    const rays = 'M8 1.5v2 M8 12.5v2 M1.5 8h2 M12.5 8h2 M3.4 3.4l1.4 1.4 M11.2 11.2l1.4 1.4 M3.4 12.6l1.4-1.4 M11.2 4.8l1.4-1.4';
+    const kinds = [
+      I('kien-tao', 'Kiến tạo', 'M3 13l5-5 M9.5 3.5l3 3-2 2-3-3z M9.5 3.5l1-1 M12.5 6.5l1-1'),
+      I('tham-hiem', 'Thám hiểm', c(8, 8, 6) + ' M10.5 5.5l-1.5 3.5-3.5 1.5 1.5-3.5z'),
+      I('tru-ta', 'Trừ tà', 'M5.5 7.5a2.5 2.5 0 0 1 5 0v3a2.5 2.5 0 0 1-5 0z M8 7.5v5.5 M3 9h2.5 M10.5 9H13 M4 12.5l1.5-1.5 M12 12.5l-1.5-1.5 M4 5.5l1.5 1.5 M12 5.5l-1.5 1.5 M6.5 5a1.5 1.5 0 0 1 3 0'),
+      I('gia-co', 'Gia cố', 'M2 4h12v9H2z M2 7h12 M2 10h12 M6 4v3 M10 7v3 M6 10v3'),
+      I('soan-thao', 'Soạn thảo', 'M4 2h5.5L13 5.5V14H4z M9.5 2v3.5H13 M6.5 8.5h4 M6.5 11h4'),
+      I('rao-truyen', 'Rao truyền', 'M2 6.5v3h2.5l5.5 3V3.5l-5.5 3z M12.5 6a3 3 0 0 1 0 4'),
+      I('chiem-nghiem', 'Chiêm nghiệm', 'M2 13.5l3.5-3.5 M4 11l6-6 2 2-6 6z M10 5l1.5-1.5 2 2L12 7z M5 13.5l1-2.5'),
+      I('nghi-hoi', 'Nghị hội', c(4, 6, 1.5) + c(12, 6, 1.5) + c(8, 4.5, 2) + ' M3 13c0-2.5 2-4 5-4s5 1.5 5 4'),
+      I('chinh-phuc', 'Chinh phục', 'M4 14V2.5 M4 3h8.5l-2 3 2 3H4'),
+      I('ngoai-giao', 'Ngoại giao', 'M2 4h12v9H2z M2 4.5l6 5 6-5'),
+      I('tran-danh', 'Trận đánh', 'M3 3l10 10 M13 3L3 13 M3 3h2.5 M3 3v2.5 M13 3h-2.5 M13 3v2.5'),
+      I('chien-tranh', 'Chiến tranh', 'M4 14V6l4-3 4 3v8 M4 6h8 M8 3V1.5h3l-1 1 1 1H8 M7 14v-3h2v3')
+    ];
+    const classes = [
+      I('te-tuong', 'Tể tướng', 'M4 2h8v12H4z M4 2a1.5 1.5 0 0 0-1.5 1.5V5 M12 2a1.5 1.5 0 0 1 1.5 1.5V5 M6.5 6h3 M6.5 8.5h3' + c(8, 11.5, 1.2)),
+      I('phap-su', 'Pháp sư', 'M8 2l3.5 8.5 M8 2L4.5 10.5 M2.5 11.5c3-2 8-2 11 0 M2.5 11.5c3 2 8 2 11 0'),
+      I('hiep-si', 'Hiệp sĩ', 'M4 13V7a4 4 0 0 1 8 0v6z M4 9h8 M8 9v4'),
+      I('nguoi-lun', 'Người lùn', 'M3 6h10v2H9v3h2v2H5v-2h2V8H3z M3 6V4.5h4'),
+      I('elf-trinh-sat', 'Elf trinh sát', 'M4 2.5c4 2 4 9 0 11 M4 2.5v11 M4 8h9 M10.5 5.5L13 8l-2.5 2.5'),
+      I('thu-ky', 'Thư ký', 'M3 13l6.5-6.5 M13 3c-1 0-4 .5-5.5 2S5.5 9 5.5 9 9 10 11 8 13 3 13 3z'),
+      I('nha-tho', 'Nhà thơ', 'M4 2c0 4 1 6 2 8h4c1-2 2-4 2-8 M6 10v3 M10 10v3 M5 13h6 M7 4v6 M9 4v6'),
+      I('chiem-tinh-gia', 'Chiêm tinh gia', 'M8 2.5l1.5 3.5 3.5.5-2.5 2.5.5 3.5L8 10.8 4.5 12.5l.5-3.5L2.5 6.5 6 6z'),
+      I('su-than', 'Sứ thần', 'M2 4h12v9H2z M2 4.5l6 4.5 6-4.5' + c(11.5, 11, 1.5)),
+      I('tho-ca', 'Thợ cả', 'M3 13V3h10 M3 13h10V5 M6 3v3 M3 6h3 M9 3v2 M3 9h2'),
+      I('thu-thu-truong', 'Thủ thư trưởng', 'M3 2.5h4.5a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 0-1.5-1.5H3z M13 2.5H8.5A1.5 1.5 0 0 0 7 4v9a1.5 1.5 0 0 1 1.5-1.5H13z M9.5 7l1 1 2-2'),
+      I('thay-tu', 'Thầy tu', 'M6 6h4v7.5H6z M8 6V3.5 M8 2c.8.6.8 1.4 0 2 M4.5 13.5h7')
+    ];
+    const qstatus = [
+      I('q-open', 'open', 'M8 2a6 6 0 0 1 6 6 M8 14a6 6 0 0 1-6-6', 'var(--elv-q-open)'),
+      I('q-working', 'working', c(8, 8, 3) + ' M8 1.5v2 M13.6 4.8l-1.7 1 M13.6 11.2l-1.7-1 M8 14.5v-2 M2.4 11.2l1.7-1 M2.4 4.8l1.7 1', 'var(--elv-q-working)'),
+      I('q-review', 'review', 'M1.5 8c2-3.5 4-5 6.5-5s4.5 1.5 6.5 5c-2 3.5-4 5-6.5 5S3.5 11.5 1.5 8z' + c(8, 8, 2), 'var(--elv-q-review)'),
+      I('q-done', 'done', c(8, 8, 6) + ' M5 8.2l2 2 4-4.5', 'var(--elv-q-done)'),
+      I('q-returned', 'returned', 'M11 4H6a3 3 0 0 0 0 6h6 M9.5 7.5L12 10l-2.5 2.5', 'var(--elv-q-returned)'),
+      I('q-sleep', 'paused_mana', 'M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z', 'var(--elv-q-sleep)'),
+      I('q-infirmary', 'infirmary', 'M3 13.5L8 3l5 10.5z M8 7v4 M6 9h4', 'var(--elv-q-infirmary)'),
+      I('q-seal', 'awaiting_seal', seal, 'var(--elv-accent)')
+    ];
+    const cstatus = [
+      I('c-working', 'làm việc', 'M2.5 13.5L9 7 M9 7l2-2 M9.5 3l3.5 3.5-2 2L7.5 5z', 'var(--elv-q-working)'),
+      I('c-reviewing', 'nghiệm thu', 'M8 2v12 M5 14h6 M3 5h10 M3 5l-2 4a2 2 0 0 0 4 0z M13 5l-2 4a2 2 0 0 0 4 0z', 'var(--elv-q-review)'),
+      I('c-sleeping', 'ngủ (hết mana)', 'M10 11.5A4.5 4.5 0 0 1 5 6.5a4.5 4.5 0 1 0 5 5z M10 3h3l-3 3h3', 'var(--elv-q-sleep)'),
+      I('c-meditating', 'thiền', 'M8 2c2 2 3 4 3 6s-1 4-3 6c-2-2-3-4-3-6s1-4 3-6z M2.5 9c2 0 4 1 5.5 3 1.5-2 3.5-3 5.5-3', 'var(--elv-q-review)'),
+      I('c-suspended', 'đình chỉ', c(8, 8, 6) + ' M6.5 5.5v5 M9.5 5.5v5', 'var(--elv-q-open)'),
+      I('c-swamp', 'lạc đầm lầy', 'M2 10.5c1.5-1 3-1 4.5 0s3 1 4.5 0 3-1 3 0 M2 13c1.5-1 3-1 4.5 0s3 1 4.5 0 3-1 3 0 M8 8V3 M8 5c1-1 2-1 3-.5', 'var(--elv-q-infirmary)')
+    ];
+    const factions = [
+      I('fac-silver', 'Tộc Sao Bạc', 'M8 2l1.5 4.5L14 8l-4.5 1.5L8 14l-1.5-4.5L2 8l4.5-1.5z', 'var(--elv-fac-silver)'),
+      I('fac-fire', 'Tộc Lửa Đỏ', 'M8 2c1 2.5 4 4 4 7.5a4 4 0 0 1-8 0c0-1.5.5-2.5 1.5-3.5.3 1 .8 1.5 1.5 2C7.5 6 7.5 4 8 2z', 'var(--elv-fac-fire)')
+    ];
+    const actions = [
+      I('act-seal', 'Đóng dấu', seal, 'var(--elv-accent)'),
+      I('act-return', 'Trả về', 'M12.5 5H6a3 3 0 0 0 0 6h3 M8.5 2.5L6 5l2.5 2.5', 'var(--elv-q-returned)'),
+      I('act-summon', 'Triệu hồi', 'M2 3h12v10H2z M4.5 6l2 2-2 2 M8 10h3'),
+      I('act-suspend', 'Đình chỉ', 'M4 3h3v10H4z M9 3h3v10H9z'),
+      I('act-reassign', 'Giao lại', 'M2 5.5h9l-2.5-2.5 M14 10.5H5l2.5 2.5'),
+      I('act-archive', 'Lưu trữ', 'M2 3h12v3H2z M3 6v7h10V6 M6.5 9h3'),
+      I('act-temple', 'Đưa về Đền', 'M3 13.5V7l5-4 5 4v6.5 M2 13.5h12 M6.5 13.5V10h3v3.5 M8 3V1.5'),
+      I('act-declare', 'Tuyên chiến', 'M3 14V2 M3 2.5h9l-1.5 2.5 1.5 2.5H3'),
+      I('bell', 'Chuông', bell),
+      I('settings', 'Cài đặt', c(8, 8, 2) + ' ' + rays),
+      I('filter', 'Lọc', 'M2 3h12l-4.5 5.5V13l-3-1.5V8.5z'),
+      I('search', 'Tìm', c(7, 7, 4.5) + ' M10.5 10.5L14 14'),
+      I('close', 'Đóng', 'M4 4l8 8 M12 4l-8 8'),
+      I('chevron', 'Mở rộng', 'M4 6l4 4 4-4'),
+      I('plus', 'Thêm', 'M8 3v10 M3 8h10'),
+      I('more', 'Thêm nữa', 'M4 8h.01 M8 8h.01 M12 8h.01'),
+      I('link', 'Link giao hàng', 'M6.5 9.5l3-3 M7 11l-1.5 1.5a2.5 2.5 0 0 1-3.5-3.5L3.5 7.5 M9 5l1.5-1.5a2.5 2.5 0 0 1 3.5 3.5L12.5 8.5'),
+      I('note', 'Ghi chú / journal', 'M3 2.5h7l3 3v8H3z M10 2.5v3h3 M5.5 8h5 M5.5 10.5h3')
+    ];
+    const hud = [
+      I('mode-overview', 'Toàn cảnh', 'M2 10l6 3 6-3 M2 6l6-3 6 3-6 3z'),
+      I('mode-follow', 'Theo chân', c(8, 4, 2) + ' M4 14c0-3 1.5-5 4-5s4 2 4 5'),
+      I('mode-cinema', 'Điện ảnh', 'M2 6h12v8H2z M2 6l1.5-3.5 10 1.5L13 6 M5 2.8l1.5 3 M9 3.4l1.5 3'),
+      I('eco', 'Tiết kiệm', 'M3 13c0-6 4-9 10-9 0 6-3 9-8 9 M3 13c2-3 4-5 7-6'),
+      I('minimap', 'Minimap', 'M2 2h12v12H2z M2 9h5V2 M7 14V9h7'),
+      I('clock', 'Đồng hồ ngày/đêm', c(8, 8, 6) + ' M8 4.5V8l2.5 1.5'),
+      I('sun', 'Ban ngày', c(8, 8, 3) + ' ' + rays),
+      I('mana', 'Mana', 'M6 2h4 M7 2v4l-3.5 6a1.5 1.5 0 0 0 1.3 2.3h6.4a1.5 1.5 0 0 0 1.3-2.3L9 6V2 M5 10h6'),
+      I('territory', 'Lãnh thổ', 'M2 4l4-2 4 2 4-2v10l-4 2-4-2-4 2z M6 2v10 M10 4v10'),
+      I('season', 'Mùa (sprint)', 'M2 4h12v10H2z M2 7h12 M5 2v3 M11 2v3'),
+      I('play', 'Xem lại', 'M4 3l9 5-9 5z'),
+      I('speed', 'Tốc độ 1×/5×/20×', 'M2 8h5 M2 4.5h3 M2 11.5h3 M8 3l6 5-6 5z'),
+      I('token', 'Token', c(8, 8, 6) + ' M8 5v6 M6.5 6.5h2.5a1.25 1.25 0 0 1 0 2.5H6.5h3a1.25 1.25 0 0 1 0 2.5H6.5'),
+      I('warning', 'Cảnh báo', 'M8 2l6.5 11.5h-13z M8 6.5v3.5 M8 11.8v.01', 'var(--elv-h-warn)'),
+      I('incident', 'Sự cố', 'M9 2L4 9h4l-1 5 5-7H8z', 'var(--elv-h-incident)'),
+      I('info', 'Thông tin', c(8, 8, 6) + ' M8 7.5v4 M8 5v.01'),
+      I('tunnel', 'Đường hầm', 'M2 13V8a6 6 0 0 1 12 0v5 M5 13V9a3 3 0 0 1 6 0v4'),
+      I('home-pc', 'Máy ở nhà', 'M2 3h12v8H2z M6 13.5h4 M8 11v2.5')
+    ];
+    return {
+      sample: [kinds[0], kinds[2], qstatus[1], qstatus[7], factions[0], actions[1]],
+      groups: [
+        { title: '11 dạng nhiệm vụ + Chiến tranh (vật chứa)', prefix: 'ic-kind-*', items: kinds },
+        { title: '12 nghề (nghiệm thu: Thợ cả, Thủ thư trưởng; Trọng tài / Hiền giả dùng tho-ca + chip)', prefix: 'ic-class-*', items: classes },
+        { title: '7 trạng thái quest + awaiting_seal', prefix: 'ic-q-*', items: qstatus },
+        { title: '6 trạng thái nhân vật', prefix: 'ic-c-*', items: cstatus },
+        { title: '2 tộc (tên tạm, sẽ đổi)', prefix: 'ic-fac-*', items: factions },
+        { title: 'Hành động', prefix: 'ic-act-*', items: actions },
+        { title: 'HUD & hệ thống', prefix: 'ic-*', items: hud }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

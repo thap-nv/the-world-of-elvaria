@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Elvaria — HUD thường trực</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./elvaria.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Grenze+Gotisch:wght@400;500;600&amp;family=Cinzel:wght@600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#D4A454}a:hover{color:#EEE4CF}
+</style>
+</helmet>
+<div class="elv" data-theme="{{theme}}" style="width: {{w}}px; height: {{h}}px; position: relative; overflow: hidden; background: var(--elv-map-sky); --elv-dock-right-w: {{dockW}}px">
+
+  <!-- Thế giới 3D (placeholder) — scale theo khung, giao diện 2D giữ nguyên px -->
+  <div style="position: absolute; left: 0; top: 0; width: 1440px; height: 900px; transform: scale({{mapScale}}); transform-origin: 0 0">
+    <dc-import name="Map" theme="{{theme}}" scene="{{mapScene}}" hint-size="1440px,900px"></dc-import>
+  </div>
+
+  <!-- Thanh trên -->
+  <div class="elv-topbar">
+    <span class="elv-row" style="gap: 8px">
+      <svg class="elv-ic elv-ic--20" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-accent)"><path d="M2 12V5l3 2.5L8 3l3 4.5L14 5v7z M2 12h12"></path></svg>
+      <span class="elv-fantasy elv-name" style="font-size: 20px">Vương quốc Thanh Nguyệt Sơn</span>
+    </span>
+    <span class="elv-topbar__sep"></span>
+    <span class="elv-row elv-small elv-muted" style="gap: 6px">
+      <svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z"></path></svg>
+      <span>Đêm · <span class="elv-num" style="color: var(--elv-ink)">21:14</span></span>
+    </span>
+    <span class="elv-topbar__sep"></span>
+    <span class="elv-row elv-small elv-muted" style="gap: 6px">
+      <svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4h12v10H2z M2 7h12 M5 2v3 M11 2v3"></path></svg>
+      <span>Mùa 14 · <span style="color: var(--elv-ink)">còn 3 ngày</span></span>
+    </span>
+    <span class="elv-grow"></span>
+    <span class="elv-row elv-small elv-muted" style="gap: 10px">
+      <span class="elv-dot" style="background: var(--elv-q-working)"></span><span><b style="color: var(--elv-ink)">5</b> đang làm</span>
+      <span class="elv-dot" style="background: var(--elv-q-review)"></span><span><b style="color: var(--elv-ink)">2</b> nghiệm thu</span>
+    </span>
+    <span class="elv-topbar__sep"></span>
+    <a class="elv-chip elv-chip--on" href="Throne.dc.html" style="background: var(--elv-accent); color: var(--elv-accent-ink); border-color: transparent; text-decoration: none; height: 26px">
+      <svg class="elv-ic elv-ic--12" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.5 3.5a1.5 1.5 0 0 1 3 0v4h2.5a1.5 1.5 0 0 1 1.5 1.5V11H2.5V9a1.5 1.5 0 0 1 1.5-1.5h2.5z M3.5 13.5h9"></path></svg>{{sealCount}} chờ dấu
+    </a>
+    <button class="elv-btn elv-btn--ghost elv-btn--icon" aria-label="Chuông" style="position: relative">
+      <svg class="elv-ic elv-ic--20" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 11h8c-1-1-1.5-2-1.5-4a2.5 2.5 0 0 0-5 0c0 2-.5 3-1.5 4z M6.5 13a1.5 1.5 0 0 0 3 0 M8 3.5V2"></path></svg>
+      <span class="elv-dot" style="position: absolute; top: 6px; right: 6px; background: var(--elv-h-incident); width: 7px; height: 7px"></span>
+    </button>
+    <a class="elv-btn elv-btn--ghost elv-btn--icon" href="Settings.dc.html" aria-label="Cài đặt"><svg class="elv-ic elv-ic--20" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 6a2 2 0 1 1 0 4a2 2 0 1 1 0-4 M8 1.5v2 M8 12.5v2 M1.5 8h2 M12.5 8h2 M3.4 3.4l1.4 1.4 M11.2 11.2l1.4 1.4 M3.4 12.6l1.4-1.4 M11.2 4.8l1.4-1.4"></path></svg></a>
+  </div>
+
+  <!-- Dải toàn cục -->
+  <sc-if value="{{bandSleep}}" hint-placeholder-val="{{ false }}">
+    <div class="elv-band elv-band--sleep">
+      <svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-q-sleep)"><path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z"></path></svg>
+      <span><b>Tộc Sao Bạc đang ngủ</b> · hết mana lúc 11:47 · hồi <span class="elv-num">14:00</span> (còn <span class="elv-num">2h 13m</span>) · 2 quest tạm dừng, giữ nguyên người làm</span>
+      <span class="elv-grow"></span>
+      <sc-if value="{{relogin}}" hint-placeholder-val="{{ false }}">
+        <span class="elv-small elv-muted">Đang ping tộc bằng một lệnh rẻ…</span>
+        <button class="elv-btn elv-btn--sm" disabled>Đã đăng nhập lại</button>
+      </sc-if>
+      <sc-if value="{{notRelogin}}" hint-placeholder-val="{{ true }}">
+        <button class="elv-btn elv-btn--sm elv-btn--primary">Đã đăng nhập lại</button>
+      </sc-if>
+    </div>
+  </sc-if>
+  <sc-if value="{{bandDefense}}" hint-placeholder-val="{{ false }}">
+    <div class="elv-band elv-band--defense">
+      <svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M9 2L4 9h4l-1 5 5-7H8z"></path></svg>
+      <span><b>PHÒNG THỦ</b> · shop-api · CI đỏ sau commit 7f3a · Trừ tà q_0150 tự sinh · Thorn đang xử lý · <span class="elv-num">00:12:40</span></span>
+      <span class="elv-grow"></span>
+      <a class="elv-btn elv-btn--sm" href="WarRoom.dc.html" style="background: transparent; color: inherit; border-color: currentColor; text-decoration: none">Phòng chiến sự</a>
+    </div>
+  </sc-if>
+  <sc-if value="{{bandCli}}" hint-placeholder-val="{{ false }}">
+    <div class="elv-band elv-band--warn">
+      <svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-h-warn)"><path d="M8 2l6.5 11.5h-13z M8 6.5v3.5 M8 11.8v.01"></path></svg>
+      <span><b>Claude Code chưa đăng nhập</b> · Tộc Sao Bạc không thể nhận quest · chạy <span class="elv-mono">claude login</span> trong terminal rồi thử lại</span>
+      <span class="elv-grow"></span>
+      <button class="elv-btn elv-btn--sm">Thử lại</button>
+      <button class="elv-btn elv-btn--sm elv-btn--ghost">Chi tiết</button>
+    </div>
+  </sc-if>
+  <sc-if value="{{bandMock}}" hint-placeholder-val="{{ false }}">
+    <div class="elv-band elv-band--mock">
+      <span class="elv-chip" style="background: var(--elv-q-review); color: #1A1714; border-color: transparent">DỮ LIỆU GIẢ</span>
+      <span>Sa bàn phát lại <span class="elv-mono">events/2026-11-10.jsonl</span> · <span class="elv-num">09:12 → 17:40</span> · không chạy agent, không tốn mana</span>
+      <span class="elv-grow"></span>
+      <span class="elv-row" style="gap: 4px"><button class="elv-btn elv-btn--sm elv-btn--ghost">1×</button><button class="elv-btn elv-btn--sm elv-btn--ghost">5×</button><button class="elv-btn elv-btn--sm">20×</button></span>
+      <button class="elv-btn elv-btn--sm elv-btn--ghost">Dừng</button>
+    </div>
+  </sc-if>
+
+  <!-- Mana hai tộc -->
+  <div class="elv-hud elv-hud-box" style="left: 16px; top: {{overlayTop}}px; width: 268px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px">
+    <div class="elv-mana {{silverCls}}">
+      <span class="elv-crest elv-crest--silver"><svg class="elv-ic" viewBox="0 0 16 16" role="img" aria-label="Tộc Sao Bạc"><path d="M8 2l1.5 4.5L14 8l-4.5 1.5L8 14l-1.5-4.5L2 8l4.5-1.5z"></path></svg></span>
+      <span class="elv-mana__bar"><span class="elv-mana__fill" style="width: {{silverPct}}%"></span><span class="elv-mana__warn" style="left: 88%"></span><span class="elv-mana__cap" style="left: 98%"></span></span>
+      <span class="elv-mana__meta">{{silverMeta}}</span>
+    </div>
+    <div class="elv-mana elv-mana--fire">
+      <span class="elv-crest elv-crest--fire"><svg class="elv-ic" viewBox="0 0 16 16" role="img" aria-label="Tộc Lửa Đỏ"><path d="M8 2c1 2.5 4 4 4 7.5a4 4 0 0 1-8 0c0-1.5.5-2.5 1.5-3.5.3 1 .8 1.5 1.5 2C7.5 6 7.5 4 8 2z"></path></svg></span>
+      <span class="elv-mana__bar"><span class="elv-mana__fill" style="width: 38%"></span><span class="elv-mana__warn" style="left: 88%"></span><span class="elv-mana__cap" style="left: 98%"></span></span>
+      <span class="elv-mana__meta">38% · hồi 09:00</span>
+    </div>
+  </div>
+
+  <!-- Lớp "Cần ngài" -->
+  <div class="elv-hud elv-hud-box elv-need" style="left: 16px; top: {{needTop}}px">
+    <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px">
+      <span class="elv-h3">Cần ngài</span>
+      <span class="elv-chip" style="background: var(--elv-accent); color: var(--elv-accent-ink); border-color: transparent">{{needCount}}</span>
+      <span class="elv-grow"></span>
+      <span class="elv-micro elv-dim">theo mức khẩn</span>
+    </div>
+    <a class="elv-need__item elv-need__item--infirmary" href="Throne.dc.html" style="text-decoration: none; color: inherit"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13.5L8 3l5 10.5z M8 7v4 M6 9h4"></path></svg><span class="elv-need__title">Quân y · Wren lạc đầm lầy, q_0147 hết 3 lần thử</span><span class="elv-need__age">2h</span></a>
+    <sc-if value="{{notSealed}}" hint-placeholder-val="{{ true }}">
+      <a class="elv-need__item" href="Throne.dc.html" style="text-decoration: none; color: inherit"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.5 3.5a1.5 1.5 0 0 1 3 0v4h2.5a1.5 1.5 0 0 1 1.5 1.5V11H2.5V9a1.5 1.5 0 0 1 1.5-1.5h2.5z M3.5 13.5h9"></path></svg><span class="elv-need__title">Dấu · hợp nhất q_0142 vào main</span><span class="elv-need__age">25m</span></a>
+    </sc-if>
+    <a class="elv-need__item" href="Throne.dc.html" style="text-decoration: none; color: inherit"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.5 3.5a1.5 1.5 0 0 1 3 0v4h2.5a1.5 1.5 0 0 1 1.5 1.5V11H2.5V9a1.5 1.5 0 0 1 1.5-1.5h2.5z M3.5 13.5h9"></path></svg><span class="elv-need__title">Dấu · gửi email chiến dịch "Mùa đông"</span><span class="elv-need__age">1h</span></a>
+    <a class="elv-need__item elv-need__item--warn" href="Character.dc.html" style="text-decoration: none; color: inherit"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2l6.5 11.5h-13z M8 6.5v3.5 M8 11.8v.01"></path></svg><span class="elv-need__title">Duyệt · Ngộ đạo cho Thorn (cấp 7, tốn mana hơn)</span><span class="elv-need__age">1 ngày</span></a>
+  </div>
+
+  <!-- Minimap có "nhiệt" -->
+  <div class="elv-hud elv-hud-box elv-minimap" style="left: 16px; bottom: {{minimapBottom}}px">
+    <svg width="220" height="150" viewBox="0 0 220 150" role="img" aria-label="Minimap: nhiệt hoạt động theo lãnh thổ" style="display: block">
+      <rect width="220" height="150" fill="var(--elv-map-sky)"></rect>
+      <polygon points="0,150 0,45 60,38 120,30 180,40 220,42 220,150" fill="var(--elv-map-land-1)"></polygon>
+      <path d="M0 50 C 40 60, 60 90, 100 110 S 140 150, 150 150" fill="none" stroke="var(--elv-map-water)" stroke-width="4"></path>
+      <polygon points="56,66 100,58 110,90 70,100" fill="var(--elv-fac-silver)" opacity=".45"></polygon>
+      <polygon points="100,42 150,40 156,66 110,70" fill="var(--elv-fac-fire)" opacity=".22"></polygon>
+      <polygon points="132,96 170,92 176,118 142,124" fill="var(--elv-h-warn)" opacity=".18"></polygon>
+      <polygon points="106,70 130,64 134,84 110,90" fill="var(--elv-accent)" opacity=".5"></polygon>
+      <ellipse cx="190" cy="78" rx="22" ry="14" fill="var(--elv-map-fog)"></ellipse>
+      <rect x="48" y="40" width="120" height="76" fill="none" stroke="var(--elv-ink)" stroke-width="1" stroke-dasharray="3 2" opacity=".8"></rect>
+      <text x="60" y="84" style="font-size: 8px; fill: var(--elv-ink); font-family: 'Source Sans 3', sans-serif">shop-api</text>
+      <text x="112" y="57" style="font-size: 8px; fill: var(--elv-ink); font-family: 'Source Sans 3', sans-serif">docs</text>
+      <text x="140" y="112" style="font-size: 8px; fill: var(--elv-ink); font-family: 'Source Sans 3', sans-serif">data-lake</text>
+    </svg>
+    <span class="elv-micro elv-dim" style="position: absolute; left: 8px; bottom: 6px">nhiệt = sự kiện 15 phút qua</span>
+  </div>
+
+  <!-- Nút chế độ camera + tiết kiệm -->
+  <div class="elv-hud elv-hud-box elv-modes" style="right: {{modesRight}}px; top: {{overlayTop}}px">
+    <button class="elv-btn elv-btn--on" aria-label="Toàn cảnh"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 10l6 3 6-3 M2 6l6-3 6 3-6 3z"></path></svg></button>
+    <button class="elv-btn" aria-label="Theo chân"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2a2 2 0 1 1 0 4a2 2 0 1 1 0-4 M4 14c0-3 1.5-5 4-5s4 2 4 5"></path></svg></button>
+    <button class="elv-btn" aria-label="Điện ảnh"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6h12v8H2z M2 6l1.5-3.5 10 1.5L13 6 M5 2.8l1.5 3 M9 3.4l1.5 3"></path></svg></button>
+    <span style="height: 1px; background: var(--elv-border); margin: 2px 4px"></span>
+    <button class="elv-btn" aria-label="Tiết kiệm"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13c0-6 4-9 10-9 0 6-3 9-8 9 M3 13c2-3 4-5 7-6"></path></svg></button>
+  </div>
+
+  <!-- Toast chuông -->
+  <sc-if value="{{toastClaimed}}" hint-placeholder-val="{{ false }}">
+    <div class="elv-toast elv-toast--info elv-hud" style="right: {{toastRight}}px; top: {{overlayTop}}px"><svg class="elv-ic elv-ic--20 elv-toast__ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 13V7a4 4 0 0 1 8 0v6z M4 9h8 M8 9v4"></path></svg><span class="elv-toast__text"><b>Thorn</b> (Hiệp sĩ cấp 5) đã nhận <b>q_0142</b> · đang tới Công trường shop-api</span><a class="elv-btn elv-btn--sm" href="Quest.dc.html" style="text-decoration: none">Theo chân</a></div>
+  </sc-if>
+  <sc-if value="{{toastAwake}}" hint-placeholder-val="{{ false }}">
+    <div class="elv-toast elv-toast--done elv-hud" style="right: {{toastRight}}px; top: {{overlayTop}}px"><svg class="elv-ic elv-ic--20 elv-toast__ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2a6 6 0 1 1 0 12a6 6 0 1 1 0-12 M5 8.2l2 2 4-4.5"></path></svg><span class="elv-toast__text"><b>Tộc Sao Bạc đã tỉnh</b> · mana 12% · Thorn và Bramble đọc journal, làm tiếp từ mốc cuối</span></div>
+  </sc-if>
+  <sc-if value="{{toastIncident}}" hint-placeholder-val="{{ false }}">
+    <div class="elv-toast elv-toast--incident elv-hud" style="right: {{toastRight}}px; top: {{overlayTop}}px"><svg class="elv-ic elv-ic--20 elv-toast__ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 11h8c-1-1-1.5-2-1.5-4a2.5 2.5 0 0 0-5 0c0 2-.5 3-1.5 4z M6.5 13a1.5 1.5 0 0 0 3 0 M8 3.5V2"></path></svg><span class="elv-toast__text"><b>Chuông báo động</b> · shop-api: CI đỏ sau commit 7f3a (test auth) · tuần tra đêm phát hiện</span><a class="elv-btn elv-btn--sm" href="WarRoom.dc.html" style="text-decoration: none">Phòng thủ</a></div>
+  </sc-if>
+  <sc-if value="{{toastCleared}}" hint-placeholder-val="{{ false }}">
+    <div class="elv-toast elv-toast--done elv-hud" style="right: {{toastRight}}px; top: {{overlayTop}}px"><svg class="elv-ic elv-ic--20 elv-toast__ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2a6 6 0 1 1 0 12a6 6 0 1 1 0-12 M5 8.2l2 2 4-4.5"></path></svg><span class="elv-toast__text"><b>Đã dẹp</b> · shop-api sáng lại · CI xanh · bẫy đặt qua một đêm · hội đồng sau chiến chờ mở</span><a class="elv-btn elv-btn--sm" href="WarRoom.dc.html" style="text-decoration: none">Mở hội đồng</a></div>
+  </sc-if>
+  <sc-if value="{{toastNew}}" hint-placeholder-val="{{ false }}">
+    <div class="elv-toast elv-hud" style="right: {{toastRight}}px; top: {{overlayTop}}px"><svg class="elv-ic elv-ic--20 elv-toast__ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4l4-2 4 2 4-2v10l-4 2-4-2-4 2z M6 2v10 M10 4v10"></path></svg><span class="elv-toast__text"><b>Lãnh địa "billing-svc"</b> đã mọc ở biên đông · đường nối về Kinh đô · 4 tòa nhà, 2 tường test</span><a class="elv-btn elv-btn--sm" href="Territory.dc.html" style="text-decoration: none">Tới đó</a></div>
+  </sc-if>
+  <sc-if value="{{toastSealed}}" hint-placeholder-val="{{ false }}">
+    <div class="elv-toast elv-toast--done elv-hud" style="right: {{toastRight}}px; top: {{overlayTop}}px"><svg class="elv-ic elv-ic--20 elv-toast__ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.5 3.5a1.5 1.5 0 0 1 3 0v4h2.5a1.5 1.5 0 0 1 1.5 1.5V11H2.5V9a1.5 1.5 0 0 1 1.5-1.5h2.5z M3.5 13.5h9"></path></svg><span class="elv-toast__text"><b>Đã đóng dấu</b> · q_0142 hợp nhất vào main · lễ khánh thành ở Công trường shop-api</span></div>
+  </sc-if>
+
+  <!-- Khung Tể tướng -->
+  <div class="elv-hud" style="left: {{chanLeft}}px; bottom: {{chanBottom}}px; width: 560px; display: flex; flex-direction: column; gap: 8px">
+
+    <sc-if value="{{preview}}" hint-placeholder-val="{{ false }}">
+      <div class="elv-panel">
+        <div class="elv-panel__head"><span class="elv-panel__title">Tể tướng tách được 3 quest</span><span class="elv-small elv-muted">ước lượng ~6.7k mana · Sao Bạc còn 27%</span></div>
+        <div class="elv-panel__body" style="display: flex; flex-direction: column; gap: 8px; padding: 12px 16px">
+          <div style="display: grid; grid-template-columns: 16px 1fr 70px 110px 70px; gap: 8px; align-items: center" class="elv-micro elv-dim"><span></span><span>Tiêu đề (sửa được)</span><span>Hạng</span><span>Lãnh thổ</span><span>Mana</span></div>
+          <div style="display: grid; grid-template-columns: 16px 1fr 70px 110px 70px; gap: 8px; align-items: center">
+            <svg class="elv-ic" viewBox="0 0 16 16" role="img" aria-label="Trừ tà"><path d="M5.5 7.5a2.5 2.5 0 0 1 5 0v3a2.5 2.5 0 0 1-5 0z M8 7.5v5.5 M3 9h2.5 M10.5 9H13 M4 12.5l1.5-1.5 M12 12.5l-1.5-1.5 M4 5.5l1.5 1.5 M12 5.5l-1.5 1.5 M6.5 5a1.5 1.5 0 0 1 3 0"></path></svg>
+            <input class="elv-input" value="Sửa lỗi đăng nhập trả 500 khi token hết hạn">
+            <button class="elv-select"><span class="elv-rank" data-rank="C">C</span><svg class="elv-ic elv-ic--12" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"></path></svg></button>
+            <button class="elv-select"><span class="elv-ellipsis">shop-api</span><svg class="elv-ic elv-ic--12" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"></path></svg></button>
+            <span class="elv-small elv-num">~2.1k</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 16px 1fr 70px 110px 70px; gap: 8px; align-items: center">
+            <svg class="elv-ic" viewBox="0 0 16 16" role="img" aria-label="Soạn thảo"><path d="M4 2h5.5L13 5.5V14H4z M9.5 2v3.5H13 M6.5 8.5h4 M6.5 11h4"></path></svg>
+            <input class="elv-input" value="SOP triển khai bản 2 cho đội vận hành">
+            <button class="elv-select"><span class="elv-rank" data-rank="E">E</span><svg class="elv-ic elv-ic--12" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"></path></svg></button>
+            <button class="elv-select"><span class="elv-ellipsis">docs-portal</span><svg class="elv-ic elv-ic--12" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"></path></svg></button>
+            <span class="elv-small elv-num">~600</span>
+          </div>
+          <div style="display: grid; grid-template-columns: 16px 1fr 70px 110px 70px; gap: 8px; align-items: center">
+            <svg class="elv-ic" viewBox="0 0 16 16" role="img" aria-label="Thám hiểm"><path d="M8 2a6 6 0 1 1 0 12a6 6 0 1 1 0-12 M10.5 5.5l-1.5 3.5-3.5 1.5 1.5-3.5z"></path></svg>
+            <input class="elv-input" value="Khảo sát thư viện xác thực thay thế">
+            <button class="elv-select"><span class="elv-rank" data-rank="B">B</span><svg class="elv-ic elv-ic--12" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"></path></svg></button>
+            <button class="elv-select"><span class="elv-ellipsis">shop-api</span><svg class="elv-ic elv-ic--12" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"></path></svg></button>
+            <span class="elv-small elv-num">~4.0k</span>
+          </div>
+          <span class="elv-small elv-muted">Quest 1 chặn quest 2 (SOP cần bản sửa). Thám hiểm sẽ do Elf trinh sát Tộc Lửa Đỏ nhận.</span>
+        </div>
+        <div class="elv-panel__foot elv-btnrow--split">
+          <button class="elv-btn elv-btn--ghost">Hủy</button>
+          <span class="elv-row"><button class="elv-btn">Thêm quest</button><button class="elv-btn elv-btn--primary">Xác nhận 3 quest</button></span>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ask}}" hint-placeholder-val="{{ false }}">
+      <div class="elv-panel">
+        <div class="elv-panel__body" style="display: flex; flex-direction: column; gap: 10px; padding: 14px 16px">
+          <span class="elv-row" style="gap: 8px"><svg class="elv-ic elv-ic--20" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-accent)"><path d="M4 2h8v12H4z M6.5 6h3 M6.5 8.5h3"></path></svg><span class="elv-h3">Tể tướng hỏi lại một câu</span></span>
+          <span class="elv-body">"Sửa lỗi đăng nhập" là lỗi 500 ở <b>shop-api</b> hôm qua, hay lỗi đăng nhập SSO ở <b>docs-portal</b> mà tuần tra ghi nhận?</span>
+          <div class="elv-row" style="gap: 8px; flex-wrap: wrap">
+            <button class="elv-btn">shop-api · lỗi 500</button>
+            <button class="elv-btn">docs-portal · SSO</button>
+            <button class="elv-btn elv-btn--ghost">Cả hai, hai quest</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{fail}}" hint-placeholder-val="{{ false }}">
+      <div class="elv-panel">
+        <div class="elv-panel__body" style="display: flex; flex-direction: column; gap: 10px; padding: 14px 16px">
+          <span class="elv-row" style="gap: 8px"><svg class="elv-ic elv-ic--20" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-ink-2)"><path d="M8 2a6 6 0 1 1 0 12a6 6 0 1 1 0-12 M8 7.5v4 M8 5v.01"></path></svg><span class="elv-h3">Tể tướng chưa hiểu</span></span>
+          <span class="elv-body elv-muted">Không nhận ra việc cần làm hay lãnh thổ nào. Hãy nói rõ <b style="color: var(--elv-ink)">làm gì</b> và <b style="color: var(--elv-ink)">ở đâu</b>, ví dụ:</span>
+          <div class="elv-stack" style="gap: 4px">
+            <span class="elv-small">· "sửa lỗi 500 ở login của shop-api, thêm test"</span>
+            <span class="elv-small">· "khảo sát 3 thư viện xác thực thay thế cho shop-api"</span>
+            <span class="elv-small">· "viết SOP triển khai cho đội vận hành trong docs-portal"</span>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{nomana}}" hint-placeholder-val="{{ false }}">
+      <div class="elv-panel" style="border-color: var(--elv-q-sleep)">
+        <div class="elv-panel__body" style="display: flex; flex-direction: column; gap: 10px; padding: 14px 16px">
+          <span class="elv-row" style="gap: 8px"><svg class="elv-ic elv-ic--20" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-q-sleep)"><path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z"></path></svg><span class="elv-h3">Tộc Sao Bạc hết mana</span></span>
+          <span class="elv-body">Quest này cần Hiệp sĩ (Sao Bạc). Tể tướng vẫn ghi lên bảng với trạng thái <span class="elv-status" data-status="open" style="font-size: 13px"><span class="elv-dot"></span>open</span>; Quản sự sẽ giao khi tộc tỉnh lúc <b class="elv-num">14:00</b>.</span>
+          <div class="elv-row" style="gap: 8px; flex-wrap: wrap">
+            <button class="elv-btn elv-btn--primary">Ghi lên bảng, chờ 14:00</button>
+            <button class="elv-btn">Giao cho Tộc Lửa Đỏ (38%)</button>
+            <button class="elv-btn elv-btn--ghost">Hủy</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{chanOpen}}" hint-placeholder-val="{{ false }}">
+      <div class="elv-chancellor elv-chancellor--open" style="align-items: flex-start">
+        <svg class="elv-ic elv-ic--20 elv-chancellor__glyph" viewBox="0 0 16 16" aria-hidden="true" style="margin-top: 6px"><path d="M4 2h8v12H4z M4 2a1.5 1.5 0 0 0-1.5 1.5V5 M12 2a1.5 1.5 0 0 1 1.5 1.5V5 M6.5 6h3 M6.5 8.5h3 M8 10.3a1.2 1.2 0 1 1 0 2.4a1.2 1.2 0 1 1 0-2.4"></path></svg>
+        <span class="elv-body" style="flex: 1; padding: 6px 0; line-height: 1.45">Sửa lỗi đăng nhập trả 500 khi token hết hạn, thêm regression test, rồi viết SOP triển khai bản 2 cho đội vận hành. Khảo sát luôn thư viện xác thực thay thế.</span>
+        <div style="display: flex; flex-direction: column; gap: 6px; align-items: flex-end; padding-top: 2px"><button class="elv-btn elv-btn--primary elv-btn--sm">Tâu</button><span class="elv-chancellor__hint"><span class="elv-kbd">⏎</span> gửi</span></div>
+      </div>
+    </sc-if>
+    <sc-if value="{{chanIdle}}" hint-placeholder-val="{{ true }}">
+      <div class="elv-chancellor">
+        <svg class="elv-ic elv-ic--20 elv-chancellor__glyph" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2h8v12H4z M4 2a1.5 1.5 0 0 0-1.5 1.5V5 M12 2a1.5 1.5 0 0 1 1.5 1.5V5 M6.5 6h3 M6.5 8.5h3 M8 10.3a1.2 1.2 0 1 1 0 2.4a1.2 1.2 0 1 1 0-2.4"></path></svg>
+        <input class="elv-chancellor__input" placeholder="Tâu Tể tướng… một câu, Tể tướng tách thành quest">
+        <span class="elv-chancellor__hint"><span class="elv-kbd">/</span> để gõ</span>
+      </div>
+    </sc-if>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["night","day"],"default":"night","section":"Chế độ"},"scene":{"editor":"enum","options":["default","typing","preview","ask","fail","nomana","claimed","sleeping","relogin","awake","incident","defense","cleared","newregion","cli","sandbox","sealed"],"default":"default","section":"Cảnh"},"dockRight":{"editor":"boolean","default":false,"section":"Dock"},"dockBottom":{"editor":"boolean","default":false,"section":"Dock"},"dockW":{"editor":"int","default":380,"min":380,"max":760,"step":380,"section":"Dock"},"w":{"editor":"int","default":1440,"min":1280,"max":3840,"step":10,"section":"Khung"},"h":{"editor":"int","default":900,"min":720,"max":2400,"step":10,"section":"Khung"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.props.scene ?? 'default';
+    const dr = this.props.dockRight === true || this.props.dockRight === 'true';
+    const db = this.props.dockBottom === true || this.props.dockBottom === 'true';
+    const w = Number(this.props.w) || 1440;
+    const h = Number(this.props.h) || 900;
+    const dockW = Number(this.props.dockW) || 380;
+    const mapScale = Math.max(w / 1440, h / 900);
+    const bandSleep = s === 'sleeping' || s === 'relogin' || s === 'nomana';
+    const bandDefense = s === 'defense';
+    const bandCli = s === 'cli';
+    const bandMock = s === 'sandbox';
+    const hasBand = bandSleep || bandDefense || bandCli || bandMock;
+    const overlayTop = hasBand ? 100 : 64;
+    const silverSleep = bandSleep;
+    const silverPct = s === 'awake' ? 12 : (silverSleep ? 98 : 71);
+    const chanOpen = ['typing', 'preview', 'ask', 'fail', 'nomana'].includes(s);
+    const mapW = dr ? w - dockW : w;
+    return {
+      theme: this.props.theme ?? 'night',
+      w, h, dockW, mapScale,
+      mapScene: (s === 'incident' || s === 'defense') ? 'incident' : (s === 'newregion' ? 'newregion' : 'default'),
+      bandSleep, bandDefense, bandCli, bandMock,
+      relogin: s === 'relogin', notRelogin: s !== 'relogin',
+      overlayTop, needTop: overlayTop + 84,
+      minimapBottom: db ? 256 : 16,
+      modesRight: dr ? dockW + 16 : 16,
+      toastRight: dr ? dockW + 64 : 64,
+      chanLeft: Math.round((mapW - 560) / 2),
+      chanBottom: db ? 256 : 24,
+      silverCls: silverSleep ? 'elv-mana--sleep' : '',
+      silverPct,
+      silverMeta: silverSleep ? 'ngủ · hồi 14:00 (2h 13m)' : (s === 'awake' ? '12% · vừa hồi' : '71% · hồi 14:00'),
+      sealCount: s === 'sealed' ? 2 : 3,
+      needCount: s === 'sealed' ? 3 : 4,
+      notSealed: s !== 'sealed',
+      toastClaimed: s === 'claimed', toastAwake: s === 'awake', toastIncident: s === 'incident', toastCleared: s === 'cleared', toastNew: s === 'newregion', toastSealed: s === 'sealed',
+      preview: s === 'preview', ask: s === 'ask', fail: s === 'fail', nomana: s === 'nomana',
+      chanOpen, chanIdle: !chanOpen
+    };
+  }
+}
+</script>
+</body>
+</html>

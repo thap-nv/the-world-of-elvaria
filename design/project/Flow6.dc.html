@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Luồng 6 — Trên điện thoại: chuông tới đóng dấu</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./elvaria.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Grenze+Gotisch:wght@400;500;600&amp;family=Cinzel:wght@600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#D4A454}a:hover{color:#EEE4CF}
+.fl{display:flex;align-items:flex-start;gap:0;padding:32px;box-sizing:border-box;background:var(--elv-bg)}
+.st{width:195px;display:flex;flex-direction:column;gap:10px;flex:0 0 195px}
+.th{width:195px;height:422px;overflow:hidden;border:1px solid var(--elv-border-strong);border-radius:8px;background:var(--elv-bg)}
+.th>div{width:390px;height:844px;transform:scale(.5);transform-origin:0 0}
+.ar{width:40px;flex:0 0 40px;display:flex;align-items:center;justify-content:center;height:422px;color:var(--elv-ink-3)}
+.cap{display:flex;gap:8px;align-items:flex-start}
+.n{width:22px;height:22px;border-radius:11px;background:var(--elv-accent);color:var(--elv-accent-ink);font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;flex:0 0 22px}
+</style>
+</helmet>
+<div class="elv fl" data-theme="night" style="width: 964px; height: 590px">
+  <div class="st"><div class="th"><div><dc-import name="MBell" theme="night" variant="incoming" hint-size="390px,844px"></dc-import></div></div><div class="cap"><span class="n">1</span><div><div class="elv-h3" style="font-size: 14px">Chuông</div><div class="elv-small elv-muted">Thông báo đẩy qua đường hầm, rung một lần.</div></div></div></div>
+  <div class="ar"><svg class="elv-ic elv-ic--24" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"></path></svg></div>
+  <div class="st"><div class="th"><div><dc-import name="MThrone" theme="night" variant="default" hint-size="390px,844px"></dc-import></div></div><div class="cap"><span class="n">2</span><div><div class="elv-h3" style="font-size: 14px">Mở Ngai vàng</div><div class="elv-small elv-muted">Xem nhanh diff + verdict; ghi chú; hai nút cách xa nhau, một tay.</div></div></div></div>
+  <div class="ar"><svg class="elv-ic elv-ic--24" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"></path></svg></div>
+  <div class="st"><div class="th"><div><dc-import name="MThrone" theme="night" variant="sealed" hint-size="390px,844px"></dc-import></div></div><div class="cap"><span class="n">3</span><div><div class="elv-h3" style="font-size: 14px">Đóng dấu</div><div class="elv-small elv-muted">Chỉ ghi vào quests/ qua đường hầm; máy ở nhà nhận lệnh.</div></div></div></div>
+  <div class="ar"><svg class="elv-ic elv-ic--24" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"></path></svg></div>
+  <div class="st"><div class="th"><div><dc-import name="MMap" theme="night" variant="default" hint-size="390px,844px"></dc-import></div></div><div class="cap"><span class="n">4</span><div><div class="elv-h3" style="font-size: 14px">Máy ở nhà tiếp tục</div><div class="elv-small elv-muted">Bản đồ 2D cập nhật: hợp nhất xong, vùng shop-api đổi màu sức khỏe.</div></div></div></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":964,"height":590}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Elvaria — Token màu, chữ, khoảng cách</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./elvaria.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Grenze+Gotisch:wght@400;500;600&amp;family=Cinzel:wght@600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#D4A454}a:hover{color:#EEE4CF}
+</style>
+</helmet>
+<div class="elv" data-theme="night" style="width: 1440px; height: 1780px; box-sizing: border-box; padding: 40px 48px; display: flex; flex-direction: column; gap: 28px; overflow: hidden">
+
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--elv-border); padding-bottom: 16px">
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <span class="elv-label">Elvaria · design system v0.2 · 2026-11-06</span>
+      <h1 class="elv-h1" style="font-size: 32px">Token: màu, chữ, khoảng cách</h1>
+      <span class="elv-muted elv-body">Tên token = CSS variable trong <span class="elv-mono">project/elvaria.css</span>, tiền tố <span class="elv-mono">--elv-</span>. Đêm là mặc định; ngày đổi bằng <span class="elv-mono">[data-theme="day"]</span> trên gốc <span class="elv-mono">.elv</span>.</span>
+    </div>
+    <div style="display: flex; gap: 8px">
+      <span class="elv-chip elv-chip--on">Thế giới ồn, giao diện lặng</span>
+      <span class="elv-chip">Giấy da · gỗ tối · đồng cũ · mực</span>
+      <span class="elv-chip">Không texture · không bevel · không glow</span>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px">
+    <div class="elv" data-theme="night" style="padding: 20px; border-radius: 6px; border: 1px solid var(--elv-border); display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline">
+        <span class="elv-h2">Đêm <span class="elv-muted" style="font-family: var(--elv-font-body); font-size: 13px; font-weight: 400">· mặc định, vì nền 3D thường tối</span></span>
+        <span class="elv-mono elv-dim">.elv[data-theme="night"]</span>
+      </div>
+      <sc-for list="{{groups}}" as="g" hint-placeholder-count="7">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span class="elv-label">{{g.label}}</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px">
+            <sc-for list="{{g.items}}" as="t" hint-placeholder-count="5">
+              <div style="width: 118px; display: flex; flex-direction: column; gap: 4px">
+                <div style="height: 34px; border-radius: 4px; border: 1px solid var(--elv-border); background: var({{t.v}})"></div>
+                <span class="elv-mono" style="font-size: 10px; color: var(--elv-ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{t.short}}</span>
+                <span class="elv-mono" style="font-size: 10px; color: var(--elv-ink-3)">{{t.n}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <div class="elv" data-theme="day" style="padding: 20px; border-radius: 6px; border: 1px solid var(--elv-border); display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline">
+        <span class="elv-h2">Ngày <span class="elv-muted" style="font-family: var(--elv-font-body); font-size: 13px; font-weight: 400">· giấy da nhạt, mực đậm hơn để đủ tương phản</span></span>
+        <span class="elv-mono elv-dim">.elv[data-theme="day"]</span>
+      </div>
+      <sc-for list="{{groups}}" as="g" hint-placeholder-count="7">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span class="elv-label">{{g.label}}</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px">
+            <sc-for list="{{g.items}}" as="t" hint-placeholder-count="5">
+              <div style="width: 118px; display: flex; flex-direction: column; gap: 4px">
+                <div style="height: 34px; border-radius: 4px; border: 1px solid var(--elv-border); background: var({{t.v}})"></div>
+                <span class="elv-mono" style="font-size: 10px; color: var(--elv-ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{t.short}}</span>
+                <span class="elv-mono" style="font-size: 10px; color: var(--elv-ink-3)">{{t.d}}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 32px">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span class="elv-label">Thang chữ · dòng 1.4 · hai font nền + một font nhấn fantasy</span>
+      <div style="display: grid; grid-template-columns: 56px 1fr; gap: 8px 16px; align-items: baseline">
+        <span class="elv-mono elv-dim">24 / fs-5</span><span class="elv-h1">Vương quốc Thanh Nguyệt Sơn</span>
+        <span class="elv-mono elv-dim">18 / fs-4</span><span class="elv-h2">Thorn · Hiệp sĩ cấp 7 · Tộc Sao Bạc</span>
+        <span class="elv-mono elv-dim">15 / fs-3</span><span class="elv-h3">Sửa lỗi đăng nhập trả 500 khi token hết hạn</span>
+        <span class="elv-mono elv-dim">15 / fs-3</span><span class="elv-body">Thân chữ: mô tả quest, ghi chú trả bài, nội dung journal. Source Sans 3, 400.</span>
+        <span class="elv-mono elv-dim">13 / fs-2</span><span class="elv-small">Mặc định cho bảng, card, nút, log. <span class="elv-num">09:12:03 · 1.240 token · 3/3 lần thử</span></span>
+        <span class="elv-mono elv-dim">11 / fs-1</span><span class="elv-micro elv-muted">Meta, nhãn, mốc giờ · <span class="elv-label">nhãn mục · 0.08em</span></span>
+      </div>
+      <div class="elv-small elv-muted" style="margin-top: 4px; display: flex; flex-direction: column; gap: 4px">
+        <span><b style="color: var(--elv-ink)">Alegreya</b> (serif, có dấu tiếng Việt, vẫn đọc được ở 14px) cho: tên nhân vật, tên quest, tên lãnh địa, tiêu đề bảng thường. Trọng lượng 600–700.</span>
+        <span><b style="color: var(--elv-ink)">Source Sans 3</b> (sans nhân văn) cho mọi thứ còn lại: thân chữ, số liệu (tabular-nums), log, nhãn. Không in nghiêng nhãn.</span>
+      </div>
+      <div style="margin-top: 6px; padding: 14px 16px; border: 1px solid var(--elv-border); border-radius: 6px; background: var(--elv-surface); display: flex; flex-direction: column; gap: 10px">
+        <span class="elv-label" style="color: var(--elv-accent)">Font nhấn fantasy · chỉ ở vài chỗ đặc biệt · không bao giờ dưới 14px</span>
+        <div style="display: grid; grid-template-columns: 120px 1fr; gap: 10px 16px; align-items: baseline">
+          <span class="elv-mono elv-dim">fantasy · 28</span><span class="elv-fantasy" style="font-size: 28px; line-height: 1.15">Vương quốc Thanh Nguyệt Sơn</span>
+          <span class="elv-mono elv-dim">fantasy · 20</span><span class="elv-fantasy" style="font-size: 20px">Ngai vàng · Hội quán · Phòng chiến sự · Đền · Phát hành 2.4</span>
+          <span class="elv-mono elv-dim">fantasy · 17</span><span><button class="elv-btn elv-btn--seal"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.5 3.5a1.5 1.5 0 0 1 3 0v4h2.5a1.5 1.5 0 0 1 1.5 1.5V11H2.5V9a1.5 1.5 0 0 1 1.5-1.5h2.5z M3.5 13.5h9"></path></svg>Đóng dấu</button> <span class="elv-small elv-muted">nút dấu vua, lễ khánh thành, tiêu đề onboarding</span></span>
+          <span class="elv-mono elv-dim">inscription · 26</span><span class="elv-wordmark" style="font-size: 26px">Elvaria</span>
+          <span class="elv-mono elv-dim">inscription · 14</span><span class="elv-row" style="gap: 8px"><span class="elv-rank" data-rank="D">D</span><span class="elv-rank" data-rank="B">B</span><span class="elv-rank" data-rank="S">S</span><span class="elv-inscr" style="font-size: 14px; color: var(--elv-ink-2)">Rank · Lv 10 · I · II · III</span></span>
+        </div>
+        <div class="elv-small elv-muted" style="display: flex; flex-direction: column; gap: 4px">
+          <span><b style="color: var(--elv-ink)">Grenze Gotisch</b> (<span class="elv-mono">--elv-font-fantasy</span>, blackletter nhẹ, <b style="color: var(--elv-ink)">có dấu tiếng Việt</b>) · trọng lượng 500 · dùng ở đúng 6 chỗ: tên vương quốc ở thanh trên, tiêu đề các bảng cung đình (Ngai vàng, Hội quán, Phòng chiến sự, Đền), tên chiến dịch, nút Đóng dấu, tiêu đề màn Lần đầu mở, toast lễ hội. Không dùng cho tên quest, tên nhân vật, log, nhãn.</span>
+          <span><b style="color: var(--elv-ink)">Cinzel</b> (<span class="elv-mono">--elv-font-inscription</span>, chữ khắc La Mã, <b style="color: var(--elv-h-warn)">không có dấu tiếng Việt</b>) · chỉ cho chữ Latin không dấu và số: wordmark ELVARIA, chữ hạng F–S trong badge, số cấp lớn. Mọi chữ có dấu phải về Grenze Gotisch hoặc Alegreya.</span>
+          <span>Font nền vẫn là hai: Alegreya + Source Sans 3. Hai font nhấn tải thêm ~60 KB; chỉ nạp subset <span class="elv-mono">latin, vietnamese</span>.</span>
+        </div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span class="elv-label">Khoảng cách 4/8 · bo góc · viền</span>
+      <div style="display: flex; align-items: flex-end; gap: 10px">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><div style="width: 4px; height: 4px; background: var(--elv-accent)"></div><span class="elv-mono elv-dim" style="font-size: 10px">sp-1 4</span></div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><div style="width: 8px; height: 8px; background: var(--elv-accent)"></div><span class="elv-mono elv-dim" style="font-size: 10px">sp-2 8</span></div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><div style="width: 12px; height: 12px; background: var(--elv-accent)"></div><span class="elv-mono elv-dim" style="font-size: 10px">sp-3 12</span></div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><div style="width: 16px; height: 16px; background: var(--elv-accent)"></div><span class="elv-mono elv-dim" style="font-size: 10px">sp-4 16</span></div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><div style="width: 24px; height: 24px; background: var(--elv-accent)"></div><span class="elv-mono elv-dim" style="font-size: 10px">sp-5 24</span></div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 4px"><div style="width: 32px; height: 32px; background: var(--elv-accent)"></div><span class="elv-mono elv-dim" style="font-size: 10px">sp-6 32</span></div>
+      </div>
+      <div style="display: flex; gap: 12px; align-items: center; margin-top: 6px">
+        <div style="width: 64px; height: 40px; border: 1px solid var(--elv-border-strong); border-radius: 4px; background: var(--elv-surface)"></div><span class="elv-mono elv-dim" style="font-size: 10px">r-1 4px · nút, chip, ô nhập</span>
+      </div>
+      <div style="display: flex; gap: 12px; align-items: center">
+        <div style="width: 64px; height: 40px; border: 1px solid var(--elv-border); border-radius: 6px; background: var(--elv-surface)"></div><span class="elv-mono elv-dim" style="font-size: 10px">r-2 6px · bảng, card, toast</span>
+      </div>
+      <span class="elv-small elv-muted">Viền luôn 1px (<span class="elv-mono">--elv-border</span>); viền nhấn <span class="elv-mono">--elv-border-strong</span>. Không bóng mềm nhiều lớp: tối đa <span class="elv-mono">0 2px 0</span> đặc cho toast/menu.</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span class="elv-label">Tên do người dùng đặt · 24 ký tự · chuyển động</span>
+      <div class="elv-panel" style="padding: 10px 12px; gap: 6px">
+        <span class="elv-mono elv-dim" style="font-size: 10px">.elv-name · max-width: 24ch · ellipsis</span>
+        <span class="elv-display elv-name" style="font-size: 18px">Vương quốc Thanh Nguyệt Sơn</span>
+        <span class="elv-display elv-name" style="font-size: 18px">Lãnh địa Bắc Hải</span>
+        <span class="elv-mono elv-dim" style="font-size: 10px">.elv-name--2 · hai dòng khi có chỗ</span>
+        <span class="elv-display elv-name elv-name--2" style="font-size: 15px; max-width: 200px">Vương quốc Thanh Nguyệt Sơn Đệ Nhất</span>
+      </div>
+      <div class="elv-small elv-muted" style="display: flex; flex-direction: column; gap: 4px">
+        <span><span class="elv-mono" style="color: var(--elv-ink)">--elv-dur: 180ms</span> · <span class="elv-mono" style="color: var(--elv-ink)">--elv-ease</span> ease-out. Chỉ khi người dùng thao tác hoặc có sự kiện mới.</span>
+        <span>Chuông rung <b style="color: var(--elv-ink)">một lần</b> rồi đứng yên. Không nhấp nháy, không hoạt hình lặp, không blur lớn.</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1780}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const mk = (v, n, d) => ({ v: '--elv-' + v, short: v, n, d });
+    return {
+      groups: [
+        { label: 'Nền & mặt bảng', items: [mk('bg','#1A1714','#E9DFC8'), mk('surface','#262019','#F7F0DF'), mk('surface-2','#2F2820','#FFFBF1'), mk('surface-3','#3A3128','#EFE4CB'), mk('border','#4A3F31','#CDBC98'), mk('border-strong','#6B5B45','#A8956F')] },
+        { label: 'Mực & nhấn (đồng / vàng cũ)', items: [mk('ink','#EEE4CF','#2B2318'), mk('ink-2','#AA9C84','#6A5B45'), mk('ink-3','#948770','#6F614A'), mk('accent','#D4A454','#7F5614'), mk('accent-ink','#1A1714','#FFF8E8')] },
+        { label: '7 trạng thái quest · awaiting_seal dùng accent', items: [mk('q-open','#9A9183','#645C4D'), mk('q-working','#6AA2E6','#245AA6'), mk('q-review','#B59AE8','#5F40A8'), mk('q-done','#79C286','#256B38'), mk('q-returned','#E68AA2','#A53853'), mk('q-sleep','#8A97AE','#4A566D'), mk('q-infirmary','#E8706B','#A52B27')] },
+        { label: 'Mana hai tộc · không trùng màu trạng thái', items: [mk('fac-silver','#8AD8D4','#176E6A'), mk('fac-fire','#FF8A60','#AE3814')] },
+        { label: 'Sức khỏe lãnh thổ (thời tiết)', items: [mk('h-good','#66C29C','#227550'), mk('h-warn','#E6B84A','#7E5903'), mk('h-incident','#E8706B','#A52B27')] },
+        { label: 'Chất liệu gợi', items: [mk('wood','#5B3F28','#7A5538'), mk('leather','#8B6B45','#9B7A50'), mk('steel','#9FB2C4','#6F8294'), mk('parchment','#E9DFC8','#E9DFC8')] },
+        { label: 'Bản đồ 3D — bảng màu để Three.js khớp lớp 2D', items: [mk('map-sky','#14151C','#CFE0E8'), mk('map-land-1','#2E3A2C','#9FBF7A'), mk('map-land-2','#38462F','#B5CC84'), mk('map-land-3','#4B5636','#C9D68E'), mk('map-rock','#3E3A3A','#A79D92'), mk('map-snow','#8C8E96','#F2F2EE'), mk('map-water','#243747','#7FB2C7'), mk('map-road','#5A4A36','#B59A72')] }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

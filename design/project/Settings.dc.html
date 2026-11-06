@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Elvaria — Cài đặt</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./elvaria.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Grenze+Gotisch:wght@400;500;600&amp;family=Cinzel:wght@600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#D4A454}a:hover{color:#EEE4CF}
+</style>
+</helmet>
+<div class="elv" data-theme="{{theme}}" style="width: 1440px; height: 900px; position: relative; overflow: hidden">
+  <div style="position: absolute; inset: 0">
+    <dc-import name="Hud" theme="{{theme}}" scene="default" dock-right="{{ true }}" hint-size="1440px,900px"></dc-import>
+  </div>
+
+  <div class="elv-panel elv-dock elv-dock--right">
+    <div class="elv-panel__head">
+      <svg class="elv-ic elv-ic--20" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-accent)"><path d="M8 6a2 2 0 1 1 0 4a2 2 0 1 1 0-4 M8 1.5v2 M8 12.5v2 M1.5 8h2 M12.5 8h2 M3.4 3.4l1.4 1.4 M11.2 11.2l1.4 1.4 M3.4 12.6l1.4-1.4 M11.2 4.8l1.4-1.4"></path></svg>
+      <span class="elv-panel__title">Cài đặt <span class="elv-muted" style="font-family: var(--elv-font-body); font-size: 13px; font-weight: 400">· kingdom.json</span></span>
+      <button class="elv-btn elv-btn--ghost elv-btn--sm elv-btn--icon" aria-label="Đóng"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8 M12 4l-8 8"></path></svg></button>
+    </div>
+    <div class="elv-panel__body" style="padding: 0 16px; display: flex; flex-direction: column">
+      <div class="elv-section" style="display: flex; flex-direction: column; gap: 10px">
+        <span class="elv-label">Mana</span>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+          <label class="elv-field"><span>Trần mana_cap</span><span class="elv-row"><input class="elv-input elv-num" value="98" style="width: 64px"><span class="elv-small elv-muted">%</span></span></label>
+          <label class="elv-field"><span>Phần của vua king_reserve</span><span class="elv-row"><input class="elv-input elv-num" value="2" style="width: 64px"><span class="elv-small elv-muted">% · tăng 10 nếu ngài dùng trực tiếp</span></span></label>
+        </div>
+        <div class="elv-mana"><span class="elv-crest elv-crest--silver"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2l1.5 4.5L14 8l-4.5 1.5L8 14l-1.5-4.5L2 8l4.5-1.5z"></path></svg></span><span class="elv-mana__bar"><span class="elv-mana__fill" style="width: 71%"></span><span class="elv-mana__warn" style="left: 88%"></span><span class="elv-mana__cap" style="left: 98%"></span></span><span class="elv-mana__meta">cảnh báo từ 88%</span></div>
+        <span class="elv-small elv-muted">Thế giới không nhận quest mới khi dùng ≥ min(trần, 100 − phần của vua). Hệ thống không bao giờ tự xoay tài khoản.</span>
+      </div>
+      <div class="elv-section" style="display: flex; flex-direction: column; gap: 8px">
+        <span class="elv-label">Cầu dao</span>
+        <dl class="elv-kv" style="grid-template-columns: 150px 1fr; align-items: center; row-gap: 8px">
+          <dt>Thời gian / lần thử</dt><dd class="elv-row"><input class="elv-input elv-num" value="45" style="width: 56px"><span class="elv-small elv-muted">F–C</span><input class="elv-input elv-num" value="120" style="width: 56px"><span class="elv-small elv-muted">B–S · phút</span></dd>
+          <dt>Số lần thử</dt><dd><input class="elv-input elv-num" value="3" style="width: 56px"></dd>
+          <dt>Mana / quest</dt><dd class="elv-row"><span class="elv-small">ước lượng Tể tướng ×</span><input class="elv-input elv-num" value="2" style="width: 56px"></dd>
+          <dt>Trả bài cùng lỗi</dt><dd class="elv-row"><input class="elv-input elv-num" value="3" style="width: 56px"><span class="elv-small elv-muted">→ đình chỉ về Đền</span></dd>
+        </dl>
+      </div>
+      <div class="elv-section" style="display: flex; flex-direction: column; gap: 8px">
+        <span class="elv-label">Kênh chuông</span>
+        <label class="elv-check"><input type="checkbox" checked>Thông báo hệ thống (Windows toast / Notification Center)</label>
+        <label class="elv-check"><input type="checkbox" checked>Điện thoại qua đường hầm · web push</label>
+        <label class="elv-check"><input type="checkbox">Ứng dụng nhắn tin · chọn ở giai đoạn 2</label>
+        <span class="elv-small elv-muted">Chuông chỉ khi: chờ dấu, bệnh xá, báo động, cả tộc ngủ.</span>
+      </div>
+      <div class="elv-section" style="display: flex; flex-direction: column; gap: 8px">
+        <span class="elv-row" style="justify-content: space-between"><span class="elv-label">Đường hầm · Cổng thành</span><span class="elv-switch elv-switch--on"></span></span>
+        <dl class="elv-kv" style="grid-template-columns: 110px 1fr"><dt>Nhà cung cấp</dt><dd>Tailscale · <span class="elv-mono">thanh-nguyet.ts.net</span></dd><dt>Xác thực</dt><dd>token + HTTPS · đổi 90 ngày</dd><dt>Hành động từ xa</dt><dd>chỉ ghi vào quests/, không chạy lệnh</dd></dl>
+        <span class="elv-small" style="color: var(--elv-h-warn)">Máy phải không ngủ khi bật đường hầm.</span>
+      </div>
+      <div class="elv-section" style="display: flex; flex-direction: column; gap: 8px">
+        <span class="elv-label">Hiển thị</span>
+        <div class="elv-row" style="gap: 8px"><span class="elv-small" style="width: 110px">Ngày / đêm</span><button class="elv-btn elv-btn--sm elv-btn--on" style="background: var(--elv-surface-3)">Theo giờ thật</button><button class="elv-btn elv-btn--sm elv-btn--ghost">Luôn đêm</button><button class="elv-btn elv-btn--sm elv-btn--ghost">Luôn ngày</button></div>
+        <div class="elv-row" style="gap: 8px"><span class="elv-small" style="width: 110px">Tiết kiệm (pin)</span><span class="elv-switch"></span><span class="elv-small elv-muted">15 fps, tắt thời tiết và điện ảnh</span></div>
+        <div class="elv-row" style="gap: 8px"><span class="elv-small" style="width: 110px">Theme</span><button class="elv-select">fantasy<svg class="elv-ic elv-ic--12" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"></path></svg></button><span class="elv-small elv-muted">world/themes/</span></div>
+      </div>
+      <div class="elv-section" style="display: flex; flex-direction: column; gap: 8px">
+        <span class="elv-label">Lịch · tính vào mana, tắt được từng cái</span>
+        <div class="elv-row" style="gap: 8px"><span class="elv-switch elv-switch--on"></span><span class="elv-small">Tuần tra đêm · ≤ 10% mana tuần</span></div>
+        <div class="elv-row" style="gap: 8px"><span class="elv-switch elv-switch--on"></span><span class="elv-small">Đền · Thầy tu mỗi 10 quest hoặc hằng tuần</span></div>
+        <div class="elv-row" style="gap: 8px"><span class="elv-switch elv-switch--on"></span><span class="elv-small">Nhà thơ · biên niên sử mỗi tối</span></div>
+      </div>
+    </div>
+    <div class="elv-panel__foot elv-btnrow--split"><button class="elv-btn elv-btn--ghost">Mở kingdom.json</button><button class="elv-btn elv-btn--primary">Lưu</button></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["night","day"],"default":"night","section":"Chế độ"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return { theme: this.props.theme ?? 'night' }; }
+}
+</script>
+</body>
+</html>

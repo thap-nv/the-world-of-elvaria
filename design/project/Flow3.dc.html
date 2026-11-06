@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Luồng 3 — Sự cố, chuông, phòng thủ, Trừ tà, hội đồng</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./elvaria.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Grenze+Gotisch:wght@400;500;600&amp;family=Cinzel:wght@600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#D4A454}a:hover{color:#EEE4CF}
+.fl{display:flex;align-items:flex-start;gap:0;padding:32px;box-sizing:border-box;background:var(--elv-bg)}
+.st{width:504px;display:flex;flex-direction:column;gap:10px;flex:0 0 504px}
+.th{width:504px;height:315px;overflow:hidden;border:1px solid var(--elv-border-strong);border-radius:6px;background:var(--elv-map-sky)}
+.th>div{width:1440px;height:900px;transform:scale(.35);transform-origin:0 0}
+.ar{width:40px;flex:0 0 40px;display:flex;align-items:center;justify-content:center;height:315px;color:var(--elv-ink-3)}
+.cap{display:flex;gap:8px;align-items:flex-start}
+.n{width:22px;height:22px;border-radius:11px;background:var(--elv-h-incident);color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;flex:0 0 22px}
+</style>
+</helmet>
+<div class="elv fl" data-theme="night" style="width: 2744px; height: 480px">
+  <div class="st"><div class="th"><div><dc-import name="Hud" theme="night" scene="incident" hint-size="1440px,900px"></dc-import></div></div><div class="cap"><span class="n">1</span><div><div class="elv-h3">Sự cố → chuông</div><div class="elv-small elv-muted">Tuần tra đêm thấy CI đỏ. Sấm sét trên shop-api, chuông rung một lần, toast có nút.</div></div></div></div>
+  <div class="ar"><svg class="elv-ic elv-ic--24" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"></path></svg></div>
+  <div class="st"><div class="th"><div><dc-import name="Hud" theme="night" scene="defense" hint-size="1440px,900px"></dc-import></div></div><div class="cap"><span class="n">2</span><div><div class="elv-h3">Dải phòng thủ</div><div class="elv-small elv-muted">Chiến dịch phòng thủ tự tuyên. Dải đỏ ở thanh trên với đồng hồ, không popup, không che bản đồ.</div></div></div></div>
+  <div class="ar"><svg class="elv-ic elv-ic--24" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"></path></svg></div>
+  <div class="st"><div class="th"><div><dc-import name="Guild" theme="night" variant="exorcism" hint-size="1440px,900px"></dc-import></div></div><div class="cap"><span class="n">3</span><div><div class="elv-h3">Quest Trừ tà tự sinh</div><div class="elv-small elv-muted">Lên đầu Hội quán với chip "tự sinh"; Hiệp sĩ rảnh cùng lãnh thổ nhận ngay. Quest khác tạm hoãn.</div></div></div></div>
+  <div class="ar"><svg class="elv-ic elv-ic--24" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"></path></svg></div>
+  <div class="st"><div class="th"><div><dc-import name="Hud" theme="night" scene="cleared" hint-size="1440px,900px"></dc-import></div></div><div class="cap"><span class="n">4</span><div><div class="elv-h3">Cleared</div><div class="elv-small elv-muted">Săn xong chưa đủ: bẫy chạy lại qua đêm đạt → incident.cleared, trời quang, dải đỏ hạ.</div></div></div></div>
+  <div class="ar"><svg class="elv-ic elv-ic--24" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5"></path></svg></div>
+  <div class="st"><div class="th"><div><dc-import name="WarRoom" theme="night" variant="retro" hint-size="1440px,900px"></dc-import></div></div><div class="cap"><span class="n">5</span><div><div class="elv-h3">Hội đồng sau chiến</div><div class="elv-small elv-muted">3 agent phản biện, bài học đủ phiếu → kinh chung; đổ nát → quest Gia cố; chronicle ghi một trang.</div></div></div></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2744,"height":480}}'>
+class Component extends DCLogic { renderVals() { return {}; } }
+</script>
+</body>
+</html>

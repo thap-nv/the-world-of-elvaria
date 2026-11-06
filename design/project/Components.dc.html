@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Elvaria — Thành phần</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./elvaria.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Grenze+Gotisch:wght@400;500;600&amp;family=Cinzel:wght@600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#D4A454}a:hover{color:#EEE4CF}
+.elv-ic .t2{opacity:.55}
+</style>
+</helmet>
+<div class="elv" data-theme="{{theme}}" style="width: 1440px; height: 2000px; box-sizing: border-box; padding: 40px 48px; display: flex; flex-direction: column; gap: 28px; overflow: hidden">
+
+  <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; border-bottom: 1px solid var(--elv-border); padding-bottom: 16px">
+    <div style="display: flex; flex-direction: column; gap: 4px">
+      <span class="elv-label">Elvaria · design system v0.2 · chế độ {{themeLabel}}</span>
+      <h1 class="elv-h1" style="font-size: 32px">Thành phần</h1>
+      <span class="elv-muted elv-body">Tên class dùng thẳng trong code. Mọi thành phần có nền đục, viền 1px, bo 4–6px; không blur, không bóng mềm.</span>
+    </div>
+    <span class="elv-mono elv-dim">.elv-panel · .elv-quest · .elv-rank · .elv-avatar · .elv-mana · .elv-btn--seal / --return · .elv-log · .elv-tooltip · .elv-toast · .elv-select · .elv-tabs · .elv-chancellor · .elv-btn--summon · .elv-crest</span>
+  </div>
+
+  <!-- HÀNG 1: Panel / Dock · Card quest -->
+  <div style="display: grid; grid-template-columns: 420px 1fr; gap: 32px">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span class="elv-label">Panel · dock phải ≤ 380 · dock dưới ≤ 240</span>
+      <div class="elv-panel" style="width: 380px; height: 300px">
+        <div class="elv-panel__head">
+          <svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4l4-2 4 2 4-2v10l-4 2-4-2-4 2z M6 2v10 M10 4v10"></path></svg>
+          <span class="elv-panel__title">Tiêu đề bảng <span class="elv-muted" style="font-family: var(--elv-font-body); font-size: 13px; font-weight: 400">· phụ đề</span></span>
+          <button class="elv-btn elv-btn--ghost elv-btn--sm elv-btn--icon" aria-label="Đóng"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 4l8 8 M12 4l-8 8"></path></svg></button>
+        </div>
+        <div class="elv-panel__body" style="display: flex; flex-direction: column; gap: 12px">
+          <div class="elv-section" style="padding-top: 0">
+            <span class="elv-label">Mục</span>
+            <dl class="elv-kv" style="margin: 6px 0 0">
+              <dt>Khóa</dt><dd>Giá trị, cắt gọn khi quá dài, quá dài nữa thì…</dd>
+              <dt>Lãnh thổ</dt><dd><span class="elv-name">shop-api</span></dd>
+            </dl>
+          </div>
+          <span class="elv-small elv-muted">Thân bảng cuộn; đầu và chân bảng cố định. Đầu bảng 44px, chân bảng chứa hành động.</span>
+        </div>
+        <div class="elv-panel__foot elv-btnrow--split">
+          <button class="elv-btn elv-btn--ghost">Hủy</button>
+          <button class="elv-btn elv-btn--primary">Hành động chính</button>
+        </div>
+      </div>
+      <span class="elv-mono elv-dim" style="font-size: 10px">.elv-dock--right (top 48, w 380) · .elv-dock--bottom (h 240, right 380) · .elv-topbar (h 48)</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span class="elv-label">Card quest · .elv-quest · tiêu đề, icon dạng, badge hạng, người làm, lãnh thổ, mana, tuổi, lần thử</span>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+        <div class="elv-quest elv-quest--active" data-status="working">
+          <svg class="elv-ic elv-quest__kind" viewBox="0 0 16 16" role="img" aria-label="Trừ tà"><path d="M5.5 7.5a2.5 2.5 0 0 1 5 0v3a2.5 2.5 0 0 1-5 0z M8 7.5v5.5 M3 9h2.5 M10.5 9H13 M4 12.5l1.5-1.5 M12 12.5l-1.5-1.5 M4 5.5l1.5 1.5 M12 5.5l-1.5 1.5 M6.5 5a1.5 1.5 0 0 1 3 0"></path></svg>
+          <span class="elv-quest__title">Sửa lỗi đăng nhập trả 500 khi token hết hạn</span>
+          <div class="elv-quest__right"><span class="elv-rank" data-rank="C">C</span><span class="elv-status"><span class="elv-dot"></span>working</span></div>
+          <div class="elv-quest__meta">
+            <span class="elv-row" style="gap: 4px"><span class="elv-avatar elv-avatar--sm" data-tier="2" style="--rep: 85"><span class="elv-avatar__ring"></span><span class="elv-avatar__frame"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 13V7a4 4 0 0 1 8 0v6z M4 9h8 M8 9v4"></path></svg></span></span>Thorn</span>
+            <span class="elv-quest__ter">shop-api</span>
+            <span class="elv-num">~2.1k mana</span>
+            <span class="elv-num">42 phút</span>
+            <span class="elv-num">lần 2/3</span>
+          </div>
+        </div>
+        <div class="elv-quest" data-status="review">
+          <svg class="elv-ic elv-quest__kind" viewBox="0 0 16 16" role="img" aria-label="Soạn thảo"><path d="M4 2h5.5L13 5.5V14H4z M9.5 2v3.5H13 M6.5 8.5h4 M6.5 11h4"></path></svg>
+          <span class="elv-quest__title">SOP triển khai cho đội vận hành, bản 2</span>
+          <div class="elv-quest__right"><span class="elv-rank" data-rank="E">E</span><span class="elv-status"><span class="elv-dot"></span>review</span></div>
+          <div class="elv-quest__meta">
+            <span class="elv-row" style="gap: 4px"><span class="elv-avatar elv-avatar--sm" data-tier="1" style="--rep: 70"><span class="elv-avatar__ring"></span><span class="elv-avatar__frame"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13l6.5-6.5 M13 3c-1 0-4 .5-5.5 2S5.5 9 5.5 9 9 10 11 8 13 3 13 3z"></path></svg></span></span>Ilse</span>
+            <span class="elv-quest__ter">docs-portal</span>
+            <span class="elv-num">~600 mana</span>
+            <span class="elv-num">3 giờ</span>
+            <span class="elv-num">lần 1/3</span>
+          </div>
+        </div>
+        <div class="elv-quest" data-status="seal">
+          <svg class="elv-ic elv-quest__kind" viewBox="0 0 16 16" role="img" aria-label="Kiến tạo"><path d="M3 13l5-5 M9.5 3.5l3 3-2 2-3-3z M9.5 3.5l1-1 M12.5 6.5l1-1"></path></svg>
+          <span class="elv-quest__title">Trang tổng quan đơn hàng theo mùa với bộ lọc theo kho hàng</span>
+          <div class="elv-quest__right"><span class="elv-rank" data-rank="A">A</span><span class="elv-status"><span class="elv-dot"></span>chờ dấu</span></div>
+          <div class="elv-quest__meta">
+            <span class="elv-row" style="gap: 4px"><span class="elv-avatar elv-avatar--sm" data-tier="3" style="--rep: 92"><span class="elv-avatar__ring"></span><span class="elv-avatar__frame"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 13V7a4 4 0 0 1 8 0v6z M4 9h8 M8 9v4"></path></svg></span></span>Bramble</span>
+            <span class="elv-quest__ter">shop-api</span>
+            <span class="elv-num">8.4k mana</span>
+            <span class="elv-num">1 ngày</span>
+            <span class="elv-num">lần 1/3</span>
+          </div>
+        </div>
+        <div class="elv-quest" data-status="infirmary" style="opacity: .92">
+          <svg class="elv-ic elv-quest__kind" viewBox="0 0 16 16" role="img" aria-label="Thám hiểm"><path d="M8 2a6 6 0 1 1 0 12a6 6 0 1 1 0-12 M10.5 5.5l-1.5 3.5-3.5 1.5 1.5-3.5z"></path></svg>
+          <span class="elv-quest__title">Khảo sát thư viện xác thực thay thế</span>
+          <div class="elv-quest__right"><span class="elv-rank" data-rank="B">B</span><span class="elv-status"><span class="elv-dot"></span>bệnh xá</span></div>
+          <div class="elv-quest__meta">
+            <span class="elv-row" style="gap: 4px"><span class="elv-avatar elv-avatar--sm" data-tier="2" style="--rep: 55"><span class="elv-avatar__ring"></span><span class="elv-avatar__frame"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5c4 2 4 9 0 11 M4 2.5v11 M4 8h9 M10.5 5.5L13 8l-2.5 2.5"></path></svg></span></span>Wren</span>
+            <span class="elv-quest__ter">shop-api</span>
+            <span class="elv-num">4.0k mana</span>
+            <span class="elv-num">2 ngày</span>
+            <span class="elv-num" style="color: var(--elv-q-infirmary)">lần 3/3</span>
+          </div>
+        </div>
+      </div>
+      <span class="elv-small elv-muted">Trạng thái = chấm màu + chữ (không chỉ màu). Card chọn: viền accent. Bệnh xá: số lần thử đỏ. Tên lãnh thổ cắt ở 14ch trong card, 24ch ở nơi rộng.</span>
+    </div>
+  </div>
+
+  <!-- HÀNG 2: Badge hạng · Avatar / trang bị · Huy hiệu tộc -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span class="elv-label">Badge hạng F–S · .elv-rank[data-rank] · 3 mức khớp vật thể 3D</span>
+      <div class="elv-panel" style="padding: 16px; gap: 14px">
+        <div style="display: flex; align-items: center; gap: 16px">
+          <span style="display: inline-flex; gap: 6px"><span class="elv-rank" data-rank="F">F</span><span class="elv-rank" data-rank="E">E</span><span class="elv-rank" data-rank="D">D</span></span>
+          <span class="elv-small"><b>Biển gỗ</b> · F–D <span class="elv-muted">· trên bản đồ: biển gỗ cắm trước tòa nhà</span></span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px">
+          <span style="display: inline-flex; gap: 6px"><span class="elv-rank" data-rank="C">C</span><span class="elv-rank" data-rank="B">B</span></span>
+          <span class="elv-small"><b>Cờ hiệu</b> · C–B <span class="elv-muted">· cờ đuôi én màu thép</span></span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 16px">
+          <span style="display: inline-flex; gap: 6px"><span class="elv-rank" data-rank="A">A</span><span class="elv-rank" data-rank="S">S</span></span>
+          <span class="elv-small"><b>Cờ lớn</b> · A–S <span class="elv-muted">· cờ dài màu đồng, hào quang nhẹ = viền ngoài 1px</span></span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 18px; padding-top: 6px; border-top: 1px solid var(--elv-border)">
+          <span class="elv-rank elv-rank--lg" data-rank="D">D</span><span class="elv-rank elv-rank--lg" data-rank="B">B</span><span class="elv-rank elv-rank--lg" data-rank="S">S</span>
+          <span class="elv-small elv-muted">.elv-rank--lg trong thẻ quest chi tiết</span>
+        </div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span class="elv-label">Avatar nghề + vòng danh tiếng + 4 bậc trang bị · .elv-avatar[data-tier]</span>
+      <div class="elv-panel" style="padding: 16px; gap: 14px">
+        <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; text-align: center">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 8px"><span class="elv-avatar elv-avatar--lg" data-tier="1" style="--rep: 62"><span class="elv-avatar__ring"></span><span class="elv-avatar__frame"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 13V7a4 4 0 0 1 8 0v6z M4 9h8 M8 9v4"></path></svg></span><span class="elv-avatar__lvl">2</span></span><span class="elv-small">Vải<br><span class="elv-muted">cấp 1–3</span></span></div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 8px"><span class="elv-avatar elv-avatar--lg" data-tier="2" style="--rep: 78"><span class="elv-avatar__ring"></span><span class="elv-avatar__frame"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 13V7a4 4 0 0 1 8 0v6z M4 9h8 M8 9v4"></path></svg></span><span class="elv-avatar__lvl">5</span></span><span class="elv-small">Da / xích<br><span class="elv-muted">cấp 4–6</span></span></div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 8px"><span class="elv-avatar elv-avatar--lg" data-tier="3" style="--rep: 90"><span class="elv-avatar__ring"></span><span class="elv-avatar__frame"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 13V7a4 4 0 0 1 8 0v6z M4 9h8 M8 9v4"></path></svg></span><span class="elv-avatar__lvl">8</span></span><span class="elv-small">Giáp / phù chú<br><span class="elv-muted">cấp 7–9</span></span></div>
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 8px"><span class="elv-avatar elv-avatar--lg" data-tier="4" style="--rep: 96"><span class="elv-avatar__ring"></span><span class="elv-avatar__frame"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 13V7a4 4 0 0 1 8 0v6z M4 9h8 M8 9v4"></path></svg></span><span class="elv-avatar__lvl">10</span></span><span class="elv-small">Huyền thoại<br><span class="elv-muted">cấp 10</span></span></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; padding-top: 10px; border-top: 1px solid var(--elv-border)">
+          <span class="elv-avatar" data-tier="2" style="--rep: 85"><span class="elv-avatar__ring"></span><span class="elv-avatar__frame"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13l6.5-6.5 M13 3c-1 0-4 .5-5.5 2S5.5 9 5.5 9 9 10 11 8 13 3 13 3z"></path></svg></span><span class="elv-avatar__lvl">5</span></span>
+          <span class="elv-avatar elv-avatar--sm" data-tier="3" style="--rep: 40"><span class="elv-avatar__ring"></span><span class="elv-avatar__frame"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5c4 2 4 9 0 11 M4 2.5v11 M4 8h9 M10.5 5.5L13 8l-2.5 2.5"></path></svg></span></span>
+          <span class="elv-small elv-muted">Vòng = tỉ lệ đạt trong 20 phán quyết gần nhất (<span class="elv-mono">--rep: 85</span>). Cỡ 24 / 36 / 64. Khung avatar đổi viền theo bậc, không đổi màu nghề.</span>
+        </div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span class="elv-label">Huy hiệu tộc · .elv-crest · chip · chấm · sức khỏe</span>
+      <div class="elv-panel" style="padding: 16px; gap: 14px">
+        <div style="display: flex; align-items: center; gap: 14px">
+          <span class="elv-crest elv-crest--silver elv-crest--lg"><svg class="elv-ic" viewBox="0 0 16 16" role="img" aria-label="Tộc Sao Bạc"><path d="M8 2l1.5 4.5L14 8l-4.5 1.5L8 14l-1.5-4.5L2 8l4.5-1.5z"></path></svg></span>
+          <span class="elv-small"><b>Tộc Sao Bạc</b> <span class="elv-muted">· Claude · sao bốn cánh</span></span>
+          <span class="elv-crest elv-crest--silver"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2l1.5 4.5L14 8l-4.5 1.5L8 14l-1.5-4.5L2 8l4.5-1.5z"></path></svg></span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px">
+          <span class="elv-crest elv-crest--fire elv-crest--lg"><svg class="elv-ic" viewBox="0 0 16 16" role="img" aria-label="Tộc Lửa Đỏ"><path d="M8 2c1 2.5 4 4 4 7.5a4 4 0 0 1-8 0c0-1.5.5-2.5 1.5-3.5.3 1 .8 1.5 1.5 2C7.5 6 7.5 4 8 2z"></path></svg></span>
+          <span class="elv-small"><b>Tộc Lửa Đỏ</b> <span class="elv-muted">· Gemini · ngọn lửa</span></span>
+          <span class="elv-crest elv-crest--fire"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2c1 2.5 4 4 4 7.5a4 4 0 0 1-8 0c0-1.5.5-2.5 1.5-3.5.3 1 .8 1.5 1.5 2C7.5 6 7.5 4 8 2z"></path></svg></span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px; padding-top: 10px; border-top: 1px solid var(--elv-border)">
+          <span class="elv-chip elv-chip--on">Tất cả · 24</span><span class="elv-chip">Kiến tạo</span><span class="elv-chip">shop-api</span><span class="elv-chip">Chiến dịch: Phát hành 2.4</span><span class="elv-chip">Thorn</span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: center">
+          <span class="elv-health elv-health--good"><span class="elv-dot" style="background: var(--elv-h-good)"></span>Tốt</span>
+          <span class="elv-health elv-health--warn"><span class="elv-dot" style="background: var(--elv-h-warn)"></span>Cảnh báo</span>
+          <span class="elv-health elv-health--incident"><span class="elv-dot" style="background: var(--elv-h-incident)"></span>Sự cố</span>
+          <span class="elv-muted elv-small">· thời tiết lãnh thổ</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HÀNG 3: Nút · Thanh mana · Dropdown & Tab -->
+  <div style="display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 32px">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span class="elv-label">Nút · Đóng dấu và Trả về phải khác hình, không đặt cạnh nhau</span>
+      <div class="elv-panel" style="padding: 16px; gap: 14px">
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+          <button class="elv-btn elv-btn--seal"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.5 3.5a1.5 1.5 0 0 1 3 0v4h2.5a1.5 1.5 0 0 1 1.5 1.5V11H2.5V9a1.5 1.5 0 0 1 1.5-1.5h2.5z M3.5 13.5h9"></path></svg>Đóng dấu</button>
+          <span class="elv-small elv-muted">khối đặc, vuông, chữ hiển thị, màu đồng — chỉ cho dấu vua</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+          <button class="elv-btn elv-btn--return"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M12.5 5H6a3 3 0 0 0 0 6h3 M8.5 2.5L6 5l2.5 2.5"></path></svg>Trả về</button>
+          <span class="elv-small elv-muted">viền rỗng, bo tròn, mũi tên quay lại, màu hồng trả bài — luôn kèm ô ghi chú</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid var(--elv-border)">
+          <button class="elv-btn elv-btn--primary">Chính</button>
+          <button class="elv-btn">Thường</button>
+          <button class="elv-btn elv-btn--ghost">Mờ</button>
+          <button class="elv-btn elv-btn--summon"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3h12v10H2z M4.5 6l2 2-2 2 M8 10h3"></path></svg>Triệu hồi</button>
+          <button class="elv-btn elv-btn--danger">Xóa nhánh</button>
+          <button class="elv-btn" disabled>Vô hiệu</button>
+          <button class="elv-btn elv-btn--sm">Nhỏ</button>
+          <button class="elv-btn elv-btn--icon" aria-label="Cài đặt"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 6a2 2 0 1 1 0 4a2 2 0 1 1 0-4 M8 1.5v2 M8 12.5v2 M1.5 8h2 M12.5 8h2 M3.4 3.4l1.4 1.4 M11.2 11.2l1.4 1.4 M3.4 12.6l1.4-1.4 M11.2 4.8l1.4-1.4"></path></svg></button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px; padding-top: 10px; border-top: 1px solid var(--elv-border)">
+          <div class="elv-panel" style="padding: 12px; gap: 8px; width: 300px; border-color: var(--elv-border-strong)">
+            <span class="elv-h3">Hợp nhất vào main?</span>
+            <span class="elv-small elv-muted">Nhánh <span class="elv-mono">quest/q_0142</span> → <span class="elv-mono">main</span>, 3 commit. Không hoàn tác được.</span>
+            <div class="elv-btnrow elv-btnrow--split" style="margin-top: 4px"><button class="elv-btn elv-btn--ghost">Để sau</button><button class="elv-btn elv-btn--seal"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.5 3.5a1.5 1.5 0 0 1 3 0v4h2.5a1.5 1.5 0 0 1 1.5 1.5V11H2.5V9a1.5 1.5 0 0 1 1.5-1.5h2.5z M3.5 13.5h9"></path></svg>Đóng dấu hợp nhất</button></div>
+          </div>
+          <span class="elv-small elv-muted">Hành động phá hủy / ra ngoài: hộp xác nhận, nút xác nhận tách xa nút thường.</span>
+        </div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span class="elv-label">Thanh mana theo tộc · .elv-mana · vạch phần của vua · giờ hồi</span>
+      <div class="elv-panel" style="padding: 16px; gap: 14px">
+        <div class="elv-mana">
+          <span class="elv-crest elv-crest--silver"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2l1.5 4.5L14 8l-4.5 1.5L8 14l-1.5-4.5L2 8l4.5-1.5z"></path></svg></span>
+          <span class="elv-mana__bar"><span class="elv-mana__fill" style="width: 71%"></span><span class="elv-mana__warn" style="left: 88%"></span><span class="elv-mana__cap" style="left: 98%"></span></span>
+          <span class="elv-mana__meta">71% · hồi 14:00</span>
+        </div>
+        <div class="elv-mana elv-mana--fire">
+          <span class="elv-crest elv-crest--fire"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2c1 2.5 4 4 4 7.5a4 4 0 0 1-8 0c0-1.5.5-2.5 1.5-3.5.3 1 .8 1.5 1.5 2C7.5 6 7.5 4 8 2z"></path></svg></span>
+          <span class="elv-mana__bar"><span class="elv-mana__fill" style="width: 38%"></span><span class="elv-mana__warn" style="left: 88%"></span><span class="elv-mana__cap" style="left: 98%"></span></span>
+          <span class="elv-mana__meta">38% · hồi 09:00 mai</span>
+        </div>
+        <div class="elv-mana elv-mana--sleep">
+          <span class="elv-crest elv-crest--silver" style="opacity: .6"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2l1.5 4.5L14 8l-4.5 1.5L8 14l-1.5-4.5L2 8l4.5-1.5z"></path></svg></span>
+          <span class="elv-mana__bar"><span class="elv-mana__fill" style="width: 98%"></span><span class="elv-mana__cap" style="left: 98%"></span></span>
+          <span class="elv-mana__meta" style="color: var(--elv-q-sleep)"><svg class="elv-ic elv-ic--12" viewBox="0 0 16 16" aria-hidden="true" style="stroke: var(--elv-q-sleep)"><path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z"></path></svg> ngủ · 2h 13m</span>
+        </div>
+        <div class="elv-mana">
+          <span class="elv-crest elv-crest--silver"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2l1.5 4.5L14 8l-4.5 1.5L8 14l-1.5-4.5L2 8l4.5-1.5z"></path></svg></span>
+          <span class="elv-mana__bar"><span class="elv-mana__fill" style="width: 90%; background: var(--elv-h-warn)"></span><span class="elv-mana__warn" style="left: 88%"></span><span class="elv-mana__cap" style="left: 98%"></span></span>
+          <span class="elv-mana__meta" style="color: var(--elv-h-warn)">90% · sắp chạm trần</span>
+        </div>
+        <span class="elv-small elv-muted">Vạch đồng = trần <span class="elv-mono">mana_cap</span> (98%) = 100 − phần của vua. Vạch đứt = cảnh báo trước 10 điểm. Tộc ngủ: thanh xám, icon trăng, đếm ngược hồi.</span>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span class="elv-label">Dropdown trạng thái · Tab · ô nhập · công tắc</span>
+      <div class="elv-panel" style="padding: 16px; gap: 14px">
+        <div style="display: flex; gap: 16px; align-items: flex-start">
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <button class="elv-select" data-status="working"><span class="elv-dot"></span>working<svg class="elv-ic elv-ic--12" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"></path></svg></button>
+            <div class="elv-menu">
+              <div class="elv-menu__item" data-status="open"><span class="elv-dot"></span>open</div>
+              <div class="elv-menu__item elv-menu__item--on" data-status="working"><span class="elv-dot"></span>working</div>
+              <div class="elv-menu__item" data-status="review"><span class="elv-dot"></span>review</div>
+              <div class="elv-menu__item" data-status="done"><span class="elv-dot"></span>done</div>
+              <div class="elv-menu__item" data-status="returned"><span class="elv-dot"></span>returned</div>
+              <div class="elv-menu__item" data-status="seal"><span class="elv-dot"></span>awaiting_seal</div>
+              <div class="elv-menu__item" data-status="sleep"><span class="elv-dot"></span>paused_mana</div>
+              <div class="elv-menu__item" data-status="infirmary"><span class="elv-dot"></span>infirmary</div>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 12px; flex: 1; min-width: 0">
+            <div class="elv-tabs"><button class="elv-tab elv-tab--on">Tổng quan</button><button class="elv-tab">Kinh<span class="elv-tab__count">12</span></button><button class="elv-tab">Trang bị</button></div>
+            <div class="elv-field"><label>Ghi chú trả bài</label><input class="elv-input" placeholder="Cụ thể, có thể hành động…"></div>
+            <div class="elv-row" style="gap: 12px"><span class="elv-switch elv-switch--on"></span><span class="elv-small">Đường hầm</span><span class="elv-switch"></span><span class="elv-small">Tiết kiệm</span></div>
+            <label class="elv-check"><input type="checkbox" checked>Tuần tra đêm (≤ 10% mana tuần)</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HÀNG 4: Khung Tể tướng · Log · Tooltip & Toast -->
+  <div style="display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 32px">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span class="elv-label">Ô nhập Tể tướng · .elv-chancellor · một dòng, mở rộng khi gõ</span>
+      <div class="elv-chancellor">
+        <svg class="elv-ic elv-ic--20 elv-chancellor__glyph" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2h8v12H4z M4 2a1.5 1.5 0 0 0-1.5 1.5V5 M12 2a1.5 1.5 0 0 1 1.5 1.5V5 M6.5 6h3 M6.5 8.5h3 M8 10.3a1.2 1.2 0 1 1 0 2.4a1.2 1.2 0 1 1 0-2.4"></path></svg>
+        <input class="elv-chancellor__input" placeholder="Tâu Tể tướng… (ví dụ: sửa lỗi 500 ở login rồi viết SOP triển khai)">
+        <span class="elv-chancellor__hint"><span class="elv-kbd">/</span> để gõ</span>
+      </div>
+      <div class="elv-chancellor elv-chancellor--open" style="align-items: flex-start">
+        <svg class="elv-ic elv-ic--20 elv-chancellor__glyph" viewBox="0 0 16 16" aria-hidden="true" style="margin-top: 6px"><path d="M4 2h8v12H4z M4 2a1.5 1.5 0 0 0-1.5 1.5V5 M12 2a1.5 1.5 0 0 1 1.5 1.5V5 M6.5 6h3 M6.5 8.5h3 M8 10.3a1.2 1.2 0 1 1 0 2.4a1.2 1.2 0 1 1 0-2.4"></path></svg>
+        <span class="elv-body" style="flex: 1; padding: 6px 0; line-height: 1.45">Sửa lỗi đăng nhập trả 500 khi token hết hạn, thêm regression test, rồi viết SOP triển khai bản 2 cho đội vận hành. Khảo sát luôn thư viện xác thực thay thế.</span>
+        <div style="display: flex; flex-direction: column; gap: 6px; align-items: flex-end; padding-top: 2px"><button class="elv-btn elv-btn--primary elv-btn--sm">Tâu</button><span class="elv-chancellor__hint"><span class="elv-kbd">⏎</span> gửi · <span class="elv-kbd">⇧⏎</span> xuống dòng</span></div>
+      </div>
+      <span class="elv-small elv-muted">Sau khi gửi: bản xem trước các quest tách ra (xem HUD, luồng 1). Tể tướng hỏi lại tối đa một câu.</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span class="elv-label">Dòng log có mốc giờ · .elv-log · .elv-timeline</span>
+      <div class="elv-panel" style="padding: 12px 16px">
+        <div class="elv-timeline">
+          <div class="elv-log"><span class="elv-log__time">09:12</span><svg class="elv-ic elv-log__ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.5h7l3 3v8H3z M10 2.5v3h3 M5.5 8h5 M5.5 10.5h3"></path></svg><span class="elv-log__text">Đọc <em>src/auth/login.ts</em>, <em>middleware/token.ts</em></span></div>
+          <div class="elv-log"><span class="elv-log__time">09:14</span><svg class="elv-ic elv-log__ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13l6.5-6.5 M13 3c-1 0-4 .5-5.5 2S5.5 9 5.5 9 9 10 11 8 13 3 13 3z"></path></svg><span class="elv-log__text">Sửa <em>login.ts</em>: bắt TokenExpired, trả 401 kèm mã</span></div>
+          <div class="elv-log"><span class="elv-log__time">09:21</span><svg class="elv-ic elv-log__ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3h12v10H2z M4.5 6l2 2-2 2 M8 10h3"></path></svg><span class="elv-log__text">Chạy <em>npm test</em> — 212 đạt, 0 lỗi</span></div>
+          <div class="elv-log elv-log--mark"><span class="elv-log__time">09:22</span><svg class="elv-ic elv-log__ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-accent)"><path d="M8 2l1.5 4.5L14 8l-4.5 1.5L8 14l-1.5-4.5L2 8l4.5-1.5z"></path></svg><span class="elv-log__text">Mốc: nộp bài, chờ nghiệm thu</span></div>
+          <div class="elv-log"><span class="elv-log__time">09:40</span><svg class="elv-ic elv-log__ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-q-review)"><path d="M1.5 8c2-3.5 4-5 6.5-5s4.5 1.5 6.5 5c-2 3.5-4 5-6.5 5S3.5 11.5 1.5 8z M8 6a2 2 0 1 1 0 4a2 2 0 1 1 0-4"></path></svg><span class="elv-log__text">Thợ cả Ragnar (Lửa Đỏ) nhận nghiệm thu, phiên mới</span></div>
+        </div>
+      </div>
+      <span class="elv-small elv-muted">Mốc giờ 11px tabular; icon 16px theo loại sự kiện; dòng mốc màu đồng. Tên file in nghiêng → <span class="elv-mono">em</span> màu mực phụ.</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span class="elv-label">Tooltip · Toast chuông (rung một lần)</span>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span class="elv-tooltip">Thorn · Hiệp sĩ cấp 5 · đang làm q_0142 · 1.240 token hôm nay</span>
+        <div class="elv-toast"><svg class="elv-ic elv-ic--20 elv-toast__ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 11h8c-1-1-1.5-2-1.5-4a2.5 2.5 0 0 0-5 0c0 2-.5 3-1.5 4z M6.5 13a1.5 1.5 0 0 0 3 0 M8 3.5V2"></path></svg><span class="elv-toast__text"><b>Chờ dấu</b> · Bramble nộp "Trang tổng quan đơn hàng" — hợp nhất vào main</span><button class="elv-btn elv-btn--sm">Mở Ngai vàng</button></div>
+        <div class="elv-toast elv-toast--incident"><svg class="elv-ic elv-ic--20 elv-toast__ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M9 2L4 9h4l-1 5 5-7H8z"></path></svg><span class="elv-toast__text"><b>Chuông báo động</b> · shop-api: CI đỏ sau commit 7f3a</span><button class="elv-btn elv-btn--sm">Phòng chiến sự</button></div>
+        <div class="elv-toast elv-toast--done"><svg class="elv-ic elv-ic--20 elv-toast__ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2a6 6 0 1 1 0 12a6 6 0 1 1 0-12 M5 8.2l2 2 4-4.5"></path></svg><span class="elv-toast__text"><b>Đã đóng dấu</b> · q_0142 hợp nhất vào main</span></div>
+        <div class="elv-toast elv-toast--info"><svg class="elv-ic elv-ic--20 elv-toast__ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 13V7a4 4 0 0 1 8 0v6z M4 9h8 M8 9v4"></path></svg><span class="elv-toast__text"><b>Thorn</b> (Hiệp sĩ) đã nhận q_0142 · đi tới Công trường shop-api</span></div>
+      </div>
+      <span class="elv-small elv-muted">Toast góc trên phải, dưới thanh trên; tự ẩn sau 8 s; tối đa 3 chồng. Viền trái 3px theo loại.</span>
+    </div>
+  </div>
+
+  <!-- HÀNG 5: Band · Need layer · Queue · Empty · Diff -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span class="elv-label">Dải toàn cục · .elv-band · dưới thanh trên, không che bản đồ</span>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <div class="elv-band elv-band--sleep" style="position: static"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-q-sleep)"><path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z"></path></svg><span><b>Tộc Sao Bạc đang ngủ</b> · hết mana · hồi 14:00 (2h 13m) · 2 quest tạm dừng</span><span class="elv-grow"></span><button class="elv-btn elv-btn--sm elv-btn--primary">Đã đăng nhập lại</button></div>
+        <div class="elv-band elv-band--defense" style="position: static"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M9 2L4 9h4l-1 5 5-7H8z"></path></svg><span><b>PHÒNG THỦ</b> · shop-api · CI đỏ · Trừ tà q_0150 tự sinh · Thorn đang xử lý · 00:12:40</span><span class="elv-grow"></span><button class="elv-btn elv-btn--sm" style="background: transparent; color: inherit; border-color: currentColor">Phòng chiến sự</button></div>
+        <div class="elv-band elv-band--warn" style="position: static"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-h-warn)"><path d="M8 2l6.5 11.5h-13z M8 6.5v3.5 M8 11.8v.01"></path></svg><span><b>Claude Code chưa đăng nhập</b> · chạy <span class="elv-mono">claude login</span> rồi thử lại</span><span class="elv-grow"></span><button class="elv-btn elv-btn--sm">Thử lại</button></div>
+        <div class="elv-band elv-band--mock" style="position: static"><span class="elv-chip elv-chip--on" style="background: var(--elv-q-review); color: #1A1714; border-color: transparent">DỮ LIỆU GIẢ</span><span>Sa bàn phát lại <span class="elv-mono">events/2026-11-10.jsonl</span> · 20× · 09:12 → 17:40</span><span class="elv-grow"></span><button class="elv-btn elv-btn--sm elv-btn--ghost">Dừng</button></div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span class="elv-label">Lớp "Cần ngài" · .elv-need · mục hàng đợi · .elv-queue-item</span>
+      <div style="display: flex; gap: 12px">
+        <div class="elv-hud-box elv-need" style="width: 260px">
+          <div style="display: flex; align-items: center; gap: 8px; padding: 8px 12px"><span class="elv-h3">Cần ngài</span><span class="elv-chip elv-chip--on" style="background: var(--elv-accent); color: var(--elv-accent-ink)">4</span><span class="elv-grow"></span><span class="elv-micro elv-dim">theo mức khẩn</span></div>
+          <div class="elv-need__item elv-need__item--infirmary"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13.5L8 3l5 10.5z M8 7v4 M6 9h4"></path></svg><span class="elv-need__title">Quân y · Wren lạc đầm lầy</span><span class="elv-need__age">2h</span></div>
+          <div class="elv-need__item"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.5 3.5a1.5 1.5 0 0 1 3 0v4h2.5a1.5 1.5 0 0 1 1.5 1.5V11H2.5V9a1.5 1.5 0 0 1 1.5-1.5h2.5z M3.5 13.5h9"></path></svg><span class="elv-need__title">Dấu · hợp nhất q_0142</span><span class="elv-need__age">25m</span></div>
+          <div class="elv-need__item elv-need__item--warn"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2l6.5 11.5h-13z M8 6.5v3.5 M8 11.8v.01"></path></svg><span class="elv-need__title">Duyệt · Ngộ đạo cho Thorn</span><span class="elv-need__age">1 ngày</span></div>
+        </div>
+        <div class="elv-panel" style="width: 200px; padding: 0">
+          <div class="elv-queue-item elv-queue-item--on"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.5 3.5a1.5 1.5 0 0 1 3 0v4h2.5a1.5 1.5 0 0 1 1.5 1.5V11H2.5V9a1.5 1.5 0 0 1 1.5-1.5h2.5z M3.5 13.5h9"></path></svg><span class="elv-queue-item__title">Hợp nhất q_0142</span><span class="elv-queue-item__meta"><span>Thorn</span><span>shop-api</span></span></div>
+          <div class="elv-queue-item elv-queue-item--infirmary"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13.5L8 3l5 10.5z M8 7v4 M6 9h4"></path></svg><span class="elv-queue-item__title">Wren · 3/3 thử</span><span class="elv-queue-item__meta"><span>Thám hiểm</span></span></div>
+        </div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <span class="elv-label">Trạng thái trống · .elv-empty · diff xem nhanh · .elv-diff</span>
+      <div style="display: flex; gap: 12px">
+        <div class="elv-panel elv-empty" style="width: 200px; padding: 20px 12px">
+          <svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2h8v12H4z M6.5 6h3 M6.5 8.5h3"></path></svg>
+          <span class="elv-empty__title">Không có tấu chương</span>
+          <span class="elv-small">Mọi việc đang tự chạy.</span>
+        </div>
+        <div class="elv-diff" style="flex: 1">
+          <div class="hunk">@@ -41,6 +41,9 @@ login()</div>
+          <div> const t = parse(req)</div>
+          <div class="del">-  if (!t) throw 500</div>
+          <div class="add">+  if (!t || t.exp &lt; now())</div>
+          <div class="add">+    return res.status(401)</div>
+          <div class="add">+      .json({ code: 'TOKEN_EXPIRED' })</div>
+          <div> return next()</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["night","day"],"default":"night","section":"Chế độ"},"$preview":{"width":1440,"height":2000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'night';
+    return { theme, themeLabel: theme === 'day' ? 'ngày' : 'đêm' };
+  }
+}
+</script>
+</body>
+</html>

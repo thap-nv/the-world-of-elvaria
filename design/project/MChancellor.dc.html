@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Elvaria — Điện thoại: khung Tể tướng</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./elvaria.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=Grenze+Gotisch:wght@400;500;600&amp;family=Cinzel:wght@600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#D4A454}a:hover{color:#EEE4CF}
+</style>
+</helmet>
+<div class="elv" data-theme="{{theme}}" style="width: 390px; height: 844px; display: flex; flex-direction: column; overflow: hidden; background: var(--elv-bg)">
+  <div class="elv-m-top">
+    <svg class="elv-ic elv-ic--20" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-accent)"><path d="M4 2h8v12H4z M4 2a1.5 1.5 0 0 0-1.5 1.5V5 M12 2a1.5 1.5 0 0 1 1.5 1.5V5 M6.5 6h3 M6.5 8.5h3"></path></svg>
+    <span class="elv-display elv-grow" style="font-size: 16px">Tể tướng</span>
+    <span class="elv-row elv-micro elv-muted" style="gap: 6px"><span class="elv-crest elv-crest--silver" style="width: 14px; height: 14px; flex-basis: 14px"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true" style="width: 9px; height: 9px"><path d="M8 2l1.5 4.5L14 8l-4.5 1.5L8 14l-1.5-4.5L2 8l4.5-1.5z"></path></svg></span>71% <span class="elv-crest elv-crest--fire" style="width: 14px; height: 14px; flex-basis: 14px"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true" style="width: 9px; height: 9px"><path d="M8 2c1 2.5 4 4 4 7.5a4 4 0 0 1-8 0c0-1.5.5-2.5 1.5-3.5.3 1 .8 1.5 1.5 2C7.5 6 7.5 4 8 2z"></path></svg></span>38%</span>
+  </div>
+
+  <div style="flex: 1; min-height: 0; overflow: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px">
+    <span class="elv-micro elv-dim" style="text-align: center">Hôm nay · lệnh từ xa chỉ ghi vào quests/, máy ở nhà làm</span>
+    <!-- lệnh trước -->
+    <div style="align-self: flex-end; max-width: 300px; padding: 8px 12px; border-radius: 10px 10px 2px 10px; background: var(--elv-accent-dim); border: 1px solid var(--elv-border)"><span class="elv-small">Khảo sát 3 thư viện xác thực thay thế cho shop-api</span><div class="elv-micro elv-dim" style="text-align: right; margin-top: 2px">18:40 · đã lên bảng · q_0147</div></div>
+
+    <!-- lệnh hiện tại -->
+    <div style="align-self: flex-end; max-width: 300px; padding: 8px 12px; border-radius: 10px 10px 2px 10px; background: var(--elv-accent-dim); border: 1px solid var(--elv-border)"><span class="elv-small">Sửa lỗi đăng nhập trả 500 khi token hết hạn, thêm test, rồi viết SOP triển khai bản 2</span><div class="elv-micro elv-dim" style="text-align: right; margin-top: 2px">21:16</div></div>
+
+    <sc-if value="{{preview}}" hint-placeholder-val="{{ true }}">
+      <div class="elv-panel" style="align-self: stretch">
+        <div class="elv-panel__head" style="min-height: 40px; padding: 8px 12px"><span class="elv-panel__title" style="font-size: 15px">Tách được 2 quest</span><span class="elv-micro elv-muted">~2.7k mana</span></div>
+        <div style="padding: 8px 12px; display: flex; flex-direction: column; gap: 8px">
+          <div class="elv-row" style="gap: 8px; align-items: flex-start; padding: 8px; border: 1px solid var(--elv-border); border-radius: 6px">
+            <svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true" style="margin-top: 2px"><path d="M5.5 7.5a2.5 2.5 0 0 1 5 0v3a2.5 2.5 0 0 1-5 0z M8 7.5v5.5 M3 9h2.5 M10.5 9H13"></path></svg>
+            <div class="elv-grow" style="min-width: 0; display: flex; flex-direction: column; gap: 4px"><span class="elv-small"><b>Sửa lỗi đăng nhập trả 500 khi token hết hạn</b></span><div class="elv-row" style="gap: 6px; flex-wrap: wrap"><button class="elv-select" style="height: 26px; font-size: 11px"><span class="elv-rank" data-rank="C" style="transform: scale(.8)">C</span></button><button class="elv-select" style="height: 26px; font-size: 11px">shop-api</button><span class="elv-micro elv-muted">Trừ tà · ~2.1k</span></div></div>
+          </div>
+          <div class="elv-row" style="gap: 8px; align-items: flex-start; padding: 8px; border: 1px solid var(--elv-border); border-radius: 6px">
+            <svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true" style="margin-top: 2px"><path d="M4 2h5.5L13 5.5V14H4z M9.5 2v3.5H13 M6.5 8.5h4 M6.5 11h4"></path></svg>
+            <div class="elv-grow" style="min-width: 0; display: flex; flex-direction: column; gap: 4px"><span class="elv-small"><b>SOP triển khai bản 2 cho đội vận hành</b></span><div class="elv-row" style="gap: 6px; flex-wrap: wrap"><button class="elv-select" style="height: 26px; font-size: 11px"><span class="elv-rank" data-rank="E" style="transform: scale(.8)">E</span></button><button class="elv-select" style="height: 26px; font-size: 11px">docs-portal</button><span class="elv-micro elv-muted">Soạn thảo · ~600</span></div></div>
+          </div>
+          <span class="elv-micro elv-muted">Quest 2 chờ quest 1. Chạm từng cái để sửa tiêu đề.</span>
+        </div>
+        <div class="elv-panel__foot" style="padding: 8px 12px"><button class="elv-btn elv-btn--ghost" style="height: 40px">Hủy</button><button class="elv-btn elv-btn--primary elv-grow" style="height: 40px">Xác nhận 2 quest</button></div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ask}}" hint-placeholder-val="{{ false }}">
+      <div class="elv-panel" style="align-self: stretch">
+        <div style="padding: 12px; display: flex; flex-direction: column; gap: 10px">
+          <span class="elv-row" style="gap: 8px"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-accent)"><path d="M4 2h8v12H4z M6.5 6h3 M6.5 8.5h3"></path></svg><span class="elv-h3">Tể tướng hỏi lại một câu</span></span>
+          <span class="elv-small">"Lỗi đăng nhập" là lỗi 500 ở <b>shop-api</b> hôm qua, hay lỗi SSO ở <b>docs-portal</b> mà tuần tra ghi nhận?</span>
+          <div style="display: flex; flex-direction: column; gap: 6px"><button class="elv-btn" style="height: 44px; justify-content: flex-start">shop-api · lỗi 500</button><button class="elv-btn" style="height: 44px; justify-content: flex-start">docs-portal · SSO</button><button class="elv-btn elv-btn--ghost" style="height: 44px; justify-content: flex-start">Cả hai, hai quest</button></div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{queued}}" hint-placeholder-val="{{ false }}">
+      <div class="elv-row" style="gap: 8px; align-self: stretch; padding: 10px 12px; border: 1px solid var(--elv-q-sleep); border-radius: 6px; background: var(--elv-surface)">
+        <svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true" style="color: var(--elv-q-sleep)"><path d="M2 3h12v8H2z M6 13.5h4 M8 11v2.5"></path></svg>
+        <span class="elv-small"><b>Đã xếp hàng.</b> Máy ở nhà đang ngủ; Tể tướng sẽ đọc lệnh khi máy tỉnh và báo lại qua chuông.</span>
+      </div>
+    </sc-if>
+  </div>
+
+  <div style="padding: 10px 16px; background: var(--elv-surface); border-top: 1px solid var(--elv-border)">
+    <div class="elv-chancellor" style="min-height: 48px">
+      <svg class="elv-ic elv-ic--20 elv-chancellor__glyph" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2h8v12H4z M6.5 6h3 M6.5 8.5h3 M8 10.3a1.2 1.2 0 1 1 0 2.4a1.2 1.2 0 1 1 0-2.4"></path></svg>
+      <input class="elv-chancellor__input" placeholder="Tâu Tể tướng…" aria-label="Lệnh cho Tể tướng">
+      <button class="elv-btn elv-btn--primary elv-btn--icon" aria-label="Gửi" style="width: 36px; height: 36px"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h11 M9 4l4 4-4 4"></path></svg></button>
+    </div>
+  </div>
+
+  <nav class="elv-m-nav" style="position: relative">
+    <a href="MMap.dc.html"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 4l4-2 4 2 4-2v10l-4 2-4-2-4 2z M6 2v10 M10 4v10"></path></svg>Bản đồ</a>
+    <a href="MThrone.dc.html" style="position: relative"><span class="elv-badge">3</span><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 12V5l3 2.5L8 3l3 4.5L14 5v7z M2 12h12"></path></svg>Ngai vàng</a>
+    <a href="MBell.dc.html"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 11h8c-1-1-1.5-2-1.5-4a2.5 2.5 0 0 0-5 0c0 2-.5 3-1.5 4z M6.5 13a1.5 1.5 0 0 0 3 0 M8 3.5V2"></path></svg>Chuông</a>
+    <a class="on" href="MChancellor.dc.html"><svg class="elv-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2h8v12H4z M6.5 6h3 M6.5 8.5h3"></path></svg>Tể tướng</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["night","day"],"default":"night","section":"Chế độ"},"variant":{"editor":"enum","options":["preview","ask","queued"],"default":"preview","section":"Trạng thái"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const v = this.props.variant ?? 'preview';
+    return { theme: this.props.theme ?? 'night', preview: v === 'preview', ask: v === 'ask', queued: v === 'queued' };
+  }
+}
+</script>
+</body>
+</html>
