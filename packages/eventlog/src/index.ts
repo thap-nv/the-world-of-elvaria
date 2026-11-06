@@ -9,11 +9,21 @@ export type { EventLogErrorCode } from './errors.ts';
 export { openEventLog, openJournal } from './event-log.ts';
 export type { EventLog, Journal } from './event-log.ts';
 export type { EventLogIssue, EventLogIssueCode, IssueDetail } from './issues.ts';
-export { EVENTS_DIR, SANDBOX_EVENTS_DIR, dayOfTs, eventLogDir, journalOf, journalPath } from './layout.ts';
+export {
+  EVENTS_DIR,
+  QUEST_ID_SHAPE,
+  SANDBOX_EVENTS_DIR,
+  dayOfTs,
+  eventLogDir,
+  journalOf,
+  journalPath,
+} from './layout.ts';
 export { CURRENT_EVENT_VERSION } from './migrations/index.ts';
 export { readEventFile } from './read-file.ts';
 export type { FileBatch } from './read-file.ts';
 export type { EventBatch } from './read-log.ts';
 export { REDACTED, REDACT_PATTERNS, createRedactor, redact, redactDeep } from './redact.ts';
 export type { Redactor } from './redact.ts';
+export { ULID_MAX_TIME_MS, createStamper, localTs, tsFormatter, ulidOf } from './stamp.ts';
+export type { Stamp, StamperOptions } from './stamp.ts';
 export type { TailOptions } from './tail.ts';

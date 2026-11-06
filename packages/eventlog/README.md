@@ -17,6 +17,12 @@
 - Tails the log by polling (§6: no `fs.watch`): `EventLog.tail({ from, intervalMs, signal })`.
 - Redacts (ADR 0013): `redact(text, known, patterns)`, `createRedactor`, `redactDeep` for a whole event.
   Known values are masked exactly, then the patterns of `src/redact-patterns.json` (data, one fixture each).
+- Stamps lines for writers that may not load the domain, the hook (P1-08): `createStamper(format)` gives ULIDs
+  that increase within one writer, `tsFormatter(tz)` the ISO 8601 `ts` of an IANA zone through Intl, `localTs`
+  the same from `Date` once `process.env.TZ` is that zone (~11 ms cheaper per process). `stamp.spec.ts` holds
+  all three equal to the domain's `formatUlid` and `zonedTime(tz).format`.
+- Builds to `dist/` (`pnpm --filter @elvaria/eventlog build`, tsc). `exports` resolves to the build only under
+  the `elvaria-dist` condition, which the hook passes to Node; everything else keeps running `src/*.ts`.
 
 ## Does not
 
@@ -35,6 +41,7 @@
 
 ```bash
 pnpm --filter @elvaria/eventlog test
+pnpm --filter @elvaria/eventlog build   # dist/ for the hook; @elvaria/hooks builds it before its tests
 ```
 
 Specs use temp folders with a space in the name. `concurrency.spec.ts`: four appending processes and a tail;

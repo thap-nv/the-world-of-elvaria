@@ -5,9 +5,13 @@
   "description": "The event log: JSONL day files and quest journals; append, read from a cursor, tail by polling, redact.",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "elvaria-dist": "./dist/index.js",
+      "default": "./src/index.ts"
+    }
   },
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run --coverage"
   },
