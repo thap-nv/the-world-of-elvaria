@@ -37,20 +37,24 @@ const outcomeOf = (result: Result<unknown, string>): Outcome =>
 
 /**
  * The quest id of a create_quest, derived from the command id: a command applied again after a crash between its
- * file and its ack finds its quest already there instead of making a second one.
+ * file and its ack finds its quest already there instead of making a second one. The CLI derives the same ids to
+ * write the Chancellor's drafts that depend on each other (P1-13). Undefined only for a zone or a time their schemas
+ * would have refused.
  */
-function questIdFor(ctx: Context, command: InboxCommandOf<'create_quest'>): QuestId {
-  const zone = zonedTime(ctx.world.kingdom.tz);
+export function questIdOfCommand(
+  command: { readonly id: string; readonly ts: string },
+  tz: string,
+): QuestId | undefined {
+  const zone = zonedTime(tz);
   const when = parseInstant(command.ts);
-  // Both were checked by their schemas (an IANA zone, an ISO date-time); a fresh id is the fallback all the same.
-  if (!zone.ok || !when.ok) return ctx.deps.ids.quest();
+  if (!zone.ok || !when.ok) return undefined;
   const day = zone.value.localDate(when.value);
   // formatDatedId with the `q` prefix produces exactly the quest id pattern.
   return formatDatedId('q', day, createHash('sha256').update(command.id).digest()) as QuestId;
 }
 
 export async function createQuest(ctx: Context, command: InboxCommandOf<'create_quest'>): Promise<Outcome> {
-  const id = questIdFor(ctx, command);
+  const id = questIdOfCommand(command, ctx.world.kingdom.tz) ?? ctx.deps.ids.quest();
   if (ctx.world.quests.has(id)) return APPLIED;
   const made = questFromCommand(command.payload, {
     id,

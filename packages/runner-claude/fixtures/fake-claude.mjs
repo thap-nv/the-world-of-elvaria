@@ -234,8 +234,20 @@ function replay(settings, file) {
   return undefined;
 }
 
+/** The prompt on stdin, with the real hook's fallback for a pipe left non-blocking (EAGAIN on macOS, PR #32). */
+async function readStdin() {
+  try {
+    return readFileSync(0, 'utf8');
+  } catch (error) {
+    if (error?.code !== 'EAGAIN') throw error;
+  }
+  const chunks = [];
+  for await (const chunk of process.stdin) chunks.push(Buffer.from(chunk));
+  return Buffer.concat(chunks).toString('utf8');
+}
+
 async function session(argv) {
-  const prompt = readFileSync(0, 'utf8');
+  const prompt = await readStdin();
   if (env.FAKE_CLAUDE_RECORD !== undefined)
     writeFileSync(env.FAKE_CLAUDE_RECORD, JSON.stringify({ argv, cwd: process.cwd(), env, prompt }));
   const settings = JSON.parse(readFileSync(flag(argv, '--settings'), 'utf8'));

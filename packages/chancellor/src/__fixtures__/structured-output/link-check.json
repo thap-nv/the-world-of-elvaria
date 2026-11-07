@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "drafts": [
+    {
+      "ref": "d1",
+      "title": "Kiểm tra link nội bộ trong docs",
+      "description": "Kiểm tra mọi link nội bộ trong README.md, docs/**/*.md và CLAUDE.md; link chết mở quest con để sửa.",
+      "kind": "batch",
+      "rank": "E",
+      "territory": "dc1-se-team",
+      "tier": "script",
+      "script": {
+        "id": "link-check",
+        "params": {
+          "globs": ["README.md", "docs/**/*.md", "CLAUDE.md"]
+        }
+      },
+      "tags": ["docs"],
+      "depends_on_refs": [],
+      "estimate": {
+        "tokens": 0,
+        "minutes": 2
+      },
+      "seal_required": false,
+      "secrets_required": []
+    }
+  ]
+}

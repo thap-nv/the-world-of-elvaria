@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "drafts": [
+    {
+      "ref": "d1",
+      "title": "Đội: màn xác nhận L5 cho API và web",
+      "description": "Việc chạm cả apps/api lẫn apps/web. Trưởng đội viết hợp đồng OpenAPI trước, rồi chia một phần backend và một phần frontend; quest ghép chạy e2e.",
+      "kind": "plan",
+      "rank": "C",
+      "territory": "dc1-se-team",
+      "tier": "session",
+      "class_required": "mage",
+      "tags": ["backend", "frontend"],
+      "party_role": "contract",
+      "depends_on_refs": [],
+      "estimate": {
+        "tokens": 70000,
+        "minutes": 25
+      },
+      "seal_required": false,
+      "secrets_required": []
+    }
+  ]
+}

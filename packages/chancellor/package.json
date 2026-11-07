@@ -1,0 +1,25 @@
+{
+  "name": "@elvaria/chancellor",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The Chancellor: the owner's words become quest drafts, through one session with structured output.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@elvaria/domain": "workspace:*",
+    "@elvaria/runner-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@elvaria/config": "workspace:*",
+    "@types/node": "^24.19.2",
+    "@vitest/coverage-v8": "^5.1.0",
+    "typescript": "~5.9.3",
+    "vitest": "^5.1.0"
+  }
+}

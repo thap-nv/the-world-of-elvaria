@@ -59,7 +59,23 @@ function preToolUse(payload, laws) {
   process.stdout.write(`${JSON.stringify({ hookSpecificOutput: answer })}\n`);
 }
 
-const payload = JSON.parse(readFileSync(0, 'utf8'));
+/**
+ * The payload, read as the real hook reads it (packages/hooks/src/elvaria-hook.ts): fd 0 at once, and the stream
+ * when the parent left the pipe non-blocking. Without the fallback, macOS's EAGAIN killed this hook before it wrote
+ * the session's start, and the runner judged the session broken (CI, PR #32).
+ */
+async function readStdin() {
+  try {
+    return readFileSync(0, 'utf8');
+  } catch (error) {
+    if (error?.code !== 'EAGAIN') throw error;
+  }
+  const chunks = [];
+  for await (const chunk of process.stdin) chunks.push(Buffer.from(chunk));
+  return Buffer.concat(chunks).toString('utf8');
+}
+
+const payload = JSON.parse(await readStdin());
 const policy = policyOf(process.argv);
 if (payload.hook_event_name === 'SessionStart') sessionStart(payload, process.env);
 if (payload.hook_event_name === 'PreToolUse') preToolUse(payload, policy.laws);
