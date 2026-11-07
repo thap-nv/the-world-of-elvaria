@@ -62,12 +62,21 @@ importers:
       '@elvaria/eventlog':
         specifier: workspace:*
         version: link:../../packages/eventlog
+      '@elvaria/hooks':
+        specifier: workspace:*
+        version: link:../../packages/hooks
       '@elvaria/i18n':
         specifier: workspace:*
         version: link:../../packages/i18n
       '@elvaria/registry-default':
         specifier: workspace:*
         version: link:../../packages/registry-default
+      '@elvaria/runner-claude':
+        specifier: workspace:*
+        version: link:../../packages/runner-claude
+      '@elvaria/runner-core':
+        specifier: workspace:*
+        version: link:../../packages/runner-core
       '@elvaria/sandbox':
         specifier: workspace:*
         version: link:../../packages/sandbox

@@ -26,7 +26,7 @@ const levelFor = (rank: Rank): number =>
   ) ?? CHARACTER_LEVEL_MAX;
 
 /** The rank one above `ceiling`: taken only when nobody else can. */
-const stretchOf = (ceiling: Rank): Rank =>
+export const stretchOf = (ceiling: Rank): Rank =>
   RANKS[Math.min(RANKS.indexOf(ceiling) + 1, RANKS.length - 1)] ?? ceiling;
 
 const className = (ctx: KingdomContext, registry: Registry | undefined, id: string): string => {

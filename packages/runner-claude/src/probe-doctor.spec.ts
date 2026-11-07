@@ -12,10 +12,10 @@ import {
   fakeRunner,
   minimalEnv,
 } from './__fixtures__/harness.ts';
-import { NOT_FOUND, hookMissing, versionOf } from './doctor.ts';
+import { NOT_FOUND, hookMissing, signInEnding, versionOf } from './doctor.ts';
 import { launchOf } from './launch.ts';
 import { claudeCandidates, locateClaude } from './locate.ts';
-import { createClaudeRunner } from './runner.ts';
+import { createClaudeForget, createClaudeRunner } from './runner.ts';
 
 const withEnv = (extra: Record<string, string>) => ({ env: { ...minimalEnv(), ...extra } });
 
@@ -80,6 +80,39 @@ describe('doctor', () => {
     });
     expect(await runner.doctor()).toEqual({ path: '', version: '', auth_ok: false, detail: NOT_FOUND });
     expect(await runner.probe()).toEqual({ status: 'error', detail: NOT_FOUND });
+  });
+
+  it('warns a week before the sign-in ends', async () => {
+    const now = Date.parse('2026-11-10T00:00:00Z');
+    const soon = '2026-11-15T15:23:28.735Z';
+    const info = await fakeRunner({
+      ...withEnv({ FAKE_CLAUDE_LOGIN_EXPIRES: soon }),
+      now: () => now,
+    }).doctor();
+    expect(info).toMatchObject({ auth_ok: true });
+    expect(info.detail).toBe(`the sign-in ends by ${soon}: run claude auth login before then`);
+    expect(signInEnding('2026-12-01T00:00:00Z', now)).toBeUndefined();
+    expect(signInEnding('not a date', now)).toBeUndefined();
+    expect(signInEnding(undefined, now)).toBeUndefined();
+  });
+});
+
+describe('forget', () => {
+  const forget = (extra: Record<string, string> = {}) =>
+    createClaudeForget({ executable: FAKE_CLAUDE, ...withEnv(extra) });
+  const worktree = path.join(tmpdir(), 'repo', '.elvaria', 'worktrees', 'q_20261107_abc123');
+
+  it('purges the transcripts of a removed worktree, and takes "nothing to purge" as done', async () => {
+    await expect(forget()(worktree)).resolves.toBeUndefined();
+    await expect(forget({ FAKE_CLAUDE_PURGE: 'nothing' })(worktree)).resolves.toBeUndefined();
+  });
+
+  it('throws on any other failure, for release to report', async () => {
+    await expect(forget({ FAKE_CLAUDE_PURGE: 'fail' })(worktree)).rejects.toThrow(
+      `claude purge --yes ${worktree}: EBUSY`,
+    );
+    const missing = createClaudeForget({ env: { PATH: '' } });
+    await expect(missing(worktree)).rejects.toThrow(NOT_FOUND);
   });
 });
 

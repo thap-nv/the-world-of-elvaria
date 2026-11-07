@@ -3,8 +3,8 @@
 ## Does
 
 - Ships the `elvaria` command, the only composition root (implementation-plan §1.1): `init`, `doctor`,
-  `territory add|list`, `character add|list`, `quest add|list|show|confirm|cancel|edit`, `sandbox generate|replay`,
-  `migrate`. The command table (`src/commands.ts`) drives parsing (`util.parseArgs`), help, and the reference
+  `territory add|list`, `character add|list`, `quest add|list|show|confirm|cancel|edit`, `run`,
+  `sandbox generate|replay`, `migrate`. The command table (`src/commands.ts`) drives parsing (`util.parseArgs`), help, and the reference
   `docs/cli.md` that `pnpm docs:gen` renders from it (`scripts/docs-cli.mjs`).
 - Prints everything through `t()` of `@elvaria/i18n`, in `kingdom.owner.locale` unless `--locale vi|en` is given;
   `i18next/no-literal-string` (`packages/config/eslint-i18n.mjs`) guards it. Store and registry issues are
@@ -17,21 +17,30 @@
 - `sandbox generate` writes a fake day of `@elvaria/sandbox` to `events/sandbox/<date>.jsonl` (nothing else of the
   kingdom changes); `sandbox replay <file> --speed 20` plays it back as a timeline, one sentence per line in the
   owner's language (`src/sandbox/timeline.ts`), paced by `CliIo.sleep`. Closing the pipe (`| head`) ends it quietly.
-- `doctor`: finds each tribe's CLI (`--tool <tribe>=<path>`, the pinned path, then PATH; npm `.cmd` shims run as
-  `node <script>`), pins path and version, refuses Antigravity without `--acknowledge-terms` (ADR 0018), checks
-  git, the registry (`missingRegistryFiles`) and each territory.
+- `doctor`: finds each tribe's CLI (`--tool <tribe>=<path>`, the pinned path, PATH, then the adapter's own search:
+  Claude Code inside the VS Code extension; npm `.cmd` shims run as `node <script>`), pins path and version, asks
+  the tribe's adapter about its login, how soon it ends and the built hook, refuses Antigravity without
+  `--acknowledge-terms` (ADR 0018), checks git, the registry (`missingRegistryFiles`) and each territory.
+- `run`: puts the work engine together and runs the Steward until Ctrl+C (`CliIo.untilStopped`): a runner per
+  enabled tribe from `kingdom.tribes[].adapter` (`src/run/crew.ts`: `claude_code` today, with `hookCommand` and
+  `HOOK_SCRIPT` of `@elvaria/hooks`; a tribe without a runner takes no quest), plots over runner-core's
+  `PlotManager` with a `ProcessHost` from PATH and each CLI's `forget` (`claude purge`), the console bell saying
+  the Steward's notices in the owner's language, and `.state/steward.lock` (a second `run` is refused).
 
 ## Does not
 
 - Write or change a quest, or change an existing character: the Steward does (P1-03).
-- Run sessions, worktrees or `.git/info/exclude` (runner-core, P1-07); `doctor` only asks `--version`.
+- Decide anything about quests or sessions, or talk to a CLI itself: the Steward and the adapters do; `doctor`
+  asks only `--version` and, through the adapter, the login (no model call).
 - Inherit `process.env` into child processes: they get `minimalEnv` (ADR 0013), and never a shell (ADR 0015).
 
 ## Depends on
 
 - `@elvaria/domain` (schemas, ids, transition table, views), `@elvaria/store` (kingdom folder, inbox, migrate),
   `@elvaria/eventlog` (append, redact), `@elvaria/sandbox` (fake days and their replay),
-  `@elvaria/registry-default` (`REGISTRY_ROOT`, `registryFiles()` for `init`), `@elvaria/i18n`.
+  `@elvaria/registry-default` (`REGISTRY_ROOT`, `registryFiles()` for `init`), `@elvaria/i18n`, `@elvaria/steward`
+  (the Steward, unclaimable notices), `@elvaria/runner-core` (`PlotManager`), `@elvaria/runner-claude` (the
+  `claude_code` adapter), `@elvaria/hooks` (the hook's command).
 
 ## How to test
 

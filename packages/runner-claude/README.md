@@ -22,7 +22,10 @@
   laws. Its outcome is `error`.
 - `probe()`: `claude -p "/usage"` (no model call); when no window of the account is full, one turn of the cheapest
   model with no tool. `doctor()`: the CLI (PATH, `~/.local/bin`, `%APPDATA%\npm`, the VS Code extension's binary,
-  newest first), its version, `claude auth status --json`, and whether the hook is built.
+  newest first), its version, `claude auth status --json` (and a warning a week before `loginExpiresAt`), and
+  whether the hook is built.
+- `createClaudeForget()`: the `forget` of `PlotManager.release`, `claude purge --yes <worktree>` (the CLI drops
+  its own transcripts of a removed worktree; "No Claude Code project state found" counts as done).
 - Parses the account's limits for the mana gauge (P1-05): `rateLimitWindowsOf` (`rate_limit_event`) and
   `usageWindowsOf` (the text of `/usage`, resets turned into instants).
 

@@ -1,16 +1,18 @@
 // A fake Claude Code 2.1.318 for the adapter's specs and the conformance suite (implementation-plan §3.7, §3.14).
 // Like the real CLI it runs the hooks the `--settings` file declares (exec form, payload on stdin, env with
 // settings.env) and honours `permissions.deny`; its stream has the shapes of the redacted real runs next to it.
-//   --version | auth status --json                   answers as the real CLI does
-//   -p /usage | -p "<ping>"                          replays usage-command.jsonl | probe.jsonl
-//   -p (prompt on stdin)                             plays env ELVARIA_FAKE_SCENARIO, or replays FAKE_CLAUDE_REPLAY
-// Knobs: FAKE_CLAUDE_AUTH=logged_out, FAKE_CLAUDE_PING=rate_limit|error, FAKE_CLAUDE_USAGE_TEXT=<text of /usage>,
-// FAKE_CLAUDE_RECORD=<file> (argv, cwd, env and prompt of a session, for the specs to read).
+//   --version | auth status --json | purge --yes <dir>   answers as the real CLI does
+//   -p /usage | -p "<ping>"                              replays usage-command.jsonl | probe.jsonl
+//   -p (prompt on stdin)                                 plays env ELVARIA_FAKE_SCENARIO, or replays FAKE_CLAUDE_REPLAY
+// Knobs: FAKE_CLAUDE_PING=rate_limit|error, FAKE_CLAUDE_USAGE_TEXT=<text of /usage>, FAKE_CLAUDE_RECORD=<file>
+// (argv, cwd, env and prompt of a session, for the specs to read), and those of fake-claude-commands.mjs.
 // Lines marked "self-built" have no real fixture yet: 429 is P1-16's (spike P1-02); they follow the docs.
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
+
+import { COMMANDS } from './fake-claude-commands.mjs';
 
 const FIXTURES = import.meta.dirname;
 const PING = 'Reply with the single word ok.';
@@ -261,16 +263,10 @@ async function session(argv) {
 }
 
 function usage() {
-  if (env.FAKE_CLAUDE_USAGE_TEXT === undefined) return replay({}, 'usage-command.jsonl');
+  const text = env.FAKE_CLAUDE_USAGE_TEXT;
+  if (text === undefined) return replay({}, 'usage-command.jsonl');
   out({ type: 'system', subtype: 'init', session_id: 'fake-usage' });
-  out({
-    type: 'result',
-    subtype: 'success',
-    is_error: false,
-    num_turns: 0,
-    result: env.FAKE_CLAUDE_USAGE_TEXT,
-    session_id: 'fake-usage',
-  });
+  out({ type: 'result', subtype: 'success', is_error: false, num_turns: 0, result: text, session_id: 'u' });
   return 0;
 }
 
@@ -281,15 +277,7 @@ function ping() {
 }
 
 async function main(argv) {
-  if (argv[0] === '--version') {
-    process.stdout.write('2.1.318 (Claude Code)\n');
-    return 0;
-  }
-  if (argv[0] === 'auth') {
-    const loggedIn = env.FAKE_CLAUDE_AUTH !== 'logged_out';
-    out({ loggedIn, authMethod: loggedIn ? 'claude.ai' : 'none' });
-    return loggedIn ? 0 : 1;
-  }
+  if (COMMANDS[argv[0]] !== undefined) return COMMANDS[argv[0]](argv);
   if (argv[0] !== '-p') return 2;
   if (argv[1] === '/usage') return usage();
   if (argv[1] === PING) return ping();

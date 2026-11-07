@@ -22,6 +22,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria quest confirm <quest>` | Xác nhận một nhiệm vụ nháp để nó mở (lệnh confirm). |
 | `elvaria quest cancel <quest>` | Hủy một nhiệm vụ chưa xong; nhiệm vụ nháp thì bỏ đi (lệnh cancel hoặc archive). |
 | `elvaria quest edit <quest>` | Sửa một nhiệm vụ mà không chạm vào file của nó (lệnh edit_quest). |
+| `elvaria run` | Chạy Quản sự: giao nhiệm vụ cho nhân vật và cho nghiệm thu, tới khi bạn dừng (Ctrl+C). |
 | `elvaria sandbox generate` | Sinh một ngày giả vào events/sandbox/ của vương quốc (sa bàn): không chạy phiên nào, không chạm nhiệm vụ thật. |
 | `elvaria sandbox replay <file>` | Phát lại một ngày giả thành dòng thời gian trên terminal. |
 | `elvaria migrate` | Chuyển mọi file cũ của vương quốc lên phiên bản hiện tại, có sao lưu. |
@@ -161,6 +162,12 @@ Sửa một nhiệm vụ mà không chạm vào file của nó (lệnh edit_ques
 | `--max-minutes <n>` | Trần số phút cho một lần thử. |
 | `--max-tokens <n>` | Trần số token cho một lần thử. |
 | `--max-attempts <n>` | Số lần thử tối đa. |
+
+## `elvaria run`
+
+Chạy Quản sự: giao nhiệm vụ cho nhân vật và cho nghiệm thu, tới khi bạn dừng (Ctrl+C).
+
+Không có tham số riêng, chỉ các tùy chọn chung.
 
 ## `elvaria sandbox generate`
 

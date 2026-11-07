@@ -15,9 +15,17 @@ export interface DoctorDeps extends RunOnceOptions {
   readonly executable: string | undefined;
   readonly nodePath: string;
   readonly hookScript: string;
+  /** Epoch ms: when the sign-in is close to its end. */
+  readonly now: () => number;
 }
 
 const VERSION = /\d+\.\d+\.\d+(?:[-+.][0-9A-Za-z.-]+)?/;
+/**
+ * A sign-in ends on a fixed date, and a session after it fails (the CLI warns days before; P1-07 run). A week
+ * leaves the owner time to run `claude auth login`.
+ */
+export const SIGN_IN_WARNING_DAYS = 7;
+const DAY_MS = 86_400_000;
 
 export const NOT_FOUND =
   'Claude Code not found on PATH, in ~/.local/bin, in %APPDATA%\\npm or in a VS Code extension folder';
@@ -35,6 +43,14 @@ async function isFile(file: string): Promise<boolean> {
 /** `2.1.318 (Claude Code)` → `2.1.318`. */
 export const versionOf = (stdout: string): string | undefined => VERSION.exec(stdout)?.[0];
 
+/** `loginExpiresAt` of `claude auth status --json`, when it falls within the warning window. */
+export function signInEnding(expiresAt: unknown, now: number): string | undefined {
+  if (typeof expiresAt !== 'string') return undefined;
+  const ends = Date.parse(expiresAt);
+  if (Number.isNaN(ends) || ends - now > SIGN_IN_WARNING_DAYS * DAY_MS) return undefined;
+  return `the sign-in ends by ${expiresAt}: run claude auth login before then`;
+}
+
 export async function doctorClaude(deps: DoctorDeps): Promise<ToolInfo> {
   if (deps.executable === undefined) return { path: '', version: '', auth_ok: false, detail: NOT_FOUND };
   const launch = await launchOf(deps.executable, deps.nodePath);
@@ -46,9 +62,11 @@ export async function doctorClaude(deps: DoctorDeps): Promise<ToolInfo> {
   const found = versionOf(version.stdout);
   const status = parseLine(auth.stdout.trim());
   const authOk = auth.code === 0 && status?.loggedIn === true;
+  const ending = authOk ? signInEnding(status.loginExpiresAt, deps.now()) : undefined;
   const problems = [
     ...(found === undefined ? [`no version from ${deps.executable} --version`] : []),
     ...(authOk ? [] : ['not logged in: run `claude` once and sign in (claude auth status)']),
+    ...(ending === undefined ? [] : [ending]),
     ...(hookBuilt ? [] : [hookMissing(deps.hookScript)]),
   ];
   return {

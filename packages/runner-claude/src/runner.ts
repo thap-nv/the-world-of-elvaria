@@ -1,17 +1,15 @@
 // The `claude_code` adapter: Claude Code 2.1.318 headless behind AgentRunner (implementation-plan §3.7, §3.14;
 // ADR 0006, 0007). apps/cli builds it from `kingdom.tribes[]` and hands it what this package may not import: the
 // hook's command (`hookCommand` and `HOOK_SCRIPT` of @elvaria/hooks) and the minimal env (§3.9).
-import { tmpdir } from 'node:os';
-
 import { doctorClaude } from './doctor.ts';
-import { NOT_FOUND } from './doctor.ts';
-import { launchOf } from './launch.ts';
-import { locateClaude } from './locate.ts';
+import { purgeWorktree } from './forget.ts';
 import { probeClaude } from './probe.ts';
 import { startSession } from './session.ts';
+import { claudeTool } from './tool.ts';
 import type { ApprenticeConfig } from './agents.ts';
 import type { HookCommand } from './settings.ts';
-import type { AgentRunner } from '@elvaria/runner-core';
+import type { ClaudeToolOptions } from './tool.ts';
+import type { AgentRunner, ForgetWorktree } from '@elvaria/runner-core';
 
 export const CLAUDE_CODE_ADAPTER = 'claude_code';
 
@@ -35,78 +33,59 @@ export const CLAUDE_CAPABILITIES: AgentRunner['capabilities'] = {
 /** `BREAKER_DEFAULTS.subagent_max_turns` of the domain, which the adapter may not import. */
 const DEFAULT_APPRENTICE: ApprenticeConfig = { model: 'haiku', max_turns: 30 };
 const DEFAULT_PROBE_MODEL = 'haiku';
-/** `--version`, `auth status`, `/usage` (≈ 4 s) and the ping (≈ 4 s), with room for a slow machine. */
-const SHORT_CALL_MS = 60_000;
 
-export interface ClaudeRunnerOptions {
+export interface ClaudeRunnerOptions extends ClaudeToolOptions {
   readonly tribe: AgentRunner['tribe'];
-  /** `tribes[].tool.path`; when absent, found as `elvaria doctor` would (locate.ts). */
-  readonly executable?: string;
   /** `hookCommand` of @elvaria/hooks: the hook in the exec form, with `--policy <run_dir>/policy.json`. */
   readonly hookCommand: (policyFile: string) => HookCommand;
   /** `HOOK_SCRIPT` of @elvaria/hooks, so doctor can say it is not built. */
   readonly hookScript: string;
-  /** The minimal env (§3.9) for doctor and probe; a session gets SpawnRequest.env instead. */
-  readonly env: Readonly<Record<string, string>>;
   /** The apprentice's model and `kingdom.breakers.subagent_max_turns`. */
   readonly apprentice?: ApprenticeConfig;
   readonly probeModel?: string;
-  /** cwd of doctor and probe, which need no plot; the system temp folder by default. */
-  readonly workDir?: string;
-  readonly platform?: NodeJS.Platform;
-  /** The Node that runs an npm shim's script; this process's by default. */
-  readonly nodePath?: string;
-  readonly timeoutMs?: number;
+  /** Epoch ms, for doctor's sign-in warning; Date.now by default. */
+  readonly now?: () => number;
 }
 
-const withoutGit = (env: Readonly<Record<string, string>>): Record<string, string> =>
-  Object.fromEntries(Object.entries(env).filter(([name]) => !name.startsWith('GIT_')));
-
 export function createClaudeRunner(options: ClaudeRunnerOptions): AgentRunner {
-  const nodePath = options.nodePath ?? process.execPath;
-  const env = withoutGit(options.env);
-  const cwd = options.workDir ?? tmpdir();
-  const timeoutMs = options.timeoutMs ?? SHORT_CALL_MS;
-  let found: Promise<string | undefined> | undefined;
-  const executable = () =>
-    (found ??=
-      options.executable === undefined
-        ? locateClaude(env, options.platform ?? process.platform)
-        : Promise.resolve(options.executable));
-  const launch = async () => {
-    const file = await executable();
-    if (file === undefined) throw new Error(NOT_FOUND);
-    return launchOf(file, nodePath);
-  };
+  const tool = claudeTool(options);
+  const { env, cwd, timeoutMs, nodePath } = tool;
+  const now = options.now ?? Date.now;
+  const apprentice = options.apprentice ?? DEFAULT_APPRENTICE;
   return {
     tribe: options.tribe,
     adapter: CLAUDE_CODE_ADAPTER,
     capabilities: CLAUDE_CAPABILITIES,
     spawn: async (req) =>
-      startSession(
-        {
-          launch: await launch(),
-          hookCommand: options.hookCommand,
-          apprentice: options.apprentice ?? DEFAULT_APPRENTICE,
-        },
-        req,
-      ),
+      startSession({ launch: await tool.launch(), hookCommand: options.hookCommand, apprentice }, req),
     probe: async () => {
       const model = options.probeModel ?? DEFAULT_PROBE_MODEL;
       try {
-        return await probeClaude({ launch: await launch(), env, cwd, model, timeoutMs, now: Date.now });
+        return await probeClaude({ launch: await tool.launch(), env, cwd, model, timeoutMs, now });
       } catch (error) {
         return { status: 'error', detail: error instanceof Error ? error.message : String(error) };
       }
     },
     doctor: async () =>
       doctorClaude({
-        executable: await executable(),
+        executable: await tool.executable(),
         nodePath,
         hookScript: options.hookScript,
         env,
         cwd,
         timeoutMs,
+        now,
       }),
+  };
+}
+
+/**
+ * The `forget` of PlotManager.release for this tribe (§3.3, P1-07): Claude Code drops the transcripts it kept for
+ * a removed worktree. The CLI touches `~/.claude`, Elvaria never does.
+ */
+export function createClaudeForget(options: ClaudeToolOptions): ForgetWorktree {
+  const tool = claudeTool(options);
+  return async (worktree) => {
+    await purgeWorktree(await tool.launch(), worktree, tool);
   };
 }

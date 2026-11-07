@@ -5,6 +5,7 @@ import type { Tribe } from '@elvaria/domain';
 import { toPortable } from '@elvaria/store';
 
 import { launchOf } from '../process/launch.ts';
+import { ADAPTER_FACTORIES } from '../run/crew.ts';
 import { finding } from './finding.ts';
 import { ADAPTER_PROGRAMS, locateTool } from './locate-tool.ts';
 import { toolVersion } from './tool-version.ts';
@@ -100,6 +101,19 @@ function changedTool(
     : finding('warn', ctx.t('cli.doctor.tool_changed', params), hint);
 }
 
+/**
+ * What the tribe's adapter checks once its CLI is pinned (P1-09): the login, how soon it ends, a built hook. A
+ * login that does not work is an error; the rest are warnings. A tribe without an adapter package says nothing.
+ */
+async function adapterFindings(tribe: Tribe, ctx: KingdomContext): Promise<Finding[]> {
+  const factory = ADAPTER_FACTORIES[tribe.adapter];
+  if (factory === undefined) return [];
+  const info = await factory(tribe, ctx.kingdom, ctx.io).runner.doctor();
+  if (info.detail === undefined) return [];
+  const text = ctx.t('cli.doctor.adapter_detail', { tribe: tribe.id, detail: info.detail });
+  return [finding(info.auth_ok ? 'warn' : 'error', text)];
+}
+
 export async function checkTribe(
   tribe: Tribe,
   ctx: KingdomContext,
@@ -119,6 +133,7 @@ export async function checkTribe(
   }
   const findings = [
     finding('ok', t('cli.doctor.tool_found', { tribe: tribe.id, version: tool.version, path: tool.path })),
+    ...(await adapterFindings(next.data, ctx)),
   ];
   if (tribe.adapter === 'antigravity' && next.data.tool?.terms_acknowledged_at === undefined)
     findings.push(
