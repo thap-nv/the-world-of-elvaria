@@ -79,6 +79,8 @@ export const RITUAL_STEPS = [
   'check_sources',
   'cross_check_sources',
   'check_regression_test',
+  // A change of behaviour comes with its test when the territory has tests (§3.15, ADR 0022; P1-01).
+  'check_tests_cover_change',
   'compare_before_after',
   'score_tone_checklist',
   'rerun_from_source',

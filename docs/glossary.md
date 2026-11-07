@@ -368,6 +368,7 @@ Bước nghi thức (`ritual.steps[]`):
 | `check_sources` | kiểm từng nguồn được trích |
 | `cross_check_sources` | đối chiếu tài liệu với nguồn gốc |
 | `check_regression_test` | có test tái hiện lỗi và test đó xanh |
+| `check_tests_cover_change` | thay đổi hành vi có test đi kèm (khi lãnh thổ có test); thiếu thì `fail_kind: incomplete` |
 | `compare_before_after` | so số liệu trước/sau |
 | `score_tone_checklist` | chấm theo checklist giọng điệu/thương hiệu |
 | `rerun_from_source` | tính lại từ dữ liệu gốc |
