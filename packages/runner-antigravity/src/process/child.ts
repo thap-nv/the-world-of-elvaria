@@ -1,5 +1,5 @@
-// Starting a CLI and reading it: generic, not Antigravity's. It belongs to runner-core's kit (spawn and kill
-// tree, P1-06, §3.14); it lives here until that exists, and moves there without changing its callers.
+// Starting a CLI and reading it: generic, not Antigravity's (runner-claude keeps its own, run-once.ts). It
+// belongs to runner-core with the kill tree of P1-06 (ADR 0006, amended after P1-09); it lives here until then.
 import { spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
 
@@ -12,6 +12,8 @@ export interface Launch {
 export interface ChildOptions {
   readonly cwd?: string;
   readonly env: Readonly<Record<string, string>>;
+  /** stderr as it comes, in any chunks: the run's stderr.log (openRunOutput of runner-core). */
+  readonly onStderr?: (chunk: string) => void;
 }
 
 export interface Exit {
@@ -53,6 +55,7 @@ export function startChild(
   child.stderr.setEncoding('utf8');
   child.stderr.on('data', (chunk: string) => {
     stderr = (stderr + chunk).slice(-STDERR_LIMIT);
+    options.onStderr?.(chunk);
   });
   const lines = createInterface({ input: child.stdout, crlfDelay: Infinity });
   lines.on('line', onLine);

@@ -38,15 +38,22 @@ const calls = () =>
     .filter((line) => line !== '')
     .map((line) => JSON.parse(line) as { argv: string[]; auto_update?: string; path_head: string });
 
-const eventTypes = (): string[] => {
+interface Line {
+  readonly type: string;
+  readonly session?: string;
+  readonly data: Record<string, unknown>;
+}
+
+const eventLines = (): Line[] => {
   const dir = path.join(world.root, 'events');
   return readdirSync(dir).flatMap((file) =>
     readFileSync(path.join(dir, file), 'utf8')
       .split('\n')
       .filter((line) => line !== '')
-      .map((line) => (JSON.parse(line) as { type: string }).type),
+      .map((line) => JSON.parse(line) as Line),
   );
 };
+const eventTypes = (): string[] => eventLines().map(({ type }) => type);
 
 describe('a session', () => {
   it('runs on generated files: settings, policy, hooks.json, its shim, GEMINI.md, the version', async () => {
@@ -129,7 +136,25 @@ describe('a session', () => {
     expect(blocked).toMatchObject({
       reason: expect.stringMatching(/^tool call denied by pre-tool hook: Elvaria law/) as unknown,
     });
-    expect(eventTypes()).toEqual(['agent.session.start', 'agent.tool.blocked']);
+    // The hook writes the first two; the runner writes the end, which only the stream knows.
+    expect(eventTypes()).toEqual(['agent.session.start', 'agent.tool.blocked', 'agent.session.end']);
+    expect(eventLines().at(-1)).toMatchObject({
+      session: result.session_id,
+      data: { outcome: 'completed', usage: { tokens: 1000, turns: 1 } },
+    });
+  });
+
+  it('keeps what agy printed in the run folder, and writes the end of a killed run', async () => {
+    const session = await fakeRunner().spawn(request(world, { ELVARIA_FAKE_SCENARIO: 'hang' }));
+    await session.session_id;
+    await session.kill('the Steward stopped it');
+    const result = await session.wait();
+    expect(result.outcome).toBe('killed');
+    const stdout = await readFile(path.join(world.run_dir, 'stdout.jsonl'), 'utf8');
+    expect(stdout.split('\n')[0]).toContain('"event":"init"');
+    const stderr = await readFile(path.join(world.run_dir, 'stderr.log'), 'utf8');
+    expect(stderr).toContain('[elvaria] killed: the Steward stopped it');
+    expect(eventLines().at(-1)).toMatchObject({ type: 'agent.session.end', data: { outcome: 'killed' } });
   });
 });
 
@@ -254,6 +279,15 @@ describe('agyEnv', () => {
     });
     expect(agyEnv({ PATH: '/bin' }, undefined)).toEqual({
       PATH: '/bin',
+      AGY_CLI_DISABLE_AUTO_UPDATE: 'true',
+    });
+  });
+
+  it("drops git's variables and lays the session context over the given env", () => {
+    const given = { PATH: '/bin', GIT_DIR: '/repo/.git', git_index_file: 'x', ELVARIA_ROLE: 'wrong' };
+    expect(agyEnv(given, undefined, { ELVARIA_ROLE: 'assignee' })).toEqual({
+      PATH: '/bin',
+      ELVARIA_ROLE: 'assignee',
       AGY_CLI_DISABLE_AUTO_UPDATE: 'true',
     });
   });

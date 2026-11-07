@@ -65,10 +65,7 @@ describe.runIf(LIVE)('agy for real', () => {
     env: minimalEnv(),
     timeout_ms: MINUTES,
   };
-  // forbidden_command runs below with a budget that fits: on an assignee probe the handover gate adds 3-4 turns
-  // to the probe's max_turns 5 (refused push, answer, letter asked twice), so the breaker stops it first
-  // (implementation-plan §11, P1-12b). The fake CLI runs it in conformance.spec.ts.
-  for (const check of conformanceChecks(target).filter(({ id }) => id !== 'forbidden_command')) {
+  for (const check of conformanceChecks(target)) {
     it(`conformance: ${check.id}`, { timeout: MINUTES }, async () => {
       expect(await check.run(target)).toBe('passed');
     });

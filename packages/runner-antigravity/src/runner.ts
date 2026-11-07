@@ -4,6 +4,7 @@
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { contextEnv, openRunLog, openRunOutput, runContextOf } from '@elvaria/runner-core';
 import type { AgentRunner, ProbeResult, SpawnRequest, ToolInfo } from '@elvaria/runner-core';
 
 import { hookPlanOf, hooksProblem } from './hook-files.ts';
@@ -55,12 +56,17 @@ const DEFAULT_TIMEOUT_MS = 30_000;
 const TERMS =
   'the owner has not acknowledged the Antigravity terms (ADR 0018): elvaria doctor --acknowledge-terms';
 
-/** agy's env: the given one, the updater off, and Elvaria's Node first on PATH for the hook's bare `node`. */
+/**
+ * agy's env: the given one without git's variables (§6), the updater off, and Elvaria's Node first on PATH for
+ * the hook's bare `node`. `extra` (the session context as `ELVARIA_*`) goes over the given env.
+ */
 export function agyEnv(
   env: Readonly<Record<string, string>>,
   nodeDir: string | undefined,
+  extra: Readonly<Record<string, string>> = {},
 ): Record<string, string> {
-  const out: Record<string, string> = { ...env, ...NO_AUTO_UPDATE };
+  const base = Object.entries(env).filter(([name]) => !name.toUpperCase().startsWith('GIT_'));
+  const out: Record<string, string> = { ...Object.fromEntries(base), ...extra, ...NO_AUTO_UPDATE };
   if (nodeDir === undefined) return out;
   // Windows keeps `Path`; adding `PATH` beside it would give the child two.
   const key = Object.keys(out).find((name) => name.toUpperCase() === 'PATH') ?? 'PATH';
@@ -85,10 +91,13 @@ const versionOf = (stdout: string): string | undefined => /\d+\.\d+\.\d+\S*/.exe
 
 async function spawnAgy(req: SpawnRequest, options: AntigravityOptions, plan: HookPlan) {
   if (options.terms_acknowledged_at === undefined) throw new Error(TERMS);
-  const env = agyEnv(req.env, plan.node_dir);
+  // The same context as the Claude adapter: kingdom, attempt and zone from env, character, role, model from
+  // the request (runner-core's runContextOf), for policy.json, the hook's env and the lines the runner writes.
+  const ctx = runContextOf(req);
+  const env = agyEnv(req.env, plan.node_dir, contextEnv(ctx));
   const call = { cwd: req.cwd, env, timeout_ms: options.timeout_ms ?? DEFAULT_TIMEOUT_MS };
   const version = versionOf((await runToEnd(options.launch, ['--version'], call)).stdout);
-  const files = await writeRunFiles(req, plan);
+  const files = await writeRunFiles(req, ctx, plan);
   // The run folder belongs to the attempt: its version is recorded there (quest attempts have no such field).
   await writeFile(path.join(req.run_dir, 'agy-version.txt'), `${version ?? 'unknown'}\n`, 'utf8');
   // A hooks.json agy does not load is silent but for one log line, and without the hook every unlisted tool
@@ -99,9 +108,12 @@ async function spawnAgy(req: SpawnRequest, options: AntigravityOptions, plan: Ho
   return startSession({
     launch: options.launch,
     args: sessionArgs(req, files),
-    options: { cwd: req.cwd, env },
+    cwd: req.cwd,
+    env,
     max_turns: req.budget.max_turns,
     handover: req.handover,
+    log: openRunLog(ctx),
+    output: openRunOutput(req.run_dir),
   });
 }
 

@@ -4,7 +4,6 @@ export type { HookPlan } from './hook-files.ts';
 export { agyErrorOf, outcomeOf, rateLimitOf } from './outcome.ts';
 export type { AgyError } from './outcome.ts';
 export type { Launch } from './process/child.ts';
-export { policyOf } from './run-files.ts';
 export {
   ANTIGRAVITY_ADAPTER,
   ANTIGRAVITY_CAPABILITIES,

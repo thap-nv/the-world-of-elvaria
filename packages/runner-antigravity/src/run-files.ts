@@ -4,7 +4,8 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import type { SpawnRequest } from '@elvaria/runner-core';
+import { writePolicyFile } from '@elvaria/runner-core';
+import type { RunContext, SpawnRequest } from '@elvaria/runner-core';
 
 import { contextFileText, contextFilesIn, isElvariaContext } from './context-file.ts';
 import { AGENTS_DIR, HOOKS_FILE, SHIM_FILE, hooksJson, isElvariaHooks, shimSource } from './hook-files.ts';
@@ -13,28 +14,12 @@ import type { HookPlan } from './hook-files.ts';
 
 export interface RunFiles {
   readonly settings: string;
+  /** policy.json v1 of runner-core's `writePolicyFile`: the laws and the context the hook reads (`--policy`). */
   readonly policy: string;
   readonly hooks: string;
   /** `--log-file`: agy writes the account's e-mail there, so it is private and goes nowhere else (spike §8). */
   readonly log: string;
   readonly schema?: string;
-}
-
-/** The hook reads this file (`--policy`); its shape is policy.json v1 of @elvaria/hooks (§3.6 "(P1-08)"). */
-export function policyOf(req: SpawnRequest): Record<string, unknown> {
-  const { env } = req;
-  const attempt = Number(env.ELVARIA_ATTEMPT);
-  const context = {
-    kingdom: env.ELVARIA_KINGDOM,
-    quest: env.ELVARIA_QUEST,
-    attempt: Number.isInteger(attempt) && attempt >= 1 ? attempt : undefined,
-    character: req.character.id,
-    role: req.role,
-    model: req.character.model,
-    tz: env.ELVARIA_TZ,
-  };
-  const known = Object.entries(context).filter(([, value]) => value !== undefined && value !== '');
-  return { version: 1, ...Object.fromEntries(known), laws: req.permissions.laws };
 }
 
 const json = (value: unknown): string => `${JSON.stringify(value, null, 2)}\n`;
@@ -62,12 +47,12 @@ async function writeGenerated(file: string, text: string, ours: (old: string) =>
   await writeFile(file, text, 'utf8');
 }
 
-export async function writeRunFiles(req: SpawnRequest, plan: HookPlan): Promise<RunFiles> {
+export async function writeRunFiles(req: SpawnRequest, ctx: RunContext, plan: HookPlan): Promise<RunFiles> {
   const agents = path.join(req.cwd, AGENTS_DIR);
   await Promise.all([mkdir(req.run_dir, { recursive: true }), mkdir(agents, { recursive: true })]);
   const files: RunFiles = {
     settings: path.join(req.run_dir, 'settings.json'),
-    policy: path.join(req.run_dir, 'policy.json'),
+    policy: await writePolicyFile(req.run_dir, ctx, req.permissions.laws),
     hooks: path.join(agents, HOOKS_FILE),
     log: path.join(req.run_dir, 'agy.log'),
     ...(req.structured === undefined ? {} : { schema: path.join(req.run_dir, 'schema.json') }),
@@ -76,7 +61,6 @@ export async function writeRunFiles(req: SpawnRequest, plan: HookPlan): Promise<
   const context = contextFileText(req.prompt.system, await contextFilesIn(req.cwd, patterns));
   await Promise.all([
     writeFile(files.settings, json(agySettingsOf(req.permissions, req.handover)), 'utf8'),
-    writeFile(files.policy, json(policyOf(req)), 'utf8'),
     files.schema === undefined ? undefined : writeFile(files.schema, json(req.structured), 'utf8'),
     writeGenerated(files.hooks, hooksJson(plan), isElvariaHooks),
     writeGenerated(path.join(agents, SHIM_FILE), shimSource(plan, files.policy), (old) =>
