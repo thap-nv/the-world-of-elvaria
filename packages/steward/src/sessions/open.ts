@@ -3,11 +3,11 @@
 // it was for, so no session ever runs for a quest the files do not say it runs for.
 import { currentRun, err, ok } from '@elvaria/domain';
 import type { CharacterId, Quest, QuestId, Result } from '@elvaria/domain';
-import { secretValuesOf } from '@elvaria/runner-core';
 import type { AgentRunner, Continuation, RunningSession } from '@elvaria/runner-core';
 
 import { step } from '../record.ts';
 import { continuationOf, requestOf } from './request.ts';
+import { rememberSecrets } from './secrets.ts';
 import type { Context } from '../context.ts';
 import type { MovePayload } from '../record.ts';
 import type { SessionInput } from './request.ts';
@@ -27,25 +27,19 @@ function partsOf(ctx: Context, questId: QuestId, characterId: CharacterId | null
   return ok({ quest, character, territory, runner });
 }
 
-interface Spawned {
-  readonly session: RunningSession;
-  readonly plot: Quest['plot'];
-  /** The secret values in the session's env, which its end masks in what the kingdom keeps (§3.9). */
-  readonly known: readonly string[];
-}
-
 /** Prepares the plot, builds the request and spawns; the session and the plot the quest gets. */
 async function spawnFor(
   ctx: Context,
   runner: AgentRunner,
   input: Omit<SessionInput, 'cwd'>,
-): Promise<Result<Spawned, string>> {
+): Promise<Result<{ session: RunningSession; plot: Quest['plot'] }, string>> {
   try {
     const prepared = await ctx.deps.plots.prepare(input.quest, input.territory);
     const quest = { ...input.quest, plot: prepared.plot };
     const request = await requestOf(ctx, { ...input, quest, cwd: prepared.cwd });
     const session = await runner.spawn(request);
-    return ok({ session, plot: prepared.plot, known: secretValuesOf(request) });
+    rememberSecrets(session, request);
+    return ok({ session, plot: prepared.plot });
   } catch (error) {
     ctx.deps.log.warn(
       `steward: ${input.quest.id}: no session for ${input.character.id}: ${messageOf(error)}`,
@@ -104,7 +98,7 @@ export async function openAssignee(
       await ctx.record.move({ quest: questId, event: { type: 'release' }, actor: 'steward' });
     return spawned;
   }
-  const { session, plot, known } = spawned.value;
+  const { session, plot } = spawned.value;
   const sessionId = await session.session_id;
   const moved = await ctx.record.move({
     quest: questId,
@@ -124,7 +118,6 @@ export async function openAssignee(
     character: character.id,
     session,
     session_id: sessionId,
-    known,
   });
   ctx.counts.started += 1;
   return moved;
@@ -142,7 +135,7 @@ export async function openVerifier(
   const n = currentRun(quest);
   const spawned = await spawnFor(ctx, runner, { role: 'verifier', quest, character, territory, n });
   if (!spawned.ok) return spawned;
-  const { session, known } = spawned.value;
+  const { session } = spawned.value;
   const sessionId = await session.session_id;
   const moved = await ctx.record.move({
     quest: questId,
@@ -161,7 +154,6 @@ export async function openVerifier(
     character: character.id,
     session,
     session_id: sessionId,
-    known,
   });
   ctx.counts.started += 1;
   return moved;

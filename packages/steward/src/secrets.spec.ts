@@ -1,16 +1,29 @@
 // The treasury in the Steward's hands (implementation-plan §3.9, ADR 0013): a quest asks only for what its territory
 // allows, a session gets the minimal env, its context and exactly those secrets, and what a session leaves behind
 // (the letter, the question, the verdict notes) loses their values before the kingdom keeps it.
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import { ok } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { BENCH_ENV, KINGDOM, NPM_TOKEN, bench, questPayload, tickUntil } from './__fixtures__/kingdom.ts';
+import {
+  BENCH_ENV,
+  KINGDOM,
+  NPM_TOKEN,
+  bench,
+  characterOf,
+  questPayload,
+  tickUntil,
+} from './__fixtures__/kingdom.ts';
+import { maskFinished } from './sessions/secrets.ts';
 import type { Bench, BenchOptions } from './__fixtures__/kingdom.ts';
+import type { Context } from './context.ts';
+import type { Running } from './sessions/running.ts';
 import type { Steward, StewardDeps } from './types.ts';
-import type { AgentRunner, FakeRunner } from '@elvaria/runner-core';
+import type { AgentRunner, FakeRunner, RunResult } from '@elvaria/runner-core';
 
 let current: Bench | undefined;
 let running: Steward | undefined;
@@ -98,6 +111,52 @@ describe('a quest that asks for secrets', () => {
     expect(kingdom.requests).toEqual([]);
     expect(kingdom.warnings.join('\n')).toMatch(/no session for \w+: treasury has no npm_token/);
     expect((await kingdom.quest('Publish')).status).toBe('open');
+  });
+
+  it('opens no session when its territory has dropped one of them since the quest was made', async () => {
+    const { kingdom, steward } = await open({ cast: [] });
+    await kingdom.command('create_quest', questPayload('Publish', NEEDS_TOKEN));
+    await steward.tick();
+    const dropped = await kingdom.store.territories.update('dc1-se-team' as never, (territory) =>
+      ok({ ...territory, secrets_allowed: [] }),
+    );
+    expect(dropped.ok).toBe(true);
+    await kingdom.store.characters.write(characterOf({ id: 'thorn', cls: 'knight', level: 5 }));
+    await steward.tick();
+    expect(kingdom.requests).toEqual([]);
+    expect(kingdom.warnings.join('\n')).toMatch(
+      /no session for thorn: territory dc1-se-team does not allow the secrets npm_token/,
+    );
+  });
+});
+
+describe('maskFinished', () => {
+  it('masks the patterns of a session it was told nothing of, and warns when the letter cannot be read', async () => {
+    const root = await mkdtemp(path.join(tmpdir(), 'elvaria mask '));
+    try {
+      const quest = 'q_20261107_aaaaaa' as Running['quest'];
+      // A folder where the letter should be: reading it fails, and the end is recorded all the same.
+      await mkdir(path.join(root, 'quests', quest, 'handover.md'), { recursive: true });
+      const warnings: string[] = [];
+      const ctx = { root, deps: { log: { warn: (line: string) => void warnings.push(line) } } };
+      const shaped = ['gh', 'p_', 'abcdefghijklmnopqrstuvwxyz0123456789'].join('');
+      const running = {
+        quest,
+        role: 'assignee',
+        n: 1,
+        character: 'thorn',
+        session: {},
+        session_id: 's',
+      } as unknown as Running;
+      const result = { outcome: 'completed', question: `Use ${shaped}?` } as unknown as RunResult;
+      const masked = await maskFinished(ctx as unknown as Context, { running, result });
+      expect(masked.result.question).toBe('Use [redacted]?');
+      expect(warnings).toEqual([
+        expect.stringMatching(/^steward: q_20261107_aaaaaa: the handover letter was not masked/),
+      ]);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 });
 

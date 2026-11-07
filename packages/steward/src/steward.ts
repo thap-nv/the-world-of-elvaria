@@ -11,6 +11,7 @@ import type { HeldLock } from '@elvaria/store';
 import { applyInbox } from './inbox/apply.ts';
 import { createRecorder } from './record.ts';
 import { createSessions } from './sessions/running.ts';
+import { maskFinished } from './sessions/secrets.ts';
 import { reapLost, settle } from './sessions/settle.ts';
 import { carryOut } from './steps.ts';
 import { noteUnclaimable, reportedFromLog, writeUnclaimable } from './unclaimable.ts';
@@ -74,7 +75,8 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   const root = deps.store.root;
   const ctx: Context = { deps, root, world, record, sessions, templates: held.templates, limits, counts };
   const waiting = await applyInbox(ctx, handled);
-  for (const finished of sessions.drain()) await settle(ctx, finished);
+  // A session's leftovers lose its secrets before anything is recorded of them (§3.9).
+  for (const finished of sessions.drain()) await settle(ctx, await maskFinished(ctx, finished));
   await reapLost(ctx);
   counts.waiting = (await applyInbox(ctx, handled, waiting)).length;
   const plan = planTick(snapshotOf(world, limits), deps.clock.now());
