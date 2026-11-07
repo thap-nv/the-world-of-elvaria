@@ -1,0 +1,37 @@
+import { describe, expect, it } from 'vitest';
+
+import { Q1, character, quest } from './__fixtures__/snapshot.ts';
+import { claimBlocker } from './claim-blocker.ts';
+
+const rankA = quest(Q1, { rank: 'A' });
+
+describe('claimBlocker', () => {
+  it('reports level_too_low when the highest knight is level 5 (ceiling C) for a rank-A quest', () => {
+    const roster = [character('kael', { level: 2 }), character('thorn', { level: 5 })];
+    expect(claimBlocker(rankA, roster)).toEqual({
+      reason: 'level_too_low',
+      best: { character: 'thorn', level: 5, ceiling: 'C' },
+    });
+  });
+
+  it('reports nothing at level 7 (ceiling B): it takes A when nobody else can, with the seal', () => {
+    expect(claimBlocker(rankA, [character('thorn', { level: 7 })])).toBeNull();
+  });
+
+  it('reports nothing for a level-9 knight, busy or asleep: that wait ends by itself', () => {
+    expect(claimBlocker(rankA, [character('thorn', { level: 9, status: 'working' })])).toBeNull();
+    expect(claimBlocker(rankA, [character('thorn', { level: 9, status: 'sleeping_mana' })])).toBeNull();
+  });
+
+  it('reports no_class when the roster has nobody of the class', () => {
+    expect(claimBlocker(rankA, [])).toEqual({ reason: 'no_class' });
+    expect(claimBlocker(rankA, [character('wren', { cls: 'scribe', level: 10 })])).toEqual({
+      reason: 'no_class',
+    });
+  });
+
+  it('names the same best character among equals: the lowest id', () => {
+    const roster = [character('thorn', { level: 4 }), character('kael', { level: 4 })];
+    expect(claimBlocker(rankA, roster)?.best?.character).toBe('kael');
+  });
+});

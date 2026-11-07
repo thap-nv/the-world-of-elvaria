@@ -90,6 +90,9 @@ export const QUEST_TRANSITIONS: readonly QuestTransitionRow[] = [
   { from: 'review', event: 'verdict_fail', actors: VS, guard: 'out_of_retries', to: 'infirmary' },
   { from: 'review', event: 'mana_out', actors: M, guard: 'has_verifier', to: 'review' },
   { from: 'review', event: 'breaker', actors: S, guard: 'has_verifier', to: 'review' },
+  // The verifier's session ended with no verdict (its CLI failed, or the Steward restarted under it): the
+  // verifier leaves as on a breaker and the next one takes the review (P1-03).
+  { from: 'review', event: 'crash', actors: S, guard: 'has_verifier', to: 'review' },
   { from: 'review', event: 'suspend', actors: U, guard: 'has_verifier', to: 'review' },
   { from: 'review', event: 'cancel', actors: U, to: 'archived' },
   { from: 'returned', event: 'redispatch', actors: S, to: 'working' },

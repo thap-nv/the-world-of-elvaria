@@ -87,6 +87,50 @@ describe('elvaria quest list and show', () => {
     expect(io.printed.out.at(-1)).toBe('Gom lint, typecheck và test thành một lệnh.');
   });
 
+  it('marks the quests the Steward said nobody can take, and shows why with what to do', async () => {
+    const notes = {
+      [QUEST_ID]: {
+        reason: 'level_too_low',
+        rank: 'A',
+        class: 'knight',
+        best_character: 'thorn',
+        best_level: 5,
+      },
+      [OTHER_QUEST_ID]: { reason: 'no_class', rank: 'D', class: 'knight' },
+    };
+    await mkdir(path.join(kingdom, '.state'), { recursive: true });
+    await writeFile(
+      path.join(kingdom, '.state', 'unclaimable.json'),
+      JSON.stringify({ version: 1, quests: notes }),
+    );
+    await plantQuests(
+      kingdom,
+      questFixture('open', QUEST_ID, { rank: 'A' }),
+      questFixture('open', OTHER_QUEST_ID),
+    );
+    const io = testIo();
+    expect(await list(io)).toBe(0);
+    expect(io.printed.out[1]).toMatch(new RegExp(`^${QUEST_ID}\\s+Mở \\(không ai nhận\\)\\s+A`));
+    expect(io.printed.out).toContain('2 nhiệm vụ không ai nhận được; xem lý do: elvaria quest show <id>.');
+    const show = testIo();
+    expect(await run(show, 'quest', 'show', QUEST_ID, '--kingdom', kingdom)).toBe(0);
+    expect(show.printed.out).toEqual(
+      expect.arrayContaining([
+        'Không ai nhận được hạng A: Hiệp sĩ cao nhất là thorn cấp 5, nhận tới C (B khi không còn ai).',
+        `Hạ hạng: elvaria quest edit ${QUEST_ID} --rank C`,
+        'Triệu hồi: elvaria character add <id> --class knight --level 8',
+      ]),
+    );
+    const none = testIo();
+    expect(await run(none, 'quest', 'show', OTHER_QUEST_ID, '--kingdom', kingdom, '--locale', 'en')).toBe(0);
+    expect(none.printed.out).toEqual(
+      expect.arrayContaining([
+        'No Knight can take it: suspended characters and disabled tribes do not count.',
+        `Cancel: elvaria quest cancel ${OTHER_QUEST_ID}`,
+      ]),
+    );
+  });
+
   it('shows kinds by id when the registry does not load, and names a missing quest', async () => {
     await plantQuests(kingdom, questFixture('open'));
     await writeFile(path.join(kingdom, 'registry', 'kinds.json'), '{');

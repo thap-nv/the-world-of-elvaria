@@ -52,6 +52,14 @@ const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
   'quest.resumed': QUEST_CHANGE,
   'quest.infirmary': { reason: 'breaker:time', ...QUEST_CHANGE },
   'quest.delivered': QUEST_CHANGE,
+  'quest.edited': { quest: QUEST_VIEW },
+  'quest.unclaimable': {
+    reason: 'level_too_low',
+    rank: 'A',
+    class: 'knight',
+    best_character: 'thorn',
+    best_level: 5,
+  },
   'character.created': CHARACTER_CHANGE,
   'character.sleep': CHARACTER_CHANGE,
   'character.wake': CHARACTER_CHANGE,
@@ -98,6 +106,11 @@ describe('EventSchema', () => {
     expect(EventSchema.parse(sent)).toEqual(sent);
   });
 
+  it('takes a cleared notice: reason null, no best character', () => {
+    const cleared = line('quest.unclaimable', { reason: null, rank: 'B', class: 'knight' });
+    expect(issuesOf(cleared)).toEqual([]);
+  });
+
   it('checks data without rewriting it: an omitted `characters` stays omitted', () => {
     const created = line('quest.created', { quest: QUEST_VIEW });
     expect(EventSchema.parse(created).data).toEqual({ quest: QUEST_VIEW });
@@ -130,6 +143,9 @@ describe('EventSchema', () => {
     ['territory.health', { territory: { ...TERRITORY_VIEW, health: { ci: 'blue' } } }, 'health'],
     ['mana.exhausted', { ...POOL, pool: 'Gemini Models' }, 'data.pool'],
     ['mana.restored', { pool: 'claude' }, 'data.tribe'],
+    ['quest.unclaimable', { ...VALID_DATA['quest.unclaimable'], reason: 'busy' }, 'data.reason'],
+    ['quest.unclaimable', { reason: null, rank: 'A' }, 'data.class'],
+    ['quest.edited', {}, 'data.quest'],
   ])('rejects %s with data %j', (type, data, expected) => {
     expect(issuesOf(line(type, data)).join('\n')).toContain(expected);
   });
