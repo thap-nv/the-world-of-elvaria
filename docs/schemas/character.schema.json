@@ -90,7 +90,7 @@
             "properties": {
               "verdict_id": {
                 "type": "string",
-                "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*$"
+                "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user)?$"
               },
               "result": {
                 "description": "Partial verdicts (verifier ran out of mana) are not a judgement and never enter a window.",
@@ -140,7 +140,7 @@
               "properties": {
                 "verdict_id": {
                   "type": "string",
-                  "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*$"
+                  "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user)?$"
                 },
                 "result": {
                   "description": "Partial verdicts (verifier ran out of mana) are not a judgement and never enter a window.",

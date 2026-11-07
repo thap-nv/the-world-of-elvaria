@@ -1,13 +1,12 @@
-// Reviews in a fake day: who judges a submitted quest, and the verdict the scenario's table draws for it.
-// The choice follows the separation of duties (ADR 0008) in its simplest form, until selectVerifier (P1-04):
-// a free character of a verifier class for the kind, who never worked on the quest and runs another model;
-// another tribe first (the cast gives each tribe a judge, ADR 0011), then the one idle the longest.
-import { FAIL_KINDS, currentRun } from '@elvaria/domain';
-import type { Character, Quest } from '@elvaria/domain';
+// Reviews in a fake day: the judge planTick chose (selectVerifier, ADR 0008) opens its fresh session, and the
+// verdict the scenario's table draws for it moves the quest. When the machine judges alone (machine_only and no
+// judge of another family), its verdict is a pass: a fake day runs no checks.
+import { FAIL_KINDS, currentRun, verdictIdOf } from '@elvaria/domain';
+import type { CharacterId, QuestId } from '@elvaria/domain';
 
-import { holds, isFree, noteWaits, schedule, sessionId } from './day.ts';
+import { holds, noteWaits, schedule, sessionId } from './day.ts';
 import { holderOf, step } from './ledger.ts';
-import { judged, levelAfterVerdict, verdictIdOf } from './reputation.ts';
+import { judged, levelAfterVerdict } from './reputation.ts';
 import { endSession } from './work.ts';
 import type { Day, Happening } from './day.ts';
 
@@ -16,53 +15,21 @@ const FAILS = FAIL_KINDS.filter((kind) =>
   ['tests_fail', 'incomplete', 'scope_creep', 'missing_i18n'].includes(kind),
 );
 
-const byIdleSince = (a: Character, b: Character): number =>
-  Date.parse(a.status_since) - Date.parse(b.status_since) || a.id.localeCompare(b.id);
-
-export function verifierFor(day: Day, quest: Quest): Character | undefined {
-  const assignee = day.ledger.character(holderOf(quest, 'assignee'));
-  const worked = new Set(
-    quest.attempt_log.filter(({ role }) => role === 'assignee').map(({ character }) => character),
-  );
-  const classes = new Set(
-    day.registry.classes
-      .filter(({ is_verifier, kinds }) => is_verifier && kinds.includes(quest.kind))
-      .map(({ id }) => id),
-  );
-  const fit = day.ledger
-    .characters()
-    .filter((c) => classes.has(c.class) && isFree(day, c) && !worked.has(c.id) && c.model !== assignee.model)
-    .toSorted(byIdleSince);
-  return fit.find(({ tribe }) => tribe !== assignee.tribe) ?? fit[0];
-}
-
-/** A submitted session-tier quest with no verifier gets one, whose fresh session opens at once (§3.2). */
-export function beginReview(day: Day, quest: Quest): void {
-  const verifier = verifierFor(day, quest);
-  if (verifier === undefined) return;
+/** A submitted session-tier quest gets the judge planTick chose, whose fresh session opens at once (§3.2). */
+export function beginReview(day: Day, id: QuestId, verifier: CharacterId): void {
   const session = sessionId(day);
-  const after = day.ledger.move(
-    quest.id,
-    { type: 'assign_verifier', verifier: verifier.id, session_id: session },
-    'steward',
-    {
-      [verifier.id]: step('assign_verify', quest.id),
-    },
-  );
+  const after = day.ledger.move(id, { type: 'assign_verifier', verifier, session_id: session }, 'steward', {
+    [verifier]: step('assign_verify', id),
+  });
   day.ledger.note({
     type: 'agent.session.start',
-    actor: { kind: 'character', id: verifier.id },
-    data: { session, model: verifier.model },
+    actor: { kind: 'character', id: verifier },
+    data: { session, model: day.ledger.character(verifier).model },
     quest: after,
     session,
   });
   const result = day.dice.weighted(day.scenario.verdict);
-  schedule(day, day.dice.int(day.scenario.minutes.review), {
-    kind: 'verdict',
-    quest: quest.id,
-    session,
-    result,
-  });
+  schedule(day, day.dice.int(day.scenario.minutes.review), { kind: 'verdict', quest: id, session, result });
 }
 
 /** The verifier's verdict: its line, then the quest's move, the assignee's reputation and maybe its level. */
@@ -74,11 +41,11 @@ export function finishReview(day: Day, happening: Extract<Happening, { kind: 've
   const assignee = holderOf(quest, 'assignee');
   const verdict = verdictIdOf(quest, currentRun(quest));
   endSession(day, quest, 'verifier', { session, outcome: 'completed' });
-  const why = result === 'fail' ? { fail_kind: day.dice.pick(FAILS) } : {};
+  const outcome = result === 'fail' ? { result, fail_kind: day.dice.pick(FAILS) } : { result };
   day.ledger.note({
     type: `verdict.${result}`,
     actor: { kind: 'character', id: verifier },
-    data: { verdict, ...why },
+    data: { verdict, ...(outcome.result === 'fail' ? { fail_kind: outcome.fail_kind } : {}) },
     quest,
     session,
   });
@@ -88,9 +55,22 @@ export function finishReview(day: Day, happening: Extract<Happening, { kind: 've
     'verifier',
     {
       [verifier]: step('verdict'),
-      [assignee]: judged(quest, verdict, result),
+      [assignee]: judged(quest, verdict, outcome),
     },
   );
+  levelAfterVerdict(day, assignee);
+  noteWaits(day, after);
+}
+
+/** The machine's verdict on a submitted quest nobody of another family can judge (§3.2 machine_only). */
+export function machineJudges(day: Day, id: QuestId): void {
+  const quest = day.ledger.quest(id);
+  const assignee = holderOf(quest, 'assignee');
+  const verdict = verdictIdOf(quest, currentRun(quest));
+  day.ledger.note({ type: 'verdict.pass', actor: { kind: 'steward' }, data: { verdict }, quest });
+  const after = day.ledger.move(id, { type: 'verdict_pass' }, 'steward', {
+    [assignee]: judged(quest, verdict, { result: 'pass' }),
+  });
   levelAfterVerdict(day, assignee);
   noteWaits(day, after);
 }

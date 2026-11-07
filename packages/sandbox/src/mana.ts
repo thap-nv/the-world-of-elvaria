@@ -2,12 +2,11 @@
 // the mana-out day one tribe running dry. Then the whole pool sleeps: its running quests pause and keep their
 // assignee, a verifier leaves its review with a partial verdict, idle characters fall asleep. When the probe
 // succeeds the pool wakes, paused quests go on in a fresh session of the same attempt, sleepers wake.
-import { currentRun } from '@elvaria/domain';
+import { currentRun, partialVerdictIdOf, verifierSessionsOf } from '@elvaria/domain';
 import type { CharacterId, Instant, PoolKey, Quest } from '@elvaria/domain';
 
 import { sessionOf, tribeAsleep } from './day.ts';
 import { holderOf, step } from './ledger.ts';
-import { verdictIdOf } from './reputation.ts';
 import { endSession, openSession } from './work.ts';
 import type { Day } from './day.ts';
 import type { ReadingData } from './ledger.ts';
@@ -94,7 +93,9 @@ function verifierSleeps(day: Day, quest: Quest): void {
   const verifier = holderOf(quest, 'verifier');
   const session = sessionOf(quest, 'verifier');
   endSession(day, quest, 'verifier', { session, outcome: 'killed' });
-  const data = { verdict: verdictIdOf(quest, currentRun(quest)), progress: { checked_until: 'README.md' } };
+  const n = currentRun(quest);
+  const verdict = partialVerdictIdOf(quest, n, verifierSessionsOf(quest, n));
+  const data = { verdict, progress: { checked_until: 'README.md' } };
   day.ledger.note({
     type: 'verdict.partial',
     actor: { kind: 'character', id: verifier },

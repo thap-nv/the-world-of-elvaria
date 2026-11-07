@@ -26,6 +26,12 @@ export type CharacterTransitionError =
 
 const ROLE_TAKEN = { claim: 'assignee', assign_verify: 'verifier' } as const;
 
+/**
+ * Leaving the Temple ends the fail streak that sent the character there (P1-04): without it, the next tick would
+ * suspend it again for the same failures.
+ */
+const STREAK_ENDS: readonly CharacterEventType[] = ['temple_done', 'release'];
+
 /** Statuses in which the character still holds its quest (current). */
 const HOLDING: readonly CharacterStatus[] = ['working', 'reviewing', 'meditating', 'swamp'];
 
@@ -60,6 +66,7 @@ function next(character: Character, event: CharacterEvent, row: CharacterTransit
     // status_since dates the status, so a change of quest within one status does not reset it.
     status_since: status === character.status ? character.status_since : event.at,
     current: currentAfter(character, event, status, row.remember),
+    ...(STREAK_ENDS.includes(event.type) ? { consecutive_fail: { count: 0 } } : {}),
   };
 }
 

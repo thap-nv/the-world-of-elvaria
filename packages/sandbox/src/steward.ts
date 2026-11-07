@@ -1,15 +1,15 @@
-// The scripted Steward of a fake day: one tick per minute, in the order of implementation-plan §3.1. Claims come
-// from the domain's planTick, the one the real Steward runs (P1-03 extends it); what characters then do comes
-// from the scenario's table. Every move goes through transition(), so the day obeys the same machine.
-import { FULL_TRIBE_LIMITS, currentRun, planTick } from '@elvaria/domain';
-import type { Quest } from '@elvaria/domain';
+// The scripted Steward of a fake day: one tick per minute, in the order of implementation-plan §3.1. Every decision
+// comes from the domain's planTick, the one the real Steward runs: suspensions, judges (selectVerifier), returned
+// quests sent back, claims; what characters then do comes from the scenario's table. Every move goes through
+// transition(), so the day obeys the same machine.
+import { FULL_TRIBE_LIMITS, currentRun, planTick, verdictIdOf } from '@elvaria/domain';
+import type { Quest, TickPlan } from '@elvaria/domain';
 
-import { isFree, noteWaits, schedule } from './day.ts';
+import { noteWaits, schedule } from './day.ts';
 import { holderOf, step } from './ledger.ts';
 import { manaTick } from './mana.ts';
 import { ownerActs } from './owner.ts';
-import { verdictIdOf } from './reputation.ts';
-import { beginReview, finishReview } from './review.ts';
+import { beginReview, finishReview, machineJudges } from './review.ts';
 import { finishWork, openSession, useTool } from './work.ts';
 import type { Day, Happening } from './day.ts';
 
@@ -46,44 +46,39 @@ function happenings(day: Day): void {
   day.agenda.delete(day.clock.minute());
 }
 
-/** Step 4: a submitted session-tier quest without a verifier gets one (§3.2). */
-function verifications(day: Day): void {
-  for (const quest of inStatus(day, 'review').filter(
-    (q) => q.tier === 'session' && typeof q.verifier !== 'string',
-  )) {
-    beginReview(day, quest);
-  }
-}
-
-/** Step 5: a returned quest goes back to its assignee, in a fresh session, once the assignee is free. */
-function redispatches(day: Day): void {
-  for (const quest of inStatus(day, 'returned')) {
-    const assignee = holderOf(quest, 'assignee');
-    if (!isFree(day, day.ledger.character(assignee))) continue;
-    openSession(day, (session) =>
-      day.ledger.move(quest.id, { type: 'redispatch', session_id: session }, 'steward', {
-        [assignee]: step('claim', quest.id),
-      }),
-    );
-  }
-}
-
 /**
- * Step 6: planTick's claims; the plot and the session follow in the same tick (§3.1, §3.3). The fake runners of
- * a day can do everything a real one declares, so every tribe has full limits (tribeLimitsOf, §3.14).
+ * planTick on the day's files. The fake runners of a day can do everything a real one declares, so every tribe
+ * has full limits (tribeLimitsOf, §3.14).
  */
-function claims(day: Day): void {
-  const asleep = day.ledger.pools().filter((pool) => pool.asleep);
+function planOf(day: Day): TickPlan {
   const snapshot = {
     kingdom: day.kingdom,
     territories: day.ledger.source().territories,
     registry: day.registry,
     quests: day.ledger.quests(),
     characters: day.ledger.characters(),
-    asleep,
+    asleep: day.ledger.pools().filter((pool) => pool.asleep),
     limits: Object.fromEntries(day.kingdom.tribes.map(({ id }) => [id, FULL_TRIBE_LIMITS])),
   };
-  const plan = planTick(snapshot, day.clock.now());
+  return planTick(snapshot, day.clock.now());
+}
+
+/** A session of the assignee opens on the quest: a claimed quest starts, a returned one goes back (§2.5). */
+function reopen(day: Day, id: Quest['id'], type: 'start' | 'redispatch'): void {
+  const assignee = holderOf(day.ledger.quest(id), 'assignee');
+  openSession(day, (session) =>
+    day.ledger.move(id, { type, session_id: session }, 'steward', { [assignee]: step('claim', id) }),
+  );
+}
+
+/** Steps 4–6 as planTick decided them; the plot and the session of a claim follow in the same tick (§3.1, §3.3). */
+function carryOut(day: Day, plan: TickPlan): void {
+  for (const id of plan.suspensions) day.ledger.change(id, 'character.suspend', step('fail_streak'));
+  for (const quest of plan.starts) reopen(day, quest, 'start');
+  for (const { quest, verifier } of plan.verifications) beginReview(day, quest, verifier);
+  for (const quest of plan.machine_verdicts) machineJudges(day, quest);
+  for (const quest of plan.redispatches) reopen(day, quest, 'redispatch');
+  // A fake day moves the character with the claim, the session following in the same minute.
   for (const { quest, assignee, level } of plan.claims) {
     day.ledger.move(quest, { type: 'claim', assignee, level }, 'steward', {
       [assignee]: step('claim', quest),
@@ -115,8 +110,6 @@ export function tick(day: Day): void {
   ownerActs(day);
   manaTick(day);
   happenings(day);
-  verifications(day);
-  redispatches(day);
-  claims(day);
+  carryOut(day, planOf(day));
   deliveries(day);
 }
