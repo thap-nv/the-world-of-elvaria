@@ -18,6 +18,7 @@ export function folderPlots(root: string): Plots {
     },
     commit: () => Promise.resolve({ status: 'no_git' }),
     check: () => Promise.resolve([]),
+    scriptChecks: () => Promise.resolve([]),
     release: () => Promise.resolve(ok({ removed: false, forget_failures: [] })),
   };
 }

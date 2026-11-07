@@ -71,6 +71,17 @@
   `verifier_same_family = machine_only` with no judge of another family, the machine's verdict comes from them
   alone (`verifier_id: machine`). Gives the plot back when a quest is archived (`Plots.release`; a dirty
   worktree stays, with a warning).
+- Runs the script tier itself (§2.5, §3.12, ADR 0017; `src/script/`): a `create_quest` whose `script.params` do
+  not fit the catalog's `params_schema` is refused (`invalid_script_params`); an open script-tier quest is claimed
+  with no assignee, gets its plot, starts, and `node registry/scripts/<id>.mjs --params <json> --context <json>`
+  runs in the plot within the tick (`StewardDeps.scripts`, `nodeScriptRunner`): the minimal env and no secret,
+  `--context` with the run folder and the territory's checks resolved (`Plots.scriptChecks`), its tree killed at
+  `timeout_minutes`. Its output goes to `.runs/<quest>-<n>/script.log` and `script.json`; the machine judges from
+  that (`scriptVerdictOf`): a result goes to review, then done (or the seal), a failing one and a units list with
+  open units to the infirmary with their verdict; a timeout trips the time breaker; a script that broke or could
+  not use the quest goes to the infirmary at once (`script:broken`, `script:usage`). No runner is asked, mana 0.
+  `stop()` kills a script running in the tick; the next Steward judges a run it finds working or in review from
+  `script.json`, or sends one that saved nothing to the infirmary (`script:lost`).
 - Delivers every done quest once, by its kind's convention (`deliverable.type`; step 7 of §3.1, `src/deliver/`):
   a branch, file, report or draft on a git territory stays on its branch for the owner to merge by hand; a plot
   folder of a territory without git is copied into the territory (a file it replaces is kept in
@@ -93,9 +104,10 @@
   `transition`, `selectVerifier`, `validateVerdict`, ADR 0002).
 - Estimate mana from tokens against `tribes[].budget`, warn, reassign a long-paused quest
   (`mana.reassign_after_hours`) or ring when a pool sleeps (P1-22); kill a process itself (runner-core's
-  `killTree` does, through the runner's `kill`); know git or a territory's programs (`Plots` is given;
-  `folderPlots` is a folder with no git and no checks, for the specs), or run catalog scripts (P1-17). The judge's
-  prompt carries no diff yet: the judge reads the branch in its plot.
+  `killTree` does, through the runner's `kill`); know git or a territory's programs (`Plots` is given, with the
+  territory's checks resolved for `run-check`; `folderPlots` is a folder with no git and no checks, for the specs).
+  Open child quests for a batch's open units, or a fix quest for a failing `run-check` (proposed after P1-17). The
+  judge's prompt carries no diff yet: the judge reads the branch in its plot.
 - Push, merge or send anything a quest delivered (stage 1, §9.1 item 11): the owner does, from the delivery note.
   Open a party's parts and its merge quest when a contract is delivered (P1-18).
 - Read `process.env` or a treasury file itself: the composition root hands it the minimal env and a `Treasury`.
@@ -120,3 +132,8 @@ entry matches exactly one session, and the replayed log equals the files. `deliv
 report and a sealed draft from worktree-like plots, and a document copied into a territory without git;
 `subquests.spec.ts` opens a plan's sub-quests (again after a delivery that failed halfway) and refuses lists it
 cannot follow; assignees leave their files in the plot through `leavingRunners` (`src/__fixtures__/deliver.ts`).
+`scripts.spec.ts` copies the real `link-check` and `run-check` of `packages/registry-default/scripts/` into the
+kingdom and takes script quests all the way with no runner asked: a link check that passes, one with a dead link,
+a territory check run from its resolved argv; params the catalog refuses; stand-in scripts that break, refuse the
+quest, print outside the contract or outlive a short timeout; a Steward stopped in the middle of a script, and a
+run saved but not judged.

@@ -61,6 +61,8 @@ interface State {
   readonly limits: Partial<Record<TribeId, TribeLimits>>;
   readonly mana: ManaBook;
   reported: Reported;
+  /** Aborted by stop(): a catalog script running in the tick dies, so stopping never waits out its timeout. */
+  stopping: AbortController;
   held: Held | undefined;
   timer: ReturnType<typeof setTimeout> | undefined;
   /** The tick in progress: ticks run one after the other, never two at once. */
@@ -95,7 +97,8 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   const record = createRecorder({ ...deps, world, stamp: () => held.zone.format(deps.clock.now()) });
   const root = deps.store.root;
   const { templates } = held;
-  const ctx: Context = { deps, root, world, record, sessions, templates, limits, mana, counts };
+  const stopping = state.stopping.signal;
+  const ctx: Context = { deps, root, world, record, sessions, templates, limits, mana, counts, stopping };
   const waiting = await applyInbox(ctx, handled);
   // A session's leftovers lose its secrets before anything is recorded of them (§3.9).
   for (const finished of sessions.drain()) await recordEnd(ctx, await maskFinished(ctx, finished));
@@ -152,6 +155,7 @@ async function begin(deps: StewardDeps, state: State): Promise<Result<Held, Star
   const tickMs = kingdom.value.dispatch.tick_seconds * MS_PER_SECOND;
   const held = { lock: lock.value, zone: zone.value, templates, tickMs };
   state.held = held;
+  state.stopping = new AbortController();
   await recover(deps, state);
   return ok(held);
 }
@@ -163,6 +167,7 @@ export function createSteward(deps: StewardDeps): Steward {
     limits: limitsOf(deps.runners),
     mana: createManaBook(),
     reported: new Map(),
+    stopping: new AbortController(),
     held: undefined,
     timer: undefined,
     queue: Promise.resolve(),
@@ -178,6 +183,7 @@ export function createSteward(deps: StewardDeps): Steward {
     stop: async () => {
       clearTimeout(state.timer);
       state.timer = undefined;
+      state.stopping.abort();
       await state.queue;
       await state.sessions.close('the Steward stopped');
       await state.sessions.saved();

@@ -27,6 +27,8 @@ export interface Context {
   /** Readings, sleeping pools and probe times, kept between ticks (§3.5). */
   readonly mana: ManaBook;
   readonly counts: Counts;
+  /** Aborted when the Steward stops: a catalog script running in the tick dies with it (§3.12). */
+  readonly stopping: AbortSignal;
 }
 
 /** Rings the bell; a bell that fails never stops a tick. */

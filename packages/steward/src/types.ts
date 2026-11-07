@@ -24,6 +24,8 @@ import type {
 } from '@elvaria/runner-core';
 import type { KingdomStore } from '@elvaria/store';
 
+import type { ScriptRunner } from './script/run-script.ts';
+
 /** A quest as a notice names it: enough for the owner to recognise it without opening the file. */
 export interface NoticeQuest {
   readonly id: QuestId;
@@ -81,6 +83,17 @@ export interface PlotCheck {
 }
 
 /**
+ * A territory check as the catalog's `run-check` script spawns it (§3.12): its `run` command already resolved to an
+ * executable (an npm `.cmd` shim becomes `node <js>`, §6), so the script needs no shell and the command never comes
+ * from params a model wrote.
+ */
+export interface ResolvedCheck {
+  readonly id: string;
+  readonly argv: readonly string[];
+  readonly timeout_minutes: number;
+}
+
+/**
  * The quest's own ground (§3.3): apps/cli puts PlotManager and runChecks of P1-07 behind it; folderPlots gives
  * every quest a folder with no git and no checks (the Steward's specs).
  */
@@ -91,6 +104,11 @@ export interface Plots {
   commit(plot: Quest['plot'], message: string): Promise<CommitOutcome>;
   /** The territory's checks for the paths the quest touched, one after another in the plot (§3.2). */
   check(request: PlotCheck): Promise<readonly CheckRun[]>;
+  /**
+   * Every check of the territory whose program is found, for a catalog script's `--context` (§3.12); a check whose
+   * program is not found is left out, and `run-check` then says the territory has no such check.
+   */
+  scriptChecks(territory: Territory): Promise<readonly ResolvedCheck[]>;
   /** At archive only: removes a worktree (its branch stays) and what the tribes' CLIs kept about it. */
   release(plot: Quest['plot']): Promise<Result<ReleasedPlot, PlotFailure>>;
 }
@@ -114,6 +132,11 @@ export interface StewardDeps {
   readonly log: Logger;
   /** Prompt templates of runner-core; loaded from its prompts/ folder at start when not given. */
   readonly templates?: PromptTemplates;
+  /**
+   * How a catalog script runs (§3.12): `nodeScriptRunner(<node>)`, the `node` that runs Elvaria by default. apps/cli
+   * names the node it found; a spec may give a runner with a shorter timeout.
+   */
+  readonly scripts?: ScriptRunner;
 }
 
 export interface TickReport {

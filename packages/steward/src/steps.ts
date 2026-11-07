@@ -1,8 +1,8 @@
 // Steps 3–7 of a tick (implementation-plan §3.1), as planTick decided them: stop the sessions past a breaker
 // (P1-06), send characters on a fail streak to the Temple, wake paused quests whose pool has mana again (P1-05),
 // start claimed quests, give submitted quests a verifier or the machine's verdict, send returned quests back,
-// claim open ones, deliver done ones (P1-14). Script-tier quests wait for P1-17, which runs registry scripts; the
-// Steward does not claim them before it can run them.
+// claim open ones, run open script-tier quests (P1-17), deliver done ones (P1-14). A script runs inside the tick, as
+// the checks do: a long script holds the tick for its length (stage 1, §3.12).
 import type { CharacterId, TickPlan } from '@elvaria/domain';
 
 import { ring } from './context.ts';
@@ -10,6 +10,7 @@ import { deliver } from './deliver/deliver.ts';
 import { moveAndRing } from './notices.ts';
 import { step } from './record.ts';
 import { machineReview } from './review/machine.ts';
+import { judgeScript, runScriptQuest } from './script/script-quest.ts';
 import { tripBreakers } from './sessions/breaker.ts';
 import { openAssignee, openVerifier } from './sessions/open.ts';
 import type { Context } from './context.ts';
@@ -41,6 +42,9 @@ export async function carryOut(ctx: Context, plan: TickPlan): Promise<void> {
     warnIfRefused(ctx, `${quest} verifier ${verifier}`, await openVerifier(ctx, quest, verifier));
   for (const quest of plan.machine_verdicts)
     warnIfRefused(ctx, `${quest} machine verdict`, await machineReview(ctx, quest));
+  // Script runs a Steward stopped in the middle of: judged from what they saved, before any new script runs.
+  for (const quest of plan.script_verdicts)
+    warnIfRefused(ctx, `${quest} script verdict`, await judgeScript(ctx, quest));
   for (const quest of plan.redispatches)
     warnIfRefused(ctx, `${quest} redispatch`, await openAssignee(ctx, quest, { kind: 'redispatch' }));
   for (const { quest, assignee, level } of plan.claims) {
@@ -53,6 +57,11 @@ export async function carryOut(ctx: Context, plan: TickPlan): Promise<void> {
     });
     if (claimed.ok) warnIfRefused(ctx, `${quest} start`, await openAssignee(ctx, quest, { kind: 'start' }));
     else warnIfRefused(ctx, `${quest} claim`, claimed);
+  }
+  // The script tier needs no character: claimed, run and judged here, one after another (§3.12).
+  for (const quest of plan.scripts) {
+    if (ctx.stopping.aborted) break;
+    warnIfRefused(ctx, `${quest} script`, await runScriptQuest(ctx, quest));
   }
   // Step 7: what is done goes to the owner by its kind's convention (P1-14).
   for (const quest of plan.deliveries) warnIfRefused(ctx, `${quest} deliver`, await deliver(ctx, quest));

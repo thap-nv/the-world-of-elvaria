@@ -3,7 +3,7 @@
 // over PlotManager, the console bell, the event log; the Steward itself sees only interfaces (ADR 0006, 0021).
 import { openEventLog } from '@elvaria/eventlog';
 import { minimalEnv, openFileTreasury } from '@elvaria/runner-core';
-import { createSteward } from '@elvaria/steward';
+import { createSteward, nodeScriptRunner } from '@elvaria/steward';
 import { fromPortable } from '@elvaria/store';
 import type { Steward } from '@elvaria/steward';
 
@@ -38,6 +38,8 @@ function stewardOf(ctx: KingdomContext, crew: Crew): Steward {
     treasury: openFileTreasury(fromPortable(ctx.kingdom.paths.treasury, io.platform)),
     clock: io.clock,
     ids: ctx.ids,
+    // Catalog scripts run on the node found for Elvaria, with the same minimal env and no secret (§3.12).
+    scripts: nodeScriptRunner(io.nodePath),
     bell: consoleBell(t, io),
     log: {
       warn: (message) => {
