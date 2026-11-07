@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, realpath } from 'node:fs/promises';
 import path from 'node:path';
 
 import { CONFORMANCE_QUEST, STDERR_FILE, STDOUT_FILE } from '@elvaria/runner-core';
@@ -73,7 +73,8 @@ describe('a session', () => {
     // The prompt goes on stdin, never in argv (a Windows command line stops at 32 767 characters).
     expect(seen.prompt).toBe(prepared.request.prompt.user);
     expect(seen.argv).not.toContain(prepared.request.prompt.user);
-    expect(seen.cwd).toBe(prepared.request.cwd);
+    // The CLI sees its cwd with symlinks resolved: macOS's temp folder /var/… is /private/var/….
+    expect(await realpath(seen.cwd)).toBe(await realpath(prepared.request.cwd));
     expect(seen.env).toMatchObject({
       ELVARIA_MODEL: character.model,
       ELVARIA_ROLE: 'assignee',
