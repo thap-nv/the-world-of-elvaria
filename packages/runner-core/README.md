@@ -22,21 +22,29 @@
   royal decree when `<kingdom>/decree.md` exists.
 - Runs the conformance suite (`conformanceChecks`, `runConformance`): plain checks with `node:assert`, so a spec
   wraps them in `it` and `elvaria tribe check` (P1-19) runs them too. With a real CLI (`live`) only the checks
-  that burn no mana run.
+  that burn no mana run. `openWorkspace` and `conformanceRequest` give an adapter's specs the same requests.
+- Gives every adapter the session's side of the hook contract (P1-09, §3.6): `runContextOf(req)` (kingdom,
+  quest, attempt from env `ELVARIA_*`; character, role, model from the request), `contextEnv`, and
+  `writePolicyFile` for `<run_dir>/policy.json` v1, the file `--policy` points the hook at.
+- Writes the lines only a CLI's output knows (`openRunLog`): `agent.session.end`, `agent.subagent.*`,
+  `mana.signal`, stamped and redacted like the hook's, checked by `EventSchema`, to the log and the journal; and
+  tells whether Elvaria's SessionStart hook recorded a session (`recorded`). Keeps a CLI's raw stdout and stderr
+  in `.runs/`, redacted (`openRunOutput`).
 
 ## Does not
 
 - Talk to a real CLI: adapters do (`runner-claude` P1-09, `runner-antigravity` P1-12b, `runner-gemini` P1-12c).
-- Write settings.json, policy.json or agents.json, nor build the minimal env: the adapters (P1-09) and the
-  treasury (P1-10) do, from `ToolPolicy` and `SpawnRequest`.
+- Write a CLI's own settings or agents file, nor build the minimal env: the adapters (P1-09) and the treasury
+  (P1-10) do, from `ToolPolicy` and `SpawnRequest`.
 - Prepare plots, run checks, kill process trees or normalise streams yet (P1-06, P1-07, §3.10).
 - Decide anything: the Steward chooses who, when and with which continuation; `tribeLimitsOf` lives in the
   domain.
 
 ## Depends on
 
-- `@elvaria/domain` (schemas, registry, capabilities, `RITUAL_STEPS`, `FAIL_KINDS`), `@elvaria/store`
-  (`readTextFile`, `writeFileAtomic`). No third-party package.
+- `@elvaria/domain` (schemas, registry, capabilities, `RITUAL_STEPS`, `FAIL_KINDS`, `EventSchema`),
+  `@elvaria/eventlog` (append, read a journal, stamp, redact), `@elvaria/store` (`readTextFile`,
+  `writeFileAtomic`). No third-party package.
 
 ## How to test
 

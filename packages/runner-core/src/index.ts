@@ -10,7 +10,13 @@ export {
 } from './conformance/scenarios.ts';
 export type { FakeScenario } from './conformance/scenarios.ts';
 export type { CheckOutcome, ConformanceCheck, ConformanceTarget } from './conformance/target.ts';
-export { CONFORMANCE_CHARACTER, CONFORMANCE_QUEST } from './conformance/workspace.ts';
+export {
+  CONFORMANCE_CHARACTER,
+  CONFORMANCE_QUEST,
+  conformanceRequest,
+  openWorkspace,
+} from './conformance/workspace.ts';
+export type { Workspace } from './conformance/workspace.ts';
 export { commandRefusal } from './policy/command-refusal.ts';
 export {
   AGENT_TOOL,
@@ -35,6 +41,14 @@ export { FAKE_ADAPTER, FAKE_TOKENS, createFakeRunner, scenarioFromEnv } from './
 export type { FakeRunner, FakeRunnerOptions } from './runner/fake-runner.ts';
 export { HANDOVER_SECTIONS, questionOf, readQuestion, sectionOf } from './runner/handover.ts';
 export type { HandoverSection } from './runner/handover.ts';
+export { POLICY_FILE, POLICY_VERSION, policyFileOf, writePolicyFile } from './runner/policy-file.ts';
+export type { PolicyFile } from './runner/policy-file.ts';
+export { CONTEXT_ENV, contextEnv, runContextOf } from './runner/run-context.ts';
+export type { RunContext } from './runner/run-context.ts';
+export { openRunLog } from './runner/run-log.ts';
+export type { RunEventDraft, RunLog, RunLogOptions } from './runner/run-log.ts';
+export { NOTE_PREFIX, STDERR_FILE, STDOUT_FILE, openRunOutput } from './runner/run-output.ts';
+export type { RunOutput } from './runner/run-output.ts';
 export { createSignalChannel } from './runner/signal-channel.ts';
 export type { SignalChannel } from './runner/signal-channel.ts';
 export { SPAWN_ROLES } from './runner/roles.ts';

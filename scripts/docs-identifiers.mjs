@@ -26,6 +26,12 @@ export const ALLOWED = new Map([
   ['projectService', 'typescript-eslint parser option'],
   ['dc1-se-team', 'the first territory: a real repository, named by its owner'],
   ['CLAUDE_PROJECT_DIR', 'Claude Code hook variable, used in .claude/settings.json'],
+  ['project,local', 'Claude Code `--setting-sources` value (spike P1-02, runner-claude)'],
+  ['task_id', 'Claude Code stream-json field of a sub-agent run (spike P1-02, runner-claude)'],
+  ['task_started', 'Claude Code stream-json subtype: an apprentice starts (§3.12)'],
+  ['task_progress', 'Claude Code stream-json subtype: an apprentice runs'],
+  ['task_updated', 'Claude Code stream-json subtype: an apprentice changes status'],
+  ['task_notification', 'Claude Code stream-json subtype: an apprentice ends (§3.12)'],
 ]);
 
 /** @param {string} path */

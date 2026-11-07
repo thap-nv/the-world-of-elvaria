@@ -1,0 +1,169 @@
+import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+
+import {
+  FAKE_CLAUDE,
+  FAKE_HOOK,
+  TRIBE,
+  fakeHookCommand,
+  fakeRunner,
+  minimalEnv,
+} from './__fixtures__/harness.ts';
+import { NOT_FOUND, hookMissing, versionOf } from './doctor.ts';
+import { launchOf } from './launch.ts';
+import { claudeCandidates, locateClaude } from './locate.ts';
+import { createClaudeRunner } from './runner.ts';
+
+const withEnv = (extra: Record<string, string>) => ({ env: { ...minimalEnv(), ...extra } });
+
+describe('probe', () => {
+  it('reads /usage, then pings the cheapest model', async () => {
+    expect(await fakeRunner().probe()).toEqual({ status: 'ok' });
+  });
+
+  it('stays asleep while a window of the account is full, until the latest reset', async () => {
+    const text = [
+      'Current session: 100% used · resets Nov 6, 9:50pm (Asia/Bangkok)',
+      'Current week (all models): 100% used · resets Nov 8, 8pm (Asia/Bangkok)',
+      'Current week (Fable): 100% used · resets Nov 8, 9pm (Asia/Bangkok)',
+    ].join('\n');
+    const result = await fakeRunner(withEnv({ FAKE_CLAUDE_USAGE_TEXT: text })).probe();
+    expect(result).toMatchObject({ status: 'rate_limited', detail: 'usage full: five_hour, weekly' });
+    expect(result.resets_at).toMatch(/T13:00:00\.000Z$/);
+  });
+
+  it('pings when only the cap of one model is full: that binds its characters, not the tribe', async () => {
+    const text = 'Current session: 10% used\nCurrent week (Fable): 100% used';
+    expect(await fakeRunner(withEnv({ FAKE_CLAUDE_USAGE_TEXT: text })).probe()).toEqual({ status: 'ok' });
+  });
+
+  it('reports a ping that hit a limit (self-built 429) or failed', async () => {
+    expect(await fakeRunner(withEnv({ FAKE_CLAUDE_PING: 'rate_limit' })).probe()).toEqual({
+      status: 'rate_limited',
+      detail: 'the ping hit a usage limit',
+    });
+    const failed = await fakeRunner(withEnv({ FAKE_CLAUDE_PING: 'error' })).probe();
+    expect(failed.status).toBe('error');
+    expect(failed.detail).toContain('claude-nonexistent-9');
+  });
+
+  it('reports a CLI that does not start', async () => {
+    const result = await fakeRunner({ executable: path.join(tmpdir(), 'no such claude.exe') }).probe();
+    expect(result.status).toBe('error');
+    expect(result.detail).toMatch(/ENOENT/);
+  });
+});
+
+describe('doctor', () => {
+  it('names the CLI, its version and the login', async () => {
+    expect(await fakeRunner().doctor()).toEqual({ path: FAKE_CLAUDE, version: '2.1.318', auth_ok: true });
+    expect(versionOf('2.1.318 (Claude Code)\n')).toBe('2.1.318');
+  });
+
+  it('says when the owner is logged out or the hook is not built', async () => {
+    const hookScript = path.join(tmpdir(), 'missing', 'elvaria-hook.js');
+    const info = await fakeRunner({ ...withEnv({ FAKE_CLAUDE_AUTH: 'logged_out' }), hookScript }).doctor();
+    expect(info.auth_ok).toBe(false);
+    expect(info.detail).toContain('not logged in');
+    expect(info.detail).toContain(hookMissing(hookScript));
+  });
+
+  it('says when it found no CLI at all, and a session cannot start', async () => {
+    const runner = createClaudeRunner({
+      tribe: TRIBE,
+      hookCommand: fakeHookCommand,
+      hookScript: FAKE_HOOK,
+      env: { PATH: '' },
+    });
+    expect(await runner.doctor()).toEqual({ path: '', version: '', auth_ok: false, detail: NOT_FOUND });
+    expect(await runner.probe()).toEqual({ status: 'error', detail: NOT_FOUND });
+  });
+});
+
+describe('where Claude Code is', () => {
+  let home: string;
+  beforeAll(async () => {
+    home = await mkdtemp(path.join(tmpdir(), 'elvaria home '));
+  });
+  afterAll(() => rm(home, { recursive: true, force: true }));
+
+  const binary = process.platform === 'win32' ? 'claude.exe' : 'claude';
+  const homeEnv = () => (process.platform === 'win32' ? { USERPROFILE: home } : { HOME: home });
+
+  async function place(...parts: string[]): Promise<string> {
+    const file = path.join(home, ...parts);
+    await mkdir(path.dirname(file), { recursive: true });
+    await writeFile(file, '');
+    await chmod(file, 0o755);
+    return file;
+  }
+
+  it('takes the newest VS Code extension when nothing else has it', async () => {
+    const extensions = ['.vscode', 'extensions'];
+    await place(
+      ...extensions,
+      'anthropic.claude-code-2.1.99-win32-x64',
+      'resources',
+      'native-binary',
+      binary,
+    );
+    const newest = await place(
+      ...extensions,
+      'anthropic.claude-code-2.1.318-win32-x64',
+      'resources',
+      'native-binary',
+      binary,
+    );
+    await place(...extensions, 'someone.else-1.0.0', 'resources', 'native-binary', binary);
+    expect(await locateClaude({ PATH: '', ...homeEnv() }, process.platform)).toBe(newest);
+  });
+
+  it('prefers PATH, then the native installer', async () => {
+    const local = await place('.local', 'bin', binary);
+    expect(await locateClaude({ PATH: '', ...homeEnv() }, process.platform)).toBe(local);
+    const onPath = await place('bin dir', binary);
+    const env = { PATH: path.dirname(onPath), ...homeEnv() };
+    expect(await locateClaude(env, process.platform)).toBe(onPath);
+  });
+
+  it("looks in npm's folder and in shims on Windows", async () => {
+    const candidates = await claudeCandidates(
+      {
+        Path: String.raw`C:\tools`,
+        USERPROFILE: String.raw`C:\Users\u`,
+        APPDATA: String.raw`C:\Users\u\AppData\Roaming`,
+      },
+      'win32',
+    );
+    expect(candidates.slice(0, 4)).toEqual([
+      String.raw`C:\tools\claude.exe`,
+      String.raw`C:\tools\claude.cmd`,
+      String.raw`C:\Users\u\.local\bin\claude.exe`,
+      String.raw`C:\Users\u\AppData\Roaming\npm\claude.cmd`,
+    ]);
+    expect(await claudeCandidates({}, 'darwin')).toEqual([]);
+  });
+
+  it('starts a binary as it is, and a script or an npm shim with Node', async () => {
+    const node = process.execPath;
+    expect(await launchOf('/opt/claude', node)).toEqual({ file: '/opt/claude', args: [] });
+    expect(await launchOf(FAKE_CLAUDE, node)).toEqual({ file: node, args: [FAKE_CLAUDE] });
+    const shim = path.join(home, 'claude.cmd');
+    await writeFile(
+      shim,
+      '@ECHO off\r\n"%_prog%"  "%dp0%\\node_modules\\@anthropic-ai\\claude-code\\cli.js" %*\r\n',
+    );
+    expect(await launchOf(shim, node)).toEqual({
+      file: node,
+      args: [
+        path.win32.join(path.win32.dirname(shim), String.raw`node_modules\@anthropic-ai\claude-code\cli.js`),
+      ],
+    });
+    const other = path.join(home, 'other.cmd');
+    await writeFile(other, '@ECHO off\r\nclaude.exe %*\r\n');
+    await expect(launchOf(other, node)).rejects.toThrow(/does not run a Node script/);
+  });
+});

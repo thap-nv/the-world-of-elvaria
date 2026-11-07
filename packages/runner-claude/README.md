@@ -1,0 +1,53 @@
+# @elvaria/runner-claude
+
+## Does
+
+- Runs Claude Code 2.1.318 headless behind `AgentRunner` (adapter `claude_code`, implementation-plan §3.7, ADR 0006,
+  0007): `createClaudeRunner({ tribe, executable, hookCommand, hookScript, env })`. apps/cli hands it what this
+  package may not import: `hookCommand` and `HOOK_SCRIPT` of `@elvaria/hooks`, and the minimal env (§3.9).
+- Writes the run folder of every session (`<kingdom>/.runs/<quest>-<n>/`): `policy.json` for the hook (laws and
+  context, through runner-core), `settings.json` (dontAsk, the allow/deny of the `ToolPolicy` with file tools
+  scoped to the plot as `Read(./**)`, the assignee's own handover letter by absolute path, Elvaria's hook on the
+  twelve events in the exec form, `ELVARIA_*` and `CLAUDE_CODE_*` env, no auto memory, no attribution line),
+  `agents.json` (the one apprentice: the character's tools minus `Agent`, a hard `maxTurns`), `system.md` for
+  `--append-system-prompt-file` and the prompt as sent. Generated settings are checked before spawn, because
+  Claude Code drops a malformed part without a word.
+- Spawns `claude -p` with stream-json, hook events, dontAsk, `--tools`, `--strict-mcp-config` and
+  `--setting-sources project,local`, without a shell, the prompt on stdin, a chosen `--session-id` (or
+  `--resume`). Reads the stream: signals (`text`, `usage` so far, `tool_blocked`, `rate_limit`), the lines only
+  the stream knows (`agent.session.end` from the last `result`, `agent.subagent.start/end` from
+  `system/task_*`, `mana.signal` of an API retry), and `RunResult` (outcome from `is_error` + `terminal_reason`,
+  tokens of `modelUsage`, denials, structured output, the letter's question).
+- Stops a session that Elvaria's SessionStart hook did not record in the quest's journal: it would run without the
+  laws. Its outcome is `error`.
+- `probe()`: `claude -p "/usage"` (no model call); when no window of the account is full, one turn of the cheapest
+  model with no tool. `doctor()`: the CLI (PATH, `~/.local/bin`, `%APPDATA%\npm`, the VS Code extension's binary,
+  newest first), its version, `claude auth status --json`, and whether the hook is built.
+- Parses the account's limits for the mana gauge (P1-05): `rateLimitWindowsOf` (`rate_limit_event`) and
+  `usageWindowsOf` (the text of `/usage`, resets turned into instants).
+
+## Does not
+
+- Kill a process tree: `kill()` ends the CLI's own process until P1-06 brings `runner-core/src/process/`.
+- Build the minimal env or resolve treasury secrets (P1-10), nor decide anything: the Steward chooses who, when,
+  with which budget and whether to resume.
+- Read or write `~/.claude/`, parse transcripts, or use `--bare`, `--worktree`, `--dangerously-skip-permissions`.
+
+## Depends on
+
+- `@elvaria/runner-core` (the interface, `ToolPolicy`, `policy.json`, the run log and output, the conformance
+  suite). No third-party package.
+
+## How to test
+
+```bash
+pnpm --filter @elvaria/runner-claude test
+pnpm --filter @elvaria/hooks build && ELVARIA_LIVE=1 pnpm --filter @elvaria/runner-claude test   # real CLI, a little mana
+```
+
+`fixtures/*.jsonl` are the redacted real runs of spike P1-02 (catalogue in `docs/spikes/claude-2026-11.md`).
+`fixtures/fake-claude.mjs` plays the conformance scenarios through the real run files (it runs the hooks the
+settings declare) or replays a fixture verbatim (`FAKE_CLAUDE_REPLAY`); its 429 lines are self-built from the docs
+until P1-16 records real ones. `fixtures/fake-hook.mjs` stands in for the built hook. `src/live.spec.ts` runs the
+conformance suite's live checks with the real CLI and the real hook, the Stop gate, and a commit without
+attribution.

@@ -11,6 +11,7 @@ flowchart TD
   store["store"]
   registry_default["registry-default"]
   runner_core["runner-core"]
+  runner_claude["runner-claude"]
   sandbox["sandbox"]
   eventlog["eventlog"]
   hooks["hooks"]
@@ -19,7 +20,9 @@ flowchart TD
   store --> domain
   registry_default --> domain
   runner_core --> domain
+  runner_core --> eventlog
   runner_core --> store
+  runner_claude --> runner_core
   sandbox --> domain
   sandbox --> eventlog
   sandbox --> store
@@ -39,8 +42,8 @@ flowchart TD
 | `domain` | `packages/domain` | — | — |
 | `store` | `packages/store` | `domain` | `domain`, `eventlog` |
 | `registry-default` | `packages/registry-default` | `domain` | `domain` |
-| `runner-core` | `packages/runner-core` | `domain`, `store` | `domain`, `store`, `eventlog` |
-| `runner-claude` | chưa có | | `runner-core` |
+| `runner-core` | `packages/runner-core` | `domain`, `eventlog`, `store` | `domain`, `store`, `eventlog` |
+| `runner-claude` | `packages/runner-claude` | `runner-core` | `runner-core` |
 | `runner-antigravity` | chưa có | | `runner-core` |
 | `runner-gemini` | chưa có | | `runner-core` |
 | `runner-codex` | chưa có | | `runner-core` |
