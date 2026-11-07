@@ -16,14 +16,17 @@ afterEach(async () => {
   await Promise.all(opened.splice(0).map((workspace) => workspace.remove()));
 });
 
-async function play(prepared: Prepared, drive?: (session: RunningSession) => Promise<void>) {
+async function play(
+  prepared: Prepared,
+  drive?: (session: RunningSession, signals: readonly RunnerSignal[]) => Promise<void>,
+) {
   opened.push(prepared.workspace);
   const session = await prepared.runner.spawn(prepared.request);
   const signals: RunnerSignal[] = [];
   const reading = (async () => {
     for await (const signal of session.signals) signals.push(signal);
   })();
-  if (drive !== undefined) await drive(session);
+  if (drive !== undefined) await drive(session, signals);
   const result = await session.wait();
   await reading;
   return { session, result, signals };
@@ -260,8 +263,11 @@ describe('real runs replayed through the adapter', () => {
 
   it('ends a killed run itself: no result and no hook would', async () => {
     const prepared = await replay('killed.jsonl');
-    const { result } = await play(prepared, async (session) => {
-      await new Promise((resolve) => setTimeout(resolve, 300));
+    const { result } = await play(prepared, async (session, signals) => {
+      // Killed once the runner has read the run's usage, not after a fixed wait: a slow CI machine (macOS) took
+      // longer than 300 ms to start the fake CLI, and the kill came before the last assistant line.
+      while (!signals.some((signal) => signal.kind === 'usage' && signal.tokens === 4693))
+        await new Promise((resolve) => setTimeout(resolve, 20));
       await session.kill('breaker: time');
       await session.kill('again');
     });
