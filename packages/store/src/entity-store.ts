@@ -10,12 +10,15 @@ import type { Result } from '@elvaria/domain';
 import { entityFile } from './entities.ts';
 import { errorCode, readTextFile, writeFileAtomic } from './io/atomic.ts';
 import { withLock } from './io/lock.ts';
-import { lockedIssue, storeIssue } from './issues.ts';
+import { lockedIssue, notAFolderIssue, storeIssue } from './issues.ts';
 import { inKingdom } from './paths.ts';
 import { decode, encode, validate } from './stored-file.ts';
 import type { EntitySpec } from './entities.ts';
 import type { StoreIssue } from './issues.ts';
 import type { FileSpec } from './stored-file.ts';
+
+/** What mkdir says when a file is in the way: the folder itself (EEXIST) or a folder above it (ENOTDIR). */
+const FOLDER_BLOCKED: ReadonlySet<string> = new Set(['EEXIST', 'ENOTDIR']);
 
 /** One file: `kingdom.json`, or one entity. */
 export interface FileStore<T> {
@@ -71,7 +74,15 @@ export function fileStore<T>(
   };
 
   const locked = async <R>(action: () => Promise<R>): Promise<R | Result<never, StoreIssue>> => {
-    const outcome = await withLock(target, action);
+    let outcome;
+    try {
+      outcome = await withLock(target, action);
+    } catch (error) {
+      // The lock and the write both make the file's folder first; a file in its way is the kingdom's state, which
+      // the caller reports, not a crash (P1-04 met it with `verdicts` written as a file).
+      if (FOLDER_BLOCKED.has(errorCode(error) ?? '')) return err(notAFolderIssue(file));
+      throw error;
+    }
     return outcome.ok ? outcome.value : err(lockedIssue(file));
   };
 

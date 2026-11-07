@@ -42,9 +42,16 @@ const REGISTRY_FIXTURES = {
   tags: 'tag',
 };
 
-/** registry/ made of the five registry fixtures: a small registry that passes every cross-file rule. */
+/** The prompt files the class fixture names (P1-15: a registry without them does not load). */
+export const FIXTURE_PROMPTS = ['registry/prompts/scribe.md', 'registry/prompts/judge.md'] as const;
+
+/**
+ * registry/ made of the five registry fixtures and the class prompts they name: a small registry that passes every
+ * cross-file rule and loads.
+ */
 export async function plantRegistry(root: string): Promise<void> {
   for (const [file, contract] of Object.entries(REGISTRY_FIXTURES)) {
     await plant(root, `registry/${file}.json`, fixtureText(contract));
   }
+  for (const prompt of FIXTURE_PROMPTS) await plant(root, prompt, '# Craft\n');
 }

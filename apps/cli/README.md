@@ -14,7 +14,8 @@
   `seal`, `return`; ADR 0005), after checking ids against the registry and the quest against the transition
   table. `return` asks for a note of at least 20 characters (`--note`) and a `--fail-kind` (`other` by default),
   since the Steward writes it as the owner's fail verdict.
-- Writes new files the Steward does not own: `kingdom.json` (`init`, then `tribes[].tool` from `doctor`), a
+- Writes new files the Steward does not own: `kingdom.json` (`init`, then `tribes[].tool` and, with `--enable`,
+  `tribes[].enabled` from `doctor`), a
   territory, a newly summoned character (create only, never overwrite). Those two are also logged
   (`territory.attached`, `character.created`, with the view after the change, P0-09), so the world sees them.
 - `sandbox generate` writes a fake day of `@elvaria/sandbox` to `events/sandbox/<date>.jsonl` (nothing else of the
@@ -23,7 +24,10 @@
 - `doctor`: finds each tribe's CLI (`--tool <tribe>=<path>`, the pinned path, PATH, then the adapter's own search:
   Claude Code inside the VS Code extension; npm `.cmd` shims run as `node <script>`), pins path and version, asks
   the tribe's adapter about its login, how soon it ends and the built hook, refuses Antigravity without
-  `--acknowledge-terms` (ADR 0018), checks git, the registry (`missingRegistryFiles`) and each territory, the
+  `--acknowledge-terms` (ADR 0018), turns a disabled tribe on with `--enable <tribe>` once its CLI is pinned
+  (P1-15; `elvaria tribe` is P1-19), refuses (exit 2, nothing written) a tribe option naming a tribe
+  kingdom.json has not, or `--acknowledge-terms` for a disabled tribe it would skip, checks git, the registry
+  (class prompts: where the default ones are; catalog scripts: `missingRegistryFiles`) and each territory, the
   treasury file (`inspectTreasury`: present, mode 0600 outside Windows, `{ "name": "value" }`, every name a
   territory allows; names only, never a value) and, while no Steward holds its lock, the sessions a stopped one
   left running (`sessionsLeftBehind`), which the next `run` kills (P1-11, `src/doctor/check-state.ts`).

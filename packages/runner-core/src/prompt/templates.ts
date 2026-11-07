@@ -9,6 +9,7 @@ export const PROMPTS_DIR = path.join(import.meta.dirname, '..', '..', 'prompts')
 export const PROMPT_TEMPLATES = [
   'decree',
   'assignee',
+  'class',
   'apprentice',
   'shell',
   'handover',
@@ -23,6 +24,7 @@ export const PROMPT_TEMPLATES = [
   'answer',
   'verifier',
   'review',
+  'partial',
   'ritual-steps',
   'chancellor',
   'chancellor-context',
@@ -35,12 +37,15 @@ const PLACEHOLDER = /\{\{([a-z_]+)\}\}/g;
 /** A placeholder alone on its line, with the blank line after it. */
 const LONE_PLACEHOLDER = /^\{\{([a-z_]+)\}\}\n(?:\n|$)/gm;
 
+/** A prompt file as a model reads it: `\n` line ends, without the `<!-- … -->` notes for people, trimmed. */
+export const withoutNotes = (text: string): string =>
+  text.replaceAll('\r\n', '\n').replace(COMMENT, '').trim();
+
 export async function loadPromptTemplates(dir: string = PROMPTS_DIR): Promise<PromptTemplates> {
   const entries = await Promise.all(
-    PROMPT_TEMPLATES.map(async (name) => {
-      const text = await readFile(path.join(dir, `${name}.md`), 'utf8');
-      return [name, text.replaceAll('\r\n', '\n').replace(COMMENT, '').trim()] as const;
-    }),
+    PROMPT_TEMPLATES.map(
+      async (name) => [name, withoutNotes(await readFile(path.join(dir, `${name}.md`), 'utf8'))] as const,
+    ),
   );
   return Object.fromEntries(entries) as PromptTemplates;
 }

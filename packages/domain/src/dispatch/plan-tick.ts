@@ -12,7 +12,7 @@ import { rosterOf } from './roster.ts';
 import { selectAssignee } from './select-assignee.ts';
 import { wakesOf } from './wakes.ts';
 import { RANKS } from '../schema/common.ts';
-import { selectVerifier } from '../verify/select-verifier.ts';
+import { selectVerifier, waitsForNoJudge } from '../verify/select-verifier.ts';
 import { partyOf } from '../verify/past-assignees-of.ts';
 import type { Breaker, HeldSession } from '../breaker/breakers.ts';
 import type { ClaimBlocker } from './claim-blocker.ts';
@@ -74,6 +74,11 @@ export interface TickPlan {
    * another family in the kingdom, ADR 0008); the Steward issues the verdict from the checks.
    */
   readonly machine_verdicts: readonly QuestId[];
+  /**
+   * Step 4 too (P1-15): submitted quests that wait for a judge the roster does not have (`waitsForNoJudge`, under
+   * `different_model`): the Steward tells the owner once, as for a quest nobody can claim.
+   */
+  readonly unjudgeable: readonly QuestId[];
   /** Step 5: returned quests that go back to their assignee in a fresh session. */
   readonly redispatches: readonly QuestId[];
   /** Step 6, in the order the Steward applies them. */
@@ -142,21 +147,29 @@ function suspensions(step: Step): CharacterId[] {
 interface Reviews {
   readonly verifications: Verification[];
   readonly machine: QuestId[];
+  readonly unjudgeable: QuestId[];
 }
 
-/** Step 4: a judge for each submitted quest (selectVerifier), the machine's verdict, or a later tick. */
+/**
+ * Step 4: a judge for each submitted quest (selectVerifier), the machine's verdict, or a later tick; a quest whose
+ * judge the roster does not have at all is named.
+ */
 function reviews(step: Step, review: readonly Quest[]): Reviews {
-  const planned: Reviews = { verifications: [], machine: [] };
+  const planned: Reviews = { verifications: [], machine: [], unjudgeable: [] };
   const { snapshot, roster } = step;
   for (const quest of review) {
-    const choice = selectVerifier(quest, snapshot.characters.filter(roster.standsBy), {
+    const candidates = snapshot.characters.filter(roster.standsBy);
+    const policy = {
       same_family: snapshot.kingdom.dispatch.verifier_same_family,
       classes: snapshot.registry.classes,
       assignee: step.character(quest.assignee),
       party: partyOf(quest, snapshot.quests),
-      free: roster.canStart,
-    });
-    if (choice === null) continue;
+    };
+    const choice = selectVerifier(quest, candidates, { ...policy, free: roster.canStart });
+    if (choice === null) {
+      if (waitsForNoJudge(quest, candidates, policy)) planned.unjudgeable.push(quest.id);
+      continue;
+    }
     if (choice.reason === 'machine_only') {
       planned.machine.push(quest.id);
       continue;
@@ -234,6 +247,7 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
     starts,
     verifications: judged.verifications,
     machine_verdicts: judged.machine,
+    unjudgeable: judged.unjudgeable,
     redispatches: inStatus('returned')
       .filter((quest) => holderGoes(step, quest))
       .map(({ id }) => id),

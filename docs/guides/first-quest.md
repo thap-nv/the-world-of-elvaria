@@ -74,7 +74,7 @@ elvaria character add vesper --class judge     # tộc claude, claude-opus-5-5
 elvaria character list
 ```
 
-Người nghiệm thu phải khác người làm, và cùng tộc thì khác model (`dispatch.verifier_same_family: different_model`). Prompt riêng của từng nghề có từ P1-15; tới lúc đó `doctor` cảnh báo 11 file `registry/prompts/*.md` còn thiếu, và nhân vật chạy với prompt chung của runner-core.
+Người nghiệm thu phải khác người làm, và cùng tộc thì khác model (`dispatch.verifier_same_family: different_model`). Mỗi nghề có prompt riêng `registry/prompts/<nghề>.md` (từ P1-15), nối vào sau luật của vai trong phần hệ thống của mọi phiên; chủ nhân sửa được. Vương quốc tạo trước P1-15 không có thư mục đó và không nạp được registry: `doctor` báo từng file thiếu và chỉ chỗ chép bản mặc định (`packages/registry-default/prompts/`).
 
 ## 6. Ra nhiệm vụ
 

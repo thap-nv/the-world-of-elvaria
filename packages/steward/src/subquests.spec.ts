@@ -1,4 +1,7 @@
+import { readFile, writeFile } from 'node:fs/promises';
+
 import { openEventLog } from '@elvaria/eventlog';
+import { inKingdom } from '@elvaria/store';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { CAST, bench, questPayload, tickUntil } from './__fixtures__/kingdom.ts';
@@ -17,7 +20,11 @@ afterEach(async () => {
   current = undefined;
 });
 
-const MAGES = ['merle', 'morgan', 'mirel', 'mott'].map((id) => ({ id, cls: 'mage' }));
+// One mage per plan of the largest spec: a returned plan goes back to its own mage before any new claim.
+const MAGES = ['merle', 'morgan', 'mirel', 'mott', 'maeve', 'milo', 'mira', 'moss'].map((id) => ({
+  id,
+  cls: 'mage',
+}));
 
 /** A sub-quest draft of the quest-draft schema, a knight's build on dc1-se-team unless `fields` say otherwise. */
 const draft = (ref: string, fields: Record<string, unknown> = {}) => ({
@@ -138,7 +145,7 @@ describe('delivering a plan: its sub-quests open', () => {
     expect(await childrenOf(kingdom, plan)).toHaveLength(2);
   });
 
-  it('opens none of a list it cannot follow, and the note says why', async () => {
+  it('returns a list it cannot follow to the mage: the subquests check fails before the judge (P1-15)', async () => {
     const cases: Readonly<Record<string, readonly [string | undefined, string]>> = {
       'No list': [undefined, 'no subquests.json at the root of the plot'],
       'Not JSON': ['{', 'subquests.json is not JSON'],
@@ -153,6 +160,7 @@ describe('delivering a plan: its sub-quests open', () => {
         'the drafts wait on each other in a circle',
       ],
       'Unknown tag': [list(draft('d1', { tags: ['blockchain'] })), 'd1 is refused: unknown_tag'],
+      'Wrong class': [list(draft('d1', { class_required: 'bard' })), 'd1 is refused: class_not_allowed'],
     };
     const files = Object.fromEntries(
       Object.entries(cases).flatMap(([title, [text]]) => (text === undefined ? [] : [[title, text]])),
@@ -160,24 +168,62 @@ describe('delivering a plan: its sub-quests open', () => {
     const { kingdom, steward } = await open(files);
     for (const title of Object.keys(cases)) await kingdom.command('create_quest', planPayload(title));
     const titles = Object.keys(cases);
+    const judged = async (title: string) =>
+      (await kingdom.store.verdicts.read(`${(await kingdom.quest(title)).id}-1` as VerdictId)).ok;
     await tickUntil(
       steward,
       kingdom.clock,
-      async () => (await Promise.all(titles.map((title) => delivered(kingdom, title)()))).every(Boolean),
+      async () => (await Promise.all(titles.map(judged))).every(Boolean),
       150,
     );
-    expect(await kingdom.quests()).toHaveLength(titles.length);
     for (const [title, [, reason]] of Object.entries(cases)) {
       const plan = await kingdom.quest(title);
-      expect(await noteOf(kingdom, plan)).toContain(`## Sub-quests\n\nNone opened: ${reason}`);
-      // The owner hears it once, the log says it too.
-      const rung = kingdom.notices.filter(
-        (notice) => notice.kind === 'subquests_refused' && notice.quest.id === plan.id,
-      );
-      expect(rung).toHaveLength(1);
-      expect(rung[0]).toMatchObject({ kind: 'subquests_refused', quest: { id: plan.id, title, rank: 'D' } });
-      expect(rung[0]?.kind === 'subquests_refused' ? rung[0].reason : '').toContain(reason);
-      expect(kingdom.warnings.join('\n')).toContain(`${plan.id}: delivered, no sub-quest opened: ${reason}`);
+      const verdict = await kingdom.store.verdicts.read(`${plan.id}-1` as VerdictId);
+      if (!verdict.ok) throw new Error(`no verdict for ${title}`);
+      const check = verdict.value.checks.find(({ id }) => id === 'subquests');
+      expect(verdict.value.result).toBe('fail');
+      expect(check).toMatchObject({ pass: false, log_path: `.runs/${plan.id}-1/checks/subquests.log` });
+      const log = await readFile(inKingdom(kingdom.root, check?.log_path ?? ''), 'utf8');
+      expect(log).toContain(`subquests.json: the delivery would open none: ${reason}`);
+      expect(plan.deliverable.delivered_at).toBeUndefined();
     }
+    expect(kingdom.notices.filter(({ kind }) => kind === 'subquests_refused')).toEqual([]);
+  });
+
+  it('passes the subquests check of a list it can follow, and names the children it would open', async () => {
+    const { kingdom, steward } = await open({ 'Plan well': list(draft('d1')) });
+    await kingdom.command('create_quest', planPayload('Plan well'));
+    await tickUntil(steward, kingdom.clock, delivered(kingdom, 'Plan well'));
+    const plan = await kingdom.quest('Plan well');
+    expect(plan.checks_run).toEqual(['subquests']);
+    const log = await readFile(inKingdom(kingdom.root, `.runs/${plan.id}-1/checks/subquests.log`), 'utf8');
+    expect(log).toMatch(
+      /^subquests\.json: the delivery would open 1 sub-quests\n- q_\d{8}_[0-9a-z]{6} build \(knight\): Part d1\n$/,
+    );
+  });
+
+  it('still opens none of a list that broke after its review, and the note says why', async () => {
+    const { kingdom, steward } = await open({ 'Plan, then edit': list(draft('d1')) });
+    await kingdom.command('create_quest', { ...planPayload('Plan, then edit'), seal_required: true });
+    const waiting = async () => (await kingdom.quest('Plan, then edit')).status === 'awaiting_seal';
+    await tickUntil(steward, kingdom.clock, waiting);
+    const plan = await kingdom.quest('Plan, then edit');
+    // Edited by hand while it waited for the seal: the delivery reads the file again.
+    const reason = 'd1 is refused: unknown_tag';
+    await writeFile(
+      inKingdom(kingdom.root, `${plan.plot.path ?? ''}/subquests.json`),
+      list(draft('d1', { tags: ['blockchain'] })),
+    );
+    await kingdom.command('seal', { quest: plan.id });
+    await tickUntil(steward, kingdom.clock, delivered(kingdom, 'Plan, then edit'));
+    const done = await kingdom.quest('Plan, then edit');
+    expect(await kingdom.quests()).toHaveLength(1);
+    expect(await noteOf(kingdom, done)).toContain(`## Sub-quests\n\nNone opened: ${reason}`);
+    // The owner hears it once, the log says it too.
+    const rung = kingdom.notices.filter(({ kind }) => kind === 'subquests_refused');
+    expect(rung).toHaveLength(1);
+    expect(rung[0]).toMatchObject({ kind: 'subquests_refused', quest: { id: plan.id, rank: 'D' } });
+    expect(rung[0]?.kind === 'subquests_refused' ? rung[0].reason : '').toContain(reason);
+    expect(kingdom.warnings.join('\n')).toContain(`${plan.id}: delivered, no sub-quest opened: ${reason}`);
   });
 });

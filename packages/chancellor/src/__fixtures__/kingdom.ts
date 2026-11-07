@@ -109,6 +109,7 @@ export const CONTEXT: ChancellorContext = {
   utterance: 'Kiểm tra link trong docs',
   locale: 'vi',
   decree: null,
+  class_prompt: readFileSync(path.join(REGISTRY_DIR, chancellorClass.prompt_file), 'utf8'),
   territories: [DC1, HANDBOOK],
   registry: REGISTRY,
   roster: [ALDRIC, VESNA, THORN],

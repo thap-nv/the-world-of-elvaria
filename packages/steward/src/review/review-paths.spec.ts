@@ -17,6 +17,7 @@ const quest = {
   territory: 'dc1-se-team',
   tags: ['backend'],
   plot: { type: 'none' },
+  deliverable: { type: 'branch' },
   attempt_log: [],
 } as unknown as Quest;
 const territory = { id: 'dc1-se-team' } as unknown as Territory;

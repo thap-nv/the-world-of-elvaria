@@ -26,7 +26,7 @@ let source: TempKingdom;
 let kingdom: TempKingdom;
 let registry: RegistrySource;
 beforeEach(async () => {
-  // A registry source laid out like @elvaria/registry-default: the five files, a script, a prompt.
+  // A registry source laid out like @elvaria/registry-default: the five files, a script, the class prompts.
   source = await tempKingdom();
   for (const file of REGISTRY_FILES) {
     const contract = CONTRACT_OF[file];
@@ -34,9 +34,10 @@ beforeEach(async () => {
   }
   await plant(source.root, 'scripts/count-files.mjs', 'console.log("{}");\n');
   await plant(source.root, 'prompts/scribe.md', '# Scribe\n');
+  await plant(source.root, 'prompts/judge.md', '# Judge\n');
   registry = {
     root: source.root,
-    files: [...REGISTRY_FILES, 'scripts/count-files.mjs', 'prompts/scribe.md'],
+    files: [...REGISTRY_FILES, 'scripts/count-files.mjs', 'prompts/scribe.md', 'prompts/judge.md'],
   };
   kingdom = await tempKingdom();
 });

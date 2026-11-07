@@ -61,6 +61,7 @@ Kiểm tra máy đã sẵn sàng chưa: registry, git, CLI của từng tộc, c
 |---|---|
 | `--tool <tribe>=<path>` | Đường dẫn CLI của một tộc khi nó không có trên PATH, ví dụ claude=C:/…/claude.exe; lặp lại cho nhiều tộc. |
 | `--pin` | Ghim lại phiên bản và đường dẫn CLI vừa tìm thấy khi chúng khác bản đã ghim. |
+| `--enable <tribe>` | Bật một tộc trong kingdom.json (enabled: true) khi doctor tìm thấy CLI của nó, rồi kiểm nó như mọi tộc đang bật. |
 | `--acknowledge-terms <tribe>` | Ghi nhận bạn đã đọc và chấp nhận điều khoản của nhà cung cấp cho tộc này (ADR 0018). |
 
 ## `elvaria territory add`

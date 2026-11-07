@@ -4,7 +4,7 @@
 import { err, ok, planTick, zonedTime } from '@elvaria/domain';
 import { loadPromptTemplates } from '@elvaria/runner-core';
 import { acquireLock, inKingdom, isLocked } from '@elvaria/store';
-import type { Result, TribeId, TribeLimits, ZonedTime } from '@elvaria/domain';
+import type { QuestId, Result, TribeId, TribeLimits, ZonedTime } from '@elvaria/domain';
 import type { PromptTemplates } from '@elvaria/runner-core';
 import type { HeldLock } from '@elvaria/store';
 
@@ -20,6 +20,7 @@ import { maskFinished } from './sessions/secrets.ts';
 import { reapLost } from './sessions/settle.ts';
 import { carryOut } from './steps.ts';
 import { noteUnclaimable, reportedFromLog, writeUnclaimable } from './unclaimable.ts';
+import { noteUnjudgeable } from './unjudgeable.ts';
 import { limitsOf, loadWorld, snapshotOf } from './world.ts';
 import type { Context, Counts } from './context.ts';
 import type { ManaBook } from './mana/book.ts';
@@ -61,6 +62,8 @@ interface State {
   readonly limits: Partial<Record<TribeId, TribeLimits>>;
   readonly mana: ManaBook;
   reported: Reported;
+  /** Submitted quests the bell already named for having no judge in the roster (unjudgeable.ts, P1-15). */
+  readonly unjudged: Set<QuestId>;
   held: Held | undefined;
   timer: ReturnType<typeof setTimeout> | undefined;
   /** The tick in progress: ticks run one after the other, never two at once. */
@@ -106,6 +109,7 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   // Notices first: a quest someone can take now has its notice withdrawn before the claim that follows (§3.1).
   if (await noteUnclaimable(ctx, state.reported, plan.unclaimable))
     await writeUnclaimable(root, state.reported);
+  await noteUnjudgeable(ctx, state.unjudged, plan.unjudgeable);
   await carryOut(ctx, plan);
   // The pids of the sessions opened or ended in this tick are on disk before the next one (sessions/pids.ts).
   await sessions.saved();
@@ -163,6 +167,7 @@ export function createSteward(deps: StewardDeps): Steward {
     limits: limitsOf(deps.runners),
     mana: createManaBook(),
     reported: new Map(),
+    unjudged: new Set(),
     held: undefined,
     timer: undefined,
     queue: Promise.resolve(),

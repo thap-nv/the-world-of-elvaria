@@ -10,6 +10,7 @@ import type { Plot, Quest, Result, Territory } from '@elvaria/domain';
 import { fromPortable, inKingdom, toPortable } from '@elvaria/store';
 
 import type { ProcessHost } from '../process/program.ts';
+import { diffIn } from './diff.ts';
 import { filesIn, prepareFolder } from './folder.ts';
 import { gitOf } from './git.ts';
 import type { Git } from './git.ts';
@@ -47,6 +48,11 @@ export interface PlotManager {
   /** Paths the quest changed, relative to the plot with `/`: what `runChecks` selects checks by. */
   touched(plot: Plot): Promise<string[]>;
   commitAll(plot: Plot, message: string): Promise<CommitOutcome>;
+  /**
+   * What a judge reads (P1-15): `git diff <base>...HEAD`, summary then patch, cut at DIFF_MAX_CHARS; empty when the
+   * branch has no change, null for a plot without git (the judge reads the files the quest names).
+   */
+  diff(plot: Plot): Promise<string | null>;
   /** Only when the quest is archived: removes the worktree, keeps the branch. */
   release(plot: Plot): Promise<Result<ReleasedPlot, PlotFailure>>;
 }
@@ -122,6 +128,7 @@ export function createPlotManager(options: PlotManagerOptions): PlotManager {
       plot.type === 'worktree'
         ? commitWorktree(await git(), worktreeOf(plot), message)
         : { status: 'no_git' },
+    diff: async (plot) => (plot.type === 'worktree' ? diffIn(await git(), worktreeOf(plot)) : null),
     release: async (plot) =>
       plot.type === 'worktree'
         ? releaseWorktree(await git(), worktreeOf(plot), forget)

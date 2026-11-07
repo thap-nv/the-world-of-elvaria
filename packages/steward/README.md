@@ -69,8 +69,12 @@
 - Runs the territory's checks on what the quest touched before a judge's session opens (`Plots.check`: runChecks
   of P1-07 in `elvaria run`): their results go into the judge's prompt, the verdict and `quest.checks_run`. Under
   `verifier_same_family = machine_only` with no judge of another family, the machine's verdict comes from them
-  alone (`verifier_id: machine`). Gives the plot back when a quest is archived (`Plots.release`; a dirty
-  worktree stays, with a warning).
+  alone (`verifier_id: machine`). A plan's `subquests.json` is checked the same way first (check `subquests`,
+  `src/review/deliverable-checks.ts`, P1-15): what the delivery would open, or why none, so a list the Steward
+  would refuse goes back to the mage. The judge's prompt carries the branch's diff (`Plots.diff`), the craft of
+  its class (`registry/<class.prompt_file>`, as every session's does), and where the last judge of the run
+  stopped when it left a `partial` verdict. Gives the plot back when a quest is archived (`Plots.release`; a
+  dirty worktree stays, with a warning).
 - Delivers every done quest once, by its kind's convention (`deliverable.type`; step 7 of §3.1, `src/deliver/`):
   a branch, file, report or draft on a git territory stays on its branch for the owner to merge by hand; a plot
   folder of a territory without git is copied into the territory (a file it replaces is kept in
@@ -85,7 +89,8 @@
   finds what it already did.
 - Tells once when an open quest nobody can take (`quest.unclaimable`, the bell), withdraws it with
   `reason: null`, and keeps the notices in `.state/unclaimable.json` (`readUnclaimable`) for `elvaria quest list`
-  and `show`.
+  and `show`. Rings once when a submitted quest waits for a judge the roster does not have (`unjudgeable`,
+  P1-15: `different_model` and no judge of the kind outside its doers on another model); no file, no event.
 
 ## Does not
 
@@ -94,8 +99,7 @@
 - Estimate mana from tokens against `tribes[].budget`, warn, reassign a long-paused quest
   (`mana.reassign_after_hours`) or ring when a pool sleeps (P1-22); kill a process itself (runner-core's
   `killTree` does, through the runner's `kill`); know git or a territory's programs (`Plots` is given;
-  `folderPlots` is a folder with no git and no checks, for the specs), or run catalog scripts (P1-17). The judge's
-  prompt carries no diff yet: the judge reads the branch in its plot.
+  `folderPlots` is a folder with no git, no checks and no diff, for the specs), or run catalog scripts (P1-17).
 - Push, merge or send anything a quest delivered (stage 1, §9.1 item 11): the owner does, from the delivery note.
   Open a party's parts and its merge quest when a contract is delivered (P1-18).
 - Read `process.env` or a treasury file itself: the composition root hands it the minimal env and a `Treasury`.

@@ -80,6 +80,7 @@ describe('plots over PlotManager', () => {
     status: () => Promise.reject(new Error('unused')),
     touched: () => Promise.reject(new Error('unused')),
     commitAll: () => Promise.reject(new Error('unused')),
+    diff: () => Promise.reject(new Error('unused')),
     release: () => Promise.reject(new Error('unused')),
   });
   const kingdom = path.resolve('kingdom root');
@@ -123,7 +124,7 @@ describe('plots over PlotManager', () => {
     await expect(pathless.prepare(quest, territory)).rejects.toThrow('has no path');
   });
 
-  it('commits, runs the checks on what the quest touched, and releases through PlotManager', async () => {
+  it('commits, runs the checks on what the quest touched, gives the diff and releases through PlotManager', async () => {
     const dir = await mkdtemp(path.join(os.tmpdir(), 'elvaria plots-'));
     try {
       const calls: string[] = [];
@@ -136,6 +137,7 @@ describe('plots over PlotManager', () => {
           calls.push(message);
           return Promise.resolve({ status: 'no_git' });
         },
+        diff: () => Promise.resolve(' notes/today.md | 1 +'),
         release: () => Promise.resolve({ ok: true, value: { removed: false, forget_failures: [] } }),
       };
       const lint = {
@@ -157,6 +159,7 @@ describe('plots over PlotManager', () => {
       expect(runs).toMatchObject([
         { id: 'lint', pass: true, log_path: `.runs/${quest.id}-1/checks/lint.log` },
       ]);
+      expect(await plots.diff(folder)).toBe(' notes/today.md | 1 +');
       expect(await plots.release(folder)).toEqual({
         ok: true,
         value: { removed: false, forget_failures: [] },
@@ -198,6 +201,14 @@ describe('the console bell', () => {
     );
     expect(lineOf(t, { kind: 'question', quest, question: 'main or release?' })).toContain(
       'asks you: main or release?',
+    );
+    expect(lineOf(t, { kind: 'unjudgeable', quest, classes: ['judge'], model: 'claude-sonnet-5-5' })).toBe(
+      'Quest q_20261106_7k3m2a «Đổi luồng đăng nhập» waits in review, but no judge of the kingdom may judge it: ' +
+        'the judge must not have worked on it and must run another model than claude-sonnet-5-5. ' +
+        'Summon one: elvaria character add <id> --class judge --model <model>',
+    );
+    expect(lineOf(t, { kind: 'unjudgeable', quest, classes: [], model: null })).toContain(
+      'no — of the kingdom may judge it: the judge must not have worked on it and must run another model than —.',
     );
     expect(lineOf(t, { kind: 'subquests_refused', quest, reason: 'no subquests.json' })).toBe(
       'Plan q_20261106_7k3m2a «Đổi luồng đăng nhập» is delivered but opened no sub-quest: no subquests.json. ' +
