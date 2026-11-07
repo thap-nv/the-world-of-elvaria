@@ -11,7 +11,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | Lệnh | Việc |
 |---|---|
 | `elvaria init` | Lập một vương quốc mới: thư mục, registry mặc định và hai tộc. |
-| `elvaria doctor` | Kiểm tra máy đã sẵn sàng chưa: registry, git, CLI của từng tộc, các lãnh thổ. |
+| `elvaria doctor` | Kiểm tra máy đã sẵn sàng chưa: registry, git, CLI của từng tộc, các lãnh thổ, kho bảo vật, phiên còn sót. |
 | `elvaria territory add <path>` | Gắn một repo hoặc thư mục vào vương quốc (mở cõi). |
 | `elvaria territory list` | Liệt kê các lãnh thổ. |
 | `elvaria character add <id>` | Triệu hồi một nhân vật: nghề, tộc, model và cấp ban đầu. |
@@ -54,7 +54,7 @@ Lập một vương quốc mới: thư mục, registry mặc định và hai t�
 
 ## `elvaria doctor`
 
-Kiểm tra máy đã sẵn sàng chưa: registry, git, CLI của từng tộc, các lãnh thổ.
+Kiểm tra máy đã sẵn sàng chưa: registry, git, CLI của từng tộc, các lãnh thổ, kho bảo vật, phiên còn sót.
 
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|

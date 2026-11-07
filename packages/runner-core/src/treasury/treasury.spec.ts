@@ -7,7 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { QUEST } from '../__fixtures__/world.ts';
 import { MINIMAL_ENV_NAMES, minimalEnv } from './minimal-env.ts';
 import { secretEnvNamesOf, secretValuesOf, sessionEnv } from './session-env.ts';
-import { openFileTreasury, secretEnvName } from './treasury.ts';
+import { inspectTreasury, openFileTreasury, secretEnvName } from './treasury.ts';
 
 /** A machine env as the composition root sees it: toolchain variables among the owner's own secrets. */
 const MACHINE = {
@@ -141,6 +141,30 @@ describe('openFileTreasury', () => {
     const read = windows().names();
     await expect(read).rejects.toThrow(message);
     await expect(windows().names()).rejects.not.toThrow(/v4lue/);
+  });
+
+  it('inspectTreasury: names or what is wrong, never a value (elvaria doctor)', async () => {
+    const inspect = (target = file) => inspectTreasury(target, { platform: 'win32' });
+    expect(await inspect(path.join(dir, 'none.json'))).toEqual({
+      ok: true,
+      value: { found: false, names: [] },
+    });
+    await save(JSON.stringify({ sentry_dsn: 'https://s@x', npm_token: 'npm-v4lue' }));
+    expect(await inspect()).toEqual({ ok: true, value: { found: true, names: ['npm_token', 'sentry_dsn'] } });
+    await save('{"npm_token": "npm-v4lue"');
+    expect(await inspect()).toEqual({ ok: false, error: { kind: 'not_json' } });
+    await save('null');
+    expect(await inspect()).toEqual({ ok: false, error: { kind: 'not_object' } });
+    await save('{"NPM-TOKEN": "npm-v4lue"}');
+    expect(await inspect()).toEqual({ ok: false, error: { kind: 'bad_name', name: 'NPM-TOKEN' } });
+    await save('{"npm_token": ""}');
+    expect(await inspect()).toEqual({ ok: false, error: { kind: 'bad_value', name: 'npm_token' } });
+    await chmod(file, 0o640);
+    // Windows reports 666 whatever chmod asked; the macOS check runs with its platform anywhere.
+    expect(await inspectTreasury(file, { platform: 'darwin' })).toEqual({
+      ok: false,
+      error: { kind: 'shared', mode: expect.stringMatching(/^6[46]\d$/) as string },
+    });
   });
 
   it('refuses, outside Windows, a file other users can read (mode 0600, ADR 0013)', async () => {

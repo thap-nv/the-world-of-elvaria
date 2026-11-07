@@ -22,7 +22,10 @@
 - `doctor`: finds each tribe's CLI (`--tool <tribe>=<path>`, the pinned path, PATH, then the adapter's own search:
   Claude Code inside the VS Code extension; npm `.cmd` shims run as `node <script>`), pins path and version, asks
   the tribe's adapter about its login, how soon it ends and the built hook, refuses Antigravity without
-  `--acknowledge-terms` (ADR 0018), checks git, the registry (`missingRegistryFiles`) and each territory.
+  `--acknowledge-terms` (ADR 0018), checks git, the registry (`missingRegistryFiles`) and each territory, the
+  treasury file (`inspectTreasury`: present, mode 0600 outside Windows, `{ "name": "value" }`, every name a
+  territory allows; names only, never a value) and, while no Steward holds its lock, the sessions a stopped one
+  left running (`sessionsLeftBehind`), which the next `run` kills (P1-11, `src/doctor/check-state.ts`).
 - `run`: puts the work engine together and runs the Steward until Ctrl+C (`CliIo.untilStopped`): a runner per
   enabled tribe from `kingdom.tribes[].adapter` (`src/run/crew.ts`: `claude_code` today, with `hookCommand` and
   `HOOK_SCRIPT` of `@elvaria/hooks`; a tribe without a runner takes no quest), plots over runner-core's

@@ -21,8 +21,9 @@
 - Builds prompts from the Markdown templates in `prompts/` (`loadPromptTemplates`): `buildPrompt` for an
   assignee (new, or continuing after `returned` / `revive` with the letter, the last 20 journal lines, the
   branch's log and the owner's answer) and a verifier (the ritual's steps from `prompts/ritual-steps.md`, the
-  checks, the letter, the diff); `buildChancellorPrompt` for the Chancellor; `resumedPrompt` for a session
-  continued with `--resume` (the system part as built, a user part that only says it goes on, with the owner's
+  checks, the letter, the diff, or where to read it when the caller has none); both list the shell commands
+  their `ToolPolicy` allows, one per call (`prompts/shell.md`, P1-11); `buildChancellorPrompt` for the
+  Chancellor; `resumedPrompt` for a session continued with `--resume` (the system part as built, a user part that only says it goes on, with the owner's
   answer when there is one). The system part opens with the royal decree when `<kingdom>/decree.md` exists.
   The quest's facts carry its kind's delivery convention when the Steward needs a file of a given shape: a plan
   (`subquests`) writes its sub-quests as quest-draft JSON to `SUBQUESTS_FILE` (`subquests.json`) at the root of
@@ -66,8 +67,8 @@
   hook at: context, `secrets` (names only), `tools` (the class's, for a CLI with no `--tools`) and `laws`.
 - Holds the treasury (`src/treasury/`, §3.9, ADR 0013): `openFileTreasury(file)` reads `{ "name": "value" }`
   from `kingdom.paths.treasury` on each call (a missing file is empty; on macOS a file others can read is
-  refused; no error ever quotes a value), `secretEnvName` (`npm_token` → `NPM_TOKEN`), `minimalEnv` (the
-  allowlist every child starts from), `sessionEnv` (minimal env + `ELVARIA_*` + exactly the quest's secrets; a
+  refused; no error ever quotes a value), `inspectTreasury` (the file's names or a typed problem, for the
+  doctor), `secretEnvName` (`npm_token` → `NPM_TOKEN`), `minimalEnv` (the allowlist every child starts from), `sessionEnv` (minimal env + `ELVARIA_*` + exactly the quest's secrets; a
   secret that would replace another variable is refused), and `secretValuesOf` / `sessionRedactor` for the
   adapters, which mask the session's values before the patterns.
 - Writes the lines only a CLI's output knows (`openRunLog`): `agent.session.end`, `agent.subagent.*`,

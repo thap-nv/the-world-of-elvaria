@@ -91,8 +91,13 @@ export { SPAWN_ROLES } from './runner/roles.ts';
 export { MINIMAL_ENV_NAMES, minimalEnv } from './treasury/minimal-env.ts';
 export { secretEnvNamesOf, secretValuesOf, sessionEnv, sessionRedactor } from './treasury/session-env.ts';
 export type { SessionEnvInput } from './treasury/session-env.ts';
-export { openFileTreasury, secretEnvName } from './treasury/treasury.ts';
-export type { FileTreasuryOptions, Treasury } from './treasury/treasury.ts';
+export { inspectTreasury, openFileTreasury, secretEnvName } from './treasury/treasury.ts';
+export type {
+  FileTreasuryOptions,
+  Treasury,
+  TreasuryContents,
+  TreasuryProblem,
+} from './treasury/treasury.ts';
 export type { SpawnRole } from './runner/roles.ts';
 export { RUN_OUTCOMES } from './runner/types.ts';
 export type {

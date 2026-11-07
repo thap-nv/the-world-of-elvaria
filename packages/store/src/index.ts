@@ -12,6 +12,6 @@ export type { IssueDetail, StoreIssue, StoreIssueCode } from './issues.ts';
 export { DECREE_FILE, KINGDOM_DIRS, KINGDOM_FILE, kingdomLayout } from './layout.ts';
 export { readDecree, redactHandover } from './texts.ts';
 export { comparePath, fromPortable, inKingdom, staysInside, toPortable } from './paths.ts';
-export { acquireLock, withLock } from './io/lock.ts';
+export { acquireLock, isLocked, withLock } from './io/lock.ts';
 export type { HeldLock, LockOptions } from './io/lock.ts';
 export { pathExists, readTextFile, writeFileAtomic } from './io/atomic.ts';

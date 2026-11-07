@@ -5,7 +5,7 @@ import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
 import { err, ok } from '@elvaria/domain';
-import { lock } from 'proper-lockfile';
+import { check, lock } from 'proper-lockfile';
 import type { Result } from '@elvaria/domain';
 
 import { errorCode } from './atomic.ts';
@@ -56,6 +56,14 @@ export async function acquireLock(
     if (errorCode(error) === 'ELOCKED') return err('locked');
     throw error;
   }
+}
+
+/**
+ * Whether a live holder keeps the lock on `target` now, a stale one counting as free; it only reads, so asking
+ * never gets in the way of a holder about to take it (`elvaria doctor` asks about the Steward's lock, P1-11).
+ */
+export async function isLocked(target: string, staleMs: number = STALE_MS): Promise<boolean> {
+  return check(target, { realpath: false, stale: staleMs });
 }
 
 /** Runs `action` while holding the lock on `target`; `locked` when it could not be taken in time. */

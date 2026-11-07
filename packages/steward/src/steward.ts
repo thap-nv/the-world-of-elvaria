@@ -3,7 +3,7 @@
 // files (ADR 0002); the Steward reads the files, carries the plan out and writes what happened.
 import { err, ok, planTick, zonedTime } from '@elvaria/domain';
 import { loadPromptTemplates } from '@elvaria/runner-core';
-import { acquireLock, inKingdom } from '@elvaria/store';
+import { acquireLock, inKingdom, isLocked } from '@elvaria/store';
 import type { Result, TribeId, TribeLimits, ZonedTime } from '@elvaria/domain';
 import type { PromptTemplates } from '@elvaria/runner-core';
 import type { HeldLock } from '@elvaria/store';
@@ -14,7 +14,8 @@ import { manaStep } from './mana/step.ts';
 import { createRecorder } from './record.ts';
 import { createSessions } from './sessions/running.ts';
 import { recordEnd } from './sessions/ended.ts';
-import { pidsWriter, reapOrphans } from './sessions/pids.ts';
+import { leftSessions, pidsWriter, reapOrphans } from './sessions/pids.ts';
+import type { LeftSession } from './sessions/pids.ts';
 import { maskFinished } from './sessions/secrets.ts';
 import { reapLost } from './sessions/settle.ts';
 import { carryOut } from './steps.ts';
@@ -29,6 +30,16 @@ import type { StartError, Steward, StewardDeps, TickReport } from './types.ts';
 /** `.state/steward` + proper-lockfile's `.lock` = kingdomLayout.stewardLock(). */
 const LOCK_TARGET = '.state/steward';
 const MS_PER_SECOND = 1000;
+
+/**
+ * For `elvaria doctor` (P1-11): the sessions a dead Steward left running, which the next `elvaria run` kills
+ * (sessions/pids.ts). None while a Steward holds the lock: its sessions are its own. A pid that now names another
+ * process is left out.
+ */
+export async function sessionsLeftBehind(root: string): Promise<LeftSession[]> {
+  if (await isLocked(inKingdom(root, LOCK_TARGET))) return [];
+  return (await leftSessions(root)).filter(({ process }) => process !== 'other');
+}
 
 const reportOf = (counts: Counts): TickReport => ({
   commands: { applied: counts.applied, rejected: counts.rejected, waiting: counts.waiting },

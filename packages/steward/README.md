@@ -25,7 +25,8 @@
 - Keeps the pid of every session it holds in `.state/sessions.json` (written before each tick ends, emptied at
   stop). At start, before the first tick, it kills the tree of each pid the last Steward left there whose process
   started when that session was spawned (`processStartOf`, within a minute), and leaves a pid that now belongs to
-  another process, or whose start the system would not tell, alone, with a warning.
+  another process, or whose start the system would not tell, alone, with a warning. `sessionsLeftBehind(root)`
+  tells `elvaria doctor` which of them still run, and nothing while a Steward holds the lock.
 - Watches mana per pool (§3.5, ADR 0009; `src/mana/`): a session that hits its account's limit pauses its quest
   (assignee kept; a verifier leaves the review), the whole pool sleeps (`mana.exhausted`), every other session on
   it is killed and pauses and idle characters fall asleep; each paused assignee's work is committed as
