@@ -3,7 +3,7 @@
 // start kills those trees before the first tick calls their runs lost and opens fresh sessions on the same plots.
 // A pid alone could name an unrelated program after a reboot or a long wait, so a tree is killed only when the
 // process under that pid started when the session was spawned.
-import { killTree, processStartOf } from '@elvaria/runner-core';
+import { isAlive, killTree, processStartOf } from '@elvaria/runner-core';
 import { inKingdom, readTextFile, writeFileAtomic } from '@elvaria/store';
 
 import type { Running } from './running.ts';
@@ -71,14 +71,19 @@ export async function readPids(root: string): Promise<SessionPid[]> {
 
 /**
  * At start, before the first tick: kills the tree of every session the last Steward left running, then clears the
- * record. A pid whose process started at another time belongs to someone else now, and is left alone.
+ * record. A pid whose process started at another time belongs to someone else now, and is left alone; so is one
+ * whose start the system would not tell (the owner reads the warning and the pid).
  */
 export async function reapOrphans(deps: Pick<StewardDeps, 'store' | 'log'>): Promise<void> {
   const root = deps.store.root;
   for (const left of await readPids(root)) {
+    if (!isAlive(left.pid)) continue;
     const started = await processStartOf(left.pid);
-    if (started === undefined) continue;
     const who = `${left.quest}: ${left.character}'s session (pid ${String(left.pid)})`;
+    if (started === undefined) {
+      deps.log.warn(`steward: ${who}: still running, but when it started is unknown; left alone`);
+      continue;
+    }
     if (Math.abs(started - Date.parse(left.spawned_at)) > SAME_PROCESS_MS) {
       deps.log.warn(`steward: ${who}: the pid now belongs to another process; left alone`);
       continue;

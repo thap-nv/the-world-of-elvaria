@@ -57,7 +57,8 @@
   SIGKILL to whoever is left after `KILL_GRACE_MS` (5 s). A check or setup past its timeout, a killed CLI
   (`runner-claude`'s `kill`, `startChild`'s) and the Steward's breakers all take the whole tree. `startChild` /
   `runToEnd` start a CLI that takes its prompt in argv and read it line by line (Antigravity). `processStartOf(pid)`
-  (ps `etime`, PowerShell `Get-Process` on Windows) lets the Steward tell a session's process from a later one
+  (ps `etime`; on Windows .NET `Process.GetProcessById` through PowerShell, which a cold start makes slow, so it
+  waits up to `POWERSHELL_TIMEOUT_MS`; a pid that runs nothing answers at once) lets the Steward tell a session's process from a later one
   under the same pid after a restart. System programs live at fixed paths (`/bin/ps`, `System32`), never PATH.
 - Gives every adapter the session's side of the hook contract (P1-09, §3.6): `runContextOf(req)` (kingdom,
   quest, attempt from env `ELVARIA_*`; character, role, model from the request; the env names of the quest's

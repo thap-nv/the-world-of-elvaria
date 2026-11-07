@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { endedPid } from '../__fixtures__/tree.ts';
-import { parseElapsed, processStartOf } from './started-at.ts';
+import { POWERSHELL_TIMEOUT_MS, parseElapsed, processStartOf } from './started-at.ts';
 
 describe('parseElapsed', () => {
   it('reads every form of ps etime', () => {
@@ -20,7 +20,8 @@ describe('parseElapsed', () => {
 });
 
 describe('processStartOf', () => {
-  it('finds when this process started, to the second', async () => {
+  // Windows asks a cold PowerShell, which takes seconds to start on a CI runner (POWERSHELL_TIMEOUT_MS).
+  it('finds when this process started, to the second', { timeout: POWERSHELL_TIMEOUT_MS }, async () => {
     const now = Date.now();
     const started = now - process.uptime() * 1000;
     const found = await processStartOf(process.pid, now);

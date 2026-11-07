@@ -29,11 +29,15 @@ export interface Captured {
   readonly stdout: string;
 }
 
-/** Runs a system program to its end and reads its stdout; stderr is dropped, nothing here reads it. */
+/**
+ * Runs a system program to its end and reads its stdout; stderr is dropped, nothing here reads it. `timeoutMs`:
+ * SYSTEM_TIMEOUT_MS by default.
+ */
 export function capture(
   file: string,
   args: readonly string[],
   env: Readonly<Record<string, string>>,
+  timeoutMs: number = SYSTEM_TIMEOUT_MS,
 ): Promise<Captured> {
   return new Promise((resolve) => {
     let stdout = '';
@@ -42,7 +46,7 @@ export function capture(
       shell: false,
       windowsHide: true,
       stdio: ['ignore', 'pipe', 'ignore'],
-      timeout: SYSTEM_TIMEOUT_MS,
+      timeout: timeoutMs,
     });
     child.stdout.setEncoding('utf8').on('data', (chunk: string) => {
       stdout += chunk;

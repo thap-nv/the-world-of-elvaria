@@ -7,7 +7,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { openEventLog } from '@elvaria/eventlog';
-import { createFakeRunner } from '@elvaria/runner-core';
+import { POWERSHELL_TIMEOUT_MS, createFakeRunner } from '@elvaria/runner-core';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { bench, questPayload, tickUntil, wakesAfter } from './__fixtures__/kingdom.ts';
@@ -237,37 +237,49 @@ describe('the pids of the sessions (.state/sessions.json)', () => {
     expect(await readPids(kingdom.root)).toEqual([]);
   });
 
-  it('kills at start the tree a crashed Steward left running, and leaves a pid that is someone else now', async () => {
-    const orphan = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { stdio: 'ignore' });
-    const pid = orphan.pid ?? 0;
-    children.push(pid);
-    const exited = new Promise((resolve) => orphan.once('exit', resolve));
-    current = await bench();
-    const file = path.join(current.root, SESSIONS_FILE);
-    await mkdir(path.dirname(file), { recursive: true });
-    const left = (quest: string, character: string, at: number, spawnedAt: string) => ({
-      quest,
-      role: 'assignee',
-      character,
-      pid: at,
-      spawned_at: spawnedAt,
-    });
-    const sessions = [
-      left('q_20261107_aaaaaa', 'kael', pid, new Date().toISOString()),
-      // This very process holds that pid now, started long after the session's spawn.
-      left('q_20261107_bbbbbb', 'thorn', process.pid, '2026-01-01T00:00:00+07:00'),
-    ];
-    await writeFile(file, JSON.stringify({ version: 1, sessions }));
-    running = current.steward();
-    expect(await running.start({ loop: false })).toEqual({ ok: true });
-    await exited;
-    expect(current.warnings.join('\n')).toContain(
-      `q_20261107_aaaaaa: kael's session (pid ${String(pid)}) outlived`,
-    );
-    expect(current.warnings.join('\n')).toContain('q_20261107_bbbbbb: thorn');
-    expect(current.warnings.join('\n')).toContain('belongs to another process; left alone');
-    expect(await readPids(current.root)).toEqual([]);
-  });
+  // Two cold PowerShells on a Windows CI runner (runner-core's POWERSHELL_TIMEOUT_MS each, at worst).
+  it(
+    'kills at start the tree a crashed Steward left running, and leaves a pid that is someone else now',
+    {
+      timeout: 2 * POWERSHELL_TIMEOUT_MS,
+    },
+    async () => {
+      const ended = spawn(process.execPath, ['-e', ''], { stdio: 'ignore' });
+      await new Promise((resolve) => ended.once('close', resolve));
+      const orphan = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { stdio: 'ignore' });
+      const pid = orphan.pid ?? 0;
+      children.push(pid);
+      const exited = new Promise((resolve) => orphan.once('exit', resolve));
+      current = await bench();
+      const file = path.join(current.root, SESSIONS_FILE);
+      await mkdir(path.dirname(file), { recursive: true });
+      const left = (quest: string, character: string, at: number, spawnedAt: string) => ({
+        quest,
+        role: 'assignee',
+        character,
+        pid: at,
+        spawned_at: spawnedAt,
+      });
+      const sessions = [
+        left('q_20261107_aaaaaa', 'kael', pid, new Date().toISOString()),
+        // This very process holds that pid now, started long after the session's spawn.
+        left('q_20261107_bbbbbb', 'thorn', process.pid, '2026-01-01T00:00:00+07:00'),
+        // Gone with its Steward: nothing to kill, nothing to say.
+        left('q_20261107_cccccc', 'wren', ended.pid ?? 0, new Date().toISOString()),
+      ];
+      await writeFile(file, JSON.stringify({ version: 1, sessions }));
+      running = current.steward();
+      expect(await running.start({ loop: false })).toEqual({ ok: true });
+      await exited;
+      expect(current.warnings.join('\n')).toContain(
+        `q_20261107_aaaaaa: kael's session (pid ${String(pid)}) outlived`,
+      );
+      expect(current.warnings.join('\n')).toContain('q_20261107_bbbbbb: thorn');
+      expect(current.warnings.join('\n')).toContain('belongs to another process; left alone');
+      expect(current.warnings.join('\n')).not.toContain('q_20261107_cccccc');
+      expect(await readPids(current.root)).toEqual([]);
+    },
+  );
 
   it('reads nothing from a torn or foreign record', async () => {
     current = await bench();

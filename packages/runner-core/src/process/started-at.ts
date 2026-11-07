@@ -2,6 +2,7 @@
 // `.state/` (implementation-plan §3.4, P1-06); after a crash it kills the trees that still run. A pid alone is not
 // enough: the system hands a dead process's pid to a new one, and a kill tree with /F on that one would take an
 // unrelated program down. The start time tells the session's process from a later one under the same pid.
+import { isAlive } from './kill-tree.ts';
 import { PS, PS_ENV, capture, windowsEnv, windowsProgram } from './system.ts';
 
 const MS_PER_SECOND = 1000;
@@ -28,16 +29,26 @@ export function parseElapsed(text: string): number | undefined {
   );
 }
 
-/** Get-Process gives the start in local time; the script prints it as epoch milliseconds, or nothing. */
+/**
+ * A cold PowerShell on a busy machine (a CI runner) takes seconds to start, past SYSTEM_TIMEOUT_MS at worst. It
+ * runs only when a Steward starts after a crash, once per pid it left: waiting longer beats leaving a tree running.
+ */
+export const POWERSHELL_TIMEOUT_MS = 60_000;
+
+/**
+ * The start in local time, printed as epoch milliseconds, or nothing. .NET straight, not the Get-Process cmdlet:
+ * no module to find and load under the bare env it gets.
+ */
 const powershellScript = (pid: number): string =>
-  `$p = Get-Process -Id ${String(pid)} -ErrorAction SilentlyContinue; ` +
-  'if ($p) { [DateTimeOffset]::new($p.StartTime).ToUnixTimeMilliseconds() }';
+  `try { [DateTimeOffset]::new([System.Diagnostics.Process]::GetProcessById(${String(pid)}).StartTime)` +
+  '.ToUnixTimeMilliseconds() } catch {}';
 
 async function windowsStartOf(pid: number): Promise<number | undefined> {
   const ran = await capture(
     windowsProgram('WindowsPowerShell\\v1.0\\powershell.exe'),
     ['-NoLogo', '-NoProfile', '-NonInteractive', '-Command', powershellScript(pid)],
     windowsEnv(),
+    POWERSHELL_TIMEOUT_MS,
   );
   const ms = Number(ran.stdout.trim());
   return ran.code === 0 && ran.stdout.trim() !== '' && Number.isInteger(ms) ? ms : undefined;
@@ -51,9 +62,10 @@ async function posixStartOf(pid: number, now: number): Promise<number | undefine
 
 /**
  * When process `pid` started, in epoch milliseconds (POSIX: to the second); undefined when no process has that pid
- * or the system cannot tell. `now` is the wall clock the answer is measured against.
+ * or the system cannot tell (the caller tells the two apart with isAlive). A pid that runs nothing answers at once,
+ * without a system program. `now` is the wall clock the answer is measured against.
  */
 export function processStartOf(pid: number, now: number = Date.now()): Promise<number | undefined> {
-  if (!Number.isInteger(pid) || pid <= 0) return Promise.resolve(undefined);
+  if (!Number.isInteger(pid) || pid <= 0 || !isAlive(pid)) return Promise.resolve(undefined);
   return process.platform === 'win32' ? windowsStartOf(pid) : posixStartOf(pid, now);
 }

@@ -9,7 +9,7 @@ export { KILL_GRACE_MS, isAlive, killTree } from './process/kill-tree.ts';
 export type { KillTreeOptions } from './process/kill-tree.ts';
 export { childEnvOf, runProgram } from './process/program.ts';
 export type { Launch, ProcessHost, ProgramOptions, ProgramResolver, ProgramRun } from './process/program.ts';
-export { processStartOf } from './process/started-at.ts';
+export { POWERSHELL_TIMEOUT_MS, processStartOf } from './process/started-at.ts';
 export {
   CLEANUP_TIMEOUT_MS,
   MS_PER_MINUTE,
