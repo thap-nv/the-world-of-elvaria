@@ -30,6 +30,14 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
 - Writes each line in the order §3.6 fixes: stamp (`createStamper` of the event log; the process sets `TZ` to
   the kingdom's zone) → `redactDeep` → long strings cut with `…[truncated]` until the line fits 64 KiB → append to
   `events/<day>.jsonl` and `quests/<id>/journal.jsonl`.
+- Answers Antigravity CLI (`agy`) too, whose payload names no event: its hook command carries the event in argv
+  (`node elvaria-hook.mjs PreToolUse`, a shim the runner writes in `.agents/` adds `--policy`; spike P1-12a §4).
+  PreToolUse always answers, since agy reads no answer as a block: `{"decision": "deny", "reason"}` for a law,
+  a sub-agent tool or an `ask_*` tool (nobody answers under `-p`), else `{"decision":
+"deny_unless_prior_grant"}`, so the run's `--settings` allow rules decide; never `allow` or `auto_approve`.
+  SessionStart and PostToolUse write `agent.session.start` and `agent.tool` (path relative to
+  `workspacePaths[0]`); Stop answers `{"decision": "continue", "reason"}` while the letter is unchanged. A
+  sub-agent's own session (empty `lastUserInput`) starts no line and meets no gate.
 - Keeps what it must remember between calls in `.runs/<quest>-<n>/hook/` (handover fingerprint at start, Stop
   reminders per session), one small versioned JSON file per concern.
 
@@ -42,8 +50,7 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
   `CLAUDE_CODE_MESSAGING_TOKEN`; ADR 0010, 0013, CLAUDE.md).
 - Mask known secret values yet: P1-10 settles how the runner passes their names; until then only the patterns
   of `redact-patterns.json` apply.
-- Handle Antigravity, Gemini CLI or Codex payloads: their branches come with their adapters (P1-12b, P1-12c,
-  P1-12d).
+- Handle Gemini CLI or Codex payloads: their branches come with their adapters (P1-12c, P1-12d).
 
 ## Depends on
 
@@ -59,7 +66,9 @@ pnpm --filter @elvaria/hooks test    # builds, then vitest with coverage
 
 `translate.spec.ts` feeds a stdin payload per event with every field (`src/__fixtures__/claude-payloads.ts`);
 `real-payloads.spec.ts` runs the 18 payloads Claude Code 2.1.318 really sent in spike P1-02
-(`packages/runner-claude/fixtures/hook-payloads.jsonl`); `run-hook.spec.ts` runs whole calls in-process on temp
+(`packages/runner-claude/fixtures/hook-payloads.jsonl`); `antigravity/translate.spec.ts` runs the 50 calls agy
+1.5.2 really made in spike P1-12a (`packages/runner-antigravity/fixtures/hook-stdin-full-run.jsonl`) and
+constructed ones; `run-hook.spec.ts` runs whole calls in-process on temp
 kingdoms (paths with a space) and reads every line back through the domain's `EventSchema`;
 `hook-process.spec.ts` spawns the build: every event, a backslash path to `.env` denied on stdout, stamps in the
 kingdom's zone, the load trace, and the start time next to `node -e 0` on the same machine.

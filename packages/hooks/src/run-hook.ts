@@ -1,6 +1,8 @@
 // One hook call, from stdin to stdout and stderr, with every input passed in so specs run it in-process
 // (implementation-plan §3.6). elvaria-hook.ts wires it to the real process. The exit code is always 0: a
 // decision travels as JSON on stdout (draft.ts).
+import { argvEvent } from './antigravity/input.ts';
+import { translateAntigravity } from './antigravity/translate.ts';
 import { translateClaude } from './claude/translate.ts';
 import { loadContext } from './context.ts';
 import { errorText } from './draft.ts';
@@ -12,7 +14,7 @@ export interface HookIo {
   /** The CLI's payload, JSON. */
   readonly stdin: string;
   readonly env: HookEnv;
-  /** Arguments after the script: `--policy <file>`. */
+  /** Arguments after the script: `--policy <file>`, and for agy the event first (`PreToolUse --policy <file>`). */
   readonly argv: readonly string[];
   /** Epoch ms of this call. */
   readonly now: number;
@@ -43,13 +45,23 @@ function payloadOf(stdin: string): Record<string, unknown> | undefined {
 const notes = (problems: readonly string[]): string =>
   problems.map((problem) => `${PREFIX}: ${problem}\n`).join('');
 
+const textAt = (payload: Readonly<Record<string, unknown>>, key: string): string | undefined => {
+  const value = payload[key];
+  return typeof value === 'string' && value !== '' ? value : undefined;
+};
+
+/**
+ * Claude names its event in the payload; agy does not, so its hook command carries the event in argv
+ * (spike P1-12a §4). A payload that is not JSON gets no answer: agy reads a missing decision as a block.
+ */
 export async function runHook(io: HookIo): Promise<HookOutcome> {
   const payload = payloadOf(io.stdin);
   if (payload === undefined) return { stdout: '', stderr: notes(['stdin is not a JSON object; ignored']) };
   const ctx = loadContext(io.env, io.argv);
-  const result = translateClaude(payload, ctx);
-  const session =
-    typeof payload.session_id === 'string' && payload.session_id !== '' ? payload.session_id : undefined;
+  const agyEvent = argvEvent(io.argv);
+  const result =
+    agyEvent === undefined ? translateClaude(payload, ctx) : translateAntigravity(payload, agyEvent, ctx);
+  const session = textAt(payload, agyEvent === undefined ? 'session_id' : 'conversationId');
   let written: string[];
   try {
     written = await appendDrafts(result.drafts, ctx, {

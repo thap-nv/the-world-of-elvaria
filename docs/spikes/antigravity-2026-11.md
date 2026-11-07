@@ -208,3 +208,15 @@ Fixture ở [packages/runner-antigravity/fixtures/](../../packages/runner-antigr
 | M11 | lần chạy đủ: command, đọc, ghi, chặn cứng, subagent, `--json-schema`; chạy ba lần (lần đầu mất log hook, lần hai subagent hỏng, lần ba giữ) | `stream-full-run.jsonl` + `hook-stdin-full-run.jsonl` (lần ba, hook thấy cả phiên con); `stream-subagent-failed.jsonl` + `hook-stdin-subagent-failed.jsonl` (lần hai) |
 | M12, M12b, M12c | cú pháp regex, lệnh ghép | — |
 | — | `/usage` ba định dạng, `agy models` hai định dạng | `usage-json.jsonl`, `usage-stream.jsonl`, `usage-text.txt`, `models-text.txt`, `models-json.jsonl` |
+
+## 12. Bổ sung khi làm P1-12b (2026-11-07, `agy` 1.5.2, Windows)
+
+Chạy thật trong lúc viết adapter, `gemini-3.8-flash-low`, thư mục tạm có dấu cách; đáp mấy dòng của §10. Các lần chạy là smoke `ELVARIA_LIVE=1` của `p/runner-antigravity` và vài lần thăm dò bằng chính adapter.
+
+- **`--conversation <id>` dưới `-p` nối phiên** [máy]: cùng `conversation_id`, bước đánh số tiếp (2, 3, 4 sau 0, 1), model nhớ nội dung lượt trước, `num_turns: 2`. `result.usage` của lần sau **cộng dồn** cả cuộc hội thoại (14 399 = 7 083 + 7 316), `duration_seconds` cũng vậy ⇒ token của một lần chạy là tổng `usage` các bước của chính nó. Fixture `stream-resume-first.jsonl`, `stream-resume-second.jsonl`.
+- **`-p /hooks --output-format json`** [máy]: 3 s, 0 token, `command.data.hooks[]{name, enabled, source, actions[]{event, matcher?, type, command, timeout_seconds}}`, `source` là đường dẫn tuyệt đối của `hooks.json` (backslash). Fixture `hooks-json.jsonl`.
+- **Tool model thật có dưới `-p`** [máy, model tự liệt kê]: `read_file`, `write_file`, `edit_file`, `run_command`, `ask_question`, `search_web`, `send_message`, `define_subagent`, `invoke_subagent`, `manage_subagents`, `manage_task`, `schedule` (+ `finish` khi có `--json-schema`). Danh sách `tools` của dòng `init` (§5) dài hơn và không khớp: không có `edit_file`, có `read_url_content` mà model không gọi được. `search_web` chạy khi hook trả `deny_unless_prior_grant` mà không cần luật nào. Khi được bảo tải một trang, model dùng `run_command` `Invoke-WebRequest` (bị chặn vì không có allow).
+- **Luật đường dẫn** [máy]: `write_file(./)` cho ghi cả workspace; luật tuyệt đối với `/` (`read_file(C:/…/quests/<id>/handover.md)`, `write_file(…)`) cho đọc/ghi đúng một file ngoài workspace.
+- **Hook bản build qua shim** [máy]: `node --conditions=elvaria-dist elvaria-hook.mjs <Event>` qua `cmd /c`, `node` lấy từ `PATH` (runner đặt thư mục Node của Elvaria lên đầu) chạy được; hook `deny` lệnh `git push` theo luật, model ghi nhận và làm tiếp.
+- **Cổng thư bàn giao** [máy]: Stop `continue` hai lần; model đọc thư (chưa có), thử `Get-ChildItem` thư mục quest (bị chặn), rồi ghi thư bằng `write_file` theo luật tuyệt đối. Trên một probe vai người làm, cổng thêm 3–4 lượt.
+- Vẫn chưa kiểm: hết quota thật, macOS, `--input-format stream-json`, `terminationBehavior: terminate` có chủ đích (P1-12b không cần: cầu dao lượt đọc stream), lãnh thổ có `.agents/hooks.json` riêng (P1-12b từ chối, không thử nạp chung).

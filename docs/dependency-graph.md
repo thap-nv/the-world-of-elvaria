@@ -12,6 +12,7 @@ flowchart TD
   registry_default["registry-default"]
   runner_core["runner-core"]
   runner_claude["runner-claude"]
+  runner_antigravity["runner-antigravity"]
   steward["steward"]
   sandbox["sandbox"]
   eventlog["eventlog"]
@@ -24,6 +25,7 @@ flowchart TD
   runner_core --> eventlog
   runner_core --> store
   runner_claude --> runner_core
+  runner_antigravity --> runner_core
   steward --> domain
   steward --> eventlog
   steward --> runner_core
@@ -53,7 +55,7 @@ flowchart TD
 | `registry-default` | `packages/registry-default` | `domain` | `domain` |
 | `runner-core` | `packages/runner-core` | `domain`, `eventlog`, `store` | `domain`, `store`, `eventlog` |
 | `runner-claude` | `packages/runner-claude` | `runner-core` | `runner-core` |
-| `runner-antigravity` | chưa có | | `runner-core` |
+| `runner-antigravity` | `packages/runner-antigravity` | `runner-core` | `runner-core` |
 | `runner-gemini` | chưa có | | `runner-core` |
 | `runner-codex` | chưa có | | `runner-core` |
 | `steward` | `packages/steward` | `domain`, `eventlog`, `runner-core`, `store` | `domain`, `store`, `eventlog`, `runner-core` |
