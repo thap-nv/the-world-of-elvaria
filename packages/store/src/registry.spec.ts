@@ -1,6 +1,9 @@
+import { rm } from 'node:fs/promises';
+import path from 'node:path';
+
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { fixture, plant, plantRegistry, tempKingdom } from '../test/kingdom.ts';
+import { FIXTURE_PROMPTS, fixture, plant, plantRegistry, tempKingdom } from '../test/kingdom.ts';
 import { loadRegistry, missingRegistryFiles } from './registry.ts';
 import type { TempKingdom } from '../test/kingdom.ts';
 import type { Registry } from '@elvaria/domain';
@@ -54,19 +57,28 @@ describe('loadRegistry (ADR 0016)', () => {
       expect.objectContaining({ file: 'kinds', code: 'unknown_ritual' }),
     ]);
   });
+
+  it('does not load when a class has no prompt file (P1-15)', async () => {
+    await plantRegistry(kingdom.root);
+    await rm(path.join(kingdom.root, ...FIXTURE_PROMPTS[1].split('/')));
+    const result = await loadRegistry(kingdom.root);
+    expect(!result.ok && result.error).toEqual([
+      {
+        code: 'not_found',
+        file: 'registry/prompts/judge.md',
+        message: 'prompt of class judge is missing',
+      },
+    ]);
+  });
 });
 
 describe('missingRegistryFiles', () => {
-  it('names prompts and script entries the kingdom does not have', async () => {
+  it('names the script entries the kingdom does not have', async () => {
     await plantRegistry(kingdom.root);
     const registry = await loaded();
     expect((await missingRegistryFiles(kingdom.root, registry)).map((issue) => issue.file)).toEqual([
-      'registry/prompts/scribe.md',
-      'registry/prompts/judge.md',
       'registry/scripts/count-files.mjs',
     ]);
-    await plant(kingdom.root, 'registry/prompts/scribe.md', '# Scribe\n');
-    await plant(kingdom.root, 'registry/prompts/judge.md', '# Judge\n');
     await plant(kingdom.root, 'registry/scripts/count-files.mjs', '');
     expect(await missingRegistryFiles(kingdom.root, registry)).toEqual([]);
   });

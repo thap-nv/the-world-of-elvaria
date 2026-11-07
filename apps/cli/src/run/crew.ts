@@ -1,6 +1,7 @@
 // The runners the Steward is given (implementation-plan §3.7, §3.14, ADR 0021): one per enabled tribe, built from
 // `kingdom.tribes[].adapter`. Only this composition root names a CLI; a tribe whose adapter has no runner yet
-// takes no quest. The hook's command comes from @elvaria/hooks, which the adapters may not import (§1.3).
+// takes no quest. Claude Code (`claude_code`) and, since P1-15, Antigravity (`antigravity`, ./antigravity.ts).
+// The hook's command comes from @elvaria/hooks, which the adapters may not import (§1.3).
 import { HOOK_SCRIPT, hookCommand } from '@elvaria/hooks';
 import { createClaudeForget, createClaudeRunner } from '@elvaria/runner-claude';
 import type { Kingdom, Tribe, TribeId } from '@elvaria/domain';
@@ -9,6 +10,7 @@ import type { AgentRunner, ForgetWorktree } from '@elvaria/runner-core';
 import { fromPortable } from '@elvaria/store';
 
 import { minimalEnv } from '../process/minimal-env.ts';
+import { antigravityRunner } from './antigravity.ts';
 import type { CliIo } from '../io.ts';
 
 /** One tribe's runner and what its CLI must forget when a worktree is released (§3.3). */
@@ -46,8 +48,14 @@ const claudeCode: AdapterFactory = (tribe, kingdom, io) => {
   };
 };
 
-/** Built-in adapters with a runner today; antigravity (P1-12b), gemini_cli, codex_cli and owner files come later. */
-export const ADAPTER_FACTORIES: Readonly<Record<string, AdapterFactory>> = { claude_code: claudeCode };
+/** The Gemini tribe on Antigravity CLI (P1-12b, wired in P1-15); agy keeps nothing per worktree to forget. */
+const antigravity: AdapterFactory = (tribe, _kingdom, io) => ({ runner: antigravityRunner(tribe, io) });
+
+/** Built-in adapters with a runner today; gemini_cli, codex_cli and owner files come later. */
+export const ADAPTER_FACTORIES: Readonly<Record<string, AdapterFactory>> = {
+  claude_code: claudeCode,
+  antigravity,
+};
 
 export interface Crew {
   readonly runners: Partial<Record<TribeId, AgentRunner>>;

@@ -69,7 +69,8 @@ describe('elvaria doctor', () => {
     expect(await doctor(io)).toBe(1);
     const text = printed(io);
     expect(text).toContain('✓ Registry: 11 quest kinds, 11 classes, 11 rituals, 5 scripts, 7 tags.');
-    expect(text).toContain('! The registry names 11 files the kingdom does not have');
+    // init copied the class prompts and the catalog scripts: nothing is missing (P1-15).
+    expect(text).not.toContain('The registry names');
     expect(text).toMatch(/✓ git \d+\.\d+/);
     expect(text).toContain('✓ Tribe claude: ');
     expect(text).toContain("✗ Tribe gemini: Antigravity's terms are not acknowledged");

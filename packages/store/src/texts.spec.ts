@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { fixture, plant, tempKingdom } from '../test/kingdom.ts';
 import { openKingdom } from './kingdom-store.ts';
 import { kingdomLayout } from './layout.ts';
-import { readDecree, redactHandover } from './texts.ts';
+import { readClassPrompt, readDecree, redactHandover } from './texts.ts';
 import type { TempKingdom } from '../test/kingdom.ts';
 
 const QUEST = QuestIdSchema.parse('q_20261106_7k3m2a');
@@ -33,6 +33,15 @@ describe('readDecree', () => {
     expect(await readDecree(kingdom.root)).toBeNull();
     await plant(kingdom.root, 'decree.md', '# Decree\n\nCommit messages in English.\n');
     expect(await readDecree(kingdom.root)).toBe('# Decree\n\nCommit messages in English.\n');
+  });
+});
+
+describe('readClassPrompt (P1-15)', () => {
+  it('reads registry/<prompt_file>, or null when it is gone', async () => {
+    const scribe = { prompt_file: 'prompts/scribe.md' };
+    expect(await readClassPrompt(kingdom.root, scribe)).toBeNull();
+    await plant(kingdom.root, 'registry/prompts/scribe.md', 'Write plainly.\n');
+    expect(await readClassPrompt(kingdom.root, scribe)).toBe('Write plainly.\n');
   });
 });
 

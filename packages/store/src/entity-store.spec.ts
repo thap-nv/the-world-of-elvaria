@@ -95,6 +95,25 @@ describe('write and read (implementation-plan §2.1)', () => {
     expect(await store.territories.read(territory.id)).toEqual({ ok: true, value: territory });
   });
 
+  it('reports a file standing where the folder must be, instead of throwing (P1-15)', async () => {
+    const verdict = fixture('verdict') as { id: string };
+    await plant(kingdom.root, 'verdicts', 'not a folder');
+    expect(await store.verdicts.write(verdict as never)).toEqual({
+      ok: false,
+      error: {
+        code: 'not_a_folder',
+        file: `verdicts/${verdict.id}.json`,
+        message: 'a file stands where its folder must be',
+      },
+    });
+    const territory = TerritorySchema.parse(fixture('territory'));
+    await plant(kingdom.root, 'territories', 'not a folder');
+    expect(await store.territories.write(territory)).toMatchObject({
+      ok: false,
+      error: { code: 'not_a_folder' },
+    });
+  });
+
   it('reads and writes kingdom.json', async () => {
     const value = KingdomSchema.parse(fixture('kingdom'));
     expect(await store.kingdom.read()).toMatchObject({

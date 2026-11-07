@@ -1,11 +1,13 @@
 // The machine checks of a submitted run (implementation-plan §3.2, ADR 0008): the territory's checks for the paths
 // the quest touched, run in its plot before the judge's session opens (or before the machine judges alone). Their
 // results go into the judge's prompt, the verdict and quest.checks_run; the logs stay in `.runs/<quest>-<n>/checks/`.
+// The deliverable's own checks (deliverable-checks.ts, P1-15) come after the territory's.
 // Checks run inside the tick, one after another: a long check holds the tick for its length (stage 1).
 import { err, ok, runDirOf } from '@elvaria/domain';
 import { toVerdictCheck } from '@elvaria/runner-core';
 import type { Quest, Result, Territory, VerdictCheck } from '@elvaria/domain';
 
+import { deliverableChecks } from './deliverable-checks.ts';
 import type { Context } from '../context.ts';
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
@@ -18,12 +20,10 @@ export async function checksOf(
   n: number,
 ): Promise<Result<VerdictCheck[], string>> {
   try {
-    const runs = await ctx.deps.plots.check({
-      plot: quest.plot,
-      territory,
-      run_dir: runDirOf(quest, n, 'assignee'),
-    });
-    return ok(runs.map(toVerdictCheck));
+    const runDir = runDirOf(quest, n, 'assignee');
+    const runs = await ctx.deps.plots.check({ plot: quest.plot, territory, run_dir: runDir });
+    // The deliverable's own checks follow the territory's (P1-15: subquests.json of a plan quest).
+    return ok([...runs.map(toVerdictCheck), ...(await deliverableChecks(ctx, quest, runDir))]);
   } catch (error) {
     ctx.deps.log.warn(`steward: ${quest.id}: the checks did not run: ${messageOf(error)}`);
     return err('checks_failed');

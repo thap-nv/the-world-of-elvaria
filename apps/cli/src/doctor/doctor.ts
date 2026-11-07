@@ -1,9 +1,10 @@
 // `elvaria doctor`: is this machine ready to run the kingdom? Registry, git, each tribe's CLI (found, version
 // pinned into kingdom.json, terms acknowledged where ADR 0018 requires), each territory (implementation-plan
 // §3.14, §6), the treasury file and the sessions a stopped Steward left running (P1-11). It writes only
-// `tribes[].tool`, through the kingdom file's lock.
+// `tribes[].tool` and, with `--enable`, `tribes[].enabled` (P1-15), through the kingdom file's lock.
 import { ok } from '@elvaria/domain';
 import type { Tribe } from '@elvaria/domain';
+import type { Translate } from '@elvaria/i18n';
 
 import { textOptions, flagOption } from '../args.ts';
 import { EXIT } from '../command.ts';
@@ -11,7 +12,7 @@ import { storeIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { checkGit, checkRegistry, checkTerritories } from './check-kingdom.ts';
 import { checkLeftSessions, checkTreasury } from './check-state.ts';
-import { checkTribe } from './check-tribe.ts';
+import { checkTribe, skipsTribe } from './check-tribe.ts';
 import { finding, findingLines } from './finding.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
@@ -26,6 +27,31 @@ export function toolPaths(values: readonly string[]): Map<string, string> | unde
   });
   if (pairs.some((pair) => pair === undefined)) return undefined;
   return new Map(pairs.filter((pair) => pair !== undefined));
+}
+
+/**
+ * Why the tribe options cannot be honoured, before anything is checked or written (P1-15): a tribe kingdom.json
+ * does not have, or terms to acknowledge for a tribe doctor skips because it is disabled. Before P1-15 both were
+ * ignored without a word, and the owner believed the terms were recorded.
+ */
+export function optionProblems(tribes: readonly Tribe[], options: DoctorOptions, t: Translate): string[] {
+  const known = new Map(tribes.map((tribe) => [tribe.id as string, tribe]));
+  const list = [...known.keys()].join(', ');
+  const named = [
+    ...[...options.tools.keys()].map((tribe) => ({ option: '--tool', tribe })),
+    ...[...options.enable].map((tribe) => ({ option: '--enable', tribe })),
+    ...[...options.acknowledge].map((tribe) => ({ option: '--acknowledge-terms', tribe })),
+  ];
+  const unknown = named
+    .filter(({ tribe }) => !known.has(tribe))
+    .map(({ option, tribe }) => t('cli.doctor.unknown_tribe', { option, tribe, tribes: list }));
+  const skipped = [...options.acknowledge].flatMap((id) => {
+    const tribe = known.get(id);
+    return tribe !== undefined && skipsTribe(tribe, options)
+      ? [t('cli.doctor.acknowledge_disabled', { tribe: id })]
+      : [];
+  });
+  return [...unknown, ...skipped];
 }
 
 /** Writes the re-pinned tribes into kingdom.json under its lock, leaving everything else as it is on disk. */
@@ -52,7 +78,13 @@ async function runDoctor(input: CommandInput, cli: CliContext): Promise<ExitCode
     tools,
     pin: flagOption(input, 'pin') ?? false,
     acknowledge: new Set(textOptions(input, 'acknowledge-terms')),
+    enable: new Set(textOptions(input, 'enable')),
   };
+  const problems = optionProblems(ctx.kingdom.tribes, options, ctx.t);
+  if (problems.length > 0) {
+    problems.forEach(ctx.io.err);
+    return EXIT.usage;
+  }
   const tribes = await Promise.all(ctx.kingdom.tribes.map((tribe) => checkTribe(tribe, ctx, options)));
   const saved = await saveTribes(
     ctx,
@@ -80,6 +112,7 @@ export const DOCTOR: CommandSpec = {
   options: {
     tool: { type: 'string', value: '<tribe>=<path>', multiple: true, help: 'cli.doctor.option.tool' },
     pin: { type: 'boolean', help: 'cli.doctor.option.pin' },
+    enable: { type: 'string', value: '<tribe>', multiple: true, help: 'cli.doctor.option.enable' },
     'acknowledge-terms': {
       type: 'string',
       value: '<tribe>',

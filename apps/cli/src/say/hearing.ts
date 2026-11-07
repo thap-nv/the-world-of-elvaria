@@ -4,7 +4,7 @@ import { CHANCELLOR_CLASS, poolsOf, selectChancellor, tribeLimitsOf } from '@elv
 import type { ChancellorChoice, CharacterClass, TribeId } from '@elvaria/domain';
 import { loadPromptTemplates } from '@elvaria/runner-core';
 import type { AgentRunner, ChancellorContext } from '@elvaria/runner-core';
-import { inKingdom, readDecree } from '@elvaria/store';
+import { inKingdom, readClassPrompt, readDecree } from '@elvaria/store';
 
 import { registryIssueLines } from '../issues.ts';
 import type { ChancellorSession } from '@elvaria/chancellor';
@@ -84,6 +84,7 @@ export async function hearingOf(
     utterance,
     locale: ctx.kingdom.owner.locale,
     decree: await readDecree(ctx.store.root),
+    class_prompt: await readClassPrompt(ctx.store.root, characterClass),
     territories: territories.items,
     registry: registry.value,
     roster: characters.items,

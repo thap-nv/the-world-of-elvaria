@@ -1,7 +1,7 @@
 import { TribeIdSchema } from '@elvaria/domain';
 import { describe, expect, it } from 'vitest';
 
-import { DECREE, REGISTRY, SABLE, TERRITORY, THORN } from '../__fixtures__/world.ts';
+import { DECREE, REGISTRY, SABLE, TERRITORY, THORN, classPromptOf } from '../__fixtures__/world.ts';
 import { buildChancellorPrompt } from './chancellor.ts';
 import { loadPromptTemplates } from './templates.ts';
 import type { ChancellorContext } from './chancellor.ts';
@@ -12,6 +12,7 @@ const context: ChancellorContext = {
   utterance: '  Kiểm tra link trong docs rồi viết lại README cho rõ phần cài đặt.  ',
   locale: 'vi',
   decree: null,
+  class_prompt: classPromptOf('chancellor'),
   territories: [TERRITORY],
   registry: REGISTRY,
   roster: [THORN, SABLE],

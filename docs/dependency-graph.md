@@ -45,6 +45,7 @@ flowchart TD
   cli --> hooks
   cli --> i18n
   cli --> registry_default
+  cli --> runner_antigravity
   cli --> runner_claude
   cli --> runner_core
   cli --> sandbox
@@ -74,4 +75,4 @@ flowchart TD
 | `ui` | chưa có | | `domain`, `i18n`, `ui-kit` |
 | `world` | chưa có | | `domain`, `i18n`, `ui-kit`, `ui` |
 | `lite` | chưa có | | `domain`, `i18n`, `ui-kit`, `ui` |
-| `cli` | `apps/cli` | `chancellor`, `domain`, `eventlog`, `hooks`, `i18n`, `registry-default`, `runner-claude`, `runner-core`, `sandbox`, `steward`, `store` | `domain`, `eventlog`, `store`, `registry-default`, `runner-core`, `runner-claude`, `runner-antigravity`, `runner-gemini`, `runner-codex`, `hooks`, `steward`, `chancellor`, `sandbox`, `herald`, `i18n` |
+| `cli` | `apps/cli` | `chancellor`, `domain`, `eventlog`, `hooks`, `i18n`, `registry-default`, `runner-antigravity`, `runner-claude`, `runner-core`, `sandbox`, `steward`, `store` | `domain`, `eventlog`, `store`, `registry-default`, `runner-core`, `runner-claude`, `runner-antigravity`, `runner-gemini`, `runner-codex`, `hooks`, `steward`, `chancellor`, `sandbox`, `herald`, `i18n` |

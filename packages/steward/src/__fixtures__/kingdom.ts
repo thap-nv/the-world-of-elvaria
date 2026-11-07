@@ -1,7 +1,7 @@
 // A throwaway kingdom for the Steward's specs: what `elvaria init` lays out (the default registry, read from
 // packages/registry-default by path because the Steward may not depend on it, implementation-plan §1.3), two
 // territories, a cast, and FakeRunners for both tribes whose verifiers hand in a verdict.
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, readdir, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -284,7 +284,9 @@ export const worldOfFiles = async (store: KingdomStore): Promise<WorldState> =>
 
 export async function bench(options: BenchOptions = {}): Promise<Bench> {
   const root = await mkdtemp(path.join(os.tmpdir(), 'elvaria steward-'));
-  const files = REGISTRY_FILES.map((file) => `${file}.json`);
+  // The five files and the class prompts: a registry without them does not load (P1-15).
+  const prompts = (await readdir(path.join(REGISTRY_DIR, 'prompts'))).map((file) => `prompts/${file}`);
+  const files = [...REGISTRY_FILES.map((file) => `${file}.json`), ...prompts];
   const made = await initKingdom(root, KINGDOM, { root: REGISTRY_DIR, files });
   if (!made.ok) throw new Error(`fixture: ${made.error.message}`);
   const store = openKingdom(root);

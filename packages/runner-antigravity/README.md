@@ -19,7 +19,9 @@ terms_acknowledged_at, env, pools?, timeout_ms?})`. `hook` is `hookCommand()` of
 - Spawns `agy -p <prompt> --output-format stream-json --model <slug> --settings … --print-timeout <n>m
 --log-file <run_dir>/agy.log [--json-schema …] [--conversation <id>]`, without a shell, with the request's env
   minus `GIT_*`, the session context as `ELVARIA_*` (runner-core's `runContextOf`),
-  `AGY_CLI_DISABLE_AUTO_UPDATE=true` and Elvaria's Node first on `PATH` (the hook calls a bare `node`).
+  `AGY_CLI_DISABLE_AUTO_UPDATE=true` and Elvaria's Node first on `PATH` (the hook calls a bare `node`). agy
+  takes the prompt on the command line: on Windows a prompt longer than CreateProcess takes (32 767 characters)
+  is refused before the session, with the reason (`commandLineProblem`, P1-15).
 - Reads the stream: `init` names the session; `agent_response` steps give text and usage signals (tokens of this
   run's own steps, since `result.usage` adds up a resumed conversation) and the turn count; refused tool steps
   and `denied_actions` give `tool_blocked` and `permission_denials`. Stops the run when a turn past

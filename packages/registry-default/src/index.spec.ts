@@ -1,6 +1,7 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
+import { QuestDraftFileSchema, QuestDraftSchema } from '@elvaria/domain';
 import { describe, expect, it } from 'vitest';
 
 import { loadDefaultRegistry, REGISTRY_ROOT, registryFiles } from './index.ts';
@@ -87,6 +88,24 @@ describe('the default registry', () => {
     expect(ids(withWeb)).toEqual(['scout']);
   });
 
+  it('ships the prompt of every class, opened by a note for the maintainer (P1-15)', () => {
+    for (const entry of registry().classes) {
+      expect(entry.prompt_file).toBe(`prompts/${entry.id}.md`);
+      const text = readFileSync(path.join(REGISTRY_ROOT, entry.prompt_file), 'utf8');
+      expect(
+        text.startsWith(`<!-- Class prompt of the ${entry.id === 'chancellor' ? 'Chancellor' : entry.id}`),
+      ).toBe(true);
+      expect(text.replace(/<!--[\s\S]*?-->/, '').trim().length).toBeGreaterThan(200);
+    }
+  });
+
+  it('explains every field of a sub-quest draft in the mage prompt (P1-15)', () => {
+    const mage = readFileSync(path.join(REGISTRY_ROOT, 'prompts/mage.md'), 'utf8');
+    for (const field of Object.keys(QuestDraftSchema.shape)) expect(mage).toContain(`\`${field}\``);
+    const example = /```json\n([\s\S]*?)```/.exec(mage)?.[1];
+    expect(QuestDraftFileSchema.safeParse(JSON.parse(example ?? '')).success).toBe(true);
+  });
+
   it('ships every catalog script with its file and its test (ADR 0016)', () => {
     for (const script of registry().scripts) {
       expect(existsSync(path.join(REGISTRY_ROOT, script.entry))).toBe(true);
@@ -99,7 +118,13 @@ describe('registryFiles', () => {
   it('lists the data files and the scripts to copy, never their tests or helpers', () => {
     const files = registryFiles();
     expect(files).toEqual(
-      expect.arrayContaining(['kinds.json', 'tags.json', 'scripts/common.mjs', 'scripts/link-check.mjs']),
+      expect.arrayContaining([
+        'kinds.json',
+        'tags.json',
+        'scripts/common.mjs',
+        'scripts/link-check.mjs',
+        ...registry().classes.map((entry) => entry.prompt_file),
+      ]),
     );
     expect(files.filter((file) => file.endsWith('.ts'))).toEqual([]);
     expect(files).toEqual([...files].sort());

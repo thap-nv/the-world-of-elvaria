@@ -40,6 +40,36 @@ const byPreference =
   (a: Character, b: Character): number =>
     Number(a.tribe === assignee?.tribe) - Number(b.tribe === assignee?.tribe) || byIdleSince(a, b);
 
+/** Who may ever judge `quest`: a judge of its kind, never one of its doers, never on the assignee's model. */
+function fitJudges(
+  quest: Quest,
+  candidates: readonly Character[],
+  policy: Omit<VerifierPolicy, 'same_family' | 'free'>,
+): Character[] {
+  const judges = new Set(
+    policy.classes
+      .filter(({ is_verifier, kinds }) => is_verifier && kinds.includes(quest.kind))
+      .map((c) => c.id),
+  );
+  const pastAssignees = pastAssigneesOf(quest, policy.party);
+  return candidates.filter(
+    (c) => judges.has(c.class) && !pastAssignees.has(c.id) && c.model !== policy.assignee?.model,
+  );
+}
+
+/**
+ * Whether `quest` waits in review for a judge the roster does not have (P1-15): under `different_model`, nobody
+ * among `candidates` may ever judge it, so it waits until the owner summons one. Under `machine_only` the machine
+ * judges when no judge of another family exists, so a quest never waits for ever.
+ */
+export function waitsForNoJudge(
+  quest: Quest,
+  candidates: readonly Character[],
+  policy: Omit<VerifierPolicy, 'free'>,
+): boolean {
+  return policy.same_family === 'different_model' && fitJudges(quest, candidates, policy).length === 0;
+}
+
 /**
  * `candidates`: everyone who could judge, now or later (not suspended, of an enabled tribe with a runner);
  * `policy.free` says who can now.
@@ -49,15 +79,7 @@ export function selectVerifier(
   candidates: readonly Character[],
   policy: VerifierPolicy,
 ): Selection | NoVerifier {
-  const judges = new Set(
-    policy.classes
-      .filter(({ is_verifier, kinds }) => is_verifier && kinds.includes(quest.kind))
-      .map((c) => c.id),
-  );
-  const pastAssignees = pastAssigneesOf(quest, policy.party);
-  const fit = candidates.filter(
-    (c) => judges.has(c.class) && !pastAssignees.has(c.id) && c.model !== policy.assignee?.model,
-  );
+  const fit = fitJudges(quest, candidates, policy);
   const family = policy.assignee === undefined ? undefined : familyOf(policy.assignee.model);
   const otherFamily = (character: Character): boolean => familyOf(character.model) !== family;
   const free = fit.filter(policy.free).toSorted(byPreference(policy.assignee));

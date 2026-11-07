@@ -19,6 +19,8 @@ export type StoreIssueCode =
   | 'id_mismatch'
   /** Another process held the file's lock for longer than the wait. */
   | 'locked'
+  /** A file stands where the file's folder must be (`verdicts` written as a file), so nothing can be written. */
+  | 'not_a_folder'
   /** `initKingdom` on a folder that already has a kingdom.json. */
   | 'exists';
 
@@ -45,3 +47,6 @@ export const storeIssue = (
 
 export const lockedIssue = (file: string): StoreIssue =>
   storeIssue('locked', file, 'another process held its lock past the wait');
+
+export const notAFolderIssue = (file: string): StoreIssue =>
+  storeIssue('not_a_folder', file, 'a file stands where its folder must be');

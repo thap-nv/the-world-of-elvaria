@@ -3,7 +3,7 @@
 // letter is a character's: once its session ends the Steward masks it with that session's secret values and the
 // patterns, so a secret the character copied into it never reaches the next prompt or the owner's screen.
 import { createRedactor } from '@elvaria/eventlog';
-import type { QuestId } from '@elvaria/domain';
+import type { CharacterClass, QuestId } from '@elvaria/domain';
 
 import { readTextFile, writeFileAtomic } from './io/atomic.ts';
 import { kingdomLayout } from './layout.ts';
@@ -12,6 +12,19 @@ import { inKingdom } from './paths.ts';
 /** `decree.md`, or null when the owner has written none. */
 export async function readDecree(root: string): Promise<string | null> {
   return (await readTextFile(inKingdom(root, kingdomLayout.decree()))) ?? null;
+}
+
+/**
+ * A class's prompt, `registry/<class.prompt_file>` (P1-15), or null when the file is gone since the registry
+ * loaded (loadRegistry refuses a kingdom without one): the session then runs with the laws of its role alone.
+ */
+export async function readClassPrompt(
+  root: string,
+  characterClass: Pick<CharacterClass, 'prompt_file'>,
+): Promise<string | null> {
+  return (
+    (await readTextFile(inKingdom(root, kingdomLayout.registryEntry(characterClass.prompt_file)))) ?? null
+  );
 }
 
 /**

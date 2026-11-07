@@ -1,6 +1,9 @@
 // `elvaria migrate`: rewrite every file older than this Elvaria once, keeping the old text in .backup/<stamp>/
 // (implementation-plan §2.1, ADR 0003). Reads migrate in memory anyway; this makes the files on disk current.
-import { migrateKingdom } from '@elvaria/store';
+// It also copies the registry files this Elvaria ships and the kingdom lacks, never one the owner has (P1-15: the
+// class prompts arrived after the first kingdoms).
+import { REGISTRY_ROOT, registryFiles } from '@elvaria/registry-default';
+import { addMissingRegistryFiles, migrateKingdom } from '@elvaria/store';
 
 import { EXIT } from './command.ts';
 import { storeIssueLines } from './issues.ts';
@@ -22,6 +25,16 @@ async function runMigrate(input: CommandInput, ctx: CliContext): Promise<ExitCod
   else {
     io.out(t('cli.migrate.done', { count: report.migrated.length, backup: report.backup }));
     report.migrated.forEach((file) => {
+      io.out(`  ${file}`);
+    });
+  }
+  const added = await addMissingRegistryFiles(kingdom.store.root, {
+    root: REGISTRY_ROOT,
+    files: registryFiles(),
+  });
+  if (added.length > 0) {
+    io.out(t('cli.migrate.registry', { count: added.length }));
+    added.forEach((file) => {
       io.out(`  ${file}`);
     });
   }

@@ -43,6 +43,16 @@ export type Notice =
       readonly class: string;
       readonly best?: { readonly character: string; readonly level: number; readonly ceiling: Rank };
     }
+  /**
+   * The quest waits in review for a judge the roster does not have (P1-15): no character of `classes` outside its
+   * doers on another model than the assignee's `model` (dispatch.verifier_same_family = different_model).
+   */
+  | {
+      readonly kind: 'unjudgeable';
+      readonly quest: NoticeQuest;
+      readonly classes: readonly string[];
+      readonly model: string | null;
+    }
   | { readonly kind: 'awaiting_seal'; readonly quest: NoticeQuest }
   | { readonly kind: 'infirmary'; readonly quest: NoticeQuest; readonly reason: string }
   | { readonly kind: 'question'; readonly quest: NoticeQuest; readonly question: string }
@@ -91,6 +101,11 @@ export interface Plots {
   commit(plot: Quest['plot'], message: string): Promise<CommitOutcome>;
   /** The territory's checks for the paths the quest touched, one after another in the plot (§3.2). */
   check(request: PlotCheck): Promise<readonly CheckRun[]>;
+  /**
+   * The branch's diff against its fork point for the judge's prompt (PlotManager.diff, P1-15): summary then patch,
+   * capped; empty when nothing changed, null for a plot without git.
+   */
+  diff(plot: Quest['plot']): Promise<string | null>;
   /** At archive only: removes a worktree (its branch stays) and what the tribes' CLIs kept about it. */
   release(plot: Quest['plot']): Promise<Result<ReleasedPlot, PlotFailure>>;
 }

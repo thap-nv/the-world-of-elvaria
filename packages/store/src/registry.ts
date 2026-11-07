@@ -14,6 +14,31 @@ import type { StoreIssue } from './issues.ts';
 /** A file the store could not read (`StoreIssue`), or a registry rule the files break (`RegistryIssue`). */
 export type RegistryLoadIssue = StoreIssue | RegistryIssue;
 
+interface NamedFile {
+  /** Relative to registry/, with `/`. */
+  readonly file: string;
+  readonly what: string;
+}
+
+/** Each named file the kingdom lacks, as a `not_found` issue with its kingdom-relative path. */
+async function absent(root: string, named: readonly NamedFile[]): Promise<StoreIssue[]> {
+  const missing = await Promise.all(
+    named.map(async ({ file, what }) => {
+      const relative = kingdomLayout.registryEntry(file);
+      if (await pathExists(inKingdom(root, relative))) return [];
+      return [storeIssue('not_found', relative, `${what} is missing`)];
+    }),
+  );
+  return missing.flat();
+}
+
+const promptsOf = (registry: Registry): NamedFile[] =>
+  registry.classes.map((entry) => ({ file: entry.prompt_file, what: `prompt of class ${entry.id}` }));
+
+/**
+ * The five files, migrated, checked together by the domain, and every class with its prompt file (P1-15): a
+ * character's session is built from it, so a kingdom without one does not load.
+ */
 export async function loadRegistry(root: string): Promise<Result<Registry, readonly RegistryLoadIssue[]>> {
   const issues: StoreIssue[] = [];
   const raw: Record<RegistryFile, unknown> = {
@@ -35,25 +60,21 @@ export async function loadRegistry(root: string): Promise<Result<Registry, reado
     if (read.ok) raw[name] = read.value.value;
     else issues.push(read.error);
   }
-  return issues.length > 0 ? err(issues) : parseRegistry(raw);
+  if (issues.length > 0) return err(issues);
+  const parsed = parseRegistry(raw);
+  if (!parsed.ok) return parsed;
+  const prompts = await absent(root, promptsOf(parsed.value));
+  return prompts.length > 0 ? err(prompts) : parsed;
 }
 
 /**
- * Registry entries that name a file the kingdom does not have: `class.prompt_file`, `script.entry`. The domain
- * cannot look at files, so this is the store's half of the registry check. Role prompts ship with P1-15; until
- * then `elvaria doctor` reports them here instead of the load failing.
+ * Catalog scripts whose `entry` the kingdom does not have. The domain cannot look at files, so this is the
+ * store's half of the registry check; `elvaria doctor` reports them, and only a script-tier quest needs one
+ * (class prompts are part of loadRegistry since P1-15).
  */
 export async function missingRegistryFiles(root: string, registry: Registry): Promise<StoreIssue[]> {
-  const named = [
-    ...registry.classes.map((entry) => ({ file: entry.prompt_file, what: `prompt of class ${entry.id}` })),
-    ...registry.scripts.map((entry) => ({ file: entry.entry, what: `entry of script ${entry.id}` })),
-  ];
-  const missing = await Promise.all(
-    named.map(async ({ file, what }) => {
-      const relative = kingdomLayout.registryEntry(file);
-      if (await pathExists(inKingdom(root, relative))) return [];
-      return [storeIssue('not_found', relative, `${what} is missing`)];
-    }),
+  return absent(
+    root,
+    registry.scripts.map((entry) => ({ file: entry.entry, what: `entry of script ${entry.id}` })),
   );
-  return missing.flat();
 }

@@ -6,12 +6,14 @@ import {
   DIFF,
   JOURNAL,
   LETTER,
+  PARTIAL,
   QUEST,
   REGISTRY,
   RETURNED,
   SABLE,
   TERRITORY,
   THORN,
+  classPromptOf,
 } from '../__fixtures__/world.ts';
 import { JOURNAL_TAIL_LINES } from './blocks.ts';
 import { buildPrompt } from './build-prompt.ts';
@@ -35,6 +37,7 @@ const assignee: AssigneePromptInput = {
   scriptures: ['- [L_20261105_a1b2c3] Run `pnpm i18n:check` before submitting any locale change.', '  '],
   skills: [],
   gazetteer: '`apps/api`: NestJS. `apps/web`: React + TanStack Query.',
+  class_prompt: classPromptOf('knight'),
   handover_path: HANDOVER_PATH,
   continuation: null,
 };
@@ -49,8 +52,10 @@ const verifier: VerifierPromptInput = {
   registry: REGISTRY,
   scriptures: [],
   gazetteer: null,
+  class_prompt: classPromptOf('judge'),
   handover: LETTER,
   diff: DIFF,
+  partial: null,
   checks: [
     {
       id: CheckIdSchema.parse('lint'),
@@ -100,10 +105,35 @@ describe('buildPrompt snapshots (§10 question 4)', () => {
     await expect(decreed.system).toMatchFileSnapshot(`__snapshots__/${name}.decree.txt`);
   });
 
+  it('verifier-partial reads on from the last judge', async () => {
+    await expect(show(buildPrompt({ ...verifier, partial: PARTIAL }, templates))).toMatchFileSnapshot(
+      '__snapshots__/verifier-partial.txt',
+    );
+  });
+
   it('leaves out a decree that is only blank', () => {
     expect(buildPrompt({ ...assignee, decree: ' \n' }, templates).system).toBe(
       buildPrompt(assignee, templates).system,
     );
+  });
+});
+
+describe('the craft of the class (P1-15)', () => {
+  it.each([
+    ['assignee', assignee, 'Knight'],
+    ['verifier', verifier, 'Judge'],
+  ] as const)('closes the system part of the %s, without the maintainer note', (_, input, name) => {
+    const { system } = buildPrompt(input, templates);
+    const craft = system.slice(system.indexOf(`# Your craft: ${name}`));
+    expect(craft.length).toBeGreaterThan(200);
+    expect(system.endsWith(craft)).toBe(true);
+    expect(system).not.toContain('<!--');
+  });
+
+  it.each([null, '<!-- only a note -->\n\n'])('is left out when the file is %j', (classPrompt) => {
+    const full = buildPrompt(assignee, templates).system;
+    const { system } = buildPrompt({ ...assignee, class_prompt: classPrompt }, templates);
+    expect(system).toBe(full.slice(0, full.indexOf('\n\n# Your craft')));
   });
 });
 
@@ -173,6 +203,19 @@ describe('assignee prompt', () => {
     expect(buildPrompt(assignee, templates).user).not.toContain('- Deliverable:');
   });
 
+  it('gives a plan quest the words its sub-quests may use (P1-15)', () => {
+    const plan = QuestSchema.parse({ ...QUEST, kind: 'plan', class_required: 'mage' });
+    const territory = { ...TERRITORY, secrets_allowed: ['npm_token'] };
+    const { user } = buildPrompt({ ...assignee, quest: plan, territory }, templates);
+    expect(user).toContain('- Kinds of a sub-quest and the classes each allows: build (knight, dwarf);');
+    expect(user).toContain('plan (mage)');
+    expect(user).toContain('- Tags: frontend, backend, db, infra, i18n, e2e, docs');
+    expect(user).toContain('- Secrets this territory allows: npm_token');
+    expect(buildPrompt({ ...assignee, quest: plan }, templates).user).toContain(
+      '- Secrets this territory allows: none',
+    );
+  });
+
   it('fails loudly on a class the registry does not have', () => {
     const lost = { ...THORN, class: 'necromancer' } as unknown as typeof THORN;
     expect(() => buildPrompt({ ...assignee, character: lost }, templates)).toThrow(
@@ -204,6 +247,17 @@ describe('verifier prompt', () => {
     expect(user).toContain('No machine check ran for the paths this quest touched.');
     expect(user).toContain('The branch has no changes.');
     expect(user).toContain('The assignee left no letter.');
+  });
+
+  it('says where the last judge stopped only for a partial verdict with progress', () => {
+    const { user } = buildPrompt({ ...verifier, partial: PARTIAL }, templates);
+    expect(user).toContain('# Where the last judge stopped');
+    expect(user).toContain('- Checked until: read_diff: package.json, README.md');
+    expect(user).toContain(`(verdict \`${PARTIAL.id}\`, \`partial\`)`);
+    const bare = buildPrompt({ ...verifier, partial: { ...PARTIAL, notes: undefined } }, templates).user;
+    expect(bare).toContain('- Checked until:');
+    const failed = { ...PARTIAL, result: 'fail' as const, progress: undefined };
+    expect(buildPrompt({ ...verifier, partial: failed }, templates).user).not.toContain('last judge');
   });
 
   it('fails loudly on a step that has no text', () => {

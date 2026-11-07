@@ -21,13 +21,17 @@
 - Builds prompts from the Markdown templates in `prompts/` (`loadPromptTemplates`): `buildPrompt` for an
   assignee (new, or continuing after `returned` / `revive` with the letter, the last 20 journal lines, the
   branch's log and the owner's answer) and a verifier (the ritual's steps from `prompts/ritual-steps.md`, the
-  checks, the letter, the diff, or where to read it when the caller has none); both list the shell commands
+  checks, the letter, the diff, or where to read it when the caller has none, and where the last judge of the
+  run stopped when it left a `partial` verdict, P1-15); both list the shell commands
   their `ToolPolicy` allows, one per call (`prompts/shell.md`, P1-11); `buildChancellorPrompt` for the
   Chancellor; `resumedPrompt` for a session continued with `--resume` (the system part as built, a user part that only says it goes on, with the owner's
-  answer when there is one). The system part opens with the royal decree when `<kingdom>/decree.md` exists.
+  answer when there is one). The system part opens with the royal decree when `<kingdom>/decree.md` exists, and
+  ends with the craft of the character's class (`class_prompt`: the kingdom's `registry/<class.prompt_file>`
+  without its maintainer note, `prompts/class.md`, P1-15).
   The quest's facts carry its kind's delivery convention when the Steward needs a file of a given shape: a plan
   (`subquests`) writes its sub-quests as quest-draft JSON to `SUBQUESTS_FILE` (`subquests.json`) at the root of
-  its plot, where its judge reads them and the Steward opens them once the quest is done (P1-14).
+  its plot, where its judge reads them and the Steward opens them once the quest is done (P1-14), with the
+  words a draft may use: the kinds and the classes each allows, the tags, the territory's secrets (P1-15).
 - Runs the conformance suite (`conformanceChecks`, `runConformance`): plain checks with `node:assert`, so a spec
   wraps them in `it` and `elvaria tribe check` (P1-19) runs them too. With a real CLI (`live`) only the checks
   that burn no mana run. `openWorkspace` and `conformanceRequest` give an adapter's specs the same requests.
@@ -40,7 +44,9 @@
   `.runs/<quest>-setup.log`). The fork point and the setup state live in `elvaria-plot.json` in the worktree's
   private git folder. `status`, `touched` (paths changed since the fork, committed or not, plus untracked files),
   `commitAll` (everything, through the territory's own hooks; `refused` when a hook says no; the Steward's messages
-  are `plotCommitMessage`, Conventional Commits so commitlint accepts them) and `release`
+  are `plotCommitMessage`, Conventional Commits so commitlint accepts them), `diff` (what a judge reads, P1-15:
+  `git diff <base>...HEAD`, summary then patch, cut at `DIFF_MAX_CHARS` on a whole line with a note saying where
+  the rest is; null for a plot without git) and `release`
   (removes a clean worktree, keeps the branch, takes the folders git leaves on Windows around pnpm's dead
   junctions when nothing else is in them, `leftover` says why a folder stays, then calls each `forget` callback,
   such as a tribe CLI dropping its transcripts). A territory without git gets `quests/<id>/work/` in the kingdom.

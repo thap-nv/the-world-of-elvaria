@@ -3,7 +3,7 @@
 // to the context if it needs them.
 import { QUEST_TAGS_MAX } from '@elvaria/domain';
 
-import { LANGUAGE_NAMES, decreeBlock } from './blocks.ts';
+import { LANGUAGE_NAMES, classBlock, decreeBlock } from './blocks.ts';
 import { fill, joinBlocks } from './templates.ts';
 import type { BuiltPrompt } from '../runner/types.ts';
 import type { Locale } from './blocks.ts';
@@ -15,6 +15,8 @@ export interface ChancellorContext {
   readonly utterance: string;
   readonly locale: Locale;
   readonly decree: string | null;
+  /** The kingdom's `registry/prompts/chancellor.md` (the class's `prompt_file`, P1-15), or null when it is gone. */
+  readonly class_prompt: string | null;
   readonly territories: readonly Territory[];
   /** Kinds with their classes, tags and the script catalog are what a draft may name. */
   readonly registry: Registry;
@@ -92,7 +94,11 @@ export function buildChancellorPrompt(context: ChancellorContext, t: PromptTempl
     language: LANGUAGE_NAMES[context.locale],
   });
   return {
-    system: joinBlocks([decreeBlock(context.decree, t), role]),
+    system: joinBlocks([
+      decreeBlock(context.decree, t),
+      role,
+      classBlock(context.class_prompt, 'Chancellor', t),
+    ]),
     user: fill(t['chancellor-context'], {
       utterance: context.utterance.trim(),
       territories: territoriesOf(context.territories),

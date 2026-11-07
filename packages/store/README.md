@@ -10,7 +10,8 @@
   change → write inside one lock) and `list` (good files plus one issue per bad file). Every read runs
   JSON → migrate to the current version → the domain's zod schema; every write is validated first.
 - Writes atomically (temp file in the same folder, flushed, renamed over the target) under `proper-lockfile`
-  locks (ADR 0004, 0015). Windows' transient `EPERM`/`EACCES`/`EBUSY` are retried within a time budget.
+  locks (ADR 0004, 0015). Windows' transient `EPERM`/`EACCES`/`EBUSY` are retried within a time budget. A
+  file standing where an entity's folder must be is an issue (`not_a_folder`), not a throw (P1-15).
   `acquireLock` also serves the long-held `.state/steward.lock` (P1-03); `isLocked` only reads whether a live
   holder keeps a lock (`elvaria doctor`, P1-11).
 - Holds the migration framework (ADR 0003): one chain per stored contract in `src/migrations/index.ts`, steps in
@@ -18,9 +19,12 @@
   `elvaria migrate` (rewrite every old file once, old text in `.backup/<stamp>/`).
 - Runs the inbox (ADR 0005): `inbox.write` drops `inbox/<ulid>.json`, `inbox.read` lists commands oldest first
   (unusable files too, so the Steward can reject them), `inbox.ack` moves one to `inbox/done/`.
-- Loads `registry/` (`loadRegistry`: migrate each file, then the domain's `parseRegistry`) and names registry
-  entries whose file is missing (`missingRegistryFiles`: `class.prompt_file`, `script.entry`).
+- Loads `registry/` (`loadRegistry`: migrate each file, then the domain's `parseRegistry`, then every
+  `class.prompt_file` must exist, P1-15) and names the catalog scripts whose `entry` is missing
+  (`missingRegistryFiles`). `readClassPrompt` reads a class's prompt for a session (null when it is gone).
 - Lays out a new kingdom (`initKingdom`): folders, a copy of the registry it is given, `kingdom.json` last.
+  `addMissingRegistryFiles` copies into an older kingdom the registry files it lacks, never one it has
+  (`elvaria migrate`, P1-15).
 - Reads the owner's royal decree (`readDecree`, `kingdomLayout.decree` = `decree.md`, null when absent) and masks
   secrets in free text it keeps (ADR 0013): every verdict write masks the secret patterns in `notes` (checked
   by the schema again after), and `redactHandover` masks a session's values and the patterns in its letter.

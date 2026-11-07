@@ -135,9 +135,16 @@ export async function fakeTool(
   auth = { loggedIn: true },
 ): Promise<string> {
   await mkdir(dir, { recursive: true });
-  // `auth status --json` answers as Claude Code does (logged in by default); every other call prints the version.
-  const answer = `process.argv[2] === 'auth' ? ${JSON.stringify(`${JSON.stringify(auth)}\n`)} : ${JSON.stringify(`${version}\n`)}`;
-  const source = `process.stdout.write(${answer}); process.exitCode = ${code};\n`;
+  // `auth status --json` answers as Claude Code does (logged in by default), `models` as agy does (a list when
+  // signed in, exit 1 when not); every other call prints the version.
+  const models = `${JSON.stringify({ models: [{ id: 'gemini-4-argon-medium' }] })}\n`;
+  const answer = [
+    `process.argv[2] === 'auth' ? ${JSON.stringify(`${JSON.stringify(auth)}\n`)}`,
+    `process.argv.includes('models') ? ${JSON.stringify(auth.loggedIn ? models : '')}`,
+    JSON.stringify(`${version}\n`),
+  ].join(' : ');
+  const exit = `process.argv.includes('models') && ${String(!auth.loggedIn)} ? 1 : ${code}`;
+  const source = `process.stdout.write(${answer}); process.exitCode = ${exit};\n`;
   if (process.platform === 'win32') {
     await writeFile(path.join(dir, `${name}-cli.cjs`), source);
     const shim = path.join(dir, `${name}.cmd`);
