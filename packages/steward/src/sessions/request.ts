@@ -3,10 +3,10 @@
 // context the hook reads, and the run folder `.runs/<quest>-<n>` (verifier: `/verify` below it).
 import { mkdir } from 'node:fs/promises';
 
-import { FAIL_KINDS, currentRun, runDirOf } from '@elvaria/domain';
+import { FAIL_KINDS, currentRun, ownerVerdictIdOf, runDirOf, verdictIdOf } from '@elvaria/domain';
 import { buildPrompt, toolPolicyOf } from '@elvaria/runner-core';
 import { inKingdom } from '@elvaria/store';
-import type { Character, Quest, Role, Territory } from '@elvaria/domain';
+import type { Character, Quest, Role, Territory, VerdictCheck } from '@elvaria/domain';
 import type { Continuation, JsonSchema, Memory, SpawnRequest } from '@elvaria/runner-core';
 
 import {
@@ -17,12 +17,11 @@ import {
   readJournal,
   readScriptures,
 } from '../files.ts';
-import { verdictIdOf } from '../verdicts.ts';
 import type { Context } from '../context.ts';
 
 /**
- * The verifier's structured output (§3.2): what the verdict file takes from it. The Steward checks the result with
- * the verdict schema; selectVerifier and validateVerdict (P1-04) take this over.
+ * The verifier's structured output (§3.2): what the verdict file takes from it. The Steward adds the checks, applies
+ * the ritual's pass rule, and writes it only when the verdict schema and validateVerdict accept it (review/judge.ts).
  */
 export const VERDICT_OUTPUT_SCHEMA: JsonSchema = {
   type: 'object',
@@ -51,6 +50,8 @@ export interface SessionInput {
   readonly cwd: string;
   /** An assignee that goes on with the quest in a fresh session (§10 question 4); null for its first session. */
   readonly continuation?: Continuation | null;
+  /** A verifier's: the machine checks that ran before its session (§3.2). */
+  readonly checks?: readonly VerdictCheck[];
 }
 
 /** What a continuing session reads instead of a transcript (ADR 0017); the branch's git log comes with P1-07. */
@@ -62,12 +63,17 @@ async function memoryOf(ctx: Context, quest: Quest): Promise<Memory> {
   };
 }
 
-/** The verdict a returned quest comes back with, when the verifier left one (`<quest>-<n>` of the last run). */
+/**
+ * The verdict a returned quest comes back with: the owner's return (`<quest>-<n>-user`), else the judge's or the
+ * machine's fail (`<quest>-<n>`) on the last run; a crash returns with none.
+ */
 export async function continuationOf(ctx: Context, quest: Quest): Promise<Continuation> {
-  const verdict = await ctx.deps.store.verdicts.read(verdictIdOf(quest, currentRun(quest)));
-  return verdict.ok && verdict.value.result === 'fail'
-    ? { reason: 'returned', verdict: verdict.value }
-    : { reason: 'revive' };
+  const n = currentRun(quest);
+  for (const id of [ownerVerdictIdOf(quest, n), verdictIdOf(quest, n)]) {
+    const verdict = await ctx.deps.store.verdicts.read(id);
+    if (verdict.ok && verdict.value.result === 'fail') return { reason: 'returned', verdict: verdict.value };
+  }
+  return { reason: 'revive' };
 }
 
 /** The context the hook reads from env (§3.6); P1-10 adds the minimal env and the allowed secrets. */
@@ -95,9 +101,11 @@ async function promptOf(ctx: Context, input: SessionInput) {
     gazetteer: await readGazetteer(ctx.root, territory.id),
   };
   if (input.role === 'verifier') {
-    // The diff and the machine checks come with P1-07 (PlotManager, runChecks).
+    // The judge runs in the plot and reads the branch's diff there; the prompt's own diff waits for PlotManager to
+    // give one (§11, P1-04).
     const handover = await readHandover(ctx.root, quest.id);
-    return buildPrompt({ ...base, role: 'verifier', handover, diff: '', checks: [] }, ctx.templates);
+    const checks = input.checks ?? [];
+    return buildPrompt({ ...base, role: 'verifier', handover, diff: '', checks }, ctx.templates);
   }
   const continuation =
     input.continuation === undefined || input.continuation === null

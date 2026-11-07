@@ -2,12 +2,12 @@
 // A quest waiting for the seal is sealed, a question is answered once its asker is free again, and a quest in the
 // infirmary is retried when the scenario says so. Each is a command the Steward applies (command.applied), then
 // the quest's move by the owner.
-import { currentRun } from '@elvaria/domain';
+import { currentRun, ownerVerdictIdOf } from '@elvaria/domain';
 import type { Quest, QuestId } from '@elvaria/domain';
 
 import { isFree } from './day.ts';
 import { holderOf, step } from './ledger.ts';
-import { judged, levelAfterVerdict, verdictIdOf } from './reputation.ts';
+import { judged, levelAfterVerdict } from './reputation.ts';
 import { answerFor, openSession } from './work.ts';
 import type { Day } from './day.ts';
 
@@ -19,12 +19,14 @@ function applied(day: Day): void {
   });
 }
 
-/** The royal seal: a human verdict on the assignee's work, weighed three times (§2.6). */
+/** The royal seal: the owner's verdict on the assignee's work (`<quest>-<n>-user`), weighed three times (§2.6). */
 function seal(day: Day, quest: Quest): void {
   const assignee = holderOf(quest, 'assignee');
-  const verdict = verdictIdOf(quest, currentRun(quest));
+  const verdict = ownerVerdictIdOf(quest, currentRun(quest));
   applied(day);
-  day.ledger.move(quest.id, { type: 'seal' }, 'user', { [assignee]: judged(quest, verdict, 'pass', true) });
+  day.ledger.move(quest.id, { type: 'seal' }, 'user', {
+    [assignee]: judged(quest, verdict, { result: 'pass' }, true),
+  });
   levelAfterVerdict(day, assignee);
 }
 

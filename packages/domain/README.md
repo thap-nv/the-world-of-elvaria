@@ -17,16 +17,26 @@
   `reputationOf`, `affinityOf`, `titleOf`. Decides levels: `canTake` (which ranks the Steward may give a level),
   `aboveCeiling` (a stretch that makes the quest wait for the royal seal) and `levelChange` (counting only the
   verdicts since the last change, `level_since`).
-- Plans the Steward's tick (`src/dispatch/`): `planTick(snapshot, now)` returns the claims of one tick, the
-  minimal form of P0-10 that the sandbox runs and P1-03 extends (class, level by `canTake`, enabled and awake
-  tribe, dependencies done; script-tier quests to the Steward). From P1-05 a character's pool must be open
-  (`poolOpenOf`) and paused quests whose pool woke come first (`wakes`). `resumedSession` decides whether a
-  revived assignee continues its CLI session (an answer within `resume_after_answer_minutes`, mana with
-  `resume_after_mana`, an adapter that can resume); `answeredAlready` knows a question the owner answered.
+- Plans the Steward's tick (`src/dispatch/`): `planTick(snapshot, now)` returns what the Steward and the sandbox
+  carry out in one tick: characters on a fail streak sent to the Temple (`failStreakReached`), claimed quests
+  that start, a judge (or the machine) for each submitted quest, returned quests sent back, claims (class, level
+  by `canTake`, limits of tribe and territory, round-robin, affinity), and the open quests nobody can take.
+  From P1-05 a character's pool must be open (`poolOpenOf`), and paused quests whose pool woke go on before
+  any new work (`wakes`, `wakesOf`). `resumedSession` decides whether a revived assignee continues its CLI
+  session (an answer within `resume_after_answer_minutes`, mana with `resume_after_mana`, an adapter that can
+  resume); `answeredAlready` knows a question the owner answered.
+- Keeps the separation of duties (`src/verify/`, ADR 0008, 0020): `selectVerifier` (never a worker of the quest
+  or of its party, never the assignee's model, another model family first by `familyOf`, then another tribe;
+  `dispatch.verifier_same_family` for the rest), `underPassRule` (a failing check fails the quest under
+  `all_checks_and_agent`), `machineVerdictOf` (the machine's verdict from the checks), `validateVerdict` (no
+  worker, only the session the Steward spawned, no pass over a failing check) and the verdict ids of a run
+  (`<quest>-<n>`, `-p<k>` for a partial, `-user` for the owner's). `withVerdict` (`src/character/`) puts a
+  verdict into the reputation and tag windows and the fail streak.
 - Decides mana per pool (`src/mana/`, ADR 0009): `poolOf(tribe, model)` (a one-pool account is the tribe; named
   pools by model prefix, `POOL_MODEL_PREFIXES`), `ManaReading` and `readingOf` (an account's window as a
   reading), `decideManaState(readings, pool, cfg, now, model?)` → `ok | warning | closed | asleep` against
-  `min(cap_pct, 100 − king_reserve_pct)`; a cap of one model binds only the characters on it.
+  `min(cap_pct, 100 − king_reserve_pct)`; a cap of one model binds only the characters on it; `nextProbeOf`, when
+  a sleeping pool is probed next (just after a known reset, soon again when the account is late).
 - Maps the domain onto the design system (implementation-plan §2.7): `statusToneOf`, `characterToneOf`, and
   `bannerOf` (`src/world/`), the one band the HUD shows.
 - Builds the world state (`src/world/`) from the files (`worldStateOf`) or the log (`reduce`): every event that

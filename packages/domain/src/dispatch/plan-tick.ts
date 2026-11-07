@@ -1,25 +1,31 @@
 // planTick(snapshot, now): what the Steward does in one tick, decided as a pure function of a snapshot of the
 // kingdom (implementation-plan §3.1, ADR 0002); the Steward and the sandbox only carry the plan out. Steps 4–6
 // of the tick, in that order, sharing one roster so a character or a slot given away is gone for the next step:
-// claimed quests start, submitted quests get a verifier, returned quests go back to their assignee, open quests
-// are claimed (round-robin over territories, then rank, then age), and open quests nobody can take are named.
+// characters on a fail streak go to the Temple, claimed quests start, submitted quests get a verifier (or the
+// machine's verdict), returned quests go back to their assignee, open quests are claimed (round-robin over
+// territories, then rank, then age), and open quests nobody can take are named.
+import { failStreakReached } from '../character/fail-streak.ts';
 import { claimBlocker } from './claim-blocker.ts';
 import { rosterOf } from './roster.ts';
 import { selectAssignee } from './select-assignee.ts';
-import { verifierFor } from './verifier-for.ts';
 import { wakesOf } from './wakes.ts';
 import { RANKS } from '../schema/common.ts';
+import { selectVerifier } from '../verify/select-verifier.ts';
+import { partyOf } from '../verify/past-assignees-of.ts';
 import type { ClaimBlocker } from './claim-blocker.ts';
 import type { Roster, RosterSource } from './roster.ts';
 import type { Instant } from '../core/clock.ts';
 import type { CharacterId, QuestId, TerritoryId } from '../core/ids.ts';
 import type { Character } from '../schema/character/character.ts';
+import type { Kingdom } from '../schema/kingdom.ts';
 import type { Quest } from '../schema/quest/quest.ts';
-import type { CharacterClass } from '../schema/registry-entries.ts';
+import type { VerifierClass } from '../verify/select-verifier.ts';
 
 export interface KingdomSnapshot extends RosterSource {
+  /** Tribes, and the rules of judging: dispatch.verifier_same_family, breakers.same_fail_suspend. */
+  readonly kingdom: Pick<Kingdom, 'tribes' | 'dispatch' | 'breakers'>;
   /** Which classes verify which kinds. */
-  readonly registry: { readonly classes: readonly Pick<CharacterClass, 'id' | 'is_verifier' | 'kinds'>[] };
+  readonly registry: { readonly classes: readonly VerifierClass[] };
 }
 
 /** A session-tier quest and the character that takes it, with its level for the claim event (§2.6). */
@@ -32,6 +38,8 @@ export interface Claim {
 export interface Verification {
   readonly quest: QuestId;
   readonly verifier: CharacterId;
+  /** Why this judge (selectVerifier): another model family, or the same family on another model. */
+  readonly reason: 'other_family' | 'same_family_other_model';
 }
 
 export interface Unclaimable extends ClaimBlocker {
@@ -39,13 +47,23 @@ export interface Unclaimable extends ClaimBlocker {
 }
 
 export interface TickPlan {
-  /** Paused quests whose assignee's pool has mana again, first (`wakesOf`, P1-05, §3.5). */
+  /**
+   * Idle characters whose fail streak reached breakers.same_fail_suspend (§2.6 `fail_streak`): they go to the
+   * Temple before anything else, and take no work this tick.
+   */
+  readonly suspensions: readonly CharacterId[];
+  /** Paused quests whose assignee's pool has mana again, before any new work (`wakesOf`, P1-05, §3.5). */
   readonly wakes: readonly QuestId[];
   /** Claimed quests whose dependencies are done and whose assignee is free: the owner's reassigns, or a claim
    * the Steward made before it stopped. */
   readonly starts: readonly QuestId[];
-  /** Step 4: submitted session-tier quests and their verifier (§3.2, plain form until P1-04). */
+  /** Step 4: submitted session-tier quests and their verifier (selectVerifier, §3.2). */
   readonly verifications: readonly Verification[];
+  /**
+   * Step 4 too: submitted quests the machine judges alone (verifier_same_family = machine_only and no judge of
+   * another family in the kingdom, ADR 0008); the Steward issues the verdict from the checks.
+   */
+  readonly machine_verdicts: readonly QuestId[];
   /** Step 5: returned quests that go back to their assignee in a fresh session. */
   readonly redispatches: readonly QuestId[];
   /** Step 6, in the order the Steward applies them. */
@@ -96,14 +114,40 @@ function holderGoes(step: Step, quest: Quest): boolean {
   return true;
 }
 
-function verifications(step: Step, review: readonly Quest[]): Verification[] {
-  const planned: Verification[] = [];
+/** Idle characters whose fail streak reached the limit; they leave the roster before anyone is given work. */
+function suspensions(step: Step): CharacterId[] {
+  const limit = step.snapshot.kingdom.breakers.same_fail_suspend;
+  const suspended = step.snapshot.characters.filter(
+    (character) => character.status === 'idle' && failStreakReached(character, limit),
+  );
+  suspended.forEach(step.roster.setAside);
+  return suspended.map(({ id }) => id);
+}
+
+interface Reviews {
+  readonly verifications: Verification[];
+  readonly machine: QuestId[];
+}
+
+/** Step 4: a judge for each submitted quest (selectVerifier), the machine's verdict, or a later tick. */
+function reviews(step: Step, review: readonly Quest[]): Reviews {
+  const planned: Reviews = { verifications: [], machine: [] };
+  const { snapshot, roster } = step;
   for (const quest of review) {
-    const free = step.snapshot.characters.filter(step.roster.canStart);
-    const verifier = verifierFor(quest, free, step.character(quest.assignee), step.snapshot.registry.classes);
-    if (verifier === undefined) continue;
-    step.roster.take(verifier, null);
-    planned.push({ quest: quest.id, verifier: verifier.id });
+    const choice = selectVerifier(quest, snapshot.characters.filter(roster.standsBy), {
+      same_family: snapshot.kingdom.dispatch.verifier_same_family,
+      classes: snapshot.registry.classes,
+      assignee: step.character(quest.assignee),
+      party: partyOf(quest, snapshot.quests),
+      free: roster.canStart,
+    });
+    if (choice === null) continue;
+    if (choice.reason === 'machine_only') {
+      planned.machine.push(quest.id);
+      continue;
+    }
+    roster.take(choice.character, null);
+    planned.verifications.push({ quest: quest.id, verifier: choice.character.id, reason: choice.reason });
   }
   return planned;
 }
@@ -158,16 +202,22 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
     snapshot.quests.filter((quest) => quest.status === status).toSorted(byPriority);
   const open = inStatus('open').filter(ready);
   const openSessions = open.filter(({ tier }) => tier === 'session');
+  const suspended = suspensions(step);
+  // The paused work takes its slots before anything new.
+  const wakes = wakesOf(step.roster, step.character, inStatus('paused_mana'));
+  const starts = inStatus('claimed')
+    .filter((quest) => ready(quest) && holderGoes(step, quest))
+    .map(({ id }) => id);
+  const judged = reviews(
+    step,
+    inStatus('review').filter((quest) => quest.tier === 'session' && typeof quest.verifier !== 'string'),
+  );
   return {
-    // Object literals evaluate in order: the paused work takes its slots before anything new.
-    wakes: wakesOf(step.roster, step.character, inStatus('paused_mana')),
-    starts: inStatus('claimed')
-      .filter((quest) => ready(quest) && holderGoes(step, quest))
-      .map(({ id }) => id),
-    verifications: verifications(
-      step,
-      inStatus('review').filter((quest) => quest.tier === 'session' && typeof quest.verifier !== 'string'),
-    ),
+    suspensions: suspended,
+    wakes,
+    starts,
+    verifications: judged.verifications,
+    machine_verdicts: judged.machine,
     redispatches: inStatus('returned')
       .filter((quest) => holderGoes(step, quest))
       .map(({ id }) => id),

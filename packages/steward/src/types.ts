@@ -1,8 +1,26 @@
 // What the Steward is given and what it gives back (implementation-plan §3.1). It sees only AgentRunner and its
 // capabilities, never a CLI (ADR 0006, 0021): apps/cli, the composition root, injects the runners of the tribes.
-import type { Clock, IdSource, Quest, QuestId, Rank, Territory, TribeId } from '@elvaria/domain';
+import type {
+  CharacterId,
+  Clock,
+  FailKind,
+  IdSource,
+  Quest,
+  QuestId,
+  Rank,
+  Result,
+  Territory,
+  TribeId,
+} from '@elvaria/domain';
 import type { EventLog } from '@elvaria/eventlog';
-import type { AgentRunner, PromptTemplates } from '@elvaria/runner-core';
+import type {
+  AgentRunner,
+  CheckRun,
+  CommitOutcome,
+  PlotFailure,
+  PromptTemplates,
+  ReleasedPlot,
+} from '@elvaria/runner-core';
 import type { KingdomStore } from '@elvaria/store';
 
 /** A quest as a notice names it: enough for the owner to recognise it without opening the file. */
@@ -26,7 +44,14 @@ export type Notice =
     }
   | { readonly kind: 'awaiting_seal'; readonly quest: NoticeQuest }
   | { readonly kind: 'infirmary'; readonly quest: NoticeQuest; readonly reason: string }
-  | { readonly kind: 'question'; readonly quest: NoticeQuest; readonly question: string };
+  | { readonly kind: 'question'; readonly quest: NoticeQuest; readonly question: string }
+  /** The character failed the same way breakers.same_fail_suspend times in a row: it went to the Temple. */
+  | {
+      readonly kind: 'suspended';
+      readonly character: CharacterId;
+      readonly fail_kind: FailKind | null;
+      readonly count: number;
+    };
 
 export interface Bell {
   ring(notice: Notice): Promise<void>;
@@ -44,10 +69,27 @@ export interface PreparedPlot {
   readonly cwd: string;
 }
 
-/** PlotManager.prepare of P1-07 fits here; until it is wired, folderPlots gives every quest a folder. */
+/** What the territory's checks need: the plot they run in, and the run whose folder keeps their logs. */
+export interface PlotCheck {
+  readonly plot: Quest['plot'];
+  readonly territory: Territory;
+  /** `.runs/<quest>-<n>`, portable and relative to the kingdom: the logs go to `<run_dir>/checks/<id>.log`. */
+  readonly run_dir: string;
+}
+
+/**
+ * The quest's own ground (§3.3): apps/cli puts PlotManager and runChecks of P1-07 behind it; folderPlots gives
+ * every quest a folder with no git and no checks (the Steward's specs).
+ */
 export interface Plots {
-  /** Idempotent: a quest that already has its plot gets the same one back. */
+  /** Idempotent: a quest that already has its plot gets the same one back. Throws when it cannot be prepared. */
   prepare(quest: Quest, territory: Territory): Promise<PreparedPlot>;
+  /** `git add --all` + commit with the territory's hooks (never bypassed): `refused` keeps the work in place. */
+  commit(plot: Quest['plot'], message: string): Promise<CommitOutcome>;
+  /** The territory's checks for the paths the quest touched, one after another in the plot (§3.2). */
+  check(request: PlotCheck): Promise<readonly CheckRun[]>;
+  /** At archive only: removes a worktree (its branch stays) and what the tribes' CLIs kept about it. */
+  release(plot: Quest['plot']): Promise<Result<ReleasedPlot, PlotFailure>>;
 }
 
 export interface StewardDeps {

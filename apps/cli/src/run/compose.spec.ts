@@ -1,6 +1,8 @@
+import { mkdir, mkdtemp, rm } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 
-import { KingdomSchema, QuestIdSchema, TerritorySchema } from '@elvaria/domain';
+import { CharacterIdSchema, KingdomSchema, QuestIdSchema, TerritorySchema } from '@elvaria/domain';
 import type { Kingdom, Quest, Territory } from '@elvaria/domain';
 import { translator } from '@elvaria/i18n';
 import type { PlotManager } from '@elvaria/runner-core';
@@ -81,12 +83,14 @@ describe('plots over PlotManager', () => {
     release: () => Promise.reject(new Error('unused')),
   });
   const kingdom = path.resolve('kingdom root');
+  const HOST = processHostOf(testIo());
 
   it('runs a session in the worktree, or in the folder inside the kingdom', async () => {
     const worktree = { type: 'worktree' as const, path: 'D:/repo/.elvaria/worktrees/q', branch: 'quest/q' };
     const atWorktree = plotsOver(
       kingdom,
       manager({ ok: true, value: { plot: worktree, created: true, setup: null } }),
+      HOST,
     );
     expect((await atWorktree.prepare(quest, territory)).cwd).toBe(
       path.normalize('D:/repo/.elvaria/worktrees/q'),
@@ -95,6 +99,7 @@ describe('plots over PlotManager', () => {
     const atFolder = plotsOver(
       kingdom,
       manager({ ok: true, value: { plot: folder, created: false, setup: null } }),
+      HOST,
     );
     expect((await atFolder.prepare(quest, territory)).cwd).toBe(
       path.join(kingdom, 'quests', quest.id, 'work'),
@@ -105,6 +110,7 @@ describe('plots over PlotManager', () => {
     const failed = plotsOver(
       kingdom,
       manager({ ok: false, error: { reason: 'setup_failed', detail: 'pnpm install exited 1' } }),
+      HOST,
     );
     await expect(failed.prepare(quest, territory)).rejects.toThrow(
       `the plot of ${quest.id} is not ready (setup_failed): pnpm install exited 1`,
@@ -112,8 +118,60 @@ describe('plots over PlotManager', () => {
     const pathless = plotsOver(
       kingdom,
       manager({ ok: true, value: { plot: { type: 'folder' }, created: false, setup: null } }),
+      HOST,
     );
     await expect(pathless.prepare(quest, territory)).rejects.toThrow('has no path');
+  });
+
+  it('commits, runs the checks on what the quest touched, and releases through PlotManager', async () => {
+    const dir = await mkdtemp(path.join(os.tmpdir(), 'elvaria plots-'));
+    try {
+      const calls: string[] = [];
+      const folder = { type: 'folder' as const, path: `quests/${quest.id}/work` };
+      await mkdir(path.join(dir, 'quests', quest.id, 'work'), { recursive: true });
+      const wired: PlotManager = {
+        ...manager({ ok: true, value: { plot: folder, created: false, setup: null } }),
+        touched: () => Promise.resolve(['notes/today.md']),
+        commitAll: (_plot, message) => {
+          calls.push(message);
+          return Promise.resolve({ status: 'no_git' });
+        },
+        release: () => Promise.resolve({ ok: true, value: { removed: false, forget_failures: [] } }),
+      };
+      const lint = {
+        id: 'lint',
+        run: 'node --version',
+        when: ['**/*.md'],
+        exclusive: false,
+        timeout_minutes: 1,
+      };
+      const checked = { ...territory, checks: [lint] };
+      const plots = plotsOver(dir, wired, HOST);
+      expect(await plots.commit(folder, 'chore: submit q')).toEqual({ status: 'no_git' });
+      expect(calls).toEqual(['chore: submit q']);
+      const runs = await plots.check({
+        plot: folder,
+        territory: TerritorySchema.parse(checked),
+        run_dir: `.runs/${quest.id}-1`,
+      });
+      expect(runs).toMatchObject([
+        { id: 'lint', pass: true, log_path: `.runs/${quest.id}-1/checks/lint.log` },
+      ]);
+      expect(await plots.release(folder)).toEqual({
+        ok: true,
+        value: { removed: false, forget_failures: [] },
+      });
+      // A quest that never got a plot runs its checks from the kingdom: nothing it touched, nothing to run.
+      expect(
+        await plotsOver(dir, { ...wired, touched: () => Promise.resolve([]) }, HOST).check({
+          plot: { type: 'none' },
+          territory: TerritorySchema.parse(checked),
+          run_dir: `.runs/${quest.id}-1`,
+        }),
+      ).toEqual([]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 
   it('finds territory programs on PATH for runner-core, with the minimal env', async () => {
@@ -152,6 +210,13 @@ describe('the console bell', () => {
     expect(tooLow).toContain('elvaria quest show q_20261106_7k3m2a');
     const none = lineOf(t, { kind: 'unclaimable', quest, reason: 'no_class', class: 'mage' });
     expect(none).toContain('mage');
+    const thorn = CharacterIdSchema.parse('thorn');
+    expect(lineOf(t, { kind: 'suspended', character: thorn, fail_kind: 'tests_fail', count: 3 })).toBe(
+      'thorn failed the same way (tests_fail) 3 times in a row and went to the Temple.',
+    );
+    expect(lineOf(t, { kind: 'suspended', character: thorn, fail_kind: null, count: 3 })).toContain(
+      '(other)',
+    );
   });
 
   it('prints on the terminal that runs the Steward', async () => {

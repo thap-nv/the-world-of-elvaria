@@ -8,6 +8,7 @@ import type { AgentRunner, Answered, Continuation, RunningSession, SpawnRequest 
 
 import { heardBy } from '../mana/heard.ts';
 import { step } from '../record.ts';
+import { checksOf, checksRunOf } from '../review/checks.ts';
 import { continuationOf, requestOf } from './request.ts';
 import type { Context } from '../context.ts';
 import type { MovePayload } from '../record.ts';
@@ -170,12 +171,16 @@ export async function openAssignee(
     character: character.id,
     session,
     session_id: sessionId,
+    checks: [],
   });
   ctx.counts.started += 1;
   return moved;
 }
 
-/** The verifier's fresh session on a submitted quest (§3.2): it reads the letter and the diff, never a transcript. */
+/**
+ * The verifier's fresh session on a submitted quest (§3.2): the machine checks run first, then the judge reads the
+ * letter, the checks and the work in the plot, never a transcript.
+ */
 export async function openVerifier(
   ctx: Context,
   questId: QuestId,
@@ -185,7 +190,10 @@ export async function openVerifier(
   if (!parts.ok) return parts;
   const { quest, character, territory, runner } = parts.value;
   const n = currentRun(quest);
-  const spawned = await spawnFor(ctx, runner, { role: 'verifier', quest, character, territory, n });
+  const checks = await checksOf(ctx, quest, territory, n);
+  if (!checks.ok) return checks;
+  const input = { role: 'verifier', quest, character, territory, n, checks: checks.value } as const;
+  const spawned = await spawnFor(ctx, runner, input);
   if (!spawned.ok) return spawned;
   const { session } = spawned.value;
   const sessionId = await session.session_id;
@@ -194,6 +202,7 @@ export async function openVerifier(
     event: { type: 'assign_verifier', verifier: character.id, session_id: sessionId },
     actor: 'steward',
     edits: { [character.id]: step('assign_verify', questId) },
+    before: { checks_run: checksRunOf(checks.value) },
   });
   if (!moved.ok) {
     await session.kill(`the quest refused its verifier: ${moved.error}`);
@@ -206,6 +215,7 @@ export async function openVerifier(
     character: character.id,
     session,
     session_id: sessionId,
+    checks: checks.value,
   });
   ctx.counts.started += 1;
   return moved;

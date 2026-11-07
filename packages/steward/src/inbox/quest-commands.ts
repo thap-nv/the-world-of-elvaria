@@ -4,7 +4,6 @@
 import { createHash } from 'node:crypto';
 
 import {
-  currentRun,
   editQuest,
   formatDatedId,
   parseInstant,
@@ -19,7 +18,6 @@ import type { Character, InboxCommandOf, Quest, QuestEventType, QuestId, Result 
 import { moveAndRing } from '../notices.ts';
 import { OWNER, step } from '../record.ts';
 import { openAssignee } from '../sessions/open.ts';
-import { judged, levelAfterVerdict, verdictIdOf } from '../verdicts.ts';
 import type { Context } from '../context.ts';
 import type { Edits } from '../record.ts';
 
@@ -95,23 +93,32 @@ const ARCHIVE_EVENT: Partial<Record<Quest['status'], 'discard' | 'reject'>> = {
   awaiting_seal: 'reject',
 };
 
+const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
+/**
+ * An archived quest gives its plot back (§2.5 `done.archive`: the worktree goes at archive, never sooner; its branch
+ * stays). A worktree with uncommitted work is refused and stays for the owner (no `--force`, §3.3).
+ */
+async function releasePlot(ctx: Context, quest: Quest): Promise<void> {
+  try {
+    const released = await ctx.deps.plots.release(quest.plot);
+    if (!released.ok) {
+      const { reason, detail } = released.error;
+      ctx.deps.log.warn(`steward: ${quest.id}: the plot stays (${reason}): ${detail}`);
+      return;
+    }
+    for (const failure of released.value.forget_failures)
+      ctx.deps.log.warn(`steward: ${quest.id}: a tribe's CLI kept data about the plot: ${failure}`);
+  } catch (error) {
+    ctx.deps.log.warn(`steward: ${quest.id}: the plot stays: ${messageOf(error)}`);
+  }
+}
+
 export async function archive(ctx: Context, quest: Quest): Promise<Outcome> {
   const type: Extract<QuestEventType, 'discard' | 'reject' | 'archive'> =
     ARCHIVE_EVENT[quest.status] ?? 'archive';
-  return outcomeOf(await moveAndRing(ctx, { quest: quest.id, event: { type }, actor: 'user' }));
-}
-
-/** The royal seal: the owner's verdict on the assignee's work, weighed three times (§2.6). */
-export async function seal(ctx: Context, quest: Quest, note: string | undefined): Promise<Outcome> {
-  const assignee = typeof quest.assignee === 'string' ? quest.assignee : undefined;
-  const edits: Edits =
-    assignee === undefined
-      ? {}
-      : { [assignee]: judged(quest, verdictIdOf(quest, currentRun(quest)), 'pass', true) };
-  const event = note === undefined ? { type: 'seal' as const } : { type: 'seal' as const, note };
-  const moved = await moveAndRing(ctx, { quest: quest.id, event, actor: 'user', edits });
-  const judgedAssignee = assignee === undefined ? undefined : ctx.world.characters.get(assignee);
-  if (moved.ok && judgedAssignee !== undefined) await levelAfterVerdict(ctx, judgedAssignee);
+  const moved = await moveAndRing(ctx, { quest: quest.id, event: { type }, actor: 'user' });
+  if (moved.ok) await releasePlot(ctx, moved.value);
   return outcomeOf(moved);
 }
 

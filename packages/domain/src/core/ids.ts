@@ -14,7 +14,11 @@ export const SCRIPT_ID_PATTERN = /^[a-z][a-z0-9-]*$/;
 export const QUEST_ID_PATTERN = new RegExp(`^q_${DATE}_${CROCKFORD6}$`);
 export const CAMPAIGN_ID_PATTERN = new RegExp(`^c_${DATE}_${CROCKFORD6}$`);
 export const LESSON_ID_PATTERN = new RegExp(`^L_${DATE}_${CROCKFORD6}$`);
-export const VERDICT_ID_PATTERN = new RegExp(`^q_${DATE}_${CROCKFORD6}-[1-9][0-9]*$`);
+/**
+ * `<quest>-<n>`: the verdict that ends the review of run n. Two more judgements on a run get files of their own
+ * (P1-04): `-p<k>`, the partial verdict its k-th verifier session left, and `-user`, the owner's seal or return.
+ */
+export const VERDICT_ID_PATTERN = new RegExp(`^q_${DATE}_${CROCKFORD6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user)?$`);
 /** Event and inbox command ids: ULID, so they sort by time (implementation-plan §2.1). */
 export const ULID_PATTERN = /^[0-9A-HJKMNP-TV-Z]{26}$/;
 
