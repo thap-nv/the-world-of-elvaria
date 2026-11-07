@@ -1,6 +1,6 @@
 // `elvaria quest add`: a quest straight to `open`, no Chancellor and no mana (implementation-plan §3.11, stage 0).
 // It sends `create_quest` with draft = false; the Steward gives the quest its id and writes the file (ADR 0005).
-import { QUEST_TAGS_MAX, QUEST_TITLE_MAX_LENGTH, RANKS } from '@elvaria/domain';
+import { QUEST_TAGS_MAX, QUEST_TITLE_MAX_LENGTH, RANKS, scriptParamsIssues } from '@elvaria/domain';
 import type { Kind, Rank, Registry } from '@elvaria/domain';
 
 import { flagOption, textOption, textOptions } from '../args.ts';
@@ -45,6 +45,10 @@ function readScript(input: CommandInput, kind: Kind | undefined, registry: Regis
     problems.push(ctx.t('cli.quest.script_kind', { script: id, kind: kind.id }));
   const params = parseParams(textOption(input, 'params'));
   if (params === undefined) problems.push(ctx.t('cli.quest.bad_params'));
+  // The Steward refuses params outside the catalog's params_schema (§3.12): say why here, before the inbox.
+  const issues = script === undefined || params === undefined ? [] : scriptParamsIssues(script, params);
+  if (issues.length > 0)
+    problems.push(ctx.t('cli.quest.script_params', { script: id, issues: issues.join('; ') }));
   const choice: ScriptChoice | undefined = params === undefined ? undefined : { id, params };
   return { choice, problems };
 }
