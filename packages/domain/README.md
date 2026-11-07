@@ -20,7 +20,8 @@
 - Plans the Steward's tick (`src/dispatch/`): `planTick(snapshot, now)` returns what the Steward and the sandbox
   carry out in one tick: characters on a fail streak sent to the Temple (`failStreakReached`), claimed quests
   that start, a judge (or the machine) for each submitted quest, returned quests sent back, claims (class, level
-  by `canTake`, limits of tribe and territory, round-robin, affinity), and the open quests nobody can take.
+  by `canTake`, limits of tribe and territory, round-robin, affinity), the open quests nobody can take, and the
+  done quests still to deliver (`deliveries`, P1-14).
   From P1-05 a character's pool must be open (`poolOpenOf`), and paused quests whose pool woke go on before
   any new work (`wakes`, `wakesOf`). `resumedSession` decides whether a revived assignee continues its CLI
   session (an answer within `resume_after_answer_minutes`, mana with `resume_after_mana`, an adapter that can

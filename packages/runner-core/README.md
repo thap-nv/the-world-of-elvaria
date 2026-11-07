@@ -24,6 +24,9 @@
   checks, the letter, the diff); `buildChancellorPrompt` for the Chancellor; `resumedPrompt` for a session
   continued with `--resume` (the system part as built, a user part that only says it goes on, with the owner's
   answer when there is one). The system part opens with the royal decree when `<kingdom>/decree.md` exists.
+  The quest's facts carry its kind's delivery convention when the Steward needs a file of a given shape: a plan
+  (`subquests`) writes its sub-quests as quest-draft JSON to `SUBQUESTS_FILE` (`subquests.json`) at the root of
+  its plot, where its judge reads them and the Steward opens them once the quest is done (P1-14).
 - Runs the conformance suite (`conformanceChecks`, `runConformance`): plain checks with `node:assert`, so a spec
   wraps them in `it` and `elvaria tribe check` (P1-19) runs them too. With a real CLI (`live`) only the checks
   that burn no mana run. `openWorkspace` and `conformanceRequest` give an adapter's specs the same requests.

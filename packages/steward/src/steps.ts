@@ -1,11 +1,12 @@
-// Steps 3–6 of a tick (implementation-plan §3.1), as planTick decided them: stop the sessions past a breaker
+// Steps 3–7 of a tick (implementation-plan §3.1), as planTick decided them: stop the sessions past a breaker
 // (P1-06), send characters on a fail streak to the Temple, wake paused quests whose pool has mana again (P1-05),
 // start claimed quests, give submitted quests a verifier or the machine's verdict, send returned quests back,
-// claim open ones. Script-tier quests wait for P1-17, which runs registry scripts; the Steward does not claim them
-// before it can run them.
+// claim open ones, deliver done ones (P1-14). Script-tier quests wait for P1-17, which runs registry scripts; the
+// Steward does not claim them before it can run them.
 import type { CharacterId, TickPlan } from '@elvaria/domain';
 
 import { ring } from './context.ts';
+import { deliver } from './deliver/deliver.ts';
 import { moveAndRing } from './notices.ts';
 import { step } from './record.ts';
 import { machineReview } from './review/machine.ts';
@@ -53,4 +54,6 @@ export async function carryOut(ctx: Context, plan: TickPlan): Promise<void> {
     if (claimed.ok) warnIfRefused(ctx, `${quest} start`, await openAssignee(ctx, quest, { kind: 'start' }));
     else warnIfRefused(ctx, `${quest} claim`, claimed);
   }
+  // Step 7: what is done goes to the owner by its kind's convention (P1-14).
+  for (const quest of plan.deliveries) warnIfRefused(ctx, `${quest} deliver`, await deliver(ctx, quest));
 }

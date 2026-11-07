@@ -165,6 +165,14 @@ describe('assignee prompt', () => {
     expect(user).not.toContain('# Gazetteer');
   });
 
+  it('tells a plan quest where its sub-quests go, and other kinds nothing of the kind', () => {
+    const plan = QuestSchema.parse({ ...QUEST, kind: 'plan', class_required: 'mage' });
+    const line = '- Deliverable: the sub-quests, written to `subquests.json` at the root of the plot';
+    expect(buildPrompt({ ...assignee, quest: plan }, templates).user).toContain(line);
+    expect(buildPrompt({ ...verifier, quest: plan }, templates).user).toContain(line);
+    expect(buildPrompt(assignee, templates).user).not.toContain('- Deliverable:');
+  });
+
   it('fails loudly on a class the registry does not have', () => {
     const lost = { ...THORN, class: 'necromancer' } as unknown as typeof THORN;
     expect(() => buildPrompt({ ...assignee, character: lost }, templates)).toThrow(

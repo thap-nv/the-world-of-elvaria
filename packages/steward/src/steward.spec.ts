@@ -47,6 +47,8 @@ describe('the Steward, one quest', () => {
       'quest.started',
       'verdict.pass',
       'quest.done',
+      // Step 7 of the same tick (P1-14).
+      'quest.delivered',
     ]);
     // The log, replayed over the morning, gives back the files (P0-09): no change went unwritten.
     const log = await openEventLog(kingdom.root).read();

@@ -41,6 +41,8 @@ export function lineOf(t: Translate, notice: Notice): string {
       return t('cli.run.notice.infirmary', { ...quest, reason: notice.reason });
     case 'question':
       return t('cli.run.notice.question', { ...quest, question: notice.question });
+    case 'subquests_refused':
+      return t('cli.run.notice.subquests_refused', { ...quest, reason: notice.reason });
   }
 }
 

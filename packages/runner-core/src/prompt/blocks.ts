@@ -1,8 +1,9 @@
 // The blocks prompts are made of (implementation-plan §3.7, §3.13; ADR 0010, 0017): each fills one template from
 // the kingdom's files, and an optional block with nothing to say is empty, so joinBlocks leaves it out.
+import { SUBQUESTS_FILE } from '../plot/subquests.ts';
 import { fenced, fill, joinBlocks } from './templates.ts';
 import type { PromptTemplates } from './templates.ts';
-import type { Kingdom, Quest, Registry, Skill, Territory, Verdict } from '@elvaria/domain';
+import type { Kind, Kingdom, Quest, Registry, Skill, Territory, Verdict } from '@elvaria/domain';
 
 export type Locale = Kingdom['owner']['locale'];
 
@@ -42,6 +43,14 @@ const present = (text: string | null | undefined): text is string =>
 export const decreeBlock = (decree: string | null, t: PromptTemplates): string =>
   present(decree) ? fill(t.decree, { decree: decree.trim() }) : '';
 
+/**
+ * What the session leaves for the Steward to deliver, when the kind's convention needs a file of a given shape
+ * (product plan §5: the prompt carries the kind's delivery convention). Other deliverables are the work itself.
+ */
+const DELIVERABLE_FACTS: Partial<Record<Kind['deliverable_type'], string>> = {
+  subquests: `- Deliverable: the sub-quests, written to \`${SUBQUESTS_FILE}\` at the root of the plot as quest-draft JSON: \`{"version": 1, "drafts": [...]}\`, each draft with ref (d1, d2…), title, description, kind, rank, territory, tier, class_required, tags, depends_on_refs, parent_ref (optional), estimate {tokens, minutes}, seal_required, secrets_required. The Steward opens them once this quest is done`,
+};
+
 function partyFact(quest: Quest): string[] {
   if (quest.party_id === undefined) return [];
   const contract = quest.contract === undefined ? '' : `, contract \`${quest.contract}\``;
@@ -57,6 +66,7 @@ export function questBlock(quest: Quest, registry: Registry, t: PromptTemplates)
     `- Territory: ${quest.territory}`,
     `- Limits: ${quest.budget.max_minutes} minutes, ${quest.budget.max_tokens} tokens`,
     ...partyFact(quest),
+    ...[DELIVERABLE_FACTS[kind.deliverable_type] ?? []].flat(),
   ];
   return fill(t.quest, {
     quest_id: quest.id,
