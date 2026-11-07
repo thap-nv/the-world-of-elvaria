@@ -115,7 +115,18 @@ elvaria seal <quest> --note "…"                   # xong
 elvaria return <quest> --note "…" --fail-kind …   # trả về người làm, ít nhất 20 ký tự
 ```
 
-Merge nhánh là việc của bạn, như mọi PR.
+Merge nhánh là việc của bạn, như mọi PR. Quản sự viết thư giao hàng vào `.runs/<quest>-delivery.md`, dùng làm mô tả PR. Push từ trong worktree (`git -C <repo>/.elvaria/worktrees/<quest> push -u origin quest/<quest>`), để pre-push hook của repo kiểm đúng nhánh đó, không kiểm checkout chính.
+
+Sau khi merge, worktree chưa tự đi: một quest `done` chưa có lệnh lưu trữ (§11, đề xuất P1-11c), nên dọn tay trong repo của lãnh thổ:
+
+```bash
+git worktree remove .elvaria/worktrees/<quest>     # quest đã hủy, còn thay đổi chưa commit: thêm --force
+git branch -d quest/<quest>                          # nhánh không có commit nào: -D
+git push origin --delete quest/<quest>               # nếu đã push
+claude purge --yes "<repo>/.elvaria/worktrees/<quest>"
+```
+
+`claude purge` xóa transcript mà Claude Code giữ cho đường dẫn đó (exit 1 với "No Claude Code project state found" là không còn gì). Trên Windows, `git worktree remove` để lại khung thư mục chứa các junction `node_modules` của pnpm (đã chết, không còn file): xóa nó bằng một lệnh không đi theo junction, ví dụ `node -e "require('fs').rmSync(process.argv[1], {recursive: true, force: true})" "<repo>/.elvaria/worktrees/<quest>"`. `EPERM` nghĩa là một chương trình còn mở thư mục đó (VS Code mở worktree để xem PR): đóng nó rồi xóa lại. Lần chạy 2026-11-07 dọn đúng như vậy cả hai worktree.
 
 ## 9. Lần chạy ngày 2026-11-07
 
