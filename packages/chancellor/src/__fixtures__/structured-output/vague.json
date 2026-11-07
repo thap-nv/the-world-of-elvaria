@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "drafts": [
+    {
+      "ref": "d1",
+      "title": "Cải thiện trang chủ",
+      "description": "Người dùng muốn trang chủ tốt hơn nhưng chưa nói tốt hơn ở mặt nào; chờ câu trả lời rồi mới chia việc.",
+      "kind": "build",
+      "rank": "D",
+      "territory": "dc1-se-team",
+      "tier": "session",
+      "class_required": "knight",
+      "tags": ["frontend"],
+      "depends_on_refs": [],
+      "estimate": { "tokens": 40000, "minutes": 20 },
+      "seal_required": false,
+      "secrets_required": [],
+      "question": "Tốt hơn ở mặt nào: tốc độ tải, giao diện, hay nội dung?"
+    }
+  ]
+}

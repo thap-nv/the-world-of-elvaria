@@ -22,6 +22,13 @@ const DEFAULT_MODEL = 'claude-haiku-5-5';
  * real hook asks for at Stop (ADR 0010) takes a few more (P1-09, first run against Claude Code).
  */
 const PROBE_BUDGET = { max_turns: 10, max_minutes: 5 } as const;
+/**
+ * On Windows a killed session's own children (a hook, agy's shim) may still hold the plot for a moment: killing
+ * the whole tree is P1-06. rm() then fails with EBUSY or EPERM, which its retries are made for (CI, PR #32: the
+ * `hang` check of runner-antigravity). Linear back-off: up to 5.5 s in all.
+ */
+const REMOVE_RETRIES = 10;
+const REMOVE_RETRY_MS = 100;
 
 export interface Workspace {
   readonly root: string;
@@ -41,7 +48,8 @@ export async function openWorkspace(): Promise<Workspace> {
     plot,
     run_dir: runDir,
     handover: path.join(root, 'quests', CONFORMANCE_QUEST, 'handover.md'),
-    remove: () => rm(root, { recursive: true, force: true }),
+    remove: () =>
+      rm(root, { recursive: true, force: true, maxRetries: REMOVE_RETRIES, retryDelay: REMOVE_RETRY_MS }),
   };
 }
 
