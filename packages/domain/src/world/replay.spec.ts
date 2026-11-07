@@ -100,8 +100,11 @@ describe('replaying a fake day', () => {
     const unused = Object.keys(EVENT_DATA_SCHEMAS).filter(
       (type) => !types.has(type) && !type.startsWith('agent.') && !type.startsWith('command.'),
     );
-    // Moves of the temple and of the owner's discipline; reduce.spec.ts applies them one by one.
+    // The owner's edits and the Steward's notices (P1-03), moves of the temple and of the owner's discipline;
+    // reduce.spec.ts applies them one by one.
     expect(unused).toEqual([
+      'quest.edited',
+      'quest.unclaimable',
       'character.meditate',
       'character.suspend',
       'character.release',

@@ -1,0 +1,27 @@
+{
+  "name": "@elvaria/steward",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The Steward: the tick loop, the inbox, claims, sessions through AgentRunner, verdicts — the only writer of quests.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@elvaria/domain": "workspace:*",
+    "@elvaria/eventlog": "workspace:*",
+    "@elvaria/runner-core": "workspace:*",
+    "@elvaria/store": "workspace:*"
+  },
+  "devDependencies": {
+    "@elvaria/config": "workspace:*",
+    "@types/node": "^24.19.2",
+    "@vitest/coverage-v8": "^5.1.0",
+    "typescript": "~5.9.3",
+    "vitest": "^5.1.0"
+  }
+}

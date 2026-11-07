@@ -65,6 +65,7 @@ const HANDLERS: { readonly [T in TypedEventType]?: Handler<T> } = {
   'quest.resumed': onQuest,
   'quest.infirmary': onQuest,
   'quest.delivered': onQuest,
+  'quest.edited': onQuest,
   'character.created': onCharacter,
   'character.sleep': onCharacter,
   'character.wake': onCharacter,

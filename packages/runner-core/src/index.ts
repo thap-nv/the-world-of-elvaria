@@ -1,3 +1,25 @@
+export { splitCommandLine } from './checks/command-line.ts';
+export type { CommandLineIssue } from './checks/command-line.ts';
+export { globToRegExp } from './checks/glob.ts';
+export { argvOf, childEnvOf, runProgram } from './checks/program.ts';
+export type {
+  CommandIssue,
+  Launch,
+  ProcessHost,
+  ProgramOptions,
+  ProgramResolver,
+  ProgramRun,
+} from './checks/program.ts';
+export {
+  CLEANUP_TIMEOUT_MS,
+  MS_PER_MINUTE,
+  checkLogOf,
+  exclusiveLockOf,
+  runChecks,
+  toVerdictCheck,
+} from './checks/run-checks.ts';
+export type { CheckRun, ChecksOptions, ChecksRequest } from './checks/run-checks.ts';
+export { selectChecks } from './checks/select-checks.ts';
 export { CONFORMANCE_CHECKS, conformanceChecks, runConformance } from './conformance/checks.ts';
 export type { ConformanceReport } from './conformance/checks.ts';
 export {
@@ -17,6 +39,17 @@ export {
   openWorkspace,
 } from './conformance/workspace.ts';
 export type { Workspace } from './conformance/workspace.ts';
+export { plotCommitMessage } from './plot/commit-message.ts';
+export { folderPlotOf } from './plot/folder.ts';
+export { createPlotManager } from './plot/plot-manager.ts';
+export type { PlotManager, PlotManagerOptions, PreparedPlot } from './plot/plot-manager.ts';
+export { PLOT_RECORD_FILE } from './plot/plot-record.ts';
+export type { PlotRecord } from './plot/plot-record.ts';
+export { PLOT_EXCLUDES } from './plot/repo-settings.ts';
+export { SETUP_TIMEOUT_MS, setupLogOf } from './plot/setup.ts';
+export type { SetupRun } from './plot/setup.ts';
+export type { CommitOutcome, ForgetWorktree, PlotStatus, ReleasedPlot } from './plot/worktree-ops.ts';
+export type { PlotFailure, PlotFailureReason } from './plot/worktree.ts';
 export { commandRefusal } from './policy/command-refusal.ts';
 export {
   AGENT_TOOL,
