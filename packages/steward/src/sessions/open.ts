@@ -2,8 +2,9 @@
 // move with the session's id and the character's move with it. A move the state machine refuses kills the session
 // it was for, so no session ever runs for a quest the files do not say it runs for.
 import { currentRun, err, ok, resumedSession } from '@elvaria/domain';
+import { resumedPrompt } from '@elvaria/runner-core';
 import type { Character, CharacterId, Quest, QuestId, Result, Revival } from '@elvaria/domain';
-import type { AgentRunner, Continuation, RunningSession } from '@elvaria/runner-core';
+import type { AgentRunner, Answered, Continuation, RunningSession, SpawnRequest } from '@elvaria/runner-core';
 
 import { heardBy } from '../mana/heard.ts';
 import { step } from '../record.ts';
@@ -27,6 +28,22 @@ function partsOf(ctx: Context, questId: QuestId, characterId: CharacterId | null
   return ok({ quest, character, territory, runner });
 }
 
+/** A CLI session to continue (`--resume`), and the answer it gets when the owner answered its question. */
+interface Resume {
+  readonly session_id: string;
+  readonly answered: Answered | null;
+}
+
+/** The request of a resumed session: `--resume`, and a prompt carrying only what is new (ADR 0017). */
+const resumedRequest = (ctx: Context, request: SpawnRequest, resume: Resume | null): SpawnRequest =>
+  resume === null
+    ? request
+    : {
+        ...request,
+        resume: { session_id: resume.session_id },
+        prompt: resumedPrompt(request.prompt, resume.answered, ctx.templates),
+      };
+
 /**
  * Prepares the plot, builds the request and spawns; the session and the plot the quest gets. `resume` continues
  * that CLI session (ADR 0017); the session's in-band mana windows are heard by the gauge (§3.5).
@@ -35,13 +52,13 @@ async function spawnFor(
   ctx: Context,
   runner: AgentRunner,
   input: Omit<SessionInput, 'cwd'>,
-  resume: string | null = null,
+  resume: Resume | null = null,
 ): Promise<Result<{ session: RunningSession; plot: Quest['plot'] }, string>> {
   try {
     const prepared = await ctx.deps.plots.prepare(input.quest, input.territory);
     const quest = { ...input.quest, plot: prepared.plot };
     const request = await requestOf(ctx, { ...input, quest, cwd: prepared.cwd });
-    const resumed = resume === null ? request : { ...request, resume: { session_id: resume } };
+    const resumed = resumedRequest(ctx, request, resume);
     const session = heardBy(ctx.mana, input.character, await runner.spawn(resumed));
     return ok({ session, plot: prepared.plot });
   } catch (error) {
@@ -82,12 +99,17 @@ const ACTORS = { answer: 'user', wake: 'mana', start: 'steward', redispatch: 'st
  * The CLI session to continue (`--resume`) instead of a fresh one from the letter (ADR 0017): after an answer in
  * time, or after mana with resume_after_mana, and only when the tribe's adapter can resume (§3.14).
  */
-function resumeFor(ctx: Context, quest: Quest, character: Character, opening: Opening): string | null {
+function resumeFor(ctx: Context, quest: Quest, character: Character, opening: Opening): Resume | null {
   if (!goesOn(opening)) return null;
   const canResume = ctx.limits[character.tribe]?.resume ?? false;
   const revival =
     opening.kind === 'answer' ? { kind: 'answer', now: ctx.deps.clock.now() } : { kind: 'mana' };
-  return resumedSession(quest, revival as Revival, ctx.world.kingdom.dispatch, canResume);
+  const session = resumedSession(quest, revival as Revival, ctx.world.kingdom.dispatch, canResume);
+  if (session === null) return null;
+  const question = quest.blocked?.question;
+  const answered =
+    opening.kind === 'answer' && question !== undefined ? { question, answer: opening.answer } : null;
+  return { session_id: session, answered };
 }
 
 /** The prompt of an answered question reads the answer from the quest (§2.4). */

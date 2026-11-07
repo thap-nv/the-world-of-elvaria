@@ -21,8 +21,9 @@
 - Builds prompts from the Markdown templates in `prompts/` (`loadPromptTemplates`): `buildPrompt` for an
   assignee (new, or continuing after `returned` / `revive` with the letter, the last 20 journal lines, the
   branch's log and the owner's answer) and a verifier (the ritual's steps from `prompts/ritual-steps.md`, the
-  checks, the letter, the diff); `buildChancellorPrompt` for the Chancellor. The system part opens with the
-  royal decree when `<kingdom>/decree.md` exists.
+  checks, the letter, the diff); `buildChancellorPrompt` for the Chancellor; `resumedPrompt` for a session
+  continued with `--resume` (the system part as built, a user part that only says it goes on, with the owner's
+  answer when there is one). The system part opens with the royal decree when `<kingdom>/decree.md` exists.
 - Runs the conformance suite (`conformanceChecks`, `runConformance`): plain checks with `node:assert`, so a spec
   wraps them in `it` and `elvaria tribe check` (P1-19) runs them too. With a real CLI (`live`) only the checks
   that burn no mana run. `openWorkspace` and `conformanceRequest` give an adapter's specs the same requests.

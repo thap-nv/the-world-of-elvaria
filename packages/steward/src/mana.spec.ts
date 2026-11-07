@@ -161,6 +161,9 @@ describe('a usage limit in the middle of a quest', () => {
     expect(paused).toBeDefined();
     expect(first?.resume).toBeUndefined();
     expect(second?.resume).toEqual({ session_id: paused });
+    // The resumed session still holds the quest: its prompt only says it goes on.
+    expect(second?.prompt.user).toMatch(/^# Going on/);
+    expect(second?.prompt.user).not.toContain('The owner answered');
   });
 });
 

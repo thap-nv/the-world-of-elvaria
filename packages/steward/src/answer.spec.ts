@@ -50,21 +50,26 @@ describe("the owner's answer", () => {
     const runs = quest.attempt_log.filter(({ role }) => role === 'assignee');
     expect(quest.attempts).toBe(1);
     expect(runs.map(({ n }) => n)).toEqual([1, 1]);
-    const requests = kingdom.fakes.claude.requests.filter(({ role }) => role === 'assignee');
-    return { asked, resumed: requests.at(-1)?.resume, revived: runs[1] };
+    const request = kingdom.fakes.claude.requests.filter(({ role }) => role === 'assignee').at(-1);
+    return { asked, resumed: request?.resume, prompt: request?.prompt.user ?? '', revived: runs[1] };
   }
 
-  it('continues the asking session for an answer at minute 54', async () => {
-    const { asked, resumed, revived } = await answeredAfter(54);
+  it('continues the asking session for an answer at minute 54, telling it only the answer', async () => {
+    const { asked, resumed, prompt, revived } = await answeredAfter(54);
     expect(asked).toBeDefined();
     expect(resumed).toEqual({ session_id: asked });
     expect(revived?.session_id).toBe(asked);
+    expect(prompt).toMatch(/^# Going on/);
+    expect(prompt).toContain('The owner answered: On the release branch.');
+    expect(prompt).not.toContain('Fake quest «Asks»');
   });
 
   it('starts a fresh session from the letter for an answer at minute 56', async () => {
-    const { asked, resumed, revived } = await answeredAfter(56);
+    const { asked, resumed, prompt, revived } = await answeredAfter(56);
     expect(resumed).toBeUndefined();
     expect(revived?.session_id).not.toBe(asked);
+    expect(prompt).toContain('Fake quest «Asks»');
+    expect(prompt).toContain('The owner answered: On the release branch.');
   });
 
   it('starts a fresh session when the adapter cannot resume', async () => {

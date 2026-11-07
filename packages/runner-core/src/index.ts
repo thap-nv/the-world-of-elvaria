@@ -68,6 +68,8 @@ export { buildPrompt } from './prompt/build-prompt.ts';
 export type { AssigneePromptInput, PromptInput, VerifierPromptInput } from './prompt/build-prompt.ts';
 export { buildChancellorPrompt } from './prompt/chancellor.ts';
 export type { ChancellorContext } from './prompt/chancellor.ts';
+export { resumedPrompt } from './prompt/resumed.ts';
+export type { Answered } from './prompt/resumed.ts';
 export { PROMPTS_DIR, PROMPT_TEMPLATES, loadPromptTemplates } from './prompt/templates.ts';
 export type { PromptTemplateName, PromptTemplates } from './prompt/templates.ts';
 export { FAKE_ADAPTER, FAKE_TOKENS, createFakeRunner, scenarioFromEnv } from './runner/fake-runner.ts';
