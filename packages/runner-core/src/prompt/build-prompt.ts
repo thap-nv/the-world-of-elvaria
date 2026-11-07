@@ -6,11 +6,13 @@ import { FAIL_KINDS } from '@elvaria/domain';
 import { toolPolicyOf } from '../policy/tool-policy.ts';
 import {
   LANGUAGE_NAMES,
+  classBlock,
   continuationBlock,
   decreeBlock,
   diffBlock,
   entryOf,
   gazetteerBlock,
+  partialBlock,
   questBlock,
   scriptureBlock,
   shellBlock,
@@ -20,7 +22,16 @@ import { fenced, fill, joinBlocks, sectionsOf } from './templates.ts';
 import type { BuiltPrompt } from '../runner/types.ts';
 import type { Continuation, Locale, Memory } from './blocks.ts';
 import type { PromptTemplates } from './templates.ts';
-import type { Character, Quest, Registry, Ritual, Skill, Territory, VerdictCheck } from '@elvaria/domain';
+import type {
+  Character,
+  Quest,
+  Registry,
+  Ritual,
+  Skill,
+  Territory,
+  Verdict,
+  VerdictCheck,
+} from '@elvaria/domain';
 
 interface PromptBase {
   readonly locale: Locale;
@@ -34,6 +45,8 @@ interface PromptBase {
   readonly scriptures: readonly string[];
   /** `territories/<id>/gazetteer.md`, or null. */
   readonly gazetteer: string | null;
+  /** The kingdom's `registry/<class.prompt_file>` for the character's class (P1-15), or null when it is gone. */
+  readonly class_prompt: string | null;
 }
 
 export interface AssigneePromptInput extends PromptBase {
@@ -53,7 +66,13 @@ export interface VerifierPromptInput extends PromptBase {
   /** The branch's diff; null when the caller has none to give, and the verifier reads it in the plot. */
   readonly diff: string | null;
   readonly checks: readonly VerdictCheck[];
+  /** The `partial` verdict the last judge of this run left (`<quest>-<n>-p<k>`), or null; this judge reads on. */
+  readonly partial: Verdict | null;
 }
+
+/** The system part of a character: the decree, the laws of its role, then the craft of its class. */
+const systemOf = (input: PromptBase, role: string, className: string, t: PromptTemplates): string =>
+  joinBlocks([decreeBlock(input.decree, t), role, classBlock(input.class_prompt, className, t)]);
 
 export type PromptInput = AssigneePromptInput | VerifierPromptInput;
 
@@ -81,9 +100,9 @@ function assigneePrompt(input: AssigneePromptInput, t: PromptTemplates): BuiltPr
     handover_template: fenced(fill(t.handover, { quest_id: quest.id }), 'markdown'),
   });
   return {
-    system: joinBlocks([decreeBlock(input.decree, t), role]),
+    system: systemOf(input, role, characterClass.name_en, t),
     user: joinBlocks([
-      questBlock(quest, registry, t),
+      questBlock(quest, registry, input.territory, t),
       gazetteerBlock(input.territory, input.gazetteer, t),
       scriptureBlock(input.scriptures, t),
       skillsBlock(input.skills, t),
@@ -143,11 +162,12 @@ function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): BuiltPr
     diff: diffBlock(input.diff, input.territory),
   });
   return {
-    system: joinBlocks([decreeBlock(input.decree, t), role]),
+    system: systemOf(input, role, characterClass.name_en, t),
     user: joinBlocks([
-      questBlock(quest, registry, t),
+      questBlock(quest, registry, input.territory, t),
       gazetteerBlock(input.territory, input.gazetteer, t),
       scriptureBlock(input.scriptures, t),
+      partialBlock(input.partial, t),
       review,
     ]),
   };

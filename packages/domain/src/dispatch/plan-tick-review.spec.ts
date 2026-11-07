@@ -53,6 +53,37 @@ describe('planTick: judges and the fail streak', () => {
     expect(waits).toMatchObject({ verifications: [], machine_verdicts: [] });
   });
 
+  it('names a submitted quest no judge of the roster may ever take under different_model (P1-15)', () => {
+    const review = [inReview(quest(Q1), 'thorn')];
+    // vesper is a judge on the assignee's own model: it never judges thorn's work.
+    const sameModel = [character('thorn', { status: 'working' }), character('vesper', { cls: 'judge' })];
+    expect(planTick(snapshot(review, sameModel), NOW)).toMatchObject({
+      verifications: [],
+      machine_verdicts: [],
+      unjudgeable: [Q1],
+    });
+    // A judge who may take it but is busy for now: the quest only waits.
+    const busy = [...sameModel, character('orin', { cls: 'judge', tribe: 'gemini', status: 'reviewing' })];
+    expect(planTick(snapshot(review, busy), NOW).unjudgeable).toEqual([]);
+    // A judge on another model of the same family is enough under different_model.
+    const other = [...sameModel, character('sable', { cls: 'judge', model: 'claude-opus-5-5' })];
+    expect(planTick(snapshot(review, other), NOW)).toMatchObject({
+      verifications: [{ quest: Q1, verifier: 'sable' }],
+      unjudgeable: [],
+    });
+    // machine_only never waits for ever: the machine judges.
+    const machineOnly = {
+      kingdom: {
+        ...KINGDOM,
+        dispatch: { ...KINGDOM.dispatch, verifier_same_family: 'machine_only' as const },
+      },
+    };
+    expect(planTick(snapshot(review, sameModel, machineOnly), NOW)).toMatchObject({
+      machine_verdicts: [Q1],
+      unjudgeable: [],
+    });
+  });
+
   it('sends an idle character on a fail streak to the Temple before it is given anything', () => {
     const streak = { fail_kind: 'tests_fail' as const, count: 3 };
     const characters = [

@@ -152,6 +152,26 @@ function childrenOf(ctx: Context, plan: Quest, drafts: readonly QuestDraft[]): R
 }
 
 /**
+ * The children the plan quest's list would open, made but not written, or why it opens none. The delivery opens
+ * them; the machine check before the judge (P1-15, review/subquests-check.ts) asks the same question, so a list
+ * the Steward would refuse is returned to the mage instead of being delivered.
+ */
+export async function plannedChildren(
+  ctx: Context,
+  plan: Quest,
+  dir: string | undefined,
+): Promise<Result<Quest[], string>> {
+  if (dir === undefined) return err('the quest has no plot');
+  const drafts = await draftsIn(dir);
+  if (!drafts.ok) return drafts;
+  const beyond = beyondPlan(drafts.value);
+  if (beyond !== undefined) return err(beyond);
+  const order = ordered(drafts.value);
+  if (order === undefined) return err('the drafts wait on each other in a circle');
+  return childrenOf(ctx, plan, order);
+}
+
+/**
  * Opens the sub-quests a plan quest left in its plot (`dir`, native; undefined without a plot). An error is a file
  * the Steward could not write: the delivery waits for the next tick, which finds the children already written.
  */
@@ -160,14 +180,7 @@ export async function openSubquests(
   plan: Quest,
   dir: string | undefined,
 ): Promise<Result<Subquests, string>> {
-  if (dir === undefined) return refused('the quest has no plot');
-  const drafts = await draftsIn(dir);
-  if (!drafts.ok) return refused(drafts.error);
-  const beyond = beyondPlan(drafts.value);
-  if (beyond !== undefined) return refused(beyond);
-  const order = ordered(drafts.value);
-  if (order === undefined) return refused('the drafts wait on each other in a circle');
-  const children = childrenOf(ctx, plan, order);
+  const children = await plannedChildren(ctx, plan, dir);
   if (!children.ok) return refused(children.error);
   for (const child of children.value) {
     if (ctx.world.quests.has(child.id)) continue;

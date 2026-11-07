@@ -19,7 +19,13 @@ export interface DoctorOptions {
   readonly pin: boolean;
   /** `--acknowledge-terms <tribe>`: the owner accepts the provider's terms for that tribe (ADR 0018). */
   readonly acknowledge: ReadonlySet<string>;
+  /** `--enable <tribe>`: turn the tribe on (P1-15; `elvaria tribe` arrives with P1-19). */
+  readonly enable: ReadonlySet<string>;
 }
+
+/** A disabled tribe doctor leaves alone: no `--tool` points at its CLI and no `--enable` turns it on. */
+export const skipsTribe = (tribe: Tribe, options: DoctorOptions): boolean =>
+  !tribe.enabled && !options.tools.has(tribe.id) && !options.enable.has(tribe.id);
 
 export interface TribeCheck {
   readonly findings: readonly Finding[];
@@ -114,14 +120,39 @@ async function adapterFindings(tribe: Tribe, ctx: KingdomContext): Promise<Findi
   return [finding(info.auth_ok ? 'warn' : 'error', text)];
 }
 
+/**
+ * One tribe as kingdom.json should hold it after this run. `--enable` checks a disabled tribe as an enabled one, so
+ * its CLI must be found and pinned before `enabled: true` is written; when it is not, the tribe stays disabled.
+ */
 export async function checkTribe(
   tribe: Tribe,
   ctx: KingdomContext,
   options: DoctorOptions,
 ): Promise<TribeCheck> {
   const { t } = ctx;
-  if (!tribe.enabled && !options.tools.has(tribe.id))
+  if (skipsTribe(tribe, options))
     return { findings: [finding('ok', t('cli.doctor.tribe_disabled', { tribe: tribe.id }))] };
+  const enabling = !tribe.enabled && options.enable.has(tribe.id);
+  const check = await checkFound(enabling ? { ...tribe, enabled: true } : tribe, tribe, ctx, options);
+  if (!enabling) return check;
+  const enabled = check.updated?.enabled === true;
+  const line = enabled
+    ? finding('ok', t('cli.doctor.tribe_enabled', { tribe: tribe.id }))
+    : finding('error', t('cli.doctor.tribe_still_disabled', { tribe: tribe.id }));
+  return { ...check, findings: [...check.findings, line] };
+}
+
+/**
+ * The tribe's CLI found, its version pinned, its adapter asked, its terms checked (ADR 0018); `updated` when the
+ * result differs from `stored`, the tribe as kingdom.json holds it.
+ */
+async function checkFound(
+  tribe: Tribe,
+  stored: Tribe,
+  ctx: KingdomContext,
+  options: DoctorOptions,
+): Promise<TribeCheck> {
+  const { t } = ctx;
   const found = await probe(tribe, ctx, options);
   if ('problem' in found) return { findings: [found.problem] };
   const tool = nextTool(tribe, found, ctx, options);
@@ -131,16 +162,18 @@ export async function checkTribe(
     const details = next.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`);
     return { findings: [finding('error', t('cli.doctor.tribe_invalid', { tribe: tribe.id }), details)] };
   }
+  // Without the terms the adapter would only say the same in English; its login check comes once they are recorded.
+  const refused = tribe.adapter === 'antigravity' && next.data.tool?.terms_acknowledged_at === undefined;
   const findings = [
     finding('ok', t('cli.doctor.tool_found', { tribe: tribe.id, version: tool.version, path: tool.path })),
-    ...(await adapterFindings(next.data, ctx)),
+    ...(refused
+      ? [
+          finding('error', t('cli.doctor.terms_refused', { tribe: tribe.id }), [
+            t('cli.doctor.terms_hint', { tribe: tribe.id }),
+          ]),
+        ]
+      : await adapterFindings(next.data, ctx)),
   ];
-  if (tribe.adapter === 'antigravity' && next.data.tool?.terms_acknowledged_at === undefined)
-    findings.push(
-      finding('error', t('cli.doctor.terms_refused', { tribe: tribe.id }), [
-        t('cli.doctor.terms_hint', { tribe: tribe.id }),
-      ]),
-    );
-  const same = JSON.stringify(next.data) === JSON.stringify(tribe);
+  const same = JSON.stringify(next.data) === JSON.stringify(stored);
   return same ? { findings } : { findings, updated: next.data };
 }

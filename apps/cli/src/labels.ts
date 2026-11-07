@@ -46,6 +46,7 @@ export const STORE_ISSUE_LABEL: Readonly<Record<StoreIssueCode, MessageKey>> = {
   invalid: 'store.issue.invalid',
   id_mismatch: 'store.issue.id_mismatch',
   locked: 'store.issue.locked',
+  not_a_folder: 'store.issue.not_a_folder',
   exists: 'store.issue.exists',
 };
 

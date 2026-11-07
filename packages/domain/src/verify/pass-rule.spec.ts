@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { Q1 } from '../dispatch/__fixtures__/snapshot.ts';
 import { VerdictSchema } from '../schema/quest/verdict.ts';
 import { LINT, NOTES, UNIT, verdictOf } from './__fixtures__/verdicts.ts';
-import { failedChecksNote, underPassRule } from './pass-rule.ts';
+import { SUBQUESTS_CHECK_ID, failedChecksNote, underPassRule } from './pass-rule.ts';
 import type { Verdict } from '../schema/quest/verdict.ts';
 describe('underPassRule', () => {
   const judgedPass = verdictOf({ checks: [LINT, UNIT], notes: 'Looks right to me.' });
@@ -19,6 +19,20 @@ describe('underPassRule', () => {
     const silent = underPassRule(verdictOf({ checks: [UNIT] }), 'all_checks_and_agent');
     expect(silent.notes).toBe(failedChecksNote([UNIT]));
     expect(VerdictSchema.safeParse(silent).success).toBe(true);
+  });
+
+  it('names the kind of the first failing check: incomplete for a sub-quest list (P1-15)', () => {
+    const subquests = { ...UNIT, id: SUBQUESTS_CHECK_ID, log_path: `.runs/${Q1}-1/checks/subquests.log` };
+    expect(underPassRule(verdictOf({ checks: [LINT, subquests] }), 'all_checks_and_agent')).toMatchObject({
+      result: 'fail',
+      fail_kind: 'incomplete',
+    });
+    expect(underPassRule(verdictOf({ checks: [UNIT, subquests] }), 'checks_only').fail_kind).toBe(
+      'tests_fail',
+    );
+    expect(underPassRule(verdictOf({ checks: [subquests, UNIT] }), 'checks_only').fail_kind).toBe(
+      'incomplete',
+    );
   });
 
   it("keeps the judge's fail, its pass when every check passed, and its word under agent_only", () => {

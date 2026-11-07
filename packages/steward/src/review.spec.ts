@@ -28,10 +28,14 @@ afterEach(async () => {
 describe('the machine checks and the pass rule', () => {
   it('runs the checks before the judge, and fails a pass when a check failed', async () => {
     const calls: string[] = [];
+    const diff = ' src/api.ts | 1 +\n\ndiff --git a/src/api.ts b/src/api.ts\n+export const api = 1;';
     const { kingdom, steward } = await open({}, (k) => ({
       plots: plotsWith(
         k.root,
-        { check: ({ run_dir }) => Promise.resolve([unitFails(questOfRun(run_dir))]) },
+        {
+          check: ({ run_dir }) => Promise.resolve([unitFails(questOfRun(run_dir))]),
+          diff: () => Promise.resolve(diff),
+        },
         calls,
       ),
     }));
@@ -43,7 +47,11 @@ describe('the machine checks and the pass rule', () => {
       async () => (await kingdom.quest('Breaks a test')).attempts === 2,
     );
     const quest = await kingdom.quest('Breaks a test');
-    expect(calls.slice(0, 2)).toEqual([`commit chore: submit ${quest.id}`, `check .runs/${quest.id}-1`]);
+    expect(calls.slice(0, 3)).toEqual([
+      `commit chore: submit ${quest.id}`,
+      `check .runs/${quest.id}-1`,
+      'diff folder',
+    ]);
     expect(quest.checks_run).toEqual(['unit']);
     const judged = await verdictIn(kingdom, `${quest.id}-1`);
     expect(judged).toMatchObject({
@@ -56,6 +64,11 @@ describe('the machine checks and the pass rule', () => {
       ({ role }) => role === 'verifier',
     );
     expect(judgeRequest?.prompt.user).toContain('unit');
+    // The judge reads the branch's diff in its prompt (PlotManager.diff, P1-15) and the craft of its class.
+    expect(judgeRequest?.prompt.user).toContain(`# Diff\n\n\`\`\`diff\n${diff}\n\`\`\``);
+    expect(judgeRequest?.prompt.system).toContain('# Your craft: Judge');
+    const assigneeRequest = kingdom.fakes.claude.requests.find(({ role }) => role === 'assignee');
+    expect(assigneeRequest?.prompt.system).toContain('# Your craft: Knight');
   });
 
   it('sends the quest to the infirmary when the territory refuses the commit of the finished work', async () => {
@@ -102,6 +115,16 @@ describe('verdict files', () => {
     const quest = await kingdom.quest('Long diff');
     expect(await verdictIn(kingdom, `${quest.id}-1-p1`)).toMatchObject({ result: 'partial' });
     expect(await verdictIn(kingdom, `${quest.id}-1`)).toMatchObject({ result: 'pass' });
+    // The second judge reads on from where the first stopped (P1-15); the first had nobody before it.
+    const judges = [...kingdom.fakes.claude.requests, ...kingdom.fakes.gemini.requests].filter(
+      ({ role }) => role === 'verifier',
+    );
+    expect(judges.map(({ prompt }) => prompt.user.includes('# Where the last judge stopped'))).toEqual([
+      false,
+      true,
+    ]);
+    expect(judges[1]?.prompt.user).toContain('- Checked until: src/api/orders.ts');
+    expect(judges[1]?.prompt.user).toContain(`verdict \`${quest.id}-1-p1\``);
   });
 
   it("writes the owner's seal as a verdict of its own, then archives and releases the plot", async () => {

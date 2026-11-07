@@ -19,7 +19,8 @@
   verdicts since the last change, `level_since`).
 - Plans the Steward's tick (`src/dispatch/`): `planTick(snapshot, now)` returns what the Steward and the sandbox
   carry out in one tick: characters on a fail streak sent to the Temple (`failStreakReached`), claimed quests
-  that start, a judge (or the machine) for each submitted quest, returned quests sent back, claims (class, level
+  that start, a judge (or the machine) for each submitted quest, the submitted quests no judge of the roster may
+  ever take (`unjudgeable`, `waitsForNoJudge`, P1-15), returned quests sent back, claims (class, level
   by `canTake`, limits of tribe and territory, round-robin, affinity), the open quests nobody can take, and the
   done quests still to deliver (`deliveries`, P1-14).
   From P1-05 a character's pool must be open (`poolOpenOf`), and paused quests whose pool woke go on before
@@ -35,7 +36,7 @@
 - Keeps the separation of duties (`src/verify/`, ADR 0008, 0020): `selectVerifier` (never a worker of the quest
   or of its party, never the assignee's model, another model family first by `familyOf`, then another tribe;
   `dispatch.verifier_same_family` for the rest), `underPassRule` (a failing check fails the quest under
-  `all_checks_and_agent`), `machineVerdictOf` (the machine's verdict from the checks), `validateVerdict` (no
+  `all_checks_and_agent`, as `tests_fail`, or `incomplete` for the Steward's `subquests` check, P1-15), `machineVerdictOf` (the machine's verdict from the checks), `validateVerdict` (no
   worker, only the session the Steward spawned, no pass over a failing check) and the verdict ids of a run
   (`<quest>-<n>`, `-p<k>` for a partial, `-user` for the owner's). `withVerdict` (`src/character/`) puts a
   verdict into the reputation and tag windows and the fail streak.

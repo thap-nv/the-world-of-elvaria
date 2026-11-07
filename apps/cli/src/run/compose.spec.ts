@@ -35,16 +35,21 @@ describe('crewOf', () => {
     { id: 'claude', adapter: 'claude_code', enabled: true, max_concurrent: 2 },
     { id: 'gemini', adapter: 'antigravity', enabled: true, max_concurrent: 1 },
     { id: 'spare', adapter: 'claude_code', enabled: false, max_concurrent: 1 },
+    { id: 'codex', adapter: 'codex_cli', enabled: true, max_concurrent: 1 },
   ]);
 
   it('gives each enabled tribe with a known adapter a runner, and its CLI a forget', () => {
     const crew = crewOf(kingdom, testIo());
-    expect(Object.keys(crew.runners)).toEqual(['claude']);
+    expect(Object.keys(crew.runners)).toEqual(['claude', 'gemini']);
     const claude = crew.runners[kingdom.tribes[0]!.id];
     expect(claude?.adapter).toBe('claude_code');
     expect(claude?.capabilities.tool_gate).toBe(true);
+    // Antigravity since P1-15: agy keeps nothing per worktree, so only Claude Code has a forget.
+    const gemini = crew.runners[kingdom.tribes[1]!.id];
+    expect(gemini).toMatchObject({ tribe: 'gemini', adapter: 'antigravity' });
+    expect(gemini?.capabilities).toMatchObject({ resume: true, subagent: false });
     expect(crew.forget).toHaveLength(1);
-    expect(crew.idle.map(({ id }) => id)).toEqual(['gemini']);
+    expect(crew.idle.map(({ id }) => id)).toEqual(['codex']);
   });
 
   it('starts the pinned CLI, with the minimal env only', () => {
@@ -80,6 +85,7 @@ describe('plots over PlotManager', () => {
     status: () => Promise.reject(new Error('unused')),
     touched: () => Promise.reject(new Error('unused')),
     commitAll: () => Promise.reject(new Error('unused')),
+    diff: () => Promise.reject(new Error('unused')),
     release: () => Promise.reject(new Error('unused')),
   });
   const kingdom = path.resolve('kingdom root');
@@ -123,7 +129,7 @@ describe('plots over PlotManager', () => {
     await expect(pathless.prepare(quest, territory)).rejects.toThrow('has no path');
   });
 
-  it('commits, runs the checks on what the quest touched, and releases through PlotManager', async () => {
+  it('commits, runs the checks on what the quest touched, gives the diff and releases through PlotManager', async () => {
     const dir = await mkdtemp(path.join(os.tmpdir(), 'elvaria plots-'));
     try {
       const calls: string[] = [];
@@ -136,6 +142,7 @@ describe('plots over PlotManager', () => {
           calls.push(message);
           return Promise.resolve({ status: 'no_git' });
         },
+        diff: () => Promise.resolve(' notes/today.md | 1 +'),
         release: () => Promise.resolve({ ok: true, value: { removed: false, forget_failures: [] } }),
       };
       const lint = {
@@ -157,6 +164,7 @@ describe('plots over PlotManager', () => {
       expect(runs).toMatchObject([
         { id: 'lint', pass: true, log_path: `.runs/${quest.id}-1/checks/lint.log` },
       ]);
+      expect(await plots.diff(folder)).toBe(' notes/today.md | 1 +');
       expect(await plots.release(folder)).toEqual({
         ok: true,
         value: { removed: false, forget_failures: [] },
@@ -218,8 +226,17 @@ describe('the console bell', () => {
     expect(lineOf(t, { kind: 'infirmary', quest, reason: 'crash' })).toContain(
       'went to the infirmary: crash',
     );
-    expect(lineOf(t, { kind: 'question', quest, question: 'main or release?' })).toContain(
-      'asks you: main or release?',
+    expect(lineOf(t, { kind: 'question', quest, question: 'main or release?' })).toBe(
+      'Quest q_20261106_7k3m2a «Đổi luồng đăng nhập» asks you: main or release? ' +
+        'To answer: elvaria answer q_20261106_7k3m2a "…"',
+    );
+    expect(lineOf(t, { kind: 'unjudgeable', quest, classes: ['judge'], model: 'claude-sonnet-5-5' })).toBe(
+      'Quest q_20261106_7k3m2a «Đổi luồng đăng nhập» waits in review, but no judge of the kingdom may judge it: ' +
+        'the judge must not have worked on it and must run another model than claude-sonnet-5-5. ' +
+        'Summon one: elvaria character add <id> --class judge --model <model>',
+    );
+    expect(lineOf(t, { kind: 'unjudgeable', quest, classes: [], model: null })).toContain(
+      'no — of the kingdom may judge it: the judge must not have worked on it and must run another model than —.',
     );
     expect(lineOf(t, { kind: 'subquests_refused', quest, reason: 'no subquests.json' })).toBe(
       'Plan q_20261106_7k3m2a «Đổi luồng đăng nhập» is delivered but opened no sub-quest: no subquests.json. ' +

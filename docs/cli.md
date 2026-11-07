@@ -26,6 +26,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria quest edit <quest>` | Sửa một nhiệm vụ mà không chạm vào file của nó (lệnh edit_quest). |
 | `elvaria seal <quest>` | Đóng dấu việc đang chờ dấu vua: nhiệm vụ xong (lệnh seal; nặng bằng ba phán quyết). |
 | `elvaria return <quest>` | Trả việc đang chờ dấu vua về người làm, kèm ghi chú (lệnh return; nặng bằng ba phán quyết). |
+| `elvaria answer <quest> <answer>` | Trả lời câu hỏi của một nhiệm vụ đang chờ bạn (elvaria quest show in câu hỏi): người làm tiếp tục với câu trả lời của bạn (lệnh answer). |
 | `elvaria run` | Chạy Quản sự: giao nhiệm vụ cho nhân vật và cho nghiệm thu, tới khi bạn dừng (Ctrl+C). |
 | `elvaria wake <tribe>` | Nhờ Quản sự thăm dò mana của một tộc ngay, ví dụ sau khi đăng nhập lại (lệnh wake). |
 | `elvaria sandbox generate` | Sinh một ngày giả vào events/sandbox/ của vương quốc (sa bàn): không chạy phiên nào, không chạm nhiệm vụ thật. |
@@ -61,6 +62,7 @@ Kiểm tra máy đã sẵn sàng chưa: registry, git, CLI của từng tộc, c
 |---|---|
 | `--tool <tribe>=<path>` | Đường dẫn CLI của một tộc khi nó không có trên PATH, ví dụ claude=C:/…/claude.exe; lặp lại cho nhiều tộc. |
 | `--pin` | Ghim lại phiên bản và đường dẫn CLI vừa tìm thấy khi chúng khác bản đã ghim. |
+| `--enable <tribe>` | Bật một tộc trong kingdom.json (enabled: true) khi doctor tìm thấy CLI của nó, rồi kiểm nó như mọi tộc đang bật. |
 | `--acknowledge-terms <tribe>` | Ghi nhận bạn đã đọc và chấp nhận điều khoản của nhà cung cấp cho tộc này (ADR 0018). |
 
 ## `elvaria territory add`
@@ -202,6 +204,15 @@ Trả việc đang chờ dấu vua về người làm, kèm ghi chú (lệnh ret
 | `<quest>` | id của nhiệm vụ, ví dụ q_20261106_7k3m2a. |
 | `--note <text>` | Sai gì, ở đâu, ít nhất 20 ký tự: người làm đọc nó ở phiên kế tiếp. (bắt buộc) |
 | `--fail-kind <kind>` | Kiểu lỗi, để đếm những lần trượt cùng kiểu liền nhau: tests_fail, scope_creep, missing_i18n, wrong_facts, incomplete, style, unsafe hoặc other (mặc định). |
+
+## `elvaria answer`
+
+Trả lời câu hỏi của một nhiệm vụ đang chờ bạn (elvaria quest show in câu hỏi): người làm tiếp tục với câu trả lời của bạn (lệnh answer).
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<quest>` | id của nhiệm vụ, ví dụ q_20261106_7k3m2a. |
+| `<answer>` | Câu trả lời của bạn cho câu hỏi của nhân vật, trong ngoặc kép. |
 
 ## `elvaria run`
 

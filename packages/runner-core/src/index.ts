@@ -47,6 +47,7 @@ export { PLOT_RECORD_FILE } from './plot/plot-record.ts';
 export type { PlotRecord } from './plot/plot-record.ts';
 export { PLOT_EXCLUDES } from './plot/repo-settings.ts';
 export { SETUP_TIMEOUT_MS, setupLogOf } from './plot/setup.ts';
+export { DIFF_MAX_CHARS } from './plot/diff.ts';
 export { SUBQUESTS_FILE } from './plot/subquests.ts';
 export type { SetupRun } from './plot/setup.ts';
 export type { CommitOutcome, ForgetWorktree, PlotStatus, ReleasedPlot } from './plot/worktree-ops.ts';

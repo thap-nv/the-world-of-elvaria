@@ -33,7 +33,7 @@ type Ship = (
 const shipped = (value: Shipped): Result<Shipped, string> => ok(value);
 
 /** The plot's folder, native: a worktree's own path, or the folder inside the kingdom. */
-function plotDirOf(ctx: Context, plot: Quest['plot']): string | undefined {
+export function plotDirOf(ctx: Context, plot: Quest['plot']): string | undefined {
   if (plot.path === undefined || plot.type === 'none') return undefined;
   return plot.type === 'worktree' ? fromPortable(plot.path) : inKingdom(ctx.root, plot.path);
 }

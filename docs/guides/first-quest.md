@@ -74,7 +74,7 @@ elvaria character add vesper --class judge     # tộc claude, claude-opus-5-5
 elvaria character list
 ```
 
-Người nghiệm thu phải khác người làm, và cùng tộc thì khác model (`dispatch.verifier_same_family: different_model`). Prompt riêng của từng nghề có từ P1-15; tới lúc đó `doctor` cảnh báo 11 file `registry/prompts/*.md` còn thiếu, và nhân vật chạy với prompt chung của runner-core.
+Người nghiệm thu phải khác người làm, và cùng tộc thì khác model (`dispatch.verifier_same_family: different_model`). Mỗi nghề có prompt riêng `registry/prompts/<nghề>.md` (từ P1-15), nối vào sau luật của vai trong phần hệ thống của mọi phiên; chủ nhân sửa được. Vương quốc tạo trước P1-15 không có thư mục đó và không nạp được registry: `doctor` báo từng file thiếu, và `elvaria migrate` chép các file registry còn thiếu (không ghi đè file bạn đã có).
 
 ## 6. Ra nhiệm vụ
 
@@ -102,7 +102,7 @@ Một vương quốc chỉ có một Quản sự (`.state/steward.lock`). Mỗi 
 | thư bàn giao | `quests/<quest>/handover.md` |
 | prompt, settings, stdout của phiên | `.runs/<quest>-<n>/` |
 | log của setup và từng check | `.runs/<quest>-setup.log`, `.runs/<quest>-<n>/checks/<id>.log` |
-| câu hỏi của nhân vật | chuông trên terminal của `elvaria run` |
+| câu hỏi của nhân vật | chuông trên terminal của `elvaria run`, `elvaria quest show <quest>`; trả lời bằng `elvaria answer <quest> "<câu>"` |
 
 Dừng bằng Ctrl+C. Nếu Quản sự chết khi còn phiên chạy, `elvaria doctor` liệt kê các pid đó (khi không có Quản sự nào giữ khóa) và lần `elvaria run` kế tiếp giết chúng.
 

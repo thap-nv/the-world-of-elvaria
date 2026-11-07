@@ -1,6 +1,8 @@
 // The doctor's checks that only read: the registry and the files it names, git, and every territory's folder.
 import { stat } from 'node:fs/promises';
+import path from 'node:path';
 
+import { REGISTRY_ROOT } from '@elvaria/registry-default';
 import { fromPortable, missingRegistryFiles } from '@elvaria/store';
 
 import { registryIssueLines, storeIssueLines } from '../issues.ts';
@@ -10,16 +12,24 @@ import { parseVersion } from './tool-version.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 import type { Finding } from './finding.ts';
 
+/** Where a kingdom made before P1-15 finds the class prompts its registry/ lacks. */
+const DEFAULT_PROMPTS = path.join(REGISTRY_ROOT, 'prompts');
+
 /**
- * registry/ loads and passes the domain's cross-file rules. Files it names but the kingdom lacks are a warning:
- * the role prompts ship with P1-15, and loading turns them into an error then (implementation-plan §2.3).
+ * registry/ loads, passes the domain's cross-file rules, and has a prompt for every class (P1-15: a kingdom made
+ * before that has none, and is told where the default ones are). Catalog scripts it names but lacks are a warning:
+ * only a script-tier quest needs one (implementation-plan §2.3).
  */
 export async function checkRegistry(ctx: KingdomContext): Promise<Finding[]> {
   const { t, store } = ctx;
   const registry = await store.loadRegistry();
   if (!registry.ok) {
     const details = registry.error.flatMap((issue) => registryIssueLines(t, issue));
-    return [finding('error', t('cli.doctor.registry_invalid'), details)];
+    const prompts = registry.error.some(
+      (issue) => issue.code === 'not_found' && issue.file.startsWith('registry/prompts/'),
+    );
+    const hint = prompts ? [t('cli.doctor.registry_prompts_hint', { path: DEFAULT_PROMPTS })] : [];
+    return [finding('error', t('cli.doctor.registry_invalid'), [...details, ...hint])];
   }
   const { kinds, classes, rituals, scripts, tags } = registry.value;
   const counts = {

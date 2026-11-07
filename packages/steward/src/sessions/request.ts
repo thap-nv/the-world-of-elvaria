@@ -3,10 +3,26 @@
 // context the hook reads, and the run folder `.runs/<quest>-<n>` (verifier: `/verify` below it).
 import { mkdir } from 'node:fs/promises';
 
-import { FAIL_KINDS, currentRun, ownerVerdictIdOf, runDirOf, verdictIdOf } from '@elvaria/domain';
+import {
+  FAIL_KINDS,
+  currentRun,
+  ownerVerdictIdOf,
+  partialVerdictIdOf,
+  runDirOf,
+  verdictIdOf,
+  verifierSessionsOf,
+} from '@elvaria/domain';
 import { buildPrompt, toolPolicyOf } from '@elvaria/runner-core';
-import { inKingdom } from '@elvaria/store';
-import type { Character, Quest, Role, Territory, VerdictCheck } from '@elvaria/domain';
+import { inKingdom, readClassPrompt } from '@elvaria/store';
+import type {
+  Character,
+  CharacterClass,
+  Quest,
+  Role,
+  Territory,
+  Verdict,
+  VerdictCheck,
+} from '@elvaria/domain';
 import type { Continuation, JsonSchema, Memory, SpawnRequest } from '@elvaria/runner-core';
 
 import {
@@ -89,7 +105,20 @@ const envOf = (ctx: Context, input: SessionInput): Record<string, string> => ({
   ELVARIA_TZ: ctx.world.kingdom.tz,
 });
 
-async function promptOf(ctx: Context, input: SessionInput) {
+/**
+ * The `partial` verdict the latest judge of run `n` left (`<quest>-<n>-p<k>`, §3.2), so the next judge reads on from
+ * where it stopped; null when no judge of this run stopped part-way. A session that crashed left none: the one
+ * before it may have.
+ */
+export async function lastPartialOf(ctx: Context, quest: Quest, n: number): Promise<Verdict | null> {
+  for (let k = verifierSessionsOf(quest, n); k >= 1; k -= 1) {
+    const verdict = await ctx.deps.store.verdicts.read(partialVerdictIdOf(quest, n, k));
+    if (verdict.ok && verdict.value.result === 'partial') return verdict.value;
+  }
+  return null;
+}
+
+async function promptOf(ctx: Context, input: SessionInput, characterClass: CharacterClass) {
   const { quest, character, territory } = input;
   const base = {
     locale: ctx.world.kingdom.owner.locale,
@@ -100,13 +129,15 @@ async function promptOf(ctx: Context, input: SessionInput) {
     registry: ctx.world.registry,
     scriptures: await readScriptures(ctx.root, character.id),
     gazetteer: await readGazetteer(ctx.root, territory.id),
+    class_prompt: await readClassPrompt(ctx.root, characterClass),
   };
   if (input.role === 'verifier') {
-    // The judge runs in the plot and reads the branch's diff there; the prompt's own diff waits for PlotManager to
-    // give one (§11, P1-04).
+    // The branch's diff against its fork point (PlotManager.diff, P1-15); a plot without git has none to give.
     const handover = await readHandover(ctx.root, quest.id);
     const checks = input.checks ?? [];
-    return buildPrompt({ ...base, role: 'verifier', handover, diff: null, checks }, ctx.templates);
+    const diff = await ctx.deps.plots.diff(quest.plot);
+    const partial = await lastPartialOf(ctx, quest, input.n);
+    return buildPrompt({ ...base, role: 'verifier', handover, diff, checks, partial }, ctx.templates);
   }
   const continuation =
     input.continuation === undefined || input.continuation === null
@@ -130,7 +161,7 @@ export async function requestOf(ctx: Context, input: SessionInput): Promise<Spaw
     character,
     territory,
     cwd: input.cwd,
-    prompt: await promptOf(ctx, input),
+    prompt: await promptOf(ctx, input, characterClass),
     permissions: toolPolicyOf({ role, characterClass, character, territory }),
     budget: { max_turns: ctx.world.kingdom.breakers.max_turns, max_minutes: quest.budget.max_minutes },
     env: await sessionEnvOf(ctx, input, envOf(ctx, input)),

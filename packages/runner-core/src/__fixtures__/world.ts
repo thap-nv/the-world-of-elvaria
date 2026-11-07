@@ -160,6 +160,27 @@ export const RETURNED = VerdictSchema.parse({
   created_at: '2026-11-06T10:02:00+07:00',
 });
 
+/** The verdict a judge leaves when it stops before the end of its review (§3.2): the next judge reads on. */
+export const PARTIAL = VerdictSchema.parse({
+  version: 1,
+  id: `${QUEST_ID}-1-p1`,
+  quest_id: QUEST_ID,
+  attempt: 1,
+  verifier_id: 'vesper',
+  ritual: 'build_review',
+  checks: [],
+  result: 'partial',
+  notes: 'package.json và README đã đọc, khớp nhau; chưa đọc tới test.',
+  progress: { checked_until: 'read_diff: package.json, README.md' },
+  by_human: false,
+  session_id: '1b2c3d4e-5f6a-4b7c-8d9e-0f1a2b3c4d5e',
+  created_at: '2026-11-06T09:58:00+07:00',
+});
+
+/** The class prompts of the default registry, as a kingdom has them in registry/prompts/ (P1-15). */
+export const classPromptOf = (id: string): string =>
+  readFileSync(path.join(REGISTRY_DIR, 'prompts', `${id}.md`), 'utf8');
+
 export const LETTER = `# Handover · ${QUEST_ID}
 
 ## Where I am

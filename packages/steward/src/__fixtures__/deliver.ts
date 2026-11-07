@@ -23,6 +23,7 @@ export function worktreePlots(repo: string): Plots {
     commit: () => Promise.resolve({ status: 'committed', sha: 'f00d' }),
     check: () => Promise.resolve([]),
     scriptChecks: () => Promise.resolve([]),
+    diff: () => Promise.resolve(''),
     release: () => Promise.resolve(ok({ removed: true, forget_failures: [] })),
   };
 }
