@@ -34,7 +34,8 @@
 
 ## Does not
 
-- Kill a process tree: `kill()` ends the CLI's own process until P1-06 brings `runner-core/src/process/`.
+- Kill a process tree itself: `kill()` hands the CLI's pid to runner-core's `killTree` (P1-06), which takes the
+  CLI and every process under it (taskkill on Windows; SIGTERM, then SIGKILL after `kill_grace_ms` elsewhere).
 - Build the minimal env or resolve treasury secrets (the Steward does, with runner-core's treasury), nor decide
   anything: the Steward chooses who, when, with which budget and whether to resume. Secrets stay in the
   process env: settings.json carries only `ELVARIA_*`, policy.json only the secrets' names.

@@ -1,15 +1,15 @@
 export { splitCommandLine } from './checks/command-line.ts';
 export type { CommandLineIssue } from './checks/command-line.ts';
 export { globToRegExp } from './checks/glob.ts';
-export { argvOf, childEnvOf, runProgram } from './checks/program.ts';
-export type {
-  CommandIssue,
-  Launch,
-  ProcessHost,
-  ProgramOptions,
-  ProgramResolver,
-  ProgramRun,
-} from './checks/program.ts';
+export { argvOf } from './checks/argv.ts';
+export type { CommandIssue } from './checks/argv.ts';
+export { runToEnd, startChild } from './process/child.ts';
+export type { Child, ChildExit, ChildOptions, ChildRun } from './process/child.ts';
+export { KILL_GRACE_MS, isAlive, killTree } from './process/kill-tree.ts';
+export type { KillTreeOptions } from './process/kill-tree.ts';
+export { childEnvOf, runProgram } from './process/program.ts';
+export type { Launch, ProcessHost, ProgramOptions, ProgramResolver, ProgramRun } from './process/program.ts';
+export { processStartOf } from './process/started-at.ts';
 export {
   CLEANUP_TIMEOUT_MS,
   MS_PER_MINUTE,

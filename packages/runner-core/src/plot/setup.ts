@@ -4,7 +4,7 @@ import { err, ok } from '@elvaria/domain';
 import type { Result } from '@elvaria/domain';
 
 import { openLog, runLine } from '../checks/logged-run.ts';
-import type { ProcessHost } from '../checks/program.ts';
+import type { ProcessHost } from '../process/program.ts';
 import { MS_PER_MINUTE } from '../checks/run-checks.ts';
 import { writePlotRecord } from './plot-record.ts';
 import type { PlotRecord } from './plot-record.ts';

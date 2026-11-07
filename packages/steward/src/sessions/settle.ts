@@ -3,52 +3,22 @@
 // An end that arrives for a quest that moved on meanwhile (cancelled, reassigned) changes nothing.
 import { currentRun } from '@elvaria/domain';
 import { plotCommitMessage } from '@elvaria/runner-core';
-import type { BreakerTrip, Quest, Result } from '@elvaria/domain';
-import type { CommitOutcome, RunResult } from '@elvaria/runner-core';
+import type { Quest, Result } from '@elvaria/domain';
+import type { RunResult } from '@elvaria/runner-core';
 
 import { moveAndRing } from '../notices.ts';
 import { step } from '../record.ts';
 import { judge, runOf, verifierLeaves } from '../review/judge.ts';
+import { breakAssignee } from './breaker.ts';
+import { commitPlot } from './commit.ts';
 import type { Context } from '../context.ts';
 import type { Finished, Running } from './running.ts';
 
 /** The CLI's own limits are breakers (§3.4): max_turns trips `turns`, an exhausted budget trips `tokens`. */
 const TRIPS = { max_turns: 'turns', budget: 'tokens' } as const;
 
-const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
-
-async function breaker(
-  ctx: Context,
-  running: Running,
-  result: RunResult,
-  trip: BreakerTrip,
-  detail?: string,
-) {
-  const who = running.character;
-  // The character is bogged down while the Steward ends the session, then free again (§2.6 "Sa lầy").
-  await ctx.record.change(who, 'character.swamp', step('breaker'));
-  return moveAndRing(ctx, {
-    quest: running.quest,
-    event: { type: 'breaker', trip, ...runOf(running, result) },
-    actor: 'steward',
-    edits: { [who]: step('quest_infirmary') },
-    reason: detail === undefined ? `breaker:${trip}` : `breaker:${trip}: ${detail}`,
-  });
-}
-
-/**
- * Commits the finished work before review (§3.3, P1-07): five classes have no git of their own, and the judge reads
- * the branch's diff. The territory's hooks may refuse; a failing git is a refusal too, never a bypass.
- */
-async function commitSubmitted(ctx: Context, running: Running): Promise<CommitOutcome> {
-  const quest = ctx.world.quests.get(running.quest);
-  if (quest === undefined) return { status: 'no_git' };
-  try {
-    return await ctx.deps.plots.commit(quest.plot, plotCommitMessage.submit(quest.id));
-  } catch (error) {
-    return { status: 'refused', detail: messageOf(error) };
-  }
-}
+/** The session has ended already: the breaker's `end` is the result it reported. */
+const ended = (result: RunResult) => () => Promise.resolve(result);
 
 async function settleAssignee(
   ctx: Context,
@@ -58,15 +28,18 @@ async function settleAssignee(
   const who = running.character;
   const run = runOf(running, result);
   const quest = running.quest;
-  if (result.rate_limited)
+  if (result.rate_limited) {
+    // The pause keeps the work on the branch too (§3.3: a WIP commit before a pause); a refusal leaves it in place.
+    await commitPlot(ctx, quest, plotCommitMessage.wip(quest, 'mana'));
     return moveAndRing(ctx, {
       quest,
       event: { type: 'mana_out', ...run },
       actor: 'mana',
       edits: { [who]: step('mana_out') },
     });
+  }
   if (result.outcome === 'max_turns' || result.outcome === 'budget')
-    return breaker(ctx, running, result, TRIPS[result.outcome]);
+    return breakAssignee(ctx, running, { trip: TRIPS[result.outcome] }, ended(result));
   if (result.outcome !== 'completed')
     return moveAndRing(ctx, {
       quest,
@@ -81,9 +54,11 @@ async function settleAssignee(
       actor: 'runner',
       edits: { [who]: step('ask') },
     });
-  const committed = await commitSubmitted(ctx, running);
+  // Five classes have no git of their own, and the judge reads the branch's diff (§3.3, P1-07).
+  const committed = await commitPlot(ctx, quest, plotCommitMessage.submit(quest));
   // The branch would lack the work: the quest goes to the infirmary with the hook's last words, not to review.
-  if (committed.status === 'refused') return breaker(ctx, running, result, 'commit', committed.detail);
+  if (committed.status === 'refused')
+    return breakAssignee(ctx, running, { trip: 'commit', detail: committed.detail }, ended(result));
   return moveAndRing(ctx, {
     quest,
     event: { type: 'submit', ...run },

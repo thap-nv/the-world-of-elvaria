@@ -9,6 +9,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 
 import {
   createSignalChannel,
+  killTree,
   openRunLog,
   openRunOutput,
   readQuestion,
@@ -44,12 +45,11 @@ export interface SessionDeps {
   readonly apprentice: ApprenticeConfig;
   /** Wait before reading the journal a second time for the SessionStart line; 500 ms by default. */
   readonly recheck_ms?: number;
-  /** After a kill, how long a POSIX process gets before SIGKILL. */
+  /** After a kill, how long a POSIX process tree gets before SIGKILL; runner-core's KILL_GRACE_MS by default. */
   readonly kill_grace_ms?: number;
 }
 
 const RECHECK_MS = 500;
-const KILL_GRACE_MS = 5000;
 
 interface Live {
   readonly req: SpawnRequest;
@@ -91,14 +91,14 @@ function record(live: Live, drafts: readonly RunEventDraft[]): void {
   live.pending.push(live.writing);
 }
 
-/** The CLI and its children. Tree kill comes with P1-06 (`runner-core/src/process/`). */
+/**
+ * The CLI and every process under it (runner-core's killTree, P1-06): the shells, test runners and apprentices it
+ * started would otherwise go on in the plot and hold the stdout pipe the session's end waits for.
+ */
 function stop(live: Live): void {
   if (live.ended) return;
-  live.child.kill();
-  if (process.platform === 'win32') return;
-  setTimeout(() => {
-    if (!live.ended) live.child.kill('SIGKILL');
-  }, live.deps.kill_grace_ms ?? KILL_GRACE_MS).unref();
+  const grace = live.deps.kill_grace_ms;
+  void killTree(live.child.pid ?? 0, grace === undefined ? {} : { grace_ms: grace });
 }
 
 async function checkRecorded(live: Live, session: string): Promise<void> {

@@ -49,6 +49,13 @@
 - Starts territory programs without a shell (`runProgram`, `argvOf`, `splitCommandLine`): quoted words, shell
   syntax refused, the program resolved by the `ProcessHost` the composition root passes in (it owns PATH and turns
   an npm `.cmd` shim into `node <script>`), and an env with no `GIT_*` (`childEnvOf`).
+- Kills process trees (`src/process/`, P1-06, §3.4): `killTree(pid)` runs `taskkill /PID <pid> /T /F` on Windows,
+  and on macOS and Linux sends SIGTERM to the process and every descendant `ps -A -o pid=,ppid=` names, then
+  SIGKILL to whoever is left after `KILL_GRACE_MS` (5 s). A check or setup past its timeout, a killed CLI
+  (`runner-claude`'s `kill`, `startChild`'s) and the Steward's breakers all take the whole tree. `startChild` /
+  `runToEnd` start a CLI that takes its prompt in argv and read it line by line (Antigravity). `processStartOf(pid)`
+  (ps `etime`, PowerShell `Get-Process` on Windows) lets the Steward tell a session's process from a later one
+  under the same pid after a restart. System programs live at fixed paths (`/bin/ps`, `System32`), never PATH.
 - Gives every adapter the session's side of the hook contract (P1-09, §3.6): `runContextOf(req)` (kingdom,
   quest, attempt from env `ELVARIA_*`; character, role, model from the request; the env names of the quest's
   secrets), `contextEnv`, and `writePolicyFile` for `<run_dir>/policy.json` v1, the file `--policy` points the
@@ -70,8 +77,8 @@
 - Write a CLI's own settings or agents file: the adapters do, from `ToolPolicy` and `SpawnRequest`. Choose which
   secrets a session gets: the quest names them, the Steward checks them against the territory and builds the env.
 - Read a keychain: the file treasury is stage 1's; a keychain adapter can stand behind `Treasury` later.
-- Kill process trees yet (P1-06): a check or setup past its timeout, or a killed CLI, loses only its own
-  process.
+- Reach a grandchild that left the tree before the kill (re-parented to init on POSIX, or whose parent ended on
+  Windows): `taskkill /T` and the ps walk see only live parent links.
 - Search PATH, push, merge, or force anything: a dirty worktree is not released, a refused commit stays refused.
 - Name a tribe CLI: `claude purge --yes <worktree>` reaches `release` as a `forget` callback (ADR 0021).
 - Decide anything: the Steward chooses who, when and with which continuation; `tribeLimitsOf` lives in the
@@ -96,3 +103,5 @@ you would a change of prose. `src/conformance/conformance.spec.ts` runs the suit
 runners that lie about their capabilities. The plot and check specs build real git repos (a bare origin, a clone,
 worktrees, a refusing pre-commit hook) and plots in temp folders with spaces in their names; git runs without the
 caller's `GIT_*` (`src/__fixtures__/git-repo.ts`), and one spec proves a `GIT_DIR` in the host env is ignored.
+The `src/process/` specs kill real node process trees (`src/__fixtures__/tree.ts`: a node that starts an idle
+grandchild) on this machine: CI runs them on Windows and macOS, and the SIGTERM-then-SIGKILL case on POSIX only.

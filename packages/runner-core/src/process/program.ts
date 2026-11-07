@@ -5,11 +5,7 @@
 import { spawn } from 'node:child_process';
 import { performance } from 'node:perf_hooks';
 
-import { err, ok } from '@elvaria/domain';
-import type { Result } from '@elvaria/domain';
-
-import { splitCommandLine } from './command-line.ts';
-import type { CommandLineIssue } from './command-line.ts';
+import { killTree } from './kill-tree.ts';
 
 /** How to start a program: the file to spawn and the arguments that come before the caller's own. */
 export interface Launch {
@@ -27,30 +23,12 @@ export interface ProcessHost {
   readonly env: Readonly<Record<string, string>>;
 }
 
-export interface CommandIssue {
-  readonly reason: CommandLineIssue | 'not_found';
-  readonly detail: string;
-}
-
 /**
  * The env a child gets. A GIT_* variable from the caller would point git at another repo: husky exports
  * GIT_DIR to the pre-push hook, so a commit made under it lands in the repo being pushed (implementation-plan §6).
  */
 export const childEnvOf = (env: Readonly<Record<string, string>>): Record<string, string> =>
   Object.fromEntries(Object.entries(env).filter(([name]) => !/^GIT_/i.test(name)));
-
-/** `line` as the argv to spawn, its program resolved; this is also the `argv` the run-check script expects. */
-export async function argvOf(
-  line: string,
-  resolve: ProgramResolver,
-): Promise<Result<readonly string[], CommandIssue>> {
-  const words = splitCommandLine(line);
-  if (!words.ok) return err({ reason: words.error, detail: line });
-  const [program = '', ...args] = words.value;
-  const launch = await resolve(program);
-  if (launch === undefined) return err({ reason: 'not_found', detail: program });
-  return ok([launch.file, ...launch.args, ...args]);
-}
 
 export interface ProgramRun {
   /** null when the program was killed after its timeout, or never started. */
@@ -73,9 +51,9 @@ export interface ProgramOptions {
 }
 
 /**
- * Runs `argv` to its end or its timeout. A timeout kills only the program itself: the process tree waits for
- * runner-core's kill tree (P1-06), and is why a timed-out run settles on `exit` instead of `close`, which would
- * wait for grandchildren still holding the pipes.
+ * Runs `argv` to its end or its timeout. A timeout kills the program's whole tree (P1-06): a test runner's workers
+ * or a dev server it started go with it. A timed-out run still settles on `exit` rather than `close`, which waits
+ * for every holder of the pipes: a grandchild that left the tree (re-parented before the kill) may hold them.
  */
 export function runProgram(argv: readonly string[], options: ProgramOptions): Promise<ProgramRun> {
   const [file = '', ...args] = argv;
@@ -105,7 +83,7 @@ export function runProgram(argv: readonly string[], options: ProgramOptions): Pr
     };
     const timer = setTimeout(() => {
       timedOut = true;
-      child.kill();
+      void killTree(child.pid ?? 0);
     }, options.timeout_ms);
     if (piped) {
       child.stdout?.setEncoding('utf8').on('data', (chunk: string) => {

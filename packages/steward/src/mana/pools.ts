@@ -12,9 +12,11 @@ import {
   samePool,
   withReadings,
 } from '@elvaria/domain';
+import { plotCommitMessage } from '@elvaria/runner-core';
 import type { Character, ManaReading, PoolKey, Quest, ReportedWindow, TribeId } from '@elvaria/domain';
 
 import { STEWARD, step } from '../record.ts';
+import { commitPlot } from '../sessions/commit.ts';
 import { isAsleep } from './book.ts';
 import type { Context } from '../context.ts';
 
@@ -78,15 +80,19 @@ function heldSession(ctx: Context, quest: Quest) {
   return typeof holder === 'string' && running?.character === holder ? running : undefined;
 }
 
-/** Every session on the pool stops; its quest pauses with its assignee, a verifier leaves the review (§2.5). */
+/**
+ * Every session on the pool stops with its process tree; an assignee's work is committed as WIP, as for a breaker
+ * (§3.3; a refusal leaves it in the plot), and its quest pauses with its assignee; a verifier leaves the review.
+ */
 async function pauseRunning(ctx: Context, key: PoolKey): Promise<void> {
   for (const quest of [...ctx.world.quests.values()]) {
     const running = heldSession(ctx, quest);
     const character = running === undefined ? undefined : ctx.world.characters.get(running.character);
     if (running === undefined || character === undefined) continue;
     if (!samePool(poolKeyOfCharacter(ctx, character), key)) continue;
-    // P1-04/P1-06 commit the plot first (`chore: wip <quest> (mana)`); the work stays in the plot meanwhile.
+    // Killed first, then committed: nothing writes in the plot while git takes its snapshot.
     await ctx.sessions.kill(running.quest, 'the mana of its pool ran out');
+    if (running.role === 'assignee') await commitPlot(ctx, quest.id, plotCommitMessage.wip(quest.id, 'mana'));
     const moved = await ctx.record.move({
       quest: running.quest,
       event: { type: 'mana_out', session_id: running.session_id },

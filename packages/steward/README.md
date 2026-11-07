@@ -8,13 +8,28 @@
 - One tick, in the order of §3.1: the inbox in id order (the owner first); the ends of the sessions it runs;
   sessions the files say run but it does not hold (a Steward that stopped or crashed) end as a crash, so no
   quest ever runs two sessions; the inbox commands that waited, once more; the mana gauges; then the domain's
-  `planTick` decides and the Steward carries it out: characters on a fail streak go to the Temple
+  `planTick` decides and the Steward carries it out: sessions past a breaker stop, characters on a fail streak go
+  to the Temple
   (`character.suspend`, the bell), paused quests whose pool woke go on, claimed quests start, submitted quests get
   the judge `selectVerifier` chose (or the machine's verdict under `machine_only`), returned quests go back to
   their assignee, open quests are claimed.
+- Trips the breakers (§3.4, P1-06; `src/sessions/breaker.ts`): `planTick` names each held session past its
+  minutes (`quest.budget.max_minutes`, from its own attempt_log entry), its tokens (the running total of its
+  `usage` signals against `budget.max_tokens`) or its turns; the Steward sinks the assignee into the swamp, kills
+  the session's process tree, commits the work as `chore: wip <quest> (<trip>)` (a refusal keeps it in the plot
+  and says so in the reason), sends the quest to the infirmary (`quest.infirmary`, `breaker:<trip>: <detail>`) and
+  rings the bell; a verifier past a breaker leaves the review to the next one. A CLI that stopped at its own
+  `--max-turns` or budget gets the same end. A quest whose secrets the treasury lacks, or its territory no longer
+  allows, goes to the infirmary (`breaker:secrets`) instead of being claimed and released every tick; an
+  owner's answer to such a blocked quest is refused (`secrets_lacking`).
+- Keeps the pid of every session it holds in `.state/sessions.json` (written before each tick ends, emptied at
+  stop). At start, before the first tick, it kills the tree of each pid the last Steward left there whose process
+  started when that session was spawned (`processStartOf`, within a minute), and leaves a pid that now belongs to
+  another process alone, with a warning.
 - Watches mana per pool (§3.5, ADR 0009; `src/mana/`): a session that hits its account's limit pauses its quest
   (assignee kept; a verifier leaves the review), the whole pool sleeps (`mana.exhausted`), every other session on
-  it pauses and idle characters fall asleep. A tribe with a pool asleep is probed (`mana.probe`) one minute after
+  it is killed and pauses and idle characters fall asleep; each paused assignee's work is committed as
+  `chore: wip <quest> (mana)` after its session ends. A tribe with a pool asleep is probed (`mana.probe`) one minute after
   the reset its session or its last probe named, again every two minutes while the account resets late, else
   every `probe_interval_minutes` (`nextProbeOf`); a probe that goes through wakes the pool (`mana.restored`),
   sleepers wake and the paused quests go on with the same character and attempt, in a fresh session from the
@@ -38,7 +53,8 @@
 - Opens sessions through `AgentRunner` only (ADR 0006, 0021): the plot, the prompt and tool policy of
   `runner-core`, the budget, `.runs/<quest>-<n>`, and the env (§3.9): the minimal env it was given, the
   `ELVARIA_*` context of the hook and exactly the quest's `secrets_required` from the treasury (`sessionEnvOf`
-  of `sessions/secrets.ts`); a name the territory no longer allows or the treasury lacks opens no session. A
+  of `sessions/secrets.ts`); a name the territory no longer allows or the treasury lacks opens no session
+  (`secretsLacking` asks first, by name only). A
   runner's `capabilities` narrow its tribe through `tribeLimitsOf`; a tribe without a runner takes no work.
 - Masks what a session leaves behind with that session's secret values and the patterns, before the kingdom
   keeps it (`maskFinished`, ADR 0013): the handover letter (`redactHandover`), the question, and the verifier's
@@ -63,9 +79,8 @@
 - Decide: who takes what, who verifies, when a quest may move are pure functions of the domain (`planTick`,
   `transition`, `selectVerifier`, `validateVerdict`, ADR 0002).
 - Estimate mana from tokens against `tribes[].budget`, warn, reassign a long-paused quest
-  (`mana.reassign_after_hours`) or ring when a pool sleeps (P1-22); trip time or token breakers, commit WIP
-  before a kill (for a breaker or a pool out of mana) or kill process trees (P1-06); know git or a territory's
-  programs (`Plots` is given; `folderPlots` is a folder with no git and no checks, for the specs), deliver
+  (`mana.reassign_after_hours`) or ring when a pool sleeps (P1-22); kill a process itself (runner-core's
+  `killTree` does, through the runner's `kill`); know git or a territory's programs (`Plots` is given; `folderPlots` is a folder with no git and no checks, for the specs), deliver
   (P1-14) or run catalog scripts (P1-17). The judge's prompt carries no diff yet: the judge reads the branch in
   its plot.
 - Read `process.env` or a treasury file itself: the composition root hands it the minimal env and a `Treasury`.

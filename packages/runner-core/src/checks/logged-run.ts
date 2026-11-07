@@ -8,8 +8,9 @@ import path from 'node:path';
 import { inKingdom } from '@elvaria/store';
 
 import { maskedOnClose } from './masked-log.ts';
-import { argvOf, runProgram } from './program.ts';
-import type { ProcessHost, ProgramRun } from './program.ts';
+import { runProgram } from '../process/program.ts';
+import { argvOf } from './argv.ts';
+import type { ProcessHost, ProgramRun } from '../process/program.ts';
 
 export interface LineContext {
   /** Where the command runs: the plot, native. */

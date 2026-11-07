@@ -41,6 +41,8 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
   'open.cancel': 'lệnh `cancel`; mọi trạng thái chưa xong đều hủy được',
   'claimed.start': 'đất riêng xong, phiên mở; `attempts` +1, mở lượt mới `n` trong `attempt_log`',
   'claimed.release': 'spawn lỗi; `attempts` không tăng, bỏ `assignee`',
+  'claimed.breaker':
+    'trip `secrets`: kho bảo vật thiếu secret quest xin, hoặc lãnh thổ đã bỏ nó khỏi `secrets_allowed`; không mở phiên, `attempts` không đổi, chuông',
   'working.submit.session': 'có handover.md; mọi thay đổi đã commit vào nhánh; lượt kết thúc `submitted`',
   'working.submit.script': 'script chạy xong trong plot, output vào `.runs/` + journal.jsonl',
   'working.ask': 'ghi `blocked.question`; lượt kết thúc `blocked`',
@@ -56,6 +58,7 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
   'paused_mana.mana_restored': 'cùng nhân vật, phiên mới từ handover, cùng lượt `n` (§3.5)',
   'paused_mana.reassign':
     'người dùng đổi người; mọi `reassign` vượt hạng trần của cấp người mới ⇒ `seal_required`',
+  'paused_mana.breaker': 'trip `secrets`, như `claimed`; người làm đang ngủ bỏ `current`',
   'blocked.answer.has_assignee':
     'câu trả lời ghi vào `blocked.answer` và handover.md; phiên mới, cùng lượt `n`',
   'blocked.unblock.no_assignee': '`depends_on` xong',
@@ -69,10 +72,12 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
   'review.verdict_fail.out_of_retries': 'chuông; bậc script không có `returned`',
   'review.mana_out.has_verifier': '`verifier = null`, verdict `partial` lưu `progress`; người kế đọc tiếp',
   'review.breaker.has_verifier': 'như trên',
+  'review.breaker.needs_verifier': 'trip `secrets`, như `claimed`: người chấm cần cùng secret với người làm',
   'review.crash.has_verifier':
     'phiên người chấm kết thúc mà không có phán quyết (CLI lỗi, Quản sự khởi động lại): như trên, lượt kết thúc `crash`',
   'review.suspend.has_verifier': 'như trên, khi người dùng đình chỉ người chấm',
   'returned.redispatch': '`attempts` +1, lượt mới, cùng `assignee`, prompt kèm notes',
+  'returned.breaker': 'trip `secrets`, như `claimed`',
   'awaiting_seal.seal': '`seal`, verdict `by_human = true` (nặng ×3)',
   'awaiting_seal.return.session': 'lệnh `return` kèm ghi chú; bỏ `verifier`',
   'awaiting_seal.reject': 'lệnh `archive`',

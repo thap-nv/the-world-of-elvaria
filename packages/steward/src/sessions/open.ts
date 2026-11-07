@@ -9,8 +9,9 @@ import type { AgentRunner, Answered, Continuation, RunningSession, SpawnRequest 
 import { heardBy } from '../mana/heard.ts';
 import { step } from '../record.ts';
 import { checksOf, checksRunOf } from '../review/checks.ts';
+import { secretsBreaker } from './breaker.ts';
 import { continuationOf, requestOf } from './request.ts';
-import { rememberSecrets } from './secrets.ts';
+import { rememberSecrets, secretsLacking } from './secrets.ts';
 import type { Context } from '../context.ts';
 import type { MovePayload } from '../record.ts';
 import type { SessionInput } from './request.ts';
@@ -55,16 +56,18 @@ async function spawnFor(
   runner: AgentRunner,
   input: Omit<SessionInput, 'cwd'>,
   resume: Resume | null = null,
-): Promise<Result<{ session: RunningSession; plot: Quest['plot'] }, string>> {
+): Promise<Result<{ session: RunningSession; plot: Quest['plot']; spawned_at: string }, string>> {
   try {
     const prepared = await ctx.deps.plots.prepare(input.quest, input.territory);
     const quest = { ...input.quest, plot: prepared.plot };
     const request = await requestOf(ctx, { ...input, quest, cwd: prepared.cwd });
     const resumed = resumedRequest(ctx, request, resume);
     const session = heardBy(ctx.mana, input.character, await runner.spawn(resumed));
+    // Right after the spawn: a restart tells the CLI's process by its start (sessions/pids.ts).
+    const spawnedAt = ctx.record.stamp();
     // Keyed by the session the Steward keeps (heardBy's wrapper): maskFinished finds it from Running.session.
     rememberSecrets(session, resumed);
-    return ok({ session, plot: prepared.plot });
+    return ok({ session, plot: prepared.plot, spawned_at: spawnedAt });
   } catch (error) {
     ctx.deps.log.warn(
       `steward: ${input.quest.id}: no session for ${input.character.id}: ${messageOf(error)}`,
@@ -135,6 +138,12 @@ export async function openAssignee(
   const parts = partsOf(ctx, questId, ctx.world.quests.get(questId)?.assignee);
   if (!parts.ok) return parts;
   const { quest, character, territory, runner } = parts.value;
+  const lacking = await secretsLacking(ctx, quest, territory);
+  if (lacking !== undefined) {
+    // A blocked quest has no way to the infirmary: the owner's answer is refused with the reason instead.
+    if (opening.kind === 'answer') return err(`secrets_lacking: ${lacking}`);
+    return secretsBreaker(ctx, quest, lacking);
+  }
   const n = goesOn(opening) ? currentRun(quest) : currentRun(quest) + 1;
   const spawned = await spawnFor(
     ctx,
@@ -154,7 +163,7 @@ export async function openAssignee(
       await ctx.record.move({ quest: questId, event: { type: 'release' }, actor: 'steward' });
     return spawned;
   }
-  const { session, plot } = spawned.value;
+  const { session, plot, spawned_at: spawnedAt } = spawned.value;
   const sessionId = await session.session_id;
   const moved = await ctx.record.move({
     quest: questId,
@@ -175,6 +184,7 @@ export async function openAssignee(
     session,
     session_id: sessionId,
     checks: [],
+    spawned_at: spawnedAt,
   });
   ctx.counts.started += 1;
   return moved;
@@ -192,13 +202,16 @@ export async function openVerifier(
   const parts = partsOf(ctx, questId, verifierId);
   if (!parts.ok) return parts;
   const { quest, character, territory, runner } = parts.value;
+  // The judge runs the same checks as the assignee, with the same secrets (§3.9).
+  const lacking = await secretsLacking(ctx, quest, territory);
+  if (lacking !== undefined) return secretsBreaker(ctx, quest, lacking);
   const n = currentRun(quest);
   const checks = await checksOf(ctx, quest, territory, n);
   if (!checks.ok) return checks;
   const input = { role: 'verifier', quest, character, territory, n, checks: checks.value } as const;
   const spawned = await spawnFor(ctx, runner, input);
   if (!spawned.ok) return spawned;
-  const { session } = spawned.value;
+  const { session, spawned_at: spawnedAt } = spawned.value;
   const sessionId = await session.session_id;
   const moved = await ctx.record.move({
     quest: questId,
@@ -219,6 +232,7 @@ export async function openVerifier(
     session,
     session_id: sessionId,
     checks: checks.value,
+    spawned_at: spawnedAt,
   });
   ctx.counts.started += 1;
   return moved;

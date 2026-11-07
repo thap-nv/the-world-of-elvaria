@@ -4,16 +4,23 @@
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { contextEnv, openRunLog, openRunOutput, runContextOf, secretValuesOf } from '@elvaria/runner-core';
+import {
+  contextEnv,
+  openRunLog,
+  openRunOutput,
+  runContextOf,
+  runToEnd,
+  secretValuesOf,
+} from '@elvaria/runner-core';
 import type { AgentRunner, ProbeResult, SpawnRequest, ToolInfo } from '@elvaria/runner-core';
 
 import { hookPlanOf, hooksProblem } from './hook-files.ts';
-import { runToEnd } from './process/child.ts';
+import { programOf } from './launch.ts';
 import { writeRunFiles } from './run-files.ts';
 import { startSession } from './session.ts';
 import { probeOf, usageBuckets, windowsOf } from './usage.ts';
 import type { HookPlan } from './hook-files.ts';
-import type { Launch } from './process/child.ts';
+import type { Launch } from './launch.ts';
 import type { RunFiles } from './run-files.ts';
 
 export const ANTIGRAVITY_ADAPTER = 'antigravity';
@@ -96,13 +103,13 @@ async function spawnAgy(req: SpawnRequest, options: AntigravityOptions, plan: Ho
   const ctx = runContextOf(req);
   const env = agyEnv(req.env, plan.node_dir, contextEnv(ctx));
   const call = { cwd: req.cwd, env, timeout_ms: options.timeout_ms ?? DEFAULT_TIMEOUT_MS };
-  const version = versionOf((await runToEnd(options.launch, ['--version'], call)).stdout);
+  const version = versionOf((await runToEnd(programOf(options.launch), ['--version'], call)).stdout);
   const files = await writeRunFiles(req, ctx, plan);
   // The run folder belongs to the attempt: its version is recorded there (quest attempts have no such field).
   await writeFile(path.join(req.run_dir, 'agy-version.txt'), `${version ?? 'unknown'}\n`, 'utf8');
   // A hooks.json agy does not load is silent but for one log line, and without the hook every unlisted tool
   // ends the run (spike §1 #18): check before the session burns mana.
-  const listed = await runToEnd(options.launch, ['-p', '/hooks', '--output-format', 'json'], call);
+  const listed = await runToEnd(programOf(options.launch), ['-p', '/hooks', '--output-format', 'json'], call);
   const problem = hooksProblem(listed.stdout, files.hooks);
   if (problem !== undefined) throw new Error(problem);
   // The session's secret values are masked before the patterns in every line the runner writes (§3.9).
@@ -121,7 +128,7 @@ async function spawnAgy(req: SpawnRequest, options: AntigravityOptions, plan: Ho
 
 async function probe(options: AntigravityOptions): Promise<ProbeResult> {
   const call = { env: agyEnv(options.env, undefined), timeout_ms: options.timeout_ms ?? DEFAULT_TIMEOUT_MS };
-  const ran = await runToEnd(options.launch, ['-p', '/usage', '--output-format', 'json'], call);
+  const ran = await runToEnd(programOf(options.launch), ['-p', '/usage', '--output-format', 'json'], call);
   const buckets = ran.code === 0 ? usageBuckets(ran.stdout) : undefined;
   if (buckets === undefined) {
     return { status: 'error', detail: `agy -p /usage: exit ${String(ran.code)} ${ran.stderr.trim()}`.trim() };
@@ -135,8 +142,8 @@ async function probe(options: AntigravityOptions): Promise<ProbeResult> {
 /** Version, sign-in (`agy models` needs both login and network, 0 tokens) and the terms (ADR 0018). */
 async function doctor(options: AntigravityOptions): Promise<ToolInfo> {
   const call = { env: agyEnv(options.env, undefined), timeout_ms: options.timeout_ms ?? DEFAULT_TIMEOUT_MS };
-  const version = versionOf((await runToEnd(options.launch, ['--version'], call)).stdout);
-  const models = await runToEnd(options.launch, ['--output-format', 'json', 'models'], call);
+  const version = versionOf((await runToEnd(programOf(options.launch), ['--version'], call)).stdout);
+  const models = await runToEnd(programOf(options.launch), ['--output-format', 'json', 'models'], call);
   const signedIn = models.code === 0 && /"models"\s*:\s*\[\s*\{/.test(models.stdout);
   const problems = [
     ...(signedIn ? [] : [`agy models failed (exit ${String(models.code)}): not signed in, or offline`]),

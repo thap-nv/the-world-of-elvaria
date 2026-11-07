@@ -17,6 +17,7 @@ import {
   characterOf,
   questPayload,
   tickUntil,
+  wakesAfter,
 } from './__fixtures__/kingdom.ts';
 import { maskFinished } from './sessions/secrets.ts';
 import type { Bench, BenchOptions } from './__fixtures__/kingdom.ts';
@@ -103,14 +104,23 @@ describe('a quest that asks for secrets', () => {
     ]);
   });
 
-  it('opens no session when the treasury lacks one of them', async () => {
+  it('opens no session when the treasury lacks one of them: the quest waits in the infirmary (P1-06)', async () => {
     const { kingdom, steward } = await open({ treasury: {} });
     await kingdom.command('create_quest', questPayload('Publish', NEEDS_TOKEN));
     await steward.tick();
     await steward.tick();
     expect(kingdom.requests).toEqual([]);
-    expect(kingdom.warnings.join('\n')).toMatch(/no session for \w+: treasury has no npm_token/);
-    expect((await kingdom.quest('Publish')).status).toBe('open');
+    const quest = await kingdom.quest('Publish');
+    expect(quest).toMatchObject({ status: 'infirmary', attempts: 0, attempt_log: [] });
+    // Once, with its own reason: not claimed and released again every tick.
+    expect(kingdom.notices).toEqual([
+      {
+        kind: 'infirmary',
+        quest: { id: quest.id, title: 'Publish', rank: 'D' },
+        reason: 'breaker:secrets: the treasury has no npm_token',
+      },
+    ]);
+    expect(kingdom.warnings).toEqual([]);
   });
 
   it('opens no session when its territory has dropped one of them since the quest was made', async () => {
@@ -124,9 +134,76 @@ describe('a quest that asks for secrets', () => {
     await kingdom.store.characters.write(characterOf({ id: 'thorn', cls: 'knight', level: 5 }));
     await steward.tick();
     expect(kingdom.requests).toEqual([]);
-    expect(kingdom.warnings.join('\n')).toMatch(
-      /no session for thorn: territory dc1-se-team does not allow the secrets npm_token/,
+    expect((await kingdom.quest('Publish')).status).toBe('infirmary');
+    expect(kingdom.notices.at(-1)).toMatchObject({
+      reason: 'breaker:secrets: territory dc1-se-team does not allow the secrets npm_token',
+    });
+  });
+
+  it('sends the quest to the infirmary when its secret leaves the treasury before the judge can open', async () => {
+    const values: Record<string, string> = { npm_token: NPM_TOKEN };
+    const { kingdom, steward } = await open({ treasury: values });
+    await kingdom.command('create_quest', questPayload('Publish', NEEDS_TOKEN));
+    await steward.tick();
+    // The assignee's session has its secret; the owner empties the treasury while it works.
+    delete values.npm_token;
+    await tickUntil(
+      steward,
+      kingdom.clock,
+      async () => (await kingdom.quest('Publish')).status !== 'working',
     );
+    const quest = await kingdom.quest('Publish');
+    expect(quest).toMatchObject({ status: 'infirmary', verifier: null });
+    expect(kingdom.requests.map(({ role }) => role)).toEqual(['assignee']);
+    expect(kingdom.notices.at(-1)).toMatchObject({
+      reason: 'breaker:secrets: the treasury has no npm_token',
+    });
+  });
+
+  it('lets the sleeper go of a paused quest that cannot wake for want of its secret', async () => {
+    const values: Record<string, string> = { npm_token: NPM_TOKEN };
+    const { kingdom, steward } = await open({
+      treasury: values,
+      plays: { work: { Publish: ['rate_limit'] } },
+      probes: { claude: wakesAfter(1) },
+    });
+    await kingdom.command('create_quest', questPayload('Publish', NEEDS_TOKEN));
+    await tickUntil(
+      steward,
+      kingdom.clock,
+      async () => (await kingdom.quest('Publish')).status === 'paused_mana',
+    );
+    const sleeper = (await kingdom.quest('Publish')).assignee ?? '';
+    delete values.npm_token;
+    await tickUntil(
+      steward,
+      kingdom.clock,
+      async () => (await kingdom.quest('Publish')).status === 'infirmary',
+    );
+    expect(kingdom.notices.at(-1)).toMatchObject({
+      reason: 'breaker:secrets: the treasury has no npm_token',
+    });
+    await steward.tick();
+    expect(await kingdom.character(sleeper)).toMatchObject({ status: 'idle', current: null });
+  });
+
+  it("refuses the owner's answer to a blocked quest whose secret is gone, saying why", async () => {
+    const values: Record<string, string> = { npm_token: NPM_TOKEN };
+    const { kingdom, steward } = await open({ treasury: values, plays: { work: { Publish: ['ask'] } } });
+    await kingdom.command('create_quest', questPayload('Publish', NEEDS_TOKEN));
+    await tickUntil(
+      steward,
+      kingdom.clock,
+      async () => (await kingdom.quest('Publish')).status === 'blocked',
+    );
+    delete values.npm_token;
+    await kingdom.command('answer', {
+      quest: (await kingdom.quest('Publish')).id,
+      answer: 'Use the staging registry.',
+    });
+    await steward.tick();
+    expect(await rejections(kingdom)).toEqual(['secrets_lacking: the treasury has no npm_token']);
+    expect((await kingdom.quest('Publish')).status).toBe('blocked');
   });
 });
 

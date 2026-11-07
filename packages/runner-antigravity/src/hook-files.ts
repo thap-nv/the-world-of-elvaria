@@ -5,7 +5,7 @@ import { statSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import type { Launch } from './process/child.ts';
+import type { Launch } from './launch.ts';
 
 export const AGENTS_DIR = '.agents';
 export const HOOKS_FILE = 'hooks.json';

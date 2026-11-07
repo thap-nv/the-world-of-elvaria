@@ -1,7 +1,7 @@
 // git as the PlotManager runs it: the program the composition root resolved, no shell, the host's minimal env
 // without GIT_* (ADR 0013, 0015), and a timeout, so a fetch waiting on credentials cannot hang a tick.
-import { runProgram } from '../checks/program.ts';
-import type { ProcessHost } from '../checks/program.ts';
+import { runProgram } from '../process/program.ts';
+import type { ProcessHost } from '../process/program.ts';
 
 /** Local git work (worktree add, commit, status) is quick; a fetch talks to the network. */
 export const GIT_TIMEOUT_MS = 120_000;

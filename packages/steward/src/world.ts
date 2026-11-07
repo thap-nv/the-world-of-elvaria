@@ -4,6 +4,7 @@ import { tribeLimitsOf } from '@elvaria/domain';
 import type {
   Character,
   CharacterId,
+  HeldSession,
   Kingdom,
   KingdomSnapshot,
   Quest,
@@ -82,7 +83,9 @@ export const snapshotOf = (
   world: World,
   limits: Partial<Record<TribeId, TribeLimits>>,
   mana: Pick<ManaBook, 'asleep' | 'readings'>,
+  sessions: readonly HeldSession[] = [],
 ): KingdomSnapshot => ({
+  sessions,
   kingdom: world.kingdom,
   territories: [...world.territories.values()],
   registry: world.registry,

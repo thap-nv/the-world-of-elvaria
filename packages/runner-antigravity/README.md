@@ -41,15 +41,17 @@ terms_acknowledged_at, env, pools?, timeout_ms?})`. `hook` is `hookCommand()` of
   the deny rules): `spawn` rejects with the reason.
 - Allow sub-agents or questions to a person: the hook denies `invoke_subagent`, `define_subagent`,
   `browser_subagent` and `ask_*` (ADR 0017; a question goes in the handover letter).
-- Kill a process tree (P1-06): `src/process/child.ts` is the generic spawn and kill (runner-claude keeps its
-  own), which moves to runner-core with the kill tree. Check the journal for the SessionStart line, as the
-  Claude adapter does: the `/hooks` check before the session already proves the hook is loaded.
+- Spawn or kill a process itself: `startChild` / `runToEnd` of runner-core start agy and read its lines, and a
+  kill (the Steward's, or the turn breaker past `budget.max_turns`) takes agy's whole tree through runner-core's
+  `killTree` (P1-06). `src/launch.ts` keeps agy's `{command, args}` (the shape of `hookCommand()`) and turns it
+  into runner-core's `{file, args}`. Check the journal for the SessionStart line, as the Claude adapter does: the
+  `/hooks` check before the session already proves the hook is loaded.
 - Touch `~/.gemini`, parse transcripts, or pass `--dangerously-skip-permissions` or `--effort`.
 
 ## Depends on
 
 - `@elvaria/runner-core` (types, `toolOf`, `readQuestion`, the signal channel, `runContextOf`, `contextEnv`,
-  `writePolicyFile`, `openRunLog`, `openRunOutput`, the conformance suite). No third-party package. The specs run the hook from `packages/hooks/src` by path, never by import.
+  `writePolicyFile`, `openRunLog`, `openRunOutput`, `startChild`, `runToEnd`, the conformance suite). No third-party package. The specs run the hook from `packages/hooks/src` by path, never by import.
 
 ## How to test
 

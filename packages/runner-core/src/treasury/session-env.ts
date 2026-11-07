@@ -5,7 +5,7 @@
 import { createRedactor } from '@elvaria/eventlog';
 import type { Redactor } from '@elvaria/eventlog';
 
-import { childEnvOf } from '../checks/program.ts';
+import { childEnvOf } from '../process/program.ts';
 import { secretEnvName } from './treasury.ts';
 import type { SpawnRequest } from '../runner/types.ts';
 

@@ -6,42 +6,14 @@ import process from 'node:process';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { TEST_HOST } from '../__fixtures__/git-repo.ts';
-import { argvOf, childEnvOf, runProgram } from './program.ts';
-import type { ProgramResolver } from './program.ts';
+import { goneWithin, treeScript } from '../__fixtures__/tree.ts';
+import { childEnvOf, runProgram } from './program.ts';
 
 let dir = '';
 beforeAll(async () => {
   dir = await mkdtemp(path.join(tmpdir(), 'elvaria program '));
 });
 afterAll(() => rm(dir, { recursive: true, force: true }));
-
-/** pnpm as a Windows shim becomes `node <script>` in the composition root; here that is a table. */
-const resolver: ProgramResolver = (name) =>
-  Promise.resolve(
-    name === 'pnpm'
-      ? { file: 'C:/Program Files/nodejs/node.exe', args: ['C:/pnpm/bin/pnpm.cjs'] }
-      : undefined,
-  );
-
-describe('argvOf', () => {
-  it("puts the resolved program's launch before the command's own arguments", async () => {
-    expect(await argvOf('pnpm -r test', resolver)).toEqual({
-      ok: true,
-      value: ['C:/Program Files/nodejs/node.exe', 'C:/pnpm/bin/pnpm.cjs', '-r', 'test'],
-    });
-  });
-
-  it('says why a command cannot run', async () => {
-    expect(await argvOf('pnpm lint && pnpm test', resolver)).toEqual({
-      ok: false,
-      error: { reason: 'shell_syntax', detail: 'pnpm lint && pnpm test' },
-    });
-    expect(await argvOf('docker compose up', resolver)).toEqual({
-      ok: false,
-      error: { reason: 'not_found', detail: 'docker' },
-    });
-  });
-});
 
 describe('childEnvOf', () => {
   it('drops every GIT_* variable, whatever its case, and keeps the rest', () => {
@@ -82,6 +54,14 @@ describe('runProgram', () => {
     });
     expect(run).toMatchObject({ exit_code: null, timed_out: true });
     expect(run.duration_ms).toBeGreaterThanOrEqual(250);
+  });
+
+  it('takes the whole process tree down at its timeout (P1-06)', async () => {
+    const run = await runProgram(node(treeScript()), { ...options, cwd: dir, timeout_ms: 1500 });
+    expect(run.timed_out).toBe(true);
+    const grandchild = Number(run.stdout.trim());
+    expect(grandchild).toBeGreaterThan(0);
+    expect(await goneWithin(grandchild)).toBe(true);
   });
 
   it('reports a program that cannot start', async () => {
