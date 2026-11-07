@@ -2044,6 +2044,10 @@
               "meaning": "có test tái hiện lỗi và test đó xanh"
             },
             {
+              "id": ["check_tests_cover_change"],
+              "meaning": "thay đổi hành vi có test đi kèm (khi lãnh thổ có test); thiếu thì `fail_kind: incomplete`"
+            },
+            {
               "id": ["compare_before_after"],
               "meaning": "so số liệu trước/sau"
             },

@@ -1,0 +1,267 @@
+[
+  {
+    "class": "chancellor",
+    "role": "chancellor",
+    "tools": [],
+    "allow": [],
+    "apprentice": null
+  },
+  {
+    "class": "mage",
+    "role": "assignee",
+    "tools": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "Bash",
+      "Agent"
+    ],
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm -r test:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm typecheck:*)"
+    ],
+    "apprentice": {
+      "tools": [
+        "Read",
+        "Edit",
+        "Write",
+        "Glob",
+        "Grep",
+        "Bash"
+      ]
+    }
+  },
+  {
+    "class": "knight",
+    "role": "assignee",
+    "tools": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "Bash",
+      "Agent"
+    ],
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(pnpm -r test:*)"
+    ],
+    "apprentice": {
+      "tools": [
+        "Read",
+        "Edit",
+        "Write",
+        "Glob",
+        "Grep",
+        "Bash"
+      ]
+    }
+  },
+  {
+    "class": "dwarf",
+    "role": "assignee",
+    "tools": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "Bash",
+      "Agent"
+    ],
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm -r test:*)"
+    ],
+    "apprentice": {
+      "tools": [
+        "Read",
+        "Edit",
+        "Write",
+        "Glob",
+        "Grep",
+        "Bash"
+      ]
+    }
+  },
+  {
+    "class": "scout",
+    "role": "assignee",
+    "tools": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "WebFetch",
+      "WebSearch"
+    ],
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "WebFetch",
+      "WebSearch"
+    ],
+    "apprentice": null
+  },
+  {
+    "class": "scribe",
+    "role": "assignee",
+    "tools": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep"
+    ],
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep"
+    ],
+    "apprentice": null
+  },
+  {
+    "class": "bard",
+    "role": "assignee",
+    "tools": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep"
+    ],
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep"
+    ],
+    "apprentice": null
+  },
+  {
+    "class": "astrologer",
+    "role": "assignee",
+    "tools": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "Bash"
+    ],
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "Bash(node:*)",
+      "Bash(git diff:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm -r test:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm typecheck:*)"
+    ],
+    "apprentice": null
+  },
+  {
+    "class": "envoy",
+    "role": "assignee",
+    "tools": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep"
+    ],
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep"
+    ],
+    "apprentice": null
+  },
+  {
+    "class": "judge",
+    "role": "verifier",
+    "tools": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash"
+    ],
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm typecheck:*)",
+      "Bash(git diff:*)",
+      "Bash(pnpm -r test:*)"
+    ],
+    "apprentice": null
+  },
+  {
+    "class": "monk",
+    "role": "monk",
+    "tools": [
+      "Read",
+      "Glob",
+      "Grep"
+    ],
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep"
+    ],
+    "apprentice": null
+  }
+]

@@ -5,7 +5,14 @@
       "id": "build_review",
       "name_vi": "Thợ cả khám công trình",
       "name_en": "Master builder's inspection",
-      "steps": ["run_checks", "read_handover", "read_diff", "judge", "write_verdict"],
+      "steps": [
+        "run_checks",
+        "read_handover",
+        "read_diff",
+        "check_tests_cover_change",
+        "judge",
+        "write_verdict"
+      ],
       "pass_rule": "all_checks_and_agent",
       "max_seconds": 1800
     },
@@ -26,6 +33,7 @@
         "read_handover",
         "read_diff",
         "check_regression_test",
+        "check_tests_cover_change",
         "judge",
         "write_verdict"
       ],
@@ -36,7 +44,14 @@
       "id": "stress_test",
       "name_vi": "Thử bão",
       "name_en": "Storm trial",
-      "steps": ["run_checks", "compare_before_after", "read_diff", "judge", "write_verdict"],
+      "steps": [
+        "run_checks",
+        "compare_before_after",
+        "read_diff",
+        "check_tests_cover_change",
+        "judge",
+        "write_verdict"
+      ],
       "pass_rule": "all_checks_and_agent",
       "max_seconds": 2400
     },
