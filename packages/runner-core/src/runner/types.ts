@@ -1,7 +1,14 @@
 // The one interface between the Steward and an agent CLI (implementation-plan §3.7, ADR 0006, 0021). The Steward
 // sees AgentRunner and its capabilities, never a CLI name; an adapter translates a SpawnRequest into argv, env and
 // settings of its CLI, and the CLI's output into RunnerSignal and RunResult.
-import type { AdapterCapabilities, Character, Quest, Territory, TribeId } from '@elvaria/domain';
+import type {
+  AdapterCapabilities,
+  Character,
+  Quest,
+  ReportedWindow,
+  Territory,
+  TribeId,
+} from '@elvaria/domain';
 
 import type { ToolPolicy } from '../policy/tool-policy.ts';
 import type { SpawnRole } from './roles.ts';
@@ -56,6 +63,8 @@ export interface SpawnRequest {
 export type RunnerSignal =
   | { readonly kind: 'usage'; readonly tokens: number }
   | { readonly kind: 'rate_limit'; readonly detail: string; readonly resets_at?: string }
+  /** The account's windows as the CLI reports them in band (Claude `rate_limit_event`), for the mana gauge (§3.5). */
+  | { readonly kind: 'mana'; readonly windows: readonly ReportedWindow[] }
   | { readonly kind: 'text'; readonly text: string }
   | { readonly kind: 'tool_blocked'; readonly tool: string; readonly reason: string };
 
@@ -101,6 +110,16 @@ export interface ProbeResult {
   readonly status: 'ok' | 'rate_limited' | 'error';
   readonly detail?: string;
   readonly resets_at?: string;
+  /** The account's windows the probe read on the way (`/usage`), for the mana gauge; absent when it read none. */
+  readonly windows?: readonly ReportedWindow[];
+}
+
+export interface ProbeOptions {
+  /**
+   * false: only read the account's windows, never call a model (0 mana): how the Steward watches an awake pool.
+   * The status then says what the windows say. Default true: prove a call goes through (waking a pool).
+   */
+  readonly ping?: boolean;
 }
 
 /** `elvaria doctor`: the CLI found, its version, and whether its login works. */
@@ -116,6 +135,6 @@ export interface AgentRunner {
   readonly adapter: AdapterId;
   readonly capabilities: AdapterCapabilities;
   spawn(req: SpawnRequest): Promise<RunningSession>;
-  probe(): Promise<ProbeResult>;
+  probe(options?: ProbeOptions): Promise<ProbeResult>;
   doctor(): Promise<ToolInfo>;
 }

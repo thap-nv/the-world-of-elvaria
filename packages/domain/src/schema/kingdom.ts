@@ -143,6 +143,17 @@ const DispatchSchema = z.strictObject({
         'Revive with `--resume <session>` instead of a fresh session built from handover.md. Off by default (principle 13, ADR 0017).',
       ),
     ),
+  resume_after_answer_minutes: z
+    .int()
+    .min(1)
+    .max(MINUTES_PER_DAY)
+    .nullable()
+    .default(DISPATCH_DEFAULTS.resume_after_answer_minutes)
+    .meta(
+      describe(
+        "When the owner answers a character's question within this many minutes of blocked.asked_at and the tribe's adapter can resume, the same CLI session goes on (`--resume`); later, or null, a fresh session starts from handover.md with the answer (ADR 0017).",
+      ),
+    ),
 });
 
 export const KingdomSchema = z

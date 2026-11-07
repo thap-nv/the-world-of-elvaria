@@ -24,7 +24,7 @@ Dữ kiện về CLI đã có, đừng tra lại: [cli-facts](../../docs/referen
 
 ## CLI
 
-- Cấm `--dangerously-skip-permissions`, `--bare`, `--worktree`, và `--resume` trừ khi `dispatch.resume_after_mana = true`. Không parse transcript: quan sát bằng hook Elvaria + stream-json.
+- Cấm `--dangerously-skip-permissions`, `--bare`, `--worktree`, và `--resume` trừ khi Quản sự xin nó qua `SpawnRequest.resume` (`resumedSession` của domain: `dispatch.resume_after_mana = true`, hoặc câu trả lời trong `dispatch.resume_after_answer_minutes`, ADR 0017). Không parse transcript: quan sát bằng hook Elvaria + stream-json.
 - Claude (ADR 0007, §3.7): `-p --output-format stream-json`, `--settings <run_dir>/settings.json` (dontAsk, allow/deny từ `ToolPolicy`, `Read(./**)`/`Edit(./**)`/`Write(./**)`, `autoMemoryEnabled: false`, tắt attribution), `--tools`, `--strict-mcp-config`, `--setting-sources project,local`. Kiểm settings sinh ra bằng schema; phiên hỏng khi hook `SessionStart` của Elvaria không ghi nhận nó.
 - Antigravity (ADR 0018, spike P1-12a): hook `PreToolUse` bắt buộc, trả `deny_unless_prior_grant` hoặc `deny`, không bao giờ `allow`/`auto_approve`; đặt `AGY_CLI_DISABLE_AUTO_UPDATE=true`; `agy.log` là dữ liệu riêng.
 

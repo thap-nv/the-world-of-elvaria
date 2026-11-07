@@ -11,7 +11,7 @@ import { hookPlanOf, hooksProblem } from './hook-files.ts';
 import { runToEnd } from './process/child.ts';
 import { writeRunFiles } from './run-files.ts';
 import { startSession } from './session.ts';
-import { probeOf, usageBuckets } from './usage.ts';
+import { probeOf, usageBuckets, windowsOf } from './usage.ts';
 import type { HookPlan } from './hook-files.ts';
 import type { Launch } from './process/child.ts';
 import type { RunFiles } from './run-files.ts';
@@ -124,7 +124,10 @@ async function probe(options: AntigravityOptions): Promise<ProbeResult> {
   if (buckets === undefined) {
     return { status: 'error', detail: `agy -p /usage: exit ${String(ran.code)} ${ran.stderr.trim()}`.trim() };
   }
-  return probeOf(buckets, options.pools ?? ['gemini_models']);
+  // /usage costs no mana, so `ping: false` changes nothing here; the windows feed the mana gauge (P1-05).
+  const windows = windowsOf(buckets);
+  const answer = probeOf(buckets, options.pools ?? ['gemini_models']);
+  return windows.length === 0 ? answer : { ...answer, windows };
 }
 
 /** Version, sign-in (`agy models` needs both login and network, 0 tokens) and the terms (ADR 0018). */

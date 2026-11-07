@@ -290,6 +290,16 @@
           "description": "Revive with `--resume <session>` instead of a fresh session built from handover.md. Off by default (principle 13, ADR 0017).",
           "type": "boolean",
           "default": false
+        },
+        "resume_after_answer_minutes": {
+          "description": "When the owner answers a character's question within this many minutes of blocked.asked_at and the tribe's adapter can resume, the same CLI session goes on (`--resume`); later, or null, a fresh session starts from handover.md with the answer (ADR 0017).",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 1440,
+          "default": 55
         }
       }
     },
@@ -633,7 +643,8 @@
         "tick_seconds": 5,
         "fairness": "round_robin_territory",
         "verifier_same_family": "different_model",
-        "resume_after_mana": false
+        "resume_after_mana": false,
+        "resume_after_answer_minutes": 55
       },
       "bell": {
         "desktop": true,

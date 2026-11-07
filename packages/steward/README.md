@@ -7,22 +7,33 @@
   Ticks never overlap.
 - One tick, in the order of §3.1: the inbox in id order (the owner first); the ends of the sessions it runs;
   sessions the files say run but it does not hold (a Steward that stopped or crashed) end as a crash, so no
-  quest ever runs two sessions; the inbox commands that waited, once more; then the domain's `planTick` decides
-  and the Steward carries it out: claimed quests start, submitted quests get a verifier, returned quests go back
-  to their assignee, open quests are claimed.
+  quest ever runs two sessions; the inbox commands that waited, once more; the mana gauges; then the domain's
+  `planTick` decides and the Steward carries it out: paused quests whose pool woke go on, claimed quests start,
+  submitted quests get a verifier, returned quests go back to their assignee, open quests are claimed.
+- Watches mana per pool (§3.5, ADR 0009; `src/mana/`): a session that hits its account's limit pauses its quest
+  (assignee kept; a verifier leaves the review), the whole pool sleeps (`mana.exhausted`), every other session on
+  it pauses and idle characters fall asleep. A tribe with a pool asleep is probed every `probe_interval_minutes`
+  or at the known reset (`mana.probe`); a probe that goes through wakes the pool (`mana.restored`), sleepers wake
+  and the paused quests go on with the same character and attempt, in a fresh session from the letter
+  (`--resume` only with `resume_after_mana`). Awake pools are read without a model call (`probe({ping: false})`)
+  while quests are in play, and windows a session reports in band (`mana` signal) come in too: `mana.level` on
+  change; a pool at the cap takes no new session, one whose window reads spent sleeps. The owner's `wake` probes
+  at once. The pools asleep are rebuilt from the log at start.
 - Is the only writer of quests and characters (ADR 0005): every change goes through `transition()` or
   `transitionCharacter()`, is written to its file, then told in one event line carrying the view after it
   (P0-09), in the log and the quest's journal. Replaying the log over the morning gives back the files.
 - Applies the owner's commands: `create_quest` (an id derived from the command id, so a command applied twice
   never makes two quests), `confirm`, `cancel` (kills the session), `archive`, `retry`, `seal` (a human verdict,
-  weighed three times), `answer` (waits in the inbox until the asker is free), `reassign` (the owner's character,
-  the level aside; or the Steward's own choice), `set_rank`, `edit_quest` (refused when the quest moved since
-  the owner read it). Other kinds are refused with `unsupported` until their task.
+  weighed three times), `answer` (waits in the inbox until the asker is free and its pool has mana; within
+  `dispatch.resume_after_answer_minutes` of the question, and when the adapter can, the asking session goes on
+  with `--resume`), `reassign` (the owner's character, the level aside; or the Steward's own choice), `set_rank`,
+  `edit_quest` (refused when the quest moved since the owner read it), `wake`. Other kinds are refused with
+  `unsupported` until their task.
 - Opens sessions through `AgentRunner` only (ADR 0006, 0021): the plot, the prompt and tool policy of
   `runner-core`, the budget, the `ELVARIA_*` context of the hook, `.runs/<quest>-<n>`. A runner's
   `capabilities` narrow its tribe through `tribeLimitsOf`; a tribe without a runner takes no work.
-- Turns a session's end into the quest's move: submit, a question (`ask`), mana out, a crash, the CLI's turn or
-  budget limit (breaker); for a verifier the verdict file, `verdict.*`, the move, and the assignee's reputation
+- Turns a session's end into the quest's move: submit, a question (`ask`; one the owner already answered, left
+  in the letter, is a submit), mana out, a crash, the CLI's turn or budget limit (breaker); for a verifier the verdict file, `verdict.*`, the move, and the assignee's reputation
   and tag windows, then `levelChange` (`character.level_up` / `level_down`).
 - Tells once when an open quest nobody can take (`quest.unclaimable`, the bell), withdraws it with
   `reason: null`, and keeps the notices in `.state/unclaimable.json` (`readUnclaimable`) for `elvaria quest list`
@@ -33,7 +44,9 @@
 - Decide: who takes what, who verifies, when a quest may move are pure functions of the domain (`planTick`,
   `transition`, ADR 0002). Choose a verifier the full way (`selectVerifier`, P1-04), validate verdicts, or write
   the owner's return (P1-04).
-- Read mana or wake a tribe (P1-05), trip time or token breakers or kill process trees (P1-06), prepare git
+- Commit the plot before a pause for mana (P1-04, P1-06), estimate mana from tokens against
+  `tribes[].budget`, reassign a long-paused quest (`mana.reassign_after_hours`), trip time or token breakers or
+  kill process trees (P1-06), prepare git
   worktrees, commit them or run the territory's checks (P1-07; `folderPlots` gives each quest a folder until
   then), build the minimal env with secrets (P1-10), deliver (P1-14) or run catalog scripts (P1-17).
 - Import a concrete runner, the registry package or anything of the world layer (§1.3).

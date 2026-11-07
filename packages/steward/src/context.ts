@@ -1,5 +1,6 @@
 // What every step of one tick works with: the deps, the world as the tick sees it, the pen, the sessions.
 import type { Notice, StewardDeps } from './types.ts';
+import type { ManaBook } from './mana/book.ts';
 import type { Recorder } from './record.ts';
 import type { Sessions } from './sessions/running.ts';
 import type { World } from './world.ts';
@@ -23,6 +24,8 @@ export interface Context {
   readonly sessions: Sessions;
   readonly templates: PromptTemplates;
   readonly limits: Partial<Record<TribeId, TribeLimits>>;
+  /** Readings, sleeping pools and probe times, kept between ticks (§3.5). */
+  readonly mana: ManaBook;
   readonly counts: Counts;
 }
 

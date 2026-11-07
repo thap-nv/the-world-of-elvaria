@@ -7,6 +7,7 @@ import { claimBlocker } from './claim-blocker.ts';
 import { rosterOf } from './roster.ts';
 import { selectAssignee } from './select-assignee.ts';
 import { verifierFor } from './verifier-for.ts';
+import { wakesOf } from './wakes.ts';
 import { RANKS } from '../schema/common.ts';
 import type { ClaimBlocker } from './claim-blocker.ts';
 import type { Roster, RosterSource } from './roster.ts';
@@ -38,6 +39,8 @@ export interface Unclaimable extends ClaimBlocker {
 }
 
 export interface TickPlan {
+  /** Paused quests whose assignee's pool has mana again, first (`wakesOf`, P1-05, §3.5). */
+  readonly wakes: readonly QuestId[];
   /** Claimed quests whose dependencies are done and whose assignee is free: the owner's reassigns, or a claim
    * the Steward made before it stopped. */
   readonly starts: readonly QuestId[];
@@ -146,7 +149,7 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
   const byId = new Map(snapshot.characters.map((character) => [character.id, character]));
   const step: Step = {
     snapshot,
-    roster: rosterOf(snapshot),
+    roster: rosterOf(snapshot, now),
     character: (id) => (typeof id === 'string' ? byId.get(id) : undefined),
   };
   const done = new Set(snapshot.quests.filter(({ status }) => status === 'done').map(({ id }) => id));
@@ -156,6 +159,8 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
   const open = inStatus('open').filter(ready);
   const openSessions = open.filter(({ tier }) => tier === 'session');
   return {
+    // Object literals evaluate in order: the paused work takes its slots before anything new.
+    wakes: wakesOf(step.roster, step.character, inStatus('paused_mana')),
     starts: inStatus('claimed')
       .filter((quest) => ready(quest) && holderGoes(step, quest))
       .map(({ id }) => id),

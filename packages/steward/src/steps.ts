@@ -1,5 +1,5 @@
-// Steps 4–6 of a tick (implementation-plan §3.1), as planTick decided them: start claimed quests, give submitted
-// quests a verifier, send returned quests back, claim open ones. Script-tier quests wait for P1-17, which runs
+// Steps 4–6 of a tick (implementation-plan §3.1), as planTick decided them: wake paused quests whose pool has mana
+// again, start claimed quests, give submitted quests a verifier, send returned quests back, claim open ones. Script-tier quests wait for P1-17, which runs
 // registry scripts; the Steward does not claim them before it can run them.
 import type { TickPlan } from '@elvaria/domain';
 
@@ -12,6 +12,9 @@ const warnIfRefused = (ctx: Context, what: string, result: { ok: boolean; error?
 };
 
 export async function carryOut(ctx: Context, plan: TickPlan): Promise<void> {
+  // A paused quest whose pool woke goes on first: the same character, the same attempt (§3.5).
+  for (const quest of plan.wakes)
+    warnIfRefused(ctx, `${quest} wake`, await openAssignee(ctx, quest, { kind: 'wake' }));
   for (const quest of plan.starts)
     warnIfRefused(ctx, `${quest} start`, await openAssignee(ctx, quest, { kind: 'start' }));
   for (const { quest, verifier } of plan.verifications)

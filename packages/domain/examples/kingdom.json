@@ -97,7 +97,8 @@
       "tick_seconds": 5,
       "fairness": "round_robin_territory",
       "verifier_same_family": "different_model",
-      "resume_after_mana": false
+      "resume_after_mana": false,
+      "resume_after_answer_minutes": 55
     },
     "bell": {
       "desktop": true,

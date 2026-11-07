@@ -19,7 +19,14 @@
   verdicts since the last change, `level_since`).
 - Plans the Steward's tick (`src/dispatch/`): `planTick(snapshot, now)` returns the claims of one tick, the
   minimal form of P0-10 that the sandbox runs and P1-03 extends (class, level by `canTake`, enabled and awake
-  tribe, dependencies done; script-tier quests to the Steward).
+  tribe, dependencies done; script-tier quests to the Steward). From P1-05 a character's pool must be open
+  (`poolOpenOf`) and paused quests whose pool woke come first (`wakes`). `resumedSession` decides whether a
+  revived assignee continues its CLI session (an answer within `resume_after_answer_minutes`, mana with
+  `resume_after_mana`, an adapter that can resume); `answeredAlready` knows a question the owner answered.
+- Decides mana per pool (`src/mana/`, ADR 0009): `poolOf(tribe, model)` (a one-pool account is the tribe; named
+  pools by model prefix, `POOL_MODEL_PREFIXES`), `ManaReading` and `readingOf` (an account's window as a
+  reading), `decideManaState(readings, pool, cfg, now, model?)` → `ok | warning | closed | asleep` against
+  `min(cap_pct, 100 − king_reserve_pct)`; a cap of one model binds only the characters on it.
 - Maps the domain onto the design system (implementation-plan §2.7): `statusToneOf`, `characterToneOf`, and
   `bannerOf` (`src/world/`), the one band the HUD shows.
 - Builds the world state (`src/world/`) from the files (`worldStateOf`) or the log (`reduce`): every event that

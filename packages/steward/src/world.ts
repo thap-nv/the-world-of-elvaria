@@ -17,6 +17,7 @@ import type {
 import type { AgentRunner } from '@elvaria/runner-core';
 import type { KingdomStore, Listing, StoreIssue } from '@elvaria/store';
 
+import type { ManaBook } from './mana/book.ts';
 import type { Logger } from './types.ts';
 
 export interface World {
@@ -76,13 +77,18 @@ export function limitsOf(
   return limits;
 }
 
-/** The snapshot planTick decides on. Mana pools come with P1-05; until then no pool sleeps. */
-export const snapshotOf = (world: World, limits: Partial<Record<TribeId, TribeLimits>>): KingdomSnapshot => ({
+/** The snapshot planTick decides on, with the pools asleep and the gauges' readings (§3.5). */
+export const snapshotOf = (
+  world: World,
+  limits: Partial<Record<TribeId, TribeLimits>>,
+  mana: Pick<ManaBook, 'asleep' | 'readings'>,
+): KingdomSnapshot => ({
   kingdom: world.kingdom,
   territories: [...world.territories.values()],
   registry: world.registry,
   quests: [...world.quests.values()],
   characters: [...world.characters.values()],
-  asleep: [],
+  asleep: mana.asleep,
+  mana: { readings: mana.readings, config: world.kingdom.mana },
   limits,
 });

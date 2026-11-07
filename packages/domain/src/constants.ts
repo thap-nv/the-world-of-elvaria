@@ -35,6 +35,7 @@ export const MANA_DEFAULTS = {
 /** A reserve or warning margin above half the quota would leave the world unable to work. */
 export const MANA_MARGIN_MAX_PCT = 50;
 export const MINUTES_PER_DAY = 1440;
+export const MS_PER_MINUTE = 60_000;
 
 export const BREAKER_DEFAULTS = {
   attempt_minutes_low: 45,
@@ -57,7 +58,11 @@ export const SCHEDULE_DEFAULTS = {
   patrol_every: 'P1D',
 } as const;
 
-export const DISPATCH_DEFAULTS = { tick_seconds: 5 } as const;
+export const DISPATCH_DEFAULTS = {
+  tick_seconds: 5,
+  /** An answer this soon after the question still finds the session's context, and likely its cache, warm. */
+  resume_after_answer_minutes: 55,
+} as const;
 
 // territory.json defaults.
 export const TERRITORY_DEFAULTS = {

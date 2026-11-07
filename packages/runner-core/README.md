@@ -6,11 +6,14 @@
   `AgentRunner` (`tribe`, `adapter`, `capabilities`, `spawn`, `probe`, `doctor`), `SpawnRequest`, `RunningSession`
   (`session_id`, `pid`, `signals`, `wait`, `kill`), `RunnerSignal` and `RunResult`. `RunResult.rate_limited` tells
   a session that ran out of mana from a crash; `RunResult.question` is the Question section of the handover
-  letter (§2.4), read by `readQuestion` after every session.
+  letter (§2.4), read by `readQuestion` after every session. For the mana gauge (P1-05, §3.5) the signal `mana`
+  carries the account's windows a session reports in band, `ProbeResult.windows` those a probe read, and
+  `probe({ping: false})` only reads them, without calling a model.
 - Ships `createFakeRunner()`: characters that play a scenario in process (`submit`, `crash`, `hang`,
   `rate_limit`, `forbidden_command`, `ask`), chosen per spawn by `scenarioOf` or by env `ELVARIA_FAKE_SCENARIO`.
   It writes the letter, blocks the forbidden push through the policy when it declares `tool_gate`, keeps a
-  resumed session id, and records every request for the Steward's tests.
+  resumed session id, and records every request for the Steward's tests. Its `probe` answers one result, or one
+  per call (a pool that wakes on the second probe).
 - Builds `ToolPolicy` from class + territory laws + role (`toolPolicyOf`): `tools` (Claude `--tools`), `allow` and
   `deny` rules in Claude Code syntax, the apprentice (`Agent(apprentice)` in a class is a flag), and the laws the
   hook enforces. A verifier never has Edit, Write or NotebookEdit; a character with a shell may run the

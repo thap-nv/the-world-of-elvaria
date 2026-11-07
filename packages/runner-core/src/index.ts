@@ -95,6 +95,7 @@ export type {
   BuiltPrompt,
   JsonSchema,
   PermissionDenial,
+  ProbeOptions,
   ProbeResult,
   RunOutcome,
   RunResult,

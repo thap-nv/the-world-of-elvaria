@@ -58,10 +58,11 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): AgentRunner {
     capabilities: CLAUDE_CAPABILITIES,
     spawn: async (req) =>
       startSession({ launch: await tool.launch(), hookCommand: options.hookCommand, apprentice }, req),
-    probe: async () => {
+    probe: async (probeOptions = {}) => {
       const model = options.probeModel ?? DEFAULT_PROBE_MODEL;
       try {
-        return await probeClaude({ launch: await tool.launch(), env, cwd, model, timeoutMs, now });
+        const deps = { launch: await tool.launch(), env, cwd, model, timeoutMs, now };
+        return await probeClaude(deps, probeOptions);
       } catch (error) {
         return { status: 'error', detail: error instanceof Error ? error.message : String(error) };
       }

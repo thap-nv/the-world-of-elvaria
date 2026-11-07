@@ -54,6 +54,15 @@ describe('KingdomSchema', () => {
     expect(kingdom.ui).toEqual({ mode: 'night', eco: false });
   });
 
+  it('resumes an answered session for 55 minutes unless the owner turns it off (P1-05)', () => {
+    expect(KingdomSchema.parse(minimal).dispatch.resume_after_answer_minutes).toBe(55);
+    const off = KingdomSchema.parse({ ...minimal, dispatch: { resume_after_answer_minutes: null } });
+    expect(off.dispatch.resume_after_answer_minutes).toBeNull();
+    expect(issuesOf({ ...minimal, dispatch: { resume_after_answer_minutes: 0 } }).join('\n')).toContain(
+      'dispatch.resume_after_answer_minutes',
+    );
+  });
+
   const tribe = (id: string) => ({ id, adapter: 'claude_code', enabled: true, max_concurrent: 1 });
 
   it.each([
