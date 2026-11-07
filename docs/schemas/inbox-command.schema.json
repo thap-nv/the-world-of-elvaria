@@ -138,7 +138,7 @@
           ]
         },
         "payload": {
-          "description": "Return always carries a note (design: the Return button requires one).",
+          "description": "Return always carries a note (design: the Return button requires one). The Steward writes it as the owner's fail verdict, which needs notes of at least 20 characters and a fail_kind (`other` when absent).",
           "type": "object",
           "additionalProperties": false,
           "required": [
@@ -153,6 +153,18 @@
             "notes": {
               "type": "string",
               "minLength": 1
+            },
+            "fail_kind": {
+              "enum": [
+                "tests_fail",
+                "scope_creep",
+                "missing_i18n",
+                "wrong_facts",
+                "incomplete",
+                "style",
+                "unsafe",
+                "other"
+              ]
             }
           }
         }

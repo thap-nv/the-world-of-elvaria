@@ -16,7 +16,7 @@ Principle 4: the doer never judges. Agents tend to pass their own work and their
   2. class has `is_verifier` and covers `quest.kind`;
   3. status `idle`, and the character's pool has mana;
   4. prefer another model family (`familyOf(model)`: `claude | gemini | gpt`), then another tribe (account);
-  5. same family ⇒ a different model slug is required; if none, `dispatch.verifier_same_family` decides: `machine_only` or wait.
+  5. never the assignee's own model slug. With no free judge of another family, `dispatch.verifier_same_family` decides: `different_model` takes a free judge of the same family on another model (or waits for one); `machine_only` never takes a same-family judge, waits while the roster still has a judge of another family (busy or asleep), and lets the machine judge once it has none. (Amended 2026-11-07, P1-04: read as the kingdom schema describes the setting; the earlier wording allowed a same-family judge under `machine_only` too.)
 - Machine checks run before the verifier session (`runChecks` picks territory checks by touched paths). Ritual `pass_rule` defaults to `all_checks_and_agent`: any failing check ⇒ fail, whatever the agent says.
 - A `machine_only` verdict has `verifier_id: "machine"` and never passes with a failing check.
 - The verifier is a fresh top-level session spawned by the Steward: never `--resume`, never a sub-agent. Its prompt holds the quest, `handover.md`, the diff, check results, the ritual and the verifier's scripture; no transcript, no doer journal.

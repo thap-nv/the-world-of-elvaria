@@ -129,6 +129,14 @@ describe('the character state machine', () => {
     expect(walk(IDLE, ['send_to_temple', 'release']).status).toBe('idle');
   });
 
+  it('ends the fail streak when the character leaves the temple, and only then (P1-04)', () => {
+    const streak = { ...IDLE, consecutive_fail: { fail_kind: 'style' as const, count: 3 } };
+    const suspended = walk(streak, ['fail_streak']);
+    expect(suspended.consecutive_fail).toEqual({ fail_kind: 'style', count: 3 });
+    expect(walk(suspended, ['temple_done']).consecutive_fail).toEqual({ count: 0 });
+    expect(walk(suspended, ['release']).consecutive_fail).toEqual({ count: 0 });
+  });
+
   it('wakes a verifier of an older file into its review, and a character that lost its memory idle', () => {
     const legacy = {
       ...walk(IDLE, ['assign_verify']),

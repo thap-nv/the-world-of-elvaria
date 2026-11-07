@@ -43,7 +43,7 @@
     "source_verdict": {
       "description": "Verdict the lesson comes from; required when source = monk.",
       "type": "string",
-      "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*$"
+      "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user)?$"
     },
     "created_at": {
       "type": "string",

@@ -17,14 +17,13 @@ import {
   ownerMove,
   reassign,
   rejected,
-  seal,
 } from './quest-commands.ts';
+import { giveBack, seal } from './verdict-commands.ts';
 import type { Context } from '../context.ts';
 import type { Outcome } from './quest-commands.ts';
 
 /** Commands the Steward does not apply yet; each names the task that brings it. */
 const LATER: ReadonlySet<InboxCommand['kind']> = new Set([
-  'return', // P1-04: the owner's return needs a verdict file with fail_kind and notes
   'wake', // P1-05: mana and probes
   'summon',
   'suspend',
@@ -50,6 +49,8 @@ async function onQuest(ctx: Context, command: InboxCommand, quest: Quest): Promi
       return archive(ctx, quest);
     case 'seal':
       return seal(ctx, quest, command.payload.note);
+    case 'return':
+      return giveBack(ctx, quest, command.payload.notes, command.payload.fail_kind);
     case 'answer':
       return answer(ctx, quest, command.payload.answer);
     case 'reassign':

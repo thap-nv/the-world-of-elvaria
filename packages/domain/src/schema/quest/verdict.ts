@@ -25,6 +25,11 @@ const describe = (description: string) => ({ description });
 export const USER_VERIFIER = 'user';
 /** verifier_id of a verdict the Steward issues from machine checks alone. */
 export const MACHINE_VERIFIER = 'machine';
+/** After `<quest>-<n>`: the owner's verdict on run n, beside the judge's (P1-04). */
+export const OWNER_VERDICT_SUFFIX = `-${USER_VERIFIER}`;
+/** After `<quest>-<n>`, then k: the partial verdict the k-th verifier session of run n left (P1-04). */
+export const PARTIAL_VERDICT_MARK = '-p';
+const PARTIAL_SUFFIX = new RegExp(`^${PARTIAL_VERDICT_MARK}[1-9][0-9]*$`);
 
 const VerdictCheckSchema = z.strictObject({
   id: CheckIdSchema,
@@ -74,6 +79,20 @@ const VerdictFieldsSchema = z.strictObject({
 type VerdictFields = z.output<typeof VerdictFieldsSchema>;
 
 const isFail = (verdict: VerdictFields) => verdict.result === 'fail';
+
+/**
+ * `<quest_id>-<attempt>`, the file name saying which run it judges (implementation-plan §2.1); `-p<k>` only on a
+ * partial verdict and `-user` only on the owner's, so a run's judgements never share a file. A plain id on a
+ * partial or a human verdict stays valid: files written before P1-04 read as they did.
+ */
+function idFits(verdict: VerdictFields): boolean {
+  const base = `${verdict.quest_id}-${verdict.attempt}`;
+  if (verdict.id === base) return true;
+  if (!verdict.id.startsWith(base)) return false;
+  const suffix = verdict.id.slice(base.length);
+  if (suffix === OWNER_VERDICT_SUFFIX) return verdict.by_human;
+  return PARTIAL_SUFFIX.test(suffix) && verdict.result === 'partial';
+}
 
 const VERDICT_RULES: readonly Rule<VerdictFields>[] = [
   {
@@ -128,12 +147,11 @@ const VERDICT_RULES: readonly Rule<VerdictFields>[] = [
       ),
   },
   {
-    // Verdict id = <quest>-<attempt> (implementation-plan §2.1): the file name says which attempt it judges.
     check: (verdict) =>
       issueIf(
-        verdict.id !== `${verdict.quest_id}-${verdict.attempt}`,
+        !idFits(verdict),
         ['id'],
-        'the verdict id is <quest_id>-<attempt>',
+        "the verdict id is <quest_id>-<attempt>, with -p<k> on a partial verdict and -user on the owner's",
       ),
   },
   {
@@ -152,8 +170,8 @@ const VERDICT_RULES: readonly Rule<VerdictFields>[] = [
 export const VerdictSchema = VerdictFieldsSchema.superRefine(checkRules(VERDICT_RULES)).meta({
   title: 'Verdict',
   description:
-    'verdicts/<quest>-<n>.json: the judgement on attempt n of a quest. Written by a judge in a fresh session spawned by the Steward, by the Steward itself (`machine`: script tier or verifier_same_family = machine_only), or by the owner (`user`: royal seal or return, weighs 3x in reputation). Machine checks run before the judge and are the primary judge.',
-  $comment: `${GENERATED_NOTE} Not expressible here, checked by zod: id = quest_id + '-' + attempt; a character verdict (verifier_id neither user nor machine) has a session_id. Not checked by this schema because they need the quest or the registry, enforced by validateVerdict in packages/domain: verifier_id is neither the assignee nor anyone who worked the quest; a character verdict is valid only if session_id belongs to a verifier attempt in quest.attempt_log spawned by the Steward (never a sub-agent of the worker); under pass_rule all_checks_and_agent or checks_only, result is never pass while any check has pass = false.`,
+    'verdicts/<quest>-<n>.json: the judgement on attempt n of a quest. Written by a judge in a fresh session spawned by the Steward, by the Steward itself (`machine`: script tier or verifier_same_family = machine_only), or by the owner (`user`: royal seal or return, weighs 3x in reputation; file <quest>-<n>-user.json). A partial verdict, left by a judge stopped before the end, is <quest>-<n>-p<k>.json, k counting the verifier sessions of run n. Machine checks run before the judge and are the primary judge.',
+  $comment: `${GENERATED_NOTE} Not expressible here, checked by zod: id = quest_id + '-' + attempt, followed by -p<k> only when result = partial and by -user only when by_human = true; a character verdict (verifier_id neither user nor machine) has a session_id. Not checked by this schema because they need the quest or the registry, enforced by validateVerdict in packages/domain: verifier_id is neither the assignee nor anyone who worked the quest; a character verdict is valid only if session_id belongs to a verifier attempt in quest.attempt_log spawned by the Steward (never a sub-agent of the worker); under pass_rule all_checks_and_agent or checks_only, result is never pass while any check has pass = false.`,
   allOf: allOfRules(VERDICT_RULES),
 });
 

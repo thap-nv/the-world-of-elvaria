@@ -1,7 +1,7 @@
 // The sessions this Steward opened and has not recorded the end of yet (implementation-plan §3.1). A session's
 // end arrives whenever its CLI exits; it waits here until the next tick records it, so every write of the kingdom
 // still happens inside a tick, one at a time.
-import type { CharacterId, QuestId, Role } from '@elvaria/domain';
+import type { CharacterId, QuestId, Role, VerdictCheck } from '@elvaria/domain';
 import type { RunResult, RunningSession } from '@elvaria/runner-core';
 
 export interface Running {
@@ -12,6 +12,8 @@ export interface Running {
   readonly character: CharacterId;
   readonly session: RunningSession;
   readonly session_id: string;
+  /** A verifier's: the machine checks that ran before its session, for the verdict file (§3.2); none for an assignee. */
+  readonly checks: readonly VerdictCheck[];
 }
 
 export interface Finished {
