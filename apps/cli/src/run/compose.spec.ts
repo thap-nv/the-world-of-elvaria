@@ -199,8 +199,9 @@ describe('the console bell', () => {
     expect(lineOf(t, { kind: 'infirmary', quest, reason: 'crash' })).toContain(
       'went to the infirmary: crash',
     );
-    expect(lineOf(t, { kind: 'question', quest, question: 'main or release?' })).toContain(
-      'asks you: main or release?',
+    expect(lineOf(t, { kind: 'question', quest, question: 'main or release?' })).toBe(
+      'Quest q_20261106_7k3m2a «Đổi luồng đăng nhập» asks you: main or release? ' +
+        'To answer: elvaria answer q_20261106_7k3m2a "…"',
     );
     expect(lineOf(t, { kind: 'unjudgeable', quest, classes: ['judge'], model: 'claude-sonnet-5-5' })).toBe(
       'Quest q_20261106_7k3m2a «Đổi luồng đăng nhập» waits in review, but no judge of the kingdom may judge it: ' +

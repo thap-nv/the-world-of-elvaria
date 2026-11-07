@@ -4,16 +4,19 @@
 
 - Ships the `elvaria` command, the only composition root (implementation-plan §1.1): `init`, `doctor`,
   `territory add|list`, `character add|list`, `quest add|list|show|confirm|cancel|archive|edit`, `seal`, `return`,
-  `run`,
+  `answer`, `run`,
   `sandbox generate|replay`, `migrate`. The command table (`src/commands.ts`) drives parsing (`util.parseArgs`), help, and the reference
   `docs/cli.md` that `pnpm docs:gen` renders from it (`scripts/docs-cli.mjs`).
 - Prints everything through `t()` of `@elvaria/i18n`, in `kingdom.owner.locale` unless `--locale vi|en` is given;
   `i18next/no-literal-string` (`packages/config/eslint-i18n.mjs`) guards it. Store and registry issues are
   translated by their `code`.
 - Sends every quest change as an inbox command (`create_quest`, `confirm`, `cancel`, `archive`, `edit_quest`,
-  `seal`, `return`; ADR 0005), after checking ids against the registry and the quest against the transition
-  table. `return` asks for a note of at least 20 characters (`--note`) and a `--fail-kind` (`other` by default),
-  since the Steward writes it as the owner's fail verdict.
+  `seal`, `return`, `answer`; ADR 0005), after checking ids against the registry and the quest against the
+  transition table. `return` asks for a note of at least 20 characters (`--note`) and a `--fail-kind` (`other` by
+  default), since the Steward writes it as the owner's fail verdict. `answer <quest> "<answer>"` takes a non-empty
+  answer for a `blocked` quest; the Steward then goes on with the same attempt, in the asking session when the
+  answer comes within `dispatch.resume_after_answer_minutes` (ADR 0017). The bell of `run` prints that command
+  with each question.
 - Writes new files the Steward does not own: `kingdom.json` (`init`, then `tribes[].tool` and, with `--enable`,
   `tribes[].enabled` from `doctor`), a
   territory, a newly summoned character (create only, never overwrite). Those two are also logged
