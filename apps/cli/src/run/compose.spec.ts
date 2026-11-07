@@ -196,8 +196,9 @@ describe('the console bell', () => {
     expect(lineOf(t, { kind: 'infirmary', quest, reason: 'crash' })).toContain(
       'went to the infirmary: crash',
     );
-    expect(lineOf(t, { kind: 'question', quest, question: 'main or release?' })).toContain(
-      'asks you: main or release?',
+    expect(lineOf(t, { kind: 'question', quest, question: 'main or release?' })).toBe(
+      'Quest q_20261106_7k3m2a «Đổi luồng đăng nhập» asks you: main or release? ' +
+        'To answer: elvaria answer q_20261106_7k3m2a "…"',
     );
     expect(lineOf(t, { kind: 'subquests_refused', quest, reason: 'no subquests.json' })).toBe(
       'Plan q_20261106_7k3m2a «Đổi luồng đăng nhập» is delivered but opened no sub-quest: no subquests.json. ' +
