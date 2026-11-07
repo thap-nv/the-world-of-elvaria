@@ -3,7 +3,8 @@
 // of the tick, in that order, sharing one roster so a character or a slot given away is gone for the next step:
 // characters on a fail streak go to the Temple, claimed quests start, submitted quests get a verifier (or the
 // machine's verdict), returned quests go back to their assignee, open quests are claimed (round-robin over
-// territories, then rank, then age), and open quests nobody can take are named.
+// territories, then rank, then age), and open quests nobody can take are named. Step 7 lists the done quests
+// still to deliver.
 import { failStreakReached } from '../character/fail-streak.ts';
 import { claimBlocker } from './claim-blocker.ts';
 import { rosterOf } from './roster.ts';
@@ -72,6 +73,11 @@ export interface TickPlan {
   readonly scripts: readonly QuestId[];
   /** Open session-tier quests with their dependencies done that nobody can take as things stand (§3.1). */
   readonly unclaimable: readonly Unclaimable[];
+  /**
+   * Step 7: done quests not delivered yet (`done.deliver`, §2.5), highest rank first; the Steward delivers each by
+   * its kind's convention (P1-14). It needs nobody, so the roster plays no part.
+   */
+  readonly deliveries: readonly QuestId[];
 }
 
 const rankOrder = (quest: Quest): number => RANKS.indexOf(quest.rank);
@@ -224,5 +230,8 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
     claims: claims(step, openSessions, now),
     scripts: open.filter(({ tier }) => tier === 'script').map(({ id }) => id),
     unclaimable: unclaimable(step, openSessions),
+    deliveries: inStatus('done')
+      .filter(({ deliverable }) => deliverable.delivered_at === undefined)
+      .map(({ id }) => id),
   };
 }

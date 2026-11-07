@@ -217,6 +217,17 @@ describe('planTick: the other steps', () => {
     ).toEqual([]);
   });
 
+  it('delivers done quests once: not yet delivered, highest rank first, whoever is free or not', () => {
+    const delivered = quest(Q3, { status: 'done', rank: 'S' });
+    const quests = [
+      quest(Q1, { status: 'done' }),
+      quest(Q2, { status: 'done', rank: 'A' }),
+      { ...delivered, deliverable: { ...delivered.deliverable, delivered_at: at(5) } },
+      inReview(quest(Q4), 'thorn'),
+    ];
+    expect(planTick(snapshot(quests, []), NOW).deliveries).toEqual([Q2, Q1]);
+  });
+
   it('starts or redispatches nothing on a territory the kingdom does not know', () => {
     const lost = [returnedTo(quest(Q1, { territory: 'atlas' }), 'thorn')];
     expect(planTick(snapshot(lost, [character('thorn')]), NOW).redispatches).toEqual([]);
