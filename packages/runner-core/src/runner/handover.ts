@@ -37,9 +37,18 @@ export function questionOf(letter: string): string | undefined {
   return text === undefined || NO_QUESTION.test(text) ? undefined : text;
 }
 
-/** Reads the letter after a session; a missing letter (or none expected) asks nothing. */
+/** A folder on the way is a file: Windows says ENOENT, which readTextFile reads as "missing"; POSIX says ENOTDIR. */
+const notADirectory = (error: unknown): boolean =>
+  error instanceof Error && 'code' in error && error.code === 'ENOTDIR';
+
+/** Reads the letter after a session; a missing letter (or none expected) asks nothing, on every OS. */
 export async function readQuestion(file: string | undefined): Promise<string | undefined> {
   if (file === undefined) return undefined;
-  const letter = await readTextFile(file);
-  return letter === undefined ? undefined : questionOf(letter);
+  try {
+    const letter = await readTextFile(file);
+    return letter === undefined ? undefined : questionOf(letter);
+  } catch (error) {
+    if (notADirectory(error)) return undefined;
+    throw error;
+  }
 }

@@ -60,6 +60,16 @@ describe('readQuestion', () => {
     expect(await readQuestion(path.join(dir, 'missing.md'))).toBeUndefined();
     expect(await readQuestion(undefined)).toBeUndefined();
   });
+
+  it('asks nothing when a folder on the way is a file, on every OS (ENOENT on Windows, ENOTDIR on POSIX)', async () => {
+    const blocker = path.join(dir, 'a-file');
+    await writeFile(blocker, 'not a folder', 'utf8');
+    expect(await readQuestion(path.join(blocker, 'handover.md'))).toBeUndefined();
+  });
+
+  it('lets any other read error through', async () => {
+    await expect(readQuestion(dir)).rejects.toMatchObject({ code: 'EISDIR' });
+  });
 });
 
 describe('prompts/handover.md', () => {

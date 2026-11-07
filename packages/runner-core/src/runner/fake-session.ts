@@ -90,7 +90,8 @@ export function startFakeSession(start: FakeStart): RunningSession {
     if (ended) return;
     ended = true;
     channel.close();
-    const question = await readQuestion(start.req.handover);
+    // wait() must settle whatever happens to the letter: one that cannot be read asks nothing.
+    const question = await readQuestion(start.req.handover).catch(() => undefined);
     deliver({
       outcome: ending.outcome,
       exit_code: ending.exit_code,
