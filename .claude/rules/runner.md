@@ -12,7 +12,7 @@ Dữ kiện về CLI đã có, đừng tra lại: [cli-facts](../../docs/referen
 ## Ranh giới (ADR 0006, 0021)
 
 - `runner-core` ← `domain`, `store`, `eventlog`. Adapter ← chỉ `runner-core`. Steward chỉ thấy `AgentRunner` và `capabilities`; chỉ `apps/cli` import adapter cụ thể, nạp theo `kingdom.tribes[].adapter`.
-- Adapter chỉ dịch `SpawnRequest` → argv, env, settings và output của CLI → signal, event; phần chung (prompt, `ToolPolicy`, plot, checks, kho bảo vật, kill tree, chuẩn hóa) ở `runner-core`. Adapter dưới 300 dòng; class chỉ được dùng trong adapter.
+- Adapter chỉ dịch `SpawnRequest` → argv, env, settings và output của CLI → signal, event; phần chung (prompt, `ToolPolicy`, plot, checks, kho bảo vật, kill tree, chuẩn hóa) ở `runner-core`. Mỗi file của adapter dưới 300 dòng, phần không theo CLI ở `runner-core` (ADR 0006, sửa sau P1-09); class chỉ được dùng trong adapter.
 - Adapter không import `@elvaria/hooks` (DAG): lệnh hook do `hookCommand()` dựng (dạng exec `node` + `args` cho Claude), `apps/cli` truyền vào runner. Antigravity dùng chuỗi `node --conditions=elvaria-dist elvaria-hook.mjs <Event>` + shim sinh trong `.agents/` (§3.6, §3.7).
 
 ## Tiến trình con (ADR 0013, 0015)
