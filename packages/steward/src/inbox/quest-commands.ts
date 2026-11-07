@@ -7,6 +7,7 @@ import {
   editQuest,
   formatDatedId,
   parseInstant,
+  poolOpenOf,
   questFromCommand,
   selectAssignee,
   setRank,
@@ -126,8 +127,9 @@ export async function archive(ctx: Context, quest: Quest): Promise<Outcome> {
 }
 
 /**
- * The owner's answer. With an assignee the same attempt goes on in a fresh session, so the answer waits in the
- * inbox until that character is free and its tribe can run it (§2.5); without one the quest opens again.
+ * The owner's answer. With an assignee the same attempt goes on (a fresh session, or the asking one resumed when
+ * the answer comes in time, ADR 0017), so the answer waits in the inbox until that character is free, its tribe
+ * can run it and its pool has mana (§2.5, §3.5); without one the quest opens again.
  */
 export async function answer(ctx: Context, quest: Quest, text: string): Promise<Outcome> {
   if (quest.status !== 'blocked' || typeof quest.assignee !== 'string')
@@ -136,6 +138,10 @@ export async function answer(ctx: Context, quest: Quest, text: string): Promise<
     );
   const asker = ctx.world.characters.get(quest.assignee);
   if (asker?.status !== 'idle' || ctx.deps.runners[asker.tribe] === undefined) return { status: 'waiting' };
+  const { kingdom } = ctx.world;
+  const mana = { readings: ctx.mana.readings, config: kingdom.mana };
+  const open = poolOpenOf({ kingdom, asleep: ctx.mana.asleep, mana }, ctx.deps.clock.now());
+  if (!open(asker)) return { status: 'waiting' };
   return outcomeOf(await openAssignee(ctx, quest.id, { kind: 'answer', answer: text }));
 }
 

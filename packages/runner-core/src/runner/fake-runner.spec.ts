@@ -124,6 +124,16 @@ describe('createFakeRunner', () => {
     const runner = createFakeRunner({ probe: { status: 'rate_limited', detail: 'empty' } });
     expect(await runner.probe()).toEqual({ status: 'rate_limited', detail: 'empty' });
     expect(await createFakeRunner().probe()).toEqual({ status: 'ok' });
+    const pinged: boolean[] = [];
+    const waking = createFakeRunner({
+      probe: ({ ping = true }) => {
+        pinged.push(ping);
+        return { status: pinged.length > 1 ? 'ok' : 'rate_limited' };
+      },
+    });
+    expect(await waking.probe()).toEqual({ status: 'rate_limited' });
+    expect(await waking.probe({ ping: false })).toEqual({ status: 'ok' });
+    expect(pinged).toEqual([true, false]);
     expect(await runner.doctor()).toMatchObject({ version: '0.0.0-fake', auth_ok: true });
   });
 });

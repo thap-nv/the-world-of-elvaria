@@ -123,6 +123,7 @@ function observe(live: Live, seen: Observation): void {
     case 'text':
     case 'usage':
     case 'tool_blocked':
+    case 'mana':
       live.channel.push(seen);
       return;
     case 'rate_limit':

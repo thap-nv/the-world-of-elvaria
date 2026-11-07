@@ -55,6 +55,30 @@ export function usageBuckets(stdout: string): UsageBucket[] | undefined {
     .flatMap((raw) => bucketOf(raw) ?? []);
 }
 
+type ReportedWindow = NonNullable<ProbeResult['windows']>[number];
+
+/** The model a bucket that is not pool-wide caps: `gemini-argon-wtu-weekly` → `argon`. */
+const modelOf = (id: string): string => id.split('-')[1] ?? id;
+
+/**
+ * The buckets as the account's windows, for the mana gauge (P1-05): every bucket of a known pool and window; a
+ * bucket that caps one model (Argon) names it, so it binds only the characters on that model (§3.5).
+ */
+export const windowsOf = (buckets: readonly UsageBucket[]): ReportedWindow[] =>
+  buckets.flatMap(({ id, pool, window, used_pct, resets_at, pool_wide }) =>
+    pool === undefined || window === undefined
+      ? []
+      : [
+          {
+            window,
+            used_pct,
+            pool,
+            ...(resets_at === null ? {} : { resets_at }),
+            ...(pool_wide ? {} : { model: modelOf(id) }),
+          },
+        ],
+  );
+
 /** The probe's answer: rate limited while a pool-wide bucket of a pool the tribe runs on is empty. */
 export function probeOf(buckets: readonly UsageBucket[], pools: readonly string[]): ProbeResult {
   const empty = buckets.filter(

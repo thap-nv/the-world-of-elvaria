@@ -6,11 +6,14 @@
   `AgentRunner` (`tribe`, `adapter`, `capabilities`, `spawn`, `probe`, `doctor`), `SpawnRequest`, `RunningSession`
   (`session_id`, `pid`, `signals`, `wait`, `kill`), `RunnerSignal` and `RunResult`. `RunResult.rate_limited` tells
   a session that ran out of mana from a crash; `RunResult.question` is the Question section of the handover
-  letter (§2.4), read by `readQuestion` after every session.
+  letter (§2.4), read by `readQuestion` after every session. For the mana gauge (P1-05, §3.5) the signal `mana`
+  carries the account's windows a session reports in band, `ProbeResult.windows` those a probe read, and
+  `probe({ping: false})` only reads them, without calling a model.
 - Ships `createFakeRunner()`: characters that play a scenario in process (`submit`, `crash`, `hang`,
   `rate_limit`, `forbidden_command`, `ask`), chosen per spawn by `scenarioOf` or by env `ELVARIA_FAKE_SCENARIO`.
   It writes the letter, blocks the forbidden push through the policy when it declares `tool_gate`, keeps a
-  resumed session id, and records every request for the Steward's tests.
+  resumed session id, and records every request for the Steward's tests. Its `probe` answers one result, or one
+  per call (a pool that wakes on the second probe).
 - Builds `ToolPolicy` from class + territory laws + role (`toolPolicyOf`): `tools` (Claude `--tools`), `allow` and
   `deny` rules in Claude Code syntax, the apprentice (`Agent(apprentice)` in a class is a flag), and the laws the
   hook enforces. A verifier never has Edit, Write or NotebookEdit; a character with a shell may run the
@@ -18,8 +21,9 @@
 - Builds prompts from the Markdown templates in `prompts/` (`loadPromptTemplates`): `buildPrompt` for an
   assignee (new, or continuing after `returned` / `revive` with the letter, the last 20 journal lines, the
   branch's log and the owner's answer) and a verifier (the ritual's steps from `prompts/ritual-steps.md`, the
-  checks, the letter, the diff); `buildChancellorPrompt` for the Chancellor. The system part opens with the
-  royal decree when `<kingdom>/decree.md` exists.
+  checks, the letter, the diff); `buildChancellorPrompt` for the Chancellor; `resumedPrompt` for a session
+  continued with `--resume` (the system part as built, a user part that only says it goes on, with the owner's
+  answer when there is one). The system part opens with the royal decree when `<kingdom>/decree.md` exists.
 - Runs the conformance suite (`conformanceChecks`, `runConformance`): plain checks with `node:assert`, so a spec
   wraps them in `it` and `elvaria tribe check` (P1-19) runs them too. With a real CLI (`live`) only the checks
   that burn no mana run. `openWorkspace` and `conformanceRequest` give an adapter's specs the same requests.

@@ -9,13 +9,17 @@ import type { PromptTemplates } from '@elvaria/runner-core';
 import type { HeldLock } from '@elvaria/store';
 
 import { applyInbox } from './inbox/apply.ts';
+import { asleepFromLog, createManaBook } from './mana/book.ts';
+import { manaStep } from './mana/step.ts';
 import { createRecorder } from './record.ts';
 import { createSessions } from './sessions/running.ts';
-import { reapLost, settle } from './sessions/settle.ts';
+import { recordEnd } from './sessions/ended.ts';
+import { reapLost } from './sessions/settle.ts';
 import { carryOut } from './steps.ts';
 import { noteUnclaimable, reportedFromLog, writeUnclaimable } from './unclaimable.ts';
 import { limitsOf, loadWorld, snapshotOf } from './world.ts';
 import type { Context, Counts } from './context.ts';
+import type { ManaBook } from './mana/book.ts';
 import type { Sessions } from './sessions/running.ts';
 import type { Reported } from './unclaimable.ts';
 import type { StartError, Steward, StewardDeps, TickReport } from './types.ts';
@@ -42,6 +46,7 @@ interface State {
   /** Command ids the log has answered (command.applied, command.rejected). */
   readonly handled: Set<string>;
   readonly limits: Partial<Record<TribeId, TribeLimits>>;
+  readonly mana: ManaBook;
   reported: Reported;
   held: Held | undefined;
   timer: ReturnType<typeof setTimeout> | undefined;
@@ -51,7 +56,7 @@ interface State {
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
-/** What the log already knows: the commands answered, the notices in force (§3.1). */
+/** What the log already knows: the commands answered, the notices in force (§3.1), the pools asleep (§3.5). */
 async function recover(deps: StewardDeps, state: State): Promise<void> {
   const log = await deps.events.read();
   for (const issue of log.issues) deps.log.warn(`steward: event log: ${issue.code} in ${issue.file}`);
@@ -62,22 +67,28 @@ async function recover(deps: StewardDeps, state: State): Promise<void> {
   }
   state.reported = reportedFromLog(log.events);
   await writeUnclaimable(deps.store.root, state.reported);
+  state.mana.asleep = asleepFromLog(log.events);
 }
 
-/** One tick, in the order of §3.1: the inbox, the sessions' ends, the plan, the notices, the plan carried out. */
+/**
+ * One tick, in the order of §3.1: the inbox, the sessions' ends, the mana gauges, the plan, the notices, the plan
+ * carried out.
+ */
 async function runTick(deps: StewardDeps, state: State, held: Held): Promise<TickReport> {
   const counts: Counts = { applied: 0, rejected: 0, waiting: 0, started: 0, ended: 0 };
   const world = await loadWorld(deps.store, deps.log);
   if (world === undefined) return reportOf(counts);
-  const { sessions, handled, limits } = state;
+  const { sessions, handled, limits, mana } = state;
   const record = createRecorder({ ...deps, world, stamp: () => held.zone.format(deps.clock.now()) });
   const root = deps.store.root;
-  const ctx: Context = { deps, root, world, record, sessions, templates: held.templates, limits, counts };
+  const { templates } = held;
+  const ctx: Context = { deps, root, world, record, sessions, templates, limits, mana, counts };
   const waiting = await applyInbox(ctx, handled);
-  for (const finished of sessions.drain()) await settle(ctx, finished);
+  for (const finished of sessions.drain()) await recordEnd(ctx, finished);
   await reapLost(ctx);
   counts.waiting = (await applyInbox(ctx, handled, waiting)).length;
-  const plan = planTick(snapshotOf(world, limits), deps.clock.now());
+  await manaStep(ctx);
+  const plan = planTick(snapshotOf(world, limits, mana), deps.clock.now());
   // Notices first: a quest someone can take now has its notice withdrawn before the claim that follows (§3.1).
   if (await noteUnclaimable(ctx, state.reported, plan.unclaimable))
     await writeUnclaimable(root, state.reported);
@@ -132,6 +143,7 @@ export function createSteward(deps: StewardDeps): Steward {
     sessions: createSessions(),
     handled: new Set(),
     limits: limitsOf(deps.runners),
+    mana: createManaBook(),
     reported: new Map(),
     held: undefined,
     timer: undefined,
@@ -150,6 +162,8 @@ export function createSteward(deps: StewardDeps): Steward {
       state.timer = undefined;
       await state.queue;
       await state.sessions.close('the Steward stopped');
+      // A gauge read after a session's end may still run its CLI: let it finish before the lock goes.
+      await Promise.all(state.mana.reading.values());
       await state.held?.lock.release();
       state.held = undefined;
     },

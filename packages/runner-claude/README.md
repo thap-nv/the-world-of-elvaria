@@ -14,20 +14,22 @@
   Claude Code drops a malformed part without a word.
 - Spawns `claude -p` with stream-json, hook events, dontAsk, `--tools`, `--strict-mcp-config` and
   `--setting-sources project,local`, without a shell, the prompt on stdin, a chosen `--session-id` (or
-  `--resume`). Reads the stream: signals (`text`, `usage` so far, `tool_blocked`, `rate_limit`), the lines only
+  `--resume`). Reads the stream: signals (`text`, `usage` so far, `tool_blocked`, `rate_limit`, `mana` with the
+  windows of each `rate_limit_event`), the lines only
   the stream knows (`agent.session.end` from the last `result`, `agent.subagent.start/end` from
   `system/task_*`, `mana.signal` of an API retry), and `RunResult` (outcome from `is_error` + `terminal_reason`,
   tokens of `modelUsage`, denials, structured output, the letter's question).
 - Stops a session that Elvaria's SessionStart hook did not record in the quest's journal: it would run without the
   laws. Its outcome is `error`.
 - `probe()`: `claude -p "/usage"` (no model call); when no window of the account is full, one turn of the cheapest
-  model with no tool. `doctor()`: the CLI (PATH, `~/.local/bin`, `%APPDATA%\npm`, the VS Code extension's binary,
+  model with no tool. The windows of `/usage` come back in `windows`; `probe({ping: false})` stops after `/usage`. `doctor()`: the CLI (PATH, `~/.local/bin`, `%APPDATA%\npm`, the VS Code extension's binary,
   newest first), its version, `claude auth status --json` (and a warning a week before `loginExpiresAt`), and
   whether the hook is built.
 - `createClaudeForget()`: the `forget` of `PlotManager.release`, `claude purge --yes <worktree>` (the CLI drops
   its own transcripts of a removed worktree; "No Claude Code project state found" counts as done).
-- Parses the account's limits for the mana gauge (P1-05): `rateLimitWindowsOf` (`rate_limit_event`) and
-  `usageWindowsOf` (the text of `/usage`, resets turned into instants).
+- Parses the account's limits for the mana gauge (P1-05): `rateLimitWindowsOf` (`rate_limit_event`, sent on as
+  the `mana` signal) and `usageWindowsOf` (the text of `/usage`, resets turned into instants, in
+  `ProbeResult.windows`; `Current week (Fable)` names its model).
 
 ## Does not
 

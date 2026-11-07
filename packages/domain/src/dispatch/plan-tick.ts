@@ -8,6 +8,7 @@ import { failStreakReached } from '../character/fail-streak.ts';
 import { claimBlocker } from './claim-blocker.ts';
 import { rosterOf } from './roster.ts';
 import { selectAssignee } from './select-assignee.ts';
+import { wakesOf } from './wakes.ts';
 import { RANKS } from '../schema/common.ts';
 import { selectVerifier } from '../verify/select-verifier.ts';
 import { partyOf } from '../verify/past-assignees-of.ts';
@@ -51,6 +52,8 @@ export interface TickPlan {
    * Temple before anything else, and take no work this tick.
    */
   readonly suspensions: readonly CharacterId[];
+  /** Paused quests whose assignee's pool has mana again, before any new work (`wakesOf`, P1-05, §3.5). */
+  readonly wakes: readonly QuestId[];
   /** Claimed quests whose dependencies are done and whose assignee is free: the owner's reassigns, or a claim
    * the Steward made before it stopped. */
   readonly starts: readonly QuestId[];
@@ -190,7 +193,7 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
   const byId = new Map(snapshot.characters.map((character) => [character.id, character]));
   const step: Step = {
     snapshot,
-    roster: rosterOf(snapshot),
+    roster: rosterOf(snapshot, now),
     character: (id) => (typeof id === 'string' ? byId.get(id) : undefined),
   };
   const done = new Set(snapshot.quests.filter(({ status }) => status === 'done').map(({ id }) => id));
@@ -200,6 +203,8 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
   const open = inStatus('open').filter(ready);
   const openSessions = open.filter(({ tier }) => tier === 'session');
   const suspended = suspensions(step);
+  // The paused work takes its slots before anything new.
+  const wakes = wakesOf(step.roster, step.character, inStatus('paused_mana'));
   const starts = inStatus('claimed')
     .filter((quest) => ready(quest) && holderGoes(step, quest))
     .map(({ id }) => id);
@@ -209,6 +214,7 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
   );
   return {
     suspensions: suspended,
+    wakes,
     starts,
     verifications: judged.verifications,
     machine_verdicts: judged.machine,

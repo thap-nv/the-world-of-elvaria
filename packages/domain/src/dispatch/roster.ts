@@ -1,8 +1,13 @@
 // Who may take work in this tick, and how much room each tribe and territory has left (implementation-plan §3.1,
 // §3.14): the bookkeeping planTick shares between its steps, so a character, a tribe slot or a territory slot
 // given away in one step is gone for the next ones.
+import { poolEnabled, poolKeyOf, samePool } from '../mana/pool.ts';
+import { admits, decideManaState } from '../mana/state.ts';
 import { RANKS } from '../schema/common.ts';
+import type { Instant } from '../core/clock.ts';
 import type { CharacterId, TerritoryId, TribeId } from '../core/ids.ts';
+import type { ManaReading } from '../mana/reading.ts';
+import type { ManaConfig } from '../mana/state.ts';
 import type { Character, CharacterStatus } from '../schema/character/character.ts';
 import type { Rank } from '../schema/common.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
@@ -23,14 +28,18 @@ export interface RosterSource {
   readonly characters: readonly Character[];
   /** Pools asleep because their mana ran out (ADR 0009). */
   readonly asleep: readonly PoolKey[];
+  /** The latest gauge readings and the owner's cap: a pool at the cap opens no session. Absent: only `asleep` stops a pool. */
+  readonly mana?: { readonly readings: readonly ManaReading[]; readonly config: ManaConfig };
   /** What each tribe's runner can do (tribeLimitsOf, §3.14); a tribe with no runner is absent and takes no work. */
   readonly limits: Readonly<Partial<Record<TribeId, TribeLimits>>>;
 }
 
 // Function properties, not methods: planTick passes them to Array.filter on their own.
 export interface Roster {
-  /** Idle, of a tribe that may work and has a slot left, and not given work yet this tick. */
+  /** Idle, of a tribe that may work and has a slot left, its pool open, and not given work yet this tick. */
   readonly canStart: (character: Character) => boolean;
+  /** Asleep on a paused quest, its pool open again, its tribe with a slot left (§3.5). */
+  readonly canWake: (character: Character) => boolean;
   /** canStart, and the tribe's runner may take this quest on this territory (§3.14). */
   readonly canClaim: (character: Character, quest: Quest, territory: TerritoryRules) => boolean;
   /** Of the quest's roster for claimBlocker: not suspended, of an enabled tribe (busy, asleep or without a runner yet). */
@@ -77,11 +86,30 @@ export function tribeMayTake(limits: TribeLimits, quest: Quest, territory: Terri
   return rankAtMost(quest.rank, limits.max_rank) && (limits.guarded_zones || !guarded);
 }
 
-export function rosterOf(source: RosterSource): Roster {
+/**
+ * Whether the pool a character draws on opens a session now (§3.5, ADR 0009): enabled, not asleep, and below the
+ * cap for the character's model (a model's own weekly cap binds only the characters on it).
+ */
+export function poolOpenOf(
+  source: Pick<RosterSource, 'kingdom' | 'asleep' | 'mana'>,
+  now: Instant,
+): (character: Character) => boolean {
+  const { tribes } = source.kingdom;
+  return (character) => {
+    const key = poolKeyOf(tribes, character);
+    if (!poolEnabled(tribes, key) || source.asleep.some((pool) => samePool(pool, key))) return false;
+    const { mana } = source;
+    return (
+      mana === undefined || admits(decideManaState(mana.readings, key, mana.config, now, character.model))
+    );
+  };
+}
+
+/** `now` weighs the gauge readings: one whose window has reset no longer counts. */
+export function rosterOf(source: RosterSource, now: Instant): Roster {
   const staffed = staffedTribes(source);
   const enabled = new Set(source.kingdom.tribes.filter((tribe) => tribe.enabled).map(({ id }) => id));
-  // A tribe sleeps while any of its pools sleeps, until poolOf (P1-05) tells which pool a character draws on.
-  const asleep = new Set(source.asleep.map(({ tribe }) => tribe));
+  const poolOpen = poolOpenOf(source, now);
   const taken = new Set<CharacterId>();
   const aside = new Set<CharacterId>();
   const inSession = count(
@@ -90,19 +118,20 @@ export function rosterOf(source: RosterSource): Roster {
   const running = count(source.quests.filter(({ status }) => status === 'working').map((q) => q.territory));
   const territories = new Map(source.territories.map((territory) => [territory.id, territory]));
 
-  const canStart = (character: Character): boolean => {
+  const mayOpen = (character: Character): boolean => {
     const tribe = staffed.get(character.tribe);
     return (
       tribe !== undefined &&
-      character.status === 'idle' &&
-      !asleep.has(character.tribe) &&
+      poolOpen(character) &&
       !taken.has(character.id) &&
       (inSession.get(character.tribe) ?? 0) < tribe.max
     );
   };
+  const canStart = (character: Character): boolean => character.status === 'idle' && mayOpen(character);
 
   return {
     canStart,
+    canWake: (character) => character.status === 'sleeping_mana' && mayOpen(character),
     canClaim: (character, quest, territory) => {
       const tribe = staffed.get(character.tribe);
       return tribe !== undefined && canStart(character) && tribeMayTake(tribe.limits, quest, territory);

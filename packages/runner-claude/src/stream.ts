@@ -2,8 +2,9 @@
 // reader keeps what the result needs (session, last `result`, usage so far) and names what the runner acts on:
 // signals for the Steward, lines only the stream knows (apprentice start and end, API retries).
 import { isObject, modelUsageTokens, numberOf, objectOf, objectsOf, textOf, usageTokens } from './json.ts';
-import { rejectionOf } from './usage.ts';
+import { rateLimitWindowsOf, rejectionOf } from './usage.ts';
 import type { JsonObject } from './json.ts';
+import type { UsageWindow } from './usage.ts';
 
 export type Observation =
   | { readonly kind: 'init'; readonly session: string }
@@ -14,6 +15,8 @@ export type Observation =
   /** `system/api_retry`; with `error: rate_limit` the account is running out (cli-facts §1.2). */
   | { readonly kind: 'api_retry'; readonly error: string; readonly detail: string }
   | { readonly kind: 'rate_limit'; readonly detail: string; readonly resets_at?: string }
+  /** The account's windows of a `rate_limit_event`, for the mana gauge (P1-05). */
+  | { readonly kind: 'mana'; readonly windows: readonly UsageWindow[] }
   | { readonly kind: 'subagent_start'; readonly agent_type: string }
   | { readonly kind: 'subagent_end'; readonly agent_type: string; readonly duration_ms: number };
 
@@ -161,10 +164,13 @@ function finish(state: State, line: JsonObject): Observation[] {
 }
 
 function limit(state: State, line: JsonObject): Observation[] {
-  const rejected = rejectionOf(objectOf(line, 'rate_limit_info'));
-  if (rejected === undefined) return [];
+  const info = objectOf(line, 'rate_limit_info');
+  const windows = rateLimitWindowsOf(info);
+  const read: Observation[] = windows.length === 0 ? [] : [{ kind: 'mana', windows }];
+  const rejected = rejectionOf(info);
+  if (rejected === undefined) return read;
   state.rateLimited = true;
-  return [{ kind: 'rate_limit', ...rejected }];
+  return [...read, { kind: 'rate_limit', ...rejected }];
 }
 
 const HANDLERS: Readonly<Record<string, (state: State, line: JsonObject) => Observation[]>> = {

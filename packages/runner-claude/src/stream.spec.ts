@@ -110,6 +110,19 @@ describe('stream-json of Claude Code 2.1.318 (fixtures of spike P1-02)', () => {
       expect(readFixture(file).reader.rateLimited).toBe(false);
     }
   });
+
+  it("passes on the account's windows of a rate_limit_event, for the mana gauge (P1-05)", () => {
+    const { seen } = readFixture('agent-denied-by-hook.jsonl');
+    expect(seen.filter(({ kind }) => kind === 'mana')).toEqual([
+      {
+        kind: 'mana',
+        windows: [
+          { window: 'five_hour', used_pct: 1, resets_at: '2026-11-06T19:50:00.000Z' },
+          { window: 'weekly', used_pct: 55, resets_at: '2026-11-08T13:00:00.000Z' },
+        ],
+      },
+    ]);
+  });
 });
 
 describe('lines without a real fixture yet (429 comes with P1-16; self-built from the docs)', () => {
