@@ -29,6 +29,7 @@ import { inKingdom, kingdomLayout } from '@elvaria/store';
 import { moveAndRing } from '../notices.ts';
 import { STEWARD } from '../record.ts';
 import { VERDICT_EVENT, moveOnVerdict, recordVerdict, ritualOf } from '../verdicts.ts';
+import { openFollowUp, unitsHandedTo } from './follow-up.ts';
 import { nodeScriptRunner } from './run-script.ts';
 import type { Context } from '../context.ts';
 import type { ScriptRunResult } from './run-script.ts';
@@ -70,7 +71,10 @@ async function readRun(ctx: Context, file: string): Promise<ScriptRunResult | un
   }
 }
 
-/** The machine's verdict on the run, written and weighed like a judge's (verdicts.ts); a fail ends in the infirmary. */
+/**
+ * The machine's verdict on the run, written and weighed like a judge's (verdicts.ts). A fail ends in the infirmary,
+ * after the follow-up its catalog entry names is open (P1-17): the reason names it, the open units point at it.
+ */
 async function verdictOn(ctx: Context, parts: Parts, result: ScriptResult, duration: number) {
   const { quest, script } = parts;
   const n = currentRun(quest);
@@ -90,6 +94,9 @@ async function verdictOn(ctx: Context, parts: Parts, result: ScriptResult, durat
   const written = await recordVerdict(ctx, quest, made.value, STEWARD);
   if (!written.ok) return written;
   const verdict = written.value.result === 'pass' ? 'pass' : 'fail';
+  const followUp = verdict === 'fail' ? await openFollowUp(ctx, quest, script, written.value) : undefined;
+  const handed = followUp === undefined ? {} : unitsHandedTo(quest, followUp);
+  const opened = followUp === undefined ? '' : `; follow-up quest ${followUp} opened`;
   return moveOnVerdict(
     ctx,
     quest,
@@ -97,8 +104,8 @@ async function verdictOn(ctx: Context, parts: Parts, result: ScriptResult, durat
     {
       event: { type: VERDICT_EVENT[verdict] },
       actor: 'steward',
-      before: { checks_run: [scriptCheckId(script.id)] },
-      reason: `script:fail: ${script.id} did not pass, see the verdict`,
+      before: { checks_run: [scriptCheckId(script.id)], ...handed },
+      reason: `script:fail: ${script.id} did not pass, see the verdict${opened}`,
     },
   );
 }
@@ -140,10 +147,7 @@ export async function judgeScript(ctx: Context, questId: QuestId): Promise<Resul
           };
     return verdictOn(ctx, parts.value, result, saved?.duration_ms ?? 0);
   }
-  if (saved === undefined) {
-    const reason = 'script:lost: the Steward stopped while the script ran';
-    return moveAndRing(ctx, { quest: quest.id, event: { type: 'crash' }, actor: 'steward', reason });
-  }
+  if (saved === undefined) return runAgain(ctx, quest.id);
   const outcome = scriptOutcomeOf(script.produces, saved);
   if (outcome.kind !== 'result') return fall(ctx, quest, outcome, script);
   const units = outcome.units === undefined ? {} : { units: [...outcome.units] };
@@ -210,8 +214,17 @@ export async function runScriptQuest(ctx: Context, questId: QuestId): Promise<Re
   await mkdir(files.native, { recursive: true });
   const runner = ctx.deps.scripts ?? nodeScriptRunner();
   const run = await runner(await requestOf(ctx, { ...parts, quest: started.value }, cwd, files.native));
-  // Nothing may be read from a run the Steward cut short: the next Steward finds it working, without output.
-  if (run.stopped) return err('stopped');
+  // Nothing may be read from a run the Steward cut short: the quest opens again and runs anew.
+  if (run.stopped) return runAgain(ctx, questId);
   await save(files.native, run);
   return judgeScript(ctx, questId);
+}
+
+/**
+ * A run that says nothing (§2.5 `working.release.script`, P1-17): the Steward stopped under it, or a Steward that died
+ * left it without output. Its entry ends `cancelled` and the quest is open again: the next tick runs it anew.
+ */
+function runAgain(ctx: Context, questId: QuestId): Promise<Result<Quest, string>> {
+  ctx.deps.log.warn(`steward: ${questId}: its script was cut short when the Steward stopped; it runs again`);
+  return moveAndRing(ctx, { quest: questId, event: { type: 'release' }, actor: 'steward' });
 }

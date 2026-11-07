@@ -71,6 +71,7 @@ export * from './tribe/constants.ts';
 export * from './tribe/select-chancellor.ts';
 export * from './tribe/tribe-limits.ts';
 export * from './script/constants.ts';
+export * from './script/follow-up.ts';
 export * from './script/outcome.ts';
 export * from './script/params.ts';
 export * from './script/script-verdict.ts';

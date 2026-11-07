@@ -44,8 +44,10 @@
   `invalid_script_params`), `scriptOutcomeOf` (exit 0 with one JSON line in the shape `produces` declares, 2 for a
   quest the script cannot use, anything else a broken script, or the timeout) and `scriptVerdictOf` (the machine's
   verdict: one check named after the script, `link-check` → `link_check`; a batch passes when every unit is done).
-  `planTick` names open script-tier quests (`scripts`) and runs a Steward stopped in the middle of
-  (`script_verdicts`).
+  `followUpOf` builds the `create_quest` of the session quest a failed run hands its work to, of the kind and
+  class the catalog's `follow_up` names (`parseRegistry` checks them). `planTick` names open script-tier quests
+  (`scripts`) and runs a Steward stopped in the middle of (`script_verdicts`); `working.release.script` opens
+  such a quest again, its run `cancelled`.
 - Decides mana per pool (`src/mana/`, ADR 0009): `poolOf(tribe, model)` (a one-pool account is the tribe; named
   pools by model prefix, `POOL_MODEL_PREFIXES`), `ManaReading` and `readingOf` (an account's window as a
   reading), `decideManaState(readings, pool, cfg, now, model?)` → `ok | warning | closed | asleep` against

@@ -84,8 +84,11 @@ function ordered(drafts: readonly QuestDraft[]): QuestDraft[] | undefined {
   return placed;
 }
 
-/** The id of a child: the plan quest's day and a hash of plan and ref, the same on every try. */
-function childIdOf(ctx: Context, plan: Quest, ref: string): QuestId {
+/**
+ * The id of a child: the parent quest's day and a hash of parent and ref, the same on every try. A plan's sub-quests
+ * use it, and so does the follow-up of a failed script run (P1-17).
+ */
+export function childIdOf(ctx: Context, plan: Quest, ref: string): QuestId {
   const zone = zonedTime(ctx.world.kingdom.tz);
   const when = parseInstant(plan.updated_at);
   // kingdom.json and the quest passed their schemas: a real zone and a real time.

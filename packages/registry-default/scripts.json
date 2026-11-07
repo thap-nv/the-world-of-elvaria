@@ -23,7 +23,11 @@
       },
       "kinds": ["batch", "document", "research"],
       "produces": "units",
-      "timeout_minutes": 10
+      "timeout_minutes": 10,
+      "follow_up": {
+        "kind": "document",
+        "class": "scribe"
+      }
     },
     {
       "id": "run-check",
@@ -43,7 +47,11 @@
       },
       "kinds": ["fix", "build", "refactor", "batch"],
       "produces": "check",
-      "timeout_minutes": 60
+      "timeout_minutes": 60,
+      "follow_up": {
+        "kind": "fix",
+        "class": "knight"
+      }
     },
     {
       "id": "count-files",

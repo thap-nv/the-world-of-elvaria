@@ -185,6 +185,19 @@ function scriptRules({ kinds, scripts }: Registry): RegistryIssue[] {
         ? []
         : [issue('scripts', ['scripts', index, 'kinds', position], 'unknown_kind', `no kind "${kindId}"`)],
     );
-    return [...entry, ...unknown];
+    return [...entry, ...unknown, ...followUpRules(kinds, script, index)];
   });
+}
+
+/** The quest a failed run opens must be one the kingdom can make: a known kind, a class it allows (P1-17). */
+function followUpRules(kinds: Registry['kinds'], script: CatalogScript, index: number): RegistryIssue[] {
+  const followUp = script.follow_up;
+  if (followUp === undefined) return [];
+  const path = ['scripts', index, 'follow_up'];
+  const kind = kinds.find(({ id }) => id === followUp.kind);
+  if (kind === undefined)
+    return [issue('scripts', [...path, 'kind'], 'unknown_kind', `no kind "${followUp.kind}"`)];
+  if (kind.classes_allowed.includes(followUp.class)) return [];
+  const message = `kind ${kind.id} does not allow class ${followUp.class}`;
+  return [issue('scripts', [...path, 'class'], 'class_kind_mismatch', message)];
 }

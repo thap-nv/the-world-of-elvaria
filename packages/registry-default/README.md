@@ -6,7 +6,9 @@
   11 kinds, 11 classes, 11 rituals, 5 catalog scripts, 7 tags. The package root is laid out like that folder.
 - Holds the catalog scripts of the script tier (ADR 0017): `link-check`, `run-check`, `count-files`,
   `diff-stat`, `compare-numbers`, plus `scripts/common.mjs`. Each runs as
-  `node scripts/<id>.mjs --params <json> [--context <json>]` in the plot and prints one JSON line.
+  `node scripts/<id>.mjs --params <json> [--context <json>]` in the plot and prints one JSON line. A failed run of
+  `link-check` hands its dead links to a `document` quest for a scribe, one of `run-check` to a `fix` quest for a
+  knight (`follow_up` in `scripts.json`, P1-17).
 - Exports `loadDefaultRegistry()` (read + validate through `@elvaria/domain`), `registryFiles()` (what init
   copies) and `REGISTRY_ROOT`.
 
