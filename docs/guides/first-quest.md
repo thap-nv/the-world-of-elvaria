@@ -102,7 +102,7 @@ Một vương quốc chỉ có một Quản sự (`.state/steward.lock`). Mỗi 
 | thư bàn giao | `quests/<quest>/handover.md` |
 | prompt, settings, stdout của phiên | `.runs/<quest>-<n>/` |
 | log của setup và từng check | `.runs/<quest>-setup.log`, `.runs/<quest>-<n>/checks/<id>.log` |
-| câu hỏi của nhân vật | chuông trên terminal của `elvaria run` |
+| câu hỏi của nhân vật | chuông trên terminal của `elvaria run`, `elvaria quest show <quest>`; trả lời bằng `elvaria answer <quest> "<câu>"` |
 
 Dừng bằng Ctrl+C. Nếu Quản sự chết khi còn phiên chạy, `elvaria doctor` liệt kê các pid đó (khi không có Quản sự nào giữ khóa) và lần `elvaria run` kế tiếp giết chúng.
 

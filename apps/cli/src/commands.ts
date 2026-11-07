@@ -5,6 +5,7 @@ import { DOCTOR } from './doctor/doctor.ts';
 import { INIT } from './init.ts';
 import { MIGRATE } from './migrate.ts';
 import { QUEST_ADD } from './quest/add.ts';
+import { ANSWER } from './quest/answer.ts';
 import { QUEST_EDIT } from './quest/edit.ts';
 import { QUEST_ARCHIVE, QUEST_CANCEL, QUEST_CONFIRM } from './quest/lifecycle.ts';
 import { QUEST_LIST } from './quest/list.ts';
@@ -36,6 +37,7 @@ export const COMMANDS: readonly CommandSpec[] = [
   QUEST_EDIT,
   SEAL,
   RETURN,
+  ANSWER,
   RUN,
   WAKE,
   SANDBOX_GENERATE,
