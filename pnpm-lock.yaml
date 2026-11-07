@@ -74,6 +74,9 @@ importers:
       '@elvaria/registry-default':
         specifier: workspace:*
         version: link:../../packages/registry-default
+      '@elvaria/runner-antigravity':
+        specifier: workspace:*
+        version: link:../../packages/runner-antigravity
       '@elvaria/runner-claude':
         specifier: workspace:*
         version: link:../../packages/runner-claude

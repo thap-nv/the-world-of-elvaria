@@ -162,16 +162,18 @@ async function checkFound(
     const details = next.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`);
     return { findings: [finding('error', t('cli.doctor.tribe_invalid', { tribe: tribe.id }), details)] };
   }
+  // Without the terms the adapter would only say the same in English; its login check comes once they are recorded.
+  const refused = tribe.adapter === 'antigravity' && next.data.tool?.terms_acknowledged_at === undefined;
   const findings = [
     finding('ok', t('cli.doctor.tool_found', { tribe: tribe.id, version: tool.version, path: tool.path })),
-    ...(await adapterFindings(next.data, ctx)),
+    ...(refused
+      ? [
+          finding('error', t('cli.doctor.terms_refused', { tribe: tribe.id }), [
+            t('cli.doctor.terms_hint', { tribe: tribe.id }),
+          ]),
+        ]
+      : await adapterFindings(next.data, ctx)),
   ];
-  if (tribe.adapter === 'antigravity' && next.data.tool?.terms_acknowledged_at === undefined)
-    findings.push(
-      finding('error', t('cli.doctor.terms_refused', { tribe: tribe.id }), [
-        t('cli.doctor.terms_hint', { tribe: tribe.id }),
-      ]),
-    );
   const same = JSON.stringify(next.data) === JSON.stringify(stored);
   return same ? { findings } : { findings, updated: next.data };
 }

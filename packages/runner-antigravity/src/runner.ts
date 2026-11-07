@@ -3,6 +3,7 @@
 // signals and a RunResult; everything else (prompt, policy, plot, checks) is runner-core's.
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import process from 'node:process';
 
 import {
   contextEnv,
@@ -15,7 +16,7 @@ import {
 import type { AgentRunner, ProbeResult, SpawnRequest, ToolInfo } from '@elvaria/runner-core';
 
 import { hookPlanOf, hooksProblem } from './hook-files.ts';
-import { programOf } from './launch.ts';
+import { commandLineProblem, programOf } from './launch.ts';
 import { writeRunFiles } from './run-files.ts';
 import { startSession } from './session.ts';
 import { probeOf, usageBuckets, windowsOf } from './usage.ts';
@@ -55,6 +56,8 @@ export interface AntigravityOptions {
   readonly pools?: readonly string[];
   /** How long a call outside a session may take; 30 s by default (`/usage` takes ~3 s). */
   readonly timeout_ms?: number;
+  /** Whose command-line limit applies (launch.ts); this machine's by default, another in the specs. */
+  readonly platform?: NodeJS.Platform;
 }
 
 /** The value `1` does not turn the updater off; `true` does (spike §2.1). */
@@ -105,6 +108,10 @@ async function spawnAgy(req: SpawnRequest, options: AntigravityOptions, plan: Ho
   const call = { cwd: req.cwd, env, timeout_ms: options.timeout_ms ?? DEFAULT_TIMEOUT_MS };
   const version = versionOf((await runToEnd(programOf(options.launch), ['--version'], call)).stdout);
   const files = await writeRunFiles(req, ctx, plan);
+  const args = sessionArgs(req, files);
+  // A prompt Windows cannot pass to agy is refused before any mana is spent, with the reason (P1-15).
+  const tooLong = commandLineProblem(options.launch, args, options.platform ?? process.platform);
+  if (tooLong !== undefined) throw new Error(tooLong);
   // The run folder belongs to the attempt: its version is recorded there (quest attempts have no such field).
   await writeFile(path.join(req.run_dir, 'agy-version.txt'), `${version ?? 'unknown'}\n`, 'utf8');
   // A hooks.json agy does not load is silent but for one log line, and without the hook every unlisted tool
@@ -116,7 +123,7 @@ async function spawnAgy(req: SpawnRequest, options: AntigravityOptions, plan: Ho
   const known = secretValuesOf(req);
   return startSession({
     launch: options.launch,
-    args: sessionArgs(req, files),
+    args,
     cwd: req.cwd,
     env,
     max_turns: req.budget.max_turns,

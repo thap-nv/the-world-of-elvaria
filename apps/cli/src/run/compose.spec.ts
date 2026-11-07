@@ -35,16 +35,21 @@ describe('crewOf', () => {
     { id: 'claude', adapter: 'claude_code', enabled: true, max_concurrent: 2 },
     { id: 'gemini', adapter: 'antigravity', enabled: true, max_concurrent: 1 },
     { id: 'spare', adapter: 'claude_code', enabled: false, max_concurrent: 1 },
+    { id: 'codex', adapter: 'codex_cli', enabled: true, max_concurrent: 1 },
   ]);
 
   it('gives each enabled tribe with a known adapter a runner, and its CLI a forget', () => {
     const crew = crewOf(kingdom, testIo());
-    expect(Object.keys(crew.runners)).toEqual(['claude']);
+    expect(Object.keys(crew.runners)).toEqual(['claude', 'gemini']);
     const claude = crew.runners[kingdom.tribes[0]!.id];
     expect(claude?.adapter).toBe('claude_code');
     expect(claude?.capabilities.tool_gate).toBe(true);
+    // Antigravity since P1-15: agy keeps nothing per worktree, so only Claude Code has a forget.
+    const gemini = crew.runners[kingdom.tribes[1]!.id];
+    expect(gemini).toMatchObject({ tribe: 'gemini', adapter: 'antigravity' });
+    expect(gemini?.capabilities).toMatchObject({ resume: true, subagent: false });
     expect(crew.forget).toHaveLength(1);
-    expect(crew.idle.map(({ id }) => id)).toEqual(['gemini']);
+    expect(crew.idle.map(({ id }) => id)).toEqual(['codex']);
   });
 
   it('starts the pinned CLI, with the minimal env only', () => {

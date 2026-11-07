@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -25,6 +25,23 @@ describe('elvaria migrate', () => {
     const io = testIo();
     expect(await run(io, 'migrate', '--kingdom', kingdom, '--locale', 'en')).toBe(0);
     expect(io.printed.out).toEqual(['Every file is at the current version; nothing to migrate.']);
+  });
+
+  it('copies the class prompts a kingdom made before P1-15 lacks, and keeps the owner’s own', async () => {
+    const kingdom = await foundKingdom(dir.root);
+    const prompts = path.join(kingdom, 'registry', 'prompts');
+    await rm(prompts, { recursive: true });
+    await mkdir(prompts);
+    await writeFile(path.join(prompts, 'judge.md'), '# My own judge\n');
+    const io = testIo();
+    expect(await run(io, 'migrate', '--kingdom', kingdom, '--locale', 'en')).toBe(0);
+    expect(io.printed.out[1]).toBe(
+      'Copied 10 registry files this Elvaria ships and the kingdom lacked (files you have are left as they are):',
+    );
+    expect(io.printed.out).toContain('  registry/prompts/mage.md');
+    expect(io.printed.out).not.toContain('  registry/prompts/judge.md');
+    expect(await readFile(path.join(prompts, 'judge.md'), 'utf8')).toBe('# My own judge\n');
+    expect(await readdir(prompts)).toHaveLength(11);
   });
 
   it('reports the files it cannot read, and exits 1', async () => {

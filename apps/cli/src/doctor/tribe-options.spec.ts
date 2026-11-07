@@ -110,7 +110,7 @@ describe('elvaria doctor: tribe options and class prompts (P1-15)', () => {
     expect(printed(io)).toContain('✗ The registry does not load:');
     expect(printed(io)).toContain('There is no file registry/prompts/judge.md.');
     expect(printed(io)).toContain(
-      `Copy the missing class prompts from ${path.join(REGISTRY_ROOT, 'prompts')} into the registry/prompts/`,
+      `Run elvaria migrate: it copies the missing class prompts from ${path.join(REGISTRY_ROOT, 'prompts')}`,
     );
     // A catalog script only a script-tier quest needs is a warning.
     await writeFile(judge, text);

@@ -2,7 +2,7 @@ export { openKingdom } from './kingdom-store.ts';
 export type { KingdomStore } from './kingdom-store.ts';
 export type { EntityStore, FileStore, Listing } from './entity-store.ts';
 export type { InboxItem, InboxStore } from './inbox.ts';
-export { initKingdom } from './init.ts';
+export { addMissingRegistryFiles, initKingdom } from './init.ts';
 export type { RegistrySource } from './init.ts';
 export { migrateKingdom } from './migrate-kingdom.ts';
 export type { MigrationReport } from './migrate-kingdom.ts';

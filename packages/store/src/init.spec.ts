@@ -5,7 +5,7 @@ import { KingdomSchema } from '@elvaria/domain';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { fixture, fixtureText, plant, tempKingdom } from '../test/kingdom.ts';
-import { initKingdom } from './init.ts';
+import { addMissingRegistryFiles, initKingdom } from './init.ts';
 import { openKingdom } from './kingdom-store.ts';
 import { KINGDOM_DIRS } from './layout.ts';
 import type { TempKingdom } from '../test/kingdom.ts';
@@ -90,5 +90,21 @@ describe('initKingdom (implementation-plan §2.2, ADR 0016)', () => {
       error: { code: 'invalid_id', file: 'registry/../outside.json' },
     });
     expect(await readdir(kingdom.root)).toEqual([]);
+  });
+});
+
+describe('addMissingRegistryFiles (P1-15)', () => {
+  it('copies only what an older kingdom lacks, never a file the owner has', async () => {
+    const older = { ...registry, files: registry.files.filter((file) => !file.startsWith('prompts/')) };
+    await initKingdom(kingdom.root, KINGDOM, older);
+    const edited = path.join(kingdom.root, 'registry', 'prompts', 'judge.md');
+    await plant(kingdom.root, 'registry/prompts/judge.md', '# My own judge\n');
+    const escaping = { ...registry, files: [...registry.files, '../outside.md'] };
+    expect(await addMissingRegistryFiles(kingdom.root, escaping)).toEqual(['registry/prompts/scribe.md']);
+    expect(await readFile(edited, 'utf8')).toBe('# My own judge\n');
+    expect(await readFile(path.join(kingdom.root, 'registry', 'prompts', 'scribe.md'), 'utf8')).toBe(
+      '# Scribe\n',
+    );
+    expect(await addMissingRegistryFiles(kingdom.root, registry)).toEqual([]);
   });
 });

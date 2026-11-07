@@ -181,7 +181,8 @@ describe('delivering a plan: its sub-quests open', () => {
       const verdict = await kingdom.store.verdicts.read(`${plan.id}-1` as VerdictId);
       if (!verdict.ok) throw new Error(`no verdict for ${title}`);
       const check = verdict.value.checks.find(({ id }) => id === 'subquests');
-      expect(verdict.value.result).toBe('fail');
+      // Unfinished work, not a failing test (pass-rule of the domain, P1-15).
+      expect(verdict.value).toMatchObject({ result: 'fail', fail_kind: 'incomplete' });
       expect(check).toMatchObject({ pass: false, log_path: `.runs/${plan.id}-1/checks/subquests.log` });
       const log = await readFile(inKingdom(kingdom.root, check?.log_path ?? ''), 'utf8');
       expect(log).toContain(`subquests.json: the delivery would open none: ${reason}`);

@@ -30,13 +30,15 @@
   `--acknowledge-terms` (ADR 0018), turns a disabled tribe on with `--enable <tribe>` once its CLI is pinned
   (P1-15; `elvaria tribe` is P1-19), refuses (exit 2, nothing written) a tribe option naming a tribe
   kingdom.json has not, or `--acknowledge-terms` for a disabled tribe it would skip, checks git, the registry
-  (class prompts: where the default ones are; catalog scripts: `missingRegistryFiles`) and each territory, the
+  (a class prompt it lacks: `elvaria migrate` copies the default ones; catalog scripts: `missingRegistryFiles`)
+  and each territory, the
   treasury file (`inspectTreasury`: present, mode 0600 outside Windows, `{ "name": "value" }`, every name a
   territory allows; names only, never a value) and, while no Steward holds its lock, the sessions a stopped one
   left running (`sessionsLeftBehind`), which the next `run` kills (P1-11, `src/doctor/check-state.ts`).
 - `run`: puts the work engine together and runs the Steward until Ctrl+C (`CliIo.untilStopped`): a runner per
-  enabled tribe from `kingdom.tribes[].adapter` (`src/run/crew.ts`: `claude_code` today, with `hookCommand` and
-  `HOOK_SCRIPT` of `@elvaria/hooks`; a tribe without a runner takes no quest), plots over runner-core's
+  enabled tribe from `kingdom.tribes[].adapter` (`src/run/crew.ts`: `claude_code`, with `hookCommand` and
+  `HOOK_SCRIPT` of `@elvaria/hooks`, and since P1-15 `antigravity` from the pinned agy, built on first use in
+  `src/run/antigravity.ts`; a tribe without a runner takes no quest), plots over runner-core's
   `PlotManager` and `runChecks` (`src/run/plots.ts`: prepare, commit, the checks on what the quest touched,
   release) with a `ProcessHost` from PATH and each CLI's `forget` (`claude purge`), the console bell saying
   the Steward's notices in the owner's language, and `.state/steward.lock` (a second `run` is refused).
@@ -52,9 +54,10 @@
 
 - `@elvaria/domain` (schemas, ids, transition table, views), `@elvaria/store` (kingdom folder, inbox, migrate),
   `@elvaria/eventlog` (append, redact), `@elvaria/sandbox` (fake days and their replay),
-  `@elvaria/registry-default` (`REGISTRY_ROOT`, `registryFiles()` for `init`), `@elvaria/i18n`, `@elvaria/steward`
+  `@elvaria/registry-default` (`REGISTRY_ROOT`, `registryFiles()` for `init` and `migrate`), `@elvaria/i18n`, `@elvaria/steward`
   (the Steward, unclaimable notices), `@elvaria/runner-core` (`PlotManager`), `@elvaria/runner-claude` (the
-  `claude_code` adapter), `@elvaria/hooks` (the hook's command).
+  `claude_code` adapter), `@elvaria/runner-antigravity` (the `antigravity` adapter, P1-15), `@elvaria/hooks` (the
+  hook's command).
 
 ## How to test
 

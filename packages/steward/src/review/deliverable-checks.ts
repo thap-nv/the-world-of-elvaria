@@ -5,7 +5,7 @@
 // list a plan quest leaves for the Steward to open whole or not at all (quest-draft schema, registry, territory and
 // secrets, refs). Under the council's pass rule a failing check fails the quest, so a list the Steward would refuse
 // goes back to the mage instead of being delivered with no child opened.
-import { CheckIdSchema } from '@elvaria/domain';
+import { SUBQUESTS_CHECK_ID } from '@elvaria/domain';
 import type { Quest, VerdictCheck } from '@elvaria/domain';
 import { SUBQUESTS_FILE } from '@elvaria/runner-core';
 import { inKingdom, writeFileAtomic } from '@elvaria/store';
@@ -14,8 +14,8 @@ import { plotDirOf } from '../deliver/deliver.ts';
 import { plannedChildren } from '../deliver/subquests.ts';
 import type { Context } from '../context.ts';
 
-/** The check's id in verdicts, `checks_run` and the log's name. */
-export const SUBQUESTS_CHECK = CheckIdSchema.parse('subquests');
+/** The check's id in verdicts, `checks_run` and the log's name; its failure is `incomplete` work (pass-rule). */
+export const SUBQUESTS_CHECK = SUBQUESTS_CHECK_ID;
 
 type DeliverableCheck = (ctx: Context, quest: Quest, runDir: string) => Promise<VerdictCheck>;
 

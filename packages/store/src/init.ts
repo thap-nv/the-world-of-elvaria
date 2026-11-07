@@ -1,6 +1,7 @@
 // `elvaria init`: lay out an empty kingdom (implementation-plan §2.2) and copy the default registry into it,
 // where the owner may edit it (ADR 0016). The store may not import @elvaria/registry-default (§1.3), so the
 // composition root passes the registry in as a folder plus a file list.
+import { constants } from 'node:fs';
 import { copyFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -9,7 +10,7 @@ import type { Kingdom, Result } from '@elvaria/domain';
 
 import { KINGDOM_SPEC } from './entities.ts';
 import { fileStore } from './entity-store.ts';
-import { pathExists } from './io/atomic.ts';
+import { errorCode, pathExists } from './io/atomic.ts';
 import { storeIssue } from './issues.ts';
 import { KINGDOM_DIRS, KINGDOM_FILE, kingdomLayout } from './layout.ts';
 import { fromPortable, inKingdom, staysInside } from './paths.ts';
@@ -21,6 +22,29 @@ export interface RegistrySource {
   readonly root: string;
   /** What to copy, relative to `root` with `/`: registryFiles() of @elvaria/registry-default. */
   readonly files: readonly string[];
+}
+
+/**
+ * Copies the registry files a kingdom made by an older Elvaria lacks (`elvaria migrate`, P1-15: the class prompts
+ * arrived after the owner's kingdom). A file the kingdom has is never touched, even when it differs: the registry
+ * is the owner's to edit. Returns the copied files, kingdom-relative with `/`.
+ */
+export async function addMissingRegistryFiles(root: string, registry: RegistrySource): Promise<string[]> {
+  const copied: string[] = [];
+  for (const file of registry.files.filter(staysInside)) {
+    const relative = kingdomLayout.registryEntry(file);
+    const target = inKingdom(root, relative);
+    if (await pathExists(target)) continue;
+    await mkdir(path.dirname(target), { recursive: true });
+    // COPYFILE_EXCL: a file the owner writes meanwhile wins over the default one.
+    try {
+      await copyFile(path.join(registry.root, fromPortable(file)), target, constants.COPYFILE_EXCL);
+      copied.push(relative);
+    } catch (error) {
+      if (errorCode(error) !== 'EEXIST') throw error;
+    }
+  }
+  return copied;
 }
 
 /**

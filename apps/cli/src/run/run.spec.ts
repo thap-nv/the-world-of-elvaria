@@ -23,7 +23,8 @@ describe('elvaria run', () => {
     expect(await steward(io)).toBe(0);
     expect(io.printed.out).toEqual([
       'Tribe claude: adapter claude_code ready.',
-      'Tribe gemini: adapter antigravity has no runner yet, so this tribe takes no quest.',
+      // Antigravity has a runner since P1-15; a tribe without one is in compose.spec.ts (crewOf).
+      'Tribe gemini: adapter antigravity ready.',
       `The Steward is running in ${kingdom}, one tick every 5 s. Ctrl+C stops it.`,
       'Stopping the Steward: the sessions it runs end, and their quests are taken up again at the next start.',
       'The Steward stopped.',

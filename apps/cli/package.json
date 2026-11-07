@@ -19,6 +19,7 @@
     "@elvaria/hooks": "workspace:*",
     "@elvaria/i18n": "workspace:*",
     "@elvaria/registry-default": "workspace:*",
+    "@elvaria/runner-antigravity": "workspace:*",
     "@elvaria/runner-claude": "workspace:*",
     "@elvaria/runner-core": "workspace:*",
     "@elvaria/sandbox": "workspace:*",

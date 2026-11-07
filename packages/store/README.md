@@ -23,6 +23,8 @@
   `class.prompt_file` must exist, P1-15) and names the catalog scripts whose `entry` is missing
   (`missingRegistryFiles`). `readClassPrompt` reads a class's prompt for a session (null when it is gone).
 - Lays out a new kingdom (`initKingdom`): folders, a copy of the registry it is given, `kingdom.json` last.
+  `addMissingRegistryFiles` copies into an older kingdom the registry files it lacks, never one it has
+  (`elvaria migrate`, P1-15).
 - Reads the owner's royal decree (`readDecree`, `kingdomLayout.decree` = `decree.md`, null when absent) and masks
   secrets in free text it keeps (ADR 0013): every verdict write masks the secret patterns in `notes` (checked
   by the schema again after), and `redactHandover` masks a session's values and the patterns in its letter.
