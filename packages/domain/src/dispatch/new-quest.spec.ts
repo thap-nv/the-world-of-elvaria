@@ -13,8 +13,21 @@ const REGISTRY = {
     { id: 'batch', classes_allowed: ['knight'], deliverable_type: 'report', seal_default: false },
   ],
   tags: [{ id: 'frontend' }, { id: 'i18n' }],
-  scripts: [{ id: 'link-check', kinds: ['batch'] }],
+  scripts: [
+    {
+      id: 'link-check',
+      kinds: ['batch'],
+      params_schema: {
+        type: 'object',
+        required: ['globs'],
+        properties: { globs: { type: 'array', items: { type: 'string' }, minItems: 1 } },
+        additionalProperties: false,
+      },
+    },
+  ],
 } as unknown as NewQuestContext['registry'];
+
+const LINKS = { id: 'link-check', params: { globs: ['docs/**/*.md'] } };
 
 const CONTEXT: NewQuestContext = {
   id: Q1,
@@ -116,11 +129,11 @@ describe('questFromCommand', () => {
       kind: 'batch',
       tier: 'script',
       class_required: undefined,
-      script: { id: 'link-check' },
+      script: LINKS,
     });
     expect(questFromCommand(script, CONTEXT)).toMatchObject({
       ok: true,
-      value: { tier: 'script', assignee: null },
+      value: { tier: 'script', assignee: null, script: LINKS },
     });
   });
 
@@ -131,7 +144,21 @@ describe('questFromCommand', () => {
     ['class_not_allowed', { class_required: 'scribe' }],
     ['unknown_tag', { tags: ['db'] }],
     ['unknown_script', { kind: 'batch', tier: 'script', class_required: undefined, script: { id: 'nope' } }],
-    ['script_not_for_kind', { tier: 'script', class_required: undefined, script: { id: 'link-check' } }],
+    ['script_not_for_kind', { tier: 'script', class_required: undefined, script: LINKS }],
+    // The params a model wrote must fit the catalog's params_schema before the script ever runs (§3.12).
+    [
+      'invalid_script_params',
+      { kind: 'batch', tier: 'script', class_required: undefined, script: { id: 'link-check' } },
+    ],
+    [
+      'invalid_script_params',
+      {
+        kind: 'batch',
+        tier: 'script',
+        class_required: undefined,
+        script: { ...LINKS, params: { globs: [], x: 1 } },
+      },
+    ],
     ['unknown_dependency', { depends_on: ['q_20261106_zzzzzz'] }],
   ])('refuses %s', (code, fields) => {
     expect(questFromCommand(payload(fields), CONTEXT)).toEqual({ ok: false, error: { code } });

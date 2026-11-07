@@ -78,7 +78,7 @@ const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
   'agent.tool.blocked': { tool: 'write', reason: 'forbidden path .env' },
   'agent.session.start': { session: 'abc-123', model: 'claude-opus-4.1' },
   'agent.session.end': { outcome: 'completed', usage: { tokens: 18_000, turns: 12 } },
-  'agent.subagent.end': { agent_type: 'apprentice', duration_ms: 90_000 },
+  'agent.subagent.end': { agent_type: 'apprentice', duration_ms: 90_000, stopped: 'max_turns' },
   'agent.subagent.overrun': { agent_type: 'apprentice', duration_ms: 400_000, limit_minutes: 5 },
   'mana.signal': { error: 'rate_limit', source: 'stop_failure' },
   'mana.level': { tribe: 'claude', pool: 'claude', window: 'weekly', used_pct: 0, source: 'estimate' },
@@ -92,6 +92,14 @@ describe('EventSchema', () => {
   });
 
   it.each(Object.entries(VALID_DATA))('accepts valid data for %s', (type, data) => {
+    expect(issuesOf(line(type, data))).toEqual([]);
+  });
+
+  it.each([
+    ['agent.tool', { tool: 'read', path: 'src/a.ts', agent_type: 'apprentice' }],
+    ['agent.tool.blocked', { tool: 'read', reason: '.env is a forbidden path', agent_type: 'apprentice' }],
+    ['agent.subagent.end', { agent_type: 'apprentice', duration_ms: 3527 }],
+  ])('accepts %s from a sub-agent, and the same line without the optional fields', (type, data) => {
     expect(issuesOf(line(type, data))).toEqual([]);
   });
 
@@ -121,6 +129,9 @@ describe('EventSchema', () => {
     ['agent.tool', { tool: 'write', path: 'a.ts', diff: '+1' }, 'data: Unrecognized key: "diff"'],
     ['agent.tool', { tool: 'write', path: '' }, 'data.path'],
     ['agent.tool.blocked', { tool: 'write', reason: '' }, 'data.reason'],
+    ['agent.tool', { tool: 'read', agent_type: '' }, 'data.agent_type'],
+    ['agent.tool.blocked', { tool: 'read', reason: 'no', agent_type: '' }, 'data.agent_type'],
+    ['agent.subagent.end', { agent_type: 'apprentice', duration_ms: 1, stopped: 'budget' }, 'data.stopped'],
     ['agent.session.start', { session: 's', model: 'Claude Opus' }, 'data.model'],
     ['agent.session.end', { outcome: 'crashed' }, 'data.outcome'],
     ['agent.session.end', { outcome: 'error', usage: { turns: 3 } }, 'data.usage.tokens'],

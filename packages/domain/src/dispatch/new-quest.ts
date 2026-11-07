@@ -4,6 +4,7 @@
 import { err, ok } from '../core/result.ts';
 import { RANKS } from '../schema/common.ts';
 import { QuestSchema } from '../schema/quest/quest.ts';
+import { scriptParamsIssues } from '../script/params.ts';
 import type { QuestId } from '../core/ids.ts';
 import type { Result } from '../core/result.ts';
 import type { CommandPayload } from '../schema/command/inbox-command.ts';
@@ -24,6 +25,7 @@ export type QuestCommandProblem =
   | 'unknown_tag'
   | 'unknown_script'
   | 'script_not_for_kind'
+  | 'invalid_script_params'
   | 'unknown_dependency'
   | 'self_dependency'
   | 'stale'
@@ -84,6 +86,9 @@ function problemOf(
   const script = context.registry.scripts.find(({ id }) => id === payload.script?.id);
   if (payload.script !== undefined && script === undefined) return 'unknown_script';
   if (script !== undefined && !script.kinds.includes(kind.id)) return 'script_not_for_kind';
+  // Params are a model's or the owner's words: they must fit the catalog before the script ever runs (§3.12).
+  if (script !== undefined && scriptParamsIssues(script, payload.script?.params).length > 0)
+    return 'invalid_script_params';
   if ((payload.depends_on ?? []).some((id) => !context.quests.includes(id))) return 'unknown_dependency';
   return undefined;
 }

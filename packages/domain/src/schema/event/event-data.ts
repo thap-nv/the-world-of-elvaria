@@ -31,6 +31,13 @@ export const ToolKindSchema = z
   );
 export type ToolKind = z.infer<typeof ToolKindSchema>;
 
+// Optional and added after v1 shipped with no line written yet, so `v` stays 1 (ADR 0003, implementation-plan §3.12).
+const CallerSchema = NonEmptyStringSchema.optional().meta(
+  describe(
+    'The sub-agent that made the call (`apprentice`), from the hook payload; absent when the character itself did (implementation-plan §3.12).',
+  ),
+);
+
 const AgentToolDataSchema = z.strictObject({
   tool: ToolKindSchema,
   path: NonEmptyStringSchema.optional().meta(describe("Relative to the plot, '/' separators.")),
@@ -38,9 +45,14 @@ const AgentToolDataSchema = z.strictObject({
   url: z.string().optional(),
   exit: z.int().optional(),
   duration_ms: DurationMsSchema.optional(),
+  agent_type: CallerSchema,
 });
 
-const AgentToolBlockedDataSchema = z.strictObject({ tool: ToolKindSchema, reason: NonEmptyStringSchema });
+const AgentToolBlockedDataSchema = z.strictObject({
+  tool: ToolKindSchema,
+  reason: NonEmptyStringSchema,
+  agent_type: CallerSchema,
+});
 
 const AgentSessionStartDataSchema = z.strictObject({ session: NonEmptyStringSchema, model: ModelSlugSchema });
 
@@ -54,6 +66,14 @@ const AgentSessionEndDataSchema = z.strictObject({
 const AgentSubagentEndDataSchema = z.strictObject({
   agent_type: NonEmptyStringSchema,
   duration_ms: DurationMsSchema,
+  stopped: z
+    .literal('max_turns')
+    .optional()
+    .meta(
+      describe(
+        'The CLI stopped the sub-agent at its maxTurns (breakers.subagent_max_turns); absent when it finished on its own or the CLI did not say (implementation-plan §3.12).',
+      ),
+    ),
 });
 
 const AgentSubagentOverrunDataSchema = z.strictObject({

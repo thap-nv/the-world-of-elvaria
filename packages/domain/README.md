@@ -39,6 +39,13 @@
   worker, only the session the Steward spawned, no pass over a failing check) and the verdict ids of a run
   (`<quest>-<n>`, `-p<k>` for a partial, `-user` for the owner's). `withVerdict` (`src/character/`) puts a
   verdict into the reputation and tag windows and the fail streak.
+- Reads the script tier (`src/script/`, §3.12, ADR 0017): `scriptParamsIssues` (a quest's `script.params` against
+  the catalog's `params_schema`, read by zod's `fromJSONSchema`; `questFromCommand` refuses
+  `invalid_script_params`), `scriptOutcomeOf` (exit 0 with one JSON line in the shape `produces` declares, 2 for a
+  quest the script cannot use, anything else a broken script, or the timeout) and `scriptVerdictOf` (the machine's
+  verdict: one check named after the script, `link-check` → `link_check`; a batch passes when every unit is done).
+  `planTick` names open script-tier quests (`scripts`) and runs a Steward stopped in the middle of
+  (`script_verdicts`).
 - Decides mana per pool (`src/mana/`, ADR 0009): `poolOf(tribe, model)` (a one-pool account is the tribe; named
   pools by model prefix, `POOL_MODEL_PREFIXES`), `ManaReading` and `readingOf` (an account's window as a
   reading), `decideManaState(readings, pool, cfg, now, model?)` → `ok | warning | closed | asleep` against
