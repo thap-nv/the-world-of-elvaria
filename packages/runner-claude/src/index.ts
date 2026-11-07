@@ -11,6 +11,7 @@ export {
   HOOK_EVENTS,
   HOOK_TIMEOUT_SECONDS,
   absoluteRulePath,
+  allowRules,
   letterRules,
   scopedRule,
   settingsOf,

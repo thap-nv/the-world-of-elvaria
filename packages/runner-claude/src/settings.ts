@@ -38,6 +38,12 @@ export const HOOK_TIMEOUT_SECONDS = 5;
  */
 const FILE_TOOLS = ['Read', 'Edit', 'Write', 'NotebookEdit'] as const;
 const IN_PLOT = './**';
+/**
+ * Search tools that get no allow rule at all. A bare `Glob` / `Grep` allow searched any folder and printed what it
+ * found there; without one, dontAsk still lets them search the plot and refuses them outside it, and a scoped
+ * `Grep(./**)` changes nothing (P1-09, a live run of 2.1.318). The tools stay in `--tools`.
+ */
+const SEARCH_TOOLS = ['Glob', 'Grep'] as const;
 
 interface HookHandler {
   readonly type: 'command';
@@ -66,6 +72,10 @@ export interface ClaudeSettings {
 /** `Read` → `Read(./**)`; any other rule as the policy wrote it. */
 export const scopedRule = (rule: string): string =>
   (FILE_TOOLS as readonly string[]).includes(rule) ? `${rule}(${IN_PLOT})` : rule;
+
+/** The allow rules of a ToolPolicy as Claude Code gets them: file tools scoped, bare search tools dropped. */
+export const allowRules = (allow: readonly string[]): string[] =>
+  allow.filter((rule) => !(SEARCH_TOOLS as readonly string[]).includes(rule)).map(scopedRule);
 
 /**
  * An absolute path as a rule path: `//` + the path in the POSIX form Claude Code 2.1.318 compares rules in, where
@@ -103,7 +113,7 @@ export function settingsOf(
   return {
     permissions: {
       defaultMode: 'dontAsk',
-      allow: [...policy.allow.map(scopedRule), ...(letter === undefined ? [] : letterRules(letter))],
+      allow: [...allowRules(policy.allow), ...(letter === undefined ? [] : letterRules(letter))],
       deny: policy.deny,
     },
     autoMemoryEnabled: false,

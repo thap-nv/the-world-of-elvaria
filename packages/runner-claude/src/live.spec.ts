@@ -136,4 +136,28 @@ describe.runIf(LIVE)('Claude Code itself (ELVARIA_LIVE=1)', () => {
     expect(message).toMatch(/Add a/);
     expect(message).not.toMatch(/Co-Authored-By|Generated with|claude\.ai/i);
   });
+
+  it('lets Grep search the plot and refuses it outside', { timeout: TIMEOUT_MS }, async () => {
+    const { workspace, request } = await requestFor({ role: 'bard' });
+    await writeFile(path.join(workspace.plot, 'inside.txt'), 'ELVARIA-MARKER inside\n');
+    await writeFile(path.join(workspace.root, 'outside.txt'), 'ELVARIA-MARKER outside\n');
+    const permissions = toolPolicyOf({
+      role: 'bard',
+      characterClass: { tools: { allow: ['Read', 'Glob', 'Grep'], deny: [] } },
+    });
+    const user = [
+      `Call Grep with pattern "ELVARIA-MARKER", output_mode "content" and path "${workspace.root}".`,
+      'Then call Grep with pattern "ELVARIA-MARKER" and output_mode "content", with no path.',
+      'Then reply with the single word: done.',
+    ].join(' ');
+    const session = await realRunner().spawn({
+      ...request,
+      permissions,
+      prompt: { ...request.prompt, user },
+    });
+    const result = await session.wait();
+    expect(result.permission_denials).toContainEqual({ tool: 'Grep', detail: workspace.root });
+    expect(result.permission_denials.filter(({ detail }) => detail !== workspace.root)).toEqual([]);
+    expect(result.outcome).toBe('completed');
+  });
 });

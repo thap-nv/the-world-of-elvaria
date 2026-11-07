@@ -5,6 +5,7 @@ import { agentsOf } from './agents.ts';
 import {
   HOOK_EVENTS,
   absoluteRulePath,
+  allowRules,
   letterRules,
   scopedRule,
   settingsOf,
@@ -57,9 +58,21 @@ describe('settingsOf', () => {
     expect(permissions.deny).toEqual(knight.deny);
   });
 
+  it('gives Glob and Grep no rule: a bare one searched outside the plot, none keeps them inside (live run)', () => {
+    expect(allowRules(['Read', 'Glob', 'Grep', 'Glob(src/**)', 'Bash(pnpm test:*)'])).toEqual([
+      'Read(./**)',
+      'Glob(src/**)',
+      'Bash(pnpm test:*)',
+    ]);
+    const { permissions } = settingsOf(knight, HOOK, {});
+    expect(permissions.allow).not.toContain('Glob');
+    expect(permissions.allow).not.toContain('Grep');
+    expect(knight.tools).toEqual(expect.arrayContaining(['Glob', 'Grep']));
+  });
+
   it('gives a verifier no write rule and denies the write tools', () => {
     const { permissions } = settingsOf(verifier, HOOK, {});
-    expect(permissions.allow).toEqual(['Read(./**)', 'Glob']);
+    expect(permissions.allow).toEqual(['Read(./**)']);
     expect(permissions.deny).toEqual(expect.arrayContaining(['Edit', 'Write', 'NotebookEdit']));
   });
 

@@ -91,9 +91,10 @@ describe('a session', () => {
     const settings = (await readJson(path.join(dir, SETTINGS_FILE))) as ClaudeSettings;
     expect(settings.permissions.defaultMode).toBe('dontAsk');
     expect(settings.permissions.allow).toEqual(
-      expect.arrayContaining(['Read(./**)', 'Edit(./**)', 'Write(./**)', 'Glob']),
+      expect.arrayContaining(['Read(./**)', 'Edit(./**)', 'Write(./**)']),
     );
     expect(settings.permissions.allow).not.toContain('Read');
+    expect(settings.permissions.allow).not.toContain('Glob');
     expect(settings.permissions.allow).toEqual(
       expect.arrayContaining(letterRules(prepared.request.handover!)),
     );
