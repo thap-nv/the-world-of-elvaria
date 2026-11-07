@@ -1,31 +1,83 @@
-// What a verdict does (implementation-plan §2.3, §2.6, §3.13): the verdict file, then one entry in the assignee's
-// reputation window and in the window of each of the quest's tags (the last 20 kept), then a new level when
-// levelChange says the window has earned it (character.level_up or level_down, with level_since).
-import { CharacterSchema, VERDICT_WINDOW_MAX, VerdictSchema, err, levelChange, ok } from '@elvaria/domain';
-import type { Character, Quest, Result, Verdict, VerdictEntry, VerdictId } from '@elvaria/domain';
+// What a verdict does (implementation-plan §2.3, §2.6, §3.13): its file and its line, then one entry in the
+// assignee's reputation window and in the window of each of the quest's tags, and the fail streak (withVerdict of
+// the domain, which the sandbox uses too), then a new level when levelChange says the window has earned it. The
+// judge's, the machine's and the owner's verdicts all go through here.
+import { CharacterSchema, err, levelChange, ok, withVerdict } from '@elvaria/domain';
+import type { Actor, Character, Quest, Result, Ritual, Verdict } from '@elvaria/domain';
 
+import { moveAndRing } from './notices.ts';
+import { describeIssue } from './world.ts';
 import type { Context } from './context.ts';
-import type { CharacterEdit } from './record.ts';
+import type { CharacterEdit, Move } from './record.ts';
 
-/** The verdict on run `n` of the quest, as verdict ids name it (`<quest>-<n>`, §2.1). */
-export const verdictIdOf = (quest: Quest, n: number): VerdictId => `${quest.id}-${n}` as VerdictId;
-
-const kept = (window: readonly VerdictEntry[], entry: VerdictEntry): VerdictEntry[] =>
-  [...window, entry].slice(-VERDICT_WINDOW_MAX);
-
-/** The assignee's windows after a verdict on `quest`; the owner's seal or return weighs three (by_human). */
+/** The assignee's windows after a pass or a fail on `quest`; the owner's seal or return weighs three (by_human). */
 export const judged =
-  (quest: Quest, verdict: VerdictId, result: 'pass' | 'fail', byHuman = false): CharacterEdit =>
+  (quest: Quest, verdict: Judged): CharacterEdit =>
   (character, at) => {
-    const entry: VerdictEntry = { verdict_id: verdict, result, by_human: byHuman, at };
-    const affinity = { ...character.skill_affinity };
-    for (const tag of quest.tags) affinity[tag] = { window: kept(affinity[tag]?.window ?? [], entry) };
-    return ok({
-      ...character,
-      reputation: { window: kept(character.reputation.window, entry) },
-      skill_affinity: affinity,
-    });
+    const base = { verdict_id: verdict.id, by_human: verdict.by_human, at, tags: quest.tags };
+    return ok(
+      withVerdict(
+        character,
+        verdict.result === 'pass'
+          ? { ...base, result: 'pass' }
+          : // The verdict schema requires fail_kind on a fail; `other` only stands in for a broken file.
+            { ...base, result: 'fail', fail_kind: verdict.fail_kind ?? 'other' },
+      ),
+    );
   };
+
+/** The ritual of the quest's kind (registry/kinds.json, rituals.json): its id and pass rule. */
+export function ritualOf(ctx: Context, quest: Quest): Ritual | undefined {
+  const kind = ctx.world.registry.kinds.find(({ id }) => id === quest.kind);
+  return ctx.world.registry.rituals.find(({ id }) => id === kind?.ritual);
+}
+
+/** Writes the verdict file, then its line (`verdict.pass|fail|partial`); a file the store refuses writes no line. */
+export async function recordVerdict(
+  ctx: Context,
+  quest: Quest,
+  verdict: Verdict,
+  actor: Actor,
+): Promise<Result<Verdict, string>> {
+  const written = await ctx.deps.store.verdicts.write(verdict);
+  if (!written.ok) return err(describeIssue(written.error));
+  const data = {
+    verdict: verdict.id,
+    ...(verdict.fail_kind === undefined ? {} : { fail_kind: verdict.fail_kind }),
+  };
+  await ctx.record.note({
+    type: `verdict.${verdict.result}`,
+    actor,
+    data,
+    quest,
+    session: verdict.session_id,
+  });
+  return ok(written.value);
+}
+
+/** A pass or a fail: what enters the assignee's windows. */
+export type Judged = Verdict & { readonly result: 'pass' | 'fail' };
+
+/** The quest's move on a judge's or the machine's verdict (§2.5). */
+export const VERDICT_EVENT = { pass: 'verdict_pass', fail: 'verdict_fail' } as const;
+
+/**
+ * The quest's move on a verdict (`verdict_pass`/`verdict_fail` of a judge or the machine, the owner's `seal` or
+ * `return`), the assignee's windows with it, then its level.
+ */
+export async function moveOnVerdict(
+  ctx: Context,
+  quest: Quest,
+  verdict: Judged,
+  move: Omit<Move, 'quest'>,
+): Promise<Result<Quest, string>> {
+  const assignee = typeof quest.assignee === 'string' ? quest.assignee : undefined;
+  const edits = { ...move.edits, ...(assignee === undefined ? {} : { [assignee]: judged(quest, verdict) }) };
+  const moved = await moveAndRing(ctx, { ...move, quest: quest.id, edits });
+  const after = assignee === undefined ? undefined : ctx.world.characters.get(assignee);
+  if (moved.ok && after !== undefined) await levelAfterVerdict(ctx, after);
+  return moved;
+}
 
 /** After a verdict entered the window: a new level when the window has earned it. */
 export async function levelAfterVerdict(ctx: Context, character: Character): Promise<void> {
@@ -37,42 +89,4 @@ export async function levelAfterVerdict(ctx: Context, character: Character): Pro
     return parsed.success ? ok(parsed.data) : err('invalid_character');
   });
   if (!changed.ok) ctx.deps.log.warn(`steward: ${character.id} ${type}: ${changed.error}`);
-}
-
-/** What the verifier's structured output says, as far as a verdict file takes it. */
-interface VerdictOutput {
-  readonly result?: unknown;
-  readonly fail_kind?: unknown;
-  readonly notes?: unknown;
-  readonly progress?: unknown;
-}
-
-/** The verdict file of a verifier's session, or why its output is not one (the verdict schema decides). */
-export function verdictOf(
-  ctx: Context,
-  quest: Quest,
-  run: { readonly n: number; readonly verifier: string; readonly session_id: string },
-  output: unknown,
-): Result<Verdict, string> {
-  if (typeof output !== 'object' || output === null) return err('no_verdict');
-  const { result, fail_kind: failKind, notes, progress } = output as VerdictOutput;
-  const kind = ctx.world.registry.kinds.find(({ id }) => id === quest.kind);
-  const parsed = VerdictSchema.safeParse({
-    version: 1,
-    id: verdictIdOf(quest, run.n),
-    quest_id: quest.id,
-    attempt: run.n,
-    verifier_id: run.verifier,
-    ritual: kind?.ritual,
-    // The machine checks come with P1-07 (runChecks).
-    checks: [],
-    result,
-    ...(failKind === undefined ? {} : { fail_kind: failKind }),
-    ...(notes === undefined ? {} : { notes }),
-    ...(progress === undefined ? {} : { progress }),
-    by_human: false,
-    session_id: run.session_id,
-    created_at: ctx.record.stamp(),
-  });
-  return parsed.success ? ok(parsed.data) : err('invalid_verdict');
 }

@@ -23,6 +23,10 @@ function waitReason(t: Translate, notice: Extract<Notice, { kind: 'unclaimable' 
 }
 
 export function lineOf(t: Translate, notice: Notice): string {
+  if (notice.kind === 'suspended') {
+    const { character, count } = notice;
+    return t('cli.run.notice.suspended', { character, count, fail_kind: notice.fail_kind ?? 'other' });
+  }
   const quest = { quest: notice.quest.id, title: notice.quest.title };
   switch (notice.kind) {
     case 'unclaimable':

@@ -35,6 +35,10 @@ export interface Roster {
   readonly canClaim: (character: Character, quest: Quest, territory: TerritoryRules) => boolean;
   /** Of the quest's roster for claimBlocker: not suspended, of an enabled tribe (busy, asleep or without a runner yet). */
   readonly counts: (character: Character) => boolean;
+  /** May judge now or later: not suspended, of an enabled tribe that has a runner (busy or asleep for now). */
+  readonly standsBy: (character: Character) => boolean;
+  /** The character leaves the roster for this tick without a session (a suspension): no slot is taken. */
+  readonly setAside: (character: Character) => void;
   /** The territory exists and has a slot left (territory.max_concurrent). */
   readonly territoryHasRoom: (territory: TerritoryId) => boolean;
   readonly territory: (id: TerritoryId) => TerritoryRules | undefined;
@@ -79,6 +83,7 @@ export function rosterOf(source: RosterSource): Roster {
   // A tribe sleeps while any of its pools sleeps, until poolOf (P1-05) tells which pool a character draws on.
   const asleep = new Set(source.asleep.map(({ tribe }) => tribe));
   const taken = new Set<CharacterId>();
+  const aside = new Set<CharacterId>();
   const inSession = count(
     source.characters.filter(({ status }) => IN_SESSION.includes(status)).map(({ tribe }) => tribe),
   );
@@ -102,7 +107,14 @@ export function rosterOf(source: RosterSource): Roster {
       const tribe = staffed.get(character.tribe);
       return tribe !== undefined && canStart(character) && tribeMayTake(tribe.limits, quest, territory);
     },
-    counts: (character) => character.status !== 'suspended' && enabled.has(character.tribe),
+    counts: (character) =>
+      character.status !== 'suspended' && !aside.has(character.id) && enabled.has(character.tribe),
+    standsBy: (character) =>
+      character.status !== 'suspended' && !aside.has(character.id) && staffed.has(character.tribe),
+    setAside: (character) => {
+      aside.add(character.id);
+      taken.add(character.id);
+    },
     territoryHasRoom: (id) => (running.get(id) ?? 0) < (territories.get(id)?.max_concurrent ?? 0),
     territory: (id) => territories.get(id),
     take: (character, territory) => {

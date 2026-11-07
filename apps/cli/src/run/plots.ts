@@ -1,10 +1,13 @@
-// The Steward's Plots over PlotManager (implementation-plan §3.3, P1-07 row "(Chốt sau P1-07)"): a git territory
-// gets its worktree, any other a folder in the kingdom; the session's cwd is the worktree's native path, or the
-// folder inside the kingdom. A plot that cannot be prepared throws, so the Steward opens no session there.
-import { createPlotManager } from '@elvaria/runner-core';
+// The Steward's Plots over PlotManager and runChecks (implementation-plan §3.3, P1-07 row "(Chốt sau P1-07)", P1-04):
+// a git territory gets its worktree, any other a folder in the kingdom; the session's cwd and the checks' cwd are the
+// worktree's native path, or the folder inside the kingdom. A plot that cannot be prepared throws, so the Steward
+// opens no session there. Commit, the checks on what the quest touched, and release at archive (with each tribe's
+// `forget`) go straight to PlotManager.
+import { createPlotManager, runChecks } from '@elvaria/runner-core';
 import type { ForgetWorktree, PlotManager, ProcessHost } from '@elvaria/runner-core';
 import type { Plots } from '@elvaria/steward';
 import { fromPortable, inKingdom } from '@elvaria/store';
+import type { Quest } from '@elvaria/domain';
 
 import { findExecutable } from '../process/find-executable.ts';
 import { launchOf } from '../process/launch.ts';
@@ -22,7 +25,13 @@ export function processHostOf(io: CliIo): ProcessHost {
   };
 }
 
-export function plotsOver(kingdom: string, manager: PlotManager): Plots {
+/** Where a plot's programs run: the worktree, the folder in the kingdom, or the kingdom for a quest without one. */
+function cwdOf(kingdom: string, plot: Quest['plot']): string {
+  if (plot.path === undefined) return kingdom;
+  return plot.type === 'worktree' ? fromPortable(plot.path) : inKingdom(kingdom, plot.path);
+}
+
+export function plotsOver(kingdom: string, manager: PlotManager, host: ProcessHost): Plots {
   return {
     prepare: async (quest, territory) => {
       const prepared = await manager.prepare(quest, territory);
@@ -32,13 +41,19 @@ export function plotsOver(kingdom: string, manager: PlotManager): Plots {
       }
       const { plot } = prepared.value;
       if (plot.path === undefined) throw new Error(`the plot of ${quest.id} has no path`);
-      const cwd = plot.type === 'worktree' ? fromPortable(plot.path) : inKingdom(kingdom, plot.path);
-      return { plot, cwd };
+      return { plot, cwd: cwdOf(kingdom, plot) };
     },
+    commit: (plot, message) => manager.commitAll(plot, message),
+    check: async ({ plot, territory, run_dir }) => {
+      const touched = await manager.touched(plot);
+      return runChecks({ kingdom, territory, touched, cwd: cwdOf(kingdom, plot), run_dir }, host);
+    },
+    release: (plot) => manager.release(plot),
   };
 }
 
 export function plotsOf(kingdom: string, io: CliIo, forget: readonly ForgetWorktree[]): Plots {
-  const manager = createPlotManager({ kingdom, host: processHostOf(io), platform: io.platform, forget });
-  return plotsOver(kingdom, manager);
+  const host = processHostOf(io);
+  const manager = createPlotManager({ kingdom, host, platform: io.platform, forget });
+  return plotsOver(kingdom, manager, host);
 }

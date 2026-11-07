@@ -17,6 +17,7 @@ import {
 import {
   AbsPathSchema,
   DateTimeSchema,
+  FailKindSchema,
   NameSchema,
   NonEmptyStringSchema,
   RankSchema,
@@ -43,8 +44,17 @@ export const QuestReasonPayloadSchema = z.strictObject({
 export const SealPayloadSchema = z.strictObject({ quest: QuestIdSchema, note: z.string().optional() });
 
 export const ReturnPayloadSchema = z
-  .strictObject({ quest: QuestIdSchema, notes: NonEmptyStringSchema })
-  .meta(describe('Return always carries a note (design: the Return button requires one).'));
+  .strictObject({
+    quest: QuestIdSchema,
+    notes: NonEmptyStringSchema,
+    // Optional, so commands written before P1-04 stay valid; the Steward takes `other` when it is absent.
+    fail_kind: FailKindSchema.optional(),
+  })
+  .meta(
+    describe(
+      "Return always carries a note (design: the Return button requires one). The Steward writes it as the owner's fail verdict, which needs notes of at least 20 characters and a fail_kind (`other` when absent).",
+    ),
+  );
 
 export const CharacterPayloadSchema = z.strictObject({ character: CharacterIdSchema });
 

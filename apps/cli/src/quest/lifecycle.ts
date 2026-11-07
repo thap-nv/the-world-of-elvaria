@@ -20,7 +20,7 @@ export function ownerMay(quest: Quest, event: QuestEventType): boolean {
 }
 
 /** The quest named on the command line, if the owner may cause `event` on it now. */
-async function questFor(
+export async function questFor(
   input: CommandInput,
   ctx: KingdomContext,
   event: (quest: Quest) => QuestEventType,

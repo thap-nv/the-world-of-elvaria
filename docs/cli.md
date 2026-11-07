@@ -22,6 +22,8 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria quest confirm <quest>` | Xác nhận một nhiệm vụ nháp để nó mở (lệnh confirm). |
 | `elvaria quest cancel <quest>` | Hủy một nhiệm vụ chưa xong; nhiệm vụ nháp thì bỏ đi (lệnh cancel hoặc archive). |
 | `elvaria quest edit <quest>` | Sửa một nhiệm vụ mà không chạm vào file của nó (lệnh edit_quest). |
+| `elvaria seal <quest>` | Đóng dấu việc đang chờ dấu vua: nhiệm vụ xong (lệnh seal; nặng bằng ba phán quyết). |
+| `elvaria return <quest>` | Trả việc đang chờ dấu vua về người làm, kèm ghi chú (lệnh return; nặng bằng ba phán quyết). |
 | `elvaria run` | Chạy Quản sự: giao nhiệm vụ cho nhân vật và cho nghiệm thu, tới khi bạn dừng (Ctrl+C). |
 | `elvaria sandbox generate` | Sinh một ngày giả vào events/sandbox/ của vương quốc (sa bàn): không chạy phiên nào, không chạm nhiệm vụ thật. |
 | `elvaria sandbox replay <file>` | Phát lại một ngày giả thành dòng thời gian trên terminal. |
@@ -162,6 +164,25 @@ Sửa một nhiệm vụ mà không chạm vào file của nó (lệnh edit_ques
 | `--max-minutes <n>` | Trần số phút cho một lần thử. |
 | `--max-tokens <n>` | Trần số token cho một lần thử. |
 | `--max-attempts <n>` | Số lần thử tối đa. |
+
+## `elvaria seal`
+
+Đóng dấu việc đang chờ dấu vua: nhiệm vụ xong (lệnh seal; nặng bằng ba phán quyết).
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<quest>` | id của nhiệm vụ, ví dụ q_20261106_7k3m2a. |
+| `--note <text>` | Một lời cho người làm, lưu cùng dấu vua. |
+
+## `elvaria return`
+
+Trả việc đang chờ dấu vua về người làm, kèm ghi chú (lệnh return; nặng bằng ba phán quyết).
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<quest>` | id của nhiệm vụ, ví dụ q_20261106_7k3m2a. |
+| `--note <text>` | Sai gì, ở đâu, ít nhất 20 ký tự: người làm đọc nó ở phiên kế tiếp. (bắt buộc) |
+| `--fail-kind <kind>` | Kiểu lỗi, để đếm những lần trượt cùng kiểu liền nhau: tests_fail, scope_creep, missing_i18n, wrong_facts, incomplete, style, unsafe hoặc other (mặc định). |
 
 ## `elvaria run`
 
