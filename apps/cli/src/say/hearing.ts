@@ -4,7 +4,7 @@ import { CHANCELLOR_CLASS, poolsOf, selectChancellor, tribeLimitsOf } from '@elv
 import type { ChancellorChoice, CharacterClass, TribeId } from '@elvaria/domain';
 import { loadPromptTemplates } from '@elvaria/runner-core';
 import type { AgentRunner, ChancellorContext } from '@elvaria/runner-core';
-import { inKingdom, readTextFile } from '@elvaria/store';
+import { inKingdom, readDecree } from '@elvaria/store';
 
 import { registryIssueLines } from '../issues.ts';
 import type { ChancellorSession } from '@elvaria/chancellor';
@@ -12,9 +12,6 @@ import type { KingdomContext } from '../kingdom-context.ts';
 
 /** The runners of the tribes that work now: what `elvaria run` builds (crewOf). */
 export type Runners = Partial<Record<TribeId, AgentRunner>>;
-
-/** Kingdom-relative; the store's layout lists it from P1-10 (implementation-plan §8, P1-10 row). */
-const DECREE = 'decree.md';
 
 export interface Hearing {
   readonly context: ChancellorContext;
@@ -86,7 +83,7 @@ export async function hearingOf(
   const context: ChancellorContext = {
     utterance,
     locale: ctx.kingdom.owner.locale,
-    decree: (await readTextFile(inKingdom(ctx.store.root, DECREE))) ?? null,
+    decree: await readDecree(ctx.store.root),
     territories: territories.items,
     registry: registry.value,
     roster: characters.items,
