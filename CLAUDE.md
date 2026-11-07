@@ -81,7 +81,7 @@ pnpm elvaria sandbox replay <tmp>/events/sandbox/<ngày>.jsonl --speed 20   # d�
 ELVARIA_LIVE=1 pnpm --filter @elvaria/runner-claude test              # smoke với CLI thật và hook đã build (từ P1-09) — tốn mana, chỉ khi cần
 ```
 
-`elvaria` hôm nay có `init`, `doctor`, `territory add|list`, `character add|list`, `quest add|list|show|confirm|cancel|edit`, `run` (Quản sự, tới khi Ctrl+C), `sandbox generate|replay`, `migrate`; `seal`, `return` đến với P1-04, `say` với P1-13. Vương quốc lấy từ `--kingdom` hoặc biến `ELVARIA_KINGDOM`.
+`elvaria` hôm nay có `init`, `doctor`, `territory add|list`, `character add|list`, `quest add|list|show|confirm|cancel|edit`, `run` (Quản sự, tới khi Ctrl+C), `say "<câu>"` (Tể tướng soạn nhiệm vụ nháp; cần một nhân vật nghề `chancellor`), `sandbox generate|replay`, `migrate`; `seal`, `return` đến với P1-04. Vương quốc lấy từ `--kingdom` hoặc biến `ELVARIA_KINGDOM`.
 
 ### Hook của repo / Repo hooks
 

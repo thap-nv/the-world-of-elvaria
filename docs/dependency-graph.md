@@ -14,6 +14,7 @@ flowchart TD
   runner_claude["runner-claude"]
   runner_antigravity["runner-antigravity"]
   steward["steward"]
+  chancellor["chancellor"]
   sandbox["sandbox"]
   eventlog["eventlog"]
   hooks["hooks"]
@@ -30,11 +31,14 @@ flowchart TD
   steward --> eventlog
   steward --> runner_core
   steward --> store
+  chancellor --> domain
+  chancellor --> runner_core
   sandbox --> domain
   sandbox --> eventlog
   sandbox --> store
   eventlog --> domain
   hooks --> eventlog
+  cli --> chancellor
   cli --> domain
   cli --> eventlog
   cli --> hooks
@@ -59,7 +63,7 @@ flowchart TD
 | `runner-gemini` | chưa có | | `runner-core` |
 | `runner-codex` | chưa có | | `runner-core` |
 | `steward` | `packages/steward` | `domain`, `eventlog`, `runner-core`, `store` | `domain`, `store`, `eventlog`, `runner-core` |
-| `chancellor` | chưa có | | `domain`, `runner-core` |
+| `chancellor` | `packages/chancellor` | `domain`, `runner-core` | `domain`, `runner-core` |
 | `sandbox` | `packages/sandbox` | `domain`, `eventlog`, `store` | `domain`, `eventlog`, `store` |
 | `eventlog` | `packages/eventlog` | `domain` | `domain` |
 | `hooks` | `packages/hooks` | `eventlog` | `eventlog` |
@@ -69,4 +73,4 @@ flowchart TD
 | `ui` | chưa có | | `domain`, `i18n`, `ui-kit` |
 | `world` | chưa có | | `domain`, `i18n`, `ui-kit`, `ui` |
 | `lite` | chưa có | | `domain`, `i18n`, `ui-kit`, `ui` |
-| `cli` | `apps/cli` | `domain`, `eventlog`, `hooks`, `i18n`, `registry-default`, `runner-claude`, `runner-core`, `sandbox`, `steward`, `store` | `domain`, `eventlog`, `store`, `registry-default`, `runner-core`, `runner-claude`, `runner-antigravity`, `runner-gemini`, `runner-codex`, `hooks`, `steward`, `chancellor`, `sandbox`, `herald`, `i18n` |
+| `cli` | `apps/cli` | `chancellor`, `domain`, `eventlog`, `hooks`, `i18n`, `registry-default`, `runner-claude`, `runner-core`, `sandbox`, `steward`, `store` | `domain`, `eventlog`, `store`, `registry-default`, `runner-core`, `runner-claude`, `runner-antigravity`, `runner-gemini`, `runner-codex`, `hooks`, `steward`, `chancellor`, `sandbox`, `herald`, `i18n` |

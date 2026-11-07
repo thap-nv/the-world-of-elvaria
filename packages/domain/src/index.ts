@@ -58,6 +58,7 @@ export * from './schema/world-map/constants.ts';
 export * from './schema/world-map/world-map.ts';
 export * from './tribe/capabilities.ts';
 export * from './tribe/constants.ts';
+export * from './tribe/select-chancellor.ts';
 export * from './tribe/tribe-limits.ts';
 export * from './world/banner.ts';
 export * from './world/character-view.ts';

@@ -16,6 +16,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria territory list` | Liệt kê các lãnh thổ. |
 | `elvaria character add <id>` | Triệu hồi một nhân vật: nghề, tộc, model và cấp ban đầu. |
 | `elvaria character list` | Liệt kê các nhân vật. |
+| `elvaria say <words>` | Nói với Tể tướng việc bạn muốn: Tể tướng soạn nhiệm vụ nháp, bạn xác nhận (lệnh create_quest, nháp). |
 | `elvaria quest add` | Thêm một nhiệm vụ mở ngay, không qua Tể tướng (lệnh create_quest). |
 | `elvaria quest list` | Liệt kê các nhiệm vụ trên bảng nhiệm vụ. |
 | `elvaria quest show <quest>` | Xem một nhiệm vụ. |
@@ -94,6 +95,14 @@ Triệu hồi một nhân vật: nghề, tộc, model và cấp ban đầu.
 Liệt kê các nhân vật.
 
 Không có tham số riêng, chỉ các tùy chọn chung.
+
+## `elvaria say`
+
+Nói với Tể tướng việc bạn muốn: Tể tướng soạn nhiệm vụ nháp, bạn xác nhận (lệnh create_quest, nháp).
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<words>` | Việc bạn muốn làm, bằng lời của bạn, trong ngoặc kép. |
 
 ## `elvaria quest add`
 
