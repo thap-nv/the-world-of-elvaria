@@ -23,5 +23,7 @@ export interface CliIo {
   readonly clock: Clock;
   /** Waits `ms` milliseconds: a sandbox replay paces its lines with it; tests pass one that returns at once. */
   readonly sleep: (ms: number) => Promise<void>;
+  /** Resolves when the owner stops a long-running command (Ctrl+C, SIGTERM): `elvaria run` then stops the Steward. */
+  readonly untilStopped: () => Promise<void>;
   readonly random: RandomSource;
 }

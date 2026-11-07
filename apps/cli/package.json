@@ -15,8 +15,11 @@
   "dependencies": {
     "@elvaria/domain": "workspace:*",
     "@elvaria/eventlog": "workspace:*",
+    "@elvaria/hooks": "workspace:*",
     "@elvaria/i18n": "workspace:*",
     "@elvaria/registry-default": "workspace:*",
+    "@elvaria/runner-claude": "workspace:*",
+    "@elvaria/runner-core": "workspace:*",
     "@elvaria/sandbox": "workspace:*",
     "@elvaria/steward": "workspace:*",
     "@elvaria/store": "workspace:*"

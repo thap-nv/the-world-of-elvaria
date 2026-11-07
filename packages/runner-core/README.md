@@ -22,7 +22,7 @@
   royal decree when `<kingdom>/decree.md` exists.
 - Runs the conformance suite (`conformanceChecks`, `runConformance`): plain checks with `node:assert`, so a spec
   wraps them in `it` and `elvaria tribe check` (P1-19) runs them too. With a real CLI (`live`) only the checks
-  that burn no mana run.
+  that burn no mana run. `openWorkspace` and `conformanceRequest` give an adapter's specs the same requests.
 - Gives every quest its own ground (`createPlotManager`, implementation-plan §3.3, ADR 0012). On a git territory,
   `prepare` adds `<repo>/<worktree_dir>/<quest-id>` on branch `quest/<quest-id>` (`--no-track`), forked from the
   default branch: origin's after a fetch when it only adds to the local one, else the local one; the main
@@ -43,14 +43,21 @@
 - Starts territory programs without a shell (`runProgram`, `argvOf`, `splitCommandLine`): quoted words, shell
   syntax refused, the program resolved by the `ProcessHost` the composition root passes in (it owns PATH and turns
   an npm `.cmd` shim into `node <script>`), and an env with no `GIT_*` (`childEnvOf`).
+- Gives every adapter the session's side of the hook contract (P1-09, §3.6): `runContextOf(req)` (kingdom,
+  quest, attempt from env `ELVARIA_*`; character, role, model from the request), `contextEnv`, and
+  `writePolicyFile` for `<run_dir>/policy.json` v1, the file `--policy` points the hook at.
+- Writes the lines only a CLI's output knows (`openRunLog`): `agent.session.end`, `agent.subagent.*`,
+  `mana.signal`, stamped and redacted like the hook's, checked by `EventSchema`, to the log and the journal; and
+  tells whether Elvaria's SessionStart hook recorded a session (`recorded`). Keeps a CLI's raw stdout and stderr
+  in `.runs/`, redacted (`openRunOutput`).
 
 ## Does not
 
 - Talk to a real CLI: adapters do (`runner-claude` P1-09, `runner-antigravity` P1-12b, `runner-gemini` P1-12c).
-- Write settings.json, policy.json or agents.json, nor build the minimal env: the adapters (P1-09) and the
-  treasury (P1-10) do, from `ToolPolicy` and `SpawnRequest`.
-- Kill process trees or normalise streams yet (P1-06, §3.10): a check or setup past its timeout loses only its
-  own process.
+- Write a CLI's own settings or agents file, nor build the minimal env: the adapters (P1-09) and the treasury
+  (P1-10) do, from `ToolPolicy` and `SpawnRequest`.
+- Kill process trees yet (P1-06): a check or setup past its timeout, or a killed CLI, loses only its own
+  process.
 - Search PATH, push, merge, or force anything: a dirty worktree is not released, a refused commit stays refused.
 - Name a tribe CLI: `claude purge --yes <worktree>` reaches `release` as a `forget` callback (ADR 0021).
 - Decide anything: the Steward chooses who, when and with which continuation; `tribeLimitsOf` lives in the
@@ -58,9 +65,10 @@
 
 ## Depends on
 
-- `@elvaria/domain` (schemas, registry, capabilities, `RITUAL_STEPS`, `FAIL_KINDS`, `Result`), `@elvaria/store`
-  (`readTextFile`, `writeFileAtomic`, `acquireLock`, kingdom paths). No third-party package; git is the
-  territory's own, found by the host.
+- `@elvaria/domain` (schemas, registry, capabilities, `RITUAL_STEPS`, `FAIL_KINDS`, `Result`, `EventSchema`),
+  `@elvaria/eventlog` (append, read a journal, stamp, redact), `@elvaria/store` (`readTextFile`,
+  `writeFileAtomic`, `acquireLock`, kingdom paths). No third-party package; git is the territory's own, found
+  by the host.
 
 ## How to test
 

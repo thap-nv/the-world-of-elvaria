@@ -1,0 +1,24 @@
+{
+  "name": "@elvaria/runner-claude",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The claude_code adapter: Claude Code headless behind AgentRunner (argv, settings, hooks, stream-json, probe, doctor).",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@elvaria/runner-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@elvaria/config": "workspace:*",
+    "@types/node": "^24.19.2",
+    "@vitest/coverage-v8": "^5.1.0",
+    "typescript": "~5.9.3",
+    "vitest": "^5.1.0"
+  }
+}

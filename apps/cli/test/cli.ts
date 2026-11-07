@@ -63,6 +63,8 @@ export function testIo(overrides: Partial<CliIo> = {}): TestIo {
       slept.push(ms);
       return Promise.resolve();
     },
+    // A long-running command (`elvaria run`) is stopped at once unless a test holds it.
+    untilStopped: () => Promise.resolve(),
     random: {
       bytes: (count) => {
         seed += 1;
@@ -125,9 +127,17 @@ export async function gitRepo(folder: string): Promise<string> {
  * A program named `name` in `dir` that prints `version` and exits with `code`: an npm-style `.cmd` shim around a
  * Node script on Windows (the path doctor must read), an executable with a shebang elsewhere.
  */
-export async function fakeTool(dir: string, name: string, version: string, code = 0): Promise<string> {
+export async function fakeTool(
+  dir: string,
+  name: string,
+  version: string,
+  code = 0,
+  auth = { loggedIn: true },
+): Promise<string> {
   await mkdir(dir, { recursive: true });
-  const source = `process.stdout.write(${JSON.stringify(`${version}\n`)}); process.exitCode = ${code};\n`;
+  // `auth status --json` answers as Claude Code does (logged in by default); every other call prints the version.
+  const answer = `process.argv[2] === 'auth' ? ${JSON.stringify(`${JSON.stringify(auth)}\n`)} : ${JSON.stringify(`${version}\n`)}`;
+  const source = `process.stdout.write(${answer}); process.exitCode = ${code};\n`;
   if (process.platform === 'win32') {
     await writeFile(path.join(dir, `${name}-cli.cjs`), source);
     const shim = path.join(dir, `${name}.cmd`);
