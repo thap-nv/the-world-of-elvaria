@@ -4,6 +4,8 @@ import { spawn } from 'node:child_process';
 import type { ChildProcessByStdio } from 'node:child_process';
 import type { Readable } from 'node:stream';
 
+import { killTree } from '@elvaria/runner-core';
+
 import type { Launch } from './launch.ts';
 
 export interface Ran {
@@ -52,7 +54,8 @@ export function runOnce(launch: Launch, args: readonly string[], options: RunOnc
     child.stderr.setEncoding('utf8').on('data', (chunk: string) => (stderr += chunk));
     const timer = setTimeout(() => {
       problem = `no answer within ${options.timeoutMs} ms`;
-      child.kill();
+      // The whole tree (P1-06): a child left holding stdout would keep `close` from ever coming.
+      void killTree(child.pid ?? 0);
     }, options.timeoutMs);
     child.on('error', (error) => {
       problem = error.message;
