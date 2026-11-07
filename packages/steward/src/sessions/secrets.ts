@@ -1,8 +1,8 @@
 // The treasury in the Steward's hands (implementation-plan §3.9 "(P1-10)", ADR 0013), kept apart from the session
 // functions it serves: the env of a session (the minimal env, the hook's context, exactly the quest's secrets), the
 // values each running session was given, and what a session leaves behind masked with them before the kingdom
-// keeps it. Each part is called from one place: sessionEnvOf by requestOf, rememberSecrets by spawnFor,
-// maskFinished by the tick before settle.
+// keeps it. sessionEnvOf is called by requestOf, rememberSecrets by spawnFor, secretsLacking by the openings before
+// the plot (P1-06), maskFinished by the tick before settle and by the breakers after a kill.
 import { secretsBeyond } from '@elvaria/domain';
 import { createRedactor, redactDeep } from '@elvaria/eventlog';
 import { secretValuesOf, sessionEnv } from '@elvaria/runner-core';
@@ -31,6 +31,31 @@ export async function sessionEnvOf(
   return sessionEnv({ base: ctx.deps.env, context, secrets });
 }
 
+const errorText = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
+/**
+ * Why no session can get the quest's secrets now, or undefined when it can: a name its territory no longer allows,
+ * a name the treasury lacks, a treasury that cannot be read. Names only, never a value. Asked before the plot is
+ * prepared, so such a quest goes to the infirmary instead of being claimed and released every tick (P1-06).
+ */
+export async function secretsLacking(
+  ctx: Context,
+  quest: Quest,
+  territory: Territory,
+): Promise<string | undefined> {
+  if (quest.secrets_required.length === 0) return undefined;
+  const refused = secretsBeyond(quest.secrets_required, territory);
+  if (refused.length > 0) return `territory ${territory.id} does not allow the secrets ${refused.join(', ')}`;
+  let held: readonly string[];
+  try {
+    held = await ctx.deps.treasury.names();
+  } catch (error) {
+    return `the treasury cannot be read: ${errorText(error)}`;
+  }
+  const missing = quest.secrets_required.filter((name) => !held.includes(name));
+  return missing.length === 0 ? undefined : `the treasury has no ${missing.join(', ')}`;
+}
+
 /**
  * The secret values in each running session's env, beside the session rather than in its `Running` record. Weak:
  * an entry goes with its session.
@@ -41,8 +66,6 @@ const given = new WeakMap<RunningSession, readonly string[]>();
 export function rememberSecrets(session: RunningSession, request: SpawnRequest): void {
   given.set(session, secretValuesOf(request));
 }
-
-const errorText = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
 /**
  * A session's end as the kingdom keeps it: the assignee's handover letter rewritten masked (the next prompts and

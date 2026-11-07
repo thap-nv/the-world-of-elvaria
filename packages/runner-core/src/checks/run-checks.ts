@@ -9,7 +9,7 @@ import { acquireLock, inKingdom } from '@elvaria/store';
 import type { HeldLock } from '@elvaria/store';
 
 import { openLog, runLine } from './logged-run.ts';
-import type { ProcessHost } from './program.ts';
+import type { ProcessHost } from '../process/program.ts';
 import { selectChecks } from './select-checks.ts';
 
 export const MS_PER_MINUTE = 60_000;

@@ -26,6 +26,12 @@
   any new work (`wakes`, `wakesOf`). `resumedSession` decides whether a revived assignee continues its CLI
   session (an answer within `resume_after_answer_minutes`, mana with `resume_after_mana`, an adapter that can
   resume); `answeredAlready` knows a question the owner answered.
+- Decides the breakers (`src/breaker/`, §3.4, P1-06): `evaluateBreakers(attempt, limits, now, usage)` → `ok` or
+  the first trip of `time` (on the minute `budget.max_minutes` is spent), `tokens` or `turns` (once past
+  `budget.max_tokens`, `breakers.max_turns`); `breakersOf` applies it to the sessions the Steward holds
+  (`KingdomSnapshot.sessions`), each timed from its own attempt_log entry, and `planTick` returns them first as
+  `breakers`. The trips `commit` and `secrets` happen where no session runs: `secrets` takes a claimed,
+  returned, paused or unjudged quest to the infirmary (§2.5).
 - Keeps the separation of duties (`src/verify/`, ADR 0008, 0020): `selectVerifier` (never a worker of the quest
   or of its party, never the assignee's model, another model family first by `familyOf`, then another tribe;
   `dispatch.verifier_same_family` for the rest), `underPassRule` (a failing check fails the quest under

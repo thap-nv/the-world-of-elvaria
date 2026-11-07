@@ -67,6 +67,8 @@ export const QUEST_TRANSITIONS: readonly QuestTransitionRow[] = [
   { from: 'claimed', event: 'start', actors: S, to: 'working' },
   { from: 'claimed', event: 'release', actors: S, to: 'open' },
   { from: 'claimed', event: 'cancel', actors: U, to: 'archived' },
+  // No session can open (trip `secrets`): only the owner can fix the treasury or the territory (P1-06).
+  { from: 'claimed', event: 'breaker', actors: S, to: 'infirmary' },
   { from: 'working', event: 'submit', actors: R, guard: 'session', to: 'review' },
   { from: 'working', event: 'submit', actors: S, guard: 'script', to: 'review' },
   { from: 'working', event: 'ask', actors: R, to: 'blocked' },
@@ -79,6 +81,7 @@ export const QUEST_TRANSITIONS: readonly QuestTransitionRow[] = [
   { from: 'paused_mana', event: 'mana_restored', actors: M, to: 'working' },
   { from: 'paused_mana', event: 'reassign', actors: U, to: 'claimed' },
   { from: 'paused_mana', event: 'cancel', actors: U, to: 'archived' },
+  { from: 'paused_mana', event: 'breaker', actors: S, to: 'infirmary' },
   { from: 'blocked', event: 'answer', actors: U, guard: 'has_assignee', to: 'working' },
   { from: 'blocked', event: 'answer', actors: U, guard: 'no_assignee', to: 'open' },
   { from: 'blocked', event: 'unblock', actors: S, guard: 'no_assignee', to: 'open' },
@@ -90,6 +93,7 @@ export const QUEST_TRANSITIONS: readonly QuestTransitionRow[] = [
   { from: 'review', event: 'verdict_fail', actors: VS, guard: 'out_of_retries', to: 'infirmary' },
   { from: 'review', event: 'mana_out', actors: M, guard: 'has_verifier', to: 'review' },
   { from: 'review', event: 'breaker', actors: S, guard: 'has_verifier', to: 'review' },
+  { from: 'review', event: 'breaker', actors: S, guard: 'needs_verifier', to: 'infirmary' },
   // The verifier's session ended with no verdict (its CLI failed, or the Steward restarted under it): the
   // verifier leaves as on a breaker and the next one takes the review (P1-03).
   { from: 'review', event: 'crash', actors: S, guard: 'has_verifier', to: 'review' },
@@ -98,6 +102,7 @@ export const QUEST_TRANSITIONS: readonly QuestTransitionRow[] = [
   { from: 'returned', event: 'redispatch', actors: S, to: 'working' },
   { from: 'returned', event: 'reassign', actors: U, to: 'claimed' },
   { from: 'returned', event: 'cancel', actors: U, to: 'archived' },
+  { from: 'returned', event: 'breaker', actors: S, to: 'infirmary' },
   { from: 'awaiting_seal', event: 'seal', actors: U, to: 'done' },
   { from: 'awaiting_seal', event: 'return', actors: U, guard: 'session', to: 'returned' },
   { from: 'awaiting_seal', event: 'reject', actors: U, to: 'archived' },

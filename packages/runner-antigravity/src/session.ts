@@ -4,8 +4,10 @@
 // agy has no `--max-turns`, so the runner counts model turns in the stream (spike §1 #20) and stops the run when
 // a turn past `budget.max_turns` begins, as Claude's flag does: a last allowed turn that answers ends the run
 // normally. A hook could `terminate` instead (spike §1 #19), but it would need state between calls.
-import { createSignalChannel, readQuestion } from '@elvaria/runner-core';
+import { createSignalChannel, readQuestion, startChild } from '@elvaria/runner-core';
 import type {
+  Child,
+  ChildExit,
   RunLog,
   RunOutput,
   RunResult,
@@ -14,10 +16,10 @@ import type {
   SignalChannel,
 } from '@elvaria/runner-core';
 
+import { programOf } from './launch.ts';
 import { agyErrorOf, outcomeOf, rateLimitOf } from './outcome.ts';
-import { startChild } from './process/child.ts';
 import { createStreamReader } from './stream.ts';
-import type { Child, Exit, Launch } from './process/child.ts';
+import type { Launch } from './launch.ts';
 import type { StreamReader } from './stream.ts';
 
 export interface SessionStart {
@@ -37,7 +39,7 @@ type Stopper = 'killed' | 'max_turns' | undefined;
 
 interface Ended {
   readonly start: SessionStart;
-  readonly exit: Exit;
+  readonly exit: ChildExit;
   readonly child: Child;
   readonly reader: StreamReader;
   readonly channel: SignalChannel<RunnerSignal>;
@@ -106,17 +108,22 @@ export function startSession(start: SessionStart): RunningSession {
     start.output.stderr(chunk);
   };
 
-  const child = startChild(start.launch, start.args, { cwd: start.cwd, env: start.env, onStderr }, (line) => {
-    start.output.stdout(line);
-    for (const signal of reader.read(line)) channel.push(signal);
-    const { session, started } = reader.state;
-    if (session !== undefined) named(session);
-    if (started > start.max_turns && stopped === undefined) {
-      stopped = 'max_turns';
-      start.output.note(`stopped: a turn past budget.max_turns ${start.max_turns} began`);
-      child.kill();
-    }
-  });
+  const child = startChild(
+    programOf(start.launch),
+    start.args,
+    { cwd: start.cwd, env: start.env, onStderr },
+    (line) => {
+      start.output.stdout(line);
+      for (const signal of reader.read(line)) channel.push(signal);
+      const { session, started } = reader.state;
+      if (session !== undefined) named(session);
+      if (started > start.max_turns && stopped === undefined) {
+        stopped = 'max_turns';
+        start.output.note(`stopped: a turn past budget.max_turns ${start.max_turns} began`);
+        child.kill();
+      }
+    },
+  );
 
   const result = child.exit.then((exit) => {
     ended = true;

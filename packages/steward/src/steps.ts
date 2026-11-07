@@ -1,7 +1,8 @@
-// Steps 4–7 of a tick (implementation-plan §3.1), as planTick decided them: send characters on a fail streak to the
-// Temple, wake paused quests whose pool has mana again (P1-05), start claimed quests, give submitted quests a
-// verifier or the machine's verdict, send returned quests back, claim open ones, deliver done ones (P1-14). Script-tier quests wait for
-// P1-17, which runs registry scripts; the Steward does not claim them before it can run them.
+// Steps 3–7 of a tick (implementation-plan §3.1), as planTick decided them: stop the sessions past a breaker
+// (P1-06), send characters on a fail streak to the Temple, wake paused quests whose pool has mana again (P1-05),
+// start claimed quests, give submitted quests a verifier or the machine's verdict, send returned quests back,
+// claim open ones, deliver done ones (P1-14). Script-tier quests wait for P1-17, which runs registry scripts; the
+// Steward does not claim them before it can run them.
 import type { CharacterId, TickPlan } from '@elvaria/domain';
 
 import { ring } from './context.ts';
@@ -9,6 +10,7 @@ import { deliver } from './deliver/deliver.ts';
 import { moveAndRing } from './notices.ts';
 import { step } from './record.ts';
 import { machineReview } from './review/machine.ts';
+import { tripBreakers } from './sessions/breaker.ts';
 import { openAssignee, openVerifier } from './sessions/open.ts';
 import type { Context } from './context.ts';
 
@@ -28,6 +30,7 @@ async function suspend(ctx: Context, id: CharacterId): Promise<void> {
 }
 
 export async function carryOut(ctx: Context, plan: TickPlan): Promise<void> {
+  await tripBreakers(ctx, plan.breakers);
   for (const id of plan.suspensions) await suspend(ctx, id);
   // A paused quest whose pool woke goes on before new work: the same character, the same attempt (§3.5).
   for (const quest of plan.wakes)

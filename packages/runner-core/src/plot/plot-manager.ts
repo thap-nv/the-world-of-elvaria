@@ -9,7 +9,7 @@ import { err, ok } from '@elvaria/domain';
 import type { Plot, Quest, Result, Territory } from '@elvaria/domain';
 import { fromPortable, inKingdom, toPortable } from '@elvaria/store';
 
-import type { ProcessHost } from '../checks/program.ts';
+import type { ProcessHost } from '../process/program.ts';
 import { filesIn, prepareFolder } from './folder.ts';
 import { gitOf } from './git.ts';
 import type { Git } from './git.ts';

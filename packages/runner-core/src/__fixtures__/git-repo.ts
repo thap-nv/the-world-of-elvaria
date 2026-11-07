@@ -10,7 +10,7 @@ import { QuestIdSchema, TerritorySchema } from '@elvaria/domain';
 import type { QuestId, Territory } from '@elvaria/domain';
 import { toPortable } from '@elvaria/store';
 
-import type { ProcessHost } from '../checks/program.ts';
+import type { ProcessHost } from '../process/program.ts';
 
 /** What a child needs to start, as the composition root would pass it (implementation-plan §3.9). */
 const PASSED = [

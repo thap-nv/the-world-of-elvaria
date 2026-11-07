@@ -14,6 +14,7 @@ import { manaStep } from './mana/step.ts';
 import { createRecorder } from './record.ts';
 import { createSessions } from './sessions/running.ts';
 import { recordEnd } from './sessions/ended.ts';
+import { pidsWriter, reapOrphans } from './sessions/pids.ts';
 import { maskFinished } from './sessions/secrets.ts';
 import { reapLost } from './sessions/settle.ts';
 import { carryOut } from './steps.ts';
@@ -90,11 +91,13 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   await reapLost(ctx);
   counts.waiting = (await applyInbox(ctx, handled, waiting)).length;
   await manaStep(ctx);
-  const plan = planTick(snapshotOf(world, limits, mana), deps.clock.now());
+  const plan = planTick(snapshotOf(world, limits, mana, sessions.held()), deps.clock.now());
   // Notices first: a quest someone can take now has its notice withdrawn before the claim that follows (§3.1).
   if (await noteUnclaimable(ctx, state.reported, plan.unclaimable))
     await writeUnclaimable(root, state.reported);
   await carryOut(ctx, plan);
+  // The pids of the sessions opened or ended in this tick are on disk before the next one (sessions/pids.ts).
+  await sessions.saved();
   return reportOf(counts);
 }
 
@@ -132,6 +135,8 @@ async function begin(deps: StewardDeps, state: State): Promise<Result<Held, Star
   if (!zone.ok) return err('no_kingdom');
   const lock = await acquireLock(inKingdom(deps.store.root, LOCK_TARGET), { wait: false });
   if (!lock.ok) return err('locked');
+  // The CLIs a crashed Steward left running die before the first tick calls their runs lost (P1-06).
+  await reapOrphans(deps);
   const templates = deps.templates ?? (await loadPromptTemplates());
   const tickMs = kingdom.value.dispatch.tick_seconds * MS_PER_SECOND;
   const held = { lock: lock.value, zone: zone.value, templates, tickMs };
@@ -142,7 +147,7 @@ async function begin(deps: StewardDeps, state: State): Promise<Result<Held, Star
 
 export function createSteward(deps: StewardDeps): Steward {
   const state: State = {
-    sessions: createSessions(),
+    sessions: createSessions(pidsWriter(deps.store.root)),
     handled: new Set(),
     limits: limitsOf(deps.runners),
     mana: createManaBook(),
@@ -164,6 +169,7 @@ export function createSteward(deps: StewardDeps): Steward {
       state.timer = undefined;
       await state.queue;
       await state.sessions.close('the Steward stopped');
+      await state.sessions.saved();
       // A gauge read after a session's end may still run its CLI: let it finish before the lock goes.
       await Promise.all(state.mana.reading.values());
       await state.held?.lock.release();
