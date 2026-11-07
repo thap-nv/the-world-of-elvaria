@@ -1,7 +1,7 @@
 // The scripted Steward of a fake day: one tick per minute, in the order of implementation-plan §3.1. Claims come
 // from the domain's planTick, the one the real Steward runs (P1-03 extends it); what characters then do comes
 // from the scenario's table. Every move goes through transition(), so the day obeys the same machine.
-import { currentRun, planTick } from '@elvaria/domain';
+import { FULL_TRIBE_LIMITS, currentRun, planTick } from '@elvaria/domain';
 import type { Quest } from '@elvaria/domain';
 
 import { isFree, noteWaits, schedule } from './day.ts';
@@ -68,14 +68,20 @@ function redispatches(day: Day): void {
   }
 }
 
-/** Step 6: planTick's claims; the plot and the session follow in the same tick (§3.1, §3.3). */
+/**
+ * Step 6: planTick's claims; the plot and the session follow in the same tick (§3.1, §3.3). The fake runners of
+ * a day can do everything a real one declares, so every tribe has full limits (tribeLimitsOf, §3.14).
+ */
 function claims(day: Day): void {
   const asleep = day.ledger.pools().filter((pool) => pool.asleep);
   const snapshot = {
     kingdom: day.kingdom,
+    territories: day.ledger.source().territories,
+    registry: day.registry,
     quests: day.ledger.quests(),
     characters: day.ledger.characters(),
     asleep,
+    limits: Object.fromEntries(day.kingdom.tribes.map(({ id }) => [id, FULL_TRIBE_LIMITS])),
   };
   const plan = planTick(snapshot, day.clock.now());
   for (const { quest, assignee, level } of plan.claims) {

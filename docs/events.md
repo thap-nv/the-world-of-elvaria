@@ -4,7 +4,7 @@
 
 Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là một event; log chỉ ghi thêm, không bao giờ viết lại. `type` là `nhóm.hành_động`; reader giữ nguyên type lạ, renderer bỏ qua nó. Hợp đồng đầy đủ: [schemas/event.schema.json](schemas/event.schema.json); nghĩa từng nhóm và các tiền tố dành sẵn: [glossary.md](glossary.md) mục 12.
 
-54 type trong danh mục v1, 41 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
+56 type trong danh mục v1, 43 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
 
 ## Khung một dòng
 
@@ -21,7 +21,7 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 | `session` | | string (không rỗng) | |
 | `data` | có | object | |
 
-## `quest` · 17 type
+## `quest` · 19 type
 
 | Type | `data` |
 |---|---|
@@ -42,6 +42,8 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 | `quest.resumed` | `quest`: object { id, title, kind, rank, territory, status, tier, class_required, tags, assignee, verifier, attempts, max_attempts, seal_required, sealed_at, question, party_id, party_role, campaign_id, parent_id, depends_on, delivered_at, created_at, updated_at } — The quest after this event (questViewOf). Its id is the envelope `quest`.<br>`characters` (tùy chọn): array of object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own. |
 | `quest.infirmary` | `reason`: string (không rỗng) — e.g. breaker:time, breaker:tokens, max_attempts, script_error.<br>`quest`: object { id, title, kind, rank, territory, status, tier, class_required, tags, assignee, verifier, attempts, max_attempts, seal_required, sealed_at, question, party_id, party_role, campaign_id, parent_id, depends_on, delivered_at, created_at, updated_at } — The quest after this event (questViewOf). Its id is the envelope `quest`.<br>`characters` (tùy chọn): array of object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own. |
 | `quest.delivered` | `quest`: object { id, title, kind, rank, territory, status, tier, class_required, tags, assignee, verifier, attempts, max_attempts, seal_required, sealed_at, question, party_id, party_role, campaign_id, parent_id, depends_on, delivered_at, created_at, updated_at } — The quest after this event (questViewOf). Its id is the envelope `quest`.<br>`characters` (tùy chọn): array of object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own. |
+| `quest.edited` | `quest`: object { id, title, kind, rank, territory, status, tier, class_required, tags, assignee, verifier, attempts, max_attempts, seal_required, sealed_at, question, party_id, party_role, campaign_id, parent_id, depends_on, delivered_at, created_at, updated_at } — The quest after this event (questViewOf). Its id is the envelope `quest`.<br>`characters` (tùy chọn): array of object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own. |
+| `quest.unclaimable` | `reason`: một trong `no_class`, `level_too_low` — no_class: no character of the class outside the suspended ones and the disabled tribes; level_too_low: even the highest level among them cannot take the rank, not even when nobody else could (canTake); null: the reason is gone.<br>`rank`: một trong `F`, `E`, `D`, `C`, `B`, `A`, `S`<br>`class`: string (khớp `^[a-z][a-z0-9_]*$`) — The quest's class_required.<br>`best_character` (tùy chọn): string (khớp `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$`, khác `user`, `machine`, `temple`) — level_too_low: the highest-level character of the class.<br>`best_level` (tùy chọn): integer ≥ 1 |
 
 ## `agent` · 9 type
 

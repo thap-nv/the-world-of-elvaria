@@ -120,7 +120,8 @@
               "quest.unblocked",
               "quest.paused",
               "quest.resumed",
-              "quest.delivered"
+              "quest.delivered",
+              "quest.edited"
             ]
           }
         }
@@ -839,6 +840,70 @@
       "if": {
         "properties": {
           "type": {
+            "const": "quest.unclaimable"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "The quest stays open: a character who can take it later claims it as usual.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "reason",
+              "rank",
+              "class"
+            ],
+            "properties": {
+              "reason": {
+                "description": "no_class: no character of the class outside the suspended ones and the disabled tribes; level_too_low: even the highest level among them cannot take the rank, not even when nobody else could (canTake); null: the reason is gone.",
+                "enum": [
+                  "no_class",
+                  "level_too_low"
+                ]
+              },
+              "rank": {
+                "enum": [
+                  "F",
+                  "E",
+                  "D",
+                  "C",
+                  "B",
+                  "A",
+                  "S"
+                ]
+              },
+              "class": {
+                "description": "The quest's class_required.",
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "best_character": {
+                "description": "level_too_low: the highest-level character of the class.",
+                "type": "string",
+                "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                "not": {
+                  "enum": [
+                    "user",
+                    "machine",
+                    "temple"
+                  ]
+                }
+              },
+              "best_level": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
             "const": "agent.tool"
           }
         }
@@ -1504,6 +1569,8 @@
         "quest.resumed",
         "quest.infirmary",
         "quest.delivered",
+        "quest.edited",
+        "quest.unclaimable",
         "agent.session.start",
         "agent.session.end",
         "agent.tool",

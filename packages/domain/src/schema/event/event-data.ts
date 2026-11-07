@@ -9,6 +9,7 @@ import {
   ManaPoolDataSchema,
   QuestChangeDataSchema,
   QuestInfirmaryDataSchema,
+  QuestUnclaimableDataSchema,
   TerritoryChangeDataSchema,
 } from './state-data.ts';
 import type { EventType } from './event-types.ts';
@@ -104,6 +105,8 @@ export const EVENT_DATA_SCHEMAS = {
   'quest.resumed': QuestChangeDataSchema,
   'quest.infirmary': QuestInfirmaryDataSchema,
   'quest.delivered': QuestChangeDataSchema,
+  'quest.edited': QuestChangeDataSchema,
+  'quest.unclaimable': QuestUnclaimableDataSchema,
   'agent.tool': AgentToolDataSchema,
   'agent.tool.blocked': AgentToolBlockedDataSchema,
   'agent.session.start': AgentSessionStartDataSchema,

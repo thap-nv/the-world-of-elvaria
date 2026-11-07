@@ -1,3 +1,25 @@
+export { splitCommandLine } from './checks/command-line.ts';
+export type { CommandLineIssue } from './checks/command-line.ts';
+export { globToRegExp } from './checks/glob.ts';
+export { argvOf, childEnvOf, runProgram } from './checks/program.ts';
+export type {
+  CommandIssue,
+  Launch,
+  ProcessHost,
+  ProgramOptions,
+  ProgramResolver,
+  ProgramRun,
+} from './checks/program.ts';
+export {
+  CLEANUP_TIMEOUT_MS,
+  MS_PER_MINUTE,
+  checkLogOf,
+  exclusiveLockOf,
+  runChecks,
+  toVerdictCheck,
+} from './checks/run-checks.ts';
+export type { CheckRun, ChecksOptions, ChecksRequest } from './checks/run-checks.ts';
+export { selectChecks } from './checks/select-checks.ts';
 export { CONFORMANCE_CHECKS, conformanceChecks, runConformance } from './conformance/checks.ts';
 export type { ConformanceReport } from './conformance/checks.ts';
 export {
@@ -10,7 +32,24 @@ export {
 } from './conformance/scenarios.ts';
 export type { FakeScenario } from './conformance/scenarios.ts';
 export type { CheckOutcome, ConformanceCheck, ConformanceTarget } from './conformance/target.ts';
-export { CONFORMANCE_CHARACTER, CONFORMANCE_QUEST } from './conformance/workspace.ts';
+export {
+  CONFORMANCE_CHARACTER,
+  CONFORMANCE_QUEST,
+  conformanceRequest,
+  openWorkspace,
+} from './conformance/workspace.ts';
+export type { Workspace } from './conformance/workspace.ts';
+export { plotCommitMessage } from './plot/commit-message.ts';
+export { folderPlotOf } from './plot/folder.ts';
+export { createPlotManager } from './plot/plot-manager.ts';
+export type { PlotManager, PlotManagerOptions, PreparedPlot } from './plot/plot-manager.ts';
+export { PLOT_RECORD_FILE } from './plot/plot-record.ts';
+export type { PlotRecord } from './plot/plot-record.ts';
+export { PLOT_EXCLUDES } from './plot/repo-settings.ts';
+export { SETUP_TIMEOUT_MS, setupLogOf } from './plot/setup.ts';
+export type { SetupRun } from './plot/setup.ts';
+export type { CommitOutcome, ForgetWorktree, PlotStatus, ReleasedPlot } from './plot/worktree-ops.ts';
+export type { PlotFailure, PlotFailureReason } from './plot/worktree.ts';
 export { commandRefusal } from './policy/command-refusal.ts';
 export {
   AGENT_TOOL,
@@ -35,6 +74,14 @@ export { FAKE_ADAPTER, FAKE_TOKENS, createFakeRunner, scenarioFromEnv } from './
 export type { FakeRunner, FakeRunnerOptions } from './runner/fake-runner.ts';
 export { HANDOVER_SECTIONS, questionOf, readQuestion, sectionOf } from './runner/handover.ts';
 export type { HandoverSection } from './runner/handover.ts';
+export { POLICY_FILE, POLICY_VERSION, policyFileOf, writePolicyFile } from './runner/policy-file.ts';
+export type { PolicyFile } from './runner/policy-file.ts';
+export { CONTEXT_ENV, contextEnv, runContextOf } from './runner/run-context.ts';
+export type { RunContext } from './runner/run-context.ts';
+export { openRunLog } from './runner/run-log.ts';
+export type { RunEventDraft, RunLog, RunLogOptions } from './runner/run-log.ts';
+export { NOTE_PREFIX, STDERR_FILE, STDOUT_FILE, openRunOutput } from './runner/run-output.ts';
+export type { RunOutput } from './runner/run-output.ts';
 export { createSignalChannel } from './runner/signal-channel.ts';
 export type { SignalChannel } from './runner/signal-channel.ts';
 export { SPAWN_ROLES } from './runner/roles.ts';

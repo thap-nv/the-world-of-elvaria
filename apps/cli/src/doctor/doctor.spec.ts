@@ -17,6 +17,7 @@ import {
   testIo,
 } from '../../test/cli.ts';
 import { toolPaths } from './doctor.ts';
+import { locateTool } from './locate-tool.ts';
 import { parseVersion } from './tool-version.ts';
 import type { TempDir, TestIo } from '../../test/cli.ts';
 import type { Kingdom } from '@elvaria/domain';
@@ -157,6 +158,36 @@ describe('elvaria doctor', () => {
     expect(text).toContain('✗ Tribe mine: there is no adapter adapters/mine.mjs yet');
     expect(text).toContain('✗ Tribe paid: its settings are not valid once the tool is filled in:');
     expect(text).toContain('budget.usd_week: auth = api_key needs budget.usd_week');
+  });
+
+  it('asks the adapter about the login once the CLI is pinned (P1-09)', async () => {
+    const loggedOut = path.join(dir.root, 'logged out');
+    await fakeTool(loggedOut, 'claude', '2.1.318 (Claude Code)', 0, { loggedIn: false });
+    const io = await doctorIo(loggedOut, bin);
+    expect(await doctor(io, '--acknowledge-terms', 'gemini')).toBe(1);
+    expect(printed(io)).toContain('✗ Tribe claude: not logged in: run `claude` once and sign in');
+  });
+
+  it('finds Claude Code inside the VS Code extension when PATH has none', async () => {
+    const home = path.join(dir.root, 'home');
+    const binary = path.join(
+      home,
+      '.vscode',
+      'extensions',
+      'anthropic.claude-code-2.1.318-x64',
+      'resources',
+      'native-binary',
+      process.platform === 'win32' ? 'claude.exe' : 'claude',
+    );
+    await mkdir(path.dirname(binary), { recursive: true });
+    await writeFile(binary, '', { mode: 0o755 });
+    const io = testIo({ env: baseEnv(await isolatedPath(path.join(dir.root, 'empty'))), home });
+    const [claude] = (await readKingdom()).tribes;
+    expect(await locateTool(claude!, 'claude', undefined, io)).toEqual({ found: binary, from: 'path' });
+    // The owner's home only: this machine's own extension folder never answers for a test.
+    expect(await locateTool(claude!, 'claude', undefined, { ...io, home: dir.root })).toEqual({
+      from: 'path',
+    });
   });
 
   it('refuses a malformed --tool', async () => {

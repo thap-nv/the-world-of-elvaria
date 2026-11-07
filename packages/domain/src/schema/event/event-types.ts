@@ -19,6 +19,8 @@ export const EVENT_TYPES = [
   'quest.resumed',
   'quest.infirmary',
   'quest.delivered',
+  'quest.edited',
+  'quest.unclaimable',
   'agent.session.start',
   'agent.session.end',
   'agent.tool',

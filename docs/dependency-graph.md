@@ -11,7 +11,9 @@ flowchart TD
   store["store"]
   registry_default["registry-default"]
   runner_core["runner-core"]
+  runner_claude["runner-claude"]
   runner_antigravity["runner-antigravity"]
+  steward["steward"]
   sandbox["sandbox"]
   eventlog["eventlog"]
   hooks["hooks"]
@@ -20,8 +22,14 @@ flowchart TD
   store --> domain
   registry_default --> domain
   runner_core --> domain
+  runner_core --> eventlog
   runner_core --> store
+  runner_claude --> runner_core
   runner_antigravity --> runner_core
+  steward --> domain
+  steward --> eventlog
+  steward --> runner_core
+  steward --> store
   sandbox --> domain
   sandbox --> eventlog
   sandbox --> store
@@ -29,9 +37,13 @@ flowchart TD
   hooks --> eventlog
   cli --> domain
   cli --> eventlog
+  cli --> hooks
   cli --> i18n
   cli --> registry_default
+  cli --> runner_claude
+  cli --> runner_core
   cli --> sandbox
+  cli --> steward
   cli --> store
 ```
 
@@ -41,12 +53,12 @@ flowchart TD
 | `domain` | `packages/domain` | — | — |
 | `store` | `packages/store` | `domain` | `domain`, `eventlog` |
 | `registry-default` | `packages/registry-default` | `domain` | `domain` |
-| `runner-core` | `packages/runner-core` | `domain`, `store` | `domain`, `store`, `eventlog` |
-| `runner-claude` | chưa có | | `runner-core` |
+| `runner-core` | `packages/runner-core` | `domain`, `eventlog`, `store` | `domain`, `store`, `eventlog` |
+| `runner-claude` | `packages/runner-claude` | `runner-core` | `runner-core` |
 | `runner-antigravity` | `packages/runner-antigravity` | `runner-core` | `runner-core` |
 | `runner-gemini` | chưa có | | `runner-core` |
 | `runner-codex` | chưa có | | `runner-core` |
-| `steward` | chưa có | | `domain`, `store`, `eventlog`, `runner-core` |
+| `steward` | `packages/steward` | `domain`, `eventlog`, `runner-core`, `store` | `domain`, `store`, `eventlog`, `runner-core` |
 | `chancellor` | chưa có | | `domain`, `runner-core` |
 | `sandbox` | `packages/sandbox` | `domain`, `eventlog`, `store` | `domain`, `eventlog`, `store` |
 | `eventlog` | `packages/eventlog` | `domain` | `domain` |
@@ -57,4 +69,4 @@ flowchart TD
 | `ui` | chưa có | | `domain`, `i18n`, `ui-kit` |
 | `world` | chưa có | | `domain`, `i18n`, `ui-kit`, `ui` |
 | `lite` | chưa có | | `domain`, `i18n`, `ui-kit`, `ui` |
-| `cli` | `apps/cli` | `domain`, `eventlog`, `i18n`, `registry-default`, `sandbox`, `store` | `domain`, `eventlog`, `store`, `registry-default`, `runner-core`, `runner-claude`, `runner-antigravity`, `runner-gemini`, `runner-codex`, `hooks`, `steward`, `chancellor`, `sandbox`, `herald`, `i18n` |
+| `cli` | `apps/cli` | `domain`, `eventlog`, `hooks`, `i18n`, `registry-default`, `runner-claude`, `runner-core`, `sandbox`, `steward`, `store` | `domain`, `eventlog`, `store`, `registry-default`, `runner-core`, `runner-claude`, `runner-antigravity`, `runner-gemini`, `runner-codex`, `hooks`, `steward`, `chancellor`, `sandbox`, `herald`, `i18n` |

@@ -1,5 +1,5 @@
 // Every command of `elvaria`, in the order help lists them. Later tasks add theirs here: say, seal, return (P1-04,
-// P1-13), tribe (P1-19), run (the Steward, P1-03).
+// P1-13), tribe (P1-19).
 import { CHARACTER_ADD } from './character/add.ts';
 import { CHARACTER_LIST } from './character/list.ts';
 import { DOCTOR } from './doctor/doctor.ts';
@@ -10,6 +10,7 @@ import { QUEST_EDIT } from './quest/edit.ts';
 import { QUEST_CANCEL, QUEST_CONFIRM } from './quest/lifecycle.ts';
 import { QUEST_LIST } from './quest/list.ts';
 import { QUEST_SHOW } from './quest/show.ts';
+import { RUN } from './run/run.ts';
 import { SANDBOX_GENERATE } from './sandbox/generate.ts';
 import { SANDBOX_REPLAY } from './sandbox/replay.ts';
 import { TERRITORY_ADD } from './territory/add.ts';
@@ -29,6 +30,7 @@ export const COMMANDS: readonly CommandSpec[] = [
   QUEST_CONFIRM,
   QUEST_CANCEL,
   QUEST_EDIT,
+  RUN,
   SANDBOX_GENERATE,
   SANDBOX_REPLAY,
   MIGRATE,

@@ -27,7 +27,7 @@ Cây đầy đủ và luật phụ thuộc: [docs/implementation-plan.md](docs/i
 | `packages/store` | P0-06 | Thư mục kingdom: `openKingdom(dir)` → `KingdomStore`, atomic write, lock, migration, inbox, `initKingdom` |
 | `packages/registry-default` | P0-02 | Dữ liệu mặc định: kinds, classes, rituals, scripts, tags (+ `scripts/*.mjs`; `prompts/*.md` từ P1-15) |
 | `packages/runner-core` | P1-01 | Interface `AgentRunner`, `FakeRunner`, prompt, tool policy, plot (worktree), checks, kho bảo vật, kill tree, chuẩn hóa sự kiện |
-| `packages/runner-claude`, `runner-antigravity`, `runner-gemini` (+ `runner-codex` tùy chọn) | P1-09, P1-12b, P1-12c, P1-12d | Adapter cho Claude Code, Antigravity CLI (mặc định tộc Gemini), Gemini CLI + API key (đường lui), Codex CLI. `runner-antigravity` có từ P1-12b (CLI giả `fixtures/fake-agy.mjs`); `runner-claude` mới có `fixtures/` của spike P1-02. Tộc khác: file `adapters/<name>.mjs` trong kingdom theo hợp đồng tộc (ADR 0021) |
+| `packages/runner-claude`, `runner-antigravity`, `runner-gemini` (+ `runner-codex` tùy chọn) | P1-09, P1-12b, P1-12c, P1-12d | Adapter cho Claude Code, Antigravity CLI (mặc định tộc Gemini), Gemini CLI + API key (đường lui), Codex CLI. `runner-claude` có từ P1-09, `runner-antigravity` từ P1-12b (CLI giả `fixtures/fake-agy.mjs`). Tộc khác: file `adapters/<name>.mjs` trong kingdom theo hợp đồng tộc (ADR 0021) |
 | `packages/hooks` | P1-08 | Hook mà mọi CLI gọi: viết bằng TS, build ra `dist/elvaria-hook.js` (`pnpm --filter @elvaria/hooks build`); lệnh gọi do `hookCommand()` dựng (`node --conditions=elvaria-dist <abs>/dist/elvaria-hook.js`); ngữ cảnh qua env `ELVARIA_*` + `--policy <run_dir>/policy.json`; chỉ phụ thuộc `eventlog`, khởi động < 100 ms |
 | `packages/steward` | P1-03 | Quản sự: vòng tick, inbox, nhận việc, nghiệm thu, cầu dao, mana, bậc script, giao hàng — **người duy nhất ghi quest** |
 | `packages/chancellor` | P1-13 | Tể tướng: câu lệnh tự nhiên → quest draft |
@@ -78,10 +78,10 @@ pnpm elvaria <lệnh>      # CLI, chạy thẳng apps/cli/src/cli.ts; mọi lệ
 pnpm elvaria init --kingdom <tmp> --name Thu                          # vương quốc thử
 pnpm elvaria sandbox generate --day busy --seed 42 --kingdom <tmp>    # ngày giả vào <tmp>/events/sandbox/<ngày>.jsonl
 pnpm elvaria sandbox replay <tmp>/events/sandbox/<ngày>.jsonl --speed 20   # dòng thời gian ra terminal
-ELVARIA_LIVE=1 pnpm --filter @elvaria/runner-claude test              # smoke với CLI thật (từ P1-09) — tốn mana, chỉ khi cần
+ELVARIA_LIVE=1 pnpm --filter @elvaria/runner-claude test              # smoke với CLI thật và hook đã build (từ P1-09) — tốn mana, chỉ khi cần
 ```
 
-`elvaria` hôm nay có `init`, `doctor`, `territory add|list`, `character add|list`, `quest add|list|show|confirm|cancel|edit`, `sandbox generate|replay`, `migrate`; `say`, `seal`, `return`, `run` đến với P1-03, P1-04, P1-13. Vương quốc lấy từ `--kingdom` hoặc biến `ELVARIA_KINGDOM`.
+`elvaria` hôm nay có `init`, `doctor`, `territory add|list`, `character add|list`, `quest add|list|show|confirm|cancel|edit`, `run` (Quản sự, tới khi Ctrl+C), `sandbox generate|replay`, `migrate`; `seal`, `return` đến với P1-04, `say` với P1-13. Vương quốc lấy từ `--kingdom` hoặc biến `ELVARIA_KINGDOM`.
 
 ### Hook của repo / Repo hooks
 

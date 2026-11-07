@@ -1,0 +1,110 @@
+// What the Steward does to a worktree plot after prepare (implementation-plan §3.3): read its state, list what the
+// quest touched for runChecks, commit everything before a kill, a pause or a review, and remove it at archive.
+import { err, ok } from '@elvaria/domain';
+import type { Result } from '@elvaria/domain';
+import { pathExists } from '@elvaria/store';
+
+import { gitOut, zList } from './git.ts';
+import type { Git } from './git.ts';
+import { plotRecordOf } from './plot-record.ts';
+import type { PlotFailure } from './worktree.ts';
+
+export interface PlotStatus {
+  /** Changes not committed yet, untracked files included (generated runner files are excluded, ADR 0012). */
+  readonly dirty: boolean;
+  /** Commits on the quest branch since it forked. */
+  readonly ahead: number;
+  /** null on a detached HEAD, and for plots without git. */
+  readonly branch: string | null;
+}
+
+export type CommitOutcome =
+  | { readonly status: 'committed'; readonly sha: string }
+  | { readonly status: 'clean' }
+  /** git or a hook of the territory refused the commit; the changes stay in the worktree. */
+  | { readonly status: 'refused'; readonly detail: string }
+  | { readonly status: 'no_git' };
+
+export interface ReleasedPlot {
+  /** false when the worktree was already gone. */
+  readonly removed: boolean;
+  /** What a `forget` callback threw; the worktree is gone all the same. */
+  readonly forget_failures: readonly string[];
+}
+
+/** A tribe CLI drops what it kept about a removed worktree (Claude Code: `claude purge --yes <worktree>`). */
+export type ForgetWorktree = (worktree: string) => Promise<void>;
+
+/** How much of a refusal to keep: the end of a hook's output says why. */
+const DETAIL_CHARS = 2000;
+
+export async function worktreeStatus(git: Git, worktree: string): Promise<PlotStatus> {
+  const record = await plotRecordOf(git, worktree);
+  const changes = await gitOut(git, worktree, ['status', '--porcelain', '-z']);
+  const head = await git(worktree, ['symbolic-ref', '--quiet', '--short', 'HEAD']);
+  const ahead = await gitOut(git, worktree, ['rev-list', '--count', `${record.base}..HEAD`]);
+  return {
+    dirty: changes !== '',
+    ahead: Number(ahead.trim()),
+    branch: head.code === 0 ? head.stdout.trim() : null,
+  };
+}
+
+/**
+ * Paths the quest changed since its branch forked, relative to the plot: committed or not, deleted, and new
+ * untracked files. A rename counts as both paths, since checks watching either should run.
+ */
+export async function touchedIn(git: Git, worktree: string): Promise<string[]> {
+  const record = await plotRecordOf(git, worktree);
+  const changed = await gitOut(git, worktree, ['diff', '--name-only', '--no-renames', '-z', record.base]);
+  const untracked = await gitOut(git, worktree, ['ls-files', '--others', '--exclude-standard', '-z']);
+  return [...new Set([...zList(changed), ...zList(untracked)])].sort();
+}
+
+/** Stages everything and commits it with the territory's own hooks; nothing is bypassed (CLAUDE.md). */
+export async function commitWorktree(git: Git, worktree: string, message: string): Promise<CommitOutcome> {
+  await gitOut(git, worktree, ['add', '--all']);
+  const staged = await git(worktree, ['diff', '--cached', '--quiet']);
+  if (staged.code === 0) return { status: 'clean' };
+  if (staged.code !== 1) throw new Error(`git diff --cached failed in ${worktree}: ${staged.stderr.trim()}`);
+  const commit = await git(worktree, ['commit', '--quiet', '--message', message]);
+  if (commit.code !== 0) {
+    const said = `${commit.stderr}\n${commit.stdout}`.trim();
+    return { status: 'refused', detail: said.slice(-DETAIL_CHARS) };
+  }
+  return { status: 'committed', sha: (await gitOut(git, worktree, ['rev-parse', 'HEAD'])).trim() };
+}
+
+const messageOf = (reason: unknown): string => (reason instanceof Error ? reason.message : 'forget failed');
+
+/** The main checkout: git refuses to remove a worktree from inside it, and Windows keeps a folder that is a cwd. */
+async function mainCheckoutOf(git: Git, worktree: string): Promise<string> {
+  const list = await gitOut(git, worktree, ['worktree', 'list', '--porcelain']);
+  const first = list.split(/\r?\n/).find((line) => line.startsWith('worktree '));
+  if (first === undefined) throw new Error(`git worktree list printed no worktree for ${worktree}`);
+  return first.slice('worktree '.length);
+}
+
+/**
+ * Removes the worktree and keeps its branch (ADR 0012), then lets each tribe CLI forget it. A dirty worktree is
+ * refused, never forced: what is not committed would be lost. Run again after a crash, it only forgets.
+ */
+export async function releaseWorktree(
+  git: Git,
+  worktree: string,
+  forget: readonly ForgetWorktree[],
+): Promise<Result<ReleasedPlot, PlotFailure>> {
+  const present = await pathExists(worktree);
+  if (present) {
+    const changes = await gitOut(git, worktree, ['status', '--porcelain', '-z']);
+    if (changes !== '') return err({ reason: 'dirty', detail: `${worktree} has changes not committed` });
+    const main = await mainCheckoutOf(git, worktree);
+    const removed = await git(main, ['worktree', 'remove', worktree]);
+    if (removed.code !== 0) return err({ reason: 'git_failed', detail: removed.stderr.trim() });
+  }
+  const settled = await Promise.allSettled(forget.map((drop) => drop(worktree)));
+  const failures = settled.flatMap((result) =>
+    result.status === 'rejected' ? [messageOf(result.reason)] : [],
+  );
+  return ok({ removed: present, forget_failures: failures });
+}

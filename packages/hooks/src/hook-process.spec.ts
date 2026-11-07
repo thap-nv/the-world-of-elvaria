@@ -22,11 +22,13 @@ const LOAD_TRACE = fileURLToPath(new URL('__fixtures__/load-trace.mjs', import.m
 const RUNS = 15;
 /**
  * What the hook may add to a bare Node start: a soft gate. The development machine measures ~32 ms on top of
- * `node -e 0` (whole call 76 ms, §3.6 "(P1-08)"); CI machines on Windows load files several times slower, so
- * the gate leaves room for them and catches regressions of the size of loading the domain and zod by mistake
- * (200-350 ms). The hard guard is the load trace above it: no `.ts`, no domain, no zod.
+ * `node -e 0` (whole call 76 ms, §3.6 "(P1-08)"); CI machines load files several times slower, so the gate
+ * leaves room for them and catches regressions of the size of loading the domain and zod by mistake
+ * (200-350 ms). A macOS runner measured 101 ms on top of `node -e 0` (74 ms, hook 175 ms) with no regression,
+ * so the gate is 150 ms, still under the smallest such regression (owner, after P1-09). The hard guard is the
+ * load trace above it: no `.ts`, no domain, no zod.
  */
-const OVERHEAD_BUDGET_MS = 100;
+const OVERHEAD_BUDGET_MS = 150;
 
 /** The test runner's env without its Node options (coverage, loaders) and without any session of ours. */
 const baseEnv = (): Record<string, string> =>

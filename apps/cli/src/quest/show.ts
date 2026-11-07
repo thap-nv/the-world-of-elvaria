@@ -9,6 +9,7 @@ import { NONE } from '../listing.ts';
 import { renderTable } from '../table.ts';
 import { kindName } from './list.ts';
 import { readQuest } from './references.ts';
+import { unclaimableLines, unclaimableOf } from './unclaimable.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
@@ -50,7 +51,12 @@ async function runQuestShow(input: CommandInput, cli: CliContext): Promise<ExitC
     ctx.t(label),
     value,
   ]);
-  [`${quest.id}  ${quest.title}`, ...renderTable(rows), '', quest.description].forEach(ctx.io.out);
+  const note = (await unclaimableOf(ctx, [quest])).get(quest.id);
+  const why =
+    note === undefined
+      ? []
+      : ['', ...(await unclaimableLines(ctx, registry.ok ? registry.value : undefined, quest, note))];
+  [`${quest.id}  ${quest.title}`, ...renderTable(rows), ...why, '', quest.description].forEach(ctx.io.out);
   return EXIT.ok;
 }
 

@@ -17,8 +17,11 @@ export const CONFORMANCE_QUEST = 'q_20261107_c0nf0r';
 export const CONFORMANCE_CHARACTER = 'probe';
 const STARTED = '2026-11-07T00:00:00+07:00';
 const DEFAULT_MODEL = 'claude-haiku-5-5';
-/** A probe never needs more; the CLI stops it if it tries. */
-const PROBE_BUDGET = { max_turns: 5, max_minutes: 5 } as const;
+/**
+ * A probe never needs more; the CLI stops it if it tries. The tiny job takes a turn or two; the handover letter a
+ * real hook asks for at Stop (ADR 0010) takes a few more (P1-09, first run against Claude Code).
+ */
+const PROBE_BUDGET = { max_turns: 10, max_minutes: 5 } as const;
 
 export interface Workspace {
   readonly root: string;
@@ -52,8 +55,16 @@ const ASKS: Readonly<Record<FakeScenario, string>> = {
   ask: `Write this question in the Question section of the handover letter, then stop: ${FAKE_QUESTION}`,
 };
 
-const promptOf = (scenario: FakeScenario): BuiltPrompt => ({
-  system: 'You are a probe of the Elvaria conformance suite. Do exactly what you are asked, nothing more.',
+/**
+ * The probe is an assignee, and an assignee's hook does not let it stop before it has left a letter (ADR 0010),
+ * so the system part says where the letter goes, as buildPrompt does for a real assignee.
+ */
+const promptOf = (scenario: FakeScenario, handover: string): BuiltPrompt => ({
+  system: [
+    'You are a probe of the Elvaria conformance suite. Do exactly what you are asked, nothing more.',
+    `Before you stop, write your handover letter, the file ${handover}: the heading "## Where I am" and one line`,
+    'under it saying what you did. Add no other heading unless you are asked to.',
+  ].join(' '),
   user: ASKS[scenario],
 });
 
@@ -103,7 +114,7 @@ export function conformanceRequest(
     role: 'assignee',
     character: probeCharacter(runner, target),
     cwd: workspace.plot,
-    prompt: promptOf(scenario),
+    prompt: promptOf(scenario, workspace.handover),
     permissions: PROBE_POLICY,
     budget: PROBE_BUDGET,
     env: {
