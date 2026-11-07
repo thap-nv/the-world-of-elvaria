@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { InboxCommandSchema } from '../schema/command/inbox-command.ts';
 import { KINGDOM, Q1, Q2, TERRITORY, at, quest } from './__fixtures__/snapshot.ts';
-import { editQuest, questFromCommand, setRank } from './new-quest.ts';
+import { editQuest, questFromCommand, secretsBeyond, setRank } from './new-quest.ts';
 import type { CommandPayload } from '../schema/command/inbox-command.ts';
 import type { NewQuestContext } from './new-quest.ts';
 
@@ -21,7 +21,7 @@ const CONTEXT: NewQuestContext = {
   at: at(5),
   breakers: KINGDOM.breakers,
   registry: REGISTRY,
-  territories: [TERRITORY],
+  territories: [{ id: TERRITORY, secrets_allowed: ['npm_token'] }],
   quests: [Q2],
 };
 
@@ -102,6 +102,15 @@ describe('questFromCommand', () => {
     });
   });
 
+  it('keeps the secrets its territory allows, and names the ones it does not', () => {
+    expect(questFromCommand(payload({ secrets_required: ['npm_token'] }), CONTEXT)).toMatchObject({
+      ok: true,
+      value: { secrets_required: ['npm_token'] },
+    });
+    expect(secretsBeyond(['npm_token', 'aws_key'], { secrets_allowed: ['npm_token'] })).toEqual(['aws_key']);
+    expect(secretsBeyond([], { secrets_allowed: [] })).toEqual([]);
+  });
+
   it('makes a script-tier quest without a class', () => {
     const script = payload({
       kind: 'batch',
@@ -118,6 +127,7 @@ describe('questFromCommand', () => {
   it.each([
     ['unknown_kind', { kind: 'conquer' }],
     ['unknown_territory', { territory: 'atlas' }],
+    ['secret_not_allowed', { secrets_required: ['npm_token', 'aws_key'] }],
     ['class_not_allowed', { class_required: 'scribe' }],
     ['unknown_tag', { tags: ['db'] }],
     ['unknown_script', { kind: 'batch', tier: 'script', class_required: undefined, script: { id: 'nope' } }],

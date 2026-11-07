@@ -5,7 +5,7 @@ import { TerritorySchema, TribeIdSchema, createIdSource } from '@elvaria/domain'
 import type { Quest } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import { translator } from '@elvaria/i18n';
-import { createFakeRunner } from '@elvaria/runner-core';
+import { createFakeRunner, openFileTreasury } from '@elvaria/runner-core';
 import type { AgentRunner } from '@elvaria/runner-core';
 import { createSteward, folderPlots } from '@elvaria/steward';
 import { openKingdom } from '@elvaria/store';
@@ -82,6 +82,9 @@ describe('elvaria say', () => {
       events: openEventLog(kingdom),
       runners: {},
       plots: folderPlots(kingdom),
+      // No session opens here, so no env and no secret is needed (P1-10).
+      env: {},
+      treasury: openFileTreasury(path.join(dir.root, 'no-treasury.json')),
       clock: io.clock,
       ids: ids.value,
       bell: consoleBell(translator('en'), io),

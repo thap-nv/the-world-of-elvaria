@@ -35,6 +35,46 @@ export const AGY_SUBAGENT_TOOLS: readonly string[] = [
   'browser_subagent',
 ];
 
+/** Any one of the writing tools of a class grants every agy write tool, as the settings translate them (§3.7). */
+const WRITE = ['Edit', 'Write'];
+
+/**
+ * The tools of a class (Claude Code names, `ToolPolicy.tools`) that grant each agy tool. agy has no `--tools`, and
+ * some of its tools need no permission at all (`search_web`, reading inside the plot; P1-12b), so the hook checks
+ * the class (P1-10). A tool not listed (`finish` of `--json-schema`, one a newer agy adds) is left to the settings:
+ * blocking an unknown tool blindly would break structured output (spike P1-12a §1 #5).
+ */
+export const AGY_CLASS_TOOLS: Readonly<Record<string, readonly string[]>> = {
+  read_file: ['Read'],
+  view_file: ['Read'],
+  list_dir: ['Read', 'Glob'],
+  grep_search: ['Grep'],
+  find_by_name: ['Glob'],
+  write_file: WRITE,
+  edit_file: WRITE,
+  write_to_file: WRITE,
+  replace_file_content: WRITE,
+  multi_replace_file_content: WRITE,
+  sed_file: WRITE,
+  notebook_edit: ['NotebookEdit'],
+  run_command: ['Bash'],
+  send_command_input: ['Bash'],
+  command_status: ['Bash'],
+  read_url_content: ['WebFetch'],
+  open_browser_url: ['WebFetch'],
+  search_web: ['WebSearch'],
+};
+
+/** The class tools that would grant `name`, when the class has none of them; undefined when it may use it. */
+export function missingClassTools(
+  name: string,
+  classTools: readonly string[] | undefined,
+): readonly string[] | undefined {
+  const granting = AGY_CLASS_TOOLS[name];
+  if (classTools === undefined || granting === undefined) return undefined;
+  return granting.some((tool) => classTools.includes(tool)) ? undefined : granting;
+}
+
 /**
  * Tools that wait for a person. Nobody answers under `-p`: a question goes in the handover letter and the
  * session ends (law 6 of the assignee prompt, implementation-plan §2.4).

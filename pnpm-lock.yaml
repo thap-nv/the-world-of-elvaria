@@ -410,6 +410,9 @@ importers:
       '@elvaria/domain':
         specifier: workspace:*
         version: link:../domain
+      '@elvaria/eventlog':
+        specifier: workspace:*
+        version: link:../eventlog
       proper-lockfile:
         specifier: ^4.1.2
         version: 4.1.2

@@ -170,6 +170,45 @@ describe('PreToolUse on agy', () => {
     expect((await kingdom.log()).events).toEqual([]);
   });
 
+  describe('the tools of the class (policy `tools`, P1-10)', () => {
+    const KNIGHT = ['Read', 'Edit', 'Write', 'Glob', 'Grep', 'Bash', 'Agent'];
+    const SCOUT = ['Read', 'Edit', 'Write', 'Glob', 'Grep', 'WebFetch', 'WebSearch'];
+    const JUDGE = ['Read', 'Glob', 'Grep', 'Bash'];
+    const withTools = (tools: readonly string[]) =>
+      writeFile(policy, JSON.stringify({ version: 1, tools, laws: DC1_LAWS }), 'utf8');
+    const decide = async (name: string, args: Record<string, unknown> = {}) =>
+      decisionOf((await call('PreToolUse', toolCall(name, args))).stdout);
+
+    it('denies search_web to a class without WebSearch, which agy would run with no permission', async () => {
+      await withTools(KNIGHT);
+      const decision = await decide('search_web', { query: 'vitest coverage' });
+      expect(decision).toMatchObject({ decision: 'deny' });
+      expect(decision.reason).toMatch(/^Elvaria rule: search_web: your class has no WebSearch;/);
+      const [line] = (await kingdom.log()).events;
+      expect(line).toMatchObject({ type: 'agent.tool.blocked', data: { tool: 'web' } });
+    });
+
+    it('defers search_web to the settings for a class that has WebSearch', async () => {
+      await withTools(SCOUT);
+      expect(await decide('search_web', { query: 'vitest coverage' })).toEqual(DEFER_TO_SETTINGS);
+      expect(await decide('run_command', { CommandLine: 'pnpm test' })).toMatchObject({ decision: 'deny' });
+    });
+
+    it('denies a judge every write tool and lets it read, grep and run its checks', async () => {
+      await withTools(JUDGE);
+      for (const name of ['write_file', 'edit_file', 'replace_file_content', 'notebook_edit']) {
+        expect(await decide(name, { Path: 'src/a.ts' })).toMatchObject({ decision: 'deny' });
+      }
+      for (const name of ['read_file', 'list_dir', 'grep_search', 'find_by_name', 'run_command', 'finish']) {
+        expect(await decide(name, { CommandLine: 'pnpm test' })).toEqual(DEFER_TO_SETTINGS);
+      }
+    });
+
+    it('leaves the class to the settings when the policy names no tools', async () => {
+      expect(await decide('search_web', { query: 'x' })).toEqual(DEFER_TO_SETTINGS);
+    });
+  });
+
   it('blocks file and shell tools when the policy cannot be read', async () => {
     await writeFile(policy, '{ not json', 'utf8');
     const outcome = await call('PreToolUse', toolCall('run_command', { CommandLine: 'pnpm test' }));

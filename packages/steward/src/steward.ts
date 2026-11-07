@@ -14,6 +14,7 @@ import { manaStep } from './mana/step.ts';
 import { createRecorder } from './record.ts';
 import { createSessions } from './sessions/running.ts';
 import { recordEnd } from './sessions/ended.ts';
+import { maskFinished } from './sessions/secrets.ts';
 import { reapLost } from './sessions/settle.ts';
 import { carryOut } from './steps.ts';
 import { noteUnclaimable, reportedFromLog, writeUnclaimable } from './unclaimable.ts';
@@ -84,7 +85,8 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   const { templates } = held;
   const ctx: Context = { deps, root, world, record, sessions, templates, limits, mana, counts };
   const waiting = await applyInbox(ctx, handled);
-  for (const finished of sessions.drain()) await recordEnd(ctx, finished);
+  // A session's leftovers lose its secrets before anything is recorded of them (§3.9).
+  for (const finished of sessions.drain()) await recordEnd(ctx, await maskFinished(ctx, finished));
   await reapLost(ctx);
   counts.waiting = (await applyInbox(ctx, handled, waiting)).length;
   await manaStep(ctx);

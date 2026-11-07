@@ -10,8 +10,9 @@
   scoped to the plot as `Read(./**)`, the assignee's own handover letter by absolute path, Elvaria's hook on the
   twelve events in the exec form, `ELVARIA_*` and `CLAUDE_CODE_*` env, no auto memory, no attribution line),
   `agents.json` (the one apprentice: the character's tools minus `Agent`, a hard `maxTurns`), `system.md` for
-  `--append-system-prompt-file` and the prompt as sent. Generated settings are checked before spawn, because
-  Claude Code drops a malformed part without a word.
+  `--append-system-prompt-file` and the prompt as sent, redacted. Generated settings are checked before spawn,
+  because Claude Code drops a malformed part without a word. Every file the runner writes masks the session's
+  secret values (`secretValuesOf`) before the patterns (§3.9).
 - Spawns `claude -p` with stream-json, hook events, dontAsk, `--tools`, `--strict-mcp-config` and
   `--setting-sources project,local`, without a shell, the prompt on stdin, a chosen `--session-id` (or
   `--resume`). Reads the stream: signals (`text`, `usage` so far, `tool_blocked`, `rate_limit`, `mana` with the
@@ -34,8 +35,9 @@
 ## Does not
 
 - Kill a process tree: `kill()` ends the CLI's own process until P1-06 brings `runner-core/src/process/`.
-- Build the minimal env or resolve treasury secrets (P1-10), nor decide anything: the Steward chooses who, when,
-  with which budget and whether to resume.
+- Build the minimal env or resolve treasury secrets (the Steward does, with runner-core's treasury), nor decide
+  anything: the Steward chooses who, when, with which budget and whether to resume. Secrets stay in the
+  process env: settings.json carries only `ELVARIA_*`, policy.json only the secrets' names.
 - Read or write `~/.claude/`, parse transcripts, or use `--bare`, `--worktree`, `--dangerously-skip-permissions`.
 
 ## Depends on
@@ -53,6 +55,8 @@ pnpm --filter @elvaria/hooks build && ELVARIA_LIVE=1 pnpm --filter @elvaria/runn
 `fixtures/*.jsonl` are the redacted real runs of spike P1-02 (catalogue in `docs/spikes/claude-2026-11.md`).
 `fixtures/fake-claude.mjs` plays the conformance scenarios through the real run files (it runs the hooks the
 settings declare) or replays a fixture verbatim (`FAKE_CLAUDE_REPLAY`); its 429 lines are self-built from the docs
-until P1-16 records real ones. `fixtures/fake-hook.mjs` stands in for the built hook. `src/live.spec.ts` runs the
+until P1-16 records real ones; its fake-only scenario `leak` (`fixtures/fake-claude-leak.mjs`) prints secrets
+everywhere, and `src/secrets.spec.ts` runs it with Elvaria's real hook from source and finds none of them in
+any file of the kingdom. `fixtures/fake-hook.mjs` stands in for the built hook elsewhere. `src/live.spec.ts` runs the
 conformance suite's live checks with the real CLI and the real hook, the Stop gate, and a commit without
 attribution.

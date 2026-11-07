@@ -33,6 +33,7 @@ import type {
   ProbeOptions,
   ProbeResult,
   SpawnRequest,
+  Treasury,
 } from '@elvaria/runner-core';
 import type { KingdomStore } from '@elvaria/store';
 
@@ -104,7 +105,25 @@ const territory = (id: string, kind: 'code' | 'docs', maxConcurrent: number) =>
     kind,
     vcs: { type: 'none', default_branch: 'main' },
     max_concurrent: maxConcurrent,
+    // The code territory lets its quests ask for the npm token (ADR 0013); the handbook allows none.
+    secrets_allowed: kind === 'code' ? ['npm_token'] : [],
   });
+
+/** The treasury value of npm_token in the bench: a shape no pattern knows, so only the known values mask it. */
+export const NPM_TOKEN = ['plain', '-FAKE-', 'treasury-value-77'].join('');
+
+/** The minimal env the composition root would hand over: a toolchain path and a home, nothing secret. */
+export const BENCH_ENV = { PATH: '/usr/bin', HOME: '/home/owner' } as const;
+
+/** A treasury in memory, with what the file treasury says when a name is missing. */
+export const memoryTreasury = (values: Readonly<Record<string, string>>): Treasury => ({
+  names: () => Promise.resolve(Object.keys(values).sort()),
+  resolve: (names) => {
+    const missing = names.filter((name) => values[name] === undefined);
+    if (missing.length > 0) return Promise.reject(new Error(`treasury has no ${missing.join(', ')}`));
+    return Promise.resolve(Object.fromEntries(names.map((name) => [name, values[name] ?? ''])));
+  },
+});
 
 export interface CastMember {
   readonly id: string;
@@ -189,10 +208,15 @@ function scripted(plays: Plays) {
 }
 
 /** A FakeRunner whose verifier sessions end with a verdict as structured output, as `--json-schema` gives it. */
-function judgingRunner(fake: FakeRunner, verdictOf: (req: SpawnRequest) => unknown): AgentRunner {
+function judgingRunner(
+  fake: FakeRunner,
+  verdictOf: (req: SpawnRequest) => unknown,
+  requests: SpawnRequest[],
+): AgentRunner {
   return {
     ...fake,
     spawn: async (req) => {
+      requests.push(req);
       const session = await fake.spawn(req);
       if (req.role !== 'verifier') return session;
       return { ...session, wait: async () => ({ ...(await session.wait()), structured: verdictOf(req) }) };
@@ -210,6 +234,8 @@ export interface Bench {
   readonly runners: { readonly claude: AgentRunner; readonly gemini: AgentRunner };
   readonly notices: Notice[];
   readonly warnings: string[];
+  /** Every request a runner was asked to spawn, in order. */
+  readonly requests: SpawnRequest[];
   /** The morning: the world the files described before the first tick. */
   readonly morning: () => Promise<WorldState>;
   steward(overrides?: Partial<StewardDeps>): Steward;
@@ -231,6 +257,8 @@ export interface BenchOptions {
     readonly claude?: FakeRunnerOptions['probe'];
     readonly gemini?: FakeRunnerOptions['probe'];
   };
+  /** The treasury's contents; npm_token = NPM_TOKEN by default. */
+  readonly treasury?: Readonly<Record<string, string>>;
 }
 
 async function sourceOf(store: KingdomStore) {
@@ -275,9 +303,10 @@ export async function bench(options: BenchOptions = {}): Promise<Bench> {
       ...(options.probes?.[tribe] === undefined ? {} : { probe: options.probes[tribe] }),
     });
   const fakes = { claude: fakeOf('claude'), gemini: fakeOf('gemini') };
+  const requests: SpawnRequest[] = [];
   const runners = {
-    claude: judgingRunner(fakes.claude, plays.verdict),
-    gemini: judgingRunner(fakes.gemini, plays.verdict),
+    claude: judgingRunner(fakes.claude, plays.verdict, requests),
+    gemini: judgingRunner(fakes.gemini, plays.verdict, requests),
   };
   const notices: Notice[] = [];
   const warnings: string[] = [];
@@ -291,6 +320,7 @@ export async function bench(options: BenchOptions = {}): Promise<Bench> {
     runners,
     notices,
     warnings,
+    requests,
     morning: () => Promise.resolve(morning),
     steward: (overrides = {}) =>
       createSteward({
@@ -298,6 +328,8 @@ export async function bench(options: BenchOptions = {}): Promise<Bench> {
         events: openEventLog(root),
         runners,
         plots: folderPlots(root),
+        env: BENCH_ENV,
+        treasury: memoryTreasury(options.treasury ?? { npm_token: NPM_TOKEN }),
         clock,
         ids,
         bell: { ring: (notice) => Promise.resolve(void notices.push(notice)) },

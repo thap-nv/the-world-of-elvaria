@@ -14,7 +14,10 @@ import type { HookPlan } from './hook-files.ts';
 
 export interface RunFiles {
   readonly settings: string;
-  /** policy.json v1 of runner-core's `writePolicyFile`: the laws and the context the hook reads (`--policy`). */
+  /**
+   * policy.json v1 of runner-core's `writePolicyFile`: the laws, the context, the secret names and the class's
+   * tools the hook reads (`--policy`); agy has no `--tools`, so the hook refuses a tool the class lacks (P1-10).
+   */
   readonly policy: string;
   readonly hooks: string;
   /** `--log-file`: agy writes the account's e-mail there, so it is private and goes nowhere else (spike §8). */
@@ -52,7 +55,7 @@ export async function writeRunFiles(req: SpawnRequest, ctx: RunContext, plan: Ho
   await Promise.all([mkdir(req.run_dir, { recursive: true }), mkdir(agents, { recursive: true })]);
   const files: RunFiles = {
     settings: path.join(req.run_dir, 'settings.json'),
-    policy: await writePolicyFile(req.run_dir, ctx, req.permissions.laws),
+    policy: await writePolicyFile(req.run_dir, ctx, req.permissions),
     hooks: path.join(agents, HOOKS_FILE),
     log: path.join(req.run_dir, 'agy.log'),
     ...(req.structured === undefined ? {} : { schema: path.join(req.run_dir, 'schema.json') }),

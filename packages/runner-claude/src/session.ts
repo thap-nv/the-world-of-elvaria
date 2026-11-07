@@ -13,6 +13,7 @@ import {
   openRunOutput,
   readQuestion,
   runContextOf,
+  secretValuesOf,
 } from '@elvaria/runner-core';
 import type {
   RunEventDraft,
@@ -202,7 +203,9 @@ export async function startSession(deps: SessionDeps, req: SpawnRequest): Promis
   const ctx = runContextOf(req);
   const { files, env } = await writeRunFiles(req, ctx, deps.hookCommand, deps.apprentice);
   const chosen = req.resume?.session_id ?? randomUUID();
-  const log = openRunLog(ctx);
+  // The session's secret values are masked before the patterns in every line the runner writes (§3.9).
+  const known = secretValuesOf(req);
+  const log = openRunLog(ctx, { known });
   const mark = await log.mark();
   const began = performance.now();
   const child = launchChild(deps, req, sessionArgv(req, files, chosen), env);
@@ -213,7 +216,7 @@ export async function startSession(deps: SessionDeps, req: SpawnRequest): Promis
     reader: createStreamReader(),
     channel: createSignalChannel<RunnerSignal>(),
     log,
-    output: openRunOutput(req.run_dir),
+    output: openRunOutput(req.run_dir, known),
     chosen,
     mark,
     pending: [],

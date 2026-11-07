@@ -20,6 +20,7 @@ import type {
   PlotFailure,
   PromptTemplates,
   ReleasedPlot,
+  Treasury,
 } from '@elvaria/runner-core';
 import type { KingdomStore } from '@elvaria/store';
 
@@ -98,6 +99,13 @@ export interface StewardDeps {
   /** One runner per tribe that may work; a tribe without one takes no quest. */
   readonly runners: Readonly<Partial<Record<TribeId, AgentRunner>>>;
   readonly plots: Plots;
+  /**
+   * The minimal env every session starts from (runner-core's `minimalEnv` of the composition root's own env,
+   * §3.9); a session adds `ELVARIA_*` and the secrets of its quest. Never process.env whole (ADR 0013).
+   */
+  readonly env: Readonly<Record<string, string>>;
+  /** Where the secrets a quest asks for come from: the file `kingdom.paths.treasury` in stage 1 (ADR 0013). */
+  readonly treasury: Treasury;
   readonly clock: Clock;
   readonly ids: IdSource;
   readonly bell: Bell;

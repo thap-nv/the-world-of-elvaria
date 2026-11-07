@@ -1,5 +1,8 @@
+import path from 'node:path';
+
 import { QuestIdSchema, VerdictIdSchema, createIdSource } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
+import { openFileTreasury } from '@elvaria/runner-core';
 import { createSteward, folderPlots } from '@elvaria/steward';
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -76,6 +79,9 @@ describe('elvaria seal, return', () => {
       events: openEventLog(store.root),
       runners: {},
       plots: folderPlots(store.root),
+      // No session opens here, so no env and no secret is needed (P1-10).
+      env: {},
+      treasury: openFileTreasury(path.join(dir.root, 'no-treasury.json')),
       clock: io.clock,
       ids: idsOf(io),
       bell: { ring: () => Promise.resolve() },

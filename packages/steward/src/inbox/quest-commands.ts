@@ -61,7 +61,8 @@ export async function createQuest(ctx: Context, command: InboxCommandOf<'create_
     at: ctx.record.stamp(),
     breakers: ctx.world.kingdom.breakers,
     registry: ctx.world.registry,
-    territories: [...ctx.world.territories.keys()],
+    // With the secrets each allows: a quest asking for more is refused here (ADR 0013).
+    territories: [...ctx.world.territories.values()],
     quests: [...ctx.world.quests.keys()],
   });
   if (!made.ok) return rejected(made.error.code);

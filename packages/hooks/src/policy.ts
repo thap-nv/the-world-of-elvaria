@@ -19,6 +19,16 @@ export interface HookPolicy {
   readonly model?: string;
   /** IANA zone of the kingdom (`kingdom.tz`): the day file of every line follows it (§2.1). */
   readonly tz?: string;
+  /**
+   * Env names of the session's secrets (P1-10, §3.9): the hook reads their values from its own env, which the CLI
+   * inherited from the runner, and masks them before the patterns. Never values: this file is on disk.
+   */
+  readonly secrets?: readonly string[];
+  /**
+   * The tools of the class in Claude Code names (`ToolPolicy.tools`, P1-10): for a CLI with no `--tools`
+   * (Antigravity), the hook refuses a tool the class does not have. Absent: no such check.
+   */
+  readonly tools?: readonly string[];
   /** `territory.laws`; other law kinds may be present and are not the hook's to enforce. */
   readonly laws?: LawsInput;
 }
@@ -27,6 +37,7 @@ export type PolicyResult =
   { readonly ok: true; readonly policy: HookPolicy } | { readonly ok: false; readonly problem: string };
 
 const STRING_FIELDS = ['kingdom', 'quest', 'character', 'role', 'model', 'tz'] as const;
+const LIST_FIELDS = ['secrets', 'tools'] as const;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -50,6 +61,8 @@ function policyProblem(value: Record<string, unknown>): string | undefined {
   if (value.attempt !== undefined && !(Number.isInteger(value.attempt) && Number(value.attempt) >= 1)) {
     return 'attempt is not an integer >= 1';
   }
+  const list = LIST_FIELDS.find((key) => value[key] !== undefined && !isStringList(value[key]));
+  if (list !== undefined) return `${list} is not a list of strings`;
   return lawsProblem(value.laws);
 }
 

@@ -20,6 +20,8 @@ describe('parsePolicy', () => {
       role: 'assignee',
       model: 'claude-opus-5-5',
       tz: 'Asia/Ho_Chi_Minh',
+      secrets: ['NPM_TOKEN'],
+      tools: ['Read', 'Glob', 'Grep'],
       laws: { ...DC1_LAWS, read_before_write: ['packages/shared/**'] },
     };
     expect(parsePolicy(policy)).toEqual({ ok: true, policy });
@@ -37,6 +39,8 @@ describe('parsePolicy', () => {
     [{ version: 1, model: ['x'] }, 'model is not a string'],
     [{ version: 1, attempt: 0 }, 'attempt is not an integer >= 1'],
     [{ version: 1, attempt: 1.5 }, 'attempt is not an integer >= 1'],
+    [{ version: 1, secrets: 'NPM_TOKEN' }, 'secrets is not a list of strings'],
+    [{ version: 1, tools: ['Read', 7] }, 'tools is not a list of strings'],
     [{ version: 1, laws: [] }, 'laws is not an object'],
     [{ version: 1, laws: { forbidden_paths: '.env' } }, 'laws.forbidden_paths is not a list of strings'],
     [{ version: 1, laws: { forbidden_commands: [1] } }, 'laws.forbidden_commands is not a list of strings'],

@@ -26,6 +26,11 @@ export interface FileSpec<T> {
   readonly contract: StoredContract;
   readonly parser: Parser<T>;
   readonly migrations: MigrationChain;
+  /**
+   * What a write changes in a valid value before it is checked again and written: masking secrets in free text
+   * (verdict notes, ADR 0013). A method, so a spec of any T still fits `FileSpec<unknown>` (migrateKingdom).
+   */
+  scrub?(value: T): T;
 }
 
 export interface Decoded<T> {

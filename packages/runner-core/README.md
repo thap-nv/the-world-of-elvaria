@@ -44,12 +44,21 @@
   in the hook), one at a time in the plot, each logged to `<run_dir>/checks/<id>.log`. An `exclusive` check holds
   the territory's lock (`.state/checks/<territory>-exclusive`) so two quests never run one at once; a timed-out
   check runs its `cleanup`. A check that cannot run (shell syntax, program not found, lock never freed) fails.
+  The log of a check or of `commands.setup` loses the secret shapes the command printed when it closes
+  (`maskLogFile`, ADR 0013); the command writes straight into the file, so the masking is not line by line.
 - Starts territory programs without a shell (`runProgram`, `argvOf`, `splitCommandLine`): quoted words, shell
   syntax refused, the program resolved by the `ProcessHost` the composition root passes in (it owns PATH and turns
   an npm `.cmd` shim into `node <script>`), and an env with no `GIT_*` (`childEnvOf`).
 - Gives every adapter the session's side of the hook contract (P1-09, §3.6): `runContextOf(req)` (kingdom,
-  quest, attempt from env `ELVARIA_*`; character, role, model from the request), `contextEnv`, and
-  `writePolicyFile` for `<run_dir>/policy.json` v1, the file `--policy` points the hook at.
+  quest, attempt from env `ELVARIA_*`; character, role, model from the request; the env names of the quest's
+  secrets), `contextEnv`, and `writePolicyFile` for `<run_dir>/policy.json` v1, the file `--policy` points the
+  hook at: context, `secrets` (names only), `tools` (the class's, for a CLI with no `--tools`) and `laws`.
+- Holds the treasury (`src/treasury/`, §3.9, ADR 0013): `openFileTreasury(file)` reads `{ "name": "value" }`
+  from `kingdom.paths.treasury` on each call (a missing file is empty; on macOS a file others can read is
+  refused; no error ever quotes a value), `secretEnvName` (`npm_token` → `NPM_TOKEN`), `minimalEnv` (the
+  allowlist every child starts from), `sessionEnv` (minimal env + `ELVARIA_*` + exactly the quest's secrets; a
+  secret that would replace another variable is refused), and `secretValuesOf` / `sessionRedactor` for the
+  adapters, which mask the session's values before the patterns.
 - Writes the lines only a CLI's output knows (`openRunLog`): `agent.session.end`, `agent.subagent.*`,
   `mana.signal`, stamped and redacted like the hook's, checked by `EventSchema`, to the log and the journal; and
   tells whether Elvaria's SessionStart hook recorded a session (`recorded`). Keeps a CLI's raw stdout and stderr
@@ -58,8 +67,9 @@
 ## Does not
 
 - Talk to a real CLI: adapters do (`runner-claude` P1-09, `runner-antigravity` P1-12b, `runner-gemini` P1-12c).
-- Write a CLI's own settings or agents file, nor build the minimal env: the adapters (P1-09) and the treasury
-  (P1-10) do, from `ToolPolicy` and `SpawnRequest`.
+- Write a CLI's own settings or agents file: the adapters do, from `ToolPolicy` and `SpawnRequest`. Choose which
+  secrets a session gets: the quest names them, the Steward checks them against the territory and builds the env.
+- Read a keychain: the file treasury is stage 1's; a keychain adapter can stand behind `Treasury` later.
 - Kill process trees yet (P1-06): a check or setup past its timeout, or a killed CLI, loses only its own
   process.
 - Search PATH, push, merge, or force anything: a dirty worktree is not released, a refused commit stays refused.

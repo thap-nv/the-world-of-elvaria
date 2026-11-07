@@ -87,6 +87,11 @@ export type { RunOutput } from './runner/run-output.ts';
 export { createSignalChannel } from './runner/signal-channel.ts';
 export type { SignalChannel } from './runner/signal-channel.ts';
 export { SPAWN_ROLES } from './runner/roles.ts';
+export { MINIMAL_ENV_NAMES, minimalEnv } from './treasury/minimal-env.ts';
+export { secretEnvNamesOf, secretValuesOf, sessionEnv, sessionRedactor } from './treasury/session-env.ts';
+export type { SessionEnvInput } from './treasury/session-env.ts';
+export { openFileTreasury, secretEnvName } from './treasury/treasury.ts';
+export type { FileTreasuryOptions, Treasury } from './treasury/treasury.ts';
 export type { SpawnRole } from './runner/roles.ts';
 export { RUN_OUTCOMES } from './runner/types.ts';
 export type {

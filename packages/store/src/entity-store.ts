@@ -60,7 +60,10 @@ export function fileStore<T>(
   };
 
   const save = async (value: unknown): Promise<Result<T, StoreIssue>> => {
-    const valid = validate(value, spec.parser, file);
+    const checked = validate(value, spec.parser, file);
+    if (!checked.ok) return checked;
+    // Scrubbed text is checked again: masking may shorten a field the schema wants long enough.
+    const valid = spec.scrub === undefined ? checked : validate(spec.scrub(checked.value), spec.parser, file);
     if (!valid.ok) return valid;
     if (!owns(valid.value)) return err(mismatch());
     await writeFileAtomic(target, encode(valid.value));

@@ -9,7 +9,9 @@ terms_acknowledged_at, env, pools?, timeout_ms?})`. `hook` is `hookCommand()` of
   `--conversation <id>`, checked on a real machine.
 - Per session: reads `agy --version` into `<run_dir>/agy-version.txt`; writes `settings.json` (the
   `ToolPolicy` as agy prefix rules: `command(pnpm test)`, `write_file(./)`, deny `read_file(.env)`, plus the
-  handover letter outside the plot), `policy.json` (runner-core's `writePolicyFile`), `schema.json` for
+  handover letter outside the plot), `policy.json` (runner-core's `writePolicyFile`, with the class's `tools`:
+  agy has no `--tools`, so the hook refuses a tool the class lacks, such as `search_web` without `WebSearch`,
+  and the names of the session's secrets), `schema.json` for
   `--json-schema`; writes into the plot `.agents/hooks.json` (`node [flags] elvaria-hook.mjs <Event>` for
   SessionStart, PreToolUse, PostToolUse, Stop), the shim `.agents/elvaria-hook.mjs` that holds the paths, and
   `GEMINI.md` (the system prompt, then `@[Territory law](./CLAUDE.md)` and `@[rule](./<file>)` for
@@ -24,7 +26,8 @@ terms_acknowledged_at, env, pools?, timeout_ms?})`. `hook` is `hookCommand()` of
   `budget.max_turns` begins (agy has no `--max-turns`). Outcome: SUCCESS with an answer → `completed`; a
   soft-deny or an empty answer → `error`; `print_timeout` → `budget`; a quota in `AGY_ERROR` → `rate_limited`.
 - Writes what only the stream knows through runner-core, as the Claude adapter does: `agent.session.end`
-  (outcome and usage, a killed run included) with `openRunLog`, and stdout and stderr redacted into
+  (outcome and usage, a killed run included) with `openRunLog`, and stdout and stderr redacted (the session's
+  secret values first, `secretValuesOf`) into
   `<run_dir>/stdout.jsonl` and `stderr.log` with `openRunOutput`, plus the runner's own notes there.
 - `probe()` reads `agy -p /usage --output-format json` into buckets per pool (`usageBuckets`), and returns them as
   the account's windows for the mana gauge (`windowsOf`; the Argon bucket names its model; `/usage` costs no

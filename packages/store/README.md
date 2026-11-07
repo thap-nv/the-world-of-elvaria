@@ -20,6 +20,9 @@
 - Loads `registry/` (`loadRegistry`: migrate each file, then the domain's `parseRegistry`) and names registry
   entries whose file is missing (`missingRegistryFiles`: `class.prompt_file`, `script.entry`).
 - Lays out a new kingdom (`initKingdom`): folders, a copy of the registry it is given, `kingdom.json` last.
+- Reads the owner's royal decree (`readDecree`, `kingdomLayout.decree` = `decree.md`, null when absent) and masks
+  secrets in free text it keeps (ADR 0013): every verdict write masks the secret patterns in `notes` (checked
+  by the schema again after), and `redactHandover` masks a session's values and the patterns in its letter.
 
 ## Does not
 
@@ -27,8 +30,9 @@
   command means is the domain's and the Steward's business. The store persists what it is handed.
 - Import `@elvaria/registry-default`: the composition root passes `initKingdom` the registry's folder and file
   list (`REGISTRY_ROOT`, `registryFiles()`).
-- Write the event log or journals (`@elvaria/eventlog` does), or redact secrets yet: P1-10 adds the eventlog
-  dependency for `redactDeep` and `journalOf` (ADR 0013).
+- Write the event log or journals (`@elvaria/eventlog` does; the journal's name is its `journalOf`), know a
+  session's secret values (the Steward passes them to `redactHandover`), or create or change `decree.md` (the
+  owner's).
 - Throw for states a caller can act on: a missing, unreadable, invalid, newer or locked file is a `StoreIssue`
   with a `code` the CLI translates. An IO failure nobody can act on (disk full, no permission on the kingdom)
   is thrown.
@@ -36,6 +40,7 @@
 ## Depends on
 
 - `@elvaria/domain` (schemas, ids, `Result`, `parseRegistry`).
+- `@elvaria/eventlog` (`journalOf`, `createRedactor`): one source for the journal's name and the patterns.
 - `proper-lockfile` (file locks that survive a crashed holder, on Windows and macOS).
 
 ## How to test

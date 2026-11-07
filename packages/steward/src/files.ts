@@ -3,15 +3,15 @@
 import { inKingdom, kingdomLayout, readTextFile } from '@elvaria/store';
 import type { CharacterId, QuestId, TerritoryId } from '@elvaria/domain';
 
-/** Kingdom-relative paths the store's layout does not list yet (P1-10 adds the decree, the temple has its own). */
-const DECREE = 'decree.md';
+/** The temple's own scripture, which the store's layout does not list yet. */
 const TEMPLE_SCRIPTURE = 'temple/scripture.md';
 
 /** The text of a kingdom file, or null when it does not exist. */
 export const readOptional = async (root: string, relative: string): Promise<string | null> =>
   (await readTextFile(inKingdom(root, relative))) ?? null;
 
-export const readDecree = (root: string) => readOptional(root, DECREE);
+/** The owner's royal decree, as the store reads it (`kingdomLayout.decree`). */
+export { readDecree } from '@elvaria/store';
 
 export const readGazetteer = (root: string, territory: TerritoryId) =>
   readOptional(root, kingdomLayout.gazetteer(territory));

@@ -33,7 +33,7 @@ function redactLine(line: string, redactor: Redactor): string {
   }
 }
 
-/** `known`: secret values of the session, masked before the patterns (P1-10 fills them). */
+/** `known`: secret values of the session (`secretValuesOf(req)`), masked before the patterns. */
 export function openRunOutput(runDir: string, known: readonly string[] = []): RunOutput {
   mkdirSync(runDir, { recursive: true });
   const redactor = createRedactor(known);

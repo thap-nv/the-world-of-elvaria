@@ -10,6 +10,7 @@ import { heardBy } from '../mana/heard.ts';
 import { step } from '../record.ts';
 import { checksOf, checksRunOf } from '../review/checks.ts';
 import { continuationOf, requestOf } from './request.ts';
+import { rememberSecrets } from './secrets.ts';
 import type { Context } from '../context.ts';
 import type { MovePayload } from '../record.ts';
 import type { SessionInput } from './request.ts';
@@ -61,6 +62,8 @@ async function spawnFor(
     const request = await requestOf(ctx, { ...input, quest, cwd: prepared.cwd });
     const resumed = resumedRequest(ctx, request, resume);
     const session = heardBy(ctx.mana, input.character, await runner.spawn(resumed));
+    // Keyed by the session the Steward keeps (heardBy's wrapper): maskFinished finds it from Running.session.
+    rememberSecrets(session, resumed);
     return ok({ session, plot: prepared.plot });
   } catch (error) {
     ctx.deps.log.warn(

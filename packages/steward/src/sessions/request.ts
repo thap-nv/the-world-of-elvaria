@@ -17,6 +17,7 @@ import {
   readJournal,
   readScriptures,
 } from '../files.ts';
+import { sessionEnvOf } from './secrets.ts';
 import type { Context } from '../context.ts';
 
 /**
@@ -76,7 +77,7 @@ export async function continuationOf(ctx: Context, quest: Quest): Promise<Contin
   return { reason: 'revive' };
 }
 
-/** The context the hook reads from env (§3.6); P1-10 adds the minimal env and the allowed secrets. */
+/** The context the hook reads from env (§3.6); sessionEnvOf (secrets.ts) adds the minimal env and the secrets. */
 const envOf = (ctx: Context, input: SessionInput): Record<string, string> => ({
   ELVARIA_KINGDOM: ctx.root,
   ELVARIA_QUEST: input.quest.id,
@@ -132,7 +133,7 @@ export async function requestOf(ctx: Context, input: SessionInput): Promise<Spaw
     prompt: await promptOf(ctx, input),
     permissions: toolPolicyOf({ role, characterClass, character, territory }),
     budget: { max_turns: ctx.world.kingdom.breakers.max_turns, max_minutes: quest.budget.max_minutes },
-    env: envOf(ctx, input),
+    env: await sessionEnvOf(ctx, input, envOf(ctx, input)),
     run_dir: runDir,
     ...(role === 'verifier'
       ? { structured: VERDICT_OUTPUT_SCHEMA }

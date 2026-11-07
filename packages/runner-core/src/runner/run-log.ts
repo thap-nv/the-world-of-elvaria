@@ -41,8 +41,8 @@ export interface RunLogOptions {
   /** Epoch ms; Date.now by default. */
   readonly now?: () => number;
   /**
-   * Secret values masked before the patterns (`createRedactor`). Empty until P1-10 settles the treasury, as in
-   * the hook; until then only `redact-patterns.json` applies.
+   * Secret values masked before the patterns (`createRedactor`): `secretValuesOf(req)`, the values the hook
+   * masks too (§3.9). Without them only `redact-patterns.json` applies.
    */
   readonly known?: readonly string[];
 }

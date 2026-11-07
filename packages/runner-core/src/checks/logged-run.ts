@@ -7,6 +7,7 @@ import path from 'node:path';
 
 import { inKingdom } from '@elvaria/store';
 
+import { maskedOnClose } from './masked-log.ts';
 import { argvOf, runProgram } from './program.ts';
 import type { ProcessHost, ProgramRun } from './program.ts';
 
@@ -24,7 +25,7 @@ export async function openLog(kingdom: string, logPath: string, firstLine: strin
   await mkdir(path.dirname(file), { recursive: true });
   await writeFile(file, `${firstLine}\n`);
   // Appending: the child writes through the same file, and every write lands after the last one.
-  return open(file, 'a');
+  return maskedOnClose(await open(file, 'a'), file);
 }
 
 /** Runs `line` with its output appended to `log`; a line that cannot start says why in the log. */
