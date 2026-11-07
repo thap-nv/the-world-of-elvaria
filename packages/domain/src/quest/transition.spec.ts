@@ -176,10 +176,11 @@ describe('transition: verification', () => {
     expect(failed.attempt_log[1]).toMatchObject({ ended_at: at(50), outcome: 'submitted' });
   });
 
-  it('drops a verifier that runs out of mana, trips a breaker or is suspended, and stays in review', () => {
+  it('drops a verifier that runs out of mana, trips a breaker, crashes or is suspended, and stays in review', () => {
     for (const [type, actor, outcome] of [
       ['mana_out', 'mana', 'paused'],
       ['breaker', 'steward', 'breaker'],
+      ['crash', 'steward', 'crash'],
       ['suspend', 'user', 'cancelled'],
     ] as const) {
       const result = value(fire(judged(), type, actor));

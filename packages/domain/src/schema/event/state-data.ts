@@ -4,8 +4,8 @@
 // snapshot can always be rebuilt from the log (ADR 0003, ADR 0004).
 import { z } from 'zod';
 
-import { REGISTRY_ID_PATTERN, TribeIdSchema } from '../../core/ids.ts';
-import { NonEmptyStringSchema } from '../common.ts';
+import { CharacterIdSchema, ClassIdSchema, REGISTRY_ID_PATTERN, TribeIdSchema } from '../../core/ids.ts';
+import { NonEmptyStringSchema, RANKS } from '../common.ts';
 import { CharacterViewSchema } from '../../world/character-view.ts';
 import { QuestViewSchema } from '../../world/quest-view.ts';
 import { TerritoryViewSchema } from '../../world/territory-view.ts';
@@ -34,6 +34,31 @@ export const QuestInfirmaryDataSchema = z.strictObject({
   ),
   ...QUEST_CHANGE,
 });
+
+/**
+ * An open quest no character may take (implementation-plan §3.1 "Quest không ai nhận được", P1-03): written once
+ * when the reason appears or changes, and with `reason: null` once it is gone while the quest is still open.
+ * The quest itself does not change, so the data carries the reason, not the quest's view.
+ */
+export const QuestUnclaimableDataSchema = z
+  .strictObject({
+    reason: z
+      .enum(['no_class', 'level_too_low'])
+      .nullable()
+      .meta(
+        describe(
+          'no_class: no character of the class outside the suspended ones and the disabled tribes; level_too_low: even the highest level among them cannot take the rank, not even when nobody else could (canTake); null: the reason is gone.',
+        ),
+      ),
+    // RANKS, not RankSchema: its id would put a `$ref` into this rule, which is converted on its own (event-data.ts).
+    rank: z.enum(RANKS),
+    class: ClassIdSchema.meta(describe("The quest's class_required.")),
+    best_character: CharacterIdSchema.optional().meta(
+      describe('level_too_low: the highest-level character of the class.'),
+    ),
+    best_level: z.int().min(1).optional(),
+  })
+  .meta(describe('The quest stays open: a character who can take it later claims it as usual.'));
 
 export const CharacterChangeDataSchema = z.strictObject({
   character: CharacterViewSchema.meta(describe('The character after this event (characterViewOf).')),

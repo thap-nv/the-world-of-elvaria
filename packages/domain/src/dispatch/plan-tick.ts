@@ -1,25 +1,24 @@
 // planTick(snapshot, now): what the Steward does in one tick, decided as a pure function of a snapshot of the
-// kingdom (implementation-plan §3.1, ADR 0002); the Steward and the sandbox only carry the plan out. This is the
-// minimal form P0-10 needs: step 6, claims. An open quest whose dependencies are done goes to a free character
-// of its class and level, of an enabled tribe that is awake; a script-tier quest goes to the Steward itself.
-// P1-03 extends it with the other steps (verifications, redispatches, breakers, wakes, deliveries), the limits
-// (tribe and territory max_concurrent, exclusive checks), round-robin over territories and ranking by affinity.
-import { canTake } from '../character/level.ts';
+// kingdom (implementation-plan §3.1, ADR 0002); the Steward and the sandbox only carry the plan out. Steps 4–6
+// of the tick, in that order, sharing one roster so a character or a slot given away is gone for the next step:
+// claimed quests start, submitted quests get a verifier, returned quests go back to their assignee, open quests
+// are claimed (round-robin over territories, then rank, then age), and open quests nobody can take are named.
+import { claimBlocker } from './claim-blocker.ts';
+import { rosterOf } from './roster.ts';
+import { selectAssignee } from './select-assignee.ts';
+import { verifierFor } from './verifier-for.ts';
 import { RANKS } from '../schema/common.ts';
+import type { ClaimBlocker } from './claim-blocker.ts';
+import type { Roster, RosterSource } from './roster.ts';
 import type { Instant } from '../core/clock.ts';
-import type { CharacterId, QuestId } from '../core/ids.ts';
+import type { CharacterId, QuestId, TerritoryId } from '../core/ids.ts';
 import type { Character } from '../schema/character/character.ts';
-import type { Kingdom } from '../schema/kingdom.ts';
 import type { Quest } from '../schema/quest/quest.ts';
-import type { PoolKey } from '../world/mana-view.ts';
+import type { CharacterClass } from '../schema/registry-entries.ts';
 
-export interface KingdomSnapshot {
-  /** Which tribes may take work (P1-03 reads the rest of kingdom.json: limits, dispatch, breakers). */
-  readonly kingdom: Pick<Kingdom, 'tribes'>;
-  readonly quests: readonly Quest[];
-  readonly characters: readonly Character[];
-  /** Pools that sleep because their mana ran out (ADR 0009); P1-05 adds the pools closed at the cap. */
-  readonly asleep: readonly PoolKey[];
+export interface KingdomSnapshot extends RosterSource {
+  /** Which classes verify which kinds. */
+  readonly registry: { readonly classes: readonly Pick<CharacterClass, 'id' | 'is_verifier' | 'kinds'>[] };
 }
 
 /** A session-tier quest and the character that takes it, with its level for the claim event (§2.6). */
@@ -29,61 +28,146 @@ export interface Claim {
   readonly level: number;
 }
 
+export interface Verification {
+  readonly quest: QuestId;
+  readonly verifier: CharacterId;
+}
+
+export interface Unclaimable extends ClaimBlocker {
+  readonly quest: QuestId;
+}
+
 export interface TickPlan {
-  /** In the order the Steward applies them: highest rank first, then the oldest quest. */
+  /** Claimed quests whose dependencies are done and whose assignee is free: the owner's reassigns, or a claim
+   * the Steward made before it stopped. */
+  readonly starts: readonly QuestId[];
+  /** Step 4: submitted session-tier quests and their verifier (§3.2, plain form until P1-04). */
+  readonly verifications: readonly Verification[];
+  /** Step 5: returned quests that go back to their assignee in a fresh session. */
+  readonly redispatches: readonly QuestId[];
+  /** Step 6, in the order the Steward applies them. */
   readonly claims: readonly Claim[];
-  /** Script-tier quests the Steward claims with no assignee and runs itself (§3.12), in the same order. */
+  /** Script-tier quests the Steward claims with no assignee and runs itself (§3.12), highest rank first. */
   readonly scripts: readonly QuestId[];
+  /** Open session-tier quests with their dependencies done that nobody can take as things stand (§3.1). */
+  readonly unclaimable: readonly Unclaimable[];
 }
 
 const rankOrder = (quest: Quest): number => RANKS.indexOf(quest.rank);
 
-/** Step 6 (§3.1): (b) higher rank first, (c) older first; the id keeps the order total. */
+/** (b) higher rank first, (c) older first; the id keeps the order total. */
 const byPriority = (a: Quest, b: Quest): number =>
   rankOrder(b) - rankOrder(a) ||
   Date.parse(a.created_at) - Date.parse(b.created_at) ||
   a.id.localeCompare(b.id);
 
-/** Among characters that may take a quest, the one idle the longest goes first (§3.1, the last tie-break). */
-const byIdleSince = (a: Character, b: Character): number =>
-  Date.parse(a.status_since) - Date.parse(b.status_since) || a.id.localeCompare(b.id);
-
-/**
- * A tribe sleeps while any of its pools sleeps. Conservative until poolOf (P1-05) tells which pool a character's
- * model draws on: a character is never sent into a pool that has run out.
- */
-function freeCharacters(snapshot: KingdomSnapshot): Character[] {
-  const enabled = new Set(snapshot.kingdom.tribes.filter((tribe) => tribe.enabled).map(({ id }) => id));
-  const asleep = new Set(snapshot.asleep.map(({ tribe }) => tribe));
-  return snapshot.characters
-    .filter(({ status, tribe }) => status === 'idle' && enabled.has(tribe) && !asleep.has(tribe))
-    .toSorted(byIdleSince);
-}
-
-/**
- * The character that takes `quest`: one of its class within its level's ceiling, else one rank above the ceiling
- * because nobody else of the class is free (canTake, §2.6; the claim then makes the quest wait for the seal).
- */
-function takerOf(quest: Quest, free: readonly Character[]): Character | undefined {
-  const ofClass = free.filter((character) => character.class === quest.class_required);
-  const within = ofClass.find((character) => canTake(character.level, quest.rank, false));
-  return within ?? ofClass.find((character) => canTake(character.level, quest.rank, true));
-}
-
-/** The claims of this tick. `now` is for the steps P1-03 adds (breakers, probes, waits); claims do not need it. */
-export function planTick(snapshot: KingdomSnapshot, _now: Instant): TickPlan {
-  const done = new Set(snapshot.quests.filter(({ status }) => status === 'done').map(({ id }) => id));
-  const ready = snapshot.quests
-    .filter(({ status, depends_on }) => status === 'open' && depends_on.every((id) => done.has(id)))
-    .toSorted(byPriority);
-  let free = freeCharacters(snapshot);
-  const claims: Claim[] = [];
-  for (const quest of ready.filter(({ tier }) => tier === 'session')) {
-    const taker = takerOf(quest, free);
-    if (taker === undefined) continue;
-    claims.push({ quest: quest.id, assignee: taker.id, level: taker.level });
-    free = free.filter(({ id }) => id !== taker.id);
+/** When each territory last had a quest taken: the latest assignee session on it. */
+function lastTakenOf(quests: readonly Quest[]): Map<TerritoryId, number> {
+  const last = new Map<TerritoryId, number>();
+  for (const quest of quests) {
+    for (const entry of quest.attempt_log.filter(({ role }) => role === 'assignee')) {
+      last.set(quest.territory, Math.max(last.get(quest.territory) ?? -1, Date.parse(entry.started_at)));
+    }
   }
-  const scripts = ready.filter(({ tier }) => tier === 'script').map(({ id }) => id);
-  return { claims, scripts };
+  return last;
+}
+
+/** (a) the territory that had a quest taken least recently goes first; the sort is stable, so (b) and (c) hold within. */
+const byTurn =
+  (last: ReadonlyMap<TerritoryId, number>) =>
+  (a: Quest, b: Quest): number =>
+    (last.get(a.territory) ?? -1) - (last.get(b.territory) ?? -1) || a.territory.localeCompare(b.territory);
+
+interface Step {
+  readonly snapshot: KingdomSnapshot;
+  readonly roster: Roster;
+  readonly character: (id: CharacterId | null | undefined) => Character | undefined;
+}
+
+/** The quest's assignee, if it may start a session on the quest's territory now; it is then taken. */
+function holderGoes(step: Step, quest: Quest): boolean {
+  const holder = step.character(quest.assignee);
+  if (holder === undefined || !step.roster.canStart(holder) || !step.roster.territoryHasRoom(quest.territory))
+    return false;
+  step.roster.take(holder, quest.territory);
+  return true;
+}
+
+function verifications(step: Step, review: readonly Quest[]): Verification[] {
+  const planned: Verification[] = [];
+  for (const quest of review) {
+    const free = step.snapshot.characters.filter(step.roster.canStart);
+    const verifier = verifierFor(quest, free, step.character(quest.assignee), step.snapshot.registry.classes);
+    if (verifier === undefined) continue;
+    step.roster.take(verifier, null);
+    planned.push({ quest: quest.id, verifier: verifier.id });
+  }
+  return planned;
+}
+
+/** The character that takes `quest`, if its territory has room and a free character of its class fits. */
+function takerOf(step: Step, quest: Quest): Character | undefined {
+  const territory = step.roster.territory(quest.territory);
+  if (territory === undefined || !step.roster.territoryHasRoom(territory.id)) return undefined;
+  const candidates = step.snapshot.characters.filter((c) => step.roster.canClaim(c, quest, territory));
+  return selectAssignee(quest, candidates);
+}
+
+function claims(step: Step, open: readonly Quest[], now: Instant): Claim[] {
+  const last = lastTakenOf(step.snapshot.quests);
+  const planned: Claim[] = [];
+  let pending = open;
+  for (
+    let quest = pending.toSorted(byTurn(last))[0];
+    quest !== undefined;
+    quest = pending.toSorted(byTurn(last))[0]
+  ) {
+    const current = quest;
+    pending = pending.filter((other) => other !== current);
+    const taker = takerOf(step, current);
+    if (taker === undefined) continue;
+    step.roster.take(taker, current.territory);
+    last.set(current.territory, now);
+    planned.push({ quest: current.id, assignee: taker.id, level: taker.level });
+  }
+  return planned;
+}
+
+function unclaimable(step: Step, open: readonly Quest[]): Unclaimable[] {
+  const counted = step.snapshot.characters.filter(step.roster.counts);
+  return open.flatMap((quest) => {
+    const blocker = claimBlocker(quest, counted);
+    return blocker === null ? [] : [{ quest: quest.id, ...blocker }];
+  });
+}
+
+/** The plan of this tick; `now` dates the claims for the round-robin over territories. */
+export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
+  const byId = new Map(snapshot.characters.map((character) => [character.id, character]));
+  const step: Step = {
+    snapshot,
+    roster: rosterOf(snapshot),
+    character: (id) => (typeof id === 'string' ? byId.get(id) : undefined),
+  };
+  const done = new Set(snapshot.quests.filter(({ status }) => status === 'done').map(({ id }) => id));
+  const ready = (quest: Quest): boolean => quest.depends_on.every((id) => done.has(id));
+  const inStatus = (status: Quest['status']): Quest[] =>
+    snapshot.quests.filter((quest) => quest.status === status).toSorted(byPriority);
+  const open = inStatus('open').filter(ready);
+  const openSessions = open.filter(({ tier }) => tier === 'session');
+  return {
+    starts: inStatus('claimed')
+      .filter((quest) => ready(quest) && holderGoes(step, quest))
+      .map(({ id }) => id),
+    verifications: verifications(
+      step,
+      inStatus('review').filter((quest) => quest.tier === 'session' && typeof quest.verifier !== 'string'),
+    ),
+    redispatches: inStatus('returned')
+      .filter((quest) => holderGoes(step, quest))
+      .map(({ id }) => id),
+    claims: claims(step, openSessions, now),
+    scripts: open.filter(({ tier }) => tier === 'script').map(({ id }) => id),
+    unclaimable: unclaimable(step, openSessions),
+  };
 }

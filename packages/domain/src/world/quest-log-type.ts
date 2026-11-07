@@ -5,7 +5,11 @@ import type { EventType } from '../schema/event/event-types.ts';
 import type { QuestStatus } from '../schema/quest/shared.ts';
 import type { QuestEventType } from '../quest/events.ts';
 
-export type QuestLogType = Extract<EventType, `quest.${string}`>;
+/**
+ * The quest lines that carry the quest's view. `quest.unclaimable` is a notice about an open quest, not a change
+ * to it (P1-03), so it has data of its own and no move of the table is named by it.
+ */
+export type QuestLogType = Exclude<Extract<EventType, `quest.${string}`>, 'quest.unclaimable'>;
 
 /** Where the quest lands says it best: the infirmary, a verdict waiting for the seal. */
 const BY_TARGET: Partial<Record<QuestStatus, QuestLogType>> = {
@@ -48,7 +52,7 @@ const BY_EVENT: Readonly<Record<QuestEventType, QuestLogType>> = {
 
 /**
  * The log type of the move `event` from `from` to `to`. A verifier that leaves a review early (mana_out, breaker,
- * suspend: the quest stays in review without it) leaves a partial verdict, so the line is a verdict.
+ * crash, suspend: the quest stays in review without it) leaves a partial verdict, so the line is a verdict.
  */
 export function questLogTypeOf(event: QuestEventType, from: QuestStatus, to: QuestStatus): QuestLogType {
   const verifierLeft = from === 'review' && to === 'review' && event !== 'assign_verifier';

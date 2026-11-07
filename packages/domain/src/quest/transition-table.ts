@@ -69,6 +69,8 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
   'review.verdict_fail.out_of_retries': 'chuông; bậc script không có `returned`',
   'review.mana_out.has_verifier': '`verifier = null`, verdict `partial` lưu `progress`; người kế đọc tiếp',
   'review.breaker.has_verifier': 'như trên',
+  'review.crash.has_verifier':
+    'phiên người chấm kết thúc mà không có phán quyết (CLI lỗi, Quản sự khởi động lại): như trên, lượt kết thúc `crash`',
   'review.suspend.has_verifier': 'như trên, khi người dùng đình chỉ người chấm',
   'returned.redispatch': '`attempts` +1, lượt mới, cùng `assignee`, prompt kèm notes',
   'awaiting_seal.seal': '`seal`, verdict `by_human = true` (nặng ×3)',

@@ -327,7 +327,7 @@ Mọi giá trị enum xuất hiện trong [schemas/](schemas/) có ở bảng n�
 
 | Nhóm | Type | Nghĩa (VI) |
 |---|---|---|
-| Quest | `quest.drafted`, `quest.created`, `quest.claimed`, `quest.released`, `quest.started`, `quest.submitted`, `quest.returned`, `quest.verdict`, `quest.done`, `quest.sealed`, `quest.archived`, `quest.blocked`, `quest.unblocked`, `quest.paused`, `quest.resumed`, `quest.infirmary`, `quest.delivered` | mỗi chuyển trạng thái của quest (§2.5 của implementation-plan) |
+| Quest | `quest.drafted`, `quest.created`, `quest.claimed`, `quest.released`, `quest.started`, `quest.submitted`, `quest.returned`, `quest.verdict`, `quest.done`, `quest.sealed`, `quest.archived`, `quest.blocked`, `quest.unblocked`, `quest.paused`, `quest.resumed`, `quest.infirmary`, `quest.delivered`, `quest.edited`, `quest.unclaimable` | mỗi chuyển trạng thái của quest (§2.5 của implementation-plan); `quest.edited`: người dùng sửa trường của quest (`edit_quest`, `set_rank`); `quest.unclaimable`: Quản sự báo quest `open` không ai nhận được (§3.1) |
 | Phiên agent | `agent.session.start`, `agent.session.end`, `agent.tool`, `agent.tool.blocked`, `agent.subagent.start`, `agent.subagent.end`, `agent.subagent.overrun`, `agent.compact`, `agent.notification` | những gì phiên CLI làm, do hook và stream ghi; `overrun` = học đồ quá `subagent_max_minutes`; `compact` = ngồi thiền |
 | Phán quyết | `verdict.pass`, `verdict.fail`, `verdict.partial` | kết quả nghiệm thu |
 | Mana | `mana.level`, `mana.warning`, `mana.exhausted`, `mana.restored`, `mana.probe`, `mana.signal` | số đo, cảnh báo, hết, hồi sinh, thăm dò, tín hiệu hết trong băng (429, `StopFailure`) |
