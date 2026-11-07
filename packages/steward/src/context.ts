@@ -1,5 +1,5 @@
 // What every step of one tick works with: the deps, the world as the tick sees it, the pen, the sessions.
-import type { Notice, StewardDeps } from './types.ts';
+import type { Notice, NoticeQuest, StewardDeps } from './types.ts';
 import type { Recorder } from './record.ts';
 import type { Sessions } from './sessions/running.ts';
 import type { World } from './world.ts';
@@ -35,16 +35,4 @@ export async function ring(ctx: Context, notice: Notice): Promise<void> {
   }
 }
 
-export const noticeQuest = ({
-  id,
-  title,
-  rank,
-}: {
-  id: Notice['quest']['id'];
-  title: string;
-  rank: Notice['quest']['rank'];
-}) => ({
-  id,
-  title,
-  rank,
-});
+export const noticeQuest = ({ id, title, rank }: NoticeQuest): NoticeQuest => ({ id, title, rank });

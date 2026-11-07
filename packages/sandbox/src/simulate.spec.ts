@@ -154,11 +154,10 @@ describe('the mana-out day', () => {
         .filter(({ type }) => type === 'quest.claimed' || type === 'quest.started');
       for (const event of asleep) {
         const quest = questOf(event)!;
-        expect(
-          [quest.assignee, quest.verifier].some(
-            (id) => id !== null && claude.has(id) && quest.status !== 'paused_mana',
-          ),
-        ).toBe(false);
+        // The character the line gives work to: a judge whose review starts, else the assignee. A judge of the
+        // other tribe may still review a sleeping Claude character's submitted work.
+        const taker = quest.status === 'review' ? quest.verifier : quest.assignee;
+        expect(taker !== null && claude.has(taker) && quest.status !== 'paused_mana').toBe(false);
       }
     }
   });

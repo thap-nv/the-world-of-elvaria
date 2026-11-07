@@ -2,24 +2,28 @@
 // of the table, the character's matching move, and for a verifier the verdict, the assignee's reputation and level.
 // An end that arrives for a quest that moved on meanwhile (cancelled, reassigned) changes nothing.
 import { currentRun } from '@elvaria/domain';
-import type { Quest, Result } from '@elvaria/domain';
-import type { RunResult } from '@elvaria/runner-core';
+import { plotCommitMessage } from '@elvaria/runner-core';
+import type { BreakerTrip, Quest, Result } from '@elvaria/domain';
+import type { CommitOutcome, RunResult } from '@elvaria/runner-core';
 
 import { moveAndRing } from '../notices.ts';
 import { step } from '../record.ts';
-import { judged, levelAfterVerdict, verdictOf } from '../verdicts.ts';
+import { judge, runOf, verifierLeaves } from '../review/judge.ts';
 import type { Context } from '../context.ts';
 import type { Finished, Running } from './running.ts';
-
-const runOf = (running: Running, result: RunResult) => ({
-  session_id: result.session_id === '' ? running.session_id : result.session_id,
-  tokens: result.usage.tokens,
-});
 
 /** The CLI's own limits are breakers (§3.4): max_turns trips `turns`, an exhausted budget trips `tokens`. */
 const TRIPS = { max_turns: 'turns', budget: 'tokens' } as const;
 
-async function breaker(ctx: Context, running: Running, result: RunResult, trip: 'turns' | 'tokens') {
+const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
+async function breaker(
+  ctx: Context,
+  running: Running,
+  result: RunResult,
+  trip: BreakerTrip,
+  detail?: string,
+) {
   const who = running.character;
   // The character is bogged down while the Steward ends the session, then free again (§2.6 "Sa lầy").
   await ctx.record.change(who, 'character.swamp', step('breaker'));
@@ -28,8 +32,22 @@ async function breaker(ctx: Context, running: Running, result: RunResult, trip: 
     event: { type: 'breaker', trip, ...runOf(running, result) },
     actor: 'steward',
     edits: { [who]: step('quest_infirmary') },
-    reason: `breaker:${trip}`,
+    reason: detail === undefined ? `breaker:${trip}` : `breaker:${trip}: ${detail}`,
   });
+}
+
+/**
+ * Commits the finished work before review (§3.3, P1-07): five classes have no git of their own, and the judge reads
+ * the branch's diff. The territory's hooks may refuse; a failing git is a refusal too, never a bypass.
+ */
+async function commitSubmitted(ctx: Context, running: Running): Promise<CommitOutcome> {
+  const quest = ctx.world.quests.get(running.quest);
+  if (quest === undefined) return { status: 'no_git' };
+  try {
+    return await ctx.deps.plots.commit(quest.plot, plotCommitMessage.submit(quest.id));
+  } catch (error) {
+    return { status: 'refused', detail: messageOf(error) };
+  }
 }
 
 async function settleAssignee(
@@ -63,61 +81,15 @@ async function settleAssignee(
       actor: 'runner',
       edits: { [who]: step('ask') },
     });
-  // P1-07 commits the plot here first ("submit: <quest>"), for the classes that have no git of their own.
+  const committed = await commitSubmitted(ctx, running);
+  // The branch would lack the work: the quest goes to the infirmary with the hook's last words, not to review.
+  if (committed.status === 'refused') return breaker(ctx, running, result, 'commit', committed.detail);
   return moveAndRing(ctx, {
     quest,
     event: { type: 'submit', ...run },
     actor: 'runner',
     edits: { [who]: step('submit') },
   });
-}
-
-/** The verifier leaves without a verdict (§2.5 `review.crash`): the next verifier takes the review. */
-const verifierLeaves = (ctx: Context, running: Running, result: RunResult) =>
-  moveAndRing(ctx, {
-    quest: running.quest,
-    event: { type: 'crash', ...runOf(running, result) },
-    actor: 'steward',
-    edits: { [running.character]: step('unassign') },
-  });
-
-async function judge(
-  ctx: Context,
-  quest: Quest,
-  running: Running,
-  result: RunResult,
-): Promise<Result<Quest, string>> {
-  const run = runOf(running, result);
-  const verdict = verdictOf(
-    ctx,
-    quest,
-    { n: running.n, verifier: running.character, session_id: run.session_id },
-    result.structured,
-  );
-  if (!verdict.ok) {
-    ctx.deps.log.warn(`steward: ${quest.id}: the verifier's output is no verdict (${verdict.error})`);
-    return verifierLeaves(ctx, running, result);
-  }
-  const written = await ctx.deps.store.verdicts.write(verdict.value);
-  if (!written.ok) return verifierLeaves(ctx, running, result);
-  const { result: outcome, id, fail_kind: failKind } = verdict.value;
-  const actor = { kind: 'character', id: running.character } as const;
-  const data = { verdict: id, ...(failKind === undefined ? {} : { fail_kind: failKind }) };
-  await ctx.record.note({ type: `verdict.${outcome}`, actor, data, quest, session: run.session_id });
-  // A partial verdict says how far the verifier read (`progress`); the next verifier reads on (§2.5).
-  if (outcome === 'partial' || typeof quest.assignee !== 'string')
-    return verifierLeaves(ctx, running, result);
-  const assignee = quest.assignee;
-  const moved = await moveAndRing(ctx, {
-    quest: quest.id,
-    event: { type: outcome === 'pass' ? 'verdict_pass' : 'verdict_fail', ...run },
-    actor: 'verifier',
-    edits: { [running.character]: step('verdict'), [assignee]: judged(quest, id, outcome) },
-    reason: 'max_attempts',
-  });
-  const judgedAssignee = ctx.world.characters.get(assignee);
-  if (moved.ok && judgedAssignee !== undefined) await levelAfterVerdict(ctx, judgedAssignee);
-  return moved;
 }
 
 async function settleVerifier(

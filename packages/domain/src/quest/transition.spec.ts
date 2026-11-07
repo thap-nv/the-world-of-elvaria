@@ -85,6 +85,9 @@ describe('transition: attempts and the attempt log', () => {
     expect(value(fire(working, 'breaker', 'steward', { trip: 'turns' })).attempt_log[0]?.outcome).toBe(
       'breaker',
     );
+    // A commit the territory's hooks refused (P1-04): the work stays in the plot, the quest in the infirmary.
+    const refused = value(fire(working, 'breaker', 'steward', { trip: 'commit' }));
+    expect(refused).toMatchObject({ status: 'infirmary', attempt_log: [{ outcome: 'breaker' }] });
   });
 
   it('ends the attempt as returned when the owner suspends the assignee, cancelled when the owner cancels', () => {

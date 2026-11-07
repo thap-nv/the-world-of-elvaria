@@ -46,7 +46,7 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
   'working.ask': 'ghi `blocked.question`; lượt kết thúc `blocked`',
   'working.mana_out.session': 'giữ `assignee`; lượt kết thúc `paused`',
   'working.breaker':
-    'kill tree, event `quest.infirmary` kèm lý do; lượt `timeout` (thời gian) hoặc `breaker` (token, lượt); nhân vật → swamp rồi idle',
+    'kill tree, event `quest.infirmary` kèm lý do; lượt `timeout` (thời gian) hoặc `breaker` (token, lượt, hook từ chối commit lúc nộp); nhân vật → swamp rồi idle',
   'working.crash.can_retry': 'outcome `crash`, cùng nhân vật thử lại',
   'working.crash.out_of_retries':
     'bậc script: lỗi script vào thẳng trạm quân y (lỗi của Elvaria hoặc dữ liệu)',

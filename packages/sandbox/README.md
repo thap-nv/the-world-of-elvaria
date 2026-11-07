@@ -14,9 +14,11 @@
   (submitted, crashed, a question, the time breaker), what verdicts say, when the owner seals, answers or
   retries, and in `mana-out` when the Claude pool runs dry and wakes. Randomness is a seeded `Dice`
   (mulberry32), also behind the day's `IdSource`.
-- Plays the rest of the Steward's tick the simplest way until P1-03 and P1-04 do it for real: a verifier of
-  another model (another tribe first) for each submitted quest, a fresh session for a returned or answered
-  quest, delivery of done quests, reputation and level after each verdict.
+- Plays the Steward's tick as the domain plans it (`planTick`, P1-04): suspensions on a fail streak, the judge
+  `selectVerifier` chose for each submitted quest (the machine's pass under `machine_only`), returned quests sent
+  back, claims; then a fresh session for an answered quest, delivery of done quests, and after each verdict the
+  domain's `withVerdict` (reputation, tag windows, fail streak) and `levelChange`. Verdict lines use the domain's
+  verdict ids (`-p<k>` for a partial, `-user` for the owner's seal).
 - Writes and reads day files: `writeDay` replaces `events/sandbox/<date>.jsonl` in one atomic write (redacted,
   ADR 0013); `readDay` reads it with the event log's reader. `scenarioProblems` names what a kingdom lacks
   (a tribe of the cast, a class, kind, script or tag) before a day is played.
@@ -30,8 +32,9 @@
 - Touch the real kingdom: no quest, character, territory or inbox file, nothing in `events/` outside
   `events/sandbox/`.
 - Print or translate anything: `apps/cli` turns lines into a timeline through `@elvaria/i18n`.
-- Decide like the real Steward beyond claims: limits (`max_concurrent`, exclusive checks), round-robin over
-  territories, affinity ranking, `selectVerifier` and mana gauges are P1-03, P1-04 and P1-05.
+- Decide anything of its own: who works, who judges and who is suspended are `planTick`'s; mana runs out and
+  comes back on the scenario's schedule until the gauges of P1-05. It runs no machine check: a fake day's
+  verdicts come from the scenario's table.
 
 ## Depends on
 

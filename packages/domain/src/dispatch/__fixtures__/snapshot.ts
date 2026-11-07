@@ -61,6 +61,8 @@ interface CharacterSpec {
   readonly pinned?: string;
   /** Verdicts on a tag: `{ frontend: ['pass', 'fail'] }`. */
   readonly affinity?: Readonly<Record<string, readonly ('pass' | 'fail')[]>>;
+  /** Its fail streak (consecutive_fail): none by default. */
+  readonly fails?: { readonly fail_kind: 'tests_fail' | 'style'; readonly count: number };
 }
 
 const windowOf = (results: readonly ('pass' | 'fail')[]) =>
@@ -94,7 +96,7 @@ export function character(id: string, spec: CharacterSpec = {}): Character {
       ? { quest: 'q_20261106_zzzzzz', role: status === 'working' ? 'assignee' : 'verifier' }
       : null,
     vow_no_production: false,
-    consecutive_fail: { count: 0 },
+    consecutive_fail: spec.fails ?? { count: 0 },
     stats: { quests_done: 0, tokens_today: 0, tokens_day: '2026-11-06' },
     created_at: '2026-11-05T08:00:00+07:00',
   });
@@ -111,6 +113,8 @@ interface QuestSpec {
   readonly status?: 'open' | 'draft' | 'done';
   readonly script?: boolean;
   readonly dependsOn?: readonly string[];
+  /** The party (id of its contract quest) the quest belongs to; the contract when it names itself. */
+  readonly party?: string;
 }
 
 export function quest(id: string, spec: QuestSpec = {}): Quest {
@@ -130,6 +134,11 @@ export function quest(id: string, spec: QuestSpec = {}): Quest {
     assignee: null,
     verifier: null,
     depends_on: spec.dependsOn ?? [],
+    ...(spec.party === undefined
+      ? {}
+      : spec.party === id
+        ? { party_id: spec.party, party_role: 'contract' }
+        : { party_id: spec.party, party_role: 'part', contract: 'api/openapi.yaml' }),
     budget: { max_minutes: 45, max_tokens: 400000, max_attempts: 3 },
     estimate: { tokens: 200000, minutes: 30 },
     attempts: 0,

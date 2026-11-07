@@ -208,7 +208,7 @@ describe('planTick: the other steps', () => {
       character('sable', { cls: 'judge', model: 'claude-opus-5-5' }),
     ];
     const plan = planTick(snapshot([inReview(quest(Q1), 'thorn')], judges), NOW);
-    expect(plan.verifications).toEqual([{ quest: Q1, verifier: 'sable' }]);
+    expect(plan.verifications).toEqual([{ quest: Q1, verifier: 'sable', reason: 'same_family_other_model' }]);
     const reviewing = [inReview(quest(Q1), 'thorn'), quest(Q2, { cls: 'judge' })];
     expect(planTick(snapshot(reviewing, judges.slice(1)), NOW)).toMatchObject({ claims: [] });
     // Nobody fits: the quest waits in review.

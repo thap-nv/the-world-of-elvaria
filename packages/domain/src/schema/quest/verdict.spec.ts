@@ -20,6 +20,10 @@ const pass = {
   created_at: '2026-11-06T09:58:40+07:00',
 };
 
+const OWNER = { verifier_id: 'user', by_human: true, session_id: undefined };
+const ID_ISSUE =
+  "id: the verdict id is <quest_id>-<attempt>, with -p<k> on a partial verdict and -user on the owner's";
+
 const issuesOf = (change: object) => {
   const result = VerdictSchema.safeParse({ ...pass, ...change });
   return result.success
@@ -42,8 +46,14 @@ describe('VerdictSchema', () => {
       'a partial with progress',
       { result: 'partial', progress: { checked_until: 'docs/architecture.md#runner' } },
     ],
-    ['a royal seal without session', { verifier_id: 'user', by_human: true, session_id: undefined }],
+    ['a royal seal without session', OWNER],
     ['a machine verdict without session', { verifier_id: 'machine', session_id: undefined }],
+    // P1-04: the judgements of one run keep a file each.
+    ["the owner's verdict beside the judge's", { id: `${QUEST}-2-user`, ...OWNER }],
+    [
+      'a partial verdict of the second verifier session',
+      { id: `${QUEST}-2-p2`, result: 'partial', progress: { checked_until: 'src/api/orders.ts' } },
+    ],
   ])('accepts %s', (_, change) => {
     expect(issuesOf(change)).toEqual([]);
   });
@@ -91,7 +101,11 @@ describe('VerdictSchema', () => {
       { verifier_id: 'user' },
       'by_human: verifier_id user is a human verdict',
     ],
-    ['an id of another attempt', { id: `${QUEST}-1` }, 'id: the verdict id is <quest_id>-<attempt>'],
+    ['an id of another attempt', { id: `${QUEST}-1` }, ID_ISSUE],
+    ['an id of another attempt with a suffix', { id: `${QUEST}-1-user`, ...OWNER }, ID_ISSUE],
+    ['a partial id on a pass', { id: `${QUEST}-2-p1` }, ID_ISSUE],
+    ['an owner id on a judge verdict', { id: `${QUEST}-2-user` }, ID_ISSUE],
+    ['a run number glued to the attempt', { id: `${QUEST}-21` }, ID_ISSUE],
     [
       'a character verdict without session',
       { session_id: undefined },
