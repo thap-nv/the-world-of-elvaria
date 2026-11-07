@@ -52,9 +52,12 @@ describe('probe', () => {
       'Current week (all models): 100% used · resets Nov 8, 8pm (Asia/Bangkok)',
       'Current week (Fable): 100% used · resets Nov 8, 9pm (Asia/Bangkok)',
     ].join('\n');
-    const result = await fakeRunner(withEnv({ FAKE_CLAUDE_USAGE_TEXT: text })).probe();
+    // /usage dates have no year: a reset more than a day behind the clock means next year (usage.ts).
+    // The clock is pinned to the spike's, so the test does not turn red once these dates pass.
+    const now = () => Date.parse('2026-11-06T14:40:00Z');
+    const result = await fakeRunner({ ...withEnv({ FAKE_CLAUDE_USAGE_TEXT: text }), now }).probe();
     expect(result).toMatchObject({ status: 'rate_limited', detail: 'usage full: five_hour, weekly' });
-    expect(result.resets_at).toMatch(/T13:00:00\.000Z$/);
+    expect(result.resets_at).toBe('2026-11-08T13:00:00.000Z');
   });
 
   it('pings when only the cap of one model is full: that binds its characters, not the tribe', async () => {
