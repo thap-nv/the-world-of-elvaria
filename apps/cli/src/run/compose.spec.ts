@@ -182,6 +182,28 @@ describe('plots over PlotManager', () => {
     }
   });
 
+  it("hands a catalog script the territory's checks resolved to programs, and leaves out what is not found", async () => {
+    const check = { when: ['**'], exclusive: false, timeout_minutes: 3 };
+    const checked = TerritorySchema.parse({
+      ...territory,
+      checks: [
+        { ...check, id: 'version', run: 'node --version' },
+        { ...check, id: 'ghost', run: 'no-such-program-elvaria --run' },
+      ],
+    });
+    const folder = { type: 'folder' as const, path: `quests/${quest.id}/work` };
+    const plots = plotsOver(
+      kingdom,
+      manager({ ok: true, value: { plot: folder, created: false, setup: null } }),
+      HOST,
+    );
+    const resolved = await plots.scriptChecks(checked);
+    expect(resolved).toEqual([
+      { id: 'version', argv: [expect.any(String), '--version'], timeout_minutes: 3 },
+    ]);
+    expect(path.isAbsolute(resolved[0]?.argv[0] ?? '')).toBe(true);
+  });
+
   it('finds territory programs on PATH for runner-core, with the minimal env', async () => {
     const host = processHostOf(testIo());
     expect(await host.resolve('node')).toBeDefined();

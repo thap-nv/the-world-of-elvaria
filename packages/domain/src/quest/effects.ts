@@ -115,7 +115,8 @@ const EFFECTS: { readonly [T in QuestEventType]: Effect<T> } = {
   archive: same,
   unblock: same,
   claim,
-  release: (quest) => ok({ ...quest, assignee: null }),
+  // A claim that never started, or a script run the Steward cut short (its entry ends `cancelled`, P1-17).
+  release: (quest, event) => ok({ ...endRun(quest, event, 'cancelled'), assignee: null }),
   // The owner hands the quest to someone new; out of the infirmary that someone gets the full attempt budget.
   reassign: (quest, event) =>
     ok({ ...takenBy(quest, event), ...(quest.status === 'infirmary' ? { attempts: 0 } : {}) }),

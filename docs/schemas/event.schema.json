@@ -946,6 +946,11 @@
               "duration_ms": {
                 "type": "integer",
                 "minimum": 0
+              },
+              "agent_type": {
+                "description": "The sub-agent that made the call (`apprentice`), from the hook payload; absent when the character itself did (implementation-plan §3.12).",
+                "type": "string",
+                "minLength": 1
               }
             }
           }
@@ -982,6 +987,11 @@
                 ]
               },
               "reason": {
+                "type": "string",
+                "minLength": 1
+              },
+              "agent_type": {
+                "description": "The sub-agent that made the call (`apprentice`), from the hook payload; absent when the character itself did (implementation-plan §3.12).",
                 "type": "string",
                 "minLength": 1
               }
@@ -1095,6 +1105,10 @@
               "duration_ms": {
                 "type": "integer",
                 "minimum": 0
+              },
+              "stopped": {
+                "description": "The CLI stopped the sub-agent at its maxTurns (breakers.subagent_max_turns); absent when it finished on its own or the CLI did not say (implementation-plan §3.12).",
+                "const": "max_turns"
               }
             }
           }

@@ -30,8 +30,8 @@ export const CLAUDE_CAPABILITIES: AgentRunner['capabilities'] = {
   subagent: true,
 };
 
-/** `BREAKER_DEFAULTS.subagent_max_turns` of the domain, which the adapter may not import. */
-const DEFAULT_APPRENTICE: ApprenticeConfig = { model: 'haiku', max_turns: 30 };
+/** `BREAKER_DEFAULTS.subagent_max_turns` and `subagent_max_minutes` of the domain, which the adapter may not import. */
+const DEFAULT_APPRENTICE: ApprenticeConfig = { max_turns: 30, max_minutes: 5 };
 const DEFAULT_PROBE_MODEL = 'haiku';
 
 export interface ClaudeRunnerOptions extends ClaudeToolOptions {
@@ -40,7 +40,7 @@ export interface ClaudeRunnerOptions extends ClaudeToolOptions {
   readonly hookCommand: (policyFile: string) => HookCommand;
   /** `HOOK_SCRIPT` of @elvaria/hooks, so doctor can say it is not built. */
   readonly hookScript: string;
-  /** The apprentice's model and `kingdom.breakers.subagent_max_turns`. */
+  /** `kingdom.breakers.subagent_max_turns` and `subagent_max_minutes`; the models are this adapter's. */
   readonly apprentice?: ApprenticeConfig;
   readonly probeModel?: string;
   /** Epoch ms, for doctor's sign-in warning; Date.now by default. */

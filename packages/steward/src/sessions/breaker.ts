@@ -3,6 +3,7 @@
 // with the reason and the bell; a verifier stopped so leaves the review to the next one. The same end awaits an
 // assignee whose CLI stopped itself at its own limit (settle.ts), and a quest no session can open for because its
 // secrets are missing (open.ts): that one waits in the infirmary instead of being claimed again every tick.
+import { openJournal } from '@elvaria/eventlog';
 import { plotCommitMessage } from '@elvaria/runner-core';
 import type { Breaker, BreakerTrip, Quest, Result } from '@elvaria/domain';
 import type { RunResult } from '@elvaria/runner-core';
@@ -38,14 +39,38 @@ export async function breakAssignee(
       ? undefined
       : await commitPlot(ctx, running.quest, plotCommitMessage.wip(running.quest, trip));
   const kept = wip?.status === 'refused' ? ` (WIP not committed, it stays in the plot: ${wip.detail})` : '';
+  const left = await apprenticeLeft(ctx, running);
   return moveAndRing(ctx, {
     quest: running.quest,
     event: { type: 'breaker', trip, ...runOf(running, result) },
     actor: 'steward',
     edits: swamped.ok ? { [who]: step('quest_infirmary') } : {},
-    reason: `breaker:${trip}${detail === undefined ? '' : `: ${detail}`}${kept}`,
+    reason: `breaker:${trip}${detail === undefined ? '' : `: ${detail}`}${kept}${left}`,
   });
 }
+
+/**
+ * §3.12 invariant 3: a quest that met a breaker while an apprentice of its session ran past its minutes or was cut at
+ * its turns has work left that belongs in a child quest; the infirmary note says so to the owner. The runner wrote
+ * those lines into the quest's journal, under the session's id. A journal that cannot be read adds nothing.
+ */
+async function apprenticeLeft(ctx: Context, running: Running): Promise<string> {
+  try {
+    const { events } = await openJournal(ctx.root, running.quest).read();
+    const cut = events.some(
+      ({ session, type, data }) =>
+        session === running.session_id &&
+        (type === 'agent.subagent.overrun' ||
+          (type === 'agent.subagent.end' && data.stopped === 'max_turns')),
+    );
+    return cut ? APPRENTICE_LEFT : '';
+  } catch {
+    return '';
+  }
+}
+
+export const APPRENTICE_LEFT =
+  '; an apprentice of this session ran past its minutes or was cut at its turns: open a child quest for the work it left (see handover.md)';
 
 /** Kills the session's tree; what it left behind loses its secret values like any end (§3.9). */
 async function stopped(ctx: Context, running: Running, reason: string): Promise<RunResult> {

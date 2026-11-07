@@ -14,6 +14,8 @@ export const DROP_REASON_LABEL: Readonly<Record<DropReason, MessageKey>> = {
   unknown_tag: 'cli.say.drop.unknown_tag',
   unknown_script: 'cli.say.drop.unknown_script',
   script_not_for_kind: 'cli.say.drop.script_not_for_kind',
+  invalid_script_params: 'cli.say.drop.invalid_script_params',
+  over_context_budget: 'cli.say.drop.over_context_budget',
   secret_not_allowed: 'cli.say.drop.secret_not_allowed',
   party_part: 'cli.say.drop.party_part',
   needs_dropped_draft: 'cli.say.drop.needs_dropped_draft',

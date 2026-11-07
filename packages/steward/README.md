@@ -19,7 +19,8 @@
   the session's process tree, commits the work as `chore: wip <quest> (<trip>)` (a refusal keeps it in the plot
   and says so in the reason), sends the quest to the infirmary (`quest.infirmary`, `breaker:<trip>: <detail>`) and
   rings the bell; a verifier past a breaker leaves the review to the next one. A CLI that stopped at its own
-  `--max-turns` or budget gets the same end. A quest whose secrets the treasury lacks, or its territory no longer
+  `--max-turns` or budget gets the same end. When the quest's journal shows an apprentice of that session past
+  its minutes or cut at its turns, the reason asks the owner for a child quest for the work it left (§3.12). A quest whose secrets the treasury lacks, or its territory no longer
   allows, goes to the infirmary (`breaker:secrets`) instead of being claimed and released every tick; an
   owner's answer to such a blocked quest is refused (`secrets_lacking`).
 - Keeps the pid of every session it holds in `.state/sessions.json` (written before each tick ends, emptied at
@@ -75,6 +76,21 @@
   its class (`registry/<class.prompt_file>`, as every session's does), and where the last judge of the run
   stopped when it left a `partial` verdict. Gives the plot back when a quest is archived (`Plots.release`; a
   dirty worktree stays, with a warning).
+- Runs the script tier itself (§2.5, §3.12, ADR 0017; `src/script/`): a `create_quest` whose `script.params` do
+  not fit the catalog's `params_schema` is refused (`invalid_script_params`); an open script-tier quest is claimed
+  with no assignee, gets its plot, starts, and `node registry/scripts/<id>.mjs --params <json> --context <json>`
+  runs in the plot within the tick (`StewardDeps.scripts`, `nodeScriptRunner`): the minimal env and no secret,
+  `--context` with the run folder and the territory's checks resolved (`Plots.scriptChecks`), its tree killed at
+  `timeout_minutes`. Its output goes to `.runs/<quest>-<n>/script.log` and `script.json`; the machine judges from
+  that (`scriptVerdictOf`): a result goes to review, then done (or the seal), a failing one and a units list with
+  open units to the infirmary with their verdict; a timeout trips the time breaker; a script that broke or could
+  not use the quest goes to the infirmary at once (`script:broken`, `script:usage`). No runner is asked, mana 0.
+  A failing result first opens the follow-up its catalog entry names (`follow_up: {kind, class}`, `followUpOf`):
+  one open session quest, a child of the script quest (`created_by: battle`), its id derived from the quest and
+  the run so a verdict judged twice opens it once; the open units point at it (`child_quest`) and the infirmary
+  reason names it. `stop()` kills a script running in the tick and opens its quest again (`release`, the run
+  `cancelled`); the next Steward judges a run it finds working or in review from `script.json`, or opens again
+  one that saved nothing.
 - Delivers every done quest once, by its kind's convention (`deliverable.type`; step 7 of §3.1, `src/deliver/`):
   a branch, file, report or draft on a git territory stays on its branch for the owner to merge by hand; a plot
   folder of a territory without git is copied into the territory (a file it replaces is kept in
@@ -98,8 +114,9 @@
   `transition`, `selectVerifier`, `validateVerdict`, ADR 0002).
 - Estimate mana from tokens against `tribes[].budget`, warn, reassign a long-paused quest
   (`mana.reassign_after_hours`) or ring when a pool sleeps (P1-22); kill a process itself (runner-core's
-  `killTree` does, through the runner's `kill`); know git or a territory's programs (`Plots` is given;
-  `folderPlots` is a folder with no git, no checks and no diff, for the specs), or run catalog scripts (P1-17).
+  `killTree` does, through the runner's `kill`); know git or a territory's programs (`Plots` is given, with the
+  territory's checks resolved for `run-check`; `folderPlots` is a folder with no git, no checks and no diff, for
+  the specs).
 - Push, merge or send anything a quest delivered (stage 1, §9.1 item 11): the owner does, from the delivery note.
   Open a party's parts and its merge quest when a contract is delivered (P1-18).
 - Read `process.env` or a treasury file itself: the composition root hands it the minimal env and a `Treasury`.
@@ -124,3 +141,10 @@ entry matches exactly one session, and the replayed log equals the files. `deliv
 report and a sealed draft from worktree-like plots, and a document copied into a territory without git;
 `subquests.spec.ts` opens a plan's sub-quests (again after a delivery that failed halfway) and refuses lists it
 cannot follow; assignees leave their files in the plot through `leavingRunners` (`src/__fixtures__/deliver.ts`).
+`scripts.spec.ts` copies the real `link-check` and `run-check` of `packages/registry-default/scripts/` into the
+kingdom (`src/__fixtures__/scripts.ts`) and takes script quests all the way with no runner asked: a link check
+that passes, one with a dead link and its scribe's follow-up, a territory check run from its resolved argv and its
+knight's follow-up; params the catalog refuses; stand-in scripts that break, refuse the quest, print outside the
+contract or outlive a short timeout. `scripts-restart.spec.ts`: a Steward stopped in the middle of a script, one
+that died without output or before its verdict, and a follow-up opened once. `apprentice-breaker.spec.ts`: the
+infirmary note after an apprentice overran or was cut.

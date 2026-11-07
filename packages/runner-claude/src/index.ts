@@ -1,4 +1,4 @@
-export { APPRENTICE, agentsOf } from './agents.ts';
+export { APPRENTICE, APPRENTICE_MODELS, agentsOf, apprenticeModelsOf } from './agents.ts';
 export type { AgentDefinition, ApprenticeConfig } from './agents.ts';
 export { PING_PROMPT, USAGE_PROMPT, pingArgv, sessionArgv, usageArgv } from './argv.ts';
 export type { RunFiles } from './argv.ts';

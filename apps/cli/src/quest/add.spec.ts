@@ -96,15 +96,32 @@ describe('elvaria quest add', () => {
       '--script',
       'link-check',
       '--params',
-      '{"paths":["docs"]}',
+      '{"globs":["docs/**/*.md"]}',
     ];
     expect(await add(testIo(), ...required, ...args)).toBe(0);
     const payload = (await inbox())[0]?.payload;
     expect(payload).toMatchObject({
       tier: 'script',
-      script: { id: 'link-check', params: { paths: ['docs'] } },
+      script: { id: 'link-check', params: { globs: ['docs/**/*.md'] } },
     });
     expect(payload).not.toHaveProperty('class_required');
+  });
+
+  it("refuses params outside the script's params_schema before the inbox (§3.12)", async () => {
+    const io = testIo();
+    const args = [
+      '--kind',
+      'document',
+      '--rank',
+      'E',
+      '--script',
+      'link-check',
+      '--params',
+      '{"paths":["docs"]}',
+    ];
+    expect(await add(io, ...required, ...args)).toBe(1);
+    expect(io.printed.err).toEqual([expect.stringMatching(/^--params do not fit script link-check: params/)]);
+    expect(await inbox()).toEqual([]);
   });
 
   it('checks the script, its kind and its params', async () => {

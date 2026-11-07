@@ -32,6 +32,7 @@ import { parseLine } from './json.ts';
 import { outcomeOf, permissionDenialsOf, structuredOf, turnsOf } from './outcome.ts';
 import { writeRunFiles } from './run-files.ts';
 import { createStreamReader } from './stream.ts';
+import { subagentEndLines } from './subagent.ts';
 import type { ApprenticeConfig } from './agents.ts';
 import type { Launch } from './launch.ts';
 import type { HookCommand } from './settings.ts';
@@ -141,9 +142,7 @@ function observe(live: Live, seen: Observation): void {
       record(live, [{ type: 'agent.subagent.start', data: { agent_type: seen.agent_type } }]);
       return;
     case 'subagent_end':
-      record(live, [
-        { type: 'agent.subagent.end', data: { agent_type: seen.agent_type, duration_ms: seen.duration_ms } },
-      ]);
+      record(live, subagentEndLines(live.deps.apprentice, seen));
   }
 }
 

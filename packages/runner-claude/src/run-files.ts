@@ -7,7 +7,7 @@ import path from 'node:path';
 import { contextEnv, sessionRedactor, writePolicyFile } from '@elvaria/runner-core';
 import type { RunContext, SpawnRequest } from '@elvaria/runner-core';
 
-import { agentsOf } from './agents.ts';
+import { agentsOf, apprenticeModelsOf } from './agents.ts';
 import { settingsOf, settingsProblems } from './settings.ts';
 import type { ApprenticeConfig } from './agents.ts';
 import type { RunFiles } from './argv.ts';
@@ -46,14 +46,17 @@ export async function writeRunFiles(
 ): Promise<RunSetup> {
   const dir = req.run_dir;
   await mkdir(dir, { recursive: true });
-  const policyFile = await writePolicyFile(dir, ctx, req.permissions);
+  // The apprentice never runs on a model stronger than its master's (§3.12): the hook holds the list.
+  const allowed = apprenticeModelsOf(req.character.model, apprentice.models);
+  const extras = req.permissions.apprentice === null ? {} : { apprentice_models: allowed };
+  const policyFile = await writePolicyFile(dir, ctx, req.permissions, extras);
   const env = { ...contextEnv(ctx), ...CLAUDE_ENV };
   // Only an assignee writes a letter; a verifier reads it in its prompt and writes nothing (ADR 0008).
   const letter = req.role === 'assignee' ? req.handover : undefined;
   const settings = settingsOf(req.permissions, hookCommand(policyFile), env, letter);
   const problems = settingsProblems(settings);
   if (problems.length > 0) throw new Error(`generated settings are unsound: ${problems.join('; ')}`);
-  const agents = agentsOf(req.permissions, apprentice);
+  const agents = agentsOf(req.permissions, apprentice, allowed);
   const files: RunFiles = {
     settings: path.join(dir, SETTINGS_FILE),
     system: path.join(dir, SYSTEM_FILE),

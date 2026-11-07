@@ -85,6 +85,12 @@ export interface TickPlan {
   readonly claims: readonly Claim[];
   /** Script-tier quests the Steward claims with no assignee and runs itself (§3.12), highest rank first. */
   readonly scripts: readonly QuestId[];
+  /**
+   * Script-tier quests working or in review at the start of a tick: a script runs and is judged inside one tick, so
+   * these are runs a Steward stopped in the middle of. The machine judges each from the run's saved output, or
+   * sends it to the infirmary when the run left none (§3.12), before any script runs.
+   */
+  readonly script_verdicts: readonly QuestId[];
   /** Open session-tier quests with their dependencies done that nobody can take as things stand (§3.1). */
   readonly unclaimable: readonly Unclaimable[];
   /**
@@ -253,6 +259,9 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
       .map(({ id }) => id),
     claims: claims(step, openSessions, now),
     scripts: open.filter(({ tier }) => tier === 'script').map(({ id }) => id),
+    script_verdicts: [...inStatus('working'), ...inStatus('review')]
+      .filter(({ tier }) => tier === 'script')
+      .map(({ id }) => id),
     unclaimable: unclaimable(step, openSessions),
     deliveries: inStatus('done')
       .filter(({ deliverable }) => deliverable.delivered_at === undefined)

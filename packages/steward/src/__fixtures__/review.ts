@@ -48,5 +48,6 @@ export function plotsWith(root: string, replace: Partial<Plots>, calls: string[]
       calls.push(`release ${plot.type}`);
       return (replace.release ?? base.release)(plot);
     },
+    scriptChecks: (territory) => (replace.scriptChecks ?? base.scriptChecks)(territory),
   };
 }

@@ -102,6 +102,14 @@ export const ScriptSchema = z
         describe("units feeds a batch quest's units[]; units needing judgement become child session quests."),
       ),
     timeout_minutes: z.int().min(1),
+    follow_up: z
+      .strictObject({ kind: KindIdSchema, class: ClassIdSchema })
+      .optional()
+      .meta(
+        describe(
+          "The session quest the Steward opens when a run fails (a batch's open units, a failing check): its kind and class, the class one the kind allows. Absent: the failed run waits in the infirmary for the owner (P1-17).",
+        ),
+      ),
   })
   .meta({ id: 'script' });
 

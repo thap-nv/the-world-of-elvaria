@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { DC1, HANDBOOK, REGISTRY, reply } from './__fixtures__/kingdom.ts';
 import { screenDrafts } from './screen.ts';
 
-const CONTEXT = { registry: REGISTRY, territories: [DC1, HANDBOOK] };
+const CONTEXT = { registry: REGISTRY, territories: [DC1, HANDBOOK], context_budget_tokens: 120_000 };
 const draftsOf = (name: string): QuestDraft[] => QuestDraftFileSchema.parse(reply(name)).drafts;
 const refs = (drafts: readonly QuestDraft[]) => drafts.map(({ ref }) => ref);
 
@@ -62,12 +62,43 @@ describe('screenDrafts (§3.11)', () => {
       'compare-numbers',
     ],
     ['party_part', { kind: 'build', party_role: 'part', contract: 'docs/api.yaml' }, undefined],
+    // One quest, one context: a job above context_budget_tokens that nobody split (ADR 0017).
+    ['over_context_budget', { estimate: { tokens: 150_000, minutes: 90 } }, '150000 > 120000'],
   ])('drops a draft with %s', (reason, fields, detail) => {
     const { kept, dropped } = screenDrafts([draft('d1', fields)], CONTEXT);
     expect(kept).toEqual([]);
     expect(dropped).toEqual([
       { ref: 'd1', title: 'Quest d1', reason, ...(detail === undefined ? {} : { detail }) },
     ]);
+  });
+
+  it("drops a script draft whose params do not fit the catalog's params_schema (§3.12)", () => {
+    const script = { kind: 'batch', tier: 'script', class_required: undefined };
+    const wrong = draft('d1', { ...script, script: { id: 'link-check', params: { glob: 'docs/*.md' } } });
+    const right = draft('d2', {
+      ...script,
+      script: { id: 'link-check', params: { globs: ['docs/**/*.md'] } },
+    });
+    const { kept, dropped } = screenDrafts([wrong, right], CONTEXT);
+    expect(refs(kept)).toEqual(['d2']);
+    expect(dropped).toEqual([
+      expect.objectContaining({
+        ref: 'd1',
+        reason: 'invalid_script_params',
+        detail: expect.stringMatching(/^link-check: params/) as string,
+      }),
+    ]);
+  });
+
+  it('keeps a long job that is the split itself: a plan, or the parent of other drafts', () => {
+    const long = { estimate: { tokens: 400_000, minutes: 240 } };
+    const plan = draft('d1', { ...long, kind: 'plan', class_required: 'mage' });
+    const parent = draft('d2', long);
+    const child = draft('d3', { parent_ref: 'd2' });
+    expect(screenDrafts([plan, parent, child], CONTEXT)).toEqual({
+      kept: [plan, parent, child],
+      dropped: [],
+    });
   });
 
   it('puts each draft after its parent and what it depends on, and drops drafts that wait on each other', () => {

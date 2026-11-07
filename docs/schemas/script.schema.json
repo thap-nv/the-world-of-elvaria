@@ -84,6 +84,25 @@
         "timeout_minutes": {
           "type": "integer",
           "minimum": 1
+        },
+        "follow_up": {
+          "description": "The session quest the Steward opens when a run fails (a batch's open units, a failing check): its kind and class, the class one the kind allows. Absent: the failed run waits in the infirmary for the owner (P1-17).",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "class"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            },
+            "class": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            }
+          }
         }
       }
     }

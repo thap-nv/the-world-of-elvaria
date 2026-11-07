@@ -9,12 +9,16 @@ import process from 'node:process';
 
 import { REPO, readPayload, repoPath, toolInput } from './hook-io.mjs';
 
-/** The whole files `pnpm docs:gen` writes: GENERATORS of scripts/docs-gen.mjs, which the spec keeps in step. */
+/**
+ * The whole files `pnpm docs:gen` writes: GENERATORS of scripts/docs-gen.mjs, which the spec keeps in step, and the
+ * tier report it writes from a kingdom's event log with `--kingdom <dir>` (P1-17).
+ */
 export const GENERATED_FILES = [
   'docs/glossary.md',
   'docs/events.md',
   'docs/dependency-graph.md',
   'docs/cli.md',
+  'docs/tier-report.md',
 ];
 
 const REGENERATE = 'edit its source and run `pnpm docs:gen`';

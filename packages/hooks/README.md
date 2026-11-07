@@ -10,7 +10,8 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
   CLI that does not hand its env to hooks; env wins. Malformed ids are left out and reported on stderr.
 - Turns the 12 Claude Code events Elvaria registers into lines (§3.10): `SessionStart` → `agent.session.start`
   (the model from the context when the payload has none, as under `-p`), `PostToolUse`/`PostToolUseFailure` →
-  `agent.tool` (kind, path relative to the plot with `/`, command, url, exit, duration), `StopFailure` →
+  `agent.tool` (kind, path relative to the plot with `/`, command, url, exit, duration, and `agent_type` when a
+  sub-agent made the call, so a revival tells the apprentice's work from the character's, §3.12), `StopFailure` →
   `mana.signal`, `PreCompact`/`PostCompact` → `agent.compact`, `Notification` → `agent.notification`. The
   runner writes what only the stream knows: `agent.session.end` (outcome, usage, kills) and
   `agent.subagent.start`/`end` (`SubagentStop` does not run when an apprentice stops at `maxTurns`).
@@ -22,8 +23,10 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
   `forbidden_commands` match the raw and the de-quoted line, case-insensitively; a shell line that names a
   forbidden file (`cat .env`, `Get-Content .env`) is denied too. Laws asked for (`--policy`) but unreadable deny
   every file and shell tool.
-- Denies every sub-agent but the apprentice in `PreToolUse` on the `Agent` tool (§3.12, ADR 0017), laws or not.
-  Every denial logs `agent.tool.blocked`.
+- Denies every sub-agent but the apprentice in `PreToolUse` on the `Agent` tool (§3.12, ADR 0017), laws or not,
+  and an apprentice asked to run on a `model` outside the policy's `apprentice_models` (the models up to the
+  character's own, which the adapter writes; P1-17). Every denial logs `agent.tool.blocked`, with `agent_type`
+  when a sub-agent made the call.
 - Asks for the handover letter in `Stop` (ADR 0010): an assignee whose `quests/<id>/handover.md` is missing or
   unchanged since the attempt started is blocked at most twice per session, then let through with an
   `agent.notification` for the verifier.

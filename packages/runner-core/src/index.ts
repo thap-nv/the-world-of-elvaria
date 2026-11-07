@@ -79,7 +79,7 @@ export type { FakeRunner, FakeRunnerOptions } from './runner/fake-runner.ts';
 export { HANDOVER_SECTIONS, questionOf, readQuestion, sectionOf } from './runner/handover.ts';
 export type { HandoverSection } from './runner/handover.ts';
 export { POLICY_FILE, POLICY_VERSION, policyFileOf, writePolicyFile } from './runner/policy-file.ts';
-export type { PolicyFile } from './runner/policy-file.ts';
+export type { PolicyExtras, PolicyFile } from './runner/policy-file.ts';
 export { CONTEXT_ENV, contextEnv, runContextOf } from './runner/run-context.ts';
 export type { RunContext } from './runner/run-context.ts';
 export { openRunLog } from './runner/run-log.ts';

@@ -2,8 +2,9 @@
 // a git territory gets its worktree, any other a folder in the kingdom; the session's cwd and the checks' cwd are the
 // worktree's native path, or the folder inside the kingdom. A plot that cannot be prepared throws, so the Steward
 // opens no session there. Commit, the checks on what the quest touched, the judge's diff (P1-15) and release at
-// archive (with each tribe's `forget`) go straight to PlotManager.
-import { createPlotManager, runChecks } from '@elvaria/runner-core';
+// archive (with each tribe's `forget`) go straight to PlotManager; a catalog script gets the territory's checks
+// resolved to programs (P1-17).
+import { argvOf, createPlotManager, runChecks } from '@elvaria/runner-core';
 import type { ForgetWorktree, PlotManager, ProcessHost } from '@elvaria/runner-core';
 import type { Plots } from '@elvaria/steward';
 import { fromPortable, inKingdom } from '@elvaria/store';
@@ -49,6 +50,16 @@ export function plotsOver(kingdom: string, manager: PlotManager, host: ProcessHo
       return runChecks({ kingdom, territory, touched, cwd: cwdOf(kingdom, plot), run_dir }, host);
     },
     diff: (plot) => manager.diff(plot),
+    // run-check spawns these without a shell; a check whose program is not found is left out (§3.12).
+    scriptChecks: async (territory) => {
+      const resolved = await Promise.all(
+        territory.checks.map(async ({ id, run, timeout_minutes }) => {
+          const argv = await argvOf(run, host.resolve);
+          return argv.ok ? [{ id, argv: argv.value, timeout_minutes }] : [];
+        }),
+      );
+      return resolved.flat();
+    },
     release: (plot) => manager.release(plot),
   };
 }

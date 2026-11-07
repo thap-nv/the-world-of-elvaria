@@ -116,6 +116,11 @@ describe('parseRegistry', () => {
     );
   });
 
+  it("takes a script's follow-up of a known kind and a class it allows", () => {
+    const followUp = { kind: 'research', class: 'scout' };
+    expect(issuesAfter((f) => Object.assign(f.scripts.scripts[0]!, { follow_up: followUp }))).toEqual([]);
+  });
+
   it('keeps array indexes as numbers in the issue path', () => {
     const files = consistent();
     files.kinds.kinds[1] = { ...kind('research', 'source_check', ['scout']), ritual: 'Bad' };
@@ -179,6 +184,17 @@ describe('parseRegistry', () => {
       'a script serving an unknown kind',
       (f: Files) => f.scripts.scripts[0]!.kinds.push('dance'),
       'scripts unknown_kind scripts.0.kinds.1',
+    ],
+    [
+      'a script whose follow-up is an unknown kind',
+      (f: Files) => Object.assign(f.scripts.scripts[0]!, { follow_up: { kind: 'dance', class: 'scribe' } }),
+      'scripts unknown_kind scripts.0.follow_up.kind',
+    ],
+    [
+      'a script whose follow-up class its kind does not allow',
+      (f: Files) =>
+        Object.assign(f.scripts.scripts[0]!, { follow_up: { kind: 'research', class: 'knight' } }),
+      'scripts class_kind_mismatch scripts.0.follow_up.class',
     ],
   ])('rejects %s', (_, change, expected) => {
     expect(issuesAfter(change)).toEqual([expected]);

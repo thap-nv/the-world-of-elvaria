@@ -29,6 +29,11 @@ export interface HookPolicy {
    * (Antigravity), the hook refuses a tool the class does not have. Absent: no such check.
    */
   readonly tools?: readonly string[];
+  /**
+   * The models the character's apprentice may run on (P1-17, §3.12): an Agent call naming another `model` is
+   * refused, so an apprentice is never stronger than its master. Absent: no such check.
+   */
+  readonly apprentice_models?: readonly string[];
   /** `territory.laws`; other law kinds may be present and are not the hook's to enforce. */
   readonly laws?: LawsInput;
 }
@@ -37,7 +42,7 @@ export type PolicyResult =
   { readonly ok: true; readonly policy: HookPolicy } | { readonly ok: false; readonly problem: string };
 
 const STRING_FIELDS = ['kingdom', 'quest', 'character', 'role', 'model', 'tz'] as const;
-const LIST_FIELDS = ['secrets', 'tools'] as const;
+const LIST_FIELDS = ['secrets', 'tools', 'apprentice_models'] as const;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);

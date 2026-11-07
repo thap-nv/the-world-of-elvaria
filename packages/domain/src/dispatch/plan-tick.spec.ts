@@ -16,6 +16,7 @@ import {
   character,
   claimedBy,
   inReview,
+  moved,
   quest,
   returnedTo,
   snapshot,
@@ -130,7 +131,16 @@ describe('planTick: order', () => {
       quest(Q3, { script: true, rank: 'B' }),
     ];
     const plan = planTick(snapshot(quests, [character('thorn')]), NOW);
-    expect(plan).toMatchObject({ claims: [], scripts: [Q3, Q1], unclaimable: [] });
+    expect(plan).toMatchObject({ claims: [], scripts: [Q3, Q1], script_verdicts: [], unclaimable: [] });
+  });
+
+  it('names script-tier runs a Steward left working or in review, and no session-tier one', () => {
+    const run = (id: string) =>
+      moved(quest(id, { script: true }), 1, ['claim', 'steward', { assignee: null }], ['start', 'steward']);
+    const reviewed = moved(run(Q1), 2, ['submit', 'steward']);
+    const quests = [run(Q4), reviewed, inReview(quest(Q2), 'thorn'), quest(Q3, { script: true })];
+    const plan = planTick(snapshot(quests, [character('thorn')]), NOW);
+    expect(plan).toMatchObject({ scripts: [Q3], script_verdicts: [Q4, Q1] });
   });
 });
 

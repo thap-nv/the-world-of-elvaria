@@ -22,6 +22,7 @@ describe('parsePolicy', () => {
       tz: 'Asia/Ho_Chi_Minh',
       secrets: ['NPM_TOKEN'],
       tools: ['Read', 'Glob', 'Grep'],
+      apprentice_models: ['haiku', 'sonnet', 'opus'],
       laws: { ...DC1_LAWS, read_before_write: ['packages/shared/**'] },
     };
     expect(parsePolicy(policy)).toEqual({ ok: true, policy });
@@ -41,6 +42,7 @@ describe('parsePolicy', () => {
     [{ version: 1, attempt: 1.5 }, 'attempt is not an integer >= 1'],
     [{ version: 1, secrets: 'NPM_TOKEN' }, 'secrets is not a list of strings'],
     [{ version: 1, tools: ['Read', 7] }, 'tools is not a list of strings'],
+    [{ version: 1, apprentice_models: 'haiku' }, 'apprentice_models is not a list of strings'],
     [{ version: 1, laws: [] }, 'laws is not an object'],
     [{ version: 1, laws: { forbidden_paths: '.env' } }, 'laws.forbidden_paths is not a list of strings'],
     [{ version: 1, laws: { forbidden_commands: [1] } }, 'laws.forbidden_commands is not a list of strings'],

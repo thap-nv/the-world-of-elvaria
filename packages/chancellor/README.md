@@ -17,8 +17,10 @@
   question 6); the caller passes its choice in.
 - Holds the drafts against the kingdom's files (`screenDrafts`): a draft is dropped, with its reason, when it
   names a kind, territory, script or tag the kingdom does not have (tags are the closed list of
-  `registry/tags.json`), a class its kind does not allow, a script not made for its kind, a secret its
-  territory does not allow (ADR 0013), or is a party part (only the party lead emits parts, §3.13); so is every
+  `registry/tags.json`), a class its kind does not allow, a script not made for its kind or with params outside
+  its `params_schema` (§3.12), a secret its territory does not allow (ADR 0013), a party part (only the party lead
+  emits parts, §3.13), or an estimate above `context_budget_tokens` that nobody split (one quest, one context, ADR
+  0017: a draft whose kind delivers sub-quests, or that other drafts name as parent, is the split itself); so is every
   draft that waits on a dropped one, or on drafts that wait on it. The rest come back with each draft after its
   parent and its dependencies. The Chancellor's question comes back even when its draft is dropped.
 - Turns drafts into inbox commands (`draftCommands`): one `create_quest` with `draft: true` and
@@ -32,7 +34,8 @@
   Steward writes the quests in status `draft` (ADR 0005), the owner confirms them.
 - Pick the Chancellor, build runners or know a CLI: the caller gives the runner, the character and its class
   (ADR 0006, 0021).
-- Bundle or split work beyond what the prompt asks, or check script params against `params_schema`: P1-17.
+- Bundle or split work itself: the prompt asks the Chancellor to (`tier`, a batch for tiny jobs, a plan and its
+  children for long ones); the screen only drops a long job left whole.
 
 ## Depends on
 

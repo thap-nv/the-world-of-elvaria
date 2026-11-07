@@ -1,6 +1,8 @@
 // `pnpm docs:gen` writes the docs that are generated, never edited by hand (implementation-plan §5.4).
 // `pnpm docs:gen --check` compares instead of writing and exits 1 on drift: `pnpm check` runs it, and CI also
 // runs `pnpm docs:gen && git diff --exit-code docs/`. A new generated doc is one entry in GENERATORS.
+// `--kingdom <dir>` adds docs/tier-report.md, rendered from that kingdom's event log (§3.12): it is the one doc whose
+// source lies outside the repo, so it is generated only when a kingdom is named.
 import process from 'node:process';
 
 import { renderQuestTransitionTable } from '@elvaria/domain';
@@ -10,6 +12,7 @@ import { renderEvents } from './docs-events.mjs';
 import { renderGlossary } from './docs-glossary.mjs';
 import { renderDependencyGraph } from './docs-graph.mjs';
 import { gitRepo } from './docs-repo.mjs';
+import { TIER_REPORT_FILE, readKingdomEvents, renderTierReport } from './docs-tier-report.mjs';
 
 /** @typedef {import('./docs-repo.mjs').Repo} Repo */
 /**
@@ -35,6 +38,21 @@ export const GENERATORS = [
 
 /** @param {unknown} error */
 const messageOf = (error) => (error instanceof Error ? error.message : String(error));
+
+/**
+ * The tier report of the kingdom named by `--kingdom <dir>` (or `--kingdom=<dir>`), when one is named.
+ * @param {readonly string[]} args
+ * @returns {Generator[]}
+ */
+export function kingdomGenerators(args) {
+  const index = args.indexOf('--kingdom');
+  const named =
+    index === -1
+      ? args.find((arg) => arg.startsWith('--kingdom='))?.slice('--kingdom='.length)
+      : args[index + 1];
+  if (named === undefined || named === '') return [];
+  return [{ file: TIER_REPORT_FILE, render: () => renderTierReport(readKingdomEvents(named)) }];
+}
 
 /**
  * The file with the region's body replaced, or an Error when the markers are missing or out of order.
@@ -77,7 +95,8 @@ export async function run(args, repo, generators = GENERATORS) {
   const check = args.includes('--check');
   const problems = [];
   let written = 0;
-  for (const generator of generators) {
+  const all = [...generators, ...kingdomGenerators(args)];
+  for (const generator of all) {
     const current = repo.read(generator.file);
     const text = await expected(generator, current);
     const name = generator.region === undefined ? generator.file : `${generator.file} (${generator.region})`;
@@ -91,7 +110,7 @@ export async function run(args, repo, generators = GENERATORS) {
   }
   if (problems.length > 0) return { code: 1, text: problems.join('\n') };
   const verb = check ? 'up to date' : `${written} written`;
-  return { code: 0, text: `docs:gen: ${generators.length} generated docs, ${verb}` };
+  return { code: 0, text: `docs:gen: ${all.length} generated docs, ${verb}` };
 }
 
 if (import.meta.main) {

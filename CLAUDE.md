@@ -67,6 +67,7 @@ pnpm test                # vitest của scripts/ và .claude/hooks/, rồi từn
 pnpm boundaries          # dependency-cruiser theo packages/config/boundaries.mjs
 pnpm schemas             # sinh docs/schemas/*.schema.json từ zod; --check: so, không ghi, exit 1 khi lệch
 pnpm docs:gen            # sinh docs/glossary.md, events.md, dependency-graph.md, cli.md và bảng §2.5; --check như trên
+pnpm docs:gen --kingdom <dir>   # thêm docs/tier-report.md từ event log của vương quốc đó (§3.12); --check bỏ qua nó
 pnpm docs:check          # README 4 mục, từ cấm trong identifier, id dữ liệu, link sống, glossary ↔ domain, cấm .sh/.ps1/.cmd/.bat
 pnpm i18n:check          # khóa và placeholder VI/EN khớp nhau, hình dạng glossary.json
 pnpm format
@@ -88,7 +89,7 @@ ELVARIA_LIVE=1 pnpm --filter @elvaria/runner-claude test              # smoke v�
 [.claude/settings.json](.claude/settings.json) bật bốn hook Node (dạng exec, không shell; test trong `pnpm test`):
 
 - `guard-bash.mjs` (trước Bash/PowerShell) chặn: force push, `--no-verify` / `git commit -n` / tắt husky, `git rebase` và `git pull --rebase`, `git stash` trần / `stash pop` / `drop` không ref / `clear` (stash dùng chung giữa mọi worktree: dùng commit WIP, hoặc `git stash push -m <tag>` rồi `git stash apply <sha>`), `--dangerously-skip-permissions`, xóa đệ quy ngoài checkout và thư mục tạm. Luật khớp cả thân heredoc: ghi file bằng Edit/Write, đừng bằng heredoc.
-- `guard-edit.mjs` (trước Edit/Write/MultiEdit) chặn sửa tay file sinh (`docs/schemas/**`, bốn file của `pnpm docs:gen`), vùng `<!-- docs:gen … -->` của một file `.md`, `design/**` và `docs/ke-hoach-dung-elvaria-*.md`. Lệnh shell ghi vào các file đó thì nó không thấy: vẫn là điều cấm.
+- `guard-edit.mjs` (trước Edit/Write/MultiEdit) chặn sửa tay file sinh (`docs/schemas/**`, năm file của `pnpm docs:gen`, gồm `docs/tier-report.md`), vùng `<!-- docs:gen … -->` của một file `.md`, `design/**` và `docs/ke-hoach-dung-elvaria-*.md`. Lệnh shell ghi vào các file đó thì nó không thấy: vẫn là điều cấm.
 - `typecheck-touched.mjs` (sau Edit/Write) chạy `tsc -p` của workspace sở hữu file vừa sửa và trả lỗi về ngay.
 - `stop-checks.mjs` (khi kết thúc lượt) chạy `pnpm boundaries` nếu import, `dependencies` hay `boundaries.mjs` đổi, và `pnpm i18n:check` nếu locale hay glossary đổi.
 
@@ -131,7 +132,7 @@ Trước khi sửa các file sau, đọc file đó, test của nó và ADR liên
 - Import `node:*` (hay bất kỳ IO nào) vào `packages/domain`.
 - Đổi tên hoặc payload của một event type đã phát mà không có hàm migrate theo `v`; viết lại event log.
 - Đổi id EN trong glossary; thêm id tiếng Việt hoặc id "màu mè" vào dữ liệu.
-- Sửa file sinh ra bằng tay: `docs/schemas/*.schema.json` (sửa zod rồi `pnpm schemas`), `docs/glossary.md`, `docs/events.md`, `docs/dependency-graph.md`, `docs/cli.md` và vùng `<!-- docs:gen … -->` của implementation-plan (sửa nguồn rồi `pnpm docs:gen`).
+- Sửa file sinh ra bằng tay: `docs/schemas/*.schema.json` (sửa zod rồi `pnpm schemas`), `docs/glossary.md`, `docs/events.md`, `docs/dependency-graph.md`, `docs/cli.md`, `docs/tier-report.md` và vùng `<!-- docs:gen … -->` của implementation-plan (sửa nguồn rồi `pnpm docs:gen`; báo cáo bậc thì `pnpm docs:gen --kingdom <dir>`).
 - Thêm dependency mà không nêu lý do trong commit.
 - Đọc hoặc ghi `~/.claude/`, `~/.gemini/`, `~/.codex/` của người dùng từ code (cấu hình theo lần chạy đi qua `--settings` / `GEMINI_CLI_HOME` / tương đương, trong `.runs/`).
 - Thêm script `.sh`, `.ps1`, `.cmd`, `.bat`; dùng `shell: true`.

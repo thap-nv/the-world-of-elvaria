@@ -35,6 +35,8 @@ export interface HookContext {
   readonly known: readonly string[];
   /** The class's tools in Claude Code names (policy `tools`); undefined: the CLI enforces them itself. */
   readonly tools: readonly string[] | undefined;
+  /** Models the apprentice may be asked to run on (policy `apprentice_models`); undefined: not checked. */
+  readonly apprenticeModels: readonly string[] | undefined;
   /** Context that was missing or malformed, for stderr; the call goes on with what is there. */
   readonly problems: readonly string[];
 }
@@ -128,6 +130,7 @@ export function loadContext(env: HookEnv, argv: readonly string[]): HookContext 
     laws: loaded?.ok === false ? brokenLaws(loaded.problem) : compileLaws(policy.laws ?? {}),
     known: knownSecrets(env, policy.secrets ?? [], problems),
     tools: policy.tools,
+    apprenticeModels: policy.apprentice_models,
     problems,
   };
 }

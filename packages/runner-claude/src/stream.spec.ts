@@ -51,11 +51,20 @@ describe('stream-json of Claude Code 2.1.318 (fixtures of spike P1-02)', () => {
       { kind: 'subagent_start', agent_type: 'apprentice' },
       { kind: 'subagent_start', agent_type: 'apprentice' },
     ]);
-    // Measured from task_notification: SubagentStop does not run at maxTurns (§3.12).
+    // Measured from task_notification: SubagentStop does not run at maxTurns (§3.12). Both runs hit maxTurns 2,
+    // which only the notification's summary says.
+    const cut = { kind: 'subagent_end', agent_type: 'apprentice', stopped: 'max_turns' };
     expect(of('subagent_end')).toEqual([
-      { kind: 'subagent_end', agent_type: 'apprentice', duration_ms: 3527 },
-      { kind: 'subagent_end', agent_type: 'apprentice', duration_ms: 3501 },
+      { ...cut, duration_ms: 3527 },
+      { ...cut, duration_ms: 3501 },
     ]);
+  });
+
+  it('leaves `stopped` out for an apprentice that finished on its own', () => {
+    const { of } = readFixture('apprentice-background.jsonl');
+    const ends = of('subagent_end');
+    expect(ends.length).toBeGreaterThan(0);
+    expect(ends.every((end) => end.stopped === undefined)).toBe(true);
   });
 
   it('counts the apprentice model in the usage of the session', () => {

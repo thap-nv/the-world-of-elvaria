@@ -9,7 +9,8 @@
   context, through runner-core), `settings.json` (dontAsk, the allow/deny of the `ToolPolicy` with file tools
   scoped to the plot as `Read(./**)`, the assignee's own handover letter by absolute path, Elvaria's hook on the
   twelve events in the exec form, `ELVARIA_*` and `CLAUDE_CODE_*` env, no auto memory, no attribution line),
-  `agents.json` (the one apprentice: the character's tools minus `Agent`, a hard `maxTurns`), `system.md` for
+  `agents.json` (the one apprentice: the character's tools minus `Agent`, a hard `maxTurns`, the cheapest model,
+  and a description naming the models the character may ask for), `system.md` for
   `--append-system-prompt-file` and the prompt as sent, redacted. Generated settings are checked before spawn,
   because Claude Code drops a malformed part without a word. Every file the runner writes masks the session's
   secret values (`secretValuesOf`) before the patterns (§3.9).
@@ -18,8 +19,14 @@
   `--resume`). Reads the stream: signals (`text`, `usage` so far, `tool_blocked`, `rate_limit`, `mana` with the
   windows of each `rate_limit_event`), the lines only
   the stream knows (`agent.session.end` from the last `result`, `agent.subagent.start/end` from
-  `system/task_*`, `mana.signal` of an API retry), and `RunResult` (outcome from `is_error` + `terminal_reason`,
-  tokens of `modelUsage`, denials, structured output, the letter's question).
+  `system/task_*`, with `stopped: max_turns` when the notification says the CLI cut the apprentice at its
+  `maxTurns`, and `agent.subagent.overrun` past `subagent_max_minutes`; `mana.signal` of an API retry), and
+  `RunResult` (outcome from `is_error` + `terminal_reason`, tokens of `modelUsage`, denials, structured output, the
+  letter's question).
+- Lets the character pick its apprentice's model per call, never above its own (§3.12, decided after P1-09):
+  `APPRENTICE_MODELS` is the adapter's ladder (`haiku` < `sonnet` < `opus` < `fable`, the Agent tool's `model`
+  values in 2.1.318); `apprenticeModelsOf(character.model)` cuts it at the character's own model (a slug that
+  names no alias gets `haiku` alone) and goes into `policy.json` as `apprentice_models`, which the hook enforces.
 - Stops a session that Elvaria's SessionStart hook did not record in the quest's journal: it would run without the
   laws. Its outcome is `error`.
 - `probe()`: `claude -p "/usage"` (no model call); when no window of the account is full, one turn of the cheapest

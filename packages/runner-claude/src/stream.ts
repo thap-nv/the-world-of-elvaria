@@ -18,7 +18,13 @@ export type Observation =
   /** The account's windows of a `rate_limit_event`, for the mana gauge (P1-05). */
   | { readonly kind: 'mana'; readonly windows: readonly UsageWindow[] }
   | { readonly kind: 'subagent_start'; readonly agent_type: string }
-  | { readonly kind: 'subagent_end'; readonly agent_type: string; readonly duration_ms: number };
+  | {
+      readonly kind: 'subagent_end';
+      readonly agent_type: string;
+      readonly duration_ms: number;
+      /** The CLI cut the run at its maxTurns (`agent.subagent.end.stopped`). */
+      readonly stopped?: 'max_turns';
+    };
 
 export interface StreamReader {
   read(line: JsonObject): readonly Observation[];
@@ -111,6 +117,13 @@ const SUBAGENT_LINES: ReadonlySet<string> = new Set([
   'task_notification',
 ]);
 
+/**
+ * How Claude Code 2.1.318 says it stopped a sub-agent at its maxTurns: the notification's summary starts "NOTE: this
+ * agent stopped at its 2-turn limit before finishing." (fixtures/apprentice-max-turns.jsonl). No field says it, so the
+ * words do; a CLI that words it otherwise leaves `stopped` out, and nothing else depends on it.
+ */
+const CUT_AT_MAX_TURNS = /stopped at its \d+-turn limit/;
+
 /** Each stream run of a sub-agent: a revived apprentice keeps its CLI id and gets a new run id. */
 const runKey = (line: JsonObject): string =>
   `${textOf(line, 'task_id') ?? ''}:${textOf(line, 'run_id') ?? ''}`;
@@ -131,7 +144,12 @@ function subagentRun(state: State, line: JsonObject, subtype: string): Observati
   run.duration_ms = numberOf(objectOf(line, 'usage'), 'duration_ms') ?? run.duration_ms;
   if (subtype !== 'task_notification') return [];
   state.runs.delete(key);
-  return [{ kind: 'subagent_end', agent_type: run.agent_type, duration_ms: Math.round(run.duration_ms) }];
+  const end = {
+    kind: 'subagent_end',
+    agent_type: run.agent_type,
+    duration_ms: Math.round(run.duration_ms),
+  } as const;
+  return [CUT_AT_MAX_TURNS.test(textOf(line, 'summary') ?? '') ? { ...end, stopped: 'max_turns' } : end];
 }
 
 function system(state: State, line: JsonObject): Observation[] {

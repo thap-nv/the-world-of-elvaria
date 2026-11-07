@@ -71,6 +71,8 @@ export const QUEST_TRANSITIONS: readonly QuestTransitionRow[] = [
   { from: 'claimed', event: 'breaker', actors: S, to: 'infirmary' },
   { from: 'working', event: 'submit', actors: R, guard: 'session', to: 'review' },
   { from: 'working', event: 'submit', actors: S, guard: 'script', to: 'review' },
+  // The Steward stopped while the script ran, so the run says nothing: the quest is open again and runs anew (P1-17).
+  { from: 'working', event: 'release', actors: S, guard: 'script', to: 'open' },
   { from: 'working', event: 'ask', actors: R, to: 'blocked' },
   { from: 'working', event: 'mana_out', actors: M, guard: 'session', to: 'paused_mana' },
   { from: 'working', event: 'breaker', actors: S, to: 'infirmary' },

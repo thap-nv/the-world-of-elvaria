@@ -17,12 +17,28 @@ import type { ToolCall } from './tools.ts';
  */
 export const APPRENTICE = 'apprentice';
 
-/** Why a sub-agent call breaks the apprentice rule, if it does. */
-export function subagentViolation(call: ToolCall): string | undefined {
-  if (call.subagent === undefined || call.subagent === APPRENTICE) return undefined;
-  const asked = call.subagent === '' ? 'a sub-agent without subagent_type' : `sub-agent ${call.subagent}`;
-  return `${asked} is not allowed; the only sub-agent is ${APPRENTICE}`;
+/**
+ * Why a sub-agent call breaks the apprentice rule, if it does: another agent, or a `model` outside the ones the
+ * policy allows (decided after P1-09): the character picks the apprentice's model per call, never above its own.
+ */
+export function subagentViolation(call: ToolCall, models?: readonly string[]): string | undefined {
+  if (call.subagent === undefined) return undefined;
+  if (call.subagent !== APPRENTICE) {
+    const asked = call.subagent === '' ? 'a sub-agent without subagent_type' : `sub-agent ${call.subagent}`;
+    return `${asked} is not allowed; the only sub-agent is ${APPRENTICE}`;
+  }
+  if (call.model === undefined || models === undefined || models.includes(call.model)) return undefined;
+  return `model ${call.model} is not allowed for the ${APPRENTICE}, which runs on ${models.join(', ')} at most (never above your own model)`;
 }
+
+/**
+ * `agent_type` of the payload: set when a sub-agent made the call (spike P1-02), so a revival and the tier report
+ * tell the apprentice's work from the character's (§3.12).
+ */
+const callerOf = (input: ClaudeInput): { agent_type?: string } => {
+  const agentType = input.text('agent_type');
+  return agentType === undefined ? {} : { agent_type: agentType };
+};
 
 /** Why `call` breaks the laws, if it does. Tools that name no file and run no command are not guarded. */
 export function lawViolation(call: ToolCall, laws: CompiledLaws): string | undefined {
@@ -39,11 +55,12 @@ export function lawViolation(call: ToolCall, laws: CompiledLaws): string | undef
 
 export function preToolUse(input: ClaudeInput, ctx: HookContext): Translation {
   const call = toolCallOf(input.raw.tool_name, input.raw.tool_input);
-  const apprenticeRule = subagentViolation(call);
+  const apprenticeRule = subagentViolation(call, ctx.apprenticeModels);
   const reason = apprenticeRule ?? lawViolation(call, ctx.laws);
   if (reason === undefined) return translation([]);
   const source = apprenticeRule === undefined ? 'law of this territory' : 'rule';
-  return translation([{ type: 'agent.tool.blocked', data: { tool: call.kind, reason } }], {
+  const data = { tool: call.kind, reason, ...callerOf(input) };
+  return translation([{ type: 'agent.tool.blocked', data }], {
     decision: denyTool(
       `Elvaria ${source}: ${reason}. Do not try another way around it; if the work needs it, say so in handover.md.`,
     ),
@@ -63,6 +80,7 @@ function toolData(input: ClaudeInput, call: ToolCall, exit: number | undefined):
     url: call.url,
     exit,
     duration_ms: duration === undefined || duration < 0 ? undefined : Math.round(duration),
+    ...callerOf(input),
   });
 }
 

@@ -45,6 +45,8 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
     'trip `secrets`: kho bảo vật thiếu secret quest xin, hoặc lãnh thổ đã bỏ nó khỏi `secrets_allowed`; không mở phiên, `attempts` không đổi, chuông',
   'working.submit.session': 'có handover.md; mọi thay đổi đã commit vào nhánh; lượt kết thúc `submitted`',
   'working.submit.script': 'script chạy xong trong plot, output vào `.runs/` + journal.jsonl',
+  'working.release.script':
+    'Quản sự dừng giữa lúc script chạy (lần chạy không để lại gì): lượt kết thúc `cancelled`, quest mở lại, tick sau chạy lại (P1-17)',
   'working.ask': 'ghi `blocked.question`; lượt kết thúc `blocked`',
   'working.mana_out.session': 'giữ `assignee`; lượt kết thúc `paused`',
   'working.breaker':

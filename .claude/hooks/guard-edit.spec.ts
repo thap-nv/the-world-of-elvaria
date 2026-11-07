@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { GENERATORS } from '../../scripts/docs-gen.mjs';
+import { GENERATORS, kingdomGenerators } from '../../scripts/docs-gen.mjs';
 import { GENERATED_FILES, changedRegion, refusalOf, regionsOf, textAfter } from './guard-edit.mjs';
 import { REPO } from './hook-io.mjs';
 
@@ -25,6 +25,7 @@ describe('refusalOf: files no one edits by hand', () => {
     'docs/events.md',
     'docs/dependency-graph.md',
     'docs/cli.md',
+    'docs/tier-report.md',
     'Docs/CLI.md',
     'docs/schemas/quest.schema.json',
     'design/DESIGN-HANDOFF.md',
@@ -106,9 +107,10 @@ describe('refusalOf: generated regions of a hand-written file', () => {
 });
 
 describe('the generators of the repo', () => {
-  it('lists every whole file docs:gen writes', () => {
+  it('lists every whole file docs:gen writes, the tier report of `--kingdom` too', () => {
     const whole = GENERATORS.filter((generator) => generator.region === undefined).map((g) => g.file);
-    expect([...GENERATED_FILES].sort()).toEqual(whole.sort());
+    const ofKingdom = kingdomGenerators(['--kingdom', 'any']).map((generator) => generator.file);
+    expect([...GENERATED_FILES].sort()).toEqual([...whole, ...ofKingdom].sort());
   });
 
   it('finds every generated region in its Markdown file', () => {
