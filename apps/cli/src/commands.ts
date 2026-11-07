@@ -15,6 +15,7 @@ import { SANDBOX_GENERATE } from './sandbox/generate.ts';
 import { SANDBOX_REPLAY } from './sandbox/replay.ts';
 import { TERRITORY_ADD } from './territory/add.ts';
 import { TERRITORY_LIST } from './territory/list.ts';
+import { WAKE } from './wake.ts';
 import type { CommandSpec } from './command.ts';
 
 export const COMMANDS: readonly CommandSpec[] = [
@@ -31,6 +32,7 @@ export const COMMANDS: readonly CommandSpec[] = [
   QUEST_CANCEL,
   QUEST_EDIT,
   RUN,
+  WAKE,
   SANDBOX_GENERATE,
   SANDBOX_REPLAY,
   MIGRATE,

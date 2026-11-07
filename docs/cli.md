@@ -23,6 +23,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria quest cancel <quest>` | Hủy một nhiệm vụ chưa xong; nhiệm vụ nháp thì bỏ đi (lệnh cancel hoặc archive). |
 | `elvaria quest edit <quest>` | Sửa một nhiệm vụ mà không chạm vào file của nó (lệnh edit_quest). |
 | `elvaria run` | Chạy Quản sự: giao nhiệm vụ cho nhân vật và cho nghiệm thu, tới khi bạn dừng (Ctrl+C). |
+| `elvaria wake <tribe>` | Nhờ Quản sự thăm dò mana của một tộc ngay, ví dụ sau khi đăng nhập lại (lệnh wake). |
 | `elvaria sandbox generate` | Sinh một ngày giả vào events/sandbox/ của vương quốc (sa bàn): không chạy phiên nào, không chạm nhiệm vụ thật. |
 | `elvaria sandbox replay <file>` | Phát lại một ngày giả thành dòng thời gian trên terminal. |
 | `elvaria migrate` | Chuyển mọi file cũ của vương quốc lên phiên bản hiện tại, có sao lưu. |
@@ -168,6 +169,14 @@ Sửa một nhiệm vụ mà không chạm vào file của nó (lệnh edit_ques
 Chạy Quản sự: giao nhiệm vụ cho nhân vật và cho nghiệm thu, tới khi bạn dừng (Ctrl+C).
 
 Không có tham số riêng, chỉ các tùy chọn chung.
+
+## `elvaria wake`
+
+Nhờ Quản sự thăm dò mana của một tộc ngay, ví dụ sau khi đăng nhập lại (lệnh wake).
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<tribe>` | Tộc cần thăm dò lại tài khoản (một id trong kingdom.json). |
 
 ## `elvaria sandbox generate`
 
