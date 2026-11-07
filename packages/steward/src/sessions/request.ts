@@ -106,7 +106,7 @@ async function promptOf(ctx: Context, input: SessionInput) {
     // give one (§11, P1-04).
     const handover = await readHandover(ctx.root, quest.id);
     const checks = input.checks ?? [];
-    return buildPrompt({ ...base, role: 'verifier', handover, diff: '', checks }, ctx.templates);
+    return buildPrompt({ ...base, role: 'verifier', handover, diff: null, checks }, ctx.templates);
   }
   const continuation =
     input.continuation === undefined || input.continuation === null

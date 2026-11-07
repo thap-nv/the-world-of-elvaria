@@ -1,7 +1,9 @@
 // The blocks prompts are made of (implementation-plan §3.7, §3.13; ADR 0010, 0017): each fills one template from
 // the kingdom's files, and an optional block with nothing to say is empty, so joinBlocks leaves it out.
 import { SUBQUESTS_FILE } from '../plot/subquests.ts';
+import { SHELL_TOOL } from '../policy/constants.ts';
 import { fenced, fill, joinBlocks } from './templates.ts';
+import type { ToolPolicy } from '../policy/tool-policy.ts';
 import type { PromptTemplates } from './templates.ts';
 import type { Kind, Kingdom, Quest, Registry, Skill, Territory, Verdict } from '@elvaria/domain';
 
@@ -42,6 +44,37 @@ const present = (text: string | null | undefined): text is string =>
 
 export const decreeBlock = (decree: string | null, t: PromptTemplates): string =>
   present(decree) ? fill(t.decree, { decree: decree.trim() }) : '';
+
+/** `Bash(pnpm test:*)` → `pnpm test`; `Bash(git status)` → `git status`; any other tool's rule → nothing. */
+const shellCommandOf = (rule: string): string[] => {
+  const match = /^Bash\((.+?)(?::\*)?\)$/.exec(rule);
+  return match?.[1] === undefined ? [] : [match[1]];
+};
+
+/**
+ * The commands the session's shell may run, listed from its permission rules (P1-11): without them a character
+ * guesses a compound command, its settings refuse the whole line, and it stops to ask the owner. Empty without a
+ * shell.
+ */
+export function shellBlock(policy: Pick<ToolPolicy, 'tools' | 'allow'>, t: PromptTemplates): string {
+  const commands = policy.tools.includes(SHELL_TOOL) ? policy.allow.flatMap(shellCommandOf) : [];
+  if (commands.length === 0) return '';
+  return fill(t.shell, { commands: commands.map((command) => `- \`${command}\``).join('\n') });
+}
+
+/**
+ * The diff section of a verifier when the prompt carries none (`null`, the Steward's case until PlotManager.diff,
+ * §11 P1-04): where to read it, against the ref the branch forked from (§3.3 "(P1-07)": `origin/<branch>` once
+ * fetched, so a local default branch behind origin does not add other people's commits to the diff).
+ */
+export function diffBlock(diff: string | null, territory: Pick<Territory, 'vcs'>): string {
+  if (diff !== null) return diff.trim() === '' ? 'The branch has no changes.' : fenced(diff, 'diff');
+  const { vcs } = territory;
+  if (vcs.type === 'none')
+    return 'Not in this prompt: the plot is a folder without git; read the files the quest names.';
+  const base = `${vcs.remote === undefined ? '' : 'origin/'}${vcs.default_branch ?? 'HEAD'}`;
+  return `Not in this prompt: read it in the plot (your current directory) with \`git diff ${base}...HEAD\`, then each changed file in full.`;
+}
 
 /**
  * What the session leaves for the Steward to deliver, when the kind's convention needs a file of a given shape

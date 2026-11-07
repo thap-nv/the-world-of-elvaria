@@ -10,6 +10,7 @@ export const PROMPT_TEMPLATES = [
   'decree',
   'assignee',
   'apprentice',
+  'shell',
   'handover',
   'quest',
   'gazetteer',
