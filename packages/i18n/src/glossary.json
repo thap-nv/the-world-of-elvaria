@@ -72,6 +72,13 @@
               "used_in": "`<kingdom>/decree.md`"
             },
             {
+              "vi": "Kho bảo vật",
+              "en": "Treasury",
+              "id": ["treasury"],
+              "definition": "Secret của người dùng, dạng `{ \"tên\": \"giá trị\" }`, nằm ngoài vương quốc. Nhiệm vụ xin tên trong `secrets_required` (chỉ những tên lãnh thổ cho trong `secrets_allowed`); giá trị chỉ vào env của phiên (tên viết hoa: `npm_token` → `NPM_TOKEN`), không vào prompt, journal, log hay event.",
+              "used_in": "`kingdom.paths.treasury` (mặc định `~/.elvaria/treasury.json`), `quest.secrets_required`, `territory.secrets_allowed`"
+            },
+            {
               "vi": "Khảo sát điền địa",
               "en": "Land survey",
               "id": ["survey"],

@@ -4,7 +4,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { contextEnv, writePolicyFile } from '@elvaria/runner-core';
+import { contextEnv, sessionRedactor, writePolicyFile } from '@elvaria/runner-core';
 import type { RunContext, SpawnRequest } from '@elvaria/runner-core';
 
 import { agentsOf } from './agents.ts';
@@ -46,7 +46,7 @@ export async function writeRunFiles(
 ): Promise<RunSetup> {
   const dir = req.run_dir;
   await mkdir(dir, { recursive: true });
-  const policyFile = await writePolicyFile(dir, ctx, req.permissions.laws);
+  const policyFile = await writePolicyFile(dir, ctx, req.permissions);
   const env = { ...contextEnv(ctx), ...CLAUDE_ENV };
   // Only an assignee writes a letter; a verifier reads it in its prompt and writes nothing (ADR 0008).
   const letter = req.role === 'assignee' ? req.handover : undefined;
@@ -62,7 +62,8 @@ export async function writeRunFiles(
   await Promise.all([
     write(files.settings, json(settings)),
     write(files.system, req.prompt.system),
-    write(path.join(dir, PROMPT_FILE), req.prompt.user),
+    // The owner's copy of what went on stdin, masked like every other file of the run (§3.9, ADR 0013).
+    write(path.join(dir, PROMPT_FILE), sessionRedactor(req)(req.prompt.user)),
     ...(files.agents === undefined ? [] : [write(files.agents, json(agents))]),
   ]);
   return { files, env };

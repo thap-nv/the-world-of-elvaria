@@ -82,6 +82,44 @@ describe('runHook', () => {
     expect(text).toContain('[redacted]');
   });
 
+  describe('the secrets the policy names (P1-10, §3.9)', () => {
+    /** A treasury value no pattern knows: only its exact value masks it. */
+    const VALUE = ['plain', '-FAKE-', 'treasury-value-77'].join('');
+    const bash = payload('PostToolUse', {
+      tool_name: 'Bash',
+      tool_input: { command: `echo ${VALUE} | npm login --scope=@dc1` },
+    });
+    const notice = payload('Notification', { message: `npm answered for ${VALUE}` });
+    const withSecrets = async (): Promise<string[]> => {
+      const policy = path.join(kingdom.runDir, 'policy.json');
+      await writeFile(policy, JSON.stringify({ version: 1, secrets: ['NPM_TOKEN'] }), 'utf8');
+      return ['--policy', policy];
+    };
+
+    it('masks their values, read from the env, in the log and the journal', async () => {
+      const argv = await withSecrets();
+      const env = kingdom.env({ NPM_TOKEN: VALUE });
+      expect(await call(bash, env, argv)).toEqual({ stdout: '', stderr: '' });
+      await call(notice, env, argv);
+      const log = JSON.stringify((await kingdom.log()).events);
+      expect(log).not.toContain(VALUE);
+      expect(log).toContain('echo [redacted] | npm login');
+      expect(JSON.stringify((await kingdom.journal()).events)).not.toContain(VALUE);
+    });
+
+    it('leaves such a value to the patterns, which miss it, when the policy names nothing', async () => {
+      await call(bash, kingdom.env({ NPM_TOKEN: VALUE }));
+      expect(JSON.stringify((await kingdom.log()).events)).toContain(VALUE);
+    });
+
+    it('says on stderr, never with a value, when a named secret is missing from its env', async () => {
+      const outcome = await call(notice, kingdom.env(), await withSecrets());
+      expect(outcome.stderr).toBe(
+        "elvaria-hook: secret NPM_TOKEN is not in the hook's env; only the patterns mask it\n",
+      );
+    });
+  });
+
   it('denies a forbidden Windows path with a JSON decision on stdout', async () => {
     const policy = path.join(kingdom.runDir, 'policy.json');
     await writeFile(policy, JSON.stringify({ version: 1, laws: DC1_LAWS }), 'utf8');

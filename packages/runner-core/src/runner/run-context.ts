@@ -1,6 +1,7 @@
 // Who a session is and where its lines go (implementation-plan §3.6): the context every adapter hands the hook
 // (env `ELVARIA_*` and policy.json) and uses for the lines the runner writes itself. The Steward sets the env;
 // the request says who the character is, so the character, its role and its model come from the request.
+import { secretEnvNamesOf } from '../treasury/session-env.ts';
 import type { SpawnRole } from './roles.ts';
 import type { SpawnRequest } from './types.ts';
 
@@ -26,6 +27,11 @@ export interface RunContext {
   readonly model: string;
   /** `kingdom.tz`: the day file of a line follows it (§2.1). */
   readonly tz?: string;
+  /**
+   * Env names of the session's secrets (§3.9): the hook reads their values from its own env and masks them before
+   * the patterns. Names only: a value never goes into a file. Not an env variable of its own (contextEnv).
+   */
+  readonly secrets?: readonly string[];
 }
 
 const ATTEMPT = /^[1-9][0-9]{0,5}$/;
@@ -38,6 +44,7 @@ export function runContextOf(req: SpawnRequest): RunContext {
   const kingdom = set(env[CONTEXT_ENV.kingdom]);
   const quest = req.quest?.id ?? set(env[CONTEXT_ENV.quest]);
   const tz = set(env[CONTEXT_ENV.tz]);
+  const secrets = secretEnvNamesOf(req);
   return {
     ...(kingdom === undefined ? {} : { kingdom }),
     ...(quest === undefined ? {} : { quest }),
@@ -46,6 +53,7 @@ export function runContextOf(req: SpawnRequest): RunContext {
     role: req.role,
     model: req.character.model,
     ...(tz === undefined ? {} : { tz }),
+    ...(secrets.length === 0 ? {} : { secrets }),
   };
 }
 
@@ -53,7 +61,7 @@ export function runContextOf(req: SpawnRequest): RunContext {
 export function contextEnv(ctx: RunContext): Record<string, string> {
   const env: Record<string, string> = {};
   for (const [field, name] of Object.entries(CONTEXT_ENV)) {
-    const value = ctx[field as keyof RunContext];
+    const value = ctx[field as keyof typeof CONTEXT_ENV];
     if (value !== undefined) env[name] = String(value);
   }
   return env;

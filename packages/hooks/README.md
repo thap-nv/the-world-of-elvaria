@@ -29,11 +29,13 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
   `agent.notification` for the verifier.
 - Writes each line in the order §3.6 fixes: stamp (`createStamper` of the event log; the process sets `TZ` to
   the kingdom's zone) → `redactDeep` → long strings cut with `…[truncated]` until the line fits 64 KiB → append to
-  `events/<day>.jsonl` and `quests/<id>/journal.jsonl`.
+  `events/<day>.jsonl` and `quests/<id>/journal.jsonl`. The redactor masks the session's secret values first
+  (the env values of the names in the policy's `secrets`, P1-10, §3.9), then the patterns.
 - Answers Antigravity CLI (`agy`) too, whose payload names no event: its hook command carries the event in argv
   (`node elvaria-hook.mjs PreToolUse`, a shim the runner writes in `.agents/` adds `--policy`; spike P1-12a §4).
   PreToolUse always answers, since agy reads no answer as a block: `{"decision": "deny", "reason"}` for a law,
-  a sub-agent tool or an `ask_*` tool (nobody answers under `-p`), else `{"decision":
+  a sub-agent tool, an `ask_*` tool (nobody answers under `-p`) or a tool the class lacks (the policy's
+  `tools`, agy has no `--tools`: `search_web` for a class without `WebSearch`, a write tool for a judge), else `{"decision":
 "deny_unless_prior_grant"}`, so the run's `--settings` allow rules decide; never `allow` or `auto_approve`.
   SessionStart and PostToolUse write `agent.session.start` and `agent.tool` (path relative to
   `workspacePaths[0]`); Stop answers `{"decision": "continue", "reason"}` while the letter is unchanged. A
@@ -48,8 +50,10 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
 - Stop the CLI on a failed write: event log and journal errors go to stderr and the decision stands.
 - Read `kingdom.json`, transcripts, or the user's `~/.claude/`, or write its env anywhere (it holds
   `CLAUDE_CODE_MESSAGING_TOKEN`; ADR 0010, 0013, CLAUDE.md).
-- Mask known secret values yet: P1-10 settles how the runner passes their names; until then only the patterns
-  of `redact-patterns.json` apply.
+- Learn a secret value from a file: `policy.json` names the session's secrets (`secrets`, env names), and the
+  values come from the hook's own env, which the CLI inherited from the runner. A name without a value is said
+  on stderr and only the patterns of `redact-patterns.json` mask it.
+- Check the class's tools for Claude: `--tools` does that; the policy's `tools` is read by the agy branch only.
 - Handle Gemini CLI or Codex payloads: their branches come with their adapters (P1-12c, P1-12d).
 
 ## Depends on

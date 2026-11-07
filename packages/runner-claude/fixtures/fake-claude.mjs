@@ -5,7 +5,8 @@
 //   -p /usage | -p "<ping>"                              replays usage-command.jsonl | probe.jsonl
 //   -p (prompt on stdin)                                 plays env ELVARIA_FAKE_SCENARIO, or replays FAKE_CLAUDE_REPLAY
 // Knobs: FAKE_CLAUDE_PING=rate_limit|error, FAKE_CLAUDE_USAGE_TEXT=<text of /usage>, FAKE_CLAUDE_RECORD=<file>
-// (argv, cwd, env and prompt of a session, for the specs to read), and those of fake-claude-commands.mjs.
+// (argv, cwd, env and prompt of a session, for the specs to read), and those of fake-claude-commands.mjs and
+// fake-claude-leak.mjs (the fake-only scenario `leak`).
 // Lines marked "self-built" have no real fixture yet: 429 is P1-16's (spike P1-02); they follow the docs.
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -13,6 +14,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { COMMANDS } from './fake-claude-commands.mjs';
+import { leak } from './fake-claude-leak.mjs';
 
 const FIXTURES = import.meta.dirname;
 const PING = 'Reply with the single word ok.';
@@ -202,6 +204,7 @@ function rateLimited(play) {
 }
 
 const SCENARIOS = {
+  leak: (play) => leak(play, { speak, runHooks, writeLetter, finish }),
   submit: (play) => work(play),
   ask: (play) => work(play, play.core.FAKE_QUESTION),
   forbidden_command: forbidden,

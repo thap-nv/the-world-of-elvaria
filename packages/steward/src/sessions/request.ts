@@ -1,10 +1,11 @@
 // The SpawnRequest of a session (implementation-plan §3.7): the prompt runner-core builds from the kingdom's files,
-// the tool policy of the class, the territory's laws and the role, the budget the CLI enforces, the ELVARIA_*
-// context the hook reads, and the run folder `.runs/<quest>-<n>` (verifier: `/verify` below it).
+// the tool policy of the class, the territory's laws and the role, the budget the CLI enforces, the env (minimal,
+// the ELVARIA_* context the hook reads, the quest's secrets), and the run folder `.runs/<quest>-<n>` (verifier:
+// `/verify` below it).
 import { mkdir } from 'node:fs/promises';
 
-import { FAIL_KINDS, currentRun, runDirOf } from '@elvaria/domain';
-import { buildPrompt, toolPolicyOf } from '@elvaria/runner-core';
+import { FAIL_KINDS, currentRun, runDirOf, secretsBeyond } from '@elvaria/domain';
+import { buildPrompt, sessionEnv, toolPolicyOf } from '@elvaria/runner-core';
 import { inKingdom } from '@elvaria/store';
 import type { Character, Quest, Role, Territory } from '@elvaria/domain';
 import type { Continuation, JsonSchema, Memory, SpawnRequest } from '@elvaria/runner-core';
@@ -70,8 +71,8 @@ export async function continuationOf(ctx: Context, quest: Quest): Promise<Contin
     : { reason: 'revive' };
 }
 
-/** The context the hook reads from env (§3.6); P1-10 adds the minimal env and the allowed secrets. */
-const envOf = (ctx: Context, input: SessionInput): Record<string, string> => ({
+/** The context the hook reads from env (§3.6). */
+const contextOf = (ctx: Context, input: SessionInput): Record<string, string> => ({
   ELVARIA_KINGDOM: ctx.root,
   ELVARIA_QUEST: input.quest.id,
   ELVARIA_ATTEMPT: String(input.n),
@@ -81,6 +82,19 @@ const envOf = (ctx: Context, input: SessionInput): Record<string, string> => ({
   ELVARIA_MODEL: input.character.model,
   ELVARIA_TZ: ctx.world.kingdom.tz,
 });
+
+/**
+ * The whole env of the session (§3.9, ADR 0013): the minimal env, the context, and exactly the secrets the quest
+ * asks for, from the treasury. A name the territory no longer allows, or the treasury lacks, opens no session.
+ */
+async function envOf(ctx: Context, input: SessionInput): Promise<Record<string, string>> {
+  const { quest, territory } = input;
+  const refused = secretsBeyond(quest.secrets_required, territory);
+  if (refused.length > 0)
+    throw new Error(`territory ${territory.id} does not allow the secrets ${refused.join(', ')}`);
+  const secrets = await ctx.deps.treasury.resolve(quest.secrets_required);
+  return sessionEnv({ base: ctx.deps.env, context: contextOf(ctx, input), secrets });
+}
 
 async function promptOf(ctx: Context, input: SessionInput) {
   const { quest, character, territory } = input;
@@ -124,7 +138,7 @@ export async function requestOf(ctx: Context, input: SessionInput): Promise<Spaw
     prompt: await promptOf(ctx, input),
     permissions: toolPolicyOf({ role, characterClass, character, territory }),
     budget: { max_turns: ctx.world.kingdom.breakers.max_turns, max_minutes: quest.budget.max_minutes },
-    env: envOf(ctx, input),
+    env: await envOf(ctx, input),
     run_dir: runDir,
     ...(role === 'verifier'
       ? { structured: VERDICT_OUTPUT_SCHEMA }

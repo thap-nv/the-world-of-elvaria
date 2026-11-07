@@ -19,6 +19,7 @@ Luật (ADR 0014, [implementation-plan](implementation-plan.md) §2.7 và §4.1)
 | Lãnh thổ / lãnh địa | Territory | `territory` | Một repo hoặc thư mục được gắn vào vương quốc. | `territories/<id>/territory.json` |
 | Địa chí | Gazetteer | `gazetteer` | Mô tả lãnh thổ: cấu trúc, cách build, quy ước (với dc1 là CLAUDE.md + README.md). | `territories/<id>/gazetteer.md` |
 | Chiếu chỉ | Royal decree | `decree` | Luật chung của người dùng cho mọi nhân vật, mọi vai, mọi tộc (ví dụ cách viết commit). Người dùng tự viết, tùy chọn; Elvaria chỉ đọc, đưa vào phần hướng dẫn hệ thống của prompt. Luật của lãnh thổ được ưu tiên khi mâu thuẫn. | `<kingdom>/decree.md` |
+| Kho bảo vật | Treasury | `treasury` | Secret của người dùng, dạng `{ "tên": "giá trị" }`, nằm ngoài vương quốc. Nhiệm vụ xin tên trong `secrets_required` (chỉ những tên lãnh thổ cho trong `secrets_allowed`); giá trị chỉ vào env của phiên (tên viết hoa: `npm_token` → `NPM_TOKEN`), không vào prompt, journal, log hay event. | `kingdom.paths.treasury` (mặc định `~/.elvaria/treasury.json`), `quest.secrets_required`, `territory.secrets_allowed` |
 | Khảo sát điền địa | Land survey | `survey` | Việc quét lãnh thổ để sinh tòa nhà trên bản đồ. | event `territory.surveyed`, `territory.surveyed_at` |
 | Mở cõi | Open a realm (attach territory) | `territory.attach` | Gắn một repo mới; bản đồ mọc thêm một vùng. | lệnh `attach_territory`, event `territory.attached` |
 | Quốc vương / Lãnh chúa | The Crown (user) | `user` | Người dùng, chủ vương quốc. | `actor.kind = user`, `verifier_id = user` |

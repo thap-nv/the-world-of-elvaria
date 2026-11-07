@@ -53,6 +53,14 @@ describe('runContextOf', () => {
     expect(ctx).toEqual({ quest: 'q_x', character: THORN.id, role: 'assignee', model: THORN.model });
   });
 
+  it('names the env variables of the quest secrets, which never become an env variable of their own', () => {
+    const withSecrets = { ...request(STEWARD_ENV), quest: { ...QUEST, secrets_required: ['npm_token'] } };
+    const ctx = runContextOf(withSecrets);
+    expect(ctx.secrets).toEqual(['NPM_TOKEN']);
+    expect(Object.keys(contextEnv(ctx))).not.toContain('NPM_TOKEN');
+    expect(runContextOf(request(STEWARD_ENV)).secrets).toBeUndefined();
+  });
+
   it('turns the context back into the env the hook reads', () => {
     expect(contextEnv(runContextOf(request(STEWARD_ENV)))).toEqual({
       ELVARIA_KINGDOM: '/kingdom',
@@ -73,9 +81,12 @@ describe('policy.json', () => {
   });
   afterAll(() => rm(dir, { recursive: true, force: true }));
 
-  it('is the v1 contract the hook reads: version, context, laws', () => {
-    const file = policyFileOf(runContextOf(request(STEWARD_ENV)), policy.laws);
+  it('is the v1 contract the hook reads: version, context, secret names, tools, laws', () => {
+    const withSecrets = { ...request(STEWARD_ENV), quest: { ...QUEST, secrets_required: ['npm_token'] } };
+    const file = policyFileOf(runContextOf(withSecrets), policy);
     expect(file).toMatchObject({ version: 1, quest: QUEST.id, attempt: 2, model: THORN.model });
+    expect(file.secrets).toEqual(['NPM_TOKEN']);
+    expect(file.tools).toEqual(policy.tools);
     expect(file.laws).toEqual(policy.laws);
     expect(file.laws.forbidden_paths).toEqual(['.env', '.env.*', 'infra/secrets/**']);
     // The hook checks these by hand (packages/hooks/src/policy.ts): strings, an integer attempt, string lists.
@@ -86,10 +97,13 @@ describe('policy.json', () => {
 
   it('is written into the run folder, which it creates', async () => {
     const runDir = path.join(dir, '.runs', `${QUEST.id}-1`);
-    const written = await writePolicyFile(runDir, runContextOf(request(STEWARD_ENV)), policy.laws);
+    const written = await writePolicyFile(runDir, runContextOf(request(STEWARD_ENV)), policy);
     expect(written).toBe(path.join(runDir, POLICY_FILE));
-    const parsed = JSON.parse(await readFile(written, 'utf8')) as { laws: unknown; version: number };
+    const parsed = JSON.parse(await readFile(written, 'utf8')) as Record<string, unknown>;
     expect(parsed.version).toBe(1);
     expect(parsed.laws).toEqual(policy.laws);
+    expect(parsed.tools).toEqual(['Read', 'Edit', 'Write', 'Glob', 'Grep', 'Bash', 'Agent']);
+    // A session without secrets names none.
+    expect(parsed).not.toHaveProperty('secrets');
   });
 });

@@ -32,12 +32,6 @@ interface HookLine {
   readonly data: Readonly<Record<string, unknown>>;
 }
 
-/**
- * Secret values the session was given, masked exactly before the patterns run. Empty until P1-10 settles how
- * the runner passes their names to the hook; until then only redact-patterns.json applies (§3.6).
- */
-const KNOWN_SECRETS: readonly string[] = [];
-
 /** How `ts` is written for the zone of the context (undefined: the machine's). */
 export type TsFormat = (tz: string | undefined) => (timeMs: number) => string;
 
@@ -75,7 +69,8 @@ export interface CallStamp {
 export function linesOf(drafts: readonly Draft[], ctx: HookContext, call: CallStamp): Event[] {
   const { session, now } = call;
   const stamp = createStamper(call.tsFormat(ctx.tz), { now: () => now });
-  const redactor = createRedactor(KNOWN_SECRETS);
+  // The session's secret values (policy.json names them, the env holds them), then the patterns (§3.9).
+  const redactor = createRedactor(ctx.known);
   // The stamps have the contract's shapes and context.ts checks the ids it passes on; the specs read every
   // line back through the domain's EventSchema (run-hook.spec.ts, hook-process.spec.ts).
   return drafts.map((draft) => fitLine(redactDeep(lineOf(draft, ctx, session, stamp()), redactor)) as Event);

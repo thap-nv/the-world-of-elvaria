@@ -28,6 +28,13 @@ export interface HookContext {
   /** `.runs/<quest>-<n>/`: where the hook keeps what it must remember between calls. */
   readonly runDir: string | undefined;
   readonly laws: CompiledLaws;
+  /**
+   * Values of the session's secrets (policy `secrets` names, values from this process's env): masked exactly,
+   * before the patterns (§3.9). Never written anywhere.
+   */
+  readonly known: readonly string[];
+  /** The class's tools in Claude Code names (policy `tools`); undefined: the CLI enforces them itself. */
+  readonly tools: readonly string[] | undefined;
   /** Context that was missing or malformed, for stderr; the call goes on with what is there. */
   readonly problems: readonly string[];
 }
@@ -84,6 +91,19 @@ function runDirOf(
   return path.join(kingdom, '.runs', `${quest}-${attempt}`);
 }
 
+/**
+ * The values of the secrets the policy names. The CLI hands its env to the hook (Claude, Antigravity), so a
+ * name without a value means that chain broke: said on stderr, and only the patterns mask that secret.
+ */
+function knownSecrets(env: HookEnv, names: readonly string[], problems: string[]): string[] {
+  return names.flatMap((name) => {
+    const value = env[name];
+    if (value !== undefined && value !== '') return [value];
+    problems.push(`secret ${name} is not in the hook's env; only the patterns mask it`);
+    return [];
+  });
+}
+
 /** The context of this call. Never throws: what is missing is left out and reported in `problems`. */
 export function loadContext(env: HookEnv, argv: readonly string[]): HookContext {
   const policyFile = policyArgument(argv);
@@ -106,6 +126,8 @@ export function loadContext(env: HookEnv, argv: readonly string[]): HookContext 
     runDir: runDirOf(policyFile, fields),
     // A policy that was asked for and cannot be read leaves the laws unknown: block rather than guess.
     laws: loaded?.ok === false ? brokenLaws(loaded.problem) : compileLaws(policy.laws ?? {}),
+    known: knownSecrets(env, policy.secrets ?? [], problems),
+    tools: policy.tools,
     problems,
   };
 }

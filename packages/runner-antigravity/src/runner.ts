@@ -4,7 +4,7 @@
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { contextEnv, openRunLog, openRunOutput, runContextOf } from '@elvaria/runner-core';
+import { contextEnv, openRunLog, openRunOutput, runContextOf, secretValuesOf } from '@elvaria/runner-core';
 import type { AgentRunner, ProbeResult, SpawnRequest, ToolInfo } from '@elvaria/runner-core';
 
 import { hookPlanOf, hooksProblem } from './hook-files.ts';
@@ -105,6 +105,8 @@ async function spawnAgy(req: SpawnRequest, options: AntigravityOptions, plan: Ho
   const listed = await runToEnd(options.launch, ['-p', '/hooks', '--output-format', 'json'], call);
   const problem = hooksProblem(listed.stdout, files.hooks);
   if (problem !== undefined) throw new Error(problem);
+  // The session's secret values are masked before the patterns in every line the runner writes (§3.9).
+  const known = secretValuesOf(req);
   return startSession({
     launch: options.launch,
     args: sessionArgs(req, files),
@@ -112,8 +114,8 @@ async function spawnAgy(req: SpawnRequest, options: AntigravityOptions, plan: Ho
     env,
     max_turns: req.budget.max_turns,
     handover: req.handover,
-    log: openRunLog(ctx),
-    output: openRunOutput(req.run_dir),
+    log: openRunLog(ctx, { known }),
+    output: openRunOutput(req.run_dir, known),
   });
 }
 

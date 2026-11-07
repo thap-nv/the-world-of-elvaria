@@ -2,6 +2,8 @@
 // of the table, the character's matching move, and for a verifier the verdict, the assignee's reputation and level.
 // An end that arrives for a quest that moved on meanwhile (cancelled, reassigned) changes nothing.
 import { currentRun } from '@elvaria/domain';
+import { createRedactor, redactDeep } from '@elvaria/eventlog';
+import { redactHandover } from '@elvaria/store';
 import type { Quest, Result } from '@elvaria/domain';
 import type { RunResult } from '@elvaria/runner-core';
 
@@ -148,10 +150,38 @@ function current(ctx: Context, running: Running): Quest | undefined {
   return holds ? quest : undefined;
 }
 
-export async function settle(ctx: Context, { running, result }: Finished): Promise<void> {
+/**
+ * The session's output as the kingdom keeps it (§3.9, ADR 0013): the question goes into the quest file and its
+ * event, the verifier's output into the verdict and the next prompt, so both lose the session's secret values and
+ * every secret shape first.
+ */
+function masked(running: Running, result: RunResult): RunResult {
+  const mask = createRedactor(running.known);
+  return {
+    ...result,
+    ...(result.question === undefined ? {} : { question: mask(result.question) }),
+    ...(result.structured === undefined ? {} : { structured: redactDeep(result.structured, mask) }),
+  };
+}
+
+/** The letter an assignee leaves is read by the next prompts and the owner: masked as soon as its session ends. */
+async function maskLetter(ctx: Context, running: Running): Promise<void> {
+  try {
+    await redactHandover(ctx.root, running.quest, running.known);
+  } catch (error) {
+    ctx.deps.log.warn(
+      `steward: ${running.quest}: the handover letter was not masked: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+export async function settle(ctx: Context, finished: Finished): Promise<void> {
   ctx.counts.ended += 1;
+  const { running } = finished;
+  if (running.role === 'assignee') await maskLetter(ctx, running);
   const quest = current(ctx, running);
   if (quest === undefined) return;
+  const result = masked(running, finished.result);
   const settled =
     running.role === 'assignee'
       ? await settleAssignee(ctx, running, result)

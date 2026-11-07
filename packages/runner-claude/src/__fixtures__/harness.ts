@@ -43,7 +43,7 @@ const MINIMAL = [
   'LOCALAPPDATA',
 ];
 
-/** The minimal env of §3.9, read from this test process (P1-10 builds it for real). */
+/** The minimal env of §3.9, read from this test process (the Steward's comes from runner-core's minimalEnv). */
 export const minimalEnv = (): Record<string, string> =>
   Object.fromEntries(
     MINIMAL.flatMap((name) => {

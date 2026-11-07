@@ -4,7 +4,7 @@
 import { err, ok } from '../core/result.ts';
 import { RANKS } from '../schema/common.ts';
 import { QuestSchema } from '../schema/quest/quest.ts';
-import type { QuestId, TerritoryId } from '../core/ids.ts';
+import type { QuestId } from '../core/ids.ts';
 import type { Result } from '../core/result.ts';
 import type { CommandPayload } from '../schema/command/inbox-command.ts';
 import type { Rank } from '../schema/common.ts';
@@ -12,12 +12,14 @@ import type { Kingdom } from '../schema/kingdom.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 import type { Registry } from '../schema/registry.ts';
 import type { Kind } from '../schema/registry-entries.ts';
+import type { Territory } from '../schema/territory.ts';
 import type { z } from 'zod';
 
 /** Why a quest command is refused; the Steward writes the code as `command.rejected.reason`. */
 export type QuestCommandProblem =
   | 'unknown_kind'
   | 'unknown_territory'
+  | 'secret_not_allowed'
   | 'class_not_allowed'
   | 'unknown_tag'
   | 'unknown_script'
@@ -41,11 +43,22 @@ export interface NewQuestContext {
   readonly at: string;
   readonly breakers: Kingdom['breakers'];
   readonly registry: Pick<Registry, 'kinds' | 'tags' | 'scripts'>;
-  readonly territories: readonly TerritoryId[];
+  /** The kingdom's territories, with the treasury names each lets its quests ask for. */
+  readonly territories: readonly Pick<Territory, 'id' | 'secrets_allowed'>[];
   readonly quests: readonly QuestId[];
 }
 
 type CreateQuest = CommandPayload<'create_quest'>;
+
+/**
+ * The secrets a quest asks for that its territory does not allow (ADR 0013: `secrets_required ⊆
+ * secrets_allowed`). The Steward refuses such a quest when it is created, and refuses its session if the
+ * territory has dropped a name since.
+ */
+export const secretsBeyond = (
+  required: readonly string[],
+  territory: Pick<Territory, 'secrets_allowed'>,
+): string[] => required.filter((name) => !territory.secrets_allowed.includes(name));
 
 const issuesOf = (error: z.ZodError): string[] =>
   error.issues.map((issue) => `${issue.path.map(String).join('.')}: ${issue.message}`);
@@ -61,7 +74,9 @@ function problemOf(
   kind: Kind,
   context: NewQuestContext,
 ): QuestCommandProblem | undefined {
-  if (!context.territories.includes(payload.territory)) return 'unknown_territory';
+  const territory = context.territories.find(({ id }) => id === payload.territory);
+  if (territory === undefined) return 'unknown_territory';
+  if (secretsBeyond(payload.secrets_required ?? [], territory).length > 0) return 'secret_not_allowed';
   if (payload.class_required !== undefined && !kind.classes_allowed.includes(payload.class_required))
     return 'class_not_allowed';
   const tags = new Set(context.registry.tags.map(({ id }) => id));

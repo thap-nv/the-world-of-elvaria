@@ -2,7 +2,9 @@
 // "(Chốt sau P1-03)"). This is where the work engine is put together: a runner per tribe from its adapter, plots
 // over PlotManager, the console bell, the event log; the Steward itself sees only interfaces (ADR 0006, 0021).
 import { openEventLog } from '@elvaria/eventlog';
+import { minimalEnv, openFileTreasury } from '@elvaria/runner-core';
 import { createSteward } from '@elvaria/steward';
+import { fromPortable } from '@elvaria/store';
 import type { Steward } from '@elvaria/steward';
 
 import { EXIT } from '../command.ts';
@@ -31,6 +33,9 @@ function stewardOf(ctx: KingdomContext, crew: Crew): Steward {
     events: openEventLog(store.root),
     runners: crew.runners,
     plots: plotsOf(store.root, io, crew.forget),
+    // Every session starts from the minimal env and takes only its quest's secrets from the treasury (ADR 0013).
+    env: minimalEnv(io.env),
+    treasury: openFileTreasury(fromPortable(ctx.kingdom.paths.treasury, io.platform)),
     clock: io.clock,
     ids: ctx.ids,
     bell: consoleBell(t, io),

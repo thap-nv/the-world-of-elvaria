@@ -20,6 +20,7 @@ flowchart TD
   i18n["i18n"]
   cli["cli"]
   store --> domain
+  store --> eventlog
   registry_default --> domain
   runner_core --> domain
   runner_core --> eventlog
@@ -51,7 +52,7 @@ flowchart TD
 |---|---|---|---|
 | `config` | `packages/config` | — | — (chỉ dùng khi dev) |
 | `domain` | `packages/domain` | — | — |
-| `store` | `packages/store` | `domain` | `domain`, `eventlog` |
+| `store` | `packages/store` | `domain`, `eventlog` | `domain`, `eventlog` |
 | `registry-default` | `packages/registry-default` | `domain` | `domain` |
 | `runner-core` | `packages/runner-core` | `domain`, `eventlog`, `store` | `domain`, `store`, `eventlog` |
 | `runner-claude` | `packages/runner-claude` | `runner-core` | `runner-core` |

@@ -7,7 +7,7 @@ import { lawViolation } from '../claude/tool-events.ts';
 import { plotPath } from '../claude/tools.ts';
 import { modelSlugOf } from '../claude/translate.ts';
 import { agyInputOf } from './input.ts';
-import { AGY_ASK_TOOLS, agyToolCallOf } from './tools.ts';
+import { AGY_ASK_TOOLS, agyToolCallOf, missingClassTools } from './tools.ts';
 import type { HookContext } from '../context.ts';
 import type { Decision, Translation } from '../draft.ts';
 import type { AgyInput } from './input.ts';
@@ -28,14 +28,19 @@ const ASK_REASON =
   'nobody answers inside this session; write your question in the Question section of the handover letter and end the session';
 
 /** Why an Elvaria rule (not a territory law) stops this tool, if one does. */
-function ruleViolation(name: unknown, subagent: string | undefined): string | undefined {
+function ruleViolation(name: unknown, subagent: string | undefined, ctx: HookContext): string | undefined {
   if (subagent !== undefined) return `${subagent}: ${SUBAGENT_REASON}`;
-  return typeof name === 'string' && AGY_ASK_TOOLS.includes(name) ? `${name}: ${ASK_REASON}` : undefined;
+  if (typeof name !== 'string') return undefined;
+  if (AGY_ASK_TOOLS.includes(name)) return `${name}: ${ASK_REASON}`;
+  const missing = missingClassTools(name, ctx.tools);
+  return missing === undefined
+    ? undefined
+    : `${name}: your class has no ${missing.join(' or ')}; do the work with the tools you have`;
 }
 
 function preToolUse(input: AgyInput, ctx: HookContext): Translation {
   const call = agyToolCallOf(input.toolName, input.toolArgs);
-  const rule = ruleViolation(input.toolName, call.subagent);
+  const rule = ruleViolation(input.toolName, call.subagent, ctx);
   const reason = rule ?? lawViolation(call, ctx.laws);
   if (reason === undefined) return translation([], { decision: DEFER_TO_SETTINGS });
   const source = rule === undefined ? 'law of this territory' : 'rule';

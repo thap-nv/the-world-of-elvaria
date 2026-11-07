@@ -20,6 +20,7 @@ import {
   VerdictIdSchema,
   VerdictSchema,
 } from '@elvaria/domain';
+import { createRedactor } from '@elvaria/eventlog';
 import type {
   Campaign,
   CampaignId,
@@ -116,7 +117,13 @@ export const CAMPAIGN_SPEC: EntitySpec<Campaign, CampaignId> = {
   dir: 'campaigns',
 };
 
-/** Verdicts are records: the Steward writes one per attempt and never edits it. */
+/** The patterns only: the store does not know a session's secret values (the Steward masks those first). */
+const maskPatterns = createRedactor([]);
+
+/**
+ * Verdicts are records: the Steward writes one per attempt and never edits it. Their notes are free text a
+ * verifier wrote and the next prompt reads, so every write masks secret shapes in them (ADR 0013).
+ */
 export const VERDICT_SPEC: EntitySpec<Verdict, VerdictId> = {
   contract: 'verdict',
   parser: VerdictSchema,
@@ -124,4 +131,6 @@ export const VERDICT_SPEC: EntitySpec<Verdict, VerdictId> = {
   idParser: VerdictIdSchema,
   idOf: (verdict) => verdict.id,
   dir: 'verdicts',
+  scrub: (verdict) =>
+    verdict.notes === undefined ? verdict : { ...verdict, notes: maskPatterns(verdict.notes) },
 };

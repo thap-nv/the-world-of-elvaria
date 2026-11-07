@@ -12,6 +12,8 @@ export interface Running {
   readonly character: CharacterId;
   readonly session: RunningSession;
   readonly session_id: string;
+  /** The values of the secrets the session was given (§3.9): what its end masks in the letter and the verdict. */
+  readonly known: readonly string[];
 }
 
 export interface Finished {
