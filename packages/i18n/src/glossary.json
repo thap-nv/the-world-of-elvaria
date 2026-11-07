@@ -351,6 +351,13 @@
               "used_in": "`quest.deliverable`, event `delivery.sent`"
             },
             {
+              "vi": "Thư giao hàng",
+              "en": "Delivery note",
+              "id": ["delivery.md"],
+              "definition": "Quản sự viết khi giao: quest, phán quyết, thư bàn giao, thứ đã chép hay đã mở, lệnh merge tay; với nhánh là mô tả PR.",
+              "used_in": "`.runs/<quest>-delivery.md`, `quest.deliverable.path`"
+            },
+            {
               "vi": "Thư bàn giao",
               "en": "Handover letter",
               "id": ["handover.md"],

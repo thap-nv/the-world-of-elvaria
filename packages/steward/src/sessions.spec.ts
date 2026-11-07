@@ -131,6 +131,11 @@ describe("the end of a verifier's session", () => {
     );
     expect(await kingdom.character('kael')).toMatchObject({ level: 4 });
     expect((await kingdom.character('kael')).level_since).toBeDefined();
-    expect((await typesOf(kingdom)).at(-1)).toBe('character.level_up');
+    // The level comes with the verdict; the delivery of step 7 follows in the same tick.
+    expect((await typesOf(kingdom)).slice(-3)).toEqual([
+      'quest.done',
+      'character.level_up',
+      'quest.delivered',
+    ]);
   });
 });

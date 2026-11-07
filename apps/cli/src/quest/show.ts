@@ -1,6 +1,7 @@
 // `elvaria quest show <id>`: one quest, its fields as labelled lines, then its description.
 import type { Quest, Registry } from '@elvaria/domain';
 import type { MessageKey } from '@elvaria/i18n';
+import { inKingdom } from '@elvaria/store';
 
 import { EXIT } from '../command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
@@ -35,6 +36,20 @@ function fields(ctx: KingdomContext, registry: Registry | undefined, quest: Ques
     ...(quest.blocked === undefined
       ? []
       : [['cli.quest.field.question', quest.blocked.question] satisfies [MessageKey, string]]),
+    ...deliveryFields(ctx, quest),
+  ];
+}
+
+/** Once delivered (P1-14): when, the branch to merge, and the delivery note as a path the owner can open. */
+function deliveryFields(ctx: KingdomContext, quest: Quest): [MessageKey, string][] {
+  const { delivered_at: at, branch, path } = quest.deliverable;
+  if (at === undefined) return [];
+  return [
+    ['cli.quest.field.delivered', at],
+    ...(branch === undefined ? [] : [['cli.quest.field.branch', branch] satisfies [MessageKey, string]]),
+    ...(path === undefined
+      ? []
+      : [['cli.quest.field.delivery_note', inKingdom(ctx.store.root, path)] satisfies [MessageKey, string]]),
   ];
 }
 

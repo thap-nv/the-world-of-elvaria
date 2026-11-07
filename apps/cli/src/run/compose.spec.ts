@@ -199,6 +199,10 @@ describe('the console bell', () => {
     expect(lineOf(t, { kind: 'question', quest, question: 'main or release?' })).toContain(
       'asks you: main or release?',
     );
+    expect(lineOf(t, { kind: 'subquests_refused', quest, reason: 'no subquests.json' })).toBe(
+      'Plan q_20261106_7k3m2a «Đổi luồng đăng nhập» is delivered but opened no sub-quest: no subquests.json. ' +
+        'See: elvaria quest show q_20261106_7k3m2a',
+    );
     const tooLow = lineOf(t, {
       kind: 'unclaimable',
       quest,

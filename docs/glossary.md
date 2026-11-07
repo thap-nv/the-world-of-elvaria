@@ -59,6 +59,7 @@ Luật (ADR 0014, [implementation-plan](implementation-plan.md) §2.7 và §4.1)
 | Đất riêng / lều trại | Plot / camp | `plot` | Worktree hoặc thư mục riêng của một quest. | `quest.plot`, `PlotManager` |
 | Nhánh quest | Quest branch | `quest/<id>` | Nhánh git của worktree. | `quest.plot.branch` |
 | Giao hàng | Delivery | `deliver` | Đưa kết quả ra theo quy ước của kind. | `quest.deliverable`, event `delivery.sent` |
+| Thư giao hàng | Delivery note | `delivery.md` | Quản sự viết khi giao: quest, phán quyết, thư bàn giao, thứ đã chép hay đã mở, lệnh merge tay; với nhánh là mô tả PR. | `.runs/<quest>-delivery.md`, `quest.deliverable.path` |
 | Thư bàn giao | Handover letter | `handover.md` | Agent viết: đang ở đâu, đã xong, chưa xong, quyết định, bước kế. | `quests/<id>/handover.md` |
 | Nhật ký (máy) | Journal | `journal.jsonl` | Event của quest do hook ghi. | `quests/<id>/journal.jsonl` |
 | Phụ thuộc | Dependency | `depends_on` | Quest phải xong trước. | `quest.depends_on` |

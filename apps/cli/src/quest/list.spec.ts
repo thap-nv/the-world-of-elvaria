@@ -85,6 +85,33 @@ describe('elvaria quest list and show', () => {
     expect(text).toMatch(/Needs the royal seal\s+no/);
     expect(text).toMatch(/Question\s+Dùng pnpm hay npm\?/);
     expect(io.printed.out.at(-1)).toBe('Gom lint, typecheck và test thành một lệnh.');
+    expect(text).not.toContain('Delivered');
+  });
+
+  it('shows when a done quest was delivered, its branch and the delivery note to open', async () => {
+    const note = `.runs/${QUEST_ID}-delivery.md`;
+    const deliverable = {
+      type: 'branch',
+      branch: `quest/${QUEST_ID}`,
+      path: note,
+      delivered_at: '2026-11-06T09:00:00+07:00',
+    };
+    await plantQuests(kingdom, questFixture('done', QUEST_ID, { deliverable }));
+    const io = testIo();
+    expect(await run(io, 'quest', 'show', QUEST_ID, '--kingdom', kingdom, '--locale', 'en')).toBe(0);
+    const text = io.printed.out.join('\n');
+    expect(text).toMatch(/Delivered\s+2026-11-06T09:00:00\+07:00/);
+    expect(text).toMatch(new RegExp(`Branch\\s+quest/${QUEST_ID}`));
+    expect(text).toContain(path.join(kingdom, '.runs', `${QUEST_ID}-delivery.md`));
+    const bare = testIo();
+    await plantQuests(
+      kingdom,
+      questFixture('done', QUEST_ID, {
+        deliverable: { type: 'none', delivered_at: deliverable.delivered_at },
+      }),
+    );
+    expect(await run(bare, 'quest', 'show', QUEST_ID, '--kingdom', kingdom, '--locale', 'en')).toBe(0);
+    expect(bare.printed.out.join('\n')).not.toMatch(/Branch|Delivery note/);
   });
 
   it('marks the quests the Steward said nobody can take, and shows why with what to do', async () => {

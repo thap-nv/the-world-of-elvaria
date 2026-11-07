@@ -54,6 +54,18 @@
   `verifier_same_family = machine_only` with no judge of another family, the machine's verdict comes from them
   alone (`verifier_id: machine`). Gives the plot back when a quest is archived (`Plots.release`; a dirty
   worktree stays, with a warning).
+- Delivers every done quest once, by its kind's convention (`deliverable.type`; step 7 of §3.1, `src/deliver/`):
+  a branch, file, report or draft on a git territory stays on its branch for the owner to merge by hand; a plot
+  folder of a territory without git is copied into the territory (a file it replaces is kept in
+  `.runs/<quest>-replaced/`; a territory folder that is not there gets nothing); a draft is never sent, and
+  reaches `done` through the seal its kind asks for; a plan's `subquests.json` (quest-draft JSON at the root of
+  its plot) becomes open child quests (`created_by: council`, ids derived from the plan and the ref), all or none:
+  a list it cannot read, a draft the kingdom refuses, a question, a party's parts (P1-18) or a circle open none,
+  and the owner hears it once (`subquests_refused`, the bell, a warning in the log).
+  Each delivery writes `.runs/<quest>-delivery.md` (the pull request's description: the quest, the verdicts of
+  its last run, the letter, what was copied or opened, the commands to merge) and then stamps
+  `deliverable.delivered_at` with `path` (and `branch`); a delivery that fails halfway is done again next tick and
+  finds what it already did.
 - Tells once when an open quest nobody can take (`quest.unclaimable`, the bell), withdraws it with
   `reason: null`, and keeps the notices in `.state/unclaimable.json` (`readUnclaimable`) for `elvaria quest list`
   and `show`.
@@ -65,9 +77,10 @@
 - Estimate mana from tokens against `tribes[].budget`, warn, reassign a long-paused quest
   (`mana.reassign_after_hours`) or ring when a pool sleeps (P1-22); trip time or token breakers, commit WIP
   before a kill (for a breaker or a pool out of mana) or kill process trees (P1-06); know git or a territory's
-  programs (`Plots` is given; `folderPlots` is a folder with no git and no checks, for the specs), deliver
-  (P1-14) or run catalog scripts (P1-17). The judge's prompt carries no diff yet: the judge reads the branch in
-  its plot.
+  programs (`Plots` is given; `folderPlots` is a folder with no git and no checks, for the specs), or run
+  catalog scripts (P1-17). The judge's prompt carries no diff yet: the judge reads the branch in its plot.
+- Push, merge or send anything a quest delivered (stage 1, §9.1 item 11): the owner does, from the delivery note.
+  Open a party's parts and its merge quest when a contract is delivered (P1-18).
 - Read `process.env` or a treasury file itself: the composition root hands it the minimal env and a `Treasury`.
 - Import a concrete runner, the registry package or anything of the world layer (§1.3).
 
@@ -86,4 +99,7 @@ Specs build a throwaway kingdom in the OS temp folder (a space in the name) with
 path, and run `FakeRunner` for both tribes; a fake verifier hands in its verdict as structured output.
 `integration.spec.ts` takes ten quests all the way round (a crash, a failed review, a question, a seal, a
 dependency, a hang) and stops the Steward in the middle: the new one loses no quest, every `attempt_log`
-entry matches exactly one session, and the replayed log equals the files.
+entry matches exactly one session, and the replayed log equals the files. `deliver.spec.ts` delivers a build, a
+report and a sealed draft from worktree-like plots, and a document copied into a territory without git;
+`subquests.spec.ts` opens a plan's sub-quests (again after a delivery that failed halfway) and refuses lists it
+cannot follow; assignees leave their files in the plot through `leavingRunners` (`src/__fixtures__/deliver.ts`).

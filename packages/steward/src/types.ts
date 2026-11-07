@@ -46,6 +46,8 @@ export type Notice =
   | { readonly kind: 'awaiting_seal'; readonly quest: NoticeQuest }
   | { readonly kind: 'infirmary'; readonly quest: NoticeQuest; readonly reason: string }
   | { readonly kind: 'question'; readonly quest: NoticeQuest; readonly question: string }
+  /** A plan was delivered but opened none of its sub-quests (P1-14); `reason` is English, for the owner and logs. */
+  | { readonly kind: 'subquests_refused'; readonly quest: NoticeQuest; readonly reason: string }
   /** The character failed the same way breakers.same_fail_suspend times in a row: it went to the Temple. */
   | {
       readonly kind: 'suspended';
