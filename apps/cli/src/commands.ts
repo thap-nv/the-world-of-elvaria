@@ -6,7 +6,7 @@ import { INIT } from './init.ts';
 import { MIGRATE } from './migrate.ts';
 import { QUEST_ADD } from './quest/add.ts';
 import { QUEST_EDIT } from './quest/edit.ts';
-import { QUEST_CANCEL, QUEST_CONFIRM } from './quest/lifecycle.ts';
+import { QUEST_ARCHIVE, QUEST_CANCEL, QUEST_CONFIRM } from './quest/lifecycle.ts';
 import { QUEST_LIST } from './quest/list.ts';
 import { RETURN, SEAL } from './quest/owner-verdict.ts';
 import { QUEST_SHOW } from './quest/show.ts';
@@ -32,6 +32,7 @@ export const COMMANDS: readonly CommandSpec[] = [
   QUEST_SHOW,
   QUEST_CONFIRM,
   QUEST_CANCEL,
+  QUEST_ARCHIVE,
   QUEST_EDIT,
   SEAL,
   RETURN,

@@ -5,6 +5,7 @@ import type { Result } from '@elvaria/domain';
 import { pathExists } from '@elvaria/store';
 
 import { gitOut, zList } from './git.ts';
+import { clearLeftover } from './leftover.ts';
 import type { Git } from './git.ts';
 import { plotRecordOf } from './plot-record.ts';
 import type { PlotFailure } from './worktree.ts';
@@ -30,6 +31,11 @@ export interface ReleasedPlot {
   readonly removed: boolean;
   /** What a `forget` callback threw; the worktree is gone all the same. */
   readonly forget_failures: readonly string[];
+  /**
+   * Why the folder is still on disk although git removed the worktree (P1-11): something in it is not a dead link
+   * of its own, or a program holds it. Git and the tribes are done with it; the owner removes the folder.
+   */
+  readonly leftover?: string;
 }
 
 /** A tribe CLI drops what it kept about a removed worktree (Claude Code: `claude purge --yes <worktree>`). */
@@ -102,9 +108,11 @@ export async function releaseWorktree(
     const removed = await git(main, ['worktree', 'remove', worktree]);
     if (removed.code !== 0) return err({ reason: 'git_failed', detail: removed.stderr.trim() });
   }
+  // On Windows git keeps the folders of pnpm's junctions (leftover.ts); a crash right after git leaves them too.
+  const leftover = await clearLeftover(worktree);
   const settled = await Promise.allSettled(forget.map((drop) => drop(worktree)));
   const failures = settled.flatMap((result) =>
     result.status === 'rejected' ? [messageOf(result.reason)] : [],
   );
-  return ok({ removed: present, forget_failures: failures });
+  return ok({ removed: present, forget_failures: failures, ...(leftover === undefined ? {} : { leftover }) });
 }

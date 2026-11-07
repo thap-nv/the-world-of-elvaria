@@ -41,8 +41,9 @@
   private git folder. `status`, `touched` (paths changed since the fork, committed or not, plus untracked files),
   `commitAll` (everything, through the territory's own hooks; `refused` when a hook says no; the Steward's messages
   are `plotCommitMessage`, Conventional Commits so commitlint accepts them) and `release`
-  (removes a clean worktree, keeps the branch, then calls each `forget` callback, such as a tribe CLI dropping its
-  transcripts). A territory without git gets `quests/<id>/work/` in the kingdom.
+  (removes a clean worktree, keeps the branch, takes the folders git leaves on Windows around pnpm's dead
+  junctions when nothing else is in them, `leftover` says why a folder stays, then calls each `forget` callback,
+  such as a tribe CLI dropping its transcripts). A territory without git gets `quests/<id>/work/` in the kingdom.
 - Runs the machine checks before a judge (`runChecks`, §3.2): the territory's `checks` whose `when` globs match
   what the quest touched (`selectChecks`, `globToRegExp`: dot names match, case-insensitive, like the laws' globs
   in the hook), one at a time in the plot, each logged to `<run_dir>/checks/<id>.log`. An `exclusive` check holds

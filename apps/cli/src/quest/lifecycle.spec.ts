@@ -63,6 +63,36 @@ describe('elvaria quest confirm, cancel, edit', () => {
     ]);
   });
 
+  it('archives a done quest once delivered, and refuses one not delivered or not done (P1-11)', async () => {
+    const delivered = { deliverable: { type: 'branch', delivered_at: UPDATED_AT } };
+    await plantQuests(
+      kingdom,
+      questFixture('done', QUEST_ID, delivered),
+      questFixture('done', OTHER_QUEST_ID),
+    );
+    const io = testIo();
+    expect(await quest(io, 'archive', QUEST_ID)).toBe(0);
+    expect(io.printed.out[0]).toBe(
+      `Sent the command to archive quest ${QUEST_ID}: the Steward removes its worktree and keeps its branch.`,
+    );
+    expect((await inbox()).map(({ kind, payload }) => ({ kind, payload }))).toEqual([
+      { kind: 'archive', payload: { quest: QUEST_ID } },
+    ]);
+    const undelivered = testIo();
+    expect(await quest(undelivered, 'archive', OTHER_QUEST_ID)).toBe(1);
+    expect(undelivered.printed.err[0]).toContain('is not delivered yet');
+  });
+
+  it('refuses to archive a quest that is not done: cancel is for unfinished ones', async () => {
+    await plantQuests(kingdom, questFixture('open'));
+    const io = testIo();
+    expect(await quest(io, 'archive', QUEST_ID)).toBe(1);
+    expect(io.printed.err).toEqual([
+      `Quest ${QUEST_ID} is «Open»: only a done quest can be archived (use elvaria quest cancel for an unfinished one).`,
+    ]);
+    expect(await inbox()).toEqual([]);
+  });
+
   it('refuses to cancel an archived quest, or one that is not there', async () => {
     await plantQuests(kingdom, questFixture('archived'));
     const io = testIo();

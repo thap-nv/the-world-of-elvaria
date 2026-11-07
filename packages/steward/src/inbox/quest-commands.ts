@@ -114,6 +114,10 @@ async function releasePlot(ctx: Context, quest: Quest): Promise<void> {
     }
     for (const failure of released.value.forget_failures)
       ctx.deps.log.warn(`steward: ${quest.id}: a tribe's CLI kept data about the plot: ${failure}`);
+    // Git and the tribes are done with the plot; only the folder stays, for the owner (P1-11).
+    const { leftover } = released.value;
+    if (leftover !== undefined)
+      ctx.deps.log.warn(`steward: ${quest.id}: the plot's folder stays, remove it by hand: ${leftover}`);
   } catch (error) {
     ctx.deps.log.warn(`steward: ${quest.id}: the plot stays: ${messageOf(error)}`);
   }

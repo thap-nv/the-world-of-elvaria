@@ -117,16 +117,14 @@ elvaria return <quest> --note "…" --fail-kind …   # trả về người làm
 
 Merge nhánh là việc của bạn, như mọi PR. Quản sự viết thư giao hàng vào `.runs/<quest>-delivery.md`, dùng làm mô tả PR. Push từ trong worktree (`git -C <repo>/.elvaria/worktrees/<quest> push -u origin quest/<quest>`), để pre-push hook của repo kiểm đúng nhánh đó, không kiểm checkout chính.
 
-Sau khi merge, worktree chưa tự đi: một quest `done` chưa có lệnh lưu trữ (§11, đề xuất P1-11c), nên dọn tay trong repo của lãnh thổ:
+Sau khi merge, trả worktree bằng lệnh lưu trữ (chỉ cho quest đã xong và đã giao hàng), rồi chạy Quản sự để nó áp lệnh:
 
 ```bash
-git worktree remove .elvaria/worktrees/<quest>     # quest đã hủy, còn thay đổi chưa commit: thêm --force
-git branch -d quest/<quest>                          # nhánh không có commit nào: -D
-git push origin --delete quest/<quest>               # nếu đã push
-claude purge --yes "<repo>/.elvaria/worktrees/<quest>"
+elvaria quest archive <quest>
+elvaria run                                          # một hai nhịp, rồi Ctrl+C
 ```
 
-`claude purge` xóa transcript mà Claude Code giữ cho đường dẫn đó (exit 1 với "No Claude Code project state found" là không còn gì). Trên Windows, `git worktree remove` để lại khung thư mục chứa các junction `node_modules` của pnpm (đã chết, không còn file): xóa nó bằng một lệnh không đi theo junction, ví dụ `node -e "require('fs').rmSync(process.argv[1], {recursive: true, force: true})" "<repo>/.elvaria/worktrees/<quest>"`. `EPERM` nghĩa là một chương trình còn mở thư mục đó (VS Code mở worktree để xem PR): đóng nó rồi xóa lại. Lần chạy 2026-11-07 dọn đúng như vậy cả hai worktree.
+Quản sự gỡ worktree (cả khung thư mục chứa junction `node_modules` của pnpm mà `git worktree remove` để lại trên Windows) và cho Claude Code quên đường dẫn đó (`claude purge`). Nhánh ở lại; xóa nó khi đã merge: `git branch -d quest/<quest>` và, nếu đã push, `git push origin --delete quest/<quest>`. Một thư mục mà chương trình khác còn mở (VS Code mở worktree để xem PR: `EPERM`) thì ở lại, Quản sự in một dòng cảnh báo có đường dẫn: đóng chương trình đó rồi xóa tay. Quest đã hủy giữ worktree (như mọi lần hủy, kể cả thay đổi chưa commit); dọn tay bằng `git worktree remove --force`, `git branch -D` và `claude purge --yes "<repo>/.elvaria/worktrees/<quest>"`. Lần chạy 2026-11-07 dọn tay cả hai worktree, vì lệnh lưu trữ ra đời sau đó, từ chính lần dọn này.
 
 ## 9. Lần chạy ngày 2026-11-07
 
