@@ -7,3 +7,5 @@ design/
 # docs/schemas/ is the hand-written v1 contract until P0-03, then generator output.
 docs/
 CLAUDE.md
+# Quest worktrees when this repo is a territory (ADR 0012): each is its own checkout, checked there.
+.elvaria/

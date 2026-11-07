@@ -8,10 +8,12 @@ import {
   LANGUAGE_NAMES,
   continuationBlock,
   decreeBlock,
+  diffBlock,
   entryOf,
   gazetteerBlock,
   questBlock,
   scriptureBlock,
+  shellBlock,
   skillsBlock,
 } from './blocks.ts';
 import { fenced, fill, joinBlocks, sectionsOf } from './templates.ts';
@@ -48,7 +50,8 @@ export interface VerifierPromptInput extends PromptBase {
   readonly role: 'verifier';
   /** The assignee's letter, or null when there is none. */
   readonly handover: string | null;
-  readonly diff: string;
+  /** The branch's diff; null when the caller has none to give, and the verifier reads it in the plot. */
+  readonly diff: string | null;
   readonly checks: readonly VerdictCheck[];
 }
 
@@ -65,7 +68,7 @@ const PASS_RULES: Readonly<Record<Ritual['pass_rule'], string>> = {
 function assigneePrompt(input: AssigneePromptInput, t: PromptTemplates): BuiltPrompt {
   const { quest, character, registry } = input;
   const characterClass = entryOf(registry.classes, character.class, 'class');
-  const policy = toolPolicyOf({ role: 'assignee', characterClass, character });
+  const policy = toolPolicyOf({ role: 'assignee', characterClass, character, territory: input.territory });
   const role = fill(t.assignee, {
     character: character.name,
     class: characterClass.name_en,
@@ -74,6 +77,7 @@ function assigneePrompt(input: AssigneePromptInput, t: PromptTemplates): BuiltPr
     handover_path: input.handover_path,
     language: LANGUAGE_NAMES[input.locale],
     apprentice: policy.apprentice === null ? '' : t.apprentice,
+    shell: shellBlock(policy, t),
     handover_template: fenced(fill(t.handover, { quest_id: quest.id }), 'markdown'),
   });
   return {
@@ -122,6 +126,10 @@ function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): BuiltPr
     pass_rule: PASS_RULES[ritual.pass_rule],
     fail_kinds: FAIL_KINDS.map((kind) => `\`${kind}\``).join(', '),
     language: LANGUAGE_NAMES[input.locale],
+    shell: shellBlock(
+      toolPolicyOf({ role: 'verifier', characterClass, character, territory: input.territory }),
+      t,
+    ),
   });
   const review = fill(t.review, {
     ritual: `${ritual.name_en} (\`${ritual.id}\`)`,
@@ -132,7 +140,7 @@ function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): BuiltPr
       input.handover === null || input.handover.trim() === ''
         ? 'The assignee left no letter.'
         : fenced(input.handover, 'markdown'),
-    diff: input.diff.trim() === '' ? 'The branch has no changes.' : fenced(input.diff, 'diff'),
+    diff: diffBlock(input.diff, input.territory),
   });
   return {
     system: joinBlocks([decreeBlock(input.decree, t), role]),

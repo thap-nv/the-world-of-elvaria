@@ -70,21 +70,45 @@ export async function readPids(root: string): Promise<SessionPid[]> {
 }
 
 /**
+ * A recorded session whose pid is still alive: `same` when that process started at the spawn (the session itself),
+ * `other` when it started at another time (the pid was reused), `unknown` when the system would not tell.
+ */
+export interface LeftSession extends SessionPid {
+  readonly process: 'same' | 'other' | 'unknown';
+}
+
+/**
+ * The recorded sessions whose pid is still alive; a pid that has ended is left out. Read by the next Steward, and
+ * by `elvaria doctor` (P1-11), which reports them while no Steward holds the lock.
+ */
+export async function leftSessions(root: string): Promise<LeftSession[]> {
+  const left: LeftSession[] = [];
+  for (const entry of await readPids(root)) {
+    if (!isAlive(entry.pid)) continue;
+    left.push({ ...entry, process: whoseProcess(await processStartOf(entry.pid), entry.spawned_at) });
+  }
+  return left;
+}
+
+function whoseProcess(started: number | undefined, spawnedAt: string): LeftSession['process'] {
+  if (started === undefined) return 'unknown';
+  return Math.abs(started - Date.parse(spawnedAt)) <= SAME_PROCESS_MS ? 'same' : 'other';
+}
+
+/**
  * At start, before the first tick: kills the tree of every session the last Steward left running, then clears the
  * record. A pid whose process started at another time belongs to someone else now, and is left alone; so is one
  * whose start the system would not tell (the owner reads the warning and the pid).
  */
 export async function reapOrphans(deps: Pick<StewardDeps, 'store' | 'log'>): Promise<void> {
   const root = deps.store.root;
-  for (const left of await readPids(root)) {
-    if (!isAlive(left.pid)) continue;
-    const started = await processStartOf(left.pid);
+  for (const left of await leftSessions(root)) {
     const who = `${left.quest}: ${left.character}'s session (pid ${String(left.pid)})`;
-    if (started === undefined) {
+    if (left.process === 'unknown') {
       deps.log.warn(`steward: ${who}: still running, but when it started is unknown; left alone`);
       continue;
     }
-    if (Math.abs(started - Date.parse(left.spawned_at)) > SAME_PROCESS_MS) {
+    if (left.process === 'other') {
       deps.log.warn(`steward: ${who}: the pid now belongs to another process; left alone`);
       continue;
     }

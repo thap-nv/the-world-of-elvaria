@@ -401,7 +401,7 @@ Chi phí cố định của mỗi phiên mới (system prompt, CLAUDE.md, địa
 - Hooks của Claude Code (chạy script ở các mốc vòng đời: trước/sau tool, khi dừng, khi spawn sub-agent, khi nén context) ghi một dòng JSON vào `events/` cho từng hành động. Runner không sửa Claude Code; cấu hình hook nằm trong `~/.claude/`.
 - Sub-agent và Agent Teams: mỗi sub-agent là một học trò đi theo nhân vật; team bền vững là một đội.
 - Status line cung cấp `rate_limits.five_hour` và `rate_limits.seven_day` → mana.
-- Chế độ tương tác: click "triệu hồi" trên bản đồ mở terminal của phiên đó để người dùng can thiệp.
+- Chế độ tương tác: click "triệu hồi" trên bản đồ (hoặc trong khách nhẹ) mở khung chat với chính phiên nhân vật đang chạy, như người dùng gõ vào một phiên Claude Code đang làm: tin mới tới phiên, nhân vật đọc ở chỗ dừng kế tiếp, trả lời rồi làm tiếp, phiên không kết thúc. Tin đi qua Sứ giả như mọi hành động, được ghi vào journal; người chấm không đọc cuộc trò chuyện, nên chỉ dẫn đổi phạm vi phải vào quest hoặc thư bàn giao.
 
 ### Runner Gemini CLI
 
@@ -450,7 +450,7 @@ Runner dịch output của mọi CLI về cùng schema sự kiện ở mục 4. 
 - Phục vụ renderer tĩnh tại `http://localhost:<port>`.
 - Nhận hành động từ renderer: đóng dấu, trả bài, triệu hồi, tạo quest nhanh → ghi vào `quests/` (Quản sự đọc), không gọi agent trực tiếp.
 - Chuông: khi `awaiting_seal` hoặc `infirmary` → thông báo hệ thống trên máy (Windows/macOS) và đẩy tới điện thoại qua đường hầm (web push hoặc ứng dụng nhắn tin; chọn ở giai đoạn 2).
-- Truy cập từ xa (tùy chọn): Sứ giả đứng sau một đường hầm riêng (Tailscale hoặc Cloudflare Tunnel), có token/mật khẩu và HTTPS. Mọi hành động từ xa vẫn chỉ ghi vào `quests/` để Quản sự đọc, nên quyền hạn không đổi và không có lệnh nào chạy trực tiếp từ ngoài. Điện thoại nhận **khách nhẹ**: bản đồ 2D phẳng, Ngai vàng, trạm quân y, chuông, khung Tể tướng; không tải 3D. Điều kiện: máy chạy Elvaria không được ngủ; tắt đường hầm bằng một cờ.
+- Truy cập từ xa (tùy chọn): Sứ giả đứng sau một đường hầm riêng (Tailscale hoặc Cloudflare Tunnel), có token/mật khẩu và HTTPS. Mọi hành động từ xa vẫn chỉ ghi vào `quests/` để Quản sự đọc, nên quyền hạn không đổi và không có lệnh nào chạy trực tiếp từ ngoài. Điện thoại nhận **khách nhẹ**: bản đồ 2D phẳng, Ngai vàng, trạm quân y, chuông, khung Tể tướng, khung chat triệu hồi; không tải 3D. Điều kiện: máy chạy Elvaria không được ngủ; tắt đường hầm bằng một cờ.
 - Phương án đưa cả runner lên VM cloud để dành cho sau, đi kèm API key.
 
 ### Đa nền tảng
@@ -504,7 +504,7 @@ Runner dịch output của mọi CLI về cùng schema sự kiện ở mục 4. 
 
 ### Khách nhẹ cho điện thoại
 
-- Bản đồ 2D phẳng vẽ từ cùng `world/map.json` (vùng là ô màu theo sức khỏe, nhân vật là chấm có icon nghề), Ngai vàng, trạm quân y, chuông, khung Tể tướng.
+- Bản đồ 2D phẳng vẽ từ cùng `world/map.json` (vùng là ô màu theo sức khỏe, nhân vật là chấm có icon nghề), Ngai vàng, trạm quân y, chuông, khung Tể tướng, khung chat triệu hồi.
 - Không tải Three.js; cùng WebSocket, cùng hành động, cùng quyền hạn như desktop.
 
 ### Sa bàn
@@ -591,6 +591,7 @@ Không còn câu hỏi mở trước giai đoạn 0.
 | 2026-11-06 | Việc nhiều chuyên môn = đội: hợp đồng trước, mỗi phần một quest con, quest ghép cuối, người chấm ngoài đội |
 | 2026-11-06 | Hợp đồng tộc: thêm nhà cung cấp bằng adapter + theme + tài khoản; Codex đạt bậc đầy đủ (exec --json, hook vòng đời, AGENTS.md); nguyên tắc 6 nới thành "mỗi tộc một tài khoản" |
 | 2026-11-06 | Chạy test không phải quest; test đi kèm do người làm viết; test là sản phẩm thì quest riêng với nghi thức Thử tường (đập thử, 3 lần, coverage); Khảo hạch mù cho hạng B+; không có nghề tester |
+| 2026-11-07 | Triệu hồi = khung chat trên web với phiên nhân vật đang chạy (đọc tin mới, trả lời, làm tiếp), thay cho mở terminal của phiên; cơ chế và chi tiết ở kế hoạch triển khai §10 |
 
 ---
 

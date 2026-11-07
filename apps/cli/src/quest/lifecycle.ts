@@ -1,4 +1,5 @@
-// `elvaria quest confirm|cancel <id>`: commands the Steward turns into a transition (implementation-plan §2.5).
+// `elvaria quest confirm|cancel|archive <id>`: commands the Steward turns into a transition (implementation-plan
+// §2.5).
 // The CLI asks the same table first, so a command the quest cannot take now is refused at the terminal.
 import { findTransition } from '@elvaria/domain';
 import type { Quest, QuestEventType } from '@elvaria/domain';
@@ -60,6 +61,32 @@ async function runCancel(input: CommandInput, cli: CliContext): Promise<ExitCode
     id: quest.id,
   });
 }
+
+/**
+ * A done quest gives its plot back (`done.archive`, §2.5): the Steward removes the worktree, keeps the branch and
+ * lets each tribe CLI forget it. Only once delivered: the delivery note and the branch are what the owner merges
+ * from, and a quest archived before the Steward delivered it would never be (P1-11).
+ */
+async function runArchive(input: CommandInput, cli: CliContext): Promise<ExitCode> {
+  const ctx = await openKingdomContext(input, cli);
+  if (ctx === undefined) return EXIT.failed;
+  const quest = await questFor(input, ctx, () => 'archive', 'cli.quest.archive.refused');
+  if (quest === undefined) return EXIT.failed;
+  if (quest.deliverable.delivered_at === undefined) {
+    ctx.io.err(ctx.t('cli.quest.archive.undelivered', { id: quest.id }));
+    return EXIT.failed;
+  }
+  const command = { ...commandHeader(ctx), kind: 'archive', payload: { quest: quest.id } } as const;
+  return sendCommand(ctx, command, 'cli.quest.archive.sent', { id: quest.id });
+}
+
+export const QUEST_ARCHIVE: CommandSpec = {
+  name: ['quest', 'archive'],
+  summary: 'cli.quest.archive.summary',
+  args: [{ name: '<quest>', help: 'cli.quest.arg.quest' }],
+  options: {},
+  run: runArchive,
+};
 
 export const QUEST_CONFIRM: CommandSpec = {
   name: ['quest', 'confirm'],

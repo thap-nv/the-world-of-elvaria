@@ -89,7 +89,7 @@ describe('what goes wrong on the way', () => {
     expect(kingdom.warnings.join('\n')).toContain('the plot stays (dirty): src/a.ts is modified');
   });
 
-  it("warns when a tribe's CLI keeps data about a released plot, or the release throws", async () => {
+  it("warns when a tribe's CLI keeps data about a released plot, its folder stays, or the release throws", async () => {
     let call = 0;
     const { kingdom, steward } = await open({}, (k) => ({
       plots: plotsWith(k.root, {
@@ -98,7 +98,11 @@ describe('what goes wrong on the way', () => {
           if (call === 2) return Promise.reject(new Error('EBUSY'));
           return Promise.resolve({
             ok: true,
-            value: { removed: true, forget_failures: ['claude purge: exit 2'] },
+            value: {
+              removed: true,
+              forget_failures: ['claude purge: exit 2'],
+              leftover: 'D:/repo/.elvaria/worktrees/q: EPERM',
+            },
           });
         },
       }),
@@ -113,6 +117,7 @@ describe('what goes wrong on the way', () => {
     await steward.tick();
     const said = kingdom.warnings.join('\n');
     expect(said).toContain("a tribe's CLI kept data about the plot: claude purge: exit 2");
+    expect(said).toContain("the plot's folder stays, remove it by hand: D:/repo/.elvaria/worktrees/q: EPERM");
     expect(said).toContain('the plot stays: EBUSY');
   });
 

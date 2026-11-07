@@ -11,7 +11,8 @@
   JSON → migrate to the current version → the domain's zod schema; every write is validated first.
 - Writes atomically (temp file in the same folder, flushed, renamed over the target) under `proper-lockfile`
   locks (ADR 0004, 0015). Windows' transient `EPERM`/`EACCES`/`EBUSY` are retried within a time budget.
-  `acquireLock` also serves the long-held `.state/steward.lock` (P1-03).
+  `acquireLock` also serves the long-held `.state/steward.lock` (P1-03); `isLocked` only reads whether a live
+  holder keeps a lock (`elvaria doctor`, P1-11).
 - Holds the migration framework (ADR 0003): one chain per stored contract in `src/migrations/index.ts`, steps in
   `src/migrations/<contract>/v<n>-to-v<n+1>.ts`, fixtures `v<n>.json` beside them, and `migrateKingdom` for
   `elvaria migrate` (rewrite every old file once, old text in `.backup/<stamp>/`).

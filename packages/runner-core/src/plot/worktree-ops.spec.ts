@@ -1,8 +1,8 @@
-import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { fromPortable } from '@elvaria/store';
+import { fromPortable, pathExists } from '@elvaria/store';
 import type { Plot } from '@elvaria/domain';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -110,11 +110,16 @@ describe('release', () => {
   it('removes the worktree with its node_modules, keeps the branch, and lets each tribe forget it', async () => {
     const { repo, plot, worktree } = await preparedPlot('release repo', 'f7g8h9');
     await commitFile(worktree, 'src/done.ts', 'export const done = true;\n');
-    await mkdir(path.join(worktree, 'node_modules', 'left-pad'), { recursive: true });
-    await writeFile(path.join(worktree, 'node_modules', 'left-pad', 'index.js'), '');
+    // node_modules as pnpm lays it out: the package in its store, a junction (Windows) or symlink to it.
+    const stored = path.join(worktree, 'node_modules', '.pnpm', 'left-pad', 'node_modules', 'left-pad');
+    await mkdir(stored, { recursive: true });
+    await writeFile(path.join(stored, 'index.js'), '');
+    await symlink(stored, path.join(worktree, 'node_modules', 'left-pad'), 'junction');
     forgotten.length = 0;
 
     expect(await plots().release(plot)).toEqual({ ok: true, value: { removed: true, forget_failures: [] } });
+    // git keeps the junctions' folders on Windows; release takes them too (P1-11).
+    expect(await pathExists(worktree)).toBe(false);
     expect(git(repo, 'worktree', 'list', '--porcelain').match(/^worktree /gm)).toHaveLength(1);
     expect(git(repo, 'log', '-1', '--format=%s', 'quest/q_20261107_f7g8h9')).toBe('add src/done.ts');
     expect(forgotten).toEqual([worktree]);

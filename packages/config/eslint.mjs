@@ -84,6 +84,8 @@ export function elvaria({ root }) {
         '**/__fixtures__/**',
         'design/**',
         'docs/**',
+        // Quest worktrees when this repo is a territory (ADR 0012): each is its own checkout, linted there.
+        '.elvaria/**',
       ],
     },
     js.configs.recommended,

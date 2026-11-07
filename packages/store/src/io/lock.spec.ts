@@ -5,7 +5,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { tempKingdom } from '../../test/kingdom.ts';
-import { STALE_MS, acquireLock, withLock } from './lock.ts';
+import { STALE_MS, acquireLock, isLocked, withLock } from './lock.ts';
 import type { TempKingdom } from '../../test/kingdom.ts';
 
 // The shortest stale time proper-lockfile accepts; it then refreshes (and notices a loss) every second.
@@ -38,6 +38,21 @@ describe('acquireLock (ADR 0004, 0015)', () => {
     const held = await acquireLock(target, { wait: false });
     expect(held.ok).toBe(true);
     if (held.ok) await held.value.release();
+  });
+
+  it('isLocked: held while a holder refreshes it, free once released or stale, and never takes it', async () => {
+    expect(await isLocked(target)).toBe(false);
+    const held = await acquireLock(target, { wait: false });
+    if (!held.ok) throw new Error('lock not taken');
+    expect(await isLocked(target)).toBe(true);
+    await held.value.release();
+    expect(await isLocked(target)).toBe(false);
+    const lockDir = `${target}.lock`;
+    await mkdir(lockDir, { recursive: true });
+    const old = new Date(Date.now() - 2 * STALE_MS);
+    await utimes(lockDir, old, old);
+    expect(await isLocked(target)).toBe(false);
+    expect(await readdir(path.dirname(target))).toEqual(['steward.lock.lock']);
   });
 
   it('records a lock lost while held instead of crashing the process', async () => {
