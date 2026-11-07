@@ -1,6 +1,8 @@
 // A short call of the CLI that is read once it ends: `--version`, `auth status --json`, `-p "/usage"`, the probe's
 // ping. No shell, the env it is given and nothing else (ADR 0013, 0015); stdin closed at once.
 import { spawn } from 'node:child_process';
+import type { ChildProcessByStdio } from 'node:child_process';
+import type { Readable } from 'node:stream';
 
 import type { Launch } from './launch.ts';
 
@@ -19,15 +21,30 @@ export interface RunOnceOptions {
   readonly timeoutMs: number;
 }
 
-export function runOnce(launch: Launch, args: readonly string[], options: RunOnceOptions): Promise<Ran> {
-  return new Promise((resolve) => {
-    const child = spawn(launch.file, [...launch.args, ...args], {
+type Child = ChildProcessByStdio<null, Readable, Readable>;
+
+/** The child, or why it could not start: some failures throw at once (a broken executable on Windows: EFTYPE). */
+function start(launch: Launch, args: readonly string[], options: RunOnceOptions): Child | Error {
+  try {
+    return spawn(launch.file, [...launch.args, ...args], {
       cwd: options.cwd,
       env: options.env,
       shell: false,
       stdio: ['ignore', 'pipe', 'pipe'],
       windowsHide: true,
     });
+  } catch (error) {
+    return error instanceof Error ? error : new Error(String(error));
+  }
+}
+
+export function runOnce(launch: Launch, args: readonly string[], options: RunOnceOptions): Promise<Ran> {
+  return new Promise((resolve) => {
+    const child = start(launch, args, options);
+    if (child instanceof Error) {
+      resolve({ code: null, stdout: '', stderr: '', problem: child.message });
+      return;
+    }
     let stdout = '';
     let stderr = '';
     let problem: string | undefined;

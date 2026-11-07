@@ -63,6 +63,15 @@ describe('processes', () => {
     expect(outcome.stderr).not.toBe('');
   });
 
+  // Windows throws EFTYPE from spawn itself; POSIX may run an empty file as an empty sh script.
+  it.runIf(process.platform === 'win32')('reports a broken executable instead of throwing', async () => {
+    const broken = path.join(dir.root, 'broken.exe');
+    await writeFile(broken, '', { mode: 0o755 });
+    const outcome = await runProcess(broken, ['--version'], { env: {}, timeoutMs: 5_000 });
+    expect(outcome.code).toBeNull();
+    expect(outcome.stderr).not.toBe('');
+  });
+
   it.runIf(process.platform !== 'win32')('skips a file without the execute bit', async () => {
     const bin = path.join(dir.root, 'bin');
     await mkdir(bin);

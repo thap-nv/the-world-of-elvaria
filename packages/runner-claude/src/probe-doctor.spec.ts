@@ -71,6 +71,16 @@ describe('doctor', () => {
     expect(info.detail).toContain(hookMissing(hookScript));
   });
 
+  // Windows throws EFTYPE from spawn itself for a file that is no program; doctor must answer, not throw.
+  it.runIf(process.platform === 'win32')('answers for a broken executable', async () => {
+    const broken = path.join(await mkdtemp(path.join(tmpdir(), 'elvaria broken ')), 'claude.exe');
+    await writeFile(broken, '');
+    const info = await fakeRunner({ executable: broken }).doctor();
+    expect(info).toMatchObject({ path: broken, version: '', auth_ok: false });
+    expect(info.detail).toContain('no version from');
+    await rm(path.dirname(broken), { recursive: true, force: true });
+  });
+
   it('says when it found no CLI at all, and a session cannot start', async () => {
     const runner = createClaudeRunner({
       tribe: TRIBE,
