@@ -44,7 +44,7 @@ describe('renderEvents', () => {
 
   it('lists every type of the v1 catalogue once, under its group', () => {
     for (const type of EVENT_TYPES) expect(text.split(`| \`${type}\` |`)).toHaveLength(2);
-    expect(text).toContain('\n## `quest` · 17 type\n');
+    expect(text).toContain('\n## `quest` · 19 type\n');
     expect(text).toContain('\n## `sandbox` · 2 type\n');
   });
 

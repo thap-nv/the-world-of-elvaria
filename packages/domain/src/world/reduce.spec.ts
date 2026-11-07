@@ -81,6 +81,19 @@ describe('applyEvent', () => {
     expect(Object.keys(next.quests)).toHaveLength(Object.keys(STATE.quests).length - 1);
   });
 
+  it("puts the owner's edit in place, and keeps the state for a notice that changes no quest", () => {
+    const edited = { ...QUEST_VIEW, rank: 'B', title: 'A clearer title' } as const;
+    expect(applyEvent(STATE, line('quest.edited', { quest: edited })).quests[QUEST_VIEW.id]).toEqual(edited);
+    const notice = {
+      reason: 'level_too_low',
+      rank: 'A',
+      class: 'knight',
+      best_character: 'thorn',
+      best_level: 5,
+    };
+    expect(applyEvent(STATE, line('quest.unclaimable', notice))).toBe(STATE);
+  });
+
   it('applies the infirmary line like any quest line; its reason is for the chronicle', () => {
     const view = { ...QUEST_VIEW, status: 'infirmary', verifier: null } as const;
     const next = applyEvent(STATE, line('quest.infirmary', { reason: 'max_attempts', quest: view }));
