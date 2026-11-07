@@ -1,7 +1,7 @@
 import { readFile, realpath } from 'node:fs/promises';
 import path from 'node:path';
 
-import { CONFORMANCE_QUEST, STDERR_FILE, STDOUT_FILE } from '@elvaria/runner-core';
+import { CONFORMANCE_QUEST, POLICY_FILE, STDERR_FILE, STDOUT_FILE } from '@elvaria/runner-core';
 import type { RunnerSignal, RunningSession, Workspace } from '@elvaria/runner-core';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -156,7 +156,7 @@ describe('a session', () => {
   it('declares the apprentice and passes structured output, a budget and a resumed session', async () => {
     const prepared = await prepare(
       'submit',
-      { apprentice: { model: 'haiku', max_turns: 7 } },
+      { apprentice: { max_turns: 7, max_minutes: 5 } },
       {
         request: {
           structured: { type: 'object' },
@@ -173,6 +173,8 @@ describe('a session', () => {
     };
     const request = {
       ...prepared.request,
+      // A Sonnet master: its apprentice may run on haiku (the default) or sonnet, never stronger (§3.12).
+      character: { ...prepared.request.character, model: 'claude-sonnet-5-5' },
       permissions,
       env: { ...prepared.request.env, FAKE_CLAUDE_RECORD: record },
     };
@@ -188,6 +190,17 @@ describe('a session', () => {
     expect(await readJson(path.join(request.run_dir, AGENTS_FILE))).toMatchObject({
       apprentice: { tools: ['Read', 'Grep'], model: 'haiku', maxTurns: 7, omitClaudeMd: false },
     });
+    expect(await readJson(path.join(request.run_dir, POLICY_FILE))).toMatchObject({
+      apprentice_models: ['haiku', 'sonnet'],
+    });
+  });
+
+  it('lists no apprentice model for a character that may start no apprentice', async () => {
+    const prepared = await prepare('submit');
+    await play(prepared);
+    expect(await readJson(path.join(prepared.request.run_dir, POLICY_FILE))).not.toHaveProperty(
+      'apprentice_models',
+    );
   });
 });
 
@@ -243,18 +256,20 @@ describe('what a session reports', () => {
 describe('real runs replayed through the adapter', () => {
   const replay = (file: string) => prepare('submit', {}, { env: { FAKE_CLAUDE_REPLAY: file } });
 
-  it('writes agent.subagent.start and end from the task lines', async () => {
+  it('writes agent.subagent.start and end from the task lines, each run cut at its maxTurns', async () => {
+    // A real run (spike P1-02): an apprentice with maxTurns 2 stopped twice at its limit, resumed in between.
     const prepared = await replay('apprentice-max-turns.jsonl');
     const { result } = await play(prepared);
     expect(result.outcome).toBe('completed');
     const subagents = (await journal(prepared.workspace)).filter(({ type }) =>
       type.startsWith('agent.subagent'),
     );
+    const cut = { agent_type: 'apprentice', stopped: 'max_turns' };
     expect(subagents.map(({ type, data }) => [type, data])).toEqual([
       ['agent.subagent.start', { agent_type: 'apprentice' }],
-      ['agent.subagent.end', { agent_type: 'apprentice', duration_ms: 3527 }],
+      ['agent.subagent.end', { ...cut, duration_ms: 3527 }],
       ['agent.subagent.start', { agent_type: 'apprentice' }],
-      ['agent.subagent.end', { agent_type: 'apprentice', duration_ms: 3501 }],
+      ['agent.subagent.end', { ...cut, duration_ms: 3501 }],
     ]);
   });
 

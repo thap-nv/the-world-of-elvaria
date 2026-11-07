@@ -103,7 +103,18 @@ describe('policy.json', () => {
     expect(parsed.version).toBe(1);
     expect(parsed.laws).toEqual(policy.laws);
     expect(parsed.tools).toEqual(['Read', 'Edit', 'Write', 'Glob', 'Grep', 'Bash', 'Agent']);
-    // A session without secrets names none.
+    // A session without secrets names none, and without the adapter's word no apprentice model list.
     expect(parsed).not.toHaveProperty('secrets');
+    expect(parsed).not.toHaveProperty('apprentice_models');
+  });
+
+  it("carries the apprentice's models when the adapter gives them (§3.12)", async () => {
+    const runDir = path.join(dir, '.runs', `${QUEST.id}-2`);
+    const context = runContextOf(request(STEWARD_ENV));
+    const written = await writePolicyFile(runDir, context, policy, {
+      apprentice_models: ['haiku', 'sonnet'],
+    });
+    const parsed = JSON.parse(await readFile(written, 'utf8')) as Record<string, unknown>;
+    expect(parsed.apprentice_models).toEqual(['haiku', 'sonnet']);
   });
 });

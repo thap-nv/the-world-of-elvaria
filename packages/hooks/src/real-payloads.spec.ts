@@ -78,3 +78,38 @@ describe('the payloads Claude Code really sent', () => {
     expect(events.map(({ data }) => data.path).filter(Boolean)).toEqual(['README.md', 'notes/spike.txt']);
   });
 });
+
+describe("the apprentice's own calls (§3.12)", () => {
+  // Line 14 of the spike: the apprentice's PreToolUse on Read, with agent_id and agent_type.
+  const apprenticeRead = PAYLOADS.find((raw) => raw.agent_type === 'apprentice' && raw.tool_name === 'Read');
+
+  it('are marked with agent_type, a call done and a call refused, and read back valid', async () => {
+    expect(apprenticeRead).toBeDefined();
+    const fresh = await tempKingdom();
+    try {
+      const policy = path.join(fresh.runDir, 'policy.json');
+      await writeFile(
+        policy,
+        JSON.stringify({ version: 1, laws: { forbidden_paths: ['src/*.txt'] } }),
+        'utf8',
+      );
+      const env = fresh.env({ ELVARIA_MODEL: 'claude-sonnet-5-5' });
+      const done = { ...apprenticeRead, hook_event_name: 'PostToolUse', duration_ms: 5 };
+      const call = (raw: Record<string, unknown>) =>
+        runHook({ stdin: JSON.stringify(raw), env, argv: ['--policy', policy], now: NOW });
+      expect(denied(await call({ ...apprenticeRead }))).toMatch(
+        /a\.txt is a forbidden path \(src\/\*\.txt\)/,
+      );
+      await writeFile(policy, JSON.stringify({ version: 1 }), 'utf8');
+      await call(done);
+      const { events, issues } = await fresh.log();
+      expect(issues).toEqual([]);
+      expect(events.map(({ type, data }) => [type, data.agent_type])).toEqual([
+        ['agent.tool.blocked', 'apprentice'],
+        ['agent.tool', 'apprentice'],
+      ]);
+    } finally {
+      await fresh.remove();
+    }
+  });
+});

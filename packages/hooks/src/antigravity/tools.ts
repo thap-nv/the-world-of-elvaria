@@ -114,5 +114,7 @@ export function agyToolCallOf(name: unknown, rawArgs: unknown): ToolCall {
     command,
     url: typeof url === 'string' && url !== '' ? url : undefined,
     subagent: AGY_SUBAGENT_TOOLS.includes(tool) ? tool : undefined,
+    // Antigravity's sub-agents are refused outright (§3.12): no model of theirs is ever weighed.
+    model: undefined,
   };
 }

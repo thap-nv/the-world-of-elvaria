@@ -12,7 +12,10 @@ import type { ToolLaws, ToolPolicy } from '../policy/tool-policy.ts';
 import type { RunContext } from './run-context.ts';
 
 export const POLICY_FILE = 'policy.json';
-/** `secrets` and `tools` are optional fields added by P1-10: a v1 reader without them still reads the rest. */
+/**
+ * `secrets` and `tools` (P1-10) and `apprentice_models` (P1-17) are optional fields added later: a v1 reader without
+ * them still reads the rest.
+ */
 export const POLICY_VERSION = 1;
 
 /** policy.json v1: `version`, the context (with `secrets`), `tools` and `laws`. Env `ELVARIA_*` wins in the hook. */
@@ -21,13 +24,28 @@ export interface PolicyFile extends RunContext {
   /** ToolPolicy.tools: the tools that exist for this session, in Claude Code names. */
   readonly tools: readonly string[];
   readonly laws: ToolLaws;
+  /**
+   * The models the character's apprentice may run on (§3.12, decided after P1-09): the hook refuses an Agent call
+   * naming another `model`. The adapter knows its models and their order; absent: no such check.
+   */
+  readonly apprentice_models?: readonly string[];
 }
 
-export const policyFileOf = (ctx: RunContext, policy: Pick<ToolPolicy, 'tools' | 'laws'>): PolicyFile => ({
+/** What only the adapter knows, for the policy file. */
+export interface PolicyExtras {
+  readonly apprentice_models?: readonly string[];
+}
+
+export const policyFileOf = (
+  ctx: RunContext,
+  policy: Pick<ToolPolicy, 'tools' | 'laws'>,
+  extras: PolicyExtras = {},
+): PolicyFile => ({
   version: POLICY_VERSION,
   ...ctx,
   tools: [...policy.tools],
   laws: { forbidden_paths: policy.laws.forbidden_paths, forbidden_commands: policy.laws.forbidden_commands },
+  ...(extras.apprentice_models === undefined ? {} : { apprentice_models: [...extras.apprentice_models] }),
 });
 
 /** Writes the run's policy file and returns its native path, for `hookCommand(policyFile)`. */
@@ -35,8 +53,9 @@ export async function writePolicyFile(
   runDir: string,
   ctx: RunContext,
   policy: Pick<ToolPolicy, 'tools' | 'laws'>,
+  extras: PolicyExtras = {},
 ): Promise<string> {
   const file = path.join(runDir, POLICY_FILE);
-  await writeFileAtomic(file, `${JSON.stringify(policyFileOf(ctx, policy), null, 2)}\n`);
+  await writeFileAtomic(file, `${JSON.stringify(policyFileOf(ctx, policy, extras), null, 2)}\n`);
   return file;
 }

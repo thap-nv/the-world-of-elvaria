@@ -83,6 +83,17 @@ describe('translateClaude', () => {
     expect(dataOf('PostToolUse')).toEqual({ tool: 'write', path: 'apps/api/src/score.ts', duration_ms: 12 });
   });
 
+  it("PostToolUse and PostToolUseFailure: an apprentice's call carries its agent_type (§3.12)", () => {
+    const apprentice = { agent_id: 'aaee6abdc785a0997', agent_type: APPRENTICE };
+    expect(dataOf('PostToolUse', apprentice)).toEqual({
+      tool: 'write',
+      path: 'apps/api/src/score.ts',
+      duration_ms: 12,
+      agent_type: APPRENTICE,
+    });
+    expect(dataOf('PostToolUseFailure', apprentice)).toMatchObject({ exit: 1, agent_type: APPRENTICE });
+  });
+
   it('PostToolUse: a shell command, a fetched URL, a search, a path outside the plot', () => {
     const bash = { tool_name: 'Bash', tool_input: { command: 'pnpm test' }, duration_ms: 9.6 };
     expect(dataOf('PostToolUse', bash)).toEqual({ tool: 'bash', command: 'pnpm test', duration_ms: 10 });
@@ -187,6 +198,34 @@ describe('PreToolUse', () => {
         ['agent.tool.blocked', 'other'],
       ]);
     }
+  });
+
+  it("lets the character name the apprentice's model up to its own, and refuses a stronger one", () => {
+    ctx = { ...ctx, apprenticeModels: ['haiku', 'sonnet'] };
+    const asked = (model?: string) => pre('Agent', { prompt: 'x', subagent_type: APPRENTICE, model });
+    expect(asked().decision).toBeUndefined();
+    expect(asked('sonnet').decision).toBeUndefined();
+    const refused = asked('opus');
+    expect(denyReason(refused)).toMatch(
+      /^Elvaria rule: model opus is not allowed for the apprentice, which runs on haiku, sonnet at most/,
+    );
+    expect(refused.drafts.map(({ type, data }) => [type, data.tool])).toEqual([
+      ['agent.tool.blocked', 'other'],
+    ]);
+    // A policy without the list (a session before P1-17) does not weigh the model.
+    ctx = { ...ctx, apprenticeModels: undefined };
+    expect(asked('fable').decision).toBeUndefined();
+  });
+
+  it('marks a call the apprentice made that the laws refuse with its agent_type', () => {
+    const payloadOf = {
+      tool_name: 'Read',
+      tool_input: { file_path: `${PLOT}\\.env` },
+      agent_type: APPRENTICE,
+    };
+    const result = translateClaude(payload('PreToolUse', payloadOf), ctx);
+    expect(denyReason(result)).toMatch(/forbidden path/);
+    expect(result.drafts[0]?.data).toMatchObject({ tool: 'read', agent_type: APPRENTICE });
   });
 });
 

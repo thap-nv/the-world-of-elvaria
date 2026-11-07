@@ -40,6 +40,8 @@ export interface ToolCall {
   readonly url: string | undefined;
   /** For the sub-agent tool, the `subagent_type` asked for (`''` when none); undefined for other tools. */
   readonly subagent: string | undefined;
+  /** For the sub-agent tool, the `model` the caller names over the agent's own; undefined when none. */
+  readonly model: string | undefined;
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -64,6 +66,7 @@ export function toolCallOf(name: unknown, rawInput: unknown): ToolCall {
     command: SHELLS.has(tool) ? textAt(input, 'command') : undefined,
     url: tool === 'WebFetch' ? textAt(input, 'url') : undefined,
     subagent: SUBAGENT_TOOLS.has(tool) ? (textAt(input, 'subagent_type') ?? '') : undefined,
+    model: SUBAGENT_TOOLS.has(tool) ? textAt(input, 'model') : undefined,
   };
 }
 

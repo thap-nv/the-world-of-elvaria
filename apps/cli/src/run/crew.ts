@@ -19,9 +19,6 @@ interface Hand {
 
 type AdapterFactory = (tribe: Tribe, kingdom: Kingdom, io: CliIo) => Hand;
 
-/** The cheap model of the apprentice (§3.12): small lookups, few turns. */
-const APPRENTICE_MODEL = 'haiku';
-
 /** How to reach a tribe's CLI: the path `elvaria doctor` pinned, else the adapter's own search. */
 export function toolOptionsOf(tribe: Tribe, io: CliIo): ClaudeToolOptions {
   return {
@@ -40,7 +37,11 @@ const claudeCode: AdapterFactory = (tribe, kingdom, io) => {
       tribe: tribe.id,
       hookCommand,
       hookScript: HOOK_SCRIPT,
-      apprentice: { model: APPRENTICE_MODEL, max_turns: kingdom.breakers.subagent_max_turns },
+      // The apprentice's models and their order are the adapter's; the character picks one per call (§3.12).
+      apprentice: {
+        max_turns: kingdom.breakers.subagent_max_turns,
+        max_minutes: kingdom.breakers.subagent_max_minutes,
+      },
     }),
     forget: createClaudeForget(tool),
   };

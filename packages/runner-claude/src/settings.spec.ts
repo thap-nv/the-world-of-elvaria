@@ -1,7 +1,7 @@
 import { toolPolicyOf } from '@elvaria/runner-core';
 import { describe, expect, it } from 'vitest';
 
-import { agentsOf } from './agents.ts';
+import { agentsOf, apprenticeModelsOf } from './agents.ts';
 import {
   HOOK_EVENTS,
   absoluteRulePath,
@@ -139,11 +139,15 @@ describe('settingsProblems', () => {
   });
 });
 
+const APPRENTICE_CONFIG = { max_turns: 30, max_minutes: 5 };
+
 describe('agentsOf', () => {
-  it('defines one apprentice with the character tools minus Agent', () => {
-    expect(agentsOf(knight, { model: 'haiku', max_turns: 30 })).toEqual({
+  it('defines one apprentice with the character tools minus Agent, on the cheapest model allowed', () => {
+    expect(agentsOf(knight, APPRENTICE_CONFIG, ['haiku', 'sonnet'])).toEqual({
       apprentice: {
-        description: expect.stringContaining('apprentice') as string,
+        description: expect.stringContaining(
+          'unless you name another `model`: sonnet (no stronger one)',
+        ) as string,
         prompt: expect.stringContaining('cannot start another agent') as string,
         tools: ['Read', 'Edit', 'Write', 'NotebookEdit', 'Glob', 'Grep', 'Bash'],
         model: 'haiku',
@@ -153,7 +157,32 @@ describe('agentsOf', () => {
     });
   });
 
+  it('says there is no other model when only one is allowed', () => {
+    expect(agentsOf(knight, APPRENTICE_CONFIG, ['haiku'])?.apprentice?.description).toContain(
+      'It runs on haiku.',
+    );
+    expect(agentsOf(knight, APPRENTICE_CONFIG, [])?.apprentice?.model).toBe('haiku');
+  });
+
   it('defines none for a character that may not start one', () => {
-    expect(agentsOf(verifier, { model: 'haiku', max_turns: 30 })).toBeUndefined();
+    expect(agentsOf(verifier, APPRENTICE_CONFIG, ['haiku'])).toBeUndefined();
+  });
+});
+
+describe('apprenticeModelsOf', () => {
+  it.each([
+    ['claude-haiku-5-5', ['haiku']],
+    ['claude-sonnet-5-5', ['haiku', 'sonnet']],
+    ['claude-opus-5-5-low', ['haiku', 'sonnet', 'opus']],
+    ['claude-fable-5-1', ['haiku', 'sonnet', 'opus', 'fable']],
+    ['sonnet', ['haiku', 'sonnet']],
+    // A model that names no alias gets the cheapest alone: never more than its master by accident.
+    ['gemini-4-argon-medium', ['haiku']],
+  ])('lets the apprentice of %s run on %j, up to its master', (model, allowed) => {
+    expect(apprenticeModelsOf(model)).toEqual(allowed);
+  });
+
+  it('follows the ladder it is given', () => {
+    expect(apprenticeModelsOf('big-model', ['small', 'big'])).toEqual(['small', 'big']);
   });
 });

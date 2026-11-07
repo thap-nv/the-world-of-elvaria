@@ -65,7 +65,11 @@
 - Gives every adapter the session's side of the hook contract (P1-09, §3.6): `runContextOf(req)` (kingdom,
   quest, attempt from env `ELVARIA_*`; character, role, model from the request; the env names of the quest's
   secrets), `contextEnv`, and `writePolicyFile` for `<run_dir>/policy.json` v1, the file `--policy` points the
-  hook at: context, `secrets` (names only), `tools` (the class's, for a CLI with no `--tools`) and `laws`.
+  hook at: context, `secrets` (names only), `tools` (the class's, for a CLI with no `--tools`), `laws`, and the
+  adapter's `apprentice_models` when it has an apprentice (the models up to the character's own, §3.12, P1-17).
+  The `apprentice` prompt tells the assignee to leave the apprentice's `model` out for lookups, name a stronger
+  one only for reasoning, and to stop and write the unfinished child work in the letter when an apprentice is
+  cut at its turn limit or runs long.
 - Holds the treasury (`src/treasury/`, §3.9, ADR 0013): `openFileTreasury(file)` reads `{ "name": "value" }`
   from `kingdom.paths.treasury` on each call (a missing file is empty; on macOS a file others can read is
   refused; no error ever quotes a value), `inspectTreasury` (the file's names or a typed problem, for the
