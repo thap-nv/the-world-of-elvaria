@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "drafts": [
+    {
+      "ref": "d1",
+      "title": "Chia việc viết lại docs/architecture.md",
+      "description": "Viết lại toàn bộ docs/architecture.md theo 18 ADR vượt một context; lập kế hoạch và chia thành quest con theo nhóm ADR.",
+      "kind": "plan",
+      "rank": "C",
+      "territory": "dc1-se-team",
+      "tier": "session",
+      "class_required": "mage",
+      "tags": ["docs"],
+      "depends_on_refs": [],
+      "estimate": {
+        "tokens": 60000,
+        "minutes": 20
+      },
+      "seal_required": false,
+      "secrets_required": [],
+      "question": "Giữ nguyên thứ tự mục hiện có của docs/architecture.md hay sắp lại theo ADR?"
+    },
+    {
+      "ref": "d2",
+      "title": "Cập nhật docs/architecture.md theo ADR 0014-0018",
+      "description": "Viết lại các mục chịu ảnh hưởng của ADR 0014-0018; đối chiếu từng mục với ADR gốc.",
+      "kind": "document",
+      "rank": "D",
+      "territory": "dc1-se-team",
+      "tier": "session",
+      "class_required": "scribe",
+      "tags": ["docs"],
+      "depends_on_refs": ["d1"],
+      "parent_ref": "d1",
+      "estimate": {
+        "tokens": 110000,
+        "minutes": 40
+      },
+      "seal_required": true,
+      "secrets_required": []
+    },
+    {
+      "ref": "d3",
+      "title": "Cập nhật docs/architecture.md theo ADR 0019-0022",
+      "description": "Viết lại các mục chịu ảnh hưởng của ADR 0019-0022 sau khi phần ADR 0014-0018 xong.",
+      "kind": "document",
+      "rank": "D",
+      "territory": "dc1-se-team",
+      "tier": "session",
+      "class_required": "scribe",
+      "tags": ["docs"],
+      "depends_on_refs": ["d2"],
+      "parent_ref": "d1",
+      "estimate": {
+        "tokens": 90000,
+        "minutes": 35
+      },
+      "seal_required": true,
+      "secrets_required": []
+    }
+  ]
+}

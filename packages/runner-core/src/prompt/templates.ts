@@ -16,6 +16,7 @@ export const PROMPT_TEMPLATES = [
   'scripture',
   'skills',
   'revive',
+  'resumed',
   'returned',
   'memory',
   'answer',

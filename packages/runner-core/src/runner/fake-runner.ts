@@ -5,7 +5,7 @@ import { TribeIdSchema } from '@elvaria/domain';
 import { FAKE_SCENARIO_ENV, isFakeScenario } from '../conformance/scenarios.ts';
 import { startFakeSession } from './fake-session.ts';
 import type { FakeScenario } from '../conformance/scenarios.ts';
-import type { AgentRunner, ProbeResult, SpawnRequest } from './types.ts';
+import type { AgentRunner, ProbeOptions, ProbeResult, SpawnRequest } from './types.ts';
 import type { AdapterCapabilities, TribeId } from '@elvaria/domain';
 
 export const FAKE_ADAPTER = 'fake';
@@ -34,7 +34,8 @@ export interface FakeRunnerOptions {
   readonly tokens?: number;
   /** How long a session takes before its scenario plays; 0 by default. */
   readonly delay_ms?: number;
-  readonly probe?: ProbeResult;
+  /** What probe() answers: one result, or one per call (a pool that wakes on the second probe). */
+  readonly probe?: ProbeResult | ((options: ProbeOptions) => ProbeResult);
 }
 
 export interface FakeRunner extends AgentRunner {
@@ -72,7 +73,10 @@ export function createFakeRunner(options: FakeRunnerOptions = {}): FakeRunner {
         }),
       );
     },
-    probe: () => Promise.resolve(options.probe ?? { status: 'ok' }),
+    probe: (probeOptions = {}) => {
+      const answer = options.probe ?? { status: 'ok' };
+      return Promise.resolve(typeof answer === 'function' ? answer(probeOptions) : answer);
+    },
     doctor: () => Promise.resolve({ path: import.meta.filename, version: FAKE_VERSION, auth_ok: true }),
   };
 }

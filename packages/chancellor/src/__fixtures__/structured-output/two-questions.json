@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "drafts": [
+    {
+      "ref": "d1",
+      "title": "Cải thiện trang chủ",
+      "description": "Chưa rõ người dùng muốn gì.",
+      "kind": "build",
+      "rank": "D",
+      "territory": "dc1-se-team",
+      "tier": "session",
+      "class_required": "knight",
+      "tags": ["frontend"],
+      "depends_on_refs": [],
+      "estimate": { "tokens": 40000, "minutes": 20 },
+      "seal_required": false,
+      "secrets_required": [],
+      "question": "Tốt hơn ở mặt nào?"
+    },
+    {
+      "ref": "d2",
+      "title": "Cải thiện API trang chủ",
+      "description": "Chưa rõ người dùng muốn gì.",
+      "kind": "build",
+      "rank": "D",
+      "territory": "dc1-se-team",
+      "tier": "session",
+      "class_required": "knight",
+      "tags": ["backend"],
+      "depends_on_refs": [],
+      "estimate": { "tokens": 40000, "minutes": 20 },
+      "seal_required": false,
+      "secrets_required": [],
+      "question": "Có cần đổi API không?"
+    }
+  ]
+}

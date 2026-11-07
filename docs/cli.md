@@ -16,6 +16,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria territory list` | Liệt kê các lãnh thổ. |
 | `elvaria character add <id>` | Triệu hồi một nhân vật: nghề, tộc, model và cấp ban đầu. |
 | `elvaria character list` | Liệt kê các nhân vật. |
+| `elvaria say <words>` | Nói với Tể tướng việc bạn muốn: Tể tướng soạn nhiệm vụ nháp, bạn xác nhận (lệnh create_quest, nháp). |
 | `elvaria quest add` | Thêm một nhiệm vụ mở ngay, không qua Tể tướng (lệnh create_quest). |
 | `elvaria quest list` | Liệt kê các nhiệm vụ trên bảng nhiệm vụ. |
 | `elvaria quest show <quest>` | Xem một nhiệm vụ. |
@@ -25,6 +26,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria seal <quest>` | Đóng dấu việc đang chờ dấu vua: nhiệm vụ xong (lệnh seal; nặng bằng ba phán quyết). |
 | `elvaria return <quest>` | Trả việc đang chờ dấu vua về người làm, kèm ghi chú (lệnh return; nặng bằng ba phán quyết). |
 | `elvaria run` | Chạy Quản sự: giao nhiệm vụ cho nhân vật và cho nghiệm thu, tới khi bạn dừng (Ctrl+C). |
+| `elvaria wake <tribe>` | Nhờ Quản sự thăm dò mana của một tộc ngay, ví dụ sau khi đăng nhập lại (lệnh wake). |
 | `elvaria sandbox generate` | Sinh một ngày giả vào events/sandbox/ của vương quốc (sa bàn): không chạy phiên nào, không chạm nhiệm vụ thật. |
 | `elvaria sandbox replay <file>` | Phát lại một ngày giả thành dòng thời gian trên terminal. |
 | `elvaria migrate` | Chuyển mọi file cũ của vương quốc lên phiên bản hiện tại, có sao lưu. |
@@ -96,6 +98,14 @@ Triệu hồi một nhân vật: nghề, tộc, model và cấp ban đầu.
 Liệt kê các nhân vật.
 
 Không có tham số riêng, chỉ các tùy chọn chung.
+
+## `elvaria say`
+
+Nói với Tể tướng việc bạn muốn: Tể tướng soạn nhiệm vụ nháp, bạn xác nhận (lệnh create_quest, nháp).
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<words>` | Việc bạn muốn làm, bằng lời của bạn, trong ngoặc kép. |
 
 ## `elvaria quest add`
 
@@ -189,6 +199,14 @@ Trả việc đang chờ dấu vua về người làm, kèm ghi chú (lệnh ret
 Chạy Quản sự: giao nhiệm vụ cho nhân vật và cho nghiệm thu, tới khi bạn dừng (Ctrl+C).
 
 Không có tham số riêng, chỉ các tùy chọn chung.
+
+## `elvaria wake`
+
+Nhờ Quản sự thăm dò mana của một tộc ngay, ví dụ sau khi đăng nhập lại (lệnh wake).
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<tribe>` | Tộc cần thăm dò lại tài khoản (một id trong kingdom.json). |
 
 ## `elvaria sandbox generate`
 

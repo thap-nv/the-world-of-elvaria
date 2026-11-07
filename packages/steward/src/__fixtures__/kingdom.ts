@@ -25,7 +25,16 @@ import type {
   Quest,
   WorldState,
 } from '@elvaria/domain';
-import type { AgentRunner, FakeRunner, FakeScenario, SpawnRequest, Treasury } from '@elvaria/runner-core';
+import type {
+  AgentRunner,
+  FakeRunner,
+  FakeRunnerOptions,
+  FakeScenario,
+  ProbeOptions,
+  ProbeResult,
+  SpawnRequest,
+  Treasury,
+} from '@elvaria/runner-core';
 import type { KingdomStore } from '@elvaria/store';
 
 import { folderPlots } from '../plots.ts';
@@ -221,6 +230,8 @@ export interface Bench {
   readonly clock: StepClock;
   readonly ids: IdSource;
   readonly fakes: { readonly claude: FakeRunner; readonly gemini: FakeRunner };
+  /** The runners the Steward gets: the fakes, their verifiers handing in verdicts. */
+  readonly runners: { readonly claude: AgentRunner; readonly gemini: AgentRunner };
   readonly notices: Notice[];
   readonly warnings: string[];
   /** Every request a runner was asked to spawn, in order. */
@@ -241,6 +252,11 @@ export interface BenchOptions {
   readonly plays?: Plays;
   /** max_concurrent of dc1-se-team (code) and handbook (docs). */
   readonly room?: { readonly code: number; readonly docs: number };
+  /** What each tribe's probe answers (FakeRunner `probe`); ok with no windows by default. */
+  readonly probes?: {
+    readonly claude?: FakeRunnerOptions['probe'];
+    readonly gemini?: FakeRunnerOptions['probe'];
+  };
   /** The treasury's contents; npm_token = NPM_TOKEN by default. */
   readonly treasury?: Readonly<Record<string, string>>;
 }
@@ -280,10 +296,13 @@ export async function bench(options: BenchOptions = {}): Promise<Bench> {
   const clock = stepClock();
   const ids = seededIds(clock);
   const plays = scripted(options.plays ?? {});
-  const fakes = {
-    claude: createFakeRunner({ tribe: 'claude' as never, scenarioOf: plays.scenario }),
-    gemini: createFakeRunner({ tribe: 'gemini' as never, scenarioOf: plays.scenario }),
-  };
+  const fakeOf = (tribe: 'claude' | 'gemini') =>
+    createFakeRunner({
+      tribe: tribe as never,
+      scenarioOf: plays.scenario,
+      ...(options.probes?.[tribe] === undefined ? {} : { probe: options.probes[tribe] }),
+    });
+  const fakes = { claude: fakeOf('claude'), gemini: fakeOf('gemini') };
   const requests: SpawnRequest[] = [];
   const runners = {
     claude: judgingRunner(fakes.claude, plays.verdict, requests),
@@ -298,6 +317,7 @@ export async function bench(options: BenchOptions = {}): Promise<Bench> {
     clock,
     ids,
     fakes,
+    runners,
     notices,
     warnings,
     requests,
@@ -375,4 +395,14 @@ export async function tickUntil(
     clock.advance(1);
   }
   throw new Error(`fixture: not done after ${maxTicks} ticks`);
+}
+
+/** A probe that finds the account empty `asleep` times before it answers, reads (no ping) always ok. */
+export function wakesAfter(asleep: number): (options: ProbeOptions) => ProbeResult {
+  let pings = 0;
+  return ({ ping = true }) => {
+    if (!ping) return { status: 'ok' };
+    pings += 1;
+    return pings > asleep ? { status: 'ok' } : { status: 'rate_limited', detail: 'still empty' };
+  };
 }

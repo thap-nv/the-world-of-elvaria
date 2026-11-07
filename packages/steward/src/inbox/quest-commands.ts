@@ -7,6 +7,7 @@ import {
   editQuest,
   formatDatedId,
   parseInstant,
+  poolOpenOf,
   questFromCommand,
   selectAssignee,
   setRank,
@@ -36,20 +37,24 @@ const outcomeOf = (result: Result<unknown, string>): Outcome =>
 
 /**
  * The quest id of a create_quest, derived from the command id: a command applied again after a crash between its
- * file and its ack finds its quest already there instead of making a second one.
+ * file and its ack finds its quest already there instead of making a second one. The CLI derives the same ids to
+ * write the Chancellor's drafts that depend on each other (P1-13). Undefined only for a zone or a time their schemas
+ * would have refused.
  */
-function questIdFor(ctx: Context, command: InboxCommandOf<'create_quest'>): QuestId {
-  const zone = zonedTime(ctx.world.kingdom.tz);
+export function questIdOfCommand(
+  command: { readonly id: string; readonly ts: string },
+  tz: string,
+): QuestId | undefined {
+  const zone = zonedTime(tz);
   const when = parseInstant(command.ts);
-  // Both were checked by their schemas (an IANA zone, an ISO date-time); a fresh id is the fallback all the same.
-  if (!zone.ok || !when.ok) return ctx.deps.ids.quest();
+  if (!zone.ok || !when.ok) return undefined;
   const day = zone.value.localDate(when.value);
   // formatDatedId with the `q` prefix produces exactly the quest id pattern.
   return formatDatedId('q', day, createHash('sha256').update(command.id).digest()) as QuestId;
 }
 
 export async function createQuest(ctx: Context, command: InboxCommandOf<'create_quest'>): Promise<Outcome> {
-  const id = questIdFor(ctx, command);
+  const id = questIdOfCommand(command, ctx.world.kingdom.tz) ?? ctx.deps.ids.quest();
   if (ctx.world.quests.has(id)) return APPLIED;
   const made = questFromCommand(command.payload, {
     id,
@@ -123,8 +128,9 @@ export async function archive(ctx: Context, quest: Quest): Promise<Outcome> {
 }
 
 /**
- * The owner's answer. With an assignee the same attempt goes on in a fresh session, so the answer waits in the
- * inbox until that character is free and its tribe can run it (§2.5); without one the quest opens again.
+ * The owner's answer. With an assignee the same attempt goes on (a fresh session, or the asking one resumed when
+ * the answer comes in time, ADR 0017), so the answer waits in the inbox until that character is free, its tribe
+ * can run it and its pool has mana (§2.5, §3.5); without one the quest opens again.
  */
 export async function answer(ctx: Context, quest: Quest, text: string): Promise<Outcome> {
   if (quest.status !== 'blocked' || typeof quest.assignee !== 'string')
@@ -133,6 +139,10 @@ export async function answer(ctx: Context, quest: Quest, text: string): Promise<
     );
   const asker = ctx.world.characters.get(quest.assignee);
   if (asker?.status !== 'idle' || ctx.deps.runners[asker.tribe] === undefined) return { status: 'waiting' };
+  const { kingdom } = ctx.world;
+  const mana = { readings: ctx.mana.readings, config: kingdom.mana };
+  const open = poolOpenOf({ kingdom, asleep: ctx.mana.asleep, mana }, ctx.deps.clock.now());
+  if (!open(asker)) return { status: 'waiting' };
   return outcomeOf(await openAssignee(ctx, quest.id, { kind: 'answer', answer: text }));
 }
 

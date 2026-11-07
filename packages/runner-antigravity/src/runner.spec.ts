@@ -228,7 +228,9 @@ describe('what the adapter refuses', () => {
 
 describe('probe and doctor', () => {
   it('probe reads /usage: ok, rate limited, or an error', async () => {
-    expect(await fakeRunner().probe()).toEqual({ status: 'ok' });
+    const read = await fakeRunner().probe({ ping: false });
+    expect(read).toMatchObject({ status: 'ok' });
+    expect(read.windows).toHaveLength(5);
     const usage = JSON.parse(readFileSync(path.join(FIXTURES, 'usage-json.jsonl'), 'utf8')) as {
       command: { data: { groups: { buckets: { remaining_fraction: number }[] }[] } };
     };

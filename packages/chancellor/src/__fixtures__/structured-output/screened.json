@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "drafts": [
+    {
+      "ref": "d1",
+      "title": "Thêm cột trạng thái cho bảng đơn hàng",
+      "description": "Migration thêm cột status vào bảng orders, kèm test.",
+      "kind": "build",
+      "rank": "D",
+      "territory": "dc1-se-team",
+      "tier": "session",
+      "class_required": "knight",
+      "tags": ["db"],
+      "depends_on_refs": [],
+      "estimate": { "tokens": 50000, "minutes": 25 },
+      "seal_required": false,
+      "secrets_required": ["database_url"]
+    },
+    {
+      "ref": "d2",
+      "title": "Hiện trạng thái đơn hàng trên web",
+      "description": "Thêm cột trạng thái vào bảng đơn hàng ở apps/web.",
+      "kind": "build",
+      "rank": "D",
+      "territory": "dc1-se-team",
+      "tier": "session",
+      "class_required": "knight",
+      "tags": ["web_ui"],
+      "depends_on_refs": ["d1"],
+      "estimate": { "tokens": 40000, "minutes": 20 },
+      "seal_required": false,
+      "secrets_required": []
+    },
+    {
+      "ref": "d3",
+      "title": "Viết e2e cho trạng thái đơn hàng",
+      "description": "Kịch bản Playwright cho cột trạng thái mới.",
+      "kind": "build",
+      "rank": "D",
+      "territory": "dc1-se-team",
+      "tier": "session",
+      "class_required": "knight",
+      "tags": ["e2e"],
+      "depends_on_refs": ["d2"],
+      "estimate": { "tokens": 30000, "minutes": 15 },
+      "seal_required": false,
+      "secrets_required": []
+    },
+    {
+      "ref": "d4",
+      "title": "Đồng bộ đơn hàng lên kho lưu trữ",
+      "description": "Script đẩy đơn hàng mới lên bucket lưu trữ mỗi đêm.",
+      "kind": "build",
+      "rank": "C",
+      "territory": "dc1-se-team",
+      "tier": "session",
+      "class_required": "dwarf",
+      "tags": ["infra"],
+      "depends_on_refs": [],
+      "estimate": { "tokens": 60000, "minutes": 30 },
+      "seal_required": true,
+      "secrets_required": ["aws_secret_access_key"]
+    }
+  ]
+}

@@ -6,6 +6,7 @@ import { UlidSchema } from '@elvaria/domain';
 import type { InboxCommand, Quest } from '@elvaria/domain';
 import type { InboxItem } from '@elvaria/store';
 
+import { wake } from '../mana/step.ts';
 import { STEWARD } from '../record.ts';
 import {
   answer,
@@ -24,7 +25,6 @@ import type { Outcome } from './quest-commands.ts';
 
 /** Commands the Steward does not apply yet; each names the task that brings it. */
 const LATER: ReadonlySet<InboxCommand['kind']> = new Set([
-  'wake', // P1-05: mana and probes
   'summon',
   'suspend',
   'release',
@@ -68,6 +68,7 @@ async function onQuest(ctx: Context, command: InboxCommand, quest: Quest): Promi
 export async function applyCommand(ctx: Context, command: InboxCommand): Promise<Outcome> {
   if (LATER.has(command.kind)) return rejected('unsupported');
   if (command.kind === 'create_quest') return createQuest(ctx, command);
+  if (command.kind === 'wake') return wake(ctx, command.payload.tribe);
   const quest = questOf(ctx, command);
   return quest === undefined ? rejected('unknown_quest') : onQuest(ctx, command, quest);
 }

@@ -14,6 +14,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { COMMANDS } from './fake-claude-commands.mjs';
+import { hookDenial, ruleDenial } from './fake-claude-denials.mjs';
 import { leak } from './fake-claude-leak.mjs';
 
 const FIXTURES = import.meta.dirname;
@@ -123,28 +124,6 @@ function work(play, question) {
   return finish(play);
 }
 
-/** The reason a deny answer of a PreToolUse hook gives, as the CLI shows it to the model. */
-function hookDenial(answers) {
-  const decisions = answers.flatMap((answer) => {
-    try {
-      return [JSON.parse(answer).hookSpecificOutput];
-    } catch {
-      return [];
-    }
-  });
-  const deny = decisions.find((decision) => decision?.permissionDecision === 'deny');
-  return deny === undefined ? undefined : `PreToolUse:Bash hook error: ${deny.permissionDecisionReason}`;
-}
-
-function ruleDenial(settings, command) {
-  const prefixes = (settings.permissions?.deny ?? [])
-    .map((rule) => /^Bash\((.+):\*\)$/.exec(rule)?.[1])
-    .filter(Boolean);
-  return prefixes.some((prefix) => command.startsWith(prefix))
-    ? `Permission to use Bash with command ${command} has been denied.`
-    : undefined;
-}
-
 function forbidden(play) {
   const command = play.core.FAKE_FORBIDDEN_COMMAND;
   const toolId = 'toolu_fake_push';
@@ -237,8 +216,20 @@ function replay(settings, file) {
   return undefined;
 }
 
+/** The prompt on stdin, with the real hook's fallback for a pipe left non-blocking (EAGAIN on macOS, PR #32). */
+async function readStdin() {
+  try {
+    return readFileSync(0, 'utf8');
+  } catch (error) {
+    if (error?.code !== 'EAGAIN') throw error;
+  }
+  const chunks = [];
+  for await (const chunk of process.stdin) chunks.push(Buffer.from(chunk));
+  return Buffer.concat(chunks).toString('utf8');
+}
+
 async function session(argv) {
-  const prompt = readFileSync(0, 'utf8');
+  const prompt = await readStdin();
   if (env.FAKE_CLAUDE_RECORD !== undefined)
     writeFileSync(env.FAKE_CLAUDE_RECORD, JSON.stringify({ argv, cwd: process.cwd(), env, prompt }));
   const settings = JSON.parse(readFileSync(flag(argv, '--settings'), 'utf8'));

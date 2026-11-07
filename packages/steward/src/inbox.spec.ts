@@ -35,7 +35,7 @@ const inboxLeft = async (kingdom: Bench) => (await kingdom.store.inbox.read()).m
 describe('the inbox', () => {
   it('refuses what it cannot apply, with a reason, and moves every file out of the inbox', async () => {
     const { kingdom, steward } = await open();
-    await kingdom.command('wake', { tribe: 'claude' });
+    await kingdom.command('summon', { character: 'thorn' });
     await kingdom.command('confirm', { quest: 'q_20261107_zzzzzz' });
     await kingdom.command('create_quest', questPayload('Somewhere else', { territory: 'atlas' }));
     await writeFile(path.join(kingdom.root, 'inbox', '01JCFB7Q2R8S4T6V9W3X5Y1Z0A.json'), '{ torn');

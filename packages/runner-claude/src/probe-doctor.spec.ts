@@ -20,8 +20,30 @@ import { createClaudeForget, createClaudeRunner } from './runner.ts';
 const withEnv = (extra: Record<string, string>) => ({ env: { ...minimalEnv(), ...extra } });
 
 describe('probe', () => {
-  it('reads /usage, then pings the cheapest model', async () => {
-    expect(await fakeRunner().probe()).toEqual({ status: 'ok' });
+  it('reads /usage, then pings the cheapest model; the windows it read come back (P1-05)', async () => {
+    const result = await fakeRunner().probe();
+    expect(result.status).toBe('ok');
+    expect(result.windows?.map(({ window, used_pct, model }) => [window, used_pct, model])).toEqual([
+      ['five_hour', 49, undefined],
+      ['weekly', 56, undefined],
+      ['weekly', 54, 'Fable'],
+    ]);
+  });
+
+  it('only reads /usage when asked not to ping: no model is called (0 mana)', async () => {
+    // A ping would fail here; without one the answer is what /usage says.
+    const runner = fakeRunner(withEnv({ FAKE_CLAUDE_PING: 'error' }));
+    expect((await runner.probe()).status).toBe('error');
+    const read = await runner.probe({ ping: false });
+    expect(read.status).toBe('ok');
+    expect(read.windows).toHaveLength(3);
+  });
+
+  it('says so when it may not ping and /usage gave nothing', async () => {
+    const result = await fakeRunner({ executable: path.join(tmpdir(), 'no such claude.exe') }).probe({
+      ping: false,
+    });
+    expect(result.status).toBe('error');
   });
 
   it('stays asleep while a window of the account is full, until the latest reset', async () => {
@@ -37,11 +59,13 @@ describe('probe', () => {
 
   it('pings when only the cap of one model is full: that binds its characters, not the tribe', async () => {
     const text = 'Current session: 10% used\nCurrent week (Fable): 100% used';
-    expect(await fakeRunner(withEnv({ FAKE_CLAUDE_USAGE_TEXT: text })).probe()).toEqual({ status: 'ok' });
+    expect(await fakeRunner(withEnv({ FAKE_CLAUDE_USAGE_TEXT: text })).probe()).toMatchObject({
+      status: 'ok',
+    });
   });
 
   it('reports a ping that hit a limit (self-built 429) or failed', async () => {
-    expect(await fakeRunner(withEnv({ FAKE_CLAUDE_PING: 'rate_limit' })).probe()).toEqual({
+    expect(await fakeRunner(withEnv({ FAKE_CLAUDE_PING: 'rate_limit' })).probe()).toMatchObject({
       status: 'rate_limited',
       detail: 'the ping hit a usage limit',
     });

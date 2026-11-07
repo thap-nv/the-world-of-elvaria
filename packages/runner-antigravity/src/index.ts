@@ -17,5 +17,5 @@ export { CONTEXT_FILE, agySettingsOf, prefixOf } from './settings.ts';
 export type { AgySettings } from './settings.ts';
 export { createStreamReader } from './stream.ts';
 export type { AgyResult, StreamReader, StreamState } from './stream.ts';
-export { probeOf, usageBuckets } from './usage.ts';
+export { probeOf, usageBuckets, windowsOf } from './usage.ts';
 export type { UsageBucket } from './usage.ts';

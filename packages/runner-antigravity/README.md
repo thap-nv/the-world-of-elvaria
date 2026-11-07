@@ -29,7 +29,9 @@ terms_acknowledged_at, env, pools?, timeout_ms?})`. `hook` is `hookCommand()` of
   (outcome and usage, a killed run included) with `openRunLog`, and stdout and stderr redacted (the session's
   secret values first, `secretValuesOf`) into
   `<run_dir>/stdout.jsonl` and `stderr.log` with `openRunOutput`, plus the runner's own notes there.
-- `probe()` reads `agy -p /usage --output-format json` into buckets per pool (`usageBuckets`); `doctor()` checks
+- `probe()` reads `agy -p /usage --output-format json` into buckets per pool (`usageBuckets`), and returns them as
+  the account's windows for the mana gauge (`windowsOf`; the Argon bucket names its model; `/usage` costs no
+  mana, so `ping: false` changes nothing); `doctor()` checks
   `--version`, `agy --output-format json models` (sign-in) and `terms_acknowledged_at`.
 
 ## Does not

@@ -5,7 +5,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { FIXTURES } from './__fixtures__/agy.ts';
-import { probeOf, usageBuckets } from './usage.ts';
+import { probeOf, usageBuckets, windowsOf } from './usage.ts';
 import type { UsageBucket } from './usage.ts';
 
 const RECORDED = readFileSync(path.join(FIXTURES, 'usage-json.jsonl'), 'utf8');
@@ -77,6 +77,36 @@ const bucket = (id: string, used: number, resets: string | null = null): UsageBu
   used_pct: used,
   resets_at: resets,
   pool_wide: !id.includes('argon'),
+});
+
+describe('windowsOf', () => {
+  it("turns the recorded buckets into the account's windows, the Argon cap naming its model", () => {
+    expect(windowsOf(usageBuckets(RECORDED) ?? [])).toEqual([
+      { window: 'weekly', used_pct: 0, pool: 'gemini_models' },
+      { window: 'five_hour', used_pct: 0, pool: 'gemini_models' },
+      { window: 'weekly', used_pct: 0, pool: 'claude_gpt_models' },
+      { window: 'five_hour', used_pct: 0, pool: 'claude_gpt_models' },
+      {
+        window: 'weekly',
+        used_pct: 2.14,
+        pool: 'gemini_models',
+        resets_at: '2026-11-13T14:47:50Z',
+        model: 'argon',
+      },
+    ]);
+  });
+
+  it('leaves out a bucket of an unknown pool or window', () => {
+    const odd = {
+      id: 'x',
+      pool: undefined,
+      window: undefined,
+      used_pct: 0,
+      resets_at: null,
+      pool_wide: false,
+    };
+    expect(windowsOf([odd, { ...odd, pool: 'gemini_models' }])).toEqual([]);
+  });
 });
 
 describe('probeOf', () => {

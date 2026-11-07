@@ -1,7 +1,7 @@
 // Steps 4–6 of a tick (implementation-plan §3.1), as planTick decided them: send characters on a fail streak to the
-// Temple, start claimed quests, give submitted quests a verifier or the machine's verdict, send returned quests back,
-// claim open ones. Script-tier quests wait for P1-17, which runs registry scripts; the Steward does not claim them
-// before it can run them.
+// Temple, wake paused quests whose pool has mana again (P1-05), start claimed quests, give submitted quests a
+// verifier or the machine's verdict, send returned quests back, claim open ones. Script-tier quests wait for
+// P1-17, which runs registry scripts; the Steward does not claim them before it can run them.
 import type { CharacterId, TickPlan } from '@elvaria/domain';
 
 import { ring } from './context.ts';
@@ -28,6 +28,9 @@ async function suspend(ctx: Context, id: CharacterId): Promise<void> {
 
 export async function carryOut(ctx: Context, plan: TickPlan): Promise<void> {
   for (const id of plan.suspensions) await suspend(ctx, id);
+  // A paused quest whose pool woke goes on before new work: the same character, the same attempt (§3.5).
+  for (const quest of plan.wakes)
+    warnIfRefused(ctx, `${quest} wake`, await openAssignee(ctx, quest, { kind: 'wake' }));
   for (const quest of plan.starts)
     warnIfRefused(ctx, `${quest} start`, await openAssignee(ctx, quest, { kind: 'start' }));
   for (const { quest, verifier } of plan.verifications)

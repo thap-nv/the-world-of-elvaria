@@ -13,6 +13,7 @@
     "test": "pnpm build && vitest run --coverage"
   },
   "dependencies": {
+    "@elvaria/chancellor": "workspace:*",
     "@elvaria/domain": "workspace:*",
     "@elvaria/eventlog": "workspace:*",
     "@elvaria/hooks": "workspace:*",

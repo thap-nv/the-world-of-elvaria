@@ -10,7 +10,7 @@ import type { Launch } from './launch.ts';
 import type { Ran } from './run-once.ts';
 import type { StreamReader } from './stream.ts';
 import type { UsageWindow } from './usage.ts';
-import type { ProbeResult } from '@elvaria/runner-core';
+import type { ProbeOptions, ProbeResult } from '@elvaria/runner-core';
 
 export interface ProbeDeps {
   readonly launch: Launch;
@@ -60,10 +60,21 @@ async function ping(deps: ProbeDeps): Promise<ProbeResult> {
   return { status: 'error', detail };
 }
 
-export async function probeClaude(deps: ProbeDeps): Promise<ProbeResult> {
+/**
+ * The windows it read come back with the answer, for the mana gauge (P1-05). `ping: false` stops after `/usage`:
+ * how the Steward watches an awake pool without calling a model.
+ */
+export async function probeClaude(deps: ProbeDeps, options: ProbeOptions = {}): Promise<ProbeResult> {
   const usage = await runOnce(deps.launch, usageArgv(), deps);
   const text = textOf(readStream(usage).result, 'result');
+  const windows = text === undefined ? [] : usageWindowsOf(text, deps.now());
+  const read = windows.length === 0 ? {} : { windows };
+  const full = fullWindows(windows);
+  if (full.length > 0) return { ...asleep(full), ...read };
+  if (options.ping === false) {
+    const detail = usage.problem ?? (firstLine(usage.stderr) || 'claude -p /usage printed no usage');
+    return text === undefined ? { status: 'error', detail } : { status: 'ok', ...read };
+  }
   // An unreadable /usage (a changed text, a CLI that failed) falls back to the ping (§3.5).
-  const full = text === undefined ? [] : fullWindows(usageWindowsOf(text, deps.now()));
-  return full.length > 0 ? asleep(full) : ping(deps);
+  return { ...(await ping(deps)), ...read };
 }
