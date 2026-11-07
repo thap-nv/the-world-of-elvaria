@@ -6,8 +6,29 @@ import { QuestDraftFileSchema, contractOf } from '@elvaria/domain';
 import type { QuestDraftFile } from '@elvaria/domain';
 import type { JsonSchema } from '@elvaria/runner-core';
 
-/** `--json-schema` of the Chancellor's session: docs/schemas/quest-draft.schema.json, built from the same zod. */
-export const QUEST_DRAFT_JSON_SCHEMA: JsonSchema = contractOf('quest-draft', QuestDraftFileSchema);
+/**
+ * Keywords Claude Code 2.1.319 refuses in --json-schema, before any model call (live run of P1-13): it validates
+ * the schema as draft-07 in strict mode, so the 2020-12 `$schema` is "no schema with key or ref" and `minContains`
+ * an "unknown keyword". `contains` goes with them, or it would demand a question. What they said, at most one
+ * question per reply, is checked by checkReply (QuestDraftFileSchema) when the reply comes back.
+ */
+const NOT_IN_DRAFT_07: ReadonlySet<string> = new Set(['$schema', 'contains', 'minContains', 'maxContains']);
+
+/** The schema without those keywords, at every depth. */
+export function forTheCli(node: unknown): unknown {
+  if (Array.isArray(node)) return node.map(forTheCli);
+  if (typeof node !== 'object' || node === null) return node;
+  return Object.fromEntries(
+    Object.entries(node)
+      .filter(([key]) => !NOT_IN_DRAFT_07.has(key))
+      .map(([key, value]) => [key, forTheCli(value)]),
+  );
+}
+
+/** `--json-schema` of the Chancellor's session: docs/schemas/quest-draft.schema.json, less what the CLI refuses. */
+export const QUEST_DRAFT_JSON_SCHEMA = forTheCli(
+  contractOf('quest-draft', QuestDraftFileSchema),
+) as JsonSchema;
 
 export type ReplyCheck = { readonly ok: true; readonly value: QuestDraftFile } | ReplyIssues;
 export interface ReplyIssues {

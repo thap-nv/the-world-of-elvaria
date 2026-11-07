@@ -8,6 +8,7 @@ import {
   QUEST_DRAFT_JSON_SCHEMA,
   checkReply,
   checkTextReply,
+  forTheCli,
   jsonOfText,
   replyFormatBlock,
   retryBlock,
@@ -24,10 +25,28 @@ const CONTRACT = path.join(
 );
 
 describe('the reply (§3.11, §3.14)', () => {
-  it('gives the CLI the quest-draft contract of docs/schemas, without its examples', async () => {
+  it('gives the CLI the quest-draft contract of docs/schemas, less its examples and what draft-07 lacks', async () => {
     const { examples, ...contract } = JSON.parse(await readFile(CONTRACT, 'utf8')) as Record<string, unknown>;
     expect(examples).toBeDefined();
-    expect(QUEST_DRAFT_JSON_SCHEMA).toEqual(contract);
+    const { drafts } = contract.properties as { drafts: Record<string, unknown> };
+    const { contains, minContains, maxContains, ...plainDrafts } = drafts;
+    expect([contains, minContains, maxContains]).toEqual([{ required: ['question'] }, 0, 1]);
+    const { $schema, ...rest } = contract;
+    expect($schema).toBe('https://json-schema.org/draft/2020-12/schema');
+    expect(QUEST_DRAFT_JSON_SCHEMA).toEqual({
+      ...rest,
+      properties: { ...(contract.properties as object), drafts: plainDrafts },
+    });
+  });
+
+  it('drops the refused keywords at every depth, and leaves the rest alone', () => {
+    expect(
+      forTheCli({
+        $schema: 'x',
+        a: [{ contains: {}, b: 1 }, 'c', null],
+        d: { minContains: 0, maxContains: 1 },
+      }),
+    ).toEqual({ a: [{ b: 1 }, 'c', null], d: {} });
   });
 
   it('reads a structured output as drafts', () => {

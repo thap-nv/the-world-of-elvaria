@@ -9,7 +9,9 @@
   after `CHANCELLOR_MAX_MINUTES`), and checks the reply with the domain's `QuestDraftFileSchema` (one question at
   most, refs that name other drafts).
 - Asks for structured output the way the tribe can give it (§3.14): with the quest-draft JSON Schema as
-  `SpawnRequest.structured` (`--json-schema`) when the chosen Chancellor's tribe has `structured_output`;
+  `SpawnRequest.structured` (`--json-schema`) when the chosen Chancellor's tribe has `structured_output`,
+  less the keywords Claude Code 2.1.319 refuses (it validates the schema as draft-07, strict: `$schema`,
+  `contains`, `minContains`, `maxContains`; zod still checks the one-question rule they carry);
   otherwise with the schema in the system prompt, the JSON cut out of the session's last text, and one retry in
   `<run_dir>/retry/` when that text cannot be used. Who speaks is the domain's `selectChancellor` (§10
   question 6); the caller passes its choice in.
@@ -49,5 +51,9 @@ The specs read the Chancellor's replies as a CLI hands them over (`structured_ou
 contract, a vague request with its one question, drafts the kingdom refuses, two questions) and play them
 through a scripted runner; the default registry is read from `packages/registry-default/`, which this package
 may not import. `src/reply.spec.ts` checks that the schema given to the CLI is
-`docs/schemas/quest-draft.schema.json` without its examples. `apps/cli/src/say/say.spec.ts` runs `elvaria say`
-end to end on a kingdom on disk, then one tick of the Steward that writes the drafts.
+`docs/schemas/quest-draft.schema.json` without its examples and those keywords. `apps/cli/src/say/say.spec.ts`
+runs `elvaria say` end to end on a kingdom on disk, then one tick of the Steward that writes the drafts.
+
+A run with the real CLI costs one small session (P1-13: Sonnet, 2 turns, about 0.03 USD): build the hook
+(`pnpm --filter @elvaria/hooks build`), then on a scratch kingdom `elvaria doctor`, `territory add`,
+`character add aldric --class chancellor --tribe claude` and `elvaria say "<words>"`.
