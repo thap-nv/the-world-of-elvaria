@@ -1,6 +1,6 @@
 // The PlotManager (implementation-plan §3.3, ADR 0012): every quest works on its own ground. A git territory gets a
 // worktree on branch quest/<id>, a folder territory `quests/<id>/work/`. The Steward calls `commitAll` before a
-// kill or a pause and, with "submit: <quest>", when an assignee's session completes: five classes have no git
+// kill or a pause and when an assignee's session completes (`plotCommitMessage`): five classes have no git
 // (§8 P1-07), and the judge reads the work as the branch's diff. Tribe-specific clean-up (Claude Code's
 // transcripts) arrives as `forget` callbacks, so the core names no CLI (ADR 0021).
 import process from 'node:process';

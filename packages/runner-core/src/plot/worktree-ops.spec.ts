@@ -7,6 +7,7 @@ import type { Plot } from '@elvaria/domain';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { TEST_HOST, commitFile, git, gitRepo, questId, territoryAt } from '../__fixtures__/git-repo.ts';
+import { plotCommitMessage } from './commit-message.ts';
 import { createPlotManager } from './plot-manager.ts';
 import type { ForgetWorktree } from './worktree-ops.ts';
 
@@ -76,13 +77,14 @@ describe('commitAll', () => {
     await writeFile(path.join(worktree, 'notes.md'), 'new file\n');
     await writeFile(path.join(worktree, 'GEMINI.md'), 'generated\n');
 
-    const committed = await plots().commitAll(plot, 'submit: q_20261107_d5e6f7');
-    const again = await plots().commitAll(plot, 'submit: q_20261107_d5e6f7');
+    const message = plotCommitMessage.submit(questId('d5e6f7'));
+    const committed = await plots().commitAll(plot, message);
+    const again = await plots().commitAll(plot, message);
 
     expect(committed).toEqual({ status: 'committed', sha: git(worktree, 'rev-parse', 'HEAD') });
     expect(again).toEqual({ status: 'clean' });
     expect(git(worktree, 'rev-list', '--count', 'main..HEAD')).toBe('1');
-    expect(git(worktree, 'log', '-1', '--format=%s')).toBe('submit: q_20261107_d5e6f7');
+    expect(git(worktree, 'log', '-1', '--format=%s')).toBe('chore: submit q_20261107_d5e6f7');
     expect(git(worktree, 'show', '--name-only', '--format=', 'HEAD').split('\n').sort()).toEqual([
       'notes.md',
       'src/app.ts',
@@ -97,7 +99,7 @@ describe('commitAll', () => {
     await chmod(hook, 0o755);
     await writeFile(path.join(worktree, 'src', 'app.ts'), 'export const app = 4;\n');
 
-    const outcome = await plots().commitAll(plot, 'wip: breaker time');
+    const outcome = await plots().commitAll(plot, plotCommitMessage.wip(questId('e6f7g8'), 'time'));
 
     expect(outcome).toEqual({ status: 'refused', detail: 'lint failed: src/app.ts' });
     expect(await plots().status(plot)).toMatchObject({ dirty: true, ahead: 0 });

@@ -33,6 +33,7 @@ export {
 export type { FakeScenario } from './conformance/scenarios.ts';
 export type { CheckOutcome, ConformanceCheck, ConformanceTarget } from './conformance/target.ts';
 export { CONFORMANCE_CHARACTER, CONFORMANCE_QUEST } from './conformance/workspace.ts';
+export { plotCommitMessage } from './plot/commit-message.ts';
 export { folderPlotOf } from './plot/folder.ts';
 export { createPlotManager } from './plot/plot-manager.ts';
 export type { PlotManager, PlotManagerOptions, PreparedPlot } from './plot/plot-manager.ts';

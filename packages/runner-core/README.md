@@ -31,7 +31,8 @@
   (`PLOT_EXCLUDES`) and, on Windows, `core.longpaths`, and runs `commands.setup` until it succeeds once (log in
   `.runs/<quest>-setup.log`). The fork point and the setup state live in `elvaria-plot.json` in the worktree's
   private git folder. `status`, `touched` (paths changed since the fork, committed or not, plus untracked files),
-  `commitAll` (everything, through the territory's own hooks; `refused` when a hook says no) and `release`
+  `commitAll` (everything, through the territory's own hooks; `refused` when a hook says no; the Steward's messages
+  are `plotCommitMessage`, Conventional Commits so commitlint accepts them) and `release`
   (removes a clean worktree, keeps the branch, then calls each `forget` callback, such as a tribe CLI dropping its
   transcripts). A territory without git gets `quests/<id>/work/` in the kingdom.
 - Runs the machine checks before a judge (`runChecks`, §3.2): the territory's `checks` whose `when` globs match
