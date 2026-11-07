@@ -1,0 +1,24 @@
+{
+  "name": "@elvaria/runner-antigravity",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The Antigravity CLI (agy) adapter: the default runner of the Gemini tribe.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@elvaria/runner-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@elvaria/config": "workspace:*",
+    "@types/node": "^24.19.2",
+    "@vitest/coverage-v8": "^5.1.0",
+    "typescript": "~5.9.3",
+    "vitest": "^5.1.0"
+  }
+}

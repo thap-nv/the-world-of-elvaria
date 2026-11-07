@@ -24,6 +24,7 @@ export function hookCommand(policyFile?: string): HookCommand {
   return { command: process.execPath, args: [`--conditions=${DIST_CONDITION}`, HOOK_SCRIPT, ...policy] };
 }
 
+export { ANTIGRAVITY_HOOK_EVENTS } from './antigravity/translate.ts';
 export { CLAUDE_HOOK_EVENTS } from './claude/translate.ts';
 export { STOP_BLOCK_LIMIT } from './handover.ts';
 export { POLICY_VERSION, parsePolicy } from './policy.ts';

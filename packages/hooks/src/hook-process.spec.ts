@@ -37,11 +37,21 @@ const baseEnv = (): Record<string, string> =>
     ),
   );
 
-function runBuilt(stdin: unknown, env: HookEnv, options: { policy?: string; preload?: string[] } = {}) {
+interface RunOptions {
+  readonly policy?: string;
+  readonly preload?: string[];
+  /** agy's form: the event right after the script, as `.agents/elvaria-hook.mjs` leaves argv (§3.7). */
+  readonly event?: string;
+}
+
+function runBuilt(stdin: unknown, env: HookEnv, options: RunOptions = {}) {
   const { command, args } = hookCommand(options.policy);
   const preload = (options.preload ?? []).flatMap((file) => ['--import', pathToFileURL(file).href]);
+  const script = args.indexOf(HOOK_SCRIPT) + 1;
+  const event = options.event === undefined ? [] : [options.event];
+  const argv = [...args.slice(0, script), ...event, ...args.slice(script)];
   const started = performance.now();
-  const result = spawnSync(command, [...preload, ...args], {
+  const result = spawnSync(command, [...preload, ...argv], {
     input: JSON.stringify(stdin),
     env: { ...baseEnv(), ...env },
     encoding: 'utf8',
@@ -93,6 +103,29 @@ describe('the built hook', () => {
     expect(decision.hookSpecificOutput.permissionDecisionReason).toMatch(
       /^Elvaria law of this territory: .*forbidden path \(\.env\)/,
     );
+    expect((await kingdom.log()).events.map(({ type }) => type)).toEqual(['agent.tool.blocked']);
+  });
+
+  it("answers agy's PreToolUse with the event from argv: deny for a law, defer to the settings otherwise", async () => {
+    const policy = path.join(kingdom.runDir, 'policy.json');
+    await writeFile(policy, JSON.stringify({ version: 1, laws: DC1_LAWS }), 'utf8');
+    const agyCall = (args: Record<string, unknown>) => ({
+      conversationId: '32a0acb0-1790-48c1-b110-39fb5d66ed0f',
+      lastUserInput: 'Do the quest.',
+      workspacePaths: ['C:/Users/dev/dc1-se-team/.elvaria/worktrees/q'],
+      toolCall: { name: 'run_command', args },
+    });
+    const pushed = runBuilt(agyCall({ CommandLine: 'git push origin HEAD' }), kingdom.env(), {
+      policy,
+      event: 'PreToolUse',
+    });
+    expect({ status: pushed.status, stderr: pushed.stderr }).toEqual({ status: 0, stderr: '' });
+    expect(JSON.parse(pushed.stdout)).toMatchObject({ decision: 'deny' });
+    const tested = runBuilt(agyCall({ CommandLine: 'pnpm test' }), kingdom.env(), {
+      policy,
+      event: 'PreToolUse',
+    });
+    expect(JSON.parse(tested.stdout)).toEqual({ decision: 'deny_unless_prior_grant' });
     expect((await kingdom.log()).events.map(({ type }) => type)).toEqual(['agent.tool.blocked']);
   });
 
