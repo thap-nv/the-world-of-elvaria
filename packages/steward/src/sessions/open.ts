@@ -42,7 +42,7 @@ async function spawnFor(
     const quest = { ...input.quest, plot: prepared.plot };
     const request = await requestOf(ctx, { ...input, quest, cwd: prepared.cwd });
     const resumed = resume === null ? request : { ...request, resume: { session_id: resume } };
-    const session = heardBy(ctx.mana, input.character.id, await runner.spawn(resumed));
+    const session = heardBy(ctx.mana, input.character, await runner.spawn(resumed));
     return ok({ session, plot: prepared.plot });
   } catch (error) {
     ctx.deps.log.warn(

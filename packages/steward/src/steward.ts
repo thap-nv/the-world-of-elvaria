@@ -162,6 +162,8 @@ export function createSteward(deps: StewardDeps): Steward {
       state.timer = undefined;
       await state.queue;
       await state.sessions.close('the Steward stopped');
+      // A gauge read after a session's end may still run its CLI: let it finish before the lock goes.
+      await Promise.all(state.mana.reading.values());
       await state.held?.lock.release();
       state.held = undefined;
     },

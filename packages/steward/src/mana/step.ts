@@ -1,14 +1,16 @@
-// Step 2 of a tick (implementation-plan §3.1, §3.5): the gauges. Windows the sessions reported come in; a tribe
-// with a pool asleep is probed when its time comes (every probe_interval_minutes, or at the known reset); the
-// awake pools are read without calling a model while work is in play; a pool whose window is spent falls asleep,
-// and characters follow their pool. The owner's `wake` ("I signed in again") makes the probe due at once.
+// Step 2 of a tick (implementation-plan §3.1, §3.5): the gauges. Windows reported since the last tick come in
+// (in band, or read after a session's end); a tribe with a pool asleep is probed when its time comes (just after
+// a known reset, else every probe_interval_minutes); the awake pools are read without calling a model while work
+// is in play; a pool whose window is spent falls asleep, and characters follow their pool. The owner's `wake`
+// ("I signed in again") makes the probe due at once.
 import { decideManaState, samePool } from '@elvaria/domain';
 import type { PoolKey, Quest, TribeId } from '@elvaria/domain';
-import type { AgentRunner, ProbeOptions, ProbeResult } from '@elvaria/runner-core';
+import type { AgentRunner } from '@elvaria/runner-core';
 
 import { APPLIED, rejected } from '../inbox/quest-commands.ts';
 import { STEWARD } from '../record.ts';
-import { absorbWindows, nextProbe, settleSleepers, sleepPool, wakePool } from './pools.ts';
+import { absorbWindows, nextRead, scheduleProbe, settleSleepers, sleepPool, wakePool } from './pools.ts';
+import { probeOf } from './read.ts';
 import type { Context } from '../context.ts';
 import type { Outcome } from '../inbox/quest-commands.ts';
 
@@ -23,23 +25,9 @@ const IN_PLAY: readonly Quest['status'][] = [
   'paused_mana',
 ];
 
-const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
-
-/** A probe that throws (an adapter file, a CLI gone) is an error answer, never a failed tick. */
-async function probeOf(runner: AgentRunner, options: ProbeOptions): Promise<ProbeResult> {
-  try {
-    return await runner.probe(options);
-  } catch (error) {
-    return { status: 'error', detail: messageOf(error) };
-  }
-}
-
-/** The windows running sessions reported since the last tick (Claude `rate_limit_event`). */
+/** The windows reported since the last tick: in band by sessions, or by the reads after their ends. */
 async function hear(ctx: Context): Promise<void> {
-  for (const { character, windows } of ctx.mana.heard.splice(0)) {
-    const tribe = ctx.world.characters.get(character)?.tribe;
-    if (tribe !== undefined) await absorbWindows(ctx, tribe, windows);
-  }
+  for (const { tribe, windows } of ctx.mana.heard.splice(0)) await absorbWindows(ctx, tribe, windows);
 }
 
 const asleepOf = (ctx: Context, tribe: TribeId): PoolKey[] =>
@@ -58,7 +46,8 @@ async function probeAsleep(ctx: Context, tribe: TribeId, runner: AgentRunner): P
   await ctx.record.note({ type: 'mana.probe', actor: STEWARD, data });
   const fresh = await absorbWindows(ctx, tribe, result.windows);
   if (result.status === 'ok') for (const key of asleepOf(ctx, tribe)) await wakePool(ctx, key, fresh);
-  if (asleepOf(ctx, tribe).length > 0) ctx.mana.probeAt.set(tribe, nextProbe(ctx, result.resets_at));
+  if (asleepOf(ctx, tribe).length > 0) scheduleProbe(ctx, tribe, result.resets_at);
+  else ctx.mana.waited.delete(tribe);
 }
 
 /** The awake pools of a tribe, read without a model call (0 mana) every probe_interval_minutes. */
@@ -66,7 +55,7 @@ async function readAwake(ctx: Context, tribe: TribeId, runner: AgentRunner): Pro
   const now = ctx.deps.clock.now();
   if ((ctx.mana.readAt.get(tribe) ?? 0) > now) return;
   if (![...ctx.world.quests.values()].some(({ status }) => IN_PLAY.includes(status))) return;
-  ctx.mana.readAt.set(tribe, nextProbe(ctx, undefined));
+  ctx.mana.readAt.set(tribe, nextRead(ctx));
   await absorbWindows(ctx, tribe, (await probeOf(runner, { ping: false })).windows);
 }
 

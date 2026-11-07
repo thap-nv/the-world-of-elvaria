@@ -1,5 +1,12 @@
 // Data the mana functions decide with (implementation-plan §3.5, ADR 0009).
 
+/** A sleeping pool is probed this long after its known reset: the account may reset a few seconds late. */
+export const RESET_MARGIN_MINUTES = 1;
+/** After a probe at the reset found no mana yet, try again this soon… */
+export const RESET_RETRY_MINUTES = 2;
+/** …for this long after the reset, then fall back to probe_interval_minutes. */
+export const RESET_RETRY_WINDOW_MINUTES = 10;
+
 /**
  * Model-slug prefixes of each named pool: an account with several pools (Antigravity: Gemini models and the
  * Claude/GPT models it also serves) charges a character to the pool of its model. Keyed by pool, not by adapter,

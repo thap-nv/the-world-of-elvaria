@@ -5,7 +5,7 @@ import {
   DateTimeSchema,
   MS_PER_MINUTE,
   decideManaState,
-  parseInstant,
+  nextProbeOf,
   poolKeyOf,
   readingOf,
   sameGauge,
@@ -56,13 +56,19 @@ export async function absorbWindows(
   return fresh;
 }
 
-/** When a sleeping tribe is probed again: at its reset when that is known and ahead, else after the interval. */
-export function nextProbe(ctx: Context, resetsAt: string | undefined): number {
-  const now = ctx.deps.clock.now();
-  const resets = resetsAt === undefined ? undefined : parseInstant(resetsAt);
-  if (resets?.ok === true && resets.value > now) return resets.value;
-  return now + ctx.world.kingdom.mana.probe_interval_minutes * MS_PER_MINUTE;
+/** When a sleeping tribe is probed again (nextProbeOf): just after a known reset, soon after a late one. */
+export function scheduleProbe(ctx: Context, tribe: TribeId, resetsAt: string | undefined): void {
+  const waited = ctx.mana.waited.get(tribe) ?? null;
+  const interval = ctx.world.kingdom.mana.probe_interval_minutes;
+  const next = nextProbeOf(ctx.deps.clock.now(), resetsAt, waited, interval);
+  ctx.mana.probeAt.set(tribe, next.at);
+  if (next.reset === null) ctx.mana.waited.delete(tribe);
+  else ctx.mana.waited.set(tribe, next.reset);
 }
+
+/** When the awake pools of a tribe are read again: after probe_interval_minutes. */
+export const nextRead = (ctx: Context): number =>
+  ctx.deps.clock.now() + ctx.world.kingdom.mana.probe_interval_minutes * MS_PER_MINUTE;
 
 /** The session this Steward runs on `quest` for the character the quest file says holds it, if any. */
 function heldSession(ctx: Context, quest: Quest) {
@@ -106,7 +112,7 @@ export async function sleepPool(ctx: Context, key: PoolKey, resetsAt?: string): 
   };
   await absorb(ctx, [signal]);
   await ctx.record.note({ type: 'mana.exhausted', actor: STEWARD, data: { ...key } });
-  ctx.mana.probeAt.set(key.tribe, nextProbe(ctx, resetsAt));
+  scheduleProbe(ctx, key.tribe, resetsAt);
   await pauseRunning(ctx, key);
 }
 

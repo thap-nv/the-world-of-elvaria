@@ -19,6 +19,7 @@ export * from './dispatch/verifier-for.ts';
 export * from './mana/constants.ts';
 export * from './mana/pool.ts';
 export * from './mana/reading.ts';
+export * from './mana/schedule.ts';
 export * from './mana/state.ts';
 export * from './protocol/codec.ts';
 export * from './protocol/messages.ts';
