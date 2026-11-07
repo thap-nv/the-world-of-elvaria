@@ -10,6 +10,7 @@ import { currentRun, err, ok, ownerVerdictIdOf, verdictIdOf } from '@elvaria/dom
 import { fromPortable, inKingdom, writeFileAtomic } from '@elvaria/store';
 import type { Deliverable, Quest, QuestId, Result, Territory, Verdict } from '@elvaria/domain';
 
+import { noticeQuest, ring } from '../context.ts';
 import { readHandover } from '../files.ts';
 import { copyIntoTerritory } from './copy.ts';
 import { deliveryNote, deliveryNoteOf } from './note.ts';
@@ -85,12 +86,21 @@ async function deliverQuest(ctx: Context, quest: Quest): Promise<Result<Quest, s
   await writeFileAtomic(inKingdom(ctx.root, note), text);
   const branch = quest.plot.type === 'worktree' ? quest.plot.branch : undefined;
   const deliverable = { ...quest.deliverable, path: note, ...(branch === undefined ? {} : { branch }) };
-  return ctx.record.move({
+  const moved = await ctx.record.move({
     quest: quest.id,
     event: { type: 'deliver' },
     actor: 'steward',
     before: { deliverable },
   });
+  if (moved.ok && done.value.subquests?.status === 'refused')
+    await refusedPlan(ctx, moved.value, done.value.subquests.reason);
+  return moved;
+}
+
+/** A plan that opened nothing is delivered all the same; the owner hears it once, when it is (P1-14, §11). */
+async function refusedPlan(ctx: Context, quest: Quest, reason: string): Promise<void> {
+  ctx.deps.log.warn(`steward: ${quest.id}: delivered, no sub-quest opened: ${reason}`);
+  await ring(ctx, { kind: 'subquests_refused', quest: noticeQuest(quest), reason });
 }
 
 /** One delivery; a file that cannot be read or written leaves the quest for the next tick. */

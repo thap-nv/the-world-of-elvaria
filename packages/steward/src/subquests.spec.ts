@@ -105,6 +105,7 @@ describe('delivering a plan: its sub-quests open', () => {
     const note = await noteOf(kingdom, plan);
     expect(note).toContain(`- \`${table.id}\` Part d1 (build, rank D, knight)`);
     expect(note).not.toContain('## Merge by hand');
+    expect(kingdom.notices.filter(({ kind }) => kind === 'subquests_refused')).toEqual([]);
     // The children are quests like any other: a knight takes the first, the second waits for it.
     await tickUntil(steward, kingdom.clock, async () => (await kingdom.quest('Part d1')).status !== 'open');
     expect((await kingdom.quest('Part d2')).status).toBe('open');
@@ -166,9 +167,17 @@ describe('delivering a plan: its sub-quests open', () => {
       150,
     );
     expect(await kingdom.quests()).toHaveLength(titles.length);
-    for (const [title, [, reason]] of Object.entries(cases))
-      expect(await noteOf(kingdom, await kingdom.quest(title))).toContain(
-        `## Sub-quests\n\nNone opened: ${reason}`,
+    for (const [title, [, reason]] of Object.entries(cases)) {
+      const plan = await kingdom.quest(title);
+      expect(await noteOf(kingdom, plan)).toContain(`## Sub-quests\n\nNone opened: ${reason}`);
+      // The owner hears it once, the log says it too.
+      const rung = kingdom.notices.filter(
+        (notice) => notice.kind === 'subquests_refused' && notice.quest.id === plan.id,
       );
+      expect(rung).toHaveLength(1);
+      expect(rung[0]).toMatchObject({ kind: 'subquests_refused', quest: { id: plan.id, title, rank: 'D' } });
+      expect(rung[0]?.kind === 'subquests_refused' ? rung[0].reason : '').toContain(reason);
+      expect(kingdom.warnings.join('\n')).toContain(`${plan.id}: delivered, no sub-quest opened: ${reason}`);
+    }
   });
 });

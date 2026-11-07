@@ -60,7 +60,8 @@
   `.runs/<quest>-replaced/`; a territory folder that is not there gets nothing); a draft is never sent, and
   reaches `done` through the seal its kind asks for; a plan's `subquests.json` (quest-draft JSON at the root of
   its plot) becomes open child quests (`created_by: council`, ids derived from the plan and the ref), all or none:
-  a list it cannot read, a draft the kingdom refuses, a question, a party's parts (P1-18) or a circle open none.
+  a list it cannot read, a draft the kingdom refuses, a question, a party's parts (P1-18) or a circle open none,
+  and the owner hears it once (`subquests_refused`, the bell, a warning in the log).
   Each delivery writes `.runs/<quest>-delivery.md` (the pull request's description: the quest, the verdicts of
   its last run, the letter, what was copied or opened, the commands to merge) and then stamps
   `deliverable.delivered_at` with `path` (and `branch`); a delivery that fails halfway is done again next tick and
