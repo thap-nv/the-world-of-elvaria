@@ -19,6 +19,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 import { TRIBE, minimalEnv } from './__fixtures__/harness.ts';
 import { locateClaude } from './locate.ts';
 import { createClaudeRunner } from './runner.ts';
+import type { ApprenticeConfig } from './agents.ts';
 
 const LIVE = process.env.ELVARIA_LIVE === '1';
 /** The built hook of @elvaria/hooks, by path: the adapter's specs may not import that package (§1.3). */
@@ -35,13 +36,14 @@ const hookCommand = (policyFile: string) => ({
 const executable = LIVE
   ? (process.env.ELVARIA_CLAUDE ?? (await locateClaude(process.env, process.platform)))
   : undefined;
-const realRunner = () =>
+const realRunner = (apprentice?: ApprenticeConfig) =>
   createClaudeRunner({
     tribe: TRIBE,
     ...(executable === undefined ? {} : { executable }),
     hookCommand,
     hookScript: HOOK_SCRIPT,
     env: minimalEnv(),
+    ...(apprentice === undefined ? {} : { apprentice }),
   });
 const target: ConformanceTarget = {
   name: 'runner-claude with Claude Code',
@@ -91,8 +93,13 @@ describe.runIf(LIVE)('Claude Code itself (ELVARIA_LIVE=1)', () => {
     async () => {
       const { workspace, request } = await requestFor({
         prompt: {
-          system:
+          // A real assignee's prompt carries the letter's template (prompts/handover.md); this probe's says where the
+          // letter goes, or Haiku 5.5 refuses to write a file it has no template for (seen with Claude Code 2.1.319).
+          system: [
             'You are a probe of the Elvaria test suite. Do what you are asked, and what a hook asks of you.',
+            'Your handover letter is the file the hook names; if the hook asks for it, create it with the',
+            'Write tool, with the headings it lists, each followed by one line about this probe.',
+          ].join(' '),
           user: 'Reply with the single word: done.',
         },
         budget: { max_turns: 8, max_minutes: 3 },
@@ -126,7 +133,12 @@ describe.runIf(LIVE)('Claude Code itself (ELVARIA_LIVE=1)', () => {
     });
     const prompt = {
       system: request.prompt.system,
-      user: 'Stage the file a.txt and commit it with the message "Add a". Then reply with the single word: done.',
+      // A real assignee's prompt has the shell block (prompts/shell.md): one command per call, no `cd`, no `&&`.
+      // Without it Haiku 5.5 joins the two, which the settings refuse (seen with Claude Code 2.1.319).
+      user: [
+        'Run `git add a.txt` in one Bash call, then `git commit -m "Add a"` in another: one command per call,',
+        'no cd, no &&. Then reply with the single word: done.',
+      ].join(' '),
     };
     const result = await (
       await realRunner().spawn({ ...request, permissions, prompt, budget: { max_turns: 8, max_minutes: 3 } })
@@ -136,6 +148,52 @@ describe.runIf(LIVE)('Claude Code itself (ELVARIA_LIVE=1)', () => {
     expect(message).toMatch(/Add a/);
     expect(message).not.toMatch(/Co-Authored-By|Generated with|claude\.ai/i);
   });
+
+  it(
+    'runs the apprentice on the cheapest model, refuses a stronger one, marks its calls and sees it cut (§3.12)',
+    { timeout: TIMEOUT_MS },
+    async () => {
+      // Only an assignee may start the apprentice; Write lets it leave the letter the Stop hook asks for.
+      const { workspace, request } = await requestFor({ role: 'assignee' });
+      for (const name of ['a', 'b', 'c', 'd'])
+        await writeFile(path.join(workspace.plot, `${name}.txt`), `${name}\n`);
+      // A Haiku master: its apprentice may run on haiku only (APPRENTICE_MODELS cut at the master's own).
+      const permissions = toolPolicyOf({
+        role: 'assignee',
+        characterClass: { tools: { allow: ['Read', 'Write', 'Agent(apprentice)'], deny: [] } },
+      });
+      const user = [
+        'Step 1: call the Agent tool with subagent_type "apprentice", model "sonnet", description "probe",',
+        'and prompt "Reply with the single word: done.".',
+        'Step 2: whatever step 1 gave, call the Agent tool again with subagent_type "apprentice", description',
+        '"read four files", no model, and prompt "Read a.txt, then b.txt, then c.txt, then d.txt, one Read call',
+        'each, one after another, then reply with what they hold.". Wait for its answer.',
+        'Step 3: reply with the single word: done.',
+      ].join(' ');
+      const runner = realRunner({ max_turns: 2, max_minutes: 5 });
+      const session = await runner.spawn({
+        ...request,
+        permissions,
+        prompt: { ...request.prompt, user },
+        budget: { max_turns: 12, max_minutes: 3 },
+      });
+      const result = await session.wait();
+      const lines = await journalOf(workspace);
+      const refused = lines
+        .filter(({ type }) => type === 'agent.tool.blocked')
+        .map(({ data }) => data.reason);
+      expect(refused).toContainEqual(expect.stringMatching(/model sonnet is not allowed for the apprentice/));
+      const ends = lines.filter(({ type }) => type === 'agent.subagent.end').map(({ data }) => data);
+      expect(ends).toContainEqual(
+        expect.objectContaining({ agent_type: 'apprentice', stopped: 'max_turns' }),
+      );
+      const apprenticeReads = lines.filter(
+        ({ type, data }) => type === 'agent.tool' && data.agent_type === 'apprentice',
+      );
+      expect(apprenticeReads.length).toBeGreaterThan(0);
+      expect(result.outcome).toBe('completed');
+    },
+  );
 
   it('lets Grep search the plot and refuses it outside', { timeout: TIMEOUT_MS }, async () => {
     const { workspace, request } = await requestFor({ role: 'bard' });
