@@ -51,6 +51,18 @@ export const BREAKER_DEFAULTS = {
   /** One quest must fit one context (principle 13); the Chancellor splits work above this. */
   context_budget_tokens: 120_000,
 } as const;
+/**
+ * Tokens read from the prompt cache that count as one token against quest.budget.max_tokens (P1-23). A cache read
+ * costs a tenth of an input token (Claude API pricing; a twentieth on Opus 5.5) and does not count toward input
+ * rate limits, while Claude Code reads its whole cached context again on every model call: counted in full, reads
+ * were 85-90 % of a session's tokens and cut ordinary sessions short (phase-1 report §5.2).
+ */
+export const CACHE_READS_PER_TOKEN = 10;
+/**
+ * Verifier sessions of one run a breaker may stop before the review goes to the infirmary (P1-23): each stopped
+ * verifier hands the review to a fresh session, which a review too big for its budget would meet again forever.
+ */
+export const REVIEW_BREAKS_MAX = 2;
 
 export const SCHEDULE_DEFAULTS = {
   chronicle_at: '21:00',

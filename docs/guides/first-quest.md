@@ -80,6 +80,8 @@ Repo có `.claude/settings.json` của riêng nó (dc1 và Elvaria đều có) t
 
 Worktree của quest nằm trong repo (`<repo>/.elvaria/worktrees/<quest>`), git không thấy nhờ `.git/info/exclude`, nhưng `eslint .` và `prettier --check .` chạy ở checkout chính thì quét cả nó, trừ khi repo bỏ qua `.elvaria/**` (repo Elvaria đã bỏ qua từ P1-11; dc1 chưa).
 
+Phiên của tộc Gemini (agy) cần `.agents/hooks.json`, shim `.agents/elvaria-hook.mjs` và `GEMINI.md` trong worktree; runner gỡ chúng khi phiên kết thúc (từ P1-23), trước khi Quản sự chạy check. Check `format` vì vậy là đúng lệnh của CI (`pnpm format:check`), không cần loại `.agents/**` như lần chạy P1-16 (báo cáo giai đoạn 1 §5.3). Trong lúc chính một phiên agy chạy, các file đó vẫn có mặt: người chấm tộc Gemini tự chạy `pnpm format:check` thì thấy chúng; phán quyết dựa trên check máy đã chạy trước phiên.
+
 ## 5. Nhân vật
 
 ```bash
@@ -119,6 +121,8 @@ Một vương quốc chỉ có một Quản sự (`.state/steward.lock`). Mỗi 
 | câu hỏi của nhân vật | chuông trên terminal của `elvaria run`, `elvaria quest show <quest>`; trả lời bằng `elvaria answer <quest> "<câu>"` |
 
 Dừng bằng Ctrl+C. Nếu Quản sự chết khi còn phiên chạy, `elvaria doctor` liệt kê các pid đó (khi không có Quản sự nào giữ khóa) và lần `elvaria run` kế tiếp giết chúng.
+
+Cầu dao token so token của phiên với `budget.max_tokens` (= `estimate.tokens × breakers.mana_multiplier`, mặc định 120 000 × 2 khi quest không có ước lượng). Từ P1-23 token đọc cache tính một phần mười, như giá của nó: Claude Code đọc lại cả ngữ cảnh đã cache ở mỗi lượt, và đếm đủ thì một phiên bình thường bị cắt (báo cáo giai đoạn 1 §5.2). `mana_multiplier: 2` là đủ; vương quốc nào đã nâng nó để tránh cắt oan thì trả về 2 sau khi dùng `dist` có P1-23, còn quest đã mở giữ trần cũ tới khi `elvaria quest edit <quest> --max-tokens <n>`. Người chấm bị cầu dao cắt thì người khác chấm tiếp; người thứ hai của cùng lượt cũng bị cắt thì quest vào trạm xá kèm chuông, không mở phiên người chấm thứ ba: nâng trần bằng `elvaria quest edit <quest> --max-tokens <n>` rồi `retry` (ghi lệnh vào `inbox/` như báo cáo giai đoạn 1 §5.7, tới khi CLI có `quest retry` của P1-26).
 
 ## 8. Dấu vua
 

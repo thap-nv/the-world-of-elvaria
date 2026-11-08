@@ -1,7 +1,19 @@
 // Claude Code's stream-json, line by line (implementation-plan §3.7, §3.10, §3.12; spike P1-02, fixtures/). The
 // reader keeps what the result needs (session, last `result`, usage so far) and names what the runner acts on:
 // signals for the Steward, lines only the stream knows (apprentice start and end, API retries).
-import { isObject, modelUsageTokens, numberOf, objectOf, objectsOf, textOf, usageTokens } from './json.ts';
+import { countedTokens } from '@elvaria/runner-core';
+import type { SessionTokens } from '@elvaria/runner-core';
+
+import {
+  addTokens,
+  isObject,
+  modelUsageTokens,
+  numberOf,
+  objectOf,
+  objectsOf,
+  textOf,
+  usageTokens,
+} from './json.ts';
 import { rateLimitWindowsOf, rejectionOf } from './usage.ts';
 import type { JsonObject } from './json.ts';
 import type { UsageWindow } from './usage.ts';
@@ -9,7 +21,7 @@ import type { UsageWindow } from './usage.ts';
 export type Observation =
   | { readonly kind: 'init'; readonly session: string }
   | { readonly kind: 'text'; readonly text: string }
-  /** Tokens so far: never goes down within a session. */
+  /** Tokens so far, cache reads at a tenth (`countedTokens`, P1-23): never goes down within a session. */
   | { readonly kind: 'usage'; readonly tokens: number }
   | { readonly kind: 'tool_blocked'; readonly tool: string; readonly reason: string }
   /** `system/api_retry`; with `error: rate_limit` the account is running out (cli-facts §1.2). */
@@ -45,14 +57,16 @@ interface State {
   /** tool_use id → tool name, to name a refused tool. */
   readonly toolNames: Map<string, string>;
   /** assistant message id → its tokens; one message spans several lines. */
-  readonly messages: Map<string, number>;
+  readonly messages: Map<string, SessionTokens>;
   /** Apprentice runs in progress → their type and last known duration. */
   readonly runs: Map<string, { readonly agent_type: string; duration_ms: number }>;
 }
 
 const TOO_MANY_REQUESTS = 429;
 
-function grow(state: State, next: number): Observation[] {
+/** Both parts are summed before counting, so rounding happens once per total, not once per message. */
+function grow(state: State, parts: SessionTokens): Observation[] {
+  const next = countedTokens(parts);
   if (next <= state.tokens) return [];
   state.tokens = next;
   return [{ kind: 'usage', tokens: next }];
@@ -84,13 +98,7 @@ function assistant(state: State, line: JsonObject): Observation[] {
       state.toolNames.set(toolId, textOf(block, 'name') ?? 'unknown');
     if (type === 'text' && text !== undefined && own) observed.push({ kind: 'text', text });
   }
-  return [
-    ...observed,
-    ...grow(
-      state,
-      [...state.messages.values()].reduce((sum, value) => sum + value, 0),
-    ),
-  ];
+  return [...observed, ...grow(state, addTokens([...state.messages.values()]))];
 }
 
 /** A tool the CLI refused, by rule, by mode or by a hook: `tool_result_meta[].permission_decision`. */

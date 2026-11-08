@@ -24,7 +24,10 @@ export interface BreakerLimits {
   readonly max_turns: number;
 }
 
-/** What the session reported so far: its tokens (a running total), and its turns when the runner counts them. */
+/**
+ * What the session reported so far: its tokens (a running total, cache reads at a tenth: `countedTokens`, P1-23),
+ * and its turns when the runner counts them.
+ */
 export interface UsageSoFar {
   readonly tokens: number;
   readonly turns?: number;

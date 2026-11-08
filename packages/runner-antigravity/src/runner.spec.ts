@@ -56,15 +56,20 @@ const eventLines = (): Line[] => {
 const eventTypes = (): string[] => eventLines().map(({ type }) => type);
 
 describe('a session', () => {
-  it('runs on generated files: settings, policy, hooks.json, its shim, GEMINI.md, the version', async () => {
+  it('runs on generated files, read while it runs (run-files.spec.ts: the plot’s go at its end)', async () => {
     await mkdir(path.join(world.plot, '.claude', 'rules'), { recursive: true });
     await writeFile(path.join(world.plot, 'CLAUDE.md'), '# Law\n', 'utf8');
     await writeFile(path.join(world.plot, '.claude', 'rules', 'api.md'), '# API\n', 'utf8');
-    await spawn();
+    const session = await fakeRunner().spawn(request(world, { ELVARIA_FAKE_SCENARIO: 'hang' }));
     const read = (...parts: string[]) => readFile(path.join(...parts), 'utf8');
-    const settings = JSON.parse(await read(world.run_dir, 'settings.json')) as {
-      permissions: { allow: string[] };
-    };
+    const [settingsText, policy, hooks, shim, context] = await Promise.all([
+      read(world.run_dir, 'settings.json'),
+      read(world.run_dir, 'policy.json'),
+      read(world.plot, '.agents', 'hooks.json'),
+      read(world.plot, '.agents', 'elvaria-hook.mjs'),
+      read(world.plot, 'GEMINI.md'),
+    ]).finally(() => session.kill('the spec has read the files'));
+    const settings = JSON.parse(settingsText) as { permissions: { allow: string[] } };
     const letter = world.handover.replaceAll('\\', '/');
     expect(settings.permissions.allow).toEqual([
       'write_file(./)',
@@ -72,7 +77,7 @@ describe('a session', () => {
       `read_file(${letter})`,
       `write_file(${letter})`,
     ]);
-    expect(JSON.parse(await read(world.run_dir, 'policy.json'))).toMatchObject({
+    expect(JSON.parse(policy)).toMatchObject({
       version: 1,
       quest: 'q_20261107_a9yb2k',
       attempt: 1,
@@ -81,11 +86,8 @@ describe('a session', () => {
       model: 'gemini-3.8-flash-low',
       laws: { forbidden_paths: ['.env', '.env.*', 'infra/secrets/**'] },
     });
-    expect(await read(world.plot, '.agents', 'hooks.json')).toContain('"node elvaria-hook.mjs PreToolUse"');
-    expect(await read(world.plot, '.agents', 'elvaria-hook.mjs')).toContain(
-      JSON.stringify(path.join(world.run_dir, 'policy.json')),
-    );
-    const context = await read(world.plot, 'GEMINI.md');
+    expect(hooks).toContain('"node elvaria-hook.mjs PreToolUse"');
+    expect(shim).toContain(JSON.stringify(path.join(world.run_dir, 'policy.json')));
     expect(context).toContain('You are Quill, a Scribe.');
     expect(context).toContain('@[Territory law](./CLAUDE.md)\n@[rule](./.claude/rules/api.md)');
     expect(await read(world.run_dir, 'agy-version.txt')).toBe('1.5.2\n');
