@@ -72,11 +72,14 @@ export const toVerdictCheck = ({ id, pass, duration_ms, log_path }: CheckRun): V
 });
 
 /**
- * The host a check runs with: the quest's secrets added to the minimal env the way a session gets them (sessionEnv
- * refuses one that would replace a variable of it), and their values, which its log is masked with (P1-10b).
+ * The host a territory command runs with (a check, P1-10b; a plot's `commands.setup`, P1-30): the quest's secrets
+ * added to the minimal env the way a session gets them (sessionEnv refuses one that would replace a variable of
+ * it), and their values, which its log is masked with. No secrets: the host's minimal env alone.
  */
-function withSecrets(request: ChecksRequest, host: ProcessHost): { host: ProcessHost; known: string[] } {
-  const secrets = request.secrets ?? {};
+export function withSecrets(
+  host: ProcessHost,
+  secrets: Readonly<Record<string, string>> = {},
+): { host: ProcessHost; known: string[] } {
   const env = sessionEnv({ base: host.env, context: {}, secrets });
   return { host: { ...host, env }, known: Object.values(secrets).filter((value) => value !== '') };
 }
@@ -89,7 +92,7 @@ export async function runCheck(
   timeoutMs: number = check.timeout_minutes * MS_PER_MINUTE,
 ): Promise<CheckRun> {
   const logPath = checkLogOf(request.run_dir, check.id);
-  const given = withSecrets(request, host);
+  const given = withSecrets(host, request.secrets);
   const log = await openLog(request.kingdom, logPath, `$ ${check.run}`, given.known);
   const context = {
     cwd: request.cwd,

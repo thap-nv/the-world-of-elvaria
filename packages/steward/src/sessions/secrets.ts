@@ -3,7 +3,8 @@
 // values each running session was given, and what a session leaves behind masked with them before the kingdom
 // keeps it. sessionEnvOf is called by requestOf, rememberSecrets by spawnFor, secretsLacking by the openings before
 // the plot (P1-06) and by startChecks, questSecretsOf by startChecks too (the checks get the session's secrets,
-// P1-10b), maskFinished by the tick before settle and by the breakers after a kill.
+// P1-10b) and by the openings before the plot (its `commands.setup` gets them, P1-30), maskFinished by the tick
+// before settle and by the breakers after a kill.
 import { secretsBeyond } from '@elvaria/domain';
 import { createRedactor, redactDeep } from '@elvaria/eventlog';
 import { secretValuesOf, sessionEnv } from '@elvaria/runner-core';
@@ -15,9 +16,9 @@ import type { Context } from '../context.ts';
 import type { Finished } from './running.ts';
 
 /**
- * The quest's `secrets_required` from the treasury, name → value: what its sessions and its checks (P1-10b) are
- * given. A name the territory no longer allows, or the treasury lacks, throws; a quest that asks for none reads no
- * treasury.
+ * The quest's `secrets_required` from the treasury, name → value: what its sessions, its checks (P1-10b) and its
+ * plot's `commands.setup` (P1-30) are given. A name the territory no longer allows, or the treasury lacks, throws;
+ * a quest that asks for none reads no treasury.
  */
 export async function questSecretsOf(
   ctx: Context,

@@ -52,8 +52,8 @@
   enabled tribe from `kingdom.tribes[].adapter` (`src/run/crew.ts`: `claude_code`, with `hookCommand` and
   `HOOK_SCRIPT` of `@elvaria/hooks`, and since P1-15 `antigravity` from the pinned agy, built on first use in
   `src/run/antigravity.ts`; a tribe without a runner takes no quest), plots over runner-core's
-  `PlotManager` and `runChecks` (`src/run/plots.ts`: prepare, commit, the checks on what the quest touched,
-  release) with a `ProcessHost` from PATH and each CLI's `forget` (`claude purge`), the console bell saying
+  `PlotManager` and `runChecks` (`src/run/plots.ts`: prepare, its `commands.setup` given the quest's secrets
+  (P1-30), commit, the checks on what the quest touched, given them too (P1-10b), release) with a `ProcessHost` from PATH and each CLI's `forget` (`claude purge`), the console bell saying
   the Steward's notices in the owner's language, and `.state/steward.lock` (a second `run` is refused).
 
 ## Does not

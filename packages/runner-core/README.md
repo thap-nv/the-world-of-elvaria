@@ -47,7 +47,8 @@
   checkout is never pulled. It is idempotent: a worktree already there is reused, a branch that outlived its
   worktree is checked out again. Each prepare also makes sure of the repo's `.git/info/exclude` lines
   (`PLOT_EXCLUDES`) and, on Windows, `core.longpaths`, and runs `commands.setup` until it succeeds once (log in
-  `.runs/<quest>-setup.log`). The fork point and the setup state live in `elvaria-plot.json` in the worktree's
+  `.runs/<quest>-setup.log`), with the quest's secrets when the caller passes them (P1-30:
+  `prepare(quest, territory, secrets)`, put in its env over the host's minimal env as a check's are). The fork point and the setup state live in `elvaria-plot.json` in the worktree's
   private git folder. `status`, `touched` (paths changed since the fork, committed or not, plus untracked files),
   `commitAll` (everything, through the territory's own hooks; `refused` when a hook says no; the Steward's messages
   are `plotCommitMessage`, Conventional Commits so commitlint accepts them), `applyPatch` (P1-28: the assignee's
@@ -69,9 +70,9 @@
   other when it aborts, the log saying so; `runProgram` takes the same `signal`. `ChecksRequest.secrets` (P1-10b:
   the quest's `secrets_required`, treasury name → value) puts them in each check's env over the host's minimal env
   (`sessionEnv`, no `ELVARIA_*`), so a check that needs a private registry passes as the session did.
-  The log of a check or of `commands.setup` loses the secret shapes the command printed when it closes
-  (`maskLogFile`, ADR 0013), and a check's log the values of the secrets it was given; the command writes straight
-  into the file, so the masking is not line by line.
+  The log of a check or of `commands.setup` loses the values of the secrets the command was given (`withSecrets`),
+  then the secret shapes it printed, when it closes (`maskLogFile`, ADR 0013); the command writes straight into the
+  file, so the masking is not line by line.
 - Starts territory programs without a shell (`runProgram`, `argvOf`, `splitCommandLine`): quoted words, shell
   syntax refused, the program resolved by the `ProcessHost` the composition root passes in (it owns PATH and turns
   an npm `.cmd` shim into `node <script>`), and an env with no `GIT_*` (`childEnvOf`).

@@ -139,6 +139,33 @@ describe('prepare on a git territory', () => {
     });
   }, 30_000);
 
+  it("gives commands.setup the quest's secrets and masks their values in its log (P1-30)", async () => {
+    const repo = await gitRepo(path.join(root, 'private registry'));
+    // An install from a private registry: it needs the token, and a careless one prints it.
+    await commitFile(
+      repo,
+      'setup.mjs',
+      'if (!process.env.NPM_TOKEN) process.exit(4);\nconsole.log(`login ${process.env.NPM_TOKEN}`);\n',
+    );
+    const territory = territoryAt(repo, { commands: { setup: 'node setup.mjs' } });
+    const quest = { id: questId('h8j9k1') };
+    const plots = manager();
+    // No pattern knows this shape: only the value the setup was given can mask it.
+    const value = ['plain', '-FAKE-', 'registry-30'].join('');
+
+    // Without the secret the host's minimal env has no token, so the setup fails as it did before P1-30.
+    expect(await plots.prepare(quest, territory)).toMatchObject({
+      ok: false,
+      error: { reason: 'setup_failed', detail: 'node setup.mjs: ended with 4' },
+    });
+    const given = await plots.prepare(quest, territory, { npm_token: value });
+
+    expect(given).toMatchObject({ ok: true, value: { setup: { exit_code: 0 } } });
+    const log = await readFile(path.join(kingdom, setupLogOf(quest.id)), 'utf8');
+    expect(log).toContain('login [redacted]');
+    expect(log.split(value)).toHaveLength(1);
+  }, 30_000);
+
   it('refuses a plot path that holds something else, and a territory that is not a repo', async () => {
     const repo = await gitRepo(path.join(root, 'taken'));
     const quest = { id: questId('g7h8j9') };

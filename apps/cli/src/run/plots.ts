@@ -34,8 +34,9 @@ function cwdOf(kingdom: string, plot: Quest['plot']): string {
 
 export function plotsOver(kingdom: string, manager: PlotManager, host: ProcessHost): Plots {
   return {
-    prepare: async (quest, territory) => {
-      const prepared = await manager.prepare(quest, territory);
+    // `commands.setup` gets the quest's secrets in the host's minimal env, its log masked with them (P1-30).
+    prepare: async (quest, territory, secrets) => {
+      const prepared = await manager.prepare(quest, territory, secrets);
       if (!prepared.ok) {
         const { reason, detail } = prepared.error;
         throw new Error(`the plot of ${quest.id} is not ready (${reason}): ${detail}`);
