@@ -133,6 +133,18 @@ describe('the delivery note', () => {
     );
   });
 
+  it('names the paths the Steward applied from a patch, after the letter and before the merge (P1-31)', () => {
+    const note = render({ patched: ['.husky/pre-commit', '.husky/pre-push'] });
+    const section = '## Applied through a patch';
+    expect(note).toContain(
+      `${section}\n\nThe character's CLI does not write these paths, so it wrote its change as a patch (\`elvaria.patch\`) and the Steward applied it before the commit. Read their diff before you merge:\n\n- \`.husky/pre-commit\`\n- \`.husky/pre-push\`\n`,
+    );
+    expect(note.indexOf('## Handover letter')).toBeLessThan(note.indexOf(section));
+    expect(note.indexOf(section)).toBeLessThan(note.indexOf('## Merge by hand'));
+    expect(render({ patched: [] })).not.toContain(section);
+    expect(render()).not.toContain(section);
+  });
+
   it('tells a copy into a territory without git, or why nothing was copied', () => {
     const folder = quest({
       plot: { type: 'folder', path: `quests/${ID}/work` },

@@ -89,7 +89,9 @@
   a commit the territory's hooks refuse sends the quest to the infirmary, `breaker:commit`; before it, on a
   territory with `laws.patch_paths`, the assignee's `elvaria.patch` is applied through `Plots.applyPatch` and told
   in a `plot.patched` line, and a patch that touches other paths or does not apply sends the quest to the
-  infirmary instead, `breaker:commit: elvaria.patch was not applied: …`, P1-28), a question (`ask`;
+  infirmary instead, `breaker:commit: elvaria.patch was not applied: …`, P1-28; the next run's prompt reads that
+  reason back from the run's `quest.infirmary` line in the quest's journal, `continuationOf` and `refusedPatchOf`,
+  P1-31), a question (`ask`;
   one the owner already answered, left in the letter, is a submit), mana out, a crash, the CLI's turn or budget
   limit (breaker). For a verifier: the verdict file (a partial one as `<quest>-<n>-p<k>`), the ritual's pass rule
   over the checks (`underPassRule`), `validateVerdict`, `verdict.*`, the move, the assignee's windows and fail
@@ -134,7 +136,8 @@
   a list it cannot read, a draft the kingdom refuses, a question, a party's parts (P1-18) or a circle open none,
   and the owner hears it once (`subquests_refused`, the bell, a warning in the log).
   Each delivery writes `.runs/<quest>-delivery.md` (the pull request's description: the quest, the verdicts of
-  its last run, the letter, what was copied or opened, the commands to merge) and then stamps
+  its last run, the letter, the paths the Steward applied from the assignee's patch over every run, read from the
+  quest's `plot.patched` lines (P1-31), what was copied or opened, the commands to merge) and then stamps
   `deliverable.delivered_at` with `path` (and `branch`); a delivery that fails halfway is done again next tick and
   finds what it already did.
 - Tells once when an open quest nobody can take (`quest.unclaimable`, the bell), withdraws it with
@@ -175,6 +178,9 @@ entry matches exactly one session, and the replayed log equals the files. `deliv
 report and a sealed draft from worktree-like plots, and a document copied into a territory without git;
 `subquests.spec.ts` opens a plan's sub-quests (again after a delivery that failed halfway) and refuses lists it
 cannot follow; assignees leave their files in the plot through `leavingRunners` (`src/__fixtures__/deliver.ts`).
+`patch.spec.ts` applies or refuses an assignee's `elvaria.patch` on real git repos (`src/__fixtures__/git-plots.ts`,
+P1-28), then checks that the delivery note names exactly the patched paths and has no such section without a patch,
+and that the run after a refused patch reads why in its prompt while the first run does not (P1-31).
 `scripts.spec.ts` copies the real `link-check` and `run-check` of `packages/registry-default/scripts/` into the
 kingdom (`src/__fixtures__/scripts.ts`) and takes script quests all the way with no runner asked: a link check
 that passes, one with a dead link and its scribe's follow-up, a territory check run from its resolved argv and its

@@ -23,6 +23,7 @@ export const PROMPT_TEMPLATES = [
   'resumed',
   'returned',
   'failed-checks',
+  'refused-patch',
   'memory',
   'answer',
   'verifier',

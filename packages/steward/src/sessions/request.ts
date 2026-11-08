@@ -6,12 +6,14 @@ import { mkdir } from 'node:fs/promises';
 import {
   FAIL_KINDS,
   currentRun,
+  isEventOf,
   ownerVerdictIdOf,
   partialVerdictIdOf,
   runDirOf,
   verdictIdOf,
   verifierSessionsOf,
 } from '@elvaria/domain';
+import { openJournal } from '@elvaria/eventlog';
 import { buildPrompt, secretValuesOf, toolPolicyOf } from '@elvaria/runner-core';
 import { inKingdom, readClassPrompt } from '@elvaria/store';
 import type {
@@ -34,6 +36,7 @@ import {
   readScriptures,
 } from '../files.ts';
 import { withLogTails } from '../review/log-tail.ts';
+import { refusedPatchOf } from './patch.ts';
 import { sessionEnvOf } from './secrets.ts';
 import type { Context } from '../context.ts';
 
@@ -82,16 +85,39 @@ async function memoryOf(ctx: Context, quest: Quest): Promise<Memory> {
 }
 
 /**
+ * Why the Steward refused the patch of run `n` (P1-31), from that run's `quest.infirmary` line in the quest's journal:
+ * the quest file keeps no reason. A run ends once, so one line at most says so; a later infirmary of the same run
+ * (its secrets gone at the next claim) says something else. A journal that cannot be read tells nothing.
+ */
+async function refusedPatchOfRun(ctx: Context, quest: Quest, n: number): Promise<string | undefined> {
+  try {
+    const { events } = await openJournal(ctx.root, quest.id).read();
+    for (const event of events) {
+      if (!isEventOf(event, 'quest.infirmary') || event.attempt !== n) continue;
+      const why = refusedPatchOf(event.data.reason);
+      if (why !== undefined) return why;
+    }
+  } catch {
+    // Nothing to tell: the session reads its letter and journal as after any revival.
+  }
+  return undefined;
+}
+
+/**
  * The verdict a returned quest comes back with: the owner's return (`<quest>-<n>-user`), else the judge's or the
- * machine's fail (`<quest>-<n>`) on the last run; a crash returns with none.
+ * machine's fail (`<quest>-<n>`) on the last run; a crash returns with none. Either says why the last run's patch
+ * was refused, when it was (P1-31).
  */
 export async function continuationOf(ctx: Context, quest: Quest): Promise<Continuation> {
   const n = currentRun(quest);
+  const why = await refusedPatchOfRun(ctx, quest, n);
+  const refused = why === undefined ? {} : { refused_patch: why };
   for (const id of [ownerVerdictIdOf(quest, n), verdictIdOf(quest, n)]) {
     const verdict = await ctx.deps.store.verdicts.read(id);
-    if (verdict.ok && verdict.value.result === 'fail') return { reason: 'returned', verdict: verdict.value };
+    if (verdict.ok && verdict.value.result === 'fail')
+      return { reason: 'returned', verdict: verdict.value, ...refused };
   }
-  return { reason: 'revive' };
+  return { reason: 'revive', ...refused };
 }
 
 /** The context the hook reads from env (§3.6); sessionEnvOf (secrets.ts) adds the minimal env and the secrets. */
