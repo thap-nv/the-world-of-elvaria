@@ -4,6 +4,7 @@
 // fixed English, like the handover letter's; the rest comes from the kingdom's files, in the owner's language
 // already (the quest, the letter, the verdicts' notes), so the Steward needs no translation of its own.
 import { MACHINE_VERIFIER, USER_VERIFIER } from '@elvaria/domain';
+import { PATCH_FILE } from '@elvaria/runner-core';
 import type { Quest, Territory, Verdict } from '@elvaria/domain';
 
 import { replacedDirOf } from './copy.ts';
@@ -22,6 +23,8 @@ export interface NoteInput {
   readonly verdicts: readonly Verdict[];
   readonly copied?: Copied;
   readonly subquests?: Subquests;
+  /** The paths the Steward changed from the assignee's patch, over every run (`plot.patched` lines, P1-31). */
+  readonly patched?: readonly string[];
 }
 
 const code = (text: string): string => `\`${text}\``;
@@ -114,6 +117,21 @@ function copiedSection({ quest, territory }: NoteInput, copied: Copied): string 
   );
 }
 
+/**
+ * What the character did not write itself (P1-31): its CLI refuses these paths, so the Steward applied its patch
+ * (laws.patch_paths, P1-28). A git hook among them runs on the owner's machine once merged, so the note names them.
+ */
+function patchedSection(patched: readonly string[] | undefined): string[] {
+  if (patched === undefined || patched.length === 0) return [];
+  return [
+    section(
+      'Applied through a patch',
+      `The character's CLI does not write these paths, so it wrote its change as a patch (${code(PATCH_FILE)}) and the Steward applied it before the commit. Read their diff before you merge:`,
+      patched.map((file) => `- ${code(file)}`).join('\n'),
+    ),
+  ];
+}
+
 /** The owner merges a branch by hand (§9.1 item 11); a plan's branch only carries its list of sub-quests. */
 function mergeSection({ quest, territory }: NoteInput): string[] {
   const branch = quest.plot.branch;
@@ -150,6 +168,7 @@ export function deliveryNote(input: NoteInput): string {
     section('Description', quest.description.trim()),
     verification(input),
     section('Handover letter', letter === '' ? 'None.' : demoted(letter)),
+    ...patchedSection(input.patched),
     ...(subquests === undefined ? [] : [subquestsSection(subquests)]),
     ...(copied === undefined ? [] : [copiedSection(input, copied)]),
     ...(quest.deliverable.type === 'draft' ? [DRAFT] : []),
