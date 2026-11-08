@@ -18,8 +18,9 @@
   `usage` signals against `budget.max_tokens`) or its turns; the Steward sinks the assignee into the swamp, kills
   the session's process tree, commits the work as `chore: wip <quest> (<trip>)` (a refusal keeps it in the plot
   and says so in the reason), sends the quest to the infirmary (`quest.infirmary`, `breaker:<trip>: <detail>`) and
-  rings the bell; a verifier past a breaker leaves the review to the next one. A CLI that stopped at its own
-  `--max-turns` or budget gets the same end. When the quest's journal shows an apprentice of that session past
+  rings the bell; a verifier past a breaker leaves the review to the next one, until the second of a run
+  (`reviewStalled`, P1-23): then the quest goes to the infirmary with the bell, and no third verifier opens. A CLI
+  that stopped at its own `--max-turns` or budget gets the same end, a verifier's included. When the quest's journal shows an apprentice of that session past
   its minutes or cut at its turns, the reason asks the owner for a child quest for the work it left (§3.12). A quest whose secrets the treasury lacks, or its territory no longer
   allows, goes to the infirmary (`breaker:secrets`) instead of being claimed and released every tick; an
   owner's answer to such a blocked quest is refused (`secrets_lacking`).
@@ -147,4 +148,5 @@ that passes, one with a dead link and its scribe's follow-up, a territory check 
 knight's follow-up; params the catalog refuses; stand-in scripts that break, refuse the quest, print outside the
 contract or outlive a short timeout. `scripts-restart.spec.ts`: a Steward stopped in the middle of a script, one
 that died without output or before its verdict, and a follow-up opened once. `apprentice-breaker.spec.ts`: the
-infirmary note after an apprentice overran or was cut.
+infirmary note after an apprentice overran or was cut. `review-breakers.spec.ts`: two verifiers stopped by the
+token breaker, or by their CLI's turn limit, send the review to the infirmary and no third opens.

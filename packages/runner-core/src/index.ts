@@ -101,6 +101,9 @@ export type {
 } from './treasury/treasury.ts';
 export type { SpawnRole } from './runner/roles.ts';
 export { RUN_OUTCOMES } from './runner/types.ts';
+// The domain's rule for a session's tokens (P1-23), here because an adapter imports runner-core only (ADR 0006).
+export { countedTokens } from '@elvaria/domain';
+export type { SessionTokens } from '@elvaria/domain';
 export type {
   AbsolutePath,
   AdapterId,

@@ -231,3 +231,7 @@ Lần cố tình hết mana của mốc giai đoạn 1 ([báo cáo giai đoạn 
 - **Trần Argon** [máy]: `gemini-argon-wtu-weekly` tụt khoảng 6–7 % mỗi phiên Argon (người làm medium, người chấm high), 98,9 % → 44,3 % sau khoảng 8 phiên trong một buổi sáng.
 - **Đường dẫn của bộ thử** [máy]: `/usage` gọi từ Git Bash lại bị đổi thành đường dẫn (bẫy ở §0) và tốn khoảng 10,7k token một lần; gọi với `MSYS_NO_PATHCONV=1`.
 - **File hook trong worktree** [máy]: `.agents/elvaria-hook.mjs` và `.agents/hooks.json` của runner ở lại trong worktree sau phiên; git bỏ qua chúng (`.git/info/exclude`) nhưng `prettier --check .` thì không, nên check `format` của lãnh thổ đỏ với mọi quest của tộc Gemini (báo cáo §5.3).
+
+## 14. Bổ sung từ P1-23 (2026-11-08, tài liệu đi kèm agy 1.5.3)
+
+- **Chỗ agy nạp hook** [docs-gói]: `hooks.json` trong một gốc tùy biến: `.agents/` của project (mọi `.agents/` giữa cwd và gốc project; worktree là gốc của chính nó, §4) hoặc `~/.gemini/config/` (toàn cục, Elvaria không chạm); `hooks.json` của plugin (`.agents/plugins/<tên>/`, hay thư mục khai trong `.agents/plugins.json`, đường dẫn tuyệt đối được) cũng cần một file trong `.agents/`. Không có cờ nào chỉ tới hook ngoài workspace; khóa `hooks` trong file `--settings` không có trong tài liệu và chưa thử trên máy. Hệ quả: runner gỡ file hook khỏi plot khi phiên kết thúc (implementation-plan §3.7 "Sau mỗi phiên").

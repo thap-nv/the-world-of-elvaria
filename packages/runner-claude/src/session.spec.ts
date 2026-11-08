@@ -273,14 +273,14 @@ describe('real runs replayed through the adapter', () => {
     const { result } = await play(prepared, async (session, signals) => {
       // Killed once the runner has read the run's usage, not after a fixed wait: a slow CI machine (macOS) took
       // longer than 300 ms to start the fake CLI, and the kill came before the last assistant line.
-      while (!signals.some((signal) => signal.kind === 'usage' && signal.tokens === 4693))
+      while (!signals.some((signal) => signal.kind === 'usage' && signal.tokens === 2088))
         await new Promise((resolve) => setTimeout(resolve, 20));
       await session.kill('breaker: time');
       await session.kill('again');
     });
-    expect(result).toMatchObject({ outcome: 'killed', usage: { tokens: 4693 }, rate_limited: false });
+    expect(result).toMatchObject({ outcome: 'killed', usage: { tokens: 2088 }, rate_limited: false });
     const end = (await journal(prepared.workspace)).find(({ type }) => type === 'agent.session.end');
-    expect(end?.data).toEqual({ outcome: 'killed', usage: { tokens: 4693 } });
+    expect(end?.data).toEqual({ outcome: 'killed', usage: { tokens: 2088 } });
     expect(await readFile(path.join(prepared.request.run_dir, STDERR_FILE), 'utf8')).toContain(
       '[elvaria] killed: breaker: time',
     );
