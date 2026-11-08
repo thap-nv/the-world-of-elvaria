@@ -60,5 +60,36 @@
       "character": "thorn",
       "tag": "frontend"
     }
+  },
+  {
+    "version": 1,
+    "id": "01JCFF4G6H8J0K2M4N6P8Q0R2S",
+    "ts": "2026-11-08T08:10:00+07:00",
+    "kind": "set_level",
+    "source": "cli",
+    "payload": {
+      "character": "ember",
+      "level": 4
+    }
+  },
+  {
+    "version": 1,
+    "id": "01JCFG7H9J1K3M5N7P9Q1R3S5T",
+    "ts": "2026-11-08T08:15:00+07:00",
+    "kind": "create_quest",
+    "source": "cli",
+    "payload": {
+      "draft": false,
+      "title": "Tách bước nghiệm thu ra khỏi nhịp",
+      "description": "Việc dài, dành cho ember: chỉ ember nhận.",
+      "kind": "build",
+      "rank": "C",
+      "territory": "dc1-se-team",
+      "tier": "session",
+      "class_required": "knight",
+      "tags": ["backend"],
+      "assignee": "ember",
+      "created_by": "user"
+    }
   }
 ]

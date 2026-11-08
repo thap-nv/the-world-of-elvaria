@@ -179,7 +179,7 @@ export const CharacterSchema = CharacterFieldsSchema.superRefine(checkStatus).me
   title: 'Character',
   description:
     'characters/<id>/character.json: one agent as a character with one class (fixed for life), one tribe and one model. Personal scripture lives next to it in scripture.md. Skills are not attached to characters: they live in temple/skills and are loaded per quest by tag. Gear tier, pool, model family, reputation and per-tag pass/fail counts and the title are derived by pure functions in packages/domain (gearTierOf, poolOf, familyOf, reputationOf, affinityOf, titleOf) and are never stored.',
-  $comment: `${GENERATED_NOTE} Not expressible here: class must exist in registry/classes.json; vow_no_production must be true when the class is_verifier or is_monk; level and level_since change only through levelChange (packages/domain/src/character/level.ts).`,
+  $comment: `${GENERATED_NOTE} Not expressible here: class must exist in registry/classes.json; vow_no_production must be true when the class is_verifier or is_monk; level and level_since change only through levelChange or the owner's set_level command (setLevelLine, withLevel; packages/domain/src/character/level.ts).`,
   // The same rules as checkStatus, for readers of the JSON contract.
   allOf: [
     {

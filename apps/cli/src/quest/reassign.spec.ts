@@ -112,7 +112,7 @@ describe('elvaria quest retry, reassign (P1-26)', () => {
     expect(await errors('Not An Id')).toEqual([
       'There is no character Not An Id. See: elvaria character list',
     ]);
-    expect(await errors('quill')).toEqual([`quill is a Scribe; quest ${OTHER_QUEST_ID} needs a Knight.`]);
+    expect(await errors('quill')).toEqual(['quill is a Scribe; the quest needs a Knight.']);
     expect(await errors('thorn')).toEqual(['thorn is suspended and takes no work.']);
     expect(await sent()).toEqual([]);
   });

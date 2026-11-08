@@ -62,9 +62,14 @@
   attempt `returned` (the session killed, its work committed as WIP) and waits for it or for a `reassign`, the
   quest it judges goes back to review for the next judge, a claim not started opens again (`claimed.release`), and
   a quest it sleeps on stays paused until reassigned; `release` makes it idle with its fail streak at 0. Both lines
-  (`character.suspend`, `character.release`) are the owner's. Other kinds are refused with `unsupported` until
-  their task. A `create_quest` that asks for a secret its territory does not allow is refused with
-  `secret_not_allowed` (ADR 0013).
+  (`character.suspend`, `character.release`) are the owner's. `set_level` (P1-29,
+  `inbox/character-settings.ts`, on `settingByOwner`, the one path for a setting of a character's own fields):
+  the character's new level and `level_since`, told as the owner's `character.level_up`/`level_down`; its own
+  level is refused `same_level`. A `create_quest` naming an `assignee` (P1-29) gives the new quest to it by the
+  owner's `reassign` (`open → claimed`, the level aside); an assignee unknown, of another class, suspended or of a
+  disabled tribe refuses the command and creates no quest, as for `reassign` (the domain's `namedAssignee`).
+  Other kinds are refused with `unsupported` until their task. A `create_quest` that asks for a secret its
+  territory does not allow is refused with `secret_not_allowed` (ADR 0013).
 - Opens sessions through `AgentRunner` only (ADR 0006, 0021): the plot, the prompt and tool policy of
   `runner-core`, the budget, `.runs/<quest>-<n>`, and the env (§3.9): the minimal env it was given, the
   `ELVARIA_*` context of the hook and exactly the quest's `secrets_required` from the treasury (`sessionEnvOf`
