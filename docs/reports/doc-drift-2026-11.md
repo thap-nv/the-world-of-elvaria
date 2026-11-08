@@ -2,7 +2,14 @@
 
 Ngày đọc: 2026-11-08. Quest `q_20261108_g9w4r4`. Phạm vi: 22 ADR trong `docs/adr/` và `README.md` của 14 workspace có trên đĩa (`packages/{config, domain, eventlog, store, registry-default, runner-core, runner-claude, runner-antigravity, hooks, steward, chancellor, sandbox, i18n}`, `apps/cli`). `packages/runner-gemini`, `runner-codex`, `herald`, `ui-kit`, `ui` chưa có trên đĩa (đọc `packages/<tên>/README.md` báo "file does not exist"), nên không có README để đối chiếu.
 
-<!-- SUMMARY -->
+## Tóm tắt
+
+Đã đối chiếu 7 trên 36 tài liệu (ADR 0001–0003; README của `config`, `domain`, `eventlog`, `store`) và thấy **2 chỗ lệch, cả hai đều nên sửa tài liệu, độ chắc cao**:
+
+1. ADR 0001 (dòng 13) nói có 17 package và không kể `runner-codex`, trong khi `packages/config/boundaries.mjs:26` đã khai báo `runner-codex`, nên bảng `WORKSPACES` có 18 package.
+2. ADR 0002 (dòng 16) ghi "Today `reputationOf`, `affinityOf`, `titleOf`", nhưng `familyOf` (`packages/domain/src/character/family.ts:16`) và `poolOf` (`packages/domain/src/mana/pool.ts:15`) cũng đã có; chỉ `gearTierOf` và campaign morale là chưa có.
+
+ADR 0003 và cả 4 README đã đọc đều khớp với code. Có một ghi chú nhỏ, không tính là lệch: README `domain` chưa kể hết các luật chéo của registry. Còn 29 tài liệu chưa đối chiếu vì phạm vi đã thu hẹp do hạn mức, nên báo cáo này **không** cho biết các tài liệu đó có lệch hay không (xem mục "Giới hạn").
 
 ## Cách đọc
 
@@ -42,8 +49,6 @@ Ngày đọc: 2026-11-08. Quest `q_20261108_g9w4r4`. Phạm vi: 22 ADR trong `do
 
 Đã kiểm: `CONTRACTS` có đúng 17 hợp đồng (`packages/domain/src/schema/contracts.ts:24-42`); `pnpm schemas` = `node scripts/gen-schemas.mjs` và `pnpm check` có `pnpm schemas --check` (`package.json:11,19`); `EventSchema` giữ `v: z.literal(1)` và `type` là pattern, không phải enum, nên reader giữ type lạ (`packages/domain/src/schema/event/event.ts:36,39`); chuỗi migration của store ở `packages/store/src/migrations/index.ts:28-41` (12 contract, đều rỗng ở v1), của eventlog ở `packages/eventlog/src/migrations/index.ts:7`; `migrateKingdom` ghi bản cũ vào `.backup/<stamp>/` trước khi ghi đè (`packages/store/src/migrate-kingdom.ts:64-104`); test đọc mọi fixture cũ: `packages/store/src/migrations/migrations.spec.ts:1-2`.
 
-<!-- END-A -->
-
 ---
 
 ## Phần B — README của workspace
@@ -66,3 +71,54 @@ Ghi chú (không tính lệch): danh sách luật chéo của registry ở dòng
 
 Đã kiểm: `openKingdom(dir)` → `KingdomStore` (`packages/store/src/kingdom-store.ts:37-64`); ghi nguyên tử: file tạm cùng thư mục, `handle.sync()`, rename có thử lại `EPERM`/`EACCES`/`EBUSY` trong ngân sách thời gian (`src/io/atomic.ts:16-19,57-74`); mã `not_a_folder` (`src/issues.ts:23`); 12 contract được lưu, chuỗi ở `src/migrations/index.ts:10-41`; `migrateKingdom` với `.backup/<stamp>/` (`src/migrate-kingdom.ts:65-82`); inbox `write`/`read`/`ack` → `inbox/done/` (`src/inbox.ts:23-61`); `loadRegistry` kiểm `prompt_file` của mọi nghề, `missingRegistryFiles` (`src/registry.ts:42-80`); xuất `readClassPrompt`, `readDecree`, `redactHandover`, `acquireLock`, `isLocked`, `initKingdom`, `addMissingRegistryFiles` (`src/index.ts:5,13,15`); phụ thuộc `domain`, `eventlog`, `proper-lockfile` (`packages/store/package.json:14-18`); `test/kingdom.ts`, `test/update-worker.ts`, `src/concurrency.spec.ts`, `src/migrations/migrations.spec.ts` có trên đĩa.
 
+
+---
+
+## Giới hạn
+
+### Tài liệu chưa đối chiếu
+
+Ngày 2026-11-08, chủ nhân thu hẹp phạm vi quest vì hạn mức (mana): không đối chiếu thêm tài liệu nào sau 7 tài liệu ở trên. Vì vậy 29 tài liệu dưới đây **chưa được đối chiếu**. Báo cáo không khẳng định chúng khớp hay lệch với code. Tên file ADR lấy từ bảng ở `docs/implementation-plan.md:1167-1185`.
+
+ADR (19):
+
+- `docs/adr/0004-kingdom-state-is-files.md`
+- `docs/adr/0005-single-writer-steward-inbox.md`
+- `docs/adr/0006-runner-adapter-behind-agentrunner.md`
+- `docs/adr/0007-claude-workers-dontask-own-worktrees.md`
+- `docs/adr/0008-separation-of-duties.md`
+- `docs/adr/0009-mana-model.md`
+- `docs/adr/0010-two-file-journal.md`
+- `docs/adr/0011-one-judge-class-per-tribe.md`
+- `docs/adr/0012-worktree-for-every-git-quest.md`
+- `docs/adr/0013-treasury-and-redaction.md`
+- `docs/adr/0014-english-identifiers-glossary-bilingual-ui.md`
+- `docs/adr/0015-node-only-scripts.md`
+- `docs/adr/0016-registry-data-not-code.md`
+- `docs/adr/0017-one-quest-one-context-three-tiers.md`
+- `docs/adr/0018-gemini-tribe-on-antigravity-cli.md`
+- `docs/adr/0019-preact-ui-design-source-of-truth.md`
+- `docs/adr/0020-class-skill-scripture-tags-and-parties.md`
+- `docs/adr/0021-tribe-contract.md`
+- `docs/adr/0022-tests-in-the-world.md`
+
+README (10):
+
+- `packages/registry-default/README.md`
+- `packages/runner-core/README.md`
+- `packages/runner-claude/README.md`
+- `packages/runner-antigravity/README.md`
+- `packages/hooks/README.md`
+- `packages/steward/README.md`
+- `packages/chancellor/README.md`
+- `packages/sandbox/README.md`
+- `packages/i18n/README.md`
+- `apps/cli/README.md`
+
+Hệ quả: câu ở ADR 0001 dòng 26 ("A third runner is a new package plus one registration line in `apps/cli`") mà mục ADR 0001 hẹn kiểm ở mục `apps/cli/README.md` vẫn **chưa được kiểm**, vì mục đó không được viết.
+
+### Giới hạn của cách kiểm
+
+- Công cụ của phiên chỉ đọc được từng file. Không chạy được lệnh shell (hook chặn: "Elvaria rule: run_command: your class has no Bash"), nên không liệt kê được thư mục, không grep được, không chạy được `pnpm check`. Một định danh mà tài liệu nêu chỉ được xác nhận khi tôi mở đúng file chứa nó. Chỗ lệch nằm ở file tôi không mở thì có thể đã bị bỏ sót.
+- Không đọc được `docs/dependency-graph.md` (hook báo "forbidden path"), nên ADR 0001 được so với `packages/config/boundaries.mjs` chứ không so với đồ thị sinh ra.
+- Muốn biết chắc các tài liệu còn lại, cần một quest tiếp theo đối chiếu 29 tài liệu ở trên, nên chia thành nhiều quest nhỏ (ví dụ theo nhóm ADR 0004–0013, ADR 0014–0022, và các README).
