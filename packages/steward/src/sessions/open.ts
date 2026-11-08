@@ -8,7 +8,7 @@ import type { AgentRunner, Answered, Continuation, RunningSession, SpawnRequest 
 
 import { heardBy } from '../mana/heard.ts';
 import { step } from '../record.ts';
-import { checksOf, checksRunOf } from '../review/checks.ts';
+import { checksRunOf, takeChecks } from '../review/checks.ts';
 import { secretsBreaker } from './breaker.ts';
 import { continuationOf, requestOf } from './request.ts';
 import { rememberSecrets, secretsLacking } from './secrets.ts';
@@ -191,8 +191,8 @@ export async function openAssignee(
 }
 
 /**
- * The verifier's fresh session on a submitted quest (§3.2): the machine checks run first, then the judge reads the
- * letter, the checks and the work in the plot, never a transcript.
+ * The verifier's fresh session on a submitted quest (§3.2): the machine checks ran first, outside the tick (P1-25),
+ * then the judge reads the letter, the checks and the work in the plot, never a transcript.
  */
 export async function openVerifier(
   ctx: Context,
@@ -206,7 +206,7 @@ export async function openVerifier(
   const lacking = await secretsLacking(ctx, quest, territory);
   if (lacking !== undefined) return secretsBreaker(ctx, quest, lacking);
   const n = currentRun(quest);
-  const checks = await checksOf(ctx, quest, territory, n);
+  const checks = takeChecks(ctx, quest);
   if (!checks.ok) return checks;
   const input = { role: 'verifier', quest, character, territory, n, checks: checks.value } as const;
   const spawned = await spawnFor(ctx, runner, input);

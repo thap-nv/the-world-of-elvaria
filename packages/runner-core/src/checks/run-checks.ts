@@ -28,6 +28,11 @@ export interface ChecksRequest {
   readonly cwd: string;
   /** `.runs/<quest>-<n>` (verifier: `.runs/<quest>-<n>/verify`), portable and relative to the kingdom. */
   readonly run_dir: string;
+  /**
+   * Aborted when nobody waits for the checks any more (P1-25: they run outside the Steward's tick, and it stopped or
+   * the quest moved on): the running check is killed and the rest never start. Their results are not to be used.
+   */
+  readonly signal?: AbortSignal;
 }
 
 export interface ChecksOptions {
@@ -68,7 +73,11 @@ export async function runCheck(
 ): Promise<CheckRun> {
   const logPath = checkLogOf(request.run_dir, check.id);
   const log = await openLog(request.kingdom, logPath, `$ ${check.run}`);
-  const context = { cwd: request.cwd, host };
+  const context = {
+    cwd: request.cwd,
+    host,
+    ...(request.signal === undefined ? {} : { signal: request.signal }),
+  };
   try {
     const run = await runLine(check.run, context, log, timeoutMs);
     if (run.timed_out && check.cleanup !== undefined) {
@@ -88,13 +97,16 @@ export async function runCheck(
   }
 }
 
-/** The lock, or undefined once `waitMs` has passed; each try already waits a little (store's lock retries). */
-async function holdLock(target: string, waitMs: number): Promise<HeldLock | undefined> {
+/**
+ * The lock, or undefined once `waitMs` has passed or `signal` aborted; each try already waits a little (store's
+ * lock retries).
+ */
+async function holdLock(target: string, waitMs: number, signal?: AbortSignal): Promise<HeldLock | undefined> {
   const deadline = performance.now() + waitMs;
   for (;;) {
     const held = await acquireLock(target, { wait: waitMs > 0 });
     if (held.ok) return held.value;
-    if (performance.now() >= deadline) return undefined;
+    if (performance.now() >= deadline || signal?.aborted === true) return undefined;
   }
 }
 
@@ -105,7 +117,7 @@ async function runExclusive(
   waitMs: number,
 ): Promise<CheckRun> {
   const { kingdom, territory } = request;
-  const held = await holdLock(inKingdom(kingdom, exclusiveLockOf(territory.id)), waitMs);
+  const held = await holdLock(inKingdom(kingdom, exclusiveLockOf(territory.id)), waitMs, request.signal);
   if (held !== undefined) {
     try {
       return await runCheck(check, request, host);
@@ -137,6 +149,7 @@ export async function runChecks(
   const waitMs = options.lock_wait_ms ?? exclusiveWaitOf(request.territory.checks);
   const runs: CheckRun[] = [];
   for (const check of selectChecks(request.territory.checks, request.touched)) {
+    if (request.signal?.aborted === true) break;
     runs.push(
       check.exclusive
         ? await runExclusive(check, request, host, waitMs)

@@ -141,6 +141,11 @@ describe('planTick: order', () => {
     const quests = [run(Q4), reviewed, inReview(quest(Q2), 'thorn'), quest(Q3, { script: true })];
     const plan = planTick(snapshot(quests, [character('thorn')]), NOW);
     expect(plan).toMatchObject({ scripts: [Q3], script_verdicts: [Q4, Q1] });
+    // A script still running outside the tick (P1-25) is nobody's to judge yet.
+    const background = { running: [Q4], checked: [] };
+    expect(planTick(snapshot(quests, [character('thorn')], { background }), NOW)).toMatchObject({
+      script_verdicts: [Q1],
+    });
   });
 });
 

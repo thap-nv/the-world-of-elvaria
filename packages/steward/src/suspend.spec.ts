@@ -111,10 +111,16 @@ describe('suspend and release', () => {
     const judge = (await kingdom.quest('Judged')).verifier ?? '';
     await kingdom.command('suspend', { character: judge });
     await steward.tick();
+    // The review waits for the next judge, whose checks run first, outside the tick (P1-25).
+    expect(await kingdom.quest('Judged')).toMatchObject({ status: 'review', verifier: null });
+    await tickUntil(
+      steward,
+      kingdom.clock,
+      async () => typeof (await kingdom.quest('Judged')).verifier === 'string',
+    );
     const quest = await kingdom.quest('Judged');
-    // The other judge (another model) takes the review in the same tick.
+    // The other judge (another model) takes the review.
     expect(quest.status).toBe('review');
-    expect(quest.verifier).toEqual(expect.any(String));
     expect(quest.verifier).not.toBe(judge);
     expect(quest.attempt_log.find((entry) => entry.character === judge)).toMatchObject({
       role: 'verifier',

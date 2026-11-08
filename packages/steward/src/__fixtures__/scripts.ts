@@ -67,6 +67,8 @@ export interface ScriptSetup {
 export interface ScriptKingdom {
   setup(options?: ScriptSetup): Promise<Bench>;
   tick(): Promise<void>;
+  /** The tick that starts a script, the script to its end outside the tick (P1-25), the tick that judges it. */
+  run(): Promise<void>;
   /** A new Steward on the same kingdom, as after a stop. */
   restart(options?: ScriptSetup): Promise<void>;
   stop(): Promise<void>;
@@ -89,6 +91,12 @@ export function scriptKingdom(): ScriptKingdom {
     },
     tick: async () => {
       if (steward === undefined) throw new Error('fixture: no steward');
+      await steward.tick();
+    },
+    run: async () => {
+      if (steward === undefined) throw new Error('fixture: no steward');
+      await steward.tick();
+      await steward.idle();
       await steward.tick();
     },
     restart: async (options = {}) => {

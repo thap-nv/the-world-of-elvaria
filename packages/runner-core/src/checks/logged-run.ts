@@ -16,6 +16,8 @@ export interface LineContext {
   /** Where the command runs: the plot, native. */
   readonly cwd: string;
   readonly host: ProcessHost;
+  /** Aborted when nobody waits for the command any more (the Steward stops, P1-25): it is killed. */
+  readonly signal?: AbortSignal;
 }
 
 const NOT_RUN: ProgramRun = { exit_code: null, timed_out: false, duration_ms: 0, stdout: '', stderr: '' };
@@ -46,8 +48,10 @@ export async function runLine(
     env: context.host.env,
     timeout_ms: timeoutMs,
     output: log.fd,
+    ...(context.signal === undefined ? {} : { signal: context.signal }),
   });
   if (run.start_error !== undefined) await log.write(`elvaria: cannot start: ${run.start_error}\n`);
   if (run.timed_out) await log.write(`\nelvaria: stopped after ${timeoutMs} ms\n`);
+  else if (context.signal?.aborted === true) await log.write('\nelvaria: stopped before its end\n');
   return run;
 }

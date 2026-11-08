@@ -1,10 +1,13 @@
 // The review helpers on their own, over a stub of the tick's context: the paths a whole Steward rarely takes (a quest
-// gone from the files, a kind without a ritual, a verdict the store refuses, a fail without fail_kind).
+// gone from the files, a kind without a ritual, a verdict the store refuses, a fail without fail_kind, checks that
+// cannot run or have not ended).
 import { CharacterSchema } from '@elvaria/domain';
 import { describe, expect, it } from 'vitest';
 
 import { characterOf } from '../__fixtures__/kingdom.ts';
+import { createBackground } from '../background.ts';
 import { judged, levelAfterVerdict, moveOnVerdict, recordVerdict, ritualOf } from '../verdicts.ts';
+import { startChecks } from './checks.ts';
 import { machineReview } from './machine.ts';
 import type { Context } from '../context.ts';
 import type { Judged } from '../verdicts.ts';
@@ -31,7 +34,9 @@ function stub(
   world: { quests?: Quest[]; territories?: Territory[]; rituals?: boolean; checks?: boolean } = {},
 ): Stub {
   const warnings: string[] = [];
+  const log = { warn: (message: string) => void warnings.push(message) };
   const ctx = {
+    background: createBackground(log),
     world: {
       quests: new Map((world.quests ?? []).map((q) => [q.id, q])),
       territories: new Map((world.territories ?? []).map((t) => [t.id, t])),
@@ -42,7 +47,7 @@ function stub(
       characters: new Map(),
     },
     deps: {
-      log: { warn: (message: string) => void warnings.push(message) },
+      log,
       plots: {
         check: () =>
           world.checks === true ? Promise.resolve([]) : Promise.reject(new Error('git is not found')),
@@ -70,15 +75,31 @@ describe('the review helpers', () => {
 
   it('say why a machine review cannot start', async () => {
     expect(await machineReview(stub().ctx, QUEST)).toEqual({ ok: false, error: 'unknown_quest' });
+    // No verdict without ended checks (P1-25: planTick names the quest only once they ended).
     expect(await machineReview(stub({ quests: [quest] }).ctx, QUEST)).toEqual({
+      ok: false,
+      error: 'checks_not_ready',
+    });
+    const noRitual = stub({ quests: [quest], territories: [territory], rituals: false, checks: true });
+    expect(startChecks(noRitual.ctx, QUEST)).toEqual({ ok: true, value: undefined });
+    await noRitual.ctx.background.idle();
+    expect(noRitual.ctx.background.view()).toEqual({ running: [], checked: [QUEST] });
+    expect(await machineReview(noRitual.ctx, QUEST)).toEqual({ ok: false, error: 'unknown_ritual' });
+  });
+
+  it('say why checks cannot start, and leave nothing to take when they cannot run (P1-25)', async () => {
+    expect(startChecks(stub().ctx, QUEST)).toEqual({ ok: false, error: 'unknown_quest' });
+    expect(startChecks(stub({ quests: [quest] }).ctx, QUEST)).toEqual({
       ok: false,
       error: 'unknown_territory',
     });
     const broken = stub({ quests: [quest], territories: [territory] });
-    expect(await machineReview(broken.ctx, QUEST)).toEqual({ ok: false, error: 'checks_failed' });
+    expect(startChecks(broken.ctx, QUEST).ok).toBe(true);
+    expect(broken.ctx.background.view()).toEqual({ running: [QUEST], checked: [] });
+    await broken.ctx.background.idle();
+    // Nothing waits for a judge: the next tick starts them again.
+    expect(broken.ctx.background.view()).toEqual({ running: [], checked: [] });
     expect(broken.warnings).toEqual([`steward: ${QUEST}: the checks did not run: git is not found`]);
-    const noRitual = stub({ quests: [quest], territories: [territory], rituals: false, checks: true });
-    expect(await machineReview(noRitual.ctx, QUEST)).toEqual({ ok: false, error: 'unknown_ritual' });
   });
 
   it('write no line for a verdict the store refuses', async () => {

@@ -12,7 +12,7 @@ import {
   verdictIdOf,
   verifierSessionsOf,
 } from '@elvaria/domain';
-import { buildPrompt, toolPolicyOf } from '@elvaria/runner-core';
+import { buildPrompt, secretValuesOf, toolPolicyOf } from '@elvaria/runner-core';
 import { inKingdom, readClassPrompt } from '@elvaria/store';
 import type {
   Character,
@@ -33,6 +33,7 @@ import {
   readJournal,
   readScriptures,
 } from '../files.ts';
+import { withLogTails } from '../review/log-tail.ts';
 import { sessionEnvOf } from './secrets.ts';
 import type { Context } from '../context.ts';
 
@@ -118,7 +119,13 @@ export async function lastPartialOf(ctx: Context, quest: Quest, n: number): Prom
   return null;
 }
 
-async function promptOf(ctx: Context, input: SessionInput, characterClass: CharacterClass) {
+/** `known`: the session's secret values, masked in what the prompt quotes of the kingdom's logs (P1-25). */
+async function promptOf(
+  ctx: Context,
+  input: SessionInput,
+  characterClass: CharacterClass,
+  known: readonly string[],
+) {
   const { quest, character, territory } = input;
   const base = {
     locale: ctx.world.kingdom.owner.locale,
@@ -134,7 +141,8 @@ async function promptOf(ctx: Context, input: SessionInput, characterClass: Chara
   if (input.role === 'verifier') {
     // The branch's diff against its fork point (PlotManager.diff, P1-15); a plot without git has none to give.
     const handover = await readHandover(ctx.root, quest.id);
-    const checks = input.checks ?? [];
+    // The end of each failing check's log: the judge cannot read `.runs/` (P1-25).
+    const checks = await withLogTails(ctx.root, input.checks ?? [], known);
     const diff = await ctx.deps.plots.diff(quest.plot);
     const partial = await lastPartialOf(ctx, quest, input.n);
     return buildPrompt({ ...base, role: 'verifier', handover, diff, checks, partial }, ctx.templates);
@@ -155,16 +163,17 @@ export async function requestOf(ctx: Context, input: SessionInput): Promise<Spaw
   if (characterClass === undefined) throw new Error(`registry has no class "${character.class}"`);
   const runDir = inKingdom(ctx.root, runDirOf(quest, input.n, role));
   await mkdir(runDir, { recursive: true });
+  const env = await sessionEnvOf(ctx, input, envOf(ctx, input));
   return {
     role,
     quest,
     character,
     territory,
     cwd: input.cwd,
-    prompt: await promptOf(ctx, input, characterClass),
+    prompt: await promptOf(ctx, input, characterClass, secretValuesOf({ quest, env })),
     permissions: toolPolicyOf({ role, characterClass, character, territory }),
     budget: { max_turns: ctx.world.kingdom.breakers.max_turns, max_minutes: quest.budget.max_minutes },
-    env: await sessionEnvOf(ctx, input, envOf(ctx, input)),
+    env,
     run_dir: runDir,
     ...(role === 'verifier'
       ? { structured: VERDICT_OUTPUT_SCHEMA }

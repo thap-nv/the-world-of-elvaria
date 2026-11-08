@@ -2,6 +2,7 @@
 // write the tick makes, so later steps decide on what earlier steps did (implementation-plan §3.1).
 import { tribeLimitsOf } from '@elvaria/domain';
 import type {
+  BackgroundWork,
   Character,
   CharacterId,
   HeldSession,
@@ -78,14 +79,16 @@ export function limitsOf(
   return limits;
 }
 
-/** The snapshot planTick decides on, with the pools asleep and the gauges' readings (§3.5). */
+/** The snapshot planTick decides on, with the pools asleep, the gauges' readings (§3.5) and the background (P1-25). */
 export const snapshotOf = (
   world: World,
   limits: Partial<Record<TribeId, TribeLimits>>,
   mana: Pick<ManaBook, 'asleep' | 'readings'>,
   sessions: readonly HeldSession[] = [],
+  background: BackgroundWork = { running: [], checked: [] },
 ): KingdomSnapshot => ({
   sessions,
+  background,
   kingdom: world.kingdom,
   territories: [...world.territories.values()],
   registry: world.registry,

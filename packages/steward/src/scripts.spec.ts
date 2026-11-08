@@ -1,5 +1,5 @@
-// The script tier (implementation-plan §2.5, §3.12, ADR 0017): catalog scripts run by the Steward in the plot, with no
-// model, and judged by the machine; a failed run hands what it found to the follow-up its catalog entry names. The
+// The script tier (implementation-plan §2.5, §3.12, ADR 0017): catalog scripts run by the Steward in the plot, outside
+// the tick (P1-25), with no model, and judged by the machine; a failed run hands what it found to the follow-up its catalog entry names. The
 // real link-check and run-check of packages/registry-default run here. A Steward stopped mid-run: scripts-restart.spec.
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -25,10 +25,10 @@ afterEach(() => kingdom.remove());
 const DEAD_LINK = { ...DOCS, 'docs/guide.md': 'Back to [home](../HOME.md).\n' };
 
 describe('the script tier: a run that gives a result', () => {
-  it('runs a link check all the way in one tick: no character, no model, mana 0, the machine judges', async () => {
+  it('runs a link check outside the tick, then judges it: no character, no model, mana 0, the machine judges', async () => {
     const bench = await kingdom.setup({ files: DOCS });
     await bench.command('create_quest', scriptQuest('Links of the handbook', LINKS));
-    await kingdom.tick();
+    await kingdom.run();
     const quest = await bench.quest('Links of the handbook');
     expect(quest).toMatchObject({
       status: 'done',
@@ -65,7 +65,7 @@ describe('the script tier: a run that gives a result', () => {
   it('fails a link check with a dead link and hands the dead one to a follow-up quest of a scribe', async () => {
     const bench = await kingdom.setup({ files: DEAD_LINK });
     await bench.command('create_quest', scriptQuest('Dead links', LINKS));
-    await kingdom.tick();
+    await kingdom.run();
     const quest = await bench.quest('Dead links');
     expect(quest.status).toBe('infirmary');
     const verdict = await readJson(bench.root, `verdicts/${quest.id}-1.json`);
@@ -104,7 +104,7 @@ describe('the script tier: a run that gives a result', () => {
       JSON.stringify({ ...catalog, scripts: quiet }),
     );
     await bench.command('create_quest', scriptQuest('Dead links', LINKS));
-    await kingdom.tick();
+    await kingdom.run();
     expect((await bench.quests()).map(({ title }) => title)).toEqual(['Dead links']);
     expect(await infirmaryReason(bench)).toBe('script:fail: link-check did not pass, see the verdict');
   });
@@ -120,7 +120,7 @@ describe('the script tier: a run that gives a result', () => {
       'create_quest',
       scriptQuest('Lint', { id: 'run-check', params: { check_id: 'lint' } }),
     );
-    await kingdom.tick();
+    await kingdom.run();
     const quest = await bench.quest('Lint');
     expect(quest.status).toBe('infirmary');
     const verdict = await readJson(bench.root, `verdicts/${quest.id}-1.json`);
@@ -160,7 +160,7 @@ describe('the script tier: a run that gives none', () => {
     const bench = await kingdom.setup();
     await fakeScript(bench.root, 'link-check', body);
     await bench.command('create_quest', scriptQuest('Broken', LINKS));
-    await kingdom.tick();
+    await kingdom.run();
     const quest = await bench.quest('Broken');
     expect(quest).toMatchObject({ status: 'infirmary', attempts: 1 });
     expect(quest.attempt_log[0]?.outcome).toBe('crash');
@@ -175,7 +175,7 @@ describe('the script tier: a run that gives none', () => {
     });
     await fakeScript(bench.root, 'link-check', 'setTimeout(() => console.log("{}"), 60_000);');
     await bench.command('create_quest', scriptQuest('Slow', LINKS));
-    await kingdom.tick();
+    await kingdom.run();
     const quest = await bench.quest('Slow');
     expect(quest.status).toBe('infirmary');
     expect(quest.attempt_log[0]?.outcome).toBe('timeout');

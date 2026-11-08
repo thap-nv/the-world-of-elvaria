@@ -19,6 +19,7 @@ export * from './core/result.ts';
 export * from './dispatch/claim-blocker.ts';
 export * from './dispatch/new-quest.ts';
 export * from './dispatch/plan-tick.ts';
+export * from './dispatch/reviews.ts';
 export * from './dispatch/revival.ts';
 export * from './dispatch/roster.ts';
 export * from './dispatch/select-assignee.ts';

@@ -8,6 +8,7 @@ import type { QuestId, Result, TribeId, TribeLimits, ZonedTime } from '@elvaria/
 import type { PromptTemplates } from '@elvaria/runner-core';
 import type { HeldLock } from '@elvaria/store';
 
+import { createBackground, wantedIn } from './background.ts';
 import { applyInbox } from './inbox/apply.ts';
 import { asleepFromLog, createManaBook } from './mana/book.ts';
 import { manaStep } from './mana/step.ts';
@@ -22,6 +23,7 @@ import { carryOut } from './steps.ts';
 import { noteUnclaimable, reportedFromLog, writeUnclaimable } from './unclaimable.ts';
 import { noteUnjudgeable } from './unjudgeable.ts';
 import { limitsOf, loadWorld, snapshotOf } from './world.ts';
+import type { Background } from './background.ts';
 import type { Context, Counts } from './context.ts';
 import type { ManaBook } from './mana/book.ts';
 import type { Sessions } from './sessions/running.ts';
@@ -61,8 +63,10 @@ interface State {
   readonly handled: Set<string>;
   readonly limits: Partial<Record<TribeId, TribeLimits>>;
   readonly mana: ManaBook;
+  /** Checks and scripts running outside the tick (P1-25): stop() kills them, the next start runs them again. */
+  readonly background: Background;
   reported: Reported;
-  /** Aborted by stop(): a catalog script running in the tick dies, so stopping never waits out its timeout. */
+  /** Aborted by stop(): a tick it stops in starts no other script. */
   stopping: AbortController;
   /** Submitted quests the bell already named for having no judge in the roster (unjudgeable.ts, P1-15). */
   readonly unjudged: Set<QuestId>;
@@ -96,19 +100,34 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   const counts: Counts = { applied: 0, rejected: 0, waiting: 0, started: 0, ended: 0 };
   const world = await loadWorld(deps.store, deps.log);
   if (world === undefined) return reportOf(counts);
-  const { sessions, handled, limits, mana } = state;
+  const { sessions, handled, limits, mana, background } = state;
   const record = createRecorder({ ...deps, world, stamp: () => held.zone.format(deps.clock.now()) });
   const root = deps.store.root;
   const { templates } = held;
   const stopping = state.stopping.signal;
-  const ctx: Context = { deps, root, world, record, sessions, templates, limits, mana, counts, stopping };
+  const ctx: Context = {
+    deps,
+    root,
+    world,
+    record,
+    sessions,
+    templates,
+    limits,
+    mana,
+    counts,
+    stopping,
+    background,
+  };
   const waiting = await applyInbox(ctx, handled);
   // A session's leftovers lose its secrets before anything is recorded of them (§3.9).
   for (const finished of sessions.drain()) await recordEnd(ctx, await maskFinished(ctx, finished));
   await reapLost(ctx);
   counts.waiting = (await applyInbox(ctx, handled, waiting)).length;
   await manaStep(ctx);
-  const plan = planTick(snapshotOf(world, limits, mana, sessions.held()), deps.clock.now());
+  // Work for a quest that moved on since it started (cancelled, judged, retried) is killed before the plan (P1-25).
+  background.prune(wantedIn(world.quests));
+  const snapshot = snapshotOf(world, limits, mana, sessions.held(), background.view());
+  const plan = planTick(snapshot, deps.clock.now());
   // Notices first: a quest someone can take now has its notice withdrawn before the claim that follows (§3.1).
   if (await noteUnclaimable(ctx, state.reported, plan.unclaimable))
     await writeUnclaimable(root, state.reported);
@@ -170,6 +189,7 @@ export function createSteward(deps: StewardDeps): Steward {
     handled: new Set(),
     limits: limitsOf(deps.runners),
     mana: createManaBook(),
+    background: createBackground(deps.log),
     reported: new Map(),
     stopping: new AbortController(),
     unjudged: new Set(),
@@ -190,6 +210,8 @@ export function createSteward(deps: StewardDeps): Steward {
       state.timer = undefined;
       state.stopping.abort();
       await state.queue;
+      // The checks and scripts outside the tick die before the lock goes: the next Steward runs them again (P1-25).
+      await state.background.stop();
       await state.sessions.close('the Steward stopped');
       await state.sessions.saved();
       // A gauge read after a session's end may still run its CLI: let it finish before the lock goes.
@@ -199,5 +221,6 @@ export function createSteward(deps: StewardDeps): Steward {
     },
     tick,
     running: () => state.sessions.size(),
+    idle: () => state.background.idle(),
   };
 }

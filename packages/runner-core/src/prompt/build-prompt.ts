@@ -60,13 +60,22 @@ export interface AssigneePromptInput extends PromptBase {
   readonly continuation: (Continuation & Memory) | null;
 }
 
+/**
+ * A machine check as the judge reads it (P1-25): a failing one carries the end of its log, because the log lies in
+ * the kingdom's `.runs/`, outside the plot, where a judge's tools do not reach (Claude spike, "Quyền").
+ */
+export interface PromptCheck extends VerdictCheck {
+  /** The last lines of the log, secrets already masked by the caller; absent when there is nothing to show. */
+  readonly log_tail?: string;
+}
+
 export interface VerifierPromptInput extends PromptBase {
   readonly role: 'verifier';
   /** The assignee's letter, or null when there is none. */
   readonly handover: string | null;
   /** The branch's diff; null when the caller has none to give, and the verifier reads it in the plot. */
   readonly diff: string | null;
-  readonly checks: readonly VerdictCheck[];
+  readonly checks: readonly PromptCheck[];
   /** The `partial` verdict the last judge of this run left (`<quest>-<n>-p<k>`), or null; this judge reads on. */
   readonly partial: Verdict | null;
 }
@@ -125,14 +134,21 @@ function stepsOf(ritual: Ritual, t: PromptTemplates): string {
     .join('\n\n');
 }
 
-function checksOf(checks: readonly VerdictCheck[]): string {
+/** The end of a check's log under its own heading, after the list of checks. */
+const tailOf = (check: PromptCheck): string =>
+  check.log_tail === undefined || check.log_tail.trim() === ''
+    ? ''
+    : `## The end of the log of ${check.id}\n\n${fenced(check.log_tail, 'text')}`;
+
+function checksOf(checks: readonly PromptCheck[]): string {
   if (checks.length === 0) return 'No machine check ran for the paths this quest touched.';
-  return checks
+  const list = checks
     .map(
       (check) =>
         `- ${check.id}: ${check.pass ? 'pass' : 'FAIL'} (${check.duration_ms} ms, log ${check.log_path})`,
     )
     .join('\n');
+  return joinBlocks([list, ...checks.map(tailOf)]);
 }
 
 function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): BuiltPrompt {

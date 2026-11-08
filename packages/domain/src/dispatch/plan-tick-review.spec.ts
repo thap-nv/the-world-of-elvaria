@@ -14,6 +14,7 @@ import {
   workingBy,
 } from './__fixtures__/snapshot.ts';
 import { planTick } from './plan-tick.ts';
+import type { BackgroundWork } from './reviews.ts';
 
 // Step 4 of the tick with selectVerifier (P1-04), and the fail streak that comes before any work.
 describe('planTick: judges and the fail streak', () => {
@@ -81,6 +82,51 @@ describe('planTick: judges and the fail streak', () => {
     expect(planTick(snapshot(review, sameModel, machineOnly), NOW)).toMatchObject({
       machine_verdicts: [Q1],
       unjudgeable: [],
+    });
+  });
+
+  it('judges a submitted quest only once its checks, run outside the tick, have ended (P1-25)', () => {
+    const judges = [
+      character('thorn', { status: 'working' }),
+      character('orin', { cls: 'judge', tribe: 'gemini' }),
+    ];
+    const review = [inReview(quest(Q1), 'thorn')];
+    const at = (background: BackgroundWork) => planTick(snapshot(review, judges, { background }), NOW);
+    // Not checked yet: the Steward starts the checks and no judge is taken.
+    expect(at({ running: [], checked: [] })).toMatchObject({ checks: [Q1], verifications: [] });
+    // Still running: nothing more to start, nothing to judge.
+    expect(at({ running: [Q1], checked: [] })).toMatchObject({ checks: [], verifications: [] });
+    // Checked: the judge comes.
+    expect(at({ running: [], checked: [Q1] })).toMatchObject({
+      checks: [],
+      verifications: [{ quest: Q1, verifier: 'orin' }],
+    });
+    // A sandbox day has no background: checks take no time there.
+    expect(planTick(snapshot(review, judges), NOW)).toMatchObject({
+      checks: [],
+      verifications: [{ quest: Q1 }],
+    });
+  });
+
+  it('starts no checks for a quest no judge may ever take, and none for the machine before it ended', () => {
+    const sameModel = [character('thorn', { status: 'working' }), character('vesper', { cls: 'judge' })];
+    const review = [inReview(quest(Q1), 'thorn')];
+    const none = { background: { running: [], checked: [] } };
+    expect(planTick(snapshot(review, sameModel, none), NOW)).toMatchObject({ checks: [], unjudgeable: [Q1] });
+    const machineOnly = {
+      kingdom: {
+        ...KINGDOM,
+        dispatch: { ...KINGDOM.dispatch, verifier_same_family: 'machine_only' as const },
+      },
+    };
+    expect(planTick(snapshot(review, sameModel, { ...machineOnly, ...none }), NOW)).toMatchObject({
+      checks: [Q1],
+      machine_verdicts: [],
+    });
+    const checked = { background: { running: [], checked: [Q1] } };
+    expect(planTick(snapshot(review, sameModel, { ...machineOnly, ...checked }), NOW)).toMatchObject({
+      checks: [],
+      machine_verdicts: [Q1],
     });
   });
 
