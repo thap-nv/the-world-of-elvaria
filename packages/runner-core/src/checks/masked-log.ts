@@ -9,7 +9,7 @@ import { createRedactor } from '@elvaria/eventlog';
 
 /**
  * Masks `known` and the patterns in `file`; rewrites it only when something was masked (true then). `known` is the
- * values of the quest's secrets a check was given (P1-10b); a plot's `commands.setup` gets none.
+ * values of the quest's secrets a check (P1-10b) or a plot's `commands.setup` (P1-30) was given.
  */
 export async function maskLogFile(file: string, known: readonly string[] = []): Promise<boolean> {
   const text = await readFile(file, 'utf8');

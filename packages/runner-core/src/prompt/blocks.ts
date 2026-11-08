@@ -21,11 +21,17 @@ export const JOURNAL_TAIL_LINES = 20;
 /**
  * Continuing an assignee's work in a fresh session (§10 question 4): after a failed verdict, or a revival. A return
  * may carry the verdict's checks with the end of each failing one's log, masked by the caller (P1-10b); without
- * them the prompt names the verdict's failing checks alone.
+ * them the prompt names the verdict's failing checks alone. Either may say why the Steward refused the patch the
+ * run before this one wrote (P1-31): the reason is otherwise only in the quest's infirmary line and the bell, and the
+ * session would hand the same patch in again.
  */
-export type Continuation =
+export type Continuation = (
   | { readonly reason: 'returned'; readonly verdict: Verdict; readonly checks?: readonly PromptCheck[] }
-  | { readonly reason: 'revive' };
+  | { readonly reason: 'revive' }
+) & {
+  /** Why the Steward did not apply that run's patch, masked as its log line; absent when it applied it or none came. */
+  readonly refused_patch?: string;
+};
 
 /** What the continuing session reads instead of a transcript: the letter, the journal's tail, the branch's log. */
 export interface Memory {
@@ -106,6 +112,12 @@ export function patchBlock(policy: Pick<ToolPolicy, 'tools' | 'laws'>, t: Prompt
   const writes = policy.tools.some((tool) => (WRITE_TOOLS as readonly string[]).includes(tool));
   if (paths.length === 0 || !writes) return '';
   return fill(t.patch, { paths: bullets(paths), patch_file: PATCH_FILE });
+}
+
+/** Why the last run's patch was not applied (P1-31), for the session after it; empty when it was, or there was none. */
+export function refusedPatchBlock(why: string | undefined, t: PromptTemplates): string {
+  if (!present(why)) return '';
+  return fill(t['refused-patch'], { patch_file: PATCH_FILE, why: fenced(why.trim(), 'text') });
 }
 
 /**
@@ -254,5 +266,10 @@ export function continuationBlock(
           }),
           failedChecksBlock(continuation.checks ?? continuation.verdict.checks, t),
         ]);
-  return joinBlocks([intro, answerBlock(quest, t), memoryBlock(continuation, t)]);
+  return joinBlocks([
+    intro,
+    refusedPatchBlock(continuation.refused_patch, t),
+    answerBlock(quest, t),
+    memoryBlock(continuation, t),
+  ]);
 }

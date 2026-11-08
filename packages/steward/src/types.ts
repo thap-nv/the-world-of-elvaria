@@ -136,8 +136,16 @@ export interface ResolvedCheck {
  * every quest a folder with no git and no checks (the Steward's specs).
  */
 export interface Plots {
-  /** Idempotent: a quest that already has its plot gets the same one back. Throws when it cannot be prepared. */
-  prepare(quest: Quest, territory: Territory): Promise<PreparedPlot>;
+  /**
+   * Idempotent: a quest that already has its plot gets the same one back. Throws when it cannot be prepared.
+   * `secrets` (the quest's `secrets_required` from the treasury, P1-30) go to the territory's `commands.setup` as
+   * they go to its checks, and its log is masked with them; absent for a quest that asks for none.
+   */
+  prepare(
+    quest: Quest,
+    territory: Territory,
+    secrets?: Readonly<Record<string, string>>,
+  ): Promise<PreparedPlot>;
   /** `git add --all` + commit with the territory's hooks (never bypassed): `refused` keeps the work in place. */
   commit(plot: Quest['plot'], message: string): Promise<CommitOutcome>;
   /**

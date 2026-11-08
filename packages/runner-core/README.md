@@ -23,7 +23,8 @@
 - Builds prompts from the Markdown templates in `prompts/` (`loadPromptTemplates`): `buildPrompt` for an
   assignee (new, or continuing after `returned` / `revive` with the letter, the last 20 journal lines, the
   branch's log and the owner's answer; after `returned`, also the checks that failed with the end of each log,
-  `prompts/failed-checks.md`, P1-10b) and a verifier (the ritual's steps from `prompts/ritual-steps.md`, the
+  `prompts/failed-checks.md`, P1-10b; after either, why the Steward refused the patch the run before wrote,
+  `Continuation.refused_patch`, `prompts/refused-patch.md`, P1-31) and a verifier (the ritual's steps from `prompts/ritual-steps.md`, the
   checks with the end of each failing one's log the caller read and masked (`PromptCheck.log_tail`, P1-25; both in `src/prompt/checks.ts`), the letter, the diff, or where to read it when the caller has none, and where the last judge of the
   run stopped when it left a `partial` verdict, P1-15); both list the shell commands
   their `ToolPolicy` allows, one per call (`prompts/shell.md`, P1-11); an assignee that edits files also reads
@@ -47,7 +48,8 @@
   checkout is never pulled. It is idempotent: a worktree already there is reused, a branch that outlived its
   worktree is checked out again. Each prepare also makes sure of the repo's `.git/info/exclude` lines
   (`PLOT_EXCLUDES`) and, on Windows, `core.longpaths`, and runs `commands.setup` until it succeeds once (log in
-  `.runs/<quest>-setup.log`). The fork point and the setup state live in `elvaria-plot.json` in the worktree's
+  `.runs/<quest>-setup.log`), with the quest's secrets when the caller passes them (P1-30:
+  `prepare(quest, territory, secrets)`, put in its env over the host's minimal env as a check's are). The fork point and the setup state live in `elvaria-plot.json` in the worktree's
   private git folder. `status`, `touched` (paths changed since the fork, committed or not, plus untracked files),
   `commitAll` (everything, through the territory's own hooks; `refused` when a hook says no; the Steward's messages
   are `plotCommitMessage`, Conventional Commits so commitlint accepts them), `applyPatch` (P1-28: the assignee's
@@ -69,9 +71,9 @@
   other when it aborts, the log saying so; `runProgram` takes the same `signal`. `ChecksRequest.secrets` (P1-10b:
   the quest's `secrets_required`, treasury name → value) puts them in each check's env over the host's minimal env
   (`sessionEnv`, no `ELVARIA_*`), so a check that needs a private registry passes as the session did.
-  The log of a check or of `commands.setup` loses the secret shapes the command printed when it closes
-  (`maskLogFile`, ADR 0013), and a check's log the values of the secrets it was given; the command writes straight
-  into the file, so the masking is not line by line.
+  The log of a check or of `commands.setup` loses the values of the secrets the command was given (`withSecrets`),
+  then the secret shapes it printed, when it closes (`maskLogFile`, ADR 0013); the command writes straight into the
+  file, so the masking is not line by line.
 - Starts territory programs without a shell (`runProgram`, `argvOf`, `splitCommandLine`): quoted words, shell
   syntax refused, the program resolved by the `ProcessHost` the composition root passes in (it owns PATH and turns
   an npm `.cmd` shim into `node <script>`), and an env with no `GIT_*` (`childEnvOf`).
@@ -130,7 +132,8 @@
 pnpm --filter @elvaria/runner-core test
 ```
 
-`src/prompt/__snapshots__/*.txt` hold the prompts of the four roles, with and without a decree;
+`src/prompt/__snapshots__/*.txt` hold the prompts of the four roles, with and without a decree (and an assignee
+revived after a refused patch, `assignee-revived.txt` of `src/prompt/refused-patch.spec.ts`, P1-31);
 `src/policy/__snapshots__/class-policies.txt` holds the policy of every default class. Review a change there as
 you would a change of prose. `src/conformance/conformance.spec.ts` runs the suite against FakeRunner, and against
 runners that lie about their capabilities. The plot and check specs build real git repos (a bare origin, a clone,

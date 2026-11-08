@@ -11,7 +11,7 @@ import { step } from '../record.ts';
 import { checksRunOf, takeChecks } from '../review/checks.ts';
 import { secretsBreaker } from './breaker.ts';
 import { continuationOf, requestOf } from './request.ts';
-import { rememberSecrets, secretsLacking } from './secrets.ts';
+import { questSecretsOf, rememberSecrets, secretsLacking } from './secrets.ts';
 import type { Context } from '../context.ts';
 import type { MovePayload } from '../record.ts';
 import type { SessionInput } from './request.ts';
@@ -48,6 +48,17 @@ const resumedRequest = (ctx: Context, request: SpawnRequest, resume: Resume | nu
       };
 
 /**
+ * The plot, its `commands.setup` given the quest's secrets as its checks are (P1-30): an install from a private
+ * registry would fail before any session. The openings asked secretsLacking first (P1-06), so a quest without them
+ * is in the infirmary, not here; a quest that asks for none reads no treasury and gives setup none.
+ */
+async function plotFor(ctx: Context, input: Pick<SessionInput, 'quest' | 'territory'>) {
+  const secrets = await questSecretsOf(ctx, input.quest, input.territory);
+  const given = Object.keys(secrets).length === 0 ? undefined : secrets;
+  return ctx.deps.plots.prepare(input.quest, input.territory, given);
+}
+
+/**
  * Prepares the plot, builds the request and spawns; the session and the plot the quest gets. `resume` continues
  * that CLI session (ADR 0017); the session's in-band mana windows are heard by the gauge (§3.5).
  */
@@ -58,7 +69,7 @@ async function spawnFor(
   resume: Resume | null = null,
 ): Promise<Result<{ session: RunningSession; plot: Quest['plot']; spawned_at: string }, string>> {
   try {
-    const prepared = await ctx.deps.plots.prepare(input.quest, input.territory);
+    const prepared = await plotFor(ctx, input);
     const quest = { ...input.quest, plot: prepared.plot };
     const request = await requestOf(ctx, { ...input, quest, cwd: prepared.cwd });
     const resumed = resumedRequest(ctx, request, resume);

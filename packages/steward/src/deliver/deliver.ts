@@ -6,7 +6,8 @@
 // through the seal its kind asks for; a plan's sub-quests open. Every delivery writes `.runs/<quest>-delivery.md`
 // and then stamps `deliverable.delivered_at` (with `path`, and `branch` for a worktree), so a crash in between
 // delivers again, finding what it already did.
-import { currentRun, err, ok, ownerVerdictIdOf, verdictIdOf } from '@elvaria/domain';
+import { currentRun, err, isEventOf, ok, ownerVerdictIdOf, verdictIdOf } from '@elvaria/domain';
+import { openJournal } from '@elvaria/eventlog';
 import { fromPortable, inKingdom, writeFileAtomic } from '@elvaria/store';
 import type { Deliverable, Quest, QuestId, Result, Territory, Verdict } from '@elvaria/domain';
 
@@ -69,6 +70,16 @@ async function verdictsOf(ctx: Context, quest: Quest): Promise<Verdict[]> {
   return read.flatMap((verdict) => (verdict.ok ? [verdict.value] : []));
 }
 
+/**
+ * The paths the Steward applied from the assignee's patch, over every run of the quest (P1-31): each run's applied
+ * patch is on the branch. Its `plot.patched` lines, in the quest's journal; the quest file keeps no list.
+ */
+async function patchedPathsOf(ctx: Context, quest: Quest): Promise<string[]> {
+  const { events } = await openJournal(ctx.root, quest.id).read();
+  const paths = events.flatMap((event) => (isEventOf(event, 'plot.patched') ? event.data.paths : []));
+  return [...new Set(paths)].toSorted();
+}
+
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
 async function deliverQuest(ctx: Context, quest: Quest): Promise<Result<Quest, string>> {
@@ -81,6 +92,7 @@ async function deliverQuest(ctx: Context, quest: Quest): Promise<Result<Quest, s
     territory,
     handover: await readHandover(ctx.root, quest.id),
     verdicts: await verdictsOf(ctx, quest),
+    patched: await patchedPathsOf(ctx, quest),
     ...done.value,
   });
   await writeFileAtomic(inKingdom(ctx.root, note), text);

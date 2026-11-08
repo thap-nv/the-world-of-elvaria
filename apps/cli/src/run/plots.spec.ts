@@ -1,5 +1,6 @@
 // The checks of `elvaria run` with a quest's secrets (P1-10b, implementation-plan §3.9): the Steward hands
-// `Plots.check` the treasury values, runChecks puts them in each check's env and masks them in its log.
+// `Plots.check` the treasury values, runChecks puts them in each check's env and masks them in its log. The plot's
+// `commands.setup` gets them the same way, through `Plots.prepare` and PlotManager (P1-30).
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -63,5 +64,39 @@ describe("plots' checks with a quest's secrets", () => {
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe("plots' prepare with a quest's secrets", () => {
+  it('hands them to PlotManager.prepare for commands.setup, and none when the quest asks for none (P1-30)', async () => {
+    const quest = questFixture('open');
+    const asked: unknown[][] = [];
+    const plot = { type: 'folder' as const, path: `quests/${quest.id}/work` };
+    const manager: PlotManager = {
+      prepare: (...args) => {
+        asked.push(args.slice(2));
+        return Promise.resolve({ ok: true, value: { plot, created: true, setup: null } });
+      },
+      status: unused,
+      touched: unused,
+      commitAll: unused,
+      applyPatch: unused,
+      diff: unused,
+      release: unused,
+    };
+    const territory = TerritorySchema.parse({
+      version: 1,
+      id: 'notes',
+      name: 'notes',
+      path: 'D:/notes',
+      kind: 'docs',
+      vcs: { type: 'none' },
+    });
+    const plots = plotsOver('D:/kingdom', manager, processHostOf(testIo()));
+
+    await plots.prepare(quest, territory, { npm_token: 'value' });
+    await plots.prepare(quest, territory);
+
+    expect(asked).toEqual([[{ npm_token: 'value' }], [undefined]]);
   });
 });

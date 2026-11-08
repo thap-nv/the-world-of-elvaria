@@ -1,5 +1,6 @@
 // The Steward applies an assignee's patch for laws.patch_paths before the submit commit (P1-28, phase 1 report
-// §5.9): real git repos and PlotManager, FakeRunners whose assignee leaves the patch in its plot.
+// §5.9): real git repos and PlotManager, FakeRunners whose assignee leaves the patch in its plot. Then (P1-31) the
+// delivery note names what it changed, and the run after a refused one reads why.
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -10,9 +11,11 @@ import { PATCH_FILE } from '@elvaria/runner-core';
 import { fromPortable, pathExists } from '@elvaria/store';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { leavingRunners } from './__fixtures__/deliver.ts';
+import { delivered, leavingRunners, noteOf } from './__fixtures__/deliver.ts';
 import { git, gitPlots, gitRepoWith, onRepo } from './__fixtures__/git-plots.ts';
 import { bench, questPayload, tickUntil, worldOfFiles } from './__fixtures__/kingdom.ts';
+import { APPRENTICE_LEFT } from './sessions/breaker.ts';
+import { patchRefusal, refusedPatchOf } from './sessions/patch.ts';
 import type { Bench } from './__fixtures__/kingdom.ts';
 import type { Steward } from './types.ts';
 import type { Quest } from '@elvaria/domain';
@@ -127,5 +130,61 @@ describe('a patch for the paths the CLI guards (P1-28)', () => {
     expect(git(worktree, 'show', '--name-only', '--format=', 'HEAD').split('\n')).toEqual([PATCH_FILE]);
     expect(await readFile(path.join(worktree, '.husky', 'pre-push'), 'utf8')).toBe(HOOK);
     expect(await linesOf(kingdom, 'plot.patched')).toEqual([]);
+  });
+});
+
+describe('after the patch (P1-31)', () => {
+  const SECTION = '## Applied through a patch';
+
+  it('the delivery note names the paths the Steward applied from it', async () => {
+    const { kingdom, steward } = await open(PATCH);
+    await kingdom.command('create_quest', questPayload('Lint before push'));
+    await tickUntil(steward, kingdom.clock, delivered(kingdom, 'Lint before push'));
+    const note = await noteOf(kingdom, await kingdom.quest('Lint before push'));
+    const section = note.slice(note.indexOf(SECTION)).split('\n## ')[0] ?? '';
+    expect(section).toContain('the Steward applied it before the commit');
+    // Exactly the one path the patch changed, and nothing the character wrote with its own tools.
+    expect(section.trimEnd().endsWith('before you merge:\n\n- `.husky/pre-push`')).toBe(true);
+  });
+
+  it('the delivery note of a quest without a patch has no such section', async () => {
+    const { kingdom, steward } = await open(undefined);
+    await kingdom.command('create_quest', questPayload('Lint before push'));
+    await tickUntil(steward, kingdom.clock, delivered(kingdom, 'Lint before push'));
+    const note = await noteOf(kingdom, await kingdom.quest('Lint before push'));
+    expect(note).toContain('## Merge by hand');
+    expect(note).not.toContain(SECTION);
+  });
+
+  it('refused at run n, it is named with why in the prompt of run n + 1, and only there', async () => {
+    const { kingdom, steward } = await open(PATCH.replace(' pnpm test', ' pnpm build'));
+    await kingdom.command('create_quest', questPayload('Lint before push'));
+    await tickUntil(steward, kingdom.clock, moved(kingdom, 'Lint before push'));
+    const sick = await kingdom.quest('Lint before push');
+    expect(sick.status).toBe('infirmary');
+    await kingdom.command('retry', { quest: sick.id });
+    const assignees = () => kingdom.requests.filter(({ role }) => role === 'assignee');
+    await tickUntil(steward, kingdom.clock, () => Promise.resolve(assignees().length === 2));
+    const [first, second] = assignees().map(({ prompt }) => prompt.user);
+    expect(second).toContain('# Picking up the quest');
+    expect(second).toContain('## The patch that was not applied');
+    expect(second).toContain('```text\nit does not apply: error: patch failed: .husky/pre-push:1');
+    expect(first).not.toContain('The patch that was not applied');
+  });
+});
+
+describe('refusedPatchOf (P1-31)', () => {
+  it("reads why from a refused patch's infirmary reason, without the note for the owner", () => {
+    const why = 'it touches src/app.ts, outside laws.patch_paths (.husky/**)';
+    expect(refusedPatchOf(`breaker:commit: ${patchRefusal(why)}`)).toBe(why);
+    expect(refusedPatchOf(`breaker:commit: ${patchRefusal(why)}${APPRENTICE_LEFT}`)).toBe(why);
+  });
+
+  it.each([
+    'breaker:commit: husky - pre-commit script failed',
+    `breaker:time: ${patchRefusal('it does not apply')}`,
+    'max_attempts',
+  ])('is undefined for any other reason: %s', (reason) => {
+    expect(refusedPatchOf(reason)).toBeUndefined();
   });
 });

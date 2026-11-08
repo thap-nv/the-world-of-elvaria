@@ -86,7 +86,9 @@
   `runner-core`, the budget, `.runs/<quest>-<n>`, and the env (§3.9): the minimal env it was given, the
   `ELVARIA_*` context of the hook and exactly the quest's `secrets_required` from the treasury (`sessionEnvOf`
   of `sessions/secrets.ts`); a name the territory no longer allows or the treasury lacks opens no session
-  (`secretsLacking` asks first, by name only). A
+  (`secretsLacking` asks first, by name only). The same secrets (`questSecretsOf`, read before the plot) go to
+  `Plots.prepare` for the territory's `commands.setup`, so an install from a private registry works before the
+  first session (P1-30); a quest that asks for none gives setup none and reads no treasury. A
   runner's `capabilities` narrow its tribe through `tribeLimitsOf`; a tribe without a runner takes no work.
 - Masks what a session leaves behind with that session's secret values and the patterns, before the kingdom
   keeps it (`maskFinished`, ADR 0013): the handover letter (`redactHandover`), the question, and the verifier's
@@ -95,7 +97,9 @@
   a commit the territory's hooks refuse sends the quest to the infirmary, `breaker:commit`; before it, on a
   territory with `laws.patch_paths`, the assignee's `elvaria.patch` is applied through `Plots.applyPatch` and told
   in a `plot.patched` line, and a patch that touches other paths or does not apply sends the quest to the
-  infirmary instead, `breaker:commit: elvaria.patch was not applied: …`, P1-28), a question (`ask`;
+  infirmary instead, `breaker:commit: elvaria.patch was not applied: …`, P1-28; the next run's prompt reads that
+  reason back from the run's `quest.infirmary` line in the quest's journal, `continuationOf` and `refusedPatchOf`,
+  P1-31), a question (`ask`;
   one the owner already answered, left in the letter, is a submit), mana out, a crash, the CLI's turn or budget
   limit (breaker). For a verifier: the verdict file (a partial one as `<quest>-<n>-p<k>`), the ritual's pass rule
   over the checks (`underPassRule`), `validateVerdict`, `verdict.*`, the move, the assignee's windows and fail
@@ -140,7 +144,8 @@
   a list it cannot read, a draft the kingdom refuses, a question, a party's parts (P1-18) or a circle open none,
   and the owner hears it once (`subquests_refused`, the bell, a warning in the log).
   Each delivery writes `.runs/<quest>-delivery.md` (the pull request's description: the quest, the verdicts of
-  its last run, the letter, what was copied or opened, the commands to merge) and then stamps
+  its last run, the letter, the paths the Steward applied from the assignee's patch over every run, read from the
+  quest's `plot.patched` lines (P1-31), what was copied or opened, the commands to merge) and then stamps
   `deliverable.delivered_at` with `path` (and `branch`); a delivery that fails halfway is done again next tick and
   finds what it already did.
 - Tells once when an open quest nobody can take (`quest.unclaimable`, the bell), withdraws it with
@@ -181,6 +186,9 @@ entry matches exactly one session, and the replayed log equals the files. `deliv
 report and a sealed draft from worktree-like plots, and a document copied into a territory without git;
 `subquests.spec.ts` opens a plan's sub-quests (again after a delivery that failed halfway) and refuses lists it
 cannot follow; assignees leave their files in the plot through `leavingRunners` (`src/__fixtures__/deliver.ts`).
+`patch.spec.ts` applies or refuses an assignee's `elvaria.patch` on real git repos (`src/__fixtures__/git-plots.ts`,
+P1-28), then checks that the delivery note names exactly the patched paths and has no such section without a patch,
+and that the run after a refused patch reads why in its prompt while the first run does not (P1-31).
 `scripts.spec.ts` copies the real `link-check` and `run-check` of `packages/registry-default/scripts/` into the
 kingdom (`src/__fixtures__/scripts.ts`) and takes script quests all the way with no runner asked: a link check
 that passes, one with a dead link and its scribe's follow-up, a territory check run from its resolved argv and its
@@ -193,6 +201,9 @@ cancelled, and leaves the judge the end of its log with the treasury value and a
 `check-signals.spec.ts` (P1-10b): the checks get exactly the quest's secrets (none for a quest that asks for none),
 write `check.start` and `check.end` (`stopped` when the Steward stops under them), send a quest whose secrets are
 gone by then to the infirmary, leave the returned assignee the end of the red check's log masked, and the loop
-ticks as soon as they end, not a beat later. `apprentice-breaker.spec.ts`: the
+ticks as soon as they end, not a beat later. `setup-secrets.spec.ts` (P1-30): the plot of the assignee and of the
+judge gets exactly the quest's secrets for its setup (none, and no treasury read, for a quest that asks for none),
+and a treasury that cannot give the values by then prepares no plot and gives the claim back.
+`apprentice-breaker.spec.ts`: the
 infirmary note after an apprentice overran or was cut. `review-breakers.spec.ts`: two verifiers stopped by the
 token breaker, or by their CLI's turn limit, send the review to the infirmary and no third opens.

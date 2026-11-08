@@ -2,7 +2,7 @@
 // runs, and a verifier whose prompt carries no diff learns where to read it instead of "no changes".
 import { describe, expect, it } from 'vitest';
 
-import { diffBlock, patchBlock, readOnlyBlock, shellBlock } from './blocks.ts';
+import { diffBlock, patchBlock, readOnlyBlock, refusedPatchBlock, shellBlock } from './blocks.ts';
 import { loadPromptTemplates } from './templates.ts';
 
 const templates = await loadPromptTemplates();
@@ -92,6 +92,23 @@ describe('patchBlock (P1-28)', () => {
   it('is empty without a write tool or a patch path', () => {
     expect(patchBlock({ tools: ['Read', 'Bash'], laws }, templates)).toBe('');
     expect(patchBlock({ tools: ['Edit'], laws: { ...laws, patch_paths: [] } }, templates)).toBe('');
+  });
+});
+
+describe('refusedPatchBlock (P1-31)', () => {
+  it("fences the Steward's reason, so a line of the patch it quotes is not read as the prompt's", () => {
+    const block = refusedPatchBlock(
+      '\nit does not apply: error: patch failed: .husky/pre-push:1\n',
+      templates,
+    );
+    expect(block).toContain('## The patch that was not applied');
+    expect(block).toContain('```text\nit does not apply: error: patch failed: .husky/pre-push:1\n```');
+    expect(block).toContain('If `elvaria.patch` is still at the root of your plot, it is that patch.');
+  });
+
+  it('is empty when the last run had no patch refused', () => {
+    expect(refusedPatchBlock(undefined, templates)).toBe('');
+    expect(refusedPatchBlock(' \n', templates)).toBe('');
   });
 });
 
