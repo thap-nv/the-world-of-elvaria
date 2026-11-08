@@ -40,9 +40,11 @@
   started when that session was spawned (`processStartOf`, within a minute), and leaves a pid that now belongs to
   another process, or whose start the system would not tell, alone, with a warning. `sessionsLeftBehind(root)`
   tells `elvaria doctor` which of them still run, and nothing while a Steward holds the lock.
-- Watches mana per pool (§3.5, ADR 0009; `src/mana/`): a session that hits its account's limit pauses its quest
-  (assignee kept; a verifier leaves the review), the whole pool sleeps (`mana.exhausted`), every other session on
-  it is killed and pauses and idle characters fall asleep; each paused assignee's work is committed as
+- Watches mana per gauge (§3.5, ADR 0009; `src/mana/`): a session that hits its account's limit pauses its quest
+  (assignee kept; a verifier leaves the review); the account is read at once (`mana/limit.ts`, no model call) and
+  the gauges it shows spent for the session's model sleep (`mana.exhausted`, with `model` for the cap of one model:
+  Argon's spent cap stops only the Argon characters, P1-22), else the pool of that model; every other session they
+  bind is killed and pauses and idle characters they bind fall asleep; each paused assignee's work is committed as
   `chore: wip <quest> (mana)` after its session ends. A tribe with a pool asleep is probed (`mana.probe`) one minute after
   the reset its session or its last probe named, again every two minutes while the account resets late, else
   every `probe_interval_minutes` (`nextProbeOf`); a probe that goes through wakes the pool (`mana.restored`),
@@ -50,8 +52,13 @@
   letter (`--resume` only with `resume_after_mana`, then with a short prompt). Awake pools are read without a
   model call (`probe({ping: false})`) in the background right after each session ends and every interval while
   quests are in play; windows a session reports in band (`mana` signal) come in too: `mana.level` on change; a
-  pool at the cap takes no new session, one whose window reads spent sleeps. The owner's `wake` (`elvaria wake`)
-  probes at once. The pools asleep are rebuilt from the log at start.
+  gauge at the cap takes no new session, one whose window reads spent sleeps (a tribe with only a model's cap asleep
+  is still read, and probed without a model call). A pool and window the account gives no figure for is estimated
+  from the sessions (`mana.level` `source: estimate`); a gauge the world draws on that nears the cap warns once
+  (`mana.warning`). The bell rings when a gauge warns, sleeps or wakes (`mana_warning`, `mana_asleep`,
+  `mana_awake`). With `mana.reassign_after_hours`, a quest asleep that long goes to the character planTick chose
+  (`paused_mana.reassign` by the Steward; the sleeper lets go) and starts. The owner's `wake` (`elvaria wake`)
+  probes at once. The gauges asleep and warned are rebuilt from the log at start.
 - Is the only writer of quests and characters (ADR 0005): every change goes through `transition()` or
   `transitionCharacter()`, is written to its file, then told in one event line carrying the view after it
   (P0-09), in the log and the quest's journal. Replaying the log over the morning gives back the files.
@@ -65,11 +72,12 @@
   (P1-26, `inbox/character-commands.ts`): a suspended character takes no work; the quest it works on ends its
   attempt `returned` (the session killed, its work committed as WIP) and waits for it or for a `reassign`, the
   quest it judges goes back to review for the next judge, a claim not started opens again (`claimed.release`), and
-  a quest it sleeps on stays paused until reassigned; `release` makes it idle with its fail streak at 0. Both lines
+  a quest it sleeps on opens again without it (`paused_mana.suspend` → `open`, P1-22); `release` makes it idle with its fail streak at 0. Both lines
   (`character.suspend`, `character.release`) are the owner's. `set_level` (P1-29,
   `inbox/character-settings.ts`, on `settingByOwner`, the one path for a setting of a character's own fields):
   the character's new level and `level_since`, told as the owner's `character.level_up`/`level_down`; its own
-  level is refused `same_level`. A `create_quest` naming an `assignee` (P1-29) gives the new quest to it by the
+  level is refused `same_level`. `set_model` (P1-22, on the same path): the character on another model of its
+  tribe, told as the owner's `character.model_changed`; refused `same_model` or `model_not_of_tribe`. A `create_quest` naming an `assignee` (P1-29) gives the new quest to it by the
   owner's `reassign` (`open → claimed`, the level aside); an assignee unknown, of another class, suspended or of a
   disabled tribe refuses the command and creates no quest, as for `reassign` (the domain's `namedAssignee`).
   Other kinds are refused with `unsupported` until their task. A `create_quest` that asks for a secret its
@@ -149,8 +157,8 @@
 
 - Decide: who takes what, who verifies, when a quest may move are pure functions of the domain (`planTick`,
   `transition`, `selectVerifier`, `validateVerdict`, ADR 0002).
-- Estimate mana from tokens against `tribes[].budget`, warn, reassign a long-paused quest
-  (`mana.reassign_after_hours`) or ring when a pool sleeps (P1-22); kill a process itself (runner-core's
+- Switch or rotate accounts: a quest asleep too long goes only to a character whose own mana is open; kill a
+  process itself (runner-core's
   `killTree` does, through the runner's `kill`); know git or a territory's programs (`Plots` is given, with the
   territory's checks resolved for `run-check`; `folderPlots` is a folder with no git, no checks and no diff, for
   the specs).

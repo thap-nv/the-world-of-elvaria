@@ -22,8 +22,9 @@ export async function probeOf(runner: AgentRunner, options: ProbeOptions): Promi
 export function readAfterSession(ctx: Context, tribe: TribeId): void {
   const runner = ctx.deps.runners[tribe];
   const { mana } = ctx;
-  if (runner === undefined || mana.reading.has(tribe) || mana.asleep.some((pool) => pool.tribe === tribe))
-    return;
+  // A whole pool asleep is probed instead; only a model's cap asleep (P1-22) leaves the tribe read as usual.
+  const probed = mana.asleep.some((pool) => pool.tribe === tribe && pool.model === undefined);
+  if (runner === undefined || mana.reading.has(tribe) || probed) return;
   mana.readAt.set(tribe, nextRead(ctx));
   const read = probeOf(runner, { ping: false })
     .then(({ windows }) => {

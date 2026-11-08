@@ -9,7 +9,7 @@ import type { InboxItem } from '@elvaria/store';
 import { wake } from '../mana/step.ts';
 import { STEWARD } from '../record.ts';
 import { release, suspend } from './character-commands.ts';
-import { setLevel } from './character-settings.ts';
+import { setLevel, setModel } from './character-settings.ts';
 import {
   answer,
   archive,
@@ -72,6 +72,7 @@ export async function applyCommand(ctx: Context, command: InboxCommand): Promise
   if (command.kind === 'suspend') return suspend(ctx, command.payload.character, command.payload.reason);
   if (command.kind === 'release') return release(ctx, command.payload.character);
   if (command.kind === 'set_level') return setLevel(ctx, command.payload.character, command.payload.level);
+  if (command.kind === 'set_model') return setModel(ctx, command.payload.character, command.payload.model);
   const quest = questOf(ctx, command);
   return quest === undefined ? rejected('unknown_quest') : onQuest(ctx, command, quest);
 }

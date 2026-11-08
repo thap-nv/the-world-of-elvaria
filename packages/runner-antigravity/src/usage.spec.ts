@@ -9,6 +9,9 @@ import { probeOf, usageBuckets, windowsOf } from './usage.ts';
 import type { UsageBucket } from './usage.ts';
 
 const RECORDED = readFileSync(path.join(FIXTURES, 'usage-json.jsonl'), 'utf8');
+/** What each group's description lists (P1-22): Argon is in neither on this Pro plan. */
+const GEMINI_GROUP = ['Gemini Flash', 'Gemini Pro'];
+const THIRD_PARTY_GROUP = ['Claude Opus', 'Claude Sonnet', 'GPT-OSS'];
 
 describe('usageBuckets', () => {
   it('reads every bucket of the recorded answer into pools and windows', () => {
@@ -20,6 +23,7 @@ describe('usageBuckets', () => {
         used_pct: 0,
         resets_at: null,
         pool_wide: true,
+        models: GEMINI_GROUP,
       },
       {
         id: 'gemini-5h',
@@ -28,6 +32,7 @@ describe('usageBuckets', () => {
         used_pct: 0,
         resets_at: null,
         pool_wide: true,
+        models: GEMINI_GROUP,
       },
       {
         id: '3p-weekly',
@@ -36,6 +41,7 @@ describe('usageBuckets', () => {
         used_pct: 0,
         resets_at: null,
         pool_wide: true,
+        models: THIRD_PARTY_GROUP,
       },
       {
         id: '3p-5h',
@@ -44,6 +50,7 @@ describe('usageBuckets', () => {
         used_pct: 0,
         resets_at: null,
         pool_wide: true,
+        models: THIRD_PARTY_GROUP,
       },
       {
         id: 'gemini-argon-wtu-weekly',
@@ -54,6 +61,15 @@ describe('usageBuckets', () => {
         pool_wide: false,
       },
     ]);
+  });
+
+  it('lists no models for a group whose description names none', () => {
+    const groups = [
+      { description: 'Models within this group:  ', buckets: [{ id: 'gemini-5h', remaining_fraction: 1 }] },
+      { description: 7, buckets: [{ id: '3p-5h', remaining_fraction: 1 }] },
+    ];
+    const buckets = usageBuckets(JSON.stringify({ command: { data: { groups } } })) ?? [];
+    expect(buckets.map((found) => found.models)).toEqual([undefined, undefined]);
   });
 
   it('says when the answer is not that shape', () => {
@@ -82,10 +98,10 @@ const bucket = (id: string, used: number, resets: string | null = null): UsageBu
 describe('windowsOf', () => {
   it("turns the recorded buckets into the account's windows, the Argon cap naming its model", () => {
     expect(windowsOf(usageBuckets(RECORDED) ?? [])).toEqual([
-      { window: 'weekly', used_pct: 0, pool: 'gemini_models' },
-      { window: 'five_hour', used_pct: 0, pool: 'gemini_models' },
-      { window: 'weekly', used_pct: 0, pool: 'claude_gpt_models' },
-      { window: 'five_hour', used_pct: 0, pool: 'claude_gpt_models' },
+      { window: 'weekly', used_pct: 0, pool: 'gemini_models', models: GEMINI_GROUP },
+      { window: 'five_hour', used_pct: 0, pool: 'gemini_models', models: GEMINI_GROUP },
+      { window: 'weekly', used_pct: 0, pool: 'claude_gpt_models', models: THIRD_PARTY_GROUP },
+      { window: 'five_hour', used_pct: 0, pool: 'claude_gpt_models', models: THIRD_PARTY_GROUP },
       {
         window: 'weekly',
         used_pct: 2.14,
@@ -146,8 +162,20 @@ describe('probeOf', () => {
     );
     expect(probeOf(reset ?? [], ['gemini_models', 'claude_gpt_models'])).toEqual({ status: 'ok' });
     expect(windowsOf(drained ?? []).filter(({ pool }) => pool === 'claude_gpt_models')).toEqual([
-      { window: 'weekly', used_pct: 50.56, pool: 'claude_gpt_models', resets_at: '2026-11-15T01:01:26Z' },
-      { window: 'five_hour', used_pct: 100, pool: 'claude_gpt_models', resets_at: '2026-11-08T06:01:26Z' },
+      {
+        window: 'weekly',
+        used_pct: 50.56,
+        pool: 'claude_gpt_models',
+        resets_at: '2026-11-15T01:01:26Z',
+        models: THIRD_PARTY_GROUP,
+      },
+      {
+        window: 'five_hour',
+        used_pct: 100,
+        pool: 'claude_gpt_models',
+        resets_at: '2026-11-08T06:01:26Z',
+        models: THIRD_PARTY_GROUP,
+      },
     ]);
   });
 

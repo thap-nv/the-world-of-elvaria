@@ -5,7 +5,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { FIXTURES } from './__fixtures__/agy.ts';
-import { agyErrorOf, outcomeOf, rateLimitOf } from './outcome.ts';
+import { agyErrorOf, outcomeOf, rateLimitOf, resetsAtOf } from './outcome.ts';
 import type { Ending } from './outcome.ts';
 import type { AgyResult } from './stream.ts';
 
@@ -49,6 +49,16 @@ describe('rateLimitOf', () => {
     expect(rateLimitOf(error, undefined)).toMatch(
       /^RESOURCE_EXHAUSTED \(code 429\): Individual quota reached/,
     );
+  });
+
+  it('reads the reset a quota error names, in whole or in part, and none where it names none (P1-22)', () => {
+    const now = Date.parse('2026-11-08T01:07:42Z');
+    expect(resetsAtOf(stderrOf('stream-quota-exhausted.stderr.txt'), now)).toBe('2026-11-08T06:01:36.000Z');
+    expect(resetsAtOf('quota reached. Resets in 12m.', now)).toBe('2026-11-08T01:19:42.000Z');
+    expect(resetsAtOf('quota reached. Resets in 2h', now)).toBe('2026-11-08T03:07:42.000Z');
+    expect(resetsAtOf('quota reached. Resets in 9s', now)).toBe('2026-11-08T01:07:51.000Z');
+    expect(resetsAtOf('quota reached. Resets in soon', now)).toBeUndefined();
+    expect(resetsAtOf(stderrOf('constructed-rate-limit.stderr.txt'), now)).toBe('2026-11-08T03:38:54.000Z');
   });
 
   it('reads one in the result error alone, and none in a print timeout', () => {

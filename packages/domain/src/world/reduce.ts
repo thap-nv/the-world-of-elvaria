@@ -38,10 +38,14 @@ const onManaLevel: Handler<'mana.level'> = (state, { ts, data }) => {
   return { ...state, pools: updatePool(state.pools, data, withReading(reading)) };
 };
 
-/** A whole pool falls asleep or wakes (ADR 0009); its characters move through their own events. */
+/**
+ * A whole pool falls asleep or wakes (ADR 0009); its characters move through their own events. The cap of one model
+ * (P1-22) leaves the pool's band as it is: the HUD has one band per pool, and the pool's other models still work.
+ */
 const onSleep =
   (asleep: boolean): Handler<'mana.exhausted' | 'mana.restored'> =>
-  (state, { data }) => ({ ...state, pools: updatePool(state.pools, data, withSleep(asleep)) });
+  (state, { data }) =>
+    data.model === undefined ? { ...state, pools: updatePool(state.pools, data, withSleep(asleep)) } : state;
 
 /**
  * Every type that changes what the world shows. Other types (agent.*, verdict.*, command.*, unknown ones)
@@ -75,6 +79,7 @@ const HANDLERS: { readonly [T in TypedEventType]?: Handler<T> } = {
   'character.swamp': onCharacter,
   'character.level_up': onCharacter,
   'character.level_down': onCharacter,
+  'character.model_changed': onCharacter,
   'territory.attached': onTerritory,
   'territory.surveyed': onTerritory,
   'territory.health': onTerritory,

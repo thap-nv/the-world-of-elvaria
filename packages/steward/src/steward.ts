@@ -10,7 +10,7 @@ import type { HeldLock } from '@elvaria/store';
 
 import { createBackground, wantedIn } from './background.ts';
 import { applyInbox } from './inbox/apply.ts';
-import { asleepFromLog, createManaBook } from './mana/book.ts';
+import { asleepFromLog, createManaBook, warnedFromLog } from './mana/book.ts';
 import { manaStep } from './mana/step.ts';
 import { createRecorder } from './record.ts';
 import { createSessions } from './sessions/running.ts';
@@ -95,6 +95,7 @@ async function recover(deps: StewardDeps, state: State): Promise<void> {
   state.reported = reportedFromLog(log.events);
   await writeUnclaimable(deps.store.root, state.reported);
   state.mana.asleep = asleepFromLog(log.events);
+  state.mana.warned = warnedFromLog(log.events);
 }
 
 /**

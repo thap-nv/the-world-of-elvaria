@@ -29,17 +29,20 @@ terms_acknowledged_at, env, pools?, timeout_ms?})`. `hook` is `hookCommand()` of
   takes the prompt on the command line: on Windows a prompt longer than CreateProcess takes (32 767 characters)
   is refused before the session, with the reason (`commandLineProblem`, P1-15).
 - Reads the stream: `init` names the session; `agent_response` steps give text and usage signals (tokens of this
-  run's own steps, since `result.usage` adds up a resumed conversation) and the turn count; refused tool steps
+  run's own steps, since `result.usage` adds up a resumed conversation; `cache_read_tokens` at a tenth through
+  runner-core's `countedTokens`, as for Claude, P1-22) and the turn count; refused tool steps
   and `denied_actions` give `tool_blocked` and `permission_denials`. Stops the run when a turn past
   `budget.max_turns` begins (agy has no `--max-turns`). Outcome: SUCCESS with an answer → `completed`; a
-  soft-deny or an empty answer → `error`; `print_timeout` → `budget`; a quota in `AGY_ERROR` → `rate_limited`.
+  soft-deny or an empty answer → `error`; `print_timeout` → `budget`; a quota in `AGY_ERROR` → `rate_limited`, its `rate_limit` signal carrying `resets_at` from the error's
+  `Resets in 4h53m54s` (`resetsAtOf`, P1-22), so the Steward probes just after the reset.
 - Writes what only the stream knows through runner-core, as the Claude adapter does: `agent.session.end`
   (outcome and usage, a killed run included) with `openRunLog`, and stdout and stderr redacted (the session's
   secret values first, `secretValuesOf`) into
   `<run_dir>/stdout.jsonl` and `stderr.log` with `openRunOutput`, plus the runner's own notes there.
 - `probe()` reads `agy -p /usage --output-format json` into buckets per pool (`usageBuckets`), and returns them as
-  the account's windows for the mana gauge (`windowsOf`; the Argon bucket names its model; `/usage` costs no
-  mana, so `ping: false` changes nothing); `doctor()` checks
+  the account's windows for the mana gauge (`windowsOf`; the Argon bucket names its model; a group's buckets list
+  the models its description names, `Models within this group: Gemini Flash, Gemini Pro`, so Argon on a Pro plan is
+  bound by its own cap only, P1-22; `/usage` costs no mana, so `ping: false` changes nothing); `doctor()` checks
   `--version`, `agy --output-format json models` (sign-in) and `terms_acknowledged_at`.
 
 ## Does not

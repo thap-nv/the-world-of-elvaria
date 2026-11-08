@@ -9,6 +9,7 @@ export type { LeftSession } from './sessions/pids.ts';
 export type {
   Bell,
   Logger,
+  ManaGaugeNotice,
   Notice,
   NoticeQuest,
   Plots,

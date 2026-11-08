@@ -101,6 +101,19 @@ const ManaLevelDataSchema = z.strictObject({
   source: z.enum(['rate_limits', 'estimate', 'signal']),
 });
 
+const ManaWarningDataSchema = z
+  .strictObject({
+    ...ManaLevelDataSchema.shape,
+    model: SnakeIdSchema.optional().meta(
+      describe('The one model whose own cap warns (argon, fable); absent for the whole pool (P1-22).'),
+    ),
+  })
+  .meta(
+    describe(
+      'A gauge reached warn_margin_pct points below the cap: said once until its window resets or its figure falls back (implementation-plan §3.5, P1-22).',
+    ),
+  );
+
 const CommandResultDataSchema = z.strictObject({ command_id: UlidSchema, reason: z.string().optional() });
 
 // The machine checks of a submitted run run outside the tick (P1-25) for minutes, while the quest sits in review with
@@ -184,6 +197,7 @@ export const EVENT_DATA_SCHEMAS = {
   'check.end': CheckEndDataSchema,
   'mana.signal': ManaSignalDataSchema,
   'mana.level': ManaLevelDataSchema,
+  'mana.warning': ManaWarningDataSchema,
   'mana.exhausted': ManaPoolDataSchema,
   'mana.restored': ManaPoolDataSchema,
   'character.created': CharacterChangeDataSchema,
@@ -195,6 +209,7 @@ export const EVENT_DATA_SCHEMAS = {
   'character.swamp': CharacterChangeDataSchema,
   'character.level_up': CharacterChangeDataSchema,
   'character.level_down': CharacterChangeDataSchema,
+  'character.model_changed': CharacterChangeDataSchema,
   'command.applied': CommandResultDataSchema,
   'command.rejected': CommandResultDataSchema,
   'plot.patched': PlotPatchedDataSchema,

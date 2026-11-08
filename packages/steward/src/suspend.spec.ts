@@ -94,6 +94,39 @@ describe('suspend and release', () => {
     expect(await kingdom.quest('Hangs')).toMatchObject({ status: 'working', assignee: doer });
   });
 
+  it('lets go of a sleeper the owner suspends: its paused quest opens and another character takes it (P1-22)', async () => {
+    const { kingdom, steward } = await open({
+      cast: [
+        { id: 'kael', cls: 'knight' },
+        { id: 'quill', cls: 'knight', tribe: 'gemini', model: 'gemini-4-argon-medium' },
+        ...JUDGES,
+      ],
+      plays: { work: { 'Runs dry': ['rate_limit', 'submit'] } },
+      probes: { claude: () => ({ status: 'rate_limited', detail: 'still empty' }) },
+    });
+    await kingdom.command('create_quest', questPayload('Runs dry', { assignee: 'kael' }));
+    await tickUntil(
+      steward,
+      kingdom.clock,
+      async () => (await kingdom.quest('Runs dry')).status === 'paused_mana',
+    );
+    await kingdom.command('suspend', { character: 'kael' });
+    await steward.tick();
+    const taken = await kingdom.quest('Runs dry');
+    expect(taken).toMatchObject({ status: 'working', assignee: 'quill' });
+    expect(
+      taken.attempt_log
+        .filter(({ role }) => role === 'assignee')
+        .map(({ character, outcome }) => [character, outcome]),
+    ).toEqual([
+      ['kael', 'paused'],
+      ['quill', undefined],
+    ]);
+    expect(await kingdom.character('kael')).toMatchObject({ status: 'suspended', current: null });
+    const released = (await lines(kingdom)).filter(({ type }) => type === 'quest.released');
+    expect(released.map(({ actor }) => actor)).toEqual([{ kind: 'user' }]);
+  });
+
   it('lets a suspended verifier leave the review to the next judge', async () => {
     const hangingJudge = (tribe: string) =>
       createFakeRunner({

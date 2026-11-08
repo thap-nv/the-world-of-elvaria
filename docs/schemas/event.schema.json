@@ -1322,6 +1322,70 @@
       "if": {
         "properties": {
           "type": {
+            "const": "mana.warning"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "A gauge reached warn_margin_pct points below the cap: said once until its window resets or its figure falls back (implementation-plan §3.5, P1-22).",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "tribe",
+              "pool",
+              "window",
+              "used_pct",
+              "source"
+            ],
+            "properties": {
+              "tribe": {
+                "description": "TribeId from kingdom.tribes[].",
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "pool": {
+                "description": "PoolId from poolOf(tribe, model): the tribe id for a single-pool account (claude), or the adapter's pool (antigravity: gemini_models, claude_gpt_models).",
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "window": {
+                "enum": [
+                  "five_hour",
+                  "weekly"
+                ]
+              },
+              "used_pct": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "resets_at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "source": {
+                "enum": [
+                  "rate_limits",
+                  "estimate",
+                  "signal"
+                ]
+              },
+              "model": {
+                "description": "The one model whose own cap warns (argon, fable); absent for the whole pool (P1-22).",
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
             "enum": [
               "mana.exhausted",
               "mana.restored"
@@ -1332,7 +1396,7 @@
       "then": {
         "properties": {
           "data": {
-            "description": "The pool that fell asleep (mana.exhausted) or woke (mana.restored): the whole pool, every character of it (ADR 0009).",
+            "description": "The gauge that fell asleep (mana.exhausted) or woke (mana.restored): the whole pool, every character of it, or the cap of one model (ADR 0009).",
             "type": "object",
             "additionalProperties": false,
             "required": [
@@ -1345,6 +1409,11 @@
                 "pattern": "^[a-z][a-z0-9_]*$"
               },
               "pool": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "model": {
+                "description": "The one model whose own cap fell asleep or woke (argon, fable): only the characters on that model; absent for the whole pool (implementation-plan §3.5, P1-22). The pool's HUD band does not follow it.",
                 "type": "string",
                 "pattern": "^[a-z][a-z0-9_]*$"
               }
@@ -1366,7 +1435,8 @@
               "character.release",
               "character.swamp",
               "character.level_up",
-              "character.level_down"
+              "character.level_down",
+              "character.model_changed"
             ]
           }
         }
@@ -1729,6 +1799,7 @@
         "character.swamp",
         "character.level_up",
         "character.level_down",
+        "character.model_changed",
         "command.received",
         "command.applied",
         "command.rejected",

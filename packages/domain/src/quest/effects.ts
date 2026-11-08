@@ -130,8 +130,12 @@ const EFFECTS: { readonly [T in QuestEventType]: Effect<T> } = {
   breaker: (quest, event) => ending(event.trip === 'time' ? 'timeout' : 'breaker')(quest, event),
   crash: ending('crash'),
   cancel: (quest, event) => ok(endRun(quest, event, 'cancelled')),
-  // The assignee's attempt ends as returned (§2.6); a suspended verifier's session is simply cut short.
-  suspend: (quest, event) => ending(quest.status === 'working' ? 'returned' : 'cancelled')(quest, event),
+  // The assignee's attempt ends as returned (§2.6); a suspended verifier's session is simply cut short. A quest
+  // paused for mana has no session left (its run ended paused): it opens again without its sleeper (P1-22).
+  suspend: (quest, event, to) =>
+    to === 'open'
+      ? ok({ ...quest, assignee: null })
+      : ending(quest.status === 'working' ? 'returned' : 'cancelled')(quest, event),
   mana_restored: (quest, event) => ok(resume(quest, event.at, event.session_id)),
   answer,
   assign_verifier: assignVerifier,

@@ -1,8 +1,8 @@
 // Who may take work in this tick, and how much room each tribe and territory has left (implementation-plan §3.1,
 // §3.14): the bookkeeping planTick shares between its steps, so a character, a tribe slot or a territory slot
 // given away in one step is gone for the next ones.
-import { poolEnabled, poolKeyOf, samePool } from '../mana/pool.ts';
-import { admits, decideManaState } from '../mana/state.ts';
+import { poolEnabled, poolKeyOf } from '../mana/pool.ts';
+import { admits, asleepFor, manaStateOf } from '../mana/state.ts';
 import { RANKS } from '../schema/common.ts';
 import type { Instant } from '../core/clock.ts';
 import type { CharacterId, TerritoryId, TribeId } from '../core/ids.ts';
@@ -87,21 +87,20 @@ export function tribeMayTake(limits: TribeLimits, quest: Quest, territory: Terri
 }
 
 /**
- * Whether the pool a character draws on opens a session now (§3.5, ADR 0009): enabled, not asleep, and below the
- * cap for the character's model (a model's own weekly cap binds only the characters on it).
+ * Whether the mana a character draws on opens a session now (§3.5, ADR 0009): its pool enabled, and every gauge
+ * that binds its model (its group's windows, its model's own cap; P1-22) awake and below the cap.
  */
 export function poolOpenOf(
   source: Pick<RosterSource, 'kingdom' | 'asleep' | 'mana'>,
   now: Instant,
 ): (character: Character) => boolean {
   const { tribes } = source.kingdom;
+  const readings = source.mana?.readings ?? [];
   return (character) => {
-    const key = poolKeyOf(tribes, character);
-    if (!poolEnabled(tribes, key) || source.asleep.some((pool) => samePool(pool, key))) return false;
+    if (!poolEnabled(tribes, poolKeyOf(tribes, character))) return false;
+    if (asleepFor(source.asleep, readings, tribes, character)) return false;
     const { mana } = source;
-    return (
-      mana === undefined || admits(decideManaState(mana.readings, key, mana.config, now, character.model))
-    );
+    return mana === undefined || admits(manaStateOf(readings, tribes, character, mana.config, now));
   };
 }
 

@@ -23,6 +23,8 @@ describe('the stream reader on recorded runs', () => {
     ['stream-full-run.jsonl', '32a0acb0-1790-48c1-b110-39fb5d66ed0f', 75_394, 9],
     ['stream-denials.jsonl', '95813669-e383-4ad0-97b9-39a7bba90494', 49_252, 6],
     ['stream-print-timeout.jsonl', 'c98a2039-b2b9-4dc1-9c4e-bc3144de0029', 15_497, 2],
+    // P1-16's real run: 17 348 tokens and 5 193 cache reads at a tenth (countedTokens, P1-22).
+    ['stream-quota-exhausted.jsonl', '66789c23-ca4d-4340-b09e-bdf65f57d626', 17_868, 1],
   ])('%s: session, tokens of its steps, model turns', (name, session, tokens, turns) => {
     expect(readAll(name).state).toMatchObject({ session, tokens, turns });
   });
@@ -115,5 +117,14 @@ describe('the stream reader on recorded runs', () => {
       '{"event":"result","result":{"conversation_id":"","status":"ERROR","usage":{"total_tokens":12}}}',
     );
     expect(reader.state).toMatchObject({ session: undefined, tokens: 12, turns: 0 });
+  });
+
+  it('counts cache reads at a tenth, as the breaker and the estimate do (P1-22)', () => {
+    const reader = createStreamReader();
+    // The whole of P1-16's mana-out run (spike §13): 261 271 tokens, 4 115 142 cache reads.
+    reader.read(
+      '{"event":"result","result":{"conversation_id":"","status":"ERROR","usage":{"total_tokens":261271,"cache_read_tokens":4115142}}}',
+    );
+    expect(reader.state.tokens).toBe(672_786);
   });
 });

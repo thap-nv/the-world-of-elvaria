@@ -137,6 +137,11 @@ const CASES: Record<InboxCommandKind, { valid: object; invalid: object; issue: s
     invalid: { character: 'thorn', level: 11 },
     issue: 'payload.level: Too big',
   },
+  set_model: {
+    valid: { character: 'quill', model: 'gemini-3.8-flash-high' },
+    invalid: { character: 'quill', model: 'Gemini Flash' },
+    issue: 'payload.model',
+  },
 };
 const KINDS = Object.keys(CASES);
 
@@ -253,7 +258,7 @@ describe('inbox command narrowing', () => {
           return command.kind;
       }
     });
-    expect(seen).toEqual([QUEST, 'script', 'return', 'pin_tag', 'set_level', 'session']);
+    expect(seen).toEqual([QUEST, 'script', 'return', 'pin_tag', 'set_level', 'set_model', 'session']);
     expectTypeOf<CommandPayload<'pin_tag'>['tag']>().toEqualTypeOf<TagId | null>();
   });
 });

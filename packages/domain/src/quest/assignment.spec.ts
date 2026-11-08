@@ -74,3 +74,20 @@ describe('the owner naming a character for an open quest', () => {
     });
   });
 });
+
+describe('a quest paused for mana changes hands (P1-22)', () => {
+  it('lets go of the sleeper the owner suspends: open again for anyone, the run still paused', () => {
+    expect(transition(questIn('paused_mana'), { type: 'suspend', at: at(40) }, 'user')).toMatchObject({
+      ok: true,
+      value: { status: 'open', assignee: null, attempts: 1, attempt_log: [{ outcome: 'paused' }] },
+    });
+  });
+
+  it('lets the Steward reassign it once it slept too long, as the owner may', () => {
+    const event = { type: 'reassign', at: at(40), assignee: ELLA, level: LEVEL } as const;
+    expect(transition(questIn('paused_mana'), event, 'steward')).toMatchObject({
+      ok: true,
+      value: { status: 'claimed', assignee: ELLA },
+    });
+  });
+});

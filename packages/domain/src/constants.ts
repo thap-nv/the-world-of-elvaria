@@ -36,6 +36,7 @@ export const MANA_DEFAULTS = {
 export const MANA_MARGIN_MAX_PCT = 50;
 export const MINUTES_PER_DAY = 1440;
 export const MS_PER_MINUTE = 60_000;
+export const MINUTES_PER_HOUR = 60;
 
 export const BREAKER_DEFAULTS = {
   attempt_minutes_low: 45,

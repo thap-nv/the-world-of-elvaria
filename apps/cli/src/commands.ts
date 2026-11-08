@@ -2,6 +2,7 @@
 import { CHARACTER_ADD } from './character/add.ts';
 import { CHARACTER_LEVEL } from './character/level.ts';
 import { CHARACTER_LIST } from './character/list.ts';
+import { CHARACTER_MODEL } from './character/model.ts';
 import { CHARACTER_RELEASE, CHARACTER_SUSPEND } from './character/suspend.ts';
 import { DOCTOR } from './doctor/doctor.ts';
 import { INIT } from './init.ts';
@@ -33,6 +34,7 @@ export const COMMANDS: readonly CommandSpec[] = [
   CHARACTER_SUSPEND,
   CHARACTER_RELEASE,
   CHARACTER_LEVEL,
+  CHARACTER_MODEL,
   SAY,
   QUEST_ADD,
   QUEST_LIST,

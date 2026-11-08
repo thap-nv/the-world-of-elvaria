@@ -61,7 +61,9 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
   'working.cancel': 'kill, giữ worktree; lượt kết thúc `cancelled`',
   'paused_mana.mana_restored': 'cùng nhân vật, phiên mới từ handover, cùng lượt `n` (§3.5)',
   'paused_mana.reassign':
-    'người dùng đổi người; mọi `reassign` vượt hạng trần của cấp người mới ⇒ `seal_required`',
+    'người dùng đổi người; hoặc Quản sự, khi quest ngủ quá `mana.reassign_after_hours` và có người cùng nghề còn mana (`selectAssignee`, P1-22); mọi `reassign` vượt hạng trần của cấp người mới ⇒ `seal_required`; người cũ bỏ `current`',
+  'paused_mana.suspend':
+    'người dùng đình chỉ nhân vật đang ngủ trên quest (§2.6): quest thả người đó, bỏ `assignee`, mở lại cho Quản sự giao như mọi quest open; `attempts` giữ, lượt đã kết thúc `paused` từ trước (P1-22)',
   'paused_mana.breaker': 'trip `secrets`, như `claimed`; người làm đang ngủ bỏ `current`',
   'blocked.answer.has_assignee':
     'câu trả lời ghi vào `blocked.answer` và handover.md; phiên mới, cùng lượt `n`',

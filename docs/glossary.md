@@ -91,8 +91,9 @@ Luật (ADR 0014, [implementation-plan](implementation-plan.md) §2.7 và §4.1)
 | Mana | Mana | `mana` | Hạn mức dùng của một tài khoản/pool. | `kingdom.mana`, event `mana.*` |
 | Trần mana | Mana cap | `mana.cap_pct` | Mức dùng tối đa thế giới được chạm (mặc định 98%). | `kingdom.mana` |
 | Phần của vua | King's reserve | `mana.king_reserve_pct` | Phần thế giới không bao giờ dùng (mặc định 2%). | `kingdom.mana` |
-| Pool mana | Mana pool | `pool` | Một hạn mức riêng trong một tài khoản (Antigravity có `gemini_models`, `claude_gpt_models`). | `kingdom.tribes[].pools`, event `mana.level` |
-| Hết mana / ngủ | Mana exhausted / asleep | `sleeping_mana` | Cả pool hết; nhân vật ngủ, quest tạm dừng giữ người làm. | `character.status`, `quest.status = paused_mana` |
+| Pool mana | Mana pool | `pool` | Một hạn mức riêng trong một tài khoản (Antigravity có `gemini_models`, `claude_gpt_models`); model nào thuộc pool nào thì theo danh sách `/usage` báo, không báo thì theo tiền tố slug. | `kingdom.tribes[].pools`, event `mana.level` |
+| Đồng hồ mana | Mana gauge | `PoolKey` | Một bucket mà usage báo: cả một pool, hoặc trần riêng của một model (`model`: Argon, Fable). Một nhân vật bị mọi đồng hồ chứa model của nó ràng; ngủ, thức và cảnh báo theo từng đồng hồ. | event `mana.exhausted`, `mana.restored`, `mana.warning` |
+| Hết mana / ngủ | Mana exhausted / asleep | `sleeping_mana` | Một đồng hồ ràng nhân vật đã hết (cả pool, hay trần riêng của model của nó); nhân vật ngủ, quest tạm dừng giữ người làm. | `character.status`, `quest.status = paused_mana` |
 | Hồi sinh | Revive | `mana.restored` | Probe thành công; nhân vật tỉnh, quest chạy tiếp bằng phiên mới. | event `mana.restored` |
 | Thăm dò (mana) | Probe | `probe` | Lệnh rẻ nhất để biết tộc đã có mana lại chưa. | `AgentRunner.probe`, event `mana.probe` |
 | Hạn mức khai báo | Declared allowance | `budget` | Chỉ hai nghĩa: trần của một quest (`quest.budget`) và hạn mức người dùng khai cho một tộc (`tribes[].budget`). Mức mana hiện tại luôn gọi là `mana`. | `quest.budget`, `kingdom.tribes[].budget` |
@@ -247,6 +248,7 @@ Họ model (suy ra từ slug, không lưu): `claude`, `gemini`, `gpt` (Codex thu
 | Sửa quest | `edit_quest` | — | kèm `expected_updated_at` |
 | Ghim chuyên môn | `pin_tag` | — | `tag = null` để bỏ ghim |
 | Đặt cấp | `set_level` | — | `elvaria character level`; ghi `level_since` |
+| Đổi model | `set_model` | — | `elvaria character model`; model cùng tộc, nghề và tộc không đổi; ghi `character.model_changed` |
 
 Nguồn lệnh (`source`): `cli`, `herald`, `lite`.
 
@@ -335,8 +337,8 @@ Mọi giá trị enum xuất hiện trong [schemas/](schemas/) có ở bảng n�
 | Phiên agent | `agent.session.start`, `agent.session.end`, `agent.tool`, `agent.tool.blocked`, `agent.subagent.start`, `agent.subagent.end`, `agent.subagent.overrun`, `agent.compact`, `agent.notification` | những gì phiên CLI làm, do hook và stream ghi; `overrun` = học đồ quá `subagent_max_minutes`; `compact` = ngồi thiền |
 | Kiểm tra máy | `check.start`, `check.end` | kiểm tra máy của một lượt đã nộp chạy ngoài nhịp, quest nằm `review` chưa có người chấm trong lúc đó; `check.end` nói `pass`, `fail`, `error` (chưa chạy được, tick sau chạy lại) hay `stopped` (Quản sự dừng hoặc quest đi tiếp) |
 | Phán quyết | `verdict.pass`, `verdict.fail`, `verdict.partial` | kết quả nghiệm thu |
-| Mana | `mana.level`, `mana.warning`, `mana.exhausted`, `mana.restored`, `mana.probe`, `mana.signal` | số đo, cảnh báo, hết, hồi sinh, thăm dò, tín hiệu hết trong băng (429, `StopFailure`) |
-| Nhân vật | `character.created`, `character.sleep`, `character.wake`, `character.meditate`, `character.suspend`, `character.release`, `character.swamp`, `character.level_up`, `character.level_down` | |
+| Mana | `mana.level`, `mana.warning`, `mana.exhausted`, `mana.restored`, `mana.probe`, `mana.signal` | số đo, cảnh báo (một lần mỗi đồng hồ), hết, hồi sinh, thăm dò, tín hiệu hết trong băng (429, `StopFailure`); `exhausted`/`restored` có `model` khi chỉ trần riêng của một model ngủ hay thức |
+| Nhân vật | `character.created`, `character.sleep`, `character.wake`, `character.meditate`, `character.suspend`, `character.release`, `character.swamp`, `character.level_up`, `character.level_down`, `character.model_changed` | |
 | Lệnh | `command.received`, `command.applied`, `command.rejected` | Quản sự xử lý `inbox/` |
 | Khác | `delivery.sent`, `plot.patched`, `chronicle.written`, `territory.attached`, `territory.surveyed`, `territory.health`, `sandbox.replay.start`, `sandbox.replay.end` | `plot.patched`: Quản sự áp bản vá của người làm vào `laws.patch_paths` trước commit `submit` (P1-28) |
 | Dành sẵn | `campaign.*`, `battle.*`, `incident.*`, `patrol.*`, `party.*`, `skill.*` | giai đoạn 5; đội và bí kíp |

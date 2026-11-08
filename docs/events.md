@@ -4,7 +4,7 @@
 
 Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là một event; log chỉ ghi thêm, không bao giờ viết lại. `type` là `nhóm.hành_động`; reader giữ nguyên type lạ, renderer bỏ qua nó. Hợp đồng đầy đủ: [schemas/event.schema.json](schemas/event.schema.json); nghĩa từng nhóm và các tiền tố dành sẵn: [glossary.md](glossary.md) mục 12.
 
-59 type trong danh mục v1, 46 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
+60 type trong danh mục v1, 48 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
 
 ## Khung một dòng
 
@@ -79,13 +79,13 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 | Type | `data` |
 |---|---|
 | `mana.level` | `tribe`: string (khớp `^[a-z][a-z0-9_]*$`) — TribeId from kingdom.tribes[].<br>`pool`: string (khớp `^[a-z][a-z0-9_]*$`) — PoolId from poolOf(tribe, model): the tribe id for a single-pool account (claude), or the adapter's pool (antigravity: gemini_models, claude_gpt_models).<br>`window`: một trong `five_hour`, `weekly`<br>`used_pct`: number 0–100<br>`resets_at` (tùy chọn): string (date-time)<br>`source`: một trong `rate_limits`, `estimate`, `signal` |
-| `mana.warning` | object mở, chưa có schema |
-| `mana.exhausted` | `tribe`: string (khớp `^[a-z][a-z0-9_]*$`)<br>`pool`: string (khớp `^[a-z][a-z0-9_]*$`) |
-| `mana.restored` | `tribe`: string (khớp `^[a-z][a-z0-9_]*$`)<br>`pool`: string (khớp `^[a-z][a-z0-9_]*$`) |
+| `mana.warning` | `tribe`: string (khớp `^[a-z][a-z0-9_]*$`) — TribeId from kingdom.tribes[].<br>`pool`: string (khớp `^[a-z][a-z0-9_]*$`) — PoolId from poolOf(tribe, model): the tribe id for a single-pool account (claude), or the adapter's pool (antigravity: gemini_models, claude_gpt_models).<br>`window`: một trong `five_hour`, `weekly`<br>`used_pct`: number 0–100<br>`resets_at` (tùy chọn): string (date-time)<br>`source`: một trong `rate_limits`, `estimate`, `signal`<br>`model` (tùy chọn): string (khớp `^[a-z][a-z0-9_]*$`) — The one model whose own cap warns (argon, fable); absent for the whole pool (P1-22). |
+| `mana.exhausted` | `tribe`: string (khớp `^[a-z][a-z0-9_]*$`)<br>`pool`: string (khớp `^[a-z][a-z0-9_]*$`)<br>`model` (tùy chọn): string (khớp `^[a-z][a-z0-9_]*$`) — The one model whose own cap fell asleep or woke (argon, fable): only the characters on that model; absent for the whole pool (implementation-plan §3.5, P1-22). The pool's HUD band does not follow it. |
+| `mana.restored` | `tribe`: string (khớp `^[a-z][a-z0-9_]*$`)<br>`pool`: string (khớp `^[a-z][a-z0-9_]*$`)<br>`model` (tùy chọn): string (khớp `^[a-z][a-z0-9_]*$`) — The one model whose own cap fell asleep or woke (argon, fable): only the characters on that model; absent for the whole pool (implementation-plan §3.5, P1-22). The pool's HUD band does not follow it. |
 | `mana.probe` | object mở, chưa có schema |
 | `mana.signal` | `error`: string (khớp `^[a-z][a-z0-9_]*$`)<br>`source`: string (khớp `^[a-z][a-z0-9_]*$`) |
 
-## `character` · 9 type
+## `character` · 10 type
 
 | Type | `data` |
 |---|---|
@@ -98,6 +98,7 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 | `character.swamp` | `character`: object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — The character after this event (characterViewOf). |
 | `character.level_up` | `character`: object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — The character after this event (characterViewOf). |
 | `character.level_down` | `character`: object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — The character after this event (characterViewOf). |
+| `character.model_changed` | `character`: object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — The character after this event (characterViewOf). |
 
 ## `command` · 3 type
 

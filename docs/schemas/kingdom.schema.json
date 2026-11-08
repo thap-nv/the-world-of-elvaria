@@ -450,7 +450,7 @@
           }
         },
         "budget": {
-          "description": "Denominator for the `estimate` gauge source (implementation-plan §3.5).",
+          "description": "Denominator for the `estimate` gauge source (implementation-plan §3.5): tokens of the sessions in each window, or their minutes for a tribe without usage; used for a pool and window the account reports no figure for. Each pool of the tribe is measured against it.",
           "type": "object",
           "additionalProperties": false,
           "properties": {
@@ -459,6 +459,16 @@
               "minimum": 1
             },
             "tokens_7d": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "minutes_5h": {
+              "description": "Session minutes in five hours: the denominator for a tribe whose adapter reports no usage (mana_source elapsed_time, implementation-plan §3.14).",
+              "type": "integer",
+              "minimum": 1
+            },
+            "minutes_7d": {
+              "description": "Session minutes in seven days, as minutes_5h.",
               "type": "integer",
               "minimum": 1
             },

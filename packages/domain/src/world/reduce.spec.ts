@@ -54,7 +54,14 @@ describe('applyEvent', () => {
       line('check.start', {}),
       line('check.end', { outcome: 'pass', checks: [] }),
       line('verdict.pass', {}),
-      line('mana.warning', { tribe: 'claude' }),
+      line('mana.warning', {
+        tribe: 'claude',
+        pool: 'claude',
+        window: 'weekly',
+        used_pct: 90,
+        source: 'estimate',
+      }),
+      line('mana.exhausted', { tribe: 'claude', pool: 'claude', model: 'fable' }),
       line('campaign.declared', { name: 'a type newer than this reader' }),
     ]) {
       expect(applyEvent(STATE, ignored)).toBe(STATE);
@@ -113,6 +120,7 @@ describe('applyEvent', () => {
     'character.swamp',
     'character.level_up',
     'character.level_down',
+    'character.model_changed',
   ])('puts the character view of %s in place', (type) => {
     const view = { ...CHARACTER_VIEW, id: 'nova' as CharacterId, name: 'Nova' };
     expect(applyEvent(STATE, line(type, { character: view })).characters[view.id]).toEqual(view);

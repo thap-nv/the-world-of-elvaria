@@ -2,7 +2,7 @@
 // field of the character file and nothing else, no quest move. The domain decides whether the change is allowed and
 // which line tells it; the Steward writes the file and the line as the owner's (ADR 0005). A new setting is one
 // function here on settingByOwner, plus its line in apply.ts.
-import { ok, setLevelLine, withLevel } from '@elvaria/domain';
+import { ok, setLevelLine, setModelLine, withLevel, withModel } from '@elvaria/domain';
 import type { Character, CharacterId, Result } from '@elvaria/domain';
 
 import { OWNER } from '../record.ts';
@@ -37,4 +37,16 @@ export const setLevel = (ctx: Context, id: CharacterId, level: number): Promise<
     const line = setLevelLine(character, level);
     if (!line.ok) return line;
     return ok({ type: line.value, edit: (before, at) => ok(withLevel(before, level, at)) });
+  });
+
+/**
+ * `set_model` (P1-22): the character on another model of its own tribe from now, told as character.model_changed.
+ * Its next session runs the new model and the gauges of that model bind it (an Argon character moved to Flash takes
+ * work while Argon's cap sleeps); a session it runs now goes on with the old one.
+ */
+export const setModel = (ctx: Context, id: CharacterId, model: string): Promise<Outcome> =>
+  settingByOwner(ctx, id, (character) => {
+    const line = setModelLine(character, model, ctx.world.kingdom.tribes);
+    if (!line.ok) return line;
+    return ok({ type: line.value, edit: (before) => ok(withModel(before, model)) });
   });

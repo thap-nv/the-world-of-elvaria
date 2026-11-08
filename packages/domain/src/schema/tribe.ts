@@ -53,13 +53,23 @@ export const TribeSchema = z
       .strictObject({
         tokens_5h: z.int().min(1).optional(),
         tokens_7d: z.int().min(1).optional(),
+        minutes_5h: z.int().min(1).optional().meta({
+          description:
+            'Session minutes in five hours: the denominator for a tribe whose adapter reports no usage (mana_source elapsed_time, implementation-plan §3.14).',
+        }),
+        minutes_7d: z.int().min(1).optional().meta({
+          description: 'Session minutes in seven days, as minutes_5h.',
+        }),
         usd_week: z.number().positive().optional().meta({
           description:
             'Weekly spend ceiling; required when tool.auth = api_key (a paid key has no hard cap of its own).',
         }),
       })
       .optional()
-      .meta({ description: 'Denominator for the `estimate` gauge source (implementation-plan §3.5).' }),
+      .meta({
+        description:
+          'Denominator for the `estimate` gauge source (implementation-plan §3.5): tokens of the sessions in each window, or their minutes for a tribe without usage; used for a pool and window the account reports no figure for. Each pool of the tribe is measured against it.',
+      }),
   })
   .superRefine((tribe, ctx) => {
     if (tribe.adapter === 'gemini_cli' && tribe.tool !== undefined && tribe.tool.auth !== 'api_key') {

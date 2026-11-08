@@ -5,6 +5,7 @@ import type {
   Clock,
   FailKind,
   IdSource,
+  ManaWindow,
   Quest,
   QuestId,
   Rank,
@@ -67,7 +68,26 @@ export type Notice =
       readonly character: CharacterId;
       readonly fail_kind: FailKind | null;
       readonly count: number;
-    };
+    }
+  /**
+   * A gauge of a tribe's account (P1-22): it reached the warning share (once), ran dry and sleeps, or woke. `model`
+   * names the one model whose own cap it is (Argon, Fable); absent for the whole pool.
+   */
+  | (ManaGaugeNotice & { readonly kind: 'mana_asleep'; readonly resets_at?: string })
+  | (ManaGaugeNotice & { readonly kind: 'mana_awake' })
+  | (ManaGaugeNotice & {
+      readonly kind: 'mana_warning';
+      readonly window: ManaWindow;
+      readonly used_pct: number;
+      readonly resets_at?: string;
+    });
+
+/** The gauge a mana notice is about. */
+export interface ManaGaugeNotice {
+  readonly tribe: TribeId;
+  readonly pool: string;
+  readonly model?: string;
+}
 
 export interface Bell {
   ring(notice: Notice): Promise<void>;
