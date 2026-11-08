@@ -258,6 +258,7 @@ Nguồn lệnh (`source`): `cli`, `herald`, `lite`.
 | `count-files` | Đếm file | đếm file theo glob |
 | `diff-stat` | Thống kê diff | thống kê thay đổi của nhánh |
 | `compare-numbers` | So khớp số | so hai bộ số liệu |
+| `todo-scan` | Quét dấu TODO | đếm dấu TODO, FIXME, HACK, XXX theo file và glob |
 
 ## 10b. Tag chuyên môn mặc định (`registry/tags.json`)
 

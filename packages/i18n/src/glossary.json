@@ -1504,6 +1504,11 @@
               "id": ["compare-numbers"],
               "vi": "So khớp số",
               "does": "so hai bộ số liệu"
+            },
+            {
+              "id": ["todo-scan"],
+              "vi": "Quét dấu TODO",
+              "does": "đếm dấu TODO, FIXME, HACK, XXX theo file và glob"
             }
           ]
         }
