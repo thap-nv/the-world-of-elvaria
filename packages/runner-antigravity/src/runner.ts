@@ -1,11 +1,13 @@
 // The Antigravity CLI adapter (`antigravity`, the Gemini tribe's default runner; implementation-plan §3.7,
 // ADR 0006, 0018). It turns a SpawnRequest into agy's argv, env and per-run files, and agy's stream into
 // signals and a RunResult; everything else (prompt, policy, plot, checks) is runner-core's.
-import { writeFile } from 'node:fs/promises';
+import { appendFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
 import {
+  NOTE_PREFIX,
+  STDERR_FILE,
   contextEnv,
   openRunLog,
   openRunOutput,
@@ -13,11 +15,11 @@ import {
   runToEnd,
   secretValuesOf,
 } from '@elvaria/runner-core';
-import type { AgentRunner, ProbeResult, SpawnRequest, ToolInfo } from '@elvaria/runner-core';
+import type { AgentRunner, ProbeResult, RunningSession, SpawnRequest, ToolInfo } from '@elvaria/runner-core';
 
 import { hookPlanOf, hooksProblem } from './hook-files.ts';
 import { commandLineProblem, programOf } from './launch.ts';
-import { writeRunFiles } from './run-files.ts';
+import { removeRunFiles, writeRunFiles } from './run-files.ts';
 import { startSession } from './session.ts';
 import { probeOf, usageBuckets, windowsOf } from './usage.ts';
 import type { HookPlan } from './hook-files.ts';
@@ -99,6 +101,36 @@ export function sessionArgs(req: SpawnRequest, files: RunFiles): string[] {
 /** `agy --version` prints `1.5.2`; read on every spawn, since the extension swaps the binary in place. */
 const versionOf = (stdout: string): string | undefined => /\d+\.\d+\.\d+\S*/.exec(stdout)?.[0];
 
+/**
+ * The plot without Elvaria's files (P1-23). A file that will not go (a Windows lock past the retries) costs the
+ * session nothing: the run folder's stderr.log says so, for the owner whose check then fails on it.
+ */
+async function clearPlot(req: SpawnRequest): Promise<void> {
+  try {
+    await removeRunFiles(req.cwd);
+  } catch (error) {
+    const why = error instanceof Error ? error.message : String(error);
+    const note = `${NOTE_PREFIX}the hook files stay in the plot: ${why}\n`;
+    await appendFile(path.join(req.run_dir, STDERR_FILE), note, 'utf8').catch(() => undefined);
+  }
+}
+
+/** The session, whose end (wait, kill) settles only once its files left the plot. */
+function clearingOnEnd(session: RunningSession, req: SpawnRequest): RunningSession {
+  const result = session.wait().then(async (end) => {
+    await clearPlot(req);
+    return end;
+  });
+  return {
+    ...session,
+    wait: () => result,
+    kill: async (reason) => {
+      await session.kill(reason);
+      await result;
+    },
+  };
+}
+
 async function spawnAgy(req: SpawnRequest, options: AntigravityOptions, plan: HookPlan) {
   if (options.terms_acknowledged_at === undefined) throw new Error(TERMS);
   // The same context as the Claude adapter: kingdom, attempt and zone from env, character, role, model from
@@ -107,6 +139,24 @@ async function spawnAgy(req: SpawnRequest, options: AntigravityOptions, plan: Ho
   const env = agyEnv(req.env, plan.node_dir, contextEnv(ctx));
   const call = { cwd: req.cwd, env, timeout_ms: options.timeout_ms ?? DEFAULT_TIMEOUT_MS };
   const version = versionOf((await runToEnd(programOf(options.launch), ['--version'], call)).stdout);
+  try {
+    return clearingOnEnd(await startAgy(req, options, plan, { ctx, env, call, version }), req);
+  } catch (error) {
+    // A session that never started leaves no file behind either.
+    await clearPlot(req);
+    throw error;
+  }
+}
+
+interface Prepared {
+  readonly ctx: ReturnType<typeof runContextOf>;
+  readonly env: Record<string, string>;
+  readonly call: { readonly cwd: string; readonly env: Record<string, string>; readonly timeout_ms: number };
+  readonly version: string | undefined;
+}
+
+async function startAgy(req: SpawnRequest, options: AntigravityOptions, plan: HookPlan, prepared: Prepared) {
+  const { ctx, env, call, version } = prepared;
   const files = await writeRunFiles(req, ctx, plan);
   const args = sessionArgs(req, files);
   // A prompt Windows cannot pass to agy is refused before any mana is spent, with the reason (P1-15).
