@@ -27,6 +27,8 @@ const GUARD_TEXT: Readonly<Record<QuestGuard, string>> = {
   needs_verifier: '`tier = session`, chưa có `verifier`',
   has_verifier: 'có `verifier`',
   undelivered: 'chưa có `deliverable.delivered_at`',
+  stalled_review: 'cầu dao đã cắt `REVIEW_BREAKS_MAX` người chấm của lượt (`reviewStalled`)',
+  no_stalled_review: 'không phải `reviewStalled`',
 };
 
 /** Notes per row (rowKey); a row without a note needs none. The spec rejects a note for a row that is gone. */
@@ -88,7 +90,9 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
   'done.deliver.undelivered':
     'giao hàng theo kind, ghi `deliverable.delivered_at`; không là trạng thái riêng để không nhân đôi',
   'done.archive': 'Quản sự sau N ngày; xóa worktree khi archive, không sớm hơn',
-  'infirmary.retry': '`attempts = 0`, bỏ `assignee`, giữ `attempt_log`',
+  'infirmary.retry.no_stalled_review': '`attempts = 0`, bỏ `assignee`, giữ `attempt_log`',
+  'infirmary.retry.stalled_review':
+    'việc đã xong, chỉ phần chấm bị cắt mãi: giữ `assignee`, `attempts`, lượt `n`; người chấm mới; `reviewBreaksOf` đếm lại từ lần `retry` này (P1-26)',
   'infirmary.reassign.session': 'người mới có đủ `max_attempts` (`attempts = 0`)',
   'infirmary.archive': 'lệnh `archive`',
 };

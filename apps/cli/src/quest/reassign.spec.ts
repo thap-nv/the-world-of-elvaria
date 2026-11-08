@@ -40,6 +40,29 @@ describe('elvaria quest retry, reassign (P1-26)', () => {
     expect(await sent()).toEqual([{ kind: 'retry', payload: { quest: QUEST_ID } }]);
   });
 
+  it('says a stalled review goes back to review, not open (owner after P1-23)', async () => {
+    const entry = (character: string, role: string, minute: number, outcome: string) => ({
+      n: 1,
+      character,
+      role,
+      started_at: `2026-11-06T08:${String(minute).padStart(2, '0')}:00+07:00`,
+      ended_at: `2026-11-06T08:${String(minute + 5).padStart(2, '0')}:00+07:00`,
+      outcome,
+      run_dir: role === 'verifier' ? `.runs/${QUEST_ID}-1/verify` : `.runs/${QUEST_ID}-1`,
+    });
+    const attemptLog = [
+      entry('wren', 'assignee', 0, 'submitted'),
+      entry('sable', 'verifier', 10, 'breaker'),
+      entry('orin', 'verifier', 20, 'timeout'),
+    ];
+    await plantQuests(kingdom, questFixture('infirmary', QUEST_ID, { ...HELD, attempt_log: attemptLog }));
+    const io = testIo();
+    expect(await quest(io, 'retry', QUEST_ID)).toBe(0);
+    expect(io.printed.out[0]).toMatch(
+      new RegExp(`^Sent the command to retry quest ${QUEST_ID}: its review goes on with a new judge`),
+    );
+  });
+
   it('leaves the choice to the Steward without --to, and names the character with it', async () => {
     await plantQuests(kingdom, questFixture('infirmary'), questFixture('returned', OTHER_QUEST_ID, HELD));
     await summon('kael', '--class', 'knight', '--level', '5');

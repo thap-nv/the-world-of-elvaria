@@ -1,6 +1,7 @@
 // The quest state machine as data (implementation-plan §2.5): every status change of a quest is one row of this
 // table, and transition() refuses anything else. The table in the plan is rendered from these rows
 // (renderQuestTransitionTable), so the document cannot drift from the code. Read before changing: CLAUDE.md.
+import { reviewStalled } from '../breaker/review.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 import type { QuestStatus } from '../schema/quest/shared.ts';
 import type { QuestActor, QuestEventType } from './events.ts';
@@ -17,7 +18,9 @@ export type QuestGuard =
   | 'no_assignee'
   | 'needs_verifier'
   | 'has_verifier'
-  | 'undelivered';
+  | 'undelivered'
+  | 'stalled_review'
+  | 'no_stalled_review';
 
 /** A script-tier quest has no character to retry it: a crash or a fail goes to the infirmary (§2.5). */
 const canRetry = (quest: Quest): boolean =>
@@ -37,6 +40,9 @@ export const QUEST_GUARDS: Readonly<Record<QuestGuard, (quest: Quest) => boolean
   has_verifier: (quest) => typeof quest.verifier === 'string',
   // Delivery stamps deliverable.delivered_at instead of being a status of its own, so it happens once.
   undelivered: (quest) => quest.deliverable.delivered_at === undefined,
+  // The breakers cut REVIEW_BREAKS_MAX verifiers of the run (P1-23): the work is done, only its review stalled.
+  stalled_review: reviewStalled,
+  no_stalled_review: (quest) => !reviewStalled(quest),
 };
 
 export interface QuestTransitionRow {
@@ -110,7 +116,9 @@ export const QUEST_TRANSITIONS: readonly QuestTransitionRow[] = [
   { from: 'awaiting_seal', event: 'reject', actors: U, to: 'archived' },
   { from: 'done', event: 'deliver', actors: S, guard: 'undelivered', to: 'done' },
   { from: 'done', event: 'archive', actors: US, to: 'archived' },
-  { from: 'infirmary', event: 'retry', actors: U, to: 'open' },
+  { from: 'infirmary', event: 'retry', actors: U, guard: 'no_stalled_review', to: 'open' },
+  // A review the breakers kept cutting goes on, same run, with a new judge (P1-26): opening it would redo the work.
+  { from: 'infirmary', event: 'retry', actors: U, guard: 'stalled_review', to: 'review' },
   { from: 'infirmary', event: 'reassign', actors: U, guard: 'session', to: 'claimed' },
   { from: 'infirmary', event: 'archive', actors: U, to: 'archived' },
 ];

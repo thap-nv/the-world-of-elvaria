@@ -19,7 +19,8 @@
   the session's process tree, commits the work as `chore: wip <quest> (<trip>)` (a refusal keeps it in the plot
   and says so in the reason), sends the quest to the infirmary (`quest.infirmary`, `breaker:<trip>: <detail>`) and
   rings the bell; a verifier past a breaker leaves the review to the next one, until the second of a run
-  (`reviewStalled`, P1-23): then the quest goes to the infirmary with the bell, and no third verifier opens. A CLI
+  (`reviewStalled`, P1-23): then the quest goes to the infirmary with the bell, and no third verifier opens; the
+  owner's `retry` brings it back to review with a new judge, and the count starts over (P1-26). A CLI
   that stopped at its own `--max-turns` or budget gets the same end, a verifier's included. When the quest's journal shows an apprentice of that session past
   its minutes or cut at its turns, the reason asks the owner for a child quest for the work it left (§3.12). A quest whose secrets the treasury lacks, or its territory no longer
   allows, goes to the infirmary (`breaker:secrets`) instead of being claimed and released every tick; an

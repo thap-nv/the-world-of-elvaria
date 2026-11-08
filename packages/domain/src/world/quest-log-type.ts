@@ -52,9 +52,11 @@ const BY_EVENT: Readonly<Record<QuestEventType, QuestLogType>> = {
 
 /**
  * The log type of the move `event` from `from` to `to`. A verifier that leaves a review early (mana_out, breaker,
- * crash, suspend: the quest stays in review without it) leaves a partial verdict, so the line is a verdict.
+ * crash, suspend: the quest stays in review without it) leaves a partial verdict, so the line is a verdict. A retry
+ * of a review the breakers kept cutting hands the work to judging again, as a submit does (P1-26).
  */
 export function questLogTypeOf(event: QuestEventType, from: QuestStatus, to: QuestStatus): QuestLogType {
+  if (event === 'retry' && to === 'review') return 'quest.submitted';
   const verifierLeft = from === 'review' && to === 'review' && event !== 'assign_verifier';
   return BY_TARGET[to] ?? (verifierLeft ? 'quest.verdict' : BY_EVENT[event]);
 }

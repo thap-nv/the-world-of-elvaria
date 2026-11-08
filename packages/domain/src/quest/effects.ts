@@ -142,8 +142,10 @@ const EFFECTS: { readonly [T in QuestEventType]: Effect<T> } = {
     ok({ ...quest, seal: { at: event.at, ...(event.note === undefined ? {} : { note: event.note }) } }),
   return: (quest) => ok(withoutVerifier(quest)),
   deliver: (quest, event) => ok({ ...quest, deliverable: { ...quest.deliverable, delivered_at: event.at } }),
-  // A fresh start from the infirmary: nobody holds the quest and the attempt budget is full again (§2.5).
-  retry: (quest) => ok({ ...quest, attempts: 0, assignee: null, verifier: null }),
+  // A fresh start from the infirmary: nobody holds the quest and the attempt budget is full again (§2.5). A review
+  // the breakers kept cutting goes back to review instead: same assignee, same attempt, a new judge (P1-26).
+  retry: (quest, _event, to) =>
+    ok(to === 'review' ? withoutVerifier(quest) : { ...quest, attempts: 0, assignee: null, verifier: null }),
 };
 
 /** Applies the effect of `event` to a quest that is still in its old status. */

@@ -35,7 +35,10 @@
   returned, paused or unjudged quest to the infirmary (§2.5). (P1-23) `countedTokens` is the unit of a session's
   tokens for every adapter: input, output and cache writes in full, cache reads at a tenth
   (`CACHE_READS_PER_TOKEN`); `reviewStalled` says a breaker has stopped `REVIEW_BREAKS_MAX` (2) verifiers of the
-  current run, and the review goes to the infirmary instead of a fresh verifier.
+  current run, and the review goes to the infirmary instead of a fresh verifier. (P1-26) The owner's retry of
+  such a quest goes back to review, same run, for a new judge (`infirmary.retry.stalled_review`); `reviewBreaksOf`
+  counts only the cuts since that retry, derived from `attempt_log` (a stall closes each group of
+  `REVIEW_BREAKS_MAX`).
 - Keeps the separation of duties (`src/verify/`, ADR 0008, 0020): `selectVerifier` (never a worker of the quest
   or of its party, never the assignee's model, another model family first by `familyOf`, then another tribe;
   `dispatch.verifier_same_family` for the rest), `underPassRule` (a failing check fails the quest under
