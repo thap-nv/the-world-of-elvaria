@@ -129,4 +129,14 @@ describe('policy.json', () => {
       read_only_paths: ['apps/api/openapi.json', 'packages/shared/src/api-types.ts'],
     });
   });
+
+  it('names the patch file only when the territory has patch paths (P1-28)', async () => {
+    const runDir = path.join(dir, '.runs', `${QUEST.id}-4`);
+    const context = runContextOf(request(STEWARD_ENV));
+    const read = async (file: string) => JSON.parse(await readFile(file, 'utf8')) as Record<string, unknown>;
+    const patched = await read(await writePolicyFile(runDir, context, policy));
+    expect(patched).toMatchObject({ patch_file: 'elvaria.patch', laws: { patch_paths: ['.husky/**'] } });
+    const none = { ...policy, laws: { ...policy.laws, patch_paths: [] } };
+    expect(await read(await writePolicyFile(runDir, context, none))).not.toHaveProperty('patch_file');
+  });
 });

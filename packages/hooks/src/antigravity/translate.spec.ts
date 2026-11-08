@@ -171,6 +171,19 @@ describe('PreToolUse on agy', () => {
     expect(hook.reason).toMatch(/^Elvaria rule: .*refuses to write/);
   });
 
+  it('names the patch the Steward applies when the policy offers one (P1-28)', async () => {
+    const laws = { ...DC1_LAWS, patch_paths: ['.husky/**'] };
+    const policyOf = { version: 1, laws, cli_protected_paths: ['.husky/**'], patch_file: 'elvaria.patch' };
+    await writeFile(policy, JSON.stringify(policyOf), 'utf8');
+    const hook = decisionOf(
+      (await call('PreToolUse', toolCall('write_to_file', { TargetFile: '.husky/pre-push' }))).stdout,
+    );
+    expect(hook).toMatchObject({ decision: 'deny' });
+    expect(hook.reason).toMatch(
+      /^Elvaria rule: .*to elvaria\.patch at the root of your plot\. The Steward applies it/,
+    );
+  });
+
   it('guards edit_file, the write tool a model reports under -p', async () => {
     const outcome = await call('PreToolUse', toolCall('edit_file', { Path: 'infra/secrets/a.key' }));
     expect(decisionOf(outcome.stdout)).toMatchObject({ decision: 'deny' });

@@ -81,6 +81,7 @@ const SCRIBE = {
 const LAWS = {
   forbidden_paths: ['infra/secrets/**'],
   read_only_paths: [],
+  patch_paths: [],
   forbidden_commands: [],
   read_before_write: [],
   rank_floor: [],
@@ -96,6 +97,7 @@ export function request(
     laws: LAWS,
     checks: [],
     commands: {},
+    vcs: { type: 'git' as const, default_branch: 'main' },
     context_files: ['CLAUDE.md', '.claude/rules/*.md'],
   };
   const req = {

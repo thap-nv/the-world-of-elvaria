@@ -13,7 +13,8 @@ export type QuestActor = (typeof QUEST_ACTORS)[number];
 /**
  * The breakers that stop a running session (§3.4); "too many attempts" is a crash or a fail at the limit. `commit`:
  * the territory's hooks refused the commit of a finished session's work, so the branch lacks it and the quest goes
- * to the infirmary instead of review (§3.3, P1-04). `secrets`: the treasury lacks a secret the quest asks for, or
+ * to the infirmary instead of review (§3.3, P1-04); so does a patch for laws.patch_paths that the Steward could not
+ * apply, since the branch would lack that change (P1-28). `secrets`: the treasury lacks a secret the quest asks for, or
  * the territory no longer allows it, so no session can open; the quest waits in the infirmary for the owner
  * instead of being claimed and released again every tick (§3.9, P1-06).
  */

@@ -25,6 +25,17 @@ const isRegex = (source: string): boolean => {
   }
 };
 
+/**
+ * A segment Windows or macOS opens as git's own folder: `.git`, `.GIT`, `.git.` (trailing dots and blanks are
+ * dropped on Windows) and its 8.3 short name `git~1`. Git's internals hold its hooks and config, so no patch ever
+ * reaches them, whatever a territory allows (P1-28).
+ */
+const GIT_SEGMENT = /^(?:\.git[. ]*|git~\d+)$/i;
+
+/** False for a glob naming git's own folder (`.git/**`, `sub/.git/hooks/*`). */
+export const namesNoGitFolder = (glob: string): boolean =>
+  !glob.split(/[\\/]/).some((segment) => GIT_SEGMENT.test(segment));
+
 const CheckSchema = z.strictObject({
   id: CheckIdSchema,
   run: NonEmptyStringSchema.meta(
@@ -57,6 +68,15 @@ const LawsSchema = z
       .meta(
         describe(
           "Globs every session may read and no tool may write by hand: generated files, which only the territory's commands.generate rewrite.",
+        ),
+      ),
+    // After P1-24 (phase 1 report §5.9): Claude Code refuses `.husky/`, `.claude/`… whatever the rules say.
+    patch_paths: z
+      .array(NonEmptyStringSchema.refine(namesNoGitFolder, { message: 'a patch never reaches .git' }))
+      .default(() => [])
+      .meta(
+        describe(
+          'Globs relative to the territory root that the Steward may change for an assignee whose CLI refuses to write them (Claude Code: .husky/, .claude/…): the assignee writes the change as a git patch to elvaria.patch at the root of its plot, and the Steward applies it before the submit commit, only when it touches nothing else. Git territories only; never .git.',
         ),
       ),
     // A pattern that does not compile would only fail later, inside the hook, on the first tool call.
@@ -183,7 +203,7 @@ export const TerritorySchema = z
     title: 'Territory',
     description:
       "territories/<id>/territory.json: one repo or folder attached to the kingdom ('opening a realm'). Holds how to set up and check work there (commands, checks), the territory's own laws enforced at the runner (deny lists and hooks, not only the prompt), allowed secret names, and health.",
-    $comment: `${GENERATED_NOTE} There is no \`map\` field: region geometry lives only in world/map.json (world-map schema) and the level of detail is computed by the Herald from camera and territory count, so it is never stored here. Not expressible here: check ids are unique; laws.forbidden_commands must compile as regular expressions.`,
+    $comment: `${GENERATED_NOTE} There is no \`map\` field: region geometry lives only in world/map.json (world-map schema) and the level of detail is computed by the Herald from camera and territory count, so it is never stored here. Not expressible here: check ids are unique; laws.forbidden_commands must compile as regular expressions; laws.patch_paths never names a .git folder (nor .GIT, .git. or git~1).`,
   });
 
 export type Territory = z.infer<typeof TerritorySchema>;

@@ -41,13 +41,15 @@ const HOOK = {
   args: ['--conditions=elvaria-dist', '/hooks/dist/elvaria-hook.js', '--policy', '/run/policy.json'],
 };
 
-describe('settingsOf: generated files and protected paths (P1-24)', () => {
+describe('settingsOf: generated files and protected paths (P1-24, P1-28)', () => {
   const elvaria = {
     commands: { generate: ['pnpm docs:gen', 'pnpm schemas'] },
     checks: [],
+    vcs: { type: 'git' as const, default_branch: 'main' },
     laws: {
       forbidden_paths: ['.env'],
       read_only_paths: ['docs/glossary.md', 'docs/schemas/**'],
+      patch_paths: ['.husky/**'],
       forbidden_commands: [],
       read_before_write: [],
       rank_floor: [],
@@ -67,7 +69,7 @@ describe('settingsOf: generated files and protected paths (P1-24)', () => {
     expect(permissions.deny.filter((rule) => rule.startsWith('Read(./docs'))).toEqual([]);
   });
 
-  it('gives no allow rule for a path the CLI guards: none would be read before its safety check', () => {
+  it('gives no allow rule for a path the CLI guards, patched or not: none would be read before its safety check', () => {
     expect(CLAUDE_PROTECTED_PATHS).toEqual(
       expect.arrayContaining(['.husky/**', '.git/**', '.claude/**', '.npmrc']),
     );

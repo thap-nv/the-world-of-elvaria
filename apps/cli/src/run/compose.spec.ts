@@ -85,6 +85,7 @@ describe('plots over PlotManager', () => {
     status: () => Promise.reject(new Error('unused')),
     touched: () => Promise.reject(new Error('unused')),
     commitAll: () => Promise.reject(new Error('unused')),
+    applyPatch: () => Promise.reject(new Error('unused')),
     diff: () => Promise.reject(new Error('unused')),
     release: () => Promise.reject(new Error('unused')),
   });
@@ -142,6 +143,10 @@ describe('plots over PlotManager', () => {
           calls.push(message);
           return Promise.resolve({ status: 'no_git' });
         },
+        applyPatch: (_plot, patchPaths) => {
+          calls.push(`patch ${patchPaths.join(',')}`);
+          return Promise.resolve({ status: 'none' });
+        },
         diff: () => Promise.resolve(' notes/today.md | 1 +'),
         release: () => Promise.resolve({ ok: true, value: { removed: false, forget_failures: [] } }),
       };
@@ -154,8 +159,9 @@ describe('plots over PlotManager', () => {
       };
       const checked = { ...territory, checks: [lint] };
       const plots = plotsOver(dir, wired, HOST);
+      expect(await plots.applyPatch(folder, ['.husky/**'])).toEqual({ status: 'none' });
       expect(await plots.commit(folder, 'chore: submit q')).toEqual({ status: 'no_git' });
-      expect(calls).toEqual(['chore: submit q']);
+      expect(calls).toEqual(['patch .husky/**', 'chore: submit q']);
       const runs = await plots.check({
         plot: folder,
         territory: TerritorySchema.parse(checked),

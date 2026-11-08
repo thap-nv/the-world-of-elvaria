@@ -13,6 +13,8 @@ import type { ProcessHost } from '../process/program.ts';
 import { diffIn } from './diff.ts';
 import { filesIn, prepareFolder } from './folder.ts';
 import { gitOf } from './git.ts';
+import { NO_PATCH, applyPatchIn } from './patch.ts';
+import type { PatchOutcome } from './patch.ts';
 import type { Git } from './git.ts';
 import { ensureLongPaths, ensurePlotExcludes } from './repo-settings.ts';
 import { runSetup } from './setup.ts';
@@ -48,6 +50,11 @@ export interface PlotManager {
   /** Paths the quest changed, relative to the plot with `/`: what `runChecks` selects checks by. */
   touched(plot: Plot): Promise<string[]>;
   commitAll(plot: Plot, message: string): Promise<CommitOutcome>;
+  /**
+   * Before the submit commit (P1-28): applies the assignee's PATCH_FILE when `patchPaths` (laws.patch_paths) allow
+   * every path it touches, then deletes it; `none` for a plot without git or without a patch.
+   */
+  applyPatch(plot: Plot, patchPaths: readonly string[]): Promise<PatchOutcome>;
   /**
    * What a judge reads (P1-15): `git diff <base>...HEAD`, summary then patch, cut at DIFF_MAX_CHARS; empty when the
    * branch has no change, null for a plot without git (the judge reads the files the quest names).
@@ -128,6 +135,10 @@ export function createPlotManager(options: PlotManagerOptions): PlotManager {
       plot.type === 'worktree'
         ? commitWorktree(await git(), worktreeOf(plot), message)
         : { status: 'no_git' },
+    applyPatch: async (plot, patchPaths) =>
+      plot.type === 'worktree' && patchPaths.length > 0
+        ? applyPatchIn(await git(), worktreeOf(plot), patchPaths)
+        : NO_PATCH,
     diff: async (plot) => (plot.type === 'worktree' ? diffIn(await git(), worktreeOf(plot)) : null),
     release: async (plot) =>
       plot.type === 'worktree'

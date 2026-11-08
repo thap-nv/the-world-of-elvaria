@@ -10,11 +10,13 @@ const DC1 = {
   laws: {
     forbidden_paths: ['infra/secrets/**', '**/*.pem'],
     forbidden_commands: ['drizzle-kit\\s+push'],
+    patch_paths: ['.husky/**'],
     read_before_write: [],
     rank_floor: [],
   },
   checks: [{ id: 'unit', run: 'pnpm test', when: [], exclusive: false }],
   commands: { lint: 'pnpm lint' },
+  vcs: { type: 'git', default_branch: 'main' },
 } as unknown as NonNullable<ToolPolicyInput['territory']>;
 
 const settingsOf = (role: ToolPolicyInput['role'], allow: string[], deny: string[]) =>
@@ -47,6 +49,8 @@ describe('agySettingsOf: generated files (P1-24)', () => {
       expect.arrayContaining(['write_file(docs/glossary.md)', 'write_file(docs/schemas/)']),
     );
     expect(permissions.deny.filter((rule) => rule.startsWith('read_file(docs'))).toEqual([]);
+    // Patch paths (P1-28) are the hook's and the Steward's: no settings rule names them.
+    expect([...permissions.allow, ...permissions.deny].filter((rule) => rule.includes('.husky'))).toEqual([]);
   });
 });
 

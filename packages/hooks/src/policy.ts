@@ -39,6 +39,11 @@ export interface HookPolicy {
    * `.claude/`…), from the adapter: the hook refuses them first, with a reason the model can act on. Absent: none.
    */
   readonly cli_protected_paths?: readonly string[];
+  /**
+   * Where the assignee writes a patch for `laws.patch_paths` (P1-28; runner-core's PATCH_FILE, set when the territory
+   * has patch paths): a write the CLI would refuse to such a path is refused first with this file as the way.
+   */
+  readonly patch_file?: string;
   /** `territory.laws`; other law kinds may be present and are not the hook's to enforce. */
   readonly laws?: LawsInput;
 }
@@ -46,9 +51,9 @@ export interface HookPolicy {
 export type PolicyResult =
   { readonly ok: true; readonly policy: HookPolicy } | { readonly ok: false; readonly problem: string };
 
-const STRING_FIELDS = ['kingdom', 'quest', 'character', 'role', 'model', 'tz'] as const;
+const STRING_FIELDS = ['kingdom', 'quest', 'character', 'role', 'model', 'tz', 'patch_file'] as const;
 const LIST_FIELDS = ['secrets', 'tools', 'apprentice_models', 'cli_protected_paths'] as const;
-const LAW_LISTS = ['forbidden_paths', 'read_only_paths', 'forbidden_commands'] as const;
+const LAW_LISTS = ['forbidden_paths', 'read_only_paths', 'patch_paths', 'forbidden_commands'] as const;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);

@@ -93,9 +93,10 @@ describe.runIf(LIVE)('agy for real', () => {
       role: 'assignee',
       characterClass: { tools: { allow: ['Read'], deny: [] } },
       territory: {
-        laws: { ...laws, read_only_paths: [], read_before_write: [], rank_floor: [] },
+        laws: { ...laws, read_only_paths: [], patch_paths: [], read_before_write: [], rank_floor: [] },
         checks: [],
         commands: {},
+        vcs: { type: 'git', default_branch: 'main' },
       },
     });
     const { result, text } = await run(probeRequest(world, ask, ['Read'], { permissions }));
