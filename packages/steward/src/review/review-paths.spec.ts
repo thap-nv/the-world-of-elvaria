@@ -22,19 +22,31 @@ const quest = {
   plot: { type: 'none' },
   deliverable: { type: 'branch' },
   attempt_log: [],
+  secrets_required: [],
 } as unknown as Quest;
-const territory = { id: 'dc1-se-team' } as unknown as Territory;
+const territory = { id: 'dc1-se-team', secrets_allowed: ['npm_token'] } as unknown as Territory;
 
 interface Stub {
   readonly ctx: Context;
   readonly warnings: string[];
 }
 
-function stub(
-  world: { quests?: Quest[]; territories?: Territory[]; rituals?: boolean; checks?: boolean } = {},
-): Stub {
+interface StubWorld {
+  quests?: Quest[];
+  territories?: Territory[];
+  rituals?: boolean;
+  checks?: boolean;
+  /** A treasury that lists npm_token but cannot hand it over (the file changed between the two reads). */
+  treasury?: 'unreadable';
+  /** The event log refuses every line. */
+  lines?: 'refused';
+}
+
+function stub(world: StubWorld = {}): Stub {
   const warnings: string[] = [];
   const log = { warn: (message: string) => void warnings.push(message) };
+  const note = () =>
+    world.lines === 'refused' ? Promise.reject(new Error('EACCES: events')) : Promise.resolve();
   const ctx = {
     background: createBackground(log),
     world: {
@@ -52,6 +64,13 @@ function stub(
         check: () =>
           world.checks === true ? Promise.resolve([]) : Promise.reject(new Error('git is not found')),
       },
+      treasury: {
+        names: () => Promise.resolve(['npm_token']),
+        resolve: () =>
+          world.treasury === 'unreadable'
+            ? Promise.reject(new Error('treasury changed'))
+            : Promise.resolve({ npm_token: 'x' }),
+      },
       store: {
         verdicts: {
           write: () =>
@@ -62,7 +81,7 @@ function stub(
         },
       },
     },
-    record: { stamp: () => '2026-11-07T10:00:00+07:00', note: () => Promise.resolve() },
+    record: { stamp: () => '2026-11-07T10:00:00+07:00', note },
   } as unknown as Context;
   return { ctx, warnings };
 }
@@ -81,25 +100,42 @@ describe('the review helpers', () => {
       error: 'checks_not_ready',
     });
     const noRitual = stub({ quests: [quest], territories: [territory], rituals: false, checks: true });
-    expect(startChecks(noRitual.ctx, QUEST)).toEqual({ ok: true, value: undefined });
+    expect(await startChecks(noRitual.ctx, QUEST)).toEqual({ ok: true, value: undefined });
     await noRitual.ctx.background.idle();
     expect(noRitual.ctx.background.view()).toEqual({ running: [], checked: [QUEST] });
     expect(await machineReview(noRitual.ctx, QUEST)).toEqual({ ok: false, error: 'unknown_ritual' });
   });
 
   it('say why checks cannot start, and leave nothing to take when they cannot run (P1-25)', async () => {
-    expect(startChecks(stub().ctx, QUEST)).toEqual({ ok: false, error: 'unknown_quest' });
-    expect(startChecks(stub({ quests: [quest] }).ctx, QUEST)).toEqual({
+    expect(await startChecks(stub().ctx, QUEST)).toEqual({ ok: false, error: 'unknown_quest' });
+    expect(await startChecks(stub({ quests: [quest] }).ctx, QUEST)).toEqual({
       ok: false,
       error: 'unknown_territory',
     });
     const broken = stub({ quests: [quest], territories: [territory] });
-    expect(startChecks(broken.ctx, QUEST).ok).toBe(true);
+    expect((await startChecks(broken.ctx, QUEST)).ok).toBe(true);
     expect(broken.ctx.background.view()).toEqual({ running: [QUEST], checked: [] });
     await broken.ctx.background.idle();
     // Nothing waits for a judge: the next tick starts them again.
     expect(broken.ctx.background.view()).toEqual({ running: [], checked: [] });
     expect(broken.warnings).toEqual([`steward: ${QUEST}: the checks did not run: git is not found`]);
+  });
+
+  it('start no checks without the secrets a moment later, and run them whatever the log refuses (P1-10b)', async () => {
+    const asking: Quest = { ...quest, secrets_required: ['npm_token'] };
+    const changed = stub({ quests: [asking], territories: [territory], treasury: 'unreadable' });
+    expect(await startChecks(changed.ctx, QUEST)).toEqual({ ok: false, error: 'secrets_unread' });
+    expect(changed.ctx.background.view()).toEqual({ running: [], checked: [] });
+    expect(changed.warnings).toEqual([`steward: ${QUEST}: no secrets for the checks: treasury changed`]);
+
+    const mute = stub({ quests: [asking], territories: [territory], checks: true, lines: 'refused' });
+    expect(await startChecks(mute.ctx, QUEST)).toEqual({ ok: true, value: undefined });
+    await mute.ctx.background.idle();
+    expect(mute.ctx.background.view()).toEqual({ running: [], checked: [QUEST] });
+    expect(mute.warnings).toEqual([
+      `steward: ${QUEST}: no check.start line: EACCES: events`,
+      `steward: ${QUEST}: no check.end line: EACCES: events`,
+    ]);
   });
 
   it('write no line for a verdict the store refuses', async () => {

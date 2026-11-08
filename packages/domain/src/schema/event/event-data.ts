@@ -116,6 +116,37 @@ const ManaWarningDataSchema = z
 
 const CommandResultDataSchema = z.strictObject({ command_id: UlidSchema, reason: z.string().optional() });
 
+// The machine checks of a submitted run run outside the tick (P1-25) for minutes, while the quest sits in review with
+// no judge: these two lines tell the owner and the world that they run (P1-10b). The world animates them; it does
+// not keep them (reduce.ts), since the checks live in the Steward's memory, not in a file worldStateOf reads.
+const CheckStartDataSchema = z
+  .strictObject({})
+  .meta(
+    describe(
+      'The checks of the run the envelope\'s `attempt` names started, outside the Steward\'s tick (implementation-plan §3.1 "(P1-25)").',
+    ),
+  );
+
+export const CHECK_OUTCOMES = ['pass', 'fail', 'error', 'stopped'] as const;
+export type CheckOutcome = (typeof CHECK_OUTCOMES)[number];
+
+const CheckEndDataSchema = z.strictObject({
+  outcome: z
+    .enum(CHECK_OUTCOMES)
+    .meta(
+      describe(
+        'pass: every check passed, or none applied; fail: at least one failed; error: they could not run, a later tick runs them again; stopped: killed because the Steward stopped or the quest moved on.',
+      ),
+    ),
+  checks: z
+    .array(z.strictObject({ id: SnakeIdSchema, pass: z.boolean(), duration_ms: DurationMsSchema }))
+    .meta(
+      describe(
+        'The checks that ran, in order (verdict.checks without their logs); empty unless pass or fail.',
+      ),
+    ),
+});
+
 const PlotPatchedDataSchema = z
   .strictObject({
     file: NonEmptyStringSchema.meta(
@@ -162,6 +193,8 @@ export const EVENT_DATA_SCHEMAS = {
   'agent.session.end': AgentSessionEndDataSchema,
   'agent.subagent.end': AgentSubagentEndDataSchema,
   'agent.subagent.overrun': AgentSubagentOverrunDataSchema,
+  'check.start': CheckStartDataSchema,
+  'check.end': CheckEndDataSchema,
   'mana.signal': ManaSignalDataSchema,
   'mana.level': ManaLevelDataSchema,
   'mana.warning': ManaWarningDataSchema,

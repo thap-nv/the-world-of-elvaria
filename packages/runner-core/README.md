@@ -22,8 +22,9 @@
   readable).
 - Builds prompts from the Markdown templates in `prompts/` (`loadPromptTemplates`): `buildPrompt` for an
   assignee (new, or continuing after `returned` / `revive` with the letter, the last 20 journal lines, the
-  branch's log and the owner's answer) and a verifier (the ritual's steps from `prompts/ritual-steps.md`, the
-  checks with the end of each failing one's log the caller read and masked (`PromptCheck.log_tail`, P1-25), the letter, the diff, or where to read it when the caller has none, and where the last judge of the
+  branch's log and the owner's answer; after `returned`, also the checks that failed with the end of each log,
+  `prompts/failed-checks.md`, P1-10b) and a verifier (the ritual's steps from `prompts/ritual-steps.md`, the
+  checks with the end of each failing one's log the caller read and masked (`PromptCheck.log_tail`, P1-25; both in `src/prompt/checks.ts`), the letter, the diff, or where to read it when the caller has none, and where the last judge of the
   run stopped when it left a `partial` verdict, P1-15); both list the shell commands
   their `ToolPolicy` allows, one per call (`prompts/shell.md`, P1-11); an assignee that edits files also reads
   the territory's read-only paths and the generators its shell may run (`prompts/read-only.md`, P1-24), and its
@@ -65,9 +66,12 @@
   the territory's lock (`.state/checks/<territory>-exclusive`) so two quests never run one at once; a timed-out
   check runs its `cleanup`. A check that cannot run (shell syntax, program not found, lock never freed) fails.
   `ChecksRequest.signal` (P1-25: the Steward runs checks outside its tick) kills the running check and starts no
-  other when it aborts, the log saying so; `runProgram` takes the same `signal`.
+  other when it aborts, the log saying so; `runProgram` takes the same `signal`. `ChecksRequest.secrets` (P1-10b:
+  the quest's `secrets_required`, treasury name → value) puts them in each check's env over the host's minimal env
+  (`sessionEnv`, no `ELVARIA_*`), so a check that needs a private registry passes as the session did.
   The log of a check or of `commands.setup` loses the secret shapes the command printed when it closes
-  (`maskLogFile`, ADR 0013); the command writes straight into the file, so the masking is not line by line.
+  (`maskLogFile`, ADR 0013), and a check's log the values of the secrets it was given; the command writes straight
+  into the file, so the masking is not line by line.
 - Starts territory programs without a shell (`runProgram`, `argvOf`, `splitCommandLine`): quoted words, shell
   syntax refused, the program resolved by the `ProcessHost` the composition root passes in (it owns PATH and turns
   an npm `.cmd` shim into `node <script>`), and an env with no `GIT_*` (`childEnvOf`).

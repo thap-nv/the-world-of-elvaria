@@ -4,7 +4,7 @@
 
 Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là một event; log chỉ ghi thêm, không bao giờ viết lại. `type` là `nhóm.hành_động`; reader giữ nguyên type lạ, renderer bỏ qua nó. Hợp đồng đầy đủ: [schemas/event.schema.json](schemas/event.schema.json); nghĩa từng nhóm và các tiền tố dành sẵn: [glossary.md](glossary.md) mục 12.
 
-58 type trong danh mục v1, 46 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
+60 type trong danh mục v1, 48 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
 
 ## Khung một dòng
 
@@ -58,6 +58,13 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 | `agent.subagent.overrun` | `agent_type`: string (không rỗng)<br>`duration_ms`: integer ≥ 0<br>`limit_minutes`: integer ≥ 1 |
 | `agent.compact` | object mở, chưa có schema |
 | `agent.notification` | object mở, chưa có schema |
+
+## `check` · 2 type
+
+| Type | `data` |
+|---|---|
+| `check.start` | |
+| `check.end` | `outcome`: một trong `pass`, `fail`, `error`, `stopped` — pass: every check passed, or none applied; fail: at least one failed; error: they could not run, a later tick runs them again; stopped: killed because the Steward stopped or the quest moved on.<br>`checks`: array of object { id, pass, duration_ms } — The checks that ran, in order (verdict.checks without their logs); empty unless pass or fail. |
 
 ## `verdict` · 3 type
 

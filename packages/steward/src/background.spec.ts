@@ -6,6 +6,7 @@ import type { Quest, QuestId, VerdictCheck } from '@elvaria/domain';
 
 const Q1 = 'q_20261107_aaaaaa' as QuestId;
 const Q2 = 'q_20261107_bbbbbb' as QuestId;
+const Q3 = 'q_20261107_cccccc' as QuestId;
 const UNIT: VerdictCheck = { id: CheckIdSchema.parse('unit'), pass: true, duration_ms: 1, log_path: 'x' };
 
 const waiting = (): { promise: Promise<void>; end: () => void } => {
@@ -36,6 +37,32 @@ describe('createBackground', () => {
     expect(background.take(Q1, 1)).toBeUndefined();
     expect(background.take(Q1, 2)).toEqual([UNIT]);
     expect(background.take(Q1, 2)).toBeUndefined();
+  });
+
+  it('says when work ended on its own, its result already kept, and not for work it aborted (P1-10b)', async () => {
+    const seen: string[] = [];
+    const background = createBackground({ warn: () => undefined }, () => {
+      seen.push(`ended, checked ${background.view().checked.join(',')}`);
+    });
+    const gate = waiting();
+    background.checks(Q1, 1, async () => {
+      await gate.promise;
+      return [UNIT];
+    });
+    background.script(Q2, 1, () => Promise.reject(new Error('node is gone')));
+    background.checks(Q3, 1, (signal) => {
+      return new Promise((resolve) => {
+        signal.addEventListener('abort', () => {
+          resolve([UNIT]);
+        });
+      });
+    });
+    background.prune((quest) => quest !== Q3);
+    await Promise.resolve();
+    gate.end();
+    await background.idle();
+    // The script that threw ended on its own too: its quest is the next tick's to release.
+    expect(seen).toEqual(['ended, checked ', `ended, checked ${Q1}`]);
   });
 
   it('aborts the work it prunes and keeps nothing it gives back afterwards', async () => {

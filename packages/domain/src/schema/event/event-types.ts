@@ -30,6 +30,8 @@ export const EVENT_TYPES = [
   'agent.subagent.overrun',
   'agent.compact',
   'agent.notification',
+  'check.start',
+  'check.end',
   'verdict.pass',
   'verdict.fail',
   'verdict.partial',

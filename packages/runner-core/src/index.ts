@@ -69,12 +69,8 @@ export type { ToolLaws, ToolPolicy, ToolPolicyInput } from './policy/tool-policy
 export { JOURNAL_TAIL_LINES, LANGUAGE_NAMES } from './prompt/blocks.ts';
 export type { Continuation, Locale, Memory } from './prompt/blocks.ts';
 export { buildPrompt } from './prompt/build-prompt.ts';
-export type {
-  AssigneePromptInput,
-  PromptCheck,
-  PromptInput,
-  VerifierPromptInput,
-} from './prompt/build-prompt.ts';
+export type { AssigneePromptInput, PromptInput, VerifierPromptInput } from './prompt/build-prompt.ts';
+export type { PromptCheck } from './prompt/checks.ts';
 export { buildChancellorPrompt } from './prompt/chancellor.ts';
 export type { ChancellorContext } from './prompt/chancellor.ts';
 export { resumedPrompt } from './prompt/resumed.ts';

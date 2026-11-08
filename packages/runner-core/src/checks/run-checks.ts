@@ -11,6 +11,7 @@ import type { HeldLock } from '@elvaria/store';
 import { openLog, runLine } from './logged-run.ts';
 import type { ProcessHost } from '../process/program.ts';
 import { selectChecks } from './select-checks.ts';
+import { sessionEnv } from '../treasury/session-env.ts';
 
 export const MS_PER_MINUTE = 60_000;
 /** A cleanup only clears what a killed check left behind (containers, locks): minutes, not the check's hour. */
@@ -33,6 +34,12 @@ export interface ChecksRequest {
    * the quest moved on): the running check is killed and the rest never start. Their results are not to be used.
    */
   readonly signal?: AbortSignal;
+  /**
+   * The quest's `secrets_required`, treasury name → value (P1-10b): each check gets them in its env, as the session
+   * did, so a check that needs one (a private registry) passes on the machine as it did for the character; their
+   * values are masked in the logs. Absent or empty: the minimal env alone.
+   */
+  readonly secrets?: Readonly<Record<string, string>>;
 }
 
 export interface ChecksOptions {
@@ -64,6 +71,16 @@ export const toVerdictCheck = ({ id, pass, duration_ms, log_path }: CheckRun): V
   log_path,
 });
 
+/**
+ * The host a check runs with: the quest's secrets added to the minimal env the way a session gets them (sessionEnv
+ * refuses one that would replace a variable of it), and their values, which its log is masked with (P1-10b).
+ */
+function withSecrets(request: ChecksRequest, host: ProcessHost): { host: ProcessHost; known: string[] } {
+  const secrets = request.secrets ?? {};
+  const env = sessionEnv({ base: host.env, context: {}, secrets });
+  return { host: { ...host, env }, known: Object.values(secrets).filter((value) => value !== '') };
+}
+
 /** One check, to its end or its timeout; `cleanup` runs after a timeout (implementation-plan §9.2). */
 export async function runCheck(
   check: TerritoryCheck,
@@ -72,10 +89,11 @@ export async function runCheck(
   timeoutMs: number = check.timeout_minutes * MS_PER_MINUTE,
 ): Promise<CheckRun> {
   const logPath = checkLogOf(request.run_dir, check.id);
-  const log = await openLog(request.kingdom, logPath, `$ ${check.run}`);
+  const given = withSecrets(request, host);
+  const log = await openLog(request.kingdom, logPath, `$ ${check.run}`, given.known);
   const context = {
     cwd: request.cwd,
-    host,
+    host: given.host,
     ...(request.signal === undefined ? {} : { signal: request.signal }),
   };
   try {

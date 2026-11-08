@@ -1155,6 +1155,83 @@
       "if": {
         "properties": {
           "type": {
+            "const": "check.start"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "The checks of the run the envelope's `attempt` names started, outside the Steward's tick (implementation-plan §3.1 \"(P1-25)\").",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {}
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "check.end"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "outcome",
+              "checks"
+            ],
+            "properties": {
+              "outcome": {
+                "description": "pass: every check passed, or none applied; fail: at least one failed; error: they could not run, a later tick runs them again; stopped: killed because the Steward stopped or the quest moved on.",
+                "enum": [
+                  "pass",
+                  "fail",
+                  "error",
+                  "stopped"
+                ]
+              },
+              "checks": {
+                "description": "The checks that ran, in order (verdict.checks without their logs); empty unless pass or fail.",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "pass",
+                    "duration_ms"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    },
+                    "pass": {
+                      "type": "boolean"
+                    },
+                    "duration_ms": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
             "const": "mana.signal"
           }
         }
@@ -1702,6 +1779,8 @@
         "agent.subagent.overrun",
         "agent.compact",
         "agent.notification",
+        "check.start",
+        "check.end",
         "verdict.pass",
         "verdict.fail",
         "verdict.partial",

@@ -16,7 +16,11 @@
 - Runs the machine's long work outside the tick (P1-25, `src/background.ts`): a submitted quest's checks and a
   script-tier run start in a tick and go on while later ticks apply the inbox, record the sessions' ends and give
   out work; `planTick` sees which quests have work running and which have checks ready (`BackgroundWork`). The
-  work writes only into its run folder, never a quest or a character. Work for a quest that moved on (cancelled,
+  work writes only into its run folder and, for checks, a `check.start` and a `check.end` line (P1-10b: the owner
+  and the world see that a quest in review with no judge is being checked, and how its checks ended: `pass`,
+  `fail`, `error`, `stopped`), never a quest or a character. Work that ends on its own makes the loop tick at once
+  rather than at its next beat (P1-10b), so a judge opens on checks that ended without waiting up to
+  `tick_seconds`. Work for a quest that moved on (cancelled,
   judged, retried) is killed before each plan; `stop()` kills it all and the next Steward runs it again.
   `Steward.idle()` resolves once the work running now has ended (what a spec waits on).
 - Trips the breakers (§3.4, P1-06; `src/sessions/breaker.ts`): `planTick` names each held session past its
@@ -97,11 +101,14 @@
   over the checks (`underPassRule`), `validateVerdict`, `verdict.*`, the move, the assignee's windows and fail
   streak (`withVerdict`), then `levelChange`.
 - Runs the territory's checks on what the quest touched before a judge's session opens (`Plots.check`: runChecks
-  of P1-07 in `elvaria run`, outside the tick, its `signal` aborted when nobody waits for them any more): their
+  of P1-07 in `elvaria run`, outside the tick, its `signal` aborted when nobody waits for them any more), with the
+  quest's secrets from the treasury (`PlotCheck.secrets`, `questSecretsOf`, P1-10b), resolved in the tick before
+  they start; a quest whose secrets are gone by then goes to the infirmary (`breaker:secrets`) and runs none: their
   results go into the judge's prompt, the verdict and `quest.checks_run`; each judge of a run gets its own run of
   them. The prompt shows the end of each failing check's log (`src/review/log-tail.ts`: the last 40 lines, at most
   4 000 characters for all of them), masked with the session's secret values and the patterns, because the log lies
-  in `.runs/`, outside the plot, where the judge's tools do not reach. Under
+  in `.runs/`, outside the plot, where the judge's tools do not reach; so does the prompt of an assignee whose work
+  came back, for the checks of the verdict that returned it (P1-10b). Under
   `verifier_same_family = machine_only` with no judge of another family, the machine's verdict comes from them
   alone (`verifier_id: machine`). A plan's `subquests.json` is checked the same way first (check `subquests`,
   `src/review/deliverable-checks.ts`, P1-15): what the delivery would open, or why none, so a list the Steward
@@ -182,6 +189,10 @@ contract or outlive a short timeout. `scripts-restart.spec.ts`: a script that ru
 inbox, a Steward stopped in the middle of it, one that died without output or before its verdict, and a follow-up
 opened once. `background-checks.spec.ts` (P1-25): a check that ends only when the spec says holds no tick (the
 inbox is applied meanwhile), dies when the Steward stops and runs again under the next one, dies when the quest is
-cancelled, and leaves the judge the end of its log with the treasury value and a token the patterns know masked. `apprentice-breaker.spec.ts`: the
+cancelled, and leaves the judge the end of its log with the treasury value and a token the patterns know masked.
+`check-signals.spec.ts` (P1-10b): the checks get exactly the quest's secrets (none for a quest that asks for none),
+write `check.start` and `check.end` (`stopped` when the Steward stops under them), send a quest whose secrets are
+gone by then to the infirmary, leave the returned assignee the end of the red check's log masked, and the loop
+ticks as soon as they end, not a beat later. `apprentice-breaker.spec.ts`: the
 infirmary note after an apprentice overran or was cut. `review-breakers.spec.ts`: two verifiers stopped by the
 token breaker, or by their CLI's turn limit, send the review to the infirmary and no third opens.

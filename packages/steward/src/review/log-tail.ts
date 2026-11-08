@@ -1,7 +1,8 @@
-// The end of a failing check's log for the judge's prompt (P1-25, implementation-plan §3.2): the log lies in the
-// kingdom's `.runs/`, outside the plot, where a judge's tools do not reach (Claude spike, "Quyền"), so the Steward
-// reads its last lines and hands them over. Masked with the session's own secret values first, then the patterns
-// (ADR 0013), before any line is cut: a cut never leaves half a secret readable.
+// The end of a failing check's log for the judge's prompt (P1-25, implementation-plan §3.2), and for the prompt of an
+// assignee whose work came back (P1-10b): the log lies in the kingdom's `.runs/`, outside the plot, where a session's
+// tools do not reach (Claude spike, "Quyền"), so the Steward reads its last lines and hands them over. Masked with the
+// session's own secret values first, then the patterns (ADR 0013), before any line is cut: a cut never leaves half a
+// secret readable. The log itself was masked with the quest's secrets when the check ended (P1-10b).
 import { Buffer } from 'node:buffer';
 import { open } from 'node:fs/promises';
 
@@ -45,8 +46,8 @@ function tailOf(text: string, max: number): string {
 }
 
 /**
- * The checks as the judge's prompt shows them: each failing one with the end of its log, masked with `known` (the
- * session's secret values) and the patterns. A log that cannot be read gives none: the judge runs the check again.
+ * The checks as a prompt shows them: each failing one with the end of its log, masked with `known` (the session's
+ * secret values) and the patterns. A log that cannot be read gives none: the session runs the check again.
  */
 export async function withLogTails(
   root: string,

@@ -50,6 +50,9 @@ describe('applyEvent', () => {
     for (const ignored of [
       line('agent.tool', { tool: 'read', path: 'README.md' }),
       line('command.applied', { command_id: '01JCFB7Q2R8S4T6V9W3X5Y1Z0A' }),
+      // The checks live in the Steward's memory, not in a file worldStateOf reads (P1-10b).
+      line('check.start', {}),
+      line('check.end', { outcome: 'pass', checks: [] }),
       line('verdict.pass', {}),
       line('mana.warning', {
         tribe: 'claude',

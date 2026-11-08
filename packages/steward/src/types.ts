@@ -113,6 +113,11 @@ export interface PlotCheck {
   readonly run_dir: string;
   /** Aborted when nobody waits for the checks any more (P1-25): the Steward stopped, or the quest moved on. */
   readonly signal?: AbortSignal;
+  /**
+   * The quest's `secrets_required` from the treasury, name → value (P1-10b): the checks get them in their env as the
+   * session did, and their logs are masked with them. Absent for a quest that asks for none.
+   */
+  readonly secrets?: Readonly<Record<string, string>>;
 }
 
 /**

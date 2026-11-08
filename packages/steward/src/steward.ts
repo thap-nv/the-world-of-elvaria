@@ -71,7 +71,12 @@ interface State {
   /** Submitted quests the bell already named for having no judge in the roster (unjudgeable.ts, P1-15). */
   readonly unjudged: Set<QuestId>;
   held: Held | undefined;
+  /** The ms between two ticks of the loop while it runs (start, until stop); undefined otherwise. */
+  beat: number | undefined;
+  /** The next tick of the loop; undefined while a tick of the loop runs. */
   timer: ReturnType<typeof setTimeout> | undefined;
+  /** Work outside the tick ended while a tick of the loop ran: the next one follows at once (P1-10b). */
+  woken: boolean;
   /** The tick in progress: ticks run one after the other, never two at once. */
   queue: Promise<unknown>;
 }
@@ -152,17 +157,36 @@ function tickOf(deps: StewardDeps, state: State): () => Promise<TickReport> {
   };
 }
 
-/** A tick every `ms`, the next one scheduled when this one ends, until stop() clears the timer. */
+/**
+ * The loop's next tick in `ms`; each tick schedules the one after it when it ends, a beat later, or at once when work
+ * outside the tick ended meanwhile, until stop() clears the beat.
+ */
 function loop(deps: StewardDeps, state: State, tick: () => Promise<TickReport>, ms: number): void {
   state.timer = setTimeout(() => {
+    state.timer = undefined;
+    state.woken = false;
     const again = (): void => {
-      if (state.timer !== undefined) loop(deps, state, tick, ms);
+      if (state.beat !== undefined) loop(deps, state, tick, state.woken ? 0 : state.beat);
     };
     tick().then(again, (error: unknown) => {
       deps.log.warn(`steward: tick failed: ${messageOf(error)}`);
       again();
     });
   }, ms);
+}
+
+/**
+ * Checks or a script ended outside the tick (P1-10b): the loop ticks now, or right after the tick in progress, so
+ * a judge opens on checks that ended without waiting up to `tick_seconds` more. Many ends at once make one tick.
+ */
+function wake(deps: StewardDeps, state: State, tick: () => Promise<TickReport>): void {
+  if (state.beat === undefined) return;
+  if (state.timer === undefined) {
+    state.woken = true;
+    return;
+  }
+  clearTimeout(state.timer);
+  loop(deps, state, tick, 0);
 }
 
 async function begin(deps: StewardDeps, state: State): Promise<Result<Held, StartError>> {
@@ -190,12 +214,17 @@ export function createSteward(deps: StewardDeps): Steward {
     handled: new Set(),
     limits: limitsOf(deps.runners),
     mana: createManaBook(),
-    background: createBackground(deps.log),
+    // Work that ended calls the loop's next tick at once (P1-10b).
+    background: createBackground(deps.log, () => {
+      wake(deps, state, tick);
+    }),
     reported: new Map(),
     stopping: new AbortController(),
     unjudged: new Set(),
     held: undefined,
+    beat: undefined,
     timer: undefined,
+    woken: false,
     queue: Promise.resolve(),
   };
   const tick = tickOf(deps, state);
@@ -203,10 +232,14 @@ export function createSteward(deps: StewardDeps): Steward {
     start: async (options = {}) => {
       const held = await begin(deps, state);
       if (!held.ok) return held;
-      if (options.loop !== false) loop(deps, state, tick, held.value.tickMs);
+      if (options.loop !== false) {
+        state.beat = held.value.tickMs;
+        loop(deps, state, tick, held.value.tickMs);
+      }
       return ok(undefined);
     },
     stop: async () => {
+      state.beat = undefined;
       clearTimeout(state.timer);
       state.timer = undefined;
       state.stopping.abort();

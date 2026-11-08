@@ -47,11 +47,15 @@ export function plotsOver(kingdom: string, manager: PlotManager, host: ProcessHo
     commit: (plot, message) => manager.commitAll(plot, message),
     // Before the submit commit: the assignee's patch for laws.patch_paths (P1-28).
     applyPatch: (plot, patchPaths) => manager.applyPatch(plot, patchPaths),
-    // The Steward runs them outside its tick and aborts `signal` when nobody waits for them any more (P1-25).
-    check: async ({ plot, territory, run_dir, signal }) => {
+    // The Steward runs them outside its tick and aborts `signal` when nobody waits for them any more (P1-25); they
+    // get the quest's secrets in the host's minimal env, and their logs are masked with them (P1-10b).
+    check: async ({ plot, territory, run_dir, signal, secrets }) => {
       const touched = await manager.touched(plot);
-      const stop = signal === undefined ? {} : { signal };
-      return runChecks({ kingdom, territory, touched, cwd: cwdOf(kingdom, plot), run_dir, ...stop }, host);
+      const given = {
+        ...(signal === undefined ? {} : { signal }),
+        ...(secrets === undefined ? {} : { secrets }),
+      };
+      return runChecks({ kingdom, territory, touched, cwd: cwdOf(kingdom, plot), run_dir, ...given }, host);
     },
     diff: (plot) => manager.diff(plot),
     // run-check spawns these without a shell; a check whose program is not found is left out (§3.12).
