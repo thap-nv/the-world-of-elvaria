@@ -1884,6 +1884,11 @@
               "meaning": "những gì phiên CLI làm, do hook và stream ghi; `overrun` = học đồ quá `subagent_max_minutes`; `compact` = ngồi thiền"
             },
             {
+              "group": "Kiểm tra máy",
+              "types": ["check.start", "check.end"],
+              "meaning": "kiểm tra máy của một lượt đã nộp chạy ngoài nhịp, quest nằm `review` chưa có người chấm trong lúc đó; `check.end` nói `pass`, `fail`, `error` (chưa chạy được, tick sau chạy lại) hay `stopped` (Quản sự dừng hoặc quest đi tiếp)"
+            },
+            {
               "group": "Phán quyết",
               "types": ["verdict.pass", "verdict.fail", "verdict.partial"],
               "meaning": "kết quả nghiệm thu"

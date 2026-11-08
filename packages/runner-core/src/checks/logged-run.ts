@@ -22,13 +22,21 @@ export interface LineContext {
 
 const NOT_RUN: ProgramRun = { exit_code: null, timed_out: false, duration_ms: 0, stdout: '', stderr: '' };
 
-/** A new log at `logPath` (portable, relative to the kingdom), opened for appending after `firstLine`. */
-export async function openLog(kingdom: string, logPath: string, firstLine: string): Promise<FileHandle> {
+/**
+ * A new log at `logPath` (portable, relative to the kingdom), opened for appending after `firstLine`; masked on
+ * close with `known`, the secret values the command was given, then the patterns.
+ */
+export async function openLog(
+  kingdom: string,
+  logPath: string,
+  firstLine: string,
+  known: readonly string[] = [],
+): Promise<FileHandle> {
   const file = inKingdom(kingdom, logPath);
   await mkdir(path.dirname(file), { recursive: true });
   await writeFile(file, `${firstLine}\n`);
   // Appending: the child writes through the same file, and every write lands after the last one.
-  return maskedOnClose(await open(file, 'a'), file);
+  return maskedOnClose(await open(file, 'a'), file, known);
 }
 
 /** Runs `line` with its output appended to `log`; a line that cannot start says why in the log. */

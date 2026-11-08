@@ -20,20 +20,13 @@ import {
   shellBlock,
   skillsBlock,
 } from './blocks.ts';
+import { verifierChecks } from './checks.ts';
 import { fenced, fill, joinBlocks, sectionsOf } from './templates.ts';
 import type { BuiltPrompt } from '../runner/types.ts';
 import type { Continuation, Locale, Memory } from './blocks.ts';
+import type { PromptCheck } from './checks.ts';
 import type { PromptTemplates } from './templates.ts';
-import type {
-  Character,
-  Quest,
-  Registry,
-  Ritual,
-  Skill,
-  Territory,
-  Verdict,
-  VerdictCheck,
-} from '@elvaria/domain';
+import type { Character, Quest, Registry, Ritual, Skill, Territory, Verdict } from '@elvaria/domain';
 
 interface PromptBase {
   readonly locale: Locale;
@@ -59,15 +52,6 @@ export interface AssigneePromptInput extends PromptBase {
   readonly handover_path: string;
   /** null for a quest's first session. */
   readonly continuation: (Continuation & Memory) | null;
-}
-
-/**
- * A machine check as the judge reads it (P1-25): a failing one carries the end of its log, because the log lies in
- * the kingdom's `.runs/`, outside the plot, where a judge's tools do not reach (Claude spike, "Quyền").
- */
-export interface PromptCheck extends VerdictCheck {
-  /** The last lines of the log, secrets already masked by the caller; absent when there is nothing to show. */
-  readonly log_tail?: string;
 }
 
 export interface VerifierPromptInput extends PromptBase {
@@ -136,23 +120,6 @@ function stepsOf(ritual: Ritual, t: PromptTemplates): string {
     .join('\n\n');
 }
 
-/** The end of a check's log under its own heading, after the list of checks. */
-const tailOf = (check: PromptCheck): string =>
-  check.log_tail === undefined || check.log_tail.trim() === ''
-    ? ''
-    : `## The end of the log of ${check.id}\n\n${fenced(check.log_tail, 'text')}`;
-
-function checksOf(checks: readonly PromptCheck[]): string {
-  if (checks.length === 0) return 'No machine check ran for the paths this quest touched.';
-  const list = checks
-    .map(
-      (check) =>
-        `- ${check.id}: ${check.pass ? 'pass' : 'FAIL'} (${check.duration_ms} ms, log ${check.log_path})`,
-    )
-    .join('\n');
-  return joinBlocks([list, ...checks.map(tailOf)]);
-}
-
 function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): BuiltPrompt {
   const { quest, character, registry } = input;
   const characterClass = entryOf(registry.classes, character.class, 'class');
@@ -173,7 +140,7 @@ function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): BuiltPr
   const review = fill(t.review, {
     ritual: `${ritual.name_en} (\`${ritual.id}\`)`,
     steps: stepsOf(ritual, t),
-    checks: checksOf(input.checks),
+    checks: verifierChecks(input.checks),
     assignee: quest.assignee ?? 'the assignee',
     handover:
       input.handover === null || input.handover.trim() === ''

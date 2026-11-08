@@ -119,6 +119,23 @@ export async function lastPartialOf(ctx: Context, quest: Quest, n: number): Prom
   return null;
 }
 
+/**
+ * What a continuing assignee reads: the letter, the journal and, after a return, the checks of the verdict with the
+ * end of each failing one's log, masked with `known`: the assignee cannot read `.runs/` either (P1-10b).
+ */
+async function continuationFor(
+  ctx: Context,
+  input: SessionInput,
+  known: readonly string[],
+): Promise<(Continuation & Memory) | null> {
+  const { continuation, quest } = input;
+  if (continuation === undefined || continuation === null) return null;
+  const memory = await memoryOf(ctx, quest);
+  if (continuation.reason === 'revive') return { ...continuation, ...memory };
+  const checks = await withLogTails(ctx.root, continuation.verdict.checks, known);
+  return { ...continuation, ...memory, checks };
+}
+
 /** `known`: the session's secret values, masked in what the prompt quotes of the kingdom's logs (P1-25). */
 async function promptOf(
   ctx: Context,
@@ -147,10 +164,7 @@ async function promptOf(
     const partial = await lastPartialOf(ctx, quest, input.n);
     return buildPrompt({ ...base, role: 'verifier', handover, diff, checks, partial }, ctx.templates);
   }
-  const continuation =
-    input.continuation === undefined || input.continuation === null
-      ? null
-      : { ...input.continuation, ...(await memoryOf(ctx, quest)) };
+  const continuation = await continuationFor(ctx, input, known);
   return buildPrompt(
     { ...base, role: 'assignee', skills: [], handover_path: handoverPath(ctx.root, quest.id), continuation },
     ctx.templates,

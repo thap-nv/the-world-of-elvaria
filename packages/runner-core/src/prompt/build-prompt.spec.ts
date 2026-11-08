@@ -65,6 +65,8 @@ const continuing: AssigneePromptInput = {
   continuation: {
     reason: 'returned',
     verdict: RETURNED,
+    // The Steward's masked tails of the run's checks (P1-10b), as the judge read them.
+    checks: CHECKS,
     handover: LETTER,
     journal: JOURNAL,
     git_log: '1a2b3c4 feat: add pnpm check',

@@ -8,8 +8,8 @@ import type { FileHandle } from 'node:fs/promises';
 import { createRedactor } from '@elvaria/eventlog';
 
 /**
- * Masks `known` and the patterns in `file`; rewrites it only when something was masked (true then). The checks get
- * no quest secret today (the minimal env of `ProcessHost`), so `known` is empty for them.
+ * Masks `known` and the patterns in `file`; rewrites it only when something was masked (true then). `known` is the
+ * values of the quest's secrets a check was given (P1-10b); a plot's `commands.setup` gets none.
  */
 export async function maskLogFile(file: string, known: readonly string[] = []): Promise<boolean> {
   const text = await readFile(file, 'utf8');
@@ -23,15 +23,16 @@ export async function maskLogFile(file: string, known: readonly string[] = []): 
 const errorText = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
 /**
- * `handle` with a close that also masks `file`. The callers keep the FileHandle they had (runLine writes through
- * `fd`); a log that cannot be masked says so on its last line rather than fail the check.
+ * `handle` with a close that also masks `file` (with `known`, then the patterns). The callers keep the FileHandle
+ * they had (runLine writes through `fd`); a log that cannot be masked says so on its last line rather than fail the
+ * check.
  */
-export function maskedOnClose(handle: FileHandle, file: string): FileHandle {
+export function maskedOnClose(handle: FileHandle, file: string, known: readonly string[] = []): FileHandle {
   const close = handle.close.bind(handle);
   handle.close = async () => {
     await close();
     try {
-      await maskLogFile(file);
+      await maskLogFile(file, known);
     } catch (error) {
       await appendFile(file, `elvaria: this log could not be masked: ${errorText(error)}\n`).catch(
         () => undefined,

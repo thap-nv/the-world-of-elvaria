@@ -44,6 +44,9 @@ describe('the Steward, one quest', () => {
       'quest.claimed',
       'quest.started',
       'quest.submitted',
+      // The checks run outside the tick, and say so (P1-10b); the world keeps nothing of them (reduce below).
+      'check.start',
+      'check.end',
       'quest.started',
       'verdict.pass',
       'quest.done',
