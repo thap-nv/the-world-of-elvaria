@@ -15,7 +15,7 @@ import {
 } from '@elvaria/domain';
 import type { Registry } from '@elvaria/domain';
 
-import type { PromptCheck } from '../prompt/build-prompt.ts';
+import type { PromptCheck } from '../prompt/checks.ts';
 
 const REGISTRY_DIR = path.join(import.meta.dirname, '..', '..', '..', 'registry-default');
 

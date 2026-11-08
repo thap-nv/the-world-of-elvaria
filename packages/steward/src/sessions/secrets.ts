@@ -2,7 +2,8 @@
 // functions it serves: the env of a session (the minimal env, the hook's context, exactly the quest's secrets), the
 // values each running session was given, and what a session leaves behind masked with them before the kingdom
 // keeps it. sessionEnvOf is called by requestOf, rememberSecrets by spawnFor, secretsLacking by the openings before
-// the plot (P1-06), maskFinished by the tick before settle and by the breakers after a kill.
+// the plot (P1-06) and by startChecks, questSecretsOf by startChecks too (the checks get the session's secrets,
+// P1-10b), maskFinished by the tick before settle and by the breakers after a kill.
 import { secretsBeyond } from '@elvaria/domain';
 import { createRedactor, redactDeep } from '@elvaria/eventlog';
 import { secretValuesOf, sessionEnv } from '@elvaria/runner-core';
@@ -14,20 +15,31 @@ import type { Context } from '../context.ts';
 import type { Finished } from './running.ts';
 
 /**
+ * The quest's `secrets_required` from the treasury, name → value: what its sessions and its checks (P1-10b) are
+ * given. A name the territory no longer allows, or the treasury lacks, throws; a quest that asks for none reads no
+ * treasury.
+ */
+export async function questSecretsOf(
+  ctx: Context,
+  quest: Quest,
+  territory: Territory,
+): Promise<Record<string, string>> {
+  const refused = secretsBeyond(quest.secrets_required, territory);
+  if (refused.length > 0)
+    throw new Error(`territory ${territory.id} does not allow the secrets ${refused.join(', ')}`);
+  return quest.secrets_required.length === 0 ? {} : ctx.deps.treasury.resolve(quest.secrets_required);
+}
+
+/**
  * The whole env of a session: the minimal env the Steward was given, `context` (the `ELVARIA_*` of envOf), and the
- * quest's `secrets_required` from the treasury. A name the territory no longer allows, or the treasury lacks,
- * throws: spawnFor reports it and opens no session.
+ * quest's secrets (questSecretsOf). What questSecretsOf refuses throws: spawnFor reports it and opens no session.
  */
 export async function sessionEnvOf(
   ctx: Context,
   input: { readonly quest: Quest; readonly territory: Territory },
   context: Readonly<Record<string, string>>,
 ): Promise<Record<string, string>> {
-  const { quest, territory } = input;
-  const refused = secretsBeyond(quest.secrets_required, territory);
-  if (refused.length > 0)
-    throw new Error(`territory ${territory.id} does not allow the secrets ${refused.join(', ')}`);
-  const secrets = await ctx.deps.treasury.resolve(quest.secrets_required);
+  const secrets = await questSecretsOf(ctx, input.quest, input.territory);
   return sessionEnv({ base: ctx.deps.env, context, secrets });
 }
 

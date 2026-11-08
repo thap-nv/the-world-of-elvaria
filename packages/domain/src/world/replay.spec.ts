@@ -97,8 +97,10 @@ describe('replaying a fake day', () => {
 
   it('walks the day through the line types the world keeps, and through lines it ignores', () => {
     const types = new Set(DAY.events.map(({ type }) => type));
+    // agent.*, command.* and check.* (P1-10b) are animated, never kept: reduce.spec.ts shows them leaving the state.
+    const animated = ['agent.', 'command.', 'check.'];
     const unused = Object.keys(EVENT_DATA_SCHEMAS).filter(
-      (type) => !types.has(type) && !type.startsWith('agent.') && !type.startsWith('command.'),
+      (type) => !types.has(type) && !animated.some((group) => type.startsWith(group)),
     );
     // The owner's edits and the Steward's notices (P1-03), moves of the temple and of the owner's discipline;
     // reduce.spec.ts applies them one by one.

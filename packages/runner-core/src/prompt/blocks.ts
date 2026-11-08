@@ -2,7 +2,9 @@
 // the kingdom's files, and an optional block with nothing to say is empty, so joinBlocks leaves it out.
 import { SUBQUESTS_FILE } from '../plot/subquests.ts';
 import { SHELL_TOOL, WRITE_TOOLS } from '../policy/constants.ts';
+import { failedChecksBlock } from './checks.ts';
 import { fenced, fill, joinBlocks, withoutNotes } from './templates.ts';
+import type { PromptCheck } from './checks.ts';
 import type { ToolPolicy } from '../policy/tool-policy.ts';
 import type { PromptTemplates } from './templates.ts';
 import type { Kind, Kingdom, Quest, Registry, Skill, Territory, Verdict } from '@elvaria/domain';
@@ -15,9 +17,14 @@ export const LANGUAGE_NAMES: Readonly<Record<Locale, string>> = { vi: 'Vietnames
 /** A fresh session reads this many of the last journal lines (ADR 0017). */
 export const JOURNAL_TAIL_LINES = 20;
 
-/** Continuing an assignee's work in a fresh session (§10 question 4): after a failed verdict, or a revival. */
+/**
+ * Continuing an assignee's work in a fresh session (§10 question 4): after a failed verdict, or a revival. A return
+ * may carry the verdict's checks with the end of each failing one's log, masked by the caller (P1-10b); without
+ * them the prompt names the verdict's failing checks alone.
+ */
 export type Continuation =
-  { readonly reason: 'returned'; readonly verdict: Verdict } | { readonly reason: 'revive' };
+  | { readonly reason: 'returned'; readonly verdict: Verdict; readonly checks?: readonly PromptCheck[] }
+  | { readonly reason: 'revive' };
 
 /** What the continuing session reads instead of a transcript: the letter, the journal's tail, the branch's log. */
 export interface Memory {
@@ -226,10 +233,13 @@ export function continuationBlock(
   const intro =
     continuation.reason === 'revive'
       ? t.revive
-      : fill(t.returned, {
-          result: continuation.verdict.result,
-          fail_kind: continuation.verdict.fail_kind ?? 'none',
-          notes: continuation.verdict.notes?.trim() ?? '',
-        });
+      : joinBlocks([
+          fill(t.returned, {
+            result: continuation.verdict.result,
+            fail_kind: continuation.verdict.fail_kind ?? 'none',
+            notes: continuation.verdict.notes?.trim() ?? '',
+          }),
+          failedChecksBlock(continuation.checks ?? continuation.verdict.checks, t),
+        ]);
   return joinBlocks([intro, answerBlock(quest, t), memoryBlock(continuation, t)]);
 }

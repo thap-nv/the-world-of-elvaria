@@ -1,8 +1,9 @@
 // The machine's work outside the tick (implementation-plan §3.1, §3.12, P1-25): a submitted quest's checks before
 // its judge, a script-tier run. A tick starts the work and goes on, so a check of minutes never holds the inbox, the
-// sessions' ends or the claims. The work writes only into its run's folder in `.runs/`, never a quest or a character
-// file (a tick does, one write at a time); a later tick reads what it left: the checks' results here, a script's
-// output in `script.json`. The table lives in memory: a Steward that stops kills the work, the next one runs it again.
+// sessions' ends or the claims. The work writes into its run's folder in `.runs/` and, for checks, a `check.start`
+// and a `check.end` line (P1-10b), never a quest or a character file (a tick does, one write at a time); the next
+// tick, which work that ended calls at once (P1-10b), reads what it left: the checks' results here, a script's output
+// in `script.json`. The table lives in memory: a Steward that stops kills the work, the next one runs it again.
 import { currentRun } from '@elvaria/domain';
 import type { BackgroundWork, Quest, QuestId, VerdictCheck } from '@elvaria/domain';
 
@@ -47,6 +48,8 @@ interface State {
   readonly log: Logger;
   readonly table: Map<QuestId, Entry>;
   readonly live: Set<Promise<void>>;
+  /** Told once a piece of work ended on its own, after the table holds what it gave (P1-10b). */
+  readonly ended: () => void;
 }
 
 /** What one piece of work is: its quest, kind and run, and what it does. */
@@ -76,13 +79,19 @@ function start<T>(state: State, piece: Piece<T>, keep: (value: T, entry: Entry) 
       entry.running = false;
       // Pruned work is gone from the table already, and a later piece may hold its place.
       if (!kept && state.table.get(quest) === entry) state.table.delete(quest);
+      // Work nobody waits for any more ended for nothing: no tick is owed to it.
+      if (!entry.control.signal.aborted) state.ended();
     });
   state.live.add(done);
   void done.finally(() => state.live.delete(done));
 }
 
-export function createBackground(log: Logger): Background {
-  const state: State = { log, table: new Map(), live: new Set() };
+/**
+ * `ended` is told when a piece of work ends on its own, its result already in the table: the Steward ticks then
+ * rather than at its next beat, so a judge does not wait up to `tick_seconds` more for checks that ended (P1-10b).
+ */
+export function createBackground(log: Logger, ended: () => void = () => undefined): Background {
+  const state: State = { log, table: new Map(), live: new Set(), ended };
   const { table, live } = state;
   return {
     checks: (quest, n, work) => {

@@ -120,6 +120,20 @@ The judge returned your work on this quest. Fix what the notes name, run the ter
 
 Script `check` mới không có test; README chưa nói `pnpm check` chạy i18n:check.
 
+## Machine checks that failed
+
+The territory's checks ran on your work before the judge, and these failed. Their logs lie in the kingdom, outside your plot, so the end of each is below; secrets there read `[redacted]`. Fix what they show, then run the same checks before you finish.
+
+- unit (41000 ms)
+
+### The end of the log of unit
+
+```text
+ FAIL  src/api/orders.spec.ts > total > applies the discount
+AssertionError: expected 120 to be 108
+ Test Files  1 failed | 12 passed (13)
+```
+
 ## Handover letter so far
 
 ```markdown

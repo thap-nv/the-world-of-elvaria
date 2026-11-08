@@ -39,7 +39,7 @@ export async function carryOut(ctx: Context, plan: TickPlan): Promise<void> {
     warnIfRefused(ctx, `${quest} wake`, await openAssignee(ctx, quest, { kind: 'wake' }));
   for (const quest of plan.starts)
     warnIfRefused(ctx, `${quest} start`, await openAssignee(ctx, quest, { kind: 'start' }));
-  for (const quest of plan.checks) warnIfRefused(ctx, `${quest} checks`, startChecks(ctx, quest));
+  for (const quest of plan.checks) warnIfRefused(ctx, `${quest} checks`, await startChecks(ctx, quest));
   for (const { quest, verifier } of plan.verifications)
     warnIfRefused(ctx, `${quest} verifier ${verifier}`, await openVerifier(ctx, quest, verifier));
   for (const quest of plan.machine_verdicts)
