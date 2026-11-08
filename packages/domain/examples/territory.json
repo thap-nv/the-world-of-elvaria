@@ -17,7 +17,8 @@
       "setup": "pnpm install --prefer-offline",
       "test": "pnpm test",
       "lint": "pnpm lint",
-      "typecheck": "pnpm typecheck"
+      "typecheck": "pnpm typecheck",
+      "generate": ["pnpm api:openapi"]
     },
     "checks": [
       {
@@ -61,6 +62,7 @@
     ],
     "laws": {
       "forbidden_paths": [".env", ".env.*", "infra/secrets/**"],
+      "read_only_paths": ["apps/api/openapi.json", "packages/shared/src/api-types.ts"],
       "forbidden_commands": [
         "git\\s+(-C\\s+\\S+\\s+)?push",
         "drizzle-kit\\s+(drop|push)",

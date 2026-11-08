@@ -13,7 +13,7 @@ import {
 } from '../__fixtures__/claude-payloads.ts';
 import { tempKingdom } from '../__fixtures__/temp.ts';
 import { loadContext } from '../context.ts';
-import { compileLaws } from '../laws.ts';
+import { brokenLaws, compileLaws } from '../laws.ts';
 import { APPRENTICE } from './tool-events.ts';
 import { CLAUDE_HOOK_EVENTS, modelSlugOf, snakeIdOf, translateClaude } from './translate.ts';
 import type { TempKingdom } from '../__fixtures__/temp.ts';
@@ -178,15 +178,54 @@ describe('PreToolUse', () => {
     expect(pre('Bash', { command: 'pnpm test' })).toEqual({ drafts: [], decision: undefined, problems: [] });
   });
 
+  it('lets a generated file be read and regenerated, never written by hand (P1-24)', () => {
+    ctx = { ...ctx, laws: compileLaws({ ...DC1_LAWS, read_only_paths: ['docs/glossary.md'] }) };
+    const page = `${PLOT}\\docs\\glossary.md`;
+    for (const [tool, input] of [
+      ['Read', { file_path: page }],
+      ['Grep', { pattern: 'seal', path: 'docs/glossary.md' }],
+      ['Bash', { command: 'pnpm docs:gen' }],
+      ['Bash', { command: 'git add docs/glossary.md' }],
+    ] as const) {
+      expect(pre(tool, input).decision).toBeUndefined();
+    }
+    for (const [tool, input] of [
+      ['Write', { file_path: page, content: '# Glossary' }],
+      ['Edit', { file_path: 'docs/glossary.md', old_string: 'a', new_string: 'b' }],
+      ['Bash', { command: 'pnpm docs:gen > docs/glossary.md' }],
+    ] as const) {
+      expect(denyReason(pre(tool, input))).toMatch(
+        /^Elvaria law of this territory: .*glossary\.md is read-only \(docs\/glossary\.md\): only the territory's generators write it/,
+      );
+    }
+  });
+
+  it('says first, as a rule, that the CLI refuses a protected path: P1-16 §5.9, .husky/pre-push', () => {
+    ctx = { ...ctx, laws: compileLaws(DC1_LAWS, ['.husky/**', '.npmrc']) };
+    const hook = `${PLOT}\\.husky\\pre-push`;
+    const result = pre('Write', { file_path: hook, content: 'pnpm check\n' });
+    expect(denyReason(result)).toMatch(
+      /^Elvaria rule: .*pre-push is in a path your CLI refuses to write whatever its rules say \(\.husky\/\*\*\); .*Question section/,
+    );
+    expect(result.drafts.map(({ type, data }) => [type, data.tool])).toEqual([
+      ['agent.tool.blocked', 'write'],
+    ]);
+    expect(
+      denyReason(pre('Edit', { file_path: 'apps/web/.npmrc', old_string: 'a', new_string: 'b' })),
+    ).toMatch(/refuses to write/);
+    // Reading is the CLI's to allow, and it does.
+    expect(pre('Read', { file_path: hook }).decision).toBeUndefined();
+  });
+
   it('denies file and shell tools while the laws are unknown, and nothing else', () => {
-    ctx = { ...ctx, laws: { paths: [], commands: [], broken: 'policy x: not found' } };
+    ctx = { ...ctx, laws: brokenLaws('policy x: not found') };
     expect(denyReason(pre('Edit', { file_path: 'a.ts' }))).toMatch(/laws could not be loaded/);
     expect(pre('WebSearch', { query: 'zod' }).decision).toBeUndefined();
   });
 
   it('lets the apprentice through and denies every other sub-agent, laws or not (§3.12)', () => {
     expect(pre('Agent', { prompt: 'x', subagent_type: APPRENTICE }).decision).toBeUndefined();
-    ctx = { ...ctx, laws: { paths: [], commands: [], broken: 'policy x: not found' } };
+    ctx = { ...ctx, laws: brokenLaws('policy x: not found') };
     for (const [tool, input] of [
       ['Agent', { prompt: 'x', subagent_type: 'Explore' }],
       ['Task', { prompt: 'x', subagent_type: 'general-purpose' }],

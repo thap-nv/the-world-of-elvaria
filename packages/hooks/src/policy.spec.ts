@@ -23,7 +23,8 @@ describe('parsePolicy', () => {
       secrets: ['NPM_TOKEN'],
       tools: ['Read', 'Glob', 'Grep'],
       apprentice_models: ['haiku', 'sonnet', 'opus'],
-      laws: { ...DC1_LAWS, read_before_write: ['packages/shared/**'] },
+      cli_protected_paths: ['.husky/**', '.npmrc'],
+      laws: { ...DC1_LAWS, read_only_paths: ['docs/glossary.md'], read_before_write: ['packages/shared/**'] },
     };
     expect(parsePolicy(policy)).toEqual({ ok: true, policy });
   });
@@ -43,9 +44,11 @@ describe('parsePolicy', () => {
     [{ version: 1, secrets: 'NPM_TOKEN' }, 'secrets is not a list of strings'],
     [{ version: 1, tools: ['Read', 7] }, 'tools is not a list of strings'],
     [{ version: 1, apprentice_models: 'haiku' }, 'apprentice_models is not a list of strings'],
+    [{ version: 1, cli_protected_paths: [null] }, 'cli_protected_paths is not a list of strings'],
     [{ version: 1, laws: [] }, 'laws is not an object'],
     [{ version: 1, laws: { forbidden_paths: '.env' } }, 'laws.forbidden_paths is not a list of strings'],
     [{ version: 1, laws: { forbidden_commands: [1] } }, 'laws.forbidden_commands is not a list of strings'],
+    [{ version: 1, laws: { read_only_paths: 'docs' } }, 'laws.read_only_paths is not a list of strings'],
   ])('refuses %j', (value, problem) => {
     expect(parsePolicy(value)).toEqual({ ok: false, problem });
   });

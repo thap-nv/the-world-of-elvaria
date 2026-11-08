@@ -28,6 +28,7 @@ export const DOCS = 'handbook' as TerritoryId;
 
 const NO_LAWS: TerritoryRules['laws'] = {
   forbidden_paths: [],
+  read_only_paths: [],
   forbidden_commands: [],
   read_before_write: [],
   rank_floor: [],

@@ -46,7 +46,19 @@ const CheckSchema = z.strictObject({
 
 const LawsSchema = z
   .strictObject({
-    forbidden_paths: z.array(NonEmptyStringSchema).default(() => []),
+    forbidden_paths: z
+      .array(NonEmptyStringSchema)
+      .default(() => [])
+      .meta(describe('Globs no session may read or write (secrets).')),
+    // Split from forbidden_paths after P1-16 (§5.4 of the phase 1 report): a generated file must stay readable.
+    read_only_paths: z
+      .array(NonEmptyStringSchema)
+      .default(() => [])
+      .meta(
+        describe(
+          "Globs every session may read and no tool may write by hand: generated files, which only the territory's commands.generate rewrite.",
+        ),
+      ),
     // A pattern that does not compile would only fail later, inside the hook, on the first tool call.
     forbidden_commands: z
       .array(NonEmptyStringSchema.refine(isRegex, { message: 'not a valid regular expression' }))
@@ -123,6 +135,14 @@ export const TerritorySchema = z
         lint: z.string().optional(),
         typecheck: z.string().optional(),
         build: z.string().optional(),
+        generate: z
+          .array(NonEmptyStringSchema)
+          .optional()
+          .meta(
+            describe(
+              'Generators of the territory (`pnpm docs:gen`, `pnpm schemas`). A session that may edit files may run them: they are how files under laws.read_only_paths change.',
+            ),
+          ),
       })
       .prefault({}),
     checks: z

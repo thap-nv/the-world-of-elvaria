@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { fakeHookCommand, prepare } from './__fixtures__/harness.ts';
 import { AGENTS_FILE, writeRunFiles } from './run-files.ts';
+import { CLAUDE_PROTECTED_PATHS } from './settings.ts';
 
 const opened: Workspace[] = [];
 afterEach(async () => {
@@ -25,6 +26,15 @@ describe('writeRunFiles: the apprentice models (§3.12, P1-17)', () => {
     const { files } = await writeRunFiles(request, runContextOf(request), fakeHookCommand, APPRENTICE);
     expect(files.agents).toBeUndefined();
     expect(await readJson(path.join(request.run_dir, POLICY_FILE))).not.toHaveProperty('apprentice_models');
+  });
+
+  it('hands the hook the paths Claude Code guards on its own (P1-24, .husky of P1-16)', async () => {
+    const { workspace, request } = await prepare('submit');
+    opened.push(workspace);
+    await writeRunFiles(request, runContextOf(request), fakeHookCommand, APPRENTICE);
+    const policy = await readJson(path.join(request.run_dir, POLICY_FILE));
+    expect(policy.cli_protected_paths).toEqual(CLAUDE_PROTECTED_PATHS);
+    expect(policy.cli_protected_paths).toContain('.husky/**');
   });
 
   it("cuts the ladder at the character's own model, in policy.json and in the apprentice's description", async () => {

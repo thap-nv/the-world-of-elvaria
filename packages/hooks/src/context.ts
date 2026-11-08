@@ -127,7 +127,10 @@ export function loadContext(env: HookEnv, argv: readonly string[]): HookContext 
     tz: read.zone(policy.tz),
     runDir: runDirOf(policyFile, fields),
     // A policy that was asked for and cannot be read leaves the laws unknown: block rather than guess.
-    laws: loaded?.ok === false ? brokenLaws(loaded.problem) : compileLaws(policy.laws ?? {}),
+    laws:
+      loaded?.ok === false
+        ? brokenLaws(loaded.problem)
+        : compileLaws(policy.laws ?? {}, policy.cli_protected_paths),
     known: knownSecrets(env, policy.secrets ?? [], problems),
     tools: policy.tools,
     apprenticeModels: policy.apprentice_models,

@@ -14,6 +14,7 @@ import {
   gazetteerBlock,
   partialBlock,
   questBlock,
+  readOnlyBlock,
   scriptureBlock,
   shellBlock,
   skillsBlock,
@@ -97,6 +98,7 @@ function assigneePrompt(input: AssigneePromptInput, t: PromptTemplates): BuiltPr
     language: LANGUAGE_NAMES[input.locale],
     apprentice: policy.apprentice === null ? '' : t.apprentice,
     shell: shellBlock(policy, t),
+    read_only: readOnlyBlock(policy, input.territory, t),
     handover_template: fenced(fill(t.handover, { quest_id: quest.id }), 'markdown'),
   });
   return {

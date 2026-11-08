@@ -6,7 +6,9 @@
   0007): `createClaudeRunner({ tribe, executable, hookCommand, hookScript, env })`. apps/cli hands it what this
   package may not import: `hookCommand` and `HOOK_SCRIPT` of `@elvaria/hooks`, and the minimal env (§3.9).
 - Writes the run folder of every session (`<kingdom>/.runs/<quest>-<n>/`): `policy.json` for the hook (laws and
-  context, through runner-core), `settings.json` (dontAsk, the allow/deny of the `ToolPolicy` with file tools
+  context, through runner-core, and `CLAUDE_PROTECTED_PATHS` as `cli_protected_paths`: the folders and files
+  Claude Code 2.1.319 refuses to write whatever `--settings` allows, read from its build in P1-24, so the hook
+  says so first), `settings.json` (dontAsk, the allow/deny of the `ToolPolicy` with file tools
   scoped to the plot as `Read(./**)`, the assignee's own handover letter by absolute path, Elvaria's hook on the
   twelve events in the exec form, `ELVARIA_*` and `CLAUDE_CODE_*` env, no auto memory, no attribution line),
   `agents.json` (the one apprentice: the character's tools minus `Agent`, a hard `maxTurns`, the cheapest model,

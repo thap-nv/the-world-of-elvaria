@@ -31,6 +31,18 @@ Your shell runs only the commands below, one command per call, each starting exa
 - `git add`
 - `git commit`
 - `pnpm -r test`
+- `pnpm api:openapi`
+
+# Read-only files
+
+Read these paths freely, but never write them by hand: your tools refuse it.
+
+- `apps/api/openapi.json`
+- `packages/shared/src/api-types.ts`
+
+They are generated. After you change what they are generated from, run their generator and commit what it writes with your work:
+
+- `pnpm api:openapi`
 
 # Handover letter
 

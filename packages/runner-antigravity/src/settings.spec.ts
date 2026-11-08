@@ -33,6 +33,23 @@ const FENCES = [
   'write_file(GEMINI.md)',
 ];
 
+describe('agySettingsOf: generated files (P1-24)', () => {
+  it('lets a writer run the generators and read generated files, and denies writing them', () => {
+    const territory = {
+      ...DC1,
+      laws: { ...DC1.laws, read_only_paths: ['docs/glossary.md', 'docs/schemas/**'] },
+      commands: { generate: ['pnpm docs:gen'] },
+    };
+    const characterClass = { tools: { allow: ['Read', 'Edit', 'Bash(git status:*)'], deny: [] } };
+    const { permissions } = agySettingsOf(toolPolicyOf({ role: 'assignee', characterClass, territory }));
+    expect(permissions.allow).toContain('command(pnpm docs:gen)');
+    expect(permissions.deny).toEqual(
+      expect.arrayContaining(['write_file(docs/glossary.md)', 'write_file(docs/schemas/)']),
+    );
+    expect(permissions.deny.filter((rule) => rule.startsWith('read_file(docs'))).toEqual([]);
+  });
+});
+
 describe('agySettingsOf', () => {
   it("gives a scribe the plot to write in and nothing to run but the territory's checks", () => {
     const scribe = settingsOf(

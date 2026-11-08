@@ -1,6 +1,6 @@
 <!-- System part of an assignee, new or continuing (implementation-plan §2.4, §3.7; ADR 0010, 0017).
 {{apprentice}} is apprentice.md when the class may start one, else empty; {{shell}} is shell.md with the commands
-the class may run, else empty. -->
+the class may run, else empty; {{read_only}} is read-only.md when the territory has read-only paths, else empty. -->
 
 # Who you are
 
@@ -19,6 +19,8 @@ You are {{character}}, a {{class}} of the kingdom of Elvaria, working on the ter
 {{apprentice}}
 
 {{shell}}
+
+{{read_only}}
 
 # Handover letter
 
