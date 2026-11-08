@@ -73,8 +73,10 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
     'notes bắt buộc, `fail_kind`; bỏ `verifier`, lần nộp sau chọn người chấm mới',
   'review.verdict_fail.out_of_retries': 'chuông; bậc script không có `returned`',
   'review.mana_out.has_verifier': '`verifier = null`, verdict `partial` lưu `progress`; người kế đọc tiếp',
-  'review.breaker.has_verifier': 'như trên',
-  'review.breaker.needs_verifier': 'trip `secrets`, như `claimed`: người chấm cần cùng secret với người làm',
+  'review.breaker.has_verifier':
+    'như trên; cả khi CLI của người chấm tự dừng ở trần lượt hay ngân sách (P1-23)',
+  'review.breaker.needs_verifier':
+    'trip `secrets`, như `claimed`: người chấm cần cùng secret với người làm; hoặc ngay sau hàng trên, khi cầu dao đã cắt `REVIEW_BREAKS_MAX` (2) người chấm của lượt (`reviewStalled`, P1-23), chuông',
   'review.crash.has_verifier':
     'phiên người chấm kết thúc mà không có phán quyết (CLI lỗi, Quản sự khởi động lại): như trên, lượt kết thúc `crash`',
   'review.suspend.has_verifier': 'như trên, khi người dùng đình chỉ người chấm',

@@ -28,7 +28,8 @@ describe('stream-json of Claude Code 2.1.318 (fixtures of spike P1-02)', () => {
     expect(reader.session).toBe('70f78c8b-5281-4a07-a3f9-1c0de291d12c');
     expect(of('init')).toHaveLength(1);
     expect(outcomeOf(reader.result, { killed: false })).toBe('completed');
-    expect(reader.tokens).toBe(2 + 4 + 4403);
+    // input 2, output 4, cache read 4403 counted at a tenth (P1-23)
+    expect(reader.tokens).toBe(2 + 4 + 441);
     expect(of('text')).toEqual([{ kind: 'text', text: 'ok' }]);
     expect(reader.rateLimited).toBe(false);
   });
@@ -105,7 +106,8 @@ describe('stream-json of Claude Code 2.1.318 (fixtures of spike P1-02)', () => {
   it('has no result for a killed run, only the usage of its assistant lines', () => {
     const { reader } = readFixture('killed.jsonl');
     expect(reader.result).toBeUndefined();
-    expect(reader.tokens).toBe(2 + 1789 + 2895 + 7);
+    // input 2, cache write 1789, output 7, cache read 2895 at a tenth
+    expect(reader.tokens).toBe(2 + 1789 + 7 + 290);
     expect(outcomeOf(reader.result, { killed: true })).toBe('killed');
     expect(outcomeOf(reader.result, { killed: false })).toBe('error');
   });
@@ -195,5 +197,37 @@ describe('lines without a real fixture yet (429 comes with P1-16; self-built fro
       },
     ]);
     expect(seen).toEqual([{ kind: 'tool_blocked', tool: 'unknown', reason: 'no' }]);
+  });
+
+  it('counts cache reads at a tenth, so a verifier the size of phase 1 stays under the default 240 000', () => {
+    // Report §5.2: ~660k read from the cache, 87k written; counted in full, the breaker cut such sessions twice.
+    const message = (id: string, usage: Record<string, number>) => ({
+      type: 'assistant',
+      message: { id, content: [], usage },
+    });
+    const { reader, seen } = read([
+      message('m1', { input_tokens: 3, output_tokens: 900, cache_creation_input_tokens: 40_000 }),
+      message('m2', { input_tokens: 2, output_tokens: 8_095, cache_read_input_tokens: 660_000 }),
+      message('m2', { input_tokens: 2, output_tokens: 8_095, cache_read_input_tokens: 660_000 }),
+      {
+        type: 'result',
+        modelUsage: {
+          'claude-opus-5-5': {
+            inputTokens: 5,
+            outputTokens: 8_995,
+            cacheCreationInputTokens: 87_000,
+            cacheReadInputTokens: 660_000,
+          },
+          'claude-haiku-5-5': { inputTokens: 1, outputTokens: 4, cacheReadInputTokens: 9 },
+        },
+      },
+    ]);
+    expect(seen.filter(({ kind }) => kind === 'usage')).toEqual([
+      { kind: 'usage', tokens: 40_903 },
+      { kind: 'usage', tokens: 40_903 + 8_097 + 66_000 },
+      { kind: 'usage', tokens: 5 + 8_995 + 87_000 + 1 + 4 + 66_001 },
+    ]);
+    expect(reader.tokens).toBe(162_006);
+    expect(reader.tokens).toBeLessThan(240_000);
   });
 });

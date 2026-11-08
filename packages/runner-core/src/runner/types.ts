@@ -61,6 +61,7 @@ export interface SpawnRequest {
 
 /** What a session reports while it runs (§3.10); the hook writes the events, these are for the Steward. */
 export type RunnerSignal =
+  /** Tokens so far, as `countedTokens` counts them (cache reads at a tenth, P1-23); never goes down. */
   | { readonly kind: 'usage'; readonly tokens: number }
   | { readonly kind: 'rate_limit'; readonly detail: string; readonly resets_at?: string }
   /** The account's windows as the CLI reports them in band (Claude `rate_limit_event`), for the mana gauge (§3.5). */
@@ -83,6 +84,7 @@ export interface RunResult {
   readonly outcome: RunOutcome;
   /** null when the process ended on a signal or was killed before it reported one. */
   readonly exit_code: number | null;
+  /** `tokens` as `countedTokens` counts them, the unit of quest.budget.max_tokens and attempt_log[].tokens. */
   readonly usage: { readonly tokens: number; readonly turns?: number };
   readonly structured?: unknown;
   readonly session_id: string;
