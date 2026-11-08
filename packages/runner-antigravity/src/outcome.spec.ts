@@ -43,6 +43,14 @@ describe('rateLimitOf', () => {
     expect(rateLimitOf(error, undefined)).toMatch(/^You have exhausted your capacity/);
   });
 
+  it('reads the quota error agy 1.5.3 printed when a pool ran dry (P1-16), worded unlike the changelog', () => {
+    const error = agyErrorOf(stderrOf('stream-quota-exhausted.stderr.txt'));
+    expect(error).toMatchObject({ status: 'RESOURCE_EXHAUSTED', retryable: true });
+    expect(rateLimitOf(error, undefined)).toMatch(
+      /^RESOURCE_EXHAUSTED \(code 429\): Individual quota reached/,
+    );
+  });
+
   it('reads one in the result error alone, and none in a print timeout', () => {
     const result: AgyResult = { ...done, status: 'ERROR', error: 'RESOURCE_EXHAUSTED: quota exceeded' };
     expect(rateLimitOf(undefined, result)).toBe('RESOURCE_EXHAUSTED: quota exceeded');

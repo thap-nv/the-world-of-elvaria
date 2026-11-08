@@ -220,3 +220,14 @@ Chạy thật trong lúc viết adapter, `gemini-3.8-flash-low`, thư mục tạ
 - **Hook bản build qua shim** [máy]: `node --conditions=elvaria-dist elvaria-hook.mjs <Event>` qua `cmd /c`, `node` lấy từ `PATH` (runner đặt thư mục Node của Elvaria lên đầu) chạy được; hook `deny` lệnh `git push` theo luật, model ghi nhận và làm tiếp.
 - **Cổng thư bàn giao** [máy]: Stop `continue` hai lần; model đọc thư (chưa có), thử `Get-ChildItem` thư mục quest (bị chặn), rồi ghi thư bằng `write_file` theo luật tuyệt đối. Trên một probe vai người làm, cổng thêm 3–4 lượt.
 - Vẫn chưa kiểm: hết quota thật, macOS, `--input-format stream-json`, `terminationBehavior: terminate` có chủ đích (P1-12b không cần: cầu dao lượt đọc stream), lãnh thổ có `.agents/hooks.json` riêng (P1-12b từ chối, không thử nạp chung).
+
+## 13. Bổ sung từ P1-16 (2026-11-08, `agy` 1.5.3, Windows)
+
+Lần cố tình hết mana của mốc giai đoạn 1 ([báo cáo giai đoạn 1](../guides/phase-1-report.md) §4), một nhân vật tộc Gemini chạy `claude-opus-5-5-high`:
+
+- **Hết quota thật** [máy]: stderr `error: Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 4h53m54s. (response may be truncated)` rồi `AGY_ERROR: {"short_error": "RESOURCE_EXHAUSTED (code 429): Individual quota reached. …", "status": "RESOURCE_EXHAUSTED", "error_code": 429, "code_kind": "http", "retryable": true, "error_id": "…"}`; dòng `result` có `status: ERROR`, `error` là câu đó, `finished_reason: error`. Khác bản tự dựng theo changelog (`reason: quota_exhausted`, `retryable: false`, `http_status`). Fixture `stream-quota-exhausted.jsonl` (đầu và cuối của stream thật) + `.stderr.txt`.
+- **Tốc độ cạn** [máy]: bucket `3p-5h` từ 100 % về 0 % sau 6 phút 18 giây (130 bước, input 231 644, output 29 627, cache_read 4 115 142; `total_tokens` 261 271 không gồm cache); `3p-weekly` mất 50,6 % cùng lúc, tức làm cạn một cửa sổ 5 giờ tốn khoảng nửa tuần của nhóm.
+- **`/usage` khi cạn** [máy]: vẫn 0 token, `remaining_fraction: 0` và `reset_time` đúng giờ reset của cửa sổ 5 giờ (`06:01:26Z`); bucket chưa dùng giữ `reset_time` trượt `now + cửa sổ` như §7. Fixture `usage-json-mana-out-{before,drained}.jsonl`.
+- **Trần Argon** [máy]: `gemini-argon-wtu-weekly` tụt khoảng 6–7 % mỗi phiên Argon (người làm medium, người chấm high), 98,9 % → 44,3 % sau khoảng 8 phiên trong một buổi sáng.
+- **Đường dẫn của bộ thử** [máy]: `/usage` gọi từ Git Bash lại bị đổi thành đường dẫn (bẫy ở §0) và tốn khoảng 10,7k token một lần; gọi với `MSYS_NO_PATHCONV=1`.
+- **File hook trong worktree** [máy]: `.agents/elvaria-hook.mjs` và `.agents/hooks.json` của runner ở lại trong worktree sau phiên; git bỏ qua chúng (`.git/info/exclude`) nhưng `prettier --check .` thì không, nên check `format` của lãnh thổ đỏ với mọi quest của tộc Gemini (báo cáo §5.3).

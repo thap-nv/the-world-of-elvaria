@@ -126,6 +126,31 @@ describe('probeOf', () => {
     });
   });
 
+  it('reads the mana-out of P1-16 (agy 1.5.3): the Claude and GPT pool empty until its 5-hour reset', () => {
+    const before = usageBuckets(
+      readFileSync(path.join(FIXTURES, 'usage-json-mana-out-before.jsonl'), 'utf8'),
+    );
+    const drained = usageBuckets(
+      readFileSync(path.join(FIXTURES, 'usage-json-mana-out-drained.jsonl'), 'utf8'),
+    );
+    expect(probeOf(before ?? [], ['gemini_models', 'claude_gpt_models'])).toEqual({ status: 'ok' });
+    expect(probeOf(drained ?? [], ['gemini_models', 'claude_gpt_models'])).toEqual({
+      status: 'rate_limited',
+      detail: 'no mana left in 3p-5h',
+      resets_at: '2026-11-08T06:01:26Z',
+    });
+    expect(probeOf(drained ?? [], ['gemini_models'])).toEqual({ status: 'ok' });
+    // After the reset the 5-hour bucket is back (the revived session had started using it): the probe wakes the pool.
+    const reset = usageBuckets(
+      readFileSync(path.join(FIXTURES, 'usage-json-mana-out-after-reset.jsonl'), 'utf8'),
+    );
+    expect(probeOf(reset ?? [], ['gemini_models', 'claude_gpt_models'])).toEqual({ status: 'ok' });
+    expect(windowsOf(drained ?? []).filter(({ pool }) => pool === 'claude_gpt_models')).toEqual([
+      { window: 'weekly', used_pct: 50.56, pool: 'claude_gpt_models', resets_at: '2026-11-15T01:01:26Z' },
+      { window: 'five_hour', used_pct: 100, pool: 'claude_gpt_models', resets_at: '2026-11-08T06:01:26Z' },
+    ]);
+  });
+
   it('ignores a pool the tribe does not run on, and a cap of one model', () => {
     expect(probeOf([bucket('3p-5h', 100)], ['gemini_models'])).toEqual({ status: 'ok' });
     expect(probeOf([bucket('gemini-argon-wtu-weekly', 100)], ['gemini_models'])).toEqual({ status: 'ok' });

@@ -173,17 +173,19 @@ describe('a recorded run, replayed', () => {
     ['stream-soft-deny-ends-run.jsonl', 0, { outcome: 'error', exit_code: 0 }],
     ['stream-print-timeout.jsonl', 3, { outcome: 'budget', exit_code: 3, rate_limited: false }],
     ['constructed-rate-limit.jsonl', 3, { outcome: 'error', exit_code: 3, rate_limited: true }],
+    // P1-16's real run, cut to its first and last lines; the exit code was not kept, 3 is agy's model error.
+    ['stream-quota-exhausted.jsonl', 3, { outcome: 'error', exit_code: 3, rate_limited: true }],
     ['json-error-bad-model.jsonl', 1, { outcome: 'error', exit_code: 1, usage: { tokens: 0, turns: 0 } }],
   ])('%s (exit %i)', async (fixture, exit, expected) => {
     expect((await replay(fixture, exit)).result).toMatchObject(expected);
   });
 
-  it('signals a rate limit with what agy said', async () => {
-    const { signals } = await replay('constructed-rate-limit.jsonl', 3);
-    expect(signals.at(-1)).toEqual({
-      kind: 'rate_limit',
-      detail: expect.stringMatching(/^You have exhausted/) as unknown,
-    });
+  it.each([
+    ['constructed-rate-limit.jsonl', /^You have exhausted/],
+    ['stream-quota-exhausted.jsonl', /^RESOURCE_EXHAUSTED \(code 429\)/],
+  ])('signals a rate limit with what agy said (%s)', async (fixture, words) => {
+    const { signals } = await replay(fixture, 3);
+    expect(signals.at(-1)).toEqual({ kind: 'rate_limit', detail: expect.stringMatching(words) as unknown });
   });
 
   it('names a run that never started', async () => {
