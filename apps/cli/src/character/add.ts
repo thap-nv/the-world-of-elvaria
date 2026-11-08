@@ -8,6 +8,7 @@ import {
   CharacterSchema,
   ModelSlugSchema,
   NAME_MAX_LENGTH,
+  rankCeilingOf,
 } from '@elvaria/domain';
 import type { Character, CharacterClass, CharacterId, Registry, Tribe } from '@elvaria/domain';
 
@@ -17,6 +18,7 @@ import { recordCharacterCreated } from '../events.ts';
 import { registryIssueLines, storeIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { nameIn } from '../labels.ts';
+import { startingLevelOf } from './starting-level.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
@@ -27,11 +29,16 @@ const DATE_LENGTH = 10;
 const nameOf = (id: string): string =>
   `${id.charAt(0).toUpperCase()}${id.slice(1)}`.slice(0, NAME_MAX_LENGTH);
 
-function readLevel(input: CommandInput): number | undefined {
-  const text = textOption(input, 'level') ?? '1';
+/** `--level` as given; undefined when the owner left it to the model (P1-26). */
+function readLevel(input: CommandInput): number | 'invalid' | undefined {
+  const text = textOption(input, 'level');
+  if (text === undefined) return undefined;
   const level = Number(text);
-  return /^\d+$/.test(text) && level >= 1 && level <= CHARACTER_LEVEL_MAX ? level : undefined;
+  return /^\d+$/.test(text) && level >= 1 && level <= CHARACTER_LEVEL_MAX ? level : 'invalid';
 }
+
+/** Where the starting level came from: `--level`, the model's row, or neither (level 1). */
+type LevelSource = 'option' | 'model' | 'none';
 
 interface Choices {
   readonly id: CharacterId;
@@ -40,6 +47,16 @@ interface Choices {
   readonly tribe: Tribe;
   readonly model: string;
   readonly level: number;
+  readonly levelSource: LevelSource;
+}
+
+/** The level `--level` gave, else the model's starting level (startingLevelOf), else 1. */
+function levelOf(given: number | undefined, model: string): Pick<Choices, 'level' | 'levelSource'> {
+  if (given !== undefined) return { level: given, levelSource: 'option' };
+  const suggested = startingLevelOf(model);
+  return suggested === undefined
+    ? { level: 1, levelSource: 'none' }
+    : { level: suggested, levelSource: 'model' };
 }
 
 /** Class and tribe: the class's own tribe unless `--tribe` names another of kingdom.tribes. */
@@ -84,16 +101,16 @@ function readChoices(input: CommandInput, ctx: KingdomContext, registry: Registr
     ...(name.length > 0 && name.length <= NAME_MAX_LENGTH
       ? []
       : [t('cli.error.name_length', { max: NAME_MAX_LENGTH })]),
-    ...(level === undefined ? [t('cli.character.bad_level', { max: CHARACTER_LEVEL_MAX })] : []),
+    ...(level === 'invalid' ? [t('cli.character.bad_level', { max: CHARACTER_LEVEL_MAX })] : []),
     ...problems,
     ...(model?.problems ?? []),
   ];
-  if (all.length > 0 || !id.success || !klass || !tribe || model?.model === undefined || level === undefined)
+  if (all.length > 0 || !id.success || !klass || !tribe || model?.model === undefined || level === 'invalid')
     return all;
-  return { id: id.data, name, klass, tribe, model: model.model, level };
+  return { id: id.data, name, klass, tribe, model: model.model, ...levelOf(level, model.model) };
 }
 
-/** A character as summoned: idle, no verdicts yet, its level set by the owner (§2.6). */
+/** A character as summoned: idle, no verdicts yet, at its starting level (§2.6). */
 export function newCharacter(choices: Choices, now: string): Character {
   return CharacterSchema.parse({
     version: 1,
@@ -148,8 +165,16 @@ async function runCharacterAdd(input: CommandInput, cli: CliContext): Promise<Ex
   };
   ctx.io.out(ctx.t('cli.character.added', params));
   ctx.io.out(ctx.t('cli.character.tribe_model', { tribe: tribe.id, model: choices.model }));
+  levelLines(ctx, choices).forEach(ctx.io.out);
   if (!tribe.enabled) ctx.io.out(ctx.t('cli.character.tribe_disabled', { tribe: tribe.id }));
   return EXIT.ok;
+}
+
+/** Why the character starts at its level, when the owner did not say: the model's row, or none (P1-26). */
+function levelLines(ctx: KingdomContext, { level, levelSource, model }: Choices): string[] {
+  if (levelSource === 'option') return [];
+  if (levelSource === 'none') return [ctx.t('cli.character.level_unknown_model', { model })];
+  return [ctx.t('cli.character.level_from_model', { level, model, ceiling: rankCeilingOf(level) })];
 }
 
 export const CHARACTER_ADD: CommandSpec = {

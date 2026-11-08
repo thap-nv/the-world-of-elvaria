@@ -23,7 +23,7 @@ describe('elvaria character add', () => {
   const add = (io: ReturnType<typeof testIo>, ...args: string[]) =>
     run(io, 'character', 'add', ...args, '--kingdom', kingdom, '--locale', 'en');
 
-  it("summons an idle character with the class's tribe and model, at level 1", async () => {
+  it("summons an idle character with the class's tribe and model, at the model's starting level", async () => {
     const io = testIo();
     expect(await add(io, 'thorn', '--class', 'knight')).toBe(0);
     expect(await readCharacter('thorn')).toMatchObject({
@@ -32,7 +32,7 @@ describe('elvaria character add', () => {
       class: 'knight',
       tribe: 'claude',
       model: 'claude-sonnet-5-5',
-      level: 1,
+      level: 4,
       status: 'idle',
       status_since: '2026-11-06T09:00:00+07:00',
       vow_no_production: false,
@@ -43,9 +43,19 @@ describe('elvaria character add', () => {
       stats: { quests_done: 0, tokens_today: 0, tokens_day: '2026-11-06' },
     });
     expect(io.printed.out).toEqual([
-      'Summoned «Thorn» (thorn): Knight, level 1.',
+      'Summoned «Thorn» (thorn): Knight, level 4.',
       'Tribe claude, model claude-sonnet-5-5.',
+      'Starting level 4, from model claude-sonnet-5-5: the Steward gives it quests up to rank C.',
     ]);
+  });
+
+  it('starts at level 1 on a model it knows no level for, and says how to start higher (P1-26)', async () => {
+    const io = testIo();
+    expect(await add(io, 'otto', '--class', 'knight', '--model', 'gpt-oss-120b-medium')).toBe(0);
+    expect((await readCharacter('otto')).level).toBe(1);
+    expect(io.printed.out.at(-1)).toBe(
+      'No starting level is known for model gpt-oss-120b-medium: level 1, given rank F quests only. Summon with --level 1–10, by how strong the model is, to start higher.',
+    );
   });
 
   it('sets the starting level, tribe, model and name the owner gives (§2.6)', async () => {
@@ -61,7 +71,10 @@ describe('elvaria character add', () => {
       '--name',
       'Vela',
     ];
-    expect(await add(testIo(), 'vela', ...args)).toBe(0);
+    const io = testIo();
+    expect(await add(io, 'vela', ...args)).toBe(0);
+    // The owner's level needs no word on where it came from.
+    expect(io.printed.out).toHaveLength(2);
     expect(await readCharacter('vela')).toMatchObject({
       tribe: 'gemini',
       model: 'gemini-4-argon-medium',

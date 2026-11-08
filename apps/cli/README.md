@@ -3,24 +3,29 @@
 ## Does
 
 - Ships the `elvaria` command, the only composition root (implementation-plan §1.1): `init`, `doctor`,
-  `territory add|list`, `character add|list`, `quest add|list|show|confirm|cancel|archive|edit`, `seal`, `return`,
-  `answer`, `run`,
+  `territory add|list`, `character add|list`, `quest add|list|show|confirm|cancel|archive|edit|retry|reassign`,
+  `seal`, `return`, `answer`, `run`,
   `sandbox generate|replay`, `migrate`. The command table (`src/commands.ts`) drives parsing (`util.parseArgs`), help, and the reference
   `docs/cli.md` that `pnpm docs:gen` renders from it (`scripts/docs-cli.mjs`).
 - Prints everything through `t()` of `@elvaria/i18n`, in `kingdom.owner.locale` unless `--locale vi|en` is given;
   `i18next/no-literal-string` (`packages/config/eslint-i18n.mjs`) guards it. Store and registry issues are
   translated by their `code`.
 - Sends every quest change as an inbox command (`create_quest`, `confirm`, `cancel`, `archive`, `edit_quest`,
-  `seal`, `return`, `answer`; ADR 0005), after checking ids against the registry and the quest against the
-  transition table. `return` asks for a note of at least 20 characters (`--note`) and a `--fail-kind` (`other` by
-  default), since the Steward writes it as the owner's fail verdict. `answer <quest> "<answer>"` takes a non-empty
-  answer for a `blocked` quest; the Steward then goes on with the same attempt, in the asking session when the
-  answer comes within `dispatch.resume_after_answer_minutes` (ADR 0017). The bell of `run` prints that command
-  with each question.
+  `retry`, `reassign`, `seal`, `return`, `answer`; ADR 0005), after checking ids against the registry and the quest
+  against the transition table. `return` asks for a note of at least 20 characters (`--note`) and a `--fail-kind`
+  (`other` by default), since the Steward writes it as the owner's fail verdict. `answer <quest> "<answer>"` takes
+  a non-empty answer for a `blocked` quest; the Steward then goes on with the same attempt, in the asking session
+  when the answer comes within `dispatch.resume_after_answer_minutes` (ADR 0017). The bell of `run` prints that
+  command with each question. `quest retry` opens a quest of the infirmary again; `quest reassign [--to <id>]`
+  gives a quest to the character named (checked as the Steward checks it: known, of the quest's class, not
+  suspended; a level below the rank is said, since the quest then waits for the seal) or, without `--to`, to the
+  Steward's choice (P1-26). `quest show` of a quest nobody can take prints the `reassign` to its best candidate.
 - Writes new files the Steward does not own: `kingdom.json` (`init`, then `tribes[].tool` and, with `--enable`,
   `tribes[].enabled` from `doctor`), a
   territory, a newly summoned character (create only, never overwrite). Those two are also logged
   (`territory.attached`, `character.created`, with the view after the change, P0-09), so the world sees them.
+  Without `--level`, a character starts at its model's level (`src/character/starting-level.ts`: Opus 5, Sonnet
+  or Pro 4, Argon 3, Haiku or Flash 2), else at 1 with a word on `--level` (P1-26).
 - `sandbox generate` writes a fake day of `@elvaria/sandbox` to `events/sandbox/<date>.jsonl` (nothing else of the
   kingdom changes); `sandbox replay <file> --speed 20` plays it back as a timeline, one sentence per line in the
   owner's language (`src/sandbox/timeline.ts`), paced by `CliIo.sleep`. Closing the pipe (`| head`) ends it quietly.

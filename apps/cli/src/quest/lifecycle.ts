@@ -1,4 +1,4 @@
-// `elvaria quest confirm|cancel|archive <id>`: commands the Steward turns into a transition (implementation-plan
+// `elvaria quest confirm|cancel|archive|retry <id>`: commands the Steward turns into a transition (implementation-plan
 // §2.5).
 // The CLI asks the same table first, so a command the quest cannot take now is refused at the terminal.
 import { findTransition } from '@elvaria/domain';
@@ -79,6 +79,27 @@ async function runArchive(input: CommandInput, cli: CliContext): Promise<ExitCod
   const command = { ...commandHeader(ctx), kind: 'archive', payload: { quest: quest.id } } as const;
   return sendCommand(ctx, command, 'cli.quest.archive.sent', { id: quest.id });
 }
+
+/**
+ * A quest in the infirmary opens again with its full attempt budget and nobody holding it (`infirmary.retry`, §2.5);
+ * the Steward then gives it to whoever fits, as any open quest (P1-26).
+ */
+async function runRetry(input: CommandInput, cli: CliContext): Promise<ExitCode> {
+  const ctx = await openKingdomContext(input, cli);
+  if (ctx === undefined) return EXIT.failed;
+  const quest = await questFor(input, ctx, () => 'retry', 'cli.quest.retry.refused');
+  if (quest === undefined) return EXIT.failed;
+  const command = { ...commandHeader(ctx), kind: 'retry', payload: { quest: quest.id } } as const;
+  return sendCommand(ctx, command, 'cli.quest.retry.sent', { id: quest.id });
+}
+
+export const QUEST_RETRY: CommandSpec = {
+  name: ['quest', 'retry'],
+  summary: 'cli.quest.retry.summary',
+  args: [{ name: '<quest>', help: 'cli.quest.arg.quest' }],
+  options: {},
+  run: runRetry,
+};
 
 export const QUEST_ARCHIVE: CommandSpec = {
   name: ['quest', 'archive'],

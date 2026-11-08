@@ -144,6 +144,7 @@ describe('elvaria quest list and show', () => {
     expect(show.printed.out).toEqual(
       expect.arrayContaining([
         'Không ai nhận được hạng A: Hiệp sĩ cao nhất là thorn cấp 5, nhận tới C (B khi không còn ai).',
+        `Giao cho thorn (chờ dấu vua): elvaria quest reassign ${QUEST_ID} --to thorn`,
         `Hạ hạng: elvaria quest edit ${QUEST_ID} --rank C`,
         'Triệu hồi: elvaria character add <id> --class knight --level 8',
       ]),
