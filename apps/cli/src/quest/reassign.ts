@@ -3,12 +3,12 @@
 // and above the character's ceiling the quest waits for the royal seal (§2.6). Without it, the Steward picks among
 // the free characters of the class, other than the one holding it. An inbox command like the rest (ADR 0005); the
 // CLI checks the character first, so a wrong name is refused at the terminal and not one tick later.
-import { CharacterIdSchema, aboveCeiling, rankCeilingOf } from '@elvaria/domain';
+import { aboveCeiling, rankCeilingOf } from '@elvaria/domain';
 import type { Character, Quest } from '@elvaria/domain';
 
 import { textOption } from '../args.ts';
+import { readCharacter } from '../character/read.ts';
 import { EXIT } from '../command.ts';
-import { storeIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { nameIn } from '../labels.ts';
 import { questFor } from './lifecycle.ts';
@@ -27,12 +27,8 @@ async function classNames(ctx: KingdomContext): Promise<(id: string) => string> 
 
 /** The character `--to` names, if it may take the quest (as the Steward checks it): known, of the class, not suspended. */
 async function characterFor(ctx: KingdomContext, quest: Quest, id: string): Promise<Character | string[]> {
-  const unknown = [ctx.t('cli.quest.reassign.unknown_character', { character: id })];
-  const parsed = CharacterIdSchema.safeParse(id);
-  if (!parsed.success) return unknown;
-  const read = await ctx.store.characters.read(parsed.data);
-  if (!read.ok) return read.error.code === 'not_found' ? unknown : storeIssueLines(ctx.t, read.error);
-  const character = read.value;
+  const character = await readCharacter(ctx, id);
+  if (Array.isArray(character)) return character;
   // A session-tier quest (the only kind reassign takes) always names its class.
   const required = quest.class_required ?? '';
   if (character.class !== required) {

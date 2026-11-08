@@ -1,6 +1,6 @@
-// Every change to a quest is a command file in inbox/ that the Steward applies at its next tick: the Steward is
-// the only writer of quests (ADR 0005). The CLI checks what it can first, so most mistakes are refused here and
-// not one tick later.
+// Every change to a quest or an existing character is a command file in inbox/ that the Steward applies at its next
+// tick: the Steward is the only writer of quests and characters (ADR 0005). The CLI checks what it can first, so
+// most mistakes are refused here and not one tick later.
 import type { InboxCommandInput } from '@elvaria/domain';
 import type { MessageKey, Params } from '@elvaria/i18n';
 

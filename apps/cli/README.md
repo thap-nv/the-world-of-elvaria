@@ -3,7 +3,8 @@
 ## Does
 
 - Ships the `elvaria` command, the only composition root (implementation-plan §1.1): `init`, `doctor`,
-  `territory add|list`, `character add|list`, `quest add|list|show|confirm|cancel|archive|edit|retry|reassign`,
+  `territory add|list`, `character add|list|suspend|release`,
+  `quest add|list|show|confirm|cancel|archive|edit|retry|reassign`,
   `seal`, `return`, `answer`, `run`,
   `sandbox generate|replay`, `migrate`. The command table (`src/commands.ts`) drives parsing (`util.parseArgs`), help, and the reference
   `docs/cli.md` that `pnpm docs:gen` renders from it (`scripts/docs-cli.mjs`).
@@ -20,6 +21,9 @@
   gives a quest to the character named (checked as the Steward checks it: known, of the quest's class, not
   suspended; a level below the rank is said, since the quest then waits for the seal) or, without `--to`, to the
   Steward's choice (P1-26). `quest show` of a quest nobody can take prints the `reassign` to its best candidate.
+  `character suspend <id> [--reason]` and `character release <id>` send `suspend` and `release` (a character the
+  Steward would refuse, unknown, suspended already or not suspended, is refused here), and `suspend` says what
+  becomes of the quest the character holds (the owner's decision after P1-26).
 - Writes new files the Steward does not own: `kingdom.json` (`init`, then `tribes[].tool` and, with `--enable`,
   `tribes[].enabled` from `doctor`), a
   territory, a newly summoned character (create only, never overwrite). Those two are also logged
