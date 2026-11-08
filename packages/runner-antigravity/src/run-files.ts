@@ -54,6 +54,18 @@ async function writeGenerated(file: string, text: string, ours: (old: string) =>
   await writeFile(file, text, 'utf8');
 }
 
+/**
+ * Waits for every write, then throws the first refusal. `Promise.all` would reject at the first one while the other
+ * files are still being written, and the clean-up after a refused spawn could then run before they land and leave
+ * them in the plot (seen on Windows CI after P1-28).
+ */
+export async function settleAll(writes: readonly Promise<unknown>[]): Promise<void> {
+  const failed = (await Promise.allSettled(writes)).find((result) => result.status === 'rejected');
+  if (failed === undefined) return;
+  const reason: unknown = failed.reason;
+  throw reason instanceof Error ? reason : new Error(String(reason));
+}
+
 export async function writeRunFiles(req: SpawnRequest, ctx: RunContext, plan: HookPlan): Promise<RunFiles> {
   const agents = path.join(req.cwd, AGENTS_DIR);
   await Promise.all([mkdir(req.run_dir, { recursive: true }), mkdir(agents, { recursive: true })]);
@@ -66,9 +78,9 @@ export async function writeRunFiles(req: SpawnRequest, ctx: RunContext, plan: Ho
   };
   const patterns = ['CLAUDE.md', ...(req.territory?.context_files ?? [])];
   const context = contextFileText(req.prompt.system, await contextFilesIn(req.cwd, patterns));
-  await Promise.all([
+  await settleAll([
     writeFile(files.settings, json(agySettingsOf(req.permissions, req.handover)), 'utf8'),
-    files.schema === undefined ? undefined : writeFile(files.schema, json(req.structured), 'utf8'),
+    files.schema === undefined ? Promise.resolve() : writeFile(files.schema, json(req.structured), 'utf8'),
     writeGenerated(files.hooks, hooksJson(plan), isElvariaHooks),
     writeGenerated(path.join(agents, SHIM_FILE), shimSource(plan, files.policy), isElvariaShim),
     writeGenerated(path.join(req.cwd, CONTEXT_FILE), context, isElvariaContext),

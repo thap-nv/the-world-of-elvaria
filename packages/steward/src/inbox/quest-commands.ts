@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto';
 import {
   editQuest,
   formatDatedId,
+  namedAssignee,
   parseInstant,
   poolOpenOf,
   questFromCommand,
@@ -53,9 +54,14 @@ export function questIdOfCommand(
   return formatDatedId('q', day, createHash('sha256').update(command.id).digest()) as QuestId;
 }
 
+/**
+ * `create_quest`. With an assignee (P1-29), the domain has checked it before the quest exists, and the new quest
+ * goes to it by the owner's reassign (§2.5 `open.reassign`), so only it takes the quest, its level aside.
+ */
 export async function createQuest(ctx: Context, command: InboxCommandOf<'create_quest'>): Promise<Outcome> {
   const id = questIdOfCommand(command, ctx.world.kingdom.tz) ?? ctx.deps.ids.quest();
-  if (ctx.world.quests.has(id)) return APPLIED;
+  const known = ctx.world.quests.get(id);
+  if (known !== undefined) return givenTo(ctx, known, command.payload.assignee);
   const made = questFromCommand(command.payload, {
     id,
     at: ctx.record.stamp(),
@@ -64,10 +70,22 @@ export async function createQuest(ctx: Context, command: InboxCommandOf<'create_
     // With the secrets each allows: a quest asking for more is refused here (ADR 0013).
     territories: [...ctx.world.territories.values()],
     quests: [...ctx.world.quests.keys()],
+    characters: [...ctx.world.characters.values()],
+    tribes: ctx.world.kingdom.tribes,
   });
   if (!made.ok) return rejected(made.error.code);
   const type = made.value.status === 'draft' ? 'quest.drafted' : 'quest.created';
-  return outcomeOf(await ctx.record.put(made.value, type, OWNER));
+  const put = await ctx.record.put(made.value, type, OWNER);
+  return put.ok ? givenTo(ctx, put.value, command.payload.assignee) : rejected(put.error);
+}
+
+/**
+ * The new quest's named assignee takes it. Once: a command applied again after a crash finds its quest open and
+ * still unclaimed only when the crash came between the file and the reassign.
+ */
+async function givenTo(ctx: Context, quest: Quest, assignee: string | undefined): Promise<Outcome> {
+  if (assignee === undefined || quest.status !== 'open' || quest.assignee !== null) return APPLIED;
+  return reassign(ctx, quest, assignee);
 }
 
 /** The quest's holders let go of it: the assignee and the verifier whose `current` is this quest. */
@@ -159,11 +177,10 @@ function newAssignee(ctx: Context, quest: Quest, named: string | undefined): Res
     const chosen = selectAssignee(quest, free);
     return chosen === undefined ? { ok: false, error: 'no_candidate' } : { ok: true, value: chosen };
   }
+  // The same check as a create_quest naming its assignee (P1-29), a disabled tribe included.
   const character = ctx.world.characters.get(named as Character['id']);
-  if (character === undefined) return { ok: false, error: 'unknown_character' };
-  if (character.class !== quest.class_required) return { ok: false, error: 'class_mismatch' };
-  if (character.status === 'suspended') return { ok: false, error: 'character_suspended' };
-  return { ok: true, value: character };
+  const chosen = namedAssignee(quest.class_required, character, ctx.world.kingdom.tribes);
+  return chosen.ok ? chosen : { ok: false, error: chosen.error.code };
 }
 
 /**

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { canTake, levelChange, rankCeilingOf } from './level.ts';
+import { character as characterOf } from '../dispatch/__fixtures__/snapshot.ts';
+import { canTake, levelChange, rankCeilingOf, setLevelLine, withLevel } from './level.ts';
 import type { VerdictId } from '../core/ids.ts';
 import type { VerdictEntry } from '../schema/character/character.ts';
 
@@ -83,5 +84,25 @@ describe('levelChange', () => {
 
   it('stays put without verdicts', () => {
     expect(levelChange(character(6, ''))).toBe(6);
+  });
+});
+
+describe("setLevelLine and withLevel (the owner's set_level)", () => {
+  it('moves any number of levels either way, and counts the window afresh from then on', () => {
+    expect(setLevelLine({ level: 1 }, 4)).toEqual({ ok: true, value: 'character.level_up' });
+    expect(setLevelLine({ level: 6 }, 2)).toEqual({ ok: true, value: 'character.level_down' });
+    const ember = withLevel(characterOf('ember', { level: 1 }), 4, at(30));
+    expect(ember).toMatchObject({ id: 'ember', level: 4, level_since: at(30) });
+    // Ten passes before the change no longer lift the level: only verdicts after level_since count.
+    expect(levelChange({ ...ember, reputation: { window: window('pppppppppp') } })).toBe(4);
+  });
+
+  it.each([
+    ['invalid_level', 0],
+    ['invalid_level', 11],
+    ['invalid_level', 2.5],
+    ['same_level', 3],
+  ])('refuses %s (%s)', (code, level) => {
+    expect(setLevelLine({ level: 3 }, level)).toEqual({ ok: false, error: { code } });
   });
 });

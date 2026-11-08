@@ -1,5 +1,6 @@
 // The blocks prompts are made of (implementation-plan §3.7, §3.13; ADR 0010, 0017): each fills one template from
 // the kingdom's files, and an optional block with nothing to say is empty, so joinBlocks leaves it out.
+import { PATCH_FILE } from '../plot/patch.ts';
 import { SUBQUESTS_FILE } from '../plot/subquests.ts';
 import { SHELL_TOOL, WRITE_TOOLS } from '../policy/constants.ts';
 import { failedChecksBlock } from './checks.ts';
@@ -93,6 +94,18 @@ export function readOnlyBlock(
         ? 'Your class cannot run their generators: when your change needs them rewritten, say so in Not done.'
         : `They are generated. After you change what they are generated from, run their generator and commit what it writes with your work:\n\n${bullets(generators)}`,
   });
+}
+
+/**
+ * The territory's patch paths and the patch convention (P1-28), for a session that may edit files: without it a
+ * Claude character refused `.husky/pre-push` asks the owner for the change (P1-16 §5.9). Empty without a write tool
+ * or a patch path (ToolLaws has none on a territory without git).
+ */
+export function patchBlock(policy: Pick<ToolPolicy, 'tools' | 'laws'>, t: PromptTemplates): string {
+  const paths = policy.laws.patch_paths;
+  const writes = policy.tools.some((tool) => (WRITE_TOOLS as readonly string[]).includes(tool));
+  if (paths.length === 0 || !writes) return '';
+  return fill(t.patch, { paths: bullets(paths), patch_file: PATCH_FILE });
 }
 
 /**

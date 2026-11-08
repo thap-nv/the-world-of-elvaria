@@ -1,5 +1,6 @@
 // `elvaria quest add`: a quest straight to `open`, no Chancellor and no mana (implementation-plan §3.11, stage 0).
 // It sends `create_quest` with draft = false; the Steward gives the quest its id and writes the file (ADR 0005).
+// With --to, the quest names its assignee: only that character takes it, as after a reassign (P1-29).
 import { QUEST_TAGS_MAX, QUEST_TITLE_MAX_LENGTH, RANKS, scriptParamsIssues } from '@elvaria/domain';
 import type { Kind, Rank, Registry } from '@elvaria/domain';
 
@@ -7,6 +8,7 @@ import { flagOption, textOption, textOptions } from '../args.ts';
 import { EXIT } from '../command.ts';
 import { registryIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
+import { assigneeFor, ceilingLines } from './assignee.ts';
 import { questsMissing, territoryMissing } from './references.ts';
 import { commandHeader, sendCommand } from './send-command.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
@@ -75,6 +77,24 @@ function readTags(input: CommandInput, registry: Registry, ctx: KingdomContext) 
   return { tags, problems };
 }
 
+/**
+ * `--to`: the only character who takes the quest (P1-29), checked as the Steward checks it. A script runs without
+ * anyone; without a class (its problem already said) there is nothing to check it against.
+ */
+async function readAssignee(
+  input: CommandInput,
+  scripted: boolean,
+  klass: string | undefined,
+  ctx: KingdomContext,
+) {
+  const to = textOption(input, 'to');
+  if (to === undefined) return { problems: [] };
+  if (scripted) return { problems: [ctx.t('cli.quest.add.to_script')] };
+  if (klass === undefined) return { problems: [] };
+  const character = await assigneeFor(ctx, to, klass);
+  return Array.isArray(character) ? { problems: character } : { character, problems: [] };
+}
+
 /** Title, rank and kind: what every quest has. */
 function readBasics(input: CommandInput, registry: Registry, ctx: KingdomContext) {
   const problems: string[] = [];
@@ -105,10 +125,16 @@ async function runQuestAdd(input: CommandInput, cli: CliContext): Promise<ExitCo
   const script = readScript(input, basics.kind, registry.value, ctx);
   const klass = script.choice === undefined ? readClass(input, basics.kind, ctx) : { problems: [] };
   const tags = readTags(input, registry.value, ctx);
+  const named = await readAssignee(
+    input,
+    script.choice !== undefined,
+    'id' in klass ? klass.id : undefined,
+    ctx,
+  );
   const territory = textOption(input, 'territory') ?? '';
   const dependsOn = [...new Set(textOptions(input, 'depends-on'))];
   const problems = [
-    ...[basics, script, klass, tags].flatMap((part) => part.problems),
+    ...[basics, script, klass, tags, named].flatMap((part) => part.problems),
     ...(await territoryMissing(ctx, territory)),
     ...(await questsMissing(ctx, dependsOn)),
   ];
@@ -130,10 +156,17 @@ async function runQuestAdd(input: CommandInput, cli: CliContext): Promise<ExitCo
     tags: tags.tags,
     ...(seal === undefined ? {} : { seal_required: seal }),
     ...(dependsOn.length === 0 ? {} : { depends_on: dependsOn }),
+    ...('character' in named ? { assignee: named.character.id } : {}),
     created_by: 'user',
   } as const;
   const command = { ...commandHeader(ctx), kind: 'create_quest', payload } as const;
-  return sendCommand(ctx, command, 'cli.quest.add.sent', { title: basics.title });
+  if (!('character' in named))
+    return sendCommand(ctx, command, 'cli.quest.add.sent', { title: basics.title });
+  const { character } = named;
+  const params = { title: basics.title, character: character.id };
+  const sent = await sendCommand(ctx, command, 'cli.quest.add.sent_to', params);
+  if (sent === EXIT.ok) ceilingLines(ctx, character, basics.rank).forEach(ctx.io.out);
+  return sent;
 }
 
 export const QUEST_ADD: CommandSpec = {
@@ -162,6 +195,7 @@ export const QUEST_ADD: CommandSpec = {
     },
     script: { type: 'string', value: '<script>', help: 'cli.quest.add.option.script' },
     params: { type: 'string', value: '<json>', help: 'cli.quest.add.option.params' },
+    to: { type: 'string', value: '<character>', help: 'cli.quest.add.option.to' },
   },
   run: runQuestAdd,
 };

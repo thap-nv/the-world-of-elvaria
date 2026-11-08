@@ -201,7 +201,7 @@ describe('PreToolUse', () => {
   });
 
   it('says first, as a rule, that the CLI refuses a protected path: P1-16 §5.9, .husky/pre-push', () => {
-    ctx = { ...ctx, laws: compileLaws(DC1_LAWS, ['.husky/**', '.npmrc']) };
+    ctx = { ...ctx, laws: compileLaws(DC1_LAWS, { cliProtected: ['.husky/**', '.npmrc'] }) };
     const hook = `${PLOT}\\.husky\\pre-push`;
     const result = pre('Write', { file_path: hook, content: 'pnpm check\n' });
     expect(denyReason(result)).toMatch(

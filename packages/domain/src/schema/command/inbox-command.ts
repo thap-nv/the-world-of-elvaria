@@ -21,6 +21,7 @@ import {
   ReassignPayloadSchema,
   ReturnPayloadSchema,
   SealPayloadSchema,
+  SetLevelPayloadSchema,
   SetRankPayloadSchema,
   WakePayloadSchema,
 } from './payloads.ts';
@@ -39,7 +40,8 @@ const command = <K extends string, P extends z.ZodType>(kind: K, payload: P) =>
     payload,
   });
 
-// In the order of the v1 `kind` enum, so the contract reads like the glossary (§9).
+// In the order of the v1 `kind` enum, so the contract reads like the glossary (§9); later kinds follow, each a
+// compatible addition (ADR 0003): a writer that never sends one is unaffected.
 export const InboxCommandSchema = z
   .discriminatedUnion('kind', [
     command('confirm', QuestPayloadSchema),
@@ -62,12 +64,13 @@ export const InboxCommandSchema = z
     command('attach_territory', AttachTerritoryPayloadSchema),
     command('edit_quest', EditQuestPayloadSchema),
     command('pin_tag', PinTagPayloadSchema),
+    command('set_level', SetLevelPayloadSchema),
   ])
   .meta({
     title: 'Inbox command',
     description:
       "inbox/<ulid>.json: one command from the owner (CLI, Herald, lite phone client) waiting for the Steward, the single writer of quest state (ADR 0005). The Steward applies commands in id order at the start of every tick, appends command.applied or command.rejected, and moves the file to inbox/done/. Idempotent: a command id that already has a command.applied event is skipped. Kinds match the design's action icons (seal, return, summon, suspend, reassign, archive, temple, declare) plus the lifecycle commands the state machine needs.",
-    $comment: `${GENERATED_NOTE} One oneOf branch per kind: each fixes \`kind\` and gives its payload. confirm (draft -> open) and edit_quest (\`elvaria quest edit\`) are additions to the plan's §2.3 list, required by the single-writer rule; pin_tag (pin a character to an expertise tag, product plan 0.5 §6) was added with plan 0.5. archive covers discard (draft), reject (awaiting_seal) and archive (done, infirmary); the Steward picks the transition from the quest's current status. edit_quest is rejected when the quest's updated_at differs from expected_updated_at.`,
+    $comment: `${GENERATED_NOTE} One oneOf branch per kind: each fixes \`kind\` and gives its payload. confirm (draft -> open) and edit_quest (\`elvaria quest edit\`) are additions to the plan's §2.3 list, required by the single-writer rule; pin_tag (pin a character to an expertise tag, product plan 0.5 §6) was added with plan 0.5; set_level (the owner sets a character's level) and create_quest's assignee with P1-29. archive covers discard (draft), reject (awaiting_seal) and archive (done, infirmary); the Steward picks the transition from the quest's current status. edit_quest is rejected when the quest's updated_at differs from expected_updated_at.`,
   });
 
 /** A parsed command; `switch (command.kind)` narrows `payload`. */

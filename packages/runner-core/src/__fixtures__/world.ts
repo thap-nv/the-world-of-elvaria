@@ -57,6 +57,7 @@ export const TERRITORY = TerritorySchema.parse({
   laws: {
     forbidden_paths: ['.env', 'infra/secrets/**'],
     read_only_paths: ['apps/api/openapi.json', 'packages/shared/src/api-types.ts'],
+    patch_paths: ['.husky/**'],
     forbidden_commands: [String.raw`drizzle-kit\s+(drop|push)`],
   },
 });

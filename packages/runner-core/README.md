@@ -27,7 +27,8 @@
   checks with the end of each failing one's log the caller read and masked (`PromptCheck.log_tail`, P1-25; both in `src/prompt/checks.ts`), the letter, the diff, or where to read it when the caller has none, and where the last judge of the
   run stopped when it left a `partial` verdict, P1-15); both list the shell commands
   their `ToolPolicy` allows, one per call (`prompts/shell.md`, P1-11); an assignee that edits files also reads
-  the territory's read-only paths and the generators its shell may run (`prompts/read-only.md`, P1-24);
+  the territory's read-only paths and the generators its shell may run (`prompts/read-only.md`, P1-24), and its
+  patch paths with the patch convention (`prompts/patch.md`, P1-28: `PATCH_FILE` at the root of the plot);
   `buildChancellorPrompt` for the
   Chancellor; `resumedPrompt` for a session continued with `--resume` (the system part as built, a user part that only says it goes on, with the owner's
   answer when there is one). The system part opens with the royal decree when `<kingdom>/decree.md` exists, and
@@ -49,7 +50,11 @@
   `.runs/<quest>-setup.log`). The fork point and the setup state live in `elvaria-plot.json` in the worktree's
   private git folder. `status`, `touched` (paths changed since the fork, committed or not, plus untracked files),
   `commitAll` (everything, through the territory's own hooks; `refused` when a hook says no; the Steward's messages
-  are `plotCommitMessage`, Conventional Commits so commitlint accepts them), `diff` (what a judge reads, P1-15:
+  are `plotCommitMessage`, Conventional Commits so commitlint accepts them), `applyPatch` (P1-28: the assignee's
+  `PATCH_FILE` = `elvaria.patch` for `laws.patch_paths`, the paths its CLI refuses to write; every path the patch
+  touches, as `git apply --numstat` and its header lines name it, must be one of them and never git's own folder
+  (`patchProblem`), then `git apply --recount --check` and `git apply`, and the file goes; otherwise `refused`
+  with why, the patch left in place; `none` without a patch, a patch path or git), `diff` (what a judge reads, P1-15:
   `git diff <base>...HEAD`, summary then patch, cut at `DIFF_MAX_CHARS` on a whole line with a note saying where
   the rest is; null for a plot without git) and `release`
   (removes a clean worktree, keeps the branch, takes the folders git leaves on Windows around pnpm's dead
@@ -84,7 +89,7 @@
   hook at: context, `secrets` (names only), `tools` (the class's, for a CLI with no `--tools`), `laws` (with
   `read_only_paths`, P1-24), the adapter's `apprentice_models` when it has an apprentice (the models up to the
   character's own, §3.12, P1-17), and its `cli_protected_paths`, the paths its CLI refuses to write whatever the
-  rules say (P1-24).
+  rules say (P1-24); `laws.patch_paths` (only on a git territory) and, when there are some, `patch_file` (P1-28).
   The `apprentice` prompt tells the assignee to leave the apprentice's `model` out for lookups, name a stronger
   one only for reasoning, and to stop and write the unfinished child work in the letter when an apprentice is
   cut at its turn limit or runs long.

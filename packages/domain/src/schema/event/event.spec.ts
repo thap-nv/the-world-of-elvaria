@@ -86,6 +86,7 @@ const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
   'mana.level': { tribe: 'claude', pool: 'claude', window: 'weekly', used_pct: 0, source: 'estimate' },
   'command.applied': { command_id: ULID },
   'command.rejected': { command_id: ULID, reason: 'quest is not awaiting_seal' },
+  'plot.patched': { file: 'elvaria.patch', paths: ['.husky/pre-push'] },
 };
 
 describe('EventSchema', () => {
@@ -147,6 +148,7 @@ describe('EventSchema', () => {
     ['mana.level', { ...VALID_DATA['mana.level'], resets_at: 'tomorrow' }, 'data.resets_at'],
     ['command.applied', { command_id: 'not-a-ulid' }, 'data.command_id'],
     ['command.rejected', { reason: 'stale' }, 'data.command_id'],
+    ['plot.patched', { file: 'elvaria.patch', paths: [] }, 'data.paths'],
     ['quest.infirmary', { ...QUEST_CHANGE, reason: '' }, 'data.reason'],
     ['quest.infirmary', { reason: 'breaker:time' }, 'data.quest'],
     ['quest.claimed', {}, 'data.quest'],

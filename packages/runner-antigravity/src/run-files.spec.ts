@@ -7,7 +7,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { fakeRunner, openWorld, request } from './__fixtures__/agy.ts';
-import { removeRunFiles } from './run-files.ts';
+import { removeRunFiles, settleAll } from './run-files.ts';
 import type { World } from './__fixtures__/agy.ts';
 import type { RunningSession } from '@elvaria/runner-core';
 
@@ -78,6 +78,25 @@ describe('the files of an agy session in the plot', () => {
     await expect(fakeRunner().spawn(request(world))).rejects.toThrow(/EISDIR/);
     const stderr = await readFile(path.join(world.run_dir, 'stderr.log'), 'utf8');
     expect(stderr).toMatch(/^\[elvaria\] the hook files stay in the plot: .*EISDIR/);
+  });
+});
+
+describe('settleAll', () => {
+  it('lets every write land before it throws the first refusal, so the clean-up after it finds them all', async () => {
+    let landed = false;
+    const slow = new Promise<void>((resolve) => {
+      setTimeout(() => {
+        landed = true;
+        resolve();
+      }, 50);
+    });
+    const refused = Promise.reject(new Error('hooks.json belongs to the territory'));
+    await expect(settleAll([refused, slow])).rejects.toThrow('belongs to the territory');
+    expect(landed).toBe(true);
+  });
+
+  it('resolves when every write does', async () => {
+    await expect(settleAll([Promise.resolve(), Promise.resolve('x')])).resolves.toBeUndefined();
   });
 });
 

@@ -16,7 +16,8 @@
 - Runs the character state machine (`src/character/`, `transitionCharacter`) and derives what is never stored:
   `reputationOf`, `affinityOf`, `titleOf`. Decides levels: `canTake` (which ranks the Steward may give a level),
   `aboveCeiling` (a stretch that makes the quest wait for the royal seal) and `levelChange` (counting only the
-  verdicts since the last change, `level_since`).
+  verdicts since the last change, `level_since`); the owner's `set_level` through `setLevelLine` (the line, or
+  `invalid_level`/`same_level`) and `withLevel` (P1-29).
 - Plans the Steward's tick (`src/dispatch/`): `planTick(snapshot, now)` returns what the Steward and the sandbox
   carry out in one tick: characters on a fail streak sent to the Temple (`failStreakReached`), claimed quests
   that start, a judge (or the machine) for each submitted quest, the submitted quests no judge of the roster may
@@ -26,7 +27,9 @@
   From P1-05 a character's pool must be open (`poolOpenOf`), and paused quests whose pool woke go on before
   any new work (`wakes`, `wakesOf`). `resumedSession` decides whether a revived assignee continues its CLI
   session (an answer within `resume_after_answer_minutes`, mana with `resume_after_mana`, an adapter that can
-  resume); `answeredAlready` knows a question the owner answered.
+  resume); `answeredAlready` knows a question the owner answered. `namedAssignee` checks the character the
+  owner names for a quest (`reassign`, `create_quest.assignee`): known, of the class, not suspended, of an enabled
+  tribe, the level aside; `questFromCommand` refuses an assignee it rejects before the quest exists (P1-29).
 - Decides the breakers (`src/breaker/`, §3.4, P1-06): `evaluateBreakers(attempt, limits, now, usage)` → `ok` or
   the first trip of `time` (on the minute `budget.max_minutes` is spent), `tokens` or `turns` (once past
   `budget.max_tokens`, `breakers.max_turns`); `breakersOf` applies it to the sessions the Steward holds

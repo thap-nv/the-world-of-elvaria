@@ -13,6 +13,7 @@ import {
   entryOf,
   gazetteerBlock,
   partialBlock,
+  patchBlock,
   questBlock,
   readOnlyBlock,
   scriptureBlock,
@@ -92,6 +93,7 @@ function assigneePrompt(input: AssigneePromptInput, t: PromptTemplates): BuiltPr
     apprentice: policy.apprentice === null ? '' : t.apprentice,
     shell: shellBlock(policy, t),
     read_only: readOnlyBlock(policy, input.territory, t),
+    patch: patchBlock(policy, t),
     handover_template: fenced(fill(t.handover, { quest_id: quest.id }), 'markdown'),
   });
   return {

@@ -17,6 +17,7 @@ import type {
   AgentRunner,
   CheckRun,
   CommitOutcome,
+  PatchOutcome,
   PlotFailure,
   PromptTemplates,
   ReleasedPlot,
@@ -119,6 +120,11 @@ export interface Plots {
   prepare(quest: Quest, territory: Territory): Promise<PreparedPlot>;
   /** `git add --all` + commit with the territory's hooks (never bypassed): `refused` keeps the work in place. */
   commit(plot: Quest['plot'], message: string): Promise<CommitOutcome>;
+  /**
+   * Before the submit commit (P1-28): the assignee's PATCH_FILE, applied when `patchPaths` (laws.patch_paths) allow
+   * every path it touches, then deleted; `none` without a patch or without git, `refused` (the patch stays) else.
+   */
+  applyPatch(plot: Quest['plot'], patchPaths: readonly string[]): Promise<PatchOutcome>;
   /** The territory's checks for the paths the quest touched, one after another in the plot (§3.2). */
   check(request: PlotCheck): Promise<readonly CheckRun[]>;
   /**

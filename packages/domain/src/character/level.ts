@@ -1,6 +1,7 @@
-// Levels decide which quest ranks a character takes (implementation-plan §2.6; product plan 0.7 §6). Both
-// functions are pure: the Steward calls levelChange after writing a verdict into the window, and canTake while
-// choosing an assignee (selectAssignee, §3.1).
+// Levels decide which quest ranks a character takes (implementation-plan §2.6; product plan 0.7 §6). All pure: the
+// Steward calls levelChange after writing a verdict into the window, canTake while choosing an assignee
+// (selectAssignee, §3.1), and setLevelLine + withLevel for the owner's set_level (P1-29).
+import { err, ok } from '../core/result.ts';
 import { RANKS } from '../schema/common.ts';
 import { CHARACTER_LEVEL_MAX } from '../schema/character/constants.ts';
 import {
@@ -11,6 +12,7 @@ import {
   RANK_CEILING_BY_LEVEL,
 } from './constants.ts';
 import { reputationOf } from './reputation.ts';
+import type { Result } from '../core/result.ts';
 import type { Rank } from '../schema/common.ts';
 import type { Character } from '../schema/character/character.ts';
 
@@ -57,3 +59,36 @@ export function levelChange(character: Pick<Character, 'level' | 'level_since' |
   if (verdicts >= LEVEL_DOWN_MIN_VERDICTS && rate < LEVEL_DOWN_PCT) return Math.max(level - 1, 1);
   return level;
 }
+
+/** The line a level change writes: up or down. */
+export type LevelLine = 'character.level_up' | 'character.level_down';
+
+/** Why the owner's set_level is refused; the Steward writes the code as `command.rejected.reason`. */
+export interface SetLevelError {
+  readonly code: 'invalid_level' | 'same_level';
+}
+
+/**
+ * The owner's `set_level` (P1-29): the line it writes, or why it is refused (a level outside 1–10, or the one the
+ * character has). Unlike levelChange it moves any number of levels, either way, whatever the window says: the
+ * owner corrects a starting level the verdicts would take weeks to reach.
+ */
+export function setLevelLine(
+  character: Pick<Character, 'level'>,
+  level: number,
+): Result<LevelLine, SetLevelError> {
+  if (!Number.isInteger(level) || level < 1 || level > CHARACTER_LEVEL_MAX)
+    return err({ code: 'invalid_level' });
+  if (level === character.level) return err({ code: 'same_level' });
+  return ok(level > character.level ? 'character.level_up' : 'character.level_down');
+}
+
+/**
+ * The character at `level` from `at`. `level_since` moves with it, so levelChange counts only the verdicts earned
+ * at the new level, as after a level the window earned.
+ */
+export const withLevel = (character: Character, level: number, at: string): Character => ({
+  ...character,
+  level,
+  level_since: at,
+});

@@ -1,11 +1,15 @@
 // selectAssignee(quest, candidates): the character the Steward gives an open session-tier quest (implementation-plan
 // §3.1 step 6, §3.13). Filter by the required class and the level (canTake); rank by expertise on the quest's tags
 // (a character pinned to one of them first, then affinityOf), then by who has been idle the longest.
+// namedAssignee: the character the owner names instead (reassign, create_quest with an assignee; P1-29).
 import { canTake } from '../character/level.ts';
 import { affinityOf } from '../character/reputation.ts';
+import { err, ok } from '../core/result.ts';
 import { byIdleSince } from './roster.ts';
+import type { Result } from '../core/result.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Quest } from '../schema/quest/quest.ts';
+import type { Tribe } from '../schema/tribe.ts';
 
 const pinnedTo = (character: Character, quest: Quest): boolean =>
   character.pinned_tag !== null && quest.tags.includes(character.pinned_tag);
@@ -35,4 +39,31 @@ export function selectAssignee(quest: Quest, candidates: readonly Character[]): 
     ranked.find((character) => canTake(character.level, quest.rank, false)) ??
     ranked.find((character) => canTake(character.level, quest.rank, true))
   );
+}
+
+/** Why the character the owner names may not take a quest; the Steward writes it as `command.rejected.reason`. */
+export type NamedAssigneeProblem =
+  'unknown_character' | 'class_mismatch' | 'character_suspended' | 'tribe_disabled';
+export interface NamedAssigneeError {
+  readonly code: NamedAssigneeProblem;
+}
+
+/** What namedAssignee reads of a character. */
+export type AssigneeCandidate = Pick<Character, 'class' | 'status' | 'tribe'>;
+
+/**
+ * The character the owner names for a quest needing `classRequired`, when it may take it: known, of that class, not
+ * suspended, of an enabled tribe (a quest given to anyone else would wait for ever). The level is not asked:
+ * canTake bounds the Steward's own choice only, and above the ceiling the quest waits for the seal (§2.6).
+ */
+export function namedAssignee<C extends AssigneeCandidate>(
+  classRequired: string | undefined,
+  character: C | undefined,
+  tribes: readonly Pick<Tribe, 'id' | 'enabled'>[],
+): Result<C, NamedAssigneeError> {
+  if (character === undefined) return err({ code: 'unknown_character' });
+  if (character.class !== classRequired) return err({ code: 'class_mismatch' });
+  if (character.status === 'suspended') return err({ code: 'character_suspended' });
+  const enabled = tribes.some(({ id, enabled: on }) => on && id === character.tribe);
+  return enabled ? ok(character) : err({ code: 'tribe_disabled' });
 }

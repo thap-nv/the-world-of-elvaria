@@ -1422,7 +1422,7 @@
               "vi": "Tạo quest",
               "id": ["create_quest"],
               "icon": "—",
-              "remark": "Tể tướng gửi với `draft: true`"
+              "remark": "Tể tướng gửi với `draft: true`; `assignee` (tùy chọn, `quest add --to`): chỉ người đó nhận"
             },
             {
               "vi": "Trả lời câu hỏi",
@@ -1453,6 +1453,12 @@
               "id": ["pin_tag"],
               "icon": "—",
               "remark": "`tag = null` để bỏ ghim"
+            },
+            {
+              "vi": "Đặt cấp",
+              "id": ["set_level"],
+              "icon": "—",
+              "remark": "`elvaria character level`; ghi `level_since`"
             }
           ]
         },
@@ -1923,6 +1929,7 @@
               "group": "Khác",
               "types": [
                 "delivery.sent",
+                "plot.patched",
                 "chronicle.written",
                 "territory.attached",
                 "territory.surveyed",
@@ -1930,7 +1937,7 @@
                 "sandbox.replay.start",
                 "sandbox.replay.end"
               ],
-              "meaning": ""
+              "meaning": "`plot.patched`: Quản sự áp bản vá của người làm vào `laws.patch_paths` trước commit `submit` (P1-28)"
             },
             {
               "group": "Dành sẵn",

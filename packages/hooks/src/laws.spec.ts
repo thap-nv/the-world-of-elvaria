@@ -163,11 +163,19 @@ describe('read-only paths in shell lines (P1-24)', () => {
 
 describe('compileLaws', () => {
   it('compiles read-only and CLI-protected paths apart from the forbidden ones', () => {
-    const compiled = compileLaws({ read_only_paths: ['docs/glossary.md'] }, ['.husky/**']);
+    const compiled = compileLaws({ read_only_paths: ['docs/glossary.md'] }, { cliProtected: ['.husky/**'] });
     expect(compiled.paths).toEqual([]);
     expect(matchingGlobOf('docs/glossary.md', compiled.readOnly)).toBe('docs/glossary.md');
     expect(matchingGlobOf('C:\\repo\\.husky\\pre-push', compiled.cliProtected)).toBe('.husky/**');
     expect(forbiddenPathOf('docs/glossary.md', compiled)).toBeUndefined();
+  });
+
+  it('compiles the patch paths only with the file the patch goes to (P1-28)', () => {
+    const laws = { patch_paths: ['.husky/**'] };
+    const patched = compileLaws(laws, { cliProtected: ['.husky/**'], patchFile: 'elvaria.patch' });
+    expect(matchingGlobOf('.husky/pre-push', patched.patchPaths)).toBe('.husky/**');
+    expect(patched.patchFile).toBe('elvaria.patch');
+    expect(compileLaws(laws, { cliProtected: ['.husky/**'] }).patchPaths).toEqual([]);
   });
 
   it('breaks the laws on a pattern that is not a regular expression', () => {

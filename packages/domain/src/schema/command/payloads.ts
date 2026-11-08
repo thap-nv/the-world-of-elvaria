@@ -23,6 +23,7 @@ import {
   RankSchema,
   unique,
 } from '../common.ts';
+import { CHARACTER_LEVEL_MAX } from '../character/constants.ts';
 import {
   CAMPAIGN_NAME_MAX_LENGTH,
   QUEST_TAGS_MAX,
@@ -83,6 +84,11 @@ export const CloseCampaignPayloadSchema = z.strictObject({
 });
 
 const SCRIPT_TIER = { properties: { tier: { const: 'script' } }, required: ['tier'] };
+// An absent tier is a session quest (the default), so only an explicit script tier refuses an assignee.
+const NAMED_ASSIGNEE = {
+  if: { required: ['assignee'] },
+  then: { properties: { draft: { const: false } }, not: SCRIPT_TIER },
+};
 
 export const CreateQuestPayloadSchema = z
   .strictObject({
@@ -119,6 +125,11 @@ export const CreateQuestPayloadSchema = z
       .optional()
       .meta(describe("The Chancellor's one follow-up question; the draft is created with blocked.question.")),
     created_by: z.enum(['chancellor', 'user', 'council', 'patrol', 'battle', 'campaign']),
+    assignee: CharacterIdSchema.optional().meta(
+      describe(
+        'The character the owner gives the quest to (`elvaria quest add --to`, P1-29): only it takes the quest, as after a reassign naming it; its level aside, a rank above its ceiling makes the quest wait for the royal seal. Only for a session-tier quest created open (draft = false). The Steward refuses the command, creating no quest, when the character is unknown, of another class, suspended or of a disabled tribe.',
+      ),
+    ),
   })
   .superRefine((payload, ctx) => {
     // `tier` is already defaulted here: an absent tier is a session quest, as in the contract's second rule.
@@ -132,15 +143,24 @@ export const CreateQuestPayloadSchema = z
         message: 'a session-tier quest needs class_required',
       });
     }
+    // A draft opens only at confirm, and a script runs without anyone: neither has a moment to give it away.
+    if (payload.assignee !== undefined && (payload.draft || payload.tier === 'script')) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['assignee'],
+        message: 'an assignee needs a session-tier quest created open',
+      });
+    }
   })
   .meta({
     ...describe(
       'draft = true when it comes from the Chancellor (quest starts in `draft`, needs confirm); false for `elvaria quest add` (starts `open`). The Steward writes the quest file.',
     ),
-    // The same two rules as the superRefine above, for readers of the JSON contract.
+    // The same three rules as the superRefine above, for readers of the JSON contract.
     allOf: [
       { if: SCRIPT_TIER, then: { required: ['script'] } },
       { if: { not: SCRIPT_TIER }, then: { required: ['class_required'] } },
+      NAMED_ASSIGNEE,
     ],
   });
 
@@ -157,6 +177,15 @@ export const AnswerPayloadSchema = z
   .meta(describe('Answer to blocked.question; written into handover.md.'));
 
 export const SetRankPayloadSchema = z.strictObject({ quest: QuestIdSchema, rank: RankSchema });
+
+// The owner's changes to a character's own fields (P1-29): one payload each, `character` plus the new value.
+export const SetLevelPayloadSchema = z
+  .strictObject({ character: CharacterIdSchema, level: z.int().min(1).max(CHARACTER_LEVEL_MAX) })
+  .meta(
+    describe(
+      "The owner sets a character's level (`elvaria character level`), any number of levels up or down. The Steward writes it with level_since = now, so levelChange counts only the verdicts after it, and appends character.level_up or character.level_down as the owner's. Refused when the character already has that level.",
+    ),
+  );
 
 export const AttachTerritoryPayloadSchema = z.strictObject({
   path: AbsPathSchema,

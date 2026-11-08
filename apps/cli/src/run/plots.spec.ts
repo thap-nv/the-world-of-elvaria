@@ -32,6 +32,7 @@ describe("plots' checks with a quest's secrets", () => {
         status: unused,
         touched: () => Promise.resolve(['notes/today.md']),
         commitAll: unused,
+        applyPatch: unused,
         diff: unused,
         release: unused,
       };

@@ -1,5 +1,6 @@
 // Every command of `elvaria`, in the order help lists them. Later tasks add theirs here: tribe (P1-19).
 import { CHARACTER_ADD } from './character/add.ts';
+import { CHARACTER_LEVEL } from './character/level.ts';
 import { CHARACTER_LIST } from './character/list.ts';
 import { CHARACTER_RELEASE, CHARACTER_SUSPEND } from './character/suspend.ts';
 import { DOCTOR } from './doctor/doctor.ts';
@@ -31,6 +32,7 @@ export const COMMANDS: readonly CommandSpec[] = [
   CHARACTER_LIST,
   CHARACTER_SUSPEND,
   CHARACTER_RELEASE,
+  CHARACTER_LEVEL,
   SAY,
   QUEST_ADD,
   QUEST_LIST,
