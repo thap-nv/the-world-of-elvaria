@@ -43,9 +43,19 @@ export interface PlotManagerOptions {
   readonly forget?: readonly ForgetWorktree[];
 }
 
+/** The quest's `secrets_required`, treasury name → value: what `commands.setup` gets in its env (P1-30). */
+export type PlotSecrets = Readonly<Record<string, string>>;
+
 export interface PlotManager {
-  /** Idempotent: the same quest and territory give the same plot, and setup runs until it succeeds once. */
-  prepare(quest: Pick<Quest, 'id'>, territory: Territory): Promise<Result<PreparedPlot, PlotFailure>>;
+  /**
+   * Idempotent: the same quest and territory give the same plot, and setup runs until it succeeds once, with
+   * `secrets` over the host's minimal env and their values masked in its log (P1-30); a folder plot has no setup.
+   */
+  prepare(
+    quest: Pick<Quest, 'id'>,
+    territory: Territory,
+    secrets?: PlotSecrets,
+  ): Promise<Result<PreparedPlot, PlotFailure>>;
   status(plot: Plot): Promise<PlotStatus>;
   /** Paths the quest changed, relative to the plot with `/`: what `runChecks` selects checks by. */
   touched(plot: Plot): Promise<string[]>;
@@ -77,6 +87,7 @@ async function prepareGitPlot(
   quest: Pick<Quest, 'id'>,
   territory: Territory,
   options: PlotManagerOptions,
+  secrets: PlotSecrets | undefined,
 ): Promise<Result<PreparedPlot, PlotFailure>> {
   const repo = fromPortable(territory.path);
   const common = await git(repo, ['rev-parse', '--path-format=absolute', '--git-common-dir']);
@@ -95,6 +106,7 @@ async function prepareGitPlot(
     record: prepared.value.record,
     command: territory.commands.setup,
     host: options.host,
+    ...(secrets === undefined ? {} : { secrets }),
   });
   if (!setup.ok) return setup;
   return ok({
@@ -115,13 +127,13 @@ export function createPlotManager(options: PlotManagerOptions): PlotManager {
   };
   const forget = options.forget ?? [];
   return {
-    prepare: async (quest, territory) => {
+    prepare: async (quest, territory, secrets) => {
       if (territory.vcs.type !== 'git') {
         return ok({ ...(await prepareFolder(options.kingdom, quest.id)), setup: null });
       }
       const resolved = await findGit();
       if (resolved === undefined) return err({ reason: 'git_missing', detail: 'git is not found' });
-      return prepareGitPlot(resolved, quest, territory, options);
+      return prepareGitPlot(resolved, quest, territory, options, secrets);
     },
     status: async (plot) =>
       plot.type === 'worktree' ? worktreeStatus(await git(), worktreeOf(plot)) : NO_GIT_STATUS,

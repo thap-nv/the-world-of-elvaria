@@ -55,8 +55,8 @@ export function gitPlots(kingdom: string): Plots {
   const host = { resolve: (name: string) => Promise.resolve({ file: name, args: [] }), env: childEnv() };
   const manager = createPlotManager({ kingdom, host });
   return {
-    prepare: async (quest, territory) => {
-      const prepared = await manager.prepare(quest, territory);
+    prepare: async (quest, territory, secrets) => {
+      const prepared = await manager.prepare(quest, territory, secrets);
       if (!prepared.ok) throw new Error(`fixture: ${prepared.error.detail}`);
       const { plot } = prepared.value;
       return { plot, cwd: fromPortable(plot.path ?? '') };

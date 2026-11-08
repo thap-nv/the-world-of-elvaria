@@ -1,11 +1,13 @@
 // `commands.setup` runs once per worktree plot (implementation-plan §3.3: `pnpm install` against the global store),
 // and again on the next prepare only while it has not succeeded, so a setup killed halfway is not taken as done.
+// It gets the quest's secrets the way its checks do (P1-30, §3.9): an install from a private registry needs the
+// token the session would get, and its log loses their values when it closes.
 import { err, ok } from '@elvaria/domain';
 import type { Result } from '@elvaria/domain';
 
 import { openLog, runLine } from '../checks/logged-run.ts';
 import type { ProcessHost } from '../process/program.ts';
-import { MS_PER_MINUTE } from '../checks/run-checks.ts';
+import { MS_PER_MINUTE, withSecrets } from '../checks/run-checks.ts';
 import { writePlotRecord } from './plot-record.ts';
 import type { PlotRecord } from './plot-record.ts';
 import type { PlotFailure } from './worktree.ts';
@@ -31,6 +33,11 @@ export interface SetupInput {
   readonly record: PlotRecord;
   readonly command: string | undefined;
   readonly host: ProcessHost;
+  /**
+   * The quest's `secrets_required`, treasury name → value (P1-30): added to the host's minimal env with sessionEnv
+   * (no `ELVARIA_*`: setup is not a session) and masked in the setup's log. Absent or empty: the minimal env alone.
+   */
+  readonly secrets?: Readonly<Record<string, string>>;
 }
 
 /** null when the territory has no setup or it already succeeded in this worktree. */
@@ -38,10 +45,11 @@ export async function runSetup(input: SetupInput): Promise<Result<SetupRun | nul
   const { command, record } = input;
   if (command === undefined || record.setup_done) return ok(null);
   const logPath = setupLogOf(input.quest_id);
-  const log = await openLog(input.kingdom, logPath, `$ ${command}`);
+  const given = withSecrets(input.host, input.secrets);
+  const log = await openLog(input.kingdom, logPath, `$ ${command}`, given.known);
   const run = await runLine(
     command,
-    { cwd: input.worktree, host: input.host },
+    { cwd: input.worktree, host: given.host },
     log,
     SETUP_TIMEOUT_MS,
   ).finally(() => log.close());
