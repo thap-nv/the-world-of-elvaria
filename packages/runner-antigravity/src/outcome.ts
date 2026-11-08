@@ -46,6 +46,28 @@ export function rateLimitOf(error: AgyError | undefined, result: AgyResult | und
     : undefined;
 }
 
+/**
+ * `Resets in 4h53m54s.` in agy's quota error (agy 1.5.3, P1-16; spike §13), or the changelog's `reset after
+ * 2h31m12s`: how long until the window resets.
+ */
+const RESETS_IN = /(?:Resets in|reset after)\s*((?:\d+[hms]\s*)+)/i;
+const UNIT = /(\d+)([hms])/g;
+const SECONDS = { h: 3600, m: 60, s: 1 } as const;
+const MS_PER_SECOND = 1000;
+
+/**
+ * The reset a quota error names, `now` (epoch ms) plus its `Resets in …` (P1-22), so the Steward probes the pool
+ * just after it instead of after probe_interval_minutes; undefined when the words do not say.
+ */
+export function resetsAtOf(text: string, now: number): string | undefined {
+  const span = RESETS_IN.exec(text)?.[1];
+  if (span === undefined) return undefined;
+  let total = 0;
+  for (const [, count, unit] of span.matchAll(UNIT))
+    total += Number(count) * SECONDS[unit as keyof typeof SECONDS];
+  return new Date(now + total * MS_PER_SECOND).toISOString();
+}
+
 export interface Ending {
   readonly exit_code: number | null;
   readonly result: AgyResult | undefined;

@@ -1,5 +1,6 @@
 // agy's stream-json (spike P1-12a §5): `init` names the session, `step_update` lines carry text, token usage and
 // tool results, `result` ends the run. Steps of a sub-agent's conversation are not this session's.
+import { countedTokens } from '@elvaria/runner-core';
 import type { PermissionDenial, RunnerSignal } from '@elvaria/runner-core';
 
 export interface AgyResult {
@@ -14,8 +15,9 @@ export interface AgyResult {
 
 export interface StreamState {
   readonly session: string | undefined;
-  /** Tokens of this run: the sum of its own steps. `result.usage` adds up the whole conversation, earlier runs
-   * of a resumed one included (stream-resume-second.jsonl), so it is the fallback only. */
+  /** Tokens of this run: the sum of its own steps, cache reads at a tenth (`countedTokens`, P1-22; agy's
+   * `total_tokens` leaves them out). `result.usage` adds up the whole conversation, earlier runs of a resumed one
+   * included (stream-resume-second.jsonl), so it is the fallback only. */
   readonly tokens: number;
   /** Model turns: DONE `agent_response` steps (spike §1 #20; `num_turns` counts user turns). */
   readonly turns: number;
@@ -72,6 +74,8 @@ function resultOf(raw: Json): AgyResult {
 /** What the reader has seen so far; one per session. */
 interface Tally {
   session: string | undefined;
+  /** The run's own steps: `total_tokens` (input, output, thinking) and `cache_read_tokens` apart. */
+  readonly parts: { tokens: number; cache_read: number };
   tokens: number;
   turns: number;
   started: number;
@@ -96,7 +100,10 @@ function response(tally: Tally, step: Json, index: number): RunnerSignal[] {
   const text = tally.texts.get(index)?.trim() ?? '';
   tally.texts.delete(index);
   tally.turns += 1;
-  tally.tokens += numberAt(recordAt(step, 'usage'), 'total_tokens');
+  const usage = recordAt(step, 'usage');
+  tally.parts.tokens += numberAt(usage, 'total_tokens');
+  tally.parts.cache_read += numberAt(usage, 'cache_read_tokens');
+  tally.tokens = countedTokens(tally.parts);
   return [...(text === '' ? [] : [{ kind: 'text', text } as const]), { kind: 'usage', tokens: tally.tokens }];
 }
 
@@ -120,7 +127,11 @@ function result(tally: Tally, raw: Json): RunnerSignal[] {
   tally.result = resultOf(raw);
   const id = textAt(raw, 'conversation_id');
   if (id !== '') tally.session ??= id;
-  tally.result_tokens = numberAt(recordAt(raw, 'usage'), 'total_tokens');
+  const usage = recordAt(raw, 'usage');
+  tally.result_tokens = countedTokens({
+    tokens: numberAt(usage, 'total_tokens'),
+    cache_read: numberAt(usage, 'cache_read_tokens'),
+  });
   return tally.result.denied_actions.flatMap((denied) =>
     refuse(tally, denied.display_name, denied.action, 'soft-denied: no allow rule, and the run ended'),
   );
@@ -129,6 +140,7 @@ function result(tally: Tally, raw: Json): RunnerSignal[] {
 export function createStreamReader(): StreamReader {
   const tally: Tally = {
     session: undefined,
+    parts: { tokens: 0, cache_read: 0 },
     tokens: 0,
     turns: 0,
     started: 0,

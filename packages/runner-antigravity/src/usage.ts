@@ -12,6 +12,11 @@ export interface UsageBucket {
   readonly resets_at: string | null;
   /** The pool's own 5-hour or weekly limit; `gemini-argon-wtu-weekly` caps one model only. */
   readonly pool_wide: boolean;
+  /**
+   * The models of the bucket's group as the account names them (`Gemini Flash`, `Gemini Pro`), from the group's
+   * description; absent when it lists none (the Argon group says only that its quota is separate). P1-22.
+   */
+  readonly models?: readonly string[];
 }
 
 const POOLS: readonly (readonly [string, string])[] = [
@@ -20,6 +25,8 @@ const POOLS: readonly (readonly [string, string])[] = [
 ];
 const WINDOWS: Readonly<Record<string, UsageBucket['window']>> = { '5h': 'five_hour', weekly: 'weekly' };
 const POOL_WIDE = /^(?:gemini|3p)-(?:5h|weekly)$/;
+/** `Models within this group: Gemini Flash, Gemini Pro` (agy 1.5.x; spike P1-12a §7). */
+const MEMBERS = /^Models within this group:\s*(.+?)\s*$/;
 
 type Json = Record<string, unknown>;
 const records = (value: unknown): Json[] =>
@@ -27,16 +34,28 @@ const records = (value: unknown): Json[] =>
     ? value.filter((item): item is Json => typeof item === 'object' && item !== null && !Array.isArray(item))
     : [];
 
-function bucketOf(raw: Json): UsageBucket | undefined {
+/** The models a group's description lists, if it lists any. */
+function membersOf(group: Json): string[] | undefined {
+  const found = typeof group.description === 'string' ? MEMBERS.exec(group.description) : null;
+  const names = found?.[1]
+    ?.split(',')
+    .map((name) => name.trim())
+    .filter((name) => name !== '');
+  return names === undefined || names.length === 0 ? undefined : names;
+}
+
+function bucketOf(raw: Json, models: readonly string[] | undefined): UsageBucket | undefined {
   const { id, window, remaining_fraction: remaining, reset_time: reset } = raw;
   if (typeof id !== 'string' || typeof remaining !== 'number') return undefined;
+  const poolWide = POOL_WIDE.test(id);
   return {
     id,
     pool: POOLS.find(([prefix]) => id.startsWith(prefix))?.[1],
     window: typeof window === 'string' ? WINDOWS[window] : undefined,
     used_pct: Math.round(100 * (1 - remaining) * 100) / 100,
     resets_at: remaining < 1 && typeof reset === 'string' ? reset : null,
-    pool_wide: POOL_WIDE.test(id),
+    pool_wide: poolWide,
+    ...(poolWide && models !== undefined ? { models } : {}),
   };
 }
 
@@ -50,9 +69,10 @@ export function usageBuckets(stdout: string): UsageBucket[] | undefined {
   }
   const data = (value as { command?: { data?: { groups?: unknown } } } | null)?.command?.data;
   if (!Array.isArray(data?.groups)) return undefined;
-  return records(data.groups)
-    .flatMap((group) => records(group.buckets))
-    .flatMap((raw) => bucketOf(raw) ?? []);
+  return records(data.groups).flatMap((group) => {
+    const models = membersOf(group);
+    return records(group.buckets).flatMap((raw) => bucketOf(raw, models) ?? []);
+  });
 }
 
 type ReportedWindow = NonNullable<ProbeResult['windows']>[number];
@@ -62,10 +82,12 @@ const modelOf = (id: string): string => id.split('-')[1] ?? id;
 
 /**
  * The buckets as the account's windows, for the mana gauge (P1-05): every bucket of a known pool and window; a
- * bucket that caps one model (Argon) names it, so it binds only the characters on that model (§3.5).
+ * bucket that caps one model (Argon) names it, so it binds only the characters on that model (§3.5); a group's
+ * bucket lists the models the account puts in the group, so a model it leaves out (Argon on a Pro plan) is not
+ * bound by it (P1-22).
  */
 export const windowsOf = (buckets: readonly UsageBucket[]): ReportedWindow[] =>
-  buckets.flatMap(({ id, pool, window, used_pct, resets_at, pool_wide }) =>
+  buckets.flatMap(({ id, pool, window, used_pct, resets_at, pool_wide, models }) =>
     pool === undefined || window === undefined
       ? []
       : [
@@ -75,6 +97,7 @@ export const windowsOf = (buckets: readonly UsageBucket[]): ReportedWindow[] =>
             pool,
             ...(resets_at === null ? {} : { resets_at }),
             ...(pool_wide ? {} : { model: modelOf(id) }),
+            ...(models === undefined ? {} : { models }),
           },
         ],
   );

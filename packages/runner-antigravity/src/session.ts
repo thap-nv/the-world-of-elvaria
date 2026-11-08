@@ -17,7 +17,7 @@ import type {
 } from '@elvaria/runner-core';
 
 import { programOf } from './launch.ts';
-import { agyErrorOf, outcomeOf, rateLimitOf } from './outcome.ts';
+import { agyErrorOf, outcomeOf, rateLimitOf, resetsAtOf } from './outcome.ts';
 import { createStreamReader } from './stream.ts';
 import type { Launch } from './launch.ts';
 import type { StreamReader } from './stream.ts';
@@ -56,7 +56,14 @@ async function resultOf(ended: Ended): Promise<RunResult> {
   const state = reader.state;
   const error = agyErrorOf(child.stderr());
   const limit = rateLimitOf(error, state.result);
-  if (limit !== undefined) channel.push({ kind: 'rate_limit', detail: limit });
+  if (limit !== undefined) {
+    const resets = resetsAtOf(limit, Date.now());
+    channel.push({
+      kind: 'rate_limit',
+      detail: limit,
+      ...(resets === undefined ? {} : { resets_at: resets }),
+    });
+  }
   if (exit.failure !== undefined) {
     channel.push({ kind: 'text', text: `agy did not start: ${exit.failure}` });
     start.output.note(`agy did not start: ${exit.failure}`);
