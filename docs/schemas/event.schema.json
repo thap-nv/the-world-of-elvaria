@@ -493,9 +493,64 @@
             ],
             "properties": {
               "reason": {
-                "description": "e.g. breaker:time, breaker:tokens, max_attempts, script_error.",
+                "description": "The whole reason in one English line, for the bell and the chronicle, e.g. breaker:time: <detail>, max_attempts, script:broken: <detail>. Built from trip and detail since P1-32.",
                 "type": "string",
                 "minLength": 1
+              },
+              "trip": {
+                "description": "What sent the quest there: a breaker (time, tokens, turns, commit, secrets), max_attempts, or a script-tier run (script_broken, script_usage, script_fail). Absent on lines written before P1-32.",
+                "enum": [
+                  "time",
+                  "tokens",
+                  "turns",
+                  "commit",
+                  "secrets",
+                  "max_attempts",
+                  "script_broken",
+                  "script_usage",
+                  "script_fail"
+                ]
+              },
+              "detail": {
+                "description": "Absent when the trip says it all (max_attempts).",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "message": {
+                    "description": "What stopped the run, as the breaker, the territory's hook, the treasury or the script said it (not translated).",
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "patch": {
+                    "description": "trip commit: why the Steward refused the assignee's patch for laws.patch_paths (P1-28); the next run's prompt reads it back (P1-31).",
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "wip": {
+                    "description": "Why the WIP commit after the breaker was refused: the work stays in the quest's plot.",
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "apprentice_left": {
+                    "description": "An apprentice of the session ran past its minutes or was cut at its turns: its work left belongs in a child quest (§3.12).",
+                    "const": true
+                  },
+                  "script": {
+                    "description": "A script-tier quest: the catalog script that ran.",
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9-]*$"
+                  },
+                  "follow_up": {
+                    "description": "trip script_fail: the follow-up quest the catalog entry opened for the failed run (P1-17).",
+                    "type": "string",
+                    "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                  },
+                  "verifiers_stopped": {
+                    "description": "A breaker stopped this many verifiers of the run (the envelope `attempt`), so no further one opens (P1-23).",
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
               },
               "quest": {
                 "description": "The quest after this event (questViewOf). Its id is the envelope `quest`.",

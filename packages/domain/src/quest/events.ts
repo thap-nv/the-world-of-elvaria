@@ -21,6 +21,20 @@ export type QuestActor = (typeof QUEST_ACTORS)[number];
 export const BREAKER_TRIPS = ['time', 'tokens', 'turns', 'commit', 'secrets'] as const;
 export type BreakerTrip = (typeof BREAKER_TRIPS)[number];
 
+/**
+ * Why a quest is in the infirmary (`quest.infirmary` data `trip`, P1-32): the breaker that tripped, the attempts
+ * running out (a crash or a fail at max_attempts), or a script-tier run the machine could not finish: its script
+ * broke, could not use the quest's params (`usage`), or did not pass. A script past its time trips `time`.
+ */
+export const INFIRMARY_TRIPS = [
+  ...BREAKER_TRIPS,
+  'max_attempts',
+  'script_broken',
+  'script_usage',
+  'script_fail',
+] as const;
+export type InfirmaryTrip = (typeof INFIRMARY_TRIPS)[number];
+
 /** Events with nothing to say but their time. */
 const PLAIN = [
   'confirm',

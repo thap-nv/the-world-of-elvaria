@@ -114,6 +114,11 @@ describe('a session past a breaker', () => {
     ]);
     expect((await kingdom.character(started.assignee ?? '')).status).toBe('idle');
     expect((await typesOf(kingdom)).slice(-2)).toEqual(['character.swamp', 'quest.infirmary']);
+    // The line says why in parts too (P1-32): the trip, and the breaker's words in the detail.
+    expect((await openEventLog(kingdom.root).read()).events.at(-1)).toMatchObject({
+      attempt: 1,
+      data: { trip: 'time', detail: { message: 'ran 45 min, limit 45 min' } },
+    });
     // The quest waits for the owner: no second bell, no new session.
     kingdom.clock.advance(1);
     await steward.tick();

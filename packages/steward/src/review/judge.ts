@@ -7,6 +7,7 @@ import { partyOf, underPassRule, validateVerdict } from '@elvaria/domain';
 import type { Quest, Result, Verdict } from '@elvaria/domain';
 import type { RunResult } from '@elvaria/runner-core';
 
+import { OUT_OF_ATTEMPTS } from '../infirmary.ts';
 import { moveAndRing } from '../notices.ts';
 import { step } from '../record.ts';
 import { VERDICT_EVENT, moveOnVerdict, recordVerdict, ritualOf } from '../verdicts.ts';
@@ -84,7 +85,7 @@ export async function judge(
       event: { type: VERDICT_EVENT[outcome.result], ...runOf(running, result) },
       actor: 'verifier',
       edits: { [running.character]: step('verdict') },
-      reason: 'max_attempts',
+      infirmary: OUT_OF_ATTEMPTS,
     },
   );
 }

@@ -23,7 +23,9 @@
   since the quest then waits for the seal) or, without `--to`, to the Steward's choice (P1-26). `quest add --to
 <id>` names the new quest's assignee the same way (`create_quest.assignee`): only that character takes it
   (P1-29; refused on a script-tier quest). `quest show` of a quest nobody can take prints the `reassign` to its
-  best candidate. `character suspend <id> [--reason]` and `character release <id>` send `suspend` and `release` (a
+  best candidate; of a quest in the infirmary, why it went there, from the last `quest.infirmary` line of its
+  journal (`src/quest/infirmary.ts`, P1-32): the trip and the attempt, then each part of the detail, in the
+  owner's language (a line written before P1-32 shows its English reason). `character suspend <id> [--reason]` and `character release <id>` send `suspend` and `release` (a
   character the Steward would refuse, unknown, suspended already or not suspended, is refused here), and `suspend`
   says what becomes of the quest the character holds (the owner's decision after P1-26). `character level <id>
 <level>` sends `set_level` (a level outside 1–10 or the one the character has is refused here) and says the rank
@@ -49,7 +51,14 @@
   and each territory, the
   treasury file (`inspectTreasury`: present, mode 0600 outside Windows, `{ "name": "value" }`, every name a
   territory allows; names only, never a value) and, while no Steward holds its lock, the sessions a stopped one
-  left running (`sessionsLeftBehind`), which the next `run` kills (P1-11, `src/doctor/check-state.ts`).
+  left running (`sessionsLeftBehind`), which the next `run` kills (P1-11, `src/doctor/check-state.ts`), and the
+  mana gauges (P1-32, `src/doctor/check-mana.ts`): a sleeping one as a warning, an awake one with its readings,
+  "not measured" when the Steward has logged none.
+- Mana gauges for `character list` and `doctor` (`src/gauges.ts`, P1-32), folded from the Steward's `mana.*`
+  lines in the event log, since the Steward keeps no file of them: which gauges sleep (`mana.exhausted` /
+  `mana.restored`), the latest reading of each window still in force (`mana.level`, and `mana.warning` for a
+  model's own cap) with its reset. `character list` marks each character a sleeping gauge binds and lists the
+  sleeping gauges under the table.
 - `run`: puts the work engine together and runs the Steward until Ctrl+C (`CliIo.untilStopped`): a runner per
   enabled tribe from `kingdom.tribes[].adapter` (`src/run/crew.ts`: `claude_code`, with `hookCommand` and
   `HOOK_SCRIPT` of `@elvaria/hooks`, and since P1-15 `antigravity` from the pinned agy, built on first use in
@@ -68,7 +77,8 @@
 ## Depends on
 
 - `@elvaria/domain` (schemas, ids, transition table, views), `@elvaria/store` (kingdom folder, inbox, migrate),
-  `@elvaria/eventlog` (append, redact), `@elvaria/sandbox` (fake days and their replay),
+  `@elvaria/eventlog` (append, redact; reads the log for the mana gauges and a quest's journal for its infirmary
+  reason), `@elvaria/sandbox` (fake days and their replay),
   `@elvaria/registry-default` (`REGISTRY_ROOT`, `registryFiles()` for `init` and `migrate`), `@elvaria/i18n`, `@elvaria/steward`
   (the Steward, unclaimable notices), `@elvaria/runner-core` (`PlotManager`), `@elvaria/runner-claude` (the
   `claude_code` adapter), `@elvaria/runner-antigravity` (the `antigravity` adapter, P1-15), `@elvaria/hooks` (the
@@ -83,4 +93,6 @@ pnpm elvaria --help               # runs src/cli.ts directly (Node type strippin
 
 Specs run `runCli` on a fake machine (`test/cli.ts`: fixed clock, captured output) and throwaway kingdoms in
 paths with a space and a Vietnamese letter. Fake CLIs are npm-style `.cmd` shims on Windows and shebang scripts
-elsewhere; `cli.spec.ts` spawns the built bin as the owner would.
+elsewhere; `cli.spec.ts` spawns the built bin as the owner would. Lines the Steward would have written are
+planted with `openEventLog` / `openJournal`: `src/quest/infirmary.spec.ts` (the infirmary reason of `quest show`,
+old lines included), `src/gauges.spec.ts` (the gauges, and `character list` and `doctor` showing them).

@@ -44,6 +44,19 @@ describe('event line migrations', () => {
     for (const type of Object.keys(EVENT_DATA_SCHEMAS)) expect(types).toContain(type);
   });
 
+  // Tasks that add lines in parallel have picked the same id before (P1-22 took the id of a command.applied line).
+  it.each(FIXTURES)('gives every line of %s an id of its own', async (name) => {
+    const ids = (await readEventFile(path.join(HERE, name))).events.map(({ id }) => id);
+    expect(ids.filter((id, index) => ids.indexOf(id) !== index)).toEqual([]);
+  });
+
+  it('keeps an infirmary line from before P1-32, reason alone, beside one with its trip and detail', async () => {
+    const read = await readEventFile(path.join(HERE, 'v1.jsonl'));
+    const lines = read.events.filter(({ type }) => type === 'quest.infirmary').map(({ data }) => data);
+    expect(lines.some((data) => data.trip === undefined && data.detail === undefined)).toBe(true);
+    expect(lines.some((data) => data.trip !== undefined && data.detail !== undefined)).toBe(true);
+  });
+
   it('runs every step from the line v up to the current one', () => {
     const line = { v: 1, id: 'x', session: 's-1' };
     expect(migrateEvent(line, RENAME_SESSION)).toEqual({

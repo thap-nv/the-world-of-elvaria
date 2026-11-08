@@ -11,6 +11,7 @@ import {
   DOCS,
   LINKS,
   fakeScript,
+  infirmaryLine,
   infirmaryReason,
   lines,
   readJson,
@@ -87,9 +88,11 @@ describe('the script tier: a run that gives a result', () => {
       ['done', undefined],
       ['not_done', followUp.id],
     ]);
-    expect(await infirmaryReason(bench)).toBe(
-      `script:fail: link-check did not pass, see the verdict; follow-up quest ${followUp.id} opened`,
-    );
+    expect(await infirmaryLine(bench)).toMatchObject({
+      reason: `script:fail: link-check did not pass, see the verdict; follow-up quest ${followUp.id} opened`,
+      trip: 'script_fail',
+      detail: { script: 'link-check', follow_up: followUp.id },
+    });
     expect(bench.notices).toEqual([expect.objectContaining({ kind: 'infirmary' })]);
   });
 
@@ -149,14 +152,15 @@ describe('the script tier: a run that gives none', () => {
   });
 
   it.each([
-    ['a script that breaks', 'process.stderr.write("boom\\n"); process.exit(1);', 'script:broken: boom'],
+    ['a script that breaks', 'process.stderr.write("boom\\n"); process.exit(1);', 'broken', 'boom'],
     [
       'a quest the script cannot use',
       'process.stderr.write("no such check\\n"); process.exitCode = 2;',
-      'script:usage: no such check',
+      'usage',
+      'no such check',
     ],
-    ['output outside the contract', 'console.log("done");', 'script:broken: stdout is not JSON'],
-  ])('sends %s to the infirmary at once, with no retry and no follow-up', async (_, body, reason) => {
+    ['output outside the contract', 'console.log("done");', 'broken', 'stdout is not JSON'],
+  ])('sends %s to the infirmary at once, with no retry and no follow-up', async (_, body, kind, message) => {
     const bench = await kingdom.setup();
     await fakeScript(bench.root, 'link-check', body);
     await bench.command('create_quest', scriptQuest('Broken', LINKS));
@@ -164,7 +168,11 @@ describe('the script tier: a run that gives none', () => {
     const quest = await bench.quest('Broken');
     expect(quest).toMatchObject({ status: 'infirmary', attempts: 1 });
     expect(quest.attempt_log[0]?.outcome).toBe('crash');
-    expect(await infirmaryReason(bench)).toBe(reason);
+    expect(await infirmaryLine(bench)).toMatchObject({
+      reason: `script:${kind}: ${message}`,
+      trip: `script_${kind}`,
+      detail: { message, script: 'link-check' },
+    });
     expect(await bench.quests()).toHaveLength(1);
   });
 
@@ -179,6 +187,10 @@ describe('the script tier: a run that gives none', () => {
     const quest = await bench.quest('Slow');
     expect(quest.status).toBe('infirmary');
     expect(quest.attempt_log[0]?.outcome).toBe('timeout');
-    expect(await infirmaryReason(bench)).toBe('breaker:time: the script ran past 10 minutes');
+    expect(await infirmaryLine(bench)).toMatchObject({
+      reason: 'breaker:time: the script ran past 10 minutes',
+      trip: 'time',
+      detail: { message: 'the script ran past 10 minutes', script: 'link-check' },
+    });
   });
 });

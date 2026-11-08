@@ -14,8 +14,6 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { delivered, leavingRunners, noteOf } from './__fixtures__/deliver.ts';
 import { git, gitPlots, gitRepoWith, onRepo } from './__fixtures__/git-plots.ts';
 import { bench, questPayload, tickUntil, worldOfFiles } from './__fixtures__/kingdom.ts';
-import { APPRENTICE_LEFT } from './sessions/breaker.ts';
-import { patchRefusal, refusedPatchOf } from './sessions/patch.ts';
 import type { Bench } from './__fixtures__/kingdom.ts';
 import type { Steward } from './types.ts';
 import type { Quest } from '@elvaria/domain';
@@ -112,6 +110,11 @@ describe('a patch for the paths the CLI guards (P1-28)', () => {
     expect(notice?.kind === 'infirmary' ? notice.reason : notice).toContain(
       `breaker:commit: ${PATCH_FILE} was not applied: ${why}`,
     );
+    // The line says it in parts (P1-32): the trip, and why the patch was refused, apart from the hook's words.
+    const [line] = await linesOf(kingdom, 'quest.infirmary');
+    const refused = expect.stringContaining(why) as unknown;
+    expect(line?.data).toMatchObject({ trip: 'commit', detail: { patch: refused } });
+    expect(Object.keys(line?.data.detail ?? {})).toEqual(['patch']);
     const worktree = worktreeOf(quest);
     // Nothing committed, nothing applied: the patch waits in the plot for the owner.
     expect(git(worktree, 'log', '--format=%s')).toBe('first');
@@ -170,21 +173,5 @@ describe('after the patch (P1-31)', () => {
     expect(second).toContain('## The patch that was not applied');
     expect(second).toContain('```text\nit does not apply: error: patch failed: .husky/pre-push:1');
     expect(first).not.toContain('The patch that was not applied');
-  });
-});
-
-describe('refusedPatchOf (P1-31)', () => {
-  it("reads why from a refused patch's infirmary reason, without the note for the owner", () => {
-    const why = 'it touches src/app.ts, outside laws.patch_paths (.husky/**)';
-    expect(refusedPatchOf(`breaker:commit: ${patchRefusal(why)}`)).toBe(why);
-    expect(refusedPatchOf(`breaker:commit: ${patchRefusal(why)}${APPRENTICE_LEFT}`)).toBe(why);
-  });
-
-  it.each([
-    'breaker:commit: husky - pre-commit script failed',
-    `breaker:time: ${patchRefusal('it does not apply')}`,
-    'max_attempts',
-  ])('is undefined for any other reason: %s', (reason) => {
-    expect(refusedPatchOf(reason)).toBeUndefined();
   });
 });

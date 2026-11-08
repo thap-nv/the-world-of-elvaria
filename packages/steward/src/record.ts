@@ -30,7 +30,9 @@ import type {
 import type { EventLog } from '@elvaria/eventlog';
 import type { KingdomStore } from '@elvaria/store';
 
+import { OUT_OF_ATTEMPTS, infirmaryData } from './infirmary.ts';
 import { describeIssue } from './world.ts';
+import type { InfirmaryCause } from './infirmary.ts';
 import type { Logger } from './types.ts';
 import type { World } from './world.ts';
 
@@ -49,8 +51,8 @@ export interface Move {
   readonly edits?: Edits;
   /** Fields set before the event, e.g. the plot a start prepared (no event of the table writes it). */
   readonly before?: Partial<Quest>;
-  /** `quest.infirmary` lines say why (§3.4). */
-  readonly reason?: string;
+  /** Why, should the move land in the infirmary (§3.4, P1-32); OUT_OF_ATTEMPTS when it does not say. */
+  readonly infirmary?: InfirmaryCause;
 }
 
 /** A line about something the files do not keep: verdict.*, command.*. */
@@ -183,7 +185,9 @@ async function move(deps: RecorderDeps, request: Move): Promise<Result<Quest, st
   const type = questLogTypeOf(event.type, found.status, after.value.status);
   const session = 'session_id' in event ? event.session_id : undefined;
   const data = {
-    ...(type === 'quest.infirmary' ? { reason: request.reason ?? 'max_attempts' } : {}),
+    ...(type === 'quest.infirmary'
+      ? infirmaryData(request.infirmary ?? OUT_OF_ATTEMPTS, currentRun(after.value))
+      : {}),
     quest: questViewOf(after.value),
     ...(moved.value.length > 0 ? { characters: moved.value.map(characterViewOf) } : {}),
   };

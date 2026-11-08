@@ -35,6 +35,11 @@
   its minutes or cut at its turns, the reason asks the owner for a child quest for the work it left (§3.12). A quest whose secrets the treasury lacks, or its territory no longer
   allows, goes to the infirmary (`breaker:secrets`) instead of being claimed and released every tick; an
   owner's answer to such a blocked quest is refused (`secrets_lacking`).
+- Says why a quest goes to the infirmary once, as a cause (`src/infirmary.ts`, P1-32): a `trip` (the breaker, or
+  `max_attempts`, `script_broken`, `script_usage`, `script_fail`) and a `detail` (what was said, a refused patch,
+  a WIP commit refused, an apprentice cut short, the script and its follow-up, the verifiers stopped). The
+  `quest.infirmary` line carries both, beside the one English `reason` built from them for the bell and the
+  chronicle, worded as before P1-32.
 - Keeps the pid of every session it holds in `.state/sessions.json` (written before each tick ends, emptied at
   stop). At start, before the first tick, it kills the tree of each pid the last Steward left there whose process
   started when that session was spawned (`processStartOf`, within a minute), and leaves a pid that now belongs to
@@ -97,9 +102,9 @@
   a commit the territory's hooks refuse sends the quest to the infirmary, `breaker:commit`; before it, on a
   territory with `laws.patch_paths`, the assignee's `elvaria.patch` is applied through `Plots.applyPatch` and told
   in a `plot.patched` line, and a patch that touches other paths or does not apply sends the quest to the
-  infirmary instead, `breaker:commit: elvaria.patch was not applied: …`, P1-28; the next run's prompt reads that
-  reason back from the run's `quest.infirmary` line in the quest's journal, `continuationOf` and `refusedPatchOf`,
-  P1-31), a question (`ask`;
+  infirmary instead, `breaker:commit: elvaria.patch was not applied: …`, P1-28; the next run's prompt reads why
+  back from the run's `quest.infirmary` line in the quest's journal, `continuationOf` and `refusedPatchOf`:
+  `detail.patch` since P1-32, the reason's prefix on an older line, P1-31), a question (`ask`;
   one the owner already answered, left in the letter, is a submit), mana out, a crash, the CLI's turn or budget
   limit (breaker). For a verifier: the verdict file (a partial one as `<quest>-<n>-p<k>`), the ritual's pass rule
   over the checks (`underPassRule`), `validateVerdict`, `verdict.*`, the move, the assignee's windows and fail
@@ -189,6 +194,8 @@ cannot follow; assignees leave their files in the plot through `leavingRunners` 
 `patch.spec.ts` applies or refuses an assignee's `elvaria.patch` on real git repos (`src/__fixtures__/git-plots.ts`,
 P1-28), then checks that the delivery note names exactly the patched paths and has no such section without a patch,
 and that the run after a refused patch reads why in its prompt while the first run does not (P1-31).
+`infirmary.spec.ts` builds the reason of every trip from its detail, word for word as before P1-32, and reads a
+refused patch back from a new line and from an older one (P1-32).
 `scripts.spec.ts` copies the real `link-check` and `run-check` of `packages/registry-default/scripts/` into the
 kingdom (`src/__fixtures__/scripts.ts`) and takes script quests all the way with no runner asked: a link check
 that passes, one with a dead link and its scribe's follow-up, a territory check run from its resolved argv and its

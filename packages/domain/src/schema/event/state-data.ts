@@ -4,7 +4,15 @@
 // snapshot can always be rebuilt from the log (ADR 0003, ADR 0004).
 import { z } from 'zod';
 
-import { CharacterIdSchema, ClassIdSchema, REGISTRY_ID_PATTERN, TribeIdSchema } from '../../core/ids.ts';
+import {
+  CharacterIdSchema,
+  ClassIdSchema,
+  QuestIdSchema,
+  REGISTRY_ID_PATTERN,
+  SCRIPT_ID_PATTERN,
+  TribeIdSchema,
+} from '../../core/ids.ts';
+import { INFIRMARY_TRIPS } from '../../quest/events.ts';
 import { NonEmptyStringSchema, RANKS } from '../common.ts';
 import { CharacterViewSchema } from '../../world/character-view.ts';
 import { QuestViewSchema } from '../../world/quest-view.ts';
@@ -28,12 +36,73 @@ const QUEST_CHANGE = {
 
 export const QuestChangeDataSchema = z.strictObject(QUEST_CHANGE);
 
+/**
+ * The parts of an infirmary reason (P1-32), each a piece the Steward used to write into `reason` alone. All optional:
+ * a trip says only what it knows.
+ */
+export const InfirmaryDetailSchema = z
+  .strictObject({
+    message: NonEmptyStringSchema.optional().meta(
+      describe(
+        "What stopped the run, as the breaker, the territory's hook, the treasury or the script said it (not translated).",
+      ),
+    ),
+    patch: NonEmptyStringSchema.optional().meta(
+      describe(
+        "trip commit: why the Steward refused the assignee's patch for laws.patch_paths (P1-28); the next run's prompt reads it back (P1-31).",
+      ),
+    ),
+    wip: NonEmptyStringSchema.optional().meta(
+      describe("Why the WIP commit after the breaker was refused: the work stays in the quest's plot."),
+    ),
+    apprentice_left: z
+      .literal(true)
+      .optional()
+      .meta(
+        describe(
+          'An apprentice of the session ran past its minutes or was cut at its turns: its work left belongs in a child quest (§3.12).',
+        ),
+      ),
+    script: z
+      .string()
+      .regex(SCRIPT_ID_PATTERN)
+      .optional()
+      .meta(describe('A script-tier quest: the catalog script that ran.')),
+    follow_up: QuestIdSchema.optional().meta(
+      describe('trip script_fail: the follow-up quest the catalog entry opened for the failed run (P1-17).'),
+    ),
+    verifiers_stopped: z
+      .int()
+      .min(1)
+      .optional()
+      .meta(
+        describe(
+          'A breaker stopped this many verifiers of the run (the envelope `attempt`), so no further one opens (P1-23).',
+        ),
+      ),
+  })
+  .meta(describe('Absent when the trip says it all (max_attempts).'));
+
 export const QuestInfirmaryDataSchema = z.strictObject({
   reason: NonEmptyStringSchema.meta(
-    describe('e.g. breaker:time, breaker:tokens, max_attempts, script_error.'),
+    describe(
+      'The whole reason in one English line, for the bell and the chronicle, e.g. breaker:time: <detail>, max_attempts, script:broken: <detail>. Built from trip and detail since P1-32.',
+    ),
   ),
+  // Optional and added after v1 (P1-32): every line written before them has the reason alone, so `v` stays 1.
+  trip: z
+    .enum(INFIRMARY_TRIPS)
+    .optional()
+    .meta(
+      describe(
+        'What sent the quest there: a breaker (time, tokens, turns, commit, secrets), max_attempts, or a script-tier run (script_broken, script_usage, script_fail). Absent on lines written before P1-32.',
+      ),
+    ),
+  detail: InfirmaryDetailSchema.optional(),
   ...QUEST_CHANGE,
 });
+
+export type InfirmaryDetail = z.infer<typeof InfirmaryDetailSchema>;
 
 /**
  * An open quest no character may take (implementation-plan §3.1 "Quest không ai nhận được", P1-03): written once

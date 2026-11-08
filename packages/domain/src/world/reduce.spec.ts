@@ -104,10 +104,16 @@ describe('applyEvent', () => {
     expect(applyEvent(STATE, line('quest.unclaimable', notice))).toBe(STATE);
   });
 
-  it('applies the infirmary line like any quest line; its reason is for the chronicle', () => {
+  it.each([
+    ['written before P1-32, the reason alone', { reason: 'max_attempts' }],
+    [
+      'with its trip and detail (P1-32)',
+      { reason: 'breaker:time: x', trip: 'time', detail: { message: 'x' } },
+    ],
+  ])('applies the infirmary line like any quest line, %s; why is for the chronicle', (_, why) => {
     const view = { ...QUEST_VIEW, status: 'infirmary', verifier: null } as const;
-    const next = applyEvent(STATE, line('quest.infirmary', { reason: 'max_attempts', quest: view }));
-    expect(next.quests[QUEST_VIEW.id]?.status).toBe('infirmary');
+    const next = applyEvent(STATE, line('quest.infirmary', { ...why, quest: view }));
+    expect(next.quests[QUEST_VIEW.id]).toEqual(view);
   });
 
   it.each([
