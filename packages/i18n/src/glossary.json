@@ -1938,6 +1938,7 @@
               "group": "Khác",
               "types": [
                 "delivery.sent",
+                "plot.patched",
                 "chronicle.written",
                 "territory.attached",
                 "territory.surveyed",
@@ -1945,7 +1946,7 @@
                 "sandbox.replay.start",
                 "sandbox.replay.end"
               ],
-              "meaning": ""
+              "meaning": "`plot.patched`: Quản sự áp bản vá của người làm vào `laws.patch_paths` trước commit `submit` (P1-28)"
             },
             {
               "group": "Dành sẵn",

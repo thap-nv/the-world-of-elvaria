@@ -63,6 +63,7 @@
     "laws": {
       "forbidden_paths": [".env", ".env.*", "infra/secrets/**"],
       "read_only_paths": ["apps/api/openapi.json", "packages/shared/src/api-types.ts"],
+      "patch_paths": [".husky/**"],
       "forbidden_commands": [
         "git\\s+(-C\\s+\\S+\\s+)?push",
         "drizzle-kit\\s+(drop|push)",

@@ -130,7 +130,10 @@ export function loadContext(env: HookEnv, argv: readonly string[]): HookContext 
     laws:
       loaded?.ok === false
         ? brokenLaws(loaded.problem)
-        : compileLaws(policy.laws ?? {}, policy.cli_protected_paths),
+        : compileLaws(policy.laws ?? {}, {
+            cliProtected: policy.cli_protected_paths,
+            patchFile: policy.patch_file,
+          }),
     known: knownSecrets(env, policy.secrets ?? [], problems),
     tools: policy.tools,
     apprenticeModels: policy.apprentice_models,

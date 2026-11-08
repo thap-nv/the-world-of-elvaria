@@ -1536,6 +1536,44 @@
       "if": {
         "properties": {
           "type": {
+            "const": "plot.patched"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "The Steward applied the assignee's patch to paths of laws.patch_paths, which its CLI refuses to write, before the submit commit (implementation-plan §3.3, P1-28).",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "file",
+              "paths"
+            ],
+            "properties": {
+              "file": {
+                "description": "The patch file at the root of the plot, deleted once applied.",
+                "type": "string",
+                "minLength": 1
+              },
+              "paths": {
+                "description": "What the patch changed, relative to the plot, '/' separators.",
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
             "enum": [
               "territory.attached",
               "territory.surveyed",
@@ -1687,6 +1725,7 @@
         "command.applied",
         "command.rejected",
         "delivery.sent",
+        "plot.patched",
         "chronicle.written",
         "territory.attached",
         "territory.surveyed",

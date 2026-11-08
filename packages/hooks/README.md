@@ -28,6 +28,9 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
 - Refuses first, as an Elvaria rule, a write to the paths the adapter says its CLI refuses whatever its rules
   say (policy `cli_protected_paths`, P1-24: Claude Code's `.husky/`, `.git/`, `.claude/`…), with a reason that
   sends the exact change to the owner through the letter's Question section, instead of the CLI's bare denial.
+  When the path is one of `laws.patch_paths` and the policy names a `patch_file` (P1-28), the reason says to write
+  the change as a git patch to that file at the root of the plot, which the Steward applies when the session
+  completes, with no "do not try another way" after it.
 - Denies every sub-agent but the apprentice in `PreToolUse` on the `Agent` tool (§3.12, ADR 0017), laws or not,
   and an apprentice asked to run on a `model` outside the policy's `apprentice_models` (the models up to the
   character's own, which the adapter writes; P1-17). Every denial logs `agent.tool.blocked`, with `agent_type`

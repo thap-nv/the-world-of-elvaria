@@ -36,6 +36,10 @@ export function plotsWith(root: string, replace: Partial<Plots>, calls: string[]
       calls.push(`commit ${message}`);
       return (replace.commit ?? base.commit)(plot, message);
     },
+    applyPatch: (plot, patchPaths) => {
+      calls.push(`patch ${patchPaths.join(',')}`);
+      return (replace.applyPatch ?? base.applyPatch)(plot, patchPaths);
+    },
     check: (request) => {
       calls.push(`check ${request.run_dir}`);
       return (replace.check ?? base.check)(request);

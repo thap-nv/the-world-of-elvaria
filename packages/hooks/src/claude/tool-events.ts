@@ -58,22 +58,34 @@ export function lawViolation(call: ToolCall, laws: CompiledLaws): string | undef
   return call.command === undefined ? undefined : commandViolation(call.command, laws);
 }
 
+/** The end of a patch reason (P1-28): it says what to do instead, so no "do not try another way" follows it. */
+const PATCH_WAY = 'The Steward applies it when your session completes; do not ask the owner for it';
+
 /**
  * Why the CLI will refuse this write whatever its rules say, if it will (policy `cli_protected_paths`, P1-24).
  * Claude Code 2.1.319 checks such paths before any allow rule of `--settings`, and dontAsk turns the ask into a
  * bare "denied" (P1-16 §5.9: a knight tried Write, then Edit, on `.husky/pre-push`). Said first, the model asks the
- * owner for the change instead of retrying.
+ * owner for the change instead of retrying, or writes it as the patch the territory allows (P1-28).
  */
 export function protectedViolation(call: ToolCall, laws: CompiledLaws): string | undefined {
   if (call.kind !== 'write') return undefined;
   for (const raw of call.guarded) {
     const glob = matchingGlobOf(raw, laws.cliProtected);
-    if (glob !== undefined) {
-      return `${raw} is in a path your CLI refuses to write whatever its rules say (${glob}); finish the rest, then put the exact change in the Question section of the handover letter so the owner applies it`;
+    if (glob === undefined) continue;
+    const refused = `${raw} is in a path your CLI refuses to write whatever its rules say (${glob})`;
+    if (laws.patchFile !== undefined && matchingGlobOf(raw, laws.patchPaths) !== undefined) {
+      return `${refused}, but the territory lets the Steward change it for you: write the change as a git patch, as \`git diff\` prints it with paths from the root of your plot, to ${laws.patchFile} at the root of your plot. ${PATCH_WAY}`;
     }
+    return `${refused}; finish the rest, then put the exact change in the Question section of the handover letter so the owner applies it`;
   }
   return undefined;
 }
+
+/** What the model reads when a call is stopped, from either CLI's PreToolUse. */
+export const refusalText = (source: string, reason: string): string =>
+  reason.endsWith(PATCH_WAY)
+    ? `Elvaria ${source}: ${reason}.`
+    : `Elvaria ${source}: ${reason}. Do not try another way around it; if the work needs it, say so in handover.md.`;
 
 export function preToolUse(input: ClaudeInput, ctx: HookContext): Translation {
   const call = toolCallOf(input.raw.tool_name, input.raw.tool_input);
@@ -83,9 +95,7 @@ export function preToolUse(input: ClaudeInput, ctx: HookContext): Translation {
   const source = apprenticeRule === undefined ? 'law of this territory' : 'rule';
   const data = { tool: call.kind, reason, ...callerOf(input) };
   return translation([{ type: 'agent.tool.blocked', data }], {
-    decision: denyTool(
-      `Elvaria ${source}: ${reason}. Do not try another way around it; if the work needs it, say so in handover.md.`,
-    ),
+    decision: denyTool(refusalText(source, reason)),
   });
 }
 

@@ -80,8 +80,18 @@ describe('toolPolicyOf', () => {
     expect(policy.laws).toEqual({
       forbidden_paths: ['.env', '.env.*', 'infra/secrets/**'],
       read_only_paths: ['apps/api/openapi.json', 'packages/shared/src/api-types.ts'],
+      patch_paths: ['.husky/**'],
       forbidden_commands: [String.raw`drizzle-kit\s+(drop|push)`, NO_PUSH_COMMAND],
     });
+  });
+
+  it('keeps the patch paths of a git territory only, and opens no rule for them (P1-28)', () => {
+    const policy = toolPolicyOf({ role: 'assignee', characterClass: knight, territory: TERRITORY });
+    expect([...policy.allow, ...policy.deny].some((rule) => rule.includes('.husky'))).toBe(false);
+    const folder = { ...TERRITORY, vcs: { type: 'none' as const } };
+    const unpatched = toolPolicyOf({ role: 'assignee', characterClass: knight, territory: folder });
+    expect(unpatched.laws.patch_paths).toEqual([]);
+    expect(toolPolicyOf({ role: 'chancellor', characterClass: knight }).laws.patch_paths).toEqual([]);
   });
 
   it('lets every session read a read-only path and none write it (P1-24)', () => {

@@ -1,0 +1,85 @@
+// Plots over runner-core's PlotManager on real git repos, as `elvaria run` wires them (apps/cli/src/run/plots.ts),
+// without checks: what the patch specs need to see the Steward's commits (P1-28). Git runs without a shell, on the
+// PATH of this process and without its GIT_* variables (husky's pre-push exports GIT_DIR, implementation-plan §6).
+import { execFileSync } from 'node:child_process';
+import { mkdir, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import process from 'node:process';
+
+import { TerritorySchema, ok } from '@elvaria/domain';
+import { createPlotManager } from '@elvaria/runner-core';
+import { fromPortable, toPortable } from '@elvaria/store';
+import type { TerritoryId } from '@elvaria/domain';
+
+import type { Plots } from '../types.ts';
+import type { Bench } from './kingdom.ts';
+
+const PASSED = [
+  'PATH',
+  'Path',
+  'HOME',
+  'USERPROFILE',
+  'APPDATA',
+  'LOCALAPPDATA',
+  'TEMP',
+  'TMP',
+  'SystemRoot',
+];
+
+const childEnv = (): Record<string, string> =>
+  Object.fromEntries(
+    PASSED.flatMap((name) => (process.env[name] === undefined ? [] : [[name, process.env[name]]])),
+  );
+
+export const git = (cwd: string, ...args: string[]): string =>
+  execFileSync('git', args, { cwd, encoding: 'utf8', env: childEnv() }).trim();
+
+/** A repo on `main` whose first commit holds `files` (path → text). */
+export async function gitRepoWith(folder: string, files: Readonly<Record<string, string>>): Promise<string> {
+  await mkdir(folder, { recursive: true });
+  git(folder, 'init', '-q', '-b', 'main');
+  git(folder, 'config', 'user.name', 'Elvaria Test');
+  git(folder, 'config', 'user.email', 'test@elvaria.invalid');
+  git(folder, 'config', 'core.autocrlf', 'false');
+  for (const [file, text] of Object.entries(files)) {
+    await mkdir(path.dirname(path.join(folder, file)), { recursive: true });
+    await writeFile(path.join(folder, file), text);
+  }
+  git(folder, 'add', '--all');
+  git(folder, 'commit', '-q', '-m', 'first');
+  return folder;
+}
+
+/** Plots of PlotManager: worktrees, commits and patches for real; no check, nothing to release. */
+export function gitPlots(kingdom: string): Plots {
+  const host = { resolve: (name: string) => Promise.resolve({ file: name, args: [] }), env: childEnv() };
+  const manager = createPlotManager({ kingdom, host });
+  return {
+    prepare: async (quest, territory) => {
+      const prepared = await manager.prepare(quest, territory);
+      if (!prepared.ok) throw new Error(`fixture: ${prepared.error.detail}`);
+      const { plot } = prepared.value;
+      return { plot, cwd: fromPortable(plot.path ?? '') };
+    },
+    commit: (plot, message) => manager.commitAll(plot, message),
+    applyPatch: (plot, patchPaths) => manager.applyPatch(plot, patchPaths),
+    check: () => Promise.resolve([]),
+    scriptChecks: () => Promise.resolve([]),
+    diff: (plot) => manager.diff(plot),
+    release: () => Promise.resolve(ok({ removed: false, forget_failures: [] })),
+  };
+}
+
+/** Moves the bench's code territory to the git `repo`, with `patchPaths` as its laws.patch_paths. */
+export async function onRepo(kingdom: Bench, repo: string, patchPaths: readonly string[]): Promise<void> {
+  const read = await kingdom.store.territories.read('dc1-se-team' as TerritoryId);
+  if (!read.ok) throw new Error('fixture: no territory dc1-se-team');
+  const territory = TerritorySchema.parse({
+    ...read.value,
+    path: toPortable(repo),
+    vcs: { type: 'git', default_branch: 'main' },
+    laws: { ...read.value.laws, patch_paths: [...patchPaths] },
+  });
+  const written = await kingdom.store.territories.write(territory);
+  if (!written.ok) throw new Error(`fixture: ${written.error.message}`);
+}

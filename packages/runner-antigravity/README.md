@@ -17,7 +17,8 @@ terms_acknowledged_at, env, pools?, timeout_ms?})`. `hook` is `hookCommand()` of
   `GEMINI.md` (the system prompt, then `@[Territory law](./CLAUDE.md)` and `@[rule](./<file>)` for
   `territory.context_files`). Then checks with `agy -p /hooks` (0 tokens) that agy loaded exactly that hook.
 - Takes those three files out of the plot when the session ends, before `wait()` or `kill()` settles, and when
-  `spawn` refuses after writing them (`removeRunFiles`, P1-23): agy loads hooks only from the workspace's
+  `spawn` refuses after writing them (`removeRunFiles`, P1-23; every write settles before the refusal is thrown,
+  `settleAll`, so none lands after the clean-up): agy loads hooks only from the workspace's
   `.agents/` (or `~/.gemini/config/`, which Elvaria never touches), and a formatter the territory runs as a check
   would read them. `.agents/` goes too when empty; a file of the territory's stays. A file that will not go is
   noted in `<run_dir>/stderr.log`.

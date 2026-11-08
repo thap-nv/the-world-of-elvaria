@@ -4,7 +4,7 @@
 
 Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là một event; log chỉ ghi thêm, không bao giờ viết lại. `type` là `nhóm.hành_động`; reader giữ nguyên type lạ, renderer bỏ qua nó. Hợp đồng đầy đủ: [schemas/event.schema.json](schemas/event.schema.json); nghĩa từng nhóm và các tiền tố dành sẵn: [glossary.md](glossary.md) mục 12.
 
-57 type trong danh mục v1, 45 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
+58 type trong danh mục v1, 46 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
 
 ## Khung một dòng
 
@@ -106,6 +106,12 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 | Type | `data` |
 |---|---|
 | `delivery.sent` | object mở, chưa có schema |
+
+## `plot` · 1 type
+
+| Type | `data` |
+|---|---|
+| `plot.patched` | `file`: string (không rỗng) — The patch file at the root of the plot, deleted once applied.<br>`paths`: array of string (không rỗng) — What the patch changed, relative to the plot, '/' separators. |
 
 ## `chronicle` · 1 type
 

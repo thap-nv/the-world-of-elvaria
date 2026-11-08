@@ -3,7 +3,7 @@
 // missing decision as a block, and a soft-deny under `-p` would end the whole run (spike §1 #12).
 import { translation, withoutUndefined } from '../draft.ts';
 import { recordHandoverStart, stopGate } from '../handover.ts';
-import { lawViolation, protectedViolation } from '../claude/tool-events.ts';
+import { lawViolation, protectedViolation, refusalText } from '../claude/tool-events.ts';
 import { plotPath } from '../claude/tools.ts';
 import { modelSlugOf } from '../claude/translate.ts';
 import { agyInputOf } from './input.ts';
@@ -45,9 +45,7 @@ function preToolUse(input: AgyInput, ctx: HookContext): Translation {
   if (reason === undefined) return translation([], { decision: DEFER_TO_SETTINGS });
   const source = rule === undefined ? 'law of this territory' : 'rule';
   return translation([{ type: 'agent.tool.blocked', data: { tool: call.kind, reason } }], {
-    decision: deny(
-      `Elvaria ${source}: ${reason}. Do not try another way around it; if the work needs it, say so in handover.md.`,
-    ),
+    decision: deny(refusalText(source, reason)),
   });
 }
 

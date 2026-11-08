@@ -7,7 +7,17 @@ export interface LawsInput {
   readonly forbidden_paths?: readonly string[];
   /** Read freely, never written by a tool (P1-24): generated files, which the territory's generators rewrite. */
   readonly read_only_paths?: readonly string[];
+  /** Changed by the Steward through the assignee's patch when the CLI refuses to write them (P1-28). */
+  readonly patch_paths?: readonly string[];
   readonly forbidden_commands?: readonly string[];
+}
+
+/** What the adapter and runner-core add to the laws in the policy file. */
+export interface LawExtras {
+  /** Policy `cli_protected_paths` (P1-24). */
+  readonly cliProtected?: readonly string[] | undefined;
+  /** Policy `patch_file` (P1-28): where the assignee writes its patch; absent, no patch is offered. */
+  readonly patchFile?: string | undefined;
 }
 
 export type CompiledPaths = readonly { readonly glob: string; readonly regex: RegExp }[];
@@ -19,6 +29,9 @@ export interface CompiledLaws {
   readonly readOnly: CompiledPaths;
   /** Never written because the CLI itself refuses them (policy `cli_protected_paths`, P1-24); not a law. */
   readonly cliProtected: CompiledPaths;
+  /** Of the CLI-protected paths, those the Steward patches for the assignee (P1-28); empty without a patch file. */
+  readonly patchPaths: CompiledPaths;
+  readonly patchFile: string | undefined;
   readonly commands: readonly { readonly source: string; readonly regex: RegExp }[];
   /** Why the laws could not be loaded; then every guarded call is blocked (fail closed). */
   readonly broken: string | undefined;
@@ -28,6 +41,8 @@ export const NO_LAWS: CompiledLaws = {
   paths: [],
   readOnly: [],
   cliProtected: [],
+  patchPaths: [],
+  patchFile: undefined,
   commands: [],
   broken: undefined,
 };
@@ -42,7 +57,7 @@ const compilePaths = (globs: readonly string[] = []): CompiledPaths =>
  * compile breaks the laws instead of being skipped (the domain refuses one in territory.json; a policy file
  * written by hand may still hold one).
  */
-export function compileLaws(laws: LawsInput, cliProtected: readonly string[] = []): CompiledLaws {
+export function compileLaws(laws: LawsInput, extras: LawExtras = {}): CompiledLaws {
   const commands = [];
   for (const source of laws.forbidden_commands ?? []) {
     try {
@@ -54,7 +69,10 @@ export function compileLaws(laws: LawsInput, cliProtected: readonly string[] = [
   return {
     paths: compilePaths(laws.forbidden_paths),
     readOnly: compilePaths(laws.read_only_paths),
-    cliProtected: compilePaths(cliProtected),
+    cliProtected: compilePaths(extras.cliProtected),
+    // A policy written by hand may list patch paths without the file: then the change goes to the owner.
+    patchPaths: extras.patchFile === undefined ? [] : compilePaths(laws.patch_paths),
+    patchFile: extras.patchFile,
     commands,
     broken: undefined,
   };

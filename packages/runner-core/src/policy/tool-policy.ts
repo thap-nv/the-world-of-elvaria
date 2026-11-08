@@ -20,6 +20,11 @@ export interface ToolLaws {
   readonly forbidden_paths: readonly string[];
   /** Globs read freely but never written by a tool (generated files, P1-24); matched like forbidden_paths. */
   readonly read_only_paths: readonly string[];
+  /**
+   * Globs the Steward may change through the assignee's patch when its CLI refuses to write them (P1-28): the hook
+   * and the prompt name the convention. Empty on a territory without git, whose plot has no `git apply`.
+   */
+  readonly patch_paths: readonly string[];
   /** Regular expressions matched by the hook against shell commands, case-insensitively. */
   readonly forbidden_commands: readonly string[];
 }
@@ -40,7 +45,7 @@ export interface ToolPolicyInput {
   readonly characterClass: Pick<CharacterClass, 'tools'>;
   /** `character.tools`: a list given there replaces the class's list (schema: "Overrides of the class default"). */
   readonly character?: Pick<Character, 'tools'>;
-  readonly territory?: Pick<Territory, 'laws' | 'checks' | 'commands'>;
+  readonly territory?: Pick<Territory, 'laws' | 'checks' | 'commands' | 'vcs'>;
 }
 
 const unique = (items: readonly string[]): string[] => [...new Set(items)];
@@ -77,6 +82,7 @@ function lawsOf(territory: ToolPolicyInput['territory']): ToolLaws {
   return {
     forbidden_paths: unique([...SECRET_FILES, ...(territory?.laws.forbidden_paths ?? [])]),
     read_only_paths: unique(territory?.laws.read_only_paths ?? []),
+    patch_paths: territory?.vcs.type === 'git' ? unique(territory.laws.patch_paths) : [],
     forbidden_commands: unique([...(territory?.laws.forbidden_commands ?? []), NO_PUSH_COMMAND]),
   };
 }
