@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { InboxCommandSchema } from '../schema/command/inbox-command.ts';
-import { KINGDOM, Q1, Q2, TERRITORY, at, quest } from './__fixtures__/snapshot.ts';
+import { KINGDOM, Q1, Q2, TERRITORY, at, character, quest } from './__fixtures__/snapshot.ts';
 import { editQuest, questFromCommand, secretsBeyond, setRank } from './new-quest.ts';
 import type { CommandPayload } from '../schema/command/inbox-command.ts';
 import type { NewQuestContext } from './new-quest.ts';
@@ -36,6 +36,14 @@ const CONTEXT: NewQuestContext = {
   registry: REGISTRY,
   territories: [{ id: TERRITORY, secrets_allowed: ['npm_token'] }],
   quests: [Q2],
+  // The example kingdom enables claude and gemini, not codex.
+  characters: [
+    character('ember', { level: 1 }),
+    character('wren', { cls: 'scribe' }),
+    character('rook', { status: 'suspended' }),
+    character('vex', { tribe: 'codex' }),
+  ],
+  tribes: KINGDOM.tribes,
 };
 
 /** A create_quest payload as the inbox parses it, defaults filled. */
@@ -160,8 +168,25 @@ describe('questFromCommand', () => {
       },
     ],
     ['unknown_dependency', { depends_on: ['q_20261106_zzzzzz'] }],
+    // The owner's assignee (P1-29): a quest nobody named could take is never created.
+    ['unknown_character', { assignee: 'nobody' }],
+    ['class_mismatch', { assignee: 'wren' }],
+    ['character_suspended', { assignee: 'rook' }],
+    ['tribe_disabled', { assignee: 'vex' }],
   ])('refuses %s', (code, fields) => {
     expect(questFromCommand(payload(fields), CONTEXT)).toEqual({ ok: false, error: { code } });
+  });
+
+  it('opens a quest for a named assignee, its level aside: the Steward then gives it by a reassign', () => {
+    // ember is level 1 (ceiling F) and the quest rank D: the owner's choice is not bound by canTake.
+    const made = questFromCommand(payload({ assignee: 'ember' }), CONTEXT);
+    expect(made).toMatchObject({ ok: true, value: { status: 'open', assignee: null } });
+    // A context without the roster (the Steward's own quests) knows nobody to give a quest to.
+    const { characters: _, tribes: __, ...bare } = CONTEXT;
+    expect(questFromCommand(payload({ assignee: 'ember' }), bare)).toEqual({
+      ok: false,
+      error: { code: 'unknown_character' },
+    });
   });
 
   it('refuses what the quest schema refuses, with its issues', () => {

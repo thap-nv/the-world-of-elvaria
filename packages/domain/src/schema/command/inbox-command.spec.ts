@@ -132,6 +132,11 @@ const CASES: Record<InboxCommandKind, { valid: object; invalid: object; issue: s
     invalid: { character: 'thorn' },
     issue: 'payload.tag',
   },
+  set_level: {
+    valid: { character: 'thorn', level: 10 },
+    invalid: { character: 'thorn', level: 11 },
+    issue: 'payload.level: Too big',
+  },
 };
 const KINDS = Object.keys(CASES);
 
@@ -187,6 +192,18 @@ describe('create_quest payload', () => {
     expect(issuesOf(command('create_quest', { ...unclassed, tier: 'session' }))).toHaveLength(1);
   });
 
+  it('takes an assignee only for a session-tier quest created open', () => {
+    expect(payloadOf({ ...SESSION_QUEST, assignee: 'ember' })?.assignee).toBe('ember');
+    const refused = ['payload.assignee: an assignee needs a session-tier quest created open'];
+    expect(issuesOf(command('create_quest', { ...SESSION_QUEST, draft: true, assignee: 'ember' }))).toEqual(
+      refused,
+    );
+    expect(issuesOf(command('create_quest', { ...SCRIPT_QUEST, assignee: 'ember' }))).toEqual(refused);
+    expect(issuesOf(command('create_quest', { ...SESSION_QUEST, assignee: 'Ember' })).join()).toContain(
+      'payload.assignee',
+    );
+  });
+
   it.each([
     ['seven tags', { tags: ['a', 'b', 'c', 'd', 'e', 'f', 'g'] }, 'payload.tags: Too big'],
     ['a tag twice', { tags: ['docs', 'docs'] }, 'payload.tags: items must be unique'],
@@ -236,7 +253,7 @@ describe('inbox command narrowing', () => {
           return command.kind;
       }
     });
-    expect(seen).toEqual([QUEST, 'script', 'return', 'pin_tag']);
+    expect(seen).toEqual([QUEST, 'script', 'return', 'pin_tag', 'set_level', 'session']);
     expectTypeOf<CommandPayload<'pin_tag'>['tag']>().toEqualTypeOf<TagId | null>();
   });
 });
@@ -257,7 +274,7 @@ describe('inbox-command contract', () => {
   });
 
   it('keeps the rules zod checks in refinements', () => {
-    expect(payloadOf('create_quest')?.allOf).toHaveLength(2);
+    expect(payloadOf('create_quest')?.allOf).toHaveLength(3);
     expect(payloadOf('edit_quest')?.properties?.changes?.anyOf).toEqual(
       ['title', 'description', 'rank', 'seal_required', 'depends_on', 'budget'].map((field) => ({
         required: [field],

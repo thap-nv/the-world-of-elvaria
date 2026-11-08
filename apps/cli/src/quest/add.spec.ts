@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { foundKingdom, printed, run, tempDir, testIo } from '../../test/cli.ts';
 import { QUEST_ID, plantQuests, questFixture } from '../../test/quest.ts';
+import { CharacterIdSchema } from '@elvaria/domain';
 import type { TempDir } from '../../test/cli.ts';
 import type { InboxCommand } from '@elvaria/domain';
 
@@ -200,6 +201,75 @@ describe('elvaria quest add', () => {
     const io = testIo();
     expect(await add(io, ...required, '--kind', 'build', '--rank', 'C', '--class', 'scribe')).toBe(1);
     expect(io.printed.err).toEqual(['Kind build needs --class, one of: knight, dwarf.']);
+  });
+
+  describe('--to (P1-29)', () => {
+    const summon = (id: string, ...args: string[]) =>
+      run(testIo(), 'character', 'add', id, ...args, '--kingdom', kingdom);
+    const knightQuest = ['--kind', 'build', '--rank', 'D', '--class', 'knight'];
+
+    it('names the only character who takes the quest; above its ceiling the quest waits for the seal', async () => {
+      await summon('ember', '--class', 'knight', '--level', '1');
+      const io = testIo();
+      expect(await add(io, ...required, ...knightQuest, '--to', 'ember')).toBe(0);
+      expect(io.printed.out[0]).toBe(
+        'Sent the command to create quest «Thêm pnpm check» for ember: only ember takes it.',
+      );
+      expect(io.printed.out.at(-1)).toBe(
+        'ember is level 1 and is given up to rank F: this rank D quest waits for your royal seal when done.',
+      );
+      const [command] = await inbox();
+      expect(command?.payload).toMatchObject({ draft: false, class_required: 'knight', assignee: 'ember' });
+    });
+
+    it("says nothing more when the rank is within the character's ceiling", async () => {
+      await summon('thorn', '--class', 'knight', '--level', '4');
+      const io = testIo();
+      expect(await add(io, ...required, ...knightQuest, '--to', 'thorn')).toBe(0);
+      expect(io.printed.out).toHaveLength(2);
+    });
+
+    it('refuses a character the Steward would refuse, and --to on a script-tier quest', async () => {
+      await summon('quill', '--class', 'scribe');
+      await summon('rook', '--class', 'knight');
+      await summon('vex', '--class', 'knight', '--tribe', 'gemini', '--model', 'gemini-3.8-pro-high');
+      const store = openKingdom(kingdom);
+      const rook = await store.characters.read(CharacterIdSchema.parse('rook'));
+      const read = await store.kingdom.read();
+      if (!rook.ok || !read.ok) throw new Error('fixture');
+      await store.characters.write({ ...rook.value, status: 'suspended' });
+      const tribes = read.value.tribes.map((tribe) => ({ ...tribe, enabled: tribe.id !== 'gemini' }));
+      await store.kingdom.write({ ...read.value, tribes });
+      const errors = async (...args: string[]) => {
+        const io = testIo();
+        expect(await add(io, ...required, ...args)).toBe(1);
+        return io.printed.err;
+      };
+      expect(await errors(...knightQuest, '--to', 'nobody')).toEqual([
+        'There is no character nobody. See: elvaria character list',
+      ]);
+      expect(await errors(...knightQuest, '--to', 'quill')).toEqual([
+        'quill is a Scribe; the quest needs a Knight.',
+      ]);
+      expect(await errors(...knightQuest, '--to', 'rook')).toEqual(['rook is suspended and takes no work.']);
+      expect(await errors(...knightQuest, '--to', 'vex')).toEqual([
+        'vex is of tribe gemini, which is disabled: it takes no work until the tribe is enabled.',
+      ]);
+      const script = [
+        '--kind',
+        'batch',
+        '--rank',
+        'E',
+        '--script',
+        'link-check',
+        '--params',
+        '{"globs":["*.md"]}',
+      ];
+      expect(await errors(...script, '--to', 'rook')).toEqual([
+        '--to names who works a session; a script-tier quest (--script) runs without anyone.',
+      ]);
+      expect(await inbox()).toEqual([]);
+    });
   });
 
   it('stops when the registry does not load', async () => {

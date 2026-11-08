@@ -82,7 +82,7 @@ pnpm elvaria sandbox replay <tmp>/events/sandbox/<ngày>.jsonl --speed 20   # d�
 ELVARIA_LIVE=1 pnpm --filter @elvaria/runner-claude test              # smoke với CLI thật và hook đã build (từ P1-09) — tốn mana, chỉ khi cần
 ```
 
-`elvaria` hôm nay có `init`, `doctor`, `territory add|list`, `character add|list|suspend|release` (đình chỉ, thả nhân vật), `quest add|list|show|confirm|cancel|archive|edit|retry|reassign` (`reassign --to <nhân vật>` giao thẳng), `seal`, `return`, `answer <quest> "<câu>"` (trả lời câu hỏi của nhân vật, quest `blocked`), `run` (Quản sự, tới khi Ctrl+C), `say "<câu>"` (Tể tướng soạn nhiệm vụ nháp; cần một nhân vật nghề `chancellor`), `wake <tribe>` (Quản sự thăm dò mana của tộc ngay, sau khi đăng nhập lại), `sandbox generate|replay`, `migrate`. Vương quốc lấy từ `--kingdom` hoặc biến `ELVARIA_KINGDOM`.
+`elvaria` hôm nay có `init`, `doctor`, `territory add|list`, `character add|list|suspend|release|level` (đình chỉ, thả nhân vật, `level <id> <cấp>` đổi cấp), `quest add|list|show|confirm|cancel|archive|edit|retry|reassign` (`add --to`, `reassign --to <nhân vật>` giao thẳng), `seal`, `return`, `answer <quest> "<câu>"` (trả lời câu hỏi của nhân vật, quest `blocked`), `run` (Quản sự, tới khi Ctrl+C), `say "<câu>"` (Tể tướng soạn nhiệm vụ nháp; cần một nhân vật nghề `chancellor`), `wake <tribe>` (Quản sự thăm dò mana của tộc ngay, sau khi đăng nhập lại), `sandbox generate|replay`, `migrate`. Vương quốc lấy từ `--kingdom` hoặc biến `ELVARIA_KINGDOM`.
 
 ### Hook của repo / Repo hooks
 

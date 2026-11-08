@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { Q1, character, quest } from './__fixtures__/snapshot.ts';
-import { selectAssignee } from './select-assignee.ts';
+import { KINGDOM, Q1, character, quest } from './__fixtures__/snapshot.ts';
+import { namedAssignee, selectAssignee } from './select-assignee.ts';
 import type { Character } from '../schema/character/character.ts';
 
 const chosen = (candidates: readonly Character[], spec: Parameters<typeof quest>[1] = {}) =>
@@ -44,5 +44,27 @@ describe('selectAssignee', () => {
   it('breaks a tie by who has been idle the longest, then by id', () => {
     expect(chosen([character('thorn', { since: 20 }), character('kael', { since: 5 })])).toBe('kael');
     expect(chosen([character('thorn', { since: 5 }), character('kael', { since: 5 })])).toBe('kael');
+  });
+});
+
+describe('namedAssignee', () => {
+  // The example kingdom: claude and gemini enabled, codex disabled; a tribe it does not list is not enabled.
+  const TRIBES = KINGDOM.tribes;
+
+  it("takes the owner's character of the class whatever its level, busy or not", () => {
+    const ember = character('ember', { level: 1, status: 'working' });
+    expect(namedAssignee('knight', ember, TRIBES)).toEqual({ ok: true, value: ember });
+    const wren = character('wren', { cls: 'scribe', tribe: 'gemini' });
+    expect(namedAssignee('scribe', wren, TRIBES)).toEqual({ ok: true, value: wren });
+  });
+
+  it.each([
+    ['unknown_character', undefined],
+    ['class_mismatch', character('wren', { cls: 'scribe' })],
+    ['character_suspended', character('rook', { status: 'suspended' })],
+    ['tribe_disabled', character('vex', { tribe: 'codex' })],
+    ['tribe_disabled', character('ash', { tribe: 'mistral' })],
+  ])('refuses %s', (code, named) => {
+    expect(namedAssignee('knight', named, TRIBES)).toEqual({ ok: false, error: { code } });
   });
 });
