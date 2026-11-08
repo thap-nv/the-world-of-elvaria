@@ -50,7 +50,14 @@ describe('the default registry', () => {
       'monk',
     ]);
     expect(rituals).toHaveLength(11);
-    expect(ids(scripts)).toEqual(['link-check', 'run-check', 'count-files', 'diff-stat', 'compare-numbers']);
+    expect(ids(scripts)).toEqual([
+      'link-check',
+      'run-check',
+      'count-files',
+      'diff-stat',
+      'compare-numbers',
+      'todo-scan',
+    ]);
     expect(ids(tags)).toEqual(['frontend', 'backend', 'db', 'infra', 'i18n', 'e2e', 'docs']);
   });
 

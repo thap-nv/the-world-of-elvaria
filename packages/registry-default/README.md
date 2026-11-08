@@ -3,10 +3,10 @@
 ## Does
 
 - Ships the default registry that `elvaria init` copies into `<kingdom>/registry/` (implementation-plan §2.2):
-  11 kinds, 11 classes, 11 rituals, 5 catalog scripts, 7 tags, and one prompt per class. The package root is laid
+  11 kinds, 11 classes, 11 rituals, 6 catalog scripts, 7 tags, and one prompt per class. The package root is laid
   out like that folder.
 - Holds the catalog scripts of the script tier (ADR 0017): `link-check`, `run-check`, `count-files`,
-  `diff-stat`, `compare-numbers`, plus `scripts/common.mjs`. Each runs as
+  `diff-stat`, `compare-numbers`, `todo-scan`, plus `scripts/common.mjs`. Each runs as
   `node scripts/<id>.mjs --params <json> [--context <json>]` in the plot and prints one JSON line. A failed run of
   `link-check` hands its dead links to a `document` quest for a scribe, one of `run-check` to a `fix` quest for a
   knight (`follow_up` in `scripts.json`, P1-17).
