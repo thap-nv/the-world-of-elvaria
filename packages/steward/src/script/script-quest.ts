@@ -1,8 +1,9 @@
 // The script tier (implementation-plan §2.5, §3.12, ADR 0017): `open → claimed (no assignee) → working → review →
-// done | awaiting_seal`, all inside one tick, with no model, no secret and mana 0. The Steward runs the catalog script
-// in the plot, keeps what it said beside its log, and the machine judges from that: a result goes to review and gets
-// the verdict its contract gives; a script past its time trips the time breaker; a script that broke, or could not
-// use the quest's params, goes to the infirmary at once (Elvaria's fault or the data's, never a character's).
+// done | awaiting_seal`, with no model, no secret and mana 0. A tick claims and starts the quest, and the catalog
+// script runs in the plot outside the tick (P1-25, background.ts); its output waits beside its log, and a tick after
+// it ended judges from that: a result goes to review and gets the verdict its contract gives; a script past its time
+// trips the time breaker; a script that broke, or could not use the quest's params, goes to the infirmary at once
+// (Elvaria's fault or the data's, never a character's).
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -32,7 +33,7 @@ import { VERDICT_EVENT, moveOnVerdict, recordVerdict, ritualOf } from '../verdic
 import { openFollowUp, unitsHandedTo } from './follow-up.ts';
 import { nodeScriptRunner } from './run-script.ts';
 import type { Context } from '../context.ts';
-import type { ScriptRunResult } from './run-script.ts';
+import type { ScriptRequest, ScriptRunResult } from './run-script.ts';
 
 const MS_PER_MINUTE = 60_000;
 const JSON_INDENT = 2;
@@ -127,8 +128,8 @@ function fall(
 }
 
 /**
- * Judges the current run of a script-tier quest from its saved output: the end of every run, and what a Steward does
- * with a run the last one stopped in the middle of (`TickPlan.script_verdicts`).
+ * Judges the current run of a script-tier quest from its saved output (`TickPlan.script_verdicts`): a run that ended
+ * outside the tick, or one a Steward stopped in the middle of.
  */
 export async function judgeScript(ctx: Context, questId: QuestId): Promise<Result<Quest, string>> {
   const parts = partsOf(ctx, questId);
@@ -162,7 +163,7 @@ export async function judgeScript(ctx: Context, questId: QuestId): Promise<Resul
 }
 
 /** The script's request: the catalog file, the quest's params, and what the Steward knows that the quest may not say. */
-async function requestOf(ctx: Context, parts: Parts, cwd: string, runDir: string) {
+async function requestOf(ctx: Context, parts: Parts, cwd: string, runDir: string): Promise<ScriptRequest> {
   const checks = await ctx.deps.plots.scriptChecks(parts.territory);
   return {
     file: inKingdom(ctx.root, kingdomLayout.registryEntry(parts.script.entry)),
@@ -171,7 +172,6 @@ async function requestOf(ctx: Context, parts: Parts, cwd: string, runDir: string
     cwd,
     env: ctx.deps.env,
     timeout_ms: parts.script.timeout_minutes * MS_PER_MINUTE,
-    signal: ctx.stopping,
   };
 }
 
@@ -192,7 +192,11 @@ async function plotOf(ctx: Context, parts: Parts) {
   }
 }
 
-/** Claims an open script-tier quest, runs its script to the end and judges it (step 6 of §3.1, §3.12). */
+/**
+ * Claims an open script-tier quest and starts its script outside the tick (step 6 of §3.1, §3.12, P1-25): the output
+ * of a run that ended goes beside its log for judgeScript; a run the Steward cut short leaves none, and the quest
+ * opens again to run anew.
+ */
 export async function runScriptQuest(ctx: Context, questId: QuestId): Promise<Result<Quest, string>> {
   const found = partsOf(ctx, questId);
   if (!found.ok) return found;
@@ -210,14 +214,17 @@ export async function runScriptQuest(ctx: Context, questId: QuestId): Promise<Re
     before: { plot },
   });
   if (!started.ok) return started;
-  const files = runFilesOf(ctx, started.value, currentRun(started.value));
+  const n = currentRun(started.value);
+  const files = runFilesOf(ctx, started.value, n);
   await mkdir(files.native, { recursive: true });
   const runner = ctx.deps.scripts ?? nodeScriptRunner();
-  const run = await runner(await requestOf(ctx, { ...parts, quest: started.value }, cwd, files.native));
-  // Nothing may be read from a run the Steward cut short: the quest opens again and runs anew.
-  if (run.stopped) return runAgain(ctx, questId);
-  await save(files.native, run);
-  return judgeScript(ctx, questId);
+  const request = await requestOf(ctx, { ...parts, quest: started.value }, cwd, files.native);
+  ctx.background.script(questId, n, async (signal) => {
+    const run = await runner({ ...request, signal });
+    // Nothing may be read from a run cut short: without its output, the quest opens again and runs anew.
+    if (!run.stopped) await save(files.native, run);
+  });
+  return started;
 }
 
 /**
@@ -225,6 +232,8 @@ export async function runScriptQuest(ctx: Context, questId: QuestId): Promise<Re
  * left it without output. Its entry ends `cancelled` and the quest is open again: the next tick runs it anew.
  */
 function runAgain(ctx: Context, questId: QuestId): Promise<Result<Quest, string>> {
-  ctx.deps.log.warn(`steward: ${questId}: its script was cut short when the Steward stopped; it runs again`);
+  ctx.deps.log.warn(
+    `steward: ${questId}: its script left no output (the Steward stopped under it); it runs again`,
+  );
   return moveAndRing(ctx, { quest: questId, event: { type: 'release' }, actor: 'steward' });
 }

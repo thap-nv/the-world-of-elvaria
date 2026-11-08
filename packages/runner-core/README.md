@@ -23,7 +23,7 @@
 - Builds prompts from the Markdown templates in `prompts/` (`loadPromptTemplates`): `buildPrompt` for an
   assignee (new, or continuing after `returned` / `revive` with the letter, the last 20 journal lines, the
   branch's log and the owner's answer) and a verifier (the ritual's steps from `prompts/ritual-steps.md`, the
-  checks, the letter, the diff, or where to read it when the caller has none, and where the last judge of the
+  checks with the end of each failing one's log the caller read and masked (`PromptCheck.log_tail`, P1-25), the letter, the diff, or where to read it when the caller has none, and where the last judge of the
   run stopped when it left a `partial` verdict, P1-15); both list the shell commands
   their `ToolPolicy` allows, one per call (`prompts/shell.md`, P1-11); an assignee that edits files also reads
   the territory's read-only paths and the generators its shell may run (`prompts/read-only.md`, P1-24);
@@ -59,6 +59,8 @@
   in the hook), one at a time in the plot, each logged to `<run_dir>/checks/<id>.log`. An `exclusive` check holds
   the territory's lock (`.state/checks/<territory>-exclusive`) so two quests never run one at once; a timed-out
   check runs its `cleanup`. A check that cannot run (shell syntax, program not found, lock never freed) fails.
+  `ChecksRequest.signal` (P1-25: the Steward runs checks outside its tick) kills the running check and starts no
+  other when it aborts, the log saying so; `runProgram` takes the same `signal`.
   The log of a check or of `commands.setup` loses the secret shapes the command printed when it closes
   (`maskLogFile`, ADR 0013); the command writes straight into the file, so the masking is not line by line.
 - Starts territory programs without a shell (`runProgram`, `argvOf`, `splitCommandLine`): quoted words, shell

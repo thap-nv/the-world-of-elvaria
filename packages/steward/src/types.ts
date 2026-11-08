@@ -90,6 +90,8 @@ export interface PlotCheck {
   readonly territory: Territory;
   /** `.runs/<quest>-<n>`, portable and relative to the kingdom: the logs go to `<run_dir>/checks/<id>.log`. */
   readonly run_dir: string;
+  /** Aborted when nobody waits for the checks any more (P1-25): the Steward stopped, or the quest moved on. */
+  readonly signal?: AbortSignal;
 }
 
 /**
@@ -174,4 +176,9 @@ export interface Steward {
   tick(): Promise<TickReport>;
   /** Sessions still running: what a test waits on. */
   running(): number;
+  /**
+   * Resolves once the checks and scripts running outside the tick now have ended (P1-25): what a test waits on before
+   * the tick that reads them.
+   */
+  idle(): Promise<void>;
 }

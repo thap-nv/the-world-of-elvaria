@@ -1,4 +1,5 @@
 // What every step of one tick works with: the deps, the world as the tick sees it, the pen, the sessions.
+import type { Background } from './background.ts';
 import type { Notice, NoticeQuest, StewardDeps } from './types.ts';
 import type { ManaBook } from './mana/book.ts';
 import type { Recorder } from './record.ts';
@@ -27,8 +28,10 @@ export interface Context {
   /** Readings, sleeping pools and probe times, kept between ticks (§3.5). */
   readonly mana: ManaBook;
   readonly counts: Counts;
-  /** Aborted when the Steward stops: a catalog script running in the tick dies with it (§3.12). */
+  /** Aborted when the Steward stops: no new script starts in a tick it stops in (§3.12). */
   readonly stopping: AbortSignal;
+  /** The checks and scripts running outside the tick (P1-25). */
+  readonly background: Background;
 }
 
 /** Rings the bell; a bell that fails never stops a tick. */

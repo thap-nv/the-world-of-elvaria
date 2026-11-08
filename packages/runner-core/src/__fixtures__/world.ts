@@ -6,6 +6,7 @@ import path from 'node:path';
 
 import {
   CharacterSchema,
+  CheckIdSchema,
   QuestSchema,
   REGISTRY_FILES,
   TerritorySchema,
@@ -13,6 +14,8 @@ import {
   parseRegistry,
 } from '@elvaria/domain';
 import type { Registry } from '@elvaria/domain';
+
+import type { PromptCheck } from '../prompt/build-prompt.ts';
 
 const REGISTRY_DIR = path.join(import.meta.dirname, '..', '..', '..', 'registry-default');
 
@@ -228,3 +231,24 @@ export const DIFF = `diff --git a/package.json b/package.json
 
 export const DECREE = `- Commit messages follow Conventional Commits and say why.
 - Never add author or attribution lines to a commit.`;
+
+/** The machine checks a verifier reads: one passed, one failed with the end of its log, already masked (P1-25). */
+export const CHECKS: readonly PromptCheck[] = [
+  {
+    id: CheckIdSchema.parse('lint'),
+    pass: true,
+    duration_ms: 8200,
+    log_path: '.runs/q_20261106_7k3m2a-1/checks/lint.log',
+  },
+  {
+    id: CheckIdSchema.parse('unit'),
+    pass: false,
+    duration_ms: 41000,
+    log_path: '.runs/q_20261106_7k3m2a-1/checks/unit.log',
+    log_tail: [
+      ' FAIL  src/api/orders.spec.ts > total > applies the discount',
+      'AssertionError: expected 120 to be 108',
+      ' Test Files  1 failed | 12 passed (13)',
+    ].join('\n'),
+  },
+];

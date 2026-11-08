@@ -56,6 +56,27 @@ describe('runProgram', () => {
     expect(run.duration_ms).toBeGreaterThanOrEqual(250);
   });
 
+  it('stops a program when its signal aborts, before its timeout (P1-25)', async () => {
+    const stopping = new AbortController();
+    setTimeout(() => {
+      stopping.abort();
+    }, 300);
+    const run = await runProgram(node('setInterval(() => {}, 1000)'), {
+      ...options,
+      cwd: dir,
+      signal: stopping.signal,
+    });
+    expect(run).toMatchObject({ exit_code: null, timed_out: false });
+    expect(run.duration_ms).toBeLessThan(10_000);
+    // A signal already aborted: the program is killed as soon as it starts.
+    const late = await runProgram(node('setInterval(() => {}, 1000)'), {
+      ...options,
+      cwd: dir,
+      signal: AbortSignal.abort(),
+    });
+    expect(late).toMatchObject({ exit_code: null, timed_out: false });
+  });
+
   it('takes the whole process tree down at its timeout (P1-06)', async () => {
     const run = await runProgram(node(treeScript()), { ...options, cwd: dir, timeout_ms: 1500 });
     expect(run.timed_out).toBe(true);

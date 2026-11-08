@@ -147,10 +147,11 @@ describe('a quest that asks for secrets', () => {
     await steward.tick();
     // The assignee's session has its secret; the owner empties the treasury while it works.
     delete values.npm_token;
+    // The checks run first (P1-25); the judge that would come next cannot get the secret.
     await tickUntil(
       steward,
       kingdom.clock,
-      async () => (await kingdom.quest('Publish')).status !== 'working',
+      async () => !['working', 'review'].includes((await kingdom.quest('Publish')).status),
     );
     const quest = await kingdom.quest('Publish');
     expect(quest).toMatchObject({ status: 'infirmary', verifier: null });

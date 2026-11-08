@@ -1,7 +1,8 @@
-import { CheckIdSchema, QuestSchema } from '@elvaria/domain';
+import { QuestSchema } from '@elvaria/domain';
 import { describe, expect, it } from 'vitest';
 
 import {
+  CHECKS,
   DECREE,
   DIFF,
   JOURNAL,
@@ -56,20 +57,7 @@ const verifier: VerifierPromptInput = {
   handover: LETTER,
   diff: DIFF,
   partial: null,
-  checks: [
-    {
-      id: CheckIdSchema.parse('lint'),
-      pass: true,
-      duration_ms: 8200,
-      log_path: '.runs/q_20261106_7k3m2a-1/checks/lint.log',
-    },
-    {
-      id: CheckIdSchema.parse('unit'),
-      pass: false,
-      duration_ms: 41000,
-      log_path: '.runs/q_20261106_7k3m2a-1/checks/unit.log',
-    },
-  ],
+  checks: CHECKS,
 };
 
 const continuing: AssigneePromptInput = {
@@ -247,6 +235,18 @@ describe('verifier prompt', () => {
       'Before you name why a check failed, quote the line of its output that shows the error, verbatim',
     );
     expect(system).toContain('when you cannot see the output, say so instead of guessing');
+  });
+
+  it('shows the end of a failing check log under the checks, and no heading for an empty one (P1-25)', () => {
+    expect(buildPrompt(verifier, templates).user).toContain(
+      '## The end of the log of unit\n\n```text\n FAIL  src/',
+    );
+    const [lint, unit] = verifier.checks;
+    const { user } = buildPrompt({ ...verifier, checks: [lint!, { ...unit!, log_tail: ' \n' }] }, templates);
+    expect([user.includes('## The end of the log of'), user.includes('- unit: FAIL (41000 ms')]).toEqual([
+      false,
+      true,
+    ]);
   });
 
   it("tells a judge that agy's own files in the plot are not the assignee's work (after P1-23)", () => {

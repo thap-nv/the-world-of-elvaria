@@ -45,9 +45,11 @@ export function plotsOver(kingdom: string, manager: PlotManager, host: ProcessHo
       return { plot, cwd: cwdOf(kingdom, plot) };
     },
     commit: (plot, message) => manager.commitAll(plot, message),
-    check: async ({ plot, territory, run_dir }) => {
+    // The Steward runs them outside its tick and aborts `signal` when nobody waits for them any more (P1-25).
+    check: async ({ plot, territory, run_dir, signal }) => {
       const touched = await manager.touched(plot);
-      return runChecks({ kingdom, territory, touched, cwd: cwdOf(kingdom, plot), run_dir }, host);
+      const stop = signal === undefined ? {} : { signal };
+      return runChecks({ kingdom, territory, touched, cwd: cwdOf(kingdom, plot), run_dir, ...stop }, host);
     },
     diff: (plot) => manager.diff(plot),
     // run-check spawns these without a shell; a check whose program is not found is left out (§3.12).

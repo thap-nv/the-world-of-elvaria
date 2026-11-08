@@ -11,8 +11,14 @@
   `planTick` decides and the Steward carries it out: sessions past a breaker stop, characters on a fail streak go
   to the Temple
   (`character.suspend`, the bell), paused quests whose pool woke go on, claimed quests start, submitted quests get
-  the judge `selectVerifier` chose (or the machine's verdict under `machine_only`), returned quests go back to
-  their assignee, open quests are claimed.
+  their checks and, in a later tick once those ended, the judge `selectVerifier` chose (or the machine's verdict
+  under `machine_only`), returned quests go back to their assignee, open quests are claimed.
+- Runs the machine's long work outside the tick (P1-25, `src/background.ts`): a submitted quest's checks and a
+  script-tier run start in a tick and go on while later ticks apply the inbox, record the sessions' ends and give
+  out work; `planTick` sees which quests have work running and which have checks ready (`BackgroundWork`). The
+  work writes only into its run folder, never a quest or a character. Work for a quest that moved on (cancelled,
+  judged, retried) is killed before each plan; `stop()` kills it all and the next Steward runs it again.
+  `Steward.idle()` resolves once the work running now has ended (what a spec waits on).
 - Trips the breakers (§3.4, P1-06; `src/sessions/breaker.ts`): `planTick` names each held session past its
   minutes (`quest.budget.max_minutes`, from its own attempt_log entry), its tokens (the running total of its
   `usage` signals against `budget.max_tokens`) or its turns; the Steward sinks the assignee into the swamp, kills
@@ -75,7 +81,11 @@
   over the checks (`underPassRule`), `validateVerdict`, `verdict.*`, the move, the assignee's windows and fail
   streak (`withVerdict`), then `levelChange`.
 - Runs the territory's checks on what the quest touched before a judge's session opens (`Plots.check`: runChecks
-  of P1-07 in `elvaria run`): their results go into the judge's prompt, the verdict and `quest.checks_run`. Under
+  of P1-07 in `elvaria run`, outside the tick, its `signal` aborted when nobody waits for them any more): their
+  results go into the judge's prompt, the verdict and `quest.checks_run`; each judge of a run gets its own run of
+  them. The prompt shows the end of each failing check's log (`src/review/log-tail.ts`: the last 40 lines, at most
+  4 000 characters for all of them), masked with the session's secret values and the patterns, because the log lies
+  in `.runs/`, outside the plot, where the judge's tools do not reach. Under
   `verifier_same_family = machine_only` with no judge of another family, the machine's verdict comes from them
   alone (`verifier_id: machine`). A plan's `subquests.json` is checked the same way first (check `subquests`,
   `src/review/deliverable-checks.ts`, P1-15): what the delivery would open, or why none, so a list the Steward
@@ -86,18 +96,18 @@
 - Runs the script tier itself (§2.5, §3.12, ADR 0017; `src/script/`): a `create_quest` whose `script.params` do
   not fit the catalog's `params_schema` is refused (`invalid_script_params`); an open script-tier quest is claimed
   with no assignee, gets its plot, starts, and `node registry/scripts/<id>.mjs --params <json> --context <json>`
-  runs in the plot within the tick (`StewardDeps.scripts`, `nodeScriptRunner`): the minimal env and no secret,
+  runs in the plot outside the tick (`StewardDeps.scripts`, `nodeScriptRunner`): the minimal env and no secret,
   `--context` with the run folder and the territory's checks resolved (`Plots.scriptChecks`), its tree killed at
   `timeout_minutes`. Its output goes to `.runs/<quest>-<n>/script.log` and `script.json`; the machine judges from
-  that (`scriptVerdictOf`): a result goes to review, then done (or the seal), a failing one and a units list with
+  that in a tick after the run ended (`scriptVerdictOf`): a result goes to review, then done (or the seal), a failing one and a units list with
   open units to the infirmary with their verdict; a timeout trips the time breaker; a script that broke or could
   not use the quest goes to the infirmary at once (`script:broken`, `script:usage`). No runner is asked, mana 0.
   A failing result first opens the follow-up its catalog entry names (`follow_up: {kind, class}`, `followUpOf`):
   one open session quest, a child of the script quest (`created_by: battle`), its id derived from the quest and
   the run so a verdict judged twice opens it once; the open units point at it (`child_quest`) and the infirmary
-  reason names it. `stop()` kills a script running in the tick and opens its quest again (`release`, the run
-  `cancelled`); the next Steward judges a run it finds working or in review from `script.json`, or opens again
-  one that saved nothing.
+  reason names it. `stop()` kills a running script, which then saves nothing; the next Steward judges a run it
+  finds working or in review from `script.json`, or opens again one that saved nothing (`release`, the run
+  `cancelled`), and runs it anew.
 - Delivers every done quest once, by its kind's convention (`deliverable.type`; step 7 of §3.1, `src/deliver/`):
   a branch, file, report or draft on a git territory stays on its branch for the owner to merge by hand; a plot
   folder of a territory without git is copied into the territory (a file it replaces is kept in
@@ -152,7 +162,10 @@ cannot follow; assignees leave their files in the plot through `leavingRunners` 
 kingdom (`src/__fixtures__/scripts.ts`) and takes script quests all the way with no runner asked: a link check
 that passes, one with a dead link and its scribe's follow-up, a territory check run from its resolved argv and its
 knight's follow-up; params the catalog refuses; stand-in scripts that break, refuse the quest, print outside the
-contract or outlive a short timeout. `scripts-restart.spec.ts`: a Steward stopped in the middle of a script, one
-that died without output or before its verdict, and a follow-up opened once. `apprentice-breaker.spec.ts`: the
+contract or outlive a short timeout. `scripts-restart.spec.ts`: a script that runs on while a tick applies the
+inbox, a Steward stopped in the middle of it, one that died without output or before its verdict, and a follow-up
+opened once. `background-checks.spec.ts` (P1-25): a check that ends only when the spec says holds no tick (the
+inbox is applied meanwhile), dies when the Steward stops and runs again under the next one, dies when the quest is
+cancelled, and leaves the judge the end of its log with the treasury value and a token the patterns know masked. `apprentice-breaker.spec.ts`: the
 infirmary note after an apprentice overran or was cut. `review-breakers.spec.ts`: two verifiers stopped by the
 token breaker, or by their CLI's turn limit, send the review to the infirmary and no third opens.

@@ -112,11 +112,12 @@ describe('a review the breakers keep stopping', () => {
     const stalled = await kingdom.quest('Judged again');
     await kingdom.command('retry', { quest: stalled.id });
     await steward.tick();
-    // The same run goes on: the assignee's work stays, a new judge opens a session in the same tick.
+    // The same run goes on: the assignee's work stays; a new judge opens once its checks ended (P1-25).
+    expect(await kingdom.quest('Judged again')).toMatchObject({ status: 'review', attempts: 1 });
+    await tickUntil(steward, kingdom.clock, () => Promise.resolve(verifiersOf(spawned).length === 3));
     const retried = await kingdom.quest('Judged again');
     expect(retried).toMatchObject({ status: 'review', assignee: stalled.assignee, attempts: 1 });
     expect(retried.verifier).toEqual(expect.any(String));
-    expect(verifiersOf(spawned)).toHaveLength(3);
     // The count started over at the retry: the third judge cut leaves the review to a fourth.
     await tickUntil(steward, kingdom.clock, () => Promise.resolve(verifiersOf(spawned).length === 4));
     expect((await kingdom.quest('Judged again')).status).toBe('review');

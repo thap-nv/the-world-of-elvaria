@@ -2,33 +2,31 @@
 // kingdom (implementation-plan §3.1, ADR 0002); the Steward and the sandbox only carry the plan out. Step 3 names
 // the sessions that ran past a breaker; steps 4–6 follow, in that order, sharing one roster so a character or a
 // slot given away is gone for the next step: characters on a fail streak go to the Temple, claimed quests start,
-// submitted quests get a verifier (or the machine's verdict), returned quests go back to their assignee, open
-// quests are claimed (round-robin over territories, then rank, then age), and open quests nobody can take are named.
-// Step 7 lists the done quests still to deliver.
+// submitted quests get their checks, then a verifier or the machine's verdict (reviews.ts), returned quests go back
+// to their assignee, open quests are claimed (round-robin over territories, then rank, then age), and open quests
+// nobody can take are named. Step 7 lists the done quests still to deliver. Checks and scripts run outside the tick
+// (P1-25): a quest whose machine work still runs gets nothing more until it ends.
 import { breakersOf } from '../breaker/breakers.ts';
 import { failStreakReached } from '../character/fail-streak.ts';
 import { claimBlocker } from './claim-blocker.ts';
+import { planReviews } from './reviews.ts';
 import { rosterOf } from './roster.ts';
 import { selectAssignee } from './select-assignee.ts';
 import { wakesOf } from './wakes.ts';
 import { RANKS } from '../schema/common.ts';
-import { selectVerifier, waitsForNoJudge } from '../verify/select-verifier.ts';
-import { partyOf } from '../verify/past-assignees-of.ts';
 import type { Breaker, HeldSession } from '../breaker/breakers.ts';
 import type { ClaimBlocker } from './claim-blocker.ts';
+import type { ReviewSource, Verification } from './reviews.ts';
 import type { Roster, RosterSource } from './roster.ts';
 import type { Instant } from '../core/clock.ts';
 import type { CharacterId, QuestId, TerritoryId } from '../core/ids.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
 import type { Quest } from '../schema/quest/quest.ts';
-import type { VerifierClass } from '../verify/select-verifier.ts';
 
-export interface KingdomSnapshot extends RosterSource {
+export interface KingdomSnapshot extends RosterSource, ReviewSource {
   /** Tribes, and the rules of judging: dispatch.verifier_same_family, breakers.same_fail_suspend, max_turns. */
   readonly kingdom: Pick<Kingdom, 'tribes' | 'dispatch' | 'breakers'>;
-  /** Which classes verify which kinds. */
-  readonly registry: { readonly classes: readonly VerifierClass[] };
   /** The sessions the Steward holds, with their usage so far, for the breakers (§3.4); none in a sandbox day. */
   readonly sessions?: readonly HeldSession[];
 }
@@ -38,13 +36,6 @@ export interface Claim {
   readonly quest: QuestId;
   readonly assignee: CharacterId;
   readonly level: number;
-}
-
-export interface Verification {
-  readonly quest: QuestId;
-  readonly verifier: CharacterId;
-  /** Why this judge (selectVerifier): another model family, or the same family on another model. */
-  readonly reason: 'other_family' | 'same_family_other_model';
 }
 
 export interface Unclaimable extends ClaimBlocker {
@@ -67,7 +58,12 @@ export interface TickPlan {
   /** Claimed quests whose dependencies are done and whose assignee is free: the owner's reassigns, or a claim
    * the Steward made before it stopped. */
   readonly starts: readonly QuestId[];
-  /** Step 4: submitted session-tier quests and their verifier (selectVerifier, §3.2). */
+  /**
+   * Step 4, first (P1-25): submitted session-tier quests whose checks the Steward starts now, outside the tick; their
+   * judge, or the machine's verdict, comes in a tick after the checks ended. A quest no judge may ever take gets none.
+   */
+  readonly checks: readonly QuestId[];
+  /** Step 4: submitted session-tier quests with their checks done, and their verifier (selectVerifier, §3.2). */
   readonly verifications: readonly Verification[];
   /**
    * Step 4 too: submitted quests the machine judges alone (verifier_same_family = machine_only and no judge of
@@ -86,9 +82,9 @@ export interface TickPlan {
   /** Script-tier quests the Steward claims with no assignee and runs itself (§3.12), highest rank first. */
   readonly scripts: readonly QuestId[];
   /**
-   * Script-tier quests working or in review at the start of a tick: a script runs and is judged inside one tick, so
-   * these are runs a Steward stopped in the middle of. The machine judges each from the run's saved output, or
-   * sends it to the infirmary when the run left none (§3.12), before any script runs.
+   * Script-tier quests working or in review whose script no longer runs (P1-25: it runs outside the tick): runs that
+   * ended since the last tick, or that a Steward stopped in the middle of. The machine judges each from the run's
+   * saved output; a run that left none is opened again to run anew (§3.12), before any script runs.
    */
   readonly script_verdicts: readonly QuestId[];
   /** Open session-tier quests with their dependencies done that nobody can take as things stand (§3.1). */
@@ -150,42 +146,6 @@ function suspensions(step: Step): CharacterId[] {
   return suspended.map(({ id }) => id);
 }
 
-interface Reviews {
-  readonly verifications: Verification[];
-  readonly machine: QuestId[];
-  readonly unjudgeable: QuestId[];
-}
-
-/**
- * Step 4: a judge for each submitted quest (selectVerifier), the machine's verdict, or a later tick; a quest whose
- * judge the roster does not have at all is named.
- */
-function reviews(step: Step, review: readonly Quest[]): Reviews {
-  const planned: Reviews = { verifications: [], machine: [], unjudgeable: [] };
-  const { snapshot, roster } = step;
-  for (const quest of review) {
-    const candidates = snapshot.characters.filter(roster.standsBy);
-    const policy = {
-      same_family: snapshot.kingdom.dispatch.verifier_same_family,
-      classes: snapshot.registry.classes,
-      assignee: step.character(quest.assignee),
-      party: partyOf(quest, snapshot.quests),
-    };
-    const choice = selectVerifier(quest, candidates, { ...policy, free: roster.canStart });
-    if (choice === null) {
-      if (waitsForNoJudge(quest, candidates, policy)) planned.unjudgeable.push(quest.id);
-      continue;
-    }
-    if (choice.reason === 'machine_only') {
-      planned.machine.push(quest.id);
-      continue;
-    }
-    roster.take(choice.character, null);
-    planned.verifications.push({ quest: quest.id, verifier: choice.character.id, reason: choice.reason });
-  }
-  return planned;
-}
-
 /** The character that takes `quest`, if its territory has room and a free character of its class fits. */
 function takerOf(step: Step, quest: Quest): Character | undefined {
   const territory = step.roster.territory(quest.territory);
@@ -242,15 +202,19 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
   const starts = inStatus('claimed')
     .filter((quest) => ready(quest) && holderGoes(step, quest))
     .map(({ id }) => id);
-  const judged = reviews(
-    step,
+  const judged = planReviews(
+    snapshot,
+    step.roster,
+    step.character,
     inStatus('review').filter((quest) => quest.tier === 'session' && typeof quest.verifier !== 'string'),
   );
+  const running = new Set(snapshot.background?.running);
   return {
     breakers: breakersOf(snapshot.quests, snapshot.sessions ?? [], snapshot.kingdom.breakers.max_turns, now),
     suspensions: suspended,
     wakes,
     starts,
+    checks: judged.checks,
     verifications: judged.verifications,
     machine_verdicts: judged.machine,
     unjudgeable: judged.unjudgeable,
@@ -260,7 +224,7 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
     claims: claims(step, openSessions, now),
     scripts: open.filter(({ tier }) => tier === 'script').map(({ id }) => id),
     script_verdicts: [...inStatus('working'), ...inStatus('review')]
-      .filter(({ tier }) => tier === 'script')
+      .filter(({ tier, id }) => tier === 'script' && !running.has(id))
       .map(({ id }) => id),
     unclaimable: unclaimable(step, openSessions),
     deliveries: inStatus('done')

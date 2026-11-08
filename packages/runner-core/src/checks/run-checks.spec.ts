@@ -134,9 +134,42 @@ describe('runChecks', () => {
     expect(refused[0]).toMatchObject({ pass: false, exit_code: null, duration_ms: 0 });
     expect(await log(refused[0]!.log_path)).toContain('another quest kept the exclusive checks of dc1');
 
+    // Nobody waits any more (P1-25): the wait for the lock ends without the check.
+    const stopping = new AbortController();
+    setTimeout(() => {
+      stopping.abort();
+    }, 300);
+    const given = runChecks({ ...request(e2e, ['x.ts']), signal: stopping.signal }, TEST_HOST, {
+      lock_wait_ms: 20_000,
+    });
+    expect((await given)[0]).toMatchObject({ pass: false, exit_code: null });
+
     setTimeout(() => void held.value.release(), 300);
     const waited = await runChecks(request(e2e, ['x.ts']), TEST_HOST, { lock_wait_ms: 20_000 });
     expect(waited[0]).toMatchObject({ pass: true, exit_code: 0 });
+  }, 60_000);
+
+  it('kills the running check and starts no other when its signal aborts (P1-25)', async () => {
+    await resetTrace();
+    const checks = [
+      { id: 'slow', run: 'node step.mjs slow 0 60000', when: ['**'], timeout_minutes: 5 },
+      { id: 'after', run: 'node step.mjs after', when: ['**'], timeout_minutes: 1 },
+    ];
+    const stopping = new AbortController();
+    setTimeout(() => {
+      stopping.abort();
+    }, 500);
+    const started = Date.now();
+    const runs = await runChecks(
+      { ...request(checks, ['x.ts'], '.runs/q_20261107_s7o8p9-1'), signal: stopping.signal },
+      TEST_HOST,
+    );
+    expect(Date.now() - started).toBeLessThan(30_000);
+    expect(runs).toEqual([
+      expect.objectContaining({ id: 'slow', pass: false, exit_code: null, timed_out: false }),
+    ]);
+    expect(await log(runs[0]!.log_path)).toContain('elvaria: stopped before its end');
+    expect(await trace()).not.toContain('start after');
   }, 60_000);
 });
 

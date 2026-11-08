@@ -48,12 +48,15 @@ export interface ProgramOptions {
   readonly timeout_ms: number;
   /** An open file descriptor for stdout and stderr together (a check log); captured in the result when absent. */
   readonly output?: number;
+  /** Aborted when nobody waits for the run any more (the Steward stops, P1-25): its tree is killed as on a timeout. */
+  readonly signal?: AbortSignal;
 }
 
 /**
- * Runs `argv` to its end or its timeout. A timeout kills the program's whole tree (P1-06): a test runner's workers
- * or a dev server it started go with it. A timed-out run still settles on `exit` rather than `close`, which waits
- * for every holder of the pipes: a grandchild that left the tree (re-parented before the kill) may hold them.
+ * Runs `argv` to its end, its timeout or its signal. A timeout or an abort kills the program's whole tree (P1-06): a
+ * test runner's workers or a dev server it started go with it. Such a run still settles on `exit` rather than
+ * `close`, which waits for every holder of the pipes: a grandchild that left the tree (re-parented before the kill)
+ * may hold them.
  */
 export function runProgram(argv: readonly string[], options: ProgramOptions): Promise<ProgramRun> {
   const [file = '', ...args] = argv;
@@ -63,6 +66,7 @@ export function runProgram(argv: readonly string[], options: ProgramOptions): Pr
     let stdout = '';
     let stderr = '';
     let timedOut = false;
+    let killed = false;
     const child = spawn(file, args, {
       cwd: options.cwd,
       env: childEnvOf(options.env),
@@ -70,10 +74,15 @@ export function runProgram(argv: readonly string[], options: ProgramOptions): Pr
       windowsHide: true,
       stdio: ['ignore', options.output ?? 'pipe', options.output ?? 'pipe'],
     });
+    const kill = (): void => {
+      killed = true;
+      void killTree(child.pid ?? 0);
+    };
     const settle = (exitCode: number | null, startError?: string) => {
       clearTimeout(timer);
+      options.signal?.removeEventListener('abort', kill);
       resolve({
-        exit_code: timedOut ? null : exitCode,
+        exit_code: killed ? null : exitCode,
         timed_out: timedOut,
         duration_ms: Math.round(performance.now() - started),
         stdout,
@@ -83,8 +92,10 @@ export function runProgram(argv: readonly string[], options: ProgramOptions): Pr
     };
     const timer = setTimeout(() => {
       timedOut = true;
-      void killTree(child.pid ?? 0);
+      kill();
     }, options.timeout_ms);
+    options.signal?.addEventListener('abort', kill, { once: true });
+    if (options.signal?.aborted === true) kill();
     if (piped) {
       child.stdout?.setEncoding('utf8').on('data', (chunk: string) => {
         stdout += chunk;
@@ -99,7 +110,7 @@ export function runProgram(argv: readonly string[], options: ProgramOptions): Pr
     });
     child.on('exit', (code) => {
       // Ended on its own: the timer must not mark it timed out while the pipes drain.
-      if (timedOut) settle(code);
+      if (killed) settle(code);
       else clearTimeout(timer);
     });
     child.on('close', (code) => {
