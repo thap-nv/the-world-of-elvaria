@@ -13,7 +13,7 @@ Principle 7: mappings are data. The product plan (§5) has 11 quest kinds plus C
 - Domain treats `KindId`, `ClassId`, `RitualId` and `ScriptId` as strings validated against the loaded registry. There is no `switch` on kind in the core.
 - Ids are English; display names (`name_vi`, `name_en`) are fields, never ids.
 - Adding a kind = rows in `kinds.json` and `rituals.json` + theme mapping. Adding a theme = a `themes/<name>/` directory.
-- Tier `script` only runs entries from the catalog `registry/scripts.json` (`entry` `.mjs`, `params_schema`, `kinds[]`, `produces: report | units | check`, `timeout_minutes`). Defaults: `link-check`, `run-check`, `count-files`, `diff-stat`, `compare-numbers`, each with tests. (P0-02: a script runs as `node <entry> --params <json> [--context <json>]` in the plot, with Node built-ins only, and prints one JSON line; `run-check` gets the check's argv from the Steward in `--context`, never from params.)
+- Tier `script` only runs entries from the catalog `registry/scripts.json` (`entry` `.mjs`, `params_schema`, `kinds[]`, `produces: report | units | check`, `timeout_minutes`). Defaults: `link-check`, `run-check`, `count-files`, `diff-stat`, `compare-numbers`, `todo-scan`, each with tests. (Amended 2026-11-08, P1-27: `todo-scan` joined the defaults through a dogfood quest of P1-16, PR #48.) (P0-02: a script runs as `node <entry> --params <json> [--context <json>]` in the plot, with Node built-ins only, and prints one JSON line; `run-check` gets the check's argv from the Steward in `--context`, never from params.)
 - A script a model writes and then runs is a session, not the script tier.
 
 ## Consequences
