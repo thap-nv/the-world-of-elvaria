@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { QuestDraftFileSchema, QuestDraftSchema } from '@elvaria/domain';
+import { QuestDraftFileSchema, QuestDraftSchema, ScriptsFileSchema } from '@elvaria/domain';
 import { describe, expect, it } from 'vitest';
 
 import { loadDefaultRegistry, REGISTRY_ROOT, registryFiles } from './index.ts';
@@ -59,6 +59,14 @@ describe('the default registry', () => {
       'todo-scan',
     ]);
     expect(ids(tags)).toEqual(['frontend', 'backend', 'db', 'infra', 'i18n', 'e2e', 'docs']);
+  });
+
+  it('names exactly the default scripts in the scripts.json schema description', () => {
+    // PR #48 added todo-scan to the catalog but not to this description, and neither the
+    // quest's judge nor `pnpm check` noticed (P1-16 report §8); this keeps the two in step.
+    const description = ScriptsFileSchema.meta()?.description ?? '';
+    const listed = /Default catalog: ([^.]+)\./u.exec(description)?.[1]?.split(', ');
+    expect(listed).toEqual(ids(registry().scripts));
   });
 
   it('gives every kind its own ritual, as listed in implementation-plan §2.3', () => {
