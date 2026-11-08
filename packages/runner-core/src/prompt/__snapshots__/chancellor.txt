@@ -64,6 +64,7 @@ Kiểm tra link trong docs rồi viết lại README cho rõ phần cài đặt.
 - `count-files` (kinds analyze, research; produces report): Counts files and lines per folder for the given globs. Params: `{"type":"object","required":["globs"],"properties":{"globs":{"type":"array","items":{"type":"string"},"minItems":1}},"additionalProperties":false}`
 - `diff-stat` (kinds refactor, build, analyze; produces report): git diff --stat between two refs, as data. Params: `{"type":"object","required":["base"],"properties":{"base":{"type":"string"},"head":{"type":"string","default":"HEAD"}},"additionalProperties":false}`
 - `compare-numbers` (kinds analyze; produces check): Compares the numbers in two JSON files within a tolerance. Params: `{"type":"object","required":["expected_path","actual_path"],"properties":{"expected_path":{"type":"string"},"actual_path":{"type":"string"},"tolerance":{"type":"number","minimum":0,"default":0}},"additionalProperties":false}`
+- `todo-scan` (kinds analyze, research; produces report): Counts TODO, FIXME, HACK and XXX markers per file for the given globs. Params: `{"type":"object","required":["globs"],"properties":{"globs":{"type":"array","items":{"type":"string"},"minItems":1}},"additionalProperties":false}`
 
 # Characters
 

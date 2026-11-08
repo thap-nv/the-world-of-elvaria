@@ -68,7 +68,7 @@ describe('elvaria doctor', () => {
     const io = await doctorIo(bin);
     expect(await doctor(io)).toBe(1);
     const text = printed(io);
-    expect(text).toContain('✓ Registry: 11 quest kinds, 11 classes, 11 rituals, 5 scripts, 7 tags.');
+    expect(text).toContain('✓ Registry: 11 quest kinds, 11 classes, 11 rituals, 6 scripts, 7 tags.');
     // init copied the class prompts and the catalog scripts: nothing is missing (P1-15).
     expect(text).not.toContain('The registry names');
     expect(text).toMatch(/✓ git \d+\.\d+/);
