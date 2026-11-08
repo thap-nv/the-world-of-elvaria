@@ -103,6 +103,22 @@ const ManaLevelDataSchema = z.strictObject({
 
 const CommandResultDataSchema = z.strictObject({ command_id: UlidSchema, reason: z.string().optional() });
 
+const PlotPatchedDataSchema = z
+  .strictObject({
+    file: NonEmptyStringSchema.meta(
+      describe('The patch file at the root of the plot, deleted once applied.'),
+    ),
+    paths: z
+      .array(NonEmptyStringSchema)
+      .min(1)
+      .meta(describe("What the patch changed, relative to the plot, '/' separators.")),
+  })
+  .meta(
+    describe(
+      "The Steward applied the assignee's patch to paths of laws.patch_paths, which its CLI refuses to write, before the submit commit (implementation-plan §3.3, P1-28).",
+    ),
+  );
+
 /**
  * The data schema of each type that has one; `satisfies` keeps every key inside the v1 catalogue. Every type
  * that changes what the world shows has one (state-data.ts), so the world state rebuilds from the log (P0-09).
@@ -148,6 +164,7 @@ export const EVENT_DATA_SCHEMAS = {
   'character.level_down': CharacterChangeDataSchema,
   'command.applied': CommandResultDataSchema,
   'command.rejected': CommandResultDataSchema,
+  'plot.patched': PlotPatchedDataSchema,
   'territory.attached': TerritoryChangeDataSchema,
   'territory.surveyed': TerritoryChangeDataSchema,
   'territory.health': TerritoryChangeDataSchema,

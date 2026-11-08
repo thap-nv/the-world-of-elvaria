@@ -8,7 +8,7 @@ const policy = (fields: Partial<ToolPolicy>): ToolPolicy => ({
   allow: [],
   deny: [],
   apprentice: null,
-  laws: { forbidden_paths: [], read_only_paths: [], forbidden_commands: [] },
+  laws: { forbidden_paths: [], read_only_paths: [], patch_paths: [], forbidden_commands: [] },
   ...fields,
 });
 
@@ -37,6 +37,7 @@ describe('commandRefusal', () => {
       laws: {
         forbidden_paths: [],
         read_only_paths: [],
+        patch_paths: [],
         forbidden_commands: [String.raw`drizzle-kit\s+drop`],
       },
     });

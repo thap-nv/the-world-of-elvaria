@@ -101,7 +101,7 @@ describe('replaying a fake day', () => {
       (type) => !types.has(type) && !type.startsWith('agent.') && !type.startsWith('command.'),
     );
     // The owner's edits and the Steward's notices (P1-03), moves of the temple and of the owner's discipline;
-    // reduce.spec.ts applies them one by one.
+    // reduce.spec.ts applies them one by one. A patch the Steward applied (P1-28) changes no state the world keeps.
     expect(unused).toEqual([
       'quest.edited',
       'quest.unclaimable',
@@ -109,6 +109,7 @@ describe('replaying a fake day', () => {
       'character.suspend',
       'character.release',
       'character.level_down',
+      'plot.patched',
     ]);
     for (const ignored of ['agent.tool', 'verdict.pass', 'command.applied', 'campaign.declared']) {
       expect(types).toContain(ignored);

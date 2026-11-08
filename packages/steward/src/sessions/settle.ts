@@ -2,7 +2,7 @@
 // of the table, the character's matching move, and for a verifier the verdict, the assignee's reputation and level.
 // An end that arrives for a quest that moved on meanwhile (cancelled, reassigned) changes nothing.
 import { currentRun } from '@elvaria/domain';
-import { plotCommitMessage } from '@elvaria/runner-core';
+import { PATCH_FILE, plotCommitMessage } from '@elvaria/runner-core';
 import type { Quest, Result } from '@elvaria/domain';
 import type { RunResult } from '@elvaria/runner-core';
 
@@ -11,6 +11,7 @@ import { step } from '../record.ts';
 import { judge, runOf, verifierLeaves } from '../review/judge.ts';
 import { breakAssignee, breakVerifier } from './breaker.ts';
 import { commitPlot } from './commit.ts';
+import { applyAssigneePatch } from './patch.ts';
 import type { Context } from '../context.ts';
 import type { Finished, Running } from './running.ts';
 
@@ -54,6 +55,13 @@ async function settleAssignee(
       actor: 'runner',
       edits: { [who]: step('ask') },
     });
+  // What the CLI would not let the assignee write goes in first, as its patch, so the submit carries it (P1-28).
+  // A patch that touches other paths or does not apply leaves everything in the plot, and the quest no review.
+  const patched = await applyAssigneePatch(ctx, running);
+  if (patched.status === 'refused') {
+    const detail = `${PATCH_FILE} was not applied: ${patched.detail}`;
+    return breakAssignee(ctx, running, { trip: 'commit', detail }, ended(result));
+  }
   // Five classes have no git of their own, and the judge reads the branch's diff (§3.3, P1-07).
   const committed = await commitPlot(ctx, quest, plotCommitMessage.submit(quest));
   // The branch would lack the work: the quest goes to the infirmary with the hook's last words, not to review.

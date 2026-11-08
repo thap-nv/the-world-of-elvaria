@@ -75,7 +75,10 @@
   keeps it (`maskFinished`, ADR 0013): the handover letter (`redactHandover`), the question, and the verifier's
   output, so the verdict notes the next prompt reads hold none.
 - Turns a session's end into the quest's move: submit (after committing the plot with `plotCommitMessage.submit`;
-  a commit the territory's hooks refuse sends the quest to the infirmary, `breaker:commit`), a question (`ask`;
+  a commit the territory's hooks refuse sends the quest to the infirmary, `breaker:commit`; before it, on a
+  territory with `laws.patch_paths`, the assignee's `elvaria.patch` is applied through `Plots.applyPatch` and told
+  in a `plot.patched` line, and a patch that touches other paths or does not apply sends the quest to the
+  infirmary instead, `breaker:commit: elvaria.patch was not applied: …`, P1-28), a question (`ask`;
   one the owner already answered, left in the letter, is a submit), mana out, a crash, the CLI's turn or budget
   limit (breaker). For a verifier: the verdict file (a partial one as `<quest>-<n>-p<k>`), the ritual's pass rule
   over the checks (`underPassRule`), `validateVerdict`, `verdict.*`, the move, the assignee's windows and fail

@@ -109,12 +109,14 @@ const PROBE_POLICY = toolPolicyOf({
     laws: {
       forbidden_paths: [],
       read_only_paths: [],
+      patch_paths: [],
       forbidden_commands: [],
       read_before_write: [],
       rank_floor: [],
     },
     checks: [],
     commands: {},
+    vcs: { type: 'git', default_branch: 'main' },
   },
 });
 

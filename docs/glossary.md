@@ -336,7 +336,7 @@ Mọi giá trị enum xuất hiện trong [schemas/](schemas/) có ở bảng n�
 | Mana | `mana.level`, `mana.warning`, `mana.exhausted`, `mana.restored`, `mana.probe`, `mana.signal` | số đo, cảnh báo, hết, hồi sinh, thăm dò, tín hiệu hết trong băng (429, `StopFailure`) |
 | Nhân vật | `character.created`, `character.sleep`, `character.wake`, `character.meditate`, `character.suspend`, `character.release`, `character.swamp`, `character.level_up`, `character.level_down` | |
 | Lệnh | `command.received`, `command.applied`, `command.rejected` | Quản sự xử lý `inbox/` |
-| Khác | `delivery.sent`, `chronicle.written`, `territory.attached`, `territory.surveyed`, `territory.health`, `sandbox.replay.start`, `sandbox.replay.end` | |
+| Khác | `delivery.sent`, `plot.patched`, `chronicle.written`, `territory.attached`, `territory.surveyed`, `territory.health`, `sandbox.replay.start`, `sandbox.replay.end` | `plot.patched`: Quản sự áp bản vá của người làm vào `laws.patch_paths` trước commit `submit` (P1-28) |
 | Dành sẵn | `campaign.*`, `battle.*`, `incident.*`, `patrol.*`, `party.*`, `skill.*` | giai đoạn 5; đội và bí kíp |
 
 ## 13. Dữ liệu registry mặc định

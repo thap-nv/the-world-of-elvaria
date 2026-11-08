@@ -8,13 +8,15 @@ import path from 'node:path';
 
 import { writeFileAtomic } from '@elvaria/store';
 
+import { PATCH_FILE } from '../plot/patch.ts';
 import type { ToolLaws, ToolPolicy } from '../policy/tool-policy.ts';
 import type { RunContext } from './run-context.ts';
 
 export const POLICY_FILE = 'policy.json';
 /**
  * `secrets` and `tools` (P1-10), `apprentice_models` (P1-17), `laws.read_only_paths` and `cli_protected_paths`
- * (P1-24) are optional fields added later: a v1 reader without them still reads the rest.
+ * (P1-24), `laws.patch_paths` and `patch_file` (P1-28) are optional fields added later: a v1 reader without them
+ * still reads the rest.
  */
 export const POLICY_VERSION = 1;
 
@@ -35,6 +37,11 @@ export interface PolicyFile extends RunContext {
    * bare "denied"; absent: no such check.
    */
   readonly cli_protected_paths?: readonly string[];
+  /**
+   * PATCH_FILE when `laws.patch_paths` is not empty (P1-28): the hook names it when it refuses a write the CLI would
+   * refuse to a path of patch_paths, so the change goes into a patch the Steward applies instead of a question.
+   */
+  readonly patch_file?: string;
 }
 
 /** What only the adapter knows, for the policy file. */
@@ -59,10 +66,12 @@ export const policyFileOf = (
   laws: {
     forbidden_paths: policy.laws.forbidden_paths,
     read_only_paths: policy.laws.read_only_paths,
+    patch_paths: policy.laws.patch_paths,
     forbidden_commands: policy.laws.forbidden_commands,
   },
   ...listOf('apprentice_models', extras),
   ...listOf('cli_protected_paths', extras),
+  ...(policy.laws.patch_paths.length === 0 ? {} : { patch_file: PATCH_FILE }),
 });
 
 /** Writes the run's policy file and returns its native path, for `hookCommand(policyFile)`. */

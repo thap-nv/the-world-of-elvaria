@@ -24,7 +24,13 @@ describe('parsePolicy', () => {
       tools: ['Read', 'Glob', 'Grep'],
       apprentice_models: ['haiku', 'sonnet', 'opus'],
       cli_protected_paths: ['.husky/**', '.npmrc'],
-      laws: { ...DC1_LAWS, read_only_paths: ['docs/glossary.md'], read_before_write: ['packages/shared/**'] },
+      patch_file: 'elvaria.patch',
+      laws: {
+        ...DC1_LAWS,
+        read_only_paths: ['docs/glossary.md'],
+        patch_paths: ['.husky/**'],
+        read_before_write: ['packages/shared/**'],
+      },
     };
     expect(parsePolicy(policy)).toEqual({ ok: true, policy });
   });
@@ -49,6 +55,8 @@ describe('parsePolicy', () => {
     [{ version: 1, laws: { forbidden_paths: '.env' } }, 'laws.forbidden_paths is not a list of strings'],
     [{ version: 1, laws: { forbidden_commands: [1] } }, 'laws.forbidden_commands is not a list of strings'],
     [{ version: 1, laws: { read_only_paths: 'docs' } }, 'laws.read_only_paths is not a list of strings'],
+    [{ version: 1, laws: { patch_paths: '.husky' } }, 'laws.patch_paths is not a list of strings'],
+    [{ version: 1, patch_file: true }, 'patch_file is not a string'],
   ])('refuses %j', (value, problem) => {
     expect(parsePolicy(value)).toEqual({ ok: false, problem });
   });

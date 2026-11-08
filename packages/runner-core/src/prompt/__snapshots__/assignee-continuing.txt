@@ -44,6 +44,26 @@ They are generated. After you change what they are generated from, run their gen
 
 - `pnpm api:openapi`
 
+# Changes through a patch
+
+The territory lets the Steward change these paths for you:
+
+- `.husky/**`
+
+When your tools refuse to write one of them (your CLI guards some folders, such as `.husky/`, whatever its rules say), do not ask the owner for the change. Write it as a git patch to `elvaria.patch` at the root of your plot, in the form `git diff` prints, with paths from the root of the plot:
+
+```diff
+diff --git a/<path> b/<path>
+--- a/<path>
++++ b/<path>
+@@ -<line>,<count> +<line>,<count> @@
+ <a line kept as it is>
+-<a line taken out>
++<a line put in>
+```
+
+A new file has `new file mode 100644` (`100755` for a script) after the first line and `--- /dev/null`. When your session completes, the Steward applies the patch before it commits your work, then deletes the file; the judge reads the change in your diff. A patch that touches any other path, or that does not apply, is not applied at all, and the quest goes to the infirmary instead of review. Change every other path with your tools, as usual.
+
 # Handover letter
 
 ```markdown

@@ -2,7 +2,7 @@
 // runs, and a verifier whose prompt carries no diff learns where to read it instead of "no changes".
 import { describe, expect, it } from 'vitest';
 
-import { diffBlock, readOnlyBlock, shellBlock } from './blocks.ts';
+import { diffBlock, patchBlock, readOnlyBlock, shellBlock } from './blocks.ts';
 import { loadPromptTemplates } from './templates.ts';
 
 const templates = await loadPromptTemplates();
@@ -35,7 +35,12 @@ describe('shellBlock', () => {
 });
 
 describe('readOnlyBlock (P1-24)', () => {
-  const laws = { forbidden_paths: [], read_only_paths: ['docs/glossary.md'], forbidden_commands: [] };
+  const laws = {
+    forbidden_paths: [],
+    read_only_paths: ['docs/glossary.md'],
+    patch_paths: [],
+    forbidden_commands: [],
+  };
   const territory = { commands: { generate: ['pnpm docs:gen', 'pnpm schemas'] } };
 
   it('lists the read-only paths and the generators the shell may run', () => {
@@ -65,6 +70,28 @@ describe('readOnlyBlock (P1-24)', () => {
     expect(readOnlyBlock({ tools: ['Read', 'Bash'], allow: [], laws }, territory, templates)).toBe('');
     const none = { ...laws, read_only_paths: [] };
     expect(readOnlyBlock({ tools: ['Edit'], allow: [], laws: none }, territory, templates)).toBe('');
+  });
+});
+
+describe('patchBlock (P1-28)', () => {
+  const laws = {
+    forbidden_paths: [],
+    read_only_paths: [],
+    patch_paths: ['.husky/**'],
+    forbidden_commands: [],
+  };
+
+  it('lists the patch paths and names the file the Steward applies', () => {
+    const block = patchBlock({ tools: ['Edit'], laws }, templates);
+    expect(block).toContain('# Changes through a patch');
+    expect(block).toContain('- `.husky/**`');
+    expect(block).toContain('Write it as a git patch to `elvaria.patch` at the root of your plot');
+    expect(block).toContain('diff --git a/<path> b/<path>');
+  });
+
+  it('is empty without a write tool or a patch path', () => {
+    expect(patchBlock({ tools: ['Read', 'Bash'], laws }, templates)).toBe('');
+    expect(patchBlock({ tools: ['Edit'], laws: { ...laws, patch_paths: [] } }, templates)).toBe('');
   });
 });
 
