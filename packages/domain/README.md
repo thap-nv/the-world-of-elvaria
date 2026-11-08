@@ -32,7 +32,10 @@
   `budget.max_tokens`, `breakers.max_turns`); `breakersOf` applies it to the sessions the Steward holds
   (`KingdomSnapshot.sessions`), each timed from its own attempt_log entry, and `planTick` returns them first as
   `breakers`. The trips `commit` and `secrets` happen where no session runs: `secrets` takes a claimed,
-  returned, paused or unjudged quest to the infirmary (§2.5).
+  returned, paused or unjudged quest to the infirmary (§2.5). (P1-23) `countedTokens` is the unit of a session's
+  tokens for every adapter: input, output and cache writes in full, cache reads at a tenth
+  (`CACHE_READS_PER_TOKEN`); `reviewStalled` says a breaker has stopped `REVIEW_BREAKS_MAX` (2) verifiers of the
+  current run, and the review goes to the infirmary instead of a fresh verifier.
 - Keeps the separation of duties (`src/verify/`, ADR 0008, 0020): `selectVerifier` (never a worker of the quest
   or of its party, never the assignee's model, another model family first by `familyOf`, then another tribe;
   `dispatch.verifier_same_family` for the rest), `underPassRule` (a failing check fails the quest under

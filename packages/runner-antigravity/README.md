@@ -16,6 +16,11 @@ terms_acknowledged_at, env, pools?, timeout_ms?})`. `hook` is `hookCommand()` of
   SessionStart, PreToolUse, PostToolUse, Stop), the shim `.agents/elvaria-hook.mjs` that holds the paths, and
   `GEMINI.md` (the system prompt, then `@[Territory law](./CLAUDE.md)` and `@[rule](./<file>)` for
   `territory.context_files`). Then checks with `agy -p /hooks` (0 tokens) that agy loaded exactly that hook.
+- Takes those three files out of the plot when the session ends, before `wait()` or `kill()` settles, and when
+  `spawn` refuses after writing them (`removeRunFiles`, P1-23): agy loads hooks only from the workspace's
+  `.agents/` (or `~/.gemini/config/`, which Elvaria never touches), and a formatter the territory runs as a check
+  would read them. `.agents/` goes too when empty; a file of the territory's stays. A file that will not go is
+  noted in `<run_dir>/stderr.log`.
 - Spawns `agy -p <prompt> --output-format stream-json --model <slug> --settings … --print-timeout <n>m
 --log-file <run_dir>/agy.log [--json-schema …] [--conversation <id>]`, without a shell, with the request's env
   minus `GIT_*`, the session context as `ELVARIA_*` (runner-core's `runContextOf`),
@@ -66,4 +71,6 @@ pnpm --filter @elvaria/hooks build && ELVARIA_LIVE=1 pnpm --filter @elvaria/runn
 conformance scenario the way agy 1.5.2 does, running the generated hooks through `cmd /c` or `sh -c` and applying
 the settings as prefix rules. Fixtures: the redacted runs of spike P1-12a, the `--conversation` pair and the
 `/hooks` answer of P1-12b, and `constructed-rate-limit.*`, built from agy's changelog because no quota has run
-out on a real machine yet. `ELVARIA_AGY` points the live specs at another agy.
+out on a real machine yet. `ELVARIA_AGY` points the live specs at another agy. `run-files.spec.ts` checks the
+plot after a session that completed, was killed or never started: no `.agents/` and no `GEMINI.md` left of
+Elvaria's, the territory's own files untouched.

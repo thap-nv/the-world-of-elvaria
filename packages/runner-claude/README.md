@@ -22,7 +22,9 @@
   `system/task_*`, with `stopped: max_turns` when the notification says the CLI cut the apprentice at its
   `maxTurns`, and `agent.subagent.overrun` past `subagent_max_minutes`; `mana.signal` of an API retry), and
   `RunResult` (outcome from `is_error` + `terminal_reason`, tokens of `modelUsage`, denials, structured output, the
-  letter's question).
+  letter's question). Tokens are input, output and cache writes, plus cache reads at a tenth (`countedTokens` of
+  the domain through runner-core, P1-23): Claude Code reads its whole cached context on every call, and counted
+  in full those reads cut ordinary sessions at the default budget.
 - Lets the character pick its apprentice's model per call, never above its own (§3.12, decided after P1-09):
   `APPRENTICE_MODELS` is the adapter's ladder (`haiku` < `sonnet` < `opus` < `fable`, the Agent tool's `model`
   values in 2.1.318); `apprenticeModelsOf(character.model)` cuts it at the character's own model (a slug that

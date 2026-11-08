@@ -9,7 +9,7 @@ import type { RunResult } from '@elvaria/runner-core';
 import { moveAndRing } from '../notices.ts';
 import { step } from '../record.ts';
 import { judge, runOf, verifierLeaves } from '../review/judge.ts';
-import { breakAssignee } from './breaker.ts';
+import { breakAssignee, breakVerifier } from './breaker.ts';
 import { commitPlot } from './commit.ts';
 import type { Context } from '../context.ts';
 import type { Finished, Running } from './running.ts';
@@ -81,6 +81,9 @@ async function settleVerifier(
       edits: { [running.character]: step('mana_out') },
     });
   if (result.outcome === 'completed') return judge(ctx, quest, running, result);
+  // The CLI's own limits stop a verifier as the breakers do, and count toward the infirmary the same way (P1-23).
+  if (result.outcome === 'max_turns' || result.outcome === 'budget')
+    return breakVerifier(ctx, running, { trip: TRIPS[result.outcome] }, ended(result));
   return verifierLeaves(ctx, running, result);
 }
 

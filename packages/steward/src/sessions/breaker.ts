@@ -1,11 +1,13 @@
 // The breakers in the Steward's hands (implementation-plan §3.4, §2.6 "Sa lầy"): a session past its time, tokens
 // or turns is stopped with its whole process tree, its work committed as WIP, and its quest sent to the infirmary
-// with the reason and the bell; a verifier stopped so leaves the review to the next one. The same end awaits an
+// with the reason and the bell; a verifier stopped so leaves the review to the next one, until a breaker has stopped
+// REVIEW_BREAKS_MAX verifiers of the run and the review goes to the infirmary too (P1-23). The same end awaits an
 // assignee whose CLI stopped itself at its own limit (settle.ts), and a quest no session can open for because its
 // secrets are missing (open.ts): that one waits in the infirmary instead of being claimed again every tick.
+import { currentRun, reviewBreaksOf, reviewStalled } from '@elvaria/domain';
 import { openJournal } from '@elvaria/eventlog';
 import { plotCommitMessage } from '@elvaria/runner-core';
-import type { Breaker, BreakerTrip, Quest, Result } from '@elvaria/domain';
+import type { Breaker, BreakerTrip, Quest, Result, SessionTrip } from '@elvaria/domain';
 import type { RunResult } from '@elvaria/runner-core';
 
 import { readAfterSession } from '../mana/read.ts';
@@ -79,22 +81,34 @@ async function stopped(ctx: Context, running: Running, reason: string): Promise<
 }
 
 /**
- * A verifier past a breaker leaves the review to the next one (§2.5 `review.breaker`): no infirmary, no bell, the
- * quest is the assignee's work and not at fault; the log says why.
+ * A verifier past a breaker leaves the review to the next one (§2.5 `review.breaker`): no bell, the quest is the
+ * assignee's work and not at fault; the log says why. The REVIEW_BREAKS_MAX-th verifier of a run stopped so sends
+ * the quest to the infirmary with the bell instead (P1-23): a review its budget cannot hold would otherwise open a
+ * fresh session forever (phase-1 report §5.2).
  */
-async function breakVerifier(
+export async function breakVerifier(
   ctx: Context,
   running: Running,
-  breaker: Breaker,
-  reason: string,
+  breaker: { readonly trip: SessionTrip; readonly detail?: string | undefined },
+  end: () => Promise<RunResult>,
 ): Promise<Result<Quest, string>> {
-  const result = await stopped(ctx, running, reason);
+  const { trip, detail } = breaker;
+  const reason = `breaker:${trip}${detail === undefined ? '' : `: ${detail}`}`;
+  const result = await end();
   ctx.deps.log.warn(`steward: ${running.quest}: ${running.character}'s review stopped, ${reason}`);
-  return moveAndRing(ctx, {
+  const left = await moveAndRing(ctx, {
     quest: running.quest,
-    event: { type: 'breaker', trip: breaker.trip, ...runOf(running, result) },
+    event: { type: 'breaker', trip, ...runOf(running, result) },
     actor: 'steward',
     edits: { [running.character]: step('breaker') },
+  });
+  if (!left.ok || !reviewStalled(left.value)) return left;
+  // `review.breaker.needs_verifier`: the review has no verifier now, and no further one opens for this run.
+  return moveAndRing(ctx, {
+    quest: running.quest,
+    event: { type: 'breaker', trip },
+    actor: 'steward',
+    reason: `${reason}; a breaker stopped ${reviewBreaksOf(left.value)} verifiers of run ${currentRun(left.value)}, so no further one opens: raise the budget (quest edit) before a retry`,
   });
 }
 
@@ -104,10 +118,11 @@ export async function tripBreakers(ctx: Context, breakers: readonly Breaker[]): 
     const running = ctx.sessions.get(breaker.quest);
     if (running?.role !== breaker.role) continue;
     const reason = `breaker:${breaker.trip}: ${breaker.detail}`;
+    const stop = () => stopped(ctx, running, reason);
     const moved =
       running.role === 'assignee'
-        ? await breakAssignee(ctx, running, breaker, () => stopped(ctx, running, reason))
-        : await breakVerifier(ctx, running, breaker, reason);
+        ? await breakAssignee(ctx, running, breaker, stop)
+        : await breakVerifier(ctx, running, breaker, stop);
     if (!moved.ok) ctx.deps.log.warn(`steward: ${running.quest}: ${reason}: ${moved.error}`);
     // The session spent what it spent: the gauge reads the account again, as after any end (§3.5).
     const tribe = ctx.world.characters.get(running.character)?.tribe;
