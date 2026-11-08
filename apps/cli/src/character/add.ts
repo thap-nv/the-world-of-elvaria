@@ -18,6 +18,7 @@ import { recordCharacterCreated } from '../events.ts';
 import { registryIssueLines, storeIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { nameIn } from '../labels.ts';
+import { levelOfText } from './level.ts';
 import { startingLevelOf } from './starting-level.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
@@ -32,9 +33,7 @@ const nameOf = (id: string): string =>
 /** `--level` as given; undefined when the owner left it to the model (P1-26). */
 function readLevel(input: CommandInput): number | 'invalid' | undefined {
   const text = textOption(input, 'level');
-  if (text === undefined) return undefined;
-  const level = Number(text);
-  return /^\d+$/.test(text) && level >= 1 && level <= CHARACTER_LEVEL_MAX ? level : 'invalid';
+  return text === undefined ? undefined : (levelOfText(text) ?? 'invalid');
 }
 
 /** Where the starting level came from: `--level`, the model's row, or neither (level 1). */

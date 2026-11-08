@@ -9,17 +9,9 @@ import { EXIT } from '../command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { CHARACTER_STATUS_LABEL } from '../labels.ts';
 import { commandHeader, sendCommand } from '../quest/send-command.ts';
-import { readCharacter } from './read.ts';
+import { namedCharacter } from './read.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
-
-/** The character the command line names, or undefined once the reasons it cannot be read are printed. */
-async function namedCharacter(input: CommandInput, ctx: KingdomContext): Promise<Character | undefined> {
-  const character = await readCharacter(ctx, input.positionals[0] ?? '');
-  if (!Array.isArray(character)) return character;
-  character.forEach(ctx.io.err);
-  return undefined;
-}
 
 /** What happens to the quest the character holds: the next judge takes a review, a quest goes on without it. */
 function heldLines(ctx: KingdomContext, character: Character): string[] {

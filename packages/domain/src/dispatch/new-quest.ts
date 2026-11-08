@@ -5,8 +5,10 @@ import { err, ok } from '../core/result.ts';
 import { RANKS } from '../schema/common.ts';
 import { QuestSchema } from '../schema/quest/quest.ts';
 import { scriptParamsIssues } from '../script/params.ts';
-import type { QuestId } from '../core/ids.ts';
+import { namedAssignee } from './select-assignee.ts';
+import type { CharacterId, QuestId } from '../core/ids.ts';
 import type { Result } from '../core/result.ts';
+import type { AssigneeCandidate, NamedAssigneeProblem } from './select-assignee.ts';
 import type { CommandPayload } from '../schema/command/inbox-command.ts';
 import type { Rank } from '../schema/common.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
@@ -30,7 +32,8 @@ export type QuestCommandProblem =
   | 'self_dependency'
   | 'stale'
   | 'archived'
-  | 'invalid_quest';
+  | 'invalid_quest'
+  | NamedAssigneeProblem;
 
 export interface QuestCommandError {
   readonly code: QuestCommandProblem;
@@ -48,6 +51,12 @@ export interface NewQuestContext {
   /** The kingdom's territories, with the treasury names each lets its quests ask for. */
   readonly territories: readonly Pick<Territory, 'id' | 'secrets_allowed'>[];
   readonly quests: readonly QuestId[];
+  /**
+   * Who an `assignee` may name (P1-29): the kingdom's characters, and its tribes for which are enabled. Quests the
+   * Steward makes itself (sub-quests, follow-ups) name nobody and leave both out; an assignee is then unknown.
+   */
+  readonly characters?: readonly (AssigneeCandidate & { readonly id: CharacterId })[];
+  readonly tribes?: Kingdom['tribes'];
 }
 
 type CreateQuest = CommandPayload<'create_quest'>;
@@ -90,7 +99,18 @@ function problemOf(
   if (script !== undefined && scriptParamsIssues(script, payload.script?.params).length > 0)
     return 'invalid_script_params';
   if ((payload.depends_on ?? []).some((id) => !context.quests.includes(id))) return 'unknown_dependency';
-  return undefined;
+  return payload.assignee === undefined ? undefined : assigneeProblem(payload, payload.assignee, context);
+}
+
+/** The owner's assignee, checked before the quest exists: a refused one creates no quest (P1-29). */
+function assigneeProblem(
+  payload: CreateQuest,
+  assignee: CharacterId,
+  context: NewQuestContext,
+): NamedAssigneeProblem | undefined {
+  const character = context.characters?.find(({ id }) => id === assignee);
+  const named = namedAssignee(payload.class_required, character, context.tribes ?? []);
+  return named.ok ? undefined : named.error.code;
 }
 
 /**
@@ -120,7 +140,8 @@ export function questFromCommand(
   if (kind === undefined) return err({ code: 'unknown_kind' });
   const problem = problemOf(payload, kind, context);
   if (problem !== undefined) return err({ code: problem });
-  const { draft, question, party_role: partyRole, estimate, ...fields } = payload;
+  // The assignee is not a field of the quest: the Steward gives it the new quest by the owner's reassign (§2.5).
+  const { draft, question, party_role: partyRole, estimate, assignee: _, ...fields } = payload;
   return parsed({
     version: 1,
     id: context.id,

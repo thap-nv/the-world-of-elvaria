@@ -240,12 +240,13 @@ Họ model (suy ra từ slug, không lưu): `claude`, `gemini`, `gpt` (Codex thu
 | Đưa về Đền | `send_to_temple` | `act-temple` → `action-temple` | |
 | Tuyên chiến | `declare_campaign` | `act-declare` → `action-declare` | |
 | Kết thúc chiến dịch | `close_campaign` | — | |
-| Tạo quest | `create_quest` | — | Tể tướng gửi với `draft: true` |
+| Tạo quest | `create_quest` | — | Tể tướng gửi với `draft: true`; `assignee` (tùy chọn, `quest add --to`): chỉ người đó nhận |
 | Trả lời câu hỏi | `answer` | — | quest `blocked` |
 | Đổi hạng | `set_rank` | — | |
 | Mở cõi | `attach_territory` | — | |
 | Sửa quest | `edit_quest` | — | kèm `expected_updated_at` |
 | Ghim chuyên môn | `pin_tag` | — | `tag = null` để bỏ ghim |
+| Đặt cấp | `set_level` | — | `elvaria character level`; ghi `level_since` |
 
 Nguồn lệnh (`source`): `cli`, `herald`, `lite`.
 

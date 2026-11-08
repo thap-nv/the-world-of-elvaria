@@ -3,7 +3,7 @@
 ## Does
 
 - Ships the `elvaria` command, the only composition root (implementation-plan §1.1): `init`, `doctor`,
-  `territory add|list`, `character add|list|suspend|release`,
+  `territory add|list`, `character add|list|suspend|release|level`,
   `quest add|list|show|confirm|cancel|archive|edit|retry|reassign`,
   `seal`, `return`, `answer`, `run`,
   `sandbox generate|replay`, `migrate`. The command table (`src/commands.ts`) drives parsing (`util.parseArgs`), help, and the reference
@@ -18,12 +18,16 @@
   a non-empty answer for a `blocked` quest; the Steward then goes on with the same attempt, in the asking session
   when the answer comes within `dispatch.resume_after_answer_minutes` (ADR 0017). The bell of `run` prints that
   command with each question. `quest retry` opens a quest of the infirmary again; `quest reassign [--to <id>]`
-  gives a quest to the character named (checked as the Steward checks it: known, of the quest's class, not
-  suspended; a level below the rank is said, since the quest then waits for the seal) or, without `--to`, to the
-  Steward's choice (P1-26). `quest show` of a quest nobody can take prints the `reassign` to its best candidate.
-  `character suspend <id> [--reason]` and `character release <id>` send `suspend` and `release` (a character the
-  Steward would refuse, unknown, suspended already or not suspended, is refused here), and `suspend` says what
-  becomes of the quest the character holds (the owner's decision after P1-26).
+  gives a quest to the character named (checked as the Steward checks it, `src/quest/assignee.ts` on the domain's
+  `namedAssignee`: known, of the quest's class, not suspended, of an enabled tribe; a level below the rank is said,
+  since the quest then waits for the seal) or, without `--to`, to the Steward's choice (P1-26). `quest add --to
+<id>` names the new quest's assignee the same way (`create_quest.assignee`): only that character takes it
+  (P1-29; refused on a script-tier quest). `quest show` of a quest nobody can take prints the `reassign` to its
+  best candidate. `character suspend <id> [--reason]` and `character release <id>` send `suspend` and `release` (a
+  character the Steward would refuse, unknown, suspended already or not suspended, is refused here), and `suspend`
+  says what becomes of the quest the character holds (the owner's decision after P1-26). `character level <id>
+<level>` sends `set_level` (a level outside 1–10 or the one the character has is refused here) and says the rank
+  ceiling of the new level (P1-29).
 - Writes new files the Steward does not own: `kingdom.json` (`init`, then `tribes[].tool` and, with `--enable`,
   `tribes[].enabled` from `doctor`), a
   territory, a newly summoned character (create only, never overwrite). Those two are also logged
