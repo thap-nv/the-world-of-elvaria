@@ -1,6 +1,7 @@
 // Quests nobody can take (implementation-plan §3.1 "Quest không ai nhận được"): the Steward keeps its notices in
 // `.state/unclaimable.json`; `quest list` marks those quests and `quest show` says why, with the commands that
-// would change it: lower the rank, summon a character of the class, or cancel the quest.
+// would change it: give it to the highest of the class (with the seal, P1-26), lower the rank, summon a character
+// of the class, or cancel the quest.
 import { CHARACTER_LEVEL_MAX, RANKS, canTake, rankCeilingOf } from '@elvaria/domain';
 import { readUnclaimable } from '@elvaria/steward';
 import type { Quest, QuestId, Rank, Registry } from '@elvaria/domain';
@@ -50,14 +51,19 @@ export async function unclaimableLines(
   const summon = `elvaria character add <id> --class ${note.class} --level ${levelFor(note.rank)}`;
   if (note.reason === 'level_too_low' && note.best_character !== undefined && note.best_level !== undefined) {
     const ceiling = rankCeilingOf(note.best_level);
+    const character = await characterName(ctx, note.best_character);
     return [
       ctx.t('cli.quest.unclaimable.level_too_low', {
         rank: note.rank,
         class: cls,
-        character: await characterName(ctx, note.best_character),
+        character,
         level: note.best_level,
         ceiling,
         stretch: stretchOf(ceiling),
+      }),
+      ctx.t('cli.quest.unclaimable.reassign', {
+        character,
+        command: `elvaria quest reassign ${quest.id} --to ${note.best_character}`,
       }),
       ctx.t('cli.quest.unclaimable.lower_rank', {
         command: `elvaria quest edit ${quest.id} --rank ${ceiling}`,

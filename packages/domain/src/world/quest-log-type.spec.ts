@@ -32,6 +32,7 @@ describe('questLogTypeOf', () => {
     ['reassign', 'infirmary', 'claimed', 'quest.claimed'],
     ['release', 'claimed', 'open', 'quest.released'],
     ['retry', 'infirmary', 'open', 'quest.released'],
+    ['retry', 'infirmary', 'review', 'quest.submitted'],
     ['start', 'claimed', 'working', 'quest.started'],
     ['redispatch', 'returned', 'working', 'quest.started'],
     ['assign_verifier', 'review', 'review', 'quest.started'],

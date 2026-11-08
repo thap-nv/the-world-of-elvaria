@@ -241,6 +241,22 @@ describe('verifier prompt', () => {
     },
   );
 
+  it('asks for the failing line of a check before its cause (P1-26, phase-1 report §6 (i))', () => {
+    const { system } = buildPrompt(verifier, templates);
+    expect(system).toContain(
+      'Before you name why a check failed, quote the line of its output that shows the error, verbatim',
+    );
+    expect(system).toContain('when you cannot see the output, say so instead of guessing');
+  });
+
+  it("tells a judge that agy's own files in the plot are not the assignee's work (after P1-23)", () => {
+    const { system } = buildPrompt(verifier, templates);
+    expect(system).toContain(
+      "`.agents/` and `GEMINI.md` there are that session's own files: Elvaria removes them when the session ends",
+    );
+    expect(system).toContain("Unless the diff changes them, they are not the assignee's work");
+  });
+
   it('never tells a verifier to edit, and says when no check ran or nothing changed', () => {
     const { system, user } = buildPrompt({ ...verifier, checks: [], diff: ' ', handover: null }, templates);
     expect(system).toContain('you have no Edit or Write');

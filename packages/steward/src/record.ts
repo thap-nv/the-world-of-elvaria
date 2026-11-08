@@ -72,11 +72,15 @@ export interface Recorder {
     type: 'quest.created' | 'quest.drafted' | 'quest.edited',
     actor: Actor,
   ): Promise<Result<Quest, string>>;
-  /** A character change with no quest move: character.swamp, character.level_up, character.level_down. */
+  /**
+   * A character change with no quest move: character.swamp, character.level_up, character.level_down, and the
+   * owner's character.suspend and character.release, told as the owner's (`actor`; the Steward by default).
+   */
   change(
     id: CharacterId,
     type: `character.${string}`,
     edit: CharacterEdit,
+    actor?: Actor,
   ): Promise<Result<Character, string>>;
   note(line: Line): Promise<void>;
 }
@@ -187,11 +191,16 @@ async function move(deps: RecorderDeps, request: Move): Promise<Result<Quest, st
   return ok(after.value);
 }
 
+interface Change {
+  readonly id: CharacterId;
+  readonly type: string;
+  readonly edit: CharacterEdit;
+  readonly actor: Actor;
+}
+
 async function change(
   deps: RecorderDeps,
-  id: CharacterId,
-  type: string,
-  edit: CharacterEdit,
+  { id, type, edit, actor }: Change,
 ): Promise<Result<Character, string>> {
   const at = deps.stamp();
   const before = deps.world.characters.get(id);
@@ -200,7 +209,7 @@ async function change(
   if (!after.ok) return err(`${id}:${reasonOf(after.error)}`);
   const saved = await save(deps, undefined, [after.value]);
   if (!saved.ok) return saved;
-  await append(deps, { type, actor: STEWARD, data: { character: characterViewOf(after.value) } }, at);
+  await append(deps, { type, actor, data: { character: characterViewOf(after.value) } }, at);
   return ok(after.value);
 }
 
@@ -215,7 +224,7 @@ export function createRecorder(deps: RecorderDeps): Recorder {
       await append(deps, { type, actor, data: { quest: questViewOf(quest) }, quest }, at);
       return ok(quest);
     },
-    change: (id, type, edit) => change(deps, id, type, edit),
+    change: (id, type, edit, actor = STEWARD) => change(deps, { id, type, edit, actor }),
     note: (line) => append(deps, line, deps.stamp()),
   };
 }

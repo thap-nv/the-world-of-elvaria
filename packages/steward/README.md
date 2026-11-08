@@ -19,7 +19,8 @@
   the session's process tree, commits the work as `chore: wip <quest> (<trip>)` (a refusal keeps it in the plot
   and says so in the reason), sends the quest to the infirmary (`quest.infirmary`, `breaker:<trip>: <detail>`) and
   rings the bell; a verifier past a breaker leaves the review to the next one, until the second of a run
-  (`reviewStalled`, P1-23): then the quest goes to the infirmary with the bell, and no third verifier opens. A CLI
+  (`reviewStalled`, P1-23): then the quest goes to the infirmary with the bell, and no third verifier opens; the
+  owner's `retry` brings it back to review with a new judge, and the count starts over (P1-26). A CLI
   that stopped at its own `--max-turns` or budget gets the same end, a verifier's included. When the quest's journal shows an apprentice of that session past
   its minutes or cut at its turns, the reason asks the owner for a child quest for the work it left (§3.12). A quest whose secrets the treasury lacks, or its territory no longer
   allows, goes to the infirmary (`breaker:secrets`) instead of being claimed and released every tick; an
@@ -50,9 +51,14 @@
   `fail_kind` `other` by default), `answer` (waits in the inbox until the asker is free and its pool has mana;
   within `dispatch.resume_after_answer_minutes` of the question, and when the adapter can, the asking session goes
   on with `--resume`), `reassign` (the owner's character, the level aside; or the Steward's own choice),
-  `set_rank`, `edit_quest` (refused when the quest moved since the owner read it), `wake`. Other kinds are refused
-  with `unsupported` until their task. A `create_quest` that asks for a secret its territory does not allow is
-  refused with `secret_not_allowed` (ADR 0013).
+  `set_rank`, `edit_quest` (refused when the quest moved since the owner read it), `wake`, `suspend` and `release`
+  (P1-26, `inbox/character-commands.ts`): a suspended character takes no work; the quest it works on ends its
+  attempt `returned` (the session killed, its work committed as WIP) and waits for it or for a `reassign`, the
+  quest it judges goes back to review for the next judge, a claim not started opens again (`claimed.release`), and
+  a quest it sleeps on stays paused until reassigned; `release` makes it idle with its fail streak at 0. Both lines
+  (`character.suspend`, `character.release`) are the owner's. Other kinds are refused with `unsupported` until
+  their task. A `create_quest` that asks for a secret its territory does not allow is refused with
+  `secret_not_allowed` (ADR 0013).
 - Opens sessions through `AgentRunner` only (ADR 0006, 0021): the plot, the prompt and tool policy of
   `runner-core`, the budget, `.runs/<quest>-<n>`, and the env (§3.9): the minimal env it was given, the
   `ELVARIA_*` context of the hook and exactly the quest's `secrets_required` from the treasury (`sessionEnvOf`

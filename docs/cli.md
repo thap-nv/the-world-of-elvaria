@@ -16,6 +16,8 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria territory list` | Liệt kê các lãnh thổ. |
 | `elvaria character add <id>` | Triệu hồi một nhân vật: nghề, tộc, model và cấp ban đầu. |
 | `elvaria character list` | Liệt kê các nhân vật. |
+| `elvaria character suspend <id>` | Đình chỉ một nhân vật: nhân vật không nhận việc và buông nhiệm vụ đang giữ, nhiệm vụ đi tiếp không có nó (lệnh suspend). |
+| `elvaria character release <id>` | Thả một nhân vật bị đình chỉ: nhân vật rảnh lại và nhận việc (lệnh release). |
 | `elvaria say <words>` | Nói với Tể tướng việc bạn muốn: Tể tướng soạn nhiệm vụ nháp, bạn xác nhận (lệnh create_quest, nháp). |
 | `elvaria quest add` | Thêm một nhiệm vụ mở ngay, không qua Tể tướng (lệnh create_quest). |
 | `elvaria quest list` | Liệt kê các nhiệm vụ trên bảng nhiệm vụ. |
@@ -24,6 +26,8 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria quest cancel <quest>` | Hủy một nhiệm vụ chưa xong; nhiệm vụ nháp thì bỏ đi (lệnh cancel hoặc archive). |
 | `elvaria quest archive <quest>` | Lưu trữ một nhiệm vụ đã xong và giao hàng: Quản sự gỡ worktree, giữ nhánh (lệnh archive). |
 | `elvaria quest edit <quest>` | Sửa một nhiệm vụ mà không chạm vào file của nó (lệnh edit_quest). |
+| `elvaria quest retry <quest>` | Mở lại một nhiệm vụ ở trạm quân y với đủ lượt thử như mới, hoặc đưa nhiệm vụ có người chấm bị cầu dao cắt mãi về chờ nghiệm thu (lệnh retry). |
+| `elvaria quest reassign <quest>` | Giao lại một nhiệm vụ cho nhân vật khác, hoặc cho nhân vật bạn chỉ định (lệnh reassign). |
 | `elvaria seal <quest>` | Đóng dấu việc đang chờ dấu vua: nhiệm vụ xong (lệnh seal; nặng bằng ba phán quyết). |
 | `elvaria return <quest>` | Trả việc đang chờ dấu vua về người làm, kèm ghi chú (lệnh return; nặng bằng ba phán quyết). |
 | `elvaria answer <quest> <answer>` | Trả lời câu hỏi của một nhiệm vụ đang chờ bạn (elvaria quest show in câu hỏi): người làm tiếp tục với câu trả lời của bạn (lệnh answer). |
@@ -93,7 +97,7 @@ Triệu hồi một nhân vật: nghề, tộc, model và cấp ban đầu.
 | `--class <class>` | Nghề, theo registry/classes.json (knight, scribe, judge…). (bắt buộc) |
 | `--tribe <tribe>` | Tộc, một id trong kingdom.tribes (mặc định: tộc gợi ý của nghề). |
 | `--model <model>` | Model của CLI (mặc định: model gợi ý của nghề trong tộc của nó). |
-| `--level <1-10>` | Cấp ban đầu 1–10, đặt theo độ mạnh của model (mặc định 1). |
+| `--level <1-10>` | Cấp ban đầu 1–10, đặt theo độ mạnh của model (mặc định theo model: Opus 5, Sonnet hoặc Pro 4, Argon 3, Haiku hoặc Flash 2, model khác 1). |
 | `--name <name>` | Tên hiển thị, tối đa 24 ký tự (mặc định: id viết hoa chữ đầu). |
 
 ## `elvaria character list`
@@ -101,6 +105,23 @@ Triệu hồi một nhân vật: nghề, tộc, model và cấp ban đầu.
 Liệt kê các nhân vật.
 
 Không có tham số riêng, chỉ các tùy chọn chung.
+
+## `elvaria character suspend`
+
+Đình chỉ một nhân vật: nhân vật không nhận việc và buông nhiệm vụ đang giữ, nhiệm vụ đi tiếp không có nó (lệnh suspend).
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<id>` | id của nhân vật, ví dụ thorn. |
+| `--reason <text>` | Lý do đình chỉ (giữ cùng lệnh). |
+
+## `elvaria character release`
+
+Thả một nhân vật bị đình chỉ: nhân vật rảnh lại và nhận việc (lệnh release).
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<id>` | id của nhân vật, ví dụ thorn. |
 
 ## `elvaria say`
 
@@ -185,6 +206,23 @@ Sửa một nhiệm vụ mà không chạm vào file của nó (lệnh edit_ques
 | `--max-minutes <n>` | Trần số phút cho một lần thử. |
 | `--max-tokens <n>` | Trần số token cho một lần thử. |
 | `--max-attempts <n>` | Số lần thử tối đa. |
+
+## `elvaria quest retry`
+
+Mở lại một nhiệm vụ ở trạm quân y với đủ lượt thử như mới, hoặc đưa nhiệm vụ có người chấm bị cầu dao cắt mãi về chờ nghiệm thu (lệnh retry).
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<quest>` | id của nhiệm vụ, ví dụ q_20261106_7k3m2a. |
+
+## `elvaria quest reassign`
+
+Giao lại một nhiệm vụ cho nhân vật khác, hoặc cho nhân vật bạn chỉ định (lệnh reassign).
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<quest>` | id của nhiệm vụ, ví dụ q_20261106_7k3m2a. |
+| `--to <character>` | Nhân vật nhận việc, đúng nghề của nhiệm vụ, cấp nào cũng được (vượt hạng trần thì nhiệm vụ chờ dấu vua). Không có thì Quản sự chọn trong những người đang rảnh. |
 
 ## `elvaria seal`
 

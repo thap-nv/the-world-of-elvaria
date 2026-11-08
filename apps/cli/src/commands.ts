@@ -1,15 +1,17 @@
 // Every command of `elvaria`, in the order help lists them. Later tasks add theirs here: tribe (P1-19).
 import { CHARACTER_ADD } from './character/add.ts';
 import { CHARACTER_LIST } from './character/list.ts';
+import { CHARACTER_RELEASE, CHARACTER_SUSPEND } from './character/suspend.ts';
 import { DOCTOR } from './doctor/doctor.ts';
 import { INIT } from './init.ts';
 import { MIGRATE } from './migrate.ts';
 import { QUEST_ADD } from './quest/add.ts';
 import { ANSWER } from './quest/answer.ts';
 import { QUEST_EDIT } from './quest/edit.ts';
-import { QUEST_ARCHIVE, QUEST_CANCEL, QUEST_CONFIRM } from './quest/lifecycle.ts';
+import { QUEST_ARCHIVE, QUEST_CANCEL, QUEST_CONFIRM, QUEST_RETRY } from './quest/lifecycle.ts';
 import { QUEST_LIST } from './quest/list.ts';
 import { RETURN, SEAL } from './quest/owner-verdict.ts';
+import { QUEST_REASSIGN } from './quest/reassign.ts';
 import { QUEST_SHOW } from './quest/show.ts';
 import { RUN } from './run/run.ts';
 import { SANDBOX_GENERATE } from './sandbox/generate.ts';
@@ -27,6 +29,8 @@ export const COMMANDS: readonly CommandSpec[] = [
   TERRITORY_LIST,
   CHARACTER_ADD,
   CHARACTER_LIST,
+  CHARACTER_SUSPEND,
+  CHARACTER_RELEASE,
   SAY,
   QUEST_ADD,
   QUEST_LIST,
@@ -35,6 +39,8 @@ export const COMMANDS: readonly CommandSpec[] = [
   QUEST_CANCEL,
   QUEST_ARCHIVE,
   QUEST_EDIT,
+  QUEST_RETRY,
+  QUEST_REASSIGN,
   SEAL,
   RETURN,
   ANSWER,

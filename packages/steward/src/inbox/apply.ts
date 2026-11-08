@@ -8,6 +8,7 @@ import type { InboxItem } from '@elvaria/store';
 
 import { wake } from '../mana/step.ts';
 import { STEWARD } from '../record.ts';
+import { release, suspend } from './character-commands.ts';
 import {
   answer,
   archive,
@@ -26,8 +27,6 @@ import type { Outcome } from './quest-commands.ts';
 /** Commands the Steward does not apply yet; each names the task that brings it. */
 const LATER: ReadonlySet<InboxCommand['kind']> = new Set([
   'summon',
-  'suspend',
-  'release',
   'send_to_temple',
   'declare_campaign',
   'close_campaign',
@@ -69,6 +68,8 @@ export async function applyCommand(ctx: Context, command: InboxCommand): Promise
   if (LATER.has(command.kind)) return rejected('unsupported');
   if (command.kind === 'create_quest') return createQuest(ctx, command);
   if (command.kind === 'wake') return wake(ctx, command.payload.tribe);
+  if (command.kind === 'suspend') return suspend(ctx, command.payload.character, command.payload.reason);
+  if (command.kind === 'release') return release(ctx, command.payload.character);
   const quest = questOf(ctx, command);
   return quest === undefined ? rejected('unknown_quest') : onQuest(ctx, command, quest);
 }

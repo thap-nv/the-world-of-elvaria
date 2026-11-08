@@ -36,6 +36,20 @@ describe('reviewBreaksOf', () => {
     expect(reviewBreaksOf(stopped(crashed, 'brann', 30, 'turns'))).toBe(1);
   });
 
+  it("counts from the owner's retry of a stalled review: same run, a new judge, the count starts over (P1-26)", () => {
+    const stalled = stopped(stopped(review, 'wren', 20, 'tokens'), 'brann', 30, 'time');
+    const sick = moved(stalled, 35, ['breaker', 'steward', { trip: 'tokens' }]);
+    expect(sick).toMatchObject({ status: 'infirmary' });
+    expect(reviewStalled(sick)).toBe(true);
+    const retried = moved(sick, 40, ['retry', 'user']);
+    expect(retried).toMatchObject({ status: 'review', assignee: 'thorn', verifier: null, attempts: 1 });
+    const third = stopped(retried, 'wren', 50, 'tokens');
+    expect(third.attempt_log.at(-1)).toMatchObject({ n: 1, role: 'verifier', outcome: 'breaker' });
+    expect(reviewBreaksOf(third)).toBe(1);
+    expect(reviewStalled(third)).toBe(false);
+    expect(reviewStalled(stopped(third, 'brann', 60, 'turns'))).toBe(true);
+  });
+
   it('starts again with the next run', () => {
     const once = stopped(review, 'wren', 20, 'tokens');
     const failed = moved(judged(once, 'brann', 30), 35, ['verdict_fail', 'verifier', { verdict_id: 'v1' }]);

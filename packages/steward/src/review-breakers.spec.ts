@@ -98,6 +98,40 @@ describe('a review the breakers keep stopping', () => {
     for (const judge of judges) expect((await kingdom.character(judge.character ?? '')).status).toBe('idle');
   });
 
+  it("sends it back to review on the owner's retry, where one more cut is not yet a stall (P1-26)", async () => {
+    const spawned: SpawnRequest[] = [];
+    const { kingdom, steward } = await open(() => ({
+      runners: {
+        claude: spendingJudges('claude', 240_001, spawned),
+        gemini: spendingJudges('gemini', 240_001, spawned),
+      },
+    }));
+    await kingdom.command('create_quest', questPayload('Judged again'));
+    const sick = async () => (await kingdom.quest('Judged again')).status === 'infirmary';
+    await tickUntil(steward, kingdom.clock, sick);
+    const stalled = await kingdom.quest('Judged again');
+    await kingdom.command('retry', { quest: stalled.id });
+    await steward.tick();
+    // The same run goes on: the assignee's work stays, a new judge opens a session in the same tick.
+    const retried = await kingdom.quest('Judged again');
+    expect(retried).toMatchObject({ status: 'review', assignee: stalled.assignee, attempts: 1 });
+    expect(retried.verifier).toEqual(expect.any(String));
+    expect(verifiersOf(spawned)).toHaveLength(3);
+    // The count started over at the retry: the third judge cut leaves the review to a fourth.
+    await tickUntil(steward, kingdom.clock, () => Promise.resolve(verifiersOf(spawned).length === 4));
+    expect((await kingdom.quest('Judged again')).status).toBe('review');
+    expect(kingdom.notices).toHaveLength(1);
+    await tickUntil(steward, kingdom.clock, sick);
+    const again = await kingdom.quest('Judged again');
+    expect(again.attempt_log.filter(({ role }) => role === 'verifier').map(({ n }) => n)).toEqual([
+      1, 1, 1, 1,
+    ]);
+    expect(kingdom.notices.at(-1)).toMatchObject({
+      kind: 'infirmary',
+      reason: expect.stringContaining('a breaker stopped 2 verifiers of run 1') as unknown,
+    });
+  });
+
   it('counts a verifier its CLI stopped at its own turn limit as one a breaker stopped', async () => {
     const spawned: SpawnRequest[] = [];
     const { kingdom, steward } = await open((k) => ({

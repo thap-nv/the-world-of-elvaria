@@ -1,5 +1,6 @@
 // Quests and events for the state-machine specs. Every quest here is reached through transition() itself from a
 // draft, so the specs test the machine on states it really produces, not on hand-made ones.
+import { reviewBreaksOf } from '../../breaker/review.ts';
 import { QuestSchema } from '../../schema/quest/quest.ts';
 import { QUEST_ACTORS, QUEST_EVENT_TYPES } from '../events.ts';
 import { findTransition, transition } from '../transition.ts';
@@ -156,6 +157,8 @@ const keyOf = (quest: Quest): string =>
     quest.blocked !== undefined,
     quest.seal !== undefined,
     quest.deliverable.delivered_at !== undefined,
+    // The stalled_review guards read it (P1-26).
+    reviewBreaksOf(quest),
   ]);
 
 /**
