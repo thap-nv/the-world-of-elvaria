@@ -87,7 +87,10 @@ export const QUEST_TRANSITIONS: readonly QuestTransitionRow[] = [
   { from: 'working', event: 'suspend', actors: U, guard: 'session', to: 'returned' },
   { from: 'working', event: 'cancel', actors: U, to: 'archived' },
   { from: 'paused_mana', event: 'mana_restored', actors: M, to: 'working' },
-  { from: 'paused_mana', event: 'reassign', actors: U, to: 'claimed' },
+  // The Steward too, once the quest slept past mana.reassign_after_hours (P1-22, §3.5).
+  { from: 'paused_mana', event: 'reassign', actors: US, to: 'claimed' },
+  // The owner suspends the character asleep on it: the quest lets go of it and opens again for anyone (P1-22).
+  { from: 'paused_mana', event: 'suspend', actors: U, to: 'open' },
   { from: 'paused_mana', event: 'cancel', actors: U, to: 'archived' },
   { from: 'paused_mana', event: 'breaker', actors: S, to: 'infirmary' },
   { from: 'blocked', event: 'answer', actors: U, guard: 'has_assignee', to: 'working' },

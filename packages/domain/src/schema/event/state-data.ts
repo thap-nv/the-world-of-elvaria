@@ -69,9 +69,22 @@ export const TerritoryChangeDataSchema = z.strictObject({
 });
 
 export const ManaPoolDataSchema = z
-  .strictObject({ tribe: TribeIdSchema, pool: z.string().regex(REGISTRY_ID_PATTERN) })
+  .strictObject({
+    tribe: TribeIdSchema,
+    pool: z.string().regex(REGISTRY_ID_PATTERN),
+    // Optional and added after v1 (P1-22): every line written before it is a whole pool, so `v` stays 1.
+    model: z
+      .string()
+      .regex(REGISTRY_ID_PATTERN)
+      .optional()
+      .meta(
+        describe(
+          "The one model whose own cap fell asleep or woke (argon, fable): only the characters on that model; absent for the whole pool (implementation-plan §3.5, P1-22). The pool's HUD band does not follow it.",
+        ),
+      ),
+  })
   .meta(
     describe(
-      'The pool that fell asleep (mana.exhausted) or woke (mana.restored): the whole pool, every character of it (ADR 0009).',
+      'The gauge that fell asleep (mana.exhausted) or woke (mana.restored): the whole pool, every character of it, or the cap of one model (ADR 0009).',
     ),
   );

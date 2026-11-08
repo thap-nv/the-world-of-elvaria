@@ -52,6 +52,7 @@ describe('questLogTypeOf', () => {
     ['breaker', 'review', 'review', 'quest.verdict'],
     ['suspend', 'review', 'review', 'quest.verdict'],
     ['suspend', 'working', 'returned', 'quest.returned'],
+    ['suspend', 'paused_mana', 'open', 'quest.released'],
     ['seal', 'awaiting_seal', 'done', 'quest.sealed'],
     ['return', 'awaiting_seal', 'returned', 'quest.returned'],
     ['deliver', 'done', 'done', 'quest.delivered'],

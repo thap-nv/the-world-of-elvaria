@@ -18,6 +18,7 @@ import {
   workingBy,
 } from './__fixtures__/snapshot.ts';
 import { planTick } from './plan-tick.ts';
+import { pausedSince } from './reassigns.ts';
 import type { TribeId } from '../core/ids.ts';
 import type { ManaReading } from '../mana/reading.ts';
 import type { Character } from '../schema/character/character.ts';
@@ -109,5 +110,62 @@ describe('planTick: mana (§3.5)', () => {
     expect(planTick(snapshot([paused, running], [sleeper()], one), NOW).wakes).toEqual([]);
     expect(planTick(snapshot([paused], [sleeper('thorn', Q2)]), NOW).wakes).toEqual([]);
     expect(planTick(snapshot([paused], [character('thorn')]), NOW).wakes).toEqual([]);
+  });
+
+  describe('per bucket (P1-22)', () => {
+    const argon = character('quill', { tribe: 'gemini' });
+    const flash = character('wren', { tribe: 'gemini', model: 'gemini-3.8-flash-high' });
+    const scribes = [argon, flash];
+    const group = { tribe: GEMINI, pool: 'gemini_models' };
+
+    it("sleeps only Argon when Argon's own cap sleeps, and only Flash when the listed group does", () => {
+      const listed = reading(10, { ...group, models: ['Gemini Flash', 'Gemini Pro'] });
+      const capAsleep = { asleep: [{ ...group, model: 'argon' }] };
+      expect(takers([quest(Q1)], scribes, capAsleep)).toEqual([[Q1, 'wren']]);
+      expect(takers([quest(Q1)], scribes, { asleep: [group], ...gauge(listed) })).toEqual([[Q1, 'quill']]);
+      // Without the account's list, the prefix table charges Argon to the group too.
+      expect(takers([quest(Q1)], scribes, { asleep: [group] })).toEqual([]);
+    });
+  });
+
+  describe('mana.reassign_after_hours (P1-22)', () => {
+    const geminiKnight = character('quill', { tribe: 'gemini' });
+    const asleep = { asleep: [{ tribe: CLAUDE, pool: 'claude' }] };
+    const after = (hours: number | null) => ({
+      ...KINGDOM,
+      mana: { ...KINGDOM.mana, reassign_after_hours: hours },
+    });
+
+    it('gives a quest asleep past the limit to a free character of its class whose mana is open', () => {
+      const plan = planTick(
+        snapshot([paused], [sleeper(), geminiKnight], { ...asleep, kingdom: after(1) }),
+        NOW,
+      );
+      expect(plan.reassigns).toEqual([{ quest: Q1, assignee: 'quill', level: 3 }]);
+      expect(plan.claims).toEqual([]);
+    });
+
+    it('waits before the limit, without a limit, without a taker, or when the pool woke', () => {
+      const run = (more: Partial<KingdomSnapshot>, characters = [sleeper(), geminiKnight]) =>
+        planTick(snapshot([paused], characters, { ...asleep, ...more }), NOW).reassigns;
+      expect(run({ kingdom: after(2) })).toEqual([]);
+      expect(run({ kingdom: after(null) })).toEqual([]);
+      expect(run({})).toEqual([]);
+      expect(run({ kingdom: after(1) }, [sleeper()])).toEqual([]);
+      expect(run({ kingdom: after(1), territories: [territory(TERRITORY, 0)] })).toEqual([]);
+      expect(run({ kingdom: after(1), territories: [] })).toEqual([]);
+      const woke = planTick(snapshot([paused], [sleeper(), geminiKnight], { kingdom: after(1) }), NOW);
+      expect(woke).toMatchObject({ wakes: [Q1], reassigns: [] });
+    });
+
+    it('counts from the end of the paused session, else from the last change of the quest', () => {
+      expect(pausedSince(paused)).toBe(Date.parse(at(20)));
+      expect(pausedSince(quest(Q2))).toBe(Date.parse(quest(Q2).updated_at));
+      expect(pausedSince({ ...quest(Q2), updated_at: 'never' })).toBeUndefined();
+      const odd = { ...paused, updated_at: 'never', attempt_log: [] };
+      expect(
+        planTick(snapshot([odd], [sleeper(), geminiKnight], { ...asleep, kingdom: after(1) }), NOW).reassigns,
+      ).toEqual([]);
+    });
   });
 });

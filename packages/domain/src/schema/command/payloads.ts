@@ -20,6 +20,7 @@ import {
   FailKindSchema,
   NameSchema,
   NonEmptyStringSchema,
+  ModelSlugSchema,
   RankSchema,
   unique,
 } from '../common.ts';
@@ -184,6 +185,14 @@ export const SetLevelPayloadSchema = z
   .meta(
     describe(
       "The owner sets a character's level (`elvaria character level`), any number of levels up or down. The Steward writes it with level_since = now, so levelChange counts only the verdicts after it, and appends character.level_up or character.level_down as the owner's. Refused when the character already has that level.",
+    ),
+  );
+
+export const SetModelPayloadSchema = z
+  .strictObject({ character: CharacterIdSchema, model: ModelSlugSchema })
+  .meta(
+    describe(
+      "The owner moves a character to another model of its own tribe (`elvaria character model`, P1-22): its next session runs it, and the mana gauges of that model bind it. Class, tribe, level and reputation stay. The Steward appends character.model_changed as the owner's. Refused when the character already runs that model, or when its tribe does not serve it (an account with named pools serves the models a pool claims; a one-pool account, the family of the character's model).",
     ),
   );
 

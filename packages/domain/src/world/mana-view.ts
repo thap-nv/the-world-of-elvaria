@@ -29,9 +29,15 @@ export const PoolViewSchema = z.strictObject({
 
 export type ManaReadingView = z.infer<typeof ManaReadingViewSchema>;
 export type PoolView = z.infer<typeof PoolViewSchema>;
+/**
+ * One gauge of an account as the world sleeps and wakes it (P1-22): a whole group of models (`pool`), or the cap of
+ * one model inside it (`model`: Argon's, Fable's weekly cap), which binds only the characters on that model.
+ */
 export interface PoolKey {
   readonly tribe: TribeId;
   readonly pool: string;
+  /** Lower-case name of the one model whose own cap this is; absent for the whole pool. */
+  readonly model?: string;
 }
 
 /**
@@ -49,7 +55,7 @@ export const poolsOf = (tribes: readonly Tribe[]): PoolView[] =>
 /** `pools` with the pool of `key` changed; a pool kingdom.json does not name (yet) is added awake. */
 export function updatePool(
   pools: readonly PoolView[],
-  key: PoolKey,
+  key: Pick<PoolKey, 'tribe' | 'pool'>,
   change: (pool: PoolView) => PoolView,
 ): PoolView[] {
   const index = pools.findIndex(({ tribe, pool }) => tribe === key.tribe && pool === key.pool);

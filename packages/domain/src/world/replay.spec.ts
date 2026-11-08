@@ -105,10 +105,12 @@ describe('replaying a fake day', () => {
     expect(unused).toEqual([
       'quest.edited',
       'quest.unclaimable',
+      'mana.warning',
       'character.meditate',
       'character.suspend',
       'character.release',
       'character.level_down',
+      'character.model_changed',
     ]);
     for (const ignored of ['agent.tool', 'verdict.pass', 'command.applied', 'campaign.declared']) {
       expect(types).toContain(ignored);

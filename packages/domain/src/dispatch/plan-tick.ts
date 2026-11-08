@@ -9,6 +9,7 @@
 import { breakersOf } from '../breaker/breakers.ts';
 import { failStreakReached } from '../character/fail-streak.ts';
 import { claimBlocker } from './claim-blocker.ts';
+import { reassignsOf } from './reassigns.ts';
 import { planReviews } from './reviews.ts';
 import { rosterOf } from './roster.ts';
 import { selectAssignee } from './select-assignee.ts';
@@ -16,6 +17,7 @@ import { wakesOf } from './wakes.ts';
 import { RANKS } from '../schema/common.ts';
 import type { Breaker, HeldSession } from '../breaker/breakers.ts';
 import type { ClaimBlocker } from './claim-blocker.ts';
+import type { Reassign } from './reassigns.ts';
 import type { ReviewSource, Verification } from './reviews.ts';
 import type { Roster, RosterSource } from './roster.ts';
 import type { Instant } from '../core/clock.ts';
@@ -25,8 +27,13 @@ import type { Kingdom } from '../schema/kingdom.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 
 export interface KingdomSnapshot extends RosterSource, ReviewSource {
-  /** Tribes, and the rules of judging: dispatch.verifier_same_family, breakers.same_fail_suspend, max_turns. */
-  readonly kingdom: Pick<Kingdom, 'tribes' | 'dispatch' | 'breakers'>;
+  /**
+   * Tribes, and the rules of judging: dispatch.verifier_same_family, breakers.same_fail_suspend, max_turns; and
+   * mana.reassign_after_hours (absent: never, as null).
+   */
+  readonly kingdom: Pick<Kingdom, 'tribes' | 'dispatch' | 'breakers'> & {
+    readonly mana?: Pick<Kingdom['mana'], 'reassign_after_hours'>;
+  };
   /** The sessions the Steward holds, with their usage so far, for the breakers (§3.4); none in a sandbox day. */
   readonly sessions?: readonly HeldSession[];
 }
@@ -55,6 +62,11 @@ export interface TickPlan {
   readonly suspensions: readonly CharacterId[];
   /** Paused quests whose assignee's pool has mana again, before any new work (`wakesOf`, P1-05, §3.5). */
   readonly wakes: readonly QuestId[];
+  /**
+   * Paused quests that slept past mana.reassign_after_hours and that another character of their class, its mana
+   * open, takes now (`reassignsOf`, P1-22): the Steward moves them (`paused_mana.reassign`) and starts them.
+   */
+  readonly reassigns: readonly Reassign[];
   /** Claimed quests whose dependencies are done and whose assignee is free: the owner's reassigns, or a claim
    * the Steward made before it stopped. */
   readonly starts: readonly QuestId[];
@@ -198,7 +210,11 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
   const openSessions = open.filter(({ tier }) => tier === 'session');
   const suspended = suspensions(step);
   // The paused work takes its slots before anything new.
-  const wakes = wakesOf(step.roster, step.character, inStatus('paused_mana'));
+  const paused = inStatus('paused_mana');
+  const wakes = wakesOf(step.roster, step.character, paused);
+  const hours = snapshot.kingdom.mana?.reassign_after_hours ?? null;
+  const asleep = paused.filter(({ id }) => !wakes.includes(id));
+  const reassigns = reassignsOf(step.roster, snapshot.characters, asleep, hours, now);
   const starts = inStatus('claimed')
     .filter((quest) => ready(quest) && holderGoes(step, quest))
     .map(({ id }) => id);
@@ -213,6 +229,7 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
     breakers: breakersOf(snapshot.quests, snapshot.sessions ?? [], snapshot.kingdom.breakers.max_turns, now),
     suspensions: suspended,
     wakes,
+    reassigns,
     starts,
     checks: judged.checks,
     verifications: judged.verifications,

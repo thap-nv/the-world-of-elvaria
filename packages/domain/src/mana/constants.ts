@@ -7,6 +7,11 @@ export const RESET_RETRY_MINUTES = 2;
 /** …for this long after the reset, then fall back to probe_interval_minutes. */
 export const RESET_RETRY_WINDOW_MINUTES = 10;
 
+/** The span of each window the estimate gauge sums over (§3.5): five hours, seven days. */
+export const WINDOW_MINUTES = { five_hour: 300, weekly: 10_080 } as const;
+/** Estimated shares are kept to two decimals, as the account's own figures are. */
+export const PCT_DECIMALS_FACTOR = 100;
+
 /**
  * Model-slug prefixes of each named pool: an account with several pools (Antigravity: Gemini models and the
  * Claude/GPT models it also serves) charges a character to the pool of its model. Keyed by pool, not by adapter,

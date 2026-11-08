@@ -11,6 +11,8 @@ export interface Running {
   /** The run (attempt_log n) the session belongs to. */
   readonly n: number;
   readonly character: CharacterId;
+  /** The model the session runs, as the character had it at spawn: a usage limit is charged to it (P1-22). */
+  readonly model?: string;
   readonly session: RunningSession;
   readonly session_id: string;
   /** A verifier's: the machine checks that ran before its session, for the verdict file (§3.2); none for an assignee. */

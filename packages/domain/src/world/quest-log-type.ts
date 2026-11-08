@@ -57,6 +57,8 @@ const BY_EVENT: Readonly<Record<QuestEventType, QuestLogType>> = {
  */
 export function questLogTypeOf(event: QuestEventType, from: QuestStatus, to: QuestStatus): QuestLogType {
   if (event === 'retry' && to === 'review') return 'quest.submitted';
+  // A suspended sleeper's paused quest opens again with nobody holding it, as after a failed spawn (P1-22).
+  if (event === 'suspend' && to === 'open') return 'quest.released';
   const verifierLeft = from === 'review' && to === 'review' && event !== 'assign_verifier';
   return BY_TARGET[to] ?? (verifierLeft ? 'quest.verdict' : BY_EVENT[event]);
 }

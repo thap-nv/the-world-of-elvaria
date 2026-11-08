@@ -1,7 +1,7 @@
 // The owner's commands on characters (implementation-plan §2.6): `suspend` takes a character off work from any
 // status but suspended, `release` brings a suspended one back idle. The quest goes on without the character (§2.5):
 // returned when it was the assignee, back in review without a verifier when it was the verifier, open again when it
-// was only claimed for it. The roster never counts a suspended character, so planTick gives it nothing (P1-26).
+// was only claimed for it or the character slept on it paused for mana (P1-22). The roster never counts a suspended character, so planTick gives it nothing (P1-26).
 import { findTransition } from '@elvaria/domain';
 import { plotCommitMessage } from '@elvaria/runner-core';
 import type { Character, CharacterId, Quest, RunEnd } from '@elvaria/domain';
@@ -67,8 +67,8 @@ async function suspendWith(ctx: Context, id: CharacterId, quest: Quest, why: str
 }
 
 /**
- * `suspend`: the character's own move (§2.6), with its quest's when it works or judges one. A quest it sleeps on
- * (paused for mana) has no row for it and stays paused until the owner gives it to someone else (`reassign`).
+ * `suspend`: the character's own move (§2.6), with its quest's when it works, judges or sleeps on one: a quest it
+ * sleeps on (paused for mana) lets go of it and opens again (`paused_mana.suspend`, P1-22).
  */
 export async function suspend(ctx: Context, id: CharacterId, reason: string | undefined): Promise<Outcome> {
   const character = ctx.world.characters.get(id);

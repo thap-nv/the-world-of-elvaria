@@ -74,6 +74,17 @@
   },
   {
     "version": 1,
+    "id": "01JCFF9K1M3N5P7Q9R1S3T5V7W",
+    "ts": "2026-11-08T08:12:00+07:00",
+    "kind": "set_model",
+    "source": "cli",
+    "payload": {
+      "character": "quill",
+      "model": "gemini-3.8-flash-high"
+    }
+  },
+  {
+    "version": 1,
     "id": "01JCFG7H9J1K3M5N7P9Q1R3S5T",
     "ts": "2026-11-08T08:15:00+07:00",
     "kind": "create_quest",

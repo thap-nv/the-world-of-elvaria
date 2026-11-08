@@ -1,7 +1,7 @@
 // ConsoleBell (implementation-plan §3.1, stage 1): the Steward rings with data, a Notice; this bell says it in the
 // owner's language on the terminal that runs `elvaria run`. Desktop and web push come in stage 2.
 import type { Translate } from '@elvaria/i18n';
-import type { Bell, Notice } from '@elvaria/steward';
+import type { Bell, ManaGaugeNotice, Notice } from '@elvaria/steward';
 
 import { stretchOf } from '../quest/unclaimable.ts';
 import type { CliIo } from '../io.ts';
@@ -22,11 +22,35 @@ function waitReason(t: Translate, notice: Extract<Notice, { kind: 'unclaimable' 
   return t('cli.quest.unclaimable.no_class', { class: notice.class });
 }
 
+/** The gauge a mana notice is about: a whole pool, or the cap of one model (P1-22). */
+const gaugeOf = (t: Translate, notice: ManaGaugeNotice): string =>
+  notice.model === undefined
+    ? t('cli.run.notice.gauge.pool', { pool: notice.pool, tribe: notice.tribe })
+    : t('cli.run.notice.gauge.model', { model: notice.model, tribe: notice.tribe });
+
+type ManaNotice = Extract<Notice, { kind: 'mana_asleep' | 'mana_awake' | 'mana_warning' }>;
+
+/** A gauge warned, ran dry or came back (P1-22). */
+function manaLine(t: Translate, notice: ManaNotice): string {
+  const gauge = gaugeOf(t, notice);
+  if (notice.kind === 'mana_awake') return t('cli.run.notice.mana_awake', { gauge });
+  if (notice.kind === 'mana_asleep') {
+    const resets = notice.resets_at;
+    return resets === undefined
+      ? t('cli.run.notice.mana_asleep', { gauge })
+      : t('cli.run.notice.mana_asleep_until', { gauge, resets_at: resets });
+  }
+  const window = t(`cli.run.notice.window.${notice.window}`);
+  return t('cli.run.notice.mana_warning', { gauge, used_pct: notice.used_pct, window });
+}
+
 export function lineOf(t: Translate, notice: Notice): string {
   if (notice.kind === 'suspended') {
     const { character, count } = notice;
     return t('cli.run.notice.suspended', { character, count, fail_kind: notice.fail_kind ?? 'other' });
   }
+  if (notice.kind === 'mana_asleep' || notice.kind === 'mana_awake' || notice.kind === 'mana_warning')
+    return manaLine(t, notice);
   const quest = { quest: notice.quest.id, title: notice.quest.title };
   switch (notice.kind) {
     case 'unclaimable':

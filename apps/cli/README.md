@@ -27,7 +27,9 @@
   character the Steward would refuse, unknown, suspended already or not suspended, is refused here), and `suspend`
   says what becomes of the quest the character holds (the owner's decision after P1-26). `character level <id>
 <level>` sends `set_level` (a level outside 1–10 or the one the character has is refused here) and says the rank
-  ceiling of the new level (P1-29).
+  ceiling of the new level (P1-29). `character model <id> <model>` sends `set_model` (checked as the Steward checks
+  it, the domain's `setModelLine`: a model of the character's own tribe, not the one it runs) and says when the new
+  model's pool is turned off (P1-22).
 - Writes new files the Steward does not own: `kingdom.json` (`init`, then `tribes[].tool` and, with `--enable`,
   `tribes[].enabled` from `doctor`), a
   territory, a newly summoned character (create only, never overwrite). Those two are also logged
@@ -54,7 +56,7 @@
   `src/run/antigravity.ts`; a tribe without a runner takes no quest), plots over runner-core's
   `PlotManager` and `runChecks` (`src/run/plots.ts`: prepare, commit, the checks on what the quest touched,
   release) with a `ProcessHost` from PATH and each CLI's `forget` (`claude purge`), the console bell saying
-  the Steward's notices in the owner's language, and `.state/steward.lock` (a second `run` is refused).
+  the Steward's notices in the owner's language (from P1-22 also a mana gauge that warns, sleeps or wakes), and `.state/steward.lock` (a second `run` is refused).
 
 ## Does not
 

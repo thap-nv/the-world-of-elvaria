@@ -19,6 +19,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria character suspend <id>` | Đình chỉ một nhân vật: nhân vật không nhận việc và buông nhiệm vụ đang giữ, nhiệm vụ đi tiếp không có nó (lệnh suspend). |
 | `elvaria character release <id>` | Thả một nhân vật bị đình chỉ: nhân vật rảnh lại và nhận việc (lệnh release). |
 | `elvaria character level <id> <level>` | Đặt cấp của một nhân vật, lên hay xuống: những lần nhận việc sau theo hạng trần của cấp mới (lệnh set_level). |
+| `elvaria character model <id> <model>` | Chuyển một nhân vật sang model khác của chính tộc nó: phiên sau chạy model mới, và đồng hồ mana của model đó ràng nhân vật (lệnh set_model). |
 | `elvaria say <words>` | Nói với Tể tướng việc bạn muốn: Tể tướng soạn nhiệm vụ nháp, bạn xác nhận (lệnh create_quest, nháp). |
 | `elvaria quest add` | Thêm một nhiệm vụ mở ngay, không qua Tể tướng (lệnh create_quest). |
 | `elvaria quest list` | Liệt kê các nhiệm vụ trên bảng nhiệm vụ. |
@@ -132,6 +133,15 @@ Thả một nhân vật bị đình chỉ: nhân vật rảnh lại và nhận v
 |---|---|
 | `<id>` | id của nhân vật, ví dụ thorn. |
 | `<level>` | Cấp mới, 1–10. |
+
+## `elvaria character model`
+
+Chuyển một nhân vật sang model khác của chính tộc nó: phiên sau chạy model mới, và đồng hồ mana của model đó ràng nhân vật (lệnh set_model).
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<id>` | id của nhân vật, ví dụ thorn. |
+| `<model>` | Model CLI mới, cùng tộc, ví dụ gemini-3.8-flash-high. |
 
 ## `elvaria say`
 

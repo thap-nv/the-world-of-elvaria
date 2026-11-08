@@ -24,6 +24,11 @@ export interface ManaReading {
   readonly exhausted: boolean;
   /** Lower-case name of the one model the window caps (`fable`, `argon`); absent for the whole pool. */
   readonly model?: string;
+  /**
+   * The models the account says share the window (`Gemini Flash`, `Gemini Pro`): the group it binds (P1-22). Absent
+   * when the account does not say; POOL_MODEL_PREFIXES then decides (poolOf).
+   */
+  readonly models?: readonly string[];
 }
 
 /** A window the account reported, before the Steward knows which tribe asked (runner-core's UsageReading). */
@@ -34,6 +39,8 @@ export interface ReportedWindow {
   /** The account's pool; absent for a one-pool account. */
   readonly pool?: string;
   readonly model?: string;
+  /** The models of the window's group, as the account names them (agy `/usage`: "Models within this group: …"). */
+  readonly models?: readonly string[];
 }
 
 /** A reported window as the tribe's reading, observed at `at` (`rate_limits`: the account's own figure). */
@@ -47,11 +54,28 @@ export const readingOf = (tribe: TribeId, window: ReportedWindow, at: string): M
   observed_at: at,
   exhausted: window.used_pct >= 100,
   ...(window.model === undefined ? {} : { model: window.model.toLowerCase() }),
+  ...(window.models === undefined ? {} : { models: window.models }),
 });
 
 /** Readings are replaced per (tribe, pool, window, model): the latest one of each stands. */
 export const sameGauge = (a: ManaReading, b: ManaReading): boolean =>
   a.tribe === b.tribe && a.pool === b.pool && a.window === b.window && a.model === b.model;
+
+/**
+ * The models the account last said share `key`'s group, from the readings of the whole pool; undefined when no
+ * reading says (a pool asleep is then bound by the prefix table, as its readings would be).
+ */
+export const modelsOf = (
+  readings: readonly ManaReading[],
+  key: Pick<ManaReading, 'tribe' | 'pool'>,
+): readonly string[] | undefined =>
+  readings.findLast(
+    (reading) =>
+      reading.tribe === key.tribe &&
+      reading.pool === key.pool &&
+      reading.model === undefined &&
+      reading.models !== undefined,
+  )?.models;
 
 /** `readings` with `fresh` in place of the ones they replace. */
 export const withReadings = (

@@ -1,7 +1,8 @@
 // What the Steward knows of mana between ticks (implementation-plan §3.5, ADR 0009): the latest reading of every
-// gauge, the pools asleep, and when each tribe is next probed or read. Rebuilt from the event log at start: the
-// pools asleep from `mana.exhausted` / `mana.restored`; readings and schedules come back with the first probe.
-import { samePool } from '@elvaria/domain';
+// gauge, the gauges asleep (a whole pool, or the cap of one model: P1-22), the gauges warned, and when each tribe
+// is next probed or read. Rebuilt from the event log at start: the gauges asleep from `mana.exhausted` /
+// `mana.restored`, the ones warned from `mana.warning`; readings and schedules come back with the first probe.
+import { DateTimeSchema, keyOf, sameGauge, sameKey } from '@elvaria/domain';
 import type {
   CharacterId,
   Event,
@@ -24,6 +25,8 @@ export interface Heard {
 export interface ManaBook {
   readings: ManaReading[];
   asleep: PoolKey[];
+  /** The gauges that warned (`mana.warning`), as the reading that warned: once each until it falls back (P1-22). */
+  warned: ManaReading[];
   /** When a tribe with a pool asleep is probed next (ms); none: at once. */
   readonly probeAt: Map<TribeId, number>;
   /** The reset a sleeping tribe waits for (nextProbeOf): probes close after it come sooner. */
@@ -40,6 +43,7 @@ export interface ManaBook {
 export const createManaBook = (): ManaBook => ({
   readings: [],
   asleep: [],
+  warned: [],
   probeAt: new Map(),
   waited: new Map(),
   readAt: new Map(),
@@ -49,13 +53,12 @@ export const createManaBook = (): ManaBook => ({
 });
 
 export const isAsleep = (book: ManaBook, key: PoolKey): boolean =>
-  book.asleep.some((pool) => samePool(pool, key));
+  book.asleep.some((pool) => sameKey(pool, key));
 
 const poolOfLine = (data: unknown): PoolKey | undefined => {
-  const { tribe, pool } = (data ?? {}) as { tribe?: unknown; pool?: unknown };
-  return typeof tribe === 'string' && typeof pool === 'string'
-    ? { tribe: tribe as TribeId, pool }
-    : undefined;
+  const { tribe, pool, model } = (data ?? {}) as { tribe?: unknown; pool?: unknown; model?: unknown };
+  if (typeof tribe !== 'string' || typeof pool !== 'string') return undefined;
+  return keyOf({ tribe: tribe as TribeId, pool, ...(typeof model === 'string' ? { model } : {}) });
 };
 
 /** The pools the log leaves asleep: the last of `mana.exhausted` / `mana.restored` of each pool wins. */
@@ -65,8 +68,39 @@ export function asleepFromLog(events: readonly Event[]): PoolKey[] {
     if (event.type !== 'mana.exhausted' && event.type !== 'mana.restored') continue;
     const key = poolOfLine(event.data);
     if (key === undefined) continue;
-    asleep = asleep.filter((pool) => !samePool(pool, key));
+    asleep = asleep.filter((pool) => !sameKey(pool, key));
     if (event.type === 'mana.exhausted') asleep.push(key);
   }
   return asleep;
+}
+
+/**
+ * The gauges the log leaves warned: each `mana.warning` line as the reading that warned, the last of each gauge. The
+ * mana step forgets those whose window has reset or whose figure fell back, as it would have without a restart.
+ */
+export function warnedFromLog(events: readonly Event[]): ManaReading[] {
+  let warned: ManaReading[] = [];
+  for (const event of events) {
+    const reading = event.type === 'mana.warning' ? warningOfLine(event) : undefined;
+    if (reading === undefined) continue;
+    warned = [...warned.filter((old) => !sameGauge(old, reading)), reading];
+  }
+  return warned;
+}
+
+function warningOfLine(event: Event): ManaReading | undefined {
+  const key = poolOfLine(event.data);
+  const { window, used_pct: used, resets_at: resets } = event.data;
+  if (key === undefined || (window !== 'five_hour' && window !== 'weekly') || typeof used !== 'number')
+    return undefined;
+  const at = DateTimeSchema.safeParse(resets);
+  return {
+    ...key,
+    window,
+    used_pct: used,
+    resets_at: at.success ? at.data : null,
+    source: 'rate_limits',
+    observed_at: event.ts,
+    exhausted: false,
+  };
 }

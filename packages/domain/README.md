@@ -17,15 +17,19 @@
   `reputationOf`, `affinityOf`, `titleOf`. Decides levels: `canTake` (which ranks the Steward may give a level),
   `aboveCeiling` (a stretch that makes the quest wait for the royal seal) and `levelChange` (counting only the
   verdicts since the last change, `level_since`); the owner's `set_level` through `setLevelLine` (the line, or
-  `invalid_level`/`same_level`) and `withLevel` (P1-29).
+  `invalid_level`/`same_level`) and `withLevel` (P1-29); the owner's `set_model` through `setModelLine` (`invalid_model`,
+  `same_model`, `model_not_of_tribe`: `modelOfTribe`, a model some named pool claims, else the family of the
+  character's model) and `withModel`, told as `character.model_changed` (`src/character/model.ts`, P1-22).
 - Plans the Steward's tick (`src/dispatch/`): `planTick(snapshot, now)` returns what the Steward and the sandbox
   carry out in one tick: characters on a fail streak sent to the Temple (`failStreakReached`), claimed quests
   that start, a judge (or the machine) for each submitted quest, the submitted quests no judge of the roster may
   ever take (`unjudgeable`, `waitsForNoJudge`, P1-15), returned quests sent back, claims (class, level
   by `canTake`, limits of tribe and territory, round-robin, affinity), the open quests nobody can take, and the
   done quests still to deliver (`deliveries`, P1-14).
-  From P1-05 a character's pool must be open (`poolOpenOf`), and paused quests whose pool woke go on before
-  any new work (`wakes`, `wakesOf`). `resumedSession` decides whether a revived assignee continues its CLI
+  From P1-05 a character's mana must be open (`poolOpenOf`: its pool enabled, every gauge that binds it awake and
+  below the cap), and paused quests whose gauges woke go on before any new work (`wakes`, `wakesOf`); then, with
+  `mana.reassign_after_hours` set, a quest asleep that long goes to a free character of its class whose mana is
+  open (`reassigns`, `reassignsOf`, `pausedSince`, P1-22). `resumedSession` decides whether a revived assignee continues its CLI
   session (an answer within `resume_after_answer_minutes`, mana with `resume_after_mana`, an adapter that can
   resume); `answeredAlready` knows a question the owner answered. `namedAssignee` checks the character the
   owner names for a quest (`reassign`, `create_quest.assignee`): known, of the class, not suspended, of an enabled
@@ -58,11 +62,17 @@
   class the catalog's `follow_up` names (`parseRegistry` checks them). `planTick` names open script-tier quests
   (`scripts`) and runs a Steward stopped in the middle of (`script_verdicts`); `working.release.script` opens
   such a quest again, its run `cancelled`.
-- Decides mana per pool (`src/mana/`, ADR 0009): `poolOf(tribe, model)` (a one-pool account is the tribe; named
-  pools by model prefix, `POOL_MODEL_PREFIXES`), `ManaReading` and `readingOf` (an account's window as a
-  reading), `decideManaState(readings, pool, cfg, now, model?)` → `ok | warning | closed | asleep` against
-  `min(cap_pct, 100 − king_reserve_pct)`; a cap of one model binds only the characters on it; `nextProbeOf`, when
-  a sleeping pool is probed next (just after a known reset, soon again when the account is late).
+- Decides mana per gauge (`src/mana/`, ADR 0009; P1-22): a gauge (`PoolKey`) is a whole pool or the cap of one
+  model in it (`model`); `binds` says which characters a gauge binds: a model's cap the slugs that name it, a pool
+  the models the account lists in its group (`ManaReading.models`, `namesModel`), or, when it lists none, the models
+  `poolOf(tribe, model)` charges to it by prefix (`POOL_MODEL_PREFIXES`). `ManaReading` and `readingOf` (an
+  account's window as a reading); `decideManaState(readings, key, cfg, now)` → `ok | warning | closed | asleep` of
+  one gauge, `manaStateOf` of a character (every gauge that binds it), against `min(cap_pct, 100 − king_reserve_pct)`;
+  `asleepFor` (a gauge asleep binds the character), `spentFor` (the spent gauges a usage limit put to sleep);
+  `estimatedReadings` (`estimate`: the sessions' tokens, or minutes for `mana_source: elapsed_time`, in five hours
+  and seven days against `tribes[].budget`, for a pool and window the account gives no figure for; never spent);
+  `warningsOf` (a gauge warns once at `warn_margin_pct` below the cap); `nextProbeOf`, when a sleeping gauge is
+  probed next (just after a known reset, soon again when the account is late).
 - Maps the domain onto the design system (implementation-plan §2.7): `statusToneOf`, `characterToneOf`, and
   `bannerOf` (`src/world/`), the one band the HUD shows.
 - Builds the world state (`src/world/`) from the files (`worldStateOf`) or the log (`reduce`): every event that

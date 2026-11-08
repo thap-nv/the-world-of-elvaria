@@ -2,7 +2,13 @@ import { mkdir, mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import { CharacterIdSchema, KingdomSchema, QuestIdSchema, TerritorySchema } from '@elvaria/domain';
+import {
+  CharacterIdSchema,
+  KingdomSchema,
+  QuestIdSchema,
+  TerritorySchema,
+  TribeIdSchema,
+} from '@elvaria/domain';
 import type { Kingdom, Quest, Territory } from '@elvaria/domain';
 import { translator } from '@elvaria/i18n';
 import type { PlotManager } from '@elvaria/runner-core';
@@ -259,6 +265,29 @@ describe('the console bell', () => {
     );
     expect(lineOf(t, { kind: 'suspended', character: thorn, fail_kind: null, count: 3 })).toContain(
       '(other)',
+    );
+  });
+
+  it('says what a mana gauge did: a whole pool or the cap of one model (P1-22)', () => {
+    const gemini = TribeIdSchema.parse('gemini');
+    const argon = { tribe: gemini, pool: 'gemini_models', model: 'argon' };
+    expect(lineOf(t, { kind: 'mana_warning', ...argon, window: 'weekly', used_pct: 89.5 })).toBe(
+      'Mana running low: the argon cap of tribe gemini has used 89.5% of its weekly window. Near the cap the world ' +
+        'stops taking work there; elvaria character model moves a character to another model.',
+    );
+    expect(lineOf(t, { kind: 'mana_asleep', ...argon, resets_at: '2026-11-14T01:51:54Z' })).toBe(
+      'Out of mana: the argon cap of tribe gemini, until 2026-11-14T01:51:54Z. What runs on it pauses and keeps ' +
+        'its character; the Steward probes just after the reset.',
+    );
+    const pool = { tribe: gemini, pool: 'claude_gpt_models' };
+    expect(lineOf(t, { kind: 'mana_asleep', ...pool })).toContain(
+      'Out of mana: pool claude_gpt_models of tribe gemini.',
+    );
+    expect(lineOf(t, { kind: 'mana_awake', ...pool })).toBe(
+      'Mana is back: pool claude_gpt_models of tribe gemini. Its paused quests go on.',
+    );
+    expect(lineOf(t, { kind: 'mana_warning', ...pool, window: 'five_hour', used_pct: 90 })).toContain(
+      'of its 5-hour window',
     );
   });
 
