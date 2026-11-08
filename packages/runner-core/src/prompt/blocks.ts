@@ -1,7 +1,7 @@
 // The blocks prompts are made of (implementation-plan §3.7, §3.13; ADR 0010, 0017): each fills one template from
 // the kingdom's files, and an optional block with nothing to say is empty, so joinBlocks leaves it out.
 import { SUBQUESTS_FILE } from '../plot/subquests.ts';
-import { SHELL_TOOL } from '../policy/constants.ts';
+import { SHELL_TOOL, WRITE_TOOLS } from '../policy/constants.ts';
 import { fenced, fill, joinBlocks, withoutNotes } from './templates.ts';
 import type { ToolPolicy } from '../policy/tool-policy.ts';
 import type { PromptTemplates } from './templates.ts';
@@ -59,7 +59,33 @@ const shellCommandOf = (rule: string): string[] => {
 export function shellBlock(policy: Pick<ToolPolicy, 'tools' | 'allow'>, t: PromptTemplates): string {
   const commands = policy.tools.includes(SHELL_TOOL) ? policy.allow.flatMap(shellCommandOf) : [];
   if (commands.length === 0) return '';
-  return fill(t.shell, { commands: commands.map((command) => `- \`${command}\``).join('\n') });
+  return fill(t.shell, { commands: bullets(commands) });
+}
+
+const bullets = (items: readonly string[]): string => items.map((item) => `- \`${item}\``).join('\n');
+
+/**
+ * The read-only paths of the territory and the generators that rewrite them (P1-24), for a session that may edit
+ * files: without it a character edits a generated page by hand, or stops to ask the owner to regenerate it (P1-16).
+ * A generator is named only when the session's shell may run it. Empty without a write tool or a read-only path.
+ */
+export function readOnlyBlock(
+  policy: Pick<ToolPolicy, 'tools' | 'allow' | 'laws'>,
+  territory: Pick<Territory, 'commands'>,
+  t: PromptTemplates,
+): string {
+  const paths = policy.laws.read_only_paths;
+  const writes = policy.tools.some((tool) => (WRITE_TOOLS as readonly string[]).includes(tool));
+  if (paths.length === 0 || !writes) return '';
+  const runnable = new Set(policy.tools.includes(SHELL_TOOL) ? policy.allow.flatMap(shellCommandOf) : []);
+  const generators = (territory.commands.generate ?? []).filter((command) => runnable.has(command));
+  return fill(t['read-only'], {
+    paths: bullets(paths),
+    generators:
+      generators.length === 0
+        ? 'Your class cannot run their generators: when your change needs them rewritten, say so in Not done.'
+        : `They are generated. After you change what they are generated from, run their generator and commit what it writes with your work:\n\n${bullets(generators)}`,
+  });
 }
 
 /**

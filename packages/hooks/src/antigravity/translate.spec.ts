@@ -151,6 +151,26 @@ describe('PreToolUse on agy', () => {
     }
   });
 
+  it('reads and regenerates a read-only file, never writes it by hand; refuses a protected path (P1-24)', async () => {
+    const laws = { ...DC1_LAWS, read_only_paths: ['docs/glossary.md'] };
+    await writeFile(policy, JSON.stringify({ version: 1, laws, cli_protected_paths: ['.husky/**'] }), 'utf8');
+    for (const [name, args] of [
+      ['view_file', { AbsolutePath: `${PLOT}/docs/glossary.md` }],
+      ['run_command', { CommandLine: 'pnpm docs:gen' }],
+    ] as const) {
+      expect(decisionOf((await call('PreToolUse', toolCall(name, args))).stdout)).toEqual(DEFER_TO_SETTINGS);
+    }
+    const hand = decisionOf(
+      (await call('PreToolUse', toolCall('write_to_file', { TargetFile: 'docs\\glossary.md' }))).stdout,
+    );
+    expect(hand).toMatchObject({ decision: 'deny' });
+    expect(hand.reason).toMatch(/^Elvaria law of this territory: .*is read-only/);
+    const hook = decisionOf(
+      (await call('PreToolUse', toolCall('edit_file', { Path: '.husky/pre-push' }))).stdout,
+    );
+    expect(hook.reason).toMatch(/^Elvaria rule: .*refuses to write/);
+  });
+
   it('guards edit_file, the write tool a model reports under -p', async () => {
     const outcome = await call('PreToolUse', toolCall('edit_file', { Path: 'infra/secrets/a.key' }));
     expect(decisionOf(outcome.stdout)).toMatchObject({ decision: 'deny' });

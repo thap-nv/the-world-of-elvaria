@@ -13,8 +13,8 @@ import type { RunContext } from './run-context.ts';
 
 export const POLICY_FILE = 'policy.json';
 /**
- * `secrets` and `tools` (P1-10) and `apprentice_models` (P1-17) are optional fields added later: a v1 reader without
- * them still reads the rest.
+ * `secrets` and `tools` (P1-10), `apprentice_models` (P1-17), `laws.read_only_paths` and `cli_protected_paths`
+ * (P1-24) are optional fields added later: a v1 reader without them still reads the rest.
  */
 export const POLICY_VERSION = 1;
 
@@ -29,12 +29,24 @@ export interface PolicyFile extends RunContext {
    * naming another `model`. The adapter knows its models and their order; absent: no such check.
    */
   readonly apprentice_models?: readonly string[];
+  /**
+   * Globs the CLI itself refuses to write whatever the permission rules say (P1-24: Claude Code guards `.husky/`,
+   * `.git/`, `.claude/`…). The hook refuses them first, with a reason the model can act on instead of the CLI's
+   * bare "denied"; absent: no such check.
+   */
+  readonly cli_protected_paths?: readonly string[];
 }
 
 /** What only the adapter knows, for the policy file. */
 export interface PolicyExtras {
   readonly apprentice_models?: readonly string[];
+  readonly cli_protected_paths?: readonly string[];
 }
+
+const listOf = (key: keyof PolicyExtras, extras: PolicyExtras) => {
+  const list = extras[key];
+  return list === undefined ? {} : { [key]: [...list] };
+};
 
 export const policyFileOf = (
   ctx: RunContext,
@@ -44,8 +56,13 @@ export const policyFileOf = (
   version: POLICY_VERSION,
   ...ctx,
   tools: [...policy.tools],
-  laws: { forbidden_paths: policy.laws.forbidden_paths, forbidden_commands: policy.laws.forbidden_commands },
-  ...(extras.apprentice_models === undefined ? {} : { apprentice_models: [...extras.apprentice_models] }),
+  laws: {
+    forbidden_paths: policy.laws.forbidden_paths,
+    read_only_paths: policy.laws.read_only_paths,
+    forbidden_commands: policy.laws.forbidden_commands,
+  },
+  ...listOf('apprentice_models', extras),
+  ...listOf('cli_protected_paths', extras),
 });
 
 /** Writes the run's policy file and returns its native path, for `hookCommand(policyFile)`. */

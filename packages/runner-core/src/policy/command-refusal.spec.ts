@@ -8,7 +8,7 @@ const policy = (fields: Partial<ToolPolicy>): ToolPolicy => ({
   allow: [],
   deny: [],
   apprentice: null,
-  laws: { forbidden_paths: [], forbidden_commands: [] },
+  laws: { forbidden_paths: [], read_only_paths: [], forbidden_commands: [] },
   ...fields,
 });
 
@@ -34,7 +34,11 @@ describe('commandRefusal', () => {
 
   it('applies the laws case-insensitively', () => {
     const lawful = policy({
-      laws: { forbidden_paths: [], forbidden_commands: [String.raw`drizzle-kit\s+drop`] },
+      laws: {
+        forbidden_paths: [],
+        read_only_paths: [],
+        forbidden_commands: [String.raw`drizzle-kit\s+drop`],
+      },
     });
     expect(commandRefusal(lawful, 'pnpm DRIZZLE-KIT  drop')).toBe(
       String.raw`forbidden by law /drizzle-kit\s+drop/`,

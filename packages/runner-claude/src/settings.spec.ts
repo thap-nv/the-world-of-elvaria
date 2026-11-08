@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { agentsOf, apprenticeModelsOf } from './agents.ts';
 import {
+  CLAUDE_PROTECTED_PATHS,
   HOOK_EVENTS,
   absoluteRulePath,
   allowRules,
@@ -39,6 +40,42 @@ const HOOK = {
   command: process.execPath,
   args: ['--conditions=elvaria-dist', '/hooks/dist/elvaria-hook.js', '--policy', '/run/policy.json'],
 };
+
+describe('settingsOf: generated files and protected paths (P1-24)', () => {
+  const elvaria = {
+    commands: { generate: ['pnpm docs:gen', 'pnpm schemas'] },
+    checks: [],
+    laws: {
+      forbidden_paths: ['.env'],
+      read_only_paths: ['docs/glossary.md', 'docs/schemas/**'],
+      forbidden_commands: [],
+      read_before_write: [],
+      rank_floor: [],
+    },
+  };
+  const knightClass = { tools: { allow: ['Read', 'Edit', 'Write', 'Bash(git status:*)'], deny: [] } };
+
+  it("lets the knight run the territory's generators and read generated files, never edit them", () => {
+    const policy = toolPolicyOf({ role: 'assignee', characterClass: knightClass, territory: elvaria });
+    const { permissions } = settingsOf(policy, HOOK, {});
+    expect(permissions.allow).toEqual(
+      expect.arrayContaining(['Read(./**)', 'Edit(./**)', 'Bash(pnpm docs:gen:*)', 'Bash(pnpm schemas:*)']),
+    );
+    expect(permissions.deny).toEqual(
+      expect.arrayContaining(['Read(./.env)', 'Edit(./docs/glossary.md)', 'Edit(./docs/schemas/**)']),
+    );
+    expect(permissions.deny.filter((rule) => rule.startsWith('Read(./docs'))).toEqual([]);
+  });
+
+  it('gives no allow rule for a path the CLI guards: none would be read before its safety check', () => {
+    expect(CLAUDE_PROTECTED_PATHS).toEqual(
+      expect.arrayContaining(['.husky/**', '.git/**', '.claude/**', '.npmrc']),
+    );
+    const policy = toolPolicyOf({ role: 'assignee', characterClass: knightClass, territory: elvaria });
+    const { permissions } = settingsOf(policy, HOOK, {});
+    expect(permissions.allow.filter((rule) => rule.includes('.husky'))).toEqual([]);
+  });
+});
 
 describe('settingsOf', () => {
   it('scopes file tools to the plot and keeps every other rule', () => {

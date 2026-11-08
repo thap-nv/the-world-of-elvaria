@@ -2,7 +2,7 @@
 // `agent.tool` (implementation-plan §3.6, §3.10, §3.12). A call that is stopped gets a JSON `deny` on stdout,
 // exit 0, which Claude Code honours even for a call its allow rules permit (spike P1-02).
 import { denyTool, translation, withoutUndefined } from '../draft.ts';
-import { commandViolation, forbiddenPathOf } from '../laws.ts';
+import { commandViolation, forbiddenPathOf, matchingGlobOf, readOnlyReason } from '../laws.ts';
 import { plotPath, toolCallOf } from './tools.ts';
 import type { HookContext } from '../context.ts';
 import type { Translation } from '../draft.ts';
@@ -40,7 +40,10 @@ const callerOf = (input: ClaudeInput): { agent_type?: string } => {
   return agentType === undefined ? {} : { agent_type: agentType };
 };
 
-/** Why `call` breaks the laws, if it does. Tools that name no file and run no command are not guarded. */
+/**
+ * Why `call` breaks the laws, if it does. Tools that name no file and run no command are not guarded; a
+ * read-only path (P1-24) stops only a write tool, so a generated file stays readable.
+ */
 export function lawViolation(call: ToolCall, laws: CompiledLaws): string | undefined {
   if (call.guarded.length === 0 && call.command === undefined) return undefined;
   if (laws.broken !== undefined) {
@@ -49,13 +52,32 @@ export function lawViolation(call: ToolCall, laws: CompiledLaws): string | undef
   for (const raw of call.guarded) {
     const glob = forbiddenPathOf(raw, laws);
     if (glob !== undefined) return `${raw} is a forbidden path (${glob})`;
+    const readOnly = call.kind === 'write' ? matchingGlobOf(raw, laws.readOnly) : undefined;
+    if (readOnly !== undefined) return readOnlyReason(raw, readOnly);
   }
   return call.command === undefined ? undefined : commandViolation(call.command, laws);
 }
 
+/**
+ * Why the CLI will refuse this write whatever its rules say, if it will (policy `cli_protected_paths`, P1-24).
+ * Claude Code 2.1.319 checks such paths before any allow rule of `--settings`, and dontAsk turns the ask into a
+ * bare "denied" (P1-16 §5.9: a knight tried Write, then Edit, on `.husky/pre-push`). Said first, the model asks the
+ * owner for the change instead of retrying.
+ */
+export function protectedViolation(call: ToolCall, laws: CompiledLaws): string | undefined {
+  if (call.kind !== 'write') return undefined;
+  for (const raw of call.guarded) {
+    const glob = matchingGlobOf(raw, laws.cliProtected);
+    if (glob !== undefined) {
+      return `${raw} is in a path your CLI refuses to write whatever its rules say (${glob}); finish the rest, then put the exact change in the Question section of the handover letter so the owner applies it`;
+    }
+  }
+  return undefined;
+}
+
 export function preToolUse(input: ClaudeInput, ctx: HookContext): Translation {
   const call = toolCallOf(input.raw.tool_name, input.raw.tool_input);
-  const apprenticeRule = subagentViolation(call, ctx.apprenticeModels);
+  const apprenticeRule = subagentViolation(call, ctx.apprenticeModels) ?? protectedViolation(call, ctx.laws);
   const reason = apprenticeRule ?? lawViolation(call, ctx.laws);
   if (reason === undefined) return translation([]);
   const source = apprenticeRule === undefined ? 'law of this territory' : 'rule';

@@ -7,8 +7,10 @@ import {
   commandWords,
   compileLaws,
   forbiddenPathOf,
+  matchingGlobOf,
   normalizeCommand,
   pathSegments,
+  shellWriteTargets,
 } from './laws.ts';
 
 const laws = compileLaws(DC1_LAWS);
@@ -124,7 +126,50 @@ describe('commandViolation', () => {
   });
 });
 
+describe('read-only paths in shell lines (P1-24)', () => {
+  const generated = compileLaws({ ...DC1_LAWS, read_only_paths: ['docs/glossary.md', 'docs/schemas/**'] });
+
+  it.each([
+    ['pnpm docs:gen > docs/glossary.md', 'docs/glossary.md'],
+    ['node gen.mjs >> "docs/schemas/kind.schema.json"', 'docs/schemas/kind.schema.json'],
+    ['pnpm docs:gen 2>&1 1> D:\\repo\\docs\\glossary.md', 'D:\\repo\\docs\\glossary.md'],
+    ['Get-Content x | Set-Content -Path docs/glossary.md', 'docs/glossary.md'],
+    ['echo x | tee -a docs/glossary.md', 'docs/glossary.md'],
+    ["'x' | Out-File docs/glossary.md", 'docs/glossary.md'],
+  ])('blocks %s, which writes a read-only path itself', (command, target) => {
+    expect(commandViolation(command, generated)).toBe(
+      `${target} is read-only (${target.includes('schemas') ? 'docs/schemas/**' : 'docs/glossary.md'}): only the territory's generators write it; change its source and run the generator`,
+    );
+  });
+
+  it.each([
+    'pnpm docs:gen',
+    'pnpm docs:gen --check',
+    'git add docs/glossary.md',
+    'git diff docs/glossary.md',
+    // P1-16, quest D2: the law stopped a commit whose message named the page.
+    'git commit -m "feat: add todo-scan" -m "docs/glossary.md still needs pnpm docs:gen"',
+    'pnpm test 2>&1',
+  ])('allows %s, which reads or names a read-only path but does not write it', (command) => {
+    expect(commandViolation(command, generated)).toBeUndefined();
+  });
+
+  it('finds redirection targets and the arguments of a writer, nothing else', () => {
+    expect(shellWriteTargets('a > b 2>&1 >> c &> d >| e')).toEqual(['b', 'c', 'd', 'e']);
+    expect(shellWriteTargets('pnpm x; Add-Content -Path f -Value y')).toEqual(['-Path', 'f', '-Value', 'y']);
+    expect(shellWriteTargets('git diff | less')).toEqual([]);
+  });
+});
+
 describe('compileLaws', () => {
+  it('compiles read-only and CLI-protected paths apart from the forbidden ones', () => {
+    const compiled = compileLaws({ read_only_paths: ['docs/glossary.md'] }, ['.husky/**']);
+    expect(compiled.paths).toEqual([]);
+    expect(matchingGlobOf('docs/glossary.md', compiled.readOnly)).toBe('docs/glossary.md');
+    expect(matchingGlobOf('C:\\repo\\.husky\\pre-push', compiled.cliProtected)).toBe('.husky/**');
+    expect(forbiddenPathOf('docs/glossary.md', compiled)).toBeUndefined();
+  });
+
   it('breaks the laws on a pattern that is not a regular expression', () => {
     const broken = compileLaws({ forbidden_commands: ['git (push'] });
     expect(broken.broken).toMatch(/not a regular expression/);

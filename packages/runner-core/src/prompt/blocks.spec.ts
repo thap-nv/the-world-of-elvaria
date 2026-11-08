@@ -2,7 +2,7 @@
 // runs, and a verifier whose prompt carries no diff learns where to read it instead of "no changes".
 import { describe, expect, it } from 'vitest';
 
-import { diffBlock, shellBlock } from './blocks.ts';
+import { diffBlock, readOnlyBlock, shellBlock } from './blocks.ts';
 import { loadPromptTemplates } from './templates.ts';
 
 const templates = await loadPromptTemplates();
@@ -31,6 +31,40 @@ describe('shellBlock', () => {
   it('is empty for a class without a shell, even when a rule names one', () => {
     expect(shellBlock({ tools: ['Read'], allow: ['Read', 'Bash(pnpm test:*)'] }, templates)).toBe('');
     expect(shellBlock({ tools: ['Bash'], allow: ['Read'] }, templates)).toBe('');
+  });
+});
+
+describe('readOnlyBlock (P1-24)', () => {
+  const laws = { forbidden_paths: [], read_only_paths: ['docs/glossary.md'], forbidden_commands: [] };
+  const territory = { commands: { generate: ['pnpm docs:gen', 'pnpm schemas'] } };
+
+  it('lists the read-only paths and the generators the shell may run', () => {
+    const policy = { tools: ['Edit', 'Bash'], allow: ['Bash(pnpm docs:gen:*)'], laws };
+    const block = readOnlyBlock(policy, territory, templates);
+    expect(block).toContain('# Read-only files');
+    expect(block).toContain('- `docs/glossary.md`');
+    expect(block).toContain('run their generator and commit what it writes');
+    // `pnpm schemas` is the territory's, but this session's shell may not run it.
+    expect(block).toContain('- `pnpm docs:gen`');
+    expect(block).not.toContain('pnpm schemas');
+  });
+
+  it('says so when the class cannot run a generator', () => {
+    const block = readOnlyBlock(
+      { tools: ['Edit'], allow: ['Bash(pnpm docs:gen:*)'], laws },
+      territory,
+      templates,
+    );
+    expect(block).toContain('Your class cannot run their generators');
+    expect(
+      readOnlyBlock({ tools: ['Edit', 'Bash'], allow: [], laws }, { commands: {} }, templates),
+    ).toContain('Your class cannot run their generators');
+  });
+
+  it('is empty without a write tool or a read-only path', () => {
+    expect(readOnlyBlock({ tools: ['Read', 'Bash'], allow: [], laws }, territory, templates)).toBe('');
+    const none = { ...laws, read_only_paths: [] };
+    expect(readOnlyBlock({ tools: ['Edit'], allow: [], laws: none }, territory, templates)).toBe('');
   });
 });
 

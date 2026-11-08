@@ -92,7 +92,11 @@ describe.runIf(LIVE)('agy for real', () => {
     const permissions = toolPolicyOf({
       role: 'assignee',
       characterClass: { tools: { allow: ['Read'], deny: [] } },
-      territory: { laws: { ...laws, read_before_write: [], rank_floor: [] }, checks: [], commands: {} },
+      territory: {
+        laws: { ...laws, read_only_paths: [], read_before_write: [], rank_floor: [] },
+        checks: [],
+        commands: {},
+      },
     });
     const { result, text } = await run(probeRequest(world, ask, ['Read'], { permissions }));
     expect(result.outcome).toBe('completed');

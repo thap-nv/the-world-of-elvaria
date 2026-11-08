@@ -31,7 +31,8 @@
       "Bash(pnpm lint:*)",
       "Bash(pnpm -r test:*)",
       "Bash(pnpm test:*)",
-      "Bash(pnpm typecheck:*)"
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm api:openapi:*)"
     ],
     "apprentice": {
       "tools": [
@@ -69,7 +70,8 @@
       "Bash(git diff:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(pnpm -r test:*)"
+      "Bash(pnpm -r test:*)",
+      "Bash(pnpm api:openapi:*)"
     ],
     "apprentice": {
       "tools": [
@@ -109,7 +111,8 @@
       "Bash(git commit:*)",
       "Bash(pnpm build:*)",
       "Bash(pnpm install:*)",
-      "Bash(pnpm -r test:*)"
+      "Bash(pnpm -r test:*)",
+      "Bash(pnpm api:openapi:*)"
     ],
     "apprentice": {
       "tools": [
@@ -205,7 +208,8 @@
       "Bash(pnpm lint:*)",
       "Bash(pnpm -r test:*)",
       "Bash(pnpm test:*)",
-      "Bash(pnpm typecheck:*)"
+      "Bash(pnpm typecheck:*)",
+      "Bash(pnpm api:openapi:*)"
     ],
     "apprentice": null
   },

@@ -21,8 +21,13 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
 - Guards the territory laws in `PreToolUse` (second fence after the deny rules, ADR 0013): `forbidden_paths`
   match at any depth, case-insensitively, with backslashes, `..`, NTFS streams and trailing dots resolved;
   `forbidden_commands` match the raw and the de-quoted line, case-insensitively; a shell line that names a
-  forbidden file (`cat .env`, `Get-Content .env`) is denied too. Laws asked for (`--policy`) but unreadable deny
-  every file and shell tool.
+  forbidden file (`cat .env`, `Get-Content .env`) is denied too. `read_only_paths` (P1-24, generated files) match
+  the same way but stop only writes: a write tool, a shell redirection (`> f`, `>> f`) or a shell writer (`tee`,
+  `Set-Content`, `Add-Content`, `Out-File`); reading, `git add` and the territory's generators go through. Laws
+  asked for (`--policy`) but unreadable deny every file and shell tool.
+- Refuses first, as an Elvaria rule, a write to the paths the adapter says its CLI refuses whatever its rules
+  say (policy `cli_protected_paths`, P1-24: Claude Code's `.husky/`, `.git/`, `.claude/`…), with a reason that
+  sends the exact change to the owner through the letter's Question section, instead of the CLI's bare denial.
 - Denies every sub-agent but the apprentice in `PreToolUse` on the `Agent` tool (§3.12, ADR 0017), laws or not,
   and an apprentice asked to run on a `model` outside the policy's `apprentice_models` (the models up to the
   character's own, which the adapter writes; P1-17). Every denial logs `agent.tool.blocked`, with `agent_type`

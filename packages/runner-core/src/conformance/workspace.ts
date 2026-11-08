@@ -106,7 +106,13 @@ const PROBE_POLICY = toolPolicyOf({
     },
   },
   territory: {
-    laws: { forbidden_paths: [], forbidden_commands: [], read_before_write: [], rank_floor: [] },
+    laws: {
+      forbidden_paths: [],
+      read_only_paths: [],
+      forbidden_commands: [],
+      read_before_write: [],
+      rank_floor: [],
+    },
     checks: [],
     commands: {},
   },

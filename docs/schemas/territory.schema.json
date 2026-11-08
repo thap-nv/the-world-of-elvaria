@@ -124,6 +124,14 @@
         },
         "build": {
           "type": "string"
+        },
+        "generate": {
+          "description": "Generators of the territory (`pnpm docs:gen`, `pnpm schemas`). A session that may edit files may run them: they are how files under laws.read_only_paths change.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         }
       },
       "default": {}
@@ -181,6 +189,16 @@
       "additionalProperties": false,
       "properties": {
         "forbidden_paths": {
+          "description": "Globs no session may read or write (secrets).",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "default": []
+        },
+        "read_only_paths": {
+          "description": "Globs every session may read and no tool may write by hand: generated files, which only the territory's commands.generate rewrite.",
           "type": "array",
           "items": {
             "type": "string",
@@ -343,7 +361,10 @@
         "setup": "pnpm install --prefer-offline",
         "test": "pnpm test",
         "lint": "pnpm lint",
-        "typecheck": "pnpm typecheck"
+        "typecheck": "pnpm typecheck",
+        "generate": [
+          "pnpm api:openapi"
+        ]
       },
       "checks": [
         {
@@ -407,6 +428,10 @@
           ".env",
           ".env.*",
           "infra/secrets/**"
+        ],
+        "read_only_paths": [
+          "apps/api/openapi.json",
+          "packages/shared/src/api-types.ts"
         ],
         "forbidden_commands": [
           "git\\s+(-C\\s+\\S+\\s+)?push",
