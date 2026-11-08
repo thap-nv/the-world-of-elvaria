@@ -78,7 +78,9 @@
   `runner-core`, the budget, `.runs/<quest>-<n>`, and the env (§3.9): the minimal env it was given, the
   `ELVARIA_*` context of the hook and exactly the quest's `secrets_required` from the treasury (`sessionEnvOf`
   of `sessions/secrets.ts`); a name the territory no longer allows or the treasury lacks opens no session
-  (`secretsLacking` asks first, by name only). A
+  (`secretsLacking` asks first, by name only). The same secrets (`questSecretsOf`, read before the plot) go to
+  `Plots.prepare` for the territory's `commands.setup`, so an install from a private registry works before the
+  first session (P1-30); a quest that asks for none gives setup none and reads no treasury. A
   runner's `capabilities` narrow its tribe through `tribeLimitsOf`; a tribe without a runner takes no work.
 - Masks what a session leaves behind with that session's secret values and the patterns, before the kingdom
   keeps it (`maskFinished`, ADR 0013): the handover letter (`redactHandover`), the question, and the verifier's
@@ -191,6 +193,9 @@ cancelled, and leaves the judge the end of its log with the treasury value and a
 `check-signals.spec.ts` (P1-10b): the checks get exactly the quest's secrets (none for a quest that asks for none),
 write `check.start` and `check.end` (`stopped` when the Steward stops under them), send a quest whose secrets are
 gone by then to the infirmary, leave the returned assignee the end of the red check's log masked, and the loop
-ticks as soon as they end, not a beat later. `apprentice-breaker.spec.ts`: the
+ticks as soon as they end, not a beat later. `setup-secrets.spec.ts` (P1-30): the plot of the assignee and of the
+judge gets exactly the quest's secrets for its setup (none, and no treasury read, for a quest that asks for none),
+and a treasury that cannot give the values by then prepares no plot and gives the claim back.
+`apprentice-breaker.spec.ts`: the
 infirmary note after an apprentice overran or was cut. `review-breakers.spec.ts`: two verifiers stopped by the
 token breaker, or by their CLI's turn limit, send the review to the infirmary and no third opens.

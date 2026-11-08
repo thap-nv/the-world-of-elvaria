@@ -1,7 +1,7 @@
 // The plot of a quest without PlotManager: a folder `quests/<id>/work/` in the kingdom (§2.2, §3.3), which is what a
 // territory without git gets anyway. Nothing to commit, no check to run, no diff, nothing to release. The Steward's specs use
 // it; `elvaria run` gives the Steward PlotManager and runChecks of P1-07 (apps/cli/src/run/plots.ts). No git, no
-// patch to apply either (P1-28).
+// patch to apply either (P1-28), and no `commands.setup` to give a quest's secrets to (P1-30).
 import { mkdir } from 'node:fs/promises';
 
 import { ok } from '@elvaria/domain';
