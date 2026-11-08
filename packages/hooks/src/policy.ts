@@ -34,6 +34,11 @@ export interface HookPolicy {
    * refused, so an apprentice is never stronger than its master. Absent: no such check.
    */
   readonly apprentice_models?: readonly string[];
+  /**
+   * Globs the CLI itself refuses to write whatever its permission rules say (P1-24; Claude Code: `.husky/`, `.git/`,
+   * `.claude/`…), from the adapter: the hook refuses them first, with a reason the model can act on. Absent: none.
+   */
+  readonly cli_protected_paths?: readonly string[];
   /** `territory.laws`; other law kinds may be present and are not the hook's to enforce. */
   readonly laws?: LawsInput;
 }
@@ -42,7 +47,8 @@ export type PolicyResult =
   { readonly ok: true; readonly policy: HookPolicy } | { readonly ok: false; readonly problem: string };
 
 const STRING_FIELDS = ['kingdom', 'quest', 'character', 'role', 'model', 'tz'] as const;
-const LIST_FIELDS = ['secrets', 'tools', 'apprentice_models'] as const;
+const LIST_FIELDS = ['secrets', 'tools', 'apprentice_models', 'cli_protected_paths'] as const;
+const LAW_LISTS = ['forbidden_paths', 'read_only_paths', 'forbidden_commands'] as const;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -53,7 +59,7 @@ const isStringList = (value: unknown): value is string[] =>
 function lawsProblem(laws: unknown): string | undefined {
   if (laws === undefined) return undefined;
   if (!isRecord(laws)) return 'laws is not an object';
-  for (const key of ['forbidden_paths', 'forbidden_commands']) {
+  for (const key of LAW_LISTS) {
     if (laws[key] !== undefined && !isStringList(laws[key])) return `laws.${key} is not a list of strings`;
   }
   return undefined;

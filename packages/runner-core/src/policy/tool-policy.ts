@@ -16,8 +16,10 @@ import type { SpawnRole } from '../runner/roles.ts';
 import type { Character, CharacterClass, Territory } from '@elvaria/domain';
 
 export interface ToolLaws {
-  /** Globs relative to the plot, matched by the hook at any depth. */
+  /** Globs relative to the plot, matched by the hook at any depth: neither read nor written. */
   readonly forbidden_paths: readonly string[];
+  /** Globs read freely but never written by a tool (generated files, P1-24); matched like forbidden_paths. */
+  readonly read_only_paths: readonly string[];
   /** Regular expressions matched by the hook against shell commands, case-insensitively. */
   readonly forbidden_commands: readonly string[];
 }
@@ -63,20 +65,33 @@ function checkRules(territory: ToolPolicyInput['territory']): string[] {
   return unique([...checks, ...commands]).map((command) => `${SHELL_TOOL}(${command}:*)`);
 }
 
+/**
+ * The territory's generators (P1-24), for a session that may edit files: the only way a read-only file changes, so
+ * a knight that changed a glossary's source regenerates the page instead of asking the owner to (P1-16, D2).
+ */
+function generateRules(territory: ToolPolicyInput['territory']): string[] {
+  return unique(territory?.commands.generate ?? []).map((command) => `${SHELL_TOOL}(${command}:*)`);
+}
+
 function lawsOf(territory: ToolPolicyInput['territory']): ToolLaws {
   return {
     forbidden_paths: unique([...SECRET_FILES, ...(territory?.laws.forbidden_paths ?? [])]),
+    read_only_paths: unique(territory?.laws.read_only_paths ?? []),
     forbidden_commands: unique([...(territory?.laws.forbidden_commands ?? []), NO_PUSH_COMMAND]),
   };
 }
 
-/** Rules every session carries, whatever its class: no push, no secret files, only the apprentice as agent. */
+/**
+ * Rules every session carries, whatever its class: no push, no secret files, no hand-written generated file, only
+ * the apprentice as agent. Edit rules cover Write and NotebookEdit (runner-claude settings.ts).
+ */
 function fenceRules(laws: ToolLaws): string[] {
-  const paths = laws.forbidden_paths.map(plotPath);
+  const hidden = laws.forbidden_paths.map(plotPath);
+  const readOnly = laws.read_only_paths.map(plotPath);
   return [
     NO_PUSH_RULE,
-    ...paths.map((glob) => `Read(${glob})`),
-    ...paths.map((glob) => `Edit(${glob})`),
+    ...hidden.map((glob) => `Read(${glob})`),
+    ...[...hidden, ...readOnly].map((glob) => `Edit(${glob})`),
     ...BUILT_IN_AGENTS.map((agent) => `${AGENT_TOOL}(${agent})`),
   ];
 }
@@ -94,11 +109,15 @@ export function toolPolicyOf(input: ToolPolicyInput): ToolPolicy {
   const deniedTools = new Set(classDeny.filter((rule) => toolOf(rule) === rule));
   const ownTools = unique(granted.map(toolOf)).filter((tool) => !deniedTools.has(tool));
   const tools = withApprentice ? [...ownTools, AGENT_TOOL] : ownTools;
-  const shell = tools.includes(SHELL_TOOL) ? checkRules(input.territory) : [];
+  const hasShell = tools.includes(SHELL_TOOL);
+  // A verifier has no write tool left, so it never regenerates what it judges (ADR 0008).
+  const writes = tools.some(isWriteTool);
+  const shell = hasShell ? checkRules(input.territory) : [];
+  const generate = hasShell && writes ? generateRules(input.territory) : [];
   const laws = lawsOf(input.territory);
   return {
     tools,
-    allow: unique([...granted, ...shell]),
+    allow: unique([...granted, ...shell, ...generate]),
     deny: unique([...classDeny, ...(verifier ? WRITE_TOOLS : []), ...fenceRules(laws)]),
     // The apprentice gets the character's tools without Agent, so it cannot start another (§3.12).
     apprentice: withApprentice ? { tools: ownTools } : null,

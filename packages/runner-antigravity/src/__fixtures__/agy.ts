@@ -80,6 +80,7 @@ const SCRIBE = {
 };
 const LAWS = {
   forbidden_paths: ['infra/secrets/**'],
+  read_only_paths: [],
   forbidden_commands: [],
   read_before_write: [],
   rank_floor: [],

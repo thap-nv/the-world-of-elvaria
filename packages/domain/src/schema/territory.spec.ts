@@ -35,7 +35,13 @@ describe('TerritorySchema', () => {
       context_files: ['CLAUDE.md', 'README.md', '.claude/rules/*.md'],
       commands: {},
       checks: [],
-      laws: { forbidden_paths: [], forbidden_commands: [], read_before_write: [], rank_floor: [] },
+      laws: {
+        forbidden_paths: [],
+        read_only_paths: [],
+        forbidden_commands: [],
+        read_before_write: [],
+        rank_floor: [],
+      },
       secrets_allowed: [],
       buildings: [],
       health: { ci: 'unknown', open_bugs: 0 },
@@ -76,6 +82,8 @@ describe('TerritorySchema', () => {
       'min_rank',
     ],
     ['an unknown territory kind', { kind: 'library' }, 'kind'],
+    ['an empty generator command', { commands: { generate: [''] } }, 'commands.generate.0'],
+    ['an empty read-only glob', { laws: { read_only_paths: [''] } }, 'laws.read_only_paths.0'],
   ])('rejects %s', (_, change, expected) => {
     expect(issuesOf({ ...minimal, ...change }).join('\n')).toContain(expected);
   });

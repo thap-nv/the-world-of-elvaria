@@ -8,7 +8,7 @@ import { contextEnv, sessionRedactor, writePolicyFile } from '@elvaria/runner-co
 import type { RunContext, SpawnRequest } from '@elvaria/runner-core';
 
 import { agentsOf, apprenticeModelsOf } from './agents.ts';
-import { settingsOf, settingsProblems } from './settings.ts';
+import { CLAUDE_PROTECTED_PATHS, settingsOf, settingsProblems } from './settings.ts';
 import type { ApprenticeConfig } from './agents.ts';
 import type { RunFiles } from './argv.ts';
 import type { HookCommand } from './settings.ts';
@@ -48,7 +48,10 @@ export async function writeRunFiles(
   await mkdir(dir, { recursive: true });
   // The apprentice never runs on a model stronger than its master's (§3.12): the hook holds the list.
   const allowed = apprenticeModelsOf(req.character.model, apprentice.models);
-  const extras = req.permissions.apprentice === null ? {} : { apprentice_models: allowed };
+  const extras = {
+    ...(req.permissions.apprentice === null ? {} : { apprentice_models: allowed }),
+    cli_protected_paths: CLAUDE_PROTECTED_PATHS,
+  };
   const policyFile = await writePolicyFile(dir, ctx, req.permissions, extras);
   const env = { ...contextEnv(ctx), ...CLAUDE_ENV };
   // Only an assignee writes a letter; a verifier reads it in its prompt and writes nothing (ADR 0008).

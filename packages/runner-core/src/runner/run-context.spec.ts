@@ -116,5 +116,17 @@ describe('policy.json', () => {
     });
     const parsed = JSON.parse(await readFile(written, 'utf8')) as Record<string, unknown>;
     expect(parsed.apprentice_models).toEqual(['haiku', 'sonnet']);
+    expect(parsed).not.toHaveProperty('cli_protected_paths');
+  });
+
+  it('carries the read-only paths and the paths the CLI itself guards (P1-24)', async () => {
+    const runDir = path.join(dir, '.runs', `${QUEST.id}-3`);
+    const context = runContextOf(request(STEWARD_ENV));
+    const written = await writePolicyFile(runDir, context, policy, { cli_protected_paths: ['.husky/**'] });
+    const parsed = JSON.parse(await readFile(written, 'utf8')) as Record<string, unknown>;
+    expect(parsed.cli_protected_paths).toEqual(['.husky/**']);
+    expect(parsed.laws).toMatchObject({
+      read_only_paths: ['apps/api/openapi.json', 'packages/shared/src/api-types.ts'],
+    });
   });
 });

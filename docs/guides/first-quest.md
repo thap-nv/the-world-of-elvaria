@@ -62,6 +62,20 @@ Lãnh thổ dc1-se-team, tóm tắt:
 
 Chưa thành check, vì một check là một lệnh không qua shell: `pnpm api:openapi` và `pnpm content:build` kèm `git diff --exit-code` (CI kiểm drift bằng `&&`), và e2e (`pnpm e2e:docker` cần `infra/secrets/*` do `sh infra/scripts/init-secrets.sh` sinh, vùng cấm của nhân vật). Repo Elvaria (lãnh thổ #2) có bộ check theo bảng Change impact của [CLAUDE.md](../../CLAUDE.md): lint, format, typecheck, test, boundaries, `schemas --check`, `docs:gen --check`, `docs:check`, `i18n:check`; luật cấm sửa file sinh, `design/**`, kế hoạch sản phẩm, rebase, `git stash` trần.
 
+**File sinh** (P1-24): đặt glob của file sinh vào `laws.read_only_paths`, không vào `forbidden_paths`, và lệnh sinh ra chúng vào `commands.generate`. Mọi phiên đọc được file sinh; không tool nào ghi tay được (deny rule `Edit(./…)` cộng hook, kể cả `>`/`tee`/`Set-Content` của shell); nhân vật có Edit và shell được chạy các lệnh sinh (`Bash(<lệnh>:*)`), và prompt liệt kê cả đường dẫn chỉ đọc lẫn lệnh sinh. Người chấm không được chạy lệnh sinh. Với Elvaria:
+
+```json
+"commands": { "generate": ["pnpm docs:gen", "pnpm schemas"] },
+"laws": {
+  "forbidden_paths": [".env", ".env.*", "design/**", "docs/ke-hoach-dung-elvaria-*.md"],
+  "read_only_paths": ["docs/schemas/**", "docs/glossary.md", "docs/events.md", "docs/dependency-graph.md", "docs/cli.md", "docs/tier-report.md"]
+}
+```
+
+Với dc1 (nếu muốn nhân vật tự sinh lại): `"generate": ["pnpm api:openapi", "pnpm content:build"]` và `read_only_paths` là `apps/api/openapi.json`, `packages/shared/src/api-types.ts` cùng đầu ra của `content:build`. Lệnh sinh chạy trong plot với quyền của tiến trình con: Elvaria không giới hạn nó ghi gì, nên chỉ khai lệnh sinh tin được.
+
+**Thư mục Claude Code tự khóa** (P1-24, ca `.husky/pre-push` của P1-16): Claude Code 2.1.319 không cho Write/Edit bất kỳ đường dẫn nào chứa thư mục `.git`, `.vscode`, `.idea`, `.claude`, `.husky`, `.cargo`, `.devcontainer`, `.yarn`, `.mvn`, `.config/git`, hay kết thúc bằng một trong các file như `.gitmodules`, `.npmrc`, `.yarnrc.yml`, `.pnpmfile.cjs`, `.envrc`, `.mcp.json`, `lefthook.yml`, `.pre-commit-config.yaml` (danh sách đủ ở `CLAUDE_PROTECTED_PATHS` của runner-claude). Kiểm an toàn này chạy trước mọi allow rule của `--settings`, và `dontAsk` biến câu hỏi thành từ chối, nên không luật nào của lãnh thổ mở được. Hook của Elvaria nói trước điều đó; nhân vật làm phần còn lại, ghi đúng thay đổi vào mục Question của thư bàn giao, và chủ nhân sửa file trong plot rồi trả lời (`elvaria answer`), như P1-16 đã làm. Ở repo Elvaria, việc chạm `.claude/rules/**` hay `.claude/hooks/**` cũng rơi vào ca này.
+
 Repo có `.claude/settings.json` của riêng nó (dc1 và Elvaria đều có) thì hook của repo cũng chạy trong phiên của nhân vật, vì runner nạp `--setting-sources project,local`: nhân vật chịu cả luật của repo lẫn luật của Elvaria.
 
 Worktree của quest nằm trong repo (`<repo>/.elvaria/worktrees/<quest>`), git không thấy nhờ `.git/info/exclude`, nhưng `eslint .` và `prettier --check .` chạy ở checkout chính thì quét cả nó, trừ khi repo bỏ qua `.elvaria/**` (repo Elvaria đã bỏ qua từ P1-11; dc1 chưa).

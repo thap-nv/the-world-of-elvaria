@@ -45,6 +45,38 @@ const IN_PLOT = './**';
  */
 const SEARCH_TOOLS = ['Glob', 'Grep'] as const;
 
+/**
+ * Paths Claude Code 2.1.319 refuses to write whatever `--settings` allows (P1-24, read from its build after P1-16
+ * §5.9): its Edit/Write check runs a safety check on any path with one of these folders, or ending in one of these
+ * files, before the allow rules, and dontAsk turns that ask into a bare denial. Only a rule granted inside the
+ * session comes earlier, so `Edit(./.husky/**)` here would change nothing. The hook gets them as policy
+ * `cli_protected_paths` and refuses them first, with a reason that sends the change to the owner.
+ */
+const PROTECTED_FOLDERS = [
+  '.git',
+  '.vscode',
+  '.idea',
+  '.claude',
+  '.husky',
+  '.cargo',
+  '.devcontainer',
+  '.yarn',
+  '.mvn',
+  '.config/git',
+];
+const PROTECTED_FILES = [
+  ...['.gitconfig', '.gitmodules', '.bashrc', '.bash_profile', '.zshrc', '.zprofile', '.profile', '.zshenv'],
+  ...['.zlogin', '.zlogout', '.bash_login', '.bash_aliases', '.bash_logout', '.envrc', '.ripgreprc'],
+  ...['.mcp.json', '.claude.json', '.npmrc', '.yarnrc', '.yarnrc.yml', '.pnp.cjs', '.pnp.loader.mjs'],
+  ...['.pnpmfile.cjs', 'bunfig.toml', '.bunfig.toml', '.bazelrc', '.bazelversion', '.bazeliskrc'],
+  ...['.pre-commit-config.yaml', 'lefthook.yml', '.lefthook.yml', 'lefthook.yaml', '.lefthook.yaml'],
+  ...['gradle-wrapper.properties', 'maven-wrapper.properties', '.devcontainer.json', 'pyrightconfig.json'],
+];
+export const CLAUDE_PROTECTED_PATHS: readonly string[] = [
+  ...PROTECTED_FOLDERS.map((folder) => `${folder}/**`),
+  ...PROTECTED_FILES,
+];
+
 interface HookHandler {
   readonly type: 'command';
   readonly command: string;

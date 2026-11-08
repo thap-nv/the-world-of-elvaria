@@ -17,13 +17,17 @@
 - Builds `ToolPolicy` from class + territory laws + role (`toolPolicyOf`): `tools` (Claude `--tools`), `allow` and
   `deny` rules in Claude Code syntax, the apprentice (`Agent(apprentice)` in a class is a flag), and the laws the
   hook enforces. A verifier never has Edit, Write or NotebookEdit; a character with a shell may run the
-  territory's non-exclusive checks; every session is fenced (no `git push`, no `.env`, no built-in agent).
+  territory's non-exclusive checks, and one that also edits files its `commands.generate` (P1-24); every session
+  is fenced (no `git push`, no `.env`, no built-in agent, no `Edit` on `laws.read_only_paths`, which stay
+  readable).
 - Builds prompts from the Markdown templates in `prompts/` (`loadPromptTemplates`): `buildPrompt` for an
   assignee (new, or continuing after `returned` / `revive` with the letter, the last 20 journal lines, the
   branch's log and the owner's answer) and a verifier (the ritual's steps from `prompts/ritual-steps.md`, the
   checks, the letter, the diff, or where to read it when the caller has none, and where the last judge of the
   run stopped when it left a `partial` verdict, P1-15); both list the shell commands
-  their `ToolPolicy` allows, one per call (`prompts/shell.md`, P1-11); `buildChancellorPrompt` for the
+  their `ToolPolicy` allows, one per call (`prompts/shell.md`, P1-11); an assignee that edits files also reads
+  the territory's read-only paths and the generators its shell may run (`prompts/read-only.md`, P1-24);
+  `buildChancellorPrompt` for the
   Chancellor; `resumedPrompt` for a session continued with `--resume` (the system part as built, a user part that only says it goes on, with the owner's
   answer when there is one). The system part opens with the royal decree when `<kingdom>/decree.md` exists, and
   ends with the craft of the character's class (`class_prompt`: the kingdom's `registry/<class.prompt_file>`
@@ -71,8 +75,10 @@
 - Gives every adapter the session's side of the hook contract (P1-09, §3.6): `runContextOf(req)` (kingdom,
   quest, attempt from env `ELVARIA_*`; character, role, model from the request; the env names of the quest's
   secrets), `contextEnv`, and `writePolicyFile` for `<run_dir>/policy.json` v1, the file `--policy` points the
-  hook at: context, `secrets` (names only), `tools` (the class's, for a CLI with no `--tools`), `laws`, and the
-  adapter's `apprentice_models` when it has an apprentice (the models up to the character's own, §3.12, P1-17).
+  hook at: context, `secrets` (names only), `tools` (the class's, for a CLI with no `--tools`), `laws` (with
+  `read_only_paths`, P1-24), the adapter's `apprentice_models` when it has an apprentice (the models up to the
+  character's own, §3.12, P1-17), and its `cli_protected_paths`, the paths its CLI refuses to write whatever the
+  rules say (P1-24).
   The `apprentice` prompt tells the assignee to leave the apprentice's `model` out for lookups, name a stronger
   one only for reasoning, and to stop and write the unfinished child work in the letter when an apprentice is
   cut at its turn limit or runs long.

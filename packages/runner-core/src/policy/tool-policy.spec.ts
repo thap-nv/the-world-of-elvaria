@@ -79,8 +79,45 @@ describe('toolPolicyOf', () => {
     );
     expect(policy.laws).toEqual({
       forbidden_paths: ['.env', '.env.*', 'infra/secrets/**'],
+      read_only_paths: ['apps/api/openapi.json', 'packages/shared/src/api-types.ts'],
       forbidden_commands: [String.raw`drizzle-kit\s+(drop|push)`, NO_PUSH_COMMAND],
     });
+  });
+
+  it('lets every session read a read-only path and none write it (P1-24)', () => {
+    for (const role of ['assignee', 'verifier'] as const) {
+      const { deny } = toolPolicyOf({ role, characterClass: knight, territory: TERRITORY });
+      expect(deny).toEqual(
+        expect.arrayContaining(['Edit(./apps/api/openapi.json)', 'Edit(./packages/shared/src/api-types.ts)']),
+      );
+      expect(deny).not.toContain('Read(./apps/api/openapi.json)');
+      expect(deny).not.toContain('Read(./packages/shared/src/api-types.ts)');
+    }
+  });
+
+  it("lets a character that edits files run the territory's generators, and nobody else (P1-24)", () => {
+    const allowOf = (role: 'assignee' | 'verifier', id: string) =>
+      toolPolicyOf({ role, characterClass: classOf(id), territory: TERRITORY }).allow;
+    expect(allowOf('assignee', 'knight')).toContain('Bash(pnpm api:openapi:*)');
+    // A verifier judges what the generator wrote; it never regenerates it (ADR 0008).
+    expect(allowOf('verifier', 'knight')).not.toContain('Bash(pnpm api:openapi:*)');
+    const shellOnly = { tools: { allow: ['Read', 'Bash(git status:*)'], deny: [] } };
+    const reader = toolPolicyOf({
+      role: 'assignee',
+      characterClass: knight,
+      character: shellOnly,
+      territory: TERRITORY,
+    });
+    expect(reader.allow).toContain('Bash(pnpm lint:*)');
+    expect(reader.allow).not.toContain('Bash(pnpm api:openapi:*)');
+    const noShell = { tools: { allow: ['Read', 'Edit'], deny: [] } };
+    const scribe = toolPolicyOf({
+      role: 'assignee',
+      characterClass: knight,
+      character: noShell,
+      territory: TERRITORY,
+    });
+    expect(scribe.allow.some((rule) => rule.startsWith('Bash('))).toBe(false);
   });
 
   it('keeps the fences without a territory', () => {
@@ -88,6 +125,7 @@ describe('toolPolicyOf', () => {
     expect(policy.tools).toEqual([]);
     expect(policy.allow).toEqual([]);
     expect(policy.laws.forbidden_commands).toEqual([NO_PUSH_COMMAND]);
+    expect(policy.laws.read_only_paths).toEqual([]);
     expect(policy.deny).toContain('Read(./.env)');
   });
 

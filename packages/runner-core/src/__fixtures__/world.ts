@@ -44,6 +44,7 @@ export const TERRITORY = TerritorySchema.parse({
     test: 'pnpm test',
     lint: 'pnpm lint',
     typecheck: 'pnpm typecheck',
+    generate: ['pnpm api:openapi'],
   },
   checks: [
     { id: 'lint', run: 'pnpm lint', when: ['**/*.ts'], timeout_minutes: 10 },
@@ -52,6 +53,7 @@ export const TERRITORY = TerritorySchema.parse({
   ],
   laws: {
     forbidden_paths: ['.env', 'infra/secrets/**'],
+    read_only_paths: ['apps/api/openapi.json', 'packages/shared/src/api-types.ts'],
     forbidden_commands: [String.raw`drizzle-kit\s+(drop|push)`],
   },
 });

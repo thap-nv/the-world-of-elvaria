@@ -3,7 +3,7 @@
 // measured here on the build, next to `node -e 0` on the same machine.
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
-import { writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -129,6 +129,31 @@ describe('the built hook', () => {
     });
     expect(JSON.parse(tested.stdout)).toEqual({ decision: 'deny_unless_prior_grant' });
     expect((await kingdom.log()).events.map(({ type }) => type)).toEqual(['agent.tool.blocked']);
+  });
+
+  it('lets a knight regenerate a read-only page with the generator, never write it by hand (P1-24)', async () => {
+    const plot = path.join(kingdom.root, 'plot with space');
+    await mkdir(path.join(plot, 'docs'), { recursive: true });
+    await writeFile(path.join(plot, 'glossary.json'), '{"seal":"dấu vua"}', 'utf8');
+    // A stand-in for `pnpm docs:gen`: reads the source, writes the generated page.
+    const generator =
+      "const fs=require('fs');const g=JSON.parse(fs.readFileSync('glossary.json','utf8'));fs.writeFileSync('docs/glossary.md',Object.entries(g).map(([k,v])=>'- '+k+': '+v).join('\\n'))";
+    await writeFile(path.join(plot, 'gen.cjs'), generator, 'utf8');
+    const policy = path.join(kingdom.runDir, 'policy.json');
+    const laws = { ...DC1_LAWS, read_only_paths: ['docs/glossary.md'] };
+    await writeFile(policy, JSON.stringify({ version: 1, laws }), 'utf8');
+    const pre = (tool_name: string, tool_input: Record<string, unknown>) =>
+      runBuilt(payload('PreToolUse', { tool_name, tool_input, cwd: plot }), kingdom.env(), { policy });
+    expect(pre('Bash', { command: 'node gen.cjs' }).stdout).toBe('');
+    const ran = spawnSync(process.execPath, ['gen.cjs'], { cwd: plot, env: baseEnv(), encoding: 'utf8' });
+    expect(ran.status).toBe(0);
+    const page = path.join(plot, 'docs', 'glossary.md');
+    expect(readFileSync(page, 'utf8')).toBe('- seal: dấu vua');
+    expect(pre('Read', { file_path: page }).stdout).toBe('');
+    const hand = JSON.parse(pre('Write', { file_path: page, content: 'x' }).stdout) as {
+      hookSpecificOutput: Record<string, string>;
+    };
+    expect(hand.hookSpecificOutput.permissionDecisionReason).toMatch(/glossary\.md is read-only/);
   });
 
   it("stamps in the kingdom's zone, whatever zone the machine is in", async () => {
