@@ -21,8 +21,14 @@ afterEach(() => rm(dir, { recursive: true, force: true, maxRetries: 5 }));
 
 async function play(replies: readonly Reply[], resume = true) {
   const runner = replyRunner(replies);
-  const session = await spawnParsed(runner, replyRequest(dir), { check: resultCheck, resume });
-  return { runner, session };
+  // Each pid the run names once a retry's process runs (P1-33 (b)): what the Steward records.
+  const pids: number[] = [];
+  const session = await spawnParsed(runner, replyRequest(dir), {
+    check: resultCheck,
+    resume,
+    spawned: () => pids.push(session.pid),
+  });
+  return { runner, session, pids };
 }
 
 async function signalsOf(session: RunningSession): Promise<RunnerSignal[]> {
@@ -50,8 +56,15 @@ describe('spawnParsed', () => {
     expect(await session.session_id).toBe('s-1');
   });
 
+  it('tells the caller of no other process when the first reply can be used', async () => {
+    const { session, pids } = await play([{ text: '{"result": "pass"}' }]);
+    await session.wait();
+    expect(pids).toEqual([]);
+    expect(session.pid).toBe(1);
+  });
+
   it('tries once more, resumed and told only what was wrong, when the reply cannot be used', async () => {
-    const { runner, session } = await play([
+    const { runner, session, pids } = await play([
       { text: 'Looks fine to me.', tokens: 300, turns: 2 },
       { text: '{"result": "fail"}', tokens: 50, turns: 1 },
     ]);
@@ -75,6 +88,8 @@ describe('spawnParsed', () => {
       ],
       sequels: [{ session_id: 's-1', why: NO_JSON }],
     });
+    // The retry's process was named to the caller once it ran: the run's pid is its.
+    expect(pids).toEqual([2]);
     // The second session's tokens come on top of the first's, as a running total does.
     expect(signals.filter(({ kind }) => kind === 'usage')).toEqual([
       { kind: 'usage', tokens: 300 },

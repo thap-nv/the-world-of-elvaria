@@ -16,11 +16,15 @@ export async function spawnOf(
   parse: ParseOptions | undefined,
 ): Promise<RunningSession> {
   const { structured, quest, handover } = request;
+  // A session that goes on in another process: `.state/sessions.json` names that one (P1-33 (b)).
+  const spawned = (): void => {
+    if (quest !== undefined) ctx.sessions.respawned(quest.id, ctx.record.stamp());
+  };
   if (parse !== undefined && structured !== undefined)
-    return spawnParsed(runner, { ...request, structured }, parse);
+    return spawnParsed(runner, { ...request, structured }, { ...parse, spawned });
   if (quest === undefined || handover === undefined || !checksLetterAfter(ctx, request.character.tribe))
     return runner.spawn(request);
   // The letter as this attempt's first session finds it; a revival of the attempt keeps the first note.
   await rememberLetter(request.run_dir, handover);
-  return spawnSequel(runner, request, letterSequel(ctx, quest, request.run_dir));
+  return spawnSequel(runner, request, { ...letterSequel(ctx, quest, request.run_dir), spawned });
 }

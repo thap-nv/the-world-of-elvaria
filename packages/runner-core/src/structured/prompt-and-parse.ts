@@ -15,6 +15,8 @@ export interface ParseOptions {
   readonly check: (value: unknown) => readonly string[];
   /** The tribe can continue a session (`capabilities.resume`): the retry goes on from the first. */
   readonly resume: boolean;
+  /** The retry's process runs now (Sequel.spawned): the Steward records its pid. */
+  readonly spawned?: () => void;
 }
 
 /** The request without the schema flag, the schema named in the system part instead. */
@@ -74,5 +76,10 @@ export function spawnParsed(
     if (issues.length === 0) return undefined;
     return { request: retryRequest(heard, issues, options.resume), why: issues.join('; ') };
   };
-  return spawnSequel(runner, parsedRequest(request, request.structured), { next, finish: withReply });
+  const { spawned } = options;
+  return spawnSequel(runner, parsedRequest(request, request.structured), {
+    next,
+    finish: withReply,
+    ...(spawned === undefined ? {} : { spawned }),
+  });
 }

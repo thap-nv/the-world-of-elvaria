@@ -26,6 +26,11 @@ export interface Sequel {
   next(heard: Heard, round: number): Promise<Follow | undefined> | Follow | undefined;
   /** The run's result from the sums (see combined); the last session heard is `heard.at(-1)`. */
   finish?(result: RunResult, heard: readonly Heard[]): Promise<RunResult> | RunResult;
+  /**
+   * A sequel's process runs now, and the run's `pid` names it: the Steward records it, so a restart reaps the
+   * process the run holds, not the first one, long gone (P1-33 (b)).
+   */
+  spawned?(): void;
 }
 
 interface RunState {
@@ -119,6 +124,7 @@ async function runAll(
     if (follow === undefined) break;
     const session = await opened(runner, follow, state);
     if (session === undefined) break;
+    sequel.spawned?.();
     last = await hear(session, follow.request, relay, tokensOf([opening, ...more.map(({ heard }) => heard)]));
     more.push({ heard: last, why: follow.why });
   }

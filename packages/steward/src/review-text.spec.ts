@@ -4,11 +4,12 @@
 // still none, and the judge leaves without a verdict, toward the stall like any such judge.
 import path from 'node:path';
 
-import { verdictIdOf } from '@elvaria/domain';
-import { RETRY_DIR } from '@elvaria/runner-core';
+import { TribeIdSchema, verdictIdOf } from '@elvaria/domain';
+import { RETRY_DIR, createFakeRunner } from '@elvaria/runner-core';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { bench, questPayload, tickUntil } from './__fixtures__/kingdom.ts';
+import { readPids } from './sessions/pids.ts';
 import type { Bench } from './__fixtures__/kingdom.ts';
 import type { Steward, StewardDeps } from './types.ts';
 import type { AgentRunner, FakeRunner, RunnerSignal, SpawnRequest } from '@elvaria/runner-core';
@@ -30,12 +31,16 @@ afterEach(async () => {
   current = undefined;
 });
 
-/** A tribe whose CLI has no JSON Schema flag: its judges end their session with `reply(req)` as their last words. */
+/**
+ * A tribe whose CLI has no JSON Schema flag: its judges end their session with `reply(req)` as their last words,
+ * each in a process `pidOf(req)` names (0: in process, nothing to record).
+ */
 function textJudges(
   fake: FakeRunner,
   reply: (req: SpawnRequest) => string,
   spawned: SpawnRequest[],
   resume = true,
+  pidOf: (req: SpawnRequest) => number = () => 0,
 ): AgentRunner {
   return {
     ...fake,
@@ -49,7 +54,7 @@ function textJudges(
         yield* session.signals;
         yield { kind: 'text', text };
       }
-      return { ...session, signals: signals() };
+      return { ...session, pid: pidOf(req), signals: signals() };
     },
   };
 }
@@ -113,6 +118,28 @@ describe('a judge whose tribe answers in text', () => {
     expect(judged.map(({ outcome }) => outcome)).toEqual(['submitted']);
     const verdict = await kingdom.store.verdicts.read(verdictIdOf(quest, 1));
     expect(verdict.ok && verdict.value).toMatchObject({ result: 'pass', session_id: judged[0]?.session_id });
+  });
+
+  it("records the retry's process in .state/sessions.json, so a restart reaps the one the judge runs in (P1-33 (b))", async () => {
+    const spawned: SpawnRequest[] = [];
+    const [FIRST, RETRY] = [4_000_001, 4_000_002];
+    const retryHangs = (tribe: string) =>
+      createFakeRunner({
+        tribe: TribeIdSchema.parse(tribe),
+        scenarioOf: (req) => (isRetry(req) ? 'hang' : 'submit'),
+      });
+    const pidOf = (req: SpawnRequest) => (isRetry(req) ? RETRY : FIRST);
+    const { kingdom, steward } = await open(() => ({
+      runners: {
+        claude: textJudges(retryHangs('claude'), () => 'Looks fine.', spawned, true, pidOf),
+        gemini: textJudges(retryHangs('gemini'), () => 'Looks fine.', spawned, true, pidOf),
+      },
+    }));
+    await kingdom.command('create_quest', questPayload('Judged at length'));
+    const recorded = async () => (await readPids(kingdom.root)).map(({ role, pid }) => [role, pid]);
+    await tickUntil(steward, kingdom.clock, async () => (await recorded()).some(([, pid]) => pid === RETRY));
+    expect(await recorded()).toEqual([['verifier', RETRY]]);
+    expect(steward.running()).toBe(1);
   });
 
   it('opens a fresh retry with the whole prompt when the tribe cannot resume', async () => {

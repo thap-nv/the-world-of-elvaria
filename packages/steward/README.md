@@ -45,7 +45,8 @@
   `quest.infirmary` line carries both, beside the one English `reason` built from them for the chronicle, worded
   as before P1-32; the `infirmary` notice carries all three, so a bell can say why in the owner's language.
 - Keeps the pid of every session it holds in `.state/sessions.json` (written before each tick ends, emptied at
-  stop). At start, before the first tick, it kills the tree of each pid the last Steward left there whose process
+  stop); a session that goes on in another process (a reply tried again, a reminder of the letter, P1-33) is
+  written again with that process's pid and spawn time (`Sessions.respawned`). At start, before the first tick, it kills the tree of each pid the last Steward left there whose process
   started when that session was spawned (`processStartOf`, within a minute), and leaves a pid that now belongs to
   another process, or whose start the system would not tell, alone, with a warning. `sessionsLeftBehind(root)`
   tells `elvaria doctor` which of them still run, and nothing while a Steward holds the lock.

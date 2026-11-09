@@ -66,7 +66,8 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   `spawnSequel(runner, request, sequel)` runs one session and the ones that follow it as one `RunningSession`:
   the first session's id, every signal (tokens counted on top of the sessions before), the sums of tokens, turns
   and time, the last result, `RunResult.sequels` naming the others; a kill ends the run and no sequel opens
-  after it. The Steward uses it for the reminders of the letter too (`handover_check: after_session`).
+  after it. Its `pid` is the process running now, and `Sequel.spawned` (`ParseOptions.spawned`) says when a
+  sequel's process starts, so the caller can record it. The Steward uses it for the reminders of the letter too (`handover_check: after_session`).
 - Puts the territory's `context_files` in the system part for a tribe whose CLI loads no context file
   (`readContextFiles`, `prompts/context-files.md`, §3.14 `context: prompt`, P1-33): the files the globs name in
   the plot, in their order, each cut at `CONTEXT_FILE_MAX_CHARS` (what agy embeds), and the reminder of an
