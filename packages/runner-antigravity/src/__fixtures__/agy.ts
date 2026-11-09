@@ -61,6 +61,10 @@ export interface World {
   remove(): Promise<void>;
 }
 
+/** Retries of removing a world on Windows, a killed agy tree holding its plot (PR #32): back-off up to 5.5 s. */
+const REMOVE_RETRIES = 10;
+const REMOVE_RETRY_MS = 100;
+
 export async function openWorld(): Promise<World> {
   const root = await mkdtemp(path.join(tmpdir(), 'elvaria agy '));
   const plot = path.join(root, 'dc1 repo', '.elvaria', 'worktrees', QUEST);
@@ -71,7 +75,10 @@ export async function openWorld(): Promise<World> {
     plot,
     run_dir: runDir,
     handover: path.join(root, 'quests', QUEST, 'handover.md'),
-    remove: () => rm(root, { recursive: true, force: true }),
+    // A killed agy tree may hold the plot a moment longer on Windows (EBUSY, EPERM), as the conformance workspace
+    // knows (PR #32): retry, back-off up to 5.5 s, like it. Seen under the load of the pre-push hook (P1-19, P1-20).
+    remove: () =>
+      rm(root, { recursive: true, force: true, maxRetries: REMOVE_RETRIES, retryDelay: REMOVE_RETRY_MS }),
   };
 }
 
