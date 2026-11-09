@@ -15,7 +15,7 @@ import {
   payload,
 } from './__fixtures__/claude-payloads.ts';
 import { tempKingdom } from './__fixtures__/temp.ts';
-import { runHook } from './run-hook.ts';
+import { UNREADABLE_REASON, runHook } from './run-hook.ts';
 import type { TempKingdom } from './__fixtures__/temp.ts';
 import type { ClaudeEvent } from './__fixtures__/claude-payloads.ts';
 import type { HookEnv } from './context.ts';
@@ -166,6 +166,55 @@ describe('runHook', () => {
     expect(outcome.stdout).toBe('');
     expect(outcome.stderr).toContain('ELVARIA_KINGDOM is not set');
     expect(outcome.stderr).toContain('not an IANA zone');
+  });
+
+  describe('a payload it cannot read (P1-36, ADR 0007)', () => {
+    const whole = JSON.stringify(payload('PreToolUse', { tool_name: 'Bash', tool_input: { command: 'ls' } }));
+    const UNREADABLE = ['', 'not json', '[1]', 'null', whole.slice(0, whole.length / 2)];
+    const raw = (stdin: string, argv: string[]) => runHook({ stdin, env: kingdom.env(), argv, now: NOW });
+
+    it("denies Claude's PreToolUse, which the runner marks with --event, and writes why", async () => {
+      for (const stdin of UNREADABLE) {
+        const outcome = await raw(stdin, ['--event', 'PreToolUse']);
+        const decision = JSON.parse(outcome.stdout) as { hookSpecificOutput: Record<string, string> };
+        expect(decision.hookSpecificOutput).toMatchObject({
+          hookEventName: 'PreToolUse',
+          permissionDecision: 'deny',
+        });
+        expect(decision.hookSpecificOutput.permissionDecisionReason).toMatch(
+          /^Elvaria rule: the hook could not read this tool call .*Make the same call again/,
+        );
+        expect(outcome.stderr).toBe('elvaria-hook: stdin is not a JSON object; the tool call is denied\n');
+      }
+      const { events, issues } = await kingdom.log();
+      expect(issues).toEqual([]);
+      expect(events).toHaveLength(UNREADABLE.length);
+      expect(events[0]).toMatchObject({
+        type: 'agent.tool.blocked',
+        data: { tool: 'other', reason: UNREADABLE_REASON },
+      });
+      expect(events[0]).not.toHaveProperty('session');
+    });
+
+    it("denies agy's PreToolUse, named in argv, in agy's form", async () => {
+      const outcome = await raw('', ['PreToolUse', '--policy', path.join(kingdom.runDir, 'policy.json')]);
+      expect(JSON.parse(outcome.stdout)).toMatchObject({ decision: 'deny' });
+    });
+
+    it('ignores it for every other event, as before', async () => {
+      for (const argv of [[], ['--event', 'PostToolUse'], ['Stop'], ['--event=Stop']]) {
+        expect(await raw('', argv)).toEqual({
+          stdout: '',
+          stderr: 'elvaria-hook: stdin is not a JSON object; ignored\n',
+        });
+      }
+      expect((await kingdom.log()).events).toEqual([]);
+    });
+
+    it('reads a whole payload as before when --event is there', async () => {
+      const outcome = await raw(whole, ['--event', 'PreToolUse']);
+      expect(outcome).toEqual({ stdout: '', stderr: '' });
+    });
   });
 
   it('writes a system actor and no journal without a character and a quest', async () => {

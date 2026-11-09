@@ -1,10 +1,24 @@
+import { spawn } from 'node:child_process';
+import { once } from 'node:events';
 import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import process from 'node:process';
+import { setTimeout } from 'node:timers/promises';
 
 import { describe, expect, it } from 'vitest';
 
-import { REPO, binOf, readPayload, repoPath, runNode, toolEnv, toolInput } from './hook-io.mjs';
+import {
+  FD_0,
+  REPO,
+  binOf,
+  readPayload,
+  readStdin,
+  repoPath,
+  runNode,
+  toolEnv,
+  toolInput,
+} from './hook-io.mjs';
 
 describe('readPayload and toolInput', () => {
   it('reads the JSON object on stdin, or an empty object for anything else', () => {
@@ -17,6 +31,52 @@ describe('readPayload and toolInput', () => {
         throw new Error('EAGAIN');
       }),
     ).toEqual({});
+  });
+
+  it('keeps what it read before EAGAIN and reads the rest after it (P1-36)', () => {
+    const steps = ['{"tool_input":', 'EAGAIN', 'EAGAIN', '{"command":"ls"}}'];
+    const waits: number[] = [];
+    const source = {
+      read: (buffer: Buffer) => {
+        const step = steps.shift();
+        if (step === undefined) return 0;
+        if (step === 'EAGAIN') throw Object.assign(new Error('EAGAIN'), { code: 'EAGAIN' });
+        return Buffer.from(step, 'utf8').copy(buffer);
+      },
+      wait: (ms: number) => waits.push(ms),
+    };
+    expect(readPayload(() => readStdin(source))).toEqual({ tool_input: { command: 'ls' } });
+    expect(waits).toEqual([1, 1]);
+    const broken = {
+      read: (): number => {
+        throw Object.assign(new Error('EBADF'), { code: 'EBADF' });
+      },
+      wait: () => undefined,
+    };
+    expect(() => readStdin(broken)).toThrow('EBADF');
+    const started = performance.now();
+    FD_0.wait(5);
+    expect(performance.now() - started).toBeGreaterThanOrEqual(4);
+  });
+
+  it('reads a payload whole on a non-blocking stdin written in two halves, as the guards run', async () => {
+    // Touching process.stdin opens fd 0 as a libuv pipe, non-blocking on POSIX: the next read after the first
+    // half fails with EAGAIN, where readFileSync(0) threw the first half away and the guard let the call run.
+    const child = spawn(
+      process.execPath,
+      ['--import', 'data:text/javascript,process.stdin', join(REPO, '.claude/hooks/guard-bash.mjs')],
+      { stdio: ['pipe', 'pipe', 'pipe'] },
+    );
+    let stderr = '';
+    child.stderr.on('data', (chunk: Buffer) => (stderr += chunk.toString('utf8')));
+    const closed = once(child, 'close') as Promise<[number | null]>;
+    const command = ['git', 'push', '--force'].join(' ');
+    const text = JSON.stringify({ cwd: REPO, tool_name: 'Bash', tool_input: { command } });
+    child.stdin.write(text.slice(0, text.length / 2));
+    await setTimeout(300);
+    child.stdin.end(text.slice(text.length / 2));
+    expect((await closed)[0]).toBe(2);
+    expect(stderr).toMatch(/Force push is not allowed/);
   });
 
   it('reads one string field of tool_input', () => {
