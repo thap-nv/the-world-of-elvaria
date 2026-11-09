@@ -5,6 +5,8 @@
 /**
  * The names passed on. `TMPDIR` is the temp folder of macOS (TEMP and TMP are Windows'); the CLIs of stage 1
  * find their sign-in through the home folder (Claude Code, Antigravity), so no CLI variable is needed yet.
+ * `ProgramFiles` and `ProgramData` are where Docker's CLI looks for its plugins on Windows: without them
+ * `docker compose` is an unknown command, in a territory's e2e check and in a judge's shell alike (P1-35).
  */
 export const MINIMAL_ENV_NAMES = [
   'PATH',
@@ -19,6 +21,8 @@ export const MINIMAL_ENV_NAMES = [
   'ComSpec',
   'PATHEXT',
   'LANG',
+  'ProgramFiles',
+  'ProgramData',
 ] as const;
 
 /**
