@@ -9,7 +9,8 @@
       "ritual": "build_review",
       "checks_default": ["test", "lint", "typecheck", "build"],
       "seal_default": true,
-      "classes_allowed": ["knight", "dwarf"]
+      "classes_allowed": ["knight", "dwarf"],
+      "ritual_overrides": [{ "tags_any": ["e2e", "integration"], "ritual": "mutation_check" }]
     },
     {
       "id": "research",
@@ -39,7 +40,8 @@
       "ritual": "stress_test",
       "checks_default": ["benchmark", "test", "diff_stats"],
       "seal_default": true,
-      "classes_allowed": ["knight", "dwarf"]
+      "classes_allowed": ["knight", "dwarf"],
+      "ritual_overrides": [{ "tags_any": ["e2e", "integration"], "ritual": "mutation_check" }]
     },
     {
       "id": "document",

@@ -147,7 +147,7 @@ Luật (ADR 0014, [implementation-plan](implementation-plan.md) §2.7 và §4.1)
 
 Bước nghi thức (`ritual.steps[]`) cũng là id `snake_case` (ví dụ `run_checks`, `read_handover`, `read_diff`, `judge`, `write_verdict`); danh sách chốt ở P0-02 là `RITUAL_STEPS` trong `packages/domain/src/constants.ts` (bảng ở mục 13), vì loader registry từ chối bước lạ.
 
-Nghi thức chọn theo tag, không theo kind (kế hoạch sản phẩm 0.7, ADR 0022; làm ở P1-20/P1-21):
+Nghi thức chọn theo tag, không chỉ theo kind (kế hoạch sản phẩm 0.7, ADR 0022): `kinds[].ritual_overrides` (từ P1-20) chọn nghi thức theo tag của quest, override đầu tiên khớp thắng; Khảo hạch mù ở P1-21:
 
 | VI | EN | id | Khi nào |
 |---|---|---|---|
@@ -274,9 +274,8 @@ Nguồn lệnh (`source`): `cli`, `herald`, `lite`.
 | `infra` | Hạ tầng | Infrastructure |
 | `i18n` | Đa ngôn ngữ | Internationalisation |
 | `e2e` | Kiểm thử đầu-cuối | End-to-end tests |
+| `integration` | Kiểm thử tích hợp | Integration tests |
 | `docs` | Tài liệu | Documentation |
-
-Từ P1-20 (ADR 0022): thêm `integration` — Kiểm thử tích hợp — Integration tests.
 
 ## 11. Giá trị liệt kê trong schema
 
@@ -296,7 +295,7 @@ Mọi giá trị enum xuất hiện trong [schemas/](schemas/) có ở bảng n�
 | `attempt_log.outcome` | `submitted`, `returned`, `timeout`, `breaker`, `crash`, `paused`, `blocked`, `cancelled` | kết thúc một lần thử; `timeout` = cầu dao thời gian, `breaker` = cầu dao token/lượt |
 | `units[].outcome` | `pending`, `done`, `not_done`, `needs_user`, `debt` | chưa xử lý / xác quái / bia mộ / thương binh / đổ nát |
 | `verdict.result` | `pass`, `fail`, `partial` | đạt / không đạt / dở dang (người kế đọc tiếp) |
-| `verdict.fail_kind` (cũng `consecutive_fail.fail_kind`) | `tests_fail`, `scope_creep`, `missing_i18n`, `wrong_facts`, `incomplete`, `style`, `unsafe`, `other` | loại lỗi, để đếm "cùng loại"; thêm `flaky` từ P1-20 (ADR 0022) |
+| `verdict.fail_kind` (cũng `consecutive_fail.fail_kind`) | `tests_fail`, `scope_creep`, `missing_i18n`, `wrong_facts`, `incomplete`, `style`, `unsafe`, `other`, `flaky` | loại lỗi, để đếm "cùng loại"; `flaky` (từ P1-20, ADR 0022): một check vừa qua vừa trượt trên cùng commit, Quản sự mở quest Trừ tà |
 | `verdict.verifier_id` (giá trị đặc biệt) | `user`, `machine` | dấu vua / verdict máy; không nhân vật nào được mang id này |
 | `campaign.mode` | `offense`, `defense` | tấn công (release, launch) / phòng thủ (sự cố) |
 | `campaign.status` | `declared`, `active`, `won`, `lost`, `retro_pending`, `closed` | |

@@ -73,6 +73,8 @@ export interface SessionInput {
   readonly continuation?: Continuation | null;
   /** A verifier's: the machine checks that ran before its session (§3.2). */
   readonly checks?: readonly VerdictCheck[];
+  /** A verifier in the scratch plot its trial made (ADR 0022, P1-20): Edit and Write there, no commit, no push. */
+  readonly scratch?: boolean;
 }
 
 /** What a continuing session reads instead of a transcript (ADR 0017); the branch's git log comes with P1-07. */
@@ -215,7 +217,13 @@ export async function requestOf(ctx: Context, input: SessionInput): Promise<Spaw
     territory,
     cwd: input.cwd,
     prompt: await promptOf(ctx, input, characterClass, secretValuesOf({ quest, env })),
-    permissions: toolPolicyOf({ role, characterClass, character, territory }),
+    permissions: toolPolicyOf({
+      role,
+      characterClass,
+      character,
+      territory,
+      scratch: input.scratch === true,
+    }),
     budget: { max_turns: ctx.world.kingdom.breakers.max_turns, max_minutes: quest.budget.max_minutes },
     env,
     run_dir: runDir,

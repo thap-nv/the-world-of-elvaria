@@ -23,6 +23,7 @@ const EVERY_CAPABILITY: AdapterCapabilities = {
   resume: true,
   compact: true,
   subagent: true,
+  auth: ['login', 'api_key'],
 };
 
 export interface FakeRunnerOptions {

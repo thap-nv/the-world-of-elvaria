@@ -10,13 +10,16 @@
   carries the account's windows a session reports in band, `ProbeResult.windows` those a probe read, and
   `probe({ping: false})` only reads them, without calling a model.
 - Ships `createFakeRunner()`: characters that play a scenario in process (`submit`, `crash`, `hang`,
-  `rate_limit`, `forbidden_command`, `ask`), chosen per spawn by `scenarioOf` or by env `ELVARIA_FAKE_SCENARIO`.
+  `rate_limit`, `forbidden_command`, `ask`, and `scratch_commit`: a judge in its scratch plot that tries
+  `git commit` then `git push`, P1-20), chosen per spawn by `scenarioOf` or by env `ELVARIA_FAKE_SCENARIO`.
   It writes the letter, blocks the forbidden push through the policy when it declares `tool_gate`, keeps a
   resumed session id, and records every request for the Steward's tests. Its `probe` answers one result, or one
   per call (a pool that wakes on the second probe).
 - Builds `ToolPolicy` from class + territory laws + role (`toolPolicyOf`): `tools` (Claude `--tools`), `allow` and
   `deny` rules in Claude Code syntax, the apprentice (`Agent(apprentice)` in a class is a flag), and the laws the
-  hook enforces. A verifier never has Edit, Write or NotebookEdit; a character with a shell may run the
+  hook enforces. A verifier never has Edit, Write or NotebookEdit, except in its scratch plot (`scratch: true`,
+  ADR 0022, P1-20): Edit and Write even when its class denies them, `git status`/`git restore`, the territory's exclusive checks (the Steward holds their lock for its session), and a deny rule on
+  `git commit` plus the law `NO_HISTORY_COMMAND` (commit, merge, reset, branch, stash, worktree…) for the hook; a character with a shell may run the
   territory's non-exclusive checks, and one that also edits files its `commands.generate` (P1-24); every session
   is fenced (no `git push`, no `.env`, no built-in agent, no `Edit` on `laws.read_only_paths`, which stay
   readable).
@@ -41,7 +44,20 @@
   words a draft may use: the kinds and the classes each allows, the tags, the territory's secrets (P1-15).
 - Runs the conformance suite (`conformanceChecks`, `runConformance`): plain checks with `node:assert`, so a spec
   wraps them in `it` and `elvaria tribe check` (P1-19) runs them too. With a real CLI (`live`) only the checks
-  that burn no mana run. `openWorkspace` and `conformanceRequest` give an adapter's specs the same requests.
+  that burn no mana run. `openWorkspace` and `conformanceRequest` give an adapter's specs the same requests. The
+  `capabilities` check also wants `capabilities.auth`, the sign-ins the adapter runs with (P1-19): a non-empty list
+  of `login` / `api_key`.
+- Hands an owner adapter file its kit (`src/kit/`, P1-19, implementation-plan §3.14, ADR 0021): `adapterKitOf(host)`
+  freezes the tribe, the kingdom folder, the minimal env, the CLI to drive (`tool_path`: the path the owner gave,
+  else the pinned one), `launchOf`, `hookCommand` and runner-core's shared parts (`process`: `startChild`,
+  `runToEnd`, `killTree`; `session`: the signal channel, run context, `policy.json`, `writeRunFile` for a file of
+  the run inside `<run_dir>` only, the run log and redacted output, the letter's Question, `countedTokens`;
+  `policy`: `commandRefusal`, `toolOf`, `NO_PUSH_COMMAND`), so the file imports nothing. The prompt, the tool policy
+  and the plot already come in each `SpawnRequest`. `adapterOfModule(module, kit)` checks the imported module
+  (`createAdapter` exported, called without throwing) and the runner it returns (`runnerProblems`: the kit's tribe
+  and adapter, every capability, `spawn`, `probe`, `doctor`), one sentence per problem.
+- Proves in the conformance suite that a judge in its scratch plot, whose class allows commit and push, has both
+  refused (`scratch_commit`, fakes only, P1-20).
 - Gives every quest its own ground (`createPlotManager`, implementation-plan §3.3, ADR 0012). On a git territory,
   `prepare` adds `<repo>/<worktree_dir>/<quest-id>` on branch `quest/<quest-id>` (`--no-track`), forked from the
   default branch: origin's after a fetch when it only adds to the local one, else the local one; the main
@@ -81,7 +97,18 @@
   `ChecksRequest.signal` (P1-25: the Steward runs checks outside its tick) kills the running check and starts no
   other when it aborts, the log saying so; `runProgram` takes the same `signal`. `ChecksRequest.secrets` (P1-10b:
   the quest's `secrets_required`, treasury name → value) puts them in each check's env over the host's minimal env
-  (`sessionEnv`, no `ELVARIA_*`), so a check that needs a private registry passes as the session did.
+  (`sessionEnv`, no `ELVARIA_*`), so a check that needs a private registry passes as the session did. `ChecksRequest.lock_wait_ms` (P1-20) says how long an exclusive check waits for the lock, a judge's session included. A check's
+  `run` may list commands (P1-20): they run in order in one log, the first that fails ending the check, as CI's
+  `&&` (`runLines`).
+- Gives the judge of tests as the product its scratch plot and its trial (ADR 0022, P1-20):
+  `PlotManager.prepareScratch` makes `<worktree_dir>/<quest-id>-verify` fresh, detached at the head of
+  `quest/<id>`, its record carrying the quest plot's base, and runs `commands.setup` (log
+  `.runs/<quest>-verify-setup.log`); `checkoutScratch` moves it between head and base, `releaseScratch` removes it
+  dirty or not, `scratchOf` finds it. `runTrial` runs there `commands.reset` then the checks, again after a reset
+  up to `runs` times while every run passes (logs in `<run_dir>/run-<k>/checks/`), then `commands.coverage` on
+  the head and on the base (istanbul `coverage/coverage-summary.json`); it adds the checks `rerun_clean` (every
+  reset passed), `flake_check` and `coverage_not_lower`. `trialInScratch` does both, a setup that fails coming
+  back as a failing `rerun_clean`.
   The log of a check or of `commands.setup` loses the values of the secrets the command was given (`withSecrets`),
   then the secret shapes it printed, when it closes (`maskLogFile`, ADR 0013); the command writes straight into the
   file, so the masking is not line by line.
@@ -120,6 +147,7 @@
 ## Does not
 
 - Talk to a real CLI: adapters do (`runner-claude` P1-09, `runner-antigravity` P1-12b, `runner-gemini` P1-12c).
+- Import an owner adapter file: only `apps/cli` does (ADR 0021); runner-core builds its kit and checks its runner.
 - Write a CLI's own settings or agents file: the adapters do, from `ToolPolicy` and `SpawnRequest`. Choose which
   secrets a session gets: the quest names them, the Steward checks them against the territory and builds the env.
 - Read a keychain: the file treasury is stage 1's; a keychain adapter can stand behind `Treasury` later.

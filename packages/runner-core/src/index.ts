@@ -20,10 +20,16 @@ export {
 } from './checks/run-checks.ts';
 export type { CheckRun, ChecksOptions, ChecksRequest } from './checks/run-checks.ts';
 export { selectChecks } from './checks/select-checks.ts';
+export { COVERAGE_SUMMARY, COVERAGE_TIMEOUT_MS } from './checks/coverage.ts';
+export { trialInScratch } from './checks/scratch-trial.ts';
+export type { ScratchTrialRequest } from './checks/scratch-trial.ts';
+export { runTrial } from './checks/trial.ts';
+export type { TrialPlot, TrialRequest } from './checks/trial.ts';
 export { CONFORMANCE_CHECKS, conformanceChecks, runConformance } from './conformance/checks.ts';
 export type { ConformanceReport } from './conformance/checks.ts';
 export {
   FAKE_FORBIDDEN_COMMAND,
+  FAKE_SCRATCH_COMMANDS,
   FAKE_QUESTION,
   FAKE_SCENARIOS,
   FAKE_SCENARIO_ENV,
@@ -39,6 +45,10 @@ export {
   openWorkspace,
 } from './conformance/workspace.ts';
 export type { Workspace } from './conformance/workspace.ts';
+export { ADAPTER_FACTORY, adapterOfModule, runnerProblems } from './kit/adapter-module.ts';
+export type { AdapterFactory } from './kit/adapter-module.ts';
+export { ADAPTER_KIT_VERSION, adapterKitOf } from './kit/kit.ts';
+export type { AdapterKit, KitHookCommand, KitHost } from './kit/kit.ts';
 export { plotCommitMessage } from './plot/commit-message.ts';
 export { folderPlotOf } from './plot/folder.ts';
 export { createPlotManager } from './plot/plot-manager.ts';
@@ -52,6 +62,8 @@ export { DIFF_MAX_CHARS } from './plot/diff.ts';
 export type { DiffScope } from './plot/diff.ts';
 export { SUBQUESTS_FILE } from './plot/subquests.ts';
 export { PATCH_FILE } from './plot/patch.ts';
+export { SCRATCH_SUFFIX, scratchIdOf } from './plot/scratch.ts';
+export type { PreparedScratch } from './plot/scratch.ts';
 export type { PatchOutcome } from './plot/patch.ts';
 export type { SetupRun } from './plot/setup.ts';
 export type { CommitOutcome, ForgetWorktree, PlotStatus, ReleasedPlot } from './plot/worktree-ops.ts';
@@ -61,6 +73,8 @@ export {
   AGENT_TOOL,
   APPRENTICE_RULE,
   BUILT_IN_AGENTS,
+  NO_COMMIT_RULE,
+  NO_HISTORY_COMMAND,
   NO_PUSH_COMMAND,
   NO_PUSH_RULE,
   SECRET_FILES,

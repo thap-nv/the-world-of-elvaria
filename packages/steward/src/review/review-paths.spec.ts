@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 
 import { characterOf } from '../__fixtures__/kingdom.ts';
 import { createBackground } from '../background.ts';
+import { createJudgeLocks } from './exclusive.ts';
 import { judged, levelAfterVerdict, moveOnVerdict, recordVerdict, ritualOf } from '../verdicts.ts';
 import { startChecks } from './checks.ts';
 import { machineReview } from './machine.ts';
@@ -24,7 +25,7 @@ const quest = {
   attempt_log: [],
   secrets_required: [],
 } as unknown as Quest;
-const territory = { id: 'dc1-se-team', secrets_allowed: ['npm_token'] } as unknown as Territory;
+const territory = { id: 'dc1-se-team', secrets_allowed: ['npm_token'], checks: [] } as unknown as Territory;
 
 interface Stub {
   readonly ctx: Context;
@@ -49,6 +50,7 @@ function stub(world: StubWorld = {}): Stub {
     world.lines === 'refused' ? Promise.reject(new Error('EACCES: events')) : Promise.resolve();
   const ctx = {
     background: createBackground(log),
+    judgeLocks: createJudgeLocks(log),
     world: {
       quests: new Map((world.quests ?? []).map((q) => [q.id, q])),
       territories: new Map((world.territories ?? []).map((t) => [t.id, t])),
@@ -57,6 +59,7 @@ function stub(world: StubWorld = {}): Stub {
         rituals: world.rituals === false ? [] : [{ id: 'build_review', pass_rule: 'all_checks_and_agent' }],
       },
       characters: new Map(),
+      kingdom: { owner: { locale: 'en' }, breakers: { attempt_minutes: { low: 45, high: 120 } } },
     },
     deps: {
       log,

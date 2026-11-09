@@ -125,6 +125,40 @@
         "build": {
           "type": "string"
         },
+        "reset": {
+          "description": "Brings shared state back to clean (a test database, containers) in a judge's scratch plot (ADR 0022): run after commands.setup and before each run of the checks and of commands.coverage there. Run by the machine only, never by a character.",
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          ]
+        },
+        "coverage": {
+          "description": "Measures test coverage, leaving an istanbul json-summary at coverage/coverage-summary.json of the plot (vitest --coverage.reporter=json-summary, jest, c8, nyc). The ritual step coverage_not_lower runs it on the quest's branch and on its base in the scratch plot and fails when a total drops. Absent: coverage is not measured.",
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          ]
+        },
         "generate": {
           "description": "Generators of the territory (`pnpm docs:gen`, `pnpm schemas`). A session that may edit files may run them: they are how files under laws.read_only_paths change.",
           "type": "array",
@@ -154,9 +188,21 @@
             "pattern": "^[a-z][a-z0-9_]*$"
           },
           "run": {
-            "description": "A pnpm/node/git command without shell syntax (runs the same under Git Bash and PowerShell).",
-            "type": "string",
-            "minLength": 1
+            "description": "A pnpm/node/git command without shell syntax (runs the same under Git Bash and PowerShell), or a list of such commands run one after another in the same folder until one exits non-zero.",
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            ]
           },
           "when": {
             "type": "array",

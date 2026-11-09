@@ -116,6 +116,19 @@ describe('parseRegistry', () => {
     );
   });
 
+  it('takes ritual overrides of known rituals and tags, and a flaky follow-up the kingdom can make', () => {
+    const overrides = [{ tags_any: ['docs'], ritual: 'source_check' }];
+    expect(
+      issuesAfter((f) => {
+        Object.assign(f.kinds.kinds[0]!, { ritual_overrides: overrides });
+        Object.assign(f.rituals.rituals[0]!, {
+          scratch_plot: true,
+          flaky_follow_up: { kind: 'build', class: 'knight' },
+        });
+      }),
+    ).toEqual([]);
+  });
+
   it("takes a script's follow-up of a known kind and a class it allows", () => {
     const followUp = { kind: 'research', class: 'scout' };
     expect(issuesAfter((f) => Object.assign(f.scripts.scripts[0]!, { follow_up: followUp }))).toEqual([]);
@@ -195,6 +208,32 @@ describe('parseRegistry', () => {
       (f: Files) =>
         Object.assign(f.scripts.scripts[0]!, { follow_up: { kind: 'research', class: 'knight' } }),
       'scripts class_kind_mismatch scripts.0.follow_up.class',
+    ],
+    [
+      'a ritual override naming an unknown ritual',
+      (f: Files) =>
+        Object.assign(f.kinds.kinds[0]!, { ritual_overrides: [{ tags_any: ['docs'], ritual: 'nope' }] }),
+      'kinds unknown_ritual kinds.0.ritual_overrides.0.ritual',
+    ],
+    [
+      'a ritual override naming an unknown tag',
+      (f: Files) =>
+        Object.assign(f.kinds.kinds[0]!, {
+          ritual_overrides: [{ tags_any: ['docs', 'e2e'], ritual: 'source_check' }],
+        }),
+      'kinds unknown_tag kinds.0.ritual_overrides.0.tags_any.1',
+    ],
+    [
+      'a ritual whose flaky follow-up is an unknown kind',
+      (f: Files) =>
+        Object.assign(f.rituals.rituals[0]!, { flaky_follow_up: { kind: 'fix', class: 'knight' } }),
+      'rituals unknown_kind rituals.0.flaky_follow_up.kind',
+    ],
+    [
+      'a ritual whose flaky follow-up class its kind does not allow',
+      (f: Files) =>
+        Object.assign(f.rituals.rituals[0]!, { flaky_follow_up: { kind: 'build', class: 'scout' } }),
+      'rituals class_kind_mismatch rituals.0.flaky_follow_up.class',
     ],
   ])('rejects %s', (_, change, expected) => {
     expect(issuesAfter(change)).toEqual([expected]);

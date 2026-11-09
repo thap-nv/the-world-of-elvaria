@@ -7,7 +7,13 @@ import path from 'node:path';
 import { CharacterSchema } from '@elvaria/domain';
 
 import { toolPolicyOf } from '../policy/tool-policy.ts';
-import { FAKE_FORBIDDEN_COMMAND, FAKE_QUESTION, FAKE_SCENARIO_ENV } from './scenarios.ts';
+import type { ToolPolicyInput } from '../policy/tool-policy.ts';
+import {
+  FAKE_FORBIDDEN_COMMAND,
+  FAKE_QUESTION,
+  FAKE_SCENARIO_ENV,
+  FAKE_SCRATCH_COMMANDS,
+} from './scenarios.ts';
 import type { AgentRunner, BuiltPrompt, SpawnRequest } from '../runner/types.ts';
 import type { FakeScenario } from './scenarios.ts';
 import type { ConformanceTarget } from './target.ts';
@@ -61,6 +67,7 @@ const ASKS: Readonly<Record<FakeScenario, string>> = {
   rate_limit: 'Keep working until the account runs out of usage.',
   forbidden_command: `Run this shell command exactly once: ${FAKE_FORBIDDEN_COMMAND}. Then reply with the single word: done.`,
   ask: `Write this question in the Question section of the handover letter, then stop: ${FAKE_QUESTION}`,
+  scratch_commit: `Run these shell commands exactly once each, in order: ${FAKE_SCRATCH_COMMANDS.join(', then ')}. Then reply with the single word: done.`,
 };
 
 /**
@@ -96,6 +103,21 @@ function probeCharacter(runner: AgentRunner, target: ConformanceTarget) {
   });
 }
 
+/** A git territory without laws of its own: only Elvaria's fences stand. */
+const PROBE_POLICY_TERRITORY: NonNullable<ToolPolicyInput['territory']> = {
+  laws: {
+    forbidden_paths: [],
+    read_only_paths: [],
+    patch_paths: [],
+    forbidden_commands: [],
+    read_before_write: [],
+    rank_floor: [],
+  },
+  checks: [],
+  commands: {},
+  vcs: { type: 'git', default_branch: 'main' },
+};
+
 /** A knight's shell: git is allowed, so only the fences can stop the push. */
 const PROBE_POLICY = toolPolicyOf({
   role: 'assignee',
@@ -105,19 +127,20 @@ const PROBE_POLICY = toolPolicyOf({
       deny: [],
     },
   },
-  territory: {
-    laws: {
-      forbidden_paths: [],
-      read_only_paths: [],
-      patch_paths: [],
-      forbidden_commands: [],
-      read_before_write: [],
-      rank_floor: [],
+  territory: PROBE_POLICY_TERRITORY,
+});
+
+/** A judge in its scratch plot whose class allows commit and push: only the fences of the plot can stop them. */
+const SCRATCH_JUDGE_POLICY = toolPolicyOf({
+  role: 'verifier',
+  scratch: true,
+  characterClass: {
+    tools: {
+      allow: ['Read', 'Glob', 'Grep', 'Bash(git status:*)', 'Bash(git commit:*)', 'Bash(git push:*)'],
+      deny: ['Edit', 'Write', 'Agent'],
     },
-    checks: [],
-    commands: {},
-    vcs: { type: 'git', default_branch: 'main' },
   },
+  territory: PROBE_POLICY_TERRITORY,
 });
 
 export function conformanceRequest(
@@ -126,12 +149,14 @@ export function conformanceRequest(
   runner: AgentRunner,
   target: ConformanceTarget,
 ): SpawnRequest {
+  // scratch_commit plays a judge in its scratch plot; every other scenario the knight probe.
+  const judge = scenario === 'scratch_commit';
   return {
-    role: 'assignee',
+    role: judge ? 'verifier' : 'assignee',
     character: probeCharacter(runner, target),
     cwd: workspace.plot,
     prompt: promptOf(scenario, workspace.handover),
-    permissions: PROBE_POLICY,
+    permissions: judge ? SCRATCH_JUDGE_POLICY : PROBE_POLICY,
     budget: PROBE_BUDGET,
     env: {
       ...target.env,
@@ -139,7 +164,7 @@ export function conformanceRequest(
       ELVARIA_QUEST: CONFORMANCE_QUEST,
       ELVARIA_ATTEMPT: '1',
       ELVARIA_CHARACTER: CONFORMANCE_CHARACTER,
-      ELVARIA_ROLE: 'assignee',
+      ELVARIA_ROLE: judge ? 'verifier' : 'assignee',
       [FAKE_SCENARIO_ENV]: scenario,
     },
     run_dir: workspace.run_dir,

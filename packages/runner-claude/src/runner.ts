@@ -28,6 +28,8 @@ export const CLAUDE_CAPABILITIES: AgentRunner['capabilities'] = {
   resume: true,
   compact: true,
   subagent: true,
+  // The owner's claude.ai sign-in: the runner never puts an API key into the session's env (P1-19).
+  auth: ['login'],
 };
 
 /** `BREAKER_DEFAULTS.subagent_max_turns` and `subagent_max_minutes` of the domain, which the adapter may not import. */

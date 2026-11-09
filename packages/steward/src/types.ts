@@ -136,6 +136,20 @@ export interface PlotCheck {
   readonly secrets?: Readonly<Record<string, string>>;
   /** The quest's `party_role` (P1-18): a merge quest runs every check, a part leaves `defer_to_merge` ones to it. */
   readonly party_role?: PartyRole;
+  /** How long an exclusive check waits for the territory's lock, a judge's session included (P1-20). */
+  readonly lock_wait_ms?: number;
+}
+
+/**
+ * The checks of a ritual with a scratch plot (ADR 0022, P1-20): run in a fresh scratch plot of the quest's branch,
+ * after commands.setup and commands.reset, `runs` times while every run passes, coverage against the base when asked.
+ */
+export interface PlotTrial extends Omit<PlotCheck, 'plot'> {
+  readonly quest: Quest;
+  /** FLAKE_RUNS when the ritual has flake_check, else 1. */
+  readonly runs: number;
+  /** The ritual has coverage_not_lower. */
+  readonly coverage: boolean;
 }
 
 /**
@@ -177,6 +191,15 @@ export interface Plots {
   applyPatch(plot: Quest['plot'], patchPaths: readonly string[]): Promise<PatchOutcome>;
   /** The territory's checks for the paths the quest touched, one after another in the plot (§3.2). */
   check(request: PlotCheck): Promise<readonly CheckRun[]>;
+  /**
+   * The machine's part of a ritual with a scratch plot (ADR 0022, P1-20): a fresh scratch plot of the quest's branch,
+   * then `rerun_clean`, the checks, `flake_check` and `coverage_not_lower` there. Throws when it cannot be made.
+   */
+  trial(request: PlotTrial): Promise<readonly CheckRun[]>;
+  /** The quest's scratch plot the trial made, where its judge works; throws when there is none. */
+  scratch(quest: Quest, territory: Territory): Promise<PreparedPlot>;
+  /** Removes the quest's scratch plot, dirty or not, after its judge; what still holds its folder, if anything. */
+  releaseScratch(quest: Quest, territory: Territory): Promise<string | undefined>;
   /**
    * Every check of the territory whose program is found, for a catalog script's `--context` (§3.12); a check whose
    * program is not found is left out, and `run-check` then says the territory has no such check.

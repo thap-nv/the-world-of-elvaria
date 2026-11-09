@@ -24,6 +24,16 @@ export const NO_PUSH_RULE = 'Bash(git push:*)';
  */
 export const NO_PUSH_COMMAND = String.raw`\bgit(?:\s+-{1,2}[\w-]+(?:[=\s][^\s;&|]+)?)*\s+push\b`;
 
+/**
+ * A judge in its scratch plot (ADR 0022, P1-20) may break what the tests guard there and restore it, never change
+ * history: commit is denied by rule as push is, and the hook refuses every git command that writes a commit, a ref or
+ * the stash, which every worktree of the repo shares with the quest's branch, under any spelling of the options.
+ */
+export const NO_COMMIT_RULE = 'Bash(git commit:*)';
+export const NO_HISTORY_COMMAND = String.raw`\bgit(?:\s+-{1,2}[\w-]+(?:[=\s][^\s;&|]+)?)*\s+(?:commit|merge|rebase|cherry-pick|revert|reset|branch|tag|update-ref|symbolic-ref|replace|notes|am|switch|checkout\s+-[bB]|stash|worktree|fetch|pull)\b`;
+/** What a scratch judge gets beyond its class: the write tools, and git to see and undo its breaks. */
+export const SCRATCH_RULES = ['Edit', 'Write', 'Bash(git status:*)', 'Bash(git restore:*)'] as const;
+
 /** Dotenv files are never read nor written, whatever the territory says (§3.9). */
 export const SECRET_FILES = ['.env', '.env.*'] as const;
 

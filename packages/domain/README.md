@@ -6,8 +6,17 @@
   `src/schema/contracts.ts`): kingdom, territory, quest, character, campaign, verdict, lesson, event,
   inbox-command, the five registry files, skill, quest-draft and world-map, with their TypeScript types.
   `pnpm schemas` writes `docs/schemas/` from them; each contract's `examples` live in `examples/`.
-- Checks a registry across its five files (`parseRegistry`, `checkRegistry`): unknown ritual, class, kind or
-  step, duplicate ids, a verifier allowed to take work, a class and a kind that disagree.
+- Checks a registry across its five files (`parseRegistry`, `checkRegistry`): unknown ritual, class, kind,
+  step or tag (a kind's `ritual_overrides`, P1-20), duplicate ids, a verifier allowed to take work, a class and a
+  kind that disagree, a follow-up (a script's `follow_up`, a ritual's `flaky_follow_up`) the kingdom cannot make.
+- Chooses the ritual that judges a quest (`ritualOf`, ADR 0011, 0022; P1-20): the kind's, unless one of its
+  `ritual_overrides` meets the quest's tags (tests as the product: `build`/`refactor` tagged `e2e` or
+  `integration` → `mutation_check`); `judgedInScratch` says its judge works in a scratch plot (a ritual with
+  `scratch_plot`, a git worktree). What the machine decides there is pure too (`src/verify/trial.ts`):
+  `rerunDue` (up to `FLAKE_RUNS` runs while every run passes), `exclusiveWaitMinutes` (how long an exclusive check waits for a judge that holds the lock), `flakyChecksOf`, `coverageTotalsOf` (an istanbul
+  json-summary) and `coverageDropsOf` (counts compared, no rounding); `flakyFollowUpOf` builds the quest that
+  exorcises a flake, of the kind and class the ritual's `flaky_follow_up` names. `commandLinesOf` reads a
+  territory command that may be a list (`checks[].run`, `commands.reset`, `commands.coverage`).
 - Runs the quest state machine (`src/quest/`): the table of moves is data (`QUEST_TRANSITIONS`), and
   `transition(quest, event, actor)` is the only way a quest changes status. It keeps `attempts`, the attempt log
   and who holds the quest, refuses what the table does not allow, and validates the result against the schema.
@@ -72,7 +81,7 @@
   or of its party, never the assignee's model, another model family first by `familyOf`, then another tribe;
   `dispatch.verifier_same_family` for the rest), `underPassRule` (a failing check fails the quest under
   `all_checks_and_agent`, as `tests_fail`, or `incomplete` for the Steward's `subquests` check, P1-15, and its
-  `party` check of a merge quest, P1-18), `machineVerdictOf` (the machine's verdict from the checks), `validateVerdict` (no
+  `party` check of a merge quest, P1-18, and `coverage_not_lower`, P1-20, or `flaky` for `flake_check`), `machineVerdictOf` (the machine's verdict from the checks), `validateVerdict` (no
   worker, only the session the Steward spawned, no pass over a failing check) and the verdict ids of a run
   (`<quest>-<n>`, `-p<k>` for a partial, `-user` for the owner's). `withVerdict` (`src/character/`) puts a
   verdict into the reputation and tag windows and the fail streak.
@@ -96,6 +105,14 @@
   and seven days against `tribes[].budget`, for a pool and window the account gives no figure for; never spent);
   `warningsOf` (a gauge warns once at `warn_margin_pct` below the cap); `nextProbeOf`, when a sleeping gauge is
   probed next (just after a known reset, soon again when the account is late).
+- Reads the tribe contract (`src/tribe/`, implementation-plan §3.14, ADR 0021): `AdapterCapabilities` (the
+  yes-or-no `ADAPTER_CAPABILITIES`, and `auth`, the sign-ins an adapter runs with, P1-19), `tribeLimitsOf` (one
+  tribe narrowed by what its adapter lacks, `TRIBE_NARROWING`; `planTick` gives nothing to a tribe whose runner
+  has no headless mode, no rank above its `max_rank`, and nothing on a guarded territory without a tool gate),
+  `checkTribeAuth` and `defaultAuthOf` (the sign-in `tribes[].tool.auth` pins must be one the adapter declares;
+  doctor pins the owner's login first; P1-19, where TribeSchema used to name Gemini CLI), `selectChancellor`, and
+  `tribeLookOf` (a theme's crest and colour of a tribe, `NEUTRAL_TRIBE_LOOK`, `tribe-neutral`, for one the theme
+  has no entry for yet). `ADAPTER_FILE_PATTERN` tells an owner adapter file `adapters/<name>.mjs`.
 - Maps the domain onto the design system (implementation-plan §2.7): `statusToneOf`, `characterToneOf`, and
   `bannerOf` (`src/world/`), the one band the HUD shows.
 - Builds the world state (`src/world/`) from the files (`worldStateOf`) or the log (`reduce`): every event that

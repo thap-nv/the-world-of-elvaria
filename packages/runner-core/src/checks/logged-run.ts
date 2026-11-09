@@ -5,6 +5,8 @@ import { mkdir, open, writeFile } from 'node:fs/promises';
 import type { FileHandle } from 'node:fs/promises';
 import path from 'node:path';
 
+import { commandLinesOf } from '@elvaria/domain';
+import type { CommandLines } from '@elvaria/domain';
 import { inKingdom } from '@elvaria/store';
 
 import { maskedOnClose } from './masked-log.ts';
@@ -62,4 +64,28 @@ export async function runLine(
   if (run.timed_out) await log.write(`\nelvaria: stopped after ${timeoutMs} ms\n`);
   else if (context.signal?.aborted === true) await log.write('\nelvaria: stopped before its end\n');
   return run;
+}
+
+/** `$ <first command>`: the line a log of `lines` opens with (openLog's `firstLine`). */
+export const headerOf = (lines: CommandLines): string => `$ ${commandLinesOf(lines)[0] ?? ''}`;
+
+/**
+ * Runs the commands of `lines` one after another, as CI's `a && b` does without a shell (P1-20): each after the
+ * first gets its own `$` line in the log, the first that fails ends the run, and the commands share `timeoutMs`.
+ */
+export async function runLines(
+  lines: CommandLines,
+  context: LineContext,
+  log: FileHandle,
+  timeoutMs: number,
+): Promise<ProgramRun> {
+  let run = NOT_RUN;
+  let spent = 0;
+  for (const [index, line] of commandLinesOf(lines).entries()) {
+    if (index > 0) await log.write(`\n$ ${line}\n`);
+    run = await runLine(line, context, log, Math.max(timeoutMs - spent, 1));
+    spent += run.duration_ms;
+    if (run.exit_code !== 0 || run.timed_out || context.signal?.aborted === true) break;
+  }
+  return { ...run, duration_ms: spent };
 }

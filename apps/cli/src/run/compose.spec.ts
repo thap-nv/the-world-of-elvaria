@@ -38,8 +38,8 @@ describe('crewOf', () => {
     { id: 'codex', adapter: 'codex_cli', enabled: true, max_concurrent: 1 },
   ]);
 
-  it('gives each enabled tribe with a known adapter a runner, and its CLI a forget', () => {
-    const crew = crewOf(kingdom, testIo());
+  it('gives each enabled tribe with a known adapter a runner, and its CLI a forget', async () => {
+    const crew = await crewOf({ kingdom, root: os.tmpdir() }, testIo());
     expect(Object.keys(crew.runners)).toEqual(['claude', 'gemini']);
     const claude = crew.runners[kingdom.tribes[0]!.id];
     expect(claude?.adapter).toBe('claude_code');
@@ -50,6 +50,7 @@ describe('crewOf', () => {
     expect(gemini?.capabilities).toMatchObject({ resume: true, subagent: false });
     expect(crew.forget).toHaveLength(1);
     expect(crew.idle.map(({ id }) => id)).toEqual(['codex']);
+    expect(crew.broken).toEqual([]);
   });
 
   it('starts the pinned CLI, with the minimal env only', () => {
@@ -90,6 +91,10 @@ describe('plots over PlotManager', () => {
     merge: () => Promise.reject(new Error('unused')),
     unmerged: () => Promise.reject(new Error('unused')),
     release: () => Promise.reject(new Error('unused')),
+    prepareScratch: () => Promise.reject(new Error('unused')),
+    checkoutScratch: () => Promise.reject(new Error('unused')),
+    releaseScratch: () => Promise.reject(new Error('unused')),
+    scratchOf: () => Promise.reject(new Error('unused')),
   });
   const kingdom = path.resolve('kingdom root');
   const HOST = processHostOf(testIo());

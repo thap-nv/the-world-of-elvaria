@@ -49,7 +49,7 @@ describe('the default registry', () => {
       'judge',
       'monk',
     ]);
-    expect(rituals).toHaveLength(11);
+    expect(rituals).toHaveLength(12);
     expect(ids(scripts)).toEqual([
       'link-check',
       'run-check',
@@ -58,7 +58,7 @@ describe('the default registry', () => {
       'compare-numbers',
       'todo-scan',
     ]);
-    expect(ids(tags)).toEqual(['frontend', 'backend', 'db', 'infra', 'i18n', 'e2e', 'docs']);
+    expect(ids(tags)).toEqual(['frontend', 'backend', 'db', 'infra', 'i18n', 'e2e', 'integration', 'docs']);
   });
 
   it('names exactly the default scripts in the scripts.json schema description', () => {
@@ -84,6 +84,27 @@ describe('the default registry', () => {
       negotiate: 'sign_off',
       batch: 'unit_tally',
     });
+  });
+
+  it('judges tests as the product with Thả quái thử thành, in a scratch plot (§3.15, ADR 0022)', () => {
+    const { kinds, rituals } = registry();
+    const overridden = kinds.filter((kind) => (kind.ritual_overrides ?? []).length > 0);
+    expect(overridden.map((kind) => [kind.id, kind.ritual_overrides])).toEqual(
+      ['build', 'refactor'].map((id) => [
+        id,
+        [{ tags_any: ['e2e', 'integration'], ritual: 'mutation_check' }],
+      ]),
+    );
+    const trial = rituals.find((ritual) => ritual.id === 'mutation_check');
+    expect(trial).toMatchObject({
+      name_vi: 'Thả quái thử thành',
+      scratch_plot: true,
+      flaky_follow_up: { kind: 'fix', class: 'knight' },
+    });
+    expect(trial?.steps).toEqual(
+      expect.arrayContaining(['rerun_clean', 'break_and_expect_red', 'flake_check', 'coverage_not_lower']),
+    );
+    expect(rituals.filter((ritual) => ritual.scratch_plot === true)).toHaveLength(1);
   });
 
   it('has one judge for every kind, and keeps the judge and the monk from producing (ADR 0008, 0011)', () => {

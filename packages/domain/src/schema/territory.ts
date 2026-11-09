@@ -36,11 +36,26 @@ const GIT_SEGMENT = /^(?:\.git[. ]*|git~\d+)$/i;
 export const namesNoGitFolder = (glob: string): boolean =>
   !glob.split(/[\\/]/).some((segment) => GIT_SEGMENT.test(segment));
 
+/**
+ * A command, or commands run in order until one fails (P1-20, the P1-11 proposal (c)): the steps CI joins with `&&`
+ * (`pnpm api:openapi` then `git diff --exit-code`), since no command runs through a shell (ADR 0015).
+ */
+export const CommandLinesSchema = z
+  .union([NonEmptyStringSchema, z.array(NonEmptyStringSchema).min(1)])
+  .meta(
+    describe(
+      'A pnpm/node/git command without shell syntax (runs the same under Git Bash and PowerShell), or a list of such commands run one after another in the same folder until one exits non-zero.',
+    ),
+  );
+export type CommandLines = z.infer<typeof CommandLinesSchema>;
+
+/** The commands of `lines`, in order. */
+export const commandLinesOf = (lines: CommandLines): readonly string[] =>
+  typeof lines === 'string' ? [lines] : lines;
+
 const CheckSchema = z.strictObject({
   id: CheckIdSchema,
-  run: NonEmptyStringSchema.meta(
-    describe('A pnpm/node/git command without shell syntax (runs the same under Git Bash and PowerShell).'),
-  ),
+  run: CommandLinesSchema,
   when: z.array(NonEmptyStringSchema).min(1),
   exclusive: z
     .boolean()
@@ -175,6 +190,16 @@ export const TerritorySchema = z
         lint: z.string().optional(),
         typecheck: z.string().optional(),
         build: z.string().optional(),
+        reset: CommandLinesSchema.optional().meta(
+          describe(
+            "Brings shared state back to clean (a test database, containers) in a judge's scratch plot (ADR 0022): run after commands.setup and before each run of the checks and of commands.coverage there. Run by the machine only, never by a character.",
+          ),
+        ),
+        coverage: CommandLinesSchema.optional().meta(
+          describe(
+            "Measures test coverage, leaving an istanbul json-summary at coverage/coverage-summary.json of the plot (vitest --coverage.reporter=json-summary, jest, c8, nyc). The ritual step coverage_not_lower runs it on the quest's branch and on its base in the scratch plot and fails when a total drops. Absent: coverage is not measured.",
+          ),
+        ),
         generate: z
           .array(NonEmptyStringSchema)
           .optional()

@@ -259,6 +259,13 @@ const SCENARIOS = {
     letter();
     return finish();
   },
+  // A judge in its scratch plot tries to keep its breaks on a commit, then to push them (P1-20).
+  scratch_commit: () => {
+    for (const command of core.FAKE_SCRATCH_COMMANDS) if (!shell(command)) return softDenied();
+    respond('done');
+    letter();
+    return finish();
+  },
   crash: () => {
     respond('Fake crash.');
     return failWith('internal error', { status: 'INTERNAL', retryable: false, reason: 'model_error' });
