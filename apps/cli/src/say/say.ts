@@ -4,7 +4,6 @@
 // CLI writes no quest: it knows each quest's id in advance only because the Steward derives it from the command.
 import { draftCommands, draftQuests } from '@elvaria/chancellor';
 import type { DraftCommand } from '@elvaria/chancellor';
-import type { Kingdom } from '@elvaria/domain';
 import { questIdOfCommand } from '@elvaria/steward';
 
 import { EXIT } from '../command.ts';
@@ -15,13 +14,14 @@ import { crewOf } from '../run/crew.ts';
 import { hearingOf } from './hearing.ts';
 import { reportDropped, reportFailure, reportQuestion, reportSent } from './report.ts';
 import type { ArgumentSpec, CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
-import type { CliIo } from '../io.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
+import type { KingdomPlace } from '../run/crew.ts';
+import type { CliIo } from '../io.ts';
 import type { Runners } from './hearing.ts';
 
 export interface SayDeps {
   /** The runners of the tribes that work now; `crewOf` of `elvaria run`, a scripted runner in the specs. */
-  readonly runnersOf: (kingdom: Kingdom, io: CliIo) => Runners;
+  readonly runnersOf: (place: KingdomPlace, io: CliIo) => Runners | Promise<Runners>;
 }
 
 /** The commands in the inbox, in order; false once a write failed (the ones before it stay). */
@@ -37,7 +37,11 @@ async function send(ctx: KingdomContext, sent: readonly DraftCommand[]): Promise
 }
 
 async function say(ctx: KingdomContext, utterance: string, deps: SayDeps): Promise<ExitCode> {
-  const hearing = await hearingOf(ctx, utterance, deps.runnersOf(ctx.kingdom, ctx.io));
+  const hearing = await hearingOf(
+    ctx,
+    utterance,
+    await deps.runnersOf({ kingdom: ctx.kingdom, root: ctx.store.root }, ctx.io),
+  );
   if (hearing === undefined) return EXIT.failed;
   const { context, session } = hearing;
   ctx.io.out(ctx.t('cli.say.listening', { name: session.choice.character.name }));
@@ -83,4 +87,6 @@ export function sayCommand(deps: SayDeps): CommandSpec {
   };
 }
 
-export const SAY: CommandSpec = sayCommand({ runnersOf: (kingdom, io) => crewOf(kingdom, io).runners });
+export const SAY: CommandSpec = sayCommand({
+  runnersOf: async (place, io) => (await crewOf(place, io)).runners,
+});

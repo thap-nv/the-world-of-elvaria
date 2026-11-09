@@ -422,7 +422,7 @@
               "$ref": "#/$defs/model_slug"
             },
             "auth": {
-              "description": "login = the owner's own sign-in saved by the unmodified CLI (claude.ai, Google, ChatGPT); api_key = a key from the treasury (paid, so budget.usd_week is required; mandatory for Claude if Elvaria is shared with other people).",
+              "description": "login = the owner's own sign-in saved by the unmodified CLI (claude.ai, Google, ChatGPT); api_key = a key from the treasury (paid, so budget.usd_week is required; mandatory for Claude if Elvaria is shared with other people). It must be one the adapter declares in capabilities.auth (Gemini CLI: api_key only); `elvaria doctor` and `elvaria tribe check` check that, not this schema, which names no adapter (ADR 0021).",
               "enum": [
                 "login",
                 "api_key"
@@ -487,30 +487,6 @@
         }
       },
       "allOf": [
-        {
-          "$comment": "Gemini CLI no longer serves consumer accounts: it runs only with a paid API key.",
-          "if": {
-            "properties": {
-              "adapter": {
-                "const": "gemini_cli"
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "tool": {
-                "required": [
-                  "auth"
-                ],
-                "properties": {
-                  "auth": {
-                    "const": "api_key"
-                  }
-                }
-              }
-            }
-          }
-        },
         {
           "if": {
             "required": [

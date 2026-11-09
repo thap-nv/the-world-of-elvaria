@@ -41,7 +41,18 @@
   words a draft may use: the kinds and the classes each allows, the tags, the territory's secrets (P1-15).
 - Runs the conformance suite (`conformanceChecks`, `runConformance`): plain checks with `node:assert`, so a spec
   wraps them in `it` and `elvaria tribe check` (P1-19) runs them too. With a real CLI (`live`) only the checks
-  that burn no mana run. `openWorkspace` and `conformanceRequest` give an adapter's specs the same requests.
+  that burn no mana run. `openWorkspace` and `conformanceRequest` give an adapter's specs the same requests. The
+  `capabilities` check also wants `capabilities.auth`, the sign-ins the adapter runs with (P1-19): a non-empty list
+  of `login` / `api_key`.
+- Hands an owner adapter file its kit (`src/kit/`, P1-19, implementation-plan §3.14, ADR 0021): `adapterKitOf(host)`
+  freezes the tribe, the kingdom folder, the minimal env, the CLI to drive (`tool_path`: the path the owner gave,
+  else the pinned one), `launchOf`, `hookCommand` and runner-core's shared parts (`process`: `startChild`,
+  `runToEnd`, `killTree`; `session`: the signal channel, run context, `policy.json`, `writeRunFile` for a file of
+  the run inside `<run_dir>` only, the run log and redacted output, the letter's Question, `countedTokens`;
+  `policy`: `commandRefusal`, `toolOf`, `NO_PUSH_COMMAND`), so the file imports nothing. The prompt, the tool policy
+  and the plot already come in each `SpawnRequest`. `adapterOfModule(module, kit)` checks the imported module
+  (`createAdapter` exported, called without throwing) and the runner it returns (`runnerProblems`: the kit's tribe
+  and adapter, every capability, `spawn`, `probe`, `doctor`), one sentence per problem.
 - Gives every quest its own ground (`createPlotManager`, implementation-plan §3.3, ADR 0012). On a git territory,
   `prepare` adds `<repo>/<worktree_dir>/<quest-id>` on branch `quest/<quest-id>` (`--no-track`), forked from the
   default branch: origin's after a fetch when it only adds to the local one, else the local one; the main
@@ -118,6 +129,7 @@
 ## Does not
 
 - Talk to a real CLI: adapters do (`runner-claude` P1-09, `runner-antigravity` P1-12b, `runner-gemini` P1-12c).
+- Import an owner adapter file: only `apps/cli` does (ADR 0021); runner-core builds its kit and checks its runner.
 - Write a CLI's own settings or agents file: the adapters do, from `ToolPolicy` and `SpawnRequest`. Choose which
   secrets a session gets: the quest names them, the Steward checks them against the territory and builds the env.
 - Read a keychain: the file treasury is stage 1's; a keychain adapter can stand behind `Treasury` later.
