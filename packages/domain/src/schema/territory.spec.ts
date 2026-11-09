@@ -43,10 +43,20 @@ describe('TerritorySchema', () => {
         read_before_write: [],
         rank_floor: [],
       },
+      // The blind trial doubles a party's cost, so it is off until the owner turns it on (§3.15, P1-21).
+      blind_trial: { enabled: false, min_rank: 'B' },
       secrets_allowed: [],
       buildings: [],
       health: { ci: 'unknown', open_bugs: 0 },
     });
+  });
+
+  it('takes a blind trial turned on, its rank defaulting to B, and refuses a rank it does not know', () => {
+    const on = TerritorySchema.parse({ ...minimal, blind_trial: { enabled: true } });
+    expect(on.blind_trial).toEqual({ enabled: true, min_rank: 'B' });
+    expect(issuesOf({ ...minimal, blind_trial: { enabled: true, min_rank: 'Z' } })).toEqual([
+      expect.stringContaining('blind_trial.min_rank'),
+    ]);
   });
 
   it('gives every territory its own default lists', () => {

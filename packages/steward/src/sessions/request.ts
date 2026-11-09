@@ -182,11 +182,15 @@ async function promptOf(
     class_prompt: await readClassPrompt(ctx.root, characterClass),
   };
   if (input.role === 'verifier') {
-    // The branch's diff against its fork point (PlotManager.diff, P1-15); a plot without git has none to give.
+    // The branch's diff against its fork point (PlotManager.diff, P1-15); a plot without git has none to give. A
+    // party's merge quest gives its own work only, after its last merge: each part was judged already (P1-21 (e)).
     const handover = await readHandover(ctx.root, quest.id);
     // The end of each failing check's log: the judge cannot read `.runs/` (P1-25).
     const checks = await withLogTails(ctx.root, input.checks ?? [], known);
-    const diff = await ctx.deps.plots.diff(quest.plot);
+    const diff = await ctx.deps.plots.diff(
+      quest.plot,
+      quest.party_role === 'merge' ? 'after_merges' : 'branch',
+    );
     const partial = await lastPartialOf(ctx, quest, input.n);
     return buildPrompt({ ...base, role: 'verifier', handover, diff, checks, partial }, ctx.templates);
   }

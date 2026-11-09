@@ -61,7 +61,9 @@
   (`patchProblem`), then `git apply --recount --check` and `git apply`, and the file goes; otherwise `refused`
   with why, the patch left in place; `none` without a patch, a patch path or git), `diff` (what a judge reads, P1-15:
   `git diff <base>...HEAD`, summary then patch, cut at `DIFF_MAX_CHARS` on a whole line with a note saying where
-  the rest is; null for a plot without git), `merge` (P1-18, a party's merge quest: each branch the worktree does
+  the rest is; null for a plot without git; with `after_merges`, P1-21 (e), a party's merge quest's own work:
+  what changed after its last merge, then each merge with the conflicts it resolved, git's dense combined diff),
+  `merge` (P1-18, a party's merge quest: each branch the worktree does
   not hold yet is merged with `--no-ff`, `plotCommitMessage.merge`, through the territory's hooks, until one stops;
   a conflict is left in progress for the character, whose commit, or the Steward's `commitAll`, concludes it even
   when the resolution changes nothing; nothing is merged into uncommitted changes or a merge in progress),
@@ -73,7 +75,7 @@
   what the quest touched (`selectChecks`, `globToRegExp`: dot names match, case-insensitive, like the laws' globs
   in the hook), one at a time in the plot, each logged to `<run_dir>/checks/<id>.log`; with
   `ChecksRequest.party_role` (P1-18, §3.15) a party's merge quest runs every check and a part skips those marked
-  `defer_to_merge`. An `exclusive` check holds
+  `defer_to_merge`; the blind trial's acceptance part (P1-21) runs none, its tests waiting for the merge quest. An `exclusive` check holds
   the territory's lock (`.state/checks/<territory>-exclusive`) so two quests never run one at once; a timed-out
   check runs its `cleanup`. A check that cannot run (shell syntax, program not found, lock never freed) fails.
   `ChecksRequest.signal` (P1-25: the Steward runs checks outside its tick) kills the running check and starts no

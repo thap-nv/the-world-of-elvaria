@@ -1,15 +1,30 @@
-// selectAssignee(quest, candidates): the character the Steward gives an open session-tier quest (implementation-plan
-// §3.1 step 6, §3.13). Filter by the required class and the level (canTake); rank by expertise on the quest's tags
-// (a character pinned to one of them first, then affinityOf), then by who has been idle the longest.
+// selectAssignee(quest, candidates, party): the character the Steward gives an open session-tier quest
+// (implementation-plan §3.1 step 6, §3.13). Filter by the required class, the party's bars (nobody who judged a quest
+// of its party; in a blind trial, nobody from the other side, §3.15) and the level (canTake); rank by another model
+// family than the blind trial's other side, then expertise on the quest's tags (a character pinned to one of them
+// first, then affinityOf), then by who has been idle the longest.
 // namedAssignee: the character the owner names instead (reassign, create_quest with an assignee; P1-29).
+import { familyOf } from '../character/family.ts';
 import { canTake } from '../character/level.ts';
 import { affinityOf } from '../character/reputation.ts';
 import { err, ok } from '../core/result.ts';
+import { partyBarsOf } from '../party/party-bars.ts';
 import { byIdleSince } from './roster.ts';
+import type { CharacterId } from '../core/ids.ts';
 import type { Result } from '../core/result.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 import type { Tribe } from '../schema/tribe.ts';
+
+/** What selectAssignee knows of the quest's party (P1-21); none outside a party. */
+export interface AssigneeParty {
+  /** The other quests of the quest's party (partyOf); empty outside a party. */
+  readonly party: readonly Quest[];
+  /** The kingdom's characters, for the models of the party's assignees that are not free now. */
+  readonly characters: readonly Pick<Character, 'id' | 'model'>[];
+}
+
+const NO_PARTY: AssigneeParty = { party: [], characters: [] };
 
 const pinnedTo = (character: Character, quest: Quest): boolean =>
   character.pinned_tag !== null && quest.tags.includes(character.pinned_tag);
@@ -18,23 +33,39 @@ const pinnedTo = (character: Character, quest: Quest): boolean =>
 const affinityRate = (character: Character, quest: Quest): number =>
   affinityOf(character.skill_affinity, quest.tags).pct ?? -1;
 
-/** Pinned first, then the best rate on the quest's tags, then idle the longest, then id. */
+/** Another family first, then pinned, then the best rate on the quest's tags, then idle the longest, then id. */
 const byFit =
-  (quest: Quest) =>
+  (quest: Quest, apart: (character: Character) => boolean) =>
   (a: Character, b: Character): number =>
+    Number(apart(b)) - Number(apart(a)) ||
     Number(pinnedTo(b, quest)) - Number(pinnedTo(a, quest)) ||
     affinityRate(b, quest) - affinityRate(a, quest) ||
     byIdleSince(a, b);
 
+/** Whether a character's model family differs from every family of `rivals`, the blind trial's other side (§3.15). */
+function apartFrom(
+  rivals: ReadonlySet<CharacterId>,
+  characters: AssigneeParty['characters'],
+): (character: Character) => boolean {
+  const families = new Set(characters.filter(({ id }) => rivals.has(id)).map(({ model }) => familyOf(model)));
+  return (character) => !families.has(familyOf(character.model));
+}
+
 /**
  * The best candidate of the required class within its level's ceiling; failing that, one a rank above its ceiling,
  * because nobody else of the class can take it (canTake, §2.6: the claim then makes the quest wait for the seal).
- * `candidates` are the characters free to take it now (Roster.isFree, the tribe's limits).
+ * `candidates` are the characters free to take it now (Roster.isFree, the tribe's limits); `context` the quest's
+ * party, whose judges and, in a blind trial, other side never take it.
  */
-export function selectAssignee(quest: Quest, candidates: readonly Character[]): Character | undefined {
+export function selectAssignee(
+  quest: Quest,
+  candidates: readonly Character[],
+  context: AssigneeParty = NO_PARTY,
+): Character | undefined {
+  const { barred, rivals } = partyBarsOf(quest, context.party);
   const ranked = candidates
-    .filter((character) => character.class === quest.class_required)
-    .toSorted(byFit(quest));
+    .filter((character) => character.class === quest.class_required && !barred.has(character.id))
+    .toSorted(byFit(quest, apartFrom(rivals, context.characters)));
   return (
     ranked.find((character) => canTake(character.level, quest.rank, false)) ??
     ranked.find((character) => canTake(character.level, quest.rank, true))

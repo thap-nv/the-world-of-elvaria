@@ -303,6 +303,7 @@
                     "enum": [
                       "contract",
                       "part",
+                      "acceptance",
                       "merge"
                     ]
                   },
@@ -720,6 +721,7 @@
                     "enum": [
                       "contract",
                       "part",
+                      "acceptance",
                       "merge"
                     ]
                   },
@@ -1750,6 +1752,68 @@
       "if": {
         "properties": {
           "type": {
+            "const": "plot.merged"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "The Steward merged a party's part branches into its merge quest's branch, or tried to (implementation-plan §3.13, P1-21 (d)): before the machine's run and each knight's session, never before a judge's. A merge with nothing left to take in writes no line.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "into",
+              "merged",
+              "pending"
+            ],
+            "properties": {
+              "into": {
+                "description": "The merge quest's branch.",
+                "type": "string",
+                "minLength": 1
+              },
+              "merged": {
+                "description": "The part branches this merge took in, in order.",
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "pending": {
+                "description": "The part branches still not in, the one the merge stopped at first; empty once all are in.",
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "stop": {
+                "description": "Why the merge stopped at the first pending branch: a conflict left in progress for the knight, a refusal by git or a hook, or a branch that is gone.",
+                "enum": [
+                  "conflict",
+                  "refused",
+                  "missing"
+                ]
+              },
+              "conflicts": {
+                "description": "With stop = conflict: the conflicted files, relative to the plot.",
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
             "enum": [
               "territory.attached",
               "territory.surveyed",
@@ -1904,6 +1968,7 @@
         "command.rejected",
         "delivery.sent",
         "plot.patched",
+        "plot.merged",
         "chronicle.written",
         "territory.attached",
         "territory.surveyed",

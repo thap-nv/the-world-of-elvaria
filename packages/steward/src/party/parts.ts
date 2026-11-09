@@ -1,10 +1,28 @@
 // A party opens with its contract's delivery (implementation-plan §3.13 steps 2–3, ADR 0020; P1-18): the lead's
 // subquests.json lists the parts (`party_role: part`, `contract`), and the Steward opens each one in the contract's
 // party, waiting for the contract, then makes the merge quest itself so the party never depends on the lead
-// remembering it. Only a contract quest opens parts, and it opens nothing else; the party's invariants (domain's
-// partyIssues: one territory, parts after the contract, the merge after every part) hold before anything is written.
-import { err, mergeQuestOf, ok, partyIssues, questFromCommand } from '@elvaria/domain';
-import type { NewQuestContext, PartyPlace, Quest, QuestDraft, QuestId, Result } from '@elvaria/domain';
+// remembering it; on a territory whose blind trial is due, the acceptance part too (§3.15, P1-21). Only a contract
+// quest opens parts, and it opens nothing else; the party's invariants (domain's partyIssues: one territory, parts
+// after the contract, the merge after every part) hold before anything is written.
+import {
+  acceptanceQuestOf,
+  blindTrialDue,
+  err,
+  mergeQuestOf,
+  ok,
+  partyIssues,
+  questFromCommand,
+} from '@elvaria/domain';
+import type {
+  NewQuestContext,
+  Parts,
+  PartyQuest,
+  PartyPlace,
+  Quest,
+  QuestDraft,
+  QuestId,
+  Result,
+} from '@elvaria/domain';
 
 import type { Context } from '../context.ts';
 
@@ -31,27 +49,61 @@ export const partyPlaceOf = (plan: Quest, draft: QuestDraft): PartyPlace | undef
     ? { id: plan.id, role: 'part', contract: draft.contract }
     : undefined;
 
-/** The ref the merge quest's id derives from, beside the drafts' `d<n>` refs (deliver/subquests.ts, childIdOf). */
+/** The refs the ids of the quests the Steward adds derive from, beside the drafts' `d<n>` refs (childIdOf). */
 export const MERGE_REF = 'merge';
+export const ACCEPTANCE_REF = 'acceptance';
+
+/** The ids of the quests the Steward adds to a party (childIdOf of the contract and the refs above). */
+export interface AddedIds {
+  readonly acceptance: QuestId;
+  readonly merge: QuestId;
+}
+
+type Made = Result<Quest | undefined, string>;
+
+/** `made`, or why questFromCommand refused the quest the Steward meant to add. */
+function added(payload: PartyQuest, context: NewQuestContext, what: string): Result<Quest, string> {
+  const made = questFromCommand(payload.payload, { ...context, party: payload.party });
+  return made.ok ? ok(made.value) : err(`the ${what} is refused: ${made.error.code}`);
+}
 
 /**
- * The merge quest `id` of the contract `plan` whose parts are `parts`: made, or found when a crash left it written.
+ * The blind trial's acceptance part (§3.15, P1-21), when the contract's territory turned it on and the party is of
+ * its rank; found when a crash left it written, whatever the territory says now.
  */
-export function mergeQuestFor(
+function acceptanceQuestFor(ctx: Context, plan: Quest, parts: Parts, context: NewQuestContext): Made {
+  const before = ctx.world.quests.get(context.id);
+  if (before !== undefined) return ok(before);
+  const territory = ctx.world.territories.get(plan.territory);
+  if (territory === undefined || !blindTrialDue(territory, plan, parts)) return ok(undefined);
+  const tags = ctx.world.registry.tags.map(({ id }) => id);
+  return added(acceptanceQuestOf(plan, parts, { territory, tags }), context, 'acceptance part');
+}
+
+/**
+ * The quests the Steward adds to the party of the contract `plan` beside its `parts`, made or found when a crash
+ * left them written: the blind trial's acceptance part when it is due, then the merge quest, which waits for it too.
+ */
+export function addedQuestsFor(
   ctx: Context,
   plan: Quest,
   parts: readonly Quest[],
-  context: NewQuestContext,
-): Result<Quest, string> {
-  const id = context.id;
-  const before = ctx.world.quests.get(id);
-  if (before !== undefined) return ok(before);
+  context: Omit<NewQuestContext, 'id'>,
+  ids: AddedIds,
+): Result<Quest[], string> {
   const [first, ...rest] = parts;
   // partyRefusal let a contract's list through only when it has parts, and the schema wants one draft at least.
   if (first === undefined) return err('the contract opens no part');
-  const { payload, party } = mergeQuestOf(plan, [first, ...rest]);
-  const made = questFromCommand(payload, { ...context, party });
-  return made.ok ? ok(made.value) : err(`the merge quest is refused: ${made.error.code}`);
+  const quests = [...context.quests, ids.acceptance, ids.merge];
+  const tests = acceptanceQuestFor(ctx, plan, [first, ...rest], { ...context, quests, id: ids.acceptance });
+  if (!tests.ok) return tests;
+  const all: Parts = [first, ...rest, ...(tests.value === undefined ? [] : [tests.value])];
+  const before = ctx.world.quests.get(ids.merge);
+  const merge =
+    before === undefined
+      ? added(mergeQuestOf(plan, all), { ...context, quests, id: ids.merge }, 'merge quest')
+      : ok(before);
+  return merge.ok ? ok([...all.slice(parts.length), merge.value]) : merge;
 }
 
 /** What breaks the party's invariants once its new quests are in, or undefined; one broken rule opens none. */

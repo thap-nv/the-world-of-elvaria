@@ -1,6 +1,7 @@
 // What a plan's list may open (P1-18): parts only from a party's contract quest and nothing else from it, the
 // party's quests on one territory, no party within a party. And the plot of a quest waiting for another one not
-// merged yet starts on that one's branch (P1-16 proposal (f)).
+// merged yet starts on that one's branch (P1-16 proposal (f)). A contract archived after its delivery holds up nothing
+// (P1-21 (a)).
 import { readFile } from 'node:fs/promises';
 
 import { SUBQUESTS_FILE } from '@elvaria/runner-core';
@@ -9,7 +10,16 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { git } from './__fixtures__/git-plots.ts';
 import { questPayload, tickUntil } from './__fixtures__/kingdom.ts';
-import { contractPayload, list, part, partyBench, reached, worktreeOf } from './__fixtures__/party.ts';
+import {
+  CONTRACT,
+  contractPayload,
+  list,
+  mergeOf,
+  part,
+  partyBench,
+  reached,
+  worktreeOf,
+} from './__fixtures__/party.ts';
 import type { PartyBench } from './__fixtures__/party.ts';
 import type { VerdictId } from '@elvaria/domain';
 
@@ -108,5 +118,41 @@ describe("the party rules on a plan's list (P1-18)", () => {
       expect(await logOf(title)).toContain(`the delivery would open none: ${reason}`);
     expect(await logOf('Two lands')).toContain('party member in handbook, contract in dc1-se-team');
     expect((await kingdom.quests()).filter(({ party_role: role }) => role === 'part')).toEqual([]);
+  }, 120_000);
+});
+
+describe('a party whose contract quest the owner archived after its delivery (P1-21 (a))', () => {
+  it('still takes its parts and its merge quest, all on the contract branch', async () => {
+    current = await partyBench({
+      'Book a room': {
+        [CONTRACT]: 'openapi: 3.1.0\n',
+        [SUBQUESTS_FILE]: list(part('d1', 'Rooms API')),
+      },
+      'Rooms API': { 'apps/api/rooms.ts': 'export const rooms = [];\n' },
+    });
+    const { kingdom, steward, repo } = current;
+    await kingdom.command('create_quest', contractPayload('Book a room'));
+    const contractOf = async () => {
+      const found = (await kingdom.quests()).find(({ party_role: role }) => role === 'contract');
+      if (found === undefined) throw new Error('no contract quest yet');
+      return found;
+    };
+    const delivered = async () => (await contractOf()).deliverable.delivered_at !== undefined;
+    await tickUntil(steward, kingdom.clock, delivered, 100);
+    await kingdom.command('archive', { quest: (await contractOf()).id });
+    await tickUntil(
+      steward,
+      kingdom.clock,
+      reached(() => mergeOf(kingdom), 'awaiting_seal'),
+      200,
+    );
+
+    const contract = await contractOf();
+    const api = await kingdom.quest('Rooms API');
+    expect(contract.status).toBe('archived');
+    expect(api.status).toBe('done');
+    expect(git(repo, 'merge-base', `quest/${api.id}`, `quest/${contract.id}`)).toBe(
+      git(repo, 'rev-parse', `quest/${contract.id}`),
+    );
   }, 120_000);
 });

@@ -24,7 +24,15 @@
   instead of giving it to a knight; `claim` takes it with no assignee, and the rows `working.submit.by_machine`,
   `working.release.by_machine` (the merge stopped), `review.verdict_fail.machine_retry` and
   `awaiting_seal.return.merged_by_machine` (both back to `open`, for a knight) carry it; the quest schema lets a
-  merge quest be held with no assignee.
+  merge quest be held with no assignee. (P1-21) The blind trial (§3.15, ADR 0022): `territory.blind_trial`
+  (`{enabled: false, min_rank: 'B'}`), `blindTrialDue` (on, and the contract or a part of that rank or above) and
+  `acceptanceQuestOf` (the party's `acceptance` part: a knight's build tagged `e2e` from the owner's description
+  and the contract alone, waiting for the contract only; `plotBaseOf` starts it on the contract's branch, the
+  merge quest merges it with the parts). `partyBarsOf` keeps a party's judges from its work and, in a blind trial,
+  the acceptance writer apart from the parts' assignees (`selectAssignee` takes the party: barred characters are
+  left out, the other model family goes first; `partyIssues` reports `blind_trial_crossed`). `questFinished`
+  (done, or archived after its delivery) is what `planTick` counts a dependency as done by, so archiving a
+  contract midway holds up nothing. The event `plot.merged` records a merge of a party's parts.
 - Runs the character state machine (`src/character/`, `transitionCharacter`) and derives what is never stored:
   `reputationOf`, `affinityOf`, `titleOf`. Decides levels: `canTake` (which ranks the Steward may give a level),
   `aboveCeiling` (a stretch that makes the quest wait for the royal seal) and `levelChange` (counting only the
@@ -60,7 +68,7 @@
   such a quest goes back to review, same run, for a new judge (`infirmary.retry.stalled_review`); `reviewBreaksOf`
   counts only the cuts since that retry, derived from `attempt_log` (a stall closes each group of
   `REVIEW_BREAKS_MAX`).
-- Keeps the separation of duties (`src/verify/`, ADR 0008, 0020): `selectVerifier` (never a worker of the quest
+- Keeps the separation of duties (`src/verify/`, ADR 0008, 0020): `selectVerifier` (never an assignee of the quest
   or of its party, never the assignee's model, another model family first by `familyOf`, then another tribe;
   `dispatch.verifier_same_family` for the rest), `underPassRule` (a failing check fails the quest under
   `all_checks_and_agent`, as `tests_fail`, or `incomplete` for the Steward's `subquests` check, P1-15, and its

@@ -25,7 +25,9 @@
   (P1-29; refused on a script-tier quest). `quest show` of a quest nobody can take prints the `reassign` to its
   best candidate; of a quest in the infirmary, why it went there, from the last `quest.infirmary` line of its
   journal (`src/quest/infirmary.ts`, P1-32): the trip and the attempt, then each part of the detail, in the
-  owner's language (a line written before P1-32 shows its English reason). `character suspend <id> [--reason]` and `character release <id>` send `suspend` and `release` (a
+  owner's language (a line written before P1-32 shows its English reason). `quest list` has a column for a party's member, its role and where the party stands, and
+  `quest show` prints the party, the role, the contract and the merge quest (`src/quest/party.ts`, the domain's
+  `partyStatusOf`; P1-21 (c)): the merge quest and the acceptance part share the contract's title. `character suspend <id> [--reason]` and `character release <id>` send `suspend` and `release` (a
   character the Steward would refuse, unknown, suspended already or not suspended, is refused here), and `suspend`
   says what becomes of the quest the character holds (the owner's decision after P1-26). `character level <id>
 <level>` sends `set_level` (a level outside 1–10 or the one the character has is refused here) and says the rank

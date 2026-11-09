@@ -46,9 +46,9 @@ export function plotsWith(root: string, replace: Partial<Plots>, calls: string[]
       calls.push(`check ${request.run_dir}`);
       return (replace.check ?? base.check)(request);
     },
-    diff: (plot) => {
+    diff: (plot, scope) => {
       calls.push(`diff ${plot.type}`);
-      return (replace.diff ?? base.diff)(plot);
+      return (replace.diff ?? base.diff)(plot, scope);
     },
     release: (plot) => {
       calls.push(`release ${plot.type}`);

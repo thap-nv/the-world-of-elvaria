@@ -37,12 +37,14 @@ describe('elvaria quest list and show', () => {
     await plantQuests(kingdom, questFixture('open'), review);
     const io = testIo();
     expect(await list(io)).toBe(0);
-    expect(io.printed.out[0]).toMatch(/^ID\s+Trạng thái\s+Hạng\s+Dạng\s+Lãnh thổ\s+Người làm\s+Tiêu đề$/);
+    expect(io.printed.out[0]).toMatch(
+      /^ID\s+Trạng thái\s+Hạng\s+Dạng\s+Đội\s+Lãnh thổ\s+Người làm\s+Tiêu đề$/,
+    );
     expect(io.printed.out[1]).toMatch(
-      new RegExp(`^${QUEST_ID}\\s+Mở\\s+D\\s+Kiến tạo\\s+do-an\\s+—\\s+Thêm script`),
+      new RegExp(`^${QUEST_ID}\\s+Mở\\s+D\\s+Kiến tạo\\s+—\\s+do-an\\s+—\\s+Thêm script`),
     );
     expect(io.printed.out[2]).toMatch(
-      new RegExp(`^${OTHER_QUEST_ID}\\s+Chờ nghiệm thu\\s+D\\s+Kiến tạo\\s+do-an\\s+thorn`),
+      new RegExp(`^${OTHER_QUEST_ID}\\s+Chờ nghiệm thu\\s+D\\s+Kiến tạo\\s+—\\s+do-an\\s+thorn`),
     );
     const filtered = testIo();
     expect(await list(filtered, '--status', 'review', '--locale', 'en')).toBe(0);

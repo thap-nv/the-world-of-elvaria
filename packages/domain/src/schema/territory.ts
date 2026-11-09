@@ -103,6 +103,18 @@ const LawsSchema = z
     ),
   );
 
+// P1-21, ADR 0022: off by default, because the acceptance part and its judge double the cost of the party.
+const BlindTrialSchema = z
+  .strictObject({
+    enabled: z.boolean().default(false),
+    min_rank: RankSchema.default(TERRITORY_DEFAULTS.blind_trial_min_rank),
+  })
+  .meta(
+    describe(
+      "Khảo hạch mù (implementation-plan §3.15): when a party's contract quest or one of its parts is of min_rank or above, the Steward adds an acceptance part to the party, written by another character (another model family first) from the contract and the description alone, on a worktree of the contract's branch that holds none of the parts' work; the merge quest merges it with the parts and runs every check on the result.",
+    ),
+  );
+
 const BuildingSchema = z.strictObject({
   id: z.string().regex(SLUG_PATTERN),
   kind: z.string().regex(REGISTRY_ID_PATTERN),
@@ -183,6 +195,7 @@ export const TerritorySchema = z
         ),
       ),
     laws: LawsSchema.prefault({}),
+    blind_trial: BlindTrialSchema.prefault({}),
     secrets_allowed: unique(z.array(z.string().regex(REGISTRY_ID_PATTERN)))
       .default(() => [])
       .meta(

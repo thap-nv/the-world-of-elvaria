@@ -1,5 +1,5 @@
-// `elvaria quest show <id>`: one quest, its fields as labelled lines, why it waits (nobody can take it, P1-03; the
-// infirmary, P1-32), then its description.
+// `elvaria quest show <id>`: one quest, its fields as labelled lines (its party too, P1-21 (c)), why it waits (nobody
+// can take it, P1-03; the infirmary, P1-32), then its description.
 import type { Quest, Registry } from '@elvaria/domain';
 import type { MessageKey } from '@elvaria/i18n';
 import { inKingdom } from '@elvaria/store';
@@ -11,6 +11,7 @@ import { NONE } from '../listing.ts';
 import { renderTable } from '../table.ts';
 import { infirmaryLines, lastInfirmaryOf } from './infirmary.ts';
 import { kindName } from './list.ts';
+import { partyFields } from './party.ts';
 import { readQuest } from './references.ts';
 import { unclaimableLines, unclaimableOf } from './unclaimable.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
@@ -18,7 +19,12 @@ import type { KingdomContext } from '../kingdom-context.ts';
 
 const listed = (values: readonly string[]): string => (values.length === 0 ? NONE : values.join(', '));
 
-function fields(ctx: KingdomContext, registry: Registry | undefined, quest: Quest): [MessageKey, string][] {
+function fields(
+  ctx: KingdomContext,
+  registry: Registry | undefined,
+  quest: Quest,
+  quests: readonly Quest[],
+): [MessageKey, string][] {
   const { t } = ctx;
   return [
     ['cli.quest.field.status', `${t(QUEST_STATUS_LABEL[quest.status])} (${quest.status})`],
@@ -28,6 +34,7 @@ function fields(ctx: KingdomContext, registry: Registry | undefined, quest: Ques
     ['cli.quest.field.territory', quest.territory],
     ['cli.quest.field.class', quest.class_required ?? NONE],
     ['cli.quest.field.tags', listed(quest.tags)],
+    ...partyFields(ctx, quest, quests),
     ['cli.quest.field.assignee', quest.assignee ?? NONE],
     ['cli.quest.field.verifier', quest.verifier ?? NONE],
     ['cli.quest.field.attempts', `${quest.attempts}/${quest.budget.max_attempts}`],
@@ -64,7 +71,9 @@ async function runQuestShow(input: CommandInput, cli: CliContext): Promise<ExitC
     return EXIT.failed;
   }
   const registry = await ctx.store.loadRegistry();
-  const rows = fields(ctx, registry.ok ? registry.value : undefined, quest).map(([label, value]) => [
+  // Where its party stands is read from every quest (P1-21 (c)); a file that cannot be read counts as none.
+  const { items } = await ctx.store.quests.list();
+  const rows = fields(ctx, registry.ok ? registry.value : undefined, quest, items).map(([label, value]) => [
     ctx.t(label),
     value,
   ]);

@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { KINGDOM, Q1, character, quest } from './__fixtures__/snapshot.ts';
+import { KINGDOM, Q1, Q2, Q3, Q4, at, character, quest } from './__fixtures__/snapshot.ts';
 import { namedAssignee, selectAssignee } from './select-assignee.ts';
+import type { CharacterId } from '../core/ids.ts';
 import type { Character } from '../schema/character/character.ts';
+import type { Quest } from '../schema/quest/quest.ts';
 
 const chosen = (candidates: readonly Character[], spec: Parameters<typeof quest>[1] = {}) =>
   selectAssignee(quest(Q1, { tags: ['frontend', 'i18n'], ...spec }), candidates)?.id;
@@ -44,6 +46,58 @@ describe('selectAssignee', () => {
   it('breaks a tie by who has been idle the longest, then by id', () => {
     expect(chosen([character('thorn', { since: 20 }), character('kael', { since: 5 })])).toBe('kael');
     expect(chosen([character('thorn', { since: 5 }), character('kael', { since: 5 })])).toBe('kael');
+  });
+});
+
+describe('selectAssignee in a party (P1-21)', () => {
+  const judged = (base: Quest, judge: string): Quest => ({
+    ...base,
+    attempt_log: [
+      {
+        n: 1,
+        character: judge as CharacterId,
+        role: 'verifier',
+        started_at: at(0),
+        run_dir: '.runs/x-1/verify',
+      },
+    ],
+  });
+  const worked = (base: Quest, assignee: string): Quest => ({ ...base, assignee: assignee as CharacterId });
+  const contract = quest(Q1, { party: Q1, kind: 'plan', cls: 'mage' });
+  const api = quest(Q2, { party: Q1, dependsOn: [Q1] });
+  const web = quest(Q3, { party: Q1, dependsOn: [Q1] });
+  const tests: Quest = { ...quest(Q4, { party: Q1, dependsOn: [Q1] }), party_role: 'acceptance' };
+  const opus = character('vesper', { model: 'claude-opus-5-5', since: 0 });
+  const sonnet = character('thorn', { since: 10 });
+  const gemini = character('ilse', { tribe: 'gemini', model: 'gemini-3.8-flash-high', since: 20 });
+  const all = [opus, sonnet, gemini];
+  const pick = (target: Quest, party: readonly Quest[], candidates = all) =>
+    selectAssignee(target, candidates, { party, characters: all })?.id;
+
+  it('never gives work of the party to whoever judged a quest of it, its own included', () => {
+    expect(pick(web, [contract, judged(api, 'vesper')])).toBe('thorn');
+    expect(pick(judged(web, 'vesper'), [contract, api])).toBe('thorn');
+    expect(
+      pick(web, [contract, judged(api, 'vesper'), judged(api, 'thorn')], [opus, sonnet]),
+    ).toBeUndefined();
+  });
+
+  it("keeps the acceptance writer apart from the parts' assignees, and prefers another model family", () => {
+    // thorn (claude) built the API: the tests go to the gemini knight, though vesper was idle longer.
+    expect(pick(tests, [contract, worked(api, 'thorn'), web])).toBe('ilse');
+    expect(pick(tests, [contract, worked(api, 'thorn'), web], [opus, sonnet])).toBe('vesper');
+    // ilse wrote the tests: no part goes to it, and a part prefers a family other than gemini.
+    expect(pick(web, [contract, api, worked(tests, 'ilse')], [gemini])).toBeUndefined();
+    expect(pick(web, [contract, api, worked(tests, 'ilse')])).toBe('vesper');
+  });
+
+  it('weighs no family outside a blind trial, nor for the contract or the merge quest', () => {
+    const merge: Quest = {
+      ...quest('q_20261106_m5n6p7', { party: Q1, dependsOn: [Q2, Q3, Q4] }),
+      party_role: 'merge',
+    };
+    expect(pick(web, [contract, worked(api, 'vesper')])).toBe('vesper');
+    expect(pick(merge, [contract, worked(api, 'vesper'), worked(tests, 'ilse')])).toBe('vesper');
   });
 });
 

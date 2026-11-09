@@ -21,6 +21,7 @@ import type {
   AgentRunner,
   CheckRun,
   CommitOutcome,
+  DiffScope,
   MergeOutcome,
   PatchOutcome,
   PlotFailure,
@@ -183,9 +184,10 @@ export interface Plots {
   scriptChecks(territory: Territory): Promise<readonly ResolvedCheck[]>;
   /**
    * The branch's diff against its fork point for the judge's prompt (PlotManager.diff, P1-15): summary then patch,
-   * capped; empty when nothing changed, null for a plot without git.
+   * capped; empty when nothing changed, null for a plot without git. `after_merges` (P1-21 (e)): a party's merge
+   * quest's own work, after its last merge and in the conflicts its merges resolved.
    */
-  diff(plot: Quest['plot']): Promise<string | null>;
+  diff(plot: Quest['plot'], scope?: DiffScope): Promise<string | null>;
   /** At archive only: removes a worktree (its branch stays) and what the tribes' CLIs kept about it. */
   release(plot: Quest['plot']): Promise<Result<ReleasedPlot, PlotFailure>>;
 }

@@ -6,7 +6,8 @@ import type { QuestId } from '../core/ids.ts';
 export interface PartyPlace {
   /** party_id: the id of the party's contract quest. */
   readonly id: QuestId;
-  readonly role: 'part' | 'merge';
+  /** `acceptance`: the blind trial's part (P1-21), which the Steward adds itself like the merge quest. */
+  readonly role: 'part' | 'acceptance' | 'merge';
   /** The contract's path inside the territory, as the lead named it for the parts. */
   readonly contract: string;
 }

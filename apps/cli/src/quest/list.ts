@@ -1,5 +1,6 @@
 // `elvaria quest list`: the quest board, oldest first (ids sort by day). Commands still in the inbox are counted
-// under it, because a quest the owner just added exists only as a command until the Steward's next tick.
+// under it, because a quest the owner just added exists only as a command until the Steward's next tick. A party's
+// member says its role and where the party stands (P1-21 (c)).
 import { QUEST_STATUSES } from '@elvaria/domain';
 import type { Quest, QuestId, QuestStatus, Registry } from '@elvaria/domain';
 
@@ -8,6 +9,7 @@ import { EXIT } from '../command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { QUEST_STATUS_LABEL, nameIn } from '../labels.ts';
 import { NONE, printListing } from '../listing.ts';
+import { partyCell } from './party.ts';
 import { unclaimableOf } from './unclaimable.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
@@ -27,16 +29,19 @@ const statusCell = (ctx: KingdomContext, quest: Quest, unclaimable: ReadonlySet<
   return unclaimable.has(quest.id) ? `${status} (${ctx.t('cli.quest.unclaimable.mark')})` : status;
 };
 
-const questRow = (
-  ctx: KingdomContext,
-  registry: Registry | undefined,
-  unclaimable: ReadonlySet<QuestId>,
-  quest: Quest,
-): string[] => [
+interface Board {
+  readonly registry: Registry | undefined;
+  readonly unclaimable: ReadonlySet<QuestId>;
+  /** Every quest read, for where each quest's party stands (P1-21 (c)). */
+  readonly quests: readonly Quest[];
+}
+
+const questRow = (ctx: KingdomContext, board: Board, quest: Quest): string[] => [
   quest.id,
-  statusCell(ctx, quest, unclaimable),
+  statusCell(ctx, quest, board.unclaimable),
   quest.rank,
-  kindName(ctx, registry, quest.kind),
+  kindName(ctx, board.registry, quest.kind),
+  partyCell(ctx, quest, board.quests),
   quest.territory,
   quest.assignee ?? NONE,
   quest.title,
@@ -57,6 +62,7 @@ async function runQuestList(input: CommandInput, cli: CliContext): Promise<ExitC
   const registry = await ctx.store.loadRegistry();
   const { items, issues } = await ctx.store.quests.list();
   const unclaimable = new Set((await unclaimableOf(ctx, items)).keys());
+  const board = { registry: registry.ok ? registry.value : undefined, unclaimable, quests: items };
   const shown = items.filter(
     (quest) =>
       (statuses.length === 0 || statuses.includes(quest.status)) &&
@@ -68,11 +74,12 @@ async function runQuestList(input: CommandInput, cli: CliContext): Promise<ExitC
       'cli.column.status',
       'cli.column.rank',
       'cli.column.kind',
+      'cli.column.party',
       'cli.column.territory',
       'cli.column.assignee',
       'cli.column.title',
     ],
-    rows: shown.map((quest) => questRow(ctx, registry.ok ? registry.value : undefined, unclaimable, quest)),
+    rows: shown.map((quest) => questRow(ctx, board, quest)),
     issues,
     empty: 'cli.quest.list.none',
   });

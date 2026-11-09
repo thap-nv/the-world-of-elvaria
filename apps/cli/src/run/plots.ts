@@ -61,7 +61,7 @@ export function plotsOver(kingdom: string, manager: PlotManager, host: ProcessHo
       };
       return runChecks({ kingdom, territory, touched, cwd: cwdOf(kingdom, plot), run_dir, ...given }, host);
     },
-    diff: (plot) => manager.diff(plot),
+    diff: (plot, scope) => manager.diff(plot, scope),
     // A party's merge quest: its parts merged before its knight's sessions, and checked before its judge (P1-18).
     merge: (plot, branches) => manager.merge(plot, branches),
     unmerged: (plot, branches) => manager.unmerged(plot, branches),

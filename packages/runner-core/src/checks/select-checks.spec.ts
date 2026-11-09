@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { TERRITORY } from '../__fixtures__/world.ts';
 import { globToRegExp } from './glob.ts';
 import { selectChecks } from './select-checks.ts';
+import type { PartyRole } from '@elvaria/domain';
 
 describe('globToRegExp', () => {
   it.each([
@@ -54,11 +55,15 @@ describe('selectChecks', () => {
   it("leaves a party's heavy checks to its merge quest, which runs every check (P1-18, §3.15)", () => {
     const checks = TERRITORY.checks.map((check) => ({ ...check, defer_to_merge: check.id === 'e2e' }));
     const touched = ['apps/web/src/routes/login.ts'];
-    const idsAs = (role?: 'contract' | 'part' | 'merge', paths = touched) =>
+    const idsAs = (role?: PartyRole, paths = touched) =>
       selectChecks(checks, paths, role).map((check) => check.id);
     expect(idsAs('part')).toEqual(['lint', 'unit']);
     expect(idsAs('contract')).toEqual(['lint', 'unit', 'e2e']);
     expect(idsAs()).toEqual(['lint', 'unit', 'e2e']);
     expect(idsAs('merge', [])).toEqual(TERRITORY.checks.map((check) => check.id));
+  });
+
+  it("runs none for the blind trial's acceptance part, whose tests wait for the merge quest (P1-21)", () => {
+    expect(selectChecks(TERRITORY.checks, ['apps/web/src/routes/login.ts'], 'acceptance')).toEqual([]);
   });
 });

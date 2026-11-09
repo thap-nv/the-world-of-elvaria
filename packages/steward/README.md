@@ -167,7 +167,12 @@
   fails the run as `incomplete`, so the next session gets it). The territory's checks run by the quest's place
   (`PlotCheck.party_role`: a part skips `defer_to_merge` checks, the merge quest runs them all), and the delivery
   note of a party's quest says where the party stands (`partyStatusOf`) and that only the merge quest's branch is
-  merged by hand.
+  merged by hand. (P1-21) On a territory whose `blind_trial` is due, the delivery adds the `acceptance` part
+  (domain's `acceptanceQuestOf`) before the merge quest, which waits for it too; its plot starts on the contract's
+  branch, it runs no territory check, and `selectAssignee` keeps its writer apart from the parts' assignees, as it
+  keeps every judge of a party from the party's work (also for the owner's `reassign` without a name). Each merge
+  that takes a part in or stops at one writes `plot.merged` to the log and the merge quest's journal; the merge
+  quest's judge reads `Plots.diff(plot, 'after_merges')`, its own work only.
   Each delivery writes `.runs/<quest>-delivery.md` (the pull request's description: the quest, the verdicts of
   its last run, the letter, the paths the Steward applied from the assignee's patch over every run, read from the
   quest's `plot.patched` lines (P1-31), what was copied or opened, the commands to merge) and then stamps
@@ -214,8 +219,11 @@ cannot follow; assignees leave their files in the plot through `leavingRunners` 
 `party.spec.ts` runs a party on a real git repo (`src/__fixtures__/party.ts`, P1-18): contract, two parts on the
 contract's branch, the merge quest with both merged, its `party` check, judges from outside the party, the seal
 and the notes; then three parts editing one file, two conflicts, the knight resolving them over two runs.
-`party-rules.spec.ts` refuses the lists that break the party rules, and starts a sub-quest on the branch of the
-one it waits for (P1-16 (f)).
+`party-rules.spec.ts` refuses the lists that break the party rules, starts a sub-quest on the branch of the
+one it waits for (P1-16 (f)), and takes the parts of a contract archived after its delivery (P1-21 (a)).
+`blind-trial.spec.ts` runs a blind trial (P1-21): the acceptance part on the contract's branch, its writer apart
+from the parts' assignees and blind to their work, the merge quest holding both sets of tests, its judge reading
+only what came after the last merge, and one `plot.merged` line.
 `patch.spec.ts` applies or refuses an assignee's `elvaria.patch` on real git repos (`src/__fixtures__/git-plots.ts`,
 P1-28), then checks that the delivery note names exactly the patched paths and has no such section without a patch,
 and that the run after a refused patch reads why in its prompt while the first run does not (P1-31).

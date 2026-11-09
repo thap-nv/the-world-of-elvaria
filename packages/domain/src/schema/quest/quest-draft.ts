@@ -37,8 +37,8 @@ const DraftFieldsSchema = z.strictObject({
     describe('Required for tier = session; one of kinds[kind].classes_allowed.'),
   ),
   tags: TagsSchema,
-  // The Steward creates the merge quest itself, so a draft is never one.
-  party_role: PartyRoleSchema.exclude(['merge'])
+  // The Steward creates the merge quest and the blind trial's part itself, so a draft is never one.
+  party_role: PartyRoleSchema.exclude(['acceptance', 'merge'])
     .optional()
     .meta(
       describe(

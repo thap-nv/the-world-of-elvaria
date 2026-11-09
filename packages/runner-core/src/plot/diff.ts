@@ -37,3 +37,41 @@ export async function diffIn(git: Git, worktree: string): Promise<string> {
   const patch = await gitOut(git, worktree, ['diff', ...DIFF_FLAGS, range]);
   return cappedDiff(stat, patch, range);
 }
+
+/**
+ * What a judge reads of the branch (P1-21 (e)): `branch`, all of it since its fork point; `after_merges`, a party's
+ * merge quest's own work.
+ */
+export type DiffScope = 'branch' | 'after_merges';
+
+/** Enough of a commit id to name it in a prompt. */
+const SHORT_ID = 12;
+
+/**
+ * A party's merge quest (P1-21 (e)): each part was judged on its own, and the whole party against the contract is
+ * cut at DIFF_MAX_CHARS, so its judge reads what the merge quest did itself: what changed after its last merge, then
+ * every merge with the conflicts it resolved (git's dense combined diff shows only where the result differs from
+ * each side; a clean merge shows its subject alone). A branch with no merge yet gives the whole branch.
+ */
+export async function diffAfterMerges(git: Git, worktree: string): Promise<string> {
+  const record = await plotRecordOf(git, worktree);
+  const since = `${record.base}..HEAD`;
+  const last = (await gitOut(git, worktree, ['rev-list', '--merges', '--max-count=1', since])).trim();
+  if (last === '') return diffIn(git, worktree);
+  const range = `${last}..HEAD`;
+  const stat = await gitOut(git, worktree, ['diff', ...DIFF_FLAGS, STAT_WIDTH, range]);
+  const patch = await gitOut(git, worktree, ['diff', ...DIFF_FLAGS, range]);
+  const merges = await gitOut(git, worktree, [
+    'log',
+    ...DIFF_FLAGS,
+    '-p',
+    '--cc',
+    '--merges',
+    '--format=commit %h %s',
+    since,
+  ]);
+  const note = `[The merge quest's own work: what changed after its last merge (${last.slice(0, SHORT_ID)}), then each merge and the conflicts it resolved. Each part was judged on its own; the whole party is \`git diff ${record.base.slice(0, SHORT_ID)}...HEAD\` in the plot.]`;
+  const after = stat.trim() === '' ? 'Nothing changed after the last merge.' : stat.trimEnd();
+  const resolved = `The merges, with the conflicts each resolved:\n\n${merges.trimEnd()}`;
+  return cappedDiff(`${note}\n\n${after}`, [patch.trimEnd(), resolved].filter(Boolean).join('\n\n'), range);
+}

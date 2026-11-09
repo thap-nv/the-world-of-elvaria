@@ -3,7 +3,7 @@
 // request's description, with the commands to merge by hand: Elvaria never pushes or merges in stage 1. Headings are
 // fixed English, like the handover letter's; the rest comes from the kingdom's files, in the owner's language
 // already (the quest, the letter, the verdicts' notes), so the Steward needs no translation of its own.
-import { MACHINE_VERIFIER, USER_VERIFIER } from '@elvaria/domain';
+import { MACHINE_VERIFIER, USER_VERIFIER, isPartyPart } from '@elvaria/domain';
 import { PATCH_FILE } from '@elvaria/runner-core';
 import type { PartyRole, PartyStatus, Quest, Territory, Verdict } from '@elvaria/domain';
 
@@ -148,6 +148,8 @@ const PARTY_ROLE_NOTE: Readonly<Record<PartyRole, (merge: string) => string>> = 
     `This quest wrote the contract and opened the parts. Every branch of the party starts from this one, and ${merge} merges them all: do not merge this branch by hand.`,
   part: (merge) =>
     `This branch is one part, made on the contract's branch. Do not merge it alone: ${merge} merges every part, runs every check of the territory and waits for your seal; merge its branch instead.`,
+  acceptance: (merge) =>
+    `This branch holds the blind trial's acceptance tests, written from the contract and your description alone, never seeing the parts (P1-21). They cannot pass on their own: ${merge} merges them with every part and runs them with every check of the territory; merge its branch instead.`,
   merge: () =>
     'This branch holds the contract and every part of the party, checked as a whole: merging it delivers the party.',
 };
@@ -161,12 +163,12 @@ function partySection({ quest, party }: NoteInput): string[] {
 
 /**
  * The owner merges a branch by hand (§9.1 item 11); a plan's branch only carries its list of sub-quests, and a
- * party's part reaches the main branch through its merge quest (P1-18).
+ * party's part (and the blind trial's acceptance part, P1-21) reaches the main branch through its merge quest (P1-18).
  */
 function mergeSection({ quest, territory }: NoteInput): string[] {
   const branch = quest.plot.branch;
   if (quest.plot.type !== 'worktree' || branch === undefined || territory === undefined) return [];
-  if (quest.deliverable.type === 'subquests' || quest.party_role === 'part') return [];
+  if (quest.deliverable.type === 'subquests' || isPartyPart(quest)) return [];
   const repo = territory.path;
   const push =
     territory.vcs.remote === undefined

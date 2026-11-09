@@ -94,4 +94,34 @@ describe('partyIssues', () => {
       issue(MERGE, 'thorn'),
     ]);
   });
+
+  describe("with a blind trial's acceptance part (P1-21)", () => {
+    const TESTS = 'q_20261107_7t5s3a' as QuestId;
+    const tests = (extra: Partial<Quest> = {}) =>
+      member(TESTS, 'acceptance', { depends_on: [CONTRACT], ...extra });
+    const withTests = (part: Partial<Quest>, merge: readonly QuestId[] = [WEB, API, TESTS]): Quest[] => {
+      const [contract, web, api, mergeQuest] = party();
+      return [contract!, web!, api!, { ...mergeQuest!, depends_on: [...merge] }, tests(part)];
+    };
+
+    it('makes it wait for the contract like a part, and the merge quest wait for it', () => {
+      expect(codesOf(withTests({}))).toEqual([]);
+      expect(codesOf(withTests({ depends_on: [] }, [WEB, API]))).toEqual([
+        [TESTS, 'part_without_contract'],
+        [MERGE, 'merge_missing_part'],
+      ]);
+    });
+
+    it("keeps its writer apart from the parts' workers", () => {
+      expect(partyIssues(withTests({ assignee: THORN }))).toEqual([
+        {
+          party: CONTRACT,
+          quest: CONTRACT,
+          code: 'blind_trial_crossed',
+          message: 'thorn wrote the acceptance tests of this party and worked one of its parts',
+        },
+      ]);
+      expect(codesOf(withTests({ assignee: 'ash' as CharacterId }))).toEqual([]);
+    });
+  });
 });
