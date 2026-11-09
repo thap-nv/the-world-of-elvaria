@@ -47,7 +47,7 @@ async function journal(workspace: Workspace) {
 }
 
 describe('a session', () => {
-  // Once red on macOS CI with an empty prompt (PR #76): CI repeats it there (P1-36).
+  // Once red on macOS CI with an empty prompt (PR #76); ELVARIA_SESSION_SPEC_REPEATS repeats it (P1-36).
   it('runs Claude Code headless with the run files of §3.7', { repeats: SPEC_REPEATS }, async () => {
     // A git variable in the Steward's env (husky's pre-push exports GIT_DIR, §6) must not reach the CLI.
     const prepared = await prepare('submit', {}, { env: { GIT_DIR: '/elsewhere/.git' } });

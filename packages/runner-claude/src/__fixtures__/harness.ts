@@ -21,8 +21,8 @@ export const FAKE_HOOK = path.join(FIXTURES, 'fake-hook.mjs');
 export const TRIBE = 'claude' as AgentRunner['tribe'];
 
 /**
- * How often the specs that read a session's stdin run again: CI's macOS job sets 49 (50 runs, P1-36), where one of
- * them once got an empty prompt (PR #76); 0 elsewhere.
+ * How often the specs that read a session's stdin run again, set by hand (0 by default). One of them once got an
+ * empty prompt on macOS CI (PR #76); after the fix both passed 50 runs there (PR #82, P1-36).
  */
 export const SPEC_REPEATS = Number(process.env.ELVARIA_SESSION_SPEC_REPEATS ?? '0');
 

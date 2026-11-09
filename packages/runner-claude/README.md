@@ -74,7 +74,7 @@ until P1-16 records real ones; its fake-only scenario `leak` (`fixtures/fake-cla
 everywhere, and `src/secrets.spec.ts` runs it with Elvaria's real hook from source and finds none of them in
 any file of the kingdom. `fixtures/fake-hook.mjs` stands in for the built hook elsewhere. Both fakes read stdin
 as the real hook does (`fixtures/read-stdin.mjs`, P1-36); `src/fixtures-stdin.spec.ts` sends a prompt larger than
-any pipe buffer to a fake CLI whose stdin a preload made non-blocking, and CI's macOS job runs it and the first
-case of `src/session.spec.ts` 50 times (`ELVARIA_SESSION_SPEC_REPEATS`). `src/live.spec.ts` runs the
+any pipe buffer to a fake CLI whose stdin a preload made non-blocking; `ELVARIA_SESSION_SPEC_REPEATS=<n>` runs it
+and the first case of `src/session.spec.ts` n more times (50 runs passed on macOS CI in PR #82). `src/live.spec.ts` runs the
 conformance suite's live checks with the real CLI and the real hook, the Stop gate, and a commit without
 attribution.
