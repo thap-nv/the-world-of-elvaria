@@ -6,7 +6,7 @@
 // hands them to the judge or the machine, which takes them, so the next judge of the run gets its own run (P1-04).
 // They get the quest's secrets as its sessions do (P1-10b), resolved in the tick before they start, and they tell
 // the owner and the world when they start and end (`check.start`, `check.end`): the quest waits in review meanwhile.
-import { currentRun, err, ok, runDirOf } from '@elvaria/domain';
+import { MS_PER_MINUTE, currentRun, err, exclusiveWaitMinutes, ok, runDirOf } from '@elvaria/domain';
 import { toVerdictCheck } from '@elvaria/runner-core';
 import type { EventData, Quest, QuestId, Result, Territory, VerdictCheck } from '@elvaria/domain';
 
@@ -43,7 +43,13 @@ export async function checksOf(
     };
     // A party's merge quest runs every check, its parts leave the deferred ones to it (P1-18, §3.15).
     const role = quest.party_role === undefined ? {} : { party_role: quest.party_role };
-    const asked = { territory, run_dir: runDir, ...given, ...role };
+    // An exclusive check waits out a judge that holds the territory's lock for its session (P1-20).
+    const minutes = exclusiveWaitMinutes(
+      territory.checks,
+      ctx.world.registry.rituals,
+      ctx.world.kingdom.breakers,
+    );
+    const asked = { territory, run_dir: runDir, lock_wait_ms: minutes * MS_PER_MINUTE, ...given, ...role };
     // Tests as the product: the checks run again in a clean scratch plot, three times, coverage beside (ADR 0022).
     const runs = inScratch(ctx, quest)
       ? await ctx.deps.plots.trial({ ...asked, quest, ...trialFor(ctx, quest) })

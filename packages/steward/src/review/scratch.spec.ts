@@ -4,6 +4,7 @@ import { FLAKE_CHECK_ID, FLAKE_RUNS } from '@elvaria/domain';
 import { describe, expect, it } from 'vitest';
 
 import { childIdOf } from '../deliver/subquests.ts';
+import { createJudgeLocks } from './exclusive.ts';
 import { openFlakyFollowUp, releaseScratch, trialOf } from './scratch.ts';
 import type { Context } from '../context.ts';
 import type { Quest, QuestId, Ritual, Territory, Verdict } from '@elvaria/domain';
@@ -44,7 +45,9 @@ interface StubWorld {
 function stub(world: StubWorld = {}) {
   const warnings: string[] = [];
   const quests = new Map([[QUEST, quest], ...(world.quests ?? []).map((q) => [q.id, q] as const)]);
+  const log = { warn: (message: string) => void warnings.push(message) };
   const ctx = {
+    judgeLocks: createJudgeLocks(log),
     world: {
       quests,
       territories: new Map([[territory.id, territory]]),
@@ -64,7 +67,7 @@ function stub(world: StubWorld = {}) {
       kingdom: { tz: 'Asia/Ho_Chi_Minh', owner: { locale: 'en' }, breakers: {} },
     },
     deps: {
-      log: { warn: (message: string) => void warnings.push(message) },
+      log,
       plots: { releaseScratch: world.release ?? (() => Promise.resolve(undefined)) },
       ids: { quest: () => 'q_20261109_000000' },
     },

@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { FLAKE_RUNS } from '../constants.ts';
-import { coverageDropsOf, coveragePctOf, coverageTotalsOf, flakyChecksOf, rerunDue } from './trial.ts';
+import { FLAKE_RUNS, LOCK_MARGIN_MINUTES } from '../constants.ts';
+import {
+  coverageDropsOf,
+  coveragePctOf,
+  coverageTotalsOf,
+  exclusiveWaitMinutes,
+  flakyChecksOf,
+  rerunDue,
+} from './trial.ts';
 
 const green = [
   { id: 'lint', pass: true },
@@ -11,6 +18,25 @@ const red = [
   { id: 'lint', pass: true },
   { id: 'e2e', pass: false },
 ];
+
+describe('exclusiveWaitMinutes', () => {
+  const checks = [
+    { exclusive: true, timeout_minutes: 30 },
+    { exclusive: false, timeout_minutes: 90 },
+    { exclusive: true, timeout_minutes: 10 },
+  ];
+  const breakers = { attempt_minutes: { low: 45, high: 120 } };
+
+  it("waits out the longest exclusive check, and a scratch judge's session when a ritual has one", () => {
+    expect(exclusiveWaitMinutes(checks, [{}, { scratch_plot: false }], breakers)).toBe(
+      30 + LOCK_MARGIN_MINUTES,
+    );
+    expect(exclusiveWaitMinutes(checks, [{ scratch_plot: true }], breakers)).toBe(
+      30 + 120 + LOCK_MARGIN_MINUTES,
+    );
+    expect(exclusiveWaitMinutes([], [], breakers)).toBe(LOCK_MARGIN_MINUTES);
+  });
+});
 
 describe('rerunDue', () => {
   it('asks for another run while every run passed and fewer than the runs wanted ran', () => {

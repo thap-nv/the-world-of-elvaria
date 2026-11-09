@@ -1,8 +1,33 @@
 // What the machine decides in a scratch plot (implementation-plan §3.15, ADR 0022; P1-20): whether the checks run
 // again (flake_check: up to FLAKE_RUNS runs on one commit, while every run passes), which checks flaked, and whether
 // coverage dropped against the base. Pure: runner-core runs the commands and reads the files, the domain decides.
+import { LOCK_MARGIN_MINUTES } from '../constants.ts';
 import { err, ok } from '../core/result.ts';
 import type { Result } from '../core/result.ts';
+import type { Kingdom } from '../schema/kingdom.ts';
+import type { Ritual } from '../schema/registry-entries.ts';
+import type { TerritoryCheck } from '../schema/territory.ts';
+
+/**
+ * Minutes an exclusive check waits for its territory's lock: the longest exclusive check another quest may run, and,
+ * when a ritual judges in a scratch plot, the whole session of a judge that holds the lock to run them (P1-20; its
+ * minutes are the quest's budget, attempt_minutes.high at most by default), then a margin. Waiting costs nothing: the
+ * checks run outside the tick.
+ */
+export function exclusiveWaitMinutes(
+  checks: readonly Pick<TerritoryCheck, 'exclusive' | 'timeout_minutes'>[],
+  rituals: readonly Pick<Ritual, 'scratch_plot'>[],
+  breakers: Pick<Kingdom['breakers'], 'attempt_minutes'>,
+): number {
+  const longest = Math.max(
+    0,
+    ...checks.filter(({ exclusive }) => exclusive).map((check) => check.timeout_minutes),
+  );
+  const judge = rituals.some(({ scratch_plot: scratch }) => scratch === true)
+    ? breakers.attempt_minutes.high
+    : 0;
+  return longest + judge + LOCK_MARGIN_MINUTES;
+}
 
 /** One check of one run, as the trial needs it. */
 export interface TrialCheck {

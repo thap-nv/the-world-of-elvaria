@@ -4,7 +4,9 @@
 // end. A quest whose ritual chose the flake opens one `flaky_follow_up` quest, under an id derived from its run, so a
 // verdict judged again after a restart finds it instead of opening a second.
 import { FLAKE_RUNS, flakyFollowUpOf, judgedInScratch, questFromCommand, ritualOf } from '@elvaria/domain';
-import type { Quest, QuestId, Ritual, Verdict } from '@elvaria/domain';
+import type { Quest, QuestId, Ritual, Territory, Verdict } from '@elvaria/domain';
+import { exclusiveLockOf } from '@elvaria/runner-core';
+import { inKingdom } from '@elvaria/store';
 
 import { childIdOf } from '../deliver/subquests.ts';
 import { STEWARD } from '../record.ts';
@@ -29,6 +31,8 @@ export const trialFor = (ctx: Context, quest: Quest) => trialOf(ritualOf(quest, 
  * still holds, or one git cannot remove, costs a warning: the next judge's trial removes it before its own.
  */
 export async function releaseScratch(ctx: Context, questId: QuestId): Promise<void> {
+  // The exclusive lock goes first, whatever became of the quest (P1-20).
+  await ctx.judgeLocks.release(questId);
   const quest = ctx.world.quests.get(questId);
   const territory = quest === undefined ? undefined : ctx.world.territories.get(quest.territory);
   if (quest === undefined || territory === undefined || !inScratch(ctx, quest)) return;
@@ -38,6 +42,16 @@ export async function releaseScratch(ctx: Context, questId: QuestId): Promise<vo
   } catch (error) {
     ctx.deps.log.warn(`steward: ${questId}: the scratch plot was not removed: ${messageOf(error)}`);
   }
+}
+
+/**
+ * Whether the judge of a quest in a scratch plot may open now (P1-20): on a territory with exclusive checks, once the
+ * Steward holds their lock for the judge's session; without any, at once.
+ */
+export async function judgeMayOpen(ctx: Context, quest: Quest, territory: Territory): Promise<boolean> {
+  if (!territory.checks.some(({ exclusive }) => exclusive)) return true;
+  const target = inKingdom(ctx.root, exclusiveLockOf(territory.id));
+  return ctx.judgeLocks.hold(quest.id, target, territory.id);
 }
 
 /**

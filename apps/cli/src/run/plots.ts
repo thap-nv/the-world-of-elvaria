@@ -44,8 +44,19 @@ function scratchPlots(
   host: ProcessHost,
 ): Pick<Plots, 'trial' | 'scratch' | 'releaseScratch'> {
   return {
-    trial: ({ quest, territory, run_dir: runDir, runs, coverage, signal, secrets, party_role: role }) => {
+    trial: (request) => {
+      const {
+        quest,
+        territory,
+        run_dir: runDir,
+        runs,
+        coverage,
+        signal,
+        secrets,
+        party_role: role,
+      } = request;
       const given = {
+        ...(request.lock_wait_ms === undefined ? {} : { lock_wait_ms: request.lock_wait_ms }),
         ...(signal === undefined ? {} : { signal }),
         ...(secrets === undefined ? {} : { secrets }),
         ...(role === undefined ? {} : { party_role: role }),
@@ -85,9 +96,11 @@ export function plotsOver(kingdom: string, manager: PlotManager, host: ProcessHo
     // The Steward runs them outside its tick and aborts `signal` when nobody waits for them any more (P1-25); they
     // get the quest's secrets in the host's minimal env, and their logs are masked with them (P1-10b).
     // A party's merge quest runs every check, its parts leave the `defer_to_merge` ones to it (P1-18).
-    check: async ({ plot, territory, run_dir, signal, secrets, party_role: role }) => {
+    check: async ({ plot, territory, run_dir, signal, secrets, party_role: role, lock_wait_ms: wait }) => {
       const touched = await manager.touched(plot);
       const given = {
+        // An exclusive check waits out a judge that holds the lock for its session (P1-20).
+        ...(wait === undefined ? {} : { lock_wait_ms: wait }),
         ...(signal === undefined ? {} : { signal }),
         ...(secrets === undefined ? {} : { secrets }),
         ...(role === undefined ? {} : { party_role: role }),

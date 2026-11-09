@@ -73,8 +73,10 @@ export function gitPlots(kingdom: string): Plots {
     unmerged: (plot, branches) => manager.unmerged(plot, branches),
     release: () => Promise.resolve(ok({ removed: false, forget_failures: [] })),
     // The judge's scratch plot as `elvaria run` makes it (P1-20): real worktrees, the checks for real.
-    trial: ({ quest, territory, run_dir: runDir, runs, coverage }) =>
-      trialInScratch(manager, { kingdom, quest, territory, run_dir: runDir, runs, coverage }, host),
+    trial: ({ quest, territory, run_dir: runDir, runs, coverage, lock_wait_ms: wait }) => {
+      const given = { kingdom, quest, territory, run_dir: runDir, runs, coverage };
+      return trialInScratch(manager, wait === undefined ? given : { ...given, lock_wait_ms: wait }, host);
+    },
     scratch: async (quest, territory) => {
       const cwd = await manager.scratchOf(quest, territory);
       if (cwd === undefined) throw new Error(`fixture: ${quest.id} has no scratch plot`);

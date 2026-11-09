@@ -26,6 +26,8 @@ export interface ScratchTrialRequest {
   readonly signal?: AbortSignal;
   readonly secrets?: Readonly<Record<string, string>>;
   readonly party_role?: PartyRole;
+  /** How long an exclusive check waits for the territory's lock (ChecksRequest.lock_wait_ms). */
+  readonly lock_wait_ms?: number;
 }
 
 export async function trialInScratch(
@@ -62,6 +64,7 @@ export async function trialInScratch(
     ...(request.signal === undefined ? {} : { signal: request.signal }),
     ...(secrets === undefined ? {} : { secrets }),
     ...(request.party_role === undefined ? {} : { party_role: request.party_role }),
+    ...(request.lock_wait_ms === undefined ? {} : { lock_wait_ms: request.lock_wait_ms }),
   };
   const { kingdom, run_dir: runDir, runs, coverage } = request;
   const trial = { kingdom, territory, touched, cwd: scratch.worktree, run_dir: runDir, runs, coverage };

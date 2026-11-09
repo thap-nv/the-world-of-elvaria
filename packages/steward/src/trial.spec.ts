@@ -8,8 +8,9 @@ import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
-import { NO_HISTORY_COMMAND, scratchIdOf } from '@elvaria/runner-core';
-import { fromPortable, pathExists } from '@elvaria/store';
+import { NO_HISTORY_COMMAND, exclusiveLockOf, scratchIdOf } from '@elvaria/runner-core';
+import { acquireLock, fromPortable, inKingdom, pathExists } from '@elvaria/store';
+import type { HeldLock } from '@elvaria/store';
 import type { TerritoryId, Verdict } from '@elvaria/domain';
 import type { AgentRunner, FakeRunner, SpawnRequest } from '@elvaria/runner-core';
 import { TerritorySchema } from '@elvaria/domain';
@@ -18,7 +19,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { git, gitPlots, gitRepoWith } from './__fixtures__/git-plots.ts';
 import { bench, questPayload, tickUntil } from './__fixtures__/kingdom.ts';
 import type { Bench } from './__fixtures__/kingdom.ts';
-import type { Steward } from './types.ts';
+import type { Plots, Steward } from './types.ts';
 
 let current: Bench | undefined;
 let running: Steward | undefined;
@@ -62,16 +63,26 @@ interface Seen {
   readonly cwd: string;
   readonly request: SpawnRequest;
   readonly branch_head: string;
+  /** Whether anyone could take the territory's exclusive lock while the judge ran. */
+  readonly lock_free: boolean;
+}
+
+/** Whether someone could take `target` now; what it took is given back at once. */
+async function free(target: string): Promise<boolean> {
+  const taken = await acquireLock(target, { wait: false });
+  if (taken.ok) await taken.value.release();
+  return taken.ok;
 }
 
 /**
  * The judge of the fake quests: in its cwd it breaks src/sum.mjs, runs the test, restores the file, and fails the
  * quest when the test stayed green (break_and_expect_red); what it saw is kept for the spec.
  */
-function judgeIn(repo: string, seen: Seen[]) {
+function judgeIn(repo: string, lock: string, seen: Seen[]) {
   return async (req: SpawnRequest): Promise<unknown> => {
     const branch = `quest/${req.quest?.id ?? ''}`;
-    seen.push({ cwd: req.cwd, request: req, branch_head: git(repo, 'rev-parse', branch) });
+    const head = git(repo, 'rev-parse', branch);
+    seen.push({ cwd: req.cwd, request: req, branch_head: head, lock_free: await free(lock) });
     const file = path.join(req.cwd, 'src', 'sum.mjs');
     await writeFile(file, 'export const sum = (a, b) => a - b;\n');
     const red = testIn(req.cwd) !== 0;
@@ -103,14 +114,27 @@ function runnersOf(
 }
 
 /** dc1-se-team on a git repo with sum.mjs and an e2e check that runs the quest's test. */
-async function open(files: Record<string, string>) {
+interface Opening {
+  /** The e2e check is exclusive (Docker): the judge holds the territory's lock to run it (P1-20 (a)). */
+  readonly exclusive?: boolean;
+  /** Runs once the trial ended, before any judge opens: what another quest does meanwhile. */
+  readonly afterTrial?: (lock: string) => Promise<void>;
+}
+
+async function open(files: Record<string, string>, opening: Opening = {}) {
   const repo = await mkdtemp(path.join(os.tmpdir(), 'elvaria trial repo '));
   folders.push(repo);
   await gitRepoWith(repo, { 'src/sum.mjs': SUM, 'e2e/.keep': '' });
   current = await bench();
   const read = await current.store.territories.read('dc1-se-team' as TerritoryId);
   if (!read.ok) throw new Error('fixture: no territory');
-  const e2e = { id: 'e2e', run: 'node e2e/sum.test.mjs', when: ['e2e/**'], timeout_minutes: 1 };
+  const e2e = {
+    id: 'e2e',
+    run: 'node e2e/sum.test.mjs',
+    when: ['e2e/**'],
+    exclusive: opening.exclusive ?? false,
+    timeout_minutes: 1,
+  };
   const territory = {
     ...read.value,
     path: repo.replaceAll('\\', '/'),
@@ -118,10 +142,20 @@ async function open(files: Record<string, string>) {
   };
   await current.store.territories.write(TerritorySchema.parse({ ...territory, checks: [e2e] }));
   const seen: Seen[] = [];
-  const runners = runnersOf(current, files, judgeIn(repo, seen));
-  running = current.steward({ plots: gitPlots(current.root), runners });
+  const lock = inKingdom(current.root, exclusiveLockOf('dc1-se-team'));
+  const runners = runnersOf(current, files, judgeIn(repo, lock, seen));
+  const base = gitPlots(current.root);
+  const plots: Plots = {
+    ...base,
+    trial: async (request) => {
+      const runs = await base.trial(request);
+      await opening.afterTrial?.(lock);
+      return runs;
+    },
+  };
+  running = current.steward({ plots, runners });
   expect(await running.start({ loop: false })).toEqual({ ok: true });
-  return { kingdom: current, steward: running, repo, seen };
+  return { kingdom: current, steward: running, repo, seen, lock };
 }
 
 /** The first run of the quest has its verdict. */
@@ -203,5 +237,45 @@ describe('tests as the product: Thả quái thử thành (ADR 0022)', () => {
       tags: ['e2e'],
     });
     expect(fix?.description).toContain('✗ flake_check');
+  }, 120_000);
+
+  it('lets its judge run the exclusive e2e check while it holds the territory lock, freed after (P1-20 (a))', async () => {
+    const { kingdom, steward, seen, lock } = await open(
+      { 'e2e/sum.test.mjs': STRONG_TEST },
+      { exclusive: true },
+    );
+    await kingdom.command('create_quest', questPayload('Wall of iron', E2E));
+    await tickUntil(
+      steward,
+      kingdom.clock,
+      async () => (await kingdom.quest('Wall of iron')).status === 'done',
+    );
+    expect(seen[0]?.lock_free).toBe(false);
+    expect(seen[0]?.request.permissions.allow).toContain('Bash(node e2e/sum.test.mjs:*)');
+    expect(await free(lock)).toBe(true);
+  }, 120_000);
+
+  it('opens no judge while another holds the exclusive lock, says so once, and opens it once freed', async () => {
+    let other: HeldLock | undefined;
+    const afterTrial = async (lock: string) => {
+      const taken = await acquireLock(lock, { wait: false });
+      if (taken.ok) other ??= taken.value;
+    };
+    const files = { 'e2e/sum.test.mjs': STRONG_TEST };
+    const { kingdom, steward, seen } = await open(files, { exclusive: true, afterTrial });
+    await kingdom.command('create_quest', questPayload('Wall of glass', E2E));
+    const waits = () =>
+      kingdom.warnings.filter((line) => line.includes('its judge waits for the exclusive checks'));
+    await tickUntil(steward, kingdom.clock, () => Promise.resolve(waits().length > 0));
+    await steward.tick();
+    await steward.tick();
+    expect([seen.length, waits()]).toEqual([0, [expect.stringContaining('dc1-se-team') as string]]);
+    await other?.release();
+    await tickUntil(
+      steward,
+      kingdom.clock,
+      async () => (await kingdom.quest('Wall of glass')).status === 'done',
+    );
+    expect(seen).toHaveLength(1);
   }, 120_000);
 });

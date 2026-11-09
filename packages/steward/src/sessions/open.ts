@@ -10,7 +10,7 @@ import { heardBy } from '../mana/heard.ts';
 import { mergeParts, plotOptionsOf } from '../party/plot.ts';
 import { step } from '../record.ts';
 import { checksRunOf, takeChecks } from '../review/checks.ts';
-import { inScratch } from '../review/scratch.ts';
+import { inScratch, judgeMayOpen } from '../review/scratch.ts';
 import { secretsBreaker } from './breaker.ts';
 import { continuationOf, requestOf } from './request.ts';
 import { questSecretsOf, rememberSecrets, secretsLacking } from './secrets.ts';
@@ -230,9 +230,11 @@ export async function openVerifier(
   const lacking = await secretsLacking(ctx, quest, territory);
   if (lacking !== undefined) return secretsBreaker(ctx, quest, lacking);
   const n = currentRun(quest);
+  const scratch = inScratch(ctx, quest);
+  // A judge in its scratch plot runs the exclusive checks too: it waits, its checks kept, until it holds their lock.
+  if (scratch && !(await judgeMayOpen(ctx, quest, territory))) return ok(quest);
   const checks = takeChecks(ctx, quest);
   if (!checks.ok) return checks;
-  const scratch = inScratch(ctx, quest);
   const input = { role: 'verifier', quest, character, territory, n, checks: checks.value, scratch } as const;
   const spawned = await spawnFor(ctx, runner, input);
   if (!spawned.ok) return spawned;

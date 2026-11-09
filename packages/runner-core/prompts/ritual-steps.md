@@ -76,7 +76,7 @@ The machine measured coverage on the branch and on the commit it forked from. `c
 
 ## break_and_expect_red
 
-Prove the new tests guard something. In your scratch plot, break on purpose the code they claim to cover, never the tests themselves: invert a condition, drop a statement, return a wrong value. Run the tests that should catch it with a command your shell allows: they must fail. Restore the file (`git restore <file>`) and check they pass again. Break at least two different places. Tests that stay green on a break fail the quest with `fail_kind` `incomplete`: name the break, the file and line, and the test that missed it. When no command your shell allows runs those tests (an exclusive check only the machine may start), say so in your notes instead of guessing.
+Prove the new tests guard something. In your scratch plot, break on purpose the code they claim to cover, never the tests themselves: invert a condition, drop a statement, return a wrong value. Run the tests that should catch it with a command your shell allows: they must fail. Restore the file (`git restore <file>`) and check they pass again. Break at least two different places. Tests that stay green on a break fail the quest with `fail_kind` `incomplete`: name the break, the file and line, and the test that missed it. In a scratch plot your shell also runs the territory's exclusive checks (e2e, Docker): the Steward holds their lock for your session. When no command your shell allows runs those tests, say so in your notes instead of guessing.
 
 ## judge
 

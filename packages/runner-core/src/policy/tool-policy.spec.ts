@@ -223,9 +223,14 @@ describe('a judge in its scratch plot (ADR 0022, P1-20)', () => {
     expect(scratch.deny).toEqual(expect.arrayContaining(['Read(./infra/secrets/**)', 'Agent']));
   });
 
+  it("runs the territory's exclusive checks, whose lock the Steward holds for its session (P1-20 (a))", () => {
+    expect(scratch.allow).toContain('Bash(pnpm e2e:*)');
+  });
+
   it('is asked of a verifier only: an assignee and a judge elsewhere keep their own tools', () => {
     const plain = toolPolicyOf({ role: 'verifier', characterClass: judge, territory: TERRITORY });
     expect(plain.tools).not.toContain('Edit');
+    expect(plain.allow).not.toContain('Bash(pnpm e2e:*)');
     expect(plain.laws.forbidden_commands).not.toContain(NO_HISTORY_COMMAND);
     const knightOwn = toolPolicyOf({ role: 'assignee', characterClass: knight, territory: TERRITORY });
     expect(

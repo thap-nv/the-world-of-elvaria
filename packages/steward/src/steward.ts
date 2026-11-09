@@ -9,6 +9,7 @@ import type { PromptTemplates } from '@elvaria/runner-core';
 import type { HeldLock } from '@elvaria/store';
 
 import { createBackground, wantedIn } from './background.ts';
+import { createJudgeLocks } from './review/exclusive.ts';
 import { applyInbox } from './inbox/apply.ts';
 import { asleepFromLog, createManaBook, warnedFromLog } from './mana/book.ts';
 import { manaStep } from './mana/step.ts';
@@ -24,6 +25,7 @@ import { noteUnclaimable, reportedFromLog, writeUnclaimable } from './unclaimabl
 import { noteUnjudgeable } from './unjudgeable.ts';
 import { limitsOf, loadWorld, snapshotOf } from './world.ts';
 import type { Background } from './background.ts';
+import type { JudgeLocks } from './review/exclusive.ts';
 import type { Context, Counts } from './context.ts';
 import type { ManaBook } from './mana/book.ts';
 import type { Sessions } from './sessions/running.ts';
@@ -65,6 +67,8 @@ interface State {
   readonly mana: ManaBook;
   /** Checks and scripts running outside the tick (P1-25): stop() kills them, the next start runs them again. */
   readonly background: Background;
+  /** Exclusive locks held for judges in their scratch plots (P1-20): stop() releases them. */
+  readonly judgeLocks: JudgeLocks;
   reported: Reported;
   /** Aborted by stop(): a tick it stops in starts no other script. */
   stopping: AbortController;
@@ -106,7 +110,7 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   const counts: Counts = { applied: 0, rejected: 0, waiting: 0, started: 0, ended: 0 };
   const world = await loadWorld(deps.store, deps.log);
   if (world === undefined) return reportOf(counts);
-  const { sessions, handled, limits, mana, background } = state;
+  const { sessions, handled, limits, mana, background, judgeLocks } = state;
   const record = createRecorder({ ...deps, world, stamp: () => held.zone.format(deps.clock.now()) });
   const root = deps.store.root;
   const { templates } = held;
@@ -123,11 +127,14 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
     counts,
     stopping,
     background,
+    judgeLocks,
   };
   const waiting = await applyInbox(ctx, handled);
   // A session's leftovers lose its secrets before anything is recorded of them (§3.9).
   for (const finished of sessions.drain()) await recordEnd(ctx, await maskFinished(ctx, finished));
   await reapLost(ctx);
+  // A judge killed or gone without a recorded end leaves no exclusive lock behind (P1-20).
+  await judgeLocks.sweep((quest) => sessions.get(quest)?.role === 'verifier');
   counts.waiting = (await applyInbox(ctx, handled, waiting)).length;
   await manaStep(ctx);
   // Work for a quest that moved on since it started (cancelled, judged, retried) is killed before the plan (P1-25).
@@ -218,6 +225,7 @@ export function createSteward(deps: StewardDeps): Steward {
     background: createBackground(deps.log, () => {
       wake(deps, state, tick);
     }),
+    judgeLocks: createJudgeLocks(deps.log),
     reported: new Map(),
     stopping: new AbortController(),
     unjudged: new Set(),
@@ -248,6 +256,7 @@ export function createSteward(deps: StewardDeps): Steward {
       await state.background.stop();
       await state.sessions.close('the Steward stopped');
       await state.sessions.saved();
+      await state.judgeLocks.releaseAll();
       // A gauge read after a session's end may still run its CLI: let it finish before the lock goes.
       await Promise.all(state.mana.reading.values());
       await state.held?.lock.release();

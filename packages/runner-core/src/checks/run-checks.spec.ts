@@ -151,6 +151,9 @@ describe('runChecks', () => {
 
     const refused = await runChecks(request(e2e, ['x.ts']), TEST_HOST, { lock_wait_ms: 0 });
     expect(refused[0]).toMatchObject({ pass: false, exit_code: null, duration_ms: 0 });
+    // The wait may come with the request too (P1-20: the Steward's exclusiveWaitMinutes).
+    const asked = await runChecks({ ...request(e2e, ['x.ts']), lock_wait_ms: 0 }, TEST_HOST);
+    expect(asked[0]).toMatchObject({ pass: false, exit_code: null, duration_ms: 0 });
     expect(await log(refused[0]!.log_path)).toContain('another quest kept the exclusive checks of dc1');
 
     // Nobody waits any more (P1-25): the wait for the lock ends without the check.

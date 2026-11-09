@@ -45,6 +45,11 @@ export interface ChecksRequest {
    * marked `defer_to_merge`; absent (or a contract) selects by `when` alone.
    */
   readonly party_role?: PartyRole;
+  /**
+   * How long an exclusive check waits for the territory's lock (the domain's exclusiveWaitMinutes, P1-20): a judge in
+   * its scratch plot holds it for its whole session. Absent: the longest exclusive timeout + 1 min.
+   */
+  readonly lock_wait_ms?: number;
 }
 
 export interface ChecksOptions {
@@ -173,7 +178,7 @@ export async function runChecks(
   host: ProcessHost,
   options: ChecksOptions = {},
 ): Promise<CheckRun[]> {
-  const waitMs = options.lock_wait_ms ?? exclusiveWaitOf(request.territory.checks);
+  const waitMs = options.lock_wait_ms ?? request.lock_wait_ms ?? exclusiveWaitOf(request.territory.checks);
   const runs: CheckRun[] = [];
   for (const check of selectChecks(request.territory.checks, request.touched, request.party_role)) {
     if (request.signal?.aborted === true) break;

@@ -13,7 +13,7 @@
   `ritual_overrides` meets the quest's tags (tests as the product: `build`/`refactor` tagged `e2e` or
   `integration` → `mutation_check`); `judgedInScratch` says its judge works in a scratch plot (a ritual with
   `scratch_plot`, a git worktree). What the machine decides there is pure too (`src/verify/trial.ts`):
-  `rerunDue` (up to `FLAKE_RUNS` runs while every run passes), `flakyChecksOf`, `coverageTotalsOf` (an istanbul
+  `rerunDue` (up to `FLAKE_RUNS` runs while every run passes), `exclusiveWaitMinutes` (how long an exclusive check waits for a judge that holds the lock), `flakyChecksOf`, `coverageTotalsOf` (an istanbul
   json-summary) and `coverageDropsOf` (counts compared, no rounding); `flakyFollowUpOf` builds the quest that
   exorcises a flake, of the kind and class the ritual's `flaky_follow_up` names. `commandLinesOf` reads a
   territory command that may be a list (`checks[].run`, `commands.reset`, `commands.coverage`).

@@ -135,6 +135,8 @@ export interface PlotCheck {
   readonly secrets?: Readonly<Record<string, string>>;
   /** The quest's `party_role` (P1-18): a merge quest runs every check, a part leaves `defer_to_merge` ones to it. */
   readonly party_role?: PartyRole;
+  /** How long an exclusive check waits for the territory's lock, a judge's session included (P1-20). */
+  readonly lock_wait_ms?: number;
 }
 
 /**

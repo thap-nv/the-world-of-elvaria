@@ -125,3 +125,6 @@ export const RITUAL_STEPS = [
  * one run and fails in another is flaky.
  */
 export const FLAKE_RUNS = 3;
+
+/** Beyond what an exclusive check waits out: time for a crashed holder's lock to go stale (store STALE_MS). */
+export const LOCK_MARGIN_MINUTES = 1;

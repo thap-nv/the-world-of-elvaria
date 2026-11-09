@@ -18,7 +18,7 @@
 - Builds `ToolPolicy` from class + territory laws + role (`toolPolicyOf`): `tools` (Claude `--tools`), `allow` and
   `deny` rules in Claude Code syntax, the apprentice (`Agent(apprentice)` in a class is a flag), and the laws the
   hook enforces. A verifier never has Edit, Write or NotebookEdit, except in its scratch plot (`scratch: true`,
-  ADR 0022, P1-20): Edit and Write even when its class denies them, `git status`/`git restore`, and a deny rule on
+  ADR 0022, P1-20): Edit and Write even when its class denies them, `git status`/`git restore`, the territory's exclusive checks (the Steward holds their lock for its session), and a deny rule on
   `git commit` plus the law `NO_HISTORY_COMMAND` (commit, merge, reset, branch, stash, worktree…) for the hook; a character with a shell may run the
   territory's non-exclusive checks, and one that also edits files its `commands.generate` (P1-24); every session
   is fenced (no `git push`, no `.env`, no built-in agent, no `Edit` on `laws.read_only_paths`, which stay
@@ -95,7 +95,7 @@
   `ChecksRequest.signal` (P1-25: the Steward runs checks outside its tick) kills the running check and starts no
   other when it aborts, the log saying so; `runProgram` takes the same `signal`. `ChecksRequest.secrets` (P1-10b:
   the quest's `secrets_required`, treasury name → value) puts them in each check's env over the host's minimal env
-  (`sessionEnv`, no `ELVARIA_*`), so a check that needs a private registry passes as the session did. A check's
+  (`sessionEnv`, no `ELVARIA_*`), so a check that needs a private registry passes as the session did. `ChecksRequest.lock_wait_ms` (P1-20) says how long an exclusive check waits for the lock, a judge's session included. A check's
   `run` may list commands (P1-20): they run in order in one log, the first that fails ending the check, as CI's
   `&&` (`runLines`).
 - Gives the judge of tests as the product its scratch plot and its trial (ADR 0022, P1-20):

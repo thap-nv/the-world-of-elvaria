@@ -53,7 +53,8 @@ export interface ToolPolicyInput {
   readonly territory?: Pick<Territory, 'laws' | 'checks' | 'commands' | 'vcs'>;
   /**
    * A verifier in its scratch plot (ADR 0022, P1-20): it gets Edit and Write, even when its class denies them, to
-   * break what the tests guard and restore it, and loses every git command that writes history. Ignored otherwise.
+   * break what the tests guard and restore it, runs the territory's exclusive checks too (the Steward holds their lock
+   * for its session), and loses every git command that writes history. Ignored otherwise.
    */
   readonly scratch?: boolean;
 }
@@ -71,12 +72,15 @@ const isWriteTool = (tool: string): boolean => (WRITE_TOOLS as readonly string[]
 /** A path of the laws as a Claude rule relative to the plot: `infra/secrets/**` → `./infra/secrets/**`. */
 const plotPath = (glob: string): string => `./${glob.replaceAll('\\', '/').replace(/^\.?\//, '')}`;
 
-/** The territory's own check commands, so a character with a shell can rerun what judges it (ADR 0008). */
-function checkRules(territory: ToolPolicyInput['territory']): string[] {
+/**
+ * The territory's own check commands, so a character with a shell can rerun what judges it (ADR 0008). An exclusive
+ * check (Docker, e2e) holds a lock across quests, so only runChecks may start it, and a judge in its scratch plot,
+ * for whom the Steward holds that lock for the whole session (P1-20): `exclusive` says the caller holds it.
+ */
+function checkRules(territory: ToolPolicyInput['territory'], exclusive: boolean): string[] {
   if (territory === undefined) return [];
-  // An exclusive check (Docker, e2e) holds a lock across quests; only runChecks may start it.
   const checks = territory.checks
-    .filter((check) => !check.exclusive)
+    .filter((check) => exclusive || !check.exclusive)
     .flatMap((check) => commandLinesOf(check.run));
   const commands = CHECK_COMMANDS.flatMap((name) => territory.commands[name] ?? []);
   return unique([...checks, ...commands]).map((command) => `${SHELL_TOOL}(${command}:*)`);
@@ -145,7 +149,7 @@ export function toolPolicyOf(input: ToolPolicyInput): ToolPolicy {
   const hasShell = tools.includes(SHELL_TOOL);
   // A verifier never regenerates what it judges (ADR 0008), not even in its scratch plot.
   const writes = !verifier && tools.some(isWriteTool);
-  const shell = hasShell ? checkRules(input.territory) : [];
+  const shell = hasShell ? checkRules(input.territory, scratch) : [];
   const generate = hasShell && writes ? generateRules(input.territory) : [];
   const laws = lawsOf(input.territory, scratch);
   const fences = [

@@ -1,5 +1,6 @@
 // What every step of one tick works with: the deps, the world as the tick sees it, the pen, the sessions.
 import type { Background } from './background.ts';
+import type { JudgeLocks } from './review/exclusive.ts';
 import type { Notice, NoticeQuest, StewardDeps } from './types.ts';
 import type { ManaBook } from './mana/book.ts';
 import type { Recorder } from './record.ts';
@@ -32,6 +33,8 @@ export interface Context {
   readonly stopping: AbortSignal;
   /** The checks and scripts running outside the tick (P1-25). */
   readonly background: Background;
+  /** The exclusive locks the judges in their scratch plots hold, across ticks (P1-20). */
+  readonly judgeLocks: JudgeLocks;
 }
 
 /** Rings the bell; a bell that fails never stops a tick. */
