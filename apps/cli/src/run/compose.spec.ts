@@ -87,6 +87,8 @@ describe('plots over PlotManager', () => {
     commitAll: () => Promise.reject(new Error('unused')),
     applyPatch: () => Promise.reject(new Error('unused')),
     diff: () => Promise.reject(new Error('unused')),
+    merge: () => Promise.reject(new Error('unused')),
+    unmerged: () => Promise.reject(new Error('unused')),
     release: () => Promise.reject(new Error('unused')),
   });
   const kingdom = path.resolve('kingdom root');

@@ -16,8 +16,25 @@ describe('plotCommitMessage', () => {
     expect(plotCommitMessage.wip(quest, 'time')).toBe('chore: wip q_20261107_a1b2c3 (time)');
   });
 
+  it("names the branches of a party's merge, and the list a contract leaves (P1-18)", () => {
+    expect(plotCommitMessage.merge('quest/q_20261107_d4e5f6', `quest/${quest}`)).toBe(
+      'chore: merge quest/q_20261107_d4e5f6 into quest/q_20261107_a1b2c3',
+    );
+    expect(plotCommitMessage.partsOpen(quest, 'subquests.json')).toBe(
+      'chore: remove subquests.json of q_20261107_a1b2c3, its parts are open',
+    );
+  });
+
   it('passes what commitlint checks of a header', () => {
-    for (const message of [plotCommitMessage.submit(quest), plotCommitMessage.wip(quest, 'tokens')]) {
+    const party = [
+      plotCommitMessage.merge('quest/q_20261107_d4e5f6', `quest/${quest}`),
+      plotCommitMessage.partsOpen(quest, 'subquests.json'),
+    ];
+    for (const message of [
+      plotCommitMessage.submit(quest),
+      plotCommitMessage.wip(quest, 'tokens'),
+      ...party,
+    ]) {
       expect(message).toMatch(CONVENTIONAL_HEADER);
       expect(message.length).toBeLessThanOrEqual(HEADER_MAX);
     }

@@ -158,7 +158,7 @@ describe('prepare on a git territory', () => {
       ok: false,
       error: { reason: 'setup_failed', detail: 'node setup.mjs: ended with 4' },
     });
-    const given = await plots.prepare(quest, territory, { npm_token: value });
+    const given = await plots.prepare(quest, territory, { secrets: { npm_token: value } });
 
     expect(given).toMatchObject({ ok: true, value: { setup: { exit_code: 0 } } });
     const log = await readFile(path.join(kingdom, setupLogOf(quest.id)), 'utf8');

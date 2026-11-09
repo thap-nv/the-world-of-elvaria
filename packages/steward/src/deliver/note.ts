@@ -5,7 +5,7 @@
 // already (the quest, the letter, the verdicts' notes), so the Steward needs no translation of its own.
 import { MACHINE_VERIFIER, USER_VERIFIER } from '@elvaria/domain';
 import { PATCH_FILE } from '@elvaria/runner-core';
-import type { Quest, Territory, Verdict } from '@elvaria/domain';
+import type { PartyRole, PartyStatus, Quest, Territory, Verdict } from '@elvaria/domain';
 
 import { replacedDirOf } from './copy.ts';
 import type { Copied } from './copy.ts';
@@ -25,6 +25,8 @@ export interface NoteInput {
   readonly subquests?: Subquests;
   /** The paths the Steward changed from the assignee's patch, over every run (`plot.patched` lines, P1-31). */
   readonly patched?: readonly string[];
+  /** Where the quest's party stands (partyStatusOf, P1-18); absent outside a party. */
+  readonly party?: PartyStatus;
 }
 
 const code = (text: string): string => `\`${text}\``;
@@ -42,11 +44,19 @@ function demoted(text: string): string {
     .join('\n');
 }
 
-function facts({ quest, territory }: NoteInput): string {
+/** The branch the plot started from: the contract's for a part or a merge quest (P1-18), else the default one. */
+function startOf({ quest, territory }: NoteInput): string | undefined {
+  if (quest.party_id !== undefined && quest.party_role !== 'contract') return `quest/${quest.party_id}`;
+  return territory?.vcs.default_branch;
+}
+
+function facts(input: NoteInput): string {
+  const { quest } = input;
   const plot = quest.plot;
+  const start = startOf(input);
   const where =
     plot.type === 'worktree' && plot.branch !== undefined
-      ? `- Branch: ${code(plot.branch)}${territory?.vcs.default_branch === undefined ? '' : `, from ${code(territory.vcs.default_branch)}`}`
+      ? `- Branch: ${code(plot.branch)}${start === undefined ? '' : `, from ${code(start)}`}`
       : plot.type === 'folder' && plot.path !== undefined
         ? `- Plot: ${code(plot.path)}`
         : '- Plot: none';
@@ -132,11 +142,31 @@ function patchedSection(patched: readonly string[] | undefined): string[] {
   ];
 }
 
-/** The owner merges a branch by hand (§9.1 item 11); a plan's branch only carries its list of sub-quests. */
+/** What each member of a party is to the owner merging it (P1-18): only the merge quest's branch is merged. */
+const PARTY_ROLE_NOTE: Readonly<Record<PartyRole, (merge: string) => string>> = {
+  contract: (merge) =>
+    `This quest wrote the contract and opened the parts. Every branch of the party starts from this one, and ${merge} merges them all: do not merge this branch by hand.`,
+  part: (merge) =>
+    `This branch is one part, made on the contract's branch. Do not merge it alone: ${merge} merges every part, runs every check of the territory and waits for your seal; merge its branch instead.`,
+  merge: () =>
+    'This branch holds the contract and every part of the party, checked as a whole: merging it delivers the party.',
+};
+
+function partySection({ quest, party }: NoteInput): string[] {
+  if (party === undefined) return [];
+  const merge = party.merge === null ? 'its merge quest' : `merge quest ${code(party.merge)}`;
+  const status = `Party ${code(party.party)}: ${party.stage}, ${party.parts.done} of ${party.parts.total} parts done.`;
+  return [section('Party', status, PARTY_ROLE_NOTE[quest.party_role ?? 'part'](merge))];
+}
+
+/**
+ * The owner merges a branch by hand (§9.1 item 11); a plan's branch only carries its list of sub-quests, and a
+ * party's part reaches the main branch through its merge quest (P1-18).
+ */
 function mergeSection({ quest, territory }: NoteInput): string[] {
   const branch = quest.plot.branch;
   if (quest.plot.type !== 'worktree' || branch === undefined || territory === undefined) return [];
-  if (quest.deliverable.type === 'subquests') return [];
+  if (quest.deliverable.type === 'subquests' || quest.party_role === 'part') return [];
   const repo = territory.path;
   const push =
     territory.vcs.remote === undefined
@@ -172,6 +202,7 @@ export function deliveryNote(input: NoteInput): string {
     ...(subquests === undefined ? [] : [subquestsSection(subquests)]),
     ...(copied === undefined ? [] : [copiedSection(input, copied)]),
     ...(quest.deliverable.type === 'draft' ? [DRAFT] : []),
+    ...partySection(input),
     ...mergeSection(input),
   ];
   return `${blocks.join('\n\n')}\n`;

@@ -50,4 +50,15 @@ describe('selectChecks', () => {
     expect(ids(['apps\\web\\src\\routes\\+page.svelte'])).toEqual(['e2e']);
     expect(ids(['./apps/api/x.ts'])).toEqual(['lint', 'unit']);
   });
+
+  it("leaves a party's heavy checks to its merge quest, which runs every check (P1-18, §3.15)", () => {
+    const checks = TERRITORY.checks.map((check) => ({ ...check, defer_to_merge: check.id === 'e2e' }));
+    const touched = ['apps/web/src/routes/login.ts'];
+    const idsAs = (role?: 'contract' | 'part' | 'merge', paths = touched) =>
+      selectChecks(checks, paths, role).map((check) => check.id);
+    expect(idsAs('part')).toEqual(['lint', 'unit']);
+    expect(idsAs('contract')).toEqual(['lint', 'unit', 'e2e']);
+    expect(idsAs()).toEqual(['lint', 'unit', 'e2e']);
+    expect(idsAs('merge', [])).toEqual(TERRITORY.checks.map((check) => check.id));
+  });
 });

@@ -28,6 +28,7 @@ import type {
 import { inKingdom, kingdomLayout } from '@elvaria/store';
 
 import { moveAndRing } from '../notices.ts';
+import { plotOptionsOf } from '../party/plot.ts';
 import { STEWARD } from '../record.ts';
 import { VERDICT_EVENT, moveOnVerdict, recordVerdict, ritualOf } from '../verdicts.ts';
 import { openFollowUp, unitsHandedTo } from './follow-up.ts';
@@ -191,7 +192,9 @@ async function save(native: string, run: ScriptRunResult): Promise<void> {
 /** The plot, or the claim given back: the quest stays open for a later tick, as a session's plot would (P1-09). */
 async function plotOf(ctx: Context, parts: Parts) {
   try {
-    return ok(await ctx.deps.plots.prepare(parts.quest, parts.territory));
+    // No secret for a script; a new worktree starts on the branch the quest builds on, like a session's (P1-18).
+    const options = plotOptionsOf(ctx, parts.quest, undefined);
+    return ok(await ctx.deps.plots.prepare(parts.quest, parts.territory, options));
   } catch (error) {
     ctx.deps.log.warn(`steward: ${parts.quest.id}: no plot for its script: ${messageOf(error)}`);
     await moveAndRing(ctx, { quest: parts.quest.id, event: { type: 'release' }, actor: 'steward' });

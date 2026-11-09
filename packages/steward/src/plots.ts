@@ -22,6 +22,9 @@ export function folderPlots(root: string): Plots {
     check: () => Promise.resolve([]),
     scriptChecks: () => Promise.resolve([]),
     diff: () => Promise.resolve(null),
+    // A folder has no branch: no part to merge into it (P1-18), none it holds.
+    merge: (_plot, branches) => Promise.resolve({ merged: [], pending: [...branches] }),
+    unmerged: (_plot, branches) => Promise.resolve([...branches]),
     release: () => Promise.resolve(ok({ removed: false, forget_failures: [] })),
   };
 }

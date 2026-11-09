@@ -148,8 +148,23 @@
   `.runs/<quest>-replaced/`; a territory folder that is not there gets nothing); a draft is never sent, and
   reaches `done` through the seal its kind asks for; a plan's `subquests.json` (quest-draft JSON at the root of
   its plot) becomes open child quests (`created_by: council`, ids derived from the plan and the ref), all or none:
-  a list it cannot read, a draft the kingdom refuses, a question, a party's parts (P1-18) or a circle open none,
-  and the owner hears it once (`subquests_refused`, the bell, a warning in the log).
+  a list it cannot read, a draft the kingdom refuses, a question or a circle open none, and the owner hears it
+  once (`subquests_refused`, the bell, a warning in the log).
+- Opens a party when its contract quest is delivered (implementation-plan §3.13, ADR 0020, P1-18, `src/party/`):
+  the contract's list holds parts only (`party_role: part`, `contract`), and each opens in the contract's party,
+  waiting for the contract, with the merge quest the Steward adds itself (domain's `mergeQuestOf`: a knight's
+  build on every part, their tags, the royal seal); a part listed by a plain plan, anything else listed by a
+  contract, a party inside a party, or a list that breaks the party's invariants (`partyIssues`: one territory)
+  opens none. Then the contract's `subquests.json` leaves its branch in a commit of its own (`closeContract`),
+  since every branch of the party starts from it. A new plot starts on the branch its quest builds on (domain's
+  `plotBaseOf` → `Plots.prepare({from})`): a part on its contract's (or a part it waits for), a quest on a
+  dependency done but not merged yet (P1-16 (f)). Before each session of the merge quest's knight, never a
+  judge's, its parts are merged in (`Plots.merge`; a conflict is left in progress for the knight, and the log
+  says so); before its judge the check `party` says whether every part is in (`Plots.unmerged`; a missing part
+  fails the run as `incomplete`, so the next session gets it). The territory's checks run by the quest's place
+  (`PlotCheck.party_role`: a part skips `defer_to_merge` checks, the merge quest runs them all), and the delivery
+  note of a party's quest says where the party stands (`partyStatusOf`) and that only the merge quest's branch is
+  merged by hand.
   Each delivery writes `.runs/<quest>-delivery.md` (the pull request's description: the quest, the verdicts of
   its last run, the letter, the paths the Steward applied from the assignee's patch over every run, read from the
   quest's `plot.patched` lines (P1-31), what was copied or opened, the commands to merge) and then stamps
@@ -170,7 +185,7 @@
   territory's checks resolved for `run-check`; `folderPlots` is a folder with no git, no checks and no diff, for
   the specs).
 - Push, merge or send anything a quest delivered (stage 1, §9.1 item 11): the owner does, from the delivery note.
-  Open a party's parts and its merge quest when a contract is delivered (P1-18).
+  The parts it merges into a merge quest's branch stay in that branch, inside the territory's own repository.
 - Read `process.env` or a treasury file itself: the composition root hands it the minimal env and a `Treasury`.
 - Import a concrete runner, the registry package or anything of the world layer (§1.3).
 
@@ -193,6 +208,11 @@ entry matches exactly one session, and the replayed log equals the files. `deliv
 report and a sealed draft from worktree-like plots, and a document copied into a territory without git;
 `subquests.spec.ts` opens a plan's sub-quests (again after a delivery that failed halfway) and refuses lists it
 cannot follow; assignees leave their files in the plot through `leavingRunners` (`src/__fixtures__/deliver.ts`).
+`party.spec.ts` runs a party on a real git repo (`src/__fixtures__/party.ts`, P1-18): contract, two parts on the
+contract's branch, the merge quest with both merged, its `party` check, judges from outside the party, the seal
+and the notes; then three parts editing one file, two conflicts, the knight resolving them over two runs.
+`party-rules.spec.ts` refuses the lists that break the party rules, and starts a sub-quest on the branch of the
+one it waits for (P1-16 (f)).
 `patch.spec.ts` applies or refuses an assignee's `elvaria.patch` on real git repos (`src/__fixtures__/git-plots.ts`,
 P1-28), then checks that the delivery note names exactly the patched paths and has no such section without a patch,
 and that the run after a refused patch reads why in its prompt while the first run does not (P1-31).

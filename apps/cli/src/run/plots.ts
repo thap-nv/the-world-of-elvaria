@@ -34,9 +34,10 @@ function cwdOf(kingdom: string, plot: Quest['plot']): string {
 
 export function plotsOver(kingdom: string, manager: PlotManager, host: ProcessHost): Plots {
   return {
-    // `commands.setup` gets the quest's secrets in the host's minimal env, its log masked with them (P1-30).
-    prepare: async (quest, territory, secrets) => {
-      const prepared = await manager.prepare(quest, territory, secrets);
+    // `commands.setup` gets the quest's secrets in the host's minimal env, its log masked with them (P1-30); a new
+    // worktree starts on the branch the quest builds on (P1-18).
+    prepare: async (quest, territory, options) => {
+      const prepared = await manager.prepare(quest, territory, options);
       if (!prepared.ok) {
         const { reason, detail } = prepared.error;
         throw new Error(`the plot of ${quest.id} is not ready (${reason}): ${detail}`);
@@ -50,15 +51,20 @@ export function plotsOver(kingdom: string, manager: PlotManager, host: ProcessHo
     applyPatch: (plot, patchPaths) => manager.applyPatch(plot, patchPaths),
     // The Steward runs them outside its tick and aborts `signal` when nobody waits for them any more (P1-25); they
     // get the quest's secrets in the host's minimal env, and their logs are masked with them (P1-10b).
-    check: async ({ plot, territory, run_dir, signal, secrets }) => {
+    // A party's merge quest runs every check, its parts leave the `defer_to_merge` ones to it (P1-18).
+    check: async ({ plot, territory, run_dir, signal, secrets, party_role: role }) => {
       const touched = await manager.touched(plot);
       const given = {
         ...(signal === undefined ? {} : { signal }),
         ...(secrets === undefined ? {} : { secrets }),
+        ...(role === undefined ? {} : { party_role: role }),
       };
       return runChecks({ kingdom, territory, touched, cwd: cwdOf(kingdom, plot), run_dir, ...given }, host);
     },
     diff: (plot) => manager.diff(plot),
+    // A party's merge quest: its parts merged before its knight's sessions, and checked before its judge (P1-18).
+    merge: (plot, branches) => manager.merge(plot, branches),
+    unmerged: (plot, branches) => manager.unmerged(plot, branches),
     // run-check spawns these without a shell; a check whose program is not found is left out (§3.12).
     scriptChecks: async (territory) => {
       const resolved = await Promise.all(

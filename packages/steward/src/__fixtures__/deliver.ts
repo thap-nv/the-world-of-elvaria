@@ -25,6 +25,8 @@ export function worktreePlots(repo: string): Plots {
     check: () => Promise.resolve([]),
     scriptChecks: () => Promise.resolve([]),
     diff: () => Promise.resolve(''),
+    merge: () => Promise.resolve({ merged: [], pending: [] }),
+    unmerged: () => Promise.resolve([]),
     release: () => Promise.resolve(ok({ removed: true, forget_failures: [] })),
   };
 }

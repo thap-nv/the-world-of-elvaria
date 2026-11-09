@@ -10,6 +10,7 @@ import type { CharacterId, QuestId } from '../core/ids.ts';
 import type { Result } from '../core/result.ts';
 import type { AssigneeCandidate, NamedAssigneeProblem } from './select-assignee.ts';
 import type { CommandPayload } from '../schema/command/inbox-command.ts';
+import type { PartyPlace } from '../party/party-place.ts';
 import type { Rank } from '../schema/common.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
 import type { Quest } from '../schema/quest/quest.ts';
@@ -57,9 +58,23 @@ export interface NewQuestContext {
    */
   readonly characters?: readonly (AssigneeCandidate & { readonly id: CharacterId })[];
   readonly tribes?: Kingdom['tribes'];
+  /**
+   * A part or the merge quest of a party (P1-18), which the Steward makes from a contract's delivery: the inbox
+   * names only a contract, whose party is its own id. It takes the place of the payload's `party_role`.
+   */
+  readonly party?: PartyPlace;
 }
 
 type CreateQuest = CommandPayload<'create_quest'>;
+
+/** party_id, party_role and contract of the new quest: the Steward's place for it, or a contract's own party. */
+function partyFieldsOf(role: CreateQuest['party_role'], context: NewQuestContext) {
+  if (context.party !== undefined) {
+    const { id, role: place, contract } = context.party;
+    return { party_id: id, party_role: place, contract };
+  }
+  return role === undefined ? {} : { party_role: role, party_id: context.id };
+}
 
 /**
  * The secrets a quest asks for that its territory does not allow (ADR 0013: `secrets_required ⊆
@@ -146,7 +161,7 @@ export function questFromCommand(
     version: 1,
     id: context.id,
     ...fields,
-    ...(partyRole === undefined ? {} : { party_role: partyRole, party_id: context.id }),
+    ...partyFieldsOf(partyRole, context),
     status: draft ? 'draft' : 'open',
     assignee: null,
     verifier: null,

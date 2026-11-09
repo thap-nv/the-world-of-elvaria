@@ -55,8 +55,8 @@ export function gitPlots(kingdom: string): Plots {
   const host = { resolve: (name: string) => Promise.resolve({ file: name, args: [] }), env: childEnv() };
   const manager = createPlotManager({ kingdom, host });
   return {
-    prepare: async (quest, territory, secrets) => {
-      const prepared = await manager.prepare(quest, territory, secrets);
+    prepare: async (quest, territory, options) => {
+      const prepared = await manager.prepare(quest, territory, options);
       if (!prepared.ok) throw new Error(`fixture: ${prepared.error.detail}`);
       const { plot } = prepared.value;
       return { plot, cwd: fromPortable(plot.path ?? '') };
@@ -66,6 +66,8 @@ export function gitPlots(kingdom: string): Plots {
     check: () => Promise.resolve([]),
     scriptChecks: () => Promise.resolve([]),
     diff: (plot) => manager.diff(plot),
+    merge: (plot, branches) => manager.merge(plot, branches),
+    unmerged: (plot, branches) => manager.unmerged(plot, branches),
     release: () => Promise.resolve(ok({ removed: false, forget_failures: [] })),
   };
 }

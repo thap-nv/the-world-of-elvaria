@@ -13,6 +13,8 @@ import type { ProcessHost } from '../process/program.ts';
 import { diffIn } from './diff.ts';
 import { filesIn, prepareFolder } from './folder.ts';
 import { gitOf } from './git.ts';
+import { mergeIn, unmergedIn } from './merge.ts';
+import type { MergeOutcome } from './merge.ts';
 import { NO_PATCH, applyPatchIn } from './patch.ts';
 import type { PatchOutcome } from './patch.ts';
 import type { Git } from './git.ts';
@@ -46,15 +48,25 @@ export interface PlotManagerOptions {
 /** The quest's `secrets_required`, treasury name → value: what `commands.setup` gets in its env (P1-30). */
 export type PlotSecrets = Readonly<Record<string, string>>;
 
+export interface PrepareOptions {
+  /** For `commands.setup`, over the host's minimal env; their values are masked in its log (P1-30). */
+  readonly secrets?: PlotSecrets;
+  /**
+   * Branches a new worktree may start from, best first (`PlotBase.from` of the domain, P1-18): the first that exists
+   * and that the default branch does not hold yet; none, the default branch. A worktree already there keeps its own.
+   */
+  readonly from?: readonly string[];
+}
+
 export interface PlotManager {
   /**
-   * Idempotent: the same quest and territory give the same plot, and setup runs until it succeeds once, with
-   * `secrets` over the host's minimal env and their values masked in its log (P1-30); a folder plot has no setup.
+   * Idempotent: the same quest and territory give the same plot, and setup runs until it succeeds once; a folder
+   * plot has no setup and no branch to start from.
    */
   prepare(
     quest: Pick<Quest, 'id'>,
     territory: Territory,
-    secrets?: PlotSecrets,
+    options?: PrepareOptions,
   ): Promise<Result<PreparedPlot, PlotFailure>>;
   status(plot: Plot): Promise<PlotStatus>;
   /** Paths the quest changed, relative to the plot with `/`: what `runChecks` selects checks by. */
@@ -70,6 +82,13 @@ export interface PlotManager {
    * branch has no change, null for a plot without git (the judge reads the files the quest names).
    */
   diff(plot: Plot): Promise<string | null>;
+  /**
+   * A party's merge quest, before each session (P1-18): merges each of `branches` its worktree does not hold, in
+   * order, until one stops on a conflict (left in progress for the character); nothing for a plot without git.
+   */
+  merge(plot: Plot, branches: readonly string[]): Promise<MergeOutcome>;
+  /** The branches of `branches` the plot does not hold (P1-18); all of them for a plot without git. */
+  unmerged(plot: Plot, branches: readonly string[]): Promise<string[]>;
   /** Only when the quest is archived: removes the worktree, keeps the branch. */
   release(plot: Plot): Promise<Result<ReleasedPlot, PlotFailure>>;
 }
@@ -87,7 +106,7 @@ async function prepareGitPlot(
   quest: Pick<Quest, 'id'>,
   territory: Territory,
   options: PlotManagerOptions,
-  secrets: PlotSecrets | undefined,
+  { secrets, from }: PrepareOptions,
 ): Promise<Result<PreparedPlot, PlotFailure>> {
   const repo = fromPortable(territory.path);
   const common = await git(repo, ['rev-parse', '--path-format=absolute', '--git-common-dir']);
@@ -96,7 +115,8 @@ async function prepareGitPlot(
   await ensureLongPaths(git, repo, options.platform ?? process.platform);
   const worktree = worktreePathOf(repo, territory.worktree_dir, quest.id);
   const branch = `quest/${quest.id}`;
-  const prepared = await prepareWorktree({ git, repo, worktree, branch, vcs: territory.vcs });
+  const target = { git, repo, worktree, branch, vcs: territory.vcs, ...(from === undefined ? {} : { from }) };
+  const prepared = await prepareWorktree(target);
   if (!prepared.ok) return prepared;
   const setup = await runSetup({
     kingdom: options.kingdom,
@@ -127,13 +147,13 @@ export function createPlotManager(options: PlotManagerOptions): PlotManager {
   };
   const forget = options.forget ?? [];
   return {
-    prepare: async (quest, territory, secrets) => {
+    prepare: async (quest, territory, given = {}) => {
       if (territory.vcs.type !== 'git') {
         return ok({ ...(await prepareFolder(options.kingdom, quest.id)), setup: null });
       }
       const resolved = await findGit();
       if (resolved === undefined) return err({ reason: 'git_missing', detail: 'git is not found' });
-      return prepareGitPlot(resolved, quest, territory, options, secrets);
+      return prepareGitPlot(resolved, quest, territory, options, given);
     },
     status: async (plot) =>
       plot.type === 'worktree' ? worktreeStatus(await git(), worktreeOf(plot)) : NO_GIT_STATUS,
@@ -152,6 +172,12 @@ export function createPlotManager(options: PlotManagerOptions): PlotManager {
         ? applyPatchIn(await git(), worktreeOf(plot), patchPaths)
         : NO_PATCH,
     diff: async (plot) => (plot.type === 'worktree' ? diffIn(await git(), worktreeOf(plot)) : null),
+    merge: async (plot, branches) =>
+      plot.type === 'worktree' && plot.branch !== undefined
+        ? mergeIn(await git(), worktreeOf(plot), plot.branch, branches)
+        : { merged: [], pending: [...branches] },
+    unmerged: async (plot, branches) =>
+      plot.type === 'worktree' ? unmergedIn(await git(), worktreeOf(plot), branches) : [...branches],
     release: async (plot) =>
       plot.type === 'worktree'
         ? releaseWorktree(await git(), worktreeOf(plot), forget)

@@ -13,6 +13,13 @@
   and who holds the quest, refuses what the table does not allow, and validates the result against the schema.
   `partyIssues` checks the invariants of a party across its quests; `renderQuestTransitionTable` renders the
   table of implementation-plan §2.5.
+- Shapes a party (`src/party/`, §3.13, ADR 0020, P1-18): `mergeQuestOf` (the merge quest the Steward adds when a
+  contract is delivered: a knight's build waiting for every part, their tags and secrets, the highest rank, the
+  royal seal), `PartyPlace` (a part's or the merge quest's place, given to `questFromCommand` through
+  `NewQuestContext.party`, since the inbox names only a contract), `partyStatusOf` (`forming`, `parts`, `merging`,
+  `done` or `stuck`, derived, never stored) and `plotBaseOf` (the branches a quest's plot builds on: a part on its
+  contract's, a merge quest on the contract's with every part merged in, any quest on a dependency's not merged
+  yet, P1-16 (f)). The territory's `checks[].defer_to_merge` (§3.15) leaves a heavy check to the merge quest.
 - Runs the character state machine (`src/character/`, `transitionCharacter`) and derives what is never stored:
   `reputationOf`, `affinityOf`, `titleOf`. Decides levels: `canTake` (which ranks the Steward may give a level),
   `aboveCeiling` (a stretch that makes the quest wait for the royal seal) and `levelChange` (counting only the
@@ -49,7 +56,8 @@
 - Keeps the separation of duties (`src/verify/`, ADR 0008, 0020): `selectVerifier` (never a worker of the quest
   or of its party, never the assignee's model, another model family first by `familyOf`, then another tribe;
   `dispatch.verifier_same_family` for the rest), `underPassRule` (a failing check fails the quest under
-  `all_checks_and_agent`, as `tests_fail`, or `incomplete` for the Steward's `subquests` check, P1-15), `machineVerdictOf` (the machine's verdict from the checks), `validateVerdict` (no
+  `all_checks_and_agent`, as `tests_fail`, or `incomplete` for the Steward's `subquests` check, P1-15, and its
+  `party` check of a merge quest, P1-18), `machineVerdictOf` (the machine's verdict from the checks), `validateVerdict` (no
   worker, only the session the Steward spawned, no pass over a failing check) and the verdict ids of a run
   (`<quest>-<n>`, `-p<k>` for a partial, `-user` for the owner's). `withVerdict` (`src/character/`) puts a
   verdict into the reputation and tag windows and the fail streak.

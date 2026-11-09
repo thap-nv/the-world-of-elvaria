@@ -8,6 +8,7 @@ import type {
   InfirmaryDetail,
   InfirmaryTrip,
   ManaWindow,
+  PartyRole,
   Quest,
   QuestId,
   Rank,
@@ -20,8 +21,10 @@ import type {
   AgentRunner,
   CheckRun,
   CommitOutcome,
+  MergeOutcome,
   PatchOutcome,
   PlotFailure,
+  PrepareOptions,
   PromptTemplates,
   ReleasedPlot,
   Treasury,
@@ -130,6 +133,8 @@ export interface PlotCheck {
    * session did, and their logs are masked with them. Absent for a quest that asks for none.
    */
   readonly secrets?: Readonly<Record<string, string>>;
+  /** The quest's `party_role` (P1-18): a merge quest runs every check, a part leaves `defer_to_merge` ones to it. */
+  readonly party_role?: PartyRole;
 }
 
 /**
@@ -151,13 +156,17 @@ export interface Plots {
   /**
    * Idempotent: a quest that already has its plot gets the same one back. Throws when it cannot be prepared.
    * `secrets` (the quest's `secrets_required` from the treasury, P1-30) go to the territory's `commands.setup` as
-   * they go to its checks, and its log is masked with them; absent for a quest that asks for none.
+   * they go to its checks, and its log is masked with them; absent for a quest that asks for none. `from` (P1-18):
+   * the branches a new worktree may start from, best first (the domain's plotBaseOf).
    */
-  prepare(
-    quest: Quest,
-    territory: Territory,
-    secrets?: Readonly<Record<string, string>>,
-  ): Promise<PreparedPlot>;
+  prepare(quest: Quest, territory: Territory, options?: PrepareOptions): Promise<PreparedPlot>;
+  /**
+   * A party's merge quest, before each session (P1-18): merges each of `branches` its plot does not hold, until one
+   * stops on a conflict, which is left in progress for the character; nothing without git.
+   */
+  merge(plot: Quest['plot'], branches: readonly string[]): Promise<MergeOutcome>;
+  /** The branches of `branches` the plot does not hold (P1-18): the merge quest's check before its judge. */
+  unmerged(plot: Quest['plot'], branches: readonly string[]): Promise<readonly string[]>;
   /** `git add --all` + commit with the territory's hooks (never bypassed): `refused` keeps the work in place. */
   commit(plot: Quest['plot'], message: string): Promise<CommitOutcome>;
   /**

@@ -34,9 +34,19 @@ Each draft is an object with exactly these fields (no others):
 - `seal_required`: `true` when the owner must seal the result before it counts (drafts meant for the public, risky changes), else `false`.
 - `secrets_required`: names of secrets the session needs, only from those the territory allows (in the quest's facts below); `[]` when none.
 
-Never write `party_role`, `contract` or `question` in a draft: parties open with their own quest, and a question for the owner goes into your handover letter, not into the list.
+- `party_role` and `contract`: only when this quest heads a party (next section); otherwise leave both out.
 
-Example:
+Never write `question` in a draft: a question for the owner goes into your handover letter, not into the list.
+
+# When this quest heads a party
+
+The quest's facts below say `Party: contract of <this quest>` when it heads a party: work spread over several areas of the territory (an API and the page that uses it), with an interface between them. Then:
+
+- Write the contract first: the interface every part keeps to (an OpenAPI file for an HTTP API, a shared schema or types module), at a path of the territory, and commit it with your plan file. Every part starts from this quest's branch, so each one sees the same contract.
+- Every draft of the list is a part, and nothing else: `"party_role": "part"` and `"contract": "<the contract's path>"`. One part per area, each with one main tag; a part may wait for another (`depends_on_refs`). A part changes no contract: if it finds the contract wrong, its letter says so.
+- Do not draft the merge: when this quest is delivered, the Steward adds the merge quest itself. It merges every part on your branch, runs every check of the territory and waits for the owner's seal.
+
+Example of a plain list:
 
 ```json
 {
@@ -69,6 +79,50 @@ Example:
       "tags": ["docs"],
       "depends_on_refs": ["d1"],
       "estimate": { "tokens": 30000, "minutes": 15 },
+      "seal_required": false,
+      "secrets_required": []
+    }
+  ]
+}
+```
+
+Example of the parts of a party whose contract is `apps/api/openapi.yaml`:
+
+```json
+{
+  "version": 1,
+  "drafts": [
+    {
+      "ref": "d1",
+      "title": "Serve the bookings of apps/api/openapi.yaml",
+      "description": "Implement GET and POST /api/bookings in apps/api/src/bookings/ exactly as apps/api/openapi.yaml says, with their tests. Done: the API tests pass. Do not change the contract or the web app.",
+      "kind": "build",
+      "rank": "D",
+      "territory": "dc1-se-team",
+      "tier": "session",
+      "class_required": "knight",
+      "tags": ["backend"],
+      "party_role": "part",
+      "contract": "apps/api/openapi.yaml",
+      "depends_on_refs": [],
+      "estimate": { "tokens": 80000, "minutes": 40 },
+      "seal_required": false,
+      "secrets_required": []
+    },
+    {
+      "ref": "d2",
+      "title": "Show and make bookings in the web app",
+      "description": "Add the bookings page in apps/web/src/routes/bookings/, typed from apps/api/openapi.yaml. Done: the page lists and creates bookings against the contract, its tests pass. Do not change the contract or the API.",
+      "kind": "build",
+      "rank": "D",
+      "territory": "dc1-se-team",
+      "tier": "session",
+      "class_required": "knight",
+      "tags": ["frontend"],
+      "party_role": "part",
+      "contract": "apps/api/openapi.yaml",
+      "depends_on_refs": [],
+      "estimate": { "tokens": 80000, "minutes": 40 },
       "seal_required": false,
       "secrets_required": []
     }

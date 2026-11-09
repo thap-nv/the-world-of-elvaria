@@ -9,4 +9,9 @@ export const plotCommitMessage = {
   submit: (quest: QuestId): string => `chore: submit ${quest}`,
   /** Before a kill or a pause; `reason` is the breaker that tripped (`time`, `tokens`, `turns`) or `mana`. */
   wip: (quest: QuestId, reason: string): string => `chore: wip ${quest} (${reason})`,
+  /** A part's branch merged into its party's merge quest before a session (P1-18, §3.13 step 5). */
+  merge: (branch: string, into: string): string => `chore: merge ${branch} into ${into}`,
+  /** The contract quest's sub-quest list, gone once its parts are open (P1-18): the party's branches never carry it. */
+  partsOpen: (quest: QuestId, file: string): string =>
+    `chore: remove ${file} of ${quest}, its parts are open`,
 } as const;

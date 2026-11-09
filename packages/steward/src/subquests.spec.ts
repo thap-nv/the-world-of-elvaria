@@ -153,7 +153,10 @@ describe('delivering a plan: its sub-quests open', () => {
         JSON.stringify({ version: 1, drafts: [] }),
         'subquests.json is no quest-draft file: drafts',
       ],
-      'A party': [list(draft('d1', { party_role: 'part', contract: 'api.yaml' })), 'd1 belong to a party'],
+      'A party': [
+        list(draft('d1', { party_role: 'part', contract: 'api.yaml' })),
+        "d1 are parts of a party: only a party's contract quest opens parts",
+      ],
       'A question': [list(draft('d1', { question: 'Which database?' })), 'd1 asks a question'],
       'A circle': [
         list(draft('d1', { depends_on_refs: ['d2'] }), draft('d2', { depends_on_refs: ['d1'] })),

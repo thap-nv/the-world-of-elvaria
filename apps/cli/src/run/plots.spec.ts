@@ -35,6 +35,8 @@ describe("plots' checks with a quest's secrets", () => {
         commitAll: unused,
         applyPatch: unused,
         diff: unused,
+        merge: unused,
+        unmerged: unused,
         release: unused,
       };
       const territory = TerritorySchema.parse({
@@ -82,6 +84,8 @@ describe("plots' prepare with a quest's secrets", () => {
       commitAll: unused,
       applyPatch: unused,
       diff: unused,
+      merge: unused,
+      unmerged: unused,
       release: unused,
     };
     const territory = TerritorySchema.parse({
@@ -94,9 +98,57 @@ describe("plots' prepare with a quest's secrets", () => {
     });
     const plots = plotsOver('D:/kingdom', manager, processHostOf(testIo()));
 
-    await plots.prepare(quest, territory, { npm_token: 'value' });
+    await plots.prepare(quest, territory, { secrets: { npm_token: 'value' } });
     await plots.prepare(quest, territory);
 
-    expect(asked).toEqual([[{ npm_token: 'value' }], [undefined]]);
+    expect(asked).toEqual([[{ secrets: { npm_token: 'value' } }], [undefined]]);
+  });
+});
+
+describe("plots of a party's quests (P1-18)", () => {
+  it('runs every check for a merge quest, and hands merging and its check to PlotManager', async () => {
+    const quest = questFixture('open');
+    const dir = await mkdtemp(path.join(os.tmpdir(), 'elvaria party plots-'));
+    try {
+      const folder = { type: 'folder' as const, path: `quests/${quest.id}/work` };
+      await mkdir(path.join(dir, 'quests', quest.id, 'work'), { recursive: true });
+      const asked: string[] = [];
+      const manager: PlotManager = {
+        prepare: unused,
+        status: unused,
+        touched: () => Promise.resolve(['README.md']),
+        commitAll: unused,
+        applyPatch: unused,
+        diff: unused,
+        merge: (_plot, branches) => {
+          asked.push(`merge ${branches.join(',')}`);
+          return Promise.resolve({ merged: [...branches], pending: [] });
+        },
+        unmerged: (_plot, branches) => {
+          asked.push(`unmerged ${branches.join(',')}`);
+          return Promise.resolve([]);
+        },
+        release: unused,
+      };
+      const territory = TerritorySchema.parse({
+        version: 1,
+        id: 'notes',
+        name: 'notes',
+        path: 'D:/notes',
+        kind: 'docs',
+        vcs: { type: 'none' },
+        checks: [{ id: 'e2e', run: 'node --version', when: ['apps/**'], timeout_minutes: 1 }],
+      });
+      const plots = plotsOver(dir, manager, processHostOf(testIo()));
+      const runDir = `.runs/${quest.id}-1`;
+      expect(await plots.check({ plot: folder, territory, run_dir: runDir })).toEqual([]);
+      const all = await plots.check({ plot: folder, territory, run_dir: runDir, party_role: 'merge' });
+      expect(all).toMatchObject([{ id: 'e2e', pass: true }]);
+      expect(await plots.merge(folder, ['quest/a'])).toEqual({ merged: ['quest/a'], pending: [] });
+      expect(await plots.unmerged(folder, ['quest/a'])).toEqual([]);
+      expect(asked).toEqual(['merge quest/a', 'unmerged quest/a']);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 });
