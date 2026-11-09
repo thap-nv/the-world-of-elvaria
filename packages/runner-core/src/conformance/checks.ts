@@ -3,7 +3,7 @@
 // `elvaria tribe check` runs them too; a spec wraps each in `it`.
 import assert from 'node:assert/strict';
 
-import { ADAPTER_CAPABILITIES } from '@elvaria/domain';
+import { ADAPTER_CAPABILITIES, TRIBE_AUTHS } from '@elvaria/domain';
 
 import { FAKE_QUESTION } from './scenarios.ts';
 import { DEFAULT_TIMEOUT_MS, HANG_GRACE_MS, play, settlesWithin, within } from './play.ts';
@@ -110,6 +110,12 @@ const capabilities: ConformanceCheck = {
       );
     }
     assert.equal(runner.capabilities.headless, true, 'headless is required');
+    // The sign-ins it runs with (P1-19): doctor pins one of them, and checkTribeAuth holds the tribe to them.
+    const declared: unknown = runner.capabilities.auth;
+    const auth: readonly unknown[] = Array.isArray(declared) ? declared : [];
+    const known: readonly unknown[] = TRIBE_AUTHS;
+    assert.ok(auth.length > 0, 'capability auth not declared: login, api_key or both');
+    for (const kind of auth) assert.ok(known.includes(kind), `unknown auth ${String(kind)}`);
     assert.ok(runner.tribe.length > 0 && runner.adapter.length > 0);
     return 'passed';
   },

@@ -1,4 +1,4 @@
-// Every command of `elvaria`, in the order help lists them. Later tasks add theirs here: tribe (P1-19).
+// Every command of `elvaria`, in the order help lists them. Later tasks add theirs here.
 import { CHARACTER_ADD } from './character/add.ts';
 import { CHARACTER_LEVEL } from './character/level.ts';
 import { CHARACTER_LIST } from './character/list.ts';
@@ -21,12 +21,18 @@ import { SANDBOX_REPLAY } from './sandbox/replay.ts';
 import { SAY } from './say/say.ts';
 import { TERRITORY_ADD } from './territory/add.ts';
 import { TERRITORY_LIST } from './territory/list.ts';
+import { TRIBE_ADD } from './tribe/add.ts';
+import { TRIBE_CHECK } from './tribe/check.ts';
+import { TRIBE_DISABLE } from './tribe/disable.ts';
 import { WAKE } from './wake.ts';
 import type { CommandSpec } from './command.ts';
 
 export const COMMANDS: readonly CommandSpec[] = [
   INIT,
   DOCTOR,
+  TRIBE_ADD,
+  TRIBE_CHECK,
+  TRIBE_DISABLE,
   TERRITORY_ADD,
   TERRITORY_LIST,
   CHARACTER_ADD,

@@ -183,6 +183,9 @@ describe('planTick: limits', () => {
       const gated = { territories: [territory(TERRITORY, 9, laws)], limits: { [CLAUDE]: FULL_TRIBE_LIMITS } };
       expect(takers([quest(Q1, { rank: 'D' })], thorn, gated)).toEqual([[Q1, 'thorn']]);
     }
+    // P1-19: a runner without a headless mode takes nothing, though kingdom.json enables its tribe.
+    const headless = { limits: { [CLAUDE]: { ...FULL_TRIBE_LIMITS, enabled: false } } };
+    expect(takers([quest(Q1, { rank: 'F' })], thorn, headless)).toEqual([]);
   });
 });
 

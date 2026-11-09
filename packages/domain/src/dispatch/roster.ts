@@ -64,12 +64,15 @@ interface Staffed {
   readonly max: number;
 }
 
-/** Tribes enabled in kingdom.json whose runner exists, with its limits (ADR 0021). */
+/**
+ * Tribes enabled in kingdom.json whose runner exists and may run, with its limits (ADR 0021): a runner without a
+ * headless mode cannot be enabled (§3.14), even when kingdom.json was turned on by hand (P1-19).
+ */
 function staffedTribes(source: RosterSource): Map<TribeId, Staffed> {
   const staffed = new Map<TribeId, Staffed>();
   for (const { id, enabled, max_concurrent: max } of source.kingdom.tribes) {
     const limits = source.limits[id];
-    if (enabled && limits !== undefined) staffed.set(id, { limits, max });
+    if (enabled && limits?.enabled === true) staffed.set(id, { limits, max });
   }
   return staffed;
 }

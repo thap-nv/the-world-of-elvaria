@@ -1,15 +1,20 @@
 // One tribe of kingdom.json: find its CLI, read the version, pin both into `tribes[].tool` (implementation-plan
-// §3.14), and refuse Antigravity until the owner has acknowledged its terms (ADR 0018).
-import { TribeSchema } from '@elvaria/domain';
-import type { Tribe } from '@elvaria/domain';
+// §3.14), refuse Antigravity until the owner has acknowledged its terms (ADR 0018), and hold the pinned sign-in to
+// the ones the adapter declares (`capabilities.auth`, checkTribeAuth; P1-19). An owner adapter file names its own
+// CLI (./adapter-tool.ts).
+import { TribeSchema, checkTribeAuth, defaultAuthOf } from '@elvaria/domain';
+import type { AdapterCapabilities, Tribe } from '@elvaria/domain';
 import { toPortable } from '@elvaria/store';
 
 import { launchOf } from '../process/launch.ts';
-import { ADAPTER_FACTORIES } from '../run/crew.ts';
+import { handOf } from '../run/crew.ts';
+import { isAdapterFile } from '../tribe/adapter-file.ts';
+import { adapterFileTool } from './adapter-tool.ts';
 import { finding } from './finding.ts';
 import { ADAPTER_PROGRAMS, locateTool } from './locate-tool.ts';
 import { toolVersion } from './tool-version.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
+import type { ToolFound } from './adapter-tool.ts';
 import type { Finding } from './finding.ts';
 
 export interface DoctorOptions {
@@ -33,14 +38,16 @@ export interface TribeCheck {
   readonly updated?: Tribe;
 }
 
-type Tool = NonNullable<Tribe['tool']>;
-
-/** Gemini CLI serves only paid API keys now (ADR 0018); every other adapter starts with the owner's login. */
-const authOf = (adapter: string): Tool['auth'] => (adapter === 'gemini_cli' ? 'api_key' : 'login');
+/** The capabilities of the tribe's runner; undefined for an adapter without one (gemini_cli, codex_cli today). */
+async function capabilitiesOf(tribe: Tribe, ctx: KingdomContext): Promise<AdapterCapabilities | undefined> {
+  const found = await handOf(tribe, { kingdom: ctx.kingdom, root: ctx.store.root }, ctx.io);
+  return found.kind === 'ready' ? found.hand.runner.capabilities : undefined;
+}
 
 /** Where the CLI is and what version it says, or the finding that says why not. */
-async function probe(tribe: Tribe, ctx: KingdomContext, options: DoctorOptions) {
+async function probe(tribe: Tribe, ctx: KingdomContext, options: DoctorOptions): Promise<ToolFound> {
   const { t } = ctx;
+  if (isAdapterFile(tribe.adapter)) return adapterFileTool(tribe, ctx, options.tools.get(tribe.id));
   const program = ADAPTER_PROGRAMS[tribe.adapter];
   if (program === undefined)
     return {
@@ -64,12 +71,16 @@ async function probe(tribe: Tribe, ctx: KingdomContext, options: DoctorOptions) 
   return { path: toPortable(located.found, ctx.io.platform), version, from: located.from };
 }
 
-/** The tool to pin, or undefined when a pinned tool changed and the owner has not asked to re-pin. */
+/**
+ * The tool to pin, or undefined when a pinned tool changed and the owner has not asked to re-pin. A first pin takes
+ * the sign-in the adapter declares: the owner's login when it runs with one, Gemini CLI's paid key (ADR 0018).
+ */
 function nextTool(
   tribe: Tribe,
   found: { path: string; version: string; from: string },
   ctx: KingdomContext,
   options: DoctorOptions,
+  capabilities: AdapterCapabilities | undefined,
 ) {
   const pinned = tribe.tool;
   const changed = pinned !== undefined && (pinned.version !== found.version || pinned.path !== found.path);
@@ -79,7 +90,7 @@ function nextTool(
     ...pinned,
     path: found.path,
     version: found.version,
-    auth: pinned?.auth ?? authOf(tribe.adapter),
+    auth: pinned?.auth ?? defaultAuthOf(capabilities ?? { auth: [] }),
     ...acknowledged,
   };
 }
@@ -107,17 +118,33 @@ function changedTool(
     : finding('warn', ctx.t('cli.doctor.tool_changed', params), hint);
 }
 
+/** A pinned sign-in the adapter does not run with (P1-19): the tribe cannot run until kingdom.json names another. */
+export function authFindings(
+  tribe: Tribe,
+  capabilities: AdapterCapabilities,
+  ctx: KingdomContext,
+): Finding[] {
+  const checked = checkTribeAuth(capabilities, tribe);
+  if (checked.ok) return [];
+  const { auth, declared } = checked.error;
+  const params = { tribe: tribe.id, adapter: tribe.adapter, auth, declared: declared.join(', ') };
+  return [finding('error', ctx.t('cli.doctor.auth_not_declared', params))];
+}
+
 /**
- * What the tribe's adapter checks once its CLI is pinned (P1-09): the login, how soon it ends, a built hook. A
- * login that does not work is an error; the rest are warnings. A tribe without an adapter package says nothing.
+ * What the tribe's adapter checks once its CLI is pinned (P1-09): the sign-in it runs with (P1-19), the login, how
+ * soon it ends, a built hook. A sign-in it does not declare or a login that does not work is an error; the rest are
+ * warnings. A tribe without an adapter package says nothing.
  */
 async function adapterFindings(tribe: Tribe, ctx: KingdomContext): Promise<Finding[]> {
-  const factory = ADAPTER_FACTORIES[tribe.adapter];
-  if (factory === undefined) return [];
-  const info = await factory(tribe, ctx.kingdom, ctx.io).runner.doctor();
-  if (info.detail === undefined) return [];
+  const found = await handOf(tribe, { kingdom: ctx.kingdom, root: ctx.store.root }, ctx.io);
+  if (found.kind !== 'ready') return [];
+  const { runner } = found.hand;
+  const auth = authFindings(tribe, runner.capabilities, ctx);
+  const info = await runner.doctor();
+  if (info.detail === undefined) return auth;
   const text = ctx.t('cli.doctor.adapter_detail', { tribe: tribe.id, detail: info.detail });
-  return [finding(info.auth_ok ? 'warn' : 'error', text)];
+  return [...auth, finding(info.auth_ok ? 'warn' : 'error', text)];
 }
 
 /**
@@ -155,7 +182,7 @@ async function checkFound(
   const { t } = ctx;
   const found = await probe(tribe, ctx, options);
   if ('problem' in found) return { findings: [found.problem] };
-  const tool = nextTool(tribe, found, ctx, options);
+  const tool = nextTool(tribe, found, ctx, options, await capabilitiesOf(tribe, ctx));
   if (tool === undefined) return { findings: [changedTool(tribe, found, ctx)] };
   const next = TribeSchema.safeParse({ ...tribe, tool });
   if (!next.success) {

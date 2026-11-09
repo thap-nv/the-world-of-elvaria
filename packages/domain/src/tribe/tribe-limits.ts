@@ -3,7 +3,7 @@
 // and every row is applied in turn. Rules that compare several tribes ("no Chancellor on a tribe without
 // structured output while another has it") are a separate pure function (P1-13, §10 question 6).
 import { FULL_MAX_RANK, NO_TOOL_GATE_MAX_RANK } from './constants.ts';
-import type { AdapterCapabilities, AdapterCapability } from './capabilities.ts';
+import type { AdapterCapability, AdapterFlags } from './capabilities.ts';
 import type { Rank } from '../schema/common.ts';
 
 export interface TribeLimits {
@@ -72,7 +72,7 @@ export const TRIBE_NARROWING: readonly TribeNarrowing[] = [
 ];
 
 /** The limits of one tribe whose adapter declares `caps`. */
-export function tribeLimitsOf(caps: AdapterCapabilities): TribeLimits {
+export function tribeLimitsOf(caps: AdapterFlags): TribeLimits {
   return TRIBE_NARROWING.reduce<TribeLimits>(
     (limits, { capability, missing }) => (caps[capability] ? limits : { ...limits, ...missing }),
     FULL_TRIBE_LIMITS,

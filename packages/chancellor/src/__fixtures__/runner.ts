@@ -47,6 +47,7 @@ export function scriptedRunner(answers: readonly Answer[]): ScriptedRunner {
       resume: true,
       compact: true,
       subagent: true,
+      auth: ['login'],
     },
     requests,
     spawn: (req) => {

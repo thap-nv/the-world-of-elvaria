@@ -4,14 +4,24 @@ import { z } from 'zod';
 import { REGISTRY_ID_PATTERN, TribeIdSchema } from '../core/ids.ts';
 import { AbsPathSchema, DateTimeSchema, ModelSlugSchema, NonEmptyStringSchema } from './common.ts';
 
+/** A built-in adapter: a package of this repo (`claude_code`, `antigravity`, `gemini_cli`, `codex_cli`). */
+const BUILT_IN_ADAPTER = '[a-z][a-z0-9_]*';
+const ADAPTER_FILE = String.raw`adapters/[a-z0-9][a-z0-9-]*\.mjs`;
+/** An owner adapter file inside the kingdom (ADR 0021): only `apps/cli` loads it, with `import()`. */
+export const ADAPTER_FILE_PATTERN = new RegExp(`^${ADAPTER_FILE}$`);
+
+/** How a tribe's CLI signs in; which ones an adapter runs with is a capability it declares (§3.14). */
+export const TRIBE_AUTHS = ['login', 'api_key'] as const;
+export type TribeAuth = (typeof TRIBE_AUTHS)[number];
+
 const TribeToolSchema = z
   .strictObject({
     path: AbsPathSchema,
     version: NonEmptyStringSchema,
     default_model: ModelSlugSchema.optional(),
-    auth: z.enum(['login', 'api_key']).default('login').meta({
+    auth: z.enum(TRIBE_AUTHS).default('login').meta({
       description:
-        "login = the owner's own sign-in saved by the unmodified CLI (claude.ai, Google, ChatGPT); api_key = a key from the treasury (paid, so budget.usd_week is required; mandatory for Claude if Elvaria is shared with other people).",
+        "login = the owner's own sign-in saved by the unmodified CLI (claude.ai, Google, ChatGPT); api_key = a key from the treasury (paid, so budget.usd_week is required; mandatory for Claude if Elvaria is shared with other people). It must be one the adapter declares in capabilities.auth (Gemini CLI: api_key only); `elvaria doctor` and `elvaria tribe check` check that, not this schema, which names no adapter (ADR 0021).",
     }),
     terms_acknowledged_at: DateTimeSchema.optional().meta({
       description:
@@ -33,7 +43,7 @@ export const TribeSchema = z
     }),
     adapter: z
       .string()
-      .regex(/^(?:[a-z][a-z0-9_]*|adapters\/[a-z0-9][a-z0-9-]*\.mjs)$/)
+      .regex(new RegExp(`^(?:${BUILT_IN_ADAPTER}|${ADAPTER_FILE})$`))
       .meta({
         description:
           'A built-in adapter (claude_code, antigravity, gemini_cli, codex_cli) or an adapter file adapters/<name>.mjs inside the kingdom that exports createAdapter(kit) and passes the conformance suite.',
@@ -71,14 +81,9 @@ export const TribeSchema = z
           'Denominator for the `estimate` gauge source (implementation-plan §3.5): tokens of the sessions in each window, or their minutes for a tribe without usage; used for a pool and window the account reports no figure for. Each pool of the tribe is measured against it.',
       }),
   })
+  // Only rules that hold whatever the adapter: which sign-ins an adapter runs with is its own declaration, checked
+  // by checkTribeAuth (tribe/auth.ts), so the core never asks which CLI a tribe runs (ADR 0021; P1-19).
   .superRefine((tribe, ctx) => {
-    if (tribe.adapter === 'gemini_cli' && tribe.tool !== undefined && tribe.tool.auth !== 'api_key') {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['tool', 'auth'],
-        message: 'adapter gemini_cli needs auth = api_key',
-      });
-    }
     if (tribe.tool?.auth === 'api_key' && tribe.budget?.usd_week === undefined) {
       ctx.addIssue({
         code: 'custom',
@@ -89,13 +94,8 @@ export const TribeSchema = z
   })
   .meta({
     id: 'tribe',
-    // The same two rules as the superRefine above, for readers of the JSON contract.
+    // The same rule as the superRefine above, for readers of the JSON contract.
     allOf: [
-      {
-        $comment: 'Gemini CLI no longer serves consumer accounts: it runs only with a paid API key.',
-        if: { properties: { adapter: { const: 'gemini_cli' } } },
-        then: { properties: { tool: { required: ['auth'], ...API_KEY } } },
-      },
       {
         if: { required: ['tool'], properties: { tool: { required: ['auth'], ...API_KEY } } },
         then: { required: ['budget'], properties: { budget: { required: ['usd_week'] } } },

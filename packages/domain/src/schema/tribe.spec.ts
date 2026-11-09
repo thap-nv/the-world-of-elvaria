@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { TribeSchema } from './tribe.ts';
+import { ADAPTER_FILE_PATTERN, TribeSchema } from './tribe.ts';
 
 const base = { enabled: true, max_concurrent: 1 };
 const tool = { path: '/usr/local/bin/gemini', version: '0.67.0' };
@@ -23,9 +23,9 @@ describe('TribeSchema', () => {
     );
   });
 
-  it('runs Gemini CLI only with a paid API key (ADR 0018)', () => {
-    expect(verdictOf({ id: 'gemini', adapter: 'gemini_cli', tool })).toBe('tool.auth');
-    expect(verdictOf({ id: 'gemini', adapter: 'gemini_cli' })).toBe('ok');
+  it('names no adapter: the sign-ins an adapter runs with are its declared capability (P1-19)', () => {
+    // Gemini CLI runs only with a paid key (ADR 0018); runner-gemini declares it, checkTribeAuth checks it.
+    expect(verdictOf({ id: 'gemini', adapter: 'gemini_cli', tool })).toBe('ok');
     expect(verdictOf({ id: 'gemini', adapter: 'gemini_cli', tool: paid, budget: { usd_week: 5 } })).toBe(
       'ok',
     );
@@ -42,5 +42,8 @@ describe('TribeSchema', () => {
   it('accepts an adapter file from the kingdom and rejects one elsewhere', () => {
     expect(verdictOf({ id: 'local', adapter: 'adapters/my-cli.mjs' })).toBe('ok');
     expect(verdictOf({ id: 'local', adapter: '../outside.mjs' })).toBe('adapter');
+    expect(ADAPTER_FILE_PATTERN.test('adapters/my-cli.mjs')).toBe(true);
+    expect(ADAPTER_FILE_PATTERN.test('claude_code')).toBe(false);
+    expect(ADAPTER_FILE_PATTERN.test('adapters/sub/x.mjs')).toBe(false);
   });
 });
