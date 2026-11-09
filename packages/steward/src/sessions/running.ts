@@ -40,6 +40,11 @@ export interface Sessions {
   stop(running: Running, reason: string): Promise<RunResult>;
   /** stop() for the session on `quest`, if any, when its end is of no use. */
   kill(quest: QuestId, reason: string): Promise<void>;
+  /**
+   * The session on `quest` went on in a process of its own (a reply tried again, a reminder of the letter, P1-33):
+   * the record names that process, spawned at `spawnedAt`, so a restart reaps it and not the first one.
+   */
+  respawned(quest: QuestId, spawnedAt: string): void;
   /** Stops recording ends and kills every session (the Steward stops). */
   close(reason: string): Promise<void>;
   size(): number;
@@ -66,18 +71,34 @@ const heldOf = (table: ReadonlyMap<QuestId, Running>, spent: Spent): HeldSession
     usage: { tokens: spent.get(running)?.tokens ?? 0 } satisfies UsageSoFar,
   }));
 
+/**
+ * The record `save` keeps of the table: one write at a time, each of the table as it was when it changed, every
+ * session at its latest spawn (`respawn`: the process a session runs in now, once it is not the first, P1-33).
+ */
+function recordOf(save: SaveSessions, table: ReadonlyMap<QuestId, Running>) {
+  const respawns = new WeakMap<RunningSession, string>();
+  let saving = Promise.resolve();
+  const persist = (): void => {
+    const now = [...table.values()].map((running) => ({
+      ...running,
+      spawned_at: respawns.get(running.session) ?? running.spawned_at,
+    }));
+    saving = saving.then(() => save(now)).catch(() => undefined);
+  };
+  const respawn = (session: RunningSession, spawnedAt: string): void => {
+    respawns.set(session, spawnedAt);
+    persist();
+  };
+  return { persist, respawn, saved: () => saving };
+}
+
 export function createSessions(save: SaveSessions = () => Promise.resolve()): Sessions {
   const table = new Map<QuestId, Running>();
   const usage: Spent = new WeakMap();
   const ended: Finished[] = [];
   const dropped = new Set<RunningSession>();
+  const { persist, respawn, saved } = recordOf(save, table);
   let open = true;
-  let saving = Promise.resolve();
-  // One write at a time, each of the table as it was when it changed.
-  const persist = (): void => {
-    const now = [...table.values()];
-    saving = saving.then(() => save(now)).catch(() => undefined);
-  };
   const stop = async (running: Running, reason: string): Promise<RunResult> => {
     dropped.add(running.session);
     if (table.get(running.quest) === running) table.delete(running.quest);
@@ -113,6 +134,10 @@ export function createSessions(save: SaveSessions = () => Promise.resolve()): Se
       const running = table.get(quest);
       if (running !== undefined) await stop(running, reason);
     },
+    respawned: (quest, spawnedAt) => {
+      const running = table.get(quest);
+      if (running !== undefined) respawn(running.session, spawnedAt);
+    },
     close: async (reason) => {
       open = false;
       const all = [...table.values()];
@@ -121,6 +146,6 @@ export function createSessions(save: SaveSessions = () => Promise.resolve()): Se
       await Promise.all(all.map(({ session }) => session.kill(reason)));
     },
     size: () => table.size,
-    saved: () => saving,
+    saved,
   };
 }

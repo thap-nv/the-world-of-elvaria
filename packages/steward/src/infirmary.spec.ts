@@ -38,7 +38,15 @@ describe('infirmaryReason', () => {
     [
       'a review no verifier could finish',
       { trip: 'turns', detail: { verifiers_stopped: 2 } },
-      'breaker:turns; a breaker stopped 2 verifiers of run 3, so no further one opens: raise the budget (quest edit) before a retry',
+      'breaker:turns; 2 verifiers of run 3 left without a verdict, so no further one opens: raise the budget (quest edit) before a retry',
+    ],
+    [
+      'a review whose judges handed in no verdict (P1-33)',
+      {
+        trip: 'no_verdict',
+        detail: { message: 'the session ended error, exit code 1', verifiers_stopped: 2 },
+      },
+      'review:no_verdict: the session ended error, exit code 1; 2 verifiers of run 3 left without a verdict, so no further one opens: see why in the log, and give the review a judge that hands in a verdict before a retry',
     ],
     [
       'a script that broke',

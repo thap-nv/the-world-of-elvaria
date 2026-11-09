@@ -30,7 +30,8 @@ const GUARD_TEXT: Readonly<Record<QuestGuard, string>> = {
   needs_verifier: '`tier = session`, chưa có `verifier`',
   has_verifier: 'có `verifier`',
   undelivered: 'chưa có `deliverable.delivered_at`',
-  stalled_review: 'cầu dao đã cắt `REVIEW_BREAKS_MAX` người chấm của lượt (`reviewStalled`)',
+  stalled_review:
+    '`REVIEW_BREAKS_MAX` người chấm của lượt đã rời đi không ra verdict: cầu dao cắt hoặc `crash` (`reviewStalled`)',
   no_stalled_review: 'không phải `reviewStalled`',
 };
 
@@ -83,13 +84,17 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
   'review.verdict_fail.machine_retry':
     'lượt máy của quest ghép bị đánh trượt: không có người để trả về, quest mở lại cho hiệp sĩ, phiên của nó đọc verdict (P1-18)',
   'review.verdict_fail.out_of_retries': 'chuông; bậc script không có `returned`',
+  'review.verdict_partial.has_verifier':
+    'người chấm nộp verdict `partial` (lưu `progress`) rồi rời đi; `verifier = null`, lượt kết thúc `submitted`, không đếm vào `reviewBreaksOf`; người kế đọc tiếp (P1-33)',
   'review.mana_out.has_verifier': '`verifier = null`, verdict `partial` lưu `progress`; người kế đọc tiếp',
   'review.breaker.has_verifier':
     'như trên; cả khi CLI của người chấm tự dừng ở trần lượt hay ngân sách (P1-23)',
   'review.breaker.needs_verifier':
-    'trip `secrets`, như `claimed`: người chấm cần cùng secret với người làm; hoặc ngay sau hàng trên, khi cầu dao đã cắt `REVIEW_BREAKS_MAX` (2) người chấm của lượt (`reviewStalled`, P1-23), chuông',
+    'trip `secrets`, như `claimed`: người chấm cần cùng secret với người làm; hoặc ngay sau hàng trên, khi `REVIEW_BREAKS_MAX` (2) người chấm của lượt đã rời đi không ra verdict (`reviewStalled`, P1-23) và người cuối bị cầu dao cắt, chuông',
   'review.crash.has_verifier':
-    'phiên người chấm kết thúc mà không có phán quyết (CLI lỗi, Quản sự khởi động lại): như trên, lượt kết thúc `crash`',
+    'phiên người chấm kết thúc mà không có phán quyết (CLI lỗi, output không thành verdict, Quản sự khởi động lại): như trên, lượt kết thúc `crash`, đếm vào `reviewBreaksOf` (P1-33)',
+  'review.crash.needs_verifier':
+    'ngay sau hàng trên, khi `REVIEW_BREAKS_MAX` (2) người chấm của lượt đã rời đi không ra verdict (`reviewStalled`, P1-33): trip `no_verdict`, chuông; `retry` của người dùng đưa về review như với cầu dao',
   'review.suspend.has_verifier': 'như trên, khi người dùng đình chỉ người chấm',
   'returned.redispatch': '`attempts` +1, lượt mới, cùng `assignee`, prompt kèm notes',
   'returned.breaker': 'trip `secrets`, như `claimed`',

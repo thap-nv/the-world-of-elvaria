@@ -59,7 +59,8 @@ export const QUEST_GUARDS: Readonly<Record<QuestGuard, (quest: Quest) => boolean
   has_verifier: (quest) => typeof quest.verifier === 'string',
   // Delivery stamps deliverable.delivered_at instead of being a status of its own, so it happens once.
   undelivered: (quest) => quest.deliverable.delivered_at === undefined,
-  // The breakers cut REVIEW_BREAKS_MAX verifiers of the run (P1-23): the work is done, only its review stalled.
+  // REVIEW_BREAKS_MAX verifiers of the run left without a verdict, cut by a breaker (P1-23) or crashed (P1-33): the
+  // work is done, only its review stalled.
   stalled_review: reviewStalled,
   no_stalled_review: (quest) => !reviewStalled(quest),
 };
@@ -79,6 +80,7 @@ const R = ['runner'] as const;
 const M = ['mana'] as const;
 /** A verdict comes from the verifier's session, or from the Steward when the machine judges (ADR 0008). */
 const VS = ['verifier', 'steward'] as const;
+const V = ['verifier'] as const;
 const US = ['user', 'steward'] as const;
 
 export const QUEST_TRANSITIONS: readonly QuestTransitionRow[] = [
@@ -125,12 +127,17 @@ export const QUEST_TRANSITIONS: readonly QuestTransitionRow[] = [
   // The machine's merge failed its judge: no character to send it back to, so it opens for a knight (P1-18).
   { from: 'review', event: 'verdict_fail', actors: VS, guard: 'machine_retry', to: 'open' },
   { from: 'review', event: 'verdict_fail', actors: VS, guard: 'out_of_retries', to: 'infirmary' },
+  // A judge hands in how far it read and leaves the rest to the next judge (P1-33: before, a crash carried it).
+  { from: 'review', event: 'verdict_partial', actors: V, guard: 'has_verifier', to: 'review' },
   { from: 'review', event: 'mana_out', actors: M, guard: 'has_verifier', to: 'review' },
   { from: 'review', event: 'breaker', actors: S, guard: 'has_verifier', to: 'review' },
   { from: 'review', event: 'breaker', actors: S, guard: 'needs_verifier', to: 'infirmary' },
   // The verifier's session ended with no verdict (its CLI failed, or the Steward restarted under it): the
   // verifier leaves as on a breaker and the next one takes the review (P1-03).
   { from: 'review', event: 'crash', actors: S, guard: 'has_verifier', to: 'review' },
+  // Right after the row above, once REVIEW_BREAKS_MAX verifiers of the run left without a verdict (P1-33): a judge
+  // whose output is never a verdict would otherwise cost a session every tick, for ever. As `review.breaker`.
+  { from: 'review', event: 'crash', actors: S, guard: 'needs_verifier', to: 'infirmary' },
   { from: 'review', event: 'suspend', actors: U, guard: 'has_verifier', to: 'review' },
   { from: 'review', event: 'cancel', actors: U, to: 'archived' },
   { from: 'returned', event: 'redispatch', actors: S, to: 'working' },

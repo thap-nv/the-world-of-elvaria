@@ -94,6 +94,17 @@ export interface RunResult {
   readonly rate_limited: boolean;
   /** The Question section of the handover letter: the Steward moves the quest `ask` → `blocked` (§2.4). */
   readonly question?: string;
+  /**
+   * The sessions that followed the first in the same run (spawnSequel, §3.14, P1-33), in order: a reply tried once
+   * more, a reminder of the letter. `session_id` above stays the first one's; the tokens are of them all.
+   */
+  readonly sequels?: readonly SequelSession[];
+}
+
+/** A session that followed the first in a run, and why it was opened. */
+export interface SequelSession {
+  readonly session_id: string;
+  readonly why: string;
 }
 
 export interface RunningSession {

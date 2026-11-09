@@ -9,7 +9,7 @@ import type { CharacterId, QuestId } from '../core/ids.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
 import type { Quest } from '../schema/quest/quest.ts';
-import type { VerifierClass } from '../verify/select-verifier.ts';
+import type { VerifierClass, VerifierPolicy } from '../verify/select-verifier.ts';
 
 /**
  * The machine's work the Steward runs outside the tick (P1-25): a quest's checks before its judge, a script-tier
@@ -38,6 +38,9 @@ export interface ReviewSource {
   readonly background?: BackgroundWork;
 }
 
+/** The snapshot's tribe limits too (RosterSource): a judge answering in text comes after an equal one (P1-33). */
+type ReviewInput = ReviewSource & { readonly limits: NonNullable<VerifierPolicy['limits']> };
+
 export interface Reviews {
   /** Quests whose checks the Steward starts now, outside the tick. */
   readonly checks: QuestId[];
@@ -58,7 +61,7 @@ function checksState(background: BackgroundWork | undefined, quest: QuestId): 'r
  * a quest whose checks have ended; checks start for a quest that some judge may take, now or later.
  */
 export function planReviews(
-  source: ReviewSource,
+  source: ReviewInput,
   roster: Roster,
   characterOf: (id: CharacterId | null | undefined) => Character | undefined,
   review: readonly Quest[],
@@ -71,6 +74,7 @@ export function planReviews(
       classes: source.registry.classes,
       assignee: characterOf(quest.assignee),
       party: partyOf(quest, source.quests),
+      limits: source.limits,
     };
     if (waitsForNoJudge(quest, candidates, policy)) {
       planned.unjudgeable.push(quest.id);

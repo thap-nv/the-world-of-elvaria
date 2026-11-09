@@ -321,7 +321,7 @@ Mọi giá trị enum xuất hiện trong [schemas/](schemas/) có ở bảng n�
 | `script.produces` | `report`, `units`, `check` | |
 | event `agent.tool` → `data.tool` | `read`, `write`, `bash`, `web`, `search`, `other` | |
 | event `agent.session.end` → `data.outcome` | `completed`, `max_turns`, `budget`, `killed`, `error` | kết thúc phiên CLI (`RunResult.outcome`); `budget` = chạm `--max-budget-usd` |
-| event `quest.infirmary` → `data.trip` | `time`, `tokens`, `turns`, `commit`, `secrets`, `max_attempts`, `script_broken`, `script_usage`, `script_fail` | vì sao vào trạm quân y (P1-32): năm loại cầu dao, hết số lần thử, hay lượt bậc script mà script hỏng, không dùng được tham số, không đạt; dòng cũ không có trường này |
+| event `quest.infirmary` → `data.trip` | `time`, `tokens`, `turns`, `commit`, `secrets`, `no_verdict`, `max_attempts`, `script_broken`, `script_usage`, `script_fail` | vì sao vào trạm quân y (P1-32): năm loại cầu dao, việc nghiệm thu kẹt vì người chấm cứ rời đi không ra phán quyết (`no_verdict`, P1-33), hết số lần thử, hay lượt bậc script mà script hỏng, không dùng được tham số, không đạt; dòng cũ không có trường này |
 | event `mana.level` → `data.pool` | id tộc (ví dụ `claude`), `gemini_models`, `claude_gpt_models` | tài khoản một pool dùng id tộc làm pool; Antigravity có hai pool |
 | event `mana.level` → `data.window` | `five_hour`, `weekly` | cửa sổ hạn mức |
 | event `mana.level` → `data.source` | `rate_limits`, `estimate`, `signal` | ba nguồn gauge (ADR 0009) |

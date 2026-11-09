@@ -149,6 +149,9 @@ const EFFECTS: { readonly [T in QuestEventType]: Effect<T> } = {
   verdict_pass: (quest, event) => ok(endRun(quest, event, 'submitted')),
   // The next attempt gets a fresh verifier, chosen again once it is submitted.
   verdict_fail: (quest, event) => ok(withoutVerifier(endRun(quest, event, 'submitted'))),
+  // The judge handed in how far it read and leaves; the next one reads on. Its session handed in a verdict, so it
+  // ends `submitted`, not `crash`: a partial verdict is progress, not a stalled review (P1-33).
+  verdict_partial: ending('submitted'),
   seal: (quest, event) =>
     ok({ ...quest, seal: { at: event.at, ...(event.note === undefined ? {} : { note: event.note }) } }),
   return: (quest) => ok(withoutVerifier(quest)),

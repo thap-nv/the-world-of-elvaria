@@ -7,7 +7,10 @@ import type { AdapterCapability, AdapterFlags } from './capabilities.ts';
 import type { Rank } from '../schema/common.ts';
 
 export interface TribeLimits {
-  /** Without `headless` the tribe cannot be enabled: `doctor` refuses it. */
+  /**
+   * Without `headless` the tribe cannot be enabled: the conformance suite (`elvaria tribe check`) refuses it, and
+   * planTick gives it nothing even when kingdom.json was turned on by hand (P1-19; P1-33, as the owner settled P1-34 (b)).
+   */
   readonly enabled: boolean;
   /** Highest quest rank the tribe takes; F–D without a tool gate. */
   readonly max_rank: Rank;

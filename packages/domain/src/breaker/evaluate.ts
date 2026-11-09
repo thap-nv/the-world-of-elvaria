@@ -5,6 +5,7 @@
 import { MS_PER_MINUTE } from '../constants.ts';
 import type { Instant } from '../core/clock.ts';
 import type { BreakerTrip } from '../quest/events.ts';
+import type { TribeLimits } from '../tribe/tribe-limits.ts';
 
 /** The breakers that trip while a session runs; `commit` and `secrets` trip where no session runs (§2.5). */
 export const SESSION_TRIPS = ['time', 'tokens', 'turns'] as const satisfies readonly BreakerTrip[];
@@ -38,19 +39,22 @@ export type BreakerVerdict = 'ok' | { readonly trip: SessionTrip; readonly detai
 /**
  * The first breaker that trips, time before tokens before turns. Time trips the minute the budget is spent (a
  * session of 45 minutes stops at 45:00), tokens and turns once they go past it: spending the whole budget is
- * allowed, going over is not.
+ * allowed, going over is not. A tribe whose CLI reports no usage (`minutes_only`, §3.14, P1-33) has only the time
+ * breaker: what it would report of tokens and turns is no measure.
  */
 export function evaluateBreakers(
   attempt: RunningAttempt,
   limits: BreakerLimits,
   now: Instant,
   usage: UsageSoFar,
+  measure: TribeLimits['breakers'] = 'tokens_and_minutes',
 ): BreakerVerdict {
   const elapsed = now - attempt.started_at;
   if (elapsed >= limits.max_minutes * MS_PER_MINUTE) {
     const minutes = Math.floor(elapsed / MS_PER_MINUTE);
     return { trip: 'time', detail: `ran ${minutes} min, limit ${limits.max_minutes} min` };
   }
+  if (measure === 'minutes_only') return 'ok';
   if (usage.tokens > limits.max_tokens)
     return { trip: 'tokens', detail: `${usage.tokens} tokens, limit ${limits.max_tokens}` };
   if (usage.turns !== undefined && usage.turns > limits.max_turns)

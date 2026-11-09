@@ -12,9 +12,10 @@
   `SpawnRequest.structured` (`--json-schema`) when the chosen Chancellor's tribe has `structured_output`,
   less the keywords Claude Code 2.1.319 refuses (it validates the schema as draft-07, strict: `$schema`,
   `contains`, `minContains`, `maxContains`; zod still checks the one-question rule they carry);
-  otherwise with the schema in the system prompt, the JSON cut out of the session's last text, and one retry in
-  `<run_dir>/retry/` when that text cannot be used. Who speaks is the domain's `selectChancellor` (§10
-  question 6); the caller passes its choice in.
+  otherwise through runner-core's `spawnParsed` (P1-33, the road the judge's verdict takes too): the schema in
+  the system prompt, the JSON cut out of the session's last text, and one retry in a fresh session in
+  `<run_dir>/retry/` when `checkReply` finds that text unusable; `session_ids` names both sessions and `tokens`
+  counts both. Who speaks is the domain's `selectChancellor` (§10 question 6); the caller passes its choice in.
 - Holds the drafts against the kingdom's files (`screenDrafts`): a draft is dropped, with its reason, when it
   names a kind, territory, script or tag the kingdom does not have (tags are the closed list of
   `registry/tags.json`), a class its kind does not allow, a script not made for its kind or with params outside
@@ -40,8 +41,8 @@
 ## Depends on
 
 - `@elvaria/domain` (`QuestDraftFileSchema`, `contractOf`, registry and territory types, `Result`),
-  `@elvaria/runner-core` (`AgentRunner`, `buildChancellorPrompt`, `toolPolicyOf`, prompt templates). No
-  third-party package.
+  `@elvaria/runner-core` (`AgentRunner`, `buildChancellorPrompt`, `toolPolicyOf`, prompt templates, `spawnParsed`
+  and the text-reply helpers of `src/structured/`). No third-party package.
 
 ## How to test
 

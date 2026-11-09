@@ -16,7 +16,8 @@ import {
   workingBy,
 } from '../dispatch/__fixtures__/snapshot.ts';
 import { planTick } from '../dispatch/plan-tick.ts';
-import { breakersOf, tokenCeilingOf } from './breakers.ts';
+import { FULL_TRIBE_LIMITS, tribeLimitsOf } from '../tribe/tribe-limits.ts';
+import { breakersOf, measureOf, tokenCeilingOf } from './breakers.ts';
 import type { QuestId } from '../core/ids.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 import type { HeldSession } from './breakers.ts';
@@ -28,6 +29,18 @@ const held = (id: QuestId, role: HeldSession['role'], tokens = 0, turns?: number
   role,
   usage: turns === undefined ? { tokens } : { tokens, turns },
 });
+
+const EVERY = {
+  headless: true,
+  context_file: true,
+  events: true,
+  tool_gate: true,
+  usage: true,
+  structured_output: true,
+  resume: true,
+  compact: true,
+  subagent: true,
+};
 
 /** A quest in review whose verifier opened its session at minute `minute`. */
 const judgedBy = (base: Quest, minute: number): Quest =>
@@ -98,5 +111,43 @@ describe('planTick: breakers (§3.4)', () => {
 
   it('stops nothing without held sessions (a sandbox day)', () => {
     expect(planTick(snapshot([workingBy(quest(Q1), 'thorn', 10)], [thorn]), NOW).breakers).toEqual([]);
+  });
+
+  it('holds a tribe whose CLI reports no usage to its minutes alone (§3.14 minutes_only, P1-33)', () => {
+    const wren = character('wren', { tribe: 'gemini', status: 'working' });
+    const quests = [workingBy(quest(Q1), 'thorn', 100), workingBy(quest(Q2), 'wren', 100)];
+    const sessions = [held(Q1, 'assignee', 400_001), held(Q2, 'assignee', 400_001, 900)];
+    const limits = { claude: FULL_TRIBE_LIMITS, gemini: tribeLimitsOf({ ...EVERY, usage: false }) };
+    expect(limits.gemini.breakers).toBe('minutes_only');
+    const plan = planTick(snapshot(quests, [thorn, wren], { sessions, limits }), NOW);
+    expect(plan.breakers).toEqual([
+      { quest: Q1, role: 'assignee', trip: 'tokens', detail: '400001 tokens, limit 400000' },
+    ]);
+    // Its minutes still count.
+    const late = [workingBy(quest(Q1), 'thorn', 100), workingBy(quest(Q2), 'wren', 10)];
+    expect(planTick(snapshot(late, [thorn, wren], { sessions, limits }), NOW).breakers).toContainEqual({
+      quest: Q2,
+      role: 'assignee',
+      trip: 'time',
+      detail: 'ran 110 min, limit 45 min',
+    });
+  });
+});
+
+describe('measureOf', () => {
+  it("reads the holder's tribe, and keeps every breaker for a holder or tribe it does not know", () => {
+    const sable = character('sable', { cls: 'judge', tribe: 'lantern' });
+    const measure = measureOf(new Map([['sable', sable]]), {
+      [sable.tribe]: tribeLimitsOf({ ...EVERY, usage: false }),
+    });
+    const judged = moved(inReview(quest(Q1), 'thorn', 10), 20, [
+      'assign_verifier',
+      'steward',
+      { verifier: 'sable' },
+    ]);
+    expect(measure(judged, 'verifier')).toBe('minutes_only');
+    expect(measure(judged, 'assignee')).toBe('tokens_and_minutes');
+    expect(measure(quest(Q2), 'verifier')).toBe('tokens_and_minutes');
+    expect(measureOf(new Map([['sable', sable]]), {})(judged, 'verifier')).toBe('tokens_and_minutes');
   });
 });

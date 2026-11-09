@@ -157,8 +157,8 @@ describe('elvaria tribe', () => {
       const io = testIo();
       expect(await elvaria(io, 'tribe', 'check', 'lantern', '--scenarios')).toBe(0);
       expect(io.printed.out).toEqual([
-        'Tribe lantern (adapters/lantern.mjs) declares: headless, usage, structured_output; sign-in: login.',
-        'It lacks: context_file, events, tool_gate, resume, compact, subagent.',
+        'Tribe lantern (adapters/lantern.mjs) declares: headless, usage; sign-in: login.',
+        'It lacks: context_file, events, tool_gate, structured_output, resume, compact, subagent.',
         'It takes quests of rank F to D.',
         'Without a tool gate it takes no quest on a territory with read_before_write or rank_floor laws.',
         '✓ capabilities',

@@ -85,7 +85,7 @@ describe('a review the breakers keep stopping', () => {
         kind: 'infirmary',
         quest: { id: quest.id, title: 'Judged at length', rank: 'D' },
         reason:
-          'breaker:tokens: 480001 tokens, limit 480000; a breaker stopped 2 verifiers of run 1, so no further one opens: raise the budget (quest edit) before a retry',
+          'breaker:tokens: 480001 tokens, limit 480000; 2 verifiers of run 1 left without a verdict, so no further one opens: raise the budget (quest edit) before a retry',
         // In parts too (P1-32): the last verifier's breaker, and how many of the run it stopped.
         trip: 'tokens',
         detail: { message: '480001 tokens, limit 480000', verifiers_stopped: 2 },
@@ -133,7 +133,7 @@ describe('a review the breakers keep stopping', () => {
     ]);
     expect(kingdom.notices.at(-1)).toMatchObject({
       kind: 'infirmary',
-      reason: expect.stringContaining('a breaker stopped 2 verifiers of run 1') as unknown,
+      reason: expect.stringContaining('2 verifiers of run 1 left without a verdict') as unknown,
     });
   });
 
@@ -157,7 +157,7 @@ describe('a review the breakers keep stopping', () => {
     );
     expect(kingdom.notices.at(-1)).toMatchObject({
       kind: 'infirmary',
-      reason: expect.stringMatching(/^breaker:turns; a breaker stopped 2 verifiers of run 1/) as unknown,
+      reason: expect.stringMatching(/^breaker:turns; 2 verifiers of run 1 left without a verdict/) as unknown,
     });
     expect(verifiersOf(spawned)).toHaveLength(2);
     expect(kingdom.warnings.join('\n')).toContain("'s review stopped, breaker:turns");

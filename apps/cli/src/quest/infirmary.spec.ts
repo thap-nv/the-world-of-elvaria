@@ -92,10 +92,18 @@ describe('elvaria quest show of a quest in the infirmary', () => {
     const out = await show(infirmaryLine({ reason: 'script:fail', trip: 'script_fail', detail: failed }));
     expect(out).toContain('In the infirmary: the script ran but did not pass.');
     expect(out).toContain(
-      '  A breaker stopped 2 verifiers of this attempt, so no further one opens: raise the budget (elvaria quest edit) before a retry.',
+      '  2 verifiers of this attempt left without a verdict (a breaker stopped them, or their output was none), so no further one opens: raise the budget (elvaria quest edit), or give the review another judge, before a retry.',
     );
     expect(out).toContain('  Script: link-check');
     expect(out).toContain('  Follow-up quest opened: q_20261106_8m4n3b');
+  });
+
+  it('names a review whose judges left without a verdict (P1-33)', async () => {
+    await plantQuests(kingdom, SICK);
+    const detail = { message: "the verifier's session ended error, exit code 1", verifiers_stopped: 2 };
+    const out = await show(infirmaryLine({ reason: 'review:no_verdict', trip: 'no_verdict', detail }, 2));
+    expect(out).toContain('In the infirmary since attempt 2: its judges left without a verdict.');
+    expect(out).toContain("  What it said: the verifier's session ended error, exit code 1");
   });
 
   it('says nothing of the infirmary for a quest that has left it', async () => {

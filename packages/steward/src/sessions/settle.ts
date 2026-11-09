@@ -8,10 +8,11 @@ import type { RunResult } from '@elvaria/runner-core';
 
 import { moveAndRing } from '../notices.ts';
 import { step } from '../record.ts';
-import { judge, runOf, verifierLeaves } from '../review/judge.ts';
+import { judge, runOf, stallWithoutVerdict, verifierLeaves } from '../review/judge.ts';
 import { releaseScratch } from '../review/scratch.ts';
 import { breakAssignee, breakVerifier } from './breaker.ts';
 import { commitPlot } from './commit.ts';
+import { checksLetterAfter, noteUnchangedLetter } from './letter.ts';
 import { applyAssigneePatch } from './patch.ts';
 import type { Context } from '../context.ts';
 import type { Finished, Running } from './running.ts';
@@ -21,6 +22,18 @@ const TRIPS = { max_turns: 'turns', budget: 'tokens' } as const;
 
 /** The session has ended already: the breaker's `end` is the result it reported. */
 const ended = (result: RunResult) => () => Promise.resolve(result);
+
+/**
+ * A tribe without the Stop hook (`handover_check: after_session`, P1-33): a letter still unchanged after the
+ * Steward's reminders goes on to review, and the journal tells the judge, as the hook's let-through does (ADR 0010).
+ */
+async function letLetterThrough(ctx: Context, running: Running, session: string): Promise<void> {
+  const quest = ctx.world.quests.get(running.quest);
+  const tribe = ctx.world.characters.get(running.character)?.tribe;
+  if (quest === undefined || tribe === undefined || !checksLetterAfter(ctx, tribe)) return;
+  if (await noteUnchangedLetter(ctx, quest, running.n, session))
+    ctx.deps.log.warn(`steward: ${running.quest}: ${running.character} left handover.md unchanged`);
+}
 
 async function settleAssignee(
   ctx: Context,
@@ -56,6 +69,7 @@ async function settleAssignee(
       actor: 'runner',
       edits: { [who]: step('ask') },
     });
+  await letLetterThrough(ctx, running, run.session_id);
   // What the CLI would not let the assignee write goes in first, as its patch, so the submit carries it (P1-28).
   // A patch that touches other paths or does not apply leaves everything in the plot, and the quest no review.
   const patched = await applyAssigneePatch(ctx, running);
@@ -91,7 +105,8 @@ async function settleVerifier(
   // The CLI's own limits stop a verifier as the breakers do, and count toward the infirmary the same way (P1-23).
   if (result.outcome === 'max_turns' || result.outcome === 'budget')
     return breakVerifier(ctx, running, { trip: TRIPS[result.outcome] }, ended(result));
-  return verifierLeaves(ctx, running, result);
+  const exit = result.exit_code === null ? '' : `, exit code ${String(result.exit_code)}`;
+  return verifierLeaves(ctx, running, result, `the verifier's session ended ${result.outcome}${exit}`);
 }
 
 /** The quest, while the session is still the one its file says runs: same status, same holder, same run. */
@@ -136,12 +151,17 @@ export async function reapLost(ctx: Context): Promise<void> {
     const character = ctx.world.characters.get(holder);
     const holds = character?.current?.quest === quest.id;
     const edit = step(quest.status === 'working' ? 'crash' : 'unassign');
-    const moved = await moveAndRing(ctx, {
+    const left = await moveAndRing(ctx, {
       quest: quest.id,
       event: { type: 'crash' },
       actor: 'steward',
       edits: holds ? { [holder]: edit } : {},
     });
+    // A judge lost so left no verdict either: it counts toward a stalled review like any other (P1-33).
+    const moved =
+      quest.status === 'review'
+        ? await stallWithoutVerdict(ctx, left, "the verifier's session was lost")
+        : left;
     if (!moved.ok) ctx.deps.log.warn(`steward: ${quest.id}: a lost session: ${moved.error}`);
     else ctx.deps.log.warn(`steward: ${quest.id}: ${holder}'s session was lost; the run ended as a crash`);
   }

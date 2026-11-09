@@ -1,33 +1,28 @@
 // draftQuests: one utterance of the owner → quest drafts, through one session of the Chancellor (implementation-plan
 // §3.11). The session has no tool and reads only its prompt (buildChancellorPrompt); its reply is the quest-draft
-// structured output, or, on a tribe without it, JSON in text with one retry (§3.14). The drafts are then held
-// against the kingdom's files (screenDrafts). Nothing is written here: the caller turns the drafts into inbox
-// commands (draftCommands), and the Steward makes the quests (ADR 0005).
+// structured output, or, on a tribe without it, JSON in text with one retry in a folder of its own (§3.14): the road
+// runner-core's spawnParsed shares with the judge's verdict (P1-33). The drafts are then held against the kingdom's
+// files (screenDrafts). Nothing is written here: the caller turns the drafts into inbox commands (draftCommands),
+// and the Steward makes the quests (ADR 0005).
 import { mkdir } from 'node:fs/promises';
-import path from 'node:path';
 
 import { err, ok } from '@elvaria/domain';
-import { buildChancellorPrompt, toolPolicyOf } from '@elvaria/runner-core';
+import { buildChancellorPrompt, spawnParsed, toolPolicyOf } from '@elvaria/runner-core';
 import type { CharacterClass, ChancellorChoice, QuestDraftFile, Result } from '@elvaria/domain';
 import type {
   AgentRunner,
-  BuiltPrompt,
   ChancellorContext,
   PromptTemplates,
   RunOutcome,
+  RunResult,
+  RunningSession,
   SpawnRequest,
 } from '@elvaria/runner-core';
 
-import { CHANCELLOR_MAX_MINUTES, CHANCELLOR_MAX_TURNS, MS_PER_MINUTE, RETRY_DIR } from './constants.ts';
-import {
-  QUEST_DRAFT_JSON_SCHEMA,
-  checkReply,
-  checkTextReply,
-  replyFormatBlock,
-  retryBlock,
-} from './reply.ts';
+import { CHANCELLOR_MAX_MINUTES, CHANCELLOR_MAX_TURNS, MS_PER_MINUTE } from './constants.ts';
+import { QUEST_DRAFT_JSON_SCHEMA, checkReply, checkTextReply, replyIssuesOf } from './reply.ts';
 import { screenDrafts } from './screen.ts';
-import type { ReplyCheck } from './reply.ts';
+import type { DraftCheck } from './reply.ts';
 import type { ScreenedDrafts } from './screen.ts';
 
 export interface ChancellorSession {
@@ -60,36 +55,50 @@ export interface ChancellorReply extends ScreenedDrafts {
 }
 
 interface Heard {
-  readonly session_id: string;
-  readonly tokens: number;
-  readonly reply: ReplyCheck;
+  readonly result: RunResult;
+  readonly reply: DraftCheck;
 }
 
 const native = (session: ChancellorSession): boolean => session.choice.structured_output === 'native';
 
-function requestOf(session: ChancellorSession, prompt: BuiltPrompt, runDir: string): SpawnRequest {
+function requestOf(session: ChancellorSession, context: ChancellorContext) {
   const { character } = session.choice;
   return {
     role: 'chancellor',
     character,
-    cwd: runDir,
-    prompt,
+    cwd: session.run_dir,
+    prompt: buildChancellorPrompt(context, session.templates),
     permissions: toolPolicyOf({ role: 'chancellor', characterClass: session.characterClass, character }),
     budget: { max_turns: CHANCELLOR_MAX_TURNS, max_minutes: CHANCELLOR_MAX_MINUTES },
-    ...(native(session) ? { structured: QUEST_DRAFT_JSON_SCHEMA } : {}),
+    structured: QUEST_DRAFT_JSON_SCHEMA,
     env: session.env,
-    run_dir: runDir,
-  };
+    run_dir: session.run_dir,
+  } satisfies SpawnRequest;
 }
 
-/** One session: its last text and its result; killed when it outlasts the timeout. */
+/**
+ * The session: the CLI's own flag, or the schema in the prompt with one retry for a reply that cannot be used
+ * (spawnParsed; a fresh session, the Chancellor's prompt being short).
+ */
+async function spawned(session: ChancellorSession, context: ChancellorContext): Promise<RunningSession> {
+  const request = requestOf(session, context);
+  if (native(session)) return session.runner.spawn(request);
+  return spawnParsed(session.runner, request, { check: replyIssuesOf, resume: false });
+}
+
+/** The structured output, or the last text where the schema was in the prompt; undefined when there is none. */
+function replyOf(session: ChancellorSession, structured: unknown, text: string | undefined) {
+  if (native(session)) return structured === undefined ? undefined : checkReply(structured);
+  return text === undefined ? undefined : checkTextReply(text);
+}
+
+/** Its last text and its result; killed, with any retry, when it outlasts the timeout. */
 async function hear(
   session: ChancellorSession,
-  prompt: BuiltPrompt,
-  runDir: string,
+  context: ChancellorContext,
 ): Promise<Result<Heard, ChancellorFailure>> {
-  await mkdir(runDir, { recursive: true });
-  const running = await session.runner.spawn(requestOf(session, prompt, runDir));
+  await mkdir(session.run_dir, { recursive: true });
+  const running = await spawned(session, context);
   // Written by the signal reader and the timer while wait() runs.
   const seen: { text?: string; late: boolean } = { late: false };
   const reading = (async () => {
@@ -109,44 +118,7 @@ async function hear(
   if (seen.late) return err({ code: 'timed_out' });
   const reply = replyOf(session, result.structured, seen.text);
   if (reply === undefined) return err({ code: 'no_reply', outcome: result.outcome });
-  return ok({ session_id: result.session_id, tokens: result.usage.tokens, reply });
-}
-
-/** The structured output, or the last text where the schema was in the prompt; undefined when there is none. */
-function replyOf(session: ChancellorSession, structured: unknown, text: string | undefined) {
-  if (native(session)) return structured === undefined ? undefined : checkReply(structured);
-  return text === undefined ? undefined : checkTextReply(text);
-}
-
-/** The system part names the reply's format where the CLI cannot enforce it. */
-const promptFor = (context: ChancellorContext, session: ChancellorSession): BuiltPrompt => {
-  const prompt = buildChancellorPrompt(context, session.templates);
-  return native(session) ? prompt : { ...prompt, system: `${prompt.system}\n\n${replyFormatBlock()}` };
-};
-
-interface Hearing {
-  readonly sessions: readonly Heard[];
-  /** The reply that counts: the last session's. */
-  readonly reply: ReplyCheck;
-}
-
-const hearingOf = (first: Heard, second?: Heard): Hearing => ({
-  sessions: second === undefined ? [first] : [first, second],
-  reply: (second ?? first).reply,
-});
-
-/** The sessions of one utterance: one, and a second for a text reply that could not be used. */
-async function heardAll(
-  context: ChancellorContext,
-  session: ChancellorSession,
-): Promise<Result<Hearing, ChancellorFailure>> {
-  const prompt = promptFor(context, session);
-  const first = await hear(session, prompt, session.run_dir);
-  if (!first.ok) return first;
-  if (first.value.reply.ok || native(session)) return ok(hearingOf(first.value));
-  const again = { ...prompt, user: `${prompt.user}\n\n${retryBlock(first.value.reply.issues)}` };
-  const second = await hear(session, again, path.join(session.run_dir, RETRY_DIR));
-  return second.ok ? ok(hearingOf(first.value, second.value)) : second;
+  return ok({ result, reply });
 }
 
 const questionOf = (file: QuestDraftFile): string | undefined =>
@@ -156,15 +128,16 @@ export async function draftQuests(
   context: ChancellorContext,
   session: ChancellorSession,
 ): Promise<Result<ChancellorReply, ChancellorFailure>> {
-  const heard = await heardAll(context, session);
+  const heard = await hear(session, context);
   if (!heard.ok) return heard;
-  const { reply, sessions } = heard.value;
+  const { reply, result } = heard.value;
   if (!reply.ok) return err({ code: 'invalid_reply', issues: reply.issues });
   const question = questionOf(reply.value);
   return ok({
     ...screenDrafts(reply.value.drafts, context),
     ...(question === undefined ? {} : { question }),
-    session_ids: sessions.map(({ session_id }) => session_id),
-    tokens: sessions.reduce((sum, { tokens }) => sum + tokens, 0),
+    // The retry, when there was one, is a session of its own: the owner may look both up.
+    session_ids: [result.session_id, ...(result.sequels ?? []).map(({ session_id }) => session_id)],
+    tokens: result.usage.tokens,
   });
 }

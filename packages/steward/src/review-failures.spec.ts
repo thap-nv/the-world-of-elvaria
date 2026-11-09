@@ -58,7 +58,10 @@ describe('what goes wrong on the way', () => {
     const { kingdom, steward } = await open({ plays: { verdicts: { 'Vague judge': [vague, PASS] } } });
     await kingdom.command('create_quest', questPayload('Vague judge'));
     await tickUntil(steward, kingdom.clock, statusIs(kingdom, 'Vague judge', 'done'));
-    expect(kingdom.warnings.join('\n')).toContain("the verifier's output is no verdict (invalid_verdict)");
+    // What the schema refused, issue by issue (P1-33: a judge answering in text is told the same).
+    expect(kingdom.warnings.join('\n')).toContain(
+      "the verifier's output is no verdict (invalid_verdict: notes: a fail verdict needs specific notes",
+    );
     const quest = await kingdom.quest('Vague judge');
     expect(quest.attempt_log.filter(({ role }) => role === 'verifier')).toHaveLength(2);
   });

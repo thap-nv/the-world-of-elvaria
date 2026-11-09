@@ -2,12 +2,12 @@ import { mkdtemp, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { loadPromptTemplates } from '@elvaria/runner-core';
+import { RETRY_DIR, loadPromptTemplates } from '@elvaria/runner-core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { CHANCELLOR_CLASS_ENTRY, CONTEXT, NATIVE, PARSED, reply } from './__fixtures__/kingdom.ts';
 import { ANSWER_TOKENS, scriptedRunner } from './__fixtures__/runner.ts';
-import { CHANCELLOR_MAX_TURNS, RETRY_DIR } from './constants.ts';
+import { CHANCELLOR_MAX_TURNS } from './constants.ts';
 import { draftQuests } from './draft-quests.ts';
 import { QUEST_DRAFT_JSON_SCHEMA } from './reply.ts';
 import type { Answer } from './__fixtures__/runner.ts';

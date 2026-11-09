@@ -81,6 +81,29 @@ describe('selectVerifier', () => {
     ]);
   });
 
+  it('prefers, among judges otherwise equal, a tribe whose CLI hands in a structured verdict (P1-33)', () => {
+    const lantern = judge('wick', { tribe: 'lantern', model: 'gpt-6', since: 0 });
+    const codex = judge('ash', { tribe: 'codex', model: 'gpt-6-mini', since: 30 });
+    const limits = {
+      lantern: { structured_output: 'prompt_and_parse' },
+      codex: { structured_output: 'native' },
+    } as const;
+    // Idle the longest, but it answers in text: the judge that hands in a structured verdict goes first.
+    expect(chosen(submitted, [lantern, codex], { limits })).toEqual(['ash', 'other_family']);
+    expect(chosen(submitted, [lantern, codex])).toEqual(['wick', 'other_family']);
+    // The family and the tribe still come first: a text judge of another family beats a structured one of the same.
+    expect(chosen(submitted, [SABLE, lantern], { limits })).toEqual(['wick', 'other_family']);
+    const viaAgy = judge('vela', { tribe: 'gemini', since: 30 });
+    const inText = {
+      claude: { structured_output: 'native' },
+      gemini: { structured_output: 'prompt_and_parse' },
+    } as const;
+    expect(chosen(submitted, [judge('early', { since: 0 }), viaAgy], { limits: inText })).toEqual([
+      'vela',
+      'same_family_other_model',
+    ]);
+  });
+
   it('under machine_only waits for a judge of another family while one serves, else lets the machine judge', () => {
     const machineOnly = { same_family: 'machine_only' as const };
     expect(chosen(submitted, [SABLE, { ...ORIN, status: 'working' }], machineOnly)).toBeNull();

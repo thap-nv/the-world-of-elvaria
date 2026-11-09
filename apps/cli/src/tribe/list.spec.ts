@@ -118,7 +118,8 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
         'login',
         'D',
         'no',
-        'headless, usage, structured_output',
+        // lantern has no JSON Schema flag since P1-33: its judges answer in text.
+        'headless, usage',
         lantern,
       ],
       ['codex', 'codex_cli', 'no', '—', '—', '—', '—', 'no runner yet', '—'],

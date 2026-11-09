@@ -16,10 +16,13 @@ export function heardBy(book: ManaBook, character: Character, session: RunningSe
       yield signal;
     }
   }
-  // An adapter's session may be a class instance: its methods are called on it, never copied off it.
+  // An adapter's session may be a class instance: its methods are called on it, never copied off it. Its pid is
+  // read when asked, too: a run whose reply or letter needed one more session names that session's (P1-33 (b)).
   return {
     session_id: session.session_id,
-    pid: session.pid,
+    get pid() {
+      return session.pid;
+    },
     signals: signals(),
     wait: () => session.wait(),
     kill: (reason) => session.kill(reason),
