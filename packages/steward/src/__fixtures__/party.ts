@@ -98,7 +98,15 @@ export async function partyBench(
     roles.push([request.run_dir, request.party_role]);
     return plots.check(request);
   };
-  const steward = kingdom.steward({ plots: { ...plots, check }, runners: leavingRunners(kingdom, leaves) });
+  // A quest judged in a scratch plot (P1-20: a build tagged e2e, a blind trial's merge quest) runs them there.
+  const trial: Plots['trial'] = (request) => {
+    roles.push([request.run_dir, request.party_role]);
+    return plots.trial(request);
+  };
+  const steward = kingdom.steward({
+    plots: { ...plots, check, trial },
+    runners: leavingRunners(kingdom, leaves),
+  });
   const started = await steward.start({ loop: false });
   if (!started.ok) throw new Error(`fixture: the Steward did not start: ${started.error}`);
   return {
