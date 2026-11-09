@@ -52,12 +52,13 @@
   treasury file (`inspectTreasury`: present, mode 0600 outside Windows, `{ "name": "value" }`, every name a
   territory allows; names only, never a value) and, while no Steward holds its lock, the sessions a stopped one
   left running (`sessionsLeftBehind`), which the next `run` kills (P1-11, `src/doctor/check-state.ts`), and the
-  mana gauges (P1-32, `src/doctor/check-mana.ts`): a sleeping one as a warning, an awake one with its readings,
+  mana gauges (P1-32, `src/doctor/check-mana.ts`): a sleeping one as a warning, with the reset its sleep named,
+  an awake one with its readings,
   "not measured" when the Steward has logged none.
 - Mana gauges for `character list` and `doctor` (`src/gauges.ts`, P1-32), folded from the Steward's `mana.*`
   lines in the event log, since the Steward keeps no file of them: which gauges sleep (`mana.exhausted` /
-  `mana.restored`), the latest reading of each window still in force (`mana.level`, and `mana.warning` for a
-  model's own cap) with its reset. `character list` marks each character the Steward put to sleep for mana
+  `mana.restored`) and the reset a sleep named, the latest reading of each window still in force (`mana.level`, a
+  pool's or a model's own cap; `mana.warning`, the only line of a model's cap before P1-32) with its reset. `character list` marks each character the Steward put to sleep for mana
   (`sleeping_mana`) with the gauge it waits for, a model's own cap before its pool, and lists the sleeping gauges
   under the table. Only those: the log does not keep the models an account lists in a group, so the prefix table
   alone would call an Argon character bound by "Gemini Models", which the Steward, reading agy's `/usage`, does not.
@@ -67,7 +68,9 @@
   `src/run/antigravity.ts`; a tribe without a runner takes no quest), plots over runner-core's
   `PlotManager` and `runChecks` (`src/run/plots.ts`: prepare, its `commands.setup` given the quest's secrets
   (P1-30), commit, the checks on what the quest touched, given them too (P1-10b), release) with a `ProcessHost` from PATH and each CLI's `forget` (`claude purge`), the console bell saying
-  the Steward's notices in the owner's language (from P1-22 also a mana gauge that warns, sleeps or wakes), and `.state/steward.lock` (a second `run` is refused).
+  the Steward's notices in the owner's language (from P1-22 also a mana gauge that warns, sleeps or wakes; from
+  P1-32 a quest gone to the infirmary by its trip, then each part of the detail on a line of its own, as `quest show`
+  says them), and `.state/steward.lock` (a second `run` is refused).
 
 ## Does not
 

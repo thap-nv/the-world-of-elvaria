@@ -34,24 +34,33 @@ export const bindsAny = (
   holder: Pick<Character, 'tribe' | 'model'>,
 ): boolean => asleepFor(keys, ctx.mana.readings, ctx.world.kingdom.tribes, holder);
 
-/** A line per pool-wide reading that changed: the HUD draws its bars from `mana.level` (§2.7). */
+/** The reset a reading or a usage limit names, when it is a time the event schema takes. */
+const resetOf = (resetsAt: string | null | undefined): { resets_at?: string } => {
+  const resets = DateTimeSchema.safeParse(resetsAt);
+  return resets.success ? { resets_at: resets.data } : {};
+};
+
+/**
+ * A line per reading that changed: the HUD draws its bars from a pool's `mana.level` (§2.7); the cap of one model is
+ * told too, with its `model` (P1-32), so `elvaria doctor` can show it, and the HUD leaves it out.
+ */
 async function levelLine(ctx: Context, reading: ManaReading): Promise<void> {
   const old = ctx.mana.readings.find((known) => sameGauge(known, reading));
-  if (reading.model !== undefined || reading.used_pct === null) return;
+  if (reading.used_pct === null) return;
   if (old?.used_pct === reading.used_pct && old.resets_at === reading.resets_at) return;
-  const resets = DateTimeSchema.safeParse(reading.resets_at);
   const data = {
     tribe: reading.tribe,
     pool: reading.pool,
+    ...(reading.model === undefined ? {} : { model: reading.model }),
     window: reading.window,
     used_pct: reading.used_pct,
-    ...(resets.success ? { resets_at: resets.data } : {}),
+    ...resetOf(reading.resets_at),
     source: reading.source,
   };
   await ctx.record.note({ type: 'mana.level', actor: STEWARD, data });
 }
 
-/** Fresh readings into the book; a cap of one model stays in memory only (the HUD has one bar per window). */
+/** Fresh readings into the book, each changed one told in a `mana.level` line. */
 export async function absorb(ctx: Context, fresh: readonly ManaReading[]): Promise<void> {
   for (const reading of fresh) await levelLine(ctx, reading);
   ctx.mana.readings = withReadings(ctx.mana.readings, fresh);
@@ -134,7 +143,9 @@ export async function sleepPool(ctx: Context, gauge: PoolKey, resetsAt?: string)
     exhausted: true,
   };
   await absorb(ctx, [signal]);
-  await ctx.record.note({ type: 'mana.exhausted', actor: STEWARD, data: { ...key } });
+  // The reset, when known, goes in the line too, so `elvaria doctor` can say it (P1-32).
+  const data = { ...key, ...resetOf(resetsAt) };
+  await ctx.record.note({ type: 'mana.exhausted', actor: STEWARD, data });
   await ring(ctx, {
     kind: 'mana_asleep',
     ...key,

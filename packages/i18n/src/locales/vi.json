@@ -155,6 +155,7 @@
     "cli.mana.gauge.pool": "tộc {tribe}, pool {pool}",
     "cli.mana.gauge.model": "tộc {tribe}, pool {pool}, trần riêng của {model}",
     "cli.mana.asleep": "Đồng hồ mana đang ngủ: {gauge}. Nhân vật nó ràng không nhận việc tới khi Quản sự thấy mana về.",
+    "cli.mana.asleep_until": "Đồng hồ mana đang ngủ: {gauge}, reset lúc {resets_at}. Nhân vật nó ràng không nhận việc tới khi Quản sự thấy mana về; Quản sự thăm dò ngay sau giờ đó.",
     "cli.mana.awake": "Đồng hồ mana: {gauge}.",
     "cli.mana.reading": "Cửa sổ {window}: đã dùng {used_pct}%, reset lúc {resets_at} (đo lúc {observed_at}, nguồn {source}).",
     "cli.mana.reading_no_reset": "Cửa sổ {window}: đã dùng {used_pct}%, chưa biết giờ reset (đo lúc {observed_at}, nguồn {source}).",

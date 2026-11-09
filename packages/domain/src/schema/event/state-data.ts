@@ -13,7 +13,7 @@ import {
   TribeIdSchema,
 } from '../../core/ids.ts';
 import { INFIRMARY_TRIPS } from '../../quest/events.ts';
-import { NonEmptyStringSchema, RANKS } from '../common.ts';
+import { DateTimeSchema, NonEmptyStringSchema, RANKS } from '../common.ts';
 import { CharacterViewSchema } from '../../world/character-view.ts';
 import { QuestViewSchema } from '../../world/quest-view.ts';
 import { TerritoryViewSchema } from '../../world/territory-view.ts';
@@ -157,3 +157,15 @@ export const ManaPoolDataSchema = z
       'The gauge that fell asleep (mana.exhausted) or woke (mana.restored): the whole pool, every character of it, or the cap of one model (ADR 0009).',
     ),
   );
+
+// Optional and added after v1 (P1-32): a line written before it, or a sleep whose reset nobody named, has none.
+export const ManaExhaustedDataSchema = z
+  .strictObject({
+    ...ManaPoolDataSchema.shape,
+    resets_at: DateTimeSchema.optional().meta(
+      describe(
+        'When the spent window resets, as the usage limit or the reading that put the gauge to sleep named it; the Steward probes just after (implementation-plan §3.5, P1-32).',
+      ),
+    ),
+  })
+  .meta(describe('The gauge that fell asleep: the whole pool, or the cap of one model (ADR 0009).'));

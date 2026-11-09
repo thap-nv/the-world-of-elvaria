@@ -5,6 +5,8 @@ import type {
   Clock,
   FailKind,
   IdSource,
+  InfirmaryDetail,
+  InfirmaryTrip,
   ManaWindow,
   Quest,
   QuestId,
@@ -58,7 +60,17 @@ export type Notice =
       readonly model: string | null;
     }
   | { readonly kind: 'awaiting_seal'; readonly quest: NoticeQuest }
-  | { readonly kind: 'infirmary'; readonly quest: NoticeQuest; readonly reason: string }
+  /**
+   * The quest went to the infirmary: why in parts (P1-32), for a bell that speaks the owner's language, and the
+   * English `reason` the `quest.infirmary` line carries.
+   */
+  | {
+      readonly kind: 'infirmary';
+      readonly quest: NoticeQuest;
+      readonly reason: string;
+      readonly trip: InfirmaryTrip;
+      readonly detail?: InfirmaryDetail;
+    }
   | { readonly kind: 'question'; readonly quest: NoticeQuest; readonly question: string }
   /** A plan was delivered but opened none of its sub-quests (P1-14); `reason` is English, for the owner and logs. */
   | { readonly kind: 'subquests_refused'; readonly quest: NoticeQuest; readonly reason: string }

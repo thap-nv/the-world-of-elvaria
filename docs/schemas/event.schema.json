@@ -1367,6 +1367,11 @@
                   "estimate",
                   "signal"
                 ]
+              },
+              "model": {
+                "description": "The one model whose own cap this reads (argon, fable); absent for the whole pool. The pool's HUD band does not follow it (P1-32).",
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
               }
             }
           }
@@ -1441,10 +1446,49 @@
       "if": {
         "properties": {
           "type": {
-            "enum": [
-              "mana.exhausted",
-              "mana.restored"
-            ]
+            "const": "mana.exhausted"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "The gauge that fell asleep: the whole pool, or the cap of one model (ADR 0009).",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "tribe",
+              "pool"
+            ],
+            "properties": {
+              "tribe": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "pool": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "model": {
+                "description": "The one model whose own cap fell asleep or woke (argon, fable): only the characters on that model; absent for the whole pool (implementation-plan §3.5, P1-22). The pool's HUD band does not follow it.",
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "resets_at": {
+                "description": "When the spent window resets, as the usage limit or the reading that put the gauge to sleep named it; the Steward probes just after (implementation-plan §3.5, P1-32).",
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "mana.restored"
           }
         }
       },

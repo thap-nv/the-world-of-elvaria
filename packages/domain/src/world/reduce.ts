@@ -32,7 +32,9 @@ const onTerritory: Handler<`territory.${string}` & TypedEventType> = (state, { d
   territories: { ...state.territories, [data.territory.id]: data.territory },
 });
 
+/** A pool's reading moves its HUD band; the cap of one model (P1-32) does not, as for its sleep (onSleep). */
 const onManaLevel: Handler<'mana.level'> = (state, { ts, data }) => {
+  if (data.model !== undefined) return state;
   const { window, used_pct, resets_at, source } = data;
   const reading = { window, used_pct, resets_at: resets_at ?? null, source, observed_at: ts };
   return { ...state, pools: updatePool(state.pools, data, withReading(reading)) };

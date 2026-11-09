@@ -50,11 +50,17 @@ describe('event line migrations', () => {
     expect(ids.filter((id, index) => ids.indexOf(id) !== index)).toEqual([]);
   });
 
-  it('keeps an infirmary line from before P1-32, reason alone, beside one with its trip and detail', async () => {
+  // Optional fields added with `v` still 1 (P1-32): the fixture keeps a line from before each beside one with it.
+  it.each([
+    ['quest.infirmary', 'trip'],
+    ['quest.infirmary', 'detail'],
+    ['mana.exhausted', 'resets_at'],
+    ['mana.level', 'model'],
+  ])('keeps a %s line without %s beside one with it', async (type, field) => {
     const read = await readEventFile(path.join(HERE, 'v1.jsonl'));
-    const lines = read.events.filter(({ type }) => type === 'quest.infirmary').map(({ data }) => data);
-    expect(lines.some((data) => data.trip === undefined && data.detail === undefined)).toBe(true);
-    expect(lines.some((data) => data.trip !== undefined && data.detail !== undefined)).toBe(true);
+    const lines = read.events.filter((event) => event.type === type).map(({ data }) => data);
+    expect(lines.some((data) => data[field] === undefined)).toBe(true);
+    expect(lines.some((data) => data[field] !== undefined)).toBe(true);
   });
 
   it('runs every step from the line v up to the current one', () => {

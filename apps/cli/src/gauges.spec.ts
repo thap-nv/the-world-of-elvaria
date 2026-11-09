@@ -38,7 +38,10 @@ const level = (pool: object, window: string, used: number, resets?: string, sour
     ...(resets ? { resets_at: resets } : {}),
   });
 
-/** Claude's pool asleep with its readings, Argon's cap asleep unread, the Gemini group awake and read. */
+/**
+ * Claude's pool asleep with its readings and the reset its sleep named (P1-32); Argon's cap asleep unread, as a
+ * line written before P1-32 says it; the Gemini group awake and read.
+ */
 const DAY = (): Event[] => [
   manaLine('mana.exhausted', GEMINI, '2026-11-06T07:00:00+07:00'),
   manaLine('mana.restored', GEMINI, '2026-11-06T07:30:00+07:00'),
@@ -47,7 +50,7 @@ const DAY = (): Event[] => [
   level(CLAUDE, 'weekly', 30, '2026-11-10T09:00:00+07:00'),
   level(CLAUDE, 'five_hour', 90, RESETS),
   level(CLAUDE, 'five_hour', 100, RESETS, 'signal'),
-  manaLine('mana.exhausted', CLAUDE),
+  manaLine('mana.exhausted', { ...CLAUDE, resets_at: RESETS }),
   manaLine('mana.exhausted', ARGON),
 ];
 
@@ -72,11 +75,27 @@ describe('gaugesOf', () => {
       { window: 'five_hour', used_pct: 100, resets_at: RESETS, source: 'signal', observed_at: READ_AT },
     ]);
     expect(gauges[2]?.readings).toEqual([]);
+    // The reset Claude's sleep named; Argon's sleep named none.
+    expect(gauges[1]?.resets_at).toBe(RESETS);
+    expect(gauges[2]).not.toHaveProperty('resets_at');
   });
 
-  it("takes one model's readings from its warnings, apart from its pool's", () => {
-    const warning = { ...ARGON, window: 'weekly', used_pct: 92, source: 'rate_limits', resets_at: RESETS };
-    const [gauge] = gaugesOf([manaLine('mana.warning', warning)], NOW);
+  it('forgets the reset of a sleep once the gauge wakes', () => {
+    const woke = [
+      manaLine('mana.exhausted', { ...ARGON, resets_at: RESETS }),
+      manaLine('mana.restored', ARGON),
+    ];
+    expect(gaugesOf(woke, NOW)).toEqual([{ ...ARGON, asleep: false, readings: [] }]);
+  });
+
+  it.each([
+    ['its own mana.level (P1-32)', level(ARGON, 'weekly', 92, RESETS)],
+    [
+      'a warning, as before P1-32',
+      manaLine('mana.warning', { ...ARGON, window: 'weekly', used_pct: 92, source: 'rate_limits' }),
+    ],
+  ])("takes one model's readings from %s, apart from its pool's", (_, line) => {
+    const [gauge] = gaugesOf([line], NOW);
     expect(gauge).toMatchObject({ ...ARGON, asleep: false, readings: [{ window: 'weekly', used_pct: 92 }] });
   });
 
@@ -98,8 +117,8 @@ describe('elvaria character list and doctor with the gauges the Steward logged',
   });
   afterEach(() => dir.remove());
 
-  const asleepClaude =
-    'Mana gauge asleep: tribe claude, pool claude. The characters it binds take no work until the Steward finds the mana back.';
+  // The reset its sleep named heads the gauge (P1-32).
+  const asleepClaude = `Mana gauge asleep: tribe claude, pool claude, resets at ${RESETS}. The characters it binds take no work until the Steward finds the mana back; it probes just after that time.`;
   const asleepArgon =
     "Mana gauge asleep: tribe gemini, pool gemini_models, argon's own cap. The characters it binds take no work until the Steward finds the mana back.";
   const claudeFull = `5-hour window: 100% used, resets at ${RESETS} (read at ${READ_AT}, source signal).`;

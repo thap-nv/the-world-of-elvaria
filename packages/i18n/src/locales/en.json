@@ -155,6 +155,7 @@
     "cli.mana.gauge.pool": "tribe {tribe}, pool {pool}",
     "cli.mana.gauge.model": "tribe {tribe}, pool {pool}, {model}'s own cap",
     "cli.mana.asleep": "Mana gauge asleep: {gauge}. The characters it binds take no work until the Steward finds the mana back.",
+    "cli.mana.asleep_until": "Mana gauge asleep: {gauge}, resets at {resets_at}. The characters it binds take no work until the Steward finds the mana back; it probes just after that time.",
     "cli.mana.awake": "Mana gauge: {gauge}.",
     "cli.mana.reading": "{window} window: {used_pct}% used, resets at {resets_at} (read at {observed_at}, source {source}).",
     "cli.mana.reading_no_reset": "{window} window: {used_pct}% used, reset time unknown (read at {observed_at}, source {source}).",

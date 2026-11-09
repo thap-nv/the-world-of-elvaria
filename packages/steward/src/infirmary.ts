@@ -12,6 +12,13 @@ export interface InfirmaryCause {
 
 type InfirmaryWhy = Pick<EventData<'quest.infirmary'>, 'reason' | 'trip' | 'detail'>;
 
+/** What a line written since P1-32 says of why: always a trip. */
+interface InfirmarySaid {
+  readonly reason: string;
+  readonly trip: InfirmaryTrip;
+  readonly detail?: InfirmaryDetail;
+}
+
 /** A crash or a fail at max_attempts: the trip says it all. */
 export const OUT_OF_ATTEMPTS: InfirmaryCause = { trip: 'max_attempts' };
 
@@ -51,8 +58,11 @@ export function infirmaryReason(cause: InfirmaryCause, run: number): string {
   return `script:fail: ${detail.script ?? 'the script'} did not pass, see the verdict${opened}`;
 }
 
-/** What a `quest.infirmary` line says beside the quest's view: the reason, the trip, the detail when it has any. */
-export function infirmaryData(cause: InfirmaryCause, run: number): InfirmaryWhy {
+/**
+ * What a `quest.infirmary` line, and the bell, say beside the quest: the reason, the trip, the detail when it has
+ * any.
+ */
+export function infirmaryData(cause: InfirmaryCause, run: number): InfirmarySaid {
   const detail = spoken(cause.detail);
   return {
     reason: infirmaryReason(cause, run),

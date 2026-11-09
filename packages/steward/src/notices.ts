@@ -4,7 +4,7 @@ import { currentRun, ok } from '@elvaria/domain';
 import type { Quest, Result } from '@elvaria/domain';
 
 import { noticeQuest, ring } from './context.ts';
-import { OUT_OF_ATTEMPTS, infirmaryReason } from './infirmary.ts';
+import { OUT_OF_ATTEMPTS, infirmaryData } from './infirmary.ts';
 import type { Context } from './context.ts';
 import type { InfirmaryCause } from './infirmary.ts';
 import type { Move } from './record.ts';
@@ -14,10 +14,8 @@ function noticeOf(before: Quest, after: Quest, cause: InfirmaryCause | undefined
   if (after.status === before.status) return undefined;
   const quest = noticeQuest(after);
   if (after.status === 'awaiting_seal') return { kind: 'awaiting_seal', quest };
-  if (after.status === 'infirmary') {
-    const reason = infirmaryReason(cause ?? OUT_OF_ATTEMPTS, currentRun(after));
-    return { kind: 'infirmary', quest, reason };
-  }
+  if (after.status === 'infirmary')
+    return { kind: 'infirmary', quest, ...infirmaryData(cause ?? OUT_OF_ATTEMPTS, currentRun(after)) };
   if (after.status === 'blocked' && after.blocked !== undefined)
     return { kind: 'question', quest, question: after.blocked.question };
   return undefined;

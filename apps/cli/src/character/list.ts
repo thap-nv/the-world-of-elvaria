@@ -4,7 +4,7 @@
 import type { Character, Registry } from '@elvaria/domain';
 
 import { EXIT } from '../command.ts';
-import { blockingGauge, gaugeName, readGauges, readingLines } from '../gauges.ts';
+import { asleepLine, blockingGauge, gaugeName, readGauges, readingLines } from '../gauges.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { CHARACTER_STATUS_LABEL, nameIn } from '../labels.ts';
 import { printListing } from '../listing.ts';
@@ -44,7 +44,7 @@ const asleepLines = (ctx: KingdomContext, gauges: readonly GaugeView[]): string[
   gauges
     .filter(({ asleep }) => asleep)
     .flatMap((gauge) => [
-      ctx.t('cli.mana.asleep', { gauge: gaugeName(ctx.t, gauge) }),
+      asleepLine(ctx.t, gauge),
       ...readingLines(ctx.t, gauge).map((line) => `    ${line}`),
     ]);
 

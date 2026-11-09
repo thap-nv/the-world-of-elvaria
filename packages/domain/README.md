@@ -80,7 +80,9 @@
   lines). `snapshotOf` / `readSnapshot` version the snapshot; `src/protocol/` is the herald's WebSocket protocol.
   A `quest.infirmary` line also says why in parts (P1-32): `trip` (`INFIRMARY_TRIPS`: the breaker trips,
   `max_attempts`, `script_broken`, `script_usage`, `script_fail`) and `detail` (`InfirmaryDetailSchema`), both
-  optional so lines written before them still parse and reduce.
+  optional so lines written before them still parse and reduce. `mana.exhausted` may name the reset it waits for
+  (`resets_at`), and `mana.level` may read one model's own cap (`model`), which the reducer leaves out of the
+  pool's band, as it does that cap's sleep (P1-32).
 - Gives the core types every package builds on: `Result`, branded ids (`QuestId`, `TribeId`, ...), `Clock` and
   `Instant`, `zonedTime` (local day and ISO offset in `kingdom.tz`), `IdSource` (ULIDs and dated ids).
 - Names every number it decides with in `src/constants.ts` and the `constants.ts` of each folder.

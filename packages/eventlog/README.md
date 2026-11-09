@@ -15,7 +15,8 @@
   checks it with the domain's `EventSchema`. Unusable lines are `EventLogIssue`s with a code and an offset;
   reading goes on. Unknown event types are kept (forward compatible). The fixture `src/migrations/v1.jsonl` holds
   a line of every type with a data schema, each with an id of its own, and lines from before an optional field
-  was added beside lines that carry it (`quest.infirmary` without and with `trip`, `detail`, P1-32).
+  was added beside lines that carry it (P1-32: `quest.infirmary` without and with `trip`, `detail`;
+  `mana.exhausted` without and with `resets_at`; `mana.level` without and with `model`).
 - Tails the log by polling (§6: no `fs.watch`): `EventLog.tail({ from, intervalMs, signal })`.
 - Redacts (ADR 0013): `redact(text, known, patterns)`, `createRedactor`, `redactDeep` for a whole event.
   Known values are masked exactly, then the patterns of `src/redact-patterns.json` (data, one fixture each).

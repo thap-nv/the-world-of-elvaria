@@ -33,8 +33,11 @@ export async function lastInfirmaryOf(ctx: KingdomContext, quest: Quest): Promis
   }
 }
 
-/** One line per part of the detail, in the order the Steward's reason says them. */
-function detailLines(t: Translate, detail: InfirmaryDetail): string[] {
+/** What sent the quest there, in the owner's language. */
+export const tripLabel = (t: Translate, trip: InfirmaryTrip): string => t(TRIP_LABEL[trip]);
+
+/** One line per part of the detail, in the order the Steward's reason says them; the bell says them too. */
+export function detailLines(t: Translate, detail: InfirmaryDetail): string[] {
   const { message, patch, wip, script, follow_up: followUp, verifiers_stopped: stopped } = detail;
   return [
     ...(message === undefined ? [] : [t('cli.quest.infirmary.detail.message', { message })]),
@@ -50,7 +53,7 @@ function detailLines(t: Translate, detail: InfirmaryDetail): string[] {
 /** The reason in the owner's language: why and in which attempt, then the detail, indented. */
 export function infirmaryLines(t: Translate, line: InfirmaryLine): string[] {
   const { trip, detail = {}, reason } = line.data;
-  const why = trip === undefined ? reason : t(TRIP_LABEL[trip]);
+  const why = trip === undefined ? reason : tripLabel(t, trip);
   const head =
     line.attempt === undefined
       ? t('cli.quest.infirmary.head', { why })

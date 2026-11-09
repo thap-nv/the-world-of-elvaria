@@ -1,8 +1,9 @@
 // The mana gauges as the Steward last told them (implementation-plan §3.5, P1-22, P1-32), for `character list` and
 // `doctor`: the Steward keeps them in memory and writes no file of them (§2.2 `.state/`, settled after P1-05), so
 // they are folded here from its `mana.*` lines in the event log. `mana.exhausted` / `mana.restored` say which gauges
-// sleep; `mana.level` gives a whole pool's readings, `mana.warning` those of a gauge that neared its cap (one model's
-// cap is logged only then). A reading whose window has reset says nothing any more and is left out.
+// sleep, the first with the reset it waits for when known; `mana.level` gives each gauge's readings, a whole pool's
+// or one model's cap, and `mana.warning` too (before P1-32 the only line of a model's cap). A reading whose window
+// has reset says nothing any more and is left out.
 import { binds, current, isEventOf, keyOf, sameKey } from '@elvaria/domain';
 import type {
   Character,
@@ -28,12 +29,15 @@ export interface GaugeReading {
 
 export interface GaugeView extends PoolKey {
   readonly asleep: boolean;
+  /** Asleep: the reset its `mana.exhausted` line named (P1-32); absent when unknown or on an older line. */
+  readonly resets_at?: string;
   /** The latest reading of each window, still in force. */
   readonly readings: readonly GaugeReading[];
 }
 
 interface Folding extends PoolKey {
   asleep: boolean;
+  wakesAt: string | undefined;
   readings: GaugeReading[];
 }
 
@@ -51,28 +55,47 @@ function readingOfLine(event: Event): { key: PoolKey; reading: GaugeReading } | 
   return { key: keyOfLine(event.data), reading };
 }
 
+/** One line into the gauges it names: a sleep with its reset, a wake, or a reading in place of its window's. */
+function fold(gaugeOf: (key: PoolKey) => Folding, event: Event): void {
+  if (isEventOf(event, 'mana.exhausted')) {
+    const gauge = gaugeOf(keyOfLine(event.data));
+    gauge.asleep = true;
+    gauge.wakesAt = event.data.resets_at;
+  } else if (isEventOf(event, 'mana.restored')) {
+    const gauge = gaugeOf(keyOfLine(event.data));
+    gauge.asleep = false;
+    gauge.wakesAt = undefined;
+  } else {
+    const read = readingOfLine(event);
+    if (read === undefined) return;
+    const gauge = gaugeOf(read.key);
+    gauge.readings = [...gauge.readings.filter(({ window }) => window !== read.reading.window), read.reading];
+  }
+}
+
 /** Every gauge the log names, in the order it first did, with whether it sleeps and its latest readings. */
 export function gaugesOf(events: readonly Event[], now: Instant): GaugeView[] {
   const gauges: Folding[] = [];
   const gaugeOf = (key: PoolKey): Folding => {
     const found = gauges.find((gauge) => sameKey(gauge, key));
     if (found !== undefined) return found;
-    const added: Folding = { ...keyOf(key), asleep: false, readings: [] };
+    const added: Folding = { ...keyOf(key), asleep: false, wakesAt: undefined, readings: [] };
     gauges.push(added);
     return added;
   };
-  for (const event of events) {
-    if (isEventOf(event, 'mana.exhausted') || isEventOf(event, 'mana.restored')) {
-      gaugeOf(keyOfLine(event.data)).asleep = event.type === 'mana.exhausted';
-      continue;
-    }
-    const read = readingOfLine(event);
-    if (read === undefined) continue;
-    const gauge = gaugeOf(read.key);
-    gauge.readings = [...gauge.readings.filter(({ window }) => window !== read.reading.window), read.reading];
-  }
-  return gauges.map((gauge) => ({ ...gauge, readings: gauge.readings.filter((r) => current(r, now)) }));
+  for (const event of events) fold(gaugeOf, event);
+  return gauges.map(({ wakesAt, readings, ...gauge }) => ({
+    ...gauge,
+    ...(wakesAt === undefined ? {} : { resets_at: wakesAt }),
+    readings: readings.filter((reading) => current(reading, now)),
+  }));
 }
+
+/** The line that heads a sleeping gauge: with the reset it waits for when its sleep named one. */
+export const asleepLine = (t: Translate, gauge: GaugeView): string =>
+  gauge.resets_at === undefined
+    ? t('cli.mana.asleep', { gauge: gaugeName(t, gauge) })
+    : t('cli.mana.asleep_until', { gauge: gaugeName(t, gauge), resets_at: gauge.resets_at });
 
 /** The gauges of the kingdom's log; a log that cannot be read names none. */
 export async function readGauges(root: string, now: Instant): Promise<GaugeView[]> {
