@@ -24,6 +24,12 @@ function reportCrew(ctx: KingdomContext, crew: Crew): void {
   for (const tribe of crew.idle) {
     ctx.io.out(ctx.t('cli.run.tribe_idle', { tribe: tribe.id, adapter: tribe.adapter }));
   }
+  for (const { tribe, problems } of crew.broken) {
+    ctx.io.err(ctx.t('cli.run.tribe_broken', { tribe: tribe.id, adapter: tribe.adapter }));
+    problems.forEach((problem) => {
+      ctx.io.err(`    ${problem}`);
+    });
+  }
 }
 
 function stewardOf(ctx: KingdomContext, crew: Crew): Steward {
@@ -53,7 +59,7 @@ async function runSteward(input: CommandInput, cli: CliContext): Promise<ExitCod
   const ctx = await openKingdomContext(input, cli);
   if (ctx === undefined) return EXIT.failed;
   const { io, t, store } = ctx;
-  const crew = crewOf(ctx.kingdom, io);
+  const crew = await crewOf({ kingdom: ctx.kingdom, root: store.root }, io);
   reportCrew(ctx, crew);
   const steward = stewardOf(ctx, crew);
   const started = await steward.start();

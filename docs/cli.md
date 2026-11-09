@@ -12,6 +12,9 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 |---|---|
 | `elvaria init` | Lập một vương quốc mới: thư mục, registry mặc định và hai tộc. |
 | `elvaria doctor` | Kiểm tra máy đã sẵn sàng chưa: registry, git, CLI của từng tộc, các lãnh thổ, kho bảo vật, phiên còn sót. |
+| `elvaria tribe add <id>` | Thêm một tộc: một adapter (có sẵn, hoặc file adapters/<name>.mjs trong vương quốc) và tài khoản của chính bạn. Tộc mới tắt; nhân vật cũ không đổi. |
+| `elvaria tribe check <id>` | Chạy bộ test hợp đồng với adapter của một tộc và kiểm kiểu đăng nhập; bật tộc khi qua. Với CLI thật, bộ này chạy một việc nhỏ, một lệnh push bị cấm, một lần kill và một lần thăm dò, tốn chút mana. |
+| `elvaria tribe disable <id>` | Tắt một tộc: không nhận việc mới; quest đang chạy chạy xong, quest đang chờ thì chờ. elvaria tribe check bật lại. |
 | `elvaria territory add <path>` | Gắn một repo hoặc thư mục vào vương quốc (mở cõi). |
 | `elvaria territory list` | Liệt kê các lãnh thổ. |
 | `elvaria character add <id>` | Triệu hồi một nhân vật: nghề, tộc, model và cấp ban đầu. |
@@ -70,6 +73,34 @@ Kiểm tra máy đã sẵn sàng chưa: registry, git, CLI của từng tộc, c
 | `--pin` | Ghim lại phiên bản và đường dẫn CLI vừa tìm thấy khi chúng khác bản đã ghim. |
 | `--enable <tribe>` | Bật một tộc trong kingdom.json (enabled: true) khi doctor tìm thấy CLI của nó, rồi kiểm nó như mọi tộc đang bật. |
 | `--acknowledge-terms <tribe>` | Ghi nhận bạn đã đọc và chấp nhận điều khoản của nhà cung cấp cho tộc này (ADR 0018). |
+
+## `elvaria tribe add`
+
+Thêm một tộc: một adapter (có sẵn, hoặc file adapters/<name>.mjs trong vương quốc) và tài khoản của chính bạn. Tộc mới tắt; nhân vật cũ không đổi.
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<id>` | Id của tộc mới, ví dụ codex: chữ thường, chữ số và _, bắt đầu bằng chữ. |
+| `--adapter <adapter>` | claude_code, antigravity, gemini_cli, codex_cli, hoặc adapters/<name>.mjs: một file bạn đặt trong thư mục adapters của vương quốc, export createAdapter(kit). (bắt buộc) |
+| `--max-concurrent <n>` | Số phiên tài khoản chạy cùng lúc (mặc định 1). |
+
+## `elvaria tribe check`
+
+Chạy bộ test hợp đồng với adapter của một tộc và kiểm kiểu đăng nhập; bật tộc khi qua. Với CLI thật, bộ này chạy một việc nhỏ, một lệnh push bị cấm, một lần kill và một lần thăm dò, tốn chút mana.
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<id>` | Một id tộc trong kingdom.json. |
+| `--scenarios` | Chạy mọi phép kiểm: CLI là bản giả, diễn các kịch bản của bộ test từ ELVARIA_FAKE_SCENARIO. |
+| `--model <model>` | Model của nhân vật thăm dò (mặc định: default_model của tộc). |
+
+## `elvaria tribe disable`
+
+Tắt một tộc: không nhận việc mới; quest đang chạy chạy xong, quest đang chờ thì chờ. elvaria tribe check bật lại.
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<id>` | Một id tộc trong kingdom.json. |
 
 ## `elvaria territory add`
 

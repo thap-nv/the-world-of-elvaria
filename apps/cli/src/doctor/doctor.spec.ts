@@ -22,6 +22,20 @@ import { parseVersion } from './tool-version.ts';
 import type { TempDir, TestIo } from '../../test/cli.ts';
 import type { Kingdom } from '@elvaria/domain';
 
+/** An owner adapter file whose CLI runs only with a paid key: doctor pins auth = api_key from its declaration. */
+const PAID_ADAPTER = `export const createAdapter = (kit) => ({
+  tribe: kit.tribe.id,
+  adapter: kit.tribe.adapter,
+  capabilities: {
+    headless: true, context_file: true, events: true, tool_gate: true, usage: true,
+    structured_output: true, resume: false, compact: false, subagent: false, auth: ['api_key'],
+  },
+  spawn: () => Promise.reject(new Error('no session in this spec')),
+  probe: () => Promise.resolve({ status: 'ok' }),
+  doctor: () => Promise.resolve({ path: '/opt/paid/bin/paid', version: '1.0.0', auth_ok: true }),
+});
+`;
+
 describe('parseVersion', () => {
   it.each([
     ['2.1.318 (Claude Code)\n', '2.1.318'],
@@ -140,23 +154,20 @@ describe('elvaria doctor', () => {
       ...value.tribes,
       { id: 'codex', adapter: 'codex_cli', enabled: false, max_concurrent: 1 },
       { id: 'mine', adapter: 'adapters/mine.mjs', enabled: true, max_concurrent: 1 },
-      { id: 'paid', adapter: 'gemini_cli', enabled: true, max_concurrent: 1 },
+      { id: 'paid', adapter: 'adapters/paid.mjs', enabled: true, max_concurrent: 1 },
     ];
     await writeKingdom(KingdomSchema.parse({ ...value, tribes }));
-    await fakeTool(bin, 'gemini', '0.67.0');
+    // An adapter file that runs only with a paid key, as runner-gemini will declare (ADR 0018, P1-19).
+    await mkdir(path.join(kingdom, 'adapters'));
+    await writeFile(path.join(kingdom, 'adapters', 'paid.mjs'), PAID_ADAPTER);
     const io = await doctorIo(broken, bin);
-    expect(
-      await doctor(
-        io,
-        '--tool',
-        'paid=' + path.join(bin, process.platform === 'win32' ? 'gemini.cmd' : 'gemini'),
-      ),
-    ).toBe(1);
+    expect(await doctor(io)).toBe(1);
     const text = printed(io);
     expect(text).toContain('✗ Tribe claude: ');
     expect(text).toContain('does not answer --version.');
     expect(text).toContain('✓ Tribe codex is disabled; skipped.');
-    expect(text).toContain('✗ Tribe mine: there is no adapter adapters/mine.mjs yet');
+    expect(text).toContain('✗ Tribe mine: the adapter file adapters/mine.mjs does not load');
+    expect(text).toContain('    no file at ');
     expect(text).toContain('✗ Tribe paid: its settings are not valid once the tool is filled in:');
     expect(text).toContain('budget.usd_week: auth = api_key needs budget.usd_week');
   });

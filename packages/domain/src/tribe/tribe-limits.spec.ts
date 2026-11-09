@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import { ADAPTER_CAPABILITIES } from './capabilities.ts';
 import { FULL_TRIBE_LIMITS, TRIBE_NARROWING, tribeLimitsOf } from './tribe-limits.ts';
-import type { AdapterCapabilities, AdapterCapability } from './capabilities.ts';
+import type { AdapterCapability, AdapterFlags } from './capabilities.ts';
 import type { TribeLimits } from './tribe-limits.ts';
 
-const ALL: AdapterCapabilities = {
+const ALL: AdapterFlags = {
   headless: true,
   context_file: true,
   events: true,
@@ -17,7 +17,7 @@ const ALL: AdapterCapabilities = {
   subagent: true,
 };
 
-const without = (...missing: AdapterCapability[]): AdapterCapabilities => ({
+const without = (...missing: AdapterCapability[]): AdapterFlags => ({
   ...ALL,
   ...Object.fromEntries(missing.map((capability) => [capability, false])),
 });

@@ -42,6 +42,8 @@ export const ANTIGRAVITY_CAPABILITIES: AgentRunner['capabilities'] = {
   resume: true,
   compact: false,
   subagent: false,
+  // The owner's Google sign-in; agy has no API-key mode (P1-19).
+  auth: ['login'],
 };
 
 export interface AntigravityOptions {

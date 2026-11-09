@@ -72,6 +72,15 @@ describe('the conformance suite', () => {
     ]);
   });
 
+  it('fails a runner that declares no sign-in, or one Elvaria does not know (P1-19)', async () => {
+    const problemOf = async (auth: readonly string[]) =>
+      (await runConformance(fake({ capabilities: { auth: auth as never } }))).find(
+        ({ id }) => id === 'capabilities',
+      )?.problem;
+    expect(await problemOf([])).toMatch(/^capability auth not declared/);
+    expect(await problemOf(['login', 'oauth_device'])).toMatch(/^unknown auth oauth_device/);
+  });
+
   it('reports a runner that throws instead of answering', async () => {
     const broken: ConformanceTarget = {
       name: 'broken',

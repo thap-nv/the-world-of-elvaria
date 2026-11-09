@@ -45,6 +45,10 @@ export {
   openWorkspace,
 } from './conformance/workspace.ts';
 export type { Workspace } from './conformance/workspace.ts';
+export { ADAPTER_FACTORY, adapterOfModule, runnerProblems } from './kit/adapter-module.ts';
+export type { AdapterFactory } from './kit/adapter-module.ts';
+export { ADAPTER_KIT_VERSION, adapterKitOf } from './kit/kit.ts';
+export type { AdapterKit, KitHookCommand, KitHost } from './kit/kit.ts';
 export { plotCommitMessage } from './plot/commit-message.ts';
 export { folderPlotOf } from './plot/folder.ts';
 export { createPlotManager } from './plot/plot-manager.ts';
