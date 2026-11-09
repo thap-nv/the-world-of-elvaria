@@ -1,6 +1,7 @@
 // `elvaria tribe check <id> [--scenarios] [--model <slug>]` (implementation-plan §3.14, ADR 0021): the conformance
 // suite of runner-core against the tribe's runner, built from its adapter as `elvaria run` builds it, plus the sign-in
-// kingdom.json pins against the ones the adapter declares (checkTribeAuth, P1-19). A tribe that passes is enabled; one
+// kingdom.json pins against the ones the adapter declares (checkTribeAuth, P1-19) and, once the suite passes, the
+// login its adapter reports, as doctor does (P1-34). A tribe that passes is enabled; one
 // that fails stays as it is. With the real CLI only the checks that burn no or almost no mana run (a tiny job, a
 // forbidden push, a kill, the probe); `--scenarios` runs them all against a fake CLI that plays the suite's scenarios
 // from ELVARIA_FAKE_SCENARIO, as the specs' do.
@@ -11,7 +12,7 @@ import type { AgentRunner, ConformanceReport } from '@elvaria/runner-core';
 
 import { flagOption, textOption } from '../args.ts';
 import { EXIT } from '../command.ts';
-import { authFindings } from '../doctor/check-tribe.ts';
+import { authFindings, loginFindings } from '../doctor/check-tribe.ts';
 import { findingLines } from '../doctor/finding.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { minimalEnv } from '../process/minimal-env.ts';
@@ -94,8 +95,11 @@ async function runCheck(input: CommandInput, cli: CliContext): Promise<ExitCode>
   capabilityLines(ctx, tribe, runner.capabilities).forEach(ctx.io.out);
   const auth = authFindings(tribe, runner.capabilities, ctx);
   auth.flatMap(findingLines).forEach(ctx.io.err);
-  const passed = (await conforms(ctx, input, tribe, runner)) && auth.length === 0;
-  if (passed) return enable(ctx, tribe);
+  const conformed = (await conforms(ctx, input, tribe, runner)) && auth.length === 0;
+  // The suite asks only that doctor() answers; a CLI that cannot sign in keeps the tribe off, as in doctor (P1-34).
+  const login = conformed ? await loginFindings(tribe, runner, ctx) : [];
+  login.flatMap(findingLines).forEach(ctx.io.err);
+  if (conformed && login.every(({ level }) => level !== 'error')) return enable(ctx, tribe);
   const key = tribe.enabled ? 'cli.tribe.check.failed_enabled' : 'cli.tribe.check.failed';
   ctx.io.err(ctx.t(key, { tribe: tribe.id }));
   return EXIT.failed;

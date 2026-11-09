@@ -1,8 +1,8 @@
 // `elvaria doctor`: is this machine ready to run the kingdom? Registry, git, each tribe's CLI (found, version
 // pinned into kingdom.json, terms acknowledged where ADR 0018 requires), each territory (implementation-plan
 // §3.14, §6), the treasury file, the sessions a stopped Steward left running (P1-11) and the mana gauges the Steward
-// logged, asleep or not (P1-32). It writes only
-// `tribes[].tool` and, with `--enable`, `tribes[].enabled` (P1-15), through the kingdom file's lock.
+// logged, asleep or not (P1-32). It writes only `tribes[].tool` and, with `--enable`, `tribes[].enabled` (P1-15)
+// when this run finds nothing wrong with that tribe (P1-34), through the kingdom file's lock.
 import { ok } from '@elvaria/domain';
 import type { Tribe } from '@elvaria/domain';
 import type { Translate } from '@elvaria/i18n';
@@ -11,6 +11,7 @@ import { textOptions, flagOption } from '../args.ts';
 import { EXIT } from '../command.ts';
 import { storeIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
+import { isAdapterFile } from '../tribe/adapter-file.ts';
 import { checkGit, checkRegistry, checkTerritories } from './check-kingdom.ts';
 import { checkMana } from './check-mana.ts';
 import { checkLeftSessions, checkTreasury } from './check-state.ts';
@@ -34,7 +35,9 @@ export function toolPaths(values: readonly string[]): Map<string, string> | unde
 /**
  * Why the tribe options cannot be honoured, before anything is checked or written (P1-15): a tribe kingdom.json
  * does not have, or terms to acknowledge for a tribe doctor skips because it is disabled. Before P1-15 both were
- * ignored without a word, and the owner believed the terms were recorded.
+ * ignored without a word, and the owner believed the terms were recorded. `--enable` of a tribe whose adapter is an
+ * owner file is refused too (P1-34): a built-in adapter passed the conformance suite in this repo's CI, an owner
+ * file has passed nothing until `elvaria tribe check` runs the suite against it.
  */
 export function optionProblems(tribes: readonly Tribe[], options: DoctorOptions, t: Translate): string[] {
   const known = new Map(tribes.map((tribe) => [tribe.id as string, tribe]));
@@ -53,7 +56,13 @@ export function optionProblems(tribes: readonly Tribe[], options: DoctorOptions,
       ? [t('cli.doctor.acknowledge_disabled', { tribe: id })]
       : [];
   });
-  return [...unknown, ...skipped];
+  const files = [...options.enable].flatMap((id) => {
+    const tribe = known.get(id);
+    return tribe !== undefined && isAdapterFile(tribe.adapter)
+      ? [t('cli.doctor.enable_adapter_file', { tribe: id, adapter: tribe.adapter })]
+      : [];
+  });
+  return [...unknown, ...skipped, ...files];
 }
 
 /** Writes the re-pinned tribes into kingdom.json under its lock, leaving everything else as it is on disk. */
