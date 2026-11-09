@@ -49,7 +49,8 @@
   no character changes. `tribe check <id>` builds the tribe's runner as `run` does, prints what its adapter declares
   and how far `tribeLimitsOf` lets it go, holds its pinned sign-in to the ones it declares (`checkTribeAuth`), and
   runs runner-core's conformance suite against it (with the real CLI only the checks that burn no or almost no mana;
-  `--scenarios` runs all of them against a fake CLI): a tribe that passes is enabled once doctor has pinned its CLI.
+  `--scenarios` runs all of them against a fake CLI) and, once it passes, holds the tribe to the login its adapter
+  reports, as doctor does (`loginFindings`, P1-34): a tribe that passes is enabled once doctor has pinned its CLI.
   `tribe disable <id>` stops a tribe taking new work. An owner adapter file is imported only here
   (`src/tribe/adapter-file.ts`): runner-core's `adapterKitOf` builds its kit (minimal env, the pinned or given CLI,
   `launchOf`, `hookCommand`) and `adapterOfModule` checks what `createAdapter(kit)` returns, so a broken file is a
@@ -62,7 +63,8 @@
   through its runner's `doctor()`, `src/doctor/adapter-tool.ts`, P1-19), pins path and version with the sign-in the
   adapter declares first (`defaultAuthOf`: the owner's login when it runs with one), refuses a pinned sign-in the
   adapter does not declare (`checkTribeAuth`, P1-19), asks
-  the tribe's adapter about its login, how soon it ends and the built hook, refuses Antigravity without
+  the tribe's adapter about its login (a CLI that cannot sign in is an error, with or without a reason, P1-34), how
+  soon it ends and the built hook, refuses Antigravity without
   `--acknowledge-terms` (ADR 0018), turns a disabled tribe on with `--enable <tribe>` (P1-15) only when that run
   has no error for it (P1-34: a CLI not logged in, a sign-in the adapter does not declare or terms not acknowledged
   keep it off, its CLI still pinned), refuses (exit 2, nothing written) a tribe option naming a tribe

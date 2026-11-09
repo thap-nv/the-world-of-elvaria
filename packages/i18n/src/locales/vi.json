@@ -86,6 +86,7 @@
     "cli.doctor.enable_adapter_file": "--enable {tribe}: adapter của tộc {tribe} là file của bạn ({adapter}), chưa qua bộ test hợp đồng nào. Chạy elvaria tribe check {tribe}: lệnh đó chạy bộ test và bật tộc khi qua.",
     "cli.doctor.git": "git {version}.",
     "cli.doctor.git_missing": "Không tìm thấy git trên PATH.",
+    "cli.doctor.login_failed": "adapter báo CLI không đăng nhập được, không nói vì sao.",
     "cli.doctor.not_ready": "Chưa sẵn sàng: {count} lỗi.",
     "cli.doctor.option.acknowledge": "Ghi nhận bạn đã đọc và chấp nhận điều khoản của nhà cung cấp cho tộc này (ADR 0018).",
     "cli.doctor.option.enable": "Kiểm một tộc đang tắt như mọi tộc đang bật và chỉ bật nó trong kingdom.json (enabled: true) khi không có lỗi nào. Tộc có adapter là file của bạn thì bật bằng elvaria tribe check.",

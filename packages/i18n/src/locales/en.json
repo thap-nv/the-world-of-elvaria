@@ -86,6 +86,7 @@
     "cli.doctor.enable_adapter_file": "--enable {tribe}: the adapter of tribe {tribe} is a file of yours ({adapter}) that has passed no conformance suite yet. Run elvaria tribe check {tribe}: it runs the suite and enables the tribe once it passes.",
     "cli.doctor.git": "git {version}.",
     "cli.doctor.git_missing": "git was not found on PATH.",
+    "cli.doctor.login_failed": "its adapter says the CLI cannot sign in, without saying why.",
     "cli.doctor.not_ready": "Not ready: {count} errors.",
     "cli.doctor.option.acknowledge": "Record that you have read and accept the provider's terms for this tribe (ADR 0018).",
     "cli.doctor.option.enable": "Check a disabled tribe like every enabled one and turn it on in kingdom.json (enabled: true) only when nothing is wrong with it. A tribe whose adapter is a file of yours is enabled by elvaria tribe check instead.",

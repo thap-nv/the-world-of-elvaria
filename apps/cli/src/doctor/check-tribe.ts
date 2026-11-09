@@ -4,6 +4,7 @@
 // CLI (./adapter-tool.ts).
 import { TribeSchema, checkTribeAuth, defaultAuthOf } from '@elvaria/domain';
 import type { AdapterCapabilities, Tribe } from '@elvaria/domain';
+import type { AgentRunner } from '@elvaria/runner-core';
 import { toPortable } from '@elvaria/store';
 
 import { launchOf } from '../process/launch.ts';
@@ -140,11 +141,24 @@ async function adapterFindings(tribe: Tribe, ctx: KingdomContext): Promise<Findi
   const found = await handOf(tribe, { kingdom: ctx.kingdom, root: ctx.store.root }, ctx.io);
   if (found.kind !== 'ready') return [];
   const { runner } = found.hand;
-  const auth = authFindings(tribe, runner.capabilities, ctx);
+  return [...authFindings(tribe, runner.capabilities, ctx), ...(await loginFindings(tribe, runner, ctx))];
+}
+
+/**
+ * What the adapter says of its CLI's login (`runner.doctor()`, P1-09): an error when the CLI cannot sign in, even
+ * without a reason given, a warning for anything else it notes. doctor and `tribe check` hold a tribe to it alike
+ * (P1-34): the conformance suite asks only that `auth_ok` is a boolean.
+ */
+export async function loginFindings(
+  tribe: Tribe,
+  runner: AgentRunner,
+  ctx: KingdomContext,
+): Promise<Finding[]> {
   const info = await runner.doctor();
-  if (info.detail === undefined) return auth;
-  const text = ctx.t('cli.doctor.adapter_detail', { tribe: tribe.id, detail: info.detail });
-  return [...auth, finding(info.auth_ok ? 'warn' : 'error', text)];
+  if (info.auth_ok && info.detail === undefined) return [];
+  const detail = info.detail ?? ctx.t('cli.doctor.login_failed');
+  const text = ctx.t('cli.doctor.adapter_detail', { tribe: tribe.id, detail });
+  return [finding(info.auth_ok ? 'warn' : 'error', text)];
 }
 
 /**

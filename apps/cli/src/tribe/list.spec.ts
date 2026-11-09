@@ -1,8 +1,10 @@
 // How a tribe is turned on and seen (P1-34, implementation-plan §3.14 "không qua thì không bật được"): `doctor
-// --enable` refuses an owner adapter file, which only `tribe check` enables, and `tribe list` shows every tribe with
-// its adapter, pinned CLI, sign-in and limits: a built-in one, an adapter file, and one whose adapter has no runner.
+// --enable` refuses an owner adapter file, which only `tribe check` enables, `tribe check` holds the tribe to the login
+// its adapter reports as doctor does, and `tribe list` shows every tribe with its adapter, pinned CLI, sign-in and
+// limits: a built-in one, an adapter file, and one whose adapter has no runner.
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -12,6 +14,7 @@ import {
   LANTERN_ADAPTER,
   editKingdom,
   installLantern,
+  kingdomJson,
   writeAdapter,
 } from '../../test/lantern.ts';
 import type { TempDir, TestIo } from '../../test/cli.ts';
@@ -39,6 +42,34 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
     ]);
     expect(io.printed.out).toEqual([]);
     expect(await readFile(path.join(kingdom, 'kingdom.json'), 'utf8')).toBe(before);
+  });
+
+  it('tribe check keeps off a tribe whose adapter says its CLI cannot sign in, as doctor does', async () => {
+    // lantern, but its doctor() reports no login and no reason: the suite still passes.
+    const lantern = pathToFileURL(path.join(kingdom, LANTERN_ADAPTER)).href;
+    const locked = await writeAdapter(
+      kingdom,
+      'locked',
+      [
+        `import { createAdapter as lantern } from ${JSON.stringify(lantern)};`,
+        'export function createAdapter(kit) {',
+        '  const runner = lantern(kit);',
+        '  return { ...runner, doctor: async () => ({ ...(await runner.doctor()), auth_ok: false }) };',
+        '}',
+        '',
+      ].join('\n'),
+    );
+    await elvaria(testIo(), 'tribe', 'add', 'locked', '--adapter', locked);
+    const pinned = testIo();
+    expect(await elvaria(pinned, 'doctor', '--tool', `locked=${FAKE_LANTERN}`)).toBe(1);
+    const line = '✗ Tribe locked: its adapter says the CLI cannot sign in, without saying why.';
+    expect(pinned.printed.out).toContain(line);
+    const io = testIo();
+    expect(await elvaria(io, 'tribe', 'check', 'locked', '--scenarios')).toBe(1);
+    expect(io.printed.out).toContain('✓ doctor');
+    expect(io.printed.err).toEqual([line, 'Tribe locked does not pass, so it stays disabled.']);
+    const tribes = (await kingdomJson(kingdom)).tribes as { id: string; enabled: boolean }[];
+    expect(tribes.find(({ id }) => id === 'locked')?.enabled).toBe(false);
   });
 
   it('prints one line per tribe: built in, adapter file, no runner yet, adapter file that does not load', async () => {
