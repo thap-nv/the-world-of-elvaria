@@ -3,7 +3,7 @@
 ## Does
 
 - Ships the `elvaria` command, the only composition root (implementation-plan §1.1): `init`, `doctor`,
-  `tribe add|check|disable`, `territory add|list`, `character add|list|suspend|release|level|model`,
+  `tribe list|add|check|disable`, `territory add|list`, `character add|list|suspend|release|level|model`,
   `quest add|list|show|confirm|cancel|archive|edit|retry|reassign`,
   `seal`, `return`, `answer`, `run`,
   `sandbox generate|replay`, `migrate`. The command table (`src/commands.ts`) drives parsing (`util.parseArgs`), help, and the reference
@@ -35,7 +35,8 @@
   it, the domain's `setModelLine`: a model of the character's own tribe, not the one it runs) and says when the new
   model's pool is turned off (P1-22).
 - Writes new files the Steward does not own: `kingdom.json` (`init`, then `tribes[].tool` and, with `--enable`,
-  `tribes[].enabled` from `doctor`, and `tribes[]` from `tribe add|check|disable`, P1-19), a
+  `tribes[].enabled` from `doctor` once it finds nothing wrong, and `tribes[]` from `tribe add|check|disable`,
+  P1-19), a
   territory, a newly summoned character (create only, never overwrite). Those two are also logged
   (`territory.attached`, `character.created`, with the view after the change, P0-09), so the world sees them.
   Without `--level`, a character starts at its model's level (`src/character/starting-level.ts`: Opus 5, Sonnet
@@ -52,16 +53,21 @@
   `tribe disable <id>` stops a tribe taking new work. An owner adapter file is imported only here
   (`src/tribe/adapter-file.ts`): runner-core's `adapterKitOf` builds its kit (minimal env, the pinned or given CLI,
   `launchOf`, `hookCommand`) and `adapterOfModule` checks what `createAdapter(kit)` returns, so a broken file is a
-  list of reasons for `run`, `doctor` and `tribe check`, never a crash.
+  list of reasons for `run`, `doctor` and `tribe check`, never a crash. `tribe list` (P1-34, `src/tribe/list.ts`)
+  prints one line per tribe: adapter, enabled or not, pinned CLI version, path and sign-in, and from its runner the
+  highest rank `tribeLimitsOf` lets it take (none without `headless`), whether it takes guarded territories, and the
+  capabilities it declares; a tribe with no runner yet or an adapter file that does not load says so instead.
 - `doctor`: finds each tribe's CLI (`--tool <tribe>=<path>`, the pinned path, PATH, then the adapter's own search:
   Claude Code inside the VS Code extension; npm `.cmd` shims run as `node <script>`; an adapter file is asked
   through its runner's `doctor()`, `src/doctor/adapter-tool.ts`, P1-19), pins path and version with the sign-in the
   adapter declares first (`defaultAuthOf`: the owner's login when it runs with one), refuses a pinned sign-in the
   adapter does not declare (`checkTribeAuth`, P1-19), asks
   the tribe's adapter about its login, how soon it ends and the built hook, refuses Antigravity without
-  `--acknowledge-terms` (ADR 0018), turns a disabled tribe on with `--enable <tribe>` once its CLI is pinned
-  (P1-15), refuses (exit 2, nothing written) a tribe option naming a tribe
-  kingdom.json has not, or `--acknowledge-terms` for a disabled tribe it would skip, checks git, the registry
+  `--acknowledge-terms` (ADR 0018), turns a disabled tribe on with `--enable <tribe>` (P1-15) only when that run
+  has no error for it (P1-34: a CLI not logged in, a sign-in the adapter does not declare or terms not acknowledged
+  keep it off, its CLI still pinned), refuses (exit 2, nothing written) a tribe option naming a tribe
+  kingdom.json has not, `--acknowledge-terms` for a disabled tribe it would skip, or `--enable` of a tribe whose
+  adapter is an owner file, which only `tribe check` enables (P1-34), checks git, the registry
   (a class prompt it lacks: `elvaria migrate` copies the default ones; catalog scripts: `missingRegistryFiles`)
   and each territory, the
   treasury file (`inspectTreasury`: present, mode 0600 outside Windows, `{ "name": "value" }`, every name a
@@ -120,4 +126,6 @@ planted with `openEventLog` / `openJournal`: `src/quest/infirmary.spec.ts` (the 
 old lines included), `src/gauges.spec.ts` (the gauges, and `character list` and `doctor` showing them).
 `fixtures/lantern-adapter.mjs` is an owner adapter file that imports nothing, for `fixtures/fake-lantern.mjs`, a
 fake CLI with no tool gate: `src/tribe/tribe.spec.ts` adds, pins, checks and disables it; `src/tribe/round.spec.ts`
-runs the Steward (`elvaria run`) with it until a rank D quest is done, while a rank C quest stays open (P1-19).
+runs the Steward (`elvaria run`) with it until a rank D quest is done, while a rank C quest stays open (P1-19);
+`src/tribe/list.spec.ts` lists it beside the built-in tribes, one with no runner and a broken file, and has
+`doctor --enable` refuse it (P1-34).

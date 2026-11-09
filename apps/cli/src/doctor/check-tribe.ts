@@ -24,7 +24,7 @@ export interface DoctorOptions {
   readonly pin: boolean;
   /** `--acknowledge-terms <tribe>`: the owner accepts the provider's terms for that tribe (ADR 0018). */
   readonly acknowledge: ReadonlySet<string>;
-  /** `--enable <tribe>`: turn the tribe on (P1-15; `elvaria tribe` arrives with P1-19). */
+  /** `--enable <tribe>`: turn a built-in tribe on once this run finds nothing wrong with it (P1-15, P1-34). */
   readonly enable: ReadonlySet<string>;
 }
 
@@ -148,8 +148,10 @@ async function adapterFindings(tribe: Tribe, ctx: KingdomContext): Promise<Findi
 }
 
 /**
- * One tribe as kingdom.json should hold it after this run. `--enable` checks a disabled tribe as an enabled one, so
- * its CLI must be found and pinned before `enabled: true` is written; when it is not, the tribe stays disabled.
+ * One tribe as kingdom.json should hold it after this run. `--enable` checks a disabled tribe as an enabled one and
+ * writes `enabled: true` only when this run has no error for it (§3.14 "không qua thì không bật được", P1-34): before
+ * P1-34 a tribe whose login failed was enabled, and the Steward handed it quests whose every session broke. Its CLI
+ * is still pinned when that is all that changed.
  */
 export async function checkTribe(
   tribe: Tribe,
@@ -162,11 +164,19 @@ export async function checkTribe(
   const enabling = !tribe.enabled && options.enable.has(tribe.id);
   const check = await checkFound(enabling ? { ...tribe, enabled: true } : tribe, tribe, ctx, options);
   if (!enabling) return check;
-  const enabled = check.updated?.enabled === true;
-  const line = enabled
-    ? finding('ok', t('cli.doctor.tribe_enabled', { tribe: tribe.id }))
-    : finding('error', t('cli.doctor.tribe_still_disabled', { tribe: tribe.id }));
-  return { ...check, findings: [...check.findings, line] };
+  const failed = check.updated === undefined || check.findings.some(({ level }) => level === 'error');
+  if (!failed) {
+    const enabled = finding('ok', t('cli.doctor.tribe_enabled', { tribe: tribe.id }));
+    return { ...check, findings: [...check.findings, enabled] };
+  }
+  const findings = [
+    ...check.findings,
+    finding('error', t('cli.doctor.tribe_still_disabled', { tribe: tribe.id })),
+  ];
+  const kept = check.updated === undefined ? undefined : { ...check.updated, enabled: false };
+  return kept === undefined || JSON.stringify(kept) === JSON.stringify(tribe)
+    ? { findings }
+    : { findings, updated: kept };
 }
 
 /**

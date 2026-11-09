@@ -24,12 +24,14 @@ import { TERRITORY_LIST } from './territory/list.ts';
 import { TRIBE_ADD } from './tribe/add.ts';
 import { TRIBE_CHECK } from './tribe/check.ts';
 import { TRIBE_DISABLE } from './tribe/disable.ts';
+import { TRIBE_LIST } from './tribe/list.ts';
 import { WAKE } from './wake.ts';
 import type { CommandSpec } from './command.ts';
 
 export const COMMANDS: readonly CommandSpec[] = [
   INIT,
   DOCTOR,
+  TRIBE_LIST,
   TRIBE_ADD,
   TRIBE_CHECK,
   TRIBE_DISABLE,
