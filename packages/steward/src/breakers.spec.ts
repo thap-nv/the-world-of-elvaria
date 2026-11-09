@@ -105,15 +105,15 @@ describe('a session past a breaker', () => {
     });
     expect(steward.running()).toBe(0);
     expect(commits).toEqual([`chore: wip ${quest.id} (time)`]);
-    expect(kingdom.notices).toEqual([
-      {
-        kind: 'infirmary',
-        quest: { id: quest.id, title: 'Hangs', rank: 'D' },
-        reason: 'breaker:time: ran 45 min, limit 45 min',
-      },
-    ]);
+    // Why, in parts too (P1-32): the trip, the breaker's words in the detail; the bell and the line say the same.
+    const message = 'ran 45 min, limit 45 min';
+    const why = { reason: `breaker:time: ${message}`, trip: 'time', detail: { message } };
+    const hangs = { id: quest.id, title: 'Hangs', rank: 'D' };
+    expect(kingdom.notices).toEqual([{ kind: 'infirmary', quest: hangs, ...why }]);
     expect((await kingdom.character(started.assignee ?? '')).status).toBe('idle');
     expect((await typesOf(kingdom)).slice(-2)).toEqual(['character.swamp', 'quest.infirmary']);
+    const line = (await openEventLog(kingdom.root).read()).events.at(-1);
+    expect(line).toMatchObject({ attempt: 1, data: why });
     // The quest waits for the owner: no second bell, no new session.
     kingdom.clock.advance(1);
     await steward.tick();

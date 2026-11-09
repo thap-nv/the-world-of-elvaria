@@ -50,7 +50,12 @@ const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
   'quest.unblocked': QUEST_CHANGE,
   'quest.paused': QUEST_CHANGE,
   'quest.resumed': QUEST_CHANGE,
-  'quest.infirmary': { reason: 'breaker:time', ...QUEST_CHANGE },
+  'quest.infirmary': {
+    reason: 'breaker:commit: elvaria.patch was not applied: touches src/a.ts',
+    trip: 'commit',
+    detail: { patch: 'touches src/a.ts', wip: 'hook refused', apprentice_left: true },
+    ...QUEST_CHANGE,
+  },
   'quest.delivered': QUEST_CHANGE,
   'quest.edited': { quest: QUEST_VIEW },
   'quest.unclaimable': {
@@ -126,6 +131,31 @@ describe('EventSchema', () => {
     expect(EventSchema.parse(sent)).toEqual(sent);
   });
 
+  it.each([
+    ['written before P1-32: the reason alone', { reason: 'breaker:time', ...QUEST_CHANGE }],
+    ['a trip that says it all', { reason: 'max_attempts', trip: 'max_attempts', ...QUEST_CHANGE }],
+    [
+      'a script that failed and opened its follow-up',
+      {
+        reason: 'script:fail: lint-fix did not pass, see the verdict; follow-up quest …',
+        trip: 'script_fail',
+        detail: { script: 'lint-fix', follow_up: 'q_20261106_7k3m2b' },
+        ...QUEST_CHANGE,
+      },
+    ],
+    [
+      'a review no verifier could finish',
+      {
+        reason: 'breaker:time: past 30 minutes; a breaker stopped 2 verifiers of run 1, …',
+        trip: 'time',
+        detail: { message: 'past 30 minutes', verifiers_stopped: 2 },
+        ...QUEST_CHANGE,
+      },
+    ],
+  ])('accepts an infirmary line: %s', (_, data) => {
+    expect(issuesOf(line('quest.infirmary', data))).toEqual([]);
+  });
+
   it('takes a cleared notice: reason null, no best character', () => {
     const cleared = line('quest.unclaimable', { reason: null, rank: 'B', class: 'knight' });
     expect(issuesOf(cleared)).toEqual([]);
@@ -160,6 +190,21 @@ describe('EventSchema', () => {
     ['plot.patched', { file: 'elvaria.patch', paths: [] }, 'data.paths'],
     ['quest.infirmary', { ...QUEST_CHANGE, reason: '' }, 'data.reason'],
     ['quest.infirmary', { reason: 'breaker:time' }, 'data.quest'],
+    ['quest.infirmary', { ...QUEST_CHANGE, reason: 'r', trip: 'crash' }, 'data.trip'],
+    ['quest.infirmary', { ...QUEST_CHANGE, reason: 'r', detail: { message: '' } }, 'data.detail.message'],
+    ['quest.infirmary', { ...QUEST_CHANGE, reason: 'r', detail: { hook: 'x' } }, 'Unrecognized key: "hook"'],
+    [
+      'quest.infirmary',
+      { ...QUEST_CHANGE, reason: 'r', detail: { apprentice_left: false } },
+      'apprentice_left',
+    ],
+    ['quest.infirmary', { ...QUEST_CHANGE, reason: 'r', detail: { script: 'Lint' } }, 'data.detail.script'],
+    ['quest.infirmary', { ...QUEST_CHANGE, reason: 'r', detail: { follow_up: 'q_1' } }, 'detail.follow_up'],
+    [
+      'quest.infirmary',
+      { ...QUEST_CHANGE, reason: 'r', detail: { verifiers_stopped: 0 } },
+      'verifiers_stopped',
+    ],
     ['quest.claimed', {}, 'data.quest'],
     ['quest.claimed', { quest: { ...QUEST_VIEW, assignee: undefined } }, 'data.quest.assignee'],
     ['quest.claimed', { quest: { ...QUEST_VIEW, plot: { type: 'none' } } }, 'Unrecognized key: "plot"'],

@@ -35,8 +35,8 @@ import {
   readJournal,
   readScriptures,
 } from '../files.ts';
+import { refusedPatchOf } from '../infirmary.ts';
 import { withLogTails } from '../review/log-tail.ts';
-import { refusedPatchOf } from './patch.ts';
 import { sessionEnvOf } from './secrets.ts';
 import type { Context } from '../context.ts';
 
@@ -94,7 +94,7 @@ async function refusedPatchOfRun(ctx: Context, quest: Quest, n: number): Promise
     const { events } = await openJournal(ctx.root, quest.id).read();
     for (const event of events) {
       if (!isEventOf(event, 'quest.infirmary') || event.attempt !== n) continue;
-      const why = refusedPatchOf(event.data.reason);
+      const why = refusedPatchOf(event.data);
       if (why !== undefined) return why;
     }
   } catch {

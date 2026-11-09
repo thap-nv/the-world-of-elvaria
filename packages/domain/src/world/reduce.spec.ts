@@ -62,6 +62,15 @@ describe('applyEvent', () => {
         source: 'estimate',
       }),
       line('mana.exhausted', { tribe: 'claude', pool: 'claude', model: 'fable' }),
+      // The cap of one model (P1-32): the pool's band does not follow it.
+      line('mana.level', {
+        tribe: 'gemini',
+        pool: 'gemini_models',
+        model: 'argon',
+        window: 'weekly',
+        used_pct: 93,
+        source: 'rate_limits',
+      }),
       line('campaign.declared', { name: 'a type newer than this reader' }),
     ]) {
       expect(applyEvent(STATE, ignored)).toBe(STATE);
@@ -104,10 +113,16 @@ describe('applyEvent', () => {
     expect(applyEvent(STATE, line('quest.unclaimable', notice))).toBe(STATE);
   });
 
-  it('applies the infirmary line like any quest line; its reason is for the chronicle', () => {
+  it.each([
+    ['written before P1-32, the reason alone', { reason: 'max_attempts' }],
+    [
+      'with its trip and detail (P1-32)',
+      { reason: 'breaker:time: x', trip: 'time', detail: { message: 'x' } },
+    ],
+  ])('applies the infirmary line like any quest line, %s; why is for the chronicle', (_, why) => {
     const view = { ...QUEST_VIEW, status: 'infirmary', verifier: null } as const;
-    const next = applyEvent(STATE, line('quest.infirmary', { reason: 'max_attempts', quest: view }));
-    expect(next.quests[QUEST_VIEW.id]?.status).toBe('infirmary');
+    const next = applyEvent(STATE, line('quest.infirmary', { ...why, quest: view }));
+    expect(next.quests[QUEST_VIEW.id]).toEqual(view);
   });
 
   it.each([
@@ -158,7 +173,10 @@ describe('applyEvent', () => {
 
   it('puts a whole pool to sleep and wakes it', () => {
     const pool = { tribe: 'claude', pool: 'claude' };
-    const asleep = applyEvent(STATE, line('mana.exhausted', pool));
+    const asleep = applyEvent(
+      STATE,
+      line('mana.exhausted', { ...pool, resets_at: '2026-11-06T17:00:00+07:00' }),
+    );
     expect(asleep.pools[0]?.asleep).toBe(true);
     expect(applyEvent(asleep, line('mana.restored', pool)).pools[0]?.asleep).toBe(false);
   });

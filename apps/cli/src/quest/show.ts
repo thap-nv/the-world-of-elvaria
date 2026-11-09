@@ -1,4 +1,5 @@
-// `elvaria quest show <id>`: one quest, its fields as labelled lines, then its description.
+// `elvaria quest show <id>`: one quest, its fields as labelled lines, why it waits (nobody can take it, P1-03; the
+// infirmary, P1-32), then its description.
 import type { Quest, Registry } from '@elvaria/domain';
 import type { MessageKey } from '@elvaria/i18n';
 import { inKingdom } from '@elvaria/store';
@@ -8,6 +9,7 @@ import { openKingdomContext } from '../kingdom-context.ts';
 import { QUEST_STATUS_LABEL } from '../labels.ts';
 import { NONE } from '../listing.ts';
 import { renderTable } from '../table.ts';
+import { infirmaryLines, lastInfirmaryOf } from './infirmary.ts';
 import { kindName } from './list.ts';
 import { readQuest } from './references.ts';
 import { unclaimableLines, unclaimableOf } from './unclaimable.ts';
@@ -71,8 +73,18 @@ async function runQuestShow(input: CommandInput, cli: CliContext): Promise<ExitC
     note === undefined
       ? []
       : ['', ...(await unclaimableLines(ctx, registry.ok ? registry.value : undefined, quest, note))];
-  [`${quest.id}  ${quest.title}`, ...renderTable(rows), ...why, '', quest.description].forEach(ctx.io.out);
+  const sick = await infirmaryNote(ctx, quest);
+  [`${quest.id}  ${quest.title}`, ...renderTable(rows), ...why, ...sick, '', quest.description].forEach(
+    ctx.io.out,
+  );
   return EXIT.ok;
+}
+
+/** A quest in the infirmary: why it went there, from its journal (P1-32). */
+async function infirmaryNote(ctx: KingdomContext, quest: Quest): Promise<string[]> {
+  if (quest.status !== 'infirmary') return [];
+  const line = await lastInfirmaryOf(ctx, quest);
+  return line === undefined ? [] : ['', ...infirmaryLines(ctx.t, line)];
 }
 
 export const QUEST_SHOW: CommandSpec = {

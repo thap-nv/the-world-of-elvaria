@@ -6,7 +6,7 @@ import { openJournal } from '@elvaria/eventlog';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { bench, questPayload } from './__fixtures__/kingdom.ts';
-import { APPRENTICE_LEFT } from './sessions/breaker.ts';
+import { APPRENTICE_LEFT } from './infirmary.ts';
 import type { Bench } from './__fixtures__/kingdom.ts';
 import type { Steward } from './types.ts';
 

@@ -97,7 +97,7 @@ async function verdictOn(ctx: Context, parts: Parts, result: ScriptResult, durat
   const verdict = written.value.result === 'pass' ? 'pass' : 'fail';
   const followUp = verdict === 'fail' ? await openFollowUp(ctx, quest, script, written.value) : undefined;
   const handed = followUp === undefined ? {} : unitsHandedTo(quest, followUp);
-  const opened = followUp === undefined ? '' : `; follow-up quest ${followUp} opened`;
+  const opened = followUp === undefined ? {} : { follow_up: followUp };
   return moveOnVerdict(
     ctx,
     quest,
@@ -106,7 +106,7 @@ async function verdictOn(ctx: Context, parts: Parts, result: ScriptResult, durat
       event: { type: VERDICT_EVENT[verdict] },
       actor: 'steward',
       before: { checks_run: [scriptCheckId(script.id)], ...handed },
-      reason: `script:fail: ${script.id} did not pass, see the verdict${opened}`,
+      infirmary: { trip: 'script_fail', detail: { script: script.id, ...opened } },
     },
   );
 }
@@ -119,13 +119,20 @@ function fall(
   script: CatalogScript,
 ) {
   if (outcome.kind === 'timeout') {
-    const detail = `the script ran past ${script.timeout_minutes} minutes`;
+    const message = `the script ran past ${script.timeout_minutes} minutes`;
     const event = { type: 'breaker', trip: 'time' } as const;
-    return moveAndRing(ctx, { quest: quest.id, event, actor: 'steward', reason: `breaker:time: ${detail}` });
+    const infirmary = { trip: 'time', detail: { message, script: script.id } } as const;
+    return moveAndRing(ctx, { quest: quest.id, event, actor: 'steward', infirmary });
   }
-  const reason = `script:${outcome.kind}: ${outcome.detail}`;
-  return moveAndRing(ctx, { quest: quest.id, event: { type: 'crash' }, actor: 'steward', reason });
+  const infirmary = {
+    trip: SCRIPT_TRIPS[outcome.kind],
+    detail: { message: outcome.detail, script: script.id },
+  };
+  return moveAndRing(ctx, { quest: quest.id, event: { type: 'crash' }, actor: 'steward', infirmary });
 }
+
+/** The infirmary trip of a run that broke or could not use the quest's params (P1-32). */
+const SCRIPT_TRIPS = { broken: 'script_broken', usage: 'script_usage' } as const;
 
 /**
  * Judges the current run of a script-tier quest from its saved output (`TickPlan.script_verdicts`): a run that ended

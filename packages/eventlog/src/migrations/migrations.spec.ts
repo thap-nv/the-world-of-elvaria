@@ -44,6 +44,25 @@ describe('event line migrations', () => {
     for (const type of Object.keys(EVENT_DATA_SCHEMAS)) expect(types).toContain(type);
   });
 
+  // Tasks that add lines in parallel have picked the same id before (P1-22 took the id of a command.applied line).
+  it.each(FIXTURES)('gives every line of %s an id of its own', async (name) => {
+    const ids = (await readEventFile(path.join(HERE, name))).events.map(({ id }) => id);
+    expect(ids.filter((id, index) => ids.indexOf(id) !== index)).toEqual([]);
+  });
+
+  // Optional fields added with `v` still 1 (P1-32): the fixture keeps a line from before each beside one with it.
+  it.each([
+    ['quest.infirmary', 'trip'],
+    ['quest.infirmary', 'detail'],
+    ['mana.exhausted', 'resets_at'],
+    ['mana.level', 'model'],
+  ])('keeps a %s line without %s beside one with it', async (type, field) => {
+    const read = await readEventFile(path.join(HERE, 'v1.jsonl'));
+    const lines = read.events.filter((event) => event.type === type).map(({ data }) => data);
+    expect(lines.some((data) => data[field] === undefined)).toBe(true);
+    expect(lines.some((data) => data[field] !== undefined)).toBe(true);
+  });
+
   it('runs every step from the line v up to the current one', () => {
     const line = { v: 1, id: 'x', session: 's-1' };
     expect(migrateEvent(line, RENAME_SESSION)).toEqual({

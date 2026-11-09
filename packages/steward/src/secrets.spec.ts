@@ -113,13 +113,10 @@ describe('a quest that asks for secrets', () => {
     const quest = await kingdom.quest('Publish');
     expect(quest).toMatchObject({ status: 'infirmary', attempts: 0, attempt_log: [] });
     // Once, with its own reason: not claimed and released again every tick.
-    expect(kingdom.notices).toEqual([
-      {
-        kind: 'infirmary',
-        quest: { id: quest.id, title: 'Publish', rank: 'D' },
-        reason: 'breaker:secrets: the treasury has no npm_token',
-      },
-    ]);
+    const why = 'the treasury has no npm_token';
+    const said = { reason: `breaker:secrets: ${why}`, trip: 'secrets', detail: { message: why } };
+    const publish = { id: quest.id, title: 'Publish', rank: 'D' };
+    expect(kingdom.notices).toEqual([{ kind: 'infirmary', quest: publish, ...said }]);
     expect(kingdom.warnings).toEqual([]);
   });
 

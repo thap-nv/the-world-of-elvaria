@@ -124,8 +124,11 @@ export async function lines(at: Bench): Promise<{ type: string; data: Record<str
     .map((line) => JSON.parse(line) as { type: string; data: Record<string, unknown> });
 }
 
-export const infirmaryReason = async (at: Bench): Promise<unknown> =>
-  (await lines(at)).findLast(({ type }) => type === 'quest.infirmary')?.data.reason;
+/** The data of the last `quest.infirmary` line: its reason, trip and detail beside the quest's view. */
+export const infirmaryLine = async (at: Bench): Promise<Record<string, unknown> | undefined> =>
+  (await lines(at)).findLast(({ type }) => type === 'quest.infirmary')?.data;
+
+export const infirmaryReason = async (at: Bench): Promise<unknown> => (await infirmaryLine(at))?.reason;
 
 /** The quest as the files held it after its script ran, before the verdict: working, its run open. */
 export async function backToWorking(at: Bench, done: Quest): Promise<void> {
