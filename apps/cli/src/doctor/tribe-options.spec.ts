@@ -74,7 +74,7 @@ describe('elvaria doctor: tribe options and class prompts (P1-15)', () => {
     ]);
   });
 
-  it('enables a disabled tribe once it finds its CLI; the owner acknowledges its terms after', async () => {
+  it('enables a disabled tribe only once this run finds nothing wrong with it (P1-34)', async () => {
     await disableGemini();
     const claudeOnly = path.join(dir.root, 'claude only');
     await fakeTool(claudeOnly, 'claude', '2.1.318 (Claude Code)');
@@ -84,21 +84,49 @@ describe('elvaria doctor: tribe options and class prompts (P1-15)', () => {
     expect(printed(missing)).toContain('✗ Tribe gemini stays disabled until the problem above is fixed.');
     expect((await readKingdom()).tribes[1]?.enabled).toBe(false);
 
+    // Found but its terms not acknowledged: the CLI is pinned, the tribe stays off (before P1-34 it was enabled).
     const io = await doctorIo(bin);
     expect(await doctor(io, '--enable', 'gemini')).toBe(1);
-    expect(printed(io)).toContain('✓ Tribe gemini is now enabled in kingdom.json.');
     expect(printed(io)).toContain("✗ Tribe gemini: Antigravity's terms are not acknowledged");
-    expect((await readKingdom()).tribes[1]).toMatchObject({ enabled: true, tool: { version: '1.5.2' } });
-    const acknowledged = await doctorIo(bin);
-    expect(await doctor(acknowledged, '--acknowledge-terms', 'gemini')).toBe(0);
-    expect((await readKingdom()).tribes[1]?.tool?.terms_acknowledged_at).toBe('2026-11-06T09:00:00+07:00');
+    expect(printed(io)).toContain('✗ Tribe gemini stays disabled until the problem above is fixed.');
+    expect(printed(io)).not.toContain('now enabled');
+    expect((await readKingdom()).tribes[1]).toMatchObject({ enabled: false, tool: { version: '1.5.2' } });
 
-    // A tribe turned off by hand with its tool still pinned: --enable writes only `enabled`.
-    await disableGemini();
     const again = await doctorIo(bin);
     expect(await doctor(again, '--enable', 'gemini', '--acknowledge-terms', 'gemini')).toBe(0);
     expect(printed(again)).toContain('✓ Tribe gemini is now enabled in kingdom.json.');
-    expect((await readKingdom()).tribes[1]?.enabled).toBe(true);
+    expect((await readKingdom()).tribes[1]).toMatchObject({
+      enabled: true,
+      tool: { terms_acknowledged_at: '2026-11-06T09:00:00+07:00' },
+    });
+  });
+
+  it('keeps a tribe off whose CLI is not logged in, or whose pinned sign-in its adapter does not run with', async () => {
+    const value = await readKingdom();
+    await writeKingdom({ ...value, tribes: value.tribes.map((tribe) => ({ ...tribe, enabled: false })) });
+    const loggedOut = path.join(dir.root, 'logged out');
+    await fakeTool(loggedOut, 'claude', '2.1.318 (Claude Code)', 0, { loggedIn: false });
+    const io = await doctorIo(loggedOut);
+    expect(await doctor(io, '--enable', 'claude')).toBe(1);
+    expect(printed(io)).toContain('✗ Tribe claude: not logged in');
+    expect(printed(io)).toContain('✗ Tribe claude stays disabled until the problem above is fixed.');
+    expect((await readKingdom()).tribes[0]).toMatchObject({ enabled: false, tool: { auth: 'login' } });
+
+    // The owner pins a paid key by hand; Claude Code's adapter runs with the login only (checkTribeAuth).
+    const pinned = await readKingdom();
+    await writeKingdom({
+      ...pinned,
+      tribes: pinned.tribes.map((tribe) =>
+        tribe.id === 'claude' && tribe.tool !== undefined
+          ? { ...tribe, tool: { ...tribe.tool, auth: 'api_key' }, budget: { usd_week: 5 } }
+          : tribe,
+      ),
+    });
+    const paid = await doctorIo(bin);
+    expect(await doctor(paid, '--enable', 'claude')).toBe(1);
+    expect(printed(paid)).toContain('runs with login, not api_key');
+    expect(printed(paid)).toContain('✗ Tribe claude stays disabled until the problem above is fixed.');
+    expect((await readKingdom()).tribes[0]?.enabled).toBe(false);
   });
 
   it('names a class prompt the kingdom lacks and where the default ones are', async () => {

@@ -33,6 +33,13 @@ export type HookEvent = (typeof HOOK_EVENTS)[number];
 export const HOOK_TIMEOUT_SECONDS = 5;
 
 /**
+ * Added to the PreToolUse handler's args: Claude names the event only in the payload, and a PreToolUse whose
+ * payload the hook cannot read must still be denied, not let through (P1-36, ADR 0007). `EVENT_FLAG` of the hook,
+ * which we may not import.
+ */
+export const PRE_TOOL_USE_ARGS: readonly string[] = ['--event', 'PreToolUse'];
+
+/**
  * Tools whose bare allow would reach outside the plot: a bare `Read` read the main checkout's files and an
  * apprentice transcript in %TEMP% (spike P1-02). Their allow is scoped to the plot; Edit rules cover NotebookEdit.
  */
@@ -133,13 +140,17 @@ export function settingsOf(
   env: Readonly<Record<string, string>>,
   letter?: string,
 ): ClaudeSettings {
-  const handler = (event: HookEvent): HookHandler => ({
-    type: 'command',
-    command: hook.command,
-    args: hook.args,
-    timeout: HOOK_TIMEOUT_SECONDS,
-    ...(event === 'PreToolUse' ? { onFailure: 'block' as const } : {}),
-  });
+  // PreToolUse is the gate: it fails closed whether the hook crashes or cannot read its payload.
+  const handler = (event: HookEvent): HookHandler =>
+    event === 'PreToolUse'
+      ? {
+          type: 'command',
+          command: hook.command,
+          args: [...hook.args, ...PRE_TOOL_USE_ARGS],
+          timeout: HOOK_TIMEOUT_SECONDS,
+          onFailure: 'block',
+        }
+      : { type: 'command', command: hook.command, args: hook.args, timeout: HOOK_TIMEOUT_SECONDS };
   // No matcher: the hook checks every tool (paths of Read, Grep and Glob too) and writes every agent.tool line.
   const hooks = Object.fromEntries(HOOK_EVENTS.map((event) => [event, [{ hooks: [handler(event)] }]]));
   return {

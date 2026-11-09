@@ -21,7 +21,8 @@ type Handler = (input: AgyInput, ctx: HookContext) => Translation;
  */
 export const DEFER_TO_SETTINGS: Decision = { decision: 'deny_unless_prior_grant' };
 
-const deny = (reason: string): Decision => ({ decision: 'deny', reason });
+/** agy's hard deny: the call does not run, and the model reads `reason`. */
+export const denyAgyTool = (reason: string): Decision => ({ decision: 'deny', reason });
 
 const SUBAGENT_REASON = 'sub-agents are not allowed for this tribe yet; do the work yourself';
 const ASK_REASON =
@@ -45,7 +46,7 @@ function preToolUse(input: AgyInput, ctx: HookContext): Translation {
   if (reason === undefined) return translation([], { decision: DEFER_TO_SETTINGS });
   const source = rule === undefined ? 'law of this territory' : 'rule';
   return translation([{ type: 'agent.tool.blocked', data: { tool: call.kind, reason } }], {
-    decision: deny(refusalText(source, reason)),
+    decision: denyAgyTool(refusalText(source, reason)),
   });
 }
 

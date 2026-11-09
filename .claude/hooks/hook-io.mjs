@@ -3,7 +3,7 @@
 // never through `pnpm`, which on Windows is a .cmd shim that spawn cannot start without one; with only the env
 // it needs, never process.env whole (CLAUDE.md, ADR 0013).
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import process from 'node:process';
 
@@ -25,12 +25,49 @@ const TOOL_ENV = [
 /** tsc and dependency-cruiser print every error; their output is cut by the hooks, not by spawn. */
 const MAX_OUTPUT = 16 * 1024 * 1024;
 
+/** @typedef {{ read: (buffer: Buffer) => number; wait: (ms: number) => void }} StdinSource */
+
+const pause = new Int32Array(new SharedArrayBuffer(4));
+
+/** fd 0: `read` returns 0 at the end and throws EAGAIN when a non-blocking pipe is empty. @type {StdinSource} */
+export const FD_0 = {
+  read: (buffer) => readSync(0, buffer, 0, buffer.length, null),
+  wait: (ms) => {
+    Atomics.wait(pause, 0, 0, ms);
+  },
+};
+
+/**
+ * Everything on stdin, read as packages/hooks/src/stdin.ts reads it (P1-36). `readFileSync(0)` throws away what it
+ * had read when a read fails with EAGAIN (a pipe left non-blocking whose writer has not closed it yet); this loop
+ * keeps every chunk and, on EAGAIN, waits a millisecond and reads on.
+ * @param {StdinSource} source
+ */
+export function readStdin(source = FD_0) {
+  /** @type {Buffer[]} */
+  const chunks = [];
+  const buffer = Buffer.alloc(64 * 1024);
+  for (;;) {
+    /** @type {number} */
+    let count;
+    try {
+      count = source.read(buffer);
+    } catch (error) {
+      if (/** @type {{ code?: unknown } | null} */ (error)?.code !== 'EAGAIN') throw error;
+      source.wait(1);
+      continue;
+    }
+    if (count === 0) return Buffer.concat(chunks).toString('utf8');
+    chunks.push(Buffer.from(buffer.subarray(0, count)));
+  }
+}
+
 /**
  * The hook payload Claude Code writes on stdin; an empty object when there is none or it is not JSON.
  * @param {() => string} read
  * @returns {Record<string, unknown>}
  */
-export function readPayload(read = () => readFileSync(0, 'utf8')) {
+export function readPayload(read = () => readStdin()) {
   try {
     const value = /** @type {unknown} */ (JSON.parse(read()));
     const isObject = typeof value === 'object' && value !== null && !Array.isArray(value);
