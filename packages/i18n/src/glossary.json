@@ -941,7 +941,7 @@
           ]
         },
         "Bước nghi thức (`ritual.steps[]`) cũng là id `snake_case` (ví dụ `run_checks`, `read_handover`, `read_diff`, `judge`, `write_verdict`); danh sách chốt ở P0-02 là `RITUAL_STEPS` trong `packages/domain/src/constants.ts` (bảng ở mục 13), vì loader registry từ chối bước lạ.",
-        "Nghi thức chọn theo tag, không theo kind (kế hoạch sản phẩm 0.7, ADR 0022; làm ở P1-20/P1-21):",
+        "Nghi thức chọn theo tag, không chỉ theo kind (kế hoạch sản phẩm 0.7, ADR 0022): `kinds[].ritual_overrides` (từ P1-20) chọn nghi thức theo tag của quest, override đầu tiên khớp thắng; Khảo hạch mù ở P1-21:",
         {
           "table": "rituals_by_tag",
           "columns": [
@@ -1585,13 +1585,17 @@
               "en": "End-to-end tests"
             },
             {
+              "id": ["integration"],
+              "vi": "Kiểm thử tích hợp",
+              "en": "Integration tests"
+            },
+            {
               "id": ["docs"],
               "vi": "Tài liệu",
               "en": "Documentation"
             }
           ]
-        },
-        "Từ P1-20 (ADR 0022): thêm `integration` — Kiểm thử tích hợp — Integration tests."
+        }
       ]
     },
     {
@@ -1677,8 +1681,8 @@
             },
             {
               "field": "`verdict.fail_kind` (cũng `consecutive_fail.fail_kind`)",
-              "values": "`tests_fail`, `scope_creep`, `missing_i18n`, `wrong_facts`, `incomplete`, `style`, `unsafe`, `other`",
-              "meaning": "loại lỗi, để đếm \"cùng loại\"; thêm `flaky` từ P1-20 (ADR 0022)"
+              "values": "`tests_fail`, `scope_creep`, `missing_i18n`, `wrong_facts`, `incomplete`, `style`, `unsafe`, `other`, `flaky`",
+              "meaning": "loại lỗi, để đếm \"cùng loại\"; `flaky` (từ P1-20, ADR 0022): một check vừa qua vừa trượt trên cùng commit, Quản sự mở quest Trừ tà"
             },
             {
               "field": "`verdict.verifier_id` (giá trị đặc biệt)",

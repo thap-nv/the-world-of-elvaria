@@ -110,6 +110,18 @@ export const RITUAL_STEPS = [
   'compare_numbers',
   'challenge_scope',
   'tally_units',
+  // Tests as the product (§3.15, ADR 0022; P1-20): the machine reruns the checks in a clean scratch plot, three
+  // times, and measures coverage against the base; the judge breaks what the tests guard there and expects red.
+  'rerun_clean',
+  'flake_check',
+  'coverage_not_lower',
+  'break_and_expect_red',
   'judge',
   'write_verdict',
 ] as const;
+
+/**
+ * Runs of the checks on one commit under `flake_check` (product plan 0.7 §5 "Chạy 3 lần"): a check that passes in
+ * one run and fails in another is flaky.
+ */
+export const FLAKE_RUNS = 3;

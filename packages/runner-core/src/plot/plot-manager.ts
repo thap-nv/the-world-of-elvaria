@@ -7,7 +7,7 @@ import process from 'node:process';
 
 import { err, ok } from '@elvaria/domain';
 import type { Plot, Quest, Result, Territory } from '@elvaria/domain';
-import { fromPortable, inKingdom, toPortable } from '@elvaria/store';
+import { fromPortable, inKingdom, pathExists, toPortable } from '@elvaria/store';
 
 import type { ProcessHost } from '../process/program.ts';
 import { diffIn } from './diff.ts';
@@ -19,6 +19,8 @@ import { NO_PATCH, applyPatchIn } from './patch.ts';
 import type { PatchOutcome } from './patch.ts';
 import type { Git } from './git.ts';
 import { ensureLongPaths, ensurePlotExcludes } from './repo-settings.ts';
+import { checkoutScratch, prepareScratch, removeScratch, scratchIdOf } from './scratch.ts';
+import type { PreparedScratch, ScratchTarget } from './scratch.ts';
 import { runSetup } from './setup.ts';
 import type { SetupRun } from './setup.ts';
 import { commitWorktree, releaseWorktree, touchedIn, worktreeStatus } from './worktree-ops.ts';
@@ -91,6 +93,22 @@ export interface PlotManager {
   unmerged(plot: Plot, branches: readonly string[]): Promise<string[]>;
   /** Only when the quest is archived: removes the worktree, keeps the branch. */
   release(plot: Plot): Promise<Result<ReleasedPlot, PlotFailure>>;
+  /**
+   * The judge's scratch plot (ADR 0022, P1-20): a fresh worktree `<quest-id>-verify` detached at the head of the
+   * quest's branch, after commands.setup with `options.secrets`; one left by an earlier judge is removed first.
+   * `not_a_repo` for a folder territory, which has none.
+   */
+  prepareScratch(
+    quest: Pick<Quest, 'id'>,
+    territory: Territory,
+    options?: Pick<PrepareOptions, 'secrets'>,
+  ): Promise<Result<PreparedScratch, PlotFailure>>;
+  /** Moves a scratch plot to `ref`, detached, dropping its changes (the trial's coverage on the base). */
+  checkoutScratch(scratch: PreparedScratch, ref: string): Promise<void>;
+  /** Removes the quest's scratch plot, dirty or not; what still holds its folder, if anything. */
+  releaseScratch(quest: Pick<Quest, 'id'>, territory: Territory): Promise<string | undefined>;
+  /** The quest's scratch plot, native, when it is on disk; a folder territory has none. */
+  scratchOf(quest: Pick<Quest, 'id'>, territory: Territory): Promise<string | undefined>;
 }
 
 const NO_GIT_STATUS: PlotStatus = { dirty: false, ahead: 0, branch: null };
@@ -134,6 +152,54 @@ async function prepareGitPlot(
     created: prepared.value.created,
     setup: setup.value,
   });
+}
+
+/** Where the quest's scratch plot goes, beside its own worktree. */
+const scratchTargetOf = (git: Git, quest: Pick<Quest, 'id'>, territory: Territory): ScratchTarget => {
+  const repo = fromPortable(territory.path);
+  return {
+    git,
+    repo,
+    worktree: worktreePathOf(repo, territory.worktree_dir, scratchIdOf(quest.id)),
+    quest_worktree: worktreePathOf(repo, territory.worktree_dir, quest.id),
+    branch: `quest/${quest.id}`,
+  };
+};
+
+const NO_SCRATCH: PlotFailure = { reason: 'not_a_repo', detail: 'a folder territory has no scratch plot' };
+
+/** The scratch plot's part of the manager (P1-20): made, moved and removed with git, setup as a quest plot's. */
+type ScratchMethods = Pick<
+  PlotManager,
+  'prepareScratch' | 'checkoutScratch' | 'releaseScratch' | 'scratchOf'
+>;
+
+function scratchMethods(options: PlotManagerOptions, git: () => Promise<Git>): ScratchMethods {
+  const forget = options.forget ?? [];
+  return {
+    prepareScratch: async (quest, territory, given = {}) => {
+      if (territory.vcs.type !== 'git') return err(NO_SCRATCH);
+      const setup = {
+        kingdom: options.kingdom,
+        host: options.host,
+        forget,
+        command: territory.commands.setup,
+      };
+      const target = scratchTargetOf(await git(), quest, territory);
+      return prepareScratch(target, quest.id, { ...setup, ...(given.secrets === undefined ? {} : given) });
+    },
+    checkoutScratch: async (scratch, ref) => checkoutScratch(await git(), scratch.worktree, ref),
+    releaseScratch: async (quest, territory) =>
+      territory.vcs.type === 'git'
+        ? removeScratch(await git(), scratchTargetOf(await git(), quest, territory), forget)
+        : undefined,
+    scratchOf: async (quest, territory) => {
+      if (territory.vcs.type !== 'git') return undefined;
+      const repo = fromPortable(territory.path);
+      const worktree = worktreePathOf(repo, territory.worktree_dir, scratchIdOf(quest.id));
+      return (await pathExists(worktree)) ? worktree : undefined;
+    },
+  };
 }
 
 export function createPlotManager(options: PlotManagerOptions): PlotManager {
@@ -182,5 +248,6 @@ export function createPlotManager(options: PlotManagerOptions): PlotManager {
       plot.type === 'worktree'
         ? releaseWorktree(await git(), worktreeOf(plot), forget)
         : ok({ removed: false, forget_failures: [] }),
+    ...scratchMethods(options, git),
   };
 }

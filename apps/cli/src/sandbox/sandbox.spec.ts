@@ -88,6 +88,11 @@ describe('elvaria sandbox generate', () => {
       tags,
       JSON.stringify({ ...registry, tags: registry.tags.filter(({ id }) => id !== 'e2e') }),
     );
+    // The default kinds choose a ritual by the e2e tag (P1-20): an owner who drops the tag drops those overrides too.
+    const kindsFile = path.join(kingdom, 'registry', 'kinds.json');
+    const kinds = JSON.parse(await readFile(kindsFile, 'utf8')) as { kinds: Record<string, unknown>[] };
+    const plain = kinds.kinds.map(({ ritual_overrides: _dropped, ...kind }) => kind);
+    await writeFile(kindsFile, JSON.stringify({ ...kinds, kinds: plain }));
     const io = testIo();
     expect(await generate(io, '--date', DATE)).toBe(1);
     expect(io.printed.err).toEqual(['Kịch bản cần tag «e2e» trong registry của vương quốc.']);

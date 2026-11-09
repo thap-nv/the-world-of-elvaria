@@ -18,6 +18,7 @@ import type { Character, InboxCommandOf, Quest, QuestEventType, QuestId, Result 
 
 import { moveAndRing } from '../notices.ts';
 import { OWNER, step } from '../record.ts';
+import { releaseScratch } from '../review/scratch.ts';
 import { openAssignee } from '../sessions/open.ts';
 import type { Context } from '../context.ts';
 import type { Edits } from '../record.ts';
@@ -123,6 +124,8 @@ const messageOf = (error: unknown): string => (error instanceof Error ? error.me
  * stays). A worktree with uncommitted work is refused and stays for the owner (no `--force`, §3.3).
  */
 async function releasePlot(ctx: Context, quest: Quest): Promise<void> {
+  // A judge's scratch plot that a stopped Steward left behind goes with the quest's own (ADR 0022, P1-20).
+  await releaseScratch(ctx, quest.id);
   try {
     const released = await ctx.deps.plots.release(quest.plot);
     if (!released.ok) {

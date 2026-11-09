@@ -35,6 +35,8 @@ export const FAIL_KINDS = [
   'style',
   'unsafe',
   'other',
+  // A check that passed and failed on the same commit (P1-20, ADR 0022): the Steward opens a quest to exorcise it.
+  'flaky',
 ] as const;
 export const FailKindSchema = z.enum(FAIL_KINDS);
 export type FailKind = z.infer<typeof FailKindSchema>;

@@ -111,6 +111,13 @@
   limit (breaker). For a verifier: the verdict file (a partial one as `<quest>-<n>-p<k>`), the ritual's pass rule
   over the checks (`underPassRule`), `validateVerdict`, `verdict.*`, the move, the assignee's windows and fail
   streak (`withVerdict`), then `levelChange`.
+- Judges tests as the product in a scratch plot (ADR 0022, P1-20; `src/review/scratch.ts`): when the quest's
+  ritual (`ritualOf`: its tags may choose `mutation_check`) has `scratch_plot` and its plot is a worktree, its
+  checks run as `Plots.trial` (a fresh scratch plot of the branch, reset, three runs, coverage against the base),
+  its judge opens in that plot (`Plots.scratch`) with Edit and Write and without commit or push, and the plot is
+  removed after the judge's session whatever its end (`Plots.releaseScratch`, also after a breaker, the machine's
+  verdict and at archive). A verdict that fails on a flake (`flake_check`, or a judge's `flaky`) opens one quest
+  of the ritual's `flaky_follow_up` (`fix`, knight) before the quest moves on; the quest's branch never changes.
 - Runs the territory's checks on what the quest touched before a judge's session opens (`Plots.check`: runChecks
   of P1-07 in `elvaria run`, outside the tick, its `signal` aborted when nobody waits for them any more), with the
   quest's secrets from the treasury (`PlotCheck.secrets`, `questSecretsOf`, P1-10b), resolved in the tick before

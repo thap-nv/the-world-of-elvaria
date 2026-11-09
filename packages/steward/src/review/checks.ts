@@ -15,6 +15,7 @@ import { STEWARD } from '../record.ts';
 import { secretsBreaker } from '../sessions/breaker.ts';
 import { questSecretsOf, secretsLacking } from '../sessions/secrets.ts';
 import { deliverableChecks } from './deliverable-checks.ts';
+import { inScratch, trialFor } from './scratch.ts';
 import type { Context } from '../context.ts';
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
@@ -42,13 +43,11 @@ export async function checksOf(
     };
     // A party's merge quest runs every check, its parts leave the deferred ones to it (P1-18, §3.15).
     const role = quest.party_role === undefined ? {} : { party_role: quest.party_role };
-    const runs = await ctx.deps.plots.check({
-      plot: quest.plot,
-      territory,
-      run_dir: runDir,
-      ...given,
-      ...role,
-    });
+    const asked = { territory, run_dir: runDir, ...given, ...role };
+    // Tests as the product: the checks run again in a clean scratch plot, three times, coverage beside (ADR 0022).
+    const runs = inScratch(ctx, quest)
+      ? await ctx.deps.plots.trial({ ...asked, quest, ...trialFor(ctx, quest) })
+      : await ctx.deps.plots.check({ ...asked, plot: quest.plot });
     // The deliverable's own checks follow the territory's (P1-15: subquests.json of a plan quest), then the party's
     // (P1-18: every part merged into the merge quest).
     return ok([

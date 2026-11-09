@@ -138,6 +138,18 @@ export interface PlotCheck {
 }
 
 /**
+ * The checks of a ritual with a scratch plot (ADR 0022, P1-20): run in a fresh scratch plot of the quest's branch,
+ * after commands.setup and commands.reset, `runs` times while every run passes, coverage against the base when asked.
+ */
+export interface PlotTrial extends Omit<PlotCheck, 'plot'> {
+  readonly quest: Quest;
+  /** FLAKE_RUNS when the ritual has flake_check, else 1. */
+  readonly runs: number;
+  /** The ritual has coverage_not_lower. */
+  readonly coverage: boolean;
+}
+
+/**
  * A territory check as the catalog's `run-check` script spawns it (§3.12): its `run` command already resolved to an
  * executable (an npm `.cmd` shim becomes `node <js>`, §6), so the script needs no shell and the command never comes
  * from params a model wrote.
@@ -176,6 +188,15 @@ export interface Plots {
   applyPatch(plot: Quest['plot'], patchPaths: readonly string[]): Promise<PatchOutcome>;
   /** The territory's checks for the paths the quest touched, one after another in the plot (§3.2). */
   check(request: PlotCheck): Promise<readonly CheckRun[]>;
+  /**
+   * The machine's part of a ritual with a scratch plot (ADR 0022, P1-20): a fresh scratch plot of the quest's branch,
+   * then `rerun_clean`, the checks, `flake_check` and `coverage_not_lower` there. Throws when it cannot be made.
+   */
+  trial(request: PlotTrial): Promise<readonly CheckRun[]>;
+  /** The quest's scratch plot the trial made, where its judge works; throws when there is none. */
+  scratch(quest: Quest, territory: Territory): Promise<PreparedPlot>;
+  /** Removes the quest's scratch plot, dirty or not, after its judge; what still holds its folder, if anything. */
+  releaseScratch(quest: Quest, territory: Territory): Promise<string | undefined>;
   /**
    * Every check of the territory whose program is found, for a catalog script's `--context` (§3.12); a check whose
    * program is not found is left out, and `run-check` then says the territory has no such check.

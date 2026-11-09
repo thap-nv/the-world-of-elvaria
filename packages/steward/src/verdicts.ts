@@ -2,7 +2,7 @@
 // assignee's reputation window and in the window of each of the quest's tags, and the fail streak (withVerdict of
 // the domain, which the sandbox uses too), then a new level when levelChange says the window has earned it. The
 // judge's, the machine's and the owner's verdicts all go through here.
-import { CharacterSchema, err, levelChange, ok, withVerdict } from '@elvaria/domain';
+import { CharacterSchema, ritualOf as ritualIn, err, levelChange, ok, withVerdict } from '@elvaria/domain';
 import type { Actor, Character, Quest, Result, Ritual, Verdict } from '@elvaria/domain';
 
 import { moveAndRing } from './notices.ts';
@@ -26,11 +26,12 @@ export const judged =
     );
   };
 
-/** The ritual of the quest's kind (registry/kinds.json, rituals.json): its id and pass rule. */
-export function ritualOf(ctx: Context, quest: Quest): Ritual | undefined {
-  const kind = ctx.world.registry.kinds.find(({ id }) => id === quest.kind);
-  return ctx.world.registry.rituals.find(({ id }) => id === kind?.ritual);
-}
+/**
+ * The ritual that judges the quest (registry/kinds.json, rituals.json): its kind's, or the one its tags choose
+ * (`ritual_overrides`, ADR 0022); its id and pass rule.
+ */
+export const ritualOf = (ctx: Context, quest: Quest): Ritual | undefined =>
+  ritualIn(quest, ctx.world.registry);
 
 /** Writes the verdict file, then its line (`verdict.pass|fail|partial`); a file the store refuses writes no line. */
 export async function recordVerdict(

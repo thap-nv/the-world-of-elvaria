@@ -26,6 +26,19 @@ const RegistryIdSchema = z.string().regex(REGISTRY_ID_PATTERN);
 const NAMES = { name_vi: NonEmptyStringSchema, name_en: NonEmptyStringSchema };
 const COPIED = 'copied from @elvaria/registry-default on init';
 
+/**
+ * A session quest the Steward opens on its own (P1-17, P1-20): its kind and its class, the class one the kind allows
+ * (parseRegistry checks it).
+ */
+const FollowUpSchema = z.strictObject({ kind: KindIdSchema, class: ClassIdSchema });
+
+const RitualOverrideSchema = z.strictObject({
+  tags_any: unique(z.array(TagIdSchema).min(1)).meta(
+    describe('The override applies to a quest carrying at least one of these tags (registry/tags.json).'),
+  ),
+  ritual: RitualIdSchema,
+});
+
 export const KindSchema = z
   .strictObject({
     id: KindIdSchema,
@@ -39,6 +52,14 @@ export const KindSchema = z
       ),
     seal_default: z.boolean().meta(describe('Default for quest.seal_required.')),
     classes_allowed: unique(z.array(ClassIdSchema)),
+    ritual_overrides: z
+      .array(RitualOverrideSchema)
+      .optional()
+      .meta(
+        describe(
+          "Rituals chosen by the quest's tags (ADR 0022): the first override whose tags_any meets the quest's tags wins, otherwise `ritual`; absent, `ritual` alone. Default registry: build and refactor tagged e2e or integration -> mutation_check.",
+        ),
+      ),
   })
   .meta({ id: 'kind' });
 
@@ -80,6 +101,19 @@ export const RitualSchema = z
         ),
       ),
     max_seconds: z.int().min(1),
+    scratch_plot: z
+      .boolean()
+      .optional()
+      .meta(
+        describe(
+          "The judge works in a scratch plot (ADR 0022): a disposable worktree <quest-id>-verify detached at the quest branch's head, made after the work is submitted with commands.setup, then commands.reset before each run of the checks. The machine checks run there; the judge alone gets Edit and Write there, the hook refuses commit and push, and the plot is removed after the verdict, so the quest branch never changes. Absent: false. Git territories only: on a folder the checks run in the quest's plot and the judge has no write tool.",
+        ),
+      ),
+    flaky_follow_up: FollowUpSchema.optional().meta(
+      describe(
+        'The session quest the Steward opens when a verdict of this ritual fails as flaky (P1-20): one quest to exorcise the checks that passed and failed on the same commit. Absent: none is opened.',
+      ),
+    ),
   })
   .meta({ id: 'ritual' });
 
@@ -102,14 +136,11 @@ export const ScriptSchema = z
         describe("units feeds a batch quest's units[]; units needing judgement become child session quests."),
       ),
     timeout_minutes: z.int().min(1),
-    follow_up: z
-      .strictObject({ kind: KindIdSchema, class: ClassIdSchema })
-      .optional()
-      .meta(
-        describe(
-          "The session quest the Steward opens when a run fails (a batch's open units, a failing check): its kind and class, the class one the kind allows. Absent: the failed run waits in the infirmary for the owner (P1-17).",
-        ),
+    follow_up: FollowUpSchema.optional().meta(
+      describe(
+        "The session quest the Steward opens when a run fails (a batch's open units, a failing check): its kind and class, the class one the kind allows. Absent: the failed run waits in the infirmary for the owner (P1-17).",
       ),
+    ),
   })
   .meta({ id: 'script' });
 
@@ -125,7 +156,7 @@ export const KindsFileSchema = z
   .meta({
     title: 'Registry: quest kinds',
     description: `registry/kinds.json in the kingdom (${COPIED}; the owner may edit it). Every real job falls into one of these kinds; each kind names its verification ritual, default machine checks, deliverable convention and which classes may take it. Adding a kind = adding an entry here plus rituals.json and theme data; the domain has no switch over kinds (ADR 0016). The campaign (war) is a container entity, not a kind.`,
-    $comment: `${GENERATED_NOTE} Cross-file checks done by the registry loader (parseRegistry): ids unique; ritual exists in rituals.json; every classes_allowed entry exists in classes.json, is not a verifier class and lists this kind back. Display names in the UI come from i18n; name_vi/name_en here are the registry's own labels for the CLI and docs.`,
+    $comment: `${GENERATED_NOTE} Cross-file checks done by the registry loader (parseRegistry): ids unique; ritual and every ritual_overrides[].ritual exist in rituals.json, every ritual_overrides[].tags_any entry in tags.json; every classes_allowed entry exists in classes.json, is not a verifier class and lists this kind back. Display names in the UI come from i18n; name_vi/name_en here are the registry's own labels for the CLI and docs.`,
   });
 
 export const ClassesFileSchema = z
@@ -140,8 +171,8 @@ export const RitualsFileSchema = z
   .strictObject({ version: z.literal(1), rituals: z.array(RitualSchema).min(1) })
   .meta({
     title: 'Registry: verification rituals',
-    description: `registry/rituals.json in the kingdom (${COPIED}). A ritual is how a quest kind is verified: ordered steps, a pass rule and a time limit. Machine checks run before the judge's session; with pass_rule all_checks_and_agent a failing check fails the verdict whatever the judge says. Animation and fantasy names of the ritual live in the theme and i18n. Default registry, one ritual per kind: build_review, source_check, regression_check, stress_test, editorial_review, audience_review, recompute, council_review, stability_check, sign_off, unit_tally.`,
-    $comment: `${GENERATED_NOTE} Steps are snake_case ids interpreted by runner-core's verifier prompt builder; a step outside RITUAL_STEPS (packages/domain/src/constants.ts) fails registry validation in the loader.`,
+    description: `registry/rituals.json in the kingdom (${COPIED}). A ritual is how a quest kind is verified: ordered steps, a pass rule and a time limit. Machine checks run before the judge's session; with pass_rule all_checks_and_agent a failing check fails the verdict whatever the judge says. Animation and fantasy names of the ritual live in the theme and i18n. Default registry, one ritual per kind: build_review, source_check, regression_check, stress_test, editorial_review, audience_review, recompute, council_review, stability_check, sign_off, unit_tally; and mutation_check (displayed as Thả quái thử thành / Loose a monster on the walls), which kinds.json chooses by tag for tests as the product (ADR 0022).`,
+    $comment: `${GENERATED_NOTE} Steps are snake_case ids interpreted by runner-core's verifier prompt builder; a step outside RITUAL_STEPS (packages/domain/src/constants.ts) fails registry validation in the loader, and so does a flaky_follow_up whose kind is unknown or does not allow its class.`,
   });
 
 export const ScriptsFileSchema = z

@@ -3,7 +3,12 @@
 // spawning anything (ADR 0006).
 import { writeFileAtomic } from '@elvaria/store';
 
-import { FAKE_FORBIDDEN_COMMAND, FAKE_QUESTION, fakeLetter } from '../conformance/scenarios.ts';
+import {
+  FAKE_FORBIDDEN_COMMAND,
+  FAKE_QUESTION,
+  FAKE_SCRATCH_COMMANDS,
+  fakeLetter,
+} from '../conformance/scenarios.ts';
 import { commandRefusal } from '../policy/command-refusal.ts';
 import { SHELL_TOOL } from '../policy/constants.ts';
 import { readQuestion } from './handover.ts';
@@ -52,13 +57,16 @@ async function work(play: Play, question?: string): Promise<Ending> {
   return COMPLETED;
 }
 
-/** A gate blocks the push and the session goes on; without one the command simply runs. */
-function forbidden(play: Play): Ending {
+/** A gate blocks each command and the session goes on; without one the commands simply run. */
+function forbidden(play: Play, commands: readonly string[] = [FAKE_FORBIDDEN_COMMAND]): Ending {
   const { req, capabilities } = play.start;
-  const reason = capabilities.tool_gate ? commandRefusal(req.permissions, FAKE_FORBIDDEN_COMMAND) : undefined;
-  if (reason === undefined) return COMPLETED;
-  play.push({ kind: 'tool_blocked', tool: SHELL_TOOL, reason });
-  return { ...COMPLETED, denials: [{ tool: SHELL_TOOL, detail: FAKE_FORBIDDEN_COMMAND }] };
+  const denials = commands.flatMap((command) => {
+    const reason = capabilities.tool_gate ? commandRefusal(req.permissions, command) : undefined;
+    if (reason === undefined) return [];
+    play.push({ kind: 'tool_blocked', tool: SHELL_TOOL, reason });
+    return [{ tool: SHELL_TOOL, detail: command }];
+  });
+  return denials.length === 0 ? COMPLETED : { ...COMPLETED, denials };
 }
 
 /** Each scenario's script; `undefined` is a session that never ends until it is killed. */
@@ -75,6 +83,7 @@ const SCRIPTS: Readonly<Record<FakeScenario, (play: Play) => Promise<Ending | un
     return Promise.resolve({ ...CRASHED, rate_limited: true });
   },
   forbidden_command: (play) => Promise.resolve(forbidden(play)),
+  scratch_commit: (play) => Promise.resolve(forbidden(play, FAKE_SCRATCH_COMMANDS)),
 };
 
 export function startFakeSession(start: FakeStart): RunningSession {

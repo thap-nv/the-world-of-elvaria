@@ -10,6 +10,7 @@ import { heardBy } from '../mana/heard.ts';
 import { mergeParts, plotOptionsOf } from '../party/plot.ts';
 import { step } from '../record.ts';
 import { checksRunOf, takeChecks } from '../review/checks.ts';
+import { inScratch } from '../review/scratch.ts';
 import { secretsBreaker } from './breaker.ts';
 import { continuationOf, requestOf } from './request.ts';
 import { questSecretsOf, rememberSecrets, secretsLacking } from './secrets.ts';
@@ -54,7 +55,9 @@ const resumedRequest = (ctx: Context, request: SpawnRequest, resume: Resume | nu
  * is in the infirmary, not here; a quest that asks for none reads no treasury and gives setup none. A new worktree
  * starts on the branch the quest builds on, and a merge quest's knight finds its parts merged (P1-18).
  */
-async function plotFor(ctx: Context, input: Pick<SessionInput, 'quest' | 'territory' | 'role'>) {
+async function plotFor(ctx: Context, input: Pick<SessionInput, 'quest' | 'territory' | 'role' | 'scratch'>) {
+  // A judge of tests as the product works in the scratch plot its trial just made (ADR 0022, P1-20).
+  if (input.scratch === true) return ctx.deps.plots.scratch(input.quest, input.territory);
   const secrets = await questSecretsOf(ctx, input.quest, input.territory);
   const given = Object.keys(secrets).length === 0 ? undefined : secrets;
   const prepared = await ctx.deps.plots.prepare(
@@ -212,7 +215,8 @@ export async function openAssignee(
 
 /**
  * The verifier's fresh session on a submitted quest (§3.2): the machine checks ran first, outside the tick (P1-25),
- * then the judge reads the letter, the checks and the work in the plot, never a transcript.
+ * then the judge reads the letter, the checks and the work in the plot, never a transcript. A judge of tests as the
+ * product opens in the scratch plot where they ran (ADR 0022).
  */
 export async function openVerifier(
   ctx: Context,
@@ -228,7 +232,8 @@ export async function openVerifier(
   const n = currentRun(quest);
   const checks = takeChecks(ctx, quest);
   if (!checks.ok) return checks;
-  const input = { role: 'verifier', quest, character, territory, n, checks: checks.value } as const;
+  const scratch = inScratch(ctx, quest);
+  const input = { role: 'verifier', quest, character, territory, n, checks: checks.value, scratch } as const;
   const spawned = await spawnFor(ctx, runner, input);
   if (!spawned.ok) return spawned;
   const { session, spawned_at: spawnedAt } = spawned.value;

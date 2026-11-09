@@ -6,14 +6,19 @@ import {
   APPRENTICE_RULE,
   BUILT_IN_AGENTS,
   CHECK_COMMANDS,
+  NO_COMMIT_RULE,
+  NO_HISTORY_COMMAND,
   NO_PUSH_COMMAND,
   NO_PUSH_RULE,
+  SCRATCH_RULES,
   SECRET_FILES,
   SHELL_TOOL,
   WRITE_TOOLS,
 } from './constants.ts';
-import type { SpawnRole } from '../runner/roles.ts';
+import { commandLinesOf } from '@elvaria/domain';
 import type { Character, CharacterClass, Territory } from '@elvaria/domain';
+
+import type { SpawnRole } from '../runner/roles.ts';
 
 export interface ToolLaws {
   /** Globs relative to the plot, matched by the hook at any depth: neither read nor written. */
@@ -46,6 +51,11 @@ export interface ToolPolicyInput {
   /** `character.tools`: a list given there replaces the class's list (schema: "Overrides of the class default"). */
   readonly character?: Pick<Character, 'tools'>;
   readonly territory?: Pick<Territory, 'laws' | 'checks' | 'commands' | 'vcs'>;
+  /**
+   * A verifier in its scratch plot (ADR 0022, P1-20): it gets Edit and Write, even when its class denies them, to
+   * break what the tests guard and restore it, and loses every git command that writes history. Ignored otherwise.
+   */
+  readonly scratch?: boolean;
 }
 
 const unique = (items: readonly string[]): string[] => [...new Set(items)];
@@ -65,7 +75,9 @@ const plotPath = (glob: string): string => `./${glob.replaceAll('\\', '/').repla
 function checkRules(territory: ToolPolicyInput['territory']): string[] {
   if (territory === undefined) return [];
   // An exclusive check (Docker, e2e) holds a lock across quests; only runChecks may start it.
-  const checks = territory.checks.filter((check) => !check.exclusive).map((check) => check.run);
+  const checks = territory.checks
+    .filter((check) => !check.exclusive)
+    .flatMap((check) => commandLinesOf(check.run));
   const commands = CHECK_COMMANDS.flatMap((name) => territory.commands[name] ?? []);
   return unique([...checks, ...commands]).map((command) => `${SHELL_TOOL}(${command}:*)`);
 }
@@ -78,13 +90,27 @@ function generateRules(territory: ToolPolicyInput['territory']): string[] {
   return unique(territory?.commands.generate ?? []).map((command) => `${SHELL_TOOL}(${command}:*)`);
 }
 
-function lawsOf(territory: ToolPolicyInput['territory']): ToolLaws {
+function lawsOf(territory: ToolPolicyInput['territory'], scratch: boolean): ToolLaws {
+  const history = scratch ? [NO_HISTORY_COMMAND] : [];
   return {
     forbidden_paths: unique([...SECRET_FILES, ...(territory?.laws.forbidden_paths ?? [])]),
     read_only_paths: unique(territory?.laws.read_only_paths ?? []),
     patch_paths: territory?.vcs.type === 'git' ? unique(territory.laws.patch_paths) : [],
-    forbidden_commands: unique([...(territory?.laws.forbidden_commands ?? []), NO_PUSH_COMMAND]),
+    forbidden_commands: unique([...(territory?.laws.forbidden_commands ?? []), NO_PUSH_COMMAND, ...history]),
   };
+}
+
+/**
+ * The class's rules for this session: a verifier loses the write tools (ADR 0008), except in its scratch plot,
+ * where it gains them and git's own undo (ADR 0022); the class's bare deny of Edit or Write gives way there.
+ */
+function classRulesOf(input: ToolPolicyInput, scratch: boolean) {
+  const own = input.character?.tools;
+  const allow = own?.allow ?? input.characterClass.tools.allow;
+  const deny = own?.deny ?? input.characterClass.tools.deny;
+  if (!scratch) return { allow, deny };
+  const lifted = new Set<string>(SCRATCH_RULES);
+  return { allow: unique([...allow, ...SCRATCH_RULES]), deny: deny.filter((rule) => !lifted.has(rule)) };
 }
 
 /**
@@ -103,28 +129,34 @@ function fenceRules(laws: ToolLaws): string[] {
 }
 
 export function toolPolicyOf(input: ToolPolicyInput): ToolPolicy {
-  const own = input.character?.tools;
-  const classAllow = own?.allow ?? input.characterClass.tools.allow;
-  const classDeny = own?.deny ?? input.characterClass.tools.deny;
   const verifier = input.role === 'verifier';
+  const scratch = verifier && input.scratch === true;
+  const { allow: classAllow, deny: classDeny } = classRulesOf(input, scratch);
+  // A judge outside its scratch plot never changes a file (ADR 0008).
+  const readOnly = verifier && !scratch;
   const withApprentice = input.role === 'assignee' && classAllow.includes(APPRENTICE_RULE);
   const granted = classAllow.filter(
-    (rule) => rule !== APPRENTICE_RULE && !(verifier && isWriteTool(toolOf(rule))),
+    (rule) => rule !== APPRENTICE_RULE && !(readOnly && isWriteTool(toolOf(rule))),
   );
   // A bare deny (`Bash`, `WebFetch`) removes the tool itself, even if an override allowed one of its forms.
   const deniedTools = new Set(classDeny.filter((rule) => toolOf(rule) === rule));
   const ownTools = unique(granted.map(toolOf)).filter((tool) => !deniedTools.has(tool));
   const tools = withApprentice ? [...ownTools, AGENT_TOOL] : ownTools;
   const hasShell = tools.includes(SHELL_TOOL);
-  // A verifier has no write tool left, so it never regenerates what it judges (ADR 0008).
-  const writes = tools.some(isWriteTool);
+  // A verifier never regenerates what it judges (ADR 0008), not even in its scratch plot.
+  const writes = !verifier && tools.some(isWriteTool);
   const shell = hasShell ? checkRules(input.territory) : [];
   const generate = hasShell && writes ? generateRules(input.territory) : [];
-  const laws = lawsOf(input.territory);
+  const laws = lawsOf(input.territory, scratch);
+  const fences = [
+    ...(readOnly ? WRITE_TOOLS : []),
+    ...(scratch ? [NO_COMMIT_RULE] : []),
+    ...fenceRules(laws),
+  ];
   return {
     tools,
     allow: unique([...granted, ...shell, ...generate]),
-    deny: unique([...classDeny, ...(verifier ? WRITE_TOOLS : []), ...fenceRules(laws)]),
+    deny: unique([...classDeny, ...fences]),
     // The apprentice gets the character's tools without Agent, so it cannot start another (§3.12).
     apprentice: withApprentice ? { tools: ownTools } : null,
     laws,

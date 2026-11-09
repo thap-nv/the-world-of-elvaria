@@ -88,6 +88,25 @@ describe('runChecks', () => {
     });
   }, 30_000);
 
+  it("runs a check's commands in order until one fails, as CI's && does (P1-20)", async () => {
+    await resetTrace();
+    const drift = ['node step.mjs gen', 'node step.mjs diff 1', 'node step.mjs never'];
+    const checks = [{ id: 'openapi', run: drift, when: ['**/*.ts'], timeout_minutes: 1 }];
+    const [run] = await runChecks(request(checks, ['src/a.ts']), TEST_HOST);
+    expect(run).toMatchObject({ id: 'openapi', pass: false, exit_code: 1 });
+    expect(await trace()).toEqual(['start gen', 'end gen', 'start diff', 'end diff', '']);
+    const text = await log(run!.log_path);
+    expect(text.startsWith('$ node step.mjs gen\nran gen')).toBe(true);
+    expect(text).toContain('\n$ node step.mjs diff 1\nran diff');
+    expect(text).not.toContain('never');
+    await resetTrace();
+    const both = [
+      { id: 'both', run: ['node step.mjs a', 'node step.mjs b'], when: ['**'], timeout_minutes: 1 },
+    ];
+    expect(await runChecks(request(both, ['x']), TEST_HOST)).toMatchObject([{ pass: true }]);
+    expect(await trace()).toEqual(['start a', 'end a', 'start b', 'end b', '']);
+  });
+
   it('fails a check that cannot run, with the reason in its log', async () => {
     const checks = [
       { id: 'piped', run: 'pnpm test | tee out.log', when: ['**'], timeout_minutes: 1 },

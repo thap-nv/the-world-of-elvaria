@@ -20,6 +20,10 @@ export function folderPlots(root: string): Plots {
     commit: () => Promise.resolve({ status: 'no_git' }),
     applyPatch: () => Promise.resolve({ status: 'none' }),
     check: () => Promise.resolve([]),
+    // A folder has no branch to make a scratch plot from (ADR 0022): its judge works as any other.
+    trial: () => Promise.resolve([]),
+    scratch: (quest) => Promise.reject(new Error(`${quest.id} has no scratch plot on a folder`)),
+    releaseScratch: () => Promise.resolve(undefined),
     scriptChecks: () => Promise.resolve([]),
     diff: () => Promise.resolve(null),
     // A folder has no branch: no part to merge into it (P1-18), none it holds.

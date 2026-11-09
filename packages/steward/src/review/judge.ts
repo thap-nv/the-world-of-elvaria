@@ -11,6 +11,7 @@ import { OUT_OF_ATTEMPTS } from '../infirmary.ts';
 import { moveAndRing } from '../notices.ts';
 import { step } from '../record.ts';
 import { VERDICT_EVENT, moveOnVerdict, recordVerdict, ritualOf } from '../verdicts.ts';
+import { openFlakyFollowUp } from './scratch.ts';
 import { judgeVerdictOf } from './verdict-file.ts';
 import type { Context } from '../context.ts';
 import type { Running } from '../sessions/running.ts';
@@ -77,6 +78,8 @@ export async function judge(
   const outcome = verdict.value;
   // A partial verdict says how far the verifier read (`progress`); the next verifier reads on (§2.5).
   if (outcome.result === 'partial') return verifierLeaves(ctx, running, result);
+  // A flake fails the quest and opens the quest that exorcises it (P1-20), before the quest moves on.
+  if (outcome.result === 'fail') await openFlakyFollowUp(ctx, quest, outcome);
   return moveOnVerdict(
     ctx,
     quest,
