@@ -1,7 +1,7 @@
 // A territory command run with its output in a log under the kingdom: the checks (`.runs/<quest>-<n>/checks/`)
 // and a plot's `commands.setup`. The log says why when the command could not start, since the person reading it
 // has nothing else to go on.
-import { mkdir, open, writeFile } from 'node:fs/promises';
+import { mkdir, open } from 'node:fs/promises';
 import type { FileHandle } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -25,8 +25,8 @@ export interface LineContext {
 const NOT_RUN: ProgramRun = { exit_code: null, timed_out: false, duration_ms: 0, stdout: '', stderr: '' };
 
 /**
- * A new log at `logPath` (portable, relative to the kingdom), opened for appending after `firstLine`; masked on
- * close with `known`, the secret values the command was given, then the patterns.
+ * A new log at `logPath` (portable, relative to the kingdom) that starts with `firstLine`; masked on close with
+ * `known`, the secret values the command was given, then the patterns.
  */
 export async function openLog(
   kingdom: string,
@@ -36,9 +36,12 @@ export async function openLog(
 ): Promise<FileHandle> {
   const file = inKingdom(kingdom, logPath);
   await mkdir(path.dirname(file), { recursive: true });
-  await writeFile(file, `${firstLine}\n`);
-  // Appending: the child writes through the same file, and every write lands after the last one.
-  return maskedOnClose(await open(file, 'a'), file, known);
+  // Opened for writing, not appending: the child writes through the same handle, so the parent's lines and the
+  // child's share one file position and land in order. On Windows a handle opened to append has no write access
+  // of its own, and an MSYS program (Git's `sh`) then writes nothing and fails (P1-35).
+  const handle = await open(file, 'w');
+  await handle.write(`${firstLine}\n`);
+  return maskedOnClose(handle, file, known);
 }
 
 /** Runs `line` with its output appended to `log`; a line that cannot start says why in the log. */

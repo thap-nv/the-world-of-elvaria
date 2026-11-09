@@ -23,6 +23,9 @@ const MACHINE = {
   ComSpec: 'C:\\Windows\\system32\\cmd.exe',
   PATHEXT: '.COM;.EXE;.CMD',
   LANG: 'vi_VN.UTF-8',
+  ProgramFiles: 'C:\\Program Files',
+  PROGRAMDATA: 'C:\\ProgramData',
+  'ProgramFiles(x86)': 'C:\\Program Files (x86)',
   ANTHROPIC_API_KEY: 'sk-ant-owner-key',
   GITHUB_TOKEN: 'ghp_owner',
   AWS_SECRET_ACCESS_KEY: 'aws-owner',
@@ -50,6 +53,9 @@ describe('minimalEnv', () => {
       ComSpec: 'C:\\Windows\\system32\\cmd.exe',
       PATHEXT: '.COM;.EXE;.CMD',
       LANG: 'vi_VN.UTF-8',
+      // Docker's plugin folders on Windows (P1-35), whatever the spelling the env copy kept.
+      ProgramFiles: 'C:\\Program Files',
+      ProgramData: 'C:\\ProgramData',
     });
     expect(minimalEnv({ PATH: '/bin', HOME: '/home/o' })).toEqual({ PATH: '/bin', HOME: '/home/o' });
     expect(MINIMAL_ENV_NAMES).not.toContain('GIT_DIR');
