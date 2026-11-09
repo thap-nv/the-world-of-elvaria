@@ -12,7 +12,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { noteOf } from './__fixtures__/deliver.ts';
 import { git } from './__fixtures__/git-plots.ts';
-import { tickUntil } from './__fixtures__/kingdom.ts';
+import { FAIL, PASS, tickUntil } from './__fixtures__/kingdom.ts';
 import {
   CONTRACT,
   contractPayload,
@@ -98,6 +98,13 @@ describe('a party, from its contract to its merge quest (P1-18)', () => {
     // The merge quest holds the contract and both parts, and its check says so.
     for (const file of [CONTRACT, 'apps/api/rooms.ts', 'apps/web/rooms.ts'])
       expect(await pathExists(path.join(worktreeOf(merge), file))).toBe(true);
+    // Both parts merged cleanly, so the machine made the run and no knight's session opened on it (P1-18 (h)).
+    expect(merge.assignee).toBeNull();
+    expect(merge.attempt_log.filter(({ role }) => role === 'assignee')).toEqual([
+      expect.objectContaining({ n: 1, character: null, outcome: 'submitted' }),
+    ]);
+    const sessions = kingdom.requests.filter((req) => req.quest?.id === merge.id);
+    expect(sessions.map(({ role }) => role)).toEqual(['verifier']);
     const verdict = await kingdom.store.verdicts.read(`${merge.id}-1` as VerdictId);
     expect(verdict.ok && verdict.value.checks).toEqual([
       expect.objectContaining({ id: 'party', pass: true }),
@@ -126,6 +133,43 @@ describe('a party, from its contract to its merge quest (P1-18)', () => {
     expect(mergeNote).toContain(`merge --no-ff quest/${merge.id}`);
   }, 120_000);
 
+  it("opens the machine's merge a judge failed for a knight, whose session reads the verdict (P1-18 (h))", async () => {
+    // The contract's judge passes it; the merge quest shares its title, and its first judge fails the machine's run.
+    current = await partyBench(
+      {
+        'Book a room': {
+          [CONTRACT]: 'openapi: 3.1.0\n',
+          [SUBQUESTS_FILE]: list(part('d1', 'Rooms API')),
+        },
+        'Rooms API': { 'apps/api/rooms.ts': 'export const rooms = [];\n' },
+        merge: { 'apps/api/rooms.ts': 'export const rooms = [] as const;\n' },
+      },
+      1,
+      { verdicts: { 'Book a room': [PASS, FAIL] } },
+    );
+    const { kingdom, steward } = current;
+    await kingdom.command('create_quest', contractPayload('Book a room'));
+    await tickUntil(
+      steward,
+      kingdom.clock,
+      reached(() => mergeOf(kingdom), 'awaiting_seal'),
+      200,
+    );
+
+    const merge = await mergeOf(kingdom);
+    const runs = merge.attempt_log.filter(({ role }) => role === 'assignee');
+    // Whichever knight is free takes run 2 (thorn or kael of the bench).
+    expect(runs.map(({ n, character }) => [n, character])).toEqual([
+      [1, null],
+      [2, merge.assignee],
+    ]);
+    expect(['thorn', 'kael']).toContain(merge.assignee);
+    const failed = await kingdom.store.verdicts.read(`${merge.id}-1` as VerdictId);
+    expect(failed.ok && failed.value).toMatchObject({ result: 'fail' });
+    const knight = kingdom.requests.find((req) => req.quest?.id === merge.id && req.role === 'assignee');
+    expect(knight?.prompt.user).toContain(FAIL.notes);
+  }, 120_000);
+
   it("leaves a conflict to the merge quest's knight, and sends it back for a part still not merged", async () => {
     const shared = 'apps/shared/rooms.ts';
     current = await partyBench({
@@ -148,13 +192,21 @@ describe('a party, from its contract to its merge quest (P1-18)', () => {
     );
 
     const merge = await mergeOf(kingdom);
-    const first = await kingdom.store.verdicts.read(`${merge.id}-1` as VerdictId);
-    // Two conflicts: the first session concluded one, the check sent the quest back for the last part.
-    expect(first.ok && first.value).toMatchObject({ result: 'fail', fail_kind: 'incomplete' });
+    // Run 1 is the machine's: it stopped on the first conflict and left the merge to a knight, judging nothing.
+    const runs = merge.attempt_log.filter(({ role }) => role === 'assignee');
+    expect(runs.map(({ n, character, outcome }) => [n, character, outcome])).toEqual([
+      [1, null, 'cancelled'],
+      [2, 'thorn', 'submitted'],
+      [3, 'thorn', 'submitted'],
+    ]);
+    expect((await kingdom.store.verdicts.read(`${merge.id}-1` as VerdictId)).ok).toBe(false);
     const second = await kingdom.store.verdicts.read(`${merge.id}-2` as VerdictId);
-    expect(second.ok && second.value).toMatchObject({ result: 'pass' });
+    // Two conflicts: the knight's first session concluded one, the check sent it back for the last part.
+    expect(second.ok && second.value).toMatchObject({ result: 'fail', fail_kind: 'incomplete' });
+    const third = await kingdom.store.verdicts.read(`${merge.id}-3` as VerdictId);
+    expect(third.ok && third.value).toMatchObject({ result: 'pass' });
     expect(await readFile(path.join(worktreeOf(merge), shared), 'utf8')).toBe('export const n = 123;\n');
     const stopped = `${merge.id}: merging the parts stopped at quest/q_\\d{8}_[0-9a-z]{6} \\(conflict\\): ${shared}`;
-    expect(kingdom.warnings.join('\n')).toMatch(new RegExp(stopped));
+    expect(kingdom.warnings.join('\n')).toMatch(new RegExp(`${stopped}; a knight takes the quest`));
   }, 180_000);
 });

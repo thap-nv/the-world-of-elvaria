@@ -17,7 +17,7 @@ describe('renderQuestTransitionTable', () => {
 
   it('writes the event, the guard, the actor letters, the target and the note of a row', () => {
     expect(lines).toContain(
-      '| review | `verdict_fail` | `tier = session`, `attempts < max_attempts` | V/S | returned | notes bắt buộc, `fail_kind`; bỏ `verifier`, lần nộp sau chọn người chấm mới |',
+      '| review | `verdict_fail` | `tier = session`, có `assignee`, `attempts < max_attempts` | V/S | returned | notes bắt buộc, `fail_kind`; bỏ `verifier`, lần nộp sau chọn người chấm mới |',
     );
     expect(lines).toContain('| claimed | `cancel` |  | U | archived |  |');
     expect(lines).toContain(

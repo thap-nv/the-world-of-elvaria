@@ -32,6 +32,7 @@ export * from './mana/reading.ts';
 export * from './mana/schedule.ts';
 export * from './mana/state.ts';
 export * from './mana/warning.ts';
+export * from './party/machine-merge.ts';
 export * from './party/merge-quest.ts';
 export * from './party/party-place.ts';
 export * from './party/party-status.ts';

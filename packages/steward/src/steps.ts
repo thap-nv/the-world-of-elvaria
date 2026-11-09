@@ -8,6 +8,7 @@ import type { CharacterId, Reassign, TickPlan } from '@elvaria/domain';
 import { ring } from './context.ts';
 import { deliver } from './deliver/deliver.ts';
 import { moveAndRing } from './notices.ts';
+import { mergeByMachine } from './party/machine.ts';
 import { step } from './record.ts';
 import { startChecks } from './review/checks.ts';
 import { machineReview } from './review/machine.ts';
@@ -79,6 +80,11 @@ export async function carryOut(ctx: Context, plan: TickPlan): Promise<void> {
   for (const quest of plan.scripts) {
     if (ctx.stopping.aborted) break;
     warnIfRefused(ctx, `${quest} script`, await runScriptQuest(ctx, quest));
+  }
+  // A party's merge quest: its first run is the machine's, the parts merged by the Steward itself (P1-18).
+  for (const quest of plan.merges) {
+    if (ctx.stopping.aborted) break;
+    warnIfRefused(ctx, `${quest} merge`, await mergeByMachine(ctx, quest));
   }
   // Step 7: what is done goes to the owner by its kind's convention (P1-14).
   for (const quest of plan.deliveries) warnIfRefused(ctx, `${quest} deliver`, await deliver(ctx, quest));

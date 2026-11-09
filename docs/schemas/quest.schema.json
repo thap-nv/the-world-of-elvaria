@@ -544,7 +544,7 @@
       }
     },
     {
-      "$comment": "Session tier: a character holds the quest while it is in flight.",
+      "$comment": "Session tier: a character holds the quest while it is in flight; not a party's merge quest, whose run the Steward may make itself (P1-18).",
       "if": {
         "properties": {
           "tier": {
@@ -559,6 +559,11 @@
               "awaiting_seal",
               "paused_mana"
             ]
+          },
+          "party_role": {
+            "not": {
+              "const": "merge"
+            }
           }
         }
       },

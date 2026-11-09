@@ -12,7 +12,7 @@ import { leavingRunners } from './deliver.ts';
 import { gitPlots, gitRepoWith, onRepo } from './git-plots.ts';
 import { CAST, bench, questPayload } from './kingdom.ts';
 import type { Plots, Steward } from '../types.ts';
-import type { Bench } from './kingdom.ts';
+import type { Bench, Plays } from './kingdom.ts';
 
 export const CONTRACT = 'api/openapi.yaml';
 
@@ -60,12 +60,15 @@ export interface PartyBench {
   remove(): Promise<void>;
 }
 
-/** dc1-se-team on a fresh git repo, with `mages` mages: a returned plan goes back to its own mage first. */
-export async function partyBench(files: Files, mages = 1): Promise<PartyBench> {
+/**
+ * dc1-se-team on a fresh git repo, with `mages` mages (a returned plan goes back to its own mage first) and the
+ * sessions' `plays` (verdicts by quest title: the merge quest shares the contract's).
+ */
+export async function partyBench(files: Files, mages = 1, plays: Plays = {}): Promise<PartyBench> {
   const repo = await mkdtemp(path.join(os.tmpdir(), 'elvaria party repo '));
   await gitRepoWith(repo, { 'README.md': '# dc1\n' });
   const cast = ['merle', 'morgan', 'mirel', 'mott'].slice(0, mages).map((id) => ({ id, cls: 'mage' }));
-  const kingdom = await bench({ cast: [...CAST, ...cast] });
+  const kingdom = await bench({ cast: [...CAST, ...cast], plays });
   await onRepo(kingdom, repo, []);
   const leaves = (req: SpawnRequest) =>
     files[req.quest?.party_role === 'merge' ? 'merge' : (req.quest?.title ?? '')] ?? {};

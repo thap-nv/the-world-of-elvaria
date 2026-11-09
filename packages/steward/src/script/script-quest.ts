@@ -238,7 +238,7 @@ export async function runScriptQuest(ctx: Context, questId: QuestId): Promise<Re
 }
 
 /**
- * A run that says nothing (§2.5 `working.release.script`, P1-17): the Steward stopped under it, or a Steward that died
+ * A run that says nothing (§2.5 `working.release.by_machine`, P1-17): the Steward stopped under it, or a Steward that died
  * left it without output. Its entry ends `cancelled` and the quest is open again: the next tick runs it anew.
  */
 function runAgain(ctx: Context, questId: QuestId): Promise<Result<Quest, string>> {

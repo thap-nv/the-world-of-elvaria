@@ -1,4 +1,4 @@
-// A script-tier run a Steward stopped in the middle of (implementation-plan §2.5 `working.release.script`, §3.12,
+// A script-tier run a Steward stopped in the middle of (implementation-plan §2.5 `working.release.by_machine`, §3.12,
 // P1-17, P1-25): the script runs outside the tick, so a tick goes on while it runs; stop() kills it and leaves the
 // quest working with no output, as a Steward that died does; the next one opens it again when the run saved
 // nothing, or judges what it saved, without a second follow-up.

@@ -20,6 +20,11 @@
   `done` or `stuck`, derived, never stored) and `plotBaseOf` (the branches a quest's plot builds on: a part on its
   contract's, a merge quest on the contract's with every part merged in, any quest on a dependency's not merged
   yet, P1-16 (f)). The territory's `checks[].defer_to_merge` (§3.15) leaves a heavy check to the merge quest.
+  `machineMergeDue` (P1-18 (h)): a merge quest's first run is the machine's. `planTick` lists it in `merges`
+  instead of giving it to a knight; `claim` takes it with no assignee, and the rows `working.submit.by_machine`,
+  `working.release.by_machine` (the merge stopped), `review.verdict_fail.machine_retry` and
+  `awaiting_seal.return.merged_by_machine` (both back to `open`, for a knight) carry it; the quest schema lets a
+  merge quest be held with no assignee.
 - Runs the character state machine (`src/character/`, `transitionCharacter`) and derives what is never stored:
   `reputationOf`, `affinityOf`, `titleOf`. Decides levels: `canTake` (which ranks the Steward may give a level),
   `aboveCeiling` (a stretch that makes the quest wait for the royal seal) and `levelChange` (counting only the
@@ -46,7 +51,9 @@
   `budget.max_tokens`, `breakers.max_turns`); `breakersOf` applies it to the sessions the Steward holds
   (`KingdomSnapshot.sessions`), each timed from its own attempt_log entry, and `planTick` returns them first as
   `breakers`. The trips `commit` and `secrets` happen where no session runs: `secrets` takes a claimed,
-  returned, paused or unjudged quest to the infirmary (§2.5). (P1-23) `countedTokens` is the unit of a session's
+  returned, paused or unjudged quest to the infirmary (§2.5). (P1-18 (f)) A judge's session may spend
+  `breakers.verifier_tokens_multiplier` (2) times the quest's tokens (`tokenCeilingOf`), since it reads the whole
+  diff and runs the checks again. (P1-23) `countedTokens` is the unit of a session's
   tokens for every adapter: input, output and cache writes in full, cache reads at a tenth
   (`CACHE_READS_PER_TOKEN`); `reviewStalled` says a breaker has stopped `REVIEW_BREAKS_MAX` (2) verifiers of the
   current run, and the review goes to the infirmary instead of a fresh verifier. (P1-26) The owner's retry of
@@ -68,7 +75,7 @@
   verdict: one check named after the script, `link-check` → `link_check`; a batch passes when every unit is done).
   `followUpOf` builds the `create_quest` of the session quest a failed run hands its work to, of the kind and
   class the catalog's `follow_up` names (`parseRegistry` checks them). `planTick` names open script-tier quests
-  (`scripts`) and runs a Steward stopped in the middle of (`script_verdicts`); `working.release.script` opens
+  (`scripts`) and runs a Steward stopped in the middle of (`script_verdicts`); `working.release.by_machine` opens
   such a quest again, its run `cancelled`.
 - Decides mana per gauge (`src/mana/`, ADR 0009; P1-22): a gauge (`PoolKey`) is a whole pool or the cap of one
   model in it (`model`); `binds` says which characters a gauge binds: a model's cap the slugs that name it, a pool

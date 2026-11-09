@@ -51,6 +51,11 @@ export const BREAKER_DEFAULTS = {
   subagent_max_turns: 30,
   /** One quest must fit one context (principle 13); the Chancellor splits work above this. */
   context_budget_tokens: 120_000,
+  /**
+   * A judge's session may spend this many times quest.budget.max_tokens (P1-18 proposal (f)): it reads the whole
+   * diff and runs the checks again, and the first party run cut a judge at 244 150 of 240 000.
+   */
+  verifier_tokens_multiplier: 2,
 } as const;
 /**
  * Tokens read from the prompt cache that count as one token against quest.budget.max_tokens (P1-23). A cache read

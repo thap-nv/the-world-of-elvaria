@@ -158,7 +158,10 @@
   opens none. Then the contract's `subquests.json` leaves its branch in a commit of its own (`closeContract`),
   since every branch of the party starts from it. A new plot starts on the branch its quest builds on (domain's
   `plotBaseOf` → `Plots.prepare({from})`): a part on its contract's (or a part it waits for), a quest on a
-  dependency done but not merged yet (P1-16 (f)). Before each session of the merge quest's knight, never a
+  dependency done but not merged yet (P1-16 (f)). The merge quest's first run is the machine's (`party/machine.ts`,
+  P1-18 (h)): claimed with no assignee, its parts merged in, submitted to the checks and a judge with no knight's
+  session; a merge that stops is released (the conflict stays in progress in the plot) and a knight takes the next
+  run, as after a judge fails the machine's. Before each session of the merge quest's knight, never a
   judge's, its parts are merged in (`Plots.merge`; a conflict is left in progress for the knight, and the log
   says so); before its judge the check `party` says whether every part is in (`Plots.unmerged`; a missing part
   fails the run as `incomplete`, so the next session gets it). The territory's checks run by the quest's place

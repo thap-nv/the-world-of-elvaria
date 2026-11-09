@@ -1,7 +1,8 @@
 // The merge quest of a party (implementation-plan §3.13 step 3, ADR 0020): the Steward makes it itself when the
 // contract quest is delivered, beside the parts, so a party never depends on its lead remembering it. It waits for
-// every part, merges their branches on the contract's (the Steward does the merging before each session), runs every
-// check of the territory and always waits for the royal seal: it is what the owner merges into the main branch.
+// every part, merges their branches on the contract's (the Steward does the merging, and makes the first run itself,
+// machine-merge.ts), runs every check of the territory and always waits for the royal seal: it is what the owner
+// merges into the main branch.
 import { QUEST_TAGS_MAX, QUEST_TITLE_MAX_LENGTH } from '../constants.ts';
 import { RANKS } from '../schema/common.ts';
 import type { ClassId, KindId } from '../core/ids.ts';
@@ -39,9 +40,9 @@ function descriptionOf(contract: Quest, parts: Parts, path: string): string {
   const branches = parts.map((part) => `- quest/${part.id}: ${part.title}`).join('\n');
   return [
     `The merge quest of party ${contract.id} («${contract.title}»): one branch holding the contract (\`${path}\`) and every part below, checked as a whole. Each part was judged on its own already.`,
-    `Before each of your sessions the Steward merges these part branches into this branch, one by one:\n${branches}`,
-    'When a merge stops on a conflict it is left in progress: `git status` names the conflicted files. Resolve them so that every part keeps to the contract, `git add` them and `git commit` to conclude the merge. A part not merged yet is merged before your next session.',
-    'Then make every check of the territory pass on the merged branch: they all run before your judge, integration and e2e included. Change only what the merge needs.',
+    `The Steward merges these part branches into this branch, one by one, before every run:\n${branches}`,
+    'When they all merge cleanly the Steward submits the merge itself, and a knight is called only when a merge stops or the checks or the judge fail it. When a merge stops on a conflict it is left in progress: `git status` names the conflicted files. Resolve them so that every part keeps to the contract, `git add` them and `git commit` to conclude the merge. A part not merged yet is merged before your next session.',
+    'Then make every check of the territory pass on the merged branch: they all run before your judge, integration and e2e included. Change only what the merge needs; a verdict that sent the quest back is in front of you.',
   ].join('\n\n');
 }
 

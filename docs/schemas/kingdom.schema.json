@@ -200,6 +200,12 @@
           "type": "integer",
           "minimum": 1,
           "default": 120000
+        },
+        "verifier_tokens_multiplier": {
+          "description": "A judge's session may spend this many times quest.budget.max_tokens before the token breaker stops it: it reads the whole diff and runs the checks again. The assignee's sessions keep quest.budget.max_tokens.",
+          "type": "number",
+          "minimum": 1,
+          "default": 2
         }
       }
     },
@@ -632,7 +638,8 @@
         "max_turns": 200,
         "subagent_max_minutes": 5,
         "subagent_max_turns": 30,
-        "context_budget_tokens": 120000
+        "context_budget_tokens": 120000,
+        "verifier_tokens_multiplier": 2
       },
       "schedule": {
         "chronicle": {
