@@ -44,7 +44,13 @@ const quoted = (text: string): string =>
 function checksLine(territory: Pick<Territory, 'checks'>): string {
   if (territory.checks.length === 0)
     return 'The territory names no check, so say in your letter how to run the tests.';
-  const checks = territory.checks.map(({ id, run }) => `\`${id}\` (\`${run}\`)`).join(', ');
+  // A check runs one command or several in turn (P1-20).
+  const commands = (run: string | readonly string[]) =>
+    [run]
+      .flat()
+      .map((command) => `\`${command}\``)
+      .join(' then ');
+  const checks = territory.checks.map(({ id, run }) => `\`${id}\` (${commands(run)})`).join(', ');
   return `Put them where one of the territory's checks runs them: ${checks}.`;
 }
 

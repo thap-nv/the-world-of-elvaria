@@ -35,7 +35,7 @@ const CHECKS: TerritoryCheck[] = [
   },
   {
     id: 'integration' as CheckId,
-    run: 'pnpm test:integration',
+    run: ['pnpm db:reset', 'pnpm test:integration'],
     when: ['apps/api/**'],
     exclusive: true,
     defer_to_merge: true,
@@ -84,7 +84,9 @@ describe('acceptanceQuestOf', () => {
     expect(description).toContain('> A member downloads their results as CSV.\n> One row per answer.');
     expect(description).toContain('the contract (`api/openapi.yaml`) on this branch');
     expect(description).toContain('2 other part(s)');
-    expect(description).toContain('`unit` (`pnpm test`), `integration` (`pnpm test:integration`)');
+    expect(description).toContain(
+      '`unit` (`pnpm test`), `integration` (`pnpm db:reset` then `pnpm test:integration`)',
+    );
     expect(description).toContain('no other branch, no other worktree');
     expect(description).not.toContain(api.title);
     expect(description).not.toContain(api.description);
