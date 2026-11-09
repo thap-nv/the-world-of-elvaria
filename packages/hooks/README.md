@@ -15,9 +15,16 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
   `mana.signal`, `PreCompact`/`PostCompact` → `agent.compact`, `Notification` → `agent.notification`. The
   runner writes what only the stream knows: `agent.session.end` (outcome, usage, kills) and
   `agent.subagent.start`/`end` (`SubagentStop` does not run when an apprentice stops at `maxTurns`).
+- Reads its payload whole from fd 0 with a `readSync` loop that keeps every chunk and, when a pipe left
+  non-blocking answers EAGAIN before its writer closed it, waits a millisecond and reads on (`src/stdin.ts`,
+  P1-36). `readFileSync(0)` threw away what it had read at that point, so a payload could arrive cut or empty.
 - Stops a call with a JSON decision on stdout and exit 0, never exit 2, whose reason reaches the model prefixed
   with the hook's command line (spike P1-02): `PreToolUse` → `permissionDecision: "deny"`, `Stop` →
   `decision: "block"`.
+- Fails closed in `PreToolUse` (ADR 0007, P1-36): a payload it cannot read (empty, cut short, not a JSON object)
+  denies the call, with `agent.tool.blocked` (`tool: "other"`) and a reason that asks the model to make the call
+  again. Claude names its event only in the payload, so the runner gives that handler `--event PreToolUse`; agy's
+  event is in argv anyway. Every other event ignores such a payload, as before, with a note on stderr.
 - Guards the territory laws in `PreToolUse` (second fence after the deny rules, ADR 0013): `forbidden_paths`
   match at any depth, case-insensitively, with backslashes, `..`, NTFS streams and trailing dots resolved;
   `forbidden_commands` match the raw and the de-quoted line, case-insensitively; a shell line that names a
@@ -85,5 +92,7 @@ pnpm --filter @elvaria/hooks test    # builds, then vitest with coverage
 1.5.2 really made in spike P1-12a (`packages/runner-antigravity/fixtures/hook-stdin-full-run.jsonl`) and
 constructed ones; `run-hook.spec.ts` runs whole calls in-process on temp
 kingdoms (paths with a space) and reads every line back through the domain's `EventSchema`;
-`hook-process.spec.ts` spawns the build: every event, a backslash path to `.env` denied on stdout, stamps in the
-kingdom's zone, the load trace, and the start time next to `node -e 0` on the same machine.
+`hook-process.spec.ts` spawns the build: every event, a backslash path to `.env` denied on stdout, a payload
+written in two halves on a stdin made non-blocking (a `process.stdin` preload: EAGAIN between the halves on
+POSIX) read whole, an empty `PreToolUse` denied, stamps in the kingdom's zone, the load trace, and the start time
+next to `node -e 0` on the same machine. `stdin.spec.ts` feeds the reader a part, EAGAIN, then the rest.

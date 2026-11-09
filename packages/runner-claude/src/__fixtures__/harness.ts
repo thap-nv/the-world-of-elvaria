@@ -20,6 +20,12 @@ export const FAKE_CLAUDE = path.join(FIXTURES, 'fake-claude.mjs');
 export const FAKE_HOOK = path.join(FIXTURES, 'fake-hook.mjs');
 export const TRIBE = 'claude' as AgentRunner['tribe'];
 
+/**
+ * How often the specs that read a session's stdin run again: CI's macOS job sets 49 (50 runs, P1-36), where one of
+ * them once got an empty prompt (PR #76); 0 elsewhere.
+ */
+export const SPEC_REPEATS = Number(process.env.ELVARIA_SESSION_SPEC_REPEATS ?? '0');
+
 /** What hookCommand() of @elvaria/hooks returns, with the fake hook in place of the built one. */
 export const fakeHookCommand = (policyFile: string): HookCommand => ({
   command: process.execPath,

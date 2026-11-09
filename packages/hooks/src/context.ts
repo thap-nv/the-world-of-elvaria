@@ -50,12 +50,15 @@ const ATTEMPT_SHAPE = /^[1-9][0-9]{0,5}$/;
  */
 const ZONE_SHAPE = /^[A-Za-z][\w+-]*(?:\/[\w+-]+)*$/;
 
-/** The value after `--policy` (or of `--policy=<file>`). */
-export function policyArgument(argv: readonly string[]): string | undefined {
-  const index = argv.indexOf('--policy');
+/** The value after `flag` in argv (or of `flag=<value>`). */
+export function flagValue(argv: readonly string[], flag: string): string | undefined {
+  const index = argv.indexOf(flag);
   if (index !== -1) return argv[index + 1];
-  return argv.find((arg) => arg.startsWith('--policy='))?.slice('--policy='.length);
+  return argv.find((arg) => arg.startsWith(`${flag}=`))?.slice(flag.length + 1);
 }
+
+/** The value after `--policy` (or of `--policy=<file>`). */
+export const policyArgument = (argv: readonly string[]): string | undefined => flagValue(argv, '--policy');
 
 /** Reads one field: env first, then the policy file; an empty env value counts as unset. */
 function fieldReader(env: HookEnv, problems: string[]) {

@@ -25,7 +25,9 @@ paths:
 
 ## Đọc stdin
 
-- `readFileSync(0)` gặp `EAGAIN` giữa chừng (pipe non-blocking, bên ghi chưa đóng) thì bỏ phần đã đọc; nhánh dự phòng phải giữ phần đó (P1-36). Payload không đọc được: `PreToolUse` chặn, không cho qua.
+- Đừng đọc fd 0 bằng `readFileSync(0)`: gặp `EAGAIN` giữa chừng (pipe non-blocking, bên ghi chưa đóng) nó bỏ phần đã đọc. Dùng `readStdin` của `src/stdin.ts`: vòng `readSync` giữ mọi phần, gặp `EAGAIN` thì chờ 1 ms rồi đọc tiếp (P1-36). Hook của repo (`.claude/hooks/hook-io.mjs`) và CLI giả, hook giả của `runner-claude` (`fixtures/read-stdin.mjs`) đọc cùng cách.
+- Payload không đọc được (rỗng, cụt, không phải JSON object): `PreToolUse` chặn như một lệnh bị cấm (`agent.tool.blocked`, `tool: other`), không cho qua; sự kiện khác bỏ qua như cũ. Claude chỉ ghi tên sự kiện trong payload, nên runner thêm `--event PreToolUse` vào argv của handler đó (ADR 0007).
+- Test đọc stdin thật: preload `--import data:text/javascript,process.stdin` làm fd 0 non-blocking trên POSIX, rồi ghi payload thành hai nửa cách nhau một quãng (`hook-process.spec.ts`).
 
 ## Event log
 

@@ -56,4 +56,11 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm test
+      # macOS once handed the fake CLI an empty prompt: a pipe read cut at EAGAIN (PR #76, P1-36). The specs that
+      # read a session's stdin run 50 times here.
+      - name: Session stdin cases, 50 runs (P1-36)
+        if: matrix.os == 'macos-latest'
+        run: pnpm --filter @elvaria/runner-claude exec vitest run src/session.spec.ts src/fixtures-stdin.spec.ts
+        env:
+          ELVARIA_SESSION_SPEC_REPEATS: '49'
       # P0-10 adds the sandbox replay smoke run here (implementation-plan §7).

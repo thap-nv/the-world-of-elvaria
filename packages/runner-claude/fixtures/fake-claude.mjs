@@ -16,6 +16,7 @@ import process from 'node:process';
 import { COMMANDS } from './fake-claude-commands.mjs';
 import { hookDenial, ruleDenial } from './fake-claude-denials.mjs';
 import { leak } from './fake-claude-leak.mjs';
+import { readStdin } from './read-stdin.mjs';
 
 const FIXTURES = import.meta.dirname;
 const PING = 'Reply with the single word ok.';
@@ -220,20 +221,9 @@ function replay(settings, file) {
   return undefined;
 }
 
-/** The prompt on stdin, with the real hook's fallback for a pipe left non-blocking (EAGAIN on macOS, PR #32). */
-async function readStdin() {
-  try {
-    return readFileSync(0, 'utf8');
-  } catch (error) {
-    if (error?.code !== 'EAGAIN') throw error;
-  }
-  const chunks = [];
-  for await (const chunk of process.stdin) chunks.push(Buffer.from(chunk));
-  return Buffer.concat(chunks).toString('utf8');
-}
-
 async function session(argv) {
-  const prompt = await readStdin();
+  // The prompt on stdin, whole even on a pipe left non-blocking (read-stdin.mjs, P1-36).
+  const prompt = readStdin();
   if (env.FAKE_CLAUDE_RECORD !== undefined)
     writeFileSync(env.FAKE_CLAUDE_RECORD, JSON.stringify({ argv, cwd: process.cwd(), env, prompt }));
   const settings = JSON.parse(readFileSync(flag(argv, '--settings'), 'utf8'));
