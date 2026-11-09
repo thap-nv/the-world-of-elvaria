@@ -6,6 +6,7 @@ import { REGISTRY_ID_PATTERN, TribeIdSchema, UlidSchema } from '../../core/ids.t
 import { DateTimeSchema, NonEmptyStringSchema } from '../common.ts';
 import {
   CharacterChangeDataSchema,
+  ManaExhaustedDataSchema,
   ManaPoolDataSchema,
   QuestChangeDataSchema,
   QuestInfirmaryDataSchema,
@@ -99,6 +100,12 @@ const ManaLevelDataSchema = z.strictObject({
   used_pct: z.number().min(0).max(100),
   resets_at: DateTimeSchema.optional(),
   source: z.enum(['rate_limits', 'estimate', 'signal']),
+  // Optional and added after v1 (P1-32): every line written before it is a whole pool's, so `v` stays 1.
+  model: SnakeIdSchema.optional().meta(
+    describe(
+      "The one model whose own cap this reads (argon, fable); absent for the whole pool. The pool's HUD band does not follow it (P1-32).",
+    ),
+  ),
 });
 
 const ManaWarningDataSchema = z
@@ -198,7 +205,7 @@ export const EVENT_DATA_SCHEMAS = {
   'mana.signal': ManaSignalDataSchema,
   'mana.level': ManaLevelDataSchema,
   'mana.warning': ManaWarningDataSchema,
-  'mana.exhausted': ManaPoolDataSchema,
+  'mana.exhausted': ManaExhaustedDataSchema,
   'mana.restored': ManaPoolDataSchema,
   'character.created': CharacterChangeDataSchema,
   'character.sleep': CharacterChangeDataSchema,

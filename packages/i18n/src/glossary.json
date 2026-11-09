@@ -1806,6 +1806,11 @@
               "meaning": "kết thúc phiên CLI (`RunResult.outcome`); `budget` = chạm `--max-budget-usd`"
             },
             {
+              "field": "event `quest.infirmary` → `data.trip`",
+              "values": "`time`, `tokens`, `turns`, `commit`, `secrets`, `max_attempts`, `script_broken`, `script_usage`, `script_fail`",
+              "meaning": "vì sao vào trạm quân y (P1-32): năm loại cầu dao, hết số lần thử, hay lượt bậc script mà script hỏng, không dùng được tham số, không đạt; dòng cũ không có trường này"
+            },
+            {
               "field": "event `mana.level` → `data.pool`",
               "values": "id tộc (ví dụ `claude`), `gemini_models`, `claude_gpt_models`",
               "meaning": "tài khoản một pool dùng id tộc làm pool; Antigravity có hai pool"

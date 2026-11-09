@@ -11,7 +11,7 @@ import { step } from '../record.ts';
 import { judge, runOf, verifierLeaves } from '../review/judge.ts';
 import { breakAssignee, breakVerifier } from './breaker.ts';
 import { commitPlot } from './commit.ts';
-import { applyAssigneePatch, patchRefusal } from './patch.ts';
+import { applyAssigneePatch } from './patch.ts';
 import type { Context } from '../context.ts';
 import type { Finished, Running } from './running.ts';
 
@@ -58,10 +58,8 @@ async function settleAssignee(
   // What the CLI would not let the assignee write goes in first, as its patch, so the submit carries it (P1-28).
   // A patch that touches other paths or does not apply leaves everything in the plot, and the quest no review.
   const patched = await applyAssigneePatch(ctx, running);
-  if (patched.status === 'refused') {
-    const detail = patchRefusal(patched.detail);
-    return breakAssignee(ctx, running, { trip: 'commit', detail }, ended(result));
-  }
+  if (patched.status === 'refused')
+    return breakAssignee(ctx, running, { trip: 'commit', patch: patched.detail }, ended(result));
   // Five classes have no git of their own, and the judge reads the branch's diff (§3.3, P1-07).
   const committed = await commitPlot(ctx, quest, plotCommitMessage.submit(quest));
   // The branch would lack the work: the quest goes to the infirmary with the hook's last words, not to review.

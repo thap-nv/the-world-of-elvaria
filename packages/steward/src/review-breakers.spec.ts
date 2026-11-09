@@ -85,6 +85,9 @@ describe('a review the breakers keep stopping', () => {
         quest: { id: quest.id, title: 'Judged at length', rank: 'D' },
         reason:
           'breaker:tokens: 240001 tokens, limit 240000; a breaker stopped 2 verifiers of run 1, so no further one opens: raise the budget (quest edit) before a retry',
+        // In parts too (P1-32): the last verifier's breaker, and how many of the run it stopped.
+        trip: 'tokens',
+        detail: { message: '240001 tokens, limit 240000', verifiers_stopped: 2 },
       },
     ]);
     // The quest waits for the owner: no third verifier, no session left running.

@@ -6,6 +6,7 @@
 import { currentRun, err, machineVerdictOf } from '@elvaria/domain';
 import type { Quest, QuestId, Result } from '@elvaria/domain';
 
+import { OUT_OF_ATTEMPTS } from '../infirmary.ts';
 import { STEWARD } from '../record.ts';
 import { VERDICT_EVENT, moveOnVerdict, recordVerdict, ritualOf } from '../verdicts.ts';
 import { checksRunOf, takeChecks } from './checks.ts';
@@ -35,7 +36,7 @@ export async function machineReview(ctx: Context, questId: QuestId): Promise<Res
       event: { type: VERDICT_EVENT[result] },
       actor: 'steward',
       before: { checks_run: checksRunOf(checks.value) },
-      reason: 'max_attempts',
+      infirmary: OUT_OF_ATTEMPTS,
     },
   );
 }

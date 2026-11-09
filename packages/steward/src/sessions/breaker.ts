@@ -4,7 +4,7 @@
 // REVIEW_BREAKS_MAX verifiers of the run and the review goes to the infirmary too (P1-23). The same end awaits an
 // assignee whose CLI stopped itself at its own limit (settle.ts), and a quest no session can open for because its
 // secrets are missing (open.ts): that one waits in the infirmary instead of being claimed again every tick.
-import { currentRun, reviewBreaksOf, reviewStalled } from '@elvaria/domain';
+import { reviewBreaksOf, reviewStalled } from '@elvaria/domain';
 import { openJournal } from '@elvaria/eventlog';
 import { plotCommitMessage } from '@elvaria/runner-core';
 import type { Breaker, BreakerTrip, Quest, Result, SessionTrip } from '@elvaria/domain';
@@ -23,15 +23,15 @@ import type { Running } from './running.ts';
  * An assignee meets a breaker: the character sinks into the swamp while `end` ends the session (the kill tree, or
  * the end its CLI already reported) and the work is committed as WIP, never past the territory's hooks; then the
  * quest goes to the infirmary, the bell rings, and the character is free again. A refused WIP commit leaves the
- * work in the plot and says so in the reason. The `commit` trip is that refusal already: no second try.
+ * work in the plot and says so in the detail. The `commit` trip is that refusal already: no second try.
  */
 export async function breakAssignee(
   ctx: Context,
   running: Running,
-  breaker: { readonly trip: BreakerTrip; readonly detail?: string | undefined },
+  breaker: AssigneeBreaker,
   end: () => Promise<RunResult>,
 ): Promise<Result<Quest, string>> {
-  const { trip, detail } = breaker;
+  const { trip, detail, patch } = breaker;
   const who = running.character;
   const swamped = await ctx.record.change(who, 'character.swamp', step('breaker'));
   if (!swamped.ok) ctx.deps.log.warn(`steward: ${running.quest}: ${who} is not swamped: ${swamped.error}`);
@@ -40,15 +40,26 @@ export async function breakAssignee(
     trip === 'commit'
       ? undefined
       : await commitPlot(ctx, running.quest, plotCommitMessage.wip(running.quest, trip));
-  const kept = wip?.status === 'refused' ? ` (WIP not committed, it stays in the plot: ${wip.detail})` : '';
-  const left = await apprenticeLeft(ctx, running);
+  const said = {
+    ...(detail === undefined ? {} : { message: detail }),
+    ...(patch === undefined ? {} : { patch }),
+    ...(wip?.status === 'refused' ? { wip: wip.detail } : {}),
+    ...((await apprenticeLeft(ctx, running)) ? { apprentice_left: true as const } : {}),
+  };
   return moveAndRing(ctx, {
     quest: running.quest,
     event: { type: 'breaker', trip, ...runOf(running, result) },
     actor: 'steward',
     edits: swamped.ok ? { [who]: step('quest_infirmary') } : {},
-    reason: `breaker:${trip}${detail === undefined ? '' : `: ${detail}`}${kept}${left}`,
+    infirmary: { trip, detail: said },
   });
+}
+
+/** What stopped an assignee: the trip, what it said, and for a refused patch (trip `commit`) why (P1-28). */
+interface AssigneeBreaker {
+  readonly trip: BreakerTrip;
+  readonly detail?: string | undefined;
+  readonly patch?: string;
 }
 
 /**
@@ -56,23 +67,19 @@ export async function breakAssignee(
  * its turns has work left that belongs in a child quest; the infirmary note says so to the owner. The runner wrote
  * those lines into the quest's journal, under the session's id. A journal that cannot be read adds nothing.
  */
-async function apprenticeLeft(ctx: Context, running: Running): Promise<string> {
+async function apprenticeLeft(ctx: Context, running: Running): Promise<boolean> {
   try {
     const { events } = await openJournal(ctx.root, running.quest).read();
-    const cut = events.some(
+    return events.some(
       ({ session, type, data }) =>
         session === running.session_id &&
         (type === 'agent.subagent.overrun' ||
           (type === 'agent.subagent.end' && data.stopped === 'max_turns')),
     );
-    return cut ? APPRENTICE_LEFT : '';
   } catch {
-    return '';
+    return false;
   }
 }
-
-export const APPRENTICE_LEFT =
-  '; an apprentice of this session ran past its minutes or was cut at its turns: open a child quest for the work it left (see handover.md)';
 
 /** Kills the session's tree; what it left behind loses its secret values like any end (§3.9). */
 async function stopped(ctx: Context, running: Running, reason: string): Promise<RunResult> {
@@ -104,11 +111,12 @@ export async function breakVerifier(
   });
   if (!left.ok || !reviewStalled(left.value)) return left;
   // `review.breaker.needs_verifier`: the review has no verifier now, and no further one opens for this run.
+  const said = detail === undefined ? {} : { message: detail };
   return moveAndRing(ctx, {
     quest: running.quest,
     event: { type: 'breaker', trip },
     actor: 'steward',
-    reason: `${reason}; a breaker stopped ${reviewBreaksOf(left.value)} verifiers of run ${currentRun(left.value)}, so no further one opens: raise the budget (quest edit) before a retry`,
+    infirmary: { trip, detail: { ...said, verifiers_stopped: reviewBreaksOf(left.value) } },
   });
 }
 
@@ -143,6 +151,6 @@ export function secretsBreaker(ctx: Context, quest: Quest, why: string): Promise
     event: { type: 'breaker', trip: 'secrets' },
     actor: 'steward',
     edits: holds ? { [holder.id]: step('unassign') } : {},
-    reason: `breaker:secrets: ${why}`,
+    infirmary: { trip: 'secrets', detail: { message: why } },
   });
 }

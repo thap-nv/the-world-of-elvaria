@@ -1,6 +1,7 @@
 // `elvaria doctor`: is this machine ready to run the kingdom? Registry, git, each tribe's CLI (found, version
 // pinned into kingdom.json, terms acknowledged where ADR 0018 requires), each territory (implementation-plan
-// §3.14, §6), the treasury file and the sessions a stopped Steward left running (P1-11). It writes only
+// §3.14, §6), the treasury file, the sessions a stopped Steward left running (P1-11) and the mana gauges the Steward
+// logged, asleep or not (P1-32). It writes only
 // `tribes[].tool` and, with `--enable`, `tribes[].enabled` (P1-15), through the kingdom file's lock.
 import { ok } from '@elvaria/domain';
 import type { Tribe } from '@elvaria/domain';
@@ -11,6 +12,7 @@ import { EXIT } from '../command.ts';
 import { storeIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { checkGit, checkRegistry, checkTerritories } from './check-kingdom.ts';
+import { checkMana } from './check-mana.ts';
 import { checkLeftSessions, checkTreasury } from './check-state.ts';
 import { checkTribe, skipsTribe } from './check-tribe.ts';
 import { finding, findingLines } from './finding.ts';
@@ -98,6 +100,7 @@ async function runDoctor(input: CommandInput, cli: CliContext): Promise<ExitCode
     ...(await checkTerritories(ctx)),
     await checkTreasury(ctx),
     ...(await checkLeftSessions(ctx)),
+    ...(await checkMana(ctx)),
   ];
   findings.flatMap(findingLines).forEach(ctx.io.out);
   const errors = findings.filter((item) => item.level === 'error').length;

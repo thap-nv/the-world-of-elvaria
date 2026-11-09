@@ -71,8 +71,12 @@ describe('a usage limit, per bucket (P1-22)', () => {
       kingdom.clock,
       async () => (await statusOf(kingdom, 'Fable runs dry')) === 'paused_mana',
     );
+    // The line names the reset the bell says too, and the cap's own reading is logged (P1-32).
     const asleep = await linesOf(kingdom, 'mana.exhausted');
-    expect(asleep.map(({ data }) => data)).toEqual([{ tribe: 'claude', pool: 'claude', model: 'fable' }]);
+    const fable = { tribe: 'claude', pool: 'claude', model: 'fable' };
+    expect(asleep.map(({ data }) => data)).toEqual([{ ...fable, resets_at: FABLE_RESET }]);
+    const levels = (await linesOf(kingdom, 'mana.level')).map(({ data }) => data);
+    expect(levels).toContainEqual(expect.objectContaining({ ...fable, window: 'weekly', used_pct: 100 }));
     expect(kingdom.notices).toContainEqual({
       kind: 'mana_asleep',
       tribe: 'claude',
