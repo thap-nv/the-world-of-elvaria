@@ -60,16 +60,34 @@ Lãnh thổ dc1-se-team, tóm tắt:
 | `laws.forbidden_commands` | push, `--no-verify`, `drizzle-kit drop/push`, `docker compose … down -v` | danh sách "cấm" của CLAUDE.md |
 | `laws.read_before_write`, `rank_floor` | mục "Đọc trước khi sửa"; `permissions.ts` từ hạng B | |
 
-**Check nhiều lệnh** (P1-20): `run` của một check là một lệnh hoặc một danh sách lệnh, chạy lần lượt trong cùng thư mục và cùng log, lệnh đầu tiên lỗi kết thúc check (như `&&` của CI, nhưng không qua shell). Nhờ đó các bước CI trước đây chưa thành check của dc1 viết được: drift của `pnpm api:openapi` và `pnpm content:build` (mỗi lệnh kèm `git diff --exit-code`), và e2e cần `infra/secrets/*` do một script `sh` sinh (vùng cấm của nhân vật, nhưng check do máy chạy, không qua hook). Chương trình đầu mỗi lệnh phải tìm được trên PATH của Quản sự (`sh` của Git for Windows thường nằm ở `Git\usr\bin`, không có trên PATH mặc định). Check nhiều lệnh không vào bậc script `run-check` (một argv mỗi check); chúng chạy trước người chấm như mọi check. Ví dụ (chưa chạy thật trên dc1):
+**Check nhiều lệnh** (P1-20): `run` của một check là một lệnh hoặc một danh sách lệnh, chạy lần lượt trong cùng thư mục và cùng log, lệnh đầu tiên lỗi kết thúc check (như `&&` của CI, nhưng không qua shell). Nhờ đó các bước CI trước đây chưa thành check của dc1 viết được: drift của `pnpm api:openapi` và `pnpm content:build` (mỗi lệnh kèm `git diff --exit-code`), và e2e cần `infra/secrets/*` do một script `sh` sinh (vùng cấm của nhân vật, nhưng check do máy chạy, không qua hook). Chương trình đầu mỗi lệnh phải tìm được trên PATH của Quản sự. `sh` của Git for Windows nằm ở `C:\Program Files\Git\usr\bin`, mà PATH của Windows (PowerShell, cmd) chỉ có `Git\cmd`: chạy `elvaria run` từ Git Bash (PATH của nó có `usr\bin`), hoặc thêm thư mục đó vào PATH. `doctor` chưa kiểm điều này; thiếu thì check đỏ, log ghi `cannot run this command (not_found: sh)`. Check nhiều lệnh không vào bậc script `run-check` (một argv mỗi check); chúng chạy trước người chấm như mọi check. Bản dc1 dùng từ P1-35 (đã chạy thật, mục 10):
 
 ```json
 "checks": [
-  { "id": "openapi_drift", "run": ["pnpm api:openapi", "git diff --exit-code"], "when": ["apps/api/**"], "timeout_minutes": 10 },
-  { "id": "e2e", "run": ["sh infra/scripts/init-secrets.sh", "pnpm e2e:docker"], "when": ["apps/web/**", "e2e/**"], "exclusive": true, "timeout_minutes": 30 }
+  { "id": "content_drift", "run": ["pnpm content:build", "git diff --exit-code packages/shared/src/content"],
+    "when": ["ban-do-nang-luc-se.md", "packages/shared/scripts/**", "packages/shared/src/content/**"], "timeout_minutes": 5 },
+  { "id": "openapi_drift", "run": ["pnpm api:openapi", "git diff --exit-code apps/api/openapi.json packages/shared/src/api-types.ts"],
+    "when": ["apps/api/**", "packages/shared/src/**"], "timeout_minutes": 10 },
+  { "id": "e2e", "run": ["sh infra/scripts/init-secrets.sh", "pnpm e2e:docker"],
+    "when": ["apps/web/**", "apps/api/src/**", "packages/shared/src/**", "infra/compose*.yml", "infra/docker/**", "infra/postgres/**"],
+    "exclusive": true, "timeout_minutes": 30, "defer_to_merge": true, "cleanup": "pnpm e2e:down" }
 ]
 ```
 
-**Test là sản phẩm** (P1-20, ADR 0022): quest Kiến tạo/Gia cố có tag `e2e` hoặc `integration` được nghiệm thu bằng Thả quái thử thành trong một đất nháp `<quest-id>-verify`. Hai lệnh mới, tùy chọn, ở `commands`: `reset` (một lệnh hoặc danh sách: đưa DB, container về sạch; chạy sau `setup` và trước mỗi lần chạy check trong đất nháp, chỉ máy chạy) và `coverage` (đo coverage, để lại tóm tắt istanbul ở `coverage/coverage-summary.json`, ví dụ `pnpm vitest run --coverage --coverage.reporter=json-summary`; bước `coverage_not_lower` chạy nó trên nhánh và trên base). Không khai `coverage` thì coverage không được đo. Người chấm trong đất nháp chạy được mọi check của lãnh thổ, kể cả check `exclusive` như e2e: Quản sự giữ khóa exclusive của lãnh thổ suốt phiên người chấm (khóa đang bận thì người chấm mở ở tick sau, log báo một lần), nên trong lúc đó check exclusive của quest khác chờ (tới `breakers.attempt_minutes.high` + thời gian của check exclusive dài nhất + 1 phút) thay vì đỏ. Repo Elvaria (lãnh thổ #2) có bộ check theo bảng Change impact của [CLAUDE.md](../../CLAUDE.md): lint, format, typecheck, test, boundaries, `schemas --check`, `docs:gen --check`, `docs:check`, `i18n:check`; luật cấm sửa file sinh, `design/**`, kế hoạch sản phẩm, rebase, `git stash` trần.
+`git diff --exit-code` nêu đúng các đường dẫn sinh ra, như CI, để file khác trong plot (đất nháp của người chấm có `infra/secrets/*`, `coverage/`) không làm check đỏ. Check drift đỏ khi nguồn đổi mà file sinh không đổi theo (diff in trong log), xanh khi không drift; `content:build` còn tự từ chối khi tên mảng lệch Phụ lục A, cũng đỏ nhưng vì lý do khác.
+
+**Test là sản phẩm** (P1-20, ADR 0022): quest Kiến tạo/Gia cố có tag `e2e` hoặc `integration` được nghiệm thu bằng Thả quái thử thành trong một đất nháp `<quest-id>-verify`. Hai lệnh mới, tùy chọn, ở `commands`: `reset` (một lệnh hoặc danh sách: đưa DB, container về sạch; chạy sau `setup` và trước mỗi lần chạy check trong đất nháp, chỉ máy chạy) và `coverage` (đo coverage, để lại tóm tắt istanbul ở `coverage/coverage-summary.json` **ở gốc plot**; bước `coverage_not_lower` chạy nó trên nhánh và trên base). Không khai `coverage` thì coverage không được đo. Với dc1 (monorepo, gốc không có vitest):
+
+```json
+"commands": {
+  "reset": ["sh infra/scripts/init-secrets.sh",
+            "docker compose -p dc1-e2e --env-file infra/e2e.env -f infra/compose.yml -f infra/compose.e2e.yml -f infra/compose.test.yml down -v --remove-orphans"],
+  "coverage": ["pnpm --filter @dc1/shared build",
+               "pnpm --filter @dc1/api exec vitest run --coverage --coverage.reporter=json-summary --coverage.reportsDirectory=../../coverage"]
+}
+```
+
+`reset` chạy `init-secrets.sh` trước vì đất nháp mới chưa có `infra/secrets/*` mà compose đọc; `down -v` cấm với nhân vật (`laws.forbidden_commands`) nhưng máy chạy được. Coverage là coverage unit của api: test Playwright không chạy qua vitest, nên quest e2e không bao giờ làm nó tăng hay giảm, `coverage_not_lower` ở đó chỉ giữ cho unit không tụt. Người chấm trong đất nháp chạy được mọi check của lãnh thổ, kể cả check `exclusive` như e2e: Quản sự giữ khóa exclusive của lãnh thổ suốt phiên người chấm (khóa đang bận thì người chấm mở ở tick sau, log báo một lần), nên trong lúc đó check exclusive của quest khác chờ (tới `breakers.attempt_minutes.high` + thời gian của check exclusive dài nhất + 1 phút) thay vì đỏ. Repo Elvaria (lãnh thổ #2) có bộ check theo bảng Change impact của [CLAUDE.md](../../CLAUDE.md): lint, format, typecheck, test, boundaries, `schemas --check`, `docs:gen --check`, `docs:check`, `i18n:check`; luật cấm sửa file sinh, `design/**`, kế hoạch sản phẩm, rebase, `git stash` trần.
 
 **File sinh** (P1-24): đặt glob của file sinh vào `laws.read_only_paths`, không vào `forbidden_paths`, và lệnh sinh ra chúng vào `commands.generate`. Mọi phiên đọc được file sinh; không tool nào ghi tay được (deny rule `Edit(./…)` cộng hook, kể cả `>`/`tee`/`Set-Content` của shell); nhân vật có Edit và shell được chạy các lệnh sinh (`Bash(<lệnh>:*)`), và prompt liệt kê cả đường dẫn chỉ đọc lẫn lệnh sinh. Người chấm không được chạy lệnh sinh. Với Elvaria:
 
@@ -150,6 +168,8 @@ elvaria seal <quest> --note "…"                   # xong
 elvaria return <quest> --note "…" --fail-kind …   # trả về người làm, ít nhất 20 ký tự
 ```
 
+`seal` và `return` chỉ ghi một lệnh vào `inbox/`: Quản sự áp nó (và viết thư giao hàng) ở nhịp kế tiếp, nên khi không có Quản sự nào chạy, quest vẫn ở `awaiting_seal` tới lần `elvaria run` sau.
+
 Merge nhánh là việc của bạn, như mọi PR. Quản sự viết thư giao hàng vào `.runs/<quest>-delivery.md`, dùng làm mô tả PR. Push từ trong worktree (`git -C <repo>/.elvaria/worktrees/<quest> push -u origin quest/<quest>`), để pre-push hook của repo kiểm đúng nhánh đó, không kiểm checkout chính.
 
 Sau khi merge, trả worktree bằng lệnh lưu trữ (chỉ cho quest đã xong và đã giao hàng), rồi chạy Quản sự để nó áp lệnh:
@@ -178,3 +198,59 @@ Trước khi tốn mana, `main` của dc1 (0c3c6dc) được chạy thử đủ 
 | Vesper (claude-opus-5-5) | 6 lượt, 65 s, ≈ 0,23 USD; đọc diff, chạy lại `pnpm check`, phán `pass`, ghi chú tiếng Việt; còn bắt được mục "Done" của thư bàn giao ghi thứ tự cũ |
 
 Phát hiện của lần 2 về lãnh thổ: vì ESLint đọc `dist` của shared, check `build` phải đứng trước `lint` cả khi quest chỉ chạm file `.ts` ở gốc, nên `when` của `build` gồm luôn các glob của `lint`. Hiệp sĩ cũng ghi nhận rằng `.husky/pre-push` của dc1 không chạy lint, dù README nói pre-push hook "chạy phần đầu": việc này có thể thành một quest riêng trên dc1.
+
+## 10. Thả quái thử thành trên dc1, ngày 2026-11-09 (P1-35)
+
+Lần chạy thật đầu tiên của nghi thức `mutation_check` (§4 "Test là sản phẩm", ADR 0022), trên Windows 11, Claude Code 2.1.319, Antigravity CLI 1.5.3, Docker Desktop 29.9.2 (22 CPU, 16 GB). Token đếm theo cách của P1-23 (đọc cache tính một phần mười); mọi prompt đã có `temple/scripture.md` và `gazetteer.md` của dc1 (mỗi file 6 dòng).
+
+**Chuẩn bị vương quốc** (bản sao ở `.backup/2026-11-09/`): lãnh thổ dc1 thêm `commands.reset`, `commands.coverage`, các check `content_drift`, `openapi_drift`, `e2e` như §4. Vương quốc tạo trước P1-20 không có `mutation_check`, `ritual_overrides` và tag `integration` trong registry: `elvaria migrate` chỉ chép file thiếu, không thêm mục mới vào file đã có, và `doctor` không báo. Thiếu chúng thì quest `e2e` được chấm bằng `build_review`, không lỗi gì. Thêm bằng tay theo `packages/registry-default` (`kinds.json`, `rituals.json`, `tags.json`).
+
+**Chạy thử trước khi tốn mana** (bản clone của `main` dc1 c29d390, 0 token): install 12 s, build shared 5 s, `api:openapi` 7 s, `content:build` 1 s, lệnh coverage 3 s (lines 18,31 % của api). Hai check drift chạy qua `runChecks` thật: xanh khi không drift; đỏ vì diff khi commit nguồn mà không sinh lại. Check `e2e` lộ hai lỗi của Elvaria trên Windows, sửa trong commit `fix(runner-core)` của P1-35:
+
+| Lỗi | Triệu chứng | Sửa |
+|---|---|---|
+| log của check mở bằng `'a'` | `sh infra/scripts/init-secrets.sh` thoát 1 sau 0 s, log trống: handle mở để append không có quyền ghi riêng, chương trình MSYS (`sh` của Git) không ghi được qua nó, `set -e` dừng script | `openLog` mở bằng `'w'`; cha và con vẫn ghi đúng thứ tự qua vị trí ghi chung |
+| env tối thiểu thiếu `ProgramFiles` | `docker compose -p …` báo `unknown shorthand flag: 'p'`: Docker CLI tìm plugin compose, buildx ở `%ProgramFiles%\Docker\cli-plugins` | `ProgramFiles`, `ProgramData` vào `MINIMAL_ENV_NAMES` (ADR 0013 sửa tại chỗ, chủ nhân chọn) |
+
+Sau hai bản sửa, `pnpm e2e:docker` chạy hết dưới Elvaria (705 s cả build image) nhưng `main` của dc1 **đỏ**: 11 test hỏng, 10 không chạy, 143 qua, mọi lỗi ở `/results`, từ thẻ lịch sử một mảng của đội P1-21 (PR #35, lúc đó lãnh thổ chưa có check e2e): `<select>` rộng 406 px làm trang cuộn ngang ở 320 và 390 px; câu "…over the periods." dính chữ "To develop" của khối sau thành `periods.To`, `expectNoRawKeys` bắt nhầm là khóa i18n thô; WebKit báo vi phạm CSP trên `/results`. Quest e2e không thể xanh trên nhánh gốc đỏ (máy chỉ chạy lại khi lượt đầu xanh), nên chủ nhân chọn một quest sửa trước, quest e2e `--depends-on` nó (nhánh tách từ nhánh quest sửa, P1-16 (f)).
+
+**Quest sửa** `q_20261109_skffqk` (fix, hạng E, Quản sự từ `dist` của `8c7cb44`):
+
+| Bước | Kết quả |
+|---|---|
+| thorn (claude-sonnet-5-5), lượt 1 | 38 lượt, 133 465 token; sửa tràn ngang (CSS) và câu chữ; không tìm ra nguồn CSP (đọc tĩnh, không chạy được webkit) |
+| check máy lượt 1 | build 3 s, lint 80 s, format 6 s, typecheck 13 s, test 18 s, i18n 2 s, e2e 567 s đỏ (148 qua, còn 6 test mobile-webkit) |
+| ilse (gemini-3.8-flash-high), người chấm 1 | 56 lượt tool tự đi tìm nguồn CSP dù check đã đỏ, bị cầu dao token cắt (496 608 / 480 000), không có phán quyết |
+| check máy chạy lại | Quản sự chạy lại toàn bộ check cho người chấm kế tiếp dù commit không đổi: thêm 10 phút (e2e 546 s, cùng 6 test đỏ) |
+| ilse, người chấm 2 | được chọn lại (người chấm bị cắt không bị loại); 6 lượt, 62 857 token, `fail tests_fail` trích log e2e |
+| chẩn đoán của chủ nhân | spec tạm nghe `securitypolicyviolation` trên mobile-webkit, CSP thêm `'report-sample'`, compose project riêng, khoảng 3 phút, 0 token: vi phạm `style-src-attr`, mẫu `text-overflow:inherit`, đích là `<select>` của thẻ, lúc react-dom tạo nó; repo đã ghi đúng bẫy này ở `JournalEntryDialog.tsx` dòng 62; ghi vào mô tả quest (`quest edit --description`) |
+| thorn, lượt 2 | 35 lượt, 154 986 token; thẻ lúc đóng là một `<button>`, chỉ dựng `<select>` khi đang chọn |
+| check máy lượt 2 | mọi check xanh, e2e 679 s, 164/164 |
+| ilse, người chấm | 22 lượt, 160 262 token, `pass`; chủ nhân đóng dấu |
+
+Quest sửa: khoảng 1 008 000 token (thorn 288 451, ilse 719 727), 55 phút từ lúc nhận tới lúc chờ dấu, 3 lượt check (e2e 567 + 546 + 679 s, khoảng 30 phút, trong đó một lượt chỉ để người chấm thứ hai).
+
+**Đổi bản giữa chừng**: trong lúc quest sửa chờ dấu, Quản sự dừng khi rảnh, nhánh merge `main` có P1-36 (7ce92a6), build lại hook và CLI, `doctor`, chạy lại từ `cfcd668`. Settings của mọi phiên mở sau đó có `--event PreToolUse` ở hook `PreToolUse`.
+
+**Quest e2e** `q_20261109_k8ejj6` (build, hạng E, tag `e2e` ⇒ `mutation_check`; trần sửa trước khi giao: 60 phút, 400 000 token):
+
+| Bước | Kết quả |
+|---|---|
+| thorn, lượt 1 | 23 lượt, 75 567 token, 2 phút: `apps/web/e2e/functional/results-csv.spec.ts` (105 dòng, en và vi: tên file, BOM, tiêu đề cột, một dòng mỗi mảng, `L3` ở mảng vừa chấm, mảng chưa chấm để trống) |
+| trial trong đất nháp | 30 phút, 0 token, đất nháp `q_20261109_k8ejj6-verify` detached ở đầu nhánh, setup 11,8 s: `rerun_clean` ✓ (mọi lần reset 8 s), build 2 s, lint 37 s, format 5 s, typecheck 9 s, test 17 s, `e2e` ✓ 602 s (166/166, hai test mới khoảng 1 s mỗi test), `flake_check` ✓ 1 108 s (lượt 2, 3 đều 166/166), `coverage_not_lower` ✓ 9 s ("coverage did not drop": test Playwright không chạm coverage unit) |
+| ilse trong đất nháp | 13 lượt, 101 271 token, 2,5 phút, `pass` mà **không đập thử**: mọi lệnh `pnpm` trong shell của agy đỏ ngay, `pnpm.ps1 cannot be loaded because running scripts is disabled on this system` |
+| sau phán quyết | nhánh quest không đổi (`01d0fa9`), đất nháp đã xóa, khóa `.state/checks/dc1-se-team-exclusive` đã nhả |
+
+**Shell của agy trên Windows chạy PowerShell.** `pnpm` ở đó là `C:\nvm4w\nodejs\pnpm.ps1`, và Execution Policy mặc định của Windows (`Restricted`, mọi scope `Undefined`) cấm script. Phiên agy chưa bao giờ chạy được `pnpm` trên máy này: 8 thư mục `.runs` của lần chạy P1-21 có đúng dòng lỗi đó, gồm cả hai phiên của kael ở phần test chấp nhận (chỉ đọc file rồi bị cầu dao cắt). Sửa trên máy: `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` (cho chạy script cục bộ, script tải về phải có chữ ký). Chủ nhân sửa, rồi trả quest về (`--fail-kind other`, chưa có lệnh "chấm lại" nên lần trả về tính một lần trượt cho thorn); thorn nộp lại không đổi (4 lượt, 22 634 token), trial chạy lại.
+
+| Bước | Kết quả |
+|---|---|
+| trial lần 2 | 27,6 phút, đất nháp mới, setup 6,8 s: `rerun_clean` ✓ 11 s, `e2e` ✓ 491 s, `flake_check` ✓ 1 084 s (ba lượt 166/166, 7,6–7,7 phút Playwright), `coverage_not_lower` ✓ 8 s |
+| ilse trong đất nháp, lần 2 | 34 lượt, 275 110 token, 8,3 phút (khóa exclusive giữ suốt phiên): chạy `pnpm e2e:docker apps/web/e2e/functional/results-csv.spec.ts` (3 qua, 67 s); đập `results-csv.ts` hai chỗ (định dạng tên file, tiền tố `L` của mức), mỗi lần cả hai test en và vi đỏ (68 s); `git restore`, chạy lại 3 qua (44 s); `git status` sạch suốt phiên; `pass` |
+| sau phán quyết | nhánh không đổi (`01d0fa9`), đất nháp đã xóa, khóa đã nhả; quest chờ dấu vua |
+
+Mỗi lần chạy một file e2e trong đất nháp mất khoảng 1 phút (build lại image có cache), nên người chấm đập thử hai lần vừa trong trần 60 phút. Phán quyết của agy chỉ là `{"progress": …, "result": "pass"}` sau mấy dòng kể việc, không có `notes`: Quản sự nhận nó và lưu ghi chú rỗng, nên bằng chứng đập thử chỉ còn trong `.runs/<quest>-<n>/verify/stdout.jsonl`. Quest e2e: 474 582 token (thorn 98 201, ilse 376 381), 75 phút từ lúc nhận tới lần chờ dấu thứ hai, kể cả lúc chủ nhân sửa máy.
+
+**Check drift** chạy thật qua `runChecks` trên bản clone (không drift: cả hai xanh; commit nguồn mà không sinh lại: cả hai đỏ vì diff), nhưng không quest nào của lần chạy chạm vùng `when` của chúng.
+
+**Còn mở sau lần chạy** (đề xuất ở implementation-plan §11, dòng P1-35): `doctor` chưa kiểm chương trình của lệnh lãnh thổ và Execution Policy; registry của vương quốc cũ không tự nhận mục mới; người chấm thứ hai được chạy lại toàn bộ check dù commit không đổi; người chấm bị cầu dao cắt có thể được chọn lại ngay; người chấm agy không chạy được lệnh thì vẫn cho `pass`; phán quyết không có `notes` vẫn được nhận. Bài học vào kinh (`temple/scripture.md`) và gazetteer của dc1: người chấm thấy check đỏ thì trích log rồi dừng; trong đất nháp không đập thử được thì `partial`; WebKit và `<select>`; layout 320/390 px và `expectNoRawKeys`.
