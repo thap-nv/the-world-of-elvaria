@@ -25,8 +25,11 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const textOf = (value: unknown): string | undefined =>
   typeof value === 'string' && value !== '' ? value : undefined;
 
-/** The value-taking flags of the hook's argv: the shim appends `--policy <run_dir>/policy.json`. */
-const VALUE_FLAGS = new Set(['--policy']);
+/**
+ * The value-taking flags of the hook's argv: the shim appends `--policy <run_dir>/policy.json`, and Claude's
+ * PreToolUse handler carries `--event PreToolUse` (P1-36), whose value must not read as an agy event.
+ */
+const VALUE_FLAGS = new Set(['--policy', '--event']);
 
 /** The event of an agy call: the first argument that is neither a flag nor a flag's value; undefined for Claude. */
 export function argvEvent(argv: readonly string[]): string | undefined {

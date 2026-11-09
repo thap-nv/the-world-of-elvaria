@@ -1,10 +1,13 @@
 // A stand-in for Elvaria's hook in the adapter's specs, which may not import @elvaria/hooks (§1.3). It does the two
 // things the runner depends on, the way the real hook does them (packages/hooks, P1-08): SessionStart writes
 // `agent.session.start` to the quest's journal, and PreToolUse refuses a shell command that a law of the run's
-// policy.json forbids, answering with JSON on stdout and exit 0. Run as `node fake-hook.mjs --policy <file>`.
+// policy.json forbids, answering with JSON on stdout and exit 0. Run as `node fake-hook.mjs --policy <file>`, plus
+// `--event PreToolUse` on that handler (settings.ts, P1-36).
 import { appendFileSync, mkdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
+
+import { readStdin } from './read-stdin.mjs';
 
 const CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 
@@ -50,7 +53,10 @@ function preToolUse(payload, laws) {
   if (payload.tool_name !== 'Bash' || typeof command !== 'string') return;
   const law = (laws?.forbidden_commands ?? []).find((pattern) => new RegExp(pattern, 'i').test(command));
   if (law === undefined) return;
-  const reason = `Elvaria: "${command}" is forbidden by a law of this run.`;
+  deny(`Elvaria: "${command}" is forbidden by a law of this run.`);
+}
+
+function deny(reason) {
   const answer = {
     hookEventName: 'PreToolUse',
     permissionDecision: 'deny',
@@ -59,23 +65,23 @@ function preToolUse(payload, laws) {
   process.stdout.write(`${JSON.stringify({ hookSpecificOutput: answer })}\n`);
 }
 
-/**
- * The payload, read as the real hook reads it (packages/hooks/src/elvaria-hook.ts): fd 0 at once, and the stream
- * when the parent left the pipe non-blocking. Without the fallback, macOS's EAGAIN killed this hook before it wrote
- * the session's start, and the runner judged the session broken (CI, PR #32).
- */
-async function readStdin() {
+function payloadOf(text) {
   try {
-    return readFileSync(0, 'utf8');
-  } catch (error) {
-    if (error?.code !== 'EAGAIN') throw error;
+    const value = JSON.parse(text);
+    return typeof value === 'object' && value !== null && !Array.isArray(value) ? value : undefined;
+  } catch {
+    return undefined;
   }
-  const chunks = [];
-  for await (const chunk of process.stdin) chunks.push(Buffer.from(chunk));
-  return Buffer.concat(chunks).toString('utf8');
 }
 
-const payload = JSON.parse(await readStdin());
-const policy = policyOf(process.argv);
-if (payload.hook_event_name === 'SessionStart') sessionStart(payload, process.env);
-if (payload.hook_event_name === 'PreToolUse') preToolUse(payload, policy.laws);
+// The payload, read whole as the real hook reads it (read-stdin.mjs, P1-36). One it cannot read denies the call
+// when the runner marked the handler `--event PreToolUse`, as the real hook does (ADR 0007); other events pass.
+const payload = payloadOf(readStdin());
+const eventAt = process.argv.indexOf('--event');
+if (payload === undefined) {
+  if (eventAt !== -1 && process.argv[eventAt + 1] === 'PreToolUse') deny('Elvaria: unreadable tool call.');
+} else {
+  const policy = policyOf(process.argv);
+  if (payload.hook_event_name === 'SessionStart') sessionStart(payload, process.env);
+  if (payload.hook_event_name === 'PreToolUse') preToolUse(payload, policy.laws);
+}

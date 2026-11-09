@@ -249,9 +249,9 @@ describe('PreToolUse on agy', () => {
     expect(decisionOf(outcome.stdout).reason).toMatch(/laws could not be loaded/);
   });
 
-  it('answers nothing to a payload that is not JSON, which agy reads as a block', async () => {
+  it('denies a call whose payload is not JSON, as it denies a forbidden one (P1-36)', async () => {
     const outcome = await runHook({ stdin: 'oops', env: kingdom.env(), argv: ['PreToolUse'], now: NOW });
-    expect(outcome.stdout).toBe('');
+    expect(outcome.stdout).toMatch(/^\{"decision":"deny","reason":"Elvaria rule: the hook could not read /);
   });
 });
 
