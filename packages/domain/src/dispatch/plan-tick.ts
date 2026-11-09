@@ -6,7 +6,7 @@
 // to their assignee, open quests are claimed (round-robin over territories, then rank, then age), and open quests
 // nobody can take are named. Step 7 lists the done quests still to deliver. Checks and scripts run outside the tick
 // (P1-25): a quest whose machine work still runs gets nothing more until it ends.
-import { breakersOf } from '../breaker/breakers.ts';
+import { breakersOf, measureOf } from '../breaker/breakers.ts';
 import { failStreakReached } from '../character/fail-streak.ts';
 import { machineMergeDue } from '../party/machine-merge.ts';
 import { questFinished } from '../quest/finished.ts';
@@ -203,6 +203,20 @@ function unclaimable(step: Step, open: readonly Quest[]): Unclaimable[] {
   });
 }
 
+/** Step 3: the held sessions past a breaker, each measured as its holder's tribe allows (minutes_only, P1-33). */
+const heldPastBreakers = (
+  snapshot: KingdomSnapshot,
+  characters: ReadonlyMap<string, Character>,
+  now: Instant,
+) =>
+  breakersOf(
+    snapshot.quests,
+    snapshot.sessions ?? [],
+    snapshot.kingdom.breakers,
+    now,
+    measureOf(characters, snapshot.limits),
+  );
+
 /** The plan of this tick; `now` dates the claims for the round-robin over territories. */
 export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
   const byId = new Map(snapshot.characters.map((character) => [character.id, character]));
@@ -236,7 +250,7 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
   );
   const running = new Set(snapshot.background?.running);
   return {
-    breakers: breakersOf(snapshot.quests, snapshot.sessions ?? [], snapshot.kingdom.breakers, now),
+    breakers: heldPastBreakers(snapshot, byId, now),
     suspensions: suspended,
     wakes,
     reassigns,

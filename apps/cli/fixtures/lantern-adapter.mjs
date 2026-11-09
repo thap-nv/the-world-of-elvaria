@@ -1,8 +1,9 @@
 // An owner adapter file, as an owner would drop it into `<kingdom>/adapters/lantern.mjs` (implementation-plan §3.14,
 // ADR 0021): it exports createAdapter(kit) and imports nothing; everything it needs comes in the kit. It drives
-// fake-lantern.mjs, a CLI with a headless mode, usage and structured output but no tool gate, no hooks and no
-// context file, so tribeLimitsOf keeps the tribe to quests of rank F–D and the start and end of each session.
-// The specs of `elvaria tribe` run the conformance suite against it, and the Steward takes a quest round with it.
+// fake-lantern.mjs, a CLI with a headless mode and usage but no tool gate, no hooks, no context file and no JSON
+// Schema flag, so tribeLimitsOf keeps the tribe to quests of rank F–D and the start and end of each session, and its
+// judges answer in text (prompt_and_parse, P1-33). The specs of `elvaria tribe` run the conformance suite against
+// it, and the Steward takes a quest round with it.
 
 const CAPABILITIES = Object.freeze({
   headless: true,
@@ -10,7 +11,7 @@ const CAPABILITIES = Object.freeze({
   events: false,
   tool_gate: false,
   usage: true,
-  structured_output: true,
+  structured_output: false,
   resume: false,
   compact: false,
   subagent: false,

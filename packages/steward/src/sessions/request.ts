@@ -14,7 +14,7 @@ import {
   verifierSessionsOf,
 } from '@elvaria/domain';
 import { openJournal } from '@elvaria/eventlog';
-import { buildPrompt, secretValuesOf, toolPolicyOf } from '@elvaria/runner-core';
+import { buildPrompt, readContextFiles, secretValuesOf, toolPolicyOf } from '@elvaria/runner-core';
 import { inKingdom, readClassPrompt } from '@elvaria/store';
 import type {
   Character,
@@ -164,6 +164,15 @@ async function continuationFor(
   return { ...continuation, ...memory, checks };
 }
 
+/**
+ * The territory's law and rules as they stand in the plot, for a tribe whose CLI loads no context file (§3.14
+ * `context: prompt`, P1-33); nothing for one that loads them, or they would come twice.
+ */
+async function contextFilesFor(ctx: Context, input: SessionInput) {
+  if (ctx.limits[input.character.tribe]?.context !== 'prompt') return {};
+  return { context_files: await readContextFiles(input.cwd, input.territory.context_files) };
+}
+
 /** `known`: the session's secret values, masked in what the prompt quotes of the kingdom's logs (P1-25). */
 async function promptOf(
   ctx: Context,
@@ -182,6 +191,7 @@ async function promptOf(
     scriptures: await readScriptures(ctx.root, character.id),
     gazetteer: await readGazetteer(ctx.root, territory.id),
     class_prompt: await readClassPrompt(ctx.root, characterClass),
+    ...(await contextFilesFor(ctx, input)),
   };
   if (input.role === 'verifier') {
     // The branch's diff against its fork point (PlotManager.diff, P1-15); a plot without git has none to give. A

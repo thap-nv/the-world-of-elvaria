@@ -21,6 +21,8 @@ import {
   skillsBlock,
 } from './blocks.ts';
 import { verifierChecks } from './checks.ts';
+import { contextFilesBlock } from './context-files.ts';
+import type { ContextFile } from './context-files.ts';
 import { fenced, fill, joinBlocks, sectionsOf } from './templates.ts';
 import type { BuiltPrompt } from '../runner/types.ts';
 import type { Continuation, Locale, Memory } from './blocks.ts';
@@ -42,6 +44,11 @@ interface PromptBase {
   readonly gazetteer: string | null;
   /** The kingdom's `registry/<class.prompt_file>` for the character's class (P1-15), or null when it is gone. */
   readonly class_prompt: string | null;
+  /**
+   * `territory.context_files` as they stand in the plot, for a tribe whose CLI loads none itself (§3.14 `context:
+   * prompt`, P1-33; readContextFiles). Absent for a tribe that loads them: they would come twice.
+   */
+  readonly context_files?: readonly ContextFile[];
 }
 
 export interface AssigneePromptInput extends PromptBase {
@@ -65,9 +72,17 @@ export interface VerifierPromptInput extends PromptBase {
   readonly partial: Verdict | null;
 }
 
-/** The system part of a character: the decree, the laws of its role, then the craft of its class. */
+/**
+ * The system part of a character: the decree, the laws of its role, the craft of its class, then the territory's
+ * law and rules when its CLI does not load them (P1-33).
+ */
 const systemOf = (input: PromptBase, role: string, className: string, t: PromptTemplates): string =>
-  joinBlocks([decreeBlock(input.decree, t), role, classBlock(input.class_prompt, className, t)]);
+  joinBlocks([
+    decreeBlock(input.decree, t),
+    role,
+    classBlock(input.class_prompt, className, t),
+    contextFilesBlock(input.territory, input.context_files, t),
+  ]);
 
 export type PromptInput = AssigneePromptInput | VerifierPromptInput;
 

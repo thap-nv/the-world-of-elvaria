@@ -4,16 +4,25 @@
 import { currentRun, err, ok, resumedSession } from '@elvaria/domain';
 import { resumedPrompt } from '@elvaria/runner-core';
 import type { Character, CharacterId, Quest, QuestId, Result, Revival } from '@elvaria/domain';
-import type { AgentRunner, Answered, Continuation, RunningSession, SpawnRequest } from '@elvaria/runner-core';
+import type {
+  AgentRunner,
+  Answered,
+  Continuation,
+  ParseOptions,
+  RunningSession,
+  SpawnRequest,
+} from '@elvaria/runner-core';
 
 import { heardBy } from '../mana/heard.ts';
 import { mergeParts, plotOptionsOf } from '../party/plot.ts';
 import { step } from '../record.ts';
 import { checksRunOf, takeChecks } from '../review/checks.ts';
 import { inScratch, judgeMayOpen } from '../review/scratch.ts';
+import { judgeParseOf } from '../review/verdict-file.ts';
 import { secretsBreaker } from './breaker.ts';
 import { continuationOf, requestOf } from './request.ts';
 import { questSecretsOf, rememberSecrets, secretsLacking } from './secrets.ts';
+import { spawnOf } from './spawn.ts';
 import type { Context } from '../context.ts';
 import type { MovePayload } from '../record.ts';
 import type { SessionInput } from './request.ts';
@@ -70,21 +79,23 @@ async function plotFor(ctx: Context, input: Pick<SessionInput, 'quest' | 'territ
 }
 
 /**
- * Prepares the plot, builds the request and spawns; the session and the plot the quest gets. `resume` continues
- * that CLI session (ADR 0017); the session's in-band mana windows are heard by the gauge (§3.5).
+ * Prepares the plot, builds the request and spawns as the tribe's limits ask (spawnOf, P1-33); the session and the
+ * plot the quest gets. `resume` continues that CLI session (ADR 0017); the session's in-band mana windows are heard
+ * by the gauge (§3.5).
  */
 async function spawnFor(
   ctx: Context,
   runner: AgentRunner,
   input: Omit<SessionInput, 'cwd'>,
   resume: Resume | null = null,
+  parse?: ParseOptions,
 ): Promise<Result<{ session: RunningSession; plot: Quest['plot']; spawned_at: string }, string>> {
   try {
     const prepared = await plotFor(ctx, input);
     const quest = { ...input.quest, plot: prepared.plot };
     const request = await requestOf(ctx, { ...input, quest, cwd: prepared.cwd });
     const resumed = resumedRequest(ctx, request, resume);
-    const session = heardBy(ctx.mana, input.character, await runner.spawn(resumed));
+    const session = heardBy(ctx.mana, input.character, await spawnOf(ctx, runner, resumed, parse));
     // Right after the spawn: a restart tells the CLI's process by its start (sessions/pids.ts).
     const spawnedAt = ctx.record.stamp();
     // Keyed by the session the Steward keeps (heardBy's wrapper): maskFinished finds it from Running.session.
@@ -236,9 +247,10 @@ export async function openVerifier(
   const checks = takeChecks(ctx, quest);
   if (!checks.ok) return checks;
   const input = { role: 'verifier', quest, character, territory, n, checks: checks.value, scratch } as const;
-  const spawned = await spawnFor(ctx, runner, input);
-  if (!spawned.ok) return spawned;
-  const { session, spawned_at: spawnedAt } = spawned.value;
+  const parse = judgeParseOf(ctx, quest, character, { n, checks: checks.value });
+  const opened = await spawnFor(ctx, runner, input, null, parse);
+  if (!opened.ok) return opened;
+  const { session, spawned_at: spawnedAt } = opened.value;
   const sessionId = await session.session_id;
   const moved = await ctx.record.move({
     quest: questId,

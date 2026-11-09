@@ -25,9 +25,12 @@ export type BreakerTrip = (typeof BREAKER_TRIPS)[number];
  * Why a quest is in the infirmary (`quest.infirmary` data `trip`, P1-32): the breaker that tripped, the attempts
  * running out (a crash or a fail at max_attempts), or a script-tier run the machine could not finish: its script
  * broke, could not use the quest's params (`usage`), or did not pass. A script past its time trips `time`.
+ * `no_verdict`: the review stalled because its last judge left without a verdict, its CLI failed or its output
+ * was none (P1-33); a review whose last judge a breaker stopped names that breaker instead.
  */
 export const INFIRMARY_TRIPS = [
   ...BREAKER_TRIPS,
+  'no_verdict',
   'max_attempts',
   'script_broken',
   'script_usage',
@@ -47,7 +50,11 @@ const PLAIN = [
   'archive',
   'retry',
 ] as const;
-/** Events that end the session holding the quest; the runner may know its id and token count by then. */
+/**
+ * Events that end the session holding the quest; the runner may know its id and token count by then.
+ * `verdict_partial`: a judge hands in a partial verdict and leaves, the next one reads on (P1-33: told apart from a
+ * crash, which counts toward a stalled review and a partial does not).
+ */
 const RUN_ENDS = [
   'submit',
   'mana_out',
@@ -56,6 +63,7 @@ const RUN_ENDS = [
   'suspend',
   'verdict_pass',
   'verdict_fail',
+  'verdict_partial',
 ] as const;
 /** Events that open a new session of the assignee; the runner may already know its id. */
 const SESSION_STARTS = ['start', 'redispatch', 'mana_restored'] as const;

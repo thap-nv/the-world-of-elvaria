@@ -117,21 +117,19 @@ describe('elvaria tribe', () => {
       }));
       await elvaria(testIo(), 'tribe', 'add', 'lantern', '--adapter', LANTERN_ADAPTER);
       const io = testIo();
-      expect(
-        await elvaria(
-          io,
-          'doctor',
-          '--enable',
-          'lantern',
-          '--tool',
-          'lantern=' + path.join(kingdom, 'nothing'),
-        ),
-      ).toBe(1);
+      expect(await elvaria(io, 'doctor', '--tool', 'lantern=' + path.join(kingdom, 'nothing'))).toBe(1);
       expect(printed(io)).toContain('✗ Tribe broken: the adapter file adapters/broken.mjs does not load');
       expect(printed(io)).toContain('the file does not export a function createAdapter');
       expect(printed(io)).toContain('✗ Tribe lantern: the path given to --tool is not a file');
+      // Turned on by hand before doctor pinned anything.
+      await editKingdom(kingdom, (value) => ({
+        ...value,
+        tribes: (value.tribes as Record<string, unknown>[]).map((tribe) =>
+          tribe.id === 'lantern' ? { ...tribe, enabled: true } : tribe,
+        ),
+      }));
       const unpinned = testIo();
-      await elvaria(unpinned, 'doctor', '--enable', 'lantern');
+      await elvaria(unpinned, 'doctor');
       expect(printed(unpinned)).toContain(
         '✗ Tribe lantern: the adapter file cannot find or run its CLI: tribe lantern: lantern is not pinned',
       );
@@ -159,8 +157,8 @@ describe('elvaria tribe', () => {
       const io = testIo();
       expect(await elvaria(io, 'tribe', 'check', 'lantern', '--scenarios')).toBe(0);
       expect(io.printed.out).toEqual([
-        'Tribe lantern (adapters/lantern.mjs) declares: headless, usage, structured_output; sign-in: login.',
-        'It lacks: context_file, events, tool_gate, resume, compact, subagent.',
+        'Tribe lantern (adapters/lantern.mjs) declares: headless, usage; sign-in: login.',
+        'It lacks: context_file, events, tool_gate, structured_output, resume, compact, subagent.',
         'It takes quests of rank F to D.',
         'Without a tool gate it takes no quest on a territory with read_before_write or rank_floor laws.',
         '✓ capabilities',

@@ -1,5 +1,6 @@
-// reviewBreaksOf / reviewStalled (implementation-plan §3.4, P1-23): the verifiers of the current run a breaker
-// stopped, time or tokens; a verifier that crashed or judged does not count, nor does an earlier run.
+// reviewBreaksOf / reviewStalled (implementation-plan §3.4, P1-23, P1-33): the verifiers of the current run that left
+// without a verdict, a breaker stopped them or they crashed; one that judged, even in part, does not count, nor does
+// an earlier run.
 import { describe, expect, it } from 'vitest';
 
 import { Q1, inReview, moved, quest } from '../dispatch/__fixtures__/snapshot.ts';
@@ -31,9 +32,23 @@ describe('reviewBreaksOf', () => {
     expect(reviewStalled(twice)).toBe(true);
   });
 
-  it('does not count a verifier that crashed', () => {
+  it('counts a verifier that left without a verdict as one a breaker stopped (P1-33)', () => {
     const crashed = moved(judged(review, 'wren', 20), 25, ['crash', 'steward']);
-    expect(reviewBreaksOf(stopped(crashed, 'brann', 30, 'turns'))).toBe(1);
+    expect(crashed).toMatchObject({ status: 'review', verifier: null });
+    expect(reviewBreaksOf(crashed)).toBe(1);
+    const twice = moved(judged(crashed, 'brann', 30), 35, ['crash', 'steward']);
+    expect(reviewStalled(twice)).toBe(true);
+    expect(reviewBreaksOf(stopped(crashed, 'brann', 30, 'turns'))).toBe(2);
+    // `review.crash.needs_verifier`: the Steward's second move sends the stalled review to the infirmary.
+    expect(moved(twice, 36, ['crash', 'steward'])).toMatchObject({ status: 'infirmary', verifier: null });
+  });
+
+  it('does not count a judge that handed in a partial verdict: the next one reads on (P1-33)', () => {
+    const partial = moved(judged(review, 'wren', 20), 25, ['verdict_partial', 'verifier']);
+    expect(partial).toMatchObject({ status: 'review', verifier: null });
+    expect(partial.attempt_log.at(-1)).toMatchObject({ role: 'verifier', outcome: 'submitted' });
+    expect(reviewBreaksOf(partial)).toBe(0);
+    expect(reviewBreaksOf(stopped(partial, 'brann', 30, 'tokens'))).toBe(1);
   });
 
   it("counts from the owner's retry of a stalled review: same run, a new judge, the count starts over (P1-26)", () => {

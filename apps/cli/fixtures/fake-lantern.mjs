@@ -7,8 +7,9 @@
 // A session prints one JSON object per line: start {session}, text {text}, usage {tokens}, result {structured},
 // error {rate_limited, detail, resets_at}. An assignee leaves its letter where the hook would ask for it,
 // <ELVARIA_KINGDOM>/quests/<ELVARIA_QUEST>/handover.md; a session given a JSON Schema hands in env
-// FAKE_LANTERN_STRUCTURED (default: a passing verdict). Exit codes are set, never forced: process.exit() can cut a
-// piped stdout short.
+// FAKE_LANTERN_STRUCTURED (default: a passing verdict), and so, as its last text, does a session whose prompt names
+// a reply format instead (prompt_and_parse, P1-33). Exit codes are set, never forced: process.exit() can cut a piped
+// stdout short.
 import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -50,12 +51,16 @@ function writeLetter(question) {
   writeFileSync(file, letter(question));
 }
 
+/** The prompt's system part asks for the reply as JSON in text (runner-core replyFormatBlock). */
+const asksForJson = () =>
+  JSON.parse(readFileSync(flag('--prompt'), 'utf8')).system?.includes('# Reply format') === true;
+
 function finish(question) {
   writeLetter(question);
-  print({ type: 'text', text: 'done' });
+  const answer = env.FAKE_LANTERN_STRUCTURED ?? '{"result":"pass"}';
+  print({ type: 'text', text: asksForJson() ? `My verdict:\n${answer}` : 'done' });
   print({ type: 'usage', tokens: TOKENS });
-  if (flag('--json-schema') !== undefined)
-    print({ type: 'result', structured: JSON.parse(env.FAKE_LANTERN_STRUCTURED ?? '{"result":"pass"}') });
+  if (flag('--json-schema') !== undefined) print({ type: 'result', structured: JSON.parse(answer) });
   return 0;
 }
 

@@ -30,18 +30,35 @@ const patchRefusal = (why: string): string => `${PATCH_FILE} was not applied: ${
 
 const SCRIPT_TRIP = 'script_';
 
-/** `breaker:<trip>` or `script:<outcome>`, then what was said, the WIP left in the plot, the apprentice, the review. */
+/** A review whose judges left with no verdict at all (P1-33): `review:no_verdict`, not a breaker. */
+const NO_VERDICT_HEAD = 'review:no_verdict';
+
+/** `breaker:<trip>`, `script:<outcome>` or `review:no_verdict`. */
+function headOf(trip: InfirmaryTrip): string {
+  if (trip.startsWith(SCRIPT_TRIP)) return `script:${trip.slice(SCRIPT_TRIP.length)}`;
+  return trip === 'no_verdict' ? NO_VERDICT_HEAD : `breaker:${trip}`;
+}
+
+/**
+ * A stalled review (P1-23, P1-33): how many judges of the run left without a verdict, and what the owner can do: a
+ * budget too small for the review stops every judge, a judge that hands in no verdict needs another judge.
+ */
+function stalledReview(trip: InfirmaryTrip, stopped: number, run: number): string {
+  const remedy =
+    trip === 'no_verdict'
+      ? 'see why in the log, and give the review a judge that hands in a verdict before a retry'
+      : 'raise the budget (quest edit) before a retry';
+  return `; ${stopped} verifiers of run ${run} left without a verdict, so no further one opens: ${remedy}`;
+}
+
+/** The head, then what was said, the WIP left in the plot, the apprentice, the review. */
 function stopReason(trip: InfirmaryTrip, detail: InfirmaryDetail, run: number): string {
-  const head = trip.startsWith(SCRIPT_TRIP) ? `script:${trip.slice(SCRIPT_TRIP.length)}` : `breaker:${trip}`;
   const words = detail.patch === undefined ? detail.message : patchRefusal(detail.patch);
   const wip = detail.wip === undefined ? '' : ` (WIP not committed, it stays in the plot: ${detail.wip})`;
   const left = detail.apprentice_left === true ? APPRENTICE_LEFT : '';
   const stopped = detail.verifiers_stopped;
-  const stalled =
-    stopped === undefined
-      ? ''
-      : `; a breaker stopped ${stopped} verifiers of run ${run}, so no further one opens: raise the budget (quest edit) before a retry`;
-  return `${head}${words === undefined ? '' : `: ${words}`}${wip}${left}${stalled}`;
+  const stalled = stopped === undefined ? '' : stalledReview(trip, stopped, run);
+  return `${headOf(trip)}${words === undefined ? '' : `: ${words}`}${wip}${left}${stalled}`;
 }
 
 /** The detail without empty words: a hook or a script that printed nothing said nothing (the schema refuses ''). */

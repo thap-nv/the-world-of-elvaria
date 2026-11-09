@@ -77,7 +77,7 @@ export const InfirmaryDetailSchema = z
       .optional()
       .meta(
         describe(
-          'A breaker stopped this many verifiers of the run (the envelope `attempt`), so no further one opens (P1-23).',
+          'This many verifiers of the run (the envelope `attempt`) left without a verdict, stopped by a breaker (P1-23) or with no verdict in their output (P1-33), so no further one opens.',
         ),
       ),
   })
@@ -95,7 +95,7 @@ export const QuestInfirmaryDataSchema = z.strictObject({
     .optional()
     .meta(
       describe(
-        'What sent the quest there: a breaker (time, tokens, turns, commit, secrets), max_attempts, or a script-tier run (script_broken, script_usage, script_fail). Absent on lines written before P1-32.',
+        'What sent the quest there: a breaker (time, tokens, turns, commit, secrets), a review whose judges left without a verdict (no_verdict, P1-33), max_attempts, or a script-tier run (script_broken, script_usage, script_fail). Absent on lines written before P1-32.',
       ),
     ),
   detail: InfirmaryDetailSchema.optional(),

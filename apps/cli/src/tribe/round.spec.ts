@@ -1,8 +1,10 @@
 // P1-19 "xong khi" (implementation-plan §8, §3.14): an owner adapter file with a fake CLI and no tool gate passes
 // the conformance suite, then `elvaria run` loads it with createAdapter(kit) and takes a quest of rank D all the way
 // round — worked, judged by another character of the tribe, done — while a quest of rank C waits: tribeLimitsOf
-// keeps a tribe without a tool gate to ranks F–D, whatever its characters' levels.
-import { mkdir } from 'node:fs/promises';
+// keeps a tribe without a tool gate to ranks F–D, whatever its characters' levels. Its CLI has no JSON Schema flag
+// either, so its judge answers in text (prompt_and_parse, P1-33).
+import { existsSync } from 'node:fs';
+import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 
@@ -130,6 +132,19 @@ describe('a quest round with an owner adapter file', () => {
         ['verifier', 'submitted'],
       ]);
       expect(small?.seal).toBeDefined();
+      // lantern has no JSON Schema flag (P1-33): the judge read the verdict's schema in its prompt and answered in
+      // text, and the Steward cut the verdict out of it.
+      const verify = path.join(kingdom, '.runs', `${small?.id ?? ''}-1`, 'verify');
+      const prompt = JSON.parse(await readFile(path.join(verify, 'prompt.json'), 'utf8')) as {
+        system: string;
+      };
+      expect(prompt.system).toContain('# Reply format');
+      expect(existsSync(path.join(verify, 'schema.json'))).toBe(false);
+      expect(existsSync(path.join(verify, 'retry'))).toBe(false);
+      const verdict = JSON.parse(
+        await readFile(path.join(kingdom, 'verdicts', `${small?.id ?? ''}-1.json`), 'utf8'),
+      ) as Record<string, unknown>;
+      expect(verdict).toMatchObject({ result: 'pass', verifier_id: 'lumen', by_human: false });
       // Level 8 takes rank C; the tribe without a tool gate does not.
       expect(await questTitled(LARGE)).toMatchObject({ status: 'open', assignee: null });
       // Without events the adapter writes only the start and the end of each session (§3.14).

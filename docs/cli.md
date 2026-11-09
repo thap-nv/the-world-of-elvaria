@@ -12,6 +12,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 |---|---|
 | `elvaria init` | Lập một vương quốc mới: thư mục, registry mặc định và hai tộc. |
 | `elvaria doctor` | Kiểm tra máy đã sẵn sàng chưa: registry, git, CLI của từng tộc, các lãnh thổ, kho bảo vật, phiên còn sót. |
+| `elvaria tribe list` | Liệt kê các tộc: adapter, bật hay tắt, CLI đã ghim và kiểu đăng nhập, hạng tối đa và vùng canh tộc được nhận, năng lực adapter khai. |
 | `elvaria tribe add <id>` | Thêm một tộc: một adapter (có sẵn, hoặc file adapters/<name>.mjs trong vương quốc) và tài khoản của chính bạn. Tộc mới tắt; nhân vật cũ không đổi. |
 | `elvaria tribe check <id>` | Chạy bộ test hợp đồng với adapter của một tộc và kiểm kiểu đăng nhập; bật tộc khi qua. Với CLI thật, bộ này chạy một việc nhỏ, một lệnh push bị cấm, một lần kill và một lần thăm dò, tốn chút mana. |
 | `elvaria tribe disable <id>` | Tắt một tộc: không nhận việc mới; quest đang chạy chạy xong, quest đang chờ thì chờ. elvaria tribe check bật lại. |
@@ -31,7 +32,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria quest cancel <quest>` | Hủy một nhiệm vụ chưa xong; nhiệm vụ nháp thì bỏ đi (lệnh cancel hoặc archive). |
 | `elvaria quest archive <quest>` | Lưu trữ một nhiệm vụ đã xong và giao hàng: Quản sự gỡ worktree, giữ nhánh (lệnh archive). |
 | `elvaria quest edit <quest>` | Sửa một nhiệm vụ mà không chạm vào file của nó (lệnh edit_quest). |
-| `elvaria quest retry <quest>` | Mở lại một nhiệm vụ ở trạm quân y với đủ lượt thử như mới, hoặc đưa nhiệm vụ có người chấm bị cầu dao cắt mãi về chờ nghiệm thu (lệnh retry). |
+| `elvaria quest retry <quest>` | Mở lại một nhiệm vụ ở trạm quân y với đủ lượt thử như mới, hoặc đưa nhiệm vụ có người chấm cứ rời đi không ra phán quyết về chờ nghiệm thu (lệnh retry). |
 | `elvaria quest reassign <quest>` | Giao lại một nhiệm vụ cho nhân vật khác, hoặc cho nhân vật bạn chỉ định (lệnh reassign). |
 | `elvaria seal <quest>` | Đóng dấu việc đang chờ dấu vua: nhiệm vụ xong (lệnh seal; nặng bằng ba phán quyết). |
 | `elvaria return <quest>` | Trả việc đang chờ dấu vua về người làm, kèm ghi chú (lệnh return; nặng bằng ba phán quyết). |
@@ -71,8 +72,14 @@ Kiểm tra máy đã sẵn sàng chưa: registry, git, CLI của từng tộc, c
 |---|---|
 | `--tool <tribe>=<path>` | Đường dẫn CLI của một tộc khi nó không có trên PATH, ví dụ claude=C:/…/claude.exe; lặp lại cho nhiều tộc. |
 | `--pin` | Ghim lại phiên bản và đường dẫn CLI vừa tìm thấy khi chúng khác bản đã ghim. |
-| `--enable <tribe>` | Bật một tộc trong kingdom.json (enabled: true) khi doctor tìm thấy CLI của nó, rồi kiểm nó như mọi tộc đang bật. |
+| `--enable <tribe>` | Kiểm một tộc đang tắt như mọi tộc đang bật và chỉ bật nó trong kingdom.json (enabled: true) khi không có lỗi nào. Tộc có adapter là file của bạn thì bật bằng elvaria tribe check. |
 | `--acknowledge-terms <tribe>` | Ghi nhận bạn đã đọc và chấp nhận điều khoản của nhà cung cấp cho tộc này (ADR 0018). |
+
+## `elvaria tribe list`
+
+Liệt kê các tộc: adapter, bật hay tắt, CLI đã ghim và kiểu đăng nhập, hạng tối đa và vùng canh tộc được nhận, năng lực adapter khai.
+
+Không có tham số riêng, chỉ các tùy chọn chung.
 
 ## `elvaria tribe add`
 
@@ -262,7 +269,7 @@ Sửa một nhiệm vụ mà không chạm vào file của nó (lệnh edit_ques
 
 ## `elvaria quest retry`
 
-Mở lại một nhiệm vụ ở trạm quân y với đủ lượt thử như mới, hoặc đưa nhiệm vụ có người chấm bị cầu dao cắt mãi về chờ nghiệm thu (lệnh retry).
+Mở lại một nhiệm vụ ở trạm quân y với đủ lượt thử như mới, hoặc đưa nhiệm vụ có người chấm cứ rời đi không ra phán quyết về chờ nghiệm thu (lệnh retry).
 
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
