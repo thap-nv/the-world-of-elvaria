@@ -31,7 +31,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria quest cancel <quest>` | Hủy một nhiệm vụ chưa xong; nhiệm vụ nháp thì bỏ đi (lệnh cancel hoặc archive). |
 | `elvaria quest archive <quest>` | Lưu trữ một nhiệm vụ đã xong và giao hàng: Quản sự gỡ worktree, giữ nhánh (lệnh archive). |
 | `elvaria quest edit <quest>` | Sửa một nhiệm vụ mà không chạm vào file của nó (lệnh edit_quest). |
-| `elvaria quest retry <quest>` | Mở lại một nhiệm vụ ở trạm quân y với đủ lượt thử như mới, hoặc đưa nhiệm vụ có người chấm bị cầu dao cắt mãi về chờ nghiệm thu (lệnh retry). |
+| `elvaria quest retry <quest>` | Mở lại một nhiệm vụ ở trạm quân y với đủ lượt thử như mới, hoặc đưa nhiệm vụ có người chấm cứ rời đi không ra phán quyết về chờ nghiệm thu (lệnh retry). |
 | `elvaria quest reassign <quest>` | Giao lại một nhiệm vụ cho nhân vật khác, hoặc cho nhân vật bạn chỉ định (lệnh reassign). |
 | `elvaria seal <quest>` | Đóng dấu việc đang chờ dấu vua: nhiệm vụ xong (lệnh seal; nặng bằng ba phán quyết). |
 | `elvaria return <quest>` | Trả việc đang chờ dấu vua về người làm, kèm ghi chú (lệnh return; nặng bằng ba phán quyết). |
@@ -262,7 +262,7 @@ Sửa một nhiệm vụ mà không chạm vào file của nó (lệnh edit_ques
 
 ## `elvaria quest retry`
 
-Mở lại một nhiệm vụ ở trạm quân y với đủ lượt thử như mới, hoặc đưa nhiệm vụ có người chấm bị cầu dao cắt mãi về chờ nghiệm thu (lệnh retry).
+Mở lại một nhiệm vụ ở trạm quân y với đủ lượt thử như mới, hoặc đưa nhiệm vụ có người chấm cứ rời đi không ra phán quyết về chờ nghiệm thu (lệnh retry).
 
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|

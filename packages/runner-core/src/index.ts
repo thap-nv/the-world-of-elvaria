@@ -88,8 +88,11 @@ export { buildPrompt } from './prompt/build-prompt.ts';
 export type { AssigneePromptInput, PromptInput, VerifierPromptInput } from './prompt/build-prompt.ts';
 export type { PromptCheck } from './prompt/checks.ts';
 export { buildChancellorPrompt } from './prompt/chancellor.ts';
+export { CONTEXT_FILE_MAX_CHARS, contextPathsIn, readContextFiles } from './prompt/context-files.ts';
+export type { ContextFile } from './prompt/context-files.ts';
 export type { ChancellorContext } from './prompt/chancellor.ts';
 export { resumedPrompt } from './prompt/resumed.ts';
+export { letterReminderPrompt } from './prompt/letter-reminder.ts';
 export type { Answered } from './prompt/resumed.ts';
 export { PROMPTS_DIR, PROMPT_TEMPLATES, loadPromptTemplates } from './prompt/templates.ts';
 export type { PromptTemplateName, PromptTemplates } from './prompt/templates.ts';
@@ -108,6 +111,20 @@ export type { RunOutput } from './runner/run-output.ts';
 export { createSignalChannel } from './runner/signal-channel.ts';
 export type { SignalChannel } from './runner/signal-channel.ts';
 export { SPAWN_ROLES } from './runner/roles.ts';
+export {
+  NO_JSON,
+  RETRY_DIR,
+  checkTextReply,
+  issueLines,
+  jsonOfText,
+  replyFormatBlock,
+  retryBlock,
+} from './structured/reply.ts';
+export type { ReplyCheck, ReplyIssues, SchemaIssue } from './structured/reply.ts';
+export { parsedRequest, replyIssues, retryRequest, spawnParsed } from './structured/prompt-and-parse.ts';
+export type { ParseOptions } from './structured/prompt-and-parse.ts';
+export { spawnSequel } from './structured/sequel.ts';
+export type { Follow, Heard, Sequel } from './structured/sequel.ts';
 export { MINIMAL_ENV_NAMES, minimalEnv } from './treasury/minimal-env.ts';
 export { secretEnvNamesOf, secretValuesOf, sessionEnv, sessionRedactor } from './treasury/session-env.ts';
 export type { SessionEnvInput } from './treasury/session-env.ts';
@@ -137,6 +154,7 @@ export type {
   RunResult,
   RunnerSignal,
   RunningSession,
+  SequelSession,
   SpawnRequest,
   ToolInfo,
 } from './runner/types.ts';

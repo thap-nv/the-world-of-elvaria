@@ -2,8 +2,9 @@
 // a verdict file, the ritual's pass rule has the last word over the checks (a failing check fails the quest), and
 // validateVerdict refuses what the doer or a stranger to this session would hand in. Then the quest moves (done,
 // awaiting_seal, returned or the infirmary) and the assignee's windows and level follow. A partial verdict says how
-// far the judge read; the next judge reads on.
-import { partyOf, underPassRule, validateVerdict } from '@elvaria/domain';
+// far the judge read; the next judge reads on. A judge that leaves no verdict at all counts toward a stalled review
+// (P1-33), as a judge a breaker stopped does.
+import { partyOf, reviewBreaksOf, reviewStalled, underPassRule, validateVerdict } from '@elvaria/domain';
 import type { Quest, Result, Verdict } from '@elvaria/domain';
 import type { RunResult } from '@elvaria/runner-core';
 
@@ -12,7 +13,7 @@ import { moveAndRing } from '../notices.ts';
 import { step } from '../record.ts';
 import { VERDICT_EVENT, moveOnVerdict, recordVerdict, ritualOf } from '../verdicts.ts';
 import { openFlakyFollowUp } from './scratch.ts';
-import { judgeVerdictOf } from './verdict-file.ts';
+import { judgeVerdictOf, refusalText } from './verdict-file.ts';
 import type { Context } from '../context.ts';
 import type { Running } from '../sessions/running.ts';
 
@@ -21,12 +22,51 @@ export const runOf = (running: Running, result: RunResult) => ({
   tokens: result.usage.tokens,
 });
 
-/** The verifier leaves without a verdict (§2.5 `review.crash`): the next verifier takes the review. */
-export const verifierLeaves = (ctx: Context, running: Running, result: RunResult) =>
-  moveAndRing(ctx, {
+/**
+ * After a verifier left `left` without a verdict: the REVIEW_BREAKS_MAX-th of the run sends the review to the
+ * infirmary with the bell (§2.5 `review.crash.needs_verifier`, P1-33), where the owner sees `why` the last one left;
+ * a judge whose output is never a verdict would otherwise open a session every tick.
+ */
+export function stallWithoutVerdict(
+  ctx: Context,
+  left: Result<Quest, string>,
+  why: string | undefined,
+): Promise<Result<Quest, string>> {
+  if (!left.ok || !reviewStalled(left.value)) return Promise.resolve(left);
+  const said = why === undefined ? {} : { message: why };
+  return moveAndRing(ctx, {
+    quest: left.value.id,
+    event: { type: 'crash' },
+    actor: 'steward',
+    infirmary: { trip: 'no_verdict', detail: { ...said, verifiers_stopped: reviewBreaksOf(left.value) } },
+  });
+}
+
+/**
+ * The verifier leaves without a verdict (§2.5 `review.crash`): the next verifier takes the review, unless this was
+ * the run's REVIEW_BREAKS_MAX-th to leave so (stallWithoutVerdict). `why`: what the log and the owner are told.
+ */
+export async function verifierLeaves(
+  ctx: Context,
+  running: Running,
+  result: RunResult,
+  why?: string,
+): Promise<Result<Quest, string>> {
+  const left = await moveAndRing(ctx, {
     quest: running.quest,
     event: { type: 'crash', ...runOf(running, result) },
     actor: 'steward',
+    edits: { [running.character]: step('unassign') },
+  });
+  return stallWithoutVerdict(ctx, left, why);
+}
+
+/** A partial verdict says how far the judge read (`progress`): it leaves, and the next judge reads on (§2.5). */
+const verifierHandsInPart = (ctx: Context, running: Running, result: RunResult) =>
+  moveAndRing(ctx, {
+    quest: running.quest,
+    event: { type: 'verdict_partial', ...runOf(running, result) },
+    actor: 'verifier',
     edits: { [running.character]: step('unassign') },
   });
 
@@ -47,7 +87,7 @@ function ruledVerdict(
     checks: running.checks,
   };
   const verdict = judgeVerdictOf(ctx, quest, run, result.structured);
-  if (!verdict.ok) return verdict;
+  if (!verdict.ok) return { ok: false, error: refusalText(verdict.error) };
   const rule = ritual.pass_rule;
   const valid = validateVerdict(
     underPassRule(verdict.value, rule),
@@ -66,18 +106,19 @@ export async function judge(
 ): Promise<Result<Quest, string>> {
   const verdict = ruledVerdict(ctx, quest, running, result);
   if (!verdict.ok) {
-    ctx.deps.log.warn(`steward: ${quest.id}: the verifier's output is no verdict (${verdict.error})`);
-    return verifierLeaves(ctx, running, result);
+    const why = `the verifier's output is no verdict (${verdict.error})`;
+    ctx.deps.log.warn(`steward: ${quest.id}: ${why}`);
+    return verifierLeaves(ctx, running, result, why);
   }
   const actor = { kind: 'character', id: running.character } as const;
   const written = await recordVerdict(ctx, quest, verdict.value, actor);
   if (!written.ok) {
-    ctx.deps.log.warn(`steward: ${quest.id}: the verdict could not be written: ${written.error}`);
-    return verifierLeaves(ctx, running, result);
+    const why = `the verdict could not be written: ${written.error}`;
+    ctx.deps.log.warn(`steward: ${quest.id}: ${why}`);
+    return verifierLeaves(ctx, running, result, why);
   }
   const outcome = verdict.value;
-  // A partial verdict says how far the verifier read (`progress`); the next verifier reads on (§2.5).
-  if (outcome.result === 'partial') return verifierLeaves(ctx, running, result);
+  if (outcome.result === 'partial') return verifierHandsInPart(ctx, running, result);
   // A flake fails the quest and opens the quest that exorcises it (P1-20), before the quest moves on.
   if (outcome.result === 'fail') await openFlakyFollowUp(ctx, quest, outcome);
   return moveOnVerdict(

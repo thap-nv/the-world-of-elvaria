@@ -9,6 +9,9 @@ import type { QuestId } from '../core/ids.ts';
 import type { Role } from '../schema/common.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
 import type { Quest } from '../schema/quest/quest.ts';
+import type { Character } from '../schema/character/character.ts';
+import type { RosterSource } from '../dispatch/roster.ts';
+import type { TribeLimits } from '../tribe/tribe-limits.ts';
 
 /** A session the Steward holds on a quest, with what its stream reported so far. */
 export interface HeldSession {
@@ -41,6 +44,24 @@ export const tokenCeilingOf = (quest: Quest, role: Role, rules: SessionRules): n
     ? Math.round(quest.budget.max_tokens * rules.verifier_tokens_multiplier)
     : quest.budget.max_tokens;
 
+/** What the breakers of a session on `quest` in `role` measure: its holder's tribe's (tribeLimitsOf, §3.14). */
+export type BreakerMeasure = (quest: Quest, role: Role) => TribeLimits['breakers'];
+
+/**
+ * The measure of each session from the tribe of the character holding it (P1-33): a tribe without `usage` has
+ * minutes only. A holder or a tribe the snapshot does not know keeps every breaker.
+ */
+export const measureOf =
+  (
+    characters: ReadonlyMap<string, Pick<Character, 'tribe'>>,
+    limits: RosterSource['limits'],
+  ): BreakerMeasure =>
+  (quest, role) => {
+    const holder = role === 'assignee' ? quest.assignee : quest.verifier;
+    const tribe = typeof holder === 'string' ? characters.get(holder)?.tribe : undefined;
+    return (tribe === undefined ? undefined : limits[tribe]?.breakers) ?? 'tokens_and_minutes';
+  };
+
 /**
  * The held sessions that tripped a breaker, in the order given. A session whose quest or entry is gone (the file
  * moved on in this tick) is not the plan's to stop: the end the runner reports settles it.
@@ -50,6 +71,7 @@ export function breakersOf(
   sessions: readonly HeldSession[],
   rules: SessionRules,
   now: Instant,
+  measure: BreakerMeasure = () => 'tokens_and_minutes',
 ): Breaker[] {
   const byId = new Map(quests.map((quest) => [quest.id, quest]));
   return sessions.flatMap((session) => {
@@ -62,7 +84,13 @@ export function breakersOf(
       max_tokens: tokenCeilingOf(quest, session.role, rules),
       max_turns: rules.max_turns,
     };
-    const verdict = evaluateBreakers({ started_at: started.value }, limits, now, session.usage);
+    const verdict = evaluateBreakers(
+      { started_at: started.value },
+      limits,
+      now,
+      session.usage,
+      measure(quest, session.role),
+    );
     return verdict === 'ok' ? [] : [{ quest: quest.id, role: session.role, ...verdict }];
   });
 }

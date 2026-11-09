@@ -3,16 +3,10 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { NO_JSON } from '@elvaria/runner-core';
+
 import { reply } from './__fixtures__/kingdom.ts';
-import {
-  QUEST_DRAFT_JSON_SCHEMA,
-  checkReply,
-  checkTextReply,
-  forTheCli,
-  jsonOfText,
-  replyFormatBlock,
-  retryBlock,
-} from './reply.ts';
+import { QUEST_DRAFT_JSON_SCHEMA, checkReply, checkTextReply, forTheCli, replyIssuesOf } from './reply.ts';
 
 const CONTRACT = path.join(
   import.meta.dirname,
@@ -66,27 +60,16 @@ describe('the reply (§3.11, §3.14)', () => {
     expect(!none.ok && none.issues[0]).toMatch(/^\(reply\): /);
   });
 
-  it('cuts the JSON out of a text reply', () => {
-    expect(jsonOfText('{"version": 1}')).toEqual({ version: 1 });
-    expect(jsonOfText('Here it is:\n```json\n{"drafts": []}\n```')).toEqual({ drafts: [] });
-    expect(jsonOfText('No JSON here.')).toBeUndefined();
-    expect(jsonOfText('} backwards {')).toBeUndefined();
-    expect(jsonOfText('{ torn')).toBeUndefined();
-    expect(jsonOfText('{ "a": }')).toBeUndefined();
+  // Cutting the JSON out, the format block and the retry block are runner-core's now (structured/reply.spec.ts).
+  it('checks a text reply with the shared cut, and names one without JSON', () => {
+    expect(checkTextReply(`Here:\n${JSON.stringify(reply('vague'))}`).ok).toBe(true);
+    expect(checkTextReply('I would rather not.')).toEqual({ ok: false, issues: [NO_JSON] });
   });
 
-  it('checks a text reply, and names one without JSON', () => {
-    expect(checkTextReply(JSON.stringify(reply('vague'))).ok).toBe(true);
-    expect(checkTextReply('I would rather not.')).toEqual({
-      ok: false,
-      issues: ['(reply): no JSON object in the text'],
-    });
-  });
-
-  it('puts the schema in the prompt of a tribe that answers in text, and names what went wrong', () => {
-    expect(replyFormatBlock()).toContain(JSON.stringify(QUEST_DRAFT_JSON_SCHEMA));
-    expect(retryBlock(['drafts: required'])).toBe(
-      '# Your previous reply\n\nIt could not be used:\n- drafts: required\n\nReply again with the JSON object only.',
-    );
+  it('tells the shared retry what is wrong, and nothing when the reply can be used', () => {
+    expect(replyIssuesOf(reply('link-check'))).toEqual([]);
+    expect(replyIssuesOf(reply('two-questions'))).toEqual([
+      'drafts.1.question: the Chancellor asks at most one question',
+    ]);
   });
 });

@@ -103,6 +103,7 @@ export function payloadOf<T extends QuestEventType>(type: T, quest: Quest): Payl
     suspend: {},
     verdict_pass: {},
     verdict_fail: {},
+    verdict_partial: {},
     start: { session_id: 's-start' },
     redispatch: {},
     mana_restored: {},

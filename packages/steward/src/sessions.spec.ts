@@ -42,6 +42,22 @@ function ending(runner: AgentRunner, change: Partial<RunResult>): AgentRunner {
   };
 }
 
+/** A runner whose verifier sessions end as a failing CLI ends them: an error, exit code 1, no output. */
+function judgesFail(runner: AgentRunner): AgentRunner {
+  return {
+    ...runner,
+    spawn: async (req) => {
+      const session = await runner.spawn(req);
+      if (req.role !== 'verifier') return session;
+      const failed = async (): Promise<RunResult> => {
+        const { structured: _, ...rest } = await session.wait();
+        return { ...rest, outcome: 'error', exit_code: 1 };
+      };
+      return { ...session, wait: failed };
+    },
+  };
+}
+
 describe("the end of an assignee's session", () => {
   it('pauses the quest for mana on a usage limit, the assignee asleep on it', async () => {
     const { kingdom, steward } = await open({ plays: { work: { 'Hits the limit': ['rate_limit'] } } });
@@ -110,14 +126,66 @@ describe("the end of a verifier's session", () => {
       async () => (await statusOf(kingdom, 'Hard to judge')) === 'done',
     );
     const quest = await kingdom.quest('Hard to judge');
+    // A partial verdict was handed in (`verdict_partial`, P1-33): only the first judge left with nothing.
     expect(quest.attempt_log.filter(({ role }) => role === 'verifier').map(({ outcome }) => outcome)).toEqual(
-      ['crash', 'crash', 'submitted'],
+      ['crash', 'submitted', 'submitted'],
     );
     expect((await typesOf(kingdom)).filter((type) => type.startsWith('verdict.'))).toEqual([
       'verdict.partial',
       'verdict.pass',
     ]);
     expect(kingdom.warnings.join('\n')).toContain('no verdict');
+  });
+
+  it('sends a review whose judges never hand in a verdict to the infirmary after two of them (P1-33)', async () => {
+    const nothing = { verdict: 'looks fine' };
+    const { kingdom, steward } = await open({
+      plays: { verdicts: { 'Never judged': [nothing, nothing, nothing, nothing] } },
+    });
+    await kingdom.command('create_quest', questPayload('Never judged'));
+    await tickUntil(
+      steward,
+      kingdom.clock,
+      async () => (await statusOf(kingdom, 'Never judged')) === 'infirmary',
+    );
+    const quest = await kingdom.quest('Never judged');
+    expect(quest.attempt_log.filter(({ role }) => role === 'verifier').map(({ outcome }) => outcome)).toEqual(
+      ['crash', 'crash'],
+    );
+    expect(quest).toMatchObject({ status: 'infirmary', verifier: null, attempts: 1 });
+    expect(kingdom.notices.at(-1)).toMatchObject({
+      kind: 'infirmary',
+      trip: 'no_verdict',
+      detail: { verifiers_stopped: 2 },
+      reason: expect.stringMatching(
+        /^review:no_verdict: the verifier's output is no verdict \(invalid_verdict.*; 2 verifiers of run 1 left without a verdict/,
+      ) as unknown,
+    });
+    // No third judge opens while the quest waits for the owner.
+    for (let tick = 0; tick < 3; tick += 1) {
+      kingdom.clock.advance(1);
+      await steward.tick();
+    }
+    expect(
+      (await kingdom.quest('Never judged')).attempt_log.filter(({ role }) => role === 'verifier'),
+    ).toHaveLength(2);
+    expect(steward.running()).toBe(0);
+  });
+
+  it("counts a judge's session that ended in an error toward the stall, and says so", async () => {
+    const { kingdom, steward } = await open({}, (k) => ({
+      runners: { claude: judgesFail(k.runners.claude), gemini: judgesFail(k.runners.gemini) },
+    }));
+    await kingdom.command('create_quest', questPayload('Judges that fail'));
+    await tickUntil(
+      steward,
+      kingdom.clock,
+      async () => (await statusOf(kingdom, 'Judges that fail')) === 'infirmary',
+    );
+    expect(kingdom.notices.at(-1)).toMatchObject({
+      trip: 'no_verdict',
+      reason: expect.stringContaining("the verifier's session ended error, exit code 1") as unknown,
+    });
   });
 
   it('raises the level of an assignee whose window has earned it', async () => {

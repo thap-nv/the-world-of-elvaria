@@ -30,7 +30,11 @@
   and says so in the reason), sends the quest to the infirmary (`quest.infirmary`, `breaker:<trip>: <detail>`) and
   rings the bell; a verifier past a breaker leaves the review to the next one, until the second of a run
   (`reviewStalled`, P1-23): then the quest goes to the infirmary with the bell, and no third verifier opens; the
-  owner's `retry` brings it back to review with a new judge, and the count starts over (P1-26). A CLI
+  owner's `retry` brings it back to review with a new judge, and the count starts over (P1-26). A verifier that
+  leaves with no verdict at all (its CLI failed, its output was none, its session was lost) counts the same, and
+  the stall it ends goes to the infirmary as `review:no_verdict` (P1-33); one that hands in a partial verdict
+  (`verdict_partial`) made progress and does not count. Breakers measure a session as its holder's tribe allows:
+  minutes only for a tribe without `usage` (`measureOf`, P1-33). A CLI
   that stopped at its own `--max-turns` or budget gets the same end, a verifier's included. When the quest's journal shows an apprentice of that session past
   its minutes or cut at its turns, the reason asks the owner for a child quest for the work it left (§3.12). A quest whose secrets the treasury lacks, or its territory no longer
   allows, goes to the infirmary (`breaker:secrets`) instead of being claimed and released every tick; an
@@ -111,6 +115,16 @@
   limit (breaker). For a verifier: the verdict file (a partial one as `<quest>-<n>-p<k>`), the ritual's pass rule
   over the checks (`underPassRule`), `validateVerdict`, `verdict.*`, the move, the assignee's windows and fail
   streak (`withVerdict`), then `levelChange`.
+- Applies the limits `tribeLimitsOf` gives a tribe its adapter narrows (§3.14, P1-33; `src/sessions/spawn.ts`):
+  a judge of a tribe without `structured_output` gets the verdict's schema in its prompt and its verdict cut out of
+  its last text (runner-core's `spawnParsed`), checked by `judgeVerdictOf`, which names each issue; an unusable
+  reply is tried once more in `<run_dir>/retry/`, resumed when the tribe can. An assignee of a tribe without
+  `tool_gate` has no Stop hook: the Steward notes its letter when the attempt starts (`letter-start.json`), and a
+  session that ends with the letter unchanged is followed by a reminder session (`<run_dir>/letter-<k>/`, at most
+  `LETTER_REMINDERS_MAX`, resumed when the tribe can), then the quest goes on and the journal tells the judge
+  (`agent.notification` `handover_unchanged`), as the hook would (ADR 0010; `src/sessions/letter.ts`). A tribe
+  without `context_file` reads the territory's `context_files` in the system part of its prompt. Among judges
+  otherwise equal, `selectVerifier` takes one whose tribe has structured output first.
 - Judges tests as the product in a scratch plot (ADR 0022, P1-20; `src/review/scratch.ts`): when the quest's
   ritual (`ritualOf`: its tags may choose `mutation_check`) has `scratch_plot` and its plot is a worktree, its
   checks run as `Plots.trial` (a fresh scratch plot of the branch, reset, three runs, coverage against the base),

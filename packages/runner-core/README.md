@@ -58,6 +58,19 @@
   and adapter, every capability, `spawn`, `probe`, `doctor`), one sentence per problem.
 - Proves in the conformance suite that a judge in its scratch plot, whose class allows commit and push, has both
   refused (`scratch_commit`, fakes only, P1-20).
+- Gives a tribe without a JSON Schema flag its structured reply (`src/structured/`, implementation-plan §3.14
+  `structured_output: prompt_and_parse`, P1-33, moved from the Chancellor): `spawnParsed(runner, request, {check,
+resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag, makes the JSON of the last
+  text the run's `structured`, and tries a reply the caller's `check` refuses once more in `<run_dir>/retry/`,
+  told what was wrong (`retryBlock`): resumed when the tribe can, else fresh with the whole prompt. Under it,
+  `spawnSequel(runner, request, sequel)` runs one session and the ones that follow it as one `RunningSession`:
+  the first session's id, every signal (tokens counted on top of the sessions before), the sums of tokens, turns
+  and time, the last result, `RunResult.sequels` naming the others; a kill ends the run and no sequel opens
+  after it. The Steward uses it for the reminders of the letter too (`handover_check: after_session`).
+- Puts the territory's `context_files` in the system part for a tribe whose CLI loads no context file
+  (`readContextFiles`, `prompts/context-files.md`, §3.14 `context: prompt`, P1-33): the files the globs name in
+  the plot, in their order, each cut at `CONTEXT_FILE_MAX_CHARS` (what agy embeds), and the reminder of an
+  unchanged letter (`letterReminderPrompt`, `prompts/letter-reminder.md`).
 - Gives every quest its own ground (`createPlotManager`, implementation-plan §3.3, ADR 0012). On a git territory,
   `prepare` adds `<repo>/<worktree_dir>/<quest-id>` on branch `quest/<quest-id>` (`--no-track`), forked from the
   default branch: origin's after a fetch when it only adds to the local one, else the local one; the main
