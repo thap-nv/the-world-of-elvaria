@@ -84,10 +84,11 @@
       "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
     },
     "party_role": {
-      "description": "contract = the plan quest whose lead writes the contract and the parts; part = one area, one main tag, one character, one worktree, one verdict; merge = the final quest that merges the part branches and runs the full checks. The party is done when its merge quest is done.",
+      "description": "contract = the plan quest whose lead writes the contract and the parts; part = one area, one main tag, one character, one worktree, one verdict; acceptance = the blind trial's part (territory.blind_trial): acceptance tests another character writes from the contract and the description alone, never seeing the parts' work; merge = the final quest that merges the part branches and runs the full checks. The party is done when its merge quest is done.",
       "enum": [
         "contract",
         "part",
+        "acceptance",
         "merge"
       ]
     },
@@ -641,7 +642,7 @@
       }
     },
     {
-      "$comment": "Party fields come together: a member has a role; parts and the merge quest know the contract.",
+      "$comment": "Party fields come together: a member has a role; parts, the acceptance part and the merge quest know the contract.",
       "if": {
         "required": [
           "party_id"
@@ -674,6 +675,7 @@
           "party_role": {
             "enum": [
               "part",
+              "acceptance",
               "merge"
             ]
           }

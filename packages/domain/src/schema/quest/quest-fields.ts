@@ -59,7 +59,7 @@ export const QuestFieldsSchema = z.strictObject({
   ),
   party_role: PartyRoleSchema.optional().meta(
     describe(
-      'contract = the plan quest whose lead writes the contract and the parts; part = one area, one main tag, one character, one worktree, one verdict; merge = the final quest that merges the part branches and runs the full checks. The party is done when its merge quest is done.',
+      "contract = the plan quest whose lead writes the contract and the parts; part = one area, one main tag, one character, one worktree, one verdict; acceptance = the blind trial's part (territory.blind_trial): acceptance tests another character writes from the contract and the description alone, never seeing the parts' work; merge = the final quest that merges the part branches and runs the full checks. The party is done when its merge quest is done.",
     ),
   ),
   contract: NonEmptyStringSchema.optional().meta(

@@ -4,6 +4,8 @@ import type {
   CharacterClass,
   CharacterStatus,
   Kind,
+  PartyRole,
+  PartyStage,
   QuestStatus,
   RegistryIssueCode,
   Tag,
@@ -24,6 +26,22 @@ export const QUEST_STATUS_LABEL: Readonly<Record<QuestStatus, MessageKey>> = {
   paused_mana: 'quest.status.paused_mana',
   infirmary: 'quest.status.infirmary',
   archived: 'quest.status.archived',
+};
+
+/** A quest's place in its party (P1-21 (c)): the merge quest and the acceptance part share the contract's title. */
+export const PARTY_ROLE_LABEL: Readonly<Record<PartyRole, MessageKey>> = {
+  contract: 'cli.quest.party.role.contract',
+  part: 'cli.quest.party.role.part',
+  acceptance: 'cli.quest.party.role.acceptance',
+  merge: 'cli.quest.party.role.merge',
+};
+
+export const PARTY_STAGE_LABEL: Readonly<Record<PartyStage, MessageKey>> = {
+  forming: 'cli.quest.party.stage.forming',
+  parts: 'cli.quest.party.stage.parts',
+  merging: 'cli.quest.party.stage.merging',
+  done: 'cli.quest.party.stage.done',
+  stuck: 'cli.quest.party.stage.stuck',
 };
 
 export const CHARACTER_STATUS_LABEL: Readonly<Record<CharacterStatus, MessageKey>> = {

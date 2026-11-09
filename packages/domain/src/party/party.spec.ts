@@ -7,7 +7,7 @@ import { partyStatusOf } from './party-status.ts';
 import { plotBaseOf } from './plot-base.ts';
 import type { CampaignId, QuestId, TagId } from '../core/ids.ts';
 import type { Quest } from '../schema/quest/quest.ts';
-import type { Parts } from './merge-quest.ts';
+import type { Parts } from './party-quest.ts';
 
 const MERGE = 'q_20261106_m5n6p7' as QuestId;
 const LONE = 'q_20261106_r8s9t1' as QuestId;
@@ -91,6 +91,14 @@ describe('plotBaseOf', () => {
     expect(plotBaseOf(merge, all)).toEqual({ from: [`quest/${Q1}`], merge: [`quest/${Q2}`, `quest/${Q3}`] });
   });
 
+  it("starts the blind trial's acceptance part on the contract's branch alone, whatever it waits for (P1-21)", () => {
+    const tests: Quest = onBranch({
+      ...quest(LONE, { party: Q1, dependsOn: [Q1, Q2] }),
+      party_role: 'acceptance',
+    });
+    expect(plotBaseOf(tests, [...all, tests])).toEqual({ from: [`quest/${Q1}`], merge: [] });
+  });
+
   it('starts any other quest, a contract too, from the branches of what it waits for (P1-16 (f))', () => {
     const chained = quest(LONE, { dependsOn: [Q2, Q3] });
     expect(plotBaseOf(chained, all)).toEqual({ from: [`quest/${Q2}`, `quest/${Q3}`], merge: [] });
@@ -146,6 +154,17 @@ describe('partyStatusOf', () => {
       stage: 'stuck',
     });
     expect(at([done(contract)])).toMatchObject({ stage: 'stuck', merge: null });
+  });
+
+  it("counts the blind trial's acceptance part among the parts the merge quest waits for (P1-21)", () => {
+    const tests: Quest = { ...quest(LONE, { party: Q1, dependsOn: [Q1] }), party_role: 'acceptance' };
+    expect(partyStatusOf(Q1, [done(contract), done(api), done(web), tests, merge])).toMatchObject({
+      stage: 'parts',
+      parts: { done: 2, total: 3 },
+    });
+    expect(partyStatusOf(Q1, [done(contract), done(api), done(web), done(tests), merge])).toMatchObject({
+      stage: 'merging',
+    });
   });
 
   it('knows no party whose contract quest it is not given', () => {

@@ -10,7 +10,8 @@ import type { Plot, Quest, Result, Territory } from '@elvaria/domain';
 import { fromPortable, inKingdom, pathExists, toPortable } from '@elvaria/store';
 
 import type { ProcessHost } from '../process/program.ts';
-import { diffIn } from './diff.ts';
+import { diffAfterMerges, diffIn } from './diff.ts';
+import type { DiffScope } from './diff.ts';
 import { filesIn, prepareFolder } from './folder.ts';
 import { gitOf } from './git.ts';
 import { mergeIn, unmergedIn } from './merge.ts';
@@ -81,9 +82,10 @@ export interface PlotManager {
   applyPatch(plot: Plot, patchPaths: readonly string[]): Promise<PatchOutcome>;
   /**
    * What a judge reads (P1-15): `git diff <base>...HEAD`, summary then patch, cut at DIFF_MAX_CHARS; empty when the
-   * branch has no change, null for a plot without git (the judge reads the files the quest names).
+   * branch has no change, null for a plot without git (the judge reads the files the quest names). `after_merges`
+   * (P1-21 (e)): a party's merge quest's own work, after its last merge and in the conflicts its merges resolved.
    */
-  diff(plot: Plot): Promise<string | null>;
+  diff(plot: Plot, scope?: DiffScope): Promise<string | null>;
   /**
    * A party's merge quest, before each session (P1-18): merges each of `branches` its worktree does not hold, in
    * order, until one stops on a conflict (left in progress for the character); nothing for a plot without git.
@@ -237,7 +239,11 @@ export function createPlotManager(options: PlotManagerOptions): PlotManager {
       plot.type === 'worktree' && patchPaths.length > 0
         ? applyPatchIn(await git(), worktreeOf(plot), patchPaths)
         : NO_PATCH,
-    diff: async (plot) => (plot.type === 'worktree' ? diffIn(await git(), worktreeOf(plot)) : null),
+    diff: async (plot, scope = 'branch') => {
+      if (plot.type !== 'worktree') return null;
+      const read = scope === 'after_merges' ? diffAfterMerges : diffIn;
+      return read(await git(), worktreeOf(plot));
+    },
     merge: async (plot, branches) =>
       plot.type === 'worktree' && plot.branch !== undefined
         ? mergeIn(await git(), worktreeOf(plot), plot.branch, branches)

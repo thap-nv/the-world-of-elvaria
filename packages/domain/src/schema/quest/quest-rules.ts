@@ -101,7 +101,7 @@ const CONDITIONALS: readonly Rule<QuestFields>[] = [
   {
     contract: {
       $comment:
-        'Party fields come together: a member has a role; parts and the merge quest know the contract.',
+        'Party fields come together: a member has a role; parts, the acceptance part and the merge quest know the contract.',
       if: { required: ['party_id'] },
       then: { required: ['party_role'] },
     },
@@ -123,12 +123,15 @@ const CONDITIONALS: readonly Rule<QuestFields>[] = [
   },
   {
     contract: {
-      if: { required: ['party_role'], properties: { party_role: { enum: ['part', 'merge'] } } },
+      if: {
+        required: ['party_role'],
+        properties: { party_role: { enum: ['part', 'acceptance', 'merge'] } },
+      },
       then: { required: ['contract'] },
     },
     check: (quest) =>
       issueIf(
-        (quest.party_role === 'part' || quest.party_role === 'merge') && quest.contract === undefined,
+        quest.party_role !== undefined && quest.party_role !== 'contract' && quest.contract === undefined,
         ['contract'],
         `a party ${String(quest.party_role)} needs the contract path`,
       ),

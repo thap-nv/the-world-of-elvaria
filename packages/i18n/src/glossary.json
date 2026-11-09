@@ -429,6 +429,13 @@
               "used_in": "`party_role = part`"
             },
             {
+              "vi": "Phần test chấp nhận",
+              "en": "Acceptance part",
+              "id": ["acceptance"],
+              "definition": "Phần của Khảo hạch mù: Quản sự tự thêm vào đội; một nhân vật không làm phần nào viết test chấp nhận chỉ từ mô tả và hợp đồng, trên worktree tách từ nhánh hợp đồng; quest ghép gộp và chạy nó.",
+              "used_in": "`party_role = acceptance` (P1-21)"
+            },
+            {
               "vi": "Quest ghép",
               "en": "Merge quest",
               "id": ["merge"],
@@ -1721,8 +1728,8 @@
             },
             {
               "field": "`party_role` (quest, quest-draft)",
-              "values": "`contract`, `part`, `merge`",
-              "meaning": "quest hợp đồng / phần / quest ghép"
+              "values": "`contract`, `part`, `acceptance`, `merge`",
+              "meaning": "quest hợp đồng / phần / phần test chấp nhận của Khảo hạch mù (Quản sự tạo, không có trong quest-draft) / quest ghép"
             },
             {
               "field": "`skill.source`",
@@ -1953,6 +1960,7 @@
               "types": [
                 "delivery.sent",
                 "plot.patched",
+                "plot.merged",
                 "chronicle.written",
                 "territory.attached",
                 "territory.surveyed",
@@ -1960,7 +1968,7 @@
                 "sandbox.replay.start",
                 "sandbox.replay.end"
               ],
-              "meaning": "`plot.patched`: Quản sự áp bản vá của người làm vào `laws.patch_paths` trước commit `submit` (P1-28)"
+              "meaning": "`plot.patched`: Quản sự áp bản vá của người làm vào `laws.patch_paths` trước commit `submit` (P1-28); `plot.merged`: Quản sự gộp các nhánh phần vào nhánh quest ghép, hoặc dừng ở một nhánh (P1-21)"
             },
             {
               "group": "Dành sẵn",

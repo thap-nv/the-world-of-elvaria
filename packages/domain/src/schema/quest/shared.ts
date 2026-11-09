@@ -29,7 +29,8 @@ export type QuestStatus = z.infer<typeof QuestStatusSchema>;
 export const TierSchema = z.enum(['script', 'session']);
 export type Tier = z.infer<typeof TierSchema>;
 
-export const PartyRoleSchema = z.enum(['contract', 'part', 'merge']);
+/** `acceptance` (P1-21): the blind trial's part, which the Steward adds itself (implementation-plan §3.15). */
+export const PartyRoleSchema = z.enum(['contract', 'part', 'acceptance', 'merge']);
 export type PartyRole = z.infer<typeof PartyRoleSchema>;
 
 export const QuestTitleSchema = z.string().min(1).max(QUEST_TITLE_MAX_LENGTH);

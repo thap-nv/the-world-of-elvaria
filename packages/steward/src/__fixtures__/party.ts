@@ -12,7 +12,7 @@ import { leavingRunners } from './deliver.ts';
 import { gitPlots, gitRepoWith, onRepo } from './git-plots.ts';
 import { CAST, bench, questPayload } from './kingdom.ts';
 import type { Plots, Steward } from '../types.ts';
-import type { Bench, Plays } from './kingdom.ts';
+import type { Bench, CastMember, Plays } from './kingdom.ts';
 
 export const CONTRACT = 'api/openapi.yaml';
 
@@ -48,8 +48,23 @@ export const contractPayload = (title: string) =>
     seal_required: false,
   });
 
-/** What each assignee leaves in its plot, by the quest's title; `merge` for the merge quest (the contract's title). */
+/**
+ * What each assignee leaves in its plot, by the quest's title; `merge` for the merge quest and `acceptance` for the
+ * blind trial's acceptance part (both carry the contract's title).
+ */
 export type Files = Readonly<Record<string, Readonly<Record<string, string>>>>;
+
+/** More of the bench (P1-21): fields of the territory (its blind_trial), more characters. */
+export interface BenchMore {
+  readonly territory?: Readonly<Record<string, unknown>>;
+  readonly cast?: readonly CastMember[];
+}
+
+/** The key of `Files` a session's quest leaves. */
+const leftBy = (quest: Quest | undefined): string =>
+  quest?.party_role === 'merge' || quest?.party_role === 'acceptance'
+    ? quest.party_role
+    : (quest?.title ?? '');
 
 export interface PartyBench {
   readonly kingdom: Bench;
@@ -64,14 +79,18 @@ export interface PartyBench {
  * dc1-se-team on a fresh git repo, with `mages` mages (a returned plan goes back to its own mage first) and the
  * sessions' `plays` (verdicts by quest title: the merge quest shares the contract's).
  */
-export async function partyBench(files: Files, mages = 1, plays: Plays = {}): Promise<PartyBench> {
+export async function partyBench(
+  files: Files,
+  mages = 1,
+  plays: Plays = {},
+  more: BenchMore = {},
+): Promise<PartyBench> {
   const repo = await mkdtemp(path.join(os.tmpdir(), 'elvaria party repo '));
   await gitRepoWith(repo, { 'README.md': '# dc1\n' });
   const cast = ['merle', 'morgan', 'mirel', 'mott'].slice(0, mages).map((id) => ({ id, cls: 'mage' }));
-  const kingdom = await bench({ cast: [...CAST, ...cast], plays });
-  await onRepo(kingdom, repo, []);
-  const leaves = (req: SpawnRequest) =>
-    files[req.quest?.party_role === 'merge' ? 'merge' : (req.quest?.title ?? '')] ?? {};
+  const kingdom = await bench({ cast: [...CAST, ...cast, ...(more.cast ?? [])], plays });
+  await onRepo(kingdom, repo, [], more.territory);
+  const leaves = (req: SpawnRequest) => files[leftBy(req.quest)] ?? {};
   const plots = gitPlots(kingdom.root);
   const roles: [string, string | undefined][] = [];
   // The territory's checks run nothing here; what they are asked for is kept.
@@ -79,7 +98,15 @@ export async function partyBench(files: Files, mages = 1, plays: Plays = {}): Pr
     roles.push([request.run_dir, request.party_role]);
     return plots.check(request);
   };
-  const steward = kingdom.steward({ plots: { ...plots, check }, runners: leavingRunners(kingdom, leaves) });
+  // A quest judged in a scratch plot (P1-20: a build tagged e2e, a blind trial's merge quest) runs them there.
+  const trial: Plots['trial'] = (request) => {
+    roles.push([request.run_dir, request.party_role]);
+    return plots.trial(request);
+  };
+  const steward = kingdom.steward({
+    plots: { ...plots, check, trial },
+    runners: leavingRunners(kingdom, leaves),
+  });
   const started = await steward.start({ loop: false });
   if (!started.ok) throw new Error(`fixture: the Steward did not start: ${started.error}`);
   return {

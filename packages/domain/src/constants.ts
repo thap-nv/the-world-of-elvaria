@@ -87,6 +87,8 @@ export const TERRITORY_DEFAULTS = {
   worktree_dir: '.elvaria/worktrees',
   max_concurrent: 1,
   context_files: ['CLAUDE.md', 'README.md', '.claude/rules/*.md'],
+  /** territory.blind_trial.min_rank (§3.15, ADR 0022): B and above, the ranks worth an acceptance part. */
+  blind_trial_min_rank: 'B',
 } as const;
 
 /**

@@ -70,6 +70,7 @@ Luật (ADR 0014, [implementation-plan](implementation-plan.md) §2.7 và §4.1)
 | Trưởng đội | Party lead | `contract` (vai) | Pháp sư làm quest hợp đồng: viết hợp đồng và chia phần. | `party_role = contract` |
 | Hợp đồng | Contract | `contract` | Interface giữa các phần (ví dụ OpenAPI), commit trên nhánh quest hợp đồng. | `quest.contract` |
 | Phần (của đội) | Part | `part` | Một vùng, một tag chính, một nhân vật, một worktree, một verdict. | `party_role = part` |
+| Phần test chấp nhận | Acceptance part | `acceptance` | Phần của Khảo hạch mù: Quản sự tự thêm vào đội; một nhân vật không làm phần nào viết test chấp nhận chỉ từ mô tả và hợp đồng, trên worktree tách từ nhánh hợp đồng; quest ghép gộp và chạy nó. | `party_role = acceptance` (P1-21) |
 | Quest ghép | Merge quest | `merge` | Quest cuối của đội: hợp nhất các nhánh phần, chạy toàn bộ kiểm tra; Quản sự tự tạo. | `party_role = merge` |
 
 ## 3. Nghiệm thu, cầu dao, mana
@@ -302,7 +303,7 @@ Mọi giá trị enum xuất hiện trong [schemas/](schemas/) có ở bảng n�
 | `victory_conditions[].check.type` | `all_quests_done`, `command` | |
 | `lesson.source` | `monk`, `user` | Thầy tu viết / người dùng tự thêm |
 | `lesson.owner` (giá trị đặc biệt) | `temple` | kinh chung; không nhân vật nào được mang id này |
-| `party_role` (quest, quest-draft) | `contract`, `part`, `merge` | quest hợp đồng / phần / quest ghép |
+| `party_role` (quest, quest-draft) | `contract`, `part`, `acceptance`, `merge` | quest hợp đồng / phần / phần test chấp nhận của Khảo hạch mù (Quản sự tạo, không có trong quest-draft) / quest ghép |
 | `skill.source` | `monk`, `user` | Thầy tu viết / người dùng viết |
 | `skill.scope` (giá trị đặc biệt) | `global` | áp dụng mọi lãnh thổ; nếu không thì là id một lãnh thổ; không lãnh thổ nào được mang id `global` |
 | `actor.kind` | `character`, `user`, `steward`, `chancellor`, `herald`, `system` | |
@@ -340,7 +341,7 @@ Mọi giá trị enum xuất hiện trong [schemas/](schemas/) có ở bảng n�
 | Mana | `mana.level`, `mana.warning`, `mana.exhausted`, `mana.restored`, `mana.probe`, `mana.signal` | số đo, cảnh báo (một lần mỗi đồng hồ), hết, hồi sinh, thăm dò, tín hiệu hết trong băng (429, `StopFailure`); `exhausted`/`restored` có `model` khi chỉ trần riêng của một model ngủ hay thức |
 | Nhân vật | `character.created`, `character.sleep`, `character.wake`, `character.meditate`, `character.suspend`, `character.release`, `character.swamp`, `character.level_up`, `character.level_down`, `character.model_changed` | |
 | Lệnh | `command.received`, `command.applied`, `command.rejected` | Quản sự xử lý `inbox/` |
-| Khác | `delivery.sent`, `plot.patched`, `chronicle.written`, `territory.attached`, `territory.surveyed`, `territory.health`, `sandbox.replay.start`, `sandbox.replay.end` | `plot.patched`: Quản sự áp bản vá của người làm vào `laws.patch_paths` trước commit `submit` (P1-28) |
+| Khác | `delivery.sent`, `plot.patched`, `plot.merged`, `chronicle.written`, `territory.attached`, `territory.surveyed`, `territory.health`, `sandbox.replay.start`, `sandbox.replay.end` | `plot.patched`: Quản sự áp bản vá của người làm vào `laws.patch_paths` trước commit `submit` (P1-28); `plot.merged`: Quản sự gộp các nhánh phần vào nhánh quest ghép, hoặc dừng ở một nhánh (P1-21) |
 | Dành sẵn | `campaign.*`, `battle.*`, `incident.*`, `patrol.*`, `party.*`, `skill.*` | giai đoạn 5; đội và bí kíp |
 
 ## 13. Dữ liệu registry mặc định

@@ -8,6 +8,7 @@ import {
   formatDatedId,
   namedAssignee,
   parseInstant,
+  partyOf,
   poolOpenOf,
   questFromCommand,
   selectAssignee,
@@ -177,7 +178,10 @@ function newAssignee(ctx: Context, quest: Quest, named: string | undefined): Res
     const free = [...ctx.world.characters.values()].filter(
       (c) => c.status === 'idle' && c.id !== quest.assignee && ctx.deps.runners[c.tribe] !== undefined,
     );
-    const chosen = selectAssignee(quest, free);
+    // The Steward's own choice keeps the party's bars, as a claim does (P1-21 (b)); the owner's named one does not.
+    const characters = [...ctx.world.characters.values()];
+    const party = partyOf(quest, [...ctx.world.quests.values()]);
+    const chosen = selectAssignee(quest, free, { party, characters });
     return chosen === undefined ? { ok: false, error: 'no_candidate' } : { ok: true, value: chosen };
   }
   // The same check as a create_quest naming its assignee (P1-29), a disabled tribe included.

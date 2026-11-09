@@ -59,6 +59,7 @@ export type { PlotRecord } from './plot/plot-record.ts';
 export { PLOT_EXCLUDES } from './plot/repo-settings.ts';
 export { SETUP_TIMEOUT_MS, setupLogOf } from './plot/setup.ts';
 export { DIFF_MAX_CHARS } from './plot/diff.ts';
+export type { DiffScope } from './plot/diff.ts';
 export { SUBQUESTS_FILE } from './plot/subquests.ts';
 export { PATCH_FILE } from './plot/patch.ts';
 export { SCRATCH_SUFFIX, scratchIdOf } from './plot/scratch.ts';

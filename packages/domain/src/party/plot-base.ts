@@ -1,7 +1,8 @@
 // What a quest's plot is built on (implementation-plan §3.3, §3.13; P1-18): the branches of other quests it must
 // contain, decided from the quests alone; runner-core's PlotManager asks git which of them the default branch
 // already holds. A part starts from the contract's branch, so every member of a party sees the same contract; the
-// merge quest starts there too and gets every part merged in. Any other quest starts from the branch of a dependency
+// merge quest starts there too and gets every part merged in, the blind trial's acceptance part among them, which
+// starts on the contract's branch alone (P1-21). Any other quest starts from the branch of a dependency
 // done but not merged yet (P1-16 proposal (f): two chained sub-quests editing one file no longer fork from the same
 // main and conflict when the owner merges the second).
 import type { QuestId } from '../core/ids.ts';
@@ -38,6 +39,8 @@ export function plotBaseOf(quest: Quest, quests: readonly Quest[]): PlotBase {
   const contract = branchesOf(quest, [party], quests);
   if (quest.party_role === 'merge')
     return { from: contract, merge: branchesOf(quest, quest.depends_on, quests) };
+  // The blind trial's acceptance part (§3.15, P1-21): the contract and nothing of the parts' work, whatever it waits for.
+  if (quest.party_role === 'acceptance') return { from: contract, merge: [] };
   const others = quest.depends_on.filter((id) => id !== party);
   return { from: [...branchesOf(quest, others, quests), ...contract], merge: [] };
 }

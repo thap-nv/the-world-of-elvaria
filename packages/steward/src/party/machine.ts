@@ -9,7 +9,7 @@ import type { Quest, QuestId, Result } from '@elvaria/domain';
 
 import { moveAndRing } from '../notices.ts';
 import { questSecretsOf } from '../sessions/secrets.ts';
-import { plotOptionsOf } from './plot.ts';
+import { noteMerge, plotOptionsOf } from './plot.ts';
 import type { Context } from '../context.ts';
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
@@ -46,6 +46,7 @@ export async function mergeByMachine(ctx: Context, id: QuestId): Promise<Result<
   if (!started.ok) return started;
   const { merge } = plotBaseOf(started.value, [...ctx.world.quests.values()]);
   const outcome = await ctx.deps.plots.merge(plot.value, merge);
+  await noteMerge(ctx, started.value, outcome);
   if (outcome.stop === undefined) {
     return moveAndRing(ctx, { quest: id, event: { type: 'submit' }, actor: 'steward' });
   }

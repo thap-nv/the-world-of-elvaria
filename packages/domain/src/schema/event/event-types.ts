@@ -56,6 +56,7 @@ export const EVENT_TYPES = [
   'command.rejected',
   'delivery.sent',
   'plot.patched',
+  'plot.merged',
   'chronicle.written',
   'territory.attached',
   'territory.surveyed',

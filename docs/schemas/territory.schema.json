@@ -307,6 +307,22 @@
       },
       "default": {}
     },
+    "blind_trial": {
+      "description": "Khảo hạch mù (implementation-plan §3.15): when a party's contract quest or one of its parts is of min_rank or above, the Steward adds an acceptance part to the party, written by another character (another model family first) from the contract and the description alone, on a worktree of the contract's branch that holds none of the parts' work; the merge quest merges it with the parts and runs every check on the result.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "min_rank": {
+          "$ref": "#/$defs/rank",
+          "default": "B"
+        }
+      },
+      "default": {}
+    },
     "secrets_allowed": {
       "description": "Names in the treasury that quests on this territory may request (quest.secrets_required must be a subset).",
       "type": "array",

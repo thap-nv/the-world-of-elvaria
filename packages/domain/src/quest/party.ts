@@ -1,7 +1,9 @@
 // Invariants of a party (implementation-plan §3.13, ADR 0020) that span several quest files, so neither the quest
 // schema nor transition() can see them. The Steward checks them on the quests of a party after every change,
 // and the sandbox checks every generated day.
-import type { CharacterId, QuestId } from '../core/ids.ts';
+import { isPartyPart } from '../party/party-status.ts';
+import { charactersIn } from './characters-in.ts';
+import type { QuestId } from '../core/ids.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 
 /** Stable codes, so the CLI can translate an issue through i18n; `message` is the English text for logs. */
@@ -11,7 +13,8 @@ export type PartyIssueCode =
   | 'part_without_contract'
   | 'merge_missing_part'
   | 'many_merges'
-  | 'member_verifies';
+  | 'member_verifies'
+  | 'blind_trial_crossed';
 
 export interface PartyIssue {
   /** party_id: the id of the party's contract quest. */
@@ -52,13 +55,13 @@ const sameTerritory: Rule = (party, contract) =>
 /** A part starts once the contract is delivered: it depends on the contract quest (§3.13 step 3). */
 const partsNeedContract: Rule = (party) =>
   party.members
-    .filter((quest) => quest.party_role === 'part' && !quest.depends_on.includes(party.id))
+    .filter((quest) => isPartyPart(quest) && !quest.depends_on.includes(party.id))
     .map((quest) => issue(party, quest.id, 'part_without_contract', 'a part depends on the contract quest'));
 
 /** One merge quest per party, and it waits for every part (§3.13 step 3). */
 const oneMergeAfterParts: Rule = (party) => {
   const merges = party.members.filter((quest) => quest.party_role === 'merge');
-  const parts = party.members.filter((quest) => quest.party_role === 'part');
+  const parts = party.members.filter(isPartyPart);
   return [
     ...merges.slice(1).map((merge) => issue(party, merge.id, 'many_merges', 'a party has one merge quest')),
     ...merges.flatMap((merge) =>
@@ -68,16 +71,6 @@ const oneMergeAfterParts: Rule = (party) => {
           issue(party, merge.id, 'merge_missing_part', `the merge quest does not wait for ${part.id}`),
         ),
     ),
-  ];
-};
-
-const charactersIn = (quest: Quest, role: 'assignee' | 'verifier'): CharacterId[] => {
-  const holder = quest[role];
-  return [
-    ...quest.attempt_log.flatMap((entry) =>
-      entry.role === role && entry.character !== null ? [entry.character] : [],
-    ),
-    ...(typeof holder === 'string' ? [holder] : []),
   ];
 };
 
@@ -101,7 +94,38 @@ const membersNeverJudge: Rule = (party) => {
   );
 };
 
-const RULES: readonly Rule[] = [sameTerritory, partsNeedContract, oneMergeAfterParts, membersNeverJudge];
+const assigneesOf = (party: Party, role: 'part' | 'acceptance'): Set<string> =>
+  new Set(
+    party.members
+      .filter((quest) => quest.party_role === role)
+      .flatMap((quest) => charactersIn(quest, 'assignee')),
+  );
+
+/**
+ * In a blind trial (§3.15, ADR 0022) whoever writes the acceptance tests never works a part of the party, nor the
+ * other way round: tests by the author share the author's blind spots.
+ */
+const blindTrialApart: Rule = (party) => {
+  const writers = assigneesOf(party, 'acceptance');
+  return [...assigneesOf(party, 'part')]
+    .filter((assignee) => writers.has(assignee))
+    .map((assignee) =>
+      issue(
+        party,
+        party.id,
+        'blind_trial_crossed',
+        `${assignee} wrote the acceptance tests of this party and worked one of its parts`,
+      ),
+    );
+};
+
+const RULES: readonly Rule[] = [
+  sameTerritory,
+  partsNeedContract,
+  oneMergeAfterParts,
+  membersNeverJudge,
+  blindTrialApart,
+];
 
 function partiesOf(quests: readonly Quest[]): Party[] {
   const members = new Map<QuestId, Quest[]>();

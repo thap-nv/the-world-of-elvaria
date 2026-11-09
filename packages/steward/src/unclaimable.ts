@@ -2,7 +2,7 @@
 // Steward tells each once — a `quest.unclaimable` line and the bell when the reason appears or changes, a line with
 // `reason: null` when it is gone while the quest is still open — and keeps what it told in
 // `.state/unclaimable.json` for `elvaria quest list` and `show`. The file is rebuilt from the log at every start.
-import { QuestUnclaimableDataSchema, isEventOf } from '@elvaria/domain';
+import { QuestUnclaimableDataSchema, isEventOf, questFinished } from '@elvaria/domain';
 import { inKingdom, readTextFile, writeFileAtomic } from '@elvaria/store';
 import type { EventData, Quest, QuestId, Unclaimable } from '@elvaria/domain';
 import type { Event } from '@elvaria/domain';
@@ -74,9 +74,15 @@ async function tell(ctx: Context, quest: Quest, note: UnclaimableNote): Promise<
   await ctx.record.note({ type: 'quest.unclaimable', actor: STEWARD, data: note, quest });
 }
 
-/** A quest whose notice may be withdrawn: still open with its dependencies done, so planTick judged it. */
+/**
+ * A quest whose notice may be withdrawn: still open with its dependencies done (or archived after their delivery,
+ * P1-21 (a)), so planTick judged it.
+ */
 function judged(ctx: Context, quest: Quest): boolean {
-  const done = (id: QuestId) => ctx.world.quests.get(id)?.status === 'done';
+  const done = (id: QuestId) => {
+    const dependency = ctx.world.quests.get(id);
+    return dependency !== undefined && questFinished(dependency);
+  };
   return quest.status === 'open' && quest.depends_on.every(done);
 }
 

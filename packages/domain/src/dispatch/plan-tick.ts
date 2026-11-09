@@ -9,6 +9,8 @@
 import { breakersOf } from '../breaker/breakers.ts';
 import { failStreakReached } from '../character/fail-streak.ts';
 import { machineMergeDue } from '../party/machine-merge.ts';
+import { questFinished } from '../quest/finished.ts';
+import { partyOf } from '../verify/past-assignees-of.ts';
 import { claimBlocker } from './claim-blocker.ts';
 import { reassignsOf } from './reassigns.ts';
 import { planReviews } from './reviews.ts';
@@ -168,8 +170,9 @@ function suspensions(step: Step): CharacterId[] {
 function takerOf(step: Step, quest: Quest): Character | undefined {
   const territory = step.roster.territory(quest.territory);
   if (territory === undefined || !step.roster.territoryHasRoom(territory.id)) return undefined;
-  const candidates = step.snapshot.characters.filter((c) => step.roster.canClaim(c, quest, territory));
-  return selectAssignee(quest, candidates);
+  const { characters, quests } = step.snapshot;
+  const candidates = characters.filter((c) => step.roster.canClaim(c, quest, territory));
+  return selectAssignee(quest, candidates, { party: partyOf(quest, quests), characters });
 }
 
 function claims(step: Step, open: readonly Quest[], now: Instant): Claim[] {
@@ -208,7 +211,8 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
     roster: rosterOf(snapshot, now),
     character: (id) => (typeof id === 'string' ? byId.get(id) : undefined),
   };
-  const done = new Set(snapshot.quests.filter(({ status }) => status === 'done').map(({ id }) => id));
+  // A dependency archived after its delivery is as good as done (P1-21 (a)): its branch stays, its work stands.
+  const done = new Set(snapshot.quests.filter(questFinished).map(({ id }) => id));
   const ready = (quest: Quest): boolean => quest.depends_on.every((id) => done.has(id));
   const inStatus = (status: Quest['status']): Quest[] =>
     snapshot.quests.filter((quest) => quest.status === status).toSorted(byPriority);
@@ -220,7 +224,7 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
   const wakes = wakesOf(step.roster, step.character, paused);
   const hours = snapshot.kingdom.mana?.reassign_after_hours ?? null;
   const asleep = paused.filter(({ id }) => !wakes.includes(id));
-  const reassigns = reassignsOf(step.roster, snapshot.characters, asleep, hours, now);
+  const reassigns = reassignsOf(step.roster, snapshot, asleep, hours, now);
   const starts = inStatus('claimed')
     .filter((quest) => ready(quest) && holderGoes(step, quest))
     .map(({ id }) => id);

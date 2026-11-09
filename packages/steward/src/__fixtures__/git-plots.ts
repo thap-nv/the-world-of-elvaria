@@ -68,7 +68,7 @@ export function gitPlots(kingdom: string): Plots {
     applyPatch: (plot, patchPaths) => manager.applyPatch(plot, patchPaths),
     check: () => Promise.resolve([]),
     scriptChecks: () => Promise.resolve([]),
-    diff: (plot) => manager.diff(plot),
+    diff: (plot, scope) => manager.diff(plot, scope),
     merge: (plot, branches) => manager.merge(plot, branches),
     unmerged: (plot, branches) => manager.unmerged(plot, branches),
     release: () => Promise.resolve(ok({ removed: false, forget_failures: [] })),
@@ -86,8 +86,13 @@ export function gitPlots(kingdom: string): Plots {
   };
 }
 
-/** Moves the bench's code territory to the git `repo`, with `patchPaths` as its laws.patch_paths. */
-export async function onRepo(kingdom: Bench, repo: string, patchPaths: readonly string[]): Promise<void> {
+/** Moves the bench's code territory to the git `repo`, with `patchPaths` as its laws.patch_paths and `fields` over it. */
+export async function onRepo(
+  kingdom: Bench,
+  repo: string,
+  patchPaths: readonly string[],
+  fields: Readonly<Record<string, unknown>> = {},
+): Promise<void> {
   const read = await kingdom.store.territories.read('dc1-se-team' as TerritoryId);
   if (!read.ok) throw new Error('fixture: no territory dc1-se-team');
   const territory = TerritorySchema.parse({
@@ -95,6 +100,7 @@ export async function onRepo(kingdom: Bench, repo: string, patchPaths: readonly 
     path: toPortable(repo),
     vcs: { type: 'git', default_branch: 'main' },
     laws: { ...read.value.laws, patch_paths: [...patchPaths] },
+    ...fields,
   });
   const written = await kingdom.store.territories.write(territory);
   if (!written.ok) throw new Error(`fixture: ${written.error.message}`);

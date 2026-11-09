@@ -173,6 +173,44 @@ describe("merge: a merge quest gets its party's parts (P1-18, §3.13 step 5)", (
     expect(refused.stop?.detail).toContain('merges wait for the release');
   }, 30_000);
 
+  it("gives the merge quest's judge its own work: after the last merge, and the conflicts resolved (P1-21 (e))", async () => {
+    const { repo, api, web, merge } = await party('judge after merges');
+    // No merge yet: the whole branch, as for any quest.
+    await commitFile(worktreeOf(merge), 'notes.md', 'before\n');
+    expect(await plots().diff(merge, 'after_merges')).toBe(await plots().diff(merge));
+
+    const other = branchOf(questId('r7r7r7'));
+    await questBranch(
+      repo,
+      other,
+      branchOf(questId('c1c1c1')),
+      'apps/api/route.ts',
+      'export const api = 2;\n',
+    );
+    await plots().merge(merge, [api, web, other]);
+    await writeFile(path.join(worktreeOf(merge), 'apps', 'api', 'route.ts'), 'export const api = 12;\n');
+    expect(await plots().commitAll(merge, 'chore: submit')).toMatchObject({ status: 'committed' });
+    const clean = (await plots().diff(merge, 'after_merges')) ?? '';
+    expect(clean).toMatch(
+      /^\[The merge quest's own work: what changed after its last merge \([0-9a-f]{12}\)/,
+    );
+    expect(clean).toContain('Nothing changed after the last merge.');
+    expect(clean).toContain(`commit `);
+    expect(clean).toContain(`chore: merge ${web} into ${merge.branch}`);
+    // The resolution is the merge quest's own: the dense combined diff shows it, the parts' clean work does not.
+    expect(clean).toContain('diff --cc apps/api/route.ts');
+    expect(clean).toContain('++export const api = 12;');
+    expect(clean).not.toContain('export const web = 1;');
+
+    await commitFile(worktreeOf(merge), 'apps/web/page.ts', 'export const web = 3;\n');
+    const after = (await plots().diff(merge, 'after_merges')) ?? '';
+    expect(after).toMatch(/ apps\/web\/page\.ts +\| 2 \+-/);
+    expect(after).toContain('+export const web = 3;');
+    // The whole party is still there for anyone who asks: it holds every part.
+    expect(await plots().diff(merge)).toContain('+export const web = 3;');
+    expect(await plots().diff({ type: 'folder', path: 'quests/x/work' }, 'after_merges')).toBeNull();
+  }, 30_000);
+
   it('merges nothing on a plot without git, and holds none of the branches', async () => {
     const folder: Plot = { type: 'folder', path: 'quests/q_20261107_m4m4m4/work' };
     expect(await plots().merge(folder, ['quest/a'])).toEqual({ merged: [], pending: ['quest/a'] });

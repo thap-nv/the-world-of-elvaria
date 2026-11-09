@@ -3,7 +3,8 @@
 // domain's questFromCommand like an owner's `create_quest`. The list is one piece of work: a file that cannot be
 // read, a draft the kingdom refuses, or drafts that wait on each other in a circle open none of them, and the
 // delivery note says why. A party's contract quest lists its parts instead, which open in its party, after it, with
-// the merge quest the Steward adds (P1-18, party/parts.ts). Each id derives from the plan quest and the draft's ref,
+// the merge quest the Steward adds, and the blind trial's acceptance part when it is due (P1-18, P1-21,
+// party/parts.ts). Each id derives from the plan quest and the draft's ref (or the Steward's own refs),
 // so a delivery repeated after a crash finds the children it made.
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
@@ -21,7 +22,14 @@ import {
 import { SUBQUESTS_FILE } from '@elvaria/runner-core';
 import type { CommandPayload, NewQuestContext, Quest, QuestDraft, QuestId, Result } from '@elvaria/domain';
 
-import { MERGE_REF, mergeQuestFor, partyPlaceOf, partyProblem, partyRefusal } from '../party/parts.ts';
+import {
+  ACCEPTANCE_REF,
+  MERGE_REF,
+  addedQuestsFor,
+  partyPlaceOf,
+  partyProblem,
+  partyRefusal,
+} from '../party/parts.ts';
 import { STEWARD } from '../record.ts';
 import type { Context } from '../context.ts';
 
@@ -157,9 +165,9 @@ function childrenOf(ctx: Context, plan: Quest, drafts: readonly QuestDraft[]): R
     made.push(quest.value);
   }
   if (plan.party_role !== 'contract') return ok(made);
-  const id = childIdOf(ctx, plan, MERGE_REF);
-  const merge = mergeQuestFor(ctx, plan, made, { ...context, id, quests: [...known, id] });
-  return merge.ok ? ok([...made, merge.value]) : merge;
+  const added = { acceptance: childIdOf(ctx, plan, ACCEPTANCE_REF), merge: childIdOf(ctx, plan, MERGE_REF) };
+  const party = addedQuestsFor(ctx, plan, made, context, added);
+  return party.ok ? ok([...made, ...party.value]) : party;
 }
 
 /**

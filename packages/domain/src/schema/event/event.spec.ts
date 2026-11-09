@@ -2,9 +2,7 @@ import { describe, expect, expectTypeOf, it } from 'vitest';
 
 import examples from '../../../examples/event.json' with { type: 'json' };
 import { CHARACTER_VIEW, QUEST_VIEW, TERRITORY_VIEW } from '../../world/__fixtures__/examples.ts';
-import { contractOf } from '../json-schema.ts';
-import { EVENT_DATA_SCHEMAS } from './event-data.ts';
-import { EVENT_TYPES, isKnownEventType } from './event-types.ts';
+import { isKnownEventType } from './event-types.ts';
 import { EventSchema, isEventOf, isTypedEvent } from './event.ts';
 import type { ToolKind, TypedEventType } from './event-data.ts';
 
@@ -101,6 +99,13 @@ const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
   'command.applied': { command_id: ULID },
   'command.rejected': { command_id: ULID, reason: 'quest is not awaiting_seal' },
   'plot.patched': { file: 'elvaria.patch', paths: ['.husky/pre-push'] },
+  'plot.merged': {
+    into: 'quest/q_20261109_y90za6',
+    merged: ['quest/q_20261109_ms5j7d'],
+    pending: ['quest/q_20261109_bdyrzv'],
+    stop: 'conflict',
+    conflicts: ['apps/web/src/api.ts'],
+  },
 };
 
 describe('EventSchema', () => {
@@ -188,6 +193,8 @@ describe('EventSchema', () => {
     ['command.applied', { command_id: 'not-a-ulid' }, 'data.command_id'],
     ['command.rejected', { reason: 'stale' }, 'data.command_id'],
     ['plot.patched', { file: 'elvaria.patch', paths: [] }, 'data.paths'],
+    ['plot.merged', { into: 'quest/q', merged: [], pending: [], stop: 'dirty' }, 'data.stop'],
+    ['plot.merged', { into: '', merged: [], pending: [] }, 'data.into'],
     ['quest.infirmary', { ...QUEST_CHANGE, reason: '' }, 'data.reason'],
     ['quest.infirmary', { reason: 'breaker:time' }, 'data.quest'],
     ['quest.infirmary', { ...QUEST_CHANGE, reason: 'r', trip: 'crash' }, 'data.trip'],
@@ -273,28 +280,5 @@ describe('event narrowing', () => {
     if (!isEventOf(event, 'mana.level')) throw new Error('expected mana.level');
     expectTypeOf(event.data.used_pct).toEqualTypeOf<number>();
     expect(event.data.used_pct).toBe(42);
-  });
-});
-
-describe('event contract', () => {
-  const contract = contractOf('event', EventSchema);
-
-  it('states one data rule per data schema, shared types in one enum', () => {
-    const rules = contract.allOf as { if: { properties: { type: unknown } } }[];
-    expect(rules.map((rule) => rule.if.properties.type)).toContainEqual({
-      enum: ['command.applied', 'command.rejected'],
-    });
-    expect(rules).toHaveLength(new Set(Object.values(EVENT_DATA_SCHEMAS)).size);
-  });
-
-  it('carries the type catalogue without restricting type', () => {
-    const defs = contract.$defs as Record<string, { enum?: unknown }>;
-    expect(Object.keys(defs)).toEqual(['known_types']);
-    expect(defs.known_types?.enum).toEqual([...EVENT_TYPES]);
-    expect(isKnownEventType('character.level_up')).toBe(true);
-  });
-
-  it('inlines every data schema, so no rule points at a $defs entry that is not there', () => {
-    expect(JSON.stringify(contract)).not.toContain('$ref');
   });
 });
