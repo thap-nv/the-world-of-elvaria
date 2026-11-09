@@ -10,7 +10,9 @@
   Claude Code 2.1.319 refuses to write whatever `--settings` allows, read from its build in P1-24, so the hook
   says so first), `settings.json` (dontAsk, the allow/deny of the `ToolPolicy` with file tools
   scoped to the plot as `Read(./**)`, the assignee's own handover letter by absolute path, Elvaria's hook on the
-  twelve events in the exec form, `ELVARIA_*` and `CLAUDE_CODE_*` env, no auto memory, no attribution line),
+  twelve events in the exec form, its `PreToolUse` handler with `onFailure: "block"` and `--event PreToolUse` so
+  the hook denies a call whose payload it cannot read (P1-36, ADR 0007), `ELVARIA_*` and `CLAUDE_CODE_*` env, no
+  auto memory, no attribution line),
   `agents.json` (the one apprentice: the character's tools minus `Agent`, a hard `maxTurns`, the cheapest model,
   and a description naming the models the character may ask for), `system.md` for
   `--append-system-prompt-file` and the prompt as sent, redacted. Generated settings are checked before spawn,
@@ -70,6 +72,9 @@ pnpm --filter @elvaria/hooks build && ELVARIA_LIVE=1 pnpm --filter @elvaria/runn
 settings declare) or replays a fixture verbatim (`FAKE_CLAUDE_REPLAY`); its 429 lines are self-built from the docs
 until P1-16 records real ones; its fake-only scenario `leak` (`fixtures/fake-claude-leak.mjs`) prints secrets
 everywhere, and `src/secrets.spec.ts` runs it with Elvaria's real hook from source and finds none of them in
-any file of the kingdom. `fixtures/fake-hook.mjs` stands in for the built hook elsewhere. `src/live.spec.ts` runs the
+any file of the kingdom. `fixtures/fake-hook.mjs` stands in for the built hook elsewhere. Both fakes read stdin
+as the real hook does (`fixtures/read-stdin.mjs`, P1-36); `src/fixtures-stdin.spec.ts` sends a prompt larger than
+any pipe buffer to a fake CLI whose stdin a preload made non-blocking; `ELVARIA_SESSION_SPEC_REPEATS=<n>` runs it
+and the first case of `src/session.spec.ts` n more times (50 runs passed on macOS CI in PR #82). `src/live.spec.ts` runs the
 conformance suite's live checks with the real CLI and the real hook, the Stop gate, and a commit without
 attribution.

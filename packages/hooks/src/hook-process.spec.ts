@@ -1,11 +1,13 @@
 // The built hook as the CLIs run it: `node --conditions=elvaria-dist dist/elvaria-hook.js`, one process per
 // call, stdin in, exit code out (implementation-plan §3.6). `pnpm test` builds first; the budget of 100 ms is
 // measured here on the build, next to `node -e 0` on the same machine.
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
+import { once } from 'node:events';
 import { existsSync, readFileSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
+import { setTimeout } from 'node:timers/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -66,6 +68,35 @@ function runBuilt(stdin: unknown, env: HookEnv, options: RunOptions = {}) {
   };
 }
 
+/**
+ * Touching `process.stdin` opens fd 0 as a libuv pipe, which makes it non-blocking on POSIX: what a parent that
+ * leaves the pipe non-blocking does (macOS CI, PR #32 and PR #76). Windows pipes stay blocking.
+ */
+const NON_BLOCKING_STDIN = 'data:text/javascript,process.stdin';
+
+/**
+ * The built hook on a non-blocking stdin, its payload written in two halves with a pause between them: the first
+ * read gets the first half, the next one EAGAIN (P1-36). `readFileSync(0)` dropped that first half.
+ */
+async function runSplit(stdin: unknown, env: HookEnv, policy: string) {
+  const { command, args } = hookCommand(policy);
+  const child = spawn(command, ['--import', NON_BLOCKING_STDIN, ...args, '--event', 'PreToolUse'], {
+    env: { ...baseEnv(), ...env },
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
+  let stdout = '';
+  let stderr = '';
+  child.stdout.on('data', (chunk: Buffer) => (stdout += chunk.toString('utf8')));
+  child.stderr.on('data', (chunk: Buffer) => (stderr += chunk.toString('utf8')));
+  const closed = once(child, 'close') as Promise<[number | null]>;
+  const text = JSON.stringify(stdin);
+  child.stdin.write(text.slice(0, text.length / 2));
+  await setTimeout(300);
+  child.stdin.end(text.slice(text.length / 2));
+  const [status] = await closed;
+  return { status, stdout, stderr };
+}
+
 const median = (values: number[]): number =>
   [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)] ?? 0;
 
@@ -106,6 +137,33 @@ describe('the built hook', () => {
       /^Elvaria law of this territory: .*forbidden path \(\.env\)/,
     );
     expect((await kingdom.log()).events.map(({ type }) => type)).toEqual(['agent.tool.blocked']);
+  });
+
+  it('reads a payload whole across EAGAIN on a non-blocking stdin, and judges the call itself (P1-36)', async () => {
+    const policy = path.join(kingdom.runDir, 'policy.json');
+    await writeFile(policy, JSON.stringify({ version: 1, laws: DC1_LAWS }), 'utf8');
+    const push = payload('PreToolUse', {
+      tool_name: 'Bash',
+      tool_input: { command: 'git push origin HEAD' },
+    });
+    const { status, stdout, stderr } = await runSplit(push, kingdom.env(), policy);
+    expect({ status, stderr }).toEqual({ status: 0, stderr: '' });
+    // A cut payload would be denied too, but for the unreadable call: the law's reason shows it was read whole.
+    const decision = JSON.parse(stdout) as { hookSpecificOutput: Record<string, string> };
+    expect(decision.hookSpecificOutput.permissionDecisionReason).toMatch(/^Elvaria law of this territory: /);
+    const { events } = await kingdom.log();
+    expect(events.map(({ type, data }) => [type, data.tool])).toEqual([['agent.tool.blocked', 'bash']]);
+  });
+
+  it('denies a PreToolUse whose payload is empty, with the JSON decision and exit 0', () => {
+    const { command, args } = hookCommand();
+    const result = spawnSync(command, [...args, '--event', 'PreToolUse'], {
+      input: '',
+      env: { ...baseEnv(), ...kingdom.env() },
+      encoding: 'utf8',
+    });
+    expect(result.status).toBe(0);
+    expect(JSON.parse(result.stdout)).toMatchObject({ hookSpecificOutput: { permissionDecision: 'deny' } });
   });
 
   it("answers agy's PreToolUse with the event from argv: deny for a law, defer to the settings otherwise", async () => {

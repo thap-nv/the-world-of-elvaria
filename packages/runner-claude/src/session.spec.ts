@@ -5,7 +5,7 @@ import { CONFORMANCE_QUEST, POLICY_FILE, STDERR_FILE, STDOUT_FILE } from '@elvar
 import type { RunnerSignal, RunningSession, Workspace } from '@elvaria/runner-core';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { FAKE_HOOK, prepare, silentHookCommand } from './__fixtures__/harness.ts';
+import { FAKE_HOOK, SPEC_REPEATS, prepare, silentHookCommand } from './__fixtures__/harness.ts';
 import { AGENTS_FILE, PROMPT_FILE, SETTINGS_FILE, SYSTEM_FILE } from './run-files.ts';
 import type { Prepared } from './__fixtures__/harness.ts';
 import { letterRules } from './settings.ts';
@@ -47,7 +47,8 @@ async function journal(workspace: Workspace) {
 }
 
 describe('a session', () => {
-  it('runs Claude Code headless with the run files of §3.7', async () => {
+  // Once red on macOS CI with an empty prompt (PR #76); ELVARIA_SESSION_SPEC_REPEATS repeats it (P1-36).
+  it('runs Claude Code headless with the run files of §3.7', { repeats: SPEC_REPEATS }, async () => {
     // A git variable in the Steward's env (husky's pre-push exports GIT_DIR, §6) must not reach the CLI.
     const prepared = await prepare('submit', {}, { env: { GIT_DIR: '/elsewhere/.git' } });
     const record = path.join(prepared.workspace.root, 'record.json');
@@ -121,7 +122,8 @@ describe('a session', () => {
           {
             type: 'command',
             command: process.execPath,
-            args: [FAKE_HOOK, '--policy', policyFile],
+            // The event too: a payload the hook cannot read still gets a deny (P1-36).
+            args: [FAKE_HOOK, '--policy', policyFile, '--event', 'PreToolUse'],
             timeout: 5,
             onFailure: 'block',
           },
@@ -129,6 +131,7 @@ describe('a session', () => {
       },
     ]);
     expect(settings.hooks.Stop?.[0]?.hooks[0]).not.toHaveProperty('onFailure');
+    expect(settings.hooks.Stop?.[0]?.hooks[0]?.args).toEqual([FAKE_HOOK, '--policy', policyFile]);
     expect(await readJson(policyFile)).toMatchObject({
       version: 1,
       quest: CONFORMANCE_QUEST,
