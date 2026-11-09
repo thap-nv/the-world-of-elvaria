@@ -9,6 +9,7 @@ import type { RunResult } from '@elvaria/runner-core';
 import { moveAndRing } from '../notices.ts';
 import { step } from '../record.ts';
 import { judge, runOf, verifierLeaves } from '../review/judge.ts';
+import { releaseScratch } from '../review/scratch.ts';
 import { breakAssignee, breakVerifier } from './breaker.ts';
 import { commitPlot } from './commit.ts';
 import { applyAssigneePatch } from './patch.ts';
@@ -107,15 +108,18 @@ function current(ctx: Context, running: Running): Quest | undefined {
 export async function settle(ctx: Context, { running, result }: Finished): Promise<void> {
   ctx.counts.ended += 1;
   const quest = current(ctx, running);
-  if (quest === undefined) return;
-  const settled =
-    running.role === 'assignee'
-      ? await settleAssignee(ctx, running, result)
-      : await settleVerifier(ctx, quest, running, result);
-  if (!settled.ok)
-    ctx.deps.log.warn(
-      `steward: ${running.quest}: the end of ${running.character}'s session: ${settled.error}`,
-    );
+  if (quest !== undefined) {
+    const settled =
+      running.role === 'assignee'
+        ? await settleAssignee(ctx, running, result)
+        : await settleVerifier(ctx, quest, running, result);
+    if (!settled.ok)
+      ctx.deps.log.warn(
+        `steward: ${running.quest}: the end of ${running.character}'s session: ${settled.error}`,
+      );
+  }
+  // Whatever its end, what a judge broke on purpose in its scratch plot is never kept (ADR 0022, P1-20).
+  if (running.role === 'verifier') await releaseScratch(ctx, running.quest);
 }
 
 /**

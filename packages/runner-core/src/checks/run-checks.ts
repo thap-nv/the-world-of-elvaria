@@ -8,7 +8,7 @@ import type { PartyRole, Territory, TerritoryCheck, VerdictCheck } from '@elvari
 import { acquireLock, inKingdom } from '@elvaria/store';
 import type { HeldLock } from '@elvaria/store';
 
-import { openLog, runLine } from './logged-run.ts';
+import { headerOf, openLog, runLine, runLines } from './logged-run.ts';
 import type { ProcessHost } from '../process/program.ts';
 import { selectChecks } from './select-checks.ts';
 import { sessionEnv } from '../treasury/session-env.ts';
@@ -45,6 +45,11 @@ export interface ChecksRequest {
    * marked `defer_to_merge`; absent (or a contract) selects by `when` alone.
    */
   readonly party_role?: PartyRole;
+  /**
+   * How long an exclusive check waits for the territory's lock (the domain's exclusiveWaitMinutes, P1-20): a judge in
+   * its scratch plot holds it for its whole session. Absent: the longest exclusive timeout + 1 min.
+   */
+  readonly lock_wait_ms?: number;
 }
 
 export interface ChecksOptions {
@@ -98,14 +103,15 @@ export async function runCheck(
 ): Promise<CheckRun> {
   const logPath = checkLogOf(request.run_dir, check.id);
   const given = withSecrets(host, request.secrets);
-  const log = await openLog(request.kingdom, logPath, `$ ${check.run}`, given.known);
+  const log = await openLog(request.kingdom, logPath, headerOf(check.run), given.known);
   const context = {
     cwd: request.cwd,
     host: given.host,
     ...(request.signal === undefined ? {} : { signal: request.signal }),
   };
   try {
-    const run = await runLine(check.run, context, log, timeoutMs);
+    // A check of several commands stops at the first that fails, as CI's `&&` (P1-20).
+    const run = await runLines(check.run, context, log, timeoutMs);
     if (run.timed_out && check.cleanup !== undefined) {
       await log.write(`\n$ ${check.cleanup}\n`);
       await runLine(check.cleanup, context, log, CLEANUP_TIMEOUT_MS);
@@ -152,7 +158,7 @@ async function runExclusive(
     }
   }
   const logPath = checkLogOf(request.run_dir, check.id);
-  const log = await openLog(kingdom, logPath, `$ ${check.run}`);
+  const log = await openLog(kingdom, logPath, headerOf(check.run));
   await log.write(`elvaria: another quest kept the exclusive checks of ${territory.id} for ${waitMs} ms\n`);
   await log.close();
   return { id: check.id, pass: false, duration_ms: 0, log_path: logPath, exit_code: null, timed_out: false };
@@ -172,7 +178,7 @@ export async function runChecks(
   host: ProcessHost,
   options: ChecksOptions = {},
 ): Promise<CheckRun[]> {
-  const waitMs = options.lock_wait_ms ?? exclusiveWaitOf(request.territory.checks);
+  const waitMs = options.lock_wait_ms ?? request.lock_wait_ms ?? exclusiveWaitOf(request.territory.checks);
   const runs: CheckRun[] = [];
   for (const check of selectChecks(request.territory.checks, request.touched, request.party_role)) {
     if (request.signal?.aborted === true) break;

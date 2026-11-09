@@ -38,6 +38,12 @@
       "description": "Browser flows, accessibility checks."
     },
     {
+      "id": "integration",
+      "name_vi": "Kiểm thử tích hợp",
+      "name_en": "Integration tests",
+      "description": "Tests across modules and real services: database, auth, guards, containers."
+    },
+    {
       "id": "docs",
       "name_vi": "Tài liệu",
       "name_en": "Documentation",

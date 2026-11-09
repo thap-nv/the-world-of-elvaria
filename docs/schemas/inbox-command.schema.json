@@ -163,7 +163,8 @@
                 "incomplete",
                 "style",
                 "unsafe",
-                "other"
+                "other",
+                "flaky"
               ]
             }
           }

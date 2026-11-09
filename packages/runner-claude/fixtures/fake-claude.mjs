@@ -124,9 +124,8 @@ function work(play, question) {
   return finish(play);
 }
 
-function forbidden(play) {
-  const command = play.core.FAKE_FORBIDDEN_COMMAND;
-  const toolId = 'toolu_fake_push';
+/** One Bash call through the hooks and the deny rules, as the real CLI makes it; the denial when refused. */
+function tryCommand(play, command, toolId) {
   speak(play, [{ type: 'tool_use', id: toolId, name: 'Bash', input: { command } }]);
   const answers = runHooks(play.settings, 'PreToolUse', {
     session_id: play.id,
@@ -148,10 +147,14 @@ function forbidden(play) {
     tool_result_meta: meta,
     session_id: play.id,
   });
+  return reason === undefined ? [] : [{ tool_name: 'Bash', tool_use_id: toolId, tool_input: { command } }];
+}
+
+/** `forbidden_command` tries the push; `scratch_commit` a judge's commit then push from its scratch plot (P1-20). */
+function forbidden(play, commands = [play.core.FAKE_FORBIDDEN_COMMAND]) {
+  const denials = commands.flatMap((command, index) => tryCommand(play, command, `toolu_fake_${index + 1}`));
   speak(play, [{ type: 'text', text: 'done' }]);
   writeLetter(play);
-  const denials =
-    reason === undefined ? [] : [{ tool_name: 'Bash', tool_use_id: toolId, tool_input: { command } }];
   return finish(play, { permission_denials: denials });
 }
 
@@ -186,7 +189,8 @@ const SCENARIOS = {
   leak: (play) => leak(play, { speak, runHooks, writeLetter, finish }),
   submit: (play) => work(play),
   ask: (play) => work(play, play.core.FAKE_QUESTION),
-  forbidden_command: forbidden,
+  forbidden_command: (play) => forbidden(play),
+  scratch_commit: (play) => forbidden(play, play.core.FAKE_SCRATCH_COMMANDS),
   rate_limit: rateLimited,
   crash: (play) => {
     process.stderr.write('fake claude: crashed\n');

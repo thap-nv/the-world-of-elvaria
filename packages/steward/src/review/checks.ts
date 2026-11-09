@@ -6,7 +6,7 @@
 // hands them to the judge or the machine, which takes them, so the next judge of the run gets its own run (P1-04).
 // They get the quest's secrets as its sessions do (P1-10b), resolved in the tick before they start, and they tell
 // the owner and the world when they start and end (`check.start`, `check.end`): the quest waits in review meanwhile.
-import { currentRun, err, ok, runDirOf } from '@elvaria/domain';
+import { MS_PER_MINUTE, currentRun, err, exclusiveWaitMinutes, ok, runDirOf } from '@elvaria/domain';
 import { toVerdictCheck } from '@elvaria/runner-core';
 import type { EventData, Quest, QuestId, Result, Territory, VerdictCheck } from '@elvaria/domain';
 
@@ -15,6 +15,7 @@ import { STEWARD } from '../record.ts';
 import { secretsBreaker } from '../sessions/breaker.ts';
 import { questSecretsOf, secretsLacking } from '../sessions/secrets.ts';
 import { deliverableChecks } from './deliverable-checks.ts';
+import { inScratch, trialFor } from './scratch.ts';
 import type { Context } from '../context.ts';
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
@@ -42,13 +43,17 @@ export async function checksOf(
     };
     // A party's merge quest runs every check, its parts leave the deferred ones to it (P1-18, §3.15).
     const role = quest.party_role === undefined ? {} : { party_role: quest.party_role };
-    const runs = await ctx.deps.plots.check({
-      plot: quest.plot,
-      territory,
-      run_dir: runDir,
-      ...given,
-      ...role,
-    });
+    // An exclusive check waits out a judge that holds the territory's lock for its session (P1-20).
+    const minutes = exclusiveWaitMinutes(
+      territory.checks,
+      ctx.world.registry.rituals,
+      ctx.world.kingdom.breakers,
+    );
+    const asked = { territory, run_dir: runDir, lock_wait_ms: minutes * MS_PER_MINUTE, ...given, ...role };
+    // Tests as the product: the checks run again in a clean scratch plot, three times, coverage beside (ADR 0022).
+    const runs = inScratch(ctx, quest)
+      ? await ctx.deps.plots.trial({ ...asked, quest, ...trialFor(ctx, quest) })
+      : await ctx.deps.plots.check({ ...asked, plot: quest.plot });
     // The deliverable's own checks follow the territory's (P1-15: subquests.json of a plan quest), then the party's
     // (P1-18: every part merged into the merge quest).
     return ok([

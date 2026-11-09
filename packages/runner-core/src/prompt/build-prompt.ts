@@ -1,7 +1,7 @@
 // buildPrompt: the prompt of an assignee (new, or continuing after a return or a revival) and of a verifier
 // (implementation-plan §3.7, §10 question 4). The system part opens with the royal decree when the owner wrote
 // one; the user part carries the quest, the gazetteer, the lessons and what the role must read.
-import { FAIL_KINDS } from '@elvaria/domain';
+import { FAIL_KINDS, judgedInScratch, ritualOf } from '@elvaria/domain';
 
 import { toolPolicyOf } from '../policy/tool-policy.ts';
 import {
@@ -123,17 +123,23 @@ function stepsOf(ritual: Ritual, t: PromptTemplates): string {
 function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): BuiltPrompt {
   const { quest, character, registry } = input;
   const characterClass = entryOf(registry.classes, character.class, 'class');
-  const ritual = entryOf(registry.rituals, entryOf(registry.kinds, quest.kind, 'kind').ritual, 'ritual');
+  // The quest's tags may choose the ritual (ADR 0022): tests as the product are judged by mutation_check.
+  const ritual = ritualOf(quest, registry);
+  if (ritual === undefined) throw new Error(`registry has no ritual for kind "${quest.kind}"`);
+  const scratch = judgedInScratch(quest, registry);
+  const plotRule = sectionsOf(t['plot-rules']).get(scratch ? 'scratch_plot' : 'plot');
+  if (plotRule === undefined) throw new Error('prompts/plot-rules.md lacks a section');
   const role = fill(t.verifier, {
     character: character.name,
     class: characterClass.name_en,
     quest_id: quest.id,
     territory: input.territory.name,
     pass_rule: PASS_RULES[ritual.pass_rule],
+    plot_rule: plotRule,
     fail_kinds: FAIL_KINDS.map((kind) => `\`${kind}\``).join(', '),
     language: LANGUAGE_NAMES[input.locale],
     shell: shellBlock(
-      toolPolicyOf({ role: 'verifier', characterClass, character, territory: input.territory }),
+      toolPolicyOf({ role: 'verifier', characterClass, character, territory: input.territory, scratch }),
       t,
     ),
   });

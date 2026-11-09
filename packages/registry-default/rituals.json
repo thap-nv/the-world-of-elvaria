@@ -104,6 +104,25 @@
       "max_seconds": 900
     },
     {
+      "id": "mutation_check",
+      "name_vi": "Thả quái thử thành",
+      "name_en": "Loose a monster on the walls",
+      "steps": [
+        "rerun_clean",
+        "flake_check",
+        "coverage_not_lower",
+        "read_handover",
+        "read_diff",
+        "break_and_expect_red",
+        "judge",
+        "write_verdict"
+      ],
+      "pass_rule": "all_checks_and_agent",
+      "max_seconds": 3600,
+      "scratch_plot": true,
+      "flaky_follow_up": { "kind": "fix", "class": "knight" }
+    },
+    {
       "id": "unit_tally",
       "name_vi": "Điểm quân sau trận",
       "name_en": "Muster after battle",

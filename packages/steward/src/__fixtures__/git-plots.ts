@@ -7,7 +7,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { TerritorySchema, ok } from '@elvaria/domain';
-import { createPlotManager } from '@elvaria/runner-core';
+import { createPlotManager, trialInScratch } from '@elvaria/runner-core';
 import { fromPortable, toPortable } from '@elvaria/store';
 import type { TerritoryId } from '@elvaria/domain';
 
@@ -52,7 +52,10 @@ export async function gitRepoWith(folder: string, files: Readonly<Record<string,
 
 /** Plots of PlotManager: worktrees, commits and patches for real; no check, nothing to release. */
 export function gitPlots(kingdom: string): Plots {
-  const host = { resolve: (name: string) => Promise.resolve({ file: name, args: [] }), env: childEnv() };
+  const host = {
+    resolve: (name: string) => Promise.resolve({ file: name === 'node' ? process.execPath : name, args: [] }),
+    env: childEnv(),
+  };
   const manager = createPlotManager({ kingdom, host });
   return {
     prepare: async (quest, territory, options) => {
@@ -69,6 +72,17 @@ export function gitPlots(kingdom: string): Plots {
     merge: (plot, branches) => manager.merge(plot, branches),
     unmerged: (plot, branches) => manager.unmerged(plot, branches),
     release: () => Promise.resolve(ok({ removed: false, forget_failures: [] })),
+    // The judge's scratch plot as `elvaria run` makes it (P1-20): real worktrees, the checks for real.
+    trial: ({ quest, territory, run_dir: runDir, runs, coverage, lock_wait_ms: wait }) => {
+      const given = { kingdom, quest, territory, run_dir: runDir, runs, coverage };
+      return trialInScratch(manager, wait === undefined ? given : { ...given, lock_wait_ms: wait }, host);
+    },
+    scratch: async (quest, territory) => {
+      const cwd = await manager.scratchOf(quest, territory);
+      if (cwd === undefined) throw new Error(`fixture: ${quest.id} has no scratch plot`);
+      return { plot: { type: 'worktree', path: toPortable(cwd) }, cwd };
+    },
+    releaseScratch: (quest, territory) => manager.releaseScratch(quest, territory),
   };
 }
 

@@ -171,6 +171,7 @@ describe('elvaria tribe', () => {
         '✓ hang',
         '✓ rate_limit',
         '– forbidden_command (skipped: the adapter does not declare it)',
+        '– scratch_commit (skipped: the adapter does not declare it)',
         '✓ ask',
         'Tribe lantern passes the conformance suite and is now enabled in kingdom.json.',
       ]);

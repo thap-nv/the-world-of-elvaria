@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { REGISTRY, SABLE, TERRITORY, THORN } from '../__fixtures__/world.ts';
-import { NO_PUSH_COMMAND, WRITE_TOOLS } from './constants.ts';
+import { NO_COMMIT_RULE, NO_HISTORY_COMMAND, NO_PUSH_COMMAND, WRITE_TOOLS } from './constants.ts';
 import { toolOf, toolPolicyOf } from './tool-policy.ts';
 import type { CharacterClass } from '@elvaria/domain';
 
@@ -188,6 +188,78 @@ describe('NO_PUSH_COMMAND', () => {
   );
 
   it.each(['git status', 'git log --grep push', 'git commit -m "push later"', 'pnpm test'])(
+    'lets %s run',
+    (command) => {
+      expect(law.test(command)).toBe(false);
+    },
+  );
+});
+
+describe('a judge in its scratch plot (ADR 0022, P1-20)', () => {
+  const judge = classOf('judge');
+  const scratch = toolPolicyOf({
+    role: 'verifier',
+    characterClass: judge,
+    territory: TERRITORY,
+    scratch: true,
+  });
+
+  it('gets Edit, Write and git to see and undo its breaks, though its class denies them', () => {
+    expect(judge.tools.deny).toEqual(expect.arrayContaining(['Edit', 'Write']));
+    expect(scratch.tools).toEqual(expect.arrayContaining(['Edit', 'Write', 'Bash']));
+    expect(scratch.allow).toEqual(
+      expect.arrayContaining(['Edit', 'Write', 'Bash(git status:*)', 'Bash(git restore:*)']),
+    );
+    expect(scratch.deny).not.toContain('Edit');
+    expect(scratch.deny).not.toContain('Write');
+  });
+
+  it('may neither commit nor push, nor run the generators of what it judges', () => {
+    expect(scratch.deny).toEqual(expect.arrayContaining([NO_COMMIT_RULE, 'Bash(git push:*)']));
+    expect(scratch.laws.forbidden_commands).toEqual(
+      expect.arrayContaining([NO_PUSH_COMMAND, NO_HISTORY_COMMAND]),
+    );
+    expect(scratch.allow.filter((rule) => rule.includes('generate'))).toEqual([]);
+    expect(scratch.deny).toEqual(expect.arrayContaining(['Read(./infra/secrets/**)', 'Agent']));
+  });
+
+  it("runs the territory's exclusive checks, whose lock the Steward holds for its session (P1-20 (a))", () => {
+    expect(scratch.allow).toContain('Bash(pnpm e2e:*)');
+  });
+
+  it('is asked of a verifier only: an assignee and a judge elsewhere keep their own tools', () => {
+    const plain = toolPolicyOf({ role: 'verifier', characterClass: judge, territory: TERRITORY });
+    expect(plain.tools).not.toContain('Edit');
+    expect(plain.allow).not.toContain('Bash(pnpm e2e:*)');
+    expect(plain.laws.forbidden_commands).not.toContain(NO_HISTORY_COMMAND);
+    const knightOwn = toolPolicyOf({ role: 'assignee', characterClass: knight, territory: TERRITORY });
+    expect(
+      toolPolicyOf({ role: 'assignee', characterClass: knight, territory: TERRITORY, scratch: true }),
+    ).toEqual(knightOwn);
+  });
+});
+
+describe('NO_HISTORY_COMMAND', () => {
+  const law = new RegExp(NO_HISTORY_COMMAND, 'i');
+
+  it.each([
+    'git commit -am "break"',
+    'git -C . commit --allow-empty -m x',
+    'GIT COMMIT -m x',
+    'git merge quest/q',
+    'git reset --hard HEAD~1',
+    'git branch -f quest/q HEAD',
+    'git update-ref refs/heads/quest/q HEAD',
+    'git checkout -B quest/q',
+    'git switch -c other',
+    'git stash',
+    'git --no-pager tag v1',
+    'git worktree add ../x',
+  ])('stops %s', (command) => {
+    expect(law.test(command)).toBe(true);
+  });
+
+  it.each(['git status', 'git diff', 'git restore src/sum.ts', 'git log --grep commit', 'pnpm test'])(
     'lets %s run',
     (command) => {
       expect(law.test(command)).toBe(false);

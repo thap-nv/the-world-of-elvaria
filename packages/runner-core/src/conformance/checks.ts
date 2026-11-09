@@ -76,6 +76,26 @@ const forbiddenCommand = sessionCheck(
   },
 );
 
+/**
+ * A judge in its scratch plot (ADR 0022, P1-20) has Edit and Write and a class that allows git commit and push; the
+ * fences of the plot still refuse both, so what it breaks on purpose never reaches a branch. Fakes only: a live run
+ * of every check costs mana (§10 question 5).
+ */
+const scratchCommit = sessionCheck(
+  'scratch_commit',
+  false,
+  (caps) => caps.tool_gate,
+  ({ result }) => {
+    assert.equal(result.outcome, 'completed', 'a blocked command does not end the session');
+    for (const command of ['git commit', 'git push']) {
+      assert.ok(
+        result.permission_denials.some((denial) => denial.detail.includes(command)),
+        `a judge in its scratch plot ran ${command}`,
+      );
+    }
+  },
+);
+
 const ask = sessionCheck('ask', false, always, ({ result }) => {
   assert.equal(result.question, FAKE_QUESTION, 'the Question section of the letter is the question');
 });
@@ -154,6 +174,7 @@ export const CONFORMANCE_CHECKS: readonly ConformanceCheck[] = [
   hang,
   rateLimit,
   forbiddenCommand,
+  scratchCommit,
   ask,
 ];
 

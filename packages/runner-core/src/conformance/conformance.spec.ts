@@ -39,6 +39,7 @@ describe('the conformance suite', () => {
     expect(reports.filter(({ outcome }) => outcome !== 'passed')).toEqual([
       { id: 'rate_limit', outcome: 'skipped' },
       { id: 'forbidden_command', outcome: 'skipped' },
+      { id: 'scratch_commit', outcome: 'skipped' },
     ]);
   });
 
@@ -46,10 +47,17 @@ describe('the conformance suite', () => {
     // Every session submits: it never crashes, never asks, and its "tool gate" lets the push through.
     const reports = await runConformance(fake({ scenarioOf: () => 'submit' }, 'liar'));
     const failed = reports.filter(({ outcome }) => outcome === 'failed').map(({ id }) => id);
-    expect(failed).toEqual(['crash', 'hang', 'rate_limit', 'forbidden_command', 'ask']);
+    expect(failed).toEqual(['crash', 'hang', 'rate_limit', 'forbidden_command', 'scratch_commit', 'ask']);
     expect(reports.find(({ id }) => id === 'forbidden_command')?.problem).toContain(
       '`git push` was not refused',
     );
+    // A judge in its scratch plot that keeps what it broke on a commit (P1-20).
+    expect(reports.find(({ id }) => id === 'scratch_commit')?.problem).toContain('ran git commit');
+  });
+
+  it('refuses commit and push to a judge in its scratch plot, though its class allows both (P1-20)', async () => {
+    const check = CONFORMANCE_CHECKS.find(({ id }) => id === 'scratch_commit');
+    expect(await check?.run(fake())).toBe('passed');
   });
 
   it('fails a runner that cannot run headless, or whose probe fails', async () => {

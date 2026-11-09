@@ -27,6 +27,7 @@ export const PROMPT_TEMPLATES = [
   'memory',
   'answer',
   'verifier',
+  'plot-rules',
   'review',
   'partial',
   'ritual-steps',

@@ -10,6 +10,7 @@ import { OUT_OF_ATTEMPTS } from '../infirmary.ts';
 import { STEWARD } from '../record.ts';
 import { VERDICT_EVENT, moveOnVerdict, recordVerdict, ritualOf } from '../verdicts.ts';
 import { checksRunOf, takeChecks } from './checks.ts';
+import { openFlakyFollowUp, releaseScratch } from './scratch.ts';
 import type { Context } from '../context.ts';
 
 export async function machineReview(ctx: Context, questId: QuestId): Promise<Result<Quest, string>> {
@@ -28,6 +29,9 @@ export async function machineReview(ctx: Context, questId: QuestId): Promise<Res
   if (!written.ok) return written;
   // machineVerdictOf gives a pass or a fail, never a partial: nobody stopped reading.
   const result = written.value.result === 'pass' ? 'pass' : 'fail';
+  // No judge comes into the scratch plot of the trial (ADR 0022); a flake opens its quest all the same (P1-20).
+  await releaseScratch(ctx, questId);
+  if (result === 'fail') await openFlakyFollowUp(ctx, quest, written.value);
   return moveOnVerdict(
     ctx,
     quest,

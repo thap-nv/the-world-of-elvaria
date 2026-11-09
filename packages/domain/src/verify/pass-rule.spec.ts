@@ -3,7 +3,15 @@ import { describe, expect, it } from 'vitest';
 import { Q1 } from '../dispatch/__fixtures__/snapshot.ts';
 import { VerdictSchema } from '../schema/quest/verdict.ts';
 import { LINT, NOTES, UNIT, verdictOf } from './__fixtures__/verdicts.ts';
-import { PARTY_CHECK_ID, SUBQUESTS_CHECK_ID, failedChecksNote, underPassRule } from './pass-rule.ts';
+import {
+  COVERAGE_CHECK_ID,
+  FLAKE_CHECK_ID,
+  PARTY_CHECK_ID,
+  RERUN_CLEAN_CHECK_ID,
+  SUBQUESTS_CHECK_ID,
+  failedChecksNote,
+  underPassRule,
+} from './pass-rule.ts';
 import type { Verdict } from '../schema/quest/verdict.ts';
 describe('underPassRule', () => {
   const judgedPass = verdictOf({ checks: [LINT, UNIT], notes: 'Looks right to me.' });
@@ -40,6 +48,18 @@ describe('underPassRule', () => {
     expect(underPassRule(verdictOf({ checks: [LINT, party] }), 'all_checks_and_agent')).toMatchObject({
       result: 'fail',
       fail_kind: 'incomplete',
+    });
+  });
+
+  it.each([
+    [FLAKE_CHECK_ID, 'flaky'],
+    [COVERAGE_CHECK_ID, 'incomplete'],
+    [RERUN_CLEAN_CHECK_ID, 'tests_fail'],
+  ])("fails a pass the scratch plot's %s check overrules as %s (P1-20)", (id, kind) => {
+    const failing = { ...UNIT, id, log_path: `.runs/${Q1}-1/checks/${id}.log` };
+    expect(underPassRule(verdictOf({ checks: [LINT, failing] }), 'all_checks_and_agent')).toMatchObject({
+      result: 'fail',
+      fail_kind: kind,
     });
   });
 

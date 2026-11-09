@@ -62,6 +62,22 @@ Challenge the scope: what is missing, what goes beyond the request, and whether 
 
 Count the units by outcome and check each against its evidence.
 
+## rerun_clean
+
+The machine checks above ran in your scratch plot, made fresh from the quest's branch: the territory's setup, then its reset (a clean database, fresh containers) before each run. Trust them over the assignee's account of a green run; `rerun_clean` fails when the plot could not be set up or reset from the branch.
+
+## flake_check
+
+The machine ran the checks up to three times on the same commit while every run passed. `flake_check` fails when a check passed in one run and failed in another: the quest then fails as `flaky`, and the Steward opens a quest to exorcise the flake. Without a `flake_check` among the machine checks, the first run failed and there was nothing to repeat.
+
+## coverage_not_lower
+
+The machine measured coverage on the branch and on the commit it forked from. `coverage_not_lower` fails when a total dropped, as `incomplete`. Without that check the territory measures no coverage: say so in your notes, and judge from the diff whether the new tests reach the code they claim to cover.
+
+## break_and_expect_red
+
+Prove the new tests guard something. In your scratch plot, break on purpose the code they claim to cover, never the tests themselves: invert a condition, drop a statement, return a wrong value. Run the tests that should catch it with a command your shell allows: they must fail. Restore the file (`git restore <file>`) and check they pass again. Break at least two different places. Tests that stay green on a break fail the quest with `fail_kind` `incomplete`: name the break, the file and line, and the test that missed it. In a scratch plot your shell also runs the territory's exclusive checks (e2e, Docker): the Steward holds their lock for your session. When no command your shell allows runs those tests, say so in your notes instead of guessing.
+
 ## judge
 
 Weigh what the steps found and decide: pass, fail or partial.

@@ -6,8 +6,17 @@
   `src/schema/contracts.ts`): kingdom, territory, quest, character, campaign, verdict, lesson, event,
   inbox-command, the five registry files, skill, quest-draft and world-map, with their TypeScript types.
   `pnpm schemas` writes `docs/schemas/` from them; each contract's `examples` live in `examples/`.
-- Checks a registry across its five files (`parseRegistry`, `checkRegistry`): unknown ritual, class, kind or
-  step, duplicate ids, a verifier allowed to take work, a class and a kind that disagree.
+- Checks a registry across its five files (`parseRegistry`, `checkRegistry`): unknown ritual, class, kind,
+  step or tag (a kind's `ritual_overrides`, P1-20), duplicate ids, a verifier allowed to take work, a class and a
+  kind that disagree, a follow-up (a script's `follow_up`, a ritual's `flaky_follow_up`) the kingdom cannot make.
+- Chooses the ritual that judges a quest (`ritualOf`, ADR 0011, 0022; P1-20): the kind's, unless one of its
+  `ritual_overrides` meets the quest's tags (tests as the product: `build`/`refactor` tagged `e2e` or
+  `integration` → `mutation_check`); `judgedInScratch` says its judge works in a scratch plot (a ritual with
+  `scratch_plot`, a git worktree). What the machine decides there is pure too (`src/verify/trial.ts`):
+  `rerunDue` (up to `FLAKE_RUNS` runs while every run passes), `exclusiveWaitMinutes` (how long an exclusive check waits for a judge that holds the lock), `flakyChecksOf`, `coverageTotalsOf` (an istanbul
+  json-summary) and `coverageDropsOf` (counts compared, no rounding); `flakyFollowUpOf` builds the quest that
+  exorcises a flake, of the kind and class the ritual's `flaky_follow_up` names. `commandLinesOf` reads a
+  territory command that may be a list (`checks[].run`, `commands.reset`, `commands.coverage`).
 - Runs the quest state machine (`src/quest/`): the table of moves is data (`QUEST_TRANSITIONS`), and
   `transition(quest, event, actor)` is the only way a quest changes status. It keeps `attempts`, the attempt log
   and who holds the quest, refuses what the table does not allow, and validates the result against the schema.
@@ -64,7 +73,7 @@
   or of its party, never the assignee's model, another model family first by `familyOf`, then another tribe;
   `dispatch.verifier_same_family` for the rest), `underPassRule` (a failing check fails the quest under
   `all_checks_and_agent`, as `tests_fail`, or `incomplete` for the Steward's `subquests` check, P1-15, and its
-  `party` check of a merge quest, P1-18), `machineVerdictOf` (the machine's verdict from the checks), `validateVerdict` (no
+  `party` check of a merge quest, P1-18, and `coverage_not_lower`, P1-20, or `flaky` for `flake_check`), `machineVerdictOf` (the machine's verdict from the checks), `validateVerdict` (no
   worker, only the session the Steward spawned, no pass over a failing check) and the verdict ids of a run
   (`<quest>-<n>`, `-p<k>` for a partial, `-user` for the owner's). `withVerdict` (`src/character/`) puts a
   verdict into the reputation and tag windows and the fail streak.

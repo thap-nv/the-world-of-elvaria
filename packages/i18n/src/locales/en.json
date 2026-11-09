@@ -517,6 +517,7 @@
     "registry.issue.unknown_kind": "{where}: quest kind not in kinds.json.",
     "registry.issue.unknown_ritual": "{where}: ritual not in rituals.json.",
     "registry.issue.unknown_step": "{where}: unknown ritual step.",
+    "registry.issue.unknown_tag": "{where}: tag not in tags.json.",
     "registry.issue.verifier_and_monk": "{where}: a class cannot both verify and be a monk.",
     "registry.issue.verifier_takes_work": "{where}: a verifier class takes no work (the one who does never judges).",
     "sandbox.fake_data": "FAKE DATA",

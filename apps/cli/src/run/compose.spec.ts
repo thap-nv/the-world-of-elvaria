@@ -91,6 +91,10 @@ describe('plots over PlotManager', () => {
     merge: () => Promise.reject(new Error('unused')),
     unmerged: () => Promise.reject(new Error('unused')),
     release: () => Promise.reject(new Error('unused')),
+    prepareScratch: () => Promise.reject(new Error('unused')),
+    checkoutScratch: () => Promise.reject(new Error('unused')),
+    releaseScratch: () => Promise.reject(new Error('unused')),
+    scratchOf: () => Promise.reject(new Error('unused')),
   });
   const kingdom = path.resolve('kingdom root');
   const HOST = processHostOf(testIo());

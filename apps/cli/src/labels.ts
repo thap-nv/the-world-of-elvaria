@@ -57,6 +57,7 @@ export const REGISTRY_ISSUE_LABEL: Readonly<Record<RegistryIssueCode, MessageKey
   unknown_class: 'registry.issue.unknown_class',
   unknown_kind: 'registry.issue.unknown_kind',
   unknown_step: 'registry.issue.unknown_step',
+  unknown_tag: 'registry.issue.unknown_tag',
   verifier_and_monk: 'registry.issue.verifier_and_monk',
   verifier_takes_work: 'registry.issue.verifier_takes_work',
   class_kind_mismatch: 'registry.issue.class_kind_mismatch',

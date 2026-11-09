@@ -19,7 +19,8 @@ export interface FailedRun {
   readonly locale: Kingdom['owner']['locale'];
 }
 
-const clipTitle = (title: string): string =>
+/** A title the quest contract accepts: cut with an ellipsis at QUEST_TITLE_MAX_LENGTH. */
+export const clipTitle = (title: string): string =>
   title.length <= QUEST_TITLE_MAX_LENGTH ? title : `${title.slice(0, QUEST_TITLE_MAX_LENGTH - 1)}…`;
 
 /**

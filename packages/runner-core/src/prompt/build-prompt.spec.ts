@@ -199,7 +199,7 @@ describe('assignee prompt', () => {
     const { user } = buildPrompt({ ...assignee, quest: plan, territory }, templates);
     expect(user).toContain('- Kinds of a sub-quest and the classes each allows: build (knight, dwarf);');
     expect(user).toContain('plan (mage)');
-    expect(user).toContain('- Tags: frontend, backend, db, infra, i18n, e2e, docs');
+    expect(user).toContain('- Tags: frontend, backend, db, infra, i18n, e2e, integration, docs');
     expect(user).toContain('- Secrets this territory allows: npm_token');
     expect(buildPrompt({ ...assignee, quest: plan }, templates).user).toContain(
       '- Secrets this territory allows: none',

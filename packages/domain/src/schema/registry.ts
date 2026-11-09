@@ -33,6 +33,7 @@ export type RegistryIssueCode =
   | 'unknown_class'
   | 'unknown_kind'
   | 'unknown_step'
+  | 'unknown_tag'
   | 'verifier_and_monk'
   | 'verifier_takes_work'
   | 'class_kind_mismatch'
@@ -108,7 +109,24 @@ function duplicateIds(registry: Registry): RegistryIssue[] {
   });
 }
 
-function kindRules({ kinds, classes, rituals }: Registry): RegistryIssue[] {
+/** Each override names a known ritual and known tags (ADR 0022): a typo would quietly keep the kind's ritual. */
+function overrideRules(registry: Registry, kind: Kind, index: number): RegistryIssue[] {
+  const ritualIds = new Set<string>(registry.rituals.map((ritual) => ritual.id));
+  const tagIds = new Set<string>(registry.tags.map((tag) => tag.id));
+  return (kind.ritual_overrides ?? []).flatMap((override, position) => {
+    const path = ['kinds', index, 'ritual_overrides', position];
+    const ritual = ritualIds.has(override.ritual)
+      ? []
+      : [issue('kinds', [...path, 'ritual'], 'unknown_ritual', `no ritual "${override.ritual}"`)];
+    const tags = override.tags_any.flatMap((tag, at) =>
+      tagIds.has(tag) ? [] : [issue('kinds', [...path, 'tags_any', at], 'unknown_tag', `no tag "${tag}"`)],
+    );
+    return [...ritual, ...tags];
+  });
+}
+
+function kindRules(registry: Registry): RegistryIssue[] {
+  const { kinds, classes, rituals } = registry;
   const ritualIds = new Set<string>(rituals.map((ritual) => ritual.id));
   const classById = new Map<string, CharacterClass>(classes.map((entry) => [entry.id, entry]));
   return kinds.flatMap((kind, index) => {
@@ -124,7 +142,7 @@ function kindRules({ kinds, classes, rituals }: Registry): RegistryIssue[] {
       if (entry.kinds.includes(kind.id)) return [];
       return [issue('kinds', path, 'class_kind_mismatch', `${classId} does not list kind ${kind.id}`)];
     });
-    return [...ritual, ...allowed];
+    return [...ritual, ...allowed, ...overrideRules(registry, kind, index)];
   });
 }
 
@@ -154,15 +172,16 @@ function classRules({ kinds, classes }: Registry): RegistryIssue[] {
   });
 }
 
-function ritualRules({ rituals }: Registry): RegistryIssue[] {
+function ritualRules({ kinds, rituals }: Registry): RegistryIssue[] {
   const known = new Set<string>(RITUAL_STEPS);
-  return rituals.flatMap((ritual, index) =>
-    ritual.steps.flatMap((step, position) =>
+  return rituals.flatMap((ritual, index) => [
+    ...ritual.steps.flatMap((step, position) =>
       known.has(step)
         ? []
         : [issue('rituals', ['rituals', index, 'steps', position], 'unknown_step', `unknown step "${step}"`)],
     ),
-  );
+    ...followUpRules(kinds, ritual.flaky_follow_up, 'rituals', ['rituals', index, 'flaky_follow_up']),
+  ]);
 }
 
 function scriptRules({ kinds, scripts }: Registry): RegistryIssue[] {
@@ -185,19 +204,26 @@ function scriptRules({ kinds, scripts }: Registry): RegistryIssue[] {
         ? []
         : [issue('scripts', ['scripts', index, 'kinds', position], 'unknown_kind', `no kind "${kindId}"`)],
     );
-    return [...entry, ...unknown, ...followUpRules(kinds, script, index)];
+    const followUp = followUpRules(kinds, script.follow_up, 'scripts', ['scripts', index, 'follow_up']);
+    return [...entry, ...unknown, ...followUp];
   });
 }
 
-/** The quest a failed run opens must be one the kingdom can make: a known kind, a class it allows (P1-17). */
-function followUpRules(kinds: Registry['kinds'], script: CatalogScript, index: number): RegistryIssue[] {
-  const followUp = script.follow_up;
+/**
+ * The quest the Steward opens on its own must be one the kingdom can make: a known kind, a class it allows (a failed
+ * script run, P1-17; a flaky verdict, P1-20).
+ */
+function followUpRules(
+  kinds: Registry['kinds'],
+  followUp: CatalogScript['follow_up'],
+  file: RegistryFile,
+  path: Path,
+): RegistryIssue[] {
   if (followUp === undefined) return [];
-  const path = ['scripts', index, 'follow_up'];
   const kind = kinds.find(({ id }) => id === followUp.kind);
   if (kind === undefined)
-    return [issue('scripts', [...path, 'kind'], 'unknown_kind', `no kind "${followUp.kind}"`)];
+    return [issue(file, [...path, 'kind'], 'unknown_kind', `no kind "${followUp.kind}"`)];
   if (kind.classes_allowed.includes(followUp.class)) return [];
   const message = `kind ${kind.id} does not allow class ${followUp.class}`;
-  return [issue('scripts', [...path, 'class'], 'class_kind_mismatch', message)];
+  return [issue(file, [...path, 'class'], 'class_kind_mismatch', message)];
 }

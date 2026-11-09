@@ -517,6 +517,7 @@
     "registry.issue.unknown_kind": "{where}: dạng nhiệm vụ không có trong kinds.json.",
     "registry.issue.unknown_ritual": "{where}: nghi thức không có trong rituals.json.",
     "registry.issue.unknown_step": "{where}: bước nghi thức không có.",
+    "registry.issue.unknown_tag": "{where}: chuyên môn không có trong tags.json.",
     "registry.issue.verifier_and_monk": "{where}: một nghề không thể vừa nghiệm thu vừa là thầy tu.",
     "registry.issue.verifier_takes_work": "{where}: nghề nghiệm thu không được nhận việc (người làm không phán).",
     "sandbox.fake_data": "DỮ LIỆU GIẢ",

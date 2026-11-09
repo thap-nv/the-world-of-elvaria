@@ -30,13 +30,24 @@ export const SUBQUESTS_CHECK_ID = 'subquests' as CheckId;
 export const PARTY_CHECK_ID = 'party' as CheckId;
 
 /**
+ * The checks the machine adds in a scratch plot (P1-20, ADR 0022), named after their ritual steps: the plot could be
+ * set up and reset clean from the branch, no check passed and failed on the same commit, coverage did not drop.
+ */
+export const RERUN_CLEAN_CHECK_ID = 'rerun_clean' as CheckId;
+export const FLAKE_CHECK_ID = 'flake_check' as CheckId;
+export const COVERAGE_CHECK_ID = 'coverage_not_lower' as CheckId;
+
+/**
  * What a failing check says about the work (P1-15): a sub-quest list the Steward would refuse is unfinished work,
- * not a failing test, and so is a merge quest missing a part (P1-18). Every other check, the territory's own, fails
- * as `tests_fail`.
+ * not a failing test, and so is a merge quest missing a part (P1-18) or tests that leave code uncovered that the base
+ * covered (P1-20); a check that flakes is `flaky`, which opens a quest to exorcise it. Every other check, the
+ * territory's own, fails as `tests_fail`.
  */
 const CHECK_FAIL_KINDS: Readonly<Partial<Record<string, FailKind>>> = {
   [SUBQUESTS_CHECK_ID]: 'incomplete',
   [PARTY_CHECK_ID]: 'incomplete',
+  [COVERAGE_CHECK_ID]: 'incomplete',
+  [FLAKE_CHECK_ID]: 'flaky',
 };
 
 /**

@@ -55,6 +55,7 @@ Kiểm tra link trong docs rồi viết lại README cho rõ phần cài đặt.
 - `infra`: Infrastructure. Build, CI, Docker, deploy, tooling scripts.
 - `i18n`: Internationalisation. Locales, translated strings, language style.
 - `e2e`: End-to-end tests. Browser flows, accessibility checks.
+- `integration`: Integration tests. Tests across modules and real services: database, auth, guards, containers.
 - `docs`: Documentation. Markdown docs, specs, READMEs, ADRs.
 
 # Script catalog

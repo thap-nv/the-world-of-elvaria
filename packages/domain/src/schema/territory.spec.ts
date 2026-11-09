@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import examples from '../../examples/territory.json' with { type: 'json' };
-import { TerritorySchema, namesNoGitFolder } from './territory.ts';
+import { TerritorySchema, commandLinesOf, namesNoGitFolder } from './territory.ts';
 
 const [example] = examples;
 
@@ -84,10 +84,20 @@ describe('TerritorySchema', () => {
     ],
     ['an unknown territory kind', { kind: 'library' }, 'kind'],
     ['an empty generator command', { commands: { generate: [''] } }, 'commands.generate.0'],
+    ['a check with no command', { checks: [{ ...check('lint'), run: [] }] }, 'checks.0.run'],
+    ['an empty reset command', { commands: { reset: ['pnpm db:reset', ''] } }, 'commands.reset'],
     ['an empty read-only glob', { laws: { read_only_paths: [''] } }, 'laws.read_only_paths.0'],
     ['a patch glob into git', { laws: { patch_paths: ['.git/**'] } }, 'laws.patch_paths.0: a patch never'],
   ])('rejects %s', (_, change, expected) => {
     expect(issuesOf({ ...minimal, ...change }).join('\n')).toContain(expected);
+  });
+
+  it('takes a check, a reset and a coverage command as one command or a list run in order (P1-20)', () => {
+    const drift = { ...check('openapi'), run: ['pnpm api:openapi', 'git diff --exit-code'] };
+    const commands = { reset: 'pnpm db:reset', coverage: ['pnpm test --coverage'] };
+    expect(issuesOf({ ...minimal, checks: [drift], commands })).toEqual([]);
+    expect(commandLinesOf(drift.run)).toEqual(['pnpm api:openapi', 'git diff --exit-code']);
+    expect(commandLinesOf('pnpm lint')).toEqual(['pnpm lint']);
   });
 
   it('lets a patch reach the folders a CLI guards, never git under any spelling (P1-28)', () => {
