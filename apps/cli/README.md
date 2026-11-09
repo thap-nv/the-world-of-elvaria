@@ -57,8 +57,10 @@
 - Mana gauges for `character list` and `doctor` (`src/gauges.ts`, P1-32), folded from the Steward's `mana.*`
   lines in the event log, since the Steward keeps no file of them: which gauges sleep (`mana.exhausted` /
   `mana.restored`), the latest reading of each window still in force (`mana.level`, and `mana.warning` for a
-  model's own cap) with its reset. `character list` marks each character a sleeping gauge binds and lists the
-  sleeping gauges under the table.
+  model's own cap) with its reset. `character list` marks each character the Steward put to sleep for mana
+  (`sleeping_mana`) with the gauge it waits for, a model's own cap before its pool, and lists the sleeping gauges
+  under the table. Only those: the log does not keep the models an account lists in a group, so the prefix table
+  alone would call an Argon character bound by "Gemini Models", which the Steward, reading agy's `/usage`, does not.
 - `run`: puts the work engine together and runs the Steward until Ctrl+C (`CliIo.untilStopped`): a runner per
   enabled tribe from `kingdom.tribes[].adapter` (`src/run/crew.ts`: `claude_code`, with `hookCommand` and
   `HOOK_SCRIPT` of `@elvaria/hooks`, and since P1-15 `antigravity` from the pinned agy, built on first use in

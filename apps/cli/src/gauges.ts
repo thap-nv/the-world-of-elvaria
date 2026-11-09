@@ -84,14 +84,20 @@ export async function readGauges(root: string, now: Instant): Promise<GaugeView[
 }
 
 /**
- * The sleeping gauge that keeps `character` from work, if any: a model's cap its slug names, or its pool. The log
- * does not keep the models an account lists in a group, so a pool binds by the prefix table (poolOf).
+ * The sleeping gauge a character the Steward put to sleep waits for: a model's cap its slug names first, else its
+ * pool. Only `sleeping_mana` characters: the Steward knows the models the account lists in each group (agy's
+ * `/usage`), the log does not, and the prefix table alone would call Argon bound by "Gemini Models" when the account
+ * says it is not; the character's own status is the Steward's word.
  */
-export const blockingGauge = (
+export function blockingGauge(
   gauges: readonly GaugeView[],
   tribes: readonly Tribe[],
-  character: Pick<Character, 'tribe' | 'model'>,
-): GaugeView | undefined => gauges.find((gauge) => gauge.asleep && binds(tribes, gauge, character));
+  character: Pick<Character, 'tribe' | 'model' | 'status'>,
+): GaugeView | undefined {
+  if (character.status !== 'sleeping_mana') return undefined;
+  const binding = gauges.filter((gauge) => gauge.asleep && binds(tribes, gauge, character));
+  return binding.find(({ model }) => model !== undefined) ?? binding[0];
+}
 
 export const gaugeName = (t: Translate, { tribe, pool, model }: PoolKey): string =>
   model === undefined

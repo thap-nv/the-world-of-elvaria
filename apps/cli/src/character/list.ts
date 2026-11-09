@@ -1,6 +1,6 @@
-// `elvaria character list`: the kingdom's characters, with class, tribe, model, level and status. A character a
-// sleeping mana gauge keeps from work is marked, and the sleeping gauges follow the table with their latest
-// readings and resets (P1-32), so the owner sees why it takes nothing.
+// `elvaria character list`: the kingdom's characters, with class, tribe, model, level and status. A character the
+// Steward put to sleep for mana is marked with the gauge it waits for, and the sleeping gauges follow the table with
+// their latest readings and resets (P1-32), so the owner sees why it takes nothing.
 import type { Character, Registry } from '@elvaria/domain';
 
 import { EXIT } from '../command.ts';
@@ -12,7 +12,7 @@ import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command
 import type { GaugeView } from '../gauges.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
-/** The status, marked with the sleeping gauge that binds the character. */
+/** The status; asleep for mana, marked with the sleeping gauge the character waits for. */
 function statusCell(ctx: KingdomContext, gauges: readonly GaugeView[], character: Character): string {
   const status = ctx.t(CHARACTER_STATUS_LABEL[character.status]);
   const gauge = blockingGauge(gauges, ctx.kingdom.tribes, character);

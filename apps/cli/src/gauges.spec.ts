@@ -1,8 +1,9 @@
 // The mana gauges the Steward logged (P1-32): folded from its `mana.*` lines, then shown by `character list` (the
-// characters a sleeping gauge binds are marked) and `doctor` (every gauge, its readings and resets).
+// characters the Steward put to sleep are marked with their gauge) and `doctor` (every gauge, readings, resets).
 import { EventSchema, InstantSchema } from '@elvaria/domain';
-import type { Event } from '@elvaria/domain';
+import type { CharacterId, Event } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
+import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { NOW, foundKingdom, printed, run, tempDir, testIo } from '../test/cli.ts';
@@ -104,26 +105,60 @@ describe('elvaria character list and doctor with the gauges the Steward logged',
   const claudeFull = `5-hour window: 100% used, resets at ${RESETS} (read at ${READ_AT}, source signal).`;
   const unmeasured = 'Not measured: the log has no reading of this gauge still in force.';
 
-  it('marks the characters a sleeping gauge binds, then names the gauge with its readings and reset', async () => {
+  /** What the Steward's settleSleepers writes for a character a sleeping gauge binds. */
+  async function putToSleep(id: string): Promise<void> {
+    const store = openKingdom(kingdom);
+    const read = await store.characters.read(id as CharacterId);
+    if (!read.ok) throw new Error(`no character ${id}`);
+    const asleep = { status: 'sleeping_mana', status_before_sleep: 'idle', status_since: READ_AT } as const;
+    const written = await store.characters.write({ ...read.value, ...asleep });
+    if (!written.ok) throw new Error(written.error.message);
+  }
+
+  it('marks the characters the Steward put to sleep with the gauge they wait for, then lists the gauges', async () => {
+    // Argon's cap and the whole Gemini group both asleep, Claude's pool too.
+    await openEventLog(kingdom).append([...DAY(), manaLine('mana.exhausted', GEMINI)]);
+    // A second Argon character the Steward left awake: the account does not list Argon in the group, the prefix
+    // table would (gemini-*). It is not marked: the Steward's word, its status, decides.
+    await run(
+      testIo(),
+      'character',
+      'add',
+      'sage',
+      '--class',
+      'scribe',
+      '--tribe',
+      'gemini',
+      '--model',
+      'gemini-4-argon-medium',
+      '--kingdom',
+      kingdom,
+    );
+    for (const id of ['thorn', 'quill', 'wren']) await putToSleep(id);
+    const io = testIo();
+    expect(await run(io, 'character', 'list', '--kingdom', kingdom, '--locale', 'en')).toBe(0);
+    const row = (id: string) => io.printed.out.find((line) => line.startsWith(id));
+    expect(row('thorn')).toMatch(/Asleep \(out of mana\) \(blocked: tribe claude, pool claude asleep\)$/);
+    // Its own cap, not the group the prefix table would also give it.
+    expect(row('quill')).toMatch(/\(blocked: tribe gemini, pool gemini_models, argon's own cap asleep\)$/);
+    expect(row('wren')).toMatch(/\(blocked: tribe gemini, pool gemini_models asleep\)$/);
+    expect(row('sage')).toMatch(/Idle$/);
+    const under = io.printed.out.slice(io.printed.out.indexOf('') + 1);
+    expect(under.filter((line) => !line.startsWith(' '))).toEqual([
+      'Mana gauge asleep: tribe gemini, pool gemini_models. The characters it binds take no work until the Steward finds the mana back.',
+      asleepClaude,
+      asleepArgon,
+    ]);
+    expect(under).toContain(`    ${claudeFull}`);
+    expect(under.at(-1)).toBe(`    ${unmeasured}`);
+  });
+
+  it('marks nobody the Steward has not put to sleep, even when a sleeping gauge would bind them', async () => {
     await openEventLog(kingdom).append(DAY());
     const io = testIo();
     expect(await run(io, 'character', 'list', '--kingdom', kingdom, '--locale', 'en')).toBe(0);
-    const [, ...rows] = io.printed.out;
-    expect(rows.find((row) => row.startsWith('thorn'))).toMatch(
-      /Idle \(blocked: tribe claude, pool claude asleep\)$/,
-    );
-    expect(rows.find((row) => row.startsWith('quill'))).toMatch(
-      /blocked: tribe gemini, pool gemini_models, argon's own cap asleep\)$/,
-    );
-    expect(rows.find((row) => row.startsWith('wren'))).toMatch(/Idle$/);
-    expect(io.printed.out.slice(-6)).toEqual([
-      '',
-      asleepClaude,
-      `    weekly window: 30% used, resets at 2026-11-10T09:00:00+07:00 (read at ${READ_AT}, source rate_limits).`,
-      `    ${claudeFull}`,
-      asleepArgon,
-      `    ${unmeasured}`,
-    ]);
+    expect(io.printed.out.join('\n')).not.toContain('blocked');
+    expect(io.printed.out).toContain(asleepClaude);
   });
 
   it('doctor warns of each sleeping gauge with its reset, and gives the awake ones their readings', async () => {
