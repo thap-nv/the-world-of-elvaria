@@ -23,7 +23,7 @@ const REGISTRY: Pick<Registry, 'kinds' | 'rituals'> = {
   rituals: ['build_review', 'source_check', 'mutation_check', 'stress_test'].map(ritual),
 };
 
-const quest = (kindId: string, ...ids: string[]): Pick<Quest, 'kind' | 'tags'> => ({
+const quest = (kindId: string, ...ids: string[]): Pick<Quest, 'kind' | 'tags' | 'party_role'> => ({
   kind: kindId as Quest['kind'],
   tags: tags(...ids),
 });
@@ -38,6 +38,13 @@ describe('ritualOf', () => {
     expect(ritualOf(quest('build', 'integration'), REGISTRY)?.id).toBe('mutation_check');
     expect(ritualOf(quest('build', 'db', 'e2e'), REGISTRY)?.id).toBe('mutation_check');
     expect(ritualOf(quest('build', 'db'), REGISTRY)?.id).toBe('stress_test');
+  });
+
+  it("keeps the blind trial's acceptance part on its kind's ritual, the merge quest taking the overrides (P1-21)", () => {
+    expect(ritualOf({ ...quest('build', 'e2e'), party_role: 'acceptance' }, REGISTRY)?.id).toBe(
+      'build_review',
+    );
+    expect(ritualOf({ ...quest('build', 'e2e'), party_role: 'merge' }, REGISTRY)?.id).toBe('mutation_check');
   });
 
   it('judges in a scratch plot only under a ritual that asks for one, on a git worktree', () => {
