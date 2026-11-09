@@ -28,6 +28,14 @@ Dữ kiện về CLI đã có, đừng tra lại: [cli-facts](../../docs/referen
 - Claude (ADR 0007, §3.7): `-p --output-format stream-json`, `--settings <run_dir>/settings.json` (dontAsk, allow/deny từ `ToolPolicy`, `Read(./**)`/`Edit(./**)`/`Write(./**)`, `autoMemoryEnabled: false`, tắt attribution), `--tools`, `--strict-mcp-config`, `--setting-sources project,local`. Kiểm settings sinh ra bằng schema; phiên hỏng khi hook `SessionStart` của Elvaria không ghi nhận nó.
 - Antigravity (ADR 0018, spike P1-12a): hook `PreToolUse` bắt buộc, trả `deny_unless_prior_grant` hoặc `deny`, không bao giờ `allow`/`auto_approve`; đặt `AGY_CLI_DISABLE_AUTO_UPDATE=true`; `agy.log` là dữ liệu riêng.
 
+## Bẫy đã gặp
+
+- Claude Code 2.1.319 tự khóa Edit/Write trên `.git`, `.husky`, `.claude`, `.vscode`… (37 tên) trước mọi allow rule; `dontAsk` biến thành từ chối trần, luật lãnh thổ không mở được ([spike Claude](../../docs/spikes/claude-2026-11.md) "Bổ sung (P1-24, ghi ở P1-28)").
+- Usage của Claude đếm cả `cache_read_input_tokens` (85–90 % số đếm); trần token của cầu dao cân nó qua `countedTokens` (implementation-plan §3.12, P1-23), đừng cộng thẳng.
+- Gọi `agy` từ Git Bash: đối số bắt đầu bằng `/` bị đổi thành đường dẫn Windows; đặt `MSYS_NO_PATHCONV=1` ([spike Antigravity](../../docs/spikes/antigravity-2026-11.md) §0).
+- Windows: tiến trình con vừa bị kill vẫn giữ thư mục một lúc (`EBUSY`); xóa plot hay thư mục tạm của test bằng `rm` có `maxRetries` (`clearPlot`, `conformance/workspace.ts`).
+- `.git/info/exclude` không che file với Prettier: file sinh theo lần chạy trong plot (`.agents/`) lọt vào `format:check` của lãnh thổ (P1-16).
+
 ## Test
 
 - `FakeRunner` và bộ test hợp đồng (conformance) chạy với mọi adapter. Adapter test bằng CLI giả phát lại fixture thật đã che trong `packages/runner-*/fixtures/`, giữ theo phiên bản CLI.

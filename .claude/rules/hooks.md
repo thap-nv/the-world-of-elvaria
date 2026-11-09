@@ -23,6 +23,10 @@ paths:
 - Không ghi env ra đâu cả (env có `CLAUDE_CODE_MESSAGING_TOKEN`); không đọc `kingdom.json`, transcript, `~/.claude/`.
 - Dòng nào runner ghi từ stream thì hook không ghi (`agent.session.end`, `agent.subagent.*`): một việc, một dòng.
 
+## Đọc stdin
+
+- `readFileSync(0)` gặp `EAGAIN` giữa chừng (pipe non-blocking, bên ghi chưa đóng) thì bỏ phần đã đọc; nhánh dự phòng phải giữ phần đó (P1-36). Payload không đọc được: `PreToolUse` chặn, không cho qua.
+
 ## Event log
 
 - Append-only, một `write()` mỗi dòng, không fsync, không bao giờ viết lại. Đổi tên hay payload của event type đã phát cần hàm migrate theo `v` trong `src/migrations/`.
