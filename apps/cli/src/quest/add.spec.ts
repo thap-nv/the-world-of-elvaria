@@ -203,6 +203,25 @@ describe('elvaria quest add', () => {
     expect(io.printed.err).toEqual(['Kind build needs --class, one of: knight, dwarf.']);
   });
 
+  it("opens a party's contract quest with --contract, only of a kind that delivers sub-quests (P1-18)", async () => {
+    expect(await add(testIo(), ...required, '--kind', 'plan', '--rank', 'D', '--contract')).toBe(0);
+    expect((await inbox())[0]?.payload).toMatchObject({
+      kind: 'plan',
+      class_required: 'mage',
+      party_role: 'contract',
+    });
+    const io = testIo();
+    const build = ['--kind', 'build', '--rank', 'D', '--class', 'knight', '--contract'];
+    expect(await add(io, ...required, ...build)).toBe(1);
+    expect(io.printed.err).toEqual([
+      '--contract opens a party: the kind must deliver a list of sub-quests (plan), and not on the script tier.',
+    ]);
+    expect(await inbox()).toHaveLength(1);
+    expect(await add(testIo(), ...required, '--kind', 'plan', '--rank', 'D', '--no-contract')).toBe(0);
+    const roles = (await inbox()).map(({ payload }) => ('party_role' in payload ? payload.party_role : null));
+    expect(roles.toSorted()).toEqual(['contract', null]);
+  });
+
   describe('--to (P1-29)', () => {
     const summon = (id: string, ...args: string[]) =>
       run(testIo(), 'character', 'add', id, ...args, '--kingdom', kingdom);

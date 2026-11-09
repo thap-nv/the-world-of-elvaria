@@ -4,7 +4,7 @@
 // program not found, the exclusive lock never freed) fails rather than vanishing from the verdict.
 import { performance } from 'node:perf_hooks';
 
-import type { Territory, TerritoryCheck, VerdictCheck } from '@elvaria/domain';
+import type { PartyRole, Territory, TerritoryCheck, VerdictCheck } from '@elvaria/domain';
 import { acquireLock, inKingdom } from '@elvaria/store';
 import type { HeldLock } from '@elvaria/store';
 
@@ -40,6 +40,11 @@ export interface ChecksRequest {
    * values are masked in the logs. Absent or empty: the minimal env alone.
    */
   readonly secrets?: Readonly<Record<string, string>>;
+  /**
+   * The quest's `party_role` (P1-18, §3.15): a merge quest runs every check of the territory, a part skips those
+   * marked `defer_to_merge`; absent (or a contract) selects by `when` alone.
+   */
+  readonly party_role?: PartyRole;
 }
 
 export interface ChecksOptions {
@@ -169,7 +174,7 @@ export async function runChecks(
 ): Promise<CheckRun[]> {
   const waitMs = options.lock_wait_ms ?? exclusiveWaitOf(request.territory.checks);
   const runs: CheckRun[] = [];
-  for (const check of selectChecks(request.territory.checks, request.touched)) {
+  for (const check of selectChecks(request.territory.checks, request.touched, request.party_role)) {
     if (request.signal?.aborted === true) break;
     runs.push(
       check.exclusive

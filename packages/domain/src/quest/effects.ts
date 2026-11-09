@@ -3,6 +3,7 @@
 // QUEST_TRANSITIONS has already been chosen, and `to` is its target status.
 import { aboveCeiling } from '../character/level.ts';
 import { err, ok } from '../core/result.ts';
+import { machineMergeDue } from '../party/machine-merge.ts';
 import { closeRun, currentRun, entryOf } from './attempt-log.ts';
 import type { CharacterId } from '../core/ids.ts';
 import type { Result } from '../core/result.ts';
@@ -73,10 +74,16 @@ const takenBy = (quest: Quest, by: { readonly assignee: CharacterId; readonly le
   seal_required: quest.seal_required || aboveCeiling(by.level, quest.rank),
 });
 
+/**
+ * Nobody takes a script, nor the first run of a party's merge quest, which the Steward makes itself (P1-18); every
+ * other quest is taken by a character.
+ */
 function claim(quest: Quest, event: QuestEventOf<'claim'>): Result<Quest, QuestTransitionError> {
   const mismatch = { code: 'invalid_event', reason: 'assignee_for_tier' } as const;
   if (event.assignee === null)
-    return quest.tier === 'script' ? ok({ ...quest, assignee: null }) : err(mismatch);
+    return quest.tier === 'script' || machineMergeDue(quest)
+      ? ok({ ...quest, assignee: null })
+      : err(mismatch);
   return quest.tier === 'session' ? ok(takenBy(quest, event)) : err(mismatch);
 }
 

@@ -8,6 +8,7 @@
 // (P1-25): a quest whose machine work still runs gets nothing more until it ends.
 import { breakersOf } from '../breaker/breakers.ts';
 import { failStreakReached } from '../character/fail-streak.ts';
+import { machineMergeDue } from '../party/machine-merge.ts';
 import { claimBlocker } from './claim-blocker.ts';
 import { reassignsOf } from './reassigns.ts';
 import { planReviews } from './reviews.ts';
@@ -93,6 +94,11 @@ export interface TickPlan {
   readonly claims: readonly Claim[];
   /** Script-tier quests the Steward claims with no assignee and runs itself (§3.12), highest rank first. */
   readonly scripts: readonly QuestId[];
+  /**
+   * Party merge quests whose parts are all done and whose first run is the machine's (P1-18 (h), `machineMergeDue`):
+   * the Steward claims each with no assignee and merges the parts itself; no character, no slot.
+   */
+  readonly merges: readonly QuestId[];
   /**
    * Script-tier quests working or in review whose script no longer runs (P1-25: it runs outside the tick): runs that
    * ended since the last tick, or that a Steward stopped in the middle of. The machine judges each from the run's
@@ -207,7 +213,7 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
   const inStatus = (status: Quest['status']): Quest[] =>
     snapshot.quests.filter((quest) => quest.status === status).toSorted(byPriority);
   const open = inStatus('open').filter(ready);
-  const openSessions = open.filter(({ tier }) => tier === 'session');
+  const openSessions = open.filter((quest) => quest.tier === 'session' && !machineMergeDue(quest));
   const suspended = suspensions(step);
   // The paused work takes its slots before anything new.
   const paused = inStatus('paused_mana');
@@ -226,7 +232,7 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
   );
   const running = new Set(snapshot.background?.running);
   return {
-    breakers: breakersOf(snapshot.quests, snapshot.sessions ?? [], snapshot.kingdom.breakers.max_turns, now),
+    breakers: breakersOf(snapshot.quests, snapshot.sessions ?? [], snapshot.kingdom.breakers, now),
     suspensions: suspended,
     wakes,
     reassigns,
@@ -240,6 +246,7 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
       .map(({ id }) => id),
     claims: claims(step, openSessions, now),
     scripts: open.filter(({ tier }) => tier === 'script').map(({ id }) => id),
+    merges: open.filter(machineMergeDue).map(({ id }) => id),
     script_verdicts: [...inStatus('working'), ...inStatus('review')]
       .filter(({ tier, id }) => tier === 'script' && !running.has(id))
       .map(({ id }) => id),

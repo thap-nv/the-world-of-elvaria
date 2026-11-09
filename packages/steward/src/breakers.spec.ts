@@ -20,6 +20,8 @@ import type { AgentRunner, CommitOutcome, RunnerSignal } from '@elvaria/runner-c
 let current: Bench | undefined;
 let running: Steward | undefined;
 const children: number[] = [];
+/** A pid no process can hold on Windows, Linux or macOS (P1-18 proposal (i)). */
+const NO_SUCH_PID = 2_147_483_647;
 
 async function open(
   options: BenchOptions = {},
@@ -244,8 +246,6 @@ describe('the pids of the sessions (.state/sessions.json)', () => {
       timeout: 2 * POWERSHELL_TIMEOUT_MS,
     },
     async () => {
-      const ended = spawn(process.execPath, ['-e', ''], { stdio: 'ignore' });
-      await new Promise((resolve) => ended.once('close', resolve));
       const orphan = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { stdio: 'ignore' });
       const pid = orphan.pid ?? 0;
       children.push(pid);
@@ -264,8 +264,11 @@ describe('the pids of the sessions (.state/sessions.json)', () => {
         left('q_20261107_aaaaaa', 'kael', pid, new Date().toISOString()),
         // This very process holds that pid now, started long after the session's spawn.
         left('q_20261107_bbbbbb', 'thorn', process.pid, '2026-01-01T00:00:00+07:00'),
-        // Gone with its Steward: nothing to kill, nothing to say.
-        left('q_20261107_cccccc', 'wren', ended.pid ?? 0, new Date().toISOString()),
+        // Gone with its Steward: nothing to kill, nothing to say. Not the pid of a process that just exited: under
+        // a busy `pnpm check` the system hands it out again within SAME_PROCESS_MS, and the Steward rightly kills
+        // that tree (once a vitest worker). No process ever has this one: Windows pids are multiples of 4, Linux
+        // stops at 2^22, macOS below 100 000.
+        left('q_20261107_cccccc', 'wren', NO_SUCH_PID, new Date().toISOString()),
       ];
       await writeFile(file, JSON.stringify({ version: 1, sessions }));
       running = current.steward();

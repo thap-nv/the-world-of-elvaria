@@ -88,6 +88,15 @@ const BreakersSchema = z.strictObject({
     .min(1)
     .default(BREAKER_DEFAULTS.context_budget_tokens)
     .meta(describe('The Chancellor splits work so one quest fits one context (principle 13).')),
+  verifier_tokens_multiplier: z
+    .number()
+    .min(1)
+    .default(BREAKER_DEFAULTS.verifier_tokens_multiplier)
+    .meta(
+      describe(
+        "A judge's session may spend this many times quest.budget.max_tokens before the token breaker stops it: it reads the whole diff and runs the checks again. The assignee's sessions keep quest.budget.max_tokens.",
+      ),
+    ),
 });
 
 const ScheduleSchema = z

@@ -1,6 +1,7 @@
 // A git territory's plot (implementation-plan §3.3, ADR 0012): `git worktree add <repo>/<worktree_dir>/<quest-id>
 // --no-track -b quest/<quest-id> <base>`. Idempotent: a worktree already there on the quest's branch is reused; a
-// branch that outlived its worktree (released, revived) is checked out again with its commits.
+// branch that outlived its worktree (released, revived) is checked out again with its commits. `<base>` is the
+// default branch, or the branch of a party's contract or of a dependency not merged yet (P1-18, `from`).
 import { readdir, realpath } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -32,6 +33,11 @@ export interface WorktreeTarget {
   /** `quest/<quest-id>`. */
   readonly branch: string;
   readonly vcs: Territory['vcs'];
+  /**
+   * Branches the new worktree may start from, best first (domain's plotBaseOf, P1-18): a part starts on its party's
+   * contract, a quest on a dependency done but not merged; none left, the default branch.
+   */
+  readonly from?: readonly string[];
 }
 
 export interface PreparedWorktree {
@@ -117,6 +123,22 @@ async function forkPoint(target: WorktreeTarget): Promise<Result<string, PlotFai
   return ok(behind.code === 0 ? remote : local);
 }
 
+/**
+ * Where a new quest branch starts: the head of the first branch of `from` that exists and that the default branch's
+ * fork point does not hold yet (a contract, a dependency done but not merged), else that fork point (P1-18).
+ */
+async function startOf(target: WorktreeTarget): Promise<Result<string, PlotFailure>> {
+  const fork = await forkPoint(target);
+  if (!fork.ok) return fork;
+  for (const branch of target.from ?? []) {
+    const head = await commitOf(target.git, target.repo, `refs/heads/${branch}`);
+    if (head === undefined) continue;
+    const merged = await target.git(target.repo, ['merge-base', '--is-ancestor', head, fork.value]);
+    if (merged.code !== 0) return ok(head);
+  }
+  return fork;
+}
+
 /** Adds the worktree; returns the commit its branch forked from `base`. */
 async function addWorktree(target: WorktreeTarget, base: string): Promise<Result<string, PlotFailure>> {
   const { git, repo, worktree, branch } = target;
@@ -160,7 +182,7 @@ export async function prepareWorktree(
   if (!existing.ok) return existing;
   let base: string | undefined;
   if (existing.value === 'absent') {
-    const fork = await forkPoint(target);
+    const fork = await startOf(target);
     if (!fork.ok) return fork;
     const added = await addWorktree(target, fork.value);
     if (!added.ok) return added;

@@ -7,6 +7,7 @@ import type { SessionTrip, UsageSoFar } from './evaluate.ts';
 import type { Instant } from '../core/clock.ts';
 import type { QuestId } from '../core/ids.ts';
 import type { Role } from '../schema/common.ts';
+import type { Kingdom } from '../schema/kingdom.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 
 /** A session the Steward holds on a quest, with what its stream reported so far. */
@@ -28,6 +29,18 @@ export interface Breaker {
 const openEntryOf = (quest: Quest, role: Role) =>
   quest.attempt_log.findLast((entry) => entry.role === role && entry.ended_at === undefined);
 
+/** The kingdom's breaker settings a session is held to beside its quest's budget. */
+export type SessionRules = Pick<Kingdom['breakers'], 'max_turns' | 'verifier_tokens_multiplier'>;
+
+/**
+ * The token ceiling of a session: the quest's budget for its assignee, that budget times
+ * `verifier_tokens_multiplier` for a judge (P1-18 proposal (f)), who reads the whole diff and runs the checks again.
+ */
+export const tokenCeilingOf = (quest: Quest, role: Role, rules: SessionRules): number =>
+  role === 'verifier'
+    ? Math.round(quest.budget.max_tokens * rules.verifier_tokens_multiplier)
+    : quest.budget.max_tokens;
+
 /**
  * The held sessions that tripped a breaker, in the order given. A session whose quest or entry is gone (the file
  * moved on in this tick) is not the plan's to stop: the end the runner reports settles it.
@@ -35,7 +48,7 @@ const openEntryOf = (quest: Quest, role: Role) =>
 export function breakersOf(
   quests: readonly Quest[],
   sessions: readonly HeldSession[],
-  maxTurns: number,
+  rules: SessionRules,
   now: Instant,
 ): Breaker[] {
   const byId = new Map(quests.map((quest) => [quest.id, quest]));
@@ -46,8 +59,8 @@ export function breakersOf(
     if (quest === undefined || started?.ok !== true) return [];
     const limits = {
       max_minutes: quest.budget.max_minutes,
-      max_tokens: quest.budget.max_tokens,
-      max_turns: maxTurns,
+      max_tokens: tokenCeilingOf(quest, session.role, rules),
+      max_turns: rules.max_turns,
     };
     const verdict = evaluateBreakers({ started_at: started.value }, limits, now, session.usage);
     return verdict === 'ok' ? [] : [{ quest: quest.id, role: session.role, ...verdict }];

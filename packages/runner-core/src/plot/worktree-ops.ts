@@ -67,12 +67,17 @@ export async function touchedIn(git: Git, worktree: string): Promise<string[]> {
   return [...new Set([...zList(changed), ...zList(untracked)])].sort();
 }
 
-/** Stages everything and commits it with the territory's own hooks; nothing is bypassed (CLAUDE.md). */
+/**
+ * Stages everything and commits it with the territory's own hooks; nothing is bypassed (CLAUDE.md). A merge in
+ * progress (a party's merge quest, P1-18) is concluded even when its resolution leaves the tree as HEAD had it.
+ */
 export async function commitWorktree(git: Git, worktree: string, message: string): Promise<CommitOutcome> {
   await gitOut(git, worktree, ['add', '--all']);
   const staged = await git(worktree, ['diff', '--cached', '--quiet']);
-  if (staged.code === 0) return { status: 'clean' };
-  if (staged.code !== 1) throw new Error(`git diff --cached failed in ${worktree}: ${staged.stderr.trim()}`);
+  const merging = (await git(worktree, ['rev-parse', '--verify', '--quiet', 'MERGE_HEAD'])).code === 0;
+  if (staged.code === 0 && !merging) return { status: 'clean' };
+  if (staged.code !== 0 && staged.code !== 1)
+    throw new Error(`git diff --cached failed in ${worktree}: ${staged.stderr.trim()}`);
   const commit = await git(worktree, ['commit', '--quiet', '--message', message]);
   if (commit.code !== 0) {
     const said = `${commit.stderr}\n${commit.stdout}`.trim();

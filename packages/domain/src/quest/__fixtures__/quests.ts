@@ -1,6 +1,7 @@
 // Quests and events for the state-machine specs. Every quest here is reached through transition() itself from a
 // draft, so the specs test the machine on states it really produces, not on hand-made ones.
 import { reviewBreaksOf } from '../../breaker/review.ts';
+import { machineMergeDue } from '../../party/machine-merge.ts';
 import { QuestSchema } from '../../schema/quest/quest.ts';
 import { QUEST_ACTORS, QUEST_EVENT_TYPES } from '../events.ts';
 import { findTransition, transition } from '../transition.ts';
@@ -18,17 +19,26 @@ export interface Variant {
   readonly tier: Tier;
   readonly seal_required: boolean;
   readonly max_attempts: number;
+  /** A party's merge quest, whose first run the machine makes (P1-18 (h)). */
+  readonly merge?: boolean;
 }
 
 export const SESSION: Variant = { tier: 'session', seal_required: false, max_attempts: 3 };
 export const SCRIPT: Variant = { tier: 'script', seal_required: false, max_attempts: 1 };
+export const MERGE: Variant = { tier: 'session', seal_required: true, max_attempts: 3, merge: true };
 
-/** Every combination the guards read: tier, seal, a budget of one attempt or three. */
-export const VARIANTS: readonly Variant[] = (['session', 'script'] as const).flatMap((tier) =>
-  [false, true].flatMap((seal_required) =>
-    [1, 3].map((max_attempts) => ({ tier, seal_required, max_attempts })),
+/** Every combination the guards read: tier, seal, a budget of one attempt or three; and a party's merge quest. */
+export const VARIANTS: readonly Variant[] = [
+  ...(['session', 'script'] as const).flatMap((tier) =>
+    [false, true].flatMap((seal_required) =>
+      [1, 3].map((max_attempts) => ({ tier, seal_required, max_attempts })),
+    ),
   ),
-);
+  MERGE,
+];
+
+/** The contract quest a merge variant belongs to. */
+const PARTY_ID = 'q_20261106_5m2k8p';
 
 /** Minute `m` of the test day, as quest.json stores time. */
 export const at = (m: number): string =>
@@ -47,6 +57,9 @@ export function draftQuest(variant: Variant = SESSION): Quest {
       ? { class_required: 'knight' }
       : { script: { id: 'run-check', params: { check: 'unit' } } }),
     tags: ['infra'],
+    ...(variant.merge === true
+      ? { party_id: PARTY_ID, party_role: 'merge', contract: 'apps/api/openapi.yaml' }
+      : {}),
     status: 'draft',
     tier: variant.tier,
     assignee: null,
@@ -93,7 +106,11 @@ export function payloadOf<T extends QuestEventType>(type: T, quest: Quest): Payl
     start: { session_id: 's-start' },
     redispatch: {},
     mana_restored: {},
-    claim: quest.tier === 'session' ? { assignee: THORN, level: LEVEL } : { assignee: null },
+    // Nobody takes a script, nor the first run of a merge quest: the machine makes it (P1-18 (h)).
+    claim:
+      quest.tier === 'session' && !machineMergeDue(quest)
+        ? { assignee: THORN, level: LEVEL }
+        : { assignee: null },
     reassign: { assignee: ELLA, level: LEVEL },
     block: { question: 'Bản EN dùng giọng nào?' },
     ask: { question: 'Giữ API cũ không?' },
@@ -149,6 +166,7 @@ const keyOf = (quest: Quest): string =>
   JSON.stringify([
     quest.status,
     quest.tier,
+    quest.party_role,
     quest.seal_required,
     quest.budget.max_attempts,
     quest.attempts,

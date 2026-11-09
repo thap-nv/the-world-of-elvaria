@@ -169,6 +169,7 @@ Thêm một nhiệm vụ mở ngay, không qua Tể tướng (lệnh create_ques
 | `--script <script>` | Chạy ở bậc script: một id trong registry/scripts.json, không gọi model, không tốn mana. |
 | `--params <json>` | Tham số của script, một đối tượng JSON. |
 | `--to <character>` | Nhân vật nhận việc: chỉ nhân vật này nhận nhiệm vụ, cấp nào cũng được (vượt hạng trần thì nhiệm vụ chờ dấu vua). Đúng nghề của nhiệm vụ; không dùng cho nhiệm vụ bậc script. |
+| `--contract` | Nhiệm vụ là quest hợp đồng của một đội: trưởng đội viết hợp đồng rồi chia phần, Quản sự tự thêm quest ghép. |
 
 ## `elvaria quest list`
 

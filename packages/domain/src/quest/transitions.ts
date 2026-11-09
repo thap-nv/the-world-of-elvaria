@@ -9,8 +9,11 @@ import type { QuestActor, QuestEventType } from './events.ts';
 /** A condition on the quest that picks one row when an event leads to different statuses. */
 export type QuestGuard =
   | 'session'
-  | 'script'
+  | 'by_character'
+  | 'by_machine'
+  | 'merged_by_machine'
   | 'can_retry'
+  | 'machine_retry'
   | 'out_of_retries'
   | 'seal_required'
   | 'no_seal'
@@ -22,15 +25,31 @@ export type QuestGuard =
   | 'stalled_review'
   | 'no_stalled_review';
 
+/**
+ * A character works the quest: a session quest's assignee. A script-tier quest has none, nor has the first run of a
+ * party's merge quest, which the Steward makes itself (P1-18 (h), `machineMergeDue`): the machine submits those.
+ */
+const byCharacter = (quest: Quest): boolean => quest.tier === 'session' && typeof quest.assignee === 'string';
+const underBudget = (quest: Quest): boolean => quest.attempts < quest.budget.max_attempts;
+
 /** A script-tier quest has no character to retry it: a crash or a fail goes to the infirmary (§2.5). */
-const canRetry = (quest: Quest): boolean =>
-  quest.tier === 'session' && quest.attempts < quest.budget.max_attempts;
+const canRetry = (quest: Quest): boolean => byCharacter(quest) && underBudget(quest);
+
+/** A session quest the machine worked: the Steward's merge of a party's parts (P1-18), with no character to go back to. */
+const mergedByMachine = (quest: Quest): boolean =>
+  quest.tier === 'session' && typeof quest.assignee !== 'string';
+
+/** The machine's run of a session quest failed its judge: open again, so a character takes the next run (P1-18). */
+const machineRetry = (quest: Quest): boolean => mergedByMachine(quest) && underBudget(quest);
 
 export const QUEST_GUARDS: Readonly<Record<QuestGuard, (quest: Quest) => boolean>> = {
   session: (quest) => quest.tier === 'session',
-  script: (quest) => quest.tier === 'script',
+  by_character: byCharacter,
+  by_machine: (quest) => !byCharacter(quest),
+  merged_by_machine: mergedByMachine,
   can_retry: canRetry,
-  out_of_retries: (quest) => !canRetry(quest),
+  machine_retry: machineRetry,
+  out_of_retries: (quest) => !canRetry(quest) && !machineRetry(quest),
   seal_required: (quest) => quest.seal_required,
   no_seal: (quest) => !quest.seal_required,
   has_assignee: (quest) => typeof quest.assignee === 'string',
@@ -75,16 +94,18 @@ export const QUEST_TRANSITIONS: readonly QuestTransitionRow[] = [
   { from: 'claimed', event: 'cancel', actors: U, to: 'archived' },
   // No session can open (trip `secrets`): only the owner can fix the treasury or the territory (P1-06).
   { from: 'claimed', event: 'breaker', actors: S, to: 'infirmary' },
-  { from: 'working', event: 'submit', actors: R, guard: 'session', to: 'review' },
-  { from: 'working', event: 'submit', actors: S, guard: 'script', to: 'review' },
+  { from: 'working', event: 'submit', actors: R, guard: 'by_character', to: 'review' },
+  // A script's run, or the merge of a party's parts the Steward made itself (P1-18).
+  { from: 'working', event: 'submit', actors: S, guard: 'by_machine', to: 'review' },
   // The Steward stopped while the script ran, so the run says nothing: the quest is open again and runs anew (P1-17).
-  { from: 'working', event: 'release', actors: S, guard: 'script', to: 'open' },
+  // A merge of the parts that stopped on a conflict leaves it to a knight the same way (P1-18).
+  { from: 'working', event: 'release', actors: S, guard: 'by_machine', to: 'open' },
   { from: 'working', event: 'ask', actors: R, to: 'blocked' },
-  { from: 'working', event: 'mana_out', actors: M, guard: 'session', to: 'paused_mana' },
+  { from: 'working', event: 'mana_out', actors: M, guard: 'by_character', to: 'paused_mana' },
   { from: 'working', event: 'breaker', actors: S, to: 'infirmary' },
   { from: 'working', event: 'crash', actors: S, guard: 'can_retry', to: 'returned' },
   { from: 'working', event: 'crash', actors: S, guard: 'out_of_retries', to: 'infirmary' },
-  { from: 'working', event: 'suspend', actors: U, guard: 'session', to: 'returned' },
+  { from: 'working', event: 'suspend', actors: U, guard: 'by_character', to: 'returned' },
   { from: 'working', event: 'cancel', actors: U, to: 'archived' },
   { from: 'paused_mana', event: 'mana_restored', actors: M, to: 'working' },
   // The Steward too, once the quest slept past mana.reassign_after_hours (P1-22, §3.5).
@@ -101,6 +122,8 @@ export const QUEST_TRANSITIONS: readonly QuestTransitionRow[] = [
   { from: 'review', event: 'verdict_pass', actors: VS, guard: 'no_seal', to: 'done' },
   { from: 'review', event: 'verdict_pass', actors: VS, guard: 'seal_required', to: 'awaiting_seal' },
   { from: 'review', event: 'verdict_fail', actors: VS, guard: 'can_retry', to: 'returned' },
+  // The machine's merge failed its judge: no character to send it back to, so it opens for a knight (P1-18).
+  { from: 'review', event: 'verdict_fail', actors: VS, guard: 'machine_retry', to: 'open' },
   { from: 'review', event: 'verdict_fail', actors: VS, guard: 'out_of_retries', to: 'infirmary' },
   { from: 'review', event: 'mana_out', actors: M, guard: 'has_verifier', to: 'review' },
   { from: 'review', event: 'breaker', actors: S, guard: 'has_verifier', to: 'review' },
@@ -115,7 +138,9 @@ export const QUEST_TRANSITIONS: readonly QuestTransitionRow[] = [
   { from: 'returned', event: 'cancel', actors: U, to: 'archived' },
   { from: 'returned', event: 'breaker', actors: S, to: 'infirmary' },
   { from: 'awaiting_seal', event: 'seal', actors: U, to: 'done' },
-  { from: 'awaiting_seal', event: 'return', actors: U, guard: 'session', to: 'returned' },
+  { from: 'awaiting_seal', event: 'return', actors: U, guard: 'by_character', to: 'returned' },
+  // The owner returns the machine's merge of the parts: a knight takes the next run, reading the owner's verdict (P1-18).
+  { from: 'awaiting_seal', event: 'return', actors: U, guard: 'merged_by_machine', to: 'open' },
   { from: 'awaiting_seal', event: 'reject', actors: U, to: 'archived' },
   { from: 'done', event: 'deliver', actors: S, guard: 'undelivered', to: 'done' },
   { from: 'done', event: 'archive', actors: US, to: 'archived' },

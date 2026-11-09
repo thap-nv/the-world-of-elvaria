@@ -57,8 +57,8 @@ afterEach(async () => {
 /** folderPlots whose prepare keeps what it was handed. */
 const keeping = (root: string, prepared: Prepared[]): Plots =>
   plotsWith(root, {
-    prepare: (quest, territory, secrets) => {
-      prepared.push({ quest: quest.id, secrets });
+    prepare: (quest, territory, options) => {
+      prepared.push({ quest: quest.id, secrets: options?.secrets });
       return folderPlots(root).prepare(quest, territory);
     },
   });

@@ -2,7 +2,7 @@
 // verdict says once the checks have run. all_checks_and_agent: a failing check fails the quest whatever the judge
 // said. checks_only: the checks alone decide. agent_only: the judge's word stands. A partial verdict stays partial,
 // since the next judge reads on from it. A failing check gives the overruled pass its kind (P1-15): `tests_fail`, or
-// `incomplete` for the Steward's check of a plan's sub-quest list.
+// `incomplete` for the Steward's check of a plan's sub-quest list or of a merge quest's parts (P1-18).
 import type { CheckId } from '../core/ids.ts';
 import type { FailKind } from '../schema/common.ts';
 import type { Ritual } from '../schema/registry-entries.ts';
@@ -26,11 +26,18 @@ export const failedChecksNote = (checks: readonly VerdictCheck[]): string =>
  */
 export const SUBQUESTS_CHECK_ID = 'subquests' as CheckId;
 
+/** The check the Steward runs before the judge of a party's merge quest (P1-18): every part is merged in. */
+export const PARTY_CHECK_ID = 'party' as CheckId;
+
 /**
  * What a failing check says about the work (P1-15): a sub-quest list the Steward would refuse is unfinished work,
- * not a failing test. Every other check, the territory's own, fails as `tests_fail`.
+ * not a failing test, and so is a merge quest missing a part (P1-18). Every other check, the territory's own, fails
+ * as `tests_fail`.
  */
-const CHECK_FAIL_KINDS: Readonly<Partial<Record<string, FailKind>>> = { [SUBQUESTS_CHECK_ID]: 'incomplete' };
+const CHECK_FAIL_KINDS: Readonly<Partial<Record<string, FailKind>>> = {
+  [SUBQUESTS_CHECK_ID]: 'incomplete',
+  [PARTY_CHECK_ID]: 'incomplete',
+};
 
 /**
  * A pass the checks overrule: the failing checks first, then whatever the judge wrote. Its kind is the first

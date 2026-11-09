@@ -76,7 +76,8 @@
       "max_turns": 200,
       "subagent_max_minutes": 5,
       "subagent_max_turns": 30,
-      "context_budget_tokens": 120000
+      "context_budget_tokens": 120000,
+      "verifier_tokens_multiplier": 2
     },
     "schedule": {
       "chronicle": {

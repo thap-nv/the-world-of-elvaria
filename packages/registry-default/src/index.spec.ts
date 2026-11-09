@@ -114,11 +114,16 @@ describe('the default registry', () => {
     }
   });
 
-  it('explains every field of a sub-quest draft in the mage prompt (P1-15)', () => {
+  it('explains every field of a sub-quest draft in the mage prompt, with a plain and a party example (P1-15, P1-18)', () => {
     const mage = readFileSync(path.join(REGISTRY_ROOT, 'prompts/mage.md'), 'utf8');
     for (const field of Object.keys(QuestDraftSchema.shape)) expect(mage).toContain(`\`${field}\``);
-    const example = /```json\n([\s\S]*?)```/.exec(mage)?.[1];
-    expect(QuestDraftFileSchema.safeParse(JSON.parse(example ?? '')).success).toBe(true);
+    const examples = [...mage.matchAll(/```json\n([\s\S]*?)```/g)].map(([, json]) =>
+      QuestDraftFileSchema.parse(JSON.parse(json ?? '')),
+    );
+    expect(examples.map(({ drafts }) => drafts.map((draft) => draft.party_role ?? null))).toEqual([
+      [null, null],
+      ['part', 'part'],
+    ]);
   });
 
   it('ships every catalog script with its file and its test (ADR 0016)', () => {

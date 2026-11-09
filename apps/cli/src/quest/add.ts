@@ -1,6 +1,7 @@
 // `elvaria quest add`: a quest straight to `open`, no Chancellor and no mana (implementation-plan §3.11, stage 0).
 // It sends `create_quest` with draft = false; the Steward gives the quest its id and writes the file (ADR 0005).
-// With --to, the quest names its assignee: only that character takes it, as after a reassign (P1-29).
+// With --to, the quest names its assignee: only that character takes it, as after a reassign (P1-29). With
+// --contract, it heads a party (P1-18): its lead writes the contract and the parts.
 import { QUEST_TAGS_MAX, QUEST_TITLE_MAX_LENGTH, RANKS, scriptParamsIssues } from '@elvaria/domain';
 import type { Kind, Rank, Registry } from '@elvaria/domain';
 
@@ -113,6 +114,24 @@ function readBasics(input: CommandInput, registry: Registry, ctx: KingdomContext
   return { title, rank: isRank(rank) ? rank : undefined, kind, problems };
 }
 
+/**
+ * `--contract` (P1-18 proposal (g)): the quest heads a party, so the owner opens one without the Chancellor. Only a
+ * kind that delivers a list of sub-quests can open its parts (registry data, not a kind id), and only in a session.
+ */
+function readContract(
+  input: CommandInput,
+  kind: Kind | undefined,
+  script: boolean,
+  registry: Registry,
+  ctx: KingdomContext,
+) {
+  if (flagOption(input, 'contract') !== true) return { contract: false, problems: [] };
+  if (kind === undefined) return { contract: true, problems: [] };
+  if (kind.deliverable_type === 'subquests' && !script) return { contract: true, problems: [] };
+  const kinds = registry.kinds.filter((entry) => entry.deliverable_type === 'subquests').map(({ id }) => id);
+  return { contract: true, problems: [ctx.t('cli.quest.add.contract_kind', { kinds: kinds.join(', ') })] };
+}
+
 async function runQuestAdd(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);
   if (ctx === undefined) return EXIT.failed;
@@ -125,6 +144,7 @@ async function runQuestAdd(input: CommandInput, cli: CliContext): Promise<ExitCo
   const script = readScript(input, basics.kind, registry.value, ctx);
   const klass = script.choice === undefined ? readClass(input, basics.kind, ctx) : { problems: [] };
   const tags = readTags(input, registry.value, ctx);
+  const party = readContract(input, basics.kind, script.choice !== undefined, registry.value, ctx);
   const named = await readAssignee(
     input,
     script.choice !== undefined,
@@ -134,7 +154,7 @@ async function runQuestAdd(input: CommandInput, cli: CliContext): Promise<ExitCo
   const territory = textOption(input, 'territory') ?? '';
   const dependsOn = [...new Set(textOptions(input, 'depends-on'))];
   const problems = [
-    ...[basics, script, klass, tags, named].flatMap((part) => part.problems),
+    ...[basics, script, klass, tags, party, named].flatMap((part) => part.problems),
     ...(await territoryMissing(ctx, territory)),
     ...(await questsMissing(ctx, dependsOn)),
   ];
@@ -154,6 +174,7 @@ async function runQuestAdd(input: CommandInput, cli: CliContext): Promise<ExitCo
     ...(script.choice === undefined ? {} : { script: script.choice }),
     ...('id' in klass ? { class_required: klass.id } : {}),
     tags: tags.tags,
+    ...(party.contract ? { party_role: 'contract' as const } : {}),
     ...(seal === undefined ? {} : { seal_required: seal }),
     ...(dependsOn.length === 0 ? {} : { depends_on: dependsOn }),
     ...('character' in named ? { assignee: named.character.id } : {}),
@@ -196,6 +217,7 @@ export const QUEST_ADD: CommandSpec = {
     script: { type: 'string', value: '<script>', help: 'cli.quest.add.option.script' },
     params: { type: 'string', value: '<json>', help: 'cli.quest.add.option.params' },
     to: { type: 'string', value: '<character>', help: 'cli.quest.add.option.to' },
+    contract: { type: 'boolean', help: 'cli.quest.add.option.contract' },
   },
   run: runQuestAdd,
 };

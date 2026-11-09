@@ -6,13 +6,22 @@
 // through the seal its kind asks for; a plan's sub-quests open. Every delivery writes `.runs/<quest>-delivery.md`
 // and then stamps `deliverable.delivered_at` (with `path`, and `branch` for a worktree), so a crash in between
 // delivers again, finding what it already did.
-import { currentRun, err, isEventOf, ok, ownerVerdictIdOf, verdictIdOf } from '@elvaria/domain';
+import {
+  currentRun,
+  err,
+  isEventOf,
+  ok,
+  ownerVerdictIdOf,
+  partyStatusOf,
+  verdictIdOf,
+} from '@elvaria/domain';
 import { openJournal } from '@elvaria/eventlog';
 import { fromPortable, inKingdom, writeFileAtomic } from '@elvaria/store';
 import type { Deliverable, Quest, QuestId, Result, Territory, Verdict } from '@elvaria/domain';
 
 import { noticeQuest, ring } from '../context.ts';
 import { readHandover } from '../files.ts';
+import { closeContract } from '../party/contract.ts';
 import { copyIntoTerritory } from './copy.ts';
 import { deliveryNote, deliveryNoteOf } from './note.ts';
 import { openSubquests } from './subquests.ts';
@@ -87,6 +96,8 @@ async function deliverQuest(ctx: Context, quest: Quest): Promise<Result<Quest, s
   const done = await SHIP[quest.deliverable.type](ctx, quest, territory);
   if (!done.ok) return done;
   const note = deliveryNoteOf(quest);
+  const party =
+    quest.party_id === undefined ? undefined : partyStatusOf(quest.party_id, [...ctx.world.quests.values()]);
   const text = deliveryNote({
     quest,
     territory,
@@ -94,6 +105,7 @@ async function deliverQuest(ctx: Context, quest: Quest): Promise<Result<Quest, s
     verdicts: await verdictsOf(ctx, quest),
     patched: await patchedPathsOf(ctx, quest),
     ...done.value,
+    ...(party === undefined ? {} : { party }),
   });
   await writeFileAtomic(inKingdom(ctx.root, note), text);
   const branch = quest.plot.type === 'worktree' ? quest.plot.branch : undefined;
@@ -106,6 +118,9 @@ async function deliverQuest(ctx: Context, quest: Quest): Promise<Result<Quest, s
   });
   if (moved.ok && done.value.subquests?.status === 'refused')
     await refusedPlan(ctx, moved.value, done.value.subquests.reason);
+  // A party's branches start from the contract's: its list goes before any part's worktree is made (P1-18).
+  if (moved.ok && done.value.subquests?.status === 'opened' && quest.party_role === 'contract')
+    await closeContract(ctx, moved.value);
   return moved;
 }
 

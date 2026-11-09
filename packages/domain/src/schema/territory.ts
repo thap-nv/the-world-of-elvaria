@@ -48,6 +48,14 @@ const CheckSchema = z.strictObject({
     .meta(
       describe("Never run in parallel with another quest's exclusive check on this territory (Docker, e2e)."),
     ),
+  defer_to_merge: z
+    .boolean()
+    .default(false)
+    .meta(
+      describe(
+        'Skipped by the parts of a party and run once by its merge quest, which runs every check of the territory whatever it touched (heavy integration and e2e checks, implementation-plan §3.15). Quests outside a party run it by `when` as usual.',
+      ),
+    ),
   timeout_minutes: z.int().min(1),
   cleanup: z
     .string()

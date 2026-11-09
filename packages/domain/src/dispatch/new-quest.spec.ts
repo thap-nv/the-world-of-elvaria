@@ -123,6 +123,29 @@ describe('questFromCommand', () => {
     });
   });
 
+  it("places a part or a merge quest the Steward makes in the contract's party, over any role of the payload", () => {
+    const party = { id: Q2, role: 'part', contract: 'apps/api/openapi.yaml' } as const;
+    const made = questFromCommand(payload({ party_role: 'contract', depends_on: [Q2] }), {
+      ...CONTEXT,
+      party,
+    });
+    expect(made).toMatchObject({
+      ok: true,
+      value: {
+        id: Q1,
+        party_id: Q2,
+        party_role: 'part',
+        contract: 'apps/api/openapi.yaml',
+        depends_on: [Q2],
+      },
+    });
+    const merge = questFromCommand(payload({ depends_on: [Q2] }), {
+      ...CONTEXT,
+      party: { ...party, role: 'merge' },
+    });
+    expect(merge).toMatchObject({ ok: true, value: { party_id: Q2, party_role: 'merge' } });
+  });
+
   it('keeps the secrets its territory allows, and names the ones it does not', () => {
     expect(questFromCommand(payload({ secrets_required: ['npm_token'] }), CONTEXT)).toMatchObject({
       ok: true,

@@ -7,6 +7,7 @@ import type { Character, CharacterId, Quest, QuestId, Result, Revival } from '@e
 import type { AgentRunner, Answered, Continuation, RunningSession, SpawnRequest } from '@elvaria/runner-core';
 
 import { heardBy } from '../mana/heard.ts';
+import { mergeParts, plotOptionsOf } from '../party/plot.ts';
 import { step } from '../record.ts';
 import { checksRunOf, takeChecks } from '../review/checks.ts';
 import { secretsBreaker } from './breaker.ts';
@@ -50,12 +51,19 @@ const resumedRequest = (ctx: Context, request: SpawnRequest, resume: Resume | nu
 /**
  * The plot, its `commands.setup` given the quest's secrets as its checks are (P1-30): an install from a private
  * registry would fail before any session. The openings asked secretsLacking first (P1-06), so a quest without them
- * is in the infirmary, not here; a quest that asks for none reads no treasury and gives setup none.
+ * is in the infirmary, not here; a quest that asks for none reads no treasury and gives setup none. A new worktree
+ * starts on the branch the quest builds on, and a merge quest's knight finds its parts merged (P1-18).
  */
-async function plotFor(ctx: Context, input: Pick<SessionInput, 'quest' | 'territory'>) {
+async function plotFor(ctx: Context, input: Pick<SessionInput, 'quest' | 'territory' | 'role'>) {
   const secrets = await questSecretsOf(ctx, input.quest, input.territory);
   const given = Object.keys(secrets).length === 0 ? undefined : secrets;
-  return ctx.deps.plots.prepare(input.quest, input.territory, given);
+  const prepared = await ctx.deps.plots.prepare(
+    input.quest,
+    input.territory,
+    plotOptionsOf(ctx, input.quest, given),
+  );
+  if (input.role === 'assignee') await mergeParts(ctx, input.quest, prepared.plot);
+  return prepared;
 }
 
 /**

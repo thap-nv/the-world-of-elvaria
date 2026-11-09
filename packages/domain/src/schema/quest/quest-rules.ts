@@ -39,13 +39,23 @@ const CONDITIONALS: readonly Rule<QuestFields>[] = [
   },
   {
     contract: {
-      $comment: 'Session tier: a character holds the quest while it is in flight.',
-      if: { properties: { tier: { const: 'session' }, status: { enum: HELD } } },
+      $comment:
+        "Session tier: a character holds the quest while it is in flight; not a party's merge quest, whose run the Steward may make itself (P1-18).",
+      if: {
+        properties: {
+          tier: { const: 'session' },
+          status: { enum: HELD },
+          party_role: { not: { const: 'merge' } },
+        },
+      },
       then: { required: ['assignee'], properties: { assignee: { type: 'string' } } },
     },
     check: (quest) =>
       issueIf(
-        quest.tier === 'session' && HELD.includes(quest.status) && typeof quest.assignee !== 'string',
+        quest.tier === 'session' &&
+          HELD.includes(quest.status) &&
+          quest.party_role !== 'merge' &&
+          typeof quest.assignee !== 'string',
         ['assignee'],
         `a session-tier quest in ${quest.status} needs an assignee`,
       ),

@@ -10,6 +10,7 @@ import { currentRun, err, ok, runDirOf } from '@elvaria/domain';
 import { toVerdictCheck } from '@elvaria/runner-core';
 import type { EventData, Quest, QuestId, Result, Territory, VerdictCheck } from '@elvaria/domain';
 
+import { partyChecks } from '../party/check.ts';
 import { STEWARD } from '../record.ts';
 import { secretsBreaker } from '../sessions/breaker.ts';
 import { questSecretsOf, secretsLacking } from '../sessions/secrets.ts';
@@ -39,9 +40,22 @@ export async function checksOf(
       ...(signal === undefined ? {} : { signal }),
       ...(secrets === undefined || Object.keys(secrets).length === 0 ? {} : { secrets }),
     };
-    const runs = await ctx.deps.plots.check({ plot: quest.plot, territory, run_dir: runDir, ...given });
-    // The deliverable's own checks follow the territory's (P1-15: subquests.json of a plan quest).
-    return ok([...runs.map(toVerdictCheck), ...(await deliverableChecks(ctx, quest, runDir))]);
+    // A party's merge quest runs every check, its parts leave the deferred ones to it (P1-18, §3.15).
+    const role = quest.party_role === undefined ? {} : { party_role: quest.party_role };
+    const runs = await ctx.deps.plots.check({
+      plot: quest.plot,
+      territory,
+      run_dir: runDir,
+      ...given,
+      ...role,
+    });
+    // The deliverable's own checks follow the territory's (P1-15: subquests.json of a plan quest), then the party's
+    // (P1-18: every part merged into the merge quest).
+    return ok([
+      ...runs.map(toVerdictCheck),
+      ...(await deliverableChecks(ctx, quest, runDir)),
+      ...(await partyChecks(ctx, quest, runDir)),
+    ]);
   } catch (error) {
     ctx.deps.log.warn(`steward: ${quest.id}: the checks did not run: ${messageOf(error)}`);
     return err('checks_failed');

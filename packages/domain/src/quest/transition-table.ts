@@ -17,8 +17,11 @@ const ACTOR_LETTERS: Readonly<Record<QuestActor, string>> = {
 
 const GUARD_TEXT: Readonly<Record<QuestGuard, string>> = {
   session: '`tier = session`',
-  script: '`tier = script`',
-  can_retry: '`tier = session`, `attempts < max_attempts`',
+  by_character: '`tier = session`, có `assignee`',
+  by_machine: 'bậc script, hoặc lượt máy của quest ghép (không có `assignee`)',
+  merged_by_machine: '`tier = session`, không có `assignee` (lượt máy của quest ghép)',
+  can_retry: '`tier = session`, có `assignee`, `attempts < max_attempts`',
+  machine_retry: '`tier = session`, không có `assignee` (lượt máy của quest ghép), `attempts < max_attempts`',
   out_of_retries: '`tier = script` hoặc `attempts ≥ max_attempts`',
   seal_required: '`seal_required`',
   no_seal: '`!seal_required`',
@@ -45,18 +48,20 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
   'claimed.release': 'spawn lỗi; `attempts` không tăng, bỏ `assignee`',
   'claimed.breaker':
     'trip `secrets`: kho bảo vật thiếu secret quest xin, hoặc lãnh thổ đã bỏ nó khỏi `secrets_allowed`; không mở phiên, `attempts` không đổi, chuông',
-  'working.submit.session': 'có handover.md; mọi thay đổi đã commit vào nhánh; lượt kết thúc `submitted`',
-  'working.submit.script': 'script chạy xong trong plot, output vào `.runs/` + journal.jsonl',
-  'working.release.script':
-    'Quản sự dừng giữa lúc script chạy (lần chạy không để lại gì): lượt kết thúc `cancelled`, quest mở lại, tick sau chạy lại (P1-17)',
+  'working.submit.by_character':
+    'có handover.md; mọi thay đổi đã commit vào nhánh; lượt kết thúc `submitted`',
+  'working.submit.by_machine':
+    'script chạy xong trong plot, output vào `.runs/` + journal.jsonl; hoặc Quản sự đã gộp sạch mọi phần vào plot của quest ghép (P1-18)',
+  'working.release.by_machine':
+    'Quản sự dừng giữa lúc script chạy (lần chạy không để lại gì): lượt kết thúc `cancelled`, quest mở lại, tick sau chạy lại (P1-17); hoặc gộp các phần của quest ghép dừng ở xung đột: quest mở lại cho hiệp sĩ, merge dở để nguyên trong plot (P1-18)',
   'working.ask': 'ghi `blocked.question`; lượt kết thúc `blocked`',
-  'working.mana_out.session': 'giữ `assignee`; lượt kết thúc `paused`',
+  'working.mana_out.by_character': 'giữ `assignee`; lượt kết thúc `paused`',
   'working.breaker':
     'kill tree, event `quest.infirmary` kèm lý do; lượt `timeout` (thời gian) hoặc `breaker` (token, lượt, hook từ chối commit lúc nộp); nhân vật → swamp rồi idle',
   'working.crash.can_retry': 'outcome `crash`, cùng nhân vật thử lại',
   'working.crash.out_of_retries':
     'bậc script: lỗi script vào thẳng trạm quân y (lỗi của Elvaria hoặc dữ liệu)',
-  'working.suspend.session':
+  'working.suspend.by_character':
     'người dùng đình chỉ nhân vật (§2.6); lượt kết thúc `returned`; người dùng giao lại',
   'working.cancel': 'kill, giữ worktree; lượt kết thúc `cancelled`',
   'paused_mana.mana_restored': 'cùng nhân vật, phiên mới từ handover, cùng lượt `n` (§3.5)',
@@ -75,6 +80,8 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
   'review.verdict_pass.seal_required': 'chuông',
   'review.verdict_fail.can_retry':
     'notes bắt buộc, `fail_kind`; bỏ `verifier`, lần nộp sau chọn người chấm mới',
+  'review.verdict_fail.machine_retry':
+    'lượt máy của quest ghép bị đánh trượt: không có người để trả về, quest mở lại cho hiệp sĩ, phiên của nó đọc verdict (P1-18)',
   'review.verdict_fail.out_of_retries': 'chuông; bậc script không có `returned`',
   'review.mana_out.has_verifier': '`verifier = null`, verdict `partial` lưu `progress`; người kế đọc tiếp',
   'review.breaker.has_verifier':
@@ -87,7 +94,9 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
   'returned.redispatch': '`attempts` +1, lượt mới, cùng `assignee`, prompt kèm notes',
   'returned.breaker': 'trip `secrets`, như `claimed`',
   'awaiting_seal.seal': '`seal`, verdict `by_human = true` (nặng ×3)',
-  'awaiting_seal.return.session': 'lệnh `return` kèm ghi chú; bỏ `verifier`',
+  'awaiting_seal.return.by_character': 'lệnh `return` kèm ghi chú; bỏ `verifier`',
+  'awaiting_seal.return.merged_by_machine':
+    'lệnh `return` với lượt máy của quest ghép: không có người để trả về, quest mở lại cho hiệp sĩ, phiên của nó đọc verdict của vua (P1-18)',
   'awaiting_seal.reject': 'lệnh `archive`',
   'done.deliver.undelivered':
     'giao hàng theo kind, ghi `deliverable.delivered_at`; không là trạng thái riêng để không nhân đôi',

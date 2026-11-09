@@ -2,8 +2,9 @@
 // at the root of its plot become open quests, children of the plan quest (`created_by: council`), each made by the
 // domain's questFromCommand like an owner's `create_quest`. The list is one piece of work: a file that cannot be
 // read, a draft the kingdom refuses, or drafts that wait on each other in a circle open none of them, and the
-// delivery note says why. Parts of a party wait for P1-18, which branches them from the contract. Each id derives
-// from the plan quest and the draft's ref, so a delivery repeated after a crash finds the children it made.
+// delivery note says why. A party's contract quest lists its parts instead, which open in its party, after it, with
+// the merge quest the Steward adds (P1-18, party/parts.ts). Each id derives from the plan quest and the draft's ref,
+// so a delivery repeated after a crash finds the children it made.
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -18,8 +19,9 @@ import {
   zonedTime,
 } from '@elvaria/domain';
 import { SUBQUESTS_FILE } from '@elvaria/runner-core';
-import type { CommandPayload, Quest, QuestDraft, QuestId, Result } from '@elvaria/domain';
+import type { CommandPayload, NewQuestContext, Quest, QuestDraft, QuestId, Result } from '@elvaria/domain';
 
+import { MERGE_REF, mergeQuestFor, partyPlaceOf, partyProblem, partyRefusal } from '../party/parts.ts';
 import { STEWARD } from '../record.ts';
 import type { Context } from '../context.ts';
 
@@ -56,9 +58,9 @@ async function draftsIn(dir: string): Promise<Result<readonly QuestDraft[], stri
 }
 
 /** What only an owner's draft or a party may carry. */
-function beyondPlan(drafts: readonly QuestDraft[]): string | undefined {
-  const party = drafts.filter((draft) => draft.party_role !== undefined).map(({ ref }) => ref);
-  if (party.length > 0) return `${party.join(', ')} belong to a party, whose parts open with it (P1-18)`;
+function beyondPlan(plan: Quest, drafts: readonly QuestDraft[]): string | undefined {
+  const party = partyRefusal(plan, drafts);
+  if (party !== undefined) return party;
   const asking = drafts.find((draft) => draft.question !== undefined);
   return asking === undefined
     ? undefined
@@ -103,7 +105,7 @@ function payloadOf(
   draft: QuestDraft,
   ids: ReadonlyMap<string, QuestId>,
 ): CommandPayload<'create_quest'> {
-  // party_role, contract and question were refused above (beyondPlan).
+  // party_role and contract become the child's place in a party (party/parts.ts); question was refused above.
   const {
     ref: _ref,
     depends_on_refs: dependsOn,
@@ -114,10 +116,12 @@ function payloadOf(
     ...fields
   } = draft;
   const idOf = (ref: string): QuestId => ids.get(ref) ?? plan.id;
+  // A part starts once the contract is delivered: it waits for the contract quest (§3.13 step 3).
+  const contract = partyPlaceOf(plan, draft) === undefined ? [] : [plan.id];
   return {
     draft: false,
     ...fields,
-    depends_on: dependsOn.map(idOf),
+    depends_on: [...contract, ...dependsOn.map(idOf)],
     parent_id: parentRef === undefined ? plan.id : idOf(parentRef),
     ...(typeof plan.campaign_id === 'string' ? { campaign_id: plan.campaign_id } : {}),
     created_by: 'council',
@@ -128,7 +132,13 @@ function payloadOf(
 function childrenOf(ctx: Context, plan: Quest, drafts: readonly QuestDraft[]): Result<Quest[], string> {
   const ids = new Map(drafts.map((draft) => [draft.ref, childIdOf(ctx, plan, draft.ref)]));
   const known = [...ctx.world.quests.keys(), ...ids.values()];
-  const at = ctx.record.stamp();
+  const context: Omit<NewQuestContext, 'id'> = {
+    at: ctx.record.stamp(),
+    breakers: ctx.world.kingdom.breakers,
+    registry: ctx.world.registry,
+    territories: [...ctx.world.territories.values()],
+    quests: known,
+  };
   const made: Quest[] = [];
   for (const draft of drafts) {
     const id = ids.get(draft.ref) ?? plan.id;
@@ -137,18 +147,19 @@ function childrenOf(ctx: Context, plan: Quest, drafts: readonly QuestDraft[]): R
       made.push(before);
       continue;
     }
+    const party = partyPlaceOf(plan, draft);
     const quest = questFromCommand(payloadOf(plan, draft, ids), {
+      ...context,
       id,
-      at,
-      breakers: ctx.world.kingdom.breakers,
-      registry: ctx.world.registry,
-      territories: [...ctx.world.territories.values()],
-      quests: known,
+      ...(party === undefined ? {} : { party }),
     });
     if (!quest.ok) return err(`${draft.ref} is refused: ${quest.error.code}`);
     made.push(quest.value);
   }
-  return ok(made);
+  if (plan.party_role !== 'contract') return ok(made);
+  const id = childIdOf(ctx, plan, MERGE_REF);
+  const merge = mergeQuestFor(ctx, plan, made, { ...context, id, quests: [...known, id] });
+  return merge.ok ? ok([...made, merge.value]) : merge;
 }
 
 /**
@@ -164,11 +175,14 @@ export async function plannedChildren(
   if (dir === undefined) return err('the quest has no plot');
   const drafts = await draftsIn(dir);
   if (!drafts.ok) return drafts;
-  const beyond = beyondPlan(drafts.value);
+  const beyond = beyondPlan(plan, drafts.value);
   if (beyond !== undefined) return err(beyond);
   const order = ordered(drafts.value);
   if (order === undefined) return err('the drafts wait on each other in a circle');
-  return childrenOf(ctx, plan, order);
+  const children = childrenOf(ctx, plan, order);
+  if (!children.ok) return children;
+  const problem = partyProblem(ctx, plan, children.value);
+  return problem === undefined ? children : err(`the party would break: ${problem}`);
 }
 
 /**

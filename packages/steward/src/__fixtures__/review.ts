@@ -31,7 +31,9 @@ export const questOfRun = (runDir: string): string => runDir.slice('.runs/'.leng
 export function plotsWith(root: string, replace: Partial<Plots>, calls: string[] = []): Plots {
   const base = folderPlots(root);
   return {
-    prepare: (quest, territory, secrets) => (replace.prepare ?? base.prepare)(quest, territory, secrets),
+    prepare: (quest, territory, options) => (replace.prepare ?? base.prepare)(quest, territory, options),
+    merge: (plot, branches) => (replace.merge ?? base.merge)(plot, branches),
+    unmerged: (plot, branches) => (replace.unmerged ?? base.unmerged)(plot, branches),
     commit: (plot, message) => {
       calls.push(`commit ${message}`);
       return (replace.commit ?? base.commit)(plot, message);

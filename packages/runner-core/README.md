@@ -49,7 +49,10 @@
   worktree is checked out again. Each prepare also makes sure of the repo's `.git/info/exclude` lines
   (`PLOT_EXCLUDES`) and, on Windows, `core.longpaths`, and runs `commands.setup` until it succeeds once (log in
   `.runs/<quest>-setup.log`), with the quest's secrets when the caller passes them (P1-30:
-  `prepare(quest, territory, secrets)`, put in its env over the host's minimal env as a check's are). The fork point and the setup state live in `elvaria-plot.json` in the worktree's
+  `prepare(quest, territory, {secrets})`, put in its env over the host's minimal env as a check's are). A new
+  worktree may start elsewhere (P1-18: `prepare(quest, territory, {from})`): on the first branch of `from` that
+  exists and that the default branch does not hold yet, a party's contract or a dependency not merged yet; the
+  diff then counts from there. The fork point and the setup state live in `elvaria-plot.json` in the worktree's
   private git folder. `status`, `touched` (paths changed since the fork, committed or not, plus untracked files),
   `commitAll` (everything, through the territory's own hooks; `refused` when a hook says no; the Steward's messages
   are `plotCommitMessage`, Conventional Commits so commitlint accepts them), `applyPatch` (P1-28: the assignee's
@@ -58,13 +61,19 @@
   (`patchProblem`), then `git apply --recount --check` and `git apply`, and the file goes; otherwise `refused`
   with why, the patch left in place; `none` without a patch, a patch path or git), `diff` (what a judge reads, P1-15:
   `git diff <base>...HEAD`, summary then patch, cut at `DIFF_MAX_CHARS` on a whole line with a note saying where
-  the rest is; null for a plot without git) and `release`
+  the rest is; null for a plot without git), `merge` (P1-18, a party's merge quest: each branch the worktree does
+  not hold yet is merged with `--no-ff`, `plotCommitMessage.merge`, through the territory's hooks, until one stops;
+  a conflict is left in progress for the character, whose commit, or the Steward's `commitAll`, concludes it even
+  when the resolution changes nothing; nothing is merged into uncommitted changes or a merge in progress),
+  `unmerged` (the branches HEAD does not hold) and `release`
   (removes a clean worktree, keeps the branch, takes the folders git leaves on Windows around pnpm's dead
   junctions when nothing else is in them, `leftover` says why a folder stays, then calls each `forget` callback,
   such as a tribe CLI dropping its transcripts). A territory without git gets `quests/<id>/work/` in the kingdom.
 - Runs the machine checks before a judge (`runChecks`, §3.2): the territory's `checks` whose `when` globs match
   what the quest touched (`selectChecks`, `globToRegExp`: dot names match, case-insensitive, like the laws' globs
-  in the hook), one at a time in the plot, each logged to `<run_dir>/checks/<id>.log`. An `exclusive` check holds
+  in the hook), one at a time in the plot, each logged to `<run_dir>/checks/<id>.log`; with
+  `ChecksRequest.party_role` (P1-18, §3.15) a party's merge quest runs every check and a part skips those marked
+  `defer_to_merge`. An `exclusive` check holds
   the territory's lock (`.state/checks/<territory>-exclusive`) so two quests never run one at once; a timed-out
   check runs its `cleanup`. A check that cannot run (shell syntax, program not found, lock never freed) fails.
   `ChecksRequest.signal` (P1-25: the Steward runs checks outside its tick) kills the running check and starts no
