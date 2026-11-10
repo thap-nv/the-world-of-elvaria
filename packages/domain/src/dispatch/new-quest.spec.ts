@@ -92,35 +92,54 @@ describe('questFromCommand', () => {
     });
   });
 
-  // P1-38, P1-21 (j): one context budget was too little for the contract quest and the parts of a party.
-  it('gives a quest of a higher rank without an estimate a larger stand-in: half a budget more per rank above D', () => {
+  // P1-38, P1-21 (j): one context budget was too little for the contract quest and the parts of a party; P1-45:
+  // the rank C sessions of P1-37 spent up to 319 000 and past 322 000, so C takes two budgets, as B.
+  it('gives a quest of a higher rank without an estimate a larger stand-in, from rank C up', () => {
     const ceilingOf = (rank: string, breakers = CONTEXT.breakers) => {
       const made = questFromCommand(payload({ rank }), { ...CONTEXT, breakers });
       if (!made.ok) throw new Error(made.error.code);
       return [made.value.estimate.tokens, made.value.budget.max_tokens];
     };
     expect(ceilingOf('E')).toEqual([120_000, 240_000]);
-    expect(ceilingOf('C')).toEqual([180_000, 360_000]);
+    expect(ceilingOf('C')).toEqual([240_000, 480_000]);
     expect(ceilingOf('B')).toEqual([240_000, 480_000]);
+    expect(ceilingOf('A')).toEqual([300_000, 600_000]);
     expect(ceilingOf('S')).toEqual([360_000, 720_000]);
     // An odd budget still gives a whole estimate.
     const odd = { ...CONTEXT.breakers, context_budget_tokens: 120_001 };
-    expect(ceilingOf('C', odd)).toEqual([180_002, 360_004]);
+    expect(ceilingOf('A', odd)).toEqual([300_003, 600_006]);
   });
 
   it('gives a high rank the long time limit, and keeps the estimate and seal it was given', () => {
     const made = questFromCommand(
-      payload({ rank: 'B', estimate: { tokens: 50000, minutes: 20 }, seal_required: false }),
+      payload({ rank: 'B', estimate: { tokens: 300000, minutes: 20 }, seal_required: false }),
       CONTEXT,
     );
     expect(made).toMatchObject({
       ok: true,
       value: {
         seal_required: false,
-        budget: { max_minutes: 120, max_tokens: 100000 },
-        estimate: { tokens: 50000 },
+        budget: { max_minutes: 120, max_tokens: 600000 },
+        estimate: { tokens: 300000, minutes: 20 },
       },
     });
+  });
+
+  // P1-45, P1-37 (e): the mage guessed 160 000 tokens and 80 minutes for a rank C part; its first session was cut at
+  // 322 143 of 320 000, and it had 45 minutes.
+  it("never gives a draft's estimate a lower ceiling than its rank's, nor fewer minutes than it estimates", () => {
+    const budgetOf = (rank: string, estimate: { tokens: number; minutes: number }) => {
+      const made = questFromCommand(payload({ draft: true, rank, estimate }), CONTEXT);
+      if (!made.ok) throw new Error(made.error.code);
+      return [made.value.estimate, made.value.budget.max_tokens, made.value.budget.max_minutes];
+    };
+    const low = { tokens: 160_000, minutes: 80 };
+    expect(budgetOf('C', low)).toEqual([low, 480_000, 80]);
+    // An estimate above the rank's share keeps its own ceiling; one below the rank's minutes keeps the rank's.
+    const high = { tokens: 300_000, minutes: 20 };
+    expect(budgetOf('C', high)).toEqual([high, 600_000, 45]);
+    // The minutes stop at attempt_minutes.high: exclusiveWaitMinutes waits that long for a judge holding the lock.
+    expect(budgetOf('E', { tokens: 0, minutes: 200 })).toEqual([{ tokens: 0, minutes: 200 }, 240_000, 120]);
   });
 
   it("makes a draft of the Chancellor's, with its question, and a contract quest that heads its party", () => {

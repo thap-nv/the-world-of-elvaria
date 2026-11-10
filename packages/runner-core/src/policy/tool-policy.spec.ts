@@ -59,6 +59,21 @@ describe('toolPolicyOf', () => {
     expect(new Set(allow).size).toBe(allow.length);
   });
 
+  // P1-45, P1-37 (g): the mage prompt sends a part only to the check commands the mage's own shell lists. Deferring
+  // a check to the merge quest leaves its command in every shell; an exclusive one stays out of both.
+  it("gives a mage the check commands of a part's knight, deferred or not, and neither an exclusive one", () => {
+    const checks = TERRITORY.checks.map((check) => ({ ...check, defer_to_merge: true }));
+    for (const id of ['mage', 'knight']) {
+      const { allow } = toolPolicyOf({
+        role: 'assignee',
+        characterClass: classOf(id),
+        territory: { ...TERRITORY, checks },
+      });
+      expect(allow).toEqual(expect.arrayContaining(['Bash(pnpm lint:*)', 'Bash(pnpm -r test:*)']));
+      expect(allow).not.toContain('Bash(pnpm e2e:*)');
+    }
+  });
+
   it('adds no shell rule to a class without a shell', () => {
     const policy = toolPolicyOf({ role: 'assignee', characterClass: classOf('bard'), territory: TERRITORY });
     expect(policy.tools).not.toContain('Bash');
