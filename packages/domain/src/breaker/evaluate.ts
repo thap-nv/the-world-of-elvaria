@@ -17,9 +17,15 @@ export interface RunningAttempt {
 }
 
 export interface BreakerLimits {
-  /** quest.budget.max_minutes: 45 for ranks below breakers.high_rank_from, 120 from it up. */
+  /**
+   * quest.budget.max_minutes: 45 for ranks below breakers.high_rank_from, 120 from it up, or the estimate's minutes
+   * between the two (questFromCommand, P1-45).
+   */
   readonly max_minutes: number;
-  /** quest.budget.max_tokens = estimate.tokens x breakers.mana_multiplier. */
+  /**
+   * quest.budget.max_tokens = the larger of estimate.tokens and the rank's share of context_budget_tokens (P1-38,
+   * P1-45), x breakers.mana_multiplier.
+   */
   readonly max_tokens: number;
   /** kingdom.breakers.max_turns. */
   readonly max_turns: number;
