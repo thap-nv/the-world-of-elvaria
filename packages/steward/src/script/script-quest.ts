@@ -3,7 +3,9 @@
 // script runs in the plot outside the tick (P1-25, background.ts); its output waits beside its log, and a tick after
 // it ended judges from that: a result goes to review and gets the verdict its contract gives; a script past its time
 // trips the time breaker; a script that broke, or could not use the quest's params, goes to the infirmary at once
-// (Elvaria's fault or the data's, never a character's).
+// (Elvaria's fault or the data's, never a character's). The script has no secret, but its plot's commands.setup gets
+// the quest's as a session's plot does (P1-47, (a) of P1-30); a quest whose secrets cannot be had goes to the
+// infirmary at its claim, as a session's opening does (P1-06), instead of being claimed and released every tick.
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -30,6 +32,8 @@ import { inKingdom, kingdomLayout } from '@elvaria/store';
 import { moveAndRing } from '../notices.ts';
 import { plotOptionsOf } from '../party/plot.ts';
 import { STEWARD } from '../record.ts';
+import { secretsBreaker } from '../sessions/breaker.ts';
+import { questSecretsOf, secretsLacking } from '../sessions/secrets.ts';
 import { VERDICT_EVENT, moveOnVerdict, recordVerdict, ritualOf } from '../verdicts.ts';
 import { openFollowUp, unitsHandedTo } from './follow-up.ts';
 import { nodeScriptRunner } from './run-script.ts';
@@ -189,11 +193,17 @@ async function save(native: string, run: ScriptRunResult): Promise<void> {
   await writeFile(path.join(native, SCRIPT_RUN), `${JSON.stringify(run, null, JSON_INDENT)}\n`, 'utf8');
 }
 
-/** The plot, or the claim given back: the quest stays open for a later tick, as a session's plot would (P1-09). */
+/**
+ * The plot, its commands.setup given the quest's secrets (P1-47, (a) of P1-30): an install from a private registry
+ * needs them here as for a session. Or the claim given back, a treasury unread included: the quest stays open for a
+ * later tick, as a session's plot would (P1-09).
+ */
 async function plotOf(ctx: Context, parts: Parts) {
   try {
-    // No secret for a script; a new worktree starts on the branch the quest builds on, like a session's (P1-18).
-    const options = plotOptionsOf(ctx, parts.quest, undefined);
+    const secrets = await questSecretsOf(ctx, parts.quest, parts.territory);
+    const given = Object.keys(secrets).length === 0 ? undefined : secrets;
+    // A new worktree starts on the branch the quest builds on, like a session's (P1-18).
+    const options = plotOptionsOf(ctx, parts.quest, given);
     return ok(await ctx.deps.plots.prepare(parts.quest, parts.territory, options));
   } catch (error) {
     ctx.deps.log.warn(`steward: ${parts.quest.id}: no plot for its script: ${messageOf(error)}`);
@@ -213,6 +223,9 @@ export async function runScriptQuest(ctx: Context, questId: QuestId): Promise<Re
   const claim = { type: 'claim', assignee: null } as const;
   const claimed = await moveAndRing(ctx, { quest: questId, event: claim, actor: 'steward' });
   if (!claimed.ok) return claimed;
+  // Asked before the plot (P1-06): `claimed.breaker` with trip `secrets`, no run opened, the owner told.
+  const lacking = await secretsLacking(ctx, claimed.value, found.value.territory);
+  if (lacking !== undefined) return secretsBreaker(ctx, claimed.value, lacking);
   const parts = { ...found.value, quest: claimed.value };
   const prepared = await plotOf(ctx, parts);
   if (!prepared.ok) return prepared;

@@ -93,6 +93,13 @@ export const DISPATCH_DEFAULTS = {
   tick_seconds: 5,
   /** An answer this soon after the question still finds the session's context, and likely its cache, warm. */
   resume_after_answer_minutes: 55,
+  /**
+   * Machine work outside the tick at once, kingdom-wide (P1-47, (b) of P1-25): not measured yet, so cautious. Before
+   * P1-25 the checks and scripts ran one at a time inside the tick; two let a short check or a script go on beside a
+   * trial of half an hour (P1-35), and keep a laptop from running three check suites of a territory like Elvaria
+   * (test 108 s, boundaries 122 s, P1-16) at once. The owner raises it in kingdom.json once a run measures the load.
+   */
+  max_background: 2,
 } as const;
 
 // territory.json defaults.
