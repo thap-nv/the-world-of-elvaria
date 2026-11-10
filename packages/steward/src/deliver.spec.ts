@@ -6,7 +6,7 @@ import { reduce } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { CAST, bench, questPayload, tickUntil, worldOfFiles } from './__fixtures__/kingdom.ts';
+import { CAST, RM_TEMP, bench, questPayload, tickUntil, worldOfFiles } from './__fixtures__/kingdom.ts';
 import { delivered, leavingRunners, moveTerritory, noteOf, worktreePlots } from './__fixtures__/deliver.ts';
 import type { Bench, BenchOptions } from './__fixtures__/kingdom.ts';
 import type { Leaves } from './__fixtures__/deliver.ts';
@@ -43,7 +43,7 @@ async function open(
 afterEach(async () => {
   await running?.stop();
   await current?.remove();
-  await Promise.all(folders.splice(0).map((made) => rm(made, { recursive: true, force: true })));
+  await Promise.all(folders.splice(0).map((made) => rm(made, RM_TEMP)));
   running = undefined;
   current = undefined;
 });

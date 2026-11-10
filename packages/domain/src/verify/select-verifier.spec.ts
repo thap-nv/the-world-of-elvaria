@@ -117,6 +117,44 @@ describe('selectVerifier', () => {
   });
 });
 
+/** The review after `verifier` judged it and a breaker stopped it at minute `minute`. */
+const cutOnce = (base: Quest, verifier: string, minute: number): Quest =>
+  moved(
+    base,
+    minute,
+    ['assign_verifier', 'steward', { verifier }],
+    ['breaker', 'steward', { trip: 'tokens' }],
+  );
+
+// P1-38, P1-35 (d): ilse, cut by the token breaker, was chosen again at once in the P1-35 run.
+describe('selectVerifier after a breaker stopped a judge of the run', () => {
+  const cut = cutOnce(submitted, 'orin', 20);
+  const ASH = judge('ash', { tribe: 'codex', model: 'gpt-6' });
+
+  it('does not choose it again while another judge may take the review, even of the same family', () => {
+    expect(chosen(cut, [ORIN, SABLE])).toEqual(['sable', 'same_family_other_model']);
+    expect(chosen(cut, [ORIN, SABLE, ASH])).toEqual(['ash', 'other_family']);
+    // The other judge is busy: the review waits for it rather than the judge just cut.
+    expect(chosen(cut, [ORIN, { ...SABLE, status: 'reviewing' }])).toBeNull();
+  });
+
+  it('chooses it again when nobody else may ever take the review: REVIEW_BREAKS_MAX bounds it', () => {
+    expect(chosen(cut, [ORIN])).toEqual(['orin', 'other_family']);
+    // Under machine_only a judge of the same family never judges, so it does not count as another one.
+    const machineOnly = { same_family: 'machine_only' as const };
+    expect(chosen(cut, [ORIN, SABLE], machineOnly)).toEqual(['orin', 'other_family']);
+    expect(chosen(cut, [ORIN, SABLE, ASH], machineOnly)).toEqual(['ash', 'other_family']);
+    expect(chosen(cut, [ORIN, SABLE, { ...ASH, status: 'working' }], machineOnly)).toBeNull();
+  });
+
+  it("chooses it again after the owner's retry of a stalled review", () => {
+    const stalled = cutOnce(cut, 'sable', 30);
+    const retried = moved(stalled, 35, ['breaker', 'steward', { trip: 'tokens' }], ['retry', 'user']);
+    expect(retried).toMatchObject({ status: 'review', verifier: null });
+    expect(chosen(retried, [ORIN, SABLE])).toEqual(['orin', 'other_family']);
+  });
+});
+
 /** A random kingdom: judges and knights of three families, some busy, two of them past assignees of the quest. */
 function roster(next: () => number): { quest: Quest; candidates: Character[]; assignee: Character } {
   const models = ['claude-sonnet-5-5', 'claude-opus-5-5', 'gemini-4-argon-medium', 'gpt-oss-120b-medium'];

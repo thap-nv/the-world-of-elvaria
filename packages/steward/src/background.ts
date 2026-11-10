@@ -4,12 +4,20 @@
 // and a `check.end` line (P1-10b), never a quest or a character file (a tick does, one write at a time); the next
 // tick, which work that ended calls at once (P1-10b), reads what it left: the checks' results here, a script's output
 // in `script.json`. The table lives in memory: a Steward that stops kills the work, the next one runs it again.
+// Ended checks stay while their quest is in review on their run, for the run's next judge as long as the branch head
+// they ran on has not moved (P1-38, P1-35 (c)); review/checks.ts decides when they serve.
 import { currentRun } from '@elvaria/domain';
 import type { BackgroundWork, Quest, QuestId, VerdictCheck } from '@elvaria/domain';
 
 import type { Logger } from './types.ts';
 
 export type BackgroundKind = 'checks' | 'script';
+
+/** What a run of checks gave, and the commit it ran on (null: no git, or git could not say). */
+export interface CheckedRun {
+  readonly checks: readonly VerdictCheck[];
+  readonly head: string | null;
+}
 
 /** One piece of work: aborted when the Steward stops or the quest moves on, and given up then. */
 type Work<T> = (signal: AbortSignal) => Promise<T>;
@@ -20,19 +28,21 @@ interface Entry {
   readonly n: number;
   readonly control: AbortController;
   running: boolean;
-  /** What checks that ended gave: waits for the judge, or the machine, that takes it. */
-  checks?: readonly VerdictCheck[];
+  /** What checks that ended gave: waits for the judges, or the machine, of the run. */
+  checked?: CheckedRun;
 }
 
 export interface Background {
   /** Runs the checks of run `n` of `quest`; undefined from the work means they could not run (a later tick tries again). */
-  checks(quest: QuestId, n: number, work: Work<readonly VerdictCheck[] | undefined>): void;
+  checks(quest: QuestId, n: number, work: Work<CheckedRun | undefined>): void;
   /** Runs the script of run `n` of `quest`; its files say how it ended. */
   script(quest: QuestId, n: number, work: Work<void>): void;
   /** What planTick needs to know (BackgroundWork). */
   view(): BackgroundWork;
-  /** The ended checks of run `n`, taken: the next judge of the run gets its own run of the checks (P1-04). */
-  take(quest: QuestId, n: number): readonly VerdictCheck[] | undefined;
+  /** The ended checks of run `n`, left in the table: a later judge of the run may reuse them (P1-38). */
+  ended(quest: QuestId, n: number): CheckedRun | undefined;
+  /** Forgets the quest's ended checks: the next judge of the run gets its own run of them (P1-04). */
+  drop(quest: QuestId): void;
   /** Aborts and forgets the work `wanted` no longer wants. */
   prune(wanted: (quest: QuestId, kind: BackgroundKind, n: number) => boolean): void;
   /** Resolves once the work running now has ended. */
@@ -95,9 +105,9 @@ export function createBackground(log: Logger, ended: () => void = () => undefine
   const { table, live } = state;
   return {
     checks: (quest, n, work) => {
-      start(state, { quest, kind: 'checks', n, work }, (checks, entry) => {
-        if (checks === undefined) return false;
-        entry.checks = checks;
+      start(state, { quest, kind: 'checks', n, work }, (checked, entry) => {
+        if (checked === undefined) return false;
+        entry.checked = checked;
         return true;
       });
     },
@@ -109,14 +119,16 @@ export function createBackground(log: Logger, ended: () => void = () => undefine
       const entries = [...table.entries()];
       return {
         running: entries.filter(([, entry]) => entry.running).map(([quest]) => quest),
-        checked: entries.filter(([, entry]) => entry.checks !== undefined).map(([quest]) => quest),
+        checked: entries.filter(([, entry]) => entry.checked !== undefined).map(([quest]) => quest),
       };
     },
-    take: (quest, n) => {
+    ended: (quest, n) => {
       const entry = table.get(quest);
-      if (entry?.checks === undefined || entry.n !== n) return undefined;
-      table.delete(quest);
-      return entry.checks;
+      return entry?.n === n ? entry.checked : undefined;
+    },
+    // Only ended checks: work still running is the prune's to stop.
+    drop: (quest) => {
+      if (table.get(quest)?.checked !== undefined) table.delete(quest);
     },
     prune: (wanted) => {
       for (const [quest, entry] of table) {
@@ -137,15 +149,14 @@ export function createBackground(log: Logger, ended: () => void = () => undefine
 }
 
 /**
- * The work still wanted for the quests as `quests` hold them: checks while the quest waits in review for a judge,
- * a script while the quest works, both on the same run. A quest cancelled, judged or moved on loses its work.
+ * The work still wanted for the quests as `quests` hold them: checks while the quest is in review, its judge at work
+ * or still to come (P1-38: ended checks wait there for the run's next judge), a script while the quest works, both
+ * on the same run. A quest cancelled, judged or moved on loses its work.
  */
 export const wantedIn =
   (quests: ReadonlyMap<QuestId, Quest>) =>
   (id: QuestId, kind: BackgroundKind, n: number): boolean => {
     const quest = quests.get(id);
     if (quest === undefined || currentRun(quest) !== n) return false;
-    return kind === 'checks'
-      ? quest.status === 'review' && typeof quest.verifier !== 'string'
-      : quest.status === 'working';
+    return quest.status === (kind === 'checks' ? 'review' : 'working');
   };

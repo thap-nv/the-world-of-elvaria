@@ -83,7 +83,8 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   worktree may start elsewhere (P1-18: `prepare(quest, territory, {from})`): on the first branch of `from` that
   exists and that the default branch does not hold yet, a party's contract or a dependency not merged yet; the
   diff then counts from there. The fork point and the setup state live in `elvaria-plot.json` in the worktree's
-  private git folder. `status`, `touched` (paths changed since the fork, committed or not, plus untracked files),
+  private git folder. `status`, `head` (the commit at HEAD, null without git: the Steward reuses checks that ran on
+  it for the run's next judge, P1-38), `touched` (paths changed since the fork, committed or not, plus untracked files),
   `commitAll` (everything, through the territory's own hooks; `refused` when a hook says no; the Steward's messages
   are `plotCommitMessage`, Conventional Commits so commitlint accepts them), `applyPatch` (P1-28: the assignee's
   `PATCH_FILE` = `elvaria.patch` for `laws.patch_paths`, the paths its CLI refuses to write; every path the patch

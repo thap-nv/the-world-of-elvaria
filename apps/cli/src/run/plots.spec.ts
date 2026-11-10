@@ -9,7 +9,7 @@ import { TerritorySchema } from '@elvaria/domain';
 import type { PlotManager } from '@elvaria/runner-core';
 import { describe, expect, it } from 'vitest';
 
-import { testIo } from '../../test/cli.ts';
+import { RM_TEMP, testIo } from '../../test/cli.ts';
 import { questFixture } from '../../test/quest.ts';
 import { plotsOver, processHostOf } from './plots.ts';
 
@@ -31,6 +31,7 @@ describe("plots' checks with a quest's secrets", () => {
       const manager: PlotManager = {
         prepare: unused,
         status: unused,
+        head: unused,
         touched: () => Promise.resolve(['notes/today.md']),
         commitAll: unused,
         applyPatch: unused,
@@ -68,7 +69,7 @@ describe("plots' checks with a quest's secrets", () => {
       const bare = await plots.check({ plot: folder, territory, run_dir: `.runs/${quest.id}-2` });
       expect(bare).toMatchObject([{ id: 'login', pass: false }]);
     } finally {
-      await rm(dir, { recursive: true, force: true });
+      await rm(dir, RM_TEMP);
     }
   });
 });
@@ -84,6 +85,7 @@ describe("plots' prepare with a quest's secrets", () => {
         return Promise.resolve({ ok: true, value: { plot, created: true, setup: null } });
       },
       status: unused,
+      head: unused,
       touched: unused,
       commitAll: unused,
       applyPatch: unused,
@@ -124,6 +126,7 @@ describe("plots of a party's quests (P1-18)", () => {
       const manager: PlotManager = {
         prepare: unused,
         status: unused,
+        head: unused,
         touched: () => Promise.resolve(['README.md']),
         commitAll: unused,
         applyPatch: unused,
@@ -160,7 +163,7 @@ describe("plots of a party's quests (P1-18)", () => {
       expect(await plots.unmerged(folder, ['quest/a'])).toEqual([]);
       expect(asked).toEqual(['merge quest/a', 'unmerged quest/a']);
     } finally {
-      await rm(dir, { recursive: true, force: true });
+      await rm(dir, RM_TEMP);
     }
   });
 });

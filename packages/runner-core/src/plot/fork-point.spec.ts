@@ -6,6 +6,7 @@ import path from 'node:path';
 import { fromPortable } from '@elvaria/store';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST, commitFile, git, gitRepo, questId, territoryAt } from '../__fixtures__/git-repo.ts';
 import { createPlotManager } from './plot-manager.ts';
 
@@ -25,8 +26,8 @@ beforeAll(async () => {
   git(territoryRepo, 'config', 'user.name', 'Elvaria Test');
   git(territoryRepo, 'config', 'user.email', 'test@elvaria.invalid');
   git(territoryRepo, 'config', 'core.autocrlf', 'false');
-}, 30_000);
-afterAll(() => rm(root, { recursive: true, force: true }));
+});
+afterAll(() => rm(root, RM_TEMP));
 
 const plots = () => createPlotManager({ kingdom: path.join(root, 'kingdom'), host: TEST_HOST });
 const withRemote = () =>
@@ -46,14 +47,14 @@ describe('the fork point of a new quest branch', () => {
 
     expect(await headOf('m1n2p3')).toBe(git(seed, 'rev-parse', 'main'));
     expect(git(territoryRepo, 'rev-parse', 'main')).toBe(localBefore);
-  }, 30_000);
+  });
 
   it('starts from the local branch when it is ahead, merged here and not pushed yet', async () => {
     git(territoryRepo, 'merge', '-q', '--ff-only', 'origin/main');
     await commitFile(territoryRepo, 'merged-locally.txt', 'by hand after a seal\n');
 
     expect(await headOf('n2p3q4')).toBe(git(territoryRepo, 'rev-parse', 'main'));
-  }, 30_000);
+  });
 
   it('starts from the local branch when the two diverged, or when the remote cannot be reached', async () => {
     await commitFile(seed, 'other-side.txt', 'pushed meanwhile\n');
@@ -63,7 +64,7 @@ describe('the fork point of a new quest branch', () => {
     git(territoryRepo, 'remote', 'set-url', 'origin', path.join(root, 'gone.git'));
     expect(await headOf('q4r5s6')).toBe(git(territoryRepo, 'rev-parse', 'main'));
     git(territoryRepo, 'remote', 'set-url', 'origin', origin);
-  }, 30_000);
+  });
 
   it('fails when the default branch exists nowhere', async () => {
     const territory = territoryAt(territoryRepo, { vcs: { type: 'git', default_branch: 'trunk' } });
@@ -71,5 +72,5 @@ describe('the fork point of a new quest branch', () => {
       ok: false,
       error: { reason: 'git_failed', detail: 'no branch trunk' },
     });
-  }, 30_000);
+  });
 });

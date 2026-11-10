@@ -59,6 +59,9 @@ function apartFrom(
 /**
  * The best candidate of the required class within its level's ceiling; failing that, one a rank above its ceiling,
  * because nobody else of the class can take it (canTake, §2.6: the claim then makes the quest wait for the seal).
+ * Another family is preferred only among candidates of the same pass: the level speaks for the model's strength, so
+ * a knight of another family that would stretch never beats one of the same family whose level takes the rank
+ * (P1-38, P1-21 (k)).
  * `candidates` are the characters free to take it now (Roster.isFree, the tribe's limits); `context` the quest's
  * party, whose judges and, in a blind trial, other side never take it.
  */

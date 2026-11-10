@@ -4,6 +4,7 @@ import path from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { QUEST } from '../__fixtures__/world.ts';
 import { MINIMAL_ENV_NAMES, minimalEnv } from './minimal-env.ts';
 import { secretEnvNamesOf, secretValuesOf, sessionEnv } from './session-env.ts';
@@ -114,7 +115,7 @@ describe('openFileTreasury', () => {
     dir = await mkdtemp(path.join(tmpdir(), 'elvaria treasury '));
     file = path.join(dir, 'treasury.json');
   });
-  afterAll(() => rm(dir, { recursive: true, force: true }));
+  afterAll(() => rm(dir, RM_TEMP));
 
   const save = async (text: string): Promise<void> => {
     await writeFile(file, text, 'utf8');

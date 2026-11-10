@@ -92,6 +92,22 @@ describe('questFromCommand', () => {
     });
   });
 
+  // P1-38, P1-21 (j): one context budget was too little for the contract quest and the parts of a party.
+  it('gives a quest of a higher rank without an estimate a larger stand-in: half a budget more per rank above D', () => {
+    const ceilingOf = (rank: string, breakers = CONTEXT.breakers) => {
+      const made = questFromCommand(payload({ rank }), { ...CONTEXT, breakers });
+      if (!made.ok) throw new Error(made.error.code);
+      return [made.value.estimate.tokens, made.value.budget.max_tokens];
+    };
+    expect(ceilingOf('E')).toEqual([120_000, 240_000]);
+    expect(ceilingOf('C')).toEqual([180_000, 360_000]);
+    expect(ceilingOf('B')).toEqual([240_000, 480_000]);
+    expect(ceilingOf('S')).toEqual([360_000, 720_000]);
+    // An odd budget still gives a whole estimate.
+    const odd = { ...CONTEXT.breakers, context_budget_tokens: 120_001 };
+    expect(ceilingOf('C', odd)).toEqual([180_002, 360_004]);
+  });
+
   it('gives a high rank the long time limit, and keeps the estimate and seal it was given', () => {
     const made = questFromCommand(
       payload({ rank: 'B', estimate: { tokens: 50000, minutes: 20 }, seal_required: false }),

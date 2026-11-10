@@ -5,6 +5,7 @@ import { err, ok } from '../core/result.ts';
 import { RANKS } from '../schema/common.ts';
 import { QuestSchema } from '../schema/quest/quest.ts';
 import { scriptParamsIssues } from '../script/params.ts';
+import { CONTEXT_BUDGETS_BY_RANK } from './constants.ts';
 import { namedAssignee } from './select-assignee.ts';
 import type { CharacterId, QuestId } from '../core/ids.ts';
 import type { Result } from '../core/result.ts';
@@ -130,12 +131,14 @@ function assigneeProblem(
 
 /**
  * The budget of a new quest (§2.3: derived from kingdom.breakers and the rank). Without the Chancellor's estimate,
- * the context budget of one quest stands in for it, so the token breaker has a ceiling from the start.
+ * the context budget of one quest, more for a higher rank (CONTEXT_BUDGETS_BY_RANK, P1-38), stands in for it, so
+ * the token breaker has a ceiling from the start.
  */
 function budgetOf(rank: Rank, estimate: CreateQuest['estimate'], breakers: Kingdom['breakers']) {
   const high = RANKS.indexOf(rank) >= RANKS.indexOf(breakers.high_rank_from);
   const minutes = high ? breakers.attempt_minutes.high : breakers.attempt_minutes.low;
-  const guess = estimate ?? { tokens: breakers.context_budget_tokens, minutes };
+  const tokens = Math.round(breakers.context_budget_tokens * CONTEXT_BUDGETS_BY_RANK[rank]);
+  const guess = estimate ?? { tokens, minutes };
   return {
     budget: {
       max_minutes: minutes,

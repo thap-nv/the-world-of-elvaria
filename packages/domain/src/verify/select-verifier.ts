@@ -5,7 +5,9 @@
 // (§3.14 `prompt_and_parse`, P1-33), then the one idle the longest. With no judge of another family free,
 // dispatch.verifier_same_family decides: `different_model` takes a free judge of the same family on another model
 // (or waits for one), `machine_only` waits for a judge of another family while the roster has one, and lets the
-// machine judge once it has none.
+// machine judge once it has none. A judge a breaker stopped in this review is not chosen again while another judge
+// may take it (P1-38, P1-35 (d)): it would most likely spend its budget the same way.
+import { cutVerifiersOf } from '../breaker/review.ts';
 import { familyOf } from '../character/family.ts';
 import { byIdleSince } from '../dispatch/roster.ts';
 import { pastAssigneesOf } from './past-assignees-of.ts';
@@ -86,6 +88,21 @@ export function waitsForNoJudge(
 }
 
 /**
+ * The fit judges less those a breaker stopped in this review (cutVerifiersOf), when one that `may` take it is left,
+ * free now or later: the quest then waits for that one. With nobody else, a judge cut once may judge again, and
+ * REVIEW_BREAKS_MAX bounds the review as before; neither the machine nor a waiting quest stands in for it.
+ */
+function besidesCut(
+  quest: Quest,
+  fit: readonly Character[],
+  may: (character: Character) => boolean,
+): readonly Character[] {
+  const cut = cutVerifiersOf(quest);
+  const others = fit.filter(({ id }) => !cut.has(id));
+  return others.some(may) ? others : fit;
+}
+
+/**
  * `candidates`: everyone who could judge, now or later (not suspended, of an enabled tribe with a runner);
  * `policy.free` says who can now.
  */
@@ -94,13 +111,14 @@ export function selectVerifier(
   candidates: readonly Character[],
   policy: VerifierPolicy,
 ): Selection | NoVerifier {
-  const fit = fitJudges(quest, candidates, policy);
   const family = policy.assignee === undefined ? undefined : familyOf(policy.assignee.model);
   const otherFamily = (character: Character): boolean => familyOf(character.model) !== family;
+  const machineOnly = policy.same_family === 'machine_only';
+  const fit = besidesCut(quest, fitJudges(quest, candidates, policy), (c) => !machineOnly || otherFamily(c));
   const free = fit.filter(policy.free).toSorted(byPreference(policy));
   const other = free.find(otherFamily);
   if (other !== undefined) return { reason: 'other_family', character: other };
-  if (policy.same_family === 'machine_only') return fit.some(otherFamily) ? null : { reason: 'machine_only' };
+  if (machineOnly) return fit.some(otherFamily) ? null : { reason: 'machine_only' };
   const same = free[0];
   return same === undefined ? null : { reason: 'same_family_other_model', character: same };
 }

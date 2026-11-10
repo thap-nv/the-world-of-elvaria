@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fromPortable } from '@elvaria/store';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST, commitFile, git, gitRepo, questId, territoryAt } from '../__fixtures__/git-repo.ts';
 import { createPlotManager } from './plot-manager.ts';
 import { PLOT_RECORD_FILE } from './plot-record.ts';
@@ -17,7 +18,7 @@ beforeAll(async () => {
   kingdom = path.join(root, 'my kingdom');
   await mkdir(kingdom);
 });
-afterAll(() => rm(root, { recursive: true, force: true }));
+afterAll(() => rm(root, RM_TEMP));
 
 const plots = () => createPlotManager({ kingdom, host: TEST_HOST });
 const branchOf = (id: QuestId): string => `quest/${id}`;
@@ -56,7 +57,7 @@ describe('prepare: a plot starts from the branch it builds on (P1-18, P1-16 (f))
     );
     expect(await baseOf(part)).toBe(git(repo, 'rev-parse', contract));
     expect(await plots().touched(part)).toEqual([]);
-  }, 30_000);
+  });
 
   it('starts from the default branch once it holds the branch, or when no branch is given', async () => {
     const repo = await gitRepo(path.join(root, 'merged already'));
@@ -69,7 +70,7 @@ describe('prepare: a plot starts from the branch it builds on (P1-18, P1-16 (f))
 
     expect(await baseOf(chained)).toBe(git(repo, 'rev-parse', 'main'));
     expect(await baseOf(plain)).toBe(git(repo, 'rev-parse', 'main'));
-  }, 30_000);
+  });
 
   it('keeps the start of a worktree already there, whatever branch it is given later', async () => {
     const repo = await gitRepo(path.join(root, 'kept start'));
@@ -80,7 +81,7 @@ describe('prepare: a plot starts from the branch it builds on (P1-18, P1-16 (f))
 
     expect(await prepared(repo, id, [later])).toEqual(first);
     expect(await baseOf(first)).toBe(git(repo, 'rev-parse', 'main'));
-  }, 30_000);
+  });
 });
 
 describe("merge: a merge quest gets its party's parts (P1-18, §3.13 step 5)", () => {
@@ -110,7 +111,7 @@ describe("merge: a merge quest gets its party's parts (P1-18, §3.13 step 5)", (
     ]);
     // Each part's commit and the two merges: the judge reads the whole party against the contract.
     expect(await plots().status(merge)).toMatchObject({ dirty: false, ahead: 4 });
-  }, 30_000);
+  });
 
   it('leaves a conflict in progress for the character, and goes on once it is concluded', async () => {
     const { repo, api, merge } = await party('conflict');
@@ -140,7 +141,7 @@ describe("merge: a merge quest gets its party's parts (P1-18, §3.13 step 5)", (
     expect(await plots().commitAll(merge, 'chore: submit')).toMatchObject({ status: 'committed' });
     expect(await plots().unmerged(merge, [api, other])).toEqual([]);
     expect(await plots().commitAll(merge, 'chore: submit')).toEqual({ status: 'clean' });
-  }, 30_000);
+  });
 
   it('merges nothing into changes not committed, and stops at a branch that is not there', async () => {
     const { api, web, merge } = await party('dirty and missing');
@@ -159,7 +160,7 @@ describe("merge: a merge quest gets its party's parts (P1-18, §3.13 step 5)", (
       stop: { reason: 'missing', branch: gone, detail: `no branch ${gone}` },
     });
     expect(await plots().unmerged(merge, [gone])).toEqual([gone]);
-  }, 30_000);
+  });
 
   it('says what a hook that refuses the merge said, and never bypasses it', async () => {
     const { repo, api, merge } = await party('hook refuses');
@@ -171,7 +172,7 @@ describe("merge: a merge quest gets its party's parts (P1-18, §3.13 step 5)", (
 
     expect(refused).toMatchObject({ merged: [], pending: [api], stop: { reason: 'refused', branch: api } });
     expect(refused.stop?.detail).toContain('merges wait for the release');
-  }, 30_000);
+  });
 
   it("gives the merge quest's judge its own work: after the last merge, and the conflicts resolved (P1-21 (e))", async () => {
     const { repo, api, web, merge } = await party('judge after merges');
@@ -209,7 +210,7 @@ describe("merge: a merge quest gets its party's parts (P1-18, §3.13 step 5)", (
     // The whole party is still there for anyone who asks: it holds every part.
     expect(await plots().diff(merge)).toContain('+export const web = 3;');
     expect(await plots().diff({ type: 'folder', path: 'quests/x/work' }, 'after_merges')).toBeNull();
-  }, 30_000);
+  });
 
   it('merges nothing on a plot without git, and holds none of the branches', async () => {
     const folder: Plot = { type: 'folder', path: 'quests/q_20261107_m4m4m4/work' };

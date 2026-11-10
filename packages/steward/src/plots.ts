@@ -1,7 +1,7 @@
 // The plot of a quest without PlotManager: a folder `quests/<id>/work/` in the kingdom (§2.2, §3.3), which is what a
 // territory without git gets anyway. Nothing to commit, no check to run, no diff, nothing to release. The Steward's specs use
 // it; `elvaria run` gives the Steward PlotManager and runChecks of P1-07 (apps/cli/src/run/plots.ts). No git, no
-// patch to apply either (P1-28), and no `commands.setup` to give a quest's secrets to (P1-30).
+// patch to apply either (P1-28), no `commands.setup` to give a quest's secrets to (P1-30), and no head (P1-38).
 import { mkdir } from 'node:fs/promises';
 
 import { ok } from '@elvaria/domain';
@@ -20,6 +20,8 @@ export function folderPlots(root: string): Plots {
     commit: () => Promise.resolve({ status: 'no_git' }),
     applyPatch: () => Promise.resolve({ status: 'none' }),
     check: () => Promise.resolve([]),
+    // No commit to tie checks to: each judge gets its own run of them (P1-38).
+    head: () => Promise.resolve(null),
     // A folder has no branch to make a scratch plot from (ADR 0022): its judge works as any other.
     trial: () => Promise.resolve([]),
     scratch: (quest) => Promise.reject(new Error(`${quest.id} has no scratch plot on a folder`)),

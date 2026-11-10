@@ -193,6 +193,11 @@ export interface Plots {
   /** The territory's checks for the paths the quest touched, one after another in the plot (§3.2). */
   check(request: PlotCheck): Promise<readonly CheckRun[]>;
   /**
+   * The commit at the plot's HEAD (PlotManager.head): checks that ran on it serve the run's next judge while it
+   * stays there (P1-38); null without git, where they never do.
+   */
+  head(plot: Quest['plot']): Promise<string | null>;
+  /**
    * The machine's part of a ritual with a scratch plot (ADR 0022, P1-20): a fresh scratch plot of the quest's branch,
    * then `rerun_clean`, the checks, `flake_check` and `coverage_not_lower` there. Throws when it cannot be made.
    */

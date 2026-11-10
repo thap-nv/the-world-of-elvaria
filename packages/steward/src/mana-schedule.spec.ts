@@ -4,7 +4,7 @@
 import { openEventLog } from '@elvaria/eventlog';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { bench, questPayload, tickUntil, wakesAfter } from './__fixtures__/kingdom.ts';
+import { bench, questPayload, settled, tickUntil, wakesAfter } from './__fixtures__/kingdom.ts';
 import type { Bench, BenchOptions } from './__fixtures__/kingdom.ts';
 import type { Steward, StewardDeps } from './types.ts';
 import type { AgentRunner, ProbeOptions, ProbeResult, RunnerSignal } from '@elvaria/runner-core';
@@ -72,10 +72,11 @@ describe('an awake tribe', () => {
     };
     const { kingdom, steward } = await open({ probes: { claude: reading } });
     await kingdom.command('create_quest', questPayload('Spends a little'));
-    // Tick 1 reads the gauge (quests in play) and opens the session; tick 2 records its end and reads again.
+    // Tick 1 reads the gauge (quests in play) and opens the session; tick 2 records its end and reads again. The
+    // session ends in real time before the clock moves, however busy the machine (P1-39).
     for (let tick = 0; tick < 2; tick += 1) {
       await steward.tick();
-      await new Promise((resolve) => setTimeout(resolve, 15));
+      await settled(steward);
       kingdom.clock.advance(1);
     }
     expect(calls).toEqual([false, false]);

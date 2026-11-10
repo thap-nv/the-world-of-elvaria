@@ -2,7 +2,7 @@
 // paths and zod messages) stay verbatim, like error text in a handover (implementation-plan §4.1).
 import type { RegistryIssue } from '@elvaria/domain';
 import type { Translate } from '@elvaria/i18n';
-import type { RegistryLoadIssue, StoreIssue } from '@elvaria/store';
+import type { RegistryGap, RegistryLoadIssue, StoreIssue } from '@elvaria/store';
 
 import { REGISTRY_ISSUE_LABEL, STORE_ISSUE_LABEL } from './labels.ts';
 
@@ -25,3 +25,9 @@ export function registryIssueLines(t: Translate, issue: RegistryLoadIssue): stri
   const where = `registry/${issue.file}.json ${issue.path.join('.')}`;
   return [t(REGISTRY_ISSUE_LABEL[issue.code], { where }), `  ${issue.message}`];
 }
+
+/** A default registry entry the kingdom lacks, or the keys of it the kingdom's entry lacks (P1-41). */
+export const registryGapLine = (t: Translate, gap: RegistryGap): string =>
+  gap.fields === undefined
+    ? t('cli.registry.gap_entry', { file: gap.file, id: gap.id })
+    : t('cli.registry.gap_fields', { file: gap.file, id: gap.id, fields: gap.fields.join(', ') });

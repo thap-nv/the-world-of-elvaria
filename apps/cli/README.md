@@ -71,8 +71,14 @@
   keep it off, its CLI still pinned), refuses (exit 2, nothing written) a tribe option naming a tribe
   kingdom.json has not, `--acknowledge-terms` for a disabled tribe it would skip, or `--enable` of a tribe whose
   adapter is an owner file, which only `tribe check` enables (P1-34), checks git, the registry
-  (a class prompt it lacks: `elvaria migrate` copies the default ones; catalog scripts: `missingRegistryFiles`)
-  and each territory, the
+  (a class prompt it lacks: `elvaria migrate` copies the default ones; catalog scripts: `missingRegistryFiles`;
+  P1-41: default entries it lacks by id, and keys the default entries have that its own lack, `registryGaps`, as a
+  warning) and each territory, with the program of every command (`commands.*`, `checks[].run|cleanup`) looked up
+  on PATH the way the Steward finds it (P1-41, `src/doctor/check-commands.ts`: missing, a `.cmd`/`.bat` only a
+  shell starts, or a line with shell syntax is an error naming the territory and the commands); on Windows, for a
+  tribe whose sessions run commands in powershell.exe (agy), PowerShell's Execution Policy (P1-41,
+  `src/doctor/check-shell.ts`: one that refuses local scripts such as `pnpm.ps1` is an error of the tribe, with
+  the command that fixes it, so `--enable` keeps it off), the
   treasury file (`inspectTreasury`: present, mode 0600 outside Windows, `{ "name": "value" }`, every name a
   territory allows; names only, never a value) and, while no Steward holds its lock, the sessions a stopped one
   left running (`sessionsLeftBehind`), which the next `run` kills (P1-11, `src/doctor/check-state.ts`), and the
@@ -86,6 +92,10 @@
   (`sleeping_mana`) with the gauge it waits for, a model's own cap before its pool, and lists the sleeping gauges
   under the table. Only those: the log does not keep the models an account lists in a group, so the prefix table
   alone would call an Argon character bound by "Gemini Models", which the Steward, reading agy's `/usage`, does not.
+- `migrate`: moves every older file to the current version, old text in `.backup/<stamp>/` (`migrateKingdom`),
+  copies the registry files this Elvaria ships and the kingdom lacks (P1-15), then adds the default registry
+  entries it lacks by id, whole, only when the registry still loads with them (P1-41, `addMissingRegistryEntries`):
+  an entry the owner has is never changed, so a key it lacks (a kind's `ritual_overrides`) is only named.
 - `run`: puts the work engine together and runs the Steward until Ctrl+C (`CliIo.untilStopped`): a runner per
   enabled tribe from `kingdom.tribes[].adapter` (`src/run/crew.ts`: `claude_code`, with `hookCommand` and
   `HOOK_SCRIPT` of `@elvaria/hooks`, since P1-15 `antigravity` from the pinned agy, built on first use in
@@ -131,4 +141,5 @@ old lines included), `src/gauges.spec.ts` (the gauges, and `character list` and 
 fake CLI with no tool gate: `src/tribe/tribe.spec.ts` adds, pins, checks and disables it; `src/tribe/round.spec.ts`
 runs the Steward (`elvaria run`) with it until a rank D quest is done, while a rank C quest stays open (P1-19);
 `src/tribe/list.spec.ts` lists it beside the built-in tribes, one with no runner and a broken file, and has
-`doctor --enable` refuse it (P1-34).
+`doctor --enable` refuse it (P1-34). `src/doctor/check-shell.spec.ts` puts a fake `powershell` on PATH that prints a
+policy (`Restricted`, `RemoteSigned`); the doctor runs with it are Windows-only, the reading itself runs everywhere.
