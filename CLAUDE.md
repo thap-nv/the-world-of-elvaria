@@ -13,7 +13,7 @@ Elvaria là một thế giới fantasy low-poly chạy trên máy cá nhân (Win
 2. Đọc các mục kế hoạch và ADR mà dòng đó (và phần code bạn sắp sửa) trỏ tới, cùng các dòng §11 nhắc tới task. Luật riêng của từng vùng code nằm ở [.claude/rules/](.claude/rules/) (domain, runner, hooks) và tự nạp khi bạn chạm file của vùng đó. Dữ kiện về CLI nằm ở [docs/reference/cli-facts-2026-11-06.md](docs/reference/cli-facts-2026-11-06.md) và hai spike ([Claude](docs/spikes/claude-2026-11.md), [Antigravity](docs/spikes/antigravity-2026-11.md); spike thắng khi hai bên khác nhau); đừng tra lại điều đã có ở đó, trừ khi phiên bản CLI đã đổi.
 3. Một phiên làm một task, trên nhánh `feat/<id>` tách từ `main`. Commit triển khai mang code, test, README và tài liệu đổi theo. Nếu thực tế khác kế hoạch, sửa kế hoạch trong cùng commit và thêm một dòng §11 "<id> (…), chỗ thực tế khác kế hoạch, chờ người dùng chốt" liệt kê từng chỗ khác và các đề xuất ngoài phạm vi; người dùng chốt sau đó bằng một dòng §11 mới. Kế hoạch không nói tới một chi tiết trong phạm vi task (hình dạng một kiểu, tên một trường, chỗ đặt một file, cách test) thì chọn cách đơn giản nhất khớp ADR, làm tiếp và ghi lựa chọn vào dòng §11 đó; chỉ dừng lại hỏi khi lựa chọn đổi một ADR, đổi hợp đồng dữ liệu ngoài phạm vi task, hay tốn mana. Xem cả §10 (câu hỏi còn mở).
 4. Xong thì một commit riêng `docs: mark <id> done in the implementation plan` đổi ô Trạng thái thành `xong (<ngày>, <hash commit triển khai>)`.
-5. Trước khi merge: cập nhật nhánh bằng `git merge origin/main`, **không rebase** (hash ở ô Trạng thái phải còn đúng); file sinh ra bị conflict thì lấy một bên rồi chạy lại generator; `pnpm check`; CI xanh 3 OS rồi mới merge PR (merge commit). Chi tiết: §8 "Chạy song song".
+5. Trước khi merge: cập nhật nhánh bằng `git merge origin/main`, **không rebase** (hash ở ô Trạng thái phải còn đúng); file sinh ra bị conflict thì lấy một bên rồi chạy lại generator; `pnpm check` xanh ở máy rồi mới mở PR và merge (merge commit). CI trên GitHub không chạy ở mỗi PR nữa (chốt 2026-11-10): chạy tay khi cần kiểm ba hệ điều hành, ở Actions → CI → Run workflow trên nhánh cần kiểm (implementation-plan §7). Chi tiết: §8 "Chạy song song".
 
 ## Bản đồ repo / Repo map
 
@@ -162,7 +162,7 @@ Trước khi sửa các file sau, đọc file đó, test của nó và ADR liên
 ## Definition of done
 
 - Test cho thay đổi, chạy xanh: lint, format, typecheck, unit, boundaries, schemas drift, docs:gen drift, docs:check, i18n:check (`pnpm check`).
-- Chạy được trên Windows **và** macOS (CI matrix xanh); ca riêng của một OS có test riêng.
+- Chạy được trên Windows **và** macOS: ca riêng của một OS có test riêng. CI matrix chạy tay khi cần, không còn là cổng của từng PR; task chạm vùng nhạy hệ điều hành (`runner-*`, `hooks`, plot, kill tree, `store`) thì nêu trong báo cáo để chủ nhân quyết có chạy CI không.
 - README của package chạm vào vẫn đủ 4 mục *Does* / *Does not* / *Depends on* / *How to test* và nói đúng code.
 - ADR mới hoặc cập nhật nếu đổi một quyết định đã ghi; `glossary.json` cập nhật (rồi `pnpm docs:gen`) nếu thêm thuật ngữ.
 - Cột Trạng thái của task trong [docs/implementation-plan.md](docs/implementation-plan.md) §8 đã đổi; kế hoạch đã sửa và §11 có dòng "chờ người dùng chốt" nếu thực tế khác.

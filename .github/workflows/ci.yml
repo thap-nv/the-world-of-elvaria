@@ -1,9 +1,10 @@
 name: CI
 
+# Started by hand only (Actions → CI → Run workflow, on the branch to verify). Decided by the owner on
+# 2026-11-10: a green local `pnpm check` gates a merge; this workflow runs when a check on three operating
+# systems, or the audit, is wanted (implementation-plan §7, §11).
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
