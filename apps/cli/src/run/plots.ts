@@ -4,8 +4,9 @@
 // opens no session there. Commit, the checks on what the quest touched, the judge's diff (P1-15) and release at
 // archive (with each tribe's `forget`) go straight to PlotManager; a catalog script gets the territory's checks
 // resolved to programs (P1-17). A ritual with a scratch plot (P1-20) has its checks run in a fresh scratch plot of
-// the quest's branch (trialInScratch), its judge opened there, and the plot removed after the judge.
-import { argvOf, createPlotManager, runChecks, trialInScratch } from '@elvaria/runner-core';
+// the quest's branch (trialInScratch), its judge opened there, and the plot removed after the judge; the run's next
+// judge gets the plot made again, with commands.reset once (scratchAgain, P1-42, P1-47).
+import { argvOf, createPlotManager, runChecks, scratchAgain, trialInScratch } from '@elvaria/runner-core';
 import type { ForgetWorktree, PlotManager, ProcessHost } from '@elvaria/runner-core';
 import type { Plots } from '@elvaria/steward';
 import { fromPortable, inKingdom, toPortable } from '@elvaria/store';
@@ -67,17 +68,10 @@ function scratchPlots(
         host,
       );
     },
-    // The run's next judge reuses the last one's trial on the same commit, in a scratch plot of its own (P1-42).
-    prepareScratch: async (quest, territory, secrets) => {
-      const prepared = await manager.prepareScratch(
-        quest,
-        territory,
-        secrets === undefined ? {} : { secrets },
-      );
-      if (prepared.ok) return;
-      const { reason, detail } = prepared.error;
-      throw new Error(`the scratch plot of ${quest.id} is not ready (${reason}): ${detail}`);
-    },
+    // The run's next judge reuses the last one's trial on the same commit, in a scratch plot of its own (P1-42),
+    // reset once so it does not meet the database the last judge's breaks left (P1-47).
+    prepareScratch: (quest, territory, options = {}) =>
+      scratchAgain(manager, { kingdom, quest, territory, ...options }, host),
     scratch: async (quest, territory) => {
       const cwd = await manager.scratchOf(quest, territory);
       if (cwd === undefined) throw new Error(`${quest.id} has no scratch plot`);

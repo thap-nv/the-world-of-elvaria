@@ -7,7 +7,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { TerritorySchema, ok } from '@elvaria/domain';
-import { createPlotManager, trialInScratch } from '@elvaria/runner-core';
+import { createPlotManager, scratchAgain, trialInScratch } from '@elvaria/runner-core';
 import { fromPortable, toPortable } from '@elvaria/store';
 import type { TerritoryId } from '@elvaria/domain';
 
@@ -80,10 +80,9 @@ export function gitPlots(kingdom: string): Plots {
       const given = { kingdom, quest, territory, run_dir: runDir, runs, coverage };
       return trialInScratch(manager, wait === undefined ? given : { ...given, lock_wait_ms: wait }, host);
     },
-    prepareScratch: async (quest, territory) => {
-      const prepared = await manager.prepareScratch(quest, territory);
-      if (!prepared.ok) throw new Error(`fixture: ${prepared.error.detail}`);
-    },
+    // The next judge's scratch plot, commands.reset once there (P1-42, P1-47).
+    prepareScratch: (quest, territory, options = {}) =>
+      scratchAgain(manager, { kingdom, quest, territory, ...options }, host),
     scratch: async (quest, territory) => {
       const cwd = await manager.scratchOf(quest, territory);
       if (cwd === undefined) throw new Error(`fixture: ${quest.id} has no scratch plot`);

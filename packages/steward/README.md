@@ -25,7 +25,9 @@
   rather than at its next beat (P1-10b), so a judge opens on checks that ended without waiting up to
   `tick_seconds`. Work for a quest that moved on (cancelled,
   judged, retried) is killed before each plan; `stop()` kills it all and the next Steward runs it again.
-  `Steward.idle()` resolves once the work running now has ended (what a spec waits on).
+  `Steward.idle()` resolves once the work running now has ended (what a spec waits on). No more of it runs at once
+  than `dispatch.max_background` (P1-47, 2 by default until a run measures the load): `planTick` starts checks
+  first, then scripts, in the room the running work leaves, and the rest waits for a later tick.
 - Trips the breakers (§3.4, P1-06; `src/sessions/breaker.ts`): `planTick` names each held session past its
   minutes (`quest.budget.max_minutes`, from its own attempt_log entry), its tokens (the running total of its
   `usage` signals against `budget.max_tokens`) or its turns; the Steward sinks the assignee into the swamp, kills
@@ -140,11 +142,13 @@
   removed after the judge's session whatever its end (`Plots.releaseScratch`, also after a breaker, the machine's
   verdict and at archive). On a territory with exclusive checks the judge opens only once the Steward holds the territory's exclusive lock, kept for its session (`src/review/exclusive.ts`, released at its end, by a tick when it lost its session, and at `stop()`), so it runs e2e too; the checks of other quests wait for it (`exclusiveWaitMinutes`). A verdict that fails on a flake (`flake_check`, or a judge's `flaky`) opens one quest
   of the ritual's `flaky_follow_up` (`fix`, knight) before the quest moves on; the quest's branch never changes.
-- Puts the quest's plot back to its commit after a judge outside a scratch plot (P1-44, `src/review/after-judge.ts`):
-  the judge has no Edit or Write, but the checks' commands it runs may write in the plot (a generator, a formatter);
-  the work was all committed before its review, so once the judge's session is over, whatever its end, what is
-  changed or untracked goes (`Plots.restore`; ignored files stay), a warning names it and a `plot.restored` line in
-  the quest's journal lists it. A plot git cannot put back costs a warning and stays as the judge left it.
+- Puts the quest's plot back to its commit after a judge outside a scratch plot (P1-44, `src/review/after-judge.ts`),
+  and after the machine checks in the quest's own plot, before the judge opens (P1-47, `src/review/checks.ts`): the
+  judge has no Edit or Write, but the checks' commands, its own or the machine's, may write in the plot (a
+  generator, a formatter); the work was all committed before its review, so what is changed or untracked goes
+  (`Plots.restore`; ignored files stay, `src/review/restore.ts`), a warning names it and a `plot.restored` line in
+  the quest's journal lists it (with the judge's session after a judge, none after the checks). A plot git cannot
+  put back costs a warning and stays as the commands left it.
 - Tells an assignee that goes on with a quest (revived, or returned) which checks the machine will run on its work:
   it asks the plot what the branch touched (`Plots.touched`, P1-43) and the prompt names what `selectChecks` picks
   for it; a plot that cannot say gives no such section, and the session still opens.
@@ -155,8 +159,9 @@
   results go into the judge's prompt, the verdict and `quest.checks_run`. The run's next judge (after a partial
   verdict, a breaker or a session without a verdict) gets the same results while the plot's head is the commit they
   ran on (`Plots.head`, P1-38); a moved head and a plot without git get their own run. A judge in a scratch plot
-  leaves with its plot: the next one gets a fresh scratch plot (`Plots.prepareScratch`, after `commands.setup`) and
-  the same trial while the head stays, the trial run again once it moved (P1-42). A
+  leaves with its plot: the next one gets a fresh scratch plot (`Plots.prepareScratch`, after `commands.setup`, then
+  `commands.reset` once with its own log, P1-47) and the same trial while the head stays, the trial run again once
+  it moved or the plot could not be made or reset (P1-42). A
   judge a breaker stopped is not chosen again in that run while another judge may take the review (domain
   `cutVerifiersOf`). The prompt shows the end of each failing check's log (`src/review/log-tail.ts`: the last 40 lines, at most
   4 000 characters for all of them), masked with the session's secret values and the patterns, because the log lies
@@ -171,7 +176,9 @@
   dirty worktree stays, with a warning).
 - Runs the script tier itself (§2.5, §3.12, ADR 0017; `src/script/`): a `create_quest` whose `script.params` do
   not fit the catalog's `params_schema` is refused (`invalid_script_params`); an open script-tier quest is claimed
-  with no assignee, gets its plot, starts, and `node registry/scripts/<id>.mjs --params <json> --context <json>`
+  with no assignee, gets its plot (its `commands.setup` given the quest's secrets, or the quest goes to the
+  infirmary with `breaker:secrets` when the treasury or the territory cannot give them, P1-47), starts, and
+  `node registry/scripts/<id>.mjs --params <json> --context <json>`
   runs in the plot outside the tick (`StewardDeps.scripts`, `nodeScriptRunner`): the minimal env and no secret,
   `--context` with the run folder and the territory's checks resolved (`Plots.scriptChecks`), its tree killed at
   `timeout_minutes`. Its output goes to `.runs/<quest>-<n>/script.log` and `script.json`; the machine judges from
@@ -279,7 +286,12 @@ stalled without its move to the infirmary goes there at the next start (no verdi
 owner retried before the stop gets its new judge. `after-judge.spec.ts` (P1-44): on real git repos, a judge whose
 command rewrote the contract and left output leaves the plot clean and one `plot.restored` line; the returned
 assignee opens on the commit, so the judge's change never reaches the branch; a plot that cannot be put back costs
-a warning.
+a warning. `checks-restore.spec.ts` (P1-47): a drift check that regenerates files in the plot leaves it clean, with
+one `plot.restored` line and no session, before the judge opens; a plot that cannot be put back costs a warning and
+the judge still opens. `scratch-again.spec.ts` (P1-42, P1-47): the run's second judge in a scratch plot gets a fresh
+plot at the same head and the first judge's trial, which runs once; with a `commands.reset`, that plot is reset
+once (its own log), the first judge's three times by the trial. `background-cap.spec.ts` (P1-47): two quests
+submitted in one tick get their checks one after the other under a cap of one, both at once under two.
 `infirmary.spec.ts` builds the reason of every trip from its detail, word for word as before P1-32, and reads a
 refused patch back from a new line and from an older one (P1-32).
 `scripts.spec.ts` copies the real `link-check` and `run-check` of `packages/registry-default/scripts/` into the
@@ -296,7 +308,9 @@ write `check.start` and `check.end` (`stopped` when the Steward stops under them
 gone by then to the infirmary, leave the returned assignee the end of the red check's log masked, and the loop
 ticks as soon as they end, not a beat later. `setup-secrets.spec.ts` (P1-30): the plot of the assignee and of the
 judge gets exactly the quest's secrets for its setup (none, and no treasury read, for a quest that asks for none),
-and a treasury that cannot give the values by then prepares no plot and gives the claim back.
+and a treasury that cannot give the values by then prepares no plot and gives the claim back; a script-tier quest's
+plot gets them too while its script gets none, and one whose secrets the treasury lacks goes to the infirmary once,
+never claimed and released every tick (P1-47).
 `apprentice-breaker.spec.ts`: the
 infirmary note after an apprentice overran or was cut. `review-breakers.spec.ts`: two verifiers stopped by the
 token breaker, or by their CLI's turn limit, send the review to the infirmary and no third opens.

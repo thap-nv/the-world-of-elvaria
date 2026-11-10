@@ -132,8 +132,11 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   up to `runs` times while every run passes (logs in `<run_dir>/run-<k>/checks/`), then `commands.coverage` on
   the head and on the base (istanbul `coverage/coverage-summary.json`); it adds the checks `rerun_clean` (every
   reset passed), `flake_check` and `coverage_not_lower`. `trialInScratch` does both, a setup that fails coming
-  back as a failing `rerun_clean`. `prepareScratch` alone makes the scratch plot of the run's next judge, whose
-  trial the Steward keeps from the judge before while the branch head stays (P1-42).
+  back as a failing `rerun_clean`. `scratchAgain` makes the scratch plot of the run's next judge, whose trial the
+  Steward keeps from the judge before while the branch head stays (P1-42): `prepareScratch`, then `commands.reset`
+  once (P1-47, log `.runs/<quest>-verify-reset.log`, `scratchResetLogOf`; none and no log without a reset), so the
+  judge does not meet the database the last one's breaks left; a plot not made, or a setup or reset that fails,
+  throws.
   The log of a check or of `commands.setup` loses the values of the secrets the command was given (`withSecrets`),
   then the secret shapes it printed, when it closes (`maskLogFile`, ADR 0013); the command writes straight into the
   file, so the masking is not line by line.

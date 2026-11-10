@@ -65,7 +65,9 @@
   that start, a judge (or the machine) for each submitted quest, the submitted quests no judge of the roster may
   ever take (`unjudgeable`, `waitsForNoJudge`, P1-15), returned quests sent back, claims (class, level
   by `canTake`, limits of tribe and territory, round-robin, affinity), the open quests nobody can take, and the
-  done quests still to deliver (`deliveries`, P1-14).
+  done quests still to deliver (`deliveries`, P1-14). Checks and scripts, which run outside the tick, start only in
+  the room `dispatch.max_background` leaves beside the work running (`BackgroundWork.running`, P1-47), checks
+  first; a sandbox day has no background, so no cap.
   From P1-05 a character's mana must be open (`poolOpenOf`: its pool enabled, every gauge that binds it awake and
   below the cap), and paused quests whose gauges woke go on before any new work (`wakes`, `wakesOf`); then, with
   `mana.reassign_after_hours` set, a quest asleep that long goes to a free character of its class whose mana is
