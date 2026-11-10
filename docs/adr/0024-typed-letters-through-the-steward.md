@@ -9,7 +9,7 @@ Parallel task sessions in stage 1 collided on shared files, and a coordinating s
 
 ## Decision
 
-- There is no character-to-character channel. A character writes letters in a `Letters` section of its handover letter; `runner-core` parses them; only the Steward files `letters/<id>.json` and routes them, so the single-writer rule holds.
+- There is no character-to-character channel. A character writes letters in a `Letters` section of its handover letter; `runner-core` parses them; only the Steward files `letters/<id>.json` and routes them, so the single-writer rule holds. (Amended 2026-11-11, phase 1.5 plan: the entity's id is `memo`, because `letter` already names the handover letter throughout the code: section `Memos`, files `memos/<id>.json`, events `memo.*`, command `decide_memo`; display strings still say letter. The Steward reads the section itself when the doer's run settles, with a pure parser from `runner-core`; `RunResult` and the adapters do not change. An id made from the quest, the kind and the normalized text keeps a second reading from filing it twice.)
 - Letter kinds are registry data, each with its route: `proposal` (work outside the quest) to the Chancellor; `advisory` (I changed something another area uses) to the open quests whose `scope_paths` meet the letter's refs, read at the start of their next session; `request` (I need something from another area) to the Chancellor, where it becomes a quest draft; `objection` (I contest a verdict) to a second judge other than the first, once per verdict.
 - Routing is a pure function in `domain` that reads the registry; the Steward has no `switch` on the letter kind.
 - A question to the owner stays what it is: the Questions section of the handover and a `blocked` quest (ADR 0017).
