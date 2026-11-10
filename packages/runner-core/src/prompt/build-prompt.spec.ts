@@ -151,6 +151,8 @@ describe('assignee prompt', () => {
       templates,
     );
     expect(user).toContain('# Picking up the quest');
+    // A session the steward released when it stopped revives too (P1-44), so the reasons name it.
+    expect(user).toContain('a breaker tripped, or Elvaria stopped.');
     expect(user).toContain('You asked: Gộp i18n:check?');
     expect(user).toContain('The owner answered: Có, chạy sau cùng.');
     expect(user).toContain('None: the earlier session left no letter.');

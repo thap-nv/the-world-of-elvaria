@@ -85,9 +85,22 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
     const io = testIo();
     expect(await elvaria(io, 'tribe', 'list')).toBe(0);
     const lantern = FAKE_LANTERN.replaceAll('\\', '/');
+    // The shell each adapter declares for this OS (P1-46): claude and agy declare only Windows' (P1-40).
+    const windows = process.platform === 'win32';
     const cells = io.printed.out.map((line) => line.split(/ {2,}/));
     expect(cells).toEqual([
-      ['ID', 'Adapter', 'Enabled', 'Version', 'Sign-in', 'Max rank', 'Guarded', 'Capabilities', 'Path'],
+      [
+        'ID',
+        'Adapter',
+        'Enabled',
+        'Version',
+        'Sign-in',
+        'Max rank',
+        'Guarded',
+        'Capabilities',
+        'Shell',
+        'Path',
+      ],
       [
         'claude',
         'claude_code',
@@ -97,6 +110,7 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
         'S',
         'yes',
         'headless, context_file, events, tool_gate, usage, structured_output, resume, compact, subagent',
+        windows ? 'Git Bash' : '—',
         '—',
       ],
       [
@@ -108,6 +122,7 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
         'S',
         'yes',
         'headless, context_file, events, tool_gate, usage, structured_output, resume',
+        windows ? 'Windows PowerShell (powershell.exe)' : '—',
         '—',
       ],
       [
@@ -120,9 +135,10 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
         'no',
         // lantern has no JSON Schema flag since P1-33: its judges answer in text.
         'headless, usage',
+        '—',
         lantern,
       ],
-      ['codex', 'codex_cli', 'no', '—', '—', '—', '—', 'no runner yet', '—'],
+      ['codex', 'codex_cli', 'no', '—', '—', '—', '—', 'no runner yet', '—', '—'],
       [
         'broken',
         broken,
@@ -132,6 +148,7 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
         '—',
         '—',
         'adapter file does not load: elvaria tribe check broken',
+        '—',
         '—',
       ],
     ]);

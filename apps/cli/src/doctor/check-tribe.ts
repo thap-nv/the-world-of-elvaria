@@ -207,7 +207,8 @@ async function checkFound(
   const { t } = ctx;
   const found = await probe(tribe, ctx, options);
   if ('problem' in found) return { findings: [found.problem] };
-  const tool = nextTool(tribe, found, ctx, options, await capabilitiesOf(tribe, ctx));
+  const capabilities = await capabilitiesOf(tribe, ctx);
+  const tool = nextTool(tribe, found, ctx, options, capabilities);
   if (tool === undefined) return { findings: [changedTool(tribe, found, ctx)] };
   const next = TribeSchema.safeParse({ ...tribe, tool });
   if (!next.success) {
@@ -226,7 +227,7 @@ async function checkFound(
         ]
       : await adapterFindings(next.data, ctx)),
     // An error here is the tribe's own (P1-41): `--enable` keeps it off, its sessions could not run pnpm.
-    ...(await shellFindings(tribe, ctx)),
+    ...(await shellFindings(tribe, capabilities, ctx)),
   ];
   const same = JSON.stringify(next.data) === JSON.stringify(stored);
   return same ? { findings } : { findings, updated: next.data };

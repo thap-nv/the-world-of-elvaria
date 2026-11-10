@@ -1,7 +1,8 @@
 // The files a fake day starts from, built from the scenario's rows and checked by the domain's schemas: the cast
 // (with verdicts from earlier days, so avatar rings and titles are not all blank), the territories, and every
-// quest as the Steward would write it from the Chancellor's draft (budget from kingdom.breakers, §2.3).
-import { CharacterSchema, QuestSchema, RANKS, TerritorySchema, formatDatedId } from '@elvaria/domain';
+// quest as the Steward would write it from the Chancellor's draft (budget from kingdom.breakers, §2.3, by the Steward's
+// own questBudgetOf: P1-46, (a) of P1-45).
+import { CharacterSchema, QuestSchema, TerritorySchema, formatDatedId, questBudgetOf } from '@elvaria/domain';
 import type {
   Character,
   Instant,
@@ -116,9 +117,8 @@ export function questOf(arrival: Arrival, id: QuestId, at: string, context: Ques
   const kind = registry.kinds.find(({ id: kindId }) => kindId === template.kind);
   // scenarioProblems has checked every kind before the day starts.
   if (kind === undefined) throw new Error(`sandbox: no kind ${template.kind}`);
-  const { breakers } = kingdom;
-  const high = RANKS.indexOf(rank) >= RANKS.indexOf(breakers.high_rank_from);
-  const estimate = ESTIMATE[rank];
+  // The Steward's ceilings for the Chancellor's estimate: the rank's share of the context budget floors it (P1-45).
+  const budget = questBudgetOf(rank, ESTIMATE[rank], kingdom.breakers);
   const title = arrival.title[locale];
   return QuestSchema.parse({
     version: 1,
@@ -137,12 +137,7 @@ export function questOf(arrival: Arrival, id: QuestId, at: string, context: Ques
     tier: template.script === undefined ? 'session' : 'script',
     assignee: null,
     verifier: null,
-    budget: {
-      max_minutes: high ? breakers.attempt_minutes.high : breakers.attempt_minutes.low,
-      max_tokens: Math.round(estimate.tokens * breakers.mana_multiplier),
-      max_attempts: breakers.max_attempts,
-    },
-    estimate,
+    ...budget,
     attempts: 0,
     attempt_log: [],
     plot: { type: 'none' },

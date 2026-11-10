@@ -1,11 +1,11 @@
 // `elvaria tribe check <id> [--scenarios] [--model <slug>]` (implementation-plan §3.14, ADR 0021): the conformance
-// suite of runner-core against the tribe's runner, built from its adapter as `elvaria run` builds it, plus the sign-in
-// kingdom.json pins against the ones the adapter declares (checkTribeAuth, P1-19) and, once the suite passes, the
-// login its adapter reports, as doctor does (P1-34). A tribe that passes is enabled; one
-// that fails stays as it is. With the real CLI only the checks that burn no or almost no mana run (a tiny job, a
+// suite of runner-core against the tribe's runner, built from its adapter as `elvaria run` builds it (what it declares
+// is printed first, the shell per OS too, P1-46), plus the sign-in kingdom.json pins against the ones the adapter
+// declares (checkTribeAuth, P1-19) and, once the suite passes, the login its adapter reports, as doctor does (P1-34).
+// A tribe that passes is enabled; one that fails stays as it is. With the real CLI only the checks that burn no or almost no mana run (a tiny job, a
 // forbidden push, a kill, the probe); `--scenarios` runs them all against a fake CLI that plays the suite's scenarios
 // from ELVARIA_FAKE_SCENARIO, as the specs' do.
-import { ADAPTER_CAPABILITIES, tribeLimitsOf } from '@elvaria/domain';
+import { ADAPTER_CAPABILITIES, SHELL_PLATFORMS, shellOf, tribeLimitsOf } from '@elvaria/domain';
 import type { AdapterCapabilities, Tribe } from '@elvaria/domain';
 import { runConformance } from '@elvaria/runner-core';
 import type { AgentRunner, ConformanceReport } from '@elvaria/runner-core';
@@ -24,6 +24,17 @@ import type { KingdomContext } from '../kingdom-context.ts';
 /** How long one session of the suite may take to answer: a real CLI starts slowly, a hang is killed long before. */
 const SESSION_TIMEOUT_MS = 120_000;
 
+/** The shell the adapter declares per OS (P1-46, (b) of P1-40): `win32: Git Bash`; none when it declares none. */
+function shellLine(ctx: KingdomContext, caps: AdapterCapabilities): string {
+  const shells = SHELL_PLATFORMS.flatMap((os) => {
+    const shell = shellOf(caps, os);
+    return shell === undefined ? [] : [`${os}: ${shell}`];
+  });
+  return shells.length === 0
+    ? ctx.t('cli.tribe.check.no_shell')
+    : ctx.t('cli.tribe.check.shell', { shells: shells.join('; ') });
+}
+
 /** What the adapter declares and how far tribeLimitsOf lets the tribe go. */
 function capabilityLines(ctx: KingdomContext, tribe: Tribe, caps: AdapterCapabilities): string[] {
   const declared = ADAPTER_CAPABILITIES.filter((name) => caps[name]);
@@ -33,6 +44,7 @@ function capabilityLines(ctx: KingdomContext, tribe: Tribe, caps: AdapterCapabil
   return [
     ctx.t('cli.tribe.check.declared', { ...params, capabilities: declared.join(', ') }),
     ...(missing.length === 0 ? [] : [ctx.t('cli.tribe.check.missing', { capabilities: missing.join(', ') })]),
+    shellLine(ctx, caps),
     ctx.t('cli.tribe.check.max_rank', { rank: limits.max_rank }),
     ...(limits.guarded_zones ? [] : [ctx.t('cli.tribe.check.no_guarded')]),
   ];

@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 import { translator } from '@elvaria/i18n';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -13,10 +14,28 @@ import {
   tempDir,
   testIo,
 } from '../../test/cli.ts';
-import { policyFinding, readExecutionPolicy } from './check-shell.ts';
+import { FAKE_LANTERN, LANTERN_ADAPTER, installLantern, writeAdapter } from '../../test/lantern.ts';
+import { policyFinding, readExecutionPolicy, runsWindowsPowerShell } from './check-shell.ts';
 import type { TempDir } from '../../test/cli.ts';
 
 const t = translator('en');
+
+describe('runsWindowsPowerShell (P1-46, (e) of P1-40)', () => {
+  it.each([
+    ['Windows PowerShell (powershell.exe)', true],
+    ['powershell', true],
+    ['PowerShell 7 (pwsh.exe)', false],
+    ['Git Bash', false],
+  ])('%s on Windows: %s', (shell, expected) => {
+    expect(runsWindowsPowerShell({ shell: { win32: shell } })).toBe(expected);
+  });
+
+  it('reads only the shell declared for Windows', () => {
+    expect(runsWindowsPowerShell({ shell: { darwin: 'PowerShell' } })).toBe(false);
+    expect(runsWindowsPowerShell({})).toBe(false);
+    expect(runsWindowsPowerShell(undefined)).toBe(false);
+  });
+});
 
 describe('policyFinding (P1-41)', () => {
   it.each(['RemoteSigned', 'Unrestricted', 'Bypass'])('%s runs local scripts', (policy) => {
@@ -132,6 +151,34 @@ describe('elvaria doctor: PowerShell for agy (P1-41)', () => {
       expect(text).toContain('✗ Tribe gemini stays disabled until the problem above is fixed.');
     },
   );
+
+  it('says the shell each tribe declares, and checks PowerShell for an adapter file that declares it (P1-46)', async () => {
+    await installLantern(kingdom);
+    const lantern = pathToFileURL(path.join(kingdom, LANTERN_ADAPTER)).href;
+    const shells = { win32: 'Windows PowerShell (powershell.exe)', darwin: 'zsh', linux: 'bash' };
+    const adapter = await writeAdapter(
+      kingdom,
+      'shelled',
+      [
+        `import { createAdapter as lantern } from ${JSON.stringify(lantern)};`,
+        'export function createAdapter(kit) {',
+        '  const runner = lantern(kit);',
+        `  return { ...runner, capabilities: { ...runner.capabilities, shell: ${JSON.stringify(shells)} } };`,
+        '}',
+        '',
+      ].join('\n'),
+    );
+    await run(testIo(), 'tribe', 'add', 'shelled', '--adapter', adapter, '--kingdom', kingdom);
+    const { text } = await doctor('Restricted', '--tool', `shelled=${FAKE_LANTERN}`);
+    const windows = process.platform === 'win32';
+    const shell = shells[process.platform as keyof typeof shells];
+    expect(text).toContain(`✓ Tribe shelled: its sessions run commands in ${shell}.`);
+    // Not a table of adapter ids any more: the file's PowerShell is asked as agy's is, on Windows only.
+    expect(text.includes('✗ Tribe shelled: PowerShell refuses scripts (Execution Policy Restricted).')).toBe(
+      windows,
+    );
+    expect(text.includes('✓ Tribe claude: its sessions run commands in Git Bash.')).toBe(windows);
+  });
 
   it.runIf(process.platform !== 'win32')('asks nothing of PowerShell outside Windows', async () => {
     const { code, text } = await doctor('Restricted');
