@@ -59,7 +59,8 @@ function textJudges(
   };
 }
 
-const PASS_TEXT = 'All checks pass and the diff does what the quest asks.\n```json\n{"result": "pass"}\n```';
+const PASS_TEXT =
+  'All checks pass and the diff does what the quest asks.\n```json\n{"result": "pass", "notes": "Read the diff; every check passes."}\n```';
 const isRetry = (req: SpawnRequest) => path.basename(req.run_dir) === RETRY_DIR;
 const judgesOf = (spawned: readonly SpawnRequest[]) => spawned.filter(({ role }) => role === 'verifier');
 
@@ -140,6 +141,23 @@ describe('a judge whose tribe answers in text', () => {
     await tickUntil(steward, kingdom.clock, async () => (await recorded()).some(([, pid]) => pid === RETRY));
     expect(await recorded()).toEqual([['verifier', RETRY]]);
     expect(steward.running()).toBe(1);
+  });
+
+  it('tells a judge whose pass has no notes to give them, and takes the retry (P1-40)', async () => {
+    const spawned: SpawnRequest[] = [];
+    const reply = (req: SpawnRequest) => (isRetry(req) ? PASS_TEXT : '{"result": "pass"}');
+    const { kingdom, steward } = await open((k) => ({
+      runners: {
+        claude: textJudges(k.fakes.claude, reply, spawned),
+        gemini: textJudges(k.fakes.gemini, reply, spawned),
+      },
+    }));
+    await kingdom.command('create_quest', questPayload('Judged in silence'));
+    const done = async () => (await kingdom.quest('Judged in silence')).status === 'done';
+    await tickUntil(steward, kingdom.clock, done);
+    const [, retry, ...more] = judgesOf(spawned);
+    expect(more).toEqual([]);
+    expect(retry?.prompt.user).toContain('- notes: a pass says what the judge checked');
   });
 
   it('opens a fresh retry with the whole prompt when the tribe cannot resume', async () => {

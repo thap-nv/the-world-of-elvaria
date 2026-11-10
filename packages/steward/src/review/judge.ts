@@ -4,7 +4,14 @@
 // awaiting_seal, returned or the infirmary) and the assignee's windows and level follow. A partial verdict says how
 // far the judge read; the next judge reads on. A judge that leaves no verdict at all counts toward a stalled review
 // (P1-33), as a judge a breaker stopped does.
-import { partyOf, reviewBreaksOf, reviewStalled, underPassRule, validateVerdict } from '@elvaria/domain';
+import {
+  partyOf,
+  reviewBreaksOf,
+  reviewStalled,
+  underPassRule,
+  validateVerdict,
+  withBreaksWeighed,
+} from '@elvaria/domain';
 import type { Quest, Result, Verdict } from '@elvaria/domain';
 import type { RunResult } from '@elvaria/runner-core';
 
@@ -89,12 +96,15 @@ function ruledVerdict(
   const verdict = judgeVerdictOf(ctx, quest, run, result.structured);
   if (!verdict.ok) return { ok: false, error: refusalText(verdict.error) };
   const rule = ritual.pass_rule;
-  const valid = validateVerdict(
-    underPassRule(verdict.value, rule),
-    quest,
-    rule,
-    partyOf(quest, [...ctx.world.quests.values()]),
-  );
+  // The machine first (a failing check fails the quest), then the judge's evidence: a pass in a scratch plot that
+  // names too few breaks is a partial, and the next judge reads on from break_and_expect_red (P1-40).
+  const machine = underPassRule(verdict.value, rule);
+  const ruled = withBreaksWeighed(machine, quest, ctx.world.registry);
+  if (ruled !== machine)
+    ctx.deps.log.warn(
+      `steward: ${quest.id}: a pass without its breaks in the scratch plot is taken as partial`,
+    );
+  const valid = validateVerdict(ruled, quest, rule, partyOf(quest, [...ctx.world.quests.values()]));
   return valid.ok ? valid : { ok: false, error: valid.error.code };
 }
 

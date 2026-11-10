@@ -49,6 +49,11 @@ interface PromptBase {
    * prompt`, P1-33; readContextFiles). Absent for a tribe that loads them: they would come twice.
    */
   readonly context_files?: readonly ContextFile[];
+  /**
+   * The shell the session's command tool runs in, as the tribe's adapter declares it for this OS (`shellOf`,
+   * P1-40): a system fact the prompt states, not scripture. Absent: the prompt names no shell.
+   */
+  readonly shell?: string | undefined;
 }
 
 export interface AssigneePromptInput extends PromptBase {
@@ -106,7 +111,7 @@ function assigneePrompt(input: AssigneePromptInput, t: PromptTemplates): BuiltPr
     handover_path: input.handover_path,
     language: LANGUAGE_NAMES[input.locale],
     apprentice: policy.apprentice === null ? '' : t.apprentice,
-    shell: shellBlock(policy, t),
+    shell: shellBlock(policy, t, input.shell),
     read_only: readOnlyBlock(policy, input.territory, t),
     patch: patchBlock(policy, t),
     handover_template: fenced(fill(t.handover, { quest_id: quest.id }), 'markdown'),
@@ -156,6 +161,7 @@ function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): BuiltPr
     shell: shellBlock(
       toolPolicyOf({ role: 'verifier', characterClass, character, territory: input.territory, scratch }),
       t,
+      input.shell,
     ),
   });
   const review = fill(t.review, {

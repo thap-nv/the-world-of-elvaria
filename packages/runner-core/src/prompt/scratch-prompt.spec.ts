@@ -62,6 +62,14 @@ describe('the verifier prompt of tests as the product', () => {
       expect(user).toContain(`. ${step}\n`);
   });
 
+  it('asks the judge to name its breaks, and for notes on every pass (P1-40)', () => {
+    const { system, user } = buildPrompt(trial, templates);
+    expect(user).toContain("Name every break in the verdict's `breaks`: `change`");
+    expect(user).toContain('The Steward takes a `pass` with fewer than two breaks as `partial`');
+    expect(user).toContain('or a command does not start, quote its error in your notes and give `partial`');
+    expect(system).toContain('the Steward refuses a pass without notes');
+  });
+
   it('judges on a folder as any judge, without a scratch plot', () => {
     const quest = { ...trial.quest, plot: { type: 'folder' as const, path: 'quests/q/work' } };
     const { system, user } = buildPrompt({ ...trial, quest }, templates);

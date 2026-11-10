@@ -7,6 +7,11 @@ import { conformanceChecks } from '@elvaria/runner-core';
 import type { ConformanceTarget } from '@elvaria/runner-core';
 
 import { fakeRunner, minimalEnv } from './__fixtures__/agy.ts';
+import { ANTIGRAVITY_CAPABILITIES } from './runner.ts';
+
+it('declares PowerShell as its shell on Windows only, where the spike measured it (P1-40)', () => {
+  expect(ANTIGRAVITY_CAPABILITIES.shell).toEqual({ win32: 'Windows PowerShell (powershell.exe)' });
+});
 
 const target: ConformanceTarget = {
   name: 'antigravity (fake-agy.mjs)',

@@ -10,18 +10,22 @@ import { describeIssue } from './world.ts';
 import type { Context } from './context.ts';
 import type { CharacterEdit, Move } from './record.ts';
 
-/** The assignee's windows after a pass or a fail on `quest`; the owner's seal or return weighs three (by_human). */
+/**
+ * The assignee's windows after a pass or a fail on `quest`; the owner's seal or return weighs three (by_human), and
+ * the owner's return for a new judgement (`rejudge`, P1-40) leaves them as they were.
+ */
 export const judged =
   (quest: Quest, verdict: Judged): CharacterEdit =>
   (character, at) => {
     const base = { verdict_id: verdict.id, by_human: verdict.by_human, at, tags: quest.tags };
+    const rejudge = verdict.rejudge === true ? { rejudge: true } : {};
     return ok(
       withVerdict(
         character,
         verdict.result === 'pass'
           ? { ...base, result: 'pass' }
           : // The verdict schema requires fail_kind on a fail; `other` only stands in for a broken file.
-            { ...base, result: 'fail', fail_kind: verdict.fail_kind ?? 'other' },
+            { ...base, result: 'fail', fail_kind: verdict.fail_kind ?? 'other', ...rejudge },
       ),
     );
   };

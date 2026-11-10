@@ -66,6 +66,20 @@ describe('what goes wrong on the way', () => {
     expect(quest.attempt_log.filter(({ role }) => role === 'verifier')).toHaveLength(2);
   });
 
+  it('writes no verdict for a pass without notes, and lets the next judge come (P1-40)', async () => {
+    const bare = { result: 'pass', notes: ' ' };
+    const { kingdom, steward } = await open({ plays: { verdicts: { 'Silent judge': [bare, PASS] } } });
+    await kingdom.command('create_quest', questPayload('Silent judge'));
+    await tickUntil(steward, kingdom.clock, statusIs(kingdom, 'Silent judge', 'done'));
+    expect(kingdom.warnings.join('\n')).toContain(
+      "the verifier's output is no verdict (invalid_verdict: notes: a pass says what the judge checked",
+    );
+    const quest = await kingdom.quest('Silent judge');
+    const judged = quest.attempt_log.filter(({ role }) => role === 'verifier');
+    expect(judged.map(({ outcome }) => outcome)).toEqual(['crash', 'submitted']);
+    expect(await verdictIn(kingdom, `${quest.id}-1`)).toMatchObject({ result: 'pass', notes: PASS.notes });
+  });
+
   it("refuses the owner's seal or return on a quest that does not wait for it, and writes no file", async () => {
     const { kingdom, steward } = await open();
     await kingdom.command('create_quest', questPayload('Not sealed yet', { rank: 'S', seal_required: true }));

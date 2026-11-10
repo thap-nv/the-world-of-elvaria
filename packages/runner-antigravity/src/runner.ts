@@ -44,6 +44,9 @@ export const ANTIGRAVITY_CAPABILITIES: AgentRunner['capabilities'] = {
   subagent: false,
   // The owner's Google sign-in; agy has no API-key mode (P1-19).
   auth: ['login'],
+  // `run_command` runs through powershell.exe on Windows (spike P1-12a §1 row 16; P1-35: `pnpm.ps1` under the
+  // Execution Policy). Not measured on macOS or Linux, so not declared there: the prompt then names no shell (P1-40).
+  shell: { win32: 'Windows PowerShell (powershell.exe)' },
 };
 
 export interface AntigravityOptions {

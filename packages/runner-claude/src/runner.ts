@@ -30,6 +30,9 @@ export const CLAUDE_CAPABILITIES: AgentRunner['capabilities'] = {
   subagent: true,
   // The owner's claude.ai sign-in: the runner never puts an API key into the session's env (P1-19).
   auth: ['login'],
+  // The Bash tool runs through Git Bash on Windows (every real run since P1-11). On macOS and Linux, under the
+  // minimal env without SHELL, Claude Code picks bash or zsh itself; not measured, so not declared (P1-40).
+  shell: { win32: 'Git Bash' },
 };
 
 /** `BREAKER_DEFAULTS.subagent_max_turns` and `subagent_max_minutes` of the domain, which the adapter may not import. */

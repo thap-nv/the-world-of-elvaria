@@ -54,6 +54,16 @@ describe('VerdictSchema', () => {
       'a partial verdict of the second verifier session',
       { id: `${QUEST}-2-p2`, result: 'partial', progress: { checked_until: 'src/api/orders.ts' } },
     ],
+    // P1-40: a judge in a scratch plot names its breaks; the owner may return a quest for a new judgement.
+    [
+      'a pass with its breaks',
+      { notes: NOTES, breaks: [{ change: 'src/a.ts:3 returns 0', red: 'pnpm test: a.spec.ts failed' }] },
+    ],
+    [
+      "the owner's return for a new judgement",
+      { id: `${QUEST}-2-user`, ...OWNER, result: 'fail', fail_kind: 'other', notes: NOTES, rejudge: true },
+    ],
+    ['a verdict that says it is no rejudge', { rejudge: false }],
   ])('accepts %s', (_, change) => {
     expect(issuesOf(change)).toEqual([]);
   });
@@ -110,6 +120,21 @@ describe('VerdictSchema', () => {
       'a character verdict without session',
       { session_id: undefined },
       "session_id: a character's verdict names its session",
+    ],
+    [
+      'a rejudge by a judge',
+      { rejudge: true },
+      "rejudge: rejudge marks only the owner's return, a human fail verdict",
+    ],
+    [
+      'a rejudge on a seal',
+      { id: `${QUEST}-2-user`, ...OWNER, rejudge: true },
+      "rejudge: rejudge marks only the owner's return, a human fail verdict",
+    ],
+    [
+      'a break without its red run',
+      { breaks: [{ change: 'src/a.ts:3 returns 0', red: '' }] },
+      'breaks.0.red: Too small: expected string to have >=1 characters',
     ],
     [
       'one check reported twice',

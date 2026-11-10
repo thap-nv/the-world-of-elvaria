@@ -3,6 +3,7 @@
 // every judgement of a run in a file of its own (`-p<k>` for a partial, `-user` for the owner's). A judge of a tribe
 // without structured output replies in text: the same check names what its one retry is told (P1-33).
 import {
+  PASS_NOTES_ISSUE,
   USER_VERIFIER,
   VerdictSchema,
   currentRun,
@@ -10,6 +11,7 @@ import {
   ok,
   ownerVerdictIdOf,
   partialVerdictIdOf,
+  passWithoutNotes,
   verdictIdOf,
   verifierSessionsOf,
 } from '@elvaria/domain';
@@ -26,6 +28,7 @@ interface VerdictOutput {
   readonly fail_kind?: unknown;
   readonly notes?: unknown;
   readonly progress?: unknown;
+  readonly breaks?: unknown;
 }
 
 export interface JudgeRun {
@@ -58,7 +61,10 @@ const parsed = (fields: Record<string, unknown>): Result<Verdict, string> => {
 /** `no_verdict: …` or `invalid_verdict: …`, for the log and the infirmary. */
 export const refusalText = ({ code, issues }: VerdictRefusal): string => `${code}: ${issues.join('; ')}`;
 
-/** The verdict file of a verifier's session, or why its output is not one. */
+/**
+ * The verdict file of a verifier's session, or why its output is not one: what the verdict schema refuses, and a
+ * pass without notes (passWithoutNotes, P1-40), which a judge of a tribe without structured output is told to mend.
+ */
 export function judgeVerdictOf(
   ctx: Context,
   quest: Quest,
@@ -67,13 +73,26 @@ export function judgeVerdictOf(
 ): Result<Verdict, VerdictRefusal> {
   if (typeof output !== 'object' || output === null || Array.isArray(output))
     return err({ code: 'no_verdict', issues: ['(reply): not a JSON object'] });
-  const { result, fail_kind: failKind, notes, progress } = output as VerdictOutput;
+  const verdict = verdictFileOf(ctx, quest, run, output);
+  if (!verdict.ok) return err({ code: 'invalid_verdict', issues: verdict.error });
+  return passWithoutNotes(verdict.value)
+    ? err({ code: 'invalid_verdict', issues: [PASS_NOTES_ISSUE] })
+    : verdict;
+}
+
+function verdictFileOf(
+  ctx: Context,
+  quest: Quest,
+  run: JudgeRun,
+  output: VerdictOutput,
+): Result<Verdict, readonly string[]> {
+  const { result, fail_kind: failKind, notes, progress, breaks } = output;
   // A partial verdict and the run's final one used to share `<quest>-<n>` (P1-03): the partial now has its own.
   const id =
     result === 'partial'
       ? partialVerdictIdOf(quest, run.n, verifierSessionsOf(quest, run.n))
       : verdictIdOf(quest, run.n);
-  const verdict = checked({
+  return checked({
     version: 1,
     id,
     quest_id: quest.id,
@@ -85,11 +104,11 @@ export function judgeVerdictOf(
     ...(failKind === undefined ? {} : { fail_kind: failKind }),
     ...(notes === undefined ? {} : { notes }),
     ...(progress === undefined ? {} : { progress }),
+    ...(breaks === undefined ? {} : { breaks }),
     by_human: false,
     session_id: run.session_id,
     created_at: ctx.record.stamp(),
   });
-  return verdict.ok ? verdict : err({ code: 'invalid_verdict', issues: verdict.error });
 }
 
 /**
@@ -127,10 +146,18 @@ export function judgeParseOf(
   return { check, resume: limits.resume };
 }
 
-/** The owner's word on the run that waits for the seal: a pass (seal) or a fail (return). */
+/**
+ * The owner's word on the run that waits for the seal: a pass (seal) or a fail (return); a return for a new
+ * judgement says `rejudge` (P1-40).
+ */
 export type OwnerWord =
   | { readonly result: 'pass'; readonly notes?: string | undefined }
-  | { readonly result: 'fail'; readonly notes: string; readonly fail_kind: FailKind };
+  | {
+      readonly result: 'fail';
+      readonly notes: string;
+      readonly fail_kind: FailKind;
+      readonly rejudge?: true;
+    };
 
 /** `verdicts/<quest>-<n>-user.json`: the owner's verdict beside the judge's, weighed three times (§2.6). */
 export function ownerVerdictOf(

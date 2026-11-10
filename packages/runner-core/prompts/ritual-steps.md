@@ -76,7 +76,7 @@ The machine measured coverage on the branch and on the commit it forked from. `c
 
 ## break_and_expect_red
 
-Prove the new tests guard something. In your scratch plot, break on purpose the code they claim to cover, never the tests themselves: invert a condition, drop a statement, return a wrong value. Run the tests that should catch it with a command your shell allows: they must fail. Restore the file (`git restore <file>`) and check they pass again. Break at least two different places. Tests that stay green on a break fail the quest with `fail_kind` `incomplete`: name the break, the file and line, and the test that missed it. In a scratch plot your shell also runs the territory's exclusive checks (e2e, Docker): the Steward holds their lock for your session. When no command your shell allows runs those tests, say so in your notes instead of guessing.
+Prove the new tests guard something. In your scratch plot, break on purpose the code they claim to cover, never the tests themselves: invert a condition, drop a statement, return a wrong value. Run the tests that should catch it with a command your shell allows: they must fail. Restore the file (`git restore <file>`) and check they pass again. Break at least two different places. Tests that stay green on a break fail the quest with `fail_kind` `incomplete`: name the break, the file and line, and the test that missed it. In a scratch plot your shell also runs the territory's exclusive checks (e2e, Docker): the Steward holds their lock for your session. Name every break in the verdict's `breaks`: `change` (the file, the line and what you changed) and `red` (the command you ran on it and the tests that failed). The Steward takes a `pass` with fewer than two breaks as `partial`, stopped at this step. When no command your shell allows runs those tests, or a command does not start, quote its error in your notes and give `partial`, instead of guessing.
 
 ## judge
 
@@ -84,4 +84,4 @@ Weigh what the steps found and decide: pass, fail or partial.
 
 ## write_verdict
 
-Write the verdict in the structured output: the result, the `fail_kind` when it fails, the notes, and `progress` when it is partial.
+Write the verdict in the structured output: the result, the `fail_kind` when it fails, the notes (a pass among them: what you checked), the `breaks` when you broke code on purpose, and `progress` when it is partial.

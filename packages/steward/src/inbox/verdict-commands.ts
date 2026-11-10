@@ -45,15 +45,25 @@ export const seal = (ctx: Context, quest: Quest, note: string | undefined): Prom
 
 /**
  * The owner returns the work: a fail verdict needs specific notes (≥ 20 characters) and a fail_kind, `other`
- * unless the command names one (schema verdict, owner's decision after P0-03).
+ * unless the command names one (schema verdict, owner's decision after P0-03). A return for a new judgement
+ * (`rejudge`, P1-40) blames the judge: its verdict says so, and withVerdict leaves the assignee's books alone.
  */
 export async function giveBack(
   ctx: Context,
   quest: Quest,
-  notes: string,
-  failKind: FailKind | undefined,
+  payload: {
+    readonly notes: string;
+    readonly fail_kind?: FailKind | undefined;
+    readonly rejudge?: boolean | undefined;
+  },
 ): Promise<Outcome> {
+  const { notes } = payload;
   if (notes.trim().length < FAIL_NOTES_MIN_LENGTH) return rejected('notes_too_short');
-  const word = { result: 'fail', notes, fail_kind: failKind ?? 'other' } as const;
+  const word: OwnerWord = {
+    result: 'fail',
+    notes,
+    fail_kind: payload.fail_kind ?? 'other',
+    ...(payload.rejudge === true ? { rejudge: true } : {}),
+  };
   return judgeAsOwner(ctx, quest, word, { type: 'return' });
 }

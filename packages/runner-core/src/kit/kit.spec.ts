@@ -135,4 +135,18 @@ describe('runnerProblems', () => {
       ),
     ).toEqual(['capability usage is not true or false', 'capability auth is not a list']);
   });
+
+  it('takes a runner without a shell, and names a shell that is not a name per known OS (P1-40)', () => {
+    const fake = { ...createFakeRunner({ tribe: kit.tribe.id }), adapter: kit.tribe.adapter };
+    const withShell = (shell: unknown) =>
+      runnerProblems({ ...fake, capabilities: { ...fake.capabilities, shell } }, kit);
+    expect(runnerProblems(fake, kit)).toEqual([]);
+    expect(withShell({ win32: 'Windows PowerShell (powershell.exe)' })).toEqual([]);
+    expect(withShell('powershell')).toEqual(['capability shell is not an object of OS to shell name']);
+    expect(withShell(['bash'])).toEqual(['capability shell is not an object of OS to shell name']);
+    expect(withShell({ win32: ' ', beos: 'sh' })).toEqual([
+      'capability shell.win32 is not a shell name',
+      'capability shell names beos, not one of win32, darwin, linux',
+    ]);
+  });
 });
