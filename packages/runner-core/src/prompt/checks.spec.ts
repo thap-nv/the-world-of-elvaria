@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { CHECKS, LETTER, QUEST, RETURNED } from '../__fixtures__/world.ts';
+import { CHECKS, LETTER, QUEST, RETURNED, TERRITORY } from '../__fixtures__/world.ts';
 import { continuationBlock } from './blocks.ts';
 import { failedChecksBlock } from './checks.ts';
 import { loadPromptTemplates } from './templates.ts';
@@ -14,6 +14,7 @@ describe('the checks of a run that came back (P1-10b)', () => {
   it('follow the verdict with the failing ones and the end of their logs, as the judge saw them', () => {
     const text = continuationBlock(
       QUEST,
+      TERRITORY,
       { reason: 'returned', verdict: FAILED, checks: CHECKS, ...memory },
       templates,
     );
@@ -30,11 +31,21 @@ describe('the checks of a run that came back (P1-10b)', () => {
   });
 
   it("name the verdict's failing checks when no tail came, and say nothing when every check passed", () => {
-    const bare = continuationBlock(QUEST, { reason: 'returned', verdict: FAILED, ...memory }, templates);
+    const bare = continuationBlock(
+      QUEST,
+      TERRITORY,
+      { reason: 'returned', verdict: FAILED, ...memory },
+      templates,
+    );
     expect(bare).toContain('## Machine checks that failed');
     expect(bare).toContain('- unit (41000 ms)');
     expect(bare).not.toContain('The end of the log of');
-    const passed = continuationBlock(QUEST, { reason: 'returned', verdict: RETURNED, ...memory }, templates);
+    const passed = continuationBlock(
+      QUEST,
+      TERRITORY,
+      { reason: 'returned', verdict: RETURNED, ...memory },
+      templates,
+    );
     expect(passed).not.toContain('## Machine checks that failed');
     expect(failedChecksBlock([], templates)).toBe('');
   });

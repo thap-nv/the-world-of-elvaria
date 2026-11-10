@@ -67,6 +67,8 @@ const continuing: AssigneePromptInput = {
     verdict: RETURNED,
     // The Steward's masked tails of the run's checks (P1-10b), as the judge read them.
     checks: CHECKS,
+    // What the branch touched as the session opens: the checks ahead of it (P1-43).
+    touched: ['README.md', 'package.json', 'scripts/check.ts'],
     handover: LETTER,
     journal: JOURNAL,
     git_log: '1a2b3c4 feat: add pnpm check',

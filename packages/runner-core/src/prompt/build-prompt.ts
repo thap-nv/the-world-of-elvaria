@@ -123,7 +123,7 @@ function assigneePrompt(input: AssigneePromptInput, t: PromptTemplates): BuiltPr
       gazetteerBlock(input.territory, input.gazetteer, t),
       scriptureBlock(input.scriptures, t),
       skillsBlock(input.skills, t),
-      continuationBlock(quest, input.continuation, t),
+      continuationBlock(quest, input.territory, input.continuation, t),
     ]),
   };
 }

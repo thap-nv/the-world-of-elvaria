@@ -3,7 +3,7 @@
 import { PATCH_FILE } from '../plot/patch.ts';
 import { SUBQUESTS_FILE } from '../plot/subquests.ts';
 import { SHELL_TOOL, WRITE_TOOLS } from '../policy/constants.ts';
-import { failedChecksBlock } from './checks.ts';
+import { checksAheadBlock, failedChecksBlock } from './checks.ts';
 import { fenced, fill, joinBlocks, withoutNotes } from './templates.ts';
 import type { PromptCheck } from './checks.ts';
 import type { ToolPolicy } from '../policy/tool-policy.ts';
@@ -31,6 +31,11 @@ export type Continuation = (
 ) & {
   /** Why the Steward did not apply that run's patch, masked as its log line; absent when it applied it or none came. */
   readonly refused_patch?: string;
+  /**
+   * What the branch touched as the session opens (the Steward's Plots.touched, P1-43): the prompt names the checks
+   * selectChecks picks for it (checksAheadBlock). Absent: no such section.
+   */
+  readonly touched?: readonly string[];
 };
 
 /** What the continuing session reads instead of a transcript: the letter, the journal's tail, the branch's log. */
@@ -256,8 +261,13 @@ function memoryBlock(memory: Memory, t: PromptTemplates): string {
   });
 }
 
+/**
+ * After revive.md or returned.md: the checks the machine will run (P1-43). An owner's return for a new judgement
+ * (`rejudge`, P1-40) says the judge erred, so the session hands the same work in again.
+ */
 export function continuationBlock(
   quest: Quest,
+  territory: Pick<Territory, 'checks'>,
   continuation: (Continuation & Memory) | null,
   t: PromptTemplates,
 ): string {
@@ -267,6 +277,7 @@ export function continuationBlock(
       ? t.revive
       : joinBlocks([
           fill(t.returned, {
+            rejudge: continuation.verdict.rejudge === true ? t.rejudge : '',
             result: continuation.verdict.result,
             fail_kind: continuation.verdict.fail_kind ?? 'none',
             notes: continuation.verdict.notes?.trim() ?? '',
@@ -275,6 +286,7 @@ export function continuationBlock(
         ]);
   return joinBlocks([
     intro,
+    checksAheadBlock(territory, quest.party_role, continuation.touched, t),
     refusedPatchBlock(continuation.refused_patch, t),
     answerBlock(quest, t),
     memoryBlock(continuation, t),

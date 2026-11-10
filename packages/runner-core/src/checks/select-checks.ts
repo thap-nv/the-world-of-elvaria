@@ -12,6 +12,10 @@ import { globToRegExp } from './glob.ts';
 /** `./src\a.ts` → `src/a.ts`: globs are written relative to the plot, with `/`. */
 const portableOf = (touched: string): string => touched.replaceAll('\\', '/').replace(/^(?:\.\/)+/, '');
 
+/** Whether the quest's `party_role` leaves `check` to the party's merge quest, whatever the quest touched. */
+const deferredFor = (check: TerritoryCheck, role: PartyRole | undefined): boolean =>
+  role === 'acceptance' || ((role === 'part' || role === 'contract') && check.defer_to_merge);
+
 /**
  * The checks to run, in the territory's order; none when nothing the quest touched is watched. `role` is the quest's
  * `party_role`: `merge` runs them all, `part` and `contract` defer what the merge quest will run, `acceptance` defers
@@ -23,15 +27,20 @@ export function selectChecks(
   role?: PartyRole,
 ): TerritoryCheck[] {
   if (role === 'merge') return [...checks];
-  if (role === 'acceptance') return [];
   const paths = touched.map(portableOf);
-  const defers = role === 'part' || role === 'contract';
   return checks.filter(
     (check) =>
-      !(defers && check.defer_to_merge) &&
+      !deferredFor(check, role) &&
       check.when.some((glob) => {
         const pattern = globToRegExp(glob);
         return paths.some((touchedPath) => pattern.test(touchedPath));
       }),
   );
 }
+
+/**
+ * The checks selectChecks never picks for a quest of `role`, whatever it touches (P1-43): what a part's or a contract
+ * quest's prompt names as left to the merge quest, so its session does not work for a check that will not run.
+ */
+export const deferredChecks = (checks: readonly TerritoryCheck[], role?: PartyRole): TerritoryCheck[] =>
+  checks.filter((check) => deferredFor(check, role));

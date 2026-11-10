@@ -26,8 +26,11 @@
 - Builds prompts from the Markdown templates in `prompts/` (`loadPromptTemplates`): `buildPrompt` for an
   assignee (new, or continuing after `returned` / `revive` with the letter, the last 20 journal lines, the
   branch's log and the owner's answer; after `returned`, also the checks that failed with the end of each log,
-  `prompts/failed-checks.md`, P1-10b; after either, why the Steward refused the patch the run before wrote,
-  `Continuation.refused_patch`, `prompts/refused-patch.md`, P1-31) and a verifier (the ritual's steps from `prompts/ritual-steps.md`, the
+  `prompts/failed-checks.md`, P1-10b, and after the owner's return for a new judgement a word that the judge
+  erred, `prompts/rejudge.md`; after either, the checks the machine will run on the work, as `selectChecks` picks
+  them for what the branch touches (`Continuation.touched`), with those that may still run and those the party
+  role leaves to the merge quest (`deferredChecks`), `prompts/checks-ahead.md`, P1-43; and why the Steward refused
+  the patch the run before wrote, `Continuation.refused_patch`, `prompts/refused-patch.md`, P1-31) and a verifier (the ritual's steps from `prompts/ritual-steps.md`, the
   checks with the end of each failing one's log the caller read and masked (`PromptCheck.log_tail`, P1-25; both in `src/prompt/checks.ts`), the letter, the diff, or where to read it when the caller has none, and where the last judge of the
   run stopped when it left a `partial` verdict, P1-15); both list the shell commands
   their `ToolPolicy` allows, one per call (`prompts/shell.md`, P1-11), after the shell they run in when the caller
