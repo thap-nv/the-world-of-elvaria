@@ -135,8 +135,14 @@ function assigneeProblem(
  * the start, and floors a given one (P1-45, P1-37 (e)): a mage's low guess for a part cut its session at 322 143 of
  * 320 000, below what its rank gave a quest without an estimate. The minutes likewise: the rank's, or the estimate's
  * when more, up to attempt_minutes.high, which exclusiveWaitMinutes takes as the longest a judge holds the lock.
+ * Exported so the sandbox writes its fake quests with the Steward's ceilings, not a formula of its own (P1-46, (a)
+ * of P1-45).
  */
-function budgetOf(rank: Rank, estimate: CreateQuest['estimate'], breakers: Kingdom['breakers']) {
+export function questBudgetOf(
+  rank: Rank,
+  estimate: Quest['estimate'] | undefined,
+  breakers: Kingdom['breakers'],
+): Pick<Quest, 'budget' | 'estimate'> {
   const high = RANKS.indexOf(rank) >= RANKS.indexOf(breakers.high_rank_from);
   const minutes = high ? breakers.attempt_minutes.high : breakers.attempt_minutes.low;
   const tokens = Math.round(breakers.context_budget_tokens * CONTEXT_BUDGETS_BY_RANK[rank]);
@@ -170,7 +176,7 @@ export function questFromCommand(
     status: draft ? 'draft' : 'open',
     assignee: null,
     verifier: null,
-    ...budgetOf(payload.rank, estimate, context.breakers),
+    ...questBudgetOf(payload.rank, estimate, context.breakers),
     attempts: 0,
     attempt_log: [],
     plot: { type: 'none' },

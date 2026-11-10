@@ -159,6 +159,7 @@ describe('elvaria tribe', () => {
       expect(io.printed.out).toEqual([
         'Tribe lantern (adapters/lantern.mjs) declares: headless, usage; sign-in: login.',
         'It lacks: context_file, events, tool_gate, structured_output, resume, compact, subagent.',
+        'It declares no shell, so its prompt names none.',
         'It takes quests of rank F to D.',
         'Without a tool gate it takes no quest on a territory with read_before_write or rank_floor laws.',
         '✓ capabilities',

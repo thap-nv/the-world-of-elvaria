@@ -68,7 +68,7 @@ const CheckSchema = z.strictObject({
     .default(false)
     .meta(
       describe(
-        'Skipped by the parts of a party and run once by its merge quest, which runs every check of the territory whatever it touched (heavy integration and e2e checks, implementation-plan §3.15). Quests outside a party run it by `when` as usual.',
+        "Skipped by a party's contract quest and its parts, and run once by its merge quest, which runs every check of the territory whatever it touched (heavy integration and e2e checks, implementation-plan §3.15): the contract quest holds an interface written before the code, so a check comparing generated files with the code cannot pass there (P1-37). The blind trial's acceptance part runs no check at all, deferred or not: its tests cannot pass before the parts are merged. Quests outside a party run it by `when` as usual.",
       ),
     ),
   timeout_minutes: z.int().min(1),

@@ -30,7 +30,11 @@
   journal (`src/quest/infirmary.ts`, P1-32): the trip and the attempt, then each part of the detail, in the
   owner's language (a line written before P1-32 shows its English reason). `quest list` has a column for a party's member, its role and where the party stands, and
   `quest show` prints the party, the role, the contract and the merge quest (`src/quest/party.ts`, the domain's
-  `partyStatusOf`; P1-21 (c)): the merge quest and the acceptance part share the contract's title. `character suspend <id> [--reason]` and `character release <id>` send `suspend` and `release` (a
+  `partyStatusOf`; P1-21 (c)): the merge quest and the acceptance part share the contract's title. `quest show` also
+  says what the last run came to (`src/quest/last-run.ts`, P1-46): its verdicts in the order they were written (each
+  judge's partial verdict with where it stopped, the judge's or the machine's, the owner's), each with its failed
+  checks and its notes, and the `plot.restored` lines of that run (the paths the Steward dropped from the plot after a judge, or after the checks once P1-47 does), so
+  the owner need not open `verdicts/` or the journal. `character suspend <id> [--reason]` and `character release <id>` send `suspend` and `release` (a
   character the Steward would refuse, unknown, suspended already or not suspended, is refused here), and `suspend`
   says what becomes of the quest the character holds (the owner's decision after P1-26). `character level <id>
 <level>` sends `set_level` (a level outside 1–10 or the one the character has is refused here) and says the rank
@@ -51,7 +55,7 @@
 - `tribe add <id> --adapter <adapter>` (P1-19, implementation-plan §3.14, ADR 0021): a new tribe in
   `kingdom.tribes[]`, disabled, its adapter a built-in one or an owner file `adapters/<name>.mjs` that must be there;
   no character changes. `tribe check <id>` builds the tribe's runner as `run` does, prints what its adapter declares
-  and how far `tribeLimitsOf` lets it go, holds its pinned sign-in to the ones it declares (`checkTribeAuth`), and
+  (the shell it declares per OS too, P1-46) and how far `tribeLimitsOf` lets it go, holds its pinned sign-in to the ones it declares (`checkTribeAuth`), and
   runs runner-core's conformance suite against it (with the real CLI only the checks that burn no or almost no mana;
   `--scenarios` runs all of them against a fake CLI) and, once it passes, holds the tribe to the login its adapter
   reports, as doctor does (`loginFindings`, P1-34): a tribe that passes is enabled once doctor has pinned its CLI.
@@ -61,7 +65,7 @@
   list of reasons for `run`, `doctor` and `tribe check`, never a crash. `tribe list` (P1-34, `src/tribe/list.ts`)
   prints one line per tribe: adapter, enabled or not, pinned CLI version, path and sign-in, and from its runner the
   highest rank `tribeLimitsOf` lets it take (none without `headless`), whether it takes guarded territories, and the
-  capabilities it declares; a tribe with no runner yet or an adapter file that does not load says so instead.
+  capabilities and the shell on this OS it declares (P1-46); a tribe with no runner yet or an adapter file that does not load says so instead.
 - `doctor`: finds each tribe's CLI (`--tool <tribe>=<path>`, the pinned path, PATH, then the adapter's own search:
   Claude Code inside the VS Code extension; npm `.cmd` shims run as `node <script>`; an adapter file is asked
   through its runner's `doctor()`, `src/doctor/adapter-tool.ts`, P1-19), pins path and version with the sign-in the
@@ -78,9 +82,10 @@
   P1-41: default entries it lacks by id, and keys the default entries have that its own lack, `registryGaps`, as a
   warning) and each territory, with the program of every command (`commands.*`, `checks[].run|cleanup`) looked up
   on PATH the way the Steward finds it (P1-41, `src/doctor/check-commands.ts`: missing, a `.cmd`/`.bat` only a
-  shell starts, or a line with shell syntax is an error naming the territory and the commands); on Windows, for a
-  tribe whose sessions run commands in powershell.exe (agy), PowerShell's Execution Policy (P1-41,
-  `src/doctor/check-shell.ts`: one that refuses local scripts such as `pnpm.ps1` is an error of the tribe, with
+  shell starts, or a line with shell syntax is an error naming the territory and the commands); the shell each
+  tribe's adapter declares for this OS (`capabilities.shell`, P1-46) and, on Windows, for a tribe whose adapter
+  declares Windows PowerShell (agy, or an owner's adapter file: read from the declaration, not a table of adapter
+  ids, P1-46), PowerShell's Execution Policy (P1-41, `src/doctor/check-shell.ts`: one that refuses local scripts such as `pnpm.ps1` is an error of the tribe, with
   the command that fixes it, so `--enable` keeps it off), the
   treasury file (`inspectTreasury`: present, mode 0600 outside Windows, `{ "name": "value" }`, every name a
   territory allows; names only, never a value) and, while no Steward holds its lock, the sessions a stopped one
@@ -139,7 +144,7 @@ Specs run `runCli` on a fake machine (`test/cli.ts`: fixed clock, captured outpu
 paths with a space and a Vietnamese letter. Fake CLIs are npm-style `.cmd` shims on Windows and shebang scripts
 elsewhere; `cli.spec.ts` spawns the built bin as the owner would. Lines the Steward would have written are
 planted with `openEventLog` / `openJournal`: `src/quest/infirmary.spec.ts` (the infirmary reason of `quest show`,
-old lines included), `src/gauges.spec.ts` (the gauges, and `character list` and `doctor` showing them).
+old lines included), `src/quest/last-run.spec.ts` (verdicts and `plot.restored` of the last run), `src/gauges.spec.ts` (the gauges, and `character list` and `doctor` showing them).
 `fixtures/lantern-adapter.mjs` is an owner adapter file that imports nothing, for `fixtures/fake-lantern.mjs`, a
 fake CLI with no tool gate: `src/tribe/tribe.spec.ts` adds, pins, checks and disables it; `src/tribe/round.spec.ts`
 runs the Steward (`elvaria run`) with it until a rank D quest is done, while a rank C quest stays open (P1-19);

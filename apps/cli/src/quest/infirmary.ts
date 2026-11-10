@@ -2,7 +2,7 @@
 // line of the quest's journal, since the quest file keeps no reason, and says it in the owner's language: the trip,
 // the attempt, then each part of the detail. A line written before P1-32 has no trip: its English reason is shown.
 import { isEventOf } from '@elvaria/domain';
-import type { EventOf, InfirmaryDetail, InfirmaryTrip, Quest } from '@elvaria/domain';
+import type { Event, EventOf, InfirmaryDetail, InfirmaryTrip, Quest } from '@elvaria/domain';
 import { openJournal } from '@elvaria/eventlog';
 import type { MessageKey, Translate } from '@elvaria/i18n';
 import { PATCH_FILE } from '@elvaria/runner-core';
@@ -25,15 +25,18 @@ const TRIP_LABEL: Readonly<Record<InfirmaryTrip, MessageKey>> = {
   script_fail: 'cli.quest.infirmary.trip.script_fail',
 };
 
-/** The last line that sent the quest to the infirmary; none when the journal cannot be read or has none. */
-export async function lastInfirmaryOf(ctx: KingdomContext, quest: Quest): Promise<InfirmaryLine | undefined> {
+/** The quest's journal, read once for all `quest show` says from it; none when it cannot be read. */
+export async function journalOf(ctx: KingdomContext, quest: Quest): Promise<readonly Event[]> {
   try {
-    const { events } = await openJournal(ctx.store.root, quest.id).read();
-    return events.findLast((event): event is InfirmaryLine => isEventOf(event, 'quest.infirmary'));
+    return (await openJournal(ctx.store.root, quest.id).read()).events;
   } catch {
-    return undefined;
+    return [];
   }
 }
+
+/** The last line that sent the quest to the infirmary; none when the journal has none. */
+export const lastInfirmaryOf = (journal: readonly Event[]): InfirmaryLine | undefined =>
+  journal.findLast((event): event is InfirmaryLine => isEventOf(event, 'quest.infirmary'));
 
 /** What sent the quest there, in the owner's language. */
 export const tripLabel = (t: Translate, trip: InfirmaryTrip): string => t(TRIP_LABEL[trip]);

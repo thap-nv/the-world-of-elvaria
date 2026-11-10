@@ -1,6 +1,7 @@
 // `elvaria quest show <id>`: one quest, its fields as labelled lines (its party too, P1-21 (c)), why it waits (nobody
-// can take it, P1-03; the infirmary, P1-32), then its description.
-import type { Quest, Registry } from '@elvaria/domain';
+// can take it, P1-03; the infirmary, P1-32), what its last run came to (verdicts, plot put back, P1-46), then its
+// description.
+import type { Event, Quest, Registry } from '@elvaria/domain';
 import type { MessageKey } from '@elvaria/i18n';
 import { inKingdom } from '@elvaria/store';
 
@@ -9,7 +10,8 @@ import { openKingdomContext } from '../kingdom-context.ts';
 import { QUEST_STATUS_LABEL } from '../labels.ts';
 import { NONE } from '../listing.ts';
 import { renderTable } from '../table.ts';
-import { infirmaryLines, lastInfirmaryOf } from './infirmary.ts';
+import { infirmaryLines, journalOf, lastInfirmaryOf } from './infirmary.ts';
+import { lastRunLines } from './last-run.ts';
 import { kindName } from './list.ts';
 import { partyFields } from './party.ts';
 import { readQuest } from './references.ts';
@@ -82,17 +84,25 @@ async function runQuestShow(input: CommandInput, cli: CliContext): Promise<ExitC
     note === undefined
       ? []
       : ['', ...(await unclaimableLines(ctx, registry.ok ? registry.value : undefined, quest, note))];
-  const sick = await infirmaryNote(ctx, quest);
-  [`${quest.id}  ${quest.title}`, ...renderTable(rows), ...why, ...sick, '', quest.description].forEach(
-    ctx.io.out,
-  );
+  const journal = await journalOf(ctx, quest);
+  const sick = infirmaryNote(ctx, quest, journal);
+  const last = await lastRunLines(ctx, quest, journal);
+  [
+    `${quest.id}  ${quest.title}`,
+    ...renderTable(rows),
+    ...why,
+    ...sick,
+    ...last,
+    '',
+    quest.description,
+  ].forEach(ctx.io.out);
   return EXIT.ok;
 }
 
 /** A quest in the infirmary: why it went there, from its journal (P1-32). */
-async function infirmaryNote(ctx: KingdomContext, quest: Quest): Promise<string[]> {
+function infirmaryNote(ctx: KingdomContext, quest: Quest, journal: readonly Event[]): string[] {
   if (quest.status !== 'infirmary') return [];
-  const line = await lastInfirmaryOf(ctx, quest);
+  const line = lastInfirmaryOf(journal);
   return line === undefined ? [] : ['', ...infirmaryLines(ctx.t, line)];
 }
 
