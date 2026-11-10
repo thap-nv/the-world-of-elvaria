@@ -1,0 +1,205 @@
+# Giai đoạn 1.5 — Tự cường: kế hoạch chi tiết từng task
+
+Ngày: 2026-11-11 · Trạng thái: đã duyệt. Tài liệu này là tầng chi tiết của [kế hoạch triển khai](../implementation-plan.md) §3.16 và của bảng `PS-…` ở §8, cho các task làm trước giai đoạn 2. Chỗ nào §3.16 và tài liệu này khác nhau thì tài liệu này đúng. Trạng thái từng task vẫn ghi ở §8; quyết định ghi ở §11.
+
+**Ai đọc.** Phiên làm một task `PS-…`: đọc [CLAUDE.md](../../CLAUDE.md), dòng §8 của task, mục "Điều code cho thấy" và "Mẫu dùng lại" dưới đây, rồi mục của task. Mỗi mục nêu thứ đã có trong code để dùng lại, thứ phải thêm, test, điều kiện xong và những quyết định đã chốt; đừng hỏi lại điều đã chốt. Tên hàm và trường nêu ở đây là đề xuất khớp với code hiện có: phiên được đổi cho hợp, miễn giữ hợp đồng, và ghi chỗ đổi vào §11 như mọi task.
+
+**Mục tiêu của giai đoạn** ([kế hoạch sản phẩm 0.8](../ke-hoach-dung-elvaria-0.8.md) mục 14). Sau giai đoạn này, chủ nhân giao một việc lớn bằng vài câu, Elvaria tự lập kế hoạch có người duyệt, chủ nhân đóng dấu một lần, rồi thế giới tự chạy tới khi giao hàng; chủ nhân chỉ gặp bản tấu mỗi ngày và dấu vua.
+
+## Chủ nhân đã chốt (2026-11-11)
+
+1. Khảo sát gộp vào quest kế hoạch của pháp sư; điều chưa biết vẫn thành quest thăm dò riêng.
+2. Bài thử của mốc PS-07: lý do trạm xá và dòng chi tiết của `doctor` thành mã cộng chuỗi VI/EN.
+3. PS-01 mở ngay, trong lúc P1-50 tạm dừng; các task PS khác chờ P1-51 đóng giai đoạn 1.
+4. Tể tướng phân loại thư theo lịch, mỗi ngày một lần trước bản tấu, chỉ khi có thư đang chờ.
+
+## Điều code cho thấy
+
+Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho từng task. Phiên làm task kiểm lại điều mình dựa vào trước khi viết code: code có thể đã đổi.
+
+| # | Thực tế trong code | Hệ quả |
+|---|---|---|
+| 1 | Chưa có bộ chạy việc theo lịch: `kingdom.schedule` (chronicle, temple, patrol) có schema nhưng không gì đọc | PS-03 dựng bộ lịch; bản tấu là việc theo lịch đầu tiên |
+| 2 | `command.applied` và `command.rejected` chỉ mang `{command_id, reason?}`; lệnh đã áp còn nguyên trong `inbox/done/` | Đếm "số lần cần chủ nhân" nối với `inbox/done`; PS-01b ghi thêm `kind` |
+| 3 | `sequels` là các phiên thêm của một lượt, không phải quest nối theo | "Lỗi lọt" là chủ nhân trả bài sau một verdict pass |
+| 4 | Vai của phiên chỉ có trong `attempt_log[].role`. Con số 12 / 6 / 1 của [báo cáo giai đoạn 1](../guides/phase-1-report.md) §6 là phân loại tay theo nguyên nhân gốc | Sổ đo đọc cả quest lẫn event; PS-01 không phải tái lập đúng 12 / 6 / 1 |
+| 5 | Kinh nạp vào prompt là cả file; `BuiltPrompt` là `{system, user}`; không có bộ đếm token | Dấu vết nạp: file kinh và số dòng, id bí kíp, cỡ từng khối theo ký tự |
+| 6 | Trong code, "letter" đã là thư bàn giao (khoảng 250 chỗ) | Entity mới mang id `memo` (hiển thị vẫn là "thư"). Quản sự đọc nó; `RunResult` và các adapter không đổi |
+| 7 | `DELIVERABLE_CHECKS.subquests` (`packages/steward/src/review/deliverable-checks.ts`) đã chạy `plannedChildren` trước người chấm | Kiểm kế hoạch bằng máy là phần mở rộng của check này, không phải script catalog (script chép vào vương quốc không import được domain) |
+| 8 | Check đỏ không chặn phiên người chấm: `planReviews` vẫn gọi người chấm, rồi `underPassRule` đổi verdict thành không đạt | Kế hoạch hỏng vẫn tốn một phiên chấm; test viết theo đúng hành vi này |
+| 9 | `rosterOf` (`packages/domain/src/dispatch/roster.ts`) chỉ đếm quest `working`; `territoryHasRoom` và `take` không nhận quest; nhận việc và bắt đầu là hai bước chung một roster | Luật vùng file ở PS-05 |
+| 10 | `Move.before` (`packages/steward/src/record.ts`) đặt được trường trước một chuyển trạng thái; `seal_required` chỉ được đọc ở `review.verdict_pass` | PS-04 không sửa máy trạng thái |
+| 11 | `apps/cli/dist/cli.js` nạp package nội bộ từ nguồn `.ts`; payload lệnh là `strictObject`; không nơi nào ghi phiên bản đang chạy | Bản ghim ghim cả CLI, không riêng `run` (PS-04b) |
+| 12 | Quản sự không import được `chancellor` hay `i18n` (`packages/config/boundaries.mjs`); `Background` gắn theo `QuestId`; phiên ngoài `Sessions` không được tính chỗ của tộc | Bản tấu và phân loại thư đi qua cổng tiêm vào `StewardDeps`; phân loại chạy ngoài nhịp |
+| 13 | `draftCommands` (`packages/chancellor/src/commands.ts`) chỉ chuyển các trường của draft thành `create_quest` | Tấu trình được chép vào mô tả của quest kế hoạch |
+| 14 | `elvaria migrate` chỉ thêm file và entry registry còn thiếu; giá trị đổi trong một entry đã có thì không | Task đổi registry có mục "Vương quốc đang chạy" |
+| 15 | Vài file đã sát trần 300 dòng: `steward/src/types.ts` 300, `domain/src/dispatch/plan-tick.ts` 298, `steward/src/steward.ts` 286, `steward/src/sessions/request.ts` 280, `steward/src/sessions/open.ts` 279 | PS-01b, PS-03, PS-05 tách file trước khi thêm |
+
+## Mẫu dùng lại
+
+- **Trường mới sau v1**: tùy chọn, `version` hoặc `v` giữ 1, kèm comment nói vì sao (như ở `quest-parts.ts`, `state-data.ts`).
+- **Entity mới**: `EntitySpec` trong `packages/store/src/entities.ts`, nối ở `kingdom-store.ts`, `layout.ts` (`KINGDOM_DIRS`, `kingdomLayout`), `STORED_GROUPS` (`migrate-kingdom.ts`), `CONTRACTS` (`packages/domain/src/schema/contracts.ts`), một ví dụ ở `packages/domain/examples/`, fixture `packages/store/src/migrations/<contract>/v1.json`.
+- **Event mới**: `EVENT_TYPES`, `EVENT_DATA_SCHEMAS`, bảng `events` của `glossary.json`, rồi `pnpm docs:gen` và `pnpm schemas`.
+- **Lệnh hộp thư mới**: `payloads.ts` và `inbox-command.ts`; handler ở `packages/steward/src/inbox/` và `apply.ts`; CLI ghi bằng `sendCommand` (`apps/cli/src/quest/send-command.ts`).
+- **Lệnh CLI mới**: file ở `apps/cli/src/<nhóm>/`, mục trong `COMMANDS` (`commands.ts`), khóa `cli.<nhóm>.*` ở `vi.json` và `en.json`, rồi `pnpm docs:gen`. Mẫu nhỏ: `tribe/disable.ts`, `territory/list.ts`; bảng in bằng `printListing`.
+- **Bước nghi thức mới**: `RITUAL_STEPS` (`packages/domain/src/constants.ts`), `rituals.json`, một mục `## <id>` cùng thứ tự trong `packages/runner-core/prompts/ritual-steps.md`, bảng `ritual_steps` của glossary.
+- **Tài liệu sinh mới**: `scripts/docs-<x>.mjs` và spec, `kingdomGenerators` trong `scripts/docs-gen.mjs`, `scripts/docs-gen.spec.ts`, `GENERATED_FILES` của `.claude/hooks/guard-edit.mjs`, `scripts/README.md`, hai chỗ "năm file" trong `CLAUDE.md`.
+- **Test**: bench `packages/steward/src/__fixtures__/kingdom.ts` (`plays.work`, `plays.verdicts`); git thật qua `git-plots.ts`. Không thêm kịch bản vào `FAKE_SCENARIOS`: mỗi kịch bản là một ca của bộ test hợp đồng cho mọi adapter.
+
+## Thứ tự
+
+| Đợt | Task | Ghi chú |
+|---|---|---|
+| 1 | PS-01 | Mở ngay; 0 mana; toàn file mới |
+| 2 | PS-01b, PS-02, PS-04b | Sau P1-51. PS-01b và PS-02 cùng đụng snapshot prompt, `event-types.ts`, `inbox/apply.ts`; PS-02 và PS-04b cùng `commands.ts`, locale, glossary: nhánh merge sau giữ cả hai phía, sinh lại snapshot và file sinh |
+| 3 | PS-05, PS-03 | Hai vùng code khác nhau |
+| 4 | PS-04, PS-03b | PS-04 sau PS-05: cả hai, và PS-01b trước đó, nối tiếp nhau trên `record.ts` và `QUEST_CHANGE` |
+| 5 | PS-06, rồi PS-06b | PS-06 cần PS-05 |
+| 6 | PS-07 | Sau cùng; chạy thật, tốn mana |
+
+## PS-01 — Sổ đo, phần đọc
+
+- **Mục tiêu**: các số của kế hoạch sản phẩm mục 14 "Sổ đo" từ dữ liệu đang có. 0 mana. Không đổi schema nào.
+- **Đọc trước**: §3.16.1; [ADR 0027](../adr/0027-measured-learning.md); báo cáo giai đoạn 1 §3 và §6; `scripts/docs-tier-report.mjs` và spec của nó.
+- **Dùng lại**: `readKingdomEvents` (`scripts/docs-tier-report.mjs`); `attempt_log[]` với `role`, `outcome`, `tokens`; `ATTEMPT_OUTCOMES` (submitted, partial, returned, timeout, breaker, crash, paused, blocked, cancelled), `INFIRMARY_TRIPS`, `FAIL_KINDS`; `readLog` (`apps/cli/src/gauges.ts`).
+- **Thêm**:
+  - `packages/domain/src/metrics/` với `metricsOf(input)`:
+    - lượt làm lại là lượt vượt quá một người làm và một người chấm mỗi quest; không tính lượt `paused` (hết mana) và mục có `character: null` (script, máy ghép);
+    - nguyên nhân tra từ một bảng dữ liệu theo vai, `outcome`, trip và `fail_kind`: `infra`, `output`, `question`;
+    - tỉ lệ đạt lượt đầu theo nghề, tag, model, dạng; lỗi lọt; token và thời gian mỗi quest được đóng dấu;
+    - số lần cần chủ nhân theo một bảng kind (`return`, `retry`, `reassign`, `edit_quest`, `set_rank`, `answer`, `cancel`).
+  - `apps/cli/src/metrics/`: một bộ đọc (quest, verdict, event, `inbox/done`) và lệnh `elvaria metrics [--since] [--until] [--json]`.
+  - `scripts/docs-metrics-report.mjs` sinh `docs/metrics-report.md` khi có `--kingdom`, dùng chung bộ đọc của CLI.
+- **Giới hạn đã biết, ghi vào báo cáo sinh ra**: check đỏ vì file do Elvaria sinh hiện ra là `output`; `crash` của người chấm gồm cả CLI chết lẫn verdict không hợp lệ; `cancelled` gồm cả nhả lúc khởi động lại lẫn chủ nhân hủy.
+- **Test**: domain 100 % bằng fixture dựng tay; CLI trên một vương quốc tạm (`initKingdom` cộng vài quest, verdict và lệnh ghi tay; `simulateDay` không sinh verdict hay `inbox/done`).
+- **Xong khi**: trên vương quốc thật, ngày 2026-11-08 ra 49 phiên và 19 lượt làm lại; bảng phân loại máy đặt cạnh 12 / 6 / 1 của báo cáo giai đoạn 1, từng chỗ lệch có giải thích ở §11.
+
+## PS-01b — Sổ đo, phần ghi
+
+- **Mục tiêu**: từ nay mỗi lượt để lại đủ dấu vết cho sổ đo.
+- **Đọc trước**: §3.16.1; mục PS-01; `packages/runner-core/src/prompt/build-prompt.ts` và các spec snapshot; `packages/steward/src/sessions/request.ts`, `record.ts`.
+- **Trước tiên**: tách `packages/steward/src/sessions/request.ts` (280 dòng).
+- **Thêm**:
+  - `buildPrompt` trả thêm danh sách khối `{id, chars}`.
+  - `promptOf` gom dấu vết nạp (file kinh và số dòng, id bí kíp, các khối) và ghi vào dòng mở phiên như một trường tùy chọn của `QUEST_CHANGE` (tiền lệ: `sequels`). `attempt_log` không đổi.
+  - `command.applied` và `command.rejected` thêm `kind` tùy chọn (`packages/steward/src/inbox/apply.ts`); sổ đo dùng nó khi có, `inbox/done` khi không.
+- **Test**: snapshot prompt không đổi một ký tự; dòng mở phiên có dấu vết; log cũ vẫn đọc được.
+
+## PS-02 — Thư và việc phát sinh
+
+- **Mục tiêu**: việc ngoài phạm vi thành một thư `proposal`, không thành một lần sửa lấn vùng.
+- **Đọc trước**: §3.16.2; [ADR 0024](../adr/0024-typed-letters-through-the-steward.md), [ADR 0010](../adr/0010-two-file-journal.md); `packages/runner-core/src/runner/handover.ts`, `packages/runner-core/prompts/handover.md`; `packages/steward/src/sessions/settle.ts`.
+- **Đã chốt**: id của entity là `memo` (thư mục `memos/`, event `memo.*`, lệnh `decide_memo`, CLI `elvaria memo`); trong chuỗi hiển thị vẫn là "thư".
+- **Dùng lại**: `sectionOf` của `handover.ts`; `readHandover` (`packages/steward/src/files.ts`); `elvaria say` để đưa một thư cho Tể tướng.
+- **Thêm**:
+  - Schema `memo` và registry `memos.json` (kiểu đầu tiên `proposal`, nơi nhận `chancellor`); `routeMemo` thuần ở `packages/domain/src/memo/`.
+  - Mục `## Memos` trong `handover.md`; `memosOf(text)` cạnh `questionOf`. Dòng `-` nghĩa là không có thư và không cảnh báo (`fakeLetter` ghi `-` dưới mọi mục); dòng sai mẫu bị bỏ qua kèm cảnh báo.
+  - Quản sự đọc thư khi lượt người làm đi qua `settle` (submit, ask, crash); lượt bị cầu dao cắt thì không. Id tất định từ quest, kiểu và nội dung đã chuẩn hóa, nên đọc lại không lập trùng; thư bị viết lại ở lượt sau thành thư trùng, để bước phân loại (PS-03b) gộp.
+  - Event `memo.filed`, `memo.routed`, `memo.closed`; lệnh `decide_memo` (gác, bác, đã xử lý bởi quest X); CLI `elvaria memo list`, `show`, `decide`; `elvaria say --memo <id>` đưa thư cho Tể tướng soạn quest nháp.
+  - Prompt người làm: việc ngoài phạm vi thì viết thư, không tự sửa; prompt lượt sau liệt kê thư đã lập.
+- **Test**: spec ghi lại `handover.md` trước nhịp kết lượt; thư không đổi trạng thái quest nào; snapshot prompt mới.
+- **Vương quốc đang chạy**: `elvaria migrate` chép `memos.json`.
+
+## PS-03 — Bộ lịch và bản tấu
+
+- **Mục tiêu**: mỗi ngày một bản tấu gom mọi việc cần chủ nhân. 0 mana.
+- **Đọc trước**: §3.16.3; kế hoạch sản phẩm mục 14 "Việc phát sinh, bản tấu, phạm vi ủy quyền"; `packages/steward/src/steward.ts`, `notices.ts`, `restart.ts`; `apps/cli/src/run/bell.ts`.
+- **Trước tiên**: tách `packages/steward/src/steward.ts` (286 dòng) và `types.ts` (300 dòng).
+- **Dùng lại**: `zonedTime(tz)` và `SCHEDULE_DEFAULTS` của domain; `WorldState` và `reduce`; cổng `Bell` làm mẫu cổng tiêm; `recover()` làm mẫu dựng lại trạng thái từ log.
+- **Thêm**:
+  - `packages/domain/src/schedule/`: hàm thuần "việc nào tới giờ" từ `kingdom.schedule`, giờ địa phương và lần chạy gần nhất. Lần chạy gần nhất đọc từ event log, không có file riêng.
+  - Bộ chạy việc theo lịch trong Quản sự, hai kiểu: **trong nhịp** cho việc ngắn không gọi model (bản tấu); **ngoài nhịp** cho việc gọi model (một việc một lúc, dừng được khi Quản sự dừng; PS-03b dùng).
+  - `kingdom.schedule.digest {enabled, at}`.
+  - `attentionQueue(state)` ở `packages/domain/src/world/`: dấu đang chờ, câu hỏi, trạm xá, thư chờ chủ nhân, quest nháp, cảnh báo mana, quest đã xong còn giữ vùng mà có quest khác đang chờ (PS-05). Mỗi mục có nhóm (phải quyết để việc chạy tiếp, hay chờ được), mã khuyến nghị tra từ một bảng, và lệnh CLI tương ứng.
+  - Cổng `Digest` trong `StewardDeps`, hiện thực ở `apps/cli/src/run/`: dựng Markdown qua i18n, ghi `digest/<ngày>.md`, rung chuông một lần. Lệnh `elvaria digest`; event `digest.written`; thư vào `WorldState`.
+- **Test**: bản tấu của một ngày có đủ hai nhóm; chạy không gọi model; nhảy giờ máy không sinh hai bản một ngày.
+
+## PS-03b — Phạm vi ủy quyền và phân loại thư
+
+- **Mục tiêu**: thư `proposal` được xử lý không cần chủ nhân khi nằm trong phạm vi ủy quyền.
+- **Đọc trước**: §3.16.3; mục PS-02 và PS-03; `packages/chancellor/src/**`; `apps/cli/src/say/**`; [ADR 0005](../adr/0005-single-writer-steward-inbox.md).
+- **Đã chốt**: phân loại chạy theo lịch, mỗi ngày một lần trước giờ bản tấu, chỉ khi có thư đang chờ; `elvaria triage` chạy tay vẫn có.
+- **Dùng lại**: `draftQuests`, `screenDrafts`, `draftCommands`; `hearingOf` (`apps/cli/src/say/hearing.ts`); bộ chạy ngoài nhịp của PS-03.
+- **Thêm**:
+  - `kingdom.delegation` và hàm thuần "tự quyết được không" (`packages/domain/src/delegation/`).
+  - `triageMemos` trong `packages/chancellor`: một lần gọi model cho cả lô, đầu ra có cấu trúc, kèm template prompt. Kết quả luôn là lệnh hộp thư (`edit_quest`, `create_quest`, `decide_memo`), nên Quản sự vẫn là người ghi duy nhất.
+  - `schedule.triage` qua một cổng tiêm, chạy ngoài nhịp. Chỉ bắt đầu khi tộc của Tể tướng không có phiên nào đang chạy, vì phiên này nằm ngoài sổ chỗ của tộc.
+- **Test**: thư trong phạm vi được áp, thư ngoài phạm vi vào bản tấu; Tể tướng giả; dừng Quản sự thì việc dừng theo.
+- **Tốn mana**: một lần gọi model mỗi lô.
+
+## PS-05 — Vùng file của quest
+
+- **Mục tiêu**: lãnh thổ code chạy được nhiều quest cùng lúc mà không đụng nhau.
+- **Đọc trước**: §3.16.5; [ADR 0028](../adr/0028-plan-review-and-scope-paths.md), [ADR 0012](../adr/0012-worktree-for-every-git-quest.md); `packages/domain/src/dispatch/{plan-tick,roster,claim-blocker}.ts`; `packages/domain/src/party/plot-base.ts`.
+- **Trước tiên**: tách `packages/domain/src/dispatch/plan-tick.ts` (298 dòng).
+- **Dùng lại**: `rosterOf`; `plotBaseOf`; `unionOf` (`packages/domain/src/party/party-quest.ts`); `plots.touched`; `globToRegExp` (`packages/runner-core/src/checks/glob.ts`).
+- **Thêm**:
+  - `quest.scope_paths` (tùy chọn) ở quest, draft, `create_quest`, `edit_quest`; `territory.shared_paths` (tùy chọn).
+  - `scopesMeet(a, b)` thuần ở `packages/domain/src/dispatch/scope.ts`: so tiền tố chữ của glob, thà báo trùng nhầm; mục nằm trong `shared_paths` không tính.
+  - **Ai giữ vùng**: quest có `scope_paths`, đã bắt đầu ít nhất một lượt, chưa `archived` hay hủy. Quest nháp và quest mở không giữ gì. Một quest đã xong đang chờ chủ nhân merge vẫn giữ vùng.
+  - **Luật**, đặt trong roster (`territoryHasRoom` và `take` nhận thêm quest; sửa các chỗ gọi ở `plan-tick.ts`, `wakes.ts`, `reassigns.ts`):
+    - **R1** số quest `working` nhỏ hơn `max_concurrent`, như cũ;
+    - **R2** quest bậc phiên không khai vùng chỉ bắt đầu khi lãnh thổ không có quest bậc phiên nào đang làm, và khi nó đang làm thì không quest nào bắt đầu; quest bậc script đứng ngoài R2 và R3;
+    - **R3** quest có vùng chờ khi một quest đang giữ vùng giao với nó, trừ các quest nằm trong chuỗi nhánh mà plot của nó dựng trên (mục đầu của `plotBaseOf().from`, bắc cầu);
+    - **chống chết đói**: trong một lãnh thổ, khi một quest không khai vùng đang chờ thì quest có vùng mở sau nó không bắt đầu.
+  - Quest do Quản sự tạo: quest ghép lấy hợp vùng các phần; phần test chấp nhận và quest nối theo lấy vùng của quest sinh ra nó.
+  - Lý do chờ **không** vào `CLAIM_BLOCKERS` (mỗi lý do ở đó rung chuông và ghi `quest.unclaimable`): một hàm thuần `scopeHolderOf` cho `quest list` và cho bản tấu.
+  - Khi nộp: file đổi ngoài vùng vào dòng `quest.submitted` (trường tùy chọn) và một khối trong prompt người chấm.
+  - `chancellor.md` và prompt pháp sư khai vùng; `quest add --scope`, `quest edit --scope`.
+- **Test**: domain 100 %; hai quest vùng rời chạy song song với `max_concurrent 2`; vùng giao thì chờ tới khi quest kia được lưu trữ; hai quest mở cùng vùng không khóa nhau; một đội có các phần rời vùng đi tới quest ghép.
+
+## PS-04 — Vùng bảo vệ
+
+- **Mục tiêu**: quest chạm thứ canh giữ thế giới luôn chờ dấu vua và được ưu tiên người chấm mạnh.
+- **Đọc trước**: §3.16.4; [ADR 0026](../adr/0026-guarded-self-change.md), [ADR 0008](../adr/0008-separation-of-duties.md); `packages/steward/src/sessions/commit.ts`; `packages/runner-core/src/policy/forbidden-changes.ts`; `packages/domain/src/verify/select-verifier.ts`.
+- **Dùng lại**: `commitPlot` và `forbiddenChangesOf`; `Move.before`; `wantsStrongJudge` (một chỗ gọi, trong `byPreference`, đang giữ quest).
+- **Thêm**:
+  - `laws.protected_paths` (tùy chọn); `commitPlot` trả thêm các đường dẫn bảo vệ bị chạm, không chặn commit.
+  - Bước chuyển `submit` đặt `seal_required: true` và một cờ tùy chọn trên quest qua `Move.before`; máy trạng thái (`transitions.ts`, `effects.ts`) không đổi. `wantsStrongJudge` nhận quest và đọc cả cờ này.
+  - Danh sách mặc định cho lãnh thổ Elvaria và cách đặt, ở `docs/guides/`.
+- **Đọc trước khi sửa** (CLAUDE.md): `packages/domain/src/verify/**`, schema territory.
+- **Test**: quest dạng `analyze` chạm vùng bảo vệ chờ dấu; quest ngoài vùng không đổi hành vi.
+- **Vương quốc đang chạy**: thêm `protected_paths` vào `territory.json` của Elvaria bằng script có sao lưu.
+
+## PS-04b — Nâng cấp có đường lùi
+
+- **Mục tiêu**: bản đang chạy chỉ đổi qua một bước có thử trước và lùi được.
+- **Đọc trước**: §3.16.4; ADR 0026, [ADR 0015](../adr/0015-node-only-scripts.md); `apps/cli/src/{cli,run-cli}.ts`, `apps/cli/src/run/run.ts`, `apps/cli/src/doctor/**`, `apps/cli/src/tribe/check.ts`; `packages/hooks/src/index.ts`.
+- **Dùng lại**: `runDoctor`; `runConformance`; `sessionsLeftBehind`; `clearLeftover` của runner-core để xóa worktree có junction. `HOOK_SCRIPT`, `REGISTRY_ROOT` và `PROMPTS_DIR` đều tính từ vị trí package, nên tự nằm trong bản.
+- **Thêm**:
+  - Một bản là một worktree tách rời của repo Elvaria ở một commit, tại `<kingdom>/.builds/<sha>/`, đã cài; chỉ build `dist` của hooks và eventlog, CLI chạy thẳng `apps/cli/src/cli.ts`. Con trỏ `{current, previous}` ở `.state/build.json`; giữ hai bản.
+  - `elvaria upgrade [--ref]`: từ chối khi Quản sự đang chạy hoặc còn phiên dở; dựng bản; chạy doctor, bộ test hợp đồng với CLI giả, một quest bậc script trên một vương quốc tạm; qua hết mới đổi con trỏ. `--rollback` đổi lại.
+  - **Ghim cả CLI**: ở lối vào, mọi lệnh trên một vương quốc có con trỏ sẽ chạy lại bằng bản đang ghim (env tường minh, `shell: false`), trừ `upgrade` và khi có `--here`. Lý do: `say`, `migrate`, `quest add` dùng prompt và schema của bản chúng chạy, và Quản sự bản ghim từ chối trường nó không biết.
+  - In sha lúc khởi động; event `upgrade.started`, `upgrade.switched`, `upgrade.rolled_back`.
+- **Test**: bản hỏng doctor không được chuyển; `--rollback` về đúng bản trước; đường dẫn có dấu cách; Windows và macOS.
+
+## PS-06 — Nghị hội
+
+- **Mục tiêu**: việc lớn đi qua tấu trình, một kế hoạch có người khác duyệt, một dấu, rồi tự chia việc.
+- **Đọc trước**: §3.16.6, §3.13; ADR 0028, [ADR 0020](../adr/0020-class-skill-scripture-tags-and-parties.md); kế hoạch sản phẩm mục 14 "Nghị hội"; `packages/chancellor/src/**`; `packages/steward/src/deliver/subquests.ts`, `packages/steward/src/review/deliverable-checks.ts`; `packages/runner-core/prompts/{chancellor,ritual-steps}.md`; `packages/registry-default/prompts/mage.md`.
+- **Đã chốt**: khảo sát nằm trong quest kế hoạch của pháp sư; chỉ điều chỉ biết được khi chạy thật mới thành quest thăm dò riêng.
+- **Dùng lại**: quest `plan` và `subquests.json` (`openSubquests`: quest con chỉ sinh sau dấu và giao hàng); `DELIVERABLE_CHECKS.subquests`; đội (`party_role: contract`, `mergeQuestOf`); nghi thức `council_review`.
+- **Thêm**:
+  - Khối `brief` tùy chọn ở `QuestDraftFileSchema`: mục tiêu, ngoài phạm vi, ví dụ chấp nhận, giả định, câu hỏi kèm phương án đề xuất, và `plan_ref` chỉ draft kế hoạch. `draftCommands` chép tấu trình vào mô tả của draft đó và đặt `seal_required: true`. `elvaria say` in tấu trình; `quest confirm` nghĩa là nhận các phương án đề xuất.
+  - `councilDue(drafts, config)` thuần và ngưỡng trong `kingdom.dispatch`; `screenDrafts` trả lại câu trả lời chỉ có quest lá khi việc đủ lớn (từ hai tag ở hai vùng, hoặc từ hạng B).
+  - Mẫu `plan.md` cho pháp sư: khảo sát, quyết định chung, các phần và vùng file, điều kiện xong, điều chưa biết (thành quest thăm dò `research` mà các phần chờ), ước lượng, và một trang tóm tắt cho chủ nhân.
+  - `planIssuesOf` thuần, nối vào check `subquests` sẵn có: mỗi phần ghi file có `scope_paths`; các phần không phụ thuộc nhau có vùng rời nhau; check được nêu tên có tồn tại. Hạng, nghề và ước lượng đã là bắt buộc trong schema.
+  - Bước nghi thức `check_plan_ready` thêm vào `council_review`: một quest vừa một context, điều kiện xong máy kiểm được, file nóng có cách ghép, điều chưa biết đã có quest thăm dò, không trái một quyết định đã ghi.
+- **Test**: kế hoạch chồng vùng bị trả về (`incomplete`) dù người chấm nói gì; kế hoạch qua duyệt chờ đúng một dấu rồi sinh quest con; việc nhỏ không qua Nghị hội.
+- **Vương quốc đang chạy**: sửa `steps` của `council_review` trong registry bằng script có sao lưu.
+- **Đề xuất ngoài phạm vi**: check của Quản sự đỏ thì không mở phiên người chấm, đỡ một phiên cho mỗi kế hoạch hỏng.
+
+## PS-06b — Tổng kết kế hoạch và trang tóm tắt
+
+- **Đọc trước**: mục PS-01, PS-05, PS-06.
+- **Thêm**: `planAccuracyOf` trong `packages/domain/src/metrics/` (vùng khai so với file chạm, ước lượng so với token, số thư, lượt làm lại theo từng phần); `elvaria metrics --plan <quest>`; `quest show` in phần tóm tắt của `plan.md` khi quest kế hoạch chờ dấu.
+- **Test**: một kế hoạch giả có ba phần cho đúng các số; quest không phải kế hoạch thì `--plan` báo lỗi dùng.
+
+## PS-07 — Mốc giai đoạn 1.5
+
+Chạy thật, tốn mana: hỏi chủ nhân trước khi chạy, và chốt trần mana của lần chạy lúc đó.
+
+- **Chuẩn bị vương quốc**: `elvaria upgrade`; `elvaria migrate`; sửa registry (PS-06); lãnh thổ Elvaria có `protected_paths`, `shared_paths`, `max_concurrent 2`; `delegation`; `schedule.digest` và `schedule.triage`; đủ Tể tướng, pháp sư và hai người chấm khác họ model.
+- **Chạy**: chủ nhân giao bằng vài câu việc "lý do trạm xá và dòng chi tiết của `doctor` thành mã cộng chuỗi VI/EN" (một mục của giai đoạn 2, §8); theo dõi qua bản tấu.
+- **Xong khi**: chủ nhân chỉ gặp câu hỏi của tấu trình (một lần), một dấu trên kế hoạch, bản tấu và dấu vua.
+- **Báo cáo** `docs/guides/phase-1.5-report.md`: số từ `elvaria metrics`, so với cách phiên điều phối làm ở giai đoạn 1; mỗi lỗ hổng gặp phải là một thư hoặc một dòng §11. Bảng task của giai đoạn 2 do Nghị hội soạn sau mốc này.

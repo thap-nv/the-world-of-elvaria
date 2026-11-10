@@ -208,6 +208,7 @@ Luồng một quest từ đầu đến cuối:
 | Trường | Ghi chú |
 |---|---|
 | id, kind | `proposal` (việc ngoài phạm vi), `advisory` (tôi đổi thứ vùng khác dùng), `request` (tôi cần thứ ở vùng khác), `objection` (không phục phán quyết); từ vựng đóng |
+| tên trong dữ liệu | `memo` (chốt 2026-11-11: trong code, `letter` đã là thư bàn giao); chuỗi hiển thị vẫn là "thư" |
 | from, quest | nhân vật viết và quest đang làm; nhân vật viết thư trong thư bàn giao, Quản sự là người lập thư |
 | to | do Quản sự định tuyến theo kind: Tể tướng, các quest có vùng file liên quan, người chấm thứ hai, hoặc người dùng |
 | body, refs[] | một việc một thư; `refs` là đường dẫn file hay id quest |
@@ -219,7 +220,7 @@ Luồng một quest từ đầu đến cuối:
 {"ts":"2026-11-06T09:12:03+07:00","type":"agent.tool","character":"thorn","quest":"q_0142","territory":"shop-api","data":{"tool":"Edit","path":"src/auth/login.ts"}}
 ```
 
-Các loại sự kiện chính: `quest.created / claimed / started / submitted / returned / done / sealed / paused / infirmary`, `agent.tool` (read, write, bash, search, web), `agent.subagent.spawn / end`, `agent.compact`, `verdict.pass / fail`, `mana.level / exhausted / restored`, `character.sleep / wake / meditate / suspend`, `campaign.declared / front.update / won / lost / retro`, `battle.start / unit.down / unit.fall / wounded / end`, `incident.alarm / cleared`, `patrol.rumor`, `delivery.sent`, `chronicle.written`. (0.8) Thêm: `letter.filed / routed / closed`, `delivery.pushed / merged / failed`, `digest.written`, `lesson.added / retired`, `upgrade.started / switched / rolled_back`.
+Các loại sự kiện chính: `quest.created / claimed / started / submitted / returned / done / sealed / paused / infirmary`, `agent.tool` (read, write, bash, search, web), `agent.subagent.spawn / end`, `agent.compact`, `verdict.pass / fail`, `mana.level / exhausted / restored`, `character.sleep / wake / meditate / suspend`, `campaign.declared / front.update / won / lost / retro`, `battle.start / unit.down / unit.fall / wounded / end`, `incident.alarm / cleared`, `patrol.rumor`, `delivery.sent`, `chronicle.written`. (0.8) Thêm: `memo.filed / routed / closed`, `delivery.pushed / merged / failed`, `digest.written`, `lesson.added / retired`, `upgrade.started / switched / rolled_back`.
 
 ### Bố cục thư mục
 
@@ -237,7 +238,7 @@ kingdom/
   temple/scripture.md        # kinh chung
   temple/skills/<id>/        # bí kíp: SKILL.md + file kèm, nạp theo tag
   temple/exemplars/<loại>/   # (0.8) bài mẫu người dùng ưng, theo loại tài liệu
-  letters/<id>.json          # (0.8) thư giữa các nhân vật, do Quản sự lập
+  memos/<id>.json            # (0.8) thư giữa các nhân vật, do Quản sự lập
   digest/YYYY-MM-DD.md       # (0.8) bản tấu: mọi việc cần người dùng trong ngày, mỗi việc kèm khuyến nghị
   training/                  # (0.8) thao trường: quest mẫu từ lịch sử và kết quả các lần thử
   world/map.json             # địa hình, vị trí lãnh thổ, tòa nhà
@@ -639,6 +640,7 @@ Không còn câu hỏi mở trước giai đoạn 0.
 | 2026-11-10 | Quản sự push nhánh quest, mở PR bằng git credential của người dùng và merge khi CI xanh, theo `delivery` của lãnh thổ; thay câu "hợp nhất không bao giờ tự động" của các bản trước; nhân vật vẫn không push |
 | 2026-11-10 | Tính cách và quan hệ: chỉ ở tầng hiển thị và lời nói với người dùng; quan hệ suy ra từ phán quyết, không là đầu vào của phán quyết |
 | 2026-11-10 | Vùng bảo vệ cần dấu vua; Quản sự chạy bản đã ghim, nâng cấp có thử và đường lùi; thao trường để thử thay đổi prompt, bí kíp, model trước khi dùng thật |
+| 2026-11-11 | Kế hoạch chi tiết giai đoạn 1.5 (`docs/plans/phase-1.5.md`): khảo sát gộp vào quest kế hoạch của pháp sư; thư mang tên `memo` trong dữ liệu; vùng file được giữ tới khi quest lưu trữ; bài thử của mốc 1.5 là mã lý do cộng chuỗi VI/EN cho trạm xá và `doctor`; Tể tướng phân loại thư theo lịch mỗi ngày một lần |
 
 ---
 
@@ -789,11 +791,10 @@ Ba điều kiện để thế giới thật sự học chứ không chỉ tích 
 Dùng cho việc chạm nhiều vùng hoặc từ hạng B. Việc nhỏ vẫn đi thẳng qua Tể tướng như các bản trước.
 
 1. **Tấu trình** (Tể tướng): mục tiêu, ngoài phạm vi, ví dụ chấp nhận, giả định. Mọi câu hỏi cho người dùng gom một lần ở bước này, mỗi câu kèm phương án đề xuất; người dùng trả lời "theo đề xuất" là đủ.
-2. **Khảo sát** (trinh sát, việc máy làm được thì dùng script): vùng code liên quan, quy ước sẵn có, điều chưa biết. Điều chỉ biết được khi chạy thật thành một quest thăm dò có trần thời gian, giao ra dữ kiện chứ không giao code.
-3. **Hợp đồng** (pháp sư): interface và dữ liệu đổi, các quyết định chung phải chốt trước khi chia việc, vùng file của từng phần, thứ tự phụ thuộc, điều kiện xong viết thành kiểm tra chạy được, ước lượng mana.
-4. **Duyệt kế hoạch** (người chấm khác họ model): mỗi quest vừa một context chưa; điều kiện xong máy kiểm được chưa; các phần chạy song song có vùng file rời nhau chưa; file nóng xử lý thế nào; điều chưa biết đã có quest thăm dò chưa; có trái một quyết định đã ghi không.
-5. **Một dấu vua** trên bản tóm tắt một trang. Sau đó thế giới tự chạy trong phạm vi ủy quyền.
-6. **Tổng kết** (thầy tu, khi chiến dịch đóng): kế hoạch so với thực tế, sửa mẫu lập kế hoạch.
+2. **Khảo sát và hợp đồng** (pháp sư, trong một quest kế hoạch; chốt 2026-11-11: khảo sát không còn là quest riêng của trinh sát, để đỡ hai phiên cho mỗi việc lớn): vùng code liên quan, quy ước sẵn có, điều chưa biết; rồi interface và dữ liệu đổi, các quyết định chung phải chốt trước khi chia việc, vùng file của từng phần, thứ tự phụ thuộc, điều kiện xong viết thành kiểm tra chạy được, ước lượng mana. Điều chỉ biết được khi chạy thật thành một quest thăm dò của trinh sát, có trần thời gian, giao ra dữ kiện chứ không giao code.
+3. **Duyệt kế hoạch** (người chấm khác họ model): mỗi quest vừa một context chưa; điều kiện xong máy kiểm được chưa; các phần chạy song song có vùng file rời nhau chưa; file nóng xử lý thế nào; điều chưa biết đã có quest thăm dò chưa; có trái một quyết định đã ghi không.
+4. **Một dấu vua** trên bản tóm tắt một trang. Sau đó thế giới tự chạy trong phạm vi ủy quyền.
+5. **Tổng kết** (thầy tu, khi chiến dịch đóng): kế hoạch so với thực tế, sửa mẫu lập kế hoạch.
 
 Một lời giao việc tốt có bốn thứ: mục tiêu, dạng đầu ra, công cụ và nguồn nên dùng, ranh giới. Hai thứ cuối là thứ các kế hoạch trước 0.8 hay thiếu.
 
@@ -820,7 +821,7 @@ Luật đi kèm: nhân vật viết thư trong thư bàn giao, Quản sự là n
 
 ### Vùng file và hàng đợi merge
 
-- Mỗi quest khai `scope_paths`. Quản sự không chạy cùng lúc hai quest có vùng giao nhau; nhờ vậy một lãnh thổ code chạy được nhiều quest song song thay vì một.
+- Mỗi quest khai `scope_paths`. Quản sự không chạy cùng lúc hai quest có vùng giao nhau; nhờ vậy một lãnh thổ code chạy được nhiều quest song song thay vì một. (2026-11-11) Một quest giữ vùng của nó từ lượt chạy đầu tới khi được lưu trữ hay hủy, kể cả lúc đã xong và chờ merge, vì một quest sau trên cùng vùng sẽ conflict với nó; quest dựng trên nhánh của nó thì không phải chờ.
 - File nóng (`shared_paths`) có cách ghép khai sẵn: sinh lại bằng lệnh của lãnh thổ, hoặc giữ cả hai phía.
 - Merge đi qua một hàng đợi theo lãnh thổ: cập nhật nhánh quest bằng merge từ nhánh chính (không rebase), ghép file nóng, chạy lại kiểm tra, rồi mới giao. Conflict máy không ghép được thành một quest Hợp nhất cho một hiệp sĩ, có nghiệm thu như mọi quest.
 - Sau mỗi lần merge, Quản sự gửi `advisory` tới các quest đang mở có vùng file liên quan. Đây là việc phiên điều phối làm tay ở giai đoạn 1.
