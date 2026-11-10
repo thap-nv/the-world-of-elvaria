@@ -2,6 +2,7 @@
 // the tool policy of the class, the territory's laws and the role, the budget the CLI enforces, the ELVARIA_*
 // context the hook reads, and the run folder `.runs/<quest>-<n>` (verifier: `/verify` below it).
 import { mkdir } from 'node:fs/promises';
+import process from 'node:process';
 
 import {
   FAIL_KINDS,
@@ -10,6 +11,7 @@ import {
   ownerVerdictIdOf,
   partialVerdictIdOf,
   runDirOf,
+  shellOf,
   verdictIdOf,
   verifierSessionsOf,
 } from '@elvaria/domain';
@@ -43,20 +45,31 @@ import type { Context } from '../context.ts';
 /**
  * The verifier's structured output (§3.2): what the verdict file takes from it. The Steward adds the checks, applies
  * the ritual's pass rule, and writes it only when the verdict schema and validateVerdict accept it (review/judge.ts).
+ * Notes are required of every verdict (P1-40): an agy judge's pass came with none in the P1-35 run, and the Steward
+ * refuses such a pass; `breaks` are the evidence of a judge in a scratch plot (withBreaksWeighed).
  */
 export const VERDICT_OUTPUT_SCHEMA: JsonSchema = {
   type: 'object',
   additionalProperties: false,
-  required: ['result'],
+  required: ['result', 'notes'],
   properties: {
     result: { enum: ['pass', 'fail', 'partial'] },
     fail_kind: { enum: [...FAIL_KINDS] },
-    notes: { type: 'string' },
+    notes: { type: 'string', minLength: 1 },
     progress: {
       type: 'object',
       additionalProperties: false,
       required: ['checked_until'],
       properties: { checked_until: { type: 'string', minLength: 1 } },
+    },
+    breaks: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['change', 'red'],
+        properties: { change: { type: 'string', minLength: 1 }, red: { type: 'string', minLength: 1 } },
+      },
     },
   },
 };
@@ -173,6 +186,13 @@ async function contextFilesFor(ctx: Context, input: SessionInput) {
   return { context_files: await readContextFiles(input.cwd, input.territory.context_files) };
 }
 
+/**
+ * The shell the session's commands run in on this OS, as the tribe's adapter declares it (P1-40): a fact of the
+ * system the prompt states, where the kingdom's scripture used to say it for the gemini tribe on Windows only.
+ */
+const shellFor = (ctx: Context, character: Character): string | undefined =>
+  shellOf(ctx.deps.runners[character.tribe]?.capabilities, ctx.deps.platform ?? process.platform);
+
 /** `known`: the session's secret values, masked in what the prompt quotes of the kingdom's logs (P1-25). */
 async function promptOf(
   ctx: Context,
@@ -182,6 +202,7 @@ async function promptOf(
 ) {
   const { quest, character, territory } = input;
   const base = {
+    shell: shellFor(ctx, character),
     locale: ctx.world.kingdom.owner.locale,
     decree: await readDecree(ctx.root),
     quest,

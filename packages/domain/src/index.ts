@@ -92,6 +92,7 @@ export * from './script/follow-up.ts';
 export * from './script/outcome.ts';
 export * from './script/params.ts';
 export * from './script/script-verdict.ts';
+export * from './verify/evidence.ts';
 export * from './verify/flaky-follow-up.ts';
 export * from './verify/machine-verdict.ts';
 export * from './verify/pass-rule.ts';

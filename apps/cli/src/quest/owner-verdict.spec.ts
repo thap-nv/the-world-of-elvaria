@@ -121,6 +121,15 @@ describe('elvaria seal, return', () => {
     ]);
   });
 
+  it('returns the work for a new judgement with --rejudge, the assignee not charged (P1-40)', async () => {
+    const io = testIo();
+    expect(await elvaria(io, 'return', QUEST_ID, '--note', NOTE, '--rejudge')).toBe(0);
+    expect(io.printed.out.join('\n')).toContain('for a new judgement');
+    expect((await inbox()).map(({ payload }) => payload)).toEqual([
+      { quest: QUEST_ID, notes: NOTE, fail_kind: 'other', rejudge: true },
+    ]);
+  });
+
   it('asks for a specific note of 20 characters and a known fail_kind before sending anything', async () => {
     const short = testIo();
     expect(await elvaria(short, 'return', QUEST_ID, '--note', 'Not good.')).toBe(2);

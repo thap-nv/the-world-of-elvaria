@@ -51,6 +51,14 @@ export const ReturnPayloadSchema = z
     notes: NonEmptyStringSchema,
     // Optional, so commands written before P1-04 stay valid; the Steward takes `other` when it is absent.
     fail_kind: FailKindSchema.optional(),
+    rejudge: z
+      .boolean()
+      .optional()
+      .meta(
+        describe(
+          "The judge erred, not the assignee (P1-40): the owner's verdict says `rejudge`, and the return counts in neither the assignee's reputation nor its fail streak. Absent: false.",
+        ),
+      ),
   })
   .meta(
     describe(

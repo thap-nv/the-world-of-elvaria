@@ -57,7 +57,9 @@ const asksForJson = () =>
 
 function finish(question) {
   writeLetter(question);
-  const answer = env.FAKE_LANTERN_STRUCTURED ?? '{"result":"pass"}';
+  // A pass says what was checked: the Steward refuses one without notes (P1-40).
+  const answer =
+    env.FAKE_LANTERN_STRUCTURED ?? '{"result":"pass","notes":"Read the diff; every check passes."}';
   print({ type: 'text', text: asksForJson() ? `My verdict:\n${answer}` : 'done' });
   print({ type: 'usage', tokens: TOKENS });
   if (flag('--json-schema') !== undefined) print({ type: 'result', structured: JSON.parse(answer) });

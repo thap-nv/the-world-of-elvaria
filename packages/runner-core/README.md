@@ -30,7 +30,8 @@
   `Continuation.refused_patch`, `prompts/refused-patch.md`, P1-31) and a verifier (the ritual's steps from `prompts/ritual-steps.md`, the
   checks with the end of each failing one's log the caller read and masked (`PromptCheck.log_tail`, P1-25; both in `src/prompt/checks.ts`), the letter, the diff, or where to read it when the caller has none, and where the last judge of the
   run stopped when it left a `partial` verdict, P1-15); both list the shell commands
-  their `ToolPolicy` allows, one per call (`prompts/shell.md`, P1-11); an assignee that edits files also reads
+  their `ToolPolicy` allows, one per call (`prompts/shell.md`, P1-11), after the shell they run in when the caller
+  names it (`PromptInput.shell`, the adapter's `capabilities.shell` for this OS, P1-40); an assignee that edits files also reads
   the territory's read-only paths and the generators its shell may run (`prompts/read-only.md`, P1-24), and its
   patch paths with the patch convention (`prompts/patch.md`, P1-28: `PATCH_FILE` at the root of the plot);
   `buildChancellorPrompt` for the
@@ -55,7 +56,8 @@
   `policy`: `commandRefusal`, `toolOf`, `NO_PUSH_COMMAND`), so the file imports nothing. The prompt, the tool policy
   and the plot already come in each `SpawnRequest`. `adapterOfModule(module, kit)` checks the imported module
   (`createAdapter` exported, called without throwing) and the runner it returns (`runnerProblems`: the kit's tribe
-  and adapter, every capability, `spawn`, `probe`, `doctor`), one sentence per problem.
+  and adapter, every capability, `spawn`, `probe`, `doctor`), one sentence per problem; the optional `shell` is
+  checked only when given (`shellProblems`, P1-40), here and in the suite's `capabilities` check.
 - Proves in the conformance suite that a judge in its scratch plot, whose class allows commit and push, has both
   refused (`scratch_commit`, fakes only, P1-20).
 - Gives a tribe without a JSON Schema flag its structured reply (`src/structured/`, implementation-plan §3.14

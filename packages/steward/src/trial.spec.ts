@@ -18,6 +18,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { git, gitPlots, gitRepoWith } from './__fixtures__/git-plots.ts';
 import { RM_TEMP, bench, questPayload, tickUntil } from './__fixtures__/kingdom.ts';
+import { statusIs } from './__fixtures__/review.ts';
 import type { Bench } from './__fixtures__/kingdom.ts';
 import type { Plots, Steward } from './types.ts';
 
@@ -75,21 +76,26 @@ async function free(target: string): Promise<boolean> {
 }
 
 /**
- * The judge of the fake quests: in its cwd it breaks src/sum.mjs, runs the test, restores the file, and fails the
- * quest when the test stayed green (break_and_expect_red); what it saw is kept for the spec.
+ * The judge of the fake quests: in its cwd it breaks src/sum.mjs in two places, runs the test after each, restores
+ * the file, and fails the quest when the test stayed green (break_and_expect_red); its pass names its breaks unless
+ * `shown` is false (P1-40). What it saw is kept for the spec.
  */
-function judgeIn(repo: string, lock: string, seen: Seen[]) {
+function judgeIn(repo: string, lock: string, seen: Seen[], shown: boolean) {
   return async (req: SpawnRequest): Promise<unknown> => {
     const branch = `quest/${req.quest?.id ?? ''}`;
     const head = git(repo, 'rev-parse', branch);
     seen.push({ cwd: req.cwd, request: req, branch_head: head, lock_free: await free(lock) });
-    const file = path.join(req.cwd, 'src', 'sum.mjs');
-    await writeFile(file, 'export const sum = (a, b) => a - b;\n');
-    const red = testIn(req.cwd) !== 0;
-    git(req.cwd, 'restore', 'src/sum.mjs');
-    if (red) return { result: 'pass' };
-    const notes = 'Broke src/sum.mjs:1 (a + b -> a - b): e2e/sum.test.mjs stayed green.';
-    return { result: 'fail', fail_kind: 'incomplete', notes };
+    const breaks = [];
+    for (const change of ['a - b', 'a * b']) {
+      await writeFile(path.join(req.cwd, 'src', 'sum.mjs'), `export const sum = (a, b) => ${change};\n`);
+      const red = testIn(req.cwd) !== 0;
+      git(req.cwd, 'restore', 'src/sum.mjs');
+      const notes = `Broke src/sum.mjs:1 (a + b -> ${change}): e2e/sum.test.mjs stayed green.`;
+      if (!red) return { result: 'fail', fail_kind: 'incomplete', notes };
+      breaks.push({ change: `src/sum.mjs:1 a + b -> ${change}`, red: 'node e2e/sum.test.mjs: exit 1' });
+    }
+    const notes = 'Both breaks of src/sum.mjs turned e2e/sum.test.mjs red.';
+    return { result: 'pass', notes, ...(shown ? { breaks } : {}) };
   };
 }
 
@@ -119,6 +125,8 @@ interface Opening {
   readonly exclusive?: boolean;
   /** Runs once the trial ended, before any judge opens: what another quest does meanwhile. */
   readonly afterTrial?: (lock: string) => Promise<void>;
+  /** false: the judge's pass names no breaks (P1-40). */
+  readonly breaks?: false;
 }
 
 async function open(files: Record<string, string>, opening: Opening = {}) {
@@ -143,7 +151,7 @@ async function open(files: Record<string, string>, opening: Opening = {}) {
   await current.store.territories.write(TerritorySchema.parse({ ...territory, checks: [e2e] }));
   const seen: Seen[] = [];
   const lock = inKingdom(current.root, exclusiveLockOf('dc1-se-team'));
-  const runners = runnersOf(current, files, judgeIn(repo, lock, seen));
+  const runners = runnersOf(current, files, judgeIn(repo, lock, seen, opening.breaks ?? true));
   const base = gitPlots(current.root);
   const plots: Plots = {
     ...base,
@@ -158,9 +166,11 @@ async function open(files: Record<string, string>, opening: Opening = {}) {
   return { kingdom: current, steward: running, repo, seen, lock };
 }
 
-/** The first run of the quest has its verdict. */
-const judged = (kingdom: Bench, title: string) => async () =>
-  (await kingdom.store.verdicts.read(`${(await kingdom.quest(title)).id}-1` as never)).ok;
+/** The first run of the quest has its verdict (`run`: `1-p1` for the partial its first judge left). */
+const judged =
+  (kingdom: Bench, title: string, run = '1') =>
+  async () =>
+    (await kingdom.store.verdicts.read(`${(await kingdom.quest(title)).id}-${run}` as never)).ok;
 const verdictOf = async (kingdom: Bench, id: string): Promise<Verdict> => {
   const read = await kingdom.store.verdicts.read(id as never);
   if (!read.ok) throw new Error(`fixture: no verdict ${id}`);
@@ -201,18 +211,31 @@ describe('tests as the product: Thả quái thử thành (ADR 0022)', () => {
   it('passes a quest whose test goes red on the break, and its branch stays as the assignee left it', async () => {
     const { kingdom, steward, repo, seen } = await open({ 'e2e/sum.test.mjs': STRONG_TEST });
     await kingdom.command('create_quest', questPayload('Wall of stone', E2E));
-    await tickUntil(
-      steward,
-      kingdom.clock,
-      async () => (await kingdom.quest('Wall of stone')).status === 'done',
-    );
+    await tickUntil(steward, kingdom.clock, statusIs(kingdom, 'Wall of stone', 'done'));
     const quest = await kingdom.quest('Wall of stone');
-    expect(await verdictOf(kingdom, `${quest.id}-1`)).toMatchObject({
-      ritual: 'mutation_check',
-      result: 'pass',
-    });
+    const verdict = await verdictOf(kingdom, `${quest.id}-1`);
+    expect(verdict).toMatchObject({ ritual: 'mutation_check', result: 'pass' });
+    expect(verdict.breaks?.map(({ change }) => change)).toEqual([
+      'src/sum.mjs:1 a + b -> a - b',
+      expect.anything(),
+    ]);
     expect(git(repo, 'rev-parse', `quest/${quest.id}`)).toBe(seen[0]!.branch_head);
     expect(git(repo, 'show', `quest/${quest.id}:e2e/sum.test.mjs`)).toBe(STRONG_TEST.trim());
+  }, 120_000);
+
+  it('takes a pass that names no breaks as partial, the next judge reading on from the break (P1-40)', async () => {
+    const { kingdom, steward } = await open({ 'e2e/sum.test.mjs': STRONG_TEST }, { breaks: false });
+    await kingdom.command('create_quest', questPayload('Wall of words', E2E));
+    await tickUntil(steward, kingdom.clock, judged(kingdom, 'Wall of words', '1-p1'));
+    const quest = await kingdom.quest('Wall of words');
+    expect(await verdictOf(kingdom, `${quest.id}-1-p1`)).toMatchObject({
+      result: 'partial',
+      notes: 'Both breaks of src/sum.mjs turned e2e/sum.test.mjs red.',
+      progress: { checked_until: 'break_and_expect_red' },
+    });
+    expect(kingdom.warnings).toContainEqual(
+      expect.stringContaining('without its breaks in the scratch plot'),
+    );
   }, 120_000);
 
   it('fails a quest whose test flakes, whatever its judge says, and opens a fix quest', async () => {
@@ -225,8 +248,8 @@ describe('tests as the product: Thả quái thử thành (ADR 0022)', () => {
     const verdict = await verdictOf(kingdom, `${quest.id}-1`);
     expect(verdict).toMatchObject({ result: 'fail', fail_kind: 'flaky' });
     expect(verdict.checks.find(({ id }) => id === 'flake_check')).toMatchObject({ pass: false });
-    // Two runs of the machine (green, then red), then the judge's own run on its break.
-    expect(await readFile(counter, 'utf8')).toBe('3');
+    // Two runs of the machine (green, then red), then the judge's own runs on its two breaks.
+    expect(await readFile(counter, 'utf8')).toBe('4');
     const fix = (await kingdom.quests()).find((made) => made.parent_id === quest.id);
     expect(fix).toMatchObject({
       kind: 'fix',
@@ -245,11 +268,7 @@ describe('tests as the product: Thả quái thử thành (ADR 0022)', () => {
       { exclusive: true },
     );
     await kingdom.command('create_quest', questPayload('Wall of iron', E2E));
-    await tickUntil(
-      steward,
-      kingdom.clock,
-      async () => (await kingdom.quest('Wall of iron')).status === 'done',
-    );
+    await tickUntil(steward, kingdom.clock, statusIs(kingdom, 'Wall of iron', 'done'));
     expect(seen[0]?.lock_free).toBe(false);
     expect(seen[0]?.request.permissions.allow).toContain('Bash(node e2e/sum.test.mjs:*)');
     expect(await free(lock)).toBe(true);
@@ -271,11 +290,7 @@ describe('tests as the product: Thả quái thử thành (ADR 0022)', () => {
     await steward.tick();
     expect([seen.length, waits()]).toEqual([0, [expect.stringContaining('dc1-se-team') as string]]);
     await other?.release();
-    await tickUntil(
-      steward,
-      kingdom.clock,
-      async () => (await kingdom.quest('Wall of glass')).status === 'done',
-    );
+    await tickUntil(steward, kingdom.clock, statusIs(kingdom, 'Wall of glass', 'done'));
     expect(seen).toHaveLength(1);
   }, 120_000);
 });

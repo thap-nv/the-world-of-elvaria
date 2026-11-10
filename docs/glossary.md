@@ -230,7 +230,7 @@ Họ model (suy ra từ slug, không lưu): `claude`, `gemini`, `gpt` (Codex thu
 |---|---|---|---|
 | Xác nhận draft | `confirm` | — | `draft` → `open` |
 | Đóng dấu | `seal` | `act-seal` → `action-seal` | |
-| Trả về | `return` | `act-return` → `action-return` | bắt buộc ghi chú |
+| Trả về | `return` | `act-return` → `action-return` | bắt buộc ghi chú; `rejudge`: trả để chấm lại vì người chấm làm hỏng, không tính trượt cho người làm (từ P1-40) |
 | Thử lại | `retry` | — | từ trạm quân y |
 | Hủy | `cancel` | — | |
 | Lưu trữ | `archive` | `act-archive` → `action-archive` | cũng dùng cho bỏ draft và từ chối khi chờ dấu |

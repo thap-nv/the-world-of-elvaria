@@ -2,10 +2,12 @@
 // (implementation-plan §2.5, P1-04). Both are inbox commands; the Steward writes them as the owner's verdict
 // (`verdicts/<quest>-<n>-user.json`), weighed three times. A return is a fail verdict, which needs specific notes
 // (at least 20 characters) and a fail_kind (`other` by default): the CLI asks for both before it sends anything.
+// `return --rejudge` (P1-40) sends the work back for a new judgement because the judge erred: the assignee's
+// reputation and fail streak do not count it.
 import { FAIL_KINDS, FAIL_NOTES_MIN_LENGTH } from '@elvaria/domain';
 import type { FailKind } from '@elvaria/domain';
 
-import { textOption } from '../args.ts';
+import { flagOption, textOption } from '../args.ts';
 import { EXIT } from '../command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { questFor } from './lifecycle.ts';
@@ -41,10 +43,11 @@ async function runReturn(input: CommandInput, cli: CliContext): Promise<ExitCode
   }
   const quest = await questFor(input, ctx, () => 'return', 'cli.return.refused');
   if (quest === undefined) return EXIT.failed;
-  const payload = { quest: quest.id, notes, fail_kind: failKind };
-  return sendCommand(ctx, { ...commandHeader(ctx), kind: 'return', payload }, 'cli.return.sent', {
-    id: quest.id,
-  });
+  // The judge erred, not the assignee (P1-40): the return weighs nothing in the assignee's books.
+  const rejudge = flagOption(input, 'rejudge') === true;
+  const payload = { quest: quest.id, notes, fail_kind: failKind, ...(rejudge ? { rejudge } : {}) };
+  const sent = rejudge ? 'cli.return.sent_rejudge' : 'cli.return.sent';
+  return sendCommand(ctx, { ...commandHeader(ctx), kind: 'return', payload }, sent, { id: quest.id });
 }
 
 export const SEAL: CommandSpec = {
@@ -62,6 +65,7 @@ export const RETURN: CommandSpec = {
   options: {
     note: { type: 'string', value: '<text>', required: true, help: 'cli.return.option.note' },
     'fail-kind': { type: 'string', value: '<kind>', help: 'cli.return.option.fail_kind' },
+    rejudge: { type: 'boolean', help: 'cli.return.option.rejudge' },
   },
   run: runReturn,
 };

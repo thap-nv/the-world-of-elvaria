@@ -166,6 +166,10 @@
                 "other",
                 "flaky"
               ]
+            },
+            "rejudge": {
+              "description": "The judge erred, not the assignee (P1-40): the owner's verdict says `rejudge`, and the return counts in neither the assignee's reputation nor its fail streak. Absent: false.",
+              "type": "boolean"
             }
           }
         }

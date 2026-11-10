@@ -1364,7 +1364,7 @@
               "vi": "Trả về",
               "id": ["return"],
               "icon": "`act-return` → `action-return`",
-              "remark": "bắt buộc ghi chú"
+              "remark": "bắt buộc ghi chú; `rejudge`: trả để chấm lại vì người chấm làm hỏng, không tính trượt cho người làm (từ P1-40)"
             },
             {
               "vi": "Thử lại",

@@ -93,7 +93,10 @@
   `party` check of a merge quest, P1-18, and `coverage_not_lower`, P1-20, or `flaky` for `flake_check`), `machineVerdictOf` (the machine's verdict from the checks), `validateVerdict` (no
   worker, only the session the Steward spawned, no pass over a failing check) and the verdict ids of a run
   (`<quest>-<n>`, `-p<k>` for a partial, `-user` for the owner's). `withVerdict` (`src/character/`) puts a
-  verdict into the reputation and tag windows and the fail streak.
+  verdict into the reputation and tag windows and the fail streak, except the owner's return for a new judgement
+  (`rejudge`, P1-40). What a judge's pass must show (`src/verify/evidence.ts`, P1-40): `passWithoutNotes` (the
+  Steward refuses it), and `withBreaksWeighed`, which takes a pass in a scratch plot whose ritual breaks code
+  (`breaksDue`) with fewer than `MIN_BREAKS` breaks as the partial of that session.
 - Reads the script tier (`src/script/`, §3.12, ADR 0017): `scriptParamsIssues` (a quest's `script.params` against
   the catalog's `params_schema`, read by zod's `fromJSONSchema`; `questFromCommand` refuses
   `invalid_script_params`), `scriptOutcomeOf` (exit 0 with one JSON line in the shape `produces` declares, 2 for a
@@ -115,7 +118,8 @@
   `warningsOf` (a gauge warns once at `warn_margin_pct` below the cap); `nextProbeOf`, when a sleeping gauge is
   probed next (just after a known reset, soon again when the account is late).
 - Reads the tribe contract (`src/tribe/`, implementation-plan §3.14, ADR 0021): `AdapterCapabilities` (the
-  yes-or-no `ADAPTER_CAPABILITIES`, and `auth`, the sign-ins an adapter runs with, P1-19), `tribeLimitsOf` (one
+  yes-or-no `ADAPTER_CAPABILITIES`, `auth`, the sign-ins an adapter runs with, P1-19, and the optional `shell` per
+  OS, read with `shellOf`, P1-40), `tribeLimitsOf` (one
   tribe narrowed by what its adapter lacks, `TRIBE_NARROWING`; `planTick` gives nothing to a tribe whose runner
   has no headless mode, no rank above its `max_rank`, and nothing on a guarded territory without a tool gate),
   `checkTribeAuth` and `defaultAuthOf` (the sign-in `tribes[].tool.auth` pins must be one the adapter declares;

@@ -67,4 +67,20 @@ describe('withVerdict', () => {
     expect(failStreakReached(twice, 3)).toBe(false);
     expect(failStreakReached(withVerdict(twice, fail('style')), 3)).toBe(true);
   });
+
+  it("leaves the windows and the streak as they were on the owner's return for a new judgement (P1-40)", () => {
+    const owners = (rejudge: boolean): Judgement => ({
+      ...pass(3),
+      by_human: true,
+      result: 'fail',
+      fail_kind: 'tests_fail',
+      rejudge,
+    });
+    const before = after([pass(1), fail('tests_fail', 2)]);
+    expect(withVerdict(before, owners(true))).toBe(before);
+    expect(withVerdict(before, owners(false)).consecutive_fail).toEqual({
+      fail_kind: 'tests_fail',
+      count: 2,
+    });
+  });
 });
