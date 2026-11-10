@@ -24,7 +24,7 @@ import { checkoutScratch, prepareScratch, removeScratch, scratchIdOf } from './s
 import type { PreparedScratch, ScratchTarget } from './scratch.ts';
 import { runSetup } from './setup.ts';
 import type { SetupRun } from './setup.ts';
-import { commitWorktree, releaseWorktree, touchedIn, worktreeStatus } from './worktree-ops.ts';
+import { commitWorktree, releaseWorktree, touchedIn, worktreeHead, worktreeStatus } from './worktree-ops.ts';
 import type { CommitOutcome, ForgetWorktree, PlotStatus, ReleasedPlot } from './worktree-ops.ts';
 import { prepareWorktree, worktreePathOf } from './worktree.ts';
 import type { PlotFailure } from './worktree.ts';
@@ -72,6 +72,8 @@ export interface PlotManager {
     options?: PrepareOptions,
   ): Promise<Result<PreparedPlot, PlotFailure>>;
   status(plot: Plot): Promise<PlotStatus>;
+  /** The commit at the plot's HEAD (P1-38: checks that ran on it serve a later judge); null for a plot without git. */
+  head(plot: Plot): Promise<string | null>;
   /** Paths the quest changed, relative to the plot with `/`: what `runChecks` selects checks by. */
   touched(plot: Plot): Promise<string[]>;
   commitAll(plot: Plot, message: string): Promise<CommitOutcome>;
@@ -225,6 +227,7 @@ export function createPlotManager(options: PlotManagerOptions): PlotManager {
     },
     status: async (plot) =>
       plot.type === 'worktree' ? worktreeStatus(await git(), worktreeOf(plot)) : NO_GIT_STATUS,
+    head: async (plot) => (plot.type === 'worktree' ? worktreeHead(await git(), worktreeOf(plot)) : null),
     touched: async (plot) => {
       if (plot.type === 'worktree') return touchedIn(await git(), worktreeOf(plot));
       if (plot.type === 'folder' && plot.path !== undefined)

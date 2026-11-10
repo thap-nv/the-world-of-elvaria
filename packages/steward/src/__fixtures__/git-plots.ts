@@ -67,6 +67,7 @@ export function gitPlots(kingdom: string): Plots {
     commit: (plot, message) => manager.commitAll(plot, message),
     applyPatch: (plot, patchPaths) => manager.applyPatch(plot, patchPaths),
     check: () => Promise.resolve([]),
+    head: (plot) => manager.head(plot),
     scriptChecks: () => Promise.resolve([]),
     diff: (plot, scope) => manager.diff(plot, scope),
     merge: (plot, branches) => manager.merge(plot, branches),

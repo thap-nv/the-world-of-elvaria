@@ -66,6 +66,7 @@ function stub(world: StubWorld = {}): Stub {
       plots: {
         check: () =>
           world.checks === true ? Promise.resolve([]) : Promise.reject(new Error('git is not found')),
+        head: () => Promise.resolve(null),
       },
       treasury: {
         names: () => Promise.resolve(['npm_token']),

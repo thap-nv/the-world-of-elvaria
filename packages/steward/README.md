@@ -137,8 +137,11 @@
   of P1-07 in `elvaria run`, outside the tick, its `signal` aborted when nobody waits for them any more), with the
   quest's secrets from the treasury (`PlotCheck.secrets`, `questSecretsOf`, P1-10b), resolved in the tick before
   they start; a quest whose secrets are gone by then goes to the infirmary (`breaker:secrets`) and runs none: their
-  results go into the judge's prompt, the verdict and `quest.checks_run`; each judge of a run gets its own run of
-  them. The prompt shows the end of each failing check's log (`src/review/log-tail.ts`: the last 40 lines, at most
+  results go into the judge's prompt, the verdict and `quest.checks_run`. The run's next judge (after a partial
+  verdict, a breaker or a session without a verdict) gets the same results while the plot's head is the commit they
+  ran on (`Plots.head`, P1-38); a moved head, a plot without git and a judge in a scratch plot get their own run. A
+  judge a breaker stopped is not chosen again in that run while another judge may take the review (domain
+  `cutVerifiersOf`). The prompt shows the end of each failing check's log (`src/review/log-tail.ts`: the last 40 lines, at most
   4 000 characters for all of them), masked with the session's secret values and the patterns, because the log lies
   in `.runs/`, outside the plot, where the judge's tools do not reach; so does the prompt of an assignee whose work
   came back, for the checks of the verdict that returned it (P1-10b). Under

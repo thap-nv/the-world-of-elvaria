@@ -8,6 +8,7 @@ import {
   Q3,
   character,
   inReview,
+  moved,
   quest,
   returnedTo,
   snapshot,
@@ -32,6 +33,23 @@ describe('planTick: judges and the fail streak', () => {
     const party = planTick(snapshot([contract, part], judges), NOW);
     expect(party.verifications).toEqual([
       { quest: Q2, verifier: 'sable', reason: 'same_family_other_model' },
+    ]);
+  });
+
+  it('gives a review whose judge a breaker stopped to another judge of the roster (P1-38)', () => {
+    const judges = [
+      character('thorn', { status: 'working' }),
+      character('sable', { cls: 'judge', model: 'claude-opus-5-5', since: 0 }),
+      character('orin', { cls: 'judge', tribe: 'gemini', since: 50 }),
+    ];
+    const cut = moved(
+      inReview(quest(Q1), 'thorn'),
+      20,
+      ['assign_verifier', 'steward', { verifier: 'orin' }],
+      ['breaker', 'steward', { trip: 'tokens' }],
+    );
+    expect(planTick(snapshot([cut], judges), NOW).verifications).toEqual([
+      { quest: Q1, verifier: 'sable', reason: 'same_family_other_model' },
     ]);
   });
 

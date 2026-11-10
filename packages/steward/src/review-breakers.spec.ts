@@ -79,6 +79,8 @@ describe('a review the breakers keep stopping', () => {
     const quest = await kingdom.quest('Judged at length');
     const judges = quest.attempt_log.filter(({ role }) => role === 'verifier');
     expect(judges.map(({ outcome }) => outcome)).toEqual(['breaker', 'breaker']);
+    // The judge a breaker stopped is not chosen again in the run while another may judge (P1-38, P1-35 (d)).
+    expect(judges.map(({ character }) => character)).toEqual(['orin', 'sable']);
     expect(quest).toMatchObject({ status: 'infirmary', verifier: null, attempts: 1 });
     expect(kingdom.notices).toEqual([
       {

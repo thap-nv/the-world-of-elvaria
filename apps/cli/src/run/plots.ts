@@ -107,6 +107,8 @@ export function plotsOver(kingdom: string, manager: PlotManager, host: ProcessHo
       };
       return runChecks({ kingdom, territory, touched, cwd: cwdOf(kingdom, plot), run_dir, ...given }, host);
     },
+    // What the checks ran on: the run's next judge reuses them while the branch stays there (P1-38).
+    head: (plot) => manager.head(plot),
     ...scratchPlots(kingdom, manager, host),
     diff: (plot, scope) => manager.diff(plot, scope),
     // A party's merge quest: its parts merged before its knight's sessions, and checked before its judge (P1-18).

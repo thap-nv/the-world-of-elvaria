@@ -84,6 +84,7 @@ describe('plots over PlotManager', () => {
   const manager = (result: Awaited<ReturnType<PlotManager['prepare']>>): PlotManager => ({
     prepare: () => Promise.resolve(result),
     status: () => Promise.reject(new Error('unused')),
+    head: () => Promise.reject(new Error('unused')),
     touched: () => Promise.reject(new Error('unused')),
     commitAll: () => Promise.reject(new Error('unused')),
     applyPatch: () => Promise.reject(new Error('unused')),
@@ -155,6 +156,7 @@ describe('plots over PlotManager', () => {
           return Promise.resolve({ status: 'none' });
         },
         diff: () => Promise.resolve(' notes/today.md | 1 +'),
+        head: () => Promise.resolve('f00d'),
         release: () => Promise.resolve({ ok: true, value: { removed: false, forget_failures: [] } }),
       };
       const lint = {
@@ -178,6 +180,7 @@ describe('plots over PlotManager', () => {
         { id: 'lint', pass: true, log_path: `.runs/${quest.id}-1/checks/lint.log` },
       ]);
       expect(await plots.diff(folder)).toBe(' notes/today.md | 1 +');
+      expect(await plots.head(folder)).toBe('f00d');
       expect(await plots.release(folder)).toEqual({
         ok: true,
         value: { removed: false, forget_failures: [] },
