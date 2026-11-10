@@ -128,7 +128,7 @@ describe('elvaria quest show of a quest that has been judged', () => {
       '  Verdict of mira: fail (tests_fail)',
       '    Checks that failed: unit',
       '    Notes: unit is red: scoring/effective-level.spec.ts fails twice.',
-      '  After a judge, the Steward put the plot back to its commit, dropping 12 path(s) its commands left:',
+      "  The Steward put the plot back to its commit, dropping 12 path(s) that commands (a judge's or the checks') left there:",
       ...paths.slice(0, 10).map((path) => `    ${path}`),
       "    …and 2 more (the quest's journal has them all)",
       '',

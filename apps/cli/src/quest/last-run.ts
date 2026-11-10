@@ -1,7 +1,8 @@
 // What the last run of a quest came to (P1-46: (c) of P1-44, (b) of P1-42), so the owner need not open
 // verdicts/*.json or the journal: its verdicts in the order they were written (the partial ones each judge stopped
-// at, then the judge's or the machine's, then the owner's), each with its notes, and the `plot.restored` lines the
-// Steward wrote after its judges (P1-44). A verdict file that cannot be read is left out, like a journal that cannot.
+// at, then the judge's or the machine's, then the owner's), each with its notes, and the `plot.restored` lines of the
+// run (P1-44). Such a line does not tell whose commands left the paths, a judge's or the checks run in the plot before
+// the judge (P1-47), so the text names both. A verdict file that cannot be read is left out, like a journal.
 import {
   MACHINE_VERIFIER,
   USER_VERIFIER,

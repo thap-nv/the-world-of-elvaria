@@ -33,7 +33,7 @@
   `partyStatusOf`; P1-21 (c)): the merge quest and the acceptance part share the contract's title. `quest show` also
   says what the last run came to (`src/quest/last-run.ts`, P1-46): its verdicts in the order they were written (each
   judge's partial verdict with where it stopped, the judge's or the machine's, the owner's), each with its failed
-  checks and its notes, and the `plot.restored` lines of that run (the paths the Steward dropped after a judge), so
+  checks and its notes, and the `plot.restored` lines of that run (the paths the Steward dropped from the plot after a judge, or after the checks once P1-47 does), so
   the owner need not open `verdicts/` or the journal. `character suspend <id> [--reason]` and `character release <id>` send `suspend` and `release` (a
   character the Steward would refuse, unknown, suspended already or not suspended, is refused here), and `suspend`
   says what becomes of the quest the character holds (the owner's decision after P1-26). `character level <id>

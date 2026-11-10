@@ -320,7 +320,7 @@
     "cli.quest.run.head": "Lần thử {run}:",
     "cli.quest.run.notes": "Ghi chú: {notes}",
     "cli.quest.run.partial": "Phán quyết dở của {who}, đã đọc tới: {until}",
-    "cli.quest.run.restored": "Sau một người chấm, Quản sự đưa đất về commit của nó, bỏ {count} đường dẫn mà lệnh của người chấm để lại:",
+    "cli.quest.run.restored": "Quản sự đưa đất về commit của nó, bỏ {count} đường dẫn mà lệnh (của người chấm hay của check) để lại:",
     "cli.quest.run.restored_more": "…và {count} đường dẫn nữa (journal của nhiệm vụ có đủ)",
     "cli.quest.run.result.fail": "trả bài",
     "cli.quest.run.result.pass": "đạt",

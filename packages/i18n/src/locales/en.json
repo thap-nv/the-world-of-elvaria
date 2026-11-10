@@ -320,7 +320,7 @@
     "cli.quest.run.head": "Attempt {run}:",
     "cli.quest.run.notes": "Notes: {notes}",
     "cli.quest.run.partial": "Partial verdict of {who}, read up to: {until}",
-    "cli.quest.run.restored": "After a judge, the Steward put the plot back to its commit, dropping {count} path(s) its commands left:",
+    "cli.quest.run.restored": "The Steward put the plot back to its commit, dropping {count} path(s) that commands (a judge's or the checks') left there:",
     "cli.quest.run.restored_more": "…and {count} more (the quest's journal has them all)",
     "cli.quest.run.result.fail": "fail",
     "cli.quest.run.result.pass": "pass",
