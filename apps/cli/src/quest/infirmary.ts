@@ -18,6 +18,7 @@ const TRIP_LABEL: Readonly<Record<InfirmaryTrip, MessageKey>> = {
   commit: 'cli.quest.infirmary.trip.commit',
   secrets: 'cli.quest.infirmary.trip.secrets',
   no_verdict: 'cli.quest.infirmary.trip.no_verdict',
+  partial_verdicts: 'cli.quest.infirmary.trip.partial_verdicts',
   max_attempts: 'cli.quest.infirmary.trip.max_attempts',
   script_broken: 'cli.quest.infirmary.trip.script_broken',
   script_usage: 'cli.quest.infirmary.trip.script_usage',
@@ -40,12 +41,16 @@ export const tripLabel = (t: Translate, trip: InfirmaryTrip): string => t(TRIP_L
 /** One line per part of the detail, in the order the Steward's reason says them; the bell says them too. */
 export function detailLines(t: Translate, detail: InfirmaryDetail): string[] {
   const { message, patch, wip, script, follow_up: followUp, verifiers_stopped: stopped } = detail;
+  const partials = detail.partial_verdicts;
   return [
     ...(message === undefined ? [] : [t('cli.quest.infirmary.detail.message', { message })]),
     ...(patch === undefined ? [] : [t('cli.quest.infirmary.detail.patch', { file: PATCH_FILE, why: patch })]),
     ...(wip === undefined ? [] : [t('cli.quest.infirmary.detail.wip', { why: wip })]),
     ...(detail.apprentice_left === true ? [t('cli.quest.infirmary.detail.apprentice_left')] : []),
     ...(stopped === undefined ? [] : [t('cli.quest.infirmary.detail.verifiers_stopped', { count: stopped })]),
+    ...(partials === undefined
+      ? []
+      : [t('cli.quest.infirmary.detail.partial_verdicts', { count: partials })]),
     ...(script === undefined ? [] : [t('cli.quest.infirmary.detail.script', { script })]),
     ...(followUp === undefined ? [] : [t('cli.quest.infirmary.detail.follow_up', { quest: followUp })]),
   ];

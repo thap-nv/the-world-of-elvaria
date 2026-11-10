@@ -1,14 +1,18 @@
-// A review that keeps ending without a verdict (implementation-plan §3.4, P1-23, P1-33). A verifier past a breaker
-// leaves the review to a fresh session (§2.5 `review.breaker.has_verifier`); a review too big for the quest's budget
-// would stop every one of them, a loop that cost a session each time in phase 1 (report §5.2). A verifier whose
-// session ends with no verdict at all (its CLI failed, its output was none, §2.5 `review.crash.has_verifier`) loops
-// the same way: a tribe whose judges cannot hand in a verdict would open one session per tick for ever (P1-33).
-// After REVIEW_BREAKS_MAX such verifiers in one run, the Steward sends the quest to the infirmary instead, where the
-// owner decides. The owner's retry sends such a quest back to review, same run, for a new judge, and the count
-// starts over (P1-26). A judge that hands in a partial verdict made progress and does not count.
-// The judges a breaker stopped in the open group are not chosen again while another judge may take the review
-// (cutVerifiersOf, selectVerifier; P1-38, P1-35 (d)).
-import { REVIEW_BREAKS_MAX } from '../constants.ts';
+// A review that keeps ending without a verdict, or with a partial one only (implementation-plan §3.4; P1-23, P1-33,
+// P1-42). A verifier past a breaker leaves the review to a fresh session (§2.5 `review.breaker.has_verifier`); a
+// review too big for the quest's budget would stop every one of them, a loop that cost a session each time in
+// phase 1 (report §5.2). A verifier whose session ends with no verdict at all (its CLI failed, its output was none,
+// §2.5 `review.crash.has_verifier`) loops the same way: a tribe whose judges cannot hand in a verdict would open one
+// session per tick for ever (P1-33). After REVIEW_BREAKS_MAX such verifiers, the Steward sends the quest to the
+// infirmary instead, where the owner decides.
+// A judge that hands in a partial verdict made progress, and the next judge reads on: such judges count apart, up to
+// REVIEW_PARTIALS_MAX (P1-42). In a scratch plot a pass without its breaks is taken as partial (P1-40), and a judge
+// whose shell cannot run the checks' commands hands in partial too, so the Steward could open judge after judge, each
+// after a trial of half an hour (P1-35), until the mana breaker stopped it.
+// The owner's retry sends a stalled review back to review, same run, for a new judge, and both counts start over
+// (P1-26). The judges a breaker stopped in the open group are not chosen again while another judge may take the
+// review (cutVerifiersOf, selectVerifier; P1-38, P1-35 (d)).
+import { REVIEW_BREAKS_MAX, REVIEW_PARTIALS_MAX } from '../constants.ts';
 import { currentRun } from '../quest/attempt-log.ts';
 import type { CharacterId } from '../core/ids.ts';
 import type { Attempt } from '../schema/quest/quest-parts.ts';
@@ -16,43 +20,66 @@ import type { Quest } from '../schema/quest/quest.ts';
 
 /**
  * How a session that left no verdict ends its entry: `timeout` for time, `breaker` for tokens and turns
- * (effects.ts), `crash` for an end with no verdict. A partial verdict ends `submitted` (`verdict_partial`).
+ * (effects.ts), `crash` for an end with no verdict. A partial verdict ends `partial` (`verdict_partial`).
  */
 const NO_VERDICT: ReadonlySet<Attempt['outcome']> = new Set(['timeout', 'breaker', 'crash']);
 
 /** The ends a breaker gave: time (`timeout`), tokens or turns (`breaker`), the CLI's own limits included. */
 const CUT: ReadonlySet<Attempt['outcome']> = new Set(['timeout', 'breaker']);
 
-/** The verifier entries of the current run that ended without a verdict, oldest first. */
-const leftWithoutVerdict = (quest: Quest): Attempt[] => {
-  const n = currentRun(quest);
-  return quest.attempt_log.filter(
-    (entry) => entry.role === 'verifier' && entry.n === n && NO_VERDICT.has(entry.outcome),
-  );
-};
+/** The verifier sessions of a group that count toward a stalled review. */
+interface ReviewGroup {
+  /** Those that left without a verdict, oldest first. */
+  readonly left: readonly Attempt[];
+  /** How many handed in a partial verdict. */
+  readonly partials: number;
+}
 
-/** How many of `stopped` sessions fall in the last group of REVIEW_BREAKS_MAX. */
-const lastGroupOf = (stopped: number): number =>
-  stopped === 0 ? 0 : ((stopped - 1) % REVIEW_BREAKS_MAX) + 1;
+const EMPTY: ReviewGroup = { left: [], partials: 0 };
+
+/** The group that sends the review to the infirmary: either count at its ceiling. */
+const full = (group: ReviewGroup): boolean =>
+  group.left.length >= REVIEW_BREAKS_MAX || group.partials >= REVIEW_PARTIALS_MAX;
+
+function grown(group: ReviewGroup, entry: Attempt): ReviewGroup {
+  if (entry.outcome === 'partial') return { ...group, partials: group.partials + 1 };
+  return NO_VERDICT.has(entry.outcome) ? { ...group, left: [...group.left, entry] } : group;
+}
 
 /**
- * The verifier sessions of the quest's current run that ended without a verdict, since the owner last retried the
- * review. The REVIEW_BREAKS_MAX-th one sends the quest to the infirmary at once, so a run's such sessions come in
- * groups of REVIEW_BREAKS_MAX, each closed by a stall and a retry: only the last group counts, whole while the
- * quest waits in the infirmary. Derived from attempt_log, not stored (ADR 0002).
+ * The open group of the current run's review, since the owner last retried it. A full group sends the quest to the
+ * infirmary at once, so a verifier session after it was opened by the owner's retry and starts a new group; a full
+ * group with none after it stays whole while the quest waits in the infirmary. Derived from attempt_log, not stored
+ * (ADR 0002).
  */
-export const reviewBreaksOf = (quest: Quest): number => lastGroupOf(leftWithoutVerdict(quest).length);
+function openGroupOf(quest: Quest): ReviewGroup {
+  const n = currentRun(quest);
+  return quest.attempt_log
+    .filter((entry) => entry.role === 'verifier' && entry.n === n)
+    .reduce((group, entry) => grown(full(group) ? EMPTY : group, entry), EMPTY);
+}
+
+/** The verifier sessions of the review's open group that ended without a verdict, a breaker's or a crash. */
+export const reviewBreaksOf = (quest: Quest): number => openGroupOf(quest).left.length;
+
+/** The verifier sessions of the review's open group that handed in a partial verdict (P1-42). */
+export const reviewPartialsOf = (quest: Quest): number => openGroupOf(quest).partials;
 
 /**
- * The judges a breaker stopped in the review's open group (P1-38, P1-35 (d)): the last group while it is not full.
- * A full group sent the quest to the infirmary, so in review again it was closed by the owner's retry, which gives
- * every judge its chance again: the owner raised the budget for them. A judge that crashed is not among them.
+ * The REVIEW_PARTIALS_MAX-th partial verdict of the open group: the Steward sends the review to the infirmary
+ * instead of opening the next judge (§2.5 `review.verdict_partial.needs_verifier`, P1-42).
+ */
+export const partialsStalled = (quest: Quest): boolean => reviewPartialsOf(quest) >= REVIEW_PARTIALS_MAX;
+
+/**
+ * The judges a breaker stopped in the review's open group (P1-38, P1-35 (d)). A full group sent the quest to the
+ * infirmary, so in review again it was closed by the owner's retry, which gives every judge its chance again: the
+ * owner raised the budget for them. A judge that crashed is not among them.
  */
 export const cutVerifiersOf = (quest: Quest): ReadonlySet<CharacterId> => {
-  const stopped = leftWithoutVerdict(quest);
-  const open = lastGroupOf(stopped.length);
-  if (open === REVIEW_BREAKS_MAX) return new Set();
-  const cut = stopped.slice(stopped.length - open).filter(({ outcome }) => CUT.has(outcome));
+  const group = openGroupOf(quest);
+  if (full(group)) return new Set();
+  const cut = group.left.filter(({ outcome }) => CUT.has(outcome));
   // A verifier entry always names its judge; only a script-tier run has none.
   return new Set(cut.map(({ character }) => character).filter((id): id is CharacterId => id !== null));
 };
@@ -61,4 +88,4 @@ export const cutVerifiersOf = (quest: Quest): ReadonlySet<CharacterId> => {
  * No further verifier session opens for this run: the review goes to the infirmary, and the owner's retry brings it
  * back to review (§2.5 `infirmary.retry.stalled_review`) instead of opening the quest again.
  */
-export const reviewStalled = (quest: Quest): boolean => reviewBreaksOf(quest) >= REVIEW_BREAKS_MAX;
+export const reviewStalled = (quest: Quest): boolean => full(openGroupOf(quest));

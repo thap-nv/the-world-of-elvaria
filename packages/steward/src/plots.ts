@@ -24,6 +24,7 @@ export function folderPlots(root: string): Plots {
     head: () => Promise.resolve(null),
     // A folder has no branch to make a scratch plot from (ADR 0022): its judge works as any other.
     trial: () => Promise.resolve([]),
+    prepareScratch: (quest) => Promise.reject(new Error(`${quest.id} has no scratch plot on a folder`)),
     scratch: (quest) => Promise.reject(new Error(`${quest.id} has no scratch plot on a folder`)),
     releaseScratch: () => Promise.resolve(undefined),
     scriptChecks: () => Promise.resolve([]),

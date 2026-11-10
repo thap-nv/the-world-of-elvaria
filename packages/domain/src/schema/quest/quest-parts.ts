@@ -35,8 +35,11 @@ export const BudgetSchema = z
   })
   .meta(describe('Derived from kingdom.breakers and rank; the owner may edit it.'));
 
+// `partial` came after v1 (P1-42): a judge's session that handed in a partial verdict, told apart from one that
+// judged, so the run's partials can be counted. An entry written before ended `submitted`; version stays 1.
 export const ATTEMPT_OUTCOMES = [
   'submitted',
+  'partial',
   'returned',
   'timeout',
   'breaker',
@@ -57,7 +60,11 @@ export const AttemptSchema = z.strictObject({
   outcome: z
     .enum(ATTEMPT_OUTCOMES)
     .optional()
-    .meta(describe('timeout = the time breaker tripped; breaker = the token or turn breaker tripped.')),
+    .meta(
+      describe(
+        'timeout = the time breaker tripped; breaker = the token or turn breaker tripped; partial = a judge handed in a partial verdict (since P1-42, submitted before).',
+      ),
+    ),
   session_id: NonEmptyStringSchema.optional(),
   tokens: z.int().min(0).optional(),
   run_dir: z

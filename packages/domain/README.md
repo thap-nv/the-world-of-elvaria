@@ -83,7 +83,9 @@
   such a quest goes back to review, same run, for a new judge (`infirmary.retry.stalled_review`); `reviewBreaksOf`
   counts only the cuts since that retry, derived from `attempt_log` (a stall closes each group of
   `REVIEW_BREAKS_MAX`). (P1-38) `cutVerifiersOf` names the judges a breaker stopped in the open group, whom
-  `selectVerifier` passes over while another judge may take the review. A quest without an estimate gets
+  `selectVerifier` passes over while another judge may take the review. (P1-42) Judges that hand in a partial
+  verdict count apart (`reviewPartialsOf`, outcome `partial`): the `REVIEW_PARTIALS_MAX`-th (3) of the open group
+  stalls the review too (`partialsStalled`, `review.verdict_partial.needs_verifier`). A quest without an estimate gets
   `context_budget_tokens` × `CONTEXT_BUDGETS_BY_RANK` of its rank as the stand-in (`questFromCommand`: F–D 1, C 1.5,
   B 2, A 2.5, S 3), so its token ceiling grows with the rank.
 - Keeps the separation of duties (`src/verify/`, ADR 0008, 0020): `selectVerifier` (never an assignee of the quest

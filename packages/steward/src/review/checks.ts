@@ -5,8 +5,9 @@
 // They run outside the tick (P1-25, background.ts): a tick starts them and goes on; a later tick, once they ended,
 // hands them to the judge or the machine. The run's next judge (one a breaker stopped, one that read in part, one
 // that left without a verdict) gets the same results while the quest's branch head is the commit they ran on (P1-38,
-// P1-35 (c): a second judge cost ten more minutes of e2e on a commit that had not moved); otherwise, and always for a
-// judge in a scratch plot, whose plot leaves with it (ADR 0022), the next judge gets its own run of them (P1-04).
+// P1-35 (c): a second judge cost ten more minutes of e2e on a commit that had not moved); otherwise the next judge
+// gets its own run of them (P1-04). A judge in a scratch plot leaves with its plot (ADR 0022): the next one gets a
+// fresh scratch plot and the same trial while the head stays, the trial run again once it moved (P1-42).
 // They get the quest's secrets as its sessions do (P1-10b), resolved in the tick before they start, and they tell
 // the owner and the world when they start and end (`check.start`, `check.end`): the quest waits in review meanwhile.
 import { MS_PER_MINUTE, currentRun, err, exclusiveWaitMinutes, ok, runDirOf } from '@elvaria/domain';
@@ -19,6 +20,7 @@ import { secretsBreaker } from '../sessions/breaker.ts';
 import { questSecretsOf, secretsLacking } from '../sessions/secrets.ts';
 import { deliverableChecks } from './deliverable-checks.ts';
 import { inScratch, trialFor } from './scratch.ts';
+import type { CheckedRun } from '../background.ts';
 import type { Context } from '../context.ts';
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
@@ -117,7 +119,11 @@ export async function startChecks(ctx: Context, questId: QuestId): Promise<Resul
     return err('secrets_unread');
   }
   const n = currentRun(quest);
+  // A trial its last judge spent in a scratch plot: the next judge may reuse it (P1-42).
+  const kept = ctx.background.spent(questId, n);
   ctx.background.checks(questId, n, async (signal) => {
+    const reused = kept === undefined ? undefined : await keptTrial(ctx, quest, territory, kept, secrets);
+    if (reused !== undefined) return reused;
     // The checks start within the tick, the line beside them; the end's line always follows the start's.
     const started = noteChecks(ctx, quest, 'check.start', {});
     // Read before they run: a commit made while they run makes them stale.
@@ -143,13 +149,14 @@ async function headOf(ctx: Context, quest: Quest): Promise<string | null> {
 /**
  * The ended checks of the quest's current run, for its judge or the machine; planTick names a quest for a judge only
  * once they ended. They stay for the run's next judge when they ran on a commit that is still the branch head
- * (P1-38); a judge in a scratch plot, or a plot without git, uses them up. Checks whose commit is no longer the head
- * are dropped (`checks_stale`), and the next tick runs them again.
+ * (P1-38); a plot without git uses them up, and a judge in a scratch plot spends them, for the next one to reuse in
+ * a fresh scratch plot (P1-42). Checks whose commit is no longer the head are dropped (`checks_stale`), and the next
+ * tick runs them again.
  */
 export async function takeChecks(ctx: Context, quest: Quest): Promise<Result<VerdictCheck[], string>> {
   const checked = ctx.background.ended(quest.id, currentRun(quest));
   if (checked === undefined) return err('checks_not_ready');
-  if (checked.head === null || inScratch(ctx, quest)) {
+  if (checked.head === null) {
     ctx.background.drop(quest.id);
     return ok([...checked.checks]);
   }
@@ -157,7 +164,35 @@ export async function takeChecks(ctx: Context, quest: Quest): Promise<Result<Ver
     ctx.background.drop(quest.id);
     return err('checks_stale');
   }
+  // A judge in a scratch plot leaves with its plot: the trial waits for a fresh one (keptTrial, P1-42).
+  if (inScratch(ctx, quest)) ctx.background.spend(quest.id);
   return ok([...checked.checks]);
+}
+
+/**
+ * The run's next judge in a scratch plot (P1-42, P1-38 (a)): while the quest's branch head is the commit the last
+ * judge's trial ran on, a fresh scratch plot after commands.setup serves it with that trial, instead of half an hour
+ * of e2e run again (P1-35). Undefined, so the trial runs again, when the head moved or the plot could not be made.
+ */
+async function keptTrial(
+  ctx: Context,
+  quest: Quest,
+  territory: Territory,
+  kept: CheckedRun,
+  secrets: Readonly<Record<string, string>>,
+): Promise<CheckedRun | undefined> {
+  const head = await headOf(ctx, quest);
+  if (head === null || head !== kept.head) {
+    ctx.deps.log.warn(`steward: ${quest.id}: its branch moved since the last trial, which runs again`);
+    return undefined;
+  }
+  try {
+    await ctx.deps.plots.prepareScratch(quest, territory, secrets);
+    return kept;
+  } catch (error) {
+    ctx.deps.log.warn(`steward: ${quest.id}: no scratch plot without the trial: ${messageOf(error)}`);
+    return undefined;
+  }
 }
 
 /** quest.checks_run: the ids of the checks that ran, computed after the work from the paths it touched (§2.3). */

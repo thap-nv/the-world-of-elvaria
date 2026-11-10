@@ -292,7 +292,7 @@ Mọi giá trị enum xuất hiện trong [schemas/](schemas/) có ở bảng n�
 | `deliverable.type` (cũng `kind.deliverable_type`) | `branch`, `file`, `report`, `draft`, `subquests`, `none` | dạng giao hàng |
 | `created_by` | `chancellor`, `user`, `council`, `patrol`, `battle`, `campaign` | ai tạo quest (`council` = hội đồng Nghị hội, `battle` = Trận đánh) |
 | `role` (`attempt_log`, `character.current`) | `assignee`, `verifier` | người làm / người nghiệm thu |
-| `attempt_log.outcome` | `submitted`, `returned`, `timeout`, `breaker`, `crash`, `paused`, `blocked`, `cancelled` | kết thúc một lần thử; `timeout` = cầu dao thời gian, `breaker` = cầu dao token/lượt |
+| `attempt_log.outcome` | `submitted`, `partial`, `returned`, `timeout`, `breaker`, `crash`, `paused`, `blocked`, `cancelled` | kết thúc một lần thử; `timeout` = cầu dao thời gian, `breaker` = cầu dao token/lượt; `partial` = người chấm nộp phán quyết dở (P1-42; mục cũ ghi `submitted`) |
 | `units[].outcome` | `pending`, `done`, `not_done`, `needs_user`, `debt` | chưa xử lý / xác quái / bia mộ / thương binh / đổ nát |
 | `verdict.result` | `pass`, `fail`, `partial` | đạt / không đạt / dở dang (người kế đọc tiếp) |
 | `verdict.fail_kind` (cũng `consecutive_fail.fail_kind`) | `tests_fail`, `scope_creep`, `missing_i18n`, `wrong_facts`, `incomplete`, `style`, `unsafe`, `other`, `flaky` | loại lỗi, để đếm "cùng loại"; `flaky` (từ P1-20, ADR 0022): một check vừa qua vừa trượt trên cùng commit, Quản sự mở quest Trừ tà |
@@ -321,7 +321,7 @@ Mọi giá trị enum xuất hiện trong [schemas/](schemas/) có ở bảng n�
 | `script.produces` | `report`, `units`, `check` | |
 | event `agent.tool` → `data.tool` | `read`, `write`, `bash`, `web`, `search`, `other` | |
 | event `agent.session.end` → `data.outcome` | `completed`, `max_turns`, `budget`, `killed`, `error` | kết thúc phiên CLI (`RunResult.outcome`); `budget` = chạm `--max-budget-usd` |
-| event `quest.infirmary` → `data.trip` | `time`, `tokens`, `turns`, `commit`, `secrets`, `no_verdict`, `max_attempts`, `script_broken`, `script_usage`, `script_fail` | vì sao vào trạm quân y (P1-32): năm loại cầu dao, việc nghiệm thu kẹt vì người chấm cứ rời đi không ra phán quyết (`no_verdict`, P1-33), hết số lần thử, hay lượt bậc script mà script hỏng, không dùng được tham số, không đạt; dòng cũ không có trường này |
+| event `quest.infirmary` → `data.trip` | `time`, `tokens`, `turns`, `commit`, `secrets`, `no_verdict`, `partial_verdicts`, `max_attempts`, `script_broken`, `script_usage`, `script_fail` | vì sao vào trạm quân y (P1-32): năm loại cầu dao, việc nghiệm thu kẹt vì người chấm cứ rời đi không ra phán quyết (`no_verdict`, P1-33) hay cứ nộp phán quyết dở (`partial_verdicts`, P1-42), hết số lần thử, hay lượt bậc script mà script hỏng, không dùng được tham số, không đạt; dòng cũ không có trường này |
 | event `mana.level` → `data.pool` | id tộc (ví dụ `claude`), `gemini_models`, `claude_gpt_models` | tài khoản một pool dùng id tộc làm pool; Antigravity có hai pool |
 | event `mana.level` → `data.window` | `five_hour`, `weekly` | cửa sổ hạn mức |
 | event `mana.level` → `data.source` | `rate_limits`, `estimate`, `signal` | ba nguồn gauge (ADR 0009) |

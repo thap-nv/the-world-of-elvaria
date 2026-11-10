@@ -42,7 +42,7 @@ function scratchPlots(
   kingdom: string,
   manager: PlotManager,
   host: ProcessHost,
-): Pick<Plots, 'trial' | 'scratch' | 'releaseScratch'> {
+): Pick<Plots, 'trial' | 'prepareScratch' | 'scratch' | 'releaseScratch'> {
   return {
     trial: (request) => {
       const {
@@ -66,6 +66,17 @@ function scratchPlots(
         { kingdom, quest, territory, run_dir: runDir, runs, coverage, ...given },
         host,
       );
+    },
+    // The run's next judge reuses the last one's trial on the same commit, in a scratch plot of its own (P1-42).
+    prepareScratch: async (quest, territory, secrets) => {
+      const prepared = await manager.prepareScratch(
+        quest,
+        territory,
+        secrets === undefined ? {} : { secrets },
+      );
+      if (prepared.ok) return;
+      const { reason, detail } = prepared.error;
+      throw new Error(`the scratch plot of ${quest.id} is not ready (${reason}): ${detail}`);
     },
     scratch: async (quest, territory) => {
       const cwd = await manager.scratchOf(quest, territory);

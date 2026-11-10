@@ -42,7 +42,7 @@ const BY_EVENT: Readonly<Record<QuestEventType, QuestLogType>> = {
   suspend: 'quest.returned',
   verdict_pass: 'quest.done',
   verdict_fail: 'quest.returned',
-  // Only ever from review to review, which questLogTypeOf names a verdict before it reads this.
+  // From review to review, which questLogTypeOf names a verdict before it reads this, or to the infirmary (P1-42).
   verdict_partial: 'quest.verdict',
   return: 'quest.returned',
   seal: 'quest.sealed',
