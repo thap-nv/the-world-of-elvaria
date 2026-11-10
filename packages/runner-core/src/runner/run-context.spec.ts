@@ -4,6 +4,7 @@ import path from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { QUEST, REGISTRY, TERRITORY, THORN } from '../__fixtures__/world.ts';
 import { toolPolicyOf } from '../policy/tool-policy.ts';
 import { POLICY_FILE, policyFileOf, writePolicyFile } from './policy-file.ts';
@@ -79,7 +80,7 @@ describe('policy.json', () => {
   beforeAll(async () => {
     dir = await mkdtemp(path.join(tmpdir(), 'elvaria policy '));
   });
-  afterAll(() => rm(dir, { recursive: true, force: true }));
+  afterAll(() => rm(dir, RM_TEMP));
 
   it('is the v1 contract the hook reads: version, context, secret names, tools, laws', () => {
     const withSecrets = { ...request(STEWARD_ENV), quest: { ...QUEST, secrets_required: ['npm_token'] } };

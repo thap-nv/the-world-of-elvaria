@@ -6,6 +6,7 @@ import path from 'node:path';
 import { fromPortable, pathExists } from '@elvaria/store';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST, commitFile, git, gitRepo, questId, territoryAt } from '../__fixtures__/git-repo.ts';
 import { PATCH_FILE } from './patch.ts';
 import { createPlotManager } from './plot-manager.ts';
@@ -14,7 +15,7 @@ let root = '';
 beforeAll(async () => {
   root = await mkdtemp(path.join(tmpdir(), 'elvaria plot patch '));
 });
-afterAll(() => rm(root, { recursive: true, force: true }));
+afterAll(() => rm(root, RM_TEMP));
 
 const plots = () => createPlotManager({ kingdom: path.join(root, 'kingdom'), host: TEST_HOST });
 const HUSKY = ['.husky/**'];

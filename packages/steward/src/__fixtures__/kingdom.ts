@@ -39,9 +39,21 @@ import type { KingdomStore } from '@elvaria/store';
 
 import { folderPlots } from '../plots.ts';
 import { createSteward } from '../steward.ts';
+import { rememberingHangs, settling } from './settle.ts';
+import type { Settling } from './settle.ts';
 import type { Notice, Steward, StewardDeps } from '../types.ts';
 
 const REGISTRY_DIR = path.join(import.meta.dirname, '..', '..', '..', 'registry-default');
+
+/**
+ * How a spec removes a temp folder: on Windows a child that just ended (git, a check, a killed tree) or the indexer
+ * may hold it a moment longer (EBUSY, EPERM), so rm retries, back-off up to 5.5 s, as the conformance workspace of
+ * runner-core does (PR #32). Seen under the load of the pre-push hook (P1-39).
+ */
+export const RM_TEMP = { recursive: true, force: true, maxRetries: 10, retryDelay: 100 } as const;
+
+/** The settling of each Steward a bench made: what tickUntil waits on between two ticks (settle.ts). */
+const settlers = new WeakMap<Steward, Settling>();
 
 /** A clock the spec moves: one minute per tick by default. */
 export interface StepClock extends Clock {
@@ -249,6 +261,8 @@ export interface Bench {
   /** The morning: the world the files described before the first tick. */
   readonly morning: () => Promise<WorldState>;
   steward(overrides?: Partial<StewardDeps>): Steward;
+  /** A FakeRunner of a spec's own, whose `hang` sessions tickUntil knows never to wait for (settle.ts). */
+  fake(options: FakeRunnerOptions & { readonly scenarioOf: (req: SpawnRequest) => FakeScenario }): FakeRunner;
   /** Drops a command into the inbox; `id` sends one again under the id it had. */
   command(kind: InboxCommandInput['kind'], payload: Record<string, unknown>, id?: string): Promise<string>;
   quests(): Promise<Quest[]>;
@@ -307,11 +321,12 @@ export async function bench(options: BenchOptions = {}): Promise<Bench> {
   const morning = worldStateOf(await sourceOf(store));
   const clock = stepClock();
   const ids = seededIds(clock);
+  const hangs = new WeakSet<SpawnRequest>();
   const plays = scripted(options.plays ?? {});
   const fakeOf = (tribe: 'claude' | 'gemini') =>
     createFakeRunner({
       tribe: tribe as never,
-      scenarioOf: plays.scenario,
+      scenarioOf: rememberingHangs(hangs, plays.scenario),
       ...(options.probes?.[tribe] === undefined ? {} : { probe: options.probes[tribe] }),
     });
   const fakes = { claude: fakeOf('claude'), gemini: fakeOf('gemini') };
@@ -334,8 +349,9 @@ export async function bench(options: BenchOptions = {}): Promise<Bench> {
     warnings,
     requests,
     morning: () => Promise.resolve(morning),
-    steward: (overrides = {}) =>
-      createSteward({
+    steward: (overrides = {}) => {
+      const settler = settling(hangs);
+      const deps: StewardDeps = {
         store,
         events: openEventLog(root),
         runners,
@@ -347,7 +363,12 @@ export async function bench(options: BenchOptions = {}): Promise<Bench> {
         bell: { ring: (notice) => Promise.resolve(void notices.push(notice)) },
         log: { warn: (message) => void warnings.push(message) },
         ...overrides,
-      }),
+      };
+      const made = createSteward({ ...deps, runners: settler.watch(deps.runners) });
+      settlers.set(made, settler);
+      return made;
+    },
+    fake: (given) => createFakeRunner({ ...given, scenarioOf: rememberingHangs(hangs, given.scenarioOf) }),
     command: async (kind, payload, given) => {
       const id = given ?? ids.ulid();
       const written = await store.inbox.write({
@@ -372,7 +393,7 @@ export async function bench(options: BenchOptions = {}): Promise<Bench> {
       if (!read.ok) throw new Error(`fixture: no character ${id}`);
       return read.value;
     },
-    remove: () => rm(root, { recursive: true, force: true }),
+    remove: () => rm(root, RM_TEMP),
   };
 }
 
@@ -391,9 +412,17 @@ export const questPayload = (title: string, fields: Record<string, unknown> = {}
   ...fields,
 });
 
-const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+/**
+ * Waits, in real time, until the sessions of a bench's Steward and its work outside the tick have ended (or
+ * outlived their deadline once, as a hung session does): what a spec does between two ticks before the clock moves.
+ */
+export const settled = (steward: Steward): Promise<void> =>
+  settlers.get(steward)?.settle(steward) ?? steward.idle();
 
-/** Ticks, a minute apart, letting the fake sessions end in between, until `done` holds (or the ticks run out). */
+/**
+ * Ticks, a minute apart, until `done` holds (or the ticks run out). Between two ticks the fake sessions and the work
+ * outside the tick get to end in real time (settled), so a busy machine costs neither fake minutes nor ticks (P1-39).
+ */
 export async function tickUntil(
   steward: Steward,
   clock: StepClock,
@@ -403,7 +432,7 @@ export async function tickUntil(
   for (let tick = 1; tick <= maxTicks; tick += 1) {
     await steward.tick();
     if (await done()) return tick;
-    await pause(15);
+    await settled(steward);
     clock.advance(1);
   }
   throw new Error(`fixture: not done after ${maxTicks} ticks`);

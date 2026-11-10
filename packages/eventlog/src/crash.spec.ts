@@ -71,6 +71,9 @@ describe('crash', () => {
     const all = makeEvents(CHUNKS * CHUNK, DAY_1, 3);
     for (let chunk = 0; chunk < CHUNKS; chunk += 1) {
       if (chunk === CHUNKS / 2) {
+        // Killed once it saved a batch (it prints its count after each save), however slow a busy machine makes it:
+        // fifteen pauses of 8 ms were not always enough (P1-39).
+        while (!/^[1-9]\d*$/m.test(output)) await pause(10);
         child.kill('SIGKILL');
         await exited;
       }

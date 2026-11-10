@@ -11,6 +11,7 @@ import { launchOf } from '../process/launch.ts';
 import { handOf } from '../run/crew.ts';
 import { isAdapterFile } from '../tribe/adapter-file.ts';
 import { adapterFileTool } from './adapter-tool.ts';
+import { shellFindings } from './check-shell.ts';
 import { finding } from './finding.ts';
 import { ADAPTER_PROGRAMS, locateTool } from './locate-tool.ts';
 import { toolVersion } from './tool-version.ts';
@@ -224,6 +225,8 @@ async function checkFound(
           ]),
         ]
       : await adapterFindings(next.data, ctx)),
+    // An error here is the tribe's own (P1-41): `--enable` keeps it off, its sessions could not run pnpm.
+    ...(await shellFindings(tribe, ctx)),
   ];
   const same = JSON.stringify(next.data) === JSON.stringify(stored);
   return same ? { findings } : { findings, updated: next.data };

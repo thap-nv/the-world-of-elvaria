@@ -46,6 +46,7 @@ export async function tempKingdom(): Promise<TempKingdom> {
       await mkdir(path.join(root, 'quests', QUEST), { recursive: true });
       await writeFile(path.join(root, 'quests', QUEST, 'handover.md'), text, 'utf8');
     },
-    remove: () => rm(root, { recursive: true, force: true }),
+    // On Windows a hook child that just ended, or the indexer, may hold the folder a moment (EBUSY): retry (P1-39).
+    remove: () => rm(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }),
   };
 }

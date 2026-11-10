@@ -11,7 +11,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | Lệnh | Việc |
 |---|---|
 | `elvaria init` | Lập một vương quốc mới: thư mục, registry mặc định và hai tộc. |
-| `elvaria doctor` | Kiểm tra máy đã sẵn sàng chưa: registry, git, CLI của từng tộc, các lãnh thổ, kho bảo vật, phiên còn sót. |
+| `elvaria doctor` | Kiểm tra máy đã sẵn sàng chưa: registry, git, CLI của từng tộc (và trên Windows, PowerShell có chạy script cho agy không), các lãnh thổ và chương trình mà lệnh của chúng gọi, kho bảo vật, phiên còn sót. |
 | `elvaria tribe list` | Liệt kê các tộc: adapter, bật hay tắt, CLI đã ghim và kiểu đăng nhập, hạng tối đa và vùng canh tộc được nhận, năng lực adapter khai. |
 | `elvaria tribe add <id>` | Thêm một tộc: một adapter (có sẵn, hoặc file adapters/<name>.mjs trong vương quốc) và tài khoản của chính bạn. Tộc mới tắt; nhân vật cũ không đổi. |
 | `elvaria tribe check <id>` | Chạy bộ test hợp đồng với adapter của một tộc và kiểm kiểu đăng nhập; bật tộc khi qua. Với CLI thật, bộ này chạy một việc nhỏ, một lệnh push bị cấm, một lần kill và một lần thăm dò, tốn chút mana. |
@@ -41,7 +41,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria wake <tribe>` | Nhờ Quản sự thăm dò mana của một tộc ngay, ví dụ sau khi đăng nhập lại (lệnh wake). |
 | `elvaria sandbox generate` | Sinh một ngày giả vào events/sandbox/ của vương quốc (sa bàn): không chạy phiên nào, không chạm nhiệm vụ thật. |
 | `elvaria sandbox replay <file>` | Phát lại một ngày giả thành dòng thời gian trên terminal. |
-| `elvaria migrate` | Chuyển mọi file cũ của vương quốc lên phiên bản hiện tại, có sao lưu. |
+| `elvaria migrate` | Chuyển mọi file cũ của vương quốc lên phiên bản hiện tại, có sao lưu, và thêm file, mục registry mà bản Elvaria này có và vương quốc còn thiếu. |
 
 ## Tùy chọn chung
 
@@ -66,7 +66,7 @@ Lập một vương quốc mới: thư mục, registry mặc định và hai t�
 
 ## `elvaria doctor`
 
-Kiểm tra máy đã sẵn sàng chưa: registry, git, CLI của từng tộc, các lãnh thổ, kho bảo vật, phiên còn sót.
+Kiểm tra máy đã sẵn sàng chưa: registry, git, CLI của từng tộc (và trên Windows, PowerShell có chạy script cho agy không), các lãnh thổ và chương trình mà lệnh của chúng gọi, kho bảo vật, phiên còn sót.
 
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
@@ -349,6 +349,6 @@ Phát lại một ngày giả thành dòng thời gian trên terminal.
 
 ## `elvaria migrate`
 
-Chuyển mọi file cũ của vương quốc lên phiên bản hiện tại, có sao lưu.
+Chuyển mọi file cũ của vương quốc lên phiên bản hiện tại, có sao lưu, và thêm file, mục registry mà bản Elvaria này có và vương quốc còn thiếu.
 
 Không có tham số riêng, chỉ các tùy chọn chung.

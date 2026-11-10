@@ -21,7 +21,7 @@ describe('day files', () => {
   beforeEach(async () => {
     kingdom = await mkdtemp(path.join(tmpdir(), 'elvaria sa bàn '));
   });
-  afterEach(() => rm(kingdom, { recursive: true, force: true }));
+  afterEach(() => rm(kingdom, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }));
 
   it('lives in events/sandbox/<date>.jsonl, apart from the real log', () => {
     expect(path.relative(kingdom, dayFilePath(kingdom, DATE))).toBe(

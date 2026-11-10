@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fromPortable } from '@elvaria/store';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST, commitFile, git, gitRepo, questId, territoryAt } from '../__fixtures__/git-repo.ts';
 import { createPlotManager } from './plot-manager.ts';
 import { PLOT_RECORD_FILE } from './plot-record.ts';
@@ -18,7 +19,7 @@ beforeAll(async () => {
   kingdom = path.join(root, 'my kingdom');
   await mkdir(kingdom);
 });
-afterAll(() => rm(root, { recursive: true, force: true }));
+afterAll(() => rm(root, RM_TEMP));
 
 const manager = (fields: Partial<Parameters<typeof createPlotManager>[0]> = {}) =>
   createPlotManager({ kingdom, host: TEST_HOST, ...fields });
@@ -49,7 +50,7 @@ describe('prepare on a git territory', () => {
     expect(git(repo, 'status', '--porcelain')).toBe('');
     // --no-track: the quest branch has no upstream that a bare `git push` could follow to main.
     expect(() => git(worktree, 'config', '--get', `branch.quest/${quest.id}.merge`)).toThrow();
-  }, 30_000);
+  });
 
   it('writes the excludes once, keeps what the owner had, and records the fork point', async () => {
     const repo = await gitRepo(path.join(root, 'excludes'));
@@ -73,7 +74,7 @@ describe('prepare on a git territory', () => {
     );
     const record: unknown = JSON.parse(await readFile(path.join(gitDir, PLOT_RECORD_FILE), 'utf8'));
     expect(record).toEqual({ version: 1, base: git(repo, 'rev-parse', 'main'), setup_done: false });
-  }, 30_000);
+  });
 
   it('sets core.longpaths in the repo on Windows, and nowhere else', async () => {
     const windows = await gitRepo(path.join(root, 'long paths'));
@@ -83,7 +84,7 @@ describe('prepare on a git territory', () => {
 
     expect(git(windows, 'config', '--local', '--get', 'core.longpaths')).toBe('true');
     expect(() => git(posix, 'config', '--local', '--get', 'core.longpaths')).toThrow();
-  }, 30_000);
+  });
 
   it('runs commands.setup once, in the worktree, with its log in the kingdom', async () => {
     const repo = await gitRepo(path.join(root, 'with setup'));
@@ -110,7 +111,7 @@ describe('prepare on a git territory', () => {
       'x',
     );
     expect(await readFile(path.join(kingdom, setupLogOf(quest.id)), 'utf8')).toContain('$ node setup.mjs');
-  }, 30_000);
+  });
 
   it('reports a failed setup and runs it again on the next prepare', async () => {
     const repo = await gitRepo(path.join(root, 'failing setup'));
@@ -137,7 +138,7 @@ describe('prepare on a git territory', () => {
       ok: true,
       value: { created: false, setup: { exit_code: 0 } },
     });
-  }, 30_000);
+  });
 
   it("gives commands.setup the quest's secrets and masks their values in its log (P1-30)", async () => {
     const repo = await gitRepo(path.join(root, 'private registry'));
@@ -164,7 +165,7 @@ describe('prepare on a git territory', () => {
     const log = await readFile(path.join(kingdom, setupLogOf(quest.id)), 'utf8');
     expect(log).toContain('login [redacted]');
     expect(log.split(value)).toHaveLength(1);
-  }, 30_000);
+  });
 
   it('refuses a plot path that holds something else, and a territory that is not a repo', async () => {
     const repo = await gitRepo(path.join(root, 'taken'));
@@ -182,7 +183,7 @@ describe('prepare on a git territory', () => {
       ok: false,
       error: { reason: 'not_a_repo' },
     });
-  }, 30_000);
+  });
 
   it('says git is missing when the host cannot find it', async () => {
     const repo = await gitRepo(path.join(root, 'no git'));
@@ -202,7 +203,7 @@ describe('prepare on a git territory', () => {
     expect(prepared.ok).toBe(true);
     expect(git(repo, 'branch', '--list', 'quest/*')).toContain('quest/q_20261107_j9k0m1');
     expect(git(elsewhere, 'branch', '--list', 'quest/*')).toBe('');
-  }, 30_000);
+  });
 });
 
 describe('prepare on a territory without git', () => {

@@ -6,6 +6,7 @@ import { FLAKE_RUNS, TerritorySchema } from '@elvaria/domain';
 import { inKingdom } from '@elvaria/store';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST, commitFile, gitRepo, questId, territoryAt } from '../__fixtures__/git-repo.ts';
 import { createPlotManager } from '../plot/plot-manager.ts';
 import { trialInScratch } from './scratch-trial.ts';
@@ -19,7 +20,7 @@ beforeAll(async () => {
   kingdom = path.join(root, 'my kingdom');
   await mkdir(kingdom);
 });
-afterAll(() => rm(root, { recursive: true, force: true }));
+afterAll(() => rm(root, RM_TEMP));
 
 /** Counts its runs in `<plot>/../counts/<name>` and fails on the runs listed after the name. */
 const COUNT = [
@@ -232,7 +233,7 @@ describe('trialInScratch', () => {
     const runs = await trialInScratch(plots, request, TEST_HOST);
     expect(ids(runs)).toEqual(['rerun_clean:true', 'unit:true', 'coverage_not_lower:true']);
     expect(await plots.scratchOf(quest, territory)).toBeDefined();
-  }, 60_000);
+  });
 
   it('fails rerun_clean on a setup that fails, and throws when git cannot make the plot', async () => {
     const repo = await gitRepo(path.join(root, 'setup'));
@@ -250,5 +251,5 @@ describe('trialInScratch', () => {
     await expect(trialInScratch(plots, { ...request, territory: folder }, TEST_HOST)).rejects.toThrow(
       'is not ready (not_a_repo)',
     );
-  }, 60_000);
+  });
 });
