@@ -2,15 +2,21 @@
 // It sends `create_quest` with draft = false; the Steward gives the quest its id and writes the file (ADR 0005).
 // With --to, the quest names its assignee: only that character takes it, as after a reassign (P1-29). With
 // --contract, it heads a party (P1-18): its lead writes the contract and the parts.
-import { QUEST_TAGS_MAX, QUEST_TITLE_MAX_LENGTH, RANKS, scriptParamsIssues } from '@elvaria/domain';
-import type { Kind, Rank, Registry } from '@elvaria/domain';
+import {
+  QUEST_TAGS_MAX,
+  QUEST_TITLE_MAX_LENGTH,
+  RANKS,
+  blindTrialDue,
+  scriptParamsIssues,
+} from '@elvaria/domain';
+import type { Character, InboxCommandInput, Kind, Rank, Registry, Territory } from '@elvaria/domain';
 
 import { flagOption, textOption, textOptions } from '../args.ts';
 import { EXIT } from '../command.ts';
 import { registryIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { assigneeFor, ceilingLines } from './assignee.ts';
-import { questsMissing, territoryMissing } from './references.ts';
+import { questsMissing, readTerritory } from './references.ts';
 import { commandHeader, sendCommand } from './send-command.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
@@ -132,6 +138,26 @@ function readContract(
   return { contract: true, problems: [ctx.t('cli.quest.add.contract_kind', { kinds: kinds.join(', ') })] };
 }
 
+/**
+ * A session quest of the rank the territory's blind trial asks for, opened alone (P1-43, (a) of P1-37): the trial
+ * is built on parties (ADR 0022), so this quest never has one, and the owner may have meant `--contract`.
+ */
+function blindTrialLines(
+  ctx: KingdomContext,
+  territory: Territory,
+  rank: Rank,
+  registry: Registry,
+): string[] {
+  if (!blindTrialDue(territory, { rank }, [])) return [];
+  const kinds = registry.kinds.filter((entry) => entry.deliverable_type === 'subquests').map(({ id }) => id);
+  const params = {
+    territory: territory.id,
+    min_rank: territory.blind_trial.min_rank,
+    kinds: kinds.join(', '),
+  };
+  return [ctx.t('cli.quest.add.no_blind_trial', params)];
+}
+
 async function runQuestAdd(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);
   if (ctx === undefined) return EXIT.failed;
@@ -151,14 +177,14 @@ async function runQuestAdd(input: CommandInput, cli: CliContext): Promise<ExitCo
     'id' in klass ? klass.id : undefined,
     ctx,
   );
-  const territory = textOption(input, 'territory') ?? '';
+  const territory = await readTerritory(ctx, textOption(input, 'territory') ?? '');
   const dependsOn = [...new Set(textOptions(input, 'depends-on'))];
   const problems = [
     ...[basics, script, klass, tags, party, named].flatMap((part) => part.problems),
-    ...(await territoryMissing(ctx, territory)),
+    ...(Array.isArray(territory) ? territory : []),
     ...(await questsMissing(ctx, dependsOn)),
   ];
-  if (problems.length > 0 || basics.kind === undefined || basics.rank === undefined) {
+  if (problems.length > 0 || !basics.kind || !basics.rank || Array.isArray(territory)) {
     problems.forEach(ctx.io.err);
     return EXIT.failed;
   }
@@ -169,7 +195,7 @@ async function runQuestAdd(input: CommandInput, cli: CliContext): Promise<ExitCo
     description: textOption(input, 'description') ?? '',
     kind: basics.kind.id,
     rank: basics.rank,
-    territory,
+    territory: territory.id,
     tier: script.choice === undefined ? 'session' : 'script',
     ...(script.choice === undefined ? {} : { script: script.choice }),
     ...('id' in klass ? { class_required: klass.id } : {}),
@@ -181,12 +207,24 @@ async function runQuestAdd(input: CommandInput, cli: CliContext): Promise<ExitCo
     created_by: 'user',
   } as const;
   const command = { ...commandHeader(ctx), kind: 'create_quest', payload } as const;
-  if (!('character' in named))
-    return sendCommand(ctx, command, 'cli.quest.add.sent', { title: basics.title });
-  const { character } = named;
-  const params = { title: basics.title, character: character.id };
+  const sent = await sendQuest(ctx, command, basics.rank, 'character' in named ? named.character : undefined);
+  if (sent === EXIT.ok && script.choice === undefined && !party.contract)
+    blindTrialLines(ctx, territory, basics.rank, registry.value).forEach(ctx.io.out);
+  return sent;
+}
+
+/** Sends `create_quest`; for the character `--to` names, what its ceiling means for the quest's rank (P1-29). */
+async function sendQuest(
+  ctx: KingdomContext,
+  command: InboxCommandInput & { readonly payload: { readonly title: string } },
+  rank: Rank,
+  character: Character | undefined,
+): Promise<ExitCode> {
+  const { title } = command.payload;
+  if (character === undefined) return sendCommand(ctx, command, 'cli.quest.add.sent', { title });
+  const params = { title, character: character.id };
   const sent = await sendCommand(ctx, command, 'cli.quest.add.sent_to', params);
-  if (sent === EXIT.ok) ceilingLines(ctx, character, basics.rank).forEach(ctx.io.out);
+  if (sent === EXIT.ok) ceilingLines(ctx, character, rank).forEach(ctx.io.out);
   return sent;
 }
 

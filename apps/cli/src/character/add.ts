@@ -169,11 +169,18 @@ async function runCharacterAdd(input: CommandInput, cli: CliContext): Promise<Ex
   return EXIT.ok;
 }
 
-/** Why the character starts at its level, when the owner did not say: the model's row, or none (P1-26). */
-function levelLines(ctx: KingdomContext, { level, levelSource, model }: Choices): string[] {
-  if (levelSource === 'option') return [];
+/**
+ * Why the character starts at its level, when the owner did not say: the model's row, or none (P1-26). A `--level`
+ * above the model's row is said too (P1-43, (b) of P1-38): the Steward reads a level as the model's strength and
+ * gives quests by it, so a weak model raised by hand takes quests it may not carry.
+ */
+function levelLines(ctx: KingdomContext, { id, level, levelSource, model }: Choices): string[] {
+  const ceiling = rankCeilingOf(level);
   if (levelSource === 'none') return [ctx.t('cli.character.level_unknown_model', { model })];
-  return [ctx.t('cli.character.level_from_model', { level, model, ceiling: rankCeilingOf(level) })];
+  if (levelSource === 'model') return [ctx.t('cli.character.level_from_model', { level, model, ceiling })];
+  const suggested = startingLevelOf(model);
+  if (suggested === undefined || level <= suggested) return [];
+  return [ctx.t('cli.character.level_above_model', { level, model, suggested, ceiling, id })];
 }
 
 export const CHARACTER_ADD: CommandSpec = {

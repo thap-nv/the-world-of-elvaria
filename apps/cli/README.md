@@ -22,7 +22,9 @@
   `namedAssignee`: known, of the quest's class, not suspended, of an enabled tribe; a level below the rank is said,
   since the quest then waits for the seal) or, without `--to`, to the Steward's choice (P1-26). `quest add --to
 <id>` names the new quest's assignee the same way (`create_quest.assignee`): only that character takes it
-  (P1-29; refused on a script-tier quest). `quest show` of a quest nobody can take prints the `reassign` to its
+  (P1-29; refused on a script-tier quest). A single session quest `quest add` opens, without `--contract`, on a
+  territory whose blind trial covers its rank says it will have none, and that `--contract` opens a party (P1-43).
+  `quest show` of a quest nobody can take prints the `reassign` to its
   best candidate, or, when its party bars every character of the class (`party_bars`, P1-37), the `reassign` the
   owner may still give one of them; of a quest in the infirmary, why it went there, from the last `quest.infirmary` line of its
   journal (`src/quest/infirmary.ts`, P1-32): the trip and the attempt, then each part of the detail, in the
@@ -41,7 +43,8 @@
   territory, a newly summoned character (create only, never overwrite). Those two are also logged
   (`territory.attached`, `character.created`, with the view after the change, P0-09), so the world sees them.
   Without `--level`, a character starts at its model's level (`src/character/starting-level.ts`: Opus 5, Sonnet
-  or Pro 4, Argon 3, Haiku or Flash 2), else at 1 with a word on `--level` (P1-26).
+  or Pro 4, Argon 3, Haiku or Flash 2), else at 1 with a word on `--level` (P1-26); a `--level` above the
+  model's says the Steward takes it as the model's strength, and how to lower it (P1-43).
 - `sandbox generate` writes a fake day of `@elvaria/sandbox` to `events/sandbox/<date>.jsonl` (nothing else of the
   kingdom changes); `sandbox replay <file> --speed 20` plays it back as a timeline, one sentence per line in the
   owner's language (`src/sandbox/timeline.ts`), paced by `CliIo.sleep`. Closing the pipe (`| head`) ends it quietly.
