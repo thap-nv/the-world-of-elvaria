@@ -21,7 +21,11 @@
   `transition(quest, event, actor)` is the only way a quest changes status. It keeps `attempts`, the attempt log
   and who holds the quest, refuses what the table does not allow, and validates the result against the schema.
   `partyIssues` checks the invariants of a party across its quests; `renderQuestTransitionTable` renders the
-  table of implementation-plan §2.5.
+  table of implementation-plan §2.5. (P1-44) A session that ended while no Steward ran says nothing: `release`
+  gives a character's attempt back (`working.release.by_character`, to `returned`, so the redispatch takes it
+  again) or lets a judge leave without counting toward a stalled review (`review.release.has_verifier`), its entry
+  `cancelled`; `reviewStallOf` names what stalled a review (partial verdicts, or how the last judge who left without
+  one ended), for the move a Steward that starts on it makes.
 - Shapes a party (`src/party/`, §3.13, ADR 0020, P1-18): `mergeQuestOf` (the merge quest the Steward adds when a
   contract is delivered: a knight's build waiting for every part, their tags and secrets, the highest rank, the
   royal seal), `PartyPlace` (a part's or the merge quest's place, given to `questFromCommand` through
@@ -47,7 +51,8 @@
   it (`PartyBars.avoided`), and `claimBlocker` reports `party_bars` when the party bars every character of the
   class. `questFinished`
   (done, or archived after its delivery) is what `planTick` counts a dependency as done by, so archiving a
-  contract midway holds up nothing. The event `plot.merged` records a merge of a party's parts.
+  contract midway holds up nothing. The event `plot.merged` records a merge of a party's parts; `plot.restored`
+  (P1-44) a plot the Steward put back to its commit after a judge outside a scratch plot.
 - Runs the character state machine (`src/character/`, `transitionCharacter`) and derives what is never stored:
   `reputationOf`, `affinityOf`, `titleOf`. Decides levels: `canTake` (which ranks the Steward may give a level),
   `aboveCeiling` (a stretch that makes the quest wait for the royal seal) and `levelChange` (counting only the

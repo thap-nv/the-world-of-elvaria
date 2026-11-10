@@ -186,6 +186,11 @@ export interface Plots {
   /** `git add --all` + commit with the territory's hooks (never bypassed): `refused` keeps the work in place. */
   commit(plot: Quest['plot'], message: string): Promise<CommitOutcome>;
   /**
+   * After a judge outside a scratch plot (P1-44): the plot back to its commit, what is changed or untracked dropped
+   * (ignored files stay); the paths dropped, none for a clean plot or one without git (PlotManager.restore).
+   */
+  restore(plot: Quest['plot']): Promise<readonly string[]>;
+  /**
    * Before the submit commit (P1-28): the assignee's PATCH_FILE, applied when `patchPaths` (laws.patch_paths) allow
    * every path it touches, then deleted; `none` without a patch or without git, `refused` (the patch stays) else.
    */

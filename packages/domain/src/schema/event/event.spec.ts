@@ -106,6 +106,7 @@ const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
     stop: 'conflict',
     conflicts: ['apps/web/src/api.ts'],
   },
+  'plot.restored': { paths: ['apps/api/openapi.json', 'coverage/'] },
 };
 
 describe('EventSchema', () => {
@@ -195,6 +196,7 @@ describe('EventSchema', () => {
     ['plot.patched', { file: 'elvaria.patch', paths: [] }, 'data.paths'],
     ['plot.merged', { into: 'quest/q', merged: [], pending: [], stop: 'dirty' }, 'data.stop'],
     ['plot.merged', { into: '', merged: [], pending: [] }, 'data.into'],
+    ['plot.restored', { paths: [] }, 'data.paths'],
     ['quest.infirmary', { ...QUEST_CHANGE, reason: '' }, 'data.reason'],
     ['quest.infirmary', { reason: 'breaker:time' }, 'data.quest'],
     ['quest.infirmary', { ...QUEST_CHANGE, reason: 'r', trip: 'crash' }, 'data.trip'],

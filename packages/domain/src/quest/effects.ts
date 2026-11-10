@@ -62,6 +62,18 @@ function resume(quest: Quest, at: string, session_id: string | undefined): Quest
   return { ...quest, attempt_log: [...quest.attempt_log, entry] };
 }
 
+/**
+ * The Steward lets go of a run that says nothing; its entry ends `cancelled`. A claim that never started, a script
+ * run or a merge it cut short (P1-17, P1-18) open again with nobody holding them. A character's session that ended
+ * while no Steward ran goes back to the same character, its attempt given back, so the redispatch that follows takes
+ * it again; a verifier's leaves the review to the next judge (P1-44).
+ */
+function release(quest: Quest, event: QuestEventOf<'release'>, to: QuestStatus): Quest {
+  const ended = endRun(quest, event, 'cancelled');
+  if (to === 'returned') return { ...ended, attempts: Math.max(0, quest.attempts - 1) };
+  return to === 'review' ? withoutVerifier(ended) : { ...ended, assignee: null };
+}
+
 const askedAt = (question: string, at: string) => ({ question, asked_at: at });
 
 /**
@@ -122,8 +134,7 @@ const EFFECTS: { readonly [T in QuestEventType]: Effect<T> } = {
   archive: same,
   unblock: same,
   claim,
-  // A claim that never started, or a script run the Steward cut short (its entry ends `cancelled`, P1-17).
-  release: (quest, event) => ok({ ...endRun(quest, event, 'cancelled'), assignee: null }),
+  release: (quest, event, to) => ok(release(quest, event, to)),
   // The owner hands the quest to someone new; out of the infirmary that someone gets the full attempt budget.
   reassign: (quest, event) =>
     ok({ ...takenBy(quest, event), ...(quest.status === 'infirmary' ? { attempts: 0 } : {}) }),

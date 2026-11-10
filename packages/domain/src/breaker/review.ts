@@ -20,9 +20,19 @@ import type { Quest } from '../schema/quest/quest.ts';
 
 /**
  * How a session that left no verdict ends its entry: `timeout` for time, `breaker` for tokens and turns
- * (effects.ts), `crash` for an end with no verdict. A partial verdict ends `partial` (`verdict_partial`).
+ * (effects.ts), `crash` for an end with no verdict. A partial verdict ends `partial` (`verdict_partial`); a session
+ * the Steward lost while it did not run ends `cancelled` and counts for nothing (P1-44).
  */
-const NO_VERDICT: ReadonlySet<Attempt['outcome']> = new Set(['timeout', 'breaker', 'crash']);
+const NO_VERDICT = ['timeout', 'breaker', 'crash'] as const;
+type NoVerdict = (typeof NO_VERDICT)[number];
+
+/** A verifier session that left without a verdict. */
+interface Left extends Attempt {
+  readonly outcome: NoVerdict;
+}
+
+const leftWithout = (entry: Attempt): entry is Left =>
+  (NO_VERDICT as readonly Attempt['outcome'][]).includes(entry.outcome);
 
 /** The ends a breaker gave: time (`timeout`), tokens or turns (`breaker`), the CLI's own limits included. */
 const CUT: ReadonlySet<Attempt['outcome']> = new Set(['timeout', 'breaker']);
@@ -30,7 +40,7 @@ const CUT: ReadonlySet<Attempt['outcome']> = new Set(['timeout', 'breaker']);
 /** The verifier sessions of a group that count toward a stalled review. */
 interface ReviewGroup {
   /** Those that left without a verdict, oldest first. */
-  readonly left: readonly Attempt[];
+  readonly left: readonly Left[];
   /** How many handed in a partial verdict. */
   readonly partials: number;
 }
@@ -43,7 +53,7 @@ const full = (group: ReviewGroup): boolean =>
 
 function grown(group: ReviewGroup, entry: Attempt): ReviewGroup {
   if (entry.outcome === 'partial') return { ...group, partials: group.partials + 1 };
-  return NO_VERDICT.has(entry.outcome) ? { ...group, left: [...group.left, entry] } : group;
+  return leftWithout(entry) ? { ...group, left: [...group.left, entry] } : group;
 }
 
 /**
@@ -89,3 +99,22 @@ export const cutVerifiersOf = (quest: Quest): ReadonlySet<CharacterId> => {
  * back to review (§2.5 `infirmary.retry.stalled_review`) instead of opening the quest again.
  */
 export const reviewStalled = (quest: Quest): boolean => full(openGroupOf(quest));
+
+/**
+ * What stalled the review, and how many judges: REVIEW_PARTIALS_MAX partial verdicts, or REVIEW_BREAKS_MAX judges
+ * who left without one, named by how the last of them ended (`timeout`, `breaker`, `crash`); undefined while the
+ * review is not stalled. A Steward that starts on a review stalled so, with no move to the infirmary after it, makes
+ * that move with it (P1-44, P1-42 (a)): it stopped between the last judge's end and the move.
+ */
+export interface ReviewStall {
+  readonly by: 'partial' | NoVerdict;
+  readonly count: number;
+}
+
+export function reviewStallOf(quest: Quest): ReviewStall | undefined {
+  const { left, partials } = openGroupOf(quest);
+  if (partials >= REVIEW_PARTIALS_MAX) return { by: 'partial', count: partials };
+  const last = left.at(-1);
+  if (last === undefined || left.length < REVIEW_BREAKS_MAX) return undefined;
+  return { by: last.outcome, count: left.length };
+}

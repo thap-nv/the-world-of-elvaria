@@ -57,11 +57,11 @@ describe('transition: attempts and the attempt log', () => {
     });
   });
 
-  it('opens again a script run the Steward cut short, its entry cancelled; a session is never released so', () => {
+  it("opens again a script run the Steward cut short, its entry cancelled; a character's goes back (P1-44)", () => {
     const released = value(fire(questIn('working', SCRIPT), 'release', 'steward'));
     expect(released).toMatchObject({ status: 'open', assignee: null, attempts: 1 });
     expect(released.attempt_log.map(({ n, outcome }) => [n, outcome])).toEqual([[1, 'cancelled']]);
-    expect(fire(questIn('working'), 'release', 'steward').ok).toBe(false);
+    expect(value(fire(questIn('working'), 'release', 'steward')).status).toBe('returned');
   });
 
   it('retries after a crash with the same assignee, a new run number and the counter up', () => {

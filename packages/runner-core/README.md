@@ -91,7 +91,10 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   private git folder. `status`, `head` (the commit at HEAD, null without git: the Steward reuses checks that ran on
   it for the run's next judge, P1-38), `touched` (paths changed since the fork, committed or not, plus untracked files),
   `commitAll` (everything, through the territory's own hooks; `refused` when a hook says no; the Steward's messages
-  are `plotCommitMessage`, Conventional Commits so commitlint accepts them), `applyPatch` (P1-28: the assignee's
+  are `plotCommitMessage`, Conventional Commits so commitlint accepts them), `restore` (P1-44: after a judge outside a
+  scratch plot, `git reset --hard HEAD` and `git clean -d --force`, so ignored files and the runner files the plot
+  excludes stay; returns the paths it dropped, an untracked folder as one path ending in `/`, and leaves a clean
+  plot alone; nothing for a plot without git), `applyPatch` (P1-28: the assignee's
   `PATCH_FILE` = `elvaria.patch` for `laws.patch_paths`, the paths its CLI refuses to write; every path the patch
   touches, as `git apply --numstat` and its header lines name it, must be one of them and never git's own folder
   (`patchProblem`), then `git apply --recount --check` and `git apply`, and the file goes; otherwise `refused`

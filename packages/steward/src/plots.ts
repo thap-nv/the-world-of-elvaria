@@ -18,6 +18,8 @@ export function folderPlots(root: string): Plots {
       return { plot: { type: 'folder', path }, cwd };
     },
     commit: () => Promise.resolve({ status: 'no_git' }),
+    // No commit to go back to after a judge (P1-44).
+    restore: () => Promise.resolve([]),
     applyPatch: () => Promise.resolve({ status: 'none' }),
     check: () => Promise.resolve([]),
     // No commit to tie checks to: each judge gets its own run of them (P1-38).

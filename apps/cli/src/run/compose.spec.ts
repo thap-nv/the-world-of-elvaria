@@ -87,6 +87,7 @@ describe('plots over PlotManager', () => {
     head: () => Promise.reject(new Error('unused')),
     touched: () => Promise.reject(new Error('unused')),
     commitAll: () => Promise.reject(new Error('unused')),
+    restore: () => Promise.reject(new Error('unused')),
     applyPatch: () => Promise.reject(new Error('unused')),
     diff: () => Promise.reject(new Error('unused')),
     merge: () => Promise.reject(new Error('unused')),
