@@ -167,6 +167,15 @@ const DispatchSchema = z.strictObject({
         "When the owner answers a character's question within this many minutes of blocked.asked_at and the tribe's adapter can resume, the same CLI session goes on (`--resume`); later, or null, a fresh session starts from handover.md with the answer (ADR 0017).",
       ),
     ),
+  max_background: z
+    .int()
+    .min(1)
+    .default(DISPATCH_DEFAULTS.max_background)
+    .meta(
+      describe(
+        "How many pieces of machine work the Steward runs outside its tick at once, kingdom-wide: a submitted quest's checks (or its trial in a scratch plot) and a script-tier quest's script. The next waits for a later tick. Cautious until measured.",
+      ),
+    ),
 });
 
 export const KingdomSchema = z

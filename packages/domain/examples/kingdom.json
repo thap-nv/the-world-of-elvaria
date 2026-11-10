@@ -99,7 +99,8 @@
       "fairness": "round_robin_territory",
       "verifier_same_family": "different_model",
       "resume_after_mana": false,
-      "resume_after_answer_minutes": 55
+      "resume_after_answer_minutes": 55,
+      "max_background": 2
     },
     "bell": {
       "desktop": true,

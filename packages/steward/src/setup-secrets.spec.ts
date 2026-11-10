@@ -6,8 +6,11 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { NPM_TOKEN, bench, memoryTreasury, questPayload, tickUntil } from './__fixtures__/kingdom.ts';
 import { plotsWith, statusIs } from './__fixtures__/review.ts';
+import { ENV, LINKS, withCatalog } from './__fixtures__/scripts.ts';
 import { folderPlots } from './plots.ts';
-import type { Bench } from './__fixtures__/kingdom.ts';
+import { nodeScriptRunner } from './script/run-script.ts';
+import type { Bench, BenchOptions } from './__fixtures__/kingdom.ts';
+import type { ScriptRunner } from './script/run-script.ts';
 import type { Plots, Steward, StewardDeps } from './types.ts';
 import type { Treasury } from '@elvaria/runner-core';
 
@@ -39,8 +42,11 @@ function countedTreasury(resolve?: Treasury['resolve']) {
 let current: Bench | undefined;
 let running: Steward | undefined;
 
-async function open(deps: (root: string, prepared: Prepared[]) => Partial<StewardDeps>) {
-  current = await bench();
+async function open(
+  deps: (root: string, prepared: Prepared[]) => Partial<StewardDeps>,
+  options: BenchOptions = {},
+) {
+  current = await bench(options);
   const prepared: Prepared[] = [];
   running = current.steward(deps(current.root, prepared));
   expect(await running.start({ loop: false })).toEqual({ ok: true });
@@ -103,5 +109,69 @@ describe("the plot's setup (P1-30)", () => {
     expect(kingdom.requests).toEqual([]);
     expect(await kingdom.quest('Private registry')).toMatchObject({ status: 'open' });
     expect(kingdom.warnings).toContainEqual(expect.stringContaining('the treasury file is locked'));
+  });
+});
+
+// A script-tier quest on a territory whose setup needs a secret (P1-47, (a) of P1-30): its plot gets the quest's
+// secrets after secretsLacking, as a session's plot does; the script itself still gets none (ADR 0017).
+describe("a script-tier quest's plot", () => {
+  const linksWithToken = (title: string) =>
+    questPayload(title, {
+      kind: 'batch',
+      tier: 'script',
+      class_required: undefined,
+      territory: 'dc1-se-team',
+      script: LINKS,
+      ...NEEDS_TOKEN,
+    });
+
+  /** The script runner of `elvaria run`, keeping the env each script got. */
+  const keptEnvs =
+    (envs: Readonly<Record<string, string>>[]): ScriptRunner =>
+    (request) => {
+      envs.push(request.env);
+      return nodeScriptRunner()(request);
+    };
+
+  it("gets the quest's secrets for its setup, and the script none", async () => {
+    const envs: Readonly<Record<string, string>>[] = [];
+    const { kingdom, steward, prepared } = await open((root, kept) => ({
+      plots: keeping(root, kept),
+      env: ENV,
+      scripts: keptEnvs(envs),
+    }));
+    await withCatalog(kingdom.root);
+    await kingdom.command('create_quest', linksWithToken('Links behind a private registry'));
+    await tickUntil(steward, kingdom.clock, statusIs(kingdom, 'Links behind a private registry', 'done'));
+    const quest = await kingdom.quest('Links behind a private registry');
+    expect(prepared).toEqual([{ quest: quest.id, secrets: { npm_token: NPM_TOKEN } }]);
+    expect(envs).toHaveLength(1);
+    expect(Object.values(envs[0] ?? {})).not.toContain(NPM_TOKEN);
+  });
+
+  it('goes to the infirmary once when the treasury lacks them, instead of a claim given back every tick', async () => {
+    const envs: Readonly<Record<string, string>>[] = [];
+    const { kingdom, steward, prepared } = await open(
+      (root, kept) => ({ plots: keeping(root, kept), env: ENV, scripts: keptEnvs(envs) }),
+      { treasury: {} },
+    );
+    await withCatalog(kingdom.root);
+    await kingdom.command('create_quest', linksWithToken('Links without the token'));
+    await steward.tick();
+    await steward.tick();
+    const quest = await kingdom.quest('Links without the token');
+    expect(quest).toMatchObject({ status: 'infirmary', assignee: null, attempts: 0, attempt_log: [] });
+    expect(prepared).toEqual([]);
+    expect(envs).toEqual([]);
+    const why = 'the treasury has no npm_token';
+    expect(kingdom.notices).toEqual([
+      {
+        kind: 'infirmary',
+        quest: { id: quest.id, title: 'Links without the token', rank: 'D' },
+        reason: `breaker:secrets: ${why}`,
+        trip: 'secrets',
+        detail: { message: why },
+      },
+    ]);
   });
 });

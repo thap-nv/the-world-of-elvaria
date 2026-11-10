@@ -155,13 +155,27 @@ describe("plots' prepare with a quest's secrets", () => {
       vcs: { type: 'git', default_branch: 'main' },
     });
     const plots = plotsOver('D:/kingdom', manager, processHostOf(testIo()));
-    await plots.prepareScratch(quest, territory, { npm_token: 'value' });
+    await plots.prepareScratch(quest, territory, { secrets: { npm_token: 'value' } });
     await plots.prepareScratch(quest, territory);
     expect(asked).toEqual([{ secrets: { npm_token: 'value' } }, {}]);
     setupFails = true;
     await expect(plots.prepareScratch(quest, territory)).rejects.toThrow(
       `the scratch plot of ${quest.id} is not ready (setup_failed): exit 1`,
     );
+    // Made again, the plot gets the territory's commands.reset once, its log beside the setup's (P1-47).
+    setupFails = false;
+    const dir = await mkdtemp(path.join(os.tmpdir(), 'elvaria scratch reset '));
+    try {
+      const resetting = TerritorySchema.parse({ ...territory, commands: { reset: 'elvaria-no-such-reset' } });
+      const reset = plotsOver(dir, manager, processHostOf(testIo())).prepareScratch(quest, resetting);
+      const log = `.runs/${quest.id}-verify-reset.log`;
+      await expect(reset).rejects.toThrow(
+        `commands.reset of ${quest.id}'s scratch plot ended with no exit code (${log})`,
+      );
+      expect(await readFile(path.join(dir, log), 'utf8')).toContain('elvaria: cannot run this command');
+    } finally {
+      await rm(dir, RM_TEMP);
+    }
   });
 });
 
