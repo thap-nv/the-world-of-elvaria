@@ -3,9 +3,9 @@ import { stat } from 'node:fs/promises';
 import path from 'node:path';
 
 import { REGISTRY_ROOT } from '@elvaria/registry-default';
-import { fromPortable, missingRegistryFiles } from '@elvaria/store';
+import { fromPortable, missingRegistryFiles, registryGaps } from '@elvaria/store';
 
-import { registryIssueLines, storeIssueLines } from '../issues.ts';
+import { registryGapLine, registryIssueLines, storeIssueLines } from '../issues.ts';
 import { gitIn } from '../process/git.ts';
 import { finding } from './finding.ts';
 import { parseVersion } from './tool-version.ts';
@@ -45,7 +45,22 @@ export async function checkRegistry(ctx: KingdomContext): Promise<Finding[]> {
     const files = missing.map((issue) => issue.file);
     findings.push(finding('warn', t('cli.doctor.registry_missing', { count: missing.length }), files));
   }
-  return findings;
+  return [...findings, ...(await registryBehind(ctx))];
+}
+
+/**
+ * Default entries the kingdom's registry lacks, or lacks keys of (P1-41): a kingdom made before P1-20 had no
+ * mutation_check and nothing said so. A warning: the registry loads, it only misses what came later.
+ */
+async function registryBehind(ctx: KingdomContext): Promise<Finding[]> {
+  const gaps = await registryGaps(ctx.store.root, REGISTRY_ROOT);
+  if (!gaps.ok || gaps.value.length === 0) return [];
+  const { t } = ctx;
+  const details = [
+    ...gaps.value.map((gap) => registryGapLine(t, gap)),
+    t('cli.doctor.registry_behind_hint', { path: REGISTRY_ROOT }),
+  ];
+  return [finding('warn', t('cli.doctor.registry_behind', { count: gaps.value.length }), details)];
 }
 
 export async function checkGit(ctx: KingdomContext): Promise<Finding> {

@@ -24,7 +24,11 @@
   (`missingRegistryFiles`). `readClassPrompt` reads a class's prompt for a session (null when it is gone).
 - Lays out a new kingdom (`initKingdom`): folders, a copy of the registry it is given, `kingdom.json` last.
   `addMissingRegistryFiles` copies into an older kingdom the registry files it lacks, never one it has
-  (`elvaria migrate`, P1-15).
+  (`elvaria migrate`, P1-15). `registryGaps` compares the kingdom's registry with a default one by entry id: the
+  entries it lacks, and the top-level keys a default entry has that the kingdom's entry lacks (`elvaria doctor`,
+  P1-41). `addMissingRegistryEntries` appends the missing entries whole, under each file's lock with the old text in
+  `.backup/<stamp>/` (kept if a migration of the same run saved it first), only when the registry with all of them
+  still passes `parseRegistry`; an entry the kingdom has is never changed (`elvaria migrate`, P1-41).
 - Reads the owner's royal decree (`readDecree`, `kingdomLayout.decree` = `decree.md`, null when absent) and masks
   secrets in free text it keeps (ADR 0013): every verdict write masks the secret patterns in `notes` (checked
   by the schema again after), and `redactHandover` masks a session's values and the patterns in its letter.
@@ -34,7 +38,8 @@
 - Decide anything: who may write quests (only the Steward, ADR 0005), when a quest changes status, or what a
   command means is the domain's and the Steward's business. The store persists what it is handed.
 - Import `@elvaria/registry-default`: the composition root passes `initKingdom` the registry's folder and file
-  list (`REGISTRY_ROOT`, `registryFiles()`).
+  list (`REGISTRY_ROOT`, `registryFiles()`), and `registryGaps` / `addMissingRegistryEntries` the folder.
+- Change an entry the owner's registry has, even to add a key the default entry gained (P1-41).
 - Write the event log or journals (`@elvaria/eventlog` does; the journal's name is its `journalOf`), know a
   session's secret values (the Steward passes them to `redactHandover`), or create or change `decree.md` (the
   owner's).
@@ -57,4 +62,6 @@ pnpm --filter @elvaria/store test
 Tests build throwaway kingdoms in the OS temp folder (`test/kingdom.ts`, folder names with a space).
 `concurrency.spec.ts` races writers in one process and in four Node processes (`test/update-worker.ts`, run by
 Node's type stripping) while a reader reads in a loop: no update may be lost and no read may fail.
-`migrations.spec.ts` reads every stored fixture with the current store.
+`migrations.spec.ts` reads every stored fixture with the current store. `registry-gaps.spec.ts` plays a newer
+default registry (the fixtures plus a ritual, a tag and a kind's `ritual_overrides`) against a kingdom made of the
+fixtures.
