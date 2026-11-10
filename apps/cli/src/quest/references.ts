@@ -1,18 +1,18 @@
 // Ids a command names must exist before the command is sent: the Steward would reject it a tick later, and the
 // owner is still at the terminal now.
 import { QuestIdSchema, TerritoryIdSchema } from '@elvaria/domain';
-import type { Quest } from '@elvaria/domain';
+import type { Quest, Territory } from '@elvaria/domain';
 
 import { storeIssueLines } from '../issues.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
-/** Problems with the territory id: none when it is attached. */
-export async function territoryMissing(ctx: KingdomContext, id: string): Promise<string[]> {
+/** The territory file, or the lines that say why it cannot be read. */
+export async function readTerritory(ctx: KingdomContext, id: string): Promise<Territory | string[]> {
   const unknown = [ctx.t('cli.quest.unknown_territory', { id })];
   const parsed = TerritoryIdSchema.safeParse(id);
   if (!parsed.success) return unknown;
   const read = await ctx.store.territories.read(parsed.data);
-  if (read.ok) return [];
+  if (read.ok) return read.value;
   return read.error.code === 'not_found' ? unknown : storeIssueLines(ctx.t, read.error);
 }
 

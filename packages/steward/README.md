@@ -145,6 +145,9 @@
   the work was all committed before its review, so once the judge's session is over, whatever its end, what is
   changed or untracked goes (`Plots.restore`; ignored files stay), a warning names it and a `plot.restored` line in
   the quest's journal lists it. A plot git cannot put back costs a warning and stays as the judge left it.
+- Tells an assignee that goes on with a quest (revived, or returned) which checks the machine will run on its work:
+  it asks the plot what the branch touched (`Plots.touched`, P1-43) and the prompt names what `selectChecks` picks
+  for it; a plot that cannot say gives no such section, and the session still opens.
 - Runs the territory's checks on what the quest touched before a judge's session opens (`Plots.check`: runChecks
   of P1-07 in `elvaria run`, outside the tick, its `signal` aborted when nobody waits for them any more), with the
   quest's secrets from the treasury (`PlotCheck.secrets`, `questSecretsOf`, P1-10b), resolved in the tick before

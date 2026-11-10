@@ -96,7 +96,9 @@ describe('delivering a plan: its sub-quests open', () => {
       depends_on: [],
       created_by: 'council',
       class_required: 'knight',
-      budget: { max_tokens: 120000 },
+      // The mage's 60 000 tokens are below the rank D floor of one context budget (P1-45): 120 000 x 2.
+      budget: { max_tokens: 240000, max_minutes: 45 },
+      estimate: { tokens: 60000, minutes: 20 },
     });
     expect(table.id).toMatch(/^q_\d{8}_[0-9a-z]{6}$/);
     expect(docs).toMatchObject({

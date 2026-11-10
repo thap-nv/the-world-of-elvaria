@@ -203,6 +203,11 @@ export interface Plots {
    */
   head(plot: Quest['plot']): Promise<string | null>;
   /**
+   * The paths the quest changed in its plot (PlotManager.touched), by which `check` picks the territory's checks: a
+   * continuing assignee's prompt names the checks they pick (P1-43). Throws when the plot cannot be read.
+   */
+  touched(plot: Quest['plot']): Promise<readonly string[]>;
+  /**
    * The machine's part of a ritual with a scratch plot (ADR 0022, P1-20): a fresh scratch plot of the quest's branch,
    * then `rerun_clean`, the checks, `flake_check` and `coverage_not_lower` there. Throws when it cannot be made.
    */

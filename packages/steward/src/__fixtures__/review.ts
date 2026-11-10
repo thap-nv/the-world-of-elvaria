@@ -47,6 +47,7 @@ export function plotsWith(root: string, replace: Partial<Plots>, calls: string[]
       return (replace.check ?? base.check)(request);
     },
     head: (plot) => (replace.head ?? base.head)(plot),
+    touched: (plot) => (replace.touched ?? base.touched)(plot),
     // Not among the calls: every judge outside a scratch plot ends with it (P1-44).
     restore: (plot) => (replace.restore ?? base.restore)(plot),
     diff: (plot, scope) => {

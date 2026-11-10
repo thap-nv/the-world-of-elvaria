@@ -91,8 +91,9 @@
   `selectVerifier` passes over while another judge may take the review. (P1-42) Judges that hand in a partial
   verdict count apart (`reviewPartialsOf`, outcome `partial`): the `REVIEW_PARTIALS_MAX`-th (3) of the open group
   stalls the review too (`partialsStalled`, `review.verdict_partial.needs_verifier`). A quest without an estimate gets
-  `context_budget_tokens` × `CONTEXT_BUDGETS_BY_RANK` of its rank as the stand-in (`questFromCommand`: F–D 1, C 1.5,
-  B 2, A 2.5, S 3), so its token ceiling grows with the rank.
+  `context_budget_tokens` × `CONTEXT_BUDGETS_BY_RANK` of its rank as the stand-in (`questFromCommand`: F–D 1, C 2,
+  B 2, A 2.5, S 3), so its token ceiling grows with the rank; (P1-45) a quest with an estimate never gets a lower
+  ceiling than that, nor fewer minutes than it estimates, up to `attempt_minutes.high`.
 - Keeps the separation of duties (`src/verify/`, ADR 0008, 0020): `selectVerifier` (never an assignee of the quest
   or of its party, never the assignee's model, another model family first by `familyOf`, then another tribe;
   `dispatch.verifier_same_family` for the rest; not a judge a breaker stopped in the run while another may judge), `underPassRule` (a failing check fails the quest under

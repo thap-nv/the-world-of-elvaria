@@ -25,6 +25,7 @@ export function worktreePlots(repo: string): Plots {
     applyPatch: () => Promise.resolve({ status: 'none' }),
     check: () => Promise.resolve([]),
     head: () => Promise.resolve(null),
+    touched: () => Promise.resolve([]),
     // No git, so no scratch plot either: a judge of tests as the product works in the quest's own folder.
     trial: () => Promise.resolve([]),
     prepareScratch: () => Promise.resolve(),
