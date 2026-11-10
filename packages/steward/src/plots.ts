@@ -22,6 +22,9 @@ export function folderPlots(root: string): Plots {
     check: () => Promise.resolve([]),
     // No commit to tie checks to: each judge gets its own run of them (P1-38).
     head: () => Promise.resolve(null),
+    // No git to ask what changed (P1-43): a continuing session's prompt then names the checks of the territory that
+    // would run if the work touched what they watch.
+    touched: () => Promise.resolve([]),
     // A folder has no branch to make a scratch plot from (ADR 0022): its judge works as any other.
     trial: () => Promise.resolve([]),
     prepareScratch: (quest) => Promise.reject(new Error(`${quest.id} has no scratch plot on a folder`)),

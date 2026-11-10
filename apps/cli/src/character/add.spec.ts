@@ -73,8 +73,12 @@ describe('elvaria character add', () => {
     ];
     const io = testIo();
     expect(await add(io, 'vela', ...args)).toBe(0);
-    // The owner's level needs no word on where it came from.
-    expect(io.printed.out).toHaveLength(2);
+    // Above Argon's starting level (3): the Steward takes the level as the model's strength (P1-43).
+    expect(io.printed.out).toEqual([
+      'Summoned «Vela» (vela): Judge, level 8.',
+      'Tribe gemini, model gemini-4-argon-medium.',
+      "Level 8 is above the starting level of model gemini-4-argon-medium (3): the Steward takes a level as the model's strength, so it gives this character quests up to rank A. If the model is not that strong, lower it: elvaria character level vela 3.",
+    ]);
     expect(await readCharacter('vela')).toMatchObject({
       tribe: 'gemini',
       model: 'gemini-4-argon-medium',
@@ -82,6 +86,17 @@ describe('elvaria character add', () => {
       name: 'Vela',
       vow_no_production: true,
     });
+  });
+
+  it.each([
+    ['at', '4', 'claude-sonnet-5-5'],
+    ['below', '2', 'claude-sonnet-5-5'],
+    ['on a model of no row', '9', 'gpt-oss-120b-medium'],
+  ])('says nothing of the level the owner gives %s the model’s (P1-43)', async (_, level, model) => {
+    const io = testIo();
+    expect(await add(io, 'thorn', '--class', 'knight', '--model', model, '--level', level)).toBe(0);
+    // The owner's level needs no word on where it came from.
+    expect(io.printed.out).toHaveLength(2);
   });
 
   it('asks for a model when the tribe has no default for the class', async () => {

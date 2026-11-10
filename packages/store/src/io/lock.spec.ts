@@ -4,7 +4,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { tempKingdom } from '../../test/kingdom.ts';
+import { RM_TEMP, tempKingdom } from '../../test/kingdom.ts';
 import { STALE_MS, acquireLock, isLocked, withLock } from './lock.ts';
 import type { TempKingdom } from '../../test/kingdom.ts';
 
@@ -59,7 +59,7 @@ describe('acquireLock (ADR 0004, 0015)', () => {
     const held = await acquireLock(target, QUICK);
     if (!held.ok) throw new Error('lock not taken');
     expect(held.value.compromised()).toBeUndefined();
-    await rm(`${target}.lock`, { recursive: true });
+    await rm(`${target}.lock`, RM_TEMP);
     await expect.poll(() => held.value.compromised(), { timeout: 5000, interval: 50 }).toBeDefined();
     // Nothing is left to release, and releasing does not throw.
     await held.value.release();
@@ -104,7 +104,7 @@ describe('withLock', () => {
     const outcome = withLock(
       target,
       async () => {
-        await rm(`${target}.lock`, { recursive: true });
+        await rm(`${target}.lock`, RM_TEMP);
         await sleep(1500);
       },
       QUICK,

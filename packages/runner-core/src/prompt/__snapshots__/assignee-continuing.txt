@@ -154,6 +154,14 @@ AssertionError: expected 120 to be 108
  Test Files  1 failed | 12 passed (13)
 ```
 
+## Machine checks on your work
+
+When you finish, the machine runs the territory's checks that watch the paths your branch touched, then the judge reads their results. On what the branch touches now, these run:
+
+- `lint`: `pnpm lint`
+
+These run too if your work touches a path they watch: `unit` (`apps/**/*.ts`), `e2e` (`apps/web/src/routes/**`).
+
 ## Handover letter so far
 
 ```markdown

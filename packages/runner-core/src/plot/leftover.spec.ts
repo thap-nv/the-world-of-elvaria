@@ -29,7 +29,7 @@ async function skeleton(name: string): Promise<string> {
   const gone = path.join(plot, 'node_modules', '.pnpm', 'gone');
   await mkdir(gone);
   await link(gone, path.join(plot, 'apps', 'api', 'node_modules', 'gone'));
-  await rm(gone, { recursive: true });
+  await rm(gone, RM_TEMP);
   return plot;
 }
 

@@ -5,6 +5,7 @@ import { KingdomSchema } from '@elvaria/domain';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
+  RM_TEMP,
   baseEnv,
   fakeTool,
   foundKingdom,
@@ -135,7 +136,7 @@ describe('elvaria doctor', () => {
   it('fails while the pinned file is gone, e.g. after a VS Code extension update moved Claude Code', async () => {
     const old = await fakeTool(path.join(dir.root, 'claude-code-2.1.318'), 'claude', '2.1.318');
     await doctor(await doctorIo(bin), '--tool', `claude=${old}`, '--acknowledge-terms', 'gemini');
-    await rm(path.dirname(old), { recursive: true, force: true });
+    await rm(path.dirname(old), RM_TEMP);
     const moved = await doctorIo(bin);
     expect(await doctor(moved)).toBe(1);
     expect(printed(moved)).toContain(
@@ -216,8 +217,8 @@ describe('elvaria doctor', () => {
     const ungit = await gitRepo(path.join(dir.root, 'ungit'));
     for (const folder of [repo, notes, gone, ungit])
       await run(testIo(), 'territory', 'add', folder, '--kingdom', kingdom);
-    await rm(gone, { recursive: true, force: true });
-    await rm(path.join(ungit, '.git'), { recursive: true, force: true });
+    await rm(gone, RM_TEMP);
+    await rm(path.join(ungit, '.git'), RM_TEMP);
     await mkdir(path.join(kingdom, 'territories', 'bad'));
     await writeFile(path.join(kingdom, 'territories', 'bad', 'territory.json'), '{');
     const io = await doctorIo(bin);

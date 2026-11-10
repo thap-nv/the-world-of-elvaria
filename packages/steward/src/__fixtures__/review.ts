@@ -47,6 +47,7 @@ export function plotsWith(root: string, replace: Partial<Plots>, calls: string[]
       return (replace.check ?? base.check)(request);
     },
     head: (plot) => (replace.head ?? base.head)(plot),
+    touched: (plot) => (replace.touched ?? base.touched)(plot),
     diff: (plot, scope) => {
       calls.push(`diff ${plot.type}`);
       return (replace.diff ?? base.diff)(plot, scope);

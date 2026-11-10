@@ -161,8 +161,23 @@ export async function lastPartialOf(ctx: Context, quest: Quest, n: number): Prom
 }
 
 /**
- * What a continuing assignee reads: the letter, the journal and, after a return, the checks of the verdict with the
- * end of each failing one's log, masked with `known`: the assignee cannot read `.runs/` either (P1-10b).
+ * What the branch touched as the session opens, by which the prompt names the checks the machine will run on the work
+ * (P1-43, (d) of P1-37). A plot that cannot be read gives nothing: the session opens without that section.
+ */
+async function touchedOf(ctx: Context, quest: Quest): Promise<Pick<Continuation, 'touched'>> {
+  try {
+    return { touched: await ctx.deps.plots.touched(quest.plot) };
+  } catch (error) {
+    const why = error instanceof Error ? error.message : String(error);
+    ctx.deps.log.warn(`steward: ${quest.id}: what the branch touched is unknown: ${why}`);
+    return {};
+  }
+}
+
+/**
+ * What a continuing assignee reads: the letter, the journal, the checks ahead of its work and, after a return, the
+ * checks of the verdict with the end of each failing one's log, masked with `known`: the assignee cannot read `.runs/`
+ * either (P1-10b).
  */
 async function continuationFor(
   ctx: Context,
@@ -171,7 +186,7 @@ async function continuationFor(
 ): Promise<(Continuation & Memory) | null> {
   const { continuation, quest } = input;
   if (continuation === undefined || continuation === null) return null;
-  const memory = await memoryOf(ctx, quest);
+  const memory = { ...(await memoryOf(ctx, quest)), ...(await touchedOf(ctx, quest)) };
   if (continuation.reason === 'revive') return { ...continuation, ...memory };
   const checks = await withLogTails(ctx.root, continuation.verdict.checks, known);
   return { ...continuation, ...memory, checks };

@@ -137,6 +137,9 @@
   removed after the judge's session whatever its end (`Plots.releaseScratch`, also after a breaker, the machine's
   verdict and at archive). On a territory with exclusive checks the judge opens only once the Steward holds the territory's exclusive lock, kept for its session (`src/review/exclusive.ts`, released at its end, by a tick when it lost its session, and at `stop()`), so it runs e2e too; the checks of other quests wait for it (`exclusiveWaitMinutes`). A verdict that fails on a flake (`flake_check`, or a judge's `flaky`) opens one quest
   of the ritual's `flaky_follow_up` (`fix`, knight) before the quest moves on; the quest's branch never changes.
+- Tells an assignee that goes on with a quest (revived, or returned) which checks the machine will run on its work:
+  it asks the plot what the branch touched (`Plots.touched`, P1-43) and the prompt names what `selectChecks` picks
+  for it; a plot that cannot say gives no such section, and the session still opens.
 - Runs the territory's checks on what the quest touched before a judge's session opens (`Plots.check`: runChecks
   of P1-07 in `elvaria run`, outside the tick, its `signal` aborted when nobody waits for them any more), with the
   quest's secrets from the treasury (`PlotCheck.secrets`, `questSecretsOf`, P1-10b), resolved in the tick before

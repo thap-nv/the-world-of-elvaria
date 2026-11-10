@@ -11,6 +11,7 @@ import type { SpawnRequest } from '@elvaria/runner-core';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { prepare } from './__fixtures__/harness.ts';
+import { RM_TEMP } from './__fixtures__/temp.ts';
 import { PROMPT_FILE } from './run-files.ts';
 import type { HookCommand } from './settings.ts';
 
@@ -66,7 +67,7 @@ describe('the secrets of a session', () => {
     );
     cleanup.push(
       () => prepared.workspace.remove(),
-      () => rm(outside, { recursive: true, force: true }),
+      () => rm(outside, RM_TEMP),
     );
     const prompt = { ...prepared.request.prompt, user: `Publish with the token ${TREASURY_VALUE}.` };
     const session = await prepared.runner.spawn({ ...prepared.request, quest: QUEST, prompt });

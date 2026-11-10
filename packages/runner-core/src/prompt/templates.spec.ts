@@ -5,6 +5,7 @@ import path from 'node:path';
 import { RITUAL_STEPS } from '@elvaria/domain';
 import { describe, expect, it } from 'vitest';
 
+import { RM_TEMP } from '../__fixtures__/temp.ts';
 import {
   PROMPTS_DIR,
   PROMPT_TEMPLATES,
@@ -37,7 +38,7 @@ describe('loadPromptTemplates', () => {
         true,
       );
     } finally {
-      await rm(dir, { recursive: true, force: true });
+      await rm(dir, RM_TEMP);
     }
   });
 });
