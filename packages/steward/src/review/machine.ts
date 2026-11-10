@@ -18,7 +18,7 @@ export async function machineReview(ctx: Context, questId: QuestId): Promise<Res
   const quest = ctx.world.quests.get(questId);
   if (quest === undefined) return err('unknown_quest');
   const n = currentRun(quest);
-  const checks = takeChecks(ctx, quest);
+  const checks = await takeChecks(ctx, quest);
   if (!checks.ok) return checks;
   const ritual = ritualOf(ctx, quest);
   if (ritual === undefined) return err('unknown_ritual');

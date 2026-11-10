@@ -91,6 +91,21 @@ describe('selectAssignee in a party (P1-21)', () => {
     expect(pick(web, [contract, api, worked(tests, 'ilse')])).toBe('vesper');
   });
 
+  // P1-38, P1-21 (k): the level speaks for the model's strength (a Flash knight starts at level 2, ceiling E), and
+  // the family is weighed only among those whose level takes the rank.
+  it('gives the acceptance tests to another family only when its level takes their rank', () => {
+    const rankC: Quest = { ...tests, rank: 'C' };
+    const party = [contract, worked(api, 'thorn'), web];
+    const strong = { ...opus, level: 5 };
+    const stretching = { ...gemini, level: 3 };
+    // ilse would stretch to C, vesper takes it as a matter of course: the same family with the level wins.
+    expect(pick(rankC, party, [strong, stretching])).toBe('vesper');
+    // ilse's level takes C: another family first, though vesper's level is higher.
+    expect(pick(rankC, party, [strong, { ...gemini, level: 4 }])).toBe('ilse');
+    // Nobody else can: ilse stretches one rank, and the claim waits for the seal (§2.6).
+    expect(pick(rankC, party, [stretching])).toBe('ilse');
+  });
+
   it('weighs no family outside a blind trial, nor for the contract or the merge quest', () => {
     const merge: Quest = {
       ...quest('q_20261106_m5n6p7', { party: Q1, dependsOn: [Q2, Q3, Q4] }),

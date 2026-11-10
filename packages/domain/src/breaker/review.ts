@@ -6,8 +6,11 @@
 // After REVIEW_BREAKS_MAX such verifiers in one run, the Steward sends the quest to the infirmary instead, where the
 // owner decides. The owner's retry sends such a quest back to review, same run, for a new judge, and the count
 // starts over (P1-26). A judge that hands in a partial verdict made progress and does not count.
+// The judges a breaker stopped in the open group are not chosen again while another judge may take the review
+// (cutVerifiersOf, selectVerifier; P1-38, P1-35 (d)).
 import { REVIEW_BREAKS_MAX } from '../constants.ts';
 import { currentRun } from '../quest/attempt-log.ts';
+import type { CharacterId } from '../core/ids.ts';
 import type { Attempt } from '../schema/quest/quest-parts.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 
@@ -17,18 +20,41 @@ import type { Quest } from '../schema/quest/quest.ts';
  */
 const NO_VERDICT: ReadonlySet<Attempt['outcome']> = new Set(['timeout', 'breaker', 'crash']);
 
+/** The ends a breaker gave: time (`timeout`), tokens or turns (`breaker`), the CLI's own limits included. */
+const CUT: ReadonlySet<Attempt['outcome']> = new Set(['timeout', 'breaker']);
+
+/** The verifier entries of the current run that ended without a verdict, oldest first. */
+const leftWithoutVerdict = (quest: Quest): Attempt[] => {
+  const n = currentRun(quest);
+  return quest.attempt_log.filter(
+    (entry) => entry.role === 'verifier' && entry.n === n && NO_VERDICT.has(entry.outcome),
+  );
+};
+
+/** How many of `stopped` sessions fall in the last group of REVIEW_BREAKS_MAX. */
+const lastGroupOf = (stopped: number): number =>
+  stopped === 0 ? 0 : ((stopped - 1) % REVIEW_BREAKS_MAX) + 1;
+
 /**
  * The verifier sessions of the quest's current run that ended without a verdict, since the owner last retried the
  * review. The REVIEW_BREAKS_MAX-th one sends the quest to the infirmary at once, so a run's such sessions come in
  * groups of REVIEW_BREAKS_MAX, each closed by a stall and a retry: only the last group counts, whole while the
  * quest waits in the infirmary. Derived from attempt_log, not stored (ADR 0002).
  */
-export const reviewBreaksOf = (quest: Quest): number => {
-  const n = currentRun(quest);
-  const stopped = quest.attempt_log.filter(
-    (entry) => entry.role === 'verifier' && entry.n === n && NO_VERDICT.has(entry.outcome),
-  ).length;
-  return stopped === 0 ? 0 : ((stopped - 1) % REVIEW_BREAKS_MAX) + 1;
+export const reviewBreaksOf = (quest: Quest): number => lastGroupOf(leftWithoutVerdict(quest).length);
+
+/**
+ * The judges a breaker stopped in the review's open group (P1-38, P1-35 (d)): the last group while it is not full.
+ * A full group sent the quest to the infirmary, so in review again it was closed by the owner's retry, which gives
+ * every judge its chance again: the owner raised the budget for them. A judge that crashed is not among them.
+ */
+export const cutVerifiersOf = (quest: Quest): ReadonlySet<CharacterId> => {
+  const stopped = leftWithoutVerdict(quest);
+  const open = lastGroupOf(stopped.length);
+  if (open === REVIEW_BREAKS_MAX) return new Set();
+  const cut = stopped.slice(stopped.length - open).filter(({ outcome }) => CUT.has(outcome));
+  // A verifier entry always names its judge; only a script-tier run has none.
+  return new Set(cut.map(({ character }) => character).filter((id): id is CharacterId => id !== null));
 };
 
 /**

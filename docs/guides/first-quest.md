@@ -127,6 +127,8 @@ elvaria character list
 
 Người nghiệm thu phải khác người làm, và cùng tộc thì khác model (`dispatch.verifier_same_family: different_model`). Mỗi nghề có prompt riêng `registry/prompts/<nghề>.md` (từ P1-15), nối vào sau luật của vai trong phần hệ thống của mọi phiên; chủ nhân sửa được. Vương quốc tạo trước P1-15 không có thư mục đó và không nạp được registry: `doctor` báo từng file thiếu, và `elvaria migrate` chép các file registry còn thiếu (không ghi đè file bạn đã có).
 
+Cấp của nhân vật là thước đo sức model của nó: không có `--level`, cấp khởi đầu lấy theo model (Flash 2, nhận tới hạng E; Argon 3; Sonnet, Pro 4; Opus 5, nhận tới C). Quản sự chỉ ưu tiên người khác họ model trong số những người mà cấp nhận được hạng của quest, nên đừng nâng tay cấp của một model yếu để nó nhận việc lớn: lần chạy P1-21, một hiệp sĩ Gemini Flash nhận phần test chấp nhận hạng C (cấp khởi đầu của Flash không nhận được hạng đó), đọc file sinh lớn hai phiên mà không chạy được `pnpm` rồi bị cầu dao cắt, còn một hiệp sĩ Opus viết xong trong một phiên. Lãnh thổ bật Khảo hạch mù (`blind_trial`) cần một hiệp sĩ khác họ với người làm các phần mà cấp nhận được hạng của phần test chấp nhận (hạng cao nhất của các phần), ví dụ một hiệp sĩ Gemini Pro (cấp 4, nhận C) bên cạnh hiệp sĩ Claude; không có ai như vậy thì Quản sự giao cho người cùng họ có cấp phù hợp, tính mù (người khác, không diff) vẫn giữ. Trên Windows, hiệp sĩ tộc agy chỉ chạy được `pnpm` khi PowerShell cho chạy script (`Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned`, mục 10).
+
 ## 6. Ra nhiệm vụ
 
 ```bash
@@ -136,7 +138,7 @@ elvaria quest add --territory dc1-se-team --kind build --rank E --class knight -
 elvaria quest list
 ```
 
-Kind `build` mặc định cần dấu vua, nên quest dừng ở `awaiting_seal` sau khi qua nghiệm thu. Trong Windows PowerShell 5.1, dấu `"` nằm trong một đối số bị cắt khi truyền cho `node` (CLI báo "Thừa tham số"): dùng ngoặc kép kiểu chữ (“ ”) hoặc Git Bash.
+Kind `build` mặc định cần dấu vua, nên quest dừng ở `awaiting_seal` sau khi qua nghiệm thu. Quest tạo bằng `quest add` không có ước lượng token, nên trần token của nó lấy theo hạng (từ P1-38): `context_budget_tokens × mana_multiplier` (240 000 với mặc định) cho F–D, gấp 1,5 cho C, 2 cho B, 2,5 cho A, 3 cho S; người chấm được gấp đôi trần đó. Việc cần hơn thì nâng trước bằng `elvaria quest edit`. Trong Windows PowerShell 5.1, dấu `"` nằm trong một đối số bị cắt khi truyền cho `node` (CLI báo "Thừa tham số"): dùng ngoặc kép kiểu chữ (“ ”) hoặc Git Bash.
 
 ## 7. Chạy Quản sự và theo dõi
 

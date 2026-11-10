@@ -53,6 +53,8 @@ describe('status and touched', () => {
 
     expect(await plots().status(plot)).toEqual({ dirty: true, ahead: 1, branch: 'quest/q_20261107_a2b3c4' });
     expect(await plots().touched(plot)).toEqual(['README.md', 'docs/new.md', 'src/app.ts', 'src/feature.ts']);
+    // The head is the commit, whatever the worktree holds uncommitted (P1-38).
+    expect(await plots().head(plot)).toBe(git(worktree, 'rev-parse', 'HEAD'));
   });
 
   it('say nothing for plots without git, and list a folder plot whole', async () => {
@@ -63,6 +65,8 @@ describe('status and touched', () => {
     const none: Plot = { type: 'none' };
 
     expect(await plots().status(folder)).toEqual({ dirty: false, ahead: 0, branch: null });
+    expect(await plots().head(folder)).toBeNull();
+    expect(await plots().head(none)).toBeNull();
     expect(await plots().touched(folder)).toEqual(['notes/a.md']);
     expect(await plots().touched({ type: 'folder', path: 'quests/q_20261107_c4d5e6/work' })).toEqual([]);
     expect(await plots().touched(none)).toEqual([]);

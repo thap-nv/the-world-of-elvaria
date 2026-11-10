@@ -31,6 +31,7 @@ describe("plots' checks with a quest's secrets", () => {
       const manager: PlotManager = {
         prepare: unused,
         status: unused,
+        head: unused,
         touched: () => Promise.resolve(['notes/today.md']),
         commitAll: unused,
         applyPatch: unused,
@@ -84,6 +85,7 @@ describe("plots' prepare with a quest's secrets", () => {
         return Promise.resolve({ ok: true, value: { plot, created: true, setup: null } });
       },
       status: unused,
+      head: unused,
       touched: unused,
       commitAll: unused,
       applyPatch: unused,
@@ -124,6 +126,7 @@ describe("plots of a party's quests (P1-18)", () => {
       const manager: PlotManager = {
         prepare: unused,
         status: unused,
+        head: unused,
         touched: () => Promise.resolve(['README.md']),
         commitAll: unused,
         applyPatch: unused,

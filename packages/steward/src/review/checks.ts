@@ -3,7 +3,10 @@
 // results go into the judge's prompt, the verdict and quest.checks_run; the logs stay in `.runs/<quest>-<n>/checks/`.
 // The deliverable's own checks (deliverable-checks.ts, P1-15) come after the territory's.
 // They run outside the tick (P1-25, background.ts): a tick starts them and goes on; a later tick, once they ended,
-// hands them to the judge or the machine, which takes them, so the next judge of the run gets its own run (P1-04).
+// hands them to the judge or the machine. The run's next judge (one a breaker stopped, one that read in part, one
+// that left without a verdict) gets the same results while the quest's branch head is the commit they ran on (P1-38,
+// P1-35 (c): a second judge cost ten more minutes of e2e on a commit that had not moved); otherwise, and always for a
+// judge in a scratch plot, whose plot leaves with it (ADR 0022), the next judge gets its own run of them (P1-04).
 // They get the quest's secrets as its sessions do (P1-10b), resolved in the tick before they start, and they tell
 // the owner and the world when they start and end (`check.start`, `check.end`): the quest waits in review meanwhile.
 import { MS_PER_MINUTE, currentRun, err, exclusiveWaitMinutes, ok, runDirOf } from '@elvaria/domain';
@@ -117,18 +120,44 @@ export async function startChecks(ctx: Context, questId: QuestId): Promise<Resul
   ctx.background.checks(questId, n, async (signal) => {
     // The checks start within the tick, the line beside them; the end's line always follows the start's.
     const started = noteChecks(ctx, quest, 'check.start', {});
+    // Read before they run: a commit made while they run makes them stale.
+    const head = await headOf(ctx, quest);
     const checks = await checksOf(ctx, quest, territory, n, { signal, secrets });
     await started;
     await noteChecks(ctx, quest, 'check.end', endOf(checks, signal));
-    return checks.ok ? checks.value : undefined;
+    return checks.ok ? { checks: checks.value, head } : undefined;
   });
   return ok(undefined);
 }
 
-/** The ended checks of the quest's current run, taken; planTick names a quest for a judge only once they ended. */
-export function takeChecks(ctx: Context, quest: Quest): Result<VerdictCheck[], string> {
-  const checks = ctx.background.take(quest.id, currentRun(quest));
-  return checks === undefined ? err('checks_not_ready') : ok([...checks]);
+/** The commit at the quest's plot, or null when it has none or git cannot say: its checks then serve one judge. */
+async function headOf(ctx: Context, quest: Quest): Promise<string | null> {
+  try {
+    return await ctx.deps.plots.head(quest.plot);
+  } catch (error) {
+    ctx.deps.log.warn(`steward: ${quest.id}: the head of its plot is unknown: ${messageOf(error)}`);
+    return null;
+  }
+}
+
+/**
+ * The ended checks of the quest's current run, for its judge or the machine; planTick names a quest for a judge only
+ * once they ended. They stay for the run's next judge when they ran on a commit that is still the branch head
+ * (P1-38); a judge in a scratch plot, or a plot without git, uses them up. Checks whose commit is no longer the head
+ * are dropped (`checks_stale`), and the next tick runs them again.
+ */
+export async function takeChecks(ctx: Context, quest: Quest): Promise<Result<VerdictCheck[], string>> {
+  const checked = ctx.background.ended(quest.id, currentRun(quest));
+  if (checked === undefined) return err('checks_not_ready');
+  if (checked.head === null || inScratch(ctx, quest)) {
+    ctx.background.drop(quest.id);
+    return ok([...checked.checks]);
+  }
+  if ((await headOf(ctx, quest)) !== checked.head) {
+    ctx.background.drop(quest.id);
+    return err('checks_stale');
+  }
+  return ok([...checked.checks]);
 }
 
 /** quest.checks_run: the ids of the checks that ran, computed after the work from the paths it touched (§2.3). */
