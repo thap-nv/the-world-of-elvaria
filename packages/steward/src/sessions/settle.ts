@@ -11,7 +11,7 @@ import { step } from '../record.ts';
 import { judge, runOf, stallWithoutVerdict, verifierLeaves } from '../review/judge.ts';
 import { afterJudge } from '../review/after-judge.ts';
 import { breakAssignee, breakVerifier } from './breaker.ts';
-import { commitPlot } from './commit.ts';
+import { commitPlot, warnUncommitted } from './commit.ts';
 import { checksLetterAfter, noteUnchangedLetter } from './letter.ts';
 import { applyAssigneePatch } from './patch.ts';
 import type { Context } from '../context.ts';
@@ -45,7 +45,7 @@ async function settleAssignee(
   const quest = running.quest;
   if (result.rate_limited) {
     // The pause keeps the work on the branch too (§3.3: a WIP commit before a pause); a refusal leaves it in place.
-    await commitPlot(ctx, quest, plotCommitMessage.wip(quest, 'mana'));
+    warnUncommitted(ctx, quest, await commitPlot(ctx, quest, plotCommitMessage.wip(quest, 'mana')));
     return moveAndRing(ctx, {
       quest,
       event: { type: 'mana_out', ...run },
@@ -77,6 +77,10 @@ async function settleAssignee(
     return breakAssignee(ctx, running, { trip: 'commit', patch: patched.detail }, ended(result));
   // Five classes have no git of their own, and the judge reads the branch's diff (§3.3, P1-07).
   const committed = await commitPlot(ctx, quest, plotCommitMessage.submit(quest));
+  // A forbidden path changed, which only a program the session's shell ran could do: nothing is committed, and the
+  // owner looks at the plot before anything else does (P1-49).
+  if (committed.status === 'forbidden')
+    return breakAssignee(ctx, running, { trip: 'forbidden_paths', paths: committed.paths }, ended(result));
   // The branch would lack the work: the quest goes to the infirmary with the hook's last words, not to review.
   if (committed.status === 'refused')
     return breakAssignee(ctx, running, { trip: 'commit', detail: committed.detail }, ended(result));

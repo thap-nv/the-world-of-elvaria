@@ -184,12 +184,15 @@ async function move(deps: RecorderDeps, request: Move): Promise<Result<Quest, st
   }
   const type = questLogTypeOf(event.type, found.status, after.value.status);
   const session = 'session_id' in event ? event.session_id : undefined;
+  // The sessions that followed the first in the run that ends here (P1-49): attempt_log keeps one entry for them all.
+  const sequels = 'sequels' in event ? event.sequels : undefined;
   const data = {
     ...(type === 'quest.infirmary'
       ? infirmaryData(request.infirmary ?? OUT_OF_ATTEMPTS, currentRun(after.value))
       : {}),
     quest: questViewOf(after.value),
     ...(moved.value.length > 0 ? { characters: moved.value.map(characterViewOf) } : {}),
+    ...(sequels === undefined || sequels.length === 0 ? {} : { sequels }),
   };
   await append(deps, { type, actor: actorOf(request.actor, found), data, quest: after.value, session }, at);
   return ok(after.value);

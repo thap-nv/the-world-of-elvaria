@@ -75,7 +75,7 @@ export function sessionShareOf(
 }
 
 /** One window of one gauge: a reading's, or a share's. */
-type WindowKey = Pick<ManaReading, 'tribe' | 'pool' | 'window' | 'model'>;
+export type WindowKey = Pick<ManaReading, 'tribe' | 'pool' | 'window' | 'model'>;
 
 const sameWindow = (share: SessionShare, window: WindowKey): boolean =>
   share.tribe === window.tribe &&
@@ -115,6 +115,10 @@ export function sharesOfHistory(
   return shares;
 }
 
+/** The largest share of `window` a session was seen to take; undefined before any was measured (`elvaria doctor`). */
+export const measuredShareOf = (shares: readonly SessionShare[], window: WindowKey): number | undefined =>
+  shares.find((share) => sameWindow(share, window))?.pct;
+
 /**
  * The share of `reading`'s window one more session is taken to need: the largest measured, or
  * SESSION_SHARE_DEFAULT_PCT before any. Never more than warn_margin_pct: the gauge has warned before it closes, and
@@ -122,9 +126,8 @@ export function sharesOfHistory(
  */
 export function shareAheadOf(
   shares: readonly SessionShare[],
-  reading: ManaReading,
+  reading: WindowKey,
   cfg: Pick<Kingdom['mana'], 'warn_margin_pct'>,
 ): number {
-  const measured = shares.find((share) => sameWindow(share, reading))?.pct;
-  return Math.min(measured ?? SESSION_SHARE_DEFAULT_PCT, cfg.warn_margin_pct);
+  return Math.min(measuredShareOf(shares, reading) ?? SESSION_SHARE_DEFAULT_PCT, cfg.warn_margin_pct);
 }

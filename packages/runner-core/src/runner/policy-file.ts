@@ -9,6 +9,7 @@ import path from 'node:path';
 import { writeFileAtomic } from '@elvaria/store';
 
 import { PATCH_FILE } from '../plot/patch.ts';
+import { GIT_PATHS } from '../policy/constants.ts';
 import type { ToolLaws, ToolPolicy } from '../policy/tool-policy.ts';
 import type { RunContext } from './run-context.ts';
 
@@ -16,7 +17,7 @@ export const POLICY_FILE = 'policy.json';
 /**
  * `secrets` and `tools` (P1-10), `apprentice_models` (P1-17), `laws.read_only_paths` and `cli_protected_paths`
  * (P1-24), `laws.patch_paths` and `patch_file` (P1-28) are optional fields added later: a v1 reader without them
- * still reads the rest.
+ * still reads the rest. Since P1-49 every file has `cli_protected_paths`, with git's own folder in it.
  */
 export const POLICY_VERSION = 1;
 
@@ -32,9 +33,10 @@ export interface PolicyFile extends RunContext {
    */
   readonly apprentice_models?: readonly string[];
   /**
-   * Globs the CLI itself refuses to write whatever the permission rules say (P1-24: Claude Code guards `.husky/`,
-   * `.git/`, `.claude/`…). The hook refuses them first, with a reason the model can act on instead of the CLI's
-   * bare "denied"; absent: no such check.
+   * Globs no write tool changes whatever the permission rules say: those the CLI itself refuses (P1-24: Claude Code
+   * guards `.husky/`, `.git/`, `.claude/`…), and git's own folder for every tribe (GIT_PATHS, P1-49: agy wrote
+   * `.git/`). The hook refuses a write tool there first, with a reason the model can act on (ask the owner) instead
+   * of the CLI's bare "denied"; absent (a file written before P1-49): no such check.
    */
   readonly cli_protected_paths?: readonly string[];
   /**
@@ -55,6 +57,11 @@ const listOf = (key: keyof PolicyExtras, extras: PolicyExtras) => {
   return list === undefined ? {} : { [key]: [...list] };
 };
 
+/** The adapter's own list first (Claude's already has `.git/**`), then git's folder for a tribe whose CLI lacks it. */
+const protectedOf = (extras: PolicyExtras): string[] => [
+  ...new Set([...(extras.cli_protected_paths ?? []), ...GIT_PATHS]),
+];
+
 export const policyFileOf = (
   ctx: RunContext,
   policy: Pick<ToolPolicy, 'tools' | 'laws'>,
@@ -70,7 +77,7 @@ export const policyFileOf = (
     forbidden_commands: policy.laws.forbidden_commands,
   },
   ...listOf('apprentice_models', extras),
-  ...listOf('cli_protected_paths', extras),
+  cli_protected_paths: protectedOf(extras),
   ...(policy.laws.patch_paths.length === 0 ? {} : { patch_file: PATCH_FILE }),
 });
 

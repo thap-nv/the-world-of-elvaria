@@ -104,6 +104,12 @@ describe('a tribe without a tool gate: the letter checked after the session (han
       },
     ]);
     expect(kingdom.warnings.join('\n')).toContain('left handover.md unchanged');
+    // The line that ends the run names the two reminders, so the log counts three sessions (P1-49, (c) of P1-33).
+    const { events } = await openJournal(kingdom.root, quest.id).read();
+    const submitted = events.find(({ type }) => type === 'quest.submitted');
+    const reminded = { session_id: expect.any(String) as unknown, why: 'the handover letter is unchanged' };
+    expect(submitted?.data).toMatchObject({ sequels: [reminded, reminded] });
+    expect(events.find(({ type }) => type === 'quest.done')?.data).not.toHaveProperty('sequels');
   });
 
   it('stops reminding once the letter is written, and opens a fresh session when the tribe cannot resume', async () => {

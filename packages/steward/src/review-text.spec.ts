@@ -5,6 +5,7 @@
 import path from 'node:path';
 
 import { TribeIdSchema, verdictIdOf } from '@elvaria/domain';
+import { openJournal } from '@elvaria/eventlog';
 import { RETRY_DIR, createFakeRunner } from '@elvaria/runner-core';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -119,6 +120,15 @@ describe('a judge whose tribe answers in text', () => {
     expect(judged.map(({ outcome }) => outcome)).toEqual(['submitted']);
     const verdict = await kingdom.store.verdicts.read(verdictIdOf(quest, 1));
     expect(verdict.ok && verdict.value).toMatchObject({ result: 'pass', session_id: judged[0]?.session_id });
+    // The verdict's line names the retry and why it opened (P1-49, (c) of P1-33).
+    const { events } = await openJournal(kingdom.root, quest.id).read();
+    const done = events.find(({ type }) => type === 'quest.done');
+    expect(done?.data).toMatchObject({
+      sequels: [
+        { session_id: expect.any(String) as unknown, why: expect.stringContaining('notes') as unknown },
+      ],
+    });
+    expect(done?.session).toBe(judged[0]?.session_id);
   });
 
   it("records the retry's process in .state/sessions.json, so a restart reaps the one the judge runs in (P1-33 (b))", async () => {

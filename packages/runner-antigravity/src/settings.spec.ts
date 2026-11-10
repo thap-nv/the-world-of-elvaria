@@ -31,9 +31,22 @@ const FENCES = [
   'write_file(.env)',
   'write_file(.env.)',
   'write_file(infra/secrets/)',
+  'write_file(.git/)',
   'write_file(.agents/)',
   'write_file(GEMINI.md)',
 ];
+
+describe("agySettingsOf: git's own folder (P1-49)", () => {
+  it('denies writing in .git/ to every role, as a folder: .gitignore and .github/ stay writable', () => {
+    for (const role of ['assignee', 'verifier', 'chancellor'] as const) {
+      const { deny } = settingsOf(role, ['Read', 'Edit', 'Write'], []);
+      expect(deny).toContain('write_file(.git/)');
+      // agy rules are prefixes: `write_file(.git)` would deny `.gitignore`; the hook guards a worktree's `.git` file.
+      expect(deny).not.toContain('write_file(.git)');
+      expect(deny).not.toContain('read_file(.git/)');
+    }
+  });
+});
 
 describe('agySettingsOf: generated files (P1-24)', () => {
   it('lets a writer run the generators and read generated files, and denies writing them', () => {

@@ -158,6 +158,16 @@ describe('EventSchema', () => {
         ...QUEST_CHANGE,
       },
     ],
+    [
+      'a forbidden path a session left changed (P1-49)',
+      {
+        reason: 'breaker:forbidden_paths: infra/secrets/key.txt changed in the plot, …',
+        trip: 'forbidden_paths',
+        detail: { paths: ['infra/secrets/key.txt'] },
+        ...QUEST_CHANGE,
+        sequels: [{ session_id: 's-2', why: 'the handover letter is unchanged' }],
+      },
+    ],
   ])('accepts an infirmary line: %s', (_, data) => {
     expect(issuesOf(line('quest.infirmary', data))).toEqual([]);
   });
@@ -214,6 +224,10 @@ describe('EventSchema', () => {
       { ...QUEST_CHANGE, reason: 'r', detail: { verifiers_stopped: 0 } },
       'verifiers_stopped',
     ],
+    ['quest.infirmary', { ...QUEST_CHANGE, reason: 'r', detail: { paths: [] } }, 'data.detail.paths'],
+    ['quest.submitted', { ...QUEST_CHANGE, sequels: [] }, 'data.sequels'],
+    ['quest.submitted', { ...QUEST_CHANGE, sequels: [{ session_id: '' }] }, 'data.sequels.0.session_id'],
+    ['quest.verdict', { ...QUEST_CHANGE, sequels: [{ why: 'x', model: 'm' }] }, 'Unrecognized key: "model"'],
     ['quest.claimed', {}, 'data.quest'],
     ['quest.claimed', { quest: { ...QUEST_VIEW, assignee: undefined } }, 'data.quest.assignee'],
     ['quest.claimed', { quest: { ...QUEST_VIEW, plot: { type: 'none' } } }, 'Unrecognized key: "plot"'],

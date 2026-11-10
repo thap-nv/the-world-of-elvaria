@@ -9,7 +9,7 @@ import type { Character, CharacterId, Quest, RunEnd } from '@elvaria/domain';
 import { moveAndRing } from '../notices.ts';
 import { OWNER, step } from '../record.ts';
 import { runOf } from '../review/judge.ts';
-import { commitPlot } from '../sessions/commit.ts';
+import { commitPlot, warnUncommitted } from '../sessions/commit.ts';
 import { maskFinished } from '../sessions/secrets.ts';
 import { APPLIED, rejected } from './quest-commands.ts';
 import type { Context } from '../context.ts';
@@ -32,11 +32,12 @@ async function stopSession(ctx: Context, quest: Quest, why: string): Promise<Run
   const running = ctx.sessions.get(quest.id);
   if (running === undefined) return {};
   const { result } = await maskFinished(ctx, { running, result: await ctx.sessions.stop(running, why) });
-  if (running.role === 'assignee') {
-    const wip = await commitPlot(ctx, quest.id, plotCommitMessage.wip(quest.id, 'suspend'));
-    if (wip.status === 'refused')
-      ctx.deps.log.warn(`steward: ${quest.id}: WIP not committed, it stays in the plot: ${wip.detail}`);
-  }
+  if (running.role === 'assignee')
+    warnUncommitted(
+      ctx,
+      quest.id,
+      await commitPlot(ctx, quest.id, plotCommitMessage.wip(quest.id, 'suspend')),
+    );
   return runOf(running, result);
 }
 

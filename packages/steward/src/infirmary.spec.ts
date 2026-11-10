@@ -7,6 +7,7 @@ import {
   OUT_OF_ATTEMPTS,
   infirmaryData,
   infirmaryReason,
+  pathsSaid,
   refusedPatchOf,
 } from './infirmary.ts';
 import type { InfirmaryCause } from './infirmary.ts';
@@ -34,6 +35,11 @@ describe('infirmaryReason', () => {
       'missing secrets',
       { trip: 'secrets', detail: { message: 'no npm_token' } },
       'breaker:secrets: no npm_token',
+    ],
+    [
+      'a forbidden path a program of the session wrote (P1-49)',
+      { trip: 'forbidden_paths', detail: { paths: ['infra/secrets/key.txt', '.env'] } },
+      "breaker:forbidden_paths: infra/secrets/key.txt, .env changed in the plot, which laws.forbidden_paths forbids, so nothing was committed: put them back or remove them in the plot before a retry; a program the session's shell ran wrote them (an interpreter such as node, pnpm or npx in the class's tools.allow opens every path to the character's scripts)",
     ],
     [
       'a review no verifier could finish',
@@ -83,6 +89,14 @@ describe('infirmaryReason', () => {
     ],
   ])('says %s', (_, cause, reason) => {
     expect(infirmaryReason(cause, 3)).toBe(reason);
+  });
+});
+
+describe('pathsSaid (P1-49)', () => {
+  it('names ten paths at most and counts the rest', () => {
+    const paths = Array.from({ length: 12 }, (_, index) => `infra/secrets/${index}.key`);
+    expect(pathsSaid(paths)).toBe(`${paths.slice(0, 10).join(', ')} and 2 more`);
+    expect(pathsSaid(paths.slice(0, 10))).toBe(paths.slice(0, 10).join(', '));
   });
 });
 

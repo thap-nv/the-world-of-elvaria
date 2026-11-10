@@ -66,6 +66,8 @@ export interface PrepareOptions {
    * and that the default branch does not hold yet; none, the default branch. A worktree already there keeps its own.
    */
   readonly from?: readonly string[];
+  /** Kills `commands.setup` when aborted (the Steward stops, P1-49): the plot stays not set up, for the next prepare. */
+  readonly signal?: AbortSignal;
 }
 
 export interface PlotManager {
@@ -111,13 +113,13 @@ export interface PlotManager {
   release(plot: Plot): Promise<Result<ReleasedPlot, PlotFailure>>;
   /**
    * The judge's scratch plot (ADR 0022, P1-20): a fresh worktree `<quest-id>-verify` detached at the head of the
-   * quest's branch, after commands.setup with `options.secrets`; one left by an earlier judge is removed first.
-   * `not_a_repo` for a folder territory, which has none.
+   * quest's branch, after commands.setup with `options.secrets`, killed by `options.signal` (P1-49); one left by an
+   * earlier judge is removed first. `not_a_repo` for a folder territory, which has none.
    */
   prepareScratch(
     quest: Pick<Quest, 'id'>,
     territory: Territory,
-    options?: Pick<PrepareOptions, 'secrets'>,
+    options?: Pick<PrepareOptions, 'secrets' | 'signal'>,
   ): Promise<Result<PreparedScratch, PlotFailure>>;
   /** Moves a scratch plot to `ref`, detached, dropping its changes (the trial's coverage on the base). */
   checkoutScratch(scratch: PreparedScratch, ref: string): Promise<void>;
@@ -140,7 +142,7 @@ async function prepareGitPlot(
   quest: Pick<Quest, 'id'>,
   territory: Territory,
   options: PlotManagerOptions,
-  { secrets, from }: PrepareOptions,
+  { secrets, from, signal }: PrepareOptions,
 ): Promise<Result<PreparedPlot, PlotFailure>> {
   const repo = fromPortable(territory.path);
   const common = await git(repo, ['rev-parse', '--path-format=absolute', '--git-common-dir']);
@@ -161,6 +163,7 @@ async function prepareGitPlot(
     command: territory.commands.setup,
     host: options.host,
     ...(secrets === undefined ? {} : { secrets }),
+    ...(signal === undefined ? {} : { signal }),
   });
   if (!setup.ok) return setup;
   return ok({
@@ -202,7 +205,12 @@ function scratchMethods(options: PlotManagerOptions, git: () => Promise<Git>): S
         command: territory.commands.setup,
       };
       const target = scratchTargetOf(await git(), quest, territory);
-      return prepareScratch(target, quest.id, { ...setup, ...(given.secrets === undefined ? {} : given) });
+      const { secrets, signal } = given;
+      return prepareScratch(target, quest.id, {
+        ...setup,
+        ...(secrets === undefined ? {} : { secrets }),
+        ...(signal === undefined ? {} : { signal }),
+      });
     },
     checkoutScratch: async (scratch, ref) => checkoutScratch(await git(), scratch.worktree, ref),
     releaseScratch: async (quest, territory) =>

@@ -35,8 +35,12 @@ export async function trialInScratch(
   request: ScratchTrialRequest,
   host: ProcessHost,
 ): Promise<CheckRun[]> {
-  const { quest, territory, secrets } = request;
-  const prepared = await manager.prepareScratch(quest, territory, secrets === undefined ? {} : { secrets });
+  const { quest, territory, secrets, signal } = request;
+  // The Steward that stops kills the setup too (P1-49): what the trial gives then is thrown away (background.ts).
+  const prepared = await manager.prepareScratch(quest, territory, {
+    ...(secrets === undefined ? {} : { secrets }),
+    ...(signal === undefined ? {} : { signal }),
+  });
   if (!prepared.ok) {
     const { reason, detail, log_path: logPath } = prepared.error;
     if (reason !== 'setup_failed')
@@ -61,7 +65,7 @@ export async function trialInScratch(
     checkout: (ref: string) => manager.checkoutScratch(scratch, ref),
   };
   const optional = {
-    ...(request.signal === undefined ? {} : { signal: request.signal }),
+    ...(signal === undefined ? {} : { signal }),
     ...(secrets === undefined ? {} : { secrets }),
     ...(request.party_role === undefined ? {} : { party_role: request.party_role }),
     ...(request.lock_wait_ms === undefined ? {} : { lock_wait_ms: request.lock_wait_ms }),

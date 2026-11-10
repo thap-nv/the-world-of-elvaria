@@ -14,7 +14,7 @@ import {
   validateVerdict,
   withBreaksWeighed,
 } from '@elvaria/domain';
-import type { Quest, Result, Verdict } from '@elvaria/domain';
+import type { Quest, Result, SequelRun, Verdict } from '@elvaria/domain';
 import type { RunResult } from '@elvaria/runner-core';
 
 import { OUT_OF_ATTEMPTS } from '../infirmary.ts';
@@ -26,9 +26,23 @@ import { judgeVerdictOf, refusalText } from './verdict-file.ts';
 import type { Context } from '../context.ts';
 import type { Running } from '../sessions/running.ts';
 
+/**
+ * The sessions that followed the first in the run (spawnSequel, P1-33), for the line that tells its end (P1-49, (c)
+ * of P1-33): attempt_log keeps one entry for the run, so the line says how many sessions it opened. A part the
+ * runner did not know is left out.
+ */
+function sequelsOf(result: RunResult): { sequels?: SequelRun[] } {
+  const sequels = (result.sequels ?? []).map(({ session_id: id, why }) => ({
+    ...(id === '' ? {} : { session_id: id }),
+    ...(why === '' ? {} : { why }),
+  }));
+  return sequels.length === 0 ? {} : { sequels };
+}
+
 export const runOf = (running: Running, result: RunResult) => ({
   session_id: result.session_id === '' ? running.session_id : result.session_id,
   tokens: result.usage.tokens,
+  ...sequelsOf(result),
 });
 
 /**

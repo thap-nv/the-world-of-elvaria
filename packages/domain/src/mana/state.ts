@@ -113,3 +113,21 @@ export function spentFor(
 
 /** Whether a gauge in `state` opens new sessions. */
 export const admits = (state: ManaState): boolean => state === 'ok' || state === 'warning';
+
+/**
+ * Whether one window closes its gauge (P1-49, (c) of P1-48: `elvaria doctor` says so): `cap` once it is at the
+ * threshold, `early` while one more session, at the share a session was seen to take (shareAheadOf), would take it
+ * there, as stateOfLive decides; `open` otherwise.
+ */
+export type WindowClosing = 'open' | 'early' | 'cap';
+
+export function windowClosingOf(
+  reading: Pick<ManaReading, 'tribe' | 'pool' | 'window' | 'model' | 'used_pct'>,
+  shares: readonly SessionShare[],
+  cfg: ManaConfig,
+): WindowClosing {
+  const used = reading.used_pct ?? 0;
+  const threshold = manaThresholdOf(cfg);
+  if (used >= threshold) return 'cap';
+  return used + shareAheadOf(shares, reading, cfg) >= threshold ? 'early' : 'open';
+}

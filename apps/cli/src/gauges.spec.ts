@@ -7,6 +7,7 @@ import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { NOW, foundKingdom, printed, run, tempDir, testIo } from '../test/cli.ts';
+import { QUEST_ID, plantQuests, questFixture } from '../test/quest.ts';
 import { gaugesOf } from './gauges.ts';
 import type { TempDir } from '../test/cli.ts';
 
@@ -193,6 +194,54 @@ describe('elvaria character list and doctor with the gauges the Steward logged',
     );
     // A warning, not an error: a sleeping gauge does not make the machine unready.
     expect(text).not.toContain('✗ Mana');
+  });
+
+  it('doctor gives what a session took of each window, and warns of a gauge closed early or at the cap (P1-49)', async () => {
+    // thorn's session ended between two readings of Claude's 5-hour window: 30% then 36%, so a session took 6%.
+    const ended = {
+      n: 1,
+      character: 'thorn',
+      role: 'assignee',
+      started_at: '2026-11-06T07:10:00+07:00',
+      ended_at: '2026-11-06T07:30:00+07:00',
+      outcome: 'submitted',
+      run_dir: `.runs/${QUEST_ID}-1`,
+    };
+    await plantQuests(
+      kingdom,
+      questFixture('done', QUEST_ID, { assignee: 'thorn', attempts: 1, attempt_log: [ended] }),
+    );
+    const at = (hour: string) => `2026-11-06T${hour}:00+07:00`;
+    const read = (pool: object, window: string, used: number, ts: string, resets = RESETS) =>
+      manaLine(
+        'mana.level',
+        { ...pool, window, used_pct: used, source: 'rate_limits', resets_at: resets },
+        ts,
+      );
+    const weekly = '2026-11-10T09:00:00+07:00';
+    await openEventLog(kingdom).append([
+      read(CLAUDE, 'five_hour', 30, at('07:00')),
+      read(CLAUDE, 'five_hour', 36, at('08:00')),
+      read(GEMINI, 'weekly', 92, at('08:00'), weekly),
+      read(ARGON, 'weekly', 98, at('08:00'), weekly),
+    ]);
+    const io = testIo();
+    await run(io, 'doctor', '--kingdom', kingdom, '--locale', 'en');
+    const text = printed(io);
+    expect(text).toContain(
+      '✓ Mana gauge: tribe claude, pool claude.\n    5-hour window: 36% used, resets at ' +
+        `${RESETS} (read at ${at('08:00')}, source rate_limits).\n` +
+        '    One session took up to 6% of the 5-hour window (measured from the log).',
+    );
+    expect(text).toContain(
+      '! Mana gauge closed one session early: tribe gemini, pool gemini_models. Its weekly window is at 92%, and one more session (7%) would take it to 98%',
+    );
+    expect(text).toContain(
+      "    One session's share of the weekly window is not measured yet: the Steward counts 7%.",
+    );
+    expect(text).toContain(
+      "! Mana gauge closed: tribe gemini, pool gemini_models, argon's own cap. Its weekly window is at 98%, at or past 98%",
+    );
   });
 
   it('says mana is not measured yet when the Steward has logged nothing, and marks nobody', async () => {

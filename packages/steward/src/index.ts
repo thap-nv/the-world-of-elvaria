@@ -1,4 +1,5 @@
 export { questIdOfCommand } from './inbox/quest-commands.ts';
+export { levelsFromLog } from './mana/book.ts';
 export { folderPlots } from './plots.ts';
 export { nodeScriptRunner } from './script/run-script.ts';
 export type { ScriptRequest, ScriptRunResult, ScriptRunner } from './script/run-script.ts';

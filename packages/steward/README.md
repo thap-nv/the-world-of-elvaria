@@ -24,7 +24,9 @@
   `fail`, `error`, `stopped`), never a quest or a character. Work that ends on its own makes the loop tick at once
   rather than at its next beat (P1-10b), so a judge opens on checks that ended without waiting up to
   `tick_seconds`. Work for a quest that moved on (cancelled,
-  judged, retried) is killed before each plan; `stop()` kills it all and the next Steward runs it again.
+  judged, retried) is killed before each plan; `stop()` kills it all and the next Steward runs it again. A plot's
+  `commands.setup` in the tick gets the stop's signal too (`plotOptionsOf`, P1-49): `stop()` kills an install in
+  progress instead of waiting for it, the claim is given back, and the tick claims nothing more.
   `Steward.idle()` resolves once the work running now has ended (what a spec waits on). No more of it runs at once
   than `dispatch.max_background` (P1-47, 2 by default until a run measures the load): `planTick` starts checks
   first, then scripts, in the room the running work leaves, and the rest waits for a later tick.
@@ -52,7 +54,9 @@
   as before P1-32; the `infirmary` notice carries all three, so a bell can say why in the owner's language.
 - Keeps the pid of every session it holds in `.state/sessions.json` (written before each tick ends, emptied at
   stop); a session that goes on in another process (a reply tried again, a reminder of the letter, P1-33) is
-  written again with that process's pid and spawn time (`Sessions.respawned`). At start, before the first tick, it kills the tree of each pid the last Steward left there whose process
+  written again with that process's pid and spawn time (`Sessions.respawned`), and the `quest.*` line that tells
+  the run's end names those sessions (`data.sequels`, `runOf`, P1-49), since attempt_log keeps one entry for the
+  run. At start, before the first tick, it kills the tree of each pid the last Steward left there whose process
   started when that session was spawned (`processStartOf`, within a minute), and leaves a pid that now belongs to
   another process, or whose start the system would not tell, alone, with a warning. `sessionsLeftBehind(root)`
   tells `elvaria doctor` which of them still run, and nothing while a Steward holds the lock.
@@ -116,7 +120,11 @@
   keeps it (`maskFinished`, ADR 0013): the handover letter (`redactHandover`), the question, and the verifier's
   output, so the verdict notes the next prompt reads hold none.
 - Turns a session's end into the quest's move: submit (after committing the plot with `plotCommitMessage.submit`;
-  a commit the territory's hooks refuse sends the quest to the infirmary, `breaker:commit`; before it, on a
+  a commit the territory's hooks refuse sends the quest to the infirmary, `breaker:commit`; a plot whose changes
+  (`Plots.touched`) include a path of `laws.forbidden_paths` or a dotenv file, which only a program the session's
+  shell ran could write, is not committed and goes to the infirmary with the bell, `breaker:forbidden_paths`,
+  `detail.paths`, P1-49; every commit of the Steward checks so, a WIP left in the plot with the reason, and a plot
+  whose changes cannot be listed is not committed either; before it, on a
   territory with `laws.patch_paths`, the assignee's `elvaria.patch` is applied through `Plots.applyPatch` and told
   in a `plot.patched` line, and a patch that touches other paths or does not apply sends the quest to the
   infirmary instead, `breaker:commit: elvaria.patch was not applied: …`, P1-28; the next run's prompt reads why
@@ -313,7 +321,11 @@ ticks as soon as they end, not a beat later. `setup-secrets.spec.ts` (P1-30): th
 judge gets exactly the quest's secrets for its setup (none, and no treasury read, for a quest that asks for none),
 and a treasury that cannot give the values by then prepares no plot and gives the claim back; a script-tier quest's
 plot gets them too while its script gets none, and one whose secrets the treasury lacks goes to the infirmary once,
-never claimed and released every tick (P1-47).
+never claimed and released every tick (P1-47). `stop-setup.spec.ts` (P1-49): a stop kills the setup of the plot in
+progress, gives the claim back and claims nothing more. `forbidden-paths.spec.ts` (P1-49): on real git repos, an
+assignee that leaves `infra/secrets/key.txt` or `apps/api/.env` in its plot goes to the infirmary with
+`forbidden_paths`, the bell and nothing committed; a clean plot submits as before; a pause for mana leaves such work
+uncommitted and says why; a plot whose changes cannot be listed is not committed.
 `apprentice-breaker.spec.ts`: the
 infirmary note after an apprentice overran or was cut. `review-breakers.spec.ts`: two verifiers stopped by the
 token breaker, or by their CLI's turn limit, send the review to the infirmary and no third opens.

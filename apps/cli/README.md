@@ -92,7 +92,10 @@
   left running (`sessionsLeftBehind`), which the next `run` kills (P1-11, `src/doctor/check-state.ts`), and the
   mana gauges (P1-32, `src/doctor/check-mana.ts`): a sleeping one as a warning, with the reset its sleep named,
   an awake one with its readings,
-  "not measured" when the Steward has logged none.
+  "not measured" when the Steward has logged none; under each reading the share of the window a session took, as
+  the Steward measures it again at start from the log (`levelsFromLog`, `sharesOfHistory`), or the default it
+  counts before that, and an awake gauge one more session would take to the cap, or one at it, as a warning
+  (`windowClosingOf`, P1-49, (c) of P1-48).
 - Mana gauges for `character list` and `doctor` (`src/gauges.ts`, P1-32), folded from the Steward's `mana.*`
   lines in the event log, since the Steward keeps no file of them: which gauges sleep (`mana.exhausted` /
   `mana.restored`) and the reset a sleep named, the latest reading of each window still in force (`mana.level`, a

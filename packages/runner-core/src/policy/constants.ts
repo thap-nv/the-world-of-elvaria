@@ -37,5 +37,14 @@ export const SCRATCH_RULES = ['Edit', 'Write', 'Bash(git status:*)', 'Bash(git r
 /** Dotenv files are never read nor written, whatever the territory says (§3.9). */
 export const SECRET_FILES = ['.env', '.env.*'] as const;
 
+/**
+ * Git's own folder, and a worktree's `.git` file (the hook's `dir/**` matches `dir` itself): no write tool of any
+ * tribe changes them (P1-49, (a) of P1-46). Claude Code refuses them by itself, agy 1.5.4 does not and wrote
+ * `.git/` (spike Antigravity §15). Not a forbidden path: reading git's files is harmless, and the hook matches
+ * forbidden paths against every word of a shell line, so `grep -r --exclude-dir=.git` would be refused too. Git
+ * itself writes there on every commit, so a shell line is not fenced.
+ */
+export const GIT_PATHS = ['.git/**'] as const;
+
 /** Territory commands a character with a shell may run to check its own work. */
 export const CHECK_COMMANDS = ['test', 'lint', 'typecheck'] as const;
