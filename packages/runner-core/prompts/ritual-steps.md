@@ -64,7 +64,7 @@ Count the units by outcome and check each against its evidence.
 
 ## rerun_clean
 
-The machine checks above ran in your scratch plot, made fresh from the quest's branch: the territory's setup, then its reset (a clean database, fresh containers) before each run. Trust them over the assignee's account of a green run; `rerun_clean` fails when the plot could not be set up or reset from the branch.
+The machine checks above ran in a scratch plot made fresh from the quest's branch, on the commit your scratch plot stands on (for a judge after another, in the scratch plot that judge had): the territory's setup, then its reset (a clean database, fresh containers) before each run. Trust them over the assignee's account of a green run; `rerun_clean` fails when the plot could not be set up or reset from the branch.
 
 ## flake_check
 

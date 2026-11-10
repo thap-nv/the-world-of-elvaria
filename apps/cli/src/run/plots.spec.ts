@@ -113,6 +113,53 @@ describe("plots' prepare with a quest's secrets", () => {
 
     expect(asked).toEqual([[{ secrets: { npm_token: 'value' } }], [undefined]]);
   });
+
+  it("makes the run's next scratch plot with the quest's secrets, and throws when it is not ready (P1-42)", async () => {
+    const quest = questFixture('open');
+    const asked: unknown[] = [];
+    let setupFails = false;
+    const manager: PlotManager = {
+      prepare: unused,
+      status: unused,
+      head: unused,
+      touched: unused,
+      commitAll: unused,
+      applyPatch: unused,
+      diff: unused,
+      merge: unused,
+      unmerged: unused,
+      release: unused,
+      prepareScratch: (_quest, _territory, given) => {
+        asked.push(given);
+        if (setupFails)
+          return Promise.resolve({ ok: false, error: { reason: 'setup_failed', detail: 'exit 1' } });
+        const plot = { type: 'worktree' as const, path: 'D:/repo/.elvaria/worktrees/q-verify' };
+        return Promise.resolve({
+          ok: true,
+          value: { plot, worktree: 'D:\\repo', base: 'b45e', head: 'f00d' },
+        });
+      },
+      checkoutScratch: unused,
+      releaseScratch: unused,
+      scratchOf: unused,
+    };
+    const territory = TerritorySchema.parse({
+      version: 1,
+      id: 'notes',
+      name: 'notes',
+      path: 'D:/notes',
+      kind: 'docs',
+      vcs: { type: 'git', default_branch: 'main' },
+    });
+    const plots = plotsOver('D:/kingdom', manager, processHostOf(testIo()));
+    await plots.prepareScratch(quest, territory, { npm_token: 'value' });
+    await plots.prepareScratch(quest, territory);
+    expect(asked).toEqual([{ secrets: { npm_token: 'value' } }, {}]);
+    setupFails = true;
+    await expect(plots.prepareScratch(quest, territory)).rejects.toThrow(
+      `the scratch plot of ${quest.id} is not ready (setup_failed): exit 1`,
+    );
+  });
 });
 
 describe("plots of a party's quests (P1-18)", () => {

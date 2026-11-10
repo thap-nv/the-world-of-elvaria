@@ -26,11 +26,13 @@ export type BreakerTrip = (typeof BREAKER_TRIPS)[number];
  * running out (a crash or a fail at max_attempts), or a script-tier run the machine could not finish: its script
  * broke, could not use the quest's params (`usage`), or did not pass. A script past its time trips `time`.
  * `no_verdict`: the review stalled because its last judge left without a verdict, its CLI failed or its output
- * was none (P1-33); a review whose last judge a breaker stopped names that breaker instead.
+ * was none (P1-33); a review whose last judge a breaker stopped names that breaker instead. `partial_verdicts`: the
+ * review stalled because REVIEW_PARTIALS_MAX judges of the run handed in a partial verdict (P1-42).
  */
 export const INFIRMARY_TRIPS = [
   ...BREAKER_TRIPS,
   'no_verdict',
+  'partial_verdicts',
   'max_attempts',
   'script_broken',
   'script_usage',

@@ -30,14 +30,24 @@ const patchRefusal = (why: string): string => `${PATCH_FILE} was not applied: ${
 
 const SCRIPT_TRIP = 'script_';
 
-/** A review whose judges left with no verdict at all (P1-33): `review:no_verdict`, not a breaker. */
-const NO_VERDICT_HEAD = 'review:no_verdict';
+/**
+ * A review whose judges left with no verdict at all (P1-33) or kept handing in partial ones (P1-42):
+ * `review:<trip>`, not a breaker.
+ */
+const REVIEW_TRIPS: ReadonlySet<InfirmaryTrip> = new Set(['no_verdict', 'partial_verdicts']);
 
-/** `breaker:<trip>`, `script:<outcome>` or `review:no_verdict`. */
+/** `breaker:<trip>`, `script:<outcome>`, `review:no_verdict` or `review:partial_verdicts`. */
 function headOf(trip: InfirmaryTrip): string {
   if (trip.startsWith(SCRIPT_TRIP)) return `script:${trip.slice(SCRIPT_TRIP.length)}`;
-  return trip === 'no_verdict' ? NO_VERDICT_HEAD : `breaker:${trip}`;
+  return REVIEW_TRIPS.has(trip) ? `review:${trip}` : `breaker:${trip}`;
 }
+
+/**
+ * A review stalled on partial verdicts (P1-42): how many judges of the run handed one in, and what the owner can do.
+ * Their notes say where and why they stopped; most often a judge whose shell could not run the checks' commands.
+ */
+const partialReview = (partials: number, run: number): string =>
+  `; ${partials} verifiers of run ${run} handed in a partial verdict, so no further one opens: read their notes, and make sure the next judge can finish the ritual (run the checks' commands, name its breaks), before a retry`;
 
 /**
  * A stalled review (P1-23, P1-33): how many judges of the run left without a verdict, and what the owner can do: a
@@ -56,9 +66,10 @@ function stopReason(trip: InfirmaryTrip, detail: InfirmaryDetail, run: number): 
   const words = detail.patch === undefined ? detail.message : patchRefusal(detail.patch);
   const wip = detail.wip === undefined ? '' : ` (WIP not committed, it stays in the plot: ${detail.wip})`;
   const left = detail.apprentice_left === true ? APPRENTICE_LEFT : '';
-  const stopped = detail.verifiers_stopped;
+  const { verifiers_stopped: stopped, partial_verdicts: partials } = detail;
   const stalled = stopped === undefined ? '' : stalledReview(trip, stopped, run);
-  return `${headOf(trip)}${words === undefined ? '' : `: ${words}`}${wip}${left}${stalled}`;
+  const read = partials === undefined ? '' : partialReview(partials, run);
+  return `${headOf(trip)}${words === undefined ? '' : `: ${words}`}${wip}${left}${stalled}${read}`;
 }
 
 /** The detail without empty words: a hook or a script that printed nothing said nothing (the schema refuses ''). */

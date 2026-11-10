@@ -33,7 +33,8 @@
   owner's `retry` brings it back to review with a new judge, and the count starts over (P1-26). A verifier that
   leaves with no verdict at all (its CLI failed, its output was none, its session was lost) counts the same, and
   the stall it ends goes to the infirmary as `review:no_verdict` (P1-33); one that hands in a partial verdict
-  (`verdict_partial`) made progress and does not count. Breakers measure a session as its holder's tribe allows:
+  (`verdict_partial`) made progress and counts apart: the third of the open group sends the review to the
+  infirmary as `review:partial_verdicts`, no fourth judge opening (P1-42). Breakers measure a session as its holder's tribe allows:
   minutes only for a tribe without `usage` (`measureOf`, P1-33). A CLI
   that stopped at its own `--max-turns` or budget gets the same end, a verifier's included. When the quest's journal shows an apprentice of that session past
   its minutes or cut at its turns, the reason asks the owner for a child quest for the work it left (§3.12). A quest whose secrets the treasury lacks, or its territory no longer
@@ -142,7 +143,9 @@
   they start; a quest whose secrets are gone by then goes to the infirmary (`breaker:secrets`) and runs none: their
   results go into the judge's prompt, the verdict and `quest.checks_run`. The run's next judge (after a partial
   verdict, a breaker or a session without a verdict) gets the same results while the plot's head is the commit they
-  ran on (`Plots.head`, P1-38); a moved head, a plot without git and a judge in a scratch plot get their own run. A
+  ran on (`Plots.head`, P1-38); a moved head and a plot without git get their own run. A judge in a scratch plot
+  leaves with its plot: the next one gets a fresh scratch plot (`Plots.prepareScratch`, after `commands.setup`) and
+  the same trial while the head stays, the trial run again once it moved (P1-42). A
   judge a breaker stopped is not chosen again in that run while another judge may take the review (domain
   `cutVerifiersOf`). The prompt shows the end of each failing check's log (`src/review/log-tail.ts`: the last 40 lines, at most
   4 000 characters for all of them), masked with the session's secret values and the patterns, because the log lies

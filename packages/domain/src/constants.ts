@@ -69,6 +69,12 @@ export const CACHE_READS_PER_TOKEN = 10;
  * verifier hands the review to a fresh session, which a review too big for its budget would meet again forever.
  */
 export const REVIEW_BREAKS_MAX = 2;
+/**
+ * Partial verdicts of one run before the review goes to the infirmary (P1-42). A partial is progress, so two in a
+ * row are allowed (P1-33), but a judge that cannot finish the ritual hands one in every time: in a scratch plot each
+ * judge costs a session and, but for a trial kept from the last one, half an hour of checks (P1-35).
+ */
+export const REVIEW_PARTIALS_MAX = 3;
 
 export const SCHEDULE_DEFAULTS = {
   chronicle_at: '21:00',

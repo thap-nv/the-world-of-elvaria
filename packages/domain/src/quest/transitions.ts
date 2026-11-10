@@ -59,8 +59,8 @@ export const QUEST_GUARDS: Readonly<Record<QuestGuard, (quest: Quest) => boolean
   has_verifier: (quest) => typeof quest.verifier === 'string',
   // Delivery stamps deliverable.delivered_at instead of being a status of its own, so it happens once.
   undelivered: (quest) => quest.deliverable.delivered_at === undefined,
-  // REVIEW_BREAKS_MAX verifiers of the run left without a verdict, cut by a breaker (P1-23) or crashed (P1-33): the
-  // work is done, only its review stalled.
+  // REVIEW_BREAKS_MAX verifiers of the run left without a verdict, cut by a breaker (P1-23) or crashed (P1-33), or
+  // REVIEW_PARTIALS_MAX handed in a partial one (P1-42): the work is done, only its review stalled.
   stalled_review: reviewStalled,
   no_stalled_review: (quest) => !reviewStalled(quest),
 };
@@ -129,6 +129,9 @@ export const QUEST_TRANSITIONS: readonly QuestTransitionRow[] = [
   { from: 'review', event: 'verdict_fail', actors: VS, guard: 'out_of_retries', to: 'infirmary' },
   // A judge hands in how far it read and leaves the rest to the next judge (P1-33: before, a crash carried it).
   { from: 'review', event: 'verdict_partial', actors: V, guard: 'has_verifier', to: 'review' },
+  // Right after the row above, once REVIEW_PARTIALS_MAX judges of the run handed in a partial verdict (P1-42): a
+  // judge that cannot finish the ritual would otherwise be followed by another, each with its session and trial.
+  { from: 'review', event: 'verdict_partial', actors: S, guard: 'needs_verifier', to: 'infirmary' },
   { from: 'review', event: 'mana_out', actors: M, guard: 'has_verifier', to: 'review' },
   { from: 'review', event: 'breaker', actors: S, guard: 'has_verifier', to: 'review' },
   { from: 'review', event: 'breaker', actors: S, guard: 'needs_verifier', to: 'infirmary' },

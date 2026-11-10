@@ -1,7 +1,8 @@
 // The judge's scratch plot (implementation-plan §3.15, ADR 0022; P1-20): a disposable worktree `<quest-id>-verify`
 // beside the quest's own, detached at the head of `quest/<id>`, so nothing done there can move the quest's branch:
 // there is no branch to commit to, and the judge's hook refuses every git command that writes a ref. It is made
-// fresh for each judge (the machine checks run there first, with commands.setup and commands.reset) and removed,
+// fresh for each judge (the machine checks run there first, with commands.setup and commands.reset; for the run's
+// next judge on an unmoved branch head, commands.setup alone, the last judge's trial serving it, P1-42) and removed,
 // dirty or not, after the judge's session: what the judge broke on purpose is never kept.
 import { err, ok } from '@elvaria/domain';
 import type { Plot, Result } from '@elvaria/domain';
