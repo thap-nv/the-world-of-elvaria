@@ -17,7 +17,7 @@ Windows is the main OS and macOS the second. On Windows, Claude Code runs string
 - Atomic write = temp file + `rename`, retried on EPERM, EACCES or EBUSY (antivirus, indexer, a reader holding the file) within a 10 s time budget; file locks with `proper-lockfile`. (Amended 2026-11-06, P0-06: the first number, 5 retries, lost about one write in 200 on Windows while another process kept reading the file.)
 - The event log is tailed by polling `fs.stat` size every 500 ms with a cursor; no `fs.watch`, no chokidar.
 - Notifications go through `Bell`; `node-notifier` covers Windows toasts and macOS Notification Center.
-- CI matrix: `windows-latest`, `macos-latest`, `ubuntu-latest`.
+- CI matrix: `windows-latest`, `macos-latest`, `ubuntu-latest`. (Amended 2026-11-10, decided by the owner: the matrix no longer runs on every pull request or push to `main`. The workflow is started by hand when a check on three operating systems is wanted; a green local `pnpm check` gates a merge. A break that only shows on macOS or Linux is therefore found at the next manual run, not at the pull request.)
 
 ## Consequences
 
