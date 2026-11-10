@@ -81,6 +81,15 @@ describe('the conformance suite', () => {
     expect(await problemOf(['login', 'oauth_device'])).toMatch(/^unknown auth oauth_device/);
   });
 
+  it('passes a runner that names its shell per OS, and fails one whose shell is no name (P1-40)', async () => {
+    const problemOf = async (shell: unknown) =>
+      (await runConformance(fake({ capabilities: { shell: shell as never } }))).find(
+        ({ id }) => id === 'capabilities',
+      )?.problem;
+    expect(await problemOf({ win32: 'Git Bash' })).toBeUndefined();
+    expect(await problemOf({ win32: '' })).toMatch(/^capability shell is malformed/);
+  });
+
   it('reports a runner that throws instead of answering', async () => {
     const broken: ConformanceTarget = {
       name: 'broken',

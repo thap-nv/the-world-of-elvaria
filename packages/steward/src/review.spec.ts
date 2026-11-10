@@ -196,6 +196,29 @@ describe("the assignee's standing", () => {
       count: 1,
     });
   });
+
+  it("leaves the assignee's reputation and fail streak alone on a return for a new judgement (P1-40)", async () => {
+    const { kingdom, steward } = await open();
+    await kingdom.command('create_quest', questPayload('Misjudged', { seal_required: true }));
+    await tickUntil(steward, kingdom.clock, statusIs(kingdom, 'Misjudged', 'awaiting_seal'));
+    const before = await kingdom.character('kael');
+    const waiting = await kingdom.quest('Misjudged');
+    const notes = 'The judge broke nothing: pnpm.ps1 was blocked. Hand it in again unchanged.';
+    await kingdom.command('return', { quest: waiting.id, notes, rejudge: true });
+    await steward.tick();
+    expect(await verdictIn(kingdom, `${waiting.id}-1-user`)).toMatchObject({
+      result: 'fail',
+      fail_kind: 'other',
+      rejudge: true,
+    });
+    expect((await kingdom.quest('Misjudged')).status).not.toBe('awaiting_seal');
+    const after = await kingdom.character('kael');
+    expect([after.reputation, after.consecutive_fail, after.level]).toEqual([
+      before.reputation,
+      before.consecutive_fail,
+      before.level,
+    ]);
+  });
 });
 
 describe('the fail streak', () => {

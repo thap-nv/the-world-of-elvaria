@@ -19,7 +19,15 @@ interface JudgementBase {
 /** A pass or a fail on the assignee's work; a partial verdict judges nothing yet and enters no window. */
 export type Judgement =
   | (JudgementBase & { readonly result: 'pass' })
-  | (JudgementBase & { readonly result: 'fail'; readonly fail_kind: FailKind });
+  | (JudgementBase & {
+      readonly result: 'fail';
+      readonly fail_kind: FailKind;
+      /**
+       * The owner's return for a new judgement (`verdict.rejudge`, P1-40): the judge erred, not the assignee, so the
+       * fail enters no window and leaves the streak as it was.
+       */
+      readonly rejudge?: boolean;
+    });
 
 const kept = (window: readonly VerdictEntry[], entry: VerdictEntry): VerdictEntry[] =>
   [...window, entry].slice(-VERDICT_WINDOW_MAX);
@@ -33,6 +41,9 @@ function streakAfter(character: Character, judgement: Judgement): Character['con
 }
 
 export function withVerdict(character: Character, judgement: Judgement): Character {
+  // In the P1-35 run the owner returned a quest a judge had passed without breaking anything, and the return counted
+  // as a fail of the assignee, three times over (by_human); a rejudge does not judge the assignee's work.
+  if (judgement.result === 'fail' && judgement.rejudge === true) return character;
   const entry: VerdictEntry = {
     verdict_id: judgement.verdict_id,
     result: judgement.result,

@@ -77,7 +77,8 @@
 - Applies the owner's commands: `create_quest` (an id derived from the command id, so a command applied twice
   never makes two quests), `confirm`, `cancel` (kills the session), `archive`, `retry`, `seal` and `return` (the owner's
   verdict, `verdicts/<quest>-<n>-user.json`, weighed three times; a return needs notes of 20 characters and takes
-  `fail_kind` `other` by default), `answer` (waits in the inbox until the asker is free and its pool has mana;
+  `fail_kind` `other` by default; a return with `rejudge` blames the judge and leaves the assignee's windows,
+  fail streak and level alone, P1-40), `answer` (waits in the inbox until the asker is free and its pool has mana;
   within `dispatch.resume_after_answer_minutes` of the question, and when the adapter can, the asking session goes
   on with `--resume`), `reassign` (the owner's character, the level aside; or the Steward's own choice),
   `set_rank`, `edit_quest` (refused when the quest moved since the owner read it), `wake`, `suspend` and `release`
@@ -113,9 +114,11 @@
   back from the run's `quest.infirmary` line in the quest's journal, `continuationOf` and `refusedPatchOf`:
   `detail.patch` since P1-32, the reason's prefix on an older line, P1-31), a question (`ask`;
   one the owner already answered, left in the letter, is a submit), mana out, a crash, the CLI's turn or budget
-  limit (breaker). For a verifier: the verdict file (a partial one as `<quest>-<n>-p<k>`), the ritual's pass rule
-  over the checks (`underPassRule`), `validateVerdict`, `verdict.*`, the move, the assignee's windows and fail
-  streak (`withVerdict`), then `levelChange`.
+  limit (breaker). For a verifier: the verdict file (a partial one as `<quest>-<n>-p<k>`; a pass without notes is
+  no verdict, P1-40), the ritual's pass rule over the checks (`underPassRule`), the judge's breaks in a scratch plot
+  (`withBreaksWeighed`: too few make the pass a partial, P1-40), `validateVerdict`, `verdict.*`, the move, the
+  assignee's windows and fail streak (`withVerdict`), then `levelChange`. A session's prompt names the shell its
+  tribe's adapter declares for this OS (`shellOf` with `StewardDeps.platform`, `process.platform` by default, P1-40).
 - Applies the limits `tribeLimitsOf` gives a tribe its adapter narrows (§3.14, P1-33; `src/sessions/spawn.ts`):
   a judge of a tribe without `structured_output` gets the verdict's schema in its prompt and its verdict cut out of
   its last text (runner-core's `spawnParsed`), checked by `judgeVerdictOf`, which names each issue; an unusable

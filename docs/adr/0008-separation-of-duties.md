@@ -21,7 +21,7 @@ Principle 4: the doer never judges. Agents tend to pass their own work and their
 - A `machine_only` verdict has `verifier_id: "machine"` and never passes with a failing check.
 - The verifier is a fresh top-level session spawned by the Steward: never `--resume`, never a sub-agent. Its prompt holds the quest, `handover.md`, the diff, check results, the ritual and the verifier's scripture; no transcript, no doer journal.
 - `vow_no_production`: verifier settings allow Read/Grep/Glob and the territory's check commands only; Edit and Write are denied in settings, not just in the prompt.
-- `validateVerdict` rejects a verdict whose `verifier_id` worked on the quest, whose `session_id` is not a verifier attempt in `attempt_log`, or that passes with a failing check. Characters cannot write `verdicts/`.
+- `validateVerdict` rejects a verdict whose `verifier_id` worked on the quest, whose `session_id` is not a verifier attempt in `attempt_log`, or that passes with a failing check. Characters cannot write `verdicts/`. (Amended 2026-11-10, P1-40: the Steward also refuses a judge's pass without notes, and the owner may return a quest for a new judgement, `verdict.rejudge`, which counts in neither the assignee's reputation nor its fail streak.)
 
 ## Consequences
 

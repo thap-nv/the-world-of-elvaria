@@ -38,6 +38,13 @@ const VerdictCheckSchema = z.strictObject({
   log_path: NonEmptyStringSchema.meta(describe('Relative to the kingdom: .runs/<quest>-<n>/checks/<id>.log')),
 });
 
+const VerdictBreakSchema = z.strictObject({
+  change: NonEmptyStringSchema.meta(
+    describe('What the judge broke on purpose in its scratch plot: the file, the line and the change.'),
+  ),
+  red: NonEmptyStringSchema.meta(describe('The command it ran on the break and the tests that went red.')),
+});
+
 const VerdictFieldsSchema = z.strictObject({
   version: z.literal(1),
   id: VerdictIdSchema,
@@ -71,6 +78,22 @@ const VerdictFieldsSchema = z.strictObject({
     .strictObject({ checked_until: NonEmptyStringSchema })
     .optional()
     .meta(describe('For partial verdicts: where the next verifier continues reading.')),
+  breaks: z
+    .array(VerdictBreakSchema)
+    .optional()
+    .meta(
+      describe(
+        "The judge's breaks in a scratch plot (ritual step break_and_expect_red, P1-40): each change it made on purpose to the code the tests guard, and the red run it caused. There a judge's pass without at least two is taken by the Steward as partial.",
+      ),
+    ),
+  rejudge: z
+    .boolean()
+    .optional()
+    .meta(
+      describe(
+        "Only on the owner's return (`elvaria return --rejudge`, P1-40): the quest goes back for a new judgement because the judge erred, not the assignee, so the assignee's reputation and fail streak do not count it.",
+      ),
+    ),
   by_human: z.boolean(),
   session_id: NonEmptyStringSchema.optional(),
   created_at: DateTimeSchema,
@@ -147,6 +170,19 @@ const VERDICT_RULES: readonly Rule<VerdictFields>[] = [
       ),
   },
   {
+    // A rejudge spares the assignee only the owner's return; a judge's fail or anything else counts (P1-40).
+    contract: {
+      if: { properties: { rejudge: { const: true } }, required: ['rejudge'] },
+      then: { properties: { by_human: { const: true }, result: { const: 'fail' } } },
+    },
+    check: (verdict) =>
+      issueIf(
+        verdict.rejudge === true && !(verdict.by_human && isFail(verdict)),
+        ['rejudge'],
+        "rejudge marks only the owner's return, a human fail verdict",
+      ),
+  },
+  {
     check: (verdict) =>
       issueIf(
         !idFits(verdict),
@@ -171,7 +207,7 @@ export const VerdictSchema = VerdictFieldsSchema.superRefine(checkRules(VERDICT_
   title: 'Verdict',
   description:
     'verdicts/<quest>-<n>.json: the judgement on attempt n of a quest. Written by a judge in a fresh session spawned by the Steward, by the Steward itself (`machine`: script tier or verifier_same_family = machine_only), or by the owner (`user`: royal seal or return, weighs 3x in reputation; file <quest>-<n>-user.json). A partial verdict, left by a judge stopped before the end, is <quest>-<n>-p<k>.json, k counting the verifier sessions of run n. Machine checks run before the judge and are the primary judge.',
-  $comment: `${GENERATED_NOTE} Not expressible here, checked by zod: id = quest_id + '-' + attempt, followed by -p<k> only when result = partial and by -user only when by_human = true; a character verdict (verifier_id neither user nor machine) has a session_id. Not checked by this schema because they need the quest or the registry, enforced by validateVerdict in packages/domain: verifier_id is neither the assignee nor anyone who worked the quest; a character verdict is valid only if session_id belongs to a verifier attempt in quest.attempt_log spawned by the Steward (never a sub-agent of the worker); under pass_rule all_checks_and_agent or checks_only, result is never pass while any check has pass = false.`,
+  $comment: `${GENERATED_NOTE} Not expressible here, checked by zod: id = quest_id + '-' + attempt, followed by -p<k> only when result = partial and by -user only when by_human = true; a character verdict (verifier_id neither user nor machine) has a session_id. Not checked by this schema because they need the quest or the registry, enforced by validateVerdict in packages/domain: verifier_id is neither the assignee nor anyone who worked the quest; a character verdict is valid only if session_id belongs to a verifier attempt in quest.attempt_log spawned by the Steward (never a sub-agent of the worker); under pass_rule all_checks_and_agent or checks_only, result is never pass while any check has pass = false. Enforced by the Steward when a judge hands a verdict in, not here, so files written before P1-40 stay valid: a judge's pass has notes, and in a scratch plot whose ritual breaks code it has at least two breaks, else it is taken as partial.`,
   allOf: allOfRules(VERDICT_RULES),
 });
 

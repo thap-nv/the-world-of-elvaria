@@ -2,7 +2,7 @@
 // `createAdapter(kit)` that returns an AgentRunner for the kit's tribe. `apps/cli` imports the file; this checks
 // the module and its runner before the Steward, doctor or the conformance suite touch it, so a broken file is
 // reported as one sentence per problem instead of a crash in the middle of a tick.
-import { ADAPTER_CAPABILITIES, err, ok } from '@elvaria/domain';
+import { ADAPTER_CAPABILITIES, SHELL_PLATFORMS, err, ok } from '@elvaria/domain';
 import type { Result } from '@elvaria/domain';
 
 import type { AgentRunner } from '../runner/types.ts';
@@ -20,12 +20,28 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const errorText = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
+/**
+ * What is wrong with `capabilities.shell` (P1-40): optional, so an adapter file written before it still passes;
+ * when given, a shell name for each OS it names, among SHELL_PLATFORMS.
+ */
+export function shellProblems(shell: unknown): string[] {
+  if (shell === undefined) return [];
+  if (!isRecord(shell) || Array.isArray(shell))
+    return ['capability shell is not an object of OS to shell name'];
+  const known: readonly string[] = SHELL_PLATFORMS;
+  return Object.entries(shell).flatMap(([os, name]) => [
+    ...(known.includes(os) ? [] : [`capability shell names ${os}, not one of ${known.join(', ')}`]),
+    ...(typeof name === 'string' && name.trim() !== '' ? [] : [`capability shell.${os} is not a shell name`]),
+  ]);
+}
+
 function capabilityProblems(capabilities: unknown): string[] {
   if (!isRecord(capabilities)) return ['capabilities is not an object'];
   const flags = ADAPTER_CAPABILITIES.filter((name) => typeof capabilities[name] !== 'boolean').map(
     (name) => `capability ${name} is not true or false`,
   );
-  return Array.isArray(capabilities.auth) ? flags : [...flags, 'capability auth is not a list'];
+  const auth = Array.isArray(capabilities.auth) ? [] : ['capability auth is not a list'];
+  return [...flags, ...auth, ...shellProblems(capabilities.shell)];
 }
 
 /** What is wrong with the runner a file built for `kit`'s tribe; empty when it keeps the AgentRunner shape. */

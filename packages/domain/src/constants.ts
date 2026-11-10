@@ -128,5 +128,11 @@ export const RITUAL_STEPS = [
  */
 export const FLAKE_RUNS = 3;
 
+/**
+ * Breaks a judge's pass names in a scratch plot whose ritual breaks code (P1-40): the step break_and_expect_red asks
+ * for "at least two different places" (runner-core prompts/ritual-steps.md); a pass with fewer is taken as partial.
+ */
+export const MIN_BREAKS = 2;
+
 /** Beyond what an exclusive check waits out: time for a crashed holder's lock to go stale (store STALE_MS). */
 export const LOCK_MARGIN_MINUTES = 1;

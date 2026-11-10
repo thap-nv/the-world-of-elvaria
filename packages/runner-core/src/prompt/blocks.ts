@@ -68,12 +68,19 @@ const shellCommandOf = (rule: string): string[] => {
 /**
  * The commands the session's shell may run, listed from its permission rules (P1-11): without them a character
  * guesses a compound command, its settings refuse the whole line, and it stops to ask the owner. Empty without a
- * shell.
+ * shell. `program`: the shell its adapter declares for this OS (shellOf, P1-40), named first; none, no sentence.
  */
-export function shellBlock(policy: Pick<ToolPolicy, 'tools' | 'allow'>, t: PromptTemplates): string {
+export function shellBlock(
+  policy: Pick<ToolPolicy, 'tools' | 'allow'>,
+  t: PromptTemplates,
+  program?: string,
+): string {
   const commands = policy.tools.includes(SHELL_TOOL) ? policy.allow.flatMap(shellCommandOf) : [];
   if (commands.length === 0) return '';
-  return fill(t.shell, { commands: bullets(commands) });
+  return fill(t.shell, {
+    program: present(program) ? `Your shell is ${program.trim()}: write each command in its syntax.` : '',
+    commands: bullets(commands),
+  });
 }
 
 const bullets = (items: readonly string[]): string => items.map((item) => `- \`${item}\``).join('\n');

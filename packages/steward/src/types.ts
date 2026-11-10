@@ -239,6 +239,11 @@ export interface StewardDeps {
    * names the node it found; a spec may give a runner with a shorter timeout.
    */
   readonly scripts?: ScriptRunner;
+  /**
+   * process.platform by default: which of the shells a tribe's adapter declares (`capabilities.shell`) its sessions'
+   * prompts name (shellOf, P1-40). A spec names the OS whose prompt it checks.
+   */
+  readonly platform?: string;
 }
 
 export interface TickReport {

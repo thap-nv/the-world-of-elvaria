@@ -172,8 +172,18 @@ export const CAST: readonly CastMember[] = [
   { id: 'orin', cls: 'judge', tribe: 'gemini', model: 'gemini-3.8-flash-low', level: 6 },
 ];
 
-/** What a fake verifier hands in: pass unless the plays say otherwise. */
-export const PASS = { result: 'pass' };
+/**
+ * What a fake verifier hands in: pass unless the plays say otherwise. A pass says what was checked, and names the
+ * breaks a judge in a scratch plot owes (P1-40); elsewhere they are kept and weigh nothing.
+ */
+export const PASS = {
+  result: 'pass',
+  notes: 'Read the diff and the letter; pnpm test passes, nothing is missing.',
+  breaks: [
+    { change: 'src/api/orders.ts:42 drops the discount', red: 'pnpm test: orders.spec.ts failed' },
+    { change: 'src/api/orders.ts:57 returns 0', red: 'pnpm test: orders.spec.ts failed' },
+  ],
+};
 export const FAIL = {
   result: 'fail',
   fail_kind: 'tests_fail',

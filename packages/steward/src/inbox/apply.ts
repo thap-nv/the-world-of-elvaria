@@ -50,7 +50,7 @@ async function onQuest(ctx: Context, command: InboxCommand, quest: Quest): Promi
     case 'seal':
       return seal(ctx, quest, command.payload.note);
     case 'return':
-      return giveBack(ctx, quest, command.payload.notes, command.payload.fail_kind);
+      return giveBack(ctx, quest, command.payload);
     case 'answer':
       return answer(ctx, quest, command.payload.answer);
     case 'reassign':

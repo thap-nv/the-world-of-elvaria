@@ -302,6 +302,7 @@ Trả việc đang chờ dấu vua về người làm, kèm ghi chú (lệnh ret
 | `<quest>` | id của nhiệm vụ, ví dụ q_20261106_7k3m2a. |
 | `--note <text>` | Sai gì, ở đâu, ít nhất 20 ký tự: người làm đọc nó ở phiên kế tiếp. (bắt buộc) |
 | `--fail-kind <kind>` | Kiểu lỗi, để đếm những lần trượt cùng kiểu liền nhau: tests_fail, scope_creep, missing_i18n, wrong_facts, incomplete, style, unsafe hoặc other (mặc định). |
+| `--rejudge` | Người chấm làm hỏng, không phải người làm (không đập thử, shell không chạy được test): việc quay lại để chấm lại, và lần trả này không tính vào danh tiếng hay chuỗi trượt của người làm. |
 
 ## `elvaria answer`
 
