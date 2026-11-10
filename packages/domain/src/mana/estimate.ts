@@ -6,7 +6,7 @@ import { MS_PER_MINUTE } from '../constants.ts';
 import { parseInstant } from '../core/clock.ts';
 import { PCT_DECIMALS_FACTOR, WINDOW_MINUTES } from './constants.ts';
 import { poolKeyOf } from './pool.ts';
-import { current } from './state.ts';
+import { current } from './reading.ts';
 import type { Instant } from '../core/clock.ts';
 import type { TribeId } from '../core/ids.ts';
 import type { Character } from '../schema/character/character.ts';

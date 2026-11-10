@@ -41,6 +41,30 @@ export function rateLimitWindowsOf(info: JsonObject | undefined): UsageWindow[] 
   });
 }
 
+/** `seven_day_opus`: the weekly cap of one model, named by its last word. */
+const MODEL_WEEK = /^seven_day_([a-z]+)$/;
+
+/** The window a `rateLimitType` names: the session, the week, or the week of one model; undefined for another. */
+function windowOfType(type: string | undefined): Pick<UsageWindow, 'window' | 'model'> | undefined {
+  if (type === 'five_hour') return { window: 'five_hour' };
+  if (type === 'seven_day') return { window: 'weekly' };
+  const model = MODEL_WEEK.exec(type ?? '')?.[1];
+  return model === undefined ? undefined : { window: 'weekly', model };
+}
+
+/**
+ * The window a rejected `rate_limit_event` says is spent, from its `rateLimitType`, until its `resetsAt` (P1-48,
+ * P1-22 (d)): the gauge it belongs to sleeps until then, whatever `/usage` reads after it. Undefined while the status
+ * is not `rejected`, or for a type that names no window (`overage`).
+ */
+export function spentWindowOf(info: JsonObject | undefined): UsageWindow | undefined {
+  if (textOf(info, 'status') !== 'rejected') return undefined;
+  const named = windowOfType(textOf(info, 'rateLimitType'));
+  if (named === undefined) return undefined;
+  const resets = isoOfSeconds(numberOf(info, 'resetsAt'));
+  return { ...named, used_pct: 100, ...(resets === undefined ? {} : { resets_at: resets }) };
+}
+
 /**
  * The limit that stopped the session, when `status` says so. Only `allowed` has been seen (spike P1-02); the
  * Agent SDK's types also name `allowed_warning` and `rejected` (P1-16 brings a real one).

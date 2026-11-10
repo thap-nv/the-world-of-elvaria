@@ -148,18 +148,31 @@ describe('lines without a real fixture yet (429 comes with P1-16; self-built fro
       { kind: 'api_retry', error: 'rate_limit', detail: 'API retry (rate_limit, 429)' },
     ]);
     expect(retry.reader.rateLimited).toBe(true);
+    // The window the rejection names is spent until its reset, in place of its figure (P1-48).
     const rejected = read([
       {
         type: 'rate_limit_event',
-        rate_limit_info: { status: 'rejected', resetsAt: 1793976600, rateLimitType: 'five_hour' },
+        rate_limit_info: {
+          status: 'rejected',
+          resetsAt: 1794142800,
+          rateLimitType: 'seven_day',
+          unifiedWindows: {
+            five_hour: { utilization: 0.31, resetsAt: 1793976600 },
+            seven_day: { utilization: 0.99, resetsAt: 1794142800 },
+          },
+        },
       },
     ]);
+    const week = '2026-11-08T13:00:00.000Z';
     expect(rejected.seen).toEqual([
       {
-        kind: 'rate_limit',
-        detail: 'usage limit reached (five_hour)',
-        resets_at: '2026-11-06T14:50:00.000Z',
+        kind: 'mana',
+        windows: [
+          { window: 'five_hour', used_pct: 31, resets_at: '2026-11-06T14:50:00.000Z' },
+          { window: 'weekly', used_pct: 100, resets_at: week },
+        ],
       },
+      { kind: 'rate_limit', detail: 'usage limit reached (seven_day)', resets_at: week },
     ]);
     expect(read([{ type: 'result', is_error: true, api_error_status: 429 }]).reader.rateLimited).toBe(true);
   });

@@ -13,6 +13,13 @@ export const WINDOW_MINUTES = { five_hour: 300, weekly: 10_080 } as const;
 export const PCT_DECIMALS_FACTOR = 100;
 
 /**
+ * The share of a window one session is taken to need before any session on it was measured (P1-48, P1-22 (b)): the
+ * largest measured so far, Argon's weekly cap at 6–7 % a session (phase-1 report §4.1). Not measured for any other
+ * window: a gauge closes this much under the cap until the Steward has seen what its sessions take; tune it then.
+ */
+export const SESSION_SHARE_DEFAULT_PCT = 7;
+
+/**
  * Model-slug prefixes of each named pool: an account with several pools (Antigravity: Gemini models and the
  * Claude/GPT models it also serves) charges a character to the pool of its model. Keyed by pool, not by adapter,
  * so the core still never asks which CLI a tribe runs (ADR 0021); a tribe without `pools` is one pool.

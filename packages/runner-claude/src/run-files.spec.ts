@@ -6,7 +6,7 @@ import type { Workspace } from '@elvaria/runner-core';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { fakeHookCommand, prepare } from './__fixtures__/harness.ts';
-import { AGENTS_FILE, writeRunFiles } from './run-files.ts';
+import { AGENTS_FILE, SETTINGS_FILE, bashTimeoutEnv, writeRunFiles } from './run-files.ts';
 import { CLAUDE_PROTECTED_PATHS } from './settings.ts';
 
 const opened: Workspace[] = [];
@@ -54,5 +54,29 @@ describe('writeRunFiles: the apprentice models (§3.12, P1-17)', () => {
     };
     expect(agents.apprentice.model).toBe('haiku');
     expect(agents.apprentice.description).toContain('`model`: sonnet, opus (no stronger one)');
+  });
+});
+
+describe('the Bash timeouts of a session (P1-48, P1-35 (j))', () => {
+  it("lets a command run as long as the territory's longest check, never shorter than Claude Code's own", () => {
+    const own = { BASH_DEFAULT_TIMEOUT_MS: '120000', BASH_MAX_TIMEOUT_MS: '600000' };
+    expect(bashTimeoutEnv(undefined)).toEqual(own);
+    expect(bashTimeoutEnv({ checks: [] })).toEqual(own);
+    expect(bashTimeoutEnv({ checks: [{ timeout_minutes: 1 }] })).toEqual(own);
+    const dc1 = { checks: [{ timeout_minutes: 5 }, { timeout_minutes: 30 }] };
+    expect(bashTimeoutEnv(dc1)).toEqual({
+      BASH_DEFAULT_TIMEOUT_MS: '1800000',
+      BASH_MAX_TIMEOUT_MS: '1800000',
+    });
+  });
+
+  it('puts them in the env of the CLI and in its settings', async () => {
+    const { workspace, request } = await prepare('submit');
+    opened.push(workspace);
+    // The probe's request has no territory: Claude Code's own timeouts, written out.
+    const { env } = await writeRunFiles(request, runContextOf(request), fakeHookCommand, APPRENTICE);
+    const own = { BASH_DEFAULT_TIMEOUT_MS: '120000', BASH_MAX_TIMEOUT_MS: '600000' };
+    expect(env).toMatchObject(own);
+    expect((await readJson(path.join(request.run_dir, SETTINGS_FILE))).env).toMatchObject(own);
   });
 });

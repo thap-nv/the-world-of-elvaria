@@ -115,10 +115,12 @@ describe('verdict files', () => {
     const quest = await kingdom.quest('Long diff');
     expect(await verdictIn(kingdom, `${quest.id}-1-p1`)).toMatchObject({ result: 'partial' });
     expect(await verdictIn(kingdom, `${quest.id}-1`)).toMatchObject({ result: 'pass' });
-    // The second judge reads on from where the first stopped (P1-15); the first had nobody before it.
-    const judges = [...kingdom.fakes.claude.requests, ...kingdom.fakes.gemini.requests].filter(
+    // The second judge reads on from where the first stopped (P1-15); the first had nobody before it. It is another
+    // judge (P1-48, P1-42 (c)): orin of another family first, then sable, the only other one.
+    const judges = [...kingdom.fakes.gemini.requests, ...kingdom.fakes.claude.requests].filter(
       ({ role }) => role === 'verifier',
     );
+    expect(judges.map(({ character }) => character.id)).toEqual(['orin', 'sable']);
     expect(judges.map(({ prompt }) => prompt.user.includes('# Where the last judge stopped'))).toEqual([
       false,
       true,

@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { FIXTURES } from './__fixtures__/harness.ts';
 import { parseLine } from './json.ts';
-import { rateLimitWindowsOf, rejectionOf, usageWindowsOf } from './usage.ts';
+import { rateLimitWindowsOf, rejectionOf, spentWindowOf, usageWindowsOf } from './usage.ts';
 import type { JsonObject } from './json.ts';
 
 const linesOf = (file: string): JsonObject[] =>
@@ -32,6 +32,34 @@ describe('rate_limit_event', () => {
   it('says nothing while the status is allowed, and names a rejection (self-built, P1-16)', () => {
     expect(rejectionOf(info)).toBeUndefined();
     expect(rejectionOf({ status: 'rejected' })).toEqual({ detail: 'usage limit reached (unknown)' });
+  });
+});
+
+// Self-built from the Agent SDK's `rateLimitType` (five_hour, seven_day, seven_day_opus…): none observed yet (P1-48).
+describe('the window a rejected rate_limit_event spends', () => {
+  const WEEK_RESET = '2026-11-08T13:00:00.000Z';
+  const rejected = (type?: string) => ({
+    status: 'rejected',
+    resetsAt: 1794142800,
+    ...(type === undefined ? {} : { rateLimitType: type }),
+  });
+
+  it('is the window its rateLimitType names, spent until resetsAt', () => {
+    const week = { window: 'weekly', used_pct: 100, resets_at: WEEK_RESET };
+    expect(spentWindowOf(rejected('seven_day'))).toEqual(week);
+    expect(spentWindowOf(rejected('five_hour'))).toEqual({ ...week, window: 'five_hour' });
+    expect(spentWindowOf(rejected('seven_day_opus'))).toEqual({ ...week, model: 'opus' });
+    expect(spentWindowOf({ status: 'rejected', rateLimitType: 'seven_day' })).toEqual({
+      window: 'weekly',
+      used_pct: 100,
+    });
+  });
+
+  it('is none while allowed, or for a type that names no window', () => {
+    expect(spentWindowOf({ ...rejected('seven_day'), status: 'allowed' })).toBeUndefined();
+    expect(spentWindowOf(rejected('overage'))).toBeUndefined();
+    expect(spentWindowOf(rejected())).toBeUndefined();
+    expect(spentWindowOf(undefined)).toBeUndefined();
   });
 });
 

@@ -88,15 +88,18 @@
   such a quest goes back to review, same run, for a new judge (`infirmary.retry.stalled_review`); `reviewBreaksOf`
   counts only the cuts since that retry, derived from `attempt_log` (a stall closes each group of
   `REVIEW_BREAKS_MAX`). (P1-38) `cutVerifiersOf` names the judges a breaker stopped in the open group, whom
-  `selectVerifier` passes over while another judge may take the review. (P1-42) Judges that hand in a partial
+  `selectVerifier` passes over while another judge may take the review; (P1-48) `justPartialOf` names the judge
+  whose session, the latest of the open group, handed in a partial verdict, passed over the same way. (P1-42) Judges that hand in a partial
   verdict count apart (`reviewPartialsOf`, outcome `partial`): the `REVIEW_PARTIALS_MAX`-th (3) of the open group
   stalls the review too (`partialsStalled`, `review.verdict_partial.needs_verifier`). A quest without an estimate gets
   `context_budget_tokens` × `CONTEXT_BUDGETS_BY_RANK` of its rank as the stand-in (`questFromCommand`: F–D 1, C 2,
   B 2, A 2.5, S 3), so its token ceiling grows with the rank; (P1-45) a quest with an estimate never gets a lower
   ceiling than that, nor fewer minutes than it estimates, up to `attempt_minutes.high`.
 - Keeps the separation of duties (`src/verify/`, ADR 0008, 0020): `selectVerifier` (never an assignee of the quest
-  or of its party, never the assignee's model, another model family first by `familyOf`, then another tribe;
-  `dispatch.verifier_same_family` for the rest; not a judge a breaker stopped in the run while another may judge), `underPassRule` (a failing check fails the quest under
+  or of its party, never the assignee's model, another model family first by `familyOf`, then another tribe, then
+  on a quest of rank `STRONG_JUDGE_MIN_RANK` (B) or above the judge of the higher level, P1-48;
+  `dispatch.verifier_same_family` for the rest; not a judge a breaker stopped in the run, nor the one that just
+  handed in a partial verdict, while another may judge), `underPassRule` (a failing check fails the quest under
   `all_checks_and_agent`, as `tests_fail`, or `incomplete` for the Steward's `subquests` check, P1-15, and its
   `party` check of a merge quest, P1-18, and `coverage_not_lower`, P1-20, or `flaky` for `flake_check`), `machineVerdictOf` (the machine's verdict from the checks), `validateVerdict` (no
   worker, only the session the Steward spawned, no pass over a failing check) and the verdict ids of a run
@@ -124,7 +127,12 @@
   `estimatedReadings` (`estimate`: the sessions' tokens, or minutes for `mana_source: elapsed_time`, in five hours
   and seven days against `tribes[].budget`, for a pool and window the account gives no figure for; never spent);
   `warningsOf` (a gauge warns once at `warn_margin_pct` below the cap); `nextProbeOf`, when a sleeping gauge is
-  probed next (just after a known reset, soon again when the account is late).
+  probed next (just after a known reset, soon again when the account is late). (P1-48) `sessionShareOf` measures
+  the share of a window one session takes (the rise between two readings over the sessions the gauge binds that
+  ended between them, `endedSessionsOf`; `sharesOfHistory` for the log's readings), `withSessionShare` keeps the
+  largest of each window, and `manaStateOf` with `shares` closes a gauge as soon as one more session would take a
+  window to the cap (`shareAheadOf`: the measured share, `SESSION_SHARE_DEFAULT_PCT` (7) before any, never more
+  than `warn_margin_pct`); `RosterSource.mana.shares` carries them to `planTick`.
 - Reads the tribe contract (`src/tribe/`, implementation-plan §3.14, ADR 0021): `AdapterCapabilities` (the
   yes-or-no `ADAPTER_CAPABILITIES`, `auth`, the sign-ins an adapter runs with, P1-19, and the optional `shell` per
   OS, read with `shellOf`, P1-40), `tribeLimitsOf` (one

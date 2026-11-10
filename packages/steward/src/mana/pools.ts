@@ -22,6 +22,7 @@ import { ring } from '../context.ts';
 import { STEWARD, step } from '../record.ts';
 import { commitPlot } from '../sessions/commit.ts';
 import { isAsleep } from './book.ts';
+import { measureShares } from './shares.ts';
 import type { Context } from '../context.ts';
 
 export const poolKeyOfCharacter = (ctx: Context, character: Pick<Character, 'tribe' | 'model'>): PoolKey =>
@@ -60,9 +61,13 @@ async function levelLine(ctx: Context, reading: ManaReading): Promise<void> {
   await ctx.record.note({ type: 'mana.level', actor: STEWARD, data });
 }
 
-/** Fresh readings into the book, each changed one told in a `mana.level` line. */
+/**
+ * Fresh readings into the book, each changed one told in a `mana.level` line, each measured against the one it
+ * replaces for the share of its window a session takes (P1-48).
+ */
 export async function absorb(ctx: Context, fresh: readonly ManaReading[]): Promise<void> {
   for (const reading of fresh) await levelLine(ctx, reading);
+  measureShares(ctx, fresh);
   ctx.mana.readings = withReadings(ctx.mana.readings, fresh);
 }
 

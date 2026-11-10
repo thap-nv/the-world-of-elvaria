@@ -1,15 +1,19 @@
 // selectVerifier(quest, candidates, policy): who judges a submitted session-tier quest (implementation-plan §3.2,
 // ADR 0008, ADR 0020). Never anyone who worked the quest, or any quest of its party; a class that verifies the
 // quest's kind; never the assignee's own model. Among those free now: another model family first, then another
-// tribe (account), then a tribe whose CLI hands in a structured verdict itself over one whose judge answers in text
-// (§3.14 `prompt_and_parse`, P1-33), then the one idle the longest. With no judge of another family free,
+// tribe (account), then on a quest of rank STRONG_JUDGE_MIN_RANK or above the judge of the higher level (P1-48), then
+// a tribe whose CLI hands in a structured verdict itself over one whose judge answers in text (§3.14
+// `prompt_and_parse`, P1-33), then the one idle the longest. With no judge of another family free,
 // dispatch.verifier_same_family decides: `different_model` takes a free judge of the same family on another model
 // (or waits for one), `machine_only` waits for a judge of another family while the roster has one, and lets the
 // machine judge once it has none. A judge a breaker stopped in this review is not chosen again while another judge
-// may take it (P1-38, P1-35 (d)): it would most likely spend its budget the same way.
-import { cutVerifiersOf } from '../breaker/review.ts';
+// may take it (P1-38, P1-35 (d)): it would most likely spend its budget the same way; nor is the judge that just
+// handed in a partial verdict (P1-48, P1-42 (c)): fresh eyes read on from where it stopped.
+import { cutVerifiersOf, justPartialOf } from '../breaker/review.ts';
 import { familyOf } from '../character/family.ts';
+import { STRONG_JUDGE_MIN_RANK } from '../constants.ts';
 import { byIdleSince } from '../dispatch/roster.ts';
+import { RANKS } from '../schema/common.ts';
 import { pastAssigneesOf } from './past-assignees-of.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
@@ -44,17 +48,24 @@ export type Selection =
 /** Nobody fits now: the quest waits in review for a later tick. */
 export type NoVerifier = null;
 
+/** Whether a quest of `rank` wants the stronger judge first (P1-48, P1-16 (l): "Opus from rank B"). */
+export const wantsStrongJudge = (rank: Quest['rank']): boolean =>
+  RANKS.indexOf(rank) >= RANKS.indexOf(STRONG_JUDGE_MIN_RANK);
+
 /**
- * Another tribe first (another account, another pool), then a structured verdict over one parsed from text, then
- * the one idle the longest. The text road is placed before the idle time, not after it: idle times almost never
- * tie, so a criterion after them would never choose (P1-33).
+ * Another tribe first (another account, another pool), then on a quest that wants it the stronger judge, then a
+ * structured verdict over one parsed from text, then the one idle the longest. The text road is placed before the
+ * idle time, not after it: idle times almost never tie, so a criterion after them would never choose (P1-33).
+ * Strength is the judge's level, which the owner sets by its model when summoning it (P1-38): never a table of
+ * models in the core, and the separation rules above it are untouched.
  */
-const byPreference = ({ assignee, limits }: Pick<VerifierPolicy, 'assignee' | 'limits'>) => {
+const byPreference = (quest: Quest, { assignee, limits }: Pick<VerifierPolicy, 'assignee' | 'limits'>) => {
   const sameTribe = (c: Character): number => Number(c.tribe === assignee?.tribe);
+  const weaker = wantsStrongJudge(quest.rank) ? (c: Character): number => -c.level : () => 0;
   const inText = (c: Character): number =>
     Number(limits?.[c.tribe]?.structured_output === 'prompt_and_parse');
   return (a: Character, b: Character): number =>
-    sameTribe(a) - sameTribe(b) || inText(a) - inText(b) || byIdleSince(a, b);
+    sameTribe(a) - sameTribe(b) || weaker(a) - weaker(b) || inText(a) - inText(b) || byIdleSince(a, b);
 };
 
 /** Who may ever judge `quest`: a judge of its kind, never one of its doers, never on the assignee's model. */
@@ -88,17 +99,20 @@ export function waitsForNoJudge(
 }
 
 /**
- * The fit judges less those a breaker stopped in this review (cutVerifiersOf), when one that `may` take it is left,
- * free now or later: the quest then waits for that one. With nobody else, a judge cut once may judge again, and
- * REVIEW_BREAKS_MAX bounds the review as before; neither the machine nor a waiting quest stands in for it.
+ * The fit judges less those a breaker stopped in this review (cutVerifiersOf) and the one that just handed in a
+ * partial verdict (justPartialOf), when one that `may` take it is left, free now or later: the quest then waits for
+ * that one. With nobody else, they may judge again, and REVIEW_BREAKS_MAX and REVIEW_PARTIALS_MAX bound the review as
+ * before; neither the machine nor a waiting quest stands in for them.
  */
-function besidesCut(
+function besidesPassedOver(
   quest: Quest,
   fit: readonly Character[],
   may: (character: Character) => boolean,
 ): readonly Character[] {
-  const cut = cutVerifiersOf(quest);
-  const others = fit.filter(({ id }) => !cut.has(id));
+  const passedOver = new Set(cutVerifiersOf(quest));
+  const partial = justPartialOf(quest);
+  if (partial !== undefined) passedOver.add(partial);
+  const others = fit.filter(({ id }) => !passedOver.has(id));
   return others.some(may) ? others : fit;
 }
 
@@ -114,8 +128,12 @@ export function selectVerifier(
   const family = policy.assignee === undefined ? undefined : familyOf(policy.assignee.model);
   const otherFamily = (character: Character): boolean => familyOf(character.model) !== family;
   const machineOnly = policy.same_family === 'machine_only';
-  const fit = besidesCut(quest, fitJudges(quest, candidates, policy), (c) => !machineOnly || otherFamily(c));
-  const free = fit.filter(policy.free).toSorted(byPreference(policy));
+  const fit = besidesPassedOver(
+    quest,
+    fitJudges(quest, candidates, policy),
+    (c) => !machineOnly || otherFamily(c),
+  );
+  const free = fit.filter(policy.free).toSorted(byPreference(quest, policy));
   const other = free.find(otherFamily);
   if (other !== undefined) return { reason: 'other_family', character: other };
   if (machineOnly) return fit.some(otherFamily) ? null : { reason: 'machine_only' };

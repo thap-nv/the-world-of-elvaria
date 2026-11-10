@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { asleepFromLog, createManaBook, isAsleep } from './book.ts';
+import { asleepFromLog, createManaBook, isAsleep, levelsFromLog } from './book.ts';
 import type { Event } from '@elvaria/domain';
 
 function line(type: string, data: unknown): Event {
@@ -36,5 +36,30 @@ describe('asleepFromLog', () => {
   it('starts with nothing asleep', () => {
     const book = createManaBook();
     expect(isAsleep(book, { tribe: 'claude' as never, pool: 'claude' })).toBe(false);
+  });
+});
+
+// The history the shares of a window are measured from again after a restart (P1-48).
+describe('levelsFromLog', () => {
+  it('reads each mana.level line as the reading it told, observed when it was written', () => {
+    const week = { tribe: 'gemini', pool: 'gemini_models', window: 'weekly', source: 'rate_limits' };
+    const events = [
+      line('mana.level', { ...week, model: 'argon', used_pct: 93, resets_at: '2026-11-14T00:00:00Z' }),
+      line('mana.warning', { ...week, used_pct: 93 }),
+      line('mana.level', { ...week, used_pct: 100 }),
+      line('mana.level', { ...week, used_pct: 'full' }),
+    ];
+    const observed = { observed_at: '2026-11-07T09:00:00+07:00' };
+    expect(levelsFromLog(events)).toEqual([
+      {
+        ...week,
+        ...observed,
+        model: 'argon',
+        used_pct: 93,
+        resets_at: '2026-11-14T00:00:00Z',
+        exhausted: false,
+      },
+      { ...week, ...observed, used_pct: 100, resets_at: null, exhausted: true },
+    ]);
   });
 });

@@ -11,7 +11,7 @@ import type { HeldLock } from '@elvaria/store';
 import { createBackground, wantedIn } from './background.ts';
 import { createJudgeLocks } from './review/exclusive.ts';
 import { applyInbox } from './inbox/apply.ts';
-import { asleepFromLog, createManaBook, warnedFromLog } from './mana/book.ts';
+import { asleepFromLog, createManaBook, levelsFromLog, warnedFromLog } from './mana/book.ts';
 import { manaStep } from './mana/step.ts';
 import { createRecorder } from './record.ts';
 import { restartFromLog, stallLeftReviews } from './restart.ts';
@@ -107,6 +107,7 @@ async function recover(deps: StewardDeps, state: State): Promise<void> {
   await writeUnclaimable(deps.store.root, state.reported);
   state.mana.asleep = asleepFromLog(log.events);
   state.mana.warned = warnedFromLog(log.events);
+  state.mana.history = levelsFromLog(log.events);
   state.restart = restartFromLog(log.events);
 }
 

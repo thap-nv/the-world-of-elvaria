@@ -1,15 +1,16 @@
 // decideManaState: what a gauge may do now, from its readings (implementation-plan §3.5, ADR 0009); manaStateOf:
 // what a character may do, from every gauge that binds it (P1-22). The world uses mana up to the owner's cap and
 // always leaves the king's reserve.
-import { parseInstant } from '../core/clock.ts';
 import { binds, keyOf, sameKey } from './pool.ts';
-import { modelsOf } from './reading.ts';
+import { current, modelsOf } from './reading.ts';
+import { shareAheadOf } from './session-share.ts';
 import type { Instant } from '../core/clock.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
 import type { Tribe } from '../schema/tribe.ts';
 import type { PoolKey } from '../world/mana-view.ts';
 import type { ManaReading } from './reading.ts';
+import type { SessionShare } from './session-share.ts';
 
 export const MANA_STATES = ['ok', 'warning', 'closed', 'asleep'] as const;
 /**
@@ -29,18 +30,23 @@ export const manaThresholdOf = (cfg: ManaConfig): number => Math.min(cfg.cap_pct
 /** The share from which a window warns: warn_margin_pct points below the threshold. */
 export const manaWarningOf = (cfg: ManaConfig): number => manaThresholdOf(cfg) - cfg.warn_margin_pct;
 
-/** A reading whose window has reset since says nothing any more. */
-export function current(reading: Pick<ManaReading, 'resets_at'>, now: Instant): boolean {
-  if (reading.resets_at === null) return true;
-  const resets = parseInstant(reading.resets_at);
-  return !resets.ok || resets.value > now;
-}
-
-/** A spent window sleeps; otherwise the fullest window decides. */
-function stateOfLive(live: readonly ManaReading[], cfg: ManaConfig): ManaState {
+/**
+ * A spent window sleeps; otherwise the fullest window decides. With the shares sessions were seen to take (P1-48),
+ * a window closes as soon as one more session would take it to the cap, not once it is there: the session opened
+ * just under the cap would meet the account's limit halfway. Without them, only the cap closes.
+ */
+function stateOfLive(
+  live: readonly ManaReading[],
+  cfg: ManaConfig,
+  shares?: readonly SessionShare[],
+): ManaState {
   if (live.some(({ exhausted }) => exhausted)) return 'asleep';
   const used = Math.max(0, ...live.map(({ used_pct }) => used_pct ?? 0));
-  if (used >= manaThresholdOf(cfg)) return 'closed';
+  const ahead =
+    shares === undefined
+      ? used
+      : Math.max(0, ...live.map((reading) => (reading.used_pct ?? 0) + shareAheadOf(shares, reading, cfg)));
+  if (ahead >= manaThresholdOf(cfg)) return 'closed';
   return used >= manaWarningOf(cfg) ? 'warning' : 'ok';
 }
 
@@ -59,17 +65,22 @@ export const decideManaState = (
     cfg,
   );
 
-/** The state for a character: every current reading that binds its model (its group's windows, its own caps). */
+/**
+ * The state for a character: every current reading that binds its model (its group's windows, its own caps), each
+ * closing one session early when `shares` are given (P1-48).
+ */
 export const manaStateOf = (
   readings: readonly ManaReading[],
   tribes: Tribes,
   character: Holder,
   cfg: ManaConfig,
   now: Instant,
+  shares?: readonly SessionShare[],
 ): ManaState =>
   stateOfLive(
     readings.filter((reading) => binds(tribes, reading, character) && current(reading, now)),
     cfg,
+    shares,
   );
 
 /**

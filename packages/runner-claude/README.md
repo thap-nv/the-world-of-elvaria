@@ -11,8 +11,10 @@
   says so first), `settings.json` (dontAsk, the allow/deny of the `ToolPolicy` with file tools
   scoped to the plot as `Read(./**)`, the assignee's own handover letter by absolute path, Elvaria's hook on the
   twelve events in the exec form, its `PreToolUse` handler with `onFailure: "block"` and `--event PreToolUse` so
-  the hook denies a call whose payload it cannot read (P1-36, ADR 0007), `ELVARIA_*` and `CLAUDE_CODE_*` env, no
-  auto memory, no attribution line),
+  the hook denies a call whose payload it cannot read (P1-36, ADR 0007), `ELVARIA_*` and `CLAUDE_CODE_*` env and
+  the Bash timeouts (`bashTimeoutEnv`, P1-48: `BASH_DEFAULT_TIMEOUT_MS` and `BASH_MAX_TIMEOUT_MS` as long as the
+  territory's longest check, never under Claude Code's own 2 and 10 minutes, so a judge running dc1's 30-minute
+  e2e itself is not cut), no auto memory, no attribution line),
   `agents.json` (the one apprentice: the character's tools minus `Agent`, a hard `maxTurns`, the cheapest model,
   and a description naming the models the character may ask for), `system.md` for
   `--append-system-prompt-file` and the prompt as sent, redacted. Generated settings are checked before spawn,
@@ -43,7 +45,10 @@
   its own transcripts of a removed worktree; "No Claude Code project state found" counts as done).
 - Parses the account's limits for the mana gauge (P1-05): `rateLimitWindowsOf` (`rate_limit_event`, sent on as
   the `mana` signal) and `usageWindowsOf` (the text of `/usage`, resets turned into instants, in
-  `ProbeResult.windows`; `Current week (Fable)` names its model).
+  `ProbeResult.windows`; `Current week (Fable)` names its model). (P1-48) A rejected `rate_limit_event` names the
+  window it spent (`spentWindowOf`: `rateLimitType` `five_hour`, `seven_day`, or `seven_day_<model>` for one
+  model's weekly cap), sent in the same `mana` signal at 100 % until its `resetsAt`, so the Steward sleeps that
+  gauge until then; `overage` or a type it does not know names none.
 
 ## Does not
 
@@ -52,7 +57,8 @@
   short call (`--version`, `auth status`, `/usage`, the probe's ping, `purge`) past its timeout goes the same way.
 - Build the minimal env or resolve treasury secrets (the Steward does, with runner-core's treasury), nor decide
   anything: the Steward chooses who, when, with which budget and whether to resume. Secrets stay in the
-  process env: settings.json carries only `ELVARIA_*`, policy.json only the secrets' names.
+  process env: settings.json carries only `ELVARIA_*`, `CLAUDE_CODE_*` and the Bash timeouts, policy.json only
+  the secrets' names.
 - Read or write `~/.claude/`, parse transcripts, or use `--bare`, `--worktree`, `--dangerously-skip-permissions`.
 
 ## Depends on

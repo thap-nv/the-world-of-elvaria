@@ -11,7 +11,8 @@
 // after a trial of half an hour (P1-35), until the mana breaker stopped it.
 // The owner's retry sends a stalled review back to review, same run, for a new judge, and both counts start over
 // (P1-26). The judges a breaker stopped in the open group are not chosen again while another judge may take the
-// review (cutVerifiersOf, selectVerifier; P1-38, P1-35 (d)).
+// review (cutVerifiersOf, selectVerifier; P1-38, P1-35 (d)), nor is the judge that just handed in a partial verdict
+// (justPartialOf; P1-48, P1-42 (c)).
 import { REVIEW_BREAKS_MAX, REVIEW_PARTIALS_MAX } from '../constants.ts';
 import { currentRun } from '../quest/attempt-log.ts';
 import type { CharacterId } from '../core/ids.ts';
@@ -43,6 +44,8 @@ interface ReviewGroup {
   readonly left: readonly Left[];
   /** How many handed in a partial verdict. */
   readonly partials: number;
+  /** The latest of the sessions counted, partial or left without a verdict (P1-48). */
+  readonly last?: Attempt;
 }
 
 const EMPTY: ReviewGroup = { left: [], partials: 0 };
@@ -52,8 +55,8 @@ const full = (group: ReviewGroup): boolean =>
   group.left.length >= REVIEW_BREAKS_MAX || group.partials >= REVIEW_PARTIALS_MAX;
 
 function grown(group: ReviewGroup, entry: Attempt): ReviewGroup {
-  if (entry.outcome === 'partial') return { ...group, partials: group.partials + 1 };
-  return leftWithout(entry) ? { ...group, left: [...group.left, entry] } : group;
+  if (entry.outcome === 'partial') return { ...group, partials: group.partials + 1, last: entry };
+  return leftWithout(entry) ? { ...group, left: [...group.left, entry], last: entry } : group;
 }
 
 /**
@@ -92,6 +95,17 @@ export const cutVerifiersOf = (quest: Quest): ReadonlySet<CharacterId> => {
   const cut = group.left.filter(({ outcome }) => CUT.has(outcome));
   // A verifier entry always names its judge; only a script-tier run has none.
   return new Set(cut.map(({ character }) => character).filter((id): id is CharacterId => id !== null));
+};
+
+/**
+ * The judge whose session, the latest of the review's open group, handed in a partial verdict (P1-48, P1-42 (c)):
+ * the next judge reads on from where it stopped, with fresh eyes, while another judge may take the review. A judge
+ * that came after it, partial or not, makes it no longer the latest; a lost session (`cancelled`) does not count.
+ */
+export const justPartialOf = (quest: Quest): CharacterId | undefined => {
+  const group = openGroupOf(quest);
+  if (full(group) || group.last?.outcome !== 'partial') return undefined;
+  return group.last.character ?? undefined;
 };
 
 /**

@@ -14,7 +14,7 @@ import {
   textOf,
   usageTokens,
 } from './json.ts';
-import { rateLimitWindowsOf, rejectionOf } from './usage.ts';
+import { rateLimitWindowsOf, rejectionOf, spentWindowOf } from './usage.ts';
 import type { JsonObject } from './json.ts';
 import type { UsageWindow } from './usage.ts';
 
@@ -189,9 +189,20 @@ function finish(state: State, line: JsonObject): Observation[] {
   return grow(state, modelUsageTokens(objectOf(line, 'modelUsage')));
 }
 
+/**
+ * The account's windows of the line, and the one a rejection names as spent in place of its figure (P1-48): the
+ * Steward then sleeps that gauge until its reset, not the whole pool until the reset of another window.
+ */
+function windowsOf(info: JsonObject | undefined): UsageWindow[] {
+  const windows = rateLimitWindowsOf(info);
+  const spent = spentWindowOf(info);
+  if (spent === undefined) return windows;
+  return [...windows.filter((w) => w.window !== spent.window || w.model !== spent.model), spent];
+}
+
 function limit(state: State, line: JsonObject): Observation[] {
   const info = objectOf(line, 'rate_limit_info');
-  const windows = rateLimitWindowsOf(info);
+  const windows = windowsOf(info);
   const read: Observation[] = windows.length === 0 ? [] : [{ kind: 'mana', windows }];
   const rejected = rejectionOf(info);
   if (rejected === undefined) return read;

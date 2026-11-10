@@ -1,5 +1,7 @@
 // One reading of a mana gauge (implementation-plan §3.5, ADR 0009): one per (pool, window), and one more for a
 // window that caps a single model (Claude's `Current week (Fable)`, Antigravity's Argon bucket).
+import { parseInstant } from '../core/clock.ts';
+import type { Instant } from '../core/clock.ts';
 import type { TribeId } from '../core/ids.ts';
 import type { EVENT_DATA_SCHEMAS } from '../schema/event/event-data.ts';
 import type { PoolId } from './pool.ts';
@@ -56,6 +58,13 @@ export const readingOf = (tribe: TribeId, window: ReportedWindow, at: string): M
   ...(window.model === undefined ? {} : { model: window.model.toLowerCase() }),
   ...(window.models === undefined ? {} : { models: window.models }),
 });
+
+/** A reading whose window has reset since says nothing any more. */
+export function current(reading: Pick<ManaReading, 'resets_at'>, now: Instant): boolean {
+  if (reading.resets_at === null) return true;
+  const resets = parseInstant(reading.resets_at);
+  return !resets.ok || resets.value > now;
+}
 
 /** Readings are replaced per (tribe, pool, window, model): the latest one of each stands. */
 export const sameGauge = (a: ManaReading, b: ManaReading): boolean =>

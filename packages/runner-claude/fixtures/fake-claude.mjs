@@ -173,9 +173,18 @@ function rateLimited(play) {
       session_id: play.id,
     });
   }
+  // The week ran out (P1-48): `rateLimitType` names the window, `resetsAt` its reset (Agent SDK types).
   out({
     type: 'rate_limit_event',
-    rate_limit_info: { status: 'rejected', resetsAt: 1793976600, rateLimitType: 'five_hour' },
+    rate_limit_info: {
+      status: 'rejected',
+      resetsAt: 1794142800,
+      rateLimitType: 'seven_day',
+      unifiedWindows: {
+        five_hour: { utilization: 0.31, resetsAt: 1793976600, status: 'allowed' },
+        seven_day: { utilization: 0.99, resetsAt: 1794142800, status: 'rejected' },
+      },
+    },
     session_id: play.id,
   });
   return finish(play, {
