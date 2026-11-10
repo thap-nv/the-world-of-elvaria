@@ -31,6 +31,8 @@ Dữ kiện về CLI đã có, đừng tra lại: [cli-facts](../../docs/referen
 ## Bẫy đã gặp
 
 - Claude Code 2.1.319 tự khóa Edit/Write trên `.git`, `.husky`, `.claude`, `.vscode`… (37 tên) trước mọi allow rule; `dontAsk` biến thành từ chối trần, luật lãnh thổ không mở được ([spike Claude](../../docs/spikes/claude-2026-11.md) "Bổ sung (P1-24, ghi ở P1-28)").
+- agy 1.5.4 thì không tự khóa thư mục nào: `write_file` ghi được `.git/`, `.husky/`, `.claude/`, `.vscode/`, `.gitmodules`, `.npmrc`; `cli_protected_paths` chỉ là chuyện của tộc Claude ([spike Antigravity](../../docs/spikes/antigravity-2026-11.md) §15, P1-46).
+- Hook và luật deny chỉ thấy tool của CLI và dòng lệnh: tiến trình con của một lệnh được allow (`node script.mjs`) ghi được cả `read_only_paths` lẫn `forbidden_paths` (đo với agy 1.5.4, spike Antigravity §15). Luật đường dẫn là hàng rào, không phải sandbox; đừng viết test hay prompt coi nó là sandbox.
 - Usage của Claude đếm cả `cache_read_input_tokens` (85–90 % số đếm); trần token của cầu dao cân nó qua `countedTokens` (implementation-plan §3.12, P1-23), đừng cộng thẳng.
 - Gọi `agy` từ Git Bash: đối số bắt đầu bằng `/` bị đổi thành đường dẫn Windows; đặt `MSYS_NO_PATHCONV=1` ([spike Antigravity](../../docs/spikes/antigravity-2026-11.md) §0).
 - Windows: tiến trình con vừa bị kill vẫn giữ thư mục một lúc (`EBUSY`); xóa plot hay thư mục tạm của test bằng `rm` có `maxRetries` (`clearPlot`, `conformance/workspace.ts`; test dùng `RM_TEMP` của `src/__fixtures__/temp.ts`, P1-39). Test hết giờ để lại git còn chạy trong thư mục, nên `afterAll` gặp `EBUSY` ngay sau đó (`plot/patch.spec.ts`, P1-39).

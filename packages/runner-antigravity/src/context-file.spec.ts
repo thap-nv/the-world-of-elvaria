@@ -2,6 +2,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { contextPathsIn } from '@elvaria/runner-core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { openWorld } from './__fixtures__/agy.ts';
@@ -22,15 +23,33 @@ beforeEach(async () => {
 afterEach(() => world.remove());
 
 describe('contextFilesIn', () => {
-  it('finds the default context files of a territory, sorted, with `/`', async () => {
+  it('finds the default context files of a territory in the patterns order, with `/`', async () => {
     const files = await contextFilesIn(world.plot, ['CLAUDE.md', 'README.md', '.claude/rules/*.md']);
-    expect(files).toEqual(['.claude/rules/api.md', '.claude/rules/web.md', 'CLAUDE.md', 'README.md']);
+    expect(files).toEqual(['CLAUDE.md', 'README.md', '.claude/rules/api.md', '.claude/rules/web.md']);
   });
 
-  it('skips what is missing, and a wildcard before the last segment', async () => {
+  it('skips what is missing, and names a file once', async () => {
     expect(
-      await contextFilesIn(world.plot, ['AGENTS.md', 'docs/*.md', '**/rules/*.md', '.claude\\rules\\w?b.MD']),
-    ).toEqual(['.claude/rules/web.md']);
+      await contextFilesIn(world.plot, [
+        'AGENTS.md',
+        'docs/*.md',
+        '.claude\\rules\\w?b.md',
+        '.claude/rules/*.md',
+      ]),
+    ).toEqual(['.claude/rules/web.md', '.claude/rules/api.md']);
+  });
+
+  it('reads a glob as runner-core does: a wildcard mid-path, `**` at any depth (P1-46)', async () => {
+    const deep = path.join(world.plot, 'apps', 'web', '.claude', 'rules');
+    await mkdir(deep, { recursive: true });
+    await writeFile(path.join(deep, 'ui.md'), '# ui\n', 'utf8');
+    const patterns = ['apps/*/.claude/rules/*.md', '**/rules/a*.md'];
+    expect(await contextFilesIn(world.plot, patterns)).toEqual([
+      'apps/web/.claude/rules/ui.md',
+      '.claude/rules/api.md',
+    ]);
+    // The same paths a `context: prompt` tribe reads into its prompt, those that are there.
+    expect(await contextPathsIn(world.plot, patterns)).toEqual(await contextFilesIn(world.plot, patterns));
   });
 });
 

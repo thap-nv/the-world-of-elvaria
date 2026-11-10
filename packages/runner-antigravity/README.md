@@ -15,7 +15,8 @@ terms_acknowledged_at, env, pools?, timeout_ms?})`. `hook` is `hookCommand()` of
   `--json-schema`; writes into the plot `.agents/hooks.json` (`node [flags] elvaria-hook.mjs <Event>` for
   SessionStart, PreToolUse, PostToolUse, Stop), the shim `.agents/elvaria-hook.mjs` that holds the paths, and
   `GEMINI.md` (the system prompt, then `@[Territory law](./CLAUDE.md)` and `@[rule](./<file>)` for
-  `territory.context_files`). Then checks with `agy -p /hooks` (0 tokens) that agy loaded exactly that hook.
+  `territory.context_files`, found by runner-core's `contextPathsIn`, the globs read as for a `context: prompt`
+  tribe, in the patterns' order, only files that are there, P1-46). Then checks with `agy -p /hooks` (0 tokens) that agy loaded exactly that hook.
 - Takes those three files out of the plot when the session ends, before `wait()` or `kill()` settles, and when
   `spawn` refuses after writing them (`removeRunFiles`, P1-23; every write settles before the refusal is thrown,
   `settleAll`, so none lands after the clean-up): agy loads hooks only from the workspace's
