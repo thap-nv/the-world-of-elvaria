@@ -21,6 +21,8 @@ export {
 export type { CheckRun, ChecksOptions, ChecksRequest } from './checks/run-checks.ts';
 export { selectChecks } from './checks/select-checks.ts';
 export { COVERAGE_SUMMARY, COVERAGE_TIMEOUT_MS } from './checks/coverage.ts';
+export { scratchAgain, scratchResetLogOf } from './checks/scratch-again.ts';
+export type { ScratchAgainRequest } from './checks/scratch-again.ts';
 export { trialInScratch } from './checks/scratch-trial.ts';
 export type { ScratchTrialRequest } from './checks/scratch-trial.ts';
 export { runTrial } from './checks/trial.ts';

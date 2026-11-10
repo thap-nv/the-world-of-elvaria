@@ -306,6 +306,12 @@
           "minimum": 1,
           "maximum": 1440,
           "default": 55
+        },
+        "max_background": {
+          "description": "How many pieces of machine work the Steward runs outside its tick at once, kingdom-wide: a submitted quest's checks (or its trial in a scratch plot) and a script-tier quest's script. The next waits for a later tick. Cautious until measured.",
+          "type": "integer",
+          "minimum": 1,
+          "default": 2
         }
       }
     },
@@ -637,7 +643,8 @@
         "fairness": "round_robin_territory",
         "verifier_same_family": "different_model",
         "resume_after_mana": false,
-        "resume_after_answer_minutes": 55
+        "resume_after_answer_minutes": 55,
+        "max_background": 2
       },
       "bell": {
         "desktop": true,
