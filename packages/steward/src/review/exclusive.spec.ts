@@ -6,13 +6,14 @@ import { acquireLock } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { QuestId } from '@elvaria/domain';
 
+import { RM_TEMP } from '../__fixtures__/kingdom.ts';
 import { createJudgeLocks } from './exclusive.ts';
 
 let dir = '';
 beforeEach(async () => {
   dir = await mkdtemp(path.join(os.tmpdir(), 'elvaria judge locks '));
 });
-afterEach(() => rm(dir, { recursive: true, force: true }));
+afterEach(() => rm(dir, RM_TEMP));
 
 const ONE = 'q_20261109_aaaaaa' as QuestId;
 const TWO = 'q_20261109_bbbbbb' as QuestId;

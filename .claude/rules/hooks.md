@@ -13,7 +13,7 @@ paths:
 - `packages/hooks` chỉ nạp `node:fs`, `node:path`, `node:process` và `@elvaria/eventlog` (ESLint chặn). Không domain, không zod, không `node:crypto`, không `Intl`: `Intl.DateTimeFormat` đầu tiên tốn ~11 ms, nên tiến trình hook đặt `TZ` rồi đóng dấu bằng `localTs`.
 - `@elvaria/eventlog` chỉ `import type` từ domain; reader nạp `EventSchema` bằng `import()` ở lần đọc đầu (`light-entry.spec.ts`).
 - Hook chạy từ bản build: `node --conditions=elvaria-dist <abs>/packages/hooks/dist/elvaria-hook.js [--policy <file>]`, lệnh do `hookCommand()` dựng. Sửa `src/` của hooks hay eventlog thì build lại bằng `pnpm --filter @elvaria/hooks build` (build cả eventlog); `pnpm --filter @elvaria/hooks test` tự build.
-- `hook-process.spec.ts` đo khởi động (trung vị, trừ `node -e 0`) và liệt kê mọi module bản build nạp: import mới phải qua được nó.
+- `hook-process.spec.ts` đo khởi động (trung vị của hiệu từng cặp hook − `node -e 0`, tối đa ba vòng, đỏ khi cả ba vượt; `__fixtures__/startup-gate.ts`, P1-43) và liệt kê mọi module bản build nạp: import mới phải qua được nó.
 
 ## Hành vi
 

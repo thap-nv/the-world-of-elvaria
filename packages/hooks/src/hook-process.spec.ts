@@ -13,15 +13,22 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { DC1_LAWS, EXPECTED_TYPES, PAYLOADS, payload } from './__fixtures__/claude-payloads.ts';
+import { gateOf } from './__fixtures__/startup-gate.ts';
 import { tempKingdom } from './__fixtures__/temp.ts';
 import { HOOK_SCRIPT, hookCommand } from './index.ts';
 import type { TempKingdom } from './__fixtures__/temp.ts';
 import type { ClaudeEvent } from './__fixtures__/claude-payloads.ts';
+import type { Pair } from './__fixtures__/startup-gate.ts';
 import type { HookEnv } from './context.ts';
 
 const LOAD_TRACE = fileURLToPath(new URL('__fixtures__/load-trace.mjs', import.meta.url));
-/** Runs per median: enough to ride out a busy machine, few enough for a CI job. */
+/** Pairs per round: enough to ride out a busy machine, few enough for a CI job. */
 const RUNS = 15;
+/**
+ * Rounds before the gate is red (P1-43, (b) of P1-39): a loaded run of `main` once measured `node -e 0` 332 ms and the
+ * hook 544 ms, over the gate with no regression. A real one is over in every round (startup-gate.ts).
+ */
+const ROUNDS = 3;
 /**
  * What the hook may add to a bare Node start: a soft gate. The development machine measures ~32 ms on top of
  * `node -e 0` (whole call 76 ms, §3.6 "(P1-08)"); CI machines load files several times slower, so the gate
@@ -96,9 +103,6 @@ async function runSplit(stdin: unknown, env: HookEnv, policy: string) {
   const [status] = await closed;
   return { status, stdout, stderr };
 }
-
-const median = (values: number[]): number =>
-  [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)] ?? 0;
 
 beforeAll(() => {
   if (!existsSync(HOOK_SCRIPT))
@@ -243,17 +247,21 @@ describe('the built hook', () => {
     );
   });
 
-  it(`starts within ${OVERHEAD_BUDGET_MS} ms of a bare node -e 0`, async ({ annotate }) => {
-    const bare: number[] = [];
-    const hook: number[] = [];
-    for (let run = 0; run < RUNS; run += 1) {
-      const started = performance.now();
-      spawnSync(process.execPath, ['-e', '0'], { env: baseEnv() });
-      bare.push(performance.now() - started);
-      hook.push(runBuilt(PAYLOADS.PostToolUse, kingdom.env()).ms);
-    }
-    const note = `median of ${RUNS}: node -e 0 ${median(bare).toFixed(0)} ms, hook ${median(hook).toFixed(0)} ms`;
-    await annotate(note);
-    expect(median(hook) - median(bare), note).toBeLessThan(OVERHEAD_BUDGET_MS);
-  });
+  // Up to ROUNDS rounds, each with the package's timeout (P1-43).
+  it(
+    `starts within ${OVERHEAD_BUDGET_MS} ms of a bare node -e 0`,
+    { timeout: ROUNDS * 60_000 },
+    async ({ annotate }) => {
+      const measure = (): Pair[] =>
+        Array.from({ length: RUNS }, () => {
+          const started = performance.now();
+          spawnSync(process.execPath, ['-e', '0'], { env: baseEnv() });
+          const bare = performance.now() - started;
+          return { bare, hook: runBuilt(PAYLOADS.PostToolUse, kingdom.env()).ms };
+        });
+      const gate = gateOf(measure, OVERHEAD_BUDGET_MS, ROUNDS);
+      await annotate(gate.note);
+      expect(gate.pass, gate.note).toBe(true);
+    },
+  );
 });

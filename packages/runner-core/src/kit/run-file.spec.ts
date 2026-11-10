@@ -4,6 +4,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { writeRunFile } from './run-file.ts';
 
 describe('writeRunFile', () => {
@@ -11,7 +12,7 @@ describe('writeRunFile', () => {
   beforeEach(async () => {
     runDir = path.join(await mkdtemp(path.join(tmpdir(), 'elvaria run file ')), '.runs', 'q-1');
   });
-  afterEach(() => rm(path.dirname(path.dirname(runDir)), { recursive: true, force: true }));
+  afterEach(() => rm(path.dirname(path.dirname(runDir)), RM_TEMP));
 
   it('writes the file into the run folder, made if missing, and says where', async () => {
     const file = await writeRunFile(runDir, 'prompt.json', '{"user":"hi"}\n');

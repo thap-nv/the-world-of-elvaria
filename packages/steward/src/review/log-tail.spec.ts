@@ -5,6 +5,7 @@ import path from 'node:path';
 import { CheckIdSchema } from '@elvaria/domain';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { RM_TEMP } from '../__fixtures__/kingdom.ts';
 import { TAILS_MAX_CHARS, TAIL_LINES, withLogTails } from './log-tail.ts';
 import type { VerdictCheck } from '@elvaria/domain';
 
@@ -13,7 +14,7 @@ beforeAll(async () => {
   root = await mkdtemp(path.join(os.tmpdir(), 'elvaria log tail '));
   await mkdir(path.join(root, 'checks'), { recursive: true });
 });
-afterAll(() => rm(root, { recursive: true, force: true }));
+afterAll(() => rm(root, RM_TEMP));
 
 const check = (id: string, pass = false): VerdictCheck => ({
   id: CheckIdSchema.parse(id),

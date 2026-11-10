@@ -107,7 +107,7 @@ describe('the scratch plot of a judge (ADR 0022)', () => {
       ok: false,
       error: { reason: 'path_taken' },
     });
-    await rm(scratch, { recursive: true, force: true });
+    await rm(scratch, RM_TEMP);
     const failing = { ...territory, commands: { setup: 'node -e "process.exit(3)"' } };
     expect(await manager.prepareScratch(quest, failing)).toMatchObject({
       ok: false,

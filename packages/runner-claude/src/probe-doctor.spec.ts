@@ -12,6 +12,7 @@ import {
   fakeRunner,
   minimalEnv,
 } from './__fixtures__/harness.ts';
+import { RM_TEMP } from './__fixtures__/temp.ts';
 import { NOT_FOUND, hookMissing, signInEnding, versionOf } from './doctor.ts';
 import { launchOf } from './launch.ts';
 import { claudeCandidates, locateClaude } from './locate.ts';
@@ -105,7 +106,7 @@ describe('doctor', () => {
     const info = await fakeRunner({ executable: broken }).doctor();
     expect(info).toMatchObject({ path: broken, version: '', auth_ok: false });
     expect(info.detail).toContain('no version from');
-    await rm(path.dirname(broken), { recursive: true, force: true });
+    await rm(path.dirname(broken), RM_TEMP);
   });
 
   it('says when it found no CLI at all, and a session cannot start', async () => {
@@ -158,7 +159,7 @@ describe('where Claude Code is', () => {
   beforeAll(async () => {
     home = await mkdtemp(path.join(tmpdir(), 'elvaria home '));
   });
-  afterAll(() => rm(home, { recursive: true, force: true }));
+  afterAll(() => rm(home, RM_TEMP));
 
   const binary = process.platform === 'win32' ? 'claude.exe' : 'claude';
   const homeEnv = () => (process.platform === 'win32' ? { USERPROFILE: home } : { HOME: home });

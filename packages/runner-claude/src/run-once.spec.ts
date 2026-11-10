@@ -31,6 +31,7 @@ describe('runOnce', () => {
     expect(ran).toMatchObject({ code: null, problem: 'no answer within 1000 ms' });
     const child = Number(ran.stdout.trim());
     expect(child).toBeGreaterThan(0);
+    // No timeout of its own: one under the package's (vitest.config.ts) only fails sooner on a busy machine (P1-39).
     expect(await goneWithin(child, 5000)).toBe(true);
-  }, 20_000);
+  });
 });

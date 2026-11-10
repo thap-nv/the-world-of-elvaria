@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, printed, run, tempDir, testIo } from '../test/cli.ts';
+import { RM_TEMP, foundKingdom, printed, run, tempDir, testIo } from '../test/cli.ts';
 import { backupStamp } from './migrate.ts';
 import type { TempDir } from '../test/cli.ts';
 
@@ -53,7 +53,7 @@ describe('elvaria migrate', () => {
   it('copies the class prompts a kingdom made before P1-15 lacks, and keeps the owner’s own', async () => {
     const kingdom = await foundKingdom(dir.root);
     const prompts = path.join(kingdom, 'registry', 'prompts');
-    await rm(prompts, { recursive: true });
+    await rm(prompts, RM_TEMP);
     await mkdir(prompts);
     await writeFile(path.join(prompts, 'judge.md'), '# My own judge\n');
     const io = testIo();
