@@ -23,7 +23,8 @@
   since the quest then waits for the seal) or, without `--to`, to the Steward's choice (P1-26). `quest add --to
 <id>` names the new quest's assignee the same way (`create_quest.assignee`): only that character takes it
   (P1-29; refused on a script-tier quest). `quest show` of a quest nobody can take prints the `reassign` to its
-  best candidate; of a quest in the infirmary, why it went there, from the last `quest.infirmary` line of its
+  best candidate, or, when its party bars every character of the class (`party_bars`, P1-37), the `reassign` the
+  owner may still give one of them; of a quest in the infirmary, why it went there, from the last `quest.infirmary` line of its
   journal (`src/quest/infirmary.ts`, P1-32): the trip and the attempt, then each part of the detail, in the
   owner's language (a line written before P1-32 shows its English reason). `quest list` has a column for a party's member, its role and where the party stands, and
   `quest show` prints the party, the role, the contract and the merge quest (`src/quest/party.ts`, the domain's

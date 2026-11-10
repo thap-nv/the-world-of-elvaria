@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { Q1, character, quest } from './__fixtures__/snapshot.ts';
+import { Q1, Q2, Q3, character, quest } from './__fixtures__/snapshot.ts';
 import { claimBlocker } from './claim-blocker.ts';
+import type { CharacterId } from '../core/ids.ts';
+import type { Quest } from '../schema/quest/quest.ts';
 
 const rankA = quest(Q1, { rank: 'A' });
 
@@ -33,5 +35,35 @@ describe('claimBlocker', () => {
   it('names the same best character among equals: the lowest id', () => {
     const roster = [character('thorn', { level: 4 }), character('kael', { level: 4 })];
     expect(claimBlocker(rankA, roster)?.best?.character).toBe('kael');
+  });
+});
+
+describe('claimBlocker in a party (P1-37 (ii))', () => {
+  const tests: Quest = {
+    ...quest(Q3, { party: Q1, dependsOn: [Q1] }),
+    party_role: 'acceptance',
+    assignee: 'thorn' as CharacterId,
+  };
+  const part = quest(Q2, { party: Q1, dependsOn: [Q1, Q3] });
+  const contract = quest(Q1, { party: Q1, kind: 'plan', cls: 'mage', status: 'done' });
+
+  it("reports party_bars when the party bars every knight: one knight wrote the blind trial's tests", () => {
+    expect(claimBlocker(part, [character('thorn', { level: 9 })], [contract, tests])).toEqual({
+      reason: 'party_bars',
+    });
+  });
+
+  it('reports nothing once a knight the party does not bar is there, and no_class before the bars', () => {
+    const roster = [character('thorn', { level: 9 }), character('kael', { level: 5 })];
+    expect(claimBlocker(part, roster, [contract, tests])).toBeNull();
+    expect(claimBlocker(part, [], [contract, tests])).toEqual({ reason: 'no_class' });
+  });
+
+  it('names the best knight the party does not bar when the level is too low', () => {
+    const roster = [character('thorn', { level: 9 }), character('kael', { level: 2 })];
+    expect(claimBlocker({ ...part, rank: 'A' }, roster, [contract, tests])).toEqual({
+      reason: 'level_too_low',
+      best: { character: 'kael', level: 2, ceiling: 'E' },
+    });
   });
 });

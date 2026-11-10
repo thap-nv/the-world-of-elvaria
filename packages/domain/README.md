@@ -39,7 +39,13 @@
   and the contract alone, waiting for the contract only; `plotBaseOf` starts it on the contract's branch, the
   merge quest merges it with the parts). `partyBarsOf` keeps a party's judges from its work and, in a blind trial,
   the acceptance writer apart from the parts' assignees (`selectAssignee` takes the party: barred characters are
-  left out, the other model family goes first; `partyIssues` reports `blind_trial_crossed`). `questFinished`
+  left out, the other model family goes first; `partyIssues` reports `blind_trial_crossed`). (P1-37) Every part
+  waits for the acceptance part (`partWaitsFor`; `plotBaseOf` never starts a part on its branch), so the tests are
+  written before any part's branch holds work; `blindTrialDue` reads ranks alone, so it is asked of the lead's
+  drafts. The part's brief asks for test files named `*.acceptance.*` and quotes the owner's description up to a
+  line `---` (`LEAD_MARK`, `workOf`). The merge quest goes to the tests' writer only when no other knight may take
+  it (`PartyBars.avoided`), and `claimBlocker` reports `party_bars` when the party bars every character of the
+  class. `questFinished`
   (done, or archived after its delivery) is what `planTick` counts a dependency as done by, so archiving a
   contract midway holds up nothing. The event `plot.merged` records a merge of a party's parts.
 - Runs the character state machine (`src/character/`, `transitionCharacter`) and derives what is never stored:

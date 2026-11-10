@@ -2,7 +2,9 @@
 // ADR 0020, 0022; P1-21). A party's judges and assignees are two sets whichever came first, so whoever judged a quest
 // of the party never works on it ((b): partyIssues' `member_verifies` from the other side). In a blind trial the
 // acceptance part's writer and the parts' assignees are two sets too, or the tests would share the author's blind
-// spots; each side prefers a model family the other side has not.
+// spots; each side prefers a model family the other side has not. The merge quest goes to the tests' writer only when
+// no other character may take it (P1-37 (m)): a failing acceptance test is then weighed against the contract by
+// someone other than its author.
 import { charactersIn } from '../quest/characters-in.ts';
 import type { CharacterId } from '../core/ids.ts';
 import type { Quest } from '../schema/quest/quest.ts';
@@ -12,6 +14,8 @@ export interface PartyBars {
   readonly barred: ReadonlySet<CharacterId>;
   /** The other side of the blind trial, whose model families the taker had better not share; empty outside one. */
   readonly rivals: ReadonlySet<CharacterId>;
+  /** Characters who take the quest only when no other may: the merge quest's, whoever wrote the acceptance tests. */
+  readonly avoided: ReadonlySet<CharacterId>;
 }
 
 type Side = 'acceptance' | 'part';
@@ -32,5 +36,9 @@ export function partyBarsOf(quest: Quest, party: readonly Quest[]): PartyBars {
     return side !== undefined && other !== undefined && other !== side;
   });
   const rivals = new Set(across.flatMap((member) => charactersIn(member, 'assignee')));
-  return { barred: new Set([...judges, ...rivals]), rivals };
+  const writers = party.filter((member) => member.party_role === 'acceptance');
+  const avoided = new Set(
+    quest.party_role === 'merge' ? writers.flatMap((member) => charactersIn(member, 'assignee')) : [],
+  );
+  return { barred: new Set([...judges, ...rivals]), rivals, avoided };
 }

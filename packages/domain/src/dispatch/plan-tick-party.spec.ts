@@ -1,9 +1,11 @@
 // planTick and parties (implementation-plan §3.13; P1-21 (a), (b)): a dependency archived after its delivery stands
 // as done, so archiving a party's contract midway holds up nothing; and whoever judged a quest of a party never takes
-// work of it.
+// work of it. In a blind trial (P1-37) the parts wait for the acceptance part, and a part its party bars every knight
+// from is named.
 import { describe, expect, it } from 'vitest';
 
-import { NOW, Q1, Q2, at, character, quest, snapshot } from './__fixtures__/snapshot.ts';
+import { NOW, Q1, Q2, Q3, at, character, quest, snapshot } from './__fixtures__/snapshot.ts';
+import { partWaitsFor } from '../party/acceptance-quest.ts';
 import { planTick } from './plan-tick.ts';
 import type { CharacterId } from '../core/ids.ts';
 import type { Character } from '../schema/character/character.ts';
@@ -36,5 +38,27 @@ describe('planTick in a party (P1-21)', () => {
     expect(takers([contract, part], [character('thorn'), character('kael', { since: 30 })])).toEqual([
       [Q2, 'kael'],
     ]);
+  });
+});
+
+describe('planTick in a blind trial (P1-37)', () => {
+  const contract = quest(Q1, { party: Q1, kind: 'plan', cls: 'mage', status: 'done' });
+  const tests = (status: 'open' | 'done', writer?: string): Quest => ({
+    ...quest(Q3, { party: Q1, dependsOn: [Q1], status }),
+    party_role: 'acceptance',
+    ...(writer === undefined ? {} : { assignee: writer as CharacterId }),
+  });
+  const part = quest(Q2, { party: Q1, dependsOn: partWaitsFor(Q1, Q3) });
+
+  it('starts the parts only once the acceptance part is done, the tests first (iii)', () => {
+    const knights = [character('thorn'), character('kael', { since: 30 })];
+    expect(takers([contract, tests('open'), part], knights)).toEqual([[Q3, 'thorn']]);
+    expect(takers([contract, tests('done', 'thorn'), part], knights)).toEqual([[Q2, 'kael']]);
+  });
+
+  it('names a part nobody may take because its party bars every knight, instead of waiting in silence (ii)', () => {
+    const plan = planTick(snapshot([contract, tests('done', 'thorn'), part], [character('thorn')]), NOW);
+    expect(plan.claims).toEqual([]);
+    expect(plan.unclaimable).toEqual([{ quest: Q2, reason: 'party_bars' }]);
   });
 });

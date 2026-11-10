@@ -67,14 +67,14 @@ Lãnh thổ dc1-se-team, tóm tắt:
   { "id": "content_drift", "run": ["pnpm content:build", "git diff --exit-code packages/shared/src/content"],
     "when": ["ban-do-nang-luc-se.md", "packages/shared/scripts/**", "packages/shared/src/content/**"], "timeout_minutes": 5 },
   { "id": "openapi_drift", "run": ["pnpm api:openapi", "git diff --exit-code apps/api/openapi.json packages/shared/src/api-types.ts"],
-    "when": ["apps/api/**", "packages/shared/src/**"], "timeout_minutes": 10 },
+    "when": ["apps/api/**", "packages/shared/src/**"], "timeout_minutes": 10, "defer_to_merge": true },
   { "id": "e2e", "run": ["sh infra/scripts/init-secrets.sh", "pnpm e2e:docker"],
     "when": ["apps/web/**", "apps/api/src/**", "packages/shared/src/**", "infra/compose*.yml", "infra/docker/**", "infra/postgres/**"],
     "exclusive": true, "timeout_minutes": 30, "defer_to_merge": true, "cleanup": "pnpm e2e:down" }
 ]
 ```
 
-`git diff --exit-code` nêu đúng các đường dẫn sinh ra, như CI, để file khác trong plot (đất nháp của người chấm có `infra/secrets/*`, `coverage/`) không làm check đỏ. Check drift đỏ khi nguồn đổi mà file sinh không đổi theo (diff in trong log), xanh khi không drift; `content:build` còn tự từ chối khi tên mảng lệch Phụ lục A, cũng đỏ nhưng vì lý do khác.
+`openapi_drift` có `defer_to_merge` (từ P1-37): quest hợp đồng của một đội viết `openapi.json` trước khi có code, nên drift luôn đỏ ở đó; quest hợp đồng và các phần bỏ qua nó, quest ghép chạy nó một lần trên nhánh đã ghép. `git diff --exit-code` nêu đúng các đường dẫn sinh ra, như CI, để file khác trong plot (đất nháp của người chấm có `infra/secrets/*`, `coverage/`) không làm check đỏ. Check drift đỏ khi nguồn đổi mà file sinh không đổi theo (diff in trong log), xanh khi không drift; `content:build` còn tự từ chối khi tên mảng lệch Phụ lục A, cũng đỏ nhưng vì lý do khác.
 
 **Test là sản phẩm** (P1-20, ADR 0022): quest Kiến tạo/Gia cố có tag `e2e` hoặc `integration` được nghiệm thu bằng Thả quái thử thành trong một đất nháp `<quest-id>-verify`. Hai lệnh mới, tùy chọn, ở `commands`: `reset` (một lệnh hoặc danh sách: đưa DB, container về sạch; chạy sau `setup` và trước mỗi lần chạy check trong đất nháp, chỉ máy chạy) và `coverage` (đo coverage, để lại tóm tắt istanbul ở `coverage/coverage-summary.json` **ở gốc plot**; bước `coverage_not_lower` chạy nó trên nhánh và trên base). Không khai `coverage` thì coverage không được đo. Với dc1 (monorepo, gốc không có vitest):
 
@@ -137,6 +137,8 @@ elvaria quest add --territory dc1-se-team --kind build --rank E --class knight -
   --description "…"
 elvaria quest list
 ```
+
+**Một đội** (P1-18): `quest add --contract` (kind `plan`, nghề `mage`) mở một đội; pháp sư viết hợp đồng rồi chia phần, Quản sự tự thêm quest ghép. Trên lãnh thổ bật `blind_trial`, đội có hạng từ `min_rank` trở lên có thêm phần test chấp nhận do Quản sự tự thêm, và các phần chờ nó (P1-37): đừng liệt kê nó trong chỉ dẫn cho pháp sư. Người viết test chấp nhận chỉ đọc hợp đồng và phần việc của mô tả. Viết phần việc trước, rồi một dòng chỉ có `---`, rồi chỉ dẫn cho trưởng đội (đường dẫn hợp đồng, cách chia phần, hạng mỗi phần): người viết test không đọc phần sau dòng đó. Không có dòng `---` thì người viết đọc cả mô tả, kèm lời dặn bỏ qua chỉ dẫn cho trưởng đội. Quest lẻ không bao giờ có Khảo hạch mù, dù hạng nào; muốn có thì ra nhiệm vụ bằng `--contract`.
 
 Kind `build` mặc định cần dấu vua, nên quest dừng ở `awaiting_seal` sau khi qua nghiệm thu. Quest tạo bằng `quest add` không có ước lượng token, nên trần token của nó lấy theo hạng (từ P1-38): `context_budget_tokens × mana_multiplier` (240 000 với mặc định) cho F–D, gấp 1,5 cho C, 2 cho B, 2,5 cho A, 3 cho S; người chấm được gấp đôi trần đó. Việc cần hơn thì nâng trước bằng `elvaria quest edit`. Trong Windows PowerShell 5.1, dấu `"` nằm trong một đối số bị cắt khi truyền cho `node` (CLI báo "Thừa tham số"): dùng ngoặc kép kiểu chữ (“ ”) hoặc Git Bash.
 

@@ -20,6 +20,7 @@ function waitReason(t: Translate, notice: Extract<Notice, { kind: 'unclaimable' 
       stretch: stretchOf(best.ceiling),
     });
   }
+  if (notice.reason === 'party_bars') return t('cli.quest.unclaimable.party_bars', { class: notice.class });
   return t('cli.quest.unclaimable.no_class', { class: notice.class });
 }
 

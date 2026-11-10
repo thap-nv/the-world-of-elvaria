@@ -5,8 +5,11 @@ import {
   ACCEPTANCE_CLASS,
   ACCEPTANCE_KIND,
   ACCEPTANCE_TAG,
+  LEAD_MARK,
   acceptanceQuestOf,
   blindTrialDue,
+  partWaitsFor,
+  workOf,
 } from './acceptance-quest.ts';
 import { mergeQuestOf } from './merge-quest.ts';
 import type { CampaignId, CheckId, TagId } from '../core/ids.ts';
@@ -51,6 +54,28 @@ describe('blindTrialDue', () => {
     expect(blindTrialDue(trial(true), { ...contract, rank: 'B' }, [api, web])).toBe(true);
     expect(blindTrialDue(trial(true), contract, [api, { ...web, rank: 'A' }])).toBe(true);
     expect(blindTrialDue(trial(true, 'C'), contract, [])).toBe(true);
+    // Ranks alone: the Steward asks it of the lead's drafts before any part exists (P1-37 (iii)).
+    expect(blindTrialDue(trial(true), { rank: 'C' }, [{ rank: 'B' }])).toBe(true);
+  });
+});
+
+describe('partWaitsFor (P1-37 (iii))', () => {
+  it('makes every part wait for the contract, and in a blind trial for the acceptance part too', () => {
+    expect(partWaitsFor(Q1, undefined)).toEqual([Q1]);
+    expect(partWaitsFor(Q1, Q3)).toEqual([Q1, Q3]);
+  });
+});
+
+describe('workOf (P1-37 (n))', () => {
+  it('keeps what comes before the first line ---, trimmed', () => {
+    expect(workOf(`Export CSV.\r\nOne row per answer.\r\n${LEAD_MARK}\r\nSplit in two.\n---\nMore.`)).toBe(
+      'Export CSV.\r\nOne row per answer.',
+    );
+  });
+
+  it('gives null without a mark, or with nothing before it', () => {
+    expect(workOf('Export CSV.\n----\nSplit in two.')).toBeNull();
+    expect(workOf(`  \n${LEAD_MARK}\nSplit in two.`)).toBeNull();
   });
 });
 
@@ -83,13 +108,39 @@ describe('acceptanceQuestOf', () => {
     }).payload;
     expect(description).toContain('> A member downloads their results as CSV.\n> One row per answer.');
     expect(description).toContain('the contract (`api/openapi.yaml`) on this branch');
-    expect(description).toContain('2 other part(s)');
+    expect(description).toContain('2 part(s) of the party build the work once your tests are judged');
     expect(description).toContain(
       '`unit` (`pnpm test`), `integration` (`pnpm db:reset` then `pnpm test:integration`)',
     );
-    expect(description).toContain('no other branch, no other worktree');
+    expect(description).toContain('never read another branch or another worktree');
     expect(description).not.toContain(api.title);
     expect(description).not.toContain(api.description);
+  });
+
+  it("asks for test files named apart from any part's, so the merge meets no add/add conflict (P1-37 (l))", () => {
+    const { description } = acceptanceQuestOf(contract, [api], {
+      territory: { checks: [] },
+      tags: [],
+    }).payload;
+    expect(description).toContain('Give every test file you add `.acceptance` right before its test suffix');
+    expect(description).toContain('`rooms.acceptance.spec.ts`');
+  });
+
+  it("quotes the work alone when a line --- ends it, and warns off the lead's part when none does (P1-37 (n))", () => {
+    const lead = 'Write the contract in api/openapi.yaml, then split it into two parts of rank C.';
+    const marked = { ...contract, description: `${contract.description}\n\n ---\n${lead}` };
+    const tests = acceptanceQuestOf(marked, [api], { territory: { checks: [] }, tags: [] }).payload;
+    expect(tests.description).toContain(
+      '> A member downloads their results as CSV.\n> One row per answer.\n\n',
+    );
+    expect(tests.description).not.toContain(lead);
+    expect(tests.description).not.toContain("What it tells the party's lead");
+    const unmarked = { ...contract, description: `${contract.description}\n\n${lead}` };
+    const whole = acceptanceQuestOf(unmarked, [api], { territory: { checks: [] }, tags: [] }).payload;
+    expect(whole.description).toContain(`> ${lead}`);
+    expect(whole.description).toContain(
+      "What it tells the party's lead (writing the contract, splitting the work into parts) is no work to test",
+    );
   });
 
   it("carries no tag the kingdom lacks, no secret when the parts ask none, and the contract's campaign", () => {

@@ -276,6 +276,8 @@ describe('the console bell', () => {
     expect(tooLow).toContain('elvaria quest show q_20261106_7k3m2a');
     const none = lineOf(t, { kind: 'unclaimable', quest, reason: 'no_class', class: 'mage' });
     expect(none).toContain('mage');
+    const barred = lineOf(t, { kind: 'unclaimable', quest, reason: 'party_bars', class: 'knight' });
+    expect(barred).toContain('Its party bars every knight there is');
     const thorn = CharacterIdSchema.parse('thorn');
     expect(lineOf(t, { kind: 'suspended', character: thorn, fail_kind: 'tests_fail', count: 3 })).toBe(
       'thorn failed the same way (tests_fail) 3 times in a row and went to the Temple.',

@@ -55,11 +55,28 @@ export const ACCEPTANCE_REF = 'acceptance';
 
 /** The ids of the quests the Steward adds to a party (childIdOf of the contract and the refs above). */
 export interface AddedIds {
-  readonly acceptance: QuestId;
+  /** None when the party has no blind trial (acceptanceIdFor). */
+  readonly acceptance: QuestId | undefined;
   readonly merge: QuestId;
 }
 
 type Made = Result<Quest | undefined, string>;
+
+/**
+ * `id`, the blind trial's acceptance part (§3.15, P1-21), when the party has one: found when a crash left it written,
+ * whatever the territory says now, or due on the contract's territory for the ranks of the lead's drafts. Decided
+ * once, before any part is made, because every part waits for it (P1-37 (iii), domain's partWaitsFor).
+ */
+export function acceptanceIdFor(
+  ctx: Context,
+  plan: Quest,
+  drafts: readonly Pick<Quest, 'rank'>[],
+  id: QuestId,
+): QuestId | undefined {
+  if (ctx.world.quests.has(id)) return id;
+  const territory = ctx.world.territories.get(plan.territory);
+  return territory !== undefined && blindTrialDue(territory, plan, drafts) ? id : undefined;
+}
 
 /** `made`, or why questFromCommand refused the quest the Steward meant to add. */
 function added(payload: PartyQuest, context: NewQuestContext, what: string): Result<Quest, string> {
@@ -67,17 +84,13 @@ function added(payload: PartyQuest, context: NewQuestContext, what: string): Res
   return made.ok ? ok(made.value) : err(`the ${what} is refused: ${made.error.code}`);
 }
 
-/**
- * The blind trial's acceptance part (§3.15, P1-21), when the contract's territory turned it on and the party is of
- * its rank; found when a crash left it written, whatever the territory says now.
- */
+/** The acceptance part acceptanceIdFor named: made, or found when a crash left it written. */
 function acceptanceQuestFor(ctx: Context, plan: Quest, parts: Parts, context: NewQuestContext): Made {
   const before = ctx.world.quests.get(context.id);
   if (before !== undefined) return ok(before);
-  const territory = ctx.world.territories.get(plan.territory);
-  if (territory === undefined || !blindTrialDue(territory, plan, parts)) return ok(undefined);
+  const checks = ctx.world.territories.get(plan.territory)?.checks ?? [];
   const tags = ctx.world.registry.tags.map(({ id }) => id);
-  return added(acceptanceQuestOf(plan, parts, { territory, tags }), context, 'acceptance part');
+  return added(acceptanceQuestOf(plan, parts, { territory: { checks }, tags }), context, 'acceptance part');
 }
 
 /**
@@ -94,8 +107,11 @@ export function addedQuestsFor(
   const [first, ...rest] = parts;
   // partyRefusal let a contract's list through only when it has parts, and the schema wants one draft at least.
   if (first === undefined) return err('the contract opens no part');
-  const quests = [...context.quests, ids.acceptance, ids.merge];
-  const tests = acceptanceQuestFor(ctx, plan, [first, ...rest], { ...context, quests, id: ids.acceptance });
+  const quests = [...context.quests, ...(ids.acceptance === undefined ? [] : [ids.acceptance]), ids.merge];
+  const tests =
+    ids.acceptance === undefined
+      ? ok(undefined)
+      : acceptanceQuestFor(ctx, plan, [first, ...rest], { ...context, quests, id: ids.acceptance });
   if (!tests.ok) return tests;
   const all: Parts = [first, ...rest, ...(tests.value === undefined ? [] : [tests.value])];
   const before = ctx.world.quests.get(ids.merge);

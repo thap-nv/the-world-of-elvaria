@@ -111,6 +111,21 @@ describe('a blind trial (P1-21)', () => {
     expect(assigneesOf(tests).filter((writerId) => partAssignees.has(writerId))).toEqual([]);
     expect(partyIssues(quests)).toEqual([]);
 
+    // P1-37 (iii): every part waits for the acceptance part, written first, so each of the writer's sessions and
+    // its judge's ended before any part's session began; no part starts on the tests' branch.
+    for (const member of parts) expect(member.depends_on).toEqual([contract.id, tests.id]);
+    const members = new Set([tests.id, ...parts.map(({ id }) => id)]);
+    const created = (await openEventLog(kingdom.root).read()).events
+      .filter(({ type, quest }) => type === 'quest.created' && quest !== undefined && members.has(quest))
+      .map(({ quest }) => quest);
+    expect(created[0]).toBe(tests.id);
+    const sessionAt = (id: string) => kingdom.requests.findIndex((req) => req.quest?.id === id);
+    const lastOfTests = kingdom.requests.findLastIndex((req) => req.quest?.id === tests.id);
+    for (const member of parts) {
+      expect(sessionAt(member.id)).toBeGreaterThan(lastOfTests);
+      expect(await pathExists(path.join(worktreeOf(member), TESTS_FILE))).toBe(false);
+    }
+
     // Its own checks wait for the merge quest, which holds both sets of tests and runs every check.
     const roleOf = (quest: Quest) => roles.find(([runDir]) => runDir === `.runs/${quest.id}-1`)?.[1];
     expect([tests, merge].map(roleOf)).toEqual(['acceptance', 'merge']);
