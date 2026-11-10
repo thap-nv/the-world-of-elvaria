@@ -214,16 +214,16 @@ describe('what a session reports', () => {
     );
   });
 
-  it('pauses for mana on a rate limit, with one mana.signal per retry', async () => {
+  it('pauses for mana on a rate limit, the rejected week spent until its reset (P1-48), a mana.signal per retry', async () => {
     const prepared = await prepare('rate_limit');
     const { result, signals } = await play(prepared);
     expect(result).toMatchObject({ outcome: 'error', exit_code: 1, rate_limited: true });
     expect(signals.filter(({ kind }) => kind === 'rate_limit')).toHaveLength(3);
-    const lines = await journal(prepared.workspace);
-    expect(lines.filter(({ type }) => type === 'mana.signal').map(({ data }) => data)).toEqual([
-      { error: 'rate_limit', source: 'api_retry' },
-      { error: 'rate_limit', source: 'api_retry' },
-    ]);
+    const week = { window: 'weekly', used_pct: 100, resets_at: '2026-11-08T13:00:00.000Z' };
+    expect(signals.find(({ kind }) => kind === 'mana')).toMatchObject({ windows: [{}, week] });
+    const signalled = (await journal(prepared.workspace)).filter(({ type }) => type === 'mana.signal');
+    const retry = { error: 'rate_limit', source: 'api_retry' };
+    expect(signalled.map(({ data }) => data)).toEqual([retry, retry]);
   });
 
   it('reads the question of the letter', async () => {

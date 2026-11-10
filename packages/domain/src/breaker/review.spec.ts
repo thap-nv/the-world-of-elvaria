@@ -7,6 +7,7 @@ import { Q1, inReview, moved, quest } from '../dispatch/__fixtures__/snapshot.ts
 import { REVIEW_PARTIALS_MAX } from '../constants.ts';
 import {
   cutVerifiersOf,
+  justPartialOf,
   partialsStalled,
   reviewBreaksOf,
   reviewPartialsOf,
@@ -226,5 +227,35 @@ describe('cutVerifiersOf', () => {
     const failed = moved(judged(once, 'brann', 30), 35, ['verdict_fail', 'verifier', { verdict_id: 'v1' }]);
     const again = moved(failed, 40, ['redispatch', 'steward'], ['submit', 'runner']);
     expect(cutVerifiersOf(again)).toEqual(new Set());
+  });
+});
+
+// justPartialOf (P1-48, P1-42 (c)): the judge whose session, the latest of the open group, ended partial.
+describe('justPartialOf', () => {
+  const review = inReview(quest(Q1), 'thorn', 10);
+
+  it('names nobody before a judge handed in a partial verdict, or while one judges', () => {
+    expect(justPartialOf(review)).toBeUndefined();
+    expect(justPartialOf(judged(review, 'wren', 20))).toBeUndefined();
+    expect(justPartialOf(stopped(review, 'wren', 20, 'tokens'))).toBeUndefined();
+  });
+
+  it('names the judge of the latest partial verdict, and nobody once another judge left after it', () => {
+    const partial = read(review, 'wren', 20);
+    expect(justPartialOf(partial)).toBe('wren');
+    expect(justPartialOf(judged(partial, 'brann', 30))).toBe('wren');
+    expect(justPartialOf(read(partial, 'brann', 30))).toBe('brann');
+    expect(justPartialOf(moved(judged(partial, 'brann', 30), 35, ['crash', 'steward']))).toBeUndefined();
+    // Only a script run has no character; a hand-edited log that names none names nobody either.
+    const log = partial.attempt_log.map((entry) =>
+      entry.role === 'verifier' ? { ...entry, character: null } : entry,
+    );
+    expect(justPartialOf({ ...partial, attempt_log: log })).toBeUndefined();
+  });
+
+  it('names nobody once the partials filled the group', () => {
+    const third = [20, 30, 40].reduce((q, minute) => read(q, 'wren', minute), review);
+    expect(reviewPartialsOf(third)).toBe(REVIEW_PARTIALS_MAX);
+    expect(justPartialOf(third)).toBeUndefined();
   });
 });

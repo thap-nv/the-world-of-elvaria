@@ -75,6 +75,13 @@ export const REVIEW_BREAKS_MAX = 2;
  * judge costs a session and, but for a trial kept from the last one, half an hour of checks (P1-35).
  */
 export const REVIEW_PARTIALS_MAX = 3;
+/**
+ * From this rank up, a stronger judge goes first among those the separation rules leave equal (P1-48, P1-16 (l)):
+ * "Opus from rank B", by the judge's level, which speaks for its model's strength (P1-38). Below it the order is as
+ * before: a judge's session on a strong model costs two to two and a half of a Sonnet assignee's (phase-1 report §6).
+ * Not measured yet: no review of rank B or above has compared judges; tune it when one has.
+ */
+export const STRONG_JUDGE_MIN_RANK = 'B';
 
 export const SCHEDULE_DEFAULTS = {
   chronicle_at: '21:00',

@@ -27,9 +27,32 @@ export const CLAUDE_ENV: Readonly<Record<string, string>> = {
   CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS: '60000',
 };
 
+/** Claude Code's own Bash timeouts: two minutes for a command, ten when the model asks for more. */
+export const CLAUDE_BASH_DEFAULT_MS = 120_000;
+export const CLAUDE_BASH_MAX_MS = 600_000;
+const MS_PER_MINUTE = 60_000;
+
+/**
+ * Bash timeouts long enough for the territory's longest check, never shorter than the CLI's own (P1-48, P1-35 (j),
+ * P1-37 (j)): a judge in a scratch plot runs the checks' commands itself, and dc1's e2e takes up to 30 minutes, which
+ * Claude Code would cut at 2, or at 10 at most. The default too, so a judge that asks for no timeout is not cut.
+ */
+export function bashTimeoutEnv(
+  territory: { readonly checks: readonly { readonly timeout_minutes: number }[] } | undefined,
+): Record<string, string> {
+  const longest = Math.max(0, ...(territory?.checks ?? []).map((check) => check.timeout_minutes));
+  return {
+    BASH_DEFAULT_TIMEOUT_MS: String(Math.max(CLAUDE_BASH_DEFAULT_MS, longest * MS_PER_MINUTE)),
+    BASH_MAX_TIMEOUT_MS: String(Math.max(CLAUDE_BASH_MAX_MS, longest * MS_PER_MINUTE)),
+  };
+}
+
 export interface RunSetup {
   readonly files: RunFiles;
-  /** `ELVARIA_*` and CLAUDE_ENV: in settings.env and in the process env, so hooks get them either way (§3.6). */
+  /**
+   * `ELVARIA_*`, CLAUDE_ENV and the Bash timeouts: in settings.env and in the process env, so hooks get them either
+   * way (§3.6).
+   */
   readonly env: Readonly<Record<string, string>>;
 }
 
@@ -53,7 +76,7 @@ export async function writeRunFiles(
     cli_protected_paths: CLAUDE_PROTECTED_PATHS,
   };
   const policyFile = await writePolicyFile(dir, ctx, req.permissions, extras);
-  const env = { ...contextEnv(ctx), ...CLAUDE_ENV };
+  const env = { ...contextEnv(ctx), ...CLAUDE_ENV, ...bashTimeoutEnv(req.territory) };
   // Only an assignee writes a letter; a verifier reads it in its prompt and writes nothing (ADR 0008).
   const letter = req.role === 'assignee' ? req.handover : undefined;
   const settings = settingsOf(req.permissions, hookCommand(policyFile), env, letter);

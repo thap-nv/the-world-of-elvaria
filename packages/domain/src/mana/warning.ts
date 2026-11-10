@@ -2,8 +2,8 @@
 // the owner once, before the world stops taking work there; it may warn again only after its window reset or its
 // figure fell back. Per gauge, so Argon's weekly cap warns on its own (about 6–7 % per Argon session, phase-1 report
 // §4.1: the default 10-point margin comes at least one session ahead).
-import { sameGauge } from './reading.ts';
-import { current, manaWarningOf } from './state.ts';
+import { current, sameGauge } from './reading.ts';
+import { manaWarningOf } from './state.ts';
 import type { Instant } from '../core/clock.ts';
 import type { ManaReading } from './reading.ts';
 import type { ManaConfig } from './state.ts';

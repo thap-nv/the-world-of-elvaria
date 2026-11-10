@@ -83,7 +83,7 @@ export function limitsOf(
 export const snapshotOf = (
   world: World,
   limits: Partial<Record<TribeId, TribeLimits>>,
-  mana: Pick<ManaBook, 'asleep' | 'readings'>,
+  mana: Pick<ManaBook, 'asleep' | 'readings' | 'shares'>,
   sessions: readonly HeldSession[] = [],
   background: BackgroundWork = { running: [], checked: [] },
 ): KingdomSnapshot => ({
@@ -95,6 +95,6 @@ export const snapshotOf = (
   quests: [...world.quests.values()],
   characters: [...world.characters.values()],
   asleep: mana.asleep,
-  mana: { readings: mana.readings, config: world.kingdom.mana },
+  mana: { readings: mana.readings, config: world.kingdom.mana, shares: mana.shares },
   limits,
 });

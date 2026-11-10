@@ -155,6 +155,59 @@ describe('selectVerifier after a breaker stopped a judge of the run', () => {
   });
 });
 
+/** The review after `verifier` judged it and handed in a partial verdict at minute `minute`. */
+const readPart = (base: Quest, verifier: string, minute: number): Quest =>
+  moved(base, minute, ['assign_verifier', 'steward', { verifier }], ['verdict_partial', 'verifier']);
+
+// P1-48, P1-42 (c): the judge that just handed in a partial verdict is not the next one while another may be.
+describe('selectVerifier after a partial verdict', () => {
+  const partial = readPart(submitted, 'orin', 20);
+
+  it('takes another judge, or waits for one, while another may take the review', () => {
+    expect(chosen(partial, [ORIN, SABLE])).toEqual(['sable', 'same_family_other_model']);
+    expect(chosen(partial, [ORIN, { ...SABLE, status: 'reviewing' }])).toBeNull();
+  });
+
+  it('takes it again when nobody else may, or once another judge came after it', () => {
+    expect(chosen(partial, [ORIN])).toEqual(['orin', 'other_family']);
+    const crashedAfter = moved(
+      partial,
+      30,
+      ['assign_verifier', 'steward', { verifier: 'sable' }],
+      ['crash', 'steward'],
+    );
+    expect(chosen(crashedAfter, [ORIN, SABLE])).toEqual(['orin', 'other_family']);
+    expect(chosen(readPart(partial, 'sable', 30), [ORIN, SABLE])).toEqual(['orin', 'other_family']);
+  });
+});
+
+// P1-48, P1-16 (l): "Opus from rank B", by the judge's level (P1-38), below the separation rules.
+describe('selectVerifier by rank', () => {
+  const FLASH = judge('ilse', { tribe: 'gemini', model: 'gemini-3.8-flash-high', level: 2, since: 0 });
+  const PRO = judge('wren', { tribe: 'gemini', model: 'gemini-3.5-pro', level: 4, since: 30 });
+  const ofRank = (rank: string): Quest => inReview(quest(Q1, { rank }), 'thorn');
+
+  it('takes the stronger judge first on a quest of rank B or above', () => {
+    expect(chosen(ofRank('B'), [FLASH, PRO])).toEqual(['wren', 'other_family']);
+    expect(chosen(ofRank('S'), [FLASH, PRO])).toEqual(['wren', 'other_family']);
+  });
+
+  it('chooses as before below rank B, or when the judges are equally strong', () => {
+    expect(chosen(ofRank('C'), [FLASH, PRO])).toEqual(['ilse', 'other_family']);
+    expect(chosen(ofRank('B'), [FLASH, { ...PRO, level: 2 }])).toEqual(['ilse', 'other_family']);
+  });
+
+  it('never puts strength before the family or the tribe', () => {
+    const opus = judge('vesper', { level: 5 });
+    expect(chosen(ofRank('A'), [FLASH, opus])).toEqual(['ilse', 'other_family']);
+    const kael = character('kael', { tribe: 'gemini', model: 'gemini-3.8-flash-high' });
+    const viaAgy = judge('brann', { tribe: 'gemini', level: 5, since: 0 });
+    const weakOther = judge('sable', { model: 'claude-sonnet-5-5', level: 2, since: 30 });
+    const ofKael = inReview(quest(Q1, { rank: 'B' }), 'kael');
+    expect(chosen(ofKael, [viaAgy, weakOther], { assignee: kael })).toEqual(['sable', 'other_family']);
+  });
+});
+
 /** A random kingdom: judges and knights of three families, some busy, two of them past assignees of the quest. */
 function roster(next: () => number): { quest: Quest; candidates: Character[]; assignee: Character } {
   const models = ['claude-sonnet-5-5', 'claude-opus-5-5', 'gemini-4-argon-medium', 'gpt-oss-120b-medium'];

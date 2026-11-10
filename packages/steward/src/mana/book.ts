@@ -1,8 +1,10 @@
 // What the Steward knows of mana between ticks (implementation-plan §3.5, ADR 0009): the latest reading of every
-// gauge, the gauges asleep (a whole pool, or the cap of one model: P1-22), the gauges warned, and when each tribe
-// is next probed or read. Rebuilt from the event log at start: the gauges asleep from `mana.exhausted` /
-// `mana.restored`, the ones warned from `mana.warning`; readings and schedules come back with the first probe.
-import { DateTimeSchema, keyOf, sameGauge, sameKey } from '@elvaria/domain';
+// gauge, the gauges asleep (a whole pool, or the cap of one model: P1-22), the gauges warned, the share of each
+// window a session takes (P1-48), and when each tribe is next probed or read. Rebuilt from the event log at start:
+// the gauges asleep from `mana.exhausted` / `mana.restored`, the ones warned from `mana.warning`, the shares from the
+// `mana.level` lines (folded with the quests' sessions at the first reading); readings and schedules come back with
+// the first probe.
+import { DateTimeSchema, EVENT_DATA_SCHEMAS, keyOf, sameGauge, sameKey } from '@elvaria/domain';
 import type {
   CharacterId,
   Event,
@@ -10,6 +12,7 @@ import type {
   ManaReading,
   PoolKey,
   ReportedWindow,
+  SessionShare,
   TribeId,
 } from '@elvaria/domain';
 
@@ -27,6 +30,10 @@ export interface ManaBook {
   asleep: PoolKey[];
   /** The gauges that warned (`mana.warning`), as the reading that warned: once each until it falls back (P1-22). */
   warned: ManaReading[];
+  /** The largest share of each window a session was seen to take: a gauge closes one session early (P1-48). */
+  shares: SessionShare[];
+  /** The log's readings at start (`mana.level`), oldest first, until the first reading folds them into `shares`. */
+  history: ManaReading[];
   /** When a tribe with a pool asleep is probed next (ms); none: at once. */
   readonly probeAt: Map<TribeId, number>;
   /** The reset a sleeping tribe waits for (nextProbeOf): probes close after it come sooner. */
@@ -44,6 +51,8 @@ export const createManaBook = (): ManaBook => ({
   readings: [],
   asleep: [],
   warned: [],
+  shares: [],
+  history: [],
   probeAt: new Map(),
   waited: new Map(),
   readAt: new Map(),
@@ -103,4 +112,27 @@ function warningOfLine(event: Event): ManaReading | undefined {
     observed_at: event.ts,
     exhausted: false,
   };
+}
+
+/**
+ * The readings the log's `mana.level` lines tell, oldest first, each observed when its line was written: the history
+ * the shares a session takes of a window are measured from again after a restart (P1-48). A line written when the
+ * figure changed only, so a session that moved nothing has its share counted in the next rise.
+ */
+export function levelsFromLog(events: readonly Event[]): ManaReading[] {
+  return events.flatMap((event) => {
+    const line =
+      event.type === 'mana.level' ? EVENT_DATA_SCHEMAS['mana.level'].safeParse(event.data) : undefined;
+    if (line?.success !== true) return [];
+    const { resets_at: resets, model, ...level } = line.data;
+    return [
+      {
+        ...level,
+        ...(model === undefined ? {} : { model }),
+        resets_at: resets ?? null,
+        observed_at: event.ts,
+        exhausted: level.used_pct >= 100,
+      },
+    ];
+  });
 }

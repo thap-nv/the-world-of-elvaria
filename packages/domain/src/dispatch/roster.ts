@@ -7,6 +7,7 @@ import { RANKS } from '../schema/common.ts';
 import type { Instant } from '../core/clock.ts';
 import type { CharacterId, TerritoryId, TribeId } from '../core/ids.ts';
 import type { ManaReading } from '../mana/reading.ts';
+import type { SessionShare } from '../mana/session-share.ts';
 import type { ManaConfig } from '../mana/state.ts';
 import type { Character, CharacterStatus } from '../schema/character/character.ts';
 import type { Rank } from '../schema/common.ts';
@@ -28,8 +29,15 @@ export interface RosterSource {
   readonly characters: readonly Character[];
   /** Pools asleep because their mana ran out (ADR 0009). */
   readonly asleep: readonly PoolKey[];
-  /** The latest gauge readings and the owner's cap: a pool at the cap opens no session. Absent: only `asleep` stops a pool. */
-  readonly mana?: { readonly readings: readonly ManaReading[]; readonly config: ManaConfig };
+  /**
+   * The latest gauge readings and the owner's cap: a pool at the cap opens no session. Absent: only `asleep` stops a
+   * pool. With `shares` (P1-48), a pool closes one session before the cap (manaStateOf); without, at the cap.
+   */
+  readonly mana?: {
+    readonly readings: readonly ManaReading[];
+    readonly config: ManaConfig;
+    readonly shares?: readonly SessionShare[];
+  };
   /** What each tribe's runner can do (tribeLimitsOf, §3.14); a tribe with no runner is absent and takes no work. */
   readonly limits: Readonly<Partial<Record<TribeId, TribeLimits>>>;
 }
@@ -91,7 +99,8 @@ export function tribeMayTake(limits: TribeLimits, quest: Quest, territory: Terri
 
 /**
  * Whether the mana a character draws on opens a session now (§3.5, ADR 0009): its pool enabled, and every gauge
- * that binds its model (its group's windows, its model's own cap; P1-22) awake and below the cap.
+ * that binds its model (its group's windows, its model's own cap; P1-22) awake and below the cap, by one session's
+ * share when the Steward measures them (P1-48).
  */
 export function poolOpenOf(
   source: Pick<RosterSource, 'kingdom' | 'asleep' | 'mana'>,
@@ -103,7 +112,9 @@ export function poolOpenOf(
     if (!poolEnabled(tribes, poolKeyOf(tribes, character))) return false;
     if (asleepFor(source.asleep, readings, tribes, character)) return false;
     const { mana } = source;
-    return mana === undefined || admits(manaStateOf(readings, tribes, character, mana.config, now));
+    return (
+      mana === undefined || admits(manaStateOf(readings, tribes, character, mana.config, now, mana.shares))
+    );
   };
 }
 

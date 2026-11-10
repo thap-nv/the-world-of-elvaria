@@ -58,7 +58,8 @@
   tells `elvaria doctor` which of them still run, and nothing while a Steward holds the lock.
 - Watches mana per gauge (§3.5, ADR 0009; `src/mana/`): a session that hits its account's limit pauses its quest
   (assignee kept; a verifier leaves the review); the account is read at once (`mana/limit.ts`, no model call) and
-  the gauges it shows spent for the session's model sleep (`mana.exhausted`, with `model` for the cap of one model:
+  the gauges it shows spent for the session's model sleep, the windows the session reported in band first (P1-48: a
+  rejected `rate_limit_event` of Claude names the window it spent and its reset) (`mana.exhausted`, with `model` for the cap of one model:
   Argon's spent cap stops only the Argon characters, P1-22, and `resets_at` when the limit or the reading named the
   reset, P1-32), else the pool of that model; every other session they
   bind is killed and pauses and idle characters they bind fall asleep; each paused assignee's work is committed as
@@ -70,7 +71,9 @@
   model call (`probe({ping: false})`) in the background right after each session ends and every interval while
   quests are in play; windows a session reports in band (`mana` signal) come in too: `mana.level` on change, a
   model's own cap with its `model` since P1-32 (the HUD leaves those out, `elvaria doctor` shows them); a
-  gauge at the cap takes no new session, one whose window reads spent sleeps (a tribe with only a model's cap asleep
+  gauge at the cap takes no new session, nor one that the next session would take to the cap (P1-48: each reading
+  is set against the one it replaces for the share of its window a session takes, `mana/shares.ts`, the largest
+  kept and folded again from the log's `mana.level` lines after a restart; 7 % before any is measured), one whose window reads spent sleeps (a tribe with only a model's cap asleep
   is still read, and probed without a model call). A pool and window the account gives no figure for is estimated
   from the sessions (`mana.level` `source: estimate`); a gauge the world draws on that nears the cap warns once
   (`mana.warning`). The bell rings when a gauge warns, sleeps or wakes (`mana_warning`, `mana_asleep`,
