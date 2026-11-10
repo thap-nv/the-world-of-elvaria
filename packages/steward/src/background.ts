@@ -5,7 +5,9 @@
 // tick, which work that ended calls at once (P1-10b), reads what it left: the checks' results here, a script's output
 // in `script.json`. The table lives in memory: a Steward that stops kills the work, the next one runs it again.
 // Ended checks stay while their quest is in review on their run, for the run's next judge as long as the branch head
-// they ran on has not moved (P1-38, P1-35 (c)); review/checks.ts decides when they serve.
+// they ran on has not moved (P1-38, P1-35 (c)); review/checks.ts decides when they serve. A judge in a scratch plot
+// spends them: its plot leaves with it, so they wait out of planTick's view until a fresh scratch plot is made for
+// the next judge, which then reuses the trial instead of running it again (P1-42).
 import { currentRun } from '@elvaria/domain';
 import type { BackgroundWork, Quest, QuestId, VerdictCheck } from '@elvaria/domain';
 
@@ -30,6 +32,8 @@ interface Entry {
   running: boolean;
   /** What checks that ended gave: waits for the judges, or the machine, of the run. */
   checked?: CheckedRun;
+  /** A judge in a scratch plot took them, and its plot left with it (P1-42). */
+  spent?: boolean;
 }
 
 export interface Background {
@@ -43,6 +47,13 @@ export interface Background {
   ended(quest: QuestId, n: number): CheckedRun | undefined;
   /** Forgets the quest's ended checks: the next judge of the run gets its own run of them (P1-04). */
   drop(quest: QuestId): void;
+  /**
+   * A judge in a scratch plot took the quest's ended checks (P1-42): they stay, out of view, until the next work on
+   * the quest replaces them, which may give them back once it made a fresh scratch plot.
+   */
+  spend(quest: QuestId): void;
+  /** The ended checks of run `n` a judge in a scratch plot spent (P1-42). */
+  spent(quest: QuestId, n: number): CheckedRun | undefined;
   /** Aborts and forgets the work `wanted` no longer wants. */
   prune(wanted: (quest: QuestId, kind: BackgroundKind, n: number) => boolean): void;
   /** Resolves once the work running now has ended. */
@@ -105,6 +116,8 @@ export function createBackground(log: Logger, ended: () => void = () => undefine
   const { table, live } = state;
   return {
     checks: (quest, n, work) => {
+      // Spent checks give way to the work that makes the next judge its scratch plot (P1-42).
+      if (table.get(quest)?.spent === true) table.delete(quest);
       start(state, { quest, kind: 'checks', n, work }, (checked, entry) => {
         if (checked === undefined) return false;
         entry.checked = checked;
@@ -119,12 +132,22 @@ export function createBackground(log: Logger, ended: () => void = () => undefine
       const entries = [...table.entries()];
       return {
         running: entries.filter(([, entry]) => entry.running).map(([quest]) => quest),
-        checked: entries.filter(([, entry]) => entry.checked !== undefined).map(([quest]) => quest),
+        checked: entries
+          .filter(([, entry]) => entry.checked !== undefined && entry.spent !== true)
+          .map(([quest]) => quest),
       };
     },
     ended: (quest, n) => {
       const entry = table.get(quest);
-      return entry?.n === n ? entry.checked : undefined;
+      return entry?.n === n && entry.spent !== true ? entry.checked : undefined;
+    },
+    spent: (quest, n) => {
+      const entry = table.get(quest);
+      return entry?.n === n && entry.spent === true ? entry.checked : undefined;
+    },
+    spend: (quest) => {
+      const entry = table.get(quest);
+      if (entry?.checked !== undefined) entry.spent = true;
     },
     // Only ended checks: work still running is the prune's to stop.
     drop: (quest) => {

@@ -143,7 +143,9 @@
   they start; a quest whose secrets are gone by then goes to the infirmary (`breaker:secrets`) and runs none: their
   results go into the judge's prompt, the verdict and `quest.checks_run`. The run's next judge (after a partial
   verdict, a breaker or a session without a verdict) gets the same results while the plot's head is the commit they
-  ran on (`Plots.head`, P1-38); a moved head, a plot without git and a judge in a scratch plot get their own run. A
+  ran on (`Plots.head`, P1-38); a moved head and a plot without git get their own run. A judge in a scratch plot
+  leaves with its plot: the next one gets a fresh scratch plot (`Plots.prepareScratch`, after `commands.setup`) and
+  the same trial while the head stays, the trial run again once it moved (P1-42). A
   judge a breaker stopped is not chosen again in that run while another judge may take the review (domain
   `cutVerifiersOf`). The prompt shows the end of each failing check's log (`src/review/log-tail.ts`: the last 40 lines, at most
   4 000 characters for all of them), masked with the session's secret values and the patterns, because the log lies

@@ -60,6 +60,10 @@ export function plotsWith(root: string, replace: Partial<Plots>, calls: string[]
       calls.push(`trial ${request.run_dir} x${request.runs}${request.coverage ? ' coverage' : ''}`);
       return (replace.trial ?? base.trial)(request);
     },
+    prepareScratch: (quest, territory, secrets) => {
+      calls.push(`prepare scratch ${quest.id}`);
+      return (replace.prepareScratch ?? base.prepareScratch)(quest, territory, secrets);
+    },
     scratch: (quest, territory) => (replace.scratch ?? base.scratch)(quest, territory),
     releaseScratch: (quest, territory) => {
       calls.push(`release scratch ${quest.id}`);

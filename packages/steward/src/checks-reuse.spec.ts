@@ -11,6 +11,8 @@ import { PASS, bench, questPayload, tickUntil } from './__fixtures__/kingdom.ts'
 import { plotsWith, questOfRun, statusIs, verdictIn } from './__fixtures__/review.ts';
 import type { Bench } from './__fixtures__/kingdom.ts';
 import type { Plots, Steward } from './types.ts';
+import type { Quest } from '@elvaria/domain';
+import { openEventLog } from '@elvaria/eventlog';
 import type { CheckRun } from '@elvaria/runner-core';
 
 const opened: { kingdom: Bench; steward: Steward }[] = [];
@@ -45,11 +47,16 @@ interface Setup {
   readonly tags?: readonly string[];
   /** More answers of the plots, made once the kingdom's folder exists; `head` stays the spec's. */
   readonly plots?: (root: string) => Partial<Plots>;
+  /** What the run's judges hand in, in turn: by default a partial verdict, then a pass. */
+  readonly verdicts?: readonly unknown[];
+  /** The status the quest ends in: done by default. */
+  readonly until?: Quest['status'];
 }
 
-/** A quest judged by two judges of run 1 (the first reads in part), done; every plot call kept. */
-async function twoJudges(title: string, setup: Setup) {
-  const kingdom = await bench({ plays: { verdicts: { [title]: [PARTIAL, PASS] } } });
+/** A quest judged by the judges of run 1 (by default two, the first reading in part); every plot call kept. */
+async function judgedBy(title: string, setup: Setup) {
+  const verdicts = setup.verdicts ?? [PARTIAL, PASS];
+  const kingdom = await bench({ plays: { verdicts: { [title]: verdicts } } });
   const calls: string[] = [];
   const heads = setup.heads ?? [null];
   let asked = 0;
@@ -60,15 +67,33 @@ async function twoJudges(title: string, setup: Setup) {
   expect(await steward.start({ loop: false })).toEqual({ ok: true });
   const fields = setup.tags === undefined ? {} : { tags: setup.tags };
   await kingdom.command('create_quest', questPayload(title, fields));
-  await tickUntil(steward, kingdom.clock, statusIs(kingdom, title, 'done'));
+  await tickUntil(steward, kingdom.clock, statusIs(kingdom, title, setup.until ?? 'done'));
   const quest = await kingdom.quest(title);
   const judges = quest.attempt_log.filter(({ role }) => role === 'verifier');
-  expect(judges.map(({ outcome }) => outcome)).toEqual(['partial', 'submitted']);
-  return { kingdom, quest, calls };
+  return { kingdom, steward, quest, calls, judges: judges.map(({ outcome }) => outcome) };
 }
 
-const runsOf = (calls: readonly string[], what: 'check' | 'trial') =>
+/** Two judges of run 1, the first reading in part, the quest done. */
+async function twoJudges(title: string, setup: Setup) {
+  const judged = await judgedBy(title, setup);
+  expect(judged.judges).toEqual(['partial', 'submitted']);
+  return judged;
+}
+
+const runsOf = (calls: readonly string[], what: 'check' | 'trial' | 'prepare scratch') =>
   calls.filter((call) => call.startsWith(`${what} `));
+
+/** The unit check, green, as the trial of a scratch plot gives it. */
+const greenTrial: Plots['trial'] = ({ run_dir: runDir }) => Promise.resolve([unitPasses(runDir)]);
+
+/** A worktree plot, so the ritual of an e2e quest judges in a scratch plot (ADR 0022); `more` over it. */
+const scratchPlots =
+  (more: Partial<Plots> = {}) =>
+  (root: string): Partial<Plots> => ({
+    ...worktreePlots(path.join(root, 'repo')),
+    trial: greenTrial,
+    ...more,
+  });
 
 describe("the run's next judge and the machine checks (P1-38)", () => {
   it('runs them once for two judges while the branch head stays on the commit they ran on', async () => {
@@ -102,20 +127,79 @@ describe("the run's next judge and the machine checks (P1-38)", () => {
       expect.stringContaining('the head of its plot is unknown: git is not found'),
     );
   });
+});
 
-  it('runs the trial again for the next judge of a scratch plot, which left with the first (ADR 0022)', async () => {
-    const trial: Plots['trial'] = ({ run_dir: runDir }) => Promise.resolve([unitPasses(runDir)]);
-    // A worktree plot, so the ritual of an e2e quest judges in a scratch plot; its head stays on one commit.
-    const tree = (root: string): Partial<Plots> => ({ ...worktreePlots(path.join(root, 'repo')), trial });
-    const { quest, calls } = await twoJudges('Wall tried twice', {
+// The run's next judge in a scratch plot (P1-42, P1-38 (a)): its own scratch plot, made after commands.setup, and the
+// last judge's trial while the branch head stays; half an hour of e2e at P1-35 otherwise.
+describe("the run's next judge in a scratch plot and the trial (P1-42)", () => {
+  it('makes it a fresh scratch plot without running the trial again while the branch head stays', async () => {
+    const { kingdom, quest, calls } = await twoJudges('Wall tried once', {
       heads: ['f00d'],
       tags: ['e2e'],
-      plots: tree,
+      plots: scratchPlots(),
+    });
+    expect(runsOf(calls, 'trial')).toEqual([`trial .runs/${quest.id}-1 x3 coverage`]);
+    expect(runsOf(calls, 'prepare scratch')).toEqual([`prepare scratch ${quest.id}`]);
+    expect(runsOf(calls, 'check')).toEqual([]);
+    // Each judge's scratch plot left with it; the second judge's verdict has the trial's results.
+    expect(calls.filter((call) => call.startsWith('release scratch'))).toHaveLength(2);
+    expect(await verdictIn(kingdom, `${quest.id}-1`)).toMatchObject({ checks: [{ id: 'unit', pass: true }] });
+    // One check.start and one check.end: the trial ran once.
+    const lines = (await openEventLog(kingdom.root).read()).events.map(({ type }) => type);
+    expect(lines.filter((type) => type.startsWith('check.'))).toEqual(['check.start', 'check.end']);
+  });
+
+  it('runs the trial again for the next judge once the branch head moved', async () => {
+    // Read before the trial, at the first judge, then before the second judge's plot: the owner committed.
+    const { kingdom, quest, calls } = await twoJudges('Wall moved', {
+      heads: ['f00d', 'f00d', 'beef'],
+      tags: ['e2e'],
+      plots: scratchPlots(),
     });
     expect(runsOf(calls, 'trial')).toEqual([
       `trial .runs/${quest.id}-1 x3 coverage`,
       `trial .runs/${quest.id}-1 x3 coverage`,
     ]);
-    expect(runsOf(calls, 'check')).toEqual([]);
+    expect(runsOf(calls, 'prepare scratch')).toEqual([]);
+    expect(kingdom.warnings).toContainEqual(expect.stringContaining('its branch moved since the last trial'));
+  });
+
+  it('runs the trial again when the fresh scratch plot cannot be made, and says why', async () => {
+    const refused = () => Promise.reject(new Error('setup_failed: exit 1'));
+    const { kingdom, calls } = await twoJudges('Wall unbuilt', {
+      heads: ['f00d'],
+      tags: ['e2e'],
+      plots: scratchPlots({ prepareScratch: refused }),
+    });
+    expect(runsOf(calls, 'trial')).toHaveLength(2);
+    expect(kingdom.warnings).toContainEqual(
+      expect.stringContaining('no scratch plot without the trial: setup_failed: exit 1'),
+    );
+  });
+
+  it('stops at the third partial verdict in a scratch plot, with one trial and no fourth judge (P1-42)', async () => {
+    const stopped = { result: 'partial', progress: { checked_until: 'break_and_expect_red' } };
+    const { steward, kingdom, quest, calls, judges } = await judgedBy('Wall of echoes', {
+      heads: ['f00d'],
+      tags: ['e2e'],
+      plots: scratchPlots(),
+      verdicts: [stopped, stopped, stopped, PASS],
+      until: 'infirmary',
+    });
+    expect(judges).toEqual(['partial', 'partial', 'partial']);
+    expect(runsOf(calls, 'trial')).toHaveLength(1);
+    expect(runsOf(calls, 'prepare scratch')).toHaveLength(2);
+    expect(kingdom.notices.at(-1)).toMatchObject({
+      trip: 'partial_verdicts',
+      detail: { partial_verdicts: 3 },
+    });
+    for (let tick = 0; tick < 3; tick += 1) {
+      kingdom.clock.advance(1);
+      await steward.tick();
+    }
+    expect(
+      (await kingdom.quest(quest.title)).attempt_log.filter(({ role }) => role === 'verifier'),
+    ).toHaveLength(3);
+    expect(runsOf(calls, 'prepare scratch')).toHaveLength(2);
   });
 });

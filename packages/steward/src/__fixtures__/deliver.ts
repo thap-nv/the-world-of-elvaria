@@ -26,6 +26,7 @@ export function worktreePlots(repo: string): Plots {
     head: () => Promise.resolve(null),
     // No git, so no scratch plot either: a judge of tests as the product works in the quest's own folder.
     trial: () => Promise.resolve([]),
+    prepareScratch: () => Promise.resolve(),
     scratch: (quest) => {
       const cwd = path.join(repo, '.elvaria', 'worktrees', quest.id);
       return Promise.resolve({ plot: { type: 'worktree', path: toPortable(cwd) }, cwd });

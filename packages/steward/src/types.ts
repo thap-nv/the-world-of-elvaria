@@ -201,7 +201,17 @@ export interface Plots {
    * then `rerun_clean`, the checks, `flake_check` and `coverage_not_lower` there. Throws when it cannot be made.
    */
   trial(request: PlotTrial): Promise<readonly CheckRun[]>;
-  /** The quest's scratch plot the trial made, where its judge works; throws when there is none. */
+  /**
+   * A fresh scratch plot of the quest's branch after commands.setup, without the trial (P1-42, P1-38 (a)): the run's
+   * next judge reuses the trial of the last one while the branch head is the commit it ran on. `secrets` as for the
+   * trial. Throws when it cannot be made.
+   */
+  prepareScratch(
+    quest: Quest,
+    territory: Territory,
+    secrets?: Readonly<Record<string, string>>,
+  ): Promise<void>;
+  /** The quest's scratch plot the trial (or prepareScratch) made, where its judge works; throws when there is none. */
   scratch(quest: Quest, territory: Territory): Promise<PreparedPlot>;
   /** Removes the quest's scratch plot, dirty or not, after its judge; what still holds its folder, if anything. */
   releaseScratch(quest: Quest, territory: Territory): Promise<string | undefined>;

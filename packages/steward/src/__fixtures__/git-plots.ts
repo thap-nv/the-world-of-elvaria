@@ -78,6 +78,10 @@ export function gitPlots(kingdom: string): Plots {
       const given = { kingdom, quest, territory, run_dir: runDir, runs, coverage };
       return trialInScratch(manager, wait === undefined ? given : { ...given, lock_wait_ms: wait }, host);
     },
+    prepareScratch: async (quest, territory) => {
+      const prepared = await manager.prepareScratch(quest, territory);
+      if (!prepared.ok) throw new Error(`fixture: ${prepared.error.detail}`);
+    },
     scratch: async (quest, territory) => {
       const cwd = await manager.scratchOf(quest, territory);
       if (cwd === undefined) throw new Error(`fixture: ${quest.id} has no scratch plot`);
