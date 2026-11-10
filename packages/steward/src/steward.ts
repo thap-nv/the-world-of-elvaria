@@ -14,6 +14,7 @@ import { applyInbox } from './inbox/apply.ts';
 import { asleepFromLog, createManaBook, warnedFromLog } from './mana/book.ts';
 import { manaStep } from './mana/step.ts';
 import { createRecorder } from './record.ts';
+import { restartFromLog, stallLeftReviews } from './restart.ts';
 import { createSessions } from './sessions/running.ts';
 import { recordEnd } from './sessions/ended.ts';
 import { leftSessions, pidsWriter, reapOrphans } from './sessions/pids.ts';
@@ -28,6 +29,7 @@ import type { Background } from './background.ts';
 import type { JudgeLocks } from './review/exclusive.ts';
 import type { Context, Counts } from './context.ts';
 import type { ManaBook } from './mana/book.ts';
+import type { Restart } from './restart.ts';
 import type { Sessions } from './sessions/running.ts';
 import type { Reported } from './unclaimable.ts';
 import type { StartError, Steward, StewardDeps, TickReport } from './types.ts';
@@ -74,6 +76,8 @@ interface State {
   stopping: AbortController;
   /** Submitted quests the bell already named for having no judge in the roster (unjudgeable.ts, P1-15). */
   readonly unjudged: Set<QuestId>;
+  /** Set by start(): what the first tick finishes of the last Steward's work (restart.ts, P1-44). */
+  restart: Restart | undefined;
   held: Held | undefined;
   /** The ms between two ticks of the loop while it runs (start, until stop); undefined otherwise. */
   beat: number | undefined;
@@ -87,7 +91,10 @@ interface State {
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
-/** What the log already knows: the commands answered, the notices in force (§3.1), the pools asleep (§3.5). */
+/**
+ * What the log already knows: the commands answered, the notices in force (§3.1), the pools asleep (§3.5), the
+ * stalled reviews the owner retried (P1-44).
+ */
 async function recover(deps: StewardDeps, state: State): Promise<void> {
   const log = await deps.events.read();
   for (const issue of log.issues) deps.log.warn(`steward: event log: ${issue.code} in ${issue.file}`);
@@ -100,6 +107,7 @@ async function recover(deps: StewardDeps, state: State): Promise<void> {
   await writeUnclaimable(deps.store.root, state.reported);
   state.mana.asleep = asleepFromLog(log.events);
   state.mana.warned = warnedFromLog(log.events);
+  state.restart = restartFromLog(log.events);
 }
 
 /**
@@ -132,7 +140,14 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   const waiting = await applyInbox(ctx, handled);
   // A session's leftovers lose its secrets before anything is recorded of them (§3.9).
   for (const finished of sessions.drain()) await recordEnd(ctx, await maskFinished(ctx, finished));
-  await reapLost(ctx);
+  // The first tick after start: what ran went with the last Steward and counts for nothing, and a review it left
+  // stalled goes to the infirmary before the plan gives it a new judge (P1-44).
+  const { restart } = state;
+  await reapLost(ctx, restart !== undefined);
+  if (restart !== undefined) {
+    await stallLeftReviews(ctx, restart);
+    state.restart = undefined;
+  }
   // A judge killed or gone without a recorded end leaves no exclusive lock behind (P1-20).
   await judgeLocks.sweep((quest) => sessions.get(quest)?.role === 'verifier');
   counts.waiting = (await applyInbox(ctx, handled, waiting)).length;
@@ -229,6 +244,7 @@ export function createSteward(deps: StewardDeps): Steward {
     reported: new Map(),
     stopping: new AbortController(),
     unjudged: new Set(),
+    restart: undefined,
     held: undefined,
     beat: undefined,
     timer: undefined,

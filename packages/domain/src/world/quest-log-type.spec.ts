@@ -31,6 +31,9 @@ describe('questLogTypeOf', () => {
     ['claim', 'open', 'claimed', 'quest.claimed'],
     ['reassign', 'infirmary', 'claimed', 'quest.claimed'],
     ['release', 'claimed', 'open', 'quest.released'],
+    // A session the Steward lost while it did not run (P1-44): back to its character, or the judge leaves.
+    ['release', 'working', 'returned', 'quest.returned'],
+    ['release', 'review', 'review', 'quest.verdict'],
     ['retry', 'infirmary', 'open', 'quest.released'],
     ['retry', 'infirmary', 'review', 'quest.submitted'],
     ['start', 'claimed', 'working', 'quest.started'],

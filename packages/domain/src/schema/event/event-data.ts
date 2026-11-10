@@ -13,7 +13,11 @@ import {
   QuestUnclaimableDataSchema,
   TerritoryChangeDataSchema,
 } from './state-data.ts';
+import { PlotMergedDataSchema, PlotPatchedDataSchema, PlotRestoredDataSchema } from './plot-data.ts';
 import type { EventType } from './event-types.ts';
+
+// Where it always was for the Steward and the specs (P1-21); plot-data.ts holds it since P1-44.
+export { PLOT_MERGE_STOPS } from './plot-data.ts';
 
 const describe = (description: string) => ({ description });
 const SnakeIdSchema = z.string().regex(REGISTRY_ID_PATTERN);
@@ -154,52 +158,6 @@ const CheckEndDataSchema = z.strictObject({
     ),
 });
 
-const PlotPatchedDataSchema = z
-  .strictObject({
-    file: NonEmptyStringSchema.meta(
-      describe('The patch file at the root of the plot, deleted once applied.'),
-    ),
-    paths: z
-      .array(NonEmptyStringSchema)
-      .min(1)
-      .meta(describe("What the patch changed, relative to the plot, '/' separators.")),
-  })
-  .meta(
-    describe(
-      "The Steward applied the assignee's patch to paths of laws.patch_paths, which its CLI refuses to write, before the submit commit (implementation-plan §3.3, P1-28).",
-    ),
-  );
-
-/** Why the Steward's merge of a party's parts stopped at a branch (runner-core's MergeStop of an attempted merge). */
-export const PLOT_MERGE_STOPS = ['conflict', 'refused', 'missing'] as const;
-
-const BranchListSchema = z.array(NonEmptyStringSchema);
-
-const PlotMergedDataSchema = z
-  .strictObject({
-    into: NonEmptyStringSchema.meta(describe("The merge quest's branch.")),
-    merged: BranchListSchema.meta(describe('The part branches this merge took in, in order.')),
-    pending: BranchListSchema.meta(
-      describe('The part branches still not in, the one the merge stopped at first; empty once all are in.'),
-    ),
-    stop: z
-      .enum(PLOT_MERGE_STOPS)
-      .optional()
-      .meta(
-        describe(
-          'Why the merge stopped at the first pending branch: a conflict left in progress for the knight, a refusal by git or a hook, or a branch that is gone.',
-        ),
-      ),
-    conflicts: BranchListSchema.optional().meta(
-      describe('With stop = conflict: the conflicted files, relative to the plot.'),
-    ),
-  })
-  .meta(
-    describe(
-      "The Steward merged a party's part branches into its merge quest's branch, or tried to (implementation-plan §3.13, P1-21 (d)): before the machine's run and each knight's session, never before a judge's. A merge with nothing left to take in writes no line.",
-    ),
-  );
-
 /**
  * The data schema of each type that has one; `satisfies` keeps every key inside the v1 catalogue. Every type
  * that changes what the world shows has one (state-data.ts), so the world state rebuilds from the log (P0-09).
@@ -251,6 +209,7 @@ export const EVENT_DATA_SCHEMAS = {
   'command.rejected': CommandResultDataSchema,
   'plot.patched': PlotPatchedDataSchema,
   'plot.merged': PlotMergedDataSchema,
+  'plot.restored': PlotRestoredDataSchema,
   'territory.attached': TerritoryChangeDataSchema,
   'territory.surveyed': TerritoryChangeDataSchema,
   'territory.health': TerritoryChangeDataSchema,

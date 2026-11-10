@@ -47,6 +47,8 @@ export function plotsWith(root: string, replace: Partial<Plots>, calls: string[]
       return (replace.check ?? base.check)(request);
     },
     head: (plot) => (replace.head ?? base.head)(plot),
+    // Not among the calls: every judge outside a scratch plot ends with it (P1-44).
+    restore: (plot) => (replace.restore ?? base.restore)(plot),
     diff: (plot, scope) => {
       calls.push(`diff ${plot.type}`);
       return (replace.diff ?? base.diff)(plot, scope);

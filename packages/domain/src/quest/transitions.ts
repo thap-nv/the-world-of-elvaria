@@ -102,6 +102,9 @@ export const QUEST_TRANSITIONS: readonly QuestTransitionRow[] = [
   // The Steward stopped while the script ran, so the run says nothing: the quest is open again and runs anew (P1-17).
   // A merge of the parts that stopped on a conflict leaves it to a knight the same way (P1-18).
   { from: 'working', event: 'release', actors: S, guard: 'by_machine', to: 'open' },
+  // A character's session ended while no Steward ran (it stopped or was killed): the run says nothing, so the same
+  // character goes on in a fresh session and the attempt is not counted (P1-44, P1-37 (c)).
+  { from: 'working', event: 'release', actors: S, guard: 'by_character', to: 'returned' },
   { from: 'working', event: 'ask', actors: R, to: 'blocked' },
   { from: 'working', event: 'mana_out', actors: M, guard: 'by_character', to: 'paused_mana' },
   { from: 'working', event: 'breaker', actors: S, to: 'infirmary' },
@@ -135,12 +138,14 @@ export const QUEST_TRANSITIONS: readonly QuestTransitionRow[] = [
   { from: 'review', event: 'mana_out', actors: M, guard: 'has_verifier', to: 'review' },
   { from: 'review', event: 'breaker', actors: S, guard: 'has_verifier', to: 'review' },
   { from: 'review', event: 'breaker', actors: S, guard: 'needs_verifier', to: 'infirmary' },
-  // The verifier's session ended with no verdict (its CLI failed, or the Steward restarted under it): the
-  // verifier leaves as on a breaker and the next one takes the review (P1-03).
+  // The verifier's session ended with no verdict (its CLI failed, or its output was none): the verifier leaves as
+  // on a breaker and the next one takes the review (P1-03).
   { from: 'review', event: 'crash', actors: S, guard: 'has_verifier', to: 'review' },
   // Right after the row above, once REVIEW_BREAKS_MAX verifiers of the run left without a verdict (P1-33): a judge
   // whose output is never a verdict would otherwise cost a session every tick, for ever. As `review.breaker`.
   { from: 'review', event: 'crash', actors: S, guard: 'needs_verifier', to: 'infirmary' },
+  // The verifier's session ended while no Steward ran: it leaves, and counts toward no stalled review (P1-44).
+  { from: 'review', event: 'release', actors: S, guard: 'has_verifier', to: 'review' },
   { from: 'review', event: 'suspend', actors: U, guard: 'has_verifier', to: 'review' },
   { from: 'review', event: 'cancel', actors: U, to: 'archived' },
   { from: 'returned', event: 'redispatch', actors: S, to: 'working' },

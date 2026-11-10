@@ -1822,6 +1822,38 @@
       "if": {
         "properties": {
           "type": {
+            "const": "plot.restored"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "After a judge's session outside a scratch plot, the Steward put the quest's plot back to its commit: what the judge's commands left changed there (a generator, a formatter) is dropped, so the next session and the merge never take it for work (implementation-plan §3.15, P1-44).",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "paths"
+            ],
+            "properties": {
+              "paths": {
+                "description": "What was changed or new in the plot and is gone now, relative to the plot, '/' separators; an untracked folder is one path ending in '/'.",
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
             "enum": [
               "territory.attached",
               "territory.surveyed",
@@ -1977,6 +2009,7 @@
         "delivery.sent",
         "plot.patched",
         "plot.merged",
+        "plot.restored",
         "chronicle.written",
         "territory.attached",
         "territory.surveyed",

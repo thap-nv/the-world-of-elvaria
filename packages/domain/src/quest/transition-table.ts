@@ -55,6 +55,8 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
     'script chạy xong trong plot, output vào `.runs/` + journal.jsonl; hoặc Quản sự đã gộp sạch mọi phần vào plot của quest ghép (P1-18)',
   'working.release.by_machine':
     'Quản sự dừng giữa lúc script chạy (lần chạy không để lại gì): lượt kết thúc `cancelled`, quest mở lại, tick sau chạy lại (P1-17); hoặc gộp các phần của quest ghép dừng ở xung đột: quest mở lại cho hiệp sĩ, merge dở để nguyên trong plot (P1-18)',
+  'working.release.by_character':
+    'phiên của nhân vật kết thúc trong lúc không có Quản sự nào chạy (Quản sự dừng hay bị giết): lượt kết thúc `cancelled`, `attempts` trả lại một (lần `redispatch` ngay sau lấy lại nó), cùng nhân vật làm tiếp ở phiên mới từ handover (P1-44)',
   'working.ask': 'ghi `blocked.question`; lượt kết thúc `blocked`',
   'working.mana_out.by_character': 'giữ `assignee`; lượt kết thúc `paused`',
   'working.breaker':
@@ -87,16 +89,18 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
   'review.verdict_partial.has_verifier':
     'người chấm nộp verdict `partial` (lưu `progress`) rồi rời đi; `verifier = null`, lượt kết thúc `partial` (P1-42; trước đó `submitted`), không đếm vào `reviewBreaksOf` mà vào `reviewPartialsOf`; người kế đọc tiếp (P1-33)',
   'review.verdict_partial.needs_verifier':
-    'ngay sau hàng trên, khi `REVIEW_PARTIALS_MAX` (3) người chấm của lượt đã nộp verdict `partial` (`partialsStalled`, P1-42): trip `partial_verdicts`, chuông; `retry` của người dùng đưa về review như với cầu dao',
+    'ngay sau hàng trên, khi `REVIEW_PARTIALS_MAX` (3) người chấm của lượt đã nộp verdict `partial` (`partialsStalled`, P1-42): trip `partial_verdicts`, chuông; `retry` của người dùng đưa về review như với cầu dao; hoặc lúc Quản sự khởi động, khi Quản sự trước dừng giữa hàng trên và hàng này (P1-44)',
   'review.mana_out.has_verifier': '`verifier = null`, verdict `partial` lưu `progress`; người kế đọc tiếp',
   'review.breaker.has_verifier':
     'như trên; cả khi CLI của người chấm tự dừng ở trần lượt hay ngân sách (P1-23)',
   'review.breaker.needs_verifier':
-    'trip `secrets`, như `claimed`: người chấm cần cùng secret với người làm; hoặc ngay sau hàng trên, khi `REVIEW_BREAKS_MAX` (2) người chấm của lượt đã rời đi không ra verdict (`reviewStalled`, P1-23) và người cuối bị cầu dao cắt, chuông',
+    'trip `secrets`, như `claimed`: người chấm cần cùng secret với người làm; hoặc ngay sau hàng trên, khi `REVIEW_BREAKS_MAX` (2) người chấm của lượt đã rời đi không ra verdict (`reviewStalled`, P1-23) và người cuối bị cầu dao cắt, chuông; hoặc lúc Quản sự khởi động, khi Quản sự trước dừng giữa hàng trên và hàng này (P1-44)',
   'review.crash.has_verifier':
-    'phiên người chấm kết thúc mà không có phán quyết (CLI lỗi, output không thành verdict, Quản sự khởi động lại): như trên, lượt kết thúc `crash`, đếm vào `reviewBreaksOf` (P1-33)',
+    'phiên người chấm kết thúc mà không có phán quyết (CLI lỗi, output không thành verdict): như trên, lượt kết thúc `crash`, đếm vào `reviewBreaksOf` (P1-33)',
   'review.crash.needs_verifier':
-    'ngay sau hàng trên, khi `REVIEW_BREAKS_MAX` (2) người chấm của lượt đã rời đi không ra verdict (`reviewStalled`, P1-33): trip `no_verdict`, chuông; `retry` của người dùng đưa về review như với cầu dao',
+    'ngay sau hàng trên, khi `REVIEW_BREAKS_MAX` (2) người chấm của lượt đã rời đi không ra verdict (`reviewStalled`, P1-33): trip `no_verdict`, chuông; `retry` của người dùng đưa về review như với cầu dao; hoặc lúc Quản sự khởi động, khi Quản sự trước dừng giữa hàng trên và hàng này (P1-44)',
+  'review.release.has_verifier':
+    'phiên người chấm kết thúc trong lúc không có Quản sự nào chạy: người chấm rời đi, lượt kết thúc `cancelled`, không đếm vào `reviewBreaksOf` (P1-44)',
   'review.suspend.has_verifier': 'như trên, khi người dùng đình chỉ người chấm',
   'returned.redispatch': '`attempts` +1, lượt mới, cùng `assignee`, prompt kèm notes',
   'returned.breaker': 'trip `secrets`, như `claimed`',

@@ -44,6 +44,9 @@ export type ForgetWorktree = (worktree: string) => Promise<void>;
 /** How much of a refusal to keep: the end of a hook's output says why. */
 const DETAIL_CHARS = 2000;
 
+/** What starts an entry of `git status --porcelain`: the two status letters and a space. */
+const STATUS = 'XY ';
+
 export async function worktreeStatus(git: Git, worktree: string): Promise<PlotStatus> {
   const record = await plotRecordOf(git, worktree);
   const changes = await gitOut(git, worktree, ['status', '--porcelain', '-z']);
@@ -70,6 +73,35 @@ export async function touchedIn(git: Git, worktree: string): Promise<string[]> {
   const changed = await gitOut(git, worktree, ['diff', '--name-only', '--no-renames', '-z', record.base]);
   const untracked = await gitOut(git, worktree, ['ls-files', '--others', '--exclude-standard', '-z']);
   return [...new Set([...zList(changed), ...zList(untracked)])].sort();
+}
+
+/** The paths of `git status --porcelain -z`; a rename or a copy names its source in the entry after it. */
+function statusPaths(stdout: string): string[] {
+  const paths: string[] = [];
+  let source = false;
+  for (const entry of zList(stdout)) {
+    if (source) {
+      source = false;
+      continue;
+    }
+    paths.push(entry.slice(STATUS.length));
+    source = /[RC]/.test(entry.slice(0, STATUS.length));
+  }
+  return paths;
+}
+
+/**
+ * Puts the worktree back to its HEAD (index and files) and drops what is untracked, an untracked folder as one path
+ * ending in `/`; ignored files (node_modules) and the runner files the plot excludes stay (ADR 0012). Returns the
+ * paths it dropped; a clean worktree is left alone. After a judge outside a scratch plot (P1-44): the quest's work
+ * was all committed before its review, so what changed since came from the commands the judge or the checks ran.
+ */
+export async function restoreWorktree(git: Git, worktree: string): Promise<string[]> {
+  const paths = statusPaths(await gitOut(git, worktree, ['status', '--porcelain', '-z']));
+  if (paths.length === 0) return [];
+  await gitOut(git, worktree, ['reset', '--quiet', '--hard', 'HEAD']);
+  await gitOut(git, worktree, ['clean', '--quiet', '-d', '--force']);
+  return paths;
 }
 
 /**

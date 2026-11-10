@@ -14,7 +14,7 @@ import { readAfterSession } from '../mana/read.ts';
 import { moveAndRing } from '../notices.ts';
 import { step } from '../record.ts';
 import { runOf } from '../review/judge.ts';
-import { releaseScratch } from '../review/scratch.ts';
+import { afterJudge } from '../review/after-judge.ts';
 import { commitPlot } from './commit.ts';
 import { maskFinished } from './secrets.ts';
 import type { Context } from '../context.ts';
@@ -134,7 +134,8 @@ export async function tripBreakers(ctx: Context, breakers: readonly Breaker[]): 
         : await breakVerifier(ctx, running, breaker, stop);
     if (!moved.ok) ctx.deps.log.warn(`steward: ${running.quest}: ${reason}: ${moved.error}`);
     // A judge stopped in its scratch plot leaves nothing there (ADR 0022): the next judge's trial makes a new one.
-    if (running.role === 'verifier') await releaseScratch(ctx, running.quest);
+    // Outside one, what its commands changed in the quest's plot goes too (P1-44).
+    if (running.role === 'verifier') await afterJudge(ctx, running.quest, running.session_id);
     // The session spent what it spent: the gauge reads the account again, as after any end (§3.5).
     const tribe = ctx.world.characters.get(running.character)?.tribe;
     if (tribe !== undefined) readAfterSession(ctx, tribe);

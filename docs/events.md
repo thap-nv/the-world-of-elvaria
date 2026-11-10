@@ -4,7 +4,7 @@
 
 Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là một event; log chỉ ghi thêm, không bao giờ viết lại. `type` là `nhóm.hành_động`; reader giữ nguyên type lạ, renderer bỏ qua nó. Hợp đồng đầy đủ: [schemas/event.schema.json](schemas/event.schema.json); nghĩa từng nhóm và các tiền tố dành sẵn: [glossary.md](glossary.md) mục 12.
 
-61 type trong danh mục v1, 49 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
+62 type trong danh mục v1, 50 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
 
 ## Khung một dòng
 
@@ -114,12 +114,13 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 |---|---|
 | `delivery.sent` | object mở, chưa có schema |
 
-## `plot` · 2 type
+## `plot` · 3 type
 
 | Type | `data` |
 |---|---|
 | `plot.patched` | `file`: string (không rỗng) — The patch file at the root of the plot, deleted once applied.<br>`paths`: array of string (không rỗng) — What the patch changed, relative to the plot, '/' separators. |
 | `plot.merged` | `into`: string (không rỗng) — The merge quest's branch.<br>`merged`: array of string (không rỗng) — The part branches this merge took in, in order.<br>`pending`: array of string (không rỗng) — The part branches still not in, the one the merge stopped at first; empty once all are in.<br>`stop` (tùy chọn): một trong `conflict`, `refused`, `missing` — Why the merge stopped at the first pending branch: a conflict left in progress for the knight, a refusal by git or a hook, or a branch that is gone.<br>`conflicts` (tùy chọn): array of string (không rỗng) — With stop = conflict: the conflicted files, relative to the plot. |
+| `plot.restored` | `paths`: array of string (không rỗng) — What was changed or new in the plot and is gone now, relative to the plot, '/' separators; an untracked folder is one path ending in '/'. |
 
 ## `chronicle` · 1 type
 

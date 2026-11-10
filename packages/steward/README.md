@@ -6,8 +6,11 @@
   kingdom), rebuilds from the event log what it already answered, and ticks every `dispatch.tick_seconds`.
   Ticks never overlap.
 - One tick, in the order of §3.1: the inbox in id order (the owner first); the ends of the sessions it runs;
-  sessions the files say run but it does not hold (a Steward that stopped or crashed) end as a crash, so no
-  quest ever runs two sessions; the inbox commands that waited, once more; the mana gauges; then the domain's
+  sessions the files say run but it does not hold end, so no quest ever runs two sessions: at the first tick after
+  start those the last Steward ran when it stopped or was killed count for nothing (P1-44, `src/restart.ts`: the
+  assignee goes on in a fresh session with its attempt given back, a judge leaves without counting toward a stalled
+  review), and a review it left stalled without the move to the infirmary goes there before the plan; later, a
+  session whose end could not be recorded ends as a crash; the inbox commands that waited, once more; the mana gauges; then the domain's
   `planTick` decides and the Steward carries it out: sessions past a breaker stop, characters on a fail streak go
   to the Temple
   (`character.suspend`, the bell), paused quests whose pool woke go on, claimed quests start, submitted quests get
@@ -31,7 +34,7 @@
   rings the bell; a verifier past a breaker leaves the review to the next one, until the second of a run
   (`reviewStalled`, P1-23): then the quest goes to the infirmary with the bell, and no third verifier opens; the
   owner's `retry` brings it back to review with a new judge, and the count starts over (P1-26). A verifier that
-  leaves with no verdict at all (its CLI failed, its output was none, its session was lost) counts the same, and
+  leaves with no verdict at all (its CLI failed, its output was none, its session was lost while the Steward ran) counts the same, and
   the stall it ends goes to the infirmary as `review:no_verdict` (P1-33); one that hands in a partial verdict
   (`verdict_partial`) made progress and counts apart: the third of the open group sends the review to the
   infirmary as `review:partial_verdicts`, no fourth judge opening (P1-42). Breakers measure a session as its holder's tribe allows:
@@ -137,6 +140,11 @@
   removed after the judge's session whatever its end (`Plots.releaseScratch`, also after a breaker, the machine's
   verdict and at archive). On a territory with exclusive checks the judge opens only once the Steward holds the territory's exclusive lock, kept for its session (`src/review/exclusive.ts`, released at its end, by a tick when it lost its session, and at `stop()`), so it runs e2e too; the checks of other quests wait for it (`exclusiveWaitMinutes`). A verdict that fails on a flake (`flake_check`, or a judge's `flaky`) opens one quest
   of the ritual's `flaky_follow_up` (`fix`, knight) before the quest moves on; the quest's branch never changes.
+- Puts the quest's plot back to its commit after a judge outside a scratch plot (P1-44, `src/review/after-judge.ts`):
+  the judge has no Edit or Write, but the checks' commands it runs may write in the plot (a generator, a formatter);
+  the work was all committed before its review, so once the judge's session is over, whatever its end, what is
+  changed or untracked goes (`Plots.restore`; ignored files stay), a warning names it and a `plot.restored` line in
+  the quest's journal lists it. A plot git cannot put back costs a warning and stays as the judge left it.
 - Runs the territory's checks on what the quest touched before a judge's session opens (`Plots.check`: runChecks
   of P1-07 in `elvaria run`, outside the tick, its `signal` aborted when nobody waits for them any more), with the
   quest's secrets from the treasury (`PlotCheck.secrets`, `questSecretsOf`, P1-10b), resolved in the tick before
@@ -262,6 +270,13 @@ before every part, which waits for it and never starts on its branch.
 `patch.spec.ts` applies or refuses an assignee's `elvaria.patch` on real git repos (`src/__fixtures__/git-plots.ts`,
 P1-28), then checks that the delivery note names exactly the patched paths and has no such section without a patch,
 and that the run after a refused patch reads why in its prompt while the first run does not (P1-31).
+`restart.spec.ts` (P1-44): a session that went with the last Steward (its pid dead in `.state/sessions.json`) costs
+no attempt and its character goes on from its letter, a judge lost so counts toward no stalled review, a review left
+stalled without its move to the infirmary goes there at the next start (no verdict, partial verdicts), and one the
+owner retried before the stop gets its new judge. `after-judge.spec.ts` (P1-44): on real git repos, a judge whose
+command rewrote the contract and left output leaves the plot clean and one `plot.restored` line; the returned
+assignee opens on the commit, so the judge's change never reaches the branch; a plot that cannot be put back costs
+a warning.
 `infirmary.spec.ts` builds the reason of every trip from its detail, word for word as before P1-32, and reads a
 refused patch back from a new line and from an older one (P1-32).
 `scripts.spec.ts` copies the real `link-check` and `run-check` of `packages/registry-default/scripts/` into the

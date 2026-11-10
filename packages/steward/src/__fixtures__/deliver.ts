@@ -21,6 +21,7 @@ export function worktreePlots(repo: string): Plots {
       return { plot: { type: 'worktree', path: toPortable(cwd), branch: `quest/${quest.id}` }, cwd };
     },
     commit: () => Promise.resolve({ status: 'committed', sha: 'f00d' }),
+    restore: () => Promise.resolve([]),
     applyPatch: () => Promise.resolve({ status: 'none' }),
     check: () => Promise.resolve([]),
     head: () => Promise.resolve(null),

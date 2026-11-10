@@ -10,6 +10,7 @@ import {
   partialsStalled,
   reviewBreaksOf,
   reviewPartialsOf,
+  reviewStallOf,
   reviewStalled,
 } from './review.ts';
 import type { Quest } from '../schema/quest/quest.ts';
@@ -141,6 +142,51 @@ describe('reviewPartialsOf', () => {
     ]);
     const again = moved(failed, 40, ['redispatch', 'steward'], ['submit', 'runner']);
     expect(reviewPartialsOf(again)).toBe(0);
+  });
+});
+
+// reviewStallOf (P1-44, P1-42 (a)): what stalled the review, for the move a Steward that starts on it makes.
+describe('reviewStallOf', () => {
+  const review = inReview(quest(Q1), 'thorn', 10);
+  const crashed = (base: Quest, verifier: string, minute: number): Quest =>
+    moved(judged(base, verifier, minute), minute + 5, ['crash', 'steward']);
+
+  it('names nothing while the review is not stalled', () => {
+    expect(reviewStallOf(review)).toBeUndefined();
+    expect(reviewStallOf(stopped(read(review, 'wren', 20), 'brann', 30, 'tokens'))).toBeUndefined();
+  });
+
+  it('names the partial verdicts, or how the last judge who left without a verdict ended', () => {
+    expect(reviewStallOf(read(read(read(review, 'wren', 20), 'brann', 30), 'wren', 40))).toEqual({
+      by: 'partial',
+      count: REVIEW_PARTIALS_MAX,
+    });
+    expect(reviewStallOf(crashed(stopped(review, 'wren', 20, 'tokens'), 'brann', 30))).toEqual({
+      by: 'crash',
+      count: 2,
+    });
+    expect(reviewStallOf(stopped(crashed(review, 'wren', 20), 'brann', 30, 'time'))).toEqual({
+      by: 'timeout',
+      count: 2,
+    });
+    expect(reviewStallOf(stopped(crashed(review, 'wren', 20), 'brann', 30, 'turns'))).toEqual({
+      by: 'breaker',
+      count: 2,
+    });
+  });
+
+  it("does not count a judge the Steward lost while it did not run, and starts over after the owner's retry", () => {
+    const lost = moved(judged(review, 'wren', 20), 25, ['release', 'steward']);
+    expect(lost).toMatchObject({ status: 'review', verifier: null });
+    expect(lost.attempt_log.at(-1)).toMatchObject({ role: 'verifier', outcome: 'cancelled' });
+    expect(reviewBreaksOf(lost)).toBe(0);
+    expect(reviewStallOf(crashed(crashed(lost, 'brann', 30), 'wren', 40))).toMatchObject({ count: 2 });
+    const sick = moved(crashed(crashed(review, 'wren', 20), 'brann', 30), 36, ['crash', 'steward']);
+    const retried = moved(sick, 40, ['retry', 'user']);
+    // Right after the retry the full group still stands: only the log tells it from a move never made (P1-44).
+    expect(reviewStallOf(retried)).toEqual({ by: 'crash', count: 2 });
+    const judgedLost = moved(judged(retried, 'wren', 50), 55, ['release', 'steward']);
+    expect(reviewStallOf(judgedLost)).toBeUndefined();
   });
 });
 

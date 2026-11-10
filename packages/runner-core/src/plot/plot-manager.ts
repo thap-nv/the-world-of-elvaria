@@ -24,7 +24,14 @@ import { checkoutScratch, prepareScratch, removeScratch, scratchIdOf } from './s
 import type { PreparedScratch, ScratchTarget } from './scratch.ts';
 import { runSetup } from './setup.ts';
 import type { SetupRun } from './setup.ts';
-import { commitWorktree, releaseWorktree, touchedIn, worktreeHead, worktreeStatus } from './worktree-ops.ts';
+import {
+  commitWorktree,
+  releaseWorktree,
+  restoreWorktree,
+  touchedIn,
+  worktreeHead,
+  worktreeStatus,
+} from './worktree-ops.ts';
 import type { CommitOutcome, ForgetWorktree, PlotStatus, ReleasedPlot } from './worktree-ops.ts';
 import { prepareWorktree, worktreePathOf } from './worktree.ts';
 import type { PlotFailure } from './worktree.ts';
@@ -77,6 +84,11 @@ export interface PlotManager {
   /** Paths the quest changed, relative to the plot with `/`: what `runChecks` selects checks by. */
   touched(plot: Plot): Promise<string[]>;
   commitAll(plot: Plot, message: string): Promise<CommitOutcome>;
+  /**
+   * After a judge outside a scratch plot (P1-44): back to the plot's HEAD, what is changed or untracked dropped
+   * (ignored files stay); the paths it dropped, none for a clean plot or a plot without git.
+   */
+  restore(plot: Plot): Promise<string[]>;
   /**
    * Before the submit commit (P1-28): applies the assignee's PATCH_FILE when `patchPaths` (laws.patch_paths) allow
    * every path it touches, then deletes it; `none` for a plot without git or without a patch.
@@ -238,6 +250,7 @@ export function createPlotManager(options: PlotManagerOptions): PlotManager {
       plot.type === 'worktree'
         ? commitWorktree(await git(), worktreeOf(plot), message)
         : { status: 'no_git' },
+    restore: async (plot) => (plot.type === 'worktree' ? restoreWorktree(await git(), worktreeOf(plot)) : []),
     applyPatch: async (plot, patchPaths) =>
       plot.type === 'worktree' && patchPaths.length > 0
         ? applyPatchIn(await git(), worktreeOf(plot), patchPaths)

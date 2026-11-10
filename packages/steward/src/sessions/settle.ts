@@ -3,13 +3,13 @@
 // An end that arrives for a quest that moved on meanwhile (cancelled, reassigned) changes nothing.
 import { currentRun } from '@elvaria/domain';
 import { plotCommitMessage } from '@elvaria/runner-core';
-import type { Quest, Result } from '@elvaria/domain';
+import type { CharacterId, Quest, Result } from '@elvaria/domain';
 import type { RunResult } from '@elvaria/runner-core';
 
 import { moveAndRing } from '../notices.ts';
 import { step } from '../record.ts';
 import { judge, runOf, stallWithoutVerdict, verifierLeaves } from '../review/judge.ts';
-import { releaseScratch } from '../review/scratch.ts';
+import { afterJudge } from '../review/after-judge.ts';
 import { breakAssignee, breakVerifier } from './breaker.ts';
 import { commitPlot } from './commit.ts';
 import { checksLetterAfter, noteUnchangedLetter } from './letter.ts';
@@ -133,36 +133,67 @@ export async function settle(ctx: Context, { running, result }: Finished): Promi
         `steward: ${running.quest}: the end of ${running.character}'s session: ${settled.error}`,
       );
   }
-  // Whatever its end, what a judge broke on purpose in its scratch plot is never kept (ADR 0022, P1-20).
-  if (running.role === 'verifier') await releaseScratch(ctx, running.quest);
+  // Whatever its end, what a judge broke on purpose in its scratch plot is never kept (ADR 0022, P1-20), nor what
+  // its commands changed in the quest's own plot (P1-44).
+  if (running.role === 'verifier') await afterJudge(ctx, running.quest, running.session_id);
+}
+
+/** Who holds the session the files say runs on `quest` while this Steward holds none there; undefined otherwise. */
+function lostHolderOf(ctx: Context, quest: Quest): CharacterId | undefined {
+  if (ctx.sessions.get(quest.id) !== undefined || quest.tier !== 'session') return undefined;
+  const holder =
+    quest.status === 'working' ? quest.assignee : quest.status === 'review' ? quest.verifier : null;
+  return typeof holder === 'string' ? holder : undefined;
+}
+
+/** The end could not be recorded: the run ends as a crash, and a judge lost so counts toward a stalled review. */
+async function crashed(ctx: Context, quest: Quest, holder: CharacterId): Promise<Result<Quest, string>> {
+  const holds = ctx.world.characters.get(holder)?.current?.quest === quest.id;
+  const edit = step(quest.status === 'working' ? 'crash' : 'unassign');
+  const left = await moveAndRing(ctx, {
+    quest: quest.id,
+    event: { type: 'crash' },
+    actor: 'steward',
+    edits: holds ? { [holder]: edit } : {},
+  });
+  // A judge lost so left no verdict either: it counts toward a stalled review like any other (P1-33).
+  return quest.status === 'review' ? stallWithoutVerdict(ctx, left, "the verifier's session was lost") : left;
+}
+
+/** The last Steward stopped or was killed under the session: the run says nothing and counts for nothing (P1-44). */
+function released(ctx: Context, quest: Quest, holder: CharacterId): Promise<Result<Quest, string>> {
+  const holds = ctx.world.characters.get(holder)?.current?.quest === quest.id;
+  return ctx.record.move({
+    quest: quest.id,
+    event: { type: 'release' },
+    actor: 'steward',
+    edits: holds ? { [holder]: step('unassign') } : {},
+  });
 }
 
 /**
- * A quest the files say runs a session this Steward does not hold: the Steward stopped or crashed under it, or the
- * end could not be recorded. Its session is gone, so the run ends as a crash: the assignee tries again in a fresh
- * session, a verifier leaves the review to the next one. No quest ever runs two sessions (§3.1).
+ * A quest the files say runs a session this Steward does not hold. No quest ever runs two sessions (§3.1), so the
+ * run ends. At start (`restarted`), the last Steward stopped or was killed under it: the session went with that
+ * Steward, not through any fault of its holder, so the assignee goes on in a fresh session with its attempt given
+ * back (§2.5 `working.release.by_character`) and a judge leaves without counting toward a stalled review
+ * (`review.release.has_verifier`); in the P1-37 run two kills of the Steward cost a quest two attempts (P1-44).
+ * Later, the end could not be recorded: the run ends as a crash, the assignee tries again in a fresh session, a
+ * verifier leaves the review to the next one. A judge's plot is put back after it either way (afterJudge).
  */
-export async function reapLost(ctx: Context): Promise<void> {
+export async function reapLost(ctx: Context, restarted = false): Promise<void> {
   for (const quest of [...ctx.world.quests.values()]) {
-    if (ctx.sessions.get(quest.id) !== undefined || quest.tier !== 'session') continue;
-    const holder =
-      quest.status === 'working' ? quest.assignee : quest.status === 'review' ? quest.verifier : null;
-    if (typeof holder !== 'string') continue;
-    const character = ctx.world.characters.get(holder);
-    const holds = character?.current?.quest === quest.id;
-    const edit = step(quest.status === 'working' ? 'crash' : 'unassign');
-    const left = await moveAndRing(ctx, {
-      quest: quest.id,
-      event: { type: 'crash' },
-      actor: 'steward',
-      edits: holds ? { [holder]: edit } : {},
-    });
-    // A judge lost so left no verdict either: it counts toward a stalled review like any other (P1-33).
-    const moved =
-      quest.status === 'review'
-        ? await stallWithoutVerdict(ctx, left, "the verifier's session was lost")
-        : left;
-    if (!moved.ok) ctx.deps.log.warn(`steward: ${quest.id}: a lost session: ${moved.error}`);
-    else ctx.deps.log.warn(`steward: ${quest.id}: ${holder}'s session was lost; the run ended as a crash`);
+    const holder = lostHolderOf(ctx, quest);
+    if (holder === undefined) continue;
+    const moved = restarted ? await released(ctx, quest, holder) : await crashed(ctx, quest, holder);
+    if (!moved.ok) {
+      ctx.deps.log.warn(`steward: ${quest.id}: a lost session: ${moved.error}`);
+      continue;
+    }
+    ctx.deps.log.warn(
+      restarted
+        ? `steward: ${quest.id}: ${holder}'s session was lost with the last Steward; the run does not count`
+        : `steward: ${quest.id}: ${holder}'s session was lost; the run ended as a crash`,
+    );
+    if (quest.status === 'review') await afterJudge(ctx, quest.id);
   }
 }

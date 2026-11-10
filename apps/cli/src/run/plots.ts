@@ -102,6 +102,8 @@ export function plotsOver(kingdom: string, manager: PlotManager, host: ProcessHo
       return { plot, cwd: cwdOf(kingdom, plot) };
     },
     commit: (plot, message) => manager.commitAll(plot, message),
+    // After a judge outside a scratch plot: what its commands left changed there goes (P1-44).
+    restore: (plot) => manager.restore(plot),
     // Before the submit commit: the assignee's patch for laws.patch_paths (P1-28).
     applyPatch: (plot, patchPaths) => manager.applyPatch(plot, patchPaths),
     // The Steward runs them outside its tick and aborts `signal` when nobody waits for them any more (P1-25); they

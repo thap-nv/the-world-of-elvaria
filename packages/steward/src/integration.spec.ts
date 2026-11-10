@@ -96,12 +96,11 @@ describe('the Steward over a day of ten quests, stopped and started again in the
       expect(quest.attempt_log.every(({ ended_at }) => ended_at !== undefined)).toBe(true);
     }
     const byTitle = (title: string) => quests.find((quest) => quest.title === title)!;
-    expect(byTitle('Hangs until the restart').attempt_log.map(({ outcome }) => outcome)).toEqual([
-      'crash',
-      'submitted',
-      'submitted',
-    ]);
-    // A session the stop cut short also ends as a crash, so these counts are at least, not exactly.
+    // The hung session went with the first Steward: its run says nothing and costs no attempt (P1-44).
+    const hung = byTitle('Hangs until the restart');
+    expect(hung.attempt_log.map(({ outcome }) => outcome)).toEqual(['cancelled', 'submitted', 'submitted']);
+    expect(hung.attempts).toBe(1);
+    // A session the stop cut short gives its attempt back too, so these counts are at least, not exactly.
     expect(byTitle('Crashes once').attempt_log[0]).toMatchObject({ role: 'assignee', outcome: 'crash' });
     expect(byTitle('Crashes once').attempts).toBeGreaterThanOrEqual(2);
     expect(byTitle('Fails review once').attempts).toBeGreaterThanOrEqual(2);

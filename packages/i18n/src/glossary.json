@@ -1961,6 +1961,7 @@
                 "delivery.sent",
                 "plot.patched",
                 "plot.merged",
+                "plot.restored",
                 "chronicle.written",
                 "territory.attached",
                 "territory.surveyed",
@@ -1968,7 +1969,7 @@
                 "sandbox.replay.start",
                 "sandbox.replay.end"
               ],
-              "meaning": "`plot.patched`: Quản sự áp bản vá của người làm vào `laws.patch_paths` trước commit `submit` (P1-28); `plot.merged`: Quản sự gộp các nhánh phần vào nhánh quest ghép, hoặc dừng ở một nhánh (P1-21)"
+              "meaning": "`plot.patched`: Quản sự áp bản vá của người làm vào `laws.patch_paths` trước commit `submit` (P1-28); `plot.merged`: Quản sự gộp các nhánh phần vào nhánh quest ghép, hoặc dừng ở một nhánh (P1-21); `plot.restored`: sau phiên người chấm ngoài đất nháp, Quản sự đưa đất của quest về commit của nó, bỏ những gì lệnh của người chấm để lại (P1-44)"
             },
             {
               "group": "Dành sẵn",
