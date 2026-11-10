@@ -244,7 +244,7 @@ export async function openVerifier(
   const scratch = inScratch(ctx, quest);
   // A judge in its scratch plot runs the exclusive checks too: it waits, its checks kept, until it holds their lock.
   if (scratch && !(await judgeMayOpen(ctx, quest, territory))) return ok(quest);
-  const checks = takeChecks(ctx, quest);
+  const checks = await takeChecks(ctx, quest);
   if (!checks.ok) return checks;
   const input = { role: 'verifier', quest, character, territory, n, checks: checks.value, scratch } as const;
   const parse = judgeParseOf(ctx, quest, character, { n, checks: checks.value });

@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { Q1, inReview, moved, quest } from '../dispatch/__fixtures__/snapshot.ts';
-import { reviewBreaksOf, reviewStalled } from './review.ts';
+import { cutVerifiersOf, reviewBreaksOf, reviewStalled } from './review.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 
 const judged = (base: Quest, verifier: string, minute: number): Quest =>
@@ -71,5 +71,44 @@ describe('reviewBreaksOf', () => {
     const again = moved(failed, 40, ['redispatch', 'steward'], ['submit', 'runner']);
     expect(reviewBreaksOf(again)).toBe(0);
     expect(reviewBreaksOf(stopped(again, 'wren', 50, 'tokens'))).toBe(1);
+  });
+});
+
+// cutVerifiersOf (P1-38, P1-35 (d)): the judges a breaker stopped in the open group of the current run.
+describe('cutVerifiersOf', () => {
+  const review = inReview(quest(Q1), 'thorn', 10);
+
+  it('names nobody before a breaker stopped a judge', () => {
+    expect(cutVerifiersOf(review)).toEqual(new Set());
+    expect(cutVerifiersOf(judged(review, 'wren', 20))).toEqual(new Set());
+  });
+
+  it('names the judge a breaker stopped, for time, tokens or turns, and still after a partial verdict', () => {
+    expect(cutVerifiersOf(stopped(review, 'wren', 20, 'tokens'))).toEqual(new Set(['wren']));
+    expect(cutVerifiersOf(stopped(review, 'wren', 20, 'time'))).toEqual(new Set(['wren']));
+    const read = moved(judged(stopped(review, 'wren', 20, 'turns'), 'brann', 30), 35, [
+      'verdict_partial',
+      'verifier',
+    ]);
+    expect(cutVerifiersOf(read)).toEqual(new Set(['wren']));
+  });
+
+  it('does not name a judge that crashed: no breaker stopped it', () => {
+    expect(cutVerifiersOf(moved(judged(review, 'wren', 20), 25, ['crash', 'steward']))).toEqual(new Set());
+  });
+
+  it("names nobody once the owner's retry closed a full group, and counts the cuts after it", () => {
+    const stalled = stopped(stopped(review, 'wren', 20, 'tokens'), 'brann', 30, 'time');
+    const sick = moved(stalled, 35, ['breaker', 'steward', { trip: 'tokens' }]);
+    const retried = moved(sick, 40, ['retry', 'user']);
+    expect(cutVerifiersOf(retried)).toEqual(new Set());
+    expect(cutVerifiersOf(stopped(retried, 'brann', 50, 'tokens'))).toEqual(new Set(['brann']));
+  });
+
+  it('forgets the cuts of an earlier run', () => {
+    const once = stopped(review, 'wren', 20, 'tokens');
+    const failed = moved(judged(once, 'brann', 30), 35, ['verdict_fail', 'verifier', { verdict_id: 'v1' }]);
+    const again = moved(failed, 40, ['redispatch', 'steward'], ['submit', 'runner']);
+    expect(cutVerifiersOf(again)).toEqual(new Set());
   });
 });

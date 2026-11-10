@@ -76,10 +76,13 @@
   current run, and the review goes to the infirmary instead of a fresh verifier. (P1-26) The owner's retry of
   such a quest goes back to review, same run, for a new judge (`infirmary.retry.stalled_review`); `reviewBreaksOf`
   counts only the cuts since that retry, derived from `attempt_log` (a stall closes each group of
-  `REVIEW_BREAKS_MAX`).
+  `REVIEW_BREAKS_MAX`). (P1-38) `cutVerifiersOf` names the judges a breaker stopped in the open group, whom
+  `selectVerifier` passes over while another judge may take the review. A quest without an estimate gets
+  `context_budget_tokens` × `CONTEXT_BUDGETS_BY_RANK` of its rank as the stand-in (`questFromCommand`: F–D 1, C 1.5,
+  B 2, A 2.5, S 3), so its token ceiling grows with the rank.
 - Keeps the separation of duties (`src/verify/`, ADR 0008, 0020): `selectVerifier` (never an assignee of the quest
   or of its party, never the assignee's model, another model family first by `familyOf`, then another tribe;
-  `dispatch.verifier_same_family` for the rest), `underPassRule` (a failing check fails the quest under
+  `dispatch.verifier_same_family` for the rest; not a judge a breaker stopped in the run while another may judge), `underPassRule` (a failing check fails the quest under
   `all_checks_and_agent`, as `tests_fail`, or `incomplete` for the Steward's `subquests` check, P1-15, and its
   `party` check of a merge quest, P1-18, and `coverage_not_lower`, P1-20, or `flaky` for `flake_check`), `machineVerdictOf` (the machine's verdict from the checks), `validateVerdict` (no
   worker, only the session the Steward spawned, no pass over a failing check) and the verdict ids of a run

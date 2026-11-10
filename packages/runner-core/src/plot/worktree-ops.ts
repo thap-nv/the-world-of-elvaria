@@ -56,6 +56,11 @@ export async function worktreeStatus(git: Git, worktree: string): Promise<PlotSt
   };
 }
 
+/** The commit the worktree's HEAD is at: what a run of checks ran on (P1-38: a later judge may reuse it). */
+export async function worktreeHead(git: Git, worktree: string): Promise<string> {
+  return (await gitOut(git, worktree, ['rev-parse', 'HEAD'])).trim();
+}
+
 /**
  * Paths the quest changed since its branch forked, relative to the plot: committed or not, deleted, and new
  * untracked files. A rename counts as both paths, since checks watching either should run.
