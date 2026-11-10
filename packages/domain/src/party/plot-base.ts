@@ -41,6 +41,8 @@ export function plotBaseOf(quest: Quest, quests: readonly Quest[]): PlotBase {
     return { from: contract, merge: branchesOf(quest, quest.depends_on, quests) };
   // The blind trial's acceptance part (§3.15, P1-21): the contract and nothing of the parts' work, whatever it waits for.
   if (quest.party_role === 'acceptance') return { from: contract, merge: [] };
-  const others = quest.depends_on.filter((id) => id !== party);
+  // A part waits for the acceptance part (P1-37 (iii)) but never starts on its tests: they fail until the merge.
+  const acceptance = new Set(quests.filter((other) => other.party_role === 'acceptance').map(({ id }) => id));
+  const others = quest.depends_on.filter((id) => id !== party && !acceptance.has(id));
   return { from: [...branchesOf(quest, others, quests), ...contract], merge: [] };
 }

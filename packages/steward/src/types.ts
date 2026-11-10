@@ -2,6 +2,7 @@
 // capabilities, never a CLI (ADR 0006, 0021): apps/cli, the composition root, injects the runners of the tribes.
 import type {
   CharacterId,
+  ClaimBlockerReason,
   Clock,
   FailKind,
   IdSource,
@@ -49,7 +50,7 @@ export type Notice =
   | {
       readonly kind: 'unclaimable';
       readonly quest: NoticeQuest;
-      readonly reason: 'no_class' | 'level_too_low';
+      readonly reason: ClaimBlockerReason;
       readonly class: string;
       readonly best?: { readonly character: string; readonly level: number; readonly ceiling: Rank };
     }

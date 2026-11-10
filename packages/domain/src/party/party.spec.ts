@@ -99,6 +99,19 @@ describe('plotBaseOf', () => {
     expect(plotBaseOf(tests, [...all, tests])).toEqual({ from: [`quest/${Q1}`], merge: [] });
   });
 
+  it('never starts a part on the acceptance part it waits for, whose tests fail until the merge (P1-37 (iii))', () => {
+    const tests: Quest = onBranch({
+      ...quest(LONE, { party: Q1, dependsOn: [Q1] }),
+      party_role: 'acceptance',
+    });
+    const waiting = { ...web, depends_on: [Q1, LONE, Q2] };
+    expect(plotBaseOf(waiting, [...all, tests])).toEqual({ from: [`quest/${Q2}`, `quest/${Q1}`], merge: [] });
+    expect(plotBaseOf({ ...api, depends_on: [Q1, LONE] }, [...all, tests])).toEqual({
+      from: [`quest/${Q1}`],
+      merge: [],
+    });
+  });
+
   it('starts any other quest, a contract too, from the branches of what it waits for (P1-16 (f))', () => {
     const chained = quest(LONE, { dependsOn: [Q2, Q3] });
     expect(plotBaseOf(chained, all)).toEqual({ from: [`quest/${Q2}`, `quest/${Q3}`], merge: [] });

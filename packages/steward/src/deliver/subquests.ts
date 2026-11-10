@@ -16,6 +16,7 @@ import {
   ok,
   formatDatedId,
   parseInstant,
+  partWaitsFor,
   questFromCommand,
   zonedTime,
 } from '@elvaria/domain';
@@ -25,6 +26,7 @@ import type { CommandPayload, NewQuestContext, Quest, QuestDraft, QuestId, Resul
 import {
   ACCEPTANCE_REF,
   MERGE_REF,
+  acceptanceIdFor,
   addedQuestsFor,
   partyPlaceOf,
   partyProblem,
@@ -112,6 +114,7 @@ function payloadOf(
   plan: Quest,
   draft: QuestDraft,
   ids: ReadonlyMap<string, QuestId>,
+  acceptance: QuestId | undefined,
 ): CommandPayload<'create_quest'> {
   // party_role and contract become the child's place in a party (party/parts.ts); question was refused above.
   const {
@@ -124,8 +127,9 @@ function payloadOf(
     ...fields
   } = draft;
   const idOf = (ref: string): QuestId => ids.get(ref) ?? plan.id;
-  // A part starts once the contract is delivered: it waits for the contract quest (§3.13 step 3).
-  const contract = partyPlaceOf(plan, draft) === undefined ? [] : [plan.id];
+  // A part starts once the contract is delivered: it waits for the contract quest (§3.13 step 3), and in a blind
+  // trial for the acceptance part too (P1-37 (iii)).
+  const contract = partyPlaceOf(plan, draft) === undefined ? [] : partWaitsFor(plan.id, acceptance);
   return {
     draft: false,
     ...fields,
@@ -139,7 +143,15 @@ function payloadOf(
 /** Every child, made but not written: one draft the kingdom refuses and none is written. */
 function childrenOf(ctx: Context, plan: Quest, drafts: readonly QuestDraft[]): Result<Quest[], string> {
   const ids = new Map(drafts.map((draft) => [draft.ref, childIdOf(ctx, plan, draft.ref)]));
-  const known = [...ctx.world.quests.keys(), ...ids.values()];
+  const acceptance =
+    plan.party_role === 'contract'
+      ? acceptanceIdFor(ctx, plan, drafts, childIdOf(ctx, plan, ACCEPTANCE_REF))
+      : undefined;
+  const known = [
+    ...ctx.world.quests.keys(),
+    ...ids.values(),
+    ...(acceptance === undefined ? [] : [acceptance]),
+  ];
   const context: Omit<NewQuestContext, 'id'> = {
     at: ctx.record.stamp(),
     breakers: ctx.world.kingdom.breakers,
@@ -156,7 +168,7 @@ function childrenOf(ctx: Context, plan: Quest, drafts: readonly QuestDraft[]): R
       continue;
     }
     const party = partyPlaceOf(plan, draft);
-    const quest = questFromCommand(payloadOf(plan, draft, ids), {
+    const quest = questFromCommand(payloadOf(plan, draft, ids, acceptance), {
       ...context,
       id,
       ...(party === undefined ? {} : { party }),
@@ -165,8 +177,10 @@ function childrenOf(ctx: Context, plan: Quest, drafts: readonly QuestDraft[]): R
     made.push(quest.value);
   }
   if (plan.party_role !== 'contract') return ok(made);
-  const added = { acceptance: childIdOf(ctx, plan, ACCEPTANCE_REF), merge: childIdOf(ctx, plan, MERGE_REF) };
-  const party = addedQuestsFor(ctx, plan, made, context, added);
+  const party = addedQuestsFor(ctx, plan, made, context, {
+    acceptance,
+    merge: childIdOf(ctx, plan, MERGE_REF),
+  });
   return party.ok ? ok([...made, ...party.value]) : party;
 }
 
@@ -204,7 +218,10 @@ export async function openSubquests(
 ): Promise<Result<Subquests, string>> {
   const children = await plannedChildren(ctx, plan, dir);
   if (!children.ok) return refused(children.error);
-  for (const child of children.value) {
+  // The acceptance part first (P1-37 (iii)): a crash after it is written makes the next try find it, so the parts
+  // still wait for it, whatever the territory says by then; no part is ever written waiting for a quest never made.
+  const acceptanceFirst = (quest: Quest): number => Number(quest.party_role !== 'acceptance');
+  for (const child of children.value.toSorted((a, b) => acceptanceFirst(a) - acceptanceFirst(b))) {
     if (ctx.world.quests.has(child.id)) continue;
     const put = await ctx.record.put(child, 'quest.created', STEWARD);
     if (!put.ok) return put;

@@ -192,7 +192,10 @@
   merged by hand. (P1-21) On a territory whose `blind_trial` is due, the delivery adds the `acceptance` part
   (domain's `acceptanceQuestOf`) before the merge quest, which waits for it too; its plot starts on the contract's
   branch, it runs no territory check, and `selectAssignee` keeps its writer apart from the parts' assignees, as it
-  keeps every judge of a party from the party's work (also for the owner's `reassign` without a name). Each merge
+  keeps every judge of a party from the party's work (also for the owner's `reassign` without a name). (P1-37) The
+  delivery decides the blind trial once, from the lead's drafts (`acceptanceIdFor`), before any part is made: every
+  part then waits for the acceptance part (domain's `partWaitsFor`), and the acceptance part is written first, so a
+  crash never leaves a part waiting for a quest never made. Each merge
   that takes a part in or stops at one writes `plot.merged` to the log and the merge quest's journal; the merge
   quest's judge reads `Plots.diff(plot, 'after_merges')`, its own work only.
   Each delivery writes `.runs/<quest>-delivery.md` (the pull request's description: the quest, the verdicts of
@@ -245,7 +248,8 @@ and the notes; then three parts editing one file, two conflicts, the knight reso
 one it waits for (P1-16 (f)), and takes the parts of a contract archived after its delivery (P1-21 (a)).
 `blind-trial.spec.ts` runs a blind trial (P1-21): the acceptance part on the contract's branch, its writer apart
 from the parts' assignees and blind to their work, the merge quest holding both sets of tests, its judge reading
-only what came after the last merge, and one `plot.merged` line.
+only what came after the last merge, and one `plot.merged` line; (P1-37) the acceptance part written and run
+before every part, which waits for it and never starts on its branch.
 `patch.spec.ts` applies or refuses an assignee's `elvaria.patch` on real git repos (`src/__fixtures__/git-plots.ts`,
 P1-28), then checks that the delivery note names exactly the patched paths and has no such section without a patch,
 and that the run after a refused patch reads why in its prompt while the first run does not (P1-31).

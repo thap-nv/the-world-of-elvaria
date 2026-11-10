@@ -1,8 +1,9 @@
 // selectAssignee(quest, candidates, party): the character the Steward gives an open session-tier quest
 // (implementation-plan §3.1 step 6, §3.13). Filter by the required class, the party's bars (nobody who judged a quest
-// of its party; in a blind trial, nobody from the other side, §3.15) and the level (canTake); rank by another model
-// family than the blind trial's other side, then expertise on the quest's tags (a character pinned to one of them
-// first, then affinityOf), then by who has been idle the longest.
+// of its party; in a blind trial, nobody from the other side, §3.15) and the level (canTake); rank the merge quest's
+// acceptance-test writer last (P1-37 (m)), then by another model family than the blind trial's other side, then
+// expertise on the quest's tags (a character pinned to one of them first, then affinityOf), then by who has been idle
+// the longest.
 // namedAssignee: the character the owner names instead (reassign, create_quest with an assignee; P1-29).
 import { familyOf } from '../character/family.ts';
 import { canTake } from '../character/level.ts';
@@ -33,10 +34,14 @@ const pinnedTo = (character: Character, quest: Quest): boolean =>
 const affinityRate = (character: Character, quest: Quest): number =>
   affinityOf(character.skill_affinity, quest.tags).pct ?? -1;
 
-/** Another family first, then pinned, then the best rate on the quest's tags, then idle the longest, then id. */
+/**
+ * Not avoided first (P1-37 (m)), then another family, then pinned, then the best rate on the quest's tags, then idle
+ * the longest, then id.
+ */
 const byFit =
-  (quest: Quest, apart: (character: Character) => boolean) =>
+  (quest: Quest, apart: (character: Character) => boolean, avoided: ReadonlySet<CharacterId>) =>
   (a: Character, b: Character): number =>
+    Number(avoided.has(a.id)) - Number(avoided.has(b.id)) ||
     Number(apart(b)) - Number(apart(a)) ||
     Number(pinnedTo(b, quest)) - Number(pinnedTo(a, quest)) ||
     affinityRate(b, quest) - affinityRate(a, quest) ||
@@ -62,10 +67,10 @@ export function selectAssignee(
   candidates: readonly Character[],
   context: AssigneeParty = NO_PARTY,
 ): Character | undefined {
-  const { barred, rivals } = partyBarsOf(quest, context.party);
+  const { barred, rivals, avoided } = partyBarsOf(quest, context.party);
   const ranked = candidates
     .filter((character) => character.class === quest.class_required && !barred.has(character.id))
-    .toSorted(byFit(quest, apartFrom(rivals, context.characters)));
+    .toSorted(byFit(quest, apartFrom(rivals, context.characters), avoided));
   return (
     ranked.find((character) => canTake(character.level, quest.rank, false)) ??
     ranked.find((character) => canTake(character.level, quest.rank, true))

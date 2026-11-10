@@ -45,6 +45,7 @@ The quest's facts below say `Party: contract of <this quest>` when it heads a pa
 - Write the contract first: the interface every part keeps to (an OpenAPI file for an HTTP API, a shared schema or types module), at a path of the territory, and commit it with your plan file. Every part starts from this quest's branch, so each one sees the same contract.
 - Every draft of the list is a part, and nothing else: `"party_role": "part"` and `"contract": "<the contract's path>"`. One part per area, each with one main tag; a part may wait for another (`depends_on_refs`). A part changes no contract: if it finds the contract wrong, its letter says so.
 - Do not draft the merge: when this quest is delivered, the Steward adds the merge quest itself. It merges every part on your branch, runs every check of the territory and waits for the owner's seal.
+- Do not draft acceptance tests either: on a territory that runs a blind trial, the Steward adds that part itself, and every part waits for it. Its writer reads the contract and the owner's description of the work alone (the text before a line `---` when the description has one: what follows that line is for you), so the contract names everything a test needs: paths, fields, status codes, errors, the order of lists.
 
 Example of a plain list:
 

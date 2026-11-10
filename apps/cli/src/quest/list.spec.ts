@@ -161,6 +161,26 @@ describe('elvaria quest list and show', () => {
     );
   });
 
+  it("says when the quest's party bars every character of its class, and how to get past it (P1-37 (ii))", async () => {
+    const notes = { [QUEST_ID]: { reason: 'party_bars', rank: 'C', class: 'knight' } };
+    await mkdir(path.join(kingdom, '.state'), { recursive: true });
+    await writeFile(
+      path.join(kingdom, '.state', 'unclaimable.json'),
+      JSON.stringify({ version: 1, quests: notes }),
+    );
+    await plantQuests(kingdom, questFixture('open', QUEST_ID, { rank: 'C' }));
+    const show = testIo();
+    expect(await run(show, 'quest', 'show', QUEST_ID, '--kingdom', kingdom, '--locale', 'en')).toBe(0);
+    expect(show.printed.out).toEqual(
+      expect.arrayContaining([
+        'Its party bars every Knight there is: each one judged a quest of the party, or worked the other side of its blind trial.',
+        'Summon: elvaria character add <id> --class knight --level 4',
+        `Give it to one of them anyway (your reassign is not barred; the party loses that separation): elvaria quest reassign ${QUEST_ID} --to <character>`,
+        `Cancel: elvaria quest cancel ${QUEST_ID}`,
+      ]),
+    );
+  });
+
   it('shows kinds by id when the registry does not load, and names a missing quest', async () => {
     await plantQuests(kingdom, questFixture('open'));
     await writeFile(path.join(kingdom, 'registry', 'kinds.json'), '{');

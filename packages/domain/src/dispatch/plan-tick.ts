@@ -198,7 +198,7 @@ function claims(step: Step, open: readonly Quest[], now: Instant): Claim[] {
 function unclaimable(step: Step, open: readonly Quest[]): Unclaimable[] {
   const counted = step.snapshot.characters.filter(step.roster.counts);
   return open.flatMap((quest) => {
-    const blocker = claimBlocker(quest, counted);
+    const blocker = claimBlocker(quest, counted, partyOf(quest, step.snapshot.quests));
     return blocker === null ? [] : [{ quest: quest.id, ...blocker }];
   });
 }

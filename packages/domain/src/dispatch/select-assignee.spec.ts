@@ -99,6 +99,19 @@ describe('selectAssignee in a party (P1-21)', () => {
     expect(pick(web, [contract, worked(api, 'vesper')])).toBe('vesper');
     expect(pick(merge, [contract, worked(api, 'vesper'), worked(tests, 'ilse')])).toBe('vesper');
   });
+
+  it("gives the merge quest to the acceptance tests' writer only when no other knight may take it (P1-37 (m))", () => {
+    const merge: Quest = {
+      ...quest('q_20261106_m5n6p7', { party: Q1, dependsOn: [Q2, Q3, Q4] }),
+      party_role: 'merge',
+    };
+    // vesper was idle the longest, and pinned to nothing: the writer still comes last.
+    expect(pick(merge, [contract, api, worked(tests, 'vesper')])).toBe('thorn');
+    expect(pick(merge, [contract, api, worked(tests, 'vesper')], [opus])).toBe('vesper');
+    // Only the merge quest steers clear of the writer: a knight's contract quest does not.
+    const lead = quest(Q1, { party: Q1 });
+    expect(pick(lead, [api, worked(tests, 'vesper')])).toBe('vesper');
+  });
 });
 
 describe('namedAssignee', () => {

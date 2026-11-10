@@ -112,11 +112,11 @@ export type InfirmaryDetail = z.infer<typeof InfirmaryDetailSchema>;
 export const QuestUnclaimableDataSchema = z
   .strictObject({
     reason: z
-      .enum(['no_class', 'level_too_low'])
+      .enum(['no_class', 'level_too_low', 'party_bars'])
       .nullable()
       .meta(
         describe(
-          'no_class: no character of the class outside the suspended ones and the disabled tribes; level_too_low: even the highest level among them cannot take the rank, not even when nobody else could (canTake); null: the reason is gone.',
+          "no_class: no character of the class outside the suspended ones and the disabled tribes; level_too_low: even the highest level among them cannot take the rank, not even when nobody else could (canTake); party_bars: every one of them is barred by the quest's party, having judged one of its quests or worked the other side of its blind trial (partyBarsOf, P1-37); null: the reason is gone.",
         ),
       ),
     // RANKS, not RankSchema: its id would put a `$ref` into this rule, which is converted on its own (event-data.ts).

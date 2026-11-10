@@ -1,7 +1,7 @@
 // Quests nobody can take (implementation-plan §3.1 "Quest không ai nhận được"): the Steward keeps its notices in
 // `.state/unclaimable.json`; `quest list` marks those quests and `quest show` says why, with the commands that
 // would change it: give it to the highest of the class (with the seal, P1-26), lower the rank, summon a character
-// of the class, or cancel the quest.
+// of the class, give it to a character its party bars (P1-37 (ii): the owner's reassign is not barred), or cancel it.
 import { CHARACTER_LEVEL_MAX, RANKS, canTake, rankCeilingOf } from '@elvaria/domain';
 import { readUnclaimable } from '@elvaria/steward';
 import type { Quest, QuestId, Rank, Registry } from '@elvaria/domain';
@@ -71,6 +71,16 @@ export async function unclaimableLines(
       ctx.t('cli.quest.unclaimable.summon', { command: summon }),
     ];
   }
+  // P1-37 (ii): its party's judges, or the other side of its blind trial, are all of its class there is.
+  if (note.reason === 'party_bars')
+    return [
+      ctx.t('cli.quest.unclaimable.party_bars', { class: cls }),
+      ctx.t('cli.quest.unclaimable.summon', { command: summon }),
+      ctx.t('cli.quest.unclaimable.reassign_barred', {
+        command: `elvaria quest reassign ${quest.id} --to <character>`,
+      }),
+      ctx.t('cli.quest.unclaimable.cancel', { command: `elvaria quest cancel ${quest.id}` }),
+    ];
   return [
     ctx.t('cli.quest.unclaimable.no_class', { class: cls }),
     ctx.t('cli.quest.unclaimable.summon', { command: summon }),

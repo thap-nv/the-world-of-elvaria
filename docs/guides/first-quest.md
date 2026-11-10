@@ -136,6 +136,8 @@ elvaria quest add --territory dc1-se-team --kind build --rank E --class knight -
 elvaria quest list
 ```
 
+**Một đội** (P1-18): `quest add --contract` (kind `plan`, nghề `mage`) mở một đội; pháp sư viết hợp đồng rồi chia phần, Quản sự tự thêm quest ghép. Trên lãnh thổ bật `blind_trial`, đội có hạng từ `min_rank` trở lên có thêm phần test chấp nhận do Quản sự tự thêm, và các phần chờ nó (P1-37): đừng liệt kê nó trong chỉ dẫn cho pháp sư. Người viết test chấp nhận chỉ đọc hợp đồng và phần việc của mô tả. Viết phần việc trước, rồi một dòng chỉ có `---`, rồi chỉ dẫn cho trưởng đội (đường dẫn hợp đồng, cách chia phần, hạng mỗi phần): người viết test không đọc phần sau dòng đó. Không có dòng `---` thì người viết đọc cả mô tả, kèm lời dặn bỏ qua chỉ dẫn cho trưởng đội. Quest lẻ không bao giờ có Khảo hạch mù, dù hạng nào; muốn có thì ra nhiệm vụ bằng `--contract`.
+
 Kind `build` mặc định cần dấu vua, nên quest dừng ở `awaiting_seal` sau khi qua nghiệm thu. Trong Windows PowerShell 5.1, dấu `"` nằm trong một đối số bị cắt khi truyền cho `node` (CLI báo "Thừa tham số"): dùng ngoặc kép kiểu chữ (“ ”) hoặc Git Bash.
 
 ## 7. Chạy Quản sự và theo dõi
