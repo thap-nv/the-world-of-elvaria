@@ -1,8 +1,11 @@
-// Whether the shell a tribe's sessions run commands in can start npm's shims (P1-41, the P1-35 proposal (a)). On
-// Windows agy runs every command in powershell.exe (docs/spikes/antigravity-2026-11.md #16), where `pnpm` resolves to
-// pnpm.ps1, and Windows' default Execution Policy (Restricted) refuses every script: each agy session of the P1-21
-// and P1-35 runs failed every pnpm command, and a judge passed work it never ran (docs/guides/first-quest.md §10).
-import type { Tribe } from '@elvaria/domain';
+// The shell a tribe's sessions run commands in (`capabilities.shell`, P1-40), and whether it can start npm's shims
+// (P1-41, the P1-35 proposal (a)). On Windows agy runs every command in powershell.exe
+// (docs/spikes/antigravity-2026-11.md #16), where `pnpm` resolves to pnpm.ps1, and Windows' default Execution Policy
+// (Restricted) refuses every script: each agy session of the P1-21 and P1-35 runs failed every pnpm command, and a
+// judge passed work it never ran (docs/guides/first-quest.md §10). Which tribes run Windows PowerShell is read from
+// what their adapter declares, an owner's adapter file too, not from a table of adapter ids (P1-46, (e) of P1-40).
+import { shellOf } from '@elvaria/domain';
+import type { AdapterCapabilities, Tribe } from '@elvaria/domain';
 
 import { findExecutable } from '../process/find-executable.ts';
 import { launchOf } from '../process/launch.ts';
@@ -14,8 +17,15 @@ import type { CliIo } from '../io.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 import type { Finding } from './finding.ts';
 
-/** Adapters whose sessions run commands through powershell.exe on Windows: data, not a switch on the tribe (ADR 0021). */
-export const POWERSHELL_ADAPTERS: ReadonlySet<string> = new Set(['antigravity']);
+/**
+ * Whether the shell declared for Windows is Windows PowerShell, the one whose Execution Policy powershell.exe reads.
+ * The name is free text (P1-40), so any that names PowerShell counts, save PowerShell 7 (`pwsh`), which keeps a
+ * policy of its own and runs local scripts by default.
+ */
+export function runsWindowsPowerShell(capabilities: Pick<AdapterCapabilities, 'shell'> | undefined): boolean {
+  const shell = shellOf(capabilities, 'win32')?.toLowerCase();
+  return shell !== undefined && shell.includes('powershell') && !shell.includes('pwsh');
+}
 
 /** Policies that let a local unsigned script run; AllSigned refuses npm's unsigned shims, Restricted every script. */
 const RUNS_LOCAL_SCRIPTS = new Set(['remotesigned', 'unrestricted', 'bypass']);
@@ -58,8 +68,18 @@ export function policyFinding(tribe: string, read: PolicyRead, t: Translate): Fi
   ]);
 }
 
-/** Nothing outside Windows, or for a tribe whose sessions do not run commands through PowerShell. */
-export async function shellFindings(tribe: Tribe, ctx: KingdomContext): Promise<Finding[]> {
-  if (ctx.io.platform !== 'win32' || !POWERSHELL_ADAPTERS.has(tribe.adapter)) return [];
-  return [policyFinding(tribe.id, await readExecutionPolicy(ctx.io), ctx.t)];
+/**
+ * The shell the tribe's adapter declares for this machine's OS (P1-46, (b) of P1-40), then, on Windows and for
+ * Windows PowerShell, whether it runs scripts. Nothing when the adapter declares no shell here or has no runner.
+ */
+export async function shellFindings(
+  tribe: Tribe,
+  capabilities: AdapterCapabilities | undefined,
+  ctx: KingdomContext,
+): Promise<Finding[]> {
+  const shell = shellOf(capabilities, ctx.io.platform);
+  if (shell === undefined) return [];
+  const declared = finding('ok', ctx.t('cli.doctor.shell', { tribe: tribe.id, shell }));
+  if (ctx.io.platform !== 'win32' || !runsWindowsPowerShell(capabilities)) return [declared];
+  return [declared, policyFinding(tribe.id, await readExecutionPolicy(ctx.io), ctx.t)];
 }
