@@ -4,12 +4,13 @@ import { describe, expect, it } from 'vitest';
 import { SESSION_SHARE_DEFAULT_PCT } from './constants.ts';
 import {
   endedSessionsOf,
+  measuredShareOf,
   sessionShareOf,
   shareAheadOf,
   sharesOfHistory,
   withSessionShare,
 } from './session-share.ts';
-import { manaStateOf } from './state.ts';
+import { manaStateOf, windowClosingOf } from './state.ts';
 import type { Instant } from '../core/clock.ts';
 import type { CharacterId, TribeId } from '../core/ids.ts';
 import type { Attempt } from '../schema/quest/quest-parts.ts';
@@ -160,5 +161,27 @@ describe('manaStateOf with session shares', () => {
     expect(manaStateOf([spent], TRIBES, argonKnight, CFG, instant(9), [])).toBe('asleep');
     const signal = argon(null, 9, { source: 'signal' });
     expect(manaStateOf([signal], TRIBES, argonKnight, CFG, instant(9), measured(3))).toBe('ok');
+  });
+});
+
+describe('measuredShareOf and windowClosingOf (P1-49, elvaria doctor)', () => {
+  const measured = (pct: number): SessionShare[] => [
+    { tribe: GEMINI, pool: 'gemini_models', model: 'argon', window: 'weekly', pct },
+  ];
+  const closing = (used: number | null, shares: readonly SessionShare[]) =>
+    windowClosingOf(argon(used, 9), shares, CFG);
+
+  it('gives the measured share of the window only, never the default', () => {
+    expect(measuredShareOf(measured(6.5), argon(80, 9))).toBe(6.5);
+    expect(measuredShareOf([], argon(80, 9))).toBeUndefined();
+    expect(measuredShareOf(measured(6.5), argon(80, 9, { window: 'five_hour' }))).toBeUndefined();
+  });
+
+  it('says whether the window closes at the cap or one session early, as manaStateOf decides', () => {
+    expect(closing(98, measured(1))).toBe('cap');
+    expect(closing(91, measured(7))).toBe('early');
+    expect(closing(91, [])).toBe('early');
+    expect(closing(90.9, measured(7))).toBe('open');
+    expect(closing(null, measured(3))).toBe('open');
   });
 });

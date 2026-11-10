@@ -20,7 +20,7 @@ import type { Character, ManaReading, PoolKey, Quest, ReportedWindow, TribeId } 
 
 import { ring } from '../context.ts';
 import { STEWARD, step } from '../record.ts';
-import { commitPlot } from '../sessions/commit.ts';
+import { commitPlot, warnUncommitted } from '../sessions/commit.ts';
 import { isAsleep } from './book.ts';
 import { measureShares } from './shares.ts';
 import type { Context } from '../context.ts';
@@ -119,7 +119,12 @@ async function pauseRunning(ctx: Context, key: PoolKey): Promise<void> {
     if (!bindsAny(ctx, [key], holder)) continue;
     // Killed first, then committed: nothing writes in the plot while git takes its snapshot.
     await ctx.sessions.kill(running.quest, 'the mana of its pool ran out');
-    if (running.role === 'assignee') await commitPlot(ctx, quest.id, plotCommitMessage.wip(quest.id, 'mana'));
+    if (running.role === 'assignee')
+      warnUncommitted(
+        ctx,
+        quest.id,
+        await commitPlot(ctx, quest.id, plotCommitMessage.wip(quest.id, 'mana')),
+      );
     const moved = await ctx.record.move({
       quest: running.quest,
       event: { type: 'mana_out', session_id: running.session_id },

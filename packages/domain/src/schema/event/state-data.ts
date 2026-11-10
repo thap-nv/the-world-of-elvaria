@@ -20,6 +20,16 @@ import { TerritoryViewSchema } from '../../world/territory-view.ts';
 
 const describe = (description: string) => ({ description });
 
+/** A session that followed the first in the same run (RunEnd.sequels, P1-49). */
+const SequelRunSchema = z.strictObject({
+  session_id: NonEmptyStringSchema.optional().meta(
+    describe("The sequel's CLI session, when the runner knew it."),
+  ),
+  why: NonEmptyStringSchema.optional().meta(
+    describe('Why it opened: the reply tried once more, the letter unchanged (not translated).'),
+  ),
+});
+
 const QUEST_CHANGE = {
   quest: QuestViewSchema.meta(
     describe('The quest after this event (questViewOf). Its id is the envelope `quest`.'),
@@ -30,6 +40,16 @@ const QUEST_CHANGE = {
     .meta(
       describe(
         'Characters the same step moved (characterViewOf after it): the assignee that claims or submits, the verifier that takes the review. Most character moves have no character.* type of their own.',
+      ),
+    ),
+  // Optional and added after v1 (P1-49): a line written before it, or of a run without sequels, has none.
+  sequels: z
+    .array(SequelRunSchema)
+    .min(1)
+    .optional()
+    .meta(
+      describe(
+        "The line that tells a session's end: the sessions that followed the first in the same run (a reply tried once more for a tribe without structured output, a reminder of an unchanged letter, P1-33), in order. The envelope `session` is the first one's, and attempt_log has one entry for them all, so the log counts every session a run opened (P1-49).",
       ),
     ),
 };
@@ -55,6 +75,15 @@ export const InfirmaryDetailSchema = z
     wip: NonEmptyStringSchema.optional().meta(
       describe("Why the WIP commit after the breaker was refused: the work stays in the quest's plot."),
     ),
+    paths: z
+      .array(NonEmptyStringSchema)
+      .min(1)
+      .optional()
+      .meta(
+        describe(
+          "trip forbidden_paths: the paths of laws.forbidden_paths the session left changed, added or deleted in the quest's plot, relative to it with `/` (P1-49). Nothing was committed: the work stays in the plot.",
+        ),
+      ),
     apprentice_left: z
       .literal(true)
       .optional()
@@ -104,7 +133,7 @@ export const QuestInfirmaryDataSchema = z.strictObject({
     .optional()
     .meta(
       describe(
-        'What sent the quest there: a breaker (time, tokens, turns, commit, secrets), a review whose judges left without a verdict (no_verdict, P1-33) or kept handing in partial ones (partial_verdicts, P1-42), max_attempts, or a script-tier run (script_broken, script_usage, script_fail). Absent on lines written before P1-32.',
+        'What sent the quest there: a breaker (time, tokens, turns, commit, secrets, forbidden_paths), a review whose judges left without a verdict (no_verdict, P1-33) or kept handing in partial ones (partial_verdicts, P1-42), max_attempts, or a script-tier run (script_broken, script_usage, script_fail). Absent on lines written before P1-32.',
       ),
     ),
   detail: InfirmaryDetailSchema.optional(),

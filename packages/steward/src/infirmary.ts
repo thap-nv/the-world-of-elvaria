@@ -5,6 +5,15 @@
 import { PATCH_FILE } from '@elvaria/runner-core';
 import type { EventData, InfirmaryDetail, InfirmaryTrip } from '@elvaria/domain';
 
+/** At most this many paths in the words of a reason; the infirmary data keeps them all. */
+const PATHS_SAID = 10;
+
+/** `a, b, c` and how many more: paths as a reason says them. */
+export function pathsSaid(paths: readonly string[]): string {
+  const more = paths.length - PATHS_SAID;
+  return `${paths.slice(0, PATHS_SAID).join(', ')}${more > 0 ? ` and ${more} more` : ''}`;
+}
+
 export interface InfirmaryCause {
   readonly trip: InfirmaryTrip;
   readonly detail?: InfirmaryDetail;
@@ -61,9 +70,22 @@ function stalledReview(trip: InfirmaryTrip, stopped: number, run: number): strin
   return `; ${stopped} verifiers of run ${run} left without a verdict, so no further one opens: ${remedy}`;
 }
 
+/**
+ * Forbidden paths a session left changed (P1-49): which, and what the owner does. Only a program the session's shell
+ * ran could write there, so the class's shell allow rules are where the hole is.
+ */
+const forbiddenChanged = (paths: readonly string[]): string =>
+  `${pathsSaid(paths)} changed in the plot, which laws.forbidden_paths forbids, so nothing was committed: put them back or remove them in the plot before a retry; a program the session's shell ran wrote them (an interpreter such as node, pnpm or npx in the class's tools.allow opens every path to the character's scripts)`;
+
+/** What the trip's detail says first: a refused patch, the forbidden paths, or the words of the breaker. */
+function wordsOf(detail: InfirmaryDetail): string | undefined {
+  if (detail.patch !== undefined) return patchRefusal(detail.patch);
+  return detail.paths === undefined ? detail.message : forbiddenChanged(detail.paths);
+}
+
 /** The head, then what was said, the WIP left in the plot, the apprentice, the review. */
 function stopReason(trip: InfirmaryTrip, detail: InfirmaryDetail, run: number): string {
-  const words = detail.patch === undefined ? detail.message : patchRefusal(detail.patch);
+  const words = wordsOf(detail);
   const wip = detail.wip === undefined ? '' : ` (WIP not committed, it stays in the plot: ${detail.wip})`;
   const left = detail.apprentice_left === true ? APPRENTICE_LEFT : '';
   const { verifiers_stopped: stopped, partial_verdicts: partials } = detail;

@@ -80,8 +80,9 @@
   the first trip of `time` (on the minute `budget.max_minutes` is spent), `tokens` or `turns` (once past
   `budget.max_tokens`, `breakers.max_turns`); `breakersOf` applies it to the sessions the Steward holds
   (`KingdomSnapshot.sessions`), each timed from its own attempt_log entry, and `planTick` returns them first as
-  `breakers`. The trips `commit` and `secrets` happen where no session runs: `secrets` takes a claimed,
-  returned, paused or unjudged quest to the infirmary (§2.5). (P1-18 (f)) A judge's session may spend
+  `breakers`. The trips `commit`, `secrets` and `forbidden_paths` happen where no session runs: `secrets` takes a
+  claimed, returned, paused or unjudged quest to the infirmary (§2.5); `forbidden_paths` (P1-49) a finished session
+  that left a path of `laws.forbidden_paths` changed in its plot, which the Steward does not commit. (P1-18 (f)) A judge's session may spend
   `breakers.verifier_tokens_multiplier` (2) times the quest's tokens (`tokenCeilingOf`), since it reads the whole
   diff and runs the checks again. (P1-23) `countedTokens` is the unit of a session's
   tokens for every adapter: input, output and cache writes in full, cache reads at a tenth
@@ -135,7 +136,9 @@
   ended between them, `endedSessionsOf`; `sharesOfHistory` for the log's readings), `withSessionShare` keeps the
   largest of each window, and `manaStateOf` with `shares` closes a gauge as soon as one more session would take a
   window to the cap (`shareAheadOf`: the measured share, `SESSION_SHARE_DEFAULT_PCT` (7) before any, never more
-  than `warn_margin_pct`); `RosterSource.mana.shares` carries them to `planTick`.
+  than `warn_margin_pct`); `RosterSource.mana.shares` carries them to `planTick`. (P1-49) `measuredShareOf` is the
+  measured share alone, and `windowClosingOf` says whether one window closes its gauge, `cap` or `early` (one
+  session before the cap), for `elvaria doctor`.
 - Reads the tribe contract (`src/tribe/`, implementation-plan §3.14, ADR 0021): `AdapterCapabilities` (the
   yes-or-no `ADAPTER_CAPABILITIES`, `auth`, the sign-ins an adapter runs with, P1-19, and the optional `shell` per
   OS, read with `shellOf`, P1-40), `tribeLimitsOf` (one
@@ -151,8 +154,10 @@
   changes what the world shows carries the view after it (`questViewOf`, ...; `questLogTypeOf` names quest
   lines). `snapshotOf` / `readSnapshot` version the snapshot; `src/protocol/` is the herald's WebSocket protocol.
   A `quest.infirmary` line also says why in parts (P1-32): `trip` (`INFIRMARY_TRIPS`: the breaker trips,
-  `max_attempts`, `script_broken`, `script_usage`, `script_fail`) and `detail` (`InfirmaryDetailSchema`), both
-  optional so lines written before them still parse and reduce. `mana.exhausted` may name the reset it waits for
+  `max_attempts`, `script_broken`, `script_usage`, `script_fail`) and `detail` (`InfirmaryDetailSchema`; `paths`
+  for `forbidden_paths`, P1-49), both optional so lines written before them still parse and reduce. A line that
+  tells a run's end may name the sessions that followed its first (`sequels`, from `RunEnd.sequels`, P1-49), which
+  attempt_log does not keep. `mana.exhausted` may name the reset it waits for
   (`resets_at`), and `mana.level` may read one model's own cap (`model`), which the reducer leaves out of the
   pool's band, as it does that cap's sleep (P1-32).
 - Gives the core types every package builds on: `Result`, branded ids (`QuestId`, `TribeId`, ...), `Clock` and

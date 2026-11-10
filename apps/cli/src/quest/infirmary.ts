@@ -17,6 +17,7 @@ const TRIP_LABEL: Readonly<Record<InfirmaryTrip, MessageKey>> = {
   turns: 'cli.quest.infirmary.trip.turns',
   commit: 'cli.quest.infirmary.trip.commit',
   secrets: 'cli.quest.infirmary.trip.secrets',
+  forbidden_paths: 'cli.quest.infirmary.trip.forbidden_paths',
   no_verdict: 'cli.quest.infirmary.trip.no_verdict',
   partial_verdicts: 'cli.quest.infirmary.trip.partial_verdicts',
   max_attempts: 'cli.quest.infirmary.trip.max_attempts',
@@ -41,13 +42,26 @@ export const lastInfirmaryOf = (journal: readonly Event[]): InfirmaryLine | unde
 /** What sent the quest there, in the owner's language. */
 export const tripLabel = (t: Translate, trip: InfirmaryTrip): string => t(TRIP_LABEL[trip]);
 
+/** At most this many forbidden paths on the line; the journal keeps them all (P1-49). */
+const PATHS_SHOWN = 10;
+
+/** The forbidden paths a session left changed (trip forbidden_paths, P1-49), and how many more. */
+function pathsLine(t: Translate, paths: readonly string[]): string {
+  const shown = paths.slice(0, PATHS_SHOWN).join(', ');
+  const more = paths.length - PATHS_SHOWN;
+  return more > 0
+    ? t('cli.quest.infirmary.detail.paths_more', { paths: shown, count: more })
+    : t('cli.quest.infirmary.detail.paths', { paths: shown });
+}
+
 /** One line per part of the detail, in the order the Steward's reason says them; the bell says them too. */
 export function detailLines(t: Translate, detail: InfirmaryDetail): string[] {
-  const { message, patch, wip, script, follow_up: followUp, verifiers_stopped: stopped } = detail;
+  const { message, patch, wip, paths, script, follow_up: followUp, verifiers_stopped: stopped } = detail;
   const partials = detail.partial_verdicts;
   return [
     ...(message === undefined ? [] : [t('cli.quest.infirmary.detail.message', { message })]),
     ...(patch === undefined ? [] : [t('cli.quest.infirmary.detail.patch', { file: PATCH_FILE, why: patch })]),
+    ...(paths === undefined ? [] : [pathsLine(t, paths)]),
     ...(wip === undefined ? [] : [t('cli.quest.infirmary.detail.wip', { why: wip })]),
     ...(detail.apprentice_left === true ? [t('cli.quest.infirmary.detail.apprentice_left')] : []),
     ...(stopped === undefined ? [] : [t('cli.quest.infirmary.detail.verifiers_stopped', { count: stopped })]),

@@ -119,6 +119,28 @@ describe('elvaria quest show of a quest in the infirmary', () => {
     );
   });
 
+  it('names the forbidden paths a program of the session wrote, ten at most, and what to do (P1-49)', async () => {
+    await plantQuests(kingdom, SICK);
+    const paths = Array.from({ length: 12 }, (_, index) => `infra/secrets/${index}.key`);
+    const line = {
+      reason: 'breaker:forbidden_paths: …',
+      trip: 'forbidden_paths',
+      detail: { paths },
+    } as const;
+    const out = await show(infirmaryLine(line, 1));
+    expect(out).toContain(
+      'In the infirmary since attempt 1: the session left a forbidden path changed in the plot, so nothing was committed.',
+    );
+    const said = out.find((text) => text.startsWith('  Changed in the plot'));
+    expect(said).toContain(`${paths.slice(0, 10).join(', ')} and 2 more (the journal lists them all)`);
+    expect(said).toContain('tools.allow');
+    expect(said).toMatch(/then elvaria quest retry\.$/);
+    const few = await show(infirmaryLine({ ...line, detail: { paths: ['.env'] } }, 2));
+    expect(few).toContainEqual(
+      expect.stringMatching(/^ {2}Changed in the plot, .*forbids them: \.env\. Only/),
+    );
+  });
+
   it('says nothing of the infirmary for a quest that has left it', async () => {
     const open = questFixture('open');
     await plantQuests(kingdom, open);

@@ -15,16 +15,27 @@ import { moveAndRing } from '../notices.ts';
 import { step } from '../record.ts';
 import { runOf } from '../review/judge.ts';
 import { afterJudge } from '../review/after-judge.ts';
-import { commitPlot } from './commit.ts';
+import { commitPlot, forbiddenWip } from './commit.ts';
 import { maskFinished } from './secrets.ts';
 import type { Context } from '../context.ts';
+import type { PlotCommit } from './commit.ts';
 import type { Running } from './running.ts';
+
+/** Trips that are a commit the Steward did not make already (P1-04, P1-49): no WIP commit is tried after them. */
+const UNCOMMITTED: ReadonlySet<BreakerTrip> = new Set(['commit', 'forbidden_paths']);
+
+/** Why the WIP commit left the work in the plot, if it did. */
+function wipLeft(wip: PlotCommit | undefined): { wip?: string } {
+  if (wip?.status === 'refused') return { wip: wip.detail };
+  return wip?.status === 'forbidden' ? { wip: forbiddenWip(wip.paths) } : {};
+}
 
 /**
  * An assignee meets a breaker: the character sinks into the swamp while `end` ends the session (the kill tree, or
- * the end its CLI already reported) and the work is committed as WIP, never past the territory's hooks; then the
- * quest goes to the infirmary, the bell rings, and the character is free again. A refused WIP commit leaves the
- * work in the plot and says so in the detail. The `commit` trip is that refusal already: no second try.
+ * the end its CLI already reported) and the work is committed as WIP, never past the territory's hooks nor with a
+ * forbidden path (P1-49); then the quest goes to the infirmary, the bell rings, and the character is free again. A
+ * WIP commit not made leaves the work in the plot and says so in the detail. The `commit` and `forbidden_paths`
+ * trips are such a commit already: no second try.
  */
 export async function breakAssignee(
   ctx: Context,
@@ -32,19 +43,19 @@ export async function breakAssignee(
   breaker: AssigneeBreaker,
   end: () => Promise<RunResult>,
 ): Promise<Result<Quest, string>> {
-  const { trip, detail, patch } = breaker;
+  const { trip, detail, patch, paths } = breaker;
   const who = running.character;
   const swamped = await ctx.record.change(who, 'character.swamp', step('breaker'));
   if (!swamped.ok) ctx.deps.log.warn(`steward: ${running.quest}: ${who} is not swamped: ${swamped.error}`);
   const result = await end();
-  const wip =
-    trip === 'commit'
-      ? undefined
-      : await commitPlot(ctx, running.quest, plotCommitMessage.wip(running.quest, trip));
+  const wip = UNCOMMITTED.has(trip)
+    ? undefined
+    : await commitPlot(ctx, running.quest, plotCommitMessage.wip(running.quest, trip));
   const said = {
     ...(detail === undefined ? {} : { message: detail }),
     ...(patch === undefined ? {} : { patch }),
-    ...(wip?.status === 'refused' ? { wip: wip.detail } : {}),
+    ...(paths === undefined ? {} : { paths: [...paths] }),
+    ...wipLeft(wip),
     ...((await apprenticeLeft(ctx, running)) ? { apprentice_left: true as const } : {}),
   };
   return moveAndRing(ctx, {
@@ -56,11 +67,15 @@ export async function breakAssignee(
   });
 }
 
-/** What stopped an assignee: the trip, what it said, and for a refused patch (trip `commit`) why (P1-28). */
+/**
+ * What stopped an assignee: the trip, what it said, for a refused patch (trip `commit`) why (P1-28), and for trip
+ * `forbidden_paths` the paths changed (P1-49).
+ */
 interface AssigneeBreaker {
   readonly trip: BreakerTrip;
   readonly detail?: string | undefined;
   readonly patch?: string;
+  readonly paths?: readonly string[];
 }
 
 /**

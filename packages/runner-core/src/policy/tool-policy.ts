@@ -6,15 +6,16 @@ import {
   APPRENTICE_RULE,
   BUILT_IN_AGENTS,
   CHECK_COMMANDS,
+  GIT_PATHS,
   NO_COMMIT_RULE,
   NO_HISTORY_COMMAND,
   NO_PUSH_COMMAND,
   NO_PUSH_RULE,
   SCRATCH_RULES,
-  SECRET_FILES,
   SHELL_TOOL,
   WRITE_TOOLS,
 } from './constants.ts';
+import { forbiddenPathsOf } from './forbidden-changes.ts';
 import { commandLinesOf } from '@elvaria/domain';
 import type { Character, CharacterClass, Territory } from '@elvaria/domain';
 
@@ -97,7 +98,7 @@ function generateRules(territory: ToolPolicyInput['territory']): string[] {
 function lawsOf(territory: ToolPolicyInput['territory'], scratch: boolean): ToolLaws {
   const history = scratch ? [NO_HISTORY_COMMAND] : [];
   return {
-    forbidden_paths: unique([...SECRET_FILES, ...(territory?.laws.forbidden_paths ?? [])]),
+    forbidden_paths: forbiddenPathsOf(territory),
     read_only_paths: unique(territory?.laws.read_only_paths ?? []),
     patch_paths: territory?.vcs.type === 'git' ? unique(territory.laws.patch_paths) : [],
     forbidden_commands: unique([...(territory?.laws.forbidden_commands ?? []), NO_PUSH_COMMAND, ...history]),
@@ -118,16 +119,18 @@ function classRulesOf(input: ToolPolicyInput, scratch: boolean) {
 }
 
 /**
- * Rules every session carries, whatever its class: no push, no secret files, no hand-written generated file, only
- * the apprentice as agent. Edit rules cover Write and NotebookEdit (runner-claude settings.ts).
+ * Rules every session carries, whatever its class: no push, no secret files, no hand-written generated file, no
+ * write tool in git's own folder (P1-49), only the apprentice as agent. Edit rules cover Write and NotebookEdit
+ * (runner-claude settings.ts); agy's settings turn them into `write_file` prefixes (runner-antigravity settings.ts).
  */
 function fenceRules(laws: ToolLaws): string[] {
   const hidden = laws.forbidden_paths.map(plotPath);
   const readOnly = laws.read_only_paths.map(plotPath);
+  const git = GIT_PATHS.map(plotPath);
   return [
     NO_PUSH_RULE,
     ...hidden.map((glob) => `Read(${glob})`),
-    ...[...hidden, ...readOnly].map((glob) => `Edit(${glob})`),
+    ...[...hidden, ...readOnly, ...git].map((glob) => `Edit(${glob})`),
     ...BUILT_IN_AGENTS.map((agent) => `${AGENT_TOOL}(${agent})`),
   ];
 }

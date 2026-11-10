@@ -112,6 +112,8 @@ export interface ScratchSetup {
   readonly command: string | undefined;
   /** The quest's secrets for setup, as its own plot's setup gets them (P1-30). */
   readonly secrets?: Readonly<Record<string, string>>;
+  /** Kills commands.setup when aborted (the Steward stops, the quest moved on; P1-49). */
+  readonly signal?: AbortSignal;
 }
 
 /**
@@ -134,6 +136,7 @@ export async function prepareScratch(
     command: setup.command,
     host: setup.host,
     ...(setup.secrets === undefined ? {} : { secrets: setup.secrets }),
+    ...(setup.signal === undefined ? {} : { signal: setup.signal }),
   });
   if (!ran.ok) return ran;
   const { worktree } = target;

@@ -68,3 +68,18 @@ describe('a protected path of laws.patch_paths (P1-28)', () => {
     expect(reasonOf('Write', { file_path: '.husky/pre-push', content: 'x' })).toMatch(/Question section/);
   });
 });
+
+describe("git's own folder (P1-49)", () => {
+  it("refuses a Claude write tool in .git/ and on a worktree's .git file, not reads nor .gitignore", () => {
+    // runner-claude's protected list has `.git/**`, which runner-core's policy file keeps for every tribe.
+    ctx = { ...ctx, laws: compileLaws(DC1_LAWS, { cliProtected: ['.git/**', '.husky/**'] }) };
+    for (const file of [`${PLOT}\\.git`, '.git/config', 'C:\\Users\\elvaria\\dc1-se-team\\.git\\HEAD']) {
+      expect(reasonOf('Write', { file_path: file, content: 'x' })).toMatch(
+        /^Elvaria rule: .*refuses to write .*\(\.git\/\*\*\); .*Question section/,
+      );
+    }
+    expect(reasonOf('Write', { file_path: '.gitignore', content: 'x' })).toBeUndefined();
+    expect(reasonOf('Read', { file_path: `${PLOT}/.git/HEAD` })).toBeUndefined();
+    expect(reasonOf('Bash', { command: 'grep -r --exclude-dir=.git TODO .' })).toBeUndefined();
+  });
+});

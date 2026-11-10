@@ -22,7 +22,11 @@
   `git commit` plus the law `NO_HISTORY_COMMAND` (commit, merge, reset, branch, stash, worktree…) for the hook; a character with a shell may run the
   territory's non-exclusive checks, and one that also edits files its `commands.generate` (P1-24); every session
   is fenced (no `git push`, no `.env`, no built-in agent, no `Edit` on `laws.read_only_paths`, which stay
-  readable).
+  readable, nor on git's own folder `GIT_PATHS` = `.git/**`, P1-49: agy 1.5.4 wrote `.git/`, Claude Code refuses it
+  by itself; reads stay allowed, since the hook matches a forbidden path against every word of a shell line).
+  `forbiddenPathsOf(territory)` is the dotenv files plus `laws.forbidden_paths`, and `forbiddenChangesOf(changed,
+globs)` the changed paths a glob matches at any depth as the hook's do: the Steward reads a plot's changes against
+  them before it commits (P1-49), since a program a session's shell runs writes past the fence.
 - Builds prompts from the Markdown templates in `prompts/` (`loadPromptTemplates`): `buildPrompt` for an
   assignee (new, or continuing after `returned` / `revive` with the letter, the last 20 journal lines, the
   branch's log and the owner's answer; after `returned`, also the checks that failed with the end of each log,
@@ -84,7 +88,8 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   worktree is checked out again. Each prepare also makes sure of the repo's `.git/info/exclude` lines
   (`PLOT_EXCLUDES`) and, on Windows, `core.longpaths`, and runs `commands.setup` until it succeeds once (log in
   `.runs/<quest>-setup.log`), with the quest's secrets when the caller passes them (P1-30:
-  `prepare(quest, territory, {secrets})`, put in its env over the host's minimal env as a check's are). A new
+  `prepare(quest, territory, {secrets})`, put in its env over the host's minimal env as a check's are); `{signal}`
+  kills it (P1-49: the Steward's stop, so Ctrl+C does not wait for an install), the plot then not set up. A new
   worktree may start elsewhere (P1-18: `prepare(quest, territory, {from})`): on the first branch of `from` that
   exists and that the default branch does not hold yet, a party's contract or a dependency not merged yet; the
   diff then counts from there. The fork point and the setup state live in `elvaria-plot.json` in the worktree's
@@ -127,7 +132,8 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
 - Gives the judge of tests as the product its scratch plot and its trial (ADR 0022, P1-20):
   `PlotManager.prepareScratch` makes `<worktree_dir>/<quest-id>-verify` fresh, detached at the head of
   `quest/<id>`, its record carrying the quest plot's base, and runs `commands.setup` (log
-  `.runs/<quest>-verify-setup.log`); `checkoutScratch` moves it between head and base, `releaseScratch` removes it
+  `.runs/<quest>-verify-setup.log`, killed by `{signal}` as the trial's and `scratchAgain`'s callers give it,
+  P1-49); `checkoutScratch` moves it between head and base, `releaseScratch` removes it
   dirty or not, `scratchOf` finds it. `runTrial` runs there `commands.reset` then the checks, again after a reset
   up to `runs` times while every run passes (logs in `<run_dir>/run-<k>/checks/`), then `commands.coverage` on
   the head and on the base (istanbul `coverage/coverage-summary.json`); it adds the checks `rerun_clean` (every
@@ -156,8 +162,9 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   secrets), `contextEnv`, and `writePolicyFile` for `<run_dir>/policy.json` v1, the file `--policy` points the
   hook at: context, `secrets` (names only), `tools` (the class's, for a CLI with no `--tools`), `laws` (with
   `read_only_paths`, P1-24), the adapter's `apprentice_models` when it has an apprentice (the models up to the
-  character's own, §3.12, P1-17), and its `cli_protected_paths`, the paths its CLI refuses to write whatever the
-  rules say (P1-24); `laws.patch_paths` (only on a git territory) and, when there are some, `patch_file` (P1-28).
+  character's own, §3.12, P1-17), and `cli_protected_paths`: the adapter's, the paths its CLI refuses to write
+  whatever the rules say (P1-24), then `GIT_PATHS` for every tribe (P1-49), so the hook refuses a write tool there
+  first; `laws.patch_paths` (only on a git territory) and, when there are some, `patch_file` (P1-28).
   The `apprentice` prompt tells the assignee to leave the apprentice's `model` out for lookups, name a stronger
   one only for reasoning, and to stop and write the unfinished child work in the letter when an apprentice is
   cut at its turn limit or runs long.

@@ -10,7 +10,10 @@ import type { MergeOutcome, PrepareOptions } from '@elvaria/runner-core';
 import { STEWARD } from '../record.ts';
 import type { Context } from '../context.ts';
 
-/** `Plots.prepare`'s options: the quest's secrets for setup (P1-30) and the branches it may start from. */
+/**
+ * `Plots.prepare`'s options: the quest's secrets for setup (P1-30), the branches it may start from, and the signal
+ * of the Steward's stop, which kills a setup in progress (P1-49): Ctrl+C no longer waits for a `pnpm install`.
+ */
 export function plotOptionsOf(
   ctx: Context,
   quest: Quest,
@@ -20,6 +23,7 @@ export function plotOptionsOf(
   return {
     ...(secrets === undefined ? {} : { secrets }),
     ...(from.length === 0 ? {} : { from }),
+    signal: ctx.stopping,
   };
 }
 

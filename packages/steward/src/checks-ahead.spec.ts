@@ -62,12 +62,17 @@ describe('the checks ahead of a continuing assignee (P1-43)', () => {
     expect(returned).toContain(
       'These run too if your work touches a path they watch: `web` (`apps/web/**`).',
     );
-    // Asked once, for the session that goes on: a first session has nothing to go on from.
-    expect(asked).toEqual(['folder']);
+    // Asked before the first session's submit commit (forbidden paths, P1-49), then for the session that goes on: a
+    // first session has nothing to go on from.
+    expect(asked).toEqual(['folder', 'folder']);
   });
 
   it('are left out when the plot cannot say what the branch touched, and the session still opens', async () => {
-    const { kingdom, prompts } = await twoSessions(() => Promise.reject(new Error('git is gone')));
+    // The submit commit gets an answer (with none, nothing is committed, P1-49); the prompt that follows gets none.
+    let asked = 0;
+    const { kingdom, prompts } = await twoSessions(() =>
+      (asked += 1) === 1 ? Promise.resolve(TOUCHED) : Promise.reject(new Error('git is gone')),
+    );
     expect(prompts[1]).toContain('# The quest came back');
     expect(prompts[1]).not.toContain(SECTION);
     expect(kingdom.warnings).toContainEqual(

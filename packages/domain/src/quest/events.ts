@@ -16,9 +16,11 @@ export type QuestActor = (typeof QUEST_ACTORS)[number];
  * to the infirmary instead of review (§3.3, P1-04); so does a patch for laws.patch_paths that the Steward could not
  * apply, since the branch would lack that change (P1-28). `secrets`: the treasury lacks a secret the quest asks for, or
  * the territory no longer allows it, so no session can open; the quest waits in the infirmary for the owner
- * instead of being claimed and released again every tick (§3.9, P1-06).
+ * instead of being claimed and released again every tick (§3.9, P1-06). `forbidden_paths`: a finished session left a
+ * path of the territory's laws.forbidden_paths changed in its plot, which only a program its shell ran could do (the
+ * fence stops the tools, not their children), so the Steward commits nothing and the owner looks first (P1-49).
  */
-export const BREAKER_TRIPS = ['time', 'tokens', 'turns', 'commit', 'secrets'] as const;
+export const BREAKER_TRIPS = ['time', 'tokens', 'turns', 'commit', 'secrets', 'forbidden_paths'] as const;
 export type BreakerTrip = (typeof BREAKER_TRIPS)[number];
 
 /**
@@ -90,10 +92,24 @@ interface Timed {
   readonly at: string;
 }
 
-/** What the runner knows when a session ends: attempt_log[].session_id and tokens. */
+/**
+ * A session that followed the first in the same run (runner-core's spawnSequel, P1-33): a reply tried once more, a
+ * reminder of the letter. Either part may be unknown.
+ */
+export interface SequelRun {
+  readonly session_id?: string;
+  readonly why?: string;
+}
+
+/**
+ * What the runner knows when a session ends: attempt_log[].session_id and tokens (the tokens of every session of
+ * the run). `sequels` goes on the line that tells the end, never into attempt_log, so the log counts every session
+ * a run opened (P1-49, (c) of P1-33).
+ */
 export interface RunEnd {
   readonly session_id?: string;
   readonly tokens?: number;
+  readonly sequels?: readonly SequelRun[];
 }
 
 interface SessionStart {

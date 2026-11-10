@@ -145,6 +145,19 @@ describe('toolPolicyOf', () => {
     expect(scribe.allow.some((rule) => rule.startsWith('Bash('))).toBe(false);
   });
 
+  it("denies every role's write tools git's own folder, never its reads nor a forbidden path (P1-49)", () => {
+    const roles = ['assignee', 'verifier', 'chancellor', 'monk', 'bard'] as const;
+    for (const [role, scratch] of [
+      ...roles.map((role) => [role, false] as const),
+      ['verifier', true] as const,
+    ]) {
+      const policy = toolPolicyOf({ role, characterClass: knight, territory: TERRITORY, scratch });
+      expect(policy.deny).toContain('Edit(./.git/**)');
+      expect(policy.deny).not.toContain('Read(./.git/**)');
+      expect(policy.laws.forbidden_paths).not.toContain('.git/**');
+    }
+  });
+
   it('keeps the fences without a territory', () => {
     const policy = toolPolicyOf({ role: 'chancellor', characterClass: classOf('chancellor') });
     expect(policy.tools).toEqual([]);

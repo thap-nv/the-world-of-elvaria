@@ -469,6 +469,27 @@
                     }
                   }
                 }
+              },
+              "sequels": {
+                "description": "The line that tells a session's end: the sessions that followed the first in the same run (a reply tried once more for a tribe without structured output, a reminder of an unchanged letter, P1-33), in order. The envelope `session` is the first one's, and attempt_log has one entry for them all, so the log counts every session a run opened (P1-49).",
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "session_id": {
+                      "description": "The sequel's CLI session, when the runner knew it.",
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "why": {
+                      "description": "Why it opened: the reply tried once more, the letter unchanged (not translated).",
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
               }
             }
           }
@@ -499,13 +520,14 @@
                 "minLength": 1
               },
               "trip": {
-                "description": "What sent the quest there: a breaker (time, tokens, turns, commit, secrets), a review whose judges left without a verdict (no_verdict, P1-33) or kept handing in partial ones (partial_verdicts, P1-42), max_attempts, or a script-tier run (script_broken, script_usage, script_fail). Absent on lines written before P1-32.",
+                "description": "What sent the quest there: a breaker (time, tokens, turns, commit, secrets, forbidden_paths), a review whose judges left without a verdict (no_verdict, P1-33) or kept handing in partial ones (partial_verdicts, P1-42), max_attempts, or a script-tier run (script_broken, script_usage, script_fail). Absent on lines written before P1-32.",
                 "enum": [
                   "time",
                   "tokens",
                   "turns",
                   "commit",
                   "secrets",
+                  "forbidden_paths",
                   "no_verdict",
                   "partial_verdicts",
                   "max_attempts",
@@ -533,6 +555,15 @@
                     "description": "Why the WIP commit after the breaker was refused: the work stays in the quest's plot.",
                     "type": "string",
                     "minLength": 1
+                  },
+                  "paths": {
+                    "description": "trip forbidden_paths: the paths of laws.forbidden_paths the session left changed, added or deleted in the quest's plot, relative to it with `/` (P1-49). Nothing was committed: the work stays in the plot.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
                   },
                   "apprentice_left": {
                     "description": "An apprentice of the session ran past its minutes or was cut at its turns: its work left belongs in a child quest (§3.12).",
@@ -891,6 +922,27 @@
                         "null"
                       ],
                       "pattern": "^[a-z][a-z0-9_]*$"
+                    }
+                  }
+                }
+              },
+              "sequels": {
+                "description": "The line that tells a session's end: the sessions that followed the first in the same run (a reply tried once more for a tribe without structured output, a reminder of an unchanged letter, P1-33), in order. The envelope `session` is the first one's, and attempt_log has one entry for them all, so the log counts every session a run opened (P1-49).",
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "session_id": {
+                      "description": "The sequel's CLI session, when the runner knew it.",
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "why": {
+                      "description": "Why it opened: the reply tried once more, the letter unchanged (not translated).",
+                      "type": "string",
+                      "minLength": 1
                     }
                   }
                 }

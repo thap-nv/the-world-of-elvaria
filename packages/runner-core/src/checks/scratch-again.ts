@@ -48,8 +48,11 @@ export async function scratchAgain(
   request: ScratchAgainRequest,
   host: ProcessHost,
 ): Promise<void> {
-  const { quest, territory, secrets } = request;
-  const prepared = await manager.prepareScratch(quest, territory, secrets === undefined ? {} : { secrets });
+  const { quest, territory, secrets, signal } = request;
+  const prepared = await manager.prepareScratch(quest, territory, {
+    ...(secrets === undefined ? {} : { secrets }),
+    ...(signal === undefined ? {} : { signal }),
+  });
   if (!prepared.ok) {
     const { reason, detail } = prepared.error;
     throw new Error(`the scratch plot of ${quest.id} is not ready (${reason}): ${detail}`);

@@ -1818,8 +1818,13 @@
             },
             {
               "field": "event `quest.infirmary` → `data.trip`",
-              "values": "`time`, `tokens`, `turns`, `commit`, `secrets`, `no_verdict`, `partial_verdicts`, `max_attempts`, `script_broken`, `script_usage`, `script_fail`",
-              "meaning": "vì sao vào trạm quân y (P1-32): năm loại cầu dao, việc nghiệm thu kẹt vì người chấm cứ rời đi không ra phán quyết (`no_verdict`, P1-33) hay cứ nộp phán quyết dở (`partial_verdicts`, P1-42), hết số lần thử, hay lượt bậc script mà script hỏng, không dùng được tham số, không đạt; dòng cũ không có trường này"
+              "values": "`time`, `tokens`, `turns`, `commit`, `secrets`, `forbidden_paths`, `no_verdict`, `partial_verdicts`, `max_attempts`, `script_broken`, `script_usage`, `script_fail`",
+              "meaning": "vì sao vào trạm quân y (P1-32): sáu loại cầu dao (`forbidden_paths`, P1-49: phiên để lại một đường dẫn của `laws.forbidden_paths` bị đổi trong đất riêng, Quản sự không commit gì, `data.detail.paths` nêu các đường dẫn), việc nghiệm thu kẹt vì người chấm cứ rời đi không ra phán quyết (`no_verdict`, P1-33) hay cứ nộp phán quyết dở (`partial_verdicts`, P1-42), hết số lần thử, hay lượt bậc script mà script hỏng, không dùng được tham số, không đạt; dòng cũ không có trường này"
+            },
+            {
+              "field": "event `quest.*` → `data.sequels`",
+              "values": "`[{session_id?, why?}]`",
+              "meaning": "dòng kết thúc một lượt nêu các phiên theo sau phiên đầu trong cùng lượt (thử lại câu trả lời, nhắc thư bàn giao, P1-33); `attempt_log` chỉ có một mục cho cả lượt, nên đếm phiên thì cộng thêm `sequels` (P1-49); không có khi lượt chỉ có một phiên"
             },
             {
               "field": "event `mana.level` → `data.pool`",

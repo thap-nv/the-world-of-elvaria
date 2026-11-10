@@ -97,13 +97,18 @@ export const asleepLine = (t: Translate, gauge: GaugeView): string =>
     ? t('cli.mana.asleep', { gauge: gaugeName(t, gauge) })
     : t('cli.mana.asleep_until', { gauge: gaugeName(t, gauge), resets_at: gauge.resets_at });
 
-/** The gauges of the kingdom's log; a log that cannot be read names none. */
-export async function readGauges(root: string, now: Instant): Promise<GaugeView[]> {
+/** The lines of the kingdom's log; none when it cannot be read. */
+export async function readLog(root: string): Promise<readonly Event[]> {
   try {
-    return gaugesOf((await openEventLog(root).read()).events, now);
+    return (await openEventLog(root).read()).events;
   } catch {
     return [];
   }
+}
+
+/** The gauges of the kingdom's log; a log that cannot be read names none. */
+export async function readGauges(root: string, now: Instant): Promise<GaugeView[]> {
+  return gaugesOf(await readLog(root), now);
 }
 
 /**

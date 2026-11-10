@@ -66,6 +66,8 @@ export async function carryOut(ctx: Context, plan: TickPlan): Promise<void> {
   for (const quest of plan.redispatches)
     warnIfRefused(ctx, `${quest} redispatch`, await openAssignee(ctx, quest, { kind: 'redispatch' }));
   for (const { quest, assignee, level } of plan.claims) {
+    // A stop killed the setup of the last plot (P1-49): no new claim would get past its own, only a release.
+    if (ctx.stopping.aborted) break;
     // The claim carries the level, so a stretch above the ceiling waits for the seal (§2.6); the character moves
     // when its session starts, right after.
     const claimed = await moveAndRing(ctx, {
