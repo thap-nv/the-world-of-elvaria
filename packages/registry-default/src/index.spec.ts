@@ -147,6 +147,16 @@ describe('the default registry', () => {
     ]);
   });
 
+  // P1-45, P1-37 (g): a part told to run `pnpm test:integration`, an exclusive check of dc1, was refused.
+  it('sends a part only to the check commands of its shell, and leaves locked checks to the merge quest', () => {
+    const mage = readFileSync(path.join(REGISTRY_ROOT, 'prompts/mage.md'), 'utf8').replace(
+      /<!--[\s\S]*?-->/,
+      '',
+    );
+    expect(mage).toContain('Send a part only to commands its session has');
+    expect(mage).toContain('leaves running them to the merge quest; it never tells the part to run them');
+  });
+
   it('ships every catalog script with its file and its test (ADR 0016)', () => {
     for (const script of registry().scripts) {
       expect(existsSync(path.join(REGISTRY_ROOT, script.entry))).toBe(true);

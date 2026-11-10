@@ -130,9 +130,11 @@ function assigneeProblem(
 }
 
 /**
- * The budget of a new quest (§2.3: derived from kingdom.breakers and the rank). Without the Chancellor's estimate,
- * the context budget of one quest, more for a higher rank (CONTEXT_BUDGETS_BY_RANK, P1-38), stands in for it, so
- * the token breaker has a ceiling from the start.
+ * The budget of a new quest (§2.3: derived from kingdom.breakers and the rank). The rank's share of the context
+ * budget (CONTEXT_BUDGETS_BY_RANK, P1-38) stands in for a missing estimate, so the token breaker has a ceiling from
+ * the start, and floors a given one (P1-45, P1-37 (e)): a mage's low guess for a part cut its session at 322 143 of
+ * 320 000, below what its rank gave a quest without an estimate. The minutes likewise: the rank's, or the estimate's
+ * when more, up to attempt_minutes.high, which exclusiveWaitMinutes takes as the longest a judge holds the lock.
  */
 function budgetOf(rank: Rank, estimate: CreateQuest['estimate'], breakers: Kingdom['breakers']) {
   const high = RANKS.indexOf(rank) >= RANKS.indexOf(breakers.high_rank_from);
@@ -141,8 +143,8 @@ function budgetOf(rank: Rank, estimate: CreateQuest['estimate'], breakers: Kingd
   const guess = estimate ?? { tokens, minutes };
   return {
     budget: {
-      max_minutes: minutes,
-      max_tokens: Math.round(guess.tokens * breakers.mana_multiplier),
+      max_minutes: Math.max(minutes, Math.min(guess.minutes, breakers.attempt_minutes.high)),
+      max_tokens: Math.round(Math.max(guess.tokens, tokens) * breakers.mana_multiplier),
       max_attempts: breakers.max_attempts,
     },
     estimate: guess,

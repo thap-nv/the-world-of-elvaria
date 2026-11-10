@@ -65,7 +65,11 @@ const BreakersSchema = z.strictObject({
     .number()
     .positive()
     .default(BREAKER_DEFAULTS.mana_multiplier)
-    .meta(describe('quest.budget.max_tokens = estimate.tokens x mana_multiplier.')),
+    .meta(
+      describe(
+        "quest.budget.max_tokens = estimate.tokens x mana_multiplier, never below the rank's share of context_budget_tokens x mana_multiplier.",
+      ),
+    ),
   same_fail_suspend: z.int().min(1).default(BREAKER_DEFAULTS.same_fail_suspend),
   patrol_weekly_pct: z.number().min(0).max(100).default(BREAKER_DEFAULTS.patrol_weekly_pct),
   max_turns: z.int().min(1).default(BREAKER_DEFAULTS.max_turns),

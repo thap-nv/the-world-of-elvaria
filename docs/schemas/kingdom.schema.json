@@ -162,7 +162,7 @@
           "default": 3
         },
         "mana_multiplier": {
-          "description": "quest.budget.max_tokens = estimate.tokens x mana_multiplier.",
+          "description": "quest.budget.max_tokens = estimate.tokens x mana_multiplier, never below the rank's share of context_budget_tokens x mana_multiplier.",
           "type": "number",
           "exclusiveMinimum": 0,
           "default": 2
