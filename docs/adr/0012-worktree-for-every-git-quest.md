@@ -13,7 +13,7 @@ The product plan (§7, "Đất riêng") gives code quests a git worktree and doc
 - `quests/<id>/work/` is only for territories without git; delivery copies into `territory.path`.
 - On attach, Elvaria appends `.elvaria/`, `GEMINI.md`, `.agents/hooks.json`, `.agents/elvaria-hook.mjs` and `.gemini/settings.json` to the repo's `.git/info/exclude` (shared by worktrees). (Amended 2026-11-06, P1-12a: the Antigravity hook needs a generated shim next to `hooks.json`, ADR 0015.) It never edits `.gitignore`. On Windows it sets `core.longpaths true`. (Amended 2026-11-07, P1-07, confirmed by the owner: every `PlotManager.prepare` ensures both, idempotently, instead of `territory add`; the exclude lines are anchored at the plot root, `/GEMINI.md` and so on, so a `GEMINI.md` a quest writes deeper in the repo is still committed.)
 - `PlotManager.prepare` is idempotent; `commitAll` runs before any kill or pause; `release` (remove the worktree, keep the branch) runs only when the quest is archived.
-- Stage 1 has no automatic merge and no `git push`. The user merges by hand after the royal seal; `delivery.md` suggests the commands.
+- Stage 1 has no automatic merge and no `git push`. The user merges by hand after the royal seal; `delivery.md` suggests the commands. (Amended 2026-11-10, product plan 0.8, decided by the owner: from PS-08 the Steward pushes the quest branch, opens a pull request and merges, per territory, [ADR 0023](0023-steward-delivers-push-pr-merge.md); characters still never push.)
 
 ## Consequences
 

@@ -1,6 +1,6 @@
 # Báo cáo giai đoạn 1 (P1-16)
 
-Lần chạy kiểm chứng mốc giai đoạn 1, ngày 2026-11-08, trên Windows 11, với vương quốc thật của chủ nhân (8 nhân vật, hai tộc), Quản sự chạy từ `dist` của `main` (checkout chính ở `dc643d6`, code giống `0c3c7a8`), Claude Code 2.1.319 và Antigravity CLI 1.5.3. Mười quest của [kế hoạch sản phẩm](../ke-hoach-dung-elvaria-0.7.md) §13 chạy trên lãnh thổ dc1-se-team, thêm hai quest dogfood trên lãnh thổ Elvaria, một quest thêm trên dc1 và lần cố tình hết mana tộc Gemini. Cách chạy một quest từ đầu: [first-quest.md](first-quest.md). Bảng ba bậc sinh từ event log: [tier-report.md](../tier-report.md).
+Lần chạy kiểm chứng mốc giai đoạn 1, ngày 2026-11-08, trên Windows 11, với vương quốc thật của chủ nhân (8 nhân vật, hai tộc), Quản sự chạy từ `dist` của `main` (checkout chính ở `dc643d6`, code giống `0c3c7a8`), Claude Code 2.1.319 và Antigravity CLI 1.5.3. Mười quest của [kế hoạch sản phẩm](../ke-hoach-dung-elvaria-0.8.md) §13 chạy trên lãnh thổ dc1-se-team, thêm hai quest dogfood trên lãnh thổ Elvaria, một quest thêm trên dc1 và lần cố tình hết mana tộc Gemini. Cách chạy một quest từ đầu: [first-quest.md](first-quest.md). Bảng ba bậc sinh từ event log: [tier-report.md](../tier-report.md).
 
 ## 1. Kết quả theo mốc
 
