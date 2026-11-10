@@ -5,6 +5,7 @@ import path from 'node:path';
 import { TribeIdSchema } from '@elvaria/domain';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { REGISTRY, TERRITORY, THORN } from '../__fixtures__/world.ts';
 import { FAKE_FORBIDDEN_COMMAND, FAKE_QUESTION, FAKE_SCENARIO_ENV } from '../conformance/scenarios.ts';
 import { toolPolicyOf } from '../policy/tool-policy.ts';
@@ -16,7 +17,7 @@ let dir = '';
 beforeAll(async () => {
   dir = await mkdtemp(path.join(tmpdir(), 'elvaria fake runner '));
 });
-afterAll(() => rm(dir, { recursive: true, force: true }));
+afterAll(() => rm(dir, RM_TEMP));
 
 const knight = REGISTRY.classes.find((entry) => entry.id === 'knight')!;
 const request = (scenario?: FakeScenario, fields: Partial<SpawnRequest> = {}): SpawnRequest => ({

@@ -1,7 +1,6 @@
 // A review the breakers keep stopping (implementation-plan §3.4, P1-23; phase-1 report §5.2): the first verifier a
 // breaker stops leaves the review to the next one, the second sends the quest to the infirmary with the bell, and
 // no third verifier session opens. A verifier its CLI stopped at its own limit counts the same.
-import { createFakeRunner } from '@elvaria/runner-core';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { bench, questPayload, tickUntil } from './__fixtures__/kingdom.ts';
@@ -26,9 +25,12 @@ afterEach(async () => {
   current = undefined;
 });
 
-/** Each verifier session it spawns reports `tokens` at once, then hangs; the assignee's work is submitted. */
-function spendingJudges(tribe: string, tokens: number, spawned: SpawnRequest[]): AgentRunner {
-  const fake = createFakeRunner({
+/**
+ * Each verifier session it spawns reports `tokens` at once, then hangs; the assignee's work is submitted. The bench
+ * makes the fake, so tickUntil does not wait for the hung judges to end (P1-39).
+ */
+function spendingJudges(kingdom: Bench, tribe: string, tokens: number, spawned: SpawnRequest[]): AgentRunner {
+  const fake = kingdom.fake({
     tribe: tribe as never,
     scenarioOf: (req) => (req.role === 'verifier' ? 'hang' : 'submit'),
   });
@@ -64,10 +66,10 @@ const verifiersOf = (spawned: readonly SpawnRequest[]) => spawned.filter(({ role
 describe('a review the breakers keep stopping', () => {
   it('goes to the infirmary with the bell at the second verifier stopped, and opens no third', async () => {
     const spawned: SpawnRequest[] = [];
-    const { kingdom, steward } = await open(() => ({
+    const { kingdom, steward } = await open((k) => ({
       runners: {
-        claude: spendingJudges('claude', 480_001, spawned),
-        gemini: spendingJudges('gemini', 480_001, spawned),
+        claude: spendingJudges(k, 'claude', 480_001, spawned),
+        gemini: spendingJudges(k, 'gemini', 480_001, spawned),
       },
     }));
     await kingdom.command('create_quest', questPayload('Judged at length'));
@@ -104,10 +106,10 @@ describe('a review the breakers keep stopping', () => {
 
   it("sends it back to review on the owner's retry, where one more cut is not yet a stall (P1-26)", async () => {
     const spawned: SpawnRequest[] = [];
-    const { kingdom, steward } = await open(() => ({
+    const { kingdom, steward } = await open((k) => ({
       runners: {
-        claude: spendingJudges('claude', 480_001, spawned),
-        gemini: spendingJudges('gemini', 480_001, spawned),
+        claude: spendingJudges(k, 'claude', 480_001, spawned),
+        gemini: spendingJudges(k, 'gemini', 480_001, spawned),
       },
     }));
     await kingdom.command('create_quest', questPayload('Judged again'));

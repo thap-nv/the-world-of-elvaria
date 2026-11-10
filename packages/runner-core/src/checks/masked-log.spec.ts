@@ -6,6 +6,7 @@ import { TerritorySchema } from '@elvaria/domain';
 import { inKingdom } from '@elvaria/store';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST } from '../__fixtures__/git-repo.ts';
 import { maskLogFile, maskedOnClose } from './masked-log.ts';
 import { runCheck } from './run-checks.ts';
@@ -18,7 +19,7 @@ let root = '';
 beforeAll(async () => {
   root = await mkdtemp(path.join(tmpdir(), 'elvaria masked log '));
 });
-afterAll(() => rm(root, { recursive: true, force: true }));
+afterAll(() => rm(root, RM_TEMP));
 
 describe('the log of a check', () => {
   it('keeps what the command printed, its secrets masked (ADR 0013)', async () => {

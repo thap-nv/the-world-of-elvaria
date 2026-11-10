@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fromPortable } from '@elvaria/store';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST, commitFile, gitRepo, questId, territoryAt } from '../__fixtures__/git-repo.ts';
 import { DIFF_MAX_CHARS, cappedDiff } from './diff.ts';
 import { createPlotManager } from './plot-manager.ts';
@@ -13,7 +14,7 @@ let root = '';
 beforeAll(async () => {
   root = await mkdtemp(path.join(tmpdir(), 'elvaria plot diff '));
 });
-afterAll(() => rm(root, { recursive: true, force: true }));
+afterAll(() => rm(root, RM_TEMP));
 
 const plots = () => createPlotManager({ kingdom: path.join(root, 'kingdom'), host: TEST_HOST });
 
@@ -37,7 +38,7 @@ describe('PlotManager.diff (P1-15)', () => {
     expect(diff).toContain('+export const app = 2;');
     expect(diff).toContain('+export const feature = 1;');
     expect(diff).not.toContain('later.txt');
-  }, 30_000);
+  });
 
   it('has nothing to say for a plot without git', async () => {
     expect(await plots().diff({ type: 'folder', path: 'quests/q_20261107_e2f3a4/work' })).toBeNull();

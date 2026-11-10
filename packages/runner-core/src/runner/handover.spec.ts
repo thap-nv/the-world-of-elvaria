@@ -4,6 +4,7 @@ import path from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { LETTER } from '../__fixtures__/world.ts';
 import { PROMPTS_DIR } from '../prompt/templates.ts';
 import { HANDOVER_SECTIONS, questionOf, readQuestion, sectionOf } from './handover.ts';
@@ -48,7 +49,7 @@ describe('readQuestion', () => {
   beforeAll(async () => {
     dir = await mkdtemp(path.join(tmpdir(), 'elvaria handover '));
   });
-  afterAll(() => rm(dir, { recursive: true, force: true }));
+  afterAll(() => rm(dir, RM_TEMP));
 
   it('reads the letter after the session', async () => {
     const file = path.join(dir, 'handover.md');

@@ -5,6 +5,7 @@ import path from 'node:path';
 import { openEventLog, openJournal } from '@elvaria/eventlog';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { QUEST_ID, THORN } from '../__fixtures__/world.ts';
 import { openRunLog } from './run-log.ts';
 import { NOTE_PREFIX, STDERR_FILE, STDOUT_FILE, openRunOutput } from './run-output.ts';
@@ -19,7 +20,7 @@ let root: string;
 beforeAll(async () => {
   root = await mkdtemp(path.join(tmpdir(), 'elvaria run log '));
 });
-afterAll(() => rm(root, { recursive: true, force: true }));
+afterAll(() => rm(root, RM_TEMP));
 
 const contextIn = async (fields: Partial<RunContext> = {}): Promise<RunContext> => ({
   kingdom: await mkdtemp(path.join(root, 'kingdom ')),

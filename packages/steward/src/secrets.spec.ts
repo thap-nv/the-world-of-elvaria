@@ -13,6 +13,7 @@ import {
   BENCH_ENV,
   KINGDOM,
   NPM_TOKEN,
+  RM_TEMP,
   bench,
   characterOf,
   questPayload,
@@ -230,7 +231,7 @@ describe('maskFinished', () => {
         expect.stringMatching(/^steward: q_20261107_aaaaaa: the handover letter was not masked/),
       ]);
     } finally {
-      await rm(root, { recursive: true, force: true });
+      await rm(root, RM_TEMP);
     }
   });
 });
