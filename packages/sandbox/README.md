@@ -18,7 +18,8 @@
   `selectVerifier` chose for each submitted quest (the machine's pass under `machine_only`), returned quests sent
   back, claims; then a fresh session for an answered quest, delivery of done quests, and after each verdict the
   domain's `withVerdict` (reputation, tag windows, fail streak) and `levelChange`. Verdict lines use the domain's
-  verdict ids (`-p<k>` for a partial, `-user` for the owner's seal).
+  verdict ids (`-p<k>` for a partial, `-user` for the owner's seal). A fake quest's ceilings are the Steward's:
+  the domain's `questBudgetOf` for the Chancellor's estimate of its rank (P1-46).
 - Writes and reads day files: `writeDay` replaces `events/sandbox/<date>.jsonl` in one atomic write (redacted,
   ADR 0013); `readDay` reads it with the event log's reader. `scenarioProblems` names what a kingdom lacks
   (a tribe of the cast, a class, kind, script or tag) before a day is played.
