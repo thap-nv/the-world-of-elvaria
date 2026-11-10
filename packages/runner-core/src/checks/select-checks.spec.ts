@@ -58,7 +58,8 @@ describe('selectChecks', () => {
     const idsAs = (role?: PartyRole, paths = touched) =>
       selectChecks(checks, paths, role).map((check) => check.id);
     expect(idsAs('part')).toEqual(['lint', 'unit']);
-    expect(idsAs('contract')).toEqual(['lint', 'unit', 'e2e']);
+    // The contract quest too (P1-37): its interface comes before the code a drift check compares it with.
+    expect(idsAs('contract')).toEqual(['lint', 'unit']);
     expect(idsAs()).toEqual(['lint', 'unit', 'e2e']);
     expect(idsAs('merge', [])).toEqual(TERRITORY.checks.map((check) => check.id));
   });

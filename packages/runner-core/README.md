@@ -105,7 +105,8 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   what the quest touched (`selectChecks`, `globToRegExp`: dot names match, case-insensitive, like the laws' globs
   in the hook), one at a time in the plot, each logged to `<run_dir>/checks/<id>.log`; with
   `ChecksRequest.party_role` (P1-18, §3.15) a party's merge quest runs every check and a part skips those marked
-  `defer_to_merge`; the blind trial's acceptance part (P1-21) runs none, its tests waiting for the merge quest. An `exclusive` check holds
+  `defer_to_merge`, as does the contract quest (P1-37: an interface written before the code fails any drift check);
+  the blind trial's acceptance part (P1-21) runs none, its tests waiting for the merge quest. An `exclusive` check holds
   the territory's lock (`.state/checks/<territory>-exclusive`) so two quests never run one at once; a timed-out
   check runs its `cleanup`. A check that cannot run (shell syntax, program not found, lock never freed) fails.
   `ChecksRequest.signal` (P1-25: the Steward runs checks outside its tick) kills the running check and starts no

@@ -67,14 +67,14 @@ Lãnh thổ dc1-se-team, tóm tắt:
   { "id": "content_drift", "run": ["pnpm content:build", "git diff --exit-code packages/shared/src/content"],
     "when": ["ban-do-nang-luc-se.md", "packages/shared/scripts/**", "packages/shared/src/content/**"], "timeout_minutes": 5 },
   { "id": "openapi_drift", "run": ["pnpm api:openapi", "git diff --exit-code apps/api/openapi.json packages/shared/src/api-types.ts"],
-    "when": ["apps/api/**", "packages/shared/src/**"], "timeout_minutes": 10 },
+    "when": ["apps/api/**", "packages/shared/src/**"], "timeout_minutes": 10, "defer_to_merge": true },
   { "id": "e2e", "run": ["sh infra/scripts/init-secrets.sh", "pnpm e2e:docker"],
     "when": ["apps/web/**", "apps/api/src/**", "packages/shared/src/**", "infra/compose*.yml", "infra/docker/**", "infra/postgres/**"],
     "exclusive": true, "timeout_minutes": 30, "defer_to_merge": true, "cleanup": "pnpm e2e:down" }
 ]
 ```
 
-`git diff --exit-code` nêu đúng các đường dẫn sinh ra, như CI, để file khác trong plot (đất nháp của người chấm có `infra/secrets/*`, `coverage/`) không làm check đỏ. Check drift đỏ khi nguồn đổi mà file sinh không đổi theo (diff in trong log), xanh khi không drift; `content:build` còn tự từ chối khi tên mảng lệch Phụ lục A, cũng đỏ nhưng vì lý do khác.
+`openapi_drift` có `defer_to_merge` (từ P1-37): quest hợp đồng của một đội viết `openapi.json` trước khi có code, nên drift luôn đỏ ở đó; quest hợp đồng và các phần bỏ qua nó, quest ghép chạy nó một lần trên nhánh đã ghép. `git diff --exit-code` nêu đúng các đường dẫn sinh ra, như CI, để file khác trong plot (đất nháp của người chấm có `infra/secrets/*`, `coverage/`) không làm check đỏ. Check drift đỏ khi nguồn đổi mà file sinh không đổi theo (diff in trong log), xanh khi không drift; `content:build` còn tự từ chối khi tên mảng lệch Phụ lục A, cũng đỏ nhưng vì lý do khác.
 
 **Test là sản phẩm** (P1-20, ADR 0022): quest Kiến tạo/Gia cố có tag `e2e` hoặc `integration` được nghiệm thu bằng Thả quái thử thành trong một đất nháp `<quest-id>-verify`. Hai lệnh mới, tùy chọn, ở `commands`: `reset` (một lệnh hoặc danh sách: đưa DB, container về sạch; chạy sau `setup` và trước mỗi lần chạy check trong đất nháp, chỉ máy chạy) và `coverage` (đo coverage, để lại tóm tắt istanbul ở `coverage/coverage-summary.json` **ở gốc plot**; bước `coverage_not_lower` chạy nó trên nhánh và trên base). Không khai `coverage` thì coverage không được đo. Với dc1 (monorepo, gốc không có vitest):
 
