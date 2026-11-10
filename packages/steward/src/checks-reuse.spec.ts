@@ -63,7 +63,7 @@ async function twoJudges(title: string, setup: Setup) {
   await tickUntil(steward, kingdom.clock, statusIs(kingdom, title, 'done'));
   const quest = await kingdom.quest(title);
   const judges = quest.attempt_log.filter(({ role }) => role === 'verifier');
-  expect(judges.map(({ outcome }) => outcome)).toEqual(['submitted', 'submitted']);
+  expect(judges.map(({ outcome }) => outcome)).toEqual(['partial', 'submitted']);
   return { kingdom, quest, calls };
 }
 

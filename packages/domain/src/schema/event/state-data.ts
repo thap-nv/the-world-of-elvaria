@@ -80,6 +80,15 @@ export const InfirmaryDetailSchema = z
           'This many verifiers of the run (the envelope `attempt`) left without a verdict, stopped by a breaker (P1-23) or with no verdict in their output (P1-33), so no further one opens.',
         ),
       ),
+    partial_verdicts: z
+      .int()
+      .min(1)
+      .optional()
+      .meta(
+        describe(
+          'trip partial_verdicts: this many judges of the run (the envelope `attempt`) handed in a partial verdict since the owner last retried the review, so no further one opens (P1-42).',
+        ),
+      ),
   })
   .meta(describe('Absent when the trip says it all (max_attempts).'));
 
@@ -95,7 +104,7 @@ export const QuestInfirmaryDataSchema = z.strictObject({
     .optional()
     .meta(
       describe(
-        'What sent the quest there: a breaker (time, tokens, turns, commit, secrets), a review whose judges left without a verdict (no_verdict, P1-33), max_attempts, or a script-tier run (script_broken, script_usage, script_fail). Absent on lines written before P1-32.',
+        'What sent the quest there: a breaker (time, tokens, turns, commit, secrets), a review whose judges left without a verdict (no_verdict, P1-33) or kept handing in partial ones (partial_verdicts, P1-42), max_attempts, or a script-tier run (script_broken, script_usage, script_fail). Absent on lines written before P1-32.',
       ),
     ),
   detail: InfirmaryDetailSchema.optional(),

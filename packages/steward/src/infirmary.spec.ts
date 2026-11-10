@@ -49,6 +49,14 @@ describe('infirmaryReason', () => {
       'review:no_verdict: the session ended error, exit code 1; 2 verifiers of run 3 left without a verdict, so no further one opens: see why in the log, and give the review a judge that hands in a verdict before a retry',
     ],
     [
+      'a review whose judges only ever read in part (P1-42)',
+      {
+        trip: 'partial_verdicts',
+        detail: { message: 'the last judge stopped at break_and_expect_red', partial_verdicts: 3 },
+      },
+      "review:partial_verdicts: the last judge stopped at break_and_expect_red; 3 verifiers of run 3 handed in a partial verdict, so no further one opens: read their notes, and make sure the next judge can finish the ritual (run the checks' commands, name its breaks), before a retry",
+    ],
+    [
       'a script that broke',
       { trip: 'script_broken', detail: { message: 'exit 1', script: 'lint' } },
       'script:broken: exit 1',

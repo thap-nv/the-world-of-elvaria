@@ -106,6 +106,19 @@ describe('elvaria quest show of a quest in the infirmary', () => {
     expect(out).toContain("  What it said: the verifier's session ended error, exit code 1");
   });
 
+  it('names a review whose judges only ever read in part (P1-42)', async () => {
+    await plantQuests(kingdom, SICK);
+    const detail = { message: 'the last judge stopped at break_and_expect_red', partial_verdicts: 3 };
+    const line = { reason: 'review:partial_verdicts', trip: 'partial_verdicts', detail } as const;
+    const out = await show(infirmaryLine(line, 2));
+    expect(out).toContain('In the infirmary since attempt 2: its judges kept handing in partial verdicts.');
+    expect(out).toContainEqual(
+      expect.stringMatching(
+        /^ {2}3 verifiers of this attempt handed in a partial verdict, so no further one opens/,
+      ),
+    );
+  });
+
   it('says nothing of the infirmary for a quest that has left it', async () => {
     const open = questFixture('open');
     await plantQuests(kingdom, open);

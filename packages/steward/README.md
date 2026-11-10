@@ -33,7 +33,8 @@
   owner's `retry` brings it back to review with a new judge, and the count starts over (P1-26). A verifier that
   leaves with no verdict at all (its CLI failed, its output was none, its session was lost) counts the same, and
   the stall it ends goes to the infirmary as `review:no_verdict` (P1-33); one that hands in a partial verdict
-  (`verdict_partial`) made progress and does not count. Breakers measure a session as its holder's tribe allows:
+  (`verdict_partial`) made progress and counts apart: the third of the open group sends the review to the
+  infirmary as `review:partial_verdicts`, no fourth judge opening (P1-42). Breakers measure a session as its holder's tribe allows:
   minutes only for a tribe without `usage` (`measureOf`, P1-33). A CLI
   that stopped at its own `--max-turns` or budget gets the same end, a verifier's included. When the quest's journal shows an apprentice of that session past
   its minutes or cut at its turns, the reason asks the owner for a child quest for the work it left (§3.12). A quest whose secrets the treasury lacks, or its territory no longer

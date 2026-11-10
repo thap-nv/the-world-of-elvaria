@@ -1673,8 +1673,8 @@
             },
             {
               "field": "`attempt_log.outcome`",
-              "values": "`submitted`, `returned`, `timeout`, `breaker`, `crash`, `paused`, `blocked`, `cancelled`",
-              "meaning": "kết thúc một lần thử; `timeout` = cầu dao thời gian, `breaker` = cầu dao token/lượt"
+              "values": "`submitted`, `partial`, `returned`, `timeout`, `breaker`, `crash`, `paused`, `blocked`, `cancelled`",
+              "meaning": "kết thúc một lần thử; `timeout` = cầu dao thời gian, `breaker` = cầu dao token/lượt; `partial` = người chấm nộp phán quyết dở (P1-42; mục cũ ghi `submitted`)"
             },
             {
               "field": "`units[].outcome`",
@@ -1818,8 +1818,8 @@
             },
             {
               "field": "event `quest.infirmary` → `data.trip`",
-              "values": "`time`, `tokens`, `turns`, `commit`, `secrets`, `no_verdict`, `max_attempts`, `script_broken`, `script_usage`, `script_fail`",
-              "meaning": "vì sao vào trạm quân y (P1-32): năm loại cầu dao, việc nghiệm thu kẹt vì người chấm cứ rời đi không ra phán quyết (`no_verdict`, P1-33), hết số lần thử, hay lượt bậc script mà script hỏng, không dùng được tham số, không đạt; dòng cũ không có trường này"
+              "values": "`time`, `tokens`, `turns`, `commit`, `secrets`, `no_verdict`, `partial_verdicts`, `max_attempts`, `script_broken`, `script_usage`, `script_fail`",
+              "meaning": "vì sao vào trạm quân y (P1-32): năm loại cầu dao, việc nghiệm thu kẹt vì người chấm cứ rời đi không ra phán quyết (`no_verdict`, P1-33) hay cứ nộp phán quyết dở (`partial_verdicts`, P1-42), hết số lần thử, hay lượt bậc script mà script hỏng, không dùng được tham số, không đạt; dòng cũ không có trường này"
             },
             {
               "field": "event `mana.level` → `data.pool`",

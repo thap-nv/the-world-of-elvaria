@@ -128,7 +128,7 @@ describe("the end of a verifier's session", () => {
     const quest = await kingdom.quest('Hard to judge');
     // A partial verdict was handed in (`verdict_partial`, P1-33): only the first judge left with nothing.
     expect(quest.attempt_log.filter(({ role }) => role === 'verifier').map(({ outcome }) => outcome)).toEqual(
-      ['crash', 'submitted', 'submitted'],
+      ['crash', 'partial', 'submitted'],
     );
     expect((await typesOf(kingdom)).filter((type) => type.startsWith('verdict.'))).toEqual([
       'verdict.partial',
@@ -170,6 +170,41 @@ describe("the end of a verifier's session", () => {
       (await kingdom.quest('Never judged')).attempt_log.filter(({ role }) => role === 'verifier'),
     ).toHaveLength(2);
     expect(steward.running()).toBe(0);
+  });
+
+  it('sends a review whose judges only ever read in part to the infirmary at the third (P1-42)', async () => {
+    const partial = { result: 'partial', progress: { checked_until: 'src/api/orders.ts' } };
+    const { kingdom, steward } = await open({
+      plays: { verdicts: { 'Never finished': [partial, partial, partial, partial] } },
+    });
+    await kingdom.command('create_quest', questPayload('Never finished'));
+    await tickUntil(
+      steward,
+      kingdom.clock,
+      async () => (await statusOf(kingdom, 'Never finished')) === 'infirmary',
+    );
+    const quest = await kingdom.quest('Never finished');
+    expect(quest.attempt_log.filter(({ role }) => role === 'verifier').map(({ outcome }) => outcome)).toEqual(
+      ['partial', 'partial', 'partial'],
+    );
+    expect(quest).toMatchObject({ status: 'infirmary', verifier: null, attempts: 1 });
+    expect(kingdom.notices.at(-1)).toMatchObject({
+      kind: 'infirmary',
+      trip: 'partial_verdicts',
+      detail: { message: 'the last judge stopped at src/api/orders.ts', partial_verdicts: 3 },
+      reason: expect.stringMatching(
+        /^review:partial_verdicts: the last judge stopped at src\/api\/orders\.ts; 3 verifiers of run 1 handed in a partial verdict/,
+      ) as unknown,
+    });
+    // No fourth judge opens while the quest waits for the owner; the owner's retry brings a new judge.
+    for (let tick = 0; tick < 3; tick += 1) {
+      kingdom.clock.advance(1);
+      await steward.tick();
+    }
+    expect(steward.running()).toBe(0);
+    await kingdom.command('retry', { quest: quest.id });
+    await tickUntil(steward, kingdom.clock, () => Promise.resolve(steward.running() > 0));
+    expect(await kingdom.quest('Never finished')).toMatchObject({ status: 'review', attempts: 1 });
   });
 
   it("counts a judge's session that ended in an error toward the stall, and says so", async () => {

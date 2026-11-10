@@ -2,11 +2,13 @@
 // a verdict file, the ritual's pass rule has the last word over the checks (a failing check fails the quest), and
 // validateVerdict refuses what the doer or a stranger to this session would hand in. Then the quest moves (done,
 // awaiting_seal, returned or the infirmary) and the assignee's windows and level follow. A partial verdict says how
-// far the judge read; the next judge reads on. A judge that leaves no verdict at all counts toward a stalled review
-// (P1-33), as a judge a breaker stopped does.
+// far the judge read; the next judge reads on, up to REVIEW_PARTIALS_MAX of them (P1-42). A judge that leaves no
+// verdict at all counts toward a stalled review (P1-33), as a judge a breaker stopped does.
 import {
+  partialsStalled,
   partyOf,
   reviewBreaksOf,
+  reviewPartialsOf,
   reviewStalled,
   underPassRule,
   validateVerdict,
@@ -68,14 +70,37 @@ export async function verifierLeaves(
   return stallWithoutVerdict(ctx, left, why);
 }
 
-/** A partial verdict says how far the judge read (`progress`): it leaves, and the next judge reads on (§2.5). */
-const verifierHandsInPart = (ctx: Context, running: Running, result: RunResult) =>
-  moveAndRing(ctx, {
+/**
+ * A partial verdict says how far the judge read (`progress`): it leaves, and the next judge reads on (§2.5). The
+ * REVIEW_PARTIALS_MAX-th of the run sends the review to the infirmary with the bell instead (§2.5
+ * `review.verdict_partial.needs_verifier`, P1-42): a judge that cannot finish the ritual, its shell unable to run
+ * the checks or its pass short of breaks, would be followed by another for ever, each with a session and a trial.
+ */
+async function verifierHandsInPart(
+  ctx: Context,
+  running: Running,
+  result: RunResult,
+  partial: Verdict,
+): Promise<Result<Quest, string>> {
+  const left = await moveAndRing(ctx, {
     quest: running.quest,
     event: { type: 'verdict_partial', ...runOf(running, result) },
     actor: 'verifier',
     edits: { [running.character]: step('unassign') },
   });
+  if (!left.ok || !partialsStalled(left.value)) return left;
+  const stop = partial.progress?.checked_until;
+  const said = stop === undefined ? {} : { message: `the last judge stopped at ${stop}` };
+  return moveAndRing(ctx, {
+    quest: left.value.id,
+    event: { type: 'verdict_partial' },
+    actor: 'steward',
+    infirmary: {
+      trip: 'partial_verdicts',
+      detail: { ...said, partial_verdicts: reviewPartialsOf(left.value) },
+    },
+  });
+}
 
 /** The verdict as the pass rule and the separation of duties have it, or why the Steward writes none. */
 function ruledVerdict(
@@ -128,7 +153,7 @@ export async function judge(
     return verifierLeaves(ctx, running, result, why);
   }
   const outcome = verdict.value;
-  if (outcome.result === 'partial') return verifierHandsInPart(ctx, running, result);
+  if (outcome.result === 'partial') return verifierHandsInPart(ctx, running, result, outcome);
   // A flake fails the quest and opens the quest that exorcises it (P1-20), before the quest moves on.
   if (outcome.result === 'fail') await openFlakyFollowUp(ctx, quest, outcome);
   return moveOnVerdict(

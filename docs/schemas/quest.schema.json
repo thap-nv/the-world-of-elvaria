@@ -287,9 +287,10 @@
             "format": "date-time"
           },
           "outcome": {
-            "description": "timeout = the time breaker tripped; breaker = the token or turn breaker tripped.",
+            "description": "timeout = the time breaker tripped; breaker = the token or turn breaker tripped; partial = a judge handed in a partial verdict (since P1-42, submitted before).",
             "enum": [
               "submitted",
+              "partial",
               "returned",
               "timeout",
               "breaker",

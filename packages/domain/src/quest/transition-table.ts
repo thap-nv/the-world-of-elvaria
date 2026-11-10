@@ -31,7 +31,7 @@ const GUARD_TEXT: Readonly<Record<QuestGuard, string>> = {
   has_verifier: 'có `verifier`',
   undelivered: 'chưa có `deliverable.delivered_at`',
   stalled_review:
-    '`REVIEW_BREAKS_MAX` người chấm của lượt đã rời đi không ra verdict: cầu dao cắt hoặc `crash` (`reviewStalled`)',
+    '`REVIEW_BREAKS_MAX` người chấm của lượt đã rời đi không ra verdict (cầu dao cắt hoặc `crash`), hoặc `REVIEW_PARTIALS_MAX` người nộp verdict `partial` (`reviewStalled`)',
   no_stalled_review: 'không phải `reviewStalled`',
 };
 
@@ -85,7 +85,9 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
     'lượt máy của quest ghép bị đánh trượt: không có người để trả về, quest mở lại cho hiệp sĩ, phiên của nó đọc verdict (P1-18)',
   'review.verdict_fail.out_of_retries': 'chuông; bậc script không có `returned`',
   'review.verdict_partial.has_verifier':
-    'người chấm nộp verdict `partial` (lưu `progress`) rồi rời đi; `verifier = null`, lượt kết thúc `submitted`, không đếm vào `reviewBreaksOf`; người kế đọc tiếp (P1-33)',
+    'người chấm nộp verdict `partial` (lưu `progress`) rồi rời đi; `verifier = null`, lượt kết thúc `partial` (P1-42; trước đó `submitted`), không đếm vào `reviewBreaksOf` mà vào `reviewPartialsOf`; người kế đọc tiếp (P1-33)',
+  'review.verdict_partial.needs_verifier':
+    'ngay sau hàng trên, khi `REVIEW_PARTIALS_MAX` (3) người chấm của lượt đã nộp verdict `partial` (`partialsStalled`, P1-42): trip `partial_verdicts`, chuông; `retry` của người dùng đưa về review như với cầu dao',
   'review.mana_out.has_verifier': '`verifier = null`, verdict `partial` lưu `progress`; người kế đọc tiếp',
   'review.breaker.has_verifier':
     'như trên; cả khi CLI của người chấm tự dừng ở trần lượt hay ngân sách (P1-23)',
@@ -108,7 +110,7 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
   'done.archive': 'Quản sự sau N ngày; xóa worktree khi archive, không sớm hơn',
   'infirmary.retry.no_stalled_review': '`attempts = 0`, bỏ `assignee`, giữ `attempt_log`',
   'infirmary.retry.stalled_review':
-    'việc đã xong, chỉ phần chấm bị cắt mãi: giữ `assignee`, `attempts`, lượt `n`; người chấm mới; `reviewBreaksOf` đếm lại từ lần `retry` này (P1-26)',
+    'việc đã xong, chỉ phần chấm bị cắt mãi: giữ `assignee`, `attempts`, lượt `n`; người chấm mới; `reviewBreaksOf` và `reviewPartialsOf` đếm lại từ lần `retry` này (P1-26, P1-42)',
   'infirmary.reassign.session': 'người mới có đủ `max_attempts` (`attempts = 0`)',
   'infirmary.archive': 'lệnh `archive`',
 };
