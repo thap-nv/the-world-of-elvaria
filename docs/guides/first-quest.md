@@ -1,6 +1,6 @@
 # Quest thật đầu tiên
 
-Hướng dẫn chạy một quest thật từ đầu tới lúc chờ dấu vua, viết từ lần chạy của P1-11 ngày 2026-11-07 trên Windows 11 với Claude Code 2.1.319: vương quốc mới, lãnh thổ dc1-se-team, quest #5 của [kế hoạch sản phẩm](../ke-hoach-dung-elvaria-0.7.md) §13 ("Kiến tạo `pnpm check`"), hiệp sĩ Claude và người nghiệm thu Claude khác model. Mọi lệnh và tùy chọn: [docs/cli.md](../cli.md). Kết quả của lần chạy và những gì nó làm lộ ra: mục cuối.
+Hướng dẫn chạy một quest thật từ đầu tới lúc chờ dấu vua, viết từ lần chạy của P1-11 ngày 2026-11-07 trên Windows 11 với Claude Code 2.1.319: vương quốc mới, lãnh thổ dc1-se-team, quest #5 của [kế hoạch sản phẩm](../ke-hoach-dung-elvaria-0.8.md) §13 ("Kiến tạo `pnpm check`"), hiệp sĩ Claude và người nghiệm thu Claude khác model. Mọi lệnh và tùy chọn: [docs/cli.md](../cli.md). Kết quả của lần chạy và những gì nó làm lộ ra: mục cuối.
 
 ## 1. Máy và bản build
 
