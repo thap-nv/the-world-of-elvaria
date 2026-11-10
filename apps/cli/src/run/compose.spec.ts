@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 
 import { questFixture } from '../../test/quest.ts';
 import { newKingdom } from '../init.ts';
-import { testIo } from '../../test/cli.ts';
+import { RM_TEMP, testIo } from '../../test/cli.ts';
 import { consoleBell, lineOf } from './bell.ts';
 import { crewOf, toolOptionsOf } from './crew.ts';
 import { plotsOver, processHostOf } from './plots.ts';
@@ -194,7 +194,7 @@ describe('plots over PlotManager', () => {
         }),
       ).toEqual([]);
     } finally {
-      await rm(dir, { recursive: true, force: true });
+      await rm(dir, RM_TEMP);
     }
   });
 

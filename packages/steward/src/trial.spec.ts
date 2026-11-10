@@ -17,7 +17,7 @@ import { TerritorySchema } from '@elvaria/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { git, gitPlots, gitRepoWith } from './__fixtures__/git-plots.ts';
-import { bench, questPayload, tickUntil } from './__fixtures__/kingdom.ts';
+import { RM_TEMP, bench, questPayload, tickUntil } from './__fixtures__/kingdom.ts';
 import type { Bench } from './__fixtures__/kingdom.ts';
 import type { Plots, Steward } from './types.ts';
 
@@ -28,7 +28,7 @@ const folders: string[] = [];
 afterEach(async () => {
   await running?.stop();
   await current?.remove();
-  await Promise.all(folders.splice(0).map((made) => rm(made, { recursive: true, force: true })));
+  await Promise.all(folders.splice(0).map((made) => rm(made, RM_TEMP)));
   running = undefined;
   current = undefined;
 });

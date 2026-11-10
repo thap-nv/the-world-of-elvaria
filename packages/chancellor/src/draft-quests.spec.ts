@@ -20,7 +20,7 @@ let dir: string;
 beforeEach(async () => {
   dir = await mkdtemp(path.join(tmpdir(), 'elvaria chancellor ạ '));
 });
-afterEach(() => rm(dir, { recursive: true, force: true }));
+afterEach(() => rm(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }));
 
 function speak(answers: readonly Answer[], choice: ChancellorChoice = NATIVE, timeout_ms?: number) {
   const runner = scriptedRunner(answers);
