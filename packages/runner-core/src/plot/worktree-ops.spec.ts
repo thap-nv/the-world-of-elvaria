@@ -6,6 +6,7 @@ import { fromPortable, pathExists } from '@elvaria/store';
 import type { Plot } from '@elvaria/domain';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST, commitFile, git, gitRepo, questId, territoryAt } from '../__fixtures__/git-repo.ts';
 import { plotCommitMessage } from './commit-message.ts';
 import { createPlotManager } from './plot-manager.ts';
@@ -15,7 +16,7 @@ let root = '';
 beforeAll(async () => {
   root = await mkdtemp(path.join(tmpdir(), 'elvaria plot ops '));
 });
-afterAll(() => rm(root, { recursive: true, force: true }));
+afterAll(() => rm(root, RM_TEMP));
 
 const forgotten: string[] = [];
 const remember: ForgetWorktree = (worktree) => {
@@ -52,7 +53,7 @@ describe('status and touched', () => {
 
     expect(await plots().status(plot)).toEqual({ dirty: true, ahead: 1, branch: 'quest/q_20261107_a2b3c4' });
     expect(await plots().touched(plot)).toEqual(['README.md', 'docs/new.md', 'src/app.ts', 'src/feature.ts']);
-  }, 30_000);
+  });
 
   it('say nothing for plots without git, and list a folder plot whole', async () => {
     const kingdom = path.join(root, 'kingdom');
@@ -90,7 +91,7 @@ describe('commitAll', () => {
       'src/app.ts',
     ]);
     expect(await plots().status(plot)).toMatchObject({ dirty: false, ahead: 1 });
-  }, 30_000);
+  });
 
   it("reports a commit the territory's own hook refuses, and leaves the changes in place", async () => {
     const { repo, plot, worktree } = await preparedPlot('hooked repo', 'e6f7g8');
@@ -103,7 +104,7 @@ describe('commitAll', () => {
 
     expect(outcome).toEqual({ status: 'refused', detail: 'lint failed: src/app.ts' });
     expect(await plots().status(plot)).toMatchObject({ dirty: true, ahead: 0 });
-  }, 30_000);
+  });
 });
 
 describe('release', () => {
@@ -126,7 +127,7 @@ describe('release', () => {
     // Again after a crash between the two steps: nothing to remove, the CLIs forget once more.
     expect(await plots().release(plot)).toEqual({ ok: true, value: { removed: false, forget_failures: [] } });
     expect(forgotten).toEqual([worktree, worktree]);
-  }, 30_000);
+  });
 
   it('refuses a dirty worktree, and reports a forget that fails without failing the release', async () => {
     const { plot, worktree } = await preparedPlot('dirty repo', 'g8h9j0');
@@ -143,7 +144,7 @@ describe('release', () => {
       ok: true,
       value: { removed: true, forget_failures: ['claude purge: exit 1'] },
     });
-  }, 30_000);
+  });
 
   it('a released quest prepared again gets its branch back, commits and fork point included', async () => {
     const { repo, plot, worktree } = await preparedPlot('revive repo', 'h9j0k1');
@@ -156,5 +157,5 @@ describe('release', () => {
     expect(again).toMatchObject({ ok: true, value: { created: true, plot } });
     expect(await plots().status(plot)).toEqual({ dirty: false, ahead: 1, branch: 'quest/q_20261107_h9j0k1' });
     expect(await plots().touched(plot)).toEqual(['src/part.ts']);
-  }, 30_000);
+  });
 });

@@ -5,6 +5,7 @@ import path from 'node:path';
 import { pathExists } from '@elvaria/store';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST, commitFile, git, gitRepo, questId, territoryAt } from '../__fixtures__/git-repo.ts';
 import { createPlotManager } from './plot-manager.ts';
 import { PLOT_RECORD_FILE } from './plot-record.ts';
@@ -18,7 +19,7 @@ beforeAll(async () => {
   kingdom = path.join(root, 'my kingdom');
   await mkdir(kingdom);
 });
-afterAll(() => rm(root, { recursive: true, force: true }));
+afterAll(() => rm(root, RM_TEMP));
 
 const forgotten: string[] = [];
 let manager = createPlotManager({ kingdom: '.', host: TEST_HOST });
@@ -67,7 +68,7 @@ describe('the scratch plot of a judge (ADR 0022)', () => {
     // The fixture's commit took the quest plot's set.txt along: the branch's own change.
     expect(await manager.touched(made.value.plot)).toEqual(['set.txt', 'src/sum.mjs']);
     expect(await manager.scratchOf(quest, territory)).toBe(scratch);
-  }, 60_000);
+  });
 
   it('is made fresh for each judge, moves to the base and back, and goes dirty or not', async () => {
     const { repo, territory, quest, main } = await questOn('fresh', 'b2c3d4');
@@ -92,7 +93,7 @@ describe('the scratch plot of a judge (ADR 0022)', () => {
     expect(git(repo, 'worktree', 'list', '--porcelain').match(/^worktree /gm)).toHaveLength(2);
     // Nothing done in the scratch plot reached the quest's branch.
     expect(git(repo, 'show', `quest/${quest.id}:src/sum.mjs`)).toBe('export const sum = (a, b) => a + b;');
-  }, 60_000);
+  });
 
   it('says why it cannot be made: no quest plot, a folder in the way, a setup that fails', async () => {
     const repo = await gitRepo(path.join(root, 'refusals'));
@@ -112,7 +113,7 @@ describe('the scratch plot of a judge (ADR 0022)', () => {
       ok: false,
       error: { reason: 'setup_failed', log_path: setupLogOf(scratchIdOf(quest.id)) },
     });
-  }, 60_000);
+  });
 
   it('has none on a folder territory', async () => {
     const folder = territoryAt(path.join(root, 'docs'), { vcs: { type: 'none' } });

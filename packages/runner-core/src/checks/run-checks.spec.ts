@@ -6,6 +6,7 @@ import { TerritorySchema } from '@elvaria/domain';
 import { acquireLock, inKingdom } from '@elvaria/store';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST } from '../__fixtures__/git-repo.ts';
 import { exclusiveLockOf, runCheck, runChecks, toVerdictCheck } from './run-checks.ts';
 import type { ChecksRequest } from './run-checks.ts';
@@ -32,8 +33,8 @@ beforeAll(async () => {
       '}, Number(wait));',
     ].join('\n'),
   );
-}, 30_000);
-afterAll(() => rm(root, { recursive: true, force: true }));
+});
+afterAll(() => rm(root, RM_TEMP));
 
 const territoryWith = (checks: unknown[]) =>
   TerritorySchema.parse({
@@ -86,7 +87,7 @@ describe('runChecks', () => {
       duration_ms: runs[1]!.duration_ms,
       log_path: '.runs/q_20261107_a1b2c3-1/checks/unit.log',
     });
-  }, 30_000);
+  });
 
   it("runs a check's commands in order until one fails, as CI's && does (P1-20)", async () => {
     await resetTrace();
@@ -141,7 +142,7 @@ describe('runChecks', () => {
     expect(lines).toHaveLength(4);
     // Whoever started first ended before the other started.
     expect(lines[1]!.replace('end ', '')).toBe(lines[0]!.replace('start ', ''));
-  }, 60_000);
+  });
 
   it('waits for the exclusive lock, and fails the check when it is never freed', async () => {
     const target = inKingdom(kingdom, exclusiveLockOf('dc1'));
@@ -169,7 +170,7 @@ describe('runChecks', () => {
     setTimeout(() => void held.value.release(), 300);
     const waited = await runChecks(request(e2e, ['x.ts']), TEST_HOST, { lock_wait_ms: 20_000 });
     expect(waited[0]).toMatchObject({ pass: true, exit_code: 0 });
-  }, 60_000);
+  });
 
   it('kills the running check and starts no other when its signal aborts (P1-25)', async () => {
     await resetTrace();
@@ -192,7 +193,7 @@ describe('runChecks', () => {
     ]);
     expect(await log(runs[0]!.log_path)).toContain('elvaria: stopped before its end');
     expect(await trace()).not.toContain('start after');
-  }, 60_000);
+  });
 });
 
 describe('runCheck', () => {
@@ -212,5 +213,5 @@ describe('runCheck', () => {
     expect(await log(run.log_path)).toBe(
       '$ node step.mjs hang 0 60000\nran hang\n\nelvaria: stopped after 500 ms\n\n$ node step.mjs cleanup\nran cleanup\n',
     );
-  }, 30_000);
+  });
 });

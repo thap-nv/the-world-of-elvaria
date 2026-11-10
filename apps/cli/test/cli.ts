@@ -82,6 +82,10 @@ export const run = (io: TestIo, ...argv: string[]): Promise<number> => runCli(ar
 /** Everything printed so far, both streams, one string: for `toContain` checks. */
 export const printed = (io: TestIo): string => [...io.printed.out, ...io.printed.err].join('\n');
 
+// On Windows a child that just ended, or the indexer, may hold a temp folder a moment (EBUSY, EPERM): rm retries,
+// back-off up to 5.5 s (P1-39).
+export const RM_TEMP = { recursive: true, force: true, maxRetries: 10, retryDelay: 100 } as const;
+
 export interface TempDir {
   readonly root: string;
   remove(): Promise<void>;
@@ -89,7 +93,7 @@ export interface TempDir {
 
 export async function tempDir(): Promise<TempDir> {
   const root = await mkdtemp(path.join(tmpdir(), 'elvaria cli ạ '));
-  return { root, remove: () => rm(root, { recursive: true, force: true }) };
+  return { root, remove: () => rm(root, RM_TEMP) };
 }
 
 /** A kingdom founded through the CLI itself, at `<dir>/kingdom`. */

@@ -33,7 +33,8 @@ Dữ kiện về CLI đã có, đừng tra lại: [cli-facts](../../docs/referen
 - Claude Code 2.1.319 tự khóa Edit/Write trên `.git`, `.husky`, `.claude`, `.vscode`… (37 tên) trước mọi allow rule; `dontAsk` biến thành từ chối trần, luật lãnh thổ không mở được ([spike Claude](../../docs/spikes/claude-2026-11.md) "Bổ sung (P1-24, ghi ở P1-28)").
 - Usage của Claude đếm cả `cache_read_input_tokens` (85–90 % số đếm); trần token của cầu dao cân nó qua `countedTokens` (implementation-plan §3.12, P1-23), đừng cộng thẳng.
 - Gọi `agy` từ Git Bash: đối số bắt đầu bằng `/` bị đổi thành đường dẫn Windows; đặt `MSYS_NO_PATHCONV=1` ([spike Antigravity](../../docs/spikes/antigravity-2026-11.md) §0).
-- Windows: tiến trình con vừa bị kill vẫn giữ thư mục một lúc (`EBUSY`); xóa plot hay thư mục tạm của test bằng `rm` có `maxRetries` (`clearPlot`, `conformance/workspace.ts`).
+- Windows: tiến trình con vừa bị kill vẫn giữ thư mục một lúc (`EBUSY`); xóa plot hay thư mục tạm của test bằng `rm` có `maxRetries` (`clearPlot`, `conformance/workspace.ts`; test dùng `RM_TEMP` của `src/__fixtures__/temp.ts`, P1-39). Test hết giờ để lại git còn chạy trong thư mục, nên `afterAll` gặp `EBUSY` ngay sau đó (`plot/patch.spec.ts`, P1-39).
+- Máy bận (worktree khác chạy test cùng lúc): spec spawn git hay tiến trình vượt mặc định 5 s / 10 s của vitest, nên `runner-core` đặt `testTimeout` và `hookTimeout` 60 s như các package spawn khác. Đừng chờ một khoảng cố định rồi khẳng định: chờ điều kiện (vòng hỏi có hạn), hay ở Quản sự dùng `tickUntil`/`settled` của `steward/src/__fixtures__/kingdom.ts`, chờ phiên giả và việc ngoài nhịp kết thúc theo thời gian thật rồi mới tăng đồng hồ giả (P1-39).
 - `.git/info/exclude` không che file với Prettier: file sinh theo lần chạy trong plot (`.agents/`) lọt vào `format:check` của lãnh thổ (P1-16).
 
 ## Test

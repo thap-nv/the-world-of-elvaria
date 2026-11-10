@@ -5,6 +5,7 @@ import process from 'node:process';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST } from '../__fixtures__/git-repo.ts';
 import { goneWithin, treeScript } from '../__fixtures__/tree.ts';
 import { childEnvOf, runProgram } from './program.ts';
@@ -13,7 +14,7 @@ let dir = '';
 beforeAll(async () => {
   dir = await mkdtemp(path.join(tmpdir(), 'elvaria program '));
 });
-afterAll(() => rm(dir, { recursive: true, force: true }));
+afterAll(() => rm(dir, RM_TEMP));
 
 describe('childEnvOf', () => {
   it('drops every GIT_* variable, whatever its case, and keeps the rest', () => {

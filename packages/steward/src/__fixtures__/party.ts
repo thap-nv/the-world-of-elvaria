@@ -10,7 +10,7 @@ import type { SpawnRequest } from '@elvaria/runner-core';
 
 import { leavingRunners } from './deliver.ts';
 import { gitPlots, gitRepoWith, onRepo } from './git-plots.ts';
-import { CAST, bench, questPayload } from './kingdom.ts';
+import { CAST, RM_TEMP, bench, questPayload } from './kingdom.ts';
 import type { Plots, Steward } from '../types.ts';
 import type { Bench, CastMember, Plays } from './kingdom.ts';
 
@@ -117,7 +117,7 @@ export async function partyBench(
     remove: async () => {
       await steward.stop();
       await kingdom.remove();
-      await rm(repo, { recursive: true, force: true });
+      await rm(repo, RM_TEMP);
     },
   };
 }

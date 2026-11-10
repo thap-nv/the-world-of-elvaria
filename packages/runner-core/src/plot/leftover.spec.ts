@@ -6,13 +6,14 @@ import path from 'node:path';
 import { pathExists } from '@elvaria/store';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { clearLeftover } from './leftover.ts';
 
 let root = '';
 beforeAll(async () => {
   root = await mkdtemp(path.join(tmpdir(), 'elvaria leftover '));
 });
-afterAll(() => rm(root, { recursive: true, force: true }));
+afterAll(() => rm(root, RM_TEMP));
 
 /** A directory link as pnpm makes it: a junction on Windows (no privilege needed), a symlink elsewhere. */
 const link = (target: string, at: string) =>
