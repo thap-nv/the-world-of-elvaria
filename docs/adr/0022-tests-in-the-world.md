@@ -2,7 +2,7 @@
 
 - Status: accepted · 2026-11-06
 - Amends: [ADR 0008](0008-separation-of-duties.md) (verifier tools), [ADR 0011](0011-one-judge-class-per-tribe.md) (ritual chosen by kind)
-- Related: [implementation-plan.md](../implementation-plan.md) §3.15, §9.1 item 29; [product plan 0.7](../ke-hoach-dung-elvaria-0.7.md) §5 "Test trong thế giới"
+- Related: [implementation-plan.md](../implementation-plan.md) §3.15, §9.1 item 29; [product plan 0.8](../ke-hoach-dung-elvaria-0.8.md) §5 "Test trong thế giới"
 
 ## Context
 

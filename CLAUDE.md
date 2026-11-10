@@ -5,15 +5,15 @@ Guide for AI agents (and people) working in this repo. Read it all before changi
 
 ## Dự án là gì / What this is
 
-Elvaria là một thế giới fantasy low-poly chạy trên máy cá nhân (Windows và macOS); mỗi AI agent là một nhân vật có nghề, nhận việc thật (code, tài liệu, nghiên cứu) trên những repo người dùng gắn vào, làm trong worktree riêng, và được một nhân vật khác nghiệm thu trong một phiên mới. Lõi là một tiến trình Node (Quản sự) điều phối Claude Code và Antigravity CLI ở chế độ headless; trạng thái là file trong một thư mục kingdom ngoài repo; thế giới 3D chỉ nghe event log. Kế hoạch sản phẩm: [docs/ke-hoach-dung-elvaria-0.7.md](docs/ke-hoach-dung-elvaria-0.7.md) (mục 2 — 13 nguyên tắc — là bất biến). Kế hoạch triển khai: [docs/implementation-plan.md](docs/implementation-plan.md).
+Elvaria là một thế giới fantasy low-poly chạy trên máy cá nhân (Windows và macOS); mỗi AI agent là một nhân vật có nghề, nhận việc thật (code, tài liệu, nghiên cứu) trên những repo người dùng gắn vào, làm trong worktree riêng, và được một nhân vật khác nghiệm thu trong một phiên mới. Lõi là một tiến trình Node (Quản sự) điều phối Claude Code và Antigravity CLI ở chế độ headless; trạng thái là file trong một thư mục kingdom ngoài repo; thế giới 3D chỉ nghe event log. Kế hoạch sản phẩm: [docs/ke-hoach-dung-elvaria-0.8.md](docs/ke-hoach-dung-elvaria-0.8.md) (mục 2 — 17 nguyên tắc — là bất biến; mục 14 là chặng tự cường: thế giới tự đo, tự học, tự lập kế hoạch và tự dựng các giai đoạn sau). Kế hoạch triển khai: [docs/implementation-plan.md](docs/implementation-plan.md).
 
-**Trạng thái hiện tại: xem cột Trạng thái ở §8.** Nhiều task chạy song song, mỗi task một nhánh `feat/<id>` trong một worktree riêng (§8 "Chạy song song"): task của phiên là task ghi trong tên nhánh; nếu nhánh không nói, lấy dòng `chưa làm` đầu tiên mà mọi task cần trước đã xong. Cách làm một task:
+**Trạng thái hiện tại: xem cột Trạng thái ở §8.** Nhiều task chạy song song, mỗi task một nhánh `feat/<id>` trong một worktree riêng (§8 "Chạy song song"): task của phiên là task ghi trong tên nhánh; nếu nhánh không nói, lấy dòng `chưa làm` đầu tiên mà mọi task cần trước đã xong. Sau giai đoạn 1 là chặng tự cường: task `PS-…` (bảng riêng ở §8, cơ chế ở §3.16, ADR 0023–0028), nhánh `feat/ps-<số>`. Cách làm một task:
 
 1. Mở bảng task ở [docs/implementation-plan.md](docs/implementation-plan.md) §8, đọc đúng một dòng: task, file chạm, điều kiện xong. Task được mở bằng một commit `docs: start <id>` trên `main`, đặt ô Trạng thái `đang làm (nhánh feat/<id>)`; nếu ô chưa đổi, đổi nó trong commit đầu của nhánh.
 2. Đọc các mục kế hoạch và ADR mà dòng đó (và phần code bạn sắp sửa) trỏ tới, cùng các dòng §11 nhắc tới task. Luật riêng của từng vùng code nằm ở [.claude/rules/](.claude/rules/) (domain, runner, hooks) và tự nạp khi bạn chạm file của vùng đó. Dữ kiện về CLI nằm ở [docs/reference/cli-facts-2026-11-06.md](docs/reference/cli-facts-2026-11-06.md) và hai spike ([Claude](docs/spikes/claude-2026-11.md), [Antigravity](docs/spikes/antigravity-2026-11.md); spike thắng khi hai bên khác nhau); đừng tra lại điều đã có ở đó, trừ khi phiên bản CLI đã đổi.
 3. Một phiên làm một task, trên nhánh `feat/<id>` tách từ `main`. Commit triển khai mang code, test, README và tài liệu đổi theo. Nếu thực tế khác kế hoạch, sửa kế hoạch trong cùng commit và thêm một dòng §11 "<id> (…), chỗ thực tế khác kế hoạch, chờ người dùng chốt" liệt kê từng chỗ khác và các đề xuất ngoài phạm vi; người dùng chốt sau đó bằng một dòng §11 mới. Kế hoạch không nói tới một chi tiết trong phạm vi task (hình dạng một kiểu, tên một trường, chỗ đặt một file, cách test) thì chọn cách đơn giản nhất khớp ADR, làm tiếp và ghi lựa chọn vào dòng §11 đó; chỉ dừng lại hỏi khi lựa chọn đổi một ADR, đổi hợp đồng dữ liệu ngoài phạm vi task, hay tốn mana. Xem cả §10 (câu hỏi còn mở).
 4. Xong thì một commit riêng `docs: mark <id> done in the implementation plan` đổi ô Trạng thái thành `xong (<ngày>, <hash commit triển khai>)`.
-5. Trước khi merge: cập nhật nhánh bằng `git merge origin/main`, **không rebase** (hash ở ô Trạng thái phải còn đúng); file sinh ra bị conflict thì lấy một bên rồi chạy lại generator; `pnpm check`; CI xanh 3 OS rồi mới merge PR (merge commit). Chi tiết: §8 "Chạy song song".
+5. Trước khi merge: cập nhật nhánh bằng `git merge origin/main`, **không rebase** (hash ở ô Trạng thái phải còn đúng); file sinh ra bị conflict thì lấy một bên rồi chạy lại generator; `pnpm check` xanh ở máy rồi mới mở PR và merge (merge commit). CI trên GitHub không chạy ở mỗi PR nữa (chốt 2026-11-10): chạy tay khi cần kiểm ba hệ điều hành, ở Actions → CI → Run workflow trên nhánh cần kiểm (implementation-plan §7). Chi tiết: §8 "Chạy song song".
 
 ## Bản đồ repo / Repo map
 
@@ -137,7 +137,7 @@ Trước khi sửa các file sau, đọc file đó, test của nó và ADR liên
 - Đọc hoặc ghi `~/.claude/`, `~/.gemini/`, `~/.codex/` của người dùng từ code (cấu hình theo lần chạy đi qua `--settings` / `GEMINI_CLI_HOME` / tương đương, trong `.runs/`).
 - Thêm script `.sh`, `.ps1`, `.cmd`, `.bat`; dùng `shell: true`.
 - Truyền `process.env` nguyên khối vào tiến trình con; đưa secret vào prompt, journal, log hay event.
-- Cho Elvaria quyền `git push` hoặc merge tự động (giai đoạn 1); dùng `--dangerously-skip-permissions`, `--bare` hay `--worktree` của CLI; parse transcript của CLI.
+- Cho Elvaria quyền `git push` hoặc merge tự động (giai đoạn 1; từ PS-08 chỉ Quản sự, theo đường giao hàng của ADR 0023, nhân vật thì không bao giờ); dùng `--dangerously-skip-permissions`, `--bare` hay `--worktree` của CLI; parse transcript của CLI.
 - Rebase một nhánh task; dùng `git stash` trần hay `git stash pop` (stash dùng chung giữa mọi worktree).
 - Sửa `design/**` (bản gốc v0.2, giữ nguyên; thiết kế đổi trong `ui-kit`/`ui`, bản bàn giao mới vào thư mục mới) hoặc `docs/ke-hoach-dung-elvaria-*.md` (kế hoạch sản phẩm, mọi phiên bản; người dùng sửa).
 - Sửa file ngoài phạm vi task. Nếu thấy cần, ghi thành đề xuất trong commit hoặc vào implementation-plan.
@@ -162,7 +162,7 @@ Trước khi sửa các file sau, đọc file đó, test của nó và ADR liên
 ## Definition of done
 
 - Test cho thay đổi, chạy xanh: lint, format, typecheck, unit, boundaries, schemas drift, docs:gen drift, docs:check, i18n:check (`pnpm check`).
-- Chạy được trên Windows **và** macOS (CI matrix xanh); ca riêng của một OS có test riêng.
+- Chạy được trên Windows **và** macOS: ca riêng của một OS có test riêng. CI matrix chạy tay khi cần, không còn là cổng của từng PR; task chạm vùng nhạy hệ điều hành (`runner-*`, `hooks`, plot, kill tree, `store`) thì nêu trong báo cáo để chủ nhân quyết có chạy CI không.
 - README của package chạm vào vẫn đủ 4 mục *Does* / *Does not* / *Depends on* / *How to test* và nói đúng code.
 - ADR mới hoặc cập nhật nếu đổi một quyết định đã ghi; `glossary.json` cập nhật (rồi `pnpm docs:gen`) nếu thêm thuật ngữ.
 - Cột Trạng thái của task trong [docs/implementation-plan.md](docs/implementation-plan.md) §8 đã đổi; kế hoạch đã sửa và §11 có dòng "chờ người dùng chốt" nếu thực tế khác.

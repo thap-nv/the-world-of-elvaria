@@ -5,7 +5,7 @@
 
 ## Context
 
-Principle 13 ([product plan 0.7](../ke-hoach-dung-elvaria-0.7.md)): every character is a new top-level session that loads only what it needs from the journal, scripture and gazetteer; long memory lives on disk; the Chancellor splits work so one quest fits one context; what a machine can do does not call a model. The product plan (§7, "Script, sub-agent hay phiên mới") defines three tiers.
+Principle 13 ([product plan 0.8](../ke-hoach-dung-elvaria-0.8.md)): every character is a new top-level session that loads only what it needs from the journal, scripture and gazetteer; long memory lives on disk; the Chancellor splits work so one quest fits one context; what a machine can do does not call a model. The product plan (§7, "Script, sub-agent hay phiên mới") defines three tiers.
 
 Spike P1-02: under `-p`, an agent from `--agents <file>` gets exactly its `tools`, runs on its `model` (counted in the session's `modelUsage`) and stops at `maxTurns`. But the parent can resume a stopped agent with `SendMessage` for more turns; an allow rule for `Agent(apprentice)` does not stop other agent types; a `SubagentStart` hook that exits 2 does not block; `SubagentStop` does not fire when `maxTurns` stops the agent. A deny rule `Agent(<type>)` and a `PreToolUse` hook on the `Agent` tool both block.
 
