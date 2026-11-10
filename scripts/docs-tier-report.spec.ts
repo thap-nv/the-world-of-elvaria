@@ -140,7 +140,7 @@ describe('the report from a kingdom on disk', () => {
     await writeFile(path.join(kingdom, 'events', 'sandbox', '2026-11-07.jsonl'), jsonl(DAY), 'utf8');
     await writeFile(path.join(kingdom, 'events', 'notes.txt'), 'not a day', 'utf8');
   });
-  afterEach(() => rm(kingdom, { recursive: true, force: true }));
+  afterEach(() => rm(kingdom, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }));
 
   it("reads the kingdom's own days, line by line, and leaves out lines the schema refuses", () => {
     expect(readKingdomEvents(kingdom)).toHaveLength(DAY.length);
