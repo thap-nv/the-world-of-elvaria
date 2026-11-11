@@ -79,6 +79,9 @@ function denyOf(rule: string): string[] {
 export function agySettingsOf(policy: ToolPolicy, letter?: string): AgySettings {
   const tools = new Set(policy.tools);
   const unique = (rules: string[]): string[] => [...new Set(rules)];
+  // agy has no search tool (ANTIGRAVITY_CAPABILITIES.search): git's read-only search stands in for Glob and Grep, a
+  // shell or not (P1-53). The prefix also matches `git grep -O<pager>`; the hook, which sees the whole line, refuses it.
+  const search = (policy.search_commands ?? []).map((command) => `command(${command})`);
   // The letter lives in the kingdom, outside the plot, where agy reads and writes nothing unless a rule says so.
   const own =
     letter === undefined
@@ -86,7 +89,7 @@ export function agySettingsOf(policy: ToolPolicy, letter?: string): AgySettings 
       : [`read_file(${letter.replaceAll('\\', '/')})`, `write_file(${letter.replaceAll('\\', '/')})`];
   return {
     permissions: {
-      allow: unique([...policy.allow.flatMap((rule) => allowOf(rule, tools)), ...own]),
+      allow: unique([...policy.allow.flatMap((rule) => allowOf(rule, tools)), ...search, ...own]),
       deny: unique([...policy.deny.flatMap(denyOf), ...GENERATED]),
       ask: [],
     },

@@ -6,8 +6,10 @@ import { recordHandoverStart, stopGate } from '../handover.ts';
 import { lawViolation, protectedViolation, refusalText } from '../claude/tool-events.ts';
 import { plotPath } from '../claude/tools.ts';
 import { modelSlugOf } from '../claude/translate.ts';
+import { grepOptionViolation, plainLineProblem, plainSearchReason, searchCommandOf } from '../search.ts';
 import { agyInputOf } from './input.ts';
 import { AGY_ASK_TOOLS, agyToolCallOf, missingClassTools } from './tools.ts';
+import type { ToolCall } from '../claude/tools.ts';
 import type { HookContext } from '../context.ts';
 import type { Decision, Translation } from '../draft.ts';
 import type { AgyInput } from './input.ts';
@@ -28,20 +30,38 @@ const SUBAGENT_REASON = 'sub-agents are not allowed for this tribe yet; do the w
 const ASK_REASON =
   'nobody answers inside this session; write your question in the Question section of the handover letter and end the session';
 
+/**
+ * Why a class lacking the tools of `name` may not use it. A shell line that calls a search command the policy grants
+ * for Glob and Grep may run when it is one plain call (P1-53): agy's prefix rule cannot see what else the line does.
+ */
+function classViolation(name: string, missing: readonly string[], call: ToolCall, ctx: HookContext) {
+  const { command } = call;
+  if (command !== undefined && searchCommandOf(command, ctx.searchCommands) !== undefined) {
+    const problem = plainLineProblem(command);
+    return problem === undefined ? undefined : `${name}: ${plainSearchReason(problem, ctx.searchCommands)}`;
+  }
+  const searching =
+    command === undefined || ctx.searchCommands.length === 0
+      ? ''
+      : `; to search files, run ${ctx.searchCommands.join(' or ')} alone`;
+  return `${name}: your class has no ${missing.join(' or ')}${searching}; do the work with the tools you have`;
+}
+
 /** Why an Elvaria rule (not a territory law) stops this tool, if one does. */
-function ruleViolation(name: unknown, subagent: string | undefined, ctx: HookContext): string | undefined {
-  if (subagent !== undefined) return `${subagent}: ${SUBAGENT_REASON}`;
+function ruleViolation(name: unknown, call: ToolCall, ctx: HookContext): string | undefined {
+  if (call.subagent !== undefined) return `${call.subagent}: ${SUBAGENT_REASON}`;
   if (typeof name !== 'string') return undefined;
   if (AGY_ASK_TOOLS.includes(name)) return `${name}: ${ASK_REASON}`;
+  // Whatever the class: agy's `command(git grep)` prefix also matches `git grep -O<pager>` (P1-53).
+  const option = call.command === undefined ? undefined : grepOptionViolation(call.command);
+  if (option !== undefined) return `${name}: ${option}`;
   const missing = missingClassTools(name, ctx.tools);
-  return missing === undefined
-    ? undefined
-    : `${name}: your class has no ${missing.join(' or ')}; do the work with the tools you have`;
+  return missing === undefined ? undefined : classViolation(name, missing, call, ctx);
 }
 
 function preToolUse(input: AgyInput, ctx: HookContext): Translation {
   const call = agyToolCallOf(input.toolName, input.toolArgs);
-  const rule = ruleViolation(input.toolName, call.subagent, ctx) ?? protectedViolation(call, ctx.laws);
+  const rule = ruleViolation(input.toolName, call, ctx) ?? protectedViolation(call, ctx.laws);
   const reason = rule ?? lawViolation(call, ctx.laws);
   if (reason === undefined) return translation([], { decision: DEFER_TO_SETTINGS });
   const source = rule === undefined ? 'law of this territory' : 'rule';

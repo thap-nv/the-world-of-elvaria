@@ -16,8 +16,8 @@ import type { RunContext } from './run-context.ts';
 export const POLICY_FILE = 'policy.json';
 /**
  * `secrets` and `tools` (P1-10), `apprentice_models` (P1-17), `laws.read_only_paths` and `cli_protected_paths`
- * (P1-24), `laws.patch_paths` and `patch_file` (P1-28) are optional fields added later: a v1 reader without them
- * still reads the rest. Since P1-49 every file has `cli_protected_paths`, with git's own folder in it.
+ * (P1-24), `laws.patch_paths` and `patch_file` (P1-28), `search_commands` (P1-53) are optional fields added later: a
+ * v1 reader without them still reads the rest. Since P1-49 every file has `cli_protected_paths`, with git's own folder.
  */
 export const POLICY_VERSION = 1;
 
@@ -44,6 +44,11 @@ export interface PolicyFile extends RunContext {
    * refuse to a path of patch_paths, so the change goes into a patch the Steward applies instead of a question.
    */
   readonly patch_file?: string;
+  /**
+   * ToolPolicy.search_commands (P1-53): the hook lets a class without a shell run them, one plain call per line, and
+   * refuses `git grep` options that run a program or reach past the tracked files. Absent: none were granted.
+   */
+  readonly search_commands?: readonly string[];
 }
 
 /** What only the adapter knows, for the policy file. */
@@ -62,11 +67,9 @@ const protectedOf = (extras: PolicyExtras): string[] => [
   ...new Set([...(extras.cli_protected_paths ?? []), ...GIT_PATHS]),
 ];
 
-export const policyFileOf = (
-  ctx: RunContext,
-  policy: Pick<ToolPolicy, 'tools' | 'laws'>,
-  extras: PolicyExtras = {},
-): PolicyFile => ({
+type PolicyPart = Pick<ToolPolicy, 'tools' | 'laws' | 'search_commands'>;
+
+export const policyFileOf = (ctx: RunContext, policy: PolicyPart, extras: PolicyExtras = {}): PolicyFile => ({
   version: POLICY_VERSION,
   ...ctx,
   tools: [...policy.tools],
@@ -79,13 +82,14 @@ export const policyFileOf = (
   ...listOf('apprentice_models', extras),
   cli_protected_paths: protectedOf(extras),
   ...(policy.laws.patch_paths.length === 0 ? {} : { patch_file: PATCH_FILE }),
+  ...(policy.search_commands === undefined ? {} : { search_commands: [...policy.search_commands] }),
 });
 
 /** Writes the run's policy file and returns its native path, for `hookCommand(policyFile)`. */
 export async function writePolicyFile(
   runDir: string,
   ctx: RunContext,
-  policy: Pick<ToolPolicy, 'tools' | 'laws'>,
+  policy: PolicyPart,
   extras: PolicyExtras = {},
 ): Promise<string> {
   const file = path.join(runDir, POLICY_FILE);

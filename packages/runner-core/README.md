@@ -17,7 +17,8 @@
   per call (a pool that wakes on the second probe).
 - Builds `ToolPolicy` from class + territory laws + role (`toolPolicyOf`): `tools` (Claude `--tools`), `allow` and
   `deny` rules in Claude Code syntax, the apprentice (`Agent(apprentice)` in a class is a flag), and the laws the
-  hook enforces. A verifier never has Edit, Write or NotebookEdit, except in its scratch plot (`scratch: true`,
+  hook enforces; `search_commands` (`git grep`, `git ls-files`) for a class with Glob or Grep on a git plot when
+  the tribe's CLI has no search tool (`cli_search: false`, the adapter's `capabilities.search`, P1-53). A verifier never has Edit, Write or NotebookEdit, except in its scratch plot (`scratch: true`,
   ADR 0022, P1-20): Edit and Write even when its class denies them, `git status`/`git restore`, the territory's exclusive checks (the Steward holds their lock for its session), and a deny rule on
   `git commit` plus the law `NO_HISTORY_COMMAND` (commit, merge, reset, branch, stash, worktree…) for the hook; a character with a shell may run the
   territory's non-exclusive checks, and one that also edits files its `commands.generate` (P1-24); every session
@@ -38,7 +39,9 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   checks with the end of each failing one's log the caller read and masked (`PromptCheck.log_tail`, P1-25; both in `src/prompt/checks.ts`), the letter, the diff, or where to read it when the caller has none, and where the last judge of the
   run stopped when it left a `partial` verdict, P1-15); both list the shell commands
   their `ToolPolicy` allows, one per call (`prompts/shell.md`, P1-11), after the shell they run in when the caller
-  names it (`PromptInput.shell`, the adapter's `capabilities.shell` for this OS, P1-40); an assignee that edits files also reads
+  names it (`PromptInput.shell`, the adapter's `capabilities.shell` for this OS, P1-40), then the search commands
+  of a tribe whose CLI has no search tool with how to call them, to a class without a shell too
+  (`prompts/search.md`, P1-53); an assignee that edits files also reads
   the territory's read-only paths and the generators its shell may run (`prompts/read-only.md`, P1-24), and its
   patch paths with the patch convention (`prompts/patch.md`, P1-28: `PATCH_FILE` at the root of the plot);
   `buildChancellorPrompt` for the
@@ -64,7 +67,8 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   and the plot already come in each `SpawnRequest`. `adapterOfModule(module, kit)` checks the imported module
   (`createAdapter` exported, called without throwing) and the runner it returns (`runnerProblems`: the kit's tribe
   and adapter, every capability, `spawn`, `probe`, `doctor`), one sentence per problem; the optional `shell` is
-  checked only when given (`shellProblems`, P1-40), here and in the suite's `capabilities` check.
+  checked only when given (`shellProblems`, P1-40), and so is `search` (`searchProblems`, P1-53), here and in the
+  suite's `capabilities` check.
 - Proves in the conformance suite that a judge in its scratch plot, whose class allows commit and push, has both
   refused (`scratch_commit`, fakes only, P1-20).
 - Gives a tribe without a JSON Schema flag its structured reply (`src/structured/`, implementation-plan §3.14
@@ -164,7 +168,8 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   `read_only_paths`, P1-24), the adapter's `apprentice_models` when it has an apprentice (the models up to the
   character's own, §3.12, P1-17), and `cli_protected_paths`: the adapter's, the paths its CLI refuses to write
   whatever the rules say (P1-24), then `GIT_PATHS` for every tribe (P1-49), so the hook refuses a write tool there
-  first; `laws.patch_paths` (only on a git territory) and, when there are some, `patch_file` (P1-28).
+  first; `laws.patch_paths` (only on a git territory) and, when there are some, `patch_file` (P1-28);
+  `search_commands` when the tool policy has them (P1-53).
   The `apprentice` prompt tells the assignee to leave the apprentice's `model` out for lookups, name a stronger
   one only for reasoning, and to stop and write the unfinished child work in the letter when an apprentice is
   cut at its turn limit or runs long.

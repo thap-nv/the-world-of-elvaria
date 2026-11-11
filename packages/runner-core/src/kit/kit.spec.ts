@@ -149,4 +149,13 @@ describe('runnerProblems', () => {
       'capability shell names beos, not one of win32, darwin, linux',
     ]);
   });
+
+  it('takes a runner that says nothing of search, or true or false, and nothing else (P1-53)', () => {
+    const fake = { ...createFakeRunner({ tribe: kit.tribe.id }), adapter: kit.tribe.adapter };
+    const withSearch = (search: unknown) =>
+      runnerProblems({ ...fake, capabilities: { ...fake.capabilities, search } }, kit);
+    expect(withSearch(false)).toEqual([]);
+    expect(withSearch(true)).toEqual([]);
+    expect(withSearch('git')).toEqual(['capability search is not true or false']);
+  });
 });

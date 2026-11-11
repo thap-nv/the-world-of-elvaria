@@ -90,6 +90,15 @@ describe('the conformance suite', () => {
     expect(await problemOf({ win32: '' })).toMatch(/^capability shell is malformed/);
   });
 
+  it('passes a runner that says whether its CLI searches, and fails one that says it otherwise (P1-53)', async () => {
+    const problemOf = async (search: unknown) =>
+      (await runConformance(fake({ capabilities: { search: search as never } }))).find(
+        ({ id }) => id === 'capabilities',
+      )?.problem;
+    expect(await problemOf(false)).toBeUndefined();
+    expect(await problemOf('no')).toMatch(/^capability search is malformed/);
+  });
+
   it('reports a runner that throws instead of answering', async () => {
     const broken: ConformanceTarget = {
       name: 'broken',

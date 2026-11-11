@@ -35,13 +35,17 @@ export function shellProblems(shell: unknown): string[] {
   ]);
 }
 
+/** What is wrong with `capabilities.search` (P1-53): optional like `shell`; when given, true or false. */
+export const searchProblems = (search: unknown): string[] =>
+  search === undefined || typeof search === 'boolean' ? [] : ['capability search is not true or false'];
+
 function capabilityProblems(capabilities: unknown): string[] {
   if (!isRecord(capabilities)) return ['capabilities is not an object'];
   const flags = ADAPTER_CAPABILITIES.filter((name) => typeof capabilities[name] !== 'boolean').map(
     (name) => `capability ${name} is not true or false`,
   );
   const auth = Array.isArray(capabilities.auth) ? [] : ['capability auth is not a list'];
-  return [...flags, ...auth, ...shellProblems(capabilities.shell)];
+  return [...flags, ...auth, ...shellProblems(capabilities.shell), ...searchProblems(capabilities.search)];
 }
 
 /** What is wrong with the runner a file built for `kit`'s tribe; empty when it keeps the AgentRunner shape. */

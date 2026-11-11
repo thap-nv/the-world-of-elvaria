@@ -6,12 +6,14 @@
   runner (implementation-plan §3.7, ADR 0006, 0018): `createAntigravityRunner({tribe, launch, hook,
 terms_acknowledged_at, env, pools?, timeout_ms?})`. `hook` is `hookCommand()` of `@elvaria/hooks`, handed over
   by `apps/cli`. Capabilities for agy 1.5.2: everything but `compact` and `subagent`; `resume` is
-  `--conversation <id>`, checked on a real machine.
+  `--conversation <id>`, checked on a real machine; `search: false`, since no tool searches files under `-p`
+  (P1-53), so runner-core gives a class with Glob or Grep `git grep` and `git ls-files`.
 - Per session: reads `agy --version` into `<run_dir>/agy-version.txt`; writes `settings.json` (the
   `ToolPolicy` as agy prefix rules: `command(pnpm test)`, `write_file(./)`, deny `read_file(.env)` and
   `write_file(.git/)` (P1-49: agy 1.5.4 wrote `.git/` itself; never `write_file(.git)`, a prefix that would deny
   `.gitignore` too, so a worktree's `.git` file is the hook's, through `cli_protected_paths`), plus the
-  handover letter outside the plot), `policy.json` (runner-core's `writePolicyFile`, with the class's `tools`:
+  handover letter outside the plot, plus `command(git grep)` and `command(git ls-files)` for the policy's
+  `search_commands`, a shell or not, P1-53), `policy.json` (runner-core's `writePolicyFile`, with the class's `tools`:
   agy has no `--tools`, so the hook refuses a tool the class lacks, such as `search_web` without `WebSearch`,
   and the names of the session's secrets), `schema.json` for
   `--json-schema`; writes into the plot `.agents/hooks.json` (`node [flags] elvaria-hook.mjs <Event>` for

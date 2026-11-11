@@ -41,6 +41,13 @@ export type AdapterCapabilities = AdapterFlags & {
    * where it was measured; an OS left out, or an adapter file older than the field, makes the prompt say nothing.
    */
   readonly shell?: Readonly<Partial<Record<ShellPlatform, string>>>;
+  /**
+   * Whether the CLI has tools of its own to search file names and contents in its headless mode (P1-53). false: a
+   * class with Glob or Grep searches the files git tracks with the read-only `git grep` and `git ls-files` in its
+   * command tool instead (runner-core's ToolPolicy `search_commands`); agy has no search tool under `-p`. Absent, as in
+   * an adapter file older than the field: it has them.
+   */
+  readonly search?: boolean;
 };
 
 const isShellPlatform = (platform: string): platform is ShellPlatform =>

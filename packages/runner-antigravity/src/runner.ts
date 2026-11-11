@@ -47,6 +47,9 @@ export const ANTIGRAVITY_CAPABILITIES: AgentRunner['capabilities'] = {
   // `run_command` runs through powershell.exe on Windows (spike P1-12a §1 row 16; P1-35: `pnpm.ps1` under the
   // Execution Policy). Not measured on macOS or Linux, so not declared there: the prompt then names no shell (P1-40).
   shell: { win32: 'Windows PowerShell (powershell.exe)' },
+  // No tool searches files under `-p` (spike P1-12a, the tools a model reported): a class with Glob or Grep gets
+  // runner-core's `git grep` and `git ls-files` instead, as `command(...)` rules (settings.ts, P1-53).
+  search: false,
 };
 
 export interface AntigravityOptions {
