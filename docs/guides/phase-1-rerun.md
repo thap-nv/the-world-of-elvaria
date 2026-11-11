@@ -1,6 +1,6 @@
 # Chạy lại mốc giai đoạn 1 (P1-50) — bản nháp
 
-> **Nháp, tạm dừng 2026-11-10 22:30.** Bước 1 (đề xuất 10 quest, 0 mana) đã đưa chủ nhân; chủ nhân tạm dừng P1-50 để sửa hạ tầng của Elvaria trước, nên chưa chốt gì, chưa tốn mana, chưa sửa gì trong vương quốc. File này giữ những gì phiên đầu đã đo và đề xuất, để phiên sau làm tiếp; báo cáo thật của lần chạy (bảng mốc như [báo cáo giai đoạn 1](phase-1-report.md) §1) sẽ thay nó.
+> **Nháp, tạm dừng 2026-11-10 22:30.** Bước 1 (đề xuất 10 quest, 0 mana) đã đưa chủ nhân; chủ nhân tạm dừng P1-50 để sửa hạ tầng của Elvaria trước, nên chưa chốt gì, chưa tốn mana, chưa sửa gì trong vương quốc. 2026-11-11 chủ nhân thêm việc (8) của dc1, CI chỉ chạy tay (quest Q11). File này giữ những gì phiên đầu đã đo và đề xuất, để phiên sau làm tiếp; báo cáo thật của lần chạy (bảng mốc như [báo cáo giai đoạn 1](phase-1-report.md) §1) sẽ thay nó.
 
 Dòng việc: [implementation-plan](../implementation-plan.md) §8 P1-50. Cách chạy một quest: [first-quest.md](first-quest.md).
 
@@ -12,7 +12,7 @@ Hạ tầng sẽ đổi, nên mọi thứ dưới đây cần kiểm lại trư�
 2. Đọc lại các dòng §11 mới (thay đổi hạ tầng có thể đổi luật chọn người, mana, prompt Tể tướng, schema).
 3. Đo lại mana: `doctor` (đọc log) và `MSYS_NO_PATHCONV=1 agy -p /usage --output-format json` (0 token; thiếu biến này thì Git Bash đổi `/usage` thành đường dẫn và tốn token). Số ở §3 đã cũ; quyết định hết mana (§6) phụ thuộc vào chúng.
 4. Vương quốc: so với bản mốc `<kingdom>/.backup/20261110T220805-p1-50-start/` (kingdom.json, territories, characters, temple, registry); nếu hạ tầng đổi schema, chạy `elvaria migrate` và `doctor` trước.
-5. dc1: phạm vi 7 việc (§4) đọc trên `origin/main` `4a20d91`; nếu main của dc1 đã đổi, đọc lại các file nêu ở đó.
+5. dc1: phạm vi 8 việc (§4) đọc trên `origin/main` `4a20d91`; nếu main của dc1 đã đổi, đọc lại các file nêu ở đó.
 6. Hỏi lại chủ nhân các quyết định ở §8, rồi mới tới đợt 0.
 
 ## 2. Vương quốc lúc tạm dừng
@@ -35,7 +35,7 @@ Tỉ lệ đo được: với Gemini, bucket 5 giờ và bucket tuần tăng g�
 
 Token lịch sử (cách đếm P1-23) để ước lượng: quest lẻ dc1 hạng D/E, người làm Sonnet 75–230k, người chấm Flash 100–275k; phần hạng C 150–320k; hợp đồng của pháp sư Opus 220–380k; đội hạng B của P1-37 khoảng 2,8M.
 
-## 4. Phạm vi 7 việc trên dc1 (đọc code, `origin/main` 4a20d91)
+## 4. Phạm vi 8 việc trên dc1 (đọc code, `origin/main` 4a20d91; việc 8 thêm 2026-11-11)
 
 | # | Việc | Lớp | File chính | Migration | Vùng "đọc trước khi sửa" | Cỡ |
 |---|---|---|---|---|---|---|
@@ -46,6 +46,7 @@ Token lịch sử (cách đếm P1-23) để ước lượng: quest lẻ dc1 h�
 | 5 | Làm tiếp 2 → 5 | shared, API, web, i18n, docs | `FOCUS_MAX` (`constants.ts:28`), trigger `enforce_focus_limit` (`0001_limits_and_grants.sql`, cần migration mới), `focus.controller.ts` (`maxItems` 4 → 7), `whats-new.module.css:274`, chuỗi có số 2 (`vi.json`/`en.json` :115, :636), e2e `member-journey.spec.ts:53-58`; `ban-do-nang-luc-se.md` :14, :152, :154 | có | `constants.ts`, `infra/db/**`, `openapi.json` | nhỏ |
 | 6 | "Lịch sử xác nhận" gọn | web | `MemberDetail.tsx:303-369`, `members.module.css:610-684`; e2e `confirmations.spec.ts:274-360` | không | không | nhỏ–vừa |
 | 7 | /team: Leader/Sub-leader thấy tên L4+ | web (API tùy chọn), i18n | `team/TeamPage.tsx`, `team-model.ts` (`askWho`), `team-coverage.service.ts`; Leader/Sub-leader đã đọc được mọi mức qua `GET /dashboard` (`team.view`) | không | không (dùng lại `team.view`) | nhỏ–vừa |
+| 8 | CI chỉ chạy tay | infra, docs | `.github/workflows/ci.yml` (hôm nay `on: push` vào `main` và `pull_request`; 4 job `checks` có `audit`, `integration`, `e2e`, `docker`); README "Kiểm tra trước khi push" (câu "CI chạy đủ…") và "Deploy"; `docs/runbook.md` "Deploy an update"; `docs/deploy-ubuntu.md` §9; `CLAUDE.md` (convention test, Definition of done); ADR 0003 ("coverage … is a CI gate") và 0004 ("fail CI") | không | không | nhỏ |
 
 Chung: CSP `style-src 'self'` (`infra/docker/nginx/security-headers.conf`), không style inline trong HTML chèn vào; mọi lỗi console làm e2e đỏ; ngân sách JS 250 KB gzip; repo chưa có editor, markdown hay sanitizer. Việc 1, 2, 4, 5, 7 đổi một ADR đã ghi của dc1 (0011; 0013/0018; 0016/0017; 0005/0013; 0009).
 
@@ -63,8 +64,9 @@ Chung: CSP `style-src 'self'` (`infra/docker/nginx/security-headers.conf`), khô
 | Q8 | dc1 | **Tài liệu**: `docs/testing.md` mục "E2E: lỗi hay gặp" (CSP, WebKit và `<select>`, 320/390 px, `expectNoRawKeys`, chạy một file e2e) | document | E | **gemini** (quill) → người chấm claude | 0,2–0,35M |
 | Q9 | elvaria | **Bậc script**: `todo-scan` trên `packages/*/src`, `apps/*/src`, `scripts` | analyze | F | — | 0 |
 | Q10 | elvaria | **Nghiên cứu** (quest của lần hết mana): dữ kiện nào của [cli-facts](../reference/cli-facts-2026-11-06.md) đã lỗi thời so với hai spike, §3, §11; đầu vào cho P1-51 | research | D | **gemini**: ember (Opus high qua agy), `reassign --to ember`; người chấm ilse | 0,4–1M token agy |
+| Q11 | dc1 | (8) CI chỉ chạy tay (thêm 2026-11-11) | build, tag `infra` + `docs` | E | claude hoặc gemini (kael) | 0,15–0,3M; chỉ check `format` (file `.yml`, `.md`) |
 
-Tổng: 6–10M token; Claude tuần +10–25 điểm, Gemini tuần +20–35 điểm; dc1 tuần tự (`max_concurrent` 1) khoảng 6–8 giờ, mỗi quest code có e2e 10–12 phút. Không đặt quest tài liệu trên Elvaria vì `docs/**` thuộc P1-51.
+Tổng: 6–10M token (Q11 thêm 0,15–0,3M); Claude tuần +10–25 điểm, Gemini tuần +20–35 điểm; dc1 tuần tự (`max_concurrent` 1) khoảng 6–8 giờ, mỗi quest code có e2e 10–12 phút. Không đặt quest tài liệu trên Elvaria vì `docs/**` thuộc P1-51.
 
 Mặc định đề xuất cho lời nói với Tể tướng (một `say` mỗi việc; Tể tướng không có tool, chỉ thấy id lãnh thổ, nên lời nói mang sẵn quyết định của chủ nhân):
 
@@ -75,6 +77,7 @@ Mặc định đề xuất cho lời nói với Tể tướng (một `say` mỗi
 - (5) mọi vai, áp ngay kỳ đang mở, migration mới cho trigger, ADR mới. **Chờ chọn**: có sửa `ban-do-nang-luc-se.md` không.
 - (6) mỗi xác nhận một dòng, ghi chú cắt một dòng bấm để mở, 5 dòng mới nhất + "Xem tất cả", dòng đã hoàn tác thu gọn; cả trang và drawer.
 - (7) tên người có mức **đã xác nhận** L4+, mọi mảng, không phụ thuộc opt-in, chỉ sao cho L5, member vẫn không nhận tên từ server; ADR sửa 0009.
+- (8) lời chủ nhân (2026-11-11): "khi merge code chỉ cần chạy xanh ở local là được. CI chỉ cần chạy khi cần thiết để verify trước khi deploy. Testcase, e2e … vẫn cần update nếu logic hay UI thay đổi". Mặc định: `ci.yml` chỉ còn `workflow_dispatch`, giữ nguyên 4 job, không xóa workflow (chạy tay được trên nhánh bất kỳ); "xanh ở local" là `pnpm check`, thêm `pnpm test:integration`, `pnpm e2e` (hay `e2e:docker`) và lệnh drift openapi/content khi đụng vùng của chúng, theo bảng Change impact; trước mỗi lần deploy chạy CI tay trên `main` và chờ xanh (cả `audit` và build Docker image), ghi vào README "Deploy", runbook "Deploy an update", `deploy-ubuntu.md` §9; `CLAUDE.md` nói rõ CI không chạy ở PR không bớt test: logic hay UI đổi thì unit, integration, e2e đổi theo trong cùng PR; ADR 0003, 0004 sửa tại chỗ (gate chạy ở máy và ở lần CI tay), không ADR mới. Ngoài tầm nhân vật: nếu `main` của dc1 có branch protection hay ruleset bắt check CI, chủ nhân bỏ check bắt buộc trong cài đặt GitHub, nếu không PR sau Q11 không merge được (phiên chưa kiểm được: máy không có `gh`). Sau này, khi dc1 bật `delivery` `pr_merge` (PS-08), `required_checks` của dc1 phải rỗng vì CI không chạy ở PR.
 
 ## 6. Lần cố tình hết mana
 
@@ -97,7 +100,8 @@ Vương quốc thật không có nhân vật Gemini nào được chạy `node`.
 3. Phương án hết mana (§6), và chủ nhân có dùng Claude/GPT trong Antigravity không.
 4. Kiểm (c) của P1-49 trong vương quốc tạm (§7).
 5. Tạm nâng `max_concurrent` của dc1 và tộc gemini lên 2 trong lần chạy (như P1-16; cho tải thật để đo `max_background`, (c)–(e) của P1-47; cái giá: nhánh song song cùng sửa locale), trả về 1 sau.
+6. Q11: các mặc định của (8) ở §5, và `main` của dc1 có bắt check CI trên GitHub không (có thì bỏ trước khi merge Q11).
 
-Thứ tự đợt đề xuất (mỗi đợt tốn mana hỏi trước): đợt 0 sửa vương quốc (backup, script, diff, `territory list`, `doctor`); đợt 1 mười lần `say`, chủ nhân đọc nháp rồi `quest confirm` (sửa nháp bằng `quest edit` ghi là can thiệp); đợt 2 Quản sự với Q3, Q5, Q6, Q8, Q9; đợt 3 Q1, Q2, Q4, Q7; đợt 4 hết mana (Q10); riêng: kiểm (c).
+Thứ tự đợt đề xuất (mỗi đợt tốn mana hỏi trước): đợt 0 sửa vương quốc (backup, script, diff, `territory list`, `doctor`); đợt 1 mười một lần `say`, chủ nhân đọc nháp rồi `quest confirm` (sửa nháp bằng `quest edit` ghi là can thiệp); đợt 2 Quản sự với Q11 trước (nhỏ, chỉ check `format`; merge sớm để PR của các quest dc1 sau không chờ CI), rồi Q3, Q5, Q6, Q8, Q9; đợt 3 Q1, Q2, Q4, Q7; đợt 4 hết mana (Q10); riêng: kiểm (c).
 
 Đo trong lần chạy: tải việc nền và `max_background` ((c), (d), (e) của P1-47), phần một phiên của mỗi cửa sổ và `SESSION_SHARE_DEFAULT_PCT` ((d) của P1-48), token người chấm theo hạng ((a) của P1-48), một dòng `rateLimitType` thật nếu gặp; ghi lại nếu gặp chỗ cho (a), (b) của P1-49.
