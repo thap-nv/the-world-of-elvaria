@@ -12,6 +12,8 @@ Ngày: 2026-11-11 · Trạng thái: đã duyệt. Tài liệu này là tầng ch
 2. Bài thử của mốc PS-07: lý do trạm xá và dòng chi tiết của `doctor` thành mã cộng chuỗi VI/EN.
 3. PS-01 mở ngay, trong lúc P1-50 tạm dừng; các task PS khác chờ P1-51 đóng giai đoạn 1.
 4. Tể tướng phân loại thư theo lịch, mỗi ngày một lần trước bản tấu, chỉ khi có thư đang chờ.
+5. Thêm PS-21 (đồ thị code bằng graphify, 0 mana), PS-21b (đồ thị trong lập kế hoạch) và PS-21c (đồ thị tài liệu, tốn mana, chỉ mở khi A/B của PS-21 có lợi); bỏ bản đồ Node của bản đầu. Chủ nhân cho phép cài thư viện Python của graphify, và cho graphify tự cài vào `~/.claude`, `~/.gemini`; cách cài đã chốt hẹp hơn quyền đó (§11): chỉ `graphify install` toàn cục cho các phiên Claude Code dựng Elvaria, không `--project`, không `graphify hook install`, không chế độ strict. Nhân vật không dùng bản cài đó, chỉ có các lệnh hỏi của PS-21.
+6. Nghề cần dò code mà chưa có shell được mở Bash trên Claude ngay ở PS-21, chỉ cho lệnh hỏi đồ thị, không chờ A/B. Việc cần đồ thị của một nghề không có lệnh đồ thị thì phần dò code giao cho một nhân vật có lệnh đó. Danh sách nghề do phiên điều phối rà từ `classes.json` (trinh sát, thư ký; mục PS-21), chủ nhân đã chốt (§11).
 
 ## Điều code cho thấy
 
@@ -33,7 +35,7 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
 | 12 | Quản sự không import được `chancellor` hay `i18n` (`packages/config/boundaries.mjs`); `Background` gắn theo `QuestId`; phiên ngoài `Sessions` không được tính chỗ của tộc | Bản tấu và phân loại thư đi qua cổng tiêm vào `StewardDeps`; phân loại chạy ngoài nhịp |
 | 13 | `draftCommands` (`packages/chancellor/src/commands.ts`) chỉ chuyển các trường của draft thành `create_quest` | Tấu trình được chép vào mô tả của quest kế hoạch |
 | 14 | `elvaria migrate` chỉ thêm file và entry registry còn thiếu; giá trị đổi trong một entry đã có thì không | Task đổi registry có mục "Vương quốc đang chạy" |
-| 15 | Vài file đã sát trần 300 dòng: `steward/src/types.ts` 300, `domain/src/dispatch/plan-tick.ts` 298, `steward/src/steward.ts` 286, `steward/src/sessions/request.ts` 280, `steward/src/sessions/open.ts` 279 | PS-01b, PS-03, PS-05 tách file trước khi thêm |
+| 15 | Vài file đã sát trần 300 dòng: `steward/src/types.ts` 300, `domain/src/dispatch/plan-tick.ts` 298, `steward/src/steward.ts` 286, `steward/src/sessions/request.ts` 289 (sau P1-53; 280 lúc khảo sát), `steward/src/sessions/open.ts` 279 | PS-01b, PS-03, PS-05 tách file trước khi thêm; PS-21 chờ PS-03 tách `types.ts` (mục "Thứ tự") |
 
 ## Mẫu dùng lại
 
@@ -43,7 +45,7 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
 - **Lệnh hộp thư mới**: `payloads.ts` và `inbox-command.ts`; handler ở `packages/steward/src/inbox/` và `apply.ts`; CLI ghi bằng `sendCommand` (`apps/cli/src/quest/send-command.ts`).
 - **Lệnh CLI mới**: file ở `apps/cli/src/<nhóm>/`, mục trong `COMMANDS` (`commands.ts`), khóa `cli.<nhóm>.*` ở `vi.json` và `en.json`, rồi `pnpm docs:gen`. Mẫu nhỏ: `tribe/disable.ts`, `territory/list.ts`; bảng in bằng `printListing`.
 - **Bước nghi thức mới**: `RITUAL_STEPS` (`packages/domain/src/constants.ts`), `rituals.json`, một mục `## <id>` cùng thứ tự trong `packages/runner-core/prompts/ritual-steps.md`, bảng `ritual_steps` của glossary.
-- **Tài liệu sinh mới**: `scripts/docs-<x>.mjs` và spec, `kingdomGenerators` trong `scripts/docs-gen.mjs`, `scripts/docs-gen.spec.ts`, `GENERATED_FILES` của `.claude/hooks/guard-edit.mjs`, `scripts/README.md`, hai chỗ "năm file" trong `CLAUDE.md`.
+- **Tài liệu sinh mới**: `scripts/docs-<x>.mjs` và spec, `kingdomGenerators` trong `scripts/docs-gen.mjs`, `scripts/docs-gen.spec.ts`, `GENERATED_FILES` của `.claude/hooks/guard-edit.mjs`, `scripts/README.md`, các chỗ kể file sinh trong `CLAUDE.md` (mục hook `guard-edit` ghi số file, hôm nay "sáu file"; mục "Cấm" kể tên từng file).
 - **Test**: bench `packages/steward/src/__fixtures__/kingdom.ts` (`plays.work`, `plays.verdicts`); git thật qua `git-plots.ts`. Không thêm kịch bản vào `FAKE_SCENARIOS`: mỗi kịch bản là một ca của bộ test hợp đồng cho mọi adapter.
 
 ## Thứ tự
@@ -52,9 +54,9 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
 |---|---|---|
 | 1 | PS-01 | Mở ngay; 0 mana; toàn file mới |
 | 2 | PS-01b, PS-02, PS-04b | Sau P1-51 và P1-52 (tách kế hoạch triển khai, chốt 2026-11-11). PS-01b và PS-02 cùng đụng snapshot prompt, `event-types.ts`, `inbox/apply.ts`; PS-02 và PS-04b cùng `commands.ts`, locale, glossary: nhánh merge sau giữ cả hai phía, sinh lại snapshot và file sinh |
-| 3 | PS-05, PS-03 | Hai vùng code khác nhau |
-| 4 | PS-04, PS-03b | PS-04 sau PS-05: cả hai, và PS-01b trước đó, nối tiếp nhau trên `record.ts` và `QUEST_CHANGE` |
-| 5 | PS-06, rồi PS-06b | PS-06 cần PS-05 |
+| 3 | PS-05, PS-03, PS-21 | PS-05 và PS-03 khác vùng code. PS-21 sau PS-01b, vì A/B của nó đo bằng lượt đọc theo file; PS-21 và PS-05 cùng đụng snapshot prompt, schema territory, `packages/steward/src/sessions/`: nhánh merge sau giữ cả hai phía, sinh lại snapshot và file sinh. PS-21 và PS-03 cùng nối vào Quản sự, và `packages/steward/src/types.ts` (chỗ của `StewardDeps`) đã 300 dòng: PS-03 tách nó; PS-21 làm phép thử trước, phần code của nó merge `origin/main` sau khi commit tách của PS-03 đã vào `main`, không tự tách file đó |
+| 4 | PS-04, PS-03b, PS-21c | PS-04 sau PS-05: cả hai, và PS-01b trước đó, nối tiếp nhau trên `record.ts` và `QUEST_CHANGE`. PS-21c cần PS-21 và bộ chạy ngoài nhịp của PS-03, và chỉ mở khi A/B của PS-21 có lợi; tốn mana |
+| 5 | PS-06, rồi PS-06b và PS-21b | PS-06 cần PS-05. PS-21b cần PS-21 và PS-06: cùng `packages/chancellor`, prompt pháp sư và `planIssuesOf` |
 | 6 | PS-07 | Sau cùng; chạy thật, tốn mana; cần P1-53 (nhân vật gemini tìm được trong repo) |
 
 ## PS-01 — Sổ đo, phần đọc
@@ -79,7 +81,7 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
 
 - **Mục tiêu**: từ nay mỗi lượt để lại đủ dấu vết cho sổ đo.
 - **Đọc trước**: §3.16.1; mục PS-01; `packages/runner-core/src/prompt/build-prompt.ts` và các spec snapshot; `packages/steward/src/sessions/request.ts`, `record.ts`.
-- **Trước tiên**: tách `packages/steward/src/sessions/request.ts` (280 dòng).
+- **Trước tiên**: tách `packages/steward/src/sessions/request.ts` (289 dòng).
 - **Thêm**:
   - `buildPrompt` trả thêm danh sách khối `{id, chars}`.
   - `promptOf` gom dấu vết nạp (file kinh và số dòng, id bí kíp, các khối) và ghi vào dòng mở phiên như một trường tùy chọn của `QUEST_CHANGE` (tiền lệ: `sequels`). `attempt_log` không đổi.
@@ -111,7 +113,7 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
 - **Dùng lại**: `zonedTime(tz)` và `SCHEDULE_DEFAULTS` của domain; `WorldState` và `reduce`; cổng `Bell` làm mẫu cổng tiêm; `recover()` làm mẫu dựng lại trạng thái từ log.
 - **Thêm**:
   - `packages/domain/src/schedule/`: hàm thuần "việc nào tới giờ" từ `kingdom.schedule`, giờ địa phương và lần chạy gần nhất. Lần chạy gần nhất đọc từ event log, không có file riêng.
-  - Bộ chạy việc theo lịch trong Quản sự, hai kiểu: **trong nhịp** cho việc ngắn không gọi model (bản tấu); **ngoài nhịp** cho việc gọi model (một việc một lúc, dừng được khi Quản sự dừng; PS-03b dùng).
+  - Bộ chạy việc theo lịch trong Quản sự, hai kiểu: **trong nhịp** cho việc ngắn không gọi model (bản tấu); **ngoài nhịp** cho việc gọi model (một việc một lúc, dừng được khi Quản sự dừng; PS-03b và PS-21c dùng, nên bộ chạy nhận việc bất kỳ, không viết riêng cho phân loại thư).
   - `kingdom.schedule.digest {enabled, at}`.
   - `attentionQueue(state)` ở `packages/domain/src/world/`: dấu đang chờ, câu hỏi, trạm xá, thư chờ chủ nhân, quest nháp, cảnh báo mana, quest đã xong còn giữ vùng mà có quest khác đang chờ (PS-05). Mỗi mục có nhóm (phải quyết để việc chạy tiếp, hay chờ được), mã khuyến nghị tra từ một bảng, và lệnh CLI tương ứng.
   - Cổng `Digest` trong `StewardDeps`, hiện thực ở `apps/cli/src/run/`: dựng Markdown qua i18n, ghi `digest/<ngày>.md`, rung chuông một lần. Lệnh `elvaria digest`; event `digest.written`; thư vào `WorldState`.
@@ -151,6 +153,56 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
   - `chancellor.md` và prompt pháp sư khai vùng; `quest add --scope`, `quest edit --scope`.
 - **Test**: domain 100 %; hai quest vùng rời chạy song song với `max_concurrent 2`; vùng giao thì chờ tới khi quest kia được lưu trữ; hai quest mở cùng vùng không khóa nhau; một đội có các phần rời vùng đi tới quest ghép.
 
+## PS-21 — Đồ thị code của lãnh thổ
+
+- **Mục tiêu**: nhân vật hỏi đồ thị code của lãnh thổ thay vì tự dò lại từ đầu ở mỗi quest: ít lượt đọc, ít token, đúng chỗ hơn. Đo ngày 2026-11-11 trên event log 08–11/11: 67 phiên người làm có sửa file, 57 % lần gọi tool diễn ra trước lần sửa đầu tiên (trung vị 52 %), gần như toàn là đọc. Dựng đồ thị code không tốn mana.
+- **Đọc trước**: [ADR 0013](../adr/0013-treasury-and-redaction.md), [ADR 0015](../adr/0015-node-only-scripts.md), [ADR 0017](../adr/0017-one-quest-one-context-three-tiers.md), [ADR 0021](../adr/0021-tribe-contract.md); mục PS-01b; các dòng §11 ngày 2026-11-11 về PS-21 (quyền về graphify; bản viết lại; lần chốt ba đề xuất; nghề được mở Bash); P1-53 là mẫu cho lệnh chỉ đọc (`search_commands` trong `toolPolicyOf`, `packages/hooks/src/search.ts`, `packages/runner-core/prompts/search.md`); `packages/runner-core/src/prompt/build-prompt.ts`; `packages/runner-claude/src/argv.ts`; `packages/runner-antigravity/src/{launch,context-file,run-files}.ts`; `packages/steward/src/sessions/request.ts`, `packages/steward/src/background.ts`; `packages/runner-core/src/policy/tool-policy.ts`; `packages/registry-default/classes.json`; README của graphify (Graphify-Labs/graphify trên GitHub).
+- **Đã chốt** (chủ nhân, 2026-11-11): dùng graphify, toàn diện hơn bản đầu của PS-21; bỏ bản đồ Node. Phần code không gọi model (task này); phần tài liệu tốn mana (PS-21c); dùng đồ thị khi lập kế hoạch (PS-21b). Nghề cần dò code mà chưa có shell được mở Bash chỉ cho lệnh đồ thị ngay ở task này, không chờ A/B; việc cần đồ thị của nghề không có lệnh đồ thị thì phần dò code giao cho một nhân vật có lệnh đó.
+- **Điều README cho biết** (đọc ngày 2026-11-11; graphify ra bản mới gần như mỗi ngày, phép thử kiểm lại trên bản đang cài):
+  - Phần code dựng bằng tree-sitter, không model, khoảng 40 ngôn ngữ; cạnh `calls`, `imports`, `inherits`; nút ở mức hàm. Agent hỏi theo nhu cầu: `graphify query` trả một đồ thị con có ngân sách (mặc định 2000, sâu 2), thêm `path` và `explain`; `GRAPH_REPORT.md` là bản tổng quan.
+  - Mặc định ghi `graphify-out/` trong repo; README nhắc `GRAPHIFY_OUT` và `--graph` nhưng không nói đủ. Log truy vấn ở `~/.cache/graphify-queries.log`, tắt bằng `GRAPHIFY_QUERY_LOG_DISABLE=1`; `GRAPHIFY_BACKEND=none` tắt mọi model; README nói không có telemetry. Khi không đặt backend, graphify tự dò theo biến môi trường, có cả dịch vụ ngoài, nên Elvaria luôn đặt backend tường minh.
+  - Không có số đo token với agent thật; số gần nhất là độ phủ dữ kiện 82 % so với 70,8 % của cách grep và đọc, trên 6 câu hỏi.
+  - Chế độ strict của hook graphify chặn Read và Grep khi chưa hỏi đồ thị. Elvaria không dùng: chính sách tool của nhân vật vẫn do Elvaria giữ.
+- **Điều code cho thấy**:
+  - Nhân vật Claude chạy với `--setting-sources project,local` (`runner-claude/src/argv.ts`): settings và hook của người dùng trong `~/.claude` không vào phiên của nhân vật.
+  - agy chỉ nạp `.agents/hooks.json` của worktree ([spike agy](../spikes/antigravity-2026-11.md) §4); chưa biết `graphify install` cho Antigravity ghi gì vào `~/.gemini` và agy có nạp nó vào phiên của nhân vật không. Phép thử kiểm bằng `agy -p /hooks` (0 token) và một phiên thử.
+  - agy nhận phần `user` của prompt trên dòng lệnh, trên Windows tối đa 32 767 ký tự (`runner-antigravity/src/launch.ts`), nên khối đồ thị phải ngắn và nằm ở phần `system`.
+  - File sinh ra trong đất của quest từng làm check đỏ ở giai đoạn 1 (`.agents/`), nên đồ thị nằm ngoài đất của quest.
+  - Trên Claude, phiên chỉ có tool Bash khi nghề có một luật `Bash(...)` (`toolPolicyOf`): pháp sư, hiệp sĩ, người lùn, chiêm tinh gia, người nghiệm thu có; trinh sát và thư ký không có luật nào; nhà thơ, sứ thần, thầy tu cấm trần `Bash` (`classes.json`). Nghề có shell còn nhận lệnh check của lãnh thổ (`checkRules`). Trong vương quốc của chủ nhân ngày 2026-11-11, trinh sát và thư ký đều thuộc tộc gemini.
+  - Luật chặn cờ và luật dòng trần của hook P1-53 (`packages/hooks/src/search.ts`) chỉ chạy ở nhánh agy.
+  - Bảng của `Background` (`packages/steward/src/background.ts`) giữ một mục mỗi quest (`checks` hoặc `script`); `StewardDeps` nằm ở `packages/steward/src/types.ts`, đã 300 dòng.
+- **Bước 1, phép thử 0 mana** (`docs/spikes/graphify-<ngày>.md`): cài thư viện graphify, ghim phiên bản. Trên bản sao của dc1 và của Elvaria, ở commit gốc của 3 quest đã đóng dấu mỗi lãnh thổ (với dc1: trong Q3, Q5, Q6, Q8 của P1-50, PR #39–#42), dựng đồ thị code với backend tắt và log truy vấn tắt. Đo: thời gian dựng, và thời gian cập nhật sau một commit; cỡ `graph.json` và `GRAPH_REPORT.md`; với mỗi quest, `graphify query` hỏi bằng tiêu đề và mô tả của quest có trả về các file mà diff thật đã sửa không, và câu trả lời dài bao nhiêu; `path` và `explain` trên một hàm mà diff đã sửa; graphify có ghi gì ngoài thư mục đồ thị không, và `GRAPHIFY_OUT` hay `--graph` có đưa được đồ thị ra ngoài repo không; đường dẫn có dấu cách; Windows, và macOS khi có máy. Chủ nhân chốt đi tiếp ở §11.
+- **Thêm**:
+  - Quản sự dựng đồ thị cho lãnh thổ git có cờ bật, ở commit gốc của quest, ngoài đất của quest (`<kingdom>/.state/graphs/<territory>/<sha>/`, hoặc chỗ phép thử chọn); cập nhật tăng dần từ bản trước, giữ vài bản gần nhất. Việc nền bậc script, không chặn mở phiên: chưa có đồ thị thì phiên mở không có nó. Việc nền này có bảng riêng theo lãnh thổ và commit, cùng luật dừng với `Background` (bảng của `Background` chỉ giữ một mục mỗi quest); không dùng bộ lịch của PS-03. Event `graph.built`, `graph.failed`.
+  - Lệnh chỉ đọc cho người làm và người chấm của cả hai tộc: `graphify query`, `path`, `explain` trỏ vào đồ thị của commit gốc, theo mẫu `search_commands` của P1-53 (lõi giữ danh sách lệnh, adapter dịch thành luật của CLI, hook chặn cờ ghi file, cờ gọi model và đồ thị khác). Không skill, không hook toàn máy.
+  - **Nghề nào nhận lệnh đồ thị** (chủ nhân chốt 2026-11-11: mở ngay, không chờ A/B): một luật theo dữ liệu, như nhau ở mọi tộc, không nêu tên nghề trong lõi (ADR 0016): nghề có `Glob` hoặc `Grep` và không cấm trần `Bash`. Với registry mặc định: pháp sư, hiệp sĩ, người lùn, chiêm tinh gia, người nghiệm thu (đã có shell), cộng trinh sát và thư ký (chưa có shell). Nhà thơ, sứ thần, thầy tu cấm trần `Bash` nên không nhận (khác lệnh tìm của P1-53, vốn là bản dịch của `Grep` mà nghề đã có); Tể tướng không có tool, nhận khối đồ thị dựng sẵn ở PS-21b.
+    - Nghề chưa có shell (trinh sát, thư ký): trên Claude, phiên có thêm tool Bash với đúng ba luật allow của lệnh đồ thị; trên agy, ba luật `command(...)` như lệnh tìm của P1-53. Lõi giữ danh sách lệnh; không thêm vào `allow` của nghề trong registry, vì làm vậy nghề thành có shell và nhận cả lệnh check của lãnh thổ, kể cả khi lãnh thổ tắt cờ. Các nghề này chỉ chạy một lệnh đồ thị trần mỗi dòng (luật dòng trần của P1-53), nay ở cả nhánh Claude của hook.
+    - Hook chặn cờ nguy hiểm của lệnh đồ thị ở cả hai nhánh, với mọi nghề.
+    - Cờ tắt, lãnh thổ không git, hay chưa có đồ thị: không nghề nào nhận lệnh; tool và settings của phiên như hôm nay.
+  - Khối prompt ngắn ở phần `system`: đồ thị ở đâu, hỏi gì, ví dụ; với người chấm: hỏi ai gọi các hàm mà diff sửa. Phần đầu của `GRAPH_REPORT.md`, có trần ký tự, chỉ thêm khi A/B cho thấy lợi.
+  - Env của tiến trình graphify tường minh (ADR 0013): `GRAPHIFY_BACKEND=none`, `GRAPHIFY_QUERY_LOG_DISABLE=1`, không khóa API; `shell: false`.
+  - `doctor` kiểm graphify có trên máy khi một lãnh thổ bật cờ: thiếu là cảnh báo, không phải lỗi (quest vẫn chạy như hôm nay, và `elvaria upgrade` của PS-04b không bị chặn); `doctor --pin` ghim phiên bản như CLI của tộc, lệch thì cảnh báo.
+  - Cờ tùy chọn của lãnh thổ (đề xuất `code_graph`), mặc định tắt; tắt thì prompt không đổi một ký tự.
+  - `elvaria territory graph <id> [--commit <sha>] [--query "<câu>"]`: dựng hoặc hỏi, 0 mana, cho phép thử và cho chủ nhân.
+  - Sổ đo: đếm lượt hỏi đồ thị cạnh lượt đọc theo file của PS-01b; thêm số lần gọi tool trước lần sửa file đầu tiên của mỗi phiên người làm (con số 57 % ở mục tiêu là số đo tay), tính từ event `agent.tool` đã có nên đo được cả log cũ.
+  - Dấu còn mới của gazetteer: gazetteer ghi commit lúc viết ở dòng đầu (chưa có thì không có dấu); khi dựng prompt, Quản sự đếm các commit từ đó tới commit gốc của quest chạm từng thư mục cấp một, và in "N commit đã chạm `<thư mục>` từ `<sha>`" khi N > 0.
+  - `graphify-out/` vào `.gitignore` của Elvaria, để các phiên dựng Elvaria dùng được graphify.
+  - ADR: sau phép thử, khi chủ nhân chốt đi tiếp, viết ADR 0029 (một chương trình ngoài không phải Node do `doctor` kiểm; đồ thị ngoài đất của quest; backend tắt; không strict; cờ mặc định tắt; nghề nào nhận lệnh đồ thị) và sửa tại chỗ ADR 0021 (lệnh đồ thị cạnh lệnh tìm).
+- **Bước cuối, A/B** (tốn mana; hỏi chủ nhân trước và chốt trần mana lúc đó): mỗi tộc một cặp phiên chạy lại một quest dc1 đã đóng dấu trên đất nháp, một phiên có đồ thị, một phiên không; so token, lượt đọc theo file, lượt hỏi đồ thị, số lần gọi tool trước lần sửa đầu, và kết quả. Bật cờ trên lãnh thổ nào là chủ nhân chốt theo số đo (§11); có lợi thì bật cho lãnh thổ Elvaria trước PS-07. Chủ nhân hoãn A/B thì task vẫn xong, cờ để tắt.
+- **Test**: đồ thị dựng ngoài đất, diff và check của quest không đổi; lệnh hỏi đồ thị qua hook, lệnh ghi file hay gọi model bị chặn, ở cả hai tộc (CLI giả); trinh sát tộc claude có tool Bash với đúng ba luật của lệnh đồ thị và không có lệnh check của lãnh thổ, nhà thơ thì không có gì thêm; dòng không trần của một nghề chưa có shell bị hook từ chối ở cả hai tộc; env của tiến trình graphify đúng danh sách; cờ tắt thì snapshot prompt không đổi; máy không có graphify thì quest chạy như hôm nay; repo trong thư mục có dấu cách; Windows và macOS.
+- **Không làm**: bản đồ Node; chế độ strict; skill hay hook toàn máy cho nhân vật; mở Bash cho nghề cấm trần `Bash`, hay cho nghề vừa được mở Bash chạy lệnh nào ngoài lệnh đồ thị; đọc tài liệu bằng model (PS-21c); dùng đồ thị khi lập kế hoạch (PS-21b).
+
+## PS-21c — Đồ thị tài liệu
+
+- **Mục tiêu**: nhân vật, pháp sư và Nghị hội hỏi được các quyết định đã ghi (ADR, kế hoạch, hướng dẫn, nhật ký quyết định) thay vì lật cả file lớn: Q10 của P1-50 đã lật một file 1 MB 25 lần.
+- **Khi nào**: sau PS-21 và PS-03, chỉ khi A/B của PS-21 có lợi. Tốn mana: hỏi chủ nhân trước và chốt trần mana.
+- **Đọc trước**: mục PS-21 và PS-03; [ADR 0009](../adr/0009-mana-model.md), ADR 0013.
+- **Bước 1, phép thử**: dựng phần tài liệu của graphify trên bản sao của Elvaria với từng backend được phép: `claude` CLI của chủ nhân (tốn mana của tộc claude), và model chạy tại máy (Ollama, 0 mana nếu máy đủ sức). Đo mana và thời gian của lần dựng đầu và của một lần cập nhật, và độ đúng trên 10 câu hỏi lấy từ §11 (câu trả lời có trỏ đúng dòng quyết định không). Kiểm cách graphify gọi `claude`: lần gọi không có tool, không nạp settings và hook của người dùng.
+- **Thêm**: việc theo lịch ngoài nhịp (bộ chạy của PS-03), chỉ chạy khi tài liệu đổi từ lần trước, có trần mana mỗi lần và mỗi tuần, dừng khi Quản sự dừng; backend chỉ trong danh sách được phép, không bao giờ để graphify tự dò; đồ thị tài liệu gộp với đồ thị code hay để riêng là do phép thử chọn; lệnh hỏi của PS-21 dùng được cho nó.
+- **Test**: env của tiến trình chỉ có backend đã chọn; không chạy khi tài liệu không đổi; vượt trần thì dừng và ghi event; dừng Quản sự thì việc dừng.
+- **Không làm**: gửi tài liệu tới dịch vụ ngoài tộc của chủ nhân.
+
+
 ## PS-04 — Vùng bảo vệ
 
 - **Mục tiêu**: quest chạm thứ canh giữ thế giới luôn chờ dấu vua và được ưu tiên người chấm mạnh.
@@ -188,6 +240,7 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
   - Mẫu `plan.md` cho pháp sư: khảo sát, quyết định chung, các phần và vùng file, điều kiện xong, điều chưa biết (thành quest thăm dò `research` mà các phần chờ), ước lượng, và một trang tóm tắt cho chủ nhân.
   - `planIssuesOf` thuần, nối vào check `subquests` sẵn có: mỗi phần ghi file có `scope_paths`; các phần không phụ thuộc nhau có vùng rời nhau; check được nêu tên có tồn tại. Hạng, nghề và ước lượng đã là bắt buộc trong schema.
   - Bước nghi thức `check_plan_ready` thêm vào `council_review`: một quest vừa một context, điều kiện xong máy kiểm được, file nóng có cách ghép, điều chưa biết đã có quest thăm dò, không trái một quyết định đã ghi.
+- **Vùng bị ảnh hưởng** (2026-11-11): làm ở PS-21b, từ đồ thị code của PS-21; PS-06 không cần đồ thị.
 - **Test**: kế hoạch chồng vùng bị trả về (`incomplete`) dù người chấm nói gì; kế hoạch qua duyệt chờ đúng một dấu rồi sinh quest con; việc nhỏ không qua Nghị hội.
 - **Vương quốc đang chạy**: sửa `steps` của `council_review` trong registry bằng script có sao lưu.
 - **Đề xuất ngoài phạm vi**: check của Quản sự đỏ thì không mở phiên người chấm, đỡ một phiên cho mỗi kế hoạch hỏng.
@@ -198,11 +251,24 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
 - **Thêm**: `planAccuracyOf` trong `packages/domain/src/metrics/` (vùng khai so với file chạm, ước lượng so với token, số thư, lượt làm lại theo từng phần); `elvaria metrics --plan <quest>`; `quest show` in phần tóm tắt của `plan.md` khi quest kế hoạch chờ dấu.
 - **Test**: một kế hoạch giả có ba phần cho đúng các số; quest không phải kế hoạch thì `--plan` báo lỗi dùng.
 
+## PS-21b — Đồ thị trong lập kế hoạch
+
+- **Mục tiêu**: Tể tướng và pháp sư ước lượng và chia vùng dựa trên code thật. P1-50 thấy Tể tướng ước lượng không biết cỡ file và số file (Q10: 70k token cho một file 1 MB; Q3: 90k cho khoảng 15 file).
+- **Đọc trước**: mục PS-05, PS-06, PS-21; `packages/chancellor/src/**`; `apps/cli/src/say/**`; `packages/registry-default/prompts/mage.md`.
+- **Thêm**:
+  - Trước khi gọi Tể tướng, `elvaria say` hỏi đồ thị bằng câu của chủ nhân (0 mana) và đưa một khối tóm tắt (file, hàm, cỡ file) vào prompt của Tể tướng, để nó ước lượng và gợi ý `scope_paths`. Không có đồ thị, hay câu không khớp gì, thì khối rỗng.
+  - Pháp sư hỏi đồ thị khi lập `plan.md` (lệnh của PS-21); mẫu `plan.md` ghi vùng bị ảnh hưởng của mỗi phần, từ quan hệ gọi và import ngược.
+  - `planIssuesOf` nhận thêm các cạnh giữa file của các phần, tiêm vào từ ngoài (domain không IO): hai phần song song có vùng rời nhau nhưng nối nhau qua lời gọi hay import thành một cảnh báo trong prompt người duyệt, không thành `incomplete`.
+  - Giao việc (chủ nhân chốt 2026-11-11): `chancellor.md` và prompt pháp sư nêu nghề nào có lệnh đồ thị. Việc cần dò cấu trúc code mà nghề chính không có lệnh đồ thị (nhà thơ, sứ thần) thì phần dò code thành một quest riêng cho một nhân vật có lệnh đó, quest kia chờ nó (`depends_on`) và đọc kết quả; không thêm kênh hỏi giữa hai nhân vật. Trước PS-21b, chủ nhân giao tay bằng `quest add --to`.
+- **Test**: Tể tướng giả nhận khối đồ thị; không có đồ thị thì khối rỗng, không lỗi; kế hoạch giả có hai phần song song nối nhau qua lời gọi ra cảnh báo; lãnh thổ tắt cờ thì không đổi gì; snapshot prompt mới.
+- **Không làm**: luật chặn mới; đổi `scopesMeet` của PS-05.
+
+
 ## PS-07 — Mốc giai đoạn 1.5
 
 Chạy thật, tốn mana: hỏi chủ nhân trước khi chạy, và chốt trần mana của lần chạy lúc đó.
 
-- **Chuẩn bị vương quốc**: `elvaria upgrade`; `elvaria migrate`; sửa registry (PS-06); lãnh thổ Elvaria có `protected_paths`, `shared_paths`, `max_concurrent 2`; `delegation`; `schedule.digest` và `schedule.triage`; đủ Tể tướng, pháp sư và hai người chấm khác họ model.
+- **Chuẩn bị vương quốc**: `elvaria upgrade`; `elvaria migrate`; sửa registry (PS-06); lãnh thổ Elvaria có `protected_paths`, `shared_paths`, `max_concurrent 2`; `delegation`; `schedule.digest` và `schedule.triage`; đủ Tể tướng, pháp sư và hai người chấm khác họ model; cờ `code_graph` của lãnh thổ Elvaria theo kết quả A/B của PS-21 (bật thì graphify đã ghim bằng `doctor --pin`).
 - **Chạy**: chủ nhân giao bằng vài câu việc "lý do trạm xá và dòng chi tiết của `doctor` thành mã cộng chuỗi VI/EN" (một mục của giai đoạn 2, §8); theo dõi qua bản tấu.
 - **Xong khi**: chủ nhân chỉ gặp câu hỏi của tấu trình (một lần), một dấu trên kế hoạch, bản tấu và dấu vua.
-- **Báo cáo** `docs/guides/phase-1.5-report.md`: số từ `elvaria metrics`, so với cách phiên điều phối làm ở giai đoạn 1; mỗi lỗ hổng gặp phải là một thư hoặc một dòng §11. Sinh lại `docs/metrics-report.md` và `docs/tier-report.md` bằng `pnpm docs:gen --kingdom <dir>` sau lần chạy (chủ nhân chốt sau PS-01: hai bản đang commit là ảnh chụp của PS-01 và P1-16). Bảng task của giai đoạn 2 do Nghị hội soạn sau mốc này.
+- **Báo cáo** `docs/guides/phase-1.5-report.md`: số từ `elvaria metrics` (khi cờ `code_graph` bật, gồm lượt hỏi đồ thị và số lần gọi tool trước lần sửa đầu), so với cách phiên điều phối làm ở giai đoạn 1; mỗi lỗ hổng gặp phải là một thư hoặc một dòng §11. Sinh lại `docs/metrics-report.md` và `docs/tier-report.md` bằng `pnpm docs:gen --kingdom <dir>` sau lần chạy (chủ nhân chốt sau PS-01: hai bản đang commit là ảnh chụp của PS-01 và P1-16). Bảng task của giai đoạn 2 do Nghị hội soạn sau mốc này.
