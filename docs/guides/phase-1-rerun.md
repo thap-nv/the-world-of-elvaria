@@ -50,7 +50,7 @@ Token lịch sử (cách đếm P1-23) để ước lượng: quest lẻ dc1 h�
 
 Chung: CSP `style-src 'self'` (`infra/docker/nginx/security-headers.conf`), không style inline trong HTML chèn vào; mọi lỗi console làm e2e đỏ; ngân sách JS 250 KB gzip; repo chưa có editor, markdown hay sanitizer. Việc 1, 2, 4, 5, 7 đổi một ADR đã ghi của dc1 (0011; 0013/0018; 0016/0017; 0005/0013; 0009).
 
-## 5. Đề xuất 10 quest (chưa chốt)
+## 5. Đề xuất 11 quest (Q11 đã chốt, các quest khác chưa)
 
 | # | Lãnh thổ | Việc | Dạng | Hạng dự kiến | Tộc người làm | Mana ước lượng |
 |---|---|---|---|---|---|---|
