@@ -73,6 +73,7 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
 - **Giới hạn đã biết, ghi vào báo cáo sinh ra**: check đỏ vì file do Elvaria sinh hiện ra là `output`; `crash` của người chấm gồm cả CLI chết lẫn verdict không hợp lệ; `cancelled` gồm cả nhả lúc khởi động lại lẫn chủ nhân hủy.
 - **Test**: domain 100 % bằng fixture dựng tay; CLI trên một vương quốc tạm (`initKingdom` cộng vài quest, verdict và lệnh ghi tay; `simulateDay` không sinh verdict hay `inbox/done`).
 - **Xong khi**: trên vương quốc thật, ngày 2026-11-08 ra 49 phiên và 19 lượt làm lại; bảng phân loại máy đặt cạnh 12 / 6 / 1 của báo cáo giai đoạn 1, từng chỗ lệch có giải thích ở §11.
+- **Thực tế** (2026-11-11, chi tiết ở §11): "49 phiên" là 49 mục `attempt_log` của ngày (47 phiên của nhân vật, 2 lượt script), lệnh in đúng như vậy; máy ra 19 lượt làm lại, chia 4 / 12 / 3 (hạ tầng / đầu ra / câu hỏi). Bảng nguyên nhân có thêm `unknown` cho chỗ file không nói gì (0 trên dữ liệu thật). Bộ đọc là `apps/cli/src/metrics/read.ts`; lệnh và báo cáo dùng chung các mục của `apps/cli/src/metrics/view.ts`.
 
 ## PS-01b — Sổ đo, phần ghi
 
