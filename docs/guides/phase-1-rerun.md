@@ -1,6 +1,6 @@
 # Chạy lại mốc giai đoạn 1 (P1-50) — bản nháp
 
-> **Nháp, tạm dừng 2026-11-10 22:30.** Bước 1 (đề xuất 10 quest, 0 mana) đã đưa chủ nhân; chủ nhân tạm dừng P1-50 để sửa hạ tầng của Elvaria trước, nên chưa chốt gì, chưa tốn mana, chưa sửa gì trong vương quốc. 2026-11-11 chủ nhân thêm việc (8) của dc1, CI chỉ chạy tay (quest Q11). File này giữ những gì phiên đầu đã đo và đề xuất, để phiên sau làm tiếp; báo cáo thật của lần chạy (bảng mốc như [báo cáo giai đoạn 1](phase-1-report.md) §1) sẽ thay nó.
+> **Nháp, tạm dừng 2026-11-10 22:30.** Bước 1 (đề xuất 10 quest, 0 mana) đã đưa chủ nhân; chủ nhân tạm dừng P1-50 để sửa hạ tầng của Elvaria trước, nên chưa chốt gì, chưa tốn mana, chưa sửa gì trong vương quốc. 2026-11-11 chủ nhân thêm việc (8) của dc1, CI chỉ chạy tay (quest Q11, chạy đầu tiên). File này giữ những gì phiên đầu đã đo và đề xuất, để phiên sau làm tiếp; báo cáo thật của lần chạy (bảng mốc như [báo cáo giai đoạn 1](phase-1-report.md) §1) sẽ thay nó.
 
 Dòng việc: [implementation-plan](../implementation-plan.md) §8 P1-50. Cách chạy một quest: [first-quest.md](first-quest.md).
 
@@ -54,6 +54,7 @@ Chung: CSP `style-src 'self'` (`infra/docker/nginx/security-headers.conf`), khô
 
 | # | Lãnh thổ | Việc | Dạng | Hạng dự kiến | Tộc người làm | Mana ước lượng |
 |---|---|---|---|---|---|---|
+| Q11 | dc1 | (8) CI chỉ chạy tay (thêm 2026-11-11); **chạy đầu tiên**, trước mọi quest khác | build, tag `infra` + `docs` | E | claude hoặc gemini (kael) | 0,15–0,3M; chỉ check `format` (file `.yml`, `.md`) |
 | Q1 | dc1 | (1) ô có định dạng | build (Tể tướng có thể tách) | C | claude | 1,5–2,5M; check integration |
 | Q2 | dc1 | (2) điểm cuối — **đội**: hợp đồng, phần shared+API, phần web, ghép | plan + build | C (B ⇒ Khảo hạch mù) | morwen (claude) + phần thorn/kael | 1,5–2,5M |
 | Q3 | dc1 | (3) hover | build | D | claude hoặc gemini | 0,3–0,5M |
@@ -64,7 +65,6 @@ Chung: CSP `style-src 'self'` (`infra/docker/nginx/security-headers.conf`), khô
 | Q8 | dc1 | **Tài liệu**: `docs/testing.md` mục "E2E: lỗi hay gặp" (CSP, WebKit và `<select>`, 320/390 px, `expectNoRawKeys`, chạy một file e2e) | document | E | **gemini** (quill) → người chấm claude | 0,2–0,35M |
 | Q9 | elvaria | **Bậc script**: `todo-scan` trên `packages/*/src`, `apps/*/src`, `scripts` | analyze | F | — | 0 |
 | Q10 | elvaria | **Nghiên cứu** (quest của lần hết mana): dữ kiện nào của [cli-facts](../reference/cli-facts-2026-11-06.md) đã lỗi thời so với hai spike, §3, §11; đầu vào cho P1-51 | research | D | **gemini**: ember (Opus high qua agy), `reassign --to ember`; người chấm ilse | 0,4–1M token agy |
-| Q11 | dc1 | (8) CI chỉ chạy tay (thêm 2026-11-11) | build, tag `infra` + `docs` | E | claude hoặc gemini (kael) | 0,15–0,3M; chỉ check `format` (file `.yml`, `.md`) |
 
 Tổng: 6–10M token (Q11 thêm 0,15–0,3M); Claude tuần +10–25 điểm, Gemini tuần +20–35 điểm; dc1 tuần tự (`max_concurrent` 1) khoảng 6–8 giờ, mỗi quest code có e2e 10–12 phút. Không đặt quest tài liệu trên Elvaria vì `docs/**` thuộc P1-51.
 
@@ -102,6 +102,6 @@ Vương quốc thật không có nhân vật Gemini nào được chạy `node`.
 5. Tạm nâng `max_concurrent` của dc1 và tộc gemini lên 2 trong lần chạy (như P1-16; cho tải thật để đo `max_background`, (c)–(e) của P1-47; cái giá: nhánh song song cùng sửa locale), trả về 1 sau.
 6. ~~Q11: các mặc định của (8) ở §5, và `main` của dc1 có bắt check CI trên GitHub không.~~ Đã chốt 2026-11-11: giữ các mặc định; `main` không có check bắt buộc (§5, (8)).
 
-Thứ tự đợt đề xuất (mỗi đợt tốn mana hỏi trước): đợt 0 sửa vương quốc (backup, script, diff, `territory list`, `doctor`); đợt 1 mười một lần `say`, chủ nhân đọc nháp rồi `quest confirm` (sửa nháp bằng `quest edit` ghi là can thiệp); đợt 2 Quản sự với Q11 trước (nhỏ, chỉ check `format`; merge sớm để PR của các quest dc1 sau không chờ CI), rồi Q3, Q5, Q6, Q8, Q9; đợt 3 Q1, Q2, Q4, Q7; đợt 4 hết mana (Q10); riêng: kiểm (c).
+Thứ tự đợt đề xuất (mỗi đợt tốn mana hỏi trước): đợt 0 sửa vương quốc (backup, script, diff, `territory list`, `doctor`); đợt 1 chỉ Q11 (chủ nhân chốt 2026-11-11: quest đầu tiên của P1-50): `say`, chủ nhân đọc nháp rồi `quest confirm`, Quản sự chạy tới dấu vua, chủ nhân merge vào `main` của dc1, để PR của các quest dc1 sau không chạy CI và nhánh của chúng tách từ `main` đã có Q11; cần Tể tướng, nên quyết định 1 ở trên đến trước đợt này; đợt 2 mười lần `say` còn lại, chủ nhân đọc nháp rồi `quest confirm` (sửa nháp bằng `quest edit` ghi là can thiệp); đợt 3 Quản sự với Q3, Q5, Q6, Q8, Q9; đợt 4 Q1, Q2, Q4, Q7; đợt 5 hết mana (Q10); riêng: kiểm (c).
 
 Đo trong lần chạy: tải việc nền và `max_background` ((c), (d), (e) của P1-47), phần một phiên của mỗi cửa sổ và `SESSION_SHARE_DEFAULT_PCT` ((d) của P1-48), token người chấm theo hạng ((a) của P1-48), một dòng `rateLimitType` thật nếu gặp; ghi lại nếu gặp chỗ cho (a), (b) của P1-49.
