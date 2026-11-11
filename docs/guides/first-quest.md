@@ -95,7 +95,7 @@ Lãnh thổ dc1-se-team, tóm tắt:
 "commands": { "generate": ["pnpm docs:gen", "pnpm schemas"] },
 "laws": {
   "forbidden_paths": [".env", ".env.*", "design/**", "docs/ke-hoach-dung-elvaria-*.md"],
-  "read_only_paths": ["docs/schemas/**", "docs/glossary.md", "docs/events.md", "docs/dependency-graph.md", "docs/cli.md", "docs/tier-report.md"]
+  "read_only_paths": ["docs/schemas/**", "docs/glossary.md", "docs/events.md", "docs/dependency-graph.md", "docs/cli.md", "docs/tier-report.md", "docs/metrics-report.md"]
 }
 ```
 
