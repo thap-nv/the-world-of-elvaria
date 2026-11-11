@@ -51,11 +51,11 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
 | Đợt | Task | Ghi chú |
 |---|---|---|
 | 1 | PS-01 | Mở ngay; 0 mana; toàn file mới |
-| 2 | PS-01b, PS-02, PS-04b | Sau P1-51. PS-01b và PS-02 cùng đụng snapshot prompt, `event-types.ts`, `inbox/apply.ts`; PS-02 và PS-04b cùng `commands.ts`, locale, glossary: nhánh merge sau giữ cả hai phía, sinh lại snapshot và file sinh |
+| 2 | PS-01b, PS-02, PS-04b | Sau P1-51 và P1-52 (tách kế hoạch triển khai, chốt 2026-11-11). PS-01b và PS-02 cùng đụng snapshot prompt, `event-types.ts`, `inbox/apply.ts`; PS-02 và PS-04b cùng `commands.ts`, locale, glossary: nhánh merge sau giữ cả hai phía, sinh lại snapshot và file sinh |
 | 3 | PS-05, PS-03 | Hai vùng code khác nhau |
 | 4 | PS-04, PS-03b | PS-04 sau PS-05: cả hai, và PS-01b trước đó, nối tiếp nhau trên `record.ts` và `QUEST_CHANGE` |
 | 5 | PS-06, rồi PS-06b | PS-06 cần PS-05 |
-| 6 | PS-07 | Sau cùng; chạy thật, tốn mana |
+| 6 | PS-07 | Sau cùng; chạy thật, tốn mana; cần P1-53 (nhân vật gemini tìm được trong repo) |
 
 ## PS-01 — Sổ đo, phần đọc
 
@@ -84,7 +84,8 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
   - `buildPrompt` trả thêm danh sách khối `{id, chars}`.
   - `promptOf` gom dấu vết nạp (file kinh và số dòng, id bí kíp, các khối) và ghi vào dòng mở phiên như một trường tùy chọn của `QUEST_CHANGE` (tiền lệ: `sequels`). `attempt_log` không đổi.
   - `command.applied` và `command.rejected` thêm `kind` tùy chọn (`packages/steward/src/inbox/apply.ts`); sổ đo dùng nó khi có, `inbox/done` khi không.
-- **Test**: snapshot prompt không đổi một ký tự; dòng mở phiên có dấu vết; log cũ vẫn đọc được.
+  - Lượt đọc theo file (chốt 2026-11-11, sau Q10 của P1-50): sổ đo đếm các `agent.tool` `read` theo `path` của mỗi phiên (event đã có `path`, không cần trường mới), và `elvaria metrics` in các file bị đọc nhiều lần nhất trong một phiên, để thấy ngay quest nào lật cả một file lớn (Q10: 25 lần một file 1 MB).
+- **Test**: snapshot prompt không đổi một ký tự; dòng mở phiên có dấu vết; log cũ vẫn đọc được; một fixture đọc cùng một file nhiều lần trong một phiên ra đúng số lượt đọc.
 
 ## PS-02 — Thư và việc phát sinh
 
