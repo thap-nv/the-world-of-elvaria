@@ -13,7 +13,7 @@ Ngày: 2026-11-11 · Trạng thái: đã duyệt. Tài liệu này là tầng ch
 3. PS-01 mở ngay, trong lúc P1-50 tạm dừng; các task PS khác chờ P1-51 đóng giai đoạn 1.
 4. Tể tướng phân loại thư theo lịch, mỗi ngày một lần trước bản tấu, chỉ khi có thư đang chờ.
 5. Thêm PS-21 (đồ thị code bằng graphify, 0 mana), PS-21b (đồ thị trong lập kế hoạch) và PS-21c (đồ thị tài liệu, tốn mana, chỉ mở khi A/B của PS-21 có lợi); bỏ bản đồ Node của bản đầu. Chủ nhân cho phép cài thư viện Python của graphify, và cho graphify tự cài vào `~/.claude`, `~/.gemini`; cách cài đã chốt hẹp hơn quyền đó (§11): chỉ `graphify install` toàn cục cho các phiên Claude Code dựng Elvaria, không `--project`, không `graphify hook install`, không chế độ strict. Nhân vật không dùng bản cài đó, chỉ có các lệnh hỏi của PS-21.
-6. Nghề cần dò code mà chưa có shell được mở Bash trên Claude ngay ở PS-21, chỉ cho lệnh hỏi đồ thị, không chờ A/B. Việc cần đồ thị của một nghề không có lệnh đồ thị thì phần dò code giao cho một nhân vật có lệnh đó. Danh sách nghề do phiên điều phối rà từ `classes.json` (trinh sát, thư ký; mục PS-21), chờ chủ nhân xem lại (§11).
+6. Nghề cần dò code mà chưa có shell được mở Bash trên Claude ngay ở PS-21, chỉ cho lệnh hỏi đồ thị, không chờ A/B. Việc cần đồ thị của một nghề không có lệnh đồ thị thì phần dò code giao cho một nhân vật có lệnh đó. Danh sách nghề do phiên điều phối rà từ `classes.json` (trinh sát, thư ký; mục PS-21), chủ nhân đã chốt (§11).
 
 ## Điều code cho thấy
 
