@@ -84,6 +84,7 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
   - `buildPrompt` trả thêm danh sách khối `{id, chars}`.
   - `promptOf` gom dấu vết nạp (file kinh và số dòng, id bí kíp, các khối) và ghi vào dòng mở phiên như một trường tùy chọn của `QUEST_CHANGE` (tiền lệ: `sequels`). `attempt_log` không đổi.
   - `command.applied` và `command.rejected` thêm `kind` tùy chọn (`packages/steward/src/inbox/apply.ts`); sổ đo dùng nó khi có, `inbox/done` khi không.
+- **Không thêm** (chủ nhân chốt sau PS-01): gợi ý nguyên nhân để máy tách check đỏ vì file do Elvaria sinh, hay câu hỏi sau một tool bị từ chối, khỏi `output` và `question`. Nguyên nhân gốc đã sửa ở P1-23 và P1-24; chỉ làm khi sổ đo thấy lại.
 - **Test**: snapshot prompt không đổi một ký tự; dòng mở phiên có dấu vết; log cũ vẫn đọc được.
 
 ## PS-02 — Thư và việc phát sinh
@@ -203,4 +204,4 @@ Chạy thật, tốn mana: hỏi chủ nhân trước khi chạy, và chốt tr�
 - **Chuẩn bị vương quốc**: `elvaria upgrade`; `elvaria migrate`; sửa registry (PS-06); lãnh thổ Elvaria có `protected_paths`, `shared_paths`, `max_concurrent 2`; `delegation`; `schedule.digest` và `schedule.triage`; đủ Tể tướng, pháp sư và hai người chấm khác họ model.
 - **Chạy**: chủ nhân giao bằng vài câu việc "lý do trạm xá và dòng chi tiết của `doctor` thành mã cộng chuỗi VI/EN" (một mục của giai đoạn 2, §8); theo dõi qua bản tấu.
 - **Xong khi**: chủ nhân chỉ gặp câu hỏi của tấu trình (một lần), một dấu trên kế hoạch, bản tấu và dấu vua.
-- **Báo cáo** `docs/guides/phase-1.5-report.md`: số từ `elvaria metrics`, so với cách phiên điều phối làm ở giai đoạn 1; mỗi lỗ hổng gặp phải là một thư hoặc một dòng §11. Bảng task của giai đoạn 2 do Nghị hội soạn sau mốc này.
+- **Báo cáo** `docs/guides/phase-1.5-report.md`: số từ `elvaria metrics`, so với cách phiên điều phối làm ở giai đoạn 1; mỗi lỗ hổng gặp phải là một thư hoặc một dòng §11. Sinh lại `docs/metrics-report.md` và `docs/tier-report.md` bằng `pnpm docs:gen --kingdom <dir>` sau lần chạy (chủ nhân chốt sau PS-01: hai bản đang commit là ảnh chụp của PS-01 và P1-16). Bảng task của giai đoạn 2 do Nghị hội soạn sau mốc này.
