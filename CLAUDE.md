@@ -67,7 +67,7 @@ pnpm test                # vitest của scripts/ và .claude/hooks/, rồi từn
 pnpm boundaries          # dependency-cruiser theo packages/config/boundaries.mjs
 pnpm schemas             # sinh docs/schemas/*.schema.json từ zod; --check: so, không ghi, exit 1 khi lệch
 pnpm docs:gen            # sinh docs/glossary.md, events.md, dependency-graph.md, cli.md và bảng §2.5; --check như trên
-pnpm docs:gen --kingdom <dir>   # thêm docs/tier-report.md từ event log của vương quốc đó (§3.12); --check bỏ qua nó
+pnpm docs:gen --kingdom <dir>   # thêm docs/tier-report.md (§3.12) và docs/metrics-report.md (§3.16.1) từ vương quốc đó; --check bỏ qua hai file này
 pnpm docs:check          # README 4 mục, từ cấm trong identifier, id dữ liệu, link sống, glossary ↔ domain, cấm .sh/.ps1/.cmd/.bat
 pnpm i18n:check          # khóa và placeholder VI/EN khớp nhau, hình dạng glossary.json
 pnpm format
@@ -82,14 +82,14 @@ pnpm elvaria sandbox replay <tmp>/events/sandbox/<ngày>.jsonl --speed 20   # d�
 ELVARIA_LIVE=1 pnpm --filter @elvaria/runner-claude test              # smoke với CLI thật và hook đã build (từ P1-09) — tốn mana, chỉ khi cần
 ```
 
-`elvaria` hôm nay có `init`, `doctor` (`--enable <tộc>` chỉ bật tộc có sẵn khi lần đó không có lỗi nào của tộc), `tribe list|add|check|disable` (mỗi tộc một dòng: adapter, bật/tắt, CLI đã ghim, giới hạn; thêm tộc tắt; chạy bộ test hợp đồng với adapter của tộc rồi bật khi qua, `--scenarios` cho CLI giả, đường duy nhất bật adapter file; tắt tộc), `territory add|list`, `character add|list|suspend|release|level|model` (đình chỉ, thả nhân vật, `level <id> <cấp>` đổi cấp, `model <id> <model>` đổi model cùng tộc), `quest add|list|show|confirm|cancel|archive|edit|retry|reassign` (`add --to`, `reassign --to <nhân vật>` giao thẳng; `add --contract` mở một đội), `seal`, `return`, `answer <quest> "<câu>"` (trả lời câu hỏi của nhân vật, quest `blocked`), `run` (Quản sự, tới khi Ctrl+C), `say "<câu>"` (Tể tướng soạn nhiệm vụ nháp; cần một nhân vật nghề `chancellor`), `wake <tribe>` (Quản sự thăm dò mana của tộc ngay, sau khi đăng nhập lại), `sandbox generate|replay`, `migrate`. Vương quốc lấy từ `--kingdom` hoặc biến `ELVARIA_KINGDOM`.
+`elvaria` hôm nay có `init`, `doctor` (`--enable <tộc>` chỉ bật tộc có sẵn khi lần đó không có lỗi nào của tộc), `tribe list|add|check|disable` (mỗi tộc một dòng: adapter, bật/tắt, CLI đã ghim, giới hạn; thêm tộc tắt; chạy bộ test hợp đồng với adapter của tộc rồi bật khi qua, `--scenarios` cho CLI giả, đường duy nhất bật adapter file; tắt tộc), `territory add|list`, `character add|list|suspend|release|level|model` (đình chỉ, thả nhân vật, `level <id> <cấp>` đổi cấp, `model <id> <model>` đổi model cùng tộc), `quest add|list|show|confirm|cancel|archive|edit|retry|reassign` (`add --to`, `reassign --to <nhân vật>` giao thẳng; `add --contract` mở một đội), `seal`, `return`, `answer <quest> "<câu>"` (trả lời câu hỏi của nhân vật, quest `blocked`), `run` (Quản sự, tới khi Ctrl+C), `say "<câu>"` (Tể tướng soạn nhiệm vụ nháp; cần một nhân vật nghề `chancellor`), `wake <tribe>` (Quản sự thăm dò mana của tộc ngay, sau khi đăng nhập lại), `metrics [--since] [--until] [--json]` (sổ đo: lượt, làm lại theo nguyên nhân, đạt lượt đầu, lỗi lọt, lần cần chủ nhân; chỉ đọc, 0 mana), `sandbox generate|replay`, `migrate`. Vương quốc lấy từ `--kingdom` hoặc biến `ELVARIA_KINGDOM`.
 
 ### Hook của repo / Repo hooks
 
 [.claude/settings.json](.claude/settings.json) bật bốn hook Node (dạng exec, không shell; test trong `pnpm test`):
 
 - `guard-bash.mjs` (trước Bash/PowerShell) chặn: force push, `--no-verify` / `git commit -n` / tắt husky, `git rebase` và `git pull --rebase`, `git stash` trần / `stash pop` / `drop` không ref / `clear` (stash dùng chung giữa mọi worktree: dùng commit WIP, hoặc `git stash push -m <tag>` rồi `git stash apply <sha>`), `--dangerously-skip-permissions`, xóa đệ quy ngoài checkout và thư mục tạm. Luật khớp cả thân heredoc: ghi file bằng Edit/Write, đừng bằng heredoc.
-- `guard-edit.mjs` (trước Edit/Write/MultiEdit) chặn sửa tay file sinh (`docs/schemas/**`, năm file của `pnpm docs:gen`, gồm `docs/tier-report.md`), vùng `<!-- docs:gen … -->` của một file `.md`, `design/**` và `docs/ke-hoach-dung-elvaria-*.md`. Lệnh shell ghi vào các file đó thì nó không thấy: vẫn là điều cấm.
+- `guard-edit.mjs` (trước Edit/Write/MultiEdit) chặn sửa tay file sinh (`docs/schemas/**`, sáu file của `pnpm docs:gen`, gồm `docs/tier-report.md` và `docs/metrics-report.md`), vùng `<!-- docs:gen … -->` của một file `.md`, `design/**` và `docs/ke-hoach-dung-elvaria-*.md`. Lệnh shell ghi vào các file đó thì nó không thấy: vẫn là điều cấm.
 - `typecheck-touched.mjs` (sau Edit/Write) chạy `tsc -p` của workspace sở hữu file vừa sửa và trả lỗi về ngay.
 - `stop-checks.mjs` (khi kết thúc lượt) chạy `pnpm boundaries` nếu import, `dependencies` hay `boundaries.mjs` đổi, và `pnpm i18n:check` nếu locale hay glossary đổi.
 
@@ -132,7 +132,7 @@ Trước khi sửa các file sau, đọc file đó, test của nó và ADR liên
 - Import `node:*` (hay bất kỳ IO nào) vào `packages/domain`.
 - Đổi tên hoặc payload của một event type đã phát mà không có hàm migrate theo `v`; viết lại event log.
 - Đổi id EN trong glossary; thêm id tiếng Việt hoặc id "màu mè" vào dữ liệu.
-- Sửa file sinh ra bằng tay: `docs/schemas/*.schema.json` (sửa zod rồi `pnpm schemas`), `docs/glossary.md`, `docs/events.md`, `docs/dependency-graph.md`, `docs/cli.md`, `docs/tier-report.md` và vùng `<!-- docs:gen … -->` của implementation-plan (sửa nguồn rồi `pnpm docs:gen`; báo cáo bậc thì `pnpm docs:gen --kingdom <dir>`).
+- Sửa file sinh ra bằng tay: `docs/schemas/*.schema.json` (sửa zod rồi `pnpm schemas`), `docs/glossary.md`, `docs/events.md`, `docs/dependency-graph.md`, `docs/cli.md`, `docs/tier-report.md`, `docs/metrics-report.md` và vùng `<!-- docs:gen … -->` của implementation-plan (sửa nguồn rồi `pnpm docs:gen`; báo cáo bậc và sổ đo thì `pnpm docs:gen --kingdom <dir>`).
 - Thêm dependency mà không nêu lý do trong commit.
 - Đọc hoặc ghi `~/.claude/`, `~/.gemini/`, `~/.codex/` của người dùng từ code (cấu hình theo lần chạy đi qua `--settings` / `GEMINI_CLI_HOME` / tương đương, trong `.runs/`).
 - Thêm script `.sh`, `.ps1`, `.cmd`, `.bat`; dùng `shell: true`.

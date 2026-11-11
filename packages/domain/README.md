@@ -160,6 +160,13 @@
   attempt_log does not keep. `mana.exhausted` may name the reset it waits for
   (`resets_at`), and `mana.level` may read one model's own cap (`model`), which the reducer leaves out of the
   pool's band, as it does that cap's sleep (P1-32).
+- Keeps the metrics ledger, read side (`src/metrics/`, implementation-plan §3.16.1, ADR 0027, PS-01): `metricsOf(input,
+window)` over quests, verdicts, the event log and the handled inbox commands counts the runs of a window, the
+  rework (every character session beyond one assignee and one verifier per quest, `reworkOf`) with its cause, the
+  first-pass rate by class, tag, model and kind, escaped defects (the owner returned a passed run), the cost of each
+  sealed quest and the owner's commands on quests. Causes are data (`src/metrics/causes.ts`): `OUTCOME_CAUSES`,
+  `FAIL_KIND_CAUSES`, `TRIP_CAUSES` give `infra`, `output` or `question`, and `unknown` when the files tell
+  nothing; `OWNER_COMMAND_KINDS` lists the commands that count as stepping in.
 - Gives the core types every package builds on: `Result`, branded ids (`QuestId`, `TribeId`, ...), `Clock` and
   `Instant`, `zonedTime` (local day and ISO offset in `kingdom.tz`), `IdSource` (ULIDs and dated ids).
 - Names every number it decides with in `src/constants.ts` and the `constants.ts` of each folder.

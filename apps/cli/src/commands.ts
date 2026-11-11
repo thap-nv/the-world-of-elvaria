@@ -6,6 +6,7 @@ import { CHARACTER_MODEL } from './character/model.ts';
 import { CHARACTER_RELEASE, CHARACTER_SUSPEND } from './character/suspend.ts';
 import { DOCTOR } from './doctor/doctor.ts';
 import { INIT } from './init.ts';
+import { METRICS } from './metrics/metrics.ts';
 import { MIGRATE } from './migrate.ts';
 import { QUEST_ADD } from './quest/add.ts';
 import { ANSWER } from './quest/answer.ts';
@@ -58,6 +59,7 @@ export const COMMANDS: readonly CommandSpec[] = [
   ANSWER,
   RUN,
   WAKE,
+  METRICS,
   SANDBOX_GENERATE,
   SANDBOX_REPLAY,
   MIGRATE,

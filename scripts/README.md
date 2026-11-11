@@ -23,7 +23,8 @@
   also imports `GENERATORS` and `kingdomGenerators` to keep `GENERATED_FILES` in `.claude/hooks/guard-edit.mjs`
   in step with the generators. Reads and writes repo files through `gitRepo()` (`docs-repo.mjs`): writes
   `docs/glossary.md`, `docs/events.md`, `docs/dependency-graph.md`, `docs/cli.md`, the `quest-transitions`
-  region of `docs/implementation-plan.md`, and (with `--kingdom`) `docs/tier-report.md`.
+  region of `docs/implementation-plan.md`, and (with `--kingdom`) `docs/tier-report.md` and
+  `docs/metrics-report.md`.
 - `docs-glossary.mjs` (`docs-glossary.spec.ts`): `renderGlossary()` validates `GLOSSARY` with `glossaryProblems`
   from `@elvaria/i18n` and renders `docs/glossary.md` (ADR 0014, implementation-plan §5.3). Called by
   `docs-gen.mjs`. Reads `packages/i18n/src/glossary.json` (via `@elvaria/i18n`); `docs-gen.mjs` writes the
@@ -54,9 +55,18 @@
   Called by `docs-gen.mjs` only when `--kingdom <dir>` (or `--kingdom=<dir>`) is passed (`pnpm docs:gen --check`
   without `--kingdom` leaves it alone). Reads `<kingdom>/events/YYYY-MM-DD.jsonl`; `docs-gen.mjs` writes
   `docs/tier-report.md`.
+- `docs-metrics-report.mjs` (`docs-metrics-report.spec.ts`): `metricsReportOf(kingdom)` reads the kingdom with
+  `readMetricsSource` of `apps/cli/src/metrics/read.ts` (the reader of `elvaria metrics`) and
+  `renderMetricsReport(input, skipped)` renders the metrics ledger (`metricsOf` of `@elvaria/domain`) over the whole
+  kingdom, a table by day (`daysOf`), and the sections of `apps/cli/src/metrics/view.ts` in Vietnamese through
+  `translator('vi')`, for `docs/metrics-report.md` (`METRICS_REPORT_FILE`, implementation-plan §3.16.1, ADR 0027).
+  Called by `docs-gen.mjs` only with `--kingdom <dir>`, like the tier report. Reads `<kingdom>/quests/`,
+  `<kingdom>/verdicts/`, `<kingdom>/events/YYYY-MM-DD.jsonl` and `<kingdom>/inbox/done/`, writes nothing there;
+  `docs-gen.mjs` writes `docs/metrics-report.md`.
 - `docs-markdown.mjs` (tested in `docs-gen.spec.ts`): shared Markdown formatting helpers (`code`, `escapeCell`,
   `table`, `generatedNote`, `markdownDocument`) imported by `docs-glossary.mjs`, `docs-events.mjs`,
-  `docs-graph.mjs`, `docs-cli.mjs`, and `docs-tier-report.mjs`. Reads and writes no files.
+  `docs-graph.mjs`, `docs-cli.mjs`, `docs-tier-report.mjs`, and `docs-metrics-report.mjs`. Reads and writes no
+  files.
 - `docs-repo.mjs` (tested in `docs-gen.spec.ts` and `docs-check.spec.ts`): `gitRepo()` lists tracked files and
   non-ignored untracked files via `git ls-files -z --cached --others --exclude-standard` (with a minimal env)
   and reads and writes files by repo-relative `/` path. Called by `docs-gen.mjs` and `docs-check.mjs`.
@@ -131,7 +141,7 @@
   `isIdList`, `glossaryProblems`, `localeProblems`), `dependency-cruiser` (`docs-graph.mjs`), `typescript`
   (`docs-identifiers.mjs`), and `ajv` + `ajv-formats` (`gen-schemas.spec.ts`).
 - `apps/cli` (`src/commands.ts`, `src/args.ts`, `src/command.ts`, `src/help.ts`), imported by `docs-cli.mjs` to
-  render `docs/cli.md`.
+  render `docs/cli.md`; `src/metrics/read.ts` and `src/metrics/view.ts`, imported by `docs-metrics-report.mjs`.
 - Node built-ins (`node:child_process`, `node:fs`, `node:path`, `node:process`, `node:url`) and `git`
   (`docs-repo.mjs`, `docs-note.mjs`).
 
@@ -149,6 +159,7 @@ pnpm i18n:check        # verifies locale keys, placeholders, and glossary.json s
 Each script takes an injected file or repository abstraction (`Files`, `Repo`, or pure arguments) so its
 `*.spec.ts` tests run in memory without touching the checkout, alongside one integration check against the real
 repository (`gen-schemas.spec.ts` also compiles every `docs/schemas/*.schema.json` with `Ajv2020` and validates
-its `examples`; `docs-tier-report.spec.ts` uses a temp kingdom folder with a space in its name). Editing a file
+its `examples`; `docs-tier-report.spec.ts` and `docs-metrics-report.spec.ts` use a temp kingdom folder with a space
+in its name). Editing a file
 under `scripts/` triggers `.claude/hooks/typecheck-touched.mjs`, which runs `tsc -p tsconfig.json` on the root
 program.

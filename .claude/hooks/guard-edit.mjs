@@ -11,7 +11,7 @@ import { REPO, readPayload, repoPath, toolInput } from './hook-io.mjs';
 
 /**
  * The whole files `pnpm docs:gen` writes: GENERATORS of scripts/docs-gen.mjs, which the spec keeps in step, and the
- * tier report it writes from a kingdom's event log with `--kingdom <dir>` (P1-17).
+ * tier report (P1-17) and metrics report (PS-01) it writes from a kingdom with `--kingdom <dir>`.
  */
 export const GENERATED_FILES = [
   'docs/glossary.md',
@@ -19,6 +19,7 @@ export const GENERATED_FILES = [
   'docs/dependency-graph.md',
   'docs/cli.md',
   'docs/tier-report.md',
+  'docs/metrics-report.md',
 ];
 
 const REGENERATE = 'edit its source and run `pnpm docs:gen`';
