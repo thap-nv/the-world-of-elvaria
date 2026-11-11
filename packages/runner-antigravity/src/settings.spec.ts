@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { toolPolicyOf } from '@elvaria/runner-core';
 import type { ToolPolicyInput } from '@elvaria/runner-core';
 
+import { ANTIGRAVITY_CAPABILITIES } from './runner.ts';
 import { agySettingsOf, prefixOf } from './settings.ts';
 
 const DC1 = {
@@ -124,6 +125,43 @@ describe('agySettingsOf', () => {
       'read_file(D:/Elvaria kingdom/quests/q_20261107_a9yb2k/handover.md)',
       'write_file(D:/Elvaria kingdom/quests/q_20261107_a9yb2k/handover.md)',
     ]);
+  });
+});
+
+describe('agySettingsOf: search for a CLI without a search tool (P1-53)', () => {
+  const GIT: typeof DC1 = { ...DC1, vcs: { type: 'git', default_branch: 'main' } };
+  const allowOf = (role: ToolPolicyInput['role'], allow: string[], deny: string[] = []) =>
+    agySettingsOf(
+      toolPolicyOf({ role, characterClass: { tools: { allow, deny } }, territory: GIT, cli_search: false }),
+    ).permissions.allow;
+  const SEARCH = ['command(git grep)', 'command(git ls-files)'];
+
+  it('gives a class with Glob or Grep git grep and git ls-files, with no shell of its own', () => {
+    expect(allowOf('assignee', ['Read', 'Edit', 'Write', 'Glob', 'Grep', 'WebSearch'])).toEqual([
+      'write_file(./)',
+      ...SEARCH,
+    ]);
+    expect(allowOf('assignee', ['Read', 'Grep'])).toEqual(SEARCH);
+    expect(allowOf('assignee', ['Read', 'Glob'], ['Bash'])).toEqual(SEARCH);
+  });
+
+  it("lists them after a judge's own commands", () => {
+    expect(allowOf('verifier', ['Read', 'Glob', 'Grep', 'Bash(git diff:*)'])).toEqual([
+      'command(git diff)',
+      'command(pnpm test)',
+      'command(pnpm lint)',
+      ...SEARCH,
+    ]);
+  });
+
+  it('gives none to a class without Glob and Grep, nor where the policy has no search commands', () => {
+    expect(allowOf('assignee', ['Read', 'Edit'])).toEqual(['write_file(./)']);
+    const own = settingsOf('assignee', ['Read', 'Glob', 'Grep'], []);
+    expect(own.allow.filter((rule) => rule.includes('git '))).toEqual([]);
+  });
+
+  it('declares the search the adapter lacks, so the Steward asks for these commands', () => {
+    expect(ANTIGRAVITY_CAPABILITIES.search).toBe(false);
   });
 });
 

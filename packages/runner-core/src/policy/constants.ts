@@ -46,5 +46,15 @@ export const SECRET_FILES = ['.env', '.env.*'] as const;
  */
 export const GIT_PATHS = ['.git/**'] as const;
 
+/** The tools of a class that search file names and contents, in Claude Code names. */
+export const SEARCH_TOOLS = ['Glob', 'Grep'] as const;
+
+/**
+ * What stands in for SEARCH_TOOLS when the tribe's CLI has none of its own (`capabilities.search: false`, P1-53):
+ * read-only commands that see only what git tracks, so dotenv files and the other ignored files stay out of reach.
+ * The hook refuses their options that run a program or reach past the tracked files (`-O`, `--no-index`…).
+ */
+export const SEARCH_COMMANDS = ['git grep', 'git ls-files'] as const;
+
 /** Territory commands a character with a shell may run to check its own work. */
 export const CHECK_COMMANDS = ['test', 'lint', 'typecheck'] as const;

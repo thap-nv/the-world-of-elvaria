@@ -208,6 +208,13 @@ async function contextFilesFor(ctx: Context, input: SessionInput) {
 const shellFor = (ctx: Context, character: Character): string | undefined =>
   shellOf(ctx.deps.runners[character.tribe]?.capabilities, ctx.deps.platform ?? process.platform);
 
+/**
+ * Whether the tribe's CLI searches files on its own (P1-53): false gives a class with Glob or Grep the search
+ * commands, in its tool policy and its prompt alike; absent, as for Claude Code, nothing changes.
+ */
+const searchFor = (ctx: Context, character: Character): boolean | undefined =>
+  ctx.deps.runners[character.tribe]?.capabilities.search;
+
 /** `known`: the session's secret values, masked in what the prompt quotes of the kingdom's logs (P1-25). */
 async function promptOf(
   ctx: Context,
@@ -218,6 +225,7 @@ async function promptOf(
   const { quest, character, territory } = input;
   const base = {
     shell: shellFor(ctx, character),
+    cli_search: searchFor(ctx, character),
     locale: ctx.world.kingdom.owner.locale,
     decree: await readDecree(ctx.root),
     quest,
@@ -269,6 +277,7 @@ export async function requestOf(ctx: Context, input: SessionInput): Promise<Spaw
       character,
       territory,
       scratch: input.scratch === true,
+      cli_search: searchFor(ctx, character),
     }),
     budget: { max_turns: ctx.world.kingdom.breakers.max_turns, max_minutes: quest.budget.max_minutes },
     env,

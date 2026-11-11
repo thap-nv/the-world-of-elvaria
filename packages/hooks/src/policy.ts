@@ -44,6 +44,11 @@ export interface HookPolicy {
    * has patch paths): a write the CLI would refuse to such a path is refused first with this file as the way.
    */
   readonly patch_file?: string;
+  /**
+   * Commands that stand in for Glob and Grep when the CLI has no search tool (P1-53; runner-core's ToolPolicy
+   * `search_commands`): a class without a shell may run them, one plain call per line. Absent: none.
+   */
+  readonly search_commands?: readonly string[];
   /** `territory.laws`; other law kinds may be present and are not the hook's to enforce. */
   readonly laws?: LawsInput;
 }
@@ -52,7 +57,13 @@ export type PolicyResult =
   { readonly ok: true; readonly policy: HookPolicy } | { readonly ok: false; readonly problem: string };
 
 const STRING_FIELDS = ['kingdom', 'quest', 'character', 'role', 'model', 'tz', 'patch_file'] as const;
-const LIST_FIELDS = ['secrets', 'tools', 'apprentice_models', 'cli_protected_paths'] as const;
+const LIST_FIELDS = [
+  'secrets',
+  'tools',
+  'apprentice_models',
+  'cli_protected_paths',
+  'search_commands',
+] as const;
 const LAW_LISTS = ['forbidden_paths', 'read_only_paths', 'patch_paths', 'forbidden_commands'] as const;
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>

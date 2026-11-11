@@ -54,6 +54,11 @@ interface PromptBase {
    * P1-40): a system fact the prompt states, not scripture. Absent: the prompt names no shell.
    */
   readonly shell?: string | undefined;
+  /**
+   * `capabilities.search` of the tribe's adapter (P1-53), as the Steward gives it to toolPolicyOf: false lists the
+   * search commands that stand in for Glob and Grep. Absent: the CLI searches on its own.
+   */
+  readonly cli_search?: boolean | undefined;
 }
 
 export interface AssigneePromptInput extends PromptBase {
@@ -102,7 +107,8 @@ const PASS_RULES: Readonly<Record<Ritual['pass_rule'], string>> = {
 function assigneePrompt(input: AssigneePromptInput, t: PromptTemplates): BuiltPrompt {
   const { quest, character, registry } = input;
   const characterClass = entryOf(registry.classes, character.class, 'class');
-  const policy = toolPolicyOf({ role: 'assignee', characterClass, character, territory: input.territory });
+  const { territory, cli_search } = input;
+  const policy = toolPolicyOf({ role: 'assignee', characterClass, character, territory, cli_search });
   const role = fill(t.assignee, {
     character: character.name,
     class: characterClass.name_en,
@@ -159,7 +165,14 @@ function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): BuiltPr
     fail_kinds: FAIL_KINDS.map((kind) => `\`${kind}\``).join(', '),
     language: LANGUAGE_NAMES[input.locale],
     shell: shellBlock(
-      toolPolicyOf({ role: 'verifier', characterClass, character, territory: input.territory, scratch }),
+      toolPolicyOf({
+        role: 'verifier',
+        characterClass,
+        character,
+        territory: input.territory,
+        scratch,
+        cli_search: input.cli_search,
+      }),
       t,
       input.shell,
     ),

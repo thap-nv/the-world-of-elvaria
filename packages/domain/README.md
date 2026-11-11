@@ -140,8 +140,8 @@
   measured share alone, and `windowClosingOf` says whether one window closes its gauge, `cap` or `early` (one
   session before the cap), for `elvaria doctor`.
 - Reads the tribe contract (`src/tribe/`, implementation-plan §3.14, ADR 0021): `AdapterCapabilities` (the
-  yes-or-no `ADAPTER_CAPABILITIES`, `auth`, the sign-ins an adapter runs with, P1-19, and the optional `shell` per
-  OS, read with `shellOf`, P1-40), `tribeLimitsOf` (one
+  yes-or-no `ADAPTER_CAPABILITIES`, `auth`, the sign-ins an adapter runs with, P1-19, the optional `shell` per
+  OS, read with `shellOf`, P1-40, and the optional `search`, false for a CLI with no search tool, P1-53), `tribeLimitsOf` (one
   tribe narrowed by what its adapter lacks, `TRIBE_NARROWING`; `planTick` gives nothing to a tribe whose runner
   has no headless mode, no rank above its `max_rank`, and nothing on a guarded territory without a tool gate),
   `checkTribeAuth` and `defaultAuthOf` (the sign-in `tribes[].tool.auth` pins must be one the adapter declares;

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 
 import { ADAPTER_CAPABILITIES, TRIBE_AUTHS } from '@elvaria/domain';
 
-import { shellProblems } from '../kit/adapter-module.ts';
+import { searchProblems, shellProblems } from '../kit/adapter-module.ts';
 import { FAKE_QUESTION } from './scenarios.ts';
 import { DEFAULT_TIMEOUT_MS, HANG_GRACE_MS, play, settlesWithin, within } from './play.ts';
 import type { Played } from './play.ts';
@@ -139,6 +139,8 @@ const capabilities: ConformanceCheck = {
     for (const kind of auth) assert.ok(known.includes(kind), `unknown auth ${String(kind)}`);
     // Optional (P1-40): an adapter that names its shell names one per known OS.
     assert.deepEqual(shellProblems(runner.capabilities.shell), [], 'capability shell is malformed');
+    // Optional (P1-53): whether the CLI searches on its own, true or false.
+    assert.deepEqual(searchProblems(runner.capabilities.search), [], 'capability search is malformed');
     assert.ok(runner.tribe.length > 0 && runner.adapter.length > 0);
     return 'passed';
   },
