@@ -1,8 +1,8 @@
 // `pnpm docs:gen` writes the docs that are generated, never edited by hand (implementation-plan §5.4).
 // `pnpm docs:gen --check` compares instead of writing and exits 1 on drift: `pnpm check` runs it, and CI also
 // runs `pnpm docs:gen && git diff --exit-code docs/`. A new generated doc is one entry in GENERATORS.
-// `--kingdom <dir>` adds docs/tier-report.md, rendered from that kingdom's event log (§3.12): it is the one doc whose
-// source lies outside the repo, so it is generated only when a kingdom is named.
+// `--kingdom <dir>` adds docs/tier-report.md, rendered from that kingdom's event log (§3.12), and docs/metrics-report.md,
+// its metrics ledger (§3.16.1): their source lies outside the repo, so they are generated only when a kingdom is named.
 import process from 'node:process';
 
 import { renderQuestTransitionTable } from '@elvaria/domain';
@@ -11,6 +11,7 @@ import { renderCli } from './docs-cli.mjs';
 import { renderEvents } from './docs-events.mjs';
 import { renderGlossary } from './docs-glossary.mjs';
 import { renderDependencyGraph } from './docs-graph.mjs';
+import { METRICS_REPORT_FILE, metricsReportOf } from './docs-metrics-report.mjs';
 import { gitRepo } from './docs-repo.mjs';
 import { TIER_REPORT_FILE, readKingdomEvents, renderTierReport } from './docs-tier-report.mjs';
 
@@ -40,7 +41,8 @@ export const GENERATORS = [
 const messageOf = (error) => (error instanceof Error ? error.message : String(error));
 
 /**
- * The tier report of the kingdom named by `--kingdom <dir>` (or `--kingdom=<dir>`), when one is named.
+ * The tier report and the metrics report of the kingdom named by `--kingdom <dir>` (or `--kingdom=<dir>`), when one is
+ * named.
  * @param {readonly string[]} args
  * @returns {Generator[]}
  */
@@ -51,7 +53,10 @@ export function kingdomGenerators(args) {
       ? args.find((arg) => arg.startsWith('--kingdom='))?.slice('--kingdom='.length)
       : args[index + 1];
   if (named === undefined || named === '') return [];
-  return [{ file: TIER_REPORT_FILE, render: () => renderTierReport(readKingdomEvents(named)) }];
+  return [
+    { file: TIER_REPORT_FILE, render: () => renderTierReport(readKingdomEvents(named)) },
+    { file: METRICS_REPORT_FILE, render: () => metricsReportOf(named) },
+  ];
 }
 
 /**

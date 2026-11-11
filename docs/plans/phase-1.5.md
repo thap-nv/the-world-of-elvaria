@@ -51,11 +51,11 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
 | Đợt | Task | Ghi chú |
 |---|---|---|
 | 1 | PS-01 | Mở ngay; 0 mana; toàn file mới |
-| 2 | PS-01b, PS-02, PS-04b | Sau P1-51. PS-01b và PS-02 cùng đụng snapshot prompt, `event-types.ts`, `inbox/apply.ts`; PS-02 và PS-04b cùng `commands.ts`, locale, glossary: nhánh merge sau giữ cả hai phía, sinh lại snapshot và file sinh |
+| 2 | PS-01b, PS-02, PS-04b | Sau P1-51 và P1-52 (tách kế hoạch triển khai, chốt 2026-11-11). PS-01b và PS-02 cùng đụng snapshot prompt, `event-types.ts`, `inbox/apply.ts`; PS-02 và PS-04b cùng `commands.ts`, locale, glossary: nhánh merge sau giữ cả hai phía, sinh lại snapshot và file sinh |
 | 3 | PS-05, PS-03 | Hai vùng code khác nhau |
 | 4 | PS-04, PS-03b | PS-04 sau PS-05: cả hai, và PS-01b trước đó, nối tiếp nhau trên `record.ts` và `QUEST_CHANGE` |
 | 5 | PS-06, rồi PS-06b | PS-06 cần PS-05 |
-| 6 | PS-07 | Sau cùng; chạy thật, tốn mana |
+| 6 | PS-07 | Sau cùng; chạy thật, tốn mana; cần P1-53 (nhân vật gemini tìm được trong repo) |
 
 ## PS-01 — Sổ đo, phần đọc
 
@@ -73,6 +73,7 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
 - **Giới hạn đã biết, ghi vào báo cáo sinh ra**: check đỏ vì file do Elvaria sinh hiện ra là `output`; `crash` của người chấm gồm cả CLI chết lẫn verdict không hợp lệ; `cancelled` gồm cả nhả lúc khởi động lại lẫn chủ nhân hủy.
 - **Test**: domain 100 % bằng fixture dựng tay; CLI trên một vương quốc tạm (`initKingdom` cộng vài quest, verdict và lệnh ghi tay; `simulateDay` không sinh verdict hay `inbox/done`).
 - **Xong khi**: trên vương quốc thật, ngày 2026-11-08 ra 49 phiên và 19 lượt làm lại; bảng phân loại máy đặt cạnh 12 / 6 / 1 của báo cáo giai đoạn 1, từng chỗ lệch có giải thích ở §11.
+- **Thực tế** (2026-11-11, chi tiết ở §11): "49 phiên" là 49 mục `attempt_log` của ngày (47 phiên của nhân vật, 2 lượt script), lệnh in đúng như vậy; máy ra 19 lượt làm lại, chia 4 / 12 / 3 (hạ tầng / đầu ra / câu hỏi). Bảng nguyên nhân có thêm `unknown` cho chỗ file không nói gì (0 trên dữ liệu thật). Bộ đọc là `apps/cli/src/metrics/read.ts`; lệnh và báo cáo dùng chung các mục của `apps/cli/src/metrics/view.ts`.
 
 ## PS-01b — Sổ đo, phần ghi
 
@@ -83,7 +84,9 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
   - `buildPrompt` trả thêm danh sách khối `{id, chars}`.
   - `promptOf` gom dấu vết nạp (file kinh và số dòng, id bí kíp, các khối) và ghi vào dòng mở phiên như một trường tùy chọn của `QUEST_CHANGE` (tiền lệ: `sequels`). `attempt_log` không đổi.
   - `command.applied` và `command.rejected` thêm `kind` tùy chọn (`packages/steward/src/inbox/apply.ts`); sổ đo dùng nó khi có, `inbox/done` khi không.
-- **Test**: snapshot prompt không đổi một ký tự; dòng mở phiên có dấu vết; log cũ vẫn đọc được.
+  - Lượt đọc theo file (chốt 2026-11-11, sau Q10 của P1-50): sổ đo đếm các `agent.tool` `read` theo `path` của mỗi phiên (event đã có `path`, không cần trường mới), và `elvaria metrics` in các file bị đọc nhiều lần nhất trong một phiên, để thấy ngay quest nào lật cả một file lớn (Q10: 25 lần một file 1 MB).
+- **Không thêm** (chủ nhân chốt sau PS-01): gợi ý nguyên nhân để máy tách check đỏ vì file do Elvaria sinh, hay câu hỏi sau một tool bị từ chối, khỏi `output` và `question`. Nguyên nhân gốc đã sửa ở P1-23 và P1-24; chỉ làm khi sổ đo thấy lại.
+- **Test**: snapshot prompt không đổi một ký tự; dòng mở phiên có dấu vết; log cũ vẫn đọc được; một fixture đọc cùng một file nhiều lần trong một phiên ra đúng số lượt đọc.
 
 ## PS-02 — Thư và việc phát sinh
 
@@ -202,4 +205,4 @@ Chạy thật, tốn mana: hỏi chủ nhân trước khi chạy, và chốt tr�
 - **Chuẩn bị vương quốc**: `elvaria upgrade`; `elvaria migrate`; sửa registry (PS-06); lãnh thổ Elvaria có `protected_paths`, `shared_paths`, `max_concurrent 2`; `delegation`; `schedule.digest` và `schedule.triage`; đủ Tể tướng, pháp sư và hai người chấm khác họ model.
 - **Chạy**: chủ nhân giao bằng vài câu việc "lý do trạm xá và dòng chi tiết của `doctor` thành mã cộng chuỗi VI/EN" (một mục của giai đoạn 2, §8); theo dõi qua bản tấu.
 - **Xong khi**: chủ nhân chỉ gặp câu hỏi của tấu trình (một lần), một dấu trên kế hoạch, bản tấu và dấu vua.
-- **Báo cáo** `docs/guides/phase-1.5-report.md`: số từ `elvaria metrics`, so với cách phiên điều phối làm ở giai đoạn 1; mỗi lỗ hổng gặp phải là một thư hoặc một dòng §11. Bảng task của giai đoạn 2 do Nghị hội soạn sau mốc này.
+- **Báo cáo** `docs/guides/phase-1.5-report.md`: số từ `elvaria metrics`, so với cách phiên điều phối làm ở giai đoạn 1; mỗi lỗ hổng gặp phải là một thư hoặc một dòng §11. Sinh lại `docs/metrics-report.md` và `docs/tier-report.md` bằng `pnpm docs:gen --kingdom <dir>` sau lần chạy (chủ nhân chốt sau PS-01: hai bản đang commit là ảnh chụp của PS-01 và P1-16). Bảng task của giai đoạn 2 do Nghị hội soạn sau mốc này.

@@ -135,7 +135,9 @@
   no verdict, P1-40), the ritual's pass rule over the checks (`underPassRule`), the judge's breaks in a scratch plot
   (`withBreaksWeighed`: too few make the pass a partial, P1-40), `validateVerdict`, `verdict.*`, the move, the
   assignee's windows and fail streak (`withVerdict`), then `levelChange`. A session's prompt names the shell its
-  tribe's adapter declares for this OS (`shellOf` with `StewardDeps.platform`, `process.platform` by default, P1-40).
+  tribe's adapter declares for this OS (`shellOf` with `StewardDeps.platform`, `process.platform` by default, P1-40),
+  and its tool policy and prompt get the search commands when that adapter's CLI has no search tool
+  (`capabilities.search: false`, P1-53).
 - Applies the limits `tribeLimitsOf` gives a tribe its adapter narrows (§3.14, P1-33; `src/sessions/spawn.ts`):
   a judge of a tribe without `structured_output` gets the verdict's schema in its prompt and its verdict cut out of
   its last text (runner-core's `spawnParsed`), checked by `judgeVerdictOf`, which names each issue; an unusable

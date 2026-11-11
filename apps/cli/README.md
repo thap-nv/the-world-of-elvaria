@@ -103,6 +103,11 @@
   (`sleeping_mana`) with the gauge it waits for, a model's own cap before its pool, and lists the sleeping gauges
   under the table. Only those: the log does not keep the models an account lists in a group, so the prefix table
   alone would call an Argon character bound by "Gemini Models", which the Steward, reading agy's `/usage`, does not.
+- `metrics [--since <day>] [--until <day>] [--json]` (PS-01): the metrics ledger of `metricsOf` (`@elvaria/domain`)
+  over the days asked, as plain tables or JSON. `src/metrics/read.ts` reads quests, verdicts, the event log and
+  `inbox/done/` without a lock and writes nothing, so it runs beside a Steward; a file it cannot use is named on
+  stderr and left out. `src/metrics/view.ts` turns the ledger into sections that `scripts/docs-metrics-report.mjs`
+  also renders into `docs/metrics-report.md`.
 - `migrate`: moves every older file to the current version, old text in `.backup/<stamp>/` (`migrateKingdom`),
   copies the registry files this Elvaria ships and the kingdom lacks (P1-15), then adds the default registry
   entries it lacks by id, whole, only when the registry still loads with them (P1-41, `addMissingRegistryEntries`):
@@ -128,8 +133,8 @@
 ## Depends on
 
 - `@elvaria/domain` (schemas, ids, transition table, views), `@elvaria/store` (kingdom folder, inbox, migrate),
-  `@elvaria/eventlog` (append, redact; reads the log for the mana gauges and a quest's journal for its infirmary
-  reason), `@elvaria/sandbox` (fake days and their replay),
+  `@elvaria/eventlog` (append, redact; reads the log for the mana gauges, the metrics, and a quest's journal for its
+  infirmary reason), `@elvaria/sandbox` (fake days and their replay),
   `@elvaria/registry-default` (`REGISTRY_ROOT`, `registryFiles()` for `init` and `migrate`), `@elvaria/i18n`, `@elvaria/steward`
   (the Steward, unclaimable notices), `@elvaria/runner-core` (`PlotManager`, the adapter kit, the conformance
   suite), `@elvaria/runner-claude` (the

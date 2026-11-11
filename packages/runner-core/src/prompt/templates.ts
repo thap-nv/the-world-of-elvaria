@@ -12,6 +12,7 @@ export const PROMPT_TEMPLATES = [
   'class',
   'apprentice',
   'shell',
+  'search',
   'read-only',
   'patch',
   'handover',

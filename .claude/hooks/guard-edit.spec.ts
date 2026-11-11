@@ -26,6 +26,7 @@ describe('refusalOf: files no one edits by hand', () => {
     'docs/dependency-graph.md',
     'docs/cli.md',
     'docs/tier-report.md',
+    'docs/metrics-report.md',
     'Docs/CLI.md',
     'docs/schemas/quest.schema.json',
     'design/DESIGN-HANDOFF.md',

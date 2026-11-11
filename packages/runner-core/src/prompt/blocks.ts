@@ -72,19 +72,24 @@ const shellCommandOf = (rule: string): string[] => {
 
 /**
  * The commands the session's shell may run, listed from its permission rules (P1-11): without them a character
- * guesses a compound command, its settings refuse the whole line, and it stops to ask the owner. Empty without a
- * shell. `program`: the shell its adapter declares for this OS (shellOf, P1-40), named first; none, no sentence.
+ * guesses a compound command, its settings refuse the whole line, and it stops to ask the owner. Then the search
+ * commands that stand in for Glob and Grep when the tribe's CLI has no search tool, with how to call them (P1-53),
+ * which a class without a shell gets too. Empty without either. `program`: the shell its adapter declares for this
+ * OS (shellOf, P1-40), named first; none, no sentence.
  */
 export function shellBlock(
-  policy: Pick<ToolPolicy, 'tools' | 'allow'>,
+  policy: Pick<ToolPolicy, 'tools' | 'allow' | 'search_commands'>,
   t: PromptTemplates,
   program?: string,
 ): string {
-  const commands = policy.tools.includes(SHELL_TOOL) ? policy.allow.flatMap(shellCommandOf) : [];
+  const search = policy.search_commands ?? [];
+  const own = policy.tools.includes(SHELL_TOOL) ? policy.allow.flatMap(shellCommandOf) : [];
+  const commands = [...new Set([...own, ...search])];
   if (commands.length === 0) return '';
   return fill(t.shell, {
     program: present(program) ? `Your shell is ${program.trim()}: write each command in its syntax.` : '',
     commands: bullets(commands),
+    search: search.length === 0 ? '' : t.search,
   });
 }
 

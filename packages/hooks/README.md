@@ -55,6 +55,11 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
   a sub-agent tool, an `ask_*` tool (nobody answers under `-p`) or a tool the class lacks (the policy's
   `tools`, agy has no `--tools`: `search_web` for a class without `WebSearch`, a write tool for a judge), else `{"decision":
 "deny_unless_prior_grant"}`, so the run's `--settings` allow rules decide; never `allow` or `auto_approve`.
+  Search (P1-53, `src/search.ts`): a class without a shell may still run the policy's `search_commands` (`git grep`,
+  `git ls-files`), one plain call per line (nothing PowerShell or bash reads outside single quotes as more than
+  words: `;`, `|`, `$`, `(`, unquoted globs…); and every class is refused the `git grep` options that run a program
+  or reach past the tracked files (`-O` even among other short options, `--open-files-in-pager`, `--no-index`,
+  `--untracked`, `--textconv`, under any abbreviation git takes), which agy's prefix rule `command(git grep)` lets by.
   SessionStart and PostToolUse write `agent.session.start` and `agent.tool` (path relative to
   `workspacePaths[0]`); Stop answers `{"decision": "continue", "reason"}` while the letter is unchanged. A
   sub-agent's own session (empty `lastUserInput`) starts no line and meets no gate.

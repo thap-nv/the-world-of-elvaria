@@ -621,6 +621,41 @@
               "id": ["budget"],
               "definition": "Chỉ hai nghĩa: trần của một quest (`quest.budget`) và hạn mức người dùng khai cho một tộc (`tribes[].budget`). Mức mana hiện tại luôn gọi là `mana`.",
               "used_in": "`quest.budget`, `kingdom.tribes[].budget`"
+            },
+            {
+              "vi": "Sổ đo",
+              "en": "Metrics ledger",
+              "id": ["metrics"],
+              "definition": "Các số về cách vương quốc làm việc, là hàm thuần của quest, phán quyết, event log và lệnh đã áp (ADR 0027): lượt, làm lại theo nguyên nhân, đạt lượt đầu, lỗi lọt, lần cần chủ nhân, token và thời gian mỗi quest được đóng dấu. Chỉ đọc, 0 mana.",
+              "used_in": "`metricsOf`, `elvaria metrics`, `docs/metrics-report.md`"
+            },
+            {
+              "vi": "Làm lại",
+              "en": "Rework",
+              "id": ["rework"],
+              "definition": "Mọi phiên của nhân vật vượt một người làm và một người chấm mỗi quest; phiên dừng vì hết mana và lượt của máy không tính. Nguyên nhân là dữ liệu: `infra` (hạ tầng), `output` (đầu ra sai), `question` (phiên tiếp sau câu hỏi), `unknown` (file không nói).",
+              "used_in": "`reworkOf`, `REWORK_CAUSES`, `OUTCOME_CAUSES`, `FAIL_KIND_CAUSES`, `TRIP_CAUSES`"
+            },
+            {
+              "vi": "Đạt lượt đầu",
+              "en": "First pass",
+              "id": ["first_pass"],
+              "definition": "Lượt đầu của quest có phán quyết đạt và không có phán quyết không đạt (kể cả của chủ nhân); tỉ lệ theo nghề, tag, model, dạng.",
+              "used_in": "`firstPassOf`, `Metrics.first_pass`"
+            },
+            {
+              "vi": "Lỗi lọt",
+              "en": "Escaped defect",
+              "id": ["escaped"],
+              "definition": "Chủ nhân trả bài một lượt mà người chấm hay máy đã cho đạt.",
+              "used_in": "`escapedOf`, `Metrics.escaped`"
+            },
+            {
+              "vi": "Lần cần chủ nhân",
+              "en": "Owner intervention",
+              "id": ["owner_commands"],
+              "definition": "Lệnh hộp thư của chủ nhân trên một quest mà Quản sự đã áp, thuộc bảng `OWNER_COMMAND_KINDS` (return, retry, reassign, edit_quest, set_rank, answer, cancel); tạo, xác nhận, đóng dấu, lưu trữ không tính.",
+              "used_in": "`OWNER_COMMAND_KINDS`, `Metrics.owner_commands`"
             }
           ]
         }

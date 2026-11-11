@@ -266,6 +266,14 @@ const SCENARIOS = {
     letter();
     return finish();
   },
+  // Each shell line of ELVARIA_FAKE_COMMANDS (a JSON list) once, in order, as a model told to run them (P1-53).
+  commands: () => {
+    for (const command of JSON.parse(env.ELVARIA_FAKE_COMMANDS ?? '[]'))
+      if (!shell(command)) return softDenied();
+    respond('done');
+    letter();
+    return finish();
+  },
   crash: () => {
     respond('Fake crash.');
     return failWith('internal error', { status: 'INTERNAL', retryable: false, reason: 'model_error' });

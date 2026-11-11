@@ -12,6 +12,8 @@ import {
   NO_PUSH_COMMAND,
   NO_PUSH_RULE,
   SCRATCH_RULES,
+  SEARCH_COMMANDS,
+  SEARCH_TOOLS,
   SHELL_TOOL,
   WRITE_TOOLS,
 } from './constants.ts';
@@ -44,6 +46,12 @@ export interface ToolPolicy {
   /** The apprentice this character may start (§3.12), with its tools; null when it may start none. */
   readonly apprentice: { readonly tools: readonly string[] } | null;
   readonly laws: ToolLaws;
+  /**
+   * Commands the session's command tool may run in place of Glob and Grep, whose CLI has no search tool (P1-53):
+   * SEARCH_COMMANDS, even for a class without a shell. Absent when the CLI searches on its own, the class has neither
+   * tool, or the plot has no git.
+   */
+  readonly search_commands?: readonly string[];
 }
 
 export interface ToolPolicyInput {
@@ -58,6 +66,8 @@ export interface ToolPolicyInput {
    * for its session), and loses every git command that writes history. Ignored otherwise.
    */
   readonly scratch?: boolean;
+  /** `capabilities.search` of the tribe's adapter (P1-53): false gives the SEARCH_COMMANDS; absent, it searches itself. */
+  readonly cli_search?: boolean | undefined;
 }
 
 const unique = (items: readonly string[]): string[] => [...new Set(items)];
@@ -135,6 +145,17 @@ function fenceRules(laws: ToolLaws): string[] {
   ];
 }
 
+/**
+ * What a class with Glob or Grep searches with when its tribe's CLI has no search tool (P1-53): git's own read-only
+ * commands, on a git plot only. Outside git they would search a repository around the folder, or every file there
+ * under the owner's `grep.fallbackToNoIndex`, dotenv files included.
+ */
+function searchCommandsOf(tools: readonly string[], input: ToolPolicyInput): string[] {
+  if (input.cli_search !== false || input.territory?.vcs.type !== 'git') return [];
+  const searches = tools.some((tool) => (SEARCH_TOOLS as readonly string[]).includes(tool));
+  return searches ? [...SEARCH_COMMANDS] : [];
+}
+
 export function toolPolicyOf(input: ToolPolicyInput): ToolPolicy {
   const verifier = input.role === 'verifier';
   const scratch = verifier && input.scratch === true;
@@ -160,6 +181,7 @@ export function toolPolicyOf(input: ToolPolicyInput): ToolPolicy {
     ...(scratch ? [NO_COMMIT_RULE] : []),
     ...fenceRules(laws),
   ];
+  const search = searchCommandsOf(tools, input);
   return {
     tools,
     allow: unique([...granted, ...shell, ...generate]),
@@ -167,5 +189,6 @@ export function toolPolicyOf(input: ToolPolicyInput): ToolPolicy {
     // The apprentice gets the character's tools without Agent, so it cannot start another (§3.12).
     apprentice: withApprentice ? { tools: ownTools } : null,
     laws,
+    ...(search.length === 0 ? {} : { search_commands: search }),
   };
 }

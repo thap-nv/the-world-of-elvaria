@@ -98,6 +98,11 @@ Luật (ADR 0014, [implementation-plan](implementation-plan.md) §2.7 và §4.1)
 | Hồi sinh | Revive | `mana.restored` | Probe thành công; nhân vật tỉnh, quest chạy tiếp bằng phiên mới. | event `mana.restored` |
 | Thăm dò (mana) | Probe | `probe` | Lệnh rẻ nhất để biết tộc đã có mana lại chưa. | `AgentRunner.probe`, event `mana.probe` |
 | Hạn mức khai báo | Declared allowance | `budget` | Chỉ hai nghĩa: trần của một quest (`quest.budget`) và hạn mức người dùng khai cho một tộc (`tribes[].budget`). Mức mana hiện tại luôn gọi là `mana`. | `quest.budget`, `kingdom.tribes[].budget` |
+| Sổ đo | Metrics ledger | `metrics` | Các số về cách vương quốc làm việc, là hàm thuần của quest, phán quyết, event log và lệnh đã áp (ADR 0027): lượt, làm lại theo nguyên nhân, đạt lượt đầu, lỗi lọt, lần cần chủ nhân, token và thời gian mỗi quest được đóng dấu. Chỉ đọc, 0 mana. | `metricsOf`, `elvaria metrics`, `docs/metrics-report.md` |
+| Làm lại | Rework | `rework` | Mọi phiên của nhân vật vượt một người làm và một người chấm mỗi quest; phiên dừng vì hết mana và lượt của máy không tính. Nguyên nhân là dữ liệu: `infra` (hạ tầng), `output` (đầu ra sai), `question` (phiên tiếp sau câu hỏi), `unknown` (file không nói). | `reworkOf`, `REWORK_CAUSES`, `OUTCOME_CAUSES`, `FAIL_KIND_CAUSES`, `TRIP_CAUSES` |
+| Đạt lượt đầu | First pass | `first_pass` | Lượt đầu của quest có phán quyết đạt và không có phán quyết không đạt (kể cả của chủ nhân); tỉ lệ theo nghề, tag, model, dạng. | `firstPassOf`, `Metrics.first_pass` |
+| Lỗi lọt | Escaped defect | `escaped` | Chủ nhân trả bài một lượt mà người chấm hay máy đã cho đạt. | `escapedOf`, `Metrics.escaped` |
+| Lần cần chủ nhân | Owner intervention | `owner_commands` | Lệnh hộp thư của chủ nhân trên một quest mà Quản sự đã áp, thuộc bảng `OWNER_COMMAND_KINDS` (return, retry, reassign, edit_quest, set_rank, answer, cancel); tạo, xác nhận, đóng dấu, lưu trữ không tính. | `OWNER_COMMAND_KINDS`, `Metrics.owner_commands` |
 
 ## 4. Nhân vật
 

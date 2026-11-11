@@ -80,6 +80,7 @@ export {
   NO_HISTORY_COMMAND,
   NO_PUSH_COMMAND,
   NO_PUSH_RULE,
+  SEARCH_COMMANDS,
   SECRET_FILES,
   WRITE_TOOLS,
 } from './policy/constants.ts';

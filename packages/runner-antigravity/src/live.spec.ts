@@ -2,19 +2,20 @@
 // cheapest model, so they run only on demand (.claude/rules/runner.md). The hook runs as in production, built:
 // `node --conditions=elvaria-dist elvaria-hook.mjs <Event>` through cmd /c; run
 // `pnpm --filter @elvaria/hooks build` first. ELVARIA_AGY overrides where agy is.
+import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { conformanceChecks, toolPolicyOf } from '@elvaria/runner-core';
+import { conformanceChecks, loadPromptTemplates, toolPolicyOf } from '@elvaria/runner-core';
 import type { ConformanceTarget, RunResult, RunnerSignal, SpawnRequest } from '@elvaria/runner-core';
 
 import { TRIBE, minimalEnv, openWorld, request } from './__fixtures__/agy.ts';
-import { createAntigravityRunner } from './runner.ts';
+import { ANTIGRAVITY_CAPABILITIES, createAntigravityRunner } from './runner.ts';
 import type { World } from './__fixtures__/agy.ts';
 
 const LIVE = process.env.ELVARIA_LIVE === '1';
@@ -43,11 +44,44 @@ async function run(req: SpawnRequest): Promise<{ result: RunResult; text: string
   return { result: await session.wait(), text };
 }
 
-/** A session with no handover gate (the gate is the assignee's) and the given class tools. */
+const PROBE_SYSTEM =
+  'You are a probe of the Elvaria test suite. Do exactly what you are asked, nothing more.';
+
+/** A territory on git with no laws but the fences every session gets: what search needs (P1-53). */
+const GIT_TERRITORY = {
+  laws: {
+    forbidden_paths: [],
+    read_only_paths: [],
+    patch_paths: [],
+    forbidden_commands: [],
+    read_before_write: [],
+    rank_floor: [],
+  },
+  checks: [],
+  commands: {},
+  vcs: { type: 'git' as const, default_branch: 'main' },
+};
+
+/**
+ * A session with no handover gate (the gate is the assignee's) and the given class tools. The role goes in the
+ * request: runner-core's context env, laid over the request's env, takes the role from there (P1-53 found the env
+ * variable alone overridden, and the gate asking a class without Write for its letter).
+ */
 function probeRequest(world: World, user: string, allow: string[], extra: Partial<SpawnRequest> = {}) {
   const permissions = toolPolicyOf({ role: 'assignee', characterClass: { tools: { allow, deny: [] } } });
-  const system = 'You are a probe of the Elvaria test suite. Do exactly what you are asked, nothing more.';
-  return request(world, { ELVARIA_ROLE: 'verifier' }, { prompt: { system, user }, permissions, ...extra });
+  const prompt = { system: PROBE_SYSTEM, user };
+  return request(world, {}, { role: 'verifier', prompt, permissions, ...extra });
+}
+
+/** The shell lines the hook saw run in the session (`agent.tool` with a command). */
+async function commandsRun(world: World): Promise<string[]> {
+  const dir = path.join(world.root, 'events');
+  const texts = await Promise.all((await readdir(dir)).map((file) => readFile(path.join(dir, file), 'utf8')));
+  return texts
+    .flatMap((text) => text.split('\n'))
+    .filter((line) => line !== '')
+    .map((line) => JSON.parse(line) as { type: string; data: { command?: string } })
+    .flatMap(({ type, data }) => (type === 'agent.tool' && data.command !== undefined ? [data.command] : []));
 }
 
 describe.runIf(LIVE)('agy for real', () => {
@@ -135,7 +169,40 @@ describe.runIf(LIVE)('agy for real', () => {
       'Use your search_web tool once to search for: IANA example domain. Reply with the first result title.';
     const { result, text } = await run(probeRequest(world, ask, ['Read', 'WebSearch']));
     expect(result).toMatchObject({ outcome: 'completed', permission_denials: [] });
-    expect(text).toMatch(/example/i);
+    // The first result changes with the engine: agy 1.5.5 gave "IANA-managed Reserved Domains" (P1-53).
+    expect(text).toMatch(/example|iana/i);
+  });
+
+  // agy has no search tool under -p (P1-53): a scout's Grep becomes `git grep` in PowerShell on Windows, told by
+  // prompts/search.md, as runner-core's prompt tells a real session.
+  it('lets a scout without a shell find a string with git grep', { timeout: MINUTES }, async () => {
+    const codeword = `ELVARIA-SEARCH-${Date.now().toString(36).toUpperCase()}`;
+    await mkdir(path.join(world.plot, 'docs'), { recursive: true });
+    const lines = Array.from({ length: 400 }, (_, index) => `Line ${index + 1} of the notes.`);
+    lines.splice(250, 0, `The codeword is ${codeword}.`);
+    await writeFile(path.join(world.plot, 'docs', 'notes.md'), `${lines.join('\n')}\n`, 'utf8');
+    await writeFile(path.join(world.plot, 'README.md'), '# Probe\n', 'utf8');
+    for (const args of [
+      ['init', '-q'],
+      ['add', '.'],
+    ]) {
+      execFileSync('git', args, { cwd: world.plot, env: minimalEnv(), stdio: 'ignore' });
+    }
+    const permissions = toolPolicyOf({
+      role: 'assignee',
+      characterClass: { tools: { allow: ['Read', 'Glob', 'Grep'], deny: [] } },
+      territory: GIT_TERRITORY,
+      cli_search: ANTIGRAVITY_CAPABILITIES.search,
+    });
+    const system = `${PROBE_SYSTEM}\n\n${(await loadPromptTemplates()).search}`;
+    const user = `Which tracked file of your current folder holds the codeword ${codeword}, and on which line? Search for it with git grep once; do not read files. Reply with the path and the line number only.`;
+    const req = request(world, {}, { role: 'verifier', prompt: { system, user }, permissions });
+    const { result, text } = await run(req);
+    expect(result.outcome).toBe('completed');
+    expect(result.permission_denials).toEqual([]);
+    expect((await commandsRun(world)).some((command) => command.startsWith('git grep'))).toBe(true);
+    expect(text).toMatch(/docs[\\/]notes\.md/);
+    expect(text).toContain('251');
   });
 
   it('resumes a conversation with --conversation', { timeout: MINUTES }, async () => {

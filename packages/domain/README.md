@@ -140,8 +140,8 @@
   measured share alone, and `windowClosingOf` says whether one window closes its gauge, `cap` or `early` (one
   session before the cap), for `elvaria doctor`.
 - Reads the tribe contract (`src/tribe/`, implementation-plan §3.14, ADR 0021): `AdapterCapabilities` (the
-  yes-or-no `ADAPTER_CAPABILITIES`, `auth`, the sign-ins an adapter runs with, P1-19, and the optional `shell` per
-  OS, read with `shellOf`, P1-40), `tribeLimitsOf` (one
+  yes-or-no `ADAPTER_CAPABILITIES`, `auth`, the sign-ins an adapter runs with, P1-19, the optional `shell` per
+  OS, read with `shellOf`, P1-40, and the optional `search`, false for a CLI with no search tool, P1-53), `tribeLimitsOf` (one
   tribe narrowed by what its adapter lacks, `TRIBE_NARROWING`; `planTick` gives nothing to a tribe whose runner
   has no headless mode, no rank above its `max_rank`, and nothing on a guarded territory without a tool gate),
   `checkTribeAuth` and `defaultAuthOf` (the sign-in `tribes[].tool.auth` pins must be one the adapter declares;
@@ -160,6 +160,13 @@
   attempt_log does not keep. `mana.exhausted` may name the reset it waits for
   (`resets_at`), and `mana.level` may read one model's own cap (`model`), which the reducer leaves out of the
   pool's band, as it does that cap's sleep (P1-32).
+- Keeps the metrics ledger, read side (`src/metrics/`, implementation-plan §3.16.1, ADR 0027, PS-01): `metricsOf(input,
+window)` over quests, verdicts, the event log and the handled inbox commands counts the runs of a window, the
+  rework (every character session beyond one assignee and one verifier per quest, `reworkOf`) with its cause, the
+  first-pass rate by class, tag, model and kind, escaped defects (the owner returned a passed run), the cost of each
+  sealed quest and the owner's commands on quests. Causes are data (`src/metrics/causes.ts`): `OUTCOME_CAUSES`,
+  `FAIL_KIND_CAUSES`, `TRIP_CAUSES` give `infra`, `output` or `question`, and `unknown` when the files tell
+  nothing; `OWNER_COMMAND_KINDS` lists the commands that count as stepping in.
 - Gives the core types every package builds on: `Result`, branded ids (`QuestId`, `TribeId`, ...), `Clock` and
   `Instant`, `zonedTime` (local day and ISO offset in `kingdom.tz`), `IdSource` (ULIDs and dated ids).
 - Names every number it decides with in `src/constants.ts` and the `constants.ts` of each folder.
