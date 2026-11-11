@@ -4,16 +4,73 @@
 
 Dòng việc: [implementation-plan](../implementation-plan.md) §8 P1-50. Cách chạy một quest: [first-quest.md](first-quest.md).
 
-## 1. Khi làm tiếp
+## 1. Khi làm tiếp (bàn giao giữa đợt 3 và đợt 4)
 
-Hạ tầng sẽ đổi, nên mọi thứ dưới đây cần kiểm lại trước khi tốn mana:
+Phiên thứ hai (2026-11-11 sáng) chạy đợt 1–3 rồi bàn giao cho một phiên mới ở chỗ nghỉ giữa đợt 3 và đợt 4, theo ý chủ nhân (không `/compact`, vì ngữ cảnh đã lớn). Phiên mới đọc `CLAUDE.md` và mục này là làm tiếp được; nhật ký chi tiết, giờ từng sự kiện và nguyên nhân từng can thiệp ở §9. Danh sách kiểm khi làm tiếp sau lần tạm dừng 2026-11-10 đã làm xong lúc 09:05–09:10 (§9, gạch đầu "Kiểm theo §1").
 
-1. Nhánh: `git merge origin/main` (không rebase), build lại `dist` của hooks và cli trong worktree `p1-50`, `doctor` từ Git Bash. Phiên đầu chạy trên `d5d68ad` (main có P1-49) + commit mở `923d231`.
-2. Đọc lại các dòng §11 mới (thay đổi hạ tầng có thể đổi luật chọn người, mana, prompt Tể tướng, schema).
-3. Đo lại mana: `doctor` (đọc log) và `MSYS_NO_PATHCONV=1 agy -p /usage --output-format json` (0 token; thiếu biến này thì Git Bash đổi `/usage` thành đường dẫn và tốn token). Số ở §3 đã cũ; quyết định hết mana (§6) phụ thuộc vào chúng.
-4. Vương quốc: so với bản mốc `<kingdom>/.backup/20261110T220805-p1-50-start/` (kingdom.json, territories, characters, temple, registry); nếu hạ tầng đổi schema, chạy `elvaria migrate` và `doctor` trước.
-5. dc1: phạm vi 8 việc (§4) đọc trên `origin/main` `4a20d91`; nếu main của dc1 đã đổi, đọc lại các file nêu ở đó.
-6. Hỏi lại chủ nhân các quyết định ở §8, rồi mới tới đợt 0.
+### 1.1 Máy và bản build
+
+- Nhánh `feat/p1-50` trong worktree `elvaria-worktrees/p1-50` (chỉ ở máy, chưa push). Quản sự và hook chạy từ `dist` của chính worktree này (main `605195d` + tài liệu P1-50), build lúc 09:04; đừng build lại giữa lần chạy.
+- `origin/main` đã đi tiếp (PS-01 `1900786`, `3a33f5f`; PR #104 `3d001ed`: P1-52, P1-53). Chưa merge vào `feat/p1-50`: để tới khi đóng P1-50 (cuối §11 sẽ conflict, giữ cả hai phía), vì merge rồi build lại sẽ đổi build giữa lần chạy. Muốn số liệu của `elvaria metrics` (PS-01, đọc không khóa, 0 mana) thì chạy bằng `dist` của checkout chính: `node "D:/Dummy/Tool - Personal/Kingdom of Agents/the-world-of-elvaria/apps/cli/dist/cli.js" metrics --since 2026-11-11 --until 2026-11-11 --kingdom "<vương quốc>"`.
+- CLI đã ghim: Claude Code 2.1.322, agy 1.5.5 (`doctor --pin` sáng 2026-11-11). **Docker Desktop phải đang chạy** trước khi khởi động Quản sự (check `e2e`, `integration`, `commands.reset` của dc1 cần nó; can thiệp 4).
+- Vương quốc: `D:/Dummy/Tool - Personal/Kingdom of Agents/my-kingdom`. Lệnh CLI chạy từ Git Bash trong worktree `p1-50`: `export ELVARIA_KINGDOM="D:/Dummy/Tool - Personal/Kingdom of Agents/my-kingdom"` rồi `node apps/cli/dist/cli.js <lệnh>`.
+- **Khởi động lại Quản sự** (một Quản sự mỗi vương quốc, tới khi dừng): trong Git Bash, `cd` vào worktree `p1-50`, `docker info` trả lời, rồi `node apps/cli/dist/cli.js run > <file log> 2>&1` chạy nền (phiên trước dùng Bash `run_in_background`). Kiểm trước: không còn `elvaria run` nào (`.state/steward.lock`; `doctor` liệt kê pid còn sót).
+
+### 1.2 Quest
+
+| # | Quest | Trạng thái lúc bàn giao | Ghi chú |
+|---|---|---|---|
+| Q11 | `q_20261111_4xysc9` CI dc1 chạy tay | lưu trữ | không dấu (Tể tướng tắt dấu, chủ nhân giữ); PR #38 `4356681` |
+| Q9 | `q_20261111_hb5d6q` todo-scan elvaria | xong | bậc script, 0 token |
+| Q3 | `q_20261111_rxdmz4` hover title | lưu trữ | dấu vua 11:19:40; PR #39 `9727fce`; 4 lượt, khoảng 1,1M token |
+| Q8 | `q_20261111_3gjkg9` testing.md | lưu trữ | dấu vua 11:25:15; PR #40 `04ac1f3`; 4 lượt, khoảng 1,4M token |
+| Q5 | `q_20261111_7yenh5` làm tiếp 5 | (cập nhật lúc bàn giao) | lượt 3, Thả quái thử thành; ilse `partial` (ghi chú `placeholder`), vesper chấm tiếp |
+| Q6 | `q_20261111_cmemx7` lịch sử xác nhận | (cập nhật lúc bàn giao) | lượt 3 sau lỗi tương phản axe |
+| Q10 | `q_20261111_7pzkfv` đối chiếu cli-facts | trạm xá (kẹt) | chủ nhân cho dừng; CLI không cancel, không archive được từ trạm xá; báo cáo 108 dữ kiện ở `quests/q_20261111_7pzkfv/handover.md` là đầu vào P1-51, giữ nguyên |
+| Q1 | `q_20261111_zc5ssm` ô có định dạng | nháp | đội, plan B, Khảo hạch mù |
+| Q2 | `q_20261111_nr5nj2` điểm cuối | nháp | đội, plan B, Khảo hạch mù |
+| Q4 | `q_20261111_3f5tjv` Leader không bị nhắc | nháp | build C, Thả quái thử thành |
+| Q7 | `q_20261111_zaq7w0` tên L4+ trên /team | nháp | build C, Thả quái thử thành |
+
+Mốc cần 10 quest tới dấu vua: đã có Q3, Q8 (Q11 không dấu, Q9 script không cần dấu, Q10 dừng). Đợt 4 có bốn quest, nên cần cả Q5, Q6 và đợt 4 tới dấu, hoặc chủ nhân chốt lại cách đếm.
+
+### 1.3 Điều chủ nhân đã chốt trong phiên
+
+Q11 chạy đầu tiên và các mặc định của (8); Tể tướng aurel (claude Opus cấp 5); giữ Q11 không dấu; editor tự làm cho (1); sửa ba dòng `ban-do` cho (5); hết mana theo (C) Argon; `max_concurrent` 2 cho dc1 và tộc gemini; xác nhận đợt 3 trước, đợt 4 sau khi đợt 3 đã merge; mỗi lần cầu dao token với quest hạng D: nâng trần (400k, rồi 600k) và retry; trả thorn về cấp 5; Q10 dừng; Q8 đưa sẵn hash commit; giao hàng mỗi quest đã dấu bằng push từ worktree, PR qua REST API bằng git credential của chủ nhân, merge commit, `quest archive` (chủ nhân chọn cho từng quest đến nay: hỏi lại mỗi lần); giữ `docs/metrics-report.md` trong `read_only_paths` của elvaria; thêm dòng kinh về file lớn giữa đợt 3 và 4; bàn giao sang phiên mới.
+
+### 1.4 Còn chờ chủ nhân
+
+1. Xác nhận đợt 4 (Q1, Q2, Q4, Q7). Nháp đã có (§9 "Đợt 2"); hạng B ⇒ đội có phần test chấp nhận và Khảo hạch mù; Q4, Q7 có tag `e2e` ⇒ Thả quái thử thành.
+2. Kiểm (c) của P1-49 trong vương quốc tạm (§7): chưa hỏi.
+3. Cuối lần chạy: trả `max_concurrent` của dc1 và tộc gemini về 1 (bản cũ ở `.backup/20261111T0945-p1-50-wave2/`), ilse và kael về `gemini-3.8-flash-high` (`character model`), giữ hay gỡ `.claude/rules/**` trong `patch_paths` của dc1.
+4. Dấu vua của mỗi quest tới `awaiting_seal`, và cách giao hàng (phiên đã hỏi mỗi lần).
+
+### 1.5 Bước kế tiếp
+
+1. Kiểm Docker, khởi động lại Quản sự (1.1), xem `quest list`.
+2. Nếu Q5, Q6 chưa xong ở lúc bàn giao: theo dõi tới dấu vua, hỏi chủ nhân dấu và giao hàng; Q6 sửa `MemberDetail.tsx`, nhánh tách từ `main` cũ, nên kiểm PR có `mergeable` trước khi merge.
+3. Hỏi chủ nhân xác nhận đợt 4, rồi `quest confirm` bốn nháp. Đội Q1, Q2: morwen viết hợp đồng, Quản sự tự thêm phần test chấp nhận và quest ghép; theo dõi trần token (nhiều quest hạng D vượt 240k ở lần này; hạng C, B có 480k).
+4. Hết mana theo (C): Argon đang 70,9 % tuần lúc 11:51 (sáng 59,3 %), đóng khi khoảng 91 %; khi đóng, ilse và kael không nhận phiên mới, bài của hiệp sĩ Opus chờ ilse tới khi Argon hồi sinh (reset 2026-11-14 08:51); ghi giờ `mana` đóng sớm, `paused_mana` nếu có, và lần hồi sinh đúng chỗ.
+5. Đóng: báo cáo lần chạy (bảng mốc như báo cáo giai đoạn 1 §1), `pnpm docs:gen --kingdom` cho `docs/tier-report.md`, bài học vào gazetteer, kinh và "Bẫy đã gặp" của `.claude/rules/*`, `git merge origin/main`, `pnpm check`, đánh dấu P1-50 xong.
+
+### 1.6 Theo dõi nền và công cụ của phiên trước
+
+Phiên trước theo dõi bằng Monitor đọc đuôi `events/<ngày>.jsonl`, in một dòng cho mỗi event trừ loại ồn (`mana.level`, `agent.tool`, `command.applied`), gắn nhãn Q theo id quest. Ba script nhỏ nằm ở thư mục nháp của phiên trước (có thể dùng lại bằng đường dẫn tuyệt đối, hoặc viết lại): `C:/Users/thapn/AppData/Local/Temp/claude/bc222656782d7031/0c99a311-dc48-4e73-b960-4476b96987d1/scratchpad/` có `watch-events.mjs` (theo dõi), `gh-pr-merge.mjs` (mở PR với thư giao hàng làm mô tả rồi merge commit, token lấy từ `git credential fill`, không in ra), `gh-get.mjs` (GET chỉ đọc), `quest-stats.mjs` (token theo quest). Máy không có `gh`; API ẩn danh của GitHub đã hết lượt cho IP này.
+
+### 1.7 Can thiệp đã ghi (chi tiết ở §9)
+
+1. Q10 trần token: nâng 600k, retry. 2. Q5 câu hỏi `.claude/rules/api.md`: phiên sửa hộ, `answer`, thêm `.claude/rules/**` vào `patch_paths` của dc1. 3. Q3 trần token: 400k, retry. 4. Docker không chạy: phiên mở Docker Desktop; trả thorn về cấp 5. 5–6. Q6, Q8 trần token: 400k, retry. 7. Q10 lần hai: dừng (kẹt ở trạm xá). 8. Q8: đưa sẵn hash commit vào mô tả, retry. 9. Q3 lần ba: 600k, retry. 10. Thêm `docs/metrics-report.md` vào `read_only_paths` của elvaria. 11. Dòng kinh về file lớn (giữa đợt 3 và 4). Mọi lần đều do chủ nhân chọn (phiên hỏi), trừ việc mở Docker Desktop.
+
+### 1.8 Số đo tới lúc bàn giao, và còn phải đo
+
+- Mana: claude tuần 52 % lúc 09:10 → 56 % lúc 11:31, 5 giờ 28 % lúc 11:46; gemini Flash tuần khoảng 7–8 %; Argon tuần 59,32 % → 70,88 % lúc 11:51.
+- Token người chấm theo hạng ((a) của P1-48): Q11 hạng E người làm 52k, người chấm 220k; các số khác lấy bằng `quest-stats.mjs` hoặc `elvaria metrics`.
+- Việc nền ((c)–(e) của P1-47): check `format` của Q8 chờ 41 phút sau các lượt e2e dài (hai suất `max_background`); e2e `exclusive` mỗi lần 12–15 phút; Thả quái thử thành của Q5 mất 75 phút phần máy (`flake_check` 28 phút); người chấm Q6 chờ 33 phút sau check đỏ.
+- Còn phải đo: đồng hồ Argon đóng sớm và hồi sinh (P1-48 (d), phần một phiên của Argon), một dòng `rateLimitType` thật nếu gặp, tải việc nền với đội ở đợt 4, token người chấm hạng C, B.
+
+### 1.9 Phát hiện và đề xuất cho P1-51 và sau đó
+
+Tể tướng: (a) tắt dấu vua của quest build khi lời nói không nhắc (prompt không nói gì; lấy `seal_default` của kind); (b) ước lượng không biết cỡ file (Q10: 70k cho một file 1 MB) và số file (Q3: 90k cho khoảng 15 file); (c) giao việc cần shell cho nghề không có Bash (Q8 "tìm bằng git log"). Trần token: sàn hạng D 240k thấp cho việc web nhiều file trên dc1 (Q3, Q6, Q8 đều vượt lượt đầu). Môi trường: `doctor` không kiểm daemon Docker; check đỏ vì `commands.reset` (lỗi môi trường) bị tính là trượt và hạ cấp người làm. CLI: `quest cancel` và `quest archive` không cho rời trạm xá dù bảng chuyển trạng thái có `infirmary → archived`. agy: không có tool tìm (P1-53 đã chốt `git grep`); Argon in JSON giữ chỗ (`{"notes":"placeholder","result":"pass"}`) giữa câu trả lời và agy lấy nó làm `structured_output` (Quản sự hạ thành `partial`, mất một phiên chấm): lấy JSON cuối, hoặc từ chối ghi chú giữ chỗ. Lãnh thổ: `.claude/rules/**` nên ở `patch_paths` khi repo có thư mục đó. Việc nền: check ngắn không `exclusive` đứng sau e2e dài.
 
 ## 2. Vương quốc lúc tạm dừng
 
