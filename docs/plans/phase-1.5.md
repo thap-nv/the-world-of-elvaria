@@ -12,6 +12,7 @@ Ngày: 2026-11-11 · Trạng thái: đã duyệt. Tài liệu này là tầng ch
 2. Bài thử của mốc PS-07: lý do trạm xá và dòng chi tiết của `doctor` thành mã cộng chuỗi VI/EN.
 3. PS-01 mở ngay, trong lúc P1-50 tạm dừng; các task PS khác chờ P1-51 đóng giai đoạn 1.
 4. Tể tướng phân loại thư theo lịch, mỗi ngày một lần trước bản tấu, chỉ khi có thư đang chờ.
+5. Thêm PS-21, bản đồ lãnh thổ do máy dựng (0 mana), làm sau PS-01b; graphify chỉ là backend tùy chọn, chọn bằng số đo; graphify được tự cài vào `~/.claude`, `~/.gemini` và git hook, thư viện Python của nó được cài khi cần (§11).
 
 ## Điều code cho thấy
 
@@ -52,7 +53,7 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
 |---|---|---|
 | 1 | PS-01 | Mở ngay; 0 mana; toàn file mới |
 | 2 | PS-01b, PS-02, PS-04b | Sau P1-51 và P1-52 (tách kế hoạch triển khai, chốt 2026-11-11). PS-01b và PS-02 cùng đụng snapshot prompt, `event-types.ts`, `inbox/apply.ts`; PS-02 và PS-04b cùng `commands.ts`, locale, glossary: nhánh merge sau giữ cả hai phía, sinh lại snapshot và file sinh |
-| 3 | PS-05, PS-03 | Hai vùng code khác nhau |
+| 3 | PS-05, PS-03, PS-21 | PS-05 và PS-03 khác vùng code. PS-21 sau PS-01b, vì A/B của nó đo bằng lượt đọc theo file; PS-21 và PS-05 cùng đụng snapshot prompt, schema territory, `packages/steward/src/sessions/`: nhánh merge sau giữ cả hai phía, sinh lại snapshot và file sinh |
 | 4 | PS-04, PS-03b | PS-04 sau PS-05: cả hai, và PS-01b trước đó, nối tiếp nhau trên `record.ts` và `QUEST_CHANGE` |
 | 5 | PS-06, rồi PS-06b | PS-06 cần PS-05 |
 | 6 | PS-07 | Sau cùng; chạy thật, tốn mana; cần P1-53 (nhân vật gemini tìm được trong repo) |
@@ -151,6 +152,23 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
   - `chancellor.md` và prompt pháp sư khai vùng; `quest add --scope`, `quest edit --scope`.
 - **Test**: domain 100 %; hai quest vùng rời chạy song song với `max_concurrent 2`; vùng giao thì chờ tới khi quest kia được lưu trữ; hai quest mở cùng vùng không khóa nhau; một đội có các phần rời vùng đi tới quest ghép.
 
+## PS-21 — Bản đồ lãnh thổ
+
+- **Mục tiêu**: nhân vật bớt tự dò lại lãnh thổ từ đầu ở mỗi quest. Đo ngày 2026-11-11 trên event log 08–11/11: 67 phiên người làm có sửa file, 57 % lần gọi tool diễn ra trước lần sửa đầu tiên (trung vị 52 %), gần như toàn là đọc. Dựng bản đồ không tốn mana.
+- **Đọc trước**: [ADR 0017](../adr/0017-one-quest-one-context-three-tiers.md), [ADR 0021](../adr/0021-tribe-contract.md), [ADR 0015](../adr/0015-node-only-scripts.md); mục PS-01b (lượt đọc theo file, dấu vết nạp); dòng §11 ngày 2026-11-11 về PS-21 (quyền về graphify); `packages/runner-core/src/prompt/{build-prompt,blocks}.ts`, `packages/runner-core/prompts/gazetteer.md`; `packages/steward/src/sessions/request.ts`, `packages/steward/src/files.ts`; `packages/runner-claude/src/argv.ts`; `packages/runner-antigravity/src/{launch,context-file,run-files}.ts`; `packages/domain/src/party/plot-base.ts`.
+- **Đã chốt** (chủ nhân, 2026-11-11): bản đồ do máy dựng, không có tóm tắt do model viết; bản đồ Node là mặc định; graphify chỉ đọc code là backend tùy chọn cho ngôn ngữ Node không đọc được, chọn bằng số đo; nạp vào prompt chỉ khi A/B cho thấy lợi.
+- **Điều code cho thấy**: gazetteer nằm ở phần `user` của prompt (`build-prompt.ts`). Claude nhận phần `user` qua stdin và phần `system` qua `--append-system-prompt-file` (`runner-claude/src/argv.ts`); agy nhận phần `user` trên dòng lệnh (`-p`), trên Windows tối đa 32 767 ký tự (`WINDOWS_COMMAND_LINE_MAX`, `runner-antigravity/src/launch.ts`), còn phần `system` vào `GEMINI.md` (`context-file.ts`). Bản đồ 24 000 ký tự ở phần `user` sẽ làm agy không khởi động được với quest dài, nên bản đồ vào phần `system`; phần này đứng đầu mọi lượt hỏi của phiên nên cũng được cache tốt hơn.
+- **Bước 1, phép thử 0 mana** (`docs/spikes/territory-map-<ngày>.md`): trên một bản sao của dc1, không phải checkout của lãnh thổ, ở commit gốc của 3 quest đã đóng dấu (của P1-50: Q3, Q5, Q6, Q8, dc1 PR #39–#42), dựng (a) bản đồ Node bản đầu và (b) graphify chỉ đọc code, với `GRAPHIFY_BACKEND=none` và `GRAPHIFY_QUERY_LOG_DISABLE=1` (theo nghiên cứu ngày 2026-11-11; graphify đổi phiên bản gần như mỗi ngày, kiểm lại trên bản đang cài). Đo cho từng cách: các file mà diff thật đã sửa có trong bản đồ không, kể cả qua quan hệ import; cỡ; thời gian dựng; ngôn ngữ nào thiếu quan hệ import. Không chạy lệnh cài toàn máy của graphify, không cho nó đọc tài liệu (cần model, gửi dữ liệu ra ngoài). Chủ nhân chốt backend ở §11; bản đồ Node đủ thì không viết phần graphify.
+- **Thêm**:
+  - Bộ dựng bản đồ bằng Node trong `packages/runner-core` (hoặc chỗ khác mà `boundaries.mjs` cho phép): đọc thẳng từ git ở commit gốc (`git ls-tree`, `git show`), không cần worktree, `shell: false`. Nội dung: cây thư mục rút gọn; manifest và điểm vào (`main`, `exports`, `bin`, `scripts` của `package.json`, workspace); quan hệ import giữa file JS/TS, đọc bằng biểu thức chính quy, không thêm parser; test cạnh file nguồn. Ngôn ngữ khác chỉ có cây file, trừ khi backend graphify được chọn. Thứ tự tất định; quá 24 000 ký tự thì cắt theo một thứ tự ưu tiên cố định và ghi một dòng báo đã cắt. Giữ quan hệ import ở dạng dữ liệu, không chỉ văn bản, để PS-06 tính vùng bị ảnh hưởng.
+  - Bản đồ lưu cạnh gazetteer (`territories/<id>/`, Quản sự ghi, dòng đầu ghi commit), dựng lại khi commit gốc của quest khác.
+  - Dấu còn mới: gazetteer ghi commit lúc viết ở dòng đầu (chưa có dòng đó thì không có dấu); khi dựng prompt, Quản sự đếm các commit từ commit đó tới commit gốc của quest chạm từng thư mục cấp một, và in "N commit đã chạm `<thư mục>` từ `<sha>`" khi N > 0. Bản đồ dựng đúng ở commit gốc nên luôn mới.
+  - Cờ tùy chọn của lãnh thổ (đề xuất `code_map`), mặc định tắt: bật thì bản đồ vào phần `system`; tắt thì prompt không đổi một ký tự. Dấu vết nạp của PS-01b có khối bản đồ.
+  - `elvaria territory map <id> [--commit <sha>]` in bản đồ, 0 mana, cho phép thử và cho chủ nhân xem.
+- **Bước cuối, A/B** (tốn mana; hỏi chủ nhân trước và chốt trần mana lúc đó): mỗi tộc một cặp phiên chạy lại một quest dc1 đã đóng dấu trên đất nháp, một phiên có bản đồ, một phiên không; so lượt đọc theo file (PS-01b), số lần gọi tool trước lần sửa đầu, token và kết quả. Bật cờ trên lãnh thổ nào là chủ nhân chốt theo số đo (§11). Chủ nhân hoãn A/B thì task vẫn xong, cờ để tắt.
+- **Test**: cùng commit thì cùng bản đồ từng byte; repo git thật trong thư mục có dấu cách; repo lớn bị cắt đúng trần, có dòng báo; cờ tắt thì snapshot prompt không đổi; cờ bật thì snapshot mới, và một quest dài của agy trên Windows vẫn dưới trần dòng lệnh; dấu còn mới đúng khi có commit mới chạm một thư mục; Windows và macOS.
+- **Không làm**: tóm tắt do model viết; embeddings hay tìm theo nghĩa (PS-20); viết hay sửa gazetteer; cài graphify vào `~/.claude`, `~/.gemini` hay git hook từ code của Elvaria.
+
 ## PS-04 — Vùng bảo vệ
 
 - **Mục tiêu**: quest chạm thứ canh giữ thế giới luôn chờ dấu vua và được ưu tiên người chấm mạnh.
@@ -188,6 +206,7 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
   - Mẫu `plan.md` cho pháp sư: khảo sát, quyết định chung, các phần và vùng file, điều kiện xong, điều chưa biết (thành quest thăm dò `research` mà các phần chờ), ước lượng, và một trang tóm tắt cho chủ nhân.
   - `planIssuesOf` thuần, nối vào check `subquests` sẵn có: mỗi phần ghi file có `scope_paths`; các phần không phụ thuộc nhau có vùng rời nhau; check được nêu tên có tồn tại. Hạng, nghề và ước lượng đã là bắt buộc trong schema.
   - Bước nghi thức `check_plan_ready` thêm vào `council_review`: một quest vừa một context, điều kiện xong máy kiểm được, file nóng có cách ghép, điều chưa biết đã có quest thăm dò, không trái một quyết định đã ghi.
+- **Vùng bị ảnh hưởng, từ PS-21** (thêm 2026-11-11): mẫu `plan.md` gợi ý `scope_paths` cho mỗi phần từ quan hệ import ngược của bản đồ lãnh thổ (các file import file mà phần đó định sửa). Chỉ là gợi ý cho pháp sư và người duyệt, không thành luật của `planIssuesOf`.
 - **Test**: kế hoạch chồng vùng bị trả về (`incomplete`) dù người chấm nói gì; kế hoạch qua duyệt chờ đúng một dấu rồi sinh quest con; việc nhỏ không qua Nghị hội.
 - **Vương quốc đang chạy**: sửa `steps` của `council_review` trong registry bằng script có sao lưu.
 - **Đề xuất ngoài phạm vi**: check của Quản sự đỏ thì không mở phiên người chấm, đỡ một phiên cho mỗi kế hoạch hỏng.
