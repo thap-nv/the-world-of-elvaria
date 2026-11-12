@@ -2,7 +2,13 @@
 // (prompt.ts) and what a continuing assignee reads (continuation.ts) are built from it. A file of its own, so the
 // three import it without a cycle.
 import type { Character, Quest, Role, Territory, VerdictCheck } from '@elvaria/domain';
-import type { Continuation } from '@elvaria/runner-core';
+import type { Answered, Continuation } from '@elvaria/runner-core';
+
+/** A CLI session to continue (`--resume`, ADR 0017), and the answer it gets when the owner answered its question. */
+export interface Resume {
+  readonly session_id: string;
+  readonly answered: Answered | null;
+}
 
 export interface SessionInput {
   readonly role: Role;

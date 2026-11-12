@@ -1,18 +1,20 @@
 // The SpawnRequest of a session (implementation-plan §3.7): the prompt runner-core builds from the kingdom's files
 // (prompt.ts), the tool policy of the class, the territory's laws and the role, the budget the CLI enforces, the
-// ELVARIA_* context the hook reads, and the run folder `.runs/<quest>-<n>` (verifier: `/verify` below it).
+// ELVARIA_* context the hook reads, and the run folder `.runs/<quest>-<n>` (verifier: `/verify` below it). A resumed
+// session continues its CLI session (`--resume`, ADR 0017). Its load trace comes along for the opening line (PS-01b).
 import { mkdir } from 'node:fs/promises';
 
 import { FAIL_KINDS, runDirOf } from '@elvaria/domain';
 import { secretValuesOf, toolPolicyOf } from '@elvaria/runner-core';
 import { inKingdom } from '@elvaria/store';
+import type { LoadTrace } from '@elvaria/domain';
 import type { JsonSchema, SpawnRequest } from '@elvaria/runner-core';
 
 import { handoverPath } from '../files.ts';
 import { promptOf, searchFor } from './prompt.ts';
 import { sessionEnvOf } from './secrets.ts';
 import type { Context } from '../context.ts';
-import type { SessionInput } from './input.ts';
+import type { Resume, SessionInput } from './input.ts';
 
 /**
  * The verifier's structured output (§3.2): what the verdict file takes from it. The Steward adds the checks, applies
@@ -58,20 +60,32 @@ const envOf = (ctx: Context, input: SessionInput): Record<string, string> => ({
   ELVARIA_TZ: ctx.world.kingdom.tz,
 });
 
-export async function requestOf(ctx: Context, input: SessionInput): Promise<SpawnRequest> {
+/** The request the runner gets, and what its prompt carried, for the line that opens the session. */
+export interface SessionRequest {
+  readonly request: SpawnRequest;
+  readonly load_trace: LoadTrace;
+}
+
+export async function requestOf(
+  ctx: Context,
+  input: SessionInput,
+  resume: Resume | null = null,
+): Promise<SessionRequest> {
   const { quest, character, territory, role } = input;
   const characterClass = ctx.world.registry.classes.find(({ id }) => id === character.class);
   if (characterClass === undefined) throw new Error(`registry has no class "${character.class}"`);
   const runDir = inKingdom(ctx.root, runDirOf(quest, input.n, role));
   await mkdir(runDir, { recursive: true });
   const env = await sessionEnvOf(ctx, input, envOf(ctx, input));
-  return {
+  const known = secretValuesOf({ quest, env });
+  const { prompt, load_trace: loadTrace } = await promptOf(ctx, input, { characterClass, known }, resume);
+  const request: SpawnRequest = {
     role,
     quest,
     character,
     territory,
     cwd: input.cwd,
-    prompt: await promptOf(ctx, input, characterClass, secretValuesOf({ quest, env })),
+    prompt,
     permissions: toolPolicyOf({
       role,
       characterClass,
@@ -87,5 +101,7 @@ export async function requestOf(ctx: Context, input: SessionInput): Promise<Spaw
     ...(role === 'verifier'
       ? { structured: VERDICT_OUTPUT_SCHEMA }
       : { handover: handoverPath(ctx.root, quest.id) }),
+    ...(resume === null ? {} : { resume: { session_id: resume.session_id } }),
   };
+  return { request, load_trace: loadTrace };
 }

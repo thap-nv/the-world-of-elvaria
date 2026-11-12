@@ -1,18 +1,22 @@
 // The prompt of a session (implementation-plan §3.7): runner-core's buildPrompt over what the kingdom's files say of
 // the quest, the character, its class and the territory, plus what the role reads: a judge the letter, the checks
-// and the diff, a continuing assignee its continuation (continuation.ts).
+// and the diff, a continuing assignee its continuation (continuation.ts). A resumed session gets only what is new
+// (resumedPrompt, ADR 0017). With it comes its load trace (PS-01b, load-trace.ts), for the line that opens it.
 import process from 'node:process';
 
 import { partialVerdictIdOf, shellOf, verifierSessionsOf } from '@elvaria/domain';
-import { buildPrompt, readContextFiles } from '@elvaria/runner-core';
+import { buildPrompt, readContextFiles, resumedPrompt } from '@elvaria/runner-core';
 import { readClassPrompt } from '@elvaria/store';
-import type { Character, CharacterClass, Quest, Verdict } from '@elvaria/domain';
+import type { Character, CharacterClass, LoadTrace, Quest, Skill, Verdict } from '@elvaria/domain';
+import type { BuiltPrompt, PromptWithBlocks } from '@elvaria/runner-core';
 
 import { handoverPath, readDecree, readGazetteer, readHandover, readScriptures } from '../files.ts';
 import { withLogTails } from '../review/log-tail.ts';
 import { continuationFor } from './continuation.ts';
+import { loadTraceOf } from './load-trace.ts';
 import type { Context } from '../context.ts';
-import type { SessionInput } from './input.ts';
+import type { Scripture } from '../files.ts';
+import type { Resume, SessionInput } from './input.ts';
 
 /**
  * The `partial` verdict the latest judge of run `n` left (`<quest>-<n>-p<k>`, §3.2), so the next judge reads on from
@@ -50,14 +54,23 @@ const shellFor = (ctx: Context, character: Character): string | undefined =>
 export const searchFor = (ctx: Context, character: Character): boolean | undefined =>
   ctx.deps.runners[character.tribe]?.capabilities.search;
 
-/** `known`: the session's secret values, masked in what the prompt quotes of the kingdom's logs (P1-25). */
-export async function promptOf(
+/** What builtPromptOf reads beside the session's input: its class, its secret values, its scriptures and skills. */
+interface PromptParts {
+  readonly characterClass: CharacterClass;
+  /** The session's secret values, masked in what the prompt quotes of the kingdom's logs (P1-25). */
+  readonly known: readonly string[];
+  readonly scriptures: readonly Scripture[];
+  /** Chosen by selectSkills (§3.13); none in stage 1. */
+  readonly skills: readonly Skill[];
+}
+
+async function builtPromptOf(
   ctx: Context,
   input: SessionInput,
-  characterClass: CharacterClass,
-  known: readonly string[],
-) {
+  parts: PromptParts,
+): Promise<PromptWithBlocks> {
   const { quest, character, territory } = input;
+  const { known } = parts;
   const base = {
     shell: shellFor(ctx, character),
     cli_search: searchFor(ctx, character),
@@ -67,9 +80,9 @@ export async function promptOf(
     character,
     territory,
     registry: ctx.world.registry,
-    scriptures: await readScriptures(ctx.root, character.id),
+    scriptures: parts.scriptures.map(({ text }) => text),
     gazetteer: await readGazetteer(ctx.root, territory.id),
-    class_prompt: await readClassPrompt(ctx.root, characterClass),
+    class_prompt: await readClassPrompt(ctx.root, parts.characterClass),
     ...(await contextFilesFor(ctx, input)),
   };
   if (input.role === 'verifier') {
@@ -87,7 +100,39 @@ export async function promptOf(
   }
   const continuation = await continuationFor(ctx, input, known);
   return buildPrompt(
-    { ...base, role: 'assignee', skills: [], handover_path: handoverPath(ctx.root, quest.id), continuation },
+    {
+      ...base,
+      role: 'assignee',
+      skills: parts.skills,
+      handover_path: handoverPath(ctx.root, quest.id),
+      continuation,
+    },
     ctx.templates,
   );
+}
+
+/** The prompt the session gets, and its load trace (PS-01b): what that prompt carried. */
+export interface SessionPrompt {
+  readonly prompt: BuiltPrompt;
+  readonly load_trace: LoadTrace;
+}
+
+/**
+ * The prompt of the session, cut down when it resumes a CLI session (`resume`, ADR 0017). Its blocks go into the load
+ * trace, not to the CLI: the request's prompt is the system and the user part alone.
+ */
+export async function promptOf(
+  ctx: Context,
+  input: SessionInput,
+  given: Pick<PromptParts, 'characterClass' | 'known'>,
+  resume: Resume | null,
+): Promise<SessionPrompt> {
+  const parts = { ...given, scriptures: await readScriptures(ctx.root, input.character.id), skills: [] };
+  const built = await builtPromptOf(ctx, input, parts);
+  const prompt = resume === null ? built : resumedPrompt(built, resume.answered, ctx.templates);
+  const skills = parts.skills.map(({ id }) => id);
+  return {
+    prompt: { system: prompt.system, user: prompt.user },
+    load_trace: loadTraceOf(prompt, parts.scriptures, skills),
+  };
 }

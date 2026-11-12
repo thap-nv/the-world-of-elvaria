@@ -2,16 +2,8 @@
 // move with the session's id and the character's move with it. A move the state machine refuses kills the session
 // it was for, so no session ever runs for a quest the files do not say it runs for.
 import { currentRun, err, ok, resumedSession } from '@elvaria/domain';
-import { resumedPrompt } from '@elvaria/runner-core';
-import type { Character, CharacterId, Quest, QuestId, Result, Revival } from '@elvaria/domain';
-import type {
-  AgentRunner,
-  Answered,
-  Continuation,
-  ParseOptions,
-  RunningSession,
-  SpawnRequest,
-} from '@elvaria/runner-core';
+import type { Character, CharacterId, LoadTrace, Quest, QuestId, Result, Revival } from '@elvaria/domain';
+import type { AgentRunner, Continuation, ParseOptions, RunningSession } from '@elvaria/runner-core';
 
 import { heardBy } from '../mana/heard.ts';
 import { mergeParts, plotOptionsOf } from '../party/plot.ts';
@@ -26,7 +18,8 @@ import { questSecretsOf, rememberSecrets, secretsLacking } from './secrets.ts';
 import { spawnOf } from './spawn.ts';
 import type { Context } from '../context.ts';
 import type { MovePayload } from '../record.ts';
-import type { SessionInput } from './input.ts';
+import type { Resume, SessionInput } from './input.ts';
+import type { Running } from './running.ts';
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
@@ -42,22 +35,6 @@ function partsOf(ctx: Context, questId: QuestId, characterId: CharacterId | null
   if (runner === undefined) return err('no_runner');
   return ok({ quest, character, territory, runner });
 }
-
-/** A CLI session to continue (`--resume`), and the answer it gets when the owner answered its question. */
-interface Resume {
-  readonly session_id: string;
-  readonly answered: Answered | null;
-}
-
-/** The request of a resumed session: `--resume`, and a prompt carrying only what is new (ADR 0017). */
-const resumedRequest = (ctx: Context, request: SpawnRequest, resume: Resume | null): SpawnRequest =>
-  resume === null
-    ? request
-    : {
-        ...request,
-        resume: { session_id: resume.session_id },
-        prompt: resumedPrompt(request.prompt, resume.answered, ctx.templates),
-      };
 
 /**
  * The plot, its `commands.setup` given the quest's secrets as its checks are (P1-30): an install from a private
@@ -79,9 +56,23 @@ async function plotFor(ctx: Context, input: Pick<SessionInput, 'quest' | 'territ
   return prepared;
 }
 
+/** A session whose quest moved: the Steward keeps it until it ends, and counts it among this tick's starts. */
+function keep(ctx: Context, running: Running): void {
+  ctx.sessions.add(running);
+  ctx.counts.started += 1;
+}
+
+/** A session that spawned: the plot the quest gets, and what its prompt carried for its opening line (PS-01b). */
+interface Spawned {
+  readonly session: RunningSession;
+  readonly plot: Quest['plot'];
+  readonly spawned_at: string;
+  readonly load_trace: LoadTrace;
+}
+
 /**
- * Prepares the plot, builds the request and spawns as the tribe's limits ask (spawnOf, P1-33); the session and the
- * plot the quest gets. `resume` continues that CLI session (ADR 0017); the session's in-band mana windows are heard
+ * Prepares the plot, builds the request and spawns as the tribe's limits ask (spawnOf, P1-33). `resume` continues
+ * that CLI session with a prompt carrying only what is new (ADR 0017); the session's in-band mana windows are heard
  * by the gauge (§3.5).
  */
 async function spawnFor(
@@ -90,18 +81,18 @@ async function spawnFor(
   input: Omit<SessionInput, 'cwd'>,
   resume: Resume | null = null,
   parse?: ParseOptions,
-): Promise<Result<{ session: RunningSession; plot: Quest['plot']; spawned_at: string }, string>> {
+): Promise<Result<Spawned, string>> {
   try {
     const prepared = await plotFor(ctx, input);
     const quest = { ...input.quest, plot: prepared.plot };
-    const request = await requestOf(ctx, { ...input, quest, cwd: prepared.cwd });
-    const resumed = resumedRequest(ctx, request, resume);
-    const session = heardBy(ctx.mana, input.character, await spawnOf(ctx, runner, resumed, parse));
+    const built = await requestOf(ctx, { ...input, quest, cwd: prepared.cwd }, resume);
+    const { request, load_trace: loadTrace } = built;
+    const session = heardBy(ctx.mana, input.character, await spawnOf(ctx, runner, request, parse));
     // Right after the spawn: a restart tells the CLI's process by its start (sessions/pids.ts).
     const spawnedAt = ctx.record.stamp();
     // Keyed by the session the Steward keeps (heardBy's wrapper): maskFinished finds it from Running.session.
-    rememberSecrets(session, resumed);
-    return ok({ session, plot: prepared.plot, spawned_at: spawnedAt });
+    rememberSecrets(session, request);
+    return ok({ session, plot: prepared.plot, spawned_at: spawnedAt, load_trace: loadTrace });
   } catch (error) {
     ctx.deps.log.warn(
       `steward: ${input.quest.id}: no session for ${input.character.id}: ${messageOf(error)}`,
@@ -197,7 +188,7 @@ export async function openAssignee(
       await ctx.record.move({ quest: questId, event: { type: 'release' }, actor: 'steward' });
     return spawned;
   }
-  const { session, plot, spawned_at: spawnedAt } = spawned.value;
+  const { session, plot, spawned_at: spawnedAt, load_trace: loadTrace } = spawned.value;
   const sessionId = await session.session_id;
   const moved = await ctx.record.move({
     quest: questId,
@@ -205,12 +196,13 @@ export async function openAssignee(
     actor: ACTORS[opening.kind],
     edits: { [character.id]: opening.kind === 'wake' ? step('mana_restored') : step('claim', questId) },
     before: { plot },
+    load_trace: loadTrace,
   });
   if (!moved.ok) {
     await session.kill(`the quest refused ${opening.kind}: ${moved.error}`);
     return moved;
   }
-  ctx.sessions.add({
+  keep(ctx, {
     quest: questId,
     role: 'assignee',
     n,
@@ -221,7 +213,6 @@ export async function openAssignee(
     checks: [],
     spawned_at: spawnedAt,
   });
-  ctx.counts.started += 1;
   return moved;
 }
 
@@ -263,7 +254,7 @@ export async function openVerifier(
   const parse = judgeParseOf(ctx, quest, character, { n, checks: checks.value });
   const opened = await spawnFor(ctx, runner, input, null, parse);
   if (!opened.ok) return opened;
-  const { session, spawned_at: spawnedAt } = opened.value;
+  const { session, spawned_at: spawnedAt, load_trace: loadTrace } = opened.value;
   const sessionId = await session.session_id;
   const moved = await ctx.record.move({
     quest: questId,
@@ -271,12 +262,13 @@ export async function openVerifier(
     actor: 'steward',
     edits: { [character.id]: step('assign_verify', questId) },
     before: { checks_run: checksRunOf(checks.value) },
+    load_trace: loadTrace,
   });
   if (!moved.ok) {
     await session.kill(`the quest refused its verifier: ${moved.error}`);
     return moved;
   }
-  ctx.sessions.add({
+  keep(ctx, {
     quest: questId,
     role: 'verifier',
     n,
@@ -287,6 +279,5 @@ export async function openVerifier(
     checks: checks.value,
     spawned_at: spawnedAt,
   });
-  ctx.counts.started += 1;
   return moved;
 }
