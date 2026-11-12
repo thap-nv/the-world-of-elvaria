@@ -103,17 +103,27 @@ const BreakersSchema = z.strictObject({
     ),
 });
 
+/** A job the Steward runs once a day at `at`, the kingdom's local time (`HH:MM`, 24 hours). */
+const dailyJob = (enabled: boolean, at: string) =>
+  z
+    .strictObject({
+      enabled: z.boolean().default(enabled),
+      at: z
+        .string()
+        .regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/)
+        .default(at),
+    })
+    .prefault({});
+
 const ScheduleSchema = z
   .strictObject({
-    chronicle: z
-      .strictObject({
-        enabled: z.boolean().default(false),
-        at: z
-          .string()
-          .regex(/^([01][0-9]|2[0-3]):[0-5][0-9]$/)
-          .default(SCHEDULE_DEFAULTS.chronicle_at),
-      })
-      .prefault({}),
+    chronicle: dailyJob(false, SCHEDULE_DEFAULTS.chronicle_at),
+    // PS-03; optional with defaults, so a kingdom.json written before it stays version 1.
+    digest: dailyJob(true, SCHEDULE_DEFAULTS.digest_at).meta(
+      describe(
+        'The daily digest (PS-03): at `at` the Steward writes digest/YYYY-MM-DD.md, everything that waits for the owner in two groups (must decide for the work to go on, can wait), each item with advice and its CLI command, and rings the bell once. No model, no mana; once a day, whatever the clock does.',
+      ),
+    ),
     temple: z
       .strictObject({
         enabled: z.boolean().default(false),
@@ -134,7 +144,7 @@ const ScheduleSchema = z
   })
   .meta({
     $comment:
-      'Scheduled jobs run inside the Steward (no cron, Task Scheduler or launchd). The job list is empty in stage 1, so every job defaults to disabled.',
+      'Scheduled jobs run inside the Steward (no cron, Task Scheduler or launchd). The digest (PS-03) is the first job with a runner and is on by default; chronicle, temple and patrol have none yet, so they default to disabled.',
   });
 
 const DispatchSchema = z.strictObject({

@@ -2300,6 +2300,87 @@
       "if": {
         "properties": {
           "type": {
+            "const": "schedule.ran"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "A job of kingdom.schedule ran to its end on `day`. The Steward reads the last of these at start: a job runs once a day, however the clock moves. A job stopped with the Steward writes none and runs again.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "job",
+              "day"
+            ],
+            "properties": {
+              "job": {
+                "enum": [
+                  "chronicle",
+                  "digest"
+                ]
+              },
+              "day": {
+                "description": "The kingdom's local day, yyyy-mm-dd (kingdom.tz).",
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "digest.written"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "The Steward wrote the day's digest (attentionQueue, in the owner's language) and rang the bell once. No model ran.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "day",
+              "file",
+              "must",
+              "can_wait"
+            ],
+            "properties": {
+              "day": {
+                "description": "The kingdom's local day, yyyy-mm-dd (kingdom.tz).",
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              },
+              "file": {
+                "description": "The digest, relative to the kingdom.",
+                "type": "string",
+                "pattern": "^digest/\\d{4}-\\d{2}-\\d{2}\\.md$"
+              },
+              "must": {
+                "description": "Items the work waits on: the owner must decide for it to go on.",
+                "type": "integer",
+                "minimum": 0
+              },
+              "can_wait": {
+                "description": "Items that can wait.",
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
             "const": "upgrade.started"
           }
         }
@@ -2516,6 +2597,8 @@
         "plot.merged",
         "plot.restored",
         "chronicle.written",
+        "schedule.ran",
+        "digest.written",
         "territory.attached",
         "territory.surveyed",
         "territory.health",

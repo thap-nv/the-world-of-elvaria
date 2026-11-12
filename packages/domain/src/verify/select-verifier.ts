@@ -119,6 +119,41 @@ function besidesPassedOver(
   return others.some(may) ? others : fit;
 }
 
+/** The judges selectVerifier draws from (besidesPassedOver), and whether one is of another family than the doers. */
+function judgesFor(
+  quest: Quest,
+  candidates: readonly Character[],
+  policy: Omit<VerifierPolicy, 'free'>,
+): {
+  readonly fit: readonly Character[];
+  readonly otherFamily: (character: Character) => boolean;
+  readonly machineOnly: boolean;
+} {
+  const families = new Set(policy.doers.map(({ model }) => familyOf(model)));
+  const otherFamily = (character: Character): boolean => !families.has(familyOf(character.model));
+  const machineOnly = policy.same_family === 'machine_only';
+  const fit = besidesPassedOver(
+    quest,
+    fitJudges(quest, candidates, policy),
+    (c) => !machineOnly || otherFamily(c),
+  );
+  return { fit, otherFamily, machineOnly };
+}
+
+/**
+ * The judges a quest waits for when selectVerifier gives it nobody now (PS-03): those it would take once free, of
+ * another family under `machine_only`. The rules are selectVerifier's own; only the Steward's bell reads this, when
+ * the mana of every one of them is closed (judgeWaitOf).
+ */
+export function awaitedJudges(
+  quest: Quest,
+  candidates: readonly Character[],
+  policy: Omit<VerifierPolicy, 'free'>,
+): Character[] {
+  const { fit, otherFamily, machineOnly } = judgesFor(quest, candidates, policy);
+  return machineOnly ? fit.filter(otherFamily) : [...fit];
+}
+
 /**
  * `candidates`: everyone who could judge, now or later (not suspended, of an enabled tribe with a runner);
  * `policy.free` says who can now.
@@ -128,14 +163,7 @@ export function selectVerifier(
   candidates: readonly Character[],
   policy: VerifierPolicy,
 ): Selection | NoVerifier {
-  const families = new Set(policy.doers.map(({ model }) => familyOf(model)));
-  const otherFamily = (character: Character): boolean => !families.has(familyOf(character.model));
-  const machineOnly = policy.same_family === 'machine_only';
-  const fit = besidesPassedOver(
-    quest,
-    fitJudges(quest, candidates, policy),
-    (c) => !machineOnly || otherFamily(c),
-  );
+  const { fit, otherFamily, machineOnly } = judgesFor(quest, candidates, policy);
   const free = fit.filter(policy.free).toSorted(byPreference(quest, policy));
   const other = free.find(otherFamily);
   if (other !== undefined) return { reason: 'other_family', character: other };

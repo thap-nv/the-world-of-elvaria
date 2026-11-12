@@ -60,6 +60,8 @@ export const kingdomLayout = {
   verdict: (id: VerdictId): string => `verdicts/${id}.json`,
   /** A memo the Steward filed from a handover letter (PS-02, ADR 0024). */
   memo: (id: MemoId): string => `memos/${id}.json`,
+  /** The digest of a local day `yyyy-mm-dd` (PS-03): apps/cli writes it when the Steward says so. */
+  digest: (day: string): string => `digest/${day}.md`,
   inboxCommand: (name: string): string => `${INBOX_DIR}/${name}.json`,
   inboxDone: (name: string): string => `${INBOX_DONE_DIR}/${name}.json`,
   /** Raw output, generated settings and check logs of one attempt; `attempt_log[].run_dir` points here. */

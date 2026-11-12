@@ -7,6 +7,7 @@ import { z } from 'zod';
 import {
   CampaignIdSchema,
   CharacterIdSchema,
+  MemoIdSchema,
   QuestIdSchema,
   TerritoryIdSchema,
   TribeIdSchema,
@@ -15,11 +16,13 @@ import { NameSchema } from '../schema/common.ts';
 import { TOOL_STATES } from './banner.ts';
 import { CharacterViewSchema, characterViewOf } from './character-view.ts';
 import { PoolViewSchema, poolsOf } from './mana-view.ts';
+import { MemoViewSchema, memoViewOf } from './memo-view.ts';
 import { QuestViewSchema, questViewOf } from './quest-view.ts';
 import { TerritoryViewSchema, territoryViewOf } from './territory-view.ts';
 import type { Campaign } from '../schema/campaign/campaign.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
+import type { Memo } from '../schema/memo/memo.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 import type { Territory } from '../schema/territory.ts';
 import type { Tribe } from '../schema/tribe.ts';
@@ -56,6 +59,8 @@ export const WorldStateSchema = z.strictObject({
   territories: z.record(TerritoryIdSchema, TerritoryViewSchema),
   characters: z.record(CharacterIdSchema, CharacterViewSchema),
   quests: z.record(QuestIdSchema, QuestViewSchema),
+  /** Open memos (PS-03): what the attention queue lists for the owner to decide. */
+  memos: z.record(MemoIdSchema, MemoViewSchema),
 });
 
 export type TribeView = z.infer<typeof TribeViewSchema>;
@@ -69,6 +74,8 @@ export interface WorldSource {
   readonly characters: readonly Character[];
   readonly quests: readonly Quest[];
   readonly campaigns: readonly Campaign[];
+  /** memos/*.json (PS-03); without them the world has no memo. */
+  readonly memos?: readonly Memo[];
   /** Mana as the Steward last read it (P1-05); without it every enabled pool is awake with no reading. */
   readonly pools?: readonly PoolView[];
   readonly sandbox?: boolean;
@@ -111,5 +118,7 @@ export function worldStateOf(source: WorldSource): WorldState {
     characters: byId(source.characters.map(characterViewOf)),
     // An archived quest has left the world; its file and its events remain (reduce.ts drops it the same way).
     quests: byId(source.quests.filter(({ status }) => status !== 'archived').map(questViewOf)),
+    // A closed memo has left the world, as an archived quest has (reduce.ts drops it the same way).
+    memos: byId((source.memos ?? []).filter(({ state }) => state === 'open').map(memoViewOf)),
   };
 }

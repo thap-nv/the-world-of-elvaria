@@ -49,6 +49,28 @@ const onSleep =
   (state, { data }) =>
     data.model === undefined ? { ...state, pools: updatePool(state.pools, data, withSleep(asleep)) } : state;
 
+/** A memo filed opens in the world; it has no route until the Steward's next line routes it (PS-03). */
+const onMemoFiled: Handler<'memo.filed'> = (state, { data, quest }) => ({
+  ...state,
+  memos: {
+    ...state.memos,
+    [data.memo]: { id: data.memo, kind: data.kind, from: data.from, quest: quest ?? null, route: null },
+  },
+});
+
+const onMemoRouted: Handler<'memo.routed'> = (state, { data }) => {
+  const memo = state.memos[data.memo];
+  return memo === undefined
+    ? state
+    : { ...state, memos: { ...state.memos, [data.memo]: { ...memo, route: data.route } } };
+};
+
+/** A closed memo leaves the world, as an archived quest does (worldStateOf keeps open memos only). */
+const onMemoClosed: Handler<'memo.closed'> = (state, { data }) => {
+  const { [data.memo]: _closed, ...open } = state.memos;
+  return { ...state, memos: open };
+};
+
 /**
  * Every type that changes what the world shows. Other types (agent.*, verdict.*, command.*, unknown ones)
  * leave the state as it is: the world animates them, it does not keep them.
@@ -88,6 +110,9 @@ const HANDLERS: { readonly [T in TypedEventType]?: Handler<T> } = {
   'mana.level': onManaLevel,
   'mana.exhausted': onSleep(true),
   'mana.restored': onSleep(false),
+  'memo.filed': onMemoFiled,
+  'memo.routed': onMemoRouted,
+  'memo.closed': onMemoClosed,
 };
 
 /** A replay of a sandbox day is bracketed by these two lines; their data is open. */
