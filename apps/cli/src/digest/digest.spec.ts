@@ -89,7 +89,7 @@ describe('elvaria digest', () => {
     expect(out.slice(13, 17)).toEqual([
       `- Memo ${MEMO.id} (proposal) from thorn, of quest ${QUEST_ID}, waits for your decision. Read the memo, then decide it once (elvaria memo decide).`,
       `  \`elvaria memo show ${MEMO.id}\``,
-      '- Pool claude of tribe claude is out of mana (reset: —). The Steward probes again after the reset; if you just signed in again, wake it now.',
+      '- Pool claude of tribe claude is out of mana (reset: 2026-11-06T13:00:00+07:00). The Steward probes again after the reset; if you just signed in again, wake it now.',
       '  `elvaria wake claude`',
     ]);
     expect((await digest('vi')).slice(0, 5)).toEqual([
