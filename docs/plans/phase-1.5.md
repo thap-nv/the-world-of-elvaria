@@ -153,6 +153,7 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
   - `triageMemos` trong `packages/chancellor`: một lần gọi model cho cả lô, đầu ra có cấu trúc, kèm template prompt. Kết quả luôn là lệnh hộp thư (`edit_quest`, `create_quest`, `decide_memo`), nên Quản sự vẫn là người ghi duy nhất.
   - `schedule.triage` qua một cổng tiêm, chạy ngoài nhịp. Chỉ bắt đầu khi tộc của Tể tướng không có phiên nào đang chạy, vì phiên này nằm ngoài sổ chỗ của tộc.
   - **Từ PS-02** (chủ nhân chốt 2026-11-12, §11): quyết việc Quản sự đóng thư `handled` khi bản nháp soạn từ nó qua `say --memo` được xác nhận (hôm nay `say --memo` không nối bản nháp với thư, chỉ nhắc lệnh `memo decide … handled`); sổ đo thêm số thư chủ nhân phải tự quyết, một mục riêng, không vào `OWNER_COMMAND_KINDS`.
+  - **Từ PS-03** (chủ nhân chốt 2026-11-12, §11): `PoolView` (`packages/domain/src/world/mana-view.ts`) giữ giờ reset của lần ngủ (`mana.exhausted.resets_at`), để mục "kho ngủ" của bản tấu nêu giờ thay vì "—" khi chỉ có dòng ngủ. Việc nhỏ.
 - **Test**: thư trong phạm vi được áp, thư ngoài phạm vi vào bản tấu; Tể tướng giả; dừng Quản sự thì việc dừng theo.
 - **Tốn mana**: một lần gọi model mỗi lô.
 
