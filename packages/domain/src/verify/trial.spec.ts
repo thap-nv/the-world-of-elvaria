@@ -64,6 +64,17 @@ describe('flakyChecksOf', () => {
     expect(flakyChecksOf([red])).toEqual([]);
     expect(flakyChecksOf([])).toEqual([]);
   });
+
+  // P1-54: Q7 and Q1 of P1-50, whose third e2e run another quest's commands.reset pulled down.
+  it('names no flake for a run that failed because of its environment', () => {
+    const gone = [
+      { id: 'lint', pass: true },
+      { id: 'e2e', pass: false, environment: 'dependency db failed to start: No such container' },
+    ];
+    expect(flakyChecksOf([green, green, gone])).toEqual([]);
+    // A test that failed in another run is a flake all the same.
+    expect(flakyChecksOf([green, red, gone])).toEqual(['e2e']);
+  });
 });
 
 const summary = (lines: [number, number], branches?: [number, number]) => ({

@@ -3,13 +3,15 @@
 // judge does not meet the database or containers the first judge's breaks left behind ((d) of P1-42). The reset
 // has a log of its own beside the setup's, `.runs/<quest>-verify-reset.log`: the trial's `rerun_clean` log stays the
 // trial's. A plot that cannot be made, a setup or a reset that fails, throws, and the Steward runs the trial again,
-// whose own reset then says what went wrong as a failing `rerun_clean`.
+// whose own reset then says what went wrong as a failing `rerun_clean`. The reset holds the territory's exclusive
+// lock, as the trial's do (P1-54): a judge of another quest may be running the e2e stack it would pull down.
 import type { Quest, Territory } from '@elvaria/domain';
 
 import type { PlotManager } from '../plot/plot-manager.ts';
 import { scratchIdOf } from '../plot/scratch.ts';
 import { SETUP_TIMEOUT_MS } from '../plot/setup.ts';
 import type { ProcessHost } from '../process/program.ts';
+import { exclusiveWaitOf, underExclusiveLock } from './exclusive-lock.ts';
 import { headerOf, openLog, runLines } from './logged-run.ts';
 import { withSecrets } from './run-checks.ts';
 
@@ -25,6 +27,8 @@ export interface ScratchAgainRequest {
   readonly secrets?: Readonly<Record<string, string>>;
   /** Aborted when nobody waits for the plot any more (the Steward stops, the quest moved on): the reset is killed. */
   readonly signal?: AbortSignal;
+  /** How long the reset waits for the territory's exclusive lock (P1-54); absent: exclusiveWaitOf its checks. */
+  readonly lock_wait_ms?: number;
 }
 
 /** Runs the territory's commands.reset once in `cwd`; nothing, and no log, when it declares none. */
@@ -36,7 +40,16 @@ async function resetOnce(request: ScratchAgainRequest, cwd: string, host: Proces
   const given = withSecrets(host, secrets);
   const log = await openLog(kingdom, logPath, headerOf(lines), given.known);
   const context = { cwd, host: given.host, ...(signal === undefined ? {} : { signal }) };
-  const run = await runLines(lines, context, log, SETUP_TIMEOUT_MS).finally(() => log.close());
+  const waitMs = request.lock_wait_ms ?? exclusiveWaitOf(territory.checks);
+  const scope = { kingdom, territory: territory.id, wait_ms: waitMs, signal };
+  const locked = await underExclusiveLock(scope, () => runLines(lines, context, log, SETUP_TIMEOUT_MS));
+  if (!locked.ok)
+    await log.write(`${locked.error}
+`);
+  await log.close();
+  if (!locked.ok)
+    throw new Error(`commands.reset of ${quest.id}'s scratch plot did not run: ${locked.error}`);
+  const run = locked.value;
   if (run.exit_code === 0 && signal?.aborted !== true) return;
   const ended = run.timed_out ? 'timed out' : `ended with ${run.exit_code ?? 'no exit code'}`;
   throw new Error(`commands.reset of ${quest.id}'s scratch plot ${ended} (${logPath})`);

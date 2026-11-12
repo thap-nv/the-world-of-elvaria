@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { InboxCommandSchema } from '../schema/command/inbox-command.ts';
-import { KINGDOM, Q1, Q2, TERRITORY, at, character, quest } from './__fixtures__/snapshot.ts';
-import { editQuest, questFromCommand, secretsBeyond, setRank } from './new-quest.ts';
+import { KINGDOM, Q1, Q2, TERRITORY, at, character } from './__fixtures__/snapshot.ts';
+import { questFromCommand, secretsBeyond } from './new-quest.ts';
 import type { CommandPayload } from '../schema/command/inbox-command.ts';
 import type { NewQuestContext } from './new-quest.ts';
 
@@ -83,9 +83,10 @@ describe('questFromCommand', () => {
         seal_required: true,
         deliverable: { type: 'branch' },
         plot: { type: 'none' },
-        // No estimate: the context budget of one quest stands in for it, times the mana multiplier.
-        estimate: { tokens: 120000, minutes: 45 },
-        budget: { max_minutes: 45, max_tokens: 240000, max_attempts: 3 },
+        // No estimate: its rank's share of the context budget stands in for it (two at rank D, P1-54), times the
+        // mana multiplier.
+        estimate: { tokens: 240000, minutes: 45 },
+        budget: { max_minutes: 45, max_tokens: 480000, max_attempts: 3 },
         created_at: at(5),
         updated_at: at(5),
       },
@@ -101,13 +102,15 @@ describe('questFromCommand', () => {
       return [made.value.estimate.tokens, made.value.budget.max_tokens];
     };
     expect(ceilingOf('E')).toEqual([120_000, 240_000]);
-    expect(ceilingOf('C')).toEqual([240_000, 480_000]);
-    expect(ceilingOf('B')).toEqual([240_000, 480_000]);
-    expect(ceilingOf('A')).toEqual([300_000, 600_000]);
-    expect(ceilingOf('S')).toEqual([360_000, 720_000]);
+    // P1-54: rank D sessions on dc1 spent 243 000–255 000 in P1-50, rank C and B 450 000–500 000.
+    expect(ceilingOf('D')).toEqual([240_000, 480_000]);
+    expect(ceilingOf('C')).toEqual([360_000, 720_000]);
+    expect(ceilingOf('B')).toEqual([360_000, 720_000]);
+    expect(ceilingOf('A')).toEqual([420_000, 840_000]);
+    expect(ceilingOf('S')).toEqual([480_000, 960_000]);
     // An odd budget still gives a whole estimate.
     const odd = { ...CONTEXT.breakers, context_budget_tokens: 120_001 };
-    expect(ceilingOf('A', odd)).toEqual([300_003, 600_006]);
+    expect(ceilingOf('A', odd)).toEqual([420_004, 840_008]);
   });
 
   it('gives a high rank the long time limit, and keeps the estimate and seal it was given', () => {
@@ -119,7 +122,7 @@ describe('questFromCommand', () => {
       ok: true,
       value: {
         seal_required: false,
-        budget: { max_minutes: 120, max_tokens: 600000 },
+        budget: { max_minutes: 120, max_tokens: 720000 },
         estimate: { tokens: 300000, minutes: 20 },
       },
     });
@@ -134,10 +137,10 @@ describe('questFromCommand', () => {
       return [made.value.estimate, made.value.budget.max_tokens, made.value.budget.max_minutes];
     };
     const low = { tokens: 160_000, minutes: 80 };
-    expect(budgetOf('C', low)).toEqual([low, 480_000, 80]);
+    expect(budgetOf('C', low)).toEqual([low, 720_000, 80]);
     // An estimate above the rank's share keeps its own ceiling; one below the rank's minutes keeps the rank's.
-    const high = { tokens: 300_000, minutes: 20 };
-    expect(budgetOf('C', high)).toEqual([high, 600_000, 45]);
+    const high = { tokens: 400_000, minutes: 20 };
+    expect(budgetOf('C', high)).toEqual([high, 800_000, 45]);
     // The minutes stop at attempt_minutes.high: exclusiveWaitMinutes waits that long for a judge holding the lock.
     expect(budgetOf('E', { tokens: 0, minutes: 200 })).toEqual([{ tokens: 0, minutes: 200 }, 240_000, 120]);
   });
@@ -250,44 +253,5 @@ describe('questFromCommand', () => {
   it('refuses what the quest schema refuses, with its issues', () => {
     const made = questFromCommand(payload(), { ...CONTEXT, at: 'yesterday' });
     expect(made).toMatchObject({ ok: false, error: { code: 'invalid_quest' } });
-  });
-});
-
-describe('editQuest and setRank', () => {
-  const base = quest(Q1);
-  const edit = (changes: Record<string, unknown>, expected = base.updated_at) => {
-    const command = InboxCommandSchema.parse({
-      version: 1,
-      id: '01JCFB7Q2R8S4T6V9W3X5Y1Z0A',
-      ts: at(40),
-      kind: 'edit_quest',
-      source: 'cli',
-      payload: { quest: Q1, expected_updated_at: expected, changes },
-    });
-    if (command.kind !== 'edit_quest') throw new Error('fixture');
-    return editQuest(base, command.payload, { at: at(40), quests: [Q1, Q2] });
-  };
-
-  it('changes the fields it names, the budget field by field, and dates the change', () => {
-    expect(edit({ title: 'Sharper', budget: { max_attempts: 5 } })).toMatchObject({
-      ok: true,
-      value: { title: 'Sharper', budget: { max_minutes: 45, max_attempts: 5 }, updated_at: at(40) },
-    });
-    expect(edit({ depends_on: [Q2] })).toMatchObject({ ok: true, value: { depends_on: [Q2] } });
-  });
-
-  it('refuses an edit of a quest that moved since the owner read it, of itself, or of a quest unknown', () => {
-    expect(edit({ title: 'Late' }, at(1))).toEqual({ ok: false, error: { code: 'stale' } });
-    expect(edit({ depends_on: [Q1] })).toEqual({ ok: false, error: { code: 'self_dependency' } });
-    expect(edit({ depends_on: ['q_20261106_zzzzzz'] })).toEqual({
-      ok: false,
-      error: { code: 'unknown_dependency' },
-    });
-  });
-
-  it('sets the rank, never on an archived quest', () => {
-    expect(setRank(base, 'C', at(40))).toMatchObject({ ok: true, value: { rank: 'C' } });
-    const archived = { ...base, status: 'archived' as const };
-    expect(setRank(archived, 'C', at(40))).toEqual({ ok: false, error: { code: 'archived' } });
   });
 });

@@ -1,22 +1,6 @@
 // What the Steward is given and what it gives back (implementation-plan §3.1). It sees only AgentRunner and its
 // capabilities, never a CLI (ADR 0006, 0021): apps/cli, the composition root, injects the runners of the tribes.
-import type {
-  CharacterId,
-  ClaimBlockerReason,
-  Clock,
-  FailKind,
-  IdSource,
-  InfirmaryDetail,
-  InfirmaryTrip,
-  ManaWindow,
-  PartyRole,
-  Quest,
-  QuestId,
-  Rank,
-  Result,
-  Territory,
-  TribeId,
-} from '@elvaria/domain';
+import type { Clock, IdSource, PartyRole, Quest, Result, Territory, TribeId } from '@elvaria/domain';
 import type { EventLog } from '@elvaria/eventlog';
 import type {
   AgentRunner,
@@ -33,82 +17,10 @@ import type {
 } from '@elvaria/runner-core';
 import type { KingdomStore } from '@elvaria/store';
 
+import type { Bell } from './notice.ts';
 import type { ScriptRunner } from './script/run-script.ts';
 
-/** A quest as a notice names it: enough for the owner to recognise it without opening the file. */
-export interface NoticeQuest {
-  readonly id: QuestId;
-  readonly title: string;
-  readonly rank: Rank;
-}
-
-/**
- * What rings the bell (§3.1, §6). Data, not text: the bell of the composition root says it in the owner's
- * language (ConsoleBell in stage 1; desktop and web push in stage 2).
- */
-export type Notice =
-  | {
-      readonly kind: 'unclaimable';
-      readonly quest: NoticeQuest;
-      readonly reason: ClaimBlockerReason;
-      readonly class: string;
-      readonly best?: { readonly character: string; readonly level: number; readonly ceiling: Rank };
-    }
-  /**
-   * The quest waits in review for a judge the roster does not have (P1-15): no character of `classes` outside its
-   * doers on another model than the assignee's `model` (dispatch.verifier_same_family = different_model).
-   */
-  | {
-      readonly kind: 'unjudgeable';
-      readonly quest: NoticeQuest;
-      readonly classes: readonly string[];
-      readonly model: string | null;
-    }
-  | { readonly kind: 'awaiting_seal'; readonly quest: NoticeQuest }
-  /**
-   * The quest went to the infirmary: why in parts (P1-32), for a bell that speaks the owner's language, and the
-   * English `reason` the `quest.infirmary` line carries.
-   */
-  | {
-      readonly kind: 'infirmary';
-      readonly quest: NoticeQuest;
-      readonly reason: string;
-      readonly trip: InfirmaryTrip;
-      readonly detail?: InfirmaryDetail;
-    }
-  | { readonly kind: 'question'; readonly quest: NoticeQuest; readonly question: string }
-  /** A plan was delivered but opened none of its sub-quests (P1-14); `reason` is English, for the owner and logs. */
-  | { readonly kind: 'subquests_refused'; readonly quest: NoticeQuest; readonly reason: string }
-  /** The character failed the same way breakers.same_fail_suspend times in a row: it went to the Temple. */
-  | {
-      readonly kind: 'suspended';
-      readonly character: CharacterId;
-      readonly fail_kind: FailKind | null;
-      readonly count: number;
-    }
-  /**
-   * A gauge of a tribe's account (P1-22): it reached the warning share (once), ran dry and sleeps, or woke. `model`
-   * names the one model whose own cap it is (Argon, Fable); absent for the whole pool.
-   */
-  | (ManaGaugeNotice & { readonly kind: 'mana_asleep'; readonly resets_at?: string })
-  | (ManaGaugeNotice & { readonly kind: 'mana_awake' })
-  | (ManaGaugeNotice & {
-      readonly kind: 'mana_warning';
-      readonly window: ManaWindow;
-      readonly used_pct: number;
-      readonly resets_at?: string;
-    });
-
-/** The gauge a mana notice is about. */
-export interface ManaGaugeNotice {
-  readonly tribe: TribeId;
-  readonly pool: string;
-  readonly model?: string;
-}
-
-export interface Bell {
-  ring(notice: Notice): Promise<void>;
-}
+export type { Bell, ManaGaugeNotice, Notice, NoticeQuest } from './notice.ts';
 
 /** Problems nobody is waiting for an answer to: a refused move, a failed spawn, a lost lock. English, for logs. */
 export interface Logger {
@@ -215,12 +127,13 @@ export interface Plots {
   /**
    * A fresh scratch plot of the quest's branch after commands.setup, then commands.reset once (P1-47), without the
    * trial (P1-42, P1-38 (a)): the run's next judge reuses the trial of the last one while the branch head is the
-   * commit it ran on. `secrets` and `signal` as for the trial. Throws when it cannot be made or reset.
+   * commit it ran on. `secrets`, `signal` and `lock_wait_ms` as for the trial: the reset waits that long for the
+   * territory's exclusive lock (P1-54). Throws when it cannot be made or reset.
    */
   prepareScratch(
     quest: Quest,
     territory: Territory,
-    options?: Pick<PlotCheck, 'secrets' | 'signal'>,
+    options?: Pick<PlotCheck, 'secrets' | 'signal' | 'lock_wait_ms'>,
   ): Promise<void>;
   /** The quest's scratch plot the trial (or prepareScratch) made, where its judge works; throws when there is none. */
   scratch(quest: Quest, territory: Territory): Promise<PreparedPlot>;

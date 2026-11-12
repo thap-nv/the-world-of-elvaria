@@ -1,13 +1,15 @@
 // The checks of a ritual with a scratch plot (ADR 0022, P1-20) as the Steward asks for them: a fresh scratch plot
 // from the quest's branch, commands.setup there, then the trial. A setup that fails is the work's failure to be set
 // up clean from its branch (a broken lockfile), so it comes back as a failing `rerun_clean` naming the setup log; a
-// plot git cannot make is the machine's trouble, and throws like any check that cannot run.
+// plot git cannot make is the machine's trouble, and throws like any check that cannot run. A setup whose log shows its
+// environment failed (territory.environment_errors: a registry out of reach) says so, as a check does (P1-54).
 import { RERUN_CLEAN_CHECK_ID } from '@elvaria/domain';
 import type { PartyRole, Quest, Territory } from '@elvaria/domain';
 
 import type { PlotManager } from '../plot/plot-manager.ts';
 import { scratchIdOf } from '../plot/scratch.ts';
 import { setupLogOf } from '../plot/setup.ts';
+import { withEnvironment } from './environment.ts';
 import type { ProcessHost } from '../process/program.ts';
 import type { CheckRun } from './run-checks.ts';
 import { runTrial } from './trial.ts';
@@ -46,15 +48,9 @@ export async function trialInScratch(
     if (reason !== 'setup_failed')
       throw new Error(`the scratch plot of ${quest.id} is not ready (${reason}): ${detail}`);
     const log = logPath ?? setupLogOf(scratchIdOf(quest.id));
+    const failed = { id: RERUN_CLEAN_CHECK_ID, pass: false, duration_ms: 0, log_path: log, exit_code: null };
     return [
-      {
-        id: RERUN_CLEAN_CHECK_ID,
-        pass: false,
-        duration_ms: 0,
-        log_path: log,
-        exit_code: null,
-        timed_out: false,
-      },
+      await withEnvironment({ ...failed, timed_out: false }, request.kingdom, territory.environment_errors),
     ];
   }
   const scratch = prepared.value;

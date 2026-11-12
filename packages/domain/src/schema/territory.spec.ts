@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import examples from '../../examples/territory.json' with { type: 'json' };
+import { TERRITORY_DEFAULTS } from '../constants.ts';
 import { TerritorySchema, commandLinesOf, namesNoGitFolder } from './territory.ts';
 
 const [example] = examples;
@@ -35,6 +36,8 @@ describe('TerritorySchema', () => {
       context_files: ['CLAUDE.md', 'README.md', '.claude/rules/*.md'],
       commands: {},
       checks: [],
+      // Docker's own lines (P1-54): a territory without them would read a stopped Docker as failing work.
+      environment_errors: [...TERRITORY_DEFAULTS.environment_errors],
       laws: {
         forbidden_paths: [],
         read_only_paths: [],
@@ -49,6 +52,34 @@ describe('TerritorySchema', () => {
       buildings: [],
       health: { ci: 'unknown', open_bugs: 0 },
     });
+  });
+
+  it('takes its own environment errors, and refuses one that is no regular expression', () => {
+    const own = TerritorySchema.parse({
+      ...minimal,
+      environment_errors: ['connect ECONNREFUSED [^ ]+:5432'],
+    });
+    expect(own.environment_errors).toEqual(['connect ECONNREFUSED [^ ]+:5432']);
+    expect(TerritorySchema.parse({ ...minimal, environment_errors: [] }).environment_errors).toEqual([]);
+    expect(issuesOf({ ...minimal, environment_errors: ['(unclosed'] })).toEqual([
+      'environment_errors.0: not a valid regular expression',
+    ]);
+  });
+
+  // P1-54, (f) of the P1-50 report.
+  it('takes a check that may flake, its spec files and the command for them alone', () => {
+    const check = { id: 'e2e', run: 'pnpm e2e', when: ['apps/web/**'], timeout_minutes: 60 };
+    const flake = { specs: ['apps/web/e2e/**/*.spec.ts'], run: 'pnpm exec playwright test {specs}' };
+    const parsed = TerritorySchema.parse({ ...minimal, checks: [{ ...check, flake }] });
+    expect(parsed.checks[0]?.flake).toEqual(flake);
+    // A bare flake reruns the whole check.
+    const bare = TerritorySchema.parse({ ...minimal, checks: [{ ...check, flake: {} }] });
+    expect(bare.checks[0]?.flake).toEqual({ specs: [] });
+    const refused = 'checks.0.flake.run: flake.run names {specs} and comes with flake.specs';
+    expect(issuesOf({ ...minimal, checks: [{ ...check, flake: { ...flake, run: 'pnpm e2e' } }] })).toEqual([
+      refused,
+    ]);
+    expect(issuesOf({ ...minimal, checks: [{ ...check, flake: { run: flake.run } }] })).toEqual([refused]);
   });
 
   it('takes a blind trial turned on, its rank defaulting to B, and refuses a rank it does not know', () => {

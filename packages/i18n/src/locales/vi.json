@@ -433,6 +433,7 @@
     "cli.return.summary": "Trả việc đang chờ dấu vua về người làm, kèm ghi chú (lệnh return; nặng bằng ba phán quyết).",
     "cli.run.locked": "Một Quản sự khác đang chạy ở {kingdom}: mỗi vương quốc chỉ có một Quản sự.",
     "cli.run.notice.awaiting_seal": "Nhiệm vụ {quest} «{title}» đã qua nghiệm thu, chờ dấu vua của bạn.",
+    "cli.run.notice.environment": "Nhiệm vụ {quest} «{title}» chờ nghiệm thu: kiểm tra máy {check} đỏ vì môi trường, không phải vì bài làm ({line}). Không người chấm nào đọc nó, không ai bị hạ cấp; kiểm tra máy chạy lại sau {minutes} phút. Log: {log}",
     "cli.run.notice.infirmary": "Nhiệm vụ {quest} «{title}» vào trạm quân y: {reason}",
     "cli.run.notice.gauge.model": "trần riêng của {model}, tộc {tribe}",
     "cli.run.notice.gauge.pool": "pool {pool} của tộc {tribe}",

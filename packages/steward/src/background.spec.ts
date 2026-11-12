@@ -2,7 +2,7 @@ import { CheckIdSchema } from '@elvaria/domain';
 import { describe, expect, it } from 'vitest';
 
 import { createBackground, wantedIn } from './background.ts';
-import type { Quest, QuestId, VerdictCheck } from '@elvaria/domain';
+import type { Instant, Quest, QuestId, VerdictCheck } from '@elvaria/domain';
 
 const Q1 = 'q_20261107_aaaaaa' as QuestId;
 const Q2 = 'q_20261107_bbbbbb' as QuestId;
@@ -105,5 +105,30 @@ describe('wantedIn', () => {
     expect(wanted(quest('working'))(Q1, 'script', 1)).toBe(true);
     expect(wanted(quest('archived'))(Q1, 'script', 1)).toBe(false);
     expect(wanted(undefined)(Q1, 'script', 1)).toBe(false);
+  });
+
+  // P1-54: checks set aside because their environment failed wait out of every judge's reach for their recheck.
+  it('keeps checks whose environment failed apart, out of every judge, until their next run replaces them', async () => {
+    const background = createBackground({ warn: () => undefined });
+    const held = {
+      ...RAN,
+      environment: { failure: { check: 'e2e', line: 'is unhealthy' }, at: 600_000 as Instant },
+    };
+    background.checks(Q1, 1, () => Promise.resolve(held));
+    await background.idle();
+    expect(background.view()).toEqual({
+      running: [],
+      checked: [],
+      environment: [{ quest: Q1, at: 600_000 }],
+    });
+    expect(background.ended(Q1, 1)).toBeUndefined();
+    expect(background.held(Q1, 1)).toEqual(held);
+    expect(background.held(Q1, 2)).toBeUndefined();
+    expect(background.held(Q2, 1)).toBeUndefined();
+    // The recheck takes its place.
+    background.checks(Q1, 1, () => Promise.resolve(RAN));
+    await background.idle();
+    expect(background.view()).toEqual({ running: [], checked: [Q1] });
+    expect(background.held(Q1, 1)).toBeUndefined();
   });
 });
