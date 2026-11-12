@@ -82,6 +82,9 @@ export function agySettingsOf(policy: ToolPolicy, letter?: string): AgySettings 
   // agy has no search tool (ANTIGRAVITY_CAPABILITIES.search): git's read-only search stands in for Glob and Grep, a
   // shell or not (P1-53). The prefix also matches `git grep -O<pager>`; the hook, which sees the whole line, refuses it.
   const search = (policy.search_commands ?? []).map((command) => `command(${command})`);
+  // The code graph's commands the same way (PS-21): `command(graphify query)` also matches `--graph <other>`, which
+  // the hook refuses; GRAPHIFY_OUT in the session's env names the quest's graph.
+  const graph = (policy.graph_commands ?? []).map((command) => `command(${command})`);
   // The letter lives in the kingdom, outside the plot, where agy reads and writes nothing unless a rule says so.
   const own =
     letter === undefined
@@ -89,7 +92,7 @@ export function agySettingsOf(policy: ToolPolicy, letter?: string): AgySettings 
       : [`read_file(${letter.replaceAll('\\', '/')})`, `write_file(${letter.replaceAll('\\', '/')})`];
   return {
     permissions: {
-      allow: unique([...policy.allow.flatMap((rule) => allowOf(rule, tools)), ...search, ...own]),
+      allow: unique([...policy.allow.flatMap((rule) => allowOf(rule, tools)), ...search, ...graph, ...own]),
       deny: unique([...policy.deny.flatMap(denyOf), ...GENERATED]),
       ask: [],
     },

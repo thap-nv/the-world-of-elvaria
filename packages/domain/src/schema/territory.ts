@@ -13,6 +13,7 @@ import {
   rejectDuplicateIds,
   unique,
 } from './common.ts';
+import { CodeGraphFlagSchema } from './territory-graph.ts';
 import { CheckSchema, CommandLinesSchema } from './territory-checks.ts';
 
 const describe = (description: string) => ({ description });
@@ -202,6 +203,7 @@ export const TerritorySchema = z
       ),
     laws: LawsSchema.prefault({}),
     blind_trial: BlindTrialSchema.prefault({}),
+    code_graph: CodeGraphFlagSchema,
     shared_paths: z
       .array(SharedPathSchema)
       .optional()

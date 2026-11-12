@@ -553,7 +553,7 @@
                           ]
                         },
                         "id": {
-                          "description": "runner-core's PROMPT_BLOCK_IDS: decree, role, class, context_files, quest, gazetteer, scripture, skills, continuation, memos (PS-02), partial, review, resumed, answer.",
+                          "description": "runner-core's PROMPT_BLOCK_IDS: decree, role, class, context_files, graph (PS-21), quest, gazetteer, scripture, skills, continuation, memos (PS-02), partial, review, resumed, answer.",
                           "type": "string",
                           "pattern": "^[a-z][a-z0-9_]*$"
                         },
@@ -1094,7 +1094,7 @@
                           ]
                         },
                         "id": {
-                          "description": "runner-core's PROMPT_BLOCK_IDS: decree, role, class, context_files, quest, gazetteer, scripture, skills, continuation, memos (PS-02), partial, review, resumed, answer.",
+                          "description": "runner-core's PROMPT_BLOCK_IDS: decree, role, class, context_files, graph (PS-21), quest, gazetteer, scripture, skills, continuation, memos (PS-02), partial, review, resumed, answer.",
                           "type": "string",
                           "pattern": "^[a-z][a-z0-9_]*$"
                         },
@@ -1205,7 +1205,7 @@
             ],
             "properties": {
               "tool": {
-                "description": "Normalised tool kind (implementation-plan §3.10): Read/Glob/Grep and read_file map to read, Edit/Write and write_file/replace to write, Bash and run_shell_command to bash, WebFetch/WebSearch to web.",
+                "description": "Normalised tool kind (implementation-plan §3.10): Read and read_file map to read, Glob/Grep/LS and grep_search/find_by_name/list_dir to search (read before PS-21), Edit/Write and write_file/replace to write, Bash and run_shell_command to bash, WebFetch/WebSearch to web.",
                 "enum": [
                   "read",
                   "write",
@@ -1263,7 +1263,7 @@
             ],
             "properties": {
               "tool": {
-                "description": "Normalised tool kind (implementation-plan §3.10): Read/Glob/Grep and read_file map to read, Edit/Write and write_file/replace to write, Bash and run_shell_command to bash, WebFetch/WebSearch to web.",
+                "description": "Normalised tool kind (implementation-plan §3.10): Read and read_file map to read, Glob/Grep/LS and grep_search/find_by_name/list_dir to search (read before PS-21), Edit/Write and write_file/replace to write, Bash and run_shell_command to bash, WebFetch/WebSearch to web.",
                 "enum": [
                   "read",
                   "write",
@@ -2201,6 +2201,82 @@
       "if": {
         "properties": {
           "type": {
+            "const": "graph.built"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "A code graph was built (or updated from the newest one) for the territory at `commit`.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "commit",
+              "duration_ms"
+            ],
+            "properties": {
+              "commit": {
+                "description": "The commit of the territory the graph is of: the folder `.state/graphs/<territory>/<commit>/`.",
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+              },
+              "nodes": {
+                "description": "graphify's count, when it printed one.",
+                "type": "integer",
+                "minimum": 0
+              },
+              "edges": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "duration_ms": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "graph.failed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "A code graph could not be built: the quests on that commit run without one, and this Steward does not try it again.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "commit",
+              "reason"
+            ],
+            "properties": {
+              "commit": {
+                "description": "The commit of the territory the graph is of: the folder `.state/graphs/<territory>/<commit>/`.",
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+              },
+              "reason": {
+                "description": "Why, with the end of graphify's output; redacted.",
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
             "const": "memo.filed"
           }
         }
@@ -2620,6 +2696,8 @@
         "territory.attached",
         "territory.surveyed",
         "territory.health",
+        "graph.built",
+        "graph.failed",
         "memo.filed",
         "memo.routed",
         "memo.closed",

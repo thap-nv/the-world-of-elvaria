@@ -184,6 +184,20 @@
               "used_in": "`elvaria upgrade`, event `upgrade.*`"
             },
             {
+              "vi": "Đồ thị code",
+              "en": "Code graph",
+              "id": ["code_graph"],
+              "definition": "Đồ thị hàm, lớp, hằng của một lãnh thổ cùng import, lời gọi, kế thừa giữa chúng, do graphify dựng bằng tree-sitter (không model, 0 mana) ở commit gốc của quest, trong `.state/graphs/<lãnh thổ>/<commit>/` của vương quốc. Cờ `code_graph` của lãnh thổ bật nó, mặc định tắt; cần `programs.graphify` do `elvaria doctor --pin` ghim (PS-21, ADR 0029).",
+              "used_in": "`territory.code_graph`, `kingdom.programs.graphify`, `elvaria territory graph`, event `graph.*`"
+            },
+            {
+              "vi": "Lệnh hỏi đồ thị",
+              "en": "Graph command",
+              "id": ["graph_command"],
+              "definition": "`graphify query`, `path`, `explain`, `affected`: lệnh chỉ đọc mà nghề có `Glob` hoặc `Grep` và không cấm trần `Bash` được chạy trên đồ thị của quest mình; nghề chưa có shell chỉ chạy được chúng, mỗi dòng một lệnh trần. Hook chặn mọi lệnh graphify khác và cờ chỉ đồ thị khác (PS-21).",
+              "used_in": "`GRAPH_COMMANDS`, ToolPolicy `graph_commands`, policy.json, khối `graph` của prompt"
+            },
+            {
               "vi": "Sự cố",
               "en": "Incident",
               "id": ["incident"],
@@ -2093,6 +2107,11 @@
               "group": "Lệnh",
               "types": ["command.received", "command.applied", "command.rejected"],
               "meaning": "Quản sự xử lý `inbox/`"
+            },
+            {
+              "group": "Đồ thị code",
+              "types": ["graph.built", "graph.failed"],
+              "meaning": "Quản sự dựng đồ thị code của một lãnh thổ bật `code_graph` bằng graphify, không gọi model, ngoài mọi đất, ở commit gốc của quest và ở đầu nhánh mặc định; dòng mang lãnh thổ, không mang quest (PS-21, ADR 0029). `graph.failed` ghi một lần cho mỗi commit trong đời một Quản sự"
             },
             {
               "group": "Thư",

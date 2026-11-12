@@ -1,5 +1,6 @@
 // What every step of one tick works with: the deps, the world as the tick sees it, the pen, the sessions.
 import type { Background } from './background.ts';
+import type { GraphBuilds } from './graph-builds.ts';
 import type { JudgeLocks } from './review/exclusive.ts';
 import type { Notice, NoticeQuest, StewardDeps } from './types.ts';
 import type { ManaBook } from './mana/book.ts';
@@ -35,6 +36,8 @@ export interface Context {
   readonly background: Background;
   /** The exclusive locks the judges in their scratch plots hold, across ticks (P1-20). */
   readonly judgeLocks: JudgeLocks;
+  /** The code graphs built outside the tick (PS-21); absent without `deps.graphs`: no quest gets a graph. */
+  readonly graphs?: GraphBuilds | undefined;
 }
 
 /** Rings the bell; a bell that fails never stops a tick. */

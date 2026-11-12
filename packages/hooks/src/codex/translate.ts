@@ -2,6 +2,7 @@
 // P1-12d), each turned into at most one line of the event log (implementation-plan §3.6, §3.10). Codex reads Claude
 // Code's answers (`permissionDecision: "deny"`, Stop's `decision: "block"`), so only the tools are its own.
 import { denyTool, translation, withoutUndefined } from '../draft.ts';
+import { graphLineViolation } from '../graph.ts';
 import { stopGate } from '../handover.ts';
 import { grepOptionViolation, plainLineProblem, plainSearchReason, searchCommandOf } from '../search.ts';
 import { lawViolation, protectedViolation, refusalText } from '../claude/tool-events.ts';
@@ -46,6 +47,10 @@ function ruleViolation(name: string, call: ToolCall, ctx: HookContext): string |
   // Whatever the class: `git grep -O<pager>` runs a program (P1-53).
   const option = call.command === undefined ? undefined : grepOptionViolation(call.command);
   if (option !== undefined) return `${name}: ${option}`;
+  // Whatever the class too: no graphify call that builds, writes or names another graph (PS-21). Granting the
+  // graph's commands to a Codex class without a shell is PS-23's, for every tribe.
+  const graph = call.command === undefined ? undefined : graphLineViolation(call.command, ctx.graphCommands);
+  if (graph !== undefined) return `${name}: ${graph}`;
   const missing = missingCodexTools(name, ctx.tools);
   return missing === undefined ? undefined : classViolation(name, missing, call, ctx);
 }

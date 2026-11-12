@@ -200,7 +200,9 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   `command.applied` line, or of their inbox/done file for a line written before PS-01b. From the log alone
   (`src/metrics/log-counts.ts`, PS-01b): the runs of checks set aside for their environment (`check.end` `environment`)
   and each session's reads by file (`agent.tool` reads), the files read more than once first; and (PS-05) the submits
-  whose work changed files outside their quest's scope (`out_of_scope` of `quest.submitted`).
+  whose work changed files outside their quest's scope (`out_of_scope` of `quest.submitted`). From the log and the
+  attempt logs (`src/metrics/session-counts.ts`, PS-21): the code graph's queries (`graphCommandOf`), each assignee
+  session's tool calls before its first edit, and the prompt's size by role and block from the load traces.
 - Decides when the Steward's scheduled jobs run (`src/schedule/`, PS-03): `dueJobs` over `kingdom.schedule`, the
   kingdom's local day and time (`localClockOf`) and the day each job last ran: a daily job is due once its `at` has
   come on a day it has not run (`DAILY_JOBS`: `chronicle`, `digest`), so a late start catches up and a clock set back
@@ -217,6 +219,8 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
 - Gives the core types every package builds on: `Result`, branded ids (`QuestId`, `TribeId`, ...), `Clock` and
   `Instant`, `zonedTime` (local day and ISO offset in `kingdom.tz`), `IdSource` (ULIDs and dated ids).
 - Names every number it decides with in `src/constants.ts` and the `constants.ts` of the folders that have one.
+- Names the code graph's read-only commands (`GRAPH_COMMANDS`, `graphCommandOf`, PS-21), the territory's optional
+  `code_graph` switch, `kingdom.programs.graphify` (`ProgramsSchema`) and the `graph.built` / `graph.failed` lines.
 
 ## Does not
 

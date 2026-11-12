@@ -54,6 +54,11 @@ export interface HookPolicy {
    * `search_commands`): a class without a shell may run them, one plain call per line. Absent: none.
    */
   readonly search_commands?: readonly string[];
+  /**
+   * The code graph's read-only commands (PS-21; runner-core's ToolPolicy `graph_commands`): a class without a shell
+   * may run them, one plain call per line; every other graphify line is refused. Absent: the quest has no graph.
+   */
+  readonly graph_commands?: readonly string[];
   /** `territory.laws`; other law kinds may be present and are not the hook's to enforce. */
   readonly laws?: LawsInput;
 }
@@ -69,6 +74,7 @@ const LIST_FIELDS = [
   'cli_protected_paths',
   'elvaria_protected_paths',
   'search_commands',
+  'graph_commands',
 ] as const;
 const LAW_LISTS = ['forbidden_paths', 'read_only_paths', 'patch_paths', 'forbidden_commands'] as const;
 

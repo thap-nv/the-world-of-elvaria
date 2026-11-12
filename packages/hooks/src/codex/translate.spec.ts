@@ -131,6 +131,17 @@ describe('a class against the Codex tools', () => {
     expect(denied(await call(pre('Bash', { command: 'git grep x; rm -r src' })))).toMatch(/; outside quotes/);
   });
 
+  it('refuses a graphify call that builds or names another graph, whatever the class (PS-21)', async () => {
+    await writePolicy({ tools: KNIGHT, graph_commands: ['graphify query', 'graphify affected'] });
+    expect(denied(await call(pre('Bash', { command: 'graphify update .' })))).toMatch(
+      /graphify update is refused/,
+    );
+    expect(denied(await call(pre('Bash', { command: "graphify query 'x' --graph D:/g.json" })))).toMatch(
+      /--graph is refused/,
+    );
+    expect(denied(await call(pre('Bash', { command: "graphify affected 'FOCUS_MAX'" })))).toBeUndefined();
+  });
+
   it('refuses git grep options that run a program, whatever the class', async () => {
     await writePolicy({ tools: KNIGHT });
     expect(denied(await call(pre('Bash', { command: 'git grep -Ovim x' })))).toMatch(

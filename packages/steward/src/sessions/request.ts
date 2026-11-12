@@ -11,6 +11,7 @@ import type { LoadTrace } from '@elvaria/domain';
 import type { JsonSchema, SpawnRequest } from '@elvaria/runner-core';
 
 import { handoverPath } from '../files.ts';
+import { sessionGraphOf } from './graph.ts';
 import { promptOf, searchFor } from './prompt.ts';
 import { sessionEnvOf } from './secrets.ts';
 import type { Context } from '../context.ts';
@@ -76,9 +77,18 @@ export async function requestOf(
   if (characterClass === undefined) throw new Error(`registry has no class "${character.class}"`);
   const runDir = inKingdom(ctx.root, runDirOf(quest, input.n, role));
   await mkdir(runDir, { recursive: true });
-  const env = await sessionEnvOf(ctx, input, envOf(ctx, input));
+  const graph = await sessionGraphOf(ctx, quest, territory);
+  const own = await sessionEnvOf(ctx, input, envOf(ctx, input));
+  // GRAPHIFY_OUT names the quest's graph, so no command names one (PS-21); graphify's folder goes first on PATH.
+  const env =
+    graph === undefined || ctx.deps.graphs === undefined ? own : ctx.deps.graphs.envFor(own, graph.dir);
   const known = secretValuesOf({ quest, env });
-  const { prompt, load_trace: loadTrace } = await promptOf(ctx, input, { characterClass, known }, resume);
+  const given = {
+    characterClass,
+    known,
+    ...(graph === undefined ? {} : { graph: { commit: graph.commit } }),
+  };
+  const { prompt, load_trace: loadTrace } = await promptOf(ctx, input, given, resume);
   const request: SpawnRequest = {
     role,
     quest,
@@ -94,6 +104,7 @@ export async function requestOf(
       scratch: input.scratch === true,
       exclusive: input.exclusive !== false,
       cli_search: searchFor(ctx, character),
+      graph: graph !== undefined,
     }),
     budget: { max_turns: ctx.world.kingdom.breakers.max_turns, max_minutes: quest.budget.max_minutes },
     env,

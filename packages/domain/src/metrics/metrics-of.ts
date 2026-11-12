@@ -7,6 +7,7 @@ import { ownerCommandsOf, sequelsIn, sessionModelsOf, trailsOf } from './ledger.
 import { outOfScopeOf, readsOf, setAsidesOf } from './log-counts.ts';
 import { firstPassRatesOf } from './rates.ts';
 import { reworkOf } from './rework.ts';
+import { firstEditsOf, graphQueriesOf, promptSizesOf } from './session-counts.ts';
 import { inWindow } from './window.ts';
 import type { OwnerCommandKind, ReworkCause } from './causes.ts';
 import type { EscapedDefect, SealedCost } from './judgement.ts';
@@ -14,6 +15,7 @@ import type { MetricsInput, OwnerCommand } from './ledger.ts';
 import type { OutOfScope, Reads, SetAside } from './log-counts.ts';
 import type { FirstPassRates } from './rates.ts';
 import type { QuestTrail, Rework } from './rework.ts';
+import type { FirstEdits, GraphQueries, PromptSizes } from './session-counts.ts';
 import type { MetricsWindow } from './window.ts';
 import type { ClassId, KindId, QuestId } from '../core/ids.ts';
 import type { QuestStatus, Tier } from '../schema/quest/shared.ts';
@@ -69,6 +71,12 @@ export interface Metrics {
   readonly set_aside: readonly SetAside[];
   /** The sessions' reads by file (PS-01b). */
   readonly reads: Reads;
+  /** The code graph's queries, next to the reads (PS-21). */
+  readonly graph: GraphQueries;
+  /** Each assignee session's tool calls before its first edit (PS-21). */
+  readonly first_edits: FirstEdits;
+  /** Prompt size by block and role, from the load traces (PS-21). */
+  readonly prompts: PromptSizes;
   /** Submits that changed files outside their quest's scope (PS-05): a signal for the judge, never a fail. */
   readonly out_of_scope: readonly OutOfScope[];
 }
@@ -144,6 +152,9 @@ export function metricsOf(input: MetricsInput, window: MetricsWindow = {}): Metr
       .sort((a, b) => a.id.localeCompare(b.id)),
     set_aside: setAsidesOf(input.events, window),
     reads: readsOf(input.events, window),
+    graph: graphQueriesOf(input.events, window),
+    first_edits: firstEditsOf(input.events, input.quests, window),
+    prompts: promptSizesOf(input.events, input.quests, window),
     out_of_scope: outOfScopeOf(input.events, window),
   };
 }

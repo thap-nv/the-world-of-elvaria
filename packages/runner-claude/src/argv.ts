@@ -1,6 +1,7 @@
 // The command lines of Claude Code 2.1.318 (implementation-plan §3.5, §3.7; spike P1-02). Never `--bare` (it drops
 // OAuth), `--worktree` (it leaves a lock), `--dangerously-skip-permissions`, nor `--disable-slash-commands`
 // (`/usage` is a slash command, and without the Skill tool the skill list costs no context).
+import { sessionTools } from './graph-rules.ts';
 import type { SpawnRequest } from '@elvaria/runner-core';
 
 /** Files of the run folder the session reads. */
@@ -51,7 +52,7 @@ export function sessionArgv(req: SpawnRequest, files: RunFiles, sessionId: strin
     files.system,
     ...(files.agents === undefined ? [] : ['--agents', files.agents]),
     '--tools',
-    toolsArg(permissions.tools),
+    toolsArg(sessionTools(permissions)),
     ...ISOLATED,
   ];
 }
