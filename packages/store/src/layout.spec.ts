@@ -1,6 +1,7 @@
 import {
   CampaignIdSchema,
   CharacterIdSchema,
+  MemoIdSchema,
   QuestIdSchema,
   REGISTRY_FILES,
   TerritoryIdSchema,
@@ -40,6 +41,7 @@ describe('kingdomLayout (implementation-plan §2.2)', () => {
       kingdomLayout.scripture(character),
       kingdomLayout.campaign(campaign),
       kingdomLayout.verdict(verdict),
+      kingdomLayout.memo(MemoIdSchema.parse('m_20261106_4k2pqz')),
       kingdomLayout.inboxCommand('01JCFB7Q2R8S4T6V9W3X5Y1Z0A'),
       kingdomLayout.inboxDone('01JCFB7Q2R8S4T6V9W3X5Y1Z0A'),
       kingdomLayout.runDir(quest, 2),

@@ -4,6 +4,7 @@ import type {
   CharacterClass,
   CharacterStatus,
   Kind,
+  MemoKind,
   PartyRole,
   PartyStage,
   QuestStatus,
@@ -83,5 +84,5 @@ export const REGISTRY_ISSUE_LABEL: Readonly<Record<RegistryIssueCode, MessageKey
 };
 
 /** Registry entries carry both names; the theme does not exist yet (stage 4), so this is the display name. */
-export const nameIn = (locale: Locale, entry: Kind | CharacterClass | Tag): string =>
+export const nameIn = (locale: Locale, entry: Kind | CharacterClass | Tag | MemoKind): string =>
   locale === 'vi' ? entry.name_vi : entry.name_en;

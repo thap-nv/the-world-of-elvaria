@@ -1,4 +1,4 @@
-// The five registry files load together: each passes its own schema, then the cross-file rules that the v1
+// The six registry files load together: each passes its own schema, then the cross-file rules that the v1
 // schemas leave to "the registry loader" ($comment of kind, class and ritual .schema.json) run here, so a hand
 // edit of registry/*.json fails when the kingdom loads instead of in the middle of a quest (ADR 0016).
 import { RITUAL_STEPS } from '../constants.ts';
@@ -11,10 +11,13 @@ import {
   TagsFileSchema,
 } from './registry-entries.ts';
 import type { Result } from '../core/result.ts';
+import { MemosFileSchema } from './memo/memo-kind.ts';
 import type { CatalogScript, CharacterClass, Kind, Ritual, Tag } from './registry-entries.ts';
+import type { MemoKind } from './memo/memo-kind.ts';
 import type { z } from 'zod';
 
-export const REGISTRY_FILES = ['kinds', 'classes', 'rituals', 'scripts', 'tags'] as const;
+// memos (PS-02): the kinds of memo and their routes, read by routeMemo (ADR 0024).
+export const REGISTRY_FILES = ['kinds', 'classes', 'rituals', 'scripts', 'tags', 'memos'] as const;
 export type RegistryFile = (typeof REGISTRY_FILES)[number];
 
 export interface Registry {
@@ -23,6 +26,7 @@ export interface Registry {
   readonly rituals: readonly Ritual[];
   readonly scripts: readonly CatalogScript[];
   readonly tags: readonly Tag[];
+  readonly memos: readonly MemoKind[];
 }
 
 /** Stable codes, so the CLI can translate an issue through i18n; `message` is the English text for logs. */
@@ -55,7 +59,7 @@ const issue = (file: RegistryFile, path: Path, code: RegistryIssueCode, message:
   message,
 });
 
-/** Validates the five parsed JSON files of `registry/` and returns them as one Registry. */
+/** Validates the six parsed JSON files of `registry/` and returns them as one Registry. */
 export function parseRegistry(
   files: Readonly<Record<RegistryFile, unknown>>,
 ): Result<Registry, RegistryIssue[]> {
@@ -74,14 +78,16 @@ export function parseRegistry(
   const rituals = take('rituals', RitualsFileSchema);
   const scripts = take('scripts', ScriptsFileSchema);
   const tags = take('tags', TagsFileSchema);
+  const memos = take('memos', MemosFileSchema);
   // Cross-file rules need every file; report the schema errors of all files first.
-  if (!kinds || !classes || !rituals || !scripts || !tags) return err(invalid);
+  if (!kinds || !classes || !rituals || !scripts || !tags || !memos) return err(invalid);
   const registry: Registry = {
     kinds: kinds.kinds,
     classes: classes.classes,
     rituals: rituals.rituals,
     scripts: scripts.scripts,
     tags: tags.tags,
+    memos: memos.memos,
   };
   const issues = checkRegistry(registry);
   return issues.length === 0 ? ok(registry) : err(issues);

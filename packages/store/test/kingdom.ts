@@ -43,13 +43,14 @@ const REGISTRY_FIXTURES = {
   rituals: 'ritual',
   scripts: 'script',
   tags: 'tag',
+  memos: 'memo-kind',
 };
 
 /** The prompt files the class fixture names (P1-15: a registry without them does not load). */
 export const FIXTURE_PROMPTS = ['registry/prompts/scribe.md', 'registry/prompts/judge.md'] as const;
 
 /**
- * registry/ made of the five registry fixtures and the class prompts they name: a small registry that passes every
+ * registry/ made of the six registry fixtures and the class prompts they name: a small registry that passes every
  * cross-file rule and loads.
  */
 export async function plantRegistry(root: string): Promise<void> {

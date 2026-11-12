@@ -74,7 +74,8 @@ export function parseCommandArgs(
   );
   if (missing !== undefined) return err({ code: 'missing_option', option: `--${missing[0]}` });
   const absent = spec.args[input.positionals.length];
-  if (absent !== undefined) return err({ code: 'missing_argument', name: absent.name });
+  if (absent !== undefined && absent.optional !== true)
+    return err({ code: 'missing_argument', name: absent.name });
   const extra = input.positionals[spec.args.length];
   if (extra !== undefined) return err({ code: 'extra_argument', value: extra });
   return ok(input);

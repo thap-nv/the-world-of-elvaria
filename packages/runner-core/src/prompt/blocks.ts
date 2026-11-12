@@ -4,8 +4,10 @@ import { PATCH_FILE } from '../plot/patch.ts';
 import { SUBQUESTS_FILE } from '../plot/subquests.ts';
 import { SHELL_TOOL, WRITE_TOOLS } from '../policy/constants.ts';
 import { checksAheadBlock, failedChecksBlock } from './checks.ts';
+import { memoryBlock } from './memory.ts';
 import { fenced, fill, joinBlocks, withoutNotes } from './templates.ts';
 import type { PromptCheck } from './checks.ts';
+import type { Memory } from './memory.ts';
 import type { ToolPolicy } from '../policy/tool-policy.ts';
 import type { PromptTemplates } from './templates.ts';
 import type { Kind, Kingdom, Quest, Registry, Skill, Territory, Verdict } from '@elvaria/domain';
@@ -15,8 +17,9 @@ export type Locale = Kingdom['owner']['locale'];
 /** The owner's language, as the prompt names it: handover letters and verdict notes are written in it (ADR 0010). */
 export const LANGUAGE_NAMES: Readonly<Record<Locale, string>> = { vi: 'Vietnamese', en: 'English' };
 
-/** A fresh session reads this many of the last journal lines (ADR 0017). */
-export const JOURNAL_TAIL_LINES = 20;
+// Where they always were for the specs and the package's entry point; memory.ts holds them since PS-02.
+export { JOURNAL_TAIL_LINES } from './memory.ts';
+export type { Memory } from './memory.ts';
 
 /**
  * Continuing an assignee's work in a fresh session (§10 question 4): after a failed verdict, or a revival. A return
@@ -37,15 +40,6 @@ export type Continuation = (
    */
   readonly touched?: readonly string[];
 };
-
-/** What the continuing session reads instead of a transcript: the letter, the journal's tail, the branch's log. */
-export interface Memory {
-  readonly handover: string | null;
-  /** Lines of quests/<id>/journal.jsonl, oldest first; the last JOURNAL_TAIL_LINES are kept. */
-  readonly journal: readonly string[];
-  /** `git log --oneline <base>..<branch>`, or null before the first commit. */
-  readonly git_log: string | null;
-}
 
 interface WithId {
   readonly id: string;
@@ -253,17 +247,6 @@ function answerBlock(quest: Quest, t: PromptTemplates): string {
   const blocked = quest.blocked;
   if (blocked === undefined || !present(blocked.answer)) return '';
   return fill(t.answer, { question: blocked.question, answer: blocked.answer.trim() });
-}
-
-function memoryBlock(memory: Memory, t: PromptTemplates): string {
-  const journal = memory.journal.slice(-JOURNAL_TAIL_LINES);
-  return fill(t.memory, {
-    handover: present(memory.handover)
-      ? fenced(memory.handover, 'markdown')
-      : 'None: the earlier session left no letter.',
-    journal: journal.length === 0 ? 'None.' : fenced(journal.join('\n'), 'jsonl'),
-    git_log: present(memory.git_log) ? fenced(memory.git_log) : 'No commits yet.',
-  });
 }
 
 /**

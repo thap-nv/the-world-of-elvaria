@@ -5,6 +5,7 @@ import {
   CHECKS,
   DECREE,
   DIFF,
+  FILED_MEMO,
   JOURNAL,
   LETTER,
   PARTIAL,
@@ -72,6 +73,8 @@ const continuing: AssigneePromptInput = {
     handover: LETTER,
     journal: JOURNAL,
     git_log: '1a2b3c4 feat: add pnpm check',
+    // What the Steward filed from the Memos section of the last letter (PS-02).
+    memos: [FILED_MEMO],
   },
 };
 

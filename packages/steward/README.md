@@ -34,6 +34,13 @@
   first, then scripts, in the room the running work leaves, and the rest waits for a later tick; an acceptance
   part's checks, which run no command, go first and take no slot, and short work runs beside trials that hold
   every slot (P1-54).
+- Files memos (PS-02, ADR 0024; `src/memos/`): when an assignee's run ends through a submit, a question or a
+  crash (never a breaker), the Steward reads the letter's Memos section (runner-core's `memosOf`), hashes each
+  memo's key with sha256 for its id (`memoIdOf`), and writes `memos/<id>.json` routed by the domain's `memoOf`, with
+  `memo.filed` (the writer's) and `memo.routed` lines; a memo already filed is not filed again, and a line that
+  follows no memo, an unknown kind or a write that fails is a warning, never the run's end. No quest moves. The
+  owner's `decide_memo` closes a memo once (`memo.closed`, in the journal of the quest whose letter held it); a
+  continuing assignee's prompt lists the memos its quest filed (`filedMemosOf`).
 - Sets aside checks that failed because of their environment (P1-54, `src/review/environment.ts`): a failing check
   whose log shows a line of the territory's `environment_errors` (Docker not running, a container gone) gets no
   judge, so its assignee keeps its level and no flake quest opens; the bell says so once per run (`environment`

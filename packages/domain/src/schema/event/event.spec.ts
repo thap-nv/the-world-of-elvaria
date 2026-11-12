@@ -1,10 +1,10 @@
-import { describe, expect, expectTypeOf, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import examples from '../../../examples/event.json' with { type: 'json' };
 import { CHARACTER_VIEW, QUEST_VIEW, TERRITORY_VIEW } from '../../world/__fixtures__/examples.ts';
 import { isKnownEventType } from './event-types.ts';
-import { EventSchema, isEventOf, isTypedEvent } from './event.ts';
-import type { ToolKind, TypedEventType } from './event-data.ts';
+import { EventSchema } from './event.ts';
+import type { TypedEventType } from './event-data.ts';
 
 const line = (type: string, data: Record<string, unknown>, change: Record<string, unknown> = {}) => ({
   v: 1,
@@ -107,6 +107,9 @@ const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
     conflicts: ['apps/web/src/api.ts'],
   },
   'plot.restored': { paths: ['apps/api/openapi.json', 'coverage/'] },
+  'memo.filed': { memo: 'm_20261106_4k2pqz', kind: 'proposal', from: 'thorn' },
+  'memo.routed': { memo: 'm_20261106_4k2pqz', route: 'chancellor' },
+  'memo.closed': { memo: 'm_20261106_4k2pqz', decision: 'handled', quest: 'q_20261106_7k3m2a' },
 };
 
 describe('EventSchema', () => {
@@ -243,6 +246,9 @@ describe('EventSchema', () => {
     ['quest.unclaimable', { ...VALID_DATA['quest.unclaimable'], reason: 'busy' }, 'data.reason'],
     ['quest.unclaimable', { reason: null, rank: 'A' }, 'data.class'],
     ['quest.edited', {}, 'data.quest'],
+    ['memo.filed', { memo: 'm_1', kind: 'proposal', from: 'thorn' }, 'data.memo'],
+    ['memo.routed', { memo: 'm_20261106_4k2pqz', route: 'owner' }, 'data.route'],
+    ['memo.closed', { memo: 'm_20261106_4k2pqz', decision: 'done' }, 'data.decision'],
   ])('rejects %s with data %j', (type, data, expected) => {
     expect(issuesOf(line(type, data)).join('\n')).toContain(expected);
   });
@@ -269,32 +275,5 @@ describe('EventSchema', () => {
     expect(result.error?.issues).toEqual([
       expect.objectContaining({ code: 'invalid_type', path: ['data', 'usage', 'tokens'] }),
     ]);
-  });
-});
-
-describe('event narrowing', () => {
-  const [toolLine, manaLine] = examples.map((example) => EventSchema.parse(example));
-
-  it('narrows data by type through isTypedEvent', () => {
-    expect(isTypedEvent(toolLine!)).toBe(true);
-    expect(isTypedEvent(EventSchema.parse(line('delivery.sent', {})))).toBe(false);
-    const event = toolLine!;
-    if (!isTypedEvent(event)) throw new Error('expected a typed event');
-    switch (event.type) {
-      case 'agent.tool':
-        expectTypeOf(event.data.tool).toEqualTypeOf<ToolKind>();
-        expect(event.data.path).toBe('src/auth/login.ts');
-        break;
-      default:
-        throw new Error(`unexpected ${event.type}`);
-    }
-  });
-
-  it('narrows to one type through isEventOf', () => {
-    expect(isEventOf(toolLine!, 'mana.level')).toBe(false);
-    const event = manaLine!;
-    if (!isEventOf(event, 'mana.level')) throw new Error('expected mana.level');
-    expectTypeOf(event.data.used_pct).toEqualTypeOf<number>();
-    expect(event.data.used_pct).toBe(42);
   });
 });

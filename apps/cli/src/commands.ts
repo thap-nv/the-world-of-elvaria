@@ -6,6 +6,9 @@ import { CHARACTER_MODEL } from './character/model.ts';
 import { CHARACTER_RELEASE, CHARACTER_SUSPEND } from './character/suspend.ts';
 import { DOCTOR } from './doctor/doctor.ts';
 import { INIT } from './init.ts';
+import { MEMO_DECIDE } from './memo/decide.ts';
+import { MEMO_LIST } from './memo/list.ts';
+import { MEMO_SHOW } from './memo/show.ts';
 import { METRICS } from './metrics/metrics.ts';
 import { MIGRATE } from './migrate.ts';
 import { QUEST_ADD } from './quest/add.ts';
@@ -57,6 +60,9 @@ export const COMMANDS: readonly CommandSpec[] = [
   SEAL,
   RETURN,
   ANSWER,
+  MEMO_LIST,
+  MEMO_SHOW,
+  MEMO_DECIDE,
   RUN,
   WAKE,
   METRICS,
