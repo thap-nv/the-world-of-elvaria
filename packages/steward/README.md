@@ -69,7 +69,8 @@
   run. At start, before the first tick, it kills the tree of each pid the last Steward left there whose process
   started when that session was spawned (`processStartOf`, within a minute), and leaves a pid that now belongs to
   another process, or whose start the system would not tell, alone, with a warning. `sessionsLeftBehind(root)`
-  tells `elvaria doctor` which of them still run, and nothing while a Steward holds the lock.
+  tells `elvaria doctor` which of them still run, and nothing while a Steward holds the lock; `stewardRuns(root)` is
+  that lock question alone, which the CLI asks before it waits for the Steward's answer to a command (P1-56).
 - Watches mana per gauge (§3.5, ADR 0009; `src/mana/`): a session that hits its account's limit pauses its quest
   (assignee kept; a verifier leaves the review); the account is read at once (`mana/limit.ts`, no model call) and
   the gauges it shows spent for the session's model sleep, the windows the session reported in band first (P1-48: a

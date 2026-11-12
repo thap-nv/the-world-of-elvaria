@@ -36,7 +36,7 @@ paths:
 
 ## Bẫy đã gặp
 
-- Câu từ chối của `protectedViolation` (`src/claude/tool-events.ts`: "is in a path your CLI refuses to write whatever its rules say") dùng cho mọi tộc, mà từ P1-49 `.git` nằm trong `cli_protected_paths` của mọi `policy.json` dù agy không tự khóa `.git` (spike Antigravity §15): với tộc Gemini câu đó sai về nguyên nhân. Model Flash của kiểm (c) của P1-49 vẫn hiểu đúng và không tìm đường vòng ([báo cáo P1-50](../../docs/guides/phase-1-rerun.md) §6); khi sửa câu này, nói luật thuộc Elvaria hay thuộc CLI theo tộc.
+- Câu từ chối của `protectedViolation` (`src/claude/tool-events.ts`: "is in a path your CLI refuses to write whatever its rules say") chỉ đúng khi CLI tự khóa đường dẫn đó. Từ P1-49 `.git` nằm trong `cli_protected_paths` của mọi `policy.json` dù agy không tự khóa `.git` (spike Antigravity §15); người chấm Argon của P1-50 chép câu sai đó vào ghi chú ([báo cáo](../../docs/guides/phase-1-rerun.md) §6). Từ P1-56 `policy.json` có thêm `elvaria_protected_paths` (phần của `cli_protected_paths` mà adapter không liệt kê, tức luật của riêng Elvaria; `policyFileOf` của runner-core tính) và hook nói "this is a rule of Elvaria, not of your CLI" cho glob nằm trong đó. File viết trước P1-56 không có trường này: mọi glob vẫn được coi là của CLI. Adapter nào thêm đường dẫn Elvaria tự khóa ngoài `.git` thì phải đi qua cùng trường, đừng sửa câu theo tên tộc.
 
 ## Test
 

@@ -42,6 +42,10 @@ terms_acknowledged_at, env, pools?, timeout_ms?})`. `hook` is `hookCommand()` of
   `completed`; anything else (a soft-deny, an empty answer, a non-zero exit) → `error`. A quota in `AGY_ERROR` or
   `result.error` ends in `error` with `RunResult.rate_limited`, its `rate_limit` signal carrying `resets_at` from the error's
   `Resets in 4h53m54s` (`resetsAtOf`, P1-22), so the Steward probes just after the reset.
+- Takes the run's `structured` from the last JSON object of the answer (`result.response`), then from agy's own
+  `structured_output`, and drops one whose `notes` is a lone stand-in word such as `placeholder` (`structuredOf`,
+  `src/structured.ts`, P1-56: in Q5 of P1-50 agy kept a stand-in the judge printed before its real verdict, and the Steward
+  wrote a `partial` verdict from it). With nothing left the result has no `structured`, as a judge that left.
 - Writes what only the stream knows through runner-core, as the Claude adapter does: `agent.session.end`
   (outcome and usage, a killed run included) with `openRunLog`, and stdout and stderr redacted (the session's
   secret values first, `secretValuesOf`) into

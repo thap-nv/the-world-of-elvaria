@@ -40,6 +40,12 @@ export interface PolicyFile extends RunContext {
    */
   readonly cli_protected_paths?: readonly string[];
   /**
+   * Of `cli_protected_paths`, the globs only Elvaria keeps (P1-56): git's folder for a tribe whose CLI does not lock
+   * it, which the adapter did not list (agy). The hook's refusal calls them Elvaria's rule and not the CLI's. Absent
+   * when the CLI locks every one of them (Claude Code) and in a file written before P1-56.
+   */
+  readonly elvaria_protected_paths?: readonly string[];
+  /**
    * PATCH_FILE when `laws.patch_paths` is not empty (P1-28): the hook names it when it refuses a write the CLI would
    * refuse to a path of patch_paths, so the change goes into a patch the Steward applies instead of a question.
    */
@@ -67,6 +73,10 @@ const protectedOf = (extras: PolicyExtras): string[] => [
   ...new Set([...(extras.cli_protected_paths ?? []), ...GIT_PATHS]),
 ];
 
+/** What of git's folder the adapter did not list: Elvaria's own rule (P1-56). */
+const ownProtectedOf = (extras: PolicyExtras): string[] =>
+  GIT_PATHS.filter((glob) => !(extras.cli_protected_paths ?? []).includes(glob));
+
 type PolicyPart = Pick<ToolPolicy, 'tools' | 'laws' | 'search_commands'>;
 
 export const policyFileOf = (ctx: RunContext, policy: PolicyPart, extras: PolicyExtras = {}): PolicyFile => ({
@@ -81,6 +91,7 @@ export const policyFileOf = (ctx: RunContext, policy: PolicyPart, extras: Policy
   },
   ...listOf('apprentice_models', extras),
   cli_protected_paths: protectedOf(extras),
+  ...(ownProtectedOf(extras).length === 0 ? {} : { elvaria_protected_paths: ownProtectedOf(extras) }),
   ...(policy.laws.patch_paths.length === 0 ? {} : { patch_file: PATCH_FILE }),
   ...(policy.search_commands === undefined ? {} : { search_commands: [...policy.search_commands] }),
 });

@@ -5,7 +5,7 @@ export { nodeScriptRunner } from './script/run-script.ts';
 export type { ScriptRequest, ScriptRunResult, ScriptRunner } from './script/run-script.ts';
 export { SCRIPT_LOG, SCRIPT_RUN } from './script/script-quest.ts';
 export { VERDICT_OUTPUT_SCHEMA } from './sessions/request.ts';
-export { createSteward, sessionsLeftBehind } from './steward.ts';
+export { createSteward, sessionsLeftBehind, stewardRuns } from './steward.ts';
 export type { LeftSession } from './sessions/pids.ts';
 export type {
   Bell,

@@ -13,7 +13,10 @@
   translated by their `code`.
 - Sends every quest change as an inbox command (`create_quest`, `confirm`, `cancel`, `archive`, `edit_quest`,
   `retry`, `reassign`, `seal`, `return`, `answer`; ADR 0005), after checking ids against the registry and the quest
-  against the transition table. `return` asks for a note of at least 20 characters (`--note`) and a `--fail-kind`
+  against the transition table; `archive` and `cancel` both take a quest in the infirmary (`infirmary.archive`, P1-56).
+  While a Steward holds the kingdom's lock, `sendCommand` waits one tick and a little more for its `command.applied` or
+  `command.rejected` line and prints it (`stale` with what to do about it); without a Steward it only drops the file.
+  `quest edit --max-minutes` on a quest with a running session says the new ceiling reaches the next session only. `return` asks for a note of at least 20 characters (`--note`) and a `--fail-kind`
   (`other` by default), since the Steward writes it as the owner's fail verdict; `return --rejudge` (P1-40) says
   the judge erred: the work goes back to be judged again and the return does not count against the assignee. `answer <quest> "<answer>"` takes
   a non-empty answer for a `blocked` quest; the Steward then goes on with the same attempt, in the asking session
@@ -98,7 +101,10 @@
   territory allows; names only, never a value) and, while no Steward holds its lock, the sessions a stopped one
   left running (`sessionsLeftBehind`), which the next `run` kills (P1-11, `src/doctor/check-state.ts`), and the
   mana gauges (P1-32, `src/doctor/check-mana.ts`): a sleeping one as a warning, with the reset its sleep named,
-  an awake one with its readings,
+  an awake one with its readings, then what a territory's quests need of the machine, as warnings (P1-56,
+  `src/doctor/check-territory-setup.ts`: a Docker that does not answer `docker info` when a command mentions docker, a
+  repo with no `user.email`, `.claude/rules/` files outside `laws.patch_paths`, the last also said by `territory add`)
+  and the models whose doers have a single judge of another model (`src/doctor/check-judges.ts`),
   "not measured" when the Steward has logged none; under each reading the share of the window a session took, as
   the Steward measures it again at start from the log (`levelsFromLog`, `sharesOfHistory`), or the default it
   counts before that, and an awake gauge one more session would take to the cap, or one at it, as a warning

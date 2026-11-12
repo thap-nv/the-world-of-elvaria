@@ -16,6 +16,8 @@ export interface LawsInput {
 export interface LawExtras {
   /** Policy `cli_protected_paths` (P1-24). */
   readonly cliProtected?: readonly string[] | undefined;
+  /** Policy `elvaria_protected_paths` (P1-56): those of `cliProtected` that Elvaria keeps and the CLI does not. */
+  readonly ownProtected?: readonly string[] | undefined;
   /** Policy `patch_file` (P1-28): where the assignee writes its patch; absent, no patch is offered. */
   readonly patchFile?: string | undefined;
 }
@@ -29,6 +31,11 @@ export interface CompiledLaws {
   readonly readOnly: CompiledPaths;
   /** Never written because the CLI itself refuses them (policy `cli_protected_paths`, P1-24); not a law. */
   readonly cliProtected: CompiledPaths;
+  /**
+   * Of the globs of `cliProtected`, those that are Elvaria's own rule and not the CLI's (P1-56: git's folder for a tribe
+   * whose CLI does not lock it, agy): the refusal says so instead of blaming the CLI.
+   */
+  readonly ownProtected: readonly string[];
   /** Of the CLI-protected paths, those the Steward patches for the assignee (P1-28); empty without a patch file. */
   readonly patchPaths: CompiledPaths;
   readonly patchFile: string | undefined;
@@ -41,6 +48,7 @@ export const NO_LAWS: CompiledLaws = {
   paths: [],
   readOnly: [],
   cliProtected: [],
+  ownProtected: [],
   patchPaths: [],
   patchFile: undefined,
   commands: [],
@@ -70,6 +78,7 @@ export function compileLaws(laws: LawsInput, extras: LawExtras = {}): CompiledLa
     paths: compilePaths(laws.forbidden_paths),
     readOnly: compilePaths(laws.read_only_paths),
     cliProtected: compilePaths(extras.cliProtected),
+    ownProtected: extras.ownProtected ?? [],
     // A policy written by hand may list patch paths without the file: then the change goes to the owner.
     patchPaths: extras.patchFile === undefined ? [] : compilePaths(laws.patch_paths),
     patchFile: extras.patchFile,

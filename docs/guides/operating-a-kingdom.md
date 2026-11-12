@@ -62,7 +62,7 @@ Kind `build` mặc định cần dấu vua. Quest không cần dấu thì tới 
   - Chạy `elvaria run` từ **Git Bash** khi check của lãnh thổ gọi `sh` (PATH của PowerShell không có `Git\usr\bin`).
   - Hiệp sĩ tộc gemini chạy lệnh trong PowerShell: cần `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` thì mới chạy được `pnpm`; `doctor` kiểm điều này.
   - Trong PowerShell 5.1, dấu `"` nằm trong một đối số bị cắt khi truyền cho `node`: gõ lệnh có mô tả dài trong Git Bash.
-- **Docker**: lãnh thổ nào có check hay `commands.reset` gọi `docker` thì Docker Desktop phải chạy **trước** Quản sự. `doctor` chưa kiểm điều này (P1-56); tự kiểm bằng `docker info`.
+- **Docker**: lãnh thổ nào có check hay `commands.reset` gọi `docker` thì Docker Desktop phải chạy **trước** Quản sự. `doctor` kiểm điều này (từ P1-56): daemon không trả lời thì nó cảnh báo (không chặn), nêu các lệnh dùng docker; tự kiểm bằng `docker info`.
 - **Đăng nhập có hạn**: `claude auth status --json` cho `loginExpiresAt`; `doctor` cảnh báo khi còn dưới 7 ngày. Gần hạn thì `claude auth login`.
 
 ## 3. Vương quốc, tộc, lãnh thổ, nhân vật
@@ -183,7 +183,7 @@ Với một đội, chỉ merge nhánh của **quest ghép**; hợp đồng và 
 
 ## 8. `doctor`, phiên bản CLI và việc ghim
 
-Chạy `elvaria doctor` **đầu mỗi ngày chạy** và sau mỗi thay đổi cấu hình. Nó kiểm registry, git, CLI của từng tộc (đường dẫn, phiên bản, đăng nhập, hook đã build), shell của tộc, từng lãnh thổ và chương trình mà lệnh của chúng gọi, kho bảo vật, phiên còn sót, đồng hồ mana. Lỗi thì in "Chưa sẵn sàng: n lỗi"; cảnh báo không chặn.
+Chạy `elvaria doctor` **đầu mỗi ngày chạy** và sau mỗi thay đổi cấu hình. Nó kiểm registry, git, CLI của từng tộc (đường dẫn, phiên bản, đăng nhập, hook đã build), shell của tộc, từng lãnh thổ và chương trình mà lệnh của chúng gọi, Docker khi một lệnh dùng nó, danh tính git (`user.email`) của từng repo, `.claude/rules/` có nằm trong `laws.patch_paths` không, model người làm chỉ có một người chấm khác model (cảnh báo: một đồng hồ mana đóng là bài của model đó không ai chấm), kho bảo vật, phiên còn sót, đồng hồ mana. Lỗi thì in "Chưa sẵn sàng: n lỗi"; cảnh báo không chặn.
 
 Hai CLI **tự cập nhật qua đêm** theo VS Code (hai lần trong hai ngày của P1-50):
 
@@ -212,7 +212,7 @@ Quest vào trạm quân y thì dừng hẳn và chuông rung. `elvaria quest sho
 | Lý do | Nghĩa là | Làm gì |
 |---|---|---|
 | cầu dao token | phiên vượt trần token | `quest edit <quest> --max-tokens <n>` rồi `quest retry <quest>` (§4 có số đo) |
-| cầu dao thời gian | phiên vượt trần phút | `quest edit --max-minutes <n>` rồi `retry`. Trần phút mới **không** áp cho phiên đang chạy: CLI nhận con số cũ lúc mở phiên (P1-56) |
+| cầu dao thời gian | phiên vượt trần phút | `quest edit --max-minutes <n>` rồi `retry`. Trần phút mới **không** áp cho phiên đang chạy: CLI nhận con số cũ lúc mở phiên; từ P1-56 `quest edit` nói điều đó khi quest đang có phiên |
 | cầu dao lượt | CLI dừng ở 200 lượt | `retry`; lặp lại thì chia nhỏ việc |
 | commit bị từ chối | hook của repo từ chối commit, hoặc bản vá `elvaria.patch` không áp được | đọc lý do, sửa trong đất riêng (`<repo>/.elvaria/worktrees/<quest>`) rồi `retry` |
 | đường dẫn cấm bị đổi | một chương trình của phiên ghi vào `laws.forbidden_paths` hay file `.env`; không có gì được commit | trả các file đó về như cũ hoặc xóa trong đất riêng, rồi `retry` |
@@ -230,12 +230,11 @@ Các lệnh khác của chủ nhân:
 | nhân vật bị hạ cấp oan (check đỏ vì môi trường) | `elvaria character level <id> <cấp>` |
 | nhân vật trượt cùng một kiểu ba lần liền thì bị đình chỉ vào Đền | sửa nguyên nhân (kinh, mô tả), rồi `elvaria character release <id>` |
 | tạm cho một nhân vật nghỉ | `elvaria character suspend <id> --reason "…"` |
-| bỏ một quest chưa xong (trừ quest đang ở trạm quân y, xem dưới) | `elvaria quest cancel <quest>`; worktree của quest đã hủy ở lại, dọn tay |
+| bỏ một quest chưa xong | `elvaria quest cancel <quest>`; worktree của quest đã hủy ở lại, dọn tay. Quest ở trạm quân y thì `quest archive` (hay `cancel`, cùng lệnh): Quản sự gỡ worktree, giữ nhánh cùng phần việc dở |
 
-Chỗ còn thiếu đường, vá ở P1-55 và P1-56:
+Chỗ còn thiếu đường, vá ở P1-55:
 
-- `quest cancel` và `quest archive` từ chối quest đang ở trạm quân y, nên quest muốn bỏ nằm lại đó.
-- `quest edit` gửi đúng lúc quest vừa đổi trạng thái thì bị Quản sự từ chối (`stale`) mà CLI chỉ in "đã gửi": xem lại `quest show` sau một nhịp và gửi lại.
+- (P1-56, đã vá) `quest archive` và `quest cancel` nhận quest ở trạm quân y; khi Quản sự đang chạy, mọi lệnh gửi qua CLI chờ một nhịp và in câu trả lời của nó (`stale` kèm cách xử lý, hay "đã áp dụng"); Quản sự không chạy thì lệnh chờ trong hộp thư như cũ.
 - Quest ghép: `retry` từ trạm quân y chạy lại lượt gộp của máy trên đúng commit vừa trượt (tốn một vòng check) trước khi hiệp sĩ nhận.
 - File rác nhân vật lỡ tạo ở gốc đất riêng vào commit nộp, và hiệp sĩ không có lệnh xóa: dừng Quản sự, `git rm` rồi commit trong worktree của quest, chạy lại.
 
@@ -294,14 +293,14 @@ Thay đổi chỉ ở `docs/` thì không cần làm gì. Khi repo Elvaria cũng
 | Nhóm | Chuyện đã xảy ra | Hôm nay làm gì | Vá ở |
 |---|---|---|---|
 | Trần token (10 lần) | sàn hạng D, C, B thấp cho việc web nhiều file; mỗi lần cắt là một lần `edit` và `retry` | nâng trần trước khi xác nhận (§4) | P1-54 |
-| Docker (5 lần) | Docker Desktop chưa chạy: `commands.reset` đỏ, bài bị chấm trượt, người làm bị hạ cấp | `docker info` trước `run`; trả cấp bằng `character level` | P1-54, P1-56 |
+| Docker (5 lần) | Docker Desktop chưa chạy: `commands.reset` đỏ, bài bị chấm trượt, người làm bị hạ cấp | `doctor` cảnh báo Docker không chạy (P1-56); trả cấp bằng `character level` | P1-54, P1-56 (xong) |
 | Docker | `reset` của quest này (`docker compose … down -v`) hạ stack e2e của quest kia ba lần; e2e đỏ bị đọc là chập chờn, Quản sự sinh quest «Trừ tà» và hạ cấp người làm | `dispatch.max_background: 1` với lãnh thổ có stack Docker dùng chung; hủy sớm quest «Trừ tà» sinh từ lỗi dựng container | P1-54 |
-| Người chấm (3 lần) | một trần mana đóng làm bài của một model không còn ai chấm | giữ hai người chấm khác model cho mỗi model người làm (§3); xem `doctor` khi quest chờ nghiệm thu lâu | PS-03, P1-56 |
+| Người chấm (3 lần) | một trần mana đóng làm bài của một model không còn ai chấm | giữ hai người chấm khác model cho mỗi model người làm (§3); xem `doctor` khi quest chờ nghiệm thu lâu | PS-03 (chuông); P1-56 (cảnh báo của `doctor`, xong) |
 | Việc nền | check 6 giây của một quest tài liệu chờ 41 phút sau các bộ e2e; người chấm sau check đỏ chờ khóa 9–33 phút | xác nhận quest nhỏ trước đợt có e2e, hoặc chấp nhận chờ | P1-54 |
-| CLI thiếu đường (5 lần) | xem §10 | xem §10 | P1-55, P1-56 |
-| Quyền của nghề và lãnh thổ (2 lần) | nhân vật không ghi được `.claude/rules/`; thư ký được bảo chạy `git log` | `laws.patch_paths` (§3); mô tả không đòi lệnh mà nghề không có (§4) | P1-56, PS-06 |
+| CLI thiếu đường (5 lần) | xem §10 | xem §10 | P1-55, P1-56 (xong) |
+| Quyền của nghề và lãnh thổ (2 lần) | nhân vật không ghi được `.claude/rules/`; thư ký được bảo chạy `git log` | `laws.patch_paths` (§3; `territory add` và `doctor` gợi ý từ P1-56); mô tả không đòi lệnh mà nghề không có (§4) | P1-56 (xong), PS-06 |
 | File lớn | trinh sát tộc gemini đọc một file 1 MB 25 lần, bị cắt hai lượt | từ P1-53 tộc gemini có `git grep`; ghi file lớn vào gazetteer (§11) | P1-52, P1-53 (xong) |
-| agy | người chấm in một JSON giữ chỗ giữa câu trả lời, phán quyết thành "dở", mất một phiên chấm | không làm gì: người chấm kế tiếp chấm lại | P1-56 |
+| agy | người chấm in một JSON giữ chỗ giữa câu trả lời, phán quyết thành "dở", mất một phiên chấm | từ P1-56 runner lấy JSON cuối của câu trả lời và bỏ ghi chú giữ chỗ: người chấm không ra phán quyết thì người chấm kế tiếp mở, không còn phán quyết "dở" từ một ghi chú giả | P1-56 (xong) |
 
 Ba điều không phải lỗi, nhưng nên biết trước:
 

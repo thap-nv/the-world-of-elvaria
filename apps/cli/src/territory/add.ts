@@ -15,6 +15,7 @@ import { recordTerritoryAttached } from '../events.ts';
 import { storeIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { gitIn } from '../process/git.ts';
+import { RULES_GLOB, ruleFilesOf } from './claude-rules.ts';
 import { readGitInfo } from './git-info.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
@@ -138,8 +139,20 @@ async function runTerritoryAdd(input: CommandInput, cli: CliContext): Promise<Ex
   }
   await recordTerritoryAttached(ctx, written.value);
   ctx.io.out(ctx.t('cli.territory.added', { name, id, path: territory.path }));
-  if (vcs.type === 'git') ctx.io.out(ctx.t('cli.territory.git', { branch: vcs.default_branch ?? '' }));
+  if (vcs.type === 'git') {
+    ctx.io.out(ctx.t('cli.territory.git', { branch: vcs.default_branch ?? '' }));
+    await hintRules(ctx, folder, territory);
+  }
   return EXIT.ok;
+}
+
+/** (h) of the P1-50 report: a repo with `.claude/rules/` is told to let the Steward patch it (P1-56). */
+async function hintRules(ctx: KingdomContext, folder: string, territory: Territory): Promise<void> {
+  const { uncovered } = await ruleFilesOf(folder, territory.laws.patch_paths);
+  if (uncovered.length > 0)
+    ctx.io.out(
+      ctx.t('cli.territory.rules_hint', { id: territory.id, count: uncovered.length, glob: RULES_GLOB }),
+    );
 }
 
 export const TERRITORY_ADD: CommandSpec = {

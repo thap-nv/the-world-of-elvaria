@@ -176,6 +176,10 @@ describe('compileLaws', () => {
     expect(matchingGlobOf('.husky/pre-push', patched.patchPaths)).toBe('.husky/**');
     expect(patched.patchFile).toBe('elvaria.patch');
     expect(compileLaws(laws, { cliProtected: ['.husky/**'] }).patchPaths).toEqual([]);
+    // P1-56: which of the protected globs are Elvaria's own rule; none unless the policy says so.
+    const own = compileLaws(laws, { cliProtected: ['.git/**'], ownProtected: ['.git/**'] });
+    expect(own.ownProtected).toEqual(['.git/**']);
+    expect(compileLaws(laws, { cliProtected: ['.git/**'] }).ownProtected).toEqual([]);
   });
 
   it('breaks the laws on a pattern that is not a regular expression', () => {
