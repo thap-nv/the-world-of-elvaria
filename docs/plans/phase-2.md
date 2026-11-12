@@ -40,7 +40,9 @@ Cột "Đổi so với 2026-11-10" ghi chỗ khác bản gốc. Số hiệu gi�
 | P2-10 | **Khung chat triệu hồi**: runner giữ stdin mở, kind `message`, event `agent.message`, năng lực mới của runner, ghi journal, khung chat trên lite (chưa có mockup) | P2-05, chủ nhân chốt §10 câu 1, P2-07 | không đổi; không thuộc mốc |
 | P2-11 | **Mốc giai đoạn 2**: e2e `Flow6` (Playwright), hướng dẫn dựng đường hầm, cờ tắt đường hầm, một lần chạy thật từ ngoài nhà, báo cáo giai đoạn 2 | P2-01 … P2-09 | thêm số đo can thiệp của §1 |
 
-Task `PS-…` của chặng tự cường xen vào giai đoạn 2 (đã có dòng ở §8, không đổi): PS-08 giao hàng tới merge và PS-11 nghi thức xem ảnh ở đầu giai đoạn; PS-09 hàng đợi merge sau PS-08; PS-10 thư `request` và `objection`; PS-12 Đền bản đầu; PS-13 bí kíp vào phiên; PS-18 tính cách.
+Task `PS-…` của chặng tự cường xen vào giai đoạn 2 (đã có dòng ở §8, không đổi): PS-08 giao hàng tới merge và PS-11 nghi thức xem ảnh ở đầu giai đoạn; PS-09 hàng đợi merge sau PS-08; PS-10 thư `request` (thư `objection` đã chuyển lên giai đoạn 1.5 thành PS-22, chủ nhân chốt 2026-11-12); PS-12 Đền bản đầu; PS-13 bí kíp vào phiên; PS-18 tính cách.
+
+(Chủ nhân chốt 2026-11-12) **Tộc là danh sách mở.** Mọi màn của giai đoạn 2 vẽ tộc từ `kingdom.tribes[]` và `tribeLookOf` (PS-24 của giai đoạn 1.5): huy hiệu, khung chân dung, bảng màu, số thanh mana và chú giải theo số tộc đang có. Thiết kế v0.2 có hai màu tộc và hai thanh mana; P2-02 nhập nó rồi mở ra cho số tộc bất kỳ, P2-04 và P2-07 không mặc định hai tộc.
 
 ## 4. Thứ tự đề xuất
 

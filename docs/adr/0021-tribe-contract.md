@@ -16,9 +16,10 @@ Product plan 0.6 loosens principle 6 to "one account of the owner per tribe" and
 - Every adapter must pass the conformance suite in runner-core (`elvaria tribe check`) before it can be enabled.
 - A character's tribe is fixed for life, like its class: reputation and scripture belong to that tribe's models. Adding a tribe means summoning new characters; existing characters, quests and data do not change.
 - Codex: a full-tier candidate (`codex exec --json`, AGENTS.md, lifecycle hooks trusted by hash, `--output-schema`, `exec resume`). Its adapter is optional task P1-12d and starts with a spike; generated hook files must be byte-stable so the owner trusts them once.
+- (Amended 2026-11-12, as the owner decided) The list of tribes stays open past Codex: Grok, Cursor, Kiro or any later CLI is added by the same steps, with no change to the core. What the core still knows per CLI becomes data an adapter declares: the models it serves with the maker family of each (a model of unknown family never counts as another family, ADR 0008), and its hook payload, read through a neutral dialect. Task PS-23, after the Codex adapter shows what a third CLI needs.
 
 ## Consequences
 
 - Separation of duties gains pairs as tribes are added (Codex is model family `gpt`), and one sleeping tribe stalls less work.
-- A tribe without a theme entry shows a neutral crest until the theme has one.
+- A tribe without a theme entry shows a neutral crest until the theme has one. (Amended 2026-11-12, as the owner decided, task PS-24: a tribe must be told apart at a glance, so a tribe without a theme entry gets a look drawn from the theme's pool by its id, the same on every run and never shared with another tribe; the owner may choose one instead.)
 - An owner adapter file runs with the owner's rights; it still goes through the core's tool policy, minimal env and redaction.
