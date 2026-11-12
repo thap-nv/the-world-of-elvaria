@@ -6,7 +6,7 @@
 // - scenario: env ELVARIA_FAKE_SCENARIO (the conformance suite's) plays a session as Codex does (spike §1.5, §3): the
 //   prompt read on stdin, the `-c` hooks run through PowerShell on Windows (`command_windows`) or sh, and skipped
 //   without a word unless `--dangerously-bypass-hook-trust` is given; a refused shell call leaves only a stderr line.
-// ELVARIA_FAKE_CODEX_LOG=<file> appends each call's argv, cwd and prompt length, one JSON line per call.
+// ELVARIA_FAKE_CODEX_LOG=<file> appends each call's argv, cwd, prompt length and PowerShell policy, one JSON line each.
 // Exit codes are set, never forced: process.exit() can cut a piped stdout short.
 import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
@@ -38,7 +38,8 @@ const refuse = (code, message) => {
 };
 const log = (extra = {}) => {
   if (env.ELVARIA_FAKE_CODEX_LOG === undefined) return;
-  appendFileSync(env.ELVARIA_FAKE_CODEX_LOG, `${JSON.stringify({ argv, cwd: process.cwd(), ...extra })}\n`);
+  const call = { argv, cwd: process.cwd(), ps_policy: env.PSExecutionPolicyPreference, ...extra };
+  appendFileSync(env.ELVARIA_FAKE_CODEX_LOG, `${JSON.stringify(call)}\n`);
 };
 
 /** The prompt on stdin, to its end; read as a stream, since readFileSync(0) loses data on EAGAIN (hooks rules). */
@@ -120,6 +121,17 @@ function say(text) {
   run.item += 1;
 }
 
+/**
+ * A line the hook let through. The suite's spawn probe runs for real, but Codex 0.167's unelevated sandbox on Windows
+ * runs a command and refuses the piped child it starts (`spawn EPERM`, P1-12e): there the probe's file says so.
+ */
+function runLine(command) {
+  const unelevated = windows && configs.includes('windows.sandbox="unelevated"');
+  if (!unelevated || command !== core.SPAWN_PROBE_COMMAND)
+    return core.runFakeShellLine(command, process.cwd());
+  writeFileSync(path.join(process.cwd(), core.SPAWN_PROBE_OUT), `${core.SPAWN_PROBE_FAILED}EPERM`);
+}
+
 /** A shell call: the hook first; a refusal leaves no item, only a line on stderr (spike §1.5). */
 function shell(command) {
   const decision = runHook(
@@ -146,6 +158,7 @@ function shell(command) {
     status: 'in_progress',
   };
   item('command_execution', fields, 'item.started');
+  runLine(command);
   item('command_execution', { ...fields, exit_code: 0, status: 'completed' });
   runHook(
     'PostToolUse',
@@ -216,12 +229,14 @@ const SCENARIOS = {
     return finish();
   },
   // Each shell line of ELVARIA_FAKE_COMMANDS (a JSON list) once, in order.
-  commands: () => {
-    for (const command of JSON.parse(env.ELVARIA_FAKE_COMMANDS ?? '[]')) shell(command);
+  commands: (lines = JSON.parse(env.ELVARIA_FAKE_COMMANDS ?? '[]')) => {
+    for (const command of lines) shell(command);
     say('done');
     letter();
     return finish();
   },
+  // The suite's spawn probe (P1-12e).
+  spawn_child: () => SCENARIOS.commands([core.SPAWN_PROBE_COMMAND]),
   crash: () => {
     say('Fake crash.');
     return fail('stream disconnected before completion: internal error');

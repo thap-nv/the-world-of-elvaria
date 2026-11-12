@@ -65,6 +65,16 @@ export interface CodexOptions {
 
 const DEFAULT_TIMEOUT_MS = 30_000;
 
+/**
+ * PowerShell's execution policy for the commands of a session, Windows only (P1-12e): inside the `mxc` sandbox
+ * PowerShell cannot read the policy from the registry ("AuthorizationManager check failed"), so `pnpm`, `npm` and
+ * `npx`, which resolve to their `.ps1` shims, would not start. RemoteSigned runs local scripts, not unsigned
+ * downloaded ones; the variable sets the policy of that one process, nothing is written.
+ */
+export const SHELL_POLICY_ENV: Readonly<Record<string, string>> = {
+  PSExecutionPolicyPreference: 'RemoteSigned',
+};
+
 /** Codex's env: the given one without git's variables (§6), and `extra` (the session context as `ELVARIA_*`) over it. */
 export function codexEnv(
   env: Readonly<Record<string, string>>,
@@ -103,7 +113,8 @@ function clearingOnEnd(session: RunningSession, req: SpawnRequest): RunningSessi
 
 async function startCodex(req: SpawnRequest, options: CodexOptions): Promise<RunningSession> {
   const ctx = runContextOf(req);
-  const env = codexEnv(req.env, contextEnv(ctx));
+  const windows = (options.platform ?? process.platform) === 'win32';
+  const env = codexEnv(req.env, { ...(windows ? SHELL_POLICY_ENV : {}), ...contextEnv(ctx) });
   const files = await writeRunFiles(req, ctx);
   // The trust bypass runs every hook Codex has enabled: first make sure they are Elvaria's own (0 mana).
   const timeout = options.timeout_ms ?? DEFAULT_TIMEOUT_MS;
@@ -114,7 +125,6 @@ async function startCodex(req: SpawnRequest, options: CodexOptions): Promise<Run
     { env, cwd: req.cwd, timeout_ms: timeout },
   );
   if (!listed.ok) throw new Error(`the session's hooks could not be checked: ${listed.problem}`);
-  const windows = (options.platform ?? process.platform) === 'win32';
   const problem = hooksProblem(listed.results[0], options.hook, files.policy, windows);
   if (problem !== undefined) throw new Error(problem);
   // The session's secret values are masked before the patterns in every line the runner writes (§3.9).

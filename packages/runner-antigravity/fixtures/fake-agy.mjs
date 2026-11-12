@@ -197,6 +197,7 @@ function shell(command) {
     ...tool,
     tool_info: { name: 'run_command', parameters, ...info },
   });
+  if (verdict.ran) core.runFakeShellLine(command, process.cwd());
   if (verdict.ran) runHook('PostToolUse', base({ stepIdx: run.step, toolCall, error: '' }));
   run.step += 1;
   return true;
@@ -267,13 +268,14 @@ const SCENARIOS = {
     return finish();
   },
   // Each shell line of ELVARIA_FAKE_COMMANDS (a JSON list) once, in order, as a model told to run them (P1-53).
-  commands: () => {
-    for (const command of JSON.parse(env.ELVARIA_FAKE_COMMANDS ?? '[]'))
-      if (!shell(command)) return softDenied();
+  commands: (lines = JSON.parse(env.ELVARIA_FAKE_COMMANDS ?? '[]')) => {
+    for (const command of lines) if (!shell(command)) return softDenied();
     respond('done');
     letter();
     return finish();
   },
+  // The suite's spawn probe, which runs for real once the hook and the rules let it through (P1-12e).
+  spawn_child: () => SCENARIOS.commands([core.SPAWN_PROBE_COMMAND]),
   crash: () => {
     respond('Fake crash.');
     return failWith('internal error', { status: 'INTERNAL', retryable: false, reason: 'model_error' });

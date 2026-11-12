@@ -1,6 +1,5 @@
 // `elvaria tribe add | check | disable` with an owner adapter file whose CLI is fake (implementation-plan §3.14,
-// P1-19): the file passes the conformance suite, the tribe is narrowed to ranks F–D, and adding it changes no
-// character file.
+// P1-19): it passes the conformance suite, the tribe is narrowed to ranks F–D, and no character file changes.
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -170,6 +169,7 @@ describe('elvaria tribe', () => {
         '✓ hang',
         '✓ rate_limit',
         '– forbidden_command (skipped: the adapter does not declare it)',
+        '✓ spawn_child',
         '– scratch_commit (skipped: the adapter does not declare it)',
         '✓ ask',
         'Tribe lantern passes the conformance suite and is now enabled in kingdom.json.',
@@ -191,6 +191,7 @@ describe('elvaria tribe', () => {
         '✓ submit',
         '✓ hang',
         '– forbidden_command (skipped: the adapter does not declare it)',
+        '✓ spawn_child',
       ]);
       expect((await lantern())?.enabled).toBe(true);
     });

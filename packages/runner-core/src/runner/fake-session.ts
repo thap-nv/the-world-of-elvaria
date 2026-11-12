@@ -9,6 +9,7 @@ import {
   FAKE_SCRATCH_COMMANDS,
   fakeLetter,
 } from '../conformance/scenarios.ts';
+import { runSpawnProbe } from '../conformance/spawn-probe.ts';
 import { commandRefusal } from '../policy/command-refusal.ts';
 import { SHELL_TOOL } from '../policy/constants.ts';
 import { readQuestion } from './handover.ts';
@@ -84,6 +85,11 @@ const SCRIPTS: Readonly<Record<FakeScenario, (play: Play) => Promise<Ending | un
   },
   forbidden_command: (play) => Promise.resolve(forbidden(play)),
   scratch_commit: (play) => Promise.resolve(forbidden(play, FAKE_SCRATCH_COMMANDS)),
+  // The probe runs for real: what this machine allows a session's command (P1-12e).
+  spawn_child: async (play) => {
+    await runSpawnProbe(play.start.req.cwd);
+    return work(play);
+  },
 };
 
 export function startFakeSession(start: FakeStart): RunningSession {

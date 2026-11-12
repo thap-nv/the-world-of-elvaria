@@ -1,13 +1,16 @@
 // Codex's argv: the same flags for a new session and a resumed one, the sandbox by the session's tools, the effort
 // from the slug (spike Codex 2026-11-12 §1.3, §2, §4).
+import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { toolPolicyOf } from '@elvaria/runner-core';
 import type { SpawnRequest } from '@elvaria/runner-core';
 
 import { FAKE_HOOK, TERRITORY, openWorld, request } from './__fixtures__/codex.ts';
-import { BYPASS_HOOK_TRUST, configOf, hooksCheckArgs, sessionArgs } from './args.ts';
+import { BYPASS_HOOK_TRUST, WINDOWS_SANDBOX, configOf, hooksCheckArgs, sessionArgs } from './args.ts';
 import { modelOf, versionOf } from './launch.ts';
+import type { World } from './__fixtures__/codex.ts';
 
 const FILES = { policy: 'policy.json', context: 'AGENTS.override.md' };
 
@@ -54,23 +57,52 @@ describe('sessionArgs', () => {
   });
 });
 
-describe('configOf', () => {
-  it('lets a writing session write its plot and its quest folder, the temp folders out', async () => {
+// The fences of a writing session, one test each (P1-12e); live.spec.ts checks each against the real sandbox.
+describe('configOf: the fences of a writing session', () => {
+  const withConfig = async (check: (config: string[], world: World) => void): Promise<void> => {
     const world = await openWorld();
     try {
-      const config = configOf(request(world));
-      expect(config).toContain('sandbox_mode="workspace-write"');
-      expect(config).toContain('windows.sandbox="unelevated"');
-      expect(config).toContain('sandbox_workspace_write.exclude_tmpdir_env_var=true');
-      expect(config).toContain(
-        `sandbox_workspace_write.writable_roots=[${JSON.stringify(world.handover.slice(0, -'/handover.md'.length))}]`,
-      );
-      expect(config).toContain('web_search="disabled"');
+      check(configOf(request(world)), world);
     } finally {
       await world.remove();
     }
-  });
+  };
 
+  it("writes its plot (the sandbox's workspace) and its quest folder, nothing else", () =>
+    withConfig((config, world) => {
+      expect(config).toContain('sandbox_mode="workspace-write"');
+      const roots = config.filter((setting) => setting.startsWith('sandbox_workspace_write.writable_roots'));
+      expect(roots).toEqual([
+        `sandbox_workspace_write.writable_roots=[${JSON.stringify(path.dirname(world.handover))}]`,
+      ]);
+    }));
+
+  it("keeps git's folder read-only: workspace-write, and no root opens it", () =>
+    withConfig((config) => {
+      expect(config.some((setting) => /danger-full-access|\.git/.test(setting))).toBe(false);
+      expect(config).toContain('sandbox_mode="workspace-write"');
+    }));
+
+  it('leaves the temp folders out of the writable roots', () =>
+    withConfig((config) => {
+      expect(config).toContain('sandbox_workspace_write.exclude_tmpdir_env_var=true');
+      expect(config).toContain('sandbox_workspace_write.exclude_slash_tmp=true');
+    }));
+
+  it('opens the network, as the other tribes have it', () =>
+    withConfig((config) => {
+      expect(config).toContain('sandbox_workspace_write.network_access=true');
+      expect(config).toContain('web_search="disabled"');
+    }));
+
+  it("runs in Windows' mxc sandbox, where a command may start its children", () =>
+    withConfig((config) => {
+      expect(WINDOWS_SANDBOX).toBe('mxc');
+      expect(config).toContain('windows.sandbox="mxc"');
+    }));
+});
+
+describe('configOf', () => {
   it('keeps a judge read-only, and opens the web to a class with WebSearch', async () => {
     const world = await openWorld();
     try {
