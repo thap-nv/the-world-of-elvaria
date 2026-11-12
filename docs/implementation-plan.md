@@ -1681,7 +1681,7 @@ Mốc: replay một ngày giả in ra dòng thời gian đọc được.
 
 Mốc: 10 quest dc1-se-team đi hết vòng; cố tình hết mana rồi hồi sinh đúng chỗ. Thứ tự: **tách vai và hồi sinh trước** (hai giả định rủi ro nhất), rồi runner thật.
 
-(P1-51, 2026-11-12) **Giai đoạn 1 đóng.** Mốc chạy hai lần ([P1-16](guides/phase-1-report.md), [P1-50](guides/phase-1-rerun.md)): 12 quest có dấu vua đã vào `main` của dc1; "chỉ cần dấu vua" theo nghĩa chặt chưa đạt (26 can thiệp, mỗi lần có nguyên nhân và task vá), chủ nhân chốt vẫn đóng (§11, 2026-11-12). Còn mở trong bảng dưới: P1-54, P1-55, P1-56 (vá sau lần chạy lại mốc) và P1-52 (tách file kế hoạch); P1-12c, P1-12d để dành (§10 câu 4). Cách chạy một vương quốc hôm nay: [guides/operating-a-kingdom.md](guides/operating-a-kingdom.md).
+(P1-51, 2026-11-12) **Giai đoạn 1 đóng.** Mốc chạy hai lần ([P1-16](guides/phase-1-report.md), [P1-50](guides/phase-1-rerun.md)): 12 quest có dấu vua đã vào `main` của dc1; "chỉ cần dấu vua" theo nghĩa chặt chưa đạt (26 can thiệp, mỗi lần có nguyên nhân và task vá), chủ nhân chốt vẫn đóng (§11, 2026-11-12). Vá sau lần chạy lại mốc: P1-54, P1-55, P1-56, xong ngày 2026-11-12; P1-52 tách file kế hoạch; P1-12c, P1-12d để dành (§10 câu 4). Cách chạy một vương quốc hôm nay: [guides/operating-a-kingdom.md](guides/operating-a-kingdom.md).
 
 | # | Task | File chạm | Xong khi | Trạng thái |
 |---|---|---|---|---|
