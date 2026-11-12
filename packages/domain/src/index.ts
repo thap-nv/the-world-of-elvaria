@@ -25,6 +25,7 @@ export * from './dispatch/reassigns.ts';
 export * from './dispatch/reviews.ts';
 export * from './dispatch/revival.ts';
 export * from './dispatch/roster.ts';
+export * from './dispatch/scope.ts';
 export * from './dispatch/select-assignee.ts';
 export * from './memo/memo.ts';
 export * from './metrics/causes.ts';

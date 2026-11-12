@@ -1,9 +1,11 @@
 // The steps of planTick that share its roster (implementation-plan §3.1): who goes to the Temple, which assignee
 // starts again, which open quest goes to whom (round-robin over territories, then rank, then age), and which open
-// quests nobody can take. Split out of plan-tick.ts, unchanged, before PS-05 added the scope rules.
+// quests nobody can take. Split out of plan-tick.ts before PS-05 added the scope rules (scope.ts), which the roster
+// applies wherever a quest starts and the claims below guard against starving a quest without a scope.
 import { failStreakReached } from '../character/fail-streak.ts';
 import { partyOf } from '../verify/past-assignees-of.ts';
 import { claimBlocker } from './claim-blocker.ts';
+import { scopeOf } from './scope.ts';
 import { selectAssignee } from './select-assignee.ts';
 import type { ClaimBlocker } from './claim-blocker.ts';
 import type { Roster } from './roster.ts';
@@ -57,9 +59,9 @@ export interface Step {
 /** The quest's assignee, if it may start a session on the quest's territory now; it is then taken. */
 export function holderGoes(step: Step, quest: Quest): boolean {
   const holder = step.character(quest.assignee);
-  if (holder === undefined || !step.roster.canStart(holder) || !step.roster.territoryHasRoom(quest.territory))
+  if (holder === undefined || !step.roster.canStart(holder) || !step.roster.territoryHasRoom(quest))
     return false;
-  step.roster.take(holder, quest.territory);
+  step.roster.take(holder, quest);
   return true;
 }
 
@@ -73,18 +75,24 @@ export function suspensions(step: Step): CharacterId[] {
   return suspended.map(({ id }) => id);
 }
 
-/** The character that takes `quest`, if its territory has room and a free character of its class fits. */
+/** The free character of its class that would take `quest`, its territory's room aside. */
 function takerOf(step: Step, quest: Quest): Character | undefined {
   const territory = step.roster.territory(quest.territory);
-  if (territory === undefined || !step.roster.territoryHasRoom(territory.id)) return undefined;
+  if (territory === undefined) return undefined;
   const { characters, quests } = step.snapshot;
   const candidates = characters.filter((c) => step.roster.canClaim(c, quest, territory));
   return selectAssignee(quest, candidates, { party: partyOf(quest, quests), characters });
 }
 
+/**
+ * Open quests to the characters that take them while their territory has room. A quest without a scope that a
+ * character would take but its territory has no room for keeps every quest with a scope after it off that territory
+ * for this tick (PS-05): else quests with scopes, one starting as another stops, could keep it waiting for ever.
+ */
 export function claims(step: Step, open: readonly Quest[], now: Instant): Claim[] {
   const last = lastTakenOf(step.snapshot.quests);
   const planned: Claim[] = [];
+  const starved = new Set<TerritoryId>();
   let pending = open;
   for (
     let quest = pending.toSorted(byTurn(last))[0];
@@ -93,9 +101,15 @@ export function claims(step: Step, open: readonly Quest[], now: Instant): Claim[
   ) {
     const current = quest;
     pending = pending.filter((other) => other !== current);
+    const scoped = scopeOf(current).length > 0;
+    if (scoped && starved.has(current.territory)) continue;
     const taker = takerOf(step, current);
     if (taker === undefined) continue;
-    step.roster.take(taker, current.territory);
+    if (!step.roster.territoryHasRoom(current)) {
+      if (!scoped) starved.add(current.territory);
+      continue;
+    }
+    step.roster.take(taker, current);
     last.set(current.territory, now);
     planned.push({ quest: current.id, assignee: taker.id, level: taker.level });
   }

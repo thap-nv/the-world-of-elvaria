@@ -27,6 +27,7 @@ import {
 } from '../common.ts';
 import { CHARACTER_LEVEL_MAX } from '../character/constants.ts';
 import { MEMO_DECISIONS } from '../memo/constants.ts';
+import { ScopePathsSchema } from '../quest/shared.ts';
 import {
   CAMPAIGN_NAME_MAX_LENGTH,
   QUEST_TAGS_MAX,
@@ -126,6 +127,7 @@ export const CreateQuestPayloadSchema = z
     estimate: z.strictObject({ tokens: z.int().min(0), minutes: z.int().min(0) }).optional(),
     seal_required: z.boolean().optional(),
     secrets_required: unique(z.array(z.string().regex(REGISTRY_ID_PATTERN))).optional(),
+    scope_paths: ScopePathsSchema.optional(),
     depends_on: QuestListSchema.optional(),
     campaign_id: CampaignIdSchema.optional(),
     parent_id: QuestIdSchema.optional(),
@@ -218,6 +220,8 @@ const QuestChangesShape = {
   rank: RankSchema.optional(),
   seal_required: z.boolean().optional(),
   depends_on: QuestListSchema.optional(),
+  // PS-05: replaces the scope whole; a scope is never emptied, as a quest never had an empty one.
+  scope_paths: ScopePathsSchema.optional(),
   budget: z
     .strictObject({
       max_minutes: z.int().min(1).optional(),

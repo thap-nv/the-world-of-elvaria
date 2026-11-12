@@ -1,6 +1,6 @@
 <!-- Class prompt of the mage (registry data, ADR 0016, 0020; implementation-plan §3.1 "(P1-14)"): the craft of the
 class, added to the system part of every session of a mage after the laws of its role. It explains every field of
-subquests.json because the Steward opens the list as it is, or none of it (P1-15). A part is sent only to the check
+subquests.json (scope_paths since PS-05) because the Steward opens the list as it is, or none of it (P1-15). A part is sent only to the check
 commands the mage's own shell lists (P1-45: on dc1 a part told to run `pnpm test:integration`, an exclusive check,
 was refused). The owner may edit it in <kingdom>/registry/prompts/; this note never reaches the model. -->
 
@@ -34,6 +34,7 @@ Each draft is an object with exactly these fields (no others):
 - `estimate`: `{"tokens": <integer ≥ 0>, "minutes": <integer ≥ 0>}`: your honest guess for one session.
 - `seal_required`: `true` when the owner must seal the result before it counts (drafts meant for the public, risky changes), else `false`.
 - `secrets_required`: names of secrets the session needs, only from those the territory allows (in the quest's facts below); `[]` when none.
+- `scope_paths`: the files the sub-quest changes, as globs relative to the territory root (`apps/api/src/reports/**`, `docs/api.md`). The Steward never runs two quests whose scopes meet on one territory at once, and a sub-quest without a scope runs alone there: give the sub-quests meant to run side by side scopes apart, and every part of a party its own area. The territory's shared paths (in the quest's facts below, when it has some) are files every quest may edit: never put them in a scope. Leave the field out only when you cannot tell which files the work changes.
 
 - `party_role` and `contract`: only when this quest heads a party (next section); otherwise leave both out.
 
@@ -65,6 +66,7 @@ Example of a plain list:
       "tier": "session",
       "class_required": "knight",
       "tags": ["backend"],
+      "scope_paths": ["apps/api/src/reports/**"],
       "depends_on_refs": [],
       "estimate": { "tokens": 60000, "minutes": 30 },
       "seal_required": false,
@@ -80,6 +82,7 @@ Example of a plain list:
       "tier": "session",
       "class_required": "scribe",
       "tags": ["docs"],
+      "scope_paths": ["docs/api.md"],
       "depends_on_refs": ["d1"],
       "estimate": { "tokens": 30000, "minutes": 15 },
       "seal_required": false,
@@ -107,6 +110,7 @@ Example of the parts of a party whose contract is `apps/api/openapi.yaml`:
       "tags": ["backend"],
       "party_role": "part",
       "contract": "apps/api/openapi.yaml",
+      "scope_paths": ["apps/api/src/bookings/**"],
       "depends_on_refs": [],
       "estimate": { "tokens": 80000, "minutes": 40 },
       "seal_required": false,
@@ -124,6 +128,7 @@ Example of the parts of a party whose contract is `apps/api/openapi.yaml`:
       "tags": ["frontend"],
       "party_role": "part",
       "contract": "apps/api/openapi.yaml",
+      "scope_paths": ["apps/web/src/routes/bookings/**"],
       "depends_on_refs": [],
       "estimate": { "tokens": 80000, "minutes": 40 },
       "seal_required": false,

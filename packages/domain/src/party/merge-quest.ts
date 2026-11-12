@@ -44,11 +44,14 @@ function descriptionOf(contract: Quest, parts: Parts, path: string): string {
 /**
  * The `create_quest` payload of the party's merge quest and its place in the party, for questFromCommand. It is open
  * at once, a child of the contract quest on its territory, and depends on every part; its tags and secrets are those
- * of all the parts (tags clipped to the quest's limit), its rank the highest of theirs.
+ * of all the parts (tags clipped to the quest's limit), its rank the highest of theirs. Its scope is theirs together
+ * (PS-05), or none when a part has none: that part could change any file of the territory.
  */
 export function mergeQuestOf(contract: Quest, parts: Parts): MergeQuest {
   const path = contractPathOf(parts);
   const secrets = unionOf(parts.map((part) => part.secrets_required));
+  const scopes = parts.map(({ scope_paths: scope }) => scope);
+  const scope = scopes.every((own): own is string[] => own !== undefined) ? unionOf(scopes) : [];
   return {
     payload: {
       draft: false,
@@ -62,6 +65,7 @@ export function mergeQuestOf(contract: Quest, parts: Parts): MergeQuest {
       tags: unionOf(parts.map((part) => part.tags)).slice(0, QUEST_TAGS_MAX),
       seal_required: true,
       ...(secrets.length === 0 ? {} : { secrets_required: secrets }),
+      ...(scope.length === 0 ? {} : { scope_paths: scope }),
       depends_on: parts.map((part) => part.id),
       parent_id: contract.id,
       ...(typeof contract.campaign_id === 'string' ? { campaign_id: contract.campaign_id } : {}),

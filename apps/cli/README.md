@@ -32,7 +32,9 @@
   best candidate, or, when its party bars every character of the class (`party_bars`, P1-37), the `reassign` the
   owner may still give one of them; of a quest in the infirmary, why it went there, from the last `quest.infirmary` line of its
   journal (`src/quest/infirmary.ts`, P1-32): the trip and the attempt, then each part of the detail, in the
-  owner's language (a line written before P1-32 shows its English reason). `quest list` has a column for a party's member, its role and where the party stands, and
+  owner's language (a line written before P1-32 shows its English reason). `quest add --scope` and `quest edit --scope` declare the files a quest changes (PS-05); `quest list` marks a quest
+  that waits on its territory's scope rules and for whom, `quest show` prints its scope and that wait
+  (`src/quest/scope.ts`). `quest list` has a column for a party's member, its role and where the party stands, and
   `quest show` prints the party, the role, the contract and the merge quest (`src/quest/party.ts`, the domain's
   `partyStatusOf`; P1-21 (c)): the merge quest and the acceptance part share the contract's title. `quest show` also
   says what the last run came to (`src/quest/last-run.ts`, P1-46): its verdicts in the order they were written (each

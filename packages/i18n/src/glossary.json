@@ -358,6 +358,20 @@
               "used_in": "`quest.plot.branch`"
             },
             {
+              "vi": "Vùng file",
+              "en": "Scope",
+              "id": ["scope_paths"],
+              "definition": "Các glob (tính từ gốc lãnh thổ) của những file một quest sẽ sửa; tùy chọn. Trong một lãnh thổ, Quản sự không bao giờ cho hai quest có vùng giao nhau làm cùng lúc: quest có vùng giữ vùng từ lượt chạy đầu tới khi được lưu trữ (kể cả lúc xong và chờ chủ nhân merge), trừ với quest mà đất riêng dựng trên nhánh của nó; quest bậc phiên không khai vùng chạy một mình trong lãnh thổ. File đổi ngoài vùng vào dòng `quest.submitted`, prompt người chấm và sổ đo, không tự làm trượt (ADR 0028, PS-05).",
+              "used_in": "`quest.scope_paths`, `elvaria quest add|edit --scope`, `scopesMeet`, `scopeHolderOf`"
+            },
+            {
+              "vi": "File nóng / vùng chung",
+              "en": "Shared paths (hot files)",
+              "id": ["shared_paths"],
+              "definition": "File mà mọi nhánh song song cùng sửa (bảng kế hoạch, chỉ mục package, glossary, locale, file sinh), mỗi mục một glob và cách ghép: `regenerate` (chạy `commands.generate`) hay `union` (giữ cả hai phía). Không tính vào giao nhau của hai vùng file, không tính là file ngoài vùng (ADR 0028, PS-05).",
+              "used_in": "`territory.shared_paths`"
+            },
+            {
               "vi": "Giao hàng",
               "en": "Delivery",
               "id": ["deliver"],

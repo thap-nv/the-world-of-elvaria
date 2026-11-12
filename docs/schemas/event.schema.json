@@ -566,6 +566,15 @@
                     }
                   }
                 }
+              },
+              "out_of_scope": {
+                "description": "On the `quest.submitted` line of a quest with scope_paths: the files the work changed outside them, the territory's shared paths aside, relative to the plot with `/`. A signal for the judge, who sees the same list, and a number in the metrics; never a fail (ADR 0028).",
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
               }
             }
           }
@@ -1097,6 +1106,15 @@
                       }
                     }
                   }
+                }
+              },
+              "out_of_scope": {
+                "description": "On the `quest.submitted` line of a quest with scope_paths: the files the work changed outside them, the territory's shared paths aside, relative to the plot with `/`. A signal for the judge, who sees the same list, and a number in the metrics; never a fail (ADR 0028).",
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
                 }
               }
             }

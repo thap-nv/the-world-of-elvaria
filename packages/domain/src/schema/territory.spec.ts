@@ -91,6 +91,21 @@ describe('TerritorySchema', () => {
     ]);
   });
 
+  it('takes hot files with how a merge joins them, a regenerated one only with a generate command (PS-05)', () => {
+    const shared = [
+      { glob: 'packages/i18n/src/glossary.json', merge: 'union' },
+      { glob: 'docs/schemas/**', merge: 'regenerate' },
+    ];
+    expect(issuesOf({ ...minimal, shared_paths: shared })).toEqual([
+      'shared_paths: a shared path merged by regenerate needs commands.generate',
+    ]);
+    const generated = { ...minimal, commands: { generate: ['pnpm schemas'] }, shared_paths: shared };
+    expect(TerritorySchema.parse(generated).shared_paths).toEqual(shared);
+    expect(issuesOf({ ...minimal, shared_paths: [shared[0]] })).toEqual([]);
+    expect(issuesOf({ ...minimal, shared_paths: [{ glob: 'a', merge: 'ours' }] })).toHaveLength(1);
+    expect(TerritorySchema.parse(minimal)).not.toHaveProperty('shared_paths');
+  });
+
   it('gives every territory its own default lists', () => {
     const first = TerritorySchema.parse(minimal);
     first.context_files.push('extra.md');

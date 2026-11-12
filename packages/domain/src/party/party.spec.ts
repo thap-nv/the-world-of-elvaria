@@ -77,6 +77,13 @@ describe('mergeQuestOf', () => {
     const { contract: _path, ...bare } = api;
     expect(mergeQuestOf(contract, [bare]).party.contract).toBe('');
   });
+
+  it("takes the parts' scopes together, or none when a part has none (PS-05)", () => {
+    const scoped = (part: Quest, scope: string[]): Quest => ({ ...part, scope_paths: scope });
+    const parts: Parts = [scoped(api, ['api/**', 'docs/api.md']), scoped(web, ['web/**', 'docs/api.md'])];
+    expect(mergeQuestOf(contract, parts).payload.scope_paths).toEqual(['api/**', 'docs/api.md', 'web/**']);
+    expect(mergeQuestOf(contract, [parts[0], web]).payload).not.toHaveProperty('scope_paths');
+  });
 });
 
 describe('plotBaseOf', () => {

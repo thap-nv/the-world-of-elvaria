@@ -1,5 +1,6 @@
 // What the metrics read from the event log alone (PS-01b, implementation-plan §3.16.1): the runs of checks the Steward
-// set aside because their environment failed, and the files a session read more than once. Neither leaves a trace in
+// set aside because their environment failed, the files a session read more than once, and the files a submit
+// changed outside its quest's scope (PS-05). Neither leaves a trace in
 // a quest file, so a restarted Steward, the world and the Monk see them here or nowhere.
 import { isEventOf } from '../schema/event/event.ts';
 import { inWindow } from './window.ts';
@@ -63,3 +64,18 @@ export function readsOf(events: readonly Event[], window: MetricsWindow): Reads 
   }
   return { total, repeated: [...bySession.values()].filter(({ reads }) => reads > 1).sort(byReads) };
 }
+
+/** A submit whose work changed files outside the quest's scope (PS-05, ADR 0028), from its `quest.submitted` line. */
+export interface OutOfScope {
+  readonly quest: QuestId | null;
+  readonly at: string;
+  readonly paths: readonly string[];
+}
+
+/** The submits inside the window that changed files outside their scope, in the order they came; older lines say none. */
+export const outOfScopeOf = (events: readonly Event[], window: MetricsWindow): OutOfScope[] =>
+  events.flatMap((event) => {
+    if (!isEventOf(event, 'quest.submitted') || event.data.out_of_scope === undefined) return [];
+    if (!inWindow(window, event.ts)) return [];
+    return [{ quest: event.quest ?? null, at: event.ts, paths: event.data.out_of_scope }];
+  });
