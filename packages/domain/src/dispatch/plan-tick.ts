@@ -8,28 +8,27 @@
 // (P1-25): a quest whose machine work still runs gets nothing more until it ends, and no more of them start than
 // dispatch.max_background leaves room for (P1-47), short work beside the trials included (background-room.ts, P1-54).
 import { breakersOf, measureOf } from '../breaker/breakers.ts';
-import { failStreakReached } from '../character/fail-streak.ts';
 import { machineMergeDue } from '../party/machine-merge.ts';
 import { questFinished } from '../quest/finished.ts';
-import { partyOf } from '../verify/past-assignees-of.ts';
 import { startingNow } from './background-room.ts';
-import { claimBlocker } from './claim-blocker.ts';
 import { reassignsOf } from './reassigns.ts';
 import { planReviews } from './reviews.ts';
 import { rosterOf } from './roster.ts';
-import { selectAssignee } from './select-assignee.ts';
+import { claims, holderGoes, suspensions, unclaimable } from './tick-steps.ts';
 import { wakesOf } from './wakes.ts';
 import { RANKS } from '../schema/common.ts';
 import type { Breaker, HeldSession } from '../breaker/breakers.ts';
-import type { ClaimBlocker } from './claim-blocker.ts';
 import type { Reassign } from './reassigns.ts';
 import type { ReviewSource, Verification } from './reviews.ts';
-import type { Roster, RosterSource } from './roster.ts';
+import type { RosterSource } from './roster.ts';
+import type { Claim, Step, Unclaimable } from './tick-steps.ts';
 import type { Instant } from '../core/clock.ts';
-import type { CharacterId, QuestId, TerritoryId } from '../core/ids.ts';
+import type { CharacterId, QuestId } from '../core/ids.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
 import type { Quest } from '../schema/quest/quest.ts';
+
+export type { Claim, Unclaimable } from './tick-steps.ts';
 
 export interface KingdomSnapshot extends RosterSource, ReviewSource {
   /**
@@ -41,17 +40,6 @@ export interface KingdomSnapshot extends RosterSource, ReviewSource {
   };
   /** The sessions the Steward holds, with their usage so far, for the breakers (§3.4); none in a sandbox day. */
   readonly sessions?: readonly HeldSession[];
-}
-
-/** A session-tier quest and the character that takes it, with its level for the claim event (§2.6). */
-export interface Claim {
-  readonly quest: QuestId;
-  readonly assignee: CharacterId;
-  readonly level: number;
-}
-
-export interface Unclaimable extends ClaimBlocker {
-  readonly quest: QuestId;
 }
 
 export interface TickPlan {
@@ -130,85 +118,6 @@ const byPriority = (a: Quest, b: Quest): number =>
   rankOrder(b) - rankOrder(a) ||
   Date.parse(a.created_at) - Date.parse(b.created_at) ||
   a.id.localeCompare(b.id);
-
-/** When each territory last had a quest taken: the latest assignee session on it. */
-function lastTakenOf(quests: readonly Quest[]): Map<TerritoryId, number> {
-  const last = new Map<TerritoryId, number>();
-  for (const quest of quests) {
-    for (const entry of quest.attempt_log.filter(({ role }) => role === 'assignee')) {
-      last.set(quest.territory, Math.max(last.get(quest.territory) ?? -1, Date.parse(entry.started_at)));
-    }
-  }
-  return last;
-}
-
-/** (a) the territory that had a quest taken least recently goes first; the sort is stable, so (b) and (c) hold within. */
-const byTurn =
-  (last: ReadonlyMap<TerritoryId, number>) =>
-  (a: Quest, b: Quest): number =>
-    (last.get(a.territory) ?? -1) - (last.get(b.territory) ?? -1) || a.territory.localeCompare(b.territory);
-
-interface Step {
-  readonly snapshot: KingdomSnapshot;
-  readonly roster: Roster;
-  readonly character: (id: CharacterId | null | undefined) => Character | undefined;
-}
-
-/** The quest's assignee, if it may start a session on the quest's territory now; it is then taken. */
-function holderGoes(step: Step, quest: Quest): boolean {
-  const holder = step.character(quest.assignee);
-  if (holder === undefined || !step.roster.canStart(holder) || !step.roster.territoryHasRoom(quest.territory))
-    return false;
-  step.roster.take(holder, quest.territory);
-  return true;
-}
-
-/** Idle characters whose fail streak reached the limit; they leave the roster before anyone is given work. */
-function suspensions(step: Step): CharacterId[] {
-  const limit = step.snapshot.kingdom.breakers.same_fail_suspend;
-  const suspended = step.snapshot.characters.filter(
-    (character) => character.status === 'idle' && failStreakReached(character, limit),
-  );
-  suspended.forEach(step.roster.setAside);
-  return suspended.map(({ id }) => id);
-}
-
-/** The character that takes `quest`, if its territory has room and a free character of its class fits. */
-function takerOf(step: Step, quest: Quest): Character | undefined {
-  const territory = step.roster.territory(quest.territory);
-  if (territory === undefined || !step.roster.territoryHasRoom(territory.id)) return undefined;
-  const { characters, quests } = step.snapshot;
-  const candidates = characters.filter((c) => step.roster.canClaim(c, quest, territory));
-  return selectAssignee(quest, candidates, { party: partyOf(quest, quests), characters });
-}
-
-function claims(step: Step, open: readonly Quest[], now: Instant): Claim[] {
-  const last = lastTakenOf(step.snapshot.quests);
-  const planned: Claim[] = [];
-  let pending = open;
-  for (
-    let quest = pending.toSorted(byTurn(last))[0];
-    quest !== undefined;
-    quest = pending.toSorted(byTurn(last))[0]
-  ) {
-    const current = quest;
-    pending = pending.filter((other) => other !== current);
-    const taker = takerOf(step, current);
-    if (taker === undefined) continue;
-    step.roster.take(taker, current.territory);
-    last.set(current.territory, now);
-    planned.push({ quest: current.id, assignee: taker.id, level: taker.level });
-  }
-  return planned;
-}
-
-function unclaimable(step: Step, open: readonly Quest[]): Unclaimable[] {
-  const counted = step.snapshot.characters.filter(step.roster.counts);
-  return open.flatMap((quest) => {
-    const blocker = claimBlocker(quest, counted, partyOf(quest, step.snapshot.quests));
-    return blocker === null ? [] : [{ quest: quest.id, ...blocker }];
-  });
-}
 
 /** Step 3: the held sessions past a breaker, each measured as its holder's tribe allows (minutes_only, P1-33). */
 const heldPastBreakers = (
