@@ -53,7 +53,7 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
 | Đợt | Task | Ghi chú |
 |---|---|---|
 | 1 | PS-01 | Mở ngay; 0 mana; toàn file mới |
-| 2 | PS-01b, PS-02, PS-04b | Sau P1-51 và P1-52 (tách kế hoạch triển khai, chốt 2026-11-11). PS-01b và PS-02 cùng đụng snapshot prompt, `event-types.ts`, `inbox/apply.ts`; PS-02 và PS-04b cùng `commands.ts`, locale, glossary: nhánh merge sau giữ cả hai phía, sinh lại snapshot và file sinh |
+| 2 | PS-01b, PS-02, PS-04b | Sau P1-51 và P1-52 (tách kế hoạch triển khai, chốt 2026-11-11), và sau P1-54, P1-55, P1-56 (vá những gì P1-50 cho thấy, chốt 2026-11-12). PS-01b và PS-02 cùng đụng snapshot prompt, `event-types.ts`, `inbox/apply.ts`; PS-02 và PS-04b cùng `commands.ts`, locale, glossary: nhánh merge sau giữ cả hai phía, sinh lại snapshot và file sinh |
 | 3 | PS-05, PS-03, PS-21 | PS-05 và PS-03 khác vùng code. PS-21 sau PS-01b, vì A/B của nó đo bằng lượt đọc theo file; PS-21 và PS-05 cùng đụng snapshot prompt, schema territory, `packages/steward/src/sessions/`: nhánh merge sau giữ cả hai phía, sinh lại snapshot và file sinh. PS-21 và PS-03 cùng nối vào Quản sự, và `packages/steward/src/types.ts` (chỗ của `StewardDeps`) đã 300 dòng: PS-03 tách nó; PS-21 làm phép thử trước, phần code của nó merge `origin/main` sau khi commit tách của PS-03 đã vào `main`, không tự tách file đó |
 | 4 | PS-04, PS-03b, PS-21c | PS-04 sau PS-05: cả hai, và PS-01b trước đó, nối tiếp nhau trên `record.ts` và `QUEST_CHANGE`. PS-21c cần PS-21 và bộ chạy ngoài nhịp của PS-03, và chỉ mở khi A/B của PS-21 có lợi; tốn mana |
 | 5 | PS-06, rồi PS-06b và PS-21b | PS-06 cần PS-05. PS-21b cần PS-21 và PS-06: cùng `packages/chancellor`, prompt pháp sư và `planIssuesOf` |
