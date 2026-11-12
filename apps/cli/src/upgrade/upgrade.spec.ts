@@ -8,7 +8,16 @@ import path from 'node:path';
 import { translator } from '@elvaria/i18n';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { SHA_A, SHA_B, placeBuild, readPin, sourceRepo, stubPnpm, writePin } from '../../test/builds.ts';
+import {
+  OUTSIDE_STORE,
+  SHA_A,
+  SHA_B,
+  placeBuild,
+  readPin,
+  sourceRepo,
+  stubPnpm,
+  writePin,
+} from '../../test/builds.ts';
 import { baseEnv, foundKingdom, git, printed, run, tempDir, testIo } from '../../test/cli.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { findExecutable } from '../process/find-executable.ts';
@@ -83,7 +92,7 @@ describe('elvaria upgrade', () => {
       switched_at: '2026-11-06T09:00:00+07:00',
     });
     expect(await hasCli(buildDir(a))).toBe(true);
-    expect(await readdir(path.join(buildDir(a), 'node_modules'))).toEqual(['.pnpm', 'pkg']);
+    expect(await readdir(path.join(buildDir(a), 'node_modules'))).toEqual(['.pnpm', 'outside', 'pkg']);
     expect(await readdir(path.join(buildDir(a), 'packages', 'hooks', 'dist'))).toEqual(['elvaria-hook.js']);
     expect(tried).toEqual([{ build: buildDir(a), kingdom, tribes: (await contextOf()).kingdom.tribes }]);
     expect(io.printed.out).toEqual([
@@ -114,7 +123,7 @@ describe('elvaria upgrade', () => {
       '    stub: doctor fails',
       `Not switched: build ${short(b)} failed at step doctor. The kingdom still runs build ${short(a)}.`,
     ]);
-    expect(io.printed.out.at(-1)).toBe(`Removed the old build ${short(b)}.`);
+    expect(io.printed.out.at(-1)).toBe(`Removed build ${short(b)} from disk.`);
     expect((await upgradeEvents()).slice(2)).toEqual([
       expect.objectContaining({ type: 'upgrade.started', data: { ref: b, to: b, from: a } }),
       expect.objectContaining({ type: 'upgrade.failed', data: { to: b, step: 'doctor', reason: 'exit:1' } }),
@@ -175,8 +184,10 @@ describe('elvaria upgrade', () => {
     const d = await source.commit({});
     const io = testIo();
     expect(await upgrade('main', io)).toBe(0);
-    expect(io.printed.out).toContain(`Removed the old build ${short(a)}.`);
+    expect(io.printed.out).toContain(`Removed build ${short(a)} from disk.`);
     expect(await builds()).toEqual([c, d].sort());
+    // The link out of the removed build was taken off, not followed: what it led to is still there.
+    expect(await readFile(path.join(dir.root, OUTSIDE_STORE, 'keep.txt'), 'utf8')).toBe('kept');
     expect(git(source.repo, 'worktree', 'list')).not.toContain(a);
   });
 

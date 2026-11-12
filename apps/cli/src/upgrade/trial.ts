@@ -66,6 +66,7 @@ async function conformance(
   report: TrialReport,
 ): Promise<StepFailure | undefined> {
   const cli = buildCli(place.build, io);
+  const here = ['--kingdom', place.kingdom, '--here'];
   for (const tribe of place.tribes.filter(({ enabled }) => enabled)) {
     const fake = FAKE_CLIS[tribe.adapter];
     if (fake === undefined) {
@@ -73,18 +74,8 @@ async function conformance(
       continue;
     }
     const label = report.t('cli.upgrade.step.conformance', { tribe: tribe.id });
-    const tool = path.join(place.build, ...fake);
-    const args = [
-      'tribe',
-      'check',
-      tribe.id,
-      '--scenarios',
-      '--tool',
-      tool,
-      '--kingdom',
-      place.kingdom,
-      '--here',
-    ];
+    const tool = ['--tool', path.join(place.build, ...fake)];
+    const args = ['tribe', 'check', tribe.id, '--scenarios', ...tool, ...here];
     const failure = await step(report, label, async () => asFailure(await cli(args, SUITE_MINUTES)));
     if (failure !== undefined) return failure;
   }

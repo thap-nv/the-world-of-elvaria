@@ -66,7 +66,14 @@ if (command === 'run') {
 }
 `;
 
-/** pnpm in a build: `install` leaves a store-like folder and a link into it, as pnpm's junctions do. */
+/** Where the stub pnpm's outward link leads: a folder beside the kingdom, `<kingdom>/../outside store ạ`. */
+export const OUTSIDE_STORE = 'outside store ạ';
+
+/**
+ * pnpm in a build: `install` leaves a store-like folder and a link into it, as pnpm's junctions do, a path past 260
+ * characters (git for Windows does not delete those), and a link out of the build into OUTSIDE_STORE beside the
+ * kingdom (pnpm's global virtual store would make such links): removing the build must not follow it.
+ */
 const STUB_PNPM = `import { mkdirSync, symlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
@@ -78,6 +85,13 @@ if (args[0] === 'install') {
   mkdirSync(real, { recursive: true });
   writeFileSync(path.join(real, 'index.js'), '');
   symlinkSync(path.resolve(real), path.join('node_modules', 'pkg'), 'junction');
+  const deep = path.resolve('node_modules', '.pnpm', 'a'.repeat(120), 'node_modules', 'b'.repeat(80));
+  mkdirSync(deep, { recursive: true });
+  writeFileSync(path.join(deep, 'index.js'), '');
+  const store = path.resolve('..', '..', '..', ${JSON.stringify(OUTSIDE_STORE)});
+  mkdirSync(store, { recursive: true });
+  writeFileSync(path.join(store, 'keep.txt'), 'kept');
+  symlinkSync(store, path.join('node_modules', 'outside'), 'junction');
 }
 if (args.includes('build')) {
   mkdirSync(path.join('packages', 'hooks', 'dist'), { recursive: true });

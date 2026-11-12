@@ -683,7 +683,7 @@
     "cli.upgrade.switched": "Pinned build {sha}. The build before ({previous}) is kept: elvaria upgrade --rollback goes back to it.",
     "cli.upgrade.switched_first": "Pinned build {sha}: from now on every command on this kingdom runs on it.",
     "cli.upgrade.then": "Next: elvaria migrate, elvaria doctor, then elvaria run.",
-    "cli.upgrade.removed": "Removed the old build {sha}.",
+    "cli.upgrade.removed": "Removed build {sha} from disk.",
     "cli.upgrade.left": "Build {sha} stays on disk: {reason}. Remove that folder by hand once no program holds it.",
     "cli.upgrade.no_pointer": "The kingdom pins no build: there is nothing to go back from.",
     "cli.upgrade.no_previous": "The kingdom has only build {sha}: there is no build before it to go back to.",

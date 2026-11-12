@@ -2,9 +2,8 @@
 // repo at one commit into `<kingdom>/.builds/<sha>/`, `pnpm install --frozen-lockfile`, and the build of the hook
 // and the event log (`dist/`), the only code that does not run from source. Every program runs without a shell,
 // with the minimal env (ADR 0013, 0015) plus HUSKY=0: a build is never a place to commit from.
-import { readdir } from 'node:fs/promises';
+import { readdir, rm } from 'node:fs/promises';
 
-import { clearLeftover } from '@elvaria/runner-core';
 import { inKingdom } from '@elvaria/store';
 
 import { findExecutable } from '../process/find-executable.ts';
@@ -19,6 +18,8 @@ import type { ProcessOutcome } from '../process/run-process.ts';
 const MS_PER_MINUTE = 60_000;
 const GIT_MINUTES = 5;
 const INSTALL_MINUTES = 20;
+/** A program that just ended, or the indexer, may hold a file of the build a moment on Windows (P1-39). */
+const RM_BUILD = { recursive: true, force: true, maxRetries: 10, retryDelay: 100 } as const;
 
 /** The programs a build needs, found once on PATH. */
 export interface Tools {
@@ -102,9 +103,12 @@ export async function prepareBuild(
 }
 
 /**
- * Takes a build off the disk and out of the repo's worktree list. git leaves the folders that hold pnpm's junctions
- * (P1-11); clearLeftover removes them only when nothing else is there and no link leads out. Returns why a build
- * stays, for the owner to remove by hand.
+ * Takes a build off the disk, then out of the repo's worktree list. Node removes the folder, not git: pnpm writes
+ * paths past 260 characters under `node_modules/.pnpm`, and on the first real upgrade `git worktree remove --force`
+ * on Windows left every tracked file of such a build behind. Node's rm reaches those paths, and takes a link off
+ * (pnpm's junctions, a symlink on macOS) without following it out of the build. A build is Elvaria's own folder,
+ * which nobody edits, so unlike a plot (runner-core's clearLeftover) nothing in it is kept. Returns why a build
+ * stays: a program holding one of its files.
  */
 export async function removeBuild(
   tools: Tools,
@@ -112,10 +116,13 @@ export async function removeBuild(
   source: string,
   dir: string,
 ): Promise<string | undefined> {
-  const git = gitRun(tools, io);
-  await git(source, ['worktree', 'remove', '--force', dir]);
-  const left = await clearLeftover(dir);
-  await git(source, ['worktree', 'prune']);
+  let left: string | undefined;
+  try {
+    await rm(dir, RM_BUILD);
+  } catch (error) {
+    left = `${dir}: ${error instanceof Error && 'code' in error ? String(error.code) : String(error)}`;
+  }
+  await gitRun(tools, io)(source, ['worktree', 'prune']);
   return left;
 }
 

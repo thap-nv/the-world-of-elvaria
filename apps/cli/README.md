@@ -147,7 +147,8 @@
   named); one script-tier quest (`count-files`) on a throwaway kingdom with every tribe off, until its
   `verdict.pass` (`src/upgrade/script-trial.ts`). Only then does it write `.state/build.json` (`{current,
 previous}`), log `upgrade.started`, then `upgrade.switched` or `upgrade.failed`, and remove every build but those
-  two; a failed build is removed (`git worktree remove`, then runner-core's `clearLeftover` for pnpm's junctions).
+  two; a failed build is removed. Node removes a build, then `git worktree prune` forgets it: pnpm's paths past 260
+  characters are more than git for Windows deletes, and Node's rm takes pnpm's junctions off without following them.
   `--rollback` swaps the two (`upgrade.rolled_back`); upgrading to the build before tries it again without a
   rebuild. Every other command on a kingdom that pins a build runs on that build (`src/upgrade/pin.ts`, `entry.ts`,
   `relaunch.ts`): the bin starts `node <build>/apps/cli/src/cli.ts` with the same words, folder and terminal, an
@@ -173,7 +174,7 @@ previous}`), log `upgrade.started`, then `upgrade.switched` or `upgrade.failed`,
   `@elvaria/registry-default` (`REGISTRY_ROOT`, `registryFiles()` for `init` and `migrate`), `@elvaria/i18n`, `@elvaria/steward`
   (the Steward, unclaimable notices, `questIdOfCommand`, `levelsFromLog`), `@elvaria/chancellor` (`draftQuests`,
   `draftCommands` for `say`), `@elvaria/runner-core` (`PlotManager`, the adapter kit, the conformance
-  suite, `killTree` and `clearLeftover` for `upgrade`), `@elvaria/runner-claude` (the
+  suite, `killTree` for `upgrade`), `@elvaria/runner-claude` (the
   `claude_code` adapter), `@elvaria/runner-antigravity` (the `antigravity` adapter, P1-15), `@elvaria/hooks` (the
   hook's command).
 

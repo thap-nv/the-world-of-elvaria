@@ -53,8 +53,6 @@ export { ADAPTER_KIT_VERSION, adapterKitOf } from './kit/kit.ts';
 export type { AdapterKit, KitHookCommand, KitHost } from './kit/kit.ts';
 export { plotCommitMessage } from './plot/commit-message.ts';
 export { folderPlotOf } from './plot/folder.ts';
-// For `elvaria upgrade` (PS-04b): a removed build leaves pnpm's junctions behind as a removed plot does.
-export { clearLeftover } from './plot/leftover.ts';
 export { createPlotManager } from './plot/plot-manager.ts';
 export type { PlotManager, PlotManagerOptions, PreparedPlot, PrepareOptions } from './plot/plot-manager.ts';
 export type { MergeOutcome, MergeStop, MergeStopped } from './plot/merge.ts';

@@ -683,7 +683,7 @@
     "cli.upgrade.switched": "Đã ghim bản {sha}. Bản trước ({previous}) giữ lại: elvaria upgrade --rollback về nó.",
     "cli.upgrade.switched_first": "Đã ghim bản {sha}: từ nay mọi lệnh trên vương quốc này chạy bằng bản đó.",
     "cli.upgrade.then": "Bước kế: elvaria migrate, elvaria doctor, rồi elvaria run.",
-    "cli.upgrade.removed": "Đã xóa bản cũ {sha}.",
+    "cli.upgrade.removed": "Đã xóa bản {sha} khỏi đĩa.",
     "cli.upgrade.left": "Bản {sha} còn trên đĩa: {reason}. Xóa tay thư mục đó khi không chương trình nào giữ nó.",
     "cli.upgrade.no_pointer": "Vương quốc chưa ghim bản nào: không có gì để lùi.",
     "cli.upgrade.no_previous": "Vương quốc chỉ có bản {sha}: không có bản trước để lùi về.",
