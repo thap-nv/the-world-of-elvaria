@@ -7,6 +7,7 @@ import {
   CharacterIdSchema,
   ClassIdSchema,
   KindIdSchema,
+  MemoIdSchema,
   QuestIdSchema,
   REGISTRY_ID_PATTERN,
   ScriptIdSchema,
@@ -25,6 +26,7 @@ import {
   unique,
 } from '../common.ts';
 import { CHARACTER_LEVEL_MAX } from '../character/constants.ts';
+import { MEMO_DECISIONS } from '../memo/constants.ts';
 import {
   CAMPAIGN_NAME_MAX_LENGTH,
   QUEST_TAGS_MAX,
@@ -238,3 +240,22 @@ export const EditQuestPayloadSchema = z.strictObject({
   expected_updated_at: DateTimeSchema,
   changes: QuestChangesSchema,
 });
+
+export const DecideMemoPayloadSchema = z
+  .strictObject({
+    memo: MemoIdSchema,
+    decision: z.enum(MEMO_DECISIONS),
+    quest: QuestIdSchema.optional().meta(describe('With decision = handled: the quest that does the work.')),
+    note: NonEmptyStringSchema.optional(),
+  })
+  .refine((payload) => payload.decision !== 'handled' || payload.quest !== undefined, {
+    path: ['quest'],
+    message: 'a handled memo names its quest',
+  })
+  .meta({
+    ...describe(
+      'The owner decides a memo once (PS-02, ADR 0024; `elvaria memo decide`): set it aside (shelved), refuse it (rejected), or name the quest that does the work (handled). The Steward closes the memo and appends memo.closed. Refused when the memo is unknown or already closed, or the quest unknown. A memo is never answered, and closing it changes no quest.',
+    ),
+    if: { properties: { decision: { const: 'handled' } } },
+    then: { required: ['quest'] },
+  });

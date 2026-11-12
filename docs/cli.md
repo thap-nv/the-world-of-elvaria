@@ -24,7 +24,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria character release <id>` | Thả một nhân vật bị đình chỉ: nhân vật rảnh lại và nhận việc (lệnh release). |
 | `elvaria character level <id> <level>` | Đặt cấp của một nhân vật, lên hay xuống: những lần nhận việc sau theo hạng trần của cấp mới (lệnh set_level). |
 | `elvaria character model <id> <model>` | Chuyển một nhân vật sang model khác của chính tộc nó: phiên sau chạy model mới, và đồng hồ mana của model đó ràng nhân vật (lệnh set_model). |
-| `elvaria say <words>` | Nói với Tể tướng việc bạn muốn: Tể tướng soạn nhiệm vụ nháp, bạn xác nhận (lệnh create_quest, nháp). |
+| `elvaria say [<words>]` | Nói với Tể tướng việc bạn muốn: Tể tướng soạn nhiệm vụ nháp, bạn xác nhận (lệnh create_quest, nháp). |
 | `elvaria quest add` | Thêm một nhiệm vụ mở ngay, không qua Tể tướng (lệnh create_quest). |
 | `elvaria quest list` | Liệt kê các nhiệm vụ trên bảng nhiệm vụ. |
 | `elvaria quest show <quest>` | Xem một nhiệm vụ. |
@@ -37,6 +37,9 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria seal <quest>` | Đóng dấu việc đang chờ dấu vua: nhiệm vụ xong (lệnh seal; nặng bằng ba phán quyết). |
 | `elvaria return <quest>` | Trả việc đang chờ dấu vua về người làm, kèm ghi chú (lệnh return; nặng bằng ba phán quyết). |
 | `elvaria answer <quest> <answer>` | Trả lời câu hỏi của một nhiệm vụ đang chờ bạn (elvaria quest show in câu hỏi): người làm tiếp tục với câu trả lời của bạn (lệnh answer). |
+| `elvaria memo list` | Liệt kê thư nhân vật viết về việc ngoài nhiệm vụ của mình (memo), chỉ thư đang chờ trừ khi có --all. |
+| `elvaria memo show <memo>` | Xem một thư: ai viết khi làm nhiệm vụ nào, gửi tới đâu, đã quyết thế nào, và toàn bộ nội dung. |
+| `elvaria memo decide <memo> <decision>` | Quyết một thư, một lần: gác lại (shelved), bác (rejected), hoặc nêu nhiệm vụ làm việc đó (handled --quest); không nhiệm vụ nào đổi (lệnh decide_memo). |
 | `elvaria run` | Chạy Quản sự: giao nhiệm vụ cho nhân vật và cho nghiệm thu, tới khi bạn dừng (Ctrl+C). |
 | `elvaria wake <tribe>` | Nhờ Quản sự thăm dò mana của một tộc ngay, ví dụ sau khi đăng nhập lại (lệnh wake). |
 | `elvaria metrics` | Sổ đo: lượt, làm lại theo nguyên nhân, đạt lượt đầu, lỗi lọt, lần cần chủ nhân. Chỉ đọc vương quốc, không tốn mana. |
@@ -188,7 +191,8 @@ Nói với Tể tướng việc bạn muốn: Tể tướng soạn nhiệm vụ 
 
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
-| `<words>` | Việc bạn muốn làm, bằng lời của bạn, trong ngoặc kép. |
+| `[<words>]` | Việc bạn muốn làm, bằng lời của bạn, trong ngoặc kép; có --memo thì không bắt buộc. |
+| `--memo <memo>` | Đưa Tể tướng một thư (memo) thay cho, hoặc cùng với, lời của bạn: Tể tướng soạn nhiệm vụ từ thư. |
 
 ## `elvaria quest add`
 
@@ -313,6 +317,33 @@ Trả lời câu hỏi của một nhiệm vụ đang chờ bạn (elvaria quest
 |---|---|
 | `<quest>` | id của nhiệm vụ, ví dụ q_20261106_7k3m2a. |
 | `<answer>` | Câu trả lời của bạn cho câu hỏi của nhân vật, trong ngoặc kép. |
+
+## `elvaria memo list`
+
+Liệt kê thư nhân vật viết về việc ngoài nhiệm vụ của mình (memo), chỉ thư đang chờ trừ khi có --all.
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `--all` | In cả thư đã quyết. |
+
+## `elvaria memo show`
+
+Xem một thư: ai viết khi làm nhiệm vụ nào, gửi tới đâu, đã quyết thế nào, và toàn bộ nội dung.
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<memo>` | id của thư, ví dụ m_20261112_4k2pqz (elvaria memo list in ra). |
+
+## `elvaria memo decide`
+
+Quyết một thư, một lần: gác lại (shelved), bác (rejected), hoặc nêu nhiệm vụ làm việc đó (handled --quest); không nhiệm vụ nào đổi (lệnh decide_memo).
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<memo>` | id của thư, ví dụ m_20261112_4k2pqz (elvaria memo list in ra). |
+| `<decision>` | shelved, rejected hoặc handled. |
+| `--quest <quest>` | Đi với handled: nhiệm vụ làm việc đó. |
+| `--note <text>` | Ghi chú lưu cùng quyết định. |
 
 ## `elvaria run`
 

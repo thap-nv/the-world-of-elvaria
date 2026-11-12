@@ -54,6 +54,12 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   (`subquests`) writes its sub-quests as quest-draft JSON to `SUBQUESTS_FILE` (`subquests.json`) at the root of
   its plot, where its judge reads them and the Steward opens them once the quest is done (P1-14), with the
   words a draft may use: the kinds and the classes each allows, the tags, the territory's secrets (P1-15).
+- Reads the memos a character wrote (PS-02, ADR 0024): the letter template has a `## Memos` section
+  (`HANDOVER_SECTIONS`), law 8 of `prompts/assignee.md` says work outside the quest is a memo, not a change
+  (`- <kind>: <text> refs: <path>, <path>`), and `memosOf(letter)` returns the memos and the lines that follow no
+  memo; a `-` or `none` line is nothing, as `fakeLetter` writes. The Steward calls it as a run ends; `RunResult` and
+  the adapters do not change. A continuing assignee reads the memos its quest's letters filed
+  (`Memory.memos`, `prompts/memos.md`, after the memory block of `src/prompt/memory.ts`).
 - Runs the conformance suite (`conformanceChecks`, `runConformance`): plain checks with `node:assert`, so a spec
   wraps them in `it` and `elvaria tribe check` (P1-19) runs them too. With a real CLI (`live`) only `capabilities`,
   `doctor`, `probe`, `submit`, `hang` and `forbidden_command` run (a few cheap sessions, a little mana); `crash`,

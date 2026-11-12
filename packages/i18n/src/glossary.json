@@ -365,6 +365,20 @@
               "used_in": "`quests/<id>/handover.md`"
             },
             {
+              "vi": "Thư",
+              "en": "Letter",
+              "id": ["memo"],
+              "definition": "Một việc nhân vật thấy ngoài quest của mình, viết thành một dòng ở mục `Memos` của thư bàn giao thay vì tự sửa. Quản sự lập và chuyển đi theo kiểu thư khi lượt người làm kết thúc qua nộp, hỏi hay hỏng; không ai trả lời thư, thư không đổi quest nào, chủ nhân quyết một lần (ADR 0024, PS-02). Trong code là `memo`, vì `letter` đã là thư bàn giao.",
+              "used_in": "`memos/<id>.json`, mục `## Memos` của `handover.md`, `elvaria memo`, `elvaria say --memo`"
+            },
+            {
+              "vi": "Kiểu thư",
+              "en": "Letter kind",
+              "id": ["memo_kind"],
+              "definition": "Dữ liệu registry: mỗi kiểu khai nơi nhận (`route`); định tuyến là hàm thuần `routeMemo` đọc bảng đó. Kiểu đầu tiên `proposal` (đề xuất: việc ngoài phạm vi quest) tới Tể tướng; `advisory`, `request`, `objection` đến ở PS-09, PS-10.",
+              "used_in": "`registry/memos.json`, `memo.kind`"
+            },
+            {
               "vi": "Nhật ký (máy)",
               "en": "Journal",
               "id": ["journal.jsonl"],
@@ -1514,6 +1528,12 @@
               "id": ["set_model"],
               "icon": "—",
               "remark": "`elvaria character model`; model cùng tộc, nghề và tộc không đổi; ghi `character.model_changed`"
+            },
+            {
+              "vi": "Quyết thư",
+              "id": ["decide_memo"],
+              "icon": "—",
+              "remark": "`elvaria memo decide`; gác (`shelved`), bác (`rejected`) hay đã có quest làm (`handled`, kèm `quest`); mỗi thư quyết một lần, không quest nào đổi; ghi `memo.closed`"
             }
           ]
         },
@@ -1885,6 +1905,21 @@
               "field": "`kingdom.bell`",
               "values": "`desktop`, `web_push`, `messaging`",
               "meaning": "ba kênh chuông"
+            },
+            {
+              "field": "`memo.state`",
+              "values": "`open`, `closed`",
+              "meaning": "thư đang chờ quyết, hay đã quyết (có `outcome`)"
+            },
+            {
+              "field": "`memo.outcome.decision` (cũng `decide_memo.decision`)",
+              "values": "`shelved`, `rejected`, `handled`",
+              "meaning": "gác lại, bác, hay đã có quest làm (`handled` thì kèm `quest`)"
+            },
+            {
+              "field": "`memo_kind.route` (cũng `memo.to.route`)",
+              "values": "`chancellor`",
+              "meaning": "nơi nhận của một kiểu thư"
             }
           ]
         }
@@ -1994,6 +2029,11 @@
               "group": "Lệnh",
               "types": ["command.received", "command.applied", "command.rejected"],
               "meaning": "Quản sự xử lý `inbox/`"
+            },
+            {
+              "group": "Thư",
+              "types": ["memo.filed", "memo.routed", "memo.closed"],
+              "meaning": "Quản sự lập thư từ mục `Memos` của thư bàn giao khi lượt người làm kết thúc qua nộp, hỏi hay hỏng (không khi cầu dao cắt), chuyển theo `registry/memos.json`, và đóng theo `decide_memo` (PS-02, ADR 0024)"
             },
             {
               "group": "Khác",

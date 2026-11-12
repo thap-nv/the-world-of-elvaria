@@ -77,6 +77,7 @@ Thư mục vương quốc là trạng thái của bạn, nằm ngoài mọi repo
 | `characters/<id>/character.json`, `quests/<id>.json` | nhân vật, nhiệm vụ | `character add` tạo file nhân vật; sau đó **chỉ Quản sự** ghi; bạn đổi bằng lệnh, không sửa tay |
 | `quests/<id>/handover.md`, `journal.jsonl` | thư bàn giao, nhật ký từng lần dùng tool | nhân vật, hook |
 | `verdicts/`, `events/<ngày>.jsonl` | phán quyết, event log | Quản sự, hook |
+| `memos/` | thư nhân vật viết về việc ngoài quest của mình (PS-02) | Quản sự; bạn quyết bằng `elvaria memo decide` |
 | `registry/` | dạng nhiệm vụ, nghề, nghi thức, script, tag, `prompts/<nghề>.md` | `init`, `migrate`; bạn sửa được |
 | `temple/scripture.md`, `characters/<id>/scripture.md`, `decree.md` | kinh và chiếu chỉ (§11) | bạn |
 | `inbox/` | lệnh của bạn chờ Quản sự áp | CLI |
@@ -162,6 +163,7 @@ Cái mất khi dừng giữa chừng: phút check đã chạy (một lần 20 ph
 | đồng hồ mana, phiên bản CLI, lỗi cấu hình | `elvaria doctor` |
 | việc nhân vật làm | `quests/<quest>/journal.jsonl` |
 | thư bàn giao | `quests/<quest>/handover.md` |
+| thư về việc ngoài quest | `elvaria memo list [--all]`, `elvaria memo show <thư>` |
 | prompt, settings, stdout của một lượt | `.runs/<quest>-<n>/` (người chấm: `.runs/<quest>-<n>/verify/`) |
 | log setup và từng check | `.runs/<quest>-setup.log`, `.runs/<quest>-<n>/checks/<id>.log` |
 | số đo của một khoảng ngày | `elvaria metrics --since <yyyy-mm-dd> [--until …] [--json]` |
@@ -171,6 +173,8 @@ Trạng thái của quest, id (dùng cho `quest list --status <id>`) và tên hi
 Các lệnh trên chỉ đọc, không tốn mana, chạy được khi Quản sự đang chạy. Sau một đợt chạy, `pnpm docs:gen --kingdom "<vương quốc>"` trong repo Elvaria sinh lại [tier-report.md](../tier-report.md) và [metrics-report.md](../metrics-report.md).
 
 **Câu hỏi của nhân vật**: quest sang `Chờ trả lời`, chuông in câu hỏi. Trả lời bằng `elvaria answer <quest> "<câu>"`; trong 55 phút thì phiên cũ được nối lại, quá thì phiên mới đọc câu trả lời trong thư bàn giao.
+
+**Thư** (PS-02, ADR 0024): nhân vật thấy việc ngoài quest của mình thì không tự sửa mà viết một dòng ở mục `Memos` của thư bàn giao. Khi lượt kết thúc qua nộp bài, câu hỏi hay phiên hỏng (không khi cầu dao cắt), Quản sự lập `memos/<id>.json` và gửi tới Tể tướng; thư không đổi quest nào, và không ai trả lời thư. Xem bằng `elvaria memo list`; quyết một lần bằng `elvaria memo decide <thư> shelved` (gác), `rejected` (bác) hay `handled --quest <quest>` (đã có nhiệm vụ làm). Muốn Tể tướng soạn nhiệm vụ nháp từ thư thì `elvaria say --memo <thư> ["<lời thêm>"]` (tốn mana như mọi lần `say`), xác nhận bản nháp, rồi quyết thư `handled` với id của nó. Từ PS-03b Tể tướng tự phân loại thư theo lịch.
 
 ## 7. Dấu vua và giao hàng
 
@@ -280,7 +284,7 @@ Khi `main` của Elvaria có thay đổi ở `packages/` hay `apps/` mà bạn m
 1. **Dừng Quản sự** lúc không phiên nào chạy. Build lại hook dưới một phiên đang chạy là đổi hook của nó giữa chừng.
 2. `git pull --ff-only` trong checkout mà Quản sự chạy từ đó.
 3. `pnpm install --frozen-lockfile`, rồi `pnpm --filter @elvaria/hooks build` và `pnpm --filter @elvaria/cli build`.
-4. `elvaria migrate`: chuyển file cũ lên phiên bản mới (bản cũ vào `.backup/<stamp>/`), chép file registry mà vương quốc còn thiếu và thêm mục registry còn thiếu. Nó **không ghi đè** file bạn đã có: prompt nghề đổi ở bản mới (`packages/registry-default/prompts/<nghề>.md`) thì tự so và chép vào `registry/prompts/`, sau khi sao lưu.
+4. `elvaria migrate`: chuyển file cũ lên phiên bản mới (bản cũ vào `.backup/<stamp>/`), chép file registry mà vương quốc còn thiếu (từ PS-02 có `registry/memos.json`: thiếu nó thì registry không nạp, `doctor` báo lỗi và `run` không chạy) và thêm mục registry còn thiếu. Nó **không ghi đè** file bạn đã có: prompt nghề đổi ở bản mới (`packages/registry-default/prompts/<nghề>.md`) thì tự so và chép vào `registry/prompts/`, sau khi sao lưu.
 5. `elvaria doctor` in "Sẵn sàng."; nó nêu khóa registry mà bản mặc định có còn vương quốc thiếu.
 6. `elvaria run`.
 
@@ -310,4 +314,4 @@ Ba điều không phải lỗi, nhưng nên biết trước:
 
 ## 15. Chưa có ở giai đoạn 1
 
-Chuông ngoài terminal, điện thoại, bản đồ (giai đoạn 2 và 3); Quản sự tự push và merge (PS-08); thư đề xuất và bản tấu mỗi ngày (PS-02, PS-03); nâng cấp có đường lùi (PS-04b); tộc Gemini CLI với API key và tộc Codex (P1-12c, P1-12d, để dành). Kế hoạch và trạng thái: [implementation-plan](../implementation-plan.md) §8.
+Chuông ngoài terminal, điện thoại, bản đồ (giai đoạn 2 và 3); Quản sự tự push và merge (PS-08); bản tấu mỗi ngày và Tể tướng tự phân loại thư (PS-03, PS-03b); nâng cấp có đường lùi (PS-04b); tộc Gemini CLI với API key và tộc Codex (P1-12c, P1-12d, để dành). Kế hoạch và trạng thái: [implementation-plan](../implementation-plan.md) §8.

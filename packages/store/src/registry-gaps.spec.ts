@@ -26,6 +26,7 @@ function newerDefaults(): Record<string, unknown> {
     rituals: [editorial, { ...editorial, id: 'mutation_check', name_en: 'Mutation check' }],
     scripts: listOf('script', 'scripts'),
     tags: [docs, { ...docs, id: 'integration', name_en: 'Integration' }],
+    memos: listOf('memo-kind', 'memos'),
   };
 }
 

@@ -5,7 +5,7 @@
 - Knows the kingdom folder (implementation-plan §2.2): `kingdomLayout` gives every file's path relative to the
   kingdom with `/`; `toPortable`, `fromPortable`, `inKingdom` and `comparePath` turn and compare paths the way
   Windows and macOS do (§6).
-- Reads and writes `kingdom.json`, territories, quests, characters, campaigns and verdicts through
+- Reads and writes `kingdom.json`, territories, quests, characters, campaigns, verdicts and memos (PS-02) through
   `openKingdom(dir)`, the `KingdomStore` the Steward gets injected (§3.1): `read`, `write`, `update` (read →
   change → write inside one lock) and `list` (good files plus one issue per bad file). Every read runs
   JSON → migrate to the current version → the domain's zod schema; every write is validated first.
@@ -15,7 +15,7 @@
   `acquireLock` also serves the long-held `.state/steward.lock` (P1-03); `isLocked` only reads whether a live
   holder keeps a lock (`elvaria doctor`, P1-11).
 - Holds the migration framework (ADR 0003): one chain per stored contract in `src/migrations/index.ts`, steps in
-  `src/migrations/<contract>/v<n>-to-v<n+1>.ts`, fixtures `v<n>.json` beside them (no step yet: all 12 stored
+  `src/migrations/<contract>/v<n>-to-v<n+1>.ts`, fixtures `v<n>.json` beside them (no step yet: all 14 stored
   contracts are at v1, each with its `v1.json`), and `migrateKingdom` for
   `elvaria migrate` (rewrite every old file once, old text in `.backup/<stamp>/`).
 - Runs the inbox (ADR 0005): `inbox.write` drops `inbox/<ulid>.json`, `inbox.read` lists commands oldest first
@@ -32,7 +32,7 @@
   still passes `parseRegistry`; an entry the kingdom has is never changed (`elvaria migrate`, P1-41).
 - Reads the owner's royal decree (`readDecree`, `kingdomLayout.decree` = `decree.md`, null when absent) and masks
   secrets in free text it keeps (ADR 0013): every verdict write masks the secret patterns in `notes` (checked
-  by the schema again after), and `redactHandover` masks a session's values and the patterns in its letter.
+  by the schema again after), every memo write masks them in its text (PS-02), and `redactHandover` masks a session's values and the patterns in its letter.
 
 ## Does not
 

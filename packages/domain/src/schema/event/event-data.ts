@@ -14,6 +14,7 @@ import {
   TerritoryChangeDataSchema,
 } from './state-data.ts';
 import { PlotMergedDataSchema, PlotPatchedDataSchema, PlotRestoredDataSchema } from './plot-data.ts';
+import { MemoClosedDataSchema, MemoFiledDataSchema, MemoRoutedDataSchema } from './memo-data.ts';
 import type { EventType } from './event-types.ts';
 
 // Where it always was for the Steward and the specs (P1-21); plot-data.ts holds it since P1-44.
@@ -213,6 +214,9 @@ export const EVENT_DATA_SCHEMAS = {
   'territory.attached': TerritoryChangeDataSchema,
   'territory.surveyed': TerritoryChangeDataSchema,
   'territory.health': TerritoryChangeDataSchema,
+  'memo.filed': MemoFiledDataSchema,
+  'memo.routed': MemoRoutedDataSchema,
+  'memo.closed': MemoClosedDataSchema,
 } as const satisfies Partial<Record<EventType, z.ZodType>>;
 
 export type TypedEventType = keyof typeof EVENT_DATA_SCHEMAS;

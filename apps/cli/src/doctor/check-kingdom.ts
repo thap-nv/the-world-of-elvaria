@@ -25,10 +25,15 @@ export async function checkRegistry(ctx: KingdomContext): Promise<Finding[]> {
   const registry = await store.loadRegistry();
   if (!registry.ok) {
     const details = registry.error.flatMap((issue) => registryIssueLines(t, issue));
-    const prompts = registry.error.some(
-      (issue) => issue.code === 'not_found' && issue.file.startsWith('registry/prompts/'),
-    );
-    const hint = prompts ? [t('cli.doctor.registry_prompts_hint', { path: DEFAULT_PROMPTS })] : [];
+    const missing = (issue: (typeof registry.error)[number], pattern: RegExp) =>
+      issue.code === 'not_found' && pattern.test(issue.file);
+    const prompts = registry.error.some((issue) => missing(issue, /^registry\/prompts\//));
+    // A data file this Elvaria ships and an older kingdom lacks (registry/memos.json came with PS-02).
+    const files = registry.error.some((issue) => missing(issue, /^registry\/[a-z]+\.json$/));
+    const hint = [
+      ...(prompts ? [t('cli.doctor.registry_prompts_hint', { path: DEFAULT_PROMPTS })] : []),
+      ...(files ? [t('cli.doctor.registry_files_hint', { path: REGISTRY_ROOT })] : []),
+    ];
     return [finding('error', t('cli.doctor.registry_invalid'), [...details, ...hint])];
   }
   const { kinds, classes, rituals, scripts, tags } = registry.value;

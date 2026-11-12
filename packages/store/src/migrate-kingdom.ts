@@ -9,6 +9,7 @@ import {
   CHARACTER_SPEC,
   INBOX_SPEC,
   KINGDOM_SPEC,
+  MEMO_SPEC,
   QUEST_SPEC,
   REGISTRY_SPECS,
   TERRITORY_SPEC,
@@ -45,7 +46,7 @@ export const STORED_GROUPS: readonly StoredGroup[] = [
     spec: REGISTRY_SPECS[name],
     files: () => Promise.resolve([kingdomLayout.registryFile(name)]),
   })),
-  ...[TERRITORY_SPEC, QUEST_SPEC, CHARACTER_SPEC, CAMPAIGN_SPEC, VERDICT_SPEC].map(entityGroup),
+  ...[TERRITORY_SPEC, QUEST_SPEC, CHARACTER_SPEC, CAMPAIGN_SPEC, VERDICT_SPEC, MEMO_SPEC].map(entityGroup),
   {
     spec: INBOX_SPEC,
     files: async (root) => (await idsOnDisk(root, { dir: INBOX_DIR })).map(kingdomLayout.inboxCommand),

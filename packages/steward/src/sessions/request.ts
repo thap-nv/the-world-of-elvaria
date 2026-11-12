@@ -38,6 +38,7 @@ import {
   readScriptures,
 } from '../files.ts';
 import { refusedPatchOf } from '../infirmary.ts';
+import { filedMemosOf } from '../memos/filed.ts';
 import { withLogTails } from '../review/log-tail.ts';
 import { sessionEnvOf } from './secrets.ts';
 import type { Context } from '../context.ts';
@@ -92,12 +93,16 @@ export interface SessionInput {
   readonly exclusive?: boolean;
 }
 
-/** What a continuing session reads instead of a transcript (ADR 0017); the branch's git log comes with P1-07. */
+/**
+ * What a continuing session reads instead of a transcript (ADR 0017), with the memos its letters filed (PS-02); the
+ * branch's git log comes with P1-07.
+ */
 async function memoryOf(ctx: Context, quest: Quest): Promise<Memory> {
   return {
     handover: await readHandover(ctx.root, quest.id),
     journal: await readJournal(ctx.root, quest.id),
     git_log: null,
+    memos: await filedMemosOf(ctx, quest.id),
   };
 }
 
