@@ -4,7 +4,7 @@
 // judged in a tick after they ended, so a long check never holds the inbox, the sessions' ends or the claims.
 import { recheckDue } from '../verify/environment.ts';
 import { selectVerifier, waitsForNoJudge } from '../verify/select-verifier.ts';
-import { partyOf } from '../verify/past-assignees-of.ts';
+import { partyOf, workedOn } from '../verify/past-assignees-of.ts';
 import type { Roster } from './roster.ts';
 import type { Instant } from '../core/clock.ts';
 import type { CharacterId, QuestId } from '../core/ids.ts';
@@ -83,6 +83,20 @@ function checksState(
 }
 
 /**
+ * The files of everyone who worked the quest itself, as selectVerifier compares their models (P1-55). Not the current
+ * assignee alone: after a run the Steward made (a party's merge) `assignee` is null, and a judge on the model of the
+ * knight who did the runs before would have had nobody to be told apart from.
+ */
+function doersOf(
+  quest: Quest,
+  characterOf: (id: CharacterId | null | undefined) => Character | undefined,
+): Character[] {
+  return workedOn(quest)
+    .map((id) => characterOf(id))
+    .filter((character) => character !== undefined);
+}
+
+/**
  * Step 4 for the quests in `review` that need a judge, in priority order. A judge is taken from the roster only for
  * a quest whose checks have ended; checks start for a quest that some judge may take, now or later, and again for
  * one whose checks failed because of their environment once a recheck is due at `now` (P1-54).
@@ -100,7 +114,7 @@ export function planReviews(
     const policy = {
       same_family: source.kingdom.dispatch.verifier_same_family,
       classes: source.registry.classes,
-      assignee: characterOf(quest.assignee),
+      doers: doersOf(quest, characterOf),
       party: partyOf(quest, source.quests),
       limits: source.limits,
     };

@@ -101,7 +101,9 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   diff then counts from there. The fork point and the setup state live in `elvaria-plot.json` in the worktree's
   private git folder. `status`, `head` (the commit at HEAD, null without git: the Steward reuses checks that ran on
   it for the run's next judge, P1-38), `touched` (paths changed since the fork, committed or not, plus untracked files),
-  `commitAll` (everything, through the territory's own hooks; `refused` when a hook says no; the Steward's messages
+  `commitAll` (everything, through the territory's own hooks; `refused` when a hook says no; given a `CommitRescue` folder
+  (P1-55, `plot/rescue.ts`) it first moves the scratch files at the plot's root to `set-aside/` there, and a refusal leaves
+  `wip.patch` and the staged paths; the Steward's messages
   are `plotCommitMessage`, Conventional Commits so commitlint accepts them), `restore` (P1-44: after a judge outside a
   scratch plot, `git reset --hard HEAD` and `git clean -d --force`, so ignored files and the runner files the plot
   excludes stay; returns the paths it dropped, an untracked folder as one path ending in `/`, and leaves a clean

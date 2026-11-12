@@ -69,6 +69,8 @@ export type { PreparedScratch } from './plot/scratch.ts';
 export type { PatchOutcome } from './plot/patch.ts';
 export type { SetupRun } from './plot/setup.ts';
 export type { CommitOutcome, ForgetWorktree, PlotStatus, ReleasedPlot } from './plot/worktree-ops.ts';
+export { SET_ASIDE_DIR, WIP_PATCH_FILE, isScratchFile } from './plot/rescue.ts';
+export type { CommitRescue } from './plot/rescue.ts';
 export type { PlotFailure, PlotFailureReason } from './plot/worktree.ts';
 export { commandRefusal } from './policy/command-refusal.ts';
 export {

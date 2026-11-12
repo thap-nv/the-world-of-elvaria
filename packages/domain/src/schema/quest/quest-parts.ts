@@ -70,7 +70,11 @@ export const AttemptSchema = z.strictObject({
   run_dir: z
     .string()
     .regex(/^\.runs\/[^\\]+$/)
-    .meta(describe('Relative to the kingdom: .runs/<quest>-<n> (verifier: .runs/<quest>-<n>/verify).')),
+    .meta(
+      describe(
+        'Relative to the kingdom: .runs/<quest>-<n> (verifier: .runs/<quest>-<n>/verify, and /verify-<k> for the k-th judge of the run, k ≥ 2).',
+      ),
+    ),
 });
 
 const PlotObjectSchema = z.strictObject({

@@ -95,7 +95,7 @@ export function plotsOver(kingdom: string, manager: PlotManager, host: ProcessHo
       if (plot.path === undefined) throw new Error(`the plot of ${quest.id} has no path`);
       return { plot, cwd: cwdOf(kingdom, plot) };
     },
-    commit: (plot, message) => manager.commitAll(plot, message),
+    commit: (plot, message, rescue) => manager.commitAll(plot, message, rescue),
     // After a judge outside a scratch plot: what its commands left changed there goes (P1-44).
     restore: (plot) => manager.restore(plot),
     // Before the submit commit: the assignee's patch for laws.patch_paths (P1-28).

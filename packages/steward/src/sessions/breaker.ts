@@ -17,8 +17,10 @@ import { runOf } from '../review/judge.ts';
 import { afterJudge } from '../review/after-judge.ts';
 import { commitPlot, forbiddenWip } from './commit.ts';
 import { maskFinished } from './secrets.ts';
+import { writeStopLetter } from './stop-letter.ts';
 import type { Context } from '../context.ts';
 import type { PlotCommit } from './commit.ts';
+import type { Refusal } from './stop-letter.ts';
 import type { Running } from './running.ts';
 
 /** Trips that are a commit the Steward did not make already (P1-04, P1-49): no WIP commit is tried after them. */
@@ -43,7 +45,8 @@ export async function breakAssignee(
   breaker: AssigneeBreaker,
   end: () => Promise<RunResult>,
 ): Promise<Result<Quest, string>> {
-  const { trip, detail, patch, paths } = breaker;
+  const { trip, patch, paths } = breaker;
+  const detail = breaker.detail ?? breaker.refused?.detail;
   const who = running.character;
   const swamped = await ctx.record.change(who, 'character.swamp', step('breaker'));
   if (!swamped.ok) ctx.deps.log.warn(`steward: ${running.quest}: ${who} is not swamped: ${swamped.error}`);
@@ -51,6 +54,10 @@ export async function breakAssignee(
   const wip = UNCOMMITTED.has(trip)
     ? undefined
     : await commitPlot(ctx, running.quest, plotCommitMessage.wip(running.quest, trip));
+  // The hook refused the work this session left: a copy of it is kept, and a quest with no letter gets a minimal one.
+  const refused = wip?.status === 'refused' ? wip : breaker.refused;
+  if (refused !== undefined)
+    await writeStopLetter(ctx, { id: running.quest }, { character: who, trip }, refused);
   const said = {
     ...(detail === undefined ? {} : { message: detail }),
     ...(patch === undefined ? {} : { patch }),
@@ -76,6 +83,8 @@ interface AssigneeBreaker {
   readonly detail?: string | undefined;
   readonly patch?: string;
   readonly paths?: readonly string[];
+  /** The submit commit the hook refused (trip `commit`), whose rescue the WIP commit of the other trips gives (P1-55). */
+  readonly refused?: Refusal;
 }
 
 /**

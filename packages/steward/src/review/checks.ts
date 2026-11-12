@@ -35,6 +35,7 @@ import type {
 } from '@elvaria/domain';
 
 import { partyChecks } from '../party/check.ts';
+import { mergePartsBeforeChecks } from '../party/plot.ts';
 import { STEWARD } from '../record.ts';
 import { secretsBreaker } from '../sessions/breaker.ts';
 import { questSecretsOf, secretsLacking } from '../sessions/secrets.ts';
@@ -155,6 +156,8 @@ export async function startChecks(ctx: Context, questId: QuestId): Promise<Resul
   // The run's checks were set aside for their environment already: the owner heard of it then (P1-54).
   const told = ctx.background.held(questId, n) !== undefined;
   ctx.background.checks(questId, n, async (signal) => {
+    // The parts a knight's conflict left unmerged go in first, so the checks run on the whole party (P1-55).
+    await mergePartsBeforeChecks(ctx, quest);
     if (kept !== undefined) {
       const reused = await keptTrial(ctx, { quest, territory, kept, secrets, signal });
       // Stopped while its plot was made again: nobody waits for a trial any more.

@@ -22,7 +22,7 @@ const THORN = character('thorn');
 const policyOf = (more: Partial<VerifierPolicy> = {}): VerifierPolicy => ({
   same_family: 'different_model',
   classes: CLASSES,
-  assignee: THORN,
+  doers: [THORN],
   party: [],
   free: (candidate) => candidate.status === 'idle',
   ...more,
@@ -49,6 +49,28 @@ describe('selectVerifier', () => {
     expect(chosen(submitted, [judge('twin', { model: 'claude-sonnet-5-5' })])).toBeNull();
     expect(chosen(quest(Q2, { kind: 'research' }), [ORIN])).toBeNull();
     expect(chosen(submitted, [{ ...ORIN, status: 'reviewing' }])).toBeNull();
+  });
+
+  it('never takes the model of anyone who worked the quest, not only of the last run (P1-55)', () => {
+    // The last run was the Steward's own, so there is no assignee: the knights of the runs before name the models.
+    const sonnet = judge('twin', { model: 'claude-sonnet-5-5' });
+    const opus = judge('opus-judge', { model: 'claude-opus-5-5' });
+    const earlier = character('maren', { model: 'claude-opus-5-5' });
+    expect(chosen(submitted, [sonnet, opus], { doers: [THORN] })).toEqual([
+      'opus-judge',
+      'same_family_other_model',
+    ]);
+    expect(chosen(submitted, [sonnet, opus], { doers: [THORN, earlier] })).toBeNull();
+    // A judge is of another family only when it is of no doer's family, not of the last one's alone.
+    const gemini = judge('orin2', { tribe: 'gemini', model: 'gemini-4-argon-medium' });
+    const geminiKnight = character('quill', { tribe: 'gemini', model: 'gemini-4-argon-low' });
+    expect(chosen(submitted, [gemini], { doers: [THORN] })).toEqual(['orin2', 'other_family']);
+    expect(chosen(submitted, [gemini], { doers: [THORN, geminiKnight] })).toEqual([
+      'orin2',
+      'same_family_other_model',
+    ]);
+    const machineOnly = { doers: [THORN, geminiKnight], same_family: 'machine_only' } as const;
+    expect(chosen(submitted, [sonnet, gemini], machineOnly)).toBe('machine');
   });
 
   it('never takes anyone who worked the quest, even one the owner took it away from', () => {
@@ -113,7 +135,7 @@ describe('selectVerifier', () => {
   });
 
   it("judges any family's work when the assignee's file is gone", () => {
-    expect(chosen(submitted, [SABLE], { assignee: undefined })).toEqual(['sable', 'other_family']);
+    expect(chosen(submitted, [SABLE], { doers: [] })).toEqual(['sable', 'other_family']);
   });
 });
 
@@ -204,7 +226,7 @@ describe('selectVerifier by rank', () => {
     const viaAgy = judge('brann', { tribe: 'gemini', level: 5, since: 0 });
     const weakOther = judge('sable', { model: 'claude-sonnet-5-5', level: 2, since: 30 });
     const ofKael = inReview(quest(Q1, { rank: 'B' }), 'kael');
-    expect(chosen(ofKael, [viaAgy, weakOther], { assignee: kael })).toEqual(['sable', 'other_family']);
+    expect(chosen(ofKael, [viaAgy, weakOther], { doers: [kael] })).toEqual(['sable', 'other_family']);
   });
 });
 
@@ -231,7 +253,7 @@ function roster(next: () => number): { quest: Quest; candidates: Character[]; as
 /** What must hold of one selection on one random roster, whatever the policy. */
 function checkSelection(seed: number, same_family: VerifierPolicy['same_family']): void {
   const { quest: q, candidates, assignee } = roster(seeded(seed));
-  const selection = selectVerifier(q, candidates, policyOf({ same_family, assignee }));
+  const selection = selectVerifier(q, candidates, policyOf({ same_family, doers: [assignee] }));
   const free = candidates.filter(
     (c) =>
       c.class === 'judge' &&

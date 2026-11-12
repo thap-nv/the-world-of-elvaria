@@ -62,14 +62,30 @@ const CONDITIONALS: readonly Rule<QuestFields>[] = [
   },
   {
     contract: {
+      $comment:
+        "A quest in review has had a run: an attempt, or the Steward's own run of a party's merge, which takes a run number and no attempt (P1-55).",
       if: { properties: { status: { const: 'review' } } },
-      then: { properties: { attempts: { minimum: 1 } } },
+      then: {
+        anyOf: [
+          { properties: { attempts: { minimum: 1 } } },
+          {
+            required: ['attempt_log'],
+            properties: {
+              attempt_log: {
+                contains: { required: ['role'], properties: { role: { const: 'assignee' } } },
+              },
+            },
+          },
+        ],
+      },
     },
     check: (quest) =>
       issueIf(
-        quest.status === 'review' && quest.attempts < 1,
+        quest.status === 'review' &&
+          quest.attempts < 1 &&
+          !quest.attempt_log.some(({ role }) => role === 'assignee'),
         ['attempts'],
-        'a quest in review has an attempt',
+        'a quest in review has had a run',
       ),
   },
   {

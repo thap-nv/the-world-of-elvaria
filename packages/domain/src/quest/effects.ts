@@ -3,7 +3,7 @@
 // QUEST_TRANSITIONS has already been chosen, and `to` is its target status.
 import { aboveCeiling } from '../character/level.ts';
 import { err, ok } from '../core/result.ts';
-import { machineMergeDue } from '../party/machine-merge.ts';
+import { machineMergeDue, machineRun } from '../party/machine-merge.ts';
 import { closeRun, currentRun, entryOf } from './attempt-log.ts';
 import type { CharacterId } from '../core/ids.ts';
 import type { Result } from '../core/result.ts';
@@ -47,10 +47,15 @@ const ending =
 const assigneeRun = (quest: Quest, n: number, at: string, session_id: string | undefined) =>
   entryOf(quest, { n, role: 'assignee', character: quest.assignee ?? null, at, session_id });
 
-/** A new attempt: the counter that `budget.max_attempts` limits goes up, and so does the run number. */
+/**
+ * A new attempt: the counter that `budget.max_attempts` limits goes up, and so does the run number. The machine's
+ * merge of a party's parts takes a run number but no attempt: no character tried anything, so the knights that come
+ * after it keep the whole budget (P1-55; before, a merge quest reached the infirmary after two knight sessions).
+ */
 function startAttempt(quest: Quest, event: QuestEventOf<'start' | 'redispatch'>): Result<Quest, never> {
   const entry = assigneeRun(quest, currentRun(quest) + 1, event.at, event.session_id);
-  return ok({ ...quest, attempts: quest.attempts + 1, attempt_log: [...quest.attempt_log, entry] });
+  const attempts = machineRun(quest) ? quest.attempts : quest.attempts + 1;
+  return ok({ ...quest, attempts, attempt_log: [...quest.attempt_log, entry] });
 }
 
 /**

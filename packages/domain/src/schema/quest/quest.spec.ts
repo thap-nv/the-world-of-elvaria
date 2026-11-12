@@ -95,6 +95,18 @@ describe('QuestSchema', () => {
       'a script run without a character',
       { tier: 'script', script, assignee: null, attempt_log: [attempt(null, 'assignee')] },
     ],
+    [
+      "a quest in review after the Steward's own run, which is no attempt (P1-55)",
+      {
+        status: 'review',
+        attempts: 0,
+        assignee: null,
+        party_id: OTHER_ID,
+        party_role: 'merge',
+        contract: 'apps/api/openapi.json',
+        attempt_log: [attempt(null, 'assignee')],
+      },
+    ],
   ])('accepts %s', (_, change) => {
     expect(issuesOf({ ...minimal, ...change })).toEqual([]);
   });
@@ -147,7 +159,7 @@ describe('QuestSchema', () => {
     [
       'a quest in review before any attempt',
       { status: 'review', assignee: 'thorn' },
-      'attempts: a quest in review has an attempt',
+      'attempts: a quest in review has had a run',
     ],
     [
       'a sealed quest still open',
