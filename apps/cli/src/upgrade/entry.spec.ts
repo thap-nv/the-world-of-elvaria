@@ -7,7 +7,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { SHA_A, SHA_B, calls, placeBuild, writePin } from '../../test/builds.ts';
+import { SHA_A, SHA_B, calls, placeBuild, real, writePin } from '../../test/builds.ts';
 import { baseEnv, foundKingdom, printed, tempDir, testIo } from '../../test/cli.ts';
 import { elvaria } from './entry.ts';
 import type { TempDir } from '../../test/cli.ts';
@@ -35,7 +35,7 @@ describe('elvaria on a kingdom that pins a build', () => {
     const words = ['quest', 'list', '--kingdom', kingdom, '--locale', 'en'];
     expect(await elvaria(words, io, new EventEmitter(), elsewhere())).toBe(3);
     expect(await calls(record)).toEqual([
-      { root: build, argv: words, cwd, pinned: SHA_A, token: null, git_dir: null },
+      { root: real(build), argv: words, cwd: real(cwd), pinned: SHA_A, token: null, git_dir: null },
     ]);
   });
 
