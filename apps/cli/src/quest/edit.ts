@@ -9,6 +9,7 @@ import { flagOption, textOption, textOptions } from '../args.ts';
 import { EXIT } from '../command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { questsMissing, readQuest } from './references.ts';
+import { readScope } from './scope.ts';
 import { commandHeader, sendCommand } from './send-command.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
@@ -58,12 +59,14 @@ function readChanges(input: CommandInput, ctx: KingdomContext) {
   const { budget, problems: budgetProblems } = readBudget(input, ctx);
   const seal = flagOption(input, 'seal');
   const description = textOption(input, 'description');
+  const scope = readScope(input);
   const changes = {
     ...(title === undefined ? {} : { title }),
     ...(description === undefined ? {} : { description }),
     ...(rank === undefined || !isRank(rank) ? {} : { rank }),
     ...(seal === undefined ? {} : { seal_required: seal }),
     ...(dependsOn.length === 0 ? {} : { depends_on: [...new Set(dependsOn)] }),
+    ...(scope.length === 0 ? {} : { scope_paths: scope }),
     ...(budget === undefined ? {} : { budget }),
   };
   return { changes, dependsOn, problems: [...problems, ...budgetProblems] };
@@ -118,6 +121,7 @@ export const QUEST_EDIT: CommandSpec = {
     'max-minutes': { type: 'string', value: '<n>', help: 'cli.quest.edit.option.max_minutes' },
     'max-tokens': { type: 'string', value: '<n>', help: 'cli.quest.edit.option.max_tokens' },
     'max-attempts': { type: 'string', value: '<n>', help: 'cli.quest.edit.option.max_attempts' },
+    scope: { type: 'string', value: '<glob>', multiple: true, help: 'cli.quest.edit.option.scope' },
   },
   run: runQuestEdit,
 };

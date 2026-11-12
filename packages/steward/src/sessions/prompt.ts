@@ -15,6 +15,7 @@ import { gazetteerFor } from './gazetteer.ts';
 import { withLogTails } from '../review/log-tail.ts';
 import { continuationFor } from './continuation.ts';
 import { loadTraceOf } from './load-trace.ts';
+import { outOfScopeIn } from './out-of-scope.ts';
 import type { Context } from '../context.ts';
 import type { Scripture } from '../files.ts';
 import type { Resume, SessionInput } from './input.ts';
@@ -100,7 +101,12 @@ async function builtPromptOf(
       quest.party_role === 'merge' ? 'after_merges' : 'branch',
     );
     const partial = await lastPartialOf(ctx, quest, input.n);
-    return buildPrompt({ ...base, role: 'verifier', handover, diff, checks, partial }, ctx.templates);
+    // The files changed outside the quest's scope (PS-05): the judge weighs them, the machine never fails them.
+    const outside = await outOfScopeIn(ctx, quest);
+    return buildPrompt(
+      { ...base, role: 'verifier', handover, diff, checks, partial, out_of_scope: outside },
+      ctx.templates,
+    );
   }
   const continuation = await continuationFor(ctx, input, known);
   return buildPrompt(

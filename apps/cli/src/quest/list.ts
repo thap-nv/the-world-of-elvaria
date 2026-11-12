@@ -1,8 +1,9 @@
 // `elvaria quest list`: the quest board, oldest first (ids sort by day). Commands still in the inbox are counted
 // under it, because a quest the owner just added exists only as a command until the Steward's next tick. A party's
-// member says its role and where the party stands (P1-21 (c)).
+// member says its role and where the party stands (P1-21 (c)). A quest that waits on its territory's scope rules says
+// for whom (PS-05).
 import { QUEST_STATUSES } from '@elvaria/domain';
-import type { Quest, QuestId, QuestStatus, Registry } from '@elvaria/domain';
+import type { Quest, QuestId, QuestStatus, Registry, ScopeWait } from '@elvaria/domain';
 
 import { textOptions, textOption } from '../args.ts';
 import { EXIT } from '../command.ts';
@@ -10,6 +11,7 @@ import { openKingdomContext } from '../kingdom-context.ts';
 import { QUEST_STATUS_LABEL, nameIn } from '../labels.ts';
 import { NONE, printListing } from '../listing.ts';
 import { partyCell } from './party.ts';
+import { scopeWaitText, scopeWaitsOf } from './scope.ts';
 import { unclaimableOf } from './unclaimable.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
@@ -23,22 +25,26 @@ export function kindName(ctx: KingdomContext, registry: Registry | undefined, ki
   return entry === undefined ? kind : nameIn(ctx.locale, entry);
 }
 
-/** The status, marked when the Steward has said nobody can take the quest (§3.1). */
-const statusCell = (ctx: KingdomContext, quest: Quest, unclaimable: ReadonlySet<QuestId>): string => {
+/** The status, marked when the Steward has said nobody can take the quest (§3.1), or when it waits for a scope (PS-05). */
+const statusCell = (ctx: KingdomContext, quest: Quest, board: Board): string => {
   const status = ctx.t(QUEST_STATUS_LABEL[quest.status]);
-  return unclaimable.has(quest.id) ? `${status} (${ctx.t('cli.quest.unclaimable.mark')})` : status;
+  if (board.unclaimable.has(quest.id)) return `${status} (${ctx.t('cli.quest.unclaimable.mark')})`;
+  const wait = board.waits.get(quest.id);
+  return wait === undefined ? status : `${status} (${scopeWaitText(ctx, wait)})`;
 };
 
 interface Board {
   readonly registry: Registry | undefined;
   readonly unclaimable: ReadonlySet<QuestId>;
+  /** Quests that wait on their territory's scope rules, and for whom (PS-05). */
+  readonly waits: ReadonlyMap<QuestId, ScopeWait>;
   /** Every quest read, for where each quest's party stands (P1-21 (c)). */
   readonly quests: readonly Quest[];
 }
 
 const questRow = (ctx: KingdomContext, board: Board, quest: Quest): string[] => [
   quest.id,
-  statusCell(ctx, quest, board.unclaimable),
+  statusCell(ctx, quest, board),
   quest.rank,
   kindName(ctx, board.registry, quest.kind),
   partyCell(ctx, quest, board.quests),
@@ -62,7 +68,8 @@ async function runQuestList(input: CommandInput, cli: CliContext): Promise<ExitC
   const registry = await ctx.store.loadRegistry();
   const { items, issues } = await ctx.store.quests.list();
   const unclaimable = new Set((await unclaimableOf(ctx, items)).keys());
-  const board = { registry: registry.ok ? registry.value : undefined, unclaimable, quests: items };
+  const waits = await scopeWaitsOf(ctx, items);
+  const board = { registry: registry.ok ? registry.value : undefined, unclaimable, waits, quests: items };
   const shown = items.filter(
     (quest) =>
       (statuses.length === 0 || statuses.includes(quest.status)) &&

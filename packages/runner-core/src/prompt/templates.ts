@@ -37,6 +37,7 @@ export const PROMPT_TEMPLATES = [
   'plot-rules',
   'review',
   'partial',
+  'out-of-scope',
   'ritual-steps',
   'chancellor',
   'chancellor-context',

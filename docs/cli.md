@@ -228,6 +228,7 @@ Thêm một nhiệm vụ mở ngay, không qua Tể tướng (lệnh create_ques
 | `--params <json>` | Tham số của script, một đối tượng JSON. |
 | `--to <character>` | Nhân vật nhận việc: chỉ nhân vật này nhận nhiệm vụ, cấp nào cũng được (vượt hạng trần thì nhiệm vụ chờ dấu vua). Đúng nghề của nhiệm vụ; không dùng cho nhiệm vụ bậc script. |
 | `--contract` | Nhiệm vụ là quest hợp đồng của một đội: trưởng đội viết hợp đồng rồi chia phần, Quản sự tự thêm quest ghép. Trong mô tả, một dòng --- kết thúc phần việc: phần sau chỉ dành cho trưởng đội, người viết test của Khảo hạch mù không đọc. |
+| `--scope <glob>` | Glob của các file nhiệm vụ sẽ sửa, tính từ gốc lãnh thổ; lặp lại cho nhiều glob. Hai nhiệm vụ có vùng giao nhau không bao giờ chạy cùng lúc trên một lãnh thổ; nhiệm vụ không khai vùng thì chạy một mình ở đó. |
 
 ## `elvaria quest list`
 
@@ -286,6 +287,7 @@ Sửa một nhiệm vụ mà không chạm vào file của nó (lệnh edit_ques
 | `--max-minutes <n>` | Trần số phút cho một lần thử. |
 | `--max-tokens <n>` | Trần số token cho một lần thử. |
 | `--max-attempts <n>` | Số lần thử tối đa. |
+| `--scope <glob>` | Vùng file mới, thay cho vùng cũ: glob của các file nhiệm vụ sẽ sửa; lặp lại cho nhiều glob. |
 
 ## `elvaria quest retry`
 

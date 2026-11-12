@@ -16,6 +16,7 @@ import {
   PartyRoleSchema,
   QuestStatusSchema,
   QuestTitleSchema,
+  ScopePathsSchema,
   SecretNamesSchema,
   TagsSchema,
   TierSchema,
@@ -67,6 +68,7 @@ export const QuestFieldsSchema = z.strictObject({
       "Path of the contract inside the territory, e.g. apps/api/openapi.json, committed on the contract quest's branch. Parts and the merge quest branch from that branch, so they all see the same contract.",
     ),
   ),
+  scope_paths: ScopePathsSchema.optional(),
   status: QuestStatusSchema,
   tier: TierSchema.meta({
     default: 'session',

@@ -60,6 +60,8 @@ export interface Move {
    * quest file and attempt_log stay as they were.
    */
   readonly load_trace?: LoadTrace;
+  /** On a submit, the files the work changed outside the quest's scope (PS-05): on the line only, as `load_trace`. */
+  readonly out_of_scope?: readonly string[];
 }
 
 /** A line about something the files do not keep: verdict.*, command.*. */
@@ -204,6 +206,9 @@ async function move(deps: RecorderDeps, request: Move): Promise<Result<Quest, st
     ...(moved.value.length > 0 ? { characters: moved.value.map(characterViewOf) } : {}),
     ...(sequels === undefined || sequels.length === 0 ? {} : { sequels }),
     ...(request.load_trace === undefined ? {} : { load_trace: request.load_trace }),
+    ...(request.out_of_scope === undefined || request.out_of_scope.length === 0
+      ? {}
+      : { out_of_scope: request.out_of_scope }),
   };
   await append(deps, { type, actor: actorOf(request.actor, found), data, quest: after.value, session }, at);
   return ok(after.value);

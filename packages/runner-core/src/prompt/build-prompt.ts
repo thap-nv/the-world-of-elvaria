@@ -27,6 +27,7 @@ import { graphBlock } from './graph-block.ts';
 import type { PromptGraph } from './graph-block.ts';
 import { memosBlock } from './memory.ts';
 import { composed } from './prompt-blocks.ts';
+import { outOfScopeBlock } from './scope.ts';
 import { fenced, fill, sectionsOf } from './templates.ts';
 import type { Continuation, Locale, Memory } from './blocks.ts';
 import type { PromptCheck } from './checks.ts';
@@ -89,6 +90,8 @@ export interface VerifierPromptInput extends PromptBase {
   readonly checks: readonly PromptCheck[];
   /** The `partial` verdict the last judge of this run left (`<quest>-<n>-p<k>`), or null; this judge reads on. */
   readonly partial: Verdict | null;
+  /** The files the work changed outside the quest's scope (PS-05); absent or empty, the review says nothing of it. */
+  readonly out_of_scope?: readonly string[];
 }
 
 /**
@@ -199,6 +202,7 @@ function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): PromptW
       input.handover === null || input.handover.trim() === ''
         ? 'The assignee left no letter.'
         : fenced(input.handover, 'markdown'),
+    out_of_scope: outOfScopeBlock(quest, input.out_of_scope ?? [], t),
     diff: diffBlock(input.diff, input.territory),
   });
   const graphText = graphBlock(policy, input.graph, 'verifier', t);

@@ -100,6 +100,26 @@ describe('elvaria digest', () => {
       '## Phải quyết để việc chạy tiếp',
     ]);
   });
+
+  it('names a done quest whose scope an open quest waits for (PS-05)', async () => {
+    const worked = {
+      attempts: 1,
+      attempt_log: [
+        {
+          n: 1,
+          character: 'thorn',
+          role: 'assignee',
+          started_at: '2026-11-06T08:10:00+07:00',
+          run_dir: `.runs/${OTHER_QUEST_ID}-1`,
+        },
+      ],
+    };
+    const holder = questFixture('done', OTHER_QUEST_ID, { ...worked, scope_paths: ['scripts/**'] });
+    await plantQuests(kingdom, holder, questFixture('open', QUEST_ID, { scope_paths: ['scripts/check.ts'] }));
+    expect(await digest()).toContain(
+      `- Quest ${OTHER_QUEST_ID} «Thêm script pnpm check» is done but still holds its scope; ${QUEST_ID} wait for it. Merge its branch, then archive it: the quests that wait for its scope start.`,
+    );
+  });
 });
 
 describe('the digest file of the Steward', () => {

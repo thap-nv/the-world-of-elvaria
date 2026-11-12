@@ -212,6 +212,7 @@ describe('elvaria metrics', () => {
     expect(printed(io)).toContain(`Metrics (${DAY} → …)`);
     expect(printed(io)).toContain('None.');
     expect(printed(io)).toContain('Sealed quests: 0, 0 tokens in all, — minutes on average');
+    expect(printed(io)).toContain("Submits that changed files outside their quest's scope: 0 (0 files).");
   });
 
   it('refuses a day that is not one, and a window that ends before it starts', async () => {

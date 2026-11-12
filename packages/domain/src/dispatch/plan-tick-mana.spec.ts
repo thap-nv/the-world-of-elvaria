@@ -93,8 +93,15 @@ describe('planTick: mana (§3.5)', () => {
   });
 
   it('wakes a paused quest once its pool is awake, before anything new', () => {
+    // Q2 declares a scope and the paused quest has none: R2 of PS-05 keeps Q2 off while it works.
     const plan = planTick(snapshot([paused, quest(Q2)], [sleeper(), character('kael')]), NOW);
-    expect(plan).toMatchObject({ wakes: [Q1], claims: [{ quest: Q2, assignee: 'kael' }] });
+    expect(plan).toMatchObject({ wakes: [Q1], claims: [] });
+    const scoped = moved(workingBy(quest(Q1, { scope: ['a/**'] }), 'thorn', 10), 20, ['mana_out', 'mana']);
+    const apart = planTick(
+      snapshot([scoped, quest(Q2, { scope: ['b/**'] })], [sleeper(), character('kael')]),
+      NOW,
+    );
+    expect(apart).toMatchObject({ wakes: [Q1], claims: [{ quest: Q2, assignee: 'kael' }] });
     const full = planTick(
       snapshot([paused, quest(Q2)], [sleeper(), character('kael'), character('ella', { status: 'working' })]),
       NOW,

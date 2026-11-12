@@ -1,7 +1,8 @@
 // `elvaria quest add`: a quest straight to `open`, no Chancellor and no mana (implementation-plan §3.11, stage 0).
 // It sends `create_quest` with draft = false; the Steward gives the quest its id and writes the file (ADR 0005).
 // With --to, the quest names its assignee: only that character takes it, as after a reassign (P1-29). With
-// --contract, it heads a party (P1-18): its lead writes the contract and the parts.
+// --contract, it heads a party (P1-18): its lead writes the contract and the parts. With --scope, it names the files it
+// changes (PS-05): quests whose scopes meet never run at once on one territory.
 import {
   QUEST_TAGS_MAX,
   QUEST_TITLE_MAX_LENGTH,
@@ -16,6 +17,7 @@ import { EXIT } from '../command.ts';
 import { registryIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { assigneeFor, ceilingLines } from './assignee.ts';
+import { readScope } from './scope.ts';
 import { questsMissing, readTerritory } from './references.ts';
 import { commandHeader, sendCommand } from './send-command.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
@@ -189,6 +191,7 @@ async function runQuestAdd(input: CommandInput, cli: CliContext): Promise<ExitCo
     return EXIT.failed;
   }
   const seal = flagOption(input, 'seal');
+  const scope = readScope(input);
   const payload = {
     draft: false,
     title: basics.title,
@@ -203,6 +206,7 @@ async function runQuestAdd(input: CommandInput, cli: CliContext): Promise<ExitCo
     ...(party.contract ? { party_role: 'contract' as const } : {}),
     ...(seal === undefined ? {} : { seal_required: seal }),
     ...(dependsOn.length === 0 ? {} : { depends_on: dependsOn }),
+    ...(scope.length === 0 ? {} : { scope_paths: scope }),
     ...('character' in named ? { assignee: named.character.id } : {}),
     created_by: 'user',
   } as const;
@@ -256,6 +260,7 @@ export const QUEST_ADD: CommandSpec = {
     params: { type: 'string', value: '<json>', help: 'cli.quest.add.option.params' },
     to: { type: 'string', value: '<character>', help: 'cli.quest.add.option.to' },
     contract: { type: 'boolean', help: 'cli.quest.add.option.contract' },
+    scope: { type: 'string', value: '<glob>', multiple: true, help: 'cli.quest.add.option.scope' },
   },
   run: runQuestAdd,
 };

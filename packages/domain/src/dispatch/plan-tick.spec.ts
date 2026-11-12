@@ -51,7 +51,7 @@ const CLAUDE = 'claude' as TribeId;
 
 describe('planTick: who takes an open quest', () => {
   it('gives each open quest to a free character of the class it requires', () => {
-    const quests = [quest(Q1), quest(Q2, { cls: 'dwarf' })];
+    const quests = [quest(Q1), quest(Q2, { cls: 'dwarf', territory: DOCS })];
     const characters = [
       character('wren', { cls: 'scribe' }),
       character('thorn'),
@@ -101,13 +101,13 @@ describe('planTick: order', () => {
 
   it('takes turns between territories: the one that had a quest taken least recently first', () => {
     const knights = [character('thorn'), character('kael')];
-    const earlier = workingBy(quest(Q3, { territory: DOCS }), 'brann', 5);
-    const later = workingBy(quest(Q4), 'ella', 30);
+    const earlier = inReview(quest(Q3, { territory: DOCS }), 'brann', 5);
+    const later = inReview(quest(Q4), 'ella', 30);
     // dc1-se-team had a quest taken at 09:30, handbook at 09:05: handbook first, though its quest ranks lower.
     const open = [quest(Q1, { rank: 'B' }), quest(Q2, { territory: DOCS, rank: 'E' })];
     expect(takers([...open, earlier, later], knights.slice(0, 1))).toEqual([[Q2, 'thorn']]);
     // Never taken from yet: the territory id decides, then each takes its turn.
-    const three = [quest(Q1), quest(Q2), quest(Q3, { territory: DOCS })];
+    const three = [quest(Q1, { scope: ['a'] }), quest(Q2, { scope: ['b'] }), quest(Q3, { territory: DOCS })];
     expect(takers(three, [...knights, character('ash', { tribe: 'gemini' })])).toEqual([
       [Q1, 'ash'],
       [Q3, 'kael'],
@@ -286,7 +286,7 @@ describe('planTick: the other steps', () => {
 
 describe('planTick and transition()', () => {
   it('plans claims the state machine accepts, a stretched one waiting for the seal', () => {
-    const quests = [quest(Q1, { rank: 'C' }), quest(Q2, { rank: 'C', cls: 'dwarf' })];
+    const quests = [quest(Q1, { rank: 'C' }), quest(Q2, { rank: 'C', cls: 'dwarf', territory: DOCS })];
     const characters = [character('kael', { level: 4 }), character('brann', { cls: 'dwarf', level: 3 })];
     const claimed = claimsOf(snapshot(quests, characters)).map(({ quest: id, assignee, level }) => {
       const before = quests.find((candidate) => candidate.id === id)!;
