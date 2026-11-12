@@ -3,9 +3,11 @@
 // rules. Each is a warning: a doctor that fails on a stopped Docker Desktop would say the kingdom is broken.
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import process from 'node:process';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { findExecutable } from '../process/find-executable.ts';
 import {
   baseEnv,
   fakeTool,
@@ -13,6 +15,7 @@ import {
   git,
   gitRepo,
   isolatedPath,
+  pathWithoutGit,
   printed,
   run,
   tempDir,
@@ -43,8 +46,11 @@ describe('elvaria doctor: what the quests of a territory need of the machine (P1
     return repo;
   }
 
-  const doctor = async (...dirs: string[]) => {
-    const env = { ...baseEnv(await isolatedPath(...dirs)), HOME: home, USERPROFILE: home };
+  /** The doctor with PATH holding `dirs`, git and node (`isolatedPath`). */
+  const doctor = async (...dirs: string[]) => doctorOn(await isolatedPath(...dirs));
+
+  const doctorOn = async (pathValue: string) => {
+    const env = { ...baseEnv(pathValue), HOME: home, USERPROFILE: home };
     const io = testIo({ env, home });
     await run(io, 'doctor', '--kingdom', kingdom, '--locale', 'en');
     const text = printed(io);
@@ -160,11 +166,16 @@ describe('elvaria doctor: what the quests of a territory need of the machine (P1
 
     // A command that starts with docker already has its own error, the missing program of P1-41; this line is for the
     // commands that reach docker through something else (`pnpm e2e:docker`).
-    it('warns when there is no docker program, for a command that reaches it through another one', async () => {
+    // PATH holds node alone: git's folder is /usr/bin on Linux, where the CI runner has a docker too (CI on 637b95e).
+    // The doctor then says git is missing, an error this test does not look at. A machine with a docker next to node
+    // cannot show the warning, so the test skips there.
+    it('warns when there is no docker program, for a command that reaches it through another one', async (ctx) => {
       await territory('dc1', {
         checks: [{ id: 'e2e', run: 'node e2e.mjs --docker', when: ['**'], timeout_minutes: 5 }],
       });
-      const { text } = await doctor();
+      const nodeOnly = pathWithoutGit();
+      if ((await findExecutable('docker', baseEnv(nodeOnly), process.platform)) !== undefined) ctx.skip();
+      const { text } = await doctorOn(nodeOnly);
       expect(text).toContain(
         '! The docker program is not on PATH, and territories dc1 have commands that use docker.',
       );
