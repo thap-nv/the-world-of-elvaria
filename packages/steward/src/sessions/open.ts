@@ -20,12 +20,13 @@ import { checksRunOf, takeChecks } from '../review/checks.ts';
 import { inScratch, judgeMayOpen } from '../review/scratch.ts';
 import { judgeParseOf } from '../review/verdict-file.ts';
 import { secretsBreaker } from './breaker.ts';
-import { continuationOf, requestOf } from './request.ts';
+import { continuationOf } from './continuation.ts';
+import { requestOf } from './request.ts';
 import { questSecretsOf, rememberSecrets, secretsLacking } from './secrets.ts';
 import { spawnOf } from './spawn.ts';
 import type { Context } from '../context.ts';
 import type { MovePayload } from '../record.ts';
-import type { SessionInput } from './request.ts';
+import type { SessionInput } from './input.ts';
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
