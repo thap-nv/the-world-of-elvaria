@@ -21,6 +21,7 @@ import type {
   CharacterId,
   Event,
   IdSource,
+  LoadTrace,
   Quest,
   QuestActor,
   QuestEvent,
@@ -53,6 +54,11 @@ export interface Move {
   readonly before?: Partial<Quest>;
   /** Why, should the move land in the infirmary (§3.4, P1-32); OUT_OF_ATTEMPTS when it does not say. */
   readonly infirmary?: InfirmaryCause;
+  /**
+   * What the prompt of the session this move opens carried (PS-01b, §3.16.1): on the line only, as `sequels` is; the
+   * quest file and attempt_log stay as they were.
+   */
+  readonly load_trace?: LoadTrace;
 }
 
 /** A line about something the files do not keep: verdict.*, command.*. */
@@ -193,6 +199,7 @@ async function move(deps: RecorderDeps, request: Move): Promise<Result<Quest, st
     quest: questViewOf(after.value),
     ...(moved.value.length > 0 ? { characters: moved.value.map(characterViewOf) } : {}),
     ...(sequels === undefined || sequels.length === 0 ? {} : { sequels }),
+    ...(request.load_trace === undefined ? {} : { load_trace: request.load_trace }),
   };
   await append(deps, { type, actor: actorOf(request.actor, found), data, quest: after.value, session }, at);
   return ok(after.value);

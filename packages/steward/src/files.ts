@@ -16,13 +16,20 @@ export { readDecree } from '@elvaria/store';
 export const readGazetteer = (root: string, territory: TerritoryId) =>
   readOptional(root, kingdomLayout.gazetteer(territory));
 
-/** The character's scripture, then the temple's (§3.7); the prompt leaves out empty ones. */
-export async function readScriptures(root: string, character: CharacterId): Promise<string[]> {
-  const texts = await Promise.all([
-    readOptional(root, kingdomLayout.scripture(character)),
-    readOptional(root, TEMPLE_SCRIPTURE),
-  ]);
-  return texts.filter((text) => text !== null);
+/** A scripture file: where it is in the kingdom (with `/`, as the load trace names it, PS-01b), and its text. */
+export interface Scripture {
+  readonly file: string;
+  readonly text: string;
+}
+
+/** The character's scripture, then the temple's (§3.7), those that exist; the prompt leaves out empty ones. */
+export async function readScriptures(root: string, character: CharacterId): Promise<Scripture[]> {
+  const files = [kingdomLayout.scripture(character), TEMPLE_SCRIPTURE];
+  const texts = await Promise.all(files.map((file) => readOptional(root, file)));
+  return files.flatMap((file, index) => {
+    const text = texts[index];
+    return text === null || text === undefined ? [] : [{ file, text }];
+  });
 }
 
 export const handoverPath = (root: string, quest: QuestId): string =>

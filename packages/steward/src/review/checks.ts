@@ -103,14 +103,21 @@ export async function checksOf(
   }
 }
 
-/** What `check.end` says of checks that ended (P1-10b): killed, unable to run, or what each gave. */
+/**
+ * What `check.end` says of checks that ended (P1-10b): killed, unable to run, or what each gave, and which check's
+ * environment failed when the run is set aside for it (PS-01b, (b) of P1-54): the bell alone told it before, to the
+ * terminal of `elvaria run`, and nothing was left of it once the Steward restarted.
+ */
 function endOf(ran: Result<RunChecks, string>, signal: AbortSignal): EventData<'check.end'> {
   if (signal.aborted) return { outcome: 'stopped', checks: [] };
   if (!ran.ok) return { outcome: 'error', checks: [] };
-  const { checks } = ran.value;
+  const { checks, environment } = ran.value;
   return {
     outcome: checks.every(({ pass }) => pass) ? 'pass' : 'fail',
     checks: checks.map(({ id, pass, duration_ms }) => ({ id, pass, duration_ms })),
+    ...(environment === undefined
+      ? {}
+      : { environment: { check: environment.check, line: environment.line } }),
   };
 }
 

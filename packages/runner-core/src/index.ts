@@ -98,6 +98,8 @@ export { buildChancellorPrompt } from './prompt/chancellor.ts';
 export { CONTEXT_FILE_MAX_CHARS, contextPathsIn, readContextFiles } from './prompt/context-files.ts';
 export type { ContextFile } from './prompt/context-files.ts';
 export type { ChancellorContext } from './prompt/chancellor.ts';
+export { PROMPT_BLOCK_IDS } from './prompt/prompt-blocks.ts';
+export type { PromptBlock, PromptBlockId, PromptPart, PromptWithBlocks } from './prompt/prompt-blocks.ts';
 export { resumedPrompt } from './prompt/resumed.ts';
 export { letterReminderPrompt } from './prompt/letter-reminder.ts';
 export type { Answered } from './prompt/resumed.ts';
