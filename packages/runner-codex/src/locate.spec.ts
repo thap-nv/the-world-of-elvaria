@@ -30,17 +30,22 @@ async function extension(
 }
 
 describe('locateCodex', () => {
-  it("finds the newest extension's binary on Windows when PATH has none", async () => {
-    await extension('openai.chatgpt-26.906.1-win32-x64', 'windows-x86_64', 'codex.exe');
-    const newest = await extension(
-      'openai.chatgpt-26.1106.51428-win32-x64',
-      'windows-x86_64',
-      'codex.exe',
-      'win32',
-    );
-    await mkdir(path.join(home, '.vscode', 'extensions', 'other.ext-1.0.0'), { recursive: true });
-    expect(await locateCodex({ USERPROFILE: home, PATH: '' }, 'win32')).toBe(newest);
-  });
+  // The search reads a real folder through Windows paths (`path.win32` of USERPROFILE), which only a Windows file
+  // system resolves: on macOS the home in %TEMP% reads `\var\folders\…` and nothing is found (CI, PS-21).
+  it.runIf(process.platform === 'win32')(
+    "finds the newest extension's binary on Windows when PATH has none",
+    async () => {
+      await extension('openai.chatgpt-26.906.1-win32-x64', 'windows-x86_64', 'codex.exe');
+      const newest = await extension(
+        'openai.chatgpt-26.1106.51428-win32-x64',
+        'windows-x86_64',
+        'codex.exe',
+        'win32',
+      );
+      await mkdir(path.join(home, '.vscode', 'extensions', 'other.ext-1.0.0'), { recursive: true });
+      expect(await locateCodex({ USERPROFILE: home, PATH: '' }, 'win32')).toBe(newest);
+    },
+  );
 
   it('looks on PATH and in npm first, and finds nothing in an empty home', async () => {
     const env = { HOME: home, PATH: '/usr/local/bin:/opt/bin' };
