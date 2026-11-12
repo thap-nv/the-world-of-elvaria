@@ -93,6 +93,7 @@ export * from './schema/registry-entries.ts';
 export * from './schema/registry.ts';
 export * from './schema/skill/constants.ts';
 export * from './schema/skill/skill.ts';
+export * from './schema/territory-checks.ts';
 export * from './schema/territory.ts';
 export * from './schema/tribe.ts';
 export * from './schema/world-map/constants.ts';
