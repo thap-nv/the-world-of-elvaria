@@ -15,6 +15,12 @@ import {
 } from './state-data.ts';
 import { PlotMergedDataSchema, PlotPatchedDataSchema, PlotRestoredDataSchema } from './plot-data.ts';
 import { MemoClosedDataSchema, MemoFiledDataSchema, MemoRoutedDataSchema } from './memo-data.ts';
+import {
+  UpgradeFailedDataSchema,
+  UpgradeRolledBackDataSchema,
+  UpgradeStartedDataSchema,
+  UpgradeSwitchedDataSchema,
+} from './upgrade-data.ts';
 import type { EventType } from './event-types.ts';
 
 // Where it always was for the Steward and the specs (P1-21); plot-data.ts holds it since P1-44.
@@ -242,6 +248,10 @@ export const EVENT_DATA_SCHEMAS = {
   'memo.filed': MemoFiledDataSchema,
   'memo.routed': MemoRoutedDataSchema,
   'memo.closed': MemoClosedDataSchema,
+  'upgrade.started': UpgradeStartedDataSchema,
+  'upgrade.switched': UpgradeSwitchedDataSchema,
+  'upgrade.rolled_back': UpgradeRolledBackDataSchema,
+  'upgrade.failed': UpgradeFailedDataSchema,
 } as const satisfies Partial<Record<EventType, z.ZodType>>;
 
 export type TypedEventType = keyof typeof EVENT_DATA_SCHEMAS;

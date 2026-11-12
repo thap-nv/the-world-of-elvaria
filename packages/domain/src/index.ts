@@ -74,6 +74,7 @@ export * from './schema/event/event-types.ts';
 export * from './schema/event/event.ts';
 export * from './schema/event/load-trace.ts';
 export * from './schema/event/state-data.ts';
+export * from './schema/event/upgrade-data.ts';
 export * from './schema/json-schema.ts';
 export * from './schema/kingdom.ts';
 export * from './schema/lesson/constants.ts';

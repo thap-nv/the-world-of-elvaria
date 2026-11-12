@@ -30,6 +30,9 @@ const QUEST_CHANGE = { quest: QUEST_VIEW, characters: [CHARACTER_VIEW] };
 const CHARACTER_CHANGE = { character: CHARACTER_VIEW };
 const TERRITORY_CHANGE = { territory: TERRITORY_VIEW };
 const POOL = { tribe: 'gemini', pool: 'gemini_models' };
+/** Two commits of the Elvaria repo: the build pinned before an upgrade, and the one it moves to (PS-04b). */
+const SHA_OLD = '4bc14e9d0c2a7f1e3b5d6a8c9e0f1a2b3c4d5e6f';
+const SHA_NEW = 'b0b2605a1c3e5f7a9b1d3f5a7c9e1b3d5f7a9c1e';
 
 // One valid `data` per type that has a data schema: the table must name every one of them.
 const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
@@ -110,6 +113,10 @@ const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
   'memo.filed': { memo: 'm_20261106_4k2pqz', kind: 'proposal', from: 'thorn' },
   'memo.routed': { memo: 'm_20261106_4k2pqz', route: 'chancellor' },
   'memo.closed': { memo: 'm_20261106_4k2pqz', decision: 'handled', quest: 'q_20261106_7k3m2a' },
+  'upgrade.started': { ref: 'main', to: SHA_NEW, from: SHA_OLD },
+  'upgrade.switched': { from: null, to: SHA_NEW },
+  'upgrade.rolled_back': { from: SHA_NEW, to: SHA_OLD },
+  'upgrade.failed': { to: SHA_NEW, step: 'doctor', reason: 'exit:1' },
 };
 
 describe('EventSchema', () => {

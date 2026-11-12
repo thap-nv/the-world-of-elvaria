@@ -46,6 +46,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria sandbox generate` | Sinh một ngày giả vào events/sandbox/ của vương quốc (sa bàn): không chạy phiên nào, không chạm nhiệm vụ thật. |
 | `elvaria sandbox replay <file>` | Phát lại một ngày giả thành dòng thời gian trên terminal. |
 | `elvaria migrate` | Chuyển mọi file cũ của vương quốc lên phiên bản hiện tại, có sao lưu, và thêm file, mục registry mà bản Elvaria này có và vương quốc còn thiếu. |
+| `elvaria upgrade` | Dựng một bản mới của Elvaria cạnh bản đang ghim, thử nó (migrate, doctor và bộ test hợp đồng với CLI giả trên một bản sao cấu hình của vương quốc, một nhiệm vụ bậc script trên vương quốc tạm), qua hết mới ghim rồi chạy migrate của nó trên vương quốc; --rollback về bản trước. 0 mana; không chạy khi Quản sự đang chạy. |
 
 ## Tùy chọn chung
 
@@ -56,6 +57,7 @@ Mọi lệnh đều nhận:
 | `--kingdom <dir>` | Thư mục vương quốc (mặc định: biến ELVARIA_KINGDOM). |
 | `--locale <vi\|en>` | Ngôn ngữ in ra: vi hoặc en (mặc định: ngôn ngữ của vương quốc). |
 | `-h, --help` | In hướng dẫn của lệnh. |
+| `--here` | Chạy lệnh bằng chính mã này, không bằng bản mà vương quốc đang ghim (.state/build.json). |
 
 ## `elvaria init`
 
@@ -104,6 +106,7 @@ Chạy bộ test hợp đồng với adapter của một tộc và kiểm kiểu
 | `<id>` | Một id tộc trong kingdom.json. |
 | `--scenarios` | Chạy mọi phép kiểm: CLI là bản giả, diễn các kịch bản của bộ test từ ELVARIA_FAKE_SCENARIO. |
 | `--model <model>` | Model của nhân vật thăm dò (mặc định: default_model của tộc). |
+| `--tool <path>` | Thử một CLI khác thay cho CLI đã ghim (một bản mới, hay CLI giả với --scenarios), chỉ trong lần chạy này: kingdom.json không đổi, tộc không được bật. |
 
 ## `elvaria tribe disable`
 
@@ -394,3 +397,12 @@ Phát lại một ngày giả thành dòng thời gian trên terminal.
 Chuyển mọi file cũ của vương quốc lên phiên bản hiện tại, có sao lưu, và thêm file, mục registry mà bản Elvaria này có và vương quốc còn thiếu.
 
 Không có tham số riêng, chỉ các tùy chọn chung.
+
+## `elvaria upgrade`
+
+Dựng một bản mới của Elvaria cạnh bản đang ghim, thử nó (migrate, doctor và bộ test hợp đồng với CLI giả trên một bản sao cấu hình của vương quốc, một nhiệm vụ bậc script trên vương quốc tạm), qua hết mới ghim rồi chạy migrate của nó trên vương quốc; --rollback về bản trước. 0 mana; không chạy khi Quản sự đang chạy.
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `--ref <ref>` | Commit, nhánh hay tag của repo Elvaria mà lệnh này chạy từ đó (mặc định: main). |
+| `--rollback` | Ghim lại bản trước, không dựng gì. |

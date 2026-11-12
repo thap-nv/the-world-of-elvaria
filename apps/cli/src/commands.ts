@@ -29,6 +29,7 @@ import { TRIBE_ADD } from './tribe/add.ts';
 import { TRIBE_CHECK } from './tribe/check.ts';
 import { TRIBE_DISABLE } from './tribe/disable.ts';
 import { TRIBE_LIST } from './tribe/list.ts';
+import { UPGRADE } from './upgrade/upgrade.ts';
 import { WAKE } from './wake.ts';
 import type { CommandSpec } from './command.ts';
 
@@ -69,4 +70,5 @@ export const COMMANDS: readonly CommandSpec[] = [
   SANDBOX_GENERATE,
   SANDBOX_REPLAY,
   MIGRATE,
+  UPGRADE,
 ];
