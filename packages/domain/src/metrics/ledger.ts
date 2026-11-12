@@ -6,6 +6,7 @@ import { inWindow } from './window.ts';
 import type { OwnerCommandKind } from './causes.ts';
 import type { QuestTrail, TripAt } from './rework.ts';
 import type { MetricsWindow } from './window.ts';
+import type { QuestId } from '../core/ids.ts';
 import type { InboxCommand, InboxCommandOf } from '../schema/command/inbox-command.ts';
 import type { Event } from '../schema/event/event.ts';
 import type { Quest } from '../schema/quest/quest.ts';
@@ -17,18 +18,27 @@ export interface MetricsInput {
   /** The kingdom's own event log (not the sandbox's), in the order it was written. */
   readonly events: readonly Event[];
   /**
-   * inbox/done: the commands the Steward handled. Only those with a `command.applied` line count, since that line
-   * names the command but not its kind (until PS-01b).
+   * inbox/done: the commands the Steward handled. Only those with a `command.applied` line count; the file gives the
+   * quest a command was on, and its kind to a line written before PS-01b, which names none.
    */
   readonly commands: readonly InboxCommand[];
 }
 
-export type OwnerCommand = InboxCommandOf<OwnerCommandKind>;
+/** An owner's command on a quest that the Steward applied. */
+export interface OwnerCommand {
+  readonly id: string;
+  readonly kind: OwnerCommandKind;
+  /** The quest it was on, from inbox/done; null when only its log line is left, which names no quest. */
+  readonly quest: QuestId | null;
+  /** When the owner wrote it, from inbox/done; else when the Steward applied it. */
+  readonly ts: string;
+}
 
 const isOwnerKind = (kind: string): kind is OwnerCommandKind =>
   (OWNER_COMMAND_KINDS as readonly string[]).includes(kind);
 
-const isOwnerCommand = (command: InboxCommand): command is OwnerCommand => isOwnerKind(command.kind);
+const isOwnerCommand = (command: InboxCommand): command is InboxCommandOf<OwnerCommandKind> =>
+  isOwnerKind(command.kind);
 
 /** Each quest with its verdicts and its infirmary trips. */
 export function trailsOf(input: MetricsInput): QuestTrail[] {
@@ -53,15 +63,24 @@ export function sessionModelsOf(events: readonly Event[]): ReadonlyMap<string, s
   return models;
 }
 
-/** The owner's commands on quests that the Steward applied inside the window. */
+/**
+ * The owner's commands on quests that the Steward applied inside the window, one per `command.applied` line. The
+ * line's `kind` decides when it has one (PS-01b), so a command whose file left inbox/done still counts; inbox/done
+ * names the kind of an older line, and the quest of any.
+ */
 export function ownerCommandsOf(input: MetricsInput, window: MetricsWindow): OwnerCommand[] {
-  const applied = new Set(
-    input.events.flatMap((event) => (isEventOf(event, 'command.applied') ? [event.data.command_id] : [])),
-  );
-  return input.commands.filter(
-    (command): command is OwnerCommand =>
-      isOwnerCommand(command) && applied.has(command.id) && inWindow(window, command.ts),
-  );
+  const files = new Map(input.commands.map((command) => [command.id, command]));
+  const seen = new Set<string>();
+  return input.events.flatMap((event): OwnerCommand[] => {
+    if (!isEventOf(event, 'command.applied') || seen.has(event.data.command_id)) return [];
+    seen.add(event.data.command_id);
+    const file = files.get(event.data.command_id);
+    const kind = event.data.kind ?? file?.kind;
+    const ts = file?.ts ?? event.ts;
+    if (kind === undefined || !isOwnerKind(kind) || !inWindow(window, ts)) return [];
+    const quest = file !== undefined && isOwnerCommand(file) ? file.payload.quest : null;
+    return [{ id: event.data.command_id, kind, quest, ts }];
+  });
 }
 
 /**

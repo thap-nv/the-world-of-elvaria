@@ -82,13 +82,22 @@ export async function applyCommand(ctx: Context, command: InboxCommand): Promise
   return quest === undefined ? rejected('unknown_quest') : onQuest(ctx, command, quest);
 }
 
+/**
+ * The command's line. `kind` (PS-01b) lets the metrics ledger count the owner's steps from the log alone; a file no
+ * command could be read from has none to give.
+ */
 async function answered(
   ctx: Context,
   id: string,
   outcome: Exclude<Outcome, { status: 'waiting' }>,
+  kind?: InboxCommand['kind'],
 ): Promise<void> {
   const type = outcome.status === 'applied' ? 'command.applied' : 'command.rejected';
-  const data = { command_id: id, ...(outcome.status === 'rejected' ? { reason: outcome.reason } : {}) };
+  const data = {
+    command_id: id,
+    ...(outcome.status === 'rejected' ? { reason: outcome.reason } : {}),
+    ...(kind === undefined ? {} : { kind }),
+  };
   await ctx.record.note({ type, actor: STEWARD, data });
   if (outcome.status === 'applied') ctx.counts.applied += 1;
   else ctx.counts.rejected += 1;
@@ -108,7 +117,7 @@ async function applyItem(ctx: Context, handled: Set<string>, item: InboxItem): P
   if (!handled.has(command.id)) {
     const outcome = await applyCommand(ctx, command);
     if (outcome.status === 'waiting') return true;
-    await answered(ctx, command.id, outcome);
+    await answered(ctx, command.id, outcome, command.kind);
     handled.add(command.id);
   }
   await ctx.deps.store.inbox.ack(item.name);

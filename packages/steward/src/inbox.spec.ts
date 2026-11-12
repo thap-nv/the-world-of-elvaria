@@ -50,6 +50,22 @@ describe('the inbox', () => {
     expect(kingdom.warnings).toHaveLength(1);
   });
 
+  it("names the command's kind on its line, applied or refused, but not that of a file no command is read from", async () => {
+    const { kingdom, steward } = await open();
+    await writeFile(path.join(kingdom.root, 'inbox', '01JCFB7Q2R8S4T6V9W3X5Y1Z0A.json'), '{ torn');
+    await kingdom.command('create_quest', questPayload('Add the orders API'));
+    await kingdom.command('confirm', { quest: 'q_20261107_zzzzzz' });
+    await steward.tick();
+    const kinds = (await openEventLog(kingdom.root).read()).events
+      .filter(({ type }) => type.startsWith('command.'))
+      .map(({ type, data }) => [type, data.kind]);
+    expect(kinds).toEqual([
+      ['command.rejected', undefined],
+      ['command.applied', 'create_quest'],
+      ['command.rejected', 'confirm'],
+    ]);
+  });
+
   it('applies a command once: one the log already answered is only moved, a quest is never made twice', async () => {
     const { kingdom, steward } = await open();
     const payload = questPayload('Add the orders API');

@@ -92,6 +92,7 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
   - Lượt đọc theo file (chốt 2026-11-11, sau Q10 của P1-50): sổ đo đếm các `agent.tool` `read` theo `path` của mỗi phiên (event đã có `path`, không cần trường mới), và `elvaria metrics` in các file bị đọc nhiều lần nhất trong một phiên, để thấy ngay quest nào lật cả một file lớn (Q10: 25 lần một file 1 MB).
 - **Không thêm** (chủ nhân chốt sau PS-01): gợi ý nguyên nhân để máy tách check đỏ vì file do Elvaria sinh, hay câu hỏi sau một tool bị từ chối, khỏi `output` và `question`. Nguyên nhân gốc đã sửa ở P1-23 và P1-24; chỉ làm khi sổ đo thấy lại.
 - **Test**: snapshot prompt không đổi một ký tự; dòng mở phiên có dấu vết; log cũ vẫn đọc được; một fixture đọc cùng một file nhiều lần trong một phiên ra đúng số lượt đọc.
+- **Thực tế** (2026-11-12, chi tiết ở §11): `request.ts` (292 dòng lúc mở task) tách thành `request.ts`, `prompt.ts`, `continuation.ts` và `input.ts` (luật `no-circular` tính cả import type); phần `--resume` chuyển từ `open.ts` vào `requestOf`, vì dấu vết của phiên tiếp tục phải đo prompt đã cắt. Trường trên dòng mở phiên tên là `load_trace`; khối mang thêm `part`, cũng vì phiên `--resume` giữ khối hệ thống. `kind` là mẫu id chứ không là danh sách kind, để bản cũ (PS-04b quay lui) vẫn đọc dòng của kind mới. Trên vương quốc thật, ngày 2026-11-11 và 12 ra 1 125 lượt đọc, 133 cặp phiên–file đọc hơn một lần; Q10 đứng đầu với 17 và 9 lượt `docs/implementation-plan.md` ở hai phiên (phiên điều phối đếm tay 16 và 9).
 
 ## PS-02 — Thư và việc phát sinh
 

@@ -184,7 +184,12 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   first-pass rate by class, tag, model and kind, escaped defects (the owner returned a passed run), the cost of each
   sealed quest and the owner's commands on quests. Causes are data (`src/metrics/causes.ts`): `OUTCOME_CAUSES`,
   `FAIL_KIND_CAUSES`, `TRIP_CAUSES` give `infra`, `output` or `question`, and `unknown` when the files tell
-  nothing; `OWNER_COMMAND_KINDS` lists the commands that count as stepping in.
+  nothing; `OWNER_COMMAND_KINDS` lists the commands that count as stepping in, by the `kind` of their
+  `command.applied` line, or of their inbox/done file for a line written before PS-01b. From the log alone
+  (`src/metrics/log-counts.ts`, PS-01b): the runs of checks set aside for their environment (`check.end` `environment`)
+  and each session's reads by file (`agent.tool` reads), the files read more than once first.
+- Gives the load trace of a session's opening line its shape (`LoadTraceSchema`, `src/schema/event/load-trace.ts`,
+  PS-01b): the scripture files and their lines, the skill ids and the prompt's blocks by part, id and size.
 - Gives the core types every package builds on: `Result`, branded ids (`QuestId`, `TribeId`, ...), `Clock` and
   `Instant`, `zonedTime` (local day and ISO offset in `kingdom.tz`), `IdSource` (ULIDs and dated ids).
 - Names every number it decides with in `src/constants.ts` and the `constants.ts` of the folders that have one.

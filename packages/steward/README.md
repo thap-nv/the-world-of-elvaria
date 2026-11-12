@@ -129,8 +129,12 @@
   disabled tribe refuses the command and creates no quest, as for `reassign` (the domain's `namedAssignee`).
   Other kinds are refused with `unsupported` until their task. A `create_quest` that asks for a secret its
   territory does not allow is refused with `secret_not_allowed` (ADR 0013).
-- Opens sessions through `AgentRunner` only (ADR 0006, 0021): the plot, the prompt and tool policy of
-  `runner-core`, the budget, `.runs/<quest>-<n>`, and the env (§3.9): the minimal env it was given, the
+- Writes what each session's prompt carried on the line that opens it (`load_trace`, PS-01b, `sessions/load-trace.ts`):
+  the scripture files and their lines, the skills and the prompt's blocks; `command.applied` and `command.rejected`
+  name the command's `kind`, and `check.end` names the check whose environment failed when the run is set aside
+  (`environment`, (b) of P1-54), so the metrics ledger reads them from the log.
+- Opens sessions through `AgentRunner` only (ADR 0006, 0021): the plot, the prompt (`sessions/prompt.ts`) and tool
+  policy of `runner-core`, the budget, `.runs/<quest>-<n>`, and the env (§3.9): the minimal env it was given, the
   `ELVARIA_*` context of the hook and exactly the quest's `secrets_required` from the treasury (`sessionEnvOf`
   of `sessions/secrets.ts`); a name the territory no longer allows or the treasury lacks opens no session
   (`secretsLacking` asks first, by name only). The same secrets (`questSecretsOf`, read before the plot) go to

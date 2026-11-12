@@ -1,5 +1,5 @@
 // The files the metrics ledger reads (implementation-plan §3.16.1): quests, verdicts, the event log and the inbox
-// commands the Steward handled (inbox/done/, since `command.applied` names a command but not its kind until PS-01b).
+// commands the Steward handled (inbox/done/: the quest of a command, and the kind of a line written before PS-01b).
 // Everything is read, nothing written: no lock, no migration written back, so a kingdom is measured while its
 // Steward runs, or stopped. Shared with scripts/docs-metrics-report.mjs, so the report and the command count alike.
 import { readFile, readdir } from 'node:fs/promises';

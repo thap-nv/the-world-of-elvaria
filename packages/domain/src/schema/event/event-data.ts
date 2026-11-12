@@ -126,7 +126,17 @@ const ManaWarningDataSchema = z
     ),
   );
 
-const CommandResultDataSchema = z.strictObject({ command_id: UlidSchema, reason: z.string().optional() });
+const CommandResultDataSchema = z.strictObject({
+  command_id: UlidSchema,
+  reason: z.string().optional(),
+  // Optional and added after v1 (PS-01b): a line written before it, or of a file no command could be read from, has
+  // none. A pattern, not the list of kinds, so an older build still reads the line of a kind it does not know.
+  kind: SnakeIdSchema.optional().meta(
+    describe(
+      "The command's `kind` (InboxCommand.kind), so the metrics ledger counts the owner's steps from the log alone; inbox/done/ names it for lines written before PS-01b.",
+    ),
+  ),
+});
 
 // The machine checks of a submitted run run outside the tick (P1-25) for minutes, while the quest sits in review with
 // no judge: these two lines tell the owner and the world that they run (P1-10b). The world animates them; it does
@@ -155,6 +165,21 @@ const CheckEndDataSchema = z.strictObject({
     .meta(
       describe(
         'The checks that ran, in order (verdict.checks without their logs); empty unless pass or fail.',
+      ),
+    ),
+  // Optional and added after v1 (PS-01b, (b) of P1-54): a line written before it, or of checks set aside for no
+  // environment, has none, so `v` stays 1.
+  environment: z
+    .strictObject({
+      check: SnakeIdSchema.meta(describe('The first failing check whose log showed its environment failed.')),
+      line: NonEmptyStringSchema.meta(
+        describe("The line of its log that one of the territory's environment_errors found, masked."),
+      ),
+    })
+    .optional()
+    .meta(
+      describe(
+        "fail only: the Steward set the run's checks aside because their environment failed (P1-54: Docker down, a container gone), so no judge reads them and they run again later. Without it a restarted Steward, the world and the metrics ledger could not tell such a run from a failing one.",
       ),
     ),
 });

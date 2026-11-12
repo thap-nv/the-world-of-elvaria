@@ -17,6 +17,7 @@ import { DateTimeSchema, NonEmptyStringSchema, RANKS } from '../common.ts';
 import { CharacterViewSchema } from '../../world/character-view.ts';
 import { QuestViewSchema } from '../../world/quest-view.ts';
 import { TerritoryViewSchema } from '../../world/territory-view.ts';
+import { LoadTraceSchema } from './load-trace.ts';
 
 const describe = (description: string) => ({ description });
 
@@ -52,6 +53,8 @@ const QUEST_CHANGE = {
         "The line that tells a session's end: the sessions that followed the first in the same run (a reply tried once more for a tribe without structured output, a reminder of an unchanged letter, P1-33), in order. The envelope `session` is the first one's, and attempt_log has one entry for them all, so the log counts every session a run opened (P1-49).",
       ),
     ),
+  // Optional and added after v1 (PS-01b), as `sequels`: a line written before it, or no opening line, has none.
+  load_trace: LoadTraceSchema.optional(),
 };
 
 export const QuestChangeDataSchema = z.strictObject(QUEST_CHANGE);

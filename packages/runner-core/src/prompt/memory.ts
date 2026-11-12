@@ -1,7 +1,8 @@
 // What a continuing assignee reads instead of a transcript (ADR 0010, 0017): the letter, the journal's tail, the
 // branch's log, and the memos the quest's letters filed (PS-02, ADR 0024), so the session does not write them again.
-// Out of blocks.ts, whose file reached its limit.
-import { fenced, fill, joinBlocks } from './templates.ts';
+// Out of blocks.ts, whose file reached its limit. The memos are a block of their own after the continuation
+// (`memos`, PROMPT_BLOCK_IDS), so the load trace counts them apart (PS-01b).
+import { fenced, fill } from './templates.ts';
 import type { PromptTemplates } from './templates.ts';
 import type { Memo } from '@elvaria/domain';
 
@@ -35,14 +36,11 @@ export function memosBlock(memos: readonly FiledMemo[] | undefined, t: PromptTem
 
 export function memoryBlock(memory: Memory, t: PromptTemplates): string {
   const journal = memory.journal.slice(-JOURNAL_TAIL_LINES);
-  return joinBlocks([
-    fill(t.memory, {
-      handover: present(memory.handover)
-        ? fenced(memory.handover, 'markdown')
-        : 'None: the earlier session left no letter.',
-      journal: journal.length === 0 ? 'None.' : fenced(journal.join('\n'), 'jsonl'),
-      git_log: present(memory.git_log) ? fenced(memory.git_log) : 'No commits yet.',
-    }),
-    memosBlock(memory.memos, t),
-  ]);
+  return fill(t.memory, {
+    handover: present(memory.handover)
+      ? fenced(memory.handover, 'markdown')
+      : 'None: the earlier session left no letter.',
+    journal: journal.length === 0 ? 'None.' : fenced(journal.join('\n'), 'jsonl'),
+    git_log: present(memory.git_log) ? fenced(memory.git_log) : 'No commits yet.',
+  });
 }
