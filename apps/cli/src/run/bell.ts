@@ -83,6 +83,14 @@ export function lineOf(t: Translate, notice: Notice): string {
       return t('cli.run.notice.question', { ...quest, question: notice.question });
     case 'subquests_refused':
       return t('cli.run.notice.subquests_refused', { ...quest, reason: notice.reason });
+    case 'environment':
+      return t('cli.run.notice.environment', {
+        ...quest,
+        check: notice.check,
+        line: notice.line,
+        minutes: notice.recheck_minutes,
+        log: notice.log_path ?? '—',
+      });
     case 'unjudgeable':
       return t('cli.run.notice.unjudgeable', {
         ...quest,

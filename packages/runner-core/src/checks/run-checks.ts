@@ -1,28 +1,30 @@
 // The machine checks that run before a judge opens a session (implementation-plan §3.2, ADR 0008): the territory's
 // checks whose `when` globs match what the quest touched, one after another in the plot, each with its log in
 // `.runs/<quest>-<n>/checks/<id>.log`. The machine is the primary judge, so a check that cannot run (shell syntax,
-// program not found, the exclusive lock never freed) fails rather than vanishing from the verdict.
-import { performance } from 'node:perf_hooks';
-
+// program not found, the exclusive lock never freed) fails rather than vanishing from the verdict. A failing check
+// whose log shows its environment failed (territory.environment_errors) says so (P1-54): its run says nothing of the
+// work. The checks that are not exclusive run first, so a check of seconds never waits out the lock (P1-54).
 import type { PartyRole, Territory, TerritoryCheck, VerdictCheck } from '@elvaria/domain';
-import { acquireLock, inKingdom } from '@elvaria/store';
-import type { HeldLock } from '@elvaria/store';
 
+import { withEnvironment } from './environment.ts';
+import { exclusiveWaitOf, underExclusiveLock } from './exclusive-lock.ts';
+import type { LockScope } from './exclusive-lock.ts';
 import { headerOf, openLog, runLine, runLines } from './logged-run.ts';
 import type { ProcessHost } from '../process/program.ts';
 import { selectChecks } from './select-checks.ts';
 import { sessionEnv } from '../treasury/session-env.ts';
 
+export { exclusiveLockOf } from './exclusive-lock.ts';
+
 export const MS_PER_MINUTE = 60_000;
 /** A cleanup only clears what a killed check left behind (containers, locks): minutes, not the check's hour. */
 export const CLEANUP_TIMEOUT_MS = 5 * MS_PER_MINUTE;
-/** Beyond the longest exclusive check: time for a crashed holder's lock to go stale (store STALE_MS). */
-const LOCK_MARGIN_MS = MS_PER_MINUTE;
 
 export interface ChecksRequest {
   /** The kingdom root, native: logs and the exclusive lock live there. */
   readonly kingdom: string;
-  readonly territory: Pick<Territory, 'id' | 'checks'>;
+  /** `environment_errors` absent: no failing check is told apart as its environment's (P1-54). */
+  readonly territory: Pick<Territory, 'id' | 'checks'> & Partial<Pick<Territory, 'environment_errors'>>;
   /** Paths the quest changed, relative to the plot (PlotManager.touched). */
   readonly touched: readonly string[];
   /** The plot, native: every check runs there. */
@@ -67,18 +69,33 @@ export interface CheckRun {
   /** null when the check timed out or never started. */
   readonly exit_code: number | null;
   readonly timed_out: boolean;
+  /**
+   * The line of its log that shows it failed because of its environment, not the work (P1-54): one of the
+   * territory's environment_errors, or the machine's own lockBusyLine. Never on a passing check.
+   */
+  readonly environment?: string;
 }
 
 /** Portable, relative to the kingdom. */
 export const checkLogOf = (runDir: string, id: string): string => `${runDir}/checks/${id}.log`;
-/** One lock per territory, shared by every quest on it (`checks[].exclusive`: Docker, e2e). */
-export const exclusiveLockOf = (territory: string): string => `.state/checks/${territory}-exclusive`;
 
 export const toVerdictCheck = ({ id, pass, duration_ms, log_path }: CheckRun): VerdictCheck => ({
   id,
   pass,
   duration_ms,
   log_path,
+});
+
+/** How long a command of `request` waits for the territory's exclusive lock. */
+export const lockWaitOf = (request: ChecksRequest, options: ChecksOptions = {}): number =>
+  options.lock_wait_ms ?? request.lock_wait_ms ?? exclusiveWaitOf(request.territory.checks);
+
+/** The exclusive lock of the request's territory, waited for `waitMs` or until the request's stop. */
+export const lockScopeOf = (request: ChecksRequest, waitMs = lockWaitOf(request)): LockScope => ({
+  kingdom: request.kingdom,
+  territory: request.territory.id,
+  wait_ms: waitMs,
+  signal: request.signal,
 });
 
 /**
@@ -94,12 +111,43 @@ export function withSecrets(
   return { host: { ...host, env }, known: Object.values(secrets).filter((value) => value !== '') };
 }
 
+/**
+ * How runCheck runs one check: whether the caller holds the territory's exclusive lock already (an exclusive check),
+ * else how long its cleanup waits for it.
+ */
+export interface RunCheckOptions {
+  readonly locked?: boolean;
+  readonly lock_wait_ms?: number;
+}
+
+/**
+ * The cleanup of a check that timed out (implementation-plan §9.2) clears containers and locks an exclusive check of
+ * another quest may stand on, so it runs under the territory's lock (P1-54); one that never gets it is said and left.
+ */
+async function cleanUp(
+  cleanup: string,
+  scope: { request: ChecksRequest; options: RunCheckOptions },
+  context: Parameters<typeof runLine>[1],
+  log: Parameters<typeof runLine>[2],
+): Promise<void> {
+  const { request, options } = scope;
+  await log.write(`\n$ ${cleanup}\n`);
+  const clean = () => runLine(cleanup, context, log, CLEANUP_TIMEOUT_MS);
+  if (options.locked === true) {
+    await clean();
+    return;
+  }
+  const done = await underExclusiveLock(lockScopeOf(request, options.lock_wait_ms), clean);
+  if (!done.ok) await log.write(`${done.error}: the cleanup did not run\n`);
+}
+
 /** One check, to its end or its timeout; `cleanup` runs after a timeout (implementation-plan §9.2). */
 export async function runCheck(
   check: TerritoryCheck,
   request: ChecksRequest,
   host: ProcessHost,
   timeoutMs: number = check.timeout_minutes * MS_PER_MINUTE,
+  options: RunCheckOptions = {},
 ): Promise<CheckRun> {
   const logPath = checkLogOf(request.run_dir, check.id);
   const given = withSecrets(host, request.secrets);
@@ -109,14 +157,13 @@ export async function runCheck(
     host: given.host,
     ...(request.signal === undefined ? {} : { signal: request.signal }),
   };
+  let ran: CheckRun;
   try {
     // A check of several commands stops at the first that fails, as CI's `&&` (P1-20).
     const run = await runLines(check.run, context, log, timeoutMs);
-    if (run.timed_out && check.cleanup !== undefined) {
-      await log.write(`\n$ ${check.cleanup}\n`);
-      await runLine(check.cleanup, context, log, CLEANUP_TIMEOUT_MS);
-    }
-    return {
+    if (run.timed_out && check.cleanup !== undefined)
+      await cleanUp(check.cleanup, { request, options }, context, log);
+    ran = {
       id: check.id,
       pass: run.exit_code === 0,
       duration_ms: run.duration_ms,
@@ -127,19 +174,8 @@ export async function runCheck(
   } finally {
     await log.close();
   }
-}
-
-/**
- * The lock, or undefined once `waitMs` has passed or `signal` aborted; each try already waits a little (store's
- * lock retries).
- */
-async function holdLock(target: string, waitMs: number, signal?: AbortSignal): Promise<HeldLock | undefined> {
-  const deadline = performance.now() + waitMs;
-  for (;;) {
-    const held = await acquireLock(target, { wait: waitMs > 0 });
-    if (held.ok) return held.value;
-    if (performance.now() >= deadline || signal?.aborted === true) return undefined;
-  }
+  // Read once the log is closed, so masked: the line goes to the owner.
+  return withEnvironment(ran, request.kingdom, request.territory.environment_errors);
 }
 
 async function runExclusive(
@@ -148,44 +184,44 @@ async function runExclusive(
   host: ProcessHost,
   waitMs: number,
 ): Promise<CheckRun> {
-  const { kingdom, territory } = request;
-  const held = await holdLock(inKingdom(kingdom, exclusiveLockOf(territory.id)), waitMs, request.signal);
-  if (held !== undefined) {
-    try {
-      return await runCheck(check, request, host);
-    } finally {
-      await held.release();
-    }
-  }
+  const scope = lockScopeOf(request, waitMs);
+  const timeoutMs = check.timeout_minutes * MS_PER_MINUTE;
+  const ran = await underExclusiveLock(scope, () =>
+    runCheck(check, request, host, timeoutMs, { locked: true }),
+  );
+  if (ran.ok) return ran.value;
   const logPath = checkLogOf(request.run_dir, check.id);
-  const log = await openLog(kingdom, logPath, headerOf(check.run));
-  await log.write(`elvaria: another quest kept the exclusive checks of ${territory.id} for ${waitMs} ms\n`);
+  const log = await openLog(request.kingdom, logPath, headerOf(check.run));
+  await log.write(`${ran.error}\n`);
   await log.close();
-  return { id: check.id, pass: false, duration_ms: 0, log_path: logPath, exit_code: null, timed_out: false };
+  const run = { id: check.id, pass: false, duration_ms: 0, log_path: logPath, exit_code: null };
+  // The machine kept the check from running: no word on the work (P1-54).
+  return { ...run, timed_out: false, environment: ran.error };
 }
 
-const exclusiveWaitOf = (checks: readonly TerritoryCheck[]): number =>
-  Math.max(0, ...checks.filter((check) => check.exclusive).map((check) => check.timeout_minutes)) *
-    MS_PER_MINUTE +
-  LOCK_MARGIN_MS;
-
 /**
- * Runs the checks `request.touched` selects, in the territory's order, one at a time; an exclusive one first
- * takes the territory's lock, so two quests never run their Docker or e2e checks at once.
+ * Runs the checks `request.touched` selects, one at a time: those that are not exclusive first, in the territory's
+ * order, then the exclusive ones, each after it takes the territory's lock, so two quests never run their Docker or
+ * e2e checks at once and a short check never stands behind a lock another quest holds (P1-54).
  */
 export async function runChecks(
   request: ChecksRequest,
   host: ProcessHost,
   options: ChecksOptions = {},
 ): Promise<CheckRun[]> {
-  const waitMs = options.lock_wait_ms ?? request.lock_wait_ms ?? exclusiveWaitOf(request.territory.checks);
+  const waitMs = lockWaitOf(request, options);
+  const selected = selectChecks(request.territory.checks, request.touched, request.party_role);
+  const ordered = [
+    ...selected.filter((check) => !check.exclusive),
+    ...selected.filter((check) => check.exclusive),
+  ];
   const runs: CheckRun[] = [];
-  for (const check of selectChecks(request.territory.checks, request.touched, request.party_role)) {
+  for (const check of ordered) {
     if (request.signal?.aborted === true) break;
     runs.push(
       check.exclusive
         ? await runExclusive(check, request, host, waitMs)
-        : await runCheck(check, request, host),
+        : await runCheck(check, request, host, undefined, { lock_wait_ms: waitMs }),
     );
   }
   return runs;

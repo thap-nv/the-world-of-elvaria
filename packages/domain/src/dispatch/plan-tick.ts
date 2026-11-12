@@ -6,12 +6,13 @@
 // to their assignee, open quests are claimed (round-robin over territories, then rank, then age), and open quests
 // nobody can take are named. Step 7 lists the done quests still to deliver. Checks and scripts run outside the tick
 // (P1-25): a quest whose machine work still runs gets nothing more until it ends, and no more of them start than
-// dispatch.max_background leaves room for (P1-47).
+// dispatch.max_background leaves room for (P1-47), short work beside the trials included (background-room.ts, P1-54).
 import { breakersOf, measureOf } from '../breaker/breakers.ts';
 import { failStreakReached } from '../character/fail-streak.ts';
 import { machineMergeDue } from '../party/machine-merge.ts';
 import { questFinished } from '../quest/finished.ts';
 import { partyOf } from '../verify/past-assignees-of.ts';
+import { startingNow } from './background-room.ts';
 import { claimBlocker } from './claim-blocker.ts';
 import { reassignsOf } from './reassigns.ts';
 import { planReviews } from './reviews.ts';
@@ -77,7 +78,8 @@ export interface TickPlan {
   /**
    * Step 4, first (P1-25): submitted session-tier quests whose checks the Steward starts now, outside the tick; their
    * judge, or the machine's verdict, comes in a tick after the checks ended. A quest no judge may ever take gets none.
-   * No more than dispatch.max_background leaves room for beside the work running (P1-47); the others wait.
+   * No more than dispatch.max_background leaves room for beside the work running (P1-47), an acceptance part first
+   * and outside it, a short one beside trials that hold every slot (startingNow, P1-54); the others wait.
    */
   readonly checks: readonly QuestId[];
   /** Step 4: submitted session-tier quests with their checks done, and their verifier (selectVerifier, §3.2). */
@@ -222,21 +224,6 @@ const heldPastBreakers = (
     measureOf(characters, snapshot.limits),
   );
 
-/**
- * The checks and scripts that start outside the tick now (P1-47, (b) of P1-25), in the room dispatch.max_background
- * leaves beside the work running: checks first, their quests' work done and waiting for a judge; what finds no room
- * waits for a later tick's plan. A sandbox day has no background, so no cap: its checks take no time.
- */
-function startingNow(snapshot: KingdomSnapshot, checks: readonly QuestId[], scripts: readonly QuestId[]) {
-  const { background } = snapshot;
-  const room =
-    background === undefined
-      ? Number.POSITIVE_INFINITY
-      : Math.max(0, snapshot.kingdom.dispatch.max_background - background.running.length);
-  const due = checks.slice(0, room);
-  return { checks: due, scripts: scripts.slice(0, room - due.length) };
-}
-
 /** The plan of this tick; `now` dates the claims for the round-robin over territories. */
 export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
   const byId = new Map(snapshot.characters.map((character) => [character.id, character]));
@@ -267,6 +254,7 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
     step.roster,
     step.character,
     inStatus('review').filter((quest) => quest.tier === 'session' && typeof quest.verifier !== 'string'),
+    now,
   );
   const running = new Set(snapshot.background?.running);
   const scripts = open.filter(({ tier }) => tier === 'script').map(({ id }) => id);

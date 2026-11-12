@@ -31,7 +31,13 @@
   progress instead of waiting for it, the claim is given back, and the tick claims nothing more.
   `Steward.idle()` resolves once the work running now has ended (what a spec waits on). No more of it runs at once
   than `dispatch.max_background` (P1-47, 2 by default until a run measures the load): `planTick` starts checks
-  first, then scripts, in the room the running work leaves, and the rest waits for a later tick.
+  first, then scripts, in the room the running work leaves, and the rest waits for a later tick; an acceptance
+  part's checks, which run no command, go first and take no slot, and short work runs beside trials that hold
+  every slot (P1-54).
+- Sets aside checks that failed because of their environment (P1-54, `src/review/environment.ts`): a failing check
+  whose log shows a line of the territory's `environment_errors` (Docker not running, a container gone) gets no
+  judge, so its assignee keeps its level and no flake quest opens; the bell says so once per run (`environment`
+  notice, `src/notice.ts`) and the checks run again `ENVIRONMENT_RECHECK_MINUTES` later until they pass.
 - Trips the breakers (§3.4, P1-06; `src/sessions/breaker.ts`): `planTick` names each held session past its
   minutes (`quest.budget.max_minutes`, from its own attempt_log entry) or its tokens (the running total of its
   `usage` signals against `budget.max_tokens`, times `breakers.verifier_tokens_multiplier` for a judge); turns are
@@ -162,7 +168,7 @@
   checks run as `Plots.trial` (a fresh scratch plot of the branch, reset, three runs, coverage against the base),
   its judge opens in that plot (`Plots.scratch`) with Edit and Write and without commit or push, and the plot is
   removed after the judge's session whatever its end (`Plots.releaseScratch`, also after a breaker, the machine's
-  verdict and at archive). On a territory with exclusive checks the judge opens only once the Steward holds the territory's exclusive lock, kept for its session (`src/review/exclusive.ts`, released at its end, by a tick when it lost its session, and at `stop()`), so it runs e2e too; the checks of other quests wait for it (`exclusiveWaitMinutes`). A verdict that fails on a flake (`flake_check`, or a judge's `flaky`) opens one quest
+  verdict and at archive). On a territory with exclusive checks the judge opens only once the Steward holds the territory's exclusive lock, kept for its session (`src/review/exclusive.ts`, released at its end, by a tick when it lost its session, and at `stop()`), so it runs e2e too; after failing checks it waits for no lock and runs no exclusive check (P1-54: the pass rule fails the quest, the judge reads why); the checks of other quests wait for it (`exclusiveWaitMinutes`). A verdict that fails on a flake (`flake_check`, or a judge's `flaky`) opens one quest
   of the ritual's `flaky_follow_up` (`fix`, knight) before the quest moves on; the quest's branch never changes.
 - Puts the quest's plot back to its commit after a judge outside a scratch plot (P1-44, `src/review/after-judge.ts`),
   and after the machine checks in the quest's own plot, before the judge opens (P1-47, `src/review/checks.ts`): the
@@ -182,7 +188,7 @@
   verdict, a breaker or a session without a verdict) gets the same results while the plot's head is the commit they
   ran on (`Plots.head`, P1-38); a moved head and a plot without git get their own run. A judge in a scratch plot
   leaves with its plot: the next one gets a fresh scratch plot (`Plots.prepareScratch`, after `commands.setup`, then
-  `commands.reset` once with its own log, P1-47) and the same trial while the head stays, the trial run again once
+  `commands.reset` once with its own log, P1-47, under the exclusive lock, P1-54) and the same trial while the head stays, the trial run again once
   it moved or the plot could not be made or reset (P1-42). A
   judge a breaker stopped is not chosen again in that run while another judge may take the review (domain
   `cutVerifiersOf`). The prompt shows the end of each failing check's log (`src/review/log-tail.ts`: the last 40 lines, at most
@@ -342,3 +348,7 @@ uncommitted and says why; a plot whose changes cannot be listed is not committed
 `apprentice-breaker.spec.ts`: the
 infirmary note after an apprentice overran or was cut. `review-breakers.spec.ts`: two verifiers stopped by the
 token breaker, or by their CLI's turn limit, send the review to the infirmary and no third opens.
+`environment-checks.spec.ts` (P1-54): checks whose log shows their environment failed get no judge, no level
+change, no flake quest and one bell, wait `ENVIRONMENT_RECHECK_MINUTES` before they run again, and are judged once
+they pass. `trial-red.spec.ts` (P1-54, real git): after a red trial the judge of a scratch plot opens while another
+quest keeps the exclusive lock, and gets no exclusive check's command.

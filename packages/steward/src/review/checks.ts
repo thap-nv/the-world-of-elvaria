@@ -12,16 +12,34 @@
 // They get the quest's secrets as its sessions do (P1-10b), resolved in the tick before they start, and they tell
 // the owner and the world when they start and end (`check.start`, `check.end`): the quest waits in review meanwhile.
 // What their commands wrote in the quest's own plot (a generator) goes once they ended, before the judge opens
-// (P1-47, (b) of P1-44; restore.ts), as it goes after a judge.
-import { MS_PER_MINUTE, currentRun, err, exclusiveWaitMinutes, ok, runDirOf } from '@elvaria/domain';
+// (P1-47, (b) of P1-44; restore.ts), as it goes after a judge. Checks whose environment failed (P1-54) are set aside
+// for a later run, out of every judge's reach (environment.ts).
+import {
+  MS_PER_MINUTE,
+  currentRun,
+  environmentFailureOf,
+  err,
+  exclusiveWaitMinutes,
+  ok,
+  runDirOf,
+} from '@elvaria/domain';
 import { toVerdictCheck } from '@elvaria/runner-core';
-import type { EventData, Quest, QuestId, Result, Territory, VerdictCheck } from '@elvaria/domain';
+import type {
+  EnvironmentFailure,
+  EventData,
+  Quest,
+  QuestId,
+  Result,
+  Territory,
+  VerdictCheck,
+} from '@elvaria/domain';
 
 import { partyChecks } from '../party/check.ts';
 import { STEWARD } from '../record.ts';
 import { secretsBreaker } from '../sessions/breaker.ts';
 import { questSecretsOf, secretsLacking } from '../sessions/secrets.ts';
 import { deliverableChecks } from './deliverable-checks.ts';
+import { setAside } from './environment.ts';
 import { restorePlot } from './restore.ts';
 import { inScratch, trialFor } from './scratch.ts';
 import type { CheckedRun } from '../background.ts';
@@ -35,6 +53,17 @@ export interface ChecksOptions {
   readonly secrets?: Readonly<Record<string, string>>;
 }
 
+/** What the checks of a run gave, and the first failing one whose environment failed (P1-54). */
+export interface RunChecks {
+  readonly checks: VerdictCheck[];
+  readonly environment?: EnvironmentFailure;
+}
+
+/** How long an exclusive check, or a reset, waits for the territory's lock: a judge may hold it for its session (P1-20). */
+const lockWaitOf = (ctx: Context, territory: Territory): number =>
+  exclusiveWaitMinutes(territory.checks, ctx.world.registry.rituals, ctx.world.kingdom.breakers) *
+  MS_PER_MINUTE;
+
 /** The checks of run `n`, or why they could not run at all (the review then waits for a later tick). */
 export async function checksOf(
   ctx: Context,
@@ -42,7 +71,7 @@ export async function checksOf(
   territory: Territory,
   n: number,
   options: ChecksOptions = {},
-): Promise<Result<VerdictCheck[], string>> {
+): Promise<Result<RunChecks, string>> {
   try {
     const runDir = runDirOf(quest, n, 'assignee');
     const { signal, secrets } = options;
@@ -53,23 +82,20 @@ export async function checksOf(
     // A party's merge quest runs every check, its parts leave the deferred ones to it (P1-18, §3.15).
     const role = quest.party_role === undefined ? {} : { party_role: quest.party_role };
     // An exclusive check waits out a judge that holds the territory's lock for its session (P1-20).
-    const minutes = exclusiveWaitMinutes(
-      territory.checks,
-      ctx.world.registry.rituals,
-      ctx.world.kingdom.breakers,
-    );
-    const asked = { territory, run_dir: runDir, lock_wait_ms: minutes * MS_PER_MINUTE, ...given, ...role };
+    const asked = { territory, run_dir: runDir, lock_wait_ms: lockWaitOf(ctx, territory), ...given, ...role };
     // Tests as the product: the checks run again in a clean scratch plot, three times, coverage beside (ADR 0022).
     const runs = inScratch(ctx, quest)
       ? await ctx.deps.plots.trial({ ...asked, quest, ...trialFor(ctx, quest) })
       : await ctx.deps.plots.check({ ...asked, plot: quest.plot });
     // The deliverable's own checks follow the territory's (P1-15: subquests.json of a plan quest), then the party's
     // (P1-18: every part merged into the merge quest).
-    return ok([
+    const checks = [
       ...runs.map(toVerdictCheck),
       ...(await deliverableChecks(ctx, quest, runDir)),
       ...(await partyChecks(ctx, quest, runDir)),
-    ]);
+    ];
+    const environment = environmentFailureOf(runs);
+    return ok(environment === undefined ? { checks } : { checks, environment });
   } catch (error) {
     ctx.deps.log.warn(`steward: ${quest.id}: the checks did not run: ${messageOf(error)}`);
     return err('checks_failed');
@@ -77,12 +103,13 @@ export async function checksOf(
 }
 
 /** What `check.end` says of checks that ended (P1-10b): killed, unable to run, or what each gave. */
-function endOf(checks: Result<VerdictCheck[], string>, signal: AbortSignal): EventData<'check.end'> {
+function endOf(ran: Result<RunChecks, string>, signal: AbortSignal): EventData<'check.end'> {
   if (signal.aborted) return { outcome: 'stopped', checks: [] };
-  if (!checks.ok) return { outcome: 'error', checks: [] };
+  if (!ran.ok) return { outcome: 'error', checks: [] };
+  const { checks } = ran.value;
   return {
-    outcome: checks.value.every(({ pass }) => pass) ? 'pass' : 'fail',
-    checks: checks.value.map(({ id, pass, duration_ms }) => ({ id, pass, duration_ms })),
+    outcome: checks.every(({ pass }) => pass) ? 'pass' : 'fail',
+    checks: checks.map(({ id, pass, duration_ms }) => ({ id, pass, duration_ms })),
   };
 }
 
@@ -125,6 +152,8 @@ export async function startChecks(ctx: Context, questId: QuestId): Promise<Resul
   const n = currentRun(quest);
   // A trial its last judge spent in a scratch plot: the next judge may reuse it (P1-42).
   const kept = ctx.background.spent(questId, n);
+  // The run's checks were set aside for their environment already: the owner heard of it then (P1-54).
+  const told = ctx.background.held(questId, n) !== undefined;
   ctx.background.checks(questId, n, async (signal) => {
     if (kept !== undefined) {
       const reused = await keptTrial(ctx, { quest, territory, kept, secrets, signal });
@@ -142,7 +171,9 @@ export async function startChecks(ctx: Context, questId: QuestId): Promise<Resul
     // Checks that ran (to their end, or stopped) in the quest's own plot leave it as its commit has it (P1-47); a
     // trial ran in its scratch plot, and checks that could not run touched nothing.
     if (!inScratch(ctx, quest)) await restorePlot(ctx, quest, { by: 'checks' });
-    return { checks: checks.value, head };
+    const { environment } = checks.value;
+    if (environment === undefined || signal.aborted) return { checks: checks.value.checks, head };
+    return { checks: checks.value.checks, head, environment: await setAside(ctx, quest, environment, told) };
   });
   return ok(undefined);
 }
@@ -203,7 +234,11 @@ async function keptTrial(ctx: Context, given: KeptTrial): Promise<CheckedRun | u
     return undefined;
   }
   try {
-    await ctx.deps.plots.prepareScratch(quest, territory, { secrets, signal });
+    await ctx.deps.plots.prepareScratch(quest, territory, {
+      secrets,
+      signal,
+      lock_wait_ms: lockWaitOf(ctx, territory),
+    });
     return kept;
   } catch (error) {
     ctx.deps.log.warn(`steward: ${quest.id}: no scratch plot without the trial: ${messageOf(error)}`);

@@ -9,13 +9,19 @@ import type { Rank } from '../schema/common.ts';
  * 22 000–155 000 (P1-35); rank C sessions 173 000–319 000, and one cut at 322 143 that needed 43 758 more in the next
  * session (P1-37), so C takes two budgets, as B does; a rank B contract spent more than 248 000 and the owner raised
  * such quests to 400 000–500 000 (P1-21). A and S, never measured, keep half a budget more per rank.
+ * (P1-54, P1-50 report §7, (b) of §8) Web work over many files on dc1 went past these at once: every rank D quest
+ * (Q3, Q6, Q8, Q1-d5) was cut in its first session at 240 000 (243 000–255 000), and rank C and B sessions at 480 000
+ * in four of the first six of wave 4 (450 000–500 000), ten of the 26 interventions. With 720 000 every C and B
+ * retry ended within the ceiling but two that passed it by under 5 %; rank D retries fit in 400 000 but one cut at
+ * 405 000. So D takes two budgets (480 000) and C, B three (720 000); A and S stay half a budget per rank above.
+ * E and F keep one: no rank E session came near 240 000 (Q11: 52 000).
  */
 export const CONTEXT_BUDGETS_BY_RANK: Readonly<Record<Rank, number>> = {
   F: 1,
   E: 1,
-  D: 1,
-  C: 2,
-  B: 2,
-  A: 2.5,
-  S: 3,
+  D: 2,
+  C: 3,
+  B: 3,
+  A: 3.5,
+  S: 4,
 };

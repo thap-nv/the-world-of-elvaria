@@ -1,6 +1,7 @@
 // `elvaria quest edit <id>`: the owner's way to change a quest without touching its file (implementation-plan
 // §9.2). The command carries the quest's updated_at as read now; the Steward rejects it if the quest changed in
-// between, so an edit never overwrites a change the owner has not seen.
+// between, so an edit never overwrites a change the owner has not seen; an edit of the budget alone is taken whatever
+// the quest became (P1-54: the Steward moves a running quest many times a minute, and only the owner sets a budget).
 import { QUEST_TITLE_MAX_LENGTH, RANKS } from '@elvaria/domain';
 import type { Rank } from '@elvaria/domain';
 

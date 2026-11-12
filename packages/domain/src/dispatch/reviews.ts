@@ -2,13 +2,16 @@
 // then a judge (selectVerifier) or the machine's verdict, or waits for a later tick; a quest whose judge the roster
 // does not have at all is named. The checks run outside the tick (P1-25): the Steward starts them, and the quest is
 // judged in a tick after they ended, so a long check never holds the inbox, the sessions' ends or the claims.
+import { recheckDue } from '../verify/environment.ts';
 import { selectVerifier, waitsForNoJudge } from '../verify/select-verifier.ts';
 import { partyOf } from '../verify/past-assignees-of.ts';
 import type { Roster } from './roster.ts';
+import type { Instant } from '../core/clock.ts';
 import type { CharacterId, QuestId } from '../core/ids.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
 import type { Quest } from '../schema/quest/quest.ts';
+import type { Registry } from '../schema/registry.ts';
 import type { VerifierClass, VerifierPolicy } from '../verify/select-verifier.ts';
 
 /**
@@ -20,6 +23,17 @@ export interface BackgroundWork {
   readonly running: readonly QuestId[];
   /** Quests in review whose checks for their next judge (or the machine's verdict) have ended. */
   readonly checked: readonly QuestId[];
+  /**
+   * Quests whose last checks failed because of their environment (P1-54), and when they ended: no judge reads them,
+   * and they run again once recheckDue says so. Absent: none.
+   */
+  readonly environment?: readonly EnvironmentHold[];
+}
+
+/** Checks of a quest set aside for their environment (environmentFailureOf), ended at `at`. */
+export interface EnvironmentHold {
+  readonly quest: QuestId;
+  readonly at: Instant;
 }
 
 export interface Verification {
@@ -32,7 +46,10 @@ export interface Verification {
 /** What step 4 reads of the snapshot. */
 export interface ReviewSource {
   readonly kingdom: Pick<Kingdom, 'dispatch'>;
-  readonly registry: { readonly classes: readonly VerifierClass[] };
+  /** Kinds and rituals tell a trial in a scratch plot from other checks (background-room.ts, P1-54). */
+  readonly registry: { readonly classes: readonly VerifierClass[] } & Partial<
+    Pick<Registry, 'kinds' | 'rituals'>
+  >;
   readonly quests: readonly Quest[];
   readonly characters: readonly Character[];
   readonly background?: BackgroundWork;
@@ -50,21 +67,32 @@ export interface Reviews {
   readonly unjudgeable: QuestId[];
 }
 
-/** Whether the quest's checks have ended, and whether they still have to start. */
-function checksState(background: BackgroundWork | undefined, quest: QuestId): 'ready' | 'running' | 'due' {
+/**
+ * Whether the quest's checks have ended, wait (running, or set aside for their environment until a recheck is due),
+ * or have to start.
+ */
+function checksState(
+  background: BackgroundWork | undefined,
+  quest: QuestId,
+  now: Instant,
+): 'ready' | 'waiting' | 'due' {
   if (background === undefined || background.checked.includes(quest)) return 'ready';
-  return background.running.includes(quest) ? 'running' : 'due';
+  if (background.running.includes(quest)) return 'waiting';
+  const held = background.environment?.find((hold) => hold.quest === quest);
+  return held === undefined || recheckDue(held.at, now) ? 'due' : 'waiting';
 }
 
 /**
  * Step 4 for the quests in `review` that need a judge, in priority order. A judge is taken from the roster only for
- * a quest whose checks have ended; checks start for a quest that some judge may take, now or later.
+ * a quest whose checks have ended; checks start for a quest that some judge may take, now or later, and again for
+ * one whose checks failed because of their environment once a recheck is due at `now` (P1-54).
  */
 export function planReviews(
   source: ReviewInput,
   roster: Roster,
   characterOf: (id: CharacterId | null | undefined) => Character | undefined,
   review: readonly Quest[],
+  now: Instant,
 ): Reviews {
   const planned: Reviews = { checks: [], verifications: [], machine: [], unjudgeable: [] };
   for (const quest of review) {
@@ -80,7 +108,7 @@ export function planReviews(
       planned.unjudgeable.push(quest.id);
       continue;
     }
-    const checks = checksState(source.background, quest.id);
+    const checks = checksState(source.background, quest.id, now);
     if (checks !== 'ready') {
       if (checks === 'due') planned.checks.push(quest.id);
       continue;

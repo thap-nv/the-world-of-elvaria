@@ -125,17 +125,18 @@ describe('a session past a breaker', () => {
 
   it('trips the tokens of a session that spent past the budget', async () => {
     const { kingdom, steward } = await open({ plays: { work: { Spends: ['hang'] } } }, (k) => ({
-      runners: { claude: spending(k.runners.claude, 240_001), gemini: k.runners.gemini },
+      runners: { claude: spending(k.runners.claude, 480_001), gemini: k.runners.gemini },
     }));
     await kingdom.command('create_quest', questPayload('Spends'));
     await steward.tick();
-    expect((await kingdom.quest('Spends')).budget.max_tokens).toBe(240_000);
+    // Rank D: two context budgets since P1-54, times the mana multiplier.
+    expect((await kingdom.quest('Spends')).budget.max_tokens).toBe(480_000);
     await pause(20);
     await steward.tick();
     const quest = await kingdom.quest('Spends');
     expect(quest.status).toBe('infirmary');
     expect(quest.attempt_log.at(-1)?.outcome).toBe('breaker');
-    expect(kingdom.notices.at(-1)).toMatchObject({ reason: 'breaker:tokens: 240001 tokens, limit 240000' });
+    expect(kingdom.notices.at(-1)).toMatchObject({ reason: 'breaker:tokens: 480001 tokens, limit 480000' });
   });
 
   it('lets a verifier past its time leave the review to the next one, with no bell', async () => {

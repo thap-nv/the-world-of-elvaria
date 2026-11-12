@@ -242,11 +242,23 @@ export async function openVerifier(
   if (lacking !== undefined) return secretsBreaker(ctx, quest, lacking);
   const n = currentRun(quest);
   const scratch = inScratch(ctx, quest);
+  // Failing checks fail the quest whatever its judge says (underPassRule): the judge reads their logs, runs none of
+  // the exclusive checks and waits for no lock (P1-54; P1-50 report §7: 9 to 33 minutes for a judge of 11–34 s).
+  const exclusive = ctx.background.ended(questId, n)?.checks.every(({ pass }) => pass) !== false;
   // A judge in its scratch plot runs the exclusive checks too: it waits, its checks kept, until it holds their lock.
-  if (scratch && !(await judgeMayOpen(ctx, quest, territory))) return ok(quest);
+  if (scratch && exclusive && !(await judgeMayOpen(ctx, quest, territory))) return ok(quest);
   const checks = await takeChecks(ctx, quest);
   if (!checks.ok) return checks;
-  const input = { role: 'verifier', quest, character, territory, n, checks: checks.value, scratch } as const;
+  const input = {
+    role: 'verifier',
+    quest,
+    character,
+    territory,
+    n,
+    checks: checks.value,
+    scratch,
+    exclusive,
+  } as const;
   const parse = judgeParseOf(ctx, quest, character, { n, checks: checks.value });
   const opened = await spawnFor(ctx, runner, input, null, parse);
   if (!opened.ok) return opened;
