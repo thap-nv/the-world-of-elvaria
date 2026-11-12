@@ -34,6 +34,10 @@ paths:
 - Append-only, một `write()` mỗi dòng, không fsync, không bao giờ viết lại. Đổi tên hay payload của event type đã phát cần hàm migrate theo `v` trong `src/migrations/`.
 - `src/redact*` thuộc danh sách "đọc trước khi sửa" (ADR 0013): mọi loại secret của `secrets.spec.ts` phải bị che.
 
+## Bẫy đã gặp
+
+- Câu từ chối của `protectedViolation` (`src/claude/tool-events.ts`: "is in a path your CLI refuses to write whatever its rules say") dùng cho mọi tộc, mà từ P1-49 `.git` nằm trong `cli_protected_paths` của mọi `policy.json` dù agy không tự khóa `.git` (spike Antigravity §15): với tộc Gemini câu đó sai về nguyên nhân. Model Flash của kiểm (c) của P1-49 vẫn hiểu đúng và không tìm đường vòng ([báo cáo P1-50](../../docs/guides/phase-1-rerun.md) §6); khi sửa câu này, nói luật thuộc Elvaria hay thuộc CLI theo tộc.
+
 ## Test
 
 - Payload stdin dựng theo tài liệu (`src/__fixtures__/claude-payloads.ts`, đủ 12 sự kiện) và payload thật của spike (`packages/runner-claude/fixtures/hook-payloads.jsonl`, `real-payloads.spec.ts`); mọi dòng ghi ra được đọc lại qua `EventSchema`.

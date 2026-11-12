@@ -28,6 +28,11 @@ paths:
 - Đổi `EVENT_TYPES` hay schema `data` của event → `pnpm docs:gen` (`docs/events.md`); bảng `events` của `packages/i18n/src/glossary.json` phải chứa type mới (`pnpm docs:check`).
 - Đổi `QUEST_TRANSITIONS` → `pnpm docs:gen` (bảng §2.5 của implementation-plan). Trước khi sửa máy trạng thái, đọc `src/quest/transitions.ts`, `transition.ts`, `effects.ts`, spec của chúng và §2.5.
 
+## Bẫy đã gặp
+
+- `retry` từ trạm xá đặt `attempts` về 0 (`quest/effects.ts`), nên với quest ghép `machineMergeDue` (`party/machine-merge.ts`) lại đúng: Quản sự chạy lượt của máy và nộp lại đúng commit vừa trượt, không có phiên hiệp sĩ nào (quest ghép Q1 của P1-50). Lượt của máy cũng tính vào `max_attempts`, nên quest ghép vào trạm xá sau hai phiên hiệp sĩ. Sửa một trong hai thì xét cả hai, kèm test cho chuỗi trượt → trạm xá → retry ([báo cáo P1-50](../../docs/guides/phase-1-rerun.md) §8 (e)).
+- Luật người chấm khác model so với `quest.assignee`; ở lượt của máy `assignee` là null nên không loại ai (P1-50: người chấm Sonnet chấm quest ghép mà hiệp sĩ Sonnet đã làm hai lượt trước).
+
 ## Test
 
 - Coverage 100 % (statements, branches, functions, lines) là gate (`vitest.config.mjs`). Fixture và builder của spec nằm ở `src/**/__fixtures__/`, ngoài coverage.

@@ -2,21 +2,21 @@
 
 > Sinh từ một vương quốc bằng `pnpm docs:gen --kingdom <thư mục>`; không sửa file này. Cùng số với `elvaria metrics` (implementation-plan §3.16.1, ADR 0027).
 
-Khoảng: 2026-11-07T19:20:38+07:00 → 2026-11-11T10:03:53+07:00; 4661 dòng event, 46 quest, 69 phán quyết, 144 lệnh đã xử lý.
+Khoảng: 2026-11-07T19:20:38+07:00 → 2026-11-12T07:00:50+07:00; 7785 dòng event, 59 quest, 117 phán quyết, 209 lệnh đã xử lý.
 
 ## Sổ đo (toàn bộ vương quốc)
 
-Lượt: 116 (111 phiên của nhân vật, 5 lượt của máy); 1 phiên dừng vì hết mana; 0 phiên thêm bên trong một lượt.
+Lượt: 200 (192 phiên của nhân vật, 8 lượt của máy); 1 phiên dừng vì hết mana; 0 phiên thêm bên trong một lượt.
 
-Làm lại: 43 phiên (hạ tầng 15, đầu ra 25, câu hỏi 3, không rõ 0).
+Làm lại: 86 phiên (hạ tầng 33, đầu ra 49, câu hỏi 4, không rõ 0).
 
-Đạt lượt đầu: 15/31 quest (48 %).
+Đạt lượt đầu: 20/51 quest (39 %).
 
 Lỗi lọt (chủ nhân trả bài sau một phán quyết đạt): 1.
 
-Lần cần chủ nhân: 49 lệnh, trên 23 của 41 quest.
+Lần cần chủ nhân: 84 lệnh, trên 42 của 59 quest.
 
-Quest được đóng dấu: 21, tổng 14391324 token, trung bình 47.9 phút từ phiên đầu tới phiên cuối.
+Quest được đóng dấu: 33, tổng 24963509 token, trung bình 86.5 phút từ phiên đầu tới phiên cuối.
 
 ## Theo ngày
 
@@ -26,20 +26,24 @@ Quest được đóng dấu: 21, tổng 14391324 token, trung bình 47.9 phút t
 | 2026-11-08 | 49 | 19 (4/12/3/0) | 6/13 | 26 |
 | 2026-11-09 | 36 | 14 (6/8/0/0) | 5/11 | 12 |
 | 2026-11-10 | 20 | 9 (4/5/0/0) | 2/4 | 8 |
-| 2026-11-11 | 8 | 1 (1/0/0/0) | 1/2 | 2 |
+| 2026-11-11 | 91 | 43 (19/23/1/0) | 6/22 | 37 |
+| 2026-11-12 | 1 | 1 (0/1/0/0) | 0/0 | 0 |
 
 ## Làm lại theo nguyên nhân
 
 | Nguyên nhân | Căn cứ | Giá trị | Người làm | Người chấm | Tổng |
 |---|---|---|---|---|---|
-| hạ tầng | kết thúc phiên | breaker | 8 | 4 | 12 |
-| hạ tầng | kết thúc phiên | crash | 2 | 1 | 3 |
-| đầu ra | loại lỗi của phán quyết | tests_fail | 5 | 4 | 9 |
+| hạ tầng | kết thúc phiên | breaker | 18 | 6 | 24 |
+| hạ tầng | kết thúc phiên | crash | 2 | 2 | 4 |
+| hạ tầng | loại lỗi của phán quyết | flaky | 2 | 2 | 4 |
+| hạ tầng | kết thúc phiên | partial | 0 | 1 | 1 |
+| đầu ra | loại lỗi của phán quyết | tests_fail | 8 | 9 | 17 |
+| đầu ra | loại lỗi của phán quyết | incomplete | 6 | 4 | 10 |
+| đầu ra | loại lỗi của phán quyết | other | 4 | 4 | 8 |
+| đầu ra | loại lỗi của phán quyết | wrong_facts | 4 | 4 | 8 |
 | đầu ra | loại lỗi của phán quyết | style | 2 | 2 | 4 |
-| đầu ra | loại lỗi của phán quyết | other | 2 | 2 | 4 |
-| đầu ra | loại lỗi của phán quyết | wrong_facts | 2 | 2 | 4 |
-| đầu ra | loại lỗi của phán quyết | incomplete | 2 | 2 | 4 |
-| câu hỏi | kết thúc phiên | blocked | 3 | 0 | 3 |
+| đầu ra | loại lỗi của phán quyết | scope_creep | 1 | 1 | 2 |
+| câu hỏi | kết thúc phiên | blocked | 4 | 0 | 4 |
 
 ## Đạt lượt đầu
 
@@ -47,26 +51,28 @@ Quest được đóng dấu: 21, tổng 14391324 token, trung bình 47.9 phút t
 |---|---|---|---|---|
 | Nghề | astrologer | 0 | 1 | 0 % |
 | Nghề | bard | 0 | 1 | 0 % |
-| Nghề | knight | 11 | 18 | 61 % |
-| Nghề | mage | 1 | 4 | 25 % |
+| Nghề | knight | 15 | 34 | 44 % |
+| Nghề | mage | 2 | 6 | 33 % |
 | Nghề | scout | 1 | 3 | 33 % |
-| Nghề | scribe | 2 | 4 | 50 % |
-| Tag | backend | 5 | 9 | 56 % |
-| Tag | docs | 5 | 10 | 50 % |
-| Tag | e2e | 1 | 6 | 17 % |
-| Tag | frontend | 4 | 10 | 40 % |
-| Tag | i18n | 1 | 2 | 50 % |
+| Nghề | scribe | 2 | 6 | 33 % |
+| Tag | backend | 7 | 19 | 37 % |
+| Tag | db | 1 | 2 | 50 % |
+| Tag | docs | 6 | 21 | 29 % |
+| Tag | e2e | 3 | 19 | 16 % |
+| Tag | frontend | 7 | 24 | 29 % |
+| Tag | i18n | 2 | 11 | 18 % |
 | Tag | infra | 4 | 5 | 80 % |
-| Model | claude-opus-5-5 | 2 | 6 | 33 % |
+| Tag | integration | 0 | 5 | 0 % |
+| Model | claude-opus-5-5 | 4 | 12 | 33 % |
 | Model | claude-opus-5-5-high | 1 | 1 | 100 % |
-| Model | claude-sonnet-5-5 | 10 | 17 | 59 % |
-| Model | gemini-3.8-flash-high | 0 | 2 | 0 % |
-| Model | gemini-4-argon-medium | 2 | 5 | 40 % |
+| Model | claude-sonnet-5-5 | 13 | 28 | 46 % |
+| Model | gemini-3.8-flash-high | 0 | 4 | 0 % |
+| Model | gemini-4-argon-medium | 2 | 6 | 33 % |
 | Dạng | analyze | 0 | 1 | 0 % |
-| Dạng | build | 10 | 16 | 63 % |
-| Dạng | document | 2 | 4 | 50 % |
-| Dạng | fix | 0 | 1 | 0 % |
-| Dạng | plan | 1 | 4 | 25 % |
+| Dạng | build | 14 | 29 | 48 % |
+| Dạng | document | 2 | 6 | 33 % |
+| Dạng | fix | 0 | 4 | 0 % |
+| Dạng | plan | 2 | 6 | 33 % |
 | Dạng | publish | 0 | 1 | 0 % |
 | Dạng | refactor | 1 | 1 | 100 % |
 | Dạng | research | 1 | 3 | 33 % |
@@ -76,12 +82,12 @@ Quest được đóng dấu: 21, tổng 14391324 token, trung bình 47.9 phút t
 | Lệnh | Số lần |
 |---|---|
 | return | 1 |
-| retry | 8 |
-| reassign | 2 |
-| edit_quest | 32 |
+| retry | 19 |
+| reassign | 3 |
+| edit_quest | 52 |
 | set_rank | 0 |
-| answer | 3 |
-| cancel | 3 |
+| answer | 4 |
+| cancel | 5 |
 
 ## Lỗi lọt
 
@@ -114,6 +120,18 @@ Quest được đóng dấu: 21, tổng 14391324 token, trung bình 47.9 phút t
 | q_20261109_y90za6 | 152347 | 5.4 | 2.9 |
 | q_20261110_d3c9d9 | 79311 | 38.1 | 1.3 |
 | q_20261110_vtrjmr | 700233 | 249.9 | 229.6 |
+| q_20261111_3f5tjv | 1422617 | 239.0 | 121.6 |
+| q_20261111_3gjkg9 | 1405356 | 79.0 | 23.4 |
+| q_20261111_3tgerv | 968333 | 43.7 | 29.6 |
+| q_20261111_57v2hj | 868664 | 396.5 | 36.6 |
+| q_20261111_76bkt3 | 288795 | 247.6 | 5.6 |
+| q_20261111_7yenh5 | 1017530 | 133.9 | 34.8 |
+| q_20261111_cmemx7 | 586010 | 155.2 | 19.9 |
+| q_20261111_jeyy8t | 858844 | 151.1 | 18.0 |
+| q_20261111_nr5nj2 | 894631 | 50.9 | 15.0 |
+| q_20261111_rxdmz4 | 1123536 | 84.6 | 35.0 |
+| q_20261111_zaq7w0 | 610151 | 254.1 | 14.5 |
+| q_20261111_zc5ssm | 527718 | 12.3 | 11.8 |
 
 ## Theo quest
 
@@ -154,12 +172,30 @@ Quest được đóng dấu: 21, tổng 14391324 token, trung bình 47.9 phút t
 | q_20261110_rstw4c | build | knight | 2 | 0/0/0/0 | có | 604828 | 0 |
 | q_20261110_t9rw6g | build | knight | 2 | 0/0/0/0 | có | 372830 | 1 |
 | q_20261110_vtrjmr | plan | mage | 6 | 3/1/0/0 | không | 700233 | 4 |
+| q_20261111_2cse0x | fix | knight | 6 | 0/4/0/0 | không | 879067 | 1 |
+| q_20261111_3f5tjv | build | knight | 4 | 2/0/0/0 | không | 1422617 | 3 |
+| q_20261111_3gjkg9 | document | scribe | 6 | 2/2/0/0 | không | 1405356 | 4 |
+| q_20261111_3tgerv | fix | knight | 3 | 1/0/0/0 | không | 968333 | 3 |
 | q_20261111_4xysc9 | build | knight | 2 | 0/0/0/0 | có | 271765 | 0 |
-| q_20261111_7pzkfv | research | scout | 2 | 1/0/0/0 | không | 249913 | 2 |
-| q_20261111_7yenh5 | build | knight | 1 | 0/0/0/0 | — | 150075 | 0 |
-| q_20261111_cmemx7 | build | knight | 1 | 0/0/0/0 | — | 0 | 0 |
+| q_20261111_57v2hj | build | knight | 12 | 3/5/0/0 | không | 868664 | 3 |
+| q_20261111_76bkt3 | build | knight | 6 | 0/3/0/0 | không | 288795 | 1 |
+| q_20261111_7pzkfv | research | scout | 2 | 1/0/0/0 | không | 925720 | 2 |
+| q_20261111_7yenh5 | build | knight | 8 | 1/4/1/0 | không | 1017530 | 1 |
+| q_20261111_8gg2w0 | build | knight | 4 | 0/2/0/0 | không | 534049 | 1 |
+| q_20261111_cmemx7 | build | knight | 5 | 1/2/0/0 | không | 586010 | 2 |
+| q_20261111_gashpm | build | knight | 2 | 0/0/0/0 | có | 257150 | 1 |
 | q_20261111_hb5d6q | analyze | — | 1 | 0/0/0/0 | — | 0 | 0 |
-| q_20261111_rxdmz4 | build | knight | 1 | 0/0/0/0 | — | 0 | 0 |
+| q_20261111_jeyy8t | build | knight | 2 | 0/0/0/0 | có | 858844 | 1 |
+| q_20261111_nr5nj2 | plan | mage | 3 | 1/0/0/0 | không | 894631 | 2 |
+| q_20261111_qk3s1r | fix | knight | 3 | 0/1/0/0 | không | 528208 | 1 |
+| q_20261111_qwpn0g | build | knight | 2 | 0/0/0/0 | có | 362475 | 1 |
+| q_20261111_rxdmz4 | build | knight | 6 | 3/1/0/0 | không | 1123536 | 4 |
+| q_20261111_sc0hyz | build | knight | 3 | 1/0/0/0 | không | 679781 | 2 |
+| q_20261111_td77zr | fix | knight | 1 | 0/0/0/0 | — | 217966 | 1 |
+| q_20261111_typ8nd | build | knight | 2 | 0/0/0/0 | có | 320919 | 1 |
+| q_20261111_vmkteq | document | scribe | 3 | 1/0/0/0 | không | 609123 | 2 |
+| q_20261111_zaq7w0 | build | knight | 4 | 2/0/0/0 | không | 610151 | 0 |
+| q_20261111_zc5ssm | plan | mage | 2 | 0/0/0/0 | có | 527718 | 0 |
 
 ## Giới hạn đã biết
 
