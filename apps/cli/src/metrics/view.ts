@@ -68,6 +68,8 @@ function summarySection(t: Translate, metrics: Metrics): MetricsSection {
         tokens: sealed.reduce((total, quest) => total + quest.tokens, 0),
         minutes: sealed.length === 0 ? NONE : minutes(span / sealed.length),
       }),
+      t('cli.metrics.line.set_aside', { count: metrics.set_aside.length }),
+      t('cli.metrics.line.reads', { total: metrics.reads.total, files: metrics.reads.repeated.length }),
     ],
   };
 }
@@ -189,7 +191,22 @@ function questSection(t: Translate, metrics: Metrics): MetricsSection {
   });
 }
 
-const LIMITS = ['rule', 'check', 'crash', 'cancelled', 'day'] as const;
+/** The rows of the repeated reads: a kingdom's log has thousands; the most read say which quest leafed a file. */
+const READS_SHOWN = 10;
+
+/** The files a session read more than once (PS-01b; Q10 of P1-50 read one 1 MB file 25 times). */
+function readsSection(t: Translate, metrics: Metrics): MetricsSection {
+  return tableSection(t('cli.metrics.title.reads', { shown: READS_SHOWN }), t('cli.metrics.none'), {
+    header: ['session', 'quest', 'path', 'reads'].map((column) =>
+      t(`cli.metrics.column.${column}` as 'cli.metrics.column.session'),
+    ),
+    rows: metrics.reads.repeated
+      .slice(0, READS_SHOWN)
+      .map((read) => [read.session, read.quest ?? NONE, read.path, count(read.reads)]),
+  });
+}
+
+const LIMITS = ['rule', 'check', 'crash', 'cancelled', 'day', 'set_aside', 'reads'] as const;
 
 const limitsSection = (t: Translate): MetricsSection => ({
   title: t('cli.metrics.title.limits'),
@@ -205,6 +222,7 @@ export const metricsSections = (t: Translate, metrics: Metrics): MetricsSection[
   escapedSection(t, metrics),
   sealedSection(t, metrics),
   questSection(t, metrics),
+  readsSection(t, metrics),
   limitsSection(t),
 ];
 

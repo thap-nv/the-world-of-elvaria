@@ -49,7 +49,9 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   answer when there is one). The system part opens with the royal decree when `<kingdom>/decree.md` exists, then
   the laws of the role and the craft of the character's class (`class_prompt`: the kingdom's `registry/<class.prompt_file>`
   without its maintainer note, `prompts/class.md`, P1-15), and last the territory's `context_files` for a tribe
-  whose CLI loads none (P1-33).
+  whose CLI loads none (P1-33). `buildPrompt` and `resumedPrompt` also give the prompt's blocks (`PromptBlock`:
+  part, id of `PROMPT_BLOCK_IDS`, size in characters; `src/prompt/prompt-blocks.ts`, PS-01b), the empty ones left
+  out; the text is joined as before, and the Steward writes the blocks into the session's load trace.
   The quest's facts carry its kind's delivery convention when the Steward needs a file of a given shape: a plan
   (`subquests`) writes its sub-quests as quest-draft JSON to `SUBQUESTS_FILE` (`subquests.json`) at the root of
   its plot, where its judge reads them and the Steward opens them once the quest is done (P1-14), with the

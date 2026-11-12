@@ -23,10 +23,11 @@ import {
 import { verifierChecks } from './checks.ts';
 import { contextFilesBlock } from './context-files.ts';
 import type { ContextFile } from './context-files.ts';
-import { fenced, fill, joinBlocks, sectionsOf } from './templates.ts';
-import type { BuiltPrompt } from '../runner/types.ts';
+import { composed } from './prompt-blocks.ts';
+import { fenced, fill, sectionsOf } from './templates.ts';
 import type { Continuation, Locale, Memory } from './blocks.ts';
 import type { PromptCheck } from './checks.ts';
+import type { NamedBlock, PromptWithBlocks } from './prompt-blocks.ts';
 import type { PromptTemplates } from './templates.ts';
 import type { Character, Quest, Registry, Ritual, Skill, Territory, Verdict } from '@elvaria/domain';
 
@@ -86,13 +87,12 @@ export interface VerifierPromptInput extends PromptBase {
  * The system part of a character: the decree, the laws of its role, the craft of its class, then the territory's
  * law and rules when its CLI does not load them (P1-33).
  */
-const systemOf = (input: PromptBase, role: string, className: string, t: PromptTemplates): string =>
-  joinBlocks([
-    decreeBlock(input.decree, t),
-    role,
-    classBlock(input.class_prompt, className, t),
-    contextFilesBlock(input.territory, input.context_files, t),
-  ]);
+const systemOf = (input: PromptBase, role: string, className: string, t: PromptTemplates): NamedBlock[] => [
+  ['decree', decreeBlock(input.decree, t)],
+  ['role', role],
+  ['class', classBlock(input.class_prompt, className, t)],
+  ['context_files', contextFilesBlock(input.territory, input.context_files, t)],
+];
 
 export type PromptInput = AssigneePromptInput | VerifierPromptInput;
 
@@ -104,7 +104,7 @@ const PASS_RULES: Readonly<Record<Ritual['pass_rule'], string>> = {
   agent_only: 'No machine check applies to this kind of work; your judgement decides.',
 };
 
-function assigneePrompt(input: AssigneePromptInput, t: PromptTemplates): BuiltPrompt {
+function assigneePrompt(input: AssigneePromptInput, t: PromptTemplates): PromptWithBlocks {
   const { quest, character, registry } = input;
   const characterClass = entryOf(registry.classes, character.class, 'class');
   const { territory, cli_search } = input;
@@ -122,16 +122,13 @@ function assigneePrompt(input: AssigneePromptInput, t: PromptTemplates): BuiltPr
     patch: patchBlock(policy, t),
     handover_template: fenced(fill(t.handover, { quest_id: quest.id }), 'markdown'),
   });
-  return {
-    system: systemOf(input, role, characterClass.name_en, t),
-    user: joinBlocks([
-      questBlock(quest, registry, input.territory, t),
-      gazetteerBlock(input.territory, input.gazetteer, t),
-      scriptureBlock(input.scriptures, t),
-      skillsBlock(input.skills, t),
-      continuationBlock(quest, input.territory, input.continuation, t),
-    ]),
-  };
+  return composed(systemOf(input, role, characterClass.name_en, t), [
+    ['quest', questBlock(quest, registry, input.territory, t)],
+    ['gazetteer', gazetteerBlock(input.territory, input.gazetteer, t)],
+    ['scripture', scriptureBlock(input.scriptures, t)],
+    ['skills', skillsBlock(input.skills, t)],
+    ['continuation', continuationBlock(quest, input.territory, input.continuation, t)],
+  ]);
 }
 
 /** The ritual's steps, each with its section of ritual-steps.md, in the ritual's order (no switch, ADR 0016). */
@@ -146,7 +143,7 @@ function stepsOf(ritual: Ritual, t: PromptTemplates): string {
     .join('\n\n');
 }
 
-function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): BuiltPrompt {
+function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): PromptWithBlocks {
   const { quest, character, registry } = input;
   const characterClass = entryOf(registry.classes, character.class, 'class');
   // The quest's tags may choose the ritual (ADR 0022): tests as the product are judged by mutation_check.
@@ -188,18 +185,16 @@ function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): BuiltPr
         : fenced(input.handover, 'markdown'),
     diff: diffBlock(input.diff, input.territory),
   });
-  return {
-    system: systemOf(input, role, characterClass.name_en, t),
-    user: joinBlocks([
-      questBlock(quest, registry, input.territory, t),
-      gazetteerBlock(input.territory, input.gazetteer, t),
-      scriptureBlock(input.scriptures, t),
-      partialBlock(input.partial, t),
-      review,
-    ]),
-  };
+  return composed(systemOf(input, role, characterClass.name_en, t), [
+    ['quest', questBlock(quest, registry, input.territory, t)],
+    ['gazetteer', gazetteerBlock(input.territory, input.gazetteer, t)],
+    ['scripture', scriptureBlock(input.scriptures, t)],
+    ['partial', partialBlock(input.partial, t)],
+    ['review', review],
+  ]);
 }
 
-export function buildPrompt(input: PromptInput, templates: PromptTemplates): BuiltPrompt {
+/** The prompt, and the blocks it is made of for the Steward's load trace (PS-01b); adapters read system and user. */
+export function buildPrompt(input: PromptInput, templates: PromptTemplates): PromptWithBlocks {
   return input.role === 'assignee' ? assigneePrompt(input, templates) : verifierPrompt(input, templates);
 }

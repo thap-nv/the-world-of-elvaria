@@ -116,7 +116,8 @@
   (`sleeping_mana`) with the gauge it waits for, a model's own cap before its pool, and lists the sleeping gauges
   under the table. Only those: the log does not keep the models an account lists in a group, so the prefix table
   alone would call an Argon character bound by "Gemini Models", which the Steward, reading agy's `/usage`, does not.
-- `metrics [--since <day>] [--until <day>] [--json]` (PS-01): the metrics ledger of `metricsOf` (`@elvaria/domain`)
+- `metrics [--since <day>] [--until <day>] [--json]` (PS-01, PS-01b: checks set aside for their environment, and the
+  files a session read again, the ten most read): the metrics ledger of `metricsOf` (`@elvaria/domain`)
   over the days asked, as plain tables or JSON. `src/metrics/read.ts` reads quests, verdicts, the event log and
   `inbox/done/` without a lock and writes nothing, so it runs beside a Steward; a file it cannot use is named on
   stderr and left out. `src/metrics/view.ts` turns the ledger into sections that `scripts/docs-metrics-report.mjs`
