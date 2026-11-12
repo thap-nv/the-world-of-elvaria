@@ -1,8 +1,12 @@
+import { writeFile } from 'node:fs/promises';
+import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { createFakeRunner } from '../runner/fake-runner.ts';
 import { CONFORMANCE_CHECKS, conformanceChecks, runConformance } from './checks.ts';
 import { FAKE_SCENARIOS } from './scenarios.ts';
+import { SPAWN_PROBE_FAILED, SPAWN_PROBE_OUT } from './spawn-probe.ts';
 import type { FakeRunnerOptions } from '../runner/fake-runner.ts';
 import type { AgentRunner } from '../runner/types.ts';
 import type { ConformanceTarget } from './target.ts';
@@ -31,7 +35,15 @@ describe('the conformance suite', () => {
 
   it('keeps to the checks that burn no mana with a real CLI (§10 question 5)', () => {
     const live = conformanceChecks({ ...fake(), live: true }).map(({ id }) => id);
-    expect(live).toEqual(['capabilities', 'doctor', 'probe', 'submit', 'hang', 'forbidden_command']);
+    expect(live).toEqual([
+      'capabilities',
+      'doctor',
+      'probe',
+      'submit',
+      'hang',
+      'forbidden_command',
+      'spawn_child',
+    ]);
   });
 
   it('skips what a runner does not claim', async () => {
@@ -47,12 +59,43 @@ describe('the conformance suite', () => {
     // Every session submits: it never crashes, never asks, and its "tool gate" lets the push through.
     const reports = await runConformance(fake({ scenarioOf: () => 'submit' }, 'liar'));
     const failed = reports.filter(({ outcome }) => outcome === 'failed').map(({ id }) => id);
-    expect(failed).toEqual(['crash', 'hang', 'rate_limit', 'forbidden_command', 'scratch_commit', 'ask']);
+    expect(failed).toEqual([
+      'crash',
+      'hang',
+      'rate_limit',
+      'forbidden_command',
+      'spawn_child',
+      'scratch_commit',
+      'ask',
+    ]);
     expect(reports.find(({ id }) => id === 'forbidden_command')?.problem).toContain(
       '`git push` was not refused',
     );
+    // A session that never runs the probe (P1-12e).
+    expect(reports.find(({ id }) => id === 'spawn_child')?.problem).toContain(
+      'did not run `node elvaria-spawn-probe.mjs`',
+    );
     // A judge in its scratch plot that keeps what it broke on a commit (P1-20).
     expect(reports.find(({ id }) => id === 'scratch_commit')?.problem).toContain('ran git commit');
+  });
+
+  it('fails a runner whose session runs a command but not the child it starts (P1-12e)', async () => {
+    // As Codex 0.167's unelevated sandbox did on Windows: the probe ran, its piped child did not.
+    const inner = createFakeRunner({ scenarioOf: () => 'submit' });
+    const sandboxed: ConformanceTarget = {
+      name: 'sandboxed',
+      createRunner: (): AgentRunner => ({
+        ...inner,
+        spawn: async (req) => {
+          await writeFile(path.join(req.cwd, SPAWN_PROBE_OUT), `${SPAWN_PROBE_FAILED}EPERM`);
+          return inner.spawn(req);
+        },
+      }),
+    };
+    const check = CONFORMANCE_CHECKS.find(({ id }) => id === 'spawn_child');
+    await expect(check?.run(sandboxed)).rejects.toThrow(
+      /could not start a child process \(child failed: EPERM\)/,
+    );
   });
 
   it('refuses commit and push to a judge in its scratch plot, though its class allows both (P1-20)', async () => {

@@ -12,6 +12,7 @@ import type { RunResult, RunnerSignal, SpawnRequest } from '@elvaria/runner-core
 import { FAKE_CODEX, fakeRunner, minimalEnv, openWorld, request } from './__fixtures__/codex.ts';
 import { CONTEXT_FILE } from './context-file.ts';
 import { NOT_SIGNED_IN } from './doctor.ts';
+import { SHELL_POLICY_ENV } from './runner.ts';
 import type { World } from './__fixtures__/codex.ts';
 
 let world: World;
@@ -88,6 +89,20 @@ describe('a session', () => {
     expect(session?.argv.slice(0, 2)).toEqual(['exec', 'resume']);
     expect(session?.prompt_chars).toBe(req.prompt.user.length);
     expect(existsSync(path.join(world.plot, CONTEXT_FILE))).toBe(false);
+  });
+
+  it("sets PowerShell's policy for the session's commands on Windows only, where mxc cannot read it (P1-12e)", async () => {
+    const log = path.join(world.root, 'calls.jsonl');
+    await run(request(world, { ELVARIA_FAKE_CODEX_LOG: log }));
+    const calls = (await readFile(log, 'utf8'))
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line) as { argv: string[]; ps_policy?: string });
+    const session = calls.find((call) => call.argv[0] === 'exec');
+    expect(session?.ps_policy).toBe(
+      process.platform === 'win32' ? SHELL_POLICY_ENV.PSExecutionPolicyPreference : undefined,
+    );
+    expect(SHELL_POLICY_ENV).toEqual({ PSExecutionPolicyPreference: 'RemoteSigned' });
   });
 });
 

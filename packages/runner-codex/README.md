@@ -15,15 +15,20 @@ launch, hook, env, timeout_ms?, platform?})`. `hook` is `hookCommand()` of `@elv
   prompt, the territory's `AGENTS.md`, `CLAUDE.md` and `territory.context_files` copied in (runner-core's
   `readContextFiles`, each cut at 24 000 characters), then what Codex's tools are for this class (the shell reads
   and searches; `apply_patch` writes; git's folder is read-only, the Steward commits; no sub-agents, no
-  `request_user_input`). The file goes when the session ends, or never started; a territory's own
-  `AGENTS.override.md` refuses the session and stays.
+  `request_user_input`; the file itself is Elvaria's, never edited or formatted). The file goes when the session
+  ends, or never started; a territory's own `AGENTS.override.md` refuses the session and stays. Its body sits
+  between `<!-- prettier-ignore-start -->` and `<!-- prettier-ignore-end -->`, an open code fence of a cut law file
+  closed first (`closeFences`), so a territory's `prettier --check .` passes in the session (P1-12e).
 - Spawns `codex exec --json --ignore-user-config --skip-git-repo-check --disable plugins --disable apps --disable
 image_generation -m <model> -c … --dangerously-bypass-hook-trust [--output-schema <run_dir>/schema.json] -` (or
   `codex exec resume … <thread_id> -`), without a shell, the prompt's user part on stdin, with the request's env
-  minus `GIT_*` and the session context as `ELVARIA_*`. Everything else goes through `-c`, the same for a new and a
-  resumed session (`exec resume` takes neither `-s`, `-C` nor `--add-dir`): `approval_policy="never"`,
-  `sandbox_mode` (`workspace-write` for a session with a write tool, `read-only` otherwise),
-  `windows.sandbox="unelevated"`, the temp folders out of the writable roots and the quest's folder in (the
+  minus `GIT_*` and the session context as `ELVARIA_*`, and on Windows `PSExecutionPolicyPreference=RemoteSigned`
+  (`SHELL_POLICY_ENV`: inside `mxc` PowerShell cannot read its policy, and `pnpm`, `npm`, `npx` are `.ps1` shims).
+  Everything else goes through `-c`, the same for a new and a resumed session (`exec resume` takes neither `-s`,
+  `-C` nor `--add-dir`): `approval_policy="never"`, `sandbox_mode` (`workspace-write` for a session with a write
+  tool, `read-only` otherwise), `windows.sandbox="mxc"` (`WINDOWS_SANDBOX`, P1-12e: Windows' own isolation, no
+  administrator, no setup, and a command may start its children; `unelevated` refused a piped child, `spawn EPERM`,
+  so no Vitest, esbuild or `pnpm -r`), the temp folders out of the writable roots and the quest's folder in (the
   handover letter), the network on, `history.persistence="none"`, `project_doc_max_bytes`, `web_search` (`live`
   for a class with WebFetch or WebSearch), `model_reasoning_effort` from the slug's end (`gpt-6-luna-low`), and the
   four hooks (`SessionStart`, `PreToolUse`, `PostToolUse`, `Stop`) as session flags, each with a POSIX `command`
@@ -63,8 +68,9 @@ blocked by PreToolUse hook: <reason>. Command: <command>`) into `tool_blocked` s
 
 - `@elvaria/runner-core` (types, `readContextFiles`, `writePolicyFile`, `runContextOf`, `contextEnv`, `openRunLog`,
   `openRunOutput`, `startChild`, `runToEnd`, `killTree`, `jsonOfText`, `readQuestion`, the signal channel, the
-  conformance suite). No third-party package. The specs run the hook from `packages/hooks/src` by path, never by
-  import.
+  conformance suite, the spawn probe). No third-party package at run time; `prettier` (dev only) checks in a spec
+  that `AGENTS.override.md` is as Prettier would write it. The specs run the hook from `packages/hooks/src` by path,
+  never by import.
 
 ## How to test
 
@@ -72,6 +78,13 @@ blocked by PreToolUse hook: <reason>. Command: <command>`) into `tool_blocked` s
 pnpm --filter @elvaria/runner-codex test
 pnpm --filter @elvaria/hooks build && ELVARIA_LIVE=1 pnpm --filter @elvaria/runner-codex test   # real Codex, a little usage
 ```
+
+With `ELVARIA_LIVE=1`, `live-sandbox.spec.ts` checks each fence of a writing session (its plot and quest folder
+writable; nothing beside the plot, nothing in the machine's temp folder, nothing in `.git`, no commit; the network
+on; a piped child starts) through `codex app-server` → `command/exec` with the session's own `-c` settings, no model
+call; then one session runs a test repo's `pnpm test` (Vitest) and `pnpm build` (esbuild), installed with the pnpm
+that runs the spec (`npm_execpath`), and a script that tries to write outside. On Windows `fake-codex-unelevated.mjs`
+gives the fake P1-12d's sandbox, where the spawn probe's child fails with `EPERM` as it did on the real CLI.
 
 `fixtures/fake-codex.mjs` stands in for Codex: it answers `--version`, `login status` and `app-server`
 (`fake-codex-server.mjs`: `hooks/list` from its own `-c` hooks, `account/rateLimits/read` from `rate-limits.json`),

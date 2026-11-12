@@ -3,7 +3,8 @@
 import assert from 'node:assert/strict';
 import { setTimeout as sleep } from 'node:timers/promises';
 
-import { conformanceRequest, openWorkspace } from './workspace.ts';
+import { readSpawnProbe } from './spawn-probe.ts';
+import { conformanceRequest, openWorkspace, prepareWorkspace } from './workspace.ts';
 import type { AgentRunner, RunResult, RunnerSignal, RunningSession } from '../runner/types.ts';
 import type { FakeScenario } from './scenarios.ts';
 import type { ConformanceTarget } from './target.ts';
@@ -16,6 +17,8 @@ export interface Played {
   readonly runner: AgentRunner;
   readonly result: RunResult;
   readonly signals: readonly RunnerSignal[];
+  /** What the spawn probe left in the plot (`spawn_child`); undefined when it never ran. */
+  readonly spawned?: string;
 }
 
 /** `promise`, or a failure naming `what` once `ms` have passed. */
@@ -60,6 +63,7 @@ export async function play(
   const timeout = target.timeout_ms ?? DEFAULT_TIMEOUT_MS;
   const workspace = await openWorkspace();
   try {
+    await prepareWorkspace(workspace, scenario);
     const session = await runner.spawn(conformanceRequest(workspace, scenario, runner, target));
     const signals = drain(session.signals);
     const id = await within(session.session_id, timeout, 'session_id');
@@ -69,7 +73,9 @@ export async function play(
     const result = await within(session.wait(), timeout, `${scenario}: wait`);
     assert.equal(result.session_id, id, 'the result names the session that ran');
     assert.ok(result.duration_ms >= 0);
-    return { runner, result, signals: await within(signals, timeout, `${scenario}: signals end`) };
+    const read = await within(signals, timeout, `${scenario}: signals end`);
+    const spawned = await readSpawnProbe(workspace.plot);
+    return { runner, result, signals: read, ...(spawned === undefined ? {} : { spawned }) };
   } finally {
     await workspace.remove();
   }

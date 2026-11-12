@@ -11,6 +11,7 @@ export const FAKE_SCENARIOS = [
   'forbidden_command',
   'ask',
   'scratch_commit',
+  'spawn_child',
 ] as const;
 export type FakeScenario = (typeof FAKE_SCENARIOS)[number];
 

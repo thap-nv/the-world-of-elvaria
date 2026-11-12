@@ -4,12 +4,22 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { check } from 'prettier';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { runContextOf, toolPolicyOf } from '@elvaria/runner-core';
 
 import { TERRITORY, openWorld, request } from './__fixtures__/codex.ts';
-import { CONTEXT_FILE, CONTEXT_HEADER, READ_LINE, codexNote, contextFileText } from './context-file.ts';
+import {
+  CONTEXT_FILE,
+  CONTEXT_HEADER,
+  FORMAT_IGNORE_END,
+  FORMAT_IGNORE_START,
+  READ_LINE,
+  closeFences,
+  codexNote,
+  contextFileText,
+} from './context-file.ts';
 import { removeRunFiles, writeRunFiles } from './run-files.ts';
 import type { World } from './__fixtures__/codex.ts';
 
@@ -49,12 +59,38 @@ describe('contextFileText', () => {
     const text = contextFileText('# Who you are\n', files, '# Your tools in Codex CLI');
     expect(
       text.startsWith(
-        `${CONTEXT_HEADER}\n\n# Who you are\n\n# Territory law and rules\n\n## CLAUDE.md\n\n# Law`,
+        `${CONTEXT_HEADER}\n\n${FORMAT_IGNORE_START}\n# Who you are\n\n# Territory law and rules\n\n## CLAUDE.md\n\n# Law`,
       ),
     ).toBe(true);
     expect(text).not.toContain('empty.md');
-    expect(text.endsWith('# Your tools in Codex CLI\n')).toBe(true);
-    expect(contextFileText('S', [], 'N')).toBe(`${CONTEXT_HEADER}\n\nS\n\nN\n`);
+    expect(text.endsWith(`# Your tools in Codex CLI\n${FORMAT_IGNORE_END}\n`)).toBe(true);
+    expect(contextFileText('S', [], 'N')).toBe(
+      `${CONTEXT_HEADER}\n\n${FORMAT_IGNORE_START}\nS\n\nN\n${FORMAT_IGNORE_END}\n`,
+    );
+  });
+
+  it("is what Prettier would write, whatever the law files hold and the territory's settings (P1-12e)", async () => {
+    // Badly formatted Markdown, and a law file cut inside a code fence at runner-core's limit.
+    const files = [
+      { path: 'CLAUDE.md', text: '#  Law\n* one\n+ two\n\n| a | b |\n|---|---|\n| long cell | x |\n' },
+      { path: 'docs/cut.md', text: '## Commands\n\n```bash\npnpm   test\n' },
+    ];
+    const note = codexNote({ tools: ['Read', 'Edit', 'Bash'] }, true);
+    const text = contextFileText('You  are   *Ember*.\n', files, note);
+    for (const options of [{}, { proseWrap: 'always', printWidth: 40 } as const]) {
+      expect(await check(text, { parser: 'markdown', endOfLine: 'lf', ...options })).toBe(true);
+    }
+    expect(await check(text.replace(FORMAT_IGNORE_START, ''), { parser: 'markdown' })).toBe(false);
+  });
+});
+
+describe('closeFences', () => {
+  it('closes a fence left open, with its own marker, and leaves closed ones alone', () => {
+    expect(closeFences('```bash\npnpm test')).toBe('```bash\npnpm test\n```');
+    expect(closeFences('~~~~\n```\nstill code')).toBe('~~~~\n```\nstill code\n~~~~');
+    expect(closeFences('````\ncode\n````\ntext')).toBe('````\ncode\n````\ntext');
+    expect(closeFences('```\ncode\n``` not a close\n```')).toBe('```\ncode\n``` not a close\n```');
+    expect(closeFences('plain\n')).toBe('plain\n');
   });
 });
 
