@@ -61,6 +61,28 @@ export function adrProblems(files, read) {
     );
 }
 
+/** The most a Markdown file in docs/ may weigh: what a session reads without paging through it (P1-52). */
+export const DOC_MAX_KB = 150;
+const DOC_MARKDOWN = /^docs\/.+\.md$/;
+
+/**
+ * Markdown files in docs/ over DOC_MAX_KB, generated ones too, since sessions read them alike: the one-file plan
+ * grew to 1 MB, and a scout without a search tool read it 25 times (Q10 of P1-50).
+ * @param {readonly string[]} files
+ * @param {Read} read
+ */
+export function sizeProblems(files, read) {
+  const encoder = new TextEncoder();
+  return files
+    .filter((file) => DOC_MARKDOWN.test(file))
+    .flatMap((file) => {
+      const kb = encoder.encode(read(file) ?? '').length / 1024;
+      if (kb <= DOC_MAX_KB) return [];
+      const size = `${Math.ceil(kb)} KB, over ${DOC_MAX_KB} KB`;
+      return [`${file}: ${size}; split it (the implementation plan: a new part file, or pnpm plan:split)`];
+    });
+}
+
 /** @param {readonly string[]} files */
 export const shellScriptProblems = (files) =>
   files
@@ -110,6 +132,7 @@ export function checkRepo(files, read, glossary = GLOSSARY) {
     ...readmeProblems(files, read),
     ...adrProblems(files, read),
     ...shellScriptProblems(files),
+    ...sizeProblems(files, read),
     ...linkProblems(files, read),
     ...termProblems(glossary),
     ...files.flatMap((file) => bannedIdentifierProblems(file, text(file), banned)),
