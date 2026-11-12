@@ -1,6 +1,7 @@
 // selectVerifier(quest, candidates, policy): who judges a submitted session-tier quest (implementation-plan §3.2,
 // ADR 0008, ADR 0020). Never anyone who worked the quest, or any quest of its party; a class that verifies the
-// quest's kind; never the assignee's own model. Among those free now: another model family first, then another
+// quest's kind; never the model of anyone who worked it (P1-55: of every run, not only the last: the Steward's own
+// run of a party's merge has no assignee to compare). Among those free now: another model family first, then another
 // tribe (account), then on a quest of rank STRONG_JUDGE_MIN_RANK or above the judge of the higher level (P1-48), then
 // a tribe whose CLI hands in a structured verdict itself over one whose judge answers in text (§3.14
 // `prompt_and_parse`, P1-33), then the one idle the longest. With no judge of another family free,
@@ -27,8 +28,11 @@ export type VerifierClass = Pick<CharacterClass, 'id' | 'is_verifier' | 'kinds'>
 export interface VerifierPolicy {
   readonly same_family: Kingdom['dispatch']['verifier_same_family'];
   readonly classes: readonly VerifierClass[];
-  /** The assignee's file, if it still exists: its model and tribe. */
-  readonly assignee: Pick<Character, 'model' | 'tribe'> | undefined;
+  /**
+   * The files of those who worked the quest itself that still exist, the current assignee's included (workedOn): their
+   * models and tribes. Empty when the quest was worked by the machine alone.
+   */
+  readonly doers: readonly Pick<Character, 'model' | 'tribe'>[];
   /** The other quests of the quest's party (partyOf); empty outside a party. */
   readonly party: readonly Quest[];
   /** Whether a candidate may open a session now: idle, its tribe awake and with a slot left. */
@@ -59,8 +63,8 @@ export const wantsStrongJudge = (rank: Quest['rank']): boolean =>
  * Strength is the judge's level, which the owner sets by its model when summoning it (P1-38): never a table of
  * models in the core, and the separation rules above it are untouched.
  */
-const byPreference = (quest: Quest, { assignee, limits }: Pick<VerifierPolicy, 'assignee' | 'limits'>) => {
-  const sameTribe = (c: Character): number => Number(c.tribe === assignee?.tribe);
+const byPreference = (quest: Quest, { doers, limits }: Pick<VerifierPolicy, 'doers' | 'limits'>) => {
+  const sameTribe = (c: Character): number => Number(doers.some(({ tribe }) => tribe === c.tribe));
   const weaker = wantsStrongJudge(quest.rank) ? (c: Character): number => -c.level : () => 0;
   const inText = (c: Character): number =>
     Number(limits?.[c.tribe]?.structured_output === 'prompt_and_parse');
@@ -68,7 +72,7 @@ const byPreference = (quest: Quest, { assignee, limits }: Pick<VerifierPolicy, '
     sameTribe(a) - sameTribe(b) || weaker(a) - weaker(b) || inText(a) - inText(b) || byIdleSince(a, b);
 };
 
-/** Who may ever judge `quest`: a judge of its kind, never one of its doers, never on the assignee's model. */
+/** Who may ever judge `quest`: a judge of its kind, never one of its doers, never on a model one of them used. */
 function fitJudges(
   quest: Quest,
   candidates: readonly Character[],
@@ -80,9 +84,8 @@ function fitJudges(
       .map((c) => c.id),
   );
   const pastAssignees = pastAssigneesOf(quest, policy.party);
-  return candidates.filter(
-    (c) => judges.has(c.class) && !pastAssignees.has(c.id) && c.model !== policy.assignee?.model,
-  );
+  const models = new Set(policy.doers.map(({ model }) => model));
+  return candidates.filter((c) => judges.has(c.class) && !pastAssignees.has(c.id) && !models.has(c.model));
 }
 
 /**
@@ -125,8 +128,8 @@ export function selectVerifier(
   candidates: readonly Character[],
   policy: VerifierPolicy,
 ): Selection | NoVerifier {
-  const family = policy.assignee === undefined ? undefined : familyOf(policy.assignee.model);
-  const otherFamily = (character: Character): boolean => familyOf(character.model) !== family;
+  const families = new Set(policy.doers.map(({ model }) => familyOf(model)));
+  const otherFamily = (character: Character): boolean => !families.has(familyOf(character.model));
   const machineOnly = policy.same_family === 'machine_only';
   const fit = besidesPassedOver(
     quest,

@@ -38,7 +38,7 @@
   `done` or `stuck`, derived, never stored) and `plotBaseOf` (the branches a quest's plot builds on: a part on its
   contract's, a merge quest on the contract's with every part merged in, any quest on a dependency's not merged
   yet, P1-16 (f)). The territory's `checks[].defer_to_merge` (§3.15) leaves a heavy check to the merge quest.
-  `machineMergeDue` (P1-18 (h)): a merge quest's first run is the machine's. `planTick` lists it in `merges`
+  `machineMergeDue` (P1-18 (h)): a merge quest's first run is the machine's, and only while no run was ever started on it (`attempts = 0` and an empty log, P1-55); the run takes a run number and no attempt (`machineRun`). `planTick` lists it in `merges`
   instead of giving it to a knight; `claim` takes it with no assignee, and the rows `working.submit.by_machine`,
   `working.release.by_machine` (the merge stopped), `review.verdict_fail.machine_retry` and
   `awaiting_seal.return.merged_by_machine` (both back to `open`, for a knight) carry it; the quest schema lets a
@@ -111,7 +111,7 @@
   ceiling than that, nor fewer minutes than it estimates, up to `attempt_minutes.high`. (P1-46) The rule is
   `questBudgetOf(rank, estimate, breakers)`, exported so the sandbox gives its fake quests the same ceilings.
 - Keeps the separation of duties (`src/verify/`, ADR 0008, 0020): `selectVerifier` (never an assignee of the quest
-  or of its party, never the assignee's model, another model family first by `familyOf`, then another tribe, then
+  or of its party, never the model of anyone who worked the quest (`policy.doers`, P1-55), another model family first by `familyOf`, then another tribe, then
   on a quest of rank `STRONG_JUDGE_MIN_RANK` (B) or above the judge of the higher level, P1-48;
   `dispatch.verifier_same_family` for the rest; not a judge a breaker stopped in the run, nor the one that just
   handed in a partial verdict, while another may judge), `underPassRule` (a failing check fails the quest under

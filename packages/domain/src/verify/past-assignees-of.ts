@@ -3,7 +3,11 @@
 import type { CharacterId } from '../core/ids.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 
-const workedOn = (quest: Quest): CharacterId[] => [
+/**
+ * Everyone who worked the quest itself, oldest first, the current assignee last. A run the Steward made (a script's,
+ * a party's merge, no character in the entry) names nobody.
+ */
+export const workedOn = (quest: Quest): CharacterId[] => [
   ...quest.attempt_log.flatMap((entry) =>
     entry.role === 'assignee' && entry.character !== null ? [entry.character] : [],
   ),

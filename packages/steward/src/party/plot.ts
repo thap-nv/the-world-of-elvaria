@@ -66,3 +66,23 @@ export async function mergeParts(ctx: Context, quest: Quest, plot: Quest['plot']
     `steward: ${quest.id}: merging the parts stopped${where} (${reason}): ${detail.replaceAll('\n', ', ')}; still to merge: ${outcome.pending.join(', ')}`,
   );
 }
+
+const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
+/**
+ * A merge quest's parts its knight left unmerged go in before its checks (P1-55). A merge that stopped on a conflict
+ * leaves the parts after it for the next session; once the knight concluded that one and submitted, the party check
+ * used to send the whole quest back for them, after a full run of the checks (Q1-z). A clean merge needs no knight, so
+ * the Steward does it; one that stops again is left to the party check as before. Nothing for a quest that is not a
+ * merge quest, nor for a plot without git.
+ */
+export async function mergePartsBeforeChecks(ctx: Context, quest: Quest): Promise<void> {
+  if (quest.party_role !== 'merge') return;
+  try {
+    await mergeParts(ctx, quest, quest.plot);
+  } catch (error) {
+    ctx.deps.log.warn(
+      `steward: ${quest.id}: its parts were not merged before its checks: ${messageOf(error)}`,
+    );
+  }
+}

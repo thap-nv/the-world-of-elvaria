@@ -64,7 +64,7 @@ export function gitPlots(kingdom: string): Plots {
       const { plot } = prepared.value;
       return { plot, cwd: fromPortable(plot.path ?? '') };
     },
-    commit: (plot, message) => manager.commitAll(plot, message),
+    commit: (plot, message, rescue) => manager.commitAll(plot, message, rescue),
     restore: (plot) => manager.restore(plot),
     applyPatch: (plot, patchPaths) => manager.applyPatch(plot, patchPaths),
     check: () => Promise.resolve([]),

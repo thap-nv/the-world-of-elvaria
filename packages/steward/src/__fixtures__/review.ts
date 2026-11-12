@@ -34,9 +34,9 @@ export function plotsWith(root: string, replace: Partial<Plots>, calls: string[]
     prepare: (quest, territory, options) => (replace.prepare ?? base.prepare)(quest, territory, options),
     merge: (plot, branches) => (replace.merge ?? base.merge)(plot, branches),
     unmerged: (plot, branches) => (replace.unmerged ?? base.unmerged)(plot, branches),
-    commit: (plot, message) => {
+    commit: (plot, message, rescue) => {
       calls.push(`commit ${message}`);
-      return (replace.commit ?? base.commit)(plot, message);
+      return (replace.commit ?? base.commit)(plot, message, rescue);
     },
     applyPatch: (plot, patchPaths) => {
       calls.push(`patch ${patchPaths.join(',')}`);

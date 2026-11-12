@@ -17,6 +17,7 @@ import { gitOf } from './git.ts';
 import { mergeIn, unmergedIn } from './merge.ts';
 import type { MergeOutcome } from './merge.ts';
 import { NO_PATCH, applyPatchIn } from './patch.ts';
+import type { CommitRescue } from './rescue.ts';
 import type { PatchOutcome } from './patch.ts';
 import type { Git } from './git.ts';
 import { ensureLongPaths, ensurePlotExcludes } from './repo-settings.ts';
@@ -85,7 +86,8 @@ export interface PlotManager {
   head(plot: Plot): Promise<string | null>;
   /** Paths the quest changed, relative to the plot with `/`: what `runChecks` selects checks by. */
   touched(plot: Plot): Promise<string[]>;
-  commitAll(plot: Plot, message: string): Promise<CommitOutcome>;
+  /** `rescue` (P1-55): where scratch files at the plot's root go, and the patch of a commit the hooks refuse. */
+  commitAll(plot: Plot, message: string, rescue?: CommitRescue): Promise<CommitOutcome>;
   /**
    * After a judge outside a scratch plot (P1-44): back to the plot's HEAD, what is changed or untracked dropped
    * (ignored files stay); the paths it dropped, none for a clean plot or a plot without git.
@@ -254,9 +256,9 @@ export function createPlotManager(options: PlotManagerOptions): PlotManager {
         return filesIn(inKingdom(options.kingdom, plot.path));
       return [];
     },
-    commitAll: async (plot, message) =>
+    commitAll: async (plot, message, rescue) =>
       plot.type === 'worktree'
-        ? commitWorktree(await git(), worktreeOf(plot), message)
+        ? commitWorktree(await git(), worktreeOf(plot), message, rescue)
         : { status: 'no_git' },
     restore: async (plot) => (plot.type === 'worktree' ? restoreWorktree(await git(), worktreeOf(plot)) : []),
     applyPatch: async (plot, patchPaths) =>

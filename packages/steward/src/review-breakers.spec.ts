@@ -83,6 +83,12 @@ describe('a review the breakers keep stopping', () => {
     expect(judges.map(({ outcome }) => outcome)).toEqual(['breaker', 'breaker']);
     // The judge a breaker stopped is not chosen again in the run while another may judge (P1-38, P1-35 (d)).
     expect(judges.map(({ character }) => character)).toEqual(['orin', 'sable']);
+    // Each judge session of the run has a folder of its own: the second no longer writes over the first's logs (P1-55).
+    const folders = [`.runs/${quest.id}-1/verify`, `.runs/${quest.id}-1/verify-2`];
+    expect(judges.map(({ run_dir: dir }) => dir)).toEqual(folders);
+    expect(
+      verifiersOf(spawned).map(({ run_dir: dir }) => dir.replaceAll('\\', '/').split('/.runs/')[1]),
+    ).toEqual(folders.map((dir) => dir.slice('.runs/'.length)));
     expect(quest).toMatchObject({ status: 'infirmary', verifier: null, attempts: 1 });
     expect(kingdom.notices).toEqual([
       {

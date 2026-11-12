@@ -6,6 +6,7 @@ import type {
   AgentRunner,
   CheckRun,
   CommitOutcome,
+  CommitRescue,
   DiffScope,
   MergeOutcome,
   PatchOutcome,
@@ -95,8 +96,12 @@ export interface Plots {
   merge(plot: Quest['plot'], branches: readonly string[]): Promise<MergeOutcome>;
   /** The branches of `branches` the plot does not hold (P1-18): the merge quest's check before its judge. */
   unmerged(plot: Quest['plot'], branches: readonly string[]): Promise<readonly string[]>;
-  /** `git add --all` + commit with the territory's hooks (never bypassed): `refused` keeps the work in place. */
-  commit(plot: Quest['plot'], message: string): Promise<CommitOutcome>;
+  /**
+   * `git add --all` + commit with the territory's hooks (never bypassed): `refused` keeps the work in place. With a
+   * `rescue` folder (P1-55), scratch files at the plot's root are set aside in it first, and a refusal leaves a patch
+   * of the staged work there.
+   */
+  commit(plot: Quest['plot'], message: string, rescue?: CommitRescue): Promise<CommitOutcome>;
   /**
    * After a judge outside a scratch plot (P1-44): the plot back to its commit, what is changed or untracked dropped
    * (ignored files stay); the paths dropped, none for a clean plot or one without git (PlotManager.restore).

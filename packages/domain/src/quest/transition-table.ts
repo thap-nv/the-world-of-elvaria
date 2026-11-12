@@ -45,7 +45,8 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
   'open.reassign.session':
     'lệnh `reassign` có `character`: người dùng giao thẳng, không xét `canTake`; vượt hạng trần ⇒ `seal_required`; `depends_on` vẫn phải xong trước `start`',
   'open.cancel': 'lệnh `cancel`; mọi trạng thái chưa xong đều hủy được',
-  'claimed.start': 'đất riêng xong, phiên mở; `attempts` +1, mở lượt mới `n` trong `attempt_log`',
+  'claimed.start':
+    'đất riêng xong, phiên mở; `attempts` +1, mở lượt mới `n` trong `attempt_log`; lượt máy của quest ghép (không có `assignee`) mở lượt `n` mà `attempts` không tăng (P1-55)',
   'claimed.release': 'spawn lỗi; `attempts` không tăng, bỏ `assignee`',
   'claimed.breaker':
     'trip `secrets`: kho bảo vật thiếu secret quest xin, hoặc lãnh thổ đã bỏ nó khỏi `secrets_allowed`; không mở phiên, `attempts` không đổi, chuông',
@@ -112,7 +113,8 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
   'done.deliver.undelivered':
     'giao hàng theo kind, ghi `deliverable.delivered_at`; không là trạng thái riêng để không nhân đôi',
   'done.archive': 'Quản sự sau N ngày; xóa worktree khi archive, không sớm hơn',
-  'infirmary.retry.no_stalled_review': '`attempts = 0`, bỏ `assignee`, giữ `attempt_log`',
+  'infirmary.retry.no_stalled_review':
+    '`attempts = 0`, bỏ `assignee`, giữ `attempt_log`; quest ghép đã có lượt máy thì hiệp sĩ làm tiếp, máy không chạy lại (P1-55)',
   'infirmary.retry.stalled_review':
     'việc đã xong, chỉ phần chấm bị cắt mãi: giữ `assignee`, `attempts`, lượt `n`; người chấm mới; `reviewBreaksOf` và `reviewPartialsOf` đếm lại từ lần `retry` này (P1-26, P1-42)',
   'infirmary.reassign.session': 'người mới có đủ `max_attempts` (`attempts = 0`)',
