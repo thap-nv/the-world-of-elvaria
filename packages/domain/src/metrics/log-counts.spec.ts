@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { at, commandOf, lineOf, questId } from './__fixtures__/ledger.ts';
 import { ownerCommandsOf } from './ledger.ts';
-import { readsOf, setAsidesOf } from './log-counts.ts';
+import { outOfScopeOf, readsOf, setAsidesOf } from './log-counts.ts';
 import type { Event } from '../schema/event/event.ts';
 
 const NEXT_DAY = '2026-11-09';
@@ -88,6 +88,26 @@ describe('setAsidesOf (PS-01b, (b) of P1-54)', () => {
       { quest: null, attempt: null, check: 'e2e', at: at(5) },
     ]);
     expect(setAsidesOf(events, {})).toHaveLength(3);
+  });
+});
+
+describe('outOfScopeOf (PS-05, ADR 0028)', () => {
+  const submitted = (data: Record<string, unknown>, minute: number, quest?: string, day?: string) =>
+    lineOf('quest.submitted', data, at(minute, day), quest);
+
+  it('lists the submits that changed files outside their scope inside the window, the others left out', () => {
+    const events = [
+      submitted({ out_of_scope: ['docs/a.md', 'README.md'] }, 3, questId(1)),
+      submitted({}, 4, questId(2)),
+      lineOf('quest.claimed', { out_of_scope: ['x'] }, at(5), questId(3)),
+      submitted({ out_of_scope: ['x.ts'] }, 6),
+      submitted({ out_of_scope: ['y.ts'] }, 1, questId(4), NEXT_DAY),
+    ];
+    expect(outOfScopeOf(events, ON_THE_DAY)).toEqual([
+      { quest: questId(1), at: at(3), paths: ['docs/a.md', 'README.md'] },
+      { quest: null, at: at(6), paths: ['x.ts'] },
+    ]);
+    expect(outOfScopeOf(events, {})).toHaveLength(3);
   });
 });
 

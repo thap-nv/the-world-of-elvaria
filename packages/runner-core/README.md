@@ -28,7 +28,9 @@
   `forbiddenPathsOf(territory)` is the dotenv files plus `laws.forbidden_paths`, and `forbiddenChangesOf(changed,
 globs)` the changed paths a glob matches at any depth as the hook's do: the Steward reads a plot's changes against
   them before it commits (P1-49), since a program a session's shell runs writes past the fence.
-- Builds prompts from the Markdown templates in `prompts/` (`loadPromptTemplates`): `buildPrompt` for an
+- Builds prompts from the Markdown templates in `prompts/` (`loadPromptTemplates`); a quest with `scope_paths` gets a
+  `Scope:` fact, and its judge the files changed outside it (`prompts/out-of-scope.md`, `src/prompt/scope.ts`, PS-05),
+  while a quest without one reads as before: `buildPrompt` for an
   assignee (new, or continuing after `returned` / `revive` with the letter, the last 20 journal lines, the
   branch's log and the owner's answer; after `returned`, also the checks that failed with the end of each log,
   `prompts/failed-checks.md`, P1-10b, and after the owner's return for a new judgement a word that the judge

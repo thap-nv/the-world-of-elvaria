@@ -55,6 +55,17 @@ const QUEST_CHANGE = {
     ),
   // Optional and added after v1 (PS-01b), as `sequels`: a line written before it, or no opening line, has none.
   load_trace: LoadTraceSchema.optional(),
+  // Optional and added after v1 (PS-05), as `sequels`: a line written before it, or of work that stayed inside its
+  // scope, has none.
+  out_of_scope: z
+    .array(NonEmptyStringSchema)
+    .min(1)
+    .optional()
+    .meta(
+      describe(
+        "On the `quest.submitted` line of a quest with scope_paths: the files the work changed outside them, the territory's shared paths aside, relative to the plot with `/`. A signal for the judge, who sees the same list, and a number in the metrics; never a fail (ADR 0028).",
+      ),
+    ),
 };
 
 export const QuestChangeDataSchema = z.strictObject(QUEST_CHANGE);

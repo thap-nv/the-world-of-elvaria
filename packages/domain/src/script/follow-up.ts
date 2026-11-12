@@ -25,8 +25,8 @@ export const clipTitle = (title: string): string =>
 
 /**
  * The `create_quest` payload of the follow-up, or undefined when the catalog entry names none (the failed run then
- * waits in the infirmary for the owner). It is open at once, a child of the failed quest, on its territory, rank
- * and tags; the Steward makes the quest through `questFromCommand`, so the kingdom's rules hold.
+ * waits in the infirmary for the owner). It is open at once, a child of the failed quest, on its territory, rank,
+ * tags and scope (PS-05); the Steward makes the quest through `questFromCommand`, so the kingdom's rules hold.
  */
 export function followUpOf(run: FailedRun): CommandPayload<'create_quest'> | undefined {
   const { parent, script, verdict, locale } = run;
@@ -48,6 +48,7 @@ export function followUpOf(run: FailedRun): CommandPayload<'create_quest'> | und
     tier: 'session',
     class_required: script.follow_up.class,
     tags: [...parent.tags],
+    ...(parent.scope_paths === undefined ? {} : { scope_paths: parent.scope_paths }),
     parent_id: parent.id,
     // A battle's aftermath: the Steward opens it, as it opens a plan's sub-quests (`council`).
     created_by: 'battle',

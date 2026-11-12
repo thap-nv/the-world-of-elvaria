@@ -230,7 +230,9 @@
   `src/review/deliverable-checks.ts`, P1-15): what the delivery would open, or why none, so a list the Steward
   would refuse goes back to the mage. The judge's prompt carries the branch's diff (`Plots.diff`), the craft of
   its class (`registry/<class.prompt_file>`, as every session's does), and where the last judge of the run
-  stopped when it left a `partial` verdict. Gives the plot back when a quest is archived (`Plots.release`; a
+  stopped when it left a `partial` verdict, and (PS-05) the files the work changed outside the quest's `scope_paths`,
+  the territory's `shared_paths` aside (`src/sessions/out-of-scope.ts`, matched with `globToRegExp`), which the
+  `quest.submitted` line carries too as `out_of_scope`: a signal for the judge, never a fail. Gives the plot back when a quest is archived (`Plots.release`; a
   dirty worktree stays, with a warning).
 - Runs the script tier itself (§2.5, §3.12, ADR 0017; `src/script/`): a `create_quest` whose `script.params` do
   not fit the catalog's `params_schema` is refused (`invalid_script_params`); an open script-tier quest is claimed

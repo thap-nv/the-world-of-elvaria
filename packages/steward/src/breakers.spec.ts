@@ -202,8 +202,8 @@ describe('a pool out of mana', () => {
       },
       committing(commits),
     );
-    await kingdom.command('create_quest', questPayload('Runs dry'));
-    await kingdom.command('create_quest', questPayload('Was running', { rank: 'E' }));
+    await kingdom.command('create_quest', questPayload('Runs dry', { scope_paths: ['a'] }));
+    await kingdom.command('create_quest', questPayload('Was running', { rank: 'E', scope_paths: ['b'] }));
     await tickUntil(steward, kingdom.clock, async () =>
       (await kingdom.quests()).every(({ status }) => status === 'paused_mana'),
     );
