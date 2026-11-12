@@ -137,6 +137,7 @@ export function loadContext(env: HookEnv, argv: readonly string[]): HookContext 
         ? brokenLaws(loaded.problem)
         : compileLaws(policy.laws ?? {}, {
             cliProtected: policy.cli_protected_paths,
+            ownProtected: policy.elvaria_protected_paths,
             patchFile: policy.patch_file,
           }),
     known: knownSecrets(env, policy.secrets ?? [], problems),

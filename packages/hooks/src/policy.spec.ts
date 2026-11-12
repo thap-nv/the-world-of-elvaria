@@ -23,7 +23,8 @@ describe('parsePolicy', () => {
       secrets: ['NPM_TOKEN'],
       tools: ['Read', 'Glob', 'Grep'],
       apprentice_models: ['haiku', 'sonnet', 'opus'],
-      cli_protected_paths: ['.husky/**', '.npmrc'],
+      cli_protected_paths: ['.husky/**', '.npmrc', '.git/**'],
+      elvaria_protected_paths: ['.git/**'],
       patch_file: 'elvaria.patch',
       search_commands: ['git grep', 'git ls-files'],
       laws: {
@@ -52,6 +53,7 @@ describe('parsePolicy', () => {
     [{ version: 1, tools: ['Read', 7] }, 'tools is not a list of strings'],
     [{ version: 1, apprentice_models: 'haiku' }, 'apprentice_models is not a list of strings'],
     [{ version: 1, cli_protected_paths: [null] }, 'cli_protected_paths is not a list of strings'],
+    [{ version: 1, elvaria_protected_paths: [3] }, 'elvaria_protected_paths is not a list of strings'],
     [{ version: 1, search_commands: 'git grep' }, 'search_commands is not a list of strings'],
     [{ version: 1, laws: [] }, 'laws is not an object'],
     [{ version: 1, laws: { forbidden_paths: '.env' } }, 'laws.forbidden_paths is not a list of strings'],

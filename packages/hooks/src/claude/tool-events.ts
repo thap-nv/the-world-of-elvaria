@@ -72,6 +72,11 @@ export function protectedViolation(call: ToolCall, laws: CompiledLaws): string |
   for (const raw of call.guarded) {
     const glob = matchingGlobOf(raw, laws.cliProtected);
     if (glob === undefined) continue;
+    // Git's folder under a CLI that does not lock it (agy): the rule is Elvaria's, and saying "your CLI refuses" would
+    // be false (P1-56, (i) of the P1-50 report: the judge read it and wrote it into its notes).
+    if (laws.ownProtected.includes(glob)) {
+      return `${raw} is in git's own folder (${glob}); this is a rule of Elvaria, not of your CLI: the Steward runs git for you and commits your plot, so leave the folder alone`;
+    }
     const refused = `${raw} is in a path your CLI refuses to write whatever its rules say (${glob})`;
     if (laws.patchFile !== undefined && matchingGlobOf(raw, laws.patchPaths) !== undefined) {
       return `${refused}, but the territory lets the Steward change it for you: write the change as a git patch, as \`git diff\` prints it with paths from the root of your plot, to ${laws.patchFile} at the root of your plot. ${PATCH_WAY}`;

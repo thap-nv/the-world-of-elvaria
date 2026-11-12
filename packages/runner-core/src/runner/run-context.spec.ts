@@ -132,6 +132,9 @@ describe('policy.json', () => {
     });
     const once = JSON.parse(await readFile(claude, 'utf8')) as Record<string, unknown>;
     expect(once.cli_protected_paths).toEqual(['.git/**', '.npmrc']);
+    // P1-56: git's folder is Elvaria's own rule where the adapter did not list it (agy), the CLI's where it did.
+    expect(parsed.elvaria_protected_paths).toEqual(['.git/**']);
+    expect(once).not.toHaveProperty('elvaria_protected_paths');
     expect(parsed.laws).toMatchObject({
       read_only_paths: ['apps/api/openapi.json', 'packages/shared/src/api-types.ts'],
     });

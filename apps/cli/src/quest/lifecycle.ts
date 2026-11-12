@@ -46,8 +46,15 @@ async function runConfirm(input: CommandInput, cli: CliContext): Promise<ExitCod
   return sendCommand(ctx, command, 'cli.quest.confirm.sent', { id: quest.id });
 }
 
-/** A draft is discarded (the `archive` command); any other unfinished quest is cancelled (§2.5). */
-const cancelEvent = (quest: Quest): QuestEventType => (quest.status === 'draft' ? 'discard' : 'cancel');
+/**
+ * A draft is discarded (the `archive` command); a quest in the infirmary is archived, the one way out the table gives
+ * the owner besides a retry (`infirmary.archive`: it has no `infirmary.cancel`, and the owner who reads «cancel» means
+ * the same, P1-56); any other unfinished quest is cancelled (§2.5).
+ */
+const cancelEvent = (quest: Quest): QuestEventType => {
+  if (quest.status === 'draft') return 'discard';
+  return quest.status === 'infirmary' ? 'archive' : 'cancel';
+};
 
 async function runCancel(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);
@@ -56,23 +63,28 @@ async function runCancel(input: CommandInput, cli: CliContext): Promise<ExitCode
   if (quest === undefined) return EXIT.failed;
   const reason = textOption(input, 'reason');
   const payload = { quest: quest.id, ...(reason === undefined ? {} : { reason }) };
-  const kind = cancelEvent(quest) === 'discard' ? 'archive' : 'cancel';
-  return sendCommand(ctx, { ...commandHeader(ctx), kind, payload }, 'cli.quest.cancel.sent', {
-    id: quest.id,
-  });
+  const event = cancelEvent(quest);
+  const done = event === 'archive' ? 'cli.quest.cancel.sent_infirmary' : 'cli.quest.cancel.sent';
+  return sendCommand(
+    ctx,
+    { ...commandHeader(ctx), kind: event === 'cancel' ? 'cancel' : 'archive', payload },
+    done,
+    { id: quest.id },
+  );
 }
 
 /**
  * A done quest gives its plot back (`done.archive`, §2.5): the Steward removes the worktree, keeps the branch and
  * lets each tribe CLI forget it. Only once delivered: the delivery note and the branch are what the owner merges
- * from, and a quest archived before the Steward delivered it would never be (P1-11).
+ * from, and a quest archived before the Steward delivered it would never be (P1-11). A quest in the infirmary
+ * (`infirmary.archive`) has no delivery to wait for: the owner gives it up, and the branch with its work stays (P1-56).
  */
 async function runArchive(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);
   if (ctx === undefined) return EXIT.failed;
   const quest = await questFor(input, ctx, () => 'archive', 'cli.quest.archive.refused');
   if (quest === undefined) return EXIT.failed;
-  if (quest.deliverable.delivered_at === undefined) {
+  if (quest.status === 'done' && quest.deliverable.delivered_at === undefined) {
     ctx.io.err(ctx.t('cli.quest.archive.undelivered', { id: quest.id }));
     return EXIT.failed;
   }

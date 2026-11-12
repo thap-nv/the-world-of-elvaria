@@ -88,6 +88,7 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
   - `buildPrompt` trả thêm danh sách khối `{id, chars}`.
   - `promptOf` gom dấu vết nạp (file kinh và số dòng, id bí kíp, các khối) và ghi vào dòng mở phiên như một trường tùy chọn của `QUEST_CHANGE` (tiền lệ: `sequels`). `attempt_log` không đổi.
   - `command.applied` và `command.rejected` thêm `kind` tùy chọn (`packages/steward/src/inbox/apply.ts`); sổ đo dùng nó khi có, `inbox/done` khi không.
+  - `check.end` thêm `environment` tùy chọn khi lượt check bị gạt vì môi trường (đề xuất (b) của P1-54, chủ nhân chốt 2026-11-12): hôm nay chuông chỉ in ra terminal của `elvaria run` và `check.end` vẫn là `fail`, nên sau khi Quản sự khởi động lại không còn dấu nào; sổ đo đếm các lượt đó, bản tấu của PS-03 đọc lại.
   - Lượt đọc theo file (chốt 2026-11-11, sau Q10 của P1-50): sổ đo đếm các `agent.tool` `read` theo `path` của mỗi phiên (event đã có `path`, không cần trường mới), và `elvaria metrics` in các file bị đọc nhiều lần nhất trong một phiên, để thấy ngay quest nào lật cả một file lớn (Q10: 25 lần một file 1 MB).
 - **Không thêm** (chủ nhân chốt sau PS-01): gợi ý nguyên nhân để máy tách check đỏ vì file do Elvaria sinh, hay câu hỏi sau một tool bị từ chối, khỏi `output` và `question`. Nguyên nhân gốc đã sửa ở P1-23 và P1-24; chỉ làm khi sổ đo thấy lại.
 - **Test**: snapshot prompt không đổi một ký tự; dòng mở phiên có dấu vết; log cũ vẫn đọc được; một fixture đọc cùng một file nhiều lần trong một phiên ra đúng số lượt đọc.

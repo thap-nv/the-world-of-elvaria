@@ -15,6 +15,9 @@ import type { KingdomContext } from '../kingdom-context.ts';
 
 const isRank = (value: string): value is Rank => (RANKS as readonly string[]).includes(value);
 
+/** Statuses in which a session of the quest may be running: a character works it, or a judge reads it. */
+const SESSION_STATUSES: readonly string[] = ['working', 'review'];
+
 /** A whole number ≥ `min` from `--<name>`; undefined when absent, NaN when not such a number. */
 function wholeNumber(input: CommandInput, name: string, min: number): number | undefined {
   const text = textOption(input, name);
@@ -87,7 +90,14 @@ async function runQuestEdit(input: CommandInput, cli: CliContext): Promise<ExitC
   }
   const payload = { quest: quest.id, expected_updated_at: quest.updated_at, changes };
   const command = { ...commandHeader(ctx), kind: 'edit_quest', payload } as const;
-  return sendCommand(ctx, command, 'cli.quest.edit.sent', { id: quest.id });
+  const code = await sendCommand(ctx, command, 'cli.quest.edit.sent', { id: quest.id });
+  const minutes = changes.budget?.max_minutes;
+  // The session's CLI was given its clock when the session opened (`--print-timeout`, P1-56, (g) of the P1-50 report).
+  if (code === EXIT.ok && minutes !== undefined && SESSION_STATUSES.includes(quest.status))
+    ctx.io.out(
+      ctx.t('cli.quest.edit.minutes_next_session', { id: quest.id, minutes, was: quest.budget.max_minutes }),
+    );
+  return code;
 }
 
 export const QUEST_EDIT: CommandSpec = {

@@ -21,11 +21,14 @@ let policy: string;
 beforeEach(async () => {
   kingdom = await tempKingdom();
   policy = path.join(kingdom.runDir, 'policy.json');
-  // What runner-core's writePolicyFile writes for an agy session since P1-49.
-  const written = { version: 1, laws: DC1_LAWS, cli_protected_paths: ['.git/**'] };
-  await writeFile(policy, JSON.stringify(written), 'utf8');
+  // What runner-core's writePolicyFile writes for an agy session since P1-56: git's folder is listed, and listed as
+  // Elvaria's own rule, since agy locks no folder (P1-49 wrote the list alone).
+  await writePolicy({ cli_protected_paths: ['.git/**'], elvaria_protected_paths: ['.git/**'] });
 });
 afterEach(() => kingdom.remove());
+
+const writePolicy = (paths: Record<string, string[]>) =>
+  writeFile(policy, JSON.stringify({ version: 1, laws: DC1_LAWS, ...paths }), 'utf8');
 
 /** agy's PreToolUse decision for one tool call. */
 async function decisionFor(name: string, args: Record<string, unknown>): Promise<Record<string, unknown>> {
@@ -49,6 +52,21 @@ describe("agy and git's own folder (P1-49)", () => {
     const refused = await decisionFor(name, args);
     expect(refused).toMatchObject({ decision: 'deny' });
     expect(refused.reason).toMatch(/^Elvaria rule: .*\(\.git\/\*\*\)/);
+  });
+
+  // P1-56, (i) of the P1-50 report: the judge read "your CLI refuses to write" and copied it into its notes, which was
+  // false for agy: the rule is Elvaria's.
+  it("says the rule is Elvaria's, not the CLI's", async () => {
+    const refused = await decisionFor('write_to_file', { TargetFile: '.git/config' });
+    expect(refused.reason).toBe(
+      "Elvaria rule: .git/config is in git's own folder (.git/**); this is a rule of Elvaria, not of your CLI: the Steward runs git for you and commits your plot, so leave the folder alone. Do not try another way around it; if the work needs it, say so in handover.md.",
+    );
+  });
+
+  it('keeps the older words for a policy that does not say whose rule it is', async () => {
+    await writePolicy({ cli_protected_paths: ['.git/**'] });
+    const older = await decisionFor('write_to_file', { TargetFile: '.git/config' });
+    expect(older.reason).toContain('is in a path your CLI refuses to write whatever its rules say (.git/**)');
   });
 
   it.each([
