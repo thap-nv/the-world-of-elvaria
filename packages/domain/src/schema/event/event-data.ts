@@ -15,6 +15,7 @@ import {
 } from './state-data.ts';
 import { PlotMergedDataSchema, PlotPatchedDataSchema, PlotRestoredDataSchema } from './plot-data.ts';
 import { MemoClosedDataSchema, MemoFiledDataSchema, MemoRoutedDataSchema } from './memo-data.ts';
+import { DigestWrittenDataSchema, ScheduleRanDataSchema } from './schedule-data.ts';
 import {
   UpgradeFailedDataSchema,
   UpgradeRolledBackDataSchema,
@@ -248,6 +249,8 @@ export const EVENT_DATA_SCHEMAS = {
   'memo.filed': MemoFiledDataSchema,
   'memo.routed': MemoRoutedDataSchema,
   'memo.closed': MemoClosedDataSchema,
+  'schedule.ran': ScheduleRanDataSchema,
+  'digest.written': DigestWrittenDataSchema,
   'upgrade.started': UpgradeStartedDataSchema,
   'upgrade.switched': UpgradeSwitchedDataSchema,
   'upgrade.rolled_back': UpgradeRolledBackDataSchema,

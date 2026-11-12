@@ -8,7 +8,7 @@ import { TribeSchema } from '@elvaria/domain';
 import { translator } from '@elvaria/i18n';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { MIGRATED_MARK, SHA_A, calls, placeBuild } from '../../test/builds.ts';
+import { MIGRATED_MARK, SHA_A, calls, placeBuild, real } from '../../test/builds.ts';
 import { baseEnv, tempDir, testIo } from '../../test/cli.ts';
 import { findExecutable } from '../process/find-executable.ts';
 import { mirrorKingdom } from './mirror.ts';
@@ -103,7 +103,13 @@ describe('the trial of a new build', () => {
     expect(path.basename(path.dirname(throwaway))).toMatch(/^elvaria upgrade /);
     // Every child ran in the build, with nothing of the owner's env but the minimal list.
     for (const call of made) {
-      expect(call).toMatchObject({ root: build, cwd: build, pinned: null, token: null, git_dir: null });
+      expect(call).toMatchObject({
+        root: real(build),
+        cwd: real(build),
+        pinned: null,
+        token: null,
+        git_dir: null,
+      });
     }
     // The kingdom itself was not written; the copy and the throwaway kingdom are gone.
     expect(await readdir(kingdom)).not.toContain(MIGRATED_MARK);

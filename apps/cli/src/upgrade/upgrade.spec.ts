@@ -16,6 +16,7 @@ import {
   calls,
   placeBuild,
   readPin,
+  real,
   sourceRepo,
   stubPnpm,
   writePin,
@@ -198,10 +199,10 @@ describe('elvaria upgrade', () => {
     const record = path.join(dir.root, 'calls.jsonl');
     const a = await source.commit({ record });
     expect(await upgrade('main')).toBe(0);
-    expect(await readFile(path.join(kingdom, MIGRATED_MARK), 'utf8')).toBe(buildDir(a));
+    expect(await readFile(path.join(kingdom, MIGRATED_MARK), 'utf8')).toBe(real(buildDir(a)));
     const migrations = async () =>
       (await calls(record)).filter(({ argv }) => argv[0] === 'migrate').map(({ argv, root }) => [argv, root]);
-    expect(await migrations()).toEqual([[['migrate', '--kingdom', kingdom], buildDir(a)]]);
+    expect(await migrations()).toEqual([[['migrate', '--kingdom', kingdom], real(buildDir(a))]]);
     const b = await source.commit({ exit: { migrate: 6 } });
     const io = testIo();
     expect(await upgrade('main', io)).toBe(1);

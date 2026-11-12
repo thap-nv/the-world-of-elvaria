@@ -48,6 +48,11 @@ export interface Roster {
   readonly canStart: (character: Character) => boolean;
   /** Asleep on a paused quest, its pool open again, its tribe with a slot left (§3.5). */
   readonly canWake: (character: Character) => boolean;
+  /**
+   * The mana the character draws on opens a session now (poolOpenOf), whatever its status and slots: a quest whose
+   * judges all lack it waits for a gauge, not for a judge to be free (judgeWaitOf, PS-03).
+   */
+  readonly manaOpen: (character: Character) => boolean;
   /** canStart, and the tribe's runner may take this quest on this territory (§3.14). */
   readonly canClaim: (character: Character, quest: Quest, territory: TerritoryRules) => boolean;
   /** Of the quest's roster for claimBlocker: not suspended, of an enabled tribe (busy, asleep or without a runner yet). */
@@ -145,6 +150,7 @@ export function rosterOf(source: RosterSource, now: Instant): Roster {
   return {
     canStart,
     canWake: (character) => character.status === 'sleeping_mana' && mayOpen(character),
+    manaOpen: poolOpen,
     canClaim: (character, quest, territory) => {
       const tribe = staffed.get(character.tribe);
       return tribe !== undefined && canStart(character) && tribeMayTake(tribe.limits, quest, territory);

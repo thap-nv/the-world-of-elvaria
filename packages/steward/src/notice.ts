@@ -10,6 +10,7 @@ import type {
   Rank,
   QuestId,
   TribeId,
+  WaitGauge,
 } from '@elvaria/domain';
 
 /** A quest as a notice names it: enough for the owner to recognise it without opening the file. */
@@ -40,6 +41,24 @@ export type Notice =
       readonly quest: NoticeQuest;
       readonly classes: readonly string[];
       readonly model: string | null;
+    }
+  /**
+   * The quest has judges, but the mana of every one is closed (PS-03, (d) of P1-50): it waits for a gauge to reopen,
+   * or for a judge of `classes` on another pool. `gauges`: the pools that hold them, with their reset when known.
+   */
+  | {
+      readonly kind: 'judge_mana';
+      readonly quest: NoticeQuest;
+      readonly classes: readonly string[];
+      readonly gauges: readonly WaitGauge[];
+    }
+  /** The day's digest is written (PS-03): `file` relative to the kingdom, and how many items in each group. */
+  | {
+      readonly kind: 'digest';
+      readonly day: string;
+      readonly file: string;
+      readonly must: number;
+      readonly can_wait: number;
     }
   | { readonly kind: 'awaiting_seal'; readonly quest: NoticeQuest }
   /**

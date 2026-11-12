@@ -217,7 +217,7 @@
               "en": "Attention queue",
               "id": ["attention"],
               "definition": "Danh sách việc đang chờ người dùng quyết, theo mức khẩn.",
-              "used_in": "selector `attentionQueue(state)`"
+              "used_in": "selector `attentionQueue(state, now, notices)` (PS-03), bản tấu"
             },
             {
               "vi": "Ngai vàng",
@@ -253,6 +253,13 @@
               "id": ["chronicle"],
               "definition": "Báo cáo ngày do Nhà thơ viết từ event log.",
               "used_in": "`chronicle/<ngày>.md`, `kingdom.schedule.chronicle`"
+            },
+            {
+              "vi": "Bản tấu",
+              "en": "Digest",
+              "id": ["digest"],
+              "definition": "Bản gom mọi việc chờ chủ nhân trong ngày, chia hai nhóm (phải quyết để việc chạy tiếp, chờ được), mỗi việc kèm khuyến nghị và lệnh CLI; Quản sự viết mỗi ngày một lần theo lịch, không gọi model (PS-03).",
+              "used_in": "`digest/<ngày>.md`, `kingdom.schedule.digest`, cổng `Digest`, `elvaria digest`, event `digest.written`"
             },
             {
               "vi": "Đền",
@@ -2077,6 +2084,11 @@
               "group": "Thư",
               "types": ["memo.filed", "memo.routed", "memo.closed"],
               "meaning": "Quản sự lập thư từ mục `Memos` của thư bàn giao khi lượt người làm kết thúc qua nộp, hỏi hay hỏng (không khi cầu dao cắt), chuyển theo `registry/memos.json`, và đóng theo `decide_memo` (PS-02, ADR 0024)"
+            },
+            {
+              "group": "Lịch",
+              "types": ["schedule.ran", "digest.written"],
+              "meaning": "Việc theo lịch của Quản sự (PS-03): `schedule.ran` khi một việc của `kingdom.schedule` chạy xong trong một ngày địa phương (lần khởi động sau đọc nó, nên mỗi ngày một lần dù đồng hồ nhảy); `digest.written` khi bản tấu của ngày đã ghi vào `digest/<ngày>.md` và chuông đã rung"
             },
             {
               "group": "Khác",
