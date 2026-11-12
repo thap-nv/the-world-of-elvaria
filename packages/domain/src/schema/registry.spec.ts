@@ -77,6 +77,12 @@ const consistent = () => ({
     ],
   },
   tags: { version: 1, tags: [{ id: 'docs', name_vi: 'Tài liệu', name_en: 'Documentation' }] },
+  memos: {
+    version: 1,
+    memos: [
+      { id: 'proposal', ...names('proposal'), route: 'chancellor', description: 'Work outside the quest.' },
+    ],
+  },
 });
 type Files = ReturnType<typeof consistent>;
 
@@ -143,6 +149,11 @@ describe('parseRegistry', () => {
 
   it.each([
     ['a repeated id', (f: Files) => f.tags.tags.push(f.tags.tags[0]!), 'tags duplicate_id tags.1.id'],
+    [
+      'a repeated memo kind',
+      (f: Files) => f.memos.memos.push(f.memos.memos[0]!),
+      'memos duplicate_id memos.1.id',
+    ],
     [
       'a kind with an unknown ritual',
       (f: Files) => (f.kinds.kinds[0]!.ritual = 'nope'),

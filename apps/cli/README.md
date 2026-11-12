@@ -5,7 +5,7 @@
 - Ships the `elvaria` command, the only composition root (implementation-plan §1.1): `init`, `doctor`,
   `tribe list|add|check|disable`, `territory add|list`, `character add|list|suspend|release|level|model`, `say`,
   `quest add|list|show|confirm|cancel|archive|edit|retry|reassign`,
-  `seal`, `return`, `answer`, `run`, `wake`, `metrics`,
+  `seal`, `return`, `answer`, `memo list|show|decide`, `run`, `wake`, `metrics`,
   `sandbox generate|replay`, `migrate`, `upgrade`. The command table (`src/commands.ts`) drives parsing (`util.parseArgs`), help, and the reference
   `docs/cli.md` that `pnpm docs:gen` renders from it (`scripts/docs-cli.mjs`).
 - Prints everything through `t()` of `@elvaria/i18n`, in `kingdom.owner.locale` unless `--locale vi|en` is given;
@@ -48,7 +48,13 @@
 - `say "<words>"` (P1-13, `src/say/`): one Chancellor session of `@elvaria/chancellor`, on the runners `run`
   builds (it needs a character of class `chancellor`, and it spends mana), turns the words into drafts; each
   draft kept goes to the inbox as `create_quest` with `draft: true`, the Steward writes it in status `draft`, and
-  the owner opens it with `quest confirm`. The CLI writes no quest.
+  the owner opens it with `quest confirm`. The CLI writes no quest. `say --memo <memo>` (PS-02) hands the
+  Chancellor a letter a character wrote, with the owner's words after it when given, and says how to close it.
+- `memo list [--all]`, `memo show <memo>`, `memo decide <memo> shelved|rejected|handled [--quest] [--note]` (PS-02,
+  `src/memo/`, ADR 0024): the letters (memos) characters wrote about work outside their quests, the open ones
+  unless `--all`; `decide` sends `decide_memo` after refusing what it can tell already (an unknown or decided
+  letter, a handled one without `--quest`, an unknown quest). The CLI writes no memo. `doctor` says a registry file
+  the kingdom lacks (`registry/memos.json` before PS-02) is what `elvaria migrate` copies.
 - `wake <tribe>` sends `wake` for a tribe of `kingdom.tribes[]`: the Steward probes that account at its next tick
   (ADR 0009), for instance after the owner signed in again.
 - Writes new files the Steward does not own: `kingdom.json` (`init`, then `tribes[].tool` and, with `--enable`,

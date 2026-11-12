@@ -7,6 +7,8 @@ import path from 'node:path';
 import {
   CharacterSchema,
   CheckIdSchema,
+  MemoIdSchema,
+  MemoKindIdSchema,
   QuestSchema,
   REGISTRY_FILES,
   TerritorySchema,
@@ -16,6 +18,7 @@ import {
 import type { Registry } from '@elvaria/domain';
 
 import type { PromptCheck } from '../prompt/checks.ts';
+import type { FiledMemo } from '../prompt/memory.ts';
 
 const REGISTRY_DIR = path.join(import.meta.dirname, '..', '..', '..', 'registry-default');
 
@@ -253,3 +256,11 @@ export const CHECKS: readonly PromptCheck[] = [
     ].join('\n'),
   },
 ];
+
+/** A memo the Steward filed from the Memos section of the last letter (PS-02); its text spans two lines. */
+export const FILED_MEMO: FiledMemo = {
+  id: MemoIdSchema.parse('m_20261106_4k2pqz'),
+  kind: MemoKindIdSchema.parse('proposal'),
+  state: 'open',
+  body: 'README của `apps/web` còn hướng dẫn `npm run check`;\n  nên đổi sang `pnpm check`.',
+};

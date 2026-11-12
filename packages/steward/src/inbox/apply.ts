@@ -7,6 +7,7 @@ import type { InboxCommand, Quest } from '@elvaria/domain';
 import type { InboxItem } from '@elvaria/store';
 
 import { wake } from '../mana/step.ts';
+import { decideMemo } from '../memos/decide.ts';
 import { STEWARD } from '../record.ts';
 import { release, suspend } from './character-commands.ts';
 import { setLevel, setModel } from './character-settings.ts';
@@ -35,8 +36,11 @@ const LATER: ReadonlySet<InboxCommand['kind']> = new Set([
   'pin_tag',
 ]);
 
+// decide_memo's optional quest is the one that does the work, not the one it acts on: it never comes here.
 const questOf = (ctx: Context, command: InboxCommand): Quest | undefined =>
-  'quest' in command.payload ? ctx.world.quests.get(command.payload.quest) : undefined;
+  'quest' in command.payload && command.payload.quest !== undefined
+    ? ctx.world.quests.get(command.payload.quest)
+    : undefined;
 
 async function onQuest(ctx: Context, command: InboxCommand, quest: Quest): Promise<Outcome> {
   switch (command.kind) {
@@ -73,6 +77,7 @@ export async function applyCommand(ctx: Context, command: InboxCommand): Promise
   if (command.kind === 'release') return release(ctx, command.payload.character);
   if (command.kind === 'set_level') return setLevel(ctx, command.payload.character, command.payload.level);
   if (command.kind === 'set_model') return setModel(ctx, command.payload.character, command.payload.model);
+  if (command.kind === 'decide_memo') return decideMemo(ctx, command.payload);
   const quest = questOf(ctx, command);
   return quest === undefined ? rejected('unknown_quest') : onQuest(ctx, command, quest);
 }

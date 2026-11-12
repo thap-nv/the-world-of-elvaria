@@ -20,11 +20,12 @@ export function loadDefaultRegistry(): Result<Registry, RegistryIssue[]> {
     rituals: readJson('rituals'),
     scripts: readJson('scripts'),
     tags: readJson('tags'),
+    memos: readJson('memos'),
   });
 }
 
 /**
- * What `elvaria init` copies, relative to REGISTRY_ROOT with `/`: the five data files, the catalog scripts with
+ * What `elvaria init` copies, relative to REGISTRY_ROOT with `/`: the six data files, the catalog scripts with
  * their shared module, and the role prompts. Tests and fixtures stay in the package.
  */
 export function registryFiles(): string[] {

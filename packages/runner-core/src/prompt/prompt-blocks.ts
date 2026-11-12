@@ -16,6 +16,8 @@ export const PROMPT_BLOCK_IDS = [
   'scripture',
   'skills',
   'continuation',
+  // PS-02: the memos a continuing assignee's quest filed, after the continuation they used to end.
+  'memos',
   'partial',
   'review',
   'resumed',

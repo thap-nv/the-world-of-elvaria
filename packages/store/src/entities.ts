@@ -10,6 +10,9 @@ import {
   InboxCommandSchema,
   KindsFileSchema,
   KingdomSchema,
+  MemoIdSchema,
+  MemoSchema,
+  MemosFileSchema,
   QuestIdSchema,
   QuestSchema,
   RitualsFileSchema,
@@ -28,6 +31,8 @@ import type {
   CharacterId,
   InboxCommand,
   Kingdom,
+  Memo,
+  MemoId,
   Quest,
   QuestId,
   RegistryFile,
@@ -62,7 +67,7 @@ export const KINGDOM_SPEC: FileSpec<Kingdom> = {
 };
 
 /**
- * The five registry files, each against its own file schema. Loading a registry also runs the cross-file rules
+ * The six registry files, each against its own file schema. Loading a registry also runs the cross-file rules
  * (parseRegistry); a rewrite by `migrateKingdom` needs only each file to be valid on its own.
  */
 export const REGISTRY_SPECS: Readonly<Record<RegistryFile, FileSpec<unknown>>> = {
@@ -71,6 +76,7 @@ export const REGISTRY_SPECS: Readonly<Record<RegistryFile, FileSpec<unknown>>> =
   rituals: { contract: 'ritual', parser: RitualsFileSchema, migrations: MIGRATIONS.ritual },
   scripts: { contract: 'script', parser: ScriptsFileSchema, migrations: MIGRATIONS.script },
   tags: { contract: 'tag', parser: TagsFileSchema, migrations: MIGRATIONS.tag },
+  memos: { contract: 'memo-kind', parser: MemosFileSchema, migrations: MIGRATIONS['memo-kind'] },
 };
 
 export const INBOX_SPEC: FileSpec<InboxCommand> = {
@@ -133,4 +139,15 @@ export const VERDICT_SPEC: EntitySpec<Verdict, VerdictId> = {
   dir: 'verdicts',
   scrub: (verdict) =>
     verdict.notes === undefined ? verdict : { ...verdict, notes: maskPatterns(verdict.notes) },
+};
+
+/** Memos a character wrote in its letter (PS-02, ADR 0024): the Steward files and closes them, nobody else writes. */
+export const MEMO_SPEC: EntitySpec<Memo, MemoId> = {
+  contract: 'memo',
+  parser: MemoSchema,
+  migrations: MIGRATIONS.memo,
+  idParser: MemoIdSchema,
+  idOf: (memo) => memo.id,
+  dir: 'memos',
+  scrub: (memo) => ({ ...memo, body: maskPatterns(memo.body) }),
 };

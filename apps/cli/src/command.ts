@@ -16,9 +16,11 @@ export interface OptionSpec {
 }
 
 export interface ArgumentSpec {
-  /** Placeholder in help, e.g. `<path>`. */
+  /** Placeholder in help, e.g. `<path>`; `[<words>]` for an optional one. */
   readonly name: string;
   readonly help: MessageKey;
+  /** May be left out; only the last arguments may be (`say [<words>]` with `--memo`, PS-02). */
+  readonly optional?: boolean;
 }
 
 export type OptionValue = string | boolean | readonly (string | boolean)[] | undefined;

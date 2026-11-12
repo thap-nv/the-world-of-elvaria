@@ -3,7 +3,8 @@
 ## Does
 
 - Ships the default registry that `elvaria init` copies into `<kingdom>/registry/` (implementation-plan §2.2):
-  11 kinds, 11 classes, 12 rituals, 6 catalog scripts, 8 tags, and one prompt per class. The package root is laid
+  11 kinds, 11 classes, 12 rituals, 6 catalog scripts, 8 tags, 1 memo kind (`proposal`, routed to the Chancellor;
+  `memos.json`, PS-02, ADR 0024), and one prompt per class. The package root is laid
   out like that folder.
 - Holds the catalog scripts of the script tier (ADR 0017): `link-check`, `run-check`, `count-files`,
   `diff-stat`, `compare-numbers`, `todo-scan`, plus `scripts/common.mjs`. Each runs as

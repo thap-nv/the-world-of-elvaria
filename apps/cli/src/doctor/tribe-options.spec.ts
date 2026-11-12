@@ -148,4 +148,14 @@ describe('elvaria doctor: tribe options and class prompts (P1-15)', () => {
     expect(printed(scripts)).toContain('! The registry names 1 catalog scripts the kingdom does not have:');
     expect(printed(scripts)).toContain('registry/scripts/count-files.mjs');
   });
+
+  it('names a registry file a kingdom made before it lacks, and that elvaria migrate copies it (PS-02)', async () => {
+    await rm(path.join(kingdom, 'registry', 'memos.json'));
+    const io = await doctorIo(bin);
+    expect(await doctor(io, '--acknowledge-terms', 'gemini')).toBe(1);
+    expect(printed(io)).toContain('✗ The registry does not load:');
+    expect(printed(io)).toContain('There is no file registry/memos.json.');
+    expect(printed(io)).toContain(`Run elvaria migrate: it copies the registry files this Elvaria ships`);
+    expect(printed(io)).not.toContain('copies the missing class prompts');
+  });
 });

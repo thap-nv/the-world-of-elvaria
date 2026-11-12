@@ -1,9 +1,11 @@
 // The upgrade.* lines (PS-04b): what a build is named by, and what each line must carry.
 import { describe, expect, it } from 'vitest';
 
-import { SHA_NEW, SHA_OLD } from './__fixtures__/valid-data.ts';
 import { EventSchema } from './event.ts';
 import { CommitShaSchema, UPGRADE_STEPS } from './upgrade-data.ts';
+
+const SHA_OLD = '4bc14e9d0c2a7f1e3b5d6a8c9e0f1a2b3c4d5e6f';
+const SHA_NEW = 'b0b2605a1c3e5f7a9b1d3f5a7c9e1b3d5f7a9c1e';
 
 const line = (type: string, data: Record<string, unknown>) => ({
   v: 1,

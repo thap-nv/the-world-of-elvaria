@@ -4,7 +4,7 @@
 
 Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là một event; log chỉ ghi thêm, không bao giờ viết lại. `type` là `nhóm.hành_động`; reader giữ nguyên type lạ, renderer bỏ qua nó. Hợp đồng đầy đủ: [schemas/event.schema.json](schemas/event.schema.json); nghĩa từng nhóm và các tiền tố dành sẵn: [glossary.md](glossary.md) mục 12.
 
-66 type trong danh mục v1, 54 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
+69 type trong danh mục v1, 57 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
 
 ## Khung một dòng
 
@@ -135,6 +135,14 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 | `territory.attached` | `territory`: object { id, name, kind, health, surveyed_at } — The territory after this event (territoryViewOf). |
 | `territory.surveyed` | `territory`: object { id, name, kind, health, surveyed_at } — The territory after this event (territoryViewOf). |
 | `territory.health` | `territory`: object { id, name, kind, health, surveyed_at } — The territory after this event (territoryViewOf). |
+
+## `memo` · 3 type
+
+| Type | `data` |
+|---|---|
+| `memo.filed` | `memo`: string (khớp `^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`kind`: string (khớp `^[a-z][a-z0-9_]*$`)<br>`from`: string (khớp `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$`, khác `user`, `machine`, `temple`) |
+| `memo.routed` | `memo`: string (khớp `^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`route`: một trong `chancellor` |
+| `memo.closed` | `memo`: string (khớp `^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`decision`: một trong `shelved`, `rejected`, `handled`<br>`quest` (tùy chọn): string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`) — With decision = handled: the quest that does the work. |
 
 ## `sandbox` · 2 type
 

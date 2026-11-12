@@ -13,20 +13,28 @@ import type { RegistrySource } from './init.ts';
 import type { Kingdom } from '@elvaria/domain';
 
 const KINGDOM = KingdomSchema.parse(fixture('kingdom'));
-const REGISTRY_FILES = ['kinds.json', 'classes.json', 'rituals.json', 'scripts.json', 'tags.json'];
+const REGISTRY_FILES = [
+  'kinds.json',
+  'classes.json',
+  'rituals.json',
+  'scripts.json',
+  'tags.json',
+  'memos.json',
+];
 const CONTRACT_OF: Record<string, string> = {
   'kinds.json': 'kind',
   'classes.json': 'class',
   'rituals.json': 'ritual',
   'scripts.json': 'script',
   'tags.json': 'tag',
+  'memos.json': 'memo-kind',
 };
 
 let source: TempKingdom;
 let kingdom: TempKingdom;
 let registry: RegistrySource;
 beforeEach(async () => {
-  // A registry source laid out like @elvaria/registry-default: the five files, a script, the class prompts.
+  // A registry source laid out like @elvaria/registry-default: the six files, a script, the class prompts.
   source = await tempKingdom();
   for (const file of REGISTRY_FILES) {
     const contract = CONTRACT_OF[file];

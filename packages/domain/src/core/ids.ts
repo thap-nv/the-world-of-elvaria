@@ -15,6 +15,11 @@ export const QUEST_ID_PATTERN = new RegExp(`^q_${DATE}_${CROCKFORD6}$`);
 export const CAMPAIGN_ID_PATTERN = new RegExp(`^c_${DATE}_${CROCKFORD6}$`);
 export const LESSON_ID_PATTERN = new RegExp(`^L_${DATE}_${CROCKFORD6}$`);
 /**
+ * A memo's id (PS-02, ADR 0024): the day of the quest it comes from and six base32 digits of a hash of the quest, the
+ * memo's kind and its normalized text, so reading the same letter again finds the memo already filed.
+ */
+export const MEMO_ID_PATTERN = new RegExp(`^m_${DATE}_${CROCKFORD6}$`);
+/**
  * `<quest>-<n>`: the verdict that ends the review of run n. Two more judgements on a run get files of their own
  * (P1-04): `-p<k>`, the partial verdict its k-th verifier session left, and `-user`, the owner's seal or return.
  */
@@ -25,6 +30,7 @@ export const ULID_PATTERN = /^[0-9A-HJKMNP-TV-Z]{26}$/;
 export const QuestIdSchema = z.string().regex(QUEST_ID_PATTERN).brand<'QuestId'>();
 export const CampaignIdSchema = z.string().regex(CAMPAIGN_ID_PATTERN).brand<'CampaignId'>();
 export const LessonIdSchema = z.string().regex(LESSON_ID_PATTERN).brand<'LessonId'>();
+export const MemoIdSchema = z.string().regex(MEMO_ID_PATTERN).brand<'MemoId'>();
 export const VerdictIdSchema = z.string().regex(VERDICT_ID_PATTERN).brand<'VerdictId'>();
 export const UlidSchema = z.string().regex(ULID_PATTERN).brand<'Ulid'>();
 /**
@@ -54,10 +60,13 @@ export const RitualIdSchema = z.string().regex(REGISTRY_ID_PATTERN).brand<'Ritua
 export const TagIdSchema = z.string().regex(REGISTRY_ID_PATTERN).brand<'TagId'>();
 export const CheckIdSchema = z.string().regex(REGISTRY_ID_PATTERN).brand<'CheckId'>();
 export const ScriptIdSchema = z.string().regex(SCRIPT_ID_PATTERN).brand<'ScriptId'>();
+/** A kind of memo, `registry/memos.json` (PS-02): `proposal`. */
+export const MemoKindIdSchema = z.string().regex(REGISTRY_ID_PATTERN).brand<'MemoKindId'>();
 
 export type QuestId = z.infer<typeof QuestIdSchema>;
 export type CampaignId = z.infer<typeof CampaignIdSchema>;
 export type LessonId = z.infer<typeof LessonIdSchema>;
+export type MemoId = z.infer<typeof MemoIdSchema>;
 export type VerdictId = z.infer<typeof VerdictIdSchema>;
 export type Ulid = z.infer<typeof UlidSchema>;
 export type CharacterId = z.infer<typeof CharacterIdSchema>;
@@ -69,3 +78,4 @@ export type RitualId = z.infer<typeof RitualIdSchema>;
 export type TagId = z.infer<typeof TagIdSchema>;
 export type CheckId = z.infer<typeof CheckIdSchema>;
 export type ScriptId = z.infer<typeof ScriptIdSchema>;
+export type MemoKindId = z.infer<typeof MemoKindIdSchema>;

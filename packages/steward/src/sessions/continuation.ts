@@ -1,6 +1,7 @@
 // What an assignee that goes on with a quest in a fresh session reads instead of a transcript (implementation-plan
 // §10 question 4, ADR 0017): why it goes on (a return with its verdict, or a revival), the letter, the journal, what
-// the branch touched, and why the Steward refused the last run's patch when it did (P1-31).
+// the branch touched, why the Steward refused the last run's patch when it did (P1-31), and the memos its letters
+// filed (PS-02).
 import { currentRun, isEventOf, ownerVerdictIdOf, verdictIdOf } from '@elvaria/domain';
 import { openJournal } from '@elvaria/eventlog';
 import type { Quest } from '@elvaria/domain';
@@ -8,16 +9,21 @@ import type { Continuation, Memory } from '@elvaria/runner-core';
 
 import { readHandover, readJournal } from '../files.ts';
 import { refusedPatchOf } from '../infirmary.ts';
+import { filedMemosOf } from '../memos/filed.ts';
 import { withLogTails } from '../review/log-tail.ts';
 import type { Context } from '../context.ts';
 import type { SessionInput } from './input.ts';
 
-/** What a continuing session reads instead of a transcript (ADR 0017); the branch's git log comes with P1-07. */
+/**
+ * What a continuing session reads instead of a transcript (ADR 0017), with the memos its letters filed (PS-02); the
+ * branch's git log comes with P1-07.
+ */
 async function memoryOf(ctx: Context, quest: Quest): Promise<Memory> {
   return {
     handover: await readHandover(ctx.root, quest.id),
     journal: await readJournal(ctx.root, quest.id),
     git_log: null,
+    memos: await filedMemosOf(ctx, quest.id),
   };
 }
 

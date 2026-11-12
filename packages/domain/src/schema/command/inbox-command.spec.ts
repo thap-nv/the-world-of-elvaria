@@ -142,6 +142,11 @@ const CASES: Record<InboxCommandKind, { valid: object; invalid: object; issue: s
     invalid: { character: 'quill', model: 'Gemini Flash' },
     issue: 'payload.model',
   },
+  decide_memo: {
+    valid: { memo: 'm_20261106_4k2pqz', decision: 'handled', quest: QUEST },
+    invalid: { memo: 'm_20261106_4k2pqz', decision: 'handled' },
+    issue: 'payload.quest: a handled memo names its quest',
+  },
 };
 const KINDS = Object.keys(CASES);
 

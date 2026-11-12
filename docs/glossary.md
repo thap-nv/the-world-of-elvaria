@@ -63,6 +63,8 @@ Luật (ADR 0014, [implementation-plan](implementation-plan.md) §2.7 và §4.1)
 | Giao hàng | Delivery | `deliver` | Đưa kết quả ra theo quy ước của kind. | `quest.deliverable`, event `delivery.sent` |
 | Thư giao hàng | Delivery note | `delivery.md` | Quản sự viết khi giao: quest, phán quyết, thư bàn giao, thứ đã chép hay đã mở, lệnh merge tay; với nhánh là mô tả PR. | `.runs/<quest>-delivery.md`, `quest.deliverable.path` |
 | Thư bàn giao | Handover letter | `handover.md` | Agent viết: đang ở đâu, đã xong, chưa xong, quyết định, bước kế. | `quests/<id>/handover.md` |
+| Thư | Letter | `memo` | Một việc nhân vật thấy ngoài quest của mình, viết thành một dòng ở mục `Memos` của thư bàn giao thay vì tự sửa. Quản sự lập và chuyển đi theo kiểu thư khi lượt người làm kết thúc qua nộp, hỏi hay hỏng; không ai trả lời thư, thư không đổi quest nào, chủ nhân quyết một lần (ADR 0024, PS-02). Trong code là `memo`, vì `letter` đã là thư bàn giao. | `memos/<id>.json`, mục `## Memos` của `handover.md`, `elvaria memo`, `elvaria say --memo` |
+| Kiểu thư | Letter kind | `memo_kind` | Dữ liệu registry: mỗi kiểu khai nơi nhận (`route`); định tuyến là hàm thuần `routeMemo` đọc bảng đó. Kiểu đầu tiên `proposal` (đề xuất: việc ngoài phạm vi quest) tới Tể tướng; `advisory`, `request`, `objection` đến ở PS-09, PS-10. | `registry/memos.json`, `memo.kind` |
 | Nhật ký (máy) | Journal | `journal.jsonl` | Event của quest do hook ghi. | `quests/<id>/journal.jsonl` |
 | Phụ thuộc | Dependency | `depends_on` | Quest phải xong trước. | `quest.depends_on` |
 | Đơn vị (trận đánh) | Unit | `unit` | Một việc nhỏ trong quest Trận đánh. | `quest.units[]` |
@@ -259,6 +261,7 @@ Họ model (suy ra từ slug, không lưu): `claude`, `gemini`, `gpt` (Codex thu
 | Ghim chuyên môn | `pin_tag` | — | `tag = null` để bỏ ghim |
 | Đặt cấp | `set_level` | — | `elvaria character level`; ghi `level_since` |
 | Đổi model | `set_model` | — | `elvaria character model`; model cùng tộc, nghề và tộc không đổi; ghi `character.model_changed` |
+| Quyết thư | `decide_memo` | — | `elvaria memo decide`; gác (`shelved`), bác (`rejected`) hay đã có quest làm (`handled`, kèm `quest`); mỗi thư quyết một lần, không quest nào đổi; ghi `memo.closed` |
 
 Nguồn lệnh (`source`): `cli`, `herald`, `lite`.
 
@@ -340,6 +343,9 @@ Mọi giá trị enum xuất hiện trong [schemas/](schemas/) có ở bảng n�
 | event `mana.level` → `data.source` | `rate_limits`, `estimate`, `signal` | ba nguồn gauge (ADR 0009) |
 | `kingdom.schedule` | `chronicle`, `temple`, `patrol` | ba lịch, mỗi cái tắt được |
 | `kingdom.bell` | `desktop`, `web_push`, `messaging` | ba kênh chuông |
+| `memo.state` | `open`, `closed` | thư đang chờ quyết, hay đã quyết (có `outcome`) |
+| `memo.outcome.decision` (cũng `decide_memo.decision`) | `shelved`, `rejected`, `handled` | gác lại, bác, hay đã có quest làm (`handled` thì kèm `quest`) |
+| `memo_kind.route` (cũng `memo.to.route`) | `chancellor` | nơi nhận của một kiểu thư |
 
 ## 12. Danh mục event type (v1)
 
@@ -354,6 +360,7 @@ Mọi giá trị enum xuất hiện trong [schemas/](schemas/) có ở bảng n�
 | Mana | `mana.level`, `mana.warning`, `mana.exhausted`, `mana.restored`, `mana.probe`, `mana.signal` | số đo, cảnh báo (một lần mỗi đồng hồ), hết, hồi sinh, thăm dò, tín hiệu hết trong băng (429, `StopFailure`); `exhausted`/`restored` có `model` khi chỉ trần riêng của một model ngủ hay thức |
 | Nhân vật | `character.created`, `character.sleep`, `character.wake`, `character.meditate`, `character.suspend`, `character.release`, `character.swamp`, `character.level_up`, `character.level_down`, `character.model_changed` | |
 | Lệnh | `command.received`, `command.applied`, `command.rejected` | Quản sự xử lý `inbox/` |
+| Thư | `memo.filed`, `memo.routed`, `memo.closed` | Quản sự lập thư từ mục `Memos` của thư bàn giao khi lượt người làm kết thúc qua nộp, hỏi hay hỏng (không khi cầu dao cắt), chuyển theo `registry/memos.json`, và đóng theo `decide_memo` (PS-02, ADR 0024) |
 | Khác | `delivery.sent`, `plot.patched`, `plot.merged`, `plot.restored`, `chronicle.written`, `territory.attached`, `territory.surveyed`, `territory.health`, `sandbox.replay.start`, `sandbox.replay.end` | `plot.patched`: Quản sự áp bản vá của người làm vào `laws.patch_paths` trước commit `submit` (P1-28); `plot.merged`: Quản sự gộp các nhánh phần vào nhánh quest ghép, hoặc dừng ở một nhánh (P1-21); `plot.restored`: sau phiên người chấm ngoài đất nháp, Quản sự đưa đất của quest về commit của nó, bỏ những gì lệnh của người chấm để lại (P1-44) |
 | Bản | `upgrade.started`, `upgrade.switched`, `upgrade.rolled_back`, `upgrade.failed` | `elvaria upgrade` ghi (actor `user`): bắt đầu dựng và thử một commit, chuyển con trỏ `.state/build.json` sang bản mới, lùi về bản trước, hay hỏng ở một bước (`prepare`, `doctor`, `conformance`, `trial`) và không chuyển |
 | Dành sẵn | `campaign.*`, `battle.*`, `incident.*`, `patrol.*`, `party.*`, `skill.*` | giai đoạn 5; đội và bí kíp |

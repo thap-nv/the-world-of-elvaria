@@ -108,6 +108,7 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
   - Prompt người làm: việc ngoài phạm vi thì viết thư, không tự sửa; prompt lượt sau liệt kê thư đã lập.
 - **Test**: spec ghi lại `handover.md` trước nhịp kết lượt; thư không đổi trạng thái quest nào; snapshot prompt mới.
 - **Vương quốc đang chạy**: `elvaria migrate` chép `memos.json`.
+- **Thực tế** (2026-11-12, chi tiết ở §11): `memos.json` là file registry thứ sáu (`REGISTRY_FILES`, hợp đồng `memo-kind`), nên vương quốc chưa `migrate` thì registry không nạp; `doctor` chỉ cách. Id là `m_<ngày của quest>_<6 base32>` từ sha256 của quest, kiểu và nội dung đã chuẩn hóa (Quản sự băm, domain dựng id như `questIdOfCommand`). Schema thêm `attempt` và `filed_at`; `to` là `{route}`. Mẫu một dòng: `- <kiểu>: <nội dung> refs: <đường dẫn>, …` (luật 8 của `assignee.md`; dòng thụt vào là nối tiếp); mục `## Memos` đứng trước `## Question`, để trống như nó. Quản sự lập thư ở nhánh hỏng, hỏi, và nộp sau khi commit được; lượt bị cầu dao cắt, kể cả các trip của commit, thì không. Phiên tiếp của quest đọc khối "Memos already filed" (`prompts/memos.md`). `say --memo` không tự đóng thư; chủ nhân quyết `handled` sau khi xác nhận bản nháp.
 
 ## PS-03 — Bộ lịch và bản tấu
 

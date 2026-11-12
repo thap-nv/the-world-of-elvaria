@@ -6,6 +6,7 @@ import { plotCommitMessage } from '@elvaria/runner-core';
 import type { CharacterId, Quest, Result } from '@elvaria/domain';
 import type { RunResult } from '@elvaria/runner-core';
 
+import { fileMemos } from '../memos/file.ts';
 import { moveAndRing } from '../notices.ts';
 import { step } from '../record.ts';
 import { judge, runOf, stallWithoutVerdict, verifierLeaves } from '../review/judge.ts';
@@ -55,20 +56,34 @@ async function settleAssignee(
   }
   if (result.outcome === 'max_turns' || result.outcome === 'budget')
     return breakAssignee(ctx, running, { trip: TRIPS[result.outcome] }, ended(result));
-  if (result.outcome !== 'completed')
+  // The memos of the letter are filed when the run ends through a crash, a question or a submit; a run a breaker
+  // cut (above, and the commit's trips in submitWork) wrote its letter in haste, and the next letter brings them (PS-02).
+  if (result.outcome !== 'completed') {
+    await fileMemos(ctx, running);
     return moveAndRing(ctx, {
       quest,
       event: { type: 'crash', ...run },
       actor: 'steward',
       edits: { [who]: step('crash') },
     });
-  if (result.question !== undefined)
+  }
+  if (result.question !== undefined) {
+    await fileMemos(ctx, running);
     return moveAndRing(ctx, {
       quest,
       event: { type: 'ask', question: result.question, ...run },
       actor: 'runner',
       edits: { [who]: step('ask') },
     });
+  }
+  return submitWork(ctx, running, result);
+}
+
+/** A run that completed without a question: the patch, the commit, the letter's memos, then the submit. */
+async function submitWork(ctx: Context, running: Running, result: RunResult): Promise<Result<Quest, string>> {
+  const who = running.character;
+  const run = runOf(running, result);
+  const quest = running.quest;
   await letLetterThrough(ctx, running, run.session_id);
   // What the CLI would not let the assignee write goes in first, as its patch, so the submit carries it (P1-28).
   // A patch that touches other paths or does not apply leaves everything in the plot, and the quest no review.
@@ -84,6 +99,7 @@ async function settleAssignee(
   // The branch would lack the work: the quest goes to the infirmary with the hook's last words, not to review.
   if (committed.status === 'refused')
     return breakAssignee(ctx, running, { trip: 'commit', refused: committed }, ended(result));
+  await fileMemos(ctx, running);
   return moveAndRing(ctx, {
     quest,
     event: { type: 'submit', ...run },

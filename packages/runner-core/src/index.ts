@@ -91,6 +91,7 @@ export { toolOf, toolPolicyOf } from './policy/tool-policy.ts';
 export type { ToolLaws, ToolPolicy, ToolPolicyInput } from './policy/tool-policy.ts';
 export { JOURNAL_TAIL_LINES, LANGUAGE_NAMES } from './prompt/blocks.ts';
 export type { Continuation, Locale, Memory } from './prompt/blocks.ts';
+export type { FiledMemo } from './prompt/memory.ts';
 export { buildPrompt } from './prompt/build-prompt.ts';
 export type { AssigneePromptInput, PromptInput, VerifierPromptInput } from './prompt/build-prompt.ts';
 export type { PromptCheck } from './prompt/checks.ts';
@@ -107,8 +108,8 @@ export { PROMPTS_DIR, PROMPT_TEMPLATES, loadPromptTemplates } from './prompt/tem
 export type { PromptTemplateName, PromptTemplates } from './prompt/templates.ts';
 export { FAKE_ADAPTER, FAKE_TOKENS, createFakeRunner, scenarioFromEnv } from './runner/fake-runner.ts';
 export type { FakeRunner, FakeRunnerOptions } from './runner/fake-runner.ts';
-export { HANDOVER_SECTIONS, questionOf, readQuestion, sectionOf } from './runner/handover.ts';
-export type { HandoverSection } from './runner/handover.ts';
+export { HANDOVER_SECTIONS, memosOf, questionOf, readQuestion, sectionOf } from './runner/handover.ts';
+export type { HandoverSection, LetterMemos } from './runner/handover.ts';
 export { POLICY_FILE, POLICY_VERSION, policyFileOf, writePolicyFile } from './runner/policy-file.ts';
 export type { PolicyExtras, PolicyFile } from './runner/policy-file.ts';
 export { CONTEXT_ENV, contextEnv, runContextOf } from './runner/run-context.ts';

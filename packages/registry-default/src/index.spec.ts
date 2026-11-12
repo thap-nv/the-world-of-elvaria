@@ -22,7 +22,7 @@ describe('the default registry', () => {
   });
 
   it('holds the ids the plan and glossary fix (implementation-plan §2.3, glossary §5, §6, §10)', () => {
-    const { kinds, classes, rituals, scripts, tags } = registry();
+    const { kinds, classes, rituals, scripts, tags, memos } = registry();
     expect(ids(kinds)).toEqual([
       'build',
       'research',
@@ -59,6 +59,8 @@ describe('the default registry', () => {
       'todo-scan',
     ]);
     expect(ids(tags)).toEqual(['frontend', 'backend', 'db', 'infra', 'i18n', 'e2e', 'integration', 'docs']);
+    // PS-02: the first kind of memo; advisory, request and objection come with PS-09 and PS-10 (ADR 0024).
+    expect(memos.map(({ id, route }) => [id, route])).toEqual([['proposal', 'chancellor']]);
   });
 
   it('names exactly the default scripts in the scripts.json schema description', () => {
@@ -172,6 +174,7 @@ describe('registryFiles', () => {
       expect.arrayContaining([
         'kinds.json',
         'tags.json',
+        'memos.json',
         'scripts/common.mjs',
         'scripts/link-check.mjs',
         ...registry().classes.map((entry) => entry.prompt_file),
