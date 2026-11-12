@@ -21,6 +21,7 @@ const context: ChancellorContext = {
       tribe: TribeIdSchema.parse('claude'),
       pool: 'claude',
       asleep: false,
+      resets_at: null,
       readings: [
         {
           window: 'five_hour',
@@ -31,7 +32,13 @@ const context: ChancellorContext = {
         },
       ],
     },
-    { tribe: TribeIdSchema.parse('gemini'), pool: 'gemini_models', asleep: true, readings: [] },
+    {
+      tribe: TribeIdSchema.parse('gemini'),
+      pool: 'gemini_models',
+      asleep: true,
+      resets_at: null,
+      readings: [],
+    },
   ],
   context_budget_tokens: 120_000,
 };
@@ -61,5 +68,15 @@ describe('buildChancellorPrompt (§10 question 3)', () => {
     expect(user).toContain('No character yet.');
     expect(user).toContain('No reading yet.');
     expect(user).toContain('# Script catalog\n\nNone.');
+  });
+
+  it("names a territory's shared paths, which no draft puts in its scope (PS-05)", () => {
+    const shared = { glob: 'packages/i18n/src/glossary.json', merge: 'union' as const };
+    const { user } = buildChancellorPrompt(
+      { ...context, territories: [{ ...TERRITORY, shared_paths: [shared] }] },
+      templates,
+    );
+    expect(user).toContain('; shared paths: `packages/i18n/src/glossary.json`');
+    expect(buildChancellorPrompt(context, templates).user).not.toContain('shared paths');
   });
 });

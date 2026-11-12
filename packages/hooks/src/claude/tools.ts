@@ -4,11 +4,13 @@
 /** ToolKindSchema of the domain (`agent.tool.tool`), repeated: the hook may not load the domain (§1.4). */
 export type ToolKind = 'read' | 'write' | 'bash' | 'web' | 'search' | 'other';
 
+// Searching and listing are `search`, not `read` (PS-21, owner 2026-11-12): the metrics count reads by file, and a
+// Glob, a Grep or a folder listing reads no one file. Lines written before PS-21 still say `read` for them.
 const KINDS: Readonly<Record<string, ToolKind>> = {
   Read: 'read',
-  Glob: 'read',
-  Grep: 'read',
-  LS: 'read',
+  Glob: 'search',
+  Grep: 'search',
+  LS: 'search',
   NotebookRead: 'read',
   Edit: 'write',
   Write: 'write',

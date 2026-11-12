@@ -99,6 +99,10 @@ describe('acceptanceQuestOf', () => {
       parent_id: Q1,
       created_by: 'council',
     });
+    // The contract's scope (PS-05): the tests sit beside the contract, before any part's work.
+    const scoped = { ...contract, scope_paths: ['api/openapi.yaml', 'e2e/**'] };
+    const tests = acceptanceQuestOf(scoped, [api, web], { territory: { checks: CHECKS }, tags: TAGS });
+    expect(tests.payload.scope_paths).toEqual(['api/openapi.yaml', 'e2e/**']);
   });
 
   it("tells the writer the owner's words, the contract, where the checks run, and never the parts' work", () => {

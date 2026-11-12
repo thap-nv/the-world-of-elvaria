@@ -117,6 +117,8 @@ interface QuestSpec {
   readonly dependsOn?: readonly string[];
   /** The party (id of its contract quest) the quest belongs to; the contract when it names itself. */
   readonly party?: string;
+  /** Its scope_paths (PS-05); none by default. */
+  readonly scope?: readonly string[];
 }
 
 export function quest(id: string, spec: QuestSpec = {}): Quest {
@@ -136,6 +138,7 @@ export function quest(id: string, spec: QuestSpec = {}): Quest {
     assignee: null,
     verifier: null,
     depends_on: spec.dependsOn ?? [],
+    ...(spec.scope === undefined ? {} : { scope_paths: spec.scope }),
     ...(spec.party === undefined
       ? {}
       : spec.party === id

@@ -147,6 +147,10 @@
   the scripture files and their lines, the skills and the prompt's blocks; `command.applied` and `command.rejected`
   name the command's `kind`, and `check.end` names the check whose environment failed when the run is set aside
   (`environment`, (b) of P1-54), so the metrics ledger reads them from the log.
+- Quotes a gazetteer stamped with the commit it was written at (`<!-- elvaria:commit <sha> -->`, PS-21) without the
+  stamp and with how many commits touched each top-level folder since, up to the quest's fork point
+  (`sessions/gazetteer.ts`, `Plots.drift`, optional: folder plots have none); a drift that cannot be read costs the
+  note and a log line, never the prompt.
 - Opens sessions through `AgentRunner` only (ADR 0006, 0021): the plot, the prompt (`sessions/prompt.ts`) and tool
   policy of `runner-core`, the budget, `.runs/<quest>-<n>`, and the env (§3.9): the minimal env it was given, the
   `ELVARIA_*` context of the hook and exactly the quest's `secrets_required` from the treasury (`sessionEnvOf`
@@ -230,7 +234,9 @@
   `src/review/deliverable-checks.ts`, P1-15): what the delivery would open, or why none, so a list the Steward
   would refuse goes back to the mage. The judge's prompt carries the branch's diff (`Plots.diff`), the craft of
   its class (`registry/<class.prompt_file>`, as every session's does), and where the last judge of the run
-  stopped when it left a `partial` verdict. Gives the plot back when a quest is archived (`Plots.release`; a
+  stopped when it left a `partial` verdict, and (PS-05) the files the work changed outside the quest's `scope_paths`,
+  the territory's `shared_paths` aside (`src/sessions/out-of-scope.ts`, matched with `globToRegExp`), which the
+  `quest.submitted` line carries too as `out_of_scope`: a signal for the judge, never a fail. Gives the plot back when a quest is archived (`Plots.release`; a
   dirty worktree stays, with a warning).
 - Runs the script tier itself (§2.5, §3.12, ADR 0017; `src/script/`): a `create_quest` whose `script.params` do
   not fit the catalog's `params_schema` is refused (`invalid_script_params`); an open script-tier quest is claimed
@@ -293,6 +299,12 @@
   `reason: null`, and keeps the notices in `.state/unclaimable.json` (`readUnclaimable`) for `elvaria quest list`
   and `show`. Rings once when a submitted quest waits for a judge the roster does not have (`unjudgeable`,
   P1-15: `different_model` and no judge of the kind outside its doers on another model); no file, no event.
+- Builds the territories' code graphs outside the tick (PS-21, ADR 0029, `graph-builds.ts`) through the optional
+  `deps.graphs` port (runner-core's `codeGraphsOf`): for each territory with `code_graph` on, the default branch's tip
+  every tick and a quest's base commit when its session opens; one build per territory, the latest commit next,
+  `graph.built` / `graph.failed` lines (a failed commit is not tried again by this Steward), killed at stop. A session
+  whose graph is built gets the graph commands in its policy, `GRAPHIFY_OUT` and graphify's folder in its env, and
+  the prompt's graph block (`sessions/graph.ts`); one whose graph is not built yet opens without it.
 
 ## Does not
 

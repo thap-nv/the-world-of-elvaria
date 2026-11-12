@@ -8,12 +8,14 @@ import { partialVerdictIdOf, shellOf, verifierSessionsOf } from '@elvaria/domain
 import { buildPrompt, readContextFiles, resumedPrompt } from '@elvaria/runner-core';
 import { readClassPrompt } from '@elvaria/store';
 import type { Character, CharacterClass, LoadTrace, Quest, Skill, Verdict } from '@elvaria/domain';
-import type { BuiltPrompt, PromptWithBlocks } from '@elvaria/runner-core';
+import type { BuiltPrompt, PromptGraph, PromptWithBlocks } from '@elvaria/runner-core';
 
-import { handoverPath, readDecree, readGazetteer, readHandover, readScriptures } from '../files.ts';
+import { handoverPath, readDecree, readHandover, readScriptures } from '../files.ts';
+import { gazetteerFor } from './gazetteer.ts';
 import { withLogTails } from '../review/log-tail.ts';
 import { continuationFor } from './continuation.ts';
 import { loadTraceOf } from './load-trace.ts';
+import { outOfScopeIn } from './out-of-scope.ts';
 import type { Context } from '../context.ts';
 import type { Scripture } from '../files.ts';
 import type { Resume, SessionInput } from './input.ts';
@@ -62,6 +64,8 @@ interface PromptParts {
   readonly scriptures: readonly Scripture[];
   /** Chosen by selectSkills (§3.13); none in stage 1. */
   readonly skills: readonly Skill[];
+  /** The quest's code graph, when the session asks one (PS-21, sessionGraphOf). */
+  readonly graph?: PromptGraph | undefined;
 }
 
 async function builtPromptOf(
@@ -81,9 +85,10 @@ async function builtPromptOf(
     territory,
     registry: ctx.world.registry,
     scriptures: parts.scriptures.map(({ text }) => text),
-    gazetteer: await readGazetteer(ctx.root, territory.id),
+    gazetteer: await gazetteerFor(ctx, quest, territory),
     class_prompt: await readClassPrompt(ctx.root, parts.characterClass),
     ...(await contextFilesFor(ctx, input)),
+    ...(parts.graph === undefined ? {} : { graph: parts.graph }),
   };
   if (input.role === 'verifier') {
     // The branch's diff against its fork point (PlotManager.diff, P1-15); a plot without git has none to give. A
@@ -96,7 +101,12 @@ async function builtPromptOf(
       quest.party_role === 'merge' ? 'after_merges' : 'branch',
     );
     const partial = await lastPartialOf(ctx, quest, input.n);
-    return buildPrompt({ ...base, role: 'verifier', handover, diff, checks, partial }, ctx.templates);
+    // The files changed outside the quest's scope (PS-05): the judge weighs them, the machine never fails them.
+    const outside = await outOfScopeIn(ctx, quest);
+    return buildPrompt(
+      { ...base, role: 'verifier', handover, diff, checks, partial, out_of_scope: outside },
+      ctx.templates,
+    );
   }
   const continuation = await continuationFor(ctx, input, known);
   return buildPrompt(
@@ -124,7 +134,7 @@ export interface SessionPrompt {
 export async function promptOf(
   ctx: Context,
   input: SessionInput,
-  given: Pick<PromptParts, 'characterClass' | 'known'>,
+  given: Pick<PromptParts, 'characterClass' | 'known' | 'graph'>,
   resume: Resume | null,
 ): Promise<SessionPrompt> {
   const parts = { ...given, scriptures: await readScriptures(ctx.root, input.character.id), skills: [] };

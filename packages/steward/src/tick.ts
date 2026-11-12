@@ -11,6 +11,7 @@ import { createRecorder } from './record.ts';
 import { restartFromLog, stallLeftReviews } from './restart.ts';
 import { noticesOf } from './schedule/digest.ts';
 import { recordEnd } from './sessions/ended.ts';
+import { wantTipGraphs } from './sessions/graph.ts';
 import { maskFinished } from './sessions/secrets.ts';
 import { reapLost } from './sessions/settle.ts';
 import { carryOut } from './steps.ts';
@@ -55,7 +56,7 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   const counts: Counts = { applied: 0, rejected: 0, waiting: 0, started: 0, ended: 0 };
   const world = await loadWorld(deps.store, deps.log);
   if (world === undefined) return reportOf(counts);
-  const { sessions, handled, limits, mana, background, judgeLocks } = state;
+  const { sessions, handled, limits, mana, background, judgeLocks, graphs } = state;
   const record = createRecorder({ ...deps, world, stamp: () => held.zone.format(deps.clock.now()) });
   const root = deps.store.root;
   const { templates } = held;
@@ -73,6 +74,7 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
     stopping,
     background,
     judgeLocks,
+    graphs,
   };
   const waiting = await applyInbox(ctx, handled);
   // A session's leftovers lose its secrets before anything is recorded of them (§3.9).
@@ -91,6 +93,8 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   await manaStep(ctx);
   // Work for a quest that moved on since it started (cancelled, judged, retried) is killed before the plan (P1-25).
   background.prune(wantedIn(world.quests));
+  // Graphs of the default branches' tips build before the quests prepared from them open a session (PS-21).
+  await wantTipGraphs(ctx);
   const snapshot = snapshotOf(world, limits, mana, sessions.held(), background.view());
   const plan = planTick(snapshot, deps.clock.now());
   // Notices first: a quest someone can take now has its notice withdrawn before the claim that follows (§3.1).

@@ -6,6 +6,7 @@ import path from 'node:path';
 
 import type { Tribe } from '@elvaria/domain';
 import { locateClaude } from '@elvaria/runner-claude';
+import { locateCodex } from '@elvaria/runner-codex';
 import { fromPortable } from '@elvaria/store';
 
 import { findExecutable } from '../process/find-executable.ts';
@@ -13,7 +14,7 @@ import type { CliIo } from '../io.ts';
 
 /**
  * The program each built-in adapter drives, looked up on PATH first; an adapter may search further
- * (ADAPTER_SEARCH). Adapters without a package yet (P1-12b, P1-12c, P1-12d) are only data here.
+ * (ADAPTER_SEARCH). An adapter without a package yet (P1-12c) is only data here.
  */
 export const ADAPTER_PROGRAMS: Readonly<Record<string, string>> = {
   claude_code: 'claude',
@@ -22,21 +23,22 @@ export const ADAPTER_PROGRAMS: Readonly<Record<string, string>> = {
   codex_cli: 'codex',
 };
 
+/** The env an adapter's search reads, with the owner's home in place of the test machine's. */
+const homeEnv = (io: CliIo) => ({
+  ...io.env,
+  HOME: io.home,
+  USERPROFILE: io.home,
+  APPDATA: path.win32.join(io.home, 'AppData', 'Roaming'),
+});
+
 /**
  * Where an adapter looks besides PATH (P1-09): Claude Code's own search covers `~/.local/bin`, npm's folder and
- * the VS Code extension's binary. The home folder is io.home, the owner's, so a test machine's never leaks in.
+ * the VS Code extension's binary; Codex's npm's folder and the `openai.chatgpt` extension's (P1-12d). The home
+ * folder is io.home, the owner's, so a test machine's never leaks in.
  */
 const ADAPTER_SEARCH: Readonly<Record<string, (io: CliIo) => Promise<string | undefined>>> = {
-  claude_code: (io) =>
-    locateClaude(
-      {
-        ...io.env,
-        HOME: io.home,
-        USERPROFILE: io.home,
-        APPDATA: path.win32.join(io.home, 'AppData', 'Roaming'),
-      },
-      io.platform,
-    ),
+  claude_code: (io) => locateClaude(homeEnv(io), io.platform),
+  codex_cli: (io) => locateCodex(homeEnv(io), io.platform),
 };
 
 export type Located =

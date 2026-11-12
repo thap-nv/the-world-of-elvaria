@@ -1,0 +1,3 @@
+{"type":"thread.started","thread_id":"01a1cf9e-f350-7322-b17b-37aa2763bd8e"}
+{"type":"turn.started"}
+{"type":"item.started","item":{"id":"item_0","type":"command_execution","command":"\"C:\\\\WINDOWS\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\" -Command 'Start-Sleep -Seconds 90'","aggregated_output":"","exit_code":null,"status":"in_progress"}}

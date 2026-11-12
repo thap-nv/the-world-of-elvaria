@@ -27,6 +27,7 @@ import type {
   QuestEvent,
   QuestId,
   Result,
+  TerritoryId,
 } from '@elvaria/domain';
 import type { EventLog } from '@elvaria/eventlog';
 import type { KingdomStore } from '@elvaria/store';
@@ -59,6 +60,8 @@ export interface Move {
    * quest file and attempt_log stay as they were.
    */
   readonly load_trace?: LoadTrace;
+  /** On a submit, the files the work changed outside the quest's scope (PS-05): on the line only, as `load_trace`. */
+  readonly out_of_scope?: readonly string[];
 }
 
 /** A line about something the files do not keep: verdict.*, command.*. */
@@ -68,6 +71,8 @@ export interface Line {
   readonly data: Readonly<Record<string, unknown>>;
   readonly quest?: Quest;
   readonly session?: string | undefined;
+  /** The territory of a line with no quest (graph.*, PS-21); a quest's line takes its quest's. */
+  readonly territory?: TerritoryId;
 }
 
 export interface Recorder {
@@ -134,6 +139,7 @@ async function append(deps: RecorderDeps, line: Line, ts: string): Promise<void>
     type: line.type,
     actor: line.actor,
     ...(line.quest === undefined ? {} : { quest: line.quest.id, territory: line.quest.territory }),
+    ...(line.quest === undefined && line.territory !== undefined ? { territory: line.territory } : {}),
     ...(run > 0 ? { attempt: run } : {}),
     ...(line.session === undefined ? {} : { session: line.session }),
     data: line.data,
@@ -200,6 +206,9 @@ async function move(deps: RecorderDeps, request: Move): Promise<Result<Quest, st
     ...(moved.value.length > 0 ? { characters: moved.value.map(characterViewOf) } : {}),
     ...(sequels === undefined || sequels.length === 0 ? {} : { sequels }),
     ...(request.load_trace === undefined ? {} : { load_trace: request.load_trace }),
+    ...(request.out_of_scope === undefined || request.out_of_scope.length === 0
+      ? {}
+      : { out_of_scope: request.out_of_scope }),
   };
   await append(deps, { type, actor: actorOf(request.actor, found), data, quest: after.value, session }, at);
   return ok(after.value);

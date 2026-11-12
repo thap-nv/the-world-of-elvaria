@@ -120,6 +120,8 @@ export function plotsOver(kingdom: string, manager: PlotManager, host: ProcessHo
     touched: (plot) => manager.touched(plot),
     ...scratchPlots(kingdom, manager, host),
     diff: (plot, scope) => manager.diff(plot, scope),
+    // How far the territory moved since its gazetteer was written (PS-21).
+    drift: async (plot, from) => (await manager.drift?.(plot, from)) ?? null,
     // A party's merge quest: its parts merged before its knight's sessions, and checked before its judge (P1-18).
     merge: (plot, branches) => manager.merge(plot, branches),
     unmerged: (plot, branches) => manager.unmerged(plot, branches),

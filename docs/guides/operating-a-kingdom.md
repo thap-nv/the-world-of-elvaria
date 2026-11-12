@@ -126,6 +126,7 @@ Luật tách vai: người chấm là một nhân vật khác người làm, ch�
 ## 4. Ra nhiệm vụ
 
 - **`elvaria quest add`** gửi lệnh tạo một quest mở ngay, không qua nháp; Quản sự tạo nó ở nhịp kế (Quản sự chưa chạy thì lệnh chờ trong `inbox/`), rồi `quest list` mới thấy nó và id của nó. Bắt buộc: `--title`, `--description`, `--kind` (theo `registry/kinds.json`: `build`, `fix`, `document`…), `--rank` (F tới S), `--territory`; `--class` là nghề được nhận, cần khi dạng nhiệm vụ cho hơn một nghề (như `build`). `--to <nhân vật>` giao thẳng; `--contract` mở một đội (pháp sư viết hợp đồng, chia phần, Quản sự thêm quest ghép); `--script <id>` chạy bậc script, 0 mana.
+- **Vùng file** (PS-05): `--scope <glob>` (lặp lại; `quest edit --scope` thay cả vùng) khai các file quest sẽ sửa. Hai quest có vùng giao nhau không bao giờ làm cùng lúc trên một lãnh thổ, quest không khai vùng chạy một mình ở đó; nhờ vậy lãnh thổ code nâng được `max_concurrent`. File mà mọi nhánh cùng sửa thì đặt ở `territory.shared_paths`, không ở vùng của quest. Luật, cách khai và danh sách của lãnh thổ Elvaria: [elvaria-territory.md](elvaria-territory.md).
 - **`elvaria say "<lời>"`** (tốn mana, khoảng 15 giây): Tể tướng soạn quest **nháp**; đọc bằng `quest show`, sửa bằng `quest edit`, mở bằng `elvaria quest confirm <quest>`. Bài học của P1-50 khi nói với Tể tướng:
   - Nói rõ "Cần dấu vua trước khi xong" khi muốn có dấu: lời không nhắc dấu thì nháp có thể tắt dấu (vá ở PS-06).
   - Tể tướng không thấy file: nó ước lượng 70 nghìn token cho việc đọc một file 1 MB. Việc chạm nhiều file hay file lớn thì nâng trần trước khi xác nhận.
@@ -202,6 +203,8 @@ Hai CLI **tự cập nhật qua đêm** theo VS Code (hai lần trong hai ngày 
 | "Tộc gemini: tìm thấy phiên bản …, khác bản đã ghim" (cảnh báo) | `agy.exe` bị thay tại chỗ; phiên kế tiếp đã chạy bản mới dù chưa ghim | như trên |
 
 Trước khi ghim: đọc changelog (`agy changelog`; https://code.claude.com/docs/en/changelog) tìm mục đổi `-p`, `--settings`, quyền, hook, stream-json, mã thoát; đối chiếu các dòng có dấu ⚑ trong [cli-facts](../reference/cli-facts-2026-11-12.md). Muốn chắc hơn: `elvaria tribe check <tộc>` chạy bộ test hợp đồng với CLI thật (tốn chút mana).
+
+**Đồ thị code (PS-21, [ADR 0029](../adr/0029-code-graph-of-the-territory.md)).** Tùy chọn, mặc định tắt. Cài graphify (`uv tool install graphifyy`, Python 3.10–3.14), chạy `elvaria territory graph <lãnh thổ> --query '<tên mã>'` để thử (0 mana, đồ thị ở `.state/graphs/<lãnh thổ>/`), rồi đặt `"code_graph": true` trong `territories/<id>/territory.json` và chạy `elvaria doctor --pin` để ghim graphify. Từ đó Quản sự dựng đồ thị ở commit gốc của mỗi quest, và nghề có `Glob` hoặc `Grep` (trừ nghề cấm trần `Bash`) hỏi được nó bằng `graphify query`, `path`, `explain`, `affected`. `doctor` cảnh báo khi graphify thiếu hay đổi phiên bản; thiếu graphify thì quest chạy như trước. Bật cờ trên lãnh thổ nào là chủ nhân chốt sau A/B của PS-21.
 
 ## 9. Đồng hồ mana
 

@@ -48,13 +48,13 @@ export function reassignsOf(
     const since = pausedSince(quest);
     const territory = roster.territory(quest.territory);
     if (since === undefined || now - since < limit) return [];
-    if (territory === undefined || !roster.territoryHasRoom(territory.id)) return [];
+    if (territory === undefined || !roster.territoryHasRoom(quest)) return [];
     const free = characters.filter(
       (character) => character.id !== quest.assignee && roster.canClaim(character, quest, territory),
     );
     const taker = selectAssignee(quest, free, { party: partyOf(quest, quests), characters });
     if (taker === undefined) return [];
-    roster.take(taker, territory.id);
+    roster.take(taker, quest);
     return [{ quest: quest.id, assignee: taker.id, level: taker.level }];
   });
 }

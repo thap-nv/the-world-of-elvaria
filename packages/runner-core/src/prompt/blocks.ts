@@ -10,6 +10,7 @@ import type { PromptCheck } from './checks.ts';
 import type { Memory } from './memory.ts';
 import type { ToolPolicy } from '../policy/tool-policy.ts';
 import type { PromptTemplates } from './templates.ts';
+import { scopeFacts, sharedFacts } from './scope.ts';
 import type { Kind, Kingdom, Quest, Registry, Skill, Territory, Verdict } from '@elvaria/domain';
 
 export type Locale = Kingdom['owner']['locale'];
@@ -170,13 +171,17 @@ export function partialBlock(partial: Verdict | null, t: PromptTemplates): strin
  * secrets the territory allows. The mage's class prompt explains the fields and points here; the Steward refuses
  * a list that names anything else.
  */
-function subquestVocabulary(registry: Registry, territory: Pick<Territory, 'secrets_allowed'>): string[] {
+function subquestVocabulary(
+  registry: Registry,
+  territory: Pick<Territory, 'secrets_allowed' | 'shared_paths'>,
+): string[] {
   const kinds = registry.kinds.map((kind) => `${kind.id} (${kind.classes_allowed.join(', ') || 'no class'})`);
   const secrets = territory.secrets_allowed;
   return [
     `- Kinds of a sub-quest and the classes each allows: ${kinds.join('; ')}`,
     `- Tags: ${registry.tags.map(({ id }) => id).join(', ')}`,
     `- Secrets this territory allows: ${secrets.length === 0 ? 'none' : secrets.join(', ')}`,
+    ...sharedFacts(territory),
   ];
 }
 
@@ -187,11 +192,11 @@ function subquestVocabulary(registry: Registry, territory: Pick<Territory, 'secr
 const DELIVERABLE_FACTS: Partial<
   Record<
     Kind['deliverable_type'],
-    (registry: Registry, territory: Pick<Territory, 'secrets_allowed'>) => string[]
+    (registry: Registry, territory: Pick<Territory, 'secrets_allowed' | 'shared_paths'>) => string[]
   >
 > = {
   subquests: (registry, territory) => [
-    `- Deliverable: the sub-quests, written to \`${SUBQUESTS_FILE}\` at the root of the plot as quest-draft JSON: \`{"version": 1, "drafts": [...]}\`, each draft with ref (d1, d2…), title, description, kind, rank, territory, tier, class_required, tags, depends_on_refs, parent_ref (optional), estimate {tokens, minutes}, seal_required, secrets_required. The Steward opens them once this quest is done`,
+    `- Deliverable: the sub-quests, written to \`${SUBQUESTS_FILE}\` at the root of the plot as quest-draft JSON: \`{"version": 1, "drafts": [...]}\`, each draft with ref (d1, d2…), title, description, kind, rank, territory, tier, class_required, tags, depends_on_refs, parent_ref (optional), scope_paths (optional), estimate {tokens, minutes}, seal_required, secrets_required. The Steward opens them once this quest is done`,
     ...subquestVocabulary(registry, territory),
   ],
 };
@@ -205,7 +210,7 @@ function partyFact(quest: Quest): string[] {
 export function questBlock(
   quest: Quest,
   registry: Registry,
-  territory: Pick<Territory, 'secrets_allowed'>,
+  territory: Pick<Territory, 'secrets_allowed' | 'shared_paths'>,
   t: PromptTemplates,
 ): string {
   const kind = entryOf(registry.kinds, quest.kind, 'kind');
@@ -216,6 +221,7 @@ export function questBlock(
     `- Territory: ${quest.territory}`,
     `- Limits: ${quest.budget.max_minutes} minutes, ${quest.budget.max_tokens} tokens`,
     ...partyFact(quest),
+    ...scopeFacts(quest),
     ...(DELIVERABLE_FACTS[kind.deliverable_type]?.(registry, territory) ?? []),
   ];
   return fill(t.quest, {

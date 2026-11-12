@@ -28,8 +28,9 @@ export const isFlaky = (verdict: FlakyVerdict['verdict']): boolean =>
 
 /**
  * The `create_quest` payload of the follow-up, or undefined when the verdict found no flake or the ritual names no
- * follow-up. Open at once, a child of the quest judged, on its territory, rank and tags; the Steward makes it through
- * `questFromCommand`, so the kingdom's rules hold.
+ * follow-up. Open at once, a child of the quest judged, on its territory, rank, tags and scope (PS-05: it waits until
+ * the quest judged is archived when that one holds its scope); the Steward makes it through `questFromCommand`, so
+ * the kingdom's rules hold.
  */
 export function flakyFollowUpOf(run: FlakyVerdict): CommandPayload<'create_quest'> | undefined {
   const { parent, ritual, verdict, locale } = run;
@@ -54,6 +55,7 @@ export function flakyFollowUpOf(run: FlakyVerdict): CommandPayload<'create_quest
     tier: 'session',
     class_required: followUp.class,
     tags: [...parent.tags],
+    ...(parent.scope_paths === undefined ? {} : { scope_paths: parent.scope_paths }),
     parent_id: parent.id,
     // What the machine finds while it watches the walls: the Steward opens it, as a patrol's finding.
     created_by: 'patrol',

@@ -74,6 +74,12 @@ describe('flakyFollowUpOf', () => {
     expect(payload?.description).not.toContain('\n\n');
   });
 
+  it('keeps the scope of the quest judged, so it waits until that quest is archived (PS-05)', () => {
+    const scoped = { ...parent, scope_paths: ['e2e/**'] };
+    const run = { parent: scoped, ritual: MUTATION, kinds: [FIX], verdict: flaky, locale: 'en' } as const;
+    expect(flakyFollowUpOf(run)?.scope_paths).toEqual(['e2e/**']);
+  });
+
   it('opens none without a flake, without a follow-up, or for a kind the registry lacks', () => {
     const run = { parent, ritual: MUTATION, kinds: [FIX], verdict: flaky, locale: 'en' } as const;
     expect(flakyFollowUpOf({ ...run, verdict: { ...flaky, result: 'pass' } })).toBeUndefined();

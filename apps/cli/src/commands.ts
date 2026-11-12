@@ -25,6 +25,7 @@ import { SANDBOX_GENERATE } from './sandbox/generate.ts';
 import { SANDBOX_REPLAY } from './sandbox/replay.ts';
 import { SAY } from './say/say.ts';
 import { TERRITORY_ADD } from './territory/add.ts';
+import { TERRITORY_GRAPH } from './territory/graph.ts';
 import { TERRITORY_LIST } from './territory/list.ts';
 import { TRIBE_ADD } from './tribe/add.ts';
 import { TRIBE_CHECK } from './tribe/check.ts';
@@ -43,6 +44,7 @@ export const COMMANDS: readonly CommandSpec[] = [
   TRIBE_DISABLE,
   TERRITORY_ADD,
   TERRITORY_LIST,
+  TERRITORY_GRAPH,
   CHARACTER_ADD,
   CHARACTER_LIST,
   CHARACTER_SUSPEND,

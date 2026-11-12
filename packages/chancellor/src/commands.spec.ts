@@ -72,4 +72,13 @@ describe('draftCommands (§3.11, ADR 0005)', () => {
     });
     expect(commandsOf('vague')[0]?.command.payload).not.toHaveProperty('party_role');
   });
+
+  it("keeps a draft's scope, and declares none for a draft without one (PS-05)", () => {
+    const [draft] = QuestDraftFileSchema.parse(reply('split')).drafts;
+    if (draft === undefined) throw new Error('fixture: no draft');
+    const [scoped] = draftCommands([{ ...draft, scope_paths: ['docs/architecture.md'] }], source());
+    expect(scoped?.command.payload.scope_paths).toEqual(['docs/architecture.md']);
+    expect(InboxCommandSchema.safeParse(scoped?.command).success).toBe(true);
+    expect(commandsOf('split')[0]?.command.payload).not.toHaveProperty('scope_paths');
+  });
 });

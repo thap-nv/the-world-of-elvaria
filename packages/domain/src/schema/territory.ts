@@ -2,7 +2,7 @@
 import { z } from 'zod';
 
 import { SPECS_PLACEHOLDER, TERRITORY_DEFAULTS } from '../constants.ts';
-import { CheckIdSchema, REGISTRY_ID_PATTERN, SLUG_PATTERN, TerritoryIdSchema } from '../core/ids.ts';
+import { REGISTRY_ID_PATTERN, SLUG_PATTERN, TerritoryIdSchema } from '../core/ids.ts';
 import {
   AbsPathSchema,
   DateTimeSchema,
@@ -13,6 +13,8 @@ import {
   rejectDuplicateIds,
   unique,
 } from './common.ts';
+import { CodeGraphFlagSchema } from './territory-graph.ts';
+import { CheckSchema, CommandLinesSchema } from './territory-checks.ts';
 
 const describe = (description: string) => ({ description });
 
@@ -35,78 +37,6 @@ const GIT_SEGMENT = /^(?:\.git[. ]*|git~\d+)$/i;
 /** False for a glob naming git's own folder (`.git/**`, `sub/.git/hooks/*`). */
 export const namesNoGitFolder = (glob: string): boolean =>
   !glob.split(/[\\/]/).some((segment) => GIT_SEGMENT.test(segment));
-
-/**
- * A command, or commands run in order until one fails (P1-20, the P1-11 proposal (c)): the steps CI joins with `&&`
- * (`pnpm api:openapi` then `git diff --exit-code`), since no command runs through a shell (ADR 0015).
- */
-export const CommandLinesSchema = z
-  .union([NonEmptyStringSchema, z.array(NonEmptyStringSchema).min(1)])
-  .meta(
-    describe(
-      'A pnpm/node/git command without shell syntax (runs the same under Git Bash and PowerShell), or a list of such commands run one after another in the same folder until one exits non-zero.',
-    ),
-  );
-export type CommandLines = z.infer<typeof CommandLinesSchema>;
-
-/** The commands of `lines`, in order. */
-export const commandLinesOf = (lines: CommandLines): readonly string[] =>
-  typeof lines === 'string' ? [lines] : lines;
-
-// P1-54, (f) of the P1-50 report: flake_check reran every check twice more, 45–75 minutes of a trial on dc1.
-const FlakeSchema = z
-  .strictObject({
-    specs: z
-      .array(NonEmptyStringSchema)
-      .default(() => [])
-      .meta(describe("Globs of this check's spec files, relative to the territory root.")),
-    run: CommandLinesSchema.optional().meta(
-      describe(
-        `The check's command for some spec files alone, where ${SPECS_PLACEHOLDER} stands for them (\`pnpm exec playwright test ${SPECS_PLACEHOLDER}\`). Needs specs.`,
-      ),
-    ),
-  })
-  .refine(
-    ({ specs, run }) =>
-      run === undefined ||
-      (specs.length > 0 && commandLinesOf(run).some((line) => line.includes(SPECS_PLACEHOLDER))),
-    { path: ['run'], message: `flake.run names ${SPECS_PLACEHOLDER} and comes with flake.specs` },
-  )
-  .meta(
-    describe(
-      'The check may flake (integration, e2e): under the ritual step flake_check it runs again after commands.reset, and only the checks that have `flake` do once one check of the territory has it (none: every check runs again, as before P1-54). When the quest added or changed spec files that `specs` match, the reruns run `run` on those files alone instead of the whole check.',
-    ),
-  );
-
-const CheckSchema = z.strictObject({
-  id: CheckIdSchema,
-  run: CommandLinesSchema,
-  when: z.array(NonEmptyStringSchema).min(1),
-  exclusive: z
-    .boolean()
-    .default(false)
-    .meta(
-      describe("Never run in parallel with another quest's exclusive check on this territory (Docker, e2e)."),
-    ),
-  defer_to_merge: z
-    .boolean()
-    .default(false)
-    .meta(
-      describe(
-        "Skipped by a party's contract quest and its parts, and run once by its merge quest, which runs every check of the territory whatever it touched (heavy integration and e2e checks, implementation-plan §3.15): the contract quest holds an interface written before the code, so a check comparing generated files with the code cannot pass there (P1-37). The blind trial's acceptance part runs no check at all, deferred or not: its tests cannot pass before the parts are merged. Quests outside a party run it by `when` as usual.",
-      ),
-    ),
-  timeout_minutes: z.int().min(1),
-  cleanup: z
-    .string()
-    .optional()
-    .meta(
-      describe(
-        "Optional command run after a timeout (orphan containers, locks), under the territory's exclusive lock (P1-54).",
-      ),
-    ),
-  flake: FlakeSchema.optional(),
-});
 
 const LawsSchema = z
   .strictObject({
@@ -147,6 +77,20 @@ const LawsSchema = z
       'Territory laws, enforced by generated deny rules and the PreToolUse hook. Deny rules are a fence, not a sandbox.',
     ),
   );
+
+// PS-05, ADR 0028: hot files, which every parallel branch edits. Optional and added after v1, so `version` stays 1.
+export const SHARED_PATH_MERGES = ['regenerate', 'union'] as const;
+
+const SharedPathSchema = z.strictObject({
+  glob: NonEmptyStringSchema.meta(describe('Relative to the territory root, as in laws.')),
+  merge: z
+    .enum(SHARED_PATH_MERGES)
+    .meta(
+      describe(
+        "How a merge joins two branches' changes to these files (PS-09): `regenerate` runs the territory's commands.generate on the merged result (generated files), `union` keeps the lines of both sides (tables, indexes, locales).",
+      ),
+    ),
+});
 
 // P1-21, ADR 0022: off by default, because the acceptance part and its judge double the cost of the party.
 const BlindTrialSchema = z
@@ -202,7 +146,7 @@ export const TerritorySchema = z
       .default(TERRITORY_DEFAULTS.max_concurrent)
       .meta(
         describe(
-          'Quests running at once on this territory. Stage 1 keeps code territories at 1 because files a quest will touch cannot be known in advance.',
+          'Quests running at once on this territory. Stage 1 kept code territories at 1 because the files a quest would touch could not be known in advance; once its quests declare scope_paths (PS-05), two quests whose scopes meet never run at once, and a code territory can raise it.',
         ),
       ),
     context_files: z
@@ -259,6 +203,15 @@ export const TerritorySchema = z
       ),
     laws: LawsSchema.prefault({}),
     blind_trial: BlindTrialSchema.prefault({}),
+    code_graph: CodeGraphFlagSchema,
+    shared_paths: z
+      .array(SharedPathSchema)
+      .optional()
+      .meta(
+        describe(
+          "Hot files every parallel quest edits (the plan's tables, a package index, the glossary, locales, generated files): never an overlap of two quests' scope_paths, nor a file changed outside a scope. Absent: none.",
+        ),
+      ),
     secrets_allowed: unique(z.array(z.string().regex(REGISTRY_ID_PATTERN)))
       .default(() => [])
       .meta(
@@ -283,11 +236,17 @@ export const TerritorySchema = z
       .prefault({}),
     surveyed_at: DateTimeSchema.optional(),
   })
+  .refine(
+    (territory) =>
+      territory.commands.generate !== undefined ||
+      !(territory.shared_paths ?? []).some(({ merge }) => merge === 'regenerate'),
+    { path: ['shared_paths'], message: 'a shared path merged by regenerate needs commands.generate' },
+  )
   .meta({
     title: 'Territory',
     description:
       "territories/<id>/territory.json: one repo or folder attached to the kingdom ('opening a realm'). Holds how to set up and check work there (commands, checks), the territory's own laws enforced at the runner (deny lists and hooks, not only the prompt), allowed secret names, and health.",
-    $comment: `${GENERATED_NOTE} There is no \`map\` field: region geometry lives only in world/map.json (world-map schema) and the level of detail is computed by the Herald from camera and territory count, so it is never stored here. Not expressible here: check ids are unique; laws.forbidden_commands and environment_errors must compile as regular expressions; checks[].flake.run names ${SPECS_PLACEHOLDER} and comes with flake.specs; laws.patch_paths never names a .git folder (nor .GIT, .git. or git~1).`,
+    $comment: `${GENERATED_NOTE} There is no \`map\` field: region geometry lives only in world/map.json (world-map schema) and the level of detail is computed by the Herald from camera and territory count, so it is never stored here. Not expressible here: check ids are unique; laws.forbidden_commands and environment_errors must compile as regular expressions; checks[].flake.run names ${SPECS_PLACEHOLDER} and comes with flake.specs; laws.patch_paths never names a .git folder (nor .GIT, .git. or git~1); a shared path merged by \`regenerate\` needs commands.generate.`,
   });
 
 export type Territory = z.infer<typeof TerritorySchema>;

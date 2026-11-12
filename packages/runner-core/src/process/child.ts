@@ -1,6 +1,6 @@
-// Starting an agent CLI and reading it line by line, for an adapter whose CLI takes its prompt in argv (Antigravity;
-// runner-claude writes the prompt to stdin and keeps its own spawn). Moved from runner-antigravity with the kill
-// tree (P1-06; ADR 0006 amended after P1-09): starting a process and stopping its tree is not any one CLI's.
+// Starting an agent CLI and reading it line by line (Antigravity takes its prompt in argv, Codex on stdin, P1-12d;
+// runner-claude keeps its own spawn). Moved from runner-antigravity with the kill tree (P1-06; ADR 0006 amended after
+// P1-09): starting a process and stopping its tree is not any one CLI's.
 import { spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
 
@@ -14,6 +14,11 @@ export interface ChildOptions {
   readonly onStderr?: (chunk: string) => void;
   /** POSIX: how long SIGTERM has before SIGKILL when the child is killed (KILL_GRACE_MS by default). */
   readonly kill_grace_ms?: number;
+  /**
+   * Written to the child's stdin, which then closes; without it stdin is closed from the start. Codex reads its
+   * prompt there, past the 32 767 characters Windows lets a command line hold (P1-12d).
+   */
+  readonly stdin?: string;
 }
 
 export interface ChildExit {
@@ -36,7 +41,10 @@ export interface Child {
   kill(): void;
 }
 
-/** Spawns `launch` + `args` without a shell (ADR 0015), stdin closed, each stdout line handed to `onLine`. */
+/**
+ * Spawns `launch` + `args` without a shell (ADR 0015), stdin holding `options.stdin` (closed at once without it), each stdout line
+ * handed to `onLine`.
+ */
 export function startChild(
   launch: Launch,
   args: readonly string[],
@@ -47,9 +55,13 @@ export function startChild(
     cwd: options.cwd,
     env: options.env,
     shell: false,
-    stdio: ['ignore', 'pipe', 'pipe'],
+    stdio: ['pipe', 'pipe', 'pipe'],
     windowsHide: true,
   });
+  // A child that ends before it reads its input (a bad flag) closes the pipe: EPIPE is its exit, not ours to throw.
+  child.stdin.on('error', () => undefined);
+  // Without input the pipe closes at once: the child reads end-of-file, as from a closed stdin.
+  child.stdin.end(options.stdin ?? '', 'utf8');
   let stderr = '';
   child.stderr.setEncoding('utf8');
   child.stderr.on('data', (chunk: string) => {

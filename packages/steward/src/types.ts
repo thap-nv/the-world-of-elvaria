@@ -5,9 +5,11 @@ import type { EventLog } from '@elvaria/eventlog';
 import type {
   AgentRunner,
   CheckRun,
+  CodeGraphs,
   CommitOutcome,
   CommitRescue,
   DiffScope,
+  Drift,
   MergeOutcome,
   PatchOutcome,
   PlotFailure,
@@ -157,6 +159,11 @@ export interface Plots {
    * quest's own work, after its last merge and in the conflicts its merges resolved.
    */
   diff(plot: Quest['plot'], scope?: DiffScope): Promise<string | null>;
+  /**
+   * Commits per top-level folder from `from` (the gazetteer's stamp) to the plot's fork point (PS-21,
+   * PlotManager.drift); null when git cannot say. Absent (folder plots): a stamped gazetteer gets no note.
+   */
+  drift?(plot: Quest['plot'], from: string): Promise<Drift | null>;
   /** At archive only: removes a worktree (its branch stays) and what the tribes' CLIs kept about it. */
   release(plot: Quest['plot']): Promise<Result<ReleasedPlot, PlotFailure>>;
 }
@@ -185,6 +192,11 @@ export interface StewardDeps {
    * names the node it found; a spec may give a runner with a shorter timeout.
    */
   readonly scripts?: ScriptRunner;
+  /**
+   * The code graphs (PS-21, ADR 0029): runner-core's `codeGraphsOf` with the graphify `doctor --pin` found. Absent:
+   * no territory gets a graph, whatever its `code_graph` says, and every quest runs as before.
+   */
+  readonly graphs?: CodeGraphs;
   /**
    * process.platform by default: which of the shells a tribe's adapter declares (`capabilities.shell`) its sessions'
    * prompts name (shellOf, P1-40). A spec names the OS whose prompt it checks.

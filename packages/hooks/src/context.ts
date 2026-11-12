@@ -39,6 +39,8 @@ export interface HookContext {
   readonly apprenticeModels: readonly string[] | undefined;
   /** Commands a class without a shell may still run to search (policy `search_commands`, P1-53); empty: none. */
   readonly searchCommands: readonly string[];
+  /** The code graph's commands (policy `graph_commands`, PS-21); empty: no graph, no graphify line runs. */
+  readonly graphCommands: readonly string[];
   /** Context that was missing or malformed, for stderr; the call goes on with what is there. */
   readonly problems: readonly string[];
 }
@@ -144,6 +146,7 @@ export function loadContext(env: HookEnv, argv: readonly string[]): HookContext 
     tools: policy.tools,
     apprenticeModels: policy.apprentice_models,
     searchCommands: policy.search_commands ?? [],
+    graphCommands: policy.graph_commands ?? [],
     problems,
   };
 }

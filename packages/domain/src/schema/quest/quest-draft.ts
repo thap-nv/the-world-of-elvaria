@@ -10,6 +10,7 @@ import {
   EstimateSchema,
   PartyRoleSchema,
   QuestTitleSchema,
+  ScopePathsSchema,
   ScriptParamsSchema,
   scriptTierNeedsScript,
   SecretNamesSchema,
@@ -48,6 +49,7 @@ const DraftFieldsSchema = z.strictObject({
   contract: NonEmptyStringSchema.optional().meta(
     describe('Path of the contract inside the territory; required for a part.'),
   ),
+  scope_paths: ScopePathsSchema.optional(),
   depends_on_refs: unique(z.array(DraftRefSchema)),
   parent_ref: DraftRefSchema.optional(),
   estimate: EstimateSchema,

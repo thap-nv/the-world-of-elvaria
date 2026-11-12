@@ -44,6 +44,27 @@ describe('startChild', () => {
     expect(await goneWithin(grandchild)).toBe(true);
   });
 
+  it('writes stdin when asked, then closes it (Codex reads its prompt there, P1-12d)', async () => {
+    const lines: string[] = [];
+    const script =
+      'let s = ""; process.stdin.on("data", (d) => { s += d; }); process.stdin.on("end", () => console.log(s.length, s.slice(-3)))';
+    const child = startChild(NODE, [script], { env: ENV, stdin: `${'x'.repeat(40_000)}end` }, (line) =>
+      lines.push(line),
+    );
+    expect(await child.exit).toEqual({ code: 0, signal: null });
+    expect(lines).toEqual(['40003 end']);
+  });
+
+  it('survives a child that ends without reading its stdin', async () => {
+    const child = startChild(
+      NODE,
+      ['process.exit(0)'],
+      { env: ENV, stdin: 'y'.repeat(1_000_000) },
+      () => undefined,
+    );
+    expect((await child.exit).code).toBe(0);
+  });
+
   it('says why a program could not start', async () => {
     const child = startChild({ file: 'no such program here', args: [] }, [], { env: ENV }, () => undefined);
     expect((await child.exit).failure).toMatch(/ENOENT/);

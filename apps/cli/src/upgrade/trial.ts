@@ -31,6 +31,7 @@ const RM_TEMP = { recursive: true, force: true, maxRetries: 10, retryDelay: 100 
 const FAKE_CLIS: Readonly<Record<string, readonly string[]>> = {
   claude_code: ['packages', 'runner-claude', 'fixtures', 'fake-claude.mjs'],
   antigravity: ['packages', 'runner-antigravity', 'fixtures', 'fake-agy.mjs'],
+  codex_cli: ['packages', 'runner-codex', 'fixtures', 'fake-codex.mjs'],
 };
 
 export interface TrialPlace {

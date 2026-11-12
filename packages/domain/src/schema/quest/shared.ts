@@ -3,7 +3,7 @@
 import { z } from 'zod';
 
 import { REGISTRY_ID_PATTERN, TagIdSchema } from '../../core/ids.ts';
-import { unique } from '../common.ts';
+import { NonEmptyStringSchema, unique } from '../common.ts';
 import { QUEST_TAGS_MAX, QUEST_TITLE_MAX_LENGTH } from '../../constants.ts';
 import { issueIf } from './rules.ts';
 import type { RuleIssue } from './rules.ts';
@@ -38,6 +38,13 @@ export const TagsSchema = unique(z.array(TagIdSchema).max(QUEST_TAGS_MAX));
 /** Treasury names, as territory.secrets_allowed lists them. */
 export const SecretNamesSchema = unique(z.array(z.string().regex(REGISTRY_ID_PATTERN)));
 export const EstimateSchema = z.strictObject({ tokens: z.int().min(0), minutes: z.int().min(0) });
+// Optional and added after v1 (PS-05, ADR 0028): a quest or a draft without it counts as the whole territory, so
+// `version` stays 1. Never empty: a quest without a scope has no field at all.
+export const ScopePathsSchema = unique(z.array(NonEmptyStringSchema).min(1)).meta({
+  description:
+    "The files the quest changes, as globs relative to the territory root (`packages/domain/src/dispatch/**`). Within a territory the Steward never starts a quest whose scope meets the scope a quest holds (from its first run until it is archived, waiting for the owner's merge included), unless its plot is built on that quest's branch; a session-tier quest without a scope runs alone among working quests. Files the work changes outside the scope go into the `quest.submitted` line and the judge's prompt, never an automatic fail. Hot files every branch edits belong in territory.shared_paths, not here.",
+});
+
 /** An open object: each catalog script checks its own params against its params_schema. */
 export const ScriptParamsSchema = z.record(z.string(), z.unknown());
 

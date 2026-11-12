@@ -89,7 +89,7 @@ describe('elvaria digest', () => {
     expect(out.slice(13, 17)).toEqual([
       `- Memo ${MEMO.id} (proposal) from thorn, of quest ${QUEST_ID}, waits for your decision. Read the memo, then decide it once (elvaria memo decide).`,
       `  \`elvaria memo show ${MEMO.id}\``,
-      '- Pool claude of tribe claude is out of mana (reset: —). The Steward probes again after the reset; if you just signed in again, wake it now.',
+      '- Pool claude of tribe claude is out of mana (reset: 2026-11-06T13:00:00+07:00). The Steward probes again after the reset; if you just signed in again, wake it now.',
       '  `elvaria wake claude`',
     ]);
     expect((await digest('vi')).slice(0, 5)).toEqual([
@@ -99,6 +99,26 @@ describe('elvaria digest', () => {
       '',
       '## Phải quyết để việc chạy tiếp',
     ]);
+  });
+
+  it('names a done quest whose scope an open quest waits for (PS-05)', async () => {
+    const worked = {
+      attempts: 1,
+      attempt_log: [
+        {
+          n: 1,
+          character: 'thorn',
+          role: 'assignee',
+          started_at: '2026-11-06T08:10:00+07:00',
+          run_dir: `.runs/${OTHER_QUEST_ID}-1`,
+        },
+      ],
+    };
+    const holder = questFixture('done', OTHER_QUEST_ID, { ...worked, scope_paths: ['scripts/**'] });
+    await plantQuests(kingdom, holder, questFixture('open', QUEST_ID, { scope_paths: ['scripts/check.ts'] }));
+    expect(await digest()).toContain(
+      `- Quest ${OTHER_QUEST_ID} «Thêm script pnpm check» is done but still holds its scope; ${QUEST_ID} wait for it. Merge its branch, then archive it: the quests that wait for its scope start.`,
+    );
   });
 });
 
