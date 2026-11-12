@@ -150,6 +150,7 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
   - `kingdom.delegation` và hàm thuần "tự quyết được không" (`packages/domain/src/delegation/`).
   - `triageMemos` trong `packages/chancellor`: một lần gọi model cho cả lô, đầu ra có cấu trúc, kèm template prompt. Kết quả luôn là lệnh hộp thư (`edit_quest`, `create_quest`, `decide_memo`), nên Quản sự vẫn là người ghi duy nhất.
   - `schedule.triage` qua một cổng tiêm, chạy ngoài nhịp. Chỉ bắt đầu khi tộc của Tể tướng không có phiên nào đang chạy, vì phiên này nằm ngoài sổ chỗ của tộc.
+  - **Từ PS-02** (chủ nhân chốt 2026-11-12, §11): quyết việc Quản sự đóng thư `handled` khi bản nháp soạn từ nó qua `say --memo` được xác nhận (hôm nay `say --memo` không nối bản nháp với thư, chỉ nhắc lệnh `memo decide … handled`); sổ đo thêm số thư chủ nhân phải tự quyết, một mục riêng, không vào `OWNER_COMMAND_KINDS`.
 - **Test**: thư trong phạm vi được áp, thư ngoài phạm vi vào bản tấu; Tể tướng giả; dừng Quản sự thì việc dừng theo.
 - **Tốn mana**: một lần gọi model mỗi lô.
 
@@ -373,4 +374,5 @@ Chạy thật, tốn mana: hỏi chủ nhân trước khi chạy, và chốt tr�
 - **Chạy**: chủ nhân giao bằng vài câu việc "lý do trạm xá và dòng chi tiết của `doctor` thành mã cộng chuỗi VI/EN" (một mục của giai đoạn 2, §8); theo dõi qua bản tấu.
 - **Xong khi**: chủ nhân chỉ gặp câu hỏi của tấu trình (một lần), một dấu trên kế hoạch, bản tấu và dấu vua.
 - **Báo cáo** `docs/guides/phase-1.5-report.md`: số từ `elvaria metrics` (khi cờ `code_graph` bật, gồm lượt hỏi đồ thị và số lần gọi tool trước lần sửa đầu), so với cách phiên điều phối làm ở giai đoạn 1; mỗi lỗ hổng gặp phải là một thư hoặc một dòng §11. Sinh lại `docs/metrics-report.md` và `docs/tier-report.md` bằng `pnpm docs:gen --kingdom <dir>` sau lần chạy (chủ nhân chốt sau PS-01: hai bản đang commit là ảnh chụp của PS-01 và P1-16). Bảng task của giai đoạn 2 do Nghị hội soạn sau mốc này.
+- **Từ PS-02** (chủ nhân chốt 2026-11-12, §11): sau lần chạy, xem `elvaria memo list` và cảnh báo "follows no memo" của Quản sự: đây là lần đầu nhân vật thật viết thư.
 - **Dọn kế hoạch** (đề xuất (c) của P1-52, chủ nhân chốt 2026-11-12): khi đóng giai đoạn, chạy `pnpm plan:split` để chuyển các dòng `PS-…` đã `xong` của §8 sang file lưu (`docs/implementation-plan/8-done-ps.md`), rồi `pnpm docs:gen` và `pnpm check`.

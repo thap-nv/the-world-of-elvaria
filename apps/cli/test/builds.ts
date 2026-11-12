@@ -2,6 +2,7 @@
 // at apps/cli/src/cli.ts, a stub pnpm, and pinned builds written straight into a kingdom. The stub answers the
 // commands the trial runs as the `behavior.json` beside it says, and records every call, so a spec reads which
 // build answered, with which words, in which folder and env.
+import { realpathSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -175,6 +176,16 @@ export async function calls(record: string): Promise<Call[]> {
     .split('\n')
     .filter((line) => line !== '')
     .map((line) => JSON.parse(line) as Call);
+}
+
+/**
+ * A folder as the stub reports it (`root`, `cwd`, the mark its migrate writes): Node gives the stub real paths, and on
+ * macOS the temp folder sits under `/var`, a link to `/private/var` (CI run 43192167201). The JS `realpathSync`
+ * follows links only; its `.native` form would also expand Windows 8.3 names such as the CI runner's `RUNNER~1`,
+ * which the stub does not see.
+ */
+export function real(folder: string): string {
+  return realpathSync(folder);
 }
 
 export const SHA_A = 'a'.repeat(40);
