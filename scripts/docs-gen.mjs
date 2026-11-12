@@ -12,13 +12,15 @@ import { renderEvents } from './docs-events.mjs';
 import { renderGlossary } from './docs-glossary.mjs';
 import { renderDependencyGraph } from './docs-graph.mjs';
 import { METRICS_REPORT_FILE, metricsReportOf } from './docs-metrics-report.mjs';
+import { PLAN_DIR, PLAN_FILE, renderPlanIndex } from './docs-plan-index.mjs';
 import { gitRepo } from './docs-repo.mjs';
 import { TIER_REPORT_FILE, readKingdomEvents, renderTierReport } from './docs-tier-report.mjs';
 
 /** @typedef {import('./docs-repo.mjs').Repo} Repo */
 /**
- * A whole generated file, or with `region` one generated part of a hand-written file (the §2.5 table of
- * implementation-plan.md, from P0-04), kept between `<!-- docs:gen <region> -->` and `<!-- /docs:gen <region> -->`.
+ * A whole generated file, or with `region` one generated part of a hand-written file (the §2.5 table of the
+ * implementation plan, from P0-04; its contents table, from P1-52), kept between `<!-- docs:gen <region> -->` and
+ * `<!-- /docs:gen <region> -->`.
  * @typedef {{ file: string; region?: string; render: () => string | Promise<string> }} Generator
  */
 
@@ -29,12 +31,15 @@ export const GENERATORS = [
   { file: 'docs/dependency-graph.md', render: renderDependencyGraph },
   // The command table drives parsing and --help, so the reference is rendered from it too (decided after P0-08).
   { file: 'docs/cli.md', render: () => renderCli() },
-  // The quest state machine is data in the domain (QUEST_TRANSITIONS); the plan shows it, never restates it.
+  // The quest state machine is data in the domain (QUEST_TRANSITIONS); the plan shows it, never restates it. Its §2
+  // lives in its own file since P1-52.
   {
-    file: 'docs/implementation-plan.md',
+    file: `${PLAN_DIR}/2-data-and-events.md`,
     region: 'quest-transitions',
     render: () => `${renderQuestTransitionTable()}\n`,
   },
+  // The plan's contents table, from the headings of its files (P1-52): a new §11 day file is a line here.
+  { file: PLAN_FILE, region: 'plan-index', render: () => renderPlanIndex(gitRepo()) },
 ];
 
 /** @param {unknown} error */

@@ -1,0 +1,73 @@
+# Kế hoạch triển khai Elvaria · §5 Tài liệu như code
+
+Một phần của [kế hoạch triển khai](../implementation-plan.md), tách ra ở P1-52: chỉ chuyển chỗ, nội dung giữ nguyên. Số mục giữ làm định danh; mục lục và luật ghi ở file chính.
+
+---
+
+## 5. Tài liệu như code
+
+### 5.1 `CLAUDE.md` của repo Elvaria
+
+[CLAUDE.md](../../CLAUDE.md) (viết 2026-11-06, theo mẫu dc1, tiêu đề song ngữ) có 8 mục: (1) Dự án là gì; (2) Bản đồ repo; (3) Lệnh; (4) Convention bắt buộc — ba tầng, domain không IO, chỉ steward ghi quest, thuật ngữ theo glossary, mỗi thay đổi có test, ADR khi đổi quyết định; (5) Đọc trước khi sửa — `domain/src/quest/transitions.ts`, `domain/src/verify/**`, `domain/src/mana/**`, `eventlog/src/redact*`, `runner-core/src/treasury/**`, `config/boundaries.mjs`, `docs/schemas/**`; (6) Cấm khi chưa có chỉ thị — `any`, `--no-verify`, import `node:*` vào domain, đổi event type đã phát mà không migrate, đổi glossary EN, thêm dependency không nêu lý do, sửa `.schema.json` bằng tay (từ P0-03), chạm `~/.claude` hay `~/.gemini` của người dùng từ code, script bash/PowerShell, truyền `process.env` nguyên khối vào tiến trình con; (7) Đụng vào gì thì chạy gì; (8) Definition of Done — test xanh (lint, typecheck, unit, boundaries, schemas, docs:check), README package cập nhật, ADR nếu đổi quyết định, không thay đổi ngoài phạm vi, chạy được trên Windows **và** macOS (CI matrix xanh).
+
+P0-11 bổ sung `.claude/rules/domain.md`, `runner.md`, `hooks.md` (áp dụng theo `paths`) và `.claude/hooks/` theo mẫu dc1 (`guard-bash.mjs` bản Elvaria, `typecheck-touched.mjs`, `stop-checks.mjs` chạy boundaries khi đụng import); `.claude/settings.json` của repo bật chúng.
+
+(P0-11) Đã làm, kèm chỗ khác mẫu dc1:
+
+- **CLAUDE.md** thêm: quy trình một task như các task đã làm (dòng §11 "chờ người dùng chốt" trong commit triển khai, commit riêng `docs: mark <id> done`, merge không rebase), cột "Có từ" trong bản đồ repo, mục "Thêm một package" (mẫu `packages/sandbox`, cho P1-01 và các package sau), mục "Hook của repo", bảng Change impact cho `docs/cli.md`, `dependency-graph.md`, bảng §2.5, `scripts/`, `.claude/hooks/`.
+- **Hook khai dạng exec, không shell**: `{"command": "node", "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/<tên>.mjs"]}`. dc1 khai dạng chuỗi `node "$CLAUDE_PROJECT_DIR/…"`, chỉ chạy được khi Claude Code dùng Git Bash (PowerShell hiểu `$CLAUDE_PROJECT_DIR` là biến PowerShell). Đã thử trên Claude Code 2.1.318, Windows, bằng hook `SessionStart` dưới một model không tồn tại (0 USD, phiên dừng ở `unrecognized_model` sau khi hook chạy): dạng exec mở rộng `${CLAUDE_PROJECT_DIR}` trong `args`, **không** mở rộng `$CLAUDE_PROJECT_DIR`; dạng chuỗi chạy được qua Git Bash. `hook-io.spec.ts` giữ dạng này.
+- **Công cụ chạy bằng `node <bin script>`**, không qua `pnpm` (trên Windows là shim `.cmd`, spawn không chạy được khi `shell: false`, ADR 0015): `tsc` của `typescript`, `depcruise` của `dependency-cruiser`, `scripts/i18n-check.mjs`; env tối thiểu (`PATH`, `SystemRoot`, `HOME`, `USERPROFILE`, `TEMP`, `TMP`, `APPDATA`, `LOCALAPPDATA`), không `GIT_*`. Số đo trên máy phát triển: `tsc -p` một workspace 0,6–2,3 s, `depcruise` cả repo ~13 s. Hook báo lỗi bằng exit 2 + stderr như dc1: dòng lệnh hook mà Claude Code có thể ghép vào lý do chỉ là đường dẫn trong repo, không có gì riêng tư (khác hook của nhân vật, §3.6); lần chặn thật trong phiên P0-11 hiện `PreToolUse:Bash hook error: [command hook]: Blocked by …`. Claude Code nạp `.claude/settings.json` mới ngay giữa phiên.
+- **`guard-bash.mjs`** giữ ba luật chung của dc1 (force push, kể cả refspec `+`; `--no-verify`; xóa đệ quy ngoài checkout và thư mục tạm), bỏ ba luật riêng của dc1 (drizzle, docker volume, `DROP`), thêm luật của Elvaria: `git commit -n` và tắt husky (`HUSKY=0`, `core.hooksPath`), `git rebase` / `git pull --rebase` (§8: hash ở ô Trạng thái), `git stash` trần / `pop` / `drop` không ref / `clear` (stash dùng chung giữa mọi worktree của task song song), `--dangerously-skip-permissions`.
+- **`stop-checks.mjs`** chạy `pnpm boundaries` khi thay đổi chưa commit chạm `boundaries.mjs`, một `package.json` của workspace, một dòng import / re-export / `import()` của mã trong `packages/`, `apps/`, hoặc một file mã mới có import; và `pnpm i18n:check` khi locale hay `glossary.json` đổi (luật của dc1). `typecheck-touched.mjs` chạy `tsc -p` của workspace sở hữu file, hoặc tsconfig gốc cho `scripts/`, file `.mjs` ở gốc và `.claude/hooks/`.
+- **Hook và spec của chúng nằm trong chương trình gốc**: `tsconfig.json` gốc thêm `.claude/hooks` (`checkJs`), `vitest.config.mjs` gốc thêm `.claude/hooks/**/*.spec.ts`, nên `pnpm typecheck`, `pnpm test`, `pnpm lint` gác chúng như `scripts/`. `CLAUDE_PROJECT_DIR` vào `ALLOWED` của `scripts/docs-identifiers.mjs` (tên do Claude Code đặt; chứa từ cấm `project`).
+- **Rules** viết bằng tiếng Việt như CLAUDE.md (dc1 viết tiếng Anh), tiêu đề song ngữ. Frontmatter `paths` có hiệu lực: trong phiên P0-11, sửa `packages/domain/README.md` làm Claude Code nạp `domain.md`.
+- (Chốt sau P0-11) **`guard-edit.mjs`** (PreToolUse trên `Edit|Write|MultiEdit`) chặn điều CLAUDE.md cấm mà trước đó không gì chặn trước CI: sửa tay `docs/schemas/**` và bốn file cả bài của `pnpm docs:gen` (danh sách trong hook, spec so với `GENERATORS` của `scripts/docs-gen.mjs`), đổi hoặc xóa một vùng `<!-- docs:gen <tên> -->` của bất kỳ file `.md` nào (hook dựng nội dung sau lần sửa từ file trên đĩa, so từng vùng theo LF; thêm vùng mới thì cho qua, vì vùng mới đi cùng generator của nó), `design/**`, `docs/ke-hoach-dung-elvaria-*.md`. Không phân biệt hoa thường (`Docs/CLI.md` cũng bị chặn); file ngoài checkout cho qua; generator ghi bằng `node` nên không bị ảnh hưởng; lệnh shell ghi vào các file đó thì hook không thấy. Exit 2 + stderr như `guard-bash.mjs`. `.claude/settings.local.json` (Claude Code ghi lựa chọn "luôn cho phép" của người dùng) vào `.gitignore`.
+
+### 5.2 ADR
+
+`docs/adr/`, mẫu dc1 (Status / Context / Decision / Consequences), tiếng Anh, mỗi ADR ≤ 40 dòng. ADR mới khi đổi một quyết định; ADR cũ đánh `superseded by`.
+
+| # | Tiêu đề | Trạng thái |
+|---|---|---|
+| [0001](../adr/0001-pnpm-monorepo-lint-enforced-boundaries.md) | pnpm monorepo with package-level architecture boundaries enforced by lint | accepted |
+| [0002](../adr/0002-pure-domain-package.md) | Pure domain package: no IO, injected clock and ids | accepted |
+| [0003](../adr/0003-zod-schema-source-generated-json-schema.md) | zod is the schema source; JSON Schema in docs/ is generated and drift-checked | accepted |
+| [0004](../adr/0004-kingdom-state-is-files.md) | Kingdom state is files: JSON per entity, JSONL event log, no database until measured | accepted |
+| [0005](../adr/0005-single-writer-steward-inbox.md) | Single writer: only the Steward mutates quest state; UI and CLI write commands to inbox/ | accepted |
+| [0006](../adr/0006-runner-adapter-behind-agentrunner.md) | Runner is an adapter behind AgentRunner; CLIs are pinned and observed via hooks + stream | accepted |
+| [0007](../adr/0007-claude-workers-dontask-own-worktrees.md) | Claude Code workers run with dontAsk + explicit allow/deny; Elvaria manages worktrees itself | accepted |
+| [0008](../adr/0008-separation-of-duties.md) | Separation of duties: verifier ≠ assignee, fresh session, other model family first, machine checks are the primary judge | accepted |
+| [0009](../adr/0009-mana-model.md) | Mana model: cap and king's reserve, three gauge sources, sleep/wake keeps the assignee | accepted |
+| [0010](../adr/0010-two-file-journal.md) | Journal is two files: machine journal from hooks, handover letter from the agent | accepted |
+| [0011](../adr/0011-one-judge-class-per-tribe.md) | One `judge` verifier class per tribe with ritual chosen by quest kind (titles are theme data) | accepted |
+| [0012](../adr/0012-worktree-for-every-git-quest.md) | Every quest on a git territory gets a worktree, regardless of kind | accepted |
+| [0013](../adr/0013-treasury-and-redaction.md) | Treasury: secrets never enter prompts, journals or logs; minimal env; redaction is data | accepted |
+| [0014](../adr/0014-english-identifiers-glossary-bilingual-ui.md) | English identifiers, fixed VI↔EN glossary, bilingual UI via i18n | accepted |
+| [0015](../adr/0015-node-only-scripts.md) | Node-only scripts for Windows and macOS; no bash or PowerShell in the repo | accepted |
+| [0016](../adr/0016-registry-data-not-code.md) | Kinds, classes, rituals and scripts are registry data with schemas, not code | accepted |
+| [0017](../adr/0017-one-quest-one-context-three-tiers.md) | One quest, one context: three execution tiers (script, apprentice, session); revival starts a fresh session from the handover letter | accepted |
+| [0018](../adr/0018-gemini-tribe-on-antigravity-cli.md) | Gemini tribe runs on Antigravity CLI behind an explicit terms acknowledgement; Gemini CLI with an API key is the one-setting fallback | accepted |
+| [0019](../adr/0019-preact-ui-design-source-of-truth.md) | 2D UI is Preact + signals; `design/` is the first source of the design system, `ui-kit` owns it after the port | accepted |
+| [0020](../adr/0020-class-skill-scripture-tags-and-parties.md) | Class, skill and scripture are separate; expertise is reputation per tag; work that needs several areas is a party | accepted |
+| [0021](../adr/0021-tribe-contract.md) | Tribe contract: a tribe is an adapter with declared capabilities, a theme entry and the owner's own account; missing capabilities narrow what the tribe may take | accepted |
+| [0022](../adr/0022-tests-in-the-world.md) | Tests in the world: tag-chosen ritual for tests as a product, a scratch plot for the judge, heavy checks once per party | accepted |
+| [0023](../adr/0023-steward-delivers-push-pr-merge.md) | The Steward delivers: push the quest branch, open a pull request, merge when checks are green | accepted |
+| [0024](../adr/0024-typed-letters-through-the-steward.md) | Characters exchange typed letters through the Steward; no direct conversation | accepted |
+| [0025](../adr/0025-persona-is-display-only.md) | Persona is display-only; mood and bonds are derived, never inputs | accepted |
+| [0026](../adr/0026-guarded-self-change.md) | Guarded self-change: protected paths need the royal seal; the Steward runs a pinned build and upgrades with a trial and a way back | accepted |
+| [0027](../adr/0027-measured-learning.md) | Learning is measured: metrics from the event log, a fix ladder, line-level scripture edits with scope and counters | accepted |
+| [0028](../adr/0028-plan-review-and-scope-paths.md) | Plans pass a readiness review; quests declare scope paths and overlapping scopes never run at once | accepted |
+
+ADR 0007, 0009, 0017 được cập nhật bằng số liệu sau spike P1-02; ADR 0018 sau spike P1-12a. ADR 0023–0028 (2026-11-10) ghi các quyết định của kế hoạch sản phẩm 0.8, viết trước khi có code: task PS tương ứng sửa tại chỗ khi thực tế khác (§3.16).
+
+### 5.3 Glossary
+
+[glossary.md](../glossary.md): bảng VI · EN · id trong code · nơi dùng · icon (thiết kế → code), danh sách giá trị enum của mọi schema, và từ cấm. Từ P0-07, nguồn máy đọc là `packages/i18n/src/glossary.json`; `docs/glossary.md` được sinh từ đó bằng `pnpm docs:gen` và drift-check (một nguồn, hai dạng). Bản viết tay ngày 2026-11-06 là đầu vào của P0-07; `glossary.json` chép lại nó theo mục, đoạn văn, danh sách và bảng; bảng có id (`banned`, `quest_statuses`…), cột id giữ danh sách id thay cho chuỗi Markdown để công cụ đọc được. `pnpm docs:check` kiểm glossary khớp domain: bảng `quest_statuses`, `character_statuses` bằng đúng `QUEST_STATUSES`, `CHARACTER_STATUSES`; bảng `ritual_steps`, `events` chứa mọi `RITUAL_STEPS`, `EVENT_TYPES` (được ghi thêm bước và tiền tố của task sau).
+
+### 5.4 Giữ tài liệu đồng bộ với code
+
+- Sinh ra, không chép tay: `docs/schemas/` (từ zod), `docs/glossary.md` (từ glossary.json), `docs/dependency-graph.md` (từ dependency-cruiser), `docs/events.md` (danh mục event type + payload từ domain), `docs/cli.md` (từ định nghĩa lệnh; P0-11: `scripts/docs-cli.mjs` đọc `COMMANDS` của `apps/cli/src/commands.ts` và `GLOBAL_OPTIONS`, chuỗi qua `t()` bản `vi`, mỗi lệnh một mục với bảng tham số và tùy chọn y như `--help`), bảng §2.5 (từ `transitions.ts`), `docs/tier-report.md` (từ event log). `pnpm docs:gen` tạo; CI chạy `pnpm docs:gen --check` rồi `git diff --exit-code docs/`.
+- `pnpm docs:check`: README 4 mục cho mỗi package; từ cấm; ADR có Status; link nội bộ trong `docs/**/*.md` và `CLAUDE.md` còn sống (quest #4 của dc1 chính là việc này — Elvaria tự ăn thức ăn của mình); cấm `.sh/.ps1/.cmd`. (P0-07) Link sống được kiểm trong mọi file `.md` trừ `design/`, tới mức file hoặc thư mục, chưa kiểm anchor `#…`; cấm thêm `.bat`; danh sách file lấy từ `git ls-files` (cả file mới chưa commit); glossary khớp domain (§5.3).
+- (P0-07) `docs:gen` ghi nguyên file, hoặc một vùng giữa `<!-- docs:gen <vùng> -->` và `<!-- /docs:gen <vùng> -->` trong file viết tay (`region` trong `GENERATORS` của `scripts/docs-gen.mjs`): bảng §2.5 của P0-04 nối vào bằng một mục `region` cộng hai marker quanh bảng. `docs/dependency-graph.md` đặt import thật (dependency-cruiser, chỉ mã chạy) cạnh bảng cho phép của `boundaries.mjs`.
+- Mỗi commit đổi hành vi phải chạm `docs/` hoặc ghi `docs: none` trong thân commit (husky `commit-msg` kiểm, mức cảnh báo: luật commitlint `docs-touched` trong `scripts/docs-note.mjs`, cho type `feat`/`fix`/`perf`).
+- Tài liệu này là tài liệu sống: task xong thì đánh dấu ở §8; khi thực tế khác kế hoạch, sửa kế hoạch trong cùng commit.

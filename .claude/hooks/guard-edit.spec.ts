@@ -135,9 +135,10 @@ describe('guard-edit.mjs as Claude Code runs it', () => {
   });
 
   it('reads the file on disk to guard its regions', () => {
-    const plan = readFileSync(join(REPO, 'docs/implementation-plan.md'), 'utf8');
-    const [line] = (regionsOf(plan).get('quest-transitions') ?? '').split('\n');
-    const result = call('Edit', join(REPO, 'docs/implementation-plan.md'), edit(line ?? '', 'hand-made'));
+    // §2 of the plan, with the §2.5 table, has its own file since P1-52.
+    const data = join(REPO, 'docs/implementation-plan/2-data-and-events.md');
+    const [line] = (regionsOf(readFileSync(data, 'utf8')).get('quest-transitions') ?? '').split('\n');
+    const result = call('Edit', data, edit(line ?? '', 'hand-made'));
     expect(result.status).toBe(2);
     expect(result.stderr).toMatch(/quest-transitions --> region/);
   });

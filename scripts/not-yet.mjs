@@ -1,12 +1,23 @@
 // Stands in for a root script whose tool a later task builds (implementation-plan §8, P0-01), so that
 // `pnpm check` runs end to end from the first commit. It exits 0 but says plainly that nothing was checked:
 // read the output, it is not a green check.
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import process from 'node:process';
 
 const PLAN_PATH = 'docs/implementation-plan.md';
 const PLAN_URL = new URL(`../${PLAN_PATH}`, import.meta.url);
+/** Done rows of §8 moved here from the plan (P1-52, plan-split.mjs). */
+const DONE_URL = new URL('../docs/implementation-plan/', import.meta.url);
+const DONE_FILE = /^8-done-.*\.md$/;
 const MAX_TITLE = 160;
+
+/** The §8 rows of the plan: the open ones in the plan itself, the done ones in its done files. */
+export function readPlanRows() {
+  const done = existsSync(DONE_URL) ? readdirSync(DONE_URL).filter((name) => DONE_FILE.test(name)) : [];
+  return [PLAN_URL, ...done.map((name) => new URL(name, DONE_URL))]
+    .map((url) => readFileSync(url, 'utf8'))
+    .join('\n');
+}
 
 /**
  * Title of a task row in the plan's §8 tables, as plain text.
@@ -43,7 +54,7 @@ export function notYetMessage(script, planItemId, title) {
 export function run(args, script) {
   const planItemId = args[0];
   if (planItemId === undefined) return { code: 1, text: 'Usage: node scripts/not-yet.mjs <plan-item-id>' };
-  const title = findPlanItemTitle(readFileSync(PLAN_URL, 'utf8'), planItemId);
+  const title = findPlanItemTitle(readPlanRows(), planItemId);
   // A placeholder pointing at a task the plan does not have would hide the gap forever.
   if (title === undefined) return { code: 1, text: `not-yet: no task ${planItemId} in ${PLAN_PATH} §8` };
   return { code: 0, text: notYetMessage(script, planItemId, title) };

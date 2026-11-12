@@ -4,13 +4,14 @@ import { posix } from 'node:path';
 
 const MARKDOWN = /\.md$/;
 const SKIPPED = /^(?:design\/|node_modules\/)|\/node_modules\//;
-const FENCE = /^\s*(```|~~~)/;
-const CODE_SPAN = /`[^`]*`/g;
+// FENCE, CODE_SPAN, INLINE_LINK and NOT_RELATIVE are shared with plan-lines.mjs, which moves links between files.
+export const FENCE = /^\s*(```|~~~)/;
+export const CODE_SPAN = /`[^`]*`/g;
 /** `[text](target)` and `![alt](target)`, with an optional title; `<target>` may hold spaces. */
-const INLINE_LINK = /!?\[(?:[^\]\\]|\\.)*\]\(\s*(<[^>]*>|[^)\s]+)(?:\s+(?:"[^"]*"|'[^']*'))?\s*\)/g;
+export const INLINE_LINK = /!?\[(?:[^\]\\]|\\.)*\]\(\s*(<[^>]*>|[^)\s]+)(?:\s+(?:"[^"]*"|'[^']*'))?\s*\)/g;
 const REFERENCE = /^\s{0,3}\[[^\]]+\]:\s*(<[^>]*>|\S+)/;
 /** A scheme (`https:`, `mailto:`), a protocol-relative URL, or an anchor in the same file. */
-const NOT_RELATIVE = /^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i;
+export const NOT_RELATIVE = /^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i;
 
 /** Link targets per line, outside code fences and code spans. @param {string} text */
 export function linksOf(text) {
