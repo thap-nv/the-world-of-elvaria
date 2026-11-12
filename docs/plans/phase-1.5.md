@@ -17,7 +17,7 @@ Ngày: 2026-11-11 · Trạng thái: đã duyệt. Tài liệu này là tầng ch
 
 ## Điều code cho thấy
 
-Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho từng task. Phiên làm task kiểm lại điều mình dựa vào trước khi viết code: code có thể đã đổi.
+Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho từng task. Soát lại ngày 2026-11-12 ở `485f960`, sau PS-01, P1-53 và P1-50: mười lăm dòng đầu còn đúng (dòng 6, 8, 15 ghi thêm), dòng 16 và 17 là phát hiện của P1-50. P1-54, P1-55, P1-56 sẽ sửa vài vùng dưới đây trước đợt 2 (dòng 8, 15); phiên làm task kiểm lại điều mình dựa vào trước khi viết code: code có thể đã đổi.
 
 | # | Thực tế trong code | Hệ quả |
 |---|---|---|
@@ -26,16 +26,18 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
 | 3 | `sequels` là các phiên thêm của một lượt, không phải quest nối theo | "Lỗi lọt" là chủ nhân trả bài sau một verdict pass |
 | 4 | Vai của phiên chỉ có trong `attempt_log[].role`. Con số 12 / 6 / 1 của [báo cáo giai đoạn 1](../guides/phase-1-report.md) §6 là phân loại tay theo nguyên nhân gốc | Sổ đo đọc cả quest lẫn event; PS-01 không phải tái lập đúng 12 / 6 / 1 |
 | 5 | Kinh nạp vào prompt là cả file; `BuiltPrompt` là `{system, user}`; không có bộ đếm token | Dấu vết nạp: file kinh và số dòng, id bí kíp, cỡ từng khối theo ký tự |
-| 6 | Trong code, "letter" đã là thư bàn giao (khoảng 250 chỗ) | Entity mới mang id `memo` (hiển thị vẫn là "thư"). Quản sự đọc nó; `RunResult` và các adapter không đổi |
+| 6 | Trong code, "letter" đã là thư bàn giao (khoảng 270 chỗ trong file `.ts` ngày 2026-11-12) | Entity mới mang id `memo` (hiển thị vẫn là "thư"). Quản sự đọc nó; `RunResult` và các adapter không đổi |
 | 7 | `DELIVERABLE_CHECKS.subquests` (`packages/steward/src/review/deliverable-checks.ts`) đã chạy `plannedChildren` trước người chấm | Kiểm kế hoạch bằng máy là phần mở rộng của check này, không phải script catalog (script chép vào vương quốc không import được domain) |
-| 8 | Check đỏ không chặn phiên người chấm: `planReviews` vẫn gọi người chấm, rồi `underPassRule` đổi verdict thành không đạt | Kế hoạch hỏng vẫn tốn một phiên chấm; test viết theo đúng hành vi này |
+| 8 | Check đỏ không chặn phiên người chấm: `planReviews` (`packages/domain/src/dispatch/reviews.ts`) vẫn gọi người chấm khi check đã xong, rồi `underPassRule` (`packages/steward/src/review/judge.ts`) đổi verdict thành không đạt. P1-54 đổi một phần: check đỏ vì môi trường không mở người chấm, người chấm sau check đỏ không chờ khóa độc quyền | Kế hoạch hỏng vẫn tốn một phiên chấm; test viết theo hành vi có trong `main` lúc làm (PS-06 đọc lại sau P1-54) |
 | 9 | `rosterOf` (`packages/domain/src/dispatch/roster.ts`) chỉ đếm quest `working`; `territoryHasRoom` và `take` không nhận quest; nhận việc và bắt đầu là hai bước chung một roster | Luật vùng file ở PS-05 |
 | 10 | `Move.before` (`packages/steward/src/record.ts`) đặt được trường trước một chuyển trạng thái; `seal_required` chỉ được đọc ở `review.verdict_pass` | PS-04 không sửa máy trạng thái |
 | 11 | `apps/cli/dist/cli.js` nạp package nội bộ từ nguồn `.ts`; payload lệnh là `strictObject`; không nơi nào ghi phiên bản đang chạy | Bản ghim ghim cả CLI, không riêng `run` (PS-04b) |
 | 12 | Quản sự không import được `chancellor` hay `i18n` (`packages/config/boundaries.mjs`); `Background` gắn theo `QuestId`; phiên ngoài `Sessions` không được tính chỗ của tộc | Bản tấu và phân loại thư đi qua cổng tiêm vào `StewardDeps`; phân loại chạy ngoài nhịp |
 | 13 | `draftCommands` (`packages/chancellor/src/commands.ts`) chỉ chuyển các trường của draft thành `create_quest` | Tấu trình được chép vào mô tả của quest kế hoạch |
 | 14 | `elvaria migrate` chỉ thêm file và entry registry còn thiếu; giá trị đổi trong một entry đã có thì không | Task đổi registry có mục "Vương quốc đang chạy" |
-| 15 | Vài file đã sát trần 300 dòng: `steward/src/types.ts` 300, `domain/src/dispatch/plan-tick.ts` 298, `steward/src/steward.ts` 286, `steward/src/sessions/request.ts` 289 (sau P1-53; 280 lúc khảo sát), `steward/src/sessions/open.ts` 279 | PS-01b, PS-03, PS-05 tách file trước khi thêm; PS-21 chờ PS-03 tách `types.ts` (mục "Thứ tự") |
+| 15 | Vài file đã sát trần 300 dòng: `steward/src/types.ts` 300, `domain/src/dispatch/plan-tick.ts` 298, `steward/src/steward.ts` 286, `steward/src/sessions/request.ts` 289 (sau P1-53; 280 lúc khảo sát), `steward/src/sessions/open.ts` 279 (đo lại ở `485f960`: không đổi). P1-54 chạm `steward.ts` và `background.ts`, P1-56 chạm `steward/src/inbox` | PS-01b, PS-03, PS-05 tách file trước khi thêm, theo số dòng đo lại lúc mở task; PS-21 chờ PS-03 tách `types.ts` (mục "Thứ tự") |
+| 16 | Tể tướng (`packages/runner-core/src/prompt/chancellor.ts`) thấy mỗi dạng với nghề được nhận, tag, script, nhân vật (nghề, tộc, cấp, trạng thái) và mana; không thấy `seal_default` của dạng, tool của nghề, hay cỡ và số file. `seal_required` là bắt buộc trong `QuestDraftSchema`, nên draft nào cũng tự chọn dấu và `payload.seal_required ?? kind.seal_default` (`packages/domain/src/dispatch/new-quest.ts`) không bao giờ dùng mặc định. Trần token là `max(ước lượng, sàn của hạng) × mana_multiplier` (`questBudgetOf`): ước lượng thấp thì cầu dao cắt ở sàn | P1-50 (báo cáo chạy lại §8 (a)): Q11 bị tắt dấu, Q8 giao `git log` cho thư ký không có Bash, Q10 và Q3 ước lượng thấp; cầu dao token là 10 trong 26 can thiệp. Dấu mặc định và tool của nghề ở PS-06; cỡ và số file ở PS-21b |
+| 17 | `planReviews` đưa quest vào `unjudgeable` (chuông một lần, `packages/steward/src/unjudgeable.ts`) chỉ khi không còn người chấm hợp lệ nào (`waitsForNoJudge`). Khi người chấm hợp lệ còn đó nhưng đều bị đồng hồ mana chặn, `selectVerifier` trả `null` và quest chờ im lặng | P1-50 (§8 (d)): bài của người làm Opus chờ 50 phút mới có người thấy. Chuông và mục bản tấu ở PS-03; cảnh báo của `doctor` ở P1-56 |
 
 ## Mẫu dùng lại
 
@@ -54,7 +56,7 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
 |---|---|---|
 | 1 | PS-01 | Mở ngay; 0 mana; toàn file mới |
 | 2 | PS-01b, PS-02, PS-04b | Sau P1-51 và P1-52 (tách kế hoạch triển khai, chốt 2026-11-11), và sau P1-54, P1-55, P1-56 (vá những gì P1-50 cho thấy, chốt 2026-11-12). PS-01b và PS-02 cùng đụng snapshot prompt, `event-types.ts`, `inbox/apply.ts`; PS-02 và PS-04b cùng `commands.ts`, locale, glossary: nhánh merge sau giữ cả hai phía, sinh lại snapshot và file sinh |
-| 3 | PS-05, PS-03, PS-21 | PS-05 và PS-03 khác vùng code. PS-21 sau PS-01b, vì A/B của nó đo bằng lượt đọc theo file; PS-21 và PS-05 cùng đụng snapshot prompt, schema territory, `packages/steward/src/sessions/`: nhánh merge sau giữ cả hai phía, sinh lại snapshot và file sinh. PS-21 và PS-03 cùng nối vào Quản sự, và `packages/steward/src/types.ts` (chỗ của `StewardDeps`) đã 300 dòng: PS-03 tách nó; PS-21 làm phép thử trước, phần code của nó merge `origin/main` sau khi commit tách của PS-03 đã vào `main`, không tự tách file đó |
+| 3 | PS-05, PS-03, PS-21 | PS-05 và PS-03 khác vùng code, trừ một chỗ: PS-03 thêm một danh sách vào kết quả của `planReviews` và `planTick` (quest chờ người chấm sau đồng hồ mana), còn PS-05 tách `plan-tick.ts`: nhánh merge sau giữ cả hai phía. PS-21 sau PS-01b, vì A/B của nó đo bằng lượt đọc theo file; PS-21 và PS-05 cùng đụng snapshot prompt, schema territory, `packages/steward/src/sessions/`: nhánh merge sau giữ cả hai phía, sinh lại snapshot và file sinh. PS-21 và PS-03 cùng nối vào Quản sự, và `packages/steward/src/types.ts` (chỗ của `StewardDeps`) đã 300 dòng: PS-03 tách nó; PS-21 làm phép thử trước, phần code của nó merge `origin/main` sau khi commit tách của PS-03 đã vào `main`, không tự tách file đó |
 | 4 | PS-04, PS-03b, PS-21c | PS-04 sau PS-05: cả hai, và PS-01b trước đó, nối tiếp nhau trên `record.ts` và `QUEST_CHANGE`. PS-21c cần PS-21 và bộ chạy ngoài nhịp của PS-03, và chỉ mở khi A/B của PS-21 có lợi; tốn mana |
 | 5 | PS-06, rồi PS-06b và PS-21b | PS-06 cần PS-05. PS-21b cần PS-21 và PS-06: cùng `packages/chancellor`, prompt pháp sư và `planIssuesOf` |
 | 6 | PS-07 | Sau cùng; chạy thật, tốn mana; cần P1-53 (nhân vật gemini tìm được trong repo) |
@@ -117,7 +119,8 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
   - `kingdom.schedule.digest {enabled, at}`.
   - `attentionQueue(state)` ở `packages/domain/src/world/`: dấu đang chờ, câu hỏi, trạm xá, thư chờ chủ nhân, quest nháp, cảnh báo mana, quest đã xong còn giữ vùng mà có quest khác đang chờ (PS-05). Mỗi mục có nhóm (phải quyết để việc chạy tiếp, hay chờ được), mã khuyến nghị tra từ một bảng, và lệnh CLI tương ứng.
   - Cổng `Digest` trong `StewardDeps`, hiện thực ở `apps/cli/src/run/`: dựng Markdown qua i18n, ghi `digest/<ngày>.md`, rung chuông một lần. Lệnh `elvaria digest`; event `digest.written`; thư vào `WorldState`.
-- **Test**: bản tấu của một ngày có đủ hai nhóm; chạy không gọi model; nhảy giờ máy không sinh hai bản một ngày.
+  - **Quest chờ người chấm sau đồng hồ mana** (đề xuất (d) của P1-50, dòng 17 ở trên; lượt soát 2026-11-12, chủ nhân chốt cùng ngày ở §11): `planReviews` trả thêm danh sách quest có người chấm hợp lệ nhưng ai cũng bị đồng hồ mana chặn; Quản sự rung chuông một lần mỗi quest như `noteUnjudgeable` (nêu tộc, kho mana và giờ reset nếu biết), và `attentionQueue` có mục đó ở nhóm phải quyết (lệnh gợi ý: thêm người chấm khác họ model, hay chờ tới giờ reset). Không đổi luật chọn người chấm (ADR 0008).
+- **Test**: bản tấu của một ngày có đủ hai nhóm; chạy không gọi model; nhảy giờ máy không sinh hai bản một ngày; quest có người chấm khác model mà ai cũng bị đồng hồ chặn rung chuông đúng một lần và có trong bản tấu, mở lại đồng hồ thì phiên chấm mở như cũ.
 
 ## PS-03b — Phạm vi ủy quyền và phân loại thư
 
@@ -151,7 +154,8 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
   - Lý do chờ **không** vào `CLAIM_BLOCKERS` (mỗi lý do ở đó rung chuông và ghi `quest.unclaimable`): một hàm thuần `scopeHolderOf` cho `quest list` và cho bản tấu.
   - Khi nộp: file đổi ngoài vùng vào dòng `quest.submitted` (trường tùy chọn) và một khối trong prompt người chấm.
   - `chancellor.md` và prompt pháp sư khai vùng; `quest add --scope`, `quest edit --scope`.
-- **Test**: domain 100 %; hai quest vùng rời chạy song song với `max_concurrent 2`; vùng giao thì chờ tới khi quest kia được lưu trữ; hai quest mở cùng vùng không khóa nhau; một đội có các phần rời vùng đi tới quest ghép.
+  - **File nóng** (bài học điều phối giai đoạn 1, chốt 2026-11-12): file mà mọi nhánh song song cùng sửa nằm trong `shared_paths`, không trong `scope_paths` của từng quest; không thì quest nào cũng giao vùng nhau và R3 xếp chúng thành hàng một. Với lãnh thổ Elvaria (dòng gazetteer của lãnh thổ `elvaria` ngày 2026-11-12): bảng §8 và §11 của kế hoạch triển khai (sau P1-52 là các file nó tách ra), `packages/domain/src/index.ts`, `packages/i18n/src/glossary.json`, hai file locale, cách ghép `union`; file sinh (`docs/schemas/**` và các file của `pnpm docs:gen`), cách ghép `regenerate`. Danh sách viết ở `docs/guides/` cạnh danh sách `protected_paths` của PS-04; PS-07 đặt nó vào `territory.json`.
+- **Test**: domain 100 %; hai quest vùng rời chạy song song với `max_concurrent 2`; vùng giao thì chờ tới khi quest kia được lưu trữ; hai quest mở cùng vùng không khóa nhau; một đội có các phần rời vùng đi tới quest ghép; hai quest có vùng rời nhau cùng sửa một file trong `shared_paths` vẫn chạy song song.
 
 ## PS-21 — Đồ thị code của lãnh thổ
 
@@ -231,19 +235,22 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
 ## PS-06 — Nghị hội
 
 - **Mục tiêu**: việc lớn đi qua tấu trình, một kế hoạch có người khác duyệt, một dấu, rồi tự chia việc.
-- **Đọc trước**: §3.16.6, §3.13; ADR 0028, [ADR 0020](../adr/0020-class-skill-scripture-tags-and-parties.md); kế hoạch sản phẩm mục 14 "Nghị hội"; `packages/chancellor/src/**`; `packages/steward/src/deliver/subquests.ts`, `packages/steward/src/review/deliverable-checks.ts`; `packages/runner-core/prompts/{chancellor,ritual-steps}.md`; `packages/registry-default/prompts/mage.md`.
-- **Đã chốt**: khảo sát nằm trong quest kế hoạch của pháp sư; chỉ điều chỉ biết được khi chạy thật mới thành quest thăm dò riêng.
+- **Đọc trước**: §3.16.6, §3.13; ADR 0028, [ADR 0020](../adr/0020-class-skill-scripture-tags-and-parties.md); kế hoạch sản phẩm mục 14 "Nghị hội"; `packages/chancellor/src/**`; `packages/steward/src/deliver/subquests.ts`, `packages/steward/src/review/deliverable-checks.ts`; `packages/runner-core/prompts/{chancellor,ritual-steps}.md`, `packages/runner-core/src/prompt/chancellor.ts`; `packages/registry-default/prompts/mage.md`; `questBudgetOf` (`packages/domain/src/dispatch/new-quest.ts`); [báo cáo chạy lại](../guides/phase-1-rerun.md) §4, §7, §8 (a) và bảng sàn trần token sau P1-54.
+- **Đã chốt**: khảo sát nằm trong quest kế hoạch của pháp sư; chỉ điều chỉ biết được khi chạy thật mới thành quest thăm dò riêng. Đề xuất (a) của P1-50 về Tể tướng (chủ nhân chốt 2026-11-12: vào PS-06 và PS-21b) chia hai: dấu mặc định và tool của nghề ở đây, cỡ và số file ở PS-21b (lượt soát 2026-11-12, §11).
 - **Dùng lại**: quest `plan` và `subquests.json` (`openSubquests`: quest con chỉ sinh sau dấu và giao hàng); `DELIVERABLE_CHECKS.subquests`; đội (`party_role: contract`, `mergeQuestOf`); nghi thức `council_review`.
 - **Thêm**:
   - Khối `brief` tùy chọn ở `QuestDraftFileSchema`: mục tiêu, ngoài phạm vi, ví dụ chấp nhận, giả định, câu hỏi kèm phương án đề xuất, và `plan_ref` chỉ draft kế hoạch. `draftCommands` chép tấu trình vào mô tả của draft đó và đặt `seal_required: true`. `elvaria say` in tấu trình; `quest confirm` nghĩa là nhận các phương án đề xuất.
   - `councilDue(drafts, config)` thuần và ngưỡng trong `kingdom.dispatch`; `screenDrafts` trả lại câu trả lời chỉ có quest lá khi việc đủ lớn (từ hai tag ở hai vùng, hoặc từ hạng B).
   - Mẫu `plan.md` cho pháp sư: khảo sát, quyết định chung, các phần và vùng file, điều kiện xong, điều chưa biết (thành quest thăm dò `research` mà các phần chờ), ước lượng, và một trang tóm tắt cho chủ nhân.
   - `planIssuesOf` thuần, nối vào check `subquests` sẵn có: mỗi phần ghi file có `scope_paths`; các phần không phụ thuộc nhau có vùng rời nhau; check được nêu tên có tồn tại. Hạng, nghề và ước lượng đã là bắt buộc trong schema.
-  - Bước nghi thức `check_plan_ready` thêm vào `council_review`: một quest vừa một context, điều kiện xong máy kiểm được, file nóng có cách ghép, điều chưa biết đã có quest thăm dò, không trái một quyết định đã ghi.
+  - Bước nghi thức `check_plan_ready` thêm vào `council_review`: một quest vừa một context (ước lượng theo mục dưới đây), điều kiện xong máy kiểm được, file nóng có cách ghép (`shared_paths` của PS-05), điều chưa biết đã có quest thăm dò, không trái một quyết định đã ghi.
+  - **Dấu mặc định** (dòng 16 ở trên; P1-50, Q11): `seal_required` thành tùy chọn trong `QuestDraftSchema` (đổi tương thích, `version` giữ 1, `pnpm schemas`); lời nói không nhắc dấu thì draft bỏ trường và `questFromCommand` lấy `seal_default` của dạng; danh mục dạng trong prompt của Tể tướng in `seal_default`. Draft kế hoạch có tấu trình vẫn đặt `seal_required: true` như trên.
+  - **Tool của nghề** (P1-50, Q8): prompt của Tể tướng in tool của từng nghề từ `tools` của registry (có shell hay không, ghi file được hay không); `chancellor.md` và mẫu `plan.md`: không giao bước cần một tool mà nghề nhận quest không có. Lệnh đồ thị thêm ở PS-21b.
+  - **Ước lượng** (P1-50 §7 và bài học điều phối giai đoạn 1, chốt 2026-11-12): trần token là `max(ước lượng, sàn của hạng) × mana_multiplier`, nên ước lượng thấp thì cầu dao cắt ở sàn (10 trong 26 can thiệp của P1-50). Token của một phiên xấp xỉ số lượt nhân cỡ ngữ cảnh trung bình (đo 2026-11-11 trên các phiên dựng Elvaria), không phải tổng cỡ file: mẫu `plan.md` ghi cho mỗi phần số file và cỡ file phải đọc, số lượt dự kiến, cỡ ngữ cảnh đỉnh, rồi token. Phần có ngữ cảnh đỉnh quá khoảng 200k token thì tách; phần đọc lại một file lớn nhiều lần thì nêu cách tránh (đọc theo khoảng dòng, tìm trước). `chancellor.md` dùng cùng cách ước lượng.
 - **Vùng bị ảnh hưởng** (2026-11-11): làm ở PS-21b, từ đồ thị code của PS-21; PS-06 không cần đồ thị.
-- **Test**: kế hoạch chồng vùng bị trả về (`incomplete`) dù người chấm nói gì; kế hoạch qua duyệt chờ đúng một dấu rồi sinh quest con; việc nhỏ không qua Nghị hội.
+- **Test**: kế hoạch chồng vùng bị trả về (`incomplete`) dù người chấm nói gì; kế hoạch qua duyệt chờ đúng một dấu rồi sinh quest con; việc nhỏ không qua Nghị hội; draft không có `seal_required` lấy `seal_default` của dạng, draft có trường giữ giá trị của nó; prompt của Tể tướng có `seal_default` của dạng và tool của nghề (snapshot mới).
 - **Vương quốc đang chạy**: sửa `steps` của `council_review` trong registry bằng script có sao lưu.
-- **Đề xuất ngoài phạm vi**: check của Quản sự đỏ thì không mở phiên người chấm, đỡ một phiên cho mỗi kế hoạch hỏng.
+- **Đề xuất ngoài phạm vi**: check của Quản sự đỏ thì không mở phiên người chấm, đỡ một phiên cho mỗi kế hoạch hỏng. P1-54 làm việc này cho check đỏ vì môi trường.
 
 ## PS-06b — Tổng kết kế hoạch và trang tóm tắt
 
@@ -256,11 +263,12 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
 - **Mục tiêu**: Tể tướng và pháp sư ước lượng và chia vùng dựa trên code thật. P1-50 thấy Tể tướng ước lượng không biết cỡ file và số file (Q10: 70k token cho một file 1 MB; Q3: 90k cho khoảng 15 file).
 - **Đọc trước**: mục PS-05, PS-06, PS-21; `packages/chancellor/src/**`; `apps/cli/src/say/**`; `packages/registry-default/prompts/mage.md`.
 - **Thêm**:
+  - **Cỡ file từ đĩa** (đề xuất (a) của P1-50; lượt soát 2026-11-12, chủ nhân chốt cùng ngày ở §11): đường dẫn và glob mà câu của chủ nhân nêu và có trong một lãnh thổ git được đọc từ đĩa (số file, byte và số dòng mỗi file, có trần số dòng in ra) thành một khối trong prompt của Tể tướng, 0 mana, kể cả khi cờ `code_graph` tắt. Câu không nêu đường dẫn nào thì khối rỗng.
   - Trước khi gọi Tể tướng, `elvaria say` hỏi đồ thị bằng câu của chủ nhân (0 mana) và đưa một khối tóm tắt (file, hàm, cỡ file) vào prompt của Tể tướng, để nó ước lượng và gợi ý `scope_paths`. Không có đồ thị, hay câu không khớp gì, thì khối rỗng.
   - Pháp sư hỏi đồ thị khi lập `plan.md` (lệnh của PS-21); mẫu `plan.md` ghi vùng bị ảnh hưởng của mỗi phần, từ quan hệ gọi và import ngược.
   - `planIssuesOf` nhận thêm các cạnh giữa file của các phần, tiêm vào từ ngoài (domain không IO): hai phần song song có vùng rời nhau nhưng nối nhau qua lời gọi hay import thành một cảnh báo trong prompt người duyệt, không thành `incomplete`.
   - Giao việc (chủ nhân chốt 2026-11-11): `chancellor.md` và prompt pháp sư nêu nghề nào có lệnh đồ thị. Việc cần dò cấu trúc code mà nghề chính không có lệnh đồ thị (nhà thơ, sứ thần) thì phần dò code thành một quest riêng cho một nhân vật có lệnh đó, quest kia chờ nó (`depends_on`) và đọc kết quả; không thêm kênh hỏi giữa hai nhân vật. Trước PS-21b, chủ nhân giao tay bằng `quest add --to`.
-- **Test**: Tể tướng giả nhận khối đồ thị; không có đồ thị thì khối rỗng, không lỗi; kế hoạch giả có hai phần song song nối nhau qua lời gọi ra cảnh báo; lãnh thổ tắt cờ thì không đổi gì; snapshot prompt mới.
+- **Test**: Tể tướng giả nhận khối đồ thị; không có đồ thị thì khối rỗng, không lỗi; câu nêu một file có thật thì khối cỡ file có số dòng của file đó, cả khi cờ tắt; câu nêu đường dẫn không có thì khối rỗng; kế hoạch giả có hai phần song song nối nhau qua lời gọi ra cảnh báo; lãnh thổ tắt cờ thì không có khối đồ thị và không lệnh đồ thị nào; snapshot prompt mới.
 - **Không làm**: luật chặn mới; đổi `scopesMeet` của PS-05.
 
 
