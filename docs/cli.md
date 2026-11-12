@@ -29,8 +29,8 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria quest list` | Liệt kê các nhiệm vụ trên bảng nhiệm vụ. |
 | `elvaria quest show <quest>` | Xem một nhiệm vụ. |
 | `elvaria quest confirm <quest>` | Xác nhận một nhiệm vụ nháp để nó mở (lệnh confirm). |
-| `elvaria quest cancel <quest>` | Hủy một nhiệm vụ chưa xong; nhiệm vụ nháp thì bỏ đi (lệnh cancel hoặc archive). |
-| `elvaria quest archive <quest>` | Lưu trữ một nhiệm vụ đã xong và giao hàng: Quản sự gỡ worktree, giữ nhánh (lệnh archive). |
+| `elvaria quest cancel <quest>` | Hủy một nhiệm vụ chưa xong; nhiệm vụ nháp thì bỏ đi, nhiệm vụ ở trạm quân y thì được lưu trữ (lệnh cancel hoặc archive). |
+| `elvaria quest archive <quest>` | Lưu trữ một nhiệm vụ đã xong và giao hàng, hoặc một nhiệm vụ ở trạm quân y mà chủ nhân bỏ: Quản sự gỡ worktree, giữ nhánh (lệnh archive). |
 | `elvaria quest edit <quest>` | Sửa một nhiệm vụ mà không chạm vào file của nó (lệnh edit_quest). |
 | `elvaria quest retry <quest>` | Mở lại một nhiệm vụ ở trạm quân y với đủ lượt thử như mới, hoặc đưa nhiệm vụ có người chấm cứ rời đi không ra phán quyết, hay chỉ chấm dở, về chờ nghiệm thu (lệnh retry). |
 | `elvaria quest reassign <quest>` | Giao lại một nhiệm vụ cho nhân vật khác, hoặc cho nhân vật bạn chỉ định (lệnh reassign). |
@@ -237,7 +237,7 @@ Xác nhận một nhiệm vụ nháp để nó mở (lệnh confirm).
 
 ## `elvaria quest cancel`
 
-Hủy một nhiệm vụ chưa xong; nhiệm vụ nháp thì bỏ đi (lệnh cancel hoặc archive).
+Hủy một nhiệm vụ chưa xong; nhiệm vụ nháp thì bỏ đi, nhiệm vụ ở trạm quân y thì được lưu trữ (lệnh cancel hoặc archive).
 
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
@@ -246,7 +246,7 @@ Hủy một nhiệm vụ chưa xong; nhiệm vụ nháp thì bỏ đi (lệnh ca
 
 ## `elvaria quest archive`
 
-Lưu trữ một nhiệm vụ đã xong và giao hàng: Quản sự gỡ worktree, giữ nhánh (lệnh archive).
+Lưu trữ một nhiệm vụ đã xong và giao hàng, hoặc một nhiệm vụ ở trạm quân y mà chủ nhân bỏ: Quản sự gỡ worktree, giữ nhánh (lệnh archive).
 
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|

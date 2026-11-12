@@ -13,8 +13,12 @@ import type { Rank } from '../schema/common.ts';
  * (Q3, Q6, Q8, Q1-d5) was cut in its first session at 240 000 (243 000–255 000), and rank C and B sessions at 480 000
  * in four of the first six of wave 4 (450 000–500 000), ten of the 26 interventions. With 720 000 every C and B
  * retry ended within the ceiling but two that passed it by under 5 %; rank D retries fit in 400 000 but one cut at
- * 405 000. So D takes two budgets (480 000) and C, B three (720 000); A and S stay half a budget per rank above.
- * E and F keep one: no rank E session came near 240 000 (Q11: 52 000).
+ * 405 000. So D takes two budgets (480 000) and C, B three (720 000). E and F keep one: no rank E session came
+ * near 240 000 (Q11: 52 000).
+ * (P1-56, the owner's choice after P1-54) A takes 4 and S 6.375 (960 000 and 1 530 000 at the defaults, from 840 000
+ * and 960 000): the half-budget steps above B were a guess, and A and S work is wider than B's, which three budgets
+ * already left too little for. Still not measured on A or S; the floor is what a quest without an estimate gets, and
+ * `quest edit --max-tokens` raises it for one quest.
  */
 export const CONTEXT_BUDGETS_BY_RANK: Readonly<Record<Rank, number>> = {
   F: 1,
@@ -22,6 +26,6 @@ export const CONTEXT_BUDGETS_BY_RANK: Readonly<Record<Rank, number>> = {
   D: 2,
   C: 3,
   B: 3,
-  A: 3.5,
-  S: 4,
+  A: 4,
+  S: 6.375,
 };

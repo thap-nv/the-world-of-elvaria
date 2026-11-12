@@ -1,5 +1,6 @@
 // sessionsLeftBehind (P1-11): what `elvaria doctor` reports from `.state/sessions.json` while no Steward holds
-// `.state/steward.lock`: the sessions a dead Steward left running, which the next `elvaria run` kills.
+// `.state/steward.lock`: the sessions a dead Steward left running, which the next `elvaria run` kills. stewardRuns
+// (P1-56) is the same question on its own.
 import { spawn } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -9,7 +10,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { bench } from './__fixtures__/kingdom.ts';
 import { SESSIONS_FILE } from './sessions/pids.ts';
-import { sessionsLeftBehind } from './steward.ts';
+import { sessionsLeftBehind, stewardRuns } from './steward.ts';
 import type { Bench } from './__fixtures__/kingdom.ts';
 import type { Steward } from './types.ts';
 
@@ -35,6 +36,19 @@ const record = (root: string, sessions: readonly object[]) =>
   mkdir(path.join(root, '.state'), { recursive: true }).then(() =>
     writeFile(path.join(root, SESSIONS_FILE), JSON.stringify({ version: 1, sessions })),
   );
+
+describe('stewardRuns', () => {
+  it('is true only while a Steward holds the kingdom lock (P1-56: the CLI waits for an answer only then)', async () => {
+    current = await bench();
+    expect(await stewardRuns(current.root)).toBe(false);
+    running = current.steward();
+    expect(await running.start({ loop: false })).toEqual({ ok: true });
+    expect(await stewardRuns(current.root)).toBe(true);
+    await running.stop();
+    running = undefined;
+    expect(await stewardRuns(current.root)).toBe(false);
+  });
+});
 
 describe('sessionsLeftBehind', () => {
   it('is empty without a record', async () => {

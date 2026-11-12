@@ -40,6 +40,11 @@ export interface HookPolicy {
    */
   readonly cli_protected_paths?: readonly string[];
   /**
+   * Of `cli_protected_paths`, the globs only Elvaria keeps, not the CLI (P1-56: git's folder for a tribe whose CLI
+   * does not lock it): the hook's refusal calls them Elvaria's rule. Absent: every one is taken as the CLI's.
+   */
+  readonly elvaria_protected_paths?: readonly string[];
+  /**
    * Where the assignee writes a patch for `laws.patch_paths` (P1-28; runner-core's PATCH_FILE, set when the territory
    * has patch paths): a write the CLI would refuse to such a path is refused first with this file as the way.
    */
@@ -62,6 +67,7 @@ const LIST_FIELDS = [
   'tools',
   'apprentice_models',
   'cli_protected_paths',
+  'elvaria_protected_paths',
   'search_commands',
 ] as const;
 const LAW_LISTS = ['forbidden_paths', 'read_only_paths', 'patch_paths', 'forbidden_commands'] as const;

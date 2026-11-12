@@ -88,9 +88,31 @@ describe('elvaria quest confirm, cancel, edit', () => {
     const io = testIo();
     expect(await quest(io, 'archive', QUEST_ID)).toBe(1);
     expect(io.printed.err).toEqual([
-      `Quest ${QUEST_ID} is «Open»: only a done quest can be archived (use elvaria quest cancel for an unfinished one).`,
+      `Quest ${QUEST_ID} is «Open»: only a done quest, or one in the infirmary, can be archived (use elvaria quest cancel for an unfinished one).`,
     ]);
     expect(await inbox()).toEqual([]);
+  });
+
+  // P1-56, (g) of the P1-50 report: Q10 stayed in the infirmary because both commands refused it (intervention 7).
+  it('archives a quest in the infirmary, which has no delivery to wait for, with archive or cancel', async () => {
+    await plantQuests(
+      kingdom,
+      questFixture('infirmary', QUEST_ID, { attempts: 3 }),
+      questFixture('infirmary', OTHER_QUEST_ID, { attempts: 3 }),
+    );
+    const archived = testIo();
+    expect(await quest(archived, 'archive', QUEST_ID)).toBe(0);
+    expect(archived.printed.out[0]).toContain('to archive quest');
+    const cancelled = testIo();
+    expect(await quest(cancelled, 'cancel', OTHER_QUEST_ID, '--reason', 'Không làm nữa')).toBe(0);
+    expect(cancelled.printed.out[0]).toBe(
+      `Quest ${OTHER_QUEST_ID} is in the infirmary, where cancelling means archiving: sent the command to archive it; the Steward removes its worktree and keeps its branch with the work done.`,
+    );
+    // The Steward's `archive` is `infirmary.archive` for a quest in the infirmary (quest-commands.ts ARCHIVE_EVENT).
+    expect((await inbox()).map(({ kind, payload }) => ({ kind, payload }))).toEqual([
+      { kind: 'archive', payload: { quest: QUEST_ID } },
+      { kind: 'archive', payload: { quest: OTHER_QUEST_ID, reason: 'Không làm nữa' } },
+    ]);
   });
 
   it('refuses to cancel an archived quest, or one that is not there', async () => {
@@ -144,6 +166,28 @@ describe('elvaria quest confirm, cancel, edit', () => {
         },
       },
     });
+  });
+
+  // P1-56, (g) of the P1-50 report (intervention 16): `--max-minutes` changed the quest and nothing of the CLI that was
+  // already running with the old `--print-timeout`; the owner waited for a clock that never moved.
+  it('says a new minute ceiling reaches the next session only while a session may be running', async () => {
+    const held = { assignee: 'wren', attempts: 1 };
+    await plantQuests(
+      kingdom,
+      questFixture('working', QUEST_ID, held),
+      questFixture('returned', OTHER_QUEST_ID, held),
+    );
+    const running = testIo();
+    expect(await quest(running, 'edit', QUEST_ID, '--max-minutes', '103')).toBe(0);
+    expect(running.printed.out.at(-1)).toBe(
+      `Quest ${QUEST_ID} has a session running: the 103-minute ceiling applies to the next session only. The running session's CLI was given its clock when it opened (the old ceiling, 45 minutes) and is still cut by it; to give this session more time, stop it and open it again.`,
+    );
+    const between = testIo();
+    expect(await quest(between, 'edit', OTHER_QUEST_ID, '--max-minutes', '103')).toBe(0);
+    expect(between.printed.out.join('\n')).not.toContain('next session only');
+    const tokens = testIo();
+    expect(await quest(tokens, 'edit', QUEST_ID, '--max-tokens', '900000')).toBe(0);
+    expect(tokens.printed.out.join('\n')).not.toContain('next session only');
   });
 
   it('refuses an edit that changes nothing, or changes it badly', async () => {

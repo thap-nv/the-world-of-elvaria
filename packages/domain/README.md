@@ -107,7 +107,7 @@
   verdict count apart (`reviewPartialsOf`, outcome `partial`): the `REVIEW_PARTIALS_MAX`-th (3) of the open group
   stalls the review too (`partialsStalled`, `review.verdict_partial.needs_verifier`). A quest without an estimate gets
   `context_budget_tokens` × `CONTEXT_BUDGETS_BY_RANK` of its rank as the stand-in (`questFromCommand`: F–E 1, D 2,
-  C 3, B 3, A 3.5, S 4 since P1-54, from the sessions of P1-50 on dc1), so its token ceiling grows with the rank; (P1-45) a quest with an estimate never gets a lower
+  C 3, B 3 since P1-54, from the sessions of P1-50 on dc1; A 4, S 6.375 since P1-56, by the owner's choice), so its token ceiling grows with the rank; (P1-45) a quest with an estimate never gets a lower
   ceiling than that, nor fewer minutes than it estimates, up to `attempt_minutes.high`. (P1-46) The rule is
   `questBudgetOf(rank, estimate, breakers)`, exported so the sandbox gives its fake quests the same ceilings.
 - Keeps the separation of duties (`src/verify/`, ADR 0008, 0020): `selectVerifier` (never an assignee of the quest

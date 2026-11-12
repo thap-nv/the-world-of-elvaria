@@ -106,11 +106,13 @@ describe('questFromCommand', () => {
     expect(ceilingOf('D')).toEqual([240_000, 480_000]);
     expect(ceilingOf('C')).toEqual([360_000, 720_000]);
     expect(ceilingOf('B')).toEqual([360_000, 720_000]);
-    expect(ceilingOf('A')).toEqual([420_000, 840_000]);
-    expect(ceilingOf('S')).toEqual([480_000, 960_000]);
-    // An odd budget still gives a whole estimate.
+    // P1-56: the owner's floors for the two ranks nobody measured, 960 000 and 1 530 000 at the defaults.
+    expect(ceilingOf('A')).toEqual([480_000, 960_000]);
+    expect(ceilingOf('S')).toEqual([765_000, 1_530_000]);
+    // An odd budget still gives a whole estimate (S: 120 001 × 6.375 = 765 006.375).
     const odd = { ...CONTEXT.breakers, context_budget_tokens: 120_001 };
-    expect(ceilingOf('A', odd)).toEqual([420_004, 840_008]);
+    expect(ceilingOf('A', odd)).toEqual([480_004, 960_008]);
+    expect(ceilingOf('S', odd)).toEqual([765_006, 1_530_012]);
   });
 
   it('gives a high rank the long time limit, and keeps the estimate and seal it was given', () => {
