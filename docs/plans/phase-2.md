@@ -1,6 +1,6 @@
 # Giai đoạn 2: đề xuất chia việc
 
-Ngày: 2026-11-12 · Trạng thái: **đề xuất, chờ chủ nhân chốt** ([kế hoạch triển khai](../implementation-plan.md) §10 câu 3, §11 dòng P1-51). Chưa task nào ở đây được mở, và số hiệu `P2-…` chưa có trong bảng §8.
+Ngày: 2026-11-12 · Trạng thái: **đề xuất**; chủ nhân chốt ngày 2026-11-12 cách dùng (đầu vào cho Nghị hội sau mốc PS-07) và thứ tự, câu 3–7 ở §6 còn chờ ([kế hoạch triển khai](../implementation-plan.md) §10 câu 3, §11 dòng P1-51 và dòng chốt sau nó). Chưa task nào ở đây được mở, và số hiệu `P2-…` chưa có trong bảng §8.
 
 Tài liệu này là bản đề xuất lại, khi đóng giai đoạn 1 (P1-51), của danh sách mà phiên điều phối đưa ra ngày 2026-11-10 và chủ nhân chưa chốt. Từ hôm đó có bốn thứ đổi: kế hoạch sản phẩm 0.8 thêm giai đoạn 1.5 và quy định giai đoạn 2 do chính Elvaria lập kế hoạch và làm; vài mục của danh sách đã thành task khác; lần chạy lại mốc ([P1-50](../guides/phase-1-rerun.md)) cho số đo về cỡ việc; lượt soát kế hoạch giai đoạn 1.5 (PR #113) xếp chỗ cho hai đề xuất của P1-50.
 
@@ -70,8 +70,8 @@ Số đo ở [báo cáo P1-50](../guides/phase-1-rerun.md) §3, §4, §7.
 
 Ba câu đầu là của P1-51; bốn câu sau có từ bản 2026-11-10 và chưa được trả lời.
 
-1. **Cách dùng danh sách này.** Khuyến nghị: giữ `P2-01 … P2-11` với nội dung ở §3 làm đầu vào cho tấu trình; sau mốc PS-07, chủ nhân giao cho Nghị hội, Nghị hội soạn bảng task của §8, chủ nhân đóng một dấu. Phương án khác: một phiên điều phối viết bảng §8 ngay bây giờ như giai đoạn 1 (nhanh hơn, nhưng bỏ mất phép thử của chính Nghị hội mà kế hoạch sản phẩm 0.8 đặt ra). Không chặn việc nào trước PS-07.
-2. **Thứ tự ở §4**, nhất là việc đặt PS-08, PS-09 và PS-11 trước mọi `P2-…`. Khuyến nghị: giữ. Chặn việc mở giai đoạn 2, không chặn giai đoạn 1.5.
+1. **Cách dùng danh sách này.** Khuyến nghị: giữ `P2-01 … P2-11` với nội dung ở §3 làm đầu vào cho tấu trình; sau mốc PS-07, chủ nhân giao cho Nghị hội, Nghị hội soạn bảng task của §8, chủ nhân đóng một dấu. Phương án khác: một phiên điều phối viết bảng §8 ngay bây giờ như giai đoạn 1 (nhanh hơn, nhưng bỏ mất phép thử của chính Nghị hội mà kế hoạch sản phẩm 0.8 đặt ra). Không chặn việc nào trước PS-07. **Chủ nhân chốt 2026-11-12: theo khuyến nghị.**
+2. **Thứ tự ở §4**, nhất là việc đặt PS-08, PS-09 và PS-11 trước mọi `P2-…`. Khuyến nghị: giữ. Chặn việc mở giai đoạn 2, không chặn giai đoạn 1.5. **Chủ nhân chốt 2026-11-12: giữ.**
 3. **P2-05 do phiên Claude Code làm** (§2), và `MBell` có ba nút lệnh (P2-08). Khuyến nghị: đồng ý cả hai. Để sau được.
 4. **Kênh chuông trên điện thoại** (P2-08): web push hay ứng dụng nhắn tin. Khuyến nghị web push: không thêm bên thứ ba, đi chung đường hầm; iPhone cần iOS 16.4 trở lên và "Thêm vào màn hình chính". Cần biết điện thoại của chủ nhân là iPhone hay Android. Chặn P2-08.
 5. **Đường hầm** (P2-11, chỉ là cấu hình): Tailscale hay Cloudflare Tunnel. Khuyến nghị Tailscale: không lộ ra internet công cộng, có sẵn HTTPS (service worker bắt buộc HTTPS). Chặn P2-11.
