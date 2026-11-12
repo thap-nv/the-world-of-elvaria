@@ -18,8 +18,9 @@
   `agents.json` (the one apprentice: the character's tools minus `Agent`, a hard `maxTurns`, the cheapest model,
   and a description naming the models the character may ask for), `system.md` for
   `--append-system-prompt-file` and the prompt as sent, redacted. Generated settings are checked before spawn,
-  because Claude Code drops a malformed part without a word. Every file the runner writes masks the session's
-  secret values (`secretValuesOf`) before the patterns (§3.9).
+  because Claude Code drops a malformed part without a word. What the runner writes of the session's
+  text (`prompt.md`, `stdout.jsonl`, `stderr.log`, its event lines) masks the session's secret values
+  (`secretValuesOf`) before the patterns (§3.9).
 - Spawns `claude -p` with stream-json, hook events, dontAsk, `--tools`, `--strict-mcp-config` and
   `--setting-sources project,local`, without a shell, the prompt on stdin, a chosen `--session-id` (or
   `--resume`). Reads the stream: signals (`text`, `usage` so far, `tool_blocked`, `rate_limit`, `mana` with the
@@ -76,11 +77,12 @@ pnpm --filter @elvaria/hooks build && ELVARIA_LIVE=1 pnpm --filter @elvaria/runn
 `fixtures/*.jsonl` are the redacted real runs of spike P1-02 (catalogue in `docs/spikes/claude-2026-11.md`).
 `fixtures/fake-claude.mjs` plays the conformance scenarios through the real run files (it runs the hooks the
 settings declare) or replays a fixture verbatim (`FAKE_CLAUDE_REPLAY`); its 429 lines are self-built from the docs
-until P1-16 records real ones; its fake-only scenario `leak` (`fixtures/fake-claude-leak.mjs`) prints secrets
+and the Agent SDK's types, since no run has met a real one yet (P1-16 and P1-50 included); its fake-only scenario `leak` (`fixtures/fake-claude-leak.mjs`) prints secrets
 everywhere, and `src/secrets.spec.ts` runs it with Elvaria's real hook from source and finds none of them in
 any file of the kingdom. `fixtures/fake-hook.mjs` stands in for the built hook elsewhere. Both fakes read stdin
 as the real hook does (`fixtures/read-stdin.mjs`, P1-36); `src/fixtures-stdin.spec.ts` sends a prompt larger than
 any pipe buffer to a fake CLI whose stdin a preload made non-blocking; `ELVARIA_SESSION_SPEC_REPEATS=<n>` runs it
 and the first case of `src/session.spec.ts` n more times (50 runs passed on macOS CI in PR #82). `src/live.spec.ts` runs the
-conformance suite's live checks with the real CLI and the real hook, the Stop gate, and a commit without
-attribution.
+conformance suite's live checks with the real CLI and the real hook, the Stop gate, a commit without
+attribution, the apprentice (the cheapest model, a stronger one refused, cut at `maxTurns`) and Grep refused
+outside the plot; `ELVARIA_CLAUDE` points them at another `claude`.

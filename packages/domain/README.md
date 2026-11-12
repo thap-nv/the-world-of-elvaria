@@ -86,7 +86,9 @@
   tribe, the level aside; `questFromCommand` refuses an assignee it rejects before the quest exists (P1-29).
 - Decides the breakers (`src/breaker/`, §3.4, P1-06): `evaluateBreakers(attempt, limits, now, usage)` → `ok` or
   the first trip of `time` (on the minute `budget.max_minutes` is spent), `tokens` or `turns` (once past
-  `budget.max_tokens`, `breakers.max_turns`); `breakersOf` applies it to the sessions the Steward holds
+  `budget.max_tokens`, `breakers.max_turns`); a tribe whose adapter reports no usage (its `TribeLimits.breakers`
+  is `minutes_only`, handed in as `measure` by `measureOf`) has the time breaker alone (P1-33); `breakersOf`
+  applies it to the sessions the Steward holds
   (`KingdomSnapshot.sessions`), each timed from its own attempt_log entry, and `planTick` returns them first as
   `breakers`. The trips `commit`, `secrets` and `forbidden_paths` happen where no session runs: `secrets` takes a
   claimed, returned, paused or unjudged quest to the infirmary (§2.5); `forbidden_paths` (P1-49) a finished session
@@ -94,10 +96,11 @@
   `breakers.verifier_tokens_multiplier` (2) times the quest's tokens (`tokenCeilingOf`), since it reads the whole
   diff and runs the checks again. (P1-23) `countedTokens` is the unit of a session's
   tokens for every adapter: input, output and cache writes in full, cache reads at a tenth
-  (`CACHE_READS_PER_TOKEN`); `reviewStalled` says a breaker has stopped `REVIEW_BREAKS_MAX` (2) verifiers of the
-  current run, and the review goes to the infirmary instead of a fresh verifier. (P1-26) The owner's retry of
+  (`CACHE_READS_PER_TOKEN`); `reviewStalled` says `REVIEW_BREAKS_MAX` (2) verifiers of the
+  open group left without a verdict, cut by a breaker or ended with none (P1-33), or `REVIEW_PARTIALS_MAX` (3)
+  handed in a partial one (P1-42), and the review goes to the infirmary instead of a fresh verifier. (P1-26) The owner's retry of
   such a quest goes back to review, same run, for a new judge (`infirmary.retry.stalled_review`); `reviewBreaksOf`
-  counts only the cuts since that retry, derived from `attempt_log` (a stall closes each group of
+  counts only the verifiers that left without a verdict since that retry, derived from `attempt_log` (a stall closes each group of
   `REVIEW_BREAKS_MAX`). (P1-38) `cutVerifiersOf` names the judges a breaker stopped in the open group, whom
   `selectVerifier` passes over while another judge may take the review; (P1-48) `justPartialOf` names the judge
   whose session, the latest of the open group, handed in a partial verdict, passed over the same way. (P1-42) Judges that hand in a partial
@@ -126,8 +129,9 @@
   quest the script cannot use, anything else a broken script, or the timeout) and `scriptVerdictOf` (the machine's
   verdict: one check named after the script, `link-check` → `link_check`; a batch passes when every unit is done).
   `followUpOf` builds the `create_quest` of the session quest a failed run hands its work to, of the kind and
-  class the catalog's `follow_up` names (`parseRegistry` checks them). `planTick` names open script-tier quests
-  (`scripts`) and runs a Steward stopped in the middle of (`script_verdicts`); `working.release.by_machine` opens
+  class the catalog's `follow_up` names (`parseRegistry` checks them). `planTick` names the open script-tier quests
+  to start (`scripts`) and those working or in review whose script no longer runs (`script_verdicts`: a run that
+  ended since the last tick, or one a Steward stopped in the middle of); `working.release.by_machine` opens
   such a quest again, its run `cancelled`.
 - Decides mana per gauge (`src/mana/`, ADR 0009; P1-22): a gauge (`PoolKey`) is a whole pool or the cap of one
   model in it (`model`); `binds` says which characters a gauge binds: a model's cap the slugs that name it, a pool
@@ -156,13 +160,14 @@
   doctor pins the owner's login first; P1-19, where TribeSchema used to name Gemini CLI), `selectChancellor`, and
   `tribeLookOf` (a theme's crest and colour of a tribe, `NEUTRAL_TRIBE_LOOK`, `tribe-neutral`, for one the theme
   has no entry for yet). `ADAPTER_FILE_PATTERN` tells an owner adapter file `adapters/<name>.mjs`.
-- Maps the domain onto the design system (implementation-plan §2.7): `statusToneOf`, `characterToneOf`, and
-  `bannerOf` (`src/world/`), the one band the HUD shows.
+- Maps the domain onto the design system (implementation-plan §2.7): `statusToneOf` (`src/quest/`),
+  `characterToneOf` (`src/character/`) and `bannerOf` (`src/world/`), the one band the HUD shows.
 - Builds the world state (`src/world/`) from the files (`worldStateOf`) or the log (`reduce`): every event that
   changes what the world shows carries the view after it (`questViewOf`, ...; `questLogTypeOf` names quest
   lines). `snapshotOf` / `readSnapshot` version the snapshot; `src/protocol/` is the herald's WebSocket protocol.
   A `quest.infirmary` line also says why in parts (P1-32): `trip` (`INFIRMARY_TRIPS`: the breaker trips,
-  `max_attempts`, `script_broken`, `script_usage`, `script_fail`) and `detail` (`InfirmaryDetailSchema`; `paths`
+  `no_verdict` and `partial_verdicts` for a stalled review, `max_attempts`, `script_broken`, `script_usage`,
+  `script_fail`) and `detail` (`InfirmaryDetailSchema`; `paths`
   for `forbidden_paths`, P1-49), both optional so lines written before them still parse and reduce. A line that
   tells a run's end may name the sessions that followed its first (`sequels`, from `RunEnd.sequels`, P1-49), which
   attempt_log does not keep. `mana.exhausted` may name the reset it waits for
@@ -177,7 +182,7 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   nothing; `OWNER_COMMAND_KINDS` lists the commands that count as stepping in.
 - Gives the core types every package builds on: `Result`, branded ids (`QuestId`, `TribeId`, ...), `Clock` and
   `Instant`, `zonedTime` (local day and ISO offset in `kingdom.tz`), `IdSource` (ULIDs and dated ids).
-- Names every number it decides with in `src/constants.ts` and the `constants.ts` of each folder.
+- Names every number it decides with in `src/constants.ts` and the `constants.ts` of the folders that have one.
 
 ## Does not
 

@@ -28,7 +28,8 @@ pnpm --filter @elvaria/config test   # boundaries.spec.ts: the table is a DAG an
 pnpm boundaries                       # depcruise over the real repo
 ```
 
-`depcruise.spec.ts` runs the rules on `__fixtures__/repo`, a fake repo with one planted violation per rule;
+`depcruise.spec.ts` runs the rules on `__fixtures__/repo`, a fake repo with a planted violation for every graph and
+runtime rule and for two of the per-workspace boundary rules;
 `eslint-boundaries.spec.ts` and `eslint-i18n.spec.ts` run the ESLint rules on sample code.
 Adding a workspace: add it to `WORKSPACES` (every planned one is listed already), then create `packages/<key>`
 or `apps/<key>` named `@elvaria/<key>`; CLAUDE.md "Adding a package" has the files it needs.

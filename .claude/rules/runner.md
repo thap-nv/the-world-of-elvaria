@@ -7,7 +7,7 @@ paths:
 
 Áp dụng khi sửa `packages/runner-core/**` và các adapter `packages/runner-*/**`; cộng thêm vào [CLAUDE.md](../../CLAUDE.md).
 
-Dữ kiện về CLI đã có, đừng tra lại: [cli-facts](../../docs/reference/cli-facts-2026-11-06.md), spike [Claude](../../docs/spikes/claude-2026-11.md) và [Antigravity](../../docs/spikes/antigravity-2026-11.md) (spike thắng cli-facts khi khác), implementation-plan §3.3, §3.5–§3.7, §3.9, §3.10, §3.12, §3.14.
+Dữ kiện về CLI đã có, đừng tra lại: [cli-facts](../../docs/reference/cli-facts-2026-11-12.md) (Claude Code 2.1.322, agy 1.5.5/1.5.6), spike [Claude](../../docs/spikes/claude-2026-11.md) và [Antigravity](../../docs/spikes/antigravity-2026-11.md) (spike thắng cli-facts khi khác), implementation-plan §3.3, §3.5–§3.7, §3.9, §3.10, §3.12, §3.14.
 
 ## Ranh giới (ADR 0006, 0021)
 
@@ -19,7 +19,7 @@ Dữ kiện về CLI đã có, đừng tra lại: [cli-facts](../../docs/referen
 
 - `spawn` với `shell: false`, executable tuyệt đối từ `kingdom.tribes[].tool.path`; shim `.cmd` của npm thì chạy `node <js>`.
 - Env dựng tường minh, tối thiểu: không bao giờ `process.env` nguyên khối, không biến `GIT_*`. Secret của kho bảo vật chỉ vào env của lần chạy; không vào prompt, journal, log hay event (che bằng `redact` của eventlog trước khi ghi).
-- Cấu hình theo lần chạy (settings, `policy.json`, `GEMINI_CLI_HOME`) nằm trong `<kingdom>/.runs/<quest>-<n>/`; code không đọc, không ghi `~/.claude/`, `~/.gemini/`, `~/.codex/`.
+- Cấu hình theo lần chạy (settings, `policy.json`; `GEMINI_CLI_HOME` khi có `runner-gemini`) nằm trong `<kingdom>/.runs/<quest>-<n>/`; code không đọc, không ghi `~/.claude/`, `~/.gemini/`, `~/.codex/`.
 - Kill tree ở `src/process/kill-tree.ts`: `taskkill /PID <pid> /T /F` trên Windows, SIGTERM rồi SIGKILL trên macOS; test cả hai OS.
 
 ## CLI
@@ -30,13 +30,13 @@ Dữ kiện về CLI đã có, đừng tra lại: [cli-facts](../../docs/referen
 
 ## Bẫy đã gặp
 
-- Claude Code 2.1.319 tự khóa Edit/Write trên `.git`, `.husky`, `.claude`, `.vscode`… (37 tên) trước mọi allow rule; `dontAsk` biến thành từ chối trần, luật lãnh thổ không mở được ([spike Claude](../../docs/spikes/claude-2026-11.md) "Bổ sung (P1-24, ghi ở P1-28)").
+- Claude Code tự khóa Edit/Write trên `.git`, `.husky`, `.claude`, `.vscode`… (10 thư mục và 37 tên file, `CLAUDE_PROTECTED_PATHS`) trước mọi allow rule; `dontAsk` biến thành từ chối trần, luật lãnh thổ không mở được ([spike Claude](../../docs/spikes/claude-2026-11.md) "Bổ sung (P1-24, ghi ở P1-28)"). Danh sách đọc từ bản build 2.1.319 và trùng ở 2.1.322 (P1-51); kiểm lại mỗi lần đổi phiên bản.
 - agy 1.5.4 thì không tự khóa thư mục nào: `write_file` ghi được `.git/`, `.husky/`, `.claude/`, `.vscode/`, `.gitmodules`, `.npmrc`; danh sách tự khóa của Claude chỉ là chuyện của tộc Claude ([spike Antigravity](../../docs/spikes/antigravity-2026-11.md) §15, P1-46). Riêng `.git` thì từ P1-49 `runner-core` chặn tool ghi cho mọi tộc (`GIT_PATHS`: luật `Edit(./.git/**)`, `cli_protected_paths` của mọi `policy.json`); agy nhận `write_file(.git/)`, không bao giờ `write_file(.git)` (luật agy là tiền tố, sẽ chặn cả `.gitignore`).
 - Hook và luật deny chỉ thấy tool của CLI và dòng lệnh: tiến trình con của một lệnh được allow (`node script.mjs`) ghi được cả `read_only_paths` lẫn `forbidden_paths` (đo với agy 1.5.4, spike Antigravity §15). Luật đường dẫn là hàng rào, không phải sandbox; đừng viết test hay prompt coi nó là sandbox. Lưới sau đó là của Quản sự (P1-49): đường dẫn cấm trong thay đổi của đất riêng thì không commit, trip `forbidden_paths`. Đừng đặt `.git` vào `forbidden_paths`: hook so đường dẫn cấm với mọi từ của dòng lệnh, `grep --exclude-dir=.git` sẽ bị chặn.
 - Usage của Claude đếm cả `cache_read_input_tokens` (85–90 % số đếm); trần token của cầu dao cân nó qua `countedTokens` (implementation-plan §3.12, P1-23), đừng cộng thẳng.
 - Gọi `agy` từ Git Bash: đối số bắt đầu bằng `/` bị đổi thành đường dẫn Windows; đặt `MSYS_NO_PATHCONV=1` ([spike Antigravity](../../docs/spikes/antigravity-2026-11.md) §0).
 - Windows: tiến trình con vừa bị kill vẫn giữ thư mục một lúc (`EBUSY`); xóa plot hay thư mục tạm của test bằng `rm` có `maxRetries` (`clearPlot`, `conformance/workspace.ts`; test dùng `RM_TEMP` của `src/__fixtures__/temp.ts`, P1-39). Test hết giờ để lại git còn chạy trong thư mục, nên `afterAll` gặp `EBUSY` ngay sau đó (`plot/patch.spec.ts`, P1-39).
-- Máy bận (worktree khác chạy test cùng lúc): spec spawn git hay tiến trình vượt mặc định 5 s / 10 s của vitest, nên `runner-core` đặt `testTimeout` và `hookTimeout` 60 s như các package spawn khác. Đừng chờ một khoảng cố định rồi khẳng định: chờ điều kiện (vòng hỏi có hạn), hay ở Quản sự dùng `tickUntil`/`settled` của `steward/src/__fixtures__/kingdom.ts`, chờ phiên giả và việc ngoài nhịp kết thúc theo thời gian thật rồi mới tăng đồng hồ giả (P1-39).
+- Máy bận (worktree khác chạy test cùng lúc): spec spawn git hay tiến trình vượt mặc định 5 s / 10 s của vitest, nên `runner-core` đặt `testTimeout` và `hookTimeout` 120 s (các package spawn khác: `testTimeout` 60 s hoặc 30 s). Đừng chờ một khoảng cố định rồi khẳng định: chờ điều kiện (vòng hỏi có hạn), hay ở Quản sự dùng `tickUntil`/`settled` của `steward/src/__fixtures__/kingdom.ts`, chờ phiên giả và việc ngoài nhịp kết thúc theo thời gian thật rồi mới tăng đồng hồ giả (P1-39).
 - `.git/info/exclude` không che file với Prettier: file sinh theo lần chạy trong plot (`.agents/`) lọt vào `format:check` của lãnh thổ (P1-16).
 - agy không có tool tìm dưới `-p`: nghề có `Glob`/`Grep` mà không có lệnh tìm thì đọc tuần tự (Q10 của P1-50: 25 lần `read_file` một file 1 MB). Từ P1-53 adapter khai `capabilities.search: false` và `runner-core` cho `git grep`, `git ls-files` (`search_commands`, chỉ trên đất riêng có git). Luật `command(git grep)` là tiền tố nên khớp cả `git grep -O<chương trình>`: cờ giữa dòng chỉ chặn được ở hook (`packages/hooks/src/search.ts`), với mọi chữ viết tắt git nhận (`--no-ind`) và cờ ngắn gộp (`-nOecho`). Đừng thêm một lệnh tìm mới vào `SEARCH_COMMANDS` khi hook chưa biết cờ nguy hiểm của nó (`rg --pre <cmd>` chạy chương trình) ([spike Antigravity](../../docs/spikes/antigravity-2026-11.md) §16).
 - agy 1.5.5 có thể in một JSON giữ chỗ giữa câu trả lời (`{"notes":"placeholder","result":"pass"}`) rồi lấy nó làm `structured_output`; Quản sự hạ phán quyết đó thành `partial` và mất một phiên chấm (Q5 của P1-50, người chấm Argon). Đừng coi `structured_output` của agy là JSON cuối của câu trả lời (đề xuất (i) ở [báo cáo P1-50](../../docs/guides/phase-1-rerun.md) §8).
@@ -46,6 +46,6 @@ Dữ kiện về CLI đã có, đừng tra lại: [cli-facts](../../docs/referen
 ## Test
 
 - `FakeRunner` và bộ test hợp đồng (conformance) chạy với mọi adapter. Adapter test bằng CLI giả phát lại fixture thật đã che trong `packages/runner-*/fixtures/`, giữ theo phiên bản CLI.
-- Test dựng repo git tạm lọc `GIT_*` khỏi env (`envWithoutGit` của `apps/cli/test/cli.ts`): hook pre-push của husky export `GIT_DIR`, một `git init` kế thừa nó sẽ ghi vào repo đang push (§6).
+- Test dựng repo git tạm lọc `GIT_*` khỏi env (`envWithoutGit` của `apps/cli/test/cli.ts`; spec của runner dùng `packages/runner-core/src/__fixtures__/git-repo.ts`): hook pre-push của husky export `GIT_DIR`, một `git init` kế thừa nó sẽ ghi vào repo đang push (§6).
 - Thư mục tạm có dấu cách trong tên; ca riêng một OS dùng `it.runIf(process.platform === 'win32')`.
 - `ELVARIA_LIVE=1 pnpm --filter <package> test` gọi CLI thật và tốn mana: chỉ khi đổi argv, settings hay cách parse.
