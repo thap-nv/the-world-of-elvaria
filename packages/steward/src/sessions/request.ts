@@ -88,6 +88,8 @@ export interface SessionInput {
   readonly checks?: readonly VerdictCheck[];
   /** A verifier in the scratch plot its trial made (ADR 0022, P1-20): Edit and Write there, no commit, no push. */
   readonly scratch?: boolean;
+  /** False: the Steward holds no exclusive lock for this judge, which runs no exclusive check (P1-54). */
+  readonly exclusive?: boolean;
 }
 
 /** What a continuing session reads instead of a transcript (ADR 0017); the branch's git log comes with P1-07. */
@@ -277,6 +279,7 @@ export async function requestOf(ctx: Context, input: SessionInput): Promise<Spaw
       character,
       territory,
       scratch: input.scratch === true,
+      exclusive: input.exclusive !== false,
       cli_search: searchFor(ctx, character),
     }),
     budget: { max_turns: ctx.world.kingdom.breakers.max_turns, max_minutes: quest.budget.max_minutes },

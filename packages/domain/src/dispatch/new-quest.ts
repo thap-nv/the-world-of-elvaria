@@ -201,16 +201,26 @@ function withChanges(quest: Quest, changes: Changes, at: string, quests: readonl
 
 /**
  * `edit_quest`: the owner changes fields of a quest it read at `expected_updated_at`; refused when the quest moved
- * since, so an edit never overwrites a change the owner has not seen (§9.2).
+ * since, so an edit never overwrites a change the owner has not seen (§9.2); an edit of the budget alone is never
+ * stale (budgetOnly, P1-54).
  */
 export function editQuest(
   quest: Quest,
   payload: CommandPayload<'edit_quest'>,
   context: { readonly at: string; readonly quests: readonly QuestId[] },
 ): Result<Quest, QuestCommandError> {
-  if (payload.expected_updated_at !== quest.updated_at) return err({ code: 'stale' });
+  if (!budgetOnly(payload.changes) && payload.expected_updated_at !== quest.updated_at)
+    return err({ code: 'stale' });
   return withChanges(quest, payload.changes, context.at, context.quests);
 }
+
+/**
+ * An edit of the budget alone overwrites nothing the owner has not seen: only the owner's edits change a quest's
+ * budget, and the Steward moves a working quest many times a minute (P1-54, (b) of the P1-50 report: an edit that
+ * raised a party's token ceiling came back `stale` while its sessions ran).
+ */
+const budgetOnly = (changes: Changes): boolean =>
+  changes.budget !== undefined && Object.keys(changes).every((field) => field === 'budget');
 
 /** `set_rank`: the owner lowers (or raises) a quest's rank, e.g. one nobody can take (§3.1). */
 export const setRank = (quest: Quest, rank: Rank, at: string): Result<Quest, QuestCommandError> =>

@@ -1,7 +1,7 @@
 // territory.json v1: one repo or folder attached to the kingdom (implementation-plan §2.3).
 import { z } from 'zod';
 
-import { TERRITORY_DEFAULTS } from '../constants.ts';
+import { SPECS_PLACEHOLDER, TERRITORY_DEFAULTS } from '../constants.ts';
 import { CheckIdSchema, REGISTRY_ID_PATTERN, SLUG_PATTERN, TerritoryIdSchema } from '../core/ids.ts';
 import {
   AbsPathSchema,
@@ -53,6 +53,31 @@ export type CommandLines = z.infer<typeof CommandLinesSchema>;
 export const commandLinesOf = (lines: CommandLines): readonly string[] =>
   typeof lines === 'string' ? [lines] : lines;
 
+// P1-54, (f) of the P1-50 report: flake_check reran every check twice more, 45–75 minutes of a trial on dc1.
+const FlakeSchema = z
+  .strictObject({
+    specs: z
+      .array(NonEmptyStringSchema)
+      .default(() => [])
+      .meta(describe("Globs of this check's spec files, relative to the territory root.")),
+    run: CommandLinesSchema.optional().meta(
+      describe(
+        `The check's command for some spec files alone, where ${SPECS_PLACEHOLDER} stands for them (\`pnpm exec playwright test ${SPECS_PLACEHOLDER}\`). Needs specs.`,
+      ),
+    ),
+  })
+  .refine(
+    ({ specs, run }) =>
+      run === undefined ||
+      (specs.length > 0 && commandLinesOf(run).some((line) => line.includes(SPECS_PLACEHOLDER))),
+    { path: ['run'], message: `flake.run names ${SPECS_PLACEHOLDER} and comes with flake.specs` },
+  )
+  .meta(
+    describe(
+      'The check may flake (integration, e2e): under the ritual step flake_check it runs again after commands.reset, and only the checks that have `flake` do once one check of the territory has it (none: every check runs again, as before P1-54). When the quest added or changed spec files that `specs` match, the reruns run `run` on those files alone instead of the whole check.',
+    ),
+  );
+
 const CheckSchema = z.strictObject({
   id: CheckIdSchema,
   run: CommandLinesSchema,
@@ -75,7 +100,12 @@ const CheckSchema = z.strictObject({
   cleanup: z
     .string()
     .optional()
-    .meta(describe('Optional command run after a kill or timeout (orphan containers, locks).')),
+    .meta(
+      describe(
+        "Optional command run after a timeout (orphan containers, locks), under the territory's exclusive lock (P1-54).",
+      ),
+    ),
+  flake: FlakeSchema.optional(),
 });
 
 const LawsSchema = z
@@ -192,7 +222,7 @@ export const TerritorySchema = z
         build: z.string().optional(),
         reset: CommandLinesSchema.optional().meta(
           describe(
-            "Brings shared state back to clean (a test database, containers) in a judge's scratch plot (ADR 0022): run after commands.setup and before each run of the checks and of commands.coverage there. Run by the machine only, never by a character.",
+            "Brings shared state back to clean (a test database, containers) in a judge's scratch plot (ADR 0022): run after commands.setup and before each run of the checks and of commands.coverage there, under the territory's exclusive lock so it never pulls down what another quest's exclusive check runs on (P1-54). Run by the machine only, never by a character.",
           ),
         ),
         coverage: CommandLinesSchema.optional().meta(
@@ -217,6 +247,14 @@ export const TerritorySchema = z
       .meta(
         describe(
           "'What you touch decides what runs', as data. runChecks selects checks whose `when` globs match the touched paths. Ids are unique (zod): run-check finds a check by id.",
+        ),
+      ),
+    environment_errors: z
+      .array(NonEmptyStringSchema.refine(isRegex, { message: 'not a valid regular expression' }))
+      .default(() => [...TERRITORY_DEFAULTS.environment_errors])
+      .meta(
+        describe(
+          "Regular expressions, matched without case against the end of a failing check's log (or of commands.setup or commands.reset before the checks): a match says the check failed because of its environment (Docker not running, a container gone), not because of the work. No judge reads such checks, the assignee keeps its level and no quest hunts a flake; the Steward tells the owner and runs them again later (P1-54). The default names Docker's own lines.",
         ),
       ),
     laws: LawsSchema.prefault({}),
@@ -249,7 +287,7 @@ export const TerritorySchema = z
     title: 'Territory',
     description:
       "territories/<id>/territory.json: one repo or folder attached to the kingdom ('opening a realm'). Holds how to set up and check work there (commands, checks), the territory's own laws enforced at the runner (deny lists and hooks, not only the prompt), allowed secret names, and health.",
-    $comment: `${GENERATED_NOTE} There is no \`map\` field: region geometry lives only in world/map.json (world-map schema) and the level of detail is computed by the Herald from camera and territory count, so it is never stored here. Not expressible here: check ids are unique; laws.forbidden_commands must compile as regular expressions; laws.patch_paths never names a .git folder (nor .GIT, .git. or git~1).`,
+    $comment: `${GENERATED_NOTE} There is no \`map\` field: region geometry lives only in world/map.json (world-map schema) and the level of detail is computed by the Herald from camera and territory count, so it is never stored here. Not expressible here: check ids are unique; laws.forbidden_commands and environment_errors must compile as regular expressions; checks[].flake.run names ${SPECS_PLACEHOLDER} and comes with flake.specs; laws.patch_paths never names a .git folder (nor .GIT, .git. or git~1).`,
   });
 
 export type Territory = z.infer<typeof TerritorySchema>;

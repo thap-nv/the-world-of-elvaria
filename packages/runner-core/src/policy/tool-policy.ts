@@ -66,6 +66,12 @@ export interface ToolPolicyInput {
    * for its session), and loses every git command that writes history. Ignored otherwise.
    */
   readonly scratch?: boolean;
+  /**
+   * The Steward holds the territory's exclusive lock for this judge in its scratch plot (P1-20): it may run the
+   * exclusive checks. False for a judge opened after failing checks, who reads their logs and waits for no lock
+   * (P1-54). Absent: as `scratch`.
+   */
+  readonly exclusive?: boolean;
   /** `capabilities.search` of the tribe's adapter (P1-53): false gives the SEARCH_COMMANDS; absent, it searches itself. */
   readonly cli_search?: boolean | undefined;
 }
@@ -173,7 +179,7 @@ export function toolPolicyOf(input: ToolPolicyInput): ToolPolicy {
   const hasShell = tools.includes(SHELL_TOOL);
   // A verifier never regenerates what it judges (ADR 0008), not even in its scratch plot.
   const writes = !verifier && tools.some(isWriteTool);
-  const shell = hasShell ? checkRules(input.territory, scratch) : [];
+  const shell = hasShell ? checkRules(input.territory, scratch && input.exclusive !== false) : [];
   const generate = hasShell && writes ? generateRules(input.territory) : [];
   const laws = lawsOf(input.territory, scratch);
   const fences = [
