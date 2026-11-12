@@ -156,7 +156,7 @@ Triệu hồi một nhân vật: nghề, tộc, model và cấp ban đầu.
 | `--class <class>` | Nghề, theo registry/classes.json (knight, scribe, judge…). (bắt buộc) |
 | `--tribe <tribe>` | Tộc, một id trong kingdom.tribes (mặc định: tộc gợi ý của nghề). |
 | `--model <model>` | Model của CLI (mặc định: model gợi ý của nghề trong tộc của nó). |
-| `--level <1-10>` | Cấp ban đầu 1–10, đặt theo độ mạnh của model (mặc định theo model: Opus 5, Sonnet hoặc Pro 4, Argon 3, Haiku hoặc Flash 2, model khác 1). |
+| `--level <1-10>` | Cấp ban đầu 1–10, đặt theo độ mạnh của model (mặc định theo model: Opus hoặc Astra 5, Sonnet, Pro hoặc Sol 4, Argon hoặc Terra 3, Haiku, Flash hoặc Luna 2, model khác 1). |
 | `--name <name>` | Tên hiển thị, tối đa 24 ký tự (mặc định: id viết hoa chữ đầu). |
 
 ## `elvaria character list`

@@ -15,7 +15,7 @@
     "cli.answer.summary": "Answer the question of a quest waiting for you (elvaria quest show prints it): its assignee goes on with your answer (answer command).",
     "cli.character.add.arg.id": "Character id: lowercase letters, digits and hyphens, e.g. thorn.",
     "cli.character.add.option.class": "Class, from registry/classes.json (knight, scribe, judge…).",
-    "cli.character.add.option.level": "Starting level 1–10, by how strong the model is (default from the model: Opus 5, Sonnet or Pro 4, Argon 3, Haiku or Flash 2, any other 1).",
+    "cli.character.add.option.level": "Starting level 1–10, by how strong the model is (default from the model: Opus or Astra 5, Sonnet, Pro or Sol 4, Argon or Terra 3, Haiku, Flash or Luna 2, any other 1).",
     "cli.character.add.option.model": "CLI model (default: the class's suggested model in its own tribe).",
     "cli.character.add.option.name": "Display name, up to 24 characters (default: the id, capitalised).",
     "cli.character.add.option.tribe": "Tribe, an id in kingdom.tribes (default: the class's suggested tribe).",
