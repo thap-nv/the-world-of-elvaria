@@ -105,8 +105,8 @@ describe('the infirmary', () => {
     const { kingdom, steward } = await open({}, (k) => ({
       runners: { claude: looping(k.fakes.claude), gemini: k.fakes.gemini },
     }));
-    await kingdom.command('create_quest', questPayload('Loops'));
-    await kingdom.command('create_quest', questPayload('Loops too'));
+    await kingdom.command('create_quest', questPayload('Loops', { scope_paths: ['a'] }));
+    await kingdom.command('create_quest', questPayload('Loops too', { scope_paths: ['b'] }));
     const sick = async (title: string) => (await kingdom.quest(title)).status === 'infirmary';
     await tickUntil(steward, kingdom.clock, async () => (await sick('Loops')) && (await sick('Loops too')));
     const loops = await kingdom.quest('Loops');

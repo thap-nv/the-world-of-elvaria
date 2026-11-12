@@ -53,6 +53,17 @@ describe('followUpOf', () => {
     expect(payload?.description).not.toContain('\n\n');
   });
 
+  it("keeps the failed quest's scope (PS-05)", () => {
+    const scoped = { ...parent, scope_paths: ['docs/**'] };
+    const payload = followUpOf({
+      parent: scoped,
+      script: LINK_CHECK,
+      verdict: { notes: NOTES },
+      locale: 'en',
+    });
+    expect(payload?.scope_paths).toEqual(['docs/**']);
+  });
+
   it('opens nothing for a script whose catalog entry names no follow-up', () => {
     const quiet = { ...LINK_CHECK, follow_up: undefined };
     expect(followUpOf({ parent, script: quiet, verdict: { notes: NOTES }, locale: 'en' })).toBeUndefined();

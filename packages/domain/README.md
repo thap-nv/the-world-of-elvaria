@@ -91,6 +91,16 @@
   resume); `answeredAlready` knows a question the owner answered. `namedAssignee` checks the character the
   owner names for a quest (`reassign`, `create_quest.assignee`): known, of the class, not suspended, of an enabled
   tribe, the level aside; `questFromCommand` refuses an assignee it rejects before the quest exists (P1-29).
+- Keeps quests whose files meet apart (`src/dispatch/scope.ts`, implementation-plan §3.16.5, ADR 0028, PS-05):
+  `quest.scope_paths` is optional; `scopesMeet` compares the literal text of the globs, a doubt is an overlap, and
+  entries inside `territory.shared_paths` do not count. A session-tier quest holds its scope from its first run until
+  it is archived (`holdsScope`); the roster gives a quest room only when its territory has a slot (R1), no session
+  quest without a scope works there and it has one or no session quest works there (R2), and no quest outside its
+  base chain (`baseChainOf`: the branches its plot is built on, and those a merge quest merges) holds a scope that
+  meets its own (R3). Script-tier quests stand outside R2 and R3. A quest without a scope that waits for its territory
+  keeps the scoped quests after it in the claims of that tick (`claims` of `src/dispatch/tick-steps.ts`).
+  `scopeHolderOf` names whom a quest waits for. The merge quest takes its parts' scopes together, the acceptance part
+  and the follow-ups the scope of the quest they come from.
 - Decides the breakers (`src/breaker/`, §3.4, P1-06): `evaluateBreakers(attempt, limits, now, usage)` → `ok` or
   the first trip of `time` (on the minute `budget.max_minutes` is spent), `tokens` or `turns` (once past
   `budget.max_tokens`, `breakers.max_turns`); a tribe whose adapter reports no usage (its `TribeLimits.breakers`
@@ -189,7 +199,8 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   nothing; `OWNER_COMMAND_KINDS` lists the commands that count as stepping in, by the `kind` of their
   `command.applied` line, or of their inbox/done file for a line written before PS-01b. From the log alone
   (`src/metrics/log-counts.ts`, PS-01b): the runs of checks set aside for their environment (`check.end` `environment`)
-  and each session's reads by file (`agent.tool` reads), the files read more than once first.
+  and each session's reads by file (`agent.tool` reads), the files read more than once first; and (PS-05) the submits
+  whose work changed files outside their quest's scope (`out_of_scope` of `quest.submitted`).
 - Decides when the Steward's scheduled jobs run (`src/schedule/`, PS-03): `dueJobs` over `kingdom.schedule`, the
   kingdom's local day and time (`localClockOf`) and the day each job last ran: a daily job is due once its `at` has
   come on a day it has not run (`DAILY_JOBS`: `chronicle`, `digest`), so a late start catches up and a clock set back
@@ -197,7 +208,9 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
 - Lists what waits for the owner (`attentionQueue`, `src/world/attention.ts`, PS-03): over the world state, `now`
   and the Steward's notices (unclaimable, unjudgeable, judges out of mana), each item with its group (`must`: the
   work stands still; `can_wait`), an advice code and the `elvaria` command, both from `ATTENTION_TABLE` by kind:
-  questions, seals, the infirmary, drafts, open memos, pools asleep or at the warning share. The world state holds the
+  questions, seals, the infirmary, drafts, open memos, pools asleep or at the warning share, and (PS-05) the done
+  quests that still hold a scope quests ready to start wait for (`scope_held`, from `scopeHoldsOf` over the quest
+  files, which the caller passes with the notices: the world state holds no scope). The world state holds the
   open memos since PS-03 (`memos`, `memoViewOf`; `memo.*` lines reduce into it; `WORLD_STATE_VERSION` 2).
 - Gives the load trace of a session's opening line its shape (`LoadTraceSchema`, `src/schema/event/load-trace.ts`,
   PS-01b): the scripture files and their lines, the skill ids and the prompt's blocks by part, id and size.

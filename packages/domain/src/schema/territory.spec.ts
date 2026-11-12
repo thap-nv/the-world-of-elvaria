@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import examples from '../../examples/territory.json' with { type: 'json' };
 import { TERRITORY_DEFAULTS } from '../constants.ts';
-import { TerritorySchema, commandLinesOf, namesNoGitFolder } from './territory.ts';
+import { commandLinesOf } from './territory-checks.ts';
+import { TerritorySchema, namesNoGitFolder } from './territory.ts';
 
 const [example] = examples;
 
@@ -88,6 +89,21 @@ describe('TerritorySchema', () => {
     expect(issuesOf({ ...minimal, blind_trial: { enabled: true, min_rank: 'Z' } })).toEqual([
       expect.stringContaining('blind_trial.min_rank'),
     ]);
+  });
+
+  it('takes hot files with how a merge joins them, a regenerated one only with a generate command (PS-05)', () => {
+    const shared = [
+      { glob: 'packages/i18n/src/glossary.json', merge: 'union' },
+      { glob: 'docs/schemas/**', merge: 'regenerate' },
+    ];
+    expect(issuesOf({ ...minimal, shared_paths: shared })).toEqual([
+      'shared_paths: a shared path merged by regenerate needs commands.generate',
+    ]);
+    const generated = { ...minimal, commands: { generate: ['pnpm schemas'] }, shared_paths: shared };
+    expect(TerritorySchema.parse(generated).shared_paths).toEqual(shared);
+    expect(issuesOf({ ...minimal, shared_paths: [shared[0]] })).toEqual([]);
+    expect(issuesOf({ ...minimal, shared_paths: [{ glob: 'a', merge: 'ours' }] })).toHaveLength(1);
+    expect(TerritorySchema.parse(minimal)).not.toHaveProperty('shared_paths');
   });
 
   it('gives every territory its own default lists', () => {

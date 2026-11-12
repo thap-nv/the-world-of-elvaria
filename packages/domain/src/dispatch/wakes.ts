@@ -16,8 +16,8 @@ export function wakesOf(
     .filter((quest) => {
       const holder = character(quest.assignee);
       if (holder?.current?.quest !== quest.id || !roster.canWake(holder)) return false;
-      if (!roster.territoryHasRoom(quest.territory)) return false;
-      roster.take(holder, quest.territory);
+      if (!roster.territoryHasRoom(quest)) return false;
+      roster.take(holder, quest);
       return true;
     })
     .map(({ id }) => id);

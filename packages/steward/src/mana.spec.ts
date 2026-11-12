@@ -92,8 +92,8 @@ describe('a usage limit in the middle of a quest', () => {
       plays: { work: { 'Runs dry': ['rate_limit', 'submit'], 'Was running': ['hang', 'submit'] } },
       probes: { claude: wakesAfter(0) },
     });
-    await kingdom.command('create_quest', questPayload('Runs dry'));
-    await kingdom.command('create_quest', questPayload('Was running', { rank: 'E' }));
+    await kingdom.command('create_quest', questPayload('Runs dry', { scope_paths: ['a'] }));
+    await kingdom.command('create_quest', questPayload('Was running', { rank: 'E', scope_paths: ['b'] }));
     await tickUntil(
       steward,
       kingdom.clock,

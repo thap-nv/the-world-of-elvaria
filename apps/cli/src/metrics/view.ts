@@ -70,6 +70,10 @@ function summarySection(t: Translate, metrics: Metrics): MetricsSection {
       }),
       t('cli.metrics.line.set_aside', { count: metrics.set_aside.length }),
       t('cli.metrics.line.reads', { total: metrics.reads.total, files: metrics.reads.repeated.length }),
+      t('cli.metrics.line.out_of_scope', {
+        count: metrics.out_of_scope.length,
+        files: metrics.out_of_scope.reduce((total, { paths }) => total + paths.length, 0),
+      }),
     ],
   };
 }

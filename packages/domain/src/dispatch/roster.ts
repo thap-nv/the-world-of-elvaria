@@ -1,9 +1,11 @@
 // Who may take work in this tick, and how much room each tribe and territory has left (implementation-plan §3.1,
 // §3.14): the bookkeeping planTick shares between its steps, so a character, a tribe slot or a territory slot
-// given away in one step is gone for the next ones.
+// given away in one step is gone for the next ones. A territory has room for a quest when it runs fewer quests than
+// its max_concurrent (R1) and the scope rules let the quest start (scope.ts, PS-05: R2, R3).
 import { poolEnabled, poolKeyOf } from '../mana/pool.ts';
 import { admits, asleepFor, manaStateOf } from '../mana/state.ts';
 import { RANKS } from '../schema/common.ts';
+import { scopeBookOf } from './scope.ts';
 import type { Instant } from '../core/clock.ts';
 import type { CharacterId, TerritoryId, TribeId } from '../core/ids.ts';
 import type { ManaReading } from '../mana/reading.ts';
@@ -20,7 +22,7 @@ import type { PoolKey } from '../world/mana-view.ts';
 /** Statuses in which a character holds a CLI session of its tribe's account (tribe max_concurrent). */
 const IN_SESSION: readonly CharacterStatus[] = ['working', 'reviewing', 'meditating'];
 
-export type TerritoryRules = Pick<Territory, 'id' | 'max_concurrent' | 'laws'>;
+export type TerritoryRules = Pick<Territory, 'id' | 'max_concurrent' | 'laws' | 'shared_paths'>;
 
 export interface RosterSource {
   readonly kingdom: Pick<Kingdom, 'tribes'>;
@@ -61,11 +63,14 @@ export interface Roster {
   readonly standsBy: (character: Character) => boolean;
   /** The character leaves the roster for this tick without a session (a suspension): no slot is taken. */
   readonly setAside: (character: Character) => void;
-  /** The territory exists and has a slot left (territory.max_concurrent). */
-  readonly territoryHasRoom: (territory: TerritoryId) => boolean;
+  /**
+   * The quest's territory exists, has a slot left (territory.max_concurrent, R1), and the scope rules let the quest
+   * start there (scopeWaitOf, PS-05: R2, R3), counting the quests started earlier in this tick.
+   */
+  readonly territoryHasRoom: (quest: Quest) => boolean;
   readonly territory: (id: TerritoryId) => TerritoryRules | undefined;
-  /** The character starts a session, on a quest of `territory` (null: a verifier takes no territory slot). */
-  readonly take: (character: Character, territory: TerritoryId | null) => void;
+  /** The character starts a session on `quest` (null: a verifier takes no territory slot, nor any scope). */
+  readonly take: (character: Character, quest: Quest | null) => void;
 }
 
 const count = <K>(keys: readonly K[]): Map<K, number> =>
@@ -135,6 +140,13 @@ export function rosterOf(source: RosterSource, now: Instant): Roster {
   );
   const running = count(source.quests.filter(({ status }) => status === 'working').map((q) => q.territory));
   const territories = new Map(source.territories.map((territory) => [territory.id, territory]));
+  // The scope rules (PS-05), kept up to date with the quests started in this tick.
+  const scopes = scopeBookOf(source.quests);
+  const roomFor = (quest: Quest): boolean => {
+    const territory = territories.get(quest.territory);
+    if (territory === undefined || (running.get(territory.id) ?? 0) >= territory.max_concurrent) return false;
+    return scopes.waitOf(quest, territory) === null;
+  };
 
   const mayOpen = (character: Character): boolean => {
     const tribe = staffed.get(character.tribe);
@@ -163,12 +175,14 @@ export function rosterOf(source: RosterSource, now: Instant): Roster {
       aside.add(character.id);
       taken.add(character.id);
     },
-    territoryHasRoom: (id) => (running.get(id) ?? 0) < (territories.get(id)?.max_concurrent ?? 0),
+    territoryHasRoom: roomFor,
     territory: (id) => territories.get(id),
-    take: (character, territory) => {
+    take: (character, quest) => {
       taken.add(character.id);
       inSession.set(character.tribe, (inSession.get(character.tribe) ?? 0) + 1);
-      if (territory !== null) running.set(territory, (running.get(territory) ?? 0) + 1);
+      if (quest === null) return;
+      running.set(quest.territory, (running.get(quest.territory) ?? 0) + 1);
+      scopes.start(quest);
     },
   };
 }

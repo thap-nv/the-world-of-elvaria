@@ -14,6 +14,7 @@ import { afterJudge } from '../review/after-judge.ts';
 import { breakAssignee, breakVerifier } from './breaker.ts';
 import { commitPlot, warnUncommitted } from './commit.ts';
 import { checksLetterAfter, noteUnchangedLetter } from './letter.ts';
+import { outOfScopeIn } from './out-of-scope.ts';
 import { applyAssigneePatch } from './patch.ts';
 import type { Context } from '../context.ts';
 import type { Finished, Running } from './running.ts';
@@ -79,7 +80,10 @@ async function settleAssignee(
   return submitWork(ctx, running, result);
 }
 
-/** A run that completed without a question: the patch, the commit, the letter's memos, then the submit. */
+/**
+ * A run that completed without a question: the patch, the commit, the letter's memos, then the submit, whose line
+ * names the files the work changed outside the quest's scope (PS-05).
+ */
 async function submitWork(ctx: Context, running: Running, result: RunResult): Promise<Result<Quest, string>> {
   const who = running.character;
   const run = runOf(running, result);
@@ -100,11 +104,13 @@ async function submitWork(ctx: Context, running: Running, result: RunResult): Pr
   if (committed.status === 'refused')
     return breakAssignee(ctx, running, { trip: 'commit', refused: committed }, ended(result));
   await fileMemos(ctx, running);
+  const submitted = ctx.world.quests.get(quest);
   return moveAndRing(ctx, {
     quest,
     event: { type: 'submit', ...run },
     actor: 'runner',
     edits: { [who]: step('submit') },
+    ...(submitted === undefined ? {} : { out_of_scope: await outOfScopeIn(ctx, submitted) }),
   });
 }
 
