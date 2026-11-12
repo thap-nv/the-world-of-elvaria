@@ -51,6 +51,21 @@ export { ADAPTER_FACTORY, adapterOfModule, runnerProblems } from './kit/adapter-
 export type { AdapterFactory } from './kit/adapter-module.ts';
 export { ADAPTER_KIT_VERSION, adapterKitOf } from './kit/kit.ts';
 export type { AdapterKit, KitHookCommand, KitHost } from './kit/kit.ts';
+export {
+  GRAPH_BUSY,
+  GRAPH_FILE,
+  GRAPH_KEEP,
+  GRAPH_TIMEOUT_MS,
+  buildGraph,
+  builtGraph,
+  graphDirOf,
+} from './graph/build-graph.ts';
+export type { GraphBuild, GraphBuildOptions, GraphProgram } from './graph/build-graph.ts';
+export { GRAPH_ASK_TIMEOUT_MS, codeGraphsOf } from './graph/code-graphs.ts';
+export type { CodeGraphs, CodeGraphsOptions } from './graph/code-graphs.ts';
+export { GRAPHIFY_ENV, GRAPH_OUT_ENV, graphEnvOf } from './graph/graph-env.ts';
+export { gitOf } from './plot/git.ts';
+export type { Git, GitRun } from './plot/git.ts';
 export { plotCommitMessage } from './plot/commit-message.ts';
 export { folderPlotOf } from './plot/folder.ts';
 export { createPlotManager } from './plot/plot-manager.ts';
@@ -62,6 +77,7 @@ export { PLOT_EXCLUDES } from './plot/repo-settings.ts';
 export { SETUP_TIMEOUT_MS, setupLogOf } from './plot/setup.ts';
 export { DIFF_MAX_CHARS } from './plot/diff.ts';
 export type { DiffScope } from './plot/diff.ts';
+export type { Drift } from './plot/drift.ts';
 export { SUBQUESTS_FILE } from './plot/subquests.ts';
 export { PATCH_FILE } from './plot/patch.ts';
 export { SCRATCH_SUFFIX, scratchIdOf } from './plot/scratch.ts';
@@ -93,6 +109,8 @@ export { JOURNAL_TAIL_LINES, LANGUAGE_NAMES } from './prompt/blocks.ts';
 export type { Continuation, Locale, Memory } from './prompt/blocks.ts';
 export type { FiledMemo } from './prompt/memory.ts';
 export { buildPrompt } from './prompt/build-prompt.ts';
+export type { PromptGraph } from './prompt/graph-block.ts';
+export { driftNote, gazetteerStampOf, gazetteerWithDrift } from './prompt/gazetteer-drift.ts';
 export type { AssigneePromptInput, PromptInput, VerifierPromptInput } from './prompt/build-prompt.ts';
 export type { PromptCheck } from './prompt/checks.ts';
 export { buildChancellorPrompt } from './prompt/chancellor.ts';

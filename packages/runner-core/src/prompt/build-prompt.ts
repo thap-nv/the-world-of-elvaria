@@ -23,8 +23,11 @@ import {
 import { verifierChecks } from './checks.ts';
 import { contextFilesBlock } from './context-files.ts';
 import type { ContextFile } from './context-files.ts';
+import { graphBlock } from './graph-block.ts';
+import type { PromptGraph } from './graph-block.ts';
 import { memosBlock } from './memory.ts';
 import { composed } from './prompt-blocks.ts';
+import { outOfScopeBlock } from './scope.ts';
 import { fenced, fill, sectionsOf } from './templates.ts';
 import type { Continuation, Locale, Memory } from './blocks.ts';
 import type { PromptCheck } from './checks.ts';
@@ -61,6 +64,11 @@ interface PromptBase {
    * search commands that stand in for Glob and Grep. Absent: the CLI searches on its own.
    */
   readonly cli_search?: boolean | undefined;
+  /**
+   * The quest's code graph (PS-21), when its territory has `code_graph` on and the Steward built it: toolPolicyOf
+   * grants its commands to a class that searches code, and the system part gets the graph block. Absent: neither.
+   */
+  readonly graph?: PromptGraph | undefined;
 }
 
 export interface AssigneePromptInput extends PromptBase {
@@ -82,17 +90,26 @@ export interface VerifierPromptInput extends PromptBase {
   readonly checks: readonly PromptCheck[];
   /** The `partial` verdict the last judge of this run left (`<quest>-<n>-p<k>`), or null; this judge reads on. */
   readonly partial: Verdict | null;
+  /** The files the work changed outside the quest's scope (PS-05); absent or empty, the review says nothing of it. */
+  readonly out_of_scope?: readonly string[];
 }
 
 /**
  * The system part of a character: the decree, the laws of its role, the craft of its class, then the territory's
  * law and rules when its CLI does not load them (P1-33).
  */
-const systemOf = (input: PromptBase, role: string, className: string, t: PromptTemplates): NamedBlock[] => [
+const systemOf = (
+  input: PromptBase,
+  role: string,
+  className: string,
+  graph: string,
+  t: PromptTemplates,
+): NamedBlock[] => [
   ['decree', decreeBlock(input.decree, t)],
   ['role', role],
   ['class', classBlock(input.class_prompt, className, t)],
   ['context_files', contextFilesBlock(input.territory, input.context_files, t)],
+  ['graph', graph],
 ];
 
 export type PromptInput = AssigneePromptInput | VerifierPromptInput;
@@ -109,7 +126,8 @@ function assigneePrompt(input: AssigneePromptInput, t: PromptTemplates): PromptW
   const { quest, character, registry } = input;
   const characterClass = entryOf(registry.classes, character.class, 'class');
   const { territory, cli_search } = input;
-  const policy = toolPolicyOf({ role: 'assignee', characterClass, character, territory, cli_search });
+  const graph = input.graph !== undefined;
+  const policy = toolPolicyOf({ role: 'assignee', characterClass, character, territory, cli_search, graph });
   const role = fill(t.assignee, {
     character: character.name,
     class: characterClass.name_en,
@@ -123,7 +141,8 @@ function assigneePrompt(input: AssigneePromptInput, t: PromptTemplates): PromptW
     patch: patchBlock(policy, t),
     handover_template: fenced(fill(t.handover, { quest_id: quest.id }), 'markdown'),
   });
-  return composed(systemOf(input, role, characterClass.name_en, t), [
+  const graphText = graphBlock(policy, input.graph, 'assignee', t);
+  return composed(systemOf(input, role, characterClass.name_en, graphText, t), [
     ['quest', questBlock(quest, registry, input.territory, t)],
     ['gazetteer', gazetteerBlock(input.territory, input.gazetteer, t)],
     ['scripture', scriptureBlock(input.scriptures, t)],
@@ -154,6 +173,15 @@ function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): PromptW
   const scratch = judgedInScratch(quest, registry);
   const plotRule = sectionsOf(t['plot-rules']).get(scratch ? 'scratch_plot' : 'plot');
   if (plotRule === undefined) throw new Error('prompts/plot-rules.md lacks a section');
+  const policy = toolPolicyOf({
+    role: 'verifier',
+    characterClass,
+    character,
+    territory: input.territory,
+    scratch,
+    cli_search: input.cli_search,
+    graph: input.graph !== undefined,
+  });
   const role = fill(t.verifier, {
     character: character.name,
     class: characterClass.name_en,
@@ -163,18 +191,7 @@ function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): PromptW
     plot_rule: plotRule,
     fail_kinds: FAIL_KINDS.map((kind) => `\`${kind}\``).join(', '),
     language: LANGUAGE_NAMES[input.locale],
-    shell: shellBlock(
-      toolPolicyOf({
-        role: 'verifier',
-        characterClass,
-        character,
-        territory: input.territory,
-        scratch,
-        cli_search: input.cli_search,
-      }),
-      t,
-      input.shell,
-    ),
+    shell: shellBlock(policy, t, input.shell),
   });
   const review = fill(t.review, {
     ritual: `${ritual.name_en} (\`${ritual.id}\`)`,
@@ -185,9 +202,11 @@ function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): PromptW
       input.handover === null || input.handover.trim() === ''
         ? 'The assignee left no letter.'
         : fenced(input.handover, 'markdown'),
+    out_of_scope: outOfScopeBlock(quest, input.out_of_scope ?? [], t),
     diff: diffBlock(input.diff, input.territory),
   });
-  return composed(systemOf(input, role, characterClass.name_en, t), [
+  const graphText = graphBlock(policy, input.graph, 'verifier', t);
+  return composed(systemOf(input, role, characterClass.name_en, graphText, t), [
     ['quest', questBlock(quest, registry, input.territory, t)],
     ['gazetteer', gazetteerBlock(input.territory, input.gazetteer, t)],
     ['scripture', scriptureBlock(input.scriptures, t)],

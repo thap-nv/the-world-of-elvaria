@@ -12,6 +12,8 @@ import { fromPortable, inKingdom, pathExists, toPortable } from '@elvaria/store'
 import type { ProcessHost } from '../process/program.ts';
 import { diffAfterMerges, diffIn } from './diff.ts';
 import type { DiffScope } from './diff.ts';
+import { driftIn } from './drift.ts';
+import type { Drift } from './drift.ts';
 import { filesIn, prepareFolder } from './folder.ts';
 import { gitOf } from './git.ts';
 import { mergeIn, unmergedIn } from './merge.ts';
@@ -104,6 +106,11 @@ export interface PlotManager {
    * (P1-21 (e)): a party's merge quest's own work, after its last merge and in the conflicts its merges resolved.
    */
   diff(plot: Plot, scope?: DiffScope): Promise<string | null>;
+  /**
+   * Commits per top-level folder from `from` to the plot's fork point (PS-21, driftIn); null without git or answer.
+   * Optional for a stand-in manager of a spec; createPlotManager has it.
+   */
+  drift?(plot: Plot, from: string): Promise<Drift | null>;
   /**
    * A party's merge quest, before each session (P1-18): merges each of `branches` its worktree does not hold, in
    * order, until one stops on a conflict (left in progress for the character); nothing for a plot without git.
@@ -270,6 +277,8 @@ export function createPlotManager(options: PlotManagerOptions): PlotManager {
       const read = scope === 'after_merges' ? diffAfterMerges : diffIn;
       return read(await git(), worktreeOf(plot));
     },
+    drift: async (plot, from) =>
+      plot.type === 'worktree' ? driftIn(await git(), worktreeOf(plot), from) : null,
     merge: async (plot, branches) =>
       plot.type === 'worktree' && plot.branch !== undefined
         ? mergeIn(await git(), worktreeOf(plot), plot.branch, branches)

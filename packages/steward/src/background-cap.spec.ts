@@ -60,8 +60,8 @@ async function twoChecked(max: number): Promise<{ kingdom: Bench; watched: Watch
   };
   running = kingdom.steward({ plots: plotsWith(kingdom.root, { check }) });
   expect(await running.start({ loop: false })).toEqual({ ok: true });
-  await kingdom.command('create_quest', questPayload('First of two'));
-  await kingdom.command('create_quest', questPayload('Second of two'));
+  await kingdom.command('create_quest', questPayload('First of two', { scope_paths: ['a'] }));
+  await kingdom.command('create_quest', questPayload('Second of two', { scope_paths: ['b'] }));
   const bothDone = async () =>
     (await statusIs(kingdom, 'First of two', 'done')()) && statusIs(kingdom, 'Second of two', 'done')();
   await tickUntil(running, kingdom.clock, bothDone);

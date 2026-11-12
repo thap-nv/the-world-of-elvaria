@@ -4,12 +4,13 @@
 // fetch); arguments are PascalCase and paths carry backslashes on Windows.
 import type { ToolCall, ToolKind } from '../claude/tools.ts';
 
+// Searching and listing are `search`, as Claude's Glob, Grep and LS (PS-21): the metrics count reads by file.
 const KINDS: Readonly<Record<string, ToolKind>> = {
   read_file: 'read',
   view_file: 'read',
-  list_dir: 'read',
-  grep_search: 'read',
-  find_by_name: 'read',
+  list_dir: 'search',
+  grep_search: 'search',
+  find_by_name: 'search',
   write_file: 'write',
   edit_file: 'write',
   write_to_file: 'write',

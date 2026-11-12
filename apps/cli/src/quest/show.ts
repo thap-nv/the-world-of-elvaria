@@ -1,6 +1,6 @@
 // `elvaria quest show <id>`: one quest, its fields as labelled lines (its party too, P1-21 (c)), why it waits (nobody
-// can take it, P1-03; the infirmary, P1-32), what its last run came to (verdicts, plot put back, P1-46), then its
-// description.
+// can take it, P1-03; the infirmary, P1-32; a scope held, PS-05), what its last run came to (verdicts, plot put back,
+// P1-46), then its description.
 import type { Event, Quest, Registry } from '@elvaria/domain';
 import type { MessageKey } from '@elvaria/i18n';
 import { inKingdom } from '@elvaria/store';
@@ -15,6 +15,7 @@ import { lastRunLines } from './last-run.ts';
 import { kindName } from './list.ts';
 import { partyFields } from './party.ts';
 import { readQuest } from './references.ts';
+import { scopeWaitText, scopeWaitsOf } from './scope.ts';
 import { unclaimableLines, unclaimableOf } from './unclaimable.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
@@ -32,6 +33,9 @@ function fields(
     ['cli.quest.field.status', `${t(QUEST_STATUS_LABEL[quest.status])} (${quest.status})`],
     ['cli.quest.field.kind', `${kindName(ctx, registry, quest.kind)} (${quest.kind})`],
     ['cli.quest.field.rank', quest.rank],
+    ...(quest.scope_paths === undefined
+      ? []
+      : [['cli.quest.field.scope', listed(quest.scope_paths)] satisfies [MessageKey, string]]),
     ['cli.quest.field.tier', quest.tier],
     ['cli.quest.field.territory', quest.territory],
     ['cli.quest.field.class', quest.class_required ?? NONE],
@@ -84,6 +88,8 @@ async function runQuestShow(input: CommandInput, cli: CliContext): Promise<ExitC
     note === undefined
       ? []
       : ['', ...(await unclaimableLines(ctx, registry.ok ? registry.value : undefined, quest, note))];
+  const wait = (await scopeWaitsOf(ctx, items)).get(quest.id);
+  const scope = wait === undefined ? [] : ['', scopeWaitText(ctx, wait)];
   const journal = await journalOf(ctx, quest);
   const sick = infirmaryNote(ctx, quest, journal);
   const last = await lastRunLines(ctx, quest, journal);
@@ -91,6 +97,7 @@ async function runQuestShow(input: CommandInput, cli: CliContext): Promise<ExitC
     `${quest.id}  ${quest.title}`,
     ...renderTable(rows),
     ...why,
+    ...scope,
     ...sick,
     ...last,
     '',

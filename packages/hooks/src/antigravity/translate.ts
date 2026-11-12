@@ -6,6 +6,7 @@ import { recordHandoverStart, stopGate } from '../handover.ts';
 import { lawViolation, protectedViolation, refusalText } from '../claude/tool-events.ts';
 import { plotPath } from '../claude/tools.ts';
 import { modelSlugOf } from '../claude/translate.ts';
+import { graphCommandOf, graphLineViolation, plainGraphReason } from '../graph.ts';
 import { grepOptionViolation, plainLineProblem, plainSearchReason, searchCommandOf } from '../search.ts';
 import { agyInputOf } from './input.ts';
 import { AGY_ASK_TOOLS, agyToolCallOf, missingClassTools } from './tools.ts';
@@ -40,11 +41,20 @@ function classViolation(name: string, missing: readonly string[], call: ToolCall
     const problem = plainLineProblem(command);
     return problem === undefined ? undefined : `${name}: ${plainSearchReason(problem, ctx.searchCommands)}`;
   }
+  // The code graph's commands go the same way (PS-21): granted to a class without a shell, one plain call a line.
+  if (command !== undefined && graphCommandOf(command, ctx.graphCommands) !== undefined) {
+    const problem = plainLineProblem(command);
+    return problem === undefined ? undefined : `${name}: ${plainGraphReason(problem, ctx.graphCommands)}`;
+  }
   const searching =
     command === undefined || ctx.searchCommands.length === 0
       ? ''
       : `; to search files, run ${ctx.searchCommands.join(' or ')} alone`;
-  return `${name}: your class has no ${missing.join(' or ')}${searching}; do the work with the tools you have`;
+  const asking =
+    command === undefined || ctx.graphCommands.length === 0
+      ? ''
+      : `; to ask the code graph, run ${ctx.graphCommands.join(' or ')} alone`;
+  return `${name}: your class has no ${missing.join(' or ')}${searching}${asking}; do the work with the tools you have`;
 }
 
 /** Why an Elvaria rule (not a territory law) stops this tool, if one does. */
@@ -55,6 +65,9 @@ function ruleViolation(name: unknown, call: ToolCall, ctx: HookContext): string 
   // Whatever the class: agy's `command(git grep)` prefix also matches `git grep -O<pager>` (P1-53).
   const option = call.command === undefined ? undefined : grepOptionViolation(call.command);
   if (option !== undefined) return `${name}: ${option}`;
+  // Whatever the class too: `command(graphify query)` also matches `graphify query --graph <other>` (PS-21).
+  const graph = call.command === undefined ? undefined : graphLineViolation(call.command, ctx.graphCommands);
+  if (graph !== undefined) return `${name}: ${graph}`;
   const missing = missingClassTools(name, ctx.tools);
   return missing === undefined ? undefined : classViolation(name, missing, call, ctx);
 }

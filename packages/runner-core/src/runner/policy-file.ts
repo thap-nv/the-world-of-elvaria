@@ -16,7 +16,8 @@ import type { RunContext } from './run-context.ts';
 export const POLICY_FILE = 'policy.json';
 /**
  * `secrets` and `tools` (P1-10), `apprentice_models` (P1-17), `laws.read_only_paths` and `cli_protected_paths`
- * (P1-24), `laws.patch_paths` and `patch_file` (P1-28), `search_commands` (P1-53) are optional fields added later: a
+ * (P1-24), `laws.patch_paths` and `patch_file` (P1-28), `search_commands` (P1-53), `graph_commands` (PS-21) are
+ * optional fields added later: a
  * v1 reader without them still reads the rest. Since P1-49 every file has `cli_protected_paths`, with git's own folder.
  */
 export const POLICY_VERSION = 1;
@@ -55,6 +56,12 @@ export interface PolicyFile extends RunContext {
    * refuses `git grep` options that run a program or reach past the tracked files. Absent: none were granted.
    */
   readonly search_commands?: readonly string[];
+  /**
+   * ToolPolicy.graph_commands (PS-21): the hook lets a class without a shell run them, one plain call per line, and
+   * refuses every other graphify line, and options of these that name another graph, for every class. Absent: the
+   * quest has no graph, and no graphify line runs.
+   */
+  readonly graph_commands?: readonly string[];
 }
 
 /** What only the adapter knows, for the policy file. */
@@ -77,7 +84,7 @@ const protectedOf = (extras: PolicyExtras): string[] => [
 const ownProtectedOf = (extras: PolicyExtras): string[] =>
   GIT_PATHS.filter((glob) => !(extras.cli_protected_paths ?? []).includes(glob));
 
-type PolicyPart = Pick<ToolPolicy, 'tools' | 'laws' | 'search_commands'>;
+type PolicyPart = Pick<ToolPolicy, 'tools' | 'laws' | 'search_commands' | 'graph_commands'>;
 
 export const policyFileOf = (ctx: RunContext, policy: PolicyPart, extras: PolicyExtras = {}): PolicyFile => ({
   version: POLICY_VERSION,
@@ -94,6 +101,7 @@ export const policyFileOf = (ctx: RunContext, policy: PolicyPart, extras: Policy
   ...(ownProtectedOf(extras).length === 0 ? {} : { elvaria_protected_paths: ownProtectedOf(extras) }),
   ...(policy.laws.patch_paths.length === 0 ? {} : { patch_file: PATCH_FILE }),
   ...(policy.search_commands === undefined ? {} : { search_commands: [...policy.search_commands] }),
+  ...(policy.graph_commands === undefined ? {} : { graph_commands: [...policy.graph_commands] }),
 });
 
 /** Writes the run's policy file and returns its native path, for `hookCommand(policyFile)`. */

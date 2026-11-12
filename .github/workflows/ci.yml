@@ -25,7 +25,11 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # Type-aware `eslint .` over the whole repo outgrew Node's default heap (about 4 GB) on this runner, which has
+      # 16 GB (2026-11-12, PS-21 with P1-12d merged).
       - run: pnpm lint
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
       - run: pnpm format:check
       - run: pnpm typecheck
       - run: pnpm test

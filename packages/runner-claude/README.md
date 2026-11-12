@@ -50,6 +50,8 @@
   window it spent (`spentWindowOf`: `rateLimitType` `five_hour`, `seven_day`, or `seven_day_<model>` for one
   model's weekly cap), sent in the same `mana` signal at 100 % until its `resetsAt`, so the Steward sleeps that
   gauge until then; `overage` or a type it does not know names none.
+- Turns the policy's `graph_commands` (PS-21) into one `Bash(<command>:*)` allow rule each, and adds `Bash` to
+  `--tools` for a class without it (`src/graph-rules.ts`); the hook refuses any other line there.
 
 ## Does not
 

@@ -4,6 +4,7 @@
 // runner checks what it wrote before it spawns, and treats a session its SessionStart hook missed as broken.
 import path from 'node:path';
 
+import { graphRules } from './graph-rules.ts';
 import type { ToolPolicy } from '@elvaria/runner-core';
 
 /** What `hookCommand(policyFile)` of @elvaria/hooks returns; apps/cli hands the function to the runner. */
@@ -156,7 +157,11 @@ export function settingsOf(
   return {
     permissions: {
       defaultMode: 'dontAsk',
-      allow: [...allowRules(policy.allow), ...(letter === undefined ? [] : letterRules(letter))],
+      allow: [
+        ...allowRules(policy.allow),
+        ...graphRules(policy),
+        ...(letter === undefined ? [] : letterRules(letter)),
+      ],
       deny: policy.deny,
     },
     autoMemoryEnabled: false,

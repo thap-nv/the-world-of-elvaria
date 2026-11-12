@@ -32,6 +32,11 @@ export const ALLOWED = new Map([
   ['task_progress', 'Claude Code stream-json subtype: an apprentice runs'],
   ['task_updated', 'Claude Code stream-json subtype: an apprentice changes status'],
   ['task_notification', 'Claude Code stream-json subtype: an apprentice ends (§3.12)'],
+  ['approval_policy', 'Codex CLI config key, set with -c (spike Codex 2026-11-12, runner-codex)'],
+  [
+    'dangerously-bypass-approvals-and-sandbox',
+    'Codex CLI flag Elvaria never passes; the fake CLI refuses it (runner-codex)',
+  ],
 ]);
 
 /** @param {string} path */

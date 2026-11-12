@@ -1,7 +1,7 @@
 // buildChancellorPrompt: the owner's words and the context draftQuests needs (implementation-plan §3.11, §10
 // question 3). A separate function from buildPrompt because the Chancellor works on no quest; P1-13 adds fields
 // to the context if it needs them.
-import { QUEST_TAGS_MAX } from '@elvaria/domain';
+import { QUEST_TAGS_MAX, sharedGlobsOf } from '@elvaria/domain';
 
 import { LANGUAGE_NAMES, classBlock, decreeBlock } from './blocks.ts';
 import { fill, joinBlocks } from './templates.ts';
@@ -30,11 +30,17 @@ const list = (lines: readonly string[], none: string): string =>
   lines.length === 0 ? none : lines.join('\n');
 const names = (ids: readonly string[]): string => (ids.length === 0 ? 'none' : ids.join(', '));
 
+/** The territory's hot files (PS-05), which no draft puts in its scope; nothing when it names none. */
+function sharedOf(territory: Territory): string {
+  const globs = sharedGlobsOf(territory);
+  return globs.length === 0 ? '' : `; shared paths: ${globs.map((glob) => `\`${glob}\``).join(', ')}`;
+}
+
 function territoriesOf(territories: readonly Territory[]): string {
   return list(
     territories.map(
       (territory) =>
-        `- \`${territory.id}\` (${territory.kind}): ${territory.name}; secrets allowed: ${names(territory.secrets_allowed)}`,
+        `- \`${territory.id}\` (${territory.kind}): ${territory.name}; secrets allowed: ${names(territory.secrets_allowed)}${sharedOf(territory)}`,
     ),
     'No territory is attached yet.',
   );

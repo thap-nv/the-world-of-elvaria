@@ -6,6 +6,7 @@ import { openEventLog } from '@elvaria/eventlog';
 import { minimalEnv, openFileTreasury } from '@elvaria/runner-core';
 import { createSteward, nodeScriptRunner } from '@elvaria/steward';
 import { fromPortable } from '@elvaria/store';
+import type { CodeGraphs } from '@elvaria/runner-core';
 import type { Steward } from '@elvaria/steward';
 
 import { EXIT } from '../command.ts';
@@ -14,6 +15,7 @@ import { runningLine } from '../upgrade/running.ts';
 import { consoleBell } from './bell.ts';
 import { crewOf } from './crew.ts';
 import { fileDigest } from './digest-file.ts';
+import { graphsOf } from './graphs.ts';
 import { plotsOf } from './plots.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
@@ -35,13 +37,15 @@ function reportCrew(ctx: KingdomContext, crew: Crew): void {
   }
 }
 
-function stewardOf(ctx: KingdomContext, crew: Crew): Steward {
+function stewardOf(ctx: KingdomContext, crew: Crew, graphs: CodeGraphs | undefined): Steward {
   const { io, t, store } = ctx;
   return createSteward({
     store,
     events: openEventLog(store.root),
     runners: crew.runners,
     plots: plotsOf(store.root, io, crew.forget),
+    // The territories' code graphs (PS-21): none without a pinned graphify.
+    ...(graphs === undefined ? {} : { graphs }),
     // Every session starts from the minimal env and takes only its quest's secrets from the treasury (ADR 0013).
     env: minimalEnv(io.env),
     treasury: openFileTreasury(fromPortable(ctx.kingdom.paths.treasury, io.platform)),
@@ -66,7 +70,7 @@ async function runSteward(input: CommandInput, cli: CliContext): Promise<ExitCod
   const { io, t, store } = ctx;
   const crew = await crewOf({ kingdom: ctx.kingdom, root: store.root }, io);
   reportCrew(ctx, crew);
-  const steward = stewardOf(ctx, crew);
+  const steward = stewardOf(ctx, crew, await graphsOf(ctx.kingdom, store.root, io));
   const started = await steward.start();
   if (!started.ok) {
     const line =

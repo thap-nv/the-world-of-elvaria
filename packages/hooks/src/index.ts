@@ -26,6 +26,7 @@ export function hookCommand(policyFile?: string): HookCommand {
 
 export { ANTIGRAVITY_HOOK_EVENTS } from './antigravity/translate.ts';
 export { CLAUDE_HOOK_EVENTS } from './claude/translate.ts';
+export { CODEX_HOOK_EVENTS } from './codex/translate.ts';
 export { STOP_BLOCK_LIMIT } from './handover.ts';
 export { POLICY_VERSION, parsePolicy } from './policy.ts';
 export type { HookPolicy, PolicyResult } from './policy.ts';

@@ -286,9 +286,11 @@ describe('inbox-command contract', () => {
   it('keeps the rules zod checks in refinements', () => {
     expect(payloadOf('create_quest')?.allOf).toHaveLength(3);
     expect(payloadOf('edit_quest')?.properties?.changes?.anyOf).toEqual(
-      ['title', 'description', 'rank', 'seal_required', 'depends_on', 'budget'].map((field) => ({
-        required: [field],
-      })),
+      ['title', 'description', 'rank', 'seal_required', 'depends_on', 'scope_paths', 'budget'].map(
+        (field) => ({
+          required: [field],
+        }),
+      ),
     );
   });
 });

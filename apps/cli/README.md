@@ -32,7 +32,9 @@
   best candidate, or, when its party bars every character of the class (`party_bars`, P1-37), the `reassign` the
   owner may still give one of them; of a quest in the infirmary, why it went there, from the last `quest.infirmary` line of its
   journal (`src/quest/infirmary.ts`, P1-32): the trip and the attempt, then each part of the detail, in the
-  owner's language (a line written before P1-32 shows its English reason). `quest list` has a column for a party's member, its role and where the party stands, and
+  owner's language (a line written before P1-32 shows its English reason). `quest add --scope` and `quest edit --scope` declare the files a quest changes (PS-05); `quest list` marks a quest
+  that waits on its territory's scope rules and for whom, `quest show` prints its scope and that wait
+  (`src/quest/scope.ts`). `quest list` has a column for a party's member, its role and where the party stands, and
   `quest show` prints the party, the role, the contract and the merge quest (`src/quest/party.ts`, the domain's
   `partyStatusOf`; P1-21 (c)): the merge quest and the acceptance part share the contract's title. `quest show` also
   says what the last run came to (`src/quest/last-run.ts`, P1-46): its verdicts in the order they were written (each
@@ -135,7 +137,9 @@
   over the days asked, as plain tables or JSON. `src/metrics/read.ts` reads quests, verdicts, the event log and
   `inbox/done/` without a lock and writes nothing, so it runs beside a Steward; a file it cannot use is named on
   stderr and left out. `src/metrics/view.ts` turns the ledger into sections that `scripts/docs-metrics-report.mjs`
-  also renders into `docs/metrics-report.md`.
+  also renders into `docs/metrics-report.md`; `src/metrics/view-sessions.ts` adds the parts of PS-21 (graph
+  queries, tool calls before an assignee's first edit, prompt size by role and block), on the section shape of
+  `src/metrics/section.ts`.
 - `migrate`: moves every older file to the current version, old text in `.backup/<stamp>/` (`migrateKingdom`),
   copies the registry files this Elvaria ships and the kingdom lacks (P1-15), then adds the default registry
   entries it lacks by id, whole, only when the registry still loads with them (P1-41, `addMissingRegistryEntries`):
@@ -172,6 +176,10 @@
   through Ctrl+C and passes SIGTERM on. `--here` (a global option) and `upgrade` itself run on the code typed; a
   pointer it cannot read, or a pinned build no longer on disk, stops the command with the way out. `doctor` says
   what the kingdom pins.
+- `territory graph <id> [--commit <ref>] [--query <words>]` (PS-21) builds the territory's code graph at a commit
+  with the pinned graphify (0 mana), or finds it built, and asks it one question; `doctor` checks graphify when a
+  territory has `code_graph` on or one is pinned (missing, unpinned or changed: a warning) and `--pin` writes
+  `kingdom.programs.graphify`; `run` gives the Steward the graphs port when graphify is pinned (`src/run/graphs.ts`).
 
 ## Does not
 

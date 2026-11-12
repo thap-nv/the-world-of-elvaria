@@ -65,6 +65,9 @@ export const EVENT_TYPES = [
   'territory.attached',
   'territory.surveyed',
   'territory.health',
+  // PS-21 (ADR 0029): a territory's code graph, built by the Steward outside every plot.
+  'graph.built',
+  'graph.failed',
   // PS-02 (ADR 0024): memos the Steward files from handover letters, routes, and closes on the owner's decision.
   'memo.filed',
   'memo.routed',

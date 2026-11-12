@@ -89,6 +89,31 @@
         "$ref": "#/$defs/tribe"
       }
     },
+    "programs": {
+      "description": "Programs outside Node that Elvaria runs, each pinned like a tribe CLI.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "graphify": {
+          "description": "graphify (the Python package graphifyy), found and pinned by `elvaria doctor --pin` when a territory has code_graph on: the Steward builds the code graphs with it, with no model and a fixed env (ADR 0029). Doctor warns when it is missing or its version differs; a missing graphify never stops a quest.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "path",
+            "version"
+          ],
+          "properties": {
+            "path": {
+              "$ref": "#/$defs/abs_path"
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
     "mana": {
       "$comment": "Intake threshold per pool = min(cap_pct, 100 - king_reserve_pct). The world never takes new quests at or above it; a warning fires warn_margin_pct points earlier.",
       "type": "object",

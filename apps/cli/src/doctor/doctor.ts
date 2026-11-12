@@ -5,8 +5,9 @@
 // Docker running when a command uses it, a git identity, `.claude/rules/` within `patch_paths` (P1-56); the models
 // whose work has a single judge (P1-56), the treasury file, the sessions a
 // stopped Steward left running (P1-11), the mana gauges the Steward logged, asleep or not (P1-32), and the build the
-// kingdom pins (PS-04b). It writes only `tribes[].tool` and, with `--enable`, `tribes[].enabled` (P1-15)
-// when this run finds nothing wrong with that tribe (P1-34), through the kingdom file's lock.
+// kingdom pins (PS-04b), and graphify when a territory has a code graph (PS-21). It writes only `tribes[].tool`,
+// `programs.graphify` with `--pin` (PS-21) and, with `--enable`, `tribes[].enabled` (P1-15) when this run finds
+// nothing wrong with that tribe (P1-34), through the kingdom file's lock.
 import { ok } from '@elvaria/domain';
 import type { Tribe } from '@elvaria/domain';
 import type { Translate } from '@elvaria/i18n';
@@ -18,6 +19,7 @@ import { openKingdomContext } from '../kingdom-context.ts';
 import { isAdapterFile } from '../tribe/adapter-file.ts';
 import { checkBuild } from '../upgrade/running.ts';
 import { checkTerritoryCommands } from './check-commands.ts';
+import { checkGraph } from './check-graph.ts';
 import { checkJudges } from './check-judges.ts';
 import { checkGit, checkRegistry, checkTerritories } from './check-kingdom.ts';
 import { checkMana } from './check-mana.ts';
@@ -117,6 +119,7 @@ async function runDoctor(input: CommandInput, cli: CliContext): Promise<ExitCode
     ...(await checkTerritories(ctx)),
     ...(await checkTerritoryCommands(ctx)),
     ...(await checkTerritorySetup(ctx)),
+    ...(await checkGraph(ctx, options.pin)),
     ...(await checkJudges(ctx)),
     await checkTreasury(ctx),
     ...(await checkLeftSessions(ctx)),

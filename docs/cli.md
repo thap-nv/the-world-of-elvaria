@@ -18,6 +18,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria tribe disable <id>` | Tắt một tộc: không nhận việc mới; quest đang chạy chạy xong, quest đang chờ thì chờ. elvaria tribe check bật lại. |
 | `elvaria territory add <path>` | Gắn một repo hoặc thư mục vào vương quốc (mở cõi). |
 | `elvaria territory list` | Liệt kê các lãnh thổ. |
+| `elvaria territory graph <id>` | Dựng đồ thị code của một lãnh thổ ở một commit (0 mana) và hỏi nó một câu. |
 | `elvaria character add <id>` | Triệu hồi một nhân vật: nghề, tộc, model và cấp ban đầu. |
 | `elvaria character list` | Liệt kê các nhân vật. |
 | `elvaria character suspend <id>` | Đình chỉ một nhân vật: nhân vật không nhận việc và buông nhiệm vụ đang giữ, nhiệm vụ đi tiếp không có nó (lệnh suspend). |
@@ -135,6 +136,16 @@ Liệt kê các lãnh thổ.
 
 Không có tham số riêng, chỉ các tùy chọn chung.
 
+## `elvaria territory graph`
+
+Dựng đồ thị code của một lãnh thổ ở một commit (0 mana) và hỏi nó một câu.
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<id>` | Id của lãnh thổ. |
+| `--commit <ref>` | Commit, nhánh hoặc tag để dựng (mặc định: đầu nhánh mặc định). |
+| `--query <words>` | Các từ để hỏi đồ thị (tên mã và đường dẫn cho kết quả tốt nhất), như graphify query. |
+
 ## `elvaria character add`
 
 Triệu hồi một nhân vật: nghề, tộc, model và cấp ban đầu.
@@ -217,6 +228,7 @@ Thêm một nhiệm vụ mở ngay, không qua Tể tướng (lệnh create_ques
 | `--params <json>` | Tham số của script, một đối tượng JSON. |
 | `--to <character>` | Nhân vật nhận việc: chỉ nhân vật này nhận nhiệm vụ, cấp nào cũng được (vượt hạng trần thì nhiệm vụ chờ dấu vua). Đúng nghề của nhiệm vụ; không dùng cho nhiệm vụ bậc script. |
 | `--contract` | Nhiệm vụ là quest hợp đồng của một đội: trưởng đội viết hợp đồng rồi chia phần, Quản sự tự thêm quest ghép. Trong mô tả, một dòng --- kết thúc phần việc: phần sau chỉ dành cho trưởng đội, người viết test của Khảo hạch mù không đọc. |
+| `--scope <glob>` | Glob của các file nhiệm vụ sẽ sửa, tính từ gốc lãnh thổ; lặp lại cho nhiều glob. Hai nhiệm vụ có vùng giao nhau không bao giờ chạy cùng lúc trên một lãnh thổ; nhiệm vụ không khai vùng thì chạy một mình ở đó. |
 
 ## `elvaria quest list`
 
@@ -275,6 +287,7 @@ Sửa một nhiệm vụ mà không chạm vào file của nó (lệnh edit_ques
 | `--max-minutes <n>` | Trần số phút cho một lần thử. |
 | `--max-tokens <n>` | Trần số token cho một lần thử. |
 | `--max-attempts <n>` | Số lần thử tối đa. |
+| `--scope <glob>` | Vùng file mới, thay cho vùng cũ: glob của các file nhiệm vụ sẽ sửa; lặp lại cho nhiều glob. |
 
 ## `elvaria quest retry`
 

@@ -28,7 +28,9 @@
   `forbiddenPathsOf(territory)` is the dotenv files plus `laws.forbidden_paths`, and `forbiddenChangesOf(changed,
 globs)` the changed paths a glob matches at any depth as the hook's do: the Steward reads a plot's changes against
   them before it commits (P1-49), since a program a session's shell runs writes past the fence.
-- Builds prompts from the Markdown templates in `prompts/` (`loadPromptTemplates`): `buildPrompt` for an
+- Builds prompts from the Markdown templates in `prompts/` (`loadPromptTemplates`); a quest with `scope_paths` gets a
+  `Scope:` fact, and its judge the files changed outside it (`prompts/out-of-scope.md`, `src/prompt/scope.ts`, PS-05),
+  while a quest without one reads as before: `buildPrompt` for an
   assignee (new, or continuing after `returned` / `revive` with the letter, the last 20 journal lines, the
   branch's log and the owner's answer; after `returned`, also the checks that failed with the end of each log,
   `prompts/failed-checks.md`, P1-10b, and after the owner's return for a new judgement a word that the judge
@@ -132,6 +134,11 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   (removes a clean worktree, keeps the branch, takes the folders git leaves on Windows around pnpm's dead
   junctions when nothing else is in them, `leftover` says why a folder stays, then calls each `forget` callback,
   such as a tribe CLI dropping its transcripts). A territory without git gets `quests/<id>/work/` in the kingdom.
+- Says how far a territory moved since its gazetteer was written (PS-21): `PlotManager.drift(plot, from)` counts the
+  commits from `from` to the plot's fork point per top-level folder (`src/plot/drift.ts`, `git log --name-only`,
+  root files left out; null without git, a record or a commit git knows), and `gazetteerWithDrift`
+  (`src/prompt/gazetteer-drift.ts`) drops the `<!-- elvaria:commit <sha> -->` stamp of a gazetteer's first line and
+  adds a sentence naming the folders that moved; a gazetteer without the stamp stays as it is.
 - Runs the machine checks before a judge (`runChecks`, §3.2): the territory's `checks` whose `when` globs match
   what the quest touched (`selectChecks`, `globToRegExp`: dot names match, case-insensitive, like the laws' globs
   in the hook), one at a time in the plot, each logged to `<run_dir>/checks/<id>.log`; with
@@ -178,7 +185,8 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   and on macOS and Linux sends SIGTERM to the process and every descendant `ps -A -o pid=,ppid=` names, then
   SIGKILL to whoever is left after `KILL_GRACE_MS` (5 s). A check or setup past its timeout, a killed CLI
   (`runner-claude`'s `kill`, `startChild`'s) and the Steward's breakers all take the whole tree. `startChild` /
-  `runToEnd` start a CLI that takes its prompt in argv and read it line by line (Antigravity). `processStartOf(pid)`
+  `runToEnd` start a CLI and read it line by line, with stdin closed or holding `stdin` (Antigravity takes its
+  prompt in argv, Codex on stdin, P1-12d). `processStartOf(pid)`
   (ps `etime`; on Windows .NET `Process.GetProcessById` through PowerShell, which a cold start makes slow, so it
   waits up to `POWERSHELL_TIMEOUT_MS`; a pid that runs nothing answers at once) lets the Steward tell a session's process from a later one
   under the same pid after a restart. System programs live at fixed paths (`/bin/ps`, `System32`), never PATH.
@@ -205,6 +213,15 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   `mana.signal`, stamped and redacted like the hook's, checked by `EventSchema`, to the log and the journal; and
   tells whether Elvaria's SessionStart hook recorded a session (`recorded`). Keeps a CLI's raw stdout and stderr
   in `.runs/`, redacted (`openRunOutput`).
+- Code graphs (PS-21, ADR 0029, `src/graph/`): `buildGraph` runs graphify `update <source> --no-cluster` with
+  `graphEnvOf`'s fixed env (`GRAPHIFY_BACKEND=none`, no query log, no skill refresh, `PYTHONHASHSEED=0`, no `.pyc`,
+  `GRAPHIFY_OUT`) from a detached worktree of the territory (`.state/graphs/<territory>/source`) into
+  `.state/graphs/<territory>/<commit>/`, seeded from the newest graph; it keeps `GRAPH_KEEP` (3) and one build per
+  territory under a lock (`GRAPH_BUSY`). `codeGraphsOf` is the port the Steward and the CLI get (`base` from the plot
+  record, `head`, `built`, `build`, `envFor`, `ask`). `toolPolicyOf({ graph: true })` grants `graph_commands` (the
+  domain's `GRAPH_COMMANDS`) to a class with Glob or Grep that does not deny a bare `Bash`, and `policy.json` carries
+  them; `buildPrompt` with `graph` adds the `graph` block (`prompts/graph.md`) to the system part, with a line for
+  the judge.
 
 ## Does not
 

@@ -11,6 +11,8 @@ export const PROMPT_BLOCK_IDS = [
   'role',
   'class',
   'context_files',
+  // PS-21: the code graph a class that searches code may ask, when its territory has one built.
+  'graph',
   'quest',
   'gazetteer',
   'scripture',
