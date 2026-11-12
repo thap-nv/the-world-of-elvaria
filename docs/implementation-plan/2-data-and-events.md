@@ -34,6 +34,7 @@ Một phần của [kế hoạch triển khai](../implementation-plan.md), tách
   events/YYYY-MM-DD.jsonl
   events/sandbox/            # ngày giả của sa bàn
   chronicle/YYYY-MM-DD.md
+  digest/YYYY-MM-DD.md       # bản tấu của Quản sự, mỗi ngày một lần (PS-03, §3.16.3)
   temple/scripture.md
   temple/skills/<id>/SKILL.md # bí kíp (+ file kèm), nạp theo tag; giai đoạn 1 chưa có (§3.13)
   inbox/<ulid>.json          # lệnh của người dùng (CLI, Sứ giả, điện thoại) chờ Quản sự xử lý; inbox/done/ sau khi áp dụng

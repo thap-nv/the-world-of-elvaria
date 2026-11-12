@@ -85,6 +85,12 @@ export const STRONG_JUDGE_MIN_RANK = 'B';
 
 export const SCHEDULE_DEFAULTS = {
   chronicle_at: '21:00',
+  /**
+   * The digest of what waits for the owner (PS-03): in the morning, before the owner's day, so the night's questions
+   * and seals are in it. On by default: it costs no mana, and the owner meeting only the digest and the seal is the
+   * aim of stage 1.5 (product plan 0.8, section 14).
+   */
+  digest_at: '08:00',
   temple_every_quests: 10,
   patrol_every: 'P1D',
 } as const;

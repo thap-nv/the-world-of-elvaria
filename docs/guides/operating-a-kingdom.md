@@ -166,6 +166,7 @@ Cái mất khi dừng giữa chừng: phút check đã chạy (một lần 20 ph
 | việc nhân vật làm | `quests/<quest>/journal.jsonl` |
 | thư bàn giao | `quests/<quest>/handover.md` |
 | thư về việc ngoài quest | `elvaria memo list [--all]`, `elvaria memo show <thư>` |
+| mọi việc đang chờ bạn | `elvaria digest`; bản tấu của ngày: `digest/<yyyy-mm-dd>.md` |
 | prompt, settings, stdout của một lượt | `.runs/<quest>-<n>/` (người chấm: `.runs/<quest>-<n>/verify/`) |
 | log setup và từng check | `.runs/<quest>-setup.log`, `.runs/<quest>-<n>/checks/<id>.log` |
 | số đo của một khoảng ngày | `elvaria metrics --since <yyyy-mm-dd> [--until …] [--json]` |
@@ -178,6 +179,8 @@ Các lệnh trên chỉ đọc, không tốn mana, chạy được khi Quản s�
 
 **Thư** (PS-02, ADR 0024): nhân vật thấy việc ngoài quest của mình thì không tự sửa mà viết một dòng ở mục `Memos` của thư bàn giao. Khi lượt kết thúc qua nộp bài, câu hỏi hay phiên hỏng (không khi cầu dao cắt), Quản sự lập `memos/<id>.json` và gửi tới Tể tướng; thư không đổi quest nào, và không ai trả lời thư. Xem bằng `elvaria memo list`; quyết một lần bằng `elvaria memo decide <thư> shelved` (gác), `rejected` (bác) hay `handled --quest <quest>` (đã có nhiệm vụ làm). Muốn Tể tướng soạn nhiệm vụ nháp từ thư thì `elvaria say --memo <thư> ["<lời thêm>"]` (tốn mana như mọi lần `say`), xác nhận bản nháp, rồi quyết thư `handled` với id của nó. Từ PS-03b Tể tướng tự phân loại thư theo lịch.
 
+**Bản tấu** (PS-03): mỗi ngày một lần, lúc `schedule.digest.at` của `kingdom.json` (mặc định 08:00 giờ vương quốc; `"digest": {"enabled": false}` để tắt), Quản sự đang chạy ghi `digest/<ngày>.md` và rung chuông một lần: mọi việc chờ bạn, chia hai nhóm (phải quyết để việc chạy tiếp; chờ được), mỗi việc kèm khuyến nghị và lệnh `elvaria` để chạy. Không gọi model, không tốn mana; đồng hồ máy nhảy hay Quản sự khởi động lại thì vẫn một bản một ngày, Quản sự khởi động sau giờ đó thì ghi ngay. `elvaria digest` in bản tấu lúc này từ file và sổ sự kiện, không ghi gì; nhiệm vụ chờ người chấm chỉ có trong bản Quản sự ghi. Quản sự cũng rung chuông một lần cho nhiệm vụ có người chấm mà ai cũng hết mana (nêu kho và giờ reset nếu biết): chờ tới giờ reset, hoặc triệu hồi một người chấm khác model ở kho mana khác. `elvaria doctor` cảnh báo trước khi chuyện đó xảy ra: model người làm nào mà mọi người chấm khác model đều chung một kho mana.
+
 ## 7. Dấu vua và giao hàng
 
 1. Đọc nhánh trong repo của lãnh thổ (`git log main..quest/<quest>`, `git diff main...quest/<quest>`), thư bàn giao và phán quyết (`quest show`).
@@ -189,7 +192,7 @@ Với một đội, chỉ merge nhánh của **quest ghép**; hợp đồng và 
 
 ## 8. `doctor`, phiên bản CLI và việc ghim
 
-Chạy `elvaria doctor` **đầu mỗi ngày chạy** và sau mỗi thay đổi cấu hình. Nó kiểm registry, git, CLI của từng tộc (đường dẫn, phiên bản, đăng nhập, hook đã build), shell của tộc, từng lãnh thổ và chương trình mà lệnh của chúng gọi, Docker khi một lệnh dùng nó, danh tính git (`user.email`) của từng repo, `.claude/rules/` có nằm trong `laws.patch_paths` không, model người làm chỉ có một người chấm khác model (cảnh báo: một đồng hồ mana đóng là bài của model đó không ai chấm), kho bảo vật, phiên còn sót, đồng hồ mana, và bản mà vương quốc ghim (lỗi khi bản ghim không còn trên đĩa hay `.state/build.json` không đọc được; cảnh báo khi lệnh chạy bằng mã khác với `--here`). Lỗi thì in "Chưa sẵn sàng: n lỗi"; cảnh báo không chặn.
+Chạy `elvaria doctor` **đầu mỗi ngày chạy** và sau mỗi thay đổi cấu hình. Nó kiểm registry, git, CLI của từng tộc (đường dẫn, phiên bản, đăng nhập, hook đã build), shell của tộc, từng lãnh thổ và chương trình mà lệnh của chúng gọi, Docker khi một lệnh dùng nó, danh tính git (`user.email`) của từng repo, `.claude/rules/` có nằm trong `laws.patch_paths` không, model người làm mà mọi người chấm khác model chung một kho mana, hai người chấm trên một kho cũng tính (cảnh báo: kho đó đóng là bài của model đó không ai chấm; đếm theo kho từ PS-03), kho bảo vật, phiên còn sót, đồng hồ mana, và bản mà vương quốc ghim (lỗi khi bản ghim không còn trên đĩa hay `.state/build.json` không đọc được; cảnh báo khi lệnh chạy bằng mã khác với `--here`). Lỗi thì in "Chưa sẵn sàng: n lỗi"; cảnh báo không chặn.
 
 Hai CLI **tự cập nhật qua đêm** theo VS Code (hai lần trong hai ngày của P1-50):
 
@@ -322,4 +325,4 @@ Ba điều không phải lỗi, nhưng nên biết trước:
 
 ## 15. Chưa có ở giai đoạn 1
 
-Chuông ngoài terminal, điện thoại, bản đồ (giai đoạn 2 và 3); Quản sự tự push và merge (PS-08); bản tấu mỗi ngày và Tể tướng tự phân loại thư (PS-03, PS-03b); tộc Gemini CLI với API key và tộc Codex (P1-12c, P1-12d, để dành). Kế hoạch và trạng thái: [implementation-plan](../implementation-plan.md) §8.
+Chuông ngoài terminal, điện thoại, bản đồ (giai đoạn 2 và 3); Quản sự tự push và merge (PS-08); Tể tướng tự phân loại thư (PS-03b); tộc Gemini CLI với API key và tộc Codex (P1-12c, P1-12d, để dành). Kế hoạch và trạng thái: [implementation-plan](../implementation-plan.md) §8.

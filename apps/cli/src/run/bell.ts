@@ -3,6 +3,7 @@
 import type { Translate } from '@elvaria/i18n';
 import type { Bell, ManaGaugeNotice, Notice } from '@elvaria/steward';
 
+import { gaugesOf } from '../digest/markdown.ts';
 import { detailLines, tripLabel } from '../quest/infirmary.ts';
 import { stretchOf } from '../quest/unclaimable.ts';
 import type { CliIo } from '../io.ts';
@@ -67,6 +68,10 @@ export function lineOf(t: Translate, notice: Notice): string {
   }
   if (notice.kind === 'mana_asleep' || notice.kind === 'mana_awake' || notice.kind === 'mana_warning')
     return manaLine(t, notice);
+  if (notice.kind === 'digest') {
+    const { day, file, must, can_wait } = notice;
+    return t('cli.run.notice.digest', { day, file, must, can_wait });
+  }
   const quest = { quest: notice.quest.id, title: notice.quest.title };
   switch (notice.kind) {
     case 'unclaimable':
@@ -90,6 +95,13 @@ export function lineOf(t: Translate, notice: Notice): string {
         line: notice.line,
         minutes: notice.recheck_minutes,
         log: notice.log_path ?? '—',
+      });
+    case 'judge_mana':
+      return t('cli.run.notice.judge_mana', {
+        ...quest,
+        classes: notice.classes.join(', ') || '—',
+        class: notice.classes[0] ?? 'judge',
+        gauges: gaugesOf(t, notice.gauges),
       });
     case 'unjudgeable':
       return t('cli.run.notice.unjudgeable', {

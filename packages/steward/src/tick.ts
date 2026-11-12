@@ -1,13 +1,15 @@
 // One tick of the Steward (implementation-plan §3.1), and what the log already knows before the first one. Apart from
-// steward.ts since PS-03, which adds the scheduled jobs to both.
+// steward.ts since PS-03, which adds the scheduled jobs to both: they run at the end of the tick (§3.16.3).
 import { planTick } from '@elvaria/domain';
 
 import { wantedIn } from './background.ts';
 import { applyInbox } from './inbox/apply.ts';
 import { asleepFromLog, levelsFromLog, warnedFromLog } from './mana/book.ts';
 import { manaStep } from './mana/step.ts';
+import { noteJudgeWaits } from './judge-waits.ts';
 import { createRecorder } from './record.ts';
 import { restartFromLog, stallLeftReviews } from './restart.ts';
+import { noticesOf } from './schedule/digest.ts';
 import { recordEnd } from './sessions/ended.ts';
 import { maskFinished } from './sessions/secrets.ts';
 import { reapLost } from './sessions/settle.ts';
@@ -42,11 +44,12 @@ export async function recover(deps: StewardDeps, state: State): Promise<void> {
   state.mana.warned = warnedFromLog(log.events);
   state.mana.history = levelsFromLog(log.events);
   state.restart = restartFromLog(log.events);
+  state.scheduler.recover(log.events);
 }
 
 /**
  * One tick, in the order of §3.1: the inbox, the sessions' ends, the mana gauges, the plan, the notices, the plan
- * carried out.
+ * carried out; then the scheduled jobs due (PS-03), which see what the tick did.
  */
 async function runTick(deps: StewardDeps, state: State, held: Held): Promise<TickReport> {
   const counts: Counts = { applied: 0, rejected: 0, waiting: 0, started: 0, ended: 0 };
@@ -94,9 +97,11 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   if (await noteUnclaimable(ctx, state.reported, plan.unclaimable))
     await writeUnclaimable(root, state.reported);
   await noteUnjudgeable(ctx, state.unjudged, plan.unjudgeable);
+  await noteJudgeWaits(ctx, state.judgeWaits, plan.judge_waits);
   await carryOut(ctx, plan);
   // The pids of the sessions opened or ended in this tick are on disk before the next one (sessions/pids.ts).
   await sessions.saved();
+  await state.scheduler.step(ctx, held.zone, noticesOf(world, state));
   return reportOf(counts);
 }
 
