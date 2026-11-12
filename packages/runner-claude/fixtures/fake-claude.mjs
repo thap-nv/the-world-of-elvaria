@@ -201,6 +201,13 @@ const SCENARIOS = {
   ask: (play) => work(play, play.core.FAKE_QUESTION),
   forbidden_command: (play) => forbidden(play),
   scratch_commit: (play) => forbidden(play, play.core.FAKE_SCRATCH_COMMANDS),
+  // The suite's spawn probe runs for real once the hooks and rules let it through (P1-12e).
+  spawn_child: (play) => {
+    const command = play.core.SPAWN_PROBE_COMMAND;
+    if (tryCommand(play, command, 'toolu_fake_1').length === 0)
+      play.core.runFakeShellLine(command, process.cwd());
+    return work(play);
+  },
   rate_limit: rateLimited,
   crash: (play) => {
     process.stderr.write('fake claude: crashed\n');
