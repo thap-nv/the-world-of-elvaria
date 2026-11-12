@@ -19,7 +19,7 @@
   `deny` rules in Claude Code syntax, the apprentice (`Agent(apprentice)` in a class is a flag), and the laws the
   hook enforces; `search_commands` (`git grep`, `git ls-files`) for a class with Glob or Grep on a git plot when
   the tribe's CLI has no search tool (`cli_search: false`, the adapter's `capabilities.search`, P1-53). A verifier never has Edit, Write or NotebookEdit, except in its scratch plot (`scratch: true`,
-  ADR 0022, P1-20): Edit and Write even when its class denies them, `git status`/`git restore`, the territory's exclusive checks (the Steward holds their lock for its session), and a deny rule on
+  ADR 0022, P1-20): Edit and Write even when its class denies them, `git status`/`git restore`, the territory's exclusive checks (the Steward holds their lock for its session; not with `exclusive: false`, a judge after failing checks, P1-54), and a deny rule on
   `git commit` plus the law `NO_HISTORY_COMMAND` (commit, merge, reset, branch, stash, worktree…) for the hook; a character with a shell may run the
   territory's non-exclusive checks, and one that also edits files its `commands.generate` (P1-24); every session
   is fenced (no `git push`, no `.env`, no built-in agent, no `Edit` on `laws.read_only_paths`, which stay
@@ -127,8 +127,12 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   `ChecksRequest.party_role` (P1-18, §3.15) a party's merge quest runs every check and a part skips those marked
   `defer_to_merge`, as does the contract quest (P1-37: an interface written before the code fails any drift check);
   the blind trial's acceptance part (P1-21) runs none, its tests waiting for the merge quest. An `exclusive` check holds
-  the territory's lock (`.state/checks/<territory>-exclusive`) so two quests never run one at once; a timed-out
-  check runs its `cleanup`. A check that cannot run (shell syntax, program not found, lock never freed) fails.
+  the territory's lock (`.state/checks/<territory>-exclusive`, `src/checks/exclusive-lock.ts`) so two quests never
+  run one at once; a timed-out check runs its `cleanup`, under that lock too (P1-54). The checks that are not
+  exclusive run first (P1-54), so a short one never waits out the lock. A check that cannot run (shell syntax, program
+  not found, lock never freed) fails. A failing check whose log ends with a line of the territory's
+  `environment_errors` (or that never got the lock) carries that line as `CheckRun.environment` (P1-54,
+  `src/checks/environment.ts`): its environment failed, not the work.
   `ChecksRequest.signal` (P1-25: the Steward runs checks outside its tick) kills the running check and starts no
   other when it aborts, the log saying so; `runProgram` takes the same `signal`. `ChecksRequest.secrets` (P1-10b:
   the quest's `secrets_required`, treasury name → value) puts them in each check's env over the host's minimal env
@@ -143,10 +147,14 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   dirty or not, `scratchOf` finds it. `runTrial` runs there `commands.reset` then the checks, again after a reset
   up to `runs` times while every run passes (logs in `<run_dir>/run-<k>/checks/`), then `commands.coverage` on
   the head and on the base (istanbul `coverage/coverage-summary.json`); it adds the checks `rerun_clean` (every
-  reset passed), `flake_check` and `coverage_not_lower`. `trialInScratch` does both, a setup that fails coming
-  back as a failing `rerun_clean`. `scratchAgain` makes the scratch plot of the run's next judge, whose trial the
+  reset passed), `flake_check` and `coverage_not_lower`. (P1-54) Each reset holds the territory's exclusive lock;
+  the reruns run only the checks with `flake` when one has it (`flakeRerunsOf`: on the spec files the quest touched,
+  through `flake.run`, when it names how), and a rerun its environment failed is no flake: `flake_check` then fails
+  with that `environment`; its log ends with the end of each failing rerun's log, for the judge. `trialInScratch`
+  does both, a setup that fails coming back as a failing `rerun_clean`. `scratchAgain` makes the scratch plot of the run's next judge, whose trial the
   Steward keeps from the judge before while the branch head stays (P1-42): `prepareScratch`, then `commands.reset`
-  once (P1-47, log `.runs/<quest>-verify-reset.log`, `scratchResetLogOf`; none and no log without a reset), so the
+  once under the exclusive lock (P1-47, P1-54; log `.runs/<quest>-verify-reset.log`, `scratchResetLogOf`; none and
+  no log without a reset), so the
   judge does not meet the database the last one's breaks left; a plot not made, or a setup or reset that fails,
   throws.
   The log of a check or of `commands.setup` loses the values of the secrets the command was given (`withSecrets`),
@@ -224,3 +232,7 @@ caller's `GIT_*` (`src/__fixtures__/git-repo.ts`), and one spec proves a `GIT_DI
 The `src/process/` specs kill real node process trees (`src/__fixtures__/tree.ts`: a node that starts an idle
 grandchild) on this machine: the CI matrix, started by hand since 2026-11-10, runs them on Windows and macOS, and the
 SIGTERM-then-SIGKILL case on POSIX only.
+(P1-54) `src/checks/run-checks-environment.spec.ts` and `trial-environment.spec.ts` hold the territory's exclusive
+lock from the spec to show a reset, a cleanup and an exclusive check waiting for it, and print Docker's lines from
+fake checks to show a failing check, a reset and a rerun told apart as their environment's;
+`flake-reruns.spec.ts` covers which checks flake_check runs again and how spec paths are quoted.

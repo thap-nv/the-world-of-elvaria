@@ -2,13 +2,14 @@ import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { pathExists } from '@elvaria/store';
+import { acquireLock, inKingdom, pathExists } from '@elvaria/store';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { RM_TEMP } from '../__fixtures__/temp.ts';
 import { TEST_HOST, commitFile, gitRepo, questId, territoryAt } from '../__fixtures__/git-repo.ts';
 import { createPlotManager } from '../plot/plot-manager.ts';
 import { scratchIdOf } from '../plot/scratch.ts';
+import { exclusiveLockOf, lockBusyLine } from './exclusive-lock.ts';
 import { scratchAgain, scratchResetLogOf } from './scratch-again.ts';
 
 // The run's next judge's scratch plot, made again without the trial (P1-42), then commands.reset once (P1-47, (d) of
@@ -95,5 +96,22 @@ describe('a scratch plot made again for the next judge', () => {
     await expect(
       scratchAgain(failing.manager, { kingdom, quest: none, territory: failing.territory }, TEST_HOST),
     ).rejects.toThrow(`the scratch plot of ${none.id} is not ready (git_failed)`);
+  });
+
+  // P1-54: a reset outside the lock pulled down another quest's e2e stack three times in P1-50.
+  it("runs no reset while another quest keeps the territory's exclusive lock, and throws", async () => {
+    const kept = await questOn('kept lock', 'g7h8j9', { commands: { reset: COUNTING_RESET } });
+    const held = await acquireLock(inKingdom(kingdom, exclusiveLockOf(kept.territory.id)), { wait: false });
+    if (!held.ok) throw new Error('lock');
+    try {
+      const request = { kingdom, ...kept, lock_wait_ms: 200 };
+      await expect(scratchAgain(kept.manager, request, TEST_HOST)).rejects.toThrow(
+        `commands.reset of ${kept.quest.id}'s scratch plot did not run: ${lockBusyLine(kept.territory.id, 200)}`,
+      );
+      expect(await pathExists(path.join(kept.scratch, 'reset.txt'))).toBe(false);
+      expect(await readFile(logOf(kept.quest.id), 'utf8')).toContain(lockBusyLine(kept.territory.id, 200));
+    } finally {
+      await held.value.release();
+    }
   });
 });

@@ -33,6 +33,8 @@ export function exclusiveWaitMinutes(
 export interface TrialCheck {
   readonly id: string;
   readonly pass: boolean;
+  /** The line of its log that shows its environment failed (environmentLineOf, P1-54). */
+  readonly environment?: string;
 }
 
 /**
@@ -42,10 +44,17 @@ export interface TrialCheck {
 export const rerunDue = (done: readonly (readonly TrialCheck[])[], runs: number): boolean =>
   done.length < runs && done.every((run) => run.every(({ pass }) => pass));
 
-/** The checks that passed in one run and failed in another, in the order they first ran. */
+/**
+ * The checks that passed in one run and failed in another, in the order they first ran. A run that failed because
+ * of its environment (`environment`) is no failing test, so it makes no flake (P1-54: in P1-50 another quest's
+ * commands.reset removed the containers of a third e2e run twice, and a quest hunted a flake that was not there).
+ */
 export function flakyChecksOf(runs: readonly (readonly TrialCheck[])[]): string[] {
   const seen = new Map<string, Set<boolean>>();
-  for (const { id, pass } of runs.flat()) seen.set(id, (seen.get(id) ?? new Set<boolean>()).add(pass));
+  for (const { id, pass, environment } of runs.flat()) {
+    const outcomes = seen.get(id) ?? new Set<boolean>();
+    seen.set(id, environment === undefined || pass ? outcomes.add(pass) : outcomes);
+  }
   return [...seen.entries()].filter(([, outcomes]) => outcomes.size > 1).map(([id]) => id);
 }
 

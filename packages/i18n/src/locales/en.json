@@ -433,6 +433,7 @@
     "cli.return.summary": "Return work waiting for your seal to its assignee, with a note (return command; weighs three verdicts).",
     "cli.run.locked": "Another Steward is already running in {kingdom}: one kingdom has one Steward.",
     "cli.run.notice.awaiting_seal": "Quest {quest} «{title}» passed review and waits for your seal.",
+    "cli.run.notice.environment": "Quest {quest} «{title}» waits in review: its check {check} failed because of its environment, not the work ({line}). No judge reads it and nobody loses a level; the checks run again in {minutes} minutes. Log: {log}",
     "cli.run.notice.infirmary": "Quest {quest} «{title}» went to the infirmary: {reason}",
     "cli.run.notice.gauge.model": "the {model} cap of tribe {tribe}",
     "cli.run.notice.gauge.pool": "pool {pool} of tribe {tribe}",

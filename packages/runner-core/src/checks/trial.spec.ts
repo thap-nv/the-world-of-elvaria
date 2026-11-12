@@ -251,5 +251,11 @@ describe('trialInScratch', () => {
     await expect(trialInScratch(plots, { ...request, territory: folder }, TEST_HOST)).rejects.toThrow(
       'is not ready (not_a_repo)',
     );
+    // P1-54: a setup its environment failed says so, as a check does.
+    const down = `node -e "console.log('Cannot connect to the Docker daemon');process.exit(2)"`;
+    const docker = { ...request, territory: { ...territory, commands: { setup: down } } };
+    expect(await trialInScratch(plots, docker, TEST_HOST)).toMatchObject([
+      { id: 'rerun_clean', pass: false, environment: 'Cannot connect to the Docker daemon' },
+    ]);
   });
 });

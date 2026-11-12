@@ -5,7 +5,8 @@ import type { Territory } from '@elvaria/domain';
 import type { CheckRun, ChecksRequest } from './run-checks.ts';
 
 export interface TrialRequest extends Omit<ChecksRequest, 'territory'> {
-  readonly territory: Pick<Territory, 'id' | 'checks' | 'commands'>;
+  readonly territory: Pick<Territory, 'id' | 'checks' | 'commands'> &
+    Partial<Pick<Territory, 'environment_errors'>>;
   /** Runs of the checks on the one commit: FLAKE_RUNS when the ritual has flake_check, else 1. */
   readonly runs: number;
   /** The ritual has coverage_not_lower; it is measured when the territory has commands.coverage. */

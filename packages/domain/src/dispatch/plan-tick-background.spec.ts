@@ -13,6 +13,8 @@ import {
   snapshot,
 } from './__fixtures__/snapshot.ts';
 import { planTick } from './plan-tick.ts';
+import { ENVIRONMENT_RECHECK_MINUTES, MS_PER_MINUTE } from '../constants.ts';
+import type { Instant } from '../core/clock.ts';
 import type { QuestId } from '../core/ids.ts';
 import type { BackgroundWork } from './reviews.ts';
 
@@ -71,5 +73,22 @@ describe('planTick: the cap on machine work outside the tick', () => {
 
   it('defaults to two, until a run measures the load', () => {
     expect(KINGDOM.dispatch.max_background).toBe(2);
+  });
+});
+
+// P1-54, (c) of the P1-50 report: checks that failed because of their environment get no judge; they run again later.
+describe('planTick: checks set aside for their environment', () => {
+  const endedAt = (minutesBefore: number) => (NOW - minutesBefore * MS_PER_MINUTE) as Instant;
+
+  it('gives them no judge, and no new run before the recheck is due', () => {
+    const plan = planOf({ running: [], checked: [], environment: [{ quest: Q1, at: endedAt(1) }] });
+    expect(plan.verifications).toEqual([]);
+    expect(plan.machine_verdicts).toEqual([]);
+    expect(plan.checks).toEqual([Q2, Q3]);
+  });
+
+  it('runs them again once the recheck is due', () => {
+    const held = { quest: Q1, at: endedAt(ENVIRONMENT_RECHECK_MINUTES) };
+    expect(planOf({ running: [], checked: [], environment: [held] }).checks).toEqual([Q1, Q2]);
   });
 });

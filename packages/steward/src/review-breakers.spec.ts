@@ -62,14 +62,14 @@ const judgesAtMaxTurns = (judging: AgentRunner, spawned: SpawnRequest[]): AgentR
 
 const verifiersOf = (spawned: readonly SpawnRequest[]) => spawned.filter(({ role }) => role === 'verifier');
 
-// A judge may spend breakers.verifier_tokens_multiplier (2) times the quest's 240 000 tokens (P1-18 (f)).
+// A judge may spend breakers.verifier_tokens_multiplier (2) times the quest's 480 000 tokens (P1-18 (f); rank D, P1-54).
 describe('a review the breakers keep stopping', () => {
   it('goes to the infirmary with the bell at the second verifier stopped, and opens no third', async () => {
     const spawned: SpawnRequest[] = [];
     const { kingdom, steward } = await open((k) => ({
       runners: {
-        claude: spendingJudges(k, 'claude', 480_001, spawned),
-        gemini: spendingJudges(k, 'gemini', 480_001, spawned),
+        claude: spendingJudges(k, 'claude', 960_001, spawned),
+        gemini: spendingJudges(k, 'gemini', 960_001, spawned),
       },
     }));
     await kingdom.command('create_quest', questPayload('Judged at length'));
@@ -89,10 +89,10 @@ describe('a review the breakers keep stopping', () => {
         kind: 'infirmary',
         quest: { id: quest.id, title: 'Judged at length', rank: 'D' },
         reason:
-          'breaker:tokens: 480001 tokens, limit 480000; 2 verifiers of run 1 left without a verdict, so no further one opens: raise the budget (quest edit) before a retry',
+          'breaker:tokens: 960001 tokens, limit 960000; 2 verifiers of run 1 left without a verdict, so no further one opens: raise the budget (quest edit) before a retry',
         // In parts too (P1-32): the last verifier's breaker, and how many of the run it stopped.
         trip: 'tokens',
-        detail: { message: '480001 tokens, limit 480000', verifiers_stopped: 2 },
+        detail: { message: '960001 tokens, limit 960000', verifiers_stopped: 2 },
       },
     ]);
     // The quest waits for the owner: no third verifier, no session left running.
@@ -110,8 +110,8 @@ describe('a review the breakers keep stopping', () => {
     const spawned: SpawnRequest[] = [];
     const { kingdom, steward } = await open((k) => ({
       runners: {
-        claude: spendingJudges(k, 'claude', 480_001, spawned),
-        gemini: spendingJudges(k, 'gemini', 480_001, spawned),
+        claude: spendingJudges(k, 'claude', 960_001, spawned),
+        gemini: spendingJudges(k, 'gemini', 960_001, spawned),
       },
     }));
     await kingdom.command('create_quest', questPayload('Judged again'));
