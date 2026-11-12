@@ -7,7 +7,7 @@
   `hookCommand(policyFile?)` gives the composition root that `command` + `args` (exec form, cli-facts §1.5).
 - Reads the session from env `ELVARIA_KINGDOM, ELVARIA_QUEST, ELVARIA_ATTEMPT, ELVARIA_CHARACTER, ELVARIA_ROLE,
 ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the same fields plus `laws` and the optional `secrets`, `tools`,
-  `apprentice_models`, `cli_protected_paths`, `patch_file`, `search_commands`) for a
+  `apprentice_models`, `cli_protected_paths`, `elvaria_protected_paths`, `patch_file`, `search_commands`) for a
   CLI that does not hand its env to hooks; env wins. Malformed ids are left out and reported on stderr.
 - Turns the 12 Claude Code events Elvaria registers into lines (§3.10): `SessionStart` → `agent.session.start`
   (the model from the context when the payload has none, as under `-p`), `PostToolUse`/`PostToolUseFailure` →
@@ -37,7 +37,7 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
   `cli_protected_paths`: the paths the adapter says its CLI refuses whatever its rules say (P1-24: Claude Code's
   `.husky/`, `.git/`, `.claude/`…) and, for every tribe, git's own folder `.git/**` (runner-core's `GIT_PATHS`,
   P1-49), with a reason that
-  sends the exact change to the owner through the letter's Question section, instead of the CLI's bare denial.
+  (for a CLI that locks the path itself) sends the exact change to the owner through the letter's Question section, instead of the CLI's bare denial.
   When the path is one of `laws.patch_paths` and the policy names a `patch_file` (P1-28), the reason says to write
   the change as a git patch to that file at the root of the plot, which the Steward applies when the session
   completes, with no "do not try another way" after it.

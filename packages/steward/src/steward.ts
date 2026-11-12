@@ -39,12 +39,18 @@ const LOCK_TARGET = '.state/steward';
 const MS_PER_SECOND = 1000;
 
 /**
+ * A Steward holds the kingdom's lock now (a stale holder counts as none). The CLI asks it before it waits for the
+ * answer to a command: with no Steward running nobody answers (P1-56).
+ */
+export const stewardRuns = (root: string): Promise<boolean> => isLocked(inKingdom(root, LOCK_TARGET));
+
+/**
  * For `elvaria doctor` (P1-11): the sessions a dead Steward left running, which the next `elvaria run` kills
  * (sessions/pids.ts). None while a Steward holds the lock: its sessions are its own. A pid that now names another
  * process is left out.
  */
 export async function sessionsLeftBehind(root: string): Promise<LeftSession[]> {
-  if (await isLocked(inKingdom(root, LOCK_TARGET))) return [];
+  if (await stewardRuns(root)) return [];
   return (await leftSessions(root)).filter(({ process }) => process !== 'other');
 }
 

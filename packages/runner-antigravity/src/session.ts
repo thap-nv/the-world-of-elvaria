@@ -19,6 +19,7 @@ import type {
 import { programOf } from './launch.ts';
 import { agyErrorOf, outcomeOf, rateLimitOf, resetsAtOf } from './outcome.ts';
 import { createStreamReader } from './stream.ts';
+import { structuredOf } from './structured.ts';
 import type { Launch } from './launch.ts';
 import type { StreamReader } from './stream.ts';
 
@@ -87,7 +88,8 @@ async function resultOf(ended: Ended): Promise<RunResult> {
   await start.output.close();
   // wait() settles whatever happens to the letter: one that cannot be read asks nothing.
   const question = await readQuestion(start.handover).catch(() => undefined);
-  const structured = state.result?.structured_output;
+  // The answer's last JSON, not whatever agy kept first, and never a stand-in (P1-56, structured.ts).
+  const structured = structuredOf(state.result);
   return {
     outcome,
     exit_code: stopped === undefined ? exit.code : null,

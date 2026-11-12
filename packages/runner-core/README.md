@@ -178,7 +178,8 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   `read_only_paths`, P1-24), the adapter's `apprentice_models` when it has an apprentice (the models up to the
   character's own, §3.12, P1-17), and `cli_protected_paths`: the adapter's, the paths its CLI refuses to write
   whatever the rules say (P1-24), then `GIT_PATHS` for every tribe (P1-49), so the hook refuses a write tool there
-  first; `laws.patch_paths` (only on a git territory) and, when there are some, `patch_file` (P1-28);
+  first, and `elvaria_protected_paths` (P1-56): the part of it the adapter did not list, Elvaria's own rule, which the
+  hook's refusal does not blame on the CLI; `laws.patch_paths` (only on a git territory) and, when there are some, `patch_file` (P1-28);
   `search_commands` when the tool policy has them (P1-53).
   The `apprentice` prompt tells the assignee to leave the apprentice's `model` out for lookups, name a stronger
   one only for reasoning, and to stop and write the unfinished child work in the letter when an apprentice is
