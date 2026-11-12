@@ -66,6 +66,16 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
   SessionStart and PostToolUse write `agent.session.start` and `agent.tool` (path relative to
   `workspacePaths[0]`); Stop answers `{"decision": "continue", "reason"}` while the letter is unchanged. A
   sub-agent's own session (empty `lastUserInput`) starts no line and meets no gate.
+- Answers Codex CLI too (P1-12d, spike Codex 2026-11-12 §3): its payload has Claude Code's shape, so the runner's
+  hook command says `--dialect codex` (and `--event PreToolUse` on that handler). The Codex branch (`src/codex/`)
+  reads its own tools: the shell is `Bash`, files change only through `apply_patch`, whose patch headers
+  (`*** Add/Update/Delete File:`, `*** Move to:`) are the paths the laws and `cli_protected_paths` guard, the
+  `collaboration…` tools (sub-agents) and `request_user_input…` are refused, as are tools no class grants
+  (`image_gen…`, `request_plugin_install`, `mcp__…`). Codex has no `--tools` and no read or search tool, so the
+  policy's `tools` decide: `Bash` for a class with a shell, else only a plain search line of `search_commands`;
+  `apply_patch` for a class with Edit or Write. It answers as Claude does (`permissionDecision: "deny"`, Stop's
+  `decision: "block"`), and writes `agent.session.start`, `agent.tool` (the patched path relative to the plot,
+  `exit` from apply_patch's `Exit code: N`) and `agent.tool.blocked`.
 - Keeps what it must remember between calls in `.runs/<quest>-<n>/hook/` (handover fingerprint at start, Stop
   reminders per session), one small versioned JSON file per concern.
 
@@ -79,8 +89,8 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
 - Learn a secret value from a file: `policy.json` names the session's secrets (`secrets`, env names), and the
   values come from the hook's own env, which the CLI inherited from the runner. A name without a value is said
   on stderr and only the patterns of `redact-patterns.json` mask it.
-- Check the class's tools for Claude: `--tools` does that; the policy's `tools` is read by the agy branch only.
-- Handle Gemini CLI or Codex payloads: their branches come with their adapters (P1-12c, P1-12d).
+- Check the class's tools for Claude: `--tools` does that; the policy's `tools` is read by the agy and Codex branches.
+- Handle Gemini CLI payloads: that branch comes with its adapter (P1-12c).
 
 ## Depends on
 
@@ -98,7 +108,8 @@ pnpm --filter @elvaria/hooks test    # builds, then vitest with coverage
 `real-payloads.spec.ts` runs the 18 payloads Claude Code 2.1.318 really sent in spike P1-02
 (`packages/runner-claude/fixtures/hook-payloads.jsonl`); `antigravity/translate.spec.ts` runs the 50 calls agy
 1.5.2 really made in spike P1-12a (`packages/runner-antigravity/fixtures/hook-stdin-full-run.jsonl`) and
-constructed ones; `run-hook.spec.ts` runs whole calls in-process on temp
+constructed ones; `codex/translate.spec.ts` runs the 18 calls Codex 0.167.0-alpha.4.1 really made in spike
+P1-12d (`packages/runner-codex/fixtures/hook-payloads.jsonl`) and constructed ones; `run-hook.spec.ts` runs whole calls in-process on temp
 kingdoms (paths with a space) and reads every line back through the domain's `EventSchema`;
 `hook-process.spec.ts` spawns the build: every event, a backslash path to `.env` denied on stdout, a payload
 written in two halves on a stdin made non-blocking (a `process.stdin` preload: EAGAIN between the halves on

@@ -21,6 +21,7 @@
     "@elvaria/registry-default": "workspace:*",
     "@elvaria/runner-antigravity": "workspace:*",
     "@elvaria/runner-claude": "workspace:*",
+    "@elvaria/runner-codex": "workspace:*",
     "@elvaria/runner-core": "workspace:*",
     "@elvaria/sandbox": "workspace:*",
     "@elvaria/steward": "workspace:*",

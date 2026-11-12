@@ -221,16 +221,16 @@ describe('elvaria tribe', () => {
         '    runner.probe is not a function',
         '    runner.doctor is not a function',
       ]);
-      await elvaria(testIo(), 'tribe', 'add', 'codex', '--adapter', 'codex_cli');
+      await elvaria(testIo(), 'tribe', 'add', 'fallback', '--adapter', 'gemini_cli');
       const none = testIo();
-      expect(await elvaria(none, 'tribe', 'check', 'codex')).toBe(1);
+      expect(await elvaria(none, 'tribe', 'check', 'fallback')).toBe(1);
       expect(none.printed.err).toEqual([
-        'Tribe codex: adapter codex_cli has no runner yet, so there is nothing to check.',
+        'Tribe fallback: adapter gemini_cli has no runner yet, so there is nothing to check.',
       ]);
       const unknown = testIo();
       expect(await elvaria(unknown, 'tribe', 'check', 'nobody')).toBe(1);
       expect(unknown.printed.err).toEqual([
-        'The kingdom has no tribe nobody. Tribes: claude, gemini, liar, codex.',
+        'The kingdom has no tribe nobody. Tribes: claude, gemini, liar, fallback.',
       ]);
     });
 

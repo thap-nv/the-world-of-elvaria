@@ -25,9 +25,9 @@ export const snakeIdOf = (value: string | undefined): string => {
 
 /**
  * Under `-p` the payload has no `model` (spike P1-02, hook-payloads.jsonl), so the runner's `model` in the
- * context stands in for it.
+ * context stands in for it. Codex's SessionStart has the same shape and names its model (P1-12d).
  */
-function sessionStart(input: ClaudeInput, ctx: HookContext): Translation {
+export function sessionStart(input: ClaudeInput, ctx: HookContext): Translation {
   const data = { session: input.session ?? UNKNOWN, model: modelSlugOf(input.text('model') ?? ctx.model) };
   return translation([{ type: 'agent.session.start', data }], { problems: recordHandoverStart(ctx) });
 }

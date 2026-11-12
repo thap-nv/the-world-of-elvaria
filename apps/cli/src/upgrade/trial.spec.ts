@@ -21,7 +21,8 @@ import type { TrialPlace } from './trial.ts';
 const TRIBES = [
   { id: 'claude', adapter: 'claude_code', enabled: true, max_concurrent: 1 },
   { id: 'gemini', adapter: 'antigravity', enabled: true, max_concurrent: 1 },
-  { id: 'codex', adapter: 'codex_cli', enabled: false, max_concurrent: 1 },
+  { id: 'codex', adapter: 'codex_cli', enabled: true, max_concurrent: 1 },
+  { id: 'fallback', adapter: 'gemini_cli', enabled: false, max_concurrent: 1 },
 ].map((tribe) => TribeSchema.parse(tribe));
 
 describe('the trial of a new build', () => {
@@ -63,6 +64,7 @@ describe('the trial of a new build', () => {
       "✓ Trial: the new build's doctor on that copy",
       '✓ Trial: the conformance suite of tribe claude against a fake CLI',
       '✓ Trial: the conformance suite of tribe gemini against a fake CLI',
+      '✓ Trial: the conformance suite of tribe codex against a fake CLI',
       '✓ Trial: a script-tier quest on a throwaway kingdom',
     ]);
     const mirror = made[0]?.argv[2] ?? '';
@@ -79,17 +81,18 @@ describe('the trial of a new build', () => {
       cli,
       ...on,
     ];
-    expect(made.slice(0, 4).map(({ argv }) => argv)).toEqual([
+    expect(made.slice(0, 5).map(({ argv }) => argv)).toEqual([
       ['migrate', ...on],
       ['doctor', ...on],
       suite('claude', fake('runner-claude', 'fixtures', 'fake-claude.mjs')),
       suite('gemini', fake('runner-antigravity', 'fixtures', 'fake-agy.mjs')),
+      suite('codex', fake('runner-codex', 'fixtures', 'fake-codex.mjs')),
     ]);
-    const throwaway = made[4]?.argv[2] ?? '';
+    const throwaway = made[5]?.argv[2] ?? '';
     const at = ['--kingdom', throwaway];
     const script = ['--script', 'count-files', '--params', '{"globs":["**/*.md"]}'];
     const quest = ['--territory', 'land', '--kind', 'analyze', '--rank', 'E', '--title', 'upgrade-trial'];
-    expect(made.slice(4).map(({ argv }) => argv)).toEqual([
+    expect(made.slice(5).map(({ argv }) => argv)).toEqual([
       ['init', ...at, '--name', 'upgrade-trial'],
       ['tribe', 'disable', 'claude', ...at],
       ['tribe', 'disable', 'gemini', ...at],

@@ -36,11 +36,12 @@ describe('crewOf', () => {
     { id: 'gemini', adapter: 'antigravity', enabled: true, max_concurrent: 1 },
     { id: 'spare', adapter: 'claude_code', enabled: false, max_concurrent: 1 },
     { id: 'codex', adapter: 'codex_cli', enabled: true, max_concurrent: 1 },
+    { id: 'fallback', adapter: 'gemini_cli', enabled: true, max_concurrent: 1 },
   ]);
 
   it('gives each enabled tribe with a known adapter a runner, and its CLI a forget', async () => {
     const crew = await crewOf({ kingdom, root: os.tmpdir() }, testIo());
-    expect(Object.keys(crew.runners)).toEqual(['claude', 'gemini']);
+    expect(Object.keys(crew.runners)).toEqual(['claude', 'gemini', 'codex']);
     const claude = crew.runners[kingdom.tribes[0]!.id];
     expect(claude?.adapter).toBe('claude_code');
     expect(claude?.capabilities.tool_gate).toBe(true);
@@ -48,8 +49,11 @@ describe('crewOf', () => {
     const gemini = crew.runners[kingdom.tribes[1]!.id];
     expect(gemini).toMatchObject({ tribe: 'gemini', adapter: 'antigravity' });
     expect(gemini?.capabilities).toMatchObject({ resume: true, subagent: false });
+    // Codex since P1-12d: built on first use, like agy's, and nothing to forget either.
+    const codex = { adapter: 'codex_cli', capabilities: { tool_gate: true, subagent: false, search: false } };
+    expect(crew.runners[kingdom.tribes[3]!.id]).toMatchObject(codex);
     expect(crew.forget).toHaveLength(1);
-    expect(crew.idle.map(({ id }) => id)).toEqual(['codex']);
+    expect(crew.idle.map(({ id }) => id)).toEqual(['fallback']);
     expect(crew.broken).toEqual([]);
   });
 
