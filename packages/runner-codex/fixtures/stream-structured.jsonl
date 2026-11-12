@@ -1,0 +1,4 @@
+{"type":"thread.started","thread_id":"01a1cf9e-8df5-7370-94a1-9154929c9ed2"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"agent_message","text":"{\"result\":\"pass\",\"notes\":\"AGENTS.md names a flower: TULIP.\"}"}}
+{"type":"turn.completed","usage":{"input_tokens":14287,"cached_input_tokens":0,"cache_write_input_tokens":0,"output_tokens":29,"reasoning_output_tokens":0}}

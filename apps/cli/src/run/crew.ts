@@ -1,7 +1,7 @@
 // The runners the Steward is given (implementation-plan §3.7, §3.14, ADR 0021): one per enabled tribe, built from
 // `kingdom.tribes[].adapter`. Only this composition root names a CLI; a tribe whose adapter has no runner yet
-// takes no quest. Claude Code (`claude_code`), since P1-15 Antigravity (`antigravity`, ./antigravity.ts), and
-// since P1-19 an owner adapter file `adapters/<name>.mjs` (../tribe/adapter-file.ts).
+// takes no quest. Claude Code (`claude_code`), since P1-15 Antigravity (`antigravity`, ./antigravity.ts), since P1-19
+// an owner adapter file `adapters/<name>.mjs` (../tribe/adapter-file.ts), and since P1-12d Codex (`codex_cli`, ./codex.ts).
 // The hook's command comes from @elvaria/hooks, which the adapters may not import (§1.3).
 import { HOOK_SCRIPT, hookCommand } from '@elvaria/hooks';
 import { createClaudeForget, createClaudeRunner } from '@elvaria/runner-claude';
@@ -13,6 +13,7 @@ import { fromPortable } from '@elvaria/store';
 import { minimalEnv } from '../process/minimal-env.ts';
 import { isAdapterFile, loadAdapterFile } from '../tribe/adapter-file.ts';
 import { antigravityRunner } from './antigravity.ts';
+import { codexRunner } from './codex.ts';
 import type { CliIo } from '../io.ts';
 
 /** One tribe's runner and what its CLI must forget when a worktree is released (§3.3). */
@@ -54,16 +55,20 @@ const claudeCode: AdapterFactory = (tribe, kingdom, io) => {
 /** The Gemini tribe on Antigravity CLI (P1-12b, wired in P1-15); agy keeps nothing per worktree to forget. */
 const antigravity: AdapterFactory = (tribe, _kingdom, io) => ({ runner: antigravityRunner(tribe, io) });
 
-/** Built-in adapters with a runner today; gemini_cli and codex_cli come later. */
+/** The Codex tribe (P1-12d); Codex keeps nothing per worktree to forget. */
+const codex: AdapterFactory = (tribe, _kingdom, io) => ({ runner: codexRunner(tribe, io) });
+
+/** Built-in adapters with a runner today; gemini_cli comes later (P1-12c). */
 export const ADAPTER_FACTORIES: Readonly<Record<string, AdapterFactory>> = {
   claude_code: claudeCode,
   antigravity,
+  codex_cli: codex,
 };
 
 /** Where a tribe's runner comes from, and whether there is one. */
 export type HandOf =
   | { readonly kind: 'ready'; readonly hand: Hand }
-  /** A built-in adapter without a package yet (gemini_cli, codex_cli): the tribe waits. */
+  /** A built-in adapter without a package yet (gemini_cli): the tribe waits. */
   | { readonly kind: 'none' }
   /** An adapter file that does not load or does not keep the contract: why, one line each. */
   | { readonly kind: 'broken'; readonly problems: readonly string[] };

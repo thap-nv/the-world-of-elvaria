@@ -10,8 +10,9 @@ import type { Git } from './git.ts';
 
 /**
  * Plots in the repo and the files runners generate at a plot's root (Antigravity hooks and shim, Gemini settings,
- * GEMINI.md, §3.7, §3.8), in `.git/info/exclude`, which every worktree shares; `.gitignore` is the territory's
- * and stays untouched. Anchored with `/`, so a GEMINI.md a quest writes deeper in the repo is still committed.
+ * GEMINI.md, Codex's AGENTS.override.md of P1-12d, §3.7, §3.8), in `.git/info/exclude`, which every worktree
+ * shares; `.gitignore` is the territory's and stays untouched. Anchored with `/`, so a GEMINI.md a quest writes
+ * deeper in the repo is still committed.
  */
 export const PLOT_EXCLUDES = [
   '/.elvaria/',
@@ -19,6 +20,7 @@ export const PLOT_EXCLUDES = [
   '/.agents/hooks.json',
   '/.agents/elvaria-hook.mjs',
   '/.gemini/settings.json',
+  '/AGENTS.override.md',
 ] as const;
 
 const EXCLUDE_HEADER = '# Elvaria: plots, and files runners generate in them (ADR 0012)';

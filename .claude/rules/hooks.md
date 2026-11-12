@@ -18,7 +18,7 @@ paths:
 ## Hành vi
 
 - Ngữ cảnh: env `ELVARIA_KINGDOM, ELVARIA_QUEST, ELVARIA_ATTEMPT, ELVARIA_CHARACTER, ELVARIA_ROLE, ELVARIA_MODEL, ELVARIA_TZ` hoặc `policy.json` v1 qua `--policy`; env thắng. Policy được yêu cầu mà đọc không được thì chặn mọi tool có đường dẫn hoặc lệnh shell.
-- Chặn bằng JSON trên stdout, exit 0: `PreToolUse` → `hookSpecificOutput.permissionDecision: "deny"`, `Stop` → `{"decision": "block", "reason": …}`. Không exit 2: lý do tới model kèm cả dòng lệnh hook, lộ `run_dir` (spike P1-02). Nhánh agy (`src/antigravity/translate.ts`): `PreToolUse` → `{"decision": "deny", "reason": …}` hoặc `{"decision": "deny_unless_prior_grant"}`, `Stop` → `{"decision": "continue", "reason": …}`.
+- Chặn bằng JSON trên stdout, exit 0: `PreToolUse` → `hookSpecificOutput.permissionDecision: "deny"`, `Stop` → `{"decision": "block", "reason": …}`. Không exit 2: lý do tới model kèm cả dòng lệnh hook, lộ `run_dir` (spike P1-02). Nhánh agy (`src/antigravity/translate.ts`): `PreToolUse` → `{"decision": "deny", "reason": …}` hoặc `{"decision": "deny_unless_prior_grant"}`, `Stop` → `{"decision": "continue", "reason": …}`. Nhánh Codex (`src/codex/`, argv `--dialect codex`) trả như Claude; payload cùng hình dạng với Claude nên chỉ cờ đó phân biệt.
 - Thứ tự ghi: đóng dấu → `redactDeep` → cắt chuỗi dài (`…[truncated]`) tới khi dòng ≤ 64 KiB → append `events/<ngày>.jsonl` và `quests/<id>/journal.jsonl`. Lỗi ghi in ra stderr, exit 0: hook không bao giờ làm hỏng phiên.
 - Không ghi env ra đâu cả (env có `CLAUDE_CODE_MESSAGING_TOKEN`); không đọc `kingdom.json`, transcript, `~/.claude/`.
 - Dòng nào runner ghi từ stream thì hook không ghi (`agent.session.end`, `agent.subagent.*`): một việc, một dòng.
@@ -41,4 +41,4 @@ paths:
 ## Test
 
 - Payload stdin dựng theo tài liệu (`src/__fixtures__/claude-payloads.ts`, đủ 12 sự kiện) và payload thật của spike (`packages/runner-claude/fixtures/hook-payloads.jsonl`, `real-payloads.spec.ts`); mọi dòng ghi ra được đọc lại qua `EventSchema`.
-- Nhánh Antigravity của hook có từ P1-12b (`src/antigravity/`); nhánh Gemini CLI và Codex đến cùng adapter (P1-12c, P1-12d, để dành). Hook đọc tên event của agy từ argv: payload của agy trước 1.5.4 không có nó, và từ 1.5.4 có `hookEventName` mà hook không dùng.
+- Nhánh Antigravity của hook có từ P1-12b (`src/antigravity/`), nhánh Codex từ P1-12d (`src/codex/`, payload thật ở `packages/runner-codex/fixtures/hook-payloads.jsonl`); nhánh Gemini CLI đến cùng adapter (P1-12c, để dành). Hook đọc tên event của agy từ argv: payload của agy trước 1.5.4 không có nó, và từ 1.5.4 có `hookEventName` mà hook không dùng.
