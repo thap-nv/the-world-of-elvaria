@@ -7,12 +7,14 @@ import type { Glossary, GlossaryTable } from '@elvaria/i18n';
 import { describe, expect, it } from 'vitest';
 
 import {
+  DOC_MAX_KB,
   README_SECTIONS,
   adrProblems,
   checkRepo,
   readmeProblems,
   run,
   shellScriptProblems,
+  sizeProblems,
   termProblems,
 } from './docs-check.mjs';
 import { gitRepo } from './docs-repo.mjs';
@@ -49,11 +51,12 @@ describe('checkRepo', () => {
     ]);
   });
 
-  it('runs every check: README, ADR, shell scripts, links, ids', () => {
+  it('runs every check: README, ADR, shell scripts, size, links, ids', () => {
     const problems = check({
       'apps/y/package.json': '{}',
       'docs/adr/0002-b.md': '# ADR 0002\n',
       'scripts/setup.sh': 'echo',
+      'docs/big.md': 'x'.repeat(DOC_MAX_KB * 1024 + 1),
       'docs/guide.md': '[gone](missing.md)',
       'packages/registry-default/tags.json': '{"tags": [{"id": "Đa-ngôn-ngữ"}]}',
     });
@@ -61,6 +64,7 @@ describe('checkRepo', () => {
       'apps/y/README.md: missing (Does / Does not / Depends on / How to test)',
       'docs/adr/0002-b.md: no "- Status: proposed | accepted | rejected | deprecated | superseded by …" line',
       'scripts/setup.sh: shell script; write it in Node (ADR 0015)',
+      'docs/big.md: 151 KB, over 150 KB; split it (the implementation plan: a new part file, or pnpm plan:split)',
       'docs/guide.md:1: broken link missing.md',
       'packages/registry-default/tags.json:1: id "Đa-ngôn-ngữ" has characters outside [a-z0-9_-] (ADR 0014)',
     ]);
@@ -95,6 +99,28 @@ describe('adrProblems', () => {
     expect(adrProblems(files, read)).toEqual([]);
     expect(adrProblems(['docs/adr/0009-x.md'], () => '- Status: maybe')).toHaveLength(1);
     expect(adrProblems(['docs/adr/README.md'], () => '')).toEqual([]);
+  });
+});
+
+describe('sizeProblems', () => {
+  const read = (files: Record<string, string>) => (file: string) => files[file];
+
+  it('lets a Markdown file in docs/ weigh up to 150 KB, counting UTF-8 bytes', () => {
+    const limit = DOC_MAX_KB * 1024;
+    const files = {
+      'docs/at-limit.md': 'x'.repeat(limit),
+      // "ạ" is 3 bytes: fewer characters than the limit, more bytes.
+      'docs/plans/accented.md': 'ạ'.repeat(limit / 3 + 1),
+    };
+    expect(sizeProblems(Object.keys(files), read(files)).map((problem) => problem.split(':')[0])).toEqual([
+      'docs/plans/accented.md',
+    ]);
+  });
+
+  it('looks only at Markdown under docs/', () => {
+    const big = 'x'.repeat(DOC_MAX_KB * 1024 + 1);
+    const files = { 'CLAUDE.md': big, 'docs/schemas/quest.schema.json': big, 'design/notes.md': big };
+    expect(sizeProblems(Object.keys(files), read(files))).toEqual([]);
   });
 });
 
