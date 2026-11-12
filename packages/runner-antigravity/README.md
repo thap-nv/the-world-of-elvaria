@@ -37,8 +37,10 @@ terms_acknowledged_at, env, pools?, timeout_ms?})`. `hook` is `hookCommand()` of
   run's own steps, since `result.usage` adds up a resumed conversation; `cache_read_tokens` at a tenth through
   runner-core's `countedTokens`, as for Claude, P1-22) and the turn count; refused tool steps
   and `denied_actions` give `tool_blocked` and `permission_denials`. Stops the run when a turn past
-  `budget.max_turns` begins (agy has no `--max-turns`). Outcome: SUCCESS with an answer → `completed`; a
-  soft-deny or an empty answer → `error`; `print_timeout` → `budget`; a quota in `AGY_ERROR` → `rate_limited`, its `rate_limit` signal carrying `resets_at` from the error's
+  `budget.max_turns` begins (agy has no `--max-turns`). Outcome: a kill → `killed`, the turn breaker →
+  `max_turns`; `print_timeout` → `budget`; SUCCESS with an answer (text or structured output) and exit 0 →
+  `completed`; anything else (a soft-deny, an empty answer, a non-zero exit) → `error`. A quota in `AGY_ERROR` or
+  `result.error` ends in `error` with `RunResult.rate_limited`, its `rate_limit` signal carrying `resets_at` from the error's
   `Resets in 4h53m54s` (`resetsAtOf`, P1-22), so the Steward probes just after the reset.
 - Writes what only the stream knows through runner-core, as the Claude adapter does: `agent.session.end`
   (outcome and usage, a killed run included) with `openRunLog`, and stdout and stderr redacted (the session's
@@ -79,7 +81,7 @@ pnpm --filter @elvaria/hooks build && ELVARIA_LIVE=1 pnpm --filter @elvaria/runn
 `fixtures/fake-agy.mjs` stands in for agy: it replays a recorded stream (`ELVARIA_FAKE_AGY_REPLAY`), or plays a
 conformance scenario the way agy 1.5.2 does, running the generated hooks through `cmd /c` or `sh -c` and applying
 the settings as prefix rules. Fixtures: the redacted runs of spike P1-12a, the `--conversation` pair and the
-`/hooks` answer of P1-12b, and `constructed-rate-limit.*`, built from agy's changelog because no quota has run
-out on a real machine yet. `ELVARIA_AGY` points the live specs at another agy. `run-files.spec.ts` checks the
+`/hooks` answer of P1-12b, the real quota error of P1-16 (`stream-quota-exhausted.*`), and `constructed-rate-limit.*`, built from agy's
+changelog for its other wording (`reset after 2h31m12s`). `ELVARIA_AGY` points the live specs at another agy. `run-files.spec.ts` checks the
 plot after a session that completed, was killed or never started: no `.agents/` and no `GEMINI.md` left of
 Elvaria's, the territory's own files untouched.

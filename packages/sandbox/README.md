@@ -34,7 +34,8 @@
   `events/sandbox/`.
 - Print or translate anything: `apps/cli` turns lines into a timeline through `@elvaria/i18n`.
 - Decide anything of its own: who works, who judges and who is suspended are `planTick`'s; mana runs out and
-  comes back on the scenario's schedule until the gauges of P1-05. It runs no machine check: a fake day's
+  comes back on the scenario's schedule (`Scenario.manaOut`): the day hands `planTick` the sleeping pools only,
+  never gauge readings, so no pool closes at the cap. It runs no machine check: a fake day's
   verdicts come from the scenario's table.
 
 ## Depends on

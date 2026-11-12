@@ -1,0 +1,314 @@
+# Vận hành vương quốc
+
+Hướng dẫn cho chủ nhân: chạy một vương quốc Elvaria hằng ngày, từ lúc cài tới lúc đóng dấu, và làm gì khi có chuyện. Viết khi đóng giai đoạn 1 (P1-51, 2026-11-12) từ ba lần chạy thật trên Windows 11: [quest đầu tiên](first-quest.md) (P1-11), [mốc giai đoạn 1](phase-1-report.md) (P1-16) và [lần chạy lại mốc](phase-1-rerun.md) (P1-50: 24 quest, 92 lượt, 26 lần chủ nhân can thiệp). Mọi lệnh và tùy chọn: [docs/cli.md](../cli.md). Viết luật cho một lãnh thổ (check, lệnh, đường dẫn cấm): [first-quest.md](first-quest.md) §4.
+
+Giai đoạn 1 chỉ có dòng lệnh. Elvaria không push, không merge: nhánh của quest nằm trong repo của bạn, bạn đọc rồi merge như một PR. macOS chưa có lần chạy thật nào (chỉ có CI).
+
+## 1. Một quest từ đầu tới dấu vua
+
+Mười bước, mỗi bước giải thích ở mục ghi trong ngoặc. Các lệnh viết cho **Git Bash**; trong PowerShell, đặt biến bằng `$env:ELVARIA_KINGDOM = "…"` và viết lệnh dài trên một dòng. `elvaria` ở đây là `node "<checkout chính>/apps/cli/dist/cli.js"`: đặt `alias elvaria='node "<checkout chính>/apps/cli/dist/cli.js"'`, hoặc gõ đủ.
+
+```bash
+# 1. Bản build (§2): một bản clone của repo Elvaria (repo chứa tài liệu này), ở nhánh main
+cd "<checkout chính của Elvaria>" && pnpm install --frozen-lockfile
+pnpm --filter @elvaria/hooks build && pnpm --filter @elvaria/cli build
+
+# 2. Vương quốc, một thư mục mới nằm ngoài mọi repo; init tạo nó (§3)
+export ELVARIA_KINGDOM="<thư mục vương quốc>"
+elvaria init --name Elvaria
+elvaria tribe disable gemini        # khi chưa dùng Antigravity; dùng thì xem §3
+elvaria doctor                      # lần đầu: tìm CLI của từng tộc và ghim; đọc từng dòng lỗi
+
+# 3. Lãnh thổ: một repo git của bạn (§3)
+elvaria territory add "<thư mục repo>" --branch main   # in id của lãnh thổ; --branch: nhánh mà nhánh quest tách ra
+#    rồi điền commands, checks, laws trong <vương quốc>/territories/<id>/territory.json (mẫu ở §3)
+
+# 4. Nhân vật: một người làm, một người chấm khác model (§3)
+elvaria character add thorn --class knight      # mặc định của nghề: tộc claude, claude-sonnet-5-5
+elvaria character add vesper --class judge      # mặc định của nghề: tộc claude, claude-opus-5-5
+elvaria doctor                                  # phải in "Sẵn sàng." (bản en: "Ready.")
+
+# 5. Quản sự: giao việc, mở phiên, chạy check, mở người chấm (§5)
+elvaria run                          # trong một terminal riêng; để chạy; Ctrl+C để dừng
+
+# 6. Nhiệm vụ, ở terminal thứ hai (đặt lại ELVARIA_KINGDOM và alias ở đó) (§4)
+elvaria quest add --territory <id> --kind build --rank E --class knight \
+  --title "…" --description "…"
+elvaria quest list                   # sau một nhịp: quest hiện ra kèm id của nó (q_<ngày>_<6 ký tự>)
+
+# 7. Theo dõi, 0 mana (§6)
+elvaria quest show <quest>
+
+# 8. Quest tới "Chờ dấu vua": đọc nhánh quest/<quest> trong repo, rồi (§7)
+elvaria seal <quest> --note "…"      # --note của seal là tùy chọn
+#    hoặc: elvaria return <quest> --note "sai gì, ở đâu, ít nhất 20 ký tự" --fail-kind incomplete
+
+# 9. Giao hàng: bạn push và merge (§7)
+git -C "<repo>/.elvaria/worktrees/<quest>" push -u origin quest/<quest>
+#    mở PR, mô tả lấy từ <vương quốc>/.runs/<quest>-delivery.md, merge
+#    repo không có remote: git -C "<repo>" merge --no-ff quest/<quest>
+
+# 10. Trả đất (§7)
+elvaria quest archive <quest>        # Quản sự gỡ worktree ở nhịp kế; nó không chạy thì lệnh chờ trong inbox/
+```
+
+Kind `build` mặc định cần dấu vua. Quest không cần dấu thì tới `Xong` ngay sau khi người chấm cho đạt. Mọi lệnh đổi một quest (`quest add`, `edit`, `seal`, `archive`…) chỉ ghi một lệnh vào `inbox/`; Quản sự áp nó ở nhịp kế, nên quest và id của nó chỉ có sau khi Quản sự đã chạy qua một nhịp.
+
+## 2. Máy và bản build
+
+- **Cần có**: Node 24, pnpm 10, git; Claude Code đã đăng nhập (binary đi kèm extension VS Code là đủ, `doctor` tự tìm); với tộc gemini, Antigravity CLI (`agy`) đã đăng nhập. Phiên bản đang dùng và mọi dữ kiện về hai CLI: [cli-facts-2026-11-12.md](../reference/cli-facts-2026-11-12.md).
+- **Quản sự chạy từ bản build của một checkout ở `main`** (gọi là checkout chính: bản clone của repo Elvaria mà bạn không sửa code trong đó), không từ một nhánh đang sửa. Mọi phiên gọi hook theo đường dẫn tuyệt đối tới `packages/hooks/dist/elvaria-hook.js` của checkout đó, nên chưa build hook thì `doctor` báo lỗi và không phiên nào chạy được. `pnpm elvaria <lệnh>` trong repo chạy thẳng mã nguồn, không cần build CLI: tiện cho lệnh chỉ đọc và cho người đang phát triển Elvaria; nó vẫn cần hook đã build.
+- **Windows**:
+  - Chạy `elvaria run` từ **Git Bash** khi check của lãnh thổ gọi `sh` (PATH của PowerShell không có `Git\usr\bin`).
+  - Hiệp sĩ tộc gemini chạy lệnh trong PowerShell: cần `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` thì mới chạy được `pnpm`; `doctor` kiểm điều này.
+  - Trong PowerShell 5.1, dấu `"` nằm trong một đối số bị cắt khi truyền cho `node`: gõ lệnh có mô tả dài trong Git Bash.
+- **Docker**: lãnh thổ nào có check hay `commands.reset` gọi `docker` thì Docker Desktop phải chạy **trước** Quản sự. `doctor` chưa kiểm điều này (P1-56); tự kiểm bằng `docker info`.
+- **Đăng nhập có hạn**: `claude auth status --json` cho `loginExpiresAt`; `doctor` cảnh báo khi còn dưới 7 ngày. Gần hạn thì `claude auth login`.
+
+## 3. Vương quốc, tộc, lãnh thổ, nhân vật
+
+Thư mục vương quốc là trạng thái của bạn, nằm ngoài mọi repo. Biến `ELVARIA_KINGDOM` thay cho `--kingdom` ở mọi lệnh.
+
+| Trong vương quốc | Là gì | Ai ghi |
+|---|---|---|
+| `kingdom.json` | tộc, CLI đã ghim, `dispatch`, `mana`, `breakers` | `init`, `doctor`, `tribe …`; bạn sửa tay phần cấu hình (§12) |
+| `territories/<id>/territory.json` | lệnh, check, luật của lãnh thổ | `territory add` tạo, bạn điền |
+| `territories/<id>/gazetteer.md` | điều nhân vật cần biết về lãnh thổ | bạn (§11) |
+| `characters/<id>/character.json`, `quests/<id>.json` | nhân vật, nhiệm vụ | `character add` tạo file nhân vật; sau đó **chỉ Quản sự** ghi; bạn đổi bằng lệnh, không sửa tay |
+| `quests/<id>/handover.md`, `journal.jsonl` | thư bàn giao, nhật ký từng lần dùng tool | nhân vật, hook |
+| `verdicts/`, `events/<ngày>.jsonl` | phán quyết, event log | Quản sự, hook |
+| `registry/` | dạng nhiệm vụ, nghề, nghi thức, script, tag, `prompts/<nghề>.md` | `init`, `migrate`; bạn sửa được |
+| `temple/scripture.md`, `characters/<id>/scripture.md`, `decree.md` | kinh và chiếu chỉ (§11) | bạn |
+| `inbox/` | lệnh của bạn chờ Quản sự áp | CLI |
+| `.runs/<quest>-<n>/` | prompt, settings, stdout, log check của từng lượt; `.runs/<quest>-delivery.md` | runner, Quản sự |
+| `.state/` | khóa của Quản sự, pid các phiên, quest không ai nhận được | Quản sự |
+| `.backup/` | bản sao trước mỗi lần `migrate` và mỗi lần bạn sửa tay | `migrate`, bạn |
+
+**Tộc.** `init` tạo hai tộc, cả hai bật: `claude` (Claude Code) và `gemini` (agy, pool `claude_gpt_models` tắt). Lần `doctor` đầu tìm CLI của từng tộc đang bật và ghim đường dẫn cùng phiên bản vào `kingdom.json`; `--pin` chỉ cần về sau, khi bản tìm thấy khác bản đã ghim (§8). Một tộc đang bật mà thiếu CLI hay chưa đăng nhập là lỗi của `doctor`:
+
+- Chưa dùng Antigravity: `elvaria tribe disable gemini`.
+- Dùng Antigravity: cài và đăng nhập agy, rồi `elvaria doctor --acknowledge-terms gemini` để ghi nhận điều khoản của nó (ADR 0018, rủi ro ở [cli-facts](../reference/cli-facts-2026-11-12.md) §2.1).
+- Bật lại một tộc đã tắt: `elvaria doctor --enable <tộc>` (chỉ bật khi lần đó tộc không có lỗi nào).
+
+`elvaria tribe list` in mỗi tộc một dòng. `tribes[].max_concurrent` là số phiên một tài khoản chạy cùng lúc (mặc định claude 2, gemini 1).
+
+**Lãnh thổ.** `territory add` chỉ ghi phần nhận ra được từ git (`id`, `name`, `path`, `vcs`); `commands`, `checks` và `laws` đều tùy chọn và do bạn điền, theo CLAUDE.md và CI của repo. Không có `checks` thì quest vẫn chạy, chỉ có người chấm xét. Mẫu tối thiểu cho một repo pnpm (thêm vào file `territory add` đã tạo; cách viết luật đầy đủ ở [first-quest.md](first-quest.md) §4, schema ở [territory.schema.json](../schemas/territory.schema.json)):
+
+```json
+{
+  "commands": { "setup": "pnpm install --frozen-lockfile --prefer-offline" },
+  "checks": [
+    { "id": "lint", "run": "pnpm lint", "when": ["**/*.ts"], "timeout_minutes": 15 },
+    { "id": "test", "run": "pnpm test", "when": ["src/**", "package.json"], "timeout_minutes": 30 }
+  ],
+  "laws": {
+    "forbidden_paths": [".env", ".env.*"],
+    "forbidden_commands": ["git\\s+(-C\\s+\\S+\\s+)?push", "--no-verify"]
+  }
+}
+```
+
+- Mọi trường của mẫu nằm ở cấp cao nhất của file, cạnh `id`, `name`, `path`, `vcs` (nhánh của `--branch` ở `vcs.default_branch`). Sửa glob `when` cho đúng bố cục repo của bạn: check không khớp file nào quest chạm thì không chạy.
+- `commands.setup` chạy một lần trong mỗi đất riêng mới (worktree chưa có `node_modules`). `commands.reset` (tùy chọn) đưa DB và container về sạch trước mỗi lần máy chạy check trong đất nháp của người chấm; lệnh và check chạy tại gốc đất riêng.
+- Một check gồm `id`, `run` (một lệnh, hoặc một danh sách lệnh chạy lần lượt, không qua shell), `when` (glob: check chỉ chạy khi quest chạm file khớp) và `timeout_minutes`; thêm `"exclusive": true` cho check dùng tài nguyên chung (một stack Docker).
+- `laws.forbidden_paths` là glob nhân vật không được đọc hay ghi; `forbidden_commands` là regex trên dòng lệnh shell; `read_only_paths` cho file sinh; `patch_paths` cho đường dẫn Claude Code tự khóa: repo có `.claude/rules/**` mà bạn muốn nhân vật sửa được thì thêm glob đó vào đây, không thì nhân vật dừng lại hỏi bạn.
+- `max_concurrent` của lãnh thổ mặc định 1: mỗi lúc một quest đang làm.
+- Đất riêng của quest nằm ở `<repo>/.elvaria/worktrees/<quest>`; Elvaria tự thêm nó vào `.git/info/exclude`. ESLint và Prettier chạy ở gốc repo vẫn quét thư mục đó, trừ khi repo bỏ qua `.elvaria/`.
+- Quest xin secret (`secrets_allowed` của lãnh thổ) thì giá trị nằm trong kho bảo vật, một file JSON `{ "tên": "giá trị" }` ngoài vương quốc (mặc định `~/.elvaria/treasury.json`, đổi bằng `init --treasury`); bạn sửa tay file đó, `doctor` kiểm tên, không bao giờ in giá trị.
+
+**Nhân vật.** `character add <id> --class <nghề>` lấy tộc và model mặc định của nghề; đổi bằng `--tribe <tộc>` và `--model <model>`. Model là tên mà CLI của tộc nhận: tộc claude có `claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5`; tộc gemini lấy slug của `agy models`, ví dụ `gemini-3.8-flash-high`, `gemini-4-argon-medium`. Cấp ban đầu lấy theo model (Opus 5, Sonnet hay Pro 4, Argon 3, Haiku hay Flash 2; `--level` để đặt khác); cấp quyết định hạng cao nhất nhân vật nhận (cấp 2 tới E, 3 tới D, 4–5 tới C, 6–7 tới B).
+
+Luật tách vai: người chấm là một nhân vật khác người làm, chạy **model khác** (`dispatch.verifier_same_family: different_model`: Sonnet chấm Opus được, Opus chấm Opus thì không); trong số người chấm hợp lệ, Quản sự ưu tiên người khác họ model (một model Gemini chấm việc của một model Claude). Vì vậy **mỗi model người làm cần ít nhất một người chấm khác model, tốt nhất là hai, trên hai đồng hồ mana khác nhau** (§9): ở P1-50, khi trần Argon đóng, bài của hai nhân vật Opus không còn ai chấm vì người chấm còn lại cũng là Opus, và phải 50 phút sau mới có người thấy. Muốn soạn nhiệm vụ bằng lời (`elvaria say`) thì cần một nhân vật nghề `chancellor`.
+
+## 4. Ra nhiệm vụ
+
+- **`elvaria quest add`** gửi lệnh tạo một quest mở ngay, không qua nháp; Quản sự tạo nó ở nhịp kế (Quản sự chưa chạy thì lệnh chờ trong `inbox/`), rồi `quest list` mới thấy nó và id của nó. Bắt buộc: `--title`, `--description`, `--kind` (theo `registry/kinds.json`: `build`, `fix`, `document`…), `--rank` (F tới S), `--territory`; `--class` là nghề được nhận, cần khi dạng nhiệm vụ cho hơn một nghề (như `build`). `--to <nhân vật>` giao thẳng; `--contract` mở một đội (pháp sư viết hợp đồng, chia phần, Quản sự thêm quest ghép); `--script <id>` chạy bậc script, 0 mana.
+- **`elvaria say "<lời>"`** (tốn mana, khoảng 15 giây): Tể tướng soạn quest **nháp**; đọc bằng `quest show`, sửa bằng `quest edit`, mở bằng `elvaria quest confirm <quest>`. Bài học của P1-50 khi nói với Tể tướng:
+  - Nói rõ "Cần dấu vua trước khi xong" khi muốn có dấu: lời không nhắc dấu thì nháp có thể tắt dấu (vá ở PS-06).
+  - Tể tướng không thấy file: nó ước lượng 70 nghìn token cho việc đọc một file 1 MB. Việc chạm nhiều file hay file lớn thì nâng trần trước khi xác nhận.
+  - Thư ký và trinh sát không có Bash: đừng để mô tả bảo họ chạy `git log`; đưa sẵn hash hay đường dẫn vào mô tả.
+- **Trần của một lượt** (`quest show` in ra; đổi bằng `quest edit`): phút 45 (từ hạng B: 120), số lượt thử 3, token theo hạng: F–D 240 nghìn, C và B 480 nghìn, A 600 nghìn, S 720 nghìn; người chấm được gấp đôi. Số đo của P1-50 trên một repo web nhiều file: bốn quest hạng D đều vượt 240 nghìn ngay lượt đầu, hạng C và B vượt 480 nghìn ở 4 trong 6 phiên; với 400 nghìn (D) và 720 nghìn (C, B) thì mọi lượt xong trong trần. P1-54 xem lại bảng này; tới lúc đó, nâng trần ngay khi quest đã có id (quest nháp: trước khi xác nhận; quest của `quest add`: ngay sau khi nó hiện trong `quest list`, kể cả lúc phiên đang chạy, vì cầu dao đọc trần token của quest ở mỗi nhịp):
+
+```bash
+elvaria quest edit <quest> --max-tokens 720000
+```
+
+## 5. Chạy Quản sự
+
+```bash
+elvaria run        # một vương quốc một Quản sự (.state/steward.lock); lần chạy thứ hai bị từ chối
+```
+
+Mỗi nhịp 5 giây Quản sự áp lệnh trong `inbox/`, giao quest, dựng đất riêng (worktree `<repo>/.elvaria/worktrees/<quest>`, nhánh `quest/<quest>`, chạy `commands.setup`), mở phiên người làm; phiên xong thì commit, chạy check ngoài nhịp (tối đa `dispatch.max_background` việc cùng lúc, mặc định 2), rồi mở người chấm. Chuông in trên terminal đó: quest chờ dấu, câu hỏi của nhân vật, quest vào trạm quân y, quest không nhân vật nào nhận được, quest mà dàn nhân vật không có người chấm hợp lệ nào, đồng hồ mana cảnh báo, ngủ, thức. (Có người chấm hợp lệ nhưng ai cũng đang bị một đồng hồ mana chặn thì **không** có chuông, §9.)
+
+**Quản sự là một tiến trình của terminal đã mở nó.** Đóng terminal, đóng hay khởi động lại VS Code (terminal tích hợp, hoặc phiên Claude Code đã chạy lệnh), máy ngủ hay khởi động lại thì Quản sự dừng, và việc đứng yên cho tới khi bạn chạy lại. Muốn nó sống qua lần khởi động lại VS Code thì chạy nó trong một cửa sổ terminal riêng.
+
+**Dừng**: Ctrl+C. Khi nó chạy nền không có terminal: tìm pid của tiến trình `node … cli.js run` (Task Manager, hay `Get-Process node`), rồi `taskkill /PID <pid> /T /F` trên Windows (cả cây tiến trình); trên macOS `kill <pid>` (chưa có lần chạy thật). Dừng lúc không có phiên nào chạy (`.state/sessions.json` rỗng) thì không mất gì ngoài check đang chạy.
+
+**Chạy lại sau khi dừng hay sập** (P1-50 gặp năm lần, không mất quest hay lượt thử nào):
+
+1. `docker info` trả lời, nếu lãnh thổ cần Docker.
+2. `elvaria doctor`: in "Sẵn sàng."; khi không Quản sự nào giữ khóa, nó liệt kê phiên còn sót của lần trước.
+3. `elvaria run`: nó giết các phiên còn sót, trả lượt cho người làm đang dở (phiên mới từ thư bàn giao), và chạy lại từ đầu các check đang dở. Khóa cũ không cản (hết hạn sau 10 giây).
+
+Cái mất khi dừng giữa chừng: phút check đã chạy (một lần 20 phút), và phần máy của nghi thức Thả quái thử thành mà Quản sự giữ trong bộ nhớ cho người chấm kế tiếp.
+
+## 6. Theo dõi
+
+| Xem gì | Ở đâu |
+|---|---|
+| bảng nhiệm vụ, một quest | `elvaria quest list [--status <trạng thái>]`, `elvaria quest show <quest>` (phán quyết của lượt cuối, lý do trạm quân y, câu hỏi) |
+| nhân vật, ai đang ngủ vì mana | `elvaria character list` |
+| đồng hồ mana, phiên bản CLI, lỗi cấu hình | `elvaria doctor` |
+| việc nhân vật làm | `quests/<quest>/journal.jsonl` |
+| thư bàn giao | `quests/<quest>/handover.md` |
+| prompt, settings, stdout của một lượt | `.runs/<quest>-<n>/` (người chấm: `.runs/<quest>-<n>/verify/`) |
+| log setup và từng check | `.runs/<quest>-setup.log`, `.runs/<quest>-<n>/checks/<id>.log` |
+| số đo của một khoảng ngày | `elvaria metrics --since <yyyy-mm-dd> [--until …] [--json]` |
+
+Trạng thái của quest, id (dùng cho `quest list --status <id>`) và tên hiện ra: `draft` Nháp, `open` Mở, `claimed` Đã nhận, `working` Đang làm, `review` Chờ nghiệm thu, `returned` Bị trả bài, `blocked` Chờ trả lời, `paused_mana` Tạm dừng (hết mana), `awaiting_seal` Chờ dấu vua, `done` Xong, `infirmary` Trạm quân y, `archived` Lưu trữ. Chuỗi in ra theo ngôn ngữ của vương quốc (`vi` mặc định; `init --locale en` đặt `en` cho cả vương quốc, `--locale` ở từng lệnh thắng).
+
+Các lệnh trên chỉ đọc, không tốn mana, chạy được khi Quản sự đang chạy. Sau một đợt chạy, `pnpm docs:gen --kingdom "<vương quốc>"` trong repo Elvaria sinh lại [tier-report.md](../tier-report.md) và [metrics-report.md](../metrics-report.md).
+
+**Câu hỏi của nhân vật**: quest sang `Chờ trả lời`, chuông in câu hỏi. Trả lời bằng `elvaria answer <quest> "<câu>"`; trong 55 phút thì phiên cũ được nối lại, quá thì phiên mới đọc câu trả lời trong thư bàn giao.
+
+## 7. Dấu vua và giao hàng
+
+1. Đọc nhánh trong repo của lãnh thổ (`git log main..quest/<quest>`, `git diff main...quest/<quest>`), thư bàn giao và phán quyết (`quest show`).
+2. `elvaria seal <quest> --note "…"`, hoặc `elvaria return <quest> --note "…" --fail-kind <kiểu>` để trả về người làm. `--note` của `return` bắt buộc, ít nhất 20 ký tự; `--fail-kind` là một trong `tests_fail`, `scope_creep`, `missing_i18n`, `wrong_facts`, `incomplete`, `style`, `unsafe`, `other` (mặc định `other`). `return --rejudge` khi lỗi là của người chấm: việc được chấm lại, người làm không bị tính trượt. Hai lệnh chỉ ghi vào `inbox/`: Quản sự phải đang chạy thì quest mới chuyển.
+3. Quản sự viết thư giao hàng `.runs/<quest>-delivery.md`. Push **từ trong worktree của quest**, để pre-push hook của repo (nếu có) kiểm đúng nhánh đó; mở PR với thư giao hàng làm mô tả; merge. Repo không có remote thì merge nhánh `quest/<quest>` tại chỗ.
+4. `elvaria quest archive <quest>`: Quản sự gỡ worktree và cho Claude Code quên đường dẫn đó (Quản sự không chạy thì lệnh chờ tới lần `run` sau). Nhánh ở lại; xóa khi đã merge (`git branch -d quest/<quest>`).
+
+Với một đội, chỉ merge nhánh của **quest ghép**; hợp đồng và các phần vào `main` qua nó.
+
+## 8. `doctor`, phiên bản CLI và việc ghim
+
+Chạy `elvaria doctor` **đầu mỗi ngày chạy** và sau mỗi thay đổi cấu hình. Nó kiểm registry, git, CLI của từng tộc (đường dẫn, phiên bản, đăng nhập, hook đã build), shell của tộc, từng lãnh thổ và chương trình mà lệnh của chúng gọi, kho bảo vật, phiên còn sót, đồng hồ mana. Lỗi thì in "Chưa sẵn sàng: n lỗi"; cảnh báo không chặn.
+
+Hai CLI **tự cập nhật qua đêm** theo VS Code (hai lần trong hai ngày của P1-50):
+
+| `doctor` in | Nghĩa là | Làm gì |
+|---|---|---|
+| "Tộc claude: file đã ghim … không còn; tìm thấy …" (lỗi) | Claude Code để binary trong thư mục mang số phiên bản; bản cũ đã bị gỡ. **Tộc không chạy được cho tới khi ghim lại** | đọc changelog giữa hai bản, rồi `elvaria doctor --pin` |
+| "Tộc gemini: tìm thấy phiên bản …, khác bản đã ghim" (cảnh báo) | `agy.exe` bị thay tại chỗ; phiên kế tiếp đã chạy bản mới dù chưa ghim | như trên |
+
+Trước khi ghim: đọc changelog (`agy changelog`; https://code.claude.com/docs/en/changelog) tìm mục đổi `-p`, `--settings`, quyền, hook, stream-json, mã thoát; đối chiếu các dòng có dấu ⚑ trong [cli-facts](../reference/cli-facts-2026-11-12.md). Muốn chắc hơn: `elvaria tribe check <tộc>` chạy bộ test hợp đồng với CLI thật (tốn chút mana).
+
+## 9. Đồng hồ mana
+
+Quản sự đọc hạn mức của từng tài khoản mà không gọi model (`claude -p /usage`, `agy -p /usage`), sau mỗi phiên và mỗi `mana.probe_interval_minutes` (15). Mỗi cửa sổ là một đồng hồ: 5 giờ, tuần, và trần tuần riêng mà tài khoản đặt cho một model (Argon ở tài khoản Antigravity; Fable, một model khác của Claude, ở tài khoản Claude); trần riêng chỉ ràng nhân vật chạy model đó.
+
+- **Đóng sớm một phiên.** Đồng hồ không nhận phiên mới khi mức đã dùng cộng phần một phiên sẽ chạm `min(mana.cap_pct, 100 − mana.king_reserve_pct)` (mặc định 98). Phần một phiên là số Quản sự đo được (P1-50: Argon 7,78 % tuần, Flash 1,97 % tuần, Claude 3 % tuần), 7 % khi chưa đo. `doctor` in từng đồng hồ, phần một phiên, và dòng "đóng sớm một phiên" khi nó đã đóng.
+- **Đóng chỉ chặn phiên mới.** Phiên đang chạy chạy tiếp. Nhân vật dùng model bị chặn đứng yên; quest của họ chờ, không vào trạm quân y. Không có chuông riêng cho việc một quest chờ vì mọi người chấm hợp lệ bị đồng hồ chặn (vá ở PS-03): thấy quest `Chờ nghiệm thu` lâu mà không có check nào chạy thì xem `doctor`.
+- **Hết giữa phiên.** Phiên gặp giới hạn của tài khoản thì quest sang `Tạm dừng (hết mana)`, giữ người làm; Quản sự thăm dò lại sau giờ reset và việc tiếp tục bằng phiên mới từ thư bàn giao.
+- **Sau khi bạn đăng nhập lại hay hạn mức được hồi**: `elvaria wake <tộc>` để Quản sự đo ngay; không thì nó đo ở lần thăm dò kế.
+- **Đổi model của một nhân vật** sang đồng hồ còn chỗ: `elvaria character model <id> <model>` (cùng tộc), áp cho phiên sau.
+- Pool `claude_gpt_models` của tộc gemini mặc định tắt: đừng dùng model `claude-*` qua agy để chấm việc của tộc claude (cùng họ model).
+
+## 10. Trạm quân y và các lệnh khi quest kẹt
+
+Quest vào trạm quân y thì dừng hẳn và chuông rung. `elvaria quest show <quest>` in lý do. Phần dở của người làm đã được commit lên nhánh (`chore: wip <quest> (<lý do>)`), trừ khi `quest show` nói commit bị từ chối.
+
+| Lý do | Nghĩa là | Làm gì |
+|---|---|---|
+| cầu dao token | phiên vượt trần token | `quest edit <quest> --max-tokens <n>` rồi `quest retry <quest>` (§4 có số đo) |
+| cầu dao thời gian | phiên vượt trần phút | `quest edit --max-minutes <n>` rồi `retry`. Trần phút mới **không** áp cho phiên đang chạy: CLI nhận con số cũ lúc mở phiên (P1-56) |
+| cầu dao lượt | CLI dừng ở 200 lượt | `retry`; lặp lại thì chia nhỏ việc |
+| commit bị từ chối | hook của repo từ chối commit, hoặc bản vá `elvaria.patch` không áp được | đọc lý do, sửa trong đất riêng (`<repo>/.elvaria/worktrees/<quest>`) rồi `retry` |
+| đường dẫn cấm bị đổi | một chương trình của phiên ghi vào `laws.forbidden_paths` hay file `.env`; không có gì được commit | trả các file đó về như cũ hoặc xóa trong đất riêng, rồi `retry` |
+| thiếu secret | kho bảo vật thiếu tên mà quest xin, hoặc lãnh thổ không cho | thêm vào kho bảo vật hay `secrets_allowed`, rồi `retry` |
+| người chấm rời đi không ra phán quyết; cứ nộp phán quyết dở | hai người chấm của một lượt bị cầu dao cắt hay hỏng, hoặc ba người chấm dở | nâng trần (người chấm được gấp đôi trần của quest), `retry`: quest về chờ nghiệm thu với người chấm mới |
+| đã hết số lần thử | ba lượt đều trượt | đọc các phán quyết; sửa mô tả (`quest edit --description`) hay `--max-attempts`, rồi `retry`; hoặc `quest reassign <quest> --to <nhân vật>` |
+| script hỏng, không dùng được tham số, không đạt | bậc script | đọc `.runs/<quest>-<n>/script.log`; quest tiếp nối (nếu có) đã được mở |
+
+Các lệnh khác của chủ nhân:
+
+| Tình huống | Lệnh |
+|---|---|
+| quest không ai nhận được (cấp thấp, sai nghề, tộc tắt) | `quest show` in sẵn lệnh `quest reassign … --to …` cho ứng viên tốt nhất |
+| muốn một nhân vật cụ thể làm | `quest reassign <quest> --to <nhân vật>` (vượt hạng trần thì quest chờ dấu vua) |
+| nhân vật bị hạ cấp oan (check đỏ vì môi trường) | `elvaria character level <id> <cấp>` |
+| nhân vật trượt cùng một kiểu ba lần liền thì bị đình chỉ vào Đền | sửa nguyên nhân (kinh, mô tả), rồi `elvaria character release <id>` |
+| tạm cho một nhân vật nghỉ | `elvaria character suspend <id> --reason "…"` |
+| bỏ một quest chưa xong (trừ quest đang ở trạm quân y, xem dưới) | `elvaria quest cancel <quest>`; worktree của quest đã hủy ở lại, dọn tay |
+
+Chỗ còn thiếu đường, vá ở P1-55 và P1-56:
+
+- `quest cancel` và `quest archive` từ chối quest đang ở trạm quân y, nên quest muốn bỏ nằm lại đó.
+- `quest edit` gửi đúng lúc quest vừa đổi trạng thái thì bị Quản sự từ chối (`stale`) mà CLI chỉ in "đã gửi": xem lại `quest show` sau một nhịp và gửi lại.
+- Quest ghép: `retry` từ trạm quân y chạy lại lượt gộp của máy trên đúng commit vừa trượt (tốn một vòng check) trước khi hiệp sĩ nhận.
+- File rác nhân vật lỡ tạo ở gốc đất riêng vào commit nộp, và hiệp sĩ không có lệnh xóa: dừng Quản sự, `git rm` rồi commit trong worktree của quest, chạy lại.
+
+## 11. Bài học: kinh, gazetteer, chiếu chỉ, prompt nghề
+
+Bốn loại file văn bản mà mọi phiên đọc lúc mở; sửa xong thì phiên **kế tiếp** nhận, không cần dừng Quản sự.
+
+| File | Dành cho | Ghi gì |
+|---|---|---|
+| `decree.md` | mọi nhân vật, mọi tộc | chỉ dẫn chung của bạn (ví dụ luật viết commit). Nhân vật không đọc `~/.claude/CLAUDE.md` của bạn |
+| `territories/<id>/gazetteer.md` | mọi phiên trên lãnh thổ đó | điều riêng của repo mà CLAUDE.md của nó không nói: file lớn và cách đọc, stack Docker dùng chung, file sinh ra |
+| `temple/scripture.md` | mọi nhân vật | bài học rút từ những lần bị chấm trượt, mỗi dòng một điều kiểm được |
+| `characters/<id>/scripture.md` | một nhân vật | bài học của riêng nó |
+| `registry/prompts/<nghề>.md` | mọi nhân vật của nghề | cách làm của nghề; bản mặc định theo bản Elvaria (§13) |
+
+Giữ ngắn: mọi dòng vào prompt của mọi phiên, và với tộc gemini prompt đi trên dòng lệnh (Windows dừng ở 32 767 ký tự). Kinh là điều nhân vật học từ chính việc của nó (ADR 0020); bài học về cách bạn điều phối thì không phải kinh. Bảy dòng P1-50 thêm vào vương quốc thật là mẫu tốt: "không để file nháp trong đất riêng", "lỗi lúc dựng container là lỗi môi trường, không phải test đỏ", "file `implementation-plan.md` nặng 1 MB: tìm rồi đọc đúng đoạn".
+
+## 12. Sửa tay cấu hình của vương quốc
+
+Được sửa tay: `kingdom.json` (phần `dispatch`, `mana`, `breakers`, `tribes[].max_concurrent`, `pools`), `territories/<id>/territory.json`, `registry/**`, và các file ở §11. Quản sự đọc lại `kingdom.json`, registry và lãnh thổ ở mỗi nhịp, nên không cần dừng nó. **Không** sửa tay `quests/*.json`, `characters/*/character.json`: dùng `quest edit`, `character level|model|suspend|release`.
+
+Cách P1-50 làm mỗi lần sửa, và nên giữ:
+
+1. Chép file vào `.backup/<ngày giờ>-<nhãn>/` trước.
+2. Ghi nguyên tử (ghi ra file tạm cạnh nó rồi đổi tên), để Quản sự không đọc phải file dở.
+3. So với bản sao: chỉ khác đúng dòng định sửa.
+4. `elvaria doctor` vẫn "Sẵn sàng."; file sai schema thì `doctor` và `territory list` báo ngay.
+
+Núm hay vặn:
+
+| Trường | Mặc định | Khi nào đổi |
+|---|---|---|
+| `dispatch.max_background` | 2 | về 1 khi các check của lãnh thổ dùng chung một stack Docker (§14) |
+| `territories/<id>` `max_concurrent` | 1 | lên 2 khi muốn hai quest cùng làm trên một lãnh thổ, và check chịu được |
+| `tribes[].max_concurrent` | claude 2, gemini 1 | theo số phiên tài khoản chịu được cùng lúc |
+| `mana.cap_pct`, `king_reserve_pct` | 98, 2 | để dành nhiều hơn cho việc của chính bạn trên cùng tài khoản |
+| `breakers.max_attempts`, `attempt_minutes_low/high` | 3, 45/120 | hiếm; thường đổi trên từng quest bằng `quest edit` |
+
+## 13. Sau mỗi lần cập nhật bản build
+
+Khi `main` của Elvaria có thay đổi ở `packages/` hay `apps/` mà bạn muốn dùng:
+
+1. **Dừng Quản sự** lúc không phiên nào chạy. Build lại hook dưới một phiên đang chạy là đổi hook của nó giữa chừng.
+2. `git pull --ff-only` trong checkout mà Quản sự chạy từ đó.
+3. `pnpm install --frozen-lockfile`, rồi `pnpm --filter @elvaria/hooks build` và `pnpm --filter @elvaria/cli build`.
+4. `elvaria migrate`: chuyển file cũ lên phiên bản mới (bản cũ vào `.backup/<stamp>/`), chép file registry mà vương quốc còn thiếu và thêm mục registry còn thiếu. Nó **không ghi đè** file bạn đã có: prompt nghề đổi ở bản mới (`packages/registry-default/prompts/<nghề>.md`) thì tự so và chép vào `registry/prompts/`, sau khi sao lưu.
+5. `elvaria doctor` in "Sẵn sàng."; nó nêu khóa registry mà bản mặc định có còn vương quốc thiếu.
+6. `elvaria run`.
+
+Thay đổi chỉ ở `docs/` thì không cần làm gì. Khi repo Elvaria cũng là một lãnh thổ, checkout chính vừa là code của Quản sự vừa là gốc của worktree quest mới: `pull` chỉ đổi điểm tách của quest mở sau đó. Giai đoạn 1.5 thay các bước này bằng `elvaria upgrade` có đường lùi (PS-04b).
+
+## 14. Bài học vận hành của lần chạy lại mốc (P1-50)
+
+26 lần chủ nhân can thiệp trong một ngày, theo nhóm ([báo cáo](phase-1-rerun.md) §4). Mỗi dòng: chuyện gì, và hôm nay làm gì cho tới khi task vá xong.
+
+| Nhóm | Chuyện đã xảy ra | Hôm nay làm gì | Vá ở |
+|---|---|---|---|
+| Trần token (10 lần) | sàn hạng D, C, B thấp cho việc web nhiều file; mỗi lần cắt là một lần `edit` và `retry` | nâng trần trước khi xác nhận (§4) | P1-54 |
+| Docker (5 lần) | Docker Desktop chưa chạy: `commands.reset` đỏ, bài bị chấm trượt, người làm bị hạ cấp | `docker info` trước `run`; trả cấp bằng `character level` | P1-54, P1-56 |
+| Docker | `reset` của quest này (`docker compose … down -v`) hạ stack e2e của quest kia ba lần; e2e đỏ bị đọc là chập chờn, Quản sự sinh quest «Trừ tà» và hạ cấp người làm | `dispatch.max_background: 1` với lãnh thổ có stack Docker dùng chung; hủy sớm quest «Trừ tà» sinh từ lỗi dựng container | P1-54 |
+| Người chấm (3 lần) | một trần mana đóng làm bài của một model không còn ai chấm | giữ hai người chấm khác model cho mỗi model người làm (§3); xem `doctor` khi quest chờ nghiệm thu lâu | PS-03, P1-56 |
+| Việc nền | check 6 giây của một quest tài liệu chờ 41 phút sau các bộ e2e; người chấm sau check đỏ chờ khóa 9–33 phút | xác nhận quest nhỏ trước đợt có e2e, hoặc chấp nhận chờ | P1-54 |
+| CLI thiếu đường (5 lần) | xem §10 | xem §10 | P1-55, P1-56 |
+| Quyền của nghề và lãnh thổ (2 lần) | nhân vật không ghi được `.claude/rules/`; thư ký được bảo chạy `git log` | `laws.patch_paths` (§3); mô tả không đòi lệnh mà nghề không có (§4) | P1-56, PS-06 |
+| File lớn | trinh sát tộc gemini đọc một file 1 MB 25 lần, bị cắt hai lượt | từ P1-53 tộc gemini có `git grep`; ghi file lớn vào gazetteer (§11) | P1-52, P1-53 (xong) |
+| agy | người chấm in một JSON giữ chỗ giữa câu trả lời, phán quyết thành "dở", mất một phiên chấm | không làm gì: người chấm kế tiếp chấm lại | P1-56 |
+
+Ba điều không phải lỗi, nhưng nên biết trước:
+
+- **Người chấm hạng thấp tốn hơn người làm**: ở hạng E, người chấm tự chạy lại mọi check và tốn gấp 4 lần người làm; từ hạng D trở lên thường 0,1–0,5 lần.
+- **Nghi thức Thả quái thử thành** (quest có tag `e2e` hay `integration`) chạy cả bộ check ba lần trong đất nháp: 45–75 phút phần máy trên dc1 trước khi người chấm mở.
+- **Một ngày 88 phiên** đưa hạn mức tuần của tài khoản Claude (dùng chung với việc khác) từ 52 % lên 65 %, và đốt gần hết trần tuần Argon.
+
+## 15. Chưa có ở giai đoạn 1
+
+Chuông ngoài terminal, điện thoại, bản đồ (giai đoạn 2 và 3); Quản sự tự push và merge (PS-08); thư đề xuất và bản tấu mỗi ngày (PS-02, PS-03); nâng cấp có đường lùi (PS-04b); tộc Gemini CLI với API key và tộc Codex (P1-12c, P1-12d, để dành). Kế hoạch và trạng thái: [implementation-plan](../implementation-plan.md) §8.

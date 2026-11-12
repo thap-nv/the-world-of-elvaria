@@ -46,16 +46,18 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   patch paths with the patch convention (`prompts/patch.md`, P1-28: `PATCH_FILE` at the root of the plot);
   `buildChancellorPrompt` for the
   Chancellor; `resumedPrompt` for a session continued with `--resume` (the system part as built, a user part that only says it goes on, with the owner's
-  answer when there is one). The system part opens with the royal decree when `<kingdom>/decree.md` exists, and
-  ends with the craft of the character's class (`class_prompt`: the kingdom's `registry/<class.prompt_file>`
-  without its maintainer note, `prompts/class.md`, P1-15).
+  answer when there is one). The system part opens with the royal decree when `<kingdom>/decree.md` exists, then
+  the laws of the role and the craft of the character's class (`class_prompt`: the kingdom's `registry/<class.prompt_file>`
+  without its maintainer note, `prompts/class.md`, P1-15), and last the territory's `context_files` for a tribe
+  whose CLI loads none (P1-33).
   The quest's facts carry its kind's delivery convention when the Steward needs a file of a given shape: a plan
   (`subquests`) writes its sub-quests as quest-draft JSON to `SUBQUESTS_FILE` (`subquests.json`) at the root of
   its plot, where its judge reads them and the Steward opens them once the quest is done (P1-14), with the
   words a draft may use: the kinds and the classes each allows, the tags, the territory's secrets (P1-15).
 - Runs the conformance suite (`conformanceChecks`, `runConformance`): plain checks with `node:assert`, so a spec
-  wraps them in `it` and `elvaria tribe check` (P1-19) runs them too. With a real CLI (`live`) only the checks
-  that burn no mana run. `openWorkspace` and `conformanceRequest` give an adapter's specs the same requests. The
+  wraps them in `it` and `elvaria tribe check` (P1-19) runs them too. With a real CLI (`live`) only `capabilities`,
+  `doctor`, `probe`, `submit`, `hang` and `forbidden_command` run (a few cheap sessions, a little mana); `crash`,
+  `rate_limit`, `scratch_commit` and `ask` need a fake. `openWorkspace` and `conformanceRequest` give an adapter's specs the same requests. The
   `capabilities` check also wants `capabilities.auth`, the sign-ins the adapter runs with (P1-19): a non-empty list
   of `login` / `api_key`.
 - Hands an owner adapter file its kit (`src/kit/`, P1-19, implementation-plan §3.14, ADR 0021): `adapterKitOf(host)`
@@ -162,8 +164,8 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   waits up to `POWERSHELL_TIMEOUT_MS`; a pid that runs nothing answers at once) lets the Steward tell a session's process from a later one
   under the same pid after a restart. System programs live at fixed paths (`/bin/ps`, `System32`), never PATH.
 - Gives every adapter the session's side of the hook contract (P1-09, §3.6): `runContextOf(req)` (kingdom,
-  quest, attempt from env `ELVARIA_*`; character, role, model from the request; the env names of the quest's
-  secrets), `contextEnv`, and `writePolicyFile` for `<run_dir>/policy.json` v1, the file `--policy` points the
+  attempt and zone from env `ELVARIA_*`; the quest from the request, else env; character, role, model from the
+  request; the env names of the quest's secrets), `contextEnv`, and `writePolicyFile` for `<run_dir>/policy.json` v1, the file `--policy` points the
   hook at: context, `secrets` (names only), `tools` (the class's, for a CLI with no `--tools`), `laws` (with
   `read_only_paths`, P1-24), the adapter's `apprentice_models` when it has an apprentice (the models up to the
   character's own, §3.12, P1-17), and `cli_protected_paths`: the adapter's, the paths its CLI refuses to write
@@ -174,7 +176,7 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   one only for reasoning, and to stop and write the unfinished child work in the letter when an apprentice is
   cut at its turn limit or runs long.
 - Holds the treasury (`src/treasury/`, §3.9, ADR 0013): `openFileTreasury(file)` reads `{ "name": "value" }`
-  from `kingdom.paths.treasury` on each call (a missing file is empty; on macOS a file others can read is
+  from `kingdom.paths.treasury` on each call (a missing file is empty; outside Windows a file others can read is
   refused; no error ever quotes a value), `inspectTreasury` (the file's names or a typed problem, for the
   doctor), `secretEnvName` (`npm_token` → `NPM_TOKEN`), `minimalEnv` (the allowlist every child starts from), `sessionEnv` (minimal env + `ELVARIA_*` + exactly the quest's secrets; a
   secret that would replace another variable is refused), and `secretValuesOf` / `sessionRedactor` for the
@@ -186,7 +188,8 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
 
 ## Does not
 
-- Talk to a real CLI: adapters do (`runner-claude` P1-09, `runner-antigravity` P1-12b, `runner-gemini` P1-12c).
+- Talk to a real CLI: adapters do (`runner-claude` P1-09, `runner-antigravity` P1-12b; `runner-gemini` P1-12c and
+  `runner-codex` P1-12d have their names in `boundaries.mjs` and are not built).
 - Import an owner adapter file: only `apps/cli` does (ADR 0021); runner-core builds its kit and checks its runner.
 - Write a CLI's own settings or agents file: the adapters do, from `ToolPolicy` and `SpawnRequest`. Choose which
   secrets a session gets: the quest names them, the Steward checks them against the territory and builds the env.
@@ -200,7 +203,7 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
 
 ## Depends on
 
-- `@elvaria/domain` (schemas, registry, capabilities, `RITUAL_STEPS`, `FAIL_KINDS`, `Result`, `EventSchema`),
+- `@elvaria/domain` (schemas, registry, capabilities, `ritualOf`, `FAIL_KINDS`, `countedTokens`, `Result`, `EventSchema`),
   `@elvaria/eventlog` (append, read a journal, stamp, redact), `@elvaria/store` (`readTextFile`,
   `writeFileAtomic`, `acquireLock`, kingdom paths). No third-party package; git is the territory's own, found
   by the host.
@@ -219,4 +222,5 @@ runners that lie about their capabilities. The plot and check specs build real g
 worktrees, a refusing pre-commit hook) and plots in temp folders with spaces in their names; git runs without the
 caller's `GIT_*` (`src/__fixtures__/git-repo.ts`), and one spec proves a `GIT_DIR` in the host env is ignored.
 The `src/process/` specs kill real node process trees (`src/__fixtures__/tree.ts`: a node that starts an idle
-grandchild) on this machine: CI runs them on Windows and macOS, and the SIGTERM-then-SIGKILL case on POSIX only.
+grandchild) on this machine: the CI matrix, started by hand since 2026-11-10, runs them on Windows and macOS, and the
+SIGTERM-then-SIGKILL case on POSIX only.

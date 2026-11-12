@@ -7,9 +7,10 @@
   Ticks never overlap.
 - One tick, in the order of §3.1: the inbox in id order (the owner first); the ends of the sessions it runs;
   sessions the files say run but it does not hold end, so no quest ever runs two sessions: at the first tick after
-  start those the last Steward ran when it stopped or was killed count for nothing (P1-44, `src/restart.ts`: the
-  assignee goes on in a fresh session with its attempt given back, a judge leaves without counting toward a stalled
-  review), and a review it left stalled without the move to the infirmary goes there before the plan; later, a
+  start those the last Steward ran when it stopped or was killed count for nothing (P1-44, `reapLost` of
+  `src/sessions/settle.ts`: the assignee goes on in a fresh session with its attempt given back, a judge leaves
+  without counting toward a stalled review), and a review it left stalled without the move to the infirmary goes
+  there before the plan (`src/restart.ts`); later, a
   session whose end could not be recorded ends as a crash; the inbox commands that waited, once more; the mana gauges; then the domain's
   `planTick` decides and the Steward carries it out: sessions past a breaker stop, characters on a fail streak go
   to the Temple
@@ -19,9 +20,10 @@
 - Runs the machine's long work outside the tick (P1-25, `src/background.ts`): a submitted quest's checks and a
   script-tier run start in a tick and go on while later ticks apply the inbox, record the sessions' ends and give
   out work; `planTick` sees which quests have work running and which have checks ready (`BackgroundWork`). The
-  work writes only into its run folder and, for checks, a `check.start` and a `check.end` line (P1-10b: the owner
+  work writes into its run folder and, for checks, a `check.start` and a `check.end` line (P1-10b: the owner
   and the world see that a quest in review with no judge is being checked, and how its checks ended: `pass`,
-  `fail`, `error`, `stopped`), never a quest or a character. Work that ends on its own makes the loop tick at once
+  `fail`, `error`, `stopped`), then puts the quest's own plot back with its `plot.restored` line (P1-47); never a
+  quest or a character file. Work that ends on its own makes the loop tick at once
   rather than at its next beat (P1-10b), so a judge opens on checks that ended without waiting up to
   `tick_seconds`. Work for a quest that moved on (cancelled,
   judged, retried) is killed before each plan; `stop()` kills it all and the next Steward runs it again. A plot's
@@ -31,8 +33,9 @@
   than `dispatch.max_background` (P1-47, 2 by default until a run measures the load): `planTick` starts checks
   first, then scripts, in the room the running work leaves, and the rest waits for a later tick.
 - Trips the breakers (§3.4, P1-06; `src/sessions/breaker.ts`): `planTick` names each held session past its
-  minutes (`quest.budget.max_minutes`, from its own attempt_log entry), its tokens (the running total of its
-  `usage` signals against `budget.max_tokens`) or its turns; the Steward sinks the assignee into the swamp, kills
+  minutes (`quest.budget.max_minutes`, from its own attempt_log entry) or its tokens (the running total of its
+  `usage` signals against `budget.max_tokens`, times `breakers.verifier_tokens_multiplier` for a judge); turns are
+  the CLI's own limit (`breakers.max_turns` in the request), which ends the same way; the Steward sinks the assignee into the swamp, kills
   the session's process tree, commits the work as `chore: wip <quest> (<trip>)` (a refusal keeps it in the plot
   and says so in the reason), sends the quest to the infirmary (`quest.infirmary`, `breaker:<trip>: <detail>`) and
   rings the bell; a verifier past a breaker leaves the review to the next one, until the second of a run
@@ -48,8 +51,9 @@
   allows, goes to the infirmary (`breaker:secrets`) instead of being claimed and released every tick; an
   owner's answer to such a blocked quest is refused (`secrets_lacking`).
 - Says why a quest goes to the infirmary once, as a cause (`src/infirmary.ts`, P1-32): a `trip` (the breaker, or
-  `max_attempts`, `script_broken`, `script_usage`, `script_fail`) and a `detail` (what was said, a refused patch,
-  a WIP commit refused, an apprentice cut short, the script and its follow-up, the verifiers stopped). The
+  `no_verdict`, `partial_verdicts`, `max_attempts`, `script_broken`, `script_usage`, `script_fail`) and a `detail`
+  (what was said, a refused patch, the forbidden paths changed, a WIP commit refused, an apprentice cut short, the
+  script and its follow-up, the verifiers stopped, the partial verdicts handed in). The
   `quest.infirmary` line carries both, beside the one English `reason` built from them for the chronicle, worded
   as before P1-32; the `infirmary` notice carries all three, so a bell can say why in the owner's language.
 - Keeps the pid of every session it holds in `.state/sessions.json` (written before each tick ends, emptied at
@@ -63,12 +67,13 @@
 - Watches mana per gauge (§3.5, ADR 0009; `src/mana/`): a session that hits its account's limit pauses its quest
   (assignee kept; a verifier leaves the review); the account is read at once (`mana/limit.ts`, no model call) and
   the gauges it shows spent for the session's model sleep, the windows the session reported in band first (P1-48: a
-  rejected `rate_limit_event` of Claude names the window it spent and its reset) (`mana.exhausted`, with `model` for the cap of one model:
+  rejected `rate_limit_event` of Claude names the window it spent and its reset; read as the Agent SDK types it, no
+  real line recorded yet) (`mana.exhausted`, with `model` for the cap of one model:
   Argon's spent cap stops only the Argon characters, P1-22, and `resets_at` when the limit or the reading named the
   reset, P1-32), else the pool of that model; every other session they
   bind is killed and pauses and idle characters they bind fall asleep; each paused assignee's work is committed as
   `chore: wip <quest> (mana)` after its session ends. A tribe with a pool asleep is probed (`mana.probe`) one minute after
-  the reset its session or its last probe named, again every two minutes while the account resets late, else
+  the reset its session or its last probe named, again every two minutes for ten minutes after a reset that comes late, else
   every `probe_interval_minutes` (`nextProbeOf`); a probe that goes through wakes the pool (`mana.restored`),
   sleepers wake and the paused quests go on with the same character and attempt, in a fresh session from the
   letter (`--resume` only with `resume_after_mana`, then with a short prompt). Awake pools are read without a
@@ -84,9 +89,11 @@
   `mana_awake`). With `mana.reassign_after_hours`, a quest asleep that long goes to the character planTick chose
   (`paused_mana.reassign` by the Steward; the sleeper lets go) and starts. The owner's `wake` (`elvaria wake`)
   probes at once. The gauges asleep and warned are rebuilt from the log at start.
-- Is the only writer of quests and characters (ADR 0005): every change goes through `transition()` or
-  `transitionCharacter()`, is written to its file, then told in one event line carrying the view after it
-  (P0-09), in the log and the quest's journal. Replaying the log over the morning gives back the files.
+- Is the only writer of quests and characters (ADR 0005): every move of a quest or a character goes through
+  `transition()` or `transitionCharacter()`, every other change of a field (a new or edited quest, a rank, a level,
+  a model, the windows after a verdict) through the domain's own function for it; each is written to its file, then
+  told in one event line carrying the view after it (P0-09), in the log and the quest's journal. Replaying the log
+  over the morning gives back the files.
 - Applies the owner's commands: `create_quest` (an id derived from the command id, so a command applied twice
   never makes two quests), `confirm`, `cancel` (kills the session), `archive`, `retry`, `seal` and `return` (the owner's
   verdict, `verdicts/<quest>-<n>-user.json`, weighed three times; a return needs notes of 20 characters and takes
@@ -123,8 +130,10 @@
   a commit the territory's hooks refuse sends the quest to the infirmary, `breaker:commit`; a plot whose changes
   (`Plots.touched`) include a path of `laws.forbidden_paths` or a dotenv file, which only a program the session's
   shell ran could write, is not committed and goes to the infirmary with the bell, `breaker:forbidden_paths`,
-  `detail.paths`, P1-49; every commit of the Steward checks so, a WIP left in the plot with the reason, and a plot
-  whose changes cannot be listed is not committed either; before it, on a
+  `detail.paths`, P1-49; every commit of a session's work checks so (`commitPlot`: the submit and each WIP; the
+  Steward's own commit that takes a delivered contract's `subquests.json` off its branch, `closeContract`, does
+  not), a WIP left in the plot with the reason, and a plot whose changes cannot be listed is not committed either;
+  before it, on a
   territory with `laws.patch_paths`, the assignee's `elvaria.patch` is applied through `Plots.applyPatch` and told
   in a `plot.patched` line, and a patch that touches other paths or does not apply sends the quest to the
   infirmary instead, `breaker:commit: elvaria.patch was not applied: …`, P1-28; the next run's prompt reads why
@@ -177,7 +186,7 @@
   it moved or the plot could not be made or reset (P1-42). A
   judge a breaker stopped is not chosen again in that run while another judge may take the review (domain
   `cutVerifiersOf`). The prompt shows the end of each failing check's log (`src/review/log-tail.ts`: the last 40 lines, at most
-  4 000 characters for all of them), masked with the session's secret values and the patterns, because the log lies
+  2 000 characters a check and 4 000 for all of them), masked with the session's secret values and the patterns, because the log lies
   in `.runs/`, outside the plot, where the judge's tools do not reach; so does the prompt of an assignee whose work
   came back, for the checks of the verdict that returned it (P1-10b). Under
   `verifier_same_family = machine_only` with no judge of another family, the machine's verdict comes from them
@@ -227,7 +236,7 @@
   judge's, its parts are merged in (`Plots.merge`; a conflict is left in progress for the knight, and the log
   says so); before its judge the check `party` says whether every part is in (`Plots.unmerged`; a missing part
   fails the run as `incomplete`, so the next session gets it). The territory's checks run by the quest's place
-  (`PlotCheck.party_role`: a part skips `defer_to_merge` checks, the merge quest runs them all), and the delivery
+  (`PlotCheck.party_role`: a part and the contract quest skip `defer_to_merge` checks, the merge quest runs them all), and the delivery
   note of a party's quest says where the party stands (`partyStatusOf`) and that only the merge quest's branch is
   merged by hand. (P1-21) On a territory whose `blind_trial` is due, the delivery adds the `acceptance` part
   (domain's `acceptanceQuestOf`) before the merge quest, which waits for it too; its plot starts on the contract's
@@ -253,8 +262,8 @@
 - Decide: who takes what, who verifies, when a quest may move are pure functions of the domain (`planTick`,
   `transition`, `selectVerifier`, `validateVerdict`, ADR 0002).
 - Switch or rotate accounts: a quest asleep too long goes only to a character whose own mana is open; kill a
-  process itself (runner-core's
-  `killTree` does, through the runner's `kill`); know git or a territory's programs (`Plots` is given, with the
+  process with code of its own (a session dies through its runner's `kill`, a session the last Steward left
+  through runner-core's `killTree`, a script through runner-core's `startChild`); know git or a territory's programs (`Plots` is given, with the
   territory's checks resolved for `run-check`; `folderPlots` is a folder with no git, no checks and no diff, for
   the specs).
 - Push, merge or send anything a quest delivered (stage 1, §9.1 item 11): the owner does, from the delivery note.
@@ -281,9 +290,11 @@ entry matches exactly one session, and the replayed log equals the files. `deliv
 report and a sealed draft from worktree-like plots, and a document copied into a territory without git;
 `subquests.spec.ts` opens a plan's sub-quests (again after a delivery that failed halfway) and refuses lists it
 cannot follow; assignees leave their files in the plot through `leavingRunners` (`src/__fixtures__/deliver.ts`).
-`party.spec.ts` runs a party on a real git repo (`src/__fixtures__/party.ts`, P1-18): contract, two parts on the
-contract's branch, the merge quest with both merged, its `party` check, judges from outside the party, the seal
-and the notes; then three parts editing one file, two conflicts, the knight resolving them over two runs.
+`party.spec.ts` runs a party on a real git repo (`src/__fixtures__/party.ts`, P1-18): contract, two parts (the
+first on the contract's branch, the second on the first's, which it waits for), the merge quest with both merged,
+its `party` check, judges from outside the party, the seal and the notes; the machine's merge a judge failed, taken
+by a knight who reads the verdict; then three parts editing one file, two conflicts, the knight resolving them over
+two runs.
 `party-rules.spec.ts` refuses the lists that break the party rules, starts a sub-quest on the branch of the
 one it waits for (P1-16 (f)), and takes the parts of a contract archived after its delivery (P1-21 (a)).
 `blind-trial.spec.ts` runs a blind trial (P1-21): the acceptance part on the contract's branch, its writer apart
