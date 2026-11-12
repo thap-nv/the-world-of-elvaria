@@ -314,6 +314,7 @@ Task của giai đoạn 1, để dành tới khi chủ nhân có tài khoản Co
   - Prompt người làm (`returned.md`): ghi chú đúng thì sửa; ghi chú sai thì viết thư `objection`, không sửa cho qua và không lặng lẽ bỏ qua.
   - Prompt người chấm (`verifier.md`): chấm theo mục tiêu của quest và kết quả check; chỗ người làm làm khác các bước của đề bài mà có lý do ở mục "Decisions taken" và vẫn đạt mục tiêu thì không phải lỗi.
   - Sổ đo: số thư `objection`, số phán quyết bị người chấm thứ hai đảo, theo từng người chấm.
+  - **Từ PS-03** (chủ nhân chốt 2026-11-12, §11): mục bản tấu của thư `objection` là một dòng `ATTENTION_TABLE` (`packages/domain/src/world/attention.ts`) cùng khóa `cli.digest.item.<kind>` và `cli.digest.advice.<advice>` VI/EN, không thêm đường riêng; quest không còn người chấm hợp lệ dùng lại mục `unjudgeable` sẵn có.
 - **Bất biến có test**: người chấm thứ hai khác người đầu và khác mọi người từng làm quest; thư không mở phiên nào ngoài phiên chấm đó; `persona`, tâm trạng, quan hệ không vào phiên nào (ADR 0025); không có thư trả lời thư.
 - **Test**: thư `objection` ⇒ người chấm thứ hai theo luật tách vai; phán quyết thứ hai đạt ⇒ quest đi tiếp, không tốn thêm lượt của người làm; thư thứ hai cho cùng phán quyết bị từ chối; không còn người chấm hợp lệ ⇒ một mục trong bản tấu; snapshot prompt mới.
 - **Vương quốc đang chạy**: `elvaria migrate` thêm kiểu thư mới vào `memos.json`.
