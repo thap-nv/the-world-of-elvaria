@@ -19,6 +19,15 @@ export const FEATURES_OFF = ['plugins', 'apps', 'image_generation'] as const;
 /** The system prompt and the territory's law files live in AGENTS.override.md: room for all of them. */
 export const CONTEXT_FILE_MAX_BYTES = 1_048_576;
 
+/**
+ * Windows' sandbox for every session (P1-12e, spike §4): `mxc`, Windows' own process isolation, needs no administrator
+ * and no setup, and lets a command start its children. `unelevated` (P1-12d) ran a command but refused the piped
+ * child it started (`spawn EPERM`: no Vitest, esbuild, `pnpm -r` or `spawnSync git`); `elevated` needs a setup with
+ * an administrator, runs as another account that git calls a dubious owner, and has no writable temp folder.
+ * Ignored off Windows.
+ */
+export const WINDOWS_SANDBOX = 'mxc';
+
 /** A TOML basic string: JSON's escapes are TOML's. */
 const toml = (text: string): string => JSON.stringify(text);
 
@@ -35,7 +44,7 @@ export function configOf(req: SpawnRequest): string[] {
   return [
     'approval_policy="never"',
     `sandbox_mode="${writes ? 'workspace-write' : 'read-only'}"`,
-    'windows.sandbox="unelevated"',
+    `windows.sandbox="${WINDOWS_SANDBOX}"`,
     'sandbox_workspace_write.exclude_tmpdir_env_var=true',
     'sandbox_workspace_write.exclude_slash_tmp=true',
     'sandbox_workspace_write.network_access=true',
