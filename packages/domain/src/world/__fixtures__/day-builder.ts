@@ -186,7 +186,7 @@ export function dayBuilder(morning: WorldSource) {
     reading(tribe: TribeId, pool: string, reading: Omit<ManaReadingView, 'observed_at'>): void {
       const ts = tick();
       const key = poolKey(tribe, pool);
-      const old: PoolView = pools.get(key) ?? { tribe, pool, asleep: false, readings: [] };
+      const old: PoolView = pools.get(key) ?? { tribe, pool, asleep: false, resets_at: null, readings: [] };
       const kept = old.readings.filter(({ window }) => window !== reading.window);
       const known = kept.length < old.readings.length;
       const fresh = { ...reading, observed_at: ts };
@@ -200,7 +200,7 @@ export function dayBuilder(morning: WorldSource) {
     sleep(tribe: TribeId, pool: string, asleep: boolean): void {
       tick();
       const key = poolKey(tribe, pool);
-      pools.set(key, { ...(pools.get(key) ?? { tribe, pool, readings: [] }), asleep });
+      pools.set(key, { ...(pools.get(key) ?? { tribe, pool, readings: [] }), asleep, resets_at: null });
       append(asleep ? 'mana.exhausted' : 'mana.restored', STEWARD, { tribe, pool });
     },
     /** A line the world animates but does not keep (agent.*, verdict.*, command.*, a type it has never seen). */
