@@ -103,7 +103,16 @@ describe('translateClaude', () => {
       url: 'https://example.com',
     });
     const grep = { tool_name: 'Grep', tool_input: { pattern: 'score' }, duration_ms: undefined };
-    expect(dataOf('PostToolUse', grep)).toEqual({ tool: 'read' });
+    expect(dataOf('PostToolUse', grep)).toEqual({ tool: 'search' });
+    // Searching and listing read no one file: the metrics count reads by file (PS-21).
+    for (const tool_name of ['Glob', 'LS']) {
+      expect(
+        dataOf('PostToolUse', { tool_name, tool_input: { path: 'src' }, duration_ms: undefined }),
+      ).toEqual({
+        tool: 'search',
+        path: 'src',
+      });
+    }
     const read = { tool_name: 'Read', tool_input: { file_path: 'D:\\kingdom\\quests\\q\\handover.md' } };
     expect(dataOf('PostToolUse', { ...read, duration_ms: undefined })).toEqual({
       tool: 'read',

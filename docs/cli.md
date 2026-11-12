@@ -18,6 +18,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria tribe disable <id>` | Tắt một tộc: không nhận việc mới; quest đang chạy chạy xong, quest đang chờ thì chờ. elvaria tribe check bật lại. |
 | `elvaria territory add <path>` | Gắn một repo hoặc thư mục vào vương quốc (mở cõi). |
 | `elvaria territory list` | Liệt kê các lãnh thổ. |
+| `elvaria territory graph <id>` | Dựng đồ thị code của một lãnh thổ ở một commit (0 mana) và hỏi nó một câu. |
 | `elvaria character add <id>` | Triệu hồi một nhân vật: nghề, tộc, model và cấp ban đầu. |
 | `elvaria character list` | Liệt kê các nhân vật. |
 | `elvaria character suspend <id>` | Đình chỉ một nhân vật: nhân vật không nhận việc và buông nhiệm vụ đang giữ, nhiệm vụ đi tiếp không có nó (lệnh suspend). |
@@ -133,6 +134,16 @@ Gắn một repo hoặc thư mục vào vương quốc (mở cõi).
 Liệt kê các lãnh thổ.
 
 Không có tham số riêng, chỉ các tùy chọn chung.
+
+## `elvaria territory graph`
+
+Dựng đồ thị code của một lãnh thổ ở một commit (0 mana) và hỏi nó một câu.
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<id>` | Id của lãnh thổ. |
+| `--commit <ref>` | Commit, nhánh hoặc tag để dựng (mặc định: đầu nhánh mặc định). |
+| `--query <words>` | Các từ để hỏi đồ thị (tên mã và đường dẫn cho kết quả tốt nhất), như graphify query. |
 
 ## `elvaria character add`
 

@@ -33,6 +33,8 @@
 - Reads the owner's royal decree (`readDecree`, `kingdomLayout.decree` = `decree.md`, null when absent) and masks
   secrets in free text it keeps (ADR 0013): every verdict write masks the secret patterns in `notes` (checked
   by the schema again after), every memo write masks them in its text (PS-02), and `redactHandover` masks a session's values and the patterns in its letter.
+- Lays out a territory's code graphs (PS-21): `kingdomLayout.graphs`, `graph(<territory>, <commit>)`, `graphSource`
+  and `graphLock`, under `.state/graphs/<territory>/`.
 
 ## Does not
 

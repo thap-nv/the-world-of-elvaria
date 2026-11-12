@@ -5,6 +5,7 @@ import type { PromptTemplates } from '@elvaria/runner-core';
 import type { HeldLock } from '@elvaria/store';
 
 import type { Background } from './background.ts';
+import type { GraphBuilds } from './graph-builds.ts';
 import type { JudgeLocks } from './review/exclusive.ts';
 import type { ManaBook } from './mana/book.ts';
 import type { Restart } from './restart.ts';
@@ -29,6 +30,8 @@ export interface State {
   readonly background: Background;
   /** Exclusive locks held for judges in their scratch plots (P1-20): stop() releases them. */
   readonly judgeLocks: JudgeLocks;
+  /** Code graphs building outside the tick (PS-21): stop() kills them; undefined without `deps.graphs`. */
+  readonly graphs: GraphBuilds | undefined;
   reported: Reported;
   /** Aborted by stop(): a tick it stops in starts no other script. */
   stopping: AbortController;

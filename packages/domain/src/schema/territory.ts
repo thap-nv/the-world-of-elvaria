@@ -13,6 +13,7 @@ import {
   rejectDuplicateIds,
   unique,
 } from './common.ts';
+import { CodeGraphFlagSchema } from './territory-graph.ts';
 
 const describe = (description: string) => ({ description });
 
@@ -259,6 +260,7 @@ export const TerritorySchema = z
       ),
     laws: LawsSchema.prefault({}),
     blind_trial: BlindTrialSchema.prefault({}),
+    code_graph: CodeGraphFlagSchema,
     secrets_allowed: unique(z.array(z.string().regex(REGISTRY_ID_PATTERN)))
       .default(() => [])
       .meta(

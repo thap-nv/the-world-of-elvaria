@@ -13,6 +13,7 @@ import {
   QuestUnclaimableDataSchema,
   TerritoryChangeDataSchema,
 } from './state-data.ts';
+import { GraphBuiltDataSchema, GraphFailedDataSchema } from './graph-data.ts';
 import { PlotMergedDataSchema, PlotPatchedDataSchema, PlotRestoredDataSchema } from './plot-data.ts';
 import { MemoClosedDataSchema, MemoFiledDataSchema, MemoRoutedDataSchema } from './memo-data.ts';
 import {
@@ -38,7 +39,7 @@ export const ToolKindSchema = z
   .enum(TOOL_KINDS)
   .meta(
     describe(
-      'Normalised tool kind (implementation-plan §3.10): Read/Glob/Grep and read_file map to read, Edit/Write and write_file/replace to write, Bash and run_shell_command to bash, WebFetch/WebSearch to web.',
+      'Normalised tool kind (implementation-plan §3.10): Read and read_file map to read, Glob/Grep/LS and grep_search/find_by_name/list_dir to search (read before PS-21), Edit/Write and write_file/replace to write, Bash and run_shell_command to bash, WebFetch/WebSearch to web.',
     ),
   );
 export type ToolKind = z.infer<typeof ToolKindSchema>;
@@ -245,6 +246,8 @@ export const EVENT_DATA_SCHEMAS = {
   'territory.attached': TerritoryChangeDataSchema,
   'territory.surveyed': TerritoryChangeDataSchema,
   'territory.health': TerritoryChangeDataSchema,
+  'graph.built': GraphBuiltDataSchema,
+  'graph.failed': GraphFailedDataSchema,
   'memo.filed': MemoFiledDataSchema,
   'memo.routed': MemoRoutedDataSchema,
   'memo.closed': MemoClosedDataSchema,

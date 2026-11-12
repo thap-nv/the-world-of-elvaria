@@ -27,6 +27,7 @@ describe('parsePolicy', () => {
       elvaria_protected_paths: ['.git/**'],
       patch_file: 'elvaria.patch',
       search_commands: ['git grep', 'git ls-files'],
+      graph_commands: ['graphify query', 'graphify explain'],
       laws: {
         ...DC1_LAWS,
         read_only_paths: ['docs/glossary.md'],
@@ -55,6 +56,7 @@ describe('parsePolicy', () => {
     [{ version: 1, cli_protected_paths: [null] }, 'cli_protected_paths is not a list of strings'],
     [{ version: 1, elvaria_protected_paths: [3] }, 'elvaria_protected_paths is not a list of strings'],
     [{ version: 1, search_commands: 'git grep' }, 'search_commands is not a list of strings'],
+    [{ version: 1, graph_commands: [1] }, 'graph_commands is not a list of strings'],
     [{ version: 1, laws: [] }, 'laws is not an object'],
     [{ version: 1, laws: { forbidden_paths: '.env' } }, 'laws.forbidden_paths is not a list of strings'],
     [{ version: 1, laws: { forbidden_commands: [1] } }, 'laws.forbidden_commands is not a list of strings'],

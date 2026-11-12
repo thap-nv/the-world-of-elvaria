@@ -5,17 +5,11 @@ import type { Metrics, MetricsWindow, PassRate, Rework, ReworkCause } from '@elv
 import type { Translate } from '@elvaria/i18n';
 
 import { NONE } from '../listing.ts';
+import { count, tableSection } from './section.ts';
+import { firstEditsLine, graphLine, promptSection } from './view-sessions.ts';
+import type { MetricsSection } from './section.ts';
 
-export interface MetricsTable {
-  readonly header: readonly string[];
-  readonly rows: readonly (readonly string[])[];
-}
-
-export interface MetricsSection {
-  readonly title: string;
-  readonly lines: readonly string[];
-  readonly table?: MetricsTable;
-}
+export type { MetricsSection, MetricsTable } from './section.ts';
 
 /** One day's ledger, for the report's table by day. */
 export interface DayMetrics {
@@ -29,7 +23,6 @@ const MINUTE_DIGITS = 1;
 const rateText = ({ passed, decided }: PassRate): string =>
   decided === 0 ? NONE : `${Math.round((passed / decided) * PERCENT)} %`;
 const minutes = (value: number): string => value.toFixed(MINUTE_DIGITS);
-const count = (value: number): string => String(value);
 
 export const causeCounts = (rework: readonly Rework[]): Record<ReworkCause, number> =>
   Object.fromEntries(
@@ -70,6 +63,8 @@ function summarySection(t: Translate, metrics: Metrics): MetricsSection {
       }),
       t('cli.metrics.line.set_aside', { count: metrics.set_aside.length }),
       t('cli.metrics.line.reads', { total: metrics.reads.total, files: metrics.reads.repeated.length }),
+      graphLine(t, metrics),
+      firstEditsLine(t, metrics),
     ],
   };
 }
@@ -131,11 +126,6 @@ function firstPassSection(t: Translate, metrics: Metrics): MetricsSection {
       ]),
     ),
   });
-}
-
-/** A section whose table is left out when it has no row. */
-function tableSection(title: string, empty: string, table: MetricsTable): MetricsSection {
-  return table.rows.length === 0 ? { title, lines: [empty] } : { title, lines: [], table };
 }
 
 function ownerSection(t: Translate, metrics: Metrics): MetricsSection {
@@ -206,7 +196,17 @@ function readsSection(t: Translate, metrics: Metrics): MetricsSection {
   });
 }
 
-const LIMITS = ['rule', 'check', 'crash', 'cancelled', 'day', 'set_aside', 'reads'] as const;
+const LIMITS = [
+  'rule',
+  'check',
+  'crash',
+  'cancelled',
+  'day',
+  'set_aside',
+  'reads',
+  'first_edits',
+  'prompts',
+] as const;
 
 const limitsSection = (t: Translate): MetricsSection => ({
   title: t('cli.metrics.title.limits'),
@@ -223,6 +223,7 @@ export const metricsSections = (t: Translate, metrics: Metrics): MetricsSection[
   sealedSection(t, metrics),
   questSection(t, metrics),
   readsSection(t, metrics),
+  promptSection(t, metrics),
   limitsSection(t),
 ];
 

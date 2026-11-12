@@ -18,7 +18,7 @@ import {
   WRITE_TOOLS,
 } from './constants.ts';
 import { forbiddenPathsOf } from './forbidden-changes.ts';
-import { commandLinesOf } from '@elvaria/domain';
+import { commandLinesOf, GRAPH_COMMANDS } from '@elvaria/domain';
 import type { Character, CharacterClass, Territory } from '@elvaria/domain';
 
 import type { SpawnRole } from '../runner/roles.ts';
@@ -52,6 +52,12 @@ export interface ToolPolicy {
    * tool, or the plot has no git.
    */
   readonly search_commands?: readonly string[];
+  /**
+   * The code graph's read-only commands (PS-21, ADR 0029): GRAPH_COMMANDS, for a class with Glob or Grep that does
+   * not deny a bare `Bash`, when the quest's graph is built. A class without a shell gets them alone, never its
+   * territory's checks: the adapters turn them into rules of the CLI, the hook allows one plain call per line.
+   */
+  readonly graph_commands?: readonly string[];
 }
 
 export interface ToolPolicyInput {
@@ -74,6 +80,8 @@ export interface ToolPolicyInput {
   readonly exclusive?: boolean;
   /** `capabilities.search` of the tribe's adapter (P1-53): false gives the SEARCH_COMMANDS; absent, it searches itself. */
   readonly cli_search?: boolean | undefined;
+  /** The quest's code graph is built and its territory has `code_graph` on (PS-21); absent: no graph commands. */
+  readonly graph?: boolean;
 }
 
 const unique = (items: readonly string[]): string[] => [...new Set(items)];
@@ -162,6 +170,16 @@ function searchCommandsOf(tools: readonly string[], input: ToolPolicyInput): str
   return searches ? [...SEARCH_COMMANDS] : [];
 }
 
+/**
+ * Who asks the code graph (owner, 2026-11-11): a class that searches code, by data and alike in every tribe (ADR
+ * 0016), unless it denies a bare shell (the poet, the envoy, the monk); the registry's allow lists stay as they are,
+ * or a class would get a shell and its territory's checks with it.
+ */
+function graphCommandsOf(tools: readonly string[], deniedTools: ReadonlySet<string>, input: ToolPolicyInput) {
+  if (input.graph !== true || deniedTools.has(SHELL_TOOL)) return [];
+  return tools.some((tool) => (SEARCH_TOOLS as readonly string[]).includes(tool)) ? [...GRAPH_COMMANDS] : [];
+}
+
 export function toolPolicyOf(input: ToolPolicyInput): ToolPolicy {
   const verifier = input.role === 'verifier';
   const scratch = verifier && input.scratch === true;
@@ -188,6 +206,7 @@ export function toolPolicyOf(input: ToolPolicyInput): ToolPolicy {
     ...fenceRules(laws),
   ];
   const search = searchCommandsOf(tools, input);
+  const graph = graphCommandsOf(tools, deniedTools, input);
   return {
     tools,
     allow: unique([...granted, ...shell, ...generate]),
@@ -196,5 +215,6 @@ export function toolPolicyOf(input: ToolPolicyInput): ToolPolicy {
     apprentice: withApprentice ? { tools: ownTools } : null,
     laws,
     ...(search.length === 0 ? {} : { search_commands: search }),
+    ...(graph.length === 0 ? {} : { graph_commands: graph }),
   };
 }

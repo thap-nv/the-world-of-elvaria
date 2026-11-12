@@ -8,9 +8,10 @@ import { partialVerdictIdOf, shellOf, verifierSessionsOf } from '@elvaria/domain
 import { buildPrompt, readContextFiles, resumedPrompt } from '@elvaria/runner-core';
 import { readClassPrompt } from '@elvaria/store';
 import type { Character, CharacterClass, LoadTrace, Quest, Skill, Verdict } from '@elvaria/domain';
-import type { BuiltPrompt, PromptWithBlocks } from '@elvaria/runner-core';
+import type { BuiltPrompt, PromptGraph, PromptWithBlocks } from '@elvaria/runner-core';
 
-import { handoverPath, readDecree, readGazetteer, readHandover, readScriptures } from '../files.ts';
+import { handoverPath, readDecree, readHandover, readScriptures } from '../files.ts';
+import { gazetteerFor } from './gazetteer.ts';
 import { withLogTails } from '../review/log-tail.ts';
 import { continuationFor } from './continuation.ts';
 import { loadTraceOf } from './load-trace.ts';
@@ -62,6 +63,8 @@ interface PromptParts {
   readonly scriptures: readonly Scripture[];
   /** Chosen by selectSkills (§3.13); none in stage 1. */
   readonly skills: readonly Skill[];
+  /** The quest's code graph, when the session asks one (PS-21, sessionGraphOf). */
+  readonly graph?: PromptGraph | undefined;
 }
 
 async function builtPromptOf(
@@ -81,9 +84,10 @@ async function builtPromptOf(
     territory,
     registry: ctx.world.registry,
     scriptures: parts.scriptures.map(({ text }) => text),
-    gazetteer: await readGazetteer(ctx.root, territory.id),
+    gazetteer: await gazetteerFor(ctx, quest, territory),
     class_prompt: await readClassPrompt(ctx.root, parts.characterClass),
     ...(await contextFilesFor(ctx, input)),
+    ...(parts.graph === undefined ? {} : { graph: parts.graph }),
   };
   if (input.role === 'verifier') {
     // The branch's diff against its fork point (PlotManager.diff, P1-15); a plot without git has none to give. A
@@ -124,7 +128,7 @@ export interface SessionPrompt {
 export async function promptOf(
   ctx: Context,
   input: SessionInput,
-  given: Pick<PromptParts, 'characterClass' | 'known'>,
+  given: Pick<PromptParts, 'characterClass' | 'known' | 'graph'>,
   resume: Resume | null,
 ): Promise<SessionPrompt> {
   const parts = { ...given, scriptures: await readScriptures(ctx.root, input.character.id), skills: [] };

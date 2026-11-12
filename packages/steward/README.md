@@ -133,6 +133,10 @@
   the scripture files and their lines, the skills and the prompt's blocks; `command.applied` and `command.rejected`
   name the command's `kind`, and `check.end` names the check whose environment failed when the run is set aside
   (`environment`, (b) of P1-54), so the metrics ledger reads them from the log.
+- Quotes a gazetteer stamped with the commit it was written at (`<!-- elvaria:commit <sha> -->`, PS-21) without the
+  stamp and with how many commits touched each top-level folder since, up to the quest's fork point
+  (`sessions/gazetteer.ts`, `Plots.drift`, optional: folder plots have none); a drift that cannot be read costs the
+  note and a log line, never the prompt.
 - Opens sessions through `AgentRunner` only (ADR 0006, 0021): the plot, the prompt (`sessions/prompt.ts`) and tool
   policy of `runner-core`, the budget, `.runs/<quest>-<n>`, and the env (§3.9): the minimal env it was given, the
   `ELVARIA_*` context of the hook and exactly the quest's `secrets_required` from the treasury (`sessionEnvOf`
@@ -279,6 +283,12 @@
   `reason: null`, and keeps the notices in `.state/unclaimable.json` (`readUnclaimable`) for `elvaria quest list`
   and `show`. Rings once when a submitted quest waits for a judge the roster does not have (`unjudgeable`,
   P1-15: `different_model` and no judge of the kind outside its doers on another model); no file, no event.
+- Builds the territories' code graphs outside the tick (PS-21, ADR 0029, `graph-builds.ts`) through the optional
+  `deps.graphs` port (runner-core's `codeGraphsOf`): for each territory with `code_graph` on, the default branch's tip
+  every tick and a quest's base commit when its session opens; one build per territory, the latest commit next,
+  `graph.built` / `graph.failed` lines (a failed commit is not tried again by this Steward), killed at stop. A session
+  whose graph is built gets the graph commands in its policy, `GRAPHIFY_OUT` and graphify's folder in its env, and
+  the prompt's graph block (`sessions/graph.ts`); one whose graph is not built yet opens without it.
 
 ## Does not
 

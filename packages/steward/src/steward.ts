@@ -8,6 +8,7 @@ import { acquireLock, inKingdom, isLocked } from '@elvaria/store';
 import type { Result } from '@elvaria/domain';
 
 import { createBackground } from './background.ts';
+import { createGraphBuilds } from './graph-builds.ts';
 import { loop, wake } from './loop.ts';
 import { createJudgeLocks } from './review/exclusive.ts';
 import { createManaBook } from './mana/book.ts';
@@ -69,6 +70,7 @@ export function createSteward(deps: StewardDeps): Steward {
       wake(deps, state, tick);
     }),
     judgeLocks: createJudgeLocks(deps.log),
+    graphs: deps.graphs === undefined ? undefined : createGraphBuilds(deps.graphs, deps.log),
     reported: new Map(),
     stopping: new AbortController(),
     unjudged: new Set(),
@@ -98,6 +100,7 @@ export function createSteward(deps: StewardDeps): Steward {
       await state.queue;
       // The checks and scripts outside the tick die before the lock goes: the next Steward runs them again (P1-25).
       await state.background.stop();
+      await state.graphs?.stop();
       await state.sessions.close('the Steward stopped');
       await state.sessions.saved();
       await state.judgeLocks.releaseAll();
@@ -108,6 +111,8 @@ export function createSteward(deps: StewardDeps): Steward {
     },
     tick,
     running: () => state.sessions.size(),
-    idle: () => state.background.idle(),
+    idle: async () => {
+      await Promise.all([state.background.idle(), state.graphs?.idle()]);
+    },
   };
 }

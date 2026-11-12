@@ -27,6 +27,7 @@ import type {
   QuestEvent,
   QuestId,
   Result,
+  TerritoryId,
 } from '@elvaria/domain';
 import type { EventLog } from '@elvaria/eventlog';
 import type { KingdomStore } from '@elvaria/store';
@@ -68,6 +69,8 @@ export interface Line {
   readonly data: Readonly<Record<string, unknown>>;
   readonly quest?: Quest;
   readonly session?: string | undefined;
+  /** The territory of a line with no quest (graph.*, PS-21); a quest's line takes its quest's. */
+  readonly territory?: TerritoryId;
 }
 
 export interface Recorder {
@@ -134,6 +137,7 @@ async function append(deps: RecorderDeps, line: Line, ts: string): Promise<void>
     type: line.type,
     actor: line.actor,
     ...(line.quest === undefined ? {} : { quest: line.quest.id, territory: line.quest.territory }),
+    ...(line.quest === undefined && line.territory !== undefined ? { territory: line.territory } : {}),
     ...(run > 0 ? { attempt: run } : {}),
     ...(line.session === undefined ? {} : { session: line.session }),
     data: line.data,

@@ -12,7 +12,9 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
 - Turns the 12 Claude Code events Elvaria registers into lines (§3.10): `SessionStart` → `agent.session.start`
   (the model from the context when the payload has none, as under `-p`), `PostToolUse`/`PostToolUseFailure` →
   `agent.tool` (kind, path relative to the plot with `/`, command, url, exit, duration, and `agent_type` when a
-  sub-agent made the call, so a revival tells the apprentice's work from the character's, §3.12), `StopFailure` →
+  sub-agent made the call, so a revival tells the apprentice's work from the character's, §3.12; Glob, Grep, LS
+  and agy's `grep_search`, `find_by_name`, `list_dir` are kind `search`, not `read`, since PS-21, so the metrics'
+  reads by file count only files read), `StopFailure` →
   `mana.signal`, `PreCompact`/`PostCompact` → `agent.compact`, `Notification` → `agent.notification`. The
   runner writes what only the stream knows: `agent.session.end` (outcome, usage, kills) and
   `agent.subagent.start`/`end` (`SubagentStop` does not run when an apprentice stops at `maxTurns`).
@@ -68,6 +70,11 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
   sub-agent's own session (empty `lastUserInput`) starts no line and meets no gate.
 - Keeps what it must remember between calls in `.runs/<quest>-<n>/hook/` (handover fingerprint at start, Stop
   reminders per session), one small versioned JSON file per concern.
+- Code graph (PS-21, `src/graph.ts`): in both branches and for every class, refuses every graphify call but the
+  policy's `graph_commands` (`query`, `path`, `explain`, `affected`) with the options that only shape the answer
+  (`--graph`, `--backend` and any other refused), and any graphify call when the policy grants none; a class without
+  a shell runs them one plain call per line (Claude: a `Bash` call of a class whose policy `tools` lack it, the shell
+  runner-claude gives for these alone; agy: as `search_commands`).
 
 ## Does not
 

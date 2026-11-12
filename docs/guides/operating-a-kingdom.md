@@ -200,6 +200,8 @@ Hai CLI **tự cập nhật qua đêm** theo VS Code (hai lần trong hai ngày 
 
 Trước khi ghim: đọc changelog (`agy changelog`; https://code.claude.com/docs/en/changelog) tìm mục đổi `-p`, `--settings`, quyền, hook, stream-json, mã thoát; đối chiếu các dòng có dấu ⚑ trong [cli-facts](../reference/cli-facts-2026-11-12.md). Muốn chắc hơn: `elvaria tribe check <tộc>` chạy bộ test hợp đồng với CLI thật (tốn chút mana).
 
+**Đồ thị code (PS-21, [ADR 0029](../adr/0029-code-graph-of-the-territory.md)).** Tùy chọn, mặc định tắt. Cài graphify (`uv tool install graphifyy`, Python 3.10–3.14), chạy `elvaria territory graph <lãnh thổ> --query '<tên mã>'` để thử (0 mana, đồ thị ở `.state/graphs/<lãnh thổ>/`), rồi đặt `"code_graph": true` trong `territories/<id>/territory.json` và chạy `elvaria doctor --pin` để ghim graphify. Từ đó Quản sự dựng đồ thị ở commit gốc của mỗi quest, và nghề có `Glob` hoặc `Grep` (trừ nghề cấm trần `Bash`) hỏi được nó bằng `graphify query`, `path`, `explain`, `affected`. `doctor` cảnh báo khi graphify thiếu hay đổi phiên bản; thiếu graphify thì quest chạy như trước. Bật cờ trên lãnh thổ nào là chủ nhân chốt sau A/B của PS-21.
+
 ## 9. Đồng hồ mana
 
 Quản sự đọc hạn mức của từng tài khoản mà không gọi model (`claude -p /usage`, `agy -p /usage`), sau mỗi phiên và mỗi `mana.probe_interval_minutes` (15). Mỗi cửa sổ là một đồng hồ: 5 giờ, tuần, và trần tuần riêng mà tài khoản đặt cho một model (Argon ở tài khoản Antigravity; Fable, một model khác của Claude, ở tài khoản Claude); trần riêng chỉ ràng nhân vật chạy model đó.

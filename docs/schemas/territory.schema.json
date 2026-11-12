@@ -372,6 +372,10 @@
       },
       "default": {}
     },
+    "code_graph": {
+      "description": "On: the Steward builds a code graph of the territory with graphify (no model, kingdom.programs.graphify) at the commit each quest's branch forked from, outside every plot, and a class that searches code (Glob or Grep, no bare Bash deny) asks it with `graphify query`, `path`, `explain` and `affected`. A git territory only. Off or absent: no graph, no command, no prompt block.",
+      "type": "boolean"
+    },
     "secrets_allowed": {
       "description": "Names in the treasury that quests on this territory may request (quest.secrets_required must be a subset).",
       "type": "array",

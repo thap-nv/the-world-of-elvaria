@@ -4,7 +4,7 @@
 
 Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là một event; log chỉ ghi thêm, không bao giờ viết lại. `type` là `nhóm.hành_động`; reader giữ nguyên type lạ, renderer bỏ qua nó. Hợp đồng đầy đủ: [schemas/event.schema.json](schemas/event.schema.json); nghĩa từng nhóm và các tiền tố dành sẵn: [glossary.md](glossary.md) mục 12.
 
-69 type trong danh mục v1, 57 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
+71 type trong danh mục v1, 59 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
 
 ## Khung một dòng
 
@@ -51,8 +51,8 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 |---|---|
 | `agent.session.start` | `session`: string (không rỗng)<br>`model`: string (khớp `^[a-z0-9][a-z0-9.-]*$`) |
 | `agent.session.end` | `outcome`: một trong `completed`, `max_turns`, `budget`, `killed`, `error` — RunResult.outcome (implementation-plan §3.7).<br>`usage` (tùy chọn): object { tokens, turns? } |
-| `agent.tool` | `tool`: một trong `read`, `write`, `bash`, `web`, `search`, `other` — Normalised tool kind (implementation-plan §3.10): Read/Glob/Grep and read_file map to read, Edit/Write and write_file/replace to write, Bash and run_shell_command to bash, WebFetch/WebSearch to web.<br>`path` (tùy chọn): string (không rỗng) — Relative to the plot, '/' separators.<br>`command` (tùy chọn): string — Redacted.<br>`url` (tùy chọn): string<br>`exit` (tùy chọn): integer<br>`duration_ms` (tùy chọn): integer ≥ 0<br>`agent_type` (tùy chọn): string (không rỗng) — The sub-agent that made the call (`apprentice`), from the hook payload; absent when the character itself did (implementation-plan §3.12). |
-| `agent.tool.blocked` | `tool`: một trong `read`, `write`, `bash`, `web`, `search`, `other` — Normalised tool kind (implementation-plan §3.10): Read/Glob/Grep and read_file map to read, Edit/Write and write_file/replace to write, Bash and run_shell_command to bash, WebFetch/WebSearch to web.<br>`reason`: string (không rỗng)<br>`agent_type` (tùy chọn): string (không rỗng) — The sub-agent that made the call (`apprentice`), from the hook payload; absent when the character itself did (implementation-plan §3.12). |
+| `agent.tool` | `tool`: một trong `read`, `write`, `bash`, `web`, `search`, `other` — Normalised tool kind (implementation-plan §3.10): Read and read_file map to read, Glob/Grep/LS and grep_search/find_by_name/list_dir to search (read before PS-21), Edit/Write and write_file/replace to write, Bash and run_shell_command to bash, WebFetch/WebSearch to web.<br>`path` (tùy chọn): string (không rỗng) — Relative to the plot, '/' separators.<br>`command` (tùy chọn): string — Redacted.<br>`url` (tùy chọn): string<br>`exit` (tùy chọn): integer<br>`duration_ms` (tùy chọn): integer ≥ 0<br>`agent_type` (tùy chọn): string (không rỗng) — The sub-agent that made the call (`apprentice`), from the hook payload; absent when the character itself did (implementation-plan §3.12). |
+| `agent.tool.blocked` | `tool`: một trong `read`, `write`, `bash`, `web`, `search`, `other` — Normalised tool kind (implementation-plan §3.10): Read and read_file map to read, Glob/Grep/LS and grep_search/find_by_name/list_dir to search (read before PS-21), Edit/Write and write_file/replace to write, Bash and run_shell_command to bash, WebFetch/WebSearch to web.<br>`reason`: string (không rỗng)<br>`agent_type` (tùy chọn): string (không rỗng) — The sub-agent that made the call (`apprentice`), from the hook payload; absent when the character itself did (implementation-plan §3.12). |
 | `agent.subagent.start` | object mở, chưa có schema |
 | `agent.subagent.end` | `agent_type`: string (không rỗng)<br>`duration_ms`: integer ≥ 0<br>`stopped` (tùy chọn): `"max_turns"` — The CLI stopped the sub-agent at its maxTurns (breakers.subagent_max_turns); absent when it finished on its own or the CLI did not say (implementation-plan §3.12). |
 | `agent.subagent.overrun` | `agent_type`: string (không rỗng)<br>`duration_ms`: integer ≥ 0<br>`limit_minutes`: integer ≥ 1 |
@@ -135,6 +135,13 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 | `territory.attached` | `territory`: object { id, name, kind, health, surveyed_at } — The territory after this event (territoryViewOf). |
 | `territory.surveyed` | `territory`: object { id, name, kind, health, surveyed_at } — The territory after this event (territoryViewOf). |
 | `territory.health` | `territory`: object { id, name, kind, health, surveyed_at } — The territory after this event (territoryViewOf). |
+
+## `graph` · 2 type
+
+| Type | `data` |
+|---|---|
+| `graph.built` | `commit`: string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) — The commit of the territory the graph is of: the folder `.state/graphs/<territory>/<commit>/`.<br>`nodes` (tùy chọn): integer ≥ 0 — graphify's count, when it printed one.<br>`edges` (tùy chọn): integer ≥ 0<br>`duration_ms`: integer ≥ 0 |
+| `graph.failed` | `commit`: string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) — The commit of the territory the graph is of: the folder `.state/graphs/<territory>/<commit>/`.<br>`reason`: string (không rỗng) — Why, with the end of graphify's output; redacted. |
 
 ## `memo` · 3 type
 

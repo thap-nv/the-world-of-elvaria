@@ -18,6 +18,7 @@ import {
   RankSchema,
   rejectDuplicateIds,
 } from './common.ts';
+import { ProgramsSchema } from './program.ts';
 import { TribeSchema } from './tribe.ts';
 
 const describe = (description: string) => ({ description });
@@ -219,6 +220,7 @@ export const KingdomSchema = z
           "Tribes (product plan 0.6, tribe contract): one entry per account the owner signs in to on this machine. Adding a tribe = an adapter (built in, or a file adapters/<name>.mjs in the kingdom) + a theme entry (name, mana colour, sprites, crest) + the owner's own login; the core and existing characters do not change. `elvaria init` writes claude (claude_code) and gemini (antigravity). The Steward reads each adapter's capabilities at start and narrows what that tribe may take (implementation-plan §3.14). Ids are unique (zod).",
         ),
       ),
+    programs: ProgramsSchema,
     mana: ManaSchema,
     breakers: BreakersSchema,
     schedule: ScheduleSchema,

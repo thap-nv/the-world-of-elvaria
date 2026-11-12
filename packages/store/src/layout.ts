@@ -65,5 +65,13 @@ export const kingdomLayout = {
   /** Raw output, generated settings and check logs of one attempt; `attempt_log[].run_dir` points here. */
   runDir: (id: QuestId, attempt: number): string => `.runs/${id}-${attempt}`,
   stewardLock: (): string => '.state/steward.lock',
+  /**
+   * A territory's code graphs (PS-21, ADR 0029), outside every quest's plot so no graph file reaches a diff or a
+   * check: one folder per commit built, `source` the detached worktree they are built from, `build` the lock.
+   */
+  graphs: (id: TerritoryId): string => `.state/graphs/${id}`,
+  graph: (id: TerritoryId, commit: string): string => `.state/graphs/${id}/${commit}`,
+  graphSource: (id: TerritoryId): string => `.state/graphs/${id}/source`,
+  graphLock: (id: TerritoryId): string => `.state/graphs/${id}/build`,
   backup: (stamp: string): string => `${BACKUP_DIR}/${stamp}`,
 } as const;

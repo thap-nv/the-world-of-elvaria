@@ -2,6 +2,7 @@
 // `agent.tool` (implementation-plan §3.6, §3.10, §3.12). A call that is stopped gets a JSON `deny` on stdout,
 // exit 0, which Claude Code honours even for a call its allow rules permit (spike P1-02).
 import { denyTool, translation, withoutUndefined } from '../draft.ts';
+import { graphLineViolation, shelllessViolation } from '../graph.ts';
 import { commandViolation, forbiddenPathOf, matchingGlobOf, readOnlyReason } from '../laws.ts';
 import { plotPath, toolCallOf } from './tools.ts';
 import type { HookContext } from '../context.ts';
@@ -92,9 +93,18 @@ export const refusalText = (source: string, reason: string): string =>
     ? `Elvaria ${source}: ${reason}.`
     : `Elvaria ${source}: ${reason}. Do not try another way around it; if the work needs it, say so in handover.md.`;
 
+/** The code graph's rules (PS-21): no graphify call but the quest's own, and a shell-less class runs nothing else. */
+const graphRule = (call: ToolCall, ctx: HookContext): string | undefined =>
+  call.command === undefined
+    ? undefined
+    : (graphLineViolation(call.command, ctx.graphCommands) ?? shelllessViolation(call, ctx));
+
 export function preToolUse(input: ClaudeInput, ctx: HookContext): Translation {
   const call = toolCallOf(input.raw.tool_name, input.raw.tool_input);
-  const apprenticeRule = subagentViolation(call, ctx.apprenticeModels) ?? protectedViolation(call, ctx.laws);
+  const apprenticeRule =
+    subagentViolation(call, ctx.apprenticeModels) ??
+    protectedViolation(call, ctx.laws) ??
+    graphRule(call, ctx);
   const reason = apprenticeRule ?? lawViolation(call, ctx.laws);
   if (reason === undefined) return translation([]);
   const source = apprenticeRule === undefined ? 'law of this territory' : 'rule';
