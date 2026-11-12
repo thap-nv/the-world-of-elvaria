@@ -115,6 +115,8 @@ const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
   'memo.filed': { memo: 'm_20261106_4k2pqz', kind: 'proposal', from: 'thorn' },
   'memo.routed': { memo: 'm_20261106_4k2pqz', route: 'chancellor' },
   'memo.closed': { memo: 'm_20261106_4k2pqz', decision: 'handled', quest: 'q_20261106_7k3m2a' },
+  'schedule.ran': { job: 'digest', day: '2026-11-06' },
+  'digest.written': { day: '2026-11-06', file: 'digest/2026-11-06.md', must: 2, can_wait: 0 },
   'upgrade.started': { ref: 'main', to: SHA_NEW, from: SHA_OLD },
   'upgrade.switched': { from: null, to: SHA_NEW },
   'upgrade.rolled_back': { from: SHA_NEW, to: SHA_OLD },
@@ -260,6 +262,14 @@ describe('EventSchema', () => {
     ['graph.failed', { commit: SHA_NEW, reason: '' }, 'data.reason'],
     ['memo.routed', { memo: 'm_20261106_4k2pqz', route: 'owner' }, 'data.route'],
     ['memo.closed', { memo: 'm_20261106_4k2pqz', decision: 'done' }, 'data.decision'],
+    ['schedule.ran', { job: 'patrol', day: '2026-11-06' }, 'data.job'],
+    ['schedule.ran', { job: 'digest', day: '20261106' }, 'data.day'],
+    ['digest.written', { day: '2026-11-06', file: 'digest/x.md', must: 0, can_wait: 0 }, 'data.file'],
+    [
+      'digest.written',
+      { day: '2026-11-06', file: 'digest/2026-11-06.md', must: -1, can_wait: 0 },
+      'data.must',
+    ],
   ])('rejects %s with data %j', (type, data, expected) => {
     expect(issuesOf(line(type, data)).join('\n')).toContain(expected);
   });

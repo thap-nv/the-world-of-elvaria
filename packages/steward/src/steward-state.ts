@@ -1,6 +1,6 @@
 // What a Steward holds while it runs and keeps between ticks (implementation-plan §3.1). Apart from steward.ts, which
 // creates it, since PS-03: the tick (tick.ts) and the loop (loop.ts) work on it too.
-import type { QuestId, TribeId, TribeLimits, ZonedTime } from '@elvaria/domain';
+import type { JudgeWait, QuestId, TribeId, TribeLimits, ZonedTime } from '@elvaria/domain';
 import type { PromptTemplates } from '@elvaria/runner-core';
 import type { HeldLock } from '@elvaria/store';
 
@@ -9,6 +9,7 @@ import type { GraphBuilds } from './graph-builds.ts';
 import type { JudgeLocks } from './review/exclusive.ts';
 import type { ManaBook } from './mana/book.ts';
 import type { Restart } from './restart.ts';
+import type { Scheduler } from './schedule/scheduler.ts';
 import type { Sessions } from './sessions/running.ts';
 import type { Reported } from './unclaimable.ts';
 
@@ -37,6 +38,10 @@ export interface State {
   stopping: AbortController;
   /** Submitted quests the bell already named for having no judge in the roster (unjudgeable.ts, P1-15). */
   readonly unjudged: Set<QuestId>;
+  /** Submitted quests the bell named for judges all held by their mana, with their gauges (judge-waits.ts, PS-03). */
+  readonly judgeWaits: Map<QuestId, JudgeWait>;
+  /** The scheduled jobs: the digest, and the jobs the composition root gives (PS-03). */
+  readonly scheduler: Scheduler;
   /** Set by start(): what the first tick finishes of the last Steward's work (restart.ts, P1-44). */
   restart: Restart | undefined;
   held: Held | undefined;

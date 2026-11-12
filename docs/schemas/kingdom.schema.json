@@ -235,7 +235,7 @@
       }
     },
     "schedule": {
-      "$comment": "Scheduled jobs run inside the Steward (no cron, Task Scheduler or launchd). The job list is empty in stage 1, so every job defaults to disabled.",
+      "$comment": "Scheduled jobs run inside the Steward (no cron, Task Scheduler or launchd). The digest (PS-03) is the first job with a runner and is on by default; chronicle, temple and patrol have none yet, so they default to disabled.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -251,6 +251,23 @@
               "type": "string",
               "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
               "default": "21:00"
+            }
+          },
+          "default": {}
+        },
+        "digest": {
+          "description": "The daily digest (PS-03): at `at` the Steward writes digest/YYYY-MM-DD.md, everything that waits for the owner in two groups (must decide for the work to go on, can wait), each item with advice and its CLI command, and rings the bell once. No model, no mana; once a day, whatever the clock does.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "at": {
+              "type": "string",
+              "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+              "default": "08:00"
             }
           },
           "default": {}
@@ -652,6 +669,10 @@
         "chronicle": {
           "enabled": false,
           "at": "21:00"
+        },
+        "digest": {
+          "enabled": true,
+          "at": "08:00"
         },
         "temple": {
           "enabled": false,

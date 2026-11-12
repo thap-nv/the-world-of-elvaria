@@ -21,9 +21,11 @@ import type {
 import type { KingdomStore } from '@elvaria/store';
 
 import type { Bell } from './notice.ts';
+import type { Digest, ScheduledJob } from './schedule/ports.ts';
 import type { ScriptRunner } from './script/run-script.ts';
 
 export type { Bell, ManaGaugeNotice, Notice, NoticeQuest } from './notice.ts';
+export type { Digest, DigestRequest, JobMode, JobRun, ScheduledJob } from './schedule/ports.ts';
 
 /** Problems nobody is waiting for an answer to: a refused move, a failed spawn, a lost lock. English, for logs. */
 export interface Logger {
@@ -200,6 +202,13 @@ export interface StewardDeps {
    * prompts name (shellOf, P1-40). A spec names the OS whose prompt it checks.
    */
   readonly platform?: string;
+  /**
+   * The digest's port (PS-03): apps/cli words it in the owner's language and writes `digest/<day>.md`. Absent: no
+   * digest is written (a spec's Steward).
+   */
+  readonly digest?: Digest;
+  /** More jobs of kingdom.schedule, run by the Steward's scheduler (PS-03b's triage, PS-21c's docs graph). */
+  readonly jobs?: readonly ScheduledJob[];
 }
 
 export interface TickReport {

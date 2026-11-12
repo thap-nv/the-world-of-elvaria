@@ -4,6 +4,7 @@ import { CHARACTER_LEVEL } from './character/level.ts';
 import { CHARACTER_LIST } from './character/list.ts';
 import { CHARACTER_MODEL } from './character/model.ts';
 import { CHARACTER_RELEASE, CHARACTER_SUSPEND } from './character/suspend.ts';
+import { DIGEST } from './digest/digest.ts';
 import { DOCTOR } from './doctor/doctor.ts';
 import { INIT } from './init.ts';
 import { MEMO_DECIDE } from './memo/decide.ts';
@@ -68,6 +69,7 @@ export const COMMANDS: readonly CommandSpec[] = [
   MEMO_DECIDE,
   RUN,
   WAKE,
+  DIGEST,
   METRICS,
   SANDBOX_GENERATE,
   SANDBOX_REPLAY,

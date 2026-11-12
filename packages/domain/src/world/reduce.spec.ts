@@ -7,6 +7,7 @@ import {
   CHARACTER_VIEW,
   CHARACTERS,
   KINGDOM,
+  MEMOS,
   QUEST_VIEW,
   QUESTS,
   TERRITORIES,
@@ -28,7 +29,7 @@ const STATE = worldStateOf({
 
 let counter = 0;
 /** A valid line; ids only need to be well formed here. */
-function line(type: string, data: Record<string, unknown>): Event {
+function line(type: string, data: Record<string, unknown>, quest?: string): Event {
   counter += 1;
   return EventSchema.parse({
     v: 1,
@@ -37,6 +38,7 @@ function line(type: string, data: Record<string, unknown>): Event {
     type,
     actor: { kind: 'steward' },
     data,
+    ...(quest === undefined ? {} : { quest }),
   });
 }
 
@@ -179,6 +181,38 @@ describe('applyEvent', () => {
     );
     expect(asleep.pools[0]?.asleep).toBe(true);
     expect(applyEvent(asleep, line('mana.restored', pool)).pools[0]?.asleep).toBe(false);
+  });
+
+  it('opens a memo, routes it and drops it once closed, as worldStateOf reads the files (PS-03)', () => {
+    const [open] = MEMOS;
+    if (open === undefined) throw new Error('the examples have an open memo');
+    const id = { memo: open.id };
+    const filed = applyEvent(
+      STATE,
+      line('memo.filed', { ...id, kind: open.kind, from: open.from }, open.quest),
+    );
+    expect(filed.memos[open.id]).toMatchObject({ quest: open.quest, route: null });
+    const routed = applyEvent(filed, line('memo.routed', { ...id, route: 'chancellor' }));
+    const files = worldStateOf({
+      kingdom: KINGDOM,
+      territories: [],
+      characters: [],
+      quests: [],
+      campaigns: [],
+      memos: MEMOS,
+    });
+    expect(routed.memos).toEqual(files.memos);
+    expect(applyEvent(routed, line('memo.closed', { ...id, decision: 'shelved' })).memos).toEqual({});
+  });
+
+  it('opens a memo whose line names no quest, and routes no memo it does not hold', () => {
+    const filed = applyEvent(
+      STATE,
+      line('memo.filed', { memo: 'm_20261106_4k2pqz', kind: 'proposal', from: 'thorn' }),
+    );
+    expect(filed.memos).toMatchObject({ m_20261106_4k2pqz: { quest: null } });
+    const stray = line('memo.routed', { memo: 'm_20261106_zzzzzz', route: 'chancellor' });
+    expect(applyEvent(filed, stray)).toBe(filed);
   });
 
   it('marks the state fake between the two lines of a sandbox replay', () => {

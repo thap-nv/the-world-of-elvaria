@@ -1,6 +1,7 @@
 // `elvaria run`: the Steward of one kingdom, until the owner stops it (implementation-plan §3.1; P1-09 row,
 // "(Chốt sau P1-03)"). This is where the work engine is put together: a runner per tribe from its adapter, plots
-// over PlotManager, the console bell, the event log; the Steward itself sees only interfaces (ADR 0006, 0021).
+// over PlotManager, the console bell and the digest file (PS-03), the event log; the Steward itself sees only
+// interfaces (ADR 0006, 0021).
 import { openEventLog } from '@elvaria/eventlog';
 import { minimalEnv, openFileTreasury } from '@elvaria/runner-core';
 import { createSteward, nodeScriptRunner } from '@elvaria/steward';
@@ -13,6 +14,7 @@ import { openKingdomContext } from '../kingdom-context.ts';
 import { runningLine } from '../upgrade/running.ts';
 import { consoleBell } from './bell.ts';
 import { crewOf } from './crew.ts';
+import { fileDigest } from './digest-file.ts';
 import { graphsOf } from './graphs.ts';
 import { plotsOf } from './plots.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
@@ -52,6 +54,8 @@ function stewardOf(ctx: KingdomContext, crew: Crew, graphs: CodeGraphs | undefin
     // Catalog scripts run on the node found for Elvaria, with the same minimal env and no secret (§3.12).
     scripts: nodeScriptRunner(io.nodePath),
     bell: consoleBell(t, io),
+    // The digest, once a day at kingdom.schedule.digest.at, in the owner's language (PS-03).
+    digest: fileDigest(t, store.root, ctx.kingdom.name),
     log: {
       warn: (message) => {
         io.err(t('cli.run.warning', { message }));

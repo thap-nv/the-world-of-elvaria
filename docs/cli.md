@@ -43,6 +43,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria memo decide <memo> <decision>` | Quyết một thư, một lần: gác lại (shelved), bác (rejected), hoặc nêu nhiệm vụ làm việc đó (handled --quest); không nhiệm vụ nào đổi (lệnh decide_memo). |
 | `elvaria run` | Chạy Quản sự: giao nhiệm vụ cho nhân vật và cho nghiệm thu, tới khi bạn dừng (Ctrl+C). |
 | `elvaria wake <tribe>` | Nhờ Quản sự thăm dò mana của một tộc ngay, ví dụ sau khi đăng nhập lại (lệnh wake). |
+| `elvaria digest` | In bản tấu lúc này: mọi việc chờ bạn, chia hai nhóm (phải quyết để việc chạy tiếp, chờ được), mỗi việc kèm khuyến nghị và lệnh. Chỉ đọc vương quốc, không tốn mana. |
 | `elvaria metrics` | Sổ đo: lượt, làm lại theo nguyên nhân, đạt lượt đầu, lỗi lọt, lần cần chủ nhân. Chỉ đọc vương quốc, không tốn mana. |
 | `elvaria sandbox generate` | Sinh một ngày giả vào events/sandbox/ của vương quốc (sa bàn): không chạy phiên nào, không chạm nhiệm vụ thật. |
 | `elvaria sandbox replay <file>` | Phát lại một ngày giả thành dòng thời gian trên terminal. |
@@ -372,6 +373,12 @@ Nhờ Quản sự thăm dò mana của một tộc ngay, ví dụ sau khi đăng
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
 | `<tribe>` | Tộc cần thăm dò lại tài khoản (một id trong kingdom.json). |
+
+## `elvaria digest`
+
+In bản tấu lúc này: mọi việc chờ bạn, chia hai nhóm (phải quyết để việc chạy tiếp, chờ được), mỗi việc kèm khuyến nghị và lệnh. Chỉ đọc vương quốc, không tốn mana.
+
+Không có tham số riêng, chỉ các tùy chọn chung.
 
 ## `elvaria metrics`
 

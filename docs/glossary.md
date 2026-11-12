@@ -41,12 +41,13 @@ Luật (ADR 0014, [implementation-plan](implementation-plan.md) §2.7 và §4.1)
 | Tuần tra | Patrol | `patrol` | Việc định kỳ phát hiện vấn đề, có trần mana tuần. | `kingdom.schedule.patrol`, `created_by` |
 | Mùa | Season | `season` | Một sprint. | theme, UI |
 | Lễ hội / đoàn thương nhân | Festival / caravan | theme | Sự kiện nhịp sống (release / giao hàng ra ngoài), chỉ là hình ảnh. | `themes/fantasy` |
-| Lớp "cần ngài" | Attention queue | `attention` | Danh sách việc đang chờ người dùng quyết, theo mức khẩn. | selector `attentionQueue(state)` |
+| Lớp "cần ngài" | Attention queue | `attention` | Danh sách việc đang chờ người dùng quyết, theo mức khẩn. | selector `attentionQueue(state, now, notices)` (PS-03), bản tấu |
 | Ngai vàng | Throne | `throne` | Hàng đợi quest chờ dấu vua. | màn Throne |
 | Chuông | Bell | `bell` | Thông báo desktop / web push. | `kingdom.bell`, interface `Bell`; icon `bell` → `bell` |
 | Phòng chiến sự | War room | `war_room` | Màn điều hành chiến dịch. | UI |
 | Điểm quân | Muster | `muster` | Màn tổng kết sau trận. | UI |
 | Biên niên sử | Chronicle | `chronicle` | Báo cáo ngày do Nhà thơ viết từ event log. | `chronicle/<ngày>.md`, `kingdom.schedule.chronicle` |
+| Bản tấu | Digest | `digest` | Bản gom mọi việc chờ chủ nhân trong ngày, chia hai nhóm (phải quyết để việc chạy tiếp, chờ được), mỗi việc kèm khuyến nghị và lệnh CLI; Quản sự viết mỗi ngày một lần theo lịch, không gọi model (PS-03). | `digest/<ngày>.md`, `kingdom.schedule.digest`, cổng `Digest`, `elvaria digest`, event `digest.written` |
 | Đền | Temple | `temple` | Nơi Thầy tu phản tỉnh và giữ kinh chung. | `temple/scripture.md`, `kingdom.schedule.temple`, `lesson.owner = temple` |
 
 ## 2. Quest
@@ -364,6 +365,7 @@ Mọi giá trị enum xuất hiện trong [schemas/](schemas/) có ở bảng n�
 | Lệnh | `command.received`, `command.applied`, `command.rejected` | Quản sự xử lý `inbox/` |
 | Đồ thị code | `graph.built`, `graph.failed` | Quản sự dựng đồ thị code của một lãnh thổ bật `code_graph` bằng graphify, không gọi model, ngoài mọi đất, ở commit gốc của quest và ở đầu nhánh mặc định; dòng mang lãnh thổ, không mang quest (PS-21, ADR 0029). `graph.failed` ghi một lần cho mỗi commit trong đời một Quản sự |
 | Thư | `memo.filed`, `memo.routed`, `memo.closed` | Quản sự lập thư từ mục `Memos` của thư bàn giao khi lượt người làm kết thúc qua nộp, hỏi hay hỏng (không khi cầu dao cắt), chuyển theo `registry/memos.json`, và đóng theo `decide_memo` (PS-02, ADR 0024) |
+| Lịch | `schedule.ran`, `digest.written` | Việc theo lịch của Quản sự (PS-03): `schedule.ran` khi một việc của `kingdom.schedule` chạy xong trong một ngày địa phương (lần khởi động sau đọc nó, nên mỗi ngày một lần dù đồng hồ nhảy); `digest.written` khi bản tấu của ngày đã ghi vào `digest/<ngày>.md` và chuông đã rung |
 | Khác | `delivery.sent`, `plot.patched`, `plot.merged`, `plot.restored`, `chronicle.written`, `territory.attached`, `territory.surveyed`, `territory.health`, `sandbox.replay.start`, `sandbox.replay.end` | `plot.patched`: Quản sự áp bản vá của người làm vào `laws.patch_paths` trước commit `submit` (P1-28); `plot.merged`: Quản sự gộp các nhánh phần vào nhánh quest ghép, hoặc dừng ở một nhánh (P1-21); `plot.restored`: sau phiên người chấm ngoài đất nháp, Quản sự đưa đất của quest về commit của nó, bỏ những gì lệnh của người chấm để lại (P1-44) |
 | Bản | `upgrade.started`, `upgrade.switched`, `upgrade.rolled_back`, `upgrade.failed` | `elvaria upgrade` ghi (actor `user`): bắt đầu dựng và thử một commit, chuyển con trỏ `.state/build.json` sang bản mới, lùi về bản trước, hay hỏng ở một bước (`prepare`, `migrate`, `doctor`, `conformance`, `trial`) và không chuyển |
 | Dành sẵn | `campaign.*`, `battle.*`, `incident.*`, `patrol.*`, `party.*`, `skill.*` | giai đoạn 5; đội và bí kíp |

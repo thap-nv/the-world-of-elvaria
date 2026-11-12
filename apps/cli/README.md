@@ -5,7 +5,7 @@
 - Ships the `elvaria` command, the only composition root (implementation-plan §1.1): `init`, `doctor`,
   `tribe list|add|check|disable`, `territory add|list`, `character add|list|suspend|release|level|model`, `say`,
   `quest add|list|show|confirm|cancel|archive|edit|retry|reassign`,
-  `seal`, `return`, `answer`, `memo list|show|decide`, `run`, `wake`, `metrics`,
+  `seal`, `return`, `answer`, `memo list|show|decide`, `run`, `wake`, `digest`, `metrics`,
   `sandbox generate|replay`, `migrate`, `upgrade`. The command table (`src/commands.ts`) drives parsing (`util.parseArgs`), help, and the reference
   `docs/cli.md` that `pnpm docs:gen` renders from it (`scripts/docs-cli.mjs`).
 - Prints everything through `t()` of `@elvaria/i18n`, in `kingdom.owner.locale` unless `--locale vi|en` is given;
@@ -111,7 +111,8 @@
   an awake one with its readings, then what a territory's quests need of the machine, as warnings (P1-56,
   `src/doctor/check-territory-setup.ts`: a Docker that does not answer `docker info` when a command mentions docker, a
   repo with no `user.email`, `.claude/rules/` files outside `laws.patch_paths`, the last also said by `territory add`)
-  and the models whose doers have a single judge of another model (`src/doctor/check-judges.ts`),
+  and the models whose doers have judges of another model on a single mana pool only, two judges on one gauge
+  included (`src/doctor/check-judges.ts`, counted by pool since PS-03, (b) of P1-56),
   "not measured" when the Steward has logged none; under each reading the share of the window a session took, as
   the Steward measures it again at start from the log (`levelsFromLog`, `sharesOfHistory`), or the default it
   counts before that, and an awake gauge one more session would take to the cap, or one at it, as a warning
@@ -123,6 +124,12 @@
   (`sleeping_mana`) with the gauge it waits for, a model's own cap before its pool, and lists the sleeping gauges
   under the table. Only those: the log does not keep the models an account lists in a group, so the prefix table
   alone would call an Argon character bound by "Gemini Models", which the Steward, reading agy's `/usage`, does not.
+- `digest` (PS-03, `src/digest/`): the digest as it stands, from the files, the open memos, the mana lines of the
+  log and `.state/unclaimable.json` (`digestStateOf` of `@elvaria/steward`, `attentionQueue` of the domain), worded
+  by `digestMarkdown` and printed; writes nothing and spends no mana. Quests waiting for a judge are known to the
+  running Steward only, so they are in the digest it writes. `run` gives the Steward the `Digest` port
+  (`src/run/digest-file.ts`): the same Markdown in `digest/<day>.md`, once a day at `kingdom.schedule.digest.at`;
+  the bell says the digest is written and names a quest whose judges are all out of mana (`judge_mana`).
 - `metrics [--since <day>] [--until <day>] [--json]` (PS-01, PS-01b: checks set aside for their environment, and the
   files a session read again, the ten most read): the metrics ledger of `metricsOf` (`@elvaria/domain`)
   over the days asked, as plain tables or JSON. `src/metrics/read.ts` reads quests, verdicts, the event log and
@@ -214,5 +221,7 @@ commands as its `behavior.json` says and records each call, a stub pnpm that lea
 junction on Windows, a symlink elsewhere), and a fixture repo builds are made from: `src/upgrade/upgrade.spec.ts`
 upgrades, refuses and rolls back on real git worktrees, `src/upgrade/trial.spec.ts` runs the real trial (child
 processes, a throwaway kingdom, a kill tree), `src/upgrade/entry.spec.ts` and `cli.spec.ts` run commands on a
-pinned build. `src/doctor/check-shell.spec.ts` puts a fake `powershell` on PATH that prints a
+pinned build. `src/digest/digest.spec.ts` (PS-03) plants a draft, a quest nobody can take, an open memo and a
+sleeping pool and reads the digest in both languages, and has the port write a judge wait into `digest/<day>.md`.
+`src/doctor/check-shell.spec.ts` puts a fake `powershell` on PATH that prints a
 policy (`Restricted`, `RemoteSigned`); the doctor runs with it are Windows-only, the reading itself runs everywhere.

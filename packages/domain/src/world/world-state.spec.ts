@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { CampaignSchema } from '../schema/campaign/campaign.ts';
 import { KingdomSchema } from '../schema/kingdom.ts';
 import { QuestSchema } from '../schema/quest/quest.ts';
-import { CAMPAIGNS, CHARACTERS, KINGDOM, QUESTS, TERRITORIES } from './__fixtures__/examples.ts';
+import { CAMPAIGNS, CHARACTERS, KINGDOM, MEMOS, QUESTS, TERRITORIES } from './__fixtures__/examples.ts';
 import { bannerOf } from './banner.ts';
 import { characterViewOf } from './character-view.ts';
 import { questViewOf } from './quest-view.ts';
@@ -29,6 +29,19 @@ describe('worldStateOf', () => {
     expect(state.kingdom).toEqual({ name: 'Vương quốc Bình Minh', locale: 'vi', tz: 'Asia/Ho_Chi_Minh' });
     expect(state.mana).toEqual({ cap_pct: 98, king_reserve_pct: 2, warn_margin_pct: 10 });
     expect(state.sandbox).toBe(false);
+  });
+
+  it('holds the open memos only, and none without memo files (PS-03)', () => {
+    expect(state.memos).toEqual({});
+    expect(worldStateOf({ ...SOURCE, memos: MEMOS }).memos).toEqual({
+      m_20261112_4k2pqz: {
+        id: 'm_20261112_4k2pqz',
+        kind: 'proposal',
+        from: 'thorn',
+        quest: 'q_20261112_7pzkfv',
+        route: 'chancellor',
+      },
+    });
   });
 
   it('knows a CLI is ready once doctor found it, and missing before', () => {

@@ -12,11 +12,14 @@ import { createGraphBuilds } from './graph-builds.ts';
 import { loop, wake } from './loop.ts';
 import { createJudgeLocks } from './review/exclusive.ts';
 import { createManaBook } from './mana/book.ts';
+import { digestJob } from './schedule/digest.ts';
+import { createScheduler } from './schedule/scheduler.ts';
 import { createSessions } from './sessions/running.ts';
 import { leftSessions, pidsWriter, reapOrphans } from './sessions/pids.ts';
 import type { LeftSession } from './sessions/pids.ts';
 import { recover, tickOf } from './tick.ts';
 import { limitsOf } from './world.ts';
+import type { StewardJob } from './schedule/scheduler.ts';
 import type { Held, State } from './steward-state.ts';
 import type { StartError, Steward, StewardDeps } from './types.ts';
 
@@ -59,6 +62,16 @@ async function begin(deps: StewardDeps, state: State): Promise<Result<Held, Star
   return ok(held);
 }
 
+/** The digest when the composition root gives its port, then the jobs it injects, which ignore the tick (PS-03). */
+const jobsOf = (deps: StewardDeps): StewardJob[] => [
+  ...(deps.digest === undefined ? [] : [digestJob(deps.digest)]),
+  ...(deps.jobs ?? []).map((job): StewardJob => ({
+    id: job.id,
+    mode: job.mode,
+    run: (_ctx, run) => job.run(run),
+  })),
+];
+
 export function createSteward(deps: StewardDeps): Steward {
   const state: State = {
     sessions: createSessions(pidsWriter(deps.store.root)),
@@ -74,6 +87,8 @@ export function createSteward(deps: StewardDeps): Steward {
     reported: new Map(),
     stopping: new AbortController(),
     unjudged: new Set(),
+    judgeWaits: new Map(),
+    scheduler: createScheduler(jobsOf(deps)),
     restart: undefined,
     held: undefined,
     beat: undefined,
@@ -98,6 +113,8 @@ export function createSteward(deps: StewardDeps): Steward {
       state.timer = undefined;
       state.stopping.abort();
       await state.queue;
+      // A scheduled job outside the tick ends before the lock goes; it runs again at the next start (PS-03).
+      await state.scheduler.stop();
       // The checks and scripts outside the tick die before the lock goes: the next Steward runs them again (P1-25).
       await state.background.stop();
       await state.graphs?.stop();
@@ -111,8 +128,6 @@ export function createSteward(deps: StewardDeps): Steward {
     },
     tick,
     running: () => state.sessions.size(),
-    idle: async () => {
-      await Promise.all([state.background.idle(), state.graphs?.idle()]);
-    },
+    idle: () => Promise.all([state.background.idle(), state.graphs?.idle()]).then(() => undefined),
   };
 }

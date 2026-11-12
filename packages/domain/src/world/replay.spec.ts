@@ -103,7 +103,7 @@ describe('replaying a fake day', () => {
       (type) => !types.has(type) && !animated.some((group) => type.startsWith(group)),
     );
     // The owner's edits and the Steward's notices (P1-03), moves of the temple and of the owner's discipline;
-    // reduce.spec.ts applies them one by one. A patch the Steward applied (P1-28), its merge of a party's parts (P1-21) and a plot it put back after a judge (P1-44) change no state the world keeps, nor does the build the kingdom runs (PS-04b), nor a territory's code graph (PS-21), nor do memos (PS-02) until PS-03 brings them into it.
+    // reduce.spec.ts applies them one by one. A patch the Steward applied (P1-28), its merge of a party's parts (P1-21) and a plot it put back after a judge (P1-44) change no state the world keeps, nor does the build the kingdom runs (PS-04b), nor a territory's code graph (PS-21), nor a scheduled job (PS-03). The fake day files no memo (reduce.spec.ts applies the memo lines, PS-03).
     expect(unused).toEqual([
       'quest.edited',
       'quest.unclaimable',
@@ -121,6 +121,8 @@ describe('replaying a fake day', () => {
       'memo.filed',
       'memo.routed',
       'memo.closed',
+      'schedule.ran',
+      'digest.written',
       'upgrade.started',
       'upgrade.switched',
       'upgrade.rolled_back',

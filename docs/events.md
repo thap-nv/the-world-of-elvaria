@@ -4,7 +4,7 @@
 
 Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là một event; log chỉ ghi thêm, không bao giờ viết lại. `type` là `nhóm.hành_động`; reader giữ nguyên type lạ, renderer bỏ qua nó. Hợp đồng đầy đủ: [schemas/event.schema.json](schemas/event.schema.json); nghĩa từng nhóm và các tiền tố dành sẵn: [glossary.md](glossary.md) mục 12.
 
-71 type trong danh mục v1, 59 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
+73 type trong danh mục v1, 61 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
 
 ## Khung một dòng
 
@@ -127,6 +127,18 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 | Type | `data` |
 |---|---|
 | `chronicle.written` | object mở, chưa có schema |
+
+## `schedule` · 1 type
+
+| Type | `data` |
+|---|---|
+| `schedule.ran` | `job`: một trong `chronicle`, `digest`<br>`day`: string (khớp `^\d{4}-\d{2}-\d{2}$`) — The kingdom's local day, yyyy-mm-dd (kingdom.tz). |
+
+## `digest` · 1 type
+
+| Type | `data` |
+|---|---|
+| `digest.written` | `day`: string (khớp `^\d{4}-\d{2}-\d{2}$`) — The kingdom's local day, yyyy-mm-dd (kingdom.tz).<br>`file`: string (khớp `^digest/\d{4}-\d{2}-\d{2}\.md$`) — The digest, relative to the kingdom.<br>`must`: integer ≥ 0 — Items the work waits on: the owner must decide for it to go on.<br>`can_wait`: integer ≥ 0 — Items that can wait. |
 
 ## `territory` · 3 type
 
