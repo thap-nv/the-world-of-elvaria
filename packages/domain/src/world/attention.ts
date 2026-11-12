@@ -166,14 +166,17 @@ function memoItems(state: WorldState): AttentionItem[] {
 
 /** A pool asleep; or awake with a current window at the owner's warning share or above. */
 function manaItem(state: WorldState, pool: PoolView, now: Instant): AttentionItem[] {
+  const key = { tribe: pool.tribe, pool: pool.pool };
+  if (pool.asleep)
+    return [
+      itemOf('mana_asleep', { ...key, ...(pool.resets_at === null ? {} : { resets_at: pool.resets_at }) }),
+    ];
   const live = pool.readings.filter((reading) => current(reading, now));
   const resets = live.map(({ resets_at }) => resets_at).find((at) => at !== null);
   const where = {
-    tribe: pool.tribe,
-    pool: pool.pool,
+    ...key,
     ...(resets === undefined ? {} : { resets_at: resets }),
   };
-  if (pool.asleep) return [itemOf('mana_asleep', where)];
   const used = Math.max(0, ...live.map(({ used_pct }) => used_pct));
   return used >= manaWarningOf(state.mana) ? [itemOf('mana_warning', { ...where, used_pct: used })] : [];
 }

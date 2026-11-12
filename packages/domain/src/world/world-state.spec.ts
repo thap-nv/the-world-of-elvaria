@@ -81,7 +81,9 @@ describe('worldStateOf', () => {
   });
 
   it('takes mana as the Steward last read it, and the sandbox flag of a replay', () => {
-    const pools = [{ tribe: KINGDOM.tribes[0]!.id, pool: 'claude', asleep: true, readings: [] }];
+    const pools = [
+      { tribe: KINGDOM.tribes[0]!.id, pool: 'claude', asleep: true, resets_at: null, readings: [] },
+    ];
     const replay = worldStateOf({ ...SOURCE, pools, sandbox: true });
     expect(replay.pools).toEqual(pools);
     expect(replay.pools).not.toBe(pools);

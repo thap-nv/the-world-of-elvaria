@@ -23,6 +23,8 @@ export const PoolViewSchema = z.strictObject({
   tribe: TribeIdSchema,
   pool: z.string().regex(REGISTRY_ID_PATTERN),
   asleep: z.boolean(),
+  /** The reset reported by the sleep event; cleared when the pool wakes. */
+  resets_at: DateTimeSchema.nullable(),
   /** At most one per window, in the order the windows were first read. */
   readings: z.array(ManaReadingViewSchema),
 });
@@ -48,7 +50,7 @@ export const poolsOf = (tribes: readonly Tribe[]): PoolView[] =>
   tribes.flatMap((tribe) => {
     const named = Object.entries(tribe.pools ?? { [tribe.id]: { enabled: true } });
     return named.flatMap(([pool, { enabled }]) =>
-      enabled ? [{ tribe: tribe.id, pool, asleep: false, readings: [] }] : [],
+      enabled ? [{ tribe: tribe.id, pool, asleep: false, resets_at: null, readings: [] }] : [],
     );
   });
 
@@ -60,7 +62,10 @@ export function updatePool(
 ): PoolView[] {
   const index = pools.findIndex(({ tribe, pool }) => tribe === key.tribe && pool === key.pool);
   if (index === -1)
-    return [...pools, change({ tribe: key.tribe, pool: key.pool, asleep: false, readings: [] })];
+    return [
+      ...pools,
+      change({ tribe: key.tribe, pool: key.pool, asleep: false, resets_at: null, readings: [] }),
+    ];
   return pools.map((pool, at) => (at === index ? change(pool) : pool));
 }
 
@@ -76,5 +81,5 @@ export const withReading =
   };
 
 export const withSleep =
-  (asleep: boolean) =>
-  (pool: PoolView): PoolView => ({ ...pool, asleep });
+  (asleep: boolean, resets_at: string | null = null) =>
+  (pool: PoolView): PoolView => ({ ...pool, asleep, resets_at: asleep ? resets_at : null });

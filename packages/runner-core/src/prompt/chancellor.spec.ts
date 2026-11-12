@@ -21,6 +21,7 @@ const context: ChancellorContext = {
       tribe: TribeIdSchema.parse('claude'),
       pool: 'claude',
       asleep: false,
+      resets_at: null,
       readings: [
         {
           window: 'five_hour',
@@ -31,7 +32,13 @@ const context: ChancellorContext = {
         },
       ],
     },
-    { tribe: TribeIdSchema.parse('gemini'), pool: 'gemini_models', asleep: true, readings: [] },
+    {
+      tribe: TribeIdSchema.parse('gemini'),
+      pool: 'gemini_models',
+      asleep: true,
+      resets_at: null,
+      readings: [],
+    },
   ],
   context_budget_tokens: 120_000,
 };

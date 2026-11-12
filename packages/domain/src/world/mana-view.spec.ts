@@ -20,11 +20,11 @@ const reading = (window: 'five_hour' | 'weekly', used_pct: number): ManaReadingV
 describe('poolsOf', () => {
   it('gives a single-pool tribe one pool named after it, and a multi-pool tribe its enabled pools', () => {
     expect(poolsOf(KINGDOM.tribes)).toEqual([
-      { tribe: 'claude', pool: 'claude', asleep: false, readings: [] },
+      { tribe: 'claude', pool: 'claude', asleep: false, resets_at: null, readings: [] },
       // claude_gpt_models is off: the Gemini tribe is the Gemini family (ADR 0018).
-      { tribe: 'gemini', pool: 'gemini_models', asleep: false, readings: [] },
+      { tribe: 'gemini', pool: 'gemini_models', asleep: false, resets_at: null, readings: [] },
       // A disabled tribe keeps its pool; bannerOf ignores it.
-      { tribe: 'codex', pool: 'codex', asleep: false, readings: [] },
+      { tribe: 'codex', pool: 'codex', asleep: false, resets_at: null, readings: [] },
     ]);
   });
 
@@ -60,12 +60,18 @@ describe('updatePool', () => {
       tribe: 'gemini',
       pool: 'claude_gpt_models',
       asleep: false,
+      resets_at: null,
       readings: [reading('weekly', 3)],
     });
   });
 });
 
 describe('withReading', () => {
+  it('clears a supplied sleep reset when waking', () => {
+    const awake = poolsOf(KINGDOM.tribes)[0]!;
+    expect(withSleep(false, '2026-11-06T17:00:00+07:00')(awake).resets_at).toBeNull();
+  });
+
   it('keeps one reading per window, replaced in place so the bars do not swap', () => {
     const key = { tribe: CLAUDE, pool: 'claude' };
     let pools = poolsOf(KINGDOM.tribes);

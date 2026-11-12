@@ -46,8 +46,11 @@ const onManaLevel: Handler<'mana.level'> = (state, { ts, data }) => {
  */
 const onSleep =
   (asleep: boolean): Handler<'mana.exhausted' | 'mana.restored'> =>
-  (state, { data }) =>
-    data.model === undefined ? { ...state, pools: updatePool(state.pools, data, withSleep(asleep)) } : state;
+  (state, { data }) => {
+    if (data.model !== undefined) return state;
+    const resets = 'resets_at' in data ? (data.resets_at ?? null) : null;
+    return { ...state, pools: updatePool(state.pools, data, withSleep(asleep, resets)) };
+  };
 
 /** A memo filed opens in the world; it has no route until the Steward's next line routes it (PS-03). */
 const onMemoFiled: Handler<'memo.filed'> = (state, { data, quest }) => ({

@@ -38,6 +38,7 @@ const pool = (tribe: string, name: string, change: Partial<PoolView> = {}): Pool
   tribe: tribe as TribeId,
   pool: name,
   asleep: false,
+  resets_at: null,
   readings: [],
   ...change,
 });
@@ -74,7 +75,7 @@ describe('attentionQueue', () => {
         view(6, { status: 'working' }),
       ],
       [memo('m_20261112_4k2pqz')],
-      [pool('claude', 'claude', { asleep: true, readings: [reading(100, '2026-11-12T10:00:00+07:00')] })],
+      [pool('claude', 'claude', { asleep: true, resets_at: '2026-11-12T10:00:00+07:00' })],
     );
     const judgePool = { tribe: 'gemini' as TribeId, pool: 'gemini_models' };
     const items = attentionQueue(state, NOW, {
@@ -118,6 +119,30 @@ describe('attentionQueue', () => {
 
   it('is empty for a kingdom with nothing waiting', () => {
     expect(attentionQueue(stateWith([view(1, { status: 'working' })]), NOW)).toEqual([]);
+  });
+
+  it('uses the sleep reset even after it passed, without borrowing a reading reset when unknown', () => {
+    const resets_at = '2026-11-12T07:00:00+07:00';
+    const state = stateWith(
+      [],
+      [],
+      [
+        pool('claude', 'claude', { asleep: true, resets_at }),
+        pool('gemini', 'gemini_models', {
+          asleep: true,
+          readings: [reading(100, '2026-11-12T10:00:00+07:00')],
+        }),
+      ],
+    );
+    const items = attentionQueue(state, NOW);
+    expect(items[0]?.resets_at).toBe(resets_at);
+    expect(items[1]?.resets_at).toBeUndefined();
+  });
+
+  it('keeps the current reading reset on an awake pool warning', () => {
+    const resets_at = '2026-11-12T10:00:00+07:00';
+    const state = stateWith([], [], [pool('claude', 'claude', { readings: [reading(90, resets_at)] })]);
+    expect(attentionQueue(state, NOW)[0]).toMatchObject({ kind: 'mana_warning', resets_at });
   });
 
   it('puts higher ranks first within a kind, then ids; memos by id, with their quest when known', () => {

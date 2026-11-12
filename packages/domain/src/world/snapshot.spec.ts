@@ -33,6 +33,7 @@ describe('snapshotOf and readSnapshot', () => {
   });
 
   it.each([
+    ['before pools kept their sleep reset', { ...snapshotOf(STATE, LAST), version: 2 }, 2],
     [
       'another version',
       { ...snapshotOf(STATE, LAST), version: WORLD_STATE_VERSION + 1 },

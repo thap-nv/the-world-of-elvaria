@@ -7,13 +7,13 @@
 /** Each row: words of a model slug, and the level a character on such a model starts at (its ceiling, §2.6). */
 const STARTING_LEVELS: readonly { readonly words: readonly string[]; readonly level: number }[] = [
   // C, and B when nobody else of the class can.
-  { words: ['opus'], level: 5 },
+  { words: ['opus', 'astra'], level: 5 },
   // C.
-  { words: ['sonnet', 'pro'], level: 4 },
+  { words: ['sonnet', 'pro', 'sol'], level: 4 },
   // D, and C when nobody else can: phase 1 saw Argon guess what it had not read (report §3).
-  { words: ['argon'], level: 3 },
+  { words: ['argon', 'terra'], level: 3 },
   // E.
-  { words: ['haiku', 'flash'], level: 2 },
+  { words: ['haiku', 'flash', 'luna'], level: 2 },
 ];
 
 /** `claude-sonnet-5-5` → 4, `gemini-4-argon-medium` → 3; undefined for a model of no row (the CLI then says 1). */
