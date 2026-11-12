@@ -64,6 +64,10 @@ export const EVENT_TYPES = [
   'territory.health',
   'sandbox.replay.start',
   'sandbox.replay.end',
+  'upgrade.started',
+  'upgrade.switched',
+  'upgrade.rolled_back',
+  'upgrade.failed',
 ] as const;
 
 export type EventType = (typeof EVENT_TYPES)[number];

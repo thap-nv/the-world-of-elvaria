@@ -232,6 +232,7 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
   - **Ghim cả CLI**: ở lối vào, mọi lệnh trên một vương quốc có con trỏ sẽ chạy lại bằng bản đang ghim (env tường minh, `shell: false`), trừ `upgrade` và khi có `--here`. Lý do: `say`, `migrate`, `quest add` dùng prompt và schema của bản chúng chạy, và Quản sự bản ghim từ chối trường nó không biết.
   - In sha lúc khởi động; event `upgrade.started`, `upgrade.switched`, `upgrade.rolled_back`.
 - **Test**: bản hỏng doctor không được chuyển; `--rollback` về đúng bản trước; đường dẫn có dấu cách; Windows và macOS.
+- **Đã làm** (2026-11-12, chỗ khác và lựa chọn ở §11): code ở `apps/cli/src/upgrade/`; `tribe check` thêm `--tool`; `launchOf` của CLI chạy script `.mjs` bằng Node (CLI giả trên Windows); runner-core export `clearLeftover`; event thêm `upgrade.failed`. Phần thử chạy lệnh của chính bản mới như tiến trình con (`doctor --here`, `tribe check --scenarios --tool`, rồi `init`, `territory add`, `quest add --script count-files`, `run` trên vương quốc tạm), nên bản trước PS-04b (không biết `--here`) không qua phần thử.
 
 ## PS-06 — Nghị hội
 

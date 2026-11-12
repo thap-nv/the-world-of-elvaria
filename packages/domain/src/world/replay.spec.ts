@@ -103,7 +103,7 @@ describe('replaying a fake day', () => {
       (type) => !types.has(type) && !animated.some((group) => type.startsWith(group)),
     );
     // The owner's edits and the Steward's notices (P1-03), moves of the temple and of the owner's discipline;
-    // reduce.spec.ts applies them one by one. A patch the Steward applied (P1-28), its merge of a party's parts (P1-21) and a plot it put back after a judge (P1-44) change no state the world keeps.
+    // reduce.spec.ts applies them one by one. A patch the Steward applied (P1-28), its merge of a party's parts (P1-21) a plot it put back after a judge (P1-44) and the build the kingdom runs (PS-04b) change no state the world keeps.
     expect(unused).toEqual([
       'quest.edited',
       'quest.unclaimable',
@@ -116,6 +116,10 @@ describe('replaying a fake day', () => {
       'plot.patched',
       'plot.merged',
       'plot.restored',
+      'upgrade.started',
+      'upgrade.switched',
+      'upgrade.rolled_back',
+      'upgrade.failed',
     ]);
     for (const ignored of ['agent.tool', 'verdict.pass', 'command.applied', 'campaign.declared']) {
       expect(types).toContain(ignored);

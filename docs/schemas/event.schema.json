@@ -2000,6 +2000,163 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "upgrade.started"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "`elvaria upgrade` began building and trying a commit (implementation-plan §3.16.4).",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "ref",
+              "to",
+              "from"
+            ],
+            "properties": {
+              "ref": {
+                "description": "What the owner asked for (`--ref`), as typed.",
+                "type": "string",
+                "minLength": 1
+              },
+              "to": {
+                "description": "A full commit id of the Elvaria repo: the name of the build folder `.builds/<sha>/`.",
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+              },
+              "from": {
+                "description": "The pinned build; null when the kingdom had none.",
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "upgrade.switched"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "Every trial passed: the pointer now names the new build; `from` is kept as the way back.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "from",
+              "to"
+            ],
+            "properties": {
+              "from": {
+                "description": "A full commit id of the Elvaria repo: the name of the build folder `.builds/<sha>/`.",
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+              },
+              "to": {
+                "description": "A full commit id of the Elvaria repo: the name of the build folder `.builds/<sha>/`.",
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "upgrade.rolled_back"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "`elvaria upgrade --rollback`: the pointer went back from `from` to the build before it.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "from",
+              "to"
+            ],
+            "properties": {
+              "from": {
+                "description": "A full commit id of the Elvaria repo: the name of the build folder `.builds/<sha>/`.",
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+              },
+              "to": {
+                "description": "A full commit id of the Elvaria repo: the name of the build folder `.builds/<sha>/`.",
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "upgrade.failed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "A step of the upgrade failed: the pointer did not move and the new build was removed.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "to",
+              "step",
+              "reason"
+            ],
+            "properties": {
+              "to": {
+                "description": "A full commit id of the Elvaria repo: the name of the build folder `.builds/<sha>/`.",
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+              },
+              "step": {
+                "enum": [
+                  "prepare",
+                  "doctor",
+                  "conformance",
+                  "trial"
+                ]
+              },
+              "reason": {
+                "description": "One line, redacted: the exit code or the error.",
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "$defs": {
@@ -2067,7 +2224,11 @@
         "territory.surveyed",
         "territory.health",
         "sandbox.replay.start",
-        "sandbox.replay.end"
+        "sandbox.replay.end",
+        "upgrade.started",
+        "upgrade.switched",
+        "upgrade.rolled_back",
+        "upgrade.failed"
       ]
     }
   },

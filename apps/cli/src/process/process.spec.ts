@@ -57,6 +57,15 @@ describe('processes', () => {
     expect(outcome).toEqual({ code: 0, stdout: '2.1.318 (Claude Code)\n', stderr: '' });
   });
 
+  it('runs a Node script with Node, on every OS (a fake CLI that elvaria upgrade tries, PS-04b)', async () => {
+    const script = path.join(dir.root, 'fake agy.mjs');
+    await writeFile(script, "process.stdout.write(process.argv.slice(2).join(' '));\n");
+    const launch = await launchOf(script, process.execPath);
+    expect(launch).toEqual({ file: process.execPath, args: [script] });
+    const outcome = await runProcess(process.execPath, [script, '--version'], { env: {}, timeoutMs: 20_000 });
+    expect(outcome).toEqual({ code: 0, stdout: '--version', stderr: '' });
+  });
+
   it('reports a program that cannot start', async () => {
     const outcome = await runProcess(path.join(dir.root, 'missing'), [], { env: {}, timeoutMs: 5_000 });
     expect(outcome.code).toBeNull();

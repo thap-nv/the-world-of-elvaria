@@ -4,7 +4,7 @@
 
 Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là một event; log chỉ ghi thêm, không bao giờ viết lại. `type` là `nhóm.hành_động`; reader giữ nguyên type lạ, renderer bỏ qua nó. Hợp đồng đầy đủ: [schemas/event.schema.json](schemas/event.schema.json); nghĩa từng nhóm và các tiền tố dành sẵn: [glossary.md](glossary.md) mục 12.
 
-62 type trong danh mục v1, 50 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
+66 type trong danh mục v1, 54 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
 
 ## Khung một dòng
 
@@ -142,3 +142,12 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 |---|---|
 | `sandbox.replay.start` | object mở, chưa có schema |
 | `sandbox.replay.end` | object mở, chưa có schema |
+
+## `upgrade` · 4 type
+
+| Type | `data` |
+|---|---|
+| `upgrade.started` | `ref`: string (không rỗng) — What the owner asked for (`--ref`), as typed.<br>`to`: string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) — A full commit id of the Elvaria repo: the name of the build folder `.builds/<sha>/`.<br>`from`: string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) hoặc null — The pinned build; null when the kingdom had none. |
+| `upgrade.switched` | `from`: string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) hoặc null — A full commit id of the Elvaria repo: the name of the build folder `.builds/<sha>/`.<br>`to`: string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) — A full commit id of the Elvaria repo: the name of the build folder `.builds/<sha>/`. |
+| `upgrade.rolled_back` | `from`: string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) — A full commit id of the Elvaria repo: the name of the build folder `.builds/<sha>/`.<br>`to`: string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) — A full commit id of the Elvaria repo: the name of the build folder `.builds/<sha>/`. |
+| `upgrade.failed` | `to`: string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) — A full commit id of the Elvaria repo: the name of the build folder `.builds/<sha>/`.<br>`step`: một trong `prepare`, `doctor`, `conformance`, `trial`<br>`reason`: string (không rỗng) — One line, redacted: the exit code or the error. |

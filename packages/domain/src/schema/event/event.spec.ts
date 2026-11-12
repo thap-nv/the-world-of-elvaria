@@ -2,9 +2,10 @@ import { describe, expect, expectTypeOf, it } from 'vitest';
 
 import examples from '../../../examples/event.json' with { type: 'json' };
 import { CHARACTER_VIEW, QUEST_VIEW, TERRITORY_VIEW } from '../../world/__fixtures__/examples.ts';
+import { POOL, QUEST_CHANGE, VALID_DATA } from './__fixtures__/valid-data.ts';
 import { isKnownEventType } from './event-types.ts';
 import { EventSchema, isEventOf, isTypedEvent } from './event.ts';
-import type { ToolKind, TypedEventType } from './event-data.ts';
+import type { ToolKind } from './event-data.ts';
 
 const line = (type: string, data: Record<string, unknown>, change: Record<string, unknown> = {}) => ({
   v: 1,
@@ -21,92 +22,6 @@ const issuesOf = (value: unknown) => {
   return result.success
     ? []
     : result.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`);
-};
-
-const ULID = '01JCFB7Q2R8S4T6V9W3X5Y1Z0A';
-
-// The views of the v1 examples: what the Steward writes after a change (world/*-view.ts).
-const QUEST_CHANGE = { quest: QUEST_VIEW, characters: [CHARACTER_VIEW] };
-const CHARACTER_CHANGE = { character: CHARACTER_VIEW };
-const TERRITORY_CHANGE = { territory: TERRITORY_VIEW };
-const POOL = { tribe: 'gemini', pool: 'gemini_models' };
-
-// One valid `data` per type that has a data schema: the table must name every one of them.
-const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
-  'quest.drafted': QUEST_CHANGE,
-  'quest.created': { quest: QUEST_VIEW },
-  'quest.claimed': QUEST_CHANGE,
-  'quest.released': QUEST_CHANGE,
-  'quest.started': QUEST_CHANGE,
-  'quest.submitted': QUEST_CHANGE,
-  'quest.returned': QUEST_CHANGE,
-  'quest.verdict': QUEST_CHANGE,
-  'quest.done': QUEST_CHANGE,
-  'quest.sealed': QUEST_CHANGE,
-  'quest.archived': { ...QUEST_CHANGE, characters: [] },
-  'quest.blocked': QUEST_CHANGE,
-  'quest.unblocked': QUEST_CHANGE,
-  'quest.paused': QUEST_CHANGE,
-  'quest.resumed': QUEST_CHANGE,
-  'quest.infirmary': {
-    reason: 'breaker:commit: elvaria.patch was not applied: touches src/a.ts',
-    trip: 'commit',
-    detail: { patch: 'touches src/a.ts', wip: 'hook refused', apprentice_left: true },
-    ...QUEST_CHANGE,
-  },
-  'quest.delivered': QUEST_CHANGE,
-  'quest.edited': { quest: QUEST_VIEW },
-  'quest.unclaimable': {
-    reason: 'level_too_low',
-    rank: 'A',
-    class: 'knight',
-    best_character: 'thorn',
-    best_level: 5,
-  },
-  'character.created': CHARACTER_CHANGE,
-  'character.sleep': CHARACTER_CHANGE,
-  'character.wake': CHARACTER_CHANGE,
-  'character.meditate': CHARACTER_CHANGE,
-  'character.suspend': CHARACTER_CHANGE,
-  'character.release': CHARACTER_CHANGE,
-  'character.swamp': CHARACTER_CHANGE,
-  'character.level_up': CHARACTER_CHANGE,
-  'character.level_down': CHARACTER_CHANGE,
-  'character.model_changed': CHARACTER_CHANGE,
-  'territory.attached': TERRITORY_CHANGE,
-  'territory.surveyed': TERRITORY_CHANGE,
-  'territory.health': TERRITORY_CHANGE,
-  'mana.exhausted': POOL,
-  'mana.restored': { ...POOL, model: 'argon' },
-  'agent.tool': { tool: 'bash', command: 'pnpm test', exit: 0, duration_ms: 5120, url: 'https://x.dev' },
-  'agent.tool.blocked': { tool: 'write', reason: 'forbidden path .env' },
-  'agent.session.start': { session: 'abc-123', model: 'claude-opus-4.1' },
-  'agent.session.end': { outcome: 'completed', usage: { tokens: 18_000, turns: 12 } },
-  'agent.subagent.end': { agent_type: 'apprentice', duration_ms: 90_000, stopped: 'max_turns' },
-  'agent.subagent.overrun': { agent_type: 'apprentice', duration_ms: 400_000, limit_minutes: 5 },
-  'check.start': {},
-  'check.end': { outcome: 'fail', checks: [{ id: 'unit', pass: false, duration_ms: 900 }] },
-  'mana.signal': { error: 'rate_limit', source: 'stop_failure' },
-  'mana.level': { tribe: 'claude', pool: 'claude', window: 'weekly', used_pct: 0, source: 'estimate' },
-  'mana.warning': {
-    tribe: 'gemini',
-    pool: 'gemini_models',
-    window: 'weekly',
-    used_pct: 88.5,
-    source: 'rate_limits',
-    model: 'argon',
-  },
-  'command.applied': { command_id: ULID },
-  'command.rejected': { command_id: ULID, reason: 'quest is not awaiting_seal' },
-  'plot.patched': { file: 'elvaria.patch', paths: ['.husky/pre-push'] },
-  'plot.merged': {
-    into: 'quest/q_20261109_y90za6',
-    merged: ['quest/q_20261109_ms5j7d'],
-    pending: ['quest/q_20261109_bdyrzv'],
-    stop: 'conflict',
-    conflicts: ['apps/web/src/api.ts'],
-  },
-  'plot.restored': { paths: ['apps/api/openapi.json', 'coverage/'] },
 };
 
 describe('EventSchema', () => {

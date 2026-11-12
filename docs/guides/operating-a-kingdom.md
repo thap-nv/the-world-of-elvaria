@@ -27,6 +27,7 @@ elvaria territory add "<thư mục repo>" --branch main   # in id của lãnh th
 elvaria character add thorn --class knight      # mặc định của nghề: tộc claude, claude-sonnet-5-5
 elvaria character add vesper --class judge      # mặc định của nghề: tộc claude, claude-opus-5-5
 elvaria doctor                                  # phải in "Sẵn sàng." (bản en: "Ready.")
+elvaria upgrade                                 # dựng, thử và ghim bản main; từ đây mọi lệnh chạy bằng nó (§13)
 
 # 5. Quản sự: giao việc, mở phiên, chạy check, mở người chấm (§5)
 elvaria run                          # trong một terminal riêng; để chạy; Ctrl+C để dừng
@@ -58,6 +59,7 @@ Kind `build` mặc định cần dấu vua. Quest không cần dấu thì tới 
 
 - **Cần có**: Node 24, pnpm 10, git; Claude Code đã đăng nhập (binary đi kèm extension VS Code là đủ, `doctor` tự tìm); với tộc gemini, Antigravity CLI (`agy`) đã đăng nhập. Phiên bản đang dùng và mọi dữ kiện về hai CLI: [cli-facts-2026-11-12.md](../reference/cli-facts-2026-11-12.md).
 - **Quản sự chạy từ bản build của một checkout ở `main`** (gọi là checkout chính: bản clone của repo Elvaria mà bạn không sửa code trong đó), không từ một nhánh đang sửa. Mọi phiên gọi hook theo đường dẫn tuyệt đối tới `packages/hooks/dist/elvaria-hook.js` của checkout đó, nên chưa build hook thì `doctor` báo lỗi và không phiên nào chạy được. `pnpm elvaria <lệnh>` trong repo chạy thẳng mã nguồn, không cần build CLI: tiện cho lệnh chỉ đọc và cho người đang phát triển Elvaria; nó vẫn cần hook đã build.
+- **Bản ghim (từ PS-04b)**: `elvaria upgrade` dựng `main` thành một bản riêng trong `<vương quốc>/.builds/<sha>/`, thử nó rồi ghim; từ đó mọi lệnh trên vương quốc chạy bằng bản ghim, kể cả hook của các phiên, và checkout chính chỉ còn là lối vào (§13). `pnpm elvaria <lệnh>` từ một nhánh đang sửa cũng chạy bằng bản ghim; thêm `--here` để chạy bằng chính mã của nhánh.
 - **Windows**:
   - Chạy `elvaria run` từ **Git Bash** khi check của lãnh thổ gọi `sh` (PATH của PowerShell không có `Git\usr\bin`).
   - Hiệp sĩ tộc gemini chạy lệnh trong PowerShell: cần `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` thì mới chạy được `pnpm`; `doctor` kiểm điều này.
@@ -143,7 +145,7 @@ Mỗi nhịp 5 giây Quản sự áp lệnh trong `inbox/`, giao quest, dựng �
 
 **Quản sự là một tiến trình của terminal đã mở nó.** Đóng terminal, đóng hay khởi động lại VS Code (terminal tích hợp, hoặc phiên Claude Code đã chạy lệnh), máy ngủ hay khởi động lại thì Quản sự dừng, và việc đứng yên cho tới khi bạn chạy lại. Muốn nó sống qua lần khởi động lại VS Code thì chạy nó trong một cửa sổ terminal riêng.
 
-**Dừng**: Ctrl+C. Khi nó chạy nền không có terminal: tìm pid của tiến trình `node … cli.js run` (Task Manager, hay `Get-Process node`), rồi `taskkill /PID <pid> /T /F` trên Windows (cả cây tiến trình); trên macOS `kill <pid>` (chưa có lần chạy thật). Dừng lúc không có phiên nào chạy (`.state/sessions.json` rỗng) thì không mất gì ngoài check đang chạy.
+**Dừng**: Ctrl+C. Khi nó chạy nền không có terminal: tìm pid của tiến trình `node … cli.js run` (Task Manager, hay `Get-Process node`), rồi `taskkill /PID <pid> /T /F` trên Windows (cả cây tiến trình); trên macOS `kill <pid>` (chưa có lần chạy thật). Với bản ghim có hai tiến trình: lối vào `node …/dist/cli.js run` và con của nó, `node <vương quốc>/.builds/<sha>/apps/cli/src/cli.ts run`; Ctrl+C tới cả hai và lối vào chờ con dừng xong, `taskkill /T` trên lối vào giết cả cây, `kill` trên macOS được lối vào chuyển cho con. Dừng lúc không có phiên nào chạy (`.state/sessions.json` rỗng) thì không mất gì ngoài check đang chạy.
 
 **Chạy lại sau khi dừng hay sập** (P1-50 gặp năm lần, không mất quest hay lượt thử nào):
 
@@ -183,7 +185,7 @@ Với một đội, chỉ merge nhánh của **quest ghép**; hợp đồng và 
 
 ## 8. `doctor`, phiên bản CLI và việc ghim
 
-Chạy `elvaria doctor` **đầu mỗi ngày chạy** và sau mỗi thay đổi cấu hình. Nó kiểm registry, git, CLI của từng tộc (đường dẫn, phiên bản, đăng nhập, hook đã build), shell của tộc, từng lãnh thổ và chương trình mà lệnh của chúng gọi, Docker khi một lệnh dùng nó, danh tính git (`user.email`) của từng repo, `.claude/rules/` có nằm trong `laws.patch_paths` không, model người làm chỉ có một người chấm khác model (cảnh báo: một đồng hồ mana đóng là bài của model đó không ai chấm), kho bảo vật, phiên còn sót, đồng hồ mana. Lỗi thì in "Chưa sẵn sàng: n lỗi"; cảnh báo không chặn.
+Chạy `elvaria doctor` **đầu mỗi ngày chạy** và sau mỗi thay đổi cấu hình. Nó kiểm registry, git, CLI của từng tộc (đường dẫn, phiên bản, đăng nhập, hook đã build), shell của tộc, từng lãnh thổ và chương trình mà lệnh của chúng gọi, Docker khi một lệnh dùng nó, danh tính git (`user.email`) của từng repo, `.claude/rules/` có nằm trong `laws.patch_paths` không, model người làm chỉ có một người chấm khác model (cảnh báo: một đồng hồ mana đóng là bài của model đó không ai chấm), kho bảo vật, phiên còn sót, đồng hồ mana, và bản mà vương quốc ghim (lỗi khi bản ghim không còn trên đĩa hay `.state/build.json` không đọc được; cảnh báo khi lệnh chạy bằng mã khác với `--here`). Lỗi thì in "Chưa sẵn sàng: n lỗi"; cảnh báo không chặn.
 
 Hai CLI **tự cập nhật qua đêm** theo VS Code (hai lần trong hai ngày của P1-50):
 
@@ -273,18 +275,24 @@ Núm hay vặn:
 | `mana.cap_pct`, `king_reserve_pct` | 98, 2 | để dành nhiều hơn cho việc của chính bạn trên cùng tài khoản |
 | `breakers.max_attempts`, `attempt_minutes_low/high` | 3, 45/120 | hiếm; thường đổi trên từng quest bằng `quest edit` |
 
-## 13. Sau mỗi lần cập nhật bản build
+## 13. Sau mỗi lần cập nhật bản build: `elvaria upgrade`
+
+Từ PS-04b, vương quốc chạy bằng một **bản ghim**: một worktree tách rời của repo Elvaria ở một commit, tại `<vương quốc>/.builds/<sha>/`, đã cài và đã build hook; con trỏ ở `.state/build.json` giữ bản đang ghim và bản trước. Mọi lệnh trên vương quốc đó (`run`, `say`, `quest add`, `migrate`…) tự chạy lại bằng bản ghim, dù bạn gõ nó từ checkout nào; `--here` chạy bằng chính mã bạn gõ, và `upgrade` luôn chạy bằng mã bạn gõ. Checkout chính chỉ còn là lối vào và là nguồn để dựng bản: pull hay sửa nó không đổi gì của vương quốc cho tới lần `upgrade` kế.
 
 Khi `main` của Elvaria có thay đổi ở `packages/` hay `apps/` mà bạn muốn dùng:
 
-1. **Dừng Quản sự** lúc không phiên nào chạy. Build lại hook dưới một phiên đang chạy là đổi hook của nó giữa chừng.
-2. `git pull --ff-only` trong checkout mà Quản sự chạy từ đó.
-3. `pnpm install --frozen-lockfile`, rồi `pnpm --filter @elvaria/hooks build` và `pnpm --filter @elvaria/cli build`.
+1. **Dừng Quản sự** lúc không phiên nào chạy. `upgrade` từ chối khi Quản sự đang chạy hay còn phiên của một Quản sự đã dừng (`doctor` nêu tên chúng), và giữ khóa của Quản sự suốt lúc dựng và thử, nên `elvaria run` gõ trong lúc đó bị từ chối.
+2. `git pull --ff-only` trong checkout chính, rồi `pnpm install --frozen-lockfile` và `pnpm --filter @elvaria/cli build` ở đó: lối vào phải đọc được vương quốc, và phải biết việc ghim (CLI build trước PS-04b không biết, nó chạy mọi lệnh bằng chính nó).
+3. `elvaria upgrade` (mặc định `--ref main` của repo mà lệnh chạy từ đó; một commit, nhánh hay tag khác thì `--ref`). Nó dựng bản mới (vài phút: `pnpm install`, build hook), rồi thử, 0 mana: `doctor` của bản mới trên vương quốc này; bộ test hợp đồng của từng tộc đang bật, với CLI giả mà bản mang theo (tộc dùng adapter file thì bỏ qua, có ghi); một quest bậc script trên một vương quốc tạm. Qua hết mới chuyển con trỏ; bản trước giữ lại, bản cũ hơn bị xóa. Hỏng ở bước nào thì con trỏ không đổi, bản mới bị xóa, và output của bước hỏng in ra; `doctor` của bản mới lỗi vì máy (đăng nhập hết hạn, CLI chưa ghim lại) thì sửa máy rồi chạy lại.
 4. `elvaria migrate`: chuyển file cũ lên phiên bản mới (bản cũ vào `.backup/<stamp>/`), chép file registry mà vương quốc còn thiếu và thêm mục registry còn thiếu. Nó **không ghi đè** file bạn đã có: prompt nghề đổi ở bản mới (`packages/registry-default/prompts/<nghề>.md`) thì tự so và chép vào `registry/prompts/`, sau khi sao lưu.
-5. `elvaria doctor` in "Sẵn sàng."; nó nêu khóa registry mà bản mặc định có còn vương quốc thiếu.
-6. `elvaria run`.
+5. `elvaria doctor` in "Sẵn sàng." và dòng "Bản ghim <sha>; bản trước <sha>"; nó nêu khóa registry mà bản mặc định có còn vương quốc thiếu.
+6. `elvaria run`: dòng đầu nêu bản ghim nó chạy.
 
-Thay đổi chỉ ở `docs/` thì không cần làm gì. Khi repo Elvaria cũng là một lãnh thổ, checkout chính vừa là code của Quản sự vừa là gốc của worktree quest mới: `pull` chỉ đổi điểm tách của quest mở sau đó. Giai đoạn 1.5 thay các bước này bằng `elvaria upgrade` có đường lùi (PS-04b).
+**Bản mới hỏng sau khi đã chuyển**: dừng Quản sự, `elvaria upgrade --rollback` (về đúng bản trước, không dựng gì; còn phiên dở thì nó chỉ nêu, `run` kế tiếp dọn), rồi `elvaria run`. Nếu `migrate` của bản mới đã nâng phiên bản file, bản cũ có thể không đọc được chúng: lấy lại file từ `.backup/<stamp>/` trước khi chạy. Muốn quay lại bản vừa bỏ: `elvaria upgrade --ref <sha>` (nó thử lại, không dựng lại).
+
+**Lần đầu**: vương quốc chưa ghim thì mọi lệnh chạy từ checkout bạn gõ, như ở giai đoạn 1; lần `upgrade` đầu ghim bản `main` và từ đó áp dụng như trên. Hook của các phiên lấy từ bản ghim, nên checkout chính không cần build hook nữa (vẫn cần nếu bạn chạy `--here`).
+
+Thay đổi chỉ ở `docs/` thì không cần làm gì. Khi repo Elvaria cũng là một lãnh thổ, checkout chính là gốc của worktree quest mới, còn code của Quản sự nằm trong bản ghim: `pull` chỉ đổi điểm tách của quest mở sau đó.
 
 ## 14. Bài học vận hành của lần chạy lại mốc (P1-50)
 
@@ -310,4 +318,4 @@ Ba điều không phải lỗi, nhưng nên biết trước:
 
 ## 15. Chưa có ở giai đoạn 1
 
-Chuông ngoài terminal, điện thoại, bản đồ (giai đoạn 2 và 3); Quản sự tự push và merge (PS-08); thư đề xuất và bản tấu mỗi ngày (PS-02, PS-03); nâng cấp có đường lùi (PS-04b); tộc Gemini CLI với API key và tộc Codex (P1-12c, P1-12d, để dành). Kế hoạch và trạng thái: [implementation-plan](../implementation-plan.md) §8.
+Chuông ngoài terminal, điện thoại, bản đồ (giai đoạn 2 và 3); Quản sự tự push và merge (PS-08); thư đề xuất và bản tấu mỗi ngày (PS-02, PS-03); tộc Gemini CLI với API key và tộc Codex (P1-12c, P1-12d, để dành). Kế hoạch và trạng thái: [implementation-plan](../implementation-plan.md) §8.

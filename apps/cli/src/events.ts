@@ -3,7 +3,7 @@
 // the view after the change (P0-09), and the reducer puts it in place. P0-08 merged after P0-05, so it wires this
 // (implementation-plan §8).
 import { EventSchema, characterViewOf, territoryViewOf } from '@elvaria/domain';
-import type { Character, Territory } from '@elvaria/domain';
+import type { Character, EventData, Territory } from '@elvaria/domain';
 import { createRedactor, openEventLog, redactDeep } from '@elvaria/eventlog';
 
 import type { KingdomContext } from './kingdom-context.ts';
@@ -28,6 +28,18 @@ export function recordTerritoryAttached(ctx: KingdomContext, territory: Territor
     territory: territory.id,
     data: { territory: territoryViewOf(territory) },
   });
+}
+
+export type UpgradeEventType =
+  'upgrade.started' | 'upgrade.switched' | 'upgrade.rolled_back' | 'upgrade.failed';
+
+/** The build a kingdom runs (PS-04b): `elvaria upgrade` moves the pointer while no Steward runs, so it says so. */
+export function recordUpgrade<T extends UpgradeEventType>(
+  ctx: KingdomContext,
+  type: T,
+  data: EventData<T>,
+): Promise<void> {
+  return append(ctx, { v: 1, id: ctx.ids.ulid(), ts: ctx.now(), type, actor: OWNER, data });
 }
 
 export function recordCharacterCreated(ctx: KingdomContext, character: Character): Promise<void> {

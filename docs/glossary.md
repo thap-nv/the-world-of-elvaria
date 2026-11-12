@@ -33,6 +33,8 @@ Luật (ADR 0014, [implementation-plan](implementation-plan.md) §2.7 và §4.1)
 | Khách nhẹ | Lite client | `lite` | Giao diện 2D cho điện thoại. | `apps/lite`, inbox `source` |
 | Đường hầm | Tunnel | `tunnel` | Lối vào Sứ giả từ xa có xác thực. | `kingdom.tunnel` |
 | Sa bàn | Sandbox | `sandbox` | Ngày giả và replay, không chạy agent, không tốn mana. | `packages/sandbox`, event `sandbox.*` |
+| Bản (bản ghim) | Build (pinned build) | `build` | Một worktree tách rời của repo Elvaria ở một commit, đã cài và đã build hook, tại `<kingdom>/.builds/<sha>/`. Con trỏ `.state/build.json` giữ bản đang ghim và bản trước; mọi lệnh CLI trên vương quốc chạy lại bằng bản đang ghim, trừ `upgrade` và khi có `--here`. | `.state/build.json`, `<kingdom>/.builds/<sha>/`, `elvaria upgrade` |
+| Nâng cấp | Upgrade | `upgrade` | Dựng một bản mới cạnh bản đang ghim, thử nó (`doctor`, bộ test hợp đồng với CLI giả, một quest bậc script trên vương quốc tạm), qua hết mới chuyển con trỏ; `--rollback` về bản trước. Không chạy khi Quản sự đang chạy hay còn phiên dở. | `elvaria upgrade`, event `upgrade.*` |
 | Sự cố | Incident | `incident` | Báo động, chuyển thế giới sang chế độ phòng thủ. | event `incident.*` (dành sẵn) |
 | Tuần tra | Patrol | `patrol` | Việc định kỳ phát hiện vấn đề, có trần mana tuần. | `kingdom.schedule.patrol`, `created_by` |
 | Mùa | Season | `season` | Một sprint. | theme, UI |
@@ -348,6 +350,7 @@ Mọi giá trị enum xuất hiện trong [schemas/](schemas/) có ở bảng n�
 | Nhân vật | `character.created`, `character.sleep`, `character.wake`, `character.meditate`, `character.suspend`, `character.release`, `character.swamp`, `character.level_up`, `character.level_down`, `character.model_changed` | |
 | Lệnh | `command.received`, `command.applied`, `command.rejected` | Quản sự xử lý `inbox/` |
 | Khác | `delivery.sent`, `plot.patched`, `plot.merged`, `plot.restored`, `chronicle.written`, `territory.attached`, `territory.surveyed`, `territory.health`, `sandbox.replay.start`, `sandbox.replay.end` | `plot.patched`: Quản sự áp bản vá của người làm vào `laws.patch_paths` trước commit `submit` (P1-28); `plot.merged`: Quản sự gộp các nhánh phần vào nhánh quest ghép, hoặc dừng ở một nhánh (P1-21); `plot.restored`: sau phiên người chấm ngoài đất nháp, Quản sự đưa đất của quest về commit của nó, bỏ những gì lệnh của người chấm để lại (P1-44) |
+| Bản | `upgrade.started`, `upgrade.switched`, `upgrade.rolled_back`, `upgrade.failed` | `elvaria upgrade` ghi (actor `user`): bắt đầu dựng và thử một commit, chuyển con trỏ `.state/build.json` sang bản mới, lùi về bản trước, hay hỏng ở một bước (`prepare`, `doctor`, `conformance`, `trial`) và không chuyển |
 | Dành sẵn | `campaign.*`, `battle.*`, `incident.*`, `patrol.*`, `party.*`, `skill.*` | giai đoạn 5; đội và bí kíp |
 
 ## 13. Dữ liệu registry mặc định
