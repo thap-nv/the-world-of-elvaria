@@ -20,6 +20,7 @@
     "docs:gen": "node scripts/docs-gen.mjs",
     "docs:check": "node scripts/docs-check.mjs",
     "i18n:check": "node scripts/i18n-check.mjs",
+    "plan:split": "node scripts/plan-split.mjs",
     "elvaria": "node apps/cli/src/cli.ts",
     "prepare": "husky"
   },

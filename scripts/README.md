@@ -15,16 +15,22 @@
   (`GENERATORS`) and, when `--kingdom <dir>` (or `--kingdom=<dir>`) is passed, the kingdom tier report
   (`kingdomGenerators`, implementation-plan §5.4, §3.12). Each generator writes either a whole file or a marked
   region between `<!-- docs:gen <region> -->` and `<!-- /docs:gen <region> -->` inside a hand-written file
-  (`spliceRegion`), including the `quest-transitions` region of `docs/implementation-plan.md` (§2.5, rendered by
-  `renderQuestTransitionTable()` from `@elvaria/domain`). With `--check`, compares without writing and exits `1`
+  (`spliceRegion`): the `quest-transitions` region of `docs/implementation-plan/2-data-and-events.md` (§2.5,
+  rendered by `renderQuestTransitionTable()` from `@elvaria/domain`) and the `plan-index` region of
+  `docs/implementation-plan.md` (the contents table, `docs-plan-index.mjs`). With `--check`, compares without writing and exits `1`
   on drift. Called by `pnpm docs:gen` (and `pnpm docs:gen --kingdom <dir>`) in the root `package.json`,
   `pnpm check` (`pnpm docs:gen --check`), and the `checks` job of `.github/workflows/ci.yml`
   (`pnpm docs:gen --check && pnpm docs:gen && git diff --exit-code docs/`); `.claude/hooks/guard-edit.spec.ts`
   also imports `GENERATORS` and `kingdomGenerators` to keep `GENERATED_FILES` in `.claude/hooks/guard-edit.mjs`
   in step with the generators. Reads and writes repo files through `gitRepo()` (`docs-repo.mjs`): writes
-  `docs/glossary.md`, `docs/events.md`, `docs/dependency-graph.md`, `docs/cli.md`, the `quest-transitions`
-  region of `docs/implementation-plan.md`, and (with `--kingdom`) `docs/tier-report.md` and
-  `docs/metrics-report.md`.
+  `docs/glossary.md`, `docs/events.md`, `docs/dependency-graph.md`, `docs/cli.md`, the two regions above, and
+  (with `--kingdom`) `docs/tier-report.md` and `docs/metrics-report.md`.
+- `docs-plan-index.mjs` (`docs-plan-index.spec.ts`): `renderPlanIndex(repo)` renders the contents table of
+  `docs/implementation-plan.md` (P1-52): one row per file of `docs/implementation-plan/` in section order
+  (`byNumber`), named by its `##`/`###` numbered headings outside code fences (`headingsOf`, `labelOf`; a
+  `8-done-*` file by its §8 subsection), and one row linking every `11-<date>.md` day file. Called by
+  `docs-gen.mjs` (region `plan-index`) and `plan-split.mjs`. Reads the repo file list and the files of
+  `docs/implementation-plan/` through `gitRepo()`; writes no files.
 - `docs-glossary.mjs` (`docs-glossary.spec.ts`): `renderGlossary()` validates `GLOSSARY` with `glossaryProblems`
   from `@elvaria/i18n` and renders `docs/glossary.md` (ADR 0014, implementation-plan §5.3). Called by
   `docs-gen.mjs`. Reads `packages/i18n/src/glossary.json` (via `@elvaria/i18n`); `docs-gen.mjs` writes the
@@ -97,7 +103,24 @@
   link and image target in `*.md` files outside `design/` and `node_modules/` (skipping code fences and inline
   code spans, and ignoring external URLs, `mailto:`, and `#` anchors) resolves to an existing file or folder in
   the repo (implementation-plan §5.4, ADR 0019). Called by `docs-check.mjs`; reads the file list and Markdown
-  texts passed by `docs-check.mjs` and writes no files.
+  texts passed by `docs-check.mjs` and writes no files. Exports `FENCE`, `CODE_SPAN`, `INLINE_LINK` and
+  `NOT_RELATIVE` so `plan-lines.mjs` and `docs-plan-index.mjs` read links and fences the same way.
+- `plan-split.mjs` (`plan-split.spec.ts`): `pnpm plan:split` (P1-52) splits `docs/implementation-plan.md` into
+  the index and the files of `docs/implementation-plan/`, by the layout of `plan-layout.mjs`, rendering the index's
+  `plan-index` region (`docs-plan-index.mjs`, `spliceRegion` of `docs-gen.mjs`). Lines move unchanged except
+  relative link targets (`plan-lines.mjs`); it compares the non-blank lines before and after (`compareLines`) and
+  exits `1` when one is lost or a file passes 150 KB (`MAX_BYTES`). On a plan already split (no `## 1.` heading),
+  it moves the §8 rows whose Status starts with `xong` to the end of their `8-done-*` file. `--check` writes
+  nothing and exits `1` when it would write; `--verbose` lists the added lines. Reads and writes
+  `docs/implementation-plan.md` and `docs/implementation-plan/*.md` through `gitRepo()`.
+- `plan-layout.mjs` (`plan-layout.spec.ts`): where each part of the plan goes: `SECTION_FILES` (one file per
+  section, §3 one per subsection), `KEPT` (preamble, §8, §10, §11 head), `DONE_FILES` (the done file of each §8
+  subsection); `blocksOf`, `moveDone`, `dayRows` cut the lines, and `partText`, `doneText`, `dayText`,
+  `indexHead` write the heads of the files. Called by `plan-split.mjs`; reads and writes no files.
+- `plan-lines.mjs` (`plan-lines.spec.ts`): `rebaseLines(lines, from, to)` rewrites relative link targets of moved
+  lines so they reach the same file (outside code fences, link text and code spans untouched), and
+  `compareLines(before, after, dropped)` counts the non-blank lines of two sets of files with their links resolved
+  to repo paths and returns the `lost` and `added` ones. Called by `plan-split.mjs`; reads and writes no files.
 - `i18n-check.mjs` (`i18n-check.spec.ts`): runs `localeProblems` (every locale in `LOCALE_FILES` has the same
   keys and `{name}` placeholders as `DEFAULT_LOCALE` `vi`, with no empty messages) and `glossaryProblems` (the
   shape rules of `packages/i18n/src/glossary.json`) from `@elvaria/i18n` (implementation-plan §4.1). Called by
@@ -116,17 +139,19 @@
 - `not-yet.mjs` (`not-yet.spec.ts`): stand-in script from P0-01 (`node scripts/not-yet.mjs <plan-item-id>`,
   implementation-plan §8) for root `package.json` scripts whose tool a later implementation-plan item builds;
   today every root script in `package.json` calls its real tool, and `scripts/not-yet.spec.ts` exercises this
-  script in `pnpm test`. Reads `docs/implementation-plan.md` (`findPlanItemTitle`) and
+  script in `pnpm test`. Reads the §8 rows of `docs/implementation-plan.md` and of its done files
+  `docs/implementation-plan/8-done-*.md` (`readPlanRows`, `findPlanItemTitle`) and
   `process.env.npm_lifecycle_event`, prints which §8 item builds the tool (`notYetMessage`), and exits `0` (or
-  `1` when the item id is missing or absent from `docs/implementation-plan.md` §8); writes no files.
+  `1` when the item id is missing or absent from §8); writes no files.
 
 ## Does not
 
 - Ship as a workspace package or run at runtime in the kingdom: these are repository maintenance tools included
   in the root `tsconfig.json` and `vitest.config.mjs`.
 - Edit source schemas (`packages/domain/src/schema/`), `packages/i18n/src/glossary.json`, locale files, or
-  `packages/config/boundaries.mjs`: the generators only write derived files under `docs/`, and the check scripts
-  never write to disk.
+  `packages/config/boundaries.mjs`: the generators only write derived files under `docs/`, `plan-split.mjs` only
+  moves lines of the implementation plan, and the check scripts never write to disk.
+- Change a line of the implementation plan when `plan-split.mjs` moves it, beyond its relative link targets.
 - Run shell scripts or pass `process.env` wholesale to child `git` processes (ADR 0013, 0015).
 - Follow web URLs, `mailto:` links, in-page `#` anchors, or links under `design/` in `docs-links.mjs` (ADR
   0019), or scan comments, prose strings, Markdown, tests, fixtures, or tool configs for banned identifiers in
@@ -151,7 +176,8 @@
 pnpm test              # root vitest (scripts/**/*.spec.ts and .claude/hooks/**/*.spec.ts), then workspaces
 pnpm typecheck         # root tsc -p tsconfig.json checks scripts/*.mjs (checkJs) and scripts/*.spec.ts
 pnpm schemas --check   # verifies docs/schemas/*.schema.json match the zod contracts
-pnpm docs:gen --check  # verifies generated docs and the §2.5 region match their sources
+pnpm docs:gen --check  # verifies generated docs, the §2.5 region and the plan's contents match their sources
+pnpm plan:split --check  # loses no line of the plan and finds no done §8 row left in the index
 pnpm docs:check        # runs all repository documentation, link, and identifier checks
 pnpm i18n:check        # verifies locale keys, placeholders, and glossary.json shape
 ```

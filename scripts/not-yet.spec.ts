@@ -4,14 +4,21 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { findPlanItemTitle, notYetMessage, run } from './not-yet.mjs';
+import { findPlanItemTitle, notYetMessage, readPlanRows, run } from './not-yet.mjs';
 
 const SCRIPT = fileURLToPath(new URL('not-yet.mjs', import.meta.url));
-const PLAN = readFileSync(new URL('../docs/implementation-plan.md', import.meta.url), 'utf8');
+const PLAN = readPlanRows();
 
 describe('findPlanItemTitle', () => {
   it('reads the task cell of a §8 row as plain text', () => {
     expect(findPlanItemTitle(PLAN, 'P0-03')).toMatch(/^Schema quest/);
+  });
+
+  it('finds open rows in the plan and done rows in its done files (P1-52)', () => {
+    const index = readFileSync(new URL('../docs/implementation-plan.md', import.meta.url), 'utf8');
+    expect(findPlanItemTitle(index, 'P0-03')).toBeUndefined();
+    expect(findPlanItemTitle(index, 'P1-12c')).toMatch(/runner-gemini/);
+    expect(findPlanItemTitle(PLAN, 'P1-12c')).toMatch(/runner-gemini/);
   });
 
   it('drops markdown links and code ticks, and shortens long titles', () => {
