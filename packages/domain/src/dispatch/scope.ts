@@ -4,6 +4,7 @@
 // rules. This file decides who holds what, when two scopes meet and why a quest waits, as pure functions of the
 // quests; the roster applies them (roster.ts) and `quest list` says them (scopeHolderOf).
 import { plotBaseOf } from '../party/plot-base.ts';
+import { questFinished } from '../quest/finished.ts';
 import type { QuestId } from '../core/ids.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 import type { Territory } from '../schema/territory.ts';
@@ -179,3 +180,35 @@ export const scopeHolderOf = (
   territory?: Pick<Territory, 'shared_paths'>,
 ): ScopeWait | null =>
   scopeBookOf(quests).waitOf(quest, { id: quest.territory, shared_paths: territory?.shared_paths });
+
+/** Statuses in which a quest waits to start a session: the scope rules may be what it waits for. */
+export const SCOPE_WAITING_STATUSES: readonly Quest['status'][] = ['open', 'claimed', 'returned'];
+
+/** A done quest that still holds its scope while quests ready to start wait for it (the owner's digest, PS-03). */
+export interface ScopeHold {
+  readonly quest: QuestId;
+  readonly waiting: readonly QuestId[];
+}
+
+/**
+ * The done quests that hold a scope other quests wait for (R3), each with the quests that wait, their dependencies
+ * finished: once the owner merges and archives it, they start. `territories` give the shared paths.
+ */
+export function scopeHoldsOf(
+  quests: readonly Quest[],
+  territories: readonly Pick<Territory, 'id' | 'shared_paths'>[],
+): ScopeHold[] {
+  const book = scopeBookOf(quests);
+  const finished = new Set(quests.filter(questFinished).map(({ id }) => id));
+  const done = new Set(quests.filter(({ status }) => status === 'done').map(({ id }) => id));
+  const held = new Map<QuestId, QuestId[]>();
+  for (const quest of quests) {
+    if (!SCOPE_WAITING_STATUSES.includes(quest.status)) continue;
+    if (!quest.depends_on.every((id) => finished.has(id))) continue;
+    const territory = territories.find(({ id }) => id === quest.territory) ?? { id: quest.territory };
+    const wait = book.waitOf(quest, territory);
+    if (wait?.rule !== 'scope' || !done.has(wait.holder)) continue;
+    held.set(wait.holder, [...(held.get(wait.holder) ?? []), quest.id]);
+  }
+  return [...held].map(([quest, waiting]) => ({ quest, waiting }));
+}

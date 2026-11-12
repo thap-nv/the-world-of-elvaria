@@ -3,7 +3,15 @@
 import { describe, expect, it } from 'vitest';
 
 import { Q1, Q2, Q3, Q4, TERRITORY, quest, workingBy } from './__fixtures__/snapshot.ts';
-import { baseChainOf, holdsScope, scopeBookOf, scopeHolderOf, scopesMeet, sharedGlobsOf } from './scope.ts';
+import {
+  baseChainOf,
+  holdsScope,
+  scopeBookOf,
+  scopeHolderOf,
+  scopeHoldsOf,
+  scopesMeet,
+  sharedGlobsOf,
+} from './scope.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 
 /** On its worktree, branch quest/<id>, as PlotManager leaves a quest of a git territory. */
@@ -138,5 +146,20 @@ describe('scopeBookOf', () => {
   it('reads the shared globs of a territory, none when it names none', () => {
     expect(sharedGlobsOf(undefined)).toEqual([]);
     expect(sharedGlobsOf({ shared_paths: [{ glob: 'docs/**', merge: 'regenerate' }] })).toEqual(['docs/**']);
+  });
+});
+
+describe("scopeHoldsOf (the owner's digest)", () => {
+  it('names the done quests whose scope quests ready to start wait for, with those quests', () => {
+    const done = ranThen(quest(Q1, { scope: ['a/**'] }), 'done');
+    const waits = quest(Q2, { scope: ['a/x.ts'] });
+    const later = quest(Q3, { scope: ['a/y.ts'], dependsOn: [Q4] });
+    const territory = { id: TERRITORY, shared_paths: [] };
+    expect(scopeHoldsOf([done, waits, later, quest(Q4, { status: 'draft' })], [territory])).toEqual([
+      { quest: Q1, waiting: [Q2] },
+    ]);
+    // A working holder is nothing for the owner to do; a territory the list lacks has no shared paths.
+    expect(scopeHoldsOf([{ ...done, status: 'working' }, waits], [])).toEqual([]);
+    expect(scopeHoldsOf([done, ranThen(quest(Q2, { scope: ['b/**'] }), 'done')], [])).toEqual([]);
   });
 });

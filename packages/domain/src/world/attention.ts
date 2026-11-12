@@ -2,12 +2,15 @@
 // "attention"), as the digest, and later the world and the lite client, list it. Pure, from the world state and what
 // the Steward knows that no file holds (its notices); each item has its group (the work waits on it, or it can wait),
 // an advice code and the `elvaria` command that acts on it, both looked up in ATTENTION_TABLE by the item's kind.
+// (PS-05) A done quest that still holds the scope other quests wait for comes from the caller too (scopeHoldsOf): the
+// world state does not hold the quests' scopes.
 import { current } from '../mana/reading.ts';
 import { manaWarningOf } from '../mana/state.ts';
 import { RANKS } from '../schema/common.ts';
 import type { Instant } from '../core/clock.ts';
 import type { CharacterId, MemoId, QuestId, TribeId } from '../core/ids.ts';
 import type { WaitGauge } from '../dispatch/judge-waits.ts';
+import type { ScopeHold } from '../dispatch/scope.ts';
 import type { Rank } from '../schema/common.ts';
 import type { PoolView } from './mana-view.ts';
 import type { QuestView } from './quest-view.ts';
@@ -37,6 +40,7 @@ export const ATTENTION_TABLE = {
     command: ['character', 'add', '<id>', '--class', '{class}', '--model', '<model>'],
   },
   unclaimable: { group: 'must', advice: 'see_why', command: ['quest', 'show', '{quest}'] },
+  scope_held: { group: 'must', advice: 'merge_and_archive', command: ['quest', 'archive', '{quest}'] },
   draft: { group: 'must', advice: 'confirm_or_cancel', command: ['quest', 'confirm', '{quest}'] },
   memo: { group: 'can_wait', advice: 'decide_memo', command: ['memo', 'show', '{memo}'] },
   mana_asleep: { group: 'can_wait', advice: 'wait_or_wake', command: ['wake', '{tribe}'] },
@@ -59,6 +63,8 @@ export interface AttentionSubject {
   readonly question?: string;
   /** A judging class of the quest's kind, for the command that summons a judge. */
   readonly class?: string;
+  /** The quests that wait for a done quest's scope (scope_held, PS-05). */
+  readonly waiting?: readonly QuestId[];
   /** The pools that hold every judge of a quest (judge_mana). */
   readonly gauges?: readonly WaitGauge[];
   readonly memo?: MemoId;
@@ -89,6 +95,8 @@ export interface StewardNotices {
     readonly class: string;
     readonly gauges: readonly WaitGauge[];
   }[];
+  /** Done quests that still hold a scope quests wait for (scopeHoldsOf, PS-05); from the quest files, not the Steward's. */
+  readonly scope_held?: readonly ScopeHold[];
 }
 
 const FIELD = /^\{(\w+)\}$/;
@@ -138,6 +146,9 @@ function noticeItems(state: WorldState, notices: StewardNotices): AttentionItem[
     ),
     ...(notices.judge_waits ?? []).map(({ quest, class: cls, gauges }) =>
       itemOf('judge_mana', { ...aboutId(state, quest), class: cls, gauges }),
+    ),
+    ...(notices.scope_held ?? []).map(({ quest, waiting }) =>
+      itemOf('scope_held', { ...aboutId(state, quest), waiting }),
     ),
   ];
 }

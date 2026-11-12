@@ -81,6 +81,7 @@ describe('attentionQueue', () => {
       unclaimable: [q(5)],
       unjudgeable: [{ quest: q(6), class: 'judge' }],
       judge_waits: [{ quest: q(7), class: 'judge', gauges: [judgePool] }],
+      scope_held: [{ quest: q(8), waiting: [q(5)] }],
     });
     expect(items.map(({ group, kind, command }) => [group, kind, command.join(' ')])).toEqual([
       ['must', 'question', `answer ${q(1)} <answer>`],
@@ -89,6 +90,7 @@ describe('attentionQueue', () => {
       ['must', 'judge_mana', `character add <id> --class judge --tribe <tribe>`],
       ['must', 'unjudgeable', `character add <id> --class judge --model <model>`],
       ['must', 'unclaimable', `quest show ${q(5)}`],
+      ['must', 'scope_held', `quest archive ${q(8)}`],
       ['must', 'draft', `quest confirm ${q(4)}`],
       ['can_wait', 'memo', 'memo show m_20261112_4k2pqz'],
       ['can_wait', 'mana_asleep', 'wake claude'],

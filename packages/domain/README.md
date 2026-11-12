@@ -208,7 +208,9 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
 - Lists what waits for the owner (`attentionQueue`, `src/world/attention.ts`, PS-03): over the world state, `now`
   and the Steward's notices (unclaimable, unjudgeable, judges out of mana), each item with its group (`must`: the
   work stands still; `can_wait`), an advice code and the `elvaria` command, both from `ATTENTION_TABLE` by kind:
-  questions, seals, the infirmary, drafts, open memos, pools asleep or at the warning share. The world state holds the
+  questions, seals, the infirmary, drafts, open memos, pools asleep or at the warning share, and (PS-05) the done
+  quests that still hold a scope quests ready to start wait for (`scope_held`, from `scopeHoldsOf` over the quest
+  files, which the caller passes with the notices: the world state holds no scope). The world state holds the
   open memos since PS-03 (`memos`, `memoViewOf`; `memo.*` lines reduce into it; `WORLD_STATE_VERSION` 2).
 - Gives the load trace of a session's opening line its shape (`LoadTraceSchema`, `src/schema/event/load-trace.ts`,
   PS-01b): the scripture files and their lines, the skill ids and the prompt's blocks by part, id and size.
