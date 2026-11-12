@@ -180,7 +180,18 @@ describe('applyEvent', () => {
       line('mana.exhausted', { ...pool, resets_at: '2026-11-06T17:00:00+07:00' }),
     );
     expect(asleep.pools[0]?.asleep).toBe(true);
-    expect(applyEvent(asleep, line('mana.restored', pool)).pools[0]?.asleep).toBe(false);
+    expect(asleep.pools[0]?.resets_at).toBe('2026-11-06T17:00:00+07:00');
+    expect(applyEvent(asleep, line('mana.restored', pool)).pools[0]).toMatchObject({
+      asleep: false,
+      resets_at: null,
+    });
+    expect(applyEvent(asleep, line('mana.exhausted', pool)).pools[0]).toMatchObject({
+      asleep: true,
+      resets_at: null,
+    });
+    expect(
+      applyEvent(asleep, line('mana.exhausted', { ...pool, resets_at: undefined })).pools[0]?.resets_at,
+    ).toBeNull();
   });
 
   it('opens a memo, routes it and drops it once closed, as worldStateOf reads the files (PS-03)', () => {
