@@ -1,10 +1,13 @@
 // Step 4 of planTick (implementation-plan §3.1, §3.2): each submitted session-tier quest gets its machine checks,
 // then a judge (selectVerifier) or the machine's verdict, or waits for a later tick; a quest whose judge the roster
-// does not have at all is named. The checks run outside the tick (P1-25): the Steward starts them, and the quest is
-// judged in a tick after they ended, so a long check never holds the inbox, the sessions' ends or the claims.
+// does not have at all is named, and so is one whose judges are all held by their mana (PS-03). The checks run outside
+// the tick (P1-25): the Steward starts them, and the quest is judged in a tick after they ended, so a long check never
+// holds the inbox, the sessions' ends or the claims.
 import { recheckDue } from '../verify/environment.ts';
-import { selectVerifier, waitsForNoJudge } from '../verify/select-verifier.ts';
+import { awaitedJudges, selectVerifier, waitsForNoJudge } from '../verify/select-verifier.ts';
 import { partyOf, workedOn } from '../verify/past-assignees-of.ts';
+import { judgeWaitOf } from './judge-waits.ts';
+import type { JudgeWait, GaugeSource } from './judge-waits.ts';
 import type { Roster } from './roster.ts';
 import type { Instant } from '../core/clock.ts';
 import type { CharacterId, QuestId } from '../core/ids.ts';
@@ -55,8 +58,11 @@ export interface ReviewSource {
   readonly background?: BackgroundWork;
 }
 
-/** The snapshot's tribe limits too (RosterSource): a judge answering in text comes after an equal one (P1-33). */
-type ReviewInput = ReviewSource & { readonly limits: NonNullable<VerifierPolicy['limits']> };
+/**
+ * The snapshot's tribe limits too (RosterSource): a judge answering in text comes after an equal one (P1-33); and its
+ * mana, for the gauges that hold a quest's judges (judgeWaitOf, PS-03).
+ */
+type ReviewInput = ReviewSource & GaugeSource & { readonly limits: NonNullable<VerifierPolicy['limits']> };
 
 export interface Reviews {
   /** Quests whose checks the Steward starts now, outside the tick. */
@@ -65,6 +71,8 @@ export interface Reviews {
   /** Quests the machine judges alone (machine_only, ADR 0008). */
   readonly machine: QuestId[];
   readonly unjudgeable: QuestId[];
+  /** Quests with their checks done whose judges' mana is all closed (PS-03): the Steward rings once for each. */
+  readonly judge_waits: JudgeWait[];
 }
 
 /**
@@ -108,7 +116,7 @@ export function planReviews(
   review: readonly Quest[],
   now: Instant,
 ): Reviews {
-  const planned: Reviews = { checks: [], verifications: [], machine: [], unjudgeable: [] };
+  const planned: Reviews = { checks: [], verifications: [], machine: [], unjudgeable: [], judge_waits: [] };
   for (const quest of review) {
     const candidates = source.characters.filter(roster.standsBy);
     const policy = {
@@ -128,7 +136,12 @@ export function planReviews(
       continue;
     }
     const choice = selectVerifier(quest, candidates, { ...policy, free: roster.canStart });
-    if (choice === null) continue;
+    if (choice === null) {
+      const awaited = awaitedJudges(quest, candidates, policy);
+      const wait = judgeWaitOf(quest.id, awaited, roster.manaOpen, source, now);
+      if (wait !== undefined) planned.judge_waits.push(wait);
+      continue;
+    }
     if (choice.reason === 'machine_only') {
       planned.machine.push(quest.id);
       continue;

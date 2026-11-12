@@ -73,7 +73,9 @@
 - Plans the Steward's tick (`src/dispatch/`): `planTick(snapshot, now)` returns what the Steward and the sandbox
   carry out in one tick: characters on a fail streak sent to the Temple (`failStreakReached`), claimed quests
   that start, a judge (or the machine) for each submitted quest, the submitted quests no judge of the roster may
-  ever take (`unjudgeable`, `waitsForNoJudge`, P1-15), returned quests sent back, claims (class, level
+  ever take (`unjudgeable`, `waitsForNoJudge`, P1-15), those whose judges are all held by their mana, with the
+  pools that hold them (`judge_waits`, `judgeWaitOf` over selectVerifier's `awaitedJudges` and the roster's
+  `manaOpen`, PS-03), returned quests sent back, claims (class, level
   by `canTake`, limits of tribe and territory, round-robin, affinity), the open quests nobody can take, and the
   done quests still to deliver (`deliveries`, P1-14). Checks and scripts, which run outside the tick, start only in
   the room `dispatch.max_background` leaves beside the work running (`BackgroundWork.running`, P1-47), checks
@@ -199,6 +201,15 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   (`src/metrics/log-counts.ts`, PS-01b): the runs of checks set aside for their environment (`check.end` `environment`)
   and each session's reads by file (`agent.tool` reads), the files read more than once first; and (PS-05) the submits
   whose work changed files outside their quest's scope (`out_of_scope` of `quest.submitted`).
+- Decides when the Steward's scheduled jobs run (`src/schedule/`, PS-03): `dueJobs` over `kingdom.schedule`, the
+  kingdom's local day and time (`localClockOf`) and the day each job last ran: a daily job is due once its `at` has
+  come on a day it has not run (`DAILY_JOBS`: `chronicle`, `digest`), so a late start catches up and a clock set back
+  never runs it twice. `schedule.ran` and `digest.written` give the lines their shape (`src/schema/event/schedule-data.ts`).
+- Lists what waits for the owner (`attentionQueue`, `src/world/attention.ts`, PS-03): over the world state, `now`
+  and the Steward's notices (unclaimable, unjudgeable, judges out of mana), each item with its group (`must`: the
+  work stands still; `can_wait`), an advice code and the `elvaria` command, both from `ATTENTION_TABLE` by kind:
+  questions, seals, the infirmary, drafts, open memos, pools asleep or at the warning share. The world state holds the
+  open memos since PS-03 (`memos`, `memoViewOf`; `memo.*` lines reduce into it; `WORLD_STATE_VERSION` 2).
 - Gives the load trace of a session's opening line its shape (`LoadTraceSchema`, `src/schema/event/load-trace.ts`,
   PS-01b): the scripture files and their lines, the skill ids and the prompt's blocks by part, id and size.
 - Gives the core types every package builds on: `Result`, branded ids (`QuestId`, `TribeId`, ...), `Clock` and

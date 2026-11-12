@@ -59,6 +59,9 @@ export const EVENT_TYPES = [
   'plot.merged',
   'plot.restored',
   'chronicle.written',
+  // PS-03: the Steward's scheduled jobs; the digest is the first.
+  'schedule.ran',
+  'digest.written',
   'territory.attached',
   'territory.surveyed',
   'territory.health',

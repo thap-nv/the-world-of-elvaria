@@ -1,10 +1,11 @@
 // The console bell's mana lines (implementation-plan §3.5, P1-22): a gauge that warns, sleeps or wakes, a whole
 // pool or the cap of one model, in the owner's language. The quest notices are in compose.spec.ts.
-import { TribeIdSchema } from '@elvaria/domain';
+import { QuestIdSchema, TribeIdSchema } from '@elvaria/domain';
 import { translator } from '@elvaria/i18n';
 import { describe, expect, it } from 'vitest';
 
 import { lineOf } from './bell.ts';
+import type { Notice } from '@elvaria/steward';
 
 const en = translator('en');
 const vi = translator('vi');
@@ -43,6 +44,44 @@ describe('the console bell on mana', () => {
     );
     expect(lineOf(vi, { kind: 'mana_awake', ...pool })).toBe(
       'Mana đã về: pool claude_gpt_models của tộc gemini. Nhiệm vụ tạm dừng của nó làm tiếp.',
+    );
+  });
+});
+
+// PS-03: a quest whose judges are all out of mana, and the day's digest.
+describe('the console bell on the judges’ mana and the digest', () => {
+  const quest = {
+    id: QuestIdSchema.parse('q_20261106_7k3m2a'),
+    title: 'Thêm script pnpm check',
+    rank: 'D',
+  } as const;
+
+  it('names the pools that hold every judge, and how to stop waiting', () => {
+    const notice: Notice = {
+      kind: 'judge_mana',
+      quest,
+      classes: ['judge'],
+      gauges: [{ tribe: gemini, pool: 'gemini_models', resets_at: '2026-11-06T14:00:00+07:00' }],
+    };
+    expect(lineOf(en, notice)).toBe(
+      'Quest q_20261106_7k3m2a «Thêm script pnpm check» waits in review, but every judge who may judge it is out of ' +
+        'mana: pool gemini_models of tribe gemini, until 2026-11-06T14:00:00+07:00. The review opens once a pool ' +
+        'opens again; not to wait, summon a judge of another model on another pool: elvaria character add <id> ' +
+        '--class judge --tribe <tribe>',
+    );
+    expect(lineOf(en, { ...notice, classes: [] })).toContain('every — who may judge it');
+  });
+
+  it('says the digest is written, with its two counts and its file', () => {
+    const notice: Notice = {
+      kind: 'digest',
+      day: '2026-11-06',
+      file: 'digest/2026-11-06.md',
+      must: 2,
+      can_wait: 1,
+    };
+    expect(lineOf(vi, notice)).toBe(
+      'Bản tấu 2026-11-06: 2 việc phải quyết để việc chạy tiếp, 1 việc chờ được. Đọc ở digest/2026-11-06.md.',
     );
   });
 });

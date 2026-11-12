@@ -2,11 +2,18 @@
 // the roster does not have (different_model, and no judge of the kind outside its doers on another model). The
 // Steward rings the bell once per quest, like a quest nobody can claim (§3.1), and again only after the quest left
 // the list and came back. It keeps no file and writes no event: nothing changes in the world, and after a restart
-// the bell rings once more, which reminds the owner of a quest still waiting.
-import type { QuestId } from '@elvaria/domain';
+// the bell rings once more, which reminds the owner of a quest still waiting. The digest (PS-03) lists them too.
+import type { Quest, QuestId } from '@elvaria/domain';
 
 import { noticeQuest, ring } from './context.ts';
 import type { Context } from './context.ts';
+import type { World } from './world.ts';
+
+/** The judging classes of the quest's kind: who the owner would summon. */
+export const judgingClassesOf = (world: World, quest: Quest): string[] =>
+  world.registry.classes
+    .filter((entry) => entry.is_verifier && entry.kinds.includes(quest.kind))
+    .map((entry) => entry.id);
 
 /** Rings for each quest newly named, and forgets the quests no longer named. */
 export async function noteUnjudgeable(
@@ -19,15 +26,12 @@ export async function noteUnjudgeable(
     const quest = ctx.world.quests.get(id);
     if (quest === undefined || told.has(id)) continue;
     told.add(id);
-    const classes = ctx.world.registry.classes
-      .filter((entry) => entry.is_verifier && entry.kinds.includes(quest.kind))
-      .map((entry) => entry.id);
     const assignee =
       typeof quest.assignee === 'string' ? ctx.world.characters.get(quest.assignee) : undefined;
     await ring(ctx, {
       kind: 'unjudgeable',
       quest: noticeQuest(quest),
-      classes,
+      classes: judgingClassesOf(ctx.world, quest),
       model: assignee?.model ?? null,
     });
   }

@@ -41,6 +41,20 @@
   follows no memo, an unknown kind or a write that fails is a warning, never the run's end. No quest moves. The
   owner's `decide_memo` closes a memo once (`memo.closed`, in the journal of the quest whose letter held it); a
   continuing assignee's prompt lists the memos its quest filed (`filedMemosOf`).
+- Runs the jobs of `kingdom.schedule` (PS-03, implementation-plan §3.16.3; `src/schedule/`): no cron. At the end
+  of each tick the domain's `dueJobs` says which job's hour has come on a local day it has not run; an `in_tick`
+  job (no model) runs there and then, an `off_tick` job (may call a model: PS-03b's triage, PS-21c's docs graph,
+  given as `StewardDeps.jobs`) runs outside the tick, one at a time, and `stop()` aborts it. A job that ends without
+  throwing writes `schedule.ran`; the next start reads the last day of each from the log, so a job runs once a day
+  however the clock moves, and one a stop cut short runs again. The first job is the digest (`digestJob`, given
+  `StewardDeps.digest`): the domain's `attentionQueue` over the files, the open memos, mana as the log last read it
+  (`digestStateOf`) and the Steward's own notices (`noticesOf`: unclaimable, unjudgeable, judges out of mana); the
+  `Digest` port of the composition root words it and writes `digest/<day>.md`, then one `digest.written` line and
+  one bell (`digest`). No model, no mana.
+- Rings once for a submitted quest whose judges are all held by their mana (PS-03, (d) of P1-50;
+  `src/judge-waits.ts`): `planTick`'s `judge_waits` name it with the pools that hold its judges and their reset when
+  a reading says; the bell `judge_mana` rings once per quest, as for a quest without a judge (`unjudgeable.ts`), and
+  the digest lists it. Who judges, and when, is unchanged: the judge opens once a gauge reopens (ADR 0008).
 - Sets aside checks that failed because of their environment (P1-54, `src/review/environment.ts`): a failing check
   whose log shows a line of the territory's `environment_errors` (Docker not running, a container gone) gets no
   judge, so its assignee keeps its level and no flake quest opens; the bell says so once per run (`environment`
@@ -295,6 +309,8 @@
   The parts it merges into a merge quest's branch stay in that branch, inside the territory's own repository.
 - Read `process.env` or a treasury file itself: the composition root hands it the minimal env and a `Treasury`.
 - Import a concrete runner, the registry package or anything of the world layer (§1.3).
+- Word the digest or write its file: it decides when and what; the `Digest` port of `apps/cli` writes it in the
+  owner's language (the Steward imports no i18n, PS-03).
 
 ## Depends on
 
@@ -371,3 +387,10 @@ token breaker, or by their CLI's turn limit, send the review to the infirmary an
 change, no flake quest and one bell, wait `ENVIRONMENT_RECHECK_MINUTES` before they run again, and are judged once
 they pass. `trial-red.spec.ts` (P1-54, real git): after a red trial the judge of a scratch plot opens while another
 quest keeps the exclusive lock, and gets no exclusive check's command.
+`digest.spec.ts` (PS-03): the digest is written once a day at `schedule.digest.at`, rung once, and not again when
+the clock goes back and forth or a new Steward starts the same day; it lists the quests nobody can take and the open
+memos in their groups with their commands; no runner is asked; a port that throws warns once and tries again at the
+next start. `judge-waits.spec.ts` (PS-03): a quest whose only judge's account is spent rings `judge_mana` once, is
+in the digest with the pool asleep, and is judged by that judge once the window resets. `schedule.spec.ts` (PS-03):
+jobs outside the tick run one at a time without holding it, write `schedule.ran` when they end, stop unrecorded with
+the Steward and run again at the next start, and warn when they throw.

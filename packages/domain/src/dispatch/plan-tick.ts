@@ -18,6 +18,7 @@ import { claims, holderGoes, suspensions, unclaimable } from './tick-steps.ts';
 import { wakesOf } from './wakes.ts';
 import { RANKS } from '../schema/common.ts';
 import type { Breaker, HeldSession } from '../breaker/breakers.ts';
+import type { JudgeWait } from './judge-waits.ts';
 import type { Reassign } from './reassigns.ts';
 import type { ReviewSource, Verification } from './reviews.ts';
 import type { RosterSource } from './roster.ts';
@@ -82,6 +83,11 @@ export interface TickPlan {
    * `different_model`): the Steward tells the owner once, as for a quest nobody can claim.
    */
   readonly unjudgeable: readonly QuestId[];
+  /**
+   * Step 4 too (PS-03, (d) of P1-50): submitted quests with their checks done that have judges, all of whose mana is
+   * closed (judgeWaitOf), with the gauges that hold them: the Steward tells the owner once. Who judges is unchanged.
+   */
+  readonly judge_waits: readonly JudgeWait[];
   /** Step 5: returned quests that go back to their assignee in a fresh session. */
   readonly redispatches: readonly QuestId[];
   /** Step 6, in the order the Steward applies them. */
@@ -178,6 +184,7 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
     verifications: judged.verifications,
     machine_verdicts: judged.machine,
     unjudgeable: judged.unjudgeable,
+    judge_waits: judged.judge_waits,
     redispatches: inStatus('returned')
       .filter((quest) => holderGoes(step, quest))
       .map(({ id }) => id),
