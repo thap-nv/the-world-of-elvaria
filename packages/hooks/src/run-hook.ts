@@ -4,6 +4,7 @@
 import { argvEvent } from './antigravity/input.ts';
 import { denyAgyTool, translateAntigravity } from './antigravity/translate.ts';
 import { translateClaude } from './claude/translate.ts';
+import { translateCodex } from './codex/translate.ts';
 import { flagValue, loadContext } from './context.ts';
 import { denyTool, errorText, translation } from './draft.ts';
 import { appendDrafts, intlTs } from './write.ts';
@@ -58,6 +59,22 @@ const textAt = (payload: Readonly<Record<string, unknown>>, key: string): string
  */
 const EVENT_FLAG = '--event';
 
+/**
+ * `--dialect codex`: a Codex CLI call (P1-12d). Its payload has Claude Code's shape, so nothing in it tells the two
+ * apart; the runner's hook command says so instead. Any other value is ignored.
+ */
+const DIALECT_FLAG = '--dialect';
+const CODEX = 'codex';
+
+/** Who called: agy (its event in argv), Codex (the dialect flag), else Claude Code. */
+type Caller = { readonly cli: 'agy'; readonly event: string } | { readonly cli: 'codex' | 'claude' };
+
+function callerOf(argv: readonly string[]): Caller {
+  const agyEvent = argvEvent(argv);
+  if (agyEvent !== undefined) return { cli: 'agy', event: agyEvent };
+  return { cli: flagValue(argv, DIALECT_FLAG) === CODEX ? 'codex' : 'claude' };
+}
+
 /** What `agent.tool.blocked` says when the payload could not be read; the model reads it with a way on. */
 export const UNREADABLE_REASON =
   'the hook could not read this tool call (its input was empty, cut short or not a JSON object), so the laws could not be checked';
@@ -76,30 +93,30 @@ function unreadableCall(agy: boolean): Translation {
 
 function translate(
   payload: Record<string, unknown> | undefined,
-  agyEvent: string | undefined,
+  caller: Caller,
   ctx: HookContext,
 ): Translation {
-  if (payload === undefined) return unreadableCall(agyEvent !== undefined);
-  return agyEvent === undefined
-    ? translateClaude(payload, ctx)
-    : translateAntigravity(payload, agyEvent, ctx);
+  if (payload === undefined) return unreadableCall(caller.cli === 'agy');
+  if (caller.cli === 'agy') return translateAntigravity(payload, caller.event, ctx);
+  return caller.cli === 'codex' ? translateCodex(payload, ctx) : translateClaude(payload, ctx);
 }
 
 /**
- * Claude names its event in the payload; agy does not, so its hook command carries the event in argv
+ * Claude and Codex name their event in the payload; agy does not, so its hook command carries the event in argv
  * (spike P1-12a §4). A payload that is not a JSON object denies a PreToolUse call and is ignored elsewhere.
  */
 export async function runHook(io: HookIo): Promise<HookOutcome> {
   const payload = payloadOf(io.stdin);
-  const agyEvent = argvEvent(io.argv);
-  if (payload === undefined && (agyEvent ?? flagValue(io.argv, EVENT_FLAG)) !== 'PreToolUse')
+  const caller = callerOf(io.argv);
+  const event = caller.cli === 'agy' ? caller.event : flagValue(io.argv, EVENT_FLAG);
+  if (payload === undefined && event !== 'PreToolUse')
     return { stdout: '', stderr: notes(['stdin is not a JSON object; ignored']) };
   const ctx = loadContext(io.env, io.argv);
-  const result = translate(payload, agyEvent, ctx);
+  const result = translate(payload, caller, ctx);
   const session =
     payload === undefined
       ? undefined
-      : textAt(payload, agyEvent === undefined ? 'session_id' : 'conversationId');
+      : textAt(payload, caller.cli === 'agy' ? 'conversationId' : 'session_id');
   let written: string[];
   try {
     written = await appendDrafts(result.drafts, ctx, {

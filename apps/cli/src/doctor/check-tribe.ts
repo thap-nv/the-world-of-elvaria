@@ -40,7 +40,7 @@ export interface TribeCheck {
   readonly updated?: Tribe;
 }
 
-/** The capabilities of the tribe's runner; undefined for an adapter without one (gemini_cli, codex_cli today). */
+/** The capabilities of the tribe's runner; undefined for an adapter without one (gemini_cli today). */
 async function capabilitiesOf(tribe: Tribe, ctx: KingdomContext): Promise<AdapterCapabilities | undefined> {
   const found = await handOf(tribe, { kingdom: ctx.kingdom, root: ctx.store.root }, ctx.io);
   return found.kind === 'ready' ? found.hand.runner.capabilities : undefined;

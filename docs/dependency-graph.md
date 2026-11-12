@@ -13,6 +13,7 @@ flowchart TD
   runner_core["runner-core"]
   runner_claude["runner-claude"]
   runner_antigravity["runner-antigravity"]
+  runner_codex["runner-codex"]
   steward["steward"]
   chancellor["chancellor"]
   sandbox["sandbox"]
@@ -28,6 +29,7 @@ flowchart TD
   runner_core --> store
   runner_claude --> runner_core
   runner_antigravity --> runner_core
+  runner_codex --> runner_core
   steward --> domain
   steward --> eventlog
   steward --> runner_core
@@ -47,6 +49,7 @@ flowchart TD
   cli --> registry_default
   cli --> runner_antigravity
   cli --> runner_claude
+  cli --> runner_codex
   cli --> runner_core
   cli --> sandbox
   cli --> steward
@@ -63,7 +66,7 @@ flowchart TD
 | `runner-claude` | `packages/runner-claude` | `runner-core` | `runner-core` |
 | `runner-antigravity` | `packages/runner-antigravity` | `runner-core` | `runner-core` |
 | `runner-gemini` | chưa có | | `runner-core` |
-| `runner-codex` | chưa có | | `runner-core` |
+| `runner-codex` | `packages/runner-codex` | `runner-core` | `runner-core` |
 | `steward` | `packages/steward` | `domain`, `eventlog`, `runner-core`, `store` | `domain`, `store`, `eventlog`, `runner-core` |
 | `chancellor` | `packages/chancellor` | `domain`, `runner-core` | `domain`, `runner-core` |
 | `sandbox` | `packages/sandbox` | `domain`, `eventlog`, `store` | `domain`, `eventlog`, `store` |
@@ -75,4 +78,4 @@ flowchart TD
 | `ui` | chưa có | | `domain`, `i18n`, `ui-kit` |
 | `world` | chưa có | | `domain`, `i18n`, `ui-kit`, `ui` |
 | `lite` | chưa có | | `domain`, `i18n`, `ui-kit`, `ui` |
-| `cli` | `apps/cli` | `chancellor`, `domain`, `eventlog`, `hooks`, `i18n`, `registry-default`, `runner-antigravity`, `runner-claude`, `runner-core`, `sandbox`, `steward`, `store` | `domain`, `eventlog`, `store`, `registry-default`, `runner-core`, `runner-claude`, `runner-antigravity`, `runner-gemini`, `runner-codex`, `hooks`, `steward`, `chancellor`, `sandbox`, `herald`, `i18n` |
+| `cli` | `apps/cli` | `chancellor`, `domain`, `eventlog`, `hooks`, `i18n`, `registry-default`, `runner-antigravity`, `runner-claude`, `runner-codex`, `runner-core`, `sandbox`, `steward`, `store` | `domain`, `eventlog`, `store`, `registry-default`, `runner-core`, `runner-claude`, `runner-antigravity`, `runner-gemini`, `runner-codex`, `hooks`, `steward`, `chancellor`, `sandbox`, `herald`, `i18n` |

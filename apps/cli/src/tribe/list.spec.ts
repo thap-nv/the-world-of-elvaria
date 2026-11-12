@@ -78,7 +78,7 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
       ...value,
       tribes: [
         ...(value.tribes as object[]),
-        { id: 'codex', adapter: 'codex_cli', enabled: false, max_concurrent: 1 },
+        { id: 'fallback', adapter: 'gemini_cli', enabled: false, max_concurrent: 1 },
         { id: 'broken', adapter: broken, enabled: false, max_concurrent: 1 },
       ],
     }));
@@ -138,7 +138,7 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
         '—',
         lantern,
       ],
-      ['codex', 'codex_cli', 'no', '—', '—', '—', '—', 'no runner yet', '—', '—'],
+      ['fallback', 'gemini_cli', 'no', '—', '—', '—', '—', 'no runner yet', '—', '—'],
       [
         'broken',
         broken,
