@@ -4,12 +4,14 @@
 import { REWORK_CAUSES, OWNER_COMMAND_KINDS } from './causes.ts';
 import { escapedOf, firstPassOf, firstRunOf, sealedCostOf } from './judgement.ts';
 import { ownerCommandsOf, sequelsIn, sessionModelsOf, trailsOf } from './ledger.ts';
+import { readsOf, setAsidesOf } from './log-counts.ts';
 import { firstPassRatesOf } from './rates.ts';
 import { reworkOf } from './rework.ts';
 import { inWindow } from './window.ts';
 import type { OwnerCommandKind, ReworkCause } from './causes.ts';
 import type { EscapedDefect, SealedCost } from './judgement.ts';
 import type { MetricsInput, OwnerCommand } from './ledger.ts';
+import type { Reads, SetAside } from './log-counts.ts';
 import type { FirstPassRates } from './rates.ts';
 import type { QuestTrail, Rework } from './rework.ts';
 import type { MetricsWindow } from './window.ts';
@@ -63,6 +65,10 @@ export interface Metrics {
   readonly owner_commands: readonly CommandCount[];
   /** The quests worked, or stepped into by the owner, inside the window, by id. */
   readonly quests: readonly QuestMetrics[];
+  /** Runs of checks set aside because their environment failed (P1-54), from `check.end` (PS-01b). */
+  readonly set_aside: readonly SetAside[];
+  /** The sessions' reads by file (PS-01b). */
+  readonly reads: Reads;
 }
 
 function runCountsOf(trails: readonly QuestTrail[], input: MetricsInput, window: MetricsWindow): RunCounts {
@@ -104,7 +110,7 @@ function questRow(
     tokens: entries.reduce((total, { tokens }) => total + (tokens ?? 0), 0),
     rework: byCause(rework.filter((entry) => entry.quest === quest.id)),
     first_pass: decided ?? null,
-    owner_commands: commands.filter(({ payload }) => payload.quest === quest.id).length,
+    owner_commands: commands.filter((command) => command.quest === quest.id).length,
   };
 }
 
@@ -116,7 +122,7 @@ export function metricsOf(input: MetricsInput, window: MetricsWindow = {}): Metr
   const worked = trails.filter(
     ({ quest }) =>
       quest.attempt_log.some(({ started_at }) => inWindow(window, started_at)) ||
-      commands.some(({ payload }) => payload.quest === quest.id),
+      commands.some((command) => command.quest === quest.id),
   );
   return {
     window,
@@ -134,5 +140,7 @@ export function metricsOf(input: MetricsInput, window: MetricsWindow = {}): Metr
     quests: worked
       .map((trail) => questRow(trail, rework, commands, window))
       .sort((a, b) => a.id.localeCompare(b.id)),
+    set_aside: setAsidesOf(input.events, window),
+    reads: readsOf(input.events, window),
   };
 }

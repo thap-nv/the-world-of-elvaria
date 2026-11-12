@@ -92,5 +92,14 @@ describe('checks that failed because of their environment', () => {
     expect(types.filter((type) => type === 'quest.created')).toHaveLength(1);
     const judged = (await kingdom.quest('Docker down')).attempt_log.filter(({ role }) => role === 'verifier');
     expect(judged).toHaveLength(1);
+    // check.end says which runs were set aside, and why, for a Steward that restarts and for the metrics (PS-01b).
+    const ends = (await openEventLog(kingdom.root).read()).events.flatMap((event) =>
+      event.type === 'check.end' ? [event.data] : [],
+    );
+    expect(ends.length).toBeGreaterThanOrEqual(3);
+    expect(ends.slice(0, -1).map(({ outcome, environment }) => ({ outcome, environment }))).toEqual(
+      ends.slice(0, -1).map(() => ({ outcome: 'fail', environment: { check: 'e2e', line: GONE } })),
+    );
+    expect(ends.at(-1)).toEqual({ outcome: 'pass', checks: [] });
   });
 });

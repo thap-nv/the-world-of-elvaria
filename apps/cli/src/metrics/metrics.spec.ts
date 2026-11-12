@@ -167,6 +167,45 @@ describe('elvaria metrics', () => {
     expect(metrics.owner_commands.find(({ kind }) => kind === 'return')?.count).toBe(1);
   });
 
+  it("reads what PS-01b writes: a command's kind, checks set aside for their environment, reads by file", async () => {
+    await stageDay(kingdom);
+    const line = (
+      id: string,
+      type: string,
+      data: Record<string, unknown>,
+      more: Record<string, unknown> = {},
+    ) => EventSchema.parse({ v: 1, id, ts: at(9), type, actor: { kind: 'steward' }, data, ...more });
+    const read = (id: string) =>
+      line(id, 'agent.tool', { tool: 'read', path: 'apps/web/vi.json' }, { session: 's-9', quest: QUEST_ID });
+    await openEventLog(kingdom).append([
+      // A retry whose file left inbox/done: its line alone says what it was.
+      line('01JC0000000000000000000030', 'command.applied', {
+        command_id: '01JC0000000000000000000003',
+        kind: 'retry',
+      }),
+      line(
+        '01JC0000000000000000000031',
+        'check.end',
+        {
+          outcome: 'fail',
+          checks: [{ id: 'e2e', pass: false, duration_ms: 900 }],
+          environment: { check: 'e2e', line: 'Cannot connect to the Docker daemon' },
+        },
+        { quest: QUEST_ID, attempt: 2 },
+      ),
+      ...['32', '33', '34'].map((n) => read(`01JC00000000000000000000${n}`)),
+    ]);
+    const io = testIo();
+    expect(await elvaria(io, '--since', DAY, '--until', DAY)).toBe(0);
+    const text = printed(io);
+    expect(text).toContain('Owner interventions: 2 commands, on 1 of 2 quests.');
+    expect(text).toContain('Check runs set aside for their environment (Docker down, a container gone): 1.');
+    expect(text).toContain('File reads: 3; 1 files a session read more than once.');
+    expect(text).toContain('Files a session read again (at most 10 rows, the most read first)');
+    expect(text).toMatch(new RegExp(`s-9\\s+${QUEST_ID}\\s+apps/web/vi\\.json\\s+3`));
+    expect(text).toMatch(/retry\s+1/);
+  });
+
   it('says there is nothing to measure in a new kingdom', async () => {
     const io = testIo();
     expect(await elvaria(io, '--since', DAY)).toBe(0);
