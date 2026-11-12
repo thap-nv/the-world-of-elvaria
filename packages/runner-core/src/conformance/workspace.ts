@@ -14,6 +14,7 @@ import {
   FAKE_SCENARIO_ENV,
   FAKE_SCRATCH_COMMANDS,
 } from './scenarios.ts';
+import { SPAWN_PROBE_COMMAND, writeSpawnProbe } from './spawn-probe.ts';
 import type { AgentRunner, BuiltPrompt, SpawnRequest } from '../runner/types.ts';
 import type { FakeScenario } from './scenarios.ts';
 import type { ConformanceTarget } from './target.ts';
@@ -59,6 +60,11 @@ export async function openWorkspace(): Promise<Workspace> {
   };
 }
 
+/** What a scenario needs in the plot before the session starts: the spawn probe's script. */
+export async function prepareWorkspace(workspace: Workspace, scenario: FakeScenario): Promise<void> {
+  if (scenario === 'spawn_child') await writeSpawnProbe(workspace.plot);
+}
+
 /** What each scenario asks; a real CLI follows the words, a fake one its env. */
 const ASKS: Readonly<Record<FakeScenario, string>> = {
   submit: 'Reply with the single word: done. Use no tool.',
@@ -68,6 +74,7 @@ const ASKS: Readonly<Record<FakeScenario, string>> = {
   forbidden_command: `Run this shell command exactly once: ${FAKE_FORBIDDEN_COMMAND}. Then reply with the single word: done.`,
   ask: `Write this question in the Question section of the handover letter, then stop: ${FAKE_QUESTION}`,
   scratch_commit: `Run these shell commands exactly once each, in order: ${FAKE_SCRATCH_COMMANDS.join(', then ')}. Then reply with the single word: done.`,
+  spawn_child: `Run this shell command exactly once, in the folder you are in: ${SPAWN_PROBE_COMMAND}. Then reply with the single word: done.`,
 };
 
 /**
@@ -118,12 +125,21 @@ const PROBE_POLICY_TERRITORY: NonNullable<ToolPolicyInput['territory']> = {
   vcs: { type: 'git', default_branch: 'main' },
 };
 
-/** A knight's shell: git is allowed, so only the fences can stop the push. */
+/** A knight's shell: git is allowed, so only the fences can stop the push; node runs the spawn probe (P1-12e). */
 const PROBE_POLICY = toolPolicyOf({
   role: 'assignee',
   characterClass: {
     tools: {
-      allow: ['Read', 'Edit', 'Write', 'Glob', 'Grep', 'Bash(git status:*)', 'Bash(git commit:*)'],
+      allow: [
+        'Read',
+        'Edit',
+        'Write',
+        'Glob',
+        'Grep',
+        'Bash(git status:*)',
+        'Bash(git commit:*)',
+        'Bash(node:*)',
+      ],
       deny: [],
     },
   },

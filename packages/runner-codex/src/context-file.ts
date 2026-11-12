@@ -48,8 +48,36 @@ export function codexNote(
   }
   lines.push(
     '- Do not start sub-agents and do not call request_user_input: both are refused; a question for the owner goes in the Question section of the handover letter.',
+    `- ${CONTEXT_FILE} at the root of your plot is this file: Elvaria writes it for the session and removes it when the session ends. Never edit, format or commit it, and leave it out of what you report.`,
   );
   return lines.join('\n');
+}
+
+/**
+ * The file sits at the root of the plot while the session runs, where the territory's `prettier --check .` finds it
+ * (P1-12e: Elvaria's own `format:check` went red in a session). Prettier leaves a Markdown range between these two
+ * comments as it is, whatever the territory's settings; the header stays outside it, as Prettier writes it.
+ */
+export const FORMAT_IGNORE_START = '<!-- prettier-ignore-start -->';
+export const FORMAT_IGNORE_END = '<!-- prettier-ignore-end -->';
+
+/** An opening code fence (CommonMark): up to three spaces, then three or more backticks or tildes. */
+const FENCE = /^ {0,3}(`{3,}|~{3,})/;
+
+/**
+ * `text` with its last code fence closed: a law file cut at runner-core's limit can stop inside a fence, which would
+ * swallow every section after it, and the end of Prettier's ignored range with them.
+ */
+export function closeFences(text: string): string {
+  let open: string | undefined;
+  for (const line of text.split('\n')) {
+    const fence = FENCE.exec(line)?.[1];
+    if (fence === undefined) continue;
+    if (open === undefined) open = fence;
+    // A fence is one character repeated: the same character, at least as many, closes it.
+    else if (fence.startsWith(open) && line.trim() === fence) open = undefined;
+  }
+  return open === undefined ? text : `${text}\n${open}`;
 }
 
 /** The text of AGENTS.override.md; `files` the territory's law and rules as runner-core's readContextFiles gives them. */
@@ -61,9 +89,10 @@ export function contextFileText(system: string, files: readonly ContextFile[], n
       : [
           '# Territory law and rules',
           '',
-          ...present.flatMap(({ path, text }) => [`## ${path}`, '', text.trim(), '']),
+          ...present.flatMap(({ path, text }) => [`## ${path}`, '', closeFences(text.trim()), '']),
         ];
-  return [CONTEXT_HEADER, '', system.trim(), '', ...territory, note, ''].join('\n');
+  const body = [closeFences(system.trim()), '', ...territory, note];
+  return [CONTEXT_HEADER, '', FORMAT_IGNORE_START, ...body, FORMAT_IGNORE_END, ''].join('\n');
 }
 
 export const isElvariaContext = (text: string): boolean => text.startsWith(CONTEXT_HEADER);

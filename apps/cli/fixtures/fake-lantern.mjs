@@ -10,6 +10,7 @@
 // FAKE_LANTERN_STRUCTURED (default: a passing verdict), and so, as its last text, does a session whose prompt names
 // a reply format instead (prompt_and_parse, P1-33). Exit codes are set, never forced: process.exit() can cut a piped
 // stdout short.
+import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -70,6 +71,11 @@ const SCENARIOS = {
   submit: () => finish(),
   // No tool gate: nothing stops the push, so the suite skips this check and the session just submits.
   forbidden_command: () => finish(),
+  // The suite's spawn probe (runner-core SPAWN_PROBE_COMMAND), run for real in the plot: no sandbox here (P1-12e).
+  spawn_child: () => {
+    spawnSync(process.execPath, ['elvaria-spawn-probe.mjs'], { stdio: 'ignore', windowsHide: true });
+    return finish();
+  },
   ask: () => finish(QUESTION),
   crash: () => {
     process.stderr.write('lantern: internal error\n');

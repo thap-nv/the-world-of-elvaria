@@ -39,12 +39,24 @@ export {
   isFakeScenario,
 } from './conformance/scenarios.ts';
 export type { FakeScenario } from './conformance/scenarios.ts';
+export {
+  SPAWN_PROBE_COMMAND,
+  SPAWN_PROBE_FAILED,
+  SPAWN_PROBE_FILE,
+  SPAWN_PROBE_OK,
+  SPAWN_PROBE_OUT,
+  SPAWN_PROBE_SCRIPT,
+  readSpawnProbe,
+  runFakeShellLine,
+  writeSpawnProbe,
+} from './conformance/spawn-probe.ts';
 export type { CheckOutcome, ConformanceCheck, ConformanceTarget } from './conformance/target.ts';
 export {
   CONFORMANCE_CHARACTER,
   CONFORMANCE_QUEST,
   conformanceRequest,
   openWorkspace,
+  prepareWorkspace,
 } from './conformance/workspace.ts';
 export type { Workspace } from './conformance/workspace.ts';
 export { ADAPTER_FACTORY, adapterOfModule, runnerProblems } from './kit/adapter-module.ts';

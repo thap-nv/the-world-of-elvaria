@@ -10,8 +10,9 @@
   carries the account's windows a session reports in band, `ProbeResult.windows` those a probe read, and
   `probe({ping: false})` only reads them, without calling a model.
 - Ships `createFakeRunner()`: characters that play a scenario in process (`submit`, `crash`, `hang`,
-  `rate_limit`, `forbidden_command`, `ask`, and `scratch_commit`: a judge in its scratch plot that tries
-  `git commit` then `git push`, P1-20), chosen per spawn by `scenarioOf` or by env `ELVARIA_FAKE_SCENARIO`.
+  `rate_limit`, `forbidden_command`, `ask`, `scratch_commit`: a judge in its scratch plot that tries
+  `git commit` then `git push`, P1-20, and `spawn_child`, which runs the suite's spawn probe for real, P1-12e),
+  chosen per spawn by `scenarioOf` or by env `ELVARIA_FAKE_SCENARIO`.
   It writes the letter, blocks the forbidden push through the policy when it declares `tool_gate`, keeps a
   resumed session id, and records every request for the Steward's tests. Its `probe` answers one result, or one
   per call (a pool that wakes on the second probe).
@@ -67,8 +68,13 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   `PROMPT_BLOCK_IDS`, right after the continuation, so the load trace counts it apart.
 - Runs the conformance suite (`conformanceChecks`, `runConformance`): plain checks with `node:assert`, so a spec
   wraps them in `it` and `elvaria tribe check` (P1-19) runs them too. With a real CLI (`live`) only `capabilities`,
-  `doctor`, `probe`, `submit`, `hang` and `forbidden_command` run (a few cheap sessions, a little mana); `crash`,
-  `rate_limit`, `scratch_commit` and `ask` need a fake. `openWorkspace` and `conformanceRequest` give an adapter's specs the same requests. The
+  `doctor`, `probe`, `submit`, `hang`, `forbidden_command` and `spawn_child` run (a few cheap sessions, a little
+  mana); `crash`, `rate_limit`, `scratch_commit` and `ask` need a fake. `spawn_child` (P1-12e,
+  `src/conformance/spawn-probe.ts`) puts `elvaria-spawn-probe.mjs` in the plot and asks the session to run
+  `node elvaria-spawn-probe.mjs`, which starts a child with piped stdio, as a territory's build and test do, and
+  writes what became of it; a sandbox that runs the command but not its child (Codex's unelevated one on Windows,
+  `spawn EPERM`) fails it. A fake CLI runs the probe for real through `runFakeShellLine` once its gates let the line
+  through. `openWorkspace` and `conformanceRequest` give an adapter's specs the same requests. The
   `capabilities` check also wants `capabilities.auth`, the sign-ins the adapter runs with (P1-19): a non-empty list
   of `login` / `api_key`.
 - Hands an owner adapter file its kit (`src/kit/`, P1-19, implementation-plan §3.14, ADR 0021): `adapterKitOf(host)`

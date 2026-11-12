@@ -7,6 +7,7 @@ import { ADAPTER_CAPABILITIES, TRIBE_AUTHS } from '@elvaria/domain';
 
 import { searchProblems, shellProblems } from '../kit/adapter-module.ts';
 import { FAKE_QUESTION } from './scenarios.ts';
+import { SPAWN_PROBE_COMMAND, SPAWN_PROBE_OK } from './spawn-probe.ts';
 import { DEFAULT_TIMEOUT_MS, HANG_GRACE_MS, play, settlesWithin, within } from './play.ts';
 import type { Played } from './play.ts';
 import type { FakeScenario } from './scenarios.ts';
@@ -76,6 +77,24 @@ const forbiddenCommand = sessionCheck(
     );
   },
 );
+
+/**
+ * A command of the session starts a child process with piped stdio, as a territory's build and test do (P1-12e): a
+ * sandbox that lets the command run but not its children (Codex 0.167's unelevated one on Windows, `spawn EPERM`)
+ * leaves a knight editing code it can neither build nor test. Live too: only the real CLI has the real sandbox.
+ */
+const spawnChild = sessionCheck('spawn_child', true, always, ({ result, spawned }) => {
+  assert.equal(result.outcome, 'completed');
+  assert.ok(
+    spawned !== undefined,
+    `the session did not run \`${SPAWN_PROBE_COMMAND}\`, or could not write the result in its plot`,
+  );
+  assert.equal(
+    spawned,
+    SPAWN_PROBE_OK,
+    `a command of the session could not start a child process (${spawned}): the territory's build and test cannot run in it`,
+  );
+});
 
 /**
  * A judge in its scratch plot (ADR 0022, P1-20) has Edit and Write and a class that allows git commit and push; the
@@ -179,6 +198,7 @@ export const CONFORMANCE_CHECKS: readonly ConformanceCheck[] = [
   hang,
   rateLimit,
   forbiddenCommand,
+  spawnChild,
   scratchCommit,
   ask,
 ];
