@@ -33,7 +33,7 @@ describe('CommitShaSchema', () => {
 
 describe('upgrade.* data', () => {
   it('names the steps of a trial in the order they run', () => {
-    expect(UPGRADE_STEPS).toEqual(['prepare', 'doctor', 'conformance', 'trial']);
+    expect(UPGRADE_STEPS).toEqual(['prepare', 'migrate', 'doctor', 'conformance', 'trial']);
   });
 
   it('accepts the first upgrade of a kingdom, which has no build to come from', () => {

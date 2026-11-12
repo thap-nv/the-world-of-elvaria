@@ -2438,6 +2438,7 @@
               "step": {
                 "enum": [
                   "prepare",
+                  "migrate",
                   "doctor",
                   "conformance",
                   "trial"

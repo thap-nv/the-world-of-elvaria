@@ -46,7 +46,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria sandbox generate` | Sinh một ngày giả vào events/sandbox/ của vương quốc (sa bàn): không chạy phiên nào, không chạm nhiệm vụ thật. |
 | `elvaria sandbox replay <file>` | Phát lại một ngày giả thành dòng thời gian trên terminal. |
 | `elvaria migrate` | Chuyển mọi file cũ của vương quốc lên phiên bản hiện tại, có sao lưu, và thêm file, mục registry mà bản Elvaria này có và vương quốc còn thiếu. |
-| `elvaria upgrade` | Dựng một bản mới của Elvaria cạnh bản đang ghim, thử nó (doctor, bộ test hợp đồng với CLI giả, một nhiệm vụ bậc script trên vương quốc tạm) rồi mới ghim; --rollback về bản trước. 0 mana; không chạy khi Quản sự đang chạy. |
+| `elvaria upgrade` | Dựng một bản mới của Elvaria cạnh bản đang ghim, thử nó (migrate, doctor và bộ test hợp đồng với CLI giả trên một bản sao cấu hình của vương quốc, một nhiệm vụ bậc script trên vương quốc tạm), qua hết mới ghim rồi chạy migrate của nó trên vương quốc; --rollback về bản trước. 0 mana; không chạy khi Quản sự đang chạy. |
 
 ## Tùy chọn chung
 
@@ -400,7 +400,7 @@ Không có tham số riêng, chỉ các tùy chọn chung.
 
 ## `elvaria upgrade`
 
-Dựng một bản mới của Elvaria cạnh bản đang ghim, thử nó (doctor, bộ test hợp đồng với CLI giả, một nhiệm vụ bậc script trên vương quốc tạm) rồi mới ghim; --rollback về bản trước. 0 mana; không chạy khi Quản sự đang chạy.
+Dựng một bản mới của Elvaria cạnh bản đang ghim, thử nó (migrate, doctor và bộ test hợp đồng với CLI giả trên một bản sao cấu hình của vương quốc, một nhiệm vụ bậc script trên vương quốc tạm), qua hết mới ghim rồi chạy migrate của nó trên vương quốc; --rollback về bản trước. 0 mana; không chạy khi Quản sự đang chạy.
 
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|

@@ -180,7 +180,7 @@
               "vi": "Nâng cấp",
               "en": "Upgrade",
               "id": ["upgrade"],
-              "definition": "Dựng một bản mới cạnh bản đang ghim, thử nó (`doctor`, bộ test hợp đồng với CLI giả, một quest bậc script trên vương quốc tạm), qua hết mới chuyển con trỏ; `--rollback` về bản trước. Không chạy khi Quản sự đang chạy hay còn phiên dở.",
+              "definition": "Dựng một bản mới cạnh bản đang ghim, thử nó (`migrate`, `doctor` và bộ test hợp đồng với CLI giả trên một bản sao cấu hình của vương quốc, một quest bậc script trên vương quốc tạm), qua hết mới chuyển con trỏ rồi chạy `migrate` của bản mới trên vương quốc; `--rollback` về bản trước. Không chạy khi Quản sự đang chạy hay còn phiên dở.",
               "used_in": "`elvaria upgrade`, event `upgrade.*`"
             },
             {
@@ -2097,7 +2097,7 @@
             {
               "group": "Bản",
               "types": ["upgrade.started", "upgrade.switched", "upgrade.rolled_back", "upgrade.failed"],
-              "meaning": "`elvaria upgrade` ghi (actor `user`): bắt đầu dựng và thử một commit, chuyển con trỏ `.state/build.json` sang bản mới, lùi về bản trước, hay hỏng ở một bước (`prepare`, `doctor`, `conformance`, `trial`) và không chuyển"
+              "meaning": "`elvaria upgrade` ghi (actor `user`): bắt đầu dựng và thử một commit, chuyển con trỏ `.state/build.json` sang bản mới, lùi về bản trước, hay hỏng ở một bước (`prepare`, `migrate`, `doctor`, `conformance`, `trial`) và không chuyển"
             },
             {
               "group": "Dành sẵn",

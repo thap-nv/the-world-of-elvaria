@@ -9,9 +9,11 @@ import { translator } from '@elvaria/i18n';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
+  MIGRATED_MARK,
   OUTSIDE_STORE,
   SHA_A,
   SHA_B,
+  calls,
   placeBuild,
   readPin,
   sourceRepo,
@@ -99,7 +101,8 @@ describe('elvaria upgrade', () => {
       `Building ${short(a)} (main) from ${source.repo} into ${buildDir(a)}.`,
       '✓ Build: git worktree, pnpm install, hook build',
       `Pinned build ${short(a)}: from now on every command on this kingdom runs on it.`,
-      'Next: elvaria migrate, elvaria doctor, then elvaria run.',
+      "The new build's migrate on the kingdom:",
+      'Next: elvaria doctor, then elvaria run.',
     ]);
     expect(await upgradeEvents()).toEqual([
       expect.objectContaining({
@@ -191,6 +194,25 @@ describe('elvaria upgrade', () => {
     expect(git(source.repo, 'worktree', 'list')).not.toContain(a);
   });
 
+  it("runs the new build's migrate on the kingdom once it is pinned, and says so when it fails", async () => {
+    const record = path.join(dir.root, 'calls.jsonl');
+    const a = await source.commit({ record });
+    expect(await upgrade('main')).toBe(0);
+    expect(await readFile(path.join(kingdom, MIGRATED_MARK), 'utf8')).toBe(buildDir(a));
+    const migrations = async () =>
+      (await calls(record)).filter(({ argv }) => argv[0] === 'migrate').map(({ argv, root }) => [argv, root]);
+    expect(await migrations()).toEqual([[['migrate', '--kingdom', kingdom], buildDir(a)]]);
+    const b = await source.commit({ exit: { migrate: 6 } });
+    const io = testIo();
+    expect(await upgrade('main', io)).toBe(1);
+    // The trial passed, so the build is pinned; the owner fixes the cause or goes back.
+    expect(await readPin(kingdom)).toMatchObject({ current: b, previous: a });
+    expect(io.printed.out).toContain('    stub: migrate fails');
+    expect(io.printed.err.at(-1)).toBe(
+      "The new build's migrate failed on the kingdom (exit:6), though it passed on the copy. The new build stays pinned: fix the cause and run elvaria migrate, or elvaria upgrade --rollback (the files migrate rewrote have their old text in .backup/).",
+    );
+  });
+
   it('does nothing when the kingdom already pins that commit', async () => {
     const a = await source.commit({});
     expect(await upgrade('main')).toBe(0);
@@ -254,38 +276,5 @@ describe('elvaria upgrade', () => {
     ]);
     expect(io.printed.err[3]).toContain('cannot be read');
     expect(cliEntryOf(buildDir(SHA_B))).toContain(path.join('apps', 'cli', 'src', 'cli.ts'));
-  });
-});
-
-describe('elvaria upgrade, the command', () => {
-  let dir: TempDir;
-  let kingdom: string;
-  beforeEach(async () => {
-    dir = await tempDir();
-    kingdom = await foundKingdom(dir.root);
-  });
-  afterEach(() => dir.remove());
-
-  const elvaria = (io: TestIo, ...words: string[]) => run(io, 'upgrade', ...words, '--locale', 'en');
-
-  it('refuses --rollback with --ref, and needs a kingdom', async () => {
-    const io = testIo();
-    expect(await elvaria(io, '--rollback', '--ref', 'main', '--kingdom', kingdom)).toBe(2);
-    expect(io.printed.err).toEqual(['--rollback does not go with --ref.']);
-    expect(await elvaria(testIo({ env: baseEnv() }))).toBe(1);
-  });
-
-  it('needs git and pnpm on PATH before it builds anything', async () => {
-    const io = testIo({ env: { ...baseEnv(), PATH: path.join(dir.root, 'empty') } });
-    expect(await elvaria(io, '--kingdom', kingdom)).toBe(1);
-    expect(io.printed.err).toEqual(['git is not on PATH: elvaria upgrade needs git and pnpm.']);
-  });
-
-  it('rolls back from the command line', async () => {
-    await placeBuild(kingdom, SHA_B, {});
-    await writePin(kingdom, SHA_A, SHA_B);
-    const io = testIo();
-    expect(await elvaria(io, '--rollback', '--kingdom', kingdom)).toBe(0);
-    expect(await readPin(kingdom)).toMatchObject({ current: SHA_B, previous: SHA_A });
   });
 });

@@ -17,8 +17,13 @@ export interface Behavior {
   /** File every call is appended to, as JSON lines; ELVARIA_TEST_RECORD wins when set. */
   readonly record?: string;
   /** The trial of upgrade.spec.ts reads this instead of running the build's commands. */
-  readonly trial?: 'pass' | 'doctor' | 'conformance' | 'trial';
+  readonly trial?: 'pass' | 'migrate' | 'doctor' | 'conformance' | 'trial';
+  /** `doctor` fails (exit 7) on a kingdom this build's `migrate` has not run on, as a build after PS-02 does. */
+  readonly needs_migrate?: boolean;
 }
+
+/** What the stub's `migrate` leaves in the kingdom it ran on. */
+export const MIGRATED_MARK = 'migrated-by-stub.txt';
 
 export interface Call {
   readonly root: string;
@@ -51,6 +56,15 @@ if (code !== 0) {
   process.exit(code);
 }
 const kingdom = flag('--kingdom');
+if (command === 'migrate') writeFileSync(path.join(kingdom, ${JSON.stringify(MIGRATED_MARK)}), root);
+if (command === 'doctor' && behavior.needs_migrate === true) {
+  try {
+    readFileSync(path.join(kingdom, ${JSON.stringify(MIGRATED_MARK)}));
+  } catch {
+    console.log('stub: registry lacks memos.json; run elvaria migrate');
+    process.exit(7);
+  }
+}
 if (command === 'init') {
   mkdirSync(kingdom, { recursive: true });
   const tribes = [{ id: 'claude', enabled: true }, { id: 'gemini', enabled: true }, { id: 'codex', enabled: false }];

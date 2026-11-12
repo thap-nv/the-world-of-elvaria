@@ -14,8 +14,11 @@ export const CommitShaSchema = z
   .regex(/^[0-9a-f]{40}(?:[0-9a-f]{24})?$/)
   .meta(describe('A full commit id of the Elvaria repo: the name of the build folder `.builds/<sha>/`.'));
 
-/** What an upgrade tries before it moves the pointer, in order; `prepare` is the worktree, install and build. */
-export const UPGRADE_STEPS = ['prepare', 'doctor', 'conformance', 'trial'] as const;
+/**
+ * What an upgrade tries before it moves the pointer, in order: `prepare` is the worktree, install and build;
+ * `migrate`, `doctor` and `conformance` run on a copy of the kingdom's settings; `trial` is the script-tier quest.
+ */
+export const UPGRADE_STEPS = ['prepare', 'migrate', 'doctor', 'conformance', 'trial'] as const;
 export type UpgradeStep = (typeof UPGRADE_STEPS)[number];
 
 export const UpgradeStartedDataSchema = z

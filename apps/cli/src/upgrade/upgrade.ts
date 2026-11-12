@@ -1,15 +1,25 @@
 // `elvaria upgrade [--ref <ref>] | --rollback` (implementation-plan §3.16.4, ADR 0026 as amended 2026-11-11;
 // PS-04b): the build a kingdom runs changes only through a step that tries it first and can be undone. The new
 // build is a detached worktree of the repo this CLI runs from, at `<kingdom>/.builds/<sha>/`; it is installed,
-// tried (trial.ts) and only then pinned in `.state/build.json`, with the build before it kept as the way back. Two
-// builds stay on disk. The command itself always runs on the code it is typed with (pin.ts).
+// tried (trial.ts) and only then pinned in `.state/build.json`, with the build before it kept as the way back; then
+// its migrate runs on the kingdom (the trial ran it on a copy). Two builds stay on disk. The command itself always
+// runs on the code it is typed with (pin.ts).
 import { inKingdom } from '@elvaria/store';
 
 import { flagOption, textOption } from '../args.ts';
 import { EXIT } from '../command.ts';
 import { recordUpgrade } from '../events.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
-import { buildDirOf, buildsBesides, commitOf, findTools, prepareBuild, removeBuild } from './build.ts';
+import { buildCli } from './build-cli.ts';
+import {
+  buildDirOf,
+  buildsBesides,
+  commitOf,
+  findTools,
+  prepareBuild,
+  reasonOf,
+  removeBuild,
+} from './build.ts';
 import { BUILD_FILE, hasCli, readPointer, shortSha, writePointer } from './pointer.ts';
 import { holdKingdom, rollbackKingdom } from './rollback.ts';
 import { SELF_ROOT } from './self.ts';
@@ -24,6 +34,7 @@ import type { Trial, TrialFailure } from './trial.ts';
 export const DEFAULT_REF = 'main';
 /** How much of a failed step's output the owner sees: its end, where the reason is. */
 const OUTPUT_LINES = 40;
+const MIGRATE_MINUTES = 5;
 
 export interface UpgradeDeps {
   /** The Elvaria repo builds are made from: the one this CLI runs from. */
@@ -41,12 +52,17 @@ interface Plan {
   readonly reuse: boolean;
 }
 
-function printOutput(ctx: KingdomContext, output: string): void {
+/** A child's output, indented under the line that names the step; its end, where the reason is. */
+function printLines(output: string, print: (line: string) => void): void {
   const lines = output.split(/\r?\n/).filter((line) => line.trim() !== '');
   lines.slice(-OUTPUT_LINES).forEach((line) => {
-    ctx.io.err(`    ${line}`);
+    print(`    ${line}`);
   });
 }
+
+const printOutput = (ctx: KingdomContext, output: string): void => {
+  printLines(output, ctx.io.err);
+};
 
 async function removeOne(ctx: KingdomContext, deps: UpgradeDeps, sha: string): Promise<void> {
   const left = await removeBuild(deps.tools, ctx.io, deps.source, buildDirOf(ctx.store.root, sha));
@@ -93,6 +109,21 @@ async function refuse(
   return EXIT.failed;
 }
 
+/**
+ * The new build's migrate on the kingdom itself, once it is pinned: the trial ran it on a copy, and the pinned
+ * build cannot load the kingdom until it has run (a registry file it requires, a newer file version). Its lines are
+ * the owner's to read; it keeps the old text of what it rewrites in `.backup/`.
+ */
+async function migrated(ctx: KingdomContext, plan: Plan): Promise<boolean> {
+  ctx.io.out(ctx.t('cli.upgrade.migrating'));
+  const outcome = await buildCli(plan.dir, ctx.io)(['migrate', '--kingdom', ctx.store.root], MIGRATE_MINUTES);
+  printLines(outcome.stdout, ctx.io.out);
+  if (outcome.code === 0) return true;
+  printLines(outcome.stderr, ctx.io.err);
+  ctx.io.err(ctx.t('cli.upgrade.migrate_failed', { reason: reasonOf(outcome) }));
+  return false;
+}
+
 async function switchTo(ctx: KingdomContext, deps: UpgradeDeps, plan: Plan): Promise<ExitCode> {
   const from = plan.pinned?.current ?? null;
   await writePointer(ctx.store.root, { current: plan.sha, previous: from, switched_at: ctx.now() });
@@ -102,8 +133,10 @@ async function switchTo(ctx: KingdomContext, deps: UpgradeDeps, plan: Plan): Pro
       ? ctx.t('cli.upgrade.switched_first', { sha: shortSha(plan.sha) })
       : ctx.t('cli.upgrade.switched', { sha: shortSha(plan.sha), previous: shortSha(from) }),
   );
+  const ready = await migrated(ctx, plan);
   for (const sha of await buildsBesides(ctx.store.root, from === null ? [plan.sha] : [plan.sha, from]))
     await removeOne(ctx, deps, sha);
+  if (!ready) return EXIT.failed;
   ctx.io.out(ctx.t('cli.upgrade.then'));
   return EXIT.ok;
 }

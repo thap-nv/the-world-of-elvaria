@@ -149,12 +149,14 @@
   `<kingdom>/.builds/<sha>/`, installed (`pnpm install --frozen-lockfile`, with husky off) with the hook and the
   event log built; its CLI runs from source. `upgrade` holds the Steward's lock throughout (refused while a Steward
   runs, or while sessions of a stopped one still run), builds, then tries the build through its own commands as
-  child processes (`src/upgrade/trial.ts`): `doctor --here` on this kingdom; `tribe check --scenarios --tool` for
-  each enabled tribe against the fake CLI the build carries for its adapter (an adapter file has none, and is
-  named); one script-tier quest (`count-files`) on a throwaway kingdom with every tribe off, until its
-  `verdict.pass` (`src/upgrade/script-trial.ts`). Only then does it write `.state/build.json` (`{current,
-previous}`), log `upgrade.started`, then `upgrade.switched` or `upgrade.failed`, and remove every build but those
-  two; a failed build is removed. Node removes a build, then `git worktree prune` forgets it: pnpm's paths past 260
+  child processes (`src/upgrade/trial.ts`), first on a copy of the kingdom's settings (`src/upgrade/mirror.ts`:
+  `kingdom.json`, registry, territories, characters, adapters, decree; no quest, log or inbox), so the kingdom is
+  not written yet: `migrate`, then `doctor`, then `tribe check --scenarios --tool` for each enabled tribe against the
+  fake CLI the build carries for its adapter (an adapter file has none, and is named); last, one script-tier quest
+  (`count-files`) on a throwaway kingdom with every tribe off, until its `verdict.pass`
+  (`src/upgrade/script-trial.ts`). Only then does it write `.state/build.json` (`{current, previous}`), run the new
+  build's `migrate` on the kingdom (a failure leaves the build pinned and says how out), log `upgrade.started`, then
+  `upgrade.switched` or `upgrade.failed`, and remove every build but those two; a failed build is removed. Node removes a build, then `git worktree prune` forgets it: pnpm's paths past 260
   characters are more than git for Windows deletes, and Node's rm takes pnpm's junctions off without following them.
   `--rollback` swaps the two (`upgrade.rolled_back`); upgrading to the build before tries it again without a
   rebuild. Every other command on a kingdom that pins a build runs on that build (`src/upgrade/pin.ts`, `entry.ts`,
