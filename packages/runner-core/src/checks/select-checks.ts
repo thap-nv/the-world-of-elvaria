@@ -10,7 +10,8 @@ import type { PartyRole, TerritoryCheck } from '@elvaria/domain';
 import { globToRegExp } from './glob.ts';
 
 /** `./src\a.ts` → `src/a.ts`: globs are written relative to the plot, with `/`. */
-const portableOf = (touched: string): string => touched.replaceAll('\\', '/').replace(/^(?:\.\/)+/, '');
+export const portableOf = (touched: string): string =>
+  touched.replaceAll('\\', '/').replace(/^(?:\.\/)+/, '');
 
 /** Whether the quest's `party_role` leaves `check` to the party's merge quest, whatever the quest touched. */
 const deferredFor = (check: TerritoryCheck, role: PartyRole | undefined): boolean =>

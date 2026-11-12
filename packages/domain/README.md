@@ -13,10 +13,15 @@
   `ritual_overrides` meets the quest's tags (tests as the product: `build`/`refactor` tagged `e2e` or
   `integration` → `mutation_check`); `judgedInScratch` says its judge works in a scratch plot (a ritual with
   `scratch_plot`, a git worktree). What the machine decides there is pure too (`src/verify/trial.ts`):
-  `rerunDue` (up to `FLAKE_RUNS` runs while every run passes), `exclusiveWaitMinutes` (how long an exclusive check waits for a judge that holds the lock), `flakyChecksOf`, `coverageTotalsOf` (an istanbul
+  `rerunDue` (up to `FLAKE_RUNS` runs while every run passes), `exclusiveWaitMinutes` (how long an exclusive check waits for a judge that holds the lock), `flakyChecksOf` (a run its environment failed is no flake, P1-54), `coverageTotalsOf` (an istanbul
   json-summary) and `coverageDropsOf` (counts compared, no rounding); `flakyFollowUpOf` builds the quest that
   exorcises a flake, of the kind and class the ritual's `flaky_follow_up` names. `commandLinesOf` reads a
-  territory command that may be a list (`checks[].run`, `commands.reset`, `commands.coverage`).
+  territory command that may be a list (`checks[].run`, `commands.reset`, `commands.coverage`). (P1-54) A failing
+  check that failed because of its environment is told by `src/verify/environment.ts`: `environmentLineOf` (the
+  line of its log one of the territory's `environment_errors` finds, Docker's own lines by default),
+  `environmentFailureOf` (the first such check of a run sets the whole run aside) and `recheckDue` (the run's checks
+  run again `ENVIRONMENT_RECHECK_MINUTES` later); `checks[].flake` (`specs`, `run` with `SPECS_PLACEHOLDER`) names
+  the checks flake_check runs again.
 - Runs the quest state machine (`src/quest/`): the table of moves is data (`QUEST_TRANSITIONS`), and
   `transition(quest, event, actor)` is the only way a quest changes status. It keeps `attempts`, the attempt log
   and who holds the quest, refuses what the table does not allow, and validates the result against the schema.
@@ -67,7 +72,10 @@
   by `canTake`, limits of tribe and territory, round-robin, affinity), the open quests nobody can take, and the
   done quests still to deliver (`deliveries`, P1-14). Checks and scripts, which run outside the tick, start only in
   the room `dispatch.max_background` leaves beside the work running (`BackgroundWork.running`, P1-47), checks
-  first; a sandbox day has no background, so no cap.
+  first; a sandbox day has no background, so no cap. (P1-54, `startingNow` of `src/dispatch/background-room.ts`) The
+  checks of a blind trial's acceptance part, which run no command, go first and take no slot, and when trials in a
+  scratch plot hold every slot one piece of work that is no trial still runs beside them; checks set aside for their
+  environment (`BackgroundWork.environment`) get no judge and start again once `recheckDue`.
   From P1-05 a character's mana must be open (`poolOpenOf`: its pool enabled, every gauge that binds it awake and
   below the cap), and paused quests whose gauges woke go on before any new work (`wakes`, `wakesOf`); then, with
   `mana.reassign_after_hours` set, a quest asleep that long goes to a free character of its class whose mana is
@@ -95,8 +103,8 @@
   whose session, the latest of the open group, handed in a partial verdict, passed over the same way. (P1-42) Judges that hand in a partial
   verdict count apart (`reviewPartialsOf`, outcome `partial`): the `REVIEW_PARTIALS_MAX`-th (3) of the open group
   stalls the review too (`partialsStalled`, `review.verdict_partial.needs_verifier`). A quest without an estimate gets
-  `context_budget_tokens` × `CONTEXT_BUDGETS_BY_RANK` of its rank as the stand-in (`questFromCommand`: F–D 1, C 2,
-  B 2, A 2.5, S 3), so its token ceiling grows with the rank; (P1-45) a quest with an estimate never gets a lower
+  `context_budget_tokens` × `CONTEXT_BUDGETS_BY_RANK` of its rank as the stand-in (`questFromCommand`: F–E 1, D 2,
+  C 3, B 3, A 3.5, S 4 since P1-54, from the sessions of P1-50 on dc1), so its token ceiling grows with the rank; (P1-45) a quest with an estimate never gets a lower
   ceiling than that, nor fewer minutes than it estimates, up to `attempt_minutes.high`. (P1-46) The rule is
   `questBudgetOf(rank, estimate, breakers)`, exported so the sandbox gives its fake quests the same ceilings.
 - Keeps the separation of duties (`src/verify/`, ADR 0008, 0020): `selectVerifier` (never an assignee of the quest

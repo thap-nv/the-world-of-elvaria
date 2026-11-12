@@ -109,6 +109,20 @@ export const TERRITORY_DEFAULTS = {
   context_files: ['CLAUDE.md', 'README.md', '.claude/rules/*.md'],
   /** territory.blind_trial.min_rank (§3.15, ADR 0022): B and above, the ranks worth an acceptance part. */
   blind_trial_min_rank: 'B',
+  /**
+   * territory.environment_errors (P1-54): what Docker and Docker Compose print when a check's environment failed,
+   * not its work. The daemon is down (Q5 of P1-50: Docker Desktop not started yet), or a container the check needs
+   * is gone or never got healthy (Q7, Q1, Q2 of P1-50: another quest's commands.reset removed it). Generic Docker
+   * lines, no territory's own: a territory adds its own or clears them in its file.
+   */
+  environment_errors: [
+    'Cannot connect to the Docker daemon',
+    'error during connect',
+    'Docker Desktop is not running',
+    'No such container',
+    'is unhealthy',
+    'missing dependency',
+  ],
 } as const;
 
 /**
@@ -147,6 +161,20 @@ export const RITUAL_STEPS = [
  * one run and fails in another is flaky.
  */
 export const FLAKE_RUNS = 3;
+
+/**
+ * Stands in `checks[].flake.run` for the spec files of the check that the quest added or changed (P1-54): the reruns
+ * of flake_check repeat those alone instead of the whole suite (P1-50: the trial's machine part took 45–75 minutes on
+ * dc1, half of it flake_check running every check twice more).
+ */
+export const SPECS_PLACEHOLDER = '{specs}';
+
+/**
+ * Minutes the checks of a quest wait after they failed because of their environment before they run again (P1-54):
+ * long enough for the owner the bell told to start Docker (about a minute on P1-50's machine) or for another quest's
+ * work to end, short enough that the quest does not sit for long once the environment is back. Not measured.
+ */
+export const ENVIRONMENT_RECHECK_MINUTES = 10;
 
 /**
  * Breaks a judge's pass names in a scratch plot whose ritual breaks code (P1-40): the step break_and_expect_red asks

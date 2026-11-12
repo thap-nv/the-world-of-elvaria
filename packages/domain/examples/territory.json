@@ -57,7 +57,11 @@
         "when": ["apps/web/src/routes/**", "apps/web/src/features/**"],
         "exclusive": true,
         "timeout_minutes": 60,
-        "cleanup": "pnpm e2e:reset"
+        "cleanup": "pnpm e2e:reset",
+        "flake": {
+          "specs": ["apps/web/e2e/**/*.spec.ts"],
+          "run": "pnpm --filter @dc1/web exec playwright test {specs}"
+        }
       }
     ],
     "laws": {

@@ -7,18 +7,34 @@
 // Ended checks stay while their quest is in review on their run, for the run's next judge as long as the branch head
 // they ran on has not moved (P1-38, P1-35 (c)); review/checks.ts decides when they serve. A judge in a scratch plot
 // spends them: its plot leaves with it, so they wait out of planTick's view until a fresh scratch plot is made for
-// the next judge, which then reuses the trial instead of running it again (P1-42).
+// the next judge, which then reuses the trial instead of running it again (P1-42). Checks that failed because of
+// their environment (P1-54) wait apart, out of every judge's reach, until planTick asks for them again (recheckDue).
 import { currentRun } from '@elvaria/domain';
-import type { BackgroundWork, Quest, QuestId, VerdictCheck } from '@elvaria/domain';
+import type {
+  BackgroundWork,
+  EnvironmentFailure,
+  Instant,
+  Quest,
+  QuestId,
+  VerdictCheck,
+} from '@elvaria/domain';
 
 import type { Logger } from './types.ts';
 
 export type BackgroundKind = 'checks' | 'script';
 
+/** Checks whose environment failed (P1-54, environmentFailureOf): which check said so, and when they ended. */
+export interface EnvironmentHeld {
+  readonly failure: EnvironmentFailure;
+  readonly at: Instant;
+}
+
 /** What a run of checks gave, and the commit it ran on (null: no git, or git could not say). */
 export interface CheckedRun {
   readonly checks: readonly VerdictCheck[];
   readonly head: string | null;
+  /** Their environment failed (P1-54): no judge takes them, and a later plan runs them again. */
+  readonly environment?: EnvironmentHeld;
 }
 
 /** One piece of work: aborted when the Steward stops or the quest moves on, and given up then. */
@@ -54,6 +70,8 @@ export interface Background {
   spend(quest: QuestId): void;
   /** The ended checks of run `n` a judge in a scratch plot spent (P1-42). */
   spent(quest: QuestId, n: number): CheckedRun | undefined;
+  /** The ended checks of run `n` set aside because their environment failed (P1-54). */
+  held(quest: QuestId, n: number): CheckedRun | undefined;
   /** Aborts and forgets the work `wanted` no longer wants. */
   prune(wanted: (quest: QuestId, kind: BackgroundKind, n: number) => boolean): void;
   /** Resolves once the work running now has ended. */
@@ -108,6 +126,25 @@ function start<T>(state: State, piece: Piece<T>, keep: (value: T, entry: Entry) 
 }
 
 /**
+ * What planTick sees of the table: the work running, the checks ended for a judge, and those set aside for their
+ * environment (P1-54), with when they ended; spent checks wait out of view (P1-42).
+ */
+function viewOf(table: ReadonlyMap<QuestId, Entry>): BackgroundWork {
+  const entries = [...table.entries()];
+  const held = entries.flatMap(([quest, entry]) => {
+    const environment = entry.checked?.environment;
+    return environment === undefined ? [] : [{ quest, at: environment.at }];
+  });
+  const judged = (entry: Entry) =>
+    entry.checked !== undefined && entry.spent !== true && entry.checked.environment === undefined;
+  return {
+    running: entries.filter(([, entry]) => entry.running).map(([quest]) => quest),
+    checked: entries.filter(([, entry]) => judged(entry)).map(([quest]) => quest),
+    ...(held.length === 0 ? {} : { environment: held }),
+  };
+}
+
+/**
  * `ended` is told when a piece of work ends on its own, its result already in the table: the Steward ticks then
  * rather than at its next beat, so a judge does not wait up to `tick_seconds` more for checks that ended (P1-10b).
  */
@@ -116,8 +153,10 @@ export function createBackground(log: Logger, ended: () => void = () => undefine
   const { table, live } = state;
   return {
     checks: (quest, n, work) => {
-      // Spent checks give way to the work that makes the next judge its scratch plot (P1-42).
-      if (table.get(quest)?.spent === true) table.delete(quest);
+      // Spent checks give way to the work that makes the next judge its scratch plot (P1-42), and checks set aside
+      // for their environment to their next run (P1-54).
+      const before = table.get(quest);
+      if (before?.spent === true || before?.checked?.environment !== undefined) table.delete(quest);
       start(state, { quest, kind: 'checks', n, work }, (checked, entry) => {
         if (checked === undefined) return false;
         entry.checked = checked;
@@ -128,18 +167,15 @@ export function createBackground(log: Logger, ended: () => void = () => undefine
     script: (quest, n, work) => {
       start(state, { quest, kind: 'script', n, work }, () => false);
     },
-    view: () => {
-      const entries = [...table.entries()];
-      return {
-        running: entries.filter(([, entry]) => entry.running).map(([quest]) => quest),
-        checked: entries
-          .filter(([, entry]) => entry.checked !== undefined && entry.spent !== true)
-          .map(([quest]) => quest),
-      };
-    },
+    view: () => viewOf(table),
     ended: (quest, n) => {
       const entry = table.get(quest);
-      return entry?.n === n && entry.spent !== true ? entry.checked : undefined;
+      const usable = entry?.n === n && entry.spent !== true && entry.checked?.environment === undefined;
+      return usable ? entry.checked : undefined;
+    },
+    held: (quest, n) => {
+      const entry = table.get(quest);
+      return entry?.n === n && entry.checked?.environment !== undefined ? entry.checked : undefined;
     },
     spent: (quest, n) => {
       const entry = table.get(quest);
