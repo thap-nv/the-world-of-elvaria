@@ -6,7 +6,8 @@
   `dist/elvaria-hook.js` and run as `node --conditions=elvaria-dist dist/elvaria-hook.js [--policy <file>]`.
   `hookCommand(policyFile?)` gives the composition root that `command` + `args` (exec form, cli-facts §1.5).
 - Reads the session from env `ELVARIA_KINGDOM, ELVARIA_QUEST, ELVARIA_ATTEMPT, ELVARIA_CHARACTER, ELVARIA_ROLE,
-ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the same fields plus `laws`) for a
+ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the same fields plus `laws` and the optional `secrets`, `tools`,
+  `apprentice_models`, `cli_protected_paths`, `patch_file`, `search_commands`) for a
   CLI that does not hand its env to hooks; env wins. Malformed ids are left out and reported on stderr.
 - Turns the 12 Claude Code events Elvaria registers into lines (§3.10): `SessionStart` → `agent.session.start`
   (the model from the context when the payload has none, as under `-p`), `PostToolUse`/`PostToolUseFailure` →
@@ -32,8 +33,10 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
   the same way but stop only writes: a write tool, a shell redirection (`> f`, `>> f`) or a shell writer (`tee`,
   `Set-Content`, `Add-Content`, `Out-File`); reading, `git add` and the territory's generators go through. Laws
   asked for (`--policy`) but unreadable deny every file and shell tool.
-- Refuses first, as an Elvaria rule, a write to the paths the adapter says its CLI refuses whatever its rules
-  say (policy `cli_protected_paths`, P1-24: Claude Code's `.husky/`, `.git/`, `.claude/`…), with a reason that
+- Refuses first, as an Elvaria rule, in the Claude and the agy branch, a write to the policy's
+  `cli_protected_paths`: the paths the adapter says its CLI refuses whatever its rules say (P1-24: Claude Code's
+  `.husky/`, `.git/`, `.claude/`…) and, for every tribe, git's own folder `.git/**` (runner-core's `GIT_PATHS`,
+  P1-49), with a reason that
   sends the exact change to the owner through the letter's Question section, instead of the CLI's bare denial.
   When the path is one of `laws.patch_paths` and the policy names a `patch_file` (P1-28), the reason says to write
   the change as a git patch to that file at the root of the plot, which the Steward applies when the session
@@ -91,7 +94,7 @@ pnpm --filter @elvaria/hooks build   # tsc: the event log's dist/, then this pac
 pnpm --filter @elvaria/hooks test    # builds, then vitest with coverage
 ```
 
-`translate.spec.ts` feeds a stdin payload per event with every field (`src/__fixtures__/claude-payloads.ts`);
+`claude/translate.spec.ts` feeds a stdin payload per event with every field (`src/__fixtures__/claude-payloads.ts`);
 `real-payloads.spec.ts` runs the 18 payloads Claude Code 2.1.318 really sent in spike P1-02
 (`packages/runner-claude/fixtures/hook-payloads.jsonl`); `antigravity/translate.spec.ts` runs the 50 calls agy
 1.5.2 really made in spike P1-12a (`packages/runner-antigravity/fixtures/hook-stdin-full-run.jsonl`) and

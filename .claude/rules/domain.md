@@ -24,7 +24,7 @@ paths:
 
 ## Schema và bảng sinh ra (ADR 0003)
 
-- Zod trong `src/schema/**` là nguồn. Đổi schema → `pnpm schemas`, commit `docs/schemas/**` cùng lúc. Đổi không tương thích → tăng `version`, thêm `packages/store/src/migrations/<contract>/v<n>-to-v<n+1>.ts` và fixture `v<n>.json`; event thì tăng `v` và migrate trong `packages/eventlog/src/migrations/`.
+- Zod trong `src/schema/**` là nguồn. Đổi schema → `pnpm schemas`, commit `docs/schemas/**` cùng lúc. Đổi không tương thích → tăng `version`, thêm `packages/store/src/migrations/<contract>/v<n>-to-v<n+1>.ts` và fixture `v<n+1>.json` cạnh các fixture cũ; event thì tăng `v` và migrate trong `packages/eventlog/src/migrations/`.
 - Đổi `EVENT_TYPES` hay schema `data` của event → `pnpm docs:gen` (`docs/events.md`); bảng `events` của `packages/i18n/src/glossary.json` phải chứa type mới (`pnpm docs:check`).
 - Đổi `QUEST_TRANSITIONS` → `pnpm docs:gen` (bảng §2.5 của implementation-plan). Trước khi sửa máy trạng thái, đọc `src/quest/transitions.ts`, `transition.ts`, `effects.ts`, spec của chúng và §2.5.
 

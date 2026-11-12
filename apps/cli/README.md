@@ -3,9 +3,9 @@
 ## Does
 
 - Ships the `elvaria` command, the only composition root (implementation-plan §1.1): `init`, `doctor`,
-  `tribe list|add|check|disable`, `territory add|list`, `character add|list|suspend|release|level|model`,
+  `tribe list|add|check|disable`, `territory add|list`, `character add|list|suspend|release|level|model`, `say`,
   `quest add|list|show|confirm|cancel|archive|edit|retry|reassign`,
-  `seal`, `return`, `answer`, `run`,
+  `seal`, `return`, `answer`, `run`, `wake`, `metrics`,
   `sandbox generate|replay`, `migrate`. The command table (`src/commands.ts`) drives parsing (`util.parseArgs`), help, and the reference
   `docs/cli.md` that `pnpm docs:gen` renders from it (`scripts/docs-cli.mjs`).
 - Prints everything through `t()` of `@elvaria/i18n`, in `kingdom.owner.locale` unless `--locale vi|en` is given;
@@ -14,7 +14,8 @@
 - Sends every quest change as an inbox command (`create_quest`, `confirm`, `cancel`, `archive`, `edit_quest`,
   `retry`, `reassign`, `seal`, `return`, `answer`; ADR 0005), after checking ids against the registry and the quest
   against the transition table. `return` asks for a note of at least 20 characters (`--note`) and a `--fail-kind`
-  (`other` by default), since the Steward writes it as the owner's fail verdict. `answer <quest> "<answer>"` takes
+  (`other` by default), since the Steward writes it as the owner's fail verdict; `return --rejudge` (P1-40) says
+  the judge erred: the work goes back to be judged again and the return does not count against the assignee. `answer <quest> "<answer>"` takes
   a non-empty answer for a `blocked` quest; the Steward then goes on with the same attempt, in the asking session
   when the answer comes within `dispatch.resume_after_answer_minutes` (ADR 0017). The bell of `run` prints that
   command with each question. `quest retry` opens a quest of the infirmary again; `quest reassign [--to <id>]`
@@ -33,7 +34,7 @@
   `partyStatusOf`; P1-21 (c)): the merge quest and the acceptance part share the contract's title. `quest show` also
   says what the last run came to (`src/quest/last-run.ts`, P1-46): its verdicts in the order they were written (each
   judge's partial verdict with where it stopped, the judge's or the machine's, the owner's), each with its failed
-  checks and its notes, and the `plot.restored` lines of that run (the paths the Steward dropped from the plot after a judge, or after the checks once P1-47 does), so
+  checks and its notes, and the `plot.restored` lines of that run (the paths the Steward dropped from the plot after a judge or after the machine checks, P1-44 and P1-47), so
   the owner need not open `verdicts/` or the journal. `character suspend <id> [--reason]` and `character release <id>` send `suspend` and `release` (a
   character the Steward would refuse, unknown, suspended already or not suspended, is refused here), and `suspend`
   says what becomes of the quest the character holds (the owner's decision after P1-26). `character level <id>
@@ -41,6 +42,12 @@
   ceiling of the new level (P1-29). `character model <id> <model>` sends `set_model` (checked as the Steward checks
   it, the domain's `setModelLine`: a model of the character's own tribe, not the one it runs) and says when the new
   model's pool is turned off (P1-22).
+- `say "<words>"` (P1-13, `src/say/`): one Chancellor session of `@elvaria/chancellor`, on the runners `run`
+  builds (it needs a character of class `chancellor`, and it spends mana), turns the words into drafts; each
+  draft kept goes to the inbox as `create_quest` with `draft: true`, the Steward writes it in status `draft`, and
+  the owner opens it with `quest confirm`. The CLI writes no quest.
+- `wake <tribe>` sends `wake` for a tribe of `kingdom.tribes[]`: the Steward probes that account at its next tick
+  (ADR 0009), for instance after the owner signed in again.
 - Writes new files the Steward does not own: `kingdom.json` (`init`, then `tribes[].tool` and, with `--enable`,
   `tribes[].enabled` from `doctor` once it finds nothing wrong, and `tribes[]` from `tribe add|check|disable`,
   P1-19), a
@@ -127,7 +134,8 @@
 
 - Write or change a quest, or change an existing character: the Steward does (P1-03).
 - Decide anything about quests or sessions, or talk to a CLI itself: the Steward and the adapters do; `doctor`
-  asks only `--version` and, through the adapter, the login (no model call).
+  asks only `--version` and, through the adapter, the login (no model call). Only `say`, `run` and `tribe check`
+  with a real CLI start sessions that spend mana.
 - Inherit `process.env` into child processes: they get `minimalEnv` (ADR 0013), and never a shell (ADR 0015).
 
 ## Depends on
@@ -136,7 +144,8 @@
   `@elvaria/eventlog` (append, redact; reads the log for the mana gauges, the metrics, and a quest's journal for its
   infirmary reason), `@elvaria/sandbox` (fake days and their replay),
   `@elvaria/registry-default` (`REGISTRY_ROOT`, `registryFiles()` for `init` and `migrate`), `@elvaria/i18n`, `@elvaria/steward`
-  (the Steward, unclaimable notices), `@elvaria/runner-core` (`PlotManager`, the adapter kit, the conformance
+  (the Steward, unclaimable notices, `questIdOfCommand`, `levelsFromLog`), `@elvaria/chancellor` (`draftQuests`,
+  `draftCommands` for `say`), `@elvaria/runner-core` (`PlotManager`, the adapter kit, the conformance
   suite), `@elvaria/runner-claude` (the
   `claude_code` adapter), `@elvaria/runner-antigravity` (the `antigravity` adapter, P1-15), `@elvaria/hooks` (the
   hook's command).

@@ -13,7 +13,7 @@ The rules that matter most (quest state machine, verifier selection, breakers, m
 - Time, randomness and ids are injected (`Clock`, `RandomSource`, `IdSource`); functions take `now: Instant` explicitly.
 - Errors are values: `Result<T, E>`. Domain never throws; IO packages throw `ElvariaError(code)` with codes from `ERROR_CODES`. (Amended 2026-11-07, P0-11: there is no shared `ElvariaError` or `ERROR_CODES`. Each package has its own coded values, which callers translate by `code`: `StoreIssue`, `RegistryIssue`, `ArgsError` as values, `EventLogError` thrown; an IO failure nobody can act on is thrown as is.)
 - Decisions are pure functions over snapshots (`planTick`, `transition`, `selectVerifier`, `validateVerdict`, `evaluateBreakers`, `decideManaState`, `statusToneOf`); IO packages only execute the returned plan.
-- Derived values are functions, never stored: `gearTierOf`, `reputationOf`, `familyOf`, `poolOf`, campaign morale. (Today `reputationOf`, `affinityOf`, `titleOf`; the others come with their tasks.)
+- Derived values are functions, never stored: `gearTierOf`, `reputationOf`, `familyOf`, `poolOf`, campaign morale. (Today `reputationOf`, `affinityOf`, `titleOf`; the others come with their tasks. Amended 2026-11-12, P1-51: `familyOf` and `poolOf` exist too; `gearTierOf` and campaign morale still wait for theirs.)
 - Lint enforces the bans (`no-restricted-imports`, `no-restricted-globals`, `no-restricted-syntax`); coverage gate is 100 % on domain.
 
 ## Consequences

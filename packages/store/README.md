@@ -15,7 +15,8 @@
   `acquireLock` also serves the long-held `.state/steward.lock` (P1-03); `isLocked` only reads whether a live
   holder keeps a lock (`elvaria doctor`, P1-11).
 - Holds the migration framework (ADR 0003): one chain per stored contract in `src/migrations/index.ts`, steps in
-  `src/migrations/<contract>/v<n>-to-v<n+1>.ts`, fixtures `v<n>.json` beside them, and `migrateKingdom` for
+  `src/migrations/<contract>/v<n>-to-v<n+1>.ts`, fixtures `v<n>.json` beside them (no step yet: all 12 stored
+  contracts are at v1, each with its `v1.json`), and `migrateKingdom` for
   `elvaria migrate` (rewrite every old file once, old text in `.backup/<stamp>/`).
 - Runs the inbox (ADR 0005): `inbox.write` drops `inbox/<ulid>.json`, `inbox.read` lists commands oldest first
   (unusable files too, so the Steward can reject them), `inbox.ack` moves one to `inbox/done/`.
