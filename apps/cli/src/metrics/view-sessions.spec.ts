@@ -115,7 +115,9 @@ describe('the metrics of PS-21', () => {
   it('prints the new lines in the summary, the table before the limits, and the limits they bring', () => {
     const sections = metricsSections(t, METRICS);
     const summary = sections[0]?.lines ?? [];
-    expect(summary.slice(-2)).toEqual([graphLine(t, METRICS), firstEditsLine(t, METRICS)]);
+    // Side by side in the summary; lines of later tasks may follow them (PS-05: out of scope).
+    const at = summary.indexOf(graphLine(t, METRICS));
+    expect(summary.slice(at, at + 2)).toEqual([graphLine(t, METRICS), firstEditsLine(t, METRICS)]);
     const titles = sections.map(({ title }) => title);
     expect(titles.slice(-2)).toEqual(['Prompt size by role and block (characters)', 'Known limits']);
     const limits = sections.at(-1)?.lines.join('\n') ?? '';
