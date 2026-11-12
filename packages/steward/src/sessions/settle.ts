@@ -83,7 +83,7 @@ async function settleAssignee(
     return breakAssignee(ctx, running, { trip: 'forbidden_paths', paths: committed.paths }, ended(result));
   // The branch would lack the work: the quest goes to the infirmary with the hook's last words, not to review.
   if (committed.status === 'refused')
-    return breakAssignee(ctx, running, { trip: 'commit', detail: committed.detail }, ended(result));
+    return breakAssignee(ctx, running, { trip: 'commit', refused: committed }, ended(result));
   return moveAndRing(ctx, {
     quest,
     event: { type: 'submit', ...run },

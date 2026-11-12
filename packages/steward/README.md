@@ -138,8 +138,8 @@
   (`Plots.touched`) include a path of `laws.forbidden_paths` or a dotenv file, which only a program the session's
   shell ran could write, is not committed and goes to the infirmary with the bell, `breaker:forbidden_paths`,
   `detail.paths`, P1-49; every commit of a session's work checks so (`commitPlot`: the submit and each WIP; the
-  Steward's own commit that takes a delivered contract's `subquests.json` off its branch, `closeContract`, does
-  not), a WIP left in the plot with the reason, and a plot whose changes cannot be listed is not committed either;
+  Steward's own commit that takes a delivered contract's `subquests.json` off its branch, `closeContract`,
+  goes through it too, P1-55), a WIP left in the plot with the reason, and a plot whose changes cannot be listed is not committed either;
   before it, on a
   territory with `laws.patch_paths`, the assignee's `elvaria.patch` is applied through `Plots.applyPatch` and told
   in a `plot.patched` line, and a patch that touches other paths or does not apply sends the quest to the
@@ -154,6 +154,10 @@
   tribe's adapter declares for this OS (`shellOf` with `StewardDeps.platform`, `process.platform` by default, P1-40),
   and its tool policy and prompt get the search commands when that adapter's CLI has no search tool
   (`capabilities.search: false`, P1-53).
+- Keeps what a character could not tidy when the Steward commits (P1-55, `src/sessions/commit.ts`, `stop-letter.ts`): every
+  commit comes with the run's folder in `.runs/`, so a scratch file at the plot's root (`isScratchFile`) is moved to
+  `set-aside/` instead of into the commit, a commit the hook refuses leaves `wip.patch` there, and a quest left with no
+  `handover.md` gets a minimal one (`writeStopLetter`; a letter the character wrote is never touched).
 - Applies the limits `tribeLimitsOf` gives a tribe its adapter narrows (§3.14, P1-33; `src/sessions/spawn.ts`):
   a judge of a tribe without `structured_output` gets the verdict's schema in its prompt and its verdict cut out of
   its last text (runner-core's `spawnParsed`), checked by `judgeVerdictOf`, which names each issue; an unusable
@@ -241,7 +245,8 @@
   session; a merge that stops is released (the conflict stays in progress in the plot) and a knight takes the next
   run, as after a judge fails the machine's. Before each session of the merge quest's knight, never a
   judge's, its parts are merged in (`Plots.merge`; a conflict is left in progress for the knight, and the log
-  says so); before its judge the check `party` says whether every part is in (`Plots.unmerged`; a missing part
+  says so), and again right before the checks of a run, so the parts a conflict left go in once the knight concluded
+  it (`mergePartsBeforeChecks`, P1-55); before its judge the check `party` says whether every part is in (`Plots.unmerged`; a missing part
   fails the run as `incomplete`, so the next session gets it). The territory's checks run by the quest's place
   (`PlotCheck.party_role`: a part and the contract quest skip `defer_to_merge` checks, the merge quest runs them all), and the delivery
   note of a party's quest says where the party stands (`partyStatusOf`) and that only the merge quest's branch is

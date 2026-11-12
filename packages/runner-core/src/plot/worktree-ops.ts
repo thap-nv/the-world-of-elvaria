@@ -8,6 +8,8 @@ import { gitOut, zList } from './git.ts';
 import { clearLeftover } from './leftover.ts';
 import type { Git } from './git.ts';
 import { plotRecordOf } from './plot-record.ts';
+import { saveStaged, setAsideScratch } from './rescue.ts';
+import type { CommitRescue } from './rescue.ts';
 import type { PlotFailure } from './worktree.ts';
 
 export interface PlotStatus {
@@ -19,11 +21,25 @@ export interface PlotStatus {
   readonly branch: string | null;
 }
 
+/** What a commit with a `CommitRescue` did besides committing (P1-55). */
+export interface Rescued {
+  /** Scratch files at the plot's root it moved out of the plot, before staging (rescue.ts). */
+  readonly set_aside?: readonly string[];
+}
+
 export type CommitOutcome =
-  | { readonly status: 'committed'; readonly sha: string }
-  | { readonly status: 'clean' }
-  /** git or a hook of the territory refused the commit; the changes stay in the worktree. */
-  | { readonly status: 'refused'; readonly detail: string }
+  | ({ readonly status: 'committed'; readonly sha: string } & Rescued)
+  | ({ readonly status: 'clean' } & Rescued)
+  /**
+   * git or a hook of the territory refused the commit; the changes stay in the worktree, staged. With a rescue folder,
+   * `patch` is the copy of what was staged and `files` its paths (P1-55).
+   */
+  | ({
+      readonly status: 'refused';
+      readonly detail: string;
+      readonly patch?: string;
+      readonly files?: readonly string[];
+    } & Rescued)
   | { readonly status: 'no_git' };
 
 export interface ReleasedPlot {
@@ -107,20 +123,31 @@ export async function restoreWorktree(git: Git, worktree: string): Promise<strin
 /**
  * Stages everything and commits it with the territory's own hooks; nothing is bypassed (CLAUDE.md). A merge in
  * progress (a party's merge quest, P1-18) is concluded even when its resolution leaves the tree as HEAD had it.
+ * With a `rescue` folder (P1-55): scratch files at the plot's root are moved out of it before anything is staged, and
+ * a commit the hooks refuse leaves a copy of what was staged beside the run.
  */
-export async function commitWorktree(git: Git, worktree: string, message: string): Promise<CommitOutcome> {
+export async function commitWorktree(
+  git: Git,
+  worktree: string,
+  message: string,
+  rescue?: CommitRescue,
+): Promise<CommitOutcome> {
+  const aside = rescue === undefined ? [] : await setAsideScratch(git, worktree, rescue.dir);
+  const rescued = aside.length === 0 ? {} : { set_aside: aside };
   await gitOut(git, worktree, ['add', '--all']);
   const staged = await git(worktree, ['diff', '--cached', '--quiet']);
   const merging = (await git(worktree, ['rev-parse', '--verify', '--quiet', 'MERGE_HEAD'])).code === 0;
-  if (staged.code === 0 && !merging) return { status: 'clean' };
+  if (staged.code === 0 && !merging) return { status: 'clean', ...rescued };
   if (staged.code !== 0 && staged.code !== 1)
     throw new Error(`git diff --cached failed in ${worktree}: ${staged.stderr.trim()}`);
   const commit = await git(worktree, ['commit', '--quiet', '--message', message]);
   if (commit.code !== 0) {
     const said = `${commit.stderr}\n${commit.stdout}`.trim();
-    return { status: 'refused', detail: said.slice(-DETAIL_CHARS) };
+    const kept = rescue === undefined ? {} : await saveStaged(git, worktree, rescue.dir);
+    return { status: 'refused', detail: said.slice(-DETAIL_CHARS), ...kept, ...rescued };
   }
-  return { status: 'committed', sha: (await gitOut(git, worktree, ['rev-parse', 'HEAD'])).trim() };
+  const sha = (await gitOut(git, worktree, ['rev-parse', 'HEAD'])).trim();
+  return { status: 'committed', sha, ...rescued };
 }
 
 const messageOf = (reason: unknown): string => (reason instanceof Error ? reason.message : 'forget failed');

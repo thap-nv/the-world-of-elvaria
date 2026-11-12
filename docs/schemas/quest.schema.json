@@ -309,7 +309,7 @@
             "minimum": 0
           },
           "run_dir": {
-            "description": "Relative to the kingdom: .runs/<quest>-<n> (verifier: .runs/<quest>-<n>/verify).",
+            "description": "Relative to the kingdom: .runs/<quest>-<n> (verifier: .runs/<quest>-<n>/verify, and /verify-<k> for the k-th judge of the run, k ≥ 2).",
             "type": "string",
             "pattern": "^\\.runs/[^\\\\]+$"
           }
@@ -581,6 +581,7 @@
       }
     },
     {
+      "$comment": "A quest in review has had a run: an attempt, or the Steward's own run of a party's merge, which takes a run number and no attempt (P1-55).",
       "if": {
         "properties": {
           "status": {
@@ -589,11 +590,34 @@
         }
       },
       "then": {
-        "properties": {
-          "attempts": {
-            "minimum": 1
+        "anyOf": [
+          {
+            "properties": {
+              "attempts": {
+                "minimum": 1
+              }
+            }
+          },
+          {
+            "required": [
+              "attempt_log"
+            ],
+            "properties": {
+              "attempt_log": {
+                "contains": {
+                  "required": [
+                    "role"
+                  ],
+                  "properties": {
+                    "role": {
+                      "const": "assignee"
+                    }
+                  }
+                }
+              }
+            }
           }
-        }
+        ]
       }
     },
     {

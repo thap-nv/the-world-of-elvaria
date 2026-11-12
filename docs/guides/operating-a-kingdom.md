@@ -232,11 +232,11 @@ Các lệnh khác của chủ nhân:
 | tạm cho một nhân vật nghỉ | `elvaria character suspend <id> --reason "…"` |
 | bỏ một quest chưa xong | `elvaria quest cancel <quest>`; worktree của quest đã hủy ở lại, dọn tay. Quest ở trạm quân y thì `quest archive` (hay `cancel`, cùng lệnh): Quản sự gỡ worktree, giữ nhánh cùng phần việc dở |
 
-Chỗ còn thiếu đường, vá ở P1-55:
+Chỗ từng thiếu đường, đã vá ở P1-55 và P1-56:
 
 - (P1-56, đã vá) `quest archive` và `quest cancel` nhận quest ở trạm quân y; khi Quản sự đang chạy, mọi lệnh gửi qua CLI chờ một nhịp và in câu trả lời của nó (`stale` kèm cách xử lý, hay "đã áp dụng"); Quản sự không chạy thì lệnh chờ trong hộp thư như cũ.
-- Quest ghép: `retry` từ trạm quân y chạy lại lượt gộp của máy trên đúng commit vừa trượt (tốn một vòng check) trước khi hiệp sĩ nhận.
-- File rác nhân vật lỡ tạo ở gốc đất riêng vào commit nộp, và hiệp sĩ không có lệnh xóa: dừng Quản sự, `git rm` rồi commit trong worktree của quest, chạy lại.
+- (P1-55, đã vá) Quest ghép: `retry` từ trạm quân y đưa quest tới hiệp sĩ, không chạy lại lượt gộp của máy trên commit vừa trượt; lượt máy không tính vào `max_attempts`; sau khi hiệp sĩ gỡ xung đột và nộp, Quản sự gộp nốt các phần còn chờ trước check; người chấm khác model với mọi người từng làm quest; mỗi phiên chấm của một lượt có thư mục riêng `.runs/<quest>-<n>/verify`, `verify-2`, …
+- (P1-55, đã vá) File nháp nhân vật lỡ tạo ở gốc đất riêng (tên có `tmp`/`temp`, đuôi `.tmp`, `.bak`…) không vào commit của Quản sự: nó được chuyển sang `.runs/<quest>-<n>/set-aside/`, plot sạch. Commit bị hook của repo từ chối thì phần đã stage được chép ra `.runs/<quest>-<n>/wip.patch`, và quest chưa có `handover.md` có chữ thì Quản sự viết một thư tối thiểu (file đã sửa, đoạn cuối output của hook); phần dở vẫn nằm đã stage trong plot.
 
 ## 11. Bài học: kinh, gazetteer, chiếu chỉ, prompt nghề
 
@@ -297,7 +297,7 @@ Thay đổi chỉ ở `docs/` thì không cần làm gì. Khi repo Elvaria cũng
 | Docker | `reset` của quest này (`docker compose … down -v`) hạ stack e2e của quest kia ba lần; e2e đỏ bị đọc là chập chờn, Quản sự sinh quest «Trừ tà» và hạ cấp người làm | `dispatch.max_background: 1` với lãnh thổ có stack Docker dùng chung; hủy sớm quest «Trừ tà» sinh từ lỗi dựng container | P1-54 |
 | Người chấm (3 lần) | một trần mana đóng làm bài của một model không còn ai chấm | giữ hai người chấm khác model cho mỗi model người làm (§3); xem `doctor` khi quest chờ nghiệm thu lâu | PS-03 (chuông); P1-56 (cảnh báo của `doctor`, xong) |
 | Việc nền | check 6 giây của một quest tài liệu chờ 41 phút sau các bộ e2e; người chấm sau check đỏ chờ khóa 9–33 phút | xác nhận quest nhỏ trước đợt có e2e, hoặc chấp nhận chờ | P1-54 |
-| CLI thiếu đường (5 lần) | xem §10 | xem §10 | P1-55, P1-56 (xong) |
+| CLI thiếu đường (5 lần) | xem §10 | xem §10 | P1-55 (xong), P1-56 (xong) |
 | Quyền của nghề và lãnh thổ (2 lần) | nhân vật không ghi được `.claude/rules/`; thư ký được bảo chạy `git log` | `laws.patch_paths` (§3; `territory add` và `doctor` gợi ý từ P1-56); mô tả không đòi lệnh mà nghề không có (§4) | P1-56 (xong), PS-06 |
 | File lớn | trinh sát tộc gemini đọc một file 1 MB 25 lần, bị cắt hai lượt | từ P1-53 tộc gemini có `git grep`; ghi file lớn vào gazetteer (§11) | P1-52, P1-53 (xong) |
 | agy | người chấm in một JSON giữ chỗ giữa câu trả lời, phán quyết thành "dở", mất một phiên chấm | từ P1-56 runner lấy JSON cuối của câu trả lời và bỏ ghi chú giữ chỗ: người chấm không ra phán quyết thì người chấm kế tiếp mở, không còn phán quyết "dở" từ một ghi chú giả | P1-56 (xong) |

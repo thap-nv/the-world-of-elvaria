@@ -1,6 +1,7 @@
 // quest.attempt_log as the state machine keeps it (implementation-plan §2.3, §2.5). A run number `n` counts every
 // attempt the quest ever started and never goes back, unlike `attempts`, which `retry` resets to 0: verdict ids
 // (`<quest>-<n>`) and run folders (`.runs/<quest>-<n>`) must stay unique for the life of the quest.
+import { verifierSessionsOf } from '../verify/verdict-id.ts';
 import type { CharacterId } from '../core/ids.ts';
 import type { Role } from '../schema/common.ts';
 import type { Attempt } from '../schema/quest/quest-parts.ts';
@@ -16,9 +17,17 @@ export const currentRun = (quest: Quest): number =>
     0,
   );
 
-/** `.runs/<quest>-<n>`, and `/verify` below it for the verifier (attempt_log[].run_dir). */
-export const runDirOf = (quest: Quest, n: number, role: Role): string =>
-  role === 'verifier' ? `.runs/${quest.id}-${n}/verify` : `.runs/${quest.id}-${n}`;
+/**
+ * `.runs/<quest>-<n>`, and `/verify` below it for the verifier (attempt_log[].run_dir). A run can be judged by several
+ * sessions, and each keeps its own folder: the first is `verify`, the next `verify-2`, `verify-3` (P1-55: the second
+ * judge of Q1-z's run wrote over the log of the first one, whose session had crashed). For a verifier it names the
+ * folder of the session that opens now: the next one after those the log already holds.
+ */
+export const runDirOf = (quest: Quest, n: number, role: Role): string => {
+  if (role !== 'verifier') return `.runs/${quest.id}-${n}`;
+  const session = verifierSessionsOf(quest, n) + 1;
+  return `.runs/${quest.id}-${n}/${session === 1 ? 'verify' : `verify-${session}`}`;
+};
 
 export interface OpenRun {
   readonly n: number;

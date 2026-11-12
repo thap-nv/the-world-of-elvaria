@@ -36,6 +36,24 @@ describe('planTick: judges and the fail streak', () => {
     ]);
   });
 
+  it('keeps a judge off the model of whoever worked the quest, though the last run has no assignee (P1-55)', () => {
+    // The Steward's own run of a merge leaves no assignee; thorn (Sonnet) did the runs before it (P1-50, Q1-z).
+    const machine = { ...inReview(quest(Q1), 'thorn'), assignee: null };
+    const judges = [
+      character('thorn'),
+      character('maren', { cls: 'judge', since: 0 }),
+      character('sable', { cls: 'judge', model: 'claude-opus-5-5', since: 50 }),
+    ];
+    expect(planTick(snapshot([machine], judges), NOW).verifications).toEqual([
+      { quest: Q1, verifier: 'sable', reason: 'same_family_other_model' },
+    ]);
+    // With only a Sonnet judge, nobody may ever judge it: it waits and is named.
+    expect(planTick(snapshot([machine], judges.slice(0, 2)), NOW)).toMatchObject({
+      verifications: [],
+      unjudgeable: [Q1],
+    });
+  });
+
   it('gives a review whose judge a breaker stopped to another judge of the roster (P1-38)', () => {
     const judges = [
       character('thorn', { status: 'working' }),

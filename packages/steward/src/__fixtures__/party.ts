@@ -58,6 +58,8 @@ export type Files = Readonly<Record<string, Readonly<Record<string, string>>>>;
 export interface BenchMore {
   readonly territory?: Readonly<Record<string, unknown>>;
   readonly cast?: readonly CastMember[];
+  /** Plots to put over the git ones (P1-55): given them, the answers to replace. */
+  readonly plots?: (plots: Plots) => Partial<Plots>;
 }
 
 /** The key of `Files` a session's quest leaves. */
@@ -104,7 +106,7 @@ export async function partyBench(
     return plots.trial(request);
   };
   const steward = kingdom.steward({
-    plots: { ...plots, check, trial },
+    plots: { ...plots, check, trial, ...more.plots?.(plots) },
     runners: leavingRunners(kingdom, leaves),
   });
   const started = await steward.start({ loop: false });
