@@ -11,6 +11,10 @@ describe('startingLevelOf', () => {
     expect(startingLevelOf('gemini-4-argon-medium')).toBe(3);
     expect(startingLevelOf('claude-haiku-5-5')).toBe(2);
     expect(startingLevelOf('gemini-3.8-flash-low')).toBe(2);
+    expect(startingLevelOf('gpt-6-astra-low')).toBe(5);
+    expect(startingLevelOf('gpt-6.1-sol-low')).toBe(4);
+    expect(startingLevelOf('gpt-6.1-terra-medium')).toBe(3);
+    expect(startingLevelOf('gpt-6-luna-low')).toBe(2);
   });
 
   it('knows no level for a model of no row, and matches whole words only', () => {
