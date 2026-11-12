@@ -20,6 +20,8 @@ export const STORED_CONTRACTS = [
   'ritual',
   'script',
   'tag',
+  'memo',
+  'memo-kind',
 ] as const;
 
 export type StoredContract = (typeof STORED_CONTRACTS)[number];
@@ -38,4 +40,6 @@ export const MIGRATIONS: Readonly<Record<StoredContract, MigrationChain>> = {
   ritual: [],
   script: [],
   tag: [],
+  memo: [],
+  'memo-kind': [],
 };

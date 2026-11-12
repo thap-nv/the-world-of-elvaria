@@ -12,6 +12,8 @@ export const GLOBAL_OPTIONS: Readonly<Record<string, OptionSpec>> = {
   kingdom: { type: 'string', value: '<dir>', help: 'cli.option.kingdom' },
   locale: { type: 'string', value: '<vi|en>', help: 'cli.option.locale' },
   help: { type: 'boolean', short: 'h', help: 'cli.option.help' },
+  // Read before parsing (upgrade/pin.ts, PS-04b); every command accepts it so it can be put on any line.
+  here: { type: 'boolean', help: 'cli.option.here' },
 };
 
 export type ArgsError =
@@ -74,7 +76,8 @@ export function parseCommandArgs(
   );
   if (missing !== undefined) return err({ code: 'missing_option', option: `--${missing[0]}` });
   const absent = spec.args[input.positionals.length];
-  if (absent !== undefined) return err({ code: 'missing_argument', name: absent.name });
+  if (absent !== undefined && absent.optional !== true)
+    return err({ code: 'missing_argument', name: absent.name });
   const extra = input.positionals[spec.args.length];
   if (extra !== undefined) return err({ code: 'extra_argument', value: extra });
   return ok(input);

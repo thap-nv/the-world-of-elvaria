@@ -30,6 +30,7 @@ export const PROMPT_TEMPLATES = [
   'checks-ahead',
   'refused-patch',
   'memory',
+  'memos',
   'answer',
   'verifier',
   'plot-rules',

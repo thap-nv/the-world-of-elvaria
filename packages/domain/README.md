@@ -2,11 +2,11 @@
 
 ## Does
 
-- Holds the zod schemas that are the source of the 17 data contracts (ADR 0003, `CONTRACTS` in
+- Holds the zod schemas that are the source of the 19 data contracts (ADR 0003, `CONTRACTS` in
   `src/schema/contracts.ts`): kingdom, territory, quest, character, campaign, verdict, lesson, event,
-  inbox-command, the five registry files, skill, quest-draft and world-map, with their TypeScript types.
+  inbox-command, the six registry files, skill, quest-draft, world-map and memo (PS-02), with their TypeScript types.
   `pnpm schemas` writes `docs/schemas/` from them; each contract's `examples` live in `examples/`.
-- Checks a registry across its five files (`parseRegistry`, `checkRegistry`): unknown ritual, class, kind,
+- Checks a registry across its six files (`parseRegistry`, `checkRegistry`): unknown ritual, class, kind,
   step or tag (a kind's `ritual_overrides`, P1-20), duplicate ids, a verifier allowed to take work, a class and a
   kind that disagree, a follow-up (a script's `follow_up`, a ritual's `flaky_follow_up`) the kingdom cannot make.
 - Chooses the ritual that judges a quest (`ritualOf`, ADR 0011, 0022; P1-20): the kind's, unless one of its
@@ -58,6 +58,11 @@
   (done, or archived after its delivery) is what `planTick` counts a dependency as done by, so archiving a
   contract midway holds up nothing. The event `plot.merged` records a merge of a party's parts; `plot.restored`
   (P1-44) a plot the Steward put back to its commit after a judge outside a scratch plot.
+- Decides memos (`src/memo/`, PS-02, ADR 0024): `routeMemo` sends a memo where its kind's entry in
+  `registry/memos.json` says (no switch on the kind), `memoKeyOf` and `memoIdOf` make its id from the quest, the kind
+  and the text normalized (one Unicode form, spaces collapsed, lower case; the caller hashes the key), so a letter
+  read again files nothing twice, `memoOf` builds the open memo the Steward files, and `closeMemo` closes it once.
+  The events `memo.filed`, `memo.routed`, `memo.closed` and the inbox command `decide_memo` have their schemas here.
 - Runs the character state machine (`src/character/`, `transitionCharacter`) and derives what is never stored:
   `reputationOf`, `affinityOf`, `titleOf`. Decides levels: `canTake` (which ranks the Steward may give a level),
   `aboveCeiling` (a stretch that makes the quest wait for the royal seal) and `levelChange` (counting only the

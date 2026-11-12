@@ -6,6 +6,9 @@ import { CHARACTER_MODEL } from './character/model.ts';
 import { CHARACTER_RELEASE, CHARACTER_SUSPEND } from './character/suspend.ts';
 import { DOCTOR } from './doctor/doctor.ts';
 import { INIT } from './init.ts';
+import { MEMO_DECIDE } from './memo/decide.ts';
+import { MEMO_LIST } from './memo/list.ts';
+import { MEMO_SHOW } from './memo/show.ts';
 import { METRICS } from './metrics/metrics.ts';
 import { MIGRATE } from './migrate.ts';
 import { QUEST_ADD } from './quest/add.ts';
@@ -26,6 +29,7 @@ import { TRIBE_ADD } from './tribe/add.ts';
 import { TRIBE_CHECK } from './tribe/check.ts';
 import { TRIBE_DISABLE } from './tribe/disable.ts';
 import { TRIBE_LIST } from './tribe/list.ts';
+import { UPGRADE } from './upgrade/upgrade.ts';
 import { WAKE } from './wake.ts';
 import type { CommandSpec } from './command.ts';
 
@@ -57,10 +61,14 @@ export const COMMANDS: readonly CommandSpec[] = [
   SEAL,
   RETURN,
   ANSWER,
+  MEMO_LIST,
+  MEMO_SHOW,
+  MEMO_DECIDE,
   RUN,
   WAKE,
   METRICS,
   SANDBOX_GENERATE,
   SANDBOX_REPLAY,
   MIGRATE,
+  UPGRADE,
 ];

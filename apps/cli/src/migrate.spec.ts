@@ -1,6 +1,7 @@
 import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { RM_TEMP, foundKingdom, printed, run, tempDir, testIo } from '../test/cli.ts';
@@ -65,6 +66,22 @@ describe('elvaria migrate', () => {
     expect(io.printed.out).not.toContain('  registry/prompts/judge.md');
     expect(await readFile(path.join(prompts, 'judge.md'), 'utf8')).toBe('# My own judge\n');
     expect(await readdir(prompts)).toHaveLength(11);
+  });
+
+  it('copies registry/memos.json into a kingdom made before PS-02, so its registry loads again', async () => {
+    const kingdom = await foundKingdom(dir.root);
+    const memos = path.join(kingdom, 'registry', 'memos.json');
+    const shipped = await readFile(memos, 'utf8');
+    await rm(memos);
+    expect((await openKingdom(kingdom).loadRegistry()).ok).toBe(false);
+    const io = testIo();
+    expect(await run(io, 'migrate', '--kingdom', kingdom, '--locale', 'en')).toBe(0);
+    expect(io.printed.out.slice(1)).toEqual([
+      'Copied 1 registry files this Elvaria ships and the kingdom lacked (files you have are left as they are):',
+      '  registry/memos.json',
+    ]);
+    expect(await readFile(memos, 'utf8')).toBe(shipped);
+    expect((await openKingdom(kingdom).loadRegistry()).ok).toBe(true);
   });
 
   it('adds the registry entries a kingdom made before P1-20 lacks, and changes no entry the owner has (P1-41)', async () => {

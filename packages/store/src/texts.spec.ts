@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 
-import { QuestIdSchema, VerdictSchema } from '@elvaria/domain';
+import { MemoSchema, QuestIdSchema, VerdictSchema } from '@elvaria/domain';
 import { journalOf } from '@elvaria/eventlog';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -73,5 +73,18 @@ describe('verdict notes', () => {
     // A fail needs specific notes; a note that was only a secret is none once masked.
     const short = await store.verdicts.write({ ...verdict, notes: SHAPED });
     expect(short).toMatchObject({ ok: false, error: { code: 'invalid' } });
+  });
+});
+
+describe('memo texts', () => {
+  it('lose every secret shape on write (PS-02): a character wrote them, the Chancellor and the owner read them', async () => {
+    const store = openKingdom(kingdom.root);
+    const memo = MemoSchema.parse(fixture('memo'));
+    const written = await store.memos.write({ ...memo, body: `Rotate the deploy key ${SHAPED} in ci.yml.` });
+    expect(written).toMatchObject({ ok: true });
+    const text = await readFile(`${kingdom.root}/${kingdomLayout.memo(memo.id)}`, 'utf8');
+    expect(text).not.toContain(SHAPED);
+    expect(text).toContain('deploy key [redacted] in ci.yml');
+    expect((await store.memos.list()).items.map(({ id }) => id)).toEqual([memo.id]);
   });
 });

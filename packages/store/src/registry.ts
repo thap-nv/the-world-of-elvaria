@@ -1,4 +1,4 @@
-// registry/ of a kingdom: the five files, migrated one by one, then checked together by the domain's
+// registry/ of a kingdom: the six files, migrated one by one, then checked together by the domain's
 // parseRegistry (ADR 0016), so a hand edit fails when the kingdom loads, not in the middle of a quest.
 import { REGISTRY_FILES, err, parseRegistry } from '@elvaria/domain';
 import type { Registry, RegistryFile, RegistryIssue, Result } from '@elvaria/domain';
@@ -36,7 +36,7 @@ const promptsOf = (registry: Registry): NamedFile[] =>
   registry.classes.map((entry) => ({ file: entry.prompt_file, what: `prompt of class ${entry.id}` }));
 
 /**
- * The five files, migrated, checked together by the domain, and every class with its prompt file (P1-15): a
+ * The six files, migrated, checked together by the domain, and every class with its prompt file (P1-15): a
  * character's session is built from it, so a kingdom without one does not load.
  */
 export async function loadRegistry(root: string): Promise<Result<Registry, readonly RegistryLoadIssue[]>> {
@@ -47,6 +47,7 @@ export async function loadRegistry(root: string): Promise<Result<Registry, reado
     rituals: undefined,
     scripts: undefined,
     tags: undefined,
+    memos: undefined,
   };
   const reads = await Promise.all(
     REGISTRY_FILES.map(async (name) => {

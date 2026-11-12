@@ -553,7 +553,7 @@
                           ]
                         },
                         "id": {
-                          "description": "runner-core's PROMPT_BLOCK_IDS: decree, role, class, context_files, quest, gazetteer, scripture, skills, continuation, partial, review, resumed, answer.",
+                          "description": "runner-core's PROMPT_BLOCK_IDS: decree, role, class, context_files, quest, gazetteer, scripture, skills, continuation, memos (PS-02), partial, review, resumed, answer.",
                           "type": "string",
                           "pattern": "^[a-z][a-z0-9_]*$"
                         },
@@ -1085,7 +1085,7 @@
                           ]
                         },
                         "id": {
-                          "description": "runner-core's PROMPT_BLOCK_IDS: decree, role, class, context_files, quest, gazetteer, scripture, skills, continuation, partial, review, resumed, answer.",
+                          "description": "runner-core's PROMPT_BLOCK_IDS: decree, role, class, context_files, quest, gazetteer, scripture, skills, continuation, memos (PS-02), partial, review, resumed, answer.",
                           "type": "string",
                           "pattern": "^[a-z][a-z0-9_]*$"
                         },
@@ -2178,6 +2178,281 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "memo.filed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "The Steward filed memos/<memo>.json from the Memos section of the quest's handover letter, as the run ended through a submit, a question or a crash. The line's actor is the character who wrote it.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "memo",
+              "kind",
+              "from"
+            ],
+            "properties": {
+              "memo": {
+                "type": "string",
+                "pattern": "^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+              },
+              "kind": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "from": {
+                "type": "string",
+                "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                "not": {
+                  "enum": [
+                    "user",
+                    "machine",
+                    "temple"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "memo.routed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "The memo went where its kind's entry in registry/memos.json sends it (routeMemo).",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "memo",
+              "route"
+            ],
+            "properties": {
+              "memo": {
+                "type": "string",
+                "pattern": "^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+              },
+              "route": {
+                "enum": [
+                  "chancellor"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "memo.closed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "The owner's decide_memo closed the memo; no quest changed.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "memo",
+              "decision"
+            ],
+            "properties": {
+              "memo": {
+                "type": "string",
+                "pattern": "^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+              },
+              "decision": {
+                "enum": [
+                  "shelved",
+                  "rejected",
+                  "handled"
+                ]
+              },
+              "quest": {
+                "description": "With decision = handled: the quest that does the work.",
+                "type": "string",
+                "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "upgrade.started"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "`elvaria upgrade` began building and trying a commit (implementation-plan §3.16.4).",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "ref",
+              "to",
+              "from"
+            ],
+            "properties": {
+              "ref": {
+                "description": "What the owner asked for (`--ref`), as typed.",
+                "type": "string",
+                "minLength": 1
+              },
+              "to": {
+                "description": "A full commit id of the Elvaria repo: the name of the build folder `.builds/<sha>/`.",
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+              },
+              "from": {
+                "description": "The pinned build; null when the kingdom had none.",
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "upgrade.switched"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "Every trial passed: the pointer now names the new build; `from` is kept as the way back.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "from",
+              "to"
+            ],
+            "properties": {
+              "from": {
+                "description": "A full commit id of the Elvaria repo: the name of the build folder `.builds/<sha>/`.",
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+              },
+              "to": {
+                "description": "A full commit id of the Elvaria repo: the name of the build folder `.builds/<sha>/`.",
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "upgrade.rolled_back"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "`elvaria upgrade --rollback`: the pointer went back from `from` to the build before it.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "from",
+              "to"
+            ],
+            "properties": {
+              "from": {
+                "description": "A full commit id of the Elvaria repo: the name of the build folder `.builds/<sha>/`.",
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+              },
+              "to": {
+                "description": "A full commit id of the Elvaria repo: the name of the build folder `.builds/<sha>/`.",
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "upgrade.failed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "A step of the upgrade failed: the pointer did not move and the new build was removed.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "to",
+              "step",
+              "reason"
+            ],
+            "properties": {
+              "to": {
+                "description": "A full commit id of the Elvaria repo: the name of the build folder `.builds/<sha>/`.",
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+              },
+              "step": {
+                "enum": [
+                  "prepare",
+                  "migrate",
+                  "doctor",
+                  "conformance",
+                  "trial"
+                ]
+              },
+              "reason": {
+                "description": "One line, redacted: the exit code or the error.",
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "$defs": {
@@ -2244,8 +2519,15 @@
         "territory.attached",
         "territory.surveyed",
         "territory.health",
+        "memo.filed",
+        "memo.routed",
+        "memo.closed",
         "sandbox.replay.start",
-        "sandbox.replay.end"
+        "sandbox.replay.end",
+        "upgrade.started",
+        "upgrade.switched",
+        "upgrade.rolled_back",
+        "upgrade.failed"
       ]
     }
   },

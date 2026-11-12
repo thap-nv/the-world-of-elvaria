@@ -5,6 +5,7 @@ import { KingdomSchema } from '@elvaria/domain';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { foundKingdom, printed, run, tempDir, testIo } from '../../test/cli.ts';
+import { SELF_ROOT } from '../upgrade/self.ts';
 import type { TempDir } from '../../test/cli.ts';
 
 describe('elvaria run', () => {
@@ -25,6 +26,8 @@ describe('elvaria run', () => {
       'Tribe claude: adapter claude_code ready.',
       // Antigravity has a runner since P1-15; a tribe without one is in compose.spec.ts (crewOf).
       'Tribe gemini: adapter antigravity ready.',
+      // The specs run on the repo's own source, not on a pinned build (PS-04b).
+      `Running from the source at ${SELF_ROOT}, not from a pinned build.`,
       `The Steward is running in ${kingdom}, one tick every 5 s. Ctrl+C stops it.`,
       'Stopping the Steward: the sessions it runs end, and their quests are taken up again at the next start.',
       'The Steward stopped.',

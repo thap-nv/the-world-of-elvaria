@@ -56,7 +56,7 @@ export function formatUlid(time: Instant, random: bigint): Ulid {
 }
 
 /** `<prefix>_<yyyymmdd>_<6 random base32>`, readable in logs and sorted by day (implementation-plan §2.1). */
-export function formatDatedId(prefix: 'q' | 'c' | 'L', localDate: string, random: Uint8Array): string {
+export function formatDatedId(prefix: 'q' | 'c' | 'L' | 'm', localDate: string, random: Uint8Array): string {
   const bits = bigintOf(random.subarray(0, DATED_RANDOM_BYTES));
   const spare = BigInt(DATED_RANDOM_BYTES * BYTE_BITS - DATED_ID_RANDOM_CHARS * BITS_PER_BASE32_CHAR);
   return `${prefix}_${localDate}_${base32(bits >> spare, DATED_ID_RANDOM_CHARS)}`;

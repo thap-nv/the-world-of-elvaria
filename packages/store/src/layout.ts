@@ -2,7 +2,15 @@
 // kingdom root. One table, so the store, the Steward, the runners and the CLI cannot disagree on a file name;
 // `inKingdom(root, path)` turns an entry into a native path.
 import { journalOf } from '@elvaria/eventlog';
-import type { CampaignId, CharacterId, QuestId, RegistryFile, TerritoryId, VerdictId } from '@elvaria/domain';
+import type {
+  CampaignId,
+  CharacterId,
+  MemoId,
+  QuestId,
+  RegistryFile,
+  TerritoryId,
+  VerdictId,
+} from '@elvaria/domain';
 
 /** Folders `initKingdom` creates. `world/` (stage 3), `adapters/` and `temple/skills/` appear when used. */
 export const KINGDOM_DIRS = [
@@ -12,6 +20,7 @@ export const KINGDOM_DIRS = [
   'characters',
   'campaigns',
   'verdicts',
+  'memos',
   'events',
   'chronicle',
   'temple',
@@ -49,6 +58,8 @@ export const kingdomLayout = {
   scripture: (id: CharacterId): string => `characters/${id}/scripture.md`,
   campaign: (id: CampaignId): string => `campaigns/${id}.json`,
   verdict: (id: VerdictId): string => `verdicts/${id}.json`,
+  /** A memo the Steward filed from a handover letter (PS-02, ADR 0024). */
+  memo: (id: MemoId): string => `memos/${id}.json`,
   inboxCommand: (name: string): string => `${INBOX_DIR}/${name}.json`,
   inboxDone: (name: string): string => `${INBOX_DONE_DIR}/${name}.json`,
   /** Raw output, generated settings and check logs of one attempt; `attempt_log[].run_dir` points here. */

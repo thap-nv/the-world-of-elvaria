@@ -23,6 +23,7 @@ import {
 import { verifierChecks } from './checks.ts';
 import { contextFilesBlock } from './context-files.ts';
 import type { ContextFile } from './context-files.ts';
+import { memosBlock } from './memory.ts';
 import { composed } from './prompt-blocks.ts';
 import { fenced, fill, sectionsOf } from './templates.ts';
 import type { Continuation, Locale, Memory } from './blocks.ts';
@@ -128,6 +129,7 @@ function assigneePrompt(input: AssigneePromptInput, t: PromptTemplates): PromptW
     ['scripture', scriptureBlock(input.scriptures, t)],
     ['skills', skillsBlock(input.skills, t)],
     ['continuation', continuationBlock(quest, input.territory, input.continuation, t)],
+    ['memos', memosBlock(input.continuation?.memos, t)],
   ]);
 }
 

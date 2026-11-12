@@ -66,7 +66,7 @@ async function readKingdomFile(
   return decoded.ok ? ok(asObject(decoded.value.value)) : decoded;
 }
 
-/** The five files of a folder laid out like `<kingdom>/registry/`; the defaults ship with Elvaria, so a bad one throws. */
+/** The six files of a folder laid out like `<kingdom>/registry/`; the defaults ship with Elvaria, so a bad one throws. */
 async function readDefaults(defaultRoot: string): Promise<RawFiles> {
   const read = async (file: RegistryFile) =>
     asObject(JSON.parse(await readFile(path.join(defaultRoot, `${file}.json`), 'utf8')));

@@ -5,8 +5,8 @@
 - Ships the `elvaria` command, the only composition root (implementation-plan §1.1): `init`, `doctor`,
   `tribe list|add|check|disable`, `territory add|list`, `character add|list|suspend|release|level|model`, `say`,
   `quest add|list|show|confirm|cancel|archive|edit|retry|reassign`,
-  `seal`, `return`, `answer`, `run`, `wake`, `metrics`,
-  `sandbox generate|replay`, `migrate`. The command table (`src/commands.ts`) drives parsing (`util.parseArgs`), help, and the reference
+  `seal`, `return`, `answer`, `memo list|show|decide`, `run`, `wake`, `metrics`,
+  `sandbox generate|replay`, `migrate`, `upgrade`. The command table (`src/commands.ts`) drives parsing (`util.parseArgs`), help, and the reference
   `docs/cli.md` that `pnpm docs:gen` renders from it (`scripts/docs-cli.mjs`).
 - Prints everything through `t()` of `@elvaria/i18n`, in `kingdom.owner.locale` unless `--locale vi|en` is given;
   `i18next/no-literal-string` (`packages/config/eslint-i18n.mjs`) guards it. Store and registry issues are
@@ -48,7 +48,13 @@
 - `say "<words>"` (P1-13, `src/say/`): one Chancellor session of `@elvaria/chancellor`, on the runners `run`
   builds (it needs a character of class `chancellor`, and it spends mana), turns the words into drafts; each
   draft kept goes to the inbox as `create_quest` with `draft: true`, the Steward writes it in status `draft`, and
-  the owner opens it with `quest confirm`. The CLI writes no quest.
+  the owner opens it with `quest confirm`. The CLI writes no quest. `say --memo <memo>` (PS-02) hands the
+  Chancellor a letter a character wrote, with the owner's words after it when given, and says how to close it.
+- `memo list [--all]`, `memo show <memo>`, `memo decide <memo> shelved|rejected|handled [--quest] [--note]` (PS-02,
+  `src/memo/`, ADR 0024): the letters (memos) characters wrote about work outside their quests, the open ones
+  unless `--all`; `decide` sends `decide_memo` after refusing what it can tell already (an unknown or decided
+  letter, a handled one without `--quest`, an unknown quest). The CLI writes no memo. `doctor` says a registry file
+  the kingdom lacks (`registry/memos.json` before PS-02) is what `elvaria migrate` copies.
 - `wake <tribe>` sends `wake` for a tribe of `kingdom.tribes[]`: the Steward probes that account at its next tick
   (ADR 0009), for instance after the owner signed in again.
 - Writes new files the Steward does not own: `kingdom.json` (`init`, then `tribes[].tool` and, with `--enable`,
@@ -67,7 +73,8 @@
   no character changes. `tribe check <id>` builds the tribe's runner as `run` does, prints what its adapter declares
   (the shell it declares per OS too, P1-46) and how far `tribeLimitsOf` lets it go, holds its pinned sign-in to the ones it declares (`checkTribeAuth`), and
   runs runner-core's conformance suite against it (with the real CLI only the checks that burn no or almost no mana;
-  `--scenarios` runs all of them against a fake CLI) and, once it passes, holds the tribe to the login its adapter
+  `--scenarios` runs all of them against a fake CLI; `--tool <path>` tries another CLI than the pinned one and
+  writes nothing, PS-04b) and, once it passes, holds the tribe to the login its adapter
   reports, as doctor does (`loginFindings`, P1-34): a tribe that passes is enabled once doctor has pinned its CLI.
   `tribe disable <id>` stops a tribe taking new work. An owner adapter file is imported only here
   (`src/tribe/adapter-file.ts`): runner-core's `adapterKitOf` builds its kit (minimal env, the pinned or given CLI,
@@ -135,14 +142,37 @@
   (P1-30), commit, the checks on what the quest touched, given them too (P1-10b), release) with a `ProcessHost` from PATH and each CLI's `forget` (`claude purge`), the console bell saying
   the Steward's notices in the owner's language (from P1-22 also a mana gauge that warns, sleeps or wakes; from
   P1-32 a quest gone to the infirmary by its trip, then each part of the detail on a line of its own, as `quest show`
-  says them), and `.state/steward.lock` (a second `run` is refused).
+  says them), and `.state/steward.lock` (a second `run` is refused). It names the build it runs on as it starts
+  (`src/upgrade/running.ts`, PS-04b).
+- `upgrade [--ref <ref>] | --rollback` and the pin (PS-04b, implementation-plan §3.16.4, ADR 0026; `src/upgrade/`):
+  a build is a detached worktree of the repo this CLI runs from (`--ref`, `main` by default) at
+  `<kingdom>/.builds/<sha>/`, installed (`pnpm install --frozen-lockfile`, with husky off) with the hook and the
+  event log built; its CLI runs from source. `upgrade` holds the Steward's lock throughout (refused while a Steward
+  runs, or while sessions of a stopped one still run), builds, then tries the build through its own commands as
+  child processes (`src/upgrade/trial.ts`), first on a copy of the kingdom's settings (`src/upgrade/mirror.ts`:
+  `kingdom.json`, registry, territories, characters, adapters, decree; no quest, log or inbox), so the kingdom is
+  not written yet: `migrate`, then `doctor`, then `tribe check --scenarios --tool` for each enabled tribe against the
+  fake CLI the build carries for its adapter (an adapter file has none, and is named); last, one script-tier quest
+  (`count-files`) on a throwaway kingdom with every tribe off, until its `verdict.pass`
+  (`src/upgrade/script-trial.ts`). Only then does it write `.state/build.json` (`{current, previous}`), run the new
+  build's `migrate` on the kingdom (a failure leaves the build pinned and says how out), log `upgrade.started`, then
+  `upgrade.switched` or `upgrade.failed`, and remove every build but those two; a failed build is removed. Node removes a build, then `git worktree prune` forgets it: pnpm's paths past 260
+  characters are more than git for Windows deletes, and Node's rm takes pnpm's junctions off without following them.
+  `--rollback` swaps the two (`upgrade.rolled_back`); upgrading to the build before tries it again without a
+  rebuild. Every other command on a kingdom that pins a build runs on that build (`src/upgrade/pin.ts`, `entry.ts`,
+  `relaunch.ts`): the bin starts `node <build>/apps/cli/src/cli.ts` with the same words, folder and terminal, an
+  env of the minimal list, `ELVARIA_*` and `TZ`, and `ELVARIA_PINNED_BUILD` so it never hops twice; it waits
+  through Ctrl+C and passes SIGTERM on. `--here` (a global option) and `upgrade` itself run on the code typed; a
+  pointer it cannot read, or a pinned build no longer on disk, stops the command with the way out. `doctor` says
+  what the kingdom pins.
 
 ## Does not
 
 - Write or change a quest, or change an existing character: the Steward does (P1-03).
 - Decide anything about quests or sessions, or talk to a CLI itself: the Steward and the adapters do; `doctor`
   asks only `--version` and, through the adapter, the login (no model call). Only `say`, `run` and `tribe check`
-  with a real CLI start sessions that spend mana.
+  with a real CLI start sessions that spend mana; `upgrade` tries a build with fake CLIs only.
+- Push, merge or pull the Elvaria repo: `upgrade` builds a commit the repo already has, and never fetches.
 - Inherit `process.env` into child processes: they get `minimalEnv` (ADR 0013), and never a shell (ADR 0015).
 
 ## Depends on
@@ -153,7 +183,7 @@
   `@elvaria/registry-default` (`REGISTRY_ROOT`, `registryFiles()` for `init` and `migrate`), `@elvaria/i18n`, `@elvaria/steward`
   (the Steward, unclaimable notices, `questIdOfCommand`, `levelsFromLog`), `@elvaria/chancellor` (`draftQuests`,
   `draftCommands` for `say`), `@elvaria/runner-core` (`PlotManager`, the adapter kit, the conformance
-  suite), `@elvaria/runner-claude` (the
+  suite, `killTree` for `upgrade`), `@elvaria/runner-claude` (the
   `claude_code` adapter), `@elvaria/runner-antigravity` (the `antigravity` adapter, P1-15), `@elvaria/hooks` (the
   hook's command).
 
@@ -173,5 +203,10 @@ old lines included), `src/quest/last-run.spec.ts` (verdicts and `plot.restored` 
 fake CLI with no tool gate: `src/tribe/tribe.spec.ts` adds, pins, checks and disables it; `src/tribe/round.spec.ts`
 runs the Steward (`elvaria run`) with it until a rank D quest is done, while a rank C quest stays open (P1-19);
 `src/tribe/list.spec.ts` lists it beside the built-in tribes, one with no runner and a broken file, and has
-`doctor --enable` refuse it (P1-34). `src/doctor/check-shell.spec.ts` puts a fake `powershell` on PATH that prints a
+`doctor --enable` refuse it (P1-34). `test/builds.ts` (PS-04b) has a stub build CLI that answers the trial's
+commands as its `behavior.json` says and records each call, a stub pnpm that leaves a link into the build (a
+junction on Windows, a symlink elsewhere), and a fixture repo builds are made from: `src/upgrade/upgrade.spec.ts`
+upgrades, refuses and rolls back on real git worktrees, `src/upgrade/trial.spec.ts` runs the real trial (child
+processes, a throwaway kingdom, a kill tree), `src/upgrade/entry.spec.ts` and `cli.spec.ts` run commands on a
+pinned build. `src/doctor/check-shell.spec.ts` puts a fake `powershell` on PATH that prints a
 policy (`Restricted`, `RemoteSigned`); the doctor runs with it are Windows-only, the reading itself runs everywhere.

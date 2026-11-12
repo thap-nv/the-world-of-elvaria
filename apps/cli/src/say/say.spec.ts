@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { TerritorySchema, TribeIdSchema, createIdSource } from '@elvaria/domain';
+import { MemoSchema, TerritorySchema, TribeIdSchema, createIdSource } from '@elvaria/domain';
 import type { Quest } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import { translator } from '@elvaria/i18n';
@@ -25,6 +25,19 @@ const replyOf = async (name: string): Promise<unknown> =>
   JSON.parse(await readFile(path.join(REPLIES, `${name}.json`), 'utf8'));
 
 const CLAUDE = TribeIdSchema.parse('claude');
+const MEMO = MemoSchema.parse({
+  version: 1,
+  id: 'm_20261106_4k2pqz',
+  kind: 'proposal',
+  from: 'thorn',
+  quest: 'q_20261106_7k3m2a',
+  attempt: 1,
+  to: { route: 'chancellor' },
+  body: 'Kiểm tra link trong README.md.',
+  refs: ['README.md'],
+  state: 'open',
+  filed_at: '2026-11-06T08:10:00+07:00',
+});
 
 /** A FakeRunner whose sessions end with `structured` as their structured output, as `--json-schema` gives it. */
 function replying(structured: unknown): AgentRunner {
@@ -199,6 +212,39 @@ describe('elvaria say', () => {
     expect(asleep.printed.err[0]).toMatch(/^Nobody can speak as the Chancellor/);
     const empty = testIo();
     expect(await run(empty, 'say', '  ', '--kingdom', kingdom, '--locale', 'en')).toBe(2);
-    expect(empty.printed.err).toEqual(['Say something: elvaria say "<what you want done>".']);
+    expect(empty.printed.err).toEqual([
+      'Say something: elvaria say "<what you want done>", or hand over a letter: elvaria say --memo <memo>.',
+    ]);
+  });
+
+  it("hands the Chancellor a letter with --memo, the owner's words after it, and says how to close it (PS-02)", async () => {
+    await summon('aldric', 'chancellor');
+    await openKingdom(kingdom).memos.write(MEMO);
+    const heard: string[] = [];
+    const fake = replying(await replyOf('link-check'));
+    const listening: AgentRunner = {
+      ...fake,
+      spawn: (req) => {
+        heard.push(req.prompt.user);
+        return fake.spawn(req);
+      },
+    };
+    const io = testIo();
+    const asked = sayCommand({ runnersOf: () => ({ [CLAUDE]: listening }) }).run(
+      { values: { kingdom, memo: MEMO.id }, positionals: ['Chỉ docs/'] },
+      { io, locale: 'en', localeFromFlag: true, t: translator('en') },
+    );
+    expect(await asked).toBe(0);
+    expect(heard[0]).toContain(
+      `A letter (proposal) that thorn wrote while working on quest q_20261106_7k3m2a: ${MEMO.body} Files: README.md.\n\nChỉ docs/`,
+    );
+    expect(io.printed.out.at(-1)).toBe(
+      `Once a draft that does the work of letter ${MEMO.id} is confirmed, close the letter: elvaria memo decide ${MEMO.id} handled --quest <id>`,
+    );
+    const unknown = testIo();
+    expect(
+      await run(unknown, 'say', '--memo', 'm_20261106_000000', '--kingdom', kingdom, '--locale', 'en'),
+    ).toBe(1);
+    expect(unknown.printed.err).toEqual(['There is no letter m_20261106_000000.']);
   });
 });

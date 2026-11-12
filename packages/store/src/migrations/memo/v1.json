@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "id": "m_20261112_4k2pqz",
+  "kind": "proposal",
+  "from": "thorn",
+  "quest": "q_20261112_7pzkfv",
+  "attempt": 1,
+  "to": {
+    "route": "chancellor"
+  },
+  "body": "`elvaria quest list` in giờ theo UTC; nên dùng múi giờ của vương quốc như `quest show`.",
+  "refs": ["apps/cli/src/quest/list.ts"],
+  "state": "open",
+  "filed_at": "2026-11-12T10:41:07+07:00"
+}

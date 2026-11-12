@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "memos": [
+    {
+      "id": "proposal",
+      "name_vi": "Đề xuất",
+      "name_en": "Proposal",
+      "route": "chancellor",
+      "description": "Work found outside the quest's scope: written down for the Chancellor instead of done in place."
+    }
+  ]
+}

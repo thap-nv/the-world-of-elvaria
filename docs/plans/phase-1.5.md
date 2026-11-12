@@ -123,6 +123,7 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
   - Prompt người làm: việc ngoài phạm vi thì viết thư, không tự sửa; prompt lượt sau liệt kê thư đã lập.
 - **Test**: spec ghi lại `handover.md` trước nhịp kết lượt; thư không đổi trạng thái quest nào; snapshot prompt mới.
 - **Vương quốc đang chạy**: `elvaria migrate` chép `memos.json`.
+- **Thực tế** (2026-11-12, chi tiết ở §11): `memos.json` là file registry thứ sáu (`REGISTRY_FILES`, hợp đồng `memo-kind`), nên vương quốc chưa `migrate` thì registry không nạp; `doctor` chỉ cách. Id là `m_<ngày của quest>_<6 base32>` từ sha256 của quest, kiểu và nội dung đã chuẩn hóa (Quản sự băm, domain dựng id như `questIdOfCommand`). Schema thêm `attempt` và `filed_at`; `to` là `{route}`. Mẫu một dòng: `- <kiểu>: <nội dung> refs: <đường dẫn>, …` (luật 8 của `assignee.md`; dòng thụt vào là nối tiếp); mục `## Memos` đứng trước `## Question`, để trống như nó. Quản sự lập thư ở nhánh hỏng, hỏi, và nộp sau khi commit được; lượt bị cầu dao cắt, kể cả các trip của commit, thì không. Phiên tiếp của quest đọc khối "Memos already filed" (`prompts/memos.md`). `say --memo` không tự đóng thư; chủ nhân quyết `handled` sau khi xác nhận bản nháp.
 
 ## PS-03 — Bộ lịch và bản tấu
 
@@ -248,6 +249,7 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
   - **Ghim cả CLI**: ở lối vào, mọi lệnh trên một vương quốc có con trỏ sẽ chạy lại bằng bản đang ghim (env tường minh, `shell: false`), trừ `upgrade` và khi có `--here`. Lý do: `say`, `migrate`, `quest add` dùng prompt và schema của bản chúng chạy, và Quản sự bản ghim từ chối trường nó không biết.
   - In sha lúc khởi động; event `upgrade.started`, `upgrade.switched`, `upgrade.rolled_back`.
 - **Test**: bản hỏng doctor không được chuyển; `--rollback` về đúng bản trước; đường dẫn có dấu cách; Windows và macOS.
+- **Đã làm** (2026-11-12, chỗ khác và lựa chọn ở §11): code ở `apps/cli/src/upgrade/`; `tribe check` thêm `--tool`; `launchOf` của CLI chạy script `.mjs` bằng Node (CLI giả trên Windows); event thêm `upgrade.failed`. Không dùng `clearLeftover`: lần nâng cấp thật đầu tiên cho thấy `git worktree remove --force` trên Windows để lại mọi file của một bản đã cài (đường dẫn dưới `node_modules/.pnpm` dài tới 376 ký tự), mà `clearLeftover` từ chối thư mục còn file; Node xóa bản (không đi theo junction), rồi `git worktree prune`. Phần thử chạy lệnh của chính bản mới như tiến trình con: `migrate`, `doctor`, `tribe check --scenarios --tool` trên một bản sao cấu hình của vương quốc (vương quốc chưa bị ghi gì), rồi `init`, `territory add`, `quest add --script count-files`, `run` trên vương quốc tạm; qua hết mới chuyển con trỏ, rồi `migrate` của bản mới chạy trên vương quốc. Bản trước PS-04b (không biết `tribe check --tool`) không qua phần thử khi có tộc dựng sẵn đang bật.
 
 ## PS-06 — Nghị hội
 

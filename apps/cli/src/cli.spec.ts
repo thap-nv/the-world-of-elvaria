@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { InboxCommandSchema } from '@elvaria/domain';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { SHA_A, calls, placeBuild, writePin } from '../test/builds.ts';
 import { baseEnv, fakeTool, gitRepo, isolatedPath, tempDir } from '../test/cli.ts';
 import { OTHER_QUEST_ID, QUEST_ID, plantQuests, questFixture } from '../test/quest.ts';
 import type { Env } from './io.ts';
@@ -187,5 +188,23 @@ describe('node dist/cli.js', () => {
     const wrong = await elvaria(env, 'quest', 'add', '--locale', 'en');
     expect(wrong.code).toBe(2);
     expect(wrong.stderr).toContain('Missing required option --title.');
+  });
+
+  // Last: from here on the kingdom pins a stub build (PS-04b).
+  it('runs every command on the build its kingdom pins, except with --here', async () => {
+    const build = await placeBuild(kingdom, SHA_A, { exit: { 'quest list': 3 } });
+    await writePin(kingdom, SHA_A);
+    const record = path.join(dir.root, 'pinned calls.jsonl');
+    const pinnedEnv = { ...env, ELVARIA_TEST_RECORD: record };
+    expect(await elvaria(pinnedEnv, 'quest', 'list')).toMatchObject({
+      code: 3,
+      stdout: 'stub: quest list fails\n',
+    });
+    expect(await calls(record)).toEqual([
+      expect.objectContaining({ root: build, argv: ['quest', 'list'], pinned: SHA_A }),
+    ]);
+    const here = await elvaria(pinnedEnv, 'quest', 'list', '--here', '--locale', 'en');
+    expect(here.code).toBe(0);
+    expect(await calls(record)).toHaveLength(1);
   });
 });

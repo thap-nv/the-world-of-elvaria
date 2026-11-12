@@ -21,11 +21,12 @@ async function loaded(): Promise<Registry> {
 }
 
 describe('loadRegistry (ADR 0016)', () => {
-  it('reads the five files of registry/ as one registry', async () => {
+  it('reads the six files of registry/ as one registry', async () => {
     await plantRegistry(kingdom.root);
     const registry = await loaded();
     expect(registry.kinds.map((kind) => kind.id)).toEqual(['document']);
     expect(registry.classes.map((entry) => entry.id)).toEqual(['scribe', 'judge']);
+    expect(registry.memos.map((entry) => entry.route)).toEqual(['chancellor']);
   });
 
   it('reports every file it cannot read before running the cross-file rules', async () => {
@@ -41,7 +42,7 @@ describe('loadRegistry (ADR 0016)', () => {
 
   it('reports a missing file', async () => {
     const result = await loadRegistry(kingdom.root);
-    expect(!result.ok && result.error).toHaveLength(5);
+    expect(!result.ok && result.error).toHaveLength(6);
     expect(!result.ok && result.error[0]).toMatchObject({ code: 'not_found', file: 'registry/kinds.json' });
   });
 

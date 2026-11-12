@@ -4,6 +4,7 @@ import {
   CHECKS,
   DECREE,
   DIFF,
+  FILED_MEMO,
   LETTER,
   PARTIAL,
   QUEST,
@@ -78,6 +79,17 @@ describe('the blocks of a prompt (PS-01b)', () => {
     expect(idsOf(prompt, 'user')).toEqual(['quest', 'partial', 'review']);
     expect(prompt.blocks[0]?.chars).toBe(prompt.system.indexOf('\n\n# '));
     expect(addsUp(prompt, 'system') && addsUp(prompt, 'user')).toBe(true);
+  });
+
+  it('counts the memos a continuing assignee reads as a block of their own, after the continuation (PS-02)', () => {
+    const memory = { handover: LETTER, journal: [], git_log: null };
+    const revived = { reason: 'revive' as const, ...memory };
+    const without = buildPrompt({ ...assignee, continuation: revived }, templates);
+    const prompt = buildPrompt({ ...assignee, continuation: { ...revived, memos: [FILED_MEMO] } }, templates);
+    expect(idsOf(without, 'user')).toEqual(['quest', 'gazetteer', 'scripture', 'continuation']);
+    expect(idsOf(prompt, 'user')).toEqual(['quest', 'gazetteer', 'scripture', 'continuation', 'memos']);
+    expect(prompt.user.startsWith(without.user)).toBe(true);
+    expect(addsUp(prompt, 'user')).toBe(true);
   });
 
   it('counts a block as the prompt carries it, trimmed', () => {

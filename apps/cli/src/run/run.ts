@@ -9,6 +9,7 @@ import type { Steward } from '@elvaria/steward';
 
 import { EXIT } from '../command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
+import { runningLine } from '../upgrade/running.ts';
 import { consoleBell } from './bell.ts';
 import { crewOf } from './crew.ts';
 import { plotsOf } from './plots.ts';
@@ -71,6 +72,7 @@ async function runSteward(input: CommandInput, cli: CliContext): Promise<ExitCod
     io.err(line);
     return EXIT.failed;
   }
+  io.out(runningLine(t));
   io.out(t('cli.run.started', { kingdom: store.root, seconds: ctx.kingdom.dispatch.tick_seconds }));
   await io.untilStopped();
   io.out(t('cli.run.stopping'));

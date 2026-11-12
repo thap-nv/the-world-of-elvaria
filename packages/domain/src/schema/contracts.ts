@@ -6,6 +6,8 @@ import { InboxCommandSchema } from './command/inbox-command.ts';
 import { EventSchema } from './event/event.ts';
 import { KingdomSchema } from './kingdom.ts';
 import { LessonSchema } from './lesson/lesson.ts';
+import { MemosFileSchema } from './memo/memo-kind.ts';
+import { MemoSchema } from './memo/memo.ts';
 import { QuestDraftFileSchema } from './quest/quest-draft.ts';
 import { QuestSchema } from './quest/quest.ts';
 import { VerdictSchema } from './quest/verdict.ts';
@@ -29,6 +31,7 @@ export const CONTRACTS = {
   campaign: CampaignSchema,
   verdict: VerdictSchema,
   lesson: LessonSchema,
+  memo: MemoSchema,
   event: EventSchema,
   'inbox-command': InboxCommandSchema,
   kind: KindsFileSchema,
@@ -36,6 +39,7 @@ export const CONTRACTS = {
   ritual: RitualsFileSchema,
   script: ScriptsFileSchema,
   tag: TagsFileSchema,
+  'memo-kind': MemosFileSchema,
   skill: SkillSchema,
   'quest-draft': QuestDraftFileSchema,
   'world-map': WorldMapSchema,

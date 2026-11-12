@@ -170,6 +170,20 @@
               "used_in": "`packages/sandbox`, event `sandbox.*`"
             },
             {
+              "vi": "Bản (bản ghim)",
+              "en": "Build (pinned build)",
+              "id": ["build"],
+              "definition": "Một worktree tách rời của repo Elvaria ở một commit, đã cài và đã build hook, tại `<kingdom>/.builds/<sha>/`. Con trỏ `.state/build.json` giữ bản đang ghim và bản trước; mọi lệnh CLI trên vương quốc chạy lại bằng bản đang ghim, trừ `upgrade` và khi có `--here`.",
+              "used_in": "`.state/build.json`, `<kingdom>/.builds/<sha>/`, `elvaria upgrade`"
+            },
+            {
+              "vi": "Nâng cấp",
+              "en": "Upgrade",
+              "id": ["upgrade"],
+              "definition": "Dựng một bản mới cạnh bản đang ghim, thử nó (`migrate`, `doctor` và bộ test hợp đồng với CLI giả trên một bản sao cấu hình của vương quốc, một quest bậc script trên vương quốc tạm), qua hết mới chuyển con trỏ rồi chạy `migrate` của bản mới trên vương quốc; `--rollback` về bản trước. Không chạy khi Quản sự đang chạy hay còn phiên dở.",
+              "used_in": "`elvaria upgrade`, event `upgrade.*`"
+            },
+            {
               "vi": "Sự cố",
               "en": "Incident",
               "id": ["incident"],
@@ -363,6 +377,20 @@
               "id": ["handover.md"],
               "definition": "Agent viết: đang ở đâu, đã xong, chưa xong, quyết định, bước kế.",
               "used_in": "`quests/<id>/handover.md`"
+            },
+            {
+              "vi": "Thư",
+              "en": "Letter",
+              "id": ["memo"],
+              "definition": "Một việc nhân vật thấy ngoài quest của mình, viết thành một dòng ở mục `Memos` của thư bàn giao thay vì tự sửa. Quản sự lập và chuyển đi theo kiểu thư khi lượt người làm kết thúc qua nộp, hỏi hay hỏng; không ai trả lời thư, thư không đổi quest nào, chủ nhân quyết một lần (ADR 0024, PS-02). Trong code là `memo`, vì `letter` đã là thư bàn giao.",
+              "used_in": "`memos/<id>.json`, mục `## Memos` của `handover.md`, `elvaria memo`, `elvaria say --memo`"
+            },
+            {
+              "vi": "Kiểu thư",
+              "en": "Letter kind",
+              "id": ["memo_kind"],
+              "definition": "Dữ liệu registry: mỗi kiểu khai nơi nhận (`route`); định tuyến là hàm thuần `routeMemo` đọc bảng đó. Kiểu đầu tiên `proposal` (đề xuất: việc ngoài phạm vi quest) tới Tể tướng; `advisory`, `request`, `objection` đến ở PS-09, PS-10.",
+              "used_in": "`registry/memos.json`, `memo.kind`"
             },
             {
               "vi": "Nhật ký (máy)",
@@ -1528,6 +1556,12 @@
               "id": ["set_model"],
               "icon": "—",
               "remark": "`elvaria character model`; model cùng tộc, nghề và tộc không đổi; ghi `character.model_changed`"
+            },
+            {
+              "vi": "Quyết thư",
+              "id": ["decide_memo"],
+              "icon": "—",
+              "remark": "`elvaria memo decide`; gác (`shelved`), bác (`rejected`) hay đã có quest làm (`handled`, kèm `quest`); mỗi thư quyết một lần, không quest nào đổi; ghi `memo.closed`"
             }
           ]
         },
@@ -1914,6 +1948,21 @@
               "field": "`kingdom.bell`",
               "values": "`desktop`, `web_push`, `messaging`",
               "meaning": "ba kênh chuông"
+            },
+            {
+              "field": "`memo.state`",
+              "values": "`open`, `closed`",
+              "meaning": "thư đang chờ quyết, hay đã quyết (có `outcome`)"
+            },
+            {
+              "field": "`memo.outcome.decision` (cũng `decide_memo.decision`)",
+              "values": "`shelved`, `rejected`, `handled`",
+              "meaning": "gác lại, bác, hay đã có quest làm (`handled` thì kèm `quest`)"
+            },
+            {
+              "field": "`memo_kind.route` (cũng `memo.to.route`)",
+              "values": "`chancellor`",
+              "meaning": "nơi nhận của một kiểu thư"
             }
           ]
         }
@@ -2025,6 +2074,11 @@
               "meaning": "Quản sự xử lý `inbox/`"
             },
             {
+              "group": "Thư",
+              "types": ["memo.filed", "memo.routed", "memo.closed"],
+              "meaning": "Quản sự lập thư từ mục `Memos` của thư bàn giao khi lượt người làm kết thúc qua nộp, hỏi hay hỏng (không khi cầu dao cắt), chuyển theo `registry/memos.json`, và đóng theo `decide_memo` (PS-02, ADR 0024)"
+            },
+            {
               "group": "Khác",
               "types": [
                 "delivery.sent",
@@ -2039,6 +2093,11 @@
                 "sandbox.replay.end"
               ],
               "meaning": "`plot.patched`: Quản sự áp bản vá của người làm vào `laws.patch_paths` trước commit `submit` (P1-28); `plot.merged`: Quản sự gộp các nhánh phần vào nhánh quest ghép, hoặc dừng ở một nhánh (P1-21); `plot.restored`: sau phiên người chấm ngoài đất nháp, Quản sự đưa đất của quest về commit của nó, bỏ những gì lệnh của người chấm để lại (P1-44)"
+            },
+            {
+              "group": "Bản",
+              "types": ["upgrade.started", "upgrade.switched", "upgrade.rolled_back", "upgrade.failed"],
+              "meaning": "`elvaria upgrade` ghi (actor `user`): bắt đầu dựng và thử một commit, chuyển con trỏ `.state/build.json` sang bản mới, lùi về bản trước, hay hỏng ở một bước (`prepare`, `migrate`, `doctor`, `conformance`, `trial`) và không chuyển"
             },
             {
               "group": "Dành sẵn",

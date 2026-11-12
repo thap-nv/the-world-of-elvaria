@@ -8,6 +8,8 @@ import type {
   Character,
   CharacterId,
   Kingdom,
+  Memo,
+  MemoId,
   Quest,
   QuestId,
   Registry,
@@ -22,6 +24,7 @@ import {
   CAMPAIGN_SPEC,
   CHARACTER_SPEC,
   KINGDOM_SPEC,
+  MEMO_SPEC,
   QUEST_SPEC,
   TERRITORY_SPEC,
   VERDICT_SPEC,
@@ -43,6 +46,7 @@ export interface KingdomStore {
   readonly characters: EntityStore<Character, CharacterId>;
   readonly campaigns: EntityStore<Campaign, CampaignId>;
   readonly verdicts: EntityStore<Verdict, VerdictId>;
+  readonly memos: EntityStore<Memo, MemoId>;
   readonly inbox: InboxStore;
   loadRegistry(): Promise<Result<Registry, readonly RegistryLoadIssue[]>>;
 }
@@ -58,6 +62,7 @@ export function openKingdom(dir: string): KingdomStore {
     characters: entityStore(root, CHARACTER_SPEC),
     campaigns: entityStore(root, CAMPAIGN_SPEC),
     verdicts: entityStore(root, VERDICT_SPEC),
+    memos: entityStore(root, MEMO_SPEC),
     inbox: inboxStore(root),
     loadRegistry: () => loadRegistry(root),
   };

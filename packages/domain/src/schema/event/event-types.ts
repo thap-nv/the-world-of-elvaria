@@ -62,8 +62,16 @@ export const EVENT_TYPES = [
   'territory.attached',
   'territory.surveyed',
   'territory.health',
+  // PS-02 (ADR 0024): memos the Steward files from handover letters, routes, and closes on the owner's decision.
+  'memo.filed',
+  'memo.routed',
+  'memo.closed',
   'sandbox.replay.start',
   'sandbox.replay.end',
+  'upgrade.started',
+  'upgrade.switched',
+  'upgrade.rolled_back',
+  'upgrade.failed',
 ] as const;
 
 export type EventType = (typeof EVENT_TYPES)[number];
