@@ -109,18 +109,26 @@ async function verdictOf(run: LongChild, kingdom: string): Promise<StepFailure |
   run.stdout.setEncoding('utf8').on('data', (chunk: string) => (output += chunk));
   run.stderr.setEncoding('utf8').on('data', (chunk: string) => (output += chunk));
   run.on('exit', (code) => (exit = code));
+  // A Node that cannot start says so with `error` and may never say `exit`.
+  run.on('error', () => (exit = null));
   for (let poll = 0; poll < MAX_POLLS && exit === undefined; poll += 1) {
     const end = await endOf(kingdom);
     if (end !== undefined) return end === PASS ? undefined : failed(end, output);
     await delay(POLL_MS);
   }
+  // The Steward may have written the verdict as it stopped.
+  const end = await endOf(kingdom);
+  if (end !== undefined) return end === PASS ? undefined : failed(end, output);
   return failed(exit === undefined ? 'no_verdict' : reasonOf({ code: exit, stdout: '', stderr: '' }), output);
 }
 
 async function stop(run: LongChild): Promise<void> {
   const exited = new Promise((resolve) => {
-    if (run.exitCode !== null || run.signalCode !== null) resolve(undefined);
-    else run.on('exit', resolve);
+    if (run.exitCode !== null || run.signalCode !== null || run.pid === undefined) resolve(undefined);
+    else {
+      run.on('exit', resolve);
+      run.on('error', resolve);
+    }
   });
   await killTree(run.pid ?? 0);
   await exited;
