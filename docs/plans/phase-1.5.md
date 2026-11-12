@@ -234,6 +234,7 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
   - `laws.protected_paths` (tùy chọn); `commitPlot` trả thêm các đường dẫn bảo vệ bị chạm, không chặn commit.
   - Bước chuyển `submit` đặt `seal_required: true` và một cờ tùy chọn trên quest qua `Move.before`; máy trạng thái (`transitions.ts`, `effects.ts`) không đổi. `wantsStrongJudge` nhận quest và đọc cả cờ này.
   - Danh sách mặc định cho lãnh thổ Elvaria và cách đặt, ở `docs/guides/`.
+  - **Từ PS-04b** (chủ nhân chốt 2026-11-12, §11): danh sách `protected_paths` mặc định của lãnh thổ Elvaria có thêm `apps/cli/src/upgrade/**`, vì phần thử của `elvaria upgrade` quyết định bản nào được ghim.
 - **Đọc trước khi sửa** (CLAUDE.md): `packages/domain/src/verify/**`, schema territory.
 - **Test**: quest dạng `analyze` chạm vùng bảo vệ chờ dấu; quest ngoài vùng không đổi hành vi.
 - **Vương quốc đang chạy**: thêm `protected_paths` vào `territory.json` của Elvaria bằng script có sao lưu.
