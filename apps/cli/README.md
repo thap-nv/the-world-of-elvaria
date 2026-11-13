@@ -3,7 +3,7 @@
 ## Does
 
 - Ships the `elvaria` command, the only composition root (implementation-plan §1.1): `init`, `doctor`,
-  `tribe list|add|check|disable|look`, `territory add|list`, `character add|list|suspend|release|level|model`, `say`,
+  `tribe list|add|check|disable|look`, `territory add|list|check|graph`, `character add|list|suspend|release|level|model`, `say`,
   `quest add|list|show|confirm|cancel|archive|edit|retry|reassign`,
   `seal`, `return`, `answer`, `memo list|show|decide`, `triage`, `run`, `wake`, `digest`, `metrics`,
   `sandbox generate|replay`, `migrate`, `upgrade`. The command table (`src/commands.ts`) drives parsing (`util.parseArgs`), help, and the reference
@@ -205,6 +205,15 @@
   with the pinned graphify (0 mana), or finds it built, and asks it one question; `doctor` checks graphify when a
   territory has `code_graph` on or one is pinned (missing, unpinned or changed: a warning) and `--pin` writes
   `kingdom.programs.graphify`; `run` gives the Steward the graphs port when graphify is pinned (`src/run/graphs.ts`).
+- `territory check <id>` (PS-25, implementation-plan §3.16.1): the territory's scorecard. It tries the territory with
+  runner-core's `tryTerritory` (commands.setup, then every check, on a detached worktree at the head of its default
+  branch, removed after; Ctrl+C kills the running command and keeps no result), reads the metrics ledger
+  (`src/metrics/read.ts`) and the gazetteer, prints `territoryScorecardOf` of the domain in the owner's language
+  (`src/territory/check-view.ts`), and exits 1 when the trial fails. It keeps how the card stood in
+  `.state/territory-trials/<id>.json` (`src/territory/trial-record.ts`, the CLI's own file like `.state/build.json`),
+  which `doctor` reads (`src/doctor/check-territory-trial.ts`): a git territory never tried, whose trial failed, or
+  whose setup or checks changed since is a warning. No quest, event or model; `metrics` prints the first-pass rate
+  by territory beside class, tag, model and kind.
 
 ## Does not
 

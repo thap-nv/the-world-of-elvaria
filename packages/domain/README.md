@@ -222,7 +222,15 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   attempt logs (`src/metrics/session-counts.ts`, PS-21): the code graph's queries (`graphCommandOf`), each assignee
   session's tool calls before its first edit, and the prompt's size by role and block from the load traces. (PS-22,
   `src/metrics/memo-counts.ts`) Memos by kind with those sent to the owner, from the memo lines, and for each judge the
-  verdicts a second judge read beside an objection and those it overturned, from the verdicts' `objection`.
+  verdicts a second judge read beside an objection and those it overturned, from the verdicts' `objection`. (PS-25)
+  The first-pass rate by territory too (`by_territory`), and each quest row names its territory and counts its runs
+  of checks that passed or failed, and those set aside among them (`checkRunsOf`).
+- Scores a territory (`src/scorecard/`, PS-25): `territoryScorecardOf` over the territory file, the metrics ledger,
+  one trial (runner-core's `tryTerritory`) and the gazetteer gives six items, each `pass`, `fail` or `unmeasured`,
+  with reasons as codes and values (`SCORECARD_REASONS`), never sentences: the trial, each check's time against its
+  timeout, the share of runs of checks set aside, the gazetteer (there, fresh by its stamp, naming the commands a
+  session meets: `sessionCommandsOf`, `namesCommand`), `shared_paths` and `protected_paths` declared, and the
+  territory's first-pass rate. The thresholds are named in `src/scorecard/constants.ts`; `ready` is the trial alone.
 - Decides when the Steward's scheduled jobs run (`src/schedule/`, PS-03): `dueJobs` over `kingdom.schedule`, the
   kingdom's local day and time (`localClockOf`) and the day each job last ran: a daily job is due once its `at` has
   come on a day it has not run (`DAILY_JOBS`: `chronicle`, `triage`, `digest`), so a late start catches up and a clock set back
