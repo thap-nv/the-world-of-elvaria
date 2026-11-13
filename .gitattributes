@@ -4,3 +4,7 @@
 *.webp binary
 *.woff2 binary
 *.glb binary
+
+# §11 day files are append-only logs: every branch adds rows at the end, so keep both sides on merge
+# (git union driver). Rows are never edited in place: union would keep both versions of an edited row.
+docs/implementation-plan/11-*.md merge=union
