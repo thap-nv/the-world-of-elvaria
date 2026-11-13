@@ -57,6 +57,13 @@ const shellFor = (ctx: Context, character: Character): string | undefined =>
 export const searchFor = (ctx: Context, character: Character): boolean | undefined =>
   ctx.deps.runners[character.tribe]?.capabilities.search;
 
+/**
+ * Whether the tribe's CLI reads files with a tool of its own (PS-23): false (Codex) has the prompt say to read with
+ * the shell, or through `git grep` without one; absent, as for Claude Code and agy, nothing changes.
+ */
+const readFor = (ctx: Context, character: Character): boolean | undefined =>
+  ctx.deps.runners[character.tribe]?.capabilities.read;
+
 /** What builtPromptOf reads beside the session's input: its class, its secret values, its scriptures and skills. */
 interface PromptParts {
   readonly characterClass: CharacterClass;
@@ -79,6 +86,7 @@ async function builtPromptOf(
   const base = {
     shell: shellFor(ctx, character),
     cli_search: searchFor(ctx, character),
+    cli_read: readFor(ctx, character),
     locale: ctx.world.kingdom.owner.locale,
     // A plan quest's drafting rules quote it (PS-06).
     context_budget_tokens: ctx.world.kingdom.breakers.context_budget_tokens,

@@ -4,7 +4,8 @@
 import { denyTool, translation, withoutUndefined } from '../draft.ts';
 import { graphLineViolation } from '../graph.ts';
 import { stopGate } from '../handover.ts';
-import { grepOptionViolation, plainLineProblem, plainSearchReason, searchCommandOf } from '../search.ts';
+import { grepOptionViolation } from '../search.ts';
+import { classViolation } from '../class-gate.ts';
 import { lawViolation, protectedViolation, refusalText } from '../claude/tool-events.ts';
 import { claudeInputOf } from '../claude/input.ts';
 import { plotPath } from '../claude/tools.ts';
@@ -22,23 +23,6 @@ const ASK_REASON =
   'nobody answers inside this session; write your question in the Question section of the handover letter and end the session';
 const REFUSED_REASON = 'no class of Elvaria has this tool; do the work with the tools you have';
 
-/**
- * Why a class without the tools that grant `name` may not use it. A class without a shell may still run one plain
- * search command the policy grants for Glob and Grep (P1-53), since Codex has no search tool of its own.
- */
-function classViolation(name: string, missing: readonly string[], call: ToolCall, ctx: HookContext) {
-  const { command } = call;
-  if (command !== undefined && searchCommandOf(command, ctx.searchCommands) !== undefined) {
-    const problem = plainLineProblem(command);
-    return problem === undefined ? undefined : `${name}: ${plainSearchReason(problem, ctx.searchCommands)}`;
-  }
-  const searching =
-    command === undefined || ctx.searchCommands.length === 0
-      ? ''
-      : `; to search or read the files git tracks, run ${ctx.searchCommands.join(' or ')} alone`;
-  return `${name}: your class has no ${missing.join(' or ')}${searching}; do the work with the tools you have`;
-}
-
 /** Why an Elvaria rule (not a territory law) stops this tool, if one does. */
 function ruleViolation(name: string, call: ToolCall, ctx: HookContext): string | undefined {
   if (call.subagent !== undefined) return `${name}: ${SUBAGENT_REASON}`;
@@ -47,8 +31,8 @@ function ruleViolation(name: string, call: ToolCall, ctx: HookContext): string |
   // Whatever the class: `git grep -O<pager>` runs a program (P1-53).
   const option = call.command === undefined ? undefined : grepOptionViolation(call.command);
   if (option !== undefined) return `${name}: ${option}`;
-  // Whatever the class too: no graphify call that builds, writes or names another graph (PS-21). Granting the
-  // graph's commands to a Codex class without a shell is PS-23's, for every tribe.
+  // Whatever the class too: no graphify call that builds, writes or names another graph (PS-21); a class without a
+  // shell asks the quest's graph as on agy (class-gate.ts, PS-23).
   const graph = call.command === undefined ? undefined : graphLineViolation(call.command, ctx.graphCommands);
   if (graph !== undefined) return `${name}: ${graph}`;
   const missing = missingCodexTools(name, ctx.tools);

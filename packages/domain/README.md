@@ -148,7 +148,7 @@
   ceiling than that, nor fewer minutes than it estimates, up to `attempt_minutes.high`. (P1-46) The rule is
   `questBudgetOf(rank, estimate, breakers)`, exported so the sandbox gives its fake quests the same ceilings.
 - Keeps the separation of duties (`src/verify/`, ADR 0008, 0020): `selectVerifier` (never an assignee of the quest
-  or of its party, never the model of anyone who worked the quest (`policy.doers`, P1-55), another model family first by `familyOf`, then another tribe, then
+  or of its party, never the model of anyone who worked the quest (`policy.doers`, P1-55), another model family first by `familyOfCharacter` (the family the tribe's adapter declares, else `familyOf` of the slug; PS-23: a family nobody knows is never another one, `apartFromAll`), then another tribe, then
   on a quest of rank `STRONG_JUDGE_MIN_RANK` (B) or above the judge of the higher level, P1-48;
   `dispatch.verifier_same_family` for the rest; not a judge a breaker stopped in the run, nor the one that just
   handed in a partial verdict, while another may judge; (PS-22) never the judge whose verdict the quest's `objection`
@@ -191,7 +191,10 @@
   session before the cap), for `elvaria doctor`.
 - Reads the tribe contract (`src/tribe/`, implementation-plan §3.14, ADR 0021): `AdapterCapabilities` (the
   yes-or-no `ADAPTER_CAPABILITIES`, `auth`, the sign-ins an adapter runs with, P1-19, the optional `shell` per
-  OS, read with `shellOf`, P1-40, and the optional `search`, false for a CLI with no search tool, P1-53), `tribeLimitsOf` (one
+  OS, read with `shellOf`, P1-40, and the optional `search`, false for a CLI with no search tool, P1-53; PS-23: the optional `read`, false for a
+  CLI with no tool that reads a file, and `models`, the models it serves with the maker family and starting level of
+  each, `TribeModel`, read with `modelEntryOf`, checked with `modelsProblems`, gathered per tribe with
+  `modelsOfTribes` for `KingdomSnapshot.models`), `tribeLimitsOf` (one
   tribe narrowed by what its adapter lacks, `TRIBE_NARROWING`; `planTick` gives nothing to a tribe whose runner
   has no headless mode, no rank above its `max_rank`, and nothing on a guarded territory without a tool gate),
   `checkTribeAuth` and `defaultAuthOf` (the sign-in `tribes[].tool.auth` pins must be one the adapter declares;

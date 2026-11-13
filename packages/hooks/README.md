@@ -78,6 +78,16 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
   `apply_patch` for a class with Edit or Write. It answers as Claude does (`permissionDecision: "deny"`, Stop's
   `decision: "block"`), and writes `agent.session.start`, `agent.tool` (the patched path relative to the plot,
   `exit` from apply_patch's `Exit code: N`) and `agent.tool.blocked`.
+- Answers any other CLI with hooks through the neutral dialect (PS-23, `src/neutral/`): the adapter puts a
+  `dialect` into `policy.json` (dot paths to the event, or `argv`, the session, model, folder, tool name and input
+  of the CLI's payload; the CLI's names of the four events; each of its tools with its kind, the class tools that
+  grant it, the input keys of its command, paths, URL or patch, or a refusal; its `deny`, `stop` and `pass`
+  answers as JSON with `{reason}`), and the hook reads it as data, loading no code of the owner's. `runHook`
+  reads the policy first and takes this branch when a dialect is there; a tool the dialect does not name is refused
+  unless `unknown_tools` is `allow`; `--event <pre_tool>` keeps an unreadable call refused. The rules are agy's and
+  Codex's: territory laws, CLI-protected paths, the class's tools, `git grep` options, graphify, the letter's Stop
+  gate. One class gate (`src/class-gate.ts`) serves agy, Codex and the dialect alike, so a class without a shell asks
+  the code graph on Codex too. docs/guides/adding-a-tribe.md §2.3 has the fields.
 - Keeps what it must remember between calls in `.runs/<quest>-<n>/hook/` (handover fingerprint at start, Stop
   reminders per session), one small versioned JSON file per concern.
 - Code graph (PS-21, `src/graph.ts`): in both branches and for every class, refuses every graphify call but the
@@ -116,7 +126,9 @@ pnpm --filter @elvaria/hooks test    # builds, then vitest with coverage
 (`packages/runner-claude/fixtures/hook-payloads.jsonl`); `antigravity/translate.spec.ts` runs the 50 calls agy
 1.5.2 really made in spike P1-12a (`packages/runner-antigravity/fixtures/hook-stdin-full-run.jsonl`) and
 constructed ones; `codex/translate.spec.ts` runs the 18 calls Codex 0.167.0-alpha.4.1 really made in spike
-P1-12d (`packages/runner-codex/fixtures/hook-payloads.jsonl`) and constructed ones; `run-hook.spec.ts` runs whole calls in-process on temp
+P1-12d (`packages/runner-codex/fixtures/hook-payloads.jsonl`) and constructed ones; `neutral/translate.spec.ts`
+runs the payload of flint, the made-up CLI of apps/cli's fixtures, through its dialect, and every malformed dialect;
+`run-hook.spec.ts` runs whole calls in-process on temp
 kingdoms (paths with a space) and reads every line back through the domain's `EventSchema`;
 `hook-process.spec.ts` spawns the build: every event, a backslash path to `.env` denied on stdout, a payload
 written in two halves on a stdin made non-blocking (a `process.stdin` preload: EAGAIN between the halves on

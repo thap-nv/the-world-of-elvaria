@@ -69,6 +69,11 @@ interface PromptBase {
    */
   readonly cli_search?: boolean | undefined;
   /**
+   * `capabilities.read` of the tribe's adapter (PS-23): false says how to read without a Read tool, with the shell or,
+   * for a class without one, through `git grep`. Absent: the CLI reads with its own tool.
+   */
+  readonly cli_read?: boolean | undefined;
+  /**
    * The quest's code graph (PS-21), when its territory has `code_graph` on and the Steward built it: toolPolicyOf
    * grants its commands to a class that searches code, and the system part gets the graph block. Absent: neither.
    */
@@ -153,7 +158,7 @@ function assigneePrompt(input: AssigneePromptInput, t: PromptTemplates): PromptW
     handover_path: input.handover_path,
     language: LANGUAGE_NAMES[input.locale],
     apprentice: policy.apprentice === null ? '' : t.apprentice,
-    shell: shellBlock(policy, t, input.shell),
+    shell: shellBlock(policy, t, input.shell, input.cli_read),
     read_only: readOnlyBlock(policy, input.territory, t),
     patch: patchBlock(policy, t),
     handover_template: fenced(fill(t.handover, { quest_id: quest.id }), 'markdown'),
@@ -208,7 +213,7 @@ function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): PromptW
     plot_rule: plotRule,
     fail_kinds: FAIL_KINDS.map((kind) => `\`${kind}\``).join(', '),
     language: LANGUAGE_NAMES[input.locale],
-    shell: shellBlock(policy, t, input.shell),
+    shell: shellBlock(policy, t, input.shell, input.cli_read),
   });
   const review = fill(t.review, {
     ritual: `${ritual.name_en} (\`${ritual.id}\`)`,

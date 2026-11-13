@@ -14,12 +14,21 @@ import {
   runContextOf,
   secretValuesOf,
 } from '@elvaria/runner-core';
-import type { AgentRunner, ProbeResult, RunningSession, SpawnRequest, ToolInfo } from '@elvaria/runner-core';
+import type {
+  AdapterTool,
+  AgentRunner,
+  ProbeResult,
+  RunningSession,
+  SpawnRequest,
+  ToolInfo,
+} from '@elvaria/runner-core';
 
 import { askAppServer } from './app-server.ts';
 import { hooksCheckArgs, sessionArgs } from './args.ts';
 import { doctorCodex } from './doctor.ts';
 import { hooksProblem } from './hooks.ts';
+import { locateCodex } from './locate.ts';
+import { CODEX_MODELS } from './models.ts';
 import { removeRunFiles, writeRunFiles } from './run-files.ts';
 import { startSession } from './session.ts';
 import { probeOf } from './usage.ts';
@@ -47,6 +56,19 @@ export const CODEX_CAPABILITIES: AgentRunner['capabilities'] = {
   shell: { win32: 'Windows PowerShell (powershell.exe)' },
   // No tool of its own reads or searches files (spike §1.7): a class with Glob or Grep gets git grep and git ls-files.
   search: false,
+  // No tool reads a file either (spike §1.7): the prompt says to read with the shell, or `git grep` without one (PS-23).
+  read: false,
+  models: CODEX_MODELS,
+};
+
+/**
+ * Codex for `elvaria doctor` (PS-23): `codex` on PATH, else npm's folder or the `openai.chatgpt` extension's binary
+ * (P1-12d); the fake CLI `elvaria upgrade` tries a build with.
+ */
+export const CODEX_TOOL: AdapterTool = {
+  program: 'codex',
+  locate: locateCodex,
+  fake_cli: 'fixtures/fake-codex.mjs',
 };
 
 export interface CodexOptions {

@@ -1,6 +1,6 @@
 // The kingdom as one tick sees it: read from the files at the start of the tick, then kept current by every
 // write the tick makes, so later steps decide on what earlier steps did (implementation-plan §3.1).
-import { tribeLimitsOf } from '@elvaria/domain';
+import { modelsOfTribes, tribeLimitsOf } from '@elvaria/domain';
 import type {
   BackgroundWork,
   Character,
@@ -15,6 +15,7 @@ import type {
   TerritoryId,
   TribeId,
   TribeLimits,
+  TribeModels,
 } from '@elvaria/domain';
 import type { AgentRunner } from '@elvaria/runner-core';
 import type { KingdomStore, Listing, StoreIssue } from '@elvaria/store';
@@ -77,6 +78,19 @@ export function limitsOf(
     if (runner !== undefined) limits[tribe as TribeId] = tribeLimitsOf(runner.capabilities);
   }
   return limits;
+}
+
+/**
+ * The models each tribe's runner declares (PS-23): the separation of duties reads a character's family from them, and
+ * set_model takes only them. A runner that declares none leaves its tribe to the slug (familyOf).
+ */
+export function modelsOf(runners: Readonly<Partial<Record<TribeId, AgentRunner>>>): TribeModels {
+  const capabilities: Partial<Record<TribeId, AgentRunner['capabilities']>> = {};
+  for (const [tribe, runner] of Object.entries(runners)) {
+    // Object.entries widens the TribeId keys to string.
+    if (runner !== undefined) capabilities[tribe as TribeId] = runner.capabilities;
+  }
+  return modelsOfTribes(capabilities);
 }
 
 /** The snapshot planTick decides on, with the pools asleep, the gauges' readings (§3.5) and the background (P1-25). */

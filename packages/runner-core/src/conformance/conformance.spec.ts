@@ -142,6 +142,14 @@ describe('the conformance suite', () => {
     expect(await problemOf('no')).toMatch(/^capability search is malformed/);
   });
 
+  it('passes a runner whose read and models are well formed, and fails one whose are not (PS-23)', async () => {
+    const problemOf = async (capabilities: Record<string, unknown>) =>
+      (await runConformance(fake({ capabilities }))).find(({ id }) => id === 'capabilities')?.problem;
+    expect(await problemOf({ read: false, models: [{ id: 'auto' }] })).toBeUndefined();
+    expect(await problemOf({ read: 'no' })).toMatch(/^capability read is malformed/);
+    expect(await problemOf({ models: [{ id: 'Auto' }] })).toMatch(/^capability models is malformed/);
+  });
+
   it('reports a runner that throws instead of answering', async () => {
     const broken: ConformanceTarget = {
       name: 'broken',

@@ -5,7 +5,7 @@
 // expertise on the quest's tags (a character pinned to one of them first, then affinityOf), then by who has been idle
 // the longest.
 // namedAssignee: the character the owner names instead (reassign, create_quest with an assignee; P1-29).
-import { familyOf } from '../character/family.ts';
+import { apartFromAll, familyOfCharacter } from '../character/family.ts';
 import { canTake } from '../character/level.ts';
 import { affinityOf } from '../character/reputation.ts';
 import { err, ok } from '../core/result.ts';
@@ -16,13 +16,16 @@ import type { Result } from '../core/result.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 import type { Tribe } from '../schema/tribe.ts';
+import type { TribeModels } from '../tribe/models.ts';
 
 /** What selectAssignee knows of the quest's party (P1-21); none outside a party. */
 export interface AssigneeParty {
   /** The other quests of the quest's party (partyOf); empty outside a party. */
   readonly party: readonly Quest[];
   /** The kingdom's characters, for the models of the party's assignees that are not free now. */
-  readonly characters: readonly Pick<Character, 'id' | 'model'>[];
+  readonly characters: readonly Pick<Character, 'id' | 'model' | 'tribe'>[];
+  /** The models each tribe's adapter declares (PS-23): families are read from them, as selectVerifier reads them. */
+  readonly models?: TribeModels;
 }
 
 const NO_PARTY: AssigneeParty = { party: [], characters: [] };
@@ -47,13 +50,18 @@ const byFit =
     affinityRate(b, quest) - affinityRate(a, quest) ||
     byIdleSince(a, b);
 
-/** Whether a character's model family differs from every family of `rivals`, the blind trial's other side (§3.15). */
+/**
+ * Whether a character's model family differs from every family of `rivals`, the blind trial's other side (§3.15); a
+ * family nobody knows never does (PS-23).
+ */
 function apartFrom(
   rivals: ReadonlySet<CharacterId>,
-  characters: AssigneeParty['characters'],
+  { characters, models }: AssigneeParty,
 ): (character: Character) => boolean {
-  const families = new Set(characters.filter(({ id }) => rivals.has(id)).map(({ model }) => familyOf(model)));
-  return (character) => !families.has(familyOf(character.model));
+  const families = characters
+    .filter(({ id }) => rivals.has(id))
+    .map((rival) => familyOfCharacter(rival, models));
+  return (character) => apartFromAll(familyOfCharacter(character, models), families);
 }
 
 /**
@@ -73,7 +81,7 @@ export function selectAssignee(
   const { barred, rivals, avoided } = partyBarsOf(quest, context.party);
   const ranked = candidates
     .filter((character) => character.class === quest.class_required && !barred.has(character.id))
-    .toSorted(byFit(quest, apartFrom(rivals, context.characters), avoided));
+    .toSorted(byFit(quest, apartFrom(rivals, context), avoided));
   return (
     ranked.find((character) => canTake(character.level, quest.rank, false)) ??
     ranked.find((character) => canTake(character.level, quest.rank, true))

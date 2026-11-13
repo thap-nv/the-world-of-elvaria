@@ -10,6 +10,7 @@ import path from 'node:path';
 import type { Tribe, UpgradeStep } from '@elvaria/domain';
 import type { Translate } from '@elvaria/i18n';
 
+import { BUILT_IN_ADAPTERS } from '../run/crew.ts';
 import { buildCli } from './build-cli.ts';
 import { outputOf, reasonOf } from './build.ts';
 import { mirrorKingdom } from './mirror.ts';
@@ -25,14 +26,16 @@ const MIRROR_PREFIX = 'elvaria upgrade mirror ';
 const RM_TEMP = { recursive: true, force: true, maxRetries: 10, retryDelay: 100 } as const;
 
 /**
- * The fake CLI each built-in adapter's specs play the suite with, inside the build. An adapter not named here (an
+ * The fake CLI each built-in adapter's specs play the suite with, inside the build (its package's AdapterTool, PS-23). An adapter not named here (an
  * owner adapter file) has none to try, so its tribe is left to `elvaria tribe check` with its own CLI.
  */
-const FAKE_CLIS: Readonly<Record<string, readonly string[]>> = {
-  claude_code: ['packages', 'runner-claude', 'fixtures', 'fake-claude.mjs'],
-  antigravity: ['packages', 'runner-antigravity', 'fixtures', 'fake-agy.mjs'],
-  codex_cli: ['packages', 'runner-codex', 'fixtures', 'fake-codex.mjs'],
-};
+function fakeCliOf(adapter: string): readonly string[] | undefined {
+  const entry = BUILT_IN_ADAPTERS[adapter];
+  const fake = entry?.tool.fake_cli;
+  return entry === undefined || fake === undefined
+    ? undefined
+    : ['packages', entry.package, ...fake.split('/')];
+}
 
 export interface TrialPlace {
   readonly build: string;
@@ -76,7 +79,7 @@ async function conformance(
   report: TrialReport,
 ): Promise<StepFailure | undefined> {
   for (const tribe of place.tribes.filter(({ enabled }) => enabled)) {
-    const fake = FAKE_CLIS[tribe.adapter];
+    const fake = fakeCliOf(tribe.adapter);
     if (fake === undefined) {
       report.out(report.t('cli.upgrade.no_fake', { tribe: tribe.id, adapter: tribe.adapter }));
       continue;

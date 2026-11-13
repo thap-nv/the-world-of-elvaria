@@ -6,8 +6,9 @@ import { recordHandoverStart, stopGate } from '../handover.ts';
 import { lawViolation, protectedViolation, refusalText } from '../claude/tool-events.ts';
 import { plotPath } from '../claude/tools.ts';
 import { modelSlugOf } from '../claude/translate.ts';
-import { graphCommandOf, graphLineViolation, plainGraphReason } from '../graph.ts';
-import { grepOptionViolation, plainLineProblem, plainSearchReason, searchCommandOf } from '../search.ts';
+import { classViolation } from '../class-gate.ts';
+import { graphLineViolation } from '../graph.ts';
+import { grepOptionViolation } from '../search.ts';
 import { agyInputOf } from './input.ts';
 import { AGY_ASK_TOOLS, agyToolCallOf, missingClassTools } from './tools.ts';
 import type { ToolCall } from '../claude/tools.ts';
@@ -30,32 +31,6 @@ export const denyAgyTool = (reason: string): Decision => ({ decision: 'deny', re
 const SUBAGENT_REASON = 'sub-agents are not allowed for this tribe yet; do the work yourself';
 const ASK_REASON =
   'nobody answers inside this session; write your question in the Question section of the handover letter and end the session';
-
-/**
- * Why a class lacking the tools of `name` may not use it. A shell line that calls a search command the policy grants
- * for Glob and Grep may run when it is one plain call (P1-53): agy's prefix rule cannot see what else the line does.
- */
-function classViolation(name: string, missing: readonly string[], call: ToolCall, ctx: HookContext) {
-  const { command } = call;
-  if (command !== undefined && searchCommandOf(command, ctx.searchCommands) !== undefined) {
-    const problem = plainLineProblem(command);
-    return problem === undefined ? undefined : `${name}: ${plainSearchReason(problem, ctx.searchCommands)}`;
-  }
-  // The code graph's commands go the same way (PS-21): granted to a class without a shell, one plain call a line.
-  if (command !== undefined && graphCommandOf(command, ctx.graphCommands) !== undefined) {
-    const problem = plainLineProblem(command);
-    return problem === undefined ? undefined : `${name}: ${plainGraphReason(problem, ctx.graphCommands)}`;
-  }
-  const searching =
-    command === undefined || ctx.searchCommands.length === 0
-      ? ''
-      : `; to search files, run ${ctx.searchCommands.join(' or ')} alone`;
-  const asking =
-    command === undefined || ctx.graphCommands.length === 0
-      ? ''
-      : `; to ask the code graph, run ${ctx.graphCommands.join(' or ')} alone`;
-  return `${name}: your class has no ${missing.join(' or ')}${searching}${asking}; do the work with the tools you have`;
-}
 
 /** Why an Elvaria rule (not a territory law) stops this tool, if one does. */
 function ruleViolation(name: unknown, call: ToolCall, ctx: HookContext): string | undefined {

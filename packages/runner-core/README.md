@@ -43,7 +43,10 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   checks with the end of each failing one's log the caller read and masked (`PromptCheck.log_tail`, P1-25; both in `src/prompt/checks.ts`), the letter, the diff, or where to read it when the caller has none, and where the last judge of the
   run stopped when it left a `partial` verdict, P1-15); both list the shell commands
   their `ToolPolicy` allows, one per call (`prompts/shell.md`, P1-11), after the shell they run in when the caller
-  names it (`PromptInput.shell`, the adapter's `capabilities.shell` for this OS, P1-40), then the search commands
+  names it (`PromptInput.shell`, the adapter's `capabilities.shell` for this OS, P1-40), and how to read: with Read,
+  or, when the CLI has none (`PromptInput.cli_read: false`, the adapter's `capabilities.read`, PS-23), with
+  read-only commands of the shell, or for a class without one with `git grep -h -n -e '^'` (`GIT_READ_LINE`); then
+  the search commands
   of a tribe whose CLI has no search tool with how to call them, to a class without a shell too
   (`prompts/search.md`, P1-53); an assignee that edits files also reads
   the territory's read-only paths and the generators its shell may run (`prompts/read-only.md`, P1-24), and its
@@ -100,8 +103,12 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   and the plot already come in each `SpawnRequest`. `adapterOfModule(module, kit)` checks the imported module
   (`createAdapter` exported, called without throwing) and the runner it returns (`runnerProblems`: the kit's tribe
   and adapter, every capability, `spawn`, `probe`, `doctor`), one sentence per problem; the optional `shell` is
-  checked only when given (`shellProblems`, P1-40), and so is `search` (`searchProblems`, P1-53), here and in the
-  suite's `capabilities` check.
+  checked only when given (`shellProblems`, P1-40), and so are `search` (`searchProblems`, P1-53), `read`
+  (`readProblems`) and `models` (the domain's `modelsProblems`, PS-23), here and in the suite's `capabilities`
+  check. An adapter whose CLI has hooks of its own writes its neutral hook dialect into `policy.json` through
+  `writePolicyFile(…, { dialect })` (`HookDialect`, `src/runner/hook-dialect.ts`, PS-23), so the hook reads that
+  CLI without a branch of its own. A built-in package also exports an `AdapterTool` (its program, its search
+  outside PATH, whether the provider's terms need acknowledging, its fake CLI) for the composition root (PS-23).
 - Proves in the conformance suite that a judge in its scratch plot, whose class allows commit and push, has both
   refused (`scratch_commit`, fakes only, P1-20).
 - Gives a tribe without a JSON Schema flag its structured reply (`src/structured/`, implementation-plan §3.14

@@ -158,4 +158,17 @@ describe('runnerProblems', () => {
     expect(withSearch(true)).toEqual([]);
     expect(withSearch('git')).toEqual(['capability search is not true or false']);
   });
+
+  it('takes a runner that says nothing of read and models, or says them well (PS-23)', () => {
+    const fake = { ...createFakeRunner({ tribe: kit.tribe.id }), adapter: kit.tribe.adapter };
+    const withCaps = (more: Record<string, unknown>) =>
+      runnerProblems({ ...fake, capabilities: { ...fake.capabilities, ...more } }, kit);
+    expect(withCaps({ read: false, models: [{ id: 'auto' }, { id: 'swift', family: 'claude' }] })).toEqual(
+      [],
+    );
+    expect(withCaps({ read: 'no', models: [] })).toEqual([
+      'capability read is not true or false',
+      'capability models is not a non-empty list',
+    ]);
+  });
 });

@@ -22,3 +22,19 @@ describe('startingLevelOf', () => {
     expect(startingLevelOf('propus-1')).toBeUndefined();
   });
 });
+
+describe('startingLevelOf with the models an adapter declares (PS-23)', () => {
+  const declared = [
+    { id: 'northwind-large', family: 'northwind', starting_level: 5 },
+    { id: 'northwind', family: 'northwind' },
+  ];
+
+  it('reads the level from the entry that serves the model', () => {
+    expect(startingLevelOf('northwind-large-high', declared)).toBe(5);
+  });
+
+  it('falls back to the words of the slug, and knows none without either', () => {
+    expect(startingLevelOf('northwind-small', declared)).toBeUndefined();
+    expect(startingLevelOf('northwind-flash', declared)).toBe(2);
+  });
+});

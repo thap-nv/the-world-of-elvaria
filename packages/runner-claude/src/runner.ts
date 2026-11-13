@@ -2,6 +2,8 @@
 // ADR 0006, 0007). apps/cli builds it from `kingdom.tribes[]` and hands it what this package may not import: the
 // hook's command (`hookCommand` and `HOOK_SCRIPT` of @elvaria/hooks) and the minimal env (§3.9).
 import { doctorClaude } from './doctor.ts';
+import { locateClaude } from './locate.ts';
+import { CLAUDE_MODELS } from './models.ts';
 import { purgeWorktree } from './forget.ts';
 import { probeClaude } from './probe.ts';
 import { startSession } from './session.ts';
@@ -9,7 +11,7 @@ import { claudeTool } from './tool.ts';
 import type { ApprenticeConfig } from './agents.ts';
 import type { HookCommand } from './settings.ts';
 import type { ClaudeToolOptions } from './tool.ts';
-import type { AgentRunner, ForgetWorktree } from '@elvaria/runner-core';
+import type { AdapterTool, AgentRunner, ForgetWorktree } from '@elvaria/runner-core';
 
 export const CLAUDE_CODE_ADAPTER = 'claude_code';
 
@@ -33,6 +35,18 @@ export const CLAUDE_CAPABILITIES: AgentRunner['capabilities'] = {
   // The Bash tool runs through Git Bash on Windows (every real run since P1-11). On macOS and Linux, under the
   // minimal env without SHELL, Claude Code picks bash or zsh itself; not measured, so not declared (P1-40).
   shell: { win32: 'Git Bash' },
+  // Every model is Anthropic's (PS-23): the separation of duties reads the family from here.
+  models: CLAUDE_MODELS,
+};
+
+/**
+ * Claude Code for `elvaria doctor` (PS-23): `claude` on PATH, else its own search (`~/.local/bin`, npm's folder, the
+ * VS Code extension's binary, P1-09); the fake CLI `elvaria upgrade` tries a build with.
+ */
+export const CLAUDE_TOOL: AdapterTool = {
+  program: 'claude',
+  locate: locateClaude,
+  fake_cli: 'fixtures/fake-claude.mjs',
 };
 
 /** `BREAKER_DEFAULTS.subagent_max_turns` and `subagent_max_minutes` of the domain, which the adapter may not import. */
