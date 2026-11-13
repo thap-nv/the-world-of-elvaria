@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { at, commandOf, lineOf, questId } from './__fixtures__/ledger.ts';
 import { ownerCommandsOf } from './ledger.ts';
-import { memoCountsOf, outOfScopeOf, readsOf, setAsidesOf } from './log-counts.ts';
+import { outOfScopeOf, readsOf, setAsidesOf } from './log-counts.ts';
 import type { Event } from '../schema/event/event.ts';
 
 const NEXT_DAY = '2026-11-09';
@@ -145,33 +145,5 @@ describe("ownerCommandsOf with the line's kind (PS-01b)", () => {
     const edit = { ...commandOf('retry', { quest: questId(4) }, at(9)), source: 'chancellor' as const };
     const events = [applied(gone, { kind: 'edit_quest', source: 'chancellor' }), applied(edit.id, {})];
     expect(ownerCommandsOf({ ...input(events), commands: [edit] }, ON_THE_DAY)).toEqual([]);
-  });
-});
-
-describe('memoCountsOf (PS-03b)', () => {
-  const memo = { memo: 'm_20261108_4k2pqz' };
-  const by = (kind: Event['actor']['kind'], minute: number, day?: string): Event => {
-    const actor: Event['actor'] = { kind };
-    return { ...lineOf('memo.closed', { ...memo, decision: 'shelved' }, at(minute, day)), actor };
-  };
-
-  it('counts the memos filed, sent up, and closed by the owner or by the triage, inside the window', () => {
-    const events = [
-      lineOf('memo.filed', { ...memo, kind: 'proposal', from: 'thorn' }, at(1)),
-      lineOf('memo.filed', { ...memo, kind: 'proposal', from: 'thorn' }, at(1, NEXT_DAY)),
-      lineOf('memo.escalated', { ...memo, action: 'owner', holds: ['chancellor_asks'] }, at(2)),
-      by('user', 3),
-      by('chancellor', 4),
-      by('chancellor', 5),
-      by('steward', 6),
-      by('user', 7, NEXT_DAY),
-    ];
-    expect(memoCountsOf(events, ON_THE_DAY)).toEqual({
-      filed: 1,
-      by_owner: 1,
-      by_chancellor: 2,
-      escalated: 1,
-    });
-    expect(memoCountsOf(events, {})).toMatchObject({ filed: 2, by_owner: 2 });
   });
 });

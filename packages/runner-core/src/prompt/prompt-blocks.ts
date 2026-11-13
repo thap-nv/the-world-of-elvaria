@@ -21,6 +21,8 @@ export const PROMPT_BLOCK_IDS = [
   // PS-02: the memos a continuing assignee's quest filed, after the continuation they used to end.
   'memos',
   'partial',
+  // PS-22: the verdict an objection contests and the objection, for its second judge.
+  'objection',
   'review',
   'resumed',
   'answer',

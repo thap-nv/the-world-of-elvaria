@@ -185,6 +185,37 @@ describe('attentionQueue', () => {
     expect(items[0]).not.toHaveProperty('target');
   });
 
+  it('lists an objection no judge may read for the owner, and none on its way to a judge (PS-22)', () => {
+    const objection = { ...memo('m_20261112_9tw3hx'), kind: 'objection' as MemoKindId, quest: q(1) };
+    const state = stateWith(
+      [],
+      [
+        { ...objection, route: 'owner' },
+        { ...objection, id: 'm_20261112_4k2pqz' as MemoId, route: 'judge' },
+        { ...memo('m_20261112_zzzzzz'), route: null },
+      ],
+    );
+    expect(attentionQueue(state, NOW)).toEqual([
+      {
+        ...ATTENTION_TABLE.objection,
+        kind: 'objection',
+        command: ['memo', 'show', 'm_20261112_9tw3hx'],
+        memo: 'm_20261112_9tw3hx',
+        memo_kind: 'objection',
+        from: 'thorn',
+        quest: q(1),
+      },
+      {
+        ...ATTENTION_TABLE.memo,
+        kind: 'memo',
+        command: ['memo', 'show', 'm_20261112_zzzzzz'],
+        memo: 'm_20261112_zzzzzz',
+        memo_kind: 'proposal',
+        from: 'thorn',
+      },
+    ]);
+  });
+
   it('warns of a pool at the warning share, from current readings of enabled tribes only', () => {
     // Warning from 88 % (cap 98, reserve 2, margin 10).
     const state = stateWith(

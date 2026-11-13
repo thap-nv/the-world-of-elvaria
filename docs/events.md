@@ -160,8 +160,8 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 | Type | `data` |
 |---|---|
 | `memo.filed` | `memo`: string (khớp `^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`kind`: string (khớp `^[a-z][a-z0-9_]*$`)<br>`from`: string (khớp `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$`, khác `user`, `machine`, `temple`) |
-| `memo.routed` | `memo`: string (khớp `^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`route`: một trong `chancellor` |
-| `memo.closed` | `memo`: string (khớp `^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`decision`: một trong `shelved`, `rejected`, `handled`<br>`quest` (tùy chọn): string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`) — With decision = handled: the quest that does the work. |
+| `memo.routed` | `memo`: string (khớp `^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`route`: một trong `chancellor`, `judge`, `owner`<br>`refusal` (tùy chọn): một trong `no_verdict`, `owner_verdict`, `final_verdict`, `second_objection` — (PS-22) An objection sent to the owner: why no second judge reads it. |
+| `memo.closed` | `memo`: string (khớp `^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`decision`: một trong `shelved`, `rejected`, `handled`, `sustained`, `overruled`<br>`quest` (tùy chọn): string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`) — With decision = handled: the quest that does the work.<br>`verdict` (tùy chọn): string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*\|-user)?$`) — (PS-22) With decision = sustained or overruled: the second judge's verdict. |
 | `memo.escalated` | `memo`: string (khớp `^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`action`: một trong `merge`, `new_quest`, `shelve`, `owner`<br>`quest` (tùy chọn): string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`) — merge: the open quest; new_quest: the draft quest made for the owner to confirm.<br>`holds`: array of một trong `decision_change`, `contract_change`, `mana_over_budget`, `outward_action`, `protected_paths`, `above_rank`, `outside_scope`, `chancellor_asks` |
 
 ## `sandbox` · 2 type

@@ -40,10 +40,18 @@
   `memo.filed` (the writer's) and `memo.routed` lines; a memo already filed is not filed again, and a line that
   follows no memo, an unknown kind or a write that fails is a warning, never the run's end. No quest moves. The
   owner's `decide_memo` closes a memo once (`memo.closed`, in the journal of the quest whose letter held it); a
-  continuing assignee's prompt lists the memos its quest filed (`filedMemosOf`). (PS-03b) A create_quest or edit_quest
-  naming `memos` closes them as handled by its quest once the quest has the work (at creation or edit, or at the owner's
-  confirm of a draft); `escalate_memo` keeps the triage's advice on an open memo (`memo.escalated`). Commands with
-  `source: chancellor` are told as the Chancellor's (`actorOfCommand`), and their `command.*` lines carry the source.
+  continuing assignee's prompt lists the memos its quest filed (`filedMemosOf`). (PS-22, `src/memos/objection.ts`) An
+  objection contests the fail the run came back with (the owner's first, as the run's prompt read it): the domain
+  routes it, and the move that ends the run sets the quest's pending `objection`; the next review takes a second
+  judge (never the first one, never the machine), whose prompt holds the contested verdict and the memo
+  (`objectionFor`); its verdict carries the `objection`, clears it from the quest and closes the memo (`sustained`,
+  `overruled`), a pass taking the first fail out of the assignee's windows. A second judge's fail returns the quest
+  with the contested verdict beside it (`continuationOf`). The owner's `decide_memo` on a pending objection takes it
+  off its quest (`quest.edited`), and any judge may take the review again. (PS-03b) A create_quest or edit_quest
+  naming `memos` closes them as handled by its quest once the quest has the work (at creation or edit, or at the
+  owner's confirm of a draft); `escalate_memo` keeps the triage's advice on an open memo (`memo.escalated`).
+  Commands with `source: chancellor` are told as the Chancellor's (`actorOfCommand`), and their `command.*` lines
+  carry the source.
 - Runs the jobs of `kingdom.schedule` (PS-03, implementation-plan §3.16.3; `src/schedule/`): no cron. At the end
   of each tick the domain's `dueJobs` says which job's hour has come on a local day it has not run; an `in_tick`
   job (no model) runs there and then, an `off_tick` job (may call a model: PS-03b's triage, PS-21c's docs graph,
@@ -174,6 +182,9 @@
   `detail.paths`, P1-49; every commit of a session's work checks so (`commitPlot`: the submit and each WIP; the
   Steward's own commit that takes a delivered contract's `subquests.json` off its branch, `closeContract`,
   goes through it too, P1-55), a WIP left in the plot with the reason, and a plot whose changes cannot be listed is not committed either;
+  the same read names the paths of `laws.protected_paths` the work changed, and the submit sets the royal seal and
+  `quest.protected_changes` through `Move.before` (`protectedMarkOf`, PS-04, ADR 0026), as the machine's merge of a
+  party does from its own changes (`protectedChangesIn`);
   before it, on a
   territory with `laws.patch_paths`, the assignee's `elvaria.patch` is applied through `Plots.applyPatch` and told
   in a `plot.patched` line, and a patch that touches other paths or does not apply sends the quest to the

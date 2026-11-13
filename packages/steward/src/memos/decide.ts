@@ -1,11 +1,13 @@
 // `decide_memo` (PS-02, ADR 0024): a memo is closed once, shelved, rejected, or handled by a quest. The memo is the
-// only file that changes; no quest does, and nobody answers the memo. The owner decides it, or (PS-03b) the
-// Chancellor's triage sets it aside within kingdom.delegation: the line tells whose decision it was.
+// only file that changes, and nobody answers the memo; except (PS-22) an objection its quest's review still owes: the
+// quest no longer waits for a second judge, so its pending objection goes with the memo. The owner decides it, or
+// (PS-03b) the Chancellor's triage sets it aside within kingdom.delegation: the line tells whose decision it was.
 import type { InboxCommandOf } from '@elvaria/domain';
 
 import { APPLIED, rejected } from '../inbox/quest-commands.ts';
 import { actorOfCommand } from '../record.ts';
 import { writeClosed } from './close.ts';
+import { dropObjection } from './objection.ts';
 import type { Context } from '../context.ts';
 import type { Outcome } from '../inbox/quest-commands.ts';
 
@@ -20,5 +22,7 @@ export async function decideMemo(ctx: Context, command: InboxCommandOf<'decide_m
     ...(payload.note === undefined ? {} : { note: payload.note }),
   };
   const closed = await writeClosed(ctx, read.value, decision, actorOfCommand(command));
-  return closed.ok ? APPLIED : rejected(closed.error);
+  if (!closed.ok) return rejected(closed.error);
+  await dropObjection(ctx, payload.memo);
+  return APPLIED;
 }

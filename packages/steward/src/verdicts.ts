@@ -12,7 +12,8 @@ import type { CharacterEdit, Move } from './record.ts';
 
 /**
  * The assignee's windows after a pass or a fail on `quest`; the owner's seal or return weighs three (by_human), and
- * the owner's return for a new judgement (`rejudge`, P1-40) leaves them as they were.
+ * the owner's return for a new judgement (`rejudge`, P1-40) leaves them as they were, and a pass that sustains the
+ * assignee's objection takes the verdict it overturned out of them (PS-22).
  */
 export const judged =
   (quest: Quest, verdict: Judged): CharacterEdit =>
@@ -23,7 +24,11 @@ export const judged =
       withVerdict(
         character,
         verdict.result === 'pass'
-          ? { ...base, result: 'pass' }
+          ? {
+              ...base,
+              result: 'pass',
+              ...(verdict.objection === undefined ? {} : { overturns: verdict.objection.verdict }),
+            }
           : // The verdict schema requires fail_kind on a fail; `other` only stands in for a broken file.
             { ...base, result: 'fail', fail_kind: verdict.fail_kind ?? 'other', ...rejudge },
       ),

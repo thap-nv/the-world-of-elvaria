@@ -21,6 +21,7 @@ const pass = {
 };
 
 const OWNER = { verifier_id: 'user', by_human: true, session_id: undefined };
+const OBJECTION = { memo: 'm_20261106_4k2pqz', verdict: `${QUEST}-1`, judge: 'orin' };
 const ID_ISSUE =
   "id: the verdict id is <quest_id>-<attempt>, with -p<k> on a partial verdict and -user on the owner's";
 
@@ -64,6 +65,8 @@ describe('VerdictSchema', () => {
       { id: `${QUEST}-2-user`, ...OWNER, result: 'fail', fail_kind: 'other', notes: NOTES, rejudge: true },
     ],
     ['a verdict that says it is no rejudge', { rejudge: false }],
+    // PS-22: the second judge's verdict names the objection it answered.
+    ['a judge answering an objection', { objection: OBJECTION }],
   ])('accepts %s', (_, change) => {
     expect(issuesOf(change)).toEqual([]);
   });
@@ -130,6 +133,11 @@ describe('VerdictSchema', () => {
       'a rejudge on a seal',
       { id: `${QUEST}-2-user`, ...OWNER, rejudge: true },
       "rejudge: rejudge marks only the owner's return, a human fail verdict",
+    ],
+    [
+      "the owner's verdict answering an objection",
+      { id: `${QUEST}-2-user`, ...OWNER, objection: OBJECTION },
+      "objection: an objection is answered by a judge, never by the owner's verdict",
     ],
     [
       'a break without its red run',

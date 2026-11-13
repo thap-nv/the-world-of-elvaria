@@ -107,6 +107,10 @@ describe('QuestSchema', () => {
         attempt_log: [attempt(null, 'assignee')],
       },
     ],
+    [
+      'the protected paths its work changed, with the seal they ask for (PS-04)',
+      { seal_required: true, protected_changes: ['.claude/settings.json', 'CLAUDE.md'] },
+    ],
   ])('accepts %s', (_, change) => {
     expect(issuesOf({ ...minimal, ...change })).toEqual([]);
   });
@@ -140,6 +144,7 @@ describe('QuestSchema', () => {
     ],
     ['a unit id with capitals', { units: [{ id: 'U1', label: 'a', outcome: 'done' }] }, 'units.0.id'],
     ['a secret name in kebab-case', { secrets_required: ['npm-token'] }, 'secrets_required.0'],
+    ['an empty list of protected changes (PS-04)', { protected_changes: [] }, 'protected_changes'],
   ])('rejects %s', (_, change, expected) => {
     expect(issuesOf({ ...minimal, ...change }).join('\n')).toContain(expected);
   });

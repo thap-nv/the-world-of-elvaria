@@ -6,6 +6,7 @@ import type { Translate } from '@elvaria/i18n';
 
 import { NONE } from '../listing.ts';
 import { count, tableSection } from './section.ts';
+import { memosSection, objectionsSection } from './view-memos.ts';
 import { firstEditsLine, graphLine, promptSection } from './view-sessions.ts';
 import type { MetricsSection } from './section.ts';
 
@@ -69,8 +70,6 @@ function summarySection(t: Translate, metrics: Metrics): MetricsSection {
         count: metrics.out_of_scope.length,
         files: metrics.out_of_scope.reduce((total, { paths }) => total + paths.length, 0),
       }),
-      // PS-03b: the memos the owner had to decide, apart from the owner's steps into a quest's run.
-      t('cli.metrics.line.memos', { ...metrics.memos }),
     ],
   };
 }
@@ -228,6 +227,8 @@ export const metricsSections = (t: Translate, metrics: Metrics): MetricsSection[
   escapedSection(t, metrics),
   sealedSection(t, metrics),
   questSection(t, metrics),
+  memosSection(t, metrics),
+  objectionsSection(t, metrics),
   readsSection(t, metrics),
   promptSection(t, metrics),
   limitsSection(t),

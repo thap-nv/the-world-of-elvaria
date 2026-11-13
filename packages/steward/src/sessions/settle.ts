@@ -1,7 +1,7 @@
 // What a session's end does to its quest (implementation-plan §2.5, §3.7): the runner's RunResult becomes one move
 // of the table, the character's matching move, and for a verifier the verdict, the assignee's reputation and level.
 // An end that arrives for a quest that moved on meanwhile (cancelled, reassigned) changes nothing.
-import { currentRun } from '@elvaria/domain';
+import { currentRun, protectedMarkOf } from '@elvaria/domain';
 import { plotCommitMessage } from '@elvaria/runner-core';
 import type { CharacterId, Quest, Result } from '@elvaria/domain';
 import type { RunResult } from '@elvaria/runner-core';
@@ -59,22 +59,25 @@ async function settleAssignee(
     return breakAssignee(ctx, running, { trip: TRIPS[result.outcome] }, ended(result));
   // The memos of the letter are filed when the run ends through a crash, a question or a submit; a run a breaker
   // cut (above, and the commit's trips in submitWork) wrote its letter in haste, and the next letter brings them (PS-02).
+  // The move carries the quest's pending objection, for its next review (PS-22).
   if (result.outcome !== 'completed') {
-    await fileMemos(ctx, running);
+    const before = await fileMemos(ctx, running);
     return moveAndRing(ctx, {
       quest,
       event: { type: 'crash', ...run },
       actor: 'steward',
       edits: { [who]: step('crash') },
+      before,
     });
   }
   if (result.question !== undefined) {
-    await fileMemos(ctx, running);
+    const before = await fileMemos(ctx, running);
     return moveAndRing(ctx, {
       quest,
       event: { type: 'ask', question: result.question, ...run },
       actor: 'runner',
       edits: { [who]: step('ask') },
+      before,
     });
   }
   return submitWork(ctx, running, result);
@@ -82,7 +85,8 @@ async function settleAssignee(
 
 /**
  * A run that completed without a question: the patch, the commit, the letter's memos, then the submit, whose line
- * names the files the work changed outside the quest's scope (PS-05).
+ * names the files the work changed outside the quest's scope (PS-05). Work that changed a protected path sets the
+ * royal seal and the mark that asks for the stronger judge on the quest, before the submit (PS-04, ADR 0026).
  */
 async function submitWork(ctx: Context, running: Running, result: RunResult): Promise<Result<Quest, string>> {
   const who = running.character;
@@ -103,13 +107,17 @@ async function submitWork(ctx: Context, running: Running, result: RunResult): Pr
   // The branch would lack the work: the quest goes to the infirmary with the hook's last words, not to review.
   if (committed.status === 'refused')
     return breakAssignee(ctx, running, { trip: 'commit', refused: committed }, ended(result));
-  await fileMemos(ctx, running);
+  const before = await fileMemos(ctx, running);
   const submitted = ctx.world.quests.get(quest);
+  const mark =
+    submitted === undefined ? undefined : protectedMarkOf(submitted, committed.protected_changes ?? []);
   return moveAndRing(ctx, {
     quest,
     event: { type: 'submit', ...run },
     actor: 'runner',
     edits: { [who]: step('submit') },
+    // The quest's pending objection (PS-22) and the protected paths the work changed (PS-04).
+    before: { ...before, ...mark },
     ...(submitted === undefined ? {} : { out_of_scope: await outOfScopeIn(ctx, submitted) }),
   });
 }

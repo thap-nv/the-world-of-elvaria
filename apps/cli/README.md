@@ -35,6 +35,7 @@
   owner's language (a line written before P1-32 shows its English reason). `quest add --scope` and `quest edit --scope` declare the files a quest changes (PS-05); `quest list` marks a quest
   that waits on its territory's scope rules and for whom, `quest show` prints its scope and that wait
   (`src/quest/scope.ts`). `quest list` has a column for a party's member, its role and where the party stands, and
+  `quest show` prints the protected paths a quest's work changed, the reason it waits for the royal seal (PS-04), and
   `quest show` prints the party, the role, the contract and the merge quest (`src/quest/party.ts`, the domain's
   `partyStatusOf`; P1-21 (c)): the merge quest and the acceptance part share the contract's title. `quest show` also
   says what the last run came to (`src/quest/last-run.ts`, P1-46): its verdicts in the order they were written (each
@@ -63,7 +64,10 @@
   `src/memo/`, ADR 0024): the letters (memos) characters wrote about work outside their quests, the open ones
   unless `--all`; `decide` sends `decide_memo` after refusing what it can tell already (an unknown or decided
   letter, a handled one without `--quest`, an unknown quest). The CLI writes no memo. `doctor` says a registry file
-  the kingdom lacks (`registry/memos.json` before PS-02) is what `elvaria migrate` copies.
+  the kingdom lacks (`registry/memos.json` before PS-02) is what `elvaria migrate` copies. (PS-22) `memo show` names
+  the verdict an objection contests, why it went to the owner, and the second judge's verdict that closed it;
+  `decide` offers the owner's three decisions, never `sustained` or `overruled`. `metrics` adds memos by kind and
+  objections by first judge (`src/metrics/view-memos.ts`).
 - `wake <tribe>` sends `wake` for a tribe of `kingdom.tribes[]`: the Steward probes that account at its next tick
   (ADR 0009), for instance after the owner signed in again.
 - Writes new files the Steward does not own: `kingdom.json` (`init`, then `tribes[].tool` and, with `--enable`,

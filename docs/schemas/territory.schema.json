@@ -332,6 +332,14 @@
           },
           "default": []
         },
+        "protected_paths": {
+          "description": "Globs of what guards the world (its rules, checks, judges and measures), matched at any depth as forbidden_paths are. Never a refusal: a quest whose work changes one needs the royal seal whatever its kind's seal_default, and its judge is chosen as for a quest of rank B or above. Absent: none.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
         "rank_floor": {
           "type": "array",
           "items": {
@@ -606,6 +614,11 @@
           "packages/shared/src/scoring/**",
           "packages/shared/src/auth/**",
           "apps/api/src/infra/db/migrations/**"
+        ],
+        "protected_paths": [
+          ".github/**",
+          ".husky/**",
+          "packages/shared/src/auth/**"
         ],
         "rank_floor": [
           {

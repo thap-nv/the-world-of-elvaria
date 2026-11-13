@@ -1,7 +1,8 @@
 // validateVerdict(verdict, quest, rule): the checks of a verdict that need the quest (implementation-plan §3.2,
 // §3.12, ADR 0008); the verdict schema checks the rest. The Steward writes no verdict that fails them: the doer
 // never judges (party members included, ADR 0020), a character judges only in a verifier session the Steward
-// spawned (never a sub-agent of the worker), and a failing check never lets the quest pass.
+// spawned (never a sub-agent of the worker), and a failing check never lets the quest pass. (PS-22) Nor does the judge
+// whose verdict the quest's objection contests answer that objection.
 import { err, ok } from '../core/result.ts';
 import { MACHINE_VERIFIER, USER_VERIFIER } from '../schema/quest/verdict.ts';
 import { pastAssigneesOf } from './past-assignees-of.ts';
@@ -14,6 +15,7 @@ import type { PassRule } from './pass-rule.ts';
 export type VerdictIssue =
   | { readonly code: 'other_quest' }
   | { readonly code: 'verifier_worked' }
+  | { readonly code: 'objection_judge' }
   | { readonly code: 'unknown_session' }
   | { readonly code: 'pass_with_failing_check'; readonly checks: readonly CheckId[] };
 
@@ -42,6 +44,7 @@ export function validateVerdict(
   // verifier_id is a plain slug (`user` and `machine` judge too); past assignees are characters.
   const pastAssignees = new Set<string>(pastAssigneesOf(quest, party));
   if (pastAssignees.has(verdict.verifier_id)) return err({ code: 'verifier_worked' });
+  if (verdict.verifier_id === quest.objection?.judge) return err({ code: 'objection_judge' });
   const character = verdict.verifier_id !== USER_VERIFIER && verdict.verifier_id !== MACHINE_VERIFIER;
   if (character && !spawnedFor(quest, verdict)) return err({ code: 'unknown_session' });
   const failing = verdict.checks.filter(({ pass }) => !pass).map(({ id }) => id);

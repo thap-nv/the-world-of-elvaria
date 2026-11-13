@@ -3,17 +3,25 @@
 // the code; display strings say letter. Only the Steward writes these files (ADR 0005).
 import { z } from 'zod';
 
-import { CharacterIdSchema, MemoIdSchema, MemoKindIdSchema, QuestIdSchema } from '../../core/ids.ts';
+import {
+  CharacterIdSchema,
+  MemoIdSchema,
+  MemoKindIdSchema,
+  QuestIdSchema,
+  VerdictIdSchema,
+} from '../../core/ids.ts';
 import { DELEGATION_HOLDS, TRIAGE_ACTIONS } from '../../delegation/constants.ts';
 import { DateTimeSchema, GENERATED_NOTE, NonEmptyStringSchema, unique } from '../common.ts';
 import {
   MEMO_BODY_MAX_LENGTH,
+  MEMO_JUDGEMENTS,
+  MEMO_OUTCOME_DECISIONS,
   TRIAGE_NOTE_MAX_LENGTH,
-  MEMO_DECISIONS,
   MEMO_REF_MAX_LENGTH,
   MEMO_REFS_MAX,
   MEMO_ROUTES,
   MEMO_STATES,
+  OBJECTION_REFUSALS,
 } from './constants.ts';
 
 const describe = (description: string) => ({ description });
@@ -26,29 +34,52 @@ export const MemoRefsSchema = z
     describe("Files the memo is about, relative to the plot, as the character wrote them ('/' separators)."),
   );
 
-export const MemoRouteSchema = z
-  .strictObject({
-    route: z
-      .enum(MEMO_ROUTES)
-      .meta(describe("Where the memo goes, from its kind's entry in registry/memos.json.")),
-  })
-  .meta(
+const MemoRouteFieldsSchema = z.strictObject({
+  route: z
+    .enum(MEMO_ROUTES)
+    .meta(describe("Where the memo goes, from its kind's entry in registry/memos.json.")),
+  verdict: VerdictIdSchema.optional().meta(
     describe(
-      'The recipient, decided by routeMemo from the registry (ADR 0024). Later routes add their own fields (the quests of an advisory, the second judge of an objection).',
+      '(PS-22) Of an objection: the fail verdict it contests; absent when its run came back with none.',
     ),
-  );
+  ),
+  refusal: z
+    .enum(OBJECTION_REFUSALS)
+    .optional()
+    .meta(describe('(PS-22) Of an objection the owner decides: why no second judge reads it.')),
+});
+
+/** A judge reads an objection beside the verdict it contests; only a memo sent to the owner says why (PS-22). */
+function checkRoute(to: z.output<typeof MemoRouteFieldsSchema>, ctx: z.RefinementCtx): void {
+  if (to.route === 'judge' && to.verdict === undefined)
+    ctx.addIssue({ code: 'custom', path: ['verdict'], message: 'an objection to a judge names its verdict' });
+  if (to.refusal !== undefined && to.route !== 'owner')
+    ctx.addIssue({ code: 'custom', path: ['refusal'], message: 'only a memo to the owner is refused' });
+}
+
+export const MemoRouteSchema = MemoRouteFieldsSchema.superRefine(checkRoute).meta({
+  description:
+    'The recipient, decided by routeMemo from the registry and, for a judge, from the verdict the run came back with (ADR 0024, PS-22). Later routes add their own fields (the quests of an advisory).',
+  allOf: [
+    { if: { properties: { route: { const: 'judge' } } }, then: { required: ['verdict'] } },
+    { if: { required: ['refusal'] }, then: { properties: { route: { const: 'owner' } } } },
+  ],
+});
 export type MemoRoute = z.infer<typeof MemoRouteSchema>;
 
 export const MemoOutcomeSchema = z
   .strictObject({
-    decision: z.enum(MEMO_DECISIONS),
+    decision: z.enum(MEMO_OUTCOME_DECISIONS),
     at: DateTimeSchema,
     quest: QuestIdSchema.optional().meta(describe('With decision = handled: the quest that does the work.')),
+    verdict: VerdictIdSchema.optional().meta(
+      describe("(PS-22) With decision = sustained or overruled: the second judge's verdict."),
+    ),
     note: NonEmptyStringSchema.optional(),
   })
   .meta(
     describe(
-      'How the memo was closed: by decide_memo, or handled by the quest a create_quest or edit_quest naming it made or changed (PS-03b).',
+      "How the memo was closed: by the decide_memo command, (PS-22) an objection by its second judge's verdict, or (PS-03b) handled by the quest a create_quest or edit_quest naming it made or changed.",
     ),
   );
 export type MemoOutcome = z.infer<typeof MemoOutcomeSchema>;
@@ -75,12 +106,26 @@ export const MemoEscalationSchema = z
   );
 export type MemoEscalation = z.infer<typeof MemoEscalationSchema>;
 
-/** Closed exactly when it has an outcome; a memo handled names the quest that does the work. */
+const JUDGED: readonly string[] = MEMO_JUDGEMENTS;
+
+/**
+ * Closed exactly when it has an outcome; a memo handled names the quest that does the work, and an objection's
+ * second judge its verdict (PS-22).
+ */
 function checkMemo(memo: { state: string; outcome?: MemoOutcome | undefined }, ctx: z.RefinementCtx): void {
   if ((memo.state === 'closed') !== (memo.outcome !== undefined))
     ctx.addIssue({ code: 'custom', path: ['outcome'], message: 'a memo has an outcome exactly when closed' });
   if (memo.outcome?.decision === 'handled' && memo.outcome.quest === undefined)
     ctx.addIssue({ code: 'custom', path: ['outcome', 'quest'], message: 'a handled memo names its quest' });
+  if (
+    memo.outcome !== undefined &&
+    JUDGED.includes(memo.outcome.decision) !== (memo.outcome.verdict !== undefined)
+  )
+    ctx.addIssue({
+      code: 'custom',
+      path: ['outcome', 'verdict'],
+      message: 'a memo a judge closed names its verdict, and only such a memo',
+    });
 }
 
 export const MemoSchema = z

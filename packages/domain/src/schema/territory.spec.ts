@@ -55,6 +55,13 @@ describe('TerritorySchema', () => {
     });
   });
 
+  it('keeps protected paths as written, and writes none for a territory that names none (PS-04)', () => {
+    const laws = { protected_paths: ['.claude/**', 'CLAUDE.md'] };
+    expect(TerritorySchema.parse({ ...minimal, laws }).laws.protected_paths).toEqual(laws.protected_paths);
+    // No default: a file `territory add` writes stays readable by a build pinned before PS-04 (a rollback).
+    expect('protected_paths' in TerritorySchema.parse(minimal).laws).toBe(false);
+  });
+
   it('takes its own environment errors, and refuses one that is no regular expression', () => {
     const own = TerritorySchema.parse({
       ...minimal,
@@ -144,6 +151,7 @@ describe('TerritorySchema', () => {
     ['a check with no command', { checks: [{ ...check('lint'), run: [] }] }, 'checks.0.run'],
     ['an empty reset command', { commands: { reset: ['pnpm db:reset', ''] } }, 'commands.reset'],
     ['an empty read-only glob', { laws: { read_only_paths: [''] } }, 'laws.read_only_paths.0'],
+    ['an empty protected glob', { laws: { protected_paths: [''] } }, 'laws.protected_paths.0'],
     ['a patch glob into git', { laws: { patch_paths: ['.git/**'] } }, 'laws.patch_paths.0: a patch never'],
   ])('rejects %s', (_, change, expected) => {
     expect(issuesOf({ ...minimal, ...change }).join('\n')).toContain(expected);

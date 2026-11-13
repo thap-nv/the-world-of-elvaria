@@ -64,6 +64,11 @@
   and the text normalized (one Unicode form, spaces collapsed, lower case; the caller hashes the key), so a letter
   read again files nothing twice, `memoOf` builds the open memo the Steward files, and `closeMemo` closes it once.
   The events `memo.filed`, `memo.routed`, `memo.closed` and the inbox command `decide_memo` have their schemas here.
+  (PS-22, `src/memo/objection.ts`) A kind routed to a `judge` (`objection`) goes there only when `contestRoute` allows
+  it: it contests a judge's fail that sent the run back, no other objection contests that verdict, and the verdict
+  answered none itself; otherwise it goes to the `owner` with its `refusal`. `objectionOf` names the quest's pending
+  objection (`quest.objection`: the memo, the contested verdict, its judge) and `objectionOutcomeOf` closes it by the
+  second judge's verdict (`sustained` on a pass, `overruled` on a fail).
 - Runs the character state machine (`src/character/`, `transitionCharacter`) and derives what is never stored:
   `reputationOf`, `affinityOf`, `titleOf`. Decides levels: `canTake` (which ranks the Steward may give a level),
   `aboveCeiling` (a stretch that makes the quest wait for the royal seal) and `levelChange` (counting only the
@@ -102,6 +107,11 @@
   keeps the scoped quests after it in the claims of that tick (`claims` of `src/dispatch/tick-steps.ts`).
   `scopeHolderOf` names whom a quest waits for. The merge quest takes its parts' scopes together, the acceptance part
   and the follow-ups the scope of the quest they come from.
+- Marks a quest whose work changed a protected path (`src/verify/protected.ts`, implementation-plan §3.16.4, ADR 0026,
+  PS-04): `territory.laws.protected_paths` is optional, with no default; `protectedMarkOf` gives what the submit sets
+  (`seal_required: true` and `quest.protected_changes`, the paths gathered over the submits, never lowered), and
+  `wantsStrongJudge(quest)` puts the judge of the higher level first from rank B or once the quest is so marked,
+  below the separation rules of `selectVerifier`.
 - Decides the breakers (`src/breaker/`, §3.4, P1-06): `evaluateBreakers(attempt, limits, now, usage)` → `ok` or
   the first trip of `time` (on the minute `budget.max_minutes` is spent), `tokens` or `turns` (once past
   `budget.max_tokens`, `breakers.max_turns`); a tribe whose adapter reports no usage (its `TribeLimits.breakers`
@@ -132,13 +142,14 @@
   or of its party, never the model of anyone who worked the quest (`policy.doers`, P1-55), another model family first by `familyOf`, then another tribe, then
   on a quest of rank `STRONG_JUDGE_MIN_RANK` (B) or above the judge of the higher level, P1-48;
   `dispatch.verifier_same_family` for the rest; not a judge a breaker stopped in the run, nor the one that just
-  handed in a partial verdict, while another may judge), `underPassRule` (a failing check fails the quest under
+  handed in a partial verdict, while another may judge; (PS-22) never the judge whose verdict the quest's `objection`
+  contests, and never the machine for an objection, which waits as unjudgeable when no judge is left), `underPassRule` (a failing check fails the quest under
   `all_checks_and_agent`, as `tests_fail`, or `incomplete` for the Steward's `subquests` check, P1-15, and its
   `party` check of a merge quest, P1-18, and `coverage_not_lower`, P1-20, or `flaky` for `flake_check`), `machineVerdictOf` (the machine's verdict from the checks), `validateVerdict` (no
-  worker, only the session the Steward spawned, no pass over a failing check) and the verdict ids of a run
+  worker, only the session the Steward spawned, no pass over a failing check, not the objection's first judge) and the verdict ids of a run
   (`<quest>-<n>`, `-p<k>` for a partial, `-user` for the owner's). `withVerdict` (`src/character/`) puts a
   verdict into the reputation and tag windows and the fail streak, except the owner's return for a new judgement
-  (`rejudge`, P1-40). What a judge's pass must show (`src/verify/evidence.ts`, P1-40): `passWithoutNotes` (the
+  (`rejudge`, P1-40); a pass that sustains an objection takes the verdict it overturned out of the windows (PS-22). What a judge's pass must show (`src/verify/evidence.ts`, P1-40): `passWithoutNotes` (the
   Steward refuses it), and `withBreaksWeighed`, which takes a pass in a scratch plot whose ritual breaks code
   (`breaksDue`) with fewer than `MIN_BREAKS` breaks as the partial of that session.
 - Reads the script tier (`src/script/`, §3.12, ADR 0017): `scriptParamsIssues` (a quest's `script.params` against
@@ -203,7 +214,9 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   and each session's reads by file (`agent.tool` reads), the files read more than once first; and (PS-05) the submits
   whose work changed files outside their quest's scope (`out_of_scope` of `quest.submitted`). From the log and the
   attempt logs (`src/metrics/session-counts.ts`, PS-21): the code graph's queries (`graphCommandOf`), each assignee
-  session's tool calls before its first edit, and the prompt's size by role and block from the load traces.
+  session's tool calls before its first edit, and the prompt's size by role and block from the load traces. (PS-22,
+  `src/metrics/memo-counts.ts`) Memos by kind with those sent to the owner, from the memo lines, and for each judge the
+  verdicts a second judge read beside an objection and those it overturned, from the verdicts' `objection`.
 - Decides when the Steward's scheduled jobs run (`src/schedule/`, PS-03): `dueJobs` over `kingdom.schedule`, the
   kingdom's local day and time (`localClockOf`) and the day each job last ran: a daily job is due once its `at` has
   come on a day it has not run (`DAILY_JOBS`: `chronicle`, `triage`, `digest`), so a late start catches up and a clock set back
@@ -222,8 +235,9 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   not surely inside the work's scope (`pathInScope`, the reverse doubt of `scopesMeet`), or the Chancellor's own
   choice; none when the Steward may apply it. The memo-triage contract (`MemoTriageFileSchema`), `escalateMemo` and
   the memo's `escalation`, the command `escalate_memo`, `memos` on create_quest, edit_quest and the quest, the source
-  `chancellor` and the line `memo.escalated` have their schemas here; `memoCountsOf` counts the memos the owner and
-  the triage decided (`Metrics.memos`), and a command of the triage is none of the owner's steps.
+  `chancellor` and the line `memo.escalated` have their schemas here; `memoCountsOf` (PS-22) counts, by kind, the memos the owner
+  and the triage decided and those the triage sent up (`Metrics.memos`), and a command of the triage is none of the
+  owner's steps.
 - Gives the load trace of a session's opening line its shape (`LoadTraceSchema`, `src/schema/event/load-trace.ts`,
   PS-01b): the scripture files and their lines, the skill ids and the prompt's blocks by part, id and size.
 - Gives the core types every package builds on: `Result`, branded ids (`QuestId`, `TribeId`, ...), `Clock` and

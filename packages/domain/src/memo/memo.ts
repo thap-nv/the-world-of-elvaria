@@ -5,11 +5,13 @@
 import { formatDatedId } from '../core/id-source.ts';
 import { err, ok } from '../core/result.ts';
 import { MemoSchema } from '../schema/memo/memo.ts';
+import { NO_CONTEST, contestRoute } from './objection.ts';
 import type { CharacterId, MemoId, QuestId } from '../core/ids.ts';
 import type { DelegationHold } from '../delegation/constants.ts';
 import type { Result } from '../core/result.ts';
 import type { Memo, MemoEscalation, MemoOutcome, MemoRoute } from '../schema/memo/memo.ts';
 import type { Registry } from '../schema/registry.ts';
+import type { Contest } from './objection.ts';
 
 /** One memo as the character wrote it in the Memos section of its letter (runner-core's memosOf). */
 export interface MemoDraft {
@@ -29,10 +31,18 @@ export type MemoRefusal =
   | { readonly code: 'unknown_kind'; readonly kind: string }
   | { readonly code: 'invalid'; readonly message: string };
 
-/** Where a memo of `kind` goes, by its entry in registry/memos.json. */
-export function routeMemo(kind: string, registry: Pick<Registry, 'memos'>): Result<MemoRoute, MemoRefusal> {
+/**
+ * Where a memo of `kind` goes, by its entry in registry/memos.json; a kind routed to a judge goes there only when
+ * `contest` allows it, else to the owner (contestRoute, PS-22).
+ */
+export function routeMemo(
+  kind: string,
+  registry: Pick<Registry, 'memos'>,
+  contest: Contest = NO_CONTEST,
+): Result<MemoRoute, MemoRefusal> {
   const entry = registry.memos.find(({ id }) => id === kind);
-  return entry === undefined ? err({ code: 'unknown_kind', kind }) : ok({ route: entry.route });
+  if (entry === undefined) return err({ code: 'unknown_kind', kind });
+  return ok(entry.route === 'judge' ? contestRoute(contest) : { route: entry.route });
 }
 
 /** The text as the id reads it: one Unicode form, runs of spaces and line breaks as one space, lower case. */
@@ -57,14 +67,16 @@ export interface NewMemo {
   readonly source: MemoSource;
   /** When it is filed, in kingdom.tz. */
   readonly at: string;
+  /** What a memo routed to a judge contests (PS-22); absent, it contests nothing and goes to the owner. */
+  readonly contest?: Contest;
 }
 
 /** The open memo the Steward files, routed; refused when its kind is unknown or the contract refuses it. */
 export function memoOf(
-  { id, draft, source, at }: NewMemo,
+  { id, draft, source, at, contest }: NewMemo,
   registry: Pick<Registry, 'memos'>,
 ): Result<Memo, MemoRefusal> {
-  const to = routeMemo(draft.kind, registry);
+  const to = routeMemo(draft.kind, registry, contest);
   if (!to.ok) return to;
   const memo = {
     version: 1,
@@ -85,7 +97,10 @@ export function memoOf(
   return err({ code: 'invalid', message });
 }
 
-/** What decide_memo asks: the decision, the quest that does the work when handled, a note. */
+/**
+ * What decide_memo asks: the decision, the quest that does the work when handled, a note; or (PS-22) the second
+ * judge's verdict on an objection (objectionOutcomeOf).
+ */
 export type MemoDecision = Omit<MemoOutcome, 'at'>;
 
 /** The memo closed with `decision`; a memo is decided once (ADR 0024: no answer, no reopening). */
@@ -99,6 +114,7 @@ export function closeMemo(
     decision: decision.decision,
     at,
     ...(decision.quest === undefined ? {} : { quest: decision.quest }),
+    ...(decision.verdict === undefined ? {} : { verdict: decision.verdict }),
     ...(decision.note === undefined ? {} : { note: decision.note }),
   };
   return ok({ ...memo, state: 'closed', outcome });

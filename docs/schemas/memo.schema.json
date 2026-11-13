@@ -55,7 +55,7 @@
       "minimum": 1
     },
     "to": {
-      "description": "The recipient, decided by routeMemo from the registry (ADR 0024). Later routes add their own fields (the quests of an advisory, the second judge of an objection).",
+      "description": "The recipient, decided by routeMemo from the registry and, for a judge, from the verdict the run came back with (ADR 0024, PS-22). Later routes add their own fields (the quests of an advisory).",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -65,10 +65,56 @@
         "route": {
           "description": "Where the memo goes, from its kind's entry in registry/memos.json.",
           "enum": [
-            "chancellor"
+            "chancellor",
+            "judge",
+            "owner"
+          ]
+        },
+        "verdict": {
+          "description": "(PS-22) Of an objection: the fail verdict it contests; absent when its run came back with none.",
+          "type": "string",
+          "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user)?$"
+        },
+        "refusal": {
+          "description": "(PS-22) Of an objection the owner decides: why no second judge reads it.",
+          "enum": [
+            "no_verdict",
+            "owner_verdict",
+            "final_verdict",
+            "second_objection"
           ]
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "route": {
+                "const": "judge"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "verdict"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "refusal"
+            ]
+          },
+          "then": {
+            "properties": {
+              "route": {
+                "const": "owner"
+              }
+            }
+          }
+        }
+      ]
     },
     "body": {
       "type": "string",
@@ -96,7 +142,7 @@
       "format": "date-time"
     },
     "outcome": {
-      "description": "How the memo was closed: by decide_memo, or handled by the quest a create_quest or edit_quest naming it made or changed (PS-03b).",
+      "description": "How the memo was closed: by the decide_memo command, (PS-22) an objection by its second judge's verdict, or (PS-03b) handled by the quest a create_quest or edit_quest naming it made or changed.",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -108,7 +154,9 @@
           "enum": [
             "shelved",
             "rejected",
-            "handled"
+            "handled",
+            "sustained",
+            "overruled"
           ]
         },
         "at": {
@@ -119,6 +167,11 @@
           "description": "With decision = handled: the quest that does the work.",
           "type": "string",
           "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+        },
+        "verdict": {
+          "description": "(PS-22) With decision = sustained or overruled: the second judge's verdict.",
+          "type": "string",
+          "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user)?$"
         },
         "note": {
           "type": "string",
@@ -257,6 +310,29 @@
         "at": "2026-11-12T14:20:00+07:00",
         "quest": "q_20261112_b3m8ty",
         "note": "Gộp vào quest dọn README."
+      }
+    },
+    {
+      "version": 1,
+      "id": "m_20261112_c5rq8n",
+      "kind": "objection",
+      "from": "thorn",
+      "quest": "q_20261112_7pzkfv",
+      "attempt": 3,
+      "to": {
+        "route": "judge",
+        "verdict": "q_20261112_7pzkfv-2"
+      },
+      "body": "Ghi chú 1 sai: `apps/cli/src/quest/list.spec.ts` đã thử múi giờ của vương quốc; `pnpm --filter @elvaria/cli test` in ra 41 test xanh.",
+      "refs": [
+        "apps/cli/src/quest/list.spec.ts"
+      ],
+      "state": "closed",
+      "filed_at": "2026-11-12T13:05:10+07:00",
+      "outcome": {
+        "decision": "sustained",
+        "at": "2026-11-12T13:40:00+07:00",
+        "verdict": "q_20261112_7pzkfv-3"
       }
     },
     {

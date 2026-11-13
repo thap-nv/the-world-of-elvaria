@@ -160,7 +160,7 @@ describe('EventSchema', () => {
     ['memo.filed', { memo: 'm_1', kind: 'proposal', from: 'thorn' }, 'data.memo'],
     ['graph.built', { commit: 'abc123', duration_ms: 5 }, 'data.commit'],
     ['graph.failed', { commit: SHA_NEW, reason: '' }, 'data.reason'],
-    ['memo.routed', { memo: 'm_20261106_4k2pqz', route: 'owner' }, 'data.route'],
+    ['memo.routed', { memo: 'm_20261106_4k2pqz', route: 'everyone' }, 'data.route'],
     ['memo.closed', { memo: 'm_20261106_4k2pqz', decision: 'done' }, 'data.decision'],
     ['memo.escalated', { memo: 'm_20261106_4k2pqz', action: 'owner', holds: [] }, 'data.holds'],
     // PS-03b: only a command the owner did not write names its source.

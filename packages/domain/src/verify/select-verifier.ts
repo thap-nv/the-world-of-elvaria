@@ -2,20 +2,24 @@
 // ADR 0008, ADR 0020). Never anyone who worked the quest, or any quest of its party; a class that verifies the
 // quest's kind; never the model of anyone who worked it (P1-55: of every run, not only the last: the Steward's own
 // run of a party's merge has no assignee to compare). Among those free now: another model family first, then another
-// tribe (account), then on a quest of rank STRONG_JUDGE_MIN_RANK or above the judge of the higher level (P1-48), then
+// tribe (account), then on a quest of rank STRONG_JUDGE_MIN_RANK or above, or one whose work changed a protected path
+// (PS-04, ADR 0026), the judge of the higher level (P1-48), then
 // a tribe whose CLI hands in a structured verdict itself over one whose judge answers in text (§3.14
 // `prompt_and_parse`, P1-33), then the one idle the longest. With no judge of another family free,
 // dispatch.verifier_same_family decides: `different_model` takes a free judge of the same family on another model
 // (or waits for one), `machine_only` waits for a judge of another family while the roster has one, and lets the
 // machine judge once it has none. A judge a breaker stopped in this review is not chosen again while another judge
 // may take it (P1-38, P1-35 (d)): it would most likely spend its budget the same way; nor is the judge that just
-// handed in a partial verdict (P1-48, P1-42 (c)): fresh eyes read on from where it stopped.
+// handed in a partial verdict (P1-48, P1-42 (c)): fresh eyes read on from where it stopped. (PS-22) An objection
+// waiting on the quest takes a second judge: never the judge of the verdict it contests, and never the machine, which
+// cannot read a letter; with no such judge in the roster the quest waits as one nobody may judge.
 import { cutVerifiersOf, justPartialOf } from '../breaker/review.ts';
 import { familyOf } from '../character/family.ts';
 import { STRONG_JUDGE_MIN_RANK } from '../constants.ts';
 import { byIdleSince } from '../dispatch/roster.ts';
 import { RANKS } from '../schema/common.ts';
 import { pastAssigneesOf } from './past-assignees-of.ts';
+import { touchesProtected } from './protected.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
 import type { Quest } from '../schema/quest/quest.ts';
@@ -52,9 +56,12 @@ export type Selection =
 /** Nobody fits now: the quest waits in review for a later tick. */
 export type NoVerifier = null;
 
-/** Whether a quest of `rank` wants the stronger judge first (P1-48, P1-16 (l): "Opus from rank B"). */
-export const wantsStrongJudge = (rank: Quest['rank']): boolean =>
-  RANKS.indexOf(rank) >= RANKS.indexOf(STRONG_JUDGE_MIN_RANK);
+/**
+ * Whether `quest` wants the stronger judge first: from rank B (P1-48, P1-16 (l): "Opus from rank B"), and whatever its
+ * rank once its work changed a protected path (PS-04, ADR 0026).
+ */
+export const wantsStrongJudge = (quest: Pick<Quest, 'rank' | 'protected_changes'>): boolean =>
+  RANKS.indexOf(quest.rank) >= RANKS.indexOf(STRONG_JUDGE_MIN_RANK) || touchesProtected(quest);
 
 /**
  * Another tribe first (another account, another pool), then on a quest that wants it the stronger judge, then a
@@ -65,14 +72,17 @@ export const wantsStrongJudge = (rank: Quest['rank']): boolean =>
  */
 const byPreference = (quest: Quest, { doers, limits }: Pick<VerifierPolicy, 'doers' | 'limits'>) => {
   const sameTribe = (c: Character): number => Number(doers.some(({ tribe }) => tribe === c.tribe));
-  const weaker = wantsStrongJudge(quest.rank) ? (c: Character): number => -c.level : () => 0;
+  const weaker = wantsStrongJudge(quest) ? (c: Character): number => -c.level : () => 0;
   const inText = (c: Character): number =>
     Number(limits?.[c.tribe]?.structured_output === 'prompt_and_parse');
   return (a: Character, b: Character): number =>
     sameTribe(a) - sameTribe(b) || weaker(a) - weaker(b) || inText(a) - inText(b) || byIdleSince(a, b);
 };
 
-/** Who may ever judge `quest`: a judge of its kind, never one of its doers, never on a model one of them used. */
+/**
+ * Who may ever judge `quest`: a judge of its kind, never one of its doers, never on a model one of them used, never
+ * the judge whose verdict the quest's objection contests (PS-22).
+ */
 function fitJudges(
   quest: Quest,
   candidates: readonly Character[],
@@ -85,19 +95,24 @@ function fitJudges(
   );
   const pastAssignees = pastAssigneesOf(quest, policy.party);
   const models = new Set(policy.doers.map(({ model }) => model));
-  return candidates.filter((c) => judges.has(c.class) && !pastAssignees.has(c.id) && !models.has(c.model));
+  const contested = quest.objection?.judge;
+  return candidates.filter(
+    (c) => judges.has(c.class) && !pastAssignees.has(c.id) && !models.has(c.model) && c.id !== contested,
+  );
 }
 
 /**
  * Whether `quest` waits in review for a judge the roster does not have (P1-15): under `different_model`, nobody
  * among `candidates` may ever judge it, so it waits until the owner summons one. Under `machine_only` the machine
- * judges when no judge of another family exists, so a quest never waits for ever.
+ * judges when no judge of another family exists, so a quest never waits for ever; except one with an objection, which
+ * waits when the roster has no judge it would take (PS-22).
  */
 export function waitsForNoJudge(
   quest: Quest,
   candidates: readonly Character[],
   policy: Omit<VerifierPolicy, 'free'>,
 ): boolean {
+  if (quest.objection !== undefined) return awaitedJudges(quest, candidates, policy).length === 0;
   return policy.same_family === 'different_model' && fitJudges(quest, candidates, policy).length === 0;
 }
 
@@ -167,7 +182,9 @@ export function selectVerifier(
   const free = fit.filter(policy.free).toSorted(byPreference(quest, policy));
   const other = free.find(otherFamily);
   if (other !== undefined) return { reason: 'other_family', character: other };
-  if (machineOnly) return fit.some(otherFamily) ? null : { reason: 'machine_only' };
+  // The machine reads no objection (PS-22): the quest waits for a judge, as waitsForNoJudge says.
+  if (machineOnly)
+    return fit.some(otherFamily) || quest.objection !== undefined ? null : { reason: 'machine_only' };
   const same = free[0];
   return same === undefined ? null : { reason: 'same_family_other_model', character: same };
 }

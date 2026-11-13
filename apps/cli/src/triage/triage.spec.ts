@@ -242,6 +242,19 @@ describe('the Chancellor’s triage (PS-03b)', () => {
     expect(io.printed.err[0]).toBe("The Chancellor's reply does not follow the memo-triage contract:");
   });
 
+  it('never takes an objection, to a second judge or to the owner (PS-22): only letters sent to the Chancellor', async () => {
+    const objection = (id: string, to: Record<string, string>) =>
+      MemoSchema.parse({ ...LINK, id, kind: 'objection', to, body: 'Ghi chú 1 sai: test đã có.' });
+    const store = openKingdom(kingdom);
+    await store.memos.write(objection('m_20261105_cccccc', { route: 'judge', verdict: `${SOURCE.id}-1` }));
+    await store.memos.write(objection('m_20261105_dddddd', { route: 'owner', refusal: 'owner_verdict' }));
+    const runner = chancellor(REPLY);
+    const io = testIo();
+    expect(await triage(io, runner)).toBe(0);
+    expect(io.printed.out).toEqual(['No letter waits for the Chancellor.']);
+    expect(runner.heard).toEqual([]);
+  });
+
   it('runs as a job of the schedule: waits for the Chancellor’s tribe, ends with the Steward, throws on a failure', async () => {
     const io = testIo();
     const ctx = await openKingdomContext({ values: { kingdom }, positionals: [] }, cli(io));

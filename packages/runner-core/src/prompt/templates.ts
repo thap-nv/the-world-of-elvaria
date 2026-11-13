@@ -27,6 +27,8 @@ export const PROMPT_TEMPLATES = [
   'resumed',
   'returned',
   'rejudge',
+  // PS-22: the first verdict beside the final one, for the assignee; the objection, for its second judge.
+  'final-verdict',
   'failed-checks',
   'checks-ahead',
   'refused-patch',
@@ -37,6 +39,7 @@ export const PROMPT_TEMPLATES = [
   'plot-rules',
   'review',
   'partial',
+  'objection',
   'out-of-scope',
   'ritual-steps',
   'chancellor',

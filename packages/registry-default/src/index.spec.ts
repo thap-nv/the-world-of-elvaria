@@ -59,8 +59,12 @@ describe('the default registry', () => {
       'todo-scan',
     ]);
     expect(ids(tags)).toEqual(['frontend', 'backend', 'db', 'infra', 'i18n', 'e2e', 'integration', 'docs']);
-    // PS-02: the first kind of memo; advisory, request and objection come with PS-09 and PS-10 (ADR 0024).
-    expect(memos.map(({ id, route }) => [id, route])).toEqual([['proposal', 'chancellor']]);
+    // PS-02: the first kind of memo; PS-22 the objection to a second judge; advisory and request come with PS-09 and
+    // PS-10 (ADR 0024).
+    expect(memos.map(({ id, route }) => [id, route])).toEqual([
+      ['proposal', 'chancellor'],
+      ['objection', 'judge'],
+    ]);
   });
 
   it('names exactly the default scripts in the scripts.json schema description', () => {

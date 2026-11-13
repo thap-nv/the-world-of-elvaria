@@ -142,6 +142,33 @@
       "description": "Only on the owner's return (`elvaria return --rejudge`, P1-40): the quest goes back for a new judgement because the judge erred, not the assignee, so the assignee's reputation and fail streak do not count it.",
       "type": "boolean"
     },
+    "objection": {
+      "description": "(PS-22) The objection this judge answered, from the quest: the verdict is final, and a pass drops the contested verdict from the assignee's reputation and fail streak, as a rejudge does. Never on the owner's verdict.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "memo",
+        "verdict",
+        "judge"
+      ],
+      "properties": {
+        "memo": {
+          "description": "The objection memo (memos/<memo>.json): which note is wrong, why, the evidence.",
+          "type": "string",
+          "pattern": "^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+        },
+        "verdict": {
+          "description": "The fail verdict the objection contests.",
+          "type": "string",
+          "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user)?$"
+        },
+        "judge": {
+          "description": "That verdict's verifier_id: it never judges the objection (ADR 0008).",
+          "type": "string",
+          "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$"
+        }
+      }
+    },
     "by_human": {
       "type": "boolean"
     },
@@ -239,6 +266,20 @@
           },
           "result": {
             "const": "fail"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "objection"
+        ]
+      },
+      "then": {
+        "properties": {
+          "by_human": {
+            "const": false
           }
         }
       }
