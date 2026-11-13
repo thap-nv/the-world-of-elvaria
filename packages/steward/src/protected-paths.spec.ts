@@ -88,7 +88,11 @@ describe('a quest whose work changed a protected path (PS-04)', () => {
 });
 
 describe('a party whose part changed a protected path (PS-04)', () => {
-  it('marks the part, and the merge quest the machine merges it into', async () => {
+  // A second judge of another family than the knights', stronger than orin (level 6) and first by id: it judges the
+  // contract, which wants no strong judge, so orin is the one idle the longer when the part comes to review.
+  const STRONGER = { id: 'ilse', cls: 'judge', tribe: 'gemini', model: 'gemini-3.5-pro', level: 8 } as const;
+
+  it('marks the part without the seal and gives it the stronger judge; the merge quest waits for the seal', async () => {
     party = await partyBench(
       {
         'Book a room': { [CONTRACT]: 'openapi: 3.1.0\n', [SUBQUESTS_FILE]: list(part('d1', 'Rooms API')) },
@@ -96,33 +100,45 @@ describe('a party whose part changed a protected path (PS-04)', () => {
       },
       1,
       {},
-      { territory: { laws: { protected_paths: ['apps/api/**'] } } },
+      { cast: [STRONGER], territory: { laws: { protected_paths: ['apps/api/**'] } } },
     );
     const { kingdom, steward } = party;
     await kingdom.command('create_quest', contractPayload('Book a room'));
     await tickUntil(
       steward,
       kingdom.clock,
-      reached(() => kingdom.quest('Rooms API'), 'awaiting_seal'),
-      200,
-    );
-    const api = await kingdom.quest('Rooms API');
-    expect(api).toMatchObject({ seal_required: true, protected_changes: ['apps/api/rooms.ts'] });
-    // The contract's own change is outside the protected paths: it went on without a seal.
-    const contract = (await kingdom.quests()).find(({ party_role: role }) => role === 'contract');
-    expect(contract).toMatchObject({ status: 'done', seal_required: false });
-    expect(contract?.protected_changes).toBeUndefined();
-
-    await kingdom.command('seal', { quest: api.id });
-    await tickUntil(
-      steward,
-      kingdom.clock,
       reached(() => mergeOf(kingdom), 'awaiting_seal'),
       200,
     );
+    // The part never reaches the base alone (the owner's settlement of PS-04 (a)): it went on without the seal.
+    const api = await kingdom.quest('Rooms API');
+    expect(api).toMatchObject({
+      status: 'done',
+      seal_required: false,
+      protected_changes: ['apps/api/rooms.ts'],
+    });
+    const judges = (id: string) =>
+      kingdom.requests
+        .filter((req) => req.role === 'verifier' && req.quest?.id === id)
+        .map((req) => req.character.id);
+    expect(judges(api.id)).toEqual(['ilse']);
+    // The contract's own change is outside the protected paths: it went on without a seal, its judge the first by id.
+    const contract = (await kingdom.quests()).find(({ party_role: role }) => role === 'contract');
+    expect(contract).toMatchObject({ status: 'done', seal_required: false });
+    expect(contract?.protected_changes).toBeUndefined();
+    expect(judges(contract?.id ?? '')).toEqual(['ilse']);
+
     const merge = await mergeOf(kingdom);
     expect(merge.assignee).toBeNull();
-    expect(merge.protected_changes).toEqual(['apps/api/rooms.ts']);
+    expect(merge).toMatchObject({ seal_required: true, protected_changes: ['apps/api/rooms.ts'] });
+    expect(kingdom.notices).toContainEqual({
+      kind: 'awaiting_seal',
+      quest: expect.objectContaining({ id: merge.id }) as unknown,
+    });
+    expect(kingdom.notices).not.toContainEqual({
+      kind: 'awaiting_seal',
+      quest: expect.objectContaining({ id: api.id }) as unknown,
+    });
   }, 120_000);
 });
 

@@ -196,7 +196,7 @@ Các lệnh trên chỉ đọc, không tốn mana, chạy được khi Quản s�
 
 Với một đội, chỉ merge nhánh của **quest ghép**; hợp đồng và các phần vào `main` qua nó.
 
-**Vùng bảo vệ** (PS-04): lãnh thổ khai `laws.protected_paths` (thứ canh giữ thế giới: luật, check, người chấm, sổ đo). Quest có thay đổi chạm một đường dẫn trong đó thì cần dấu vua dù dạng của nó không cần (kể cả `analyze`), và được ưu tiên người chấm cấp cao hơn như quest từ hạng B; `quest show` có dòng "Vùng bảo vệ đã chạm". Không có gì bị chặn: đọc kỹ các file đó trong diff trước khi đóng dấu. Cách đặt và danh sách của lãnh thổ Elvaria: [elvaria-territory.md](elvaria-territory.md).
+**Vùng bảo vệ** (PS-04): lãnh thổ khai `laws.protected_paths` (thứ canh giữ thế giới: luật, check, người chấm, sổ đo). Quest có thay đổi chạm một đường dẫn trong đó thì cần dấu vua dù dạng của nó không cần (kể cả `analyze`), và được ưu tiên người chấm cấp cao hơn như quest từ hạng B; phần của một đội chỉ được ưu tiên người chấm, dấu thì quest ghép của đội xin một lần cho cả đội; `quest show` có dòng "Vùng bảo vệ đã chạm". Không có gì bị chặn: đọc kỹ các file đó trong diff trước khi đóng dấu. Cách đặt và danh sách của lãnh thổ Elvaria: [elvaria-territory.md](elvaria-territory.md).
 
 ## 8. `doctor`, phiên bản CLI và việc ghim
 

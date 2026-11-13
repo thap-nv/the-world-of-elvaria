@@ -184,7 +184,8 @@
   goes through it too, P1-55), a WIP left in the plot with the reason, and a plot whose changes cannot be listed is not committed either;
   the same read names the paths of `laws.protected_paths` the work changed, and the submit sets the royal seal and
   `quest.protected_changes` through `Move.before` (`protectedMarkOf`, PS-04, ADR 0026), as the machine's merge of a
-  party does from its own changes (`protectedChangesIn`);
+  party does from its own changes (`protectedChangesIn`); a part of a party gets the paths without the seal, which
+  its merge quest always asks for;
   before it, on a
   territory with `laws.patch_paths`, the assignee's `elvaria.patch` is applied through `Plots.applyPatch` and told
   in a `plot.patched` line, and a patch that touches other paths or does not apply sends the quest to the

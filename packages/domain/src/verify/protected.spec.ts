@@ -41,6 +41,25 @@ describe('protectedMarkOf', () => {
       protected_changes: ['CLAUDE.md', '.claude/x.json'],
     });
   });
+
+  it("names the paths of a party's part without the seal: its merge quest waits for it", () => {
+    for (const role of ['part', 'acceptance'] as const)
+      expect(
+        protectedMarkOf({ party_role: role, protected_changes: ['CLAUDE.md'] }, ['.claude/x.json']),
+      ).toEqual({
+        protected_changes: ['CLAUDE.md', '.claude/x.json'],
+      });
+    for (const role of ['contract', 'merge'] as const)
+      expect(protectedMarkOf({ party_role: role }, ['CLAUDE.md'])).toEqual({
+        seal_required: true,
+        protected_changes: ['CLAUDE.md'],
+      });
+  });
+
+  it("wants the stronger judge for a part's mark all the same", () => {
+    const mark = protectedMarkOf({ party_role: 'part' }, ['CLAUDE.md']);
+    expect(wantsStrongJudge({ rank: 'E', ...mark })).toBe(true);
+  });
 });
 
 describe('a quest whose work changed a protected path', () => {

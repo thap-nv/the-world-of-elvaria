@@ -49,11 +49,11 @@ Theo bài học điều phối giai đoạn 1 (lượt soát kế hoạch giai �
 
 `laws.protected_paths` (tùy chọn) là các glob, tính từ gốc lãnh thổ, của thứ canh giữ thế giới: luật, check, người chấm, sổ đo, bản nâng cấp. Khác `forbidden_paths`, vùng bảo vệ không chặn gì: nhân vật vẫn đọc, sửa, và Quản sự vẫn commit. Ở mỗi lần nộp, Quản sự đọc thay đổi của đất riêng (cùng lần đọc với `forbidden_paths`, từ lúc đất riêng tách nhánh, cả file chưa commit) và khớp chúng với `protected_paths` theo cùng cách: glob khớp ở mọi độ sâu, nên `CLAUDE.md` cũng nêu `packages/x/CLAUDE.md`; thà chờ dấu nhầm. Khi có đường dẫn khớp:
 
-- quest được đặt `seal_required: true` (bất kể `seal_default` của dạng, kể cả dạng `analyze` hay `research`) và `protected_changes` (các đường dẫn đã chạm, gộp qua mọi lần nộp); phán quyết đạt thì quest chờ dấu vua (`awaiting_seal`) và chuông kêu như mọi quest cần dấu;
+- quest được đặt `protected_changes` (các đường dẫn đã chạm, gộp qua mọi lần nộp) và `seal_required: true` (bất kể `seal_default` của dạng, kể cả dạng `analyze` hay `research`); phán quyết đạt thì quest chờ dấu vua (`awaiting_seal`) và chuông kêu như mọi quest cần dấu. Phần của một đội (`part`, phần test chấp nhận `acceptance`) thì chỉ được đặt `protected_changes`, không bắt dấu (chủ nhân chốt 2026-11-13): phần không bao giờ vào nhánh gốc một mình, và quest ghép của đội luôn cần dấu;
 - người chấm được chọn như quest từ hạng B: sau luật khác họ model và khác tộc, người cấp cao hơn đứng trước (P1-48); luật tách vai không đổi;
 - `elvaria quest show` có dòng "Vùng bảo vệ đã chạm" nêu các đường dẫn.
 
-Dấu đã đặt thì không gỡ: lần nộp sau không còn chạm vùng bảo vệ vẫn giữ dấu, như máy không bao giờ hạ `seal_required` (một lần nhìn của chủ nhân rẻ hơn một thay đổi lọt vào thứ canh giữ). Lượt ghép của máy trong một đội cũng đọc thay đổi của mình: phần nào chạm vùng bảo vệ thì quest ghép mang `protected_changes` và được ưu tiên người chấm mạnh (quest ghép vốn luôn cần dấu). Quest bậc script không commit gì nên không bao giờ chạm.
+Dấu đã đặt thì không gỡ: lần nộp sau không còn chạm vùng bảo vệ vẫn giữ dấu, như máy không bao giờ hạ `seal_required` (một lần nhìn của chủ nhân rẻ hơn một thay đổi lọt vào thứ canh giữ). Lượt ghép của máy trong một đội cũng đọc thay đổi của mình: phần nào chạm vùng bảo vệ thì quest ghép mang `protected_changes` và được ưu tiên người chấm mạnh (quest ghép vốn luôn cần dấu), nên đọc kỹ các file đó ở dấu của quest ghép: đó là lần nhìn duy nhất của chủ nhân trên thay đổi của các phần. Quest bậc script không commit gì nên không bao giờ chạm.
 
 ### Danh sách `protected_paths` của lãnh thổ Elvaria
 
