@@ -14,7 +14,18 @@ export interface AgySettings {
     /** Empty: nothing may ask under `-p`, where an unanswered question is a soft-deny that ends the run. */
     readonly ask: readonly string[];
   };
+  /**
+   * The Default agent mode, the one every measure of the spike was taken in. agy 1.5.7 starts a session with no
+   * saved mode in Auto, headless `-p` too, and `/config` saves Default as this empty string (its changelog).
+   * `--settings` lays its keys over settings.json for this run only (spike §3), and the empty string counts there
+   * as a saved mode: agy 1.5.7 logs `SetCycleMode called: auto` without the key and no such line with it
+   * (spike §18).
+   */
+  readonly agentMode: typeof DEFAULT_AGENT_MODE;
 }
+
+/** Default; Auto would be `auto`, which Elvaria never asks for. */
+const DEFAULT_AGENT_MODE = '';
 
 export const CONTEXT_FILE = 'GEMINI.md';
 /** Files Elvaria generates in the plot: the character never rewrites its own fence or context. */
@@ -96,5 +107,6 @@ export function agySettingsOf(policy: ToolPolicy, letter?: string): AgySettings 
       deny: unique([...policy.deny.flatMap(denyOf), ...GENERATED]),
       ask: [],
     },
+    agentMode: DEFAULT_AGENT_MODE,
   };
 }

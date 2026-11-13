@@ -49,6 +49,17 @@ describe("agySettingsOf: git's own folder (P1-49)", () => {
   });
 });
 
+describe('agySettingsOf: the agent mode (fix/agy-1-5-7)', () => {
+  it('keeps every role in Default, the mode agy 1.5.7 no longer starts a headless run in on its own', () => {
+    for (const role of ['assignee', 'verifier', 'chancellor'] as const) {
+      const policy = toolPolicyOf({ role, characterClass: { tools: { allow: ['Read'], deny: [] } } });
+      // An empty string, not an absent key: agy reads the absence as "no saved mode" and starts in Auto.
+      expect(agySettingsOf(policy).agentMode).toBe('');
+      expect(JSON.stringify(agySettingsOf(policy, 'D:/k/quests/q/handover.md'))).toContain('"agentMode":""');
+    }
+  });
+});
+
 describe('agySettingsOf: generated files (P1-24)', () => {
   it('lets a writer run the generators and read generated files, and denies writing them', () => {
     const territory = {

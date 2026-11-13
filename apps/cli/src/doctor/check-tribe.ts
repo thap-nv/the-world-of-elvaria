@@ -101,7 +101,10 @@ function nextTool(
 /**
  * A pinned CLI that changed. locateTool tries the pinned file before PATH, so one found on PATH means the pinned
  * file is gone (a VS Code extension update moves Claude Code's folder): the tribe cannot run until re-pinned,
- * which is an error. A file updated in place (agy) still runs, so a new version there is a warning.
+ * which is an error. A file updated in place (agy) still runs, so a new version there is a warning, and the pin does
+ * not hold it back: the next session runs the new version (agy 1.5.6 → 1.5.7 on 2026-11-13, with a new default
+ * agent mode). Either way the hint sends the owner to `tribe check` with the real CLI before pinning (A1a of the
+ * lessons of 2026-11-13).
  */
 function changedTool(
   tribe: Tribe,
@@ -115,8 +118,9 @@ function changedTool(
     version: found.version,
     path: found.path,
   };
-  const hint = [ctx.t('cli.doctor.pin_hint')];
-  return found.from === 'path'
+  const moved = found.from === 'path';
+  const hint = [ctx.t(moved ? 'cli.doctor.moved_hint' : 'cli.doctor.pin_hint', params)];
+  return moved
     ? finding('error', ctx.t('cli.doctor.tool_moved', params), hint)
     : finding('warn', ctx.t('cli.doctor.tool_changed', params), hint);
 }

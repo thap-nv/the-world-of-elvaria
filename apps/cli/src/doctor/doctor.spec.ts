@@ -108,8 +108,16 @@ describe('elvaria doctor', () => {
     await fakeTool(bin, 'claude', '2.1.400 (Claude Code)');
     const changed = await doctorIo(bin);
     expect(await doctor(changed)).toBe(0);
-    expect(printed(changed)).toContain('! Tribe claude: found version 2.1.400');
-    expect(printed(changed)).toContain('elvaria doctor --pin');
+    // The file at the pinned path is the new version already: the pin does not keep the old one (A1a, 2026-11-13).
+    expect(printed(changed)).toMatch(
+      /! Tribe claude: the CLI at .+ updated itself from the pinned 2\.1\.318 to 2\.1\.400;/,
+    );
+    expect(printed(changed)).toContain("the tribe's next session runs 2.1.400, pinned or not.");
+    expect(printed(changed)).not.toContain('keeping the pinned');
+    // Try it with the real CLI first, then pin.
+    expect(printed(changed)).toMatch(
+      /elvaria tribe check claude --model <.+>.*; pin it once that passes: elvaria doctor --pin/,
+    );
     expect((await readKingdom()).tribes[0]?.tool?.version).toBe('2.1.318');
     expect(await doctor(await doctorIo(bin), '--pin')).toBe(0);
     expect((await readKingdom()).tribes[0]?.tool?.version).toBe('2.1.400');
@@ -143,6 +151,8 @@ describe('elvaria doctor', () => {
     expect(printed(moved)).toContain(
       `✗ Tribe claude: the pinned ${old.replaceAll('\\', '/')} is gone; found `,
     );
+    // The pinned file is gone, so tribe check needs the one found (--tool).
+    expect(printed(moved)).toMatch(/elvaria tribe check claude --tool ".+\/bin\/claude(\.cmd)?" --model </);
     expect((await readKingdom()).tribes[0]?.tool?.path).toBe(old.replaceAll('\\', '/'));
     expect(await doctor(await doctorIo(bin), '--pin')).toBe(0);
     expect((await readKingdom()).tribes[0]?.tool?.path).toMatch(/\/bin\/claude(\.cmd)?$/);
