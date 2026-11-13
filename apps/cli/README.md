@@ -14,6 +14,10 @@
 - Sends every quest change as an inbox command (`create_quest`, `confirm`, `cancel`, `archive`, `edit_quest`,
   `retry`, `reassign`, `seal`, `return`, `answer`; ADR 0005), after checking ids against the registry and the quest
   against the transition table; `archive` and `cancel` both take a quest in the infirmary (`infirmary.archive`, P1-56).
+- `say` (PS-06) gives the Chancellor `kingdom.dispatch.council` and prints the brief of work for the council (goal,
+  out of scope, acceptance examples, assumptions, each question with its recommended answer) with the plan quest
+  that confirming accepts them for (`src/say/report.ts`, `reportBrief`); the drop reasons of the quest template and
+  the council are translated like the others.
   While a Steward holds the kingdom's lock, `sendCommand` waits one tick and a little more for its `command.applied` or
   `command.rejected` line and prints it (`stale` with what to do about it); without a Steward it only drops the file.
   `quest edit --max-minutes` on a quest with a running session says what the new ceiling does to it: the Steward's

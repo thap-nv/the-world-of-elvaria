@@ -1,6 +1,6 @@
 # ADR 0017 · One quest, one context: three execution tiers (script, apprentice, session); revival starts a fresh session from the handover letter
 
-- Status: accepted · 2026-11-06 · updated 2026-11-06 with spike P1-02 (Claude Code 2.1.318) · amended 2026-11-07 (resume after an answer; its prompt, P1-05)
+- Status: accepted · 2026-11-06 · updated 2026-11-06 with spike P1-02 (Claude Code 2.1.318) · amended 2026-11-07 (resume after an answer; its prompt, P1-05) · amended 2026-11-13 (split by the peak context, PS-06)
 - Related: [implementation-plan.md](../implementation-plan.md) §3.5, §3.11, §3.12, §9.1 items 14–16; [spike P1-02](../spikes/claude-2026-11.md)
 
 ## Context
@@ -18,7 +18,7 @@ Spike P1-02: under `-p`, an agent from `--agents <file>` gets exactly its `tools
 - **Session**: a new top-level session per quest or child quest, spawned by the Steward.
 - Invariants: a verifier is never a sub-agent of the doer; sub-agents do not spawn sub-agents; over-threshold work stops and becomes a child quest.
 - Revival after mana or a crash is a **fresh session** whose prompt is the quest + `handover.md` + the last 20 lines of `journal.jsonl` + the branch's `git log` and diff. `--resume <session_id>` only when `dispatch.resume_after_mana = true` (default false; `--settings` is passed again). (Amended 2026-11-07, owner, before P1-01: also when the owner answers a character's question within `dispatch.resume_after_answer_minutes` of `blocked.asked_at` (default 55, `null` turns it off) and the adapter declares `resume`, because the session's context, and likely its prompt cache, is still worth more than a re-read; a later answer starts a fresh session whose handover carries the answer. Implementation-plan §2.4, P1-05.) (Amended 2026-11-07, P1-05, confirmed by the owner: a resumed session's prompt carries only what is new — that it goes on, and the owner's answer when there is one — since the CLI session still holds the quest and the letter; the minutes count to the moment the session opens.)
-- The Chancellor sets `tier`, batches tiny tasks into one quest (often `batch` with `units[]`), and splits work whose `estimate.tokens` exceeds `breakers.context_budget_tokens` (default 120 000) into a parent `plan` quest and children.
+- The Chancellor sets `tier`, batches tiny tasks into one quest (often `batch` with `units[]`), and splits work whose `estimate.tokens` exceeds `breakers.context_budget_tokens` (default 120 000) into a parent `plan` quest and children. (Amended 2026-11-13, PS-06, the owner's choice in the session, awaiting settlement in implementation-plan §11: a session costs roughly its turns times its context, and the token breaker counts cached reads at a tenth (P1-23), so `estimate.tokens` of a rank D job on a web repository is some 250 000 and the old rule split nearly every honest draft. A draft now gives its peak context, `estimate.context`, and the work is split when that passes the budget; a draft without it stands on `estimate.tokens` as before. The quest keeps tokens and minutes only. A mage's sub-quest whose given peak passes the budget fails the plan's `subquests` check.)
 
 ## Consequences
 

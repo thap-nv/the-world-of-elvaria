@@ -4,7 +4,7 @@
     {
       "ref": "d1",
       "title": "Chia việc viết lại docs/architecture.md",
-      "description": "Viết lại toàn bộ docs/architecture.md theo 18 ADR vượt một context; lập kế hoạch và chia thành quest con theo nhóm ADR.",
+      "description": "## Goal\n\nViết lại toàn bộ docs/architecture.md theo 18 ADR vượt một context; lập kế hoạch và chia thành quest con theo nhóm ADR.\n\n## Steps\n\n1. Đọc phần liên quan.\n2. Sửa và thêm test.\n\n## Files\n\n- Các file trong vùng của quest.\n\n## Done when\n\n- `pnpm test` xanh.\n\n## Do not touch\n\nNone.\n\n## Known traps\n\nNone known.",
       "kind": "plan",
       "rank": "C",
       "territory": "dc1-se-team",
@@ -23,7 +23,7 @@
     {
       "ref": "d2",
       "title": "Cập nhật docs/architecture.md theo ADR 0014-0018",
-      "description": "Viết lại các mục chịu ảnh hưởng của ADR 0014-0018; đối chiếu từng mục với ADR gốc.",
+      "description": "## Goal\n\nViết lại các mục chịu ảnh hưởng của ADR 0014-0018; đối chiếu từng mục với ADR gốc.\n\n## Steps\n\n1. Đọc phần liên quan.\n2. Sửa và thêm test.\n\n## Files\n\n- Các file trong vùng của quest.\n\n## Done when\n\n- `pnpm test` xanh.\n\n## Do not touch\n\nNone.\n\n## Known traps\n\nNone known.",
       "kind": "document",
       "rank": "D",
       "territory": "dc1-se-team",
@@ -42,7 +42,7 @@
     {
       "ref": "d3",
       "title": "Cập nhật docs/architecture.md theo ADR 0019-0022",
-      "description": "Viết lại các mục chịu ảnh hưởng của ADR 0019-0022 sau khi phần ADR 0014-0018 xong.",
+      "description": "## Goal\n\nViết lại các mục chịu ảnh hưởng của ADR 0019-0022 sau khi phần ADR 0014-0018 xong.\n\n## Steps\n\n1. Đọc phần liên quan.\n2. Sửa và thêm test.\n\n## Files\n\n- Các file trong vùng của quest.\n\n## Done when\n\n- `pnpm test` xanh.\n\n## Do not touch\n\nNone.\n\n## Known traps\n\nNone known.",
       "kind": "document",
       "rank": "D",
       "territory": "dc1-se-team",

@@ -3,6 +3,7 @@ import type { QuestDraft } from '@elvaria/domain';
 import { describe, expect, it } from 'vitest';
 
 import { DC1, HANDBOOK, REGISTRY, reply } from './__fixtures__/kingdom.ts';
+import { templated } from './__fixtures__/template.ts';
 import { screenDrafts } from './screen.ts';
 
 const CONTEXT = { registry: REGISTRY, territories: [DC1, HANDBOOK], context_budget_tokens: 120_000 };
@@ -14,7 +15,7 @@ const draft = (ref: string, fields: Record<string, unknown> = {}): QuestDraft =>
   QuestDraftSchema.parse({
     ref,
     title: `Quest ${ref}`,
-    description: 'Something to do.',
+    description: templated('Something to do.'),
     kind: 'build',
     rank: 'D',
     territory: 'dc1-se-team',

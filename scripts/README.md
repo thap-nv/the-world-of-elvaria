@@ -144,11 +144,20 @@
   `docs/implementation-plan/8-done-*.md` (`readPlanRows`, `findPlanItemTitle`) and
   `process.env.npm_lifecycle_event`, prints which §8 item builds the tool (`notYetMessage`), and exits `0` (or
   `1` when the item id is missing or absent from §8); writes no files.
+- `ritual-steps.mjs` (`ritual-steps.spec.ts`): `node scripts/ritual-steps.mjs --kingdom <dir> [--ritual <id>]
+[--dry-run] [--force]` (PS-06) sets the steps of one ritual (default `council_review`) of a kingdom's
+  `registry/rituals.json` to those of `packages/registry-default/rituals.json`, which `elvaria migrate` never does
+  for an entry the kingdom has (`stepsChange`). It changes them only when the kingdom's steps are the default's with
+  steps missing, in order; otherwise it refuses unless `--force`. Reads both files; copies the kingdom's to
+  `<kingdom>/.backup/<stamp>-ritual-steps/registry/rituals.json`, then writes it whole through a file beside it.
+  Exits `0` (done, nothing to do, or `--dry-run`), `1` (refused, no such ritual) or `2` (no `--kingdom`). Run by
+  hand after `elvaria upgrade` (`docs/guides/operating-a-kingdom.md` §13).
 
 ## Does not
 
 - Ship as a workspace package or run at runtime in the kingdom: these are repository maintenance tools included
-  in the root `tsconfig.json` and `vitest.config.mjs`.
+  in the root `tsconfig.json` and `vitest.config.mjs`. `ritual-steps.mjs` writes a kingdom's registry only when
+  the owner, or a session acting for the owner, runs it by hand.
 - Edit source schemas (`packages/domain/src/schema/`), `packages/i18n/src/glossary.json`, locale files, or
   `packages/config/boundaries.mjs`: the generators only write derived files under `docs/`, `plan-split.mjs` only
   moves lines of the implementation plan, and the check scripts never write to disk.
@@ -162,7 +171,8 @@
 
 - Root `devDependencies` (`package.json`): `@elvaria/config` (`boundaries.mjs`, `depcruise.mjs`),
   `@elvaria/domain` (schemas, `CONTRACTS`, `contractOf`, `EventSchema`, `EVENT_TYPES`, `QUEST_STATUSES`,
-  `CHARACTER_STATUSES`, `RITUAL_STEPS`, `renderQuestTransitionTable`), `@elvaria/i18n` (`GLOSSARY`,
+  `CHARACTER_STATUSES`, `RITUAL_STEPS`, `renderQuestTransitionTable`), `packages/registry-default/rituals.json`
+  (`ritual-steps.mjs`, read as a file), `@elvaria/i18n` (`GLOSSARY`,
   `LOCALE_FILES`, `DEFAULT_LOCALE`, `translator`, `bannedWords`, `glossaryTable`, `idsOf`, `isGlossaryTable`,
   `isIdList`, `glossaryProblems`, `localeProblems`), `dependency-cruiser` (`docs-graph.mjs`), `typescript`
   (`docs-identifiers.mjs`), and `ajv` + `ajv-formats` (`gen-schemas.spec.ts`).

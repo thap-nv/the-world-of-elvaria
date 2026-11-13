@@ -204,8 +204,10 @@ describe('assignee prompt', () => {
     const plan = QuestSchema.parse({ ...QUEST, kind: 'plan', class_required: 'mage' });
     const territory = { ...TERRITORY, secrets_allowed: ['npm_token'] };
     const { user } = buildPrompt({ ...assignee, quest: plan, territory }, templates);
-    expect(user).toContain('- Kinds of a sub-quest and the classes each allows: build (knight, dwarf);');
-    expect(user).toContain('plan (mage)');
+    expect(user).toContain(
+      '- Kinds of a sub-quest and the classes each allows: build (knight, dwarf; sealed by default);',
+    );
+    expect(user).toContain('plan (mage; no seal by default)');
     expect(user).toContain('- Tags: frontend, backend, db, infra, i18n, e2e, integration, docs');
     expect(user).toContain('- Secrets this territory allows: npm_token');
     expect(buildPrompt({ ...assignee, quest: plan }, templates).user).toContain(

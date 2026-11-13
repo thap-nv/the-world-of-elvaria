@@ -20,15 +20,26 @@
   names a kind, territory, script or tag the kingdom does not have (tags are the closed list of
   `registry/tags.json`), a class its kind does not allow, a script not made for its kind or with params outside
   its `params_schema` (§3.12), a secret its territory does not allow (ADR 0013), a party part (only the party lead
-  emits parts, §3.13), or an estimate above `context_budget_tokens` that nobody split (one quest, one context, ADR
-  0017: a draft whose kind delivers sub-quests, or that other drafts name as parent, is the split itself); so is every
-  draft that waits on a dropped one, or on drafts that wait on it. The rest come back with each draft after its
-  parent and its dependencies. The Chancellor's question comes back even when its draft is dropped.
+  emits parts, §3.13), or a peak context (`estimate.context`, else `estimate.tokens`) above `context_budget_tokens`
+  that nobody split (one quest, one context, ADR 0017: a draft whose kind delivers sub-quests, or that other drafts
+  name as parent, is the split itself); so is every draft that waits on a dropped one, or on drafts that wait on it.
+  PS-06 adds four reasons: a session draft whose description misses the quest template (`templateIssuesOf` of the
+  domain), and with `kingdom.dispatch.council` (`src/council.ts`, the domain's `councilDue`) work of the council's
+  size drafted without a plan, a plan of that size no brief names, and a brief that names a draft delivering no
+  sub-quests. The rest come back with each draft after its parent and its dependencies. The Chancellor's question
+  comes back even when its draft is dropped.
+- Sends a reply back once (PS-06): when the screen drops drafts for those four reasons (`RETURNED_REASONS`),
+  `draftQuests` runs one more session in `<run_dir>/again/` whose prompt carries the first reply and why
+  (`ReturnedReply`); what still misses is dropped, and a second session that fails leaves the first reply. The reply
+  carries the brief when its plan draft was kept; `session_ids` and `tokens` count both sessions.
 - Turns drafts into inbox commands (`draftCommands`): one `create_quest` with `draft: true` and
   `created_by: chancellor` per draft, in that order; `depends_on_refs` and `parent_ref` become the quest
   ids the Steward will give (the caller derives them from each command, `questIdOfCommand` of
   `@elvaria/steward`), so drafts that depend on each other reach the Steward as quests that do. Given memos (PS-03b,
-  `say --memo`), every command carries them: the first draft the owner confirms closes them.
+  `say --memo`), every command carries them: the first draft the owner confirms closes them. Given a brief (PS-06),
+  the plan draft it names opens its description with the brief (`briefText`) and has `seal_required: true`; a draft
+  without `seal_required` leaves it out, so the Steward takes its kind's `seal_default`; the quest keeps the
+  estimate's tokens and minutes, not its peak context.
 - Triages memos (PS-03b, implementation-plan §3.16.3): `triageMemos(context, session, signal)` runs one session for
   the whole batch (`buildTriagePrompt` of runner-core; the memo-triage contract, `MEMO_TRIAGE_JSON_SCHEMA`), checks
   that each memo of the batch is decided once and no other named (`triageCheckOf`), and screens the drafts of its new
@@ -62,7 +73,8 @@ pnpm --filter @elvaria/chancellor test
 
 The specs read the Chancellor's replies as a CLI hands them over (`structured_output`, one JSON file each in
 `src/__fixtures__/structured-output/`: a script-tier link check, a split into a plan and its children, a party
-contract, a vague request with its one question, drafts the kingdom refuses, two questions) and play them
+contract, a vague request with its one question, drafts the kingdom refuses, two questions, a plan with its brief
+for the council) and play them
 through a scripted runner; the default registry is read from `packages/registry-default/`, which this package
 may not import. `src/reply.spec.ts` checks that the schema given to the CLI is
 `docs/schemas/quest-draft.schema.json` without its examples and those keywords. `apps/cli/src/say/say.spec.ts`

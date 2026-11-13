@@ -17,6 +17,10 @@ merge may name, and what a draft may name. Each list is built from the kingdom's
 
 {{kinds}}
 
+# Classes and their tools
+
+{{classes}}
+
 # Tags
 
 {{tags}}

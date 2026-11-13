@@ -371,6 +371,25 @@
           "type": "integer",
           "minimum": 1,
           "default": 2
+        },
+        "council": {
+          "description": "When the Chancellor sends work through the council (PS-06, product plan 0.8 §14): a brief with every question for the owner asked once, a plan quest of a mage that waits for the owner's seal, a review of the plan, then the sub-quests. A reply of smaller work goes straight to drafts as before; a reply of larger work without that plan and brief is returned to the Chancellor once.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "from_rank": {
+              "description": "Work with a session draft of this rank or above goes through the council.",
+              "$ref": "#/$defs/rank",
+              "default": "B"
+            },
+            "from_areas": {
+              "description": "Work whose session drafts carry at least this many tags over at least this many areas goes through the council too. An area is a territory, or within one the globs of scope_paths that meet (shared_paths aside); a draft without a scope covers its whole territory.",
+              "type": "integer",
+              "minimum": 2,
+              "default": 2
+            }
+          },
+          "default": {}
         }
       }
     },
@@ -795,7 +814,11 @@
         "verifier_same_family": "different_model",
         "resume_after_mana": false,
         "resume_after_answer_minutes": 55,
-        "max_background": 2
+        "max_background": 2,
+        "council": {
+          "from_rank": "B",
+          "from_areas": 2
+        }
       },
       "delegation": {
         "max_rank": "D",

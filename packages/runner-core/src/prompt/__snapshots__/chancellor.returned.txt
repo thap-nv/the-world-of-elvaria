@@ -1,0 +1,13 @@
+
+
+# Your first reply came back
+
+- d1: no "## Goal" section, or it is empty
+
+It was:
+
+```json
+{"version": 1}
+```
+
+Write the whole reply again with these fixed, and keep what was right.

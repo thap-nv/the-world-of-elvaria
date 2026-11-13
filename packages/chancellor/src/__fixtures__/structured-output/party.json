@@ -4,7 +4,7 @@
     {
       "ref": "d1",
       "title": "Đội: màn xác nhận L5 cho API và web",
-      "description": "Việc chạm cả apps/api lẫn apps/web. Trưởng đội viết hợp đồng OpenAPI trước, rồi chia một phần backend và một phần frontend; quest ghép chạy e2e.",
+      "description": "## Goal\n\nViệc chạm cả apps/api lẫn apps/web. Trưởng đội viết hợp đồng OpenAPI trước, rồi chia một phần backend và một phần frontend; quest ghép chạy e2e.\n\n## Steps\n\n1. Đọc phần liên quan.\n2. Sửa và thêm test.\n\n## Files\n\n- Các file trong vùng của quest.\n\n## Done when\n\n- `pnpm test` xanh.\n\n## Do not touch\n\nNone.\n\n## Known traps\n\nNone known.",
       "kind": "plan",
       "rank": "C",
       "territory": "dc1-se-team",

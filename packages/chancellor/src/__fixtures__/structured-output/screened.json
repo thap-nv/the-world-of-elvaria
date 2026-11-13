@@ -4,7 +4,7 @@
     {
       "ref": "d1",
       "title": "Thêm cột trạng thái cho bảng đơn hàng",
-      "description": "Migration thêm cột status vào bảng orders, kèm test.",
+      "description": "## Goal\n\nMigration thêm cột status vào bảng orders, kèm test.\n\n## Steps\n\n1. Đọc phần liên quan.\n2. Sửa và thêm test.\n\n## Files\n\n- Các file trong vùng của quest.\n\n## Done when\n\n- `pnpm test` xanh.\n\n## Do not touch\n\nNone.\n\n## Known traps\n\nNone known.",
       "kind": "build",
       "rank": "D",
       "territory": "dc1-se-team",
@@ -12,14 +12,17 @@
       "class_required": "knight",
       "tags": ["db"],
       "depends_on_refs": [],
-      "estimate": { "tokens": 50000, "minutes": 25 },
+      "estimate": {
+        "tokens": 50000,
+        "minutes": 25
+      },
       "seal_required": false,
       "secrets_required": ["database_url"]
     },
     {
       "ref": "d2",
       "title": "Hiện trạng thái đơn hàng trên web",
-      "description": "Thêm cột trạng thái vào bảng đơn hàng ở apps/web.",
+      "description": "## Goal\n\nThêm cột trạng thái vào bảng đơn hàng ở apps/web.\n\n## Steps\n\n1. Đọc phần liên quan.\n2. Sửa và thêm test.\n\n## Files\n\n- Các file trong vùng của quest.\n\n## Done when\n\n- `pnpm test` xanh.\n\n## Do not touch\n\nNone.\n\n## Known traps\n\nNone known.",
       "kind": "build",
       "rank": "D",
       "territory": "dc1-se-team",
@@ -27,14 +30,17 @@
       "class_required": "knight",
       "tags": ["web_ui"],
       "depends_on_refs": ["d1"],
-      "estimate": { "tokens": 40000, "minutes": 20 },
+      "estimate": {
+        "tokens": 40000,
+        "minutes": 20
+      },
       "seal_required": false,
       "secrets_required": []
     },
     {
       "ref": "d3",
       "title": "Viết e2e cho trạng thái đơn hàng",
-      "description": "Kịch bản Playwright cho cột trạng thái mới.",
+      "description": "## Goal\n\nKịch bản Playwright cho cột trạng thái mới.\n\n## Steps\n\n1. Đọc phần liên quan.\n2. Sửa và thêm test.\n\n## Files\n\n- Các file trong vùng của quest.\n\n## Done when\n\n- `pnpm test` xanh.\n\n## Do not touch\n\nNone.\n\n## Known traps\n\nNone known.",
       "kind": "build",
       "rank": "D",
       "territory": "dc1-se-team",
@@ -42,14 +48,17 @@
       "class_required": "knight",
       "tags": ["e2e"],
       "depends_on_refs": ["d2"],
-      "estimate": { "tokens": 30000, "minutes": 15 },
+      "estimate": {
+        "tokens": 30000,
+        "minutes": 15
+      },
       "seal_required": false,
       "secrets_required": []
     },
     {
       "ref": "d4",
       "title": "Đồng bộ đơn hàng lên kho lưu trữ",
-      "description": "Script đẩy đơn hàng mới lên bucket lưu trữ mỗi đêm.",
+      "description": "## Goal\n\nScript đẩy đơn hàng mới lên bucket lưu trữ mỗi đêm.\n\n## Steps\n\n1. Đọc phần liên quan.\n2. Sửa và thêm test.\n\n## Files\n\n- Các file trong vùng của quest.\n\n## Done when\n\n- `pnpm test` xanh.\n\n## Do not touch\n\nNone.\n\n## Known traps\n\nNone known.",
       "kind": "build",
       "rank": "C",
       "territory": "dc1-se-team",
@@ -57,7 +66,10 @@
       "class_required": "dwarf",
       "tags": ["infra"],
       "depends_on_refs": [],
-      "estimate": { "tokens": 60000, "minutes": 30 },
+      "estimate": {
+        "tokens": 60000,
+        "minutes": 30
+      },
       "seal_required": true,
       "secrets_required": ["aws_secret_access_key"]
     }

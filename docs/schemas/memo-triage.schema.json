@@ -127,7 +127,6 @@
           "tags",
           "depends_on_refs",
           "estimate",
-          "seal_required",
           "secrets_required"
         ],
         "properties": {
@@ -246,10 +245,16 @@
               "minutes": {
                 "type": "integer",
                 "minimum": 0
+              },
+              "context": {
+                "description": "The most tokens the session holds in its context at once: its prompt, the files it reads, the conversation. Above kingdom.breakers.context_budget_tokens the job is split; without it, tokens stands in.",
+                "type": "integer",
+                "minimum": 0
               }
             }
           },
           "seal_required": {
+            "description": "Only when the owner's words say whether the result waits for the seal; left out, the quest takes its kind's seal_default.",
             "type": "boolean"
           },
           "secrets_required": {

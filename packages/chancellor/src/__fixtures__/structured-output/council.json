@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "drafts": [
+    {
+      "ref": "d1",
+      "title": "Kế hoạch: lý do của trạm xá thành mã cộng chuỗi VI/EN",
+      "description": "## Goal\n\nLý do của trạm xá và dòng chi tiết của doctor thành mã, chuỗi VI/EN qua i18n.\n\n## Files\n\n- `plans/infirmary-codes.md`, `subquests.json`\n\n## Done when\n\n- `subquests.json` mở được, mỗi phần có `scope_paths`.\n\n## Do not touch\n\nNone.\n\n## Known traps\n\n- `implementation-plan.md` lớn: tìm trước rồi đọc đúng đoạn.",
+      "kind": "plan",
+      "rank": "B",
+      "territory": "dc1-se-team",
+      "tier": "session",
+      "class_required": "mage",
+      "tags": ["backend", "i18n"],
+      "depends_on_refs": [],
+      "estimate": { "tokens": 300000, "minutes": 40, "context": 90000 },
+      "secrets_required": []
+    }
+  ],
+  "brief": {
+    "goal": "Chủ nhân đọc lý do của trạm xá và của doctor bằng ngôn ngữ của mình.",
+    "out_of_scope": ["Đổi giao diện của thế giới"],
+    "acceptance_examples": ["`elvaria doctor --locale en` in lý do bằng tiếng Anh"],
+    "assumptions": ["Mã lý do là snake_case, như các id khác"],
+    "questions": [{ "question": "Giữ chuỗi cũ trong event log?", "recommended": "Không: log mang mã" }],
+    "plan_ref": "d1"
+  }
+}
