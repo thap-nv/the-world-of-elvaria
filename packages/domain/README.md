@@ -107,6 +107,14 @@
   keeps the scoped quests after it in the claims of that tick (`claims` of `src/dispatch/tick-steps.ts`).
   `scopeHolderOf` names whom a quest waits for. The merge quest takes its parts' scopes together, the acceptance part
   and the follow-ups the scope of the quest they come from.
+- Decides the council (`src/council/`, implementation-plan §3.16.6, ADR 0028, PS-06): `councilDue` (a session
+  draft from `kingdom.dispatch.council.from_rank`, or `from_areas` tags over as many areas: territories, and within
+  one the groups of scope globs that meet, shared paths aside); `templateIssuesOf` (the
+  quest template of `QUEST_TEMPLATE_SECTIONS`: every section, numbered steps up to `STEPS_REQUIRED_UP_TO`, a check
+  named in "Done when" that the territory has); `planIssuesOf` (a plan's sub-quests: a scope for each session one,
+  scopes apart for two that may run at once, a given peak context within the budget, the template);
+  `peakContextOf` and `questEstimateOf` (a draft's `estimate.context` is a planning number the quest does not
+  keep). The brief (`BriefSchema`) is a block of the quest-draft file; `seal_required` of a draft is optional.
 - Marks a quest whose work changed a protected path (`src/verify/protected.ts`, implementation-plan §3.16.4, ADR 0026,
   PS-04): `territory.laws.protected_paths` is optional, with no default; `protectedMarkOf` gives what the submit sets
   (`seal_required: true` and `quest.protected_changes`, the paths gathered over the submits, never lowered; for a

@@ -9,6 +9,7 @@ import type { Quest } from '@elvaria/domain';
 import type { SpawnRequest } from '@elvaria/runner-core';
 
 import { leavingRunners } from './deliver.ts';
+import { templated } from './template.ts';
 import { gitPlots, gitRepoWith, onRepo } from './git-plots.ts';
 import { CAST, RM_TEMP, bench, questPayload } from './kingdom.ts';
 import type { Plots, Steward } from '../types.ts';
@@ -16,11 +17,14 @@ import type { Bench, CastMember, Plays } from './kingdom.ts';
 
 export const CONTRACT = 'api/openapi.yaml';
 
-/** A part of the quest-draft schema: a knight's build on dc1-se-team under the contract. */
+/**
+ * A part of the quest-draft schema: a knight's build on dc1-se-team under the contract, in the quest template and with
+ * a scope of its own (PS-06: the subquests check returns parts without them).
+ */
 export const part = (ref: string, title: string, fields: Record<string, unknown> = {}) => ({
   ref,
   title,
-  description: `Part ${ref} of the party, against ${CONTRACT}.`,
+  description: templated(`Part ${ref} of the party, against ${CONTRACT}.`),
   kind: 'build',
   rank: 'D',
   territory: 'dc1-se-team',
@@ -29,6 +33,7 @@ export const part = (ref: string, title: string, fields: Record<string, unknown>
   tags: ['backend'],
   party_role: 'part',
   contract: CONTRACT,
+  scope_paths: [`src/${ref}/**`],
   depends_on_refs: [],
   estimate: { tokens: 60000, minutes: 20 },
   seal_required: false,

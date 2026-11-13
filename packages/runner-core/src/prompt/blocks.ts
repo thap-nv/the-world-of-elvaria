@@ -11,7 +11,9 @@ import type { Memory } from './memory.ts';
 import type { ToolPolicy } from '../policy/tool-policy.ts';
 import type { PromptTemplates } from './templates.ts';
 import { scopeFacts } from './scope.ts';
-import { DELIVERABLE_FACTS } from './deliverable-facts.ts';
+import { DELIVERABLE_FACTS, draftingFor } from './deliverable-facts.ts';
+import type { FactsTerritory } from './deliverable-facts.ts';
+import type { DraftingTerms } from './drafting.ts';
 import type { Kingdom, Quest, Registry, Skill, Territory, Verdict } from '@elvaria/domain';
 
 export type Locale = Kingdom['owner']['locale'];
@@ -179,11 +181,13 @@ function partyFact(quest: Quest): string[] {
   return [`- Party: ${quest.party_role ?? 'part'} of ${quest.party_id}${contract}`];
 }
 
+/** The quest's facts and description; a quest that delivers drafts also reads how to write them (PS-06). */
 export function questBlock(
   quest: Quest,
   registry: Registry,
-  territory: Pick<Territory, 'secrets_allowed' | 'shared_paths'>,
+  territory: FactsTerritory,
   t: PromptTemplates,
+  terms: DraftingTerms,
 ): string {
   const kind = entryOf(registry.kinds, quest.kind, 'kind');
   const facts = [
@@ -201,6 +205,7 @@ export function questBlock(
     title: quest.title,
     facts: facts.join('\n'),
     description: quest.description,
+    drafting: draftingFor(kind, t, terms),
   });
 }
 

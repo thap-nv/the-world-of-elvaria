@@ -2,8 +2,12 @@
 // quest-draft schema checks shapes, not whether a tag, kind or secret exists. A draft that names something the
 // kingdom does not have is dropped here, with its reason, instead of being refused by the Steward one tick later;
 // so is every draft that waits on a dropped one. The rest come back in an order where each follows what it names.
-import { scriptParamsIssues } from '@elvaria/domain';
-import type { Kind, QuestDraft, Registry, Territory } from '@elvaria/domain';
+// PS-06: a job is split by its peak context; a session draft follows the quest template, and work of the council's
+// size comes as a plan with a brief. The last two send the reply back to the Chancellor once (draftQuests).
+import { peakContextOf, scriptParamsIssues, templateIssueLine, templateIssuesOf } from '@elvaria/domain';
+import type { Brief, Council, Kind, QuestDraft, Registry, Territory } from '@elvaria/domain';
+
+import { councilDrops } from './council.ts';
 
 export const DROP_REASONS = [
   'unknown_kind',
@@ -23,8 +27,24 @@ export const DROP_REASONS = [
   'party_part',
   'needs_dropped_draft',
   'dependency_cycle',
+  // PS-06: the description misses part of the quest template (owner, 2026-11-12).
+  'template',
+  // PS-06: work of the council's size drafted as quests to do, not as a plan (ADR 0028).
+  'needs_council',
+  // PS-06: a plan for work of the council's size that no brief names.
+  'needs_brief',
+  // PS-06: the brief names a draft whose kind delivers no sub-quests.
+  'brief_not_on_plan',
 ] as const;
 export type DropReason = (typeof DROP_REASONS)[number];
+
+/** The reasons the Chancellor gets one more try for (draftQuests): its own drafting, not what the kingdom lacks. */
+export const RETURNED_REASONS: ReadonlySet<DropReason> = new Set([
+  'template',
+  'needs_council',
+  'needs_brief',
+  'brief_not_on_plan',
+]);
 
 export interface DroppedDraft {
   readonly ref: string;
@@ -42,9 +62,11 @@ export interface ScreenedDrafts {
 
 export interface ScreenContext {
   readonly registry: Pick<Registry, 'kinds' | 'tags' | 'scripts'>;
-  readonly territories: readonly Pick<Territory, 'id' | 'secrets_allowed'>[];
-  /** `kingdom.breakers.context_budget_tokens`: the most one quest may take (ADR 0017). */
+  readonly territories: readonly Pick<Territory, 'id' | 'secrets_allowed' | 'shared_paths' | 'checks'>[];
+  /** `kingdom.breakers.context_budget_tokens`: the most context one quest may hold at once (ADR 0017). */
   readonly context_budget_tokens: number;
+  /** `kingdom.dispatch.council` (PS-06); absent, as for the triage of memos, no reply is held to the council. */
+  readonly council?: Council;
 }
 
 type Problem = Pick<DroppedDraft, 'reason' | 'detail'>;
@@ -72,9 +94,19 @@ function tooLong(
   parents: ReadonlySet<string>,
   budget: number,
 ): Problem | undefined {
-  if (draft.estimate.tokens <= budget || kind.deliverable_type === 'subquests' || parents.has(draft.ref))
-    return undefined;
-  return problem('over_context_budget', `${draft.estimate.tokens} > ${budget}`);
+  // The peak context decides (PS-06, ADR 0017 amended): a draft's tokens count a whole session, cached reads at a tenth.
+  const peak = peakContextOf(draft.estimate);
+  if (peak <= budget || kind.deliverable_type === 'subquests' || parents.has(draft.ref)) return undefined;
+  return problem('over_context_budget', `${peak} > ${budget}`);
+}
+
+/** What the description lacks of the quest template, with the territory's checks (PS-06). */
+function templateProblem(draft: QuestDraft, territory: Pick<Territory, 'checks'>): Problem | undefined {
+  const issues = templateIssuesOf(
+    draft,
+    territory.checks.map(({ id }) => id),
+  );
+  return issues.length === 0 ? undefined : problem('template', issues.map(templateIssueLine).join('; '));
 }
 
 /** The first thing the draft names that the kingdom does not have, if any. */
@@ -96,7 +128,7 @@ function problemOf(
   const secret = draft.secrets_required.find((name) => !territory.secrets_allowed.includes(name));
   if (secret !== undefined) return problem('secret_not_allowed', secret);
   if (draft.party_role === 'part') return problem('party_part');
-  return tooLong(draft, kind, parents, budget);
+  return tooLong(draft, kind, parents, budget) ?? templateProblem(draft, territory);
 }
 
 /** The drafts this one cannot exist without. */
@@ -140,11 +172,22 @@ function ordered(drafts: readonly QuestDraft[], dropped: DroppedDraft[]): QuestD
   return placed;
 }
 
-export function screenDrafts(drafts: readonly QuestDraft[], context: ScreenContext): ScreenedDrafts {
+/**
+ * The drafts the kingdom can take, in order, and those it cannot, with why. `brief` (PS-06): the reply's, which the
+ * council rule reads with `context.council`.
+ */
+export function screenDrafts(
+  drafts: readonly QuestDraft[],
+  context: ScreenContext,
+  brief?: Brief,
+): ScreenedDrafts {
   const dropped: DroppedDraft[] = [];
   const parents = new Set(drafts.flatMap(({ parent_ref: parent }) => (parent === undefined ? [] : [parent])));
+  const council = councilDrops(drafts, context, brief);
   const known = drafts.filter((draft) => {
-    const found = problemOf(draft, context, parents);
+    const own = problemOf(draft, context, parents);
+    const rule = council.get(draft.ref);
+    const found = own ?? (rule === undefined ? undefined : problem(rule));
     if (found !== undefined) dropped.push(dropOf(draft, found));
     return found === undefined;
   });

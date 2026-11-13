@@ -407,6 +407,34 @@
               "used_in": "`territory.shared_paths`"
             },
             {
+              "vi": "Tấu trình",
+              "en": "Brief",
+              "id": ["brief"],
+              "definition": "Khối của câu trả lời Tể tướng cho việc đủ lớn để qua Nghị hội: mục tiêu, ngoài phạm vi, ví dụ chấp nhận, giả định, và mọi câu hỏi cho chủ nhân hỏi một lần, mỗi câu kèm phương án đề xuất; nêu tên bản nháp kế hoạch (`plan_ref`). `elvaria say` in nó; nó mở đầu mô tả của quest kế hoạch, quest đó chờ dấu vua. Xác nhận quest kế hoạch là nhận các phương án đề xuất (ADR 0028, PS-06).",
+              "used_in": "`quest-draft.brief`, `draftCommands`, `elvaria say`"
+            },
+            {
+              "vi": "Ngưỡng Nghị hội",
+              "en": "Council threshold",
+              "id": ["council"],
+              "definition": "Dữ liệu vương quốc: việc từ hạng nào (mặc định B), hay mang bao nhiêu tag trên bao nhiêu vùng (mặc định 2), thì đi qua Nghị hội: tấu trình, quest kế hoạch của pháp sư, duyệt kế hoạch, một dấu, rồi mới chia việc. Câu trả lời của việc lớn chỉ có quest để làm thì bị trả lại Tể tướng một lần. Hàm thuần `councilDue` (PS-06).",
+              "used_in": "`kingdom.dispatch.council`, `councilDue`, `screenDrafts`"
+            },
+            {
+              "vi": "Mẫu đề bài",
+              "en": "Quest template",
+              "id": ["quest_template"],
+              "definition": "Các mục cố định của mô tả mọi quest bậc phiên do Tể tướng và pháp sư soạn, tiêu đề bằng tiếng Anh: Goal, Steps, Files, Done when (lệnh kiểm, hay check của lãnh thổ viết check `<id>`), Do not touch, Known traps. Hạng F tới D bắt buộc có các bước đánh số; từ hạng C người làm chọn cách và ghi ở \"Decisions taken\". Máy kiểm bằng `templateIssuesOf`; quest chủ nhân tự viết không bị kiểm (PS-06).",
+              "used_in": "`QUEST_TEMPLATE_SECTIONS`, `templateIssuesOf`, `planIssuesOf`, `screenDrafts`"
+            },
+            {
+              "vi": "Ngữ cảnh đỉnh",
+              "en": "Peak context",
+              "id": ["estimate.context"],
+              "definition": "Số token lớn nhất một phiên giữ trong ngữ cảnh cùng lúc, trường tùy chọn của ước lượng trong bản nháp. Quyết việc có vừa một phiên không: vượt `context_budget_tokens` thì chia (ADR 0017 sửa tại chỗ). Khác `estimate.tokens`, là token cả phiên như cầu dao đếm. Quest không giữ trường này (PS-06).",
+              "used_in": "`quest-draft.drafts[].estimate.context`, `peakContextOf`, `screenDrafts`, `planIssuesOf`"
+            },
+            {
               "vi": "Vùng bảo vệ",
               "en": "Protected paths",
               "id": ["protected_paths", "protected_changes"],
@@ -2355,6 +2383,10 @@
             {
               "id": ["read_plan"],
               "meaning": "đọc kế hoạch và quest con"
+            },
+            {
+              "id": ["check_plan_ready"],
+              "meaning": "kiểm kế hoạch sẵn sàng: vừa một phiên, xong máy kiểm được, file nóng, quest thăm dò, không trái quyết định đã ghi (PS-06)"
             },
             {
               "id": ["check_sources"],

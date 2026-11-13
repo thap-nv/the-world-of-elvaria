@@ -6,6 +6,7 @@ import type { Memo, Quest } from '@elvaria/domain';
 
 import { LANGUAGE_NAMES, classBlock, decreeBlock } from './blocks.ts';
 import { catalogOf, list, rosterOf, territoriesOf } from './chancellor.ts';
+import { draftingValuesOf } from './drafting.ts';
 import { fill, joinBlocks } from './templates.ts';
 import type { BuiltPrompt } from '../runner/types.ts';
 import type { ChancellorContext } from './chancellor.ts';
@@ -17,7 +18,11 @@ export interface TriageMemo {
   readonly source?: Quest;
 }
 
-export interface TriageContext extends Omit<ChancellorContext, 'utterance' | 'mana'> {
+// The council is the owner's words' alone: work a memo asks for is a single quest, or the owner's (PS-06).
+export interface TriageContext extends Omit<
+  ChancellorContext,
+  'utterance' | 'mana' | 'council' | 'returned'
+> {
   /** The batch, the oldest first. */
   readonly memos: readonly TriageMemo[];
   /** The quests a merge may name: draft or open (MERGEABLE_STATUSES). */
@@ -54,10 +59,13 @@ function questItem(quest: Quest): string {
 }
 
 export function buildTriagePrompt(context: TriageContext, t: PromptTemplates): BuiltPrompt {
+  const language = LANGUAGE_NAMES[context.locale];
   const role = fill(t.triage, {
     context_budget_tokens: String(context.context_budget_tokens),
     tags_max: String(QUEST_TAGS_MAX),
-    language: LANGUAGE_NAMES[context.locale],
+    language,
+    // PS-06: a new quest of the triage is a draft like the Chancellor's, in the same template.
+    ...draftingValuesOf(t, { language, context_budget_tokens: context.context_budget_tokens }),
   });
   return {
     system: joinBlocks([

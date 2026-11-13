@@ -1,7 +1,7 @@
 // buildPrompt: the prompt of an assignee (new, or continuing after a return or a revival) and of a verifier
 // (implementation-plan §3.7, §10 question 4). The system part opens with the royal decree when the owner wrote
 // one; the user part carries the quest, the gazetteer, the lessons and what the role must read.
-import { FAIL_KINDS, judgedInScratch, ritualOf } from '@elvaria/domain';
+import { BREAKER_DEFAULTS, FAIL_KINDS, judgedInScratch, ritualOf } from '@elvaria/domain';
 
 import { toolPolicyOf } from '../policy/tool-policy.ts';
 import {
@@ -22,6 +22,7 @@ import {
 } from './blocks.ts';
 import { verifierChecks } from './checks.ts';
 import { contextFilesBlock } from './context-files.ts';
+import type { DraftingTerms } from './drafting.ts';
 import type { ContextFile } from './context-files.ts';
 import { graphBlock } from './graph-block.ts';
 import type { PromptGraph } from './graph-block.ts';
@@ -72,7 +73,18 @@ interface PromptBase {
    * grants its commands to a class that searches code, and the system part gets the graph block. Absent: neither.
    */
   readonly graph?: PromptGraph | undefined;
+  /**
+   * `kingdom.breakers.context_budget_tokens`, which the drafting rules of a quest that delivers sub-quests quote
+   * (PS-06). Absent: the default of the breakers.
+   */
+  readonly context_budget_tokens?: number | undefined;
 }
+
+/** What the drafting rules of a plan quest quote, for its mage and its judge (PS-06). */
+const termsOf = (input: PromptBase): DraftingTerms => ({
+  language: LANGUAGE_NAMES[input.locale],
+  context_budget_tokens: input.context_budget_tokens ?? BREAKER_DEFAULTS.context_budget_tokens,
+});
 
 export interface AssigneePromptInput extends PromptBase {
   readonly role: 'assignee';
@@ -148,7 +160,7 @@ function assigneePrompt(input: AssigneePromptInput, t: PromptTemplates): PromptW
   });
   const graphText = graphBlock(policy, input.graph, 'assignee', t);
   return composed(systemOf(input, role, characterClass.name_en, graphText, t), [
-    ['quest', questBlock(quest, registry, input.territory, t)],
+    ['quest', questBlock(quest, registry, input.territory, t, termsOf(input))],
     ['gazetteer', gazetteerBlock(input.territory, input.gazetteer, t)],
     ['scripture', scriptureBlock(input.scriptures, t)],
     ['skills', skillsBlock(input.skills, t)],
@@ -213,7 +225,7 @@ function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): PromptW
   });
   const graphText = graphBlock(policy, input.graph, 'verifier', t);
   return composed(systemOf(input, role, characterClass.name_en, graphText, t), [
-    ['quest', questBlock(quest, registry, input.territory, t)],
+    ['quest', questBlock(quest, registry, input.territory, t, termsOf(input))],
     ['gazetteer', gazetteerBlock(input.territory, input.gazetteer, t)],
     ['scripture', scriptureBlock(input.scriptures, t)],
     ['partial', partialBlock(input.partial, t)],

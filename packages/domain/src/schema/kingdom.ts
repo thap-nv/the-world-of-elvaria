@@ -18,6 +18,7 @@ import {
   RankSchema,
   rejectDuplicateIds,
 } from './common.ts';
+import { CouncilSchema } from './council.ts';
 import { DelegationSchema } from './delegation.ts';
 import { ProgramsSchema } from './program.ts';
 import { TribeSchema } from './tribe.ts';
@@ -194,6 +195,7 @@ const DispatchSchema = z.strictObject({
         "How many pieces of machine work the Steward runs outside its tick at once, kingdom-wide: a submitted quest's checks (or its trial in a scratch plot) and a script-tier quest's script. The next waits for a later tick. Cautious until measured.",
       ),
     ),
+  council: CouncilSchema,
 });
 
 export const KingdomSchema = z

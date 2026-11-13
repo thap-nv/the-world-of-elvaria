@@ -17,6 +17,9 @@ import {
   formatDatedId,
   parseInstant,
   partWaitsFor,
+  planIssueLine,
+  planIssuesOf,
+  questEstimateOf,
   questFromCommand,
   zonedTime,
 } from '@elvaria/domain';
@@ -117,6 +120,7 @@ function payloadOf(
   acceptance: QuestId | undefined,
 ): CommandPayload<'create_quest'> {
   // party_role and contract become the child's place in a party (party/parts.ts); question was refused above.
+  // The peak context is a planning number of the draft (PS-06): the quest keeps tokens and minutes.
   const {
     ref: _ref,
     depends_on_refs: dependsOn,
@@ -124,6 +128,7 @@ function payloadOf(
     party_role: _party,
     contract: _contract,
     question: _question,
+    estimate,
     ...fields
   } = draft;
   const idOf = (ref: string): QuestId => ids.get(ref) ?? plan.id;
@@ -133,6 +138,7 @@ function payloadOf(
   return {
     draft: false,
     ...fields,
+    estimate: questEstimateOf(estimate),
     depends_on: [...contract, ...dependsOn.map(idOf)],
     parent_id: parentRef === undefined ? plan.id : idOf(parentRef),
     ...(typeof plan.campaign_id === 'string' ? { campaign_id: plan.campaign_id } : {}),
@@ -187,7 +193,9 @@ function childrenOf(ctx: Context, plan: Quest, drafts: readonly QuestDraft[]): R
 /**
  * The children the plan quest's list would open, made but not written, or why it opens none. The delivery opens
  * them; the machine check before the judge (P1-15, review/subquests-check.ts) asks the same question, so a list
- * the Steward would refuse is returned to the mage instead of being delivered.
+ * the Steward would refuse is returned to the mage instead of being delivered. A plan the machine finds not ready
+ * (planIssuesOf, PS-06: a part without a scope, parts that may run at once on meeting scopes, a description outside
+ * the quest template) is such a list, whatever its judge says (ADR 0028).
  */
 export async function plannedChildren(
   ctx: Context,
@@ -199,6 +207,12 @@ export async function plannedChildren(
   if (!drafts.ok) return drafts;
   const beyond = beyondPlan(plan, drafts.value);
   if (beyond !== undefined) return err(beyond);
+  const issues = planIssuesOf(drafts.value, {
+    territories: [...ctx.world.territories.values()],
+    context_budget_tokens: ctx.world.kingdom.breakers.context_budget_tokens,
+  });
+  if (issues.length > 0)
+    return err(`the plan is not ready:\n${issues.map((issue) => `- ${planIssueLine(issue)}`).join('\n')}`);
   const order = ordered(drafts.value);
   if (order === undefined) return err('the drafts wait on each other in a circle');
   const children = childrenOf(ctx, plan, order);

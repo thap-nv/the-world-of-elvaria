@@ -140,6 +140,24 @@ describe('elvaria say', () => {
     expect(second).toMatchObject({ depends_on: [ids[1]], parent_id: ids[0] });
   });
 
+  it('prints the brief of work for the council, whose plan quest opens with it and waits for the seal (PS-06)', async () => {
+    await summon('aldric', 'chancellor');
+    const io = testIo();
+    const council = { [CLAUDE]: replying(await replyOf('council')) };
+    expect(await say(io, 'Lý do của trạm xá thành mã cộng chuỗi VI/EN', council)).toBe(0);
+    const id = /^Draft (q_\S+):/.exec(io.printed.out[1] ?? '')?.[1] ?? '';
+    expect(io.printed.out).toContain(`The Chancellor's brief for plan ${id}:`);
+    expect(io.printed.out).toContain('  Out of scope: Đổi giao diện của thế giới');
+    expect(io.printed.out).toContain(
+      '  Question: Giữ chuỗi cũ trong event log? Recommended: Không: log mang mã',
+    );
+    expect(io.printed.out.at(-1)).toContain(`the recommended answers: elvaria quest confirm ${id}.`);
+    const [plan] = await stewardTick();
+    expect(plan).toMatchObject({ id, status: 'draft', kind: 'plan', seal_required: true });
+    expect(plan?.estimate).toEqual({ tokens: 300_000, minutes: 40 });
+    expect(plan?.description).toMatch(/^## Brief\n\n### Goal\n/);
+  });
+
   it('names a script-tier draft by its script, and sends only what the kingdom has', async () => {
     await summon('aldric', 'chancellor');
     const link = testIo();

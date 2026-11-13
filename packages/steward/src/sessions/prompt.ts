@@ -80,6 +80,8 @@ async function builtPromptOf(
     shell: shellFor(ctx, character),
     cli_search: searchFor(ctx, character),
     locale: ctx.world.kingdom.owner.locale,
+    // A plan quest's drafting rules quote it (PS-06).
+    context_budget_tokens: ctx.world.kingdom.breakers.context_budget_tokens,
     decree: await readDecree(ctx.root),
     quest,
     character,

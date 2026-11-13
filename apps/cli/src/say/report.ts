@@ -4,8 +4,9 @@ import type { ChancellorFailure, DraftCommand, DropReason, DroppedDraft } from '
 import type { MessageKey } from '@elvaria/i18n';
 
 import { nameIn } from '../labels.ts';
+import { NONE } from '../listing.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
-import type { Registry } from '@elvaria/domain';
+import type { Brief, QuestId, Registry } from '@elvaria/domain';
 
 export const DROP_REASON_LABEL: Readonly<Record<DropReason, MessageKey>> = {
   unknown_kind: 'cli.say.drop.unknown_kind',
@@ -20,6 +21,10 @@ export const DROP_REASON_LABEL: Readonly<Record<DropReason, MessageKey>> = {
   party_part: 'cli.say.drop.party_part',
   needs_dropped_draft: 'cli.say.drop.needs_dropped_draft',
   dependency_cycle: 'cli.say.drop.dependency_cycle',
+  template: 'cli.say.drop.template',
+  needs_council: 'cli.say.drop.needs_council',
+  needs_brief: 'cli.say.drop.needs_brief',
+  brief_not_on_plan: 'cli.say.drop.brief_not_on_plan',
 };
 
 /**
@@ -78,6 +83,24 @@ export function reportSent(ctx: KingdomContext, registry: Registry, sent: readon
     );
   }
   ctx.io.out(ctx.t('cli.say.confirm_hint', { id: sent[0]?.quest ?? '' }));
+}
+
+/**
+ * The council's brief (PS-06): what the Chancellor understood and every question, each with its recommended answer,
+ * which confirming the plan quest accepts. `quest` is the plan quest the brief opens.
+ */
+export function reportBrief(ctx: KingdomContext, brief: Brief | undefined, quest: QuestId | undefined): void {
+  if (brief === undefined || quest === undefined) return;
+  const { t, io } = ctx;
+  const items = (lines: readonly string[]): string => (lines.length === 0 ? NONE : lines.join('; '));
+  io.out(t('cli.say.brief.title', { id: quest }));
+  io.out(t('cli.say.brief.goal', { goal: brief.goal }));
+  io.out(t('cli.say.brief.out_of_scope', { items: items(brief.out_of_scope) }));
+  io.out(t('cli.say.brief.acceptance', { items: items(brief.acceptance_examples) }));
+  io.out(t('cli.say.brief.assumptions', { items: items(brief.assumptions) }));
+  for (const { question, recommended } of brief.questions)
+    io.out(t('cli.say.brief.question', { question, recommended }));
+  io.out(t('cli.say.brief.confirm_hint', { id: quest }));
 }
 
 export function reportQuestion(ctx: KingdomContext, question: string | undefined): void {

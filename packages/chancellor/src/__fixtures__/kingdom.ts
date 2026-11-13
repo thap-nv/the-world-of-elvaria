@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import {
+  CouncilSchema,
   CharacterSchema,
   REGISTRY_FILES,
   TerritorySchema,
@@ -117,4 +118,5 @@ export const CONTEXT: ChancellorContext = {
     TribeSchema.parse({ id: 'claude', adapter: 'claude_code', enabled: true, max_concurrent: 1 }),
   ]),
   context_budget_tokens: 120_000,
+  council: CouncilSchema.parse({}),
 };

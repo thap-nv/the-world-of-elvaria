@@ -109,3 +109,57 @@ describe('QuestDraftFileSchema', () => {
     expect(issuesOf(...drafts)).toEqual([expected]);
   });
 });
+
+describe('QuestDraftFileSchema, the council (PS-06)', () => {
+  const brief = (change: object = {}) => ({
+    goal: 'Lý do của trạm xá thành mã cộng chuỗi VI/EN.',
+    out_of_scope: ['Đổi giao diện'],
+    acceptance_examples: ['`elvaria doctor --locale en` in lý do bằng tiếng Anh'],
+    assumptions: ['Mã lý do là snake_case'],
+    questions: [{ question: 'Giữ chuỗi cũ trong log?', recommended: 'Không' }],
+    plan_ref: 'd1',
+    ...change,
+  });
+  const plan = draft('d1', { kind: 'plan', class_required: 'mage', rank: 'B' });
+  const fileIssues = (file: object) => {
+    const result = QuestDraftFileSchema.safeParse({ version: 1, drafts: [plan], ...file });
+    return result.success
+      ? []
+      : result.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`);
+  };
+
+  it('takes a draft without seal_required, and an estimate with its peak context', () => {
+    const { seal_required: _, ...unsealed } = draft('d1', {
+      estimate: { tokens: 240000, minutes: 40, context: 90000 },
+    });
+    expect(QuestDraftFileSchema.parse({ version: 1, drafts: [unsealed] }).drafts[0]).not.toHaveProperty(
+      'seal_required',
+    );
+    expect(issuesOf(draft('d1', { estimate: { tokens: 1, minutes: 1, context: -1 } })).join()).toContain(
+      'drafts.0.estimate.context',
+    );
+  });
+
+  it('takes a brief that names a draft of the reply', () => {
+    expect(fileIssues({ brief: brief() })).toEqual([]);
+    expect(fileIssues({ brief: brief({ questions: [] }) })).toEqual([]);
+  });
+
+  it.each([
+    ['a plan_ref to no draft', { brief: brief({ plan_ref: 'd7' }) }, 'brief.plan_ref: no draft "d7"'],
+    [
+      'a question beside the brief',
+      { brief: brief(), drafts: [{ ...plan, question: 'Một?' }] },
+      'drafts.0.question: with a brief, its questions hold every question',
+    ],
+  ])('refuses %s', (_, file, expected) => {
+    expect(fileIssues(file)).toEqual([expected]);
+  });
+
+  it('refuses a brief without an acceptance example or with a field it does not know', () => {
+    expect(fileIssues({ brief: brief({ acceptance_examples: [] }) }).join()).toContain(
+      'brief.acceptance_examples',
+    );
+    expect(fileIssues({ brief: brief({ deadline: 'mai' }) }).join()).toContain('Unrecognized key');
+  });
+});

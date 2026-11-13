@@ -13,6 +13,10 @@
 
 {{kinds}}
 
+# Classes and their tools
+
+{{classes}}
+
 # Tags
 
 {{tags}}
@@ -28,3 +32,5 @@
 # Mana
 
 {{mana}}
+
+{{returned}}

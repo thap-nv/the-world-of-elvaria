@@ -59,7 +59,13 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   The quest's facts carry its kind's delivery convention when the Steward needs a file of a given shape: a plan
   (`subquests`) writes its sub-quests as quest-draft JSON to `SUBQUESTS_FILE` (`subquests.json`) at the root of
   its plot, where its judge reads them and the Steward opens them once the quest is done (P1-14), with the
-  words a draft may use: the kinds and the classes each allows, the tags, the territory's secrets (P1-15).
+  words a draft may use: the kinds and the classes each allows, the tags, the territory's secrets (P1-15); from
+  PS-06 each kind's seal, each class's tools (`classToolsOf`, `src/prompt/drafting.ts`), the territory's checks,
+  and after the description the drafting rules (`prompts/drafting.md`: the quest template of
+  `prompts/quest-template.md` and the way to size a session of `prompts/estimate.md`), which its mage and its judge
+  both read. The Chancellor and its triage quote the same two texts; the Chancellor's prompt also carries the
+  council's thresholds (`kingdom.dispatch.council`) and, on its second try, its first reply and why
+  (`prompts/chancellor-returned.md`, `ReturnedReply`).
 - Reads the memos a character wrote (PS-02, ADR 0024): the letter template has a `## Memos` section
   (`HANDOVER_SECTIONS`), law 8 of `prompts/assignee.md` says work outside the quest is a memo, not a change
   (`- <kind>: <text> refs: <path>, <path>`), and `memosOf(letter)` returns the memos and the lines that follow no

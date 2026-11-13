@@ -133,6 +133,8 @@ export async function hearingOf(
     // Readings come with P1-05; until then every enabled pool is awake (worldStateOf does the same).
     mana: poolsOf(ctx.kingdom.tribes),
     context_budget_tokens: ctx.kingdom.breakers.context_budget_tokens,
+    // How large work goes through the council (PS-06).
+    council: ctx.kingdom.dispatch.council,
   };
   return { context, session: speaker.session };
 }

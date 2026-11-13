@@ -1,0 +1,71 @@
+# Quest q_20261106_7k3m2a: Thêm script pnpm check
+
+- Kind: plan (deliverable: subquests)
+- Rank: D
+- Tags: infra
+- Territory: dc1-se-team
+- Limits: 45 minutes, 400000 tokens
+- Deliverable: the sub-quests, written to `subquests.json` at the root of the plot as quest-draft JSON: `{"version": 1, "drafts": [...]}`, each draft with ref (d1, d2…), title, description, kind, rank, territory, tier, class_required, tags, depends_on_refs, parent_ref (optional), scope_paths, estimate {tokens, minutes, context}, seal_required (optional), secrets_required. The Steward opens them once this quest is done
+- Kinds of a sub-quest and the classes each allows: build (knight, dwarf; sealed by default); research (scout; no seal by default); fix (knight, dwarf; sealed by default); refactor (knight, dwarf; sealed by default); document (scribe; sealed by default); publish (bard; sealed by default); analyze (astrologer; no seal by default); plan (mage; no seal by default); integrate (dwarf, knight; sealed by default); negotiate (envoy; sealed by default); batch (knight, scout, dwarf; no seal by default)
+- Classes and their tools:
+  - `chancellor` (Chancellor): no tools
+  - `mage` (Mage): reads and searches files; writes files; shell: `git status`, `git diff`, `git add`, `git commit`, and its territory's check commands
+  - `knight` (Knight): reads and searches files; writes files; shell: `pnpm test`, `pnpm lint`, `pnpm typecheck`, `git status`, `git diff`, `git add`, `git commit`, and its territory's check commands
+  - `dwarf` (Dwarf): reads and searches files; writes files; shell: `pnpm test`, `pnpm lint`, `pnpm typecheck`, `git status`, `git diff`, `git add`, `git commit`, `pnpm build`, `pnpm install`, and its territory's check commands
+  - `scout` (Scout): reads and searches files; writes files; web; no shell
+  - `scribe` (Scribe): reads and searches files; writes files; no shell
+  - `bard` (Bard): reads and searches files; writes files; no shell
+  - `astrologer` (Astrologer): reads and searches files; writes files; shell: `node`, `git diff`, and its territory's check commands
+  - `envoy` (Envoy): reads and searches files; writes files; no shell
+  - `judge` (Judge): reads and searches files; writes no file; shell: `pnpm test`, `pnpm lint`, `pnpm typecheck`, `git diff`, and its territory's check commands
+  - `monk` (Monk): reads and searches files; writes no file; no shell
+- Tags: frontend, backend, db, infra, i18n, e2e, integration, docs
+- Secrets this territory allows: none
+- Checks of this territory: lint, unit, e2e
+
+Thêm script `pnpm check` gom lint + typecheck + test + i18n:check; cập nhật README.
+
+# The quest template of the sub-quests
+
+Write the description of every session draft in this template: the headings in English exactly as here, the text in Vietnamese.
+
+```markdown
+## Goal
+
+What will be true when the quest is done, and why, in two or three sentences.
+
+## Steps
+
+1. One step a fresh session can follow, naming the file it changes.
+2. The next one, in the order they are done.
+
+## Files
+
+- The files it reads and changes (globs as in scope_paths), with the size of any large one.
+
+## Done when
+
+- A command that passes, with what it prints (`pnpm --filter @elvaria/cli test`), or a check of the territory by its id: check `<id>`.
+
+## Do not touch
+
+- What stays as it is, or "None."
+
+## Known traps
+
+- What went wrong before or is easy to miss, or "None known."
+```
+
+- Quests of rank F to D list their steps in order, numbered: new characters and weaker models take them. From the rank above, "Steps" may be left out: give the goal and the constraints, and the assignee chooses the way and says why under "Decisions taken" in its letter.
+- "Done when" is something a machine can run. A check named there (check `<id>`) is one its territory lists; anything else is a command in backquotes.
+- Never give a step that needs a tool the quest's class lacks (the classes are listed with their tools): a class without a shell runs no command, a class that cannot write changes no file. When the work needs one, choose a class that has it.
+
+# How to estimate the sub-quests
+
+Size each session draft from the work, step by step:
+
+1. The files the session must read, and their sizes: about four characters make a token, so a 1 MB file is some 250 000 tokens.
+2. The turns it takes: one for each file it reads, each edit, each command or test run, and the ones it spends finding its way.
+3. Its peak context, `estimate.context`: its prompt, what it reads and keeps, and the conversation so far, at the busiest moment.
+4. Its tokens, `estimate.tokens`, as the token breaker counts them: every turn reads the context again, cached at a tenth of the price, so about the turns times a tenth of the average context, plus all it reads and writes once. On a web repository of many files a rank D job took about 250 000.
+5. A job whose peak context would pass 120000 tokens does not fit one session: split it. A job that would read one large file again and again says how not to (search first, read a range of lines).

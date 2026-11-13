@@ -5,8 +5,10 @@ import { ClassIdSchema, KindIdSchema, ScriptIdSchema, TerritoryIdSchema } from '
 import { GENERATED_NOTE, NonEmptyStringSchema, RankSchema, unique } from '../common.ts';
 import { QUESTION_MAX_LENGTH } from '../../constants.ts';
 import { DRAFTS_MAX } from './constants.ts';
+import { BriefSchema } from './brief.ts';
 import { allOfRules, checkRules, issueIf } from './rules.ts';
 import {
+  DraftRefSchema,
   EstimateSchema,
   PartyRoleSchema,
   QuestTitleSchema,
@@ -18,12 +20,28 @@ import {
   TagsSchema,
   TierSchema,
 } from './shared.ts';
+import type { Brief } from './brief.ts';
 import type { Rule, RuleIssue } from './rules.ts';
 
 const describe = (description: string) => ({ description });
 
-/** A draft has no quest id yet; refs name drafts within one reply so they can depend on each other. */
-export const DraftRefSchema = z.string().regex(/^d[0-9]+$/);
+/**
+ * A draft's estimate, with the peak context of its session (PS-06, the owner's choice of 2026-11-13): tokens are what
+ * the token breaker counts (cache reads at a tenth, P1-23), roughly turns times the average context; context is what
+ * the session holds at once, and decides whether the job fits one context (ADR 0017). Optional and added after v1;
+ * the quest keeps tokens and minutes only.
+ */
+export const DraftEstimateSchema = EstimateSchema.extend({
+  context: z
+    .int()
+    .min(0)
+    .optional()
+    .meta(
+      describe(
+        'The most tokens the session holds in its context at once: its prompt, the files it reads, the conversation. Above kingdom.breakers.context_budget_tokens the job is split; without it, tokens stands in.',
+      ),
+    ),
+});
 
 const DraftFieldsSchema = z.strictObject({
   ref: DraftRefSchema,
@@ -52,8 +70,16 @@ const DraftFieldsSchema = z.strictObject({
   scope_paths: ScopePathsSchema.optional(),
   depends_on_refs: unique(z.array(DraftRefSchema)),
   parent_ref: DraftRefSchema.optional(),
-  estimate: EstimateSchema,
-  seal_required: z.boolean(),
+  estimate: DraftEstimateSchema,
+  // Optional since PS-06 (P1-50, Q11: a draft turned the seal off because the words did not mention it).
+  seal_required: z
+    .boolean()
+    .optional()
+    .meta(
+      describe(
+        "Only when the owner's words say whether the result waits for the seal; left out, the quest takes its kind's seal_default.",
+      ),
+    ),
   secrets_required: SecretNamesSchema,
   question: z
     .string()
@@ -136,6 +162,30 @@ const REPLY_RULES: readonly Rule<readonly QuestDraft[]>[] = [
   { check: danglingRefs },
 ];
 
+interface DraftFile {
+  readonly drafts: readonly QuestDraft[];
+  readonly brief?: Brief | undefined;
+}
+
+/** The brief names a draft of the reply, and holds every question: no draft asks one beside it (PS-06). */
+const briefRefs = ({ drafts, brief }: DraftFile): readonly RuleIssue[] => {
+  if (brief === undefined) return [];
+  return [
+    ...issueIf(
+      !drafts.some(({ ref }) => ref === brief.plan_ref),
+      ['brief', 'plan_ref'],
+      `no draft "${brief.plan_ref}"`,
+    ),
+    ...drafts.flatMap((draft, index) =>
+      issueIf(
+        draft.question !== undefined,
+        ['drafts', index, 'question'],
+        'with a brief, its questions hold every question',
+      ),
+    ),
+  ];
+};
+
 export const QuestDraftFileSchema = z
   .strictObject({
     version: z.literal(1),
@@ -146,12 +196,15 @@ export const QuestDraftFileSchema = z
       .superRefine(checkRules(REPLY_RULES))
       // secondQuestions, as the v1 contract states it for readers of the JSON.
       .meta({ contains: { required: ['question'] }, minContains: 0, maxContains: 1 }),
+    // Optional and added after v1 (PS-06), so `version` stays 1.
+    brief: BriefSchema.optional(),
   })
+  .superRefine(checkRules([{ check: briefRefs }]))
   .meta({
     title: 'Quest draft',
     description:
-      'Structured output of the Chancellor (`draftQuests`), passed to Claude Code with --json-schema. One utterance becomes one or more drafts. The Chancellor assigns the tier (script when a catalog script fits, session when judgement is needed), bundles tiny jobs into one quest (usually a batch with units) and splits long work so one quest fits one context (estimate.tokens <= kingdom.breakers.context_budget_tokens), using a plan parent with child drafts. It sets class_required and expertise tags (registry/tags.json). Work that needs several areas (several tags in different parts of a territory) becomes a party: one plan quest with party_role = contract, whose lead (a mage) writes the contract and then emits the parts with this same schema (party_role = part). The Steward adds the merge quest itself. It may ask at most one question. The CLI turns each draft into a create_quest inbox command with draft = true; the Steward writes quests in status draft until the owner confirms.',
-    $comment: `${GENERATED_NOTE} zod re-validates the CLI's structured_output; for the Gemini tribe (no --json-schema flag) the schema goes into the prompt and the reply is parsed with one retry. Not expressible here, checked by zod: refs unique; depends_on_refs and parent_ref point to other refs in the same output. Not checked by this schema because they need other files: secrets_required within the territory's secrets_allowed (otherwise the draft is dropped); kind, territory and script ids exist.`,
+      "Structured output of the Chancellor (`draftQuests`), passed to Claude Code with --json-schema. One utterance becomes one or more drafts. The Chancellor assigns the tier (script when a catalog script fits, session when judgement is needed), bundles tiny jobs into one quest (usually a batch with units) and splits long work so one quest fits one context (estimate.context, or estimate.tokens without it, <= kingdom.breakers.context_budget_tokens), using a plan parent with child drafts. It sets class_required and expertise tags (registry/tags.json). Work as large as kingdom.dispatch.council says goes through the council: a brief and one draft of kind plan it names, which waits for the owner's seal. Work that needs several areas (several tags in different parts of a territory) becomes a party: one plan quest with party_role = contract, whose lead (a mage) writes the contract and then emits the parts with this same schema (party_role = part). The Steward adds the merge quest itself. It may ask at most one question, or every question in the brief. Each session draft's description follows the quest template (Goal, Steps, Files, Done when, Do not touch, Known traps). The CLI turns each draft into a create_quest inbox command with draft = true; the Steward writes quests in status draft until the owner confirms.",
+    $comment: `${GENERATED_NOTE} zod re-validates the CLI's structured_output; for the Gemini tribe (no --json-schema flag) the schema goes into the prompt and the reply is parsed with one retry. Not expressible here, checked by zod: refs unique; depends_on_refs, parent_ref and brief.plan_ref point to other refs in the same output; with a brief no draft has a question. Not checked by this schema because they need other files: secrets_required within the territory's secrets_allowed (otherwise the draft is dropped); kind, territory and script ids exist; the quest template, the council and the brief's plan (screenDrafts, planIssuesOf).`,
   });
 
 export type QuestDraftFile = z.infer<typeof QuestDraftFileSchema>;

@@ -22,6 +22,17 @@ Read the draft the quest produced, as its reader would.
 
 Read the plan and the child quests it proposes: each must fit in one session and say what done means.
 
+## check_plan_ready
+
+The machine has held the sub-quests to what it can check (the `subquests` check): each has a scope, sub-quests that may run at once have scopes apart, each description follows the quest template, the checks it names exist. Judge the rest from the plan file and the drafts, and fail the quest as `incomplete` when one of these does not hold, naming the sub-quest:
+
+- Each sub-quest fits one session: the plan gives the files it reads and their sizes, its turns, its peak context and its tokens, sized as the quest's drafting rules say. One whose peak context would pass the kingdom's budget is split; one that would read a large file again and again says how not to.
+- Its "Done when" is something a machine runs: a command or a check of the territory, not a matter of taste.
+- The files every branch edits are the territory's shared paths (in the quest's facts), in no sub-quest's scope; a sub-quest that changes one says how it is merged.
+- What only a real run can tell has a probe quest of kind `research`, and the sub-quests that depend on the answer wait for it.
+- No sub-quest goes against a decision the territory records (its ADRs, plans, CLAUDE.md, gazetteer): read those the plan touches.
+- Every step needs only tools its sub-quest's class has.
+
 ## check_sources
 
 Open the sources the work cites; every claim must be supported by its source.

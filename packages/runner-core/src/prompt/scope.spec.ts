@@ -70,7 +70,7 @@ describe('the scope in a prompt', () => {
       { ...judge(undefined, plan), territory: { ...TERRITORY, shared_paths: shared } },
       templates,
     );
-    expect(user).toContain('scope_paths (optional)');
+    expect(user).toContain('scope_paths, estimate {tokens, minutes, context}');
     expect(user).toContain('no scope names: `docs/schemas/**`');
   });
 
