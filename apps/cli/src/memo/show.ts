@@ -20,6 +20,9 @@ function outcomeFields(ctx: KingdomContext, memo: Memo): Field[] {
     ['cli.memo.field.decision', `${ctx.t(MEMO_DECISION_LABEL[outcome.decision])} (${outcome.decision})`],
     ['cli.memo.field.decided', outcome.at],
     ...(outcome.quest === undefined ? [] : [['cli.memo.field.handled_by', outcome.quest] satisfies Field]),
+    ...(outcome.verdict === undefined
+      ? []
+      : [['cli.memo.field.answered_by', outcome.verdict] satisfies Field]),
     ...(outcome.note === undefined ? [] : [['cli.memo.field.note', outcome.note] satisfies Field]),
   ];
 }
@@ -43,6 +46,11 @@ async function runMemoShow(input: CommandInput, cli: CliContext): Promise<ExitCo
     ['cli.memo.field.quest', memo.quest],
     ['cli.memo.field.run', String(memo.attempt)],
     ['cli.memo.field.to', memo.to.route],
+    // An objection: the verdict it contests, and why no second judge reads it (PS-22).
+    ...(memo.to.verdict === undefined ? [] : [['cli.memo.field.contests', memo.to.verdict] satisfies Field]),
+    ...(memo.to.refusal === undefined
+      ? []
+      : [['cli.memo.field.refusal', ctx.t(`cli.memo.refusal.${memo.to.refusal}`)] satisfies Field]),
     ['cli.memo.field.filed', memo.filed_at],
     ['cli.memo.field.refs', memo.refs.length === 0 ? NONE : memo.refs.join(', ')],
     ...outcomeFields(ctx, memo),

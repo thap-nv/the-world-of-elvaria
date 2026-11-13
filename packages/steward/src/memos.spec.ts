@@ -3,16 +3,15 @@
 // Chancellor; reading the letter again files nothing twice; a line that follows no memo is a warning and the run's end
 // stands; no memo moves a quest. The owner closes a memo with decide_memo. FakeRunners whose assignee rewrites its
 // letter as its session ends, before the Steward settles it.
-import { writeFile } from 'node:fs/promises';
-
 import { openEventLog } from '@elvaria/eventlog';
 import type { Event, Memo } from '@elvaria/domain';
-import type { AgentRunner, RunResult, SpawnRequest } from '@elvaria/runner-core';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { FAIL, PASS, bench, questPayload, tickUntil } from './__fixtures__/kingdom.ts';
+import { letter, writing } from './__fixtures__/letters.ts';
 import { statusIs } from './__fixtures__/review.ts';
 import type { Bench, Plays } from './__fixtures__/kingdom.ts';
+import type { Ends, Letters } from './__fixtures__/letters.ts';
 import type { Steward } from './types.ts';
 
 let current: Bench | undefined;
@@ -24,38 +23,6 @@ afterEach(async () => {
   running = undefined;
   current = undefined;
 });
-
-/** The letter of an assignee's session, by quest title and the session's place among that quest's assignee runs. */
-type Letters = (title: string, nth: number) => string | undefined;
-/** What the session's end says instead, by quest title (a breaker's cut). */
-type Ends = (title: string) => Partial<RunResult> | undefined;
-
-const letter = (memos: string) =>
-  `## Where I am\n\nXong.\n\n## Next step\n\nNộp.\n\n## Memos\n\n${memos}\n\n## Question\n`;
-
-function writing(runner: AgentRunner, letters: Letters, ends: Ends): AgentRunner {
-  const seen = new Map<string, number>();
-  return {
-    ...runner,
-    spawn: async (req: SpawnRequest) => {
-      const session = await runner.spawn(req);
-      if (req.role !== 'assignee' || req.handover === undefined) return session;
-      const title = req.quest?.title ?? '';
-      const nth = (seen.get(title) ?? 0) + 1;
-      seen.set(title, nth);
-      const handover = req.handover;
-      return {
-        ...session,
-        wait: async () => {
-          const result = await session.wait();
-          const text = letters(title, nth);
-          if (text !== undefined) await writeFile(handover, text, 'utf8');
-          return { ...result, ...ends(title) };
-        },
-      };
-    },
-  };
-}
 
 async function open(plays: Plays, letters: Letters, ends: Ends = () => undefined) {
   current = await bench({ plays });

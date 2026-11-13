@@ -2328,7 +2328,7 @@
       "then": {
         "properties": {
           "data": {
-            "description": "The memo went where its kind's entry in registry/memos.json sends it (routeMemo).",
+            "description": "The memo went where its kind's entry in registry/memos.json sends it (routeMemo); an objection to a judge, or to the owner when no judge may read it (PS-22).",
             "type": "object",
             "additionalProperties": false,
             "required": [
@@ -2342,7 +2342,18 @@
               },
               "route": {
                 "enum": [
-                  "chancellor"
+                  "chancellor",
+                  "judge",
+                  "owner"
+                ]
+              },
+              "refusal": {
+                "description": "(PS-22) An objection sent to the owner: why no second judge reads it.",
+                "enum": [
+                  "no_verdict",
+                  "owner_verdict",
+                  "final_verdict",
+                  "second_objection"
                 ]
               }
             }
@@ -2361,7 +2372,7 @@
       "then": {
         "properties": {
           "data": {
-            "description": "The owner's decide_memo closed the memo; no quest changed.",
+            "description": "The owner's decide_memo closed the memo, or (PS-22) an objection's second judge gave its verdict (`sustained`: it passed the work, `overruled`: it failed it).",
             "type": "object",
             "additionalProperties": false,
             "required": [
@@ -2377,13 +2388,20 @@
                 "enum": [
                   "shelved",
                   "rejected",
-                  "handled"
+                  "handled",
+                  "sustained",
+                  "overruled"
                 ]
               },
               "quest": {
                 "description": "With decision = handled: the quest that does the work.",
                 "type": "string",
                 "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+              },
+              "verdict": {
+                "description": "(PS-22) With decision = sustained or overruled: the second judge's verdict.",
+                "type": "string",
+                "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user)?$"
               }
             }
           }

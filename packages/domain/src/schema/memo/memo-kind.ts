@@ -27,7 +27,7 @@ export const MemosFileSchema = z
   .meta({
     title: 'Registry: memo kinds',
     description:
-      'registry/memos.json in the kingdom (copied from @elvaria/registry-default on init; `elvaria migrate` copies it into a kingdom made before PS-02). Each kind of memo (letter) a character may write in the Memos section of its handover letter, and where the Steward routes it (ADR 0024). Default registry: proposal (work outside the quest) to the Chancellor; advisory, request and objection come with PS-09 and PS-10.',
+      'registry/memos.json in the kingdom (copied from @elvaria/registry-default on init; `elvaria migrate` copies it into a kingdom made before PS-02). Each kind of memo (letter) a character may write in the Memos section of its handover letter, and where the Steward routes it (ADR 0024). Default registry: proposal (work outside the quest) to the Chancellor; objection (the assignee contests the verdict that sent its run back) to a second judge, PS-22; advisory and request come with PS-09 and PS-10.',
     $comment: `${GENERATED_NOTE} Not expressible here: ids are unique (loader). Display names live here for the CLI; the UI takes them through i18n.`,
   });
 

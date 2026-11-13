@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { Q1, inReview, quest } from '../dispatch/__fixtures__/snapshot.ts';
 import { LINT, UNIT, reviewed, verdictOf } from './__fixtures__/verdicts.ts';
 import { validateVerdict } from './validate-verdict.ts';
+import type { MemoId } from '../core/ids.ts';
 import type { Verdict } from '../schema/quest/verdict.ts';
+
 describe('validateVerdict', () => {
   it("accepts a judge's verdict from the session the Steward spawned, and the owner's and the machine's", () => {
     expect(validateVerdict(verdictOf(), reviewed, 'all_checks_and_agent').ok).toBe(true);
@@ -33,6 +35,21 @@ describe('validateVerdict', () => {
       ok: false,
       error: { code: 'verifier_worked' },
     });
+  });
+
+  it('refuses the verdict of the judge whose verdict the objection contests (PS-22)', () => {
+    const objection = {
+      memo: 'm_20261106_aaaaaa' as MemoId,
+      verdict: `${Q1}-1` as Verdict['id'],
+      judge: 'sable',
+    };
+    const contested = { ...reviewed, objection };
+    expect(validateVerdict(verdictOf(), contested, 'agent_only')).toEqual({
+      ok: false,
+      error: { code: 'objection_judge' },
+    });
+    const other = { ...contested, objection: { ...objection, judge: 'orin' } };
+    expect(validateVerdict(verdictOf(), other, 'agent_only').ok).toBe(true);
   });
 
   it('refuses a character verdict from a session no verifier attempt of this run holds', () => {

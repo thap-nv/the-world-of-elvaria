@@ -6,7 +6,9 @@
     "from": "thorn",
     "quest": "q_20261112_7pzkfv",
     "attempt": 1,
-    "to": { "route": "chancellor" },
+    "to": {
+      "route": "chancellor"
+    },
     "body": "`elvaria quest list` in giờ theo UTC; nên dùng múi giờ của vương quốc như `quest show`.",
     "refs": ["apps/cli/src/quest/list.ts"],
     "state": "open",
@@ -19,7 +21,9 @@
     "from": "thorn",
     "quest": "q_20261112_7pzkfv",
     "attempt": 2,
-    "to": { "route": "chancellor" },
+    "to": {
+      "route": "chancellor"
+    },
     "body": "README của packages/store còn nói năm file registry.",
     "refs": [],
     "state": "closed",
@@ -29,6 +33,27 @@
       "at": "2026-11-12T14:20:00+07:00",
       "quest": "q_20261112_b3m8ty",
       "note": "Gộp vào quest dọn README."
+    }
+  },
+  {
+    "version": 1,
+    "id": "m_20261112_c5rq8n",
+    "kind": "objection",
+    "from": "thorn",
+    "quest": "q_20261112_7pzkfv",
+    "attempt": 3,
+    "to": {
+      "route": "judge",
+      "verdict": "q_20261112_7pzkfv-2"
+    },
+    "body": "Ghi chú 1 sai: `apps/cli/src/quest/list.spec.ts` đã thử múi giờ của vương quốc; `pnpm --filter @elvaria/cli test` in ra 41 test xanh.",
+    "refs": ["apps/cli/src/quest/list.spec.ts"],
+    "state": "closed",
+    "filed_at": "2026-11-12T13:05:10+07:00",
+    "outcome": {
+      "decision": "sustained",
+      "at": "2026-11-12T13:40:00+07:00",
+      "verdict": "q_20261112_7pzkfv-3"
     }
   }
 ]

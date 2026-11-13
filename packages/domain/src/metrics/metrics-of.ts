@@ -5,6 +5,7 @@ import { REWORK_CAUSES, OWNER_COMMAND_KINDS } from './causes.ts';
 import { escapedOf, firstPassOf, firstRunOf, sealedCostOf } from './judgement.ts';
 import { ownerCommandsOf, sequelsIn, sessionModelsOf, trailsOf } from './ledger.ts';
 import { outOfScopeOf, readsOf, setAsidesOf } from './log-counts.ts';
+import { memoCountsOf, objectionsOf } from './memo-counts.ts';
 import { firstPassRatesOf } from './rates.ts';
 import { reworkOf } from './rework.ts';
 import { firstEditsOf, graphQueriesOf, promptSizesOf } from './session-counts.ts';
@@ -13,6 +14,7 @@ import type { OwnerCommandKind, ReworkCause } from './causes.ts';
 import type { EscapedDefect, SealedCost } from './judgement.ts';
 import type { MetricsInput, OwnerCommand } from './ledger.ts';
 import type { OutOfScope, Reads, SetAside } from './log-counts.ts';
+import type { JudgeObjections, MemoCount } from './memo-counts.ts';
 import type { FirstPassRates } from './rates.ts';
 import type { QuestTrail, Rework } from './rework.ts';
 import type { FirstEdits, GraphQueries, PromptSizes } from './session-counts.ts';
@@ -79,6 +81,10 @@ export interface Metrics {
   readonly prompts: PromptSizes;
   /** Submits that changed files outside their quest's scope (PS-05): a signal for the judge, never a fail. */
   readonly out_of_scope: readonly OutOfScope[];
+  /** Memos filed by kind, and those sent to the owner (PS-22). */
+  readonly memos: readonly MemoCount[];
+  /** For each judge, the verdicts a second judge read beside an objection, and those it overturned (PS-22). */
+  readonly objections: readonly JudgeObjections[];
 }
 
 function runCountsOf(trails: readonly QuestTrail[], input: MetricsInput, window: MetricsWindow): RunCounts {
@@ -156,5 +162,7 @@ export function metricsOf(input: MetricsInput, window: MetricsWindow = {}): Metr
     first_edits: firstEditsOf(input.events, input.quests, window),
     prompts: promptSizesOf(input.events, input.quests, window),
     out_of_scope: outOfScopeOf(input.events, window),
+    memos: memoCountsOf(input.events, window),
+    objections: objectionsOf(input.verdicts, window),
   };
 }

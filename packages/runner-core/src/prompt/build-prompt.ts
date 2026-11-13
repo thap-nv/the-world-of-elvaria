@@ -26,6 +26,8 @@ import type { ContextFile } from './context-files.ts';
 import { graphBlock } from './graph-block.ts';
 import type { PromptGraph } from './graph-block.ts';
 import { memosBlock } from './memory.ts';
+import { objectionBlock } from './objection.ts';
+import type { PromptObjection } from './objection.ts';
 import { composed } from './prompt-blocks.ts';
 import { outOfScopeBlock } from './scope.ts';
 import { fenced, fill, sectionsOf } from './templates.ts';
@@ -92,6 +94,8 @@ export interface VerifierPromptInput extends PromptBase {
   readonly partial: Verdict | null;
   /** The files the work changed outside the quest's scope (PS-05); absent or empty, the review says nothing of it. */
   readonly out_of_scope?: readonly string[];
+  /** The objection this judge answers (PS-22): the verdict it contests and the memo; absent for any other judge. */
+  readonly objection?: PromptObjection | null;
 }
 
 /**
@@ -211,6 +215,7 @@ function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): PromptW
     ['gazetteer', gazetteerBlock(input.territory, input.gazetteer, t)],
     ['scripture', scriptureBlock(input.scriptures, t)],
     ['partial', partialBlock(input.partial, t)],
+    ['objection', objectionBlock(input.objection, t)],
     ['review', review],
   ]);
 }

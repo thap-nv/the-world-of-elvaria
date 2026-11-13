@@ -105,6 +105,8 @@ function verdictFileOf(
     ...(notes === undefined ? {} : { notes }),
     ...(progress === undefined ? {} : { progress }),
     ...(breaks === undefined ? {} : { breaks }),
+    // The objection this judge answers (PS-22): its verdict is final, and says which verdict it read it against.
+    ...(quest.objection === undefined ? {} : { objection: quest.objection }),
     by_human: false,
     session_id: run.session_id,
     created_at: ctx.record.stamp(),

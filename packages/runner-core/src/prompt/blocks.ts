@@ -5,6 +5,7 @@ import { SUBQUESTS_FILE } from '../plot/subquests.ts';
 import { SHELL_TOOL, WRITE_TOOLS } from '../policy/constants.ts';
 import { checksAheadBlock, failedChecksBlock } from './checks.ts';
 import { memoryBlock } from './memory.ts';
+import { finalVerdictBlock } from './objection.ts';
 import { fenced, fill, joinBlocks, withoutNotes } from './templates.ts';
 import type { PromptCheck } from './checks.ts';
 import type { Memory } from './memory.ts';
@@ -30,7 +31,13 @@ export type { Memory } from './memory.ts';
  * session would hand the same patch in again.
  */
 export type Continuation = (
-  | { readonly reason: 'returned'; readonly verdict: Verdict; readonly checks?: readonly PromptCheck[] }
+  | {
+      readonly reason: 'returned';
+      readonly verdict: Verdict;
+      readonly checks?: readonly PromptCheck[];
+      /** The verdict the assignee's objection contested, when `verdict` answered it (PS-22): both notes are read. */
+      readonly contested?: Verdict;
+    }
   | { readonly reason: 'revive' }
 ) & {
   /** Why the Steward did not apply that run's patch, masked as its log line; absent when it applied it or none came. */
@@ -272,6 +279,7 @@ export function continuationBlock(
       : joinBlocks([
           fill(t.returned, {
             rejudge: continuation.verdict.rejudge === true ? t.rejudge : '',
+            final: finalVerdictBlock(continuation.contested, t),
             result: continuation.verdict.result,
             fail_kind: continuation.verdict.fail_kind ?? 'none',
             notes: continuation.verdict.notes?.trim() ?? '',

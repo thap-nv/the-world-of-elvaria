@@ -7,6 +7,13 @@
       "name_en": "Proposal",
       "route": "chancellor",
       "description": "Work found outside the quest's scope: written down for the Chancellor instead of done in place."
+    },
+    {
+      "id": "objection",
+      "name_vi": "Phản biện",
+      "name_en": "Objection",
+      "route": "judge",
+      "description": "The assignee contests a note of the verdict that sent its run back: which note, why, and the evidence. A second judge reads it beside that verdict; once per verdict, and the second verdict is final."
     }
   ]
 }

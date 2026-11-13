@@ -11,6 +11,7 @@ import type { Character, CharacterClass, LoadTrace, Quest, Skill, Verdict } from
 import type { BuiltPrompt, PromptGraph, PromptWithBlocks } from '@elvaria/runner-core';
 
 import { handoverPath, readDecree, readHandover, readScriptures } from '../files.ts';
+import { objectionFor } from '../memos/objection.ts';
 import { gazetteerFor } from './gazetteer.ts';
 import { withLogTails } from '../review/log-tail.ts';
 import { continuationFor } from './continuation.ts';
@@ -103,8 +104,10 @@ async function builtPromptOf(
     const partial = await lastPartialOf(ctx, quest, input.n);
     // The files changed outside the quest's scope (PS-05): the judge weighs them, the machine never fails them.
     const outside = await outOfScopeIn(ctx, quest);
+    // A second judge reads the verdict the assignee contests and its objection (PS-22).
+    const objection = await objectionFor(ctx, quest);
     return buildPrompt(
-      { ...base, role: 'verifier', handover, diff, checks, partial, out_of_scope: outside },
+      { ...base, role: 'verifier', handover, diff, checks, partial, out_of_scope: outside, objection },
       ctx.templates,
     );
   }

@@ -123,6 +123,6 @@ describe("the owner's return for a new judgement (rejudge, P1-40)", () => {
     expect(returned(RETURNED)).not.toContain('rejudge');
     const { rejudge: _rejudge, ...plain } = OWNER_RETURN;
     expect(returned(VerdictSchema.parse(plain))).not.toContain('rejudge');
-    expect(returned(RETURNED)).toContain('then finish again. This session is new');
+    expect(returned(RETURNED)).toContain('and finish again. This session is new');
   });
 });

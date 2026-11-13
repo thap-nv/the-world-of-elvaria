@@ -4,7 +4,7 @@
 // filed (PS-02).
 import { currentRun, isEventOf, ownerVerdictIdOf, verdictIdOf } from '@elvaria/domain';
 import { openJournal } from '@elvaria/eventlog';
-import type { Quest } from '@elvaria/domain';
+import type { Quest, Verdict } from '@elvaria/domain';
 import type { Continuation, Memory } from '@elvaria/runner-core';
 
 import { readHandover, readJournal } from '../files.ts';
@@ -46,10 +46,17 @@ async function refusedPatchOfRun(ctx: Context, quest: Quest, n: number): Promise
   return undefined;
 }
 
+/** The verdict a second judge's fail answered the objection against (PS-22): the session reads both notes. */
+async function contestedOf(ctx: Context, verdict: Verdict): Promise<{ contested?: Verdict }> {
+  if (verdict.objection === undefined) return {};
+  const contested = await ctx.deps.store.verdicts.read(verdict.objection.verdict);
+  return contested.ok ? { contested: contested.value } : {};
+}
+
 /**
  * The verdict a returned quest comes back with: the owner's return (`<quest>-<n>-user`), else the judge's or the
  * machine's fail (`<quest>-<n>`) on the last run; a crash returns with none. Either says why the last run's patch
- * was refused, when it was (P1-31).
+ * was refused, when it was (P1-31), and a second judge's fail the verdict the objection contested (PS-22).
  */
 export async function continuationOf(ctx: Context, quest: Quest): Promise<Continuation> {
   const n = currentRun(quest);
@@ -58,7 +65,12 @@ export async function continuationOf(ctx: Context, quest: Quest): Promise<Contin
   for (const id of [ownerVerdictIdOf(quest, n), verdictIdOf(quest, n)]) {
     const verdict = await ctx.deps.store.verdicts.read(id);
     if (verdict.ok && verdict.value.result === 'fail')
-      return { reason: 'returned', verdict: verdict.value, ...refused };
+      return {
+        reason: 'returned',
+        verdict: verdict.value,
+        ...(await contestedOf(ctx, verdict.value)),
+        ...refused,
+      };
   }
   return { reason: 'revive', ...refused };
 }
