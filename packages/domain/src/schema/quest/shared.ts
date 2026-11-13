@@ -33,6 +33,9 @@ export type Tier = z.infer<typeof TierSchema>;
 export const PartyRoleSchema = z.enum(['contract', 'part', 'acceptance', 'merge']);
 export type PartyRole = z.infer<typeof PartyRoleSchema>;
 
+/** A draft has no quest id yet; refs name drafts within one reply so they can depend on each other. */
+export const DraftRefSchema = z.string().regex(/^d[0-9]+$/);
+
 export const QuestTitleSchema = z.string().min(1).max(QUEST_TITLE_MAX_LENGTH);
 export const TagsSchema = unique(z.array(TagIdSchema).max(QUEST_TAGS_MAX));
 /** Treasury names, as territory.secrets_allowed lists them. */

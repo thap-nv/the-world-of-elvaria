@@ -4,7 +4,7 @@
     {
       "ref": "d1",
       "title": "Cải thiện trang chủ",
-      "description": "Người dùng muốn trang chủ tốt hơn nhưng chưa nói tốt hơn ở mặt nào; chờ câu trả lời rồi mới chia việc.",
+      "description": "## Goal\n\nNgười dùng muốn trang chủ tốt hơn nhưng chưa nói tốt hơn ở mặt nào; chờ câu trả lời rồi mới chia việc.\n\n## Steps\n\n1. Đọc phần liên quan.\n2. Sửa và thêm test.\n\n## Files\n\n- Các file trong vùng của quest.\n\n## Done when\n\n- `pnpm test` xanh.\n\n## Do not touch\n\nNone.\n\n## Known traps\n\nNone known.",
       "kind": "build",
       "rank": "D",
       "territory": "dc1-se-team",
@@ -12,7 +12,10 @@
       "class_required": "knight",
       "tags": ["frontend"],
       "depends_on_refs": [],
-      "estimate": { "tokens": 40000, "minutes": 20 },
+      "estimate": {
+        "tokens": 40000,
+        "minutes": 20
+      },
       "seal_required": false,
       "secrets_required": [],
       "question": "Tốt hơn ở mặt nào: tốc độ tải, giao diện, hay nội dung?"

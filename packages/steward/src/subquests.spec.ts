@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { CAST, bench, questPayload, tickUntil } from './__fixtures__/kingdom.ts';
 import { delivered, leavingRunners, noteOf } from './__fixtures__/deliver.ts';
+import { templated } from './__fixtures__/template.ts';
 import type { Bench } from './__fixtures__/kingdom.ts';
 import type { Steward, StewardDeps } from './types.ts';
 import type { Quest, VerdictId } from '@elvaria/domain';
@@ -27,16 +28,18 @@ const MAGES = ['merle', 'morgan', 'mirel', 'mott', 'maeve', 'milo', 'mira', 'mos
 }));
 
 /** A sub-quest draft of the quest-draft schema, a knight's build on dc1-se-team unless `fields` say otherwise. */
+// In the quest template, with a scope of its own (PS-06).
 const draft = (ref: string, fields: Record<string, unknown> = {}) => ({
   ref,
   title: `Part ${ref}`,
-  description: `Sub-quest ${ref} of the plan.`,
+  description: templated(`Sub-quest ${ref} of the plan.`),
   kind: 'build',
   rank: 'D',
   territory: 'dc1-se-team',
   tier: 'session',
   class_required: 'knight',
   tags: ['db'],
+  scope_paths: [`src/${ref}/**`],
   depends_on_refs: [],
   estimate: { tokens: 60000, minutes: 20 },
   seal_required: false,

@@ -3,6 +3,7 @@
 import { MemoSchema, QuestSchema } from '@elvaria/domain';
 import type { Memo, MemoTriageFile, Quest } from '@elvaria/domain';
 
+import { templated } from './template.ts';
 import type { CommandSource } from '../commands.ts';
 
 export const AT = '2026-11-13T07:30:00+07:00';
@@ -64,11 +65,11 @@ export function memoOf(id: string, body: string, refs: readonly string[]): Memo 
   });
 }
 
-/** A one-quest draft of a triage reply. */
+/** A one-quest draft of a triage reply, in the quest template (PS-06). */
 export const draftOf = (ref: string, fields: Record<string, unknown> = {}) => ({
   ref,
   title: `Draft ${ref}`,
-  description: `Work of draft ${ref}.`,
+  description: templated(`Work of draft ${ref}.`),
   kind: 'document',
   rank: 'F',
   territory: 'dc1-se-team',

@@ -83,7 +83,7 @@
       "id": "council_review",
       "name_vi": "Hội đồng biểu quyết",
       "name_en": "Council vote",
-      "steps": ["run_checks", "read_plan", "challenge_scope", "judge", "write_verdict"],
+      "steps": ["run_checks", "read_plan", "check_plan_ready", "challenge_scope", "judge", "write_verdict"],
       "pass_rule": "all_checks_and_agent",
       "max_seconds": 1800
     },

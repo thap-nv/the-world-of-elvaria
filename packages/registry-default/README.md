@@ -17,7 +17,10 @@
 - Holds the class prompts `prompts/<class>.md` (P1-15): the craft of each class, which the Steward reads from the
   kingdom and runner-core adds to the system part of the character's session after the laws of its role. A leading
   `<!-- … -->` note is for the maintainer and never reaches a model. `mage.md` explains every field of
-  `subquests.json`, and sends a party's part only to the check commands of its shell (P1-45).
+  `subquests.json`, and sends a party's part only to the check commands of its shell (P1-45); from PS-06 it has
+  the survey in the plan quest, the shape of `plans/<topic>.md` (with the owner's one-page `## Summary`), and two
+  examples that pass the Steward's `subquests` check (scopes, quest template, peak context). `council_review`
+  runs the step `check_plan_ready` after `read_plan` (PS-06).
 - Exports `loadDefaultRegistry()` (read + validate through `@elvaria/domain`), `registryFiles()` (what init
   copies) and `REGISTRY_ROOT`.
 

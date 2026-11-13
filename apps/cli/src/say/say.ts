@@ -19,7 +19,7 @@ import { openKingdomContext } from '../kingdom-context.ts';
 import { commandHeader } from '../quest/send-command.ts';
 import { crewOf } from '../run/crew.ts';
 import { hearingOf } from './hearing.ts';
-import { reportDropped, reportFailure, reportQuestion, reportSent } from './report.ts';
+import { reportBrief, reportDropped, reportFailure, reportQuestion, reportSent } from './report.ts';
 import type {
   ArgumentSpec,
   CliContext,
@@ -80,9 +80,12 @@ async function say(
     // openKingdomContext checked the zone, and the header's time is the clock's: the fallback never runs.
     questIdOf: (header: CommandHeader) => questIdOfCommand(header, ctx.kingdom.tz) ?? ctx.ids.quest(),
   };
-  const sent = draftCommands(reply.value.kept, source, memos);
+  const { brief } = reply.value;
+  const sent = draftCommands(reply.value.kept, source, memos, brief);
   if (!(await send(ctx, sent))) return EXIT.failed;
   reportSent(ctx, context.registry, sent);
+  // PS-06: work of the council comes with a brief, whose questions confirming its plan quest answers.
+  reportBrief(ctx, brief, sent.find(({ ref }) => ref === brief?.plan_ref)?.quest);
   reportQuestion(ctx, reply.value.question);
   return EXIT.ok;
 }

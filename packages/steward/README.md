@@ -249,7 +249,10 @@
   `verifier_same_family = machine_only` with no judge of another family, the machine's verdict comes from them
   alone (`verifier_id: machine`). A plan's `subquests.json` is checked the same way first (check `subquests`,
   `src/review/deliverable-checks.ts`, P1-15): what the delivery would open, or why none, so a list the Steward
-  would refuse goes back to the mage. The judge's prompt carries the branch's diff (`Plots.diff`), the craft of
+  would refuse goes back to the mage. From PS-06 that includes a plan the domain's `planIssuesOf` finds not ready
+  (a session sub-quest without `scope_paths`, two that may run at once on scopes that meet, a given peak context
+  above the budget, a description outside the quest template): the check fails as `incomplete` whatever the judge
+  says, and the delivery reads the same answer. The judge's prompt carries the branch's diff (`Plots.diff`), the craft of
   its class (`registry/<class.prompt_file>`, as every session's does), and where the last judge of the run
   stopped when it left a `partial` verdict, and (PS-05) the files the work changed outside the quest's `scope_paths`,
   the territory's `shared_paths` aside (`src/sessions/out-of-scope.ts`, matched with `globToRegExp`), which the

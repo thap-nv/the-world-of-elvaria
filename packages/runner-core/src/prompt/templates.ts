@@ -46,6 +46,12 @@ export const PROMPT_TEMPLATES = [
   'ritual-steps',
   'chancellor',
   'chancellor-context',
+  // PS-06: the Chancellor's second try, the quest template and the way to size a session, which the Chancellor, its
+  // triage and a plan quest's drafting block quote.
+  'chancellor-returned',
+  'quest-template',
+  'estimate',
+  'drafting',
   'triage',
   'triage-context',
 ] as const;

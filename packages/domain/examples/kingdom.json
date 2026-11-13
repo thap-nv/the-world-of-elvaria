@@ -108,7 +108,11 @@
       "verifier_same_family": "different_model",
       "resume_after_mana": false,
       "resume_after_answer_minutes": 55,
-      "max_background": 2
+      "max_background": 2,
+      "council": {
+        "from_rank": "B",
+        "from_areas": 2
+      }
     },
     "delegation": {
       "max_rank": "D",

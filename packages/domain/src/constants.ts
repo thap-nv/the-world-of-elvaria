@@ -146,6 +146,8 @@ export const RITUAL_STEPS = [
   'read_diff',
   'read_draft',
   'read_plan',
+  // The council's readiness review (PS-06, ADR 0028): what the machine cannot check of a plan.
+  'check_plan_ready',
   'check_sources',
   'cross_check_sources',
   'check_regression_test',
