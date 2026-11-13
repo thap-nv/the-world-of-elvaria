@@ -13,12 +13,14 @@ launch, hook, env, timeout_ms?, platform?})`. `hook` is `hookCommand()` of `@elv
   `tools`, `search_commands`) and, for a structured answer, `schema.json` in the run folder; and
   `AGENTS.override.md` at the root of the plot, which Codex reads in place of `AGENTS.md`: the system part of the
   prompt, the territory's `AGENTS.md`, `CLAUDE.md` and `territory.context_files` copied in (runner-core's
-  `readContextFiles`, each cut at 24 000 characters), then what Codex's tools are for this class (the shell reads
-  and searches; `apply_patch` writes; git's folder is read-only, the Steward commits; no sub-agents, no
+  `readContextFiles`, each cut at 24 000 characters), then what Codex's tools are for this class (`apply_patch` writes; git's folder is read-only, the Steward commits; no sub-agents, no
   `request_user_input`; the file itself is Elvaria's, never edited or formatted). The file goes when the session
   ends, or never started; a territory's own `AGENTS.override.md` refuses the session and stays. Its body sits
   between `<!-- prettier-ignore-start -->` and `<!-- prettier-ignore-end -->`, an open code fence of a cut law file
   closed first (`closeFences`), so a territory's `prettier --check .` passes in the session (P1-12e).
+  How to read and search without a Read, Glob or Grep tool is the shared prompt's since PS-23: the adapter declares
+  `read: false` and `search: false`, and declares the account's models with their family and starting level
+  (`CODEX_MODELS`); `CODEX_TOOL` tells `elvaria doctor` the program, its search outside PATH and the fake CLI.
 - Spawns `codex exec --json --ignore-user-config --skip-git-repo-check --disable plugins --disable apps --disable
 image_generation -m <model> -c … --dangerously-bypass-hook-trust [--output-schema <run_dir>/schema.json] -` (or
   `codex exec resume … <thread_id> -`), without a shell, the prompt's user part on stdin, with the request's env

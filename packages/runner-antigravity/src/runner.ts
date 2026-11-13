@@ -15,9 +15,17 @@ import {
   runToEnd,
   secretValuesOf,
 } from '@elvaria/runner-core';
-import type { AgentRunner, ProbeResult, RunningSession, SpawnRequest, ToolInfo } from '@elvaria/runner-core';
+import type {
+  AdapterTool,
+  AgentRunner,
+  ProbeResult,
+  RunningSession,
+  SpawnRequest,
+  ToolInfo,
+} from '@elvaria/runner-core';
 
 import { hookPlanOf, hooksProblem } from './hook-files.ts';
+import { ANTIGRAVITY_MODELS } from './models.ts';
 import { commandLineProblem, programOf } from './launch.ts';
 import { removeRunFiles, writeRunFiles } from './run-files.ts';
 import { startSession } from './session.ts';
@@ -50,6 +58,18 @@ export const ANTIGRAVITY_CAPABILITIES: AgentRunner['capabilities'] = {
   // No tool searches files under `-p` (spike P1-12a, the tools a model reported): a class with Glob or Grep gets
   // runner-core's `git grep` and `git ls-files` instead, as `command(...)` rules (settings.ts, P1-53).
   search: false,
+  // Gemini, Claude and GPT models under their makers' slugs (PS-23): the family of each, for the separation of duties.
+  models: ANTIGRAVITY_MODELS,
+};
+
+/**
+ * agy for `elvaria doctor` (PS-23): on PATH only; the owner acknowledges Google's terms first, since Antigravity is not
+ * supported on consumer plans when wrapped (ADR 0018); the fake CLI `elvaria upgrade` tries a build with.
+ */
+export const ANTIGRAVITY_TOOL: AdapterTool = {
+  program: 'agy',
+  terms: true,
+  fake_cli: 'fixtures/fake-agy.mjs',
 };
 
 export interface AntigravityOptions {

@@ -866,6 +866,20 @@
               "used_in": "`AgentRunner.capabilities`"
             },
             {
+              "vi": "Họ model",
+              "en": "Model family",
+              "id": ["family"],
+              "definition": "Hãng làm ra một model (`claude`, `gemini`, `gpt`); luật tách vai so họ, không so tộc. Adapter khai họ của từng model nó chạy; model không rõ họ (bộ chọn tự động của một CLI nhiều hãng) không bao giờ được tính là khác họ.",
+              "used_in": "`capabilities.models[].family`, `familyOfCharacter`, ADR 0008"
+            },
+            {
+              "vi": "Kiểu hook trung tính",
+              "en": "Hook dialect",
+              "id": ["dialect"],
+              "definition": "Bản đồ dữ liệu adapter đặt trong `policy.json`: payload hook của CLI đọc thế nào, câu trả lời viết thế nào. Nhờ nó một CLI mới có `tool_gate` và `events` mà không sửa `packages/hooks`.",
+              "used_in": "`policy.json` `dialect`, `packages/hooks/src/neutral/`, guides/adding-a-tribe.md"
+            },
+            {
               "vi": "Bộ test hợp đồng",
               "en": "Conformance suite",
               "id": ["conformance"],

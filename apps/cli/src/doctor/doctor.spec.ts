@@ -2,6 +2,7 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { KingdomSchema } from '@elvaria/domain';
+import { CLAUDE_TOOL } from '@elvaria/runner-claude';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
@@ -196,9 +197,9 @@ describe('elvaria doctor', () => {
     await writeFile(binary, '', { mode: 0o755 });
     const io = testIo({ env: baseEnv(await isolatedPath(path.join(dir.root, 'empty'))), home });
     const [claude] = (await readKingdom()).tribes;
-    expect(await locateTool(claude!, 'claude', undefined, io)).toEqual({ found: binary, from: 'path' });
+    expect(await locateTool(claude!, CLAUDE_TOOL, undefined, io)).toEqual({ found: binary, from: 'path' });
     // The owner's home only: this machine's own extension folder never answers for a test.
-    expect(await locateTool(claude!, 'claude', undefined, { ...io, home: dir.root })).toEqual({
+    expect(await locateTool(claude!, CLAUDE_TOOL, undefined, { ...io, home: dir.root })).toEqual({
       from: 'path',
     });
   });

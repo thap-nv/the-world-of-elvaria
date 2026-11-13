@@ -1,6 +1,8 @@
 // What an adapter can do, declared per adapter and CLI version (implementation-plan §3.14, ADR 0021). The core
 // never asks which CLI a tribe runs: it reads these flags, and tribeLimitsOf narrows a tribe that lacks one.
 import type { TribeAuth } from '../schema/tribe.ts';
+import type { TribeId } from '../core/ids.ts';
+import type { TribeModel, TribeModels } from './models.ts';
 
 /**
  * headless and context_file are required (context falls back to the prompt); events, tool_gate, usage and
@@ -48,6 +50,19 @@ export type AdapterCapabilities = AdapterFlags & {
    * an adapter file older than the field: it has them.
    */
   readonly search?: boolean;
+  /**
+   * Whether the CLI has a tool of its own to read a file (PS-23). false (Codex): the prompt tells a class with a shell to
+   * read, list and search with read-only commands of it, and one without a shell to read a tracked file through
+   * `git grep`; the adapter must let such commands run. Absent, as in an adapter file older than the field: it has one.
+   */
+  readonly read?: boolean;
+  /**
+   * The models the CLI serves and the maker family of each (PS-23, tribe/models.ts): `character add` and `set_model`
+   * take only these, the separation of duties reads each character's family from here (a model named without a family
+   * never counts as another one), and a summoned character starts at its `starting_level`. Absent, as in an adapter
+   * file older than the field: any slug, its family read from its first word (familyOf).
+   */
+  readonly models?: readonly TribeModel[];
 };
 
 const isShellPlatform = (platform: string): platform is ShellPlatform =>
@@ -61,4 +76,16 @@ export function shellOf(
   if (!isShellPlatform(platform)) return undefined;
   const shell = capabilities?.shell?.[platform]?.trim();
   return shell === '' ? undefined : shell;
+}
+
+/** The declared models of each tribe whose runner names its own (`capabilities.models`), for planTick (PS-23). */
+export function modelsOfTribes(
+  capabilities: Readonly<Partial<Record<TribeId, Pick<AdapterCapabilities, 'models'>>>>,
+): TribeModels {
+  const models: Partial<Record<TribeId, readonly TribeModel[]>> = {};
+  for (const [tribe, caps] of Object.entries(capabilities)) {
+    // Object.entries widens the TribeId keys to string.
+    if (caps?.models !== undefined) models[tribe as TribeId] = caps.models;
+  }
+  return models;
 }

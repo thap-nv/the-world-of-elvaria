@@ -3,7 +3,9 @@
 // for a CLI that does not hand its env to hooks. The hook may not load zod (§1.4), so it checks by hand.
 import { readFileSync } from 'node:fs';
 
+import { dialectProblem } from './neutral/dialect.ts';
 import type { LawsInput } from './laws.ts';
+import type { HookDialect } from './neutral/dialect.ts';
 
 export const POLICY_VERSION = 1;
 
@@ -59,6 +61,11 @@ export interface HookPolicy {
    * may run them, one plain call per line; every other graphify line is refused. Absent: the quest has no graph.
    */
   readonly graph_commands?: readonly string[];
+  /**
+   * How the payload of a CLI the hook does not know by name reads, and how its answers are written (PS-23,
+   * neutral/dialect.ts): the adapter's own, so a fourth CLI needs no branch here. Absent: Claude Code, agy or Codex.
+   */
+  readonly dialect?: HookDialect;
   /** `territory.laws`; other law kinds may be present and are not the hook's to enforce. */
   readonly laws?: LawsInput;
 }
@@ -102,7 +109,7 @@ function policyProblem(value: Record<string, unknown>): string | undefined {
   }
   const list = LIST_FIELDS.find((key) => value[key] !== undefined && !isStringList(value[key]));
   if (list !== undefined) return `${list} is not a list of strings`;
-  return lawsProblem(value.laws);
+  return lawsProblem(value.laws) ?? dialectProblem(value.dialect);
 }
 
 export function parsePolicy(value: unknown): PolicyResult {

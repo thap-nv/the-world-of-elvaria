@@ -2,7 +2,7 @@
 // `createAdapter(kit)` that returns an AgentRunner for the kit's tribe. `apps/cli` imports the file; this checks
 // the module and its runner before the Steward, doctor or the conformance suite touch it, so a broken file is
 // reported as one sentence per problem instead of a crash in the middle of a tick.
-import { ADAPTER_CAPABILITIES, SHELL_PLATFORMS, err, ok } from '@elvaria/domain';
+import { ADAPTER_CAPABILITIES, SHELL_PLATFORMS, err, modelsProblems, ok } from '@elvaria/domain';
 import type { Result } from '@elvaria/domain';
 
 import type { AgentRunner } from '../runner/types.ts';
@@ -39,13 +39,25 @@ export function shellProblems(shell: unknown): string[] {
 export const searchProblems = (search: unknown): string[] =>
   search === undefined || typeof search === 'boolean' ? [] : ['capability search is not true or false'];
 
+/** What is wrong with `capabilities.read` (PS-23): optional like `search`; when given, true or false. */
+export const readProblems = (read: unknown): string[] =>
+  read === undefined || typeof read === 'boolean' ? [] : ['capability read is not true or false'];
+
 function capabilityProblems(capabilities: unknown): string[] {
   if (!isRecord(capabilities)) return ['capabilities is not an object'];
   const flags = ADAPTER_CAPABILITIES.filter((name) => typeof capabilities[name] !== 'boolean').map(
     (name) => `capability ${name} is not true or false`,
   );
   const auth = Array.isArray(capabilities.auth) ? [] : ['capability auth is not a list'];
-  return [...flags, ...auth, ...shellProblems(capabilities.shell), ...searchProblems(capabilities.search)];
+  return [
+    ...flags,
+    ...auth,
+    ...shellProblems(capabilities.shell),
+    ...searchProblems(capabilities.search),
+    ...readProblems(capabilities.read),
+    // PS-23: the models it serves and their families, optional; an older adapter file without them still loads.
+    ...modelsProblems(capabilities.models),
+  ];
 }
 
 /** What is wrong with the runner a file built for `kit`'s tribe; empty when it keeps the AgentRunner shape. */

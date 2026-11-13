@@ -150,6 +150,7 @@ export { HANDOVER_SECTIONS, memosOf, questionOf, readQuestion, sectionOf } from 
 export type { HandoverSection, LetterMemos } from './runner/handover.ts';
 export { POLICY_FILE, POLICY_VERSION, policyFileOf, writePolicyFile } from './runner/policy-file.ts';
 export type { PolicyExtras, PolicyFile } from './runner/policy-file.ts';
+export type { DialectTool, HookDialect } from './runner/hook-dialect.ts';
 export { CONTEXT_ENV, contextEnv, runContextOf } from './runner/run-context.ts';
 export type { RunContext } from './runner/run-context.ts';
 export { openRunLog } from './runner/run-log.ts';
@@ -188,9 +189,12 @@ export { RUN_OUTCOMES } from './runner/types.ts';
 // The domain's rule for a session's tokens (P1-23), here because an adapter imports runner-core only (ADR 0006).
 export { countedTokens } from '@elvaria/domain';
 export type { SessionTokens } from '@elvaria/domain';
+// The models an adapter declares (capabilities.models, PS-23), for an adapter that may import runner-core only.
+export type { TribeModel } from '@elvaria/domain';
 export type {
   AbsolutePath,
   AdapterId,
+  AdapterTool,
   AgentRunner,
   Budget,
   BuiltPrompt,

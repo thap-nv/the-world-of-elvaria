@@ -8,12 +8,12 @@ import type { AgentRunner } from '@elvaria/runner-core';
 import { toPortable } from '@elvaria/store';
 
 import { launchOf } from '../process/launch.ts';
-import { handOf } from '../run/crew.ts';
+import { BUILT_IN_ADAPTERS, handOf } from '../run/crew.ts';
 import { isAdapterFile } from '../tribe/adapter-file.ts';
 import { adapterFileTool } from './adapter-tool.ts';
 import { shellFindings } from './check-shell.ts';
 import { finding } from './finding.ts';
-import { ADAPTER_PROGRAMS, locateTool } from './locate-tool.ts';
+import { locateTool } from './locate-tool.ts';
 import { toolVersion } from './tool-version.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 import type { ToolFound } from './adapter-tool.ts';
@@ -50,12 +50,13 @@ async function capabilitiesOf(tribe: Tribe, ctx: KingdomContext): Promise<Adapte
 async function probe(tribe: Tribe, ctx: KingdomContext, options: DoctorOptions): Promise<ToolFound> {
   const { t } = ctx;
   if (isAdapterFile(tribe.adapter)) return adapterFileTool(tribe, ctx, options.tools.get(tribe.id));
-  const program = ADAPTER_PROGRAMS[tribe.adapter];
-  if (program === undefined)
+  const tool = BUILT_IN_ADAPTERS[tribe.adapter]?.tool;
+  if (tool === undefined)
     return {
       problem: finding('error', t('cli.doctor.unknown_adapter', { tribe: tribe.id, adapter: tribe.adapter })),
     };
-  const located = await locateTool(tribe, program, options.tools.get(tribe.id), ctx.io);
+  const { program } = tool;
+  const located = await locateTool(tribe, tool, options.tools.get(tribe.id), ctx.io);
   if (located.found === undefined) {
     const level = tribe.enabled ? 'error' : 'warn';
     const text = t(located.from === 'flag' ? 'cli.doctor.tool_path_bad' : 'cli.doctor.tool_missing', {
@@ -216,7 +217,9 @@ async function checkFound(
     return { findings: [finding('error', t('cli.doctor.tribe_invalid', { tribe: tribe.id }), details)] };
   }
   // Without the terms the adapter would only say the same in English; its login check comes once they are recorded.
-  const refused = tribe.adapter === 'antigravity' && next.data.tool?.terms_acknowledged_at === undefined;
+  // Which CLI wants them is its package's to say (AdapterTool.terms, PS-23), not a name here.
+  const terms = BUILT_IN_ADAPTERS[tribe.adapter]?.tool.terms === true;
+  const refused = terms && next.data.tool?.terms_acknowledged_at === undefined;
   const findings = [
     finding('ok', t('cli.doctor.tool_found', { tribe: tribe.id, version: tool.version, path: tool.path })),
     ...(refused

@@ -14,7 +14,7 @@
 // waiting on the quest takes a second judge: never the judge of the verdict it contests, and never the machine, which
 // cannot read a letter; with no such judge in the roster the quest waits as one nobody may judge.
 import { cutVerifiersOf, justPartialOf } from '../breaker/review.ts';
-import { familyOf } from '../character/family.ts';
+import { apartFromAll, familyOfCharacter } from '../character/family.ts';
 import { STRONG_JUDGE_MIN_RANK } from '../constants.ts';
 import { byIdleSince } from '../dispatch/roster.ts';
 import { RANKS } from '../schema/common.ts';
@@ -26,6 +26,7 @@ import type { Quest } from '../schema/quest/quest.ts';
 import type { CharacterClass } from '../schema/registry-entries.ts';
 import type { TribeId } from '../core/ids.ts';
 import type { TribeLimits } from '../tribe/tribe-limits.ts';
+import type { TribeModels } from '../tribe/models.ts';
 
 export type VerifierClass = Pick<CharacterClass, 'id' | 'is_verifier' | 'kinds'>;
 
@@ -46,6 +47,12 @@ export interface VerifierPolicy {
    * otherwise equal one whose CLI enforces the verdict's schema. Absent: no tribe is told apart.
    */
   readonly limits?: Readonly<Partial<Record<TribeId, Pick<TribeLimits, 'structured_output'>>>>;
+  /**
+   * The models each tribe's adapter declares, with their families (PS-23): a judge or doer on a model its tribe names
+   * without a family, or does not name, is of no known family and never counts as another one. Absent: every family
+   * is read from the slug (familyOf).
+   */
+  readonly models?: TribeModels;
 }
 
 export type Selection =
@@ -144,8 +151,9 @@ function judgesFor(
   readonly otherFamily: (character: Character) => boolean;
   readonly machineOnly: boolean;
 } {
-  const families = new Set(policy.doers.map(({ model }) => familyOf(model)));
-  const otherFamily = (character: Character): boolean => !families.has(familyOf(character.model));
+  const families = policy.doers.map((doer) => familyOfCharacter(doer, policy.models));
+  const otherFamily = (character: Character): boolean =>
+    apartFromAll(familyOfCharacter(character, policy.models), families);
   const machineOnly = policy.same_family === 'machine_only';
   const fit = besidesPassedOver(
     quest,

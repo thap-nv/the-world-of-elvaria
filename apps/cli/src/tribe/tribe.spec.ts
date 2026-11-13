@@ -55,7 +55,7 @@ describe('elvaria tribe', () => {
       expect(
         await elvaria(io, 'tribe', 'add', 'lantern', '--adapter', LANTERN_ADAPTER, '--max-concurrent', '2'),
       ).toBe(0);
-      expect(io.printed.out).toEqual([
+      expect(io.printed.out.filter((line) => !line.startsWith('Look: '))).toEqual([
         'Tribe lantern added (adapter adapters/lantern.mjs), disabled for now.',
         expect.stringContaining('elvaria tribe check lantern') as string,
       ]);

@@ -2,16 +2,19 @@
 // a new tribe in kingdom.tribes[], disabled. The owner then pins its CLI (`elvaria doctor`) and runs the conformance
 // suite (`elvaria tribe check`), which enables it once it passes. No character, quest or other file changes: a tribe
 // is an open id, and the characters of the new tribe are summoned afterwards (`elvaria character add --tribe`).
+// It prints the look the tribe draws from the theme's pool (PS-24, said at once since PS-23), and points to
+// docs/guides/adding-a-tribe.md when the adapter is not there yet.
 import { stat } from 'node:fs/promises';
 
-import { TribeIdSchema, TribeSchema, err, ok } from '@elvaria/domain';
+import { TribeIdSchema, TribeSchema, err, ok, tribeLookOf } from '@elvaria/domain';
 import type { Tribe } from '@elvaria/domain';
 
 import { textOption } from '../args.ts';
 import { EXIT } from '../command.ts';
-import { ADAPTER_PROGRAMS } from '../doctor/locate-tool.ts';
+import { BUILT_IN_ADAPTERS } from '../run/crew.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { adapterFilePath, isAdapterFile } from './adapter-file.ts';
+import { kingdomPool, lookCellOf } from './look-view.ts';
 import { refuse, saveTribes } from './save.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
@@ -32,8 +35,8 @@ async function adapterProblem(ctx: KingdomContext, adapter: string): Promise<str
     const file = adapterFilePath(ctx.store.root, adapter);
     return (await isFile(file)) ? undefined : ctx.t('cli.tribe.add.no_file', { adapter, file });
   }
-  if (ADAPTER_PROGRAMS[adapter] !== undefined) return undefined;
-  const builtIn = Object.keys(ADAPTER_PROGRAMS).join(', ');
+  if (BUILT_IN_ADAPTERS[adapter] !== undefined) return undefined;
+  const builtIn = Object.keys(BUILT_IN_ADAPTERS).join(', ');
   return ctx.t('cli.tribe.add.bad_adapter', { adapter, adapters: builtIn });
 }
 
@@ -65,8 +68,20 @@ async function runAdd(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   );
   if (!saved) return EXIT.failed;
   ctx.io.out(ctx.t('cli.tribe.add.added', { tribe: tribe.id, adapter: tribe.adapter }));
+  lookLine(ctx, tribe).forEach(ctx.io.out);
   ctx.io.out(ctx.t('cli.tribe.add.next', { tribe: tribe.id }));
   return EXIT.ok;
+}
+
+/**
+ * The look the new tribe draws (PS-24): last in kingdom.tribes[], it takes what no tribe before it holds, so the line
+ * stays true until the owner chooses one. A theme without a pool has no line.
+ */
+function lookLine(ctx: KingdomContext, tribe: Tribe): string[] {
+  const pool = kingdomPool(ctx, true);
+  if (pool === undefined) return [];
+  const look = tribeLookOf(pool, [...ctx.kingdom.tribes, tribe], tribe.id);
+  return [ctx.t('cli.tribe.add.look', { tribe: tribe.id, look: lookCellOf(ctx.t, look) })];
 }
 
 export const TRIBE_ADD: CommandSpec = {

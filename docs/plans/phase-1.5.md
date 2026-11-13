@@ -371,6 +371,7 @@ Task của giai đoạn 1, để dành tới khi chủ nhân có tài khoản Co
 - **Từ PS-24** (chủ nhân chốt 2026-11-13, §11): `elvaria tribe add` in ngoại hình tự sinh của tộc vừa thêm (một dòng; `apps/cli/src/tribe/tribe.spec.ts` đã 300 dòng, test vào file spec mới), và hướng dẫn thêm tộc nêu bước `tribe look`.
 - **Từ bài học 2026-11-13** (chủ nhân chốt 2026-11-13, §11; phiên PS-23 quyết phạm vi): CLI tự cập nhật tại chỗ đổi hành vi dưới một bản ghim. agy thay `agy.exe` từ 1.5.6 lên 1.5.7, `tribe check gemini` với agy thật còn 3/7, trong khi `elvaria upgrade` vẫn xanh vì chỉ thử tộc bằng CLI giả (`apps/cli/src/upgrade/trial.ts`). Đề xuất: `tribe check` với CLI thật đạt thì ghi lại phiên bản đã kiểm; Nhiếp chính không giao phiên mới cho một tộc mà phiên bản tìm thấy khác bản đó (0 mana), và bản tấu có một dòng `ATTENTION_TABLE` kèm lệnh `elvaria tribe check <tộc>`. Hai câu của `doctor` (`cli.doctor.tool_changed`, `cli.doctor.pin_hint`) do nhánh `fix/agy-1-5-7` viết lại. Quá phạm vi thì ghi §11 để tách một nhánh nhỏ trước PS-07.
 - **Vùng nhạy hệ điều hành**: hook và spawn; nêu trong báo cáo để chủ nhân quyết có chạy CI ba hệ điều hành không.
+- **Thực tế** (2026-11-13, chi tiết ở §11): kiểu hook trung tính là bản đồ dữ liệu `dialect` trong `policy.json`; model khai ở `capabilities.models`, `capabilities.read` mới; `AdapterTool` của từng package thay các bảng theo CLI của `apps/cli`; tộc giả thứ tư là `flint`. A1b và A6 không làm ở đây: đề xuất nhánh nhỏ trước PS-07 và một task sau PS-25.
 
 ## PS-24 — Ngoại hình tộc
 

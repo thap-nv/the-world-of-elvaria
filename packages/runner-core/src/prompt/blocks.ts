@@ -6,6 +6,7 @@ import { SHELL_TOOL, WRITE_TOOLS } from '../policy/constants.ts';
 import { checksAheadBlock, failedChecksBlock } from './checks.ts';
 import { memoryBlock } from './memory.ts';
 import { finalVerdictBlock } from './objection.ts';
+import { readSentence } from './read-sentence.ts';
 import { fenced, fill, joinBlocks, withoutNotes } from './templates.ts';
 import type { PromptCheck } from './checks.ts';
 import type { Memory } from './memory.ts';
@@ -83,15 +84,18 @@ export function shellBlock(
   policy: Pick<ToolPolicy, 'tools' | 'allow' | 'search_commands'>,
   t: PromptTemplates,
   program?: string,
+  reads?: boolean,
 ): string {
   const search = policy.search_commands ?? [];
-  const own = policy.tools.includes(SHELL_TOOL) ? policy.allow.flatMap(shellCommandOf) : [];
+  const shell = policy.tools.includes(SHELL_TOOL);
+  const own = shell ? policy.allow.flatMap(shellCommandOf) : [];
   const commands = [...new Set([...own, ...search])];
   if (commands.length === 0) return '';
   return fill(t.shell, {
     program: present(program) ? `Your shell is ${program.trim()}: write each command in its syntax.` : '',
     commands: bullets(commands),
     search: search.length === 0 ? '' : t.search,
+    read: readSentence(reads, shell, search),
   });
 }
 
