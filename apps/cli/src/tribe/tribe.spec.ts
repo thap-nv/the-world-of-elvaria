@@ -272,7 +272,7 @@ describe('elvaria tribe', () => {
       await elvaria(testIo(), 'tribe', 'check', 'lantern', '--scenarios');
       await payWithKey();
       const io = testIo();
-      expect(await elvaria(io, 'tribe', 'check', 'lantern')).toBe(1);
+      expect(await elvaria(io, 'tribe', 'check', 'lantern', '--model', 'lantern-small')).toBe(1);
       expect(io.printed.err.at(-1)).toBe(
         'Tribe lantern does not pass. It is still enabled; elvaria tribe disable lantern stops it taking new work.',
       );
