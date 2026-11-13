@@ -188,8 +188,13 @@
   has no headless mode, no rank above its `max_rank`, and nothing on a guarded territory without a tool gate),
   `checkTribeAuth` and `defaultAuthOf` (the sign-in `tribes[].tool.auth` pins must be one the adapter declares;
   doctor pins the owner's login first; P1-19, where TribeSchema used to name Gemini CLI), `selectChancellor`, and
-  `tribeLookOf` (a theme's crest and colour of a tribe, `NEUTRAL_TRIBE_LOOK`, `tribe-neutral`, for one the theme
-  has no entry for yet). `ADAPTER_FILE_PATTERN` tells an owner adapter file `adapters/<name>.mjs`.
+  `tribeLookOf` / `tribeLooksOf` (PS-24: a tribe's look, a set of parts of the theme's look pool — palette, crest,
+  figure, aura, portrait frame — and a name: the owner's choice `tribes[].look`, else the theme's pinned entry,
+  else drawn by the tribe id, the same on every run, in the order of `kingdom.tribes[]`, past the palettes and
+  crests other tribes hold; display only, no prompt and no dispatch reads it), `lookPoolOf(theme)` and
+  `parseLookPool` (the pools the themes ship: `src/tribe/fantasy-looks.json`, checked by `TribeLookPoolSchema`; the
+  spec holds its palettes to the design system's tokens, read through `designCss`).
+  `ADAPTER_FILE_PATTERN` tells an owner adapter file `adapters/<name>.mjs`.
 - Maps the domain onto the design system (implementation-plan §2.7): `statusToneOf` (`src/quest/`),
   `characterToneOf` (`src/character/`) and `bannerOf` (`src/world/`), the one band the HUD shows.
 - Builds the world state (`src/world/`) from the files (`worldStateOf`) or the log (`reduce`): every event that

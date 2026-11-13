@@ -125,7 +125,11 @@ Luật (ADR 0014, [implementation-plan](implementation-plan.md) §2.7 và §4.1)
 |---|---|---|---|---|
 | Nhân vật | Character | `character` | Một agent có nghề, tộc, model, cấp. | `characters/<id>/character.json` |
 | Nghề | Class | `class` | Prompt vai trò + tool được phép + model mặc định. | `registry/classes.json` (§6) |
-| Tộc | Tribe | `tribe` | Một tài khoản người dùng tự đăng nhập + một adapter + một mục theme; tộc của nhân vật cố định suốt đời. | `kingdom.tribes[]`, `character.tribe` (§8) |
+| Tộc | Tribe | `tribe` | Một tài khoản người dùng tự đăng nhập + một adapter + một ngoại hình; tộc của nhân vật cố định suốt đời. | `kingdom.tribes[]`, `character.tribe` (§8) |
+| Ngoại hình tộc | Tribe look | `look` | Bộ phần ghép lấy từ kho ngoại hình của theme, cùng tên hiển thị; nhìn là biết tộc. Chỉ để hiển thị: không vào prompt, không vào luật chọn người (ADR 0025). | `kingdom.tribes[].look`, `tribeLookOf`, `elvaria tribe look` (PS-24) |
+| Phần ghép (bảng màu, huy hiệu, dáng người, hào quang, khung chân dung) | Look part (palette, crest, figure, aura, portrait frame) | `palette` / `crest` / `figure` / `aura` / `frame` | Một id trong kho ngoại hình. Bảng màu và huy hiệu phân biệt hai tộc; tên tự sinh ghép từ huy hiệu và bảng màu (Sao Bạc, Lửa Đỏ). | `LOOK_PARTS`, `tribe_look.<part>.<id>` (i18n) |
+| Kho ngoại hình | Look pool | `tribe-looks` | Các phần ghép của một theme và các ngoại hình theme ghim theo id tộc. | `tribe-looks.schema.json`, `lookPoolOf(theme)`, `packages/domain/src/tribe/fantasy-looks.json` |
+| Nguồn ngoại hình (chủ nhân chọn / mục ghim / tự sinh) | Look source (owner / pinned / generated) | `owner` / `pinned` / `generated` | Ngoại hình lấy theo thứ tự: lựa chọn của chủ nhân, mục ghim của theme, ngoại hình tự sinh tất định theo id của tộc (bỏ qua bảng màu và huy hiệu tộc khác đang giữ). | `TribeLook.source` |
 | Hợp đồng tộc | Tribe contract | — | Những gì một adapter phải và nên cung cấp để một nhà cung cấp mới thành một tộc mà không sửa lõi. | ADR 0021, implementation-plan §3.14 |
 | Bộ chuyển (adapter) | Adapter | `adapter` | Lớp dịch giữa Elvaria và một CLI: package có sẵn hoặc file `adapters/<name>.mjs` của người dùng. | `kingdom.tribes[].adapter` |
 | Năng lực (của adapter) | Capabilities | `capabilities` | Adapter làm được gì; thiếu thì tộc bị thu hẹp theo `tribeLimitsOf`. | `AgentRunner.capabilities` |
@@ -232,13 +236,13 @@ Danh hiệu của `judge` (chuỗi hiển thị, không phải id): Thợ cả (
 
 ## 8. Tộc (`tribe`)
 
-Tộc là id mở trong `kingdom.tribes[]`; `elvaria init` ghi hai tộc đầu. Thêm tộc theo hợp đồng tộc (ADR 0021).
+Tộc là id mở trong `kingdom.tribes[]`; `elvaria init` ghi hai tộc đầu. Thêm tộc theo hợp đồng tộc (ADR 0021). Ngoại hình của tộc (PS-24): lựa chọn của chủ nhân (`elvaria tribe look`), mục ghim của theme, hay tự sinh từ kho ngoại hình theo id; tên dưới đây là của theme `fantasy`.
 
-| VI (tên theme, tạm) | id | Icon (thiết kế → code) | Adapter |
+| VI (tên theme) | id | Icon (thiết kế → code) | Adapter |
 |---|---|---|---|
-| Tộc Sao Bạc | `claude` | `fac-silver` → `tribe-silver` | `claude_code` (Claude Code) |
-| Tộc Lửa Đỏ | `gemini` | `fac-fire` → `tribe-fire` | `antigravity` (Antigravity CLI, mặc định) hoặc `gemini_cli` (Gemini CLI + API key, đường lui) |
-| (chưa đặt tên; ví dụ) | `codex` | `tribe-neutral` cho tới khi theme có huy hiệu | `codex_cli` (Codex CLI, tùy chọn) |
+| Tộc Sao Bạc | `claude` | `fac-silver` → `crest-star` (mục ghim: bảng màu `silver`, huy hiệu `star`) | `claude_code` (Claude Code) |
+| Tộc Lửa Đỏ | `gemini` | `fac-fire` → `crest-fire` (mục ghim: bảng màu `red`, huy hiệu `fire`) | `antigravity` (Antigravity CLI, mặc định) hoặc `gemini_cli` (Gemini CLI + API key, đường lui) |
+| Tộc Gió Vàng (tự sinh; chủ nhân chưa chọn) | `codex` | `crest-wind` (tự sinh theo id khi đứng sau `claude`, `gemini`: bảng màu `yellow`, huy hiệu `wind`) | `codex_cli` (Codex CLI, tùy chọn) |
 
 Adapter có sẵn: `claude_code`, `antigravity`, `gemini_cli`, `codex_cli`; ngoài ra là file `adapters/<name>.mjs` trong kingdom.
 

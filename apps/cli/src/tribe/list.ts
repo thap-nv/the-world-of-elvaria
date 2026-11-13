@@ -1,14 +1,16 @@
-// `elvaria tribe list` (P1-34, implementation-plan §3.14): one line per tribe of kingdom.json — its adapter, on or
+// `elvaria tribe list` (P1-34, implementation-plan §3.14): one line per tribe of kingdom.json — its look (PS-24: the
+// name, and the palette and crest that tell it apart; `elvaria tribe look` shows the rest), its adapter, on or
 // off, the CLI doctor pinned and its sign-in, how far tribeLimitsOf lets it go (highest rank, guarded territories)
 // and what its adapter declares, with the shell its sessions run commands in on this OS (P1-46). A tribe whose adapter has no runner yet, or whose adapter file does not load, says
 // so in place of what it would declare; `elvaria tribe check` says why a file does not load.
-import { ADAPTER_CAPABILITIES, shellOf, tribeLimitsOf } from '@elvaria/domain';
-import type { Tribe } from '@elvaria/domain';
+import { ADAPTER_CAPABILITIES, shellOf, tribeLimitsOf, tribeLookOf } from '@elvaria/domain';
+import type { Tribe, TribeLookPool } from '@elvaria/domain';
 
 import { EXIT } from '../command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { NONE, printListing } from '../listing.ts';
 import { handOf } from '../run/crew.ts';
+import { kingdomPool, lookCellOf } from './look-view.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
@@ -28,9 +30,10 @@ async function limitCells(ctx: KingdomContext, tribe: Tribe): Promise<string[]> 
   ];
 }
 
-async function rowOf(ctx: KingdomContext, tribe: Tribe): Promise<string[]> {
+async function rowOf(ctx: KingdomContext, pool: TribeLookPool | undefined, tribe: Tribe): Promise<string[]> {
   return [
     tribe.id,
+    pool === undefined ? NONE : lookCellOf(ctx.t, tribeLookOf(pool, ctx.kingdom.tribes, tribe.id)),
     tribe.adapter,
     ctx.t(tribe.enabled ? 'cli.yes' : 'cli.no'),
     tribe.tool?.version ?? NONE,
@@ -43,9 +46,12 @@ async function rowOf(ctx: KingdomContext, tribe: Tribe): Promise<string[]> {
 async function runTribeList(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);
   if (ctx === undefined) return EXIT.failed;
+  // A theme without a look pool leaves the column empty; tribe look says why.
+  const pool = kingdomPool(ctx, true);
   return printListing(ctx, {
     header: [
       'cli.column.id',
+      'cli.column.look',
       'cli.column.adapter',
       'cli.column.enabled',
       'cli.column.version',
@@ -56,7 +62,7 @@ async function runTribeList(input: CommandInput, cli: CliContext): Promise<ExitC
       'cli.column.shell',
       'cli.column.path',
     ],
-    rows: await Promise.all(ctx.kingdom.tribes.map((tribe) => rowOf(ctx, tribe))),
+    rows: await Promise.all(ctx.kingdom.tribes.map((tribe) => rowOf(ctx, pool, tribe))),
     issues: [],
     // kingdom.json holds at least one tribe (schema), so this is never printed.
     empty: 'cli.tribe.list.none',

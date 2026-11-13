@@ -3,7 +3,8 @@
 ## Does
 
 - Holds the display strings of the CLI and the UI in `src/locales/vi.json` and `en.json` (flat dotted keys,
-  `{name}` placeholders), and gives `translator(locale)` → `t(key, params)`, typed against the Vietnamese keys.
+  `{name}` placeholders), and gives `translator(locale)` → `t(key, params)`, typed against the Vietnamese keys;
+  `isMessageKey` tells whether a key built from data (a theme part, `tribe_look.<part>.<id>`, PS-24) is in the catalog.
 - Holds `src/glossary.json`, the one machine-readable source of every term (ADR 0014): `pnpm docs:gen` renders
   `docs/glossary.md` from it, and `pnpm docs:check` reads its banned words (`bannedWords`).
 - Reports what `pnpm i18n:check` prints: `localeProblems` (both locales have the same keys and placeholders, no

@@ -32,6 +32,7 @@ import { TRIBE_ADD } from './tribe/add.ts';
 import { TRIBE_CHECK } from './tribe/check.ts';
 import { TRIBE_DISABLE } from './tribe/disable.ts';
 import { TRIBE_LIST } from './tribe/list.ts';
+import { TRIBE_LOOK } from './tribe/look.ts';
 import { UPGRADE } from './upgrade/upgrade.ts';
 import { WAKE } from './wake.ts';
 import type { CommandSpec } from './command.ts';
@@ -43,6 +44,7 @@ export const COMMANDS: readonly CommandSpec[] = [
   TRIBE_ADD,
   TRIBE_CHECK,
   TRIBE_DISABLE,
+  TRIBE_LOOK,
   TERRITORY_ADD,
   TERRITORY_LIST,
   TERRITORY_GRAPH,

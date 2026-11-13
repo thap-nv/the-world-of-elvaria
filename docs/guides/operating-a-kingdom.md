@@ -95,6 +95,8 @@ Thư mục vương quốc là trạng thái của bạn, nằm ngoài mọi repo
 
 `elvaria tribe list` in mỗi tộc một dòng. `tribes[].max_concurrent` là số phiên một tài khoản chạy cùng lúc (mặc định claude 2, gemini 1).
 
+Mỗi tộc có một ngoại hình (PS-24): `claude` là Sao Bạc, `gemini` là Lửa Đỏ (mục ghim của theme); tộc thêm sau có ngay một ngoại hình tự sinh theo id, khác mọi tộc đã có. `elvaria tribe look <tộc>` in nó cùng các bảng màu và huy hiệu còn trống; muốn đổi thì `elvaria tribe look <tộc> --palette <id> --crest <id> --name "<tên>"` (phần nào không nêu giữ như đang có), `--reset` để quay về ngoại hình của theme. Ngoại hình chỉ để hiển thị: không đổi việc ai làm hay ai chấm.
+
 **Lãnh thổ.** `territory add` chỉ ghi phần nhận ra được từ git (`id`, `name`, `path`, `vcs`); `commands`, `checks` và `laws` đều tùy chọn và do bạn điền, theo CLAUDE.md và CI của repo. Không có `checks` thì quest vẫn chạy, chỉ có người chấm xét. Mẫu tối thiểu cho một repo pnpm (thêm vào file `territory add` đã tạo; cách viết luật đầy đủ ở [first-quest.md](first-quest.md) §4, schema ở [territory.schema.json](../schemas/territory.schema.json)):
 
 ```json

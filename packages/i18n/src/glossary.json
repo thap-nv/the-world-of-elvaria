@@ -813,8 +813,36 @@
               "vi": "Tộc",
               "en": "Tribe",
               "id": ["tribe"],
-              "definition": "Một tài khoản người dùng tự đăng nhập + một adapter + một mục theme; tộc của nhân vật cố định suốt đời.",
+              "definition": "Một tài khoản người dùng tự đăng nhập + một adapter + một ngoại hình; tộc của nhân vật cố định suốt đời.",
               "used_in": "`kingdom.tribes[]`, `character.tribe` (§8)"
+            },
+            {
+              "vi": "Ngoại hình tộc",
+              "en": "Tribe look",
+              "id": ["look"],
+              "definition": "Bộ phần ghép lấy từ kho ngoại hình của theme, cùng tên hiển thị; nhìn là biết tộc. Chỉ để hiển thị: không vào prompt, không vào luật chọn người (ADR 0025).",
+              "used_in": "`kingdom.tribes[].look`, `tribeLookOf`, `elvaria tribe look` (PS-24)"
+            },
+            {
+              "vi": "Phần ghép (bảng màu, huy hiệu, dáng người, hào quang, khung chân dung)",
+              "en": "Look part (palette, crest, figure, aura, portrait frame)",
+              "id": ["palette", "crest", "figure", "aura", "frame"],
+              "definition": "Một id trong kho ngoại hình. Bảng màu và huy hiệu phân biệt hai tộc; tên tự sinh ghép từ huy hiệu và bảng màu (Sao Bạc, Lửa Đỏ).",
+              "used_in": "`LOOK_PARTS`, `tribe_look.<part>.<id>` (i18n)"
+            },
+            {
+              "vi": "Kho ngoại hình",
+              "en": "Look pool",
+              "id": ["tribe-looks"],
+              "definition": "Các phần ghép của một theme và các ngoại hình theme ghim theo id tộc.",
+              "used_in": "`tribe-looks.schema.json`, `lookPoolOf(theme)`, `packages/domain/src/tribe/fantasy-looks.json`"
+            },
+            {
+              "vi": "Nguồn ngoại hình (chủ nhân chọn / mục ghim / tự sinh)",
+              "en": "Look source (owner / pinned / generated)",
+              "id": ["owner", "pinned", "generated"],
+              "definition": "Ngoại hình lấy theo thứ tự: lựa chọn của chủ nhân, mục ghim của theme, ngoại hình tự sinh tất định theo id của tộc (bỏ qua bảng màu và huy hiệu tộc khác đang giữ).",
+              "used_in": "`TribeLook.source`"
             },
             {
               "vi": "Hợp đồng tộc",
@@ -1416,13 +1444,13 @@
     {
       "heading": "8. Tộc (`tribe`)",
       "blocks": [
-        "Tộc là id mở trong `kingdom.tribes[]`; `elvaria init` ghi hai tộc đầu. Thêm tộc theo hợp đồng tộc (ADR 0021).",
+        "Tộc là id mở trong `kingdom.tribes[]`; `elvaria init` ghi hai tộc đầu. Thêm tộc theo hợp đồng tộc (ADR 0021). Ngoại hình của tộc (PS-24): lựa chọn của chủ nhân (`elvaria tribe look`), mục ghim của theme, hay tự sinh từ kho ngoại hình theo id; tên dưới đây là của theme `fantasy`.",
         {
           "table": "tribes",
           "columns": [
             {
               "key": "vi",
-              "header": "VI (tên theme, tạm)"
+              "header": "VI (tên theme)"
             },
             {
               "key": "id",
@@ -1442,19 +1470,19 @@
             {
               "vi": "Tộc Sao Bạc",
               "id": ["claude"],
-              "icon": "`fac-silver` → `tribe-silver`",
+              "icon": "`fac-silver` → `crest-star` (mục ghim: bảng màu `silver`, huy hiệu `star`)",
               "adapter": "`claude_code` (Claude Code)"
             },
             {
               "vi": "Tộc Lửa Đỏ",
               "id": ["gemini"],
-              "icon": "`fac-fire` → `tribe-fire`",
+              "icon": "`fac-fire` → `crest-fire` (mục ghim: bảng màu `red`, huy hiệu `fire`)",
               "adapter": "`antigravity` (Antigravity CLI, mặc định) hoặc `gemini_cli` (Gemini CLI + API key, đường lui)"
             },
             {
-              "vi": "(chưa đặt tên; ví dụ)",
+              "vi": "Tộc Gió Vàng (tự sinh; chủ nhân chưa chọn)",
               "id": ["codex"],
-              "icon": "`tribe-neutral` cho tới khi theme có huy hiệu",
+              "icon": "`crest-wind` (tự sinh theo id khi đứng sau `claude`, `gemini`: bảng màu `yellow`, huy hiệu `wind`)",
               "adapter": "`codex_cli` (Codex CLI, tùy chọn)"
             }
           ]

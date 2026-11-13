@@ -1,0 +1,24 @@
+[
+  {
+    "version": 1,
+    "theme": "harbour",
+    "palettes": [
+      { "id": "silver", "night": "#8AD8D4", "day": "#176E6A" },
+      { "id": "red", "night": "#FF8A60", "day": "#AE3814" },
+      { "id": "yellow", "night": "#F3E25B", "day": "#6C5F15" }
+    ],
+    "crests": [{ "id": "anchor" }, { "id": "gull" }, { "id": "lighthouse" }],
+    "figures": [{ "id": "slender" }, { "id": "sturdy" }],
+    "auras": [{ "id": "glow" }],
+    "frames": [{ "id": "round" }, { "id": "porthole" }],
+    "pinned": {
+      "claude": {
+        "palette": "silver",
+        "crest": "anchor",
+        "figure": "slender",
+        "aura": "glow",
+        "frame": "round"
+      }
+    }
+  }
+]

@@ -48,3 +48,6 @@ export function translator(locale: Locale): Translate {
 }
 
 export const isLocale = (value: string): value is Locale => (LOCALES as readonly string[]).includes(value);
+
+/** A key built from data (a theme part's id, PS-24) that the catalog has: the caller shows the id when it has not. */
+export const isMessageKey = (key: string): key is MessageKey => Object.hasOwn(vi.messages, key);

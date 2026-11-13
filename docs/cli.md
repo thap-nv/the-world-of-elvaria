@@ -16,6 +16,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria tribe add <id>` | Thêm một tộc: một adapter (có sẵn, hoặc file adapters/<name>.mjs trong vương quốc) và tài khoản của chính bạn. Tộc mới tắt; nhân vật cũ không đổi. |
 | `elvaria tribe check <id>` | Chạy bộ test hợp đồng với adapter của một tộc và kiểm kiểu đăng nhập; bật tộc khi qua. Với CLI thật, bộ này chạy một việc nhỏ, một lệnh push bị cấm, một lần kill và một lần thăm dò, tốn chút mana. |
 | `elvaria tribe disable <id>` | Tắt một tộc: không nhận việc mới; quest đang chạy chạy xong, quest đang chờ thì chờ. elvaria tribe check bật lại. |
+| `elvaria tribe look <id>` | Xem ngoại hình của một tộc (tên, bảng màu, huy hiệu, dáng người, hào quang, khung chân dung) và nguồn của nó; kèm tùy chọn thì ghi lựa chọn của ngài vào kingdom.json. Ngoại hình chỉ để hiển thị. |
 | `elvaria territory add <path>` | Gắn một repo hoặc thư mục vào vương quốc (mở cõi). |
 | `elvaria territory list` | Liệt kê các lãnh thổ. |
 | `elvaria territory graph <id>` | Dựng đồ thị code của một lãnh thổ ở một commit (0 mana) và hỏi nó một câu. |
@@ -118,6 +119,21 @@ Tắt một tộc: không nhận việc mới; quest đang chạy chạy xong, q
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
 | `<id>` | Một id tộc trong kingdom.json. |
+
+## `elvaria tribe look`
+
+Xem ngoại hình của một tộc (tên, bảng màu, huy hiệu, dáng người, hào quang, khung chân dung) và nguồn của nó; kèm tùy chọn thì ghi lựa chọn của ngài vào kingdom.json. Ngoại hình chỉ để hiển thị.
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<id>` | Một id tộc trong kingdom.json. |
+| `--palette <id>` | Bảng màu (id trong kho của theme); không được trùng bảng màu của tộc khác. |
+| `--crest <id>` | Huy hiệu (id trong kho của theme); không được trùng huy hiệu của tộc khác. |
+| `--figure <id>` | Dáng người (id trong kho của theme). |
+| `--aura <id>` | Hào quang (id trong kho của theme). |
+| `--frame <id>` | Khung chân dung (id trong kho của theme). |
+| `--name <name>` | Tên hiển thị của tộc, tối đa 24 ký tự; không có thì tên ghép từ huy hiệu và bảng màu. |
+| `--reset` | Bỏ lựa chọn của ngài: tộc lại mang mục ghim của theme, hay ngoại hình tự sinh. |
 
 ## `elvaria territory add`
 
