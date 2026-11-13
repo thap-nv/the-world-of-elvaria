@@ -16,6 +16,7 @@ import type { Kingdom } from '../schema/kingdom.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 import type { Registry } from '../schema/registry.ts';
 import type { VerifierClass, VerifierPolicy } from '../verify/select-verifier.ts';
+import type { TribeModels } from '../tribe/models.ts';
 
 /**
  * The machine's work the Steward runs outside the tick (P1-25): a quest's checks before its judge, a script-tier
@@ -56,6 +57,8 @@ export interface ReviewSource {
   readonly quests: readonly Quest[];
   readonly characters: readonly Character[];
   readonly background?: BackgroundWork;
+  /** The models each tribe's adapter declares (PS-23): selectVerifier reads families from them. Absent: by the slug. */
+  readonly models?: TribeModels;
 }
 
 /**
@@ -125,6 +128,7 @@ export function planReviews(
       doers: doersOf(quest, characterOf),
       party: partyOf(quest, source.quests),
       limits: source.limits,
+      models: source.models ?? {},
     };
     if (waitsForNoJudge(quest, candidates, policy)) {
       planned.unjudgeable.push(quest.id);

@@ -151,3 +151,22 @@ export interface AgentRunner {
   probe(options?: ProbeOptions): Promise<ProbeResult>;
   doctor(): Promise<ToolInfo>;
 }
+
+/**
+ * What a built-in adapter package says of its CLI beside its runner (PS-23), so the composition root keeps one table,
+ * adapter name to package, and no list per CLI: the program `elvaria doctor` looks for, where else it looks, whether
+ * the provider's terms must be acknowledged first. An owner adapter file answers the same through `runner.doctor()`.
+ */
+export interface AdapterTool {
+  /** The program looked for on PATH (`claude`, `agy`, `codex`). */
+  readonly program: string;
+  /** Where else to look, with the owner's home in `env` (a VS Code extension's folder, npm's); absent: PATH only. */
+  readonly locate?: (
+    env: Readonly<Record<string, string | undefined>>,
+    platform: NodeJS.Platform,
+  ) => Promise<string | undefined>;
+  /** The owner acknowledges the provider's terms before the tribe runs (`doctor --acknowledge-terms`, ADR 0018). */
+  readonly terms?: boolean;
+  /** The package's fake CLI, relative to its folder: what `elvaria upgrade` plays the conformance suite with. */
+  readonly fake_cli?: string;
+}

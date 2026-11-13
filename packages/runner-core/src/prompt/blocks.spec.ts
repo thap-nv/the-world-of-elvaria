@@ -3,6 +3,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { diffBlock, patchBlock, readOnlyBlock, refusedPatchBlock, shellBlock } from './blocks.ts';
+import { GIT_READ_LINE } from './read-sentence.ts';
 import { loadPromptTemplates } from './templates.ts';
 
 const templates = await loadPromptTemplates();
@@ -31,6 +32,25 @@ describe('shellBlock', () => {
   it('is empty for a class without a shell, even when a rule names one', () => {
     expect(shellBlock({ tools: ['Read'], allow: ['Read', 'Bash(pnpm test:*)'] }, templates)).toBe('');
     expect(shellBlock({ tools: ['Bash'], allow: ['Read'] }, templates)).toBe('');
+  });
+
+  describe('how to read, as the CLI declares (PS-23)', () => {
+    const knight = { tools: ['Read', 'Bash'], allow: ['Bash(pnpm test:*)'] };
+    const scribe = { tools: ['Read', 'Grep'], allow: [], search_commands: ['git grep', 'git ls-files'] };
+
+    it('reads with Read when the CLI has the tool, or says nothing of it', () => {
+      expect(shellBlock(knight, templates)).toContain('Read files with Read, not with the shell.');
+      expect(shellBlock(knight, templates, undefined, true)).toContain('Read files with Read');
+    });
+
+    it('reads with the shell, or through git grep without one, when the CLI has no Read tool', () => {
+      const shell = shellBlock(knight, templates, undefined, false);
+      expect(shell).toContain('your shell also runs read-only commands that read, list and search them');
+      expect(shell).not.toContain('Read files with Read');
+      expect(shellBlock(scribe, templates, undefined, false)).toContain(GIT_READ_LINE);
+      const lister = { ...scribe, search_commands: ['git ls-files'] };
+      expect(shellBlock(lister, templates, undefined, false)).not.toMatch(/Read files|git grep -h/);
+    });
   });
 });
 

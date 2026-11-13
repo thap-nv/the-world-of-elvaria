@@ -17,7 +17,7 @@ import { reapLost } from './sessions/settle.ts';
 import { carryOut } from './steps.ts';
 import { noteUnclaimable, reportedFromLog, writeUnclaimable } from './unclaimable.ts';
 import { noteUnjudgeable } from './unjudgeable.ts';
-import { loadWorld, snapshotOf } from './world.ts';
+import { loadWorld, modelsOf, snapshotOf } from './world.ts';
 import type { Context, Counts } from './context.ts';
 import type { Held, State } from './steward-state.ts';
 import type { StewardDeps, TickReport } from './types.ts';
@@ -95,7 +95,10 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   background.prune(wantedIn(world.quests));
   // Graphs of the default branches' tips build before the quests prepared from them open a session (PS-21).
   await wantTipGraphs(ctx);
-  const snapshot = snapshotOf(world, limits, mana, sessions.held(), background.view());
+  const snapshot = {
+    ...snapshotOf(world, limits, mana, sessions.held(), background.view()),
+    models: modelsOf(deps.runners),
+  };
   const plan = planTick(snapshot, deps.clock.now());
   // Notices first: a quest someone can take now has its notice withdrawn before the claim that follows (§3.1).
   if (await noteUnclaimable(ctx, state.reported, plan.unclaimable))

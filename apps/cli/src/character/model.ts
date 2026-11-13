@@ -8,6 +8,7 @@ import { EXIT } from '../command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { commandHeader, sendCommand } from '../quest/send-command.ts';
 import { namedCharacter } from './read.ts';
+import { declaredModelsOf } from './served.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 
 async function runModel(input: CommandInput, cli: CliContext): Promise<ExitCode> {
@@ -21,7 +22,10 @@ async function runModel(input: CommandInput, cli: CliContext): Promise<ExitCode>
   const character = await namedCharacter(input, ctx);
   if (character === undefined) return EXIT.failed;
   const { tribes } = ctx.kingdom;
-  const line = setModelLine(character, model, tribes);
+  // A tribe whose adapter declares its models takes only those, as the Steward's set_model (PS-23).
+  const tribe = tribes.find(({ id }) => id === character.tribe);
+  const declared = tribe === undefined ? undefined : await declaredModelsOf(tribe, ctx);
+  const line = setModelLine(character, model, tribes, declared);
   if (!line.ok) {
     const params = { character: character.id, model, tribe: character.tribe };
     ctx.io.err(ctx.t(`cli.character.model.${line.error.code}`, params));

@@ -9,8 +9,9 @@ import {
   ModelSlugSchema,
   NAME_MAX_LENGTH,
   rankCeilingOf,
+  startingLevelOf,
 } from '@elvaria/domain';
-import type { Character, CharacterClass, CharacterId, Registry, Tribe } from '@elvaria/domain';
+import type { Character, CharacterClass, CharacterId, Registry, Tribe, TribeModel } from '@elvaria/domain';
 
 import { textOption } from '../args.ts';
 import { EXIT } from '../command.ts';
@@ -19,7 +20,7 @@ import { registryIssueLines, storeIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { nameIn } from '../labels.ts';
 import { levelOfText } from './level.ts';
-import { startingLevelOf } from './starting-level.ts';
+import { declaredModelsOf, unservedLine } from './served.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
@@ -47,12 +48,21 @@ interface Choices {
   readonly model: string;
   readonly level: number;
   readonly levelSource: LevelSource;
+  /** The models the tribe's adapter declares (PS-23); undefined: it declares none. */
+  readonly declared?: readonly TribeModel[] | undefined;
 }
 
-/** The level `--level` gave, else the model's starting level (startingLevelOf), else 1. */
-function levelOf(given: number | undefined, model: string): Pick<Choices, 'level' | 'levelSource'> {
+/**
+ * The level `--level` gave, else the model's starting level (startingLevelOf: the one the tribe's adapter declares,
+ * else the slug's words), else 1.
+ */
+function levelOf(
+  given: number | undefined,
+  model: string,
+  declared?: readonly TribeModel[],
+): Pick<Choices, 'level' | 'levelSource'> {
   if (given !== undefined) return { level: given, levelSource: 'option' };
-  const suggested = startingLevelOf(model);
+  const suggested = startingLevelOf(model, declared);
   return suggested === undefined
     ? { level: 1, levelSource: 'none' }
     : { level: suggested, levelSource: 'model' };
@@ -139,7 +149,8 @@ async function runCharacterAdd(input: CommandInput, cli: CliContext): Promise<Ex
     registry.error.flatMap((issue) => registryIssueLines(ctx.t, issue)).forEach(ctx.io.err);
     return EXIT.failed;
   }
-  const choices = readChoices(input, ctx, registry.value);
+  const read = readChoices(input, ctx, registry.value);
+  const choices = Array.isArray(read) ? read : await servedChoices(ctx, read);
   if (Array.isArray(choices)) {
     choices.forEach(ctx.io.err);
     return EXIT.failed;
@@ -170,15 +181,28 @@ async function runCharacterAdd(input: CommandInput, cli: CliContext): Promise<Ex
 }
 
 /**
+ * The choices once the tribe's adapter is asked for its models (PS-23): a model it does not serve is refused, and the
+ * starting level is the one it gives the model, unless `--level` said.
+ */
+async function servedChoices(ctx: KingdomContext, choices: Choices): Promise<Choices | string[]> {
+  const declared = await declaredModelsOf(choices.tribe, ctx);
+  const unserved = unservedLine(ctx, choices.tribe, choices.model, declared);
+  if (unserved !== undefined) return [unserved];
+  if (declared === undefined) return choices;
+  const level = choices.levelSource === 'option' ? {} : levelOf(undefined, choices.model, declared);
+  return { ...choices, ...level, declared };
+}
+
+/**
  * Why the character starts at its level, when the owner did not say: the model's row, or none (P1-26). A `--level`
  * above the model's row is said too (P1-43, (b) of P1-38): the Steward reads a level as the model's strength and
  * gives quests by it, so a weak model raised by hand takes quests it may not carry.
  */
-function levelLines(ctx: KingdomContext, { id, level, levelSource, model }: Choices): string[] {
+function levelLines(ctx: KingdomContext, { id, level, levelSource, model, declared }: Choices): string[] {
   const ceiling = rankCeilingOf(level);
   if (levelSource === 'none') return [ctx.t('cli.character.level_unknown_model', { model })];
   if (levelSource === 'model') return [ctx.t('cli.character.level_from_model', { level, model, ceiling })];
-  const suggested = startingLevelOf(model);
+  const suggested = startingLevelOf(model, declared);
   if (suggested === undefined || level <= suggested) return [];
   return [ctx.t('cli.character.level_above_model', { level, model, suggested, ceiling, id })];
 }

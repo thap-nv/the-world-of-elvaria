@@ -7,6 +7,7 @@ export { claudeCandidates, locateClaude } from './locate.ts';
 export { AGENTS_FILE, CLAUDE_ENV, PROMPT_FILE, SETTINGS_FILE, SYSTEM_FILE } from './run-files.ts';
 export {
   CLAUDE_CAPABILITIES,
+  CLAUDE_TOOL,
   CLAUDE_CODE_ADAPTER,
   createClaudeForget,
   createClaudeRunner,

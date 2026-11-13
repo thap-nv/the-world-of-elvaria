@@ -15,7 +15,6 @@ import {
   CONTEXT_HEADER,
   FORMAT_IGNORE_END,
   FORMAT_IGNORE_START,
-  READ_LINE,
   closeFences,
   codexNote,
   contextFileText,
@@ -30,23 +29,17 @@ beforeEach(async () => {
 afterEach(() => world.remove());
 
 describe('codexNote', () => {
-  it('sends a class with a shell to read with it, and a writing one to apply_patch', () => {
+  it('sends a writing class to apply_patch, and leaves reading to the prompt (PS-23)', () => {
     const note = codexNote({ tools: ['Read', 'Edit', 'Bash'] }, true);
-    expect(note).toMatch(/read, list and search files with read-only commands of your shell/);
+    expect(note).not.toMatch(/Read, Glob or Grep/);
     expect(note).toMatch(/only with the apply_patch tool/);
     expect(note).toMatch(/git add and git commit fail/);
     expect(note).toMatch(/Do not start sub-agents/);
   });
 
-  it('gives a class without a shell the search commands and the read line, and a judge no write line', () => {
-    const note = codexNote(
-      { tools: ['Read', 'Glob', 'Grep'], search_commands: ['git grep', 'git ls-files'] },
-      false,
-    );
-    expect(note).toContain('your shell runs only git grep and git ls-files');
-    expect(note).toContain(READ_LINE);
+  it('gives a judge no write line', () => {
+    const note = codexNote({ tools: ['Read', 'Glob', 'Grep'] }, false);
     expect(note).not.toMatch(/apply_patch|git commit fail/);
-    expect(codexNote({ tools: [] }, false)).not.toMatch(/Read, Glob/);
   });
 });
 

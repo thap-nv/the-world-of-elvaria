@@ -25,6 +25,16 @@ describe('modelOfTribe', () => {
     expect(modelOfTribe(TRIBES, THORN, 'gemini-4-argon-medium')).toBe(false);
     expect(modelOfTribe([], { tribe: 'codex' as TribeId, model: 'gpt-6' }, 'codex-7')).toBe(true);
   });
+
+  it('takes only a model the adapter declares, when it declares its models (PS-23)', () => {
+    const declared = [{ id: 'swift', family: 'claude' }, { id: 'auto' }];
+    expect(modelOfTribe(TRIBES, QUILL, 'auto', declared)).toBe(true);
+    expect(modelOfTribe(TRIBES, QUILL, 'gemini-3.8-flash-high', declared)).toBe(false);
+    expect(setModelLine(QUILL, 'gemini-3.8-flash-high', TRIBES, declared)).toEqual({
+      ok: false,
+      error: { code: 'model_not_of_tribe' },
+    });
+  });
 });
 
 describe('setModelLine', () => {

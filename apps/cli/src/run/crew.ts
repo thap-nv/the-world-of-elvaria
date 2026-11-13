@@ -1,13 +1,16 @@
 // The runners the Steward is given (implementation-plan §3.7, §3.14, ADR 0021): one per enabled tribe, built from
-// `kingdom.tribes[].adapter`. Only this composition root names a CLI; a tribe whose adapter has no runner yet
-// takes no quest. Claude Code (`claude_code`), since P1-15 Antigravity (`antigravity`, ./antigravity.ts), since P1-19
+// `kingdom.tribes[].adapter`. Only this composition root names an adapter package, in one table (BUILT_IN_ADAPTERS,
+// PS-23): what doctor, `tribe add` and `upgrade` need of a CLI is the package's own AdapterTool; a tribe whose adapter
+// has no runner yet takes no quest. Claude Code (`claude_code`), since P1-15 Antigravity (`antigravity`, ./antigravity.ts), since P1-19
 // an owner adapter file `adapters/<name>.mjs` (../tribe/adapter-file.ts), and since P1-12d Codex (`codex_cli`, ./codex.ts).
 // The hook's command comes from @elvaria/hooks, which the adapters may not import (§1.3).
 import { HOOK_SCRIPT, hookCommand } from '@elvaria/hooks';
-import { createClaudeForget, createClaudeRunner } from '@elvaria/runner-claude';
+import { ANTIGRAVITY_TOOL } from '@elvaria/runner-antigravity';
+import { CLAUDE_TOOL, createClaudeForget, createClaudeRunner } from '@elvaria/runner-claude';
+import { CODEX_TOOL } from '@elvaria/runner-codex';
 import type { Kingdom, Tribe, TribeId } from '@elvaria/domain';
 import type { ClaudeToolOptions } from '@elvaria/runner-claude';
-import type { AgentRunner, ForgetWorktree } from '@elvaria/runner-core';
+import type { AdapterTool, AgentRunner, ForgetWorktree } from '@elvaria/runner-core';
 import { fromPortable } from '@elvaria/store';
 
 import { minimalEnv } from '../process/minimal-env.ts';
@@ -58,11 +61,23 @@ const antigravity: AdapterFactory = (tribe, _kingdom, io) => ({ runner: antigrav
 /** The Codex tribe (P1-12d); Codex keeps nothing per worktree to forget. */
 const codex: AdapterFactory = (tribe, _kingdom, io) => ({ runner: codexRunner(tribe, io) });
 
-/** Built-in adapters with a runner today; gemini_cli comes later (P1-12c). */
-export const ADAPTER_FACTORIES: Readonly<Record<string, AdapterFactory>> = {
-  claude_code: claudeCode,
-  antigravity,
-  codex_cli: codex,
+/** One built-in adapter: its package's folder under `packages/`, what it says of its CLI, and its runner. */
+export interface BuiltInAdapter {
+  readonly package: string;
+  readonly tool: AdapterTool;
+  /** Absent: the package is not written yet, and a tribe on it waits. */
+  readonly hand?: AdapterFactory;
+}
+
+/**
+ * The built-in adapters, by `kingdom.tribes[].adapter`. gemini_cli is reserved for P1-12c (Gemini CLI on a paid key,
+ * ADR 0018): only the name of its program, so doctor can pin it, until its package is written.
+ */
+export const BUILT_IN_ADAPTERS: Readonly<Record<string, BuiltInAdapter>> = {
+  claude_code: { package: 'runner-claude', tool: CLAUDE_TOOL, hand: claudeCode },
+  antigravity: { package: 'runner-antigravity', tool: ANTIGRAVITY_TOOL, hand: antigravity },
+  gemini_cli: { package: 'runner-gemini', tool: { program: 'gemini' } },
+  codex_cli: { package: 'runner-codex', tool: CODEX_TOOL, hand: codex },
 };
 
 /** Where a tribe's runner comes from, and whether there is one. */
@@ -92,7 +107,7 @@ export async function handOf(
       ? { kind: 'ready', hand: { runner: loaded.value } }
       : { kind: 'broken', problems: loaded.error };
   }
-  const factory = ADAPTER_FACTORIES[tribe.adapter];
+  const factory = BUILT_IN_ADAPTERS[tribe.adapter]?.hand;
   return factory === undefined
     ? { kind: 'none' }
     : { kind: 'ready', hand: factory(tribe, place.kingdom, io) };

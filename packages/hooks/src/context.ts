@@ -9,6 +9,7 @@ import { brokenLaws, compileLaws } from './laws.ts';
 import { readPolicy } from './policy.ts';
 import type { CompiledLaws } from './laws.ts';
 import type { HookPolicy } from './policy.ts';
+import type { HookDialect } from './neutral/dialect.ts';
 
 export type HookEnv = Readonly<Record<string, string | undefined>>;
 
@@ -41,6 +42,8 @@ export interface HookContext {
   readonly searchCommands: readonly string[];
   /** The code graph's commands (policy `graph_commands`, PS-21); empty: no graph, no graphify line runs. */
   readonly graphCommands: readonly string[];
+  /** How the CLI's payload reads, when the adapter describes it (policy `dialect`, PS-23); undefined: a CLI by name. */
+  readonly dialect: HookDialect | undefined;
   /** Context that was missing or malformed, for stderr; the call goes on with what is there. */
   readonly problems: readonly string[];
 }
@@ -147,6 +150,7 @@ export function loadContext(env: HookEnv, argv: readonly string[]): HookContext 
     apprenticeModels: policy.apprentice_models,
     searchCommands: policy.search_commands ?? [],
     graphCommands: policy.graph_commands ?? [],
+    dialect: policy.dialect,
     problems,
   };
 }

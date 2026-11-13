@@ -134,6 +134,8 @@ Luật (ADR 0014, [implementation-plan](implementation-plan.md) §2.7 và §4.1)
 | Hợp đồng tộc | Tribe contract | — | Những gì một adapter phải và nên cung cấp để một nhà cung cấp mới thành một tộc mà không sửa lõi. | ADR 0021, implementation-plan §3.14 |
 | Bộ chuyển (adapter) | Adapter | `adapter` | Lớp dịch giữa Elvaria và một CLI: package có sẵn hoặc file `adapters/<name>.mjs` của người dùng. | `kingdom.tribes[].adapter` |
 | Năng lực (của adapter) | Capabilities | `capabilities` | Adapter làm được gì; thiếu thì tộc bị thu hẹp theo `tribeLimitsOf`. | `AgentRunner.capabilities` |
+| Họ model | Model family | `family` | Hãng làm ra một model (`claude`, `gemini`, `gpt`); luật tách vai so họ, không so tộc. Adapter khai họ của từng model nó chạy; model không rõ họ (bộ chọn tự động của một CLI nhiều hãng) không bao giờ được tính là khác họ. | `capabilities.models[].family`, `familyOfCharacter`, ADR 0008 |
+| Kiểu hook trung tính | Hook dialect | `dialect` | Bản đồ dữ liệu adapter đặt trong `policy.json`: payload hook của CLI đọc thế nào, câu trả lời viết thế nào. Nhờ nó một CLI mới có `tool_gate` và `events` mà không sửa `packages/hooks`. | `policy.json` `dialect`, `packages/hooks/src/neutral/`, guides/adding-a-tribe.md |
 | Bộ test hợp đồng | Conformance suite | `conformance` | Bộ test mọi adapter phải qua trước khi bật tộc. | `elvaria tribe check` |
 | Cấp (1–10) | Level | `level` | Quyết định hạng quest được nhận. | `character.level` |
 | Bậc trang bị | Gear tier | `gear_tier` | Suy ra từ cấp (1–3, 4–6, 7–9, 10), không lưu. | `gearTierOf(level)` |
