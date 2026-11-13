@@ -12,6 +12,7 @@ import type { Instant } from '../core/clock.ts';
 import type { CharacterId, QuestId } from '../core/ids.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Quest } from '../schema/quest/quest.ts';
+import type { TribeModels } from '../tribe/models.ts';
 
 /** A paused quest and the character that takes it, with its level for the reassign event (§2.6). */
 export interface Reassign {
@@ -36,13 +37,17 @@ export function pausedSince(quest: Pick<Quest, 'attempt_log' | 'updated_at'>): I
  */
 export function reassignsOf(
   roster: Roster,
-  kingdom: { readonly characters: readonly Character[]; readonly quests: readonly Quest[] },
+  kingdom: {
+    readonly characters: readonly Character[];
+    readonly quests: readonly Quest[];
+    readonly models?: TribeModels;
+  },
   paused: readonly Quest[],
   hours: number | null,
   now: Instant,
 ): Reassign[] {
   if (hours === null) return [];
-  const { characters, quests } = kingdom;
+  const { characters, quests, models } = kingdom;
   const limit = hours * MINUTES_PER_HOUR * MS_PER_MINUTE;
   return paused.flatMap((quest) => {
     const since = pausedSince(quest);
@@ -52,7 +57,11 @@ export function reassignsOf(
     const free = characters.filter(
       (character) => character.id !== quest.assignee && roster.canClaim(character, quest, territory),
     );
-    const taker = selectAssignee(quest, free, { party: partyOf(quest, quests), characters });
+    const taker = selectAssignee(quest, free, {
+      party: partyOf(quest, quests),
+      characters,
+      models: models ?? {},
+    });
     if (taker === undefined) return [];
     roster.take(taker, quest);
     return [{ quest: quest.id, assignee: taker.id, level: taker.level }];

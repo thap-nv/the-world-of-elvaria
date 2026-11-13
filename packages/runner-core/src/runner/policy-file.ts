@@ -11,12 +11,13 @@ import { writeFileAtomic } from '@elvaria/store';
 import { PATCH_FILE } from '../plot/patch.ts';
 import { GIT_PATHS } from '../policy/constants.ts';
 import type { ToolLaws, ToolPolicy } from '../policy/tool-policy.ts';
+import type { HookDialect } from './hook-dialect.ts';
 import type { RunContext } from './run-context.ts';
 
 export const POLICY_FILE = 'policy.json';
 /**
  * `secrets` and `tools` (P1-10), `apprentice_models` (P1-17), `laws.read_only_paths` and `cli_protected_paths`
- * (P1-24), `laws.patch_paths` and `patch_file` (P1-28), `search_commands` (P1-53), `graph_commands` (PS-21) are
+ * (P1-24), `laws.patch_paths` and `patch_file` (P1-28), `search_commands` (P1-53), `graph_commands` (PS-21), `dialect` (PS-23) are
  * optional fields added later: a
  * v1 reader without them still reads the rest. Since P1-49 every file has `cli_protected_paths`, with git's own folder.
  */
@@ -62,15 +63,22 @@ export interface PolicyFile extends RunContext {
    * quest has no graph, and no graphify line runs.
    */
   readonly graph_commands?: readonly string[];
+  /**
+   * How the hook reads the payload of a CLI it does not know by name, and writes its answers (PS-23): the adapter's
+   * own. Absent: Claude Code, agy or Codex, which the hook knows.
+   */
+  readonly dialect?: HookDialect;
 }
 
 /** What only the adapter knows, for the policy file. */
 export interface PolicyExtras {
   readonly apprentice_models?: readonly string[];
   readonly cli_protected_paths?: readonly string[];
+  /** The neutral hook dialect of the adapter's CLI (PS-23). */
+  readonly dialect?: HookDialect;
 }
 
-const listOf = (key: keyof PolicyExtras, extras: PolicyExtras) => {
+const listOf = (key: 'apprentice_models' | 'cli_protected_paths', extras: PolicyExtras) => {
   const list = extras[key];
   return list === undefined ? {} : { [key]: [...list] };
 };
@@ -102,6 +110,7 @@ export const policyFileOf = (ctx: RunContext, policy: PolicyPart, extras: Policy
   ...(policy.laws.patch_paths.length === 0 ? {} : { patch_file: PATCH_FILE }),
   ...(policy.search_commands === undefined ? {} : { search_commands: [...policy.search_commands] }),
   ...(policy.graph_commands === undefined ? {} : { graph_commands: [...policy.graph_commands] }),
+  ...(extras.dialect === undefined ? {} : { dialect: extras.dialect }),
 });
 
 /** Writes the run's policy file and returns its native path, for `hookCommand(policyFile)`. */

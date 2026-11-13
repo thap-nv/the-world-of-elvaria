@@ -8,7 +8,7 @@
 // nothing: `elvaria upgrade` runs the suite of a new build against the fake CLIs it carries (PS-04b).
 import path from 'node:path';
 
-import { ADAPTER_CAPABILITIES, SHELL_PLATFORMS, shellOf, tribeLimitsOf } from '@elvaria/domain';
+import { ADAPTER_CAPABILITIES, SHELL_PLATFORMS, checkModelOf, shellOf, tribeLimitsOf } from '@elvaria/domain';
 import type { AdapterCapabilities, Tribe } from '@elvaria/domain';
 import { runConformance } from '@elvaria/runner-core';
 import type { AgentRunner, ConformanceReport } from '@elvaria/runner-core';
@@ -61,9 +61,39 @@ function reportLine(ctx: KingdomContext, report: ConformanceReport): string {
   return ctx.t('cli.tribe.check.failed_check', { check: report.id, problem: report.problem ?? '' });
 }
 
-/** The suite against `runner`: true when no check failed. */
-async function conforms(ctx: KingdomContext, input: CommandInput, tribe: Tribe, runner: AgentRunner) {
-  const model = textOption(input, 'model') ?? tribe.tool?.default_model;
+/**
+ * The model the suite runs on (PS-23, settled 2026-11-13): `--model`; else the tribe's own (checkModelOf: its
+ * default model, else the cheapest model its characters run on a pool that is on). A fake CLI (`--scenarios`) takes
+ * any, so there the suite's own stands in. A real one with none is refused: `missing`, said with how to name one.
+ */
+async function modelToTry(
+  ctx: KingdomContext,
+  input: CommandInput,
+  tribe: Tribe,
+  runner: AgentRunner,
+): Promise<{ readonly model?: string; readonly missing?: true }> {
+  const given = textOption(input, 'model');
+  if (given !== undefined) return { model: given };
+  const live = flagOption(input, 'scenarios') !== true;
+  const characters = (await ctx.store.characters.list()).items;
+  const chosen = checkModelOf(tribe, ctx.kingdom.tribes, characters, runner.capabilities.models);
+  if (chosen === undefined) return live ? { missing: true } : {};
+  if (live) {
+    const key =
+      chosen.from === 'character' ? 'cli.tribe.check.model_character' : 'cli.tribe.check.model_default';
+    ctx.io.out(ctx.t(key, { tribe: tribe.id, ...chosen }));
+  }
+  return { model: chosen.model };
+}
+
+/** The suite against `runner` on `model` (the suite's own when undefined): true when no check failed. */
+async function conforms(
+  ctx: KingdomContext,
+  input: CommandInput,
+  tribe: Tribe,
+  runner: AgentRunner,
+  model?: string,
+) {
   const reports = await runConformance({
     name: tribe.id,
     createRunner: () => runner,
@@ -129,9 +159,14 @@ async function runCheck(input: CommandInput, cli: CliContext): Promise<ExitCode>
   }
   const { runner } = found.hand;
   capabilityLines(ctx, tribe, runner.capabilities).forEach(ctx.io.out);
+  const tried = await modelToTry(ctx, input, tribe, runner);
+  if (tried.missing === true) {
+    ctx.io.err(ctx.t('cli.tribe.check.no_model', { tribe: tribe.id }));
+    return EXIT.failed;
+  }
   const auth = authFindings(tribe, runner.capabilities, ctx);
   auth.flatMap(findingLines).forEach(ctx.io.err);
-  const conformed = (await conforms(ctx, input, tribe, runner)) && auth.length === 0;
+  const conformed = (await conforms(ctx, input, tribe, runner, tried.model)) && auth.length === 0;
   // The suite asks only that doctor() answers; a CLI that cannot sign in keeps the tribe off, as in doctor (P1-34).
   const login = conformed ? await loginFindings(tribe, runner, ctx) : [];
   login.flatMap(findingLines).forEach(ctx.io.err);

@@ -46,7 +46,9 @@ export const setLevel = (ctx: Context, id: CharacterId, level: number): Promise<
  */
 export const setModel = (ctx: Context, id: CharacterId, model: string): Promise<Outcome> =>
   settingByOwner(ctx, id, (character) => {
-    const line = setModelLine(character, model, ctx.world.kingdom.tribes);
+    // A tribe whose adapter declares its models takes only those (PS-23); without a runner, as before.
+    const declared = ctx.deps.runners[character.tribe]?.capabilities.models;
+    const line = setModelLine(character, model, ctx.world.kingdom.tribes, declared);
     if (!line.ok) return line;
     return ok({ type: line.value, edit: (before) => ok(withModel(before, model)) });
   });

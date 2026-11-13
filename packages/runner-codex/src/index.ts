@@ -13,7 +13,6 @@ export {
   CONTEXT_HEADER,
   FORMAT_IGNORE_END,
   FORMAT_IGNORE_START,
-  READ_LINE,
   closeFences,
   codexNote,
   contextFileText,
@@ -36,6 +35,7 @@ export { blockedOf, outcomeOf, rateLimitOf } from './outcome.ts';
 export {
   CODEX_ADAPTER,
   CODEX_CAPABILITIES,
+  CODEX_TOOL,
   SHELL_POLICY_ENV,
   codexEnv,
   createCodexRunner,

@@ -81,9 +81,11 @@
   P1-19), a
   territory, a newly summoned character (create only, never overwrite). Those two are also logged
   (`territory.attached`, `character.created`, with the view after the change, P0-09), so the world sees them.
-  Without `--level`, a character starts at its model's level (`src/character/starting-level.ts`: Opus 5, Sonnet
-  or Pro 4, Argon 3, Haiku or Flash 2), else at 1 with a word on `--level` (P1-26); a `--level` above the
-  model's says the Steward takes it as the model's strength, and how to lower it (P1-43).
+  Without `--level`, a character starts at its model's level: the one its tribe's adapter declares
+  (`capabilities.models`, PS-23), else by the slug's words (the domain's `startingLevelOf`: Opus 5, Sonnet or Pro 4,
+  Argon 3, Haiku or Flash 2), else at 1 with a word on `--level` (P1-26); a `--level` above the model's says the
+  Steward takes it as the model's strength, and how to lower it (P1-43). A tribe whose adapter declares its models
+  takes only those, in `character add` and `character model` alike (`src/character/served.ts`, PS-23).
 - `sandbox generate` writes a fake day of `@elvaria/sandbox` to `events/sandbox/<date>.jsonl` (nothing else of the
   kingdom changes); `sandbox replay <file> --speed 20` plays it back as a timeline, one sentence per line in the
   owner's language (`src/sandbox/timeline.ts`), paced by `CliIo.sleep`. Closing the pipe (`| head`) ends it quietly.
@@ -252,7 +254,11 @@ old lines included), `src/quest/last-run.spec.ts` (verdicts and `plot.restored` 
 fake CLI with no tool gate: `src/tribe/tribe.spec.ts` adds, pins, checks and disables it; `src/tribe/round.spec.ts`
 runs the Steward (`elvaria run`) with it until a rank D quest is done, while a rank C quest stays open (P1-19);
 `src/tribe/list.spec.ts` lists it beside the built-in tribes, one with no runner and a broken file, and has
-`doctor --enable` refuse it (P1-34). `test/builds.ts` (PS-04b) has a stub build CLI that answers the trial's
+`doctor --enable` refuse it (P1-34). `fixtures/flint-adapter.mjs` and `fixtures/fake-flint.mjs` are the fourth tribe of
+PS-23: a CLI with hooks of its own, described to Elvaria's hook by a neutral dialect in `policy.json`, and models of
+several makers under its own names; `src/tribe/flint.spec.ts` (with `test/flint.ts`, which builds the hook when its
+build is missing or stale) passes it through every check of the conformance suite, summons its characters at the
+levels its models give, takes a rank C quest round, and finds its name in no source of `packages/` or `apps/`. `test/builds.ts` (PS-04b) has a stub build CLI that answers the trial's
 commands as its `behavior.json` says and records each call, a stub pnpm that leaves a link into the build (a
 junction on Windows, a symlink elsewhere), and a fixture repo builds are made from: `src/upgrade/upgrade.spec.ts`
 upgrades, refuses and rolls back on real git worktrees, `src/upgrade/trial.spec.ts` runs the real trial (child

@@ -79,7 +79,7 @@ describe('a scout of the Gemini tribe, without a shell (P1-53)', () => {
   it('refuses any other command, and names the search it may run', async () => {
     const decision = await decide("Select-String -Path docs -Pattern 'x'");
     expect(decision.reason).toMatch(
-      /^Elvaria rule: run_command: your class has no Bash; to search files, run git grep or git ls-files alone; do the work/,
+      /^Elvaria rule: run_command: your class has no Bash; to search or read the files git tracks, run git grep or git ls-files alone; do the work/,
     );
   });
 

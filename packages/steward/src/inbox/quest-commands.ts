@@ -24,6 +24,7 @@ import { moveAndRing } from '../notices.ts';
 import { OWNER, actorOfCommand, step } from '../record.ts';
 import { releaseScratch } from '../review/scratch.ts';
 import { openAssignee } from '../sessions/open.ts';
+import { modelsOf } from '../world.ts';
 import type { Context } from '../context.ts';
 import type { Edits } from '../record.ts';
 
@@ -197,7 +198,7 @@ function newAssignee(ctx: Context, quest: Quest, named: string | undefined): Res
     // The Steward's own choice keeps the party's bars, as a claim does (P1-21 (b)); the owner's named one does not.
     const characters = [...ctx.world.characters.values()];
     const party = partyOf(quest, [...ctx.world.quests.values()]);
-    const chosen = selectAssignee(quest, free, { party, characters });
+    const chosen = selectAssignee(quest, free, { party, characters, models: modelsOf(ctx.deps.runners) });
     return chosen === undefined ? { ok: false, error: 'no_candidate' } : { ok: true, value: chosen };
   }
   // The same check as a create_quest naming its assignee (P1-29), a disabled tribe included.

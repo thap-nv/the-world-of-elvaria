@@ -110,7 +110,7 @@ Chạy bộ test hợp đồng với adapter của một tộc và kiểm kiểu
 |---|---|
 | `<id>` | Một id tộc trong kingdom.json. |
 | `--scenarios` | Chạy mọi phép kiểm: CLI là bản giả, diễn các kịch bản của bộ test từ ELVARIA_FAKE_SCENARIO. |
-| `--model <model>` | Model của nhân vật thăm dò (mặc định: default_model của tộc). |
+| `--model <model>` | Model của nhân vật thăm dò: mặc định là default_model của tộc, không có thì model rẻ nhất mà nhân vật của tộc chạy ở pool đang bật. |
 | `--tool <path>` | Thử một CLI khác thay cho CLI đã ghim (một bản mới, hay CLI giả với --scenarios), chỉ trong lần chạy này: kingdom.json không đổi, tộc không được bật. |
 
 ## `elvaria tribe disable`

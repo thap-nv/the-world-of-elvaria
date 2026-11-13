@@ -3,9 +3,9 @@
 // `elvaria tribe check` runs them too; a spec wraps each in `it`.
 import assert from 'node:assert/strict';
 
-import { ADAPTER_CAPABILITIES, TRIBE_AUTHS } from '@elvaria/domain';
+import { ADAPTER_CAPABILITIES, TRIBE_AUTHS, modelsProblems } from '@elvaria/domain';
 
-import { searchProblems, shellProblems } from '../kit/adapter-module.ts';
+import { readProblems, searchProblems, shellProblems } from '../kit/adapter-module.ts';
 import { FAKE_QUESTION } from './scenarios.ts';
 import { SPAWN_PROBE_COMMAND, SPAWN_PROBE_OK } from './spawn-probe.ts';
 import { DEFAULT_TIMEOUT_MS, HANG_GRACE_MS, play, settlesWithin, within } from './play.ts';
@@ -160,6 +160,9 @@ const capabilities: ConformanceCheck = {
     assert.deepEqual(shellProblems(runner.capabilities.shell), [], 'capability shell is malformed');
     // Optional (P1-53): whether the CLI searches on its own, true or false.
     assert.deepEqual(searchProblems(runner.capabilities.search), [], 'capability search is malformed');
+    // Optional (PS-23): whether the CLI reads files with a tool of its own, and the models it serves with their families.
+    assert.deepEqual(readProblems(runner.capabilities.read), [], 'capability read is malformed');
+    assert.deepEqual(modelsProblems(runner.capabilities.models), [], 'capability models is malformed');
     assert.ok(runner.tribe.length > 0 && runner.adapter.length > 0);
     return 'passed';
   },

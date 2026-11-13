@@ -51,10 +51,10 @@ describe('elvaria character add', () => {
 
   it('starts at level 1 on a model it knows no level for, and says how to start higher (P1-26)', async () => {
     const io = testIo();
-    expect(await add(io, 'otto', '--class', 'knight', '--model', 'gpt-oss-120b-medium')).toBe(0);
+    expect(await add(io, 'otto', '--class', 'knight', '--model', 'claude-next-1')).toBe(0);
     expect((await readCharacter('otto')).level).toBe(1);
     expect(io.printed.out.at(-1)).toBe(
-      'No starting level is known for model gpt-oss-120b-medium: level 1, given rank F quests only. Summon with --level 1–10, by how strong the model is, to start higher.',
+      'No starting level is known for model claude-next-1: level 1, given rank F quests only. Summon with --level 1–10, by how strong the model is, to start higher.',
     );
   });
 
@@ -91,7 +91,7 @@ describe('elvaria character add', () => {
   it.each([
     ['at', '4', 'claude-sonnet-5-5'],
     ['below', '2', 'claude-sonnet-5-5'],
-    ['on a model of no row', '9', 'gpt-oss-120b-medium'],
+    ['on a model of no row', '9', 'claude-next-1'],
   ])('says nothing of the level the owner gives %s the model’s (P1-43)', async (_, level, model) => {
     const io = testIo();
     expect(await add(io, 'thorn', '--class', 'knight', '--model', model, '--level', level)).toBe(0);
@@ -161,6 +161,14 @@ describe('elvaria character add', () => {
     expect(io.printed.err).toEqual([
       'Model «Claude Opus» is not valid: lowercase letters, digits, dots and hyphens only.',
     ]);
+  });
+
+  it('refuses a model the adapter of the tribe does not serve (PS-23)', async () => {
+    const io = testIo();
+    expect(await add(io, 'otto', '--class', 'knight', '--model', 'gpt-oss-120b-medium')).toBe(1);
+    expect(io.printed.err[0]).toMatch(
+      /^The adapter of tribe claude serves no model «gpt-oss-120b-medium»: it names claude-opus, /,
+    );
   });
 
   it('lists characters with their class in the owner language', async () => {

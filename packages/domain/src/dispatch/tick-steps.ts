@@ -14,6 +14,7 @@ import type { CharacterId, QuestId, TerritoryId } from '../core/ids.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
 import type { Quest } from '../schema/quest/quest.ts';
+import type { TribeModels } from '../tribe/models.ts';
 
 /** A session-tier quest and the character that takes it, with its level for the claim event (§2.6). */
 export interface Claim {
@@ -48,6 +49,8 @@ export interface StepSource {
   readonly kingdom: Pick<Kingdom, 'breakers'>;
   readonly quests: readonly Quest[];
   readonly characters: readonly Character[];
+  /** The models each tribe's adapter declares (PS-23); absent: families by the slug. */
+  readonly models?: TribeModels;
 }
 
 export interface Step {
@@ -81,7 +84,11 @@ function takerOf(step: Step, quest: Quest): Character | undefined {
   if (territory === undefined) return undefined;
   const { characters, quests } = step.snapshot;
   const candidates = characters.filter((c) => step.roster.canClaim(c, quest, territory));
-  return selectAssignee(quest, candidates, { party: partyOf(quest, quests), characters });
+  return selectAssignee(quest, candidates, {
+    party: partyOf(quest, quests),
+    characters,
+    models: step.snapshot.models ?? {},
+  });
 }
 
 /**

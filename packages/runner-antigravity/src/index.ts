@@ -7,6 +7,7 @@ export type { Launch } from './launch.ts';
 export {
   ANTIGRAVITY_ADAPTER,
   ANTIGRAVITY_CAPABILITIES,
+  ANTIGRAVITY_TOOL,
   NO_AUTO_UPDATE,
   agyEnv,
   createAntigravityRunner,
