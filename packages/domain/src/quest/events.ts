@@ -2,6 +2,7 @@
 // mana readings into these events and passes them to transition(); nothing else changes a quest's status
 // (ADR 0005). Every event carries its time, so transition() stays a pure function of its arguments (ADR 0002).
 import type { CharacterId } from '../core/ids.ts';
+import type { BlockedAmendment } from '../schema/quest/quest-parts.ts';
 
 /**
  * Who causes an event (§2.5): the owner through the inbox (U), the Steward (S), the runner or hook acting for
@@ -136,7 +137,11 @@ export type QuestEvent =
   | Shaped<'claim', TakenBy | { readonly assignee: null }>
   | Shaped<'reassign', TakenBy>
   | Shaped<'block', { readonly question: string }>
-  | Shaped<'ask', RunEnd & { readonly question: string }>
+  /**
+   * The run ends on a question for the owner, or (PS-22b) on the doer's amendment, which its quest's author or the
+   * owner decides: the quest waits as on a question, no status of its own.
+   */
+  | Shaped<'ask', RunEnd & { readonly question: string; readonly amendment?: BlockedAmendment }>
   | Shaped<'breaker', RunEnd & { readonly trip: BreakerTrip }>
   | Shaped<'answer', SessionStart & { readonly answer: string }>
   | Shaped<'assign_verifier', SessionStart & { readonly verifier: CharacterId }>

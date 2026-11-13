@@ -146,6 +146,8 @@ export type {
   TerritoryCode,
 } from './prompt/chancellor-code.ts';
 export { buildTriagePrompt } from './prompt/triage.ts';
+export { AMENDMENT_TEXT_MAX, buildAmendmentPrompt } from './prompt/amendment.ts';
+export type { AmendmentAuthorRole, AmendmentContext } from './prompt/amendment.ts';
 export { CONTEXT_FILE_MAX_CHARS, contextPathsIn, readContextFiles } from './prompt/context-files.ts';
 export type { ContextFile } from './prompt/context-files.ts';
 export type { ChancellorContext } from './prompt/chancellor.ts';

@@ -1,5 +1,6 @@
 // A quest move that leaves the owner something to do rings the bell (implementation-plan §2.5: `verdict_pass` with
-// a seal, the infirmary, a question): one ring when the quest arrives there, never again while it waits.
+// a seal, the infirmary, a question, PS-22b an amendment the owner decides): one ring when the quest arrives there,
+// never again while it waits.
 import { currentRun, ok } from '@elvaria/domain';
 import type { Quest, Result } from '@elvaria/domain';
 
@@ -16,7 +17,8 @@ function noticeOf(before: Quest, after: Quest, cause: InfirmaryCause | undefined
   if (after.status === 'awaiting_seal') return { kind: 'awaiting_seal', quest };
   if (after.status === 'infirmary')
     return { kind: 'infirmary', quest, ...infirmaryData(cause ?? OUT_OF_ATTEMPTS, currentRun(after)) };
-  if (after.status === 'blocked' && after.blocked !== undefined)
+  // An amendment its author decides asks nothing of the owner yet (PS-22b): the bell rings if it is handed on.
+  if (after.status === 'blocked' && after.blocked !== undefined && after.blocked.amendment?.by !== 'author')
     return { kind: 'question', quest, question: after.blocked.question };
   return undefined;
 }

@@ -1,12 +1,13 @@
 // What a session's end does to its quest (implementation-plan §2.5, §3.7): the runner's RunResult becomes one move
 // of the table, the character's matching move, and for a verifier the verdict, the assignee's reputation and level.
 // An end that arrives for a quest that moved on meanwhile (cancelled, reassigned) changes nothing.
-import { currentRun, protectedMarkOf } from '@elvaria/domain';
+import { amendmentDeciderOf, currentRun, protectedMarkOf } from '@elvaria/domain';
 import { plotCommitMessage } from '@elvaria/runner-core';
 import type { CharacterId, Quest, Result } from '@elvaria/domain';
 import type { RunResult } from '@elvaria/runner-core';
 
 import { fileMemos } from '../memos/file.ts';
+import type { FiledMemos } from '../memos/file.ts';
 import { moveAndRing } from '../notices.ts';
 import { step } from '../record.ts';
 import { judge, runOf, stallWithoutVerdict, verifierLeaves } from '../review/judge.ts';
@@ -61,7 +62,7 @@ async function settleAssignee(
   // cut (above, and the commit's trips in submitWork) wrote its letter in haste, and the next letter brings them (PS-02).
   // The move carries the quest's pending objection, for its next review (PS-22).
   if (result.outcome !== 'completed') {
-    const before = await fileMemos(ctx, running);
+    const { before } = await fileMemos(ctx, running);
     return moveAndRing(ctx, {
       quest,
       event: { type: 'crash', ...run },
@@ -71,7 +72,7 @@ async function settleAssignee(
     });
   }
   if (result.question !== undefined) {
-    const before = await fileMemos(ctx, running);
+    const { before } = await fileMemos(ctx, running);
     return moveAndRing(ctx, {
       quest,
       event: { type: 'ask', question: result.question, ...run },
@@ -107,7 +108,8 @@ async function submitWork(ctx: Context, running: Running, result: RunResult): Pr
   // The branch would lack the work: the quest goes to the infirmary with the hook's last words, not to review.
   if (committed.status === 'refused')
     return breakAssignee(ctx, running, { trip: 'commit', refused: committed }, ended(result));
-  const before = await fileMemos(ctx, running);
+  const { before, amendment } = await fileMemos(ctx, running);
+  if (amendment !== undefined) return waitOnAmendment(ctx, running, result, { before, amendment });
   const submitted = ctx.world.quests.get(quest);
   const mark =
     submitted === undefined ? undefined : protectedMarkOf(submitted, committed.protected_changes ?? []);
@@ -119,6 +121,31 @@ async function submitWork(ctx: Context, running: Running, result: RunResult): Pr
     // The quest's pending objection (PS-22) and the protected paths the work changed (PS-04).
     before: { ...before, ...mark },
     ...(submitted === undefined ? {} : { out_of_scope: await outOfScopeIn(ctx, submitted) }),
+  });
+}
+
+/**
+ * The run ends on the doer's amendment (PS-22b, ADR 0024): its work stays committed on the branch, unsubmitted, and
+ * the quest waits as on a question, for its author's decision or the owner's; the same attempt goes on after it.
+ */
+function waitOnAmendment(
+  ctx: Context,
+  running: Running,
+  result: RunResult,
+  { before, amendment }: Required<FiledMemos>,
+): Promise<Result<Quest, string>> {
+  const by = amendmentDeciderOf(amendment.to) ?? 'owner';
+  return moveAndRing(ctx, {
+    quest: running.quest,
+    event: {
+      type: 'ask',
+      question: amendment.body,
+      amendment: { memo: amendment.id, by },
+      ...runOf(running, result),
+    },
+    actor: 'runner',
+    edits: { [running.character]: step('ask') },
+    before,
   });
 }
 

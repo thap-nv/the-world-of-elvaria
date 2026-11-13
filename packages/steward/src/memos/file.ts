@@ -6,15 +6,17 @@
 // stops the run's end: a line that follows no memo, an unknown kind, a file that cannot be written are warnings.
 // (PS-22) An objection contests the verdict the run came back with: the domain routes it to a second judge or to the
 // owner (contestRoute), and the quest's pending objection goes on the quest with the move that ends the run, so its
-// next review answers it (objectionOf).
+// next review answers it (objectionOf). (PS-22b) An amendment goes to the quest's author or to the owner by who wrote
+// the quest (authoringOf, authorRoute); the run that filed one ends on it, and the quest waits as on a question.
 import { createHash } from 'node:crypto';
 
-import { memoIdOf, memoKeyOf, memoOf, objectionOf } from '@elvaria/domain';
-import type { Contest, Memo, MemoDraft, MemoId, Quest } from '@elvaria/domain';
+import { amendmentDeciderOf, memoIdOf, memoKeyOf, memoOf, objectionOf } from '@elvaria/domain';
+import type { Authoring, Contest, Memo, MemoDraft, MemoId, Quest } from '@elvaria/domain';
 import { memosOf } from '@elvaria/runner-core';
 
 import { readHandover } from '../files.ts';
 import { STEWARD } from '../record.ts';
+import { authoringOf } from './authoring.ts';
 import { contestOf } from './objection.ts';
 import type { Context } from '../context.ts';
 import type { Running } from '../sessions/running.ts';
@@ -44,13 +46,22 @@ async function fileOne(
   ctx: Context,
   running: Running,
   draft: MemoDraft,
-  { quest, contest }: { readonly quest: Quest | undefined; readonly contest: Contest },
+  facts: {
+    readonly quest: Quest | undefined;
+    readonly contest: Contest;
+    readonly authoring: Authoring | undefined;
+  },
 ): Promise<Memo | undefined> {
+  const { quest, contest, authoring } = facts;
   const key = memoKeyOf(running.quest, draft);
   const id = memoIdOf(running.quest, digestOf(key));
   if (await alreadyFiled(ctx, running, id, key)) return undefined;
   const source = { quest: running.quest, attempt: running.n, from: running.character };
-  const made = memoOf({ id, draft, source, at: ctx.record.stamp(), contest }, ctx.world.registry);
+  const at = ctx.record.stamp();
+  const made = memoOf(
+    { id, draft, source, at, contest, ...(authoring === undefined ? {} : { authoring }) },
+    ctx.world.registry,
+  );
   if (!made.ok) {
     const why = made.error.code === 'unknown_kind' ? `no memo kind "${made.error.kind}"` : made.error.message;
     warn(ctx, running, `a memo of ${running.character} is left out: ${why}`);
@@ -86,33 +97,56 @@ async function fileOne(
 /** What the move that ends the run sets on the quest: its pending objection, when one waits for a judge (PS-22). */
 export type MemoFields = Partial<Pick<Quest, 'objection'>>;
 
+export interface FiledMemos {
+  readonly before: MemoFields;
+  /** (PS-22b) The amendment the run ends on: open, of this run, its quest's author's or the owner's to decide. */
+  readonly amendment?: Memo;
+}
+
+const NOTHING: FiledMemos = { before: {} };
+
+/** The open amendment of run `n`, filed now or at an earlier reading whose move was lost. */
+const amendmentOf = (memos: readonly Memo[], n: number): Memo | undefined =>
+  memos.find(
+    (memo) => memo.attempt === n && memo.state === 'open' && amendmentDeciderOf(memo.to) !== undefined,
+  );
+
 /**
  * Files the memos of the letter the assignee of `running` left; any failure is a warning, never the run's end. Gives
- * the quest's pending objection when the letter holds one, filed now or at an earlier reading whose move was lost.
+ * the quest's pending objection when the letter holds one, and (PS-22b) the amendment the run ends on, each filed now
+ * or at an earlier reading whose move was lost.
  */
-export async function fileMemos(ctx: Context, running: Running): Promise<MemoFields> {
+export async function fileMemos(ctx: Context, running: Running): Promise<FiledMemos> {
   try {
     const letter = await readHandover(ctx.root, running.quest);
-    if (letter === null) return {};
+    if (letter === null) return NOTHING;
     const { memos, malformed } = memosOf(letter);
     for (const line of malformed)
       warn(ctx, running, `a line of the Memos section follows no memo and is left out: ${line}`);
     const quest = ctx.world.quests.get(running.quest);
-    if (memos.length === 0) return {};
+    if (memos.length === 0) return NOTHING;
     const contest = await contestOf(ctx, running.quest, running.n);
-    let filed = contest.memos;
+    const author = quest === undefined ? undefined : authoringOf(ctx, quest);
+    let filed: readonly Memo[] = contest.memos;
     for (const draft of memos) {
-      const memo = await fileOne(ctx, running, draft, { quest, contest: { ...contest, memos: filed } });
+      const facts = {
+        quest,
+        contest: { ...contest, memos: filed },
+        authoring: author === undefined ? undefined : { ...author, memos: filed },
+      };
+      const memo = await fileOne(ctx, running, draft, facts);
       if (memo !== undefined) filed = [...filed, memo];
     }
     const objection = objectionOf({ ...contest, memos: filed });
-    return objection === undefined || objection.memo === quest?.objection?.memo ? {} : { objection };
+    const before = objection === undefined || objection.memo === quest?.objection?.memo ? {} : { objection };
+    const amendment = amendmentOf(filed, running.n);
+    return amendment === undefined ? { before } : { before, amendment };
   } catch (error) {
     warn(
       ctx,
       running,
       `the memos of the letter were not filed: ${error instanceof Error ? error.message : String(error)}`,
     );
-    return {};
+    return NOTHING;
   }
 }

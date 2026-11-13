@@ -6,6 +6,7 @@ import { InboxCommandSchema } from './command/inbox-command.ts';
 import { EventSchema } from './event/event.ts';
 import { KingdomSchema } from './kingdom.ts';
 import { LessonSchema } from './lesson/lesson.ts';
+import { AmendmentDecisionFileSchema } from './memo/amendment-decision.ts';
 import { MemosFileSchema } from './memo/memo-kind.ts';
 import { MemoTriageFileSchema } from './memo/memo-triage.ts';
 import { MemoSchema } from './memo/memo.ts';
@@ -45,6 +46,7 @@ export const CONTRACTS = {
   skill: SkillSchema,
   'quest-draft': QuestDraftFileSchema,
   'memo-triage': MemoTriageFileSchema,
+  'amendment-decision': AmendmentDecisionFileSchema,
   'world-map': WorldMapSchema,
   'tribe-looks': TribeLookPoolSchema,
 } as const satisfies Record<string, z.ZodType>;

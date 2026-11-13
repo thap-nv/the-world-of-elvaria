@@ -1,7 +1,7 @@
 // What the Steward's scheduled jobs are given and what the digest's port does (implementation-plan §3.16.3, PS-03).
 // Apart from types.ts, which re-exports them, and free of the tick's Context, so a job the composition root injects
 // (the Chancellor's triage of PS-03b, the docs graph of PS-21c) forms no import cycle.
-import type { AttentionItem, DailyJobId, StewardNotices, TribeId } from '@elvaria/domain';
+import type { AttentionItem, DailyJobId, QuestId, StewardNotices, TribeId } from '@elvaria/domain';
 
 /**
  * `in_tick`: short and without a model (the digest): it runs to its end inside the tick. `off_tick`: may call a model;
@@ -20,6 +20,8 @@ export interface JobView {
    * the Chancellor's triage, starts only once its tribe has none.
    */
   readonly busy: ReadonlySet<TribeId>;
+  /** (PS-22b) Quests blocked on their doer's amendment while its author has not decided it, the oldest ask first. */
+  readonly amendments: readonly QuestId[];
 }
 
 /** One run of a job. */
@@ -40,6 +42,17 @@ export interface ScheduledJob {
    * the same day, and no job waits for it.
    */
   ready?(view: JobView): Promise<boolean>;
+  run(run: JobRun): Promise<void>;
+}
+
+/**
+ * (PS-22b) A job with no hour the composition root gives the Steward: it runs outside the tick, one at a time with the
+ * scheduled ones, whenever none runs there and it says it has work it may start now (`ready`), as often as that holds.
+ * It records no `schedule.ran` and the Steward's stop aborts it. An amendment's author is the first: a quest waits on it.
+ */
+export interface OnCallJob {
+  readonly id: string;
+  ready(view: JobView): Promise<boolean>;
   run(run: JobRun): Promise<void>;
 }
 

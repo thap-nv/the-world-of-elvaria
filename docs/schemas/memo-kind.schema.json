@@ -51,7 +51,8 @@
           "enum": [
             "chancellor",
             "judge",
-            "owner"
+            "owner",
+            "author"
           ]
         },
         "description": {

@@ -55,7 +55,7 @@
       "minimum": 1
     },
     "to": {
-      "description": "The recipient, decided by routeMemo from the registry and, for a judge, from the verdict the run came back with (ADR 0024, PS-22). Later routes add their own fields (the quests of an advisory).",
+      "description": "The recipient, decided by routeMemo from the registry and, for a judge, from the verdict the run came back with (ADR 0024, PS-22), for an author from who wrote the quest (PS-22b). Later routes add their own fields (the quests of an advisory).",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -67,7 +67,8 @@
           "enum": [
             "chancellor",
             "judge",
-            "owner"
+            "owner",
+            "author"
           ]
         },
         "verdict": {
@@ -76,13 +77,28 @@
           "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user)?$"
         },
         "refusal": {
-          "description": "(PS-22) Of an objection the owner decides: why no second judge reads it.",
+          "description": "(PS-22) Of an objection the owner decides: why no second judge reads it. (PS-22b) Of an amendment the owner decides: why no author does.",
           "enum": [
             "no_verdict",
             "owner_verdict",
             "final_verdict",
-            "second_objection"
+            "second_objection",
+            "no_author",
+            "below_rank",
+            "second_amendment"
           ]
+        },
+        "author": {
+          "description": "(PS-22b) Of an amendment its author decides: the mage whose plan quest wrote the quest's description; absent, the Chancellor (whichever speaks when it decides).",
+          "type": "string",
+          "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+          "not": {
+            "enum": [
+              "user",
+              "machine",
+              "temple"
+            ]
+          }
         }
       },
       "allOf": [
@@ -110,6 +126,20 @@
             "properties": {
               "route": {
                 "const": "owner"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "author"
+            ]
+          },
+          "then": {
+            "properties": {
+              "route": {
+                "const": "author"
               }
             }
           }
@@ -155,6 +185,7 @@
             "shelved",
             "rejected",
             "handled",
+            "accepted",
             "sustained",
             "overruled"
           ]
@@ -360,6 +391,43 @@
         ],
         "note": "Đổi tên một trường của kingdom.json là đổi hợp đồng dữ liệu: chủ nhân quyết."
       }
+    },
+    {
+      "version": 1,
+      "id": "m_20261113_a7md2e",
+      "kind": "amendment",
+      "from": "thorn",
+      "quest": "q_20261113_3kd9wa",
+      "attempt": 1,
+      "to": {
+        "route": "author",
+        "author": "merlin"
+      },
+      "body": "Đề bài: bước 2 sửa `apps/cli/src/quest/list.ts`. Đề nghị: sửa `apps/cli/src/listing.ts`, nơi mọi bảng định dạng giờ. Vì: sửa ở list.ts thì `memo list` vẫn in giờ UTC; `rg formatTime apps/cli/src` cho thấy 4 bảng dùng chung hàm đó.",
+      "refs": [
+        "apps/cli/src/listing.ts",
+        "apps/cli/src/quest/list.ts"
+      ],
+      "state": "open",
+      "filed_at": "2026-11-13T09:12:30+07:00"
+    },
+    {
+      "version": 1,
+      "id": "m_20261113_a7md3f",
+      "kind": "amendment",
+      "from": "thorn",
+      "quest": "q_20261113_3kd9wa",
+      "attempt": 2,
+      "to": {
+        "route": "owner",
+        "refusal": "second_amendment"
+      },
+      "body": "Đề bài đòi giữ định dạng cũ của `memo list`; đổi cả nó thì các bảng mới khớp nhau.",
+      "refs": [
+        "apps/cli/src/memo/list.ts"
+      ],
+      "state": "open",
+      "filed_at": "2026-11-13T10:30:00+07:00"
     }
   ]
 }

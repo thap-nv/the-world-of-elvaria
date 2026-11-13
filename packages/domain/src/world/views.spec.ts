@@ -63,6 +63,23 @@ describe('questViewOf', () => {
     expect(questViewOf(open).question).toBeNull();
   });
 
+  it('asks the owner an amendment only once its author handed it on or decided it (PS-22b)', () => {
+    const asked = { question: 'Bước 2 sai.', asked_at: '2026-11-06T10:00:00+07:00' };
+    const amendment = { memo: 'm_20261106_4k2pqz', by: 'author' };
+    const viewOf = (change: object) =>
+      questViewOf(
+        QuestSchema.parse({
+          ...open,
+          status: 'blocked',
+          blocked: { ...asked, amendment: { ...amendment, ...change } },
+        }),
+      );
+    expect(viewOf({}).question).toBeNull();
+    expect(viewOf({ by: 'owner' }).question).toBe('Bước 2 sai.');
+    // Decided, but its doer could not go on: the owner answers to let it.
+    expect(viewOf({ decision: 'rejected' }).question).toBe('Bước 2 sai.');
+  });
+
   it('carries no field of the file the world has no use for', () => {
     const keys = Object.keys(questViewOf(inReview));
     for (const field of ['description', 'attempt_log', 'plot', 'budget', 'estimate', 'script', 'units']) {

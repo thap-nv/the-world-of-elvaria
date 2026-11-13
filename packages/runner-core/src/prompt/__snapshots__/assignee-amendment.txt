@@ -1,0 +1,35 @@
+# Quest q_20261106_7k3m2a: Thêm script pnpm check
+
+- Kind: build (deliverable: branch)
+- Rank: D
+- Tags: infra
+- Territory: dc1-se-team
+- Limits: 45 minutes, 400000 tokens
+
+Thêm script `pnpm check` gom lint + typecheck + test + i18n:check; cập nhật README.
+
+# Picking up the quest
+
+An earlier session of this quest stopped before it was done: mana ran out, it crashed, a breaker tripped, or Elvaria stopped. This session is new and remembers none of it. Read the handover letter and the last journal lines below, look at `git diff` on your branch, then carry on from Next step. Do not redo what Done lists, and do not try again what Tried and failed lists.
+
+## The decision on your amendment
+
+You wrote: Đề bài: bước 2 sửa `package.json` bằng tay. Đề nghị: chạy `pnpm pkg set scripts.check=…`. Vì: lint của lãnh thổ chặn sửa tay package.json; `pnpm lint` in "package.json is generated".
+
+Its author accepted it and rewrote the quest's description: work to the description as it reads now, and say under Decisions taken what changed. The author's reason:
+
+Đúng: lint chặn sửa tay.
+
+Delete the amendment's line from the Memos section of the letter: it has been decided, and another amendment of this quest goes to the owner.
+
+## Handover letter so far
+
+None: the earlier session left no letter.
+
+## Last journal lines
+
+None.
+
+## Commits on the branch
+
+No commits yet.

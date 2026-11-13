@@ -68,7 +68,13 @@
   it: it contests a judge's fail that sent the run back, no other objection contests that verdict, and the verdict
   answered none itself; otherwise it goes to the `owner` with its `refusal`. `objectionOf` names the quest's pending
   objection (`quest.objection`: the memo, the contested verdict, its judge) and `objectionOutcomeOf` closes it by the
-  second judge's verdict (`sustained` on a pass, `overruled` on a fail).
+  second judge's verdict (`sustained` on a pass, `overruled` on a fail). (PS-22b, `src/memo/amendment.ts`) A kind routed
+  to its quest's `author` (`amendment`) goes to the author `authorOf` reads from `created_by` and the parents (the
+  Chancellor, or the mage whose plan quest the council made the quest from), else to the owner (`authorRoute`:
+  `no_author`, `below_rank` under `kingdom.dispatch.amendments.from_rank`, `second_amendment`); `amendmentDeciderOf` says
+  who a quest blocked on it waits for (`blocked.amendment`, which the `ask` event carries), `awaitsAuthor` whether the
+  author's session is due. The amendment-decision contract and the `decide_amendment` command have their schemas here;
+  `Metrics.amendments` counts them (`src/metrics/amendment-counts.ts`).
 - Runs the character state machine (`src/character/`, `transitionCharacter`) and derives what is never stored:
   `reputationOf`, `affinityOf`, `titleOf`. Decides levels: `canTake` (which ranks the Steward may give a level),
   `aboveCeiling` (a stretch that makes the quest wait for the royal seal) and `levelChange` (counting only the

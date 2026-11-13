@@ -5,13 +5,22 @@
 // finished job again nor skips one a stop cut short; a job that threw waits for the next day or the next start.
 // (PS-03b) Jobs due together go by their hour, and an in-tick job waits while an off-tick job of an earlier or equal
 // hour runs: a Steward started late still triages the memos before it writes the digest. An off-tick job may also
-// wait for its tribe (`ready`), without holding back any other job.
-import { dueJobs, isEventOf, localClockOf } from '@elvaria/domain';
-import type { DailyJobId, Event, Kingdom, StewardNotices, TribeId, ZonedTime } from '@elvaria/domain';
+// wait for its tribe (`ready`), without holding back any other job. (PS-22b) A job on call (an amendment's author) has no
+// hour: it starts outside the tick once no job runs there and it says it has work, and records no `schedule.ran`.
+import { awaitsAuthor, dueJobs, isEventOf, localClockOf } from '@elvaria/domain';
+import type {
+  DailyJobId,
+  Event,
+  Kingdom,
+  QuestId,
+  StewardNotices,
+  TribeId,
+  ZonedTime,
+} from '@elvaria/domain';
 
 import { STEWARD } from '../record.ts';
 import type { Context } from '../context.ts';
-import type { JobMode, JobRun, JobView } from './ports.ts';
+import type { JobMode, JobRun, JobView, OnCallJob } from './ports.ts';
 
 /** A job as the Steward runs it: the built-in digest works on the tick's Context, an injected job ignores it. */
 export interface StewardJob {
@@ -36,7 +45,8 @@ export interface Scheduler {
 }
 
 interface Outside {
-  readonly id: DailyJobId;
+  /** A scheduled job's hour, which an in-tick job of a later hour waits for; undefined for a job on call. */
+  readonly at: string | undefined;
   readonly controller: AbortController;
   readonly done: Promise<void>;
 }
@@ -54,36 +64,64 @@ function busyTribes(ctx: Context): ReadonlySet<TribeId> {
   );
 }
 
+/** The quests waiting on their author's decision, the oldest ask first (PS-22b). */
+function amendmentsOf(ctx: Context): QuestId[] {
+  return [...ctx.world.quests.values()]
+    .filter(awaitsAuthor)
+    .sort((a, b) => (a.blocked?.asked_at ?? '').localeCompare(b.blocked?.asked_at ?? ''))
+    .map(({ id }) => id);
+}
+
 /** The jobs by their hour (`HH:MM` compares as text), in the order given within one hour. */
 const byHour = (jobs: readonly StewardJob[], schedule: Kingdom['schedule']): StewardJob[] =>
   jobs.toSorted((a, b) => schedule[a.id].at.localeCompare(schedule[b.id].at));
 
-export function createScheduler(jobs: readonly StewardJob[]): Scheduler {
+/** The one job outside the tick, when one runs. */
+interface Slot {
+  current: Outside | undefined;
+}
+
+/** Runs one scheduled job to its end; `schedule.ran` only when it ended without throwing and was not stopped. */
+async function runOne(ctx: Context, job: StewardJob, run: JobRun): Promise<void> {
+  try {
+    await job.run(ctx, run);
+    if (run.signal.aborted) return;
+    await ctx.record.note({ type: 'schedule.ran', actor: STEWARD, data: { job: job.id, day: run.day } });
+  } catch (error) {
+    if (!run.signal.aborted) ctx.deps.log.warn(`steward: scheduled ${job.id} failed: ${messageOf(error)}`);
+  }
+}
+
+/** `work` outside the tick, in the free slot, which it frees when it ends; the Steward's stop aborts it. */
+function occupy(slot: Slot, at: string | undefined, work: (signal: AbortSignal) => Promise<void>): void {
+  const controller = new AbortController();
+  const done = work(controller.signal).finally(() => {
+    slot.current = undefined;
+  });
+  slot.current = { at, controller, done };
+}
+
+/** An off-tick job, started when none runs and it is ready; true when it started. */
+async function startOutside(ctx: Context, slot: Slot, job: StewardJob, view: JobView): Promise<boolean> {
+  if (slot.current !== undefined || (job.ready !== undefined && !(await job.ready(view)))) return false;
+  occupy(slot, ctx.world.kingdom.schedule[job.id].at, (signal) => runOne(ctx, job, { ...view, signal }));
+  return true;
+}
+
+/** A job on call, started when no job runs outside the tick and it is ready; it records no `schedule.ran`. */
+async function startOnCall(ctx: Context, slot: Slot, job: OnCallJob, view: JobView): Promise<void> {
+  if (slot.current !== undefined || !(await job.ready(view))) return;
+  occupy(slot, undefined, (signal) =>
+    job.run({ ...view, signal }).catch((error: unknown) => {
+      if (!signal.aborted) ctx.deps.log.warn(`steward: ${job.id} failed: ${messageOf(error)}`);
+    }),
+  );
+}
+
+export function createScheduler(jobs: readonly StewardJob[], onCall: readonly OnCallJob[] = []): Scheduler {
   /** The day each job last started in this Steward, or last ran by the log: it is not due again that day. */
   const last: Partial<Record<DailyJobId, string>> = {};
-  let outside: Outside | undefined;
-
-  /** Runs one job to its end; `schedule.ran` only when it ended without throwing and was not stopped. */
-  async function runOne(ctx: Context, job: StewardJob, run: JobRun): Promise<void> {
-    try {
-      await job.run(ctx, run);
-      if (run.signal.aborted) return;
-      await ctx.record.note({ type: 'schedule.ran', actor: STEWARD, data: { job: job.id, day: run.day } });
-    } catch (error) {
-      if (!run.signal.aborted) ctx.deps.log.warn(`steward: scheduled ${job.id} failed: ${messageOf(error)}`);
-    }
-  }
-
-  /** An off-tick job, started when none runs and it is ready; true when it started. */
-  async function startOutside(ctx: Context, job: StewardJob, view: JobView): Promise<boolean> {
-    if (outside !== undefined || (job.ready !== undefined && !(await job.ready(view)))) return false;
-    const controller = new AbortController();
-    const done = runOne(ctx, job, { ...view, signal: controller.signal }).finally(() => {
-      outside = undefined;
-    });
-    outside = { id: job.id, controller, done };
-    return true;
-  }
+  const slot: Slot = { current: undefined };
 
   return {
     recover: (events) => {
@@ -95,26 +133,28 @@ export function createScheduler(jobs: readonly StewardJob[]): Scheduler {
       const local = localClockOf(zone, ctx.deps.clock.now());
       const { schedule } = ctx.world.kingdom;
       const due = dueJobs({ schedule, jobs: jobs.map(({ id }) => id), local, last });
-      const view: JobView = { day: local.day, notices, busy: busyTribes(ctx) };
+      const view: JobView = { day: local.day, notices, busy: busyTribes(ctx), amendments: amendmentsOf(ctx) };
       for (const job of byHour(jobs, schedule).filter(({ id }) => due.includes(id))) {
         if (job.mode === 'off_tick') {
-          if (await startOutside(ctx, job, view)) last[job.id] = local.day;
+          if (await startOutside(ctx, slot, job, view)) last[job.id] = local.day;
           continue;
         }
         // The job outside the tick of an earlier hour goes first (PS-03b): the triage before the digest.
-        if (outside !== undefined && schedule[outside.id].at <= schedule[job.id].at) continue;
+        const outside = slot.current;
+        if (outside?.at !== undefined && outside.at <= schedule[job.id].at) continue;
         last[job.id] = local.day;
         await runOne(ctx, job, { ...view, signal: ctx.stopping });
       }
+      for (const job of onCall) await startOnCall(ctx, slot, job, view);
     },
     stop: async () => {
-      const running = outside;
+      const running = slot.current;
       if (running === undefined) return;
       running.controller.abort();
       await running.done;
     },
     idle: async () => {
-      await outside?.done;
+      await slot.current?.done;
     },
   };
 }

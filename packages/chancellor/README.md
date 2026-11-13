@@ -40,6 +40,11 @@
   the plan draft it names opens its description with the brief (`briefText`) and has `seal_required: true`; a draft
   without `seal_required` leaves it out, so the Steward takes its kind's `seal_default`; the quest keeps the
   estimate's tokens and minutes, not its peak context.
+- Decides an amendment as its author (PS-22b, implementation-plan §3.16.2): `decideAmendment(context, session,
+signal)` runs one session with no tool (`buildAmendmentPrompt`; the amendment-decision contract,
+  `AMENDMENT_DECISION_JSON_SCHEMA`); `amendmentCommand` holds an acceptance against `kingdom.delegation`
+  (`delegationHolds`, `same_scope` off, the memo's protected files matched by `protectedRefsOf`) and gives one
+  `decide_amendment`: accepted or rejected, or to the owner with what holds it.
 - Triages memos (PS-03b, implementation-plan §3.16.3): `triageMemos(context, session, signal)` runs one session for
   the whole batch (`buildTriagePrompt` of runner-core; the memo-triage contract, `MEMO_TRIAGE_JSON_SCHEMA`), checks
   that each memo of the batch is decided once and no other named (`triageCheckOf`), and screens the drafts of its new

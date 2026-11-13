@@ -59,6 +59,13 @@ export const PROMPT_TEMPLATES = [
   'plan-links',
   'triage',
   'triage-context',
+  // PS-22b: the author's decision on an amendment, for the doer's next session; the author's own session.
+  'amendment-answer',
+  'amendment-accepted',
+  'amendment-rejected',
+  'amendment-owner',
+  'amendment',
+  'amendment-context',
 ] as const;
 export type PromptTemplateName = (typeof PROMPT_TEMPLATES)[number];
 export type PromptTemplates = Readonly<Record<PromptTemplateName, string>>;

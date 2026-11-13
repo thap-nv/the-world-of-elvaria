@@ -1,6 +1,7 @@
-// `elvaria memo decide <memo> <shelved|rejected|handled> [--quest <quest>] [--note "<text>"]`: the owner closes a
-// letter (memo) once (PS-02, ADR 0024). Like seal and answer it is an inbox command the Steward applies (decide_memo,
-// ADR 0005); the CLI refuses here what it can already tell: a closed or unknown memo, an unknown quest.
+// `elvaria memo decide <memo> <shelved|rejected|handled|accepted> [--quest <quest>] [--note "<text>"]`: the owner
+// closes a letter (memo) once (PS-02, ADR 0024; `accepted` is an amendment's, PS-22b). Like seal and answer it is an
+// inbox command the Steward applies (decide_memo, ADR 0005); the CLI refuses here what it can already tell: a closed
+// or unknown memo, an unknown quest.
 import { MEMO_DECISIONS } from '@elvaria/domain';
 
 import { textOption } from '../args.ts';

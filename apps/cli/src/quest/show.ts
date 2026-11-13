@@ -57,6 +57,15 @@ function fields(
     ...(quest.blocked === undefined
       ? []
       : [['cli.quest.field.question', quest.blocked.question] satisfies [MessageKey, string]]),
+    // The amendment the quest waits on, and who decides it now (PS-22b).
+    ...(quest.blocked?.amendment === undefined
+      ? []
+      : [
+          [
+            'cli.quest.field.amendment',
+            t(`cli.quest.amendment.${quest.blocked.amendment.by}`, { memo: quest.blocked.amendment.memo }),
+          ] satisfies [MessageKey, string],
+        ]),
     ...deliveryFields(ctx, quest),
   ];
 }

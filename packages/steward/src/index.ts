@@ -20,6 +20,7 @@ export type {
   ManaGaugeNotice,
   Notice,
   NoticeQuest,
+  OnCallJob,
   Plots,
   PreparedPlot,
   ResolvedCheck,

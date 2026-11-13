@@ -61,6 +61,8 @@ async function runMemoShow(input: CommandInput, cli: CliContext): Promise<ExitCo
     ['cli.memo.field.quest', memo.quest],
     ['cli.memo.field.run', String(memo.attempt)],
     ['cli.memo.field.to', memo.to.route],
+    // An amendment: the mage who decides it, when not the Chancellor (PS-22b).
+    ...(memo.to.author === undefined ? [] : [['cli.memo.field.author', memo.to.author] satisfies Field]),
     // An objection: the verdict it contests, and why no second judge reads it (PS-22).
     ...(memo.to.verdict === undefined ? [] : [['cli.memo.field.contests', memo.to.verdict] satisfies Field]),
     ...(memo.to.refusal === undefined

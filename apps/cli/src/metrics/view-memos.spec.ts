@@ -1,4 +1,5 @@
-// The PS-22 parts of `elvaria metrics`: memos by kind, and the objections each first judge's verdicts drew.
+// The PS-22 parts of `elvaria metrics`: memos by kind, and the objections each first judge's verdicts drew; (PS-22b) the
+// amendments.
 import { EventSchema, VerdictSchema, metricsOf } from '@elvaria/domain';
 import type { Event } from '@elvaria/domain';
 import { translator } from '@elvaria/i18n';
@@ -6,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 
 import { QUEST_ID } from '../../test/quest.ts';
 import { metricsSections } from './view.ts';
-import { memosSection, objectionsSection } from './view-memos.ts';
+import { amendmentsSection, memosSection, objectionsSection } from './view-memos.ts';
 
 const t = translator('en');
 const AT = '2026-11-06T09:30:00+07:00';
@@ -74,13 +75,32 @@ describe('the metrics of PS-22', () => {
     expect(objectionsSection(t, EMPTY).lines).toEqual(['None.']);
   });
 
+  it('tells what became of the amendments (PS-22b)', () => {
+    const amendments = metricsOf({
+      quests: [],
+      verdicts: [],
+      events: [
+        line('memo.routed', { memo: 'm_20261106_cccccc', route: 'author' }),
+        line('memo.closed', { memo: 'm_20261106_cccccc', decision: 'rejected' }),
+      ],
+      commands: [],
+    });
+    expect(amendmentsSection(t, amendments).table).toEqual({
+      header: ['Filed', 'Accepted', 'Rejected', 'To the owner', 'Returned after a rejection'],
+      rows: [['1', '0', '1', '0', '0']],
+    });
+    expect(amendmentsSection(t, EMPTY).lines).toEqual(['None.']);
+  });
+
   it('prints them after the quests, before the reads', () => {
     const titles = metricsSections(t, METRICS).map(({ title }) => title);
     const memos = titles.indexOf('Memos by kind');
-    expect(titles.slice(memos - 1, memos + 3)).toEqual([
+    expect(titles.slice(memos - 1, memos + 4)).toEqual([
       'By quest',
       'Memos by kind',
       'Objections by first judge',
+      // PS-22b.
+      'Amendments to quest descriptions',
       'Files a session read again (at most 10 rows, the most read first)',
     ]);
   });
