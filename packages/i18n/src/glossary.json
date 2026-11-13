@@ -449,6 +449,13 @@
               "used_in": "`quest-draft.drafts[].estimate.context`, `peakContextOf`, `screenDrafts`, `planIssuesOf`"
             },
             {
+              "vi": "File kế hoạch",
+              "en": "Plan file",
+              "id": ["plan_file"],
+              "definition": "File `plans/<chủ đề>.md` pháp sư viết trong đất của quest kế hoạch và commit cùng danh sách quest con, tiêu đề mục bằng tiếng Anh: Summary (trang tóm tắt chủ nhân đóng dấu trên đó), Survey, Shared decisions, Sub-quests, Done when, Unknowns; mục nào cũng phải có chữ. Check `subquests` của Nhiếp chính kiểm nó trước người chấm; `elvaria quest show` in Summary khi kế hoạch chờ dấu (PS-06b).",
+              "used_in": "`PLAN_FILE_SECTIONS`, `planFileIssuesOf`, `planSummaryOf`, `elvaria quest show`"
+            },
+            {
               "vi": "Vùng bảo vệ",
               "en": "Protected paths",
               "id": ["protected_paths", "protected_changes"],
@@ -761,6 +768,13 @@
               "id": ["metrics"],
               "definition": "Các số về cách vương quốc làm việc, là hàm thuần của quest, phán quyết, event log và lệnh đã áp (ADR 0027): lượt, làm lại theo nguyên nhân, đạt lượt đầu, lỗi lọt, lần cần chủ nhân, token và thời gian mỗi quest được đóng dấu. Chỉ đọc, 0 mana.",
               "used_in": "`metricsOf`, `elvaria metrics`, `docs/metrics-report.md`"
+            },
+            {
+              "vi": "Độ đúng của kế hoạch",
+              "en": "Plan accuracy",
+              "id": ["plan_accuracy"],
+              "definition": "Kế hoạch so với thực tế, theo từng quest con pháp sư soạn: vùng khai cạnh file đã sửa và file lần nộp cuối đổi ngoài vùng, ước lượng cạnh token và phút của lượt đầu, số thư đã lập, lượt làm lại theo nguyên nhân. Quest ghép và phần thử mù là của Nhiếp chính nên không tính. Hàm thuần của quest và event log, 0 mana (PS-06b).",
+              "used_in": "`planAccuracyOf`, `elvaria metrics --plan`"
             },
             {
               "vi": "Thẻ điểm lãnh thổ",

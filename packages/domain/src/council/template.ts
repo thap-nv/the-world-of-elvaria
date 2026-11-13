@@ -6,6 +6,7 @@
 import { REGISTRY_ID_PATTERN } from '../core/ids.ts';
 import { RANKS } from '../schema/common.ts';
 import { QUEST_TEMPLATE_SECTIONS, STEPS_REQUIRED_UP_TO } from './constants.ts';
+import { sectionKeyOf, sectionsOf } from './sections.ts';
 import type { Rank } from '../schema/common.ts';
 import type { Tier } from '../schema/quest/shared.ts';
 import type { QuestTemplateSection } from './constants.ts';
@@ -25,32 +26,8 @@ export interface TemplateSubject {
   readonly tier: Tier;
 }
 
-const FENCE = /^\s*(?:```|~~~)/;
-/** A heading of level one or two; `###` and deeper belong to the section they are in. */
-const HEADING = /^(?<level>#{1,2})\s+(?<text>.*?)\s*:?\s*$/;
 const ORDERED_ITEM = /^\s*\d+[.)]\s+\S/m;
 const NAMED_CHECK = /\bcheck\s+`([^`]+)`/gi;
-
-const keyOf = (heading: string): string => heading.trim().toLowerCase();
-
-/** The text of each `## ` section, by its heading in lower case; a heading inside a code fence is text. */
-function sectionsOf(description: string): ReadonlyMap<string, string> {
-  const sections = new Map<string, string[]>();
-  let current: string[] | undefined;
-  let fenced = false;
-  for (const line of description.split(/\r?\n/)) {
-    if (FENCE.test(line)) fenced = !fenced;
-    const heading = fenced ? null : HEADING.exec(line);
-    if (heading === null) {
-      current?.push(line);
-      continue;
-    }
-    const key = keyOf(String(heading.groups?.text));
-    current = heading.groups?.level === '##' && !sections.has(key) ? [] : undefined;
-    if (current !== undefined) sections.set(key, current);
-  }
-  return new Map([...sections].map(([key, lines]) => [key, lines.join('\n').trim()]));
-}
 
 const stepsRequired = (rank: Rank): boolean => RANKS.indexOf(rank) <= RANKS.indexOf(STEPS_REQUIRED_UP_TO);
 
@@ -67,7 +44,7 @@ function namedChecks(doneWhen: string): string[] {
 export function templateIssuesOf(subject: TemplateSubject, checks?: readonly string[]): TemplateIssue[] {
   if (subject.tier !== 'session') return [];
   const sections = sectionsOf(subject.description);
-  const textOf = (heading: string): string => sections.get(keyOf(heading)) ?? '';
+  const textOf = (heading: string): string => sections.get(sectionKeyOf(heading)) ?? '';
   const required = stepsRequired(subject.rank);
   const missing: TemplateIssue[] = QUEST_TEMPLATE_SECTIONS.filter(
     ({ id, heading }) => (id !== 'steps' || required) && textOf(heading) === '',

@@ -8,6 +8,7 @@ import { NONE } from '../listing.ts';
 import { count, tableSection } from './section.ts';
 import { memosSection, objectionsSection } from './view-memos.ts';
 import { firstEditsLine, graphLine, promptSection } from './view-sessions.ts';
+import { adviceSection, passByRunSection, statusTimesSection } from './view-waits.ts';
 import type { MetricsSection } from './section.ts';
 
 export type { MetricsSection, MetricsTable } from './section.ts';
@@ -217,6 +218,8 @@ const LIMITS = [
   'reads',
   'first_edits',
   'prompts',
+  'status_times',
+  'advice',
 ] as const;
 
 const limitsSection = (t: Translate): MetricsSection => ({
@@ -229,9 +232,12 @@ export const metricsSections = (t: Translate, metrics: Metrics): MetricsSection[
   summarySection(t, metrics),
   reworkSection(t, metrics.rework),
   firstPassSection(t, metrics),
+  passByRunSection(t, metrics),
   ownerSection(t, metrics),
+  adviceSection(t, metrics),
   escapedSection(t, metrics),
   sealedSection(t, metrics),
+  statusTimesSection(t, metrics),
   questSection(t, metrics),
   memosSection(t, metrics),
   objectionsSection(t, metrics),

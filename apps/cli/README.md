@@ -55,7 +55,9 @@
   says what the last run came to (`src/quest/last-run.ts`, P1-46): its verdicts in the order they were written (each
   judge's partial verdict with where it stopped, the judge's or the machine's, the owner's), each with its failed
   checks and its notes, and the `plot.restored` lines of that run (the paths the Steward dropped from the plot after a judge or after the machine checks, P1-44 and P1-47), so
-  the owner need not open `verdicts/` or the journal. `character suspend <id> [--reason]` and `character release <id>` send `suspend` and `release` (a
+  the owner need not open `verdicts/` or the journal. Of a plan quest (PS-06b, `src/quest/plan-view.ts`), `quest
+show` prints the brief apart from the rest of the description and, while the plan waits for the seal, the
+  `## Summary` of the plan file the quest changed in its plot (what the plot changed from runner-core's PlotManager). `character suspend <id> [--reason]` and `character release <id>` send `suspend` and `release` (a
   character the Steward would refuse, unknown, suspended already or not suspended, is refused here), and `suspend`
   says what becomes of the quest the character holds (the owner's decision after P1-26). `character level <id>
 <level>` sends `set_level` (a level outside 1–10 or the one the character has is refused here) and says the rank
@@ -167,14 +169,17 @@
   running Steward only, so they are in the digest it writes. `run` gives the Steward the `Digest` port
   (`src/run/digest-file.ts`): the same Markdown in `digest/<day>.md`, once a day at `kingdom.schedule.digest.at`;
   the bell says the digest is written and names a quest whose judges are all out of mana (`judge_mana`).
-- `metrics [--since <day>] [--until <day>] [--json]` (PS-01, PS-01b: checks set aside for their environment, and the
+- `metrics [--since <day>] [--until <day>] [--json] [--plan <quest>]` (PS-01, PS-01b: checks set aside for their environment, and the
   files a session read again, the ten most read): the metrics ledger of `metricsOf` (`@elvaria/domain`)
   over the days asked, as plain tables or JSON. `src/metrics/read.ts` reads quests, verdicts, the event log and
   `inbox/done/` without a lock and writes nothing, so it runs beside a Steward; a file it cannot use is named on
   stderr and left out. `src/metrics/view.ts` turns the ledger into sections that `scripts/docs-metrics-report.mjs`
   also renders into `docs/metrics-report.md`; `src/metrics/view-sessions.ts` adds the parts of PS-21 (graph
   queries, tool calls before an assignee's first edit, prompt size by role and block), on the section shape of
-  `src/metrics/section.ts`.
+  `src/metrics/section.ts`; `src/metrics/view-waits.ts` those of PS-06b (time in each status, pass rate by run, the
+  Chancellor's advice beside the owner's decisions). `--plan <quest>` prints instead how a plan quest's sub-quests went
+  against its plan (`planAccuracyOf`, `src/metrics/view-plan.ts`); a quest that is no plan, one that is not there, or
+  `--plan` with a window is a usage error.
 - `migrate`: moves every older file to the current version, old text in `.backup/<stamp>/` (`migrateKingdom`),
   copies the registry files this Elvaria ships and the kingdom lacks (P1-15), then adds the default registry
   entries it lacks by id, whole, only when the registry still loads with them (P1-41, `addMissingRegistryEntries`):

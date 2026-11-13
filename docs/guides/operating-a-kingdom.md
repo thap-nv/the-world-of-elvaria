@@ -198,7 +198,8 @@ Cái mất khi dừng giữa chừng: phút check đã chạy (một lần 20 ph
 | Tể tướng phân loại thư ngay, không chờ lịch | `elvaria triage` (một lần gọi model nếu có thư chờ) |
 | prompt, settings, stdout của một lượt | `.runs/<quest>-<n>/` (người chấm: `.runs/<quest>-<n>/verify/`) |
 | log setup và từng check | `.runs/<quest>-setup.log`, `.runs/<quest>-<n>/checks/<id>.log` |
-| số đo của một khoảng ngày | `elvaria metrics --since <yyyy-mm-dd> [--until …] [--json]` |
+| số đo của một khoảng ngày | `elvaria metrics --since <yyyy-mm-dd> [--until …] [--json]` (từ PS-06b có thêm thời gian quest nằm ở từng trạng thái, tỉ lệ đạt theo lượt làm, tỉ lệ bạn quyết thư theo lời khuyên của Tể tướng) |
+| một kế hoạch so với thực tế | `elvaria metrics --plan <quest kế hoạch> [--json]`: từng quest con với vùng khai, file đã sửa, file đổi ngoài vùng, ước lượng và token lượt đầu, thư, lượt làm lại |
 
 Trạng thái của quest, id (dùng cho `quest list --status <id>`) và tên hiện ra: `draft` Nháp, `open` Mở, `claimed` Đã nhận, `working` Đang làm, `review` Chờ nghiệm thu, `returned` Bị trả bài, `blocked` Chờ trả lời, `paused_mana` Tạm dừng (hết mana), `awaiting_seal` Chờ dấu vua, `done` Xong, `infirmary` Trạm quân y, `archived` Lưu trữ. Chuỗi in ra theo ngôn ngữ của vương quốc (`vi` mặc định; `init --locale en` đặt `en` cho cả vương quốc, `--locale` ở từng lệnh thắng).
 
@@ -222,6 +223,8 @@ Các lệnh trên chỉ đọc, không tốn mana, chạy được khi Nhiếp c
 4. `elvaria quest archive <quest>`: Nhiếp chính gỡ worktree và cho Claude Code quên đường dẫn đó (Nhiếp chính không chạy thì lệnh chờ tới lần `run` sau). Nhánh ở lại; xóa khi đã merge (`git branch -d quest/<quest>`).
 
 Với một đội, chỉ merge nhánh của **quest ghép**; hợp đồng và các phần vào `main` qua nó.
+
+**Dấu trên một kế hoạch** (PS-06b): `elvaria quest show <quest kế hoạch>` in tấu trình (các phương án bạn đã nhận khi xác nhận quest) tách khỏi phần còn lại của mô tả, và khi kế hoạch chờ dấu, mục `## Summary` của file `plans/<chủ đề>.md` pháp sư viết trong đất: trang để bạn đóng dấu. Muốn đọc cả file thì mở nó trong worktree của quest. Check `subquests` của Nhiếp chính đã trả về kế hoạch thiếu file đó hay thiếu một mục của nó trước khi người chấm đọc.
 
 **Vùng bảo vệ** (PS-04): lãnh thổ khai `laws.protected_paths` (thứ canh giữ thế giới: luật, check, người chấm, sổ đo). Quest có thay đổi chạm một đường dẫn trong đó thì cần dấu vua dù dạng của nó không cần (kể cả `analyze`), và được ưu tiên người chấm cấp cao hơn như quest từ hạng B; phần của một đội chỉ được ưu tiên người chấm, dấu thì quest ghép của đội xin một lần cho cả đội; `quest show` có dòng "Vùng bảo vệ đã chạm". Không có gì bị chặn: đọc kỹ các file đó trong diff trước khi đóng dấu. Cách đặt và danh sách của lãnh thổ Elvaria: [elvaria-territory.md](elvaria-territory.md).
 
@@ -342,7 +345,7 @@ Khi `main` của Elvaria có thay đổi ở `packages/` hay `apps/` mà bạn m
 
 1. `elvaria upgrade` trước: bản ghim cũ từ chối registry có một bước nghi thức nó không biết.
 2. Ở checkout của repo Elvaria: `node scripts/ritual-steps.mjs --kingdom <vương quốc> --dry-run` in các bước hiện có và các bước mới; bỏ `--dry-run` để ghi. Script chép `registry/rituals.json` vào `.backup/<giờ>-ritual-steps/` trước, chỉ đổi `steps` của nghi thức đó, và từ chối khi bạn đã sửa các bước theo cách khác (`--force` thay hẳn).
-3. `registry/prompts/mage.md` (mẫu `plans/<chủ đề>.md`, mẫu đề bài, `estimate.context`) và `registry/prompts/chancellor.md` đổi ở PS-06: chép bản mới vào vương quốc theo §12 (sao lưu, so). Mẫu đề bài và cách ước lượng đến với pháp sư từ bản ghim kể cả khi chưa chép, nhưng `mage.md` cũ vẫn dạy `seal_required` bắt buộc và không có mẫu `plans/`.
+3. `registry/prompts/mage.md` (mẫu `plans/<chủ đề>.md`, mẫu đề bài, `estimate.context`) và `registry/prompts/chancellor.md` đổi ở PS-06: chép bản mới vào vương quốc theo §12 (sao lưu, so). Mẫu đề bài và cách ước lượng đến với pháp sư từ bản ghim kể cả khi chưa chép, nhưng `mage.md` cũ vẫn dạy `seal_required` bắt buộc và không có mẫu `plans/`. Từ PS-06b check `subquests` trả về kế hoạch có file `plans/` thiếu một mục của mẫu (Summary, Survey, Shared decisions, Sub-quests, Done when, Unknowns): chưa chép `mage.md` mới thì kế hoạch đầu tiên gần như chắc bị trả một lần.
 4. `elvaria doctor` in "Sẵn sàng.".
 
 Thay đổi chỉ ở `docs/` thì không cần làm gì. Khi repo Elvaria cũng là một lãnh thổ, checkout chính là gốc của worktree quest mới, còn code của Nhiếp chính nằm trong bản ghim: `pull` chỉ đổi điểm tách của quest mở sau đó.

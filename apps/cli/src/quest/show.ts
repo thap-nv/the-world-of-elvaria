@@ -1,6 +1,7 @@
 // `elvaria quest show <id>`: one quest, its fields as labelled lines (its party too, P1-21 (c)), why it waits (nobody
 // can take it, P1-03; the infirmary, P1-32; a scope held, PS-05), the protected paths its work changed (PS-04), what its
-// last run came to (verdicts, plot put back, P1-46), then its description.
+// last run came to (verdicts, plot put back, P1-46), then its description. (PS-06b) A plan quest's brief comes apart
+// from the rest of its description, with its plan's summary while the plan waits for the seal.
 import type { Event, Quest, Registry } from '@elvaria/domain';
 import type { MessageKey } from '@elvaria/i18n';
 import { inKingdom } from '@elvaria/store';
@@ -14,6 +15,7 @@ import { infirmaryLines, journalOf, lastInfirmaryOf } from './infirmary.ts';
 import { lastRunLines } from './last-run.ts';
 import { kindName } from './list.ts';
 import { partyFields } from './party.ts';
+import { planViewOf } from './plan-view.ts';
 import { readQuest } from './references.ts';
 import { scopeWaitText, scopeWaitsOf } from './scope.ts';
 import { unclaimableLines, unclaimableOf } from './unclaimable.ts';
@@ -97,6 +99,7 @@ async function runQuestShow(input: CommandInput, cli: CliContext): Promise<ExitC
   const journal = await journalOf(ctx, quest);
   const sick = infirmaryNote(ctx, quest, journal);
   const last = await lastRunLines(ctx, quest, journal);
+  const plan = await planViewOf(ctx, quest);
   [
     `${quest.id}  ${quest.title}`,
     ...renderTable(rows),
@@ -104,8 +107,10 @@ async function runQuestShow(input: CommandInput, cli: CliContext): Promise<ExitC
     ...scope,
     ...sick,
     ...last,
+    ...plan.lines,
     '',
-    quest.description,
+    ...(plan.lines.length === 0 ? [] : [ctx.t('cli.quest.show.description')]),
+    plan.description,
   ].forEach(ctx.io.out);
   return EXIT.ok;
 }

@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { A, fakeGraphs } from './__fixtures__/graphs.ts';
 import { CAST, bench, questPayload, tickUntil } from './__fixtures__/kingdom.ts';
 import { leavingRunners } from './__fixtures__/deliver.ts';
-import { templated } from './__fixtures__/template.ts';
+import { PLAN_FILE, PLAN_FILE_PATH, templated } from './__fixtures__/template.ts';
 import type { Bench } from './__fixtures__/kingdom.ts';
 import type { Steward } from './types.ts';
 import type { Quest, TerritoryId } from '@elvaria/domain';
@@ -73,8 +73,9 @@ async function planned(codeGraph: boolean): Promise<readonly SpawnRequest[]> {
     version: 1,
     drafts: [draft('d1', ['apps/api/**']), draft('d2', ['apps/web/**'])],
   });
+  // A plan leaves its plan file too, which the subquests check holds to its sections (PS-06b).
   const leaves = (req: { readonly quest?: Quest }) =>
-    req.quest?.kind === 'plan' ? { 'subquests.json': list } : {};
+    req.quest?.kind === 'plan' ? { 'subquests.json': list, [PLAN_FILE_PATH]: PLAN_FILE } : {};
   running = kingdom.steward({
     runners: leavingRunners(kingdom, leaves),
     graphs: fakeGraphs(A, [A], folder.replaceAll('\\', '/')),
