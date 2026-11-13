@@ -7,6 +7,7 @@ import type { Glossary, GlossaryTable } from '@elvaria/i18n';
 import { describe, expect, it } from 'vitest';
 
 import {
+  CLAUDE_MD_MAX_KB,
   DOC_MAX_KB,
   README_SECTIONS,
   adrProblems,
@@ -117,10 +118,24 @@ describe('sizeProblems', () => {
     ]);
   });
 
-  it('looks only at Markdown under docs/', () => {
+  it('looks only at Markdown under docs/ and at CLAUDE.md', () => {
     const big = 'x'.repeat(DOC_MAX_KB * 1024 + 1);
-    const files = { 'CLAUDE.md': big, 'docs/schemas/quest.schema.json': big, 'design/notes.md': big };
+    const files = {
+      'docs/schemas/quest.schema.json': big,
+      'design/notes.md': big,
+      'packages/x/CLAUDE.md': big,
+      'README.md': big,
+    };
     expect(sizeProblems(Object.keys(files), read(files))).toEqual([]);
+  });
+
+  it('lets CLAUDE.md, which every session loads whole, weigh up to its own ceiling', () => {
+    const limit = CLAUDE_MD_MAX_KB * 1024;
+    expect(sizeProblems(['CLAUDE.md'], () => 'x'.repeat(limit))).toEqual([]);
+    expect(sizeProblems(['CLAUDE.md'], () => `${'x'.repeat(limit)}ạ`)).toEqual([
+      `CLAUDE.md: ${CLAUDE_MD_MAX_KB + 1} KB, over ${CLAUDE_MD_MAX_KB} KB; point to docs/cli.md, the plan or .claude/rules instead of repeating them`,
+    ]);
+    expect(CLAUDE_MD_MAX_KB).toBeLessThan(DOC_MAX_KB);
   });
 });
 

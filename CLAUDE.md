@@ -68,7 +68,7 @@ pnpm boundaries          # dependency-cruiser theo packages/config/boundaries.mj
 pnpm schemas             # sinh docs/schemas/*.schema.json từ zod; --check: so, không ghi, exit 1 khi lệch
 pnpm docs:gen            # sinh docs/glossary.md, events.md, dependency-graph.md, cli.md, bảng §2.5 và mục lục của kế hoạch triển khai; --check như trên
 pnpm docs:gen --kingdom <dir>   # thêm docs/tier-report.md (§3.12) và docs/metrics-report.md (§3.16.1) từ vương quốc đó; --check không kèm --kingdom (như trong pnpm check) không so hai file này
-pnpm docs:check          # README 4 mục, ADR có dòng Status, từ cấm trong identifier, id dữ liệu, link sống, glossary ↔ domain, cấm .sh/.ps1/.cmd/.bat, file .md trong docs/ ≤ 150 KB
+pnpm docs:check          # README 4 mục, ADR có dòng Status, từ cấm trong identifier, id dữ liệu, link sống, glossary ↔ domain, cấm .sh/.ps1/.cmd/.bat, file .md trong docs/ ≤ 150 KB, CLAUDE.md ≤ 29 KB
 pnpm i18n:check          # khóa và placeholder VI/EN khớp nhau, hình dạng glossary.json
 pnpm plan:split          # chuyển dòng §8 đã xong của kế hoạch triển khai sang file lưu, so tập dòng trước và sau; --check như trên
 pnpm format
