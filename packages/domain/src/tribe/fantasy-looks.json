@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "theme": "fantasy",
+  "palettes": [
+    { "id": "silver", "night": "#8AD8D4", "day": "#176E6A" },
+    { "id": "red", "night": "#FF8A60", "day": "#AE3814" },
+    { "id": "yellow", "night": "#F3E25B", "day": "#6C5F15" },
+    { "id": "green", "night": "#B6ED82", "day": "#3F6A08" },
+    { "id": "sky", "night": "#55C5F0", "day": "#0A5776" },
+    { "id": "violet", "night": "#D950F7", "day": "#80198C" },
+    { "id": "rose", "night": "#E066A8", "day": "#8F1651" },
+    { "id": "bronze", "night": "#D4B19A", "day": "#70492F" },
+    { "id": "white", "night": "#D2DAEE", "day": "#3A3A3B" },
+    { "id": "indigo", "night": "#7F90EC", "day": "#1B2A78" }
+  ],
+  "crests": [
+    { "id": "star" },
+    { "id": "fire" },
+    { "id": "moon" },
+    { "id": "wave" },
+    { "id": "mountain" },
+    { "id": "wind" },
+    { "id": "leaf" },
+    { "id": "thunder" },
+    { "id": "frost" },
+    { "id": "sun" }
+  ],
+  "figures": [{ "id": "slender" }, { "id": "sturdy" }, { "id": "tall" }, { "id": "nimble" }],
+  "auras": [{ "id": "glow" }, { "id": "sparks" }, { "id": "mist" }, { "id": "rings" }],
+  "frames": [{ "id": "round" }, { "id": "shield" }, { "id": "diamond" }, { "id": "arch" }],
+  "pinned": {
+    "claude": { "palette": "silver", "crest": "star", "figure": "slender", "aura": "glow", "frame": "round" },
+    "gemini": { "palette": "red", "crest": "fire", "figure": "sturdy", "aura": "sparks", "frame": "shield" }
+  }
+}

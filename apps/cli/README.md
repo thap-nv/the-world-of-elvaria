@@ -3,7 +3,7 @@
 ## Does
 
 - Ships the `elvaria` command, the only composition root (implementation-plan §1.1): `init`, `doctor`,
-  `tribe list|add|check|disable`, `territory add|list`, `character add|list|suspend|release|level|model`, `say`,
+  `tribe list|add|check|disable|look`, `territory add|list`, `character add|list|suspend|release|level|model`, `say`,
   `quest add|list|show|confirm|cancel|archive|edit|retry|reassign`,
   `seal`, `return`, `answer`, `memo list|show|decide`, `triage`, `run`, `wake`, `digest`, `metrics`,
   `sandbox generate|replay`, `migrate`, `upgrade`. The command table (`src/commands.ts`) drives parsing (`util.parseArgs`), help, and the reference
@@ -71,7 +71,7 @@
 - `wake <tribe>` sends `wake` for a tribe of `kingdom.tribes[]`: the Steward probes that account at its next tick
   (ADR 0009), for instance after the owner signed in again.
 - Writes new files the Steward does not own: `kingdom.json` (`init`, then `tribes[].tool` and, with `--enable`,
-  `tribes[].enabled` from `doctor` once it finds nothing wrong, and `tribes[]` from `tribe add|check|disable`,
+  `tribes[].enabled` from `doctor` once it finds nothing wrong, and `tribes[]` from `tribe add|check|disable|look`,
   P1-19), a
   territory, a newly summoned character (create only, never overwrite). Those two are also logged
   (`territory.attached`, `character.created`, with the view after the change, P0-09), so the world sees them.
@@ -93,9 +93,15 @@
   (`src/tribe/adapter-file.ts`): runner-core's `adapterKitOf` builds its kit (minimal env, the pinned or given CLI,
   `launchOf`, `hookCommand`) and `adapterOfModule` checks what `createAdapter(kit)` returns, so a broken file is a
   list of reasons for `run`, `doctor` and `tribe check`, never a crash. `tribe list` (P1-34, `src/tribe/list.ts`)
-  prints one line per tribe: adapter, enabled or not, pinned CLI version, path and sign-in, and from its runner the
+  prints one line per tribe: its look (PS-24: name, palette and crest), adapter, enabled or not, pinned CLI version, path and sign-in, and from its runner the
   highest rank `tribeLimitsOf` lets it take (none without `headless`), whether it takes guarded territories, and the
   capabilities and the shell on this OS it declares (P1-46); a tribe with no runner yet or an adapter file that does not load says so instead.
+  `tribe look <id>` (PS-24, `src/tribe/look.ts`, `look-view.ts`) prints the tribe's look from the domain's `tribeLookOf`
+  and its source (the owner's choice, the theme's pinned entry, or drawn by the id), with the palettes and crests no
+  tribe holds; with `--palette|--crest|--figure|--aura|--frame <id>` or `--name` it writes the owner's choice to
+  `tribes[].look` through `saveTribes`, every part (the look as it stands with the options laid over it), refusing a
+  part the theme's pool lacks (exit 2) and a palette or crest another tribe has or the theme pins to another tribe
+  (exit 1), and says which drawn looks moved with it; `--reset` drops the choice.
 - `doctor`: finds each tribe's CLI (`--tool <tribe>=<path>`, the pinned path, PATH, then the adapter's own search:
   Claude Code inside the VS Code extension; npm `.cmd` shims run as `node <script>`; an adapter file is asked
   through its runner's `doctor()`, `src/doctor/adapter-tool.ts`, P1-19), pins path and version with the sign-in the

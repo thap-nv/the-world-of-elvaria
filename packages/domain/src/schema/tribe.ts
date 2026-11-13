@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { REGISTRY_ID_PATTERN, TribeIdSchema } from '../core/ids.ts';
 import { AbsPathSchema, DateTimeSchema, ModelSlugSchema, NonEmptyStringSchema } from './common.ts';
+import { TribeLookChoiceSchema } from './tribe-look.ts';
 
 /** A built-in adapter: a package of this repo (`claude_code`, `antigravity`, `gemini_cli`, `codex_cli`). */
 const BUILT_IN_ADAPTER = '[a-z][a-z0-9_]*';
@@ -39,7 +40,7 @@ export const TribeSchema = z
   .strictObject({
     id: TribeIdSchema.meta({
       description:
-        'TribeId, referenced by character.tribe and class.default_tribe. Display name, mana colour and crest are theme data keyed by this id.',
+        "TribeId, referenced by character.tribe and class.default_tribe. The tribe's look (name, palette, crest…) is `look`, else the theme's pinned entry for this id, else drawn from the theme's look pool by it (PS-24).",
     }),
     adapter: z
       .string()
@@ -80,6 +81,8 @@ export const TribeSchema = z
         description:
           'Denominator for the `estimate` gauge source (implementation-plan §3.5): tokens of the sessions in each window, or their minutes for a tribe without usage; used for a pool and window the account reports no figure for. Each pool of the tribe is measured against it.',
       }),
+    // Optional, added after v1 (PS-24): a kingdom.json without it stays version 1 and every tribe still has a look.
+    look: TribeLookChoiceSchema.optional(),
   })
   // Only rules that hold whatever the adapter: which sign-ins an adapter runs with is its own declaration, checked
   // by checkTribeAuth (tribe/auth.ts), so the core never asks which CLI a tribe runs (ADR 0021; P1-19).
