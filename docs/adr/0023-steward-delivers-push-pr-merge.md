@@ -16,6 +16,8 @@ In stage 1 the owner merged by hand after the royal seal. In practice the owner 
 - The Steward pushes only `quest/<id>` branches: no force push, no push to the base branch.
 - The forge is a port (`Forge`: open, status, merge) with GitHub REST as its first implementation. The token comes from `git credential fill` each time it is needed, lives only in the Steward process, passes `redact`, and never reaches a prompt, a journal, an event or a character's env.
 - Failures do not loop. A conflict the declared rules cannot resolve opens a merge quest for a knight, judged like any quest; red CI returns the quest with the log; a forge error or a CI timeout emits `delivery.failed` and goes to the owner's digest.
+- (Amended 2026-11-13, owner's decision, PS-08) After `delivery.merged` the Steward deletes the remote `quest/<id>` branch it pushed, and no other. Before a push it scans the branch's diff with the redaction patterns (ADR 0013) and does not push on a hit.
+- (Amended 2026-11-13, owner's decision, PS-08b) The owner may delegate the seal. A quest inside the seal part of `kingdom.delegation` (rank, kind, a territory in `pr_merge`) is created without `seal_required`, and the machine only ever raises it again: protected paths, a claim above the level, files outside the scope, a diff above the cap, a judge of a doer's family, an objection. No class seals or merges, and the `seal` command stays the owner's. One escaped defect of such a quest suspends the delegation for its territory until the owner re-arms it.
 
 ## Alternatives
 
