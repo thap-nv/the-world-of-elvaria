@@ -50,7 +50,12 @@ export {
   runFakeShellLine,
   writeSpawnProbe,
 } from './conformance/spawn-probe.ts';
-export type { CheckOutcome, ConformanceCheck, ConformanceTarget } from './conformance/target.ts';
+export type {
+  CheckOutcome,
+  ConformanceCheck,
+  ConformanceTarget,
+  LeftWorkspace,
+} from './conformance/target.ts';
 export {
   CONFORMANCE_CHARACTER,
   CONFORMANCE_QUEST,

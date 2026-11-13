@@ -168,26 +168,75 @@ describe('elvaria quest confirm, cancel, edit', () => {
     });
   });
 
-  // P1-56, (g) of the P1-50 report (intervention 16): `--max-minutes` changed the quest and nothing of the CLI that was
-  // already running with the old `--print-timeout`; the owner waited for a clock that never moved.
-  it('says a new minute ceiling reaches the next session only while a session may be running', async () => {
-    const held = { assignee: 'wren', attempts: 1 };
-    await plantQuests(
-      kingdom,
-      questFixture('working', QUEST_ID, held),
-      questFixture('returned', OTHER_QUEST_ID, held),
-    );
-    const running = testIo();
-    expect(await quest(running, 'edit', QUEST_ID, '--max-minutes', '103')).toBe(0);
-    expect(running.printed.out.at(-1)).toBe(
-      `Quest ${QUEST_ID} has a session running: the 103-minute ceiling applies to the next session only. The running session's CLI was given its clock when it opened (the old ceiling, 45 minutes) and is still cut by it; to give this session more time, stop it and open it again.`,
-    );
-    const between = testIo();
-    expect(await quest(between, 'edit', OTHER_QUEST_ID, '--max-minutes', '103')).toBe(0);
-    expect(between.printed.out.join('\n')).not.toContain('next session only');
-    const tokens = testIo();
-    expect(await quest(tokens, 'edit', QUEST_ID, '--max-tokens', '900000')).toBe(0);
-    expect(tokens.printed.out.join('\n')).not.toContain('next session only');
+  // Lessons of 2026-11-12 (A2): P1-56 said a new ceiling reached the next session only, but the Steward's time breaker
+  // reads the quest's ceiling on every tick (breakersOf); only agy's own `--print-timeout` keeps the old one.
+  describe('a new minute ceiling while a session runs', () => {
+    /** A session opened at `minute` past 08:00; the test clock reads 09:00 (+07:00). */
+    const opened = (role: 'assignee' | 'verifier', character: string, minute: number) => ({
+      n: 1,
+      character,
+      role,
+      started_at: `2026-11-06T08:${String(minute).padStart(2, '0')}:00+07:00`,
+      run_dir: role === 'verifier' ? `.runs/${QUEST_ID}-1/verify` : `.runs/${QUEST_ID}-1`,
+    });
+    const working = { assignee: 'wren', attempts: 1, attempt_log: [opened('assignee', 'wren', 30)] };
+    const said = async (id: string, ...args: string[]) => {
+      const io = testIo();
+      expect(await quest(io, 'edit', id, ...args)).toBe(0);
+      return io.printed.out.slice(1).filter((line) => !line.startsWith('Command '));
+    };
+
+    it('holds the running session to it from the next tick, raised or lowered', async () => {
+      await plantQuests(kingdom, questFixture('working', QUEST_ID, working));
+      expect(await said(QUEST_ID, '--max-minutes', '103')).toEqual([
+        `Quest ${QUEST_ID} has a session running, 30 minutes so far: the Steward's time breaker reads the quest's ceiling on every tick, so from its next tick this session may run up to 103 minutes (was 45), not only the next one. Unless its CLI took its own clock when the session opened (agy, --print-timeout): that one still stops it at 45 minutes, as the time breaker would, and the next session has the new ceiling.`,
+      ]);
+      expect(await said(QUEST_ID, '--max-minutes', '40')).toEqual([
+        `Quest ${QUEST_ID} has a session running, 30 minutes so far: the Steward's time breaker reads the quest's ceiling on every tick, so this session too is cut at 40 minutes (was 45), not only the next one.`,
+      ]);
+    });
+
+    it('warns when the session has already run past it: the next tick cuts it', async () => {
+      const judged = {
+        assignee: 'wren',
+        attempts: 1,
+        verifier: 'sable',
+        attempt_log: [
+          { ...opened('assignee', 'wren', 0), ended_at: UPDATED_AT, outcome: 'submitted' },
+          opened('verifier', 'sable', 50),
+        ],
+      };
+      await plantQuests(
+        kingdom,
+        questFixture('working', QUEST_ID, working),
+        questFixture('review', OTHER_QUEST_ID, judged),
+      );
+      expect(await said(QUEST_ID, '--max-minutes', '30')).toEqual([
+        `Warning: the session working quest ${QUEST_ID} has run 30 minutes, past the new 30-minute ceiling: the Steward cuts it at its next tick, as the time breaker does, and the quest goes to the infirmary (elvaria quest show says why; elvaria quest retry opens it again).`,
+      ]);
+      expect(await said(OTHER_QUEST_ID, '--max-minutes', '5')).toEqual([
+        `Warning: the judge's session on quest ${OTHER_QUEST_ID} has run 10 minutes, past the new 5-minute ceiling: the Steward cuts it at its next tick, as the time breaker does; the judge leaves and the next one takes the review, under the new ceiling.`,
+      ]);
+    });
+
+    it('says nothing when no session runs, or the ceiling stays', async () => {
+      const waiting = {
+        assignee: 'wren',
+        attempts: 1,
+        attempt_log: [{ ...opened('assignee', 'wren', 0), ended_at: UPDATED_AT, outcome: 'submitted' }],
+      };
+      await plantQuests(
+        kingdom,
+        questFixture('working', QUEST_ID, working),
+        questFixture('returned', OTHER_QUEST_ID, { assignee: 'wren', attempts: 1 }),
+      );
+      expect(await said(OTHER_QUEST_ID, '--max-minutes', '10')).toEqual([]);
+      expect(await said(QUEST_ID, '--max-minutes', '45')).toEqual([]);
+      expect(await said(QUEST_ID, '--max-tokens', '900000')).toEqual([]);
+      // In review before a judge opens its session.
+      await plantQuests(kingdom, questFixture('review', OTHER_QUEST_ID, waiting));
+      expect(await said(OTHER_QUEST_ID, '--max-minutes', '10')).toEqual([]);
+    });
   });
 
   it('refuses an edit that changes nothing, or changes it badly', async () => {

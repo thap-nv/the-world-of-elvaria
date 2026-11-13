@@ -31,7 +31,10 @@ describe('elvaria quest retry, reassign (P1-26)', () => {
     await plantQuests(kingdom, questFixture('infirmary'), questFixture('working', OTHER_QUEST_ID, HELD));
     const io = testIo();
     expect(await quest(io, 'retry', QUEST_ID)).toBe(0);
-    expect(io.printed.out[0]).toBe(`Sent the command to open quest ${QUEST_ID} again.`);
+    // Who may take it now, and how to name one (lessons of 2026-11-12: q_20261112_gwrz5m went to another).
+    expect(io.printed.out[0]).toBe(
+      `Sent the command to open quest ${QUEST_ID} again, for every free Knight: the Steward gives it to one of them, as any open quest, not necessarily to the one who worked it. To give it to one character: elvaria quest retry ${QUEST_ID} --to <character>`,
+    );
     const refused = testIo();
     expect(await quest(refused, 'retry', OTHER_QUEST_ID)).toBe(1);
     expect(refused.printed.err).toEqual([
@@ -61,6 +64,80 @@ describe('elvaria quest retry, reassign (P1-26)', () => {
     expect(io.printed.out[0]).toMatch(
       new RegExp(`^Sent the command to retry quest ${QUEST_ID}: its review goes on with a new judge`),
     );
+  });
+
+  // Lessons of 2026-11-12 (A1): a retry opens the quest for the whole class, so naming its worker is a reassign.
+  it('retries with the character --to names through reassign, its last assignee included', async () => {
+    await plantQuests(
+      kingdom,
+      questFixture('infirmary', QUEST_ID, { ...HELD, attempts: 3, rank: 'B' }),
+      questFixture('infirmary', OTHER_QUEST_ID, { ...HELD, attempts: 3 }),
+    );
+    await summon('wren', '--class', 'knight', '--level', '1');
+    await summon('kael', '--class', 'knight', '--level', '5');
+    const io = testIo();
+    expect(await quest(io, 'retry', QUEST_ID, '--to', 'wren')).toBe(0);
+    expect(io.printed.out[0]).toBe(
+      `Sent the command to retry quest ${QUEST_ID} with wren: only it takes the quest, with its full attempt budget (reassign command).`,
+    );
+    expect(io.printed.out.at(-1)).toBe(
+      'wren is level 1 and is given up to rank F: this rank B quest waits for your royal seal when done.',
+    );
+    expect(await quest(testIo(), 'retry', OTHER_QUEST_ID, '--to', 'kael')).toBe(0);
+    const unknown = testIo();
+    expect(await quest(unknown, 'retry', OTHER_QUEST_ID, '--to', 'nobody')).toBe(1);
+    expect(unknown.printed.err).toEqual(['There is no character nobody. See: elvaria character list']);
+    // §2.5 `infirmary.reassign`: the Steward gives the named character a full attempt budget, as a retry would.
+    expect(await sent()).toEqual([
+      { kind: 'reassign', payload: { quest: QUEST_ID, character: 'wren' } },
+      { kind: 'reassign', payload: { quest: OTHER_QUEST_ID, character: 'kael' } },
+    ]);
+  });
+
+  it('refuses --to where no one works the quest again: a stalled review, a script', async () => {
+    const judged = (character: string, minute: number) => ({
+      n: 1,
+      character,
+      role: 'verifier',
+      started_at: `2026-11-06T08:${String(minute).padStart(2, '0')}:00+07:00`,
+      ended_at: `2026-11-06T08:${String(minute + 5).padStart(2, '0')}:00+07:00`,
+      outcome: 'breaker',
+      run_dir: `.runs/${QUEST_ID}-1/verify`,
+    });
+    const work = {
+      ...judged('wren', 0),
+      role: 'assignee',
+      outcome: 'submitted',
+      run_dir: `.runs/${QUEST_ID}-1`,
+    };
+    const script = {
+      tier: 'script',
+      script: { id: 'link-check', params: { globs: ['docs/**/*.md'] } },
+      class_required: undefined,
+      attempts: 1,
+    };
+    await plantQuests(
+      kingdom,
+      questFixture('infirmary', QUEST_ID, {
+        ...HELD,
+        attempt_log: [work, judged('sable', 10), judged('orin', 20)],
+      }),
+      questFixture('infirmary', OTHER_QUEST_ID, script),
+    );
+    await summon('kael', '--class', 'knight');
+    const review = testIo();
+    expect(await quest(review, 'retry', QUEST_ID, '--to', 'kael')).toBe(1);
+    expect(review.printed.err).toEqual([
+      `Quest ${QUEST_ID}'s work is done and only its review stalled: a retry sends it back to review with a new judge, and --to names who works a quest, not who judges it. Retry it without --to; to have kael do the work again instead: elvaria quest reassign ${QUEST_ID} --to kael`,
+    ]);
+    const scripted = testIo();
+    expect(await quest(scripted, 'retry', OTHER_QUEST_ID, '--to', 'kael')).toBe(1);
+    expect(scripted.printed.err[0]).toMatch(/^Quest q_20261106_8m4n3b is script-tier: no character works it/);
+    // Without --to, a script-tier quest opens for the machine, not for a class.
+    const plain = testIo();
+    expect(await quest(plain, 'retry', OTHER_QUEST_ID)).toBe(0);
+    expect(plain.printed.out[0]).toBe(`Sent the command to open quest ${OTHER_QUEST_ID} again.`);
+    expect(await sent()).toEqual([{ kind: 'retry', payload: { quest: OTHER_QUEST_ID } }]);
   });
 
   it('leaves the choice to the Steward without --to, and names the character with it', async () => {

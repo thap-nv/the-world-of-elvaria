@@ -71,6 +71,10 @@ async function conforms(ctx: KingdomContext, input: CommandInput, tribe: Tribe, 
     env: minimalEnv(ctx.io.env),
     timeout_ms: SESSION_TIMEOUT_MS,
     ...(model === undefined ? {} : { model }),
+    // A temp folder a CLI's process still holds (agy on Windows, 2026-11-12) is said, not counted as a failure.
+    onLeftover: ({ scenario, dir, problem }) => {
+      ctx.io.err(ctx.t('cli.tribe.check.left_workspace', { check: scenario, dir, problem }));
+    },
   });
   reports.forEach((report) => {
     ctx.io.out(reportLine(ctx, report));

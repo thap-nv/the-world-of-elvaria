@@ -1,5 +1,5 @@
 // `elvaria quest confirm|cancel|archive|retry <id>`: commands the Steward turns into a transition (implementation-plan
-// §2.5).
+// §2.5); `retry --to` sends `reassign` (lessons of 2026-11-12).
 // The CLI asks the same table first, so a command the quest cannot take now is refused at the terminal.
 import { findTransition } from '@elvaria/domain';
 import type { Quest, QuestEventType } from '@elvaria/domain';
@@ -8,6 +8,7 @@ import { textOption } from '../args.ts';
 import { EXIT } from '../command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { QUEST_STATUS_LABEL } from '../labels.ts';
+import { classNames, giveQuestTo } from './assignee.ts';
 import { readQuest } from './references.ts';
 import { commandHeader, sendCommand } from './send-command.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
@@ -93,9 +94,25 @@ async function runArchive(input: CommandInput, cli: CliContext): Promise<ExitCod
 }
 
 /**
+ * `retry --to`: the owner names who works the quest again, so the CLI sends the `reassign` command
+ * (`infirmary.reassign`: the same full attempt budget, for that character only). Refused where no one works it again:
+ * a script-tier quest, and a stalled review, whose work is done and wants a new judge, not a worker.
+ */
+async function retryWith(ctx: KingdomContext, quest: Quest, to: string, review: boolean): Promise<ExitCode> {
+  let refusal: MessageKey | undefined;
+  if (review) refusal = 'cli.quest.retry.to_review';
+  else if (!ownerMay(quest, 'reassign')) refusal = 'cli.quest.retry.to_script';
+  if (refusal === undefined) return giveQuestTo(ctx, quest, to, 'cli.quest.retry.sent_to');
+  ctx.io.err(ctx.t(refusal, { id: quest.id, character: to }));
+  return EXIT.failed;
+}
+
+/**
  * A quest in the infirmary opens again with its full attempt budget and nobody holding it (`infirmary.retry`, §2.5);
- * the Steward then gives it to whoever fits, as any open quest (P1-26). One whose review the breakers kept cutting
- * goes back to review instead, same run, for a new judge (`infirmary.retry.stalled_review`, owner after P1-23).
+ * the Steward then gives it to whoever fits, as any open quest (P1-26), so the line says who that is and how to name
+ * one: an owner who meant its last assignee saw it go to another (q_20261112_gwrz5m, lessons of 2026-11-12). One
+ * whose review the breakers kept cutting goes back to review instead, same run, for a new judge
+ * (`infirmary.retry.stalled_review`, owner after P1-23).
  */
 async function runRetry(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);
@@ -103,16 +120,24 @@ async function runRetry(input: CommandInput, cli: CliContext): Promise<ExitCode>
   const quest = await questFor(input, ctx, () => 'retry', 'cli.quest.retry.refused');
   if (quest === undefined) return EXIT.failed;
   const row = findTransition(quest, 'retry');
-  const sent = row.ok && row.value.to === 'review' ? 'cli.quest.retry.sent_review' : 'cli.quest.retry.sent';
+  const review = row.ok && row.value.to === 'review';
+  const to = textOption(input, 'to');
+  if (to !== undefined) return retryWith(ctx, quest, to, review);
   const command = { ...commandHeader(ctx), kind: 'retry', payload: { quest: quest.id } } as const;
-  return sendCommand(ctx, command, sent, { id: quest.id });
+  if (review) return sendCommand(ctx, command, 'cli.quest.retry.sent_review', { id: quest.id });
+  // A script-tier quest has no class: the machine runs it again.
+  if (!ownerMay(quest, 'reassign') || quest.class_required === undefined)
+    return sendCommand(ctx, command, 'cli.quest.retry.sent', { id: quest.id });
+  const className = await classNames(ctx);
+  const params = { id: quest.id, class: className(quest.class_required) };
+  return sendCommand(ctx, command, 'cli.quest.retry.sent_open', params);
 }
 
 export const QUEST_RETRY: CommandSpec = {
   name: ['quest', 'retry'],
   summary: 'cli.quest.retry.summary',
   args: [{ name: '<quest>', help: 'cli.quest.arg.quest' }],
-  options: {},
+  options: { to: { type: 'string', value: '<character>', help: 'cli.quest.retry.option.to' } },
   run: runRetry,
 };
 

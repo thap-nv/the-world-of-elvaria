@@ -16,12 +16,18 @@
   against the transition table; `archive` and `cancel` both take a quest in the infirmary (`infirmary.archive`, P1-56).
   While a Steward holds the kingdom's lock, `sendCommand` waits one tick and a little more for its `command.applied` or
   `command.rejected` line and prints it (`stale` with what to do about it); without a Steward it only drops the file.
-  `quest edit --max-minutes` on a quest with a running session says the new ceiling reaches the next session only. `return` asks for a note of at least 20 characters (`--note`) and a `--fail-kind`
+  `quest edit --max-minutes` on a quest with a running session says what the new ceiling does to it: the Steward's
+  time breaker reads the quest's ceiling on every tick, so a lower one cuts the session at its next tick (a warning
+  when it has already run past it) and a higher one gives it the time, unless its CLI took its own clock when it
+  opened (agy's `--print-timeout`; lessons of 2026-11-12, which corrected P1-56's "next session only"). `return` asks for a note of at least 20 characters (`--note`) and a `--fail-kind`
   (`other` by default), since the Steward writes it as the owner's fail verdict; `return --rejudge` (P1-40) says
   the judge erred: the work goes back to be judged again and the return does not count against the assignee. `answer <quest> "<answer>"` takes
   a non-empty answer for a `blocked` quest; the Steward then goes on with the same attempt, in the asking session
   when the answer comes within `dispatch.resume_after_answer_minutes` (ADR 0017). The bell of `run` prints that
-  command with each question. `quest retry` opens a quest of the infirmary again; `quest reassign [--to <id>]`
+  command with each question. `quest retry` opens a quest of the infirmary again, for every free character of its
+  class (the line it prints says so); `quest retry --to <id>` sends `reassign` instead, so only that character takes
+  it, with a full attempt budget (`infirmary.reassign`; refused on a stalled review and a script-tier quest, lessons
+  of 2026-11-12); `quest reassign [--to <id>]`
   gives a quest to the character named (checked as the Steward checks it, `src/quest/assignee.ts` on the domain's
   `namedAssignee`: known, of the quest's class, not suspended, of an enabled tribe; a level below the rank is said,
   since the quest then waits for the seal) or, without `--to`, to the Steward's choice (P1-26). `quest add --to
@@ -89,6 +95,8 @@
   `--scenarios` runs all of them against a fake CLI; `--tool <path>` tries another CLI than the pinned one and
   writes nothing, PS-04b) and, once it passes, holds the tribe to the login its adapter
   reports, as doctor does (`loginFindings`, P1-34): a tribe that passes is enabled once doctor has pinned its CLI.
+  A check's temp folder that a process of the CLI still holds past the retries (agy on Windows) is named on stderr
+  and left for the owner; the check does not fail for it (`onLeftover`, lessons of 2026-11-12).
   `tribe disable <id>` stops a tribe taking new work. An owner adapter file is imported only here
   (`src/tribe/adapter-file.ts`): runner-core's `adapterKitOf` builds its kit (minimal env, the pinned or given CLI,
   `launchOf`, `hookCommand`) and `adapterOfModule` checks what `createAdapter(kit)` returns, so a broken file is a
