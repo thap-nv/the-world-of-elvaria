@@ -146,6 +146,8 @@ describe('elvaria metrics', () => {
     expect(text).toContain('Sealed quests: 1, 4000 tokens in all, 240.0 minutes on average');
     expect(text).toMatch(/output\s+verdict fail kind\s+style\s+1\s+1\s+2/);
     expect(text).toMatch(/claude-sonnet-5-5\s+0\s+1\s+0 %/);
+    // PS-25: the territory's first-pass rate, which its scorecard reads.
+    expect(text).toMatch(/Territory\s+do-an\s+0\s+2\s+0 %/);
     expect(text).toMatch(new RegExp(`${OTHER_QUEST_ID}\\s+1\\s+other\\s+yes`));
     expect(io.printed.err).toEqual([
       'Skipped, unreadable: inbox/done/odd.json: does not match the inbox command schema',

@@ -112,11 +112,17 @@ function reworkSection(t: Translate, rework: readonly Rework[]): MetricsSection 
   });
 }
 
-const GROUPS = ['class', 'tag', 'model', 'kind'] as const;
+const GROUPS = ['class', 'tag', 'model', 'kind', 'territory'] as const;
 
 function firstPassSection(t: Translate, metrics: Metrics): MetricsSection {
   const rates = metrics.first_pass;
-  const byGroup = { class: rates.by_class, tag: rates.by_tag, model: rates.by_model, kind: rates.by_kind };
+  const byGroup = {
+    class: rates.by_class,
+    tag: rates.by_tag,
+    model: rates.by_model,
+    kind: rates.by_kind,
+    territory: rates.by_territory,
+  };
   return tableSection(t('cli.metrics.title.first_pass'), t('cli.metrics.none'), {
     header: ['group', 'key', 'passed', 'decided', 'rate'].map((column) =>
       t(`cli.metrics.column.${column}` as 'cli.metrics.column.group'),
