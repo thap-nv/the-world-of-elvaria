@@ -12,6 +12,7 @@ import { inKingdom, writeFileAtomic } from '@elvaria/store';
 
 import { plotDirOf } from '../deliver/deliver.ts';
 import { plannedChildren } from '../deliver/subquests.ts';
+import { planFileCheck } from './plan-file.ts';
 import type { Context } from '../context.ts';
 
 /** The check's id in verdicts, `checks_run` and the log's name; its failure is `incomplete` work (pass-rule). */
@@ -23,17 +24,21 @@ type DeliverableCheck = (ctx: Context, quest: Quest, runDir: string) => Promise<
 const childLine = (child: Quest): string =>
   `- ${child.id} ${child.kind} (${child.class_required ?? child.script?.id ?? child.tier}): ${child.title}`;
 
+// (PS-06b) The plan file too: the owner seals the plan on its summary. Only before the judge, never at the delivery:
+// once sealed, the file has done its part.
 const subquestsCheck: DeliverableCheck = async (ctx, quest, runDir) => {
   const started = ctx.deps.clock.now();
-  const children = await plannedChildren(ctx, quest, plotDirOf(ctx, quest.plot));
-  const log = children.ok
+  const dir = plotDirOf(ctx, quest.plot);
+  const children = await plannedChildren(ctx, quest, dir);
+  const plan = await planFileCheck(ctx, quest, dir);
+  const list = children.ok
     ? `${SUBQUESTS_FILE}: the delivery would open ${children.value.length} sub-quests\n${children.value.map(childLine).join('\n')}\n`
     : `${SUBQUESTS_FILE}: the delivery would open none: ${children.error}\n`;
   const logPath = `${runDir}/checks/${SUBQUESTS_CHECK}.log`;
-  await writeFileAtomic(inKingdom(ctx.root, logPath), log);
+  await writeFileAtomic(inKingdom(ctx.root, logPath), `${list}${plan.lines.join('\n')}\n`);
   return {
     id: SUBQUESTS_CHECK,
-    pass: children.ok,
+    pass: children.ok && plan.pass,
     duration_ms: ctx.deps.clock.now() - started,
     log_path: logPath,
   };

@@ -115,6 +115,10 @@
   scopes apart for two that may run at once, a given peak context within the budget, the template);
   `peakContextOf` and `questEstimateOf` (a draft's `estimate.context` is a planning number the quest does not
   keep). The brief (`BriefSchema`) is a block of the quest-draft file; `seal_required` of a draft is optional.
+  (PS-06b) The plan file (`src/council/plan-file.ts`): `planFilesOf` (the `plans/*.md` among the paths a quest
+  changed), `planFileIssuesOf` (one of them has every section of `PLAN_FILE_SECTIONS`, each holding something),
+  `planSummaryOf` (its `## Summary`, the page the owner seals on) and `splitBrief` (the brief a plan quest's
+  description opens with, apart from the rest); `src/council/sections.ts` reads the `## ` sections for both templates.
 - Marks a quest whose work changed a protected path (`src/verify/protected.ts`, implementation-plan §3.16.4, ADR 0026,
   PS-04): `territory.laws.protected_paths` is optional, with no default; `protectedMarkOf` gives what the submit sets
   (`seal_required: true` and `quest.protected_changes`, the paths gathered over the submits, never lowered; for a
@@ -235,7 +239,12 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   `src/metrics/memo-counts.ts`) Memos by kind with those sent to the owner, from the memo lines, and for each judge the
   verdicts a second judge read beside an objection and those it overturned, from the verdicts' `objection`. (PS-25)
   The first-pass rate by territory too (`by_territory`), and each quest row names its territory and counts its runs
-  of checks that passed or failed, and those set aside among them (`checkRunsOf`).
+  of checks that passed or failed, and those set aside among them (`checkRunsOf`). (PS-06b) How long quests stay in
+  each status, review split by whether a judge holds it (`statusTimesOf`, from the quest lines' views; a stay still
+  open is not counted); the pass rate of each quest's first, second, … run (`passByRunOf` over `runJudgementsOf`,
+  of which `firstPassOf` is the first); the Chancellor's advice on the memos it sent up beside the owner's decisions
+  (`adviceOf`, `ADVICE_DECISIONS`). `planAccuracyOf(input, quest)` sets a plan quest's sub-quests, the mage's only,
+  beside what they did: scope and files edited and changed outside it, estimate and first run, memos, rework.
 - Scores a territory (`src/scorecard/`, PS-25): `territoryScorecardOf` over the territory file, the metrics ledger,
   one trial (runner-core's `tryTerritory`) and the gazetteer gives six items, each `pass`, `fail` or `unmeasured`,
   with reasons as codes and values (`SCORECARD_REASONS`), never sentences: the trial, each check's time against its

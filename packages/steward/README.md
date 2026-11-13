@@ -252,7 +252,10 @@
   would refuse goes back to the mage. From PS-06 that includes a plan the domain's `planIssuesOf` finds not ready
   (a session sub-quest without `scope_paths`, two that may run at once on scopes that meet, a given peak context
   above the budget, a description outside the quest template): the check fails as `incomplete` whatever the judge
-  says, and the delivery reads the same answer. The judge's prompt carries the branch's diff (`Plots.diff`), the craft of
+  says, and the delivery reads the same answer. From PS-06b the check also holds the plan file to its template
+  (`src/review/plan-file.ts`): a `plans/*.md` the quest changed (`Plots.touched`) with every section of the domain's
+  `PLAN_FILE_SECTIONS`; a plot that does not list `subquests.json` among its changes cannot say what the quest wrote,
+  and the log says the file went unchecked. Only before the judge: the delivery after the seal does not read it. The judge's prompt carries the branch's diff (`Plots.diff`), the craft of
   its class (`registry/<class.prompt_file>`, as every session's does), and where the last judge of the run
   stopped when it left a `partial` verdict, and (PS-05) the files the work changed outside the quest's `scope_paths`,
   the territory's `shared_paths` aside (`src/sessions/out-of-scope.ts`, matched with `globToRegExp`), which the
