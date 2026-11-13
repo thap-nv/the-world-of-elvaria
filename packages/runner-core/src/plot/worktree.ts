@@ -105,9 +105,12 @@ async function commitOf(git: Git, repo: string, ref: string): Promise<string | u
 /**
  * The commit a new quest branch starts from. The repo is fetched when it has a remote, never pulled (the main
  * checkout is the owner's): origin's default branch when it only adds to the local one (merged on the forge),
- * else the local one (merged locally, not pushed yet, or the two diverged and the owner's checkout wins).
+ * else the local one (merged locally, not pushed yet, or the two diverged and the owner's checkout wins). The
+ * territory's trial (PS-25) starts there too, so it tries what a new quest would get.
  */
-async function forkPoint(target: WorktreeTarget): Promise<Result<string, PlotFailure>> {
+export async function forkPoint(
+  target: Pick<WorktreeTarget, 'git' | 'repo' | 'vcs'>,
+): Promise<Result<string, PlotFailure>> {
   const { git, repo, vcs } = target;
   const branch = vcs.default_branch;
   if (branch === undefined) return failure('git_failed', 'the territory has no default_branch');

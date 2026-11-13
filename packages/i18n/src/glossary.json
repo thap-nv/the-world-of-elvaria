@@ -721,6 +721,13 @@
               "used_in": "`metricsOf`, `elvaria metrics`, `docs/metrics-report.md`"
             },
             {
+              "vi": "Thẻ điểm lãnh thổ",
+              "en": "Territory scorecard",
+              "id": ["scorecard"],
+              "definition": "Lãnh thổ đã sẵn sàng cho nhân vật chưa, trước quest đầu tiên: sáu mục, mỗi mục đạt, trượt hay chưa đo được kèm lý do. Thử khởi đầu (`commands.setup` rồi mọi check trên một đất sạch tách rời ở đầu nhánh gốc, xóa khi xong, không tạo nhánh), thời gian từng check so với trần của nó, tỉ lệ lượt check bị gạt vì môi trường, địa chí (có, còn mới theo dấu commit, nêu các lệnh của lãnh thổ), đã khai `shared_paths` và `protected_paths`, tỉ lệ đạt lượt đầu của lãnh thổ. Hàm thuần của file lãnh thổ, sổ đo và lần thử; 0 mana, không ghi trạng thái quest (PS-25).",
+              "used_in": "`territoryScorecardOf`, `tryTerritory`, `elvaria territory check`, `.state/territory-trials/<id>.json`, `doctor`"
+            },
+            {
               "vi": "Làm lại",
               "en": "Rework",
               "id": ["rework"],
@@ -731,7 +738,7 @@
               "vi": "Đạt lượt đầu",
               "en": "First pass",
               "id": ["first_pass"],
-              "definition": "Lượt đầu của quest có phán quyết đạt và không có phán quyết không đạt (kể cả của chủ nhân); tỉ lệ theo nghề, tag, model, dạng.",
+              "definition": "Lượt đầu của quest có phán quyết đạt và không có phán quyết không đạt (kể cả của chủ nhân); tỉ lệ theo nghề, tag, model, dạng và (PS-25) lãnh thổ.",
               "used_in": "`firstPassOf`, `Metrics.first_pass`"
             },
             {

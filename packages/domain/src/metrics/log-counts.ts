@@ -28,6 +28,32 @@ export const setAsidesOf = (events: readonly Event[], window: MetricsWindow): Se
     ];
   });
 
+/** A quest's runs of checks that ended with a word on the work (pass or fail), and those set aside of them. */
+export interface CheckRunCount {
+  readonly runs: number;
+  readonly set_aside: number;
+}
+
+/**
+ * The runs of checks of each quest inside the window (PS-25: the share set aside, by territory): every `check.end` line
+ * that passed or failed; a run stopped or unable to start says nothing of the territory. A line with no quest is left
+ * out, as it belongs to no territory.
+ */
+export function checkRunsOf(
+  events: readonly Event[],
+  window: MetricsWindow,
+): ReadonlyMap<QuestId, CheckRunCount> {
+  const counts = new Map<QuestId, CheckRunCount>();
+  for (const event of events) {
+    if (!isEventOf(event, 'check.end') || event.quest === undefined || !inWindow(window, event.ts)) continue;
+    if (event.data.outcome !== 'pass' && event.data.outcome !== 'fail') continue;
+    const seen = counts.get(event.quest) ?? { runs: 0, set_aside: 0 };
+    const aside = event.data.environment === undefined ? 0 : 1;
+    counts.set(event.quest, { runs: seen.runs + 1, set_aside: seen.set_aside + aside });
+  }
+  return counts;
+}
+
 /** A file one session read more than once. */
 export interface RepeatedRead {
   readonly session: string;
