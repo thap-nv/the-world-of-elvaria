@@ -25,7 +25,7 @@ import type { Digest, ScheduledJob } from './schedule/ports.ts';
 import type { ScriptRunner } from './script/run-script.ts';
 
 export type { Bell, ManaGaugeNotice, Notice, NoticeQuest } from './notice.ts';
-export type { Digest, DigestRequest, JobMode, JobRun, ScheduledJob } from './schedule/ports.ts';
+export type { Digest, DigestRequest, JobMode, JobRun, JobView, ScheduledJob } from './schedule/ports.ts';
 
 /** Problems nobody is waiting for an answer to: a refused move, a failed spawn, a lost lock. English, for logs. */
 export interface Logger {

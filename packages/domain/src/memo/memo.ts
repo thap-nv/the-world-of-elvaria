@@ -7,8 +7,9 @@ import { err, ok } from '../core/result.ts';
 import { MemoSchema } from '../schema/memo/memo.ts';
 import { NO_CONTEST, contestRoute } from './objection.ts';
 import type { CharacterId, MemoId, QuestId } from '../core/ids.ts';
+import type { DelegationHold } from '../delegation/constants.ts';
 import type { Result } from '../core/result.ts';
-import type { Memo, MemoOutcome, MemoRoute } from '../schema/memo/memo.ts';
+import type { Memo, MemoEscalation, MemoOutcome, MemoRoute } from '../schema/memo/memo.ts';
 import type { Registry } from '../schema/registry.ts';
 import type { Contest } from './objection.ts';
 
@@ -117,4 +118,30 @@ export function closeMemo(
     ...(decision.note === undefined ? {} : { note: decision.note }),
   };
   return ok({ ...memo, state: 'closed', outcome });
+}
+
+/** What escalate_memo asks (PS-03b): the Chancellor's advice and what holds the memo for the owner. */
+export type MemoAdvice = Omit<MemoEscalation, 'at' | 'holds'> & { readonly holds: readonly DelegationHold[] };
+
+/**
+ * The open memo with the triage's advice (PS-03b): sent up once, so a second triage leaves it alone; a memo already
+ * closed or sent up is refused.
+ */
+export function escalateMemo(
+  memo: Memo,
+  advice: MemoAdvice,
+  at: string,
+): Result<Memo, { readonly code: 'closed' | 'escalated' }> {
+  if (memo.state === 'closed') return err({ code: 'closed' });
+  if (memo.escalation !== undefined) return err({ code: 'escalated' });
+  const { action, quest, addendum, holds, note } = advice;
+  const escalation: MemoEscalation = {
+    at,
+    action,
+    ...(quest === undefined ? {} : { quest }),
+    ...(addendum === undefined ? {} : { addendum }),
+    holds: [...holds],
+    note,
+  };
+  return ok({ ...memo, escalation });
 }

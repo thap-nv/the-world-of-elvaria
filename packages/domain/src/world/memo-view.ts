@@ -4,6 +4,7 @@
 import { z } from 'zod';
 
 import { CharacterIdSchema, MemoIdSchema, MemoKindIdSchema, QuestIdSchema } from '../core/ids.ts';
+import { DELEGATION_HOLDS, TRIAGE_ACTIONS } from '../delegation/constants.ts';
 import { MEMO_ROUTES } from '../schema/memo/constants.ts';
 import type { Memo } from '../schema/memo/memo.ts';
 
@@ -15,15 +16,28 @@ export const MemoViewSchema = z.strictObject({
   quest: QuestIdSchema.nullable(),
   /** Where it went (`memo.routed`); null between the two lines the Steward writes one after the other. */
   route: z.enum(MEMO_ROUTES).nullable(),
+  /** The Chancellor's triage sent it to the owner (PS-03b): what it would do, and what holds it. */
+  escalated: z
+    .strictObject({
+      action: z.enum(TRIAGE_ACTIONS),
+      quest: QuestIdSchema.optional(),
+      holds: z.array(z.enum(DELEGATION_HOLDS)).min(1),
+    })
+    .optional(),
 });
 
 export type MemoView = z.infer<typeof MemoViewSchema>;
 
 /** The view of an open memo's file. */
-export const memoViewOf = (memo: Memo): MemoView => ({
-  id: memo.id,
-  kind: memo.kind,
-  from: memo.from,
-  quest: memo.quest,
-  route: memo.to.route,
-});
+export function memoViewOf(memo: Memo): MemoView {
+  const view: MemoView = {
+    id: memo.id,
+    kind: memo.kind,
+    from: memo.from,
+    quest: memo.quest,
+    route: memo.to.route,
+  };
+  if (memo.escalation === undefined) return view;
+  const { action, quest, holds } = memo.escalation;
+  return { ...view, escalated: { action, ...(quest === undefined ? {} : { quest }), holds } };
+}

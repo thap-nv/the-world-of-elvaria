@@ -158,6 +158,33 @@ describe('attentionQueue', () => {
     ]);
   });
 
+  it('lists a memo the triage sent up with its advice, before the memos it has not read (PS-03b)', () => {
+    const merge = { action: 'merge', quest: q(3), holds: ['above_rank'] } satisfies MemoView['escalated'];
+    const state = stateWith(
+      [],
+      [
+        memo('m_20261112_aaaaaa'),
+        { ...memo('m_20261112_zzzzzz'), escalated: merge },
+        { ...memo('m_20261112_bbbbbb'), escalated: { action: 'owner', holds: ['chancellor_asks'] } },
+      ],
+    );
+    const items = attentionQueue(state, NOW);
+    expect(items.map(({ kind, memo: id }) => [kind, id])).toEqual([
+      ['memo_escalated', 'm_20261112_bbbbbb'],
+      ['memo_escalated', 'm_20261112_zzzzzz'],
+      ['memo', 'm_20261112_aaaaaa'],
+    ]);
+    expect(items[1]).toMatchObject({
+      group: 'can_wait',
+      advice: 'weigh_triage',
+      triage: 'merge',
+      target: q(3),
+      holds: ['above_rank'],
+      command: ['memo', 'show', 'm_20261112_zzzzzz'],
+    });
+    expect(items[0]).not.toHaveProperty('target');
+  });
+
   it('lists an objection no judge may read for the owner, and none on its way to a judge (PS-22)', () => {
     const objection = { ...memo('m_20261112_9tw3hx'), kind: 'objection' as MemoKindId, quest: q(1) };
     const state = stateWith(

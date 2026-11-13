@@ -235,7 +235,7 @@
       }
     },
     "schedule": {
-      "$comment": "Scheduled jobs run inside the Steward (no cron, Task Scheduler or launchd). The digest (PS-03) is the first job with a runner and is on by default; chronicle, temple and patrol have none yet, so they default to disabled.",
+      "$comment": "Scheduled jobs run inside the Steward (no cron, Task Scheduler or launchd). The digest (PS-03) and the triage (PS-03b) have a runner and are on by default; chronicle, temple and patrol have none yet, so they default to disabled.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -251,6 +251,23 @@
               "type": "string",
               "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
               "default": "21:00"
+            }
+          },
+          "default": {}
+        },
+        "triage": {
+          "description": "The Chancellor's triage of the memos waiting (PS-03b): at `at`, before the digest, one model call for the batch of memos sent to the Chancellor that nobody has decided or sent up yet, run outside the Steward's tick once no session of the Chancellor's tribe runs; none when no memo waits. Its result is inbox commands only, applied without the owner within `delegation`.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "at": {
+              "type": "string",
+              "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+              "default": "07:30"
             }
           },
           "default": {}
@@ -356,6 +373,45 @@
           "default": 2
         }
       }
+    },
+    "delegation": {
+      "description": "Delegation (PS-03b, product plan 0.8 §14): which of the memos the Chancellor triages (`kingdom.schedule.triage`, `elvaria triage`) the Steward applies without the owner. A memo the Chancellor merges into an open quest, makes a new quest of, or sets aside is applied when no reason of `ask` holds, and, for work, when its rank is at most max_rank and, with same_scope, its files lie in the work's scope; any other goes to the owner with the Chancellor's advice, and into the digest. The Chancellor's own choice to send a memo up always holds.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_rank": {
+          "description": "The highest rank of the work the world takes in alone: the open quest a memo merges into, or the new quest made of it. Above it the memo goes to the owner.",
+          "$ref": "#/$defs/rank",
+          "default": "D"
+        },
+        "same_scope": {
+          "description": "The memo's files must lie in the scope_paths of the quest that does the work, on the territory of the quest that wrote it: a merge never widens a scope, a new quest has one covering them. A memo without files, or work without a scope, then goes to the owner.",
+          "type": "boolean",
+          "default": true
+        },
+        "ask": {
+          "description": "The matters the owner keeps: a memo the Chancellor flags with one of them goes to the owner whatever its rank and scope. All five by default.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "decision_change",
+              "contract_change",
+              "mana_over_budget",
+              "outward_action",
+              "protected_paths"
+            ]
+          },
+          "default": [
+            "decision_change",
+            "contract_change",
+            "mana_over_budget",
+            "outward_action",
+            "protected_paths"
+          ]
+        }
+      },
+      "default": {}
     },
     "bell": {
       "type": "object",
@@ -670,6 +726,10 @@
           "enabled": false,
           "at": "21:00"
         },
+        "triage": {
+          "enabled": true,
+          "at": "07:30"
+        },
         "digest": {
           "enabled": true,
           "at": "08:00"
@@ -691,6 +751,17 @@
         "resume_after_mana": false,
         "resume_after_answer_minutes": 55,
         "max_background": 2
+      },
+      "delegation": {
+        "max_rank": "D",
+        "same_scope": true,
+        "ask": [
+          "decision_change",
+          "contract_change",
+          "mana_over_budget",
+          "outward_action",
+          "protected_paths"
+        ]
       },
       "bell": {
         "desktop": true,

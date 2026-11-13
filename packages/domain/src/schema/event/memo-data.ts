@@ -10,6 +10,7 @@ import {
   QuestIdSchema,
   VerdictIdSchema,
 } from '../../core/ids.ts';
+import { DELEGATION_HOLDS, TRIAGE_ACTIONS } from '../../delegation/constants.ts';
 import { MEMO_OUTCOME_DECISIONS, MEMO_ROUTES, OBJECTION_REFUSALS } from '../memo/constants.ts';
 
 const describe = (description: string) => ({ description });
@@ -48,6 +49,21 @@ export const MemoClosedDataSchema = z
   })
   .meta(
     describe(
-      "The owner's decide_memo closed the memo, or (PS-22) an objection's second judge gave its verdict (`sustained`: it passed the work, `overruled`: it failed it).",
+      "The memo was closed, once: by the owner's decide_memo or the confirm of a draft made from it (actor: the owner), within kingdom.delegation by the Chancellor's triage (actor: the Chancellor, PS-03b), or (PS-22) an objection's second judge gave its verdict (`sustained`: it passed the work, `overruled`: it failed it). Closing it changed no quest.",
+    ),
+  );
+
+export const MemoEscalatedDataSchema = z
+  .strictObject({
+    memo: MemoIdSchema,
+    action: z.enum(TRIAGE_ACTIONS),
+    quest: QuestIdSchema.optional().meta(
+      describe('merge: the open quest; new_quest: the draft quest made for the owner to confirm.'),
+    ),
+    holds: z.array(z.enum(DELEGATION_HOLDS)).min(1),
+  })
+  .meta(
+    describe(
+      "The Chancellor's triage sent the memo to the owner with its advice (escalate_memo, PS-03b): kingdom.delegation does not let the world decide it. The memo stays open; its file holds the advice.",
     ),
   );

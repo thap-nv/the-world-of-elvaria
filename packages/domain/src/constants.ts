@@ -91,6 +91,11 @@ export const SCHEDULE_DEFAULTS = {
    * aim of stage 1.5 (product plan 0.8, section 14).
    */
   digest_at: '08:00',
+  /**
+   * The Chancellor's triage of the memos waiting (PS-03b): half an hour before the digest, so the digest lists only
+   * what is left for the owner. One model call when memos wait, none otherwise.
+   */
+  triage_at: '07:30',
   temple_every_quests: 10,
   patrol_every: 'P1D',
 } as const;

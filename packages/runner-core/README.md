@@ -48,7 +48,7 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   the territory's read-only paths and the generators its shell may run (`prompts/read-only.md`, P1-24), and its
   patch paths with the patch convention (`prompts/patch.md`, P1-28: `PATCH_FILE` at the root of the plot);
   `buildChancellorPrompt` for the
-  Chancellor; `resumedPrompt` for a session continued with `--resume` (the system part as built, a user part that only says it goes on, with the owner's
+  Chancellor; `buildTriagePrompt` for its triage of memos (PS-03b: `prompts/triage.md`, `triage-context.md`); `resumedPrompt` for a session continued with `--resume` (the system part as built, a user part that only says it goes on, with the owner's
   answer when there is one). The system part opens with the royal decree when `<kingdom>/decree.md` exists, then
   the laws of the role and the craft of the character's class (`class_prompt`: the kingdom's `registry/<class.prompt_file>`
   without its maintainer note, `prompts/class.md`, P1-15), and last the territory's `context_files` for a tribe

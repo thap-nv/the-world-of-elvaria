@@ -1960,6 +1960,12 @@
                 "description": "The command's `kind` (InboxCommand.kind), so the metrics ledger counts the owner's steps from the log alone; inbox/done/ names it for lines written before PS-01b.",
                 "type": "string",
                 "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "source": {
+                "description": "`chancellor` when the command came from the Chancellor's triage (PS-03b): the metrics ledger leaves it out of the owner's steps. Absent for the owner's commands (CLI, Herald, phone).",
+                "enum": [
+                  "chancellor"
+                ]
               }
             }
           }
@@ -2372,7 +2378,7 @@
       "then": {
         "properties": {
           "data": {
-            "description": "The owner's decide_memo closed the memo, or (PS-22) an objection's second judge gave its verdict (`sustained`: it passed the work, `overruled`: it failed it).",
+            "description": "The memo was closed, once: by the owner's decide_memo or the confirm of a draft made from it (actor: the owner), within kingdom.delegation by the Chancellor's triage (actor: the Chancellor, PS-03b), or (PS-22) an objection's second judge gave its verdict (`sustained`: it passed the work, `overruled`: it failed it). Closing it changed no quest.",
             "type": "object",
             "additionalProperties": false,
             "required": [
@@ -2412,6 +2418,64 @@
       "if": {
         "properties": {
           "type": {
+            "const": "memo.escalated"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "The Chancellor's triage sent the memo to the owner with its advice (escalate_memo, PS-03b): kingdom.delegation does not let the world decide it. The memo stays open; its file holds the advice.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "memo",
+              "action",
+              "holds"
+            ],
+            "properties": {
+              "memo": {
+                "type": "string",
+                "pattern": "^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+              },
+              "action": {
+                "enum": [
+                  "merge",
+                  "new_quest",
+                  "shelve",
+                  "owner"
+                ]
+              },
+              "quest": {
+                "description": "merge: the open quest; new_quest: the draft quest made for the owner to confirm.",
+                "type": "string",
+                "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+              },
+              "holds": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "enum": [
+                    "decision_change",
+                    "contract_change",
+                    "mana_over_budget",
+                    "outward_action",
+                    "protected_paths",
+                    "above_rank",
+                    "outside_scope",
+                    "chancellor_asks"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
             "const": "schedule.ran"
           }
         }
@@ -2430,6 +2494,7 @@
               "job": {
                 "enum": [
                   "chronicle",
+                  "triage",
                   "digest"
                 ]
               },
@@ -2719,6 +2784,7 @@
         "memo.filed",
         "memo.routed",
         "memo.closed",
+        "memo.escalated",
         "sandbox.replay.start",
         "sandbox.replay.end",
         "upgrade.started",

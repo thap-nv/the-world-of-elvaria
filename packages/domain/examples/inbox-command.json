@@ -102,5 +102,20 @@
       "assignee": "ember",
       "created_by": "user"
     }
+  },
+  {
+    "version": 1,
+    "id": "01JCG2N7RZ4WQ8E5T3Y6V9A0AP",
+    "ts": "2026-11-13T07:31:12+07:00",
+    "kind": "escalate_memo",
+    "source": "chancellor",
+    "payload": {
+      "memo": "m_20261112_4k2pqz",
+      "action": "merge",
+      "quest": "q_20261112_b3m8ty",
+      "addendum": "Cũng in giờ của `quest list` theo múi giờ của vương quốc, như `quest show`.",
+      "holds": ["above_rank"],
+      "note": "Quest dọn CLI cùng vùng file nhưng hạng C, trên hạng D chủ nhân ủy quyền."
+    }
   }
 ]

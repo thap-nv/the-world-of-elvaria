@@ -18,6 +18,14 @@ export function gaugesOf(t: Translate, gauges: readonly WaitGauge[] = []): strin
     .join(', ');
 }
 
+/** What the Chancellor's triage would do with a memo it sent up, and why it is the owner's (PS-03b). */
+function triageOf(t: Translate, item: AttentionItem) {
+  const triage =
+    item.triage === undefined ? NONE : t(`cli.triage.action.${item.triage}`, { quest: item.target ?? NONE });
+  const holds = (item.holds ?? []).map((hold) => t(`cli.triage.hold.${hold}`)).join(', ');
+  return { triage, holds: holds === '' ? NONE : holds };
+}
+
 /** What the item is about, in one line; every field the line names is given, `—` when the item has none. */
 function subjectOf(t: Translate, item: AttentionItem): string {
   return t(`cli.digest.item.${item.kind}`, {
@@ -34,6 +42,7 @@ function subjectOf(t: Translate, item: AttentionItem): string {
     pool: item.pool ?? NONE,
     used_pct: item.used_pct ?? NONE,
     resets_at: item.resets_at ?? NONE,
+    ...triageOf(t, item),
   });
 }
 

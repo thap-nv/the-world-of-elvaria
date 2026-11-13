@@ -1,7 +1,7 @@
 // What the metrics read from the event log alone (PS-01b, implementation-plan §3.16.1): the runs of checks the Steward
 // set aside because their environment failed, the files a session read more than once, and the files a submit
-// changed outside its quest's scope (PS-05). Neither leaves a trace in
-// a quest file, so a restarted Steward, the world and the Monk see them here or nowhere.
+// changed outside its quest's scope (PS-05). Neither leaves a trace in a quest file, so a restarted Steward, the world
+// and the Monk see them here or nowhere.
 import { isEventOf } from '../schema/event/event.ts';
 import { inWindow } from './window.ts';
 import type { MetricsWindow } from './window.ts';

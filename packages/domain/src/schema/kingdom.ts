@@ -18,6 +18,7 @@ import {
   RankSchema,
   rejectDuplicateIds,
 } from './common.ts';
+import { DelegationSchema } from './delegation.ts';
 import { ProgramsSchema } from './program.ts';
 import { TribeSchema } from './tribe.ts';
 
@@ -119,6 +120,12 @@ const dailyJob = (enabled: boolean, at: string) =>
 const ScheduleSchema = z
   .strictObject({
     chronicle: dailyJob(false, SCHEDULE_DEFAULTS.chronicle_at),
+    // PS-03b; optional with defaults, as digest.
+    triage: dailyJob(true, SCHEDULE_DEFAULTS.triage_at).meta(
+      describe(
+        "The Chancellor's triage of the memos waiting (PS-03b): at `at`, before the digest, one model call for the batch of memos sent to the Chancellor that nobody has decided or sent up yet, run outside the Steward's tick once no session of the Chancellor's tribe runs; none when no memo waits. Its result is inbox commands only, applied without the owner within `delegation`.",
+      ),
+    ),
     // PS-03; optional with defaults, so a kingdom.json written before it stays version 1.
     digest: dailyJob(true, SCHEDULE_DEFAULTS.digest_at).meta(
       describe(
@@ -145,7 +152,7 @@ const ScheduleSchema = z
   })
   .meta({
     $comment:
-      'Scheduled jobs run inside the Steward (no cron, Task Scheduler or launchd). The digest (PS-03) is the first job with a runner and is on by default; chronicle, temple and patrol have none yet, so they default to disabled.',
+      'Scheduled jobs run inside the Steward (no cron, Task Scheduler or launchd). The digest (PS-03) and the triage (PS-03b) have a runner and are on by default; chronicle, temple and patrol have none yet, so they default to disabled.',
   });
 
 const DispatchSchema = z.strictObject({
@@ -235,6 +242,7 @@ export const KingdomSchema = z
     breakers: BreakersSchema,
     schedule: ScheduleSchema,
     dispatch: DispatchSchema,
+    delegation: DelegationSchema,
     bell: z.strictObject({
       desktop: z.boolean().default(true),
       web_push: z.boolean().default(false),

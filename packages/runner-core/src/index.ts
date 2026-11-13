@@ -127,9 +127,11 @@ export { driftNote, gazetteerStampOf, gazetteerWithDrift } from './prompt/gazett
 export type { AssigneePromptInput, PromptInput, VerifierPromptInput } from './prompt/build-prompt.ts';
 export type { PromptCheck } from './prompt/checks.ts';
 export { buildChancellorPrompt } from './prompt/chancellor.ts';
+export { buildTriagePrompt } from './prompt/triage.ts';
 export { CONTEXT_FILE_MAX_CHARS, contextPathsIn, readContextFiles } from './prompt/context-files.ts';
 export type { ContextFile } from './prompt/context-files.ts';
 export type { ChancellorContext } from './prompt/chancellor.ts';
+export type { TriageContext, TriageMemo } from './prompt/triage.ts';
 export { PROMPT_BLOCK_IDS } from './prompt/prompt-blocks.ts';
 export type { PromptBlock, PromptBlockId, PromptPart, PromptWithBlocks } from './prompt/prompt-blocks.ts';
 export { resumedPrompt } from './prompt/resumed.ts';

@@ -7,6 +7,7 @@ import {
   CheckIdSchema,
   ClassIdSchema,
   KindIdSchema,
+  MemoIdSchema,
   QuestIdSchema,
   TerritoryIdSchema,
 } from '../../core/ids.ts';
@@ -119,6 +120,14 @@ export const QuestFieldsSchema = z.strictObject({
     ),
   ),
   created_by: z.enum(['chancellor', 'user', 'council', 'patrol', 'battle', 'campaign']),
+  // PS-03b; optional, added after v1, so version stays 1 (ADR 0003).
+  memos: unique(z.array(MemoIdSchema).min(1))
+    .optional()
+    .meta(
+      describe(
+        "The memos the quest was made from (PS-03b: `elvaria say --memo`, the Chancellor's triage). The Steward closes those still open as handled by it when it opens: at creation, or when the owner confirms the draft.",
+      ),
+    ),
   created_at: DateTimeSchema,
   updated_at: DateTimeSchema,
 });
