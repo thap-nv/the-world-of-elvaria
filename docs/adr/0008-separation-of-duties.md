@@ -12,7 +12,7 @@ Principle 4: the doer never judges. Agents tend to pass their own work and their
 ## Decision
 
 - `selectVerifier(quest, candidates, policy)` in domain; the first rule that matches wins:
-  1. not the assignee, and not anyone in `attempt_log` with role `assignee` on this quest;
+  1. not the assignee, and not anyone in `attempt_log` with role `assignee` on this quest; (Amended 2026-11-13, PS-22: nor, while the quest carries an assignee's `objection`, the judge whose verdict it contests, and `validateVerdict` refuses that judge's verdict; the machine never answers an objection, so under `machine_only` the quest waits for a judge of another family, and with none in the roster it waits as one nobody may judge.)
   2. class has `is_verifier` and covers `quest.kind`;
   3. status `idle`, and the character's pool has mana;
   4. prefer another model family (`familyOf(model)`: `claude | gemini | gpt`), then another tribe (account); (Amended 2026-11-10, P1-48: then, on a quest of rank `STRONG_JUDGE_MIN_RANK` (B) or above, the judge of the higher level, which speaks for its model's strength; below it the order is as before; strength never comes before rules 1–5.)

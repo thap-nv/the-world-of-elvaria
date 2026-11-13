@@ -59,22 +59,25 @@ async function settleAssignee(
     return breakAssignee(ctx, running, { trip: TRIPS[result.outcome] }, ended(result));
   // The memos of the letter are filed when the run ends through a crash, a question or a submit; a run a breaker
   // cut (above, and the commit's trips in submitWork) wrote its letter in haste, and the next letter brings them (PS-02).
+  // The move carries the quest's pending objection, for its next review (PS-22).
   if (result.outcome !== 'completed') {
-    await fileMemos(ctx, running);
+    const before = await fileMemos(ctx, running);
     return moveAndRing(ctx, {
       quest,
       event: { type: 'crash', ...run },
       actor: 'steward',
       edits: { [who]: step('crash') },
+      before,
     });
   }
   if (result.question !== undefined) {
-    await fileMemos(ctx, running);
+    const before = await fileMemos(ctx, running);
     return moveAndRing(ctx, {
       quest,
       event: { type: 'ask', question: result.question, ...run },
       actor: 'runner',
       edits: { [who]: step('ask') },
+      before,
     });
   }
   return submitWork(ctx, running, result);
@@ -103,13 +106,14 @@ async function submitWork(ctx: Context, running: Running, result: RunResult): Pr
   // The branch would lack the work: the quest goes to the infirmary with the hook's last words, not to review.
   if (committed.status === 'refused')
     return breakAssignee(ctx, running, { trip: 'commit', refused: committed }, ended(result));
-  await fileMemos(ctx, running);
+  const before = await fileMemos(ctx, running);
   const submitted = ctx.world.quests.get(quest);
   return moveAndRing(ctx, {
     quest,
     event: { type: 'submit', ...run },
     actor: 'runner',
     edits: { [who]: step('submit') },
+    before,
     ...(submitted === undefined ? {} : { out_of_scope: await outOfScopeIn(ctx, submitted) }),
   });
 }

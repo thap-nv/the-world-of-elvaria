@@ -260,7 +260,7 @@ describe('EventSchema', () => {
     ['memo.filed', { memo: 'm_1', kind: 'proposal', from: 'thorn' }, 'data.memo'],
     ['graph.built', { commit: 'abc123', duration_ms: 5 }, 'data.commit'],
     ['graph.failed', { commit: SHA_NEW, reason: '' }, 'data.reason'],
-    ['memo.routed', { memo: 'm_20261106_4k2pqz', route: 'owner' }, 'data.route'],
+    ['memo.routed', { memo: 'm_20261106_4k2pqz', route: 'everyone' }, 'data.route'],
     ['memo.closed', { memo: 'm_20261106_4k2pqz', decision: 'done' }, 'data.decision'],
     ['schedule.ran', { job: 'patrol', day: '2026-11-06' }, 'data.job'],
     ['schedule.ran', { job: 'digest', day: '20261106' }, 'data.day'],

@@ -83,4 +83,16 @@ describe('withVerdict', () => {
       count: 2,
     });
   });
+
+  it('takes the fail a sustained objection overturned out of every window (PS-22)', () => {
+    const contested = after([pass(1), fail('tests_fail', 2)]);
+    const third = { ...pass(3), result: 'pass' } as const;
+    const sustained = withVerdict(contested, { ...third, overturns: pass(2).verdict_id });
+    const ids = (window: readonly { verdict_id: string }[] = []) => window.map(({ verdict_id: id }) => id);
+    const kept = ['q_20261107_7k3m2a-1', 'q_20261107_7k3m2a-3'];
+    expect(ids(sustained.reputation.window)).toEqual(kept);
+    expect(ids(sustained.skill_affinity[FRONTEND]?.window)).toEqual(kept);
+    expect(ids(sustained.skill_affinity[I18N]?.window)).toEqual(kept);
+    expect(sustained.consecutive_fail).toEqual({ count: 0 });
+  });
 });

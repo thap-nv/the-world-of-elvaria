@@ -40,7 +40,14 @@
   `memo.filed` (the writer's) and `memo.routed` lines; a memo already filed is not filed again, and a line that
   follows no memo, an unknown kind or a write that fails is a warning, never the run's end. No quest moves. The
   owner's `decide_memo` closes a memo once (`memo.closed`, in the journal of the quest whose letter held it); a
-  continuing assignee's prompt lists the memos its quest filed (`filedMemosOf`).
+  continuing assignee's prompt lists the memos its quest filed (`filedMemosOf`). (PS-22, `src/memos/objection.ts`) An
+  objection contests the fail the run came back with (the owner's first, as the run's prompt read it): the domain
+  routes it, and the move that ends the run sets the quest's pending `objection`; the next review takes a second
+  judge (never the first one, never the machine), whose prompt holds the contested verdict and the memo
+  (`objectionFor`); its verdict carries the `objection`, clears it from the quest and closes the memo (`sustained`,
+  `overruled`), a pass taking the first fail out of the assignee's windows. A second judge's fail returns the quest
+  with the contested verdict beside it (`continuationOf`). The owner's `decide_memo` on a pending objection takes it
+  off its quest (`quest.edited`), and any judge may take the review again.
 - Runs the jobs of `kingdom.schedule` (PS-03, implementation-plan §3.16.3; `src/schedule/`): no cron. At the end
   of each tick the domain's `dueJobs` says which job's hour has come on a local day it has not run; an `in_tick`
   job (no model) runs there and then, an `off_tick` job (may call a model: PS-03b's triage, PS-21c's docs graph,

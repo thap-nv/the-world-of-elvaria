@@ -135,6 +135,27 @@ describe('elvaria migrate', () => {
     ]);
   });
 
+  it('adds the objection kind to the memos.json of a kingdom made before PS-22, its own kinds untouched', async () => {
+    const kingdom = await foundKingdom(dir.root);
+    await editRegistry(kingdom, 'memos', (memos) =>
+      memos
+        .filter((memo) => memo.id !== 'objection')
+        .map((memo) => ({ ...memo, description: 'Work outside the quest, my words.' })),
+    );
+    const io = testIo();
+    expect(await run(io, 'migrate', '--kingdom', kingdom, '--locale', 'en')).toBe(0);
+    expect(io.printed.out.slice(1, 3)).toEqual([
+      'Added 1 registry entries this Elvaria ships and the kingdom lacked (entries you have are left as they are); the old files are in .backup/20261106T090000:',
+      '  registry/memos.json: entry objection',
+    ]);
+    const memos = await registryOf(kingdom, 'memos');
+    expect(memos.map(({ id, route, description }) => [id, route, description])).toEqual([
+      ['proposal', 'chancellor', 'Work outside the quest, my words.'],
+      ['objection', 'judge', expect.stringContaining('A second judge reads it beside that verdict')],
+    ]);
+    expect((await openKingdom(kingdom).loadRegistry()).ok).toBe(true);
+  });
+
   it('adds no entry when the registry with them would not load, and says which (P1-41)', async () => {
     const kingdom = await foundKingdom(dir.root);
     // The owner dropped the integrate kind and took it off its classes; the default kind names knight and dwarf.

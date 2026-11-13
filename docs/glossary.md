@@ -69,7 +69,8 @@ Luật (ADR 0014, [implementation-plan](implementation-plan.md) §2.7 và §4.1)
 | Thư giao hàng | Delivery note | `delivery.md` | Quản sự viết khi giao: quest, phán quyết, thư bàn giao, thứ đã chép hay đã mở, lệnh merge tay; với nhánh là mô tả PR. | `.runs/<quest>-delivery.md`, `quest.deliverable.path` |
 | Thư bàn giao | Handover letter | `handover.md` | Agent viết: đang ở đâu, đã xong, chưa xong, quyết định, bước kế. | `quests/<id>/handover.md` |
 | Thư | Letter | `memo` | Một việc nhân vật thấy ngoài quest của mình, viết thành một dòng ở mục `Memos` của thư bàn giao thay vì tự sửa. Quản sự lập và chuyển đi theo kiểu thư khi lượt người làm kết thúc qua nộp, hỏi hay hỏng; không ai trả lời thư, thư không đổi quest nào, chủ nhân quyết một lần (ADR 0024, PS-02). Trong code là `memo`, vì `letter` đã là thư bàn giao. | `memos/<id>.json`, mục `## Memos` của `handover.md`, `elvaria memo`, `elvaria say --memo` |
-| Kiểu thư | Letter kind | `memo_kind` | Dữ liệu registry: mỗi kiểu khai nơi nhận (`route`); định tuyến là hàm thuần `routeMemo` đọc bảng đó. Kiểu đầu tiên `proposal` (đề xuất: việc ngoài phạm vi quest) tới Tể tướng; `advisory`, `request`, `objection` đến ở PS-09, PS-10. | `registry/memos.json`, `memo.kind` |
+| Kiểu thư | Letter kind | `memo_kind` | Dữ liệu registry: mỗi kiểu khai nơi nhận (`route`); định tuyến là hàm thuần `routeMemo` đọc bảng đó. Kiểu đầu tiên `proposal` (đề xuất: việc ngoài phạm vi quest) tới Tể tướng; `objection` (phản biện, PS-22) tới một người chấm thứ hai; `advisory`, `request` đến ở PS-09, PS-10. | `registry/memos.json`, `memo.kind` |
+| Phản biện | Objection | `objection` | Thư người làm viết ở lượt làm lại khi cho một ghi chú của phán quyết vừa trả bài là sai: ghi chú nào, vì sao, bằng chứng. Quản sự đưa nó tới một người chấm thứ hai, không phải người chấm đầu và không phải ai từng làm quest, người này đọc cả phán quyết đầu lẫn thư; phán quyết thứ hai là cuối: đạt thì quest đi tiếp và phán quyết đầu không tính vào danh tiếng hay chuỗi trượt của người làm, trượt thì người làm đọc cả hai ghi chú. Mỗi phán quyết tối đa một thư; thư thứ hai, thư chống phán quyết thứ hai hay lần trả của chủ nhân thì vào bản tấu (ADR 0024, ADR 0008, PS-22). | `memo.kind`, `quest.objection`, `verdict.objection`, mục `## Memos` của `handover.md`, `returned.md`, `objection.md` |
 | Nhật ký (máy) | Journal | `journal.jsonl` | Event của quest do hook ghi. | `quests/<id>/journal.jsonl` |
 | Phụ thuộc | Dependency | `depends_on` | Quest phải xong trước. | `quest.depends_on` |
 | Đơn vị (trận đánh) | Unit | `unit` | Một việc nhỏ trong quest Trận đánh. | `quest.units[]` |
@@ -349,8 +350,9 @@ Mọi giá trị enum xuất hiện trong [schemas/](schemas/) có ở bảng n�
 | `kingdom.schedule` | `chronicle`, `temple`, `patrol` | ba lịch, mỗi cái tắt được |
 | `kingdom.bell` | `desktop`, `web_push`, `messaging` | ba kênh chuông |
 | `memo.state` | `open`, `closed` | thư đang chờ quyết, hay đã quyết (có `outcome`) |
-| `memo.outcome.decision` (cũng `decide_memo.decision`) | `shelved`, `rejected`, `handled` | gác lại, bác, hay đã có quest làm (`handled` thì kèm `quest`) |
-| `memo_kind.route` (cũng `memo.to.route`) | `chancellor` | nơi nhận của một kiểu thư |
+| `memo.outcome.decision` (cũng `decide_memo.decision`, trừ hai giá trị cuối) | `shelved`, `rejected`, `handled`, `sustained`, `overruled` | gác lại, bác, hay đã có quest làm (`handled` thì kèm `quest`); thư phản biện do người chấm thứ hai đóng: chấp nhận (phán quyết của nó đạt) hay bác (trượt), kèm `verdict` (PS-22) |
+| `memo_kind.route` (cũng `memo.to.route`) | `chancellor`, `judge`, `owner` | nơi nhận của một kiểu thư: Tể tướng, người chấm thứ hai (thư phản biện, kèm `verdict`), hay chủ nhân (thư phản biện không người chấm nào được đọc, kèm `refusal`) |
+| `memo.to.refusal` | `no_verdict`, `owner_verdict`, `final_verdict`, `second_objection` | vì sao thư phản biện tới chủ nhân: lượt không mang phán quyết trượt nào, phán quyết là lần trả của chủ nhân, phán quyết đã là của người chấm thứ hai, hay phán quyết đã có thư phản biện khác (PS-22) |
 
 ## 12. Danh mục event type (v1)
 

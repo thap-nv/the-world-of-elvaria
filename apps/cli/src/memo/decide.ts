@@ -2,7 +2,6 @@
 // letter (memo) once (PS-02, ADR 0024). Like seal and answer it is an inbox command the Steward applies (decide_memo,
 // ADR 0005); the CLI refuses here what it can already tell: a closed or unknown memo, an unknown quest.
 import { MEMO_DECISIONS } from '@elvaria/domain';
-import type { MemoOutcome } from '@elvaria/domain';
 
 import { textOption } from '../args.ts';
 import { EXIT } from '../command.ts';
@@ -12,7 +11,8 @@ import { commandHeader, sendCommand } from '../quest/send-command.ts';
 import { MEMO_DECISION_LABEL, readMemo } from './memo.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 
-type Decision = MemoOutcome['decision'];
+/** The owner's decisions; `sustained` and `overruled` are a second judge's (PS-22). */
+type Decision = (typeof MEMO_DECISIONS)[number];
 const isDecision = (value: string): value is Decision =>
   (MEMO_DECISIONS as readonly string[]).includes(value);
 

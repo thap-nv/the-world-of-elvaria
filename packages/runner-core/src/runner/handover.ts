@@ -68,9 +68,10 @@ function draftOf(kind: string, text: string): MemoDraft {
 const noMemo = (line: string): boolean => NO_QUESTION.test(line.replace(/^[-*]\s*/, '').trim());
 
 /**
- * The memos in the Memos section of a letter, one per `- <kind>: <text> refs: <paths>` line (assignee.md, law 8). A
- * line with no memo (`-`, as fakeLetter writes, or `none`) is nothing; any other line that follows no memo is left out
- * and returned in `malformed`, so the Steward warns and the session's end stands (PS-02).
+ * The memos in the Memos section of a letter, one per `- <kind>: <text> refs: <paths>` line (assignee.md law 8; an
+ * objection by returned.md, PS-22). A line with no memo (`-`, as fakeLetter writes, or `none`) is nothing; any other
+ * line that follows no memo is left out and returned in `malformed`, so the Steward warns and the session's end stands
+ * (PS-02).
  */
 export function memosOf(letter: string): LetterMemos {
   const section = sectionOf(letter, 'Memos');

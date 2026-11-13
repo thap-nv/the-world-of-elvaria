@@ -65,7 +65,12 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   memo; a `-` or `none` line is nothing, as `fakeLetter` writes. The Steward calls it as a run ends; `RunResult` and
   the adapters do not change. A continuing assignee reads the memos its quest's letters filed
   (`Memory.memos`, `prompts/memos.md`, `memosBlock` of `src/prompt/memory.ts`): a block of its own, `memos` in
-  `PROMPT_BLOCK_IDS`, right after the continuation, so the load trace counts it apart.
+  `PROMPT_BLOCK_IDS`, right after the continuation, so the load trace counts it apart. (PS-22) `prompts/returned.md`
+  says a note held wrong is an objection memo (`- objection: … refs: …`), not a change to satisfy it nor a note passed
+  over; a second judge reads the `objection` block (`prompts/objection.md`, `objectionBlock` of
+  `src/prompt/objection.ts`, before the review: the contested verdict and the memo, the first judge never named), and
+  an assignee its final verdict beside the contested one (`prompts/final-verdict.md`, `Continuation.contested`).
+  Law 4 of `prompts/verifier.md`: a judge judges by the quest's goal and the checks, not the wording of its steps.
 - Runs the conformance suite (`conformanceChecks`, `runConformance`): plain checks with `node:assert`, so a spec
   wraps them in `it` and `elvaria tribe check` (P1-19) runs them too. With a real CLI (`live`) only `capabilities`,
   `doctor`, `probe`, `submit`, `hang`, `forbidden_command` and `spawn_child` run (a few cheap sessions, a little
