@@ -1,5 +1,15 @@
 // What the conformance suite runs against (implementation-plan §3.14, §10 question 5).
 import type { AgentRunner } from '../runner/types.ts';
+import type { FakeScenario } from './scenarios.ts';
+
+/** A scenario's throwaway workspace that would not go once its retries ran out: it stays on disk, for the owner. */
+export interface LeftWorkspace {
+  readonly scenario: FakeScenario;
+  /** The workspace's root, in the OS temp folder. */
+  readonly dir: string;
+  /** What the last removal answered (`EBUSY: …`). */
+  readonly problem: string;
+}
 
 export interface ConformanceTarget {
   /** Shown in test names and in `elvaria tribe check`. */
@@ -14,6 +24,11 @@ export interface ConformanceTarget {
   readonly env?: Readonly<Record<string, string>>;
   /** How long a session may take to answer; 10 s by default, more for a real CLI. */
   readonly timeout_ms?: number;
+  /**
+   * Told of a workspace left behind; the check still reports what its session did. Without it, a process warning.
+   * On Windows a real agy kept its workspace for minutes after the session (`tribe check gemini`, 2026-11-12).
+   */
+  readonly onLeftover?: (left: LeftWorkspace) => void;
 }
 
 export type CheckOutcome = 'passed' | 'skipped';

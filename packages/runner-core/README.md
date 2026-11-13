@@ -82,7 +82,9 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   `spawn EPERM`) fails it. A fake CLI runs the probe for real through `runFakeShellLine` once its gates let the line
   through. `openWorkspace` and `conformanceRequest` give an adapter's specs the same requests. The
   `capabilities` check also wants `capabilities.auth`, the sign-ins the adapter runs with (P1-19): a non-empty list
-  of `login` / `api_key`.
+  of `login` / `api_key`. A check's workspace that still will not go after the retries of `rm` (a real agy held one
+  for minutes on Windows, 2026-11-12) stays on disk: `play` tells `target.onLeftover` (a process warning without
+  it) and the check reports what its session did, never the cleanup.
 - Hands an owner adapter file its kit (`src/kit/`, P1-19, implementation-plan §3.14, ADR 0021): `adapterKitOf(host)`
   freezes the tribe, the kingdom folder, the minimal env, the CLI to drive (`tool_path`: the path the owner gave,
   else the pinned one), `launchOf`, `hookCommand` and runner-core's shared parts (`process`: `startChild`,
