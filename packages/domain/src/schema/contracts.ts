@@ -21,6 +21,7 @@ import {
 } from './registry-entries.ts';
 import { SkillSchema } from './skill/skill.ts';
 import { TerritorySchema } from './territory.ts';
+import { TribeLookPoolSchema } from './tribe-look.ts';
 import { WorldMapSchema } from './world-map/world-map.ts';
 import type { z } from 'zod';
 
@@ -45,6 +46,7 @@ export const CONTRACTS = {
   'quest-draft': QuestDraftFileSchema,
   'memo-triage': MemoTriageFileSchema,
   'world-map': WorldMapSchema,
+  'tribe-looks': TribeLookPoolSchema,
 } as const satisfies Record<string, z.ZodType>;
 
 export type ContractName = keyof typeof CONTRACTS;

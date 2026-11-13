@@ -39,6 +39,21 @@ describe('TribeSchema', () => {
     expect(verdictOf({ id: 'claude', adapter: 'claude_code', tool, budget: {} })).toBe('ok');
   });
 
+  it("takes the owner's choice of look, whole, with a name of at most 24 characters (PS-24)", () => {
+    const look = { palette: 'violet', crest: 'moon', figure: 'tall', aura: 'mist', frame: 'arch' };
+    expect(verdictOf({ id: 'codex', adapter: 'codex_cli', look })).toBe('ok');
+    expect(verdictOf({ id: 'codex', adapter: 'codex_cli', look: { ...look, name: 'Trăng Tím' } })).toBe('ok');
+    expect(verdictOf({ id: 'codex', adapter: 'codex_cli', look: { palette: 'violet' } })).toBe(
+      'look.crest,look.figure,look.aura,look.frame',
+    );
+    expect(verdictOf({ id: 'codex', adapter: 'codex_cli', look: { ...look, name: 'x'.repeat(25) } })).toBe(
+      'look.name',
+    );
+    expect(verdictOf({ id: 'codex', adapter: 'codex_cli', look: { ...look, crest: 'Moon' } })).toBe(
+      'look.crest',
+    );
+  });
+
   it('accepts an adapter file from the kingdom and rejects one elsewhere', () => {
     expect(verdictOf({ id: 'local', adapter: 'adapters/my-cli.mjs' })).toBe('ok');
     expect(verdictOf({ id: 'local', adapter: '../outside.mjs' })).toBe('adapter');

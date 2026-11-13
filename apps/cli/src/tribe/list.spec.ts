@@ -85,12 +85,14 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
     const io = testIo();
     expect(await elvaria(io, 'tribe', 'list')).toBe(0);
     const lantern = FAKE_LANTERN.replaceAll('\\', '/');
-    // The shell each adapter declares for this OS (P1-46): claude and agy declare only Windows' (P1-40).
+    // The shell each adapter declares for this OS (P1-46): claude and agy declare only Windows' (P1-40). The looks
+    // (PS-24): claude and gemini pinned, the others drawn by their ids in the order of kingdom.tribes[].
     const windows = process.platform === 'win32';
     const cells = io.printed.out.map((line) => line.split(/ {2,}/));
     expect(cells).toEqual([
       [
         'ID',
+        'Look',
         'Adapter',
         'Enabled',
         'Version',
@@ -103,6 +105,7 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
       ],
       [
         'claude',
+        'Silver Star (silver, star)',
         'claude_code',
         'yes',
         '—',
@@ -115,6 +118,7 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
       ],
       [
         'gemini',
+        'Red Fire (red, fire)',
         'antigravity',
         'yes',
         '—',
@@ -127,6 +131,7 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
       ],
       [
         'lantern',
+        'Gold Leaf (yellow, leaf)',
         LANTERN_ADAPTER,
         'no',
         '0.4.2',
@@ -138,9 +143,22 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
         '—',
         lantern,
       ],
-      ['fallback', 'gemini_cli', 'no', '—', '—', '—', '—', 'no runner yet', '—', '—'],
+      [
+        'fallback',
+        'Sky Frost (sky, frost)',
+        'gemini_cli',
+        'no',
+        '—',
+        '—',
+        '—',
+        '—',
+        'no runner yet',
+        '—',
+        '—',
+      ],
       [
         'broken',
+        'Green Thunder (green, thunder)',
         broken,
         'no',
         '—',

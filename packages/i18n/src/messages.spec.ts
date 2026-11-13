@@ -7,6 +7,7 @@ import {
   LOCALE_FILES,
   format,
   isLocale,
+  isMessageKey,
   placeholdersOf,
   translator,
 } from './messages.ts';
@@ -56,5 +57,13 @@ describe('isLocale', () => {
     expect(isLocale('vi')).toBe(true);
     expect(isLocale('en')).toBe(true);
     expect(isLocale('fr')).toBe(false);
+  });
+});
+
+describe('isMessageKey', () => {
+  it('accepts a key of the catalog, not a made-up one nor an inherited name', () => {
+    expect(isMessageKey('sandbox.fake_data')).toBe(true);
+    expect(isMessageKey('tribe_look.crest.kraken')).toBe(false);
+    expect(isMessageKey('toString')).toBe(false);
   });
 });

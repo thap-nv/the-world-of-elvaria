@@ -82,7 +82,7 @@
       }
     },
     "tribes": {
-      "description": "Tribes (product plan 0.6, tribe contract): one entry per account the owner signs in to on this machine. Adding a tribe = an adapter (built in, or a file adapters/<name>.mjs in the kingdom) + a theme entry (name, mana colour, sprites, crest) + the owner's own login; the core and existing characters do not change. `elvaria init` writes claude (claude_code) and gemini (antigravity). The Steward reads each adapter's capabilities at start and narrows what that tribe may take (implementation-plan §3.14). Ids are unique (zod).",
+      "description": "Tribes (product plan 0.6, tribe contract): one entry per account the owner signs in to on this machine. Adding a tribe = an adapter (built in, or a file adapters/<name>.mjs in the kingdom) + a look (the owner's choice, the theme's pinned entry, or one drawn from the theme's look pool by the id, PS-24) + the owner's own login; the core and existing characters do not change. `elvaria init` writes claude (claude_code) and gemini (antigravity). The Steward reads each adapter's capabilities at start and narrows what that tribe may take (implementation-plan §3.14). Ids are unique (zod).",
       "type": "array",
       "minItems": 1,
       "items": {
@@ -488,7 +488,7 @@
       ],
       "properties": {
         "id": {
-          "description": "TribeId, referenced by character.tribe and class.default_tribe. Display name, mana colour and crest are theme data keyed by this id.",
+          "description": "TribeId, referenced by character.tribe and class.default_tribe. The tribe's look (name, palette, crest…) is `look`, else the theme's pinned entry for this id, else drawn from the theme's look pool by it (PS-24).",
           "type": "string",
           "pattern": "^[a-z][a-z0-9_]*$"
         },
@@ -586,6 +586,51 @@
               "description": "Weekly spend ceiling; required when tool.auth = api_key (a paid key has no hard cap of its own).",
               "type": "number",
               "exclusiveMinimum": 0
+            }
+          }
+        },
+        "look": {
+          "description": "The owner's choice of look (`elvaria tribe look`, PS-24), every part an id of the theme's look pool (tribe-looks.schema.json). Added after v1 and optional, so kingdom.json stays version 1. It wins over the theme's pinned entry; a part the pool lacks sets the whole choice aside. Absent: the theme's pinned entry for this tribe id, else a look drawn from the pool by the id. Display only: no prompt and no dispatch reads it (ADR 0025).",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "palette",
+            "crest",
+            "figure",
+            "aura",
+            "frame"
+          ],
+          "properties": {
+            "palette": {
+              "description": "Palette: the colour of the crest, the mana bar and the tint of the models.",
+              "type": "string",
+              "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$"
+            },
+            "crest": {
+              "description": "Crest: the icon on the banner, the portrait and the mana bar (`crest-<id>`).",
+              "type": "string",
+              "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$"
+            },
+            "figure": {
+              "description": "Figure: the body the characters of the tribe are built on; the class dresses it.",
+              "type": "string",
+              "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$"
+            },
+            "aura": {
+              "description": "Aura: how the tribe's mana shows around its characters.",
+              "type": "string",
+              "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$"
+            },
+            "frame": {
+              "description": "Portrait frame: the shape around a character of the tribe on the 2D screens.",
+              "type": "string",
+              "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$"
+            },
+            "name": {
+              "description": "The tribe's display name, the owner's words like a character's name; absent: the theme's words for its crest and palette.",
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 24
             }
           }
         }
