@@ -7,7 +7,8 @@ import { readSpawnProbe } from './spawn-probe.ts';
 import { conformanceRequest, openWorkspace, prepareWorkspace } from './workspace.ts';
 import type { AgentRunner, RunResult, RunnerSignal, RunningSession } from '../runner/types.ts';
 import type { FakeScenario } from './scenarios.ts';
-import type { ConformanceTarget } from './target.ts';
+import type { ConformanceTarget, LeftWorkspace } from './target.ts';
+import type { Workspace } from './workspace.ts';
 
 export const DEFAULT_TIMEOUT_MS = 10_000;
 /** How long a hanging session must stay up before the check kills it. */
@@ -50,6 +51,26 @@ async function drain(signals: AsyncIterable<RunnerSignal>): Promise<RunnerSignal
   return read;
 }
 
+const warnLeftover = (left: LeftWorkspace): void => {
+  process.emitWarning(
+    `conformance ${left.scenario}: the workspace stays, remove it by hand: ${left.dir} (${left.problem})`,
+  );
+};
+
+/**
+ * Removes the workspace, or says it stays. A folder the CLI's processes still hold past the retries is the machine's
+ * business, not the runner's: on Windows a real agy held it for minutes after the session, and the cleanup turned 3 of
+ * `tribe check gemini`'s 7 checks red (2026-11-12). Thrown from the `finally`, it also hid the check's own failure.
+ */
+async function leave(workspace: Workspace, target: ConformanceTarget, scenario: FakeScenario): Promise<void> {
+  try {
+    await workspace.remove();
+  } catch (error) {
+    const problem = error instanceof Error ? error.message : String(error);
+    (target.onLeftover ?? warnLeftover)({ scenario, dir: workspace.root, problem });
+  }
+}
+
 /**
  * Spawns `scenario` in a throwaway workspace and returns what the session yielded. `drive`, if given, acts on
  * the running session first (the hang check kills it).
@@ -77,6 +98,6 @@ export async function play(
     const spawned = await readSpawnProbe(workspace.plot);
     return { runner, result, signals: read, ...(spawned === undefined ? {} : { spawned }) };
   } finally {
-    await workspace.remove();
+    await leave(workspace, target, scenario);
   }
 }

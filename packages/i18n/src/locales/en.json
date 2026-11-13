@@ -785,6 +785,7 @@
     "cli.tribe.check.failed": "Tribe {tribe} does not pass, so it stays disabled.",
     "cli.tribe.check.failed_check": "✗ {check}: {problem}",
     "cli.tribe.check.failed_enabled": "Tribe {tribe} does not pass. It is still enabled; elvaria tribe disable {tribe} stops it taking new work.",
+    "cli.tribe.check.left_workspace": "! {check}: the check's temp folder would not go ({problem}): a process of the CLI still holds it. The check does not fail for that; remove the folder once the CLI is done with it: {dir}",
     "cli.tribe.check.max_rank": "It takes quests of rank F to {rank}.",
     "cli.tribe.check.missing": "It lacks: {capabilities}.",
     "cli.tribe.check.no_guarded": "Without a tool gate it takes no quest on a territory with read_before_write or rank_floor laws.",

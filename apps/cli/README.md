@@ -89,6 +89,8 @@
   `--scenarios` runs all of them against a fake CLI; `--tool <path>` tries another CLI than the pinned one and
   writes nothing, PS-04b) and, once it passes, holds the tribe to the login its adapter
   reports, as doctor does (`loginFindings`, P1-34): a tribe that passes is enabled once doctor has pinned its CLI.
+  A check's temp folder that a process of the CLI still holds past the retries (agy on Windows) is named on stderr
+  and left for the owner; the check does not fail for it (`onLeftover`, lessons of 2026-11-12).
   `tribe disable <id>` stops a tribe taking new work. An owner adapter file is imported only here
   (`src/tribe/adapter-file.ts`): runner-core's `adapterKitOf` builds its kit (minimal env, the pinned or given CLI,
   `launchOf`, `hookCommand`) and `adapterOfModule` checks what `createAdapter(kit)` returns, so a broken file is a

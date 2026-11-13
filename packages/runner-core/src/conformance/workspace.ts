@@ -32,7 +32,8 @@ const PROBE_BUDGET = { max_turns: 10, max_minutes: 5 } as const;
 /**
  * On Windows a killed session's own children (a hook, agy's shim) may still hold the plot for a moment: killing
  * the whole tree is P1-06. rm() then fails with EBUSY or EPERM, which its retries are made for (CI, PR #32: the
- * `hang` check of runner-antigravity). Linear back-off: up to 5.5 s in all.
+ * `hang` check of runner-antigravity). Linear back-off: up to 5.5 s in all. A real agy held it for minutes
+ * (2026-11-12): past the retries the workspace stays and the check says so (`leave` of play.ts), it does not fail.
  */
 const REMOVE_RETRIES = 10;
 const REMOVE_RETRY_MS = 100;

@@ -785,6 +785,7 @@
     "cli.tribe.check.failed": "Tộc {tribe} không qua, nên vẫn tắt.",
     "cli.tribe.check.failed_check": "✗ {check}: {problem}",
     "cli.tribe.check.failed_enabled": "Tộc {tribe} không qua. Tộc vẫn đang bật; elvaria tribe disable {tribe} để tộc thôi nhận việc mới.",
+    "cli.tribe.check.left_workspace": "! {check}: không xóa được thư mục tạm của phép kiểm ({problem}): một tiến trình của CLI còn giữ nó. Phép kiểm không vì thế mà trượt; xóa thư mục khi CLI đã buông nó: {dir}",
     "cli.tribe.check.max_rank": "Tộc nhận nhiệm vụ hạng F tới {rank}.",
     "cli.tribe.check.missing": "Thiếu: {capabilities}.",
     "cli.tribe.check.no_guarded": "Không có cổng chặn tool nên tộc không nhận nhiệm vụ của lãnh thổ có luật read_before_write hay rank_floor.",
