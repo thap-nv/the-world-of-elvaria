@@ -28,7 +28,7 @@ describe('MemoSchema', () => {
       'outcome.quest: a handled memo names its quest',
     ],
     ['an id of another shape', { ...open, id: 'm_2026_abc' }, 'id: Invalid string'],
-    ['an unknown route', { ...open, to: { route: 'owner' } }, 'to.route: Invalid input'],
+    ['an unknown route', { ...open, to: { route: 'everyone' } }, 'to.route: Invalid option'],
     ['an empty text', { ...open, body: '' }, 'body: Too small'],
     ['a text past its limit', { ...open, body: 'x'.repeat(2001) }, 'body: Too big'],
     [

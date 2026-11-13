@@ -31,6 +31,7 @@ import {
   SealSchema,
   UnitsSchema,
 } from './quest-parts.ts';
+import { ObjectionSchema } from './objection.ts';
 
 const describe = (description: string) => ({ description });
 
@@ -102,6 +103,11 @@ export const QuestFieldsSchema = z.strictObject({
     ),
   seal: SealSchema.optional(),
   blocked: BlockedSchema.optional(),
+  objection: ObjectionSchema.optional().meta(
+    describe(
+      "(PS-22) The objection memo the next review answers: the Steward sets it when the run that filed it ends, and clears it with the second judge's verdict, or when the owner decides the memo first.",
+    ),
+  ),
   secrets_required: SecretNamesSchema.default(() => []),
   checks_run: z
     .array(CheckIdSchema)

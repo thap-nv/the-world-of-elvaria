@@ -3,7 +3,8 @@
 // the Steward knows that no file holds (its notices); each item has its group (the work waits on it, or it can wait),
 // an advice code and the `elvaria` command that acts on it, both looked up in ATTENTION_TABLE by the item's kind.
 // (PS-05) A done quest that still holds the scope other quests wait for comes from the caller too (scopeHoldsOf): the
-// world state does not hold the quests' scopes.
+// world state does not hold the quests' scopes. (PS-22) An open memo is an item by where it went: an objection on its way
+// to a second judge waits for nobody, one no judge may read (MEMO_ROUTES `owner`) is the owner's to settle.
 import { current } from '../mana/reading.ts';
 import { manaWarningOf } from '../mana/state.ts';
 import { RANKS } from '../schema/common.ts';
@@ -12,9 +13,12 @@ import type { CharacterId, MemoId, QuestId, TribeId } from '../core/ids.ts';
 import type { WaitGauge } from '../dispatch/judge-waits.ts';
 import type { ScopeHold } from '../dispatch/scope.ts';
 import type { Rank } from '../schema/common.ts';
+import type { MemoRoute } from '../schema/memo/memo.ts';
 import type { PoolView } from './mana-view.ts';
 import type { QuestView } from './quest-view.ts';
 import type { WorldState } from './world-state.ts';
+
+type MemoRouteId = MemoRoute['route'];
 
 export const ATTENTION_GROUPS = ['must', 'can_wait'] as const;
 /** `must`: the work stands still until the owner decides; `can_wait`: nothing waits on it. */
@@ -42,6 +46,7 @@ export const ATTENTION_TABLE = {
   unclaimable: { group: 'must', advice: 'see_why', command: ['quest', 'show', '{quest}'] },
   scope_held: { group: 'must', advice: 'merge_and_archive', command: ['quest', 'archive', '{quest}'] },
   draft: { group: 'must', advice: 'confirm_or_cancel', command: ['quest', 'confirm', '{quest}'] },
+  objection: { group: 'can_wait', advice: 'settle_objection', command: ['memo', 'show', '{memo}'] },
   memo: { group: 'can_wait', advice: 'decide_memo', command: ['memo', 'show', '{memo}'] },
   mana_asleep: { group: 'can_wait', advice: 'wait_or_wake', command: ['wake', '{tribe}'] },
   mana_warning: { group: 'can_wait', advice: 'watch_mana', command: ['doctor'] },
@@ -153,15 +158,23 @@ function noticeItems(state: WorldState, notices: StewardNotices): AttentionItem[
   ];
 }
 
+/**
+ * The item an open memo makes, by its route: none on its way to a judge, `objection` for the owner (today only an
+ * objection no judge may read goes there, PS-22), else `memo`, a route not yet written included.
+ */
+const MEMO_ITEMS: Readonly<Record<MemoRouteId, AttentionKind | null>> = {
+  chancellor: 'memo',
+  judge: null,
+  owner: 'objection',
+};
+
 function memoItems(state: WorldState): AttentionItem[] {
-  return Object.values(state.memos).map((memo) =>
-    itemOf('memo', {
-      memo: memo.id,
-      memo_kind: memo.kind,
-      from: memo.from,
-      ...(memo.quest === null ? {} : { quest: memo.quest }),
-    }),
-  );
+  return Object.values(state.memos).flatMap((memo) => {
+    const kind = memo.route === null ? 'memo' : MEMO_ITEMS[memo.route];
+    if (kind === null) return [];
+    const quest = memo.quest === null ? {} : { quest: memo.quest };
+    return [itemOf(kind, { memo: memo.id, memo_kind: memo.kind, from: memo.from, ...quest })];
+  });
 }
 
 /** A pool asleep; or awake with a current window at the owner's warning share or above. */

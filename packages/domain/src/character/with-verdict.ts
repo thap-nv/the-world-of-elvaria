@@ -1,7 +1,8 @@
 // What a verdict does to the assignee's file (implementation-plan §2.6, §3.13, ADR 0020): one entry in the
 // reputation window and in the window of each of the quest's tags, the last 20 kept, and the fail streak that
 // breakers.same_fail_suspend counts. The Steward and the sandbox both go through it, so a fake day keeps the books
-// a real one keeps (P1-04). levelChange reads the windows afterwards.
+// a real one keeps (P1-04). levelChange reads the windows afterwards. (PS-22) A pass that sustains an objection
+// takes the verdict it overturned out of the windows, as the owner's rejudge keeps a judge's error out of them.
 import { VERDICT_WINDOW_MAX } from '../schema/character/constants.ts';
 import type { TagId, VerdictId } from '../core/ids.ts';
 import type { Character, VerdictEntry } from '../schema/character/character.ts';
@@ -18,7 +19,14 @@ interface JudgementBase {
 
 /** A pass or a fail on the assignee's work; a partial verdict judges nothing yet and enters no window. */
 export type Judgement =
-  | (JudgementBase & { readonly result: 'pass' })
+  | (JudgementBase & {
+      readonly result: 'pass';
+      /**
+       * The fail verdict this pass overturned: a second judge read the assignee's objection and passed the work
+       * (PS-22). That fail leaves every window; the pass ends the streak it lengthened.
+       */
+      readonly overturns?: VerdictId;
+    })
   | (JudgementBase & {
       readonly result: 'fail';
       readonly fail_kind: FailKind;
@@ -29,8 +37,8 @@ export type Judgement =
       readonly rejudge?: boolean;
     });
 
-const kept = (window: readonly VerdictEntry[], entry: VerdictEntry): VerdictEntry[] =>
-  [...window, entry].slice(-VERDICT_WINDOW_MAX);
+const kept = (window: readonly VerdictEntry[], entry: VerdictEntry, without?: VerdictId): VerdictEntry[] =>
+  [...window.filter(({ verdict_id: id }) => id !== without), entry].slice(-VERDICT_WINDOW_MAX);
 
 /** A pass ends the streak; a fail of the kind before lengthens it; any other fail starts a new one. */
 function streakAfter(character: Character, judgement: Judgement): Character['consecutive_fail'] {
@@ -50,11 +58,13 @@ export function withVerdict(character: Character, judgement: Judgement): Charact
     by_human: judgement.by_human,
     at: judgement.at,
   };
+  const overturned = judgement.result === 'pass' ? judgement.overturns : undefined;
   const affinity = { ...character.skill_affinity };
-  for (const tag of judgement.tags) affinity[tag] = { window: kept(affinity[tag]?.window ?? [], entry) };
+  for (const tag of judgement.tags)
+    affinity[tag] = { window: kept(affinity[tag]?.window ?? [], entry, overturned) };
   return {
     ...character,
-    reputation: { window: kept(character.reputation.window, entry) },
+    reputation: { window: kept(character.reputation.window, entry, overturned) },
     skill_affinity: affinity,
     consecutive_fail: streakAfter(character, judgement),
   };

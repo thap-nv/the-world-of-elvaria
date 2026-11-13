@@ -16,6 +16,7 @@ import {
   rejectDuplicateIds,
 } from '../common.ts';
 import { FAIL_NOTES_MIN_LENGTH } from './constants.ts';
+import { ObjectionSchema } from './objection.ts';
 import { allOfRules, checkRules, issueIf } from './rules.ts';
 import type { Rule } from './rules.ts';
 
@@ -94,6 +95,11 @@ const VerdictFieldsSchema = z.strictObject({
         "Only on the owner's return (`elvaria return --rejudge`, P1-40): the quest goes back for a new judgement because the judge erred, not the assignee, so the assignee's reputation and fail streak do not count it.",
       ),
     ),
+  objection: ObjectionSchema.optional().meta(
+    describe(
+      "(PS-22) The objection this judge answered, from the quest: the verdict is final, and a pass drops the contested verdict from the assignee's reputation and fail streak, as a rejudge does. Never on the owner's verdict.",
+    ),
+  ),
   by_human: z.boolean(),
   session_id: NonEmptyStringSchema.optional(),
   created_at: DateTimeSchema,
@@ -180,6 +186,19 @@ const VERDICT_RULES: readonly Rule<VerdictFields>[] = [
         verdict.rejudge === true && !(verdict.by_human && isFail(verdict)),
         ['rejudge'],
         "rejudge marks only the owner's return, a human fail verdict",
+      ),
+  },
+  {
+    // A second judge answers an objection (PS-22); the owner's word is never one of its rounds.
+    contract: {
+      if: { required: ['objection'] },
+      then: { properties: { by_human: { const: false } } },
+    },
+    check: (verdict) =>
+      issueIf(
+        verdict.objection !== undefined && verdict.by_human,
+        ['objection'],
+        "an objection is answered by a judge, never by the owner's verdict",
       ),
   },
   {

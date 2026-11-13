@@ -1,0 +1,119 @@
+# Quest q_20261106_7k3m2a: Thêm script pnpm check
+
+- Kind: build (deliverable: branch)
+- Rank: D
+- Tags: infra
+- Territory: dc1-se-team
+- Limits: 45 minutes, 400000 tokens
+
+Thêm script `pnpm check` gom lint + typecheck + test + i18n:check; cập nhật README.
+
+# The quest came back
+
+The judge returned your work on this quest. Read each note against the quest's goal and the territory, and fix what a right note names. A note you hold wrong, and can show wrong, you neither change the work to satisfy nor quietly pass over: write it as an objection in the Memos section of the letter, one line: `- objection: <which note is wrong, why, and the evidence: paths, lines of a log, commands you ran and what they printed> refs: <path>, <path>`. Keep `objection` and `refs:` in English and the text in the letter's language; put everything you contest in that one line. When you finish, the Steward sends it to a second judge, who reads it beside this verdict; a verdict gets one objection, and one against a second judge's verdict or the owner's goes to the owner instead. Then run the territory's checks, update the handover letter, and finish again. This session is new: the letter, the journal and git say what was done.
+
+This verdict is a second judge's answer to your objection against the first one: it read your objection beside the first verdict and judged the work again. It is final. Fix what its notes name; an objection to it goes to the owner, not to a judge.
+
+## The first verdict
+
+- Fail kind: incomplete
+
+Script `check` mới không có test; README chưa nói `pnpm check` chạy i18n:check.
+
+## Verdict
+
+- Result: fail
+- Fail kind: incomplete
+
+Test có rồi, ghi chú 1 không còn đúng; README vẫn chưa nói `pnpm check` chạy i18n:check (ghi chú 2 vẫn đúng).
+
+## Machine checks that failed
+
+The territory's checks ran on your work before the judge, and these failed. Their logs lie in the kingdom, outside your plot, so the end of each is below; secrets there read `[redacted]`. Fix what they show, then run the same checks before you finish.
+
+- unit (41000 ms)
+
+### The end of the log of unit
+
+```text
+ FAIL  src/api/orders.spec.ts > total > applies the discount
+AssertionError: expected 120 to be 108
+ Test Files  1 failed | 12 passed (13)
+```
+
+## Machine checks on your work
+
+When you finish, the machine runs the territory's checks that watch the paths your branch touched, then the judge reads their results. On what the branch touches now, these run:
+
+- `lint`: `pnpm lint`
+
+These run too if your work touches a path they watch: `unit` (`apps/**/*.ts`), `e2e` (`apps/web/src/routes/**`).
+
+## Handover letter so far
+
+```markdown
+# Handover · q_20261106_7k3m2a
+
+## Where I am
+
+Script `check` đã thêm vào package.json, README đã cập nhật.
+
+## Done
+
+- `pnpm check` chạy lint, typecheck, test, i18n:check (commit 1a2b3c4).
+
+## Not done
+
+-
+
+## Tried and failed
+
+- `pnpm -r check`: mỗi package không có script `check`.
+
+## Decisions taken
+
+- Gọi `pnpm i18n:check` sau cùng vì nó chậm nhất.
+
+## Next step
+
+Nộp.
+
+## Question
+```
+
+## Last journal lines
+
+```jsonl
+{"v":1,"type":"agent.tool","quest":"q_20261106_7k3m2a","attempt":1,"data":{"tool":"read","path":"src/file-6.ts"}}
+{"v":1,"type":"agent.tool","quest":"q_20261106_7k3m2a","attempt":1,"data":{"tool":"read","path":"src/file-7.ts"}}
+{"v":1,"type":"agent.tool","quest":"q_20261106_7k3m2a","attempt":1,"data":{"tool":"read","path":"src/file-8.ts"}}
+{"v":1,"type":"agent.tool","quest":"q_20261106_7k3m2a","attempt":1,"data":{"tool":"read","path":"src/file-9.ts"}}
+{"v":1,"type":"agent.tool","quest":"q_20261106_7k3m2a","attempt":1,"data":{"tool":"read","path":"src/file-10.ts"}}
+{"v":1,"type":"agent.tool","quest":"q_20261106_7k3m2a","attempt":1,"data":{"tool":"read","path":"src/file-11.ts"}}
+{"v":1,"type":"agent.tool","quest":"q_20261106_7k3m2a","attempt":1,"data":{"tool":"read","path":"src/file-12.ts"}}
+{"v":1,"type":"agent.tool","quest":"q_20261106_7k3m2a","attempt":1,"data":{"tool":"read","path":"src/file-13.ts"}}
+{"v":1,"type":"agent.tool","quest":"q_20261106_7k3m2a","attempt":1,"data":{"tool":"read","path":"src/file-14.ts"}}
+{"v":1,"type":"agent.tool","quest":"q_20261106_7k3m2a","attempt":1,"data":{"tool":"read","path":"src/file-15.ts"}}
+{"v":1,"type":"agent.tool","quest":"q_20261106_7k3m2a","attempt":1,"data":{"tool":"read","path":"src/file-16.ts"}}
+{"v":1,"type":"agent.tool","quest":"q_20261106_7k3m2a","attempt":1,"data":{"tool":"read","path":"src/file-17.ts"}}
+{"v":1,"type":"agent.tool","quest":"q_20261106_7k3m2a","attempt":1,"data":{"tool":"read","path":"src/file-18.ts"}}
+{"v":1,"type":"agent.tool","quest":"q_20261106_7k3m2a","attempt":1,"data":{"tool":"read","path":"src/file-19.ts"}}
+{"v":1,"type":"agent.tool","quest":"q_20261106_7k3m2a","attempt":1,"data":{"tool":"read","path":"src/file-20.ts"}}
+{"v":1,"type":"agent.tool","quest":"q_20261106_7k3m2a","attempt":1,"data":{"tool":"read","path":"src/file-21.ts"}}
+{"v":1,"type":"agent.tool","quest":"q_20261106_7k3m2a","attempt":1,"data":{"tool":"read","path":"src/file-22.ts"}}
+{"v":1,"type":"agent.tool","quest":"q_20261106_7k3m2a","attempt":1,"data":{"tool":"read","path":"src/file-23.ts"}}
+{"v":1,"type":"agent.tool","quest":"q_20261106_7k3m2a","attempt":1,"data":{"tool":"read","path":"src/file-24.ts"}}
+{"v":1,"type":"agent.tool","quest":"q_20261106_7k3m2a","attempt":1,"data":{"tool":"read","path":"src/file-25.ts"}}
+```
+
+## Commits on the branch
+
+```
+1a2b3c4 feat: add pnpm check
+```
+
+## Memos already filed
+
+The Steward filed these memos from the Memos section of this quest's handover letter, and sent each where its kind goes; nobody answers a memo. Do not write any of them again: keep a line of the Memos section word for word, or delete it.
+
+- `m_20261106_4k2pqz` (proposal, open): README của `apps/web` còn hướng dẫn `npm run check`; nên đổi sang `pnpm check`.

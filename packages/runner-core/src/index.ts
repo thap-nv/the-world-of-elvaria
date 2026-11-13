@@ -120,6 +120,7 @@ export type { ToolLaws, ToolPolicy, ToolPolicyInput } from './policy/tool-policy
 export { JOURNAL_TAIL_LINES, LANGUAGE_NAMES } from './prompt/blocks.ts';
 export type { Continuation, Locale, Memory } from './prompt/blocks.ts';
 export type { FiledMemo } from './prompt/memory.ts';
+export type { PromptObjection } from './prompt/objection.ts';
 export { buildPrompt } from './prompt/build-prompt.ts';
 export type { PromptGraph } from './prompt/graph-block.ts';
 export { driftNote, gazetteerStampOf, gazetteerWithDrift } from './prompt/gazetteer-drift.ts';
