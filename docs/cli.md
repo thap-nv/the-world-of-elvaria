@@ -424,6 +424,7 @@ Sổ đo: lượt, làm lại theo nguyên nhân, đạt lượt đầu, lỗi l
 | `--since <yyyy-mm-dd>` | Từ ngày này, tính cả ngày đó (yyyy-mm-dd). |
 | `--until <yyyy-mm-dd>` | Tới ngày này, tính cả ngày đó (yyyy-mm-dd). |
 | `--json` | In toàn bộ số đo dạng JSON thay cho bảng. |
+| `--plan <quest>` | Thay cho sổ đo: các quest con của một quest kế hoạch đã chạy ra sao so với kế hoạch: vùng khai cạnh file đã chạm, ước lượng cạnh token, thư và lượt làm lại. |
 
 ## `elvaria sandbox generate`
 

@@ -121,6 +121,14 @@ describe('metricsOf over other windows', () => {
     expect(first).toMatchObject({ id: questId(1), check_runs: 2, checks_set_aside: 1 });
   });
 
+  it('rates each run apart, and has no stay or advice where the log has no line for them (PS-06b)', () => {
+    const metrics = metricsOf(DAY, ON_THE_DAY);
+    expect(metrics.pass_by_run[0]).toEqual({ run: 1, ...metrics.first_pass.overall, key: undefined });
+    expect(metrics.pass_by_run.map(({ run }) => run)).toEqual([1, 2]);
+    expect(metrics.status_times).toEqual([]);
+    expect(metrics.advice).toEqual({ escalated: 0, decided: 0, followed: 0, by_action: [] });
+  });
+
   it('reads the whole kingdom without a window', () => {
     const metrics = metricsOf(DAY);
     expect(metrics.window).toEqual({});

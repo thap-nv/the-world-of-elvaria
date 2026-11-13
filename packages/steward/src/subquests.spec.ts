@@ -206,8 +206,9 @@ describe('delivering a plan: its sub-quests open', () => {
     const plan = await kingdom.quest('Plan well');
     expect(plan.checks_run).toEqual(['subquests']);
     const log = await readFile(inKingdom(kingdom.root, `.runs/${plan.id}-1/checks/subquests.log`), 'utf8');
+    // A folder plot does not say what the quest wrote, so its plan file goes unchecked (PS-06b, plan-file.spec.ts).
     expect(log).toMatch(
-      /^subquests\.json: the delivery would open 1 sub-quests\n- q_\d{8}_[0-9a-z]{6} build \(knight\): Part d1\n$/,
+      /^subquests\.json: the delivery would open 1 sub-quests\n- q_\d{8}_[0-9a-z]{6} build \(knight\): Part d1\nplan file: not checked, .+\n$/,
     );
   });
 

@@ -6,10 +6,11 @@ import path from 'node:path';
 
 import { fromPortable } from '@elvaria/store';
 import type { Quest } from '@elvaria/domain';
+import { SUBQUESTS_FILE } from '@elvaria/runner-core';
 import type { SpawnRequest } from '@elvaria/runner-core';
 
 import { leavingRunners } from './deliver.ts';
-import { templated } from './template.ts';
+import { PLAN_FILE, PLAN_FILE_PATH, templated } from './template.ts';
 import { gitPlots, gitRepoWith, onRepo } from './git-plots.ts';
 import { CAST, RM_TEMP, bench, questPayload } from './kingdom.ts';
 import type { Plots, Steward } from '../types.ts';
@@ -73,6 +74,12 @@ const leftBy = (quest: Quest | undefined): string =>
     ? quest.party_role
     : (quest?.title ?? '');
 
+/** A plan that leaves its list leaves its plan file too (PS-06b), unless it leaves one of its own. */
+const withPlanFile = (left: Readonly<Record<string, string>>): Readonly<Record<string, string>> =>
+  left[SUBQUESTS_FILE] === undefined || Object.keys(left).some((file) => file.startsWith('plans/'))
+    ? left
+    : { ...left, [PLAN_FILE_PATH]: PLAN_FILE };
+
 export interface PartyBench {
   readonly kingdom: Bench;
   readonly steward: Steward;
@@ -97,7 +104,7 @@ export async function partyBench(
   const cast = ['merle', 'morgan', 'mirel', 'mott'].slice(0, mages).map((id) => ({ id, cls: 'mage' }));
   const kingdom = await bench({ cast: [...CAST, ...cast, ...(more.cast ?? [])], plays });
   await onRepo(kingdom, repo, [], more.territory);
-  const leaves = (req: SpawnRequest) => files[leftBy(req.quest)] ?? {};
+  const leaves = (req: SpawnRequest) => withPlanFile(files[leftBy(req.quest)] ?? {});
   const plots = gitPlots(kingdom.root);
   const roles: [string, string | undefined][] = [];
   // The territory's checks run nothing here; what they are asked for is kept.
