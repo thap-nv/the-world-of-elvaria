@@ -12,6 +12,7 @@ import type { JsonSchema, SpawnRequest } from '@elvaria/runner-core';
 
 import { handoverPath } from '../files.ts';
 import { sessionGraphOf } from './graph.ts';
+import { planGraphFactsOf } from './plan-graph.ts';
 import { promptOf, searchFor } from './prompt.ts';
 import { sessionEnvOf } from './secrets.ts';
 import type { Context } from '../context.ts';
@@ -83,10 +84,15 @@ export async function requestOf(
   const env =
     graph === undefined || ctx.deps.graphs === undefined ? own : ctx.deps.graphs.envFor(own, graph.dir);
   const known = secretValuesOf({ quest, env });
+  // A plan quest's mage reads the impact of its scope, its judge the sub-quests the graph links (PS-21b).
+  const { impact, plan_links: planLinks } = await planGraphFactsOf(ctx, input, graph);
   const given = {
     characterClass,
     known,
-    ...(graph === undefined ? {} : { graph: { commit: graph.commit } }),
+    ...(graph === undefined
+      ? {}
+      : { graph: { commit: graph.commit, ...(impact === undefined ? {} : { impact }) } }),
+    ...(planLinks === undefined ? {} : { plan_links: planLinks }),
   };
   const { prompt, load_trace: loadTrace } = await promptOf(ctx, input, given, resume);
   const request: SpawnRequest = {

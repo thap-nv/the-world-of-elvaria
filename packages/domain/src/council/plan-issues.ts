@@ -26,7 +26,7 @@ export interface PlanContext {
 }
 
 /** Each draft's refs it waits on, directly or through others (depends_on_refs); a circle is refused elsewhere. */
-function waitsOf(drafts: readonly QuestDraft[]): ReadonlyMap<string, ReadonlySet<string>> {
+export function waitsOf(drafts: readonly QuestDraft[]): ReadonlyMap<string, ReadonlySet<string>> {
   const direct = new Map(drafts.map(({ ref, depends_on_refs: on }) => [ref, on]));
   return new Map(
     drafts.map(({ ref, depends_on_refs: on }) => {

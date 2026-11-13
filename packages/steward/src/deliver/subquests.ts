@@ -46,8 +46,8 @@ const refused = (reason: string): Result<Subquests, string> => ok({ status: 'ref
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
-/** The drafts of the file, or why there are none to open. */
-async function draftsIn(dir: string): Promise<Result<readonly QuestDraft[], string>> {
+/** The drafts of the file, or why there are none to open; the plan's judge reads them too (PS-21b, plan-graph.ts). */
+export async function draftsIn(dir: string): Promise<Result<readonly QuestDraft[], string>> {
   let text: string;
   try {
     text = await readFile(path.join(dir, SUBQUESTS_FILE), 'utf8');

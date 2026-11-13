@@ -327,7 +327,10 @@
   every tick and a quest's base commit when its session opens; one build per territory, the latest commit next,
   `graph.built` / `graph.failed` lines (a failed commit is not tried again by this Steward), killed at stop. A session
   whose graph is built gets the graph commands in its policy, `GRAPHIFY_OUT` and graphify's folder in its env, and
-  the prompt's graph block (`sessions/graph.ts`); one whose graph is not built yet opens without it.
+  the prompt's graph block (`sessions/graph.ts`); one whose graph is not built yet opens without it. For a quest
+  whose kind delivers sub-quests (PS-21b, `sessions/plan-graph.ts`), its mage reads the impact of the quest's scope
+  in that block, and its judge the sub-quests the graph links (the domain's `planLinksOf` on `subquests.json`), a
+  warning in the review that fails nothing.
 
 ## Does not
 

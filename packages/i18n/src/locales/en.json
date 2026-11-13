@@ -783,6 +783,8 @@
     "cli.say.failed.rate_limited": "The Chancellor's tribe has run out of mana for now; try again when it is back.",
     "cli.say.failed.timed_out": "The Chancellor did not answer in time; the session was stopped.",
     "cli.say.listening": "Chancellor {name} is listening…",
+    "cli.say.files": "The Chancellor gets the size of the files your words name: {files} in all.",
+    "cli.say.graph": "The Chancellor gets what the code graph of {territories} says of your words.",
     "cli.say.no_chancellor": "Nobody can speak as the Chancellor: summon an idle character of class {class} in a tribe that runs, e.g. elvaria character add aldric --class {class} --tribe claude.",
     "cli.say.option.memo": "Hand the Chancellor a letter (memo) instead of, or along with, your words: it drafts quests from it.",
     "cli.say.memo_words": "A letter ({kind}) that {from} wrote while working on quest {quest}: {body} Files: {refs}.",

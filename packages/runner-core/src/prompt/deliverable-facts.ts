@@ -2,21 +2,25 @@
 // blocks.ts. A quest that delivers sub-quests also reads the rules every draft follows (PS-06): its mage writes the
 // drafts by them, and its judge holds the plan to them.
 import { SUBQUESTS_FILE } from '../plot/subquests.ts';
-import { classesOf, draftingBlock } from './drafting.ts';
+import { classesOf, draftingBlock, graphedOf } from './drafting.ts';
 import { sharedFacts } from './scope.ts';
 import type { DraftingTerms } from './drafting.ts';
 import type { PromptTemplates } from './templates.ts';
 import type { Kind, Registry, Territory } from '@elvaria/domain';
 
 /** What the facts of a quest read of its territory. */
-export type FactsTerritory = Pick<Territory, 'secrets_allowed' | 'shared_paths' | 'checks'>;
+export type FactsTerritory = Pick<
+  Territory,
+  'secrets_allowed' | 'shared_paths' | 'checks' | 'code_graph' | 'vcs'
+>;
 
 const sealOf = (kind: Kind): string => (kind.seal_default ? 'sealed by default' : 'no seal by default');
 
 /**
  * The words a sub-quest draft may use (P1-15): the kinds with the classes each allows and their seal (PS-06), the
- * classes with their tools (PS-06), the kingdom's tags, the secrets and checks of the territory. The mage's class
- * prompt explains the fields and points here; the Steward refuses a list that names anything else.
+ * classes with their tools (PS-06) and, on a territory with a code graph, who asks it (PS-21b), the kingdom's tags,
+ * the secrets and checks of the territory. The mage's class prompt explains the fields and points here; the Steward
+ * refuses a list that names anything else.
  */
 function subquestVocabulary(registry: Registry, territory: FactsTerritory): string[] {
   const kinds = registry.kinds.map(
@@ -26,7 +30,7 @@ function subquestVocabulary(registry: Registry, territory: FactsTerritory): stri
   const checks = territory.checks.map(({ id }) => id);
   return [
     `- Kinds of a sub-quest and the classes each allows: ${kinds.join('; ')}`,
-    `- Classes and their tools:\n${classesOf(registry.classes)
+    `- Classes and their tools:\n${classesOf(registry.classes, graphedOf([territory]))
       .map((line) => `  ${line}`)
       .join('\n')}`,
     `- Tags: ${registry.tags.map(({ id }) => id).join(', ')}`,

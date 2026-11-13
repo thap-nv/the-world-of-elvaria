@@ -198,6 +198,20 @@
               "used_in": "`GRAPH_COMMANDS`, ToolPolicy `graph_commands`, policy.json, khối `graph` của prompt"
             },
             {
+              "vi": "Tầm ảnh hưởng",
+              "en": "Impact",
+              "id": ["impact"],
+              "definition": "Các file ngoài một vùng (`scope_paths` của quest, hay các đường dẫn mà lời của chủ nhân nêu) gọi, import hay kế thừa code trong vùng đó, đếm từ đồ thị code (0 mana): thứ một thay đổi ở vùng đó có thể làm hỏng. Một dòng trong khối của Tể tướng và của pháp sư, đầu vào cho hạng; không có đồ thị thì không có dòng đó (PS-21b, chủ nhân chốt 2026-11-13).",
+              "used_in": "`impactOf`, `PromptGraph.impact`, khối `chancellor-graph` của prompt Tể tướng, khối `graph` của pháp sư"
+            },
+            {
+              "vi": "Phần nối nhau qua code",
+              "en": "Plan link",
+              "id": ["plan_link"],
+              "definition": "Hai quest con của một kế hoạch được chạy cùng lúc, vùng rời nhau, mà đồ thị code cho thấy file của phần này gọi hay import file của phần kia: một cảnh báo trong prompt người chấm của quest kế hoạch, không làm kế hoạch `incomplete` (PS-21b).",
+              "used_in": "`planLinksOf`, `PlanLink`, mục `plan-links` trong phần review của người chấm"
+            },
+            {
               "vi": "Sự cố",
               "en": "Incident",
               "id": ["incident"],
