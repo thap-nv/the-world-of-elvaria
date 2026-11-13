@@ -18,6 +18,7 @@ import {
   RankSchema,
   rejectDuplicateIds,
 } from './common.ts';
+import { AmendmentsSchema } from './amendments.ts';
 import { CouncilSchema } from './council.ts';
 import { DelegationSchema } from './delegation.ts';
 import { ProgramsSchema } from './program.ts';
@@ -196,6 +197,8 @@ const DispatchSchema = z.strictObject({
       ),
     ),
   council: CouncilSchema,
+  // PS-22b; optional with defaults, added after v1.
+  amendments: AmendmentsSchema,
 });
 
 export const KingdomSchema = z

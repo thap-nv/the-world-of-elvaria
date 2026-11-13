@@ -180,13 +180,21 @@ export async function answer(ctx: Context, quest: Quest, text: string): Promise<
     return outcomeOf(
       await moveAndRing(ctx, { quest: quest.id, event: { type: 'answer', answer: text }, actor: 'user' }),
     );
+  if (answerWaits(ctx, quest)) return { status: 'waiting' };
+  return outcomeOf(await openAssignee(ctx, quest.id, { kind: 'answer', answer: text }));
+}
+
+/**
+ * An answer to `quest` waits in the inbox: its asker is busy elsewhere, its tribe has no runner, or its pool no mana.
+ * Also what an amendment's decision waits on, before it writes anything (PS-22b).
+ */
+export function answerWaits(ctx: Context, quest: Quest): boolean {
+  if (quest.status !== 'blocked' || typeof quest.assignee !== 'string') return false;
   const asker = ctx.world.characters.get(quest.assignee);
-  if (asker?.status !== 'idle' || ctx.deps.runners[asker.tribe] === undefined) return { status: 'waiting' };
+  if (asker?.status !== 'idle' || ctx.deps.runners[asker.tribe] === undefined) return true;
   const { kingdom } = ctx.world;
   const mana = { readings: ctx.mana.readings, config: kingdom.mana };
-  const open = poolOpenOf({ kingdom, asleep: ctx.mana.asleep, mana }, ctx.deps.clock.now());
-  if (!open(asker)) return { status: 'waiting' };
-  return outcomeOf(await openAssignee(ctx, quest.id, { kind: 'answer', answer: text }));
+  return !poolOpenOf({ kingdom, asleep: ctx.mana.asleep, mana }, ctx.deps.clock.now())(asker);
 }
 
 /** The character the owner named, or the Steward's own choice among the free ones (§2.3 reassign). */

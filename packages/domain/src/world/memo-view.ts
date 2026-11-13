@@ -5,7 +5,7 @@ import { z } from 'zod';
 
 import { CharacterIdSchema, MemoIdSchema, MemoKindIdSchema, QuestIdSchema } from '../core/ids.ts';
 import { DELEGATION_HOLDS, TRIAGE_ACTIONS } from '../delegation/constants.ts';
-import { MEMO_ROUTES } from '../schema/memo/constants.ts';
+import { MEMO_REFUSALS, MEMO_ROUTES } from '../schema/memo/constants.ts';
 import type { Memo } from '../schema/memo/memo.ts';
 
 export const MemoViewSchema = z.strictObject({
@@ -16,6 +16,8 @@ export const MemoViewSchema = z.strictObject({
   quest: QuestIdSchema.nullable(),
   /** Where it went (`memo.routed`); null between the two lines the Steward writes one after the other. */
   route: z.enum(MEMO_ROUTES).nullable(),
+  /** Why it went to the owner instead of where its kind goes (`memo.routed`): an objection's, or an amendment's (PS-22b). */
+  refusal: z.enum(MEMO_REFUSALS).optional(),
   /** The Chancellor's triage sent it to the owner (PS-03b): what it would do, and what holds it. */
   escalated: z
     .strictObject({
@@ -36,6 +38,7 @@ export function memoViewOf(memo: Memo): MemoView {
     from: memo.from,
     quest: memo.quest,
     route: memo.to.route,
+    ...(memo.to.refusal === undefined ? {} : { refusal: memo.to.refusal }),
   };
   if (memo.escalation === undefined) return view;
   const { action, quest, holds } = memo.escalation;

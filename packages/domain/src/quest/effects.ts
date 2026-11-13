@@ -147,8 +147,12 @@ const EFFECTS: { readonly [T in QuestEventType]: Effect<T> } = {
   start: startAttempt,
   redispatch: startAttempt,
   submit: ending('submitted'),
-  ask: (quest, event) =>
-    ok({ ...endRun(quest, event, 'blocked'), blocked: askedAt(event.question, event.at) }),
+  // An amendment is a question its author decides first (PS-22b): the quest keeps which memo it waits on, and who.
+  ask: (quest, event) => {
+    const asked = askedAt(event.question, event.at);
+    const blocked = event.amendment === undefined ? asked : { ...asked, amendment: event.amendment };
+    return ok({ ...endRun(quest, event, 'blocked'), blocked });
+  },
   mana_out: ending('paused'),
   breaker: (quest, event) => ending(event.trip === 'time' ? 'timeout' : 'breaker')(quest, event),
   crash: ending('crash'),

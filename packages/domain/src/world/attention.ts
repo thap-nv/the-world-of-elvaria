@@ -14,7 +14,9 @@ import type { DelegationHold, TriageAction } from '../delegation/constants.ts';
 import type { WaitGauge } from '../dispatch/judge-waits.ts';
 import type { ScopeHold } from '../dispatch/scope.ts';
 import type { Rank } from '../schema/common.ts';
+import { AMENDMENT_REFUSALS } from '../schema/memo/constants.ts';
 import type { MemoRoute } from '../schema/memo/memo.ts';
+import type { MemoView } from './memo-view.ts';
 import type { PoolView } from './mana-view.ts';
 import type { QuestView } from './quest-view.ts';
 import type { WorldState } from './world-state.ts';
@@ -166,18 +168,40 @@ function noticeItems(state: WorldState, notices: StewardNotices): AttentionItem[
 }
 
 /**
- * The item an open memo makes, by its route: none on its way to a judge, `objection` for the owner (today only an
- * objection no judge may read goes there, PS-22), else `memo`, a route not yet written included.
+ * The item an open memo makes, by its route: none on its way to a judge or to its quest's author (PS-22b), `objection`
+ * for the owner (an objection no judge may read, PS-22), else `memo`, a route not yet written included.
  */
 const MEMO_ITEMS: Readonly<Record<MemoRouteId, AttentionKind | null>> = {
   chancellor: 'memo',
   judge: null,
   owner: 'objection',
+  author: null,
 };
+
+const AMENDMENT_REFUSED: readonly string[] = AMENDMENT_REFUSALS;
+
+/**
+ * An amendment (PS-22b): while its quest is blocked, the quest's question item stands for it (the owner answers
+ * there); else an author's referral to the owner is `memo_escalated` (below), one sent to the owner at filing a
+ * `memo`, and one its author still decides none.
+ */
+function amendmentItem(state: WorldState, memo: MemoView): AttentionKind | null {
+  const quest = memo.quest === null ? undefined : state.quests[memo.quest];
+  if (quest?.status === 'blocked') return null;
+  return memo.route === 'author' && memo.escalated === undefined ? null : 'memo';
+}
+
+const isAmendment = (memo: MemoView): boolean =>
+  memo.route === 'author' || (memo.refusal !== undefined && AMENDMENT_REFUSED.includes(memo.refusal));
+
+function memoKindOf(state: WorldState, memo: MemoView): AttentionKind | null {
+  if (memo.route === null) return 'memo';
+  return isAmendment(memo) ? amendmentItem(state, memo) : MEMO_ITEMS[memo.route];
+}
 
 function memoItems(state: WorldState): AttentionItem[] {
   return Object.values(state.memos).flatMap((memo) => {
-    const kind = memo.route === null ? 'memo' : MEMO_ITEMS[memo.route];
+    const kind = memoKindOf(state, memo);
     if (kind === null) return [];
     const quest = memo.quest === null ? {} : { quest: memo.quest };
     const subject = { memo: memo.id, memo_kind: memo.kind, from: memo.from, ...quest };

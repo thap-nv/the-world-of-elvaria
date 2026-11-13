@@ -5,7 +5,9 @@
 import { formatDatedId } from '../core/id-source.ts';
 import { err, ok } from '../core/result.ts';
 import { MemoSchema } from '../schema/memo/memo.ts';
+import { NO_AUTHORING, authorRoute } from './amendment.ts';
 import { NO_CONTEST, contestRoute } from './objection.ts';
+import type { Authoring } from './amendment.ts';
 import type { CharacterId, MemoId, QuestId } from '../core/ids.ts';
 import type { DelegationHold } from '../delegation/constants.ts';
 import type { Result } from '../core/result.ts';
@@ -31,18 +33,32 @@ export type MemoRefusal =
   | { readonly code: 'unknown_kind'; readonly kind: string }
   | { readonly code: 'invalid'; readonly message: string };
 
+/** What a route reads beyond the registry: the verdict an objection contests (PS-22), who wrote the quest (PS-22b). */
+export interface RouteFacts {
+  readonly contest?: Contest | undefined;
+  readonly authoring?: Authoring | undefined;
+}
+
+/** The route of a registry entry, from the facts its route reads. */
+function routeOf(kind: string, route: MemoRoute['route'], facts: RouteFacts): MemoRoute {
+  if (route === 'judge') return contestRoute(facts.contest ?? NO_CONTEST);
+  if (route === 'author') return authorRoute(kind, facts.authoring ?? NO_AUTHORING);
+  return { route };
+}
+
 /**
  * Where a memo of `kind` goes, by its entry in registry/memos.json; a kind routed to a judge goes there only when
- * `contest` allows it, else to the owner (contestRoute, PS-22).
+ * the contest allows it (contestRoute, PS-22), one routed to the quest's author only when the quest has one who may
+ * decide it (authorRoute, PS-22b); else to the owner.
  */
 export function routeMemo(
   kind: string,
   registry: Pick<Registry, 'memos'>,
-  contest: Contest = NO_CONTEST,
+  facts: RouteFacts = {},
 ): Result<MemoRoute, MemoRefusal> {
   const entry = registry.memos.find(({ id }) => id === kind);
   if (entry === undefined) return err({ code: 'unknown_kind', kind });
-  return ok(entry.route === 'judge' ? contestRoute(contest) : { route: entry.route });
+  return ok(routeOf(kind, entry.route, facts));
 }
 
 /** The text as the id reads it: one Unicode form, runs of spaces and line breaks as one space, lower case. */
@@ -69,14 +85,16 @@ export interface NewMemo {
   readonly at: string;
   /** What a memo routed to a judge contests (PS-22); absent, it contests nothing and goes to the owner. */
   readonly contest?: Contest;
+  /** Who wrote the quest a memo routed to its author is about (PS-22b); absent, the owner decides it. */
+  readonly authoring?: Authoring;
 }
 
 /** The open memo the Steward files, routed; refused when its kind is unknown or the contract refuses it. */
 export function memoOf(
-  { id, draft, source, at, contest }: NewMemo,
+  { id, draft, source, at, contest, authoring }: NewMemo,
   registry: Pick<Registry, 'memos'>,
 ): Result<Memo, MemoRefusal> {
-  const to = routeMemo(draft.kind, registry, contest);
+  const to = routeMemo(draft.kind, registry, { contest, authoring });
   if (!to.ok) return to;
   const memo = {
     version: 1,

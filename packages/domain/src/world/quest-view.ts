@@ -46,7 +46,9 @@ export const QuestViewSchema = z.strictObject({
   seal_required: z.boolean(),
   sealed_at: DateTimeSchema.nullable(),
   question: NonEmptyStringSchema.nullable().meta(
-    describe('blocked.question while it waits for the answer: the throne asks the owner to answer it.'),
+    describe(
+      "blocked.question while it waits for the owner's answer: the throne asks the owner to answer it. (PS-22b) Null while the quest's author decides the amendment it waits on.",
+    ),
   ),
   party_id: QuestIdSchema.nullable(),
   party_role: PartyRoleSchema.nullable(),
@@ -59,6 +61,16 @@ export const QuestViewSchema = z.strictObject({
 });
 
 export type QuestView = z.infer<typeof QuestViewSchema>;
+
+/**
+ * The question waits for the owner's answer: unanswered, and (PS-22b) not an amendment its author still decides; an
+ * amendment decided but not yet answered (its doer could not go on) is the owner's to answer.
+ */
+function ownerAsked(blocked: Quest['blocked']): blocked is NonNullable<Quest['blocked']> {
+  if (blocked === undefined || blocked.answer !== undefined) return false;
+  const { amendment } = blocked;
+  return amendment === undefined || amendment.by === 'owner' || amendment.decision !== undefined;
+}
 
 /** The view of a quest file; the Steward writes it into the quest event of every change (P1-03, P0-10). */
 export function questViewOf(quest: Quest): QuestView {
@@ -79,7 +91,7 @@ export function questViewOf(quest: Quest): QuestView {
     max_attempts: quest.budget.max_attempts,
     seal_required: quest.seal_required,
     sealed_at: quest.seal?.at ?? null,
-    question: blocked !== undefined && blocked.answer === undefined ? blocked.question : null,
+    question: ownerAsked(blocked) ? blocked.question : null,
     party_id: quest.party_id ?? null,
     party_role: quest.party_role ?? null,
     campaign_id: quest.campaign_id ?? null,

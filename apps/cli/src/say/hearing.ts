@@ -1,6 +1,6 @@
 // What the Chancellor hears (implementation-plan §3.11, §10 question 3): the kingdom's territories, registry, characters
 // and mana, and who speaks as the Chancellor (selectChancellor, §10 question 6). The owner's words (`elvaria say`) and
-// the triage of memos (PS-03b: `elvaria triage`, `kingdom.schedule.triage`) share it.
+// the triage of memos (PS-03b: `elvaria triage`, `kingdom.schedule.triage`) share it, and an amendment's author (PS-22b).
 import { CHANCELLOR_CLASS, poolsOf, selectChancellor, tribeLimitsOf } from '@elvaria/domain';
 import type {
   ChancellorChoice,
@@ -59,7 +59,8 @@ const envOf = (ctx: KingdomContext, choice: ChancellorChoice): Record<string, st
   ELVARIA_TZ: ctx.kingdom.tz,
 });
 
-async function sessionOf(
+/** A session of the Chancellor's office for `speaking`; (PS-22b) a mage deciding an amendment speaks there too. */
+export async function sessionOf(
   ctx: KingdomContext,
   speaking: {
     readonly choice: ChancellorChoice;

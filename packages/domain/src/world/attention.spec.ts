@@ -216,6 +216,40 @@ describe('attentionQueue', () => {
     ]);
   });
 
+  it("lists an amendment as its blocked quest's question, else by where it stands (PS-22b)", () => {
+    const amendment = { ...memo('m_20261112_aaaaa1'), kind: 'amendment' as MemoKindId };
+    const blocked = view(1, { status: 'blocked', question: 'Step 2 is wrong.' });
+    const state = stateWith(
+      [blocked, view(2, { status: 'returned' })],
+      [
+        // Its quest is blocked on it: the question item stands for it, whoever decides.
+        { ...amendment, quest: q(1), route: 'author' },
+        {
+          ...amendment,
+          id: 'm_20261112_aaaaa2' as MemoId,
+          quest: q(1),
+          route: 'owner',
+          refusal: 'no_author',
+        },
+        // Its quest moved on: its author still decides one, the owner the others.
+        { ...amendment, id: 'm_20261112_aaaaa3' as MemoId, quest: q(2), route: 'author' },
+        {
+          ...amendment,
+          id: 'm_20261112_aaaaa4' as MemoId,
+          quest: q(2),
+          route: 'author',
+          escalated: { action: 'owner', holds: ['decision_change'] },
+        },
+        { ...amendment, id: 'm_20261112_aaaaa5' as MemoId, route: 'owner', refusal: 'second_amendment' },
+      ],
+    );
+    expect(attentionQueue(state, NOW).map(({ kind, quest, memo: id }) => [kind, id ?? quest])).toEqual([
+      ['question', q(1)],
+      ['memo_escalated', 'm_20261112_aaaaa4'],
+      ['memo', 'm_20261112_aaaaa5'],
+    ]);
+  });
+
   it('warns of a pool at the warning share, from current readings of enabled tribes only', () => {
     // Warning from 88 % (cap 98, reserve 2, margin 10).
     const state = stateWith(

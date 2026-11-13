@@ -50,6 +50,22 @@ describe('worldStateOf', () => {
         route: 'chancellor',
         escalated: { action: 'owner', holds: ['contract_change', 'chancellor_asks'] },
       },
+      // PS-22b: an amendment its author decides, and one that went to the owner, saying why.
+      m_20261113_a7md2e: {
+        id: 'm_20261113_a7md2e',
+        kind: 'amendment',
+        from: 'thorn',
+        quest: 'q_20261113_3kd9wa',
+        route: 'author',
+      },
+      m_20261113_a7md3f: {
+        id: 'm_20261113_a7md3f',
+        kind: 'amendment',
+        from: 'thorn',
+        quest: 'q_20261113_3kd9wa',
+        route: 'owner',
+        refusal: 'second_amendment',
+      },
     });
     const sent = MEMOS.find(({ escalation }) => escalation !== undefined);
     if (sent?.escalation === undefined) throw new Error('the examples have a memo sent up');

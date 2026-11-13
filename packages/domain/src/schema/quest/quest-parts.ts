@@ -1,7 +1,13 @@
 // The nested objects of quest.json v1 (implementation-plan §2.3); the quest itself and its rules are in quest.ts.
 import { z } from 'zod';
 
-import { CharacterIdSchema, QUEST_ID_PATTERN, QuestIdSchema, ScriptIdSchema } from '../../core/ids.ts';
+import {
+  CharacterIdSchema,
+  MemoIdSchema,
+  QUEST_ID_PATTERN,
+  QuestIdSchema,
+  ScriptIdSchema,
+} from '../../core/ids.ts';
 import {
   DateTimeSchema,
   DELIVERABLE_TYPES,
@@ -9,6 +15,7 @@ import {
   RoleSchema,
   rejectDuplicateIds,
 } from '../common.ts';
+import { AMENDMENT_DECIDERS, MEMO_DECISIONS } from '../memo/constants.ts';
 import { ScriptParamsSchema } from './shared.ts';
 import { allOfRules, checkRules, issueIf } from './rules.ts';
 import type { Rule } from './rules.ts';
@@ -123,11 +130,37 @@ export const DeliverableSchema = z
 
 export const SealSchema = z.strictObject({ at: DateTimeSchema, note: z.string().optional() });
 
+export const BlockedAmendmentSchema = z
+  .strictObject({
+    memo: MemoIdSchema.meta(describe('The amendment memo (memos/<memo>.json); its text is the question.')),
+    by: z
+      .enum(AMENDMENT_DECIDERS)
+      .meta(
+        describe(
+          "Who decides it: the quest's author in an off-tick session (the owner is not asked), or the owner, who answers it as a question.",
+        ),
+      ),
+    decision: z
+      .enum(MEMO_DECISIONS)
+      .optional()
+      .meta(
+        describe(
+          "With answer: how the memo was closed (accepted, rejected…), for the doer's next prompt; absent when the owner answered in words.",
+        ),
+      ),
+  })
+  .meta(
+    describe(
+      "(PS-22b) The quest waits on the doer's amendment, as on a question: no status of its own. Optional, added after v1, so `version` stays 1.",
+    ),
+  );
+
 export const BlockedSchema = z.strictObject({
   question: NonEmptyStringSchema,
   asked_at: DateTimeSchema,
   answer: z.string().optional(),
   answered_at: DateTimeSchema.optional(),
+  amendment: BlockedAmendmentSchema.optional(),
 });
 
 export const UnitSchema = z.strictObject({
@@ -142,6 +175,7 @@ export const UnitSchema = z.strictObject({
 // Unit ids key the muster and the child quests opened for them, so a repeated id would merge two units.
 export const UnitsSchema = z.array(UnitSchema).superRefine(rejectDuplicateIds);
 
+export type BlockedAmendment = z.infer<typeof BlockedAmendmentSchema>;
 export type Attempt = z.infer<typeof AttemptSchema>;
 export type Plot = z.infer<typeof PlotSchema>;
 export type Deliverable = z.infer<typeof DeliverableSchema>;

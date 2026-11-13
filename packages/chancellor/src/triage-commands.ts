@@ -7,14 +7,7 @@
 // in id order, and an escalate_memo names the draft made before it. The memos' files are matched here against their
 // territory's laws.protected_paths, with the matcher of the forbidden and protected paths (forbiddenChangesOf), so
 // delegationHolds sees a protected file whether the Chancellor flagged it or not (PS-03b (a), ADR 0026).
-import {
-  MEMO_BODY_MAX_LENGTH,
-  MERGEABLE_STATUSES,
-  delegationHolds,
-  pathInScope,
-  protectedPathsOf,
-} from '@elvaria/domain';
-import { forbiddenChangesOf } from '@elvaria/runner-core';
+import { MEMO_BODY_MAX_LENGTH, MERGEABLE_STATUSES, delegationHolds, pathInScope } from '@elvaria/domain';
 import type {
   Delegation,
   DelegationHold,
@@ -25,13 +18,13 @@ import type {
   QuestDraft,
   QuestId,
   Territory,
-  TerritoryId,
   TriageAction,
   TriageDecision,
   WorkPlace,
 } from '@elvaria/domain';
 
 import { draftPayloadOf } from './commands.ts';
+import { protectedRefsOf } from './protected-refs.ts';
 import type { CommandSource } from './commands.ts';
 import type { TriageReply } from './triage-memos.ts';
 
@@ -117,16 +110,6 @@ type Memos = ReadonlyMap<MemoId, Memo>;
 const memosOf = (unit: Unit, memos: Memos): Memo[] =>
   unit.decisions.flatMap(({ memo }) => memos.get(memo) ?? []);
 
-/** A line number after a file (`CLAUDE.md:12`, `a.ts:3-9`), which a character may write and a glob never matches. */
-const LINE_SUFFIX = /:\d+(?:[-:]\d+)*$/;
-
-/** The memo's files under the protected paths of `territory`; none on a territory gone or one that names none. */
-function protectedRefsOf(memo: Memo, territory: TerritoryId | undefined, input: TriageInput): string[] {
-  const globs = protectedPathsOf(input.territories.find(({ id }) => id === territory));
-  if (globs.length === 0) return [];
-  return memo.refs.filter((ref) => forbiddenChangesOf([ref.replace(LINE_SUFFIX, '')], globs).length > 0);
-}
-
 function holdsOf(unit: Unit, input: TriageInput, memos: Memos): DelegationHold[] {
   const territoryOf = (memo: Memo) => input.quests.find(({ id }) => id === memo.quest)?.territory;
   return delegationHolds(
@@ -135,7 +118,8 @@ function holdsOf(unit: Unit, input: TriageInput, memos: Memos): DelegationHold[]
       work: workOf(unit),
       memos: memosOf(unit, memos).map((memo) => {
         const territory = territoryOf(memo);
-        return { refs: memo.refs, territory, protected_refs: protectedRefsOf(memo, territory, input) };
+        const laws = input.territories.find(({ id }) => id === territory);
+        return { refs: memo.refs, territory, protected_refs: protectedRefsOf(memo.refs, laws) };
       }),
       asks: [...new Set(unit.decisions.flatMap(({ ask }) => ask))],
     },

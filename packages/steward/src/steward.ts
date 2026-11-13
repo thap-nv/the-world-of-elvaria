@@ -94,7 +94,7 @@ export function createSteward(deps: StewardDeps): Steward {
     stopping: new AbortController(),
     unjudged: new Set(),
     judgeWaits: new Map(),
-    scheduler: createScheduler(jobsOf(deps)),
+    scheduler: createScheduler(jobsOf(deps), deps.onCall),
     restart: undefined,
     held: undefined,
     beat: undefined,

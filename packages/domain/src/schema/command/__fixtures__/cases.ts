@@ -138,4 +138,15 @@ export const CASES: Record<InboxCommandKind, { valid: object; invalid: object; i
     invalid: { memo: 'm_20261106_4k2pqz', action: 'owner', holds: [], note: 'Only you can say.' },
     issue: 'payload.holds: Too small: expected array to have >=1 items',
   },
+  decide_amendment: {
+    valid: {
+      memo: 'm_20261106_4k2pqz',
+      decision: 'accepted',
+      note: 'The endpoint moved; the new path is right.',
+      description: '## Goal\n\nServe the page at /v2/status.',
+      expected_updated_at: '2026-11-06T09:00:00+07:00',
+    },
+    invalid: { memo: 'm_20261106_4k2pqz', decision: 'owner', note: 'Only you can say.' },
+    issue: 'payload.holds: an amendment sent to the owner, and only one, says why',
+  },
 };

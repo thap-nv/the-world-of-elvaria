@@ -139,8 +139,13 @@ function resumeFor(ctx: Context, quest: Quest, character: Character, opening: Op
   const session = resumedSession(quest, revival as Revival, ctx.world.kingdom.dispatch, canResume);
   if (session === null) return null;
   const question = quest.blocked?.question;
+  // An amendment's decision (PS-22b) says what it decided; an accepted one, the description the session never read.
+  const amendment = quest.blocked?.amendment;
+  const decided = amendment === undefined ? {} : { amendment, description: quest.description };
   const answered =
-    opening.kind === 'answer' && question !== undefined ? { question, answer: opening.answer } : null;
+    opening.kind === 'answer' && question !== undefined
+      ? { question, answer: opening.answer, ...decided }
+      : null;
   return { session_id: session, answered };
 }
 

@@ -1,3 +1,15 @@
+export {
+  AMENDMENT_DECISION_JSON_SCHEMA,
+  amendmentCheck,
+  amendmentCommand,
+  decideAmendment,
+} from './amendment.ts';
+export type {
+  AmendmentInput,
+  AmendmentOutcome,
+  AmendmentReply,
+  DecideAmendmentCommand,
+} from './amendment.ts';
 export { draftCommands, draftPayloadOf } from './commands.ts';
 export type { CommandHeader, CommandSource, CreateQuestCommand, DraftCommand } from './commands.ts';
 export { CHANCELLOR_MAX_MINUTES, CHANCELLOR_MAX_TURNS } from './constants.ts';

@@ -7,13 +7,13 @@ import type { InboxCommand, Quest } from '@elvaria/domain';
 import type { InboxItem } from '@elvaria/store';
 
 import { wake } from '../mana/step.ts';
+import { answerQuest, decideAmendment } from '../memos/amendment.ts';
 import { decideMemo } from '../memos/decide.ts';
 import { escalate } from '../memos/escalate.ts';
 import { STEWARD } from '../record.ts';
 import { release, suspend } from './character-commands.ts';
 import { setLevel, setModel } from './character-settings.ts';
 import {
-  answer,
   archive,
   cancel,
   changeRank,
@@ -39,7 +39,7 @@ const LATER: ReadonlySet<InboxCommand['kind']> = new Set([
 ]);
 
 // The optional quest of decide_memo and escalate_memo is the one that does the work, not the one they act on: neither
-// comes here.
+// comes here, nor decide_amendment, which names its memo only.
 const questOf = (ctx: Context, command: InboxCommand): Quest | undefined =>
   'quest' in command.payload && command.payload.quest !== undefined
     ? ctx.world.quests.get(command.payload.quest)
@@ -60,7 +60,7 @@ async function onQuest(ctx: Context, command: InboxCommand, quest: Quest): Promi
     case 'return':
       return giveBack(ctx, quest, command.payload);
     case 'answer':
-      return answer(ctx, quest, command.payload.answer);
+      return answerQuest(ctx, quest, command.payload.answer);
     case 'reassign':
       return reassign(ctx, quest, command.payload.character);
     case 'set_rank':
@@ -83,6 +83,7 @@ export async function applyCommand(ctx: Context, command: InboxCommand): Promise
   if (command.kind === 'set_model') return setModel(ctx, command.payload.character, command.payload.model);
   if (command.kind === 'decide_memo') return decideMemo(ctx, command);
   if (command.kind === 'escalate_memo') return escalate(ctx, command);
+  if (command.kind === 'decide_amendment') return decideAmendment(ctx, command);
   const quest = questOf(ctx, command);
   return quest === undefined ? rejected('unknown_quest') : onQuest(ctx, command, quest);
 }

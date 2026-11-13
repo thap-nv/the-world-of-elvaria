@@ -17,6 +17,8 @@ export const MEMO_DECISION_LABEL: Readonly<Record<MemoOutcome['decision'], Messa
   shelved: 'cli.memo.decision.shelved',
   rejected: 'cli.memo.decision.rejected',
   handled: 'cli.memo.decision.handled',
+  // PS-22b: an amendment its author (or the owner) took.
+  accepted: 'cli.memo.decision.accepted',
   // PS-22: an objection closed by its second judge's verdict.
   sustained: 'cli.memo.decision.sustained',
   overruled: 'cli.memo.decision.overruled',

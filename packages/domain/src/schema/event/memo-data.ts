@@ -11,7 +11,7 @@ import {
   VerdictIdSchema,
 } from '../../core/ids.ts';
 import { DELEGATION_HOLDS, TRIAGE_ACTIONS } from '../../delegation/constants.ts';
-import { MEMO_OUTCOME_DECISIONS, MEMO_ROUTES, OBJECTION_REFUSALS } from '../memo/constants.ts';
+import { MEMO_OUTCOME_DECISIONS, MEMO_REFUSALS, MEMO_ROUTES } from '../memo/constants.ts';
 
 const describe = (description: string) => ({ description });
 
@@ -28,13 +28,17 @@ export const MemoRoutedDataSchema = z
     memo: MemoIdSchema,
     route: z.enum(MEMO_ROUTES),
     refusal: z
-      .enum(OBJECTION_REFUSALS)
+      .enum(MEMO_REFUSALS)
       .optional()
-      .meta(describe('(PS-22) An objection sent to the owner: why no second judge reads it.')),
+      .meta(
+        describe(
+          '(PS-22) An objection sent to the owner: why no second judge reads it. (PS-22b) An amendment sent to the owner: why no author decides it.',
+        ),
+      ),
   })
   .meta(
     describe(
-      "The memo went where its kind's entry in registry/memos.json sends it (routeMemo); an objection to a judge, or to the owner when no judge may read it (PS-22).",
+      "The memo went where its kind's entry in registry/memos.json sends it (routeMemo); an objection to a judge, or to the owner when no judge may read it (PS-22); an amendment to its quest's author, or to the owner when no author may decide it (PS-22b).",
     ),
   );
 
