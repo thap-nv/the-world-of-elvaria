@@ -4,7 +4,7 @@ Hướng dẫn chạy một quest thật từ đầu tới lúc chờ dấu vua,
 
 ## 1. Máy và bản build
 
-Cần Node 24, pnpm 10, git, Claude Code đã đăng nhập (gói claude.ai). Quản sự chạy từ `dist` của **checkout chính** của repo Elvaria, không từ một nhánh đang sửa: khi repo Elvaria là một lãnh thổ, nhân vật sửa code trên nhánh `quest/<id>` trong worktree riêng, và tiến trình đang chạy không đổi theo.
+Cần Node 24, pnpm 10, git, Claude Code đã đăng nhập (gói claude.ai). Nhiếp chính chạy từ `dist` của **checkout chính** của repo Elvaria, không từ một nhánh đang sửa: khi repo Elvaria là một lãnh thổ, nhân vật sửa code trên nhánh `quest/<id>` trong worktree riêng, và tiến trình đang chạy không đổi theo.
 
 ```bash
 cd <checkout chính>          # đang ở main
@@ -23,7 +23,7 @@ Trước khi chạy quest (0 mana):
 claude auth status --json     # loginExpiresAt
 ```
 
-`elvaria doctor` cảnh báo khi còn dưới 7 ngày tới `loginExpiresAt`; hạn thật có thể sớm hơn tới 3 ngày (phiên `-p` cảnh báo cả một khoảng). Gần hạn thì `claude auth login`, hoặc `claude setup-token` khi muốn Quản sự chạy không người trông. Lần chạy này: hạn `2026-11-15T15:23Z`, còn 8 ngày.
+`elvaria doctor` cảnh báo khi còn dưới 7 ngày tới `loginExpiresAt`; hạn thật có thể sớm hơn tới 3 ngày (phiên `-p` cảnh báo cả một khoảng). Gần hạn thì `claude auth login`, hoặc `claude setup-token` khi muốn Nhiếp chính chạy không người trông. Lần chạy này: hạn `2026-11-15T15:23Z`, còn 8 ngày.
 
 ## 3. Lập vương quốc
 
@@ -32,7 +32,7 @@ elvaria init --kingdom "<thư mục vương quốc>" --name Elvaria
 elvaria doctor --kingdom "<thư mục vương quốc>"
 ```
 
-Thư mục vương quốc nằm ngoài mọi repo. `doctor` tìm CLI của từng tộc (Claude Code trong thư mục extension VS Code khi PATH không có), ghim đường dẫn và phiên bản vào `kingdom.json`, kiểm các lãnh thổ, file kho bảo vật (`paths.treasury`: có không, mode 0600 trên macOS, dạng `{ "tên": "giá trị" }`, đủ các tên mà `secrets_allowed` của lãnh thổ nêu; không bao giờ in giá trị) và các phiên do một Quản sự đã dừng để lại. Tộc chưa dùng thì tắt (`"enabled": false` trong `kingdom.json`): lần này tộc `gemini` tắt vì chưa có nhân vật Gemini, và điều khoản của Antigravity (ADR 0018) là việc của người dùng.
+Thư mục vương quốc nằm ngoài mọi repo. `doctor` tìm CLI của từng tộc (Claude Code trong thư mục extension VS Code khi PATH không có), ghim đường dẫn và phiên bản vào `kingdom.json`, kiểm các lãnh thổ, file kho bảo vật (`paths.treasury`: có không, mode 0600 trên macOS, dạng `{ "tên": "giá trị" }`, đủ các tên mà `secrets_allowed` của lãnh thổ nêu; không bao giờ in giá trị) và các phiên do một Nhiếp chính đã dừng để lại. Tộc chưa dùng thì tắt (`"enabled": false` trong `kingdom.json`): lần này tộc `gemini` tắt vì chưa có nhân vật Gemini, và điều khoản của Antigravity (ADR 0018) là việc của người dùng.
 
 Biến `ELVARIA_KINGDOM` thay được `--kingdom` ở mọi lệnh.
 
@@ -60,7 +60,7 @@ Lãnh thổ dc1-se-team, tóm tắt:
 | `laws.forbidden_commands` | push, `--no-verify`, `drizzle-kit drop/push`, `docker compose … down -v` | danh sách "cấm" của CLAUDE.md |
 | `laws.read_before_write`, `rank_floor` | mục "Đọc trước khi sửa"; `permissions.ts` từ hạng B | |
 
-**Check nhiều lệnh** (P1-20): `run` của một check là một lệnh hoặc một danh sách lệnh, chạy lần lượt trong cùng thư mục và cùng log, lệnh đầu tiên lỗi kết thúc check (như `&&` của CI, nhưng không qua shell). Nhờ đó các bước CI trước đây chưa thành check của dc1 viết được: drift của `pnpm api:openapi` và `pnpm content:build` (mỗi lệnh kèm `git diff --exit-code`), và e2e cần `infra/secrets/*` do một script `sh` sinh (vùng cấm của nhân vật, nhưng check do máy chạy, không qua hook). Chương trình đầu mỗi lệnh phải tìm được trên PATH của Quản sự. `sh` của Git for Windows nằm ở `C:\Program Files\Git\usr\bin`, mà PATH của Windows (PowerShell, cmd) chỉ có `Git\cmd`: chạy `elvaria run` từ Git Bash (PATH của nó có `usr\bin`), hoặc thêm thư mục đó vào PATH. `doctor` chưa kiểm điều này; thiếu thì check đỏ, log ghi `cannot run this command (not_found: sh)`. Check nhiều lệnh không vào bậc script `run-check` (một argv mỗi check); chúng chạy trước người chấm như mọi check. Bản dc1 dùng từ P1-35 (đã chạy thật, mục 10):
+**Check nhiều lệnh** (P1-20): `run` của một check là một lệnh hoặc một danh sách lệnh, chạy lần lượt trong cùng thư mục và cùng log, lệnh đầu tiên lỗi kết thúc check (như `&&` của CI, nhưng không qua shell). Nhờ đó các bước CI trước đây chưa thành check của dc1 viết được: drift của `pnpm api:openapi` và `pnpm content:build` (mỗi lệnh kèm `git diff --exit-code`), và e2e cần `infra/secrets/*` do một script `sh` sinh (vùng cấm của nhân vật, nhưng check do máy chạy, không qua hook). Chương trình đầu mỗi lệnh phải tìm được trên PATH của Nhiếp chính. `sh` của Git for Windows nằm ở `C:\Program Files\Git\usr\bin`, mà PATH của Windows (PowerShell, cmd) chỉ có `Git\cmd`: chạy `elvaria run` từ Git Bash (PATH của nó có `usr\bin`), hoặc thêm thư mục đó vào PATH. `doctor` chưa kiểm điều này; thiếu thì check đỏ, log ghi `cannot run this command (not_found: sh)`. Check nhiều lệnh không vào bậc script `run-check` (một argv mỗi check); chúng chạy trước người chấm như mọi check. Bản dc1 dùng từ P1-35 (đã chạy thật, mục 10):
 
 ```json
 "checks": [
@@ -87,7 +87,7 @@ Lãnh thổ dc1-se-team, tóm tắt:
 }
 ```
 
-`reset` chạy `init-secrets.sh` trước vì đất nháp mới chưa có `infra/secrets/*` mà compose đọc; `down -v` cấm với nhân vật (`laws.forbidden_commands`) nhưng máy chạy được. Coverage là coverage unit của api: test Playwright không chạy qua vitest, nên quest e2e không bao giờ làm nó tăng hay giảm, `coverage_not_lower` ở đó chỉ giữ cho unit không tụt. Người chấm trong đất nháp chạy được mọi check của lãnh thổ, kể cả check `exclusive` như e2e: Quản sự giữ khóa exclusive của lãnh thổ suốt phiên người chấm (khóa đang bận thì người chấm mở ở tick sau, log báo một lần), nên trong lúc đó check exclusive của quest khác chờ (tới `breakers.attempt_minutes.high` + thời gian của check exclusive dài nhất + 1 phút) thay vì đỏ. Repo Elvaria (lãnh thổ #2) có bộ check theo bảng Change impact của [CLAUDE.md](../../CLAUDE.md): lint, format, typecheck, test, boundaries, `schemas --check`, `docs:gen --check`, `docs:check`, `i18n:check`; luật cấm sửa file sinh, `design/**`, kế hoạch sản phẩm, rebase, `git stash` trần.
+`reset` chạy `init-secrets.sh` trước vì đất nháp mới chưa có `infra/secrets/*` mà compose đọc; `down -v` cấm với nhân vật (`laws.forbidden_commands`) nhưng máy chạy được. Coverage là coverage unit của api: test Playwright không chạy qua vitest, nên quest e2e không bao giờ làm nó tăng hay giảm, `coverage_not_lower` ở đó chỉ giữ cho unit không tụt. Người chấm trong đất nháp chạy được mọi check của lãnh thổ, kể cả check `exclusive` như e2e: Nhiếp chính giữ khóa exclusive của lãnh thổ suốt phiên người chấm (khóa đang bận thì người chấm mở ở tick sau, log báo một lần), nên trong lúc đó check exclusive của quest khác chờ (tới `breakers.attempt_minutes.high` + thời gian của check exclusive dài nhất + 1 phút) thay vì đỏ. Repo Elvaria (lãnh thổ #2) có bộ check theo bảng Change impact của [CLAUDE.md](../../CLAUDE.md): lint, format, typecheck, test, boundaries, `schemas --check`, `docs:gen --check`, `docs:check`, `i18n:check`; luật cấm sửa file sinh, `design/**`, kế hoạch sản phẩm, rebase, `git stash` trần.
 
 **File sinh** (P1-24): đặt glob của file sinh vào `laws.read_only_paths`, không vào `forbidden_paths`, và lệnh sinh ra chúng vào `commands.generate`. Mọi phiên đọc được file sinh; không tool nào ghi tay được (deny rule `Edit(./…)` cộng hook, kể cả `>`/`tee`/`Set-Content` của shell); nhân vật có Edit và shell được chạy các lệnh sinh (`Bash(<lệnh>:*)`), và prompt liệt kê cả đường dẫn chỉ đọc lẫn lệnh sinh. Người chấm không được chạy lệnh sinh. Với Elvaria:
 
@@ -101,11 +101,11 @@ Lãnh thổ dc1-se-team, tóm tắt:
 
 Với dc1 (nếu muốn nhân vật tự sinh lại): `"generate": ["pnpm api:openapi", "pnpm content:build"]` và `read_only_paths` là `apps/api/openapi.json`, `packages/shared/src/api-types.ts` cùng đầu ra của `content:build`. Lệnh sinh chạy trong plot với quyền của tiến trình con: Elvaria không giới hạn nó ghi gì, nên chỉ khai lệnh sinh tin được.
 
-**Luật đường dẫn là hàng rào, không phải sandbox** (P1-49): hook và deny rule chỉ thấy tool của CLI và dòng lệnh shell, còn một chương trình do lệnh được phép chạy thì ghi được mọi chỗ hệ điều hành cho (agy 1.5.4: `node write-secret.mjs` tạo được file trong `forbidden_paths`, [spike Antigravity](../spikes/antigravity-2026-11.md) §15). Vì vậy **cho phép một trình thông dịch (`node`, `pnpm`, `npx`, `python`) trong `tools.allow` của nghề, ví dụ `Bash(node:*)`, là mở mọi đường dẫn cho script mà nhân vật tự viết**; chỉ cho phép lệnh cụ thể (`Bash(pnpm test:*)`) khi được. Lưới cuối: trước mỗi commit, Quản sự đối chiếu thay đổi của đất riêng (diff từ điểm tách, cộng file mới chưa bị ignore) với `laws.forbidden_paths` và `.env`, `.env.*`; có một đường dẫn cấm thì không commit gì, quest vào trạm quân y với lý do `forbidden_paths` và chuông rung. Đọc danh sách bằng `elvaria quest show`, trả các file đó về như cũ hoặc xóa chúng trong đất riêng, rồi `elvaria quest retry`. Lưới này không bắt được: `read_only_paths` (lệnh sinh ghi chúng hợp lệ), file cấm bị đọc qua tiến trình con, và file bị ignore (không vào commit nào). Ngoài ra không tool ghi nào của tộc nào sửa được `.git` (thư mục, và file `.git` của worktree): Claude Code tự từ chối, agy thì không, nên luật hàng rào của Elvaria chặn cho mọi tộc; lệnh `git` vẫn chạy như thường.
+**Luật đường dẫn là hàng rào, không phải sandbox** (P1-49): hook và deny rule chỉ thấy tool của CLI và dòng lệnh shell, còn một chương trình do lệnh được phép chạy thì ghi được mọi chỗ hệ điều hành cho (agy 1.5.4: `node write-secret.mjs` tạo được file trong `forbidden_paths`, [spike Antigravity](../spikes/antigravity-2026-11.md) §15). Vì vậy **cho phép một trình thông dịch (`node`, `pnpm`, `npx`, `python`) trong `tools.allow` của nghề, ví dụ `Bash(node:*)`, là mở mọi đường dẫn cho script mà nhân vật tự viết**; chỉ cho phép lệnh cụ thể (`Bash(pnpm test:*)`) khi được. Lưới cuối: trước mỗi commit, Nhiếp chính đối chiếu thay đổi của đất riêng (diff từ điểm tách, cộng file mới chưa bị ignore) với `laws.forbidden_paths` và `.env`, `.env.*`; có một đường dẫn cấm thì không commit gì, quest vào trạm quân y với lý do `forbidden_paths` và chuông rung. Đọc danh sách bằng `elvaria quest show`, trả các file đó về như cũ hoặc xóa chúng trong đất riêng, rồi `elvaria quest retry`. Lưới này không bắt được: `read_only_paths` (lệnh sinh ghi chúng hợp lệ), file cấm bị đọc qua tiến trình con, và file bị ignore (không vào commit nào). Ngoài ra không tool ghi nào của tộc nào sửa được `.git` (thư mục, và file `.git` của worktree): Claude Code tự từ chối, agy thì không, nên luật hàng rào của Elvaria chặn cho mọi tộc; lệnh `git` vẫn chạy như thường.
 
 **Thư mục Claude Code tự khóa** (P1-24, ca `.husky/pre-push` của P1-16): Claude Code 2.1.319 không cho Write/Edit bất kỳ đường dẫn nào chứa thư mục `.git`, `.vscode`, `.idea`, `.claude`, `.husky`, `.cargo`, `.devcontainer`, `.yarn`, `.mvn`, `.config/git`, hay kết thúc bằng một trong các file như `.gitmodules`, `.npmrc`, `.yarnrc.yml`, `.pnpmfile.cjs`, `.envrc`, `.mcp.json`, `lefthook.yml`, `.pre-commit-config.yaml` (danh sách đủ ở `CLAUDE_PROTECTED_PATHS` của runner-claude). Kiểm an toàn này chạy trước mọi allow rule của `--settings`, và `dontAsk` biến câu hỏi thành từ chối, nên không luật nào của lãnh thổ mở được ([spike Claude](../spikes/claude-2026-11.md), mục "đường dẫn Claude Code 2.1.319 tự khóa"). Hook của Elvaria nói trước điều đó; nhân vật làm phần còn lại, ghi đúng thay đổi vào mục Question của thư bàn giao, và chủ nhân sửa file trong plot rồi trả lời (`elvaria answer`), như P1-16 đã làm. Ở repo Elvaria, việc chạm `.claude/rules/**` hay `.claude/hooks/**` cũng rơi vào ca này.
 
-**Cho Quản sự áp bản vá** (P1-28): lãnh thổ git muốn nhân vật tự đổi các đường dẫn đó thì khai chúng trong `laws.patch_paths` (glob tính từ gốc lãnh thổ, mặc định `[]`; không bao giờ gồm `.git`). Khi đó hook và prompt bảo nhân vật ghi thay đổi thành bản vá git (dạng `git diff` in ra) vào `elvaria.patch` ở gốc plot thay vì hỏi; khi phiên kết thúc `completed`, Quản sự kiểm bản vá chỉ chạm `patch_paths`, áp bằng `git apply --recount`, xóa file, ghi một dòng `plot.patched`, rồi mới commit `chore: submit`, nên người chấm thấy thay đổi trong diff như mọi thay đổi khác. Bản vá chạm đường dẫn khác hay không áp được thì không áp gì, file ở lại trong plot và quest vào trạm xá với lý do `breaker:commit: elvaria.patch was not applied: …`; chủ nhân đọc nó, sửa tay hoặc `quest retry`. Hook của git sẽ chạy trên máy của bạn sau khi merge, nên chỉ khai `patch_paths` cho lãnh thổ mà bạn đọc diff trước khi merge (giai đoạn 1 luôn merge tay). Ví dụ cho dc1:
+**Cho Nhiếp chính áp bản vá** (P1-28): lãnh thổ git muốn nhân vật tự đổi các đường dẫn đó thì khai chúng trong `laws.patch_paths` (glob tính từ gốc lãnh thổ, mặc định `[]`; không bao giờ gồm `.git`). Khi đó hook và prompt bảo nhân vật ghi thay đổi thành bản vá git (dạng `git diff` in ra) vào `elvaria.patch` ở gốc plot thay vì hỏi; khi phiên kết thúc `completed`, Nhiếp chính kiểm bản vá chỉ chạm `patch_paths`, áp bằng `git apply --recount`, xóa file, ghi một dòng `plot.patched`, rồi mới commit `chore: submit`, nên người chấm thấy thay đổi trong diff như mọi thay đổi khác. Bản vá chạm đường dẫn khác hay không áp được thì không áp gì, file ở lại trong plot và quest vào trạm xá với lý do `breaker:commit: elvaria.patch was not applied: …`; chủ nhân đọc nó, sửa tay hoặc `quest retry`. Hook của git sẽ chạy trên máy của bạn sau khi merge, nên chỉ khai `patch_paths` cho lãnh thổ mà bạn đọc diff trước khi merge (giai đoạn 1 luôn merge tay). Ví dụ cho dc1:
 
 ```json
 "laws": { "patch_paths": [".husky/**"] }
@@ -117,7 +117,7 @@ Repo có `.claude/settings.json` của riêng nó (dc1 và Elvaria đều có) t
 
 Worktree của quest nằm trong repo (`<repo>/.elvaria/worktrees/<quest>`), git không thấy nhờ `.git/info/exclude`, nhưng `eslint .` và `prettier --check .` chạy ở checkout chính thì quét cả nó, trừ khi repo bỏ qua `.elvaria/**` (repo Elvaria đã bỏ qua từ P1-11; dc1 chưa).
 
-Phiên của tộc Gemini (agy) cần `.agents/hooks.json`, shim `.agents/elvaria-hook.mjs` và `GEMINI.md` trong worktree; runner gỡ chúng khi phiên kết thúc (từ P1-23), trước khi Quản sự chạy check. Check `format` vì vậy là đúng lệnh của CI (`pnpm format:check`), không cần loại `.agents/**` như lần chạy P1-16 (báo cáo giai đoạn 1 §5.3). Trong lúc chính một phiên agy chạy, các file đó vẫn có mặt: người chấm tộc Gemini tự chạy `pnpm format:check` thì thấy chúng; phán quyết dựa trên check máy đã chạy trước phiên.
+Phiên của tộc Gemini (agy) cần `.agents/hooks.json`, shim `.agents/elvaria-hook.mjs` và `GEMINI.md` trong worktree; runner gỡ chúng khi phiên kết thúc (từ P1-23), trước khi Nhiếp chính chạy check. Check `format` vì vậy là đúng lệnh của CI (`pnpm format:check`), không cần loại `.agents/**` như lần chạy P1-16 (báo cáo giai đoạn 1 §5.3). Trong lúc chính một phiên agy chạy, các file đó vẫn có mặt: người chấm tộc Gemini tự chạy `pnpm format:check` thì thấy chúng; phán quyết dựa trên check máy đã chạy trước phiên.
 
 ## 5. Nhân vật
 
@@ -129,7 +129,7 @@ elvaria character list
 
 Người nghiệm thu phải khác người làm, và cùng tộc thì khác model (`dispatch.verifier_same_family: different_model`). Mỗi nghề có prompt riêng `registry/prompts/<nghề>.md` (từ P1-15), nối vào sau luật của vai trong phần hệ thống của mọi phiên; chủ nhân sửa được. Vương quốc tạo trước P1-15 không có thư mục đó và không nạp được registry: `doctor` báo từng file thiếu, và `elvaria migrate` chép các file registry còn thiếu (không ghi đè file bạn đã có).
 
-Cấp của nhân vật là thước đo sức model của nó: không có `--level`, cấp khởi đầu lấy theo model (Flash 2, nhận tới hạng E; Argon 3; Sonnet, Pro 4; Opus 5, nhận tới C). Quản sự chỉ ưu tiên người khác họ model trong số những người mà cấp nhận được hạng của quest, nên đừng nâng tay cấp của một model yếu để nó nhận việc lớn: lần chạy P1-21, một hiệp sĩ Gemini Flash nhận phần test chấp nhận hạng C (cấp khởi đầu của Flash không nhận được hạng đó), đọc file sinh lớn hai phiên mà không chạy được `pnpm` rồi bị cầu dao cắt, còn một hiệp sĩ Opus viết xong trong một phiên. Lãnh thổ bật Khảo hạch mù (`blind_trial`) cần một hiệp sĩ khác họ với người làm các phần mà cấp nhận được hạng của phần test chấp nhận (hạng cao nhất của các phần), ví dụ một hiệp sĩ Gemini Pro (cấp 4, nhận C) bên cạnh hiệp sĩ Claude; không có ai như vậy thì Quản sự giao cho người cùng họ có cấp phù hợp, tính mù (người khác, không diff) vẫn giữ. Trên Windows, hiệp sĩ tộc agy chỉ chạy được `pnpm` khi PowerShell cho chạy script (`Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned`, mục 10).
+Cấp của nhân vật là thước đo sức model của nó: không có `--level`, cấp khởi đầu lấy theo model (Flash 2, nhận tới hạng E; Argon 3; Sonnet, Pro 4; Opus 5, nhận tới C). Nhiếp chính chỉ ưu tiên người khác họ model trong số những người mà cấp nhận được hạng của quest, nên đừng nâng tay cấp của một model yếu để nó nhận việc lớn: lần chạy P1-21, một hiệp sĩ Gemini Flash nhận phần test chấp nhận hạng C (cấp khởi đầu của Flash không nhận được hạng đó), đọc file sinh lớn hai phiên mà không chạy được `pnpm` rồi bị cầu dao cắt, còn một hiệp sĩ Opus viết xong trong một phiên. Lãnh thổ bật Khảo hạch mù (`blind_trial`) cần một hiệp sĩ khác họ với người làm các phần mà cấp nhận được hạng của phần test chấp nhận (hạng cao nhất của các phần), ví dụ một hiệp sĩ Gemini Pro (cấp 4, nhận C) bên cạnh hiệp sĩ Claude; không có ai như vậy thì Nhiếp chính giao cho người cùng họ có cấp phù hợp, tính mù (người khác, không diff) vẫn giữ. Trên Windows, hiệp sĩ tộc agy chỉ chạy được `pnpm` khi PowerShell cho chạy script (`Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned`, mục 10).
 
 ## 6. Ra nhiệm vụ
 
@@ -140,17 +140,17 @@ elvaria quest add --territory dc1-se-team --kind build --rank E --class knight -
 elvaria quest list
 ```
 
-**Một đội** (P1-18): `quest add --contract` (kind `plan`, nghề `mage`) mở một đội; pháp sư viết hợp đồng rồi chia phần, Quản sự tự thêm quest ghép. Trên lãnh thổ bật `blind_trial`, đội có hạng từ `min_rank` trở lên có thêm phần test chấp nhận do Quản sự tự thêm, và các phần chờ nó (P1-37): đừng liệt kê nó trong chỉ dẫn cho pháp sư. Người viết test chấp nhận chỉ đọc hợp đồng và phần việc của mô tả. Viết phần việc trước, rồi một dòng chỉ có `---`, rồi chỉ dẫn cho trưởng đội (đường dẫn hợp đồng, cách chia phần, hạng mỗi phần): người viết test không đọc phần sau dòng đó. Không có dòng `---` thì người viết đọc cả mô tả, kèm lời dặn bỏ qua chỉ dẫn cho trưởng đội. Quest lẻ không bao giờ có Khảo hạch mù, dù hạng nào; muốn có thì ra nhiệm vụ bằng `--contract`. Phần chỉ chạy được lệnh check có trong shell của nó; check `exclusive` (integration cần Docker, e2e) không có ở đó, máy chạy chúng, và quest ghép chạy mọi check trên nhánh đã ghép (P1-45). Đừng dặn phần chạy chúng trong chỉ dẫn cho trưởng đội; `mage.md` từ P1-45 cũng dặn pháp sư như vậy, vương quốc đã dựng trước đó chép lại file vào `registry/prompts/`.
+**Một đội** (P1-18): `quest add --contract` (kind `plan`, nghề `mage`) mở một đội; pháp sư viết hợp đồng rồi chia phần, Nhiếp chính tự thêm quest ghép. Trên lãnh thổ bật `blind_trial`, đội có hạng từ `min_rank` trở lên có thêm phần test chấp nhận do Nhiếp chính tự thêm, và các phần chờ nó (P1-37): đừng liệt kê nó trong chỉ dẫn cho pháp sư. Người viết test chấp nhận chỉ đọc hợp đồng và phần việc của mô tả. Viết phần việc trước, rồi một dòng chỉ có `---`, rồi chỉ dẫn cho trưởng đội (đường dẫn hợp đồng, cách chia phần, hạng mỗi phần): người viết test không đọc phần sau dòng đó. Không có dòng `---` thì người viết đọc cả mô tả, kèm lời dặn bỏ qua chỉ dẫn cho trưởng đội. Quest lẻ không bao giờ có Khảo hạch mù, dù hạng nào; muốn có thì ra nhiệm vụ bằng `--contract`. Phần chỉ chạy được lệnh check có trong shell của nó; check `exclusive` (integration cần Docker, e2e) không có ở đó, máy chạy chúng, và quest ghép chạy mọi check trên nhánh đã ghép (P1-45). Đừng dặn phần chạy chúng trong chỉ dẫn cho trưởng đội; `mage.md` từ P1-45 cũng dặn pháp sư như vậy, vương quốc đã dựng trước đó chép lại file vào `registry/prompts/`.
 
 Kind `build` mặc định cần dấu vua, nên quest dừng ở `awaiting_seal` sau khi qua nghiệm thu. Quest tạo bằng `quest add` không có ước lượng token, nên trần token của nó lấy theo hạng (từ P1-38): `context_budget_tokens × mana_multiplier` (240 000 với mặc định) cho F–D, gấp 2 cho C và B (C gấp 1,5 tới P1-45), 2,5 cho A, 3 cho S; người chấm được gấp đôi trần đó. Quest có ước lượng (Tể tướng, pháp sư) không bao giờ có trần thấp hơn mức đó (từ P1-45), và trần phút không dưới số phút ước lượng, tối đa `attempt_minutes.high`. Việc cần hơn thì nâng trước bằng `elvaria quest edit`. Trong Windows PowerShell 5.1, dấu `"` nằm trong một đối số bị cắt khi truyền cho `node` (CLI báo "Thừa tham số"): dùng ngoặc kép kiểu chữ (“ ”) hoặc Git Bash.
 
-## 7. Chạy Quản sự và theo dõi
+## 7. Chạy Nhiếp chính và theo dõi
 
 ```bash
 elvaria run --kingdom "<thư mục vương quốc>"      # tới khi Ctrl+C
 ```
 
-Một vương quốc chỉ có một Quản sự (`.state/steward.lock`). Mỗi nhịp 5 giây nó áp lệnh trong `inbox/`, giao quest, dựng plot (worktree trên nhánh `quest/<id>`, `commands.setup`), mở phiên người làm; phiên xong thì commit phần còn lại (`chore: submit <quest>`), chạy các check mà `when` khớp đường dẫn đã chạm, rồi mở phiên người chấm. Theo dõi, không tốn mana:
+Một vương quốc chỉ có một Nhiếp chính (`.state/steward.lock`). Mỗi nhịp 5 giây nó áp lệnh trong `inbox/`, giao quest, dựng plot (worktree trên nhánh `quest/<id>`, `commands.setup`), mở phiên người làm; phiên xong thì commit phần còn lại (`chore: submit <quest>`), chạy các check mà `when` khớp đường dẫn đã chạm, rồi mở phiên người chấm. Theo dõi, không tốn mana:
 
 | Xem gì | Ở đâu |
 |---|---|
@@ -161,7 +161,7 @@ Một vương quốc chỉ có một Quản sự (`.state/steward.lock`). Mỗi 
 | log của setup và từng check | `.runs/<quest>-setup.log`, `.runs/<quest>-<n>/checks/<id>.log` |
 | câu hỏi của nhân vật | chuông trên terminal của `elvaria run`, `elvaria quest show <quest>`; trả lời bằng `elvaria answer <quest> "<câu>"` |
 
-Dừng bằng Ctrl+C. Nếu Quản sự chết khi còn phiên chạy, `elvaria doctor` liệt kê các pid đó (khi không có Quản sự nào giữ khóa) và lần `elvaria run` kế tiếp giết chúng.
+Dừng bằng Ctrl+C. Nếu Nhiếp chính chết khi còn phiên chạy, `elvaria doctor` liệt kê các pid đó (khi không có Nhiếp chính nào giữ khóa) và lần `elvaria run` kế tiếp giết chúng.
 
 Cầu dao token so token của phiên với `budget.max_tokens` (= `estimate.tokens × breakers.mana_multiplier`, không dưới mức theo hạng ở mục 6; quest không có ước lượng nhận đúng mức đó). Từ P1-23 token đọc cache tính một phần mười, như giá của nó: Claude Code đọc lại cả ngữ cảnh đã cache ở mỗi lượt, và đếm đủ thì một phiên bình thường bị cắt (báo cáo giai đoạn 1 §5.2). `mana_multiplier: 2` là đủ; vương quốc nào đã nâng nó để tránh cắt oan thì trả về 2 sau khi dùng `dist` có P1-23, còn quest đã mở giữ trần cũ tới khi `elvaria quest edit <quest> --max-tokens <n>`. Người chấm bị cầu dao cắt thì người khác chấm tiếp; người thứ hai của cùng lượt cũng bị cắt thì quest vào trạm xá kèm chuông, không mở phiên người chấm thứ ba: nâng trần bằng `elvaria quest edit <quest> --max-tokens <n>` rồi `retry` (ghi lệnh vào `inbox/` như báo cáo giai đoạn 1 §5.7, tới khi CLI có `quest retry` của P1-26).
 
@@ -174,32 +174,32 @@ elvaria seal <quest> --note "…"                   # xong
 elvaria return <quest> --note "…" --fail-kind …   # trả về người làm, ít nhất 20 ký tự
 ```
 
-`seal` và `return` chỉ ghi một lệnh vào `inbox/`: Quản sự áp nó (và viết thư giao hàng) ở nhịp kế tiếp, nên khi không có Quản sự nào chạy, quest vẫn ở `awaiting_seal` tới lần `elvaria run` sau.
+`seal` và `return` chỉ ghi một lệnh vào `inbox/`: Nhiếp chính áp nó (và viết thư giao hàng) ở nhịp kế tiếp, nên khi không có Nhiếp chính nào chạy, quest vẫn ở `awaiting_seal` tới lần `elvaria run` sau.
 
-Merge nhánh là việc của bạn, như mọi PR. Quản sự viết thư giao hàng vào `.runs/<quest>-delivery.md`, dùng làm mô tả PR. Push từ trong worktree (`git -C <repo>/.elvaria/worktrees/<quest> push -u origin quest/<quest>`), để pre-push hook của repo kiểm đúng nhánh đó, không kiểm checkout chính.
+Merge nhánh là việc của bạn, như mọi PR. Nhiếp chính viết thư giao hàng vào `.runs/<quest>-delivery.md`, dùng làm mô tả PR. Push từ trong worktree (`git -C <repo>/.elvaria/worktrees/<quest> push -u origin quest/<quest>`), để pre-push hook của repo kiểm đúng nhánh đó, không kiểm checkout chính.
 
-Sau khi merge, trả worktree bằng lệnh lưu trữ (chỉ cho quest đã xong và đã giao hàng), rồi chạy Quản sự để nó áp lệnh:
+Sau khi merge, trả worktree bằng lệnh lưu trữ (chỉ cho quest đã xong và đã giao hàng), rồi chạy Nhiếp chính để nó áp lệnh:
 
 ```bash
 elvaria quest archive <quest>
 elvaria run                                          # một hai nhịp, rồi Ctrl+C
 ```
 
-Quản sự gỡ worktree (cả khung thư mục chứa junction `node_modules` của pnpm mà `git worktree remove` để lại trên Windows) và cho Claude Code quên đường dẫn đó (`claude purge`). Nhánh ở lại; xóa nó khi đã merge: `git branch -d quest/<quest>` và, nếu đã push, `git push origin --delete quest/<quest>`. Một thư mục mà chương trình khác còn mở (VS Code mở worktree để xem PR: `EPERM`) thì ở lại, Quản sự in một dòng cảnh báo có đường dẫn: đóng chương trình đó rồi xóa tay. Quest đã hủy giữ worktree (như mọi lần hủy, kể cả thay đổi chưa commit); dọn tay bằng `git worktree remove --force`, `git branch -D` và `claude purge --yes "<repo>/.elvaria/worktrees/<quest>"`. Lần chạy 2026-11-07 dọn tay cả hai worktree, vì lệnh lưu trữ ra đời sau đó, từ chính lần dọn này.
+Nhiếp chính gỡ worktree (cả khung thư mục chứa junction `node_modules` của pnpm mà `git worktree remove` để lại trên Windows) và cho Claude Code quên đường dẫn đó (`claude purge`). Nhánh ở lại; xóa nó khi đã merge: `git branch -d quest/<quest>` và, nếu đã push, `git push origin --delete quest/<quest>`. Một thư mục mà chương trình khác còn mở (VS Code mở worktree để xem PR: `EPERM`) thì ở lại, Nhiếp chính in một dòng cảnh báo có đường dẫn: đóng chương trình đó rồi xóa tay. Quest đã hủy giữ worktree (như mọi lần hủy, kể cả thay đổi chưa commit); dọn tay bằng `git worktree remove --force`, `git branch -D` và `claude purge --yes "<repo>/.elvaria/worktrees/<quest>"`. Lần chạy 2026-11-07 dọn tay cả hai worktree, vì lệnh lưu trữ ra đời sau đó, từ chính lần dọn này.
 
 ## 9. Lần chạy ngày 2026-11-07
 
 Trước khi tốn mana, `main` của dc1 (0c3c6dc) được chạy thử đủ các bước CI trên một bản clone: install 22 s khi store còn lạnh, 1 s khi đã ấm; build `@dc1/shared` 3 s, lint 29 s, format 5 s, typecheck 8 s, test 11 s, i18n 1 s, tất cả xanh. Chạy thử như vậy để một quest không trượt vì nhánh gốc đã đỏ.
 
-**Lần 1** (Quản sự từ `dist` của `main` 5e5d5d6): hiệp sĩ làm đúng việc (thêm script `check` có build shared đứng trước, sửa README cả VI lẫn EN, viết thư bàn giao tiếng Việt; 9 lượt, ≈ 0,09 USD theo `total_cost_usd`). Để kiểm, nó gửi một lệnh ghép `… ; npx prettier --check … ; timeout 500 pnpm check | tail -15`; settings chỉ cho phép `pnpm check` đứng riêng, nên từ chối cả dòng, và thông báo từ chối của Claude Code bảo đừng tìm đường vòng. Nó không commit, đặt một câu hỏi cho chủ nhân, và quest sang `blocked`. CLI chưa có lệnh trả lời câu hỏi, nên quest bị hủy (`elvaria quest cancel`; worktree được giữ, như mọi lần hủy). Từ đó prompt của người làm và người chấm liệt kê đúng các lệnh shell được phép, mỗi lần gọi một lệnh, và nói rằng lệnh bị từ chối không phải câu hỏi cho chủ nhân; Quản sự tự commit phần còn lại rồi chạy check. Prompt người chấm cũng không còn ghi "The branch has no changes." khi Quản sự chưa truyền diff, mà chỉ cách đọc diff (`git diff origin/main...HEAD`).
+**Lần 1** (Nhiếp chính từ `dist` của `main` 5e5d5d6): hiệp sĩ làm đúng việc (thêm script `check` có build shared đứng trước, sửa README cả VI lẫn EN, viết thư bàn giao tiếng Việt; 9 lượt, ≈ 0,09 USD theo `total_cost_usd`). Để kiểm, nó gửi một lệnh ghép `… ; npx prettier --check … ; timeout 500 pnpm check | tail -15`; settings chỉ cho phép `pnpm check` đứng riêng, nên từ chối cả dòng, và thông báo từ chối của Claude Code bảo đừng tìm đường vòng. Nó không commit, đặt một câu hỏi cho chủ nhân, và quest sang `blocked`. CLI chưa có lệnh trả lời câu hỏi, nên quest bị hủy (`elvaria quest cancel`; worktree được giữ, như mọi lần hủy). Từ đó prompt của người làm và người chấm liệt kê đúng các lệnh shell được phép, mỗi lần gọi một lệnh, và nói rằng lệnh bị từ chối không phải câu hỏi cho chủ nhân; Nhiếp chính tự commit phần còn lại rồi chạy check. Prompt người chấm cũng không còn ghi "The branch has no changes." khi Nhiếp chính chưa truyền diff, mà chỉ cách đọc diff (`git diff origin/main...HEAD`).
 
-**Lần 2** (Quản sự từ `dist` của nhánh `feat/p1-11`, có hai bản sửa trên): `open → claimed → working → review → awaiting_seal`, không cần can thiệp.
+**Lần 2** (Nhiếp chính từ `dist` của nhánh `feat/p1-11`, có hai bản sửa trên): `open → claimed → working → review → awaiting_seal`, không cần can thiệp.
 
 | Bước | Kết quả |
 |---|---|
 | plot | worktree tách từ `origin/main` 0c3c6dc, `pnpm install` 6 s |
 | Thorn (claude-sonnet-5-5) | 15 lượt, 116 s, ≈ 0,15 USD; chạy `pnpm check` hai lần: lần đầu lint đỏ vì ESLint type-aware cũng đọc `dist` của shared, nên nó đưa build lên đầu script; không lệnh nào bị từ chối |
-| commit | `chore: submit q_…` do Quản sự commit (hiệp sĩ để Quản sự làm việc này) |
+| commit | `chore: submit q_…` do Nhiếp chính commit (hiệp sĩ để Nhiếp chính làm việc này) |
 | check máy | `build` 3,6 s, `format` 6,2 s, `check` 48 s, cả ba pass |
 | Vesper (claude-opus-5-5) | 6 lượt, 65 s, ≈ 0,23 USD; đọc diff, chạy lại `pnpm check`, phán `pass`, ghi chú tiếng Việt; còn bắt được mục "Done" của thư bàn giao ghi thứ tự cũ |
 
@@ -220,14 +220,14 @@ Lần chạy thật đầu tiên của nghi thức `mutation_check` (§4 "Test l
 
 Sau hai bản sửa, `pnpm e2e:docker` chạy hết dưới Elvaria (705 s cả build image) nhưng `main` của dc1 **đỏ**: 11 test hỏng, 10 không chạy, 143 qua, mọi lỗi ở `/results`, từ thẻ lịch sử một mảng của đội P1-21 (PR #35, lúc đó lãnh thổ chưa có check e2e): `<select>` rộng 406 px làm trang cuộn ngang ở 320 và 390 px; câu "…over the periods." dính chữ "To develop" của khối sau thành `periods.To`, `expectNoRawKeys` bắt nhầm là khóa i18n thô; WebKit báo vi phạm CSP trên `/results`. Quest e2e không thể xanh trên nhánh gốc đỏ (máy chỉ chạy lại khi lượt đầu xanh), nên chủ nhân chọn một quest sửa trước, quest e2e `--depends-on` nó (nhánh tách từ nhánh quest sửa, P1-16 (f)).
 
-**Quest sửa** `q_20261109_skffqk` (fix, hạng E, Quản sự từ `dist` của `8c7cb44`):
+**Quest sửa** `q_20261109_skffqk` (fix, hạng E, Nhiếp chính từ `dist` của `8c7cb44`):
 
 | Bước | Kết quả |
 |---|---|
 | thorn (claude-sonnet-5-5), lượt 1 | 38 lượt, 133 465 token; sửa tràn ngang (CSS) và câu chữ; không tìm ra nguồn CSP (đọc tĩnh, không chạy được webkit) |
 | check máy lượt 1 | build 3 s, lint 80 s, format 6 s, typecheck 13 s, test 18 s, i18n 2 s, e2e 567 s đỏ (148 qua, còn 6 test mobile-webkit) |
 | ilse (gemini-3.8-flash-high), người chấm 1 | 56 lượt tool tự đi tìm nguồn CSP dù check đã đỏ, bị cầu dao token cắt (496 608 / 480 000), không có phán quyết |
-| check máy chạy lại | Quản sự chạy lại toàn bộ check cho người chấm kế tiếp dù commit không đổi: thêm 10 phút (e2e 546 s, cùng 6 test đỏ) |
+| check máy chạy lại | Nhiếp chính chạy lại toàn bộ check cho người chấm kế tiếp dù commit không đổi: thêm 10 phút (e2e 546 s, cùng 6 test đỏ) |
 | ilse, người chấm 2 | được chọn lại (người chấm bị cắt không bị loại); 6 lượt, 62 857 token, `fail tests_fail` trích log e2e |
 | chẩn đoán của chủ nhân | spec tạm nghe `securitypolicyviolation` trên mobile-webkit, CSP thêm `'report-sample'`, compose project riêng, khoảng 3 phút, 0 token: vi phạm `style-src-attr`, mẫu `text-overflow:inherit`, đích là `<select>` của thẻ, lúc react-dom tạo nó; repo đã ghi đúng bẫy này ở `JournalEntryDialog.tsx` dòng 62; ghi vào mô tả quest (`quest edit --description`) |
 | thorn, lượt 2 | 35 lượt, 154 986 token; thẻ lúc đóng là một `<button>`, chỉ dựng `<select>` khi đang chọn |
@@ -236,7 +236,7 @@ Sau hai bản sửa, `pnpm e2e:docker` chạy hết dưới Elvaria (705 s cả 
 
 Quest sửa: khoảng 1 008 000 token (thorn 288 451, ilse 719 727), 55 phút từ lúc nhận tới lúc chờ dấu, 3 lượt check (e2e 567 + 546 + 679 s, khoảng 30 phút, trong đó một lượt chỉ để người chấm thứ hai).
 
-**Đổi bản giữa chừng**: trong lúc quest sửa chờ dấu, Quản sự dừng khi rảnh, nhánh merge `main` có P1-36 (7ce92a6), build lại hook và CLI, `doctor`, chạy lại từ `cfcd668`. Settings của mọi phiên mở sau đó có `--event PreToolUse` ở hook `PreToolUse`.
+**Đổi bản giữa chừng**: trong lúc quest sửa chờ dấu, Nhiếp chính dừng khi rảnh, nhánh merge `main` có P1-36 (7ce92a6), build lại hook và CLI, `doctor`, chạy lại từ `cfcd668`. Settings của mọi phiên mở sau đó có `--event PreToolUse` ở hook `PreToolUse`.
 
 **Quest e2e** `q_20261109_k8ejj6` (build, hạng E, tag `e2e` ⇒ `mutation_check`; trần sửa trước khi giao: 60 phút, 400 000 token):
 
@@ -255,7 +255,7 @@ Quest sửa: khoảng 1 008 000 token (thorn 288 451, ilse 719 727), 55 phút t�
 | ilse trong đất nháp, lần 2 | 34 lượt, 275 110 token, 8,3 phút (khóa exclusive giữ suốt phiên): chạy `pnpm e2e:docker apps/web/e2e/functional/results-csv.spec.ts` (3 qua, 67 s); đập `results-csv.ts` hai chỗ (định dạng tên file, tiền tố `L` của mức), mỗi lần cả hai test en và vi đỏ (68 s); `git restore`, chạy lại 3 qua (44 s); `git status` sạch suốt phiên; `pass` |
 | sau phán quyết | nhánh không đổi (`01d0fa9`), đất nháp đã xóa, khóa đã nhả; quest chờ dấu vua |
 
-Mỗi lần chạy một file e2e trong đất nháp mất khoảng 1 phút (build lại image có cache), nên người chấm đập thử hai lần vừa trong trần 60 phút. Phán quyết của agy chỉ là `{"progress": …, "result": "pass"}` sau mấy dòng kể việc, không có `notes`: Quản sự nhận nó và lưu ghi chú rỗng, nên bằng chứng đập thử chỉ còn trong `.runs/<quest>-<n>/verify/stdout.jsonl`. Quest e2e: 474 582 token (thorn 98 201, ilse 376 381), 75 phút từ lúc nhận tới lần chờ dấu thứ hai, kể cả lúc chủ nhân sửa máy.
+Mỗi lần chạy một file e2e trong đất nháp mất khoảng 1 phút (build lại image có cache), nên người chấm đập thử hai lần vừa trong trần 60 phút. Phán quyết của agy chỉ là `{"progress": …, "result": "pass"}` sau mấy dòng kể việc, không có `notes`: Nhiếp chính nhận nó và lưu ghi chú rỗng, nên bằng chứng đập thử chỉ còn trong `.runs/<quest>-<n>/verify/stdout.jsonl`. Quest e2e: 474 582 token (thorn 98 201, ilse 376 381), 75 phút từ lúc nhận tới lần chờ dấu thứ hai, kể cả lúc chủ nhân sửa máy.
 
 **Check drift** chạy thật qua `runChecks` trên bản clone (không drift: cả hai xanh; commit nguồn mà không sinh lại: cả hai đỏ vì diff), nhưng không quest nào của lần chạy chạm vùng `when` của chúng.
 

@@ -32,7 +32,7 @@ paths:
 
 - Lượt máy của quest ghép (không có `assignee`) mở lượt `n` mà không tăng `attempts` (`machineRun`, `quest/effects.ts`), và chỉ chạy khi quest chưa từng có lượt nào (`machineMergeDue`: `attempts = 0` **và** `attempt_log` rỗng). `attempts = 0` một mình không đủ: `retry` từ trạm xá đặt nó về 0 mà giữ `attempt_log`, và trước P1-55 điều đó cho máy chạy lại trên commit vừa trượt, lại tính vào `max_attempts` (quest ghép Q1 của P1-50 vào trạm xá sau hai phiên hiệp sĩ). Sửa `startAttempt`, `machineMergeDue` hay luật quest ở `review` (`quest-rules.ts`: đã có lượt chạy = `attempts ≥ 1` hoặc một mục vai assignee) thì xét cả ba, kèm test cho chuỗi trượt → trạm xá → retry ([báo cáo P1-50](../../docs/guides/phase-1-rerun.md) §8 (e)).
 - Luật người chấm khác model so với **mọi người từng làm** quest (`workedOn`, `VerifierPolicy.doers`), không chỉ `quest.assignee`: ở lượt của máy `assignee` là null (P1-50: người chấm Sonnet chấm quest ghép mà hiệp sĩ Sonnet đã làm hai lượt trước). "Khác họ" là họ không trùng họ của người làm nào.
-- `runDirOf(quest, n, 'verifier')` là thư mục của phiên chấm **sắp mở** (`verify`, `verify-2`, …), tính từ `attempt_log` trước khi mục mới được thêm: Quản sự dựng request trước nước `assign_verifier`, nên hai chỗ gọi cùng thấy một số. Đừng gọi nó sau khi mục đã thêm.
+- `runDirOf(quest, n, 'verifier')` là thư mục của phiên chấm **sắp mở** (`verify`, `verify-2`, …), tính từ `attempt_log` trước khi mục mới được thêm: Nhiếp chính dựng request trước nước `assign_verifier`, nên hai chỗ gọi cùng thấy một số. Đừng gọi nó sau khi mục đã thêm.
 
 ## Test
 

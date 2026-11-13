@@ -19,7 +19,7 @@ describe('renderCell', () => {
 
   it('prints Markdown columns as written, and nothing for a cell that is not text', () => {
     const column = { key: 'vi', header: 'VI' };
-    expect(renderCell(column, { vi: 'Quản sự' })).toBe('Quản sự');
+    expect(renderCell(column, { vi: 'Nhiếp chính' })).toBe('Nhiếp chính');
     expect(renderCell(column, { vi: true })).toBe('');
   });
 });
@@ -41,7 +41,7 @@ describe('renderGlossary', () => {
     );
     expect(text).toContain('\n### 7.1 Trạng thái quest (`quest.status`)\n');
     expect(text).toContain('\n- Identifier trong code dùng **đúng cột "id"**.');
-    expect(text).toContain('| Quản sự | Steward | `steward` |');
+    expect(text).toContain('| Nhiếp chính | Steward | `steward` |');
     expect(text).toContain('| `dispatcher` | `steward` |');
     expect(text.endsWith('|\n')).toBe(true);
   });

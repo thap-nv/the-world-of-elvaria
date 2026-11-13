@@ -4,7 +4,7 @@ Ngày 2026-11-12, PS-05 ([kế hoạch giai đoạn 1.5](../plans/phase-1.5.md) 
 
 ## Vùng file và file nóng
 
-Mỗi quest có thể khai `scope_paths`: các glob, tính từ gốc lãnh thổ, của những file nó sẽ sửa (`elvaria quest add --scope <glob>`, lặp lại cho nhiều glob; `quest edit --scope` thay cả vùng; Tể tướng và pháp sư khai khi soạn). Trong một lãnh thổ, Quản sự xếp việc theo ba luật (§3.16.5):
+Mỗi quest có thể khai `scope_paths`: các glob, tính từ gốc lãnh thổ, của những file nó sẽ sửa (`elvaria quest add --scope <glob>`, lặp lại cho nhiều glob; `quest edit --scope` thay cả vùng; Tể tướng và pháp sư khai khi soạn). Trong một lãnh thổ, Nhiếp chính xếp việc theo ba luật (§3.16.5):
 
 - **R1**: số quest đang làm nhỏ hơn `max_concurrent`, như trước.
 - **R2**: quest bậc phiên không khai vùng chỉ bắt đầu khi lãnh thổ không có quest bậc phiên nào đang làm, và khi nó đang làm thì không quest nào bắt đầu. Khi nó đang chờ lãnh thổ trống, quest có vùng xếp sau nó trong hàng không bắt đầu, để nó không chờ mãi.
@@ -14,7 +14,7 @@ Quest bậc script đứng ngoài R2 và R3. `elvaria quest list` ghi bên trạ
 
 Hai vùng "giao nhau" theo chữ của glob: phần chữ trước ký tự đại diện đầu tiên của glob này mở đầu phần chữ của glob kia (`packages/**` giao `packages/domain/src/x.ts`; `apps/api/**` không giao `apps/web/**`). Nghi ngờ thì tính là giao. **File nóng** là file mà mọi nhánh song song cùng sửa: đặt chúng trong `scope_paths` của từng quest thì quest nào cũng giao vùng nhau và R3 xếp tất cả thành hàng một. Chúng nằm trong `territory.shared_paths`: một mục của vùng nằm trong `shared_paths` không tính vào giao nhau, và file trong `shared_paths` không bao giờ là "file ngoài vùng". Mỗi mục nêu cách ghép, cho hàng đợi merge của PS-09: `regenerate` chạy `commands.generate` của lãnh thổ trên kết quả ghép, `union` giữ dòng của cả hai phía.
 
-File đổi ngoài vùng (trừ `shared_paths`) không làm quest trượt: Quản sự ghi chúng vào dòng `quest.submitted` (`data.out_of_scope`), đưa vào prompt người chấm (mục "Files changed outside the scope", giữa thư bàn giao và diff), và `elvaria metrics` đếm chúng.
+File đổi ngoài vùng (trừ `shared_paths`) không làm quest trượt: Nhiếp chính ghi chúng vào dòng `quest.submitted` (`data.out_of_scope`), đưa vào prompt người chấm (mục "Files changed outside the scope", giữa thư bàn giao và diff), và `elvaria metrics` đếm chúng.
 
 ## Danh sách `shared_paths` của lãnh thổ Elvaria
 
@@ -47,7 +47,7 @@ Theo bài học điều phối giai đoạn 1 (lượt soát kế hoạch giai �
 
 ## Vùng bảo vệ
 
-`laws.protected_paths` (tùy chọn) là các glob, tính từ gốc lãnh thổ, của thứ canh giữ thế giới: luật, check, người chấm, sổ đo, bản nâng cấp. Khác `forbidden_paths`, vùng bảo vệ không chặn gì: nhân vật vẫn đọc, sửa, và Quản sự vẫn commit. Ở mỗi lần nộp, Quản sự đọc thay đổi của đất riêng (cùng lần đọc với `forbidden_paths`, từ lúc đất riêng tách nhánh, cả file chưa commit) và khớp chúng với `protected_paths` theo cùng cách: glob khớp ở mọi độ sâu, nên `CLAUDE.md` cũng nêu `packages/x/CLAUDE.md`; thà chờ dấu nhầm. Khi có đường dẫn khớp:
+`laws.protected_paths` (tùy chọn) là các glob, tính từ gốc lãnh thổ, của thứ canh giữ thế giới: luật, check, người chấm, sổ đo, bản nâng cấp. Khác `forbidden_paths`, vùng bảo vệ không chặn gì: nhân vật vẫn đọc, sửa, và Nhiếp chính vẫn commit. Ở mỗi lần nộp, Nhiếp chính đọc thay đổi của đất riêng (cùng lần đọc với `forbidden_paths`, từ lúc đất riêng tách nhánh, cả file chưa commit) và khớp chúng với `protected_paths` theo cùng cách: glob khớp ở mọi độ sâu, nên `CLAUDE.md` cũng nêu `packages/x/CLAUDE.md`; thà chờ dấu nhầm. Khi có đường dẫn khớp:
 
 - quest được đặt `protected_changes` (các đường dẫn đã chạm, gộp qua mọi lần nộp) và `seal_required: true` (bất kể `seal_default` của dạng, kể cả dạng `analyze` hay `research`); phán quyết đạt thì quest chờ dấu vua (`awaiting_seal`) và chuông kêu như mọi quest cần dấu. Phần của một đội (`part`, phần test chấp nhận `acceptance`) thì chỉ được đặt `protected_changes`, không bắt dấu (chủ nhân chốt 2026-11-13): phần không bao giờ vào nhánh gốc một mình, và quest ghép của đội luôn cần dấu;
 - người chấm được chọn như quest từ hạng B: sau luật khác họ model và khác tộc, người cấp cao hơn đứng trước (P1-48); luật tách vai không đổi;

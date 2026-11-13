@@ -21,7 +21,7 @@ describe('renderQuestTransitionTable', () => {
     );
     expect(lines).toContain('| claimed | `cancel` |  | U | archived |  |');
     expect(lines).toContain(
-      '| done | `archive` |  | U/S | archived | Quản sự sau N ngày; xóa worktree khi archive, không sớm hơn |',
+      '| done | `archive` |  | U/S | archived | Nhiếp chính sau N ngày; xóa worktree khi archive, không sớm hơn |',
     );
   });
 
