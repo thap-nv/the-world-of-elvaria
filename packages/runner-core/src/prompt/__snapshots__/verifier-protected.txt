@@ -1,0 +1,8 @@
+# Protected paths changed
+
+The quest's work has changed these files under the territory's protected paths, which guard this world: its rules, checks, judges and measures.
+
+- `packages/hooks/src/run-hook.ts`
+- `CLAUDE.md`
+
+Read every change to these files in the diff, line by line, not only what the letter says of them. A change here fails nothing by itself: the owner lets it in with the royal seal, on this quest or on its party's merge quest, and reads your notes first. In your notes, say for each file what the change does and whether the quest asked for it. A change that weakens a guard the quest did not ask to change (a check skipped or loosened, a test dropped, a rule removed) fails the quest as `unsafe`.

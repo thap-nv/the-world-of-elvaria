@@ -31,7 +31,8 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   them before it commits (P1-49), since a program a session's shell runs writes past the fence.
 - Builds prompts from the Markdown templates in `prompts/` (`loadPromptTemplates`); a quest with `scope_paths` gets a
   `Scope:` fact, and its judge the files changed outside it (`prompts/out-of-scope.md`, `src/prompt/scope.ts`, PS-05),
-  while a quest without one reads as before: `buildPrompt` for an
+  while a quest without one reads as before; the judge of a quest with `protected_changes` gets the files to read line
+  by line (`prompts/protected-changes.md`, `src/prompt/protected.ts`, PS-04 (c)): `buildPrompt` for an
   assignee (new, or continuing after `returned` / `revive` with the letter, the last 20 journal lines, the
   branch's log and the owner's answer; after `returned`, also the checks that failed with the end of each log,
   `prompts/failed-checks.md`, P1-10b, and after the owner's return for a new judgement a word that the judge

@@ -4,8 +4,17 @@
 // the Steward applies the work with no owner: an edit_quest that merges, a create_quest made open, a decide_memo that
 // sets a memo aside; the quest's command closes its memos. Beyond it each memo goes to the owner with an escalate_memo,
 // and a new quest waits as a draft the owner confirms. The quests' commands come first: the Steward applies the inbox
-// in id order, and an escalate_memo names the draft made before it.
-import { MEMO_BODY_MAX_LENGTH, MERGEABLE_STATUSES, delegationHolds, pathInScope } from '@elvaria/domain';
+// in id order, and an escalate_memo names the draft made before it. The memos' files are matched here against their
+// territory's laws.protected_paths, with the matcher of the forbidden and protected paths (forbiddenChangesOf), so
+// delegationHolds sees a protected file whether the Chancellor flagged it or not (PS-03b (a), ADR 0026).
+import {
+  MEMO_BODY_MAX_LENGTH,
+  MERGEABLE_STATUSES,
+  delegationHolds,
+  pathInScope,
+  protectedPathsOf,
+} from '@elvaria/domain';
+import { forbiddenChangesOf } from '@elvaria/runner-core';
 import type {
   Delegation,
   DelegationHold,
@@ -15,6 +24,8 @@ import type {
   Quest,
   QuestDraft,
   QuestId,
+  Territory,
+  TerritoryId,
   TriageAction,
   TriageDecision,
   WorkPlace,
@@ -30,6 +41,8 @@ export interface TriageInput {
   readonly memos: readonly Memo[];
   /** The kingdom's quests: those a merge names, and those whose letters held the memos. */
   readonly quests: readonly Quest[];
+  /** The kingdom's territories: the protected paths of the territory a memo's files belong to. */
+  readonly territories: readonly Pick<Territory, 'id' | 'laws'>[];
   readonly delegation: Delegation;
   /** Headers of source `chancellor`, and the id the Steward gives a create_quest's quest. */
   readonly source: CommandSource;
@@ -104,13 +117,26 @@ type Memos = ReadonlyMap<MemoId, Memo>;
 const memosOf = (unit: Unit, memos: Memos): Memo[] =>
   unit.decisions.flatMap(({ memo }) => memos.get(memo) ?? []);
 
+/** A line number after a file (`CLAUDE.md:12`, `a.ts:3-9`), which a character may write and a glob never matches. */
+const LINE_SUFFIX = /:\d+(?:[-:]\d+)*$/;
+
+/** The memo's files under the protected paths of `territory`; none on a territory gone or one that names none. */
+function protectedRefsOf(memo: Memo, territory: TerritoryId | undefined, input: TriageInput): string[] {
+  const globs = protectedPathsOf(input.territories.find(({ id }) => id === territory));
+  if (globs.length === 0) return [];
+  return memo.refs.filter((ref) => forbiddenChangesOf([ref.replace(LINE_SUFFIX, '')], globs).length > 0);
+}
+
 function holdsOf(unit: Unit, input: TriageInput, memos: Memos): DelegationHold[] {
   const territoryOf = (memo: Memo) => input.quests.find(({ id }) => id === memo.quest)?.territory;
   return delegationHolds(
     {
       action: unit.action,
       work: workOf(unit),
-      memos: memosOf(unit, memos).map((memo) => ({ refs: memo.refs, territory: territoryOf(memo) })),
+      memos: memosOf(unit, memos).map((memo) => {
+        const territory = territoryOf(memo);
+        return { refs: memo.refs, territory, protected_refs: protectedRefsOf(memo, territory, input) };
+      }),
       asks: [...new Set(unit.decisions.flatMap(({ ask }) => ask))],
     },
     input.delegation,

@@ -29,6 +29,7 @@ import { memosBlock } from './memory.ts';
 import { objectionBlock } from './objection.ts';
 import type { PromptObjection } from './objection.ts';
 import { composed } from './prompt-blocks.ts';
+import { protectedChangesBlock } from './protected.ts';
 import { outOfScopeBlock } from './scope.ts';
 import { fenced, fill, sectionsOf } from './templates.ts';
 import type { Continuation, Locale, Memory } from './blocks.ts';
@@ -207,6 +208,7 @@ function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): PromptW
         ? 'The assignee left no letter.'
         : fenced(input.handover, 'markdown'),
     out_of_scope: outOfScopeBlock(quest, input.out_of_scope ?? [], t),
+    protected_changes: protectedChangesBlock(quest, t),
     diff: diffBlock(input.diff, input.territory),
   });
   const graphText = graphBlock(policy, input.graph, 'verifier', t);

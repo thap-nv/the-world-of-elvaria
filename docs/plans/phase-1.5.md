@@ -345,6 +345,7 @@ Task của giai đoạn 1, để dành tới khi chủ nhân có tài khoản Co
 - **Bất biến có test**: không tin nhắn nào tới một phiên đang chạy; quyết định chỉ đi qua lệnh hộp thư; thư không đổi quest nào khác; người chấm không nhận thư, chỉ thấy đề bài sau khi sửa và lý do trong thư bàn giao.
 - **Test**: thư được nhận ⇒ mô tả quest đổi, phiên kế của người làm thấy đề mới và lý do; thư bị bác ⇒ phiên kế thấy lý do và làm theo đề cũ; "chủ nhân phải quyết" ⇒ một mục trong bản tấu, và `elvaria answer` mở lại quest; thư thứ hai của cùng quest lên chủ nhân; quest chủ nhân tự viết ⇒ câu hỏi như hôm nay; snapshot prompt mới.
 - **Chi phí**: mỗi thư là một phiên của người viết đề; đáng khi nó thay một lượt làm sai rồi bị trả. Hạng thấp nhất được viết thư là dữ liệu trong `kingdom.dispatch` (mặc định mọi hạng), chỉnh theo sổ đo.
+- **Từ PS-03b** (chủ nhân chốt 2026-11-13, §11): phân loại thư chưa gộp một thư vào quest đang làm (`working`), vì đề bài đổi giữa lượt là việc của task này; xét ở đây có gộp không và gộp thế nào.
 - **Vương quốc đang chạy**: `elvaria migrate` thêm kiểu thư; quest đang mở không đổi.
 
 ## PS-23 — Tộc mở
@@ -388,4 +389,5 @@ Chạy thật, tốn mana: hỏi chủ nhân trước khi chạy, và chốt tr�
 - **Từ PS-02** (chủ nhân chốt 2026-11-12, §11): sau lần chạy, xem `elvaria memo list` và cảnh báo "follows no memo" của Quản sự: đây là lần đầu nhân vật thật viết thư.
 - **Từ PS-05** (chủ nhân chốt 2026-11-12, §11): lúc chuẩn bị vương quốc, đặt `shared_paths` và `commands.generate` vào `territory.json` của lãnh thổ Elvaria theo [guides/elvaria-territory.md](../guides/elvaria-territory.md); `max_concurrent` giữ 1 tới khi PS-06 và PS-09 xong.
 - **Từ bài học 2026-11-12** (chủ nhân chốt 2026-11-13, §11): việc của lần chạy gồm cả lý do `breaker:commit`. Hôm nay lý do đó là 2000 ký tự cuối của output hook pre-commit (`DETAIL_CHARS`, `packages/runner-core/src/plot/worktree-ops.ts`), cắt giữa chữ; lý do giữ vài dòng lỗi đầu và số lỗi, bản đầy đủ vào một file trong thư mục của lượt chạy.
+- **Từ PS-03b** (chủ nhân chốt 2026-11-13, §11): trước lần chạy, một lần chạy thật `triageMemos` trên vương quốc tạm với một hai thư (tốn mana: phiên điều phối hỏi chủ nhân trước).
 - **Dọn kế hoạch** (đề xuất (c) của P1-52, chủ nhân chốt 2026-11-12): khi đóng giai đoạn, chạy `pnpm plan:split` để chuyển các dòng `PS-…` đã `xong` của §8 sang file lưu (`docs/implementation-plan/8-done-ps.md`), rồi `pnpm docs:gen` và `pnpm check`.

@@ -33,7 +33,9 @@
   the whole batch (`buildTriagePrompt` of runner-core; the memo-triage contract, `MEMO_TRIAGE_JSON_SCHEMA`), checks
   that each memo of the batch is decided once and no other named (`triageCheckOf`), and screens the drafts of its new
   quests; the signal kills the session (failure `stopped`). `triageCommands` groups the decisions by the work they
-  share, holds each group against `kingdom.delegation` (the domain's `delegationHolds`) and gives inbox commands:
+  share, holds each group against `kingdom.delegation` (the domain's `delegationHolds`, with each memo's files
+  matched against its territory's `laws.protected_paths` by runner-core's `forbiddenChangesOf`, a trailing line
+  number aside, so a protected file holds the memo whatever the Chancellor flagged) and gives inbox commands:
   within it an `edit_quest` that merges, a `create_quest` made open, a `decide_memo` that sets a memo aside; beyond it
   an `escalate_memo` per memo, a new quest waiting as a draft. One session's plumbing (`src/session.ts`) serves both.
 

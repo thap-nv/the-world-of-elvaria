@@ -109,7 +109,8 @@
   and the follow-ups the scope of the quest they come from.
 - Marks a quest whose work changed a protected path (`src/verify/protected.ts`, implementation-plan §3.16.4, ADR 0026,
   PS-04): `territory.laws.protected_paths` is optional, with no default; `protectedMarkOf` gives what the submit sets
-  (`seal_required: true` and `quest.protected_changes`, the paths gathered over the submits, never lowered), and
+  (`seal_required: true` and `quest.protected_changes`, the paths gathered over the submits, never lowered; for a
+  part of a party, `part` or `acceptance`, the paths alone, since its merge quest always waits for the seal), and
   `wantsStrongJudge(quest)` puts the judge of the higher level first from rank B or once the quest is so marked,
   below the separation rules of `selectVerifier`.
 - Decides the breakers (`src/breaker/`, §3.4, P1-06): `evaluateBreakers(attempt, limits, now, usage)` → `ok` or
@@ -231,7 +232,9 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   Chancellor's triage sent up carries its advice (`escalated`, PS-03b) and lists as `memo_escalated`.
 - Decides what the world takes in alone of the memos the Chancellor triages (`src/delegation/`, PS-03b):
   `kingdom.delegation` (`DelegationSchema`: `max_rank`, `same_scope`, `ask`) and `delegationHolds`, which answers with
-  what holds a piece of work for the owner: a matter of `ask` the Chancellor flagged, a rank above `max_rank`, files
+  what holds a piece of work for the owner: a matter of `ask` the Chancellor flagged (or `protected_paths` when a
+  memo's files lie under its territory's `laws.protected_paths`, `DelegatedMemo.protected_refs` as the caller
+  matched them, the owner's settlement of PS-03b (a)), a rank above `max_rank`, files
   not surely inside the work's scope (`pathInScope`, the reverse doubt of `scopesMeet`), or the Chancellor's own
   choice; none when the Steward may apply it. The memo-triage contract (`MemoTriageFileSchema`), `escalateMemo` and
   the memo's `escalation`, the command `escalate_memo`, `memos` on create_quest, edit_quest and the quest, the source

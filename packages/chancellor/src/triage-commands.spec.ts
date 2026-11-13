@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { BUSY, DOCS, SOURCE, WEB, draftOf, memoOf, sourceOf, triageOf } from './__fixtures__/memos.ts';
 import { screenDrafts } from './screen.ts';
-import { CONTEXT } from './__fixtures__/kingdom.ts';
+import { CONTEXT, DC1 } from './__fixtures__/kingdom.ts';
 import { triageCommands } from './triage-commands.ts';
 
 const DELEGATION = DelegationSchema.parse({});
@@ -23,12 +23,18 @@ const decision = (memo: MemoId, action: TriageDecision['action'], fields: Partia
   ...fields,
 });
 
-function commandsOf(decisions: readonly unknown[], drafts: readonly unknown[] = [], delegation = DELEGATION) {
+function commandsOf(
+  decisions: readonly unknown[],
+  drafts: readonly unknown[] = [],
+  delegation = DELEGATION,
+  { memos = MEMOS, territories = CONTEXT.territories } = {},
+) {
   const reply = triageOf(decisions, drafts);
   const { commands, outcomes } = triageCommands({
     reply: { decisions: reply.decisions, drafts: screenDrafts(reply.drafts, CONTEXT) },
-    memos: MEMOS,
+    memos,
     quests: QUESTS,
+    territories,
     delegation,
     source: sourceOf(),
   });
@@ -92,6 +98,31 @@ describe('triageCommands: within the delegation', () => {
 });
 
 describe('triageCommands: beyond the delegation', () => {
+  // dc1-se-team, the territory of the memos' quest, protects its guide and every CLAUDE.md (PS-03b (a), ADR 0026).
+  const GUARDED = [{ ...DC1, laws: { ...DC1.laws, protected_paths: ['docs/guide.md', 'CLAUDE.md'] } }];
+
+  it('sends up a memo whose files the territory protects, though the Chancellor flagged nothing', () => {
+    const LINES = memoOf('m_20261112_eeeeee', 'Luật cũ trong sub/CLAUDE.md.', ['sub/CLAUDE.md:12-14']);
+    const { kinds, outcomes } = commandsOf(
+      [decision(LINK.id, 'merge', { quest: DOCS.id }), decision(LINES.id, 'shelve')],
+      [],
+      DELEGATION,
+      { memos: [...MEMOS, LINES], territories: GUARDED },
+    );
+    expect(kinds).toEqual(['escalate_memo', 'escalate_memo']);
+    expect(outcomes).toEqual([
+      { memo: LINK.id, action: 'merge', delegated: false, holds: ['protected_paths'], quest: DOCS.id },
+      { memo: LINES.id, action: 'shelve', delegated: false, holds: ['protected_paths'] },
+    ]);
+    // Without the protected paths, or with the matter given to the world, the merge goes in as before.
+    expect(commandsOf([decision(LINK.id, 'merge', { quest: DOCS.id })]).kinds).toEqual(['edit_quest']);
+    const given = { ...DELEGATION, ask: ['decision_change' as const] };
+    const kept = commandsOf([decision(LINK.id, 'merge', { quest: DOCS.id })], [], given, {
+      territories: GUARDED,
+    });
+    expect(kept.kinds).toEqual(['edit_quest']);
+  });
+
   it('sends a merge above the rank up with its advice, and changes no quest', () => {
     const { commands } = commandsOf([
       decision(WEBMEMO.id, 'merge', { quest: WEB.id, addendum: 'Thêm favicon.' }),
