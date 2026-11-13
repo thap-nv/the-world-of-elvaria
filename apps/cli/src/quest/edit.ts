@@ -2,8 +2,8 @@
 // §9.2). The command carries the quest's updated_at as read now; the Steward rejects it if the quest changed in
 // between, so an edit never overwrites a change the owner has not seen; an edit of the budget alone is taken whatever
 // the quest became (P1-54: the Steward moves a running quest many times a minute, and only the owner sets a budget).
-import { QUEST_TITLE_MAX_LENGTH, RANKS } from '@elvaria/domain';
-import type { Rank } from '@elvaria/domain';
+import { MS_PER_MINUTE, QUEST_TITLE_MAX_LENGTH, RANKS, parseInstant } from '@elvaria/domain';
+import type { Quest, Rank } from '@elvaria/domain';
 
 import { flagOption, textOption, textOptions } from '../args.ts';
 import { EXIT } from '../command.ts';
@@ -16,8 +16,11 @@ import type { KingdomContext } from '../kingdom-context.ts';
 
 const isRank = (value: string): value is Rank => (RANKS as readonly string[]).includes(value);
 
-/** Statuses in which a session of the quest may be running: a character works it, or a judge reads it. */
-const SESSION_STATUSES: readonly string[] = ['working', 'review'];
+/** The role whose session may be running in a status: a character works the quest, or a judge reads it. */
+const SESSION_ROLE: Partial<Record<Quest['status'], 'assignee' | 'verifier'>> = {
+  working: 'assignee',
+  review: 'verifier',
+};
 
 /** A whole number ≥ `min` from `--<name>`; undefined when absent, NaN when not such a number. */
 function wholeNumber(input: CommandInput, name: string, min: number): number | undefined {
@@ -72,6 +75,29 @@ function readChanges(input: CommandInput, ctx: KingdomContext) {
   return { changes, dependsOn, problems: [...problems, ...budgetProblems] };
 }
 
+/**
+ * What a new minute ceiling does to the session running now. The Steward applies the edit, then its time breaker reads
+ * the quest's ceiling on every tick, against the session's own attempt_log entry (breakersOf in planTick): lower, it
+ * cuts a session already past it at that tick; higher, the session has the time from then on. Only a CLI that took its
+ * own clock when the session opened (agy's `--print-timeout`) still stops it at the old ceiling. P1-56 said the ceiling
+ * reached the next session only, which held for agy alone (lessons of 2026-11-12, A2).
+ */
+function minuteLines(ctx: KingdomContext, quest: Quest, minutes: number): string[] {
+  const role = SESSION_ROLE[quest.status];
+  const was = quest.budget.max_minutes;
+  if (role === undefined || minutes === was) return [];
+  const entry = quest.attempt_log.findLast((run) => run.role === role && run.ended_at === undefined);
+  const started = entry === undefined ? undefined : parseInstant(entry.started_at);
+  // In review before a judge opens its session, or a quest file without one: nothing runs to tell about.
+  if (started?.ok !== true) return [];
+  const elapsed = ctx.io.clock.now() - started.value;
+  const params = { id: quest.id, minutes, was, ran: Math.floor(elapsed / MS_PER_MINUTE) };
+  if (minutes > was) return [ctx.t('cli.quest.edit.minutes_raised', params)];
+  if (elapsed < minutes * MS_PER_MINUTE) return [ctx.t('cli.quest.edit.minutes_lowered', params)];
+  const cut = role === 'assignee' ? 'cli.quest.edit.minutes_cut' : 'cli.quest.edit.minutes_cut_judge';
+  return [ctx.t(cut, params)];
+}
+
 async function runQuestEdit(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);
   if (ctx === undefined) return EXIT.failed;
@@ -95,11 +121,7 @@ async function runQuestEdit(input: CommandInput, cli: CliContext): Promise<ExitC
   const command = { ...commandHeader(ctx), kind: 'edit_quest', payload } as const;
   const code = await sendCommand(ctx, command, 'cli.quest.edit.sent', { id: quest.id });
   const minutes = changes.budget?.max_minutes;
-  // The session's CLI was given its clock when the session opened (`--print-timeout`, P1-56, (g) of the P1-50 report).
-  if (code === EXIT.ok && minutes !== undefined && SESSION_STATUSES.includes(quest.status))
-    ctx.io.out(
-      ctx.t('cli.quest.edit.minutes_next_session', { id: quest.id, minutes, was: quest.budget.max_minutes }),
-    );
+  if (code === EXIT.ok && minutes !== undefined) minuteLines(ctx, quest, minutes).forEach(ctx.io.out);
   return code;
 }
 

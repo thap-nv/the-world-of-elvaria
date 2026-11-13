@@ -16,7 +16,10 @@
   against the transition table; `archive` and `cancel` both take a quest in the infirmary (`infirmary.archive`, P1-56).
   While a Steward holds the kingdom's lock, `sendCommand` waits one tick and a little more for its `command.applied` or
   `command.rejected` line and prints it (`stale` with what to do about it); without a Steward it only drops the file.
-  `quest edit --max-minutes` on a quest with a running session says the new ceiling reaches the next session only. `return` asks for a note of at least 20 characters (`--note`) and a `--fail-kind`
+  `quest edit --max-minutes` on a quest with a running session says what the new ceiling does to it: the Steward's
+  time breaker reads the quest's ceiling on every tick, so a lower one cuts the session at its next tick (a warning
+  when it has already run past it) and a higher one gives it the time, unless its CLI took its own clock when it
+  opened (agy's `--print-timeout`; lessons of 2026-11-12, which corrected P1-56's "next session only"). `return` asks for a note of at least 20 characters (`--note`) and a `--fail-kind`
   (`other` by default), since the Steward writes it as the owner's fail verdict; `return --rejudge` (P1-40) says
   the judge erred: the work goes back to be judged again and the return does not count against the assignee. `answer <quest> "<answer>"` takes
   a non-empty answer for a `blocked` quest; the Steward then goes on with the same attempt, in the asking session

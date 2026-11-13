@@ -231,7 +231,7 @@ Quest vào trạm quân y thì dừng hẳn và chuông rung. `elvaria quest sho
 | Lý do | Nghĩa là | Làm gì |
 |---|---|---|
 | cầu dao token | phiên vượt trần token | `quest edit <quest> --max-tokens <n>` rồi `quest retry <quest>` (§4 có số đo) |
-| cầu dao thời gian | phiên vượt trần phút | `quest edit --max-minutes <n>` rồi `retry`. Trần phút mới **không** áp cho phiên đang chạy: CLI nhận con số cũ lúc mở phiên; từ P1-56 `quest edit` nói điều đó khi quest đang có phiên |
+| cầu dao thời gian | phiên vượt trần phút | `quest edit --max-minutes <n>` rồi `retry`. Đổi trần khi quest đang có phiên thì phiên đó cũng theo trần mới từ nhịp kế: cầu dao của Quản sự đọc trần của quest mỗi nhịp, nên hạ trần dưới số phút phiên đã chạy là cắt nó ngay (`quest edit` cảnh báo). Riêng agy tự giữ đồng hồ (`--print-timeout`) lúc mở phiên: nâng trần không kéo dài phiên agy đang chạy, phiên sau mới nhận trần mới |
 | cầu dao lượt | CLI dừng ở 200 lượt | `retry`; lặp lại thì chia nhỏ việc |
 | commit bị từ chối | hook của repo từ chối commit, hoặc bản vá `elvaria.patch` không áp được | đọc lý do, sửa trong đất riêng (`<repo>/.elvaria/worktrees/<quest>`) rồi `retry` |
 | đường dẫn cấm bị đổi | một chương trình của phiên ghi vào `laws.forbidden_paths` hay file `.env`; không có gì được commit | trả các file đó về như cũ hoặc xóa trong đất riêng, rồi `retry` |
