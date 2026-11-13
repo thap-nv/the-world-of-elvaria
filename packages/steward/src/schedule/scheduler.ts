@@ -28,6 +28,11 @@ export interface Scheduler {
   step(ctx: Context, zone: ZonedTime, notices: StewardNotices): Promise<void>;
   /** Aborts the job running outside the tick and waits for it to end. */
   stop(): Promise<void>;
+  /**
+   * Resolves once the job running outside the tick now has ended, its `schedule.ran` written and its slot free: what
+   * Steward.idle() waits on, so a spec's next tick sees the job gone however slowly the log was written.
+   */
+  idle(): Promise<void>;
 }
 
 interface Outside {
@@ -107,6 +112,9 @@ export function createScheduler(jobs: readonly StewardJob[]): Scheduler {
       if (running === undefined) return;
       running.controller.abort();
       await running.done;
+    },
+    idle: async () => {
+      await outside?.done;
     },
   };
 }

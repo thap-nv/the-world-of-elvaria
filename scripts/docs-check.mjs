@@ -63,24 +63,42 @@ export function adrProblems(files, read) {
 
 /** The most a Markdown file in docs/ may weigh: what a session reads without paging through it (P1-52). */
 export const DOC_MAX_KB = 150;
+/**
+ * The most CLAUDE.md may weigh: every session on the repo loads all of it before its first step. It grew from 14.6 KB
+ * to 32 KB in a week, mostly by repeating docs/cli.md and the plan; 29 KB is its size once cut, plus a few lines.
+ */
+export const CLAUDE_MD_MAX_KB = 29;
 const DOC_MARKDOWN = /^docs\/.+\.md$/;
+
+/** Which files have a ceiling, and what to do when one passes it. */
+const CEILINGS = [
+  {
+    weighs: (/** @type {string} */ file) => DOC_MARKDOWN.test(file),
+    maxKb: DOC_MAX_KB,
+    advice: 'split it (the implementation plan: a new part file, or pnpm plan:split)',
+  },
+  {
+    weighs: (/** @type {string} */ file) => file === 'CLAUDE.md',
+    maxKb: CLAUDE_MD_MAX_KB,
+    advice: 'point to docs/cli.md, the plan or .claude/rules instead of repeating them',
+  },
+];
 
 /**
  * Markdown files in docs/ over DOC_MAX_KB, generated ones too, since sessions read them alike: the one-file plan
- * grew to 1 MB, and a scout without a search tool read it 25 times (Q10 of P1-50).
+ * grew to 1 MB, and a scout without a search tool read it 25 times (Q10 of P1-50). CLAUDE.md over CLAUDE_MD_MAX_KB.
  * @param {readonly string[]} files
  * @param {Read} read
  */
 export function sizeProblems(files, read) {
   const encoder = new TextEncoder();
-  return files
-    .filter((file) => DOC_MARKDOWN.test(file))
-    .flatMap((file) => {
-      const kb = encoder.encode(read(file) ?? '').length / 1024;
-      if (kb <= DOC_MAX_KB) return [];
-      const size = `${Math.ceil(kb)} KB, over ${DOC_MAX_KB} KB`;
-      return [`${file}: ${size}; split it (the implementation plan: a new part file, or pnpm plan:split)`];
-    });
+  return files.flatMap((file) => {
+    const ceiling = CEILINGS.find(({ weighs }) => weighs(file));
+    if (ceiling === undefined) return [];
+    const kb = encoder.encode(read(file) ?? '').length / 1024;
+    if (kb <= ceiling.maxKb) return [];
+    return [`${file}: ${Math.ceil(kb)} KB, over ${ceiling.maxKb} KB; ${ceiling.advice}`];
+  });
 }
 
 /** @param {readonly string[]} files */

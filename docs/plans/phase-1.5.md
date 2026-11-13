@@ -294,6 +294,7 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
 - **Test**: một kế hoạch giả có ba phần cho đúng các số; quest không phải kế hoạch thì `--plan` báo lỗi dùng.
 
 - **Từ phiên nghiên cứu** (chủ nhân chốt 2026-11-13, §11): ba số đo thêm trong `packages/domain/src/metrics/`, đều từ log và file quest: thời gian quest nằm ở từng trạng thái (trung vị và lớn nhất; nhất là `review` chưa có người chấm và `awaiting_seal`); tỉ lệ đạt theo số lượt làm, căn cứ để quyết `max_attempts` mặc định; tỉ lệ lời khuyên của Tể tướng trên thư đưa lên (`memo.escalated`) khớp quyết định của chủ nhân, căn cứ để nới `delegation.max_rank`. `elvaria metrics` in cả ba; log không có `memo.escalated` thì mục thứ ba trống.
+- **Từ PS-06** (chủ nhân chốt 2026-11-13, §11): máy kiểm mục của `plans/<chủ đề>.md` (ít nhất `## Summary`, mục mà trang tóm tắt in ra) trong check `subquests`; `elvaria quest show` in tấu trình (khối `## Brief` ở đầu mô tả của quest kế hoạch) tách khỏi phần còn lại của mô tả, cạnh trang tóm tắt.
 
 ## PS-21b — Đồ thị trong lập kế hoạch
 

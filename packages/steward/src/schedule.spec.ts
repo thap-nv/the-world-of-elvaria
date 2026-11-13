@@ -3,7 +3,7 @@
 import { openEventLog } from '@elvaria/eventlog';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { bench, questPayload } from './__fixtures__/kingdom.ts';
+import { bench, questPayload, settled } from './__fixtures__/kingdom.ts';
 import type { Bench, BenchOptions } from './__fixtures__/kingdom.ts';
 import type { Digest, JobRun, JobView, ScheduledJob, Steward } from './types.ts';
 import type { DailyJobId } from '@elvaria/domain';
@@ -65,6 +65,16 @@ const ran = async (kingdom: Bench) =>
     .filter(({ type }) => type === 'schedule.ran')
     .map(({ data }) => data);
 
+/**
+ * The tick after a held job was told to finish. The scheduler writes `schedule.ran` before it lets another job start,
+ * in real time: a tick at once may come first on a busy machine, so wait for the job's end first (settled, which
+ * waits on Steward.idle(); .claude/rules/runner.md, "Bẫy đã gặp").
+ */
+async function tickAfterFinish(steward: Steward): Promise<void> {
+  await settled(steward);
+  await steward.tick();
+}
+
 describe('a scheduled job outside the tick', () => {
   it('runs one at a time without holding the tick, and is recorded once it ends', async () => {
     const chronicle = heldJob('chronicle');
@@ -81,7 +91,7 @@ describe('a scheduled job outside the tick', () => {
     });
     expect(digest.runs).toEqual([]);
     chronicle.finish();
-    await steward.tick();
+    await tickAfterFinish(steward);
     expect(await ran(kingdom)).toEqual([{ job: 'chronicle', day: '2026-11-07' }]);
     expect(digest.runs).toHaveLength(1);
   });
@@ -127,7 +137,7 @@ describe('scheduled jobs due together (PS-03b)', () => {
     expect(triage.runs).toHaveLength(1);
     expect(days).toEqual([]);
     triage.finish();
-    await steward.tick();
+    await tickAfterFinish(steward);
     expect(days).toEqual(['2026-11-07']);
     expect(await ran(kingdom)).toEqual([
       { job: 'triage', day: '2026-11-07' },
@@ -154,7 +164,7 @@ describe('scheduled jobs due together (PS-03b)', () => {
     expect(views[0]?.busy).toEqual(new Set());
     chronicle.finish();
     free = true;
-    await steward.tick();
+    await tickAfterFinish(steward);
     expect(triage.runs).toHaveLength(1);
     await steward.tick();
     expect(views).toHaveLength(2);

@@ -10,7 +10,7 @@
   "scripts": {
     "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm boundaries && pnpm schemas --check && pnpm docs:gen --check && pnpm docs:check && pnpm i18n:check",
     "check:fast": "pnpm typecheck && pnpm test && pnpm boundaries",
-    "lint": "eslint . --max-warnings=0",
+    "lint": "node --max-old-space-size=8192 node_modules/eslint/bin/eslint.js . --max-warnings=0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc -p tsconfig.json && pnpm -r --if-present typecheck",
