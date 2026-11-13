@@ -159,6 +159,14 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   root files left out; null without git, a record or a commit git knows), and `gazetteerWithDrift`
   (`src/prompt/gazetteer-drift.ts`) drops the `<!-- elvaria:commit <sha> -->` stamp of a gazetteer's first line and
   adds a sentence naming the folders that moved; a gazetteer without the stamp stays as it is.
+- Tries a territory before its first quest (PS-25, `src/plot/territory-trial.ts`): `tryTerritory` adds a detached
+  worktree `<repo>/<worktree_dir>/trial-<territory>` at the commit a new quest would fork from (`forkPoint`, fetched
+  as for a quest), runs commands.setup with the log and timeout of a quest plot's setup, then every check of the
+  territory through `runChecks` (selected as for a party's merge quest: all of them), and removes the worktree, dirty
+  or not; no branch is made, only the logs stay in `.runs/trial-<territory>*`. A failed step names the command its
+  log ran last and the first line of its output that says why (`src/plot/trial-log.ts`), or the line the
+  territory's `environment_errors` find; given the gazetteer's stamp it counts the commits since. No secret reaches
+  the trial: a setup that needs one fails there.
 - Runs the machine checks before a judge (`runChecks`, §3.2): the territory's `checks` whose `when` globs match
   what the quest touched (`selectChecks`, `globToRegExp`: dot names match, case-insensitive, like the laws' globs
   in the hook), one at a time in the plot, each logged to `<run_dir>/checks/<id>.log`; with

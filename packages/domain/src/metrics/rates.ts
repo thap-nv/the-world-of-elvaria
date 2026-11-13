@@ -1,5 +1,5 @@
-// First-pass rate by class, tag, model and kind (implementation-plan §3.16.1): of the quests whose first run was
-// decided, how many passed it.
+// First-pass rate by class, tag, model, kind and territory (implementation-plan §3.16.1; territory from PS-25, for the
+// territory's scorecard): of the quests whose first run was decided, how many passed it.
 import { firstPassOf, firstRunOf } from './judgement.ts';
 import { inWindow } from './window.ts';
 import type { QuestTrail } from './rework.ts';
@@ -19,6 +19,8 @@ export interface FirstPassRates {
   readonly by_tag: readonly PassRate[];
   readonly by_model: readonly PassRate[];
   readonly by_kind: readonly PassRate[];
+  /** PS-25: a territory whose quests keep failing their first run lacks something no single quest can mend. */
+  readonly by_territory: readonly PassRate[];
 }
 
 interface Decision {
@@ -74,5 +76,6 @@ export function firstPassRatesOf(
     by_tag: ratesBy(decisions, ({ quest }) => quest.tags),
     by_model: ratesBy(decisions, ({ model }) => [model]),
     by_kind: ratesBy(decisions, ({ quest }) => [quest.kind]),
+    by_territory: ratesBy(decisions, ({ quest }) => [quest.territory]),
   };
 }

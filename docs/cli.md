@@ -19,6 +19,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria tribe look <id>` | Xem ngoại hình của một tộc (tên, bảng màu, huy hiệu, dáng người, hào quang, khung chân dung) và nguồn của nó; kèm tùy chọn thì ghi lựa chọn của ngài vào kingdom.json. Ngoại hình chỉ để hiển thị. |
 | `elvaria territory add <path>` | Gắn một repo hoặc thư mục vào vương quốc (mở cõi). |
 | `elvaria territory list` | Liệt kê các lãnh thổ. |
+| `elvaria territory check <id>` | Chấm một lãnh thổ: thử commands.setup và mọi check trên một đất sạch ở đầu nhánh gốc, rồi in thẻ điểm (0 mana). |
 | `elvaria territory graph <id>` | Dựng đồ thị code của một lãnh thổ ở một commit (0 mana) và hỏi nó một câu. |
 | `elvaria character add <id>` | Triệu hồi một nhân vật: nghề, tộc, model và cấp ban đầu. |
 | `elvaria character list` | Liệt kê các nhân vật. |
@@ -152,6 +153,14 @@ Gắn một repo hoặc thư mục vào vương quốc (mở cõi).
 Liệt kê các lãnh thổ.
 
 Không có tham số riêng, chỉ các tùy chọn chung.
+
+## `elvaria territory check`
+
+Chấm một lãnh thổ: thử commands.setup và mọi check trên một đất sạch ở đầu nhánh gốc, rồi in thẻ điểm (0 mana).
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<id>` | Id của lãnh thổ. |
 
 ## `elvaria territory graph`
 

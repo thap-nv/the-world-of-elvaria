@@ -54,6 +54,8 @@ export interface QuestSpec {
   readonly tags?: readonly string[];
   readonly status?: Quest['status'];
   readonly sealed?: number;
+  /** Default dc1-se-team. */
+  readonly territory?: string;
 }
 
 /** A quest whose attempt log is `log`, valid by its schema. */
@@ -67,7 +69,7 @@ export function questOf(n: number, log: readonly EntrySpec[], spec: QuestSpec = 
     description: 'A quest of the metrics specs.',
     kind: spec.kind ?? 'build',
     rank: 'E',
-    territory: 'dc1-se-team',
+    territory: spec.territory ?? 'dc1-se-team',
     ...(tier === 'session'
       ? { class_required: spec.class ?? 'knight' }
       : { script: { id: 'link-check', params: {} } }),

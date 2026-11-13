@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { DAY } from './__fixtures__/day.ts';
-import { at, questId } from './__fixtures__/ledger.ts';
+import { at, lineOf, questId } from './__fixtures__/ledger.ts';
 import { metricsOf } from './metrics-of.ts';
 import { dayOf, inWindow } from './window.ts';
 
@@ -61,6 +61,7 @@ describe('metricsOf over one day', () => {
     expect(metrics.quests[3]).toEqual({
       id: questId(4),
       kind: 'publish',
+      territory: 'dc1-se-team',
       tier: 'session',
       class: 'bard',
       status: 'archived',
@@ -69,6 +70,8 @@ describe('metricsOf over one day', () => {
       rework: { infra: 0, output: 2, question: 1, unknown: 0 },
       first_pass: false,
       owner_commands: 1,
+      check_runs: 0,
+      checks_set_aside: 0,
     });
     expect(metrics.quests[0]).toMatchObject({ tokens: 410, first_pass: false });
     expect(metrics.quests[5]).toMatchObject({ tier: 'script', class: null, first_pass: null });
@@ -95,6 +98,27 @@ describe('metricsOf over other windows', () => {
     const { class_required: _class, ...classless } = judged;
     const metrics = metricsOf({ ...DAY, quests: [classless] }, ON_THE_DAY);
     expect(metrics.first_pass.by_class).toEqual([{ key: null, decided: 1, passed: 1 }]);
+  });
+
+  it('rates each territory apart when the log holds two (PS-25)', () => {
+    const quests = DAY.quests.map((quest, index) =>
+      index < 4 ? { ...quest, territory: 'elvaria' as typeof quest.territory } : quest,
+    );
+    const metrics = metricsOf({ ...DAY, quests }, ON_THE_DAY);
+    expect(metrics.first_pass.by_territory).toEqual([
+      { key: 'dc1-se-team', decided: 4, passed: 2 },
+      { key: 'elvaria', decided: 4, passed: 1 },
+    ]);
+    expect(metrics.quests.filter(({ territory }) => territory === 'elvaria')).toHaveLength(4);
+  });
+
+  it("counts each quest's runs of checks that passed or failed, and those set aside", () => {
+    const end = (outcome: string, minute: number, extra: Record<string, unknown> = {}) =>
+      lineOf('check.end', { outcome, checks: [], ...extra }, at(minute), questId(1));
+    const environment = { check: 'e2e', line: 'Cannot connect to the Docker daemon' };
+    const events = [...DAY.events, end('pass', 5), end('fail', 6, { environment }), end('stopped', 7)];
+    const [first] = metricsOf({ ...DAY, events }, ON_THE_DAY).quests;
+    expect(first).toMatchObject({ id: questId(1), check_runs: 2, checks_set_aside: 1 });
   });
 
   it('reads the whole kingdom without a window', () => {

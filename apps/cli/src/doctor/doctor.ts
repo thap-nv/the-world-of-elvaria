@@ -25,6 +25,7 @@ import { checkGit, checkRegistry, checkTerritories } from './check-kingdom.ts';
 import { checkMana } from './check-mana.ts';
 import { checkLeftSessions, checkTreasury } from './check-state.ts';
 import { checkTerritorySetup } from './check-territory-setup.ts';
+import { checkTerritoryTrials } from './check-territory-trial.ts';
 import { checkTribe, skipsTribe } from './check-tribe.ts';
 import { finding, findingLines } from './finding.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
@@ -119,6 +120,7 @@ async function runDoctor(input: CommandInput, cli: CliContext): Promise<ExitCode
     ...(await checkTerritories(ctx)),
     ...(await checkTerritoryCommands(ctx)),
     ...(await checkTerritorySetup(ctx)),
+    ...(await checkTerritoryTrials(ctx)),
     ...(await checkGraph(ctx, options.pin)),
     ...(await checkJudges(ctx)),
     await checkTreasury(ctx),
