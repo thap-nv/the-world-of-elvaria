@@ -90,6 +90,16 @@ export const QuestFieldsSchema = z.strictObject({
   plot: PlotSchema,
   deliverable: DeliverableSchema,
   seal_required: z.boolean().meta({ default: false }),
+  // PS-04, ADR 0026: optional and added after v1, so `version` stays 1; a quest that touched no protected path has none.
+  protected_changes: z
+    .array(NonEmptyStringSchema)
+    .min(1)
+    .optional()
+    .meta(
+      describe(
+        "The files under the territory's laws.protected_paths that the quest's work changed, relative to its plot with `/`, gathered over its submits. The Steward sets it with seal_required at a submit: the quest waits for the royal seal whatever its kind's seal_default, and its judge is chosen as for a quest of rank B or above.",
+      ),
+    ),
   seal: SealSchema.optional(),
   blocked: BlockedSchema.optional(),
   secrets_required: SecretNamesSchema.default(() => []),

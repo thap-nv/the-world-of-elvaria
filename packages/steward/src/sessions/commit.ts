@@ -3,11 +3,12 @@
 // `--no-verify`): a refusal leaves the work in the plot, and the caller says so. Never a path of the territory's
 // laws.forbidden_paths (P1-49, (b) of P1-46): the fence stops a session's tools, not a program its shell runs, which
 // may write there (`node write-secret.mjs`, spike Antigravity §15); the plot's changes are read first, and one such
-// path leaves everything uncommitted.
-import { currentRun, runDirOf } from '@elvaria/domain';
+// path leaves everything uncommitted. The same read names the paths of laws.protected_paths the work changed (PS-04,
+// ADR 0026): never a refusal, the submit marks the quest for the royal seal and the stronger judge instead.
+import { currentRun, protectedPathsOf, runDirOf } from '@elvaria/domain';
 import { forbiddenChangesOf, forbiddenPathsOf } from '@elvaria/runner-core';
 import { inKingdom } from '@elvaria/store';
-import type { QuestId } from '@elvaria/domain';
+import type { Quest, QuestId } from '@elvaria/domain';
 import type { CommitOutcome } from '@elvaria/runner-core';
 
 import { pathsSaid } from '../infirmary.ts';
@@ -15,8 +16,13 @@ import type { Context } from '../context.ts';
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
-/** What the Steward's commit did: git's outcome, or nothing committed for the forbidden paths the plot changed. */
-export type PlotCommit = CommitOutcome | { readonly status: 'forbidden'; readonly paths: readonly string[] };
+/**
+ * What the Steward's commit did: git's outcome, with the protected paths the plot's changes touch when there are any
+ * (PS-04), or nothing committed for the forbidden paths the plot changed.
+ */
+export type PlotCommit =
+  | (CommitOutcome & { readonly protected_changes?: readonly string[] })
+  | { readonly status: 'forbidden'; readonly paths: readonly string[] };
 
 /** Why a WIP commit was not made: the forbidden paths, for the infirmary's `wip` detail. */
 export const forbiddenWip = (paths: readonly string[]): string =>
@@ -35,6 +41,23 @@ export function warnUncommitted(ctx: Context, questId: QuestId, outcome: PlotCom
 }
 
 /**
+ * The protected paths a quest's plot changed since it forked, for a submit no commitPlot comes before: the machine's
+ * merge of a party's parts (PS-04). None when git cannot say (logged): a merge quest waits for the seal all the same.
+ */
+export async function protectedChangesIn(ctx: Context, quest: Quest): Promise<string[]> {
+  const globs = protectedPathsOf(ctx.world.territories.get(quest.territory));
+  if (globs.length === 0) return [];
+  try {
+    return forbiddenChangesOf(await ctx.deps.plots.touched(quest.plot), globs);
+  } catch (error) {
+    ctx.deps.log.warn(
+      `steward: ${quest.id}: the protected paths its work changed are unknown: ${messageOf(error)}`,
+    );
+    return [];
+  }
+}
+
+/**
  * `git add --all` + commit in the quest's plot; a failing git is a refusal too, never a bypass. A plot whose
  * changes git cannot list is refused as well: the fence cannot be checked, so nothing is committed. Every Steward
  * commit comes with the run's folder in `.runs/` (P1-55): scratch files at the plot's root that a character cannot
@@ -48,6 +71,8 @@ export async function commitPlot(ctx: Context, questId: QuestId, message: string
     const changed = await ctx.deps.plots.touched(quest.plot);
     const paths = forbiddenChangesOf(changed, forbiddenPathsOf(territory));
     if (paths.length > 0) return { status: 'forbidden', paths };
+    // Matched as the forbidden paths are, at any depth: a seal asked for in error costs the owner one look.
+    const guarded = forbiddenChangesOf(changed, protectedPathsOf(territory));
     const dir = inKingdom(ctx.root, runDirOf(quest, currentRun(quest), 'assignee'));
     const outcome = await ctx.deps.plots.commit(quest.plot, message, { dir });
     const aside = 'set_aside' in outcome ? (outcome.set_aside ?? []) : [];
@@ -55,7 +80,7 @@ export async function commitPlot(ctx: Context, questId: QuestId, message: string
       ctx.deps.log.warn(
         `steward: ${questId}: left out of the commit and set aside in ${dir}: ${aside.join(', ')}`,
       );
-    return outcome;
+    return guarded.length === 0 ? outcome : { ...outcome, protected_changes: guarded };
   } catch (error) {
     return { status: 'refused', detail: messageOf(error) };
   }

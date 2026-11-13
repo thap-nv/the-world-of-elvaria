@@ -1,6 +1,6 @@
-# Lãnh thổ Elvaria: file nóng và vùng file
+# Lãnh thổ Elvaria: file nóng, vùng file và vùng bảo vệ
 
-Ngày 2026-11-12, PS-05 ([kế hoạch giai đoạn 1.5](../plans/phase-1.5.md) mục PS-05, [ADR 0028](../adr/0028-plan-review-and-scope-paths.md)). Ai đọc: chủ nhân, phiên đặt `territory.json` của lãnh thổ `elvaria` (PS-07 đặt danh sách dưới đây vào vương quốc; PS-05 không sửa vương quốc nào), và PS-04, task thêm mục `protected_paths` của lãnh thổ này vào cùng file.
+Ngày 2026-11-12, PS-05 ([kế hoạch giai đoạn 1.5](../plans/phase-1.5.md) mục PS-05, [ADR 0028](../adr/0028-plan-review-and-scope-paths.md)). Ai đọc: chủ nhân, phiên đặt `territory.json` của lãnh thổ `elvaria` (PS-07 đặt danh sách `shared_paths` dưới đây vào vương quốc; PS-05 không sửa vương quốc nào). Mục "Vùng bảo vệ" thêm ngày 2026-11-13, PS-04 ([kế hoạch giai đoạn 1.5](../plans/phase-1.5.md) mục PS-04, [ADR 0026](../adr/0026-guarded-self-change.md)); PS-04 cũng không sửa vương quốc nào: phiên điều phối đặt danh sách `protected_paths` sau khi PS-04 vào `main`, có sao lưu và hỏi chủ nhân.
 
 ## Vùng file và file nóng
 
@@ -44,6 +44,52 @@ Theo bài học điều phối giai đoạn 1 (lượt soát kế hoạch giai �
 - `apps/cli/src/commands.ts` không có trong danh sách của kế hoạch: thêm theo lời phiên điều phối khi mở PS-05 (bảng lệnh là chỗ chung của mọi task thêm lệnh).
 - Lãnh thổ có mục `regenerate` thì phải có `commands.generate` (schema territory từ chối nếu thiếu). `pnpm schemas` chạy trước `pnpm docs:gen`.
 - Chưa vào danh sách: snapshot prompt của `packages/runner-core/src/prompt/__snapshots__/` (task nào đổi prompt cũng đổi chúng, nhưng không lệnh `generate` nào sinh lại chúng: sinh bằng `vitest -u`), và `docs/plans/phase-1.5.md` (mỗi task sửa mục của mình, hiếm khi cùng một đoạn). Xét lại khi PS-09 đo được số conflict thật.
+
+## Vùng bảo vệ
+
+`laws.protected_paths` (tùy chọn) là các glob, tính từ gốc lãnh thổ, của thứ canh giữ thế giới: luật, check, người chấm, sổ đo, bản nâng cấp. Khác `forbidden_paths`, vùng bảo vệ không chặn gì: nhân vật vẫn đọc, sửa, và Quản sự vẫn commit. Ở mỗi lần nộp, Quản sự đọc thay đổi của đất riêng (cùng lần đọc với `forbidden_paths`, từ lúc đất riêng tách nhánh, cả file chưa commit) và khớp chúng với `protected_paths` theo cùng cách: glob khớp ở mọi độ sâu, nên `CLAUDE.md` cũng nêu `packages/x/CLAUDE.md`; thà chờ dấu nhầm. Khi có đường dẫn khớp:
+
+- quest được đặt `seal_required: true` (bất kể `seal_default` của dạng, kể cả dạng `analyze` hay `research`) và `protected_changes` (các đường dẫn đã chạm, gộp qua mọi lần nộp); phán quyết đạt thì quest chờ dấu vua (`awaiting_seal`) và chuông kêu như mọi quest cần dấu;
+- người chấm được chọn như quest từ hạng B: sau luật khác họ model và khác tộc, người cấp cao hơn đứng trước (P1-48); luật tách vai không đổi;
+- `elvaria quest show` có dòng "Vùng bảo vệ đã chạm" nêu các đường dẫn.
+
+Dấu đã đặt thì không gỡ: lần nộp sau không còn chạm vùng bảo vệ vẫn giữ dấu, như máy không bao giờ hạ `seal_required` (một lần nhìn của chủ nhân rẻ hơn một thay đổi lọt vào thứ canh giữ). Lượt ghép của máy trong một đội cũng đọc thay đổi của mình: phần nào chạm vùng bảo vệ thì quest ghép mang `protected_changes` và được ưu tiên người chấm mạnh (quest ghép vốn luôn cần dấu). Quest bậc script không commit gì nên không bao giờ chạm.
+
+### Danh sách `protected_paths` của lãnh thổ Elvaria
+
+Theo §3.16.4 và [ADR 0026](../adr/0026-guarded-self-change.md): danh sách "Đọc trước khi sửa" của `CLAUDE.md`, cộng luật và cổng của repo (`.claude/**`, `CLAUDE.md`, `docs/adr/**`, `.github/**`, `packages/hooks/**`), mã sổ đo (`packages/domain/src/metrics/**`), ba file registry quyết định ai làm, ai chấm, chấm theo nghi thức nào, và (chủ nhân chốt 2026-11-12, sau PS-04b) phần thử của `elvaria upgrade`, vì nó quyết định bản nào được ghim.
+
+```json
+"laws": {
+  "protected_paths": [
+    "packages/domain/src/quest/transitions.ts",
+    "packages/domain/src/quest/transition.ts",
+    "packages/domain/src/quest/effects.ts",
+    "packages/domain/src/verify/**",
+    "packages/domain/src/mana/**",
+    "packages/eventlog/src/redact*",
+    "packages/runner-core/src/treasury/**",
+    "packages/config/boundaries.mjs",
+    "docs/schemas/**",
+    "packages/domain/src/schema/**",
+    ".claude/**",
+    "CLAUDE.md",
+    "docs/adr/**",
+    ".github/**",
+    "packages/hooks/**",
+    "packages/domain/src/metrics/**",
+    "packages/registry-default/rituals.json",
+    "packages/registry-default/classes.json",
+    "packages/registry-default/kinds.json",
+    "apps/cli/src/upgrade/**"
+  ]
+}
+```
+
+- Thêm vào `laws` đang có của `territories/elvaria/territory.json` (giữ `forbidden_paths`, `patch_paths`…), không thay cả khối. Sao lưu file trước, rồi `elvaria doctor` để kiểm file còn đọc được.
+- Glob thư mục viết `<thư mục>/**`: tên thư mục trần (`docs/adr`) không khớp file bên trong.
+- `docs/schemas/**` vừa là file nóng (`shared_paths`, `regenerate`) vừa là vùng bảo vệ: hai luật độc lập. Quest đổi schema zod sinh lại `docs/schemas/**` và cần dấu; quest chỉ chạy `pnpm schemas` mà không đổi gì thì không chạm.
+- Danh sách là dữ liệu: chủ nhân thu hẹp hay mở rộng bằng cách sửa file. Vương quốc đang ghim một bản trước PS-04 không đọc được lãnh thổ có trường này (`laws` là `strictObject`): chỉ thêm sau khi vương quốc ghim một bản có PS-04 (`elvaria upgrade`), và sau một lần `elvaria upgrade --rollback` về bản trước PS-04 thì gỡ nó đi.
 
 ## Bẫy
 

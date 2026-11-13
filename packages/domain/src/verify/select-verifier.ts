@@ -2,7 +2,8 @@
 // ADR 0008, ADR 0020). Never anyone who worked the quest, or any quest of its party; a class that verifies the
 // quest's kind; never the model of anyone who worked it (P1-55: of every run, not only the last: the Steward's own
 // run of a party's merge has no assignee to compare). Among those free now: another model family first, then another
-// tribe (account), then on a quest of rank STRONG_JUDGE_MIN_RANK or above the judge of the higher level (P1-48), then
+// tribe (account), then on a quest of rank STRONG_JUDGE_MIN_RANK or above, or one whose work changed a protected path
+// (PS-04, ADR 0026), the judge of the higher level (P1-48), then
 // a tribe whose CLI hands in a structured verdict itself over one whose judge answers in text (§3.14
 // `prompt_and_parse`, P1-33), then the one idle the longest. With no judge of another family free,
 // dispatch.verifier_same_family decides: `different_model` takes a free judge of the same family on another model
@@ -16,6 +17,7 @@ import { STRONG_JUDGE_MIN_RANK } from '../constants.ts';
 import { byIdleSince } from '../dispatch/roster.ts';
 import { RANKS } from '../schema/common.ts';
 import { pastAssigneesOf } from './past-assignees-of.ts';
+import { touchesProtected } from './protected.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
 import type { Quest } from '../schema/quest/quest.ts';
@@ -52,9 +54,12 @@ export type Selection =
 /** Nobody fits now: the quest waits in review for a later tick. */
 export type NoVerifier = null;
 
-/** Whether a quest of `rank` wants the stronger judge first (P1-48, P1-16 (l): "Opus from rank B"). */
-export const wantsStrongJudge = (rank: Quest['rank']): boolean =>
-  RANKS.indexOf(rank) >= RANKS.indexOf(STRONG_JUDGE_MIN_RANK);
+/**
+ * Whether `quest` wants the stronger judge first: from rank B (P1-48, P1-16 (l): "Opus from rank B"), and whatever its
+ * rank once its work changed a protected path (PS-04, ADR 0026).
+ */
+export const wantsStrongJudge = (quest: Pick<Quest, 'rank' | 'protected_changes'>): boolean =>
+  RANKS.indexOf(quest.rank) >= RANKS.indexOf(STRONG_JUDGE_MIN_RANK) || touchesProtected(quest);
 
 /**
  * Another tribe first (another account, another pool), then on a quest that wants it the stronger judge, then a
@@ -65,7 +70,7 @@ export const wantsStrongJudge = (rank: Quest['rank']): boolean =>
  */
 const byPreference = (quest: Quest, { doers, limits }: Pick<VerifierPolicy, 'doers' | 'limits'>) => {
   const sameTribe = (c: Character): number => Number(doers.some(({ tribe }) => tribe === c.tribe));
-  const weaker = wantsStrongJudge(quest.rank) ? (c: Character): number => -c.level : () => 0;
+  const weaker = wantsStrongJudge(quest) ? (c: Character): number => -c.level : () => 0;
   const inText = (c: Character): number =>
     Number(limits?.[c.tribe]?.structured_output === 'prompt_and_parse');
   return (a: Character, b: Character): number =>

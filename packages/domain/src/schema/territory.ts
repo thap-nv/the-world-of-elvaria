@@ -68,6 +68,16 @@ const LawsSchema = z
       .default(() => [])
       .meta(describe('Regular expressions matched against normalised commands (bash and PowerShell).')),
     read_before_write: z.array(NonEmptyStringSchema).default(() => []),
+    // PS-04, ADR 0026: optional and added after v1, so `version` stays 1. No default: `territory add` writes what it
+    // parses, and a territory.json without the field stays readable by a build pinned before PS-04 (a rollback).
+    protected_paths: z
+      .array(NonEmptyStringSchema)
+      .optional()
+      .meta(
+        describe(
+          "Globs of what guards the world (its rules, checks, judges and measures), matched at any depth as forbidden_paths are. Never a refusal: a quest whose work changes one needs the royal seal whatever its kind's seal_default, and its judge is chosen as for a quest of rank B or above. Absent: none.",
+        ),
+      ),
     rank_floor: z
       .array(z.strictObject({ glob: NonEmptyStringSchema, min_rank: RankSchema }))
       .default(() => []),
