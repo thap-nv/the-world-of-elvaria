@@ -81,7 +81,8 @@
   `readmeProblems` (every `packages/*/README.md` and `apps/*/README.md` has the four `##` sections `Does`,
   `Does not`, `Depends on`, `How to test` in order), `adrProblems` (every `docs/adr/NNNN-*.md` has a valid
   `- Status:` line), `shellScriptProblems` (no `.sh`, `.ps1`, `.cmd`, or `.bat` files in the repo),
-  `sizeProblems` (no `docs/**/*.md`, generated or not, over `DOC_MAX_KB` = 150 KB of UTF-8, P1-52),
+  `sizeProblems` (no `docs/**/*.md`, generated or not, over `DOC_MAX_KB` = 150 KB of UTF-8, P1-52; the root
+  `CLAUDE.md`, which every session loads whole, not over `CLAUDE_MD_MAX_KB` = 29 KB),
   `linkProblems` (`docs-links.mjs`), `termProblems` (glossary tables `quest_statuses` and `character_statuses`
   match `QUEST_STATUSES` and `CHARACTER_STATUSES` of `@elvaria/domain` exactly, and `ritual_steps` and `events`
   include every `RITUAL_STEPS` and `EVENT_TYPES` value), `bannedIdentifierProblems` (`docs-identifiers.mjs`),

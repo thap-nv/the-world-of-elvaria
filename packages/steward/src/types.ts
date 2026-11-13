@@ -232,8 +232,8 @@ export interface Steward {
   /** Sessions still running: what a test waits on. */
   running(): number;
   /**
-   * Resolves once the checks and scripts running outside the tick now have ended (P1-25): what a test waits on before
-   * the tick that reads them.
+   * Resolves once the checks and scripts running outside the tick now have ended (P1-25), the graph builds and the
+   * scheduled job outside the tick too (PS-03): what a test waits on before the tick that reads them.
    */
   idle(): Promise<void>;
 }

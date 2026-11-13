@@ -73,6 +73,11 @@ const jobsOf = (deps: StewardDeps): StewardJob[] => [
   })),
 ];
 
+/** Steward.idle(): the checks, scripts and graph builds outside the tick, and the scheduled job outside it (PS-03). */
+const idleOf = async (state: State): Promise<void> => {
+  await Promise.all([state.background.idle(), state.graphs?.idle(), state.scheduler.idle()]);
+};
+
 export function createSteward(deps: StewardDeps): Steward {
   const state: State = {
     sessions: createSessions(pidsWriter(deps.store.root)),
@@ -129,6 +134,6 @@ export function createSteward(deps: StewardDeps): Steward {
     },
     tick,
     running: () => state.sessions.size(),
-    idle: () => Promise.all([state.background.idle(), state.graphs?.idle()]).then(() => undefined),
+    idle: () => idleOf(state),
   };
 }
