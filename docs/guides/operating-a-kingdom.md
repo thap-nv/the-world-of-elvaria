@@ -191,6 +191,8 @@ Các lệnh trên chỉ đọc, không tốn mana, chạy được khi Quản s�
 
 Với một đội, chỉ merge nhánh của **quest ghép**; hợp đồng và các phần vào `main` qua nó.
 
+**Vùng bảo vệ** (PS-04): lãnh thổ khai `laws.protected_paths` (thứ canh giữ thế giới: luật, check, người chấm, sổ đo). Quest có thay đổi chạm một đường dẫn trong đó thì cần dấu vua dù dạng của nó không cần (kể cả `analyze`), và được ưu tiên người chấm cấp cao hơn như quest từ hạng B; `quest show` có dòng "Vùng bảo vệ đã chạm". Không có gì bị chặn: đọc kỹ các file đó trong diff trước khi đóng dấu. Cách đặt và danh sách của lãnh thổ Elvaria: [elvaria-territory.md](elvaria-territory.md).
+
 ## 8. `doctor`, phiên bản CLI và việc ghim
 
 Chạy `elvaria doctor` **đầu mỗi ngày chạy** và sau mỗi thay đổi cấu hình. Nó kiểm registry, git, CLI của từng tộc (đường dẫn, phiên bản, đăng nhập, hook đã build), shell của tộc, từng lãnh thổ và chương trình mà lệnh của chúng gọi, Docker khi một lệnh dùng nó, danh tính git (`user.email`) của từng repo, `.claude/rules/` có nằm trong `laws.patch_paths` không, model người làm mà mọi người chấm khác model chung một kho mana, hai người chấm trên một kho cũng tính (cảnh báo: kho đó đóng là bài của model đó không ai chấm; đếm theo kho từ PS-03), kho bảo vật, phiên còn sót, đồng hồ mana, và bản mà vương quốc ghim (lỗi khi bản ghim không còn trên đĩa hay `.state/build.json` không đọc được; cảnh báo khi lệnh chạy bằng mã khác với `--here`). Lỗi thì in "Chưa sẵn sàng: n lỗi"; cảnh báo không chặn.

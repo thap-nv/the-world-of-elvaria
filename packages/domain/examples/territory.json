@@ -78,6 +78,7 @@
         "packages/shared/src/auth/**",
         "apps/api/src/infra/db/migrations/**"
       ],
+      "protected_paths": [".github/**", ".husky/**", "packages/shared/src/auth/**"],
       "rank_floor": [
         {
           "glob": "packages/shared/src/auth/permissions.ts",

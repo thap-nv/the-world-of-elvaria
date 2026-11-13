@@ -63,7 +63,7 @@ Bối cảnh khi lập kế hoạch:
 | §8, task đã xong: Giai đoạn 1 — Tầng việc chạy thật | [8-done-phase-1.md](implementation-plan/8-done-phase-1.md) |
 | §8, task đã xong: Chặng tự cường — task `PS-…` (kế hoạch sản phẩm 0.8 mục 14, §3.16) | [8-done-ps.md](implementation-plan/8-done-ps.md) |
 | §9 Phản biện và rủi ro · §9.1 Chỗ khác kế hoạch sản phẩm (đã chốt 2026-11-06) · §9.2 Rủi ro kỹ thuật | [9-risks.md](implementation-plan/9-risks.md) |
-| §11 Nhật ký quyết định, mỗi ngày một file | [2026-11-06](implementation-plan/11-2026-11-06.md) · [2026-11-07](implementation-plan/11-2026-11-07.md) · [2026-11-08](implementation-plan/11-2026-11-08.md) · [2026-11-09](implementation-plan/11-2026-11-09.md) · [2026-11-10](implementation-plan/11-2026-11-10.md) · [2026-11-11](implementation-plan/11-2026-11-11.md) · [2026-11-12](implementation-plan/11-2026-11-12.md) |
+| §11 Nhật ký quyết định, mỗi ngày một file | [2026-11-06](implementation-plan/11-2026-11-06.md) · [2026-11-07](implementation-plan/11-2026-11-07.md) · [2026-11-08](implementation-plan/11-2026-11-08.md) · [2026-11-09](implementation-plan/11-2026-11-09.md) · [2026-11-10](implementation-plan/11-2026-11-10.md) · [2026-11-11](implementation-plan/11-2026-11-11.md) · [2026-11-12](implementation-plan/11-2026-11-12.md) · [2026-11-13](implementation-plan/11-2026-11-13.md) |
 <!-- /docs:gen plan-index -->
 
 **Ghi vào đâu.**

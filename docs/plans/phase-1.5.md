@@ -246,6 +246,7 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
 - **Đọc trước khi sửa** (CLAUDE.md): `packages/domain/src/verify/**`, schema territory.
 - **Test**: quest dạng `analyze` chạm vùng bảo vệ chờ dấu; quest ngoài vùng không đổi hành vi.
 - **Vương quốc đang chạy**: thêm `protected_paths` vào `territory.json` của Elvaria bằng script có sao lưu.
+- **Đã làm** (2026-11-13, chỗ khác và lựa chọn ở §11): `laws.protected_paths` tùy chọn, không mặc định (file lãnh thổ không có nó vẫn đọc được bằng bản ghim trước PS-04); `quest.protected_changes` tùy chọn là cờ, mang các đường dẫn đã chạm gộp qua mọi lần nộp. `commitPlot` trả thêm `protected_changes` (khớp bằng `forbiddenChangesOf`, ở mọi độ sâu); `protectedMarkOf` (domain, `verify/protected.ts`) cho `Move.before` của bước nộp `{seal_required: true, protected_changes}`, không bao giờ gỡ; `wantsStrongJudge(quest)` đọc hạng và cờ. Lượt ghép của máy (`party/machine.ts`) đọc thay đổi của mình bằng `protectedChangesIn`. `quest show` có dòng "Vùng bảo vệ đã chạm". Danh sách của lãnh thổ Elvaria: [guides/elvaria-territory.md](../guides/elvaria-territory.md) mục "Vùng bảo vệ"; không vương quốc nào bị sửa.
 
 ## PS-04b — Nâng cấp có đường lùi
 

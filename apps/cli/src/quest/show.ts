@@ -1,6 +1,6 @@
 // `elvaria quest show <id>`: one quest, its fields as labelled lines (its party too, P1-21 (c)), why it waits (nobody
-// can take it, P1-03; the infirmary, P1-32; a scope held, PS-05), what its last run came to (verdicts, plot put back,
-// P1-46), then its description.
+// can take it, P1-03; the infirmary, P1-32; a scope held, PS-05), the protected paths its work changed (PS-04), what its
+// last run came to (verdicts, plot put back, P1-46), then its description.
 import type { Event, Quest, Registry } from '@elvaria/domain';
 import type { MessageKey } from '@elvaria/i18n';
 import { inKingdom } from '@elvaria/store';
@@ -46,6 +46,10 @@ function fields(
     ['cli.quest.field.attempts', `${quest.attempts}/${quest.budget.max_attempts}`],
     ['cli.quest.field.depends_on', listed(quest.depends_on)],
     ['cli.quest.field.seal', t(quest.seal_required ? 'cli.yes' : 'cli.no')],
+    // Why the seal, when the work changed a protected path (PS-04, ADR 0026).
+    ...(quest.protected_changes === undefined
+      ? []
+      : [['cli.quest.field.protected', listed(quest.protected_changes)] satisfies [MessageKey, string]]),
     ['cli.quest.field.created', `${quest.created_at} (${quest.created_by})`],
     ['cli.quest.field.updated', quest.updated_at],
     ...(quest.blocked === undefined
