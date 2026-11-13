@@ -1,6 +1,7 @@
 // The metrics ledger, read side (implementation-plan §3.16.1, ADR 0027): a pure function of the quests, their
 // verdicts, the event log and the handled inbox commands. `elvaria metrics` prints it and docs/metrics-report.md
 // renders it; nothing here writes, so a kingdom is measured without a Steward and without mana.
+import { adviceOf } from './advice.ts';
 import { REWORK_CAUSES, OWNER_COMMAND_KINDS } from './causes.ts';
 import { escapedOf, firstPassOf, firstRunOf, sealedCostOf } from './judgement.ts';
 import { ownerCommandsOf, sequelsIn, sessionModelsOf, trailsOf } from './ledger.ts';
@@ -8,8 +9,11 @@ import { checkRunsOf, outOfScopeOf, readsOf, setAsidesOf } from './log-counts.ts
 import { memoCountsOf, objectionsOf } from './memo-counts.ts';
 import { firstPassRatesOf } from './rates.ts';
 import { reworkOf } from './rework.ts';
+import { passByRunOf } from './run-rates.ts';
 import { firstEditsOf, graphQueriesOf, promptSizesOf } from './session-counts.ts';
+import { statusTimesOf } from './status-times.ts';
 import { inWindow } from './window.ts';
+import type { AdviceMatch } from './advice.ts';
 import type { OwnerCommandKind, ReworkCause } from './causes.ts';
 import type { EscapedDefect, SealedCost } from './judgement.ts';
 import type { MetricsInput, OwnerCommand } from './ledger.ts';
@@ -17,7 +21,9 @@ import type { CheckRunCount, OutOfScope, Reads, SetAside } from './log-counts.ts
 import type { JudgeObjections, MemoCount } from './memo-counts.ts';
 import type { FirstPassRates } from './rates.ts';
 import type { QuestTrail, Rework } from './rework.ts';
+import type { RunPassRate } from './run-rates.ts';
 import type { FirstEdits, GraphQueries, PromptSizes } from './session-counts.ts';
+import type { StatusTime } from './status-times.ts';
 import type { MetricsWindow } from './window.ts';
 import type { ClassId, KindId, QuestId, TerritoryId } from '../core/ids.ts';
 import type { QuestStatus, Tier } from '../schema/quest/shared.ts';
@@ -90,6 +96,12 @@ export interface Metrics {
   readonly memos: readonly MemoCount[];
   /** For each judge, the verdicts a second judge read beside an objection, and those it overturned (PS-22). */
   readonly objections: readonly JudgeObjections[];
+  /** How long quests stayed in each status, review split by whether a judge held it (PS-06b). */
+  readonly status_times: readonly StatusTime[];
+  /** The pass rate of each quest's first, second, … run of the assignee: what one more attempt is worth (PS-06b). */
+  readonly pass_by_run: readonly RunPassRate[];
+  /** The Chancellor's advice on the memos it sent up, beside the owner's decisions on them (PS-06b). */
+  readonly advice: AdviceMatch;
 }
 
 function runCountsOf(trails: readonly QuestTrail[], input: MetricsInput, window: MetricsWindow): RunCounts {
@@ -174,5 +186,8 @@ export function metricsOf(input: MetricsInput, window: MetricsWindow = {}): Metr
     out_of_scope: outOfScopeOf(input.events, window),
     memos: memoCountsOf(input.events, window),
     objections: objectionsOf(input.verdicts, window),
+    status_times: statusTimesOf(input.events, window),
+    pass_by_run: passByRunOf(trails, window),
+    advice: adviceOf(input.events, window),
   };
 }

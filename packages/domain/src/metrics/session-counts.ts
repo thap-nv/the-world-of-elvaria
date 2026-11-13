@@ -18,7 +18,7 @@ import type { Quest } from '../schema/quest/quest.ts';
 const HALVES = 2;
 
 /** The middle of `values`, which has one at least, rounded to a whole number. */
-function middleOf(values: readonly number[]): number {
+export function middleOf(values: readonly number[]): number {
   const sorted = [...values].sort((a, b) => a - b);
   // One middle value for an odd count, two for an even one.
   const middle = sorted.slice(Math.ceil(sorted.length / HALVES) - 1, Math.floor(sorted.length / HALVES) + 1);

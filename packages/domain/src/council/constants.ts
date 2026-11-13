@@ -31,3 +31,24 @@ export type QuestTemplateSection = (typeof QUEST_TEMPLATE_SECTIONS)[number]['id'
  * assignee chooses the way and says so under "Decisions taken" (owner, 2026-11-12).
  */
 export const STEPS_REQUIRED_UP_TO: Rank = 'D';
+
+/** Where a mage writes the plan file in its plot (`plans/<short-topic>.md`, the mage's prompt, P1-14). */
+export const PLAN_FILE_FOLDER = 'plans';
+
+/**
+ * The sections of a plan file, in order, with their headings: English like the quest template's, whatever the owner's
+ * language (the mage's prompt). Every one is required and holds something ("None." will do); `summary` is the page the
+ * owner seals the plan on, which `elvaria quest show` prints (PS-06b).
+ */
+export const PLAN_FILE_SECTIONS = [
+  { id: 'summary', heading: 'Summary' },
+  { id: 'survey', heading: 'Survey' },
+  { id: 'shared_decisions', heading: 'Shared decisions' },
+  { id: 'sub_quests', heading: 'Sub-quests' },
+  { id: 'done_when', heading: 'Done when' },
+  { id: 'unknowns', heading: 'Unknowns' },
+] as const;
+export type PlanFileSection = (typeof PLAN_FILE_SECTIONS)[number]['id'];
+
+/** The heading the brief opens a plan quest's description with (the Chancellor's briefText, PS-06). */
+export const BRIEF_HEADING = 'Brief';

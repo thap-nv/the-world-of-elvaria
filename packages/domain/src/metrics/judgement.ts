@@ -8,20 +8,37 @@ import type { FailKind } from '../schema/common.ts';
 import type { Attempt } from '../schema/quest/quest-parts.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 
-/**
- * Whether the quest's first run passed: its judgement (the judge's, the machine's or the owner's) holds a pass and
- * no fail. A first run that ended without one, followed by another run, did not pass (a breaker, a crash);
- * `undefined` while undecided, and for a quest no character worked (a script).
- */
-export function firstPassOf(trail: QuestTrail): boolean | undefined {
-  const runs = trail.quest.attempt_log.filter((entry) => isCounted(entry) && entry.role === 'assignee');
-  const first = runs[0];
-  if (first === undefined) return undefined;
-  const judged = trail.verdicts.filter(({ attempt, result }) => attempt === first.n && result !== 'partial');
-  if (judged.some(({ result }) => result === 'fail')) return false;
-  if (judged.some(({ result }) => result === 'pass')) return true;
-  return runs.some(({ n }) => n > first.n) ? false : undefined;
+/** One run of the quest's assignee, as the ledger judges it. */
+export interface RunJudgement {
+  readonly n: number;
+  /** Its first counted session's start. */
+  readonly started_at: string;
+  /** undefined while undecided. */
+  readonly passed: boolean | undefined;
 }
+
+/**
+ * Whether each run of the assignee passed, in order: its judgement (the judge's, the machine's or the owner's) holds a
+ * pass and no fail. A run that ended without one, followed by another run, did not pass (a breaker, a crash);
+ * `undefined` while undecided. None for a quest no character worked (a script). (PS-06b) The rate by run reads them
+ * all; the first-pass rate reads the first.
+ */
+export function runJudgementsOf(trail: QuestTrail): RunJudgement[] {
+  const runs: Attempt[] = [];
+  for (const entry of trail.quest.attempt_log)
+    if (isCounted(entry) && entry.role === 'assignee' && !runs.some(({ n }) => n === entry.n))
+      runs.push(entry);
+  return runs.map(({ n, started_at }) => {
+    const judged = trail.verdicts.filter(({ attempt, result }) => attempt === n && result !== 'partial');
+    const later = runs.some((run) => run.n > n);
+    if (judged.some(({ result }) => result === 'fail')) return { n, started_at, passed: false };
+    if (judged.some(({ result }) => result === 'pass')) return { n, started_at, passed: true };
+    return { n, started_at, passed: later ? false : undefined };
+  });
+}
+
+/** Whether the quest's first run passed (runJudgementsOf); `undefined` while undecided, and for a script. */
+export const firstPassOf = (trail: QuestTrail): boolean | undefined => runJudgementsOf(trail)[0]?.passed;
 
 /** The first counted assignee session: whose model the first-pass rate is grouped by. */
 export const firstRunOf = (quest: Quest): Attempt | undefined =>
