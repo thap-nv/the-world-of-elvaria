@@ -21,11 +21,19 @@ import type {
 import type { KingdomStore } from '@elvaria/store';
 
 import type { Bell } from './notice.ts';
-import type { Digest, ScheduledJob } from './schedule/ports.ts';
+import type { Digest, OnCallJob, ScheduledJob } from './schedule/ports.ts';
 import type { ScriptRunner } from './script/run-script.ts';
 
 export type { Bell, ManaGaugeNotice, Notice, NoticeQuest } from './notice.ts';
-export type { Digest, DigestRequest, JobMode, JobRun, JobView, ScheduledJob } from './schedule/ports.ts';
+export type {
+  Digest,
+  DigestRequest,
+  JobMode,
+  JobRun,
+  JobView,
+  OnCallJob,
+  ScheduledJob,
+} from './schedule/ports.ts';
 
 /** Problems nobody is waiting for an answer to: a refused move, a failed spawn, a lost lock. English, for logs. */
 export interface Logger {
@@ -209,6 +217,8 @@ export interface StewardDeps {
   readonly digest?: Digest;
   /** More jobs of kingdom.schedule, run by the Steward's scheduler (PS-03b's triage, PS-21c's docs graph). */
   readonly jobs?: readonly ScheduledJob[];
+  /** Jobs with no hour, run outside the tick whenever they have work (PS-22b: an amendment's author). */
+  readonly onCall?: readonly OnCallJob[];
 }
 
 export interface TickReport {

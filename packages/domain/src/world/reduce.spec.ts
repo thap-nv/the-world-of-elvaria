@@ -213,6 +213,9 @@ describe('applyEvent', () => {
       memos: MEMOS,
     });
     expect(routed.memos[open.id]).toEqual(files.memos[open.id]);
+    // PS-22b: one sent to the owner says why, as its file does.
+    const refused = applyEvent(filed, line('memo.routed', { ...id, route: 'owner', refusal: 'no_author' }));
+    expect(refused.memos[open.id]).toMatchObject({ route: 'owner', refusal: 'no_author' });
     expect(applyEvent(routed, line('memo.closed', { ...id, decision: 'shelved' })).memos).toEqual({});
   });
 

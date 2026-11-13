@@ -63,9 +63,9 @@ const onMemoFiled: Handler<'memo.filed'> = (state, { data, quest }) => ({
 
 const onMemoRouted: Handler<'memo.routed'> = (state, { data }) => {
   const memo = state.memos[data.memo];
-  return memo === undefined
-    ? state
-    : { ...state, memos: { ...state.memos, [data.memo]: { ...memo, route: data.route } } };
+  if (memo === undefined) return state;
+  const refusal = data.refusal === undefined ? {} : { refusal: data.refusal };
+  return { ...state, memos: { ...state.memos, [data.memo]: { ...memo, route: data.route, ...refusal } } };
 };
 
 /** The Chancellor's triage sent the memo to the owner with its advice (PS-03b). */

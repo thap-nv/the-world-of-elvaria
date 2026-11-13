@@ -6,7 +6,7 @@ import type { Translate } from '@elvaria/i18n';
 
 import { NONE } from '../listing.ts';
 import { count, tableSection } from './section.ts';
-import { memosSection, objectionsSection } from './view-memos.ts';
+import { amendmentsSection, memosSection, objectionsSection } from './view-memos.ts';
 import { firstEditsLine, graphLine, promptSection } from './view-sessions.ts';
 import { adviceSection, passByRunSection, statusTimesSection } from './view-waits.ts';
 import type { MetricsSection } from './section.ts';
@@ -241,6 +241,7 @@ export const metricsSections = (t: Translate, metrics: Metrics): MetricsSection[
   questSection(t, metrics),
   memosSection(t, metrics),
   objectionsSection(t, metrics),
+  amendmentsSection(t, metrics),
   readsSection(t, metrics),
   promptSection(t, metrics),
   limitsSection(t),

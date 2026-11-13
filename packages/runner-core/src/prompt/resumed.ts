@@ -2,15 +2,29 @@
 // The CLI session still holds the quest, the letter and everything it did, so its user part carries only what is
 // new: that it goes on, and the owner's answer when there is one. The system part stays, since every call of the
 // CLI passes it again.
+import { amendmentAnswerBlock } from './amendment-answer.ts';
 import { composed } from './prompt-blocks.ts';
 import { fill } from './templates.ts';
 import type { PromptWithBlocks } from './prompt-blocks.ts';
 import type { PromptTemplates } from './templates.ts';
+import type { BlockedAmendment } from '@elvaria/domain';
 
-/** The question the session asked and the owner's answer to it. */
+/**
+ * The question the session asked and the owner's answer to it; or (PS-22b) the amendment it ended on, decided, with
+ * the description as accepted, which the cut prompt does not show.
+ */
 export interface Answered {
   readonly question: string;
   readonly answer: string;
+  readonly amendment?: BlockedAmendment | undefined;
+  readonly description?: string | undefined;
+}
+
+function answerOf(answered: Answered | null, t: PromptTemplates): string {
+  if (answered === null) return '';
+  const { question, answer, amendment, description } = answered;
+  if (amendment !== undefined) return amendmentAnswerBlock({ question, answer, amendment, description }, t);
+  return fill(t.answer, { question, answer: answer.trim() });
 }
 
 /**
@@ -22,8 +36,7 @@ export function resumedPrompt(
   answered: Answered | null,
   t: PromptTemplates,
 ): PromptWithBlocks {
-  const answer =
-    answered === null ? '' : fill(t.answer, { question: answered.question, answer: answered.answer.trim() });
+  const answer = answerOf(answered, t);
   const { user, blocks } = composed(
     [],
     [

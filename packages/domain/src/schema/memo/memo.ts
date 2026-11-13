@@ -19,9 +19,9 @@ import {
   TRIAGE_NOTE_MAX_LENGTH,
   MEMO_REF_MAX_LENGTH,
   MEMO_REFS_MAX,
+  MEMO_REFUSALS,
   MEMO_ROUTES,
   MEMO_STATES,
-  OBJECTION_REFUSALS,
 } from './constants.ts';
 
 const describe = (description: string) => ({ description });
@@ -44,25 +44,40 @@ const MemoRouteFieldsSchema = z.strictObject({
     ),
   ),
   refusal: z
-    .enum(OBJECTION_REFUSALS)
+    .enum(MEMO_REFUSALS)
     .optional()
-    .meta(describe('(PS-22) Of an objection the owner decides: why no second judge reads it.')),
+    .meta(
+      describe(
+        '(PS-22) Of an objection the owner decides: why no second judge reads it. (PS-22b) Of an amendment the owner decides: why no author does.',
+      ),
+    ),
+  author: CharacterIdSchema.optional().meta(
+    describe(
+      "(PS-22b) Of an amendment its author decides: the mage whose plan quest wrote the quest's description; absent, the Chancellor (whichever speaks when it decides).",
+    ),
+  ),
 });
 
-/** A judge reads an objection beside the verdict it contests; only a memo sent to the owner says why (PS-22). */
+/**
+ * A judge reads an objection beside the verdict it contests; only a memo sent to the owner says why (PS-22); only an
+ * amendment to its author names a mage (PS-22b).
+ */
 function checkRoute(to: z.output<typeof MemoRouteFieldsSchema>, ctx: z.RefinementCtx): void {
   if (to.route === 'judge' && to.verdict === undefined)
     ctx.addIssue({ code: 'custom', path: ['verdict'], message: 'an objection to a judge names its verdict' });
   if (to.refusal !== undefined && to.route !== 'owner')
     ctx.addIssue({ code: 'custom', path: ['refusal'], message: 'only a memo to the owner is refused' });
+  if (to.author !== undefined && to.route !== 'author')
+    ctx.addIssue({ code: 'custom', path: ['author'], message: 'only a memo to its author names one' });
 }
 
 export const MemoRouteSchema = MemoRouteFieldsSchema.superRefine(checkRoute).meta({
   description:
-    'The recipient, decided by routeMemo from the registry and, for a judge, from the verdict the run came back with (ADR 0024, PS-22). Later routes add their own fields (the quests of an advisory).',
+    'The recipient, decided by routeMemo from the registry and, for a judge, from the verdict the run came back with (ADR 0024, PS-22), for an author from who wrote the quest (PS-22b). Later routes add their own fields (the quests of an advisory).',
   allOf: [
     { if: { properties: { route: { const: 'judge' } } }, then: { required: ['verdict'] } },
     { if: { required: ['refusal'] }, then: { properties: { route: { const: 'owner' } } } },
+    { if: { required: ['author'] }, then: { properties: { route: { const: 'author' } } } },
   ],
 });
 export type MemoRoute = z.infer<typeof MemoRouteSchema>;

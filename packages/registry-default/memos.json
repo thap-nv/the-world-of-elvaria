@@ -14,6 +14,13 @@
       "name_en": "Objection",
       "route": "judge",
       "description": "The assignee contests a note of the verdict that sent its run back: which note, why, and the evidence. A second judge reads it beside that verdict; once per verdict, and the second verdict is final."
+    },
+    {
+      "id": "amendment",
+      "name_vi": "Phản biện đề bài",
+      "name_en": "Amendment",
+      "route": "author",
+      "description": "The assignee contests its quest's description: it is wrong, or another way gives what it promises better. What the description says, what the assignee proposes, why, and the evidence. The quest waits as on a question while its author (the Chancellor, or the mage of its plan) accepts and rewrites it, rejects it, or hands it to the owner; one per quest, and a second goes to the owner."
     }
   ]
 }

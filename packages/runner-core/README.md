@@ -81,6 +81,11 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   `src/prompt/objection.ts`, before the review: the contested verdict and the memo, the first judge never named), and
   an assignee its final verdict beside the contested one (`prompts/final-verdict.md`, `Continuation.contested`).
   Law 4 of `prompts/verifier.md`: a judge judges by the quest's goal and the checks, not the wording of its steps.
+  (PS-22b) Law 9 of `prompts/assignee.md`: a change of what the quest promises is an amendment memo
+  (`- amendment: … refs: …`), a change of the way is a decision under Decisions taken. `buildAmendmentPrompt`
+  (`prompts/amendment.md`, `amendment-context.md`) is the author's prompt; the doer's next session, fresh or resumed,
+  reads the decision instead of an owner's answer (`amendmentAnswerBlock`, `prompts/amendment-answer.md` and its
+  three `amendment-accepted|rejected|owner.md`), a resumed one with the description as accepted.
 - Runs the conformance suite (`conformanceChecks`, `runConformance`): plain checks with `node:assert`, so a spec
   wraps them in `it` and `elvaria tribe check` (P1-19) runs them too. With a real CLI (`live`) only `capabilities`,
   `doctor`, `probe`, `submit`, `hang`, `forbidden_command` and `spawn_child` run (a few cheap sessions, a little

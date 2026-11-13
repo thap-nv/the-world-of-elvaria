@@ -275,7 +275,7 @@ describe('the Chancellor’s triage (PS-03b)', () => {
     const io = testIo();
     const ctx = await openKingdomContext({ values: { kingdom }, positionals: [] }, cli(io));
     if (ctx === undefined) throw new Error('kingdom');
-    const view = { day: '2026-11-06', notices: {} };
+    const view = { day: '2026-11-06', notices: {}, amendments: [] };
     const job = triageJob(ctx, { [CLAUDE]: chancellor({ version: 1 }) });
     expect(await job.ready?.({ ...view, busy: new Set([CLAUDE]) })).toBe(false);
     expect(await job.ready?.({ ...view, busy: new Set() })).toBe(true);

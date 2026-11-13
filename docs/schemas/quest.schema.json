@@ -466,6 +466,38 @@
         "answered_at": {
           "type": "string",
           "format": "date-time"
+        },
+        "amendment": {
+          "description": "(PS-22b) The quest waits on the doer's amendment, as on a question: no status of its own. Optional, added after v1, so `version` stays 1.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "memo",
+            "by"
+          ],
+          "properties": {
+            "memo": {
+              "description": "The amendment memo (memos/<memo>.json); its text is the question.",
+              "type": "string",
+              "pattern": "^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+            },
+            "by": {
+              "description": "Who decides it: the quest's author in an off-tick session (the owner is not asked), or the owner, who answers it as a question.",
+              "enum": [
+                "author",
+                "owner"
+              ]
+            },
+            "decision": {
+              "description": "With answer: how the memo was closed (accepted, rejected…), for the doer's next prompt; absent when the owner answered in words.",
+              "enum": [
+                "shelved",
+                "rejected",
+                "handled",
+                "accepted"
+              ]
+            }
+          }
         }
       }
     },

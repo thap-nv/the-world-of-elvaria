@@ -112,6 +112,9 @@
       "council": {
         "from_rank": "B",
         "from_areas": 2
+      },
+      "amendments": {
+        "from_rank": "F"
       }
     },
     "delegation": {

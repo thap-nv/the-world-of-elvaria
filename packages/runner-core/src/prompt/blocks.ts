@@ -1,6 +1,7 @@
 // The blocks prompts are made of (implementation-plan §3.7, §3.13; ADR 0010, 0017): each fills one template from
 // the kingdom's files, and an optional block with nothing to say is empty, so joinBlocks leaves it out.
 import { PATCH_FILE } from '../plot/patch.ts';
+import { amendmentAnswerBlock } from './amendment-answer.ts';
 import { SHELL_TOOL, WRITE_TOOLS } from '../policy/constants.ts';
 import { checksAheadBlock, failedChecksBlock } from './checks.ts';
 import { memoryBlock } from './memory.ts';
@@ -229,11 +230,16 @@ export function skillsBlock(skills: readonly Skill[], t: PromptTemplates): strin
   });
 }
 
-/** The owner's answer to the question that blocked the quest, for a fresh session after the answer (§2.4). */
+/**
+ * The owner's answer to the question that blocked the quest, for a fresh session after the answer (§2.4); or (PS-22b)
+ * the decision on the amendment it waited on, the description already rewritten in the quest block.
+ */
 function answerBlock(quest: Quest, t: PromptTemplates): string {
   const blocked = quest.blocked;
   if (blocked === undefined || !present(blocked.answer)) return '';
-  return fill(t.answer, { question: blocked.question, answer: blocked.answer.trim() });
+  const { question, answer, amendment } = blocked;
+  if (amendment !== undefined) return amendmentAnswerBlock({ question, answer, amendment }, t);
+  return fill(t.answer, { question, answer: answer.trim() });
 }
 
 /**

@@ -116,7 +116,7 @@ describe('elvaria memo', () => {
   });
 
   it.each([
-    [['maybe'], 2, '"maybe" is no decision: give one of shelved, rejected, handled.'],
+    [['maybe'], 2, '"maybe" is no decision: give one of shelved, rejected, handled, accepted.'],
     [['handled'], 2, 'A handled letter names the quest that does the work: --quest <quest>.'],
     [['rejected', '--quest', QUEST_ID], 2, '--quest goes with handled only.'],
     [['handled', '--quest', 'q_20261106_zzzzzz'], 1, 'There is no quest q_20261106_zzzzzz.'],

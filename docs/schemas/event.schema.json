@@ -285,7 +285,7 @@
                     "format": "date-time"
                   },
                   "question": {
-                    "description": "blocked.question while it waits for the answer: the throne asks the owner to answer it.",
+                    "description": "blocked.question while it waits for the owner's answer: the throne asks the owner to answer it. (PS-22b) Null while the quest's author decides the amendment it waits on.",
                     "type": [
                       "string",
                       "null"
@@ -826,7 +826,7 @@
                     "format": "date-time"
                   },
                   "question": {
-                    "description": "blocked.question while it waits for the answer: the throne asks the owner to answer it.",
+                    "description": "blocked.question while it waits for the owner's answer: the throne asks the owner to answer it. (PS-22b) Null while the quest's author decides the amendment it waits on.",
                     "type": [
                       "string",
                       "null"
@@ -2334,7 +2334,7 @@
       "then": {
         "properties": {
           "data": {
-            "description": "The memo went where its kind's entry in registry/memos.json sends it (routeMemo); an objection to a judge, or to the owner when no judge may read it (PS-22).",
+            "description": "The memo went where its kind's entry in registry/memos.json sends it (routeMemo); an objection to a judge, or to the owner when no judge may read it (PS-22); an amendment to its quest's author, or to the owner when no author may decide it (PS-22b).",
             "type": "object",
             "additionalProperties": false,
             "required": [
@@ -2350,16 +2350,20 @@
                 "enum": [
                   "chancellor",
                   "judge",
-                  "owner"
+                  "owner",
+                  "author"
                 ]
               },
               "refusal": {
-                "description": "(PS-22) An objection sent to the owner: why no second judge reads it.",
+                "description": "(PS-22) An objection sent to the owner: why no second judge reads it. (PS-22b) An amendment sent to the owner: why no author decides it.",
                 "enum": [
                   "no_verdict",
                   "owner_verdict",
                   "final_verdict",
-                  "second_objection"
+                  "second_objection",
+                  "no_author",
+                  "below_rank",
+                  "second_amendment"
                 ]
               }
             }
@@ -2395,6 +2399,7 @@
                   "shelved",
                   "rejected",
                   "handled",
+                  "accepted",
                   "sustained",
                   "overruled"
                 ]

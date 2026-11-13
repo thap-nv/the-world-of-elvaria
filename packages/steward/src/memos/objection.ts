@@ -31,7 +31,11 @@ export async function memosOfQuest(ctx: Context, quest: Quest['id']): Promise<Me
 }
 
 /** What an objection in the letter of run `n` contests: the verdict it came back with, beside the quest's memos. */
-export async function contestOf(ctx: Context, quest: Quest['id'], n: number): Promise<Contest> {
+export async function contestOf(
+  ctx: Context,
+  quest: Quest['id'],
+  n: number,
+): Promise<Contest & { readonly memos: readonly Memo[] }> {
   return { verdict: await returnedWith(ctx, quest, n), memos: await memosOfQuest(ctx, quest) };
 }
 

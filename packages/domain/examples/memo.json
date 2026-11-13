@@ -76,5 +76,37 @@
       "holds": ["contract_change", "chancellor_asks"],
       "note": "Đổi tên một trường của kingdom.json là đổi hợp đồng dữ liệu: chủ nhân quyết."
     }
+  },
+  {
+    "version": 1,
+    "id": "m_20261113_a7md2e",
+    "kind": "amendment",
+    "from": "thorn",
+    "quest": "q_20261113_3kd9wa",
+    "attempt": 1,
+    "to": {
+      "route": "author",
+      "author": "merlin"
+    },
+    "body": "Đề bài: bước 2 sửa `apps/cli/src/quest/list.ts`. Đề nghị: sửa `apps/cli/src/listing.ts`, nơi mọi bảng định dạng giờ. Vì: sửa ở list.ts thì `memo list` vẫn in giờ UTC; `rg formatTime apps/cli/src` cho thấy 4 bảng dùng chung hàm đó.",
+    "refs": ["apps/cli/src/listing.ts", "apps/cli/src/quest/list.ts"],
+    "state": "open",
+    "filed_at": "2026-11-13T09:12:30+07:00"
+  },
+  {
+    "version": 1,
+    "id": "m_20261113_a7md3f",
+    "kind": "amendment",
+    "from": "thorn",
+    "quest": "q_20261113_3kd9wa",
+    "attempt": 2,
+    "to": {
+      "route": "owner",
+      "refusal": "second_amendment"
+    },
+    "body": "Đề bài đòi giữ định dạng cũ của `memo list`; đổi cả nó thì các bảng mới khớp nhau.",
+    "refs": ["apps/cli/src/memo/list.ts"],
+    "state": "open",
+    "filed_at": "2026-11-13T10:30:00+07:00"
   }
 ]

@@ -65,11 +65,13 @@ describe('the default registry', () => {
       'todo-scan',
     ]);
     expect(ids(tags)).toEqual(['frontend', 'backend', 'db', 'infra', 'i18n', 'e2e', 'integration', 'docs']);
-    // PS-02: the first kind of memo; PS-22 the objection to a second judge; advisory and request come with PS-09 and
+    // PS-02: the first kind of memo; PS-22 the objection to a second judge; PS-22b the amendment; advisory and request come with PS-09 and
     // PS-10 (ADR 0024).
     expect(memos.map(({ id, route }) => [id, route])).toEqual([
       ['proposal', 'chancellor'],
       ['objection', 'judge'],
+      // PS-22b: the amendment to the quest's author.
+      ['amendment', 'author'],
     ]);
   });
 

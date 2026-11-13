@@ -390,6 +390,19 @@
             }
           },
           "default": {}
+        },
+        "amendments": {
+          "description": "Where a doer's amendment (a memo contesting its quest's description, PS-22b) goes by the quest's rank. Every rank by default; raise it from the metrics when the authors' sessions cost more than the reworks they save.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "from_rank": {
+              "description": "An amendment to a quest of this rank or above goes to the quest's author (the Chancellor, or the mage of its plan), one session of the author's; below it, to the owner, as a question.",
+              "$ref": "#/$defs/rank",
+              "default": "F"
+            }
+          },
+          "default": {}
         }
       }
     },
@@ -818,6 +831,9 @@
         "council": {
           "from_rank": "B",
           "from_areas": 2
+        },
+        "amendments": {
+          "from_rank": "F"
         }
       },
       "delegation": {

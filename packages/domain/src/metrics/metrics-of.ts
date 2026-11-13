@@ -6,6 +6,7 @@ import { REWORK_CAUSES, OWNER_COMMAND_KINDS } from './causes.ts';
 import { escapedOf, firstPassOf, firstRunOf, sealedCostOf } from './judgement.ts';
 import { ownerCommandsOf, sequelsIn, sessionModelsOf, trailsOf } from './ledger.ts';
 import { checkRunsOf, outOfScopeOf, readsOf, setAsidesOf } from './log-counts.ts';
+import { amendmentCountsOf } from './amendment-counts.ts';
 import { memoCountsOf, objectionsOf } from './memo-counts.ts';
 import { firstPassRatesOf } from './rates.ts';
 import { reworkOf } from './rework.ts';
@@ -14,6 +15,7 @@ import { firstEditsOf, graphQueriesOf, promptSizesOf } from './session-counts.ts
 import { statusTimesOf } from './status-times.ts';
 import { inWindow } from './window.ts';
 import type { AdviceMatch } from './advice.ts';
+import type { AmendmentCount } from './amendment-counts.ts';
 import type { OwnerCommandKind, ReworkCause } from './causes.ts';
 import type { EscapedDefect, SealedCost } from './judgement.ts';
 import type { MetricsInput, OwnerCommand } from './ledger.ts';
@@ -102,6 +104,8 @@ export interface Metrics {
   readonly pass_by_run: readonly RunPassRate[];
   /** The Chancellor's advice on the memos it sent up, beside the owner's decisions on them (PS-06b). */
   readonly advice: AdviceMatch;
+  /** Amendments: filed, taken, refused, sent to the owner, and quests returned after a refusal (PS-22b). */
+  readonly amendments: AmendmentCount;
 }
 
 function runCountsOf(trails: readonly QuestTrail[], input: MetricsInput, window: MetricsWindow): RunCounts {
@@ -189,5 +193,6 @@ export function metricsOf(input: MetricsInput, window: MetricsWindow = {}): Metr
     status_times: statusTimesOf(input.events, window),
     pass_by_run: passByRunOf(trails, window),
     advice: adviceOf(input.events, window),
+    amendments: amendmentCountsOf(input.events, window),
   };
 }
