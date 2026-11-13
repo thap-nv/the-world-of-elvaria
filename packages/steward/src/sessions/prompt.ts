@@ -7,7 +7,7 @@ import process from 'node:process';
 import { partialVerdictIdOf, shellOf, verifierSessionsOf } from '@elvaria/domain';
 import { buildPrompt, readContextFiles, resumedPrompt } from '@elvaria/runner-core';
 import { readClassPrompt } from '@elvaria/store';
-import type { Character, CharacterClass, LoadTrace, Quest, Skill, Verdict } from '@elvaria/domain';
+import type { Character, CharacterClass, LoadTrace, PlanLink, Quest, Skill, Verdict } from '@elvaria/domain';
 import type { BuiltPrompt, PromptGraph, PromptWithBlocks } from '@elvaria/runner-core';
 
 import { handoverPath, readDecree, readHandover, readScriptures } from '../files.ts';
@@ -74,6 +74,30 @@ interface PromptParts {
   readonly skills: readonly Skill[];
   /** The quest's code graph, when the session asks one (PS-21, sessionGraphOf). */
   readonly graph?: PromptGraph | undefined;
+  /** For a plan quest's judge, the sub-quests its graph links (PS-21b, plan-graph.ts). */
+  readonly plan_links?: readonly PlanLink[];
+}
+
+/** What a judge reads beside the quest: the letter, the checks, the diff, and what the Steward found of the work. */
+async function reviewOf(ctx: Context, input: SessionInput, parts: PromptParts) {
+  const { quest } = input;
+  // The branch's diff against its fork point (PlotManager.diff, P1-15); a plot without git has none to give. A
+  // party's merge quest gives its own work only, after its last merge: each part was judged already (P1-21 (e)).
+  const handover = await readHandover(ctx.root, quest.id);
+  // The end of each failing check's log: the judge cannot read `.runs/` (P1-25).
+  const checks = await withLogTails(ctx.root, input.checks ?? [], parts.known);
+  const diff = await ctx.deps.plots.diff(
+    quest.plot,
+    quest.party_role === 'merge' ? 'after_merges' : 'branch',
+  );
+  const partial = await lastPartialOf(ctx, quest, input.n);
+  // The files changed outside the quest's scope (PS-05): the judge weighs them, the machine never fails them.
+  const outside = await outOfScopeIn(ctx, quest);
+  // A second judge reads the verdict the assignee contests and its objection (PS-22).
+  const objection = await objectionFor(ctx, quest);
+  // A plan's judge reads the sub-quests its graph links (PS-21b): a warning, never a fail.
+  const links = parts.plan_links === undefined ? {} : { plan_links: parts.plan_links };
+  return { handover, diff, checks, partial, out_of_scope: outside, objection, ...links };
 }
 
 async function builtPromptOf(
@@ -101,26 +125,8 @@ async function builtPromptOf(
     ...(await contextFilesFor(ctx, input)),
     ...(parts.graph === undefined ? {} : { graph: parts.graph }),
   };
-  if (input.role === 'verifier') {
-    // The branch's diff against its fork point (PlotManager.diff, P1-15); a plot without git has none to give. A
-    // party's merge quest gives its own work only, after its last merge: each part was judged already (P1-21 (e)).
-    const handover = await readHandover(ctx.root, quest.id);
-    // The end of each failing check's log: the judge cannot read `.runs/` (P1-25).
-    const checks = await withLogTails(ctx.root, input.checks ?? [], known);
-    const diff = await ctx.deps.plots.diff(
-      quest.plot,
-      quest.party_role === 'merge' ? 'after_merges' : 'branch',
-    );
-    const partial = await lastPartialOf(ctx, quest, input.n);
-    // The files changed outside the quest's scope (PS-05): the judge weighs them, the machine never fails them.
-    const outside = await outOfScopeIn(ctx, quest);
-    // A second judge reads the verdict the assignee contests and its objection (PS-22).
-    const objection = await objectionFor(ctx, quest);
-    return buildPrompt(
-      { ...base, role: 'verifier', handover, diff, checks, partial, out_of_scope: outside, objection },
-      ctx.templates,
-    );
-  }
+  if (input.role === 'verifier')
+    return buildPrompt({ ...base, role: 'verifier', ...(await reviewOf(ctx, input, parts)) }, ctx.templates);
   const continuation = await continuationFor(ctx, input, known);
   return buildPrompt(
     {
@@ -147,7 +153,7 @@ export interface SessionPrompt {
 export async function promptOf(
   ctx: Context,
   input: SessionInput,
-  given: Pick<PromptParts, 'characterClass' | 'known' | 'graph'>,
+  given: Pick<PromptParts, 'characterClass' | 'known' | 'graph' | 'plan_links'>,
   resume: Resume | null,
 ): Promise<SessionPrompt> {
   const parts = { ...given, scriptures: await readScriptures(ctx.root, input.character.id), skills: [] };

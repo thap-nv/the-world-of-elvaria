@@ -1,0 +1,10 @@
+# Sub-quests linked through the code
+
+The code graph at this quest's base commit links code of these sub-quests, which may run at the same time with scopes apart:
+
+- `d1` and `d2`: `apps/cli/src/say/say.ts` (d1) uses `packages/chancellor/src/commands.ts` (d2), and 2 more links between them
+- `d3` and `d1`: `packages/domain/src/a.ts` (d3) uses `apps/cli/src/x.ts` (d1), and 1 more link between them
+- `d2` and `d3`: `packages/chancellor/src/b.ts` (d2) uses `packages/domain/src/c.ts` (d3)
+
+This fails nothing by itself. Judge each pair: when one changes what the other relies on, they should not run side by side; then the plan has one wait for the other (`depends_on_refs`), or draws their scopes again. Say so in your notes.
+

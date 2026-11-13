@@ -1,6 +1,6 @@
 # ADR 0029 · A code graph of each territory, built by graphify outside every plot, asked by read-only commands
 
-- Status: accepted · 2026-11-12
+- Status: accepted · 2026-11-12 · amended 2026-11-13 (the graph in planning, PS-21b)
 - Related: [plans/phase-1.5.md](../plans/phase-1.5.md) PS-21; [spike graphify](../spikes/graphify-2026-11-12.md); [ADR 0013](0013-treasury-and-redaction.md), [ADR 0015](0015-node-only-scripts.md), [ADR 0016](0016-registry-data-not-code.md), [ADR 0017](0017-one-quest-one-context-three-tiers.md), [ADR 0021](0021-tribe-contract.md)
 
 ## Context
@@ -14,6 +14,7 @@ A worker session spends most of its calls before its first edit finding its way 
 - Every graphify process, build or question, gets an explicit env: `GRAPHIFY_BACKEND=none`, no query log, no skill refresh, a pinned hash seed, no `.pyc`, the graph folder in `GRAPHIFY_OUT`; no API key. No strict mode, no skill or hook of graphify for characters.
 - The graph commands are `graphify query`, `path`, `explain`, `affected` (the last for the judge, owner 2026-11-12). The core keeps the list; a class with Glob or Grep that does not deny a bare `Bash` gets them, alike in every tribe (ADR 0016). A class without a shell gets them alone, never its territory's checks: Claude Code gets the shell tool with these rules only, agy gets `command(…)` prefixes. The hook refuses every other graphify call and any option but those that shape the answer (`--graph` above all), for every class, and a shell-less class runs one plain call per line.
 - The system part of the prompt gets a short graph block, only when the graph commands are granted; with the switch off the prompt does not change.
+- (Amended 2026-11-13, PS-21b, awaiting settlement in implementation-plan §11.) The graph also serves planning, still with no model: the Chancellor, which has no tools, gets in its system part what `graphify query` answers to the code names and paths of the owner's words on the graph of the default branch's tip, and the impact of the files those words name (the files outside them that use their code); `elvaria say` builds no graph. The Steward and the CLI read the links between files from `graph.json` itself, with no graphify process. A plan quest's mage gets the impact of its scope, and its judge the sub-quests free to run at once whose code is linked: a warning, never a fail. With every switch off, only the file sizes the owner's words name reach the Chancellor (they come from the working tree, not the graph).
 
 ## Alternatives
 

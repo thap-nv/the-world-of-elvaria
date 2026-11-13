@@ -52,6 +52,11 @@ export const PROMPT_TEMPLATES = [
   'quest-template',
   'estimate',
   'drafting',
+  // PS-21b: the files the owner's words name and the code graph's answer, for the Chancellor; the plan's parts linked
+  // through the code, for the plan's judge.
+  'chancellor-files',
+  'chancellor-graph',
+  'plan-links',
   'triage',
   'triage-context',
 ] as const;

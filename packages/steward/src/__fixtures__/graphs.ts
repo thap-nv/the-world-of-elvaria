@@ -11,7 +11,8 @@ export interface FakeGraphs extends CodeGraphs {
   finish(commit: string, result?: Partial<GraphBuild>): void;
 }
 
-export function fakeGraphs(base = A, prebuilt: readonly string[] = []): FakeGraphs {
+/** `folder` holds the graphs: a spec that reads one (PS-21b) writes `<folder>/<commit>/graph.json` itself. */
+export function fakeGraphs(base = A, prebuilt: readonly string[] = [], folder = 'C:/graphs'): FakeGraphs {
   const built = new Set<string>(prebuilt);
   const started: string[] = [];
   const pending = new Map<string, (result: GraphBuild) => void>();
@@ -20,7 +21,7 @@ export function fakeGraphs(base = A, prebuilt: readonly string[] = []): FakeGrap
     started,
     base: () => Promise.resolve(base),
     head: () => Promise.resolve(base),
-    built: (_territory, commit) => Promise.resolve(built.has(commit) ? `C:/graphs/${commit}` : undefined),
+    built: (_territory, commit) => Promise.resolve(built.has(commit) ? `${folder}/${commit}` : undefined),
     build: (_territory, commit, signal) => {
       started.push(commit);
       return new Promise((resolve) => {
@@ -33,7 +34,7 @@ export function fakeGraphs(base = A, prebuilt: readonly string[] = []): FakeGrap
     finish: (commit, result = {}) => {
       const done: GraphBuild = {
         ok: true,
-        dir: `C:/graphs/${commit}`,
+        dir: `${folder}/${commit}`,
         commit,
         nodes: 3,
         edges: null,

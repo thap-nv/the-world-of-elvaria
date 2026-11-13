@@ -64,3 +64,31 @@ export function globToRegExp(glob: string): RegExp {
   // An unclosed `{` would make an invalid RegExp; close it so the glob still means something.
   return new RegExp(`^${source}${')'.repeat(braces)}$`, 'i');
 }
+
+/**
+ * Whether a glob of a scope covers a path (PS-05, ADR 0028): by the glob, or as a folder when it names one without a
+ * wildcard (`apps/web` covers `apps/web/src/x.ts`). The judge's files outside the scope and the code graph's links
+ * between scopes (PS-21b) read a scope alike.
+ */
+export function coverOf(glob: string): (path: string) => boolean {
+  const pattern = globToRegExp(glob);
+  const folder = `${glob
+    .replaceAll('\\', '/')
+    .replace(/^(?:\.\/|\/)+/, '')
+    .replace(/\/+$/, '')
+    .toLowerCase()}/`;
+  return (path) => pattern.test(path) || path.toLowerCase().startsWith(folder);
+}
+
+/** `(path, globs)`: whether one of the globs covers the path, each glob made into a RegExp once (coverOf). */
+export function scopeCovers(): (path: string, globs: readonly string[]) => boolean {
+  const made = new Map<string, (path: string) => boolean>();
+  const cover = (glob: string): ((path: string) => boolean) => {
+    const known = made.get(glob);
+    if (known !== undefined) return known;
+    const fresh = coverOf(glob);
+    made.set(glob, fresh);
+    return fresh;
+  };
+  return (path, globs) => globs.some((glob) => cover(glob)(path));
+}

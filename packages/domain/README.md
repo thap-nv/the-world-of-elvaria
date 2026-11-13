@@ -115,6 +115,9 @@
   scopes apart for two that may run at once, a given peak context within the budget, the template);
   `peakContextOf` and `questEstimateOf` (a draft's `estimate.context` is a planning number the quest does not
   keep). The brief (`BriefSchema`) is a block of the quest-draft file; `seal_required` of a draft is optional.
+  PS-21b adds `planLinksOf`: two session sub-quests on the graph's territory that may run at once with scopes apart,
+  whose files the code graph links (a call, an import), as a warning for the plan's judge, never an issue; the links
+  (`FileLink`) and the test of a path against a scope come from the caller.
   (PS-06b) The plan file (`src/council/plan-file.ts`): `planFilesOf` (the `plans/*.md` among the paths a quest
   changed), `planFileIssuesOf` (one of them has every section of `PLAN_FILE_SECTIONS`, each holding something),
   `planSummaryOf` (its `## Summary`, the page the owner seals on) and `splitBrief` (the brief a plan quest's
@@ -281,6 +284,8 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
 - Names every number it decides with in `src/constants.ts` and the `constants.ts` of the folders that have one.
 - Names the code graph's read-only commands (`GRAPH_COMMANDS`, `graphCommandOf`, PS-21), the territory's optional
   `code_graph` switch, `kingdom.programs.graphify` (`ProgramsSchema`) and the `graph.built` / `graph.failed` lines.
+  Counts an area's impact from the graph's links (`impactOf`, `src/graph/links.ts`, PS-21b): the files outside it
+  that use a file inside it, an input to the rank.
 
 ## Does not
 
