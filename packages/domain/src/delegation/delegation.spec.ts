@@ -79,6 +79,22 @@ describe('delegationHolds', () => {
     ]);
   });
 
+  it('holds a memo whose files the territory protects, though the Chancellor flagged nothing', () => {
+    const guarded = { ...memo(['docs/guide.md']), protected_refs: ['docs/guide.md'] };
+    expect(delegationHolds(merge({ memos: [memo(['docs/a.md']), guarded] }), defaults)).toEqual([
+      'protected_paths',
+    ]);
+    // Seen by both, held once; a memo that names no protected file holds nothing of it.
+    expect(delegationHolds(merge({ memos: [guarded], asks: ['protected_paths'] }), defaults)).toEqual([
+      'protected_paths',
+    ]);
+    expect(delegationHolds(merge({ memos: [{ ...guarded, protected_refs: [] }] }), defaults)).toEqual([]);
+    // Set aside or sent up, the same; the owner who left it out of `ask` gave it to the world.
+    const shelve = merge({ action: 'shelve', work: undefined, memos: [guarded] });
+    expect(delegationHolds(shelve, defaults)).toEqual(['protected_paths']);
+    expect(delegationHolds(shelve, { ...defaults, ask: ['decision_change'] })).toEqual([]);
+  });
+
   it('sets a memo aside alone unless a matter of the owner’s holds it', () => {
     const shelve = merge({ action: 'shelve', work: undefined, memos: [memo([])] });
     expect(delegationHolds(shelve, defaults)).toEqual([]);

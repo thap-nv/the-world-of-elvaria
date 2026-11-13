@@ -99,7 +99,7 @@ export const QuestFieldsSchema = z.strictObject({
     .optional()
     .meta(
       describe(
-        "The files under the territory's laws.protected_paths that the quest's work changed, relative to its plot with `/`, gathered over its submits. The Steward sets it with seal_required at a submit: the quest waits for the royal seal whatever its kind's seal_default, and its judge is chosen as for a quest of rank B or above.",
+        "The files under the territory's laws.protected_paths that the quest's work changed, relative to its plot with `/`, gathered over its submits. The Steward sets it with seal_required at a submit: the quest waits for the royal seal whatever its kind's seal_default, and its judge is chosen as for a quest of rank B or above. A part of a party (part, acceptance) gets it without the seal, which its merge quest always asks for.",
       ),
     ),
   seal: SealSchema.optional(),
