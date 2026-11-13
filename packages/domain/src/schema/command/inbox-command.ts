@@ -14,7 +14,6 @@ import {
   CloseCampaignPayloadSchema,
   CreateQuestPayloadSchema,
   DeclareCampaignPayloadSchema,
-  DecideMemoPayloadSchema,
   EditQuestPayloadSchema,
   PinTagPayloadSchema,
   QuestPayloadSchema,
@@ -27,8 +26,13 @@ import {
   SetRankPayloadSchema,
   WakePayloadSchema,
 } from './payloads.ts';
+import { DecideMemoPayloadSchema, EscalateMemoPayloadSchema } from './memo-payloads.ts';
 
-export const COMMAND_SOURCES = ['cli', 'herald', 'lite'] as const;
+/**
+ * Who wrote the command: the owner's clients (CLI, Herald, the phone), or the Chancellor's triage (PS-03b), whose
+ * commands the Steward applies without the owner within kingdom.delegation and tells as the Chancellor's.
+ */
+export const COMMAND_SOURCES = ['cli', 'herald', 'lite', 'chancellor'] as const;
 const SourceSchema = z.enum(COMMAND_SOURCES);
 
 /** One branch of the union: the common fields, in the contract's order, with `kind` fixed. */
@@ -69,12 +73,13 @@ export const InboxCommandSchema = z
     command('set_level', SetLevelPayloadSchema),
     command('set_model', SetModelPayloadSchema),
     command('decide_memo', DecideMemoPayloadSchema),
+    command('escalate_memo', EscalateMemoPayloadSchema),
   ])
   .meta({
     title: 'Inbox command',
     description:
-      "inbox/<ulid>.json: one command from the owner (CLI, Herald, lite phone client) waiting for the Steward, the single writer of quest state (ADR 0005). The Steward applies commands in id order at the start of every tick, appends command.applied or command.rejected, and moves the file to inbox/done/. Idempotent: a command id that already has a command.applied event is skipped. Kinds match the design's action icons (seal, return, summon, suspend, reassign, archive, temple, declare) plus the lifecycle commands the state machine needs.",
-    $comment: `${GENERATED_NOTE} One oneOf branch per kind: each fixes \`kind\` and gives its payload. confirm (draft -> open) and edit_quest (\`elvaria quest edit\`) are additions to the plan's §2.3 list, required by the single-writer rule; pin_tag (pin a character to an expertise tag, product plan 0.5 §6) was added with plan 0.5; set_level (the owner sets a character's level) and create_quest's assignee with P1-29; set_model (the owner moves a character to another model of its tribe) with P1-22; decide_memo (the owner closes a memo) with PS-02. archive covers discard (draft), reject (awaiting_seal) and archive (done, infirmary); the Steward picks the transition from the quest's current status. edit_quest is rejected when the quest's updated_at differs from expected_updated_at.`,
+      "inbox/<ulid>.json: one command from the owner (CLI, Herald, lite phone client), or from the Chancellor's triage of memos (source = chancellor, PS-03b), waiting for the Steward, the single writer of quest state (ADR 0005). The Steward applies commands in id order at the start of every tick, appends command.applied or command.rejected, and moves the file to inbox/done/. Idempotent: a command id that already has a command.applied event is skipped. Kinds match the design's action icons (seal, return, summon, suspend, reassign, archive, temple, declare) plus the lifecycle commands the state machine needs.",
+    $comment: `${GENERATED_NOTE} One oneOf branch per kind: each fixes \`kind\` and gives its payload. confirm (draft -> open) and edit_quest (\`elvaria quest edit\`) are additions to the plan's §2.3 list, required by the single-writer rule; pin_tag (pin a character to an expertise tag, product plan 0.5 §6) was added with plan 0.5; set_level (the owner sets a character's level) and create_quest's assignee with P1-29; set_model (the owner moves a character to another model of its tribe) with P1-22; decide_memo (the owner closes a memo) with PS-02; escalate_memo (the Chancellor's triage sends a memo to the owner), source = chancellor, and the memos of create_quest and edit_quest with PS-03b. archive covers discard (draft), reject (awaiting_seal) and archive (done, infirmary); the Steward picks the transition from the quest's current status. edit_quest is rejected when the quest's updated_at differs from expected_updated_at.`,
   });
 
 /** A parsed command; `switch (command.kind)` narrows `payload`. */

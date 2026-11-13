@@ -68,6 +68,15 @@ const onMemoRouted: Handler<'memo.routed'> = (state, { data }) => {
     : { ...state, memos: { ...state.memos, [data.memo]: { ...memo, route: data.route } } };
 };
 
+/** The Chancellor's triage sent the memo to the owner with its advice (PS-03b). */
+const onMemoEscalated: Handler<'memo.escalated'> = (state, { data }) => {
+  const memo = state.memos[data.memo];
+  if (memo === undefined) return state;
+  const { action, quest, holds } = data;
+  const escalated = { action, ...(quest === undefined ? {} : { quest }), holds };
+  return { ...state, memos: { ...state.memos, [data.memo]: { ...memo, escalated } } };
+};
+
 /** A closed memo leaves the world, as an archived quest does (worldStateOf keeps open memos only). */
 const onMemoClosed: Handler<'memo.closed'> = (state, { data }) => {
   const { [data.memo]: _closed, ...open } = state.memos;
@@ -116,6 +125,7 @@ const HANDLERS: { readonly [T in TypedEventType]?: Handler<T> } = {
   'memo.filed': onMemoFiled,
   'memo.routed': onMemoRouted,
   'memo.closed': onMemoClosed,
+  'memo.escalated': onMemoEscalated,
 };
 
 /** A replay of a sandbox day is bracketed by these two lines; their data is open. */

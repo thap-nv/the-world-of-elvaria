@@ -212,8 +212,36 @@ describe('applyEvent', () => {
       campaigns: [],
       memos: MEMOS,
     });
-    expect(routed.memos).toEqual(files.memos);
+    expect(routed.memos[open.id]).toEqual(files.memos[open.id]);
     expect(applyEvent(routed, line('memo.closed', { ...id, decision: 'shelved' })).memos).toEqual({});
+  });
+
+  it('keeps the advice of a memo the triage sent up, as worldStateOf reads its file (PS-03b)', () => {
+    const sent = MEMOS.find(({ escalation }) => escalation !== undefined);
+    if (sent?.escalation === undefined) throw new Error('the examples have a memo sent up');
+    const id = { memo: sent.id };
+    const routed = [
+      line('memo.filed', { ...id, kind: sent.kind, from: sent.from }, sent.quest),
+      line('memo.routed', { ...id, route: 'chancellor' }),
+      line('memo.escalated', { ...id, action: sent.escalation.action, holds: sent.escalation.holds }),
+    ].reduce(applyEvent, STATE);
+    const files = worldStateOf({
+      kingdom: KINGDOM,
+      territories: [],
+      characters: [],
+      quests: [],
+      campaigns: [],
+      memos: [sent],
+    });
+    expect(routed.memos).toEqual(files.memos);
+    const merge = { ...id, action: 'merge', quest: 'q_20261112_b3m8ty', holds: ['above_rank'] };
+    expect(applyEvent(routed, line('memo.escalated', merge)).memos[sent.id]?.escalated).toEqual({
+      action: 'merge',
+      quest: 'q_20261112_b3m8ty',
+      holds: ['above_rank'],
+    });
+    const stray = line('memo.escalated', { ...merge, memo: 'm_20261106_zzzzzz' });
+    expect(applyEvent(routed, stray)).toBe(routed);
   });
 
   it('opens a memo whose line names no quest, and routes no memo it does not hold', () => {

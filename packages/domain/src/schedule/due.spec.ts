@@ -13,6 +13,7 @@ const at = (iso: string): Instant => Date.parse(iso) as Instant;
 /** kingdom.schedule's defaults for the daily jobs. */
 const schedule: DueSource['schedule'] = {
   chronicle: { enabled: false, at: '21:00' },
+  triage: { enabled: true, at: '07:30' },
   digest: { enabled: true, at: '08:00' },
 };
 

@@ -7,7 +7,6 @@ import {
   CharacterIdSchema,
   ClassIdSchema,
   KindIdSchema,
-  MemoIdSchema,
   QuestIdSchema,
   REGISTRY_ID_PATTERN,
   ScriptIdSchema,
@@ -26,7 +25,7 @@ import {
   unique,
 } from '../common.ts';
 import { CHARACTER_LEVEL_MAX } from '../character/constants.ts';
-import { MEMO_DECISIONS } from '../memo/constants.ts';
+import { MemoListSchema } from './memo-payloads.ts';
 import { ScopePathsSchema } from '../quest/shared.ts';
 import {
   CAMPAIGN_NAME_MAX_LENGTH,
@@ -138,6 +137,11 @@ export const CreateQuestPayloadSchema = z
       .optional()
       .meta(describe("The Chancellor's one follow-up question; the draft is created with blocked.question.")),
     created_by: z.enum(['chancellor', 'user', 'council', 'patrol', 'battle', 'campaign']),
+    memos: MemoListSchema.optional().meta(
+      describe(
+        "The memos the quest is made from (PS-03b): `elvaria say --memo`, or the Chancellor's triage. Created open, the Steward closes those still open as handled by it; created as a draft, when the owner confirms it.",
+      ),
+    ),
     assignee: CharacterIdSchema.optional().meta(
       describe(
         'The character the owner gives the quest to (`elvaria quest add --to`, P1-29): only it takes the quest, as after a reassign naming it; its level aside, a rank above its ceiling makes the quest wait for the royal seal. Only for a session-tier quest created open (draft = false). The Steward refuses the command, creating no quest, when the character is unknown, of another class, suspended or of a disabled tribe.',
@@ -243,23 +247,9 @@ export const EditQuestPayloadSchema = z.strictObject({
   quest: QuestIdSchema,
   expected_updated_at: DateTimeSchema,
   changes: QuestChangesSchema,
-});
-
-export const DecideMemoPayloadSchema = z
-  .strictObject({
-    memo: MemoIdSchema,
-    decision: z.enum(MEMO_DECISIONS),
-    quest: QuestIdSchema.optional().meta(describe('With decision = handled: the quest that does the work.')),
-    note: NonEmptyStringSchema.optional(),
-  })
-  .refine((payload) => payload.decision !== 'handled' || payload.quest !== undefined, {
-    path: ['quest'],
-    message: 'a handled memo names its quest',
-  })
-  .meta({
-    ...describe(
-      'The owner decides a memo once (PS-02, ADR 0024; `elvaria memo decide`): set it aside (shelved), refuse it (rejected), or name the quest that does the work (handled). The Steward closes the memo and appends memo.closed. Refused when the memo is unknown or already closed, or the quest unknown. A memo is never answered, and closing it changes no quest.',
+  memos: MemoListSchema.optional().meta(
+    describe(
+      "The memos the edit takes in (PS-03b, the Chancellor's triage merging them into the quest): once the edit is applied, the Steward closes those still open as handled by the quest.",
     ),
-    if: { properties: { decision: { const: 'handled' } } },
-    then: { required: ['quest'] },
-  });
+  ),
+});

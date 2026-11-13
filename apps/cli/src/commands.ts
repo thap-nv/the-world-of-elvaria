@@ -27,6 +27,7 @@ import { SAY } from './say/say.ts';
 import { TERRITORY_ADD } from './territory/add.ts';
 import { TERRITORY_GRAPH } from './territory/graph.ts';
 import { TERRITORY_LIST } from './territory/list.ts';
+import { TRIAGE } from './triage/triage.ts';
 import { TRIBE_ADD } from './tribe/add.ts';
 import { TRIBE_CHECK } from './tribe/check.ts';
 import { TRIBE_DISABLE } from './tribe/disable.ts';
@@ -67,6 +68,7 @@ export const COMMANDS: readonly CommandSpec[] = [
   MEMO_LIST,
   MEMO_SHOW,
   MEMO_DECIDE,
+  TRIAGE,
   RUN,
   WAKE,
   DIGEST,

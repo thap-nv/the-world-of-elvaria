@@ -2,9 +2,10 @@
 
 ## Does
 
-- Holds the zod schemas that are the source of the 19 data contracts (ADR 0003, `CONTRACTS` in
+- Holds the zod schemas that are the source of the 20 data contracts (ADR 0003, `CONTRACTS` in
   `src/schema/contracts.ts`): kingdom, territory, quest, character, campaign, verdict, lesson, event,
-  inbox-command, the six registry files, skill, quest-draft, world-map and memo (PS-02), with their TypeScript types.
+  inbox-command, the six registry files, skill, quest-draft, world-map, memo (PS-02) and memo-triage (PS-03b), with
+  their TypeScript types.
   `pnpm schemas` writes `docs/schemas/` from them; each contract's `examples` live in `examples/`.
 - Checks a registry across its six files (`parseRegistry`, `checkRegistry`): unknown ritual, class, kind,
   step or tag (a kind's `ritual_overrides`, P1-20), duplicate ids, a verifier allowed to take work, a class and a
@@ -205,7 +206,7 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   session's tool calls before its first edit, and the prompt's size by role and block from the load traces.
 - Decides when the Steward's scheduled jobs run (`src/schedule/`, PS-03): `dueJobs` over `kingdom.schedule`, the
   kingdom's local day and time (`localClockOf`) and the day each job last ran: a daily job is due once its `at` has
-  come on a day it has not run (`DAILY_JOBS`: `chronicle`, `digest`), so a late start catches up and a clock set back
+  come on a day it has not run (`DAILY_JOBS`: `chronicle`, `triage`, `digest`), so a late start catches up and a clock set back
   never runs it twice. `schedule.ran` and `digest.written` give the lines their shape (`src/schema/event/schedule-data.ts`).
 - Lists what waits for the owner (`attentionQueue`, `src/world/attention.ts`, PS-03): over the world state, `now`
   and the Steward's notices (unclaimable, unjudgeable, judges out of mana), each item with its group (`must`: the
@@ -213,7 +214,16 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   questions, seals, the infirmary, drafts, open memos, pools asleep or at the warning share, and (PS-05) the done
   quests that still hold a scope quests ready to start wait for (`scope_held`, from `scopeHoldsOf` over the quest
   files, which the caller passes with the notices: the world state holds no scope). The world state holds the
-  open memos since PS-03 (`memos`, `memoViewOf`; `memo.*` lines reduce into it; `WORLD_STATE_VERSION` 2).
+  open memos since PS-03 (`memos`, `memoViewOf`; `memo.*` lines reduce into it; `WORLD_STATE_VERSION` 2). A memo the
+  Chancellor's triage sent up carries its advice (`escalated`, PS-03b) and lists as `memo_escalated`.
+- Decides what the world takes in alone of the memos the Chancellor triages (`src/delegation/`, PS-03b):
+  `kingdom.delegation` (`DelegationSchema`: `max_rank`, `same_scope`, `ask`) and `delegationHolds`, which answers with
+  what holds a piece of work for the owner: a matter of `ask` the Chancellor flagged, a rank above `max_rank`, files
+  not surely inside the work's scope (`pathInScope`, the reverse doubt of `scopesMeet`), or the Chancellor's own
+  choice; none when the Steward may apply it. The memo-triage contract (`MemoTriageFileSchema`), `escalateMemo` and
+  the memo's `escalation`, the command `escalate_memo`, `memos` on create_quest, edit_quest and the quest, the source
+  `chancellor` and the line `memo.escalated` have their schemas here; `memoCountsOf` counts the memos the owner and
+  the triage decided (`Metrics.memos`), and a command of the triage is none of the owner's steps.
 - Gives the load trace of a session's opening line its shape (`LoadTraceSchema`, `src/schema/event/load-trace.ts`,
   PS-01b): the scripture files and their lines, the skill ids and the prompt's blocks by part, id and size.
 - Gives the core types every package builds on: `Result`, branded ids (`QuestId`, `TribeId`, ...), `Clock` and

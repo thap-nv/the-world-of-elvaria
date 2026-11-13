@@ -4,7 +4,7 @@
 import { REWORK_CAUSES, OWNER_COMMAND_KINDS } from './causes.ts';
 import { escapedOf, firstPassOf, firstRunOf, sealedCostOf } from './judgement.ts';
 import { ownerCommandsOf, sequelsIn, sessionModelsOf, trailsOf } from './ledger.ts';
-import { outOfScopeOf, readsOf, setAsidesOf } from './log-counts.ts';
+import { memoCountsOf, outOfScopeOf, readsOf, setAsidesOf } from './log-counts.ts';
 import { firstPassRatesOf } from './rates.ts';
 import { reworkOf } from './rework.ts';
 import { firstEditsOf, graphQueriesOf, promptSizesOf } from './session-counts.ts';
@@ -12,7 +12,7 @@ import { inWindow } from './window.ts';
 import type { OwnerCommandKind, ReworkCause } from './causes.ts';
 import type { EscapedDefect, SealedCost } from './judgement.ts';
 import type { MetricsInput, OwnerCommand } from './ledger.ts';
-import type { OutOfScope, Reads, SetAside } from './log-counts.ts';
+import type { MemoCounts, OutOfScope, Reads, SetAside } from './log-counts.ts';
 import type { FirstPassRates } from './rates.ts';
 import type { QuestTrail, Rework } from './rework.ts';
 import type { FirstEdits, GraphQueries, PromptSizes } from './session-counts.ts';
@@ -79,6 +79,8 @@ export interface Metrics {
   readonly prompts: PromptSizes;
   /** Submits that changed files outside their quest's scope (PS-05): a signal for the judge, never a fail. */
   readonly out_of_scope: readonly OutOfScope[];
+  /** The memos filed, and who decided them: the owner, or the Chancellor's triage (PS-03b). */
+  readonly memos: MemoCounts;
 }
 
 function runCountsOf(trails: readonly QuestTrail[], input: MetricsInput, window: MetricsWindow): RunCounts {
@@ -156,5 +158,6 @@ export function metricsOf(input: MetricsInput, window: MetricsWindow = {}): Metr
     first_edits: firstEditsOf(input.events, input.quests, window),
     prompts: promptSizesOf(input.events, input.quests, window),
     out_of_scope: outOfScopeOf(input.events, window),
+    memos: memoCountsOf(input.events, window),
   };
 }

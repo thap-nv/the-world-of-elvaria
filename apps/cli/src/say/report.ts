@@ -22,14 +22,23 @@ export const DROP_REASON_LABEL: Readonly<Record<DropReason, MessageKey>> = {
   dependency_cycle: 'cli.say.drop.dependency_cycle',
 };
 
-/** The Chancellor gave nothing usable; `run_dir` holds its prompt and the CLI's output. */
-export function reportFailure(ctx: KingdomContext, failure: ChancellorFailure, runDir: string): void {
+/**
+ * The Chancellor gave nothing usable; `run_dir` holds its prompt and the CLI's output. `contract`: the reply's,
+ * quest-draft for the owner's words, memo-triage for the triage (PS-03b).
+ */
+export function reportFailure(
+  ctx: KingdomContext,
+  failure: ChancellorFailure,
+  runDir: string,
+  contract = 'quest-draft',
+): void {
   const { t, io } = ctx;
   if (failure.code === 'rate_limited') io.err(t('cli.say.failed.rate_limited'));
   else if (failure.code === 'timed_out') io.err(t('cli.say.failed.timed_out'));
+  else if (failure.code === 'stopped') io.err(t('cli.say.failed.stopped'));
   else if (failure.code === 'no_reply') io.err(t('cli.say.failed.no_reply', { outcome: failure.outcome }));
   else {
-    io.err(t('cli.say.failed.invalid_reply'));
+    io.err(t('cli.say.failed.invalid_reply', { contract }));
     failure.issues.forEach((issue) => {
       io.err(`  ${issue}`);
     });

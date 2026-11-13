@@ -40,13 +40,18 @@
   `memo.filed` (the writer's) and `memo.routed` lines; a memo already filed is not filed again, and a line that
   follows no memo, an unknown kind or a write that fails is a warning, never the run's end. No quest moves. The
   owner's `decide_memo` closes a memo once (`memo.closed`, in the journal of the quest whose letter held it); a
-  continuing assignee's prompt lists the memos its quest filed (`filedMemosOf`).
+  continuing assignee's prompt lists the memos its quest filed (`filedMemosOf`). (PS-03b) A create_quest or edit_quest
+  naming `memos` closes them as handled by its quest once the quest has the work (at creation or edit, or at the owner's
+  confirm of a draft); `escalate_memo` keeps the triage's advice on an open memo (`memo.escalated`). Commands with
+  `source: chancellor` are told as the Chancellor's (`actorOfCommand`), and their `command.*` lines carry the source.
 - Runs the jobs of `kingdom.schedule` (PS-03, implementation-plan §3.16.3; `src/schedule/`): no cron. At the end
   of each tick the domain's `dueJobs` says which job's hour has come on a local day it has not run; an `in_tick`
   job (no model) runs there and then, an `off_tick` job (may call a model: PS-03b's triage, PS-21c's docs graph,
   given as `StewardDeps.jobs`) runs outside the tick, one at a time, and `stop()` aborts it. A job that ends without
   throwing writes `schedule.ran`; the next start reads the last day of each from the log, so a job runs once a day
-  however the clock moves, and one a stop cut short runs again. The first job is the digest (`digestJob`, given
+  however the clock moves, and one a stop cut short runs again. (PS-03b) Jobs due together go by their hour, an
+  in-tick job waits while an off-tick job of an earlier hour runs (the triage before the digest), and an off-tick job
+  may wait for `ready` (its view names the tribes a session runs on, `busy`). The first job is the digest (`digestJob`, given
   `StewardDeps.digest`): the domain's `attentionQueue` over the files, the open memos, mana as the log last read it
   (`digestStateOf`) and the Steward's own notices (`noticesOf`: unclaimable, unjudgeable, judges out of mana); the
   `Digest` port of the composition root words it and writes `digest/<day>.md`, then one `digest.written` line and

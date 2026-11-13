@@ -13,3 +13,11 @@ export const MEMO_ROUTES = ['chancellor'] as const;
 export const MEMO_STATES = ['open', 'closed'] as const;
 /** What the owner (or, from PS-03b, the Chancellor's triage) decided: set aside, refused, or done by a quest. */
 export const MEMO_DECISIONS = ['shelved', 'rejected', 'handled'] as const;
+
+/**
+ * Memos one triage reads (PS-03b): one model call per batch, the oldest first; the rest wait for the next run. Twenty
+ * one-line memos with their quests' scopes fit a short prompt.
+ */
+export const TRIAGE_MEMOS_MAX = 20;
+/** The Chancellor's word on one memo: why, in a sentence or two, for the owner and the memo's outcome. */
+export const TRIAGE_NOTE_MAX_LENGTH = 1000;

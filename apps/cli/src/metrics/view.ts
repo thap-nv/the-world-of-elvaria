@@ -69,6 +69,8 @@ function summarySection(t: Translate, metrics: Metrics): MetricsSection {
         count: metrics.out_of_scope.length,
         files: metrics.out_of_scope.reduce((total, { paths }) => total + paths.length, 0),
       }),
+      // PS-03b: the memos the owner had to decide, apart from the owner's steps into a quest's run.
+      t('cli.metrics.line.memos', { ...metrics.memos }),
     ],
   };
 }

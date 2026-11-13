@@ -1,7 +1,7 @@
 // What the Steward's scheduled jobs are given and what the digest's port does (implementation-plan §3.16.3, PS-03).
 // Apart from types.ts, which re-exports them, and free of the tick's Context, so a job the composition root injects
 // (the Chancellor's triage of PS-03b, the docs graph of PS-21c) forms no import cycle.
-import type { AttentionItem, DailyJobId, StewardNotices } from '@elvaria/domain';
+import type { AttentionItem, DailyJobId, StewardNotices, TribeId } from '@elvaria/domain';
 
 /**
  * `in_tick`: short and without a model (the digest): it runs to its end inside the tick. `off_tick`: may call a model;
@@ -9,14 +9,23 @@ import type { AttentionItem, DailyJobId, StewardNotices } from '@elvaria/domain'
  */
 export type JobMode = 'in_tick' | 'off_tick';
 
-/** One run of a job. */
-export interface JobRun {
+/** What a job sees of the tick that starts it. */
+export interface JobView {
   /** The kingdom's local day it runs for, `yyyy-mm-dd`. */
   readonly day: string;
-  /** Aborted when the Steward stops: an off-tick job ends then, and runs again at the next start. */
-  readonly signal: AbortSignal;
   /** What the Steward knows that no file holds, as the tick that started the job left it. */
   readonly notices: StewardNotices;
+  /**
+   * The tribes a session of this Steward runs on now (PS-03b): a job whose session lies outside the tribes' slots, as
+   * the Chancellor's triage, starts only once its tribe has none.
+   */
+  readonly busy: ReadonlySet<TribeId>;
+}
+
+/** One run of a job. */
+export interface JobRun extends JobView {
+  /** Aborted when the Steward stops: an off-tick job ends then, and runs again at the next start. */
+  readonly signal: AbortSignal;
 }
 
 /**
@@ -26,6 +35,11 @@ export interface JobRun {
 export interface ScheduledJob {
   readonly id: DailyJobId;
   readonly mode: JobMode;
+  /**
+   * Whether an off-tick job may start now (PS-03b); absent: always. One not ready is asked again at the next tick of
+   * the same day, and no job waits for it.
+   */
+  ready?(view: JobView): Promise<boolean>;
   run(run: JobRun): Promise<void>;
 }
 

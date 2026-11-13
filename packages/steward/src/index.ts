@@ -15,6 +15,7 @@ export type {
   DigestRequest,
   JobMode,
   JobRun,
+  JobView,
   Logger,
   ManaGaugeNotice,
   Notice,

@@ -4,7 +4,7 @@
 
 Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là một event; log chỉ ghi thêm, không bao giờ viết lại. `type` là `nhóm.hành_động`; reader giữ nguyên type lạ, renderer bỏ qua nó. Hợp đồng đầy đủ: [schemas/event.schema.json](schemas/event.schema.json); nghĩa từng nhóm và các tiền tố dành sẵn: [glossary.md](glossary.md) mục 12.
 
-73 type trong danh mục v1, 61 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
+74 type trong danh mục v1, 62 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
 
 ## Khung một dòng
 
@@ -105,8 +105,8 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 | Type | `data` |
 |---|---|
 | `command.received` | object mở, chưa có schema |
-| `command.applied` | `command_id`: string (khớp `^[0-9A-HJKMNP-TV-Z]{26}$`)<br>`reason` (tùy chọn): string<br>`kind` (tùy chọn): string (khớp `^[a-z][a-z0-9_]*$`) — The command's `kind` (InboxCommand.kind), so the metrics ledger counts the owner's steps from the log alone; inbox/done/ names it for lines written before PS-01b. |
-| `command.rejected` | `command_id`: string (khớp `^[0-9A-HJKMNP-TV-Z]{26}$`)<br>`reason` (tùy chọn): string<br>`kind` (tùy chọn): string (khớp `^[a-z][a-z0-9_]*$`) — The command's `kind` (InboxCommand.kind), so the metrics ledger counts the owner's steps from the log alone; inbox/done/ names it for lines written before PS-01b. |
+| `command.applied` | `command_id`: string (khớp `^[0-9A-HJKMNP-TV-Z]{26}$`)<br>`reason` (tùy chọn): string<br>`kind` (tùy chọn): string (khớp `^[a-z][a-z0-9_]*$`) — The command's `kind` (InboxCommand.kind), so the metrics ledger counts the owner's steps from the log alone; inbox/done/ names it for lines written before PS-01b.<br>`source` (tùy chọn): một trong `chancellor` — `chancellor` when the command came from the Chancellor's triage (PS-03b): the metrics ledger leaves it out of the owner's steps. Absent for the owner's commands (CLI, Herald, phone). |
+| `command.rejected` | `command_id`: string (khớp `^[0-9A-HJKMNP-TV-Z]{26}$`)<br>`reason` (tùy chọn): string<br>`kind` (tùy chọn): string (khớp `^[a-z][a-z0-9_]*$`) — The command's `kind` (InboxCommand.kind), so the metrics ledger counts the owner's steps from the log alone; inbox/done/ names it for lines written before PS-01b.<br>`source` (tùy chọn): một trong `chancellor` — `chancellor` when the command came from the Chancellor's triage (PS-03b): the metrics ledger leaves it out of the owner's steps. Absent for the owner's commands (CLI, Herald, phone). |
 
 ## `delivery` · 1 type
 
@@ -132,7 +132,7 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 
 | Type | `data` |
 |---|---|
-| `schedule.ran` | `job`: một trong `chronicle`, `digest`<br>`day`: string (khớp `^\d{4}-\d{2}-\d{2}$`) — The kingdom's local day, yyyy-mm-dd (kingdom.tz). |
+| `schedule.ran` | `job`: một trong `chronicle`, `triage`, `digest`<br>`day`: string (khớp `^\d{4}-\d{2}-\d{2}$`) — The kingdom's local day, yyyy-mm-dd (kingdom.tz). |
 
 ## `digest` · 1 type
 
@@ -155,13 +155,14 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 | `graph.built` | `commit`: string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) — The commit of the territory the graph is of: the folder `.state/graphs/<territory>/<commit>/`.<br>`nodes` (tùy chọn): integer ≥ 0 — graphify's count, when it printed one.<br>`edges` (tùy chọn): integer ≥ 0<br>`duration_ms`: integer ≥ 0 |
 | `graph.failed` | `commit`: string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) — The commit of the territory the graph is of: the folder `.state/graphs/<territory>/<commit>/`.<br>`reason`: string (không rỗng) — Why, with the end of graphify's output; redacted. |
 
-## `memo` · 3 type
+## `memo` · 4 type
 
 | Type | `data` |
 |---|---|
 | `memo.filed` | `memo`: string (khớp `^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`kind`: string (khớp `^[a-z][a-z0-9_]*$`)<br>`from`: string (khớp `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$`, khác `user`, `machine`, `temple`) |
 | `memo.routed` | `memo`: string (khớp `^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`route`: một trong `chancellor` |
 | `memo.closed` | `memo`: string (khớp `^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`decision`: một trong `shelved`, `rejected`, `handled`<br>`quest` (tùy chọn): string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`) — With decision = handled: the quest that does the work. |
+| `memo.escalated` | `memo`: string (khớp `^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`action`: một trong `merge`, `new_quest`, `shelve`, `owner`<br>`quest` (tùy chọn): string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`) — merge: the open quest; new_quest: the draft quest made for the owner to confirm.<br>`holds`: array of một trong `decision_change`, `contract_change`, `mana_over_budget`, `outward_action`, `protected_paths`, `above_rank`, `outside_scope`, `chancellor_asks` |
 
 ## `sandbox` · 2 type
 

@@ -68,6 +68,7 @@ const jobsOf = (deps: StewardDeps): StewardJob[] => [
   ...(deps.jobs ?? []).map((job): StewardJob => ({
     id: job.id,
     mode: job.mode,
+    ...(job.ready === undefined ? {} : { ready: (view) => job.ready?.(view) ?? Promise.resolve(true) }),
     run: (_ctx, run) => job.run(run),
   })),
 ];

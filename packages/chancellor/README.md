@@ -27,7 +27,15 @@
 - Turns drafts into inbox commands (`draftCommands`): one `create_quest` with `draft: true` and
   `created_by: chancellor` per draft, in that order; `depends_on_refs` and `parent_ref` become the quest
   ids the Steward will give (the caller derives them from each command, `questIdOfCommand` of
-  `@elvaria/steward`), so drafts that depend on each other reach the Steward as quests that do.
+  `@elvaria/steward`), so drafts that depend on each other reach the Steward as quests that do. Given memos (PS-03b,
+  `say --memo`), every command carries them: the first draft the owner confirms closes them.
+- Triages memos (PS-03b, implementation-plan §3.16.3): `triageMemos(context, session, signal)` runs one session for
+  the whole batch (`buildTriagePrompt` of runner-core; the memo-triage contract, `MEMO_TRIAGE_JSON_SCHEMA`), checks
+  that each memo of the batch is decided once and no other named (`triageCheckOf`), and screens the drafts of its new
+  quests; the signal kills the session (failure `stopped`). `triageCommands` groups the decisions by the work they
+  share, holds each group against `kingdom.delegation` (the domain's `delegationHolds`) and gives inbox commands:
+  within it an `edit_quest` that merges, a `create_quest` made open, a `decide_memo` that sets a memo aside; beyond it
+  an `escalate_memo` per memo, a new quest waiting as a draft. One session's plumbing (`src/session.ts`) serves both.
 
 ## Does not
 

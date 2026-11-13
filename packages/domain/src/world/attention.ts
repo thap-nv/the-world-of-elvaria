@@ -9,6 +9,7 @@ import { manaWarningOf } from '../mana/state.ts';
 import { RANKS } from '../schema/common.ts';
 import type { Instant } from '../core/clock.ts';
 import type { CharacterId, MemoId, QuestId, TribeId } from '../core/ids.ts';
+import type { DelegationHold, TriageAction } from '../delegation/constants.ts';
 import type { WaitGauge } from '../dispatch/judge-waits.ts';
 import type { ScopeHold } from '../dispatch/scope.ts';
 import type { Rank } from '../schema/common.ts';
@@ -42,6 +43,8 @@ export const ATTENTION_TABLE = {
   unclaimable: { group: 'must', advice: 'see_why', command: ['quest', 'show', '{quest}'] },
   scope_held: { group: 'must', advice: 'merge_and_archive', command: ['quest', 'archive', '{quest}'] },
   draft: { group: 'must', advice: 'confirm_or_cancel', command: ['quest', 'confirm', '{quest}'] },
+  // PS-03b: a memo the Chancellor's triage sent up, with its advice, before the memos it has not read yet.
+  memo_escalated: { group: 'can_wait', advice: 'weigh_triage', command: ['memo', 'show', '{memo}'] },
   memo: { group: 'can_wait', advice: 'decide_memo', command: ['memo', 'show', '{memo}'] },
   mana_asleep: { group: 'can_wait', advice: 'wait_or_wake', command: ['wake', '{tribe}'] },
   mana_warning: { group: 'can_wait', advice: 'watch_mana', command: ['doctor'] },
@@ -70,6 +73,10 @@ export interface AttentionSubject {
   readonly memo?: MemoId;
   readonly memo_kind?: string;
   readonly from?: CharacterId;
+  /** A memo sent up (PS-03b): what the Chancellor would do, the quest it names, what holds it for the owner. */
+  readonly triage?: TriageAction;
+  readonly target?: QuestId;
+  readonly holds?: readonly DelegationHold[];
   readonly tribe?: TribeId;
   readonly pool?: string;
   readonly used_pct?: number;
@@ -154,14 +161,18 @@ function noticeItems(state: WorldState, notices: StewardNotices): AttentionItem[
 }
 
 function memoItems(state: WorldState): AttentionItem[] {
-  return Object.values(state.memos).map((memo) =>
-    itemOf('memo', {
+  return Object.values(state.memos).map((memo) => {
+    const subject = {
       memo: memo.id,
       memo_kind: memo.kind,
       from: memo.from,
       ...(memo.quest === null ? {} : { quest: memo.quest }),
-    }),
-  );
+    };
+    const sent = memo.escalated;
+    if (sent === undefined) return itemOf('memo', subject);
+    const target = sent.quest === undefined ? {} : { target: sent.quest };
+    return itemOf('memo_escalated', { ...subject, triage: sent.action, ...target, holds: sent.holds });
+  });
 }
 
 /** A pool asleep; or awake with a current window at the owner's warning share or above. */

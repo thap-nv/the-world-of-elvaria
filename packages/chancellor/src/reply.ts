@@ -42,9 +42,3 @@ export function checkReply(value: unknown): DraftCheck {
 
 /** A text reply against the schema: a text without a JSON object is a reply that cannot be used. */
 export const checkTextReply = (text: string | undefined): DraftCheck => checkText(text, checkReply);
-
-/** What spawnParsed asks before it tries again: the issues of a reply, none when it can be used. */
-export const replyIssuesOf = (value: unknown): readonly string[] => {
-  const checked = checkReply(value);
-  return checked.ok ? [] : checked.issues;
-};

@@ -276,6 +276,20 @@
               "used_in": "`digest/<ngày>.md`, `kingdom.schedule.digest`, cổng `Digest`, `elvaria digest`, event `digest.written`"
             },
             {
+              "vi": "Phân loại thư",
+              "en": "Triage",
+              "id": ["triage"],
+              "definition": "Tể tướng đọc các thư gửi tới mình đang chờ, một lần gọi model cho cả lô, và quyết mỗi thư: gộp vào một quest đang mở, mở quest mới, gác lại, hay đưa lên chủ nhân. Kết quả chỉ là lệnh hộp thư; trong phạm vi ủy quyền Quản sự áp luôn, thư còn lại tới chủ nhân kèm lời khuyên (PS-03b).",
+              "used_in": "`elvaria triage`, `kingdom.schedule.triage`, `triageMemos`, `triageCommands`"
+            },
+            {
+              "vi": "Phạm vi ủy quyền",
+              "en": "Delegation",
+              "id": ["delegation"],
+              "definition": "Dữ liệu vương quốc: thế giới tự quyết thư nào mà không cần chủ nhân (việc tới hạng nào, có buộc cùng vùng file không) và giữ cho chủ nhân những gì (đổi quyết định đã ghi, đổi hợp đồng dữ liệu, vượt mana, hành động ra ngoài, chạm vùng bảo vệ). Hàm thuần `delegationHolds` trả lời cho từng việc (PS-03b).",
+              "used_in": "`kingdom.delegation`, `memo.escalation.holds`"
+            },
+            {
               "vi": "Đền",
               "en": "Temple",
               "id": ["temple"],
@@ -1596,7 +1610,13 @@
               "vi": "Quyết thư",
               "id": ["decide_memo"],
               "icon": "—",
-              "remark": "`elvaria memo decide`; gác (`shelved`), bác (`rejected`) hay đã có quest làm (`handled`, kèm `quest`); mỗi thư quyết một lần, không quest nào đổi; ghi `memo.closed`"
+              "remark": "`elvaria memo decide`; gác (`shelved`), bác (`rejected`) hay đã có quest làm (`handled`, kèm `quest`); mỗi thư quyết một lần, không quest nào đổi; ghi `memo.closed`. Phân loại thư cũng gác thư bằng lệnh này (nguồn `chancellor`, PS-03b)"
+            },
+            {
+              "vi": "Đưa thư lên chủ nhân",
+              "id": ["escalate_memo"],
+              "icon": "—",
+              "remark": "chỉ phân loại thư của Tể tướng ghi (nguồn `chancellor`, PS-03b): thư ngoài phạm vi ủy quyền giữ lời khuyên ở `memo.escalation`, vẫn mở, vào bản tấu; ghi `memo.escalated`"
             }
           ]
         },
@@ -1976,8 +1996,8 @@
             },
             {
               "field": "`kingdom.schedule`",
-              "values": "`chronicle`, `temple`, `patrol`",
-              "meaning": "ba lịch, mỗi cái tắt được"
+              "values": "`chronicle`, `triage`, `digest`, `temple`, `patrol`",
+              "meaning": "năm lịch, mỗi cái tắt được; `triage` (phân loại thư, PS-03b) và `digest` (bản tấu, PS-03) bật sẵn"
             },
             {
               "field": "`kingdom.bell`",
@@ -1998,6 +2018,26 @@
               "field": "`memo_kind.route` (cũng `memo.to.route`)",
               "values": "`chancellor`",
               "meaning": "nơi nhận của một kiểu thư"
+            },
+            {
+              "field": "`memo.escalation.action` (cũng `memo-triage` `decisions[].action`)",
+              "values": "`merge`, `new_quest`, `shelve`, `owner`",
+              "meaning": "Tể tướng gộp thư vào một quest đang mở, mở quest mới, gác lại, hay đưa lên chủ nhân (PS-03b)"
+            },
+            {
+              "field": "`kingdom.delegation.ask` (cũng `memo-triage` `decisions[].ask`)",
+              "values": "`decision_change`, `contract_change`, `mana_over_budget`, `outward_action`, `protected_paths`",
+              "meaning": "những việc chủ nhân giữ: đổi quyết định đã ghi, đổi hợp đồng dữ liệu, vượt ngân sách mana, hành động ra ngoài, chạm vùng bảo vệ"
+            },
+            {
+              "field": "`memo.escalation.holds`",
+              "values": "các giá trị của `ask`, cùng `above_rank`, `outside_scope`, `chancellor_asks`",
+              "meaning": "vì sao thư tới chủ nhân: một việc chủ nhân giữ, hay máy thấy hạng vượt `max_rank`, tệp ngoài vùng file của việc, hoặc Tể tướng tự đưa lên"
+            },
+            {
+              "field": "`inbox-command.source`",
+              "values": "`cli`, `herald`, `lite`, `chancellor`",
+              "meaning": "ai ghi lệnh: các cửa của chủ nhân, hay phân loại thư của Tể tướng (PS-03b), áp không cần chủ nhân trong phạm vi ủy quyền"
             }
           ]
         }
@@ -2115,8 +2155,8 @@
             },
             {
               "group": "Thư",
-              "types": ["memo.filed", "memo.routed", "memo.closed"],
-              "meaning": "Quản sự lập thư từ mục `Memos` của thư bàn giao khi lượt người làm kết thúc qua nộp, hỏi hay hỏng (không khi cầu dao cắt), chuyển theo `registry/memos.json`, và đóng theo `decide_memo` (PS-02, ADR 0024)"
+              "types": ["memo.filed", "memo.routed", "memo.closed", "memo.escalated"],
+              "meaning": "Quản sự lập thư từ mục `Memos` của thư bàn giao khi lượt người làm kết thúc qua nộp, hỏi hay hỏng (không khi cầu dao cắt), chuyển theo `registry/memos.json`, và đóng theo `decide_memo` (PS-02, ADR 0024), hoặc khi quest làm việc của thư mở ra (PS-03b); `memo.escalated` khi phân loại của Tể tướng đưa thư lên chủ nhân kèm lời khuyên (PS-03b)"
             },
             {
               "group": "Lịch",

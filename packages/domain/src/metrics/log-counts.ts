@@ -1,7 +1,7 @@
 // What the metrics read from the event log alone (PS-01b, implementation-plan §3.16.1): the runs of checks the Steward
 // set aside because their environment failed, the files a session read more than once, and the files a submit
-// changed outside its quest's scope (PS-05). Neither leaves a trace in
-// a quest file, so a restarted Steward, the world and the Monk see them here or nowhere.
+// changed outside its quest's scope (PS-05), and who decided the memos (PS-03b). None leaves a trace in a quest file,
+// so a restarted Steward, the world and the Monk see them here or nowhere.
 import { isEventOf } from '../schema/event/event.ts';
 import { inWindow } from './window.ts';
 import type { MetricsWindow } from './window.ts';
@@ -79,3 +79,29 @@ export const outOfScopeOf = (events: readonly Event[], window: MetricsWindow): O
     if (!inWindow(window, event.ts)) return [];
     return [{ quest: event.quest ?? null, at: event.ts, paths: event.data.out_of_scope }];
   });
+
+/**
+ * The memos of the window (PS-03b, decided after PS-02, implementation-plan §11): how many were filed, and who closed
+ * them, the owner (`decide_memo`, or the confirm of a draft made from one) or the Chancellor's triage within
+ * kingdom.delegation; and how many the triage sent up. A count of its own, not an OWNER_COMMAND_KINDS line: deciding
+ * a memo steps into no quest's run.
+ */
+export interface MemoCounts {
+  readonly filed: number;
+  readonly by_owner: number;
+  readonly by_chancellor: number;
+  readonly escalated: number;
+}
+
+export function memoCountsOf(events: readonly Event[], window: MetricsWindow): MemoCounts {
+  const counts = { filed: 0, by_owner: 0, by_chancellor: 0, escalated: 0 };
+  for (const event of events) {
+    if (!inWindow(window, event.ts)) continue;
+    if (isEventOf(event, 'memo.filed')) counts.filed += 1;
+    if (isEventOf(event, 'memo.escalated')) counts.escalated += 1;
+    if (!isEventOf(event, 'memo.closed')) continue;
+    if (event.actor.kind === 'user') counts.by_owner += 1;
+    if (event.actor.kind === 'chancellor') counts.by_chancellor += 1;
+  }
+  return counts;
+}

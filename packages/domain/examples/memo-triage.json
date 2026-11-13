@@ -1,0 +1,55 @@
+[
+  {
+    "version": 1,
+    "decisions": [
+      {
+        "memo": "m_20261112_4k2pqz",
+        "action": "merge",
+        "quest": "q_20261112_b3m8ty",
+        "addendum": "Cũng in giờ của `quest list` theo múi giờ của vương quốc, như `quest show`.",
+        "ask": [],
+        "note": "Quest dọn CLI đang mở cùng vùng file."
+      },
+      {
+        "memo": "m_20261112_c5qe2w",
+        "action": "owner",
+        "ask": ["contract_change"],
+        "note": "Đổi tên một trường của kingdom.json là đổi hợp đồng dữ liệu."
+      },
+      {
+        "memo": "m_20261112_9tw3hx",
+        "action": "new_quest",
+        "draft_ref": "d1",
+        "ask": [],
+        "note": "Một sửa nhỏ trong README của store, chưa quest nào giữ vùng đó."
+      },
+      {
+        "memo": "m_20261112_h2kd7r",
+        "action": "shelve",
+        "ask": [],
+        "note": "Trùng thư m_20261112_9tw3hx."
+      }
+    ],
+    "drafts": [
+      {
+        "ref": "d1",
+        "title": "Sửa README của packages/store: sáu file registry",
+        "description": "README của packages/store còn nói năm file registry; từ PS-02 là sáu (thêm memos.json). Sửa câu đó.",
+        "kind": "document",
+        "rank": "F",
+        "territory": "elvaria",
+        "tier": "session",
+        "class_required": "scribe",
+        "tags": ["docs"],
+        "scope_paths": ["packages/store/README.md"],
+        "depends_on_refs": [],
+        "estimate": {
+          "tokens": 20000,
+          "minutes": 10
+        },
+        "seal_required": false,
+        "secrets_required": []
+      }
+    ]
+  }
+]

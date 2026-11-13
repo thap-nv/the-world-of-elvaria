@@ -24,6 +24,21 @@ function outcomeFields(ctx: KingdomContext, memo: Memo): Field[] {
   ];
 }
 
+/** The advice of the Chancellor's triage on a memo it sent up (PS-03b): what it would do, why it is the owner's. */
+function escalationFields(ctx: KingdomContext, memo: Memo): Field[] {
+  const sent = memo.escalation;
+  if (sent === undefined) return [];
+  const action = ctx.t(`cli.triage.action.${sent.action}`, { quest: sent.quest ?? NONE });
+  const holds = sent.holds.map((hold) => ctx.t(`cli.triage.hold.${hold}`)).join(', ');
+  return [
+    ['cli.memo.field.advice', `${action} (${sent.action})`],
+    ['cli.memo.field.advised', sent.at],
+    ['cli.memo.field.holds', holds],
+    ['cli.memo.field.advice_note', sent.note],
+    ...(sent.addendum === undefined ? [] : [['cli.memo.field.addendum', sent.addendum] satisfies Field]),
+  ];
+}
+
 async function runMemoShow(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);
   if (ctx === undefined) return EXIT.failed;
@@ -45,6 +60,7 @@ async function runMemoShow(input: CommandInput, cli: CliContext): Promise<ExitCo
     ['cli.memo.field.to', memo.to.route],
     ['cli.memo.field.filed', memo.filed_at],
     ['cli.memo.field.refs', memo.refs.length === 0 ? NONE : memo.refs.join(', ')],
+    ...escalationFields(ctx, memo),
     ...outcomeFields(ctx, memo),
   ];
   const hint = memo.state === 'open' ? ['', ctx.t('cli.memo.show.hint', { id: memo.id })] : [];

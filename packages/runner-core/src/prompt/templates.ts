@@ -41,6 +41,8 @@ export const PROMPT_TEMPLATES = [
   'ritual-steps',
   'chancellor',
   'chancellor-context',
+  'triage',
+  'triage-context',
 ] as const;
 export type PromptTemplateName = (typeof PROMPT_TEMPLATES)[number];
 export type PromptTemplates = Readonly<Record<PromptTemplateName, string>>;

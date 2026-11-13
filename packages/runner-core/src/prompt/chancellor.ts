@@ -26,9 +26,9 @@ export interface ChancellorContext {
   readonly context_budget_tokens: number;
 }
 
-const list = (lines: readonly string[], none: string): string =>
+export const list = (lines: readonly string[], none: string): string =>
   lines.length === 0 ? none : lines.join('\n');
-const names = (ids: readonly string[]): string => (ids.length === 0 ? 'none' : ids.join(', '));
+export const names = (ids: readonly string[]): string => (ids.length === 0 ? 'none' : ids.join(', '));
 
 /** The territory's hot files (PS-05), which no draft puts in its scope; nothing when it names none. */
 function sharedOf(territory: Territory): string {
@@ -36,7 +36,7 @@ function sharedOf(territory: Territory): string {
   return globs.length === 0 ? '' : `; shared paths: ${globs.map((glob) => `\`${glob}\``).join(', ')}`;
 }
 
-function territoriesOf(territories: readonly Territory[]): string {
+export function territoriesOf(territories: readonly Territory[]): string {
   return list(
     territories.map(
       (territory) =>
@@ -46,7 +46,7 @@ function territoriesOf(territories: readonly Territory[]): string {
   );
 }
 
-function catalogOf({ kinds, tags, scripts }: Registry) {
+export function catalogOf({ kinds, tags, scripts }: Registry) {
   return {
     kinds: list(
       kinds.map(
@@ -72,7 +72,7 @@ function catalogOf({ kinds, tags, scripts }: Registry) {
   };
 }
 
-function rosterOf(roster: readonly Character[]): string {
+export function rosterOf(roster: readonly Character[]): string {
   return list(
     roster.map(
       (character) =>

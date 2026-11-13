@@ -525,6 +525,16 @@
         "campaign"
       ]
     },
+    "memos": {
+      "description": "The memos the quest was made from (PS-03b: `elvaria say --memo`, the Chancellor's triage). The Steward closes those still open as handled by it when it opens: at creation, or when the owner confirms the draft.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+      }
+    },
     "created_at": {
       "type": "string",
       "format": "date-time"
