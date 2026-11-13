@@ -77,6 +77,8 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
 | 5 | PS-06 và PS-23, rồi PS-06b, PS-21b và PS-22b | (Chủ nhân chốt 2026-11-12, §11) PS-23 (tộc mở) sau P1-12d và sau PS-24, vì cùng `packages/domain/src/tribe/**` và `apps/cli/src/tribe/**` với PS-24; nhờ vậy đợt 4 không có ba task cùng sửa `verify`. PS-23 cùng `packages/hooks` với PS-21. PS-22b cần PS-06 (tấu trình và `plan.md` là ngữ cảnh của người viết đề), PS-03b (cổng chạy Tể tướng ngoài nhịp) và PS-22; cùng `packages/chancellor` và prompt người làm với PS-06, PS-21b. PS-06 cần PS-05. PS-21b cần PS-21 và PS-06: cùng `packages/chancellor`, prompt pháp sư và `planIssuesOf` |
 | 6 | PS-07 | Sau cùng; chạy thật, tốn mana; cần P1-53 (nhân vật gemini tìm được trong repo). PS-23 và PS-24 không chặn mốc (chốt 2026-11-12) |
 
+(Chủ nhân chốt 2026-11-13, §11) PS-25 (thẻ điểm lãnh thổ) thêm vào giai đoạn 1.5: không cần task nào trước, cần trước PS-07, cùng `packages/domain/src/metrics/**` với PS-06b; đợt do phiên điều phối xếp.
+
 ## PS-01 — Sổ đo, phần đọc
 
 - **Mục tiêu**: các số của kế hoạch sản phẩm mục 14 "Sổ đo" từ dữ liệu đang có. 0 mana. Không đổi schema nào.
@@ -290,6 +292,8 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
 - **Thêm**: `planAccuracyOf` trong `packages/domain/src/metrics/` (vùng khai so với file chạm, ước lượng so với token, số thư, lượt làm lại theo từng phần); `elvaria metrics --plan <quest>`; `quest show` in phần tóm tắt của `plan.md` khi quest kế hoạch chờ dấu.
 - **Test**: một kế hoạch giả có ba phần cho đúng các số; quest không phải kế hoạch thì `--plan` báo lỗi dùng.
 
+- **Từ phiên nghiên cứu** (chủ nhân chốt 2026-11-13, §11): ba số đo thêm trong `packages/domain/src/metrics/`, đều từ log và file quest: thời gian quest nằm ở từng trạng thái (trung vị và lớn nhất; nhất là `review` chưa có người chấm và `awaiting_seal`); tỉ lệ đạt theo số lượt làm, căn cứ để quyết `max_attempts` mặc định; tỉ lệ lời khuyên của Tể tướng trên thư đưa lên (`memo.escalated`) khớp quyết định của chủ nhân, căn cứ để nới `delegation.max_rank`. `elvaria metrics` in cả ba; log không có `memo.escalated` thì mục thứ ba trống.
+
 ## PS-21b — Đồ thị trong lập kế hoạch
 
 - **Mục tiêu**: Tể tướng và pháp sư ước lượng và chia vùng dựa trên code thật. P1-50 thấy Tể tướng ước lượng không biết cỡ file và số file (Q10: 70k token cho một file 1 MB; Q3: 90k cho khoảng 15 file).
@@ -302,6 +306,8 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
   - Giao việc (chủ nhân chốt 2026-11-11): `chancellor.md` và prompt pháp sư nêu nghề nào có lệnh đồ thị. Việc cần dò cấu trúc code mà nghề chính không có lệnh đồ thị (nhà thơ, sứ thần) thì phần dò code thành một quest riêng cho một nhân vật có lệnh đó, quest kia chờ nó (`depends_on`) và đọc kết quả; không thêm kênh hỏi giữa hai nhân vật. Trước PS-21b, chủ nhân giao tay bằng `quest add --to`.
 - **Test**: Tể tướng giả nhận khối đồ thị; không có đồ thị thì khối rỗng, không lỗi; câu nêu một file có thật thì khối cỡ file có số dòng của file đó, cả khi cờ tắt; câu nêu đường dẫn không có thì khối rỗng; kế hoạch giả có hai phần song song nối nhau qua lời gọi ra cảnh báo; lãnh thổ tắt cờ thì không có khối đồ thị và không lệnh đồ thị nào; snapshot prompt mới.
 - **Không làm**: luật chặn mới; đổi `scopesMeet` của PS-05.
+
+- **Tầm ảnh hưởng** (chủ nhân chốt 2026-11-13, §11): số file ngoài `scope_paths` gọi hay import vào vùng của quest, đếm từ đồ thị (0 mana), thành một dòng trong khối của Tể tướng và pháp sư, làm đầu vào cho hạng (hạng từ B đã kéo theo người chấm mạnh). Không có đồ thị thì không có dòng đó; không đổi luật chọn người chấm.
 
 ## P1-12d — Tộc Codex, ca thử của hướng tộc mở
 
@@ -379,6 +385,22 @@ Task của giai đoạn 1, để dành tới khi chủ nhân có tài khoản Co
 - **Vương quốc đang chạy**: không cần migration (trường tùy chọn); `claude` và `gemini` giữ Sao Bạc và Lửa Đỏ.
 - **Chờ chủ nhân**: tên và bảng màu cho tộc Codex; không chọn thì tộc dùng ngoại hình tự sinh.
 
+## PS-25 — Thẻ điểm lãnh thổ
+
+- **Mục tiêu**: biết một lãnh thổ đã sẵn sàng cho nhân vật chưa trước khi giao quest, và sửa chỗ thiếu ở lãnh thổ thay vì ở từng quest. Chủ nhân chốt 2026-11-13 (§11). Căn cứ: báo cáo giai đoạn 1 đếm 12 trong 19 phiên làm lại là do hạ tầng; mục A5 và A6 của bài học 2026-11-12 (setup của dc1 chỉ cài, `@dc1/shared` chưa build nên commit của Nhiếp chính hỏng; SWC không chạy trong sandbox Codex) đều là chỗ thiếu của lãnh thổ. 0 mana.
+- **Đọc trước**: §3.16.1, §3.3; `apps/cli/src/doctor/check-territory-setup.ts` và `check-commands.ts`; `packages/domain/src/metrics/rates.ts`; chỗ Nhiếp chính dựng đất và chạy check (`packages/runner-core/src/plot/`, `packages/steward/src/review/checks.ts`); dấu còn mới của địa chí (PS-21, `packages/runner-core/src/prompt/gazetteer-drift.ts`).
+- **Dùng lại**: `territoryCommands`; cách `doctor` tìm chương trình của một lệnh; `ratesBy`; trường `environment` trên `check.end` (PS-01b); lệnh chạy công cụ của lãnh thổ từ CLI theo mẫu `territory graph` (PS-21).
+- **Thêm**:
+  - Một hàm thuần chấm lãnh thổ: đầu vào là file lãnh thổ, sổ đo và kết quả một lần thử; đầu ra là danh sách mục, mỗi mục đạt hay không kèm lý do. Các mục: (1) thử khởi đầu: `commands.setup` chạy được và mọi check của lãnh thổ xanh trên một đất sạch ở đầu nhánh gốc; (2) thời gian từng check; (3) tỉ lệ lượt check bị gạt vì môi trường trong sổ đo; (4) địa chí có, còn mới, và nêu các lệnh của lãnh thổ; (5) đã khai `shared_paths` và `protected_paths`; (6) tỉ lệ đạt lượt đầu của lãnh thổ. Ngưỡng là hằng số có tên.
+  - `elvaria territory check <id>`: chạy lần thử (đất nháp tách từ nhánh gốc, xóa khi xong), in thẻ, mã thoát khác 0 khi mục (1) không đạt. Không ghi trạng thái quest, không gọi model.
+  - Sổ đo: tỉ lệ đạt lượt đầu theo lãnh thổ, cạnh nghề, tag, model và dạng.
+  - Chỗ ghi kết quả lần thử gần nhất, để `doctor` nhắc lãnh thổ chưa thử hay thử không đạt, do task chọn và ghi ở §11.
+  - Hướng dẫn `docs/guides/operating-a-kingdom.md`: chạy lệnh sau `territory add` và trước quest đầu tiên, và cách sửa từng mục. Kèm mẫu đề bài của **phép thử khởi động nguội** (tùy chọn, tốn mana, chủ nhân tự giao): một quest `research` hạng thấp, trinh sát chỉ đọc địa chí và repo rồi trả lời năm câu (hệ thống là gì, tổ chức ra sao, chạy thế nào, kiểm thế nào, đang tới đâu); câu không trả lời được là chỗ thiếu của địa chí.
+- **Test**: domain 100 %; repo git tạm có dấu cách trong đường dẫn: setup hỏng ⇒ mục (1) không đạt kèm lệnh và dòng lỗi đầu, mã thoát khác 0; một check đỏ ở nhánh gốc ⇒ thẻ nêu tên check; lãnh thổ đủ ⇒ mọi mục đạt; lần thử không để lại đất hay nhánh; địa chí không nêu lệnh nào của lãnh thổ ⇒ mục (4) không đạt; sổ đo của một log giả hai lãnh thổ cho hai tỉ lệ.
+- **Không làm**: chạy phép thử khởi động nguội; sửa lãnh thổ của chủ nhân; chấm theo tộc (luật "lệnh X không chạy trong sandbox của tộc Y" là của PS-23); đổi schema territory.
+- **Vương quốc đang chạy**: không cần migration. Sau khi task merge, phiên điều phối hỏi chủ nhân rồi chạy lệnh trên lãnh thổ Elvaria và dc1 (0 mana, nhưng chạy lệnh của repo dc1), ghi kết quả ở §11.
+- **Vùng nhạy hệ điều hành**: spawn lệnh của lãnh thổ và xóa đất; nêu trong báo cáo để chủ nhân quyết có chạy CI ba hệ điều hành không.
+
 ## PS-07 — Mốc giai đoạn 1.5
 
 Chạy thật, tốn mana: hỏi chủ nhân trước khi chạy, và chốt trần mana của lần chạy lúc đó.
@@ -391,4 +413,5 @@ Chạy thật, tốn mana: hỏi chủ nhân trước khi chạy, và chốt tr�
 - **Từ PS-05** (chủ nhân chốt 2026-11-12, §11): lúc chuẩn bị vương quốc, đặt `shared_paths` và `commands.generate` vào `territory.json` của lãnh thổ Elvaria theo [guides/elvaria-territory.md](../guides/elvaria-territory.md); `max_concurrent` giữ 1 tới khi PS-06 và PS-09 xong.
 - **Từ bài học 2026-11-12** (chủ nhân chốt 2026-11-13, §11): việc của lần chạy gồm cả lý do `breaker:commit`. Hôm nay lý do đó là 2000 ký tự cuối của output hook pre-commit (`DETAIL_CHARS`, `packages/runner-core/src/plot/worktree-ops.ts`), cắt giữa chữ; lý do giữ vài dòng lỗi đầu và số lỗi, bản đầy đủ vào một file trong thư mục của lượt chạy.
 - **Từ PS-03b** (chủ nhân chốt 2026-11-13, §11): trước lần chạy, một lần chạy thật `triageMemos` trên vương quốc tạm với một hai thư (tốn mana: phiên điều phối hỏi chủ nhân trước).
+- **Từ PS-25** (chủ nhân chốt 2026-11-13, §11): lúc chuẩn bị vương quốc, `elvaria territory check` trên lãnh thổ Elvaria đạt mục thử khởi đầu.
 - **Dọn kế hoạch** (đề xuất (c) của P1-52, chủ nhân chốt 2026-11-12): khi đóng giai đoạn, chạy `pnpm plan:split` để chuyển các dòng `PS-…` đã `xong` của §8 sang file lưu (`docs/implementation-plan/8-done-ps.md`), rồi `pnpm docs:gen` và `pnpm check`.
