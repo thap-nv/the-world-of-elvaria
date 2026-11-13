@@ -57,8 +57,9 @@ describe('the metrics of PS-22', () => {
     const section = memosSection(t, METRICS);
     expect(section.title).toBe('Memos by kind');
     expect(section.table).toEqual({
-      header: ['Kind', 'Filed', 'To the owner'],
-      rows: [['objection', '2', '1']],
+      // PS-03b: who decided them, the owner or the Chancellor's triage.
+      header: ['Kind', 'Filed', 'To the owner', 'Decided by you', 'By the triage'],
+      rows: [['objection', '2', '1', '0', '0']],
     });
     expect(memosSection(t, EMPTY).lines).toEqual(['None.']);
   });

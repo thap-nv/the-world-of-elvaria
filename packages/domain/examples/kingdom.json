@@ -84,6 +84,10 @@
         "enabled": false,
         "at": "21:00"
       },
+      "triage": {
+        "enabled": true,
+        "at": "07:30"
+      },
       "digest": {
         "enabled": true,
         "at": "08:00"
@@ -105,6 +109,11 @@
       "resume_after_mana": false,
       "resume_after_answer_minutes": 55,
       "max_background": 2
+    },
+    "delegation": {
+      "max_rank": "D",
+      "same_scope": true,
+      "ask": ["decision_change", "contract_change", "mana_over_budget", "outward_action", "protected_paths"]
     },
     "bell": {
       "desktop": true,

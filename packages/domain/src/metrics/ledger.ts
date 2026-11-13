@@ -66,7 +66,8 @@ export function sessionModelsOf(events: readonly Event[]): ReadonlyMap<string, s
 /**
  * The owner's commands on quests that the Steward applied inside the window, one per `command.applied` line. The
  * line's `kind` decides when it has one (PS-01b), so a command whose file left inbox/done still counts; inbox/done
- * names the kind of an older line, and the quest of any.
+ * names the kind of an older line, and the quest of any. A command of the Chancellor's triage (`source`, PS-03b) is
+ * none of the owner's.
  */
 export function ownerCommandsOf(input: MetricsInput, window: MetricsWindow): OwnerCommand[] {
   const files = new Map(input.commands.map((command) => [command.id, command]));
@@ -77,7 +78,9 @@ export function ownerCommandsOf(input: MetricsInput, window: MetricsWindow): Own
     const file = files.get(event.data.command_id);
     const kind = event.data.kind ?? file?.kind;
     const ts = file?.ts ?? event.ts;
-    if (kind === undefined || !isOwnerKind(kind) || !inWindow(window, ts)) return [];
+    // The Chancellor's triage writes edits too (PS-03b): those are not the owner's steps.
+    const chancellor = (event.data.source ?? file?.source) === 'chancellor';
+    if (kind === undefined || chancellor || !isOwnerKind(kind) || !inWindow(window, ts)) return [];
     const quest = file !== undefined && isOwnerCommand(file) ? file.payload.quest : null;
     return [{ id: event.data.command_id, kind, quest, ts }];
   });

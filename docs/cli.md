@@ -41,6 +41,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria memo list` | Liệt kê thư nhân vật viết về việc ngoài nhiệm vụ của mình (memo), chỉ thư đang chờ trừ khi có --all. |
 | `elvaria memo show <memo>` | Xem một thư: ai viết khi làm nhiệm vụ nào, gửi tới đâu, đã quyết thế nào, và toàn bộ nội dung. |
 | `elvaria memo decide <memo> <decision>` | Quyết một thư, một lần: gác lại (shelved), bác (rejected), hoặc nêu nhiệm vụ làm việc đó (handled --quest); không nhiệm vụ nào đổi (lệnh decide_memo). |
+| `elvaria triage` | Tể tướng phân loại các thư gửi tới mình đang chờ: một lần gọi model cho cả lô (tối đa 20 thư, cũ nhất trước). Trong phạm vi ủy quyền (kingdom.delegation), Quản sự áp quyết định mà không cần bạn; thư còn lại tới bạn kèm lời khuyên, trong bản tấu. kingdom.schedule.triage chạy việc này mỗi ngày trước bản tấu. |
 | `elvaria run` | Chạy Quản sự: giao nhiệm vụ cho nhân vật và cho nghiệm thu, tới khi bạn dừng (Ctrl+C). |
 | `elvaria wake <tribe>` | Nhờ Quản sự thăm dò mana của một tộc ngay, ví dụ sau khi đăng nhập lại (lệnh wake). |
 | `elvaria digest` | In bản tấu lúc này: mọi việc chờ bạn, chia hai nhóm (phải quyết để việc chạy tiếp, chờ được), mỗi việc kèm khuyến nghị và lệnh. Chỉ đọc vương quốc, không tốn mana. |
@@ -361,6 +362,12 @@ Quyết một thư, một lần: gác lại (shelved), bác (rejected), hoặc n
 | `<decision>` | shelved, rejected hoặc handled. |
 | `--quest <quest>` | Đi với handled: nhiệm vụ làm việc đó. |
 | `--note <text>` | Ghi chú lưu cùng quyết định. |
+
+## `elvaria triage`
+
+Tể tướng phân loại các thư gửi tới mình đang chờ: một lần gọi model cho cả lô (tối đa 20 thư, cũ nhất trước). Trong phạm vi ủy quyền (kingdom.delegation), Quản sự áp quyết định mà không cần bạn; thư còn lại tới bạn kèm lời khuyên, trong bản tấu. kingdom.schedule.triage chạy việc này mỗi ngày trước bản tấu.
+
+Không có tham số riêng, chỉ các tùy chọn chung.
 
 ## `elvaria run`
 

@@ -3,9 +3,9 @@
 import { openEventLog } from '@elvaria/eventlog';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { bench } from './__fixtures__/kingdom.ts';
-import type { Bench } from './__fixtures__/kingdom.ts';
-import type { JobRun, ScheduledJob, Steward } from './types.ts';
+import { bench, questPayload } from './__fixtures__/kingdom.ts';
+import type { Bench, BenchOptions } from './__fixtures__/kingdom.ts';
+import type { Digest, JobRun, JobView, ScheduledJob, Steward } from './types.ts';
 import type { DailyJobId } from '@elvaria/domain';
 
 let current: Bench | undefined;
@@ -44,17 +44,18 @@ function heldJob(id: DailyJobId) {
   return job;
 }
 
-/** Both daily jobs on at 08:00; the bench's clock reads 09:00. */
-async function open(jobs: readonly ScheduledJob[]) {
-  current = await bench({ cast: [] });
+/** Every daily job on at 08:00, the triage at 07:30 (PS-03b); the bench's clock reads 09:00. */
+async function open(jobs: readonly ScheduledJob[], digest?: Digest, options: BenchOptions = { cast: [] }) {
+  current = await bench(options);
   const settings = await current.store.kingdom.read();
   if (!settings.ok) throw new Error('kingdom.json');
   const daily = { enabled: true, at: '08:00' };
+  const triage = { enabled: true, at: '07:30' };
   await current.store.kingdom.write({
     ...settings.value,
-    schedule: { ...settings.value.schedule, chronicle: daily, digest: daily },
+    schedule: { ...settings.value.schedule, chronicle: daily, triage, digest: daily },
   });
-  running = current.steward({ jobs });
+  running = current.steward({ jobs, ...(digest === undefined ? {} : { digest }) });
   expect(await running.start({ loop: false })).toEqual({ ok: true });
   return { kingdom: current, steward: running };
 }
@@ -107,5 +108,72 @@ describe('a scheduled job outside the tick', () => {
     expect(kingdom.warnings).toEqual(['steward: scheduled chronicle failed: the model did not answer']);
     expect(chronicle.runs).toHaveLength(1);
     expect(await ran(kingdom)).toEqual([]);
+  });
+});
+
+describe('scheduled jobs due together (PS-03b)', () => {
+  it('go by their hour: the digest waits for the triage of an earlier hour while it runs', async () => {
+    const triage = heldJob('triage');
+    const days: string[] = [];
+    const digest: Digest = {
+      write: ({ day }) => {
+        days.push(day);
+        return Promise.resolve(`digest/${day}.md`);
+      },
+    };
+    const { kingdom, steward } = await open([triage], digest);
+    await steward.tick();
+    await steward.tick();
+    expect(triage.runs).toHaveLength(1);
+    expect(days).toEqual([]);
+    triage.finish();
+    await steward.tick();
+    expect(days).toEqual(['2026-11-07']);
+    expect(await ran(kingdom)).toEqual([
+      { job: 'triage', day: '2026-11-07' },
+      { job: 'digest', day: '2026-11-07' },
+    ]);
+  });
+
+  it('start a job outside the tick only once it is ready, asked again each tick, holding no other job back', async () => {
+    const triage = heldJob('triage');
+    const views: JobView[] = [];
+    let free = false;
+    const waiting: ScheduledJob = {
+      ...triage,
+      ready: (view) => {
+        views.push(view);
+        return Promise.resolve(free);
+      },
+    };
+    const chronicle = heldJob('chronicle');
+    const { steward } = await open([waiting, chronicle]);
+    await steward.tick();
+    expect(triage.runs).toEqual([]);
+    expect(chronicle.runs).toHaveLength(1);
+    expect(views[0]?.busy).toEqual(new Set());
+    chronicle.finish();
+    free = true;
+    await steward.tick();
+    expect(triage.runs).toHaveLength(1);
+    await steward.tick();
+    expect(views).toHaveLength(2);
+  });
+
+  it('tell a job which tribes a session runs on, as the tick that starts it left them', async () => {
+    const views: JobView[] = [];
+    const triage: ScheduledJob = {
+      ...heldJob('triage'),
+      ready: (view) => {
+        views.push(view);
+        return Promise.resolve(false);
+      },
+    };
+    const { kingdom, steward } = await open([triage], undefined, { plays: { work: { Hangs: ['hang'] } } });
+    await kingdom.command('create_quest', questPayload('Hangs'));
+    await steward.tick();
+    const { assignee } = await kingdom.quest('Hangs');
+    const { tribe } = await kingdom.character(String(assignee));
+    expect(views[0]?.busy).toEqual(new Set([tribe]));
   });
 });

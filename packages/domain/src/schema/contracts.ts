@@ -7,6 +7,7 @@ import { EventSchema } from './event/event.ts';
 import { KingdomSchema } from './kingdom.ts';
 import { LessonSchema } from './lesson/lesson.ts';
 import { MemosFileSchema } from './memo/memo-kind.ts';
+import { MemoTriageFileSchema } from './memo/memo-triage.ts';
 import { MemoSchema } from './memo/memo.ts';
 import { QuestDraftFileSchema } from './quest/quest-draft.ts';
 import { QuestSchema } from './quest/quest.ts';
@@ -42,6 +43,7 @@ export const CONTRACTS = {
   'memo-kind': MemosFileSchema,
   skill: SkillSchema,
   'quest-draft': QuestDraftFileSchema,
+  'memo-triage': MemoTriageFileSchema,
   'world-map': WorldMapSchema,
 } as const satisfies Record<string, z.ZodType>;
 

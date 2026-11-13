@@ -23,7 +23,7 @@ import type { Rule, RuleIssue } from './rules.ts';
 const describe = (description: string) => ({ description });
 
 /** A draft has no quest id yet; refs name drafts within one reply so they can depend on each other. */
-const DraftRefSchema = z.string().regex(/^d[0-9]+$/);
+export const DraftRefSchema = z.string().regex(/^d[0-9]+$/);
 
 const DraftFieldsSchema = z.strictObject({
   ref: DraftRefSchema,

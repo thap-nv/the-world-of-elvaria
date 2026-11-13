@@ -5,11 +5,13 @@ import { createHash } from 'node:crypto';
 
 import {
   editQuest,
+  err,
   formatDatedId,
   namedAssignee,
   parseInstant,
   partyOf,
   poolOpenOf,
+  ok,
   questFromCommand,
   selectAssignee,
   setRank,
@@ -17,8 +19,9 @@ import {
 } from '@elvaria/domain';
 import type { Character, InboxCommandOf, Quest, QuestEventType, QuestId, Result } from '@elvaria/domain';
 
+import { closeTaken } from '../memos/close.ts';
 import { moveAndRing } from '../notices.ts';
-import { OWNER, step } from '../record.ts';
+import { OWNER, actorOfCommand, step } from '../record.ts';
 import { releaseScratch } from '../review/scratch.ts';
 import { openAssignee } from '../sessions/open.ts';
 import type { Context } from '../context.ts';
@@ -58,12 +61,25 @@ export function questIdOfCommand(
 
 /**
  * `create_quest`. With an assignee (P1-29), the domain has checked it before the quest exists, and the new quest
- * goes to it by the owner's reassign (§2.5 `open.reassign`), so only it takes the quest, its level aside.
+ * goes to it by the owner's reassign (§2.5 `open.reassign`), so only it takes the quest, its level aside. The memos
+ * it is made from (PS-03b) close as handled by it once it is open; those of a draft wait for the owner's confirm.
  */
 export async function createQuest(ctx: Context, command: InboxCommandOf<'create_quest'>): Promise<Outcome> {
   const id = questIdOfCommand(command, ctx.world.kingdom.tz) ?? ctx.deps.ids.quest();
   const known = ctx.world.quests.get(id);
-  if (known !== undefined) return givenTo(ctx, known, command.payload.assignee);
+  const made = known === undefined ? await newQuest(ctx, command, id) : ok(known);
+  if (!made.ok) return made.error;
+  if (made.value.status !== 'draft')
+    await closeTaken(ctx, command.payload.memos, made.value.id, actorOfCommand(command));
+  return givenTo(ctx, made.value, command.payload.assignee);
+}
+
+/** The quest file of a create_quest seen for the first time, and its line. */
+async function newQuest(
+  ctx: Context,
+  command: InboxCommandOf<'create_quest'>,
+  id: QuestId,
+): Promise<Result<Quest, Extract<Outcome, { status: 'rejected' }>>> {
   const made = questFromCommand(command.payload, {
     id,
     at: ctx.record.stamp(),
@@ -75,10 +91,10 @@ export async function createQuest(ctx: Context, command: InboxCommandOf<'create_
     characters: [...ctx.world.characters.values()],
     tribes: ctx.world.kingdom.tribes,
   });
-  if (!made.ok) return rejected(made.error.code);
+  if (!made.ok) return err(rejected(made.error.code));
   const type = made.value.status === 'draft' ? 'quest.drafted' : 'quest.created';
-  const put = await ctx.record.put(made.value, type, OWNER);
-  return put.ok ? givenTo(ctx, put.value, command.payload.assignee) : rejected(put.error);
+  const put = await ctx.record.put(made.value, type, actorOfCommand(command));
+  return put.ok ? put : err(rejected(put.error));
 }
 
 /**
@@ -224,7 +240,18 @@ export async function edit(
     quests: [...ctx.world.quests.keys()],
   });
   if (!changed.ok) return rejected(changed.error.code);
-  return outcomeOf(await ctx.record.put(changed.value, 'quest.edited', OWNER));
+  const actor = actorOfCommand(command);
+  const put = await ctx.record.put(changed.value, 'quest.edited', actor);
+  // The memos the edit takes in (PS-03b) close only once the quest holds their work.
+  if (put.ok) await closeTaken(ctx, command.payload.memos, quest.id, actor);
+  return outcomeOf(put);
+}
+
+/** The owner confirms a draft; the memos it was made from close as handled by it (PS-03b). */
+export async function confirm(ctx: Context, quest: Quest): Promise<Outcome> {
+  const confirmed = await ownerMove(ctx, quest, 'confirm');
+  if (confirmed.status === 'applied') await closeTaken(ctx, quest.memos, quest.id, OWNER);
+  return confirmed;
 }
 
 /** A plain move of the owner: confirm, retry. */

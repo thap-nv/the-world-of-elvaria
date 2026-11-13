@@ -69,6 +69,21 @@ export function scopesMeet(
   return own(a).some((x) => right.some((y) => entriesMeet(x, y)));
 }
 
+/**
+ * Whether a path surely lies in a scope (PS-03b, delegation): an entry of the same text or a folder of it, or a folder
+ * glob (`<folder>/**`, `**`) whose folder starts it. Any other glob shape counts as outside: the reverse doubt of
+ * scopesMeet, since a memo taken in by mistake costs the owner more than one sent up by mistake.
+ */
+export function pathInScope(path: string, scope: readonly string[]): boolean {
+  const file = normal(path);
+  return scope.map(normal).some((entry) => {
+    if (isLiteral(entry)) return file === entry || file.startsWith(`${entry}/`);
+    const folder = literalOf(entry);
+    const folderGlob = entry.slice(folder.length) === '**' && (folder === '' || folder.endsWith('/'));
+    return folderGlob && file.startsWith(folder);
+  });
+}
+
 /** A session-tier quest at work on its territory: R2 counts these. */
 export const worksOnTerritory = (quest: Quest): boolean =>
   quest.tier === 'session' && quest.status === 'working';

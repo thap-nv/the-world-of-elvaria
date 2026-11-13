@@ -41,7 +41,21 @@ describe('worldStateOf', () => {
         quest: 'q_20261112_7pzkfv',
         route: 'chancellor',
       },
+      // PS-03b: a memo the Chancellor's triage sent up shows its advice.
+      m_20261112_c5qe2w: {
+        id: 'm_20261112_c5qe2w',
+        kind: 'proposal',
+        from: 'thorn',
+        quest: 'q_20261112_7pzkfv',
+        route: 'chancellor',
+        escalated: { action: 'owner', holds: ['contract_change', 'chancellor_asks'] },
+      },
     });
+    const sent = MEMOS.find(({ escalation }) => escalation !== undefined);
+    if (sent?.escalation === undefined) throw new Error('the examples have a memo sent up');
+    const merge = { ...sent.escalation, action: 'merge' as const, quest: QUESTS[0]?.id };
+    const memos = worldStateOf({ ...SOURCE, memos: [{ ...sent, escalation: merge }] }).memos;
+    expect(memos[sent.id]?.escalated).toEqual({ action: 'merge', quest: QUESTS[0]?.id, holds: merge.holds });
   });
 
   it('knows a CLI is ready once doctor found it, and missing before', () => {

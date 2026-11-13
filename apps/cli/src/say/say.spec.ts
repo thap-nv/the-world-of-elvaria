@@ -217,7 +217,7 @@ describe('elvaria say', () => {
     ]);
   });
 
-  it("hands the Chancellor a letter with --memo, the owner's words after it, and says how to close it (PS-02)", async () => {
+  it("hands the Chancellor a letter with --memo, the owner's words after it, and drafts that close it (PS-02, PS-03b)", async () => {
     await summon('aldric', 'chancellor');
     await openKingdom(kingdom).memos.write(MEMO);
     const heard: string[] = [];
@@ -239,8 +239,14 @@ describe('elvaria say', () => {
       `A letter (proposal) that thorn wrote while working on quest q_20261106_7k3m2a: ${MEMO.body} Files: README.md.\n\nChỉ docs/`,
     );
     expect(io.printed.out.at(-1)).toBe(
-      `Once a draft that does the work of letter ${MEMO.id} is confirmed, close the letter: elvaria memo decide ${MEMO.id} handled --quest <id>`,
+      `The drafts carry letter ${MEMO.id}: confirming one of them closes the letter as handled by that quest (elvaria quest confirm <id>).`,
     );
+    const inbox = await openKingdom(kingdom).inbox.read();
+    expect(
+      inbox.map(
+        ({ command }) => command.ok && command.value.kind === 'create_quest' && command.value.payload.memos,
+      ),
+    ).toEqual([[MEMO.id]]);
     const unknown = testIo();
     expect(
       await run(unknown, 'say', '--memo', 'm_20261106_000000', '--kingdom', kingdom, '--locale', 'en'),

@@ -55,5 +55,26 @@
       "at": "2026-11-12T13:40:00+07:00",
       "verdict": "q_20261112_7pzkfv-3"
     }
+  },
+  {
+    "version": 1,
+    "id": "m_20261112_c5qe2w",
+    "kind": "proposal",
+    "from": "thorn",
+    "quest": "q_20261112_7pzkfv",
+    "attempt": 2,
+    "to": {
+      "route": "chancellor"
+    },
+    "body": "Đổi tên trường `kingdom.bell.desktop` thành `kingdom.bell.system` cho khớp chuông máy.",
+    "refs": ["packages/domain/src/schema/kingdom.ts"],
+    "state": "open",
+    "filed_at": "2026-11-12T11:02:44+07:00",
+    "escalation": {
+      "at": "2026-11-13T07:31:40+07:00",
+      "action": "owner",
+      "holds": ["contract_change", "chancellor_asks"],
+      "note": "Đổi tên một trường của kingdom.json là đổi hợp đồng dữ liệu: chủ nhân quyết."
+    }
   }
 ]

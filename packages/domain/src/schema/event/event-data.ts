@@ -2,7 +2,7 @@
 // not, carries an open object. EVENT_DATA_SCHEMAS is the one source of both the zod check and the contract.
 import { z } from 'zod';
 
-import { REGISTRY_ID_PATTERN, TribeIdSchema, UlidSchema } from '../../core/ids.ts';
+import { REGISTRY_ID_PATTERN, TribeIdSchema } from '../../core/ids.ts';
 import { DateTimeSchema, NonEmptyStringSchema } from '../common.ts';
 import {
   CharacterChangeDataSchema,
@@ -15,7 +15,13 @@ import {
 } from './state-data.ts';
 import { GraphBuiltDataSchema, GraphFailedDataSchema } from './graph-data.ts';
 import { PlotMergedDataSchema, PlotPatchedDataSchema, PlotRestoredDataSchema } from './plot-data.ts';
-import { MemoClosedDataSchema, MemoFiledDataSchema, MemoRoutedDataSchema } from './memo-data.ts';
+import { CommandResultDataSchema } from './command-data.ts';
+import {
+  MemoClosedDataSchema,
+  MemoEscalatedDataSchema,
+  MemoFiledDataSchema,
+  MemoRoutedDataSchema,
+} from './memo-data.ts';
 import { DigestWrittenDataSchema, ScheduleRanDataSchema } from './schedule-data.ts';
 import {
   UpgradeFailedDataSchema,
@@ -134,18 +140,6 @@ const ManaWarningDataSchema = z
     ),
   );
 
-const CommandResultDataSchema = z.strictObject({
-  command_id: UlidSchema,
-  reason: z.string().optional(),
-  // Optional and added after v1 (PS-01b): a line written before it, or of a file no command could be read from, has
-  // none. A pattern, not the list of kinds, so an older build still reads the line of a kind it does not know.
-  kind: SnakeIdSchema.optional().meta(
-    describe(
-      "The command's `kind` (InboxCommand.kind), so the metrics ledger counts the owner's steps from the log alone; inbox/done/ names it for lines written before PS-01b.",
-    ),
-  ),
-});
-
 // The machine checks of a submitted run run outside the tick (P1-25) for minutes, while the quest sits in review with
 // no judge: these two lines tell the owner and the world that they run (P1-10b). The world animates them; it does
 // not keep them (reduce.ts), since the checks live in the Steward's memory, not in a file worldStateOf reads.
@@ -252,6 +246,7 @@ export const EVENT_DATA_SCHEMAS = {
   'memo.filed': MemoFiledDataSchema,
   'memo.routed': MemoRoutedDataSchema,
   'memo.closed': MemoClosedDataSchema,
+  'memo.escalated': MemoEscalatedDataSchema,
   'schedule.ran': ScheduleRanDataSchema,
   'digest.written': DigestWrittenDataSchema,
   'upgrade.started': UpgradeStartedDataSchema,

@@ -100,6 +100,12 @@ export interface Recorder {
 
 export const STEWARD: Actor = { kind: 'steward' };
 export const OWNER: Actor = { kind: 'user' };
+/** The Chancellor's triage of memos (PS-03b): its commands are told as its own, not the owner's. */
+export const CHANCELLOR: Actor = { kind: 'chancellor' };
+
+/** Who an inbox command speaks for: the Chancellor's triage, or the owner through one of its clients. */
+export const actorOfCommand = (command: { readonly source: string }): Actor =>
+  command.source === 'chancellor' ? CHANCELLOR : OWNER;
 
 /** The character after one event of its state machine (§2.6). */
 export const step =

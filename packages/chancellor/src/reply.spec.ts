@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { NO_JSON } from '@elvaria/runner-core';
 
 import { reply } from './__fixtures__/kingdom.ts';
-import { QUEST_DRAFT_JSON_SCHEMA, checkReply, checkTextReply, forTheCli, replyIssuesOf } from './reply.ts';
+import { QUEST_DRAFT_JSON_SCHEMA, checkReply, checkTextReply, forTheCli } from './reply.ts';
 
 const CONTRACT = path.join(
   import.meta.dirname,
@@ -66,10 +66,11 @@ describe('the reply (§3.11, §3.14)', () => {
     expect(checkTextReply('I would rather not.')).toEqual({ ok: false, issues: [NO_JSON] });
   });
 
-  it('tells the shared retry what is wrong, and nothing when the reply can be used', () => {
-    expect(replyIssuesOf(reply('link-check'))).toEqual([]);
-    expect(replyIssuesOf(reply('two-questions'))).toEqual([
-      'drafts.1.question: the Chancellor asks at most one question',
-    ]);
+  it('tells the shared retry what is wrong (session.ts), and nothing when the reply can be used', () => {
+    expect(checkReply(reply('link-check')).ok).toBe(true);
+    expect(checkReply(reply('two-questions'))).toEqual({
+      ok: false,
+      issues: ['drafts.1.question: the Chancellor asks at most one question'],
+    });
   });
 });

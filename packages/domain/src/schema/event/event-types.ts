@@ -72,6 +72,8 @@ export const EVENT_TYPES = [
   'memo.filed',
   'memo.routed',
   'memo.closed',
+  // PS-03b: the Chancellor's triage sends a memo to the owner, kingdom.delegation not letting the world decide it.
+  'memo.escalated',
   'sandbox.replay.start',
   'sandbox.replay.end',
   'upgrade.started',

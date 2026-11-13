@@ -48,6 +48,8 @@ Luật (ADR 0014, [implementation-plan](implementation-plan.md) §2.7 và §4.1)
 | Điểm quân | Muster | `muster` | Màn tổng kết sau trận. | UI |
 | Biên niên sử | Chronicle | `chronicle` | Báo cáo ngày do Nhà thơ viết từ event log. | `chronicle/<ngày>.md`, `kingdom.schedule.chronicle` |
 | Bản tấu | Digest | `digest` | Bản gom mọi việc chờ chủ nhân trong ngày, chia hai nhóm (phải quyết để việc chạy tiếp, chờ được), mỗi việc kèm khuyến nghị và lệnh CLI; Quản sự viết mỗi ngày một lần theo lịch, không gọi model (PS-03). | `digest/<ngày>.md`, `kingdom.schedule.digest`, cổng `Digest`, `elvaria digest`, event `digest.written` |
+| Phân loại thư | Triage | `triage` | Tể tướng đọc các thư gửi tới mình đang chờ, một lần gọi model cho cả lô, và quyết mỗi thư: gộp vào một quest đang mở, mở quest mới, gác lại, hay đưa lên chủ nhân. Kết quả chỉ là lệnh hộp thư; trong phạm vi ủy quyền Quản sự áp luôn, thư còn lại tới chủ nhân kèm lời khuyên (PS-03b). | `elvaria triage`, `kingdom.schedule.triage`, `triageMemos`, `triageCommands` |
+| Phạm vi ủy quyền | Delegation | `delegation` | Dữ liệu vương quốc: thế giới tự quyết thư nào mà không cần chủ nhân (việc tới hạng nào, có buộc cùng vùng file không) và giữ cho chủ nhân những gì (đổi quyết định đã ghi, đổi hợp đồng dữ liệu, vượt mana, hành động ra ngoài, chạm vùng bảo vệ). Hàm thuần `delegationHolds` trả lời cho từng việc (PS-03b). | `kingdom.delegation`, `memo.escalation.holds` |
 | Đền | Temple | `temple` | Nơi Thầy tu phản tỉnh và giữ kinh chung. | `temple/scripture.md`, `kingdom.schedule.temple`, `lesson.owner = temple` |
 
 ## 2. Quest
@@ -268,7 +270,8 @@ Họ model (suy ra từ slug, không lưu): `claude`, `gemini`, `gpt` (Codex thu
 | Ghim chuyên môn | `pin_tag` | — | `tag = null` để bỏ ghim |
 | Đặt cấp | `set_level` | — | `elvaria character level`; ghi `level_since` |
 | Đổi model | `set_model` | — | `elvaria character model`; model cùng tộc, nghề và tộc không đổi; ghi `character.model_changed` |
-| Quyết thư | `decide_memo` | — | `elvaria memo decide`; gác (`shelved`), bác (`rejected`) hay đã có quest làm (`handled`, kèm `quest`); mỗi thư quyết một lần, không quest nào đổi; ghi `memo.closed` |
+| Quyết thư | `decide_memo` | — | `elvaria memo decide`; gác (`shelved`), bác (`rejected`) hay đã có quest làm (`handled`, kèm `quest`); mỗi thư quyết một lần, không quest nào đổi; ghi `memo.closed`. Phân loại thư cũng gác thư bằng lệnh này (nguồn `chancellor`, PS-03b) |
+| Đưa thư lên chủ nhân | `escalate_memo` | — | chỉ phân loại thư của Tể tướng ghi (nguồn `chancellor`, PS-03b): thư ngoài phạm vi ủy quyền giữ lời khuyên ở `memo.escalation`, vẫn mở, vào bản tấu; ghi `memo.escalated` |
 
 Nguồn lệnh (`source`): `cli`, `herald`, `lite`.
 
@@ -348,12 +351,16 @@ Mọi giá trị enum xuất hiện trong [schemas/](schemas/) có ở bảng n�
 | event `mana.level` → `data.pool` | id tộc (ví dụ `claude`), `gemini_models`, `claude_gpt_models` | tài khoản một pool dùng id tộc làm pool; Antigravity có hai pool |
 | event `mana.level` → `data.window` | `five_hour`, `weekly` | cửa sổ hạn mức |
 | event `mana.level` → `data.source` | `rate_limits`, `estimate`, `signal` | ba nguồn gauge (ADR 0009) |
-| `kingdom.schedule` | `chronicle`, `temple`, `patrol` | ba lịch, mỗi cái tắt được |
+| `kingdom.schedule` | `chronicle`, `triage`, `digest`, `temple`, `patrol` | năm lịch, mỗi cái tắt được; `triage` (phân loại thư, PS-03b) và `digest` (bản tấu, PS-03) bật sẵn |
 | `kingdom.bell` | `desktop`, `web_push`, `messaging` | ba kênh chuông |
 | `memo.state` | `open`, `closed` | thư đang chờ quyết, hay đã quyết (có `outcome`) |
 | `memo.outcome.decision` (cũng `decide_memo.decision`, trừ hai giá trị cuối) | `shelved`, `rejected`, `handled`, `sustained`, `overruled` | gác lại, bác, hay đã có quest làm (`handled` thì kèm `quest`); thư phản biện do người chấm thứ hai đóng: chấp nhận (phán quyết của nó đạt) hay bác (trượt), kèm `verdict` (PS-22) |
 | `memo_kind.route` (cũng `memo.to.route`) | `chancellor`, `judge`, `owner` | nơi nhận của một kiểu thư: Tể tướng, người chấm thứ hai (thư phản biện, kèm `verdict`), hay chủ nhân (thư phản biện không người chấm nào được đọc, kèm `refusal`) |
 | `memo.to.refusal` | `no_verdict`, `owner_verdict`, `final_verdict`, `second_objection` | vì sao thư phản biện tới chủ nhân: lượt không mang phán quyết trượt nào, phán quyết là lần trả của chủ nhân, phán quyết đã là của người chấm thứ hai, hay phán quyết đã có thư phản biện khác (PS-22) |
+| `memo.escalation.action` (cũng `memo-triage` `decisions[].action`) | `merge`, `new_quest`, `shelve`, `owner` | Tể tướng gộp thư vào một quest đang mở, mở quest mới, gác lại, hay đưa lên chủ nhân (PS-03b) |
+| `kingdom.delegation.ask` (cũng `memo-triage` `decisions[].ask`) | `decision_change`, `contract_change`, `mana_over_budget`, `outward_action`, `protected_paths` | những việc chủ nhân giữ: đổi quyết định đã ghi, đổi hợp đồng dữ liệu, vượt ngân sách mana, hành động ra ngoài, chạm vùng bảo vệ |
+| `memo.escalation.holds` | các giá trị của `ask`, cùng `above_rank`, `outside_scope`, `chancellor_asks` | vì sao thư tới chủ nhân: một việc chủ nhân giữ, hay máy thấy hạng vượt `max_rank`, tệp ngoài vùng file của việc, hoặc Tể tướng tự đưa lên |
+| `inbox-command.source` | `cli`, `herald`, `lite`, `chancellor` | ai ghi lệnh: các cửa của chủ nhân, hay phân loại thư của Tể tướng (PS-03b), áp không cần chủ nhân trong phạm vi ủy quyền |
 
 ## 12. Danh mục event type (v1)
 
@@ -369,7 +376,7 @@ Mọi giá trị enum xuất hiện trong [schemas/](schemas/) có ở bảng n�
 | Nhân vật | `character.created`, `character.sleep`, `character.wake`, `character.meditate`, `character.suspend`, `character.release`, `character.swamp`, `character.level_up`, `character.level_down`, `character.model_changed` | |
 | Lệnh | `command.received`, `command.applied`, `command.rejected` | Quản sự xử lý `inbox/` |
 | Đồ thị code | `graph.built`, `graph.failed` | Quản sự dựng đồ thị code của một lãnh thổ bật `code_graph` bằng graphify, không gọi model, ngoài mọi đất, ở commit gốc của quest và ở đầu nhánh mặc định; dòng mang lãnh thổ, không mang quest (PS-21, ADR 0029). `graph.failed` ghi một lần cho mỗi commit trong đời một Quản sự |
-| Thư | `memo.filed`, `memo.routed`, `memo.closed` | Quản sự lập thư từ mục `Memos` của thư bàn giao khi lượt người làm kết thúc qua nộp, hỏi hay hỏng (không khi cầu dao cắt), chuyển theo `registry/memos.json`, và đóng theo `decide_memo` (PS-02, ADR 0024) |
+| Thư | `memo.filed`, `memo.routed`, `memo.closed`, `memo.escalated` | Quản sự lập thư từ mục `Memos` của thư bàn giao khi lượt người làm kết thúc qua nộp, hỏi hay hỏng (không khi cầu dao cắt), chuyển theo `registry/memos.json`, và đóng theo `decide_memo` (PS-02, ADR 0024), hoặc khi quest làm việc của thư mở ra (PS-03b); `memo.escalated` khi phân loại của Tể tướng đưa thư lên chủ nhân kèm lời khuyên (PS-03b) |
 | Lịch | `schedule.ran`, `digest.written` | Việc theo lịch của Quản sự (PS-03): `schedule.ran` khi một việc của `kingdom.schedule` chạy xong trong một ngày địa phương (lần khởi động sau đọc nó, nên mỗi ngày một lần dù đồng hồ nhảy); `digest.written` khi bản tấu của ngày đã ghi vào `digest/<ngày>.md` và chuông đã rung |
 | Khác | `delivery.sent`, `plot.patched`, `plot.merged`, `plot.restored`, `chronicle.written`, `territory.attached`, `territory.surveyed`, `territory.health`, `sandbox.replay.start`, `sandbox.replay.end` | `plot.patched`: Quản sự áp bản vá của người làm vào `laws.patch_paths` trước commit `submit` (P1-28); `plot.merged`: Quản sự gộp các nhánh phần vào nhánh quest ghép, hoặc dừng ở một nhánh (P1-21); `plot.restored`: sau phiên người chấm ngoài đất nháp, Quản sự đưa đất của quest về commit của nó, bỏ những gì lệnh của người chấm để lại (P1-44) |
 | Bản | `upgrade.started`, `upgrade.switched`, `upgrade.rolled_back`, `upgrade.failed` | `elvaria upgrade` ghi (actor `user`): bắt đầu dựng và thử một commit, chuyển con trỏ `.state/build.json` sang bản mới, lùi về bản trước, hay hỏng ở một bước (`prepare`, `migrate`, `doctor`, `conformance`, `trial`) và không chuyển |

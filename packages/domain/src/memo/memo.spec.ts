@@ -2,7 +2,15 @@ import { describe, expect, it } from 'vitest';
 
 import { MEMO_ID_PATTERN } from '../core/ids.ts';
 import { MemoSchema } from '../schema/memo/memo.ts';
-import { closeMemo, memoIdOf, memoKeyOf, memoOf, normalizedMemoText, routeMemo } from './memo.ts';
+import {
+  closeMemo,
+  escalateMemo,
+  memoIdOf,
+  memoKeyOf,
+  memoOf,
+  normalizedMemoText,
+  routeMemo,
+} from './memo.ts';
 import type { CharacterId, MemoId, QuestId } from '../core/ids.ts';
 import type { MemoKind } from '../schema/memo/memo-kind.ts';
 import type { Memo } from '../schema/memo/memo.ts';
@@ -128,5 +136,31 @@ describe('closeMemo', () => {
       ok: false,
       error: { code: 'closed' },
     });
+  });
+
+  it('keeps the triage’s advice on an open memo, once (PS-03b)', () => {
+    const advice = {
+      action: 'merge',
+      quest: QUEST,
+      addendum: 'Also this.',
+      holds: ['above_rank'],
+      note: 'C',
+    } as const;
+    const sent = escalateMemo(memo, advice, LATER);
+    expect(sent.ok && sent.value.escalation).toEqual({ at: LATER, ...advice });
+    expect(sent.ok && MemoSchema.safeParse(sent.value).success).toBe(true);
+    const owner = escalateMemo(memo, { action: 'owner', holds: ['chancellor_asks'], note: 'Yours.' }, LATER);
+    expect(owner.ok && owner.value.escalation).toEqual({
+      at: LATER,
+      action: 'owner',
+      holds: ['chancellor_asks'],
+      note: 'Yours.',
+    });
+    expect(sent.ok && escalateMemo(sent.value, advice, LATER)).toEqual({
+      ok: false,
+      error: { code: 'escalated' },
+    });
+    const closed: Memo = { ...memo, state: 'closed', outcome: { decision: 'rejected', at: LATER } };
+    expect(escalateMemo(closed, advice, LATER)).toEqual({ ok: false, error: { code: 'closed' } });
   });
 });

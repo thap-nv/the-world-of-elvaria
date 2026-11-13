@@ -10,11 +10,13 @@ import {
   QuestIdSchema,
   VerdictIdSchema,
 } from '../../core/ids.ts';
-import { DateTimeSchema, GENERATED_NOTE, NonEmptyStringSchema } from '../common.ts';
+import { DELEGATION_HOLDS, TRIAGE_ACTIONS } from '../../delegation/constants.ts';
+import { DateTimeSchema, GENERATED_NOTE, NonEmptyStringSchema, unique } from '../common.ts';
 import {
   MEMO_BODY_MAX_LENGTH,
   MEMO_JUDGEMENTS,
   MEMO_OUTCOME_DECISIONS,
+  TRIAGE_NOTE_MAX_LENGTH,
   MEMO_REF_MAX_LENGTH,
   MEMO_REFS_MAX,
   MEMO_ROUTES,
@@ -77,10 +79,32 @@ export const MemoOutcomeSchema = z
   })
   .meta(
     describe(
-      "How the memo was closed: by the decide_memo command, or (PS-22) an objection by its second judge's verdict.",
+      "How the memo was closed: by the decide_memo command, (PS-22) an objection by its second judge's verdict, or (PS-03b) handled by the quest a create_quest or edit_quest naming it made or changed.",
     ),
   );
 export type MemoOutcome = z.infer<typeof MemoOutcomeSchema>;
+
+export const MemoEscalationSchema = z
+  .strictObject({
+    at: DateTimeSchema,
+    action: z.enum(TRIAGE_ACTIONS).meta(describe('What the Chancellor would do with the memo.')),
+    quest: QuestIdSchema.optional().meta(
+      describe(
+        'merge: the open quest it would take the memo in; new_quest: the draft quest made for the owner to confirm.',
+      ),
+    ),
+    addendum: MemoBodySchema.optional().meta(describe("merge: what the quest's description would gain.")),
+    holds: unique(z.array(z.enum(DELEGATION_HOLDS)))
+      .min(1)
+      .meta(describe('Why the owner decides (delegationHolds): the matters it keeps and the limits found.')),
+    note: z.string().min(1).max(TRIAGE_NOTE_MAX_LENGTH).meta(describe("The Chancellor's why.")),
+  })
+  .meta(
+    describe(
+      "The Chancellor's triage sent the memo to the owner with its advice (PS-03b, escalate_memo): kingdom.delegation does not let the world decide it. The memo stays open until decided; the next triage leaves it alone.",
+    ),
+  );
+export type MemoEscalation = z.infer<typeof MemoEscalationSchema>;
 
 const JUDGED: readonly string[] = MEMO_JUDGEMENTS;
 
@@ -121,12 +145,14 @@ export const MemoSchema = z
     state: z.enum(MEMO_STATES),
     filed_at: DateTimeSchema,
     outcome: MemoOutcomeSchema.optional(),
+    // PS-03b; optional, added after v1, so version stays 1 (ADR 0003).
+    escalation: MemoEscalationSchema.optional(),
   })
   .superRefine(checkMemo)
   .meta({
     title: 'Memo',
     description:
-      "memos/<id>.json: one letter (displayed so; the id is `memo` because `letter` names the handover letter in the code) that a character wrote in the Memos section of its handover letter, one line per memo: `- <kind>: <text> refs: <path>, <path>`. The Steward reads that section when an assignee's run ends through a submit, a question or a crash (not a breaker), files each memo here with an id made from the quest, the kind and the normalized text, so reading the letter again files nothing twice, and routes it by its kind's entry in registry/memos.json (ADR 0024). Characters never write this folder. A memo changes no quest's state and is never answered: the owner decides it once (decide_memo, `elvaria memo decide`) and it is closed.",
+      "memos/<id>.json: one letter (displayed so; the id is `memo` because `letter` names the handover letter in the code) that a character wrote in the Memos section of its handover letter, one line per memo: `- <kind>: <text> refs: <path>, <path>`. The Steward reads that section when an assignee's run ends through a submit, a question or a crash (not a breaker), files each memo here with an id made from the quest, the kind and the normalized text, so reading the letter again files nothing twice, and routes it by its kind's entry in registry/memos.json (ADR 0024). Characters never write this folder. A memo changes no quest's state and is never answered: it is decided once and closed, by the owner (decide_memo, `elvaria memo decide`, or confirming a draft made from it) or, within kingdom.delegation, by the Chancellor's triage (PS-03b); a memo the triage sends to the owner keeps its advice in `escalation`.",
     $comment: `${GENERATED_NOTE} Events: memo.filed, memo.routed, memo.closed. Not expressible here: state = closed exactly when outcome is present; outcome.quest is required when outcome.decision = handled; the id's day is the day in the quest's id.`,
     allOf: [
       { if: { properties: { state: { const: 'closed' } } }, then: { required: ['outcome'] } },

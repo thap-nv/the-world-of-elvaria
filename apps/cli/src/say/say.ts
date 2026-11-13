@@ -3,11 +3,11 @@
 // the inbox, and the Steward writes the quests in status `draft` until the owner confirms them (ADR 0005). The
 // CLI writes no quest: it knows each quest's id in advance only because the Steward derives it from the command.
 // `--memo <id>` hands the Chancellor a letter a character wrote (PS-02, ADR 0024): its text, who wrote it on which
-// quest and its files become the words, with the owner's own words after them when given. The letter stays open
-// until the owner decides it (`elvaria memo decide`), since a draft may still be dropped.
+// quest and its files become the words, with the owner's own words after them when given. The drafts carry the
+// letter (PS-03b): the first one the owner confirms closes it as handled by that quest; until then it stays open.
 import { draftCommands, draftQuests } from '@elvaria/chancellor';
-import type { DraftCommand } from '@elvaria/chancellor';
-import type { Memo } from '@elvaria/domain';
+import type { CommandHeader, DraftCommand } from '@elvaria/chancellor';
+import type { Memo, MemoId } from '@elvaria/domain';
 import { questIdOfCommand } from '@elvaria/steward';
 
 import { textOption } from '../args.ts';
@@ -50,7 +50,12 @@ async function send(ctx: KingdomContext, sent: readonly DraftCommand[]): Promise
   return true;
 }
 
-async function say(ctx: KingdomContext, utterance: string, deps: SayDeps): Promise<ExitCode> {
+async function say(
+  ctx: KingdomContext,
+  utterance: string,
+  deps: SayDeps,
+  memos: readonly MemoId[] = [],
+): Promise<ExitCode> {
   const hearing = await hearingOf(
     ctx,
     utterance,
@@ -70,11 +75,12 @@ async function say(ctx: KingdomContext, utterance: string, deps: SayDeps): Promi
     ctx.io.err(ctx.t('cli.say.nothing'));
     return EXIT.failed;
   }
-  const sent = draftCommands(reply.value.kept, {
+  const source = {
     header: () => commandHeader(ctx),
     // openKingdomContext checked the zone, and the header's time is the clock's: the fallback never runs.
-    questIdOf: (header) => questIdOfCommand(header, ctx.kingdom.tz) ?? ctx.ids.quest(),
-  });
+    questIdOf: (header: CommandHeader) => questIdOfCommand(header, ctx.kingdom.tz) ?? ctx.ids.quest(),
+  };
+  const sent = draftCommands(reply.value.kept, source, memos);
   if (!(await send(ctx, sent))) return EXIT.failed;
   reportSent(ctx, context.registry, sent);
   reportQuestion(ctx, reply.value.question);
@@ -96,7 +102,7 @@ async function sayMemo(ctx: KingdomContext, id: string, words: string, deps: Say
     memo.forEach(ctx.io.err);
     return EXIT.failed;
   }
-  const said = await say(ctx, memoWords(ctx, memo, words), deps);
+  const said = await say(ctx, memoWords(ctx, memo, words), deps, [memo.id]);
   if (said === EXIT.ok) ctx.io.out(ctx.t('cli.say.memo_hint', { memo: memo.id }));
   return said;
 }

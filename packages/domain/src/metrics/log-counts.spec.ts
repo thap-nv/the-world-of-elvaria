@@ -140,4 +140,10 @@ describe("ownerCommandsOf with the line's kind (PS-01b)", () => {
     ];
     expect(ownerCommandsOf(input(events), ON_THE_DAY).map(({ id }) => id)).toEqual([retry.id]);
   });
+
+  it('leaves out the edits of the Chancellor’s triage, by its line or by its file (PS-03b)', () => {
+    const edit = { ...commandOf('retry', { quest: questId(4) }, at(9)), source: 'chancellor' as const };
+    const events = [applied(gone, { kind: 'edit_quest', source: 'chancellor' }), applied(edit.id, {})];
+    expect(ownerCommandsOf({ ...input(events), commands: [edit] }, ON_THE_DAY)).toEqual([]);
+  });
 });

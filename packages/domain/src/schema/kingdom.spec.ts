@@ -49,6 +49,8 @@ describe('KingdomSchema', () => {
     expect(kingdom.breakers).toEqual(example?.breakers);
     expect(kingdom.schedule).toEqual(example?.schedule);
     expect(kingdom.dispatch).toEqual(example?.dispatch);
+    // PS-03b: a kingdom.json written before delegation gets its defaults.
+    expect(kingdom.delegation).toEqual(example?.delegation);
     expect(kingdom.bell).toEqual({ desktop: true, web_push: false, messaging: null });
     expect(kingdom.tunnel).toEqual({ enabled: false });
     expect(kingdom.ui).toEqual({ mode: 'night', eco: false });

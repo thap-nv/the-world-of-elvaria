@@ -5,7 +5,7 @@
 - Ships the `elvaria` command, the only composition root (implementation-plan §1.1): `init`, `doctor`,
   `tribe list|add|check|disable`, `territory add|list`, `character add|list|suspend|release|level|model`, `say`,
   `quest add|list|show|confirm|cancel|archive|edit|retry|reassign`,
-  `seal`, `return`, `answer`, `memo list|show|decide`, `run`, `wake`, `digest`, `metrics`,
+  `seal`, `return`, `answer`, `memo list|show|decide`, `triage`, `run`, `wake`, `digest`, `metrics`,
   `sandbox generate|replay`, `migrate`, `upgrade`. The command table (`src/commands.ts`) drives parsing (`util.parseArgs`), help, and the reference
   `docs/cli.md` that `pnpm docs:gen` renders from it (`scripts/docs-cli.mjs`).
 - Prints everything through `t()` of `@elvaria/i18n`, in `kingdom.owner.locale` unless `--locale vi|en` is given;
@@ -52,7 +52,14 @@
   builds (it needs a character of class `chancellor`, and it spends mana), turns the words into drafts; each
   draft kept goes to the inbox as `create_quest` with `draft: true`, the Steward writes it in status `draft`, and
   the owner opens it with `quest confirm`. The CLI writes no quest. `say --memo <memo>` (PS-02) hands the
-  Chancellor a letter a character wrote, with the owner's words after it when given, and says how to close it.
+  Chancellor a letter a character wrote, with the owner's words after it when given; its drafts carry the letter, and
+  confirming one closes it (PS-03b).
+- `triage` (PS-03b, `src/triage/`): the Chancellor's triage of the letters waiting (`runTriage`: open, routed to the
+  Chancellor, not sent up yet, named by no command still in the inbox; at most 20, the oldest first), one session of
+  `@elvaria/chancellor` for the batch, its commands written with `source: chancellor`; nothing when no letter waits.
+  `run` gives the Steward the same as a scheduled job (`triageJob`, `kingdom.schedule.triage`), ready once no session
+  of the Chancellor's tribe runs. `memo show` prints the Chancellor's advice on a letter it sent up; the digest lists
+  it as `memo_escalated`; `metrics` counts the letters the owner and the triage decided.
 - `memo list [--all]`, `memo show <memo>`, `memo decide <memo> shelved|rejected|handled [--quest] [--note]` (PS-02,
   `src/memo/`, ADR 0024): the letters (memos) characters wrote about work outside their quests, the open ones
   unless `--all`; `decide` sends `decide_memo` after refusing what it can tell already (an unknown or decided
