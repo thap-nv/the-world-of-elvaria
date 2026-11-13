@@ -2,23 +2,12 @@
 // judge and a number in the metrics, never a fail, since a check can only pass or fail. Read from what the plot
 // changed since it forked (PlotManager.touched), for the `quest.submitted` line and the judge's prompt.
 import { scopeOf, sharedGlobsOf } from '@elvaria/domain';
-import { globToRegExp } from '@elvaria/runner-core';
+import { coverOf } from '@elvaria/runner-core';
 import type { Quest, Territory } from '@elvaria/domain';
 
 import type { Context } from '../context.ts';
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
-
-/** Whether a glob of a scope covers a path: by the glob, or as a folder when it names one without a wildcard. */
-function coverOf(glob: string): (path: string) => boolean {
-  const pattern = globToRegExp(glob);
-  const folder = `${glob
-    .replaceAll('\\', '/')
-    .replace(/^(?:\.\/|\/)+/, '')
-    .replace(/\/+$/, '')
-    .toLowerCase()}/`;
-  return (path) => pattern.test(path) || path.toLowerCase().startsWith(folder);
-}
 
 /** The `changed` paths that neither the quest's scope nor the territory's shared paths cover; none without a scope. */
 export function outOfScopeOf(

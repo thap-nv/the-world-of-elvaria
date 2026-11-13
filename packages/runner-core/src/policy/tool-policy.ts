@@ -175,9 +175,11 @@ function searchCommandsOf(tools: readonly string[], input: ToolPolicyInput): str
  * 0016), unless it denies a bare shell (the poet, the envoy, the monk); the registry's allow lists stay as they are,
  * or a class would get a shell and its territory's checks with it.
  */
+export const asksGraph = (tools: readonly string[], deniedTools: ReadonlySet<string>): boolean =>
+  !deniedTools.has(SHELL_TOOL) && tools.some((tool) => (SEARCH_TOOLS as readonly string[]).includes(tool));
+
 function graphCommandsOf(tools: readonly string[], deniedTools: ReadonlySet<string>, input: ToolPolicyInput) {
-  if (input.graph !== true || deniedTools.has(SHELL_TOOL)) return [];
-  return tools.some((tool) => (SEARCH_TOOLS as readonly string[]).includes(tool)) ? [...GRAPH_COMMANDS] : [];
+  return input.graph === true && asksGraph(tools, deniedTools) ? [...GRAPH_COMMANDS] : [];
 }
 
 export function toolPolicyOf(input: ToolPolicyInput): ToolPolicy {

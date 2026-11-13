@@ -3,7 +3,9 @@ outside the plot, with no model. In the system part only when the territory has 
 and the class searches code (ToolPolicy `graph_commands`); the session's GRAPHIFY_OUT names the graph, so no command
 takes a path to it, and the hook refuses `--graph` and every other graphify command. The spike
 (docs/spikes/graphify-2026-11-12.md §3) found that questions in prose match poorly and code names and paths well, and
-that explain and affected answer in about 2 000 characters. {{ask}} is the judge's line, empty for the assignee. -->
+that explain and affected answer in about 2 000 characters. {{ask}} is the judge's line, empty for the assignee.
+{{impact}} (PS-21b): for the mage of a quest that delivers sub-quests and has a scope, how many files outside that
+scope use code in it (impactOf), an input to the ranks (owner, 2026-11-13); empty for every other session. -->
 
 ## Code graph
 
@@ -15,3 +17,5 @@ A graph of this territory's code at commit `{{commit}}`, where your quest's bran
 - `graphify path '<name>' '<other name>' --undirected` shows how two nodes are linked.
 
 The graph holds the code of that commit, not your changes, and no file content: open the files it names to read them. {{ask}}
+
+{{impact}}

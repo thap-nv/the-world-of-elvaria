@@ -1,6 +1,6 @@
 export { splitCommandLine } from './checks/command-line.ts';
 export type { CommandLineIssue } from './checks/command-line.ts';
-export { globToRegExp } from './checks/glob.ts';
+export { coverOf, globToRegExp, scopeCovers } from './checks/glob.ts';
 export { argvOf } from './checks/argv.ts';
 export type { CommandIssue } from './checks/argv.ts';
 export { runToEnd, startChild } from './process/child.ts';
@@ -81,7 +81,10 @@ export type { GraphBuild, GraphBuildOptions, GraphProgram } from './graph/build-
 export { GRAPH_ASK_TIMEOUT_MS, codeGraphsOf } from './graph/code-graphs.ts';
 export type { CodeGraphs, CodeGraphsOptions } from './graph/code-graphs.ts';
 export { GRAPHIFY_ENV, GRAPH_OUT_ENV, graphEnvOf } from './graph/graph-env.ts';
-export { gitOf } from './plot/git.ts';
+export { USE_RELATIONS, graphLinksOf, readGraphLinks } from './graph/graph-links.ts';
+export { answerFilesOf } from './graph/query-answer.ts';
+export type { AnswerFile } from './graph/query-answer.ts';
+export { gitOf, zList } from './plot/git.ts';
 export type { Git, GitRun } from './plot/git.ts';
 export { plotCommitMessage } from './plot/commit-message.ts';
 export { folderPlotOf } from './plot/folder.ts';
@@ -134,6 +137,14 @@ export { driftNote, gazetteerStampOf, gazetteerWithDrift } from './prompt/gazett
 export type { AssigneePromptInput, PromptInput, VerifierPromptInput } from './prompt/build-prompt.ts';
 export type { PromptCheck } from './prompt/checks.ts';
 export { buildChancellorPrompt } from './prompt/chancellor.ts';
+export { NAMED_FILES_SHOWN } from './prompt/chancellor-code.ts';
+export type {
+  GraphAnswer,
+  GraphFile,
+  NamedPath,
+  SizedFile,
+  TerritoryCode,
+} from './prompt/chancellor-code.ts';
 export { buildTriagePrompt } from './prompt/triage.ts';
 export { CONTEXT_FILE_MAX_CHARS, contextPathsIn, readContextFiles } from './prompt/context-files.ts';
 export type { ContextFile } from './prompt/context-files.ts';

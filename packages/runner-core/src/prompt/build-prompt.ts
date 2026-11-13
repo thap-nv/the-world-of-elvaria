@@ -29,6 +29,7 @@ import type { PromptGraph } from './graph-block.ts';
 import { memosBlock } from './memory.ts';
 import { objectionBlock } from './objection.ts';
 import type { PromptObjection } from './objection.ts';
+import { planLinksBlock } from './plan-links.ts';
 import { composed } from './prompt-blocks.ts';
 import { protectedChangesBlock } from './protected.ts';
 import { outOfScopeBlock } from './scope.ts';
@@ -37,7 +38,16 @@ import type { Continuation, Locale, Memory } from './blocks.ts';
 import type { PromptCheck } from './checks.ts';
 import type { NamedBlock, PromptWithBlocks } from './prompt-blocks.ts';
 import type { PromptTemplates } from './templates.ts';
-import type { Character, Quest, Registry, Ritual, Skill, Territory, Verdict } from '@elvaria/domain';
+import type {
+  Character,
+  PlanLink,
+  Quest,
+  Registry,
+  Ritual,
+  Skill,
+  Territory,
+  Verdict,
+} from '@elvaria/domain';
 
 interface PromptBase {
   readonly locale: Locale;
@@ -114,6 +124,8 @@ export interface VerifierPromptInput extends PromptBase {
   readonly out_of_scope?: readonly string[];
   /** The objection this judge answers (PS-22): the verdict it contests and the memo; absent for any other judge. */
   readonly objection?: PromptObjection | null;
+  /** A plan's sub-quests free to run at once whose code the graph links (PS-21b); absent or empty, no block. */
+  readonly plan_links?: readonly PlanLink[];
 }
 
 /**
@@ -226,6 +238,7 @@ function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): PromptW
         : fenced(input.handover, 'markdown'),
     out_of_scope: outOfScopeBlock(quest, input.out_of_scope ?? [], t),
     protected_changes: protectedChangesBlock(quest, t),
+    plan_links: planLinksBlock(input.plan_links, t),
     diff: diffBlock(input.diff, input.territory),
   });
   const graphText = graphBlock(policy, input.graph, 'verifier', t);

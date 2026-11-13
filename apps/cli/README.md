@@ -17,7 +17,11 @@
 - `say` (PS-06) gives the Chancellor `kingdom.dispatch.council` and prints the brief of work for the council (goal,
   out of scope, acceptance examples, assumptions, each question with its recommended answer) with the plan quest
   that confirming accepts them for (`src/say/report.ts`, `reportBrief`); the drop reasons of the quest template and
-  the council are translated like the others.
+  the council are translated like the others. Before the session (PS-21b, `src/say/code.ts`, 0 mana), it reads the
+  paths and globs of the words (`src/say/words.ts`) in every git territory's tracked files, with their sizes and
+  lines, whatever `code_graph` says; and where a territory has `code_graph` on and graphify's graph of the default
+  branch's tip is built, it asks `graphify query` with the code names and paths of the words and counts the impact of
+  the named files from the graph's links. It builds no graph, and says in one line each what the Chancellor got.
   While a Steward holds the kingdom's lock, `sendCommand` waits one tick and a little more for its `command.applied` or
   `command.rejected` line and prints it (`stale` with what to do about it); without a Steward it only drops the file.
   `quest edit --max-minutes` on a quest with a running session says what the new ceiling does to it: the Steward's

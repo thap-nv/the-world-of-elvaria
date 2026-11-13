@@ -1,0 +1,43 @@
+
+
+# The files the owner's words name
+
+Elvaria read these from the territories' working trees, without a model. Size every draft that reads or changes them from these numbers, as "How to estimate" says (about four characters make a token), and take its `scope_paths` from the paths it changes.
+
+## Territory `dc1-se-team`
+
+- `packages/chancellor/src/**`: 14 files, 96.0 KB in all
+  - `packages/chancellor/src/triage-commands.ts`: 9.2 KB, 239 lines
+  - `packages/chancellor/src/screen.ts`: 7.0 KB, 196 lines
+  - `packages/chancellor/src/session.ts`: 4.9 KB, 145 lines
+  - `packages/chancellor/src/commands.ts`: 3.8 KB, 108 lines
+  - `packages/chancellor/src/draft-quests.ts`: 3.4 KB, 95 lines
+  - … and 9 more files
+- `README.md`: 1 file, 812 B in all
+  - `README.md`: 812 B, 20 lines
+
+# What the code graph answers
+
+A graph of the territory's code (functions, classes, imports and calls, built by graphify without a model) was asked with the code names and paths of the owner's words. Use it to see where the work lies: size the drafts from the files it names, and take their `scope_paths` from them.
+
+The impact is the number of files outside the named paths that use code in them: what a change there may break. Weigh it in the rank: a change that many files rely on is not small or local work, whatever its size.
+
+## Territory `dc1-se-team`, graph at commit `43566818d835`
+
+Asked: `graphify query 'draftQuests packages/chancellor/src/** README.md'`
+
+- `packages/chancellor/src/draft-quests.ts` (3.4 KB, 95 lines): `draftQuests()`, `heard()`
+- `apps/cli/src/say/say.ts`: `say()`, `send()`, `a()`, `b()`, `c()`, `d()` and 2 more names
+- `apps/cli/src/x0.ts`
+- `apps/cli/src/x1.ts`
+- `apps/cli/src/x2.ts`
+- `apps/cli/src/x3.ts`
+- `apps/cli/src/x4.ts`
+- `apps/cli/src/x5.ts`
+- `apps/cli/src/x6.ts`
+- `apps/cli/src/x7.ts`
+- `apps/cli/src/x8.ts`
+- `apps/cli/src/x9.ts`
+- … and 2 more files
+
+Impact: 3 files outside the paths the owner names use code in them: `apps/cli/src/run/triage.ts`, `apps/cli/src/say/hearing.ts`, `apps/cli/src/say/say.ts`.

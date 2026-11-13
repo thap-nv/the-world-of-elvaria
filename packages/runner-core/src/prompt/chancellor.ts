@@ -5,9 +5,11 @@
 import { QUEST_TAGS_MAX, sharedGlobsOf } from '@elvaria/domain';
 
 import { LANGUAGE_NAMES, classBlock, decreeBlock } from './blocks.ts';
-import { classesOf, draftingValuesOf } from './drafting.ts';
+import { chancellorCodeBlocks } from './chancellor-code.ts';
+import { classesOf, draftingValuesOf, graphedOf } from './drafting.ts';
 import { fenced, fill, joinBlocks } from './templates.ts';
 import type { BuiltPrompt } from '../runner/types.ts';
+import type { TerritoryCode } from './chancellor-code.ts';
 import type { Locale } from './blocks.ts';
 import type { PromptTemplates } from './templates.ts';
 import type { Character, Council, PoolView, Registry, Territory } from '@elvaria/domain';
@@ -38,6 +40,11 @@ export interface ChancellorContext {
   readonly council: Council;
   /** Set on the second try only. */
   readonly returned?: ReturnedReply;
+  /**
+   * What the code says of the owner's words (PS-21b): the files they name, and the code graph's answer where a
+   * territory has one. Gathered by `elvaria say`; absent or empty, the prompt reads as before.
+   */
+  readonly code?: readonly TerritoryCode[];
 }
 
 export const list = (lines: readonly string[], none: string): string =>
@@ -60,7 +67,8 @@ export function territoriesOf(territories: readonly Territory[]): string {
   );
 }
 
-export function catalogOf({ kinds, tags, scripts, classes }: Registry) {
+/** `graphed`: a territory has a code graph, so the classes say who asks it (PS-21b). */
+export function catalogOf({ kinds, tags, scripts, classes }: Registry, graphed = false) {
   return {
     // The seal of each kind (PS-06): a draft that leaves seal_required out takes it.
     kinds: list(
@@ -70,7 +78,7 @@ export function catalogOf({ kinds, tags, scripts, classes }: Registry) {
       ),
       'None.',
     ),
-    classes: list(classesOf(classes), 'None.'),
+    classes: list(classesOf(classes, graphed), 'None.'),
     tags: list(
       tags.map(
         (tag) =>
@@ -133,11 +141,12 @@ export function buildChancellorPrompt(context: ChancellorContext, t: PromptTempl
       decreeBlock(context.decree, t),
       role,
       classBlock(context.class_prompt, 'Chancellor', t),
+      ...chancellorCodeBlocks(context.code, t),
     ]),
     user: fill(t['chancellor-context'], {
       utterance: context.utterance.trim(),
       territories: territoriesOf(context.territories),
-      ...catalogOf(context.registry),
+      ...catalogOf(context.registry, graphedOf(context.territories)),
       roster: rosterOf(context.roster),
       mana: manaOf(context.mana),
       returned: returnedOf(context.returned, t),

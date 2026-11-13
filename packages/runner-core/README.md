@@ -257,6 +257,16 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   domain's `GRAPH_COMMANDS`) to a class with Glob or Grep that does not deny a bare `Bash`, and `policy.json` carries
   them; `buildPrompt` with `graph` adds the `graph` block (`prompts/graph.md`) to the system part, with a line for
   the judge.
+- The code graph in planning (PS-21b): `readGraphLinks` reads a built `graph.json` (no graphify process) into the
+  distinct uses between files (`USE_RELATIONS`: calls, imports, inheritance, references); `answerFilesOf` keeps the
+  files and names of a `graphify query` answer. `buildChancellorPrompt` with `code` (`TerritoryCode`, gathered by
+  `elvaria say`) adds two blocks to the system part (agy takes the user part on its command line): the files the
+  owner's words name with their sizes (`prompts/chancellor-files.md`) and the graph's answer with the impact of those
+  files (`prompts/chancellor-graph.md`). When a territory has `code_graph` on, the classes of the Chancellor and of a
+  plan quest's facts say which ask the graph (`asksGraph`, the rule of `toolPolicyOf`) and how work needing the
+  code's structure goes to one. `PromptGraph.impact` adds the impact line to a mage's graph block; a judge's
+  `plan_links` adds `prompts/plan-links.md` to its review. `coverOf` and `scopeCovers` read a scope's globs as the
+  judge's files outside the scope always have.
 
 ## Does not
 
