@@ -32,7 +32,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria quest show <quest>` | Xem một nhiệm vụ. |
 | `elvaria quest confirm <quest>` | Xác nhận một nhiệm vụ nháp để nó mở (lệnh confirm). |
 | `elvaria quest cancel <quest>` | Hủy một nhiệm vụ chưa xong; nhiệm vụ nháp thì bỏ đi, nhiệm vụ ở trạm quân y thì được lưu trữ (lệnh cancel hoặc archive). |
-| `elvaria quest archive <quest>` | Lưu trữ một nhiệm vụ đã xong và giao hàng, hoặc một nhiệm vụ ở trạm quân y mà chủ nhân bỏ: Quản sự gỡ worktree, giữ nhánh (lệnh archive). |
+| `elvaria quest archive <quest>` | Lưu trữ một nhiệm vụ đã xong và giao hàng, hoặc một nhiệm vụ ở trạm quân y mà chủ nhân bỏ: Nhiếp chính gỡ worktree, giữ nhánh (lệnh archive). |
 | `elvaria quest edit <quest>` | Sửa một nhiệm vụ mà không chạm vào file của nó (lệnh edit_quest). |
 | `elvaria quest retry <quest>` | Mở lại một nhiệm vụ ở trạm quân y với đủ lượt thử như mới, cho mọi nhân vật đúng nghề đang rảnh hoặc cho nhân vật --to chỉ định, hoặc đưa nhiệm vụ có người chấm cứ rời đi không ra phán quyết, hay chỉ chấm dở, về chờ nghiệm thu (lệnh retry; lệnh reassign khi có --to). |
 | `elvaria quest reassign <quest>` | Giao lại một nhiệm vụ cho nhân vật khác, hoặc cho nhân vật bạn chỉ định (lệnh reassign). |
@@ -42,15 +42,15 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria memo list` | Liệt kê thư nhân vật viết về việc ngoài nhiệm vụ của mình (memo), chỉ thư đang chờ trừ khi có --all. |
 | `elvaria memo show <memo>` | Xem một thư: ai viết khi làm nhiệm vụ nào, gửi tới đâu, đã quyết thế nào, và toàn bộ nội dung. |
 | `elvaria memo decide <memo> <decision>` | Quyết một thư, một lần: gác lại (shelved), bác (rejected), hoặc nêu nhiệm vụ làm việc đó (handled --quest); không nhiệm vụ nào đổi (lệnh decide_memo). |
-| `elvaria triage` | Tể tướng phân loại các thư gửi tới mình đang chờ: một lần gọi model cho cả lô (tối đa 20 thư, cũ nhất trước). Trong phạm vi ủy quyền (kingdom.delegation), Quản sự áp quyết định mà không cần bạn; thư còn lại tới bạn kèm lời khuyên, trong bản tấu. kingdom.schedule.triage chạy việc này mỗi ngày trước bản tấu. |
-| `elvaria run` | Chạy Quản sự: giao nhiệm vụ cho nhân vật và cho nghiệm thu, tới khi bạn dừng (Ctrl+C). |
-| `elvaria wake <tribe>` | Nhờ Quản sự thăm dò mana của một tộc ngay, ví dụ sau khi đăng nhập lại (lệnh wake). |
+| `elvaria triage` | Tể tướng phân loại các thư gửi tới mình đang chờ: một lần gọi model cho cả lô (tối đa 20 thư, cũ nhất trước). Trong phạm vi ủy quyền (kingdom.delegation), Nhiếp chính áp quyết định mà không cần bạn; thư còn lại tới bạn kèm lời khuyên, trong bản tấu. kingdom.schedule.triage chạy việc này mỗi ngày trước bản tấu. |
+| `elvaria run` | Chạy Nhiếp chính: giao nhiệm vụ cho nhân vật và cho nghiệm thu, tới khi bạn dừng (Ctrl+C). |
+| `elvaria wake <tribe>` | Nhờ Nhiếp chính thăm dò mana của một tộc ngay, ví dụ sau khi đăng nhập lại (lệnh wake). |
 | `elvaria digest` | In bản tấu lúc này: mọi việc chờ bạn, chia hai nhóm (phải quyết để việc chạy tiếp, chờ được), mỗi việc kèm khuyến nghị và lệnh. Chỉ đọc vương quốc, không tốn mana. |
 | `elvaria metrics` | Sổ đo: lượt, làm lại theo nguyên nhân, đạt lượt đầu, lỗi lọt, lần cần chủ nhân. Chỉ đọc vương quốc, không tốn mana. |
 | `elvaria sandbox generate` | Sinh một ngày giả vào events/sandbox/ của vương quốc (sa bàn): không chạy phiên nào, không chạm nhiệm vụ thật. |
 | `elvaria sandbox replay <file>` | Phát lại một ngày giả thành dòng thời gian trên terminal. |
 | `elvaria migrate` | Chuyển mọi file cũ của vương quốc lên phiên bản hiện tại, có sao lưu, và thêm file, mục registry mà bản Elvaria này có và vương quốc còn thiếu. |
-| `elvaria upgrade` | Dựng một bản mới của Elvaria cạnh bản đang ghim, thử nó (migrate, doctor và bộ test hợp đồng với CLI giả trên một bản sao cấu hình của vương quốc, một nhiệm vụ bậc script trên vương quốc tạm), qua hết mới ghim rồi chạy migrate của nó trên vương quốc; --rollback về bản trước. 0 mana; không chạy khi Quản sự đang chạy. |
+| `elvaria upgrade` | Dựng một bản mới của Elvaria cạnh bản đang ghim, thử nó (migrate, doctor và bộ test hợp đồng với CLI giả trên một bản sao cấu hình của vương quốc, một nhiệm vụ bậc script trên vương quốc tạm), qua hết mới ghim rồi chạy migrate của nó trên vương quốc; --rollback về bản trước. 0 mana; không chạy khi Nhiếp chính đang chạy. |
 
 ## Tùy chọn chung
 
@@ -244,7 +244,7 @@ Thêm một nhiệm vụ mở ngay, không qua Tể tướng (lệnh create_ques
 | `--script <script>` | Chạy ở bậc script: một id trong registry/scripts.json, không gọi model, không tốn mana. |
 | `--params <json>` | Tham số của script, một đối tượng JSON. |
 | `--to <character>` | Nhân vật nhận việc: chỉ nhân vật này nhận nhiệm vụ, cấp nào cũng được (vượt hạng trần thì nhiệm vụ chờ dấu vua). Đúng nghề của nhiệm vụ; không dùng cho nhiệm vụ bậc script. |
-| `--contract` | Nhiệm vụ là quest hợp đồng của một đội: trưởng đội viết hợp đồng rồi chia phần, Quản sự tự thêm quest ghép. Trong mô tả, một dòng --- kết thúc phần việc: phần sau chỉ dành cho trưởng đội, người viết test của Khảo hạch mù không đọc. |
+| `--contract` | Nhiệm vụ là quest hợp đồng của một đội: trưởng đội viết hợp đồng rồi chia phần, Nhiếp chính tự thêm quest ghép. Trong mô tả, một dòng --- kết thúc phần việc: phần sau chỉ dành cho trưởng đội, người viết test của Khảo hạch mù không đọc. |
 | `--scope <glob>` | Glob của các file nhiệm vụ sẽ sửa, tính từ gốc lãnh thổ; lặp lại cho nhiều glob. Hai nhiệm vụ có vùng giao nhau không bao giờ chạy cùng lúc trên một lãnh thổ; nhiệm vụ không khai vùng thì chạy một mình ở đó. |
 
 ## `elvaria quest list`
@@ -283,7 +283,7 @@ Hủy một nhiệm vụ chưa xong; nhiệm vụ nháp thì bỏ đi, nhiệm v
 
 ## `elvaria quest archive`
 
-Lưu trữ một nhiệm vụ đã xong và giao hàng, hoặc một nhiệm vụ ở trạm quân y mà chủ nhân bỏ: Quản sự gỡ worktree, giữ nhánh (lệnh archive).
+Lưu trữ một nhiệm vụ đã xong và giao hàng, hoặc một nhiệm vụ ở trạm quân y mà chủ nhân bỏ: Nhiếp chính gỡ worktree, giữ nhánh (lệnh archive).
 
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
@@ -322,7 +322,7 @@ Giao lại một nhiệm vụ cho nhân vật khác, hoặc cho nhân vật bạ
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
 | `<quest>` | id của nhiệm vụ, ví dụ q_20261106_7k3m2a. |
-| `--to <character>` | Nhân vật nhận việc, đúng nghề của nhiệm vụ, cấp nào cũng được (vượt hạng trần thì nhiệm vụ chờ dấu vua). Không có thì Quản sự chọn trong những người đang rảnh. |
+| `--to <character>` | Nhân vật nhận việc, đúng nghề của nhiệm vụ, cấp nào cũng được (vượt hạng trần thì nhiệm vụ chờ dấu vua). Không có thì Nhiếp chính chọn trong những người đang rảnh. |
 
 ## `elvaria seal`
 
@@ -382,19 +382,19 @@ Quyết một thư, một lần: gác lại (shelved), bác (rejected), hoặc n
 
 ## `elvaria triage`
 
-Tể tướng phân loại các thư gửi tới mình đang chờ: một lần gọi model cho cả lô (tối đa 20 thư, cũ nhất trước). Trong phạm vi ủy quyền (kingdom.delegation), Quản sự áp quyết định mà không cần bạn; thư còn lại tới bạn kèm lời khuyên, trong bản tấu. kingdom.schedule.triage chạy việc này mỗi ngày trước bản tấu.
+Tể tướng phân loại các thư gửi tới mình đang chờ: một lần gọi model cho cả lô (tối đa 20 thư, cũ nhất trước). Trong phạm vi ủy quyền (kingdom.delegation), Nhiếp chính áp quyết định mà không cần bạn; thư còn lại tới bạn kèm lời khuyên, trong bản tấu. kingdom.schedule.triage chạy việc này mỗi ngày trước bản tấu.
 
 Không có tham số riêng, chỉ các tùy chọn chung.
 
 ## `elvaria run`
 
-Chạy Quản sự: giao nhiệm vụ cho nhân vật và cho nghiệm thu, tới khi bạn dừng (Ctrl+C).
+Chạy Nhiếp chính: giao nhiệm vụ cho nhân vật và cho nghiệm thu, tới khi bạn dừng (Ctrl+C).
 
 Không có tham số riêng, chỉ các tùy chọn chung.
 
 ## `elvaria wake`
 
-Nhờ Quản sự thăm dò mana của một tộc ngay, ví dụ sau khi đăng nhập lại (lệnh wake).
+Nhờ Nhiếp chính thăm dò mana của một tộc ngay, ví dụ sau khi đăng nhập lại (lệnh wake).
 
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
@@ -444,7 +444,7 @@ Không có tham số riêng, chỉ các tùy chọn chung.
 
 ## `elvaria upgrade`
 
-Dựng một bản mới của Elvaria cạnh bản đang ghim, thử nó (migrate, doctor và bộ test hợp đồng với CLI giả trên một bản sao cấu hình của vương quốc, một nhiệm vụ bậc script trên vương quốc tạm), qua hết mới ghim rồi chạy migrate của nó trên vương quốc; --rollback về bản trước. 0 mana; không chạy khi Quản sự đang chạy.
+Dựng một bản mới của Elvaria cạnh bản đang ghim, thử nó (migrate, doctor và bộ test hợp đồng với CLI giả trên một bản sao cấu hình của vương quốc, một nhiệm vụ bậc script trên vương quốc tạm), qua hết mới ghim rồi chạy migrate của nó trên vương quốc; --rollback về bản trước. 0 mana; không chạy khi Nhiếp chính đang chạy.
 
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|

@@ -29,7 +29,7 @@ elvaria character add vesper --class judge      # mặc định của nghề: t�
 elvaria doctor                                  # phải in "Sẵn sàng." (bản en: "Ready.")
 elvaria upgrade                                 # dựng, thử và ghim bản main; từ đây mọi lệnh chạy bằng nó (§13)
 
-# 5. Quản sự: giao việc, mở phiên, chạy check, mở người chấm (§5)
+# 5. Nhiếp chính: giao việc, mở phiên, chạy check, mở người chấm (§5)
 elvaria run                          # trong một terminal riêng; để chạy; Ctrl+C để dừng
 
 # 6. Nhiệm vụ, ở terminal thứ hai (đặt lại ELVARIA_KINGDOM và alias ở đó) (§4)
@@ -50,21 +50,21 @@ git -C "<repo>/.elvaria/worktrees/<quest>" push -u origin quest/<quest>
 #    repo không có remote: git -C "<repo>" merge --no-ff quest/<quest>
 
 # 10. Trả đất (§7)
-elvaria quest archive <quest>        # Quản sự gỡ worktree ở nhịp kế; nó không chạy thì lệnh chờ trong inbox/
+elvaria quest archive <quest>        # Nhiếp chính gỡ worktree ở nhịp kế; nó không chạy thì lệnh chờ trong inbox/
 ```
 
-Kind `build` mặc định cần dấu vua. Quest không cần dấu thì tới `Xong` ngay sau khi người chấm cho đạt. Mọi lệnh đổi một quest (`quest add`, `edit`, `seal`, `archive`…) chỉ ghi một lệnh vào `inbox/`; Quản sự áp nó ở nhịp kế, nên quest và id của nó chỉ có sau khi Quản sự đã chạy qua một nhịp.
+Kind `build` mặc định cần dấu vua. Quest không cần dấu thì tới `Xong` ngay sau khi người chấm cho đạt. Mọi lệnh đổi một quest (`quest add`, `edit`, `seal`, `archive`…) chỉ ghi một lệnh vào `inbox/`; Nhiếp chính áp nó ở nhịp kế, nên quest và id của nó chỉ có sau khi Nhiếp chính đã chạy qua một nhịp.
 
 ## 2. Máy và bản build
 
 - **Cần có**: Node 24, pnpm 10, git; Claude Code đã đăng nhập (binary đi kèm extension VS Code là đủ, `doctor` tự tìm); với tộc gemini, Antigravity CLI (`agy`) đã đăng nhập. Phiên bản đang dùng và mọi dữ kiện về hai CLI: [cli-facts-2026-11-12.md](../reference/cli-facts-2026-11-12.md).
-- **Quản sự chạy từ bản build của một checkout ở `main`** (gọi là checkout chính: bản clone của repo Elvaria mà bạn không sửa code trong đó), không từ một nhánh đang sửa. Mọi phiên gọi hook theo đường dẫn tuyệt đối tới `packages/hooks/dist/elvaria-hook.js` của checkout đó, nên chưa build hook thì `doctor` báo lỗi và không phiên nào chạy được. `pnpm elvaria <lệnh>` trong repo chạy thẳng mã nguồn, không cần build CLI: tiện cho lệnh chỉ đọc và cho người đang phát triển Elvaria; nó vẫn cần hook đã build.
+- **Nhiếp chính chạy từ bản build của một checkout ở `main`** (gọi là checkout chính: bản clone của repo Elvaria mà bạn không sửa code trong đó), không từ một nhánh đang sửa. Mọi phiên gọi hook theo đường dẫn tuyệt đối tới `packages/hooks/dist/elvaria-hook.js` của checkout đó, nên chưa build hook thì `doctor` báo lỗi và không phiên nào chạy được. `pnpm elvaria <lệnh>` trong repo chạy thẳng mã nguồn, không cần build CLI: tiện cho lệnh chỉ đọc và cho người đang phát triển Elvaria; nó vẫn cần hook đã build.
 - **Bản ghim (từ PS-04b)**: `elvaria upgrade` dựng `main` thành một bản riêng trong `<vương quốc>/.builds/<sha>/`, thử nó rồi ghim; từ đó mọi lệnh trên vương quốc chạy bằng bản ghim, kể cả hook của các phiên, và checkout chính chỉ còn là lối vào (§13). `pnpm elvaria <lệnh>` từ một nhánh đang sửa cũng chạy bằng bản ghim; thêm `--here` để chạy bằng chính mã của nhánh.
 - **Windows**:
   - Chạy `elvaria run` từ **Git Bash** khi check của lãnh thổ gọi `sh` (PATH của PowerShell không có `Git\usr\bin`).
   - Hiệp sĩ tộc gemini chạy lệnh trong PowerShell: cần `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` thì mới chạy được `pnpm`; `doctor` kiểm điều này.
   - Trong PowerShell 5.1, dấu `"` nằm trong một đối số bị cắt khi truyền cho `node`: gõ lệnh có mô tả dài trong Git Bash.
-- **Docker**: lãnh thổ nào có check hay `commands.reset` gọi `docker` thì Docker Desktop phải chạy **trước** Quản sự. `doctor` kiểm điều này (từ P1-56): daemon không trả lời thì nó cảnh báo (không chặn), nêu các lệnh dùng docker; tự kiểm bằng `docker info`.
+- **Docker**: lãnh thổ nào có check hay `commands.reset` gọi `docker` thì Docker Desktop phải chạy **trước** Nhiếp chính. `doctor` kiểm điều này (từ P1-56): daemon không trả lời thì nó cảnh báo (không chặn), nêu các lệnh dùng docker; tự kiểm bằng `docker info`.
 - **Đăng nhập có hạn**: `claude auth status --json` cho `loginExpiresAt`; `doctor` cảnh báo khi còn dưới 7 ngày. Gần hạn thì `claude auth login`.
 
 ## 3. Vương quốc, tộc, lãnh thổ, nhân vật
@@ -76,15 +76,15 @@ Thư mục vương quốc là trạng thái của bạn, nằm ngoài mọi repo
 | `kingdom.json` | tộc, CLI đã ghim, `dispatch`, `mana`, `breakers` | `init`, `doctor`, `tribe …`; bạn sửa tay phần cấu hình (§12) |
 | `territories/<id>/territory.json` | lệnh, check, luật của lãnh thổ | `territory add` tạo, bạn điền |
 | `territories/<id>/gazetteer.md` | điều nhân vật cần biết về lãnh thổ | bạn (§11) |
-| `characters/<id>/character.json`, `quests/<id>.json` | nhân vật, nhiệm vụ | `character add` tạo file nhân vật; sau đó **chỉ Quản sự** ghi; bạn đổi bằng lệnh, không sửa tay |
+| `characters/<id>/character.json`, `quests/<id>.json` | nhân vật, nhiệm vụ | `character add` tạo file nhân vật; sau đó **chỉ Nhiếp chính** ghi; bạn đổi bằng lệnh, không sửa tay |
 | `quests/<id>/handover.md`, `journal.jsonl` | thư bàn giao, nhật ký từng lần dùng tool | nhân vật, hook |
-| `verdicts/`, `events/<ngày>.jsonl` | phán quyết, event log | Quản sự, hook |
-| `memos/` | thư nhân vật viết về việc ngoài quest của mình (PS-02) | Quản sự; bạn quyết bằng `elvaria memo decide` |
+| `verdicts/`, `events/<ngày>.jsonl` | phán quyết, event log | Nhiếp chính, hook |
+| `memos/` | thư nhân vật viết về việc ngoài quest của mình (PS-02) | Nhiếp chính; bạn quyết bằng `elvaria memo decide` |
 | `registry/` | dạng nhiệm vụ, nghề, nghi thức, script, tag, `prompts/<nghề>.md` | `init`, `migrate`; bạn sửa được |
 | `temple/scripture.md`, `characters/<id>/scripture.md`, `decree.md` | kinh và chiếu chỉ (§11) | bạn |
-| `inbox/` | lệnh của bạn chờ Quản sự áp | CLI |
-| `.runs/<quest>-<n>/` | prompt, settings, stdout, log check của từng lượt; `.runs/<quest>-delivery.md` | runner, Quản sự |
-| `.state/` | khóa của Quản sự, pid các phiên, quest không ai nhận được | Quản sự |
+| `inbox/` | lệnh của bạn chờ Nhiếp chính áp | CLI |
+| `.runs/<quest>-<n>/` | prompt, settings, stdout, log check của từng lượt; `.runs/<quest>-delivery.md` | runner, Nhiếp chính |
+| `.state/` | khóa của Nhiếp chính, pid các phiên, quest không ai nhận được | Nhiếp chính |
 | `.backup/` | bản sao trước mỗi lần `migrate` và mỗi lần bạn sửa tay | `migrate`, bạn |
 
 **Tộc.** `init` tạo hai tộc, cả hai bật: `claude` (Claude Code) và `gemini` (agy, pool `claude_gpt_models` tắt). Lần `doctor` đầu tìm CLI của từng tộc đang bật và ghim đường dẫn cùng phiên bản vào `kingdom.json`; `--pin` chỉ cần về sau, khi bản tìm thấy khác bản đã ghim (§8). Một tộc đang bật mà thiếu CLI hay chưa đăng nhập là lỗi của `doctor`:
@@ -123,11 +123,11 @@ Mỗi tộc có một ngoại hình (PS-24): `claude` là Sao Bạc, `gemini` l�
 
 **Nhân vật.** `character add <id> --class <nghề>` lấy tộc và model mặc định của nghề; đổi bằng `--tribe <tộc>` và `--model <model>`. Model là tên mà CLI của tộc nhận: tộc claude có `claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5`; tộc gemini lấy slug của `agy models`, ví dụ `gemini-3.8-flash-high`, `gemini-4-argon-medium`. Cấp ban đầu lấy theo model (Opus 5, Sonnet hay Pro 4, Argon 3, Haiku hay Flash 2; `--level` để đặt khác); cấp quyết định hạng cao nhất nhân vật nhận (cấp 2 tới E, 3 tới D, 4–5 tới C, 6–7 tới B).
 
-Luật tách vai: người chấm là một nhân vật khác người làm, chạy **model khác** (`dispatch.verifier_same_family: different_model`: Sonnet chấm Opus được, Opus chấm Opus thì không); trong số người chấm hợp lệ, Quản sự ưu tiên người khác họ model (một model Gemini chấm việc của một model Claude). Vì vậy **mỗi model người làm cần ít nhất một người chấm khác model, tốt nhất là hai, trên hai đồng hồ mana khác nhau** (§9): ở P1-50, khi trần Argon đóng, bài của hai nhân vật Opus không còn ai chấm vì người chấm còn lại cũng là Opus, và phải 50 phút sau mới có người thấy. Muốn soạn nhiệm vụ bằng lời (`elvaria say`) thì cần một nhân vật nghề `chancellor`.
+Luật tách vai: người chấm là một nhân vật khác người làm, chạy **model khác** (`dispatch.verifier_same_family: different_model`: Sonnet chấm Opus được, Opus chấm Opus thì không); trong số người chấm hợp lệ, Nhiếp chính ưu tiên người khác họ model (một model Gemini chấm việc của một model Claude). Vì vậy **mỗi model người làm cần ít nhất một người chấm khác model, tốt nhất là hai, trên hai đồng hồ mana khác nhau** (§9): ở P1-50, khi trần Argon đóng, bài của hai nhân vật Opus không còn ai chấm vì người chấm còn lại cũng là Opus, và phải 50 phút sau mới có người thấy. Muốn soạn nhiệm vụ bằng lời (`elvaria say`) thì cần một nhân vật nghề `chancellor`.
 
 ## 4. Ra nhiệm vụ
 
-- **`elvaria quest add`** gửi lệnh tạo một quest mở ngay, không qua nháp; Quản sự tạo nó ở nhịp kế (Quản sự chưa chạy thì lệnh chờ trong `inbox/`), rồi `quest list` mới thấy nó và id của nó. Bắt buộc: `--title`, `--description`, `--kind` (theo `registry/kinds.json`: `build`, `fix`, `document`…), `--rank` (F tới S), `--territory`; `--class` là nghề được nhận, cần khi dạng nhiệm vụ cho hơn một nghề (như `build`). `--to <nhân vật>` giao thẳng; `--contract` mở một đội (pháp sư viết hợp đồng, chia phần, Quản sự thêm quest ghép); `--script <id>` chạy bậc script, 0 mana.
+- **`elvaria quest add`** gửi lệnh tạo một quest mở ngay, không qua nháp; Nhiếp chính tạo nó ở nhịp kế (Nhiếp chính chưa chạy thì lệnh chờ trong `inbox/`), rồi `quest list` mới thấy nó và id của nó. Bắt buộc: `--title`, `--description`, `--kind` (theo `registry/kinds.json`: `build`, `fix`, `document`…), `--rank` (F tới S), `--territory`; `--class` là nghề được nhận, cần khi dạng nhiệm vụ cho hơn một nghề (như `build`). `--to <nhân vật>` giao thẳng; `--contract` mở một đội (pháp sư viết hợp đồng, chia phần, Nhiếp chính thêm quest ghép); `--script <id>` chạy bậc script, 0 mana.
 - **Vùng file** (PS-05): `--scope <glob>` (lặp lại; `quest edit --scope` thay cả vùng) khai các file quest sẽ sửa. Hai quest có vùng giao nhau không bao giờ làm cùng lúc trên một lãnh thổ, quest không khai vùng chạy một mình ở đó; nhờ vậy lãnh thổ code nâng được `max_concurrent`. File mà mọi nhánh cùng sửa thì đặt ở `territory.shared_paths`, không ở vùng của quest. Luật, cách khai và danh sách của lãnh thổ Elvaria: [elvaria-territory.md](elvaria-territory.md).
 - **`elvaria say "<lời>"`** (tốn mana, khoảng 15 giây): Tể tướng soạn quest **nháp**; đọc bằng `quest show`, sửa bằng `quest edit`, mở bằng `elvaria quest confirm <quest>`. Bài học của P1-50 khi nói với Tể tướng:
   - Nói rõ "Cần dấu vua trước khi xong" khi muốn có dấu: lời không nhắc dấu thì nháp có thể tắt dấu (vá ở PS-06).
@@ -139,25 +139,25 @@ Luật tách vai: người chấm là một nhân vật khác người làm, ch�
 elvaria quest edit <quest> --max-tokens 720000
 ```
 
-## 5. Chạy Quản sự
+## 5. Chạy Nhiếp chính
 
 ```bash
-elvaria run        # một vương quốc một Quản sự (.state/steward.lock); lần chạy thứ hai bị từ chối
+elvaria run        # một vương quốc một Nhiếp chính (.state/steward.lock); lần chạy thứ hai bị từ chối
 ```
 
-Mỗi nhịp 5 giây Quản sự áp lệnh trong `inbox/`, giao quest, dựng đất riêng (worktree `<repo>/.elvaria/worktrees/<quest>`, nhánh `quest/<quest>`, chạy `commands.setup`), mở phiên người làm; phiên xong thì commit, chạy check ngoài nhịp (tối đa `dispatch.max_background` việc cùng lúc, mặc định 2), rồi mở người chấm. Chuông in trên terminal đó: quest chờ dấu, câu hỏi của nhân vật, quest vào trạm quân y, quest không nhân vật nào nhận được, quest mà dàn nhân vật không có người chấm hợp lệ nào, đồng hồ mana cảnh báo, ngủ, thức. (Có người chấm hợp lệ nhưng ai cũng đang bị một đồng hồ mana chặn thì **không** có chuông, §9.)
+Mỗi nhịp 5 giây Nhiếp chính áp lệnh trong `inbox/`, giao quest, dựng đất riêng (worktree `<repo>/.elvaria/worktrees/<quest>`, nhánh `quest/<quest>`, chạy `commands.setup`), mở phiên người làm; phiên xong thì commit, chạy check ngoài nhịp (tối đa `dispatch.max_background` việc cùng lúc, mặc định 2), rồi mở người chấm. Chuông in trên terminal đó: quest chờ dấu, câu hỏi của nhân vật, quest vào trạm quân y, quest không nhân vật nào nhận được, quest mà dàn nhân vật không có người chấm hợp lệ nào, đồng hồ mana cảnh báo, ngủ, thức. (Có người chấm hợp lệ nhưng ai cũng đang bị một đồng hồ mana chặn thì **không** có chuông, §9.)
 
-**Quản sự là một tiến trình của terminal đã mở nó.** Đóng terminal, đóng hay khởi động lại VS Code (terminal tích hợp, hoặc phiên Claude Code đã chạy lệnh), máy ngủ hay khởi động lại thì Quản sự dừng, và việc đứng yên cho tới khi bạn chạy lại. Muốn nó sống qua lần khởi động lại VS Code thì chạy nó trong một cửa sổ terminal riêng.
+**Nhiếp chính là một tiến trình của terminal đã mở nó.** Đóng terminal, đóng hay khởi động lại VS Code (terminal tích hợp, hoặc phiên Claude Code đã chạy lệnh), máy ngủ hay khởi động lại thì Nhiếp chính dừng, và việc đứng yên cho tới khi bạn chạy lại. Muốn nó sống qua lần khởi động lại VS Code thì chạy nó trong một cửa sổ terminal riêng.
 
 **Dừng**: Ctrl+C. Khi nó chạy nền không có terminal: tìm pid của tiến trình `node … cli.js run` (Task Manager, hay `Get-Process node`), rồi `taskkill /PID <pid> /T /F` trên Windows (cả cây tiến trình); trên macOS `kill <pid>` (chưa có lần chạy thật). Với bản ghim có hai tiến trình: lối vào `node …/dist/cli.js run` và con của nó, `node <vương quốc>/.builds/<sha>/apps/cli/src/cli.ts run`; Ctrl+C tới cả hai và lối vào chờ con dừng xong, `taskkill /T` trên lối vào giết cả cây, `kill` trên macOS được lối vào chuyển cho con. Dừng lúc không có phiên nào chạy (`.state/sessions.json` rỗng) thì không mất gì ngoài check đang chạy.
 
 **Chạy lại sau khi dừng hay sập** (P1-50 gặp năm lần, không mất quest hay lượt thử nào):
 
 1. `docker info` trả lời, nếu lãnh thổ cần Docker.
-2. `elvaria doctor`: in "Sẵn sàng."; khi không Quản sự nào giữ khóa, nó liệt kê phiên còn sót của lần trước.
+2. `elvaria doctor`: in "Sẵn sàng."; khi không Nhiếp chính nào giữ khóa, nó liệt kê phiên còn sót của lần trước.
 3. `elvaria run`: nó giết các phiên còn sót, trả lượt cho người làm đang dở (phiên mới từ thư bàn giao), và chạy lại từ đầu các check đang dở. Khóa cũ không cản (hết hạn sau 10 giây).
 
-Cái mất khi dừng giữa chừng: phút check đã chạy (một lần 20 phút), và phần máy của nghi thức Thả quái thử thành mà Quản sự giữ trong bộ nhớ cho người chấm kế tiếp.
+Cái mất khi dừng giữa chừng: phút check đã chạy (một lần 20 phút), và phần máy của nghi thức Thả quái thử thành mà Nhiếp chính giữ trong bộ nhớ cho người chấm kế tiếp.
 
 ## 6. Theo dõi
 
@@ -177,24 +177,24 @@ Cái mất khi dừng giữa chừng: phút check đã chạy (một lần 20 ph
 
 Trạng thái của quest, id (dùng cho `quest list --status <id>`) và tên hiện ra: `draft` Nháp, `open` Mở, `claimed` Đã nhận, `working` Đang làm, `review` Chờ nghiệm thu, `returned` Bị trả bài, `blocked` Chờ trả lời, `paused_mana` Tạm dừng (hết mana), `awaiting_seal` Chờ dấu vua, `done` Xong, `infirmary` Trạm quân y, `archived` Lưu trữ. Chuỗi in ra theo ngôn ngữ của vương quốc (`vi` mặc định; `init --locale en` đặt `en` cho cả vương quốc, `--locale` ở từng lệnh thắng).
 
-Các lệnh trên chỉ đọc, không tốn mana, chạy được khi Quản sự đang chạy. Sau một đợt chạy, `pnpm docs:gen --kingdom "<vương quốc>"` trong repo Elvaria sinh lại [tier-report.md](../tier-report.md) và [metrics-report.md](../metrics-report.md).
+Các lệnh trên chỉ đọc, không tốn mana, chạy được khi Nhiếp chính đang chạy. Sau một đợt chạy, `pnpm docs:gen --kingdom "<vương quốc>"` trong repo Elvaria sinh lại [tier-report.md](../tier-report.md) và [metrics-report.md](../metrics-report.md).
 
 **Câu hỏi của nhân vật**: quest sang `Chờ trả lời`, chuông in câu hỏi. Trả lời bằng `elvaria answer <quest> "<câu>"`; trong 55 phút thì phiên cũ được nối lại, quá thì phiên mới đọc câu trả lời trong thư bàn giao.
 
-**Thư** (PS-02, ADR 0024): nhân vật thấy việc ngoài quest của mình thì không tự sửa mà viết một dòng ở mục `Memos` của thư bàn giao. Khi lượt kết thúc qua nộp bài, câu hỏi hay phiên hỏng (không khi cầu dao cắt), Quản sự lập `memos/<id>.json` và gửi tới Tể tướng; thư không đổi quest nào, và không ai trả lời thư. Xem bằng `elvaria memo list`; quyết một lần bằng `elvaria memo decide <thư> shelved` (gác), `rejected` (bác) hay `handled --quest <quest>` (đã có nhiệm vụ làm). Muốn Tể tướng soạn nhiệm vụ nháp từ thư thì `elvaria say --memo <thư> ["<lời thêm>"]` (tốn mana như mọi lần `say`): các bản nháp mang thư, và xác nhận một bản (`elvaria quest confirm`) là thư được đóng `handled` bởi nhiệm vụ đó (PS-03b).
+**Thư** (PS-02, ADR 0024): nhân vật thấy việc ngoài quest của mình thì không tự sửa mà viết một dòng ở mục `Memos` của thư bàn giao. Khi lượt kết thúc qua nộp bài, câu hỏi hay phiên hỏng (không khi cầu dao cắt), Nhiếp chính lập `memos/<id>.json` và gửi tới Tể tướng; thư không đổi quest nào, và không ai trả lời thư. Xem bằng `elvaria memo list`; quyết một lần bằng `elvaria memo decide <thư> shelved` (gác), `rejected` (bác) hay `handled --quest <quest>` (đã có nhiệm vụ làm). Muốn Tể tướng soạn nhiệm vụ nháp từ thư thì `elvaria say --memo <thư> ["<lời thêm>"]` (tốn mana như mọi lần `say`): các bản nháp mang thư, và xác nhận một bản (`elvaria quest confirm`) là thư được đóng `handled` bởi nhiệm vụ đó (PS-03b).
 
-**Phân loại thư và phạm vi ủy quyền** (PS-03b): mỗi ngày một lần, lúc `schedule.triage.at` (mặc định 07:30, nửa giờ trước bản tấu; `"triage": {"enabled": false}` để tắt), Quản sự đang chạy mở một phiên Tể tướng cho cả lô thư gửi tới Tể tướng còn chờ (tối đa 20, cũ nhất trước; không có thư thì không gọi model), chỉ khi tộc của Tể tướng không có phiên nào đang chạy. Tể tướng quyết mỗi thư: gộp vào một nhiệm vụ đang mở (nháp hay `open`), mở nhiệm vụ mới, gác lại, hay đưa lên bạn. Quyết định nằm trong `kingdom.delegation` thì Quản sự áp luôn, không cần bạn; còn lại thư tới bạn kèm lời khuyên và lý do (`elvaria memo show <thư>`, mục thư trong bản tấu), nhiệm vụ mới thì thành bản nháp chờ bạn xác nhận. Mặc định `"delegation": {"max_rank": "D", "same_scope": true, "ask": [...]}`: việc tới hạng D, tệp của thư nằm trong vùng file của nhiệm vụ làm nó, và không chạm điều bạn giữ (`decision_change`, `contract_change`, `mana_over_budget`, `outward_action`, `protected_paths`; bỏ một mục khỏi `ask` là giao nó cho thế giới). `protected_paths` thì máy tự thấy, không chỉ dựa vào Tể tướng: thư nêu một tệp khớp `laws.protected_paths` của lãnh thổ thì tới bạn. Chạy tay bằng `elvaria triage` (tốn mana một lần gọi). Kết quả chỉ là lệnh hộp thư nguồn `chancellor`: Quản sự dừng thì phiên dừng theo và lần khởi động sau chạy lại. `elvaria metrics` đếm thư bạn tự quyết và thư Tể tướng tự quyết.
+**Phân loại thư và phạm vi ủy quyền** (PS-03b): mỗi ngày một lần, lúc `schedule.triage.at` (mặc định 07:30, nửa giờ trước bản tấu; `"triage": {"enabled": false}` để tắt), Nhiếp chính đang chạy mở một phiên Tể tướng cho cả lô thư gửi tới Tể tướng còn chờ (tối đa 20, cũ nhất trước; không có thư thì không gọi model), chỉ khi tộc của Tể tướng không có phiên nào đang chạy. Tể tướng quyết mỗi thư: gộp vào một nhiệm vụ đang mở (nháp hay `open`), mở nhiệm vụ mới, gác lại, hay đưa lên bạn. Quyết định nằm trong `kingdom.delegation` thì Nhiếp chính áp luôn, không cần bạn; còn lại thư tới bạn kèm lời khuyên và lý do (`elvaria memo show <thư>`, mục thư trong bản tấu), nhiệm vụ mới thì thành bản nháp chờ bạn xác nhận. Mặc định `"delegation": {"max_rank": "D", "same_scope": true, "ask": [...]}`: việc tới hạng D, tệp của thư nằm trong vùng file của nhiệm vụ làm nó, và không chạm điều bạn giữ (`decision_change`, `contract_change`, `mana_over_budget`, `outward_action`, `protected_paths`; bỏ một mục khỏi `ask` là giao nó cho thế giới). `protected_paths` thì máy tự thấy, không chỉ dựa vào Tể tướng: thư nêu một tệp khớp `laws.protected_paths` của lãnh thổ thì tới bạn. Chạy tay bằng `elvaria triage` (tốn mana một lần gọi). Kết quả chỉ là lệnh hộp thư nguồn `chancellor`: Nhiếp chính dừng thì phiên dừng theo và lần khởi động sau chạy lại. `elvaria metrics` đếm thư bạn tự quyết và thư Tể tướng tự quyết.
 
-**Thư phản biện** (PS-22): người làm cho một ghi chú của phán quyết trả bài là sai thì viết thư `objection` thay vì sửa cho qua; Quản sự đưa nó tới một người chấm thứ hai (không phải người chấm đầu, không phải máy), và phán quyết thứ hai là cuối. Bạn chỉ gặp thư phản biện trong bản tấu khi không người chấm nào được đọc nó (thư thứ hai cho cùng phán quyết, thư chống phán quyết cuối hay lần trả của chính bạn): đọc bằng `elvaria memo show <thư>` rồi quyết bằng `elvaria memo decide`. Quest chờ người chấm thứ hai mà vương quốc không có ai hợp lệ thì vào mục `unjudgeable` như mọi quest thiếu người chấm: gọi thêm người chấm, hoặc quyết thư (`rejected`) để mọi người chấm lại được nhận.
+**Thư phản biện** (PS-22): người làm cho một ghi chú của phán quyết trả bài là sai thì viết thư `objection` thay vì sửa cho qua; Nhiếp chính đưa nó tới một người chấm thứ hai (không phải người chấm đầu, không phải máy), và phán quyết thứ hai là cuối. Bạn chỉ gặp thư phản biện trong bản tấu khi không người chấm nào được đọc nó (thư thứ hai cho cùng phán quyết, thư chống phán quyết cuối hay lần trả của chính bạn): đọc bằng `elvaria memo show <thư>` rồi quyết bằng `elvaria memo decide`. Quest chờ người chấm thứ hai mà vương quốc không có ai hợp lệ thì vào mục `unjudgeable` như mọi quest thiếu người chấm: gọi thêm người chấm, hoặc quyết thư (`rejected`) để mọi người chấm lại được nhận.
 
-**Bản tấu** (PS-03): mỗi ngày một lần, lúc `schedule.digest.at` của `kingdom.json` (mặc định 08:00 giờ vương quốc; `"digest": {"enabled": false}` để tắt), Quản sự đang chạy ghi `digest/<ngày>.md` và rung chuông một lần: mọi việc chờ bạn, chia hai nhóm (phải quyết để việc chạy tiếp; chờ được), mỗi việc kèm khuyến nghị và lệnh `elvaria` để chạy. Không gọi model, không tốn mana; đồng hồ máy nhảy hay Quản sự khởi động lại thì vẫn một bản một ngày, Quản sự khởi động sau giờ đó thì ghi ngay. `elvaria digest` in bản tấu lúc này từ file và sổ sự kiện, không ghi gì; nhiệm vụ chờ người chấm chỉ có trong bản Quản sự ghi. Quản sự cũng rung chuông một lần cho nhiệm vụ có người chấm mà ai cũng hết mana (nêu kho và giờ reset nếu biết): chờ tới giờ reset, hoặc triệu hồi một người chấm khác model ở kho mana khác. `elvaria doctor` cảnh báo trước khi chuyện đó xảy ra: model người làm nào mà mọi người chấm khác model đều chung một kho mana.
+**Bản tấu** (PS-03): mỗi ngày một lần, lúc `schedule.digest.at` của `kingdom.json` (mặc định 08:00 giờ vương quốc; `"digest": {"enabled": false}` để tắt), Nhiếp chính đang chạy ghi `digest/<ngày>.md` và rung chuông một lần: mọi việc chờ bạn, chia hai nhóm (phải quyết để việc chạy tiếp; chờ được), mỗi việc kèm khuyến nghị và lệnh `elvaria` để chạy. Không gọi model, không tốn mana; đồng hồ máy nhảy hay Nhiếp chính khởi động lại thì vẫn một bản một ngày, Nhiếp chính khởi động sau giờ đó thì ghi ngay. `elvaria digest` in bản tấu lúc này từ file và sổ sự kiện, không ghi gì; nhiệm vụ chờ người chấm chỉ có trong bản Nhiếp chính ghi. Nhiếp chính cũng rung chuông một lần cho nhiệm vụ có người chấm mà ai cũng hết mana (nêu kho và giờ reset nếu biết): chờ tới giờ reset, hoặc triệu hồi một người chấm khác model ở kho mana khác. `elvaria doctor` cảnh báo trước khi chuyện đó xảy ra: model người làm nào mà mọi người chấm khác model đều chung một kho mana.
 
 ## 7. Dấu vua và giao hàng
 
 1. Đọc nhánh trong repo của lãnh thổ (`git log main..quest/<quest>`, `git diff main...quest/<quest>`), thư bàn giao và phán quyết (`quest show`).
-2. `elvaria seal <quest> --note "…"`, hoặc `elvaria return <quest> --note "…" --fail-kind <kiểu>` để trả về người làm. `--note` của `return` bắt buộc, ít nhất 20 ký tự; `--fail-kind` là một trong `tests_fail`, `scope_creep`, `missing_i18n`, `wrong_facts`, `incomplete`, `style`, `unsafe`, `other` (mặc định `other`). `return --rejudge` khi lỗi là của người chấm: việc được chấm lại, người làm không bị tính trượt. Hai lệnh chỉ ghi vào `inbox/`: Quản sự phải đang chạy thì quest mới chuyển.
-3. Quản sự viết thư giao hàng `.runs/<quest>-delivery.md`. Push **từ trong worktree của quest**, để pre-push hook của repo (nếu có) kiểm đúng nhánh đó; mở PR với thư giao hàng làm mô tả; merge. Repo không có remote thì merge nhánh `quest/<quest>` tại chỗ.
-4. `elvaria quest archive <quest>`: Quản sự gỡ worktree và cho Claude Code quên đường dẫn đó (Quản sự không chạy thì lệnh chờ tới lần `run` sau). Nhánh ở lại; xóa khi đã merge (`git branch -d quest/<quest>`).
+2. `elvaria seal <quest> --note "…"`, hoặc `elvaria return <quest> --note "…" --fail-kind <kiểu>` để trả về người làm. `--note` của `return` bắt buộc, ít nhất 20 ký tự; `--fail-kind` là một trong `tests_fail`, `scope_creep`, `missing_i18n`, `wrong_facts`, `incomplete`, `style`, `unsafe`, `other` (mặc định `other`). `return --rejudge` khi lỗi là của người chấm: việc được chấm lại, người làm không bị tính trượt. Hai lệnh chỉ ghi vào `inbox/`: Nhiếp chính phải đang chạy thì quest mới chuyển.
+3. Nhiếp chính viết thư giao hàng `.runs/<quest>-delivery.md`. Push **từ trong worktree của quest**, để pre-push hook của repo (nếu có) kiểm đúng nhánh đó; mở PR với thư giao hàng làm mô tả; merge. Repo không có remote thì merge nhánh `quest/<quest>` tại chỗ.
+4. `elvaria quest archive <quest>`: Nhiếp chính gỡ worktree và cho Claude Code quên đường dẫn đó (Nhiếp chính không chạy thì lệnh chờ tới lần `run` sau). Nhánh ở lại; xóa khi đã merge (`git branch -d quest/<quest>`).
 
 Với một đội, chỉ merge nhánh của **quest ghép**; hợp đồng và các phần vào `main` qua nó.
 
@@ -213,16 +213,16 @@ Hai CLI **tự cập nhật qua đêm** theo VS Code (hai lần trong hai ngày 
 
 Trước khi ghim: đọc changelog (`agy changelog`; https://code.claude.com/docs/en/changelog) tìm mục đổi `-p`, `--settings`, quyền, hook, stream-json, mã thoát; đối chiếu các dòng có dấu ⚑ trong [cli-facts](../reference/cli-facts-2026-11-12.md). Muốn chắc hơn: `elvaria tribe check <tộc>` chạy bộ test hợp đồng với CLI thật (tốn chút mana).
 
-**Đồ thị code (PS-21, [ADR 0029](../adr/0029-code-graph-of-the-territory.md)).** Tùy chọn, mặc định tắt. Cài graphify (`uv tool install graphifyy`, Python 3.10–3.14), chạy `elvaria territory graph <lãnh thổ> --query '<tên mã>'` để thử (0 mana, đồ thị ở `.state/graphs/<lãnh thổ>/`), rồi đặt `"code_graph": true` trong `territories/<id>/territory.json` và chạy `elvaria doctor --pin` để ghim graphify. Từ đó Quản sự dựng đồ thị ở commit gốc của mỗi quest, và nghề có `Glob` hoặc `Grep` (trừ nghề cấm trần `Bash`) hỏi được nó bằng `graphify query`, `path`, `explain`, `affected`. `doctor` cảnh báo khi graphify thiếu hay đổi phiên bản; thiếu graphify thì quest chạy như trước. Bật cờ trên lãnh thổ nào là chủ nhân chốt sau A/B của PS-21.
+**Đồ thị code (PS-21, [ADR 0029](../adr/0029-code-graph-of-the-territory.md)).** Tùy chọn, mặc định tắt. Cài graphify (`uv tool install graphifyy`, Python 3.10–3.14), chạy `elvaria territory graph <lãnh thổ> --query '<tên mã>'` để thử (0 mana, đồ thị ở `.state/graphs/<lãnh thổ>/`), rồi đặt `"code_graph": true` trong `territories/<id>/territory.json` và chạy `elvaria doctor --pin` để ghim graphify. Từ đó Nhiếp chính dựng đồ thị ở commit gốc của mỗi quest, và nghề có `Glob` hoặc `Grep` (trừ nghề cấm trần `Bash`) hỏi được nó bằng `graphify query`, `path`, `explain`, `affected`. `doctor` cảnh báo khi graphify thiếu hay đổi phiên bản; thiếu graphify thì quest chạy như trước. Bật cờ trên lãnh thổ nào là chủ nhân chốt sau A/B của PS-21.
 
 ## 9. Đồng hồ mana
 
-Quản sự đọc hạn mức của từng tài khoản mà không gọi model (`claude -p /usage`, `agy -p /usage`), sau mỗi phiên và mỗi `mana.probe_interval_minutes` (15). Mỗi cửa sổ là một đồng hồ: 5 giờ, tuần, và trần tuần riêng mà tài khoản đặt cho một model (Argon ở tài khoản Antigravity; Fable, một model khác của Claude, ở tài khoản Claude); trần riêng chỉ ràng nhân vật chạy model đó.
+Nhiếp chính đọc hạn mức của từng tài khoản mà không gọi model (`claude -p /usage`, `agy -p /usage`), sau mỗi phiên và mỗi `mana.probe_interval_minutes` (15). Mỗi cửa sổ là một đồng hồ: 5 giờ, tuần, và trần tuần riêng mà tài khoản đặt cho một model (Argon ở tài khoản Antigravity; Fable, một model khác của Claude, ở tài khoản Claude); trần riêng chỉ ràng nhân vật chạy model đó.
 
-- **Đóng sớm một phiên.** Đồng hồ không nhận phiên mới khi mức đã dùng cộng phần một phiên sẽ chạm `min(mana.cap_pct, 100 − mana.king_reserve_pct)` (mặc định 98). Phần một phiên là số Quản sự đo được (P1-50: Argon 7,78 % tuần, Flash 1,97 % tuần, Claude 3 % tuần), 7 % khi chưa đo. `doctor` in từng đồng hồ, phần một phiên, và dòng "đóng sớm một phiên" khi nó đã đóng.
+- **Đóng sớm một phiên.** Đồng hồ không nhận phiên mới khi mức đã dùng cộng phần một phiên sẽ chạm `min(mana.cap_pct, 100 − mana.king_reserve_pct)` (mặc định 98). Phần một phiên là số Nhiếp chính đo được (P1-50: Argon 7,78 % tuần, Flash 1,97 % tuần, Claude 3 % tuần), 7 % khi chưa đo. `doctor` in từng đồng hồ, phần một phiên, và dòng "đóng sớm một phiên" khi nó đã đóng.
 - **Đóng chỉ chặn phiên mới.** Phiên đang chạy chạy tiếp. Nhân vật dùng model bị chặn đứng yên; quest của họ chờ, không vào trạm quân y. Không có chuông riêng cho việc một quest chờ vì mọi người chấm hợp lệ bị đồng hồ chặn (vá ở PS-03): thấy quest `Chờ nghiệm thu` lâu mà không có check nào chạy thì xem `doctor`.
-- **Hết giữa phiên.** Phiên gặp giới hạn của tài khoản thì quest sang `Tạm dừng (hết mana)`, giữ người làm; Quản sự thăm dò lại sau giờ reset và việc tiếp tục bằng phiên mới từ thư bàn giao.
-- **Sau khi bạn đăng nhập lại hay hạn mức được hồi**: `elvaria wake <tộc>` để Quản sự đo ngay; không thì nó đo ở lần thăm dò kế.
+- **Hết giữa phiên.** Phiên gặp giới hạn của tài khoản thì quest sang `Tạm dừng (hết mana)`, giữ người làm; Nhiếp chính thăm dò lại sau giờ reset và việc tiếp tục bằng phiên mới từ thư bàn giao.
+- **Sau khi bạn đăng nhập lại hay hạn mức được hồi**: `elvaria wake <tộc>` để Nhiếp chính đo ngay; không thì nó đo ở lần thăm dò kế.
 - **Đổi model của một nhân vật** sang đồng hồ còn chỗ: `elvaria character model <id> <model>` (cùng tộc), áp cho phiên sau.
 - Pool `claude_gpt_models` của tộc gemini mặc định tắt: đừng dùng model `claude-*` qua agy để chấm việc của tộc claude (cùng họ model).
 
@@ -233,7 +233,7 @@ Quest vào trạm quân y thì dừng hẳn và chuông rung. `elvaria quest sho
 | Lý do | Nghĩa là | Làm gì |
 |---|---|---|
 | cầu dao token | phiên vượt trần token | `quest edit <quest> --max-tokens <n>` rồi `quest retry <quest>` (§4 có số đo) |
-| cầu dao thời gian | phiên vượt trần phút | `quest edit --max-minutes <n>` rồi `retry`. Đổi trần khi quest đang có phiên thì phiên đó cũng theo trần mới từ nhịp kế: cầu dao của Quản sự đọc trần của quest mỗi nhịp, nên hạ trần dưới số phút phiên đã chạy là cắt nó ngay (`quest edit` cảnh báo). Riêng agy tự giữ đồng hồ (`--print-timeout`) lúc mở phiên: nâng trần không kéo dài phiên agy đang chạy, phiên sau mới nhận trần mới |
+| cầu dao thời gian | phiên vượt trần phút | `quest edit --max-minutes <n>` rồi `retry`. Đổi trần khi quest đang có phiên thì phiên đó cũng theo trần mới từ nhịp kế: cầu dao của Nhiếp chính đọc trần của quest mỗi nhịp, nên hạ trần dưới số phút phiên đã chạy là cắt nó ngay (`quest edit` cảnh báo). Riêng agy tự giữ đồng hồ (`--print-timeout`) lúc mở phiên: nâng trần không kéo dài phiên agy đang chạy, phiên sau mới nhận trần mới |
 | cầu dao lượt | CLI dừng ở 200 lượt | `retry`; lặp lại thì chia nhỏ việc |
 | commit bị từ chối | hook của repo từ chối commit, hoặc bản vá `elvaria.patch` không áp được | đọc lý do, sửa trong đất riêng (`<repo>/.elvaria/worktrees/<quest>`) rồi `retry` |
 | đường dẫn cấm bị đổi | một chương trình của phiên ghi vào `laws.forbidden_paths` hay file `.env`; không có gì được commit | trả các file đó về như cũ hoặc xóa trong đất riêng, rồi `retry` |
@@ -242,7 +242,7 @@ Quest vào trạm quân y thì dừng hẳn và chuông rung. `elvaria quest sho
 | đã hết số lần thử | ba lượt đều trượt | đọc các phán quyết; sửa mô tả (`quest edit --description`) hay `--max-attempts`, rồi `retry`; hoặc `retry <quest> --to <nhân vật>` |
 | script hỏng, không dùng được tham số, không đạt | bậc script | đọc `.runs/<quest>-<n>/script.log`; quest tiếp nối (nếu có) đã được mở |
 
-`retry` mở quest cho **mọi** nhân vật đúng nghề đang rảnh, như một quest mới: Quản sự chọn, không nhất thiết là người vừa làm (`--to` của `quest add` không được lưu trên quest, nên không còn tác dụng sau trạm quân y; quest `q_20261112_gwrz5m` vì vậy về tay người khác). Muốn đúng một nhân vật làm lại, kể cả người vừa làm: `retry <quest> --to <nhân vật>`; CLI gửi lệnh `reassign`, nhân vật đó nhận đủ lượt thử như mới. Quest chỉ kẹt ở phần chấm (người chấm rời đi không ra phán quyết) và quest bậc script không nhận `--to`.
+`retry` mở quest cho **mọi** nhân vật đúng nghề đang rảnh, như một quest mới: Nhiếp chính chọn, không nhất thiết là người vừa làm (`--to` của `quest add` không được lưu trên quest, nên không còn tác dụng sau trạm quân y; quest `q_20261112_gwrz5m` vì vậy về tay người khác). Muốn đúng một nhân vật làm lại, kể cả người vừa làm: `retry <quest> --to <nhân vật>`; CLI gửi lệnh `reassign`, nhân vật đó nhận đủ lượt thử như mới. Quest chỉ kẹt ở phần chấm (người chấm rời đi không ra phán quyết) và quest bậc script không nhận `--to`.
 
 Các lệnh khác của chủ nhân:
 
@@ -253,17 +253,17 @@ Các lệnh khác của chủ nhân:
 | nhân vật bị hạ cấp oan (check đỏ vì môi trường) | `elvaria character level <id> <cấp>` |
 | nhân vật trượt cùng một kiểu ba lần liền thì bị đình chỉ vào Đền | sửa nguyên nhân (kinh, mô tả), rồi `elvaria character release <id>` |
 | tạm cho một nhân vật nghỉ | `elvaria character suspend <id> --reason "…"` |
-| bỏ một quest chưa xong | `elvaria quest cancel <quest>`; worktree của quest đã hủy ở lại, dọn tay. Quest ở trạm quân y thì `quest archive` (hay `cancel`, cùng lệnh): Quản sự gỡ worktree, giữ nhánh cùng phần việc dở |
+| bỏ một quest chưa xong | `elvaria quest cancel <quest>`; worktree của quest đã hủy ở lại, dọn tay. Quest ở trạm quân y thì `quest archive` (hay `cancel`, cùng lệnh): Nhiếp chính gỡ worktree, giữ nhánh cùng phần việc dở |
 
 Chỗ từng thiếu đường, đã vá ở P1-55 và P1-56:
 
-- (P1-56, đã vá) `quest archive` và `quest cancel` nhận quest ở trạm quân y; khi Quản sự đang chạy, mọi lệnh gửi qua CLI chờ một nhịp và in câu trả lời của nó (`stale` kèm cách xử lý, hay "đã áp dụng"); Quản sự không chạy thì lệnh chờ trong hộp thư như cũ.
-- (P1-55, đã vá) Quest ghép: `retry` từ trạm quân y đưa quest tới hiệp sĩ, không chạy lại lượt gộp của máy trên commit vừa trượt; lượt máy không tính vào `max_attempts`; sau khi hiệp sĩ gỡ xung đột và nộp, Quản sự gộp nốt các phần còn chờ trước check; người chấm khác model với mọi người từng làm quest; mỗi phiên chấm của một lượt có thư mục riêng `.runs/<quest>-<n>/verify`, `verify-2`, …
-- (P1-55, đã vá) File nháp nhân vật lỡ tạo ở gốc đất riêng (tên có `tmp`/`temp`, đuôi `.tmp`, `.bak`…) không vào commit của Quản sự: nó được chuyển sang `.runs/<quest>-<n>/set-aside/`, plot sạch. Commit bị hook của repo từ chối thì phần đã stage được chép ra `.runs/<quest>-<n>/wip.patch`, và quest chưa có `handover.md` có chữ thì Quản sự viết một thư tối thiểu (file đã sửa, đoạn cuối output của hook); phần dở vẫn nằm đã stage trong plot.
+- (P1-56, đã vá) `quest archive` và `quest cancel` nhận quest ở trạm quân y; khi Nhiếp chính đang chạy, mọi lệnh gửi qua CLI chờ một nhịp và in câu trả lời của nó (`stale` kèm cách xử lý, hay "đã áp dụng"); Nhiếp chính không chạy thì lệnh chờ trong hộp thư như cũ.
+- (P1-55, đã vá) Quest ghép: `retry` từ trạm quân y đưa quest tới hiệp sĩ, không chạy lại lượt gộp của máy trên commit vừa trượt; lượt máy không tính vào `max_attempts`; sau khi hiệp sĩ gỡ xung đột và nộp, Nhiếp chính gộp nốt các phần còn chờ trước check; người chấm khác model với mọi người từng làm quest; mỗi phiên chấm của một lượt có thư mục riêng `.runs/<quest>-<n>/verify`, `verify-2`, …
+- (P1-55, đã vá) File nháp nhân vật lỡ tạo ở gốc đất riêng (tên có `tmp`/`temp`, đuôi `.tmp`, `.bak`…) không vào commit của Nhiếp chính: nó được chuyển sang `.runs/<quest>-<n>/set-aside/`, plot sạch. Commit bị hook của repo từ chối thì phần đã stage được chép ra `.runs/<quest>-<n>/wip.patch`, và quest chưa có `handover.md` có chữ thì Nhiếp chính viết một thư tối thiểu (file đã sửa, đoạn cuối output của hook); phần dở vẫn nằm đã stage trong plot.
 
 ## 11. Bài học: kinh, gazetteer, chiếu chỉ, prompt nghề
 
-Bốn loại file văn bản mà mọi phiên đọc lúc mở; sửa xong thì phiên **kế tiếp** nhận, không cần dừng Quản sự.
+Bốn loại file văn bản mà mọi phiên đọc lúc mở; sửa xong thì phiên **kế tiếp** nhận, không cần dừng Nhiếp chính.
 
 | File | Dành cho | Ghi gì |
 |---|---|---|
@@ -277,12 +277,12 @@ Giữ ngắn: mọi dòng vào prompt của mọi phiên, và với tộc gemini
 
 ## 12. Sửa tay cấu hình của vương quốc
 
-Được sửa tay: `kingdom.json` (phần `dispatch`, `mana`, `breakers`, `tribes[].max_concurrent`, `pools`), `territories/<id>/territory.json`, `registry/**`, và các file ở §11. Quản sự đọc lại `kingdom.json`, registry và lãnh thổ ở mỗi nhịp, nên không cần dừng nó. **Không** sửa tay `quests/*.json`, `characters/*/character.json`: dùng `quest edit`, `character level|model|suspend|release`.
+Được sửa tay: `kingdom.json` (phần `dispatch`, `mana`, `breakers`, `tribes[].max_concurrent`, `pools`), `territories/<id>/territory.json`, `registry/**`, và các file ở §11. Nhiếp chính đọc lại `kingdom.json`, registry và lãnh thổ ở mỗi nhịp, nên không cần dừng nó. **Không** sửa tay `quests/*.json`, `characters/*/character.json`: dùng `quest edit`, `character level|model|suspend|release`.
 
 Cách P1-50 làm mỗi lần sửa, và nên giữ:
 
 1. Chép file vào `.backup/<ngày giờ>-<nhãn>/` trước.
-2. Ghi nguyên tử (ghi ra file tạm cạnh nó rồi đổi tên), để Quản sự không đọc phải file dở.
+2. Ghi nguyên tử (ghi ra file tạm cạnh nó rồi đổi tên), để Nhiếp chính không đọc phải file dở.
 3. So với bản sao: chỉ khác đúng dòng định sửa.
 4. `elvaria doctor` vẫn "Sẵn sàng."; file sai schema thì `doctor` và `territory list` báo ngay.
 
@@ -302,18 +302,18 @@ Từ PS-04b, vương quốc chạy bằng một **bản ghim**: một worktree t
 
 Khi `main` của Elvaria có thay đổi ở `packages/` hay `apps/` mà bạn muốn dùng:
 
-1. **Dừng Quản sự** lúc không phiên nào chạy. `upgrade` từ chối khi Quản sự đang chạy hay còn phiên của một Quản sự đã dừng (`doctor` nêu tên chúng), và giữ khóa của Quản sự suốt lúc dựng và thử, nên `elvaria run` gõ trong lúc đó bị từ chối.
+1. **Dừng Nhiếp chính** lúc không phiên nào chạy. `upgrade` từ chối khi Nhiếp chính đang chạy hay còn phiên của một Nhiếp chính đã dừng (`doctor` nêu tên chúng), và giữ khóa của Nhiếp chính suốt lúc dựng và thử, nên `elvaria run` gõ trong lúc đó bị từ chối.
 2. `git pull --ff-only` trong checkout chính, rồi `pnpm install --frozen-lockfile` và `pnpm --filter @elvaria/cli build` ở đó: lối vào phải đọc được vương quốc, và phải biết việc ghim (CLI build trước PS-04b không biết, nó chạy mọi lệnh bằng chính nó).
 3. `elvaria upgrade` (mặc định `--ref main` của repo mà lệnh chạy từ đó; một commit, nhánh hay tag khác thì `--ref`). Nó dựng bản mới (vài phút: `pnpm install`, build hook), rồi thử, 0 mana, trên **một bản sao cấu hình** của vương quốc (`kingdom.json`, `registry/`, lãnh thổ, nhân vật, adapter; không quest, log hay hộp thư), nên vương quốc chưa bị ghi gì: `migrate` của bản mới, rồi `doctor` của nó, rồi bộ test hợp đồng của từng tộc đang bật với CLI giả mà bản mang theo (tộc dùng adapter file thì bỏ qua, có ghi); sau cùng một quest bậc script trên một vương quốc tạm. Qua hết mới chuyển con trỏ, rồi chạy `migrate` của bản mới trên vương quốc thật và in các dòng của nó; bản trước giữ lại, bản cũ hơn bị xóa. Hỏng ở bước thử nào thì con trỏ không đổi, bản mới bị xóa, và output của bước hỏng in ra; `doctor` của bản mới lỗi vì máy (đăng nhập hết hạn, CLI chưa ghim lại) thì sửa máy rồi chạy lại.
    `migrate` chuyển file cũ lên phiên bản mới (bản cũ vào `.backup/<stamp>/`), chép file registry mà vương quốc còn thiếu (từ PS-02 có `registry/memos.json`: thiếu nó thì registry không nạp, `doctor` báo lỗi và `run` không chạy) và thêm mục registry còn thiếu. Nó **không ghi đè** file bạn đã có: prompt nghề đổi ở bản mới (`packages/registry-default/prompts/<nghề>.md`) thì tự so và chép vào `registry/prompts/`, sau khi sao lưu. `migrate` thật hỏng sau khi đã chuyển (hiếm: nó vừa qua trên bản sao) thì bản mới vẫn ghim, `upgrade` nói lý do: sửa rồi chạy `elvaria migrate`, hoặc `--rollback`.
 4. `elvaria doctor` in "Sẵn sàng." và dòng "Bản ghim <sha>; bản trước <sha>"; nó nêu khóa registry mà bản mặc định có còn vương quốc thiếu.
 5. `elvaria run`: dòng đầu nêu bản ghim nó chạy.
 
-**Bản mới hỏng sau khi đã chuyển**: dừng Quản sự, `elvaria upgrade --rollback` (về đúng bản trước, không dựng gì; còn phiên dở thì nó chỉ nêu, `run` kế tiếp dọn), rồi `elvaria run`. `migrate` của bản mới đã chạy trên vương quốc: file nó nâng phiên bản thì bản cũ không đọc được (lấy lại từ `.backup/<stamp>/` trước khi chạy), còn file và dòng log mà bản cũ không biết (một file registry mới, một loại event mới) thì nó bỏ qua; dòng log của một loại cũ có thêm trường mới thì bản cũ bỏ qua kèm cảnh báo, và quest hay nhân vật có trường mới thì Quản sự cũ bỏ qua cho tới khi nâng cấp lại. Muốn quay lại bản vừa bỏ: `elvaria upgrade --ref <sha>` (nó thử lại, không dựng lại).
+**Bản mới hỏng sau khi đã chuyển**: dừng Nhiếp chính, `elvaria upgrade --rollback` (về đúng bản trước, không dựng gì; còn phiên dở thì nó chỉ nêu, `run` kế tiếp dọn), rồi `elvaria run`. `migrate` của bản mới đã chạy trên vương quốc: file nó nâng phiên bản thì bản cũ không đọc được (lấy lại từ `.backup/<stamp>/` trước khi chạy), còn file và dòng log mà bản cũ không biết (một file registry mới, một loại event mới) thì nó bỏ qua; dòng log của một loại cũ có thêm trường mới thì bản cũ bỏ qua kèm cảnh báo, và quest hay nhân vật có trường mới thì Nhiếp chính cũ bỏ qua cho tới khi nâng cấp lại. Muốn quay lại bản vừa bỏ: `elvaria upgrade --ref <sha>` (nó thử lại, không dựng lại).
 
 **Lần đầu**: vương quốc chưa ghim thì mọi lệnh chạy từ checkout bạn gõ, như ở giai đoạn 1; lần `upgrade` đầu ghim bản `main` và từ đó áp dụng như trên. Hook của các phiên lấy từ bản ghim, nên checkout chính không cần build hook nữa (vẫn cần nếu bạn chạy `--here`).
 
-Thay đổi chỉ ở `docs/` thì không cần làm gì. Khi repo Elvaria cũng là một lãnh thổ, checkout chính là gốc của worktree quest mới, còn code của Quản sự nằm trong bản ghim: `pull` chỉ đổi điểm tách của quest mở sau đó.
+Thay đổi chỉ ở `docs/` thì không cần làm gì. Khi repo Elvaria cũng là một lãnh thổ, checkout chính là gốc của worktree quest mới, còn code của Nhiếp chính nằm trong bản ghim: `pull` chỉ đổi điểm tách của quest mở sau đó.
 
 ## 14. Bài học vận hành của lần chạy lại mốc (P1-50)
 
@@ -323,7 +323,7 @@ Thay đổi chỉ ở `docs/` thì không cần làm gì. Khi repo Elvaria cũng
 |---|---|---|---|
 | Trần token (10 lần) | sàn hạng D, C, B thấp cho việc web nhiều file; mỗi lần cắt là một lần `edit` và `retry` | nâng trần trước khi xác nhận (§4) | P1-54 |
 | Docker (5 lần) | Docker Desktop chưa chạy: `commands.reset` đỏ, bài bị chấm trượt, người làm bị hạ cấp | `doctor` cảnh báo Docker không chạy (P1-56); trả cấp bằng `character level` | P1-54, P1-56 (xong) |
-| Docker | `reset` của quest này (`docker compose … down -v`) hạ stack e2e của quest kia ba lần; e2e đỏ bị đọc là chập chờn, Quản sự sinh quest «Trừ tà» và hạ cấp người làm | `dispatch.max_background: 1` với lãnh thổ có stack Docker dùng chung; hủy sớm quest «Trừ tà» sinh từ lỗi dựng container | P1-54 |
+| Docker | `reset` của quest này (`docker compose … down -v`) hạ stack e2e của quest kia ba lần; e2e đỏ bị đọc là chập chờn, Nhiếp chính sinh quest «Trừ tà» và hạ cấp người làm | `dispatch.max_background: 1` với lãnh thổ có stack Docker dùng chung; hủy sớm quest «Trừ tà» sinh từ lỗi dựng container | P1-54 |
 | Người chấm (3 lần) | một trần mana đóng làm bài của một model không còn ai chấm | giữ hai người chấm khác model cho mỗi model người làm (§3); xem `doctor` khi quest chờ nghiệm thu lâu | PS-03 (chuông); P1-56 (cảnh báo của `doctor`, xong) |
 | Việc nền | check 6 giây của một quest tài liệu chờ 41 phút sau các bộ e2e; người chấm sau check đỏ chờ khóa 9–33 phút | xác nhận quest nhỏ trước đợt có e2e, hoặc chấp nhận chờ | P1-54 |
 | CLI thiếu đường (5 lần) | xem §10 | xem §10 | P1-55 (xong), P1-56 (xong) |
@@ -339,4 +339,4 @@ Ba điều không phải lỗi, nhưng nên biết trước:
 
 ## 15. Chưa có ở giai đoạn 1
 
-Chuông ngoài terminal, điện thoại, bản đồ (giai đoạn 2 và 3); Quản sự tự push và merge (PS-08); Tể tướng tự phân loại thư (PS-03b); tộc Gemini CLI với API key và tộc Codex (P1-12c, P1-12d, để dành). Kế hoạch và trạng thái: [implementation-plan](../implementation-plan.md) §8.
+Chuông ngoài terminal, điện thoại, bản đồ (giai đoạn 2 và 3); Nhiếp chính tự push và merge (PS-08); Tể tướng tự phân loại thư (PS-03b); tộc Gemini CLI với API key và tộc Codex (P1-12c, P1-12d, để dành). Kế hoạch và trạng thái: [implementation-plan](../implementation-plan.md) §8.

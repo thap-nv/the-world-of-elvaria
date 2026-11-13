@@ -32,7 +32,7 @@ elvaria/
     runner-gemini/             # @elvaria/runner-gemini — adapter Gemini CLI + API key (đường lui)
     runner-codex/              # @elvaria/runner-codex — adapter Codex CLI (tùy chọn, P1-12d, khi người dùng có tài khoản)
     hooks/                     # @elvaria/hooks — một script hook nhỏ, nhanh, các CLI gọi vào
-    steward/                   # @elvaria/steward — Quản sự: dispatcher, cầu dao, mana, lịch, bậc script
+    steward/                   # @elvaria/steward — Nhiếp chính: dispatcher, cầu dao, mana, lịch, bậc script
     chancellor/                # @elvaria/chancellor — Tể tướng: câu lệnh → quest draft
     sandbox/                   # @elvaria/sandbox — sinh ngày giả, replay
     herald/                    # @elvaria/herald — Sứ giả: HTTP + WebSocket, world state, ghi inbox
@@ -89,7 +89,7 @@ Vì sao từng cạnh:
 - `domain` không có IO nên test bằng vitest thuần và chạy được trong trình duyệt (world import types từ đây). Clock và random tiêm vào (`Clock`, `IdSource`) để máy trạng thái và việc chọn người là hàm thuần, test deterministic. (ADR 0002)
 - `eventlog` tách khỏi `store` để tầng sự kiện là một package nhỏ, không kéo theo logic quest; `hooks` chỉ phụ thuộc nó nên mỗi lần CLI gọi hook, Node chỉ nạp vài file.
 - `steward` không import adapter nào: nó chỉ thấy `AgentRunner` và `capabilities` của từng tộc. Thêm tộc = một adapter (package trong repo hoặc file `adapters/<name>.mjs` trong kingdom) + một mục theme + tài khoản người dùng tự đăng nhập; `apps/cli` nạp adapter theo `kingdom.tribes[].adapter`. Lõi không đổi. (ADR 0006, 0021)
-- `herald` không import `steward`: Sứ giả chỉ đọc file và ghi lệnh vào `inbox/`; Quản sự là người duy nhất đổi trạng thái quest (single writer, §3.1). Khác sơ đồ mục 3 của kế hoạch sản phẩm (SG → QB), lý do ở §9.1. (ADR 0005)
+- `herald` không import `steward`: Sứ giả chỉ đọc file và ghi lệnh vào `inbox/`; Nhiếp chính là người duy nhất đổi trạng thái quest (single writer, §3.1). Khác sơ đồ mục 3 của kế hoạch sản phẩm (SG → QB), lý do ở §9.1. (ADR 0005)
 - `world`/`lite` không chạm hệ thống file; chúng chỉ nghe WebSocket, nên "thay toàn bộ hình ảnh mà không đụng logic" là thật: xóa `apps/world`, không có gì vỡ.
 - Thêm **dạng nhiệm vụ** = thêm một mục trong `registry/kinds.json` + `rituals.json` (dữ liệu, có schema) + theme; `domain` xử lý `KindId` là chuỗi đã validate qua registry, không có `switch` theo kind trong lõi. Thêm **theme** = thêm thư mục `themes/<name>/`. (ADR 0016)
 

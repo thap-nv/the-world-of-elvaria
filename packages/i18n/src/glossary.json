@@ -107,10 +107,10 @@
               "used_in": "`packages/chancellor`, class `chancellor`, `actor.kind`, `created_by`"
             },
             {
-              "vi": "Quản sự",
+              "vi": "Nhiếp chính",
               "en": "Steward",
               "id": ["steward"],
-              "definition": "Tiến trình nền duy nhất ghi trạng thái quest: nhận việc, cầu dao, mana, nghiệm thu, giao hàng.",
+              "definition": "Tiến trình nền duy nhất ghi trạng thái quest: nhận việc, cầu dao, mana, nghiệm thu, giao hàng. Tên cũ tới 2026-11-13: Quản sự.",
               "used_in": "`packages/steward`, `actor.kind`"
             },
             {
@@ -138,7 +138,7 @@
               "vi": "Lệnh (của người dùng)",
               "en": "Command",
               "id": ["inbox"],
-              "definition": "File lệnh người dùng ghi cho Quản sự xử lý.",
+              "definition": "File lệnh người dùng ghi cho Nhiếp chính xử lý.",
               "used_in": "`inbox/<ulid>.json`"
             },
             {
@@ -180,7 +180,7 @@
               "vi": "Nâng cấp",
               "en": "Upgrade",
               "id": ["upgrade"],
-              "definition": "Dựng một bản mới cạnh bản đang ghim, thử nó (`migrate`, `doctor` và bộ test hợp đồng với CLI giả trên một bản sao cấu hình của vương quốc, một quest bậc script trên vương quốc tạm), qua hết mới chuyển con trỏ rồi chạy `migrate` của bản mới trên vương quốc; `--rollback` về bản trước. Không chạy khi Quản sự đang chạy hay còn phiên dở.",
+              "definition": "Dựng một bản mới cạnh bản đang ghim, thử nó (`migrate`, `doctor` và bộ test hợp đồng với CLI giả trên một bản sao cấu hình của vương quốc, một quest bậc script trên vương quốc tạm), qua hết mới chuyển con trỏ rồi chạy `migrate` của bản mới trên vương quốc; `--rollback` về bản trước. Không chạy khi Nhiếp chính đang chạy hay còn phiên dở.",
               "used_in": "`elvaria upgrade`, event `upgrade.*`"
             },
             {
@@ -272,14 +272,14 @@
               "vi": "Bản tấu",
               "en": "Digest",
               "id": ["digest"],
-              "definition": "Bản gom mọi việc chờ chủ nhân trong ngày, chia hai nhóm (phải quyết để việc chạy tiếp, chờ được), mỗi việc kèm khuyến nghị và lệnh CLI; Quản sự viết mỗi ngày một lần theo lịch, không gọi model (PS-03).",
+              "definition": "Bản gom mọi việc chờ chủ nhân trong ngày, chia hai nhóm (phải quyết để việc chạy tiếp, chờ được), mỗi việc kèm khuyến nghị và lệnh CLI; Nhiếp chính viết mỗi ngày một lần theo lịch, không gọi model (PS-03).",
               "used_in": "`digest/<ngày>.md`, `kingdom.schedule.digest`, cổng `Digest`, `elvaria digest`, event `digest.written`"
             },
             {
               "vi": "Phân loại thư",
               "en": "Triage",
               "id": ["triage"],
-              "definition": "Tể tướng đọc các thư gửi tới mình đang chờ, một lần gọi model cho cả lô, và quyết mỗi thư: gộp vào một quest đang mở, mở quest mới, gác lại, hay đưa lên chủ nhân. Kết quả chỉ là lệnh hộp thư; trong phạm vi ủy quyền Quản sự áp luôn, thư còn lại tới chủ nhân kèm lời khuyên (PS-03b).",
+              "definition": "Tể tướng đọc các thư gửi tới mình đang chờ, một lần gọi model cho cả lô, và quyết mỗi thư: gộp vào một quest đang mở, mở quest mới, gác lại, hay đưa lên chủ nhân. Kết quả chỉ là lệnh hộp thư; trong phạm vi ủy quyền Nhiếp chính áp luôn, thư còn lại tới chủ nhân kèm lời khuyên (PS-03b).",
               "used_in": "`elvaria triage`, `kingdom.schedule.triage`, `triageMemos`, `triageCommands`"
             },
             {
@@ -396,7 +396,7 @@
               "vi": "Vùng file",
               "en": "Scope",
               "id": ["scope_paths"],
-              "definition": "Các glob (tính từ gốc lãnh thổ) của những file một quest sẽ sửa; tùy chọn. Trong một lãnh thổ, Quản sự không bao giờ cho hai quest có vùng giao nhau làm cùng lúc: quest có vùng giữ vùng từ lượt chạy đầu tới khi được lưu trữ (kể cả lúc xong và chờ chủ nhân merge), trừ với quest mà đất riêng dựng trên nhánh của nó; quest bậc phiên không khai vùng chạy một mình trong lãnh thổ. File đổi ngoài vùng vào dòng `quest.submitted`, prompt người chấm và sổ đo, không tự làm trượt (ADR 0028, PS-05).",
+              "definition": "Các glob (tính từ gốc lãnh thổ) của những file một quest sẽ sửa; tùy chọn. Trong một lãnh thổ, Nhiếp chính không bao giờ cho hai quest có vùng giao nhau làm cùng lúc: quest có vùng giữ vùng từ lượt chạy đầu tới khi được lưu trữ (kể cả lúc xong và chờ chủ nhân merge), trừ với quest mà đất riêng dựng trên nhánh của nó; quest bậc phiên không khai vùng chạy một mình trong lãnh thổ. File đổi ngoài vùng vào dòng `quest.submitted`, prompt người chấm và sổ đo, không tự làm trượt (ADR 0028, PS-05).",
               "used_in": "`quest.scope_paths`, `elvaria quest add|edit --scope`, `scopesMeet`, `scopeHolderOf`"
             },
             {
@@ -410,7 +410,7 @@
               "vi": "Vùng bảo vệ",
               "en": "Protected paths",
               "id": ["protected_paths", "protected_changes"],
-              "definition": "Các glob (tính từ gốc lãnh thổ, khớp ở mọi độ sâu như `forbidden_paths`) của thứ canh giữ thế giới: luật, check, người chấm, sổ đo, bản nâng cấp. Không chặn commit: quest có thay đổi chạm vùng bảo vệ thì cần dấu vua bất kể `seal_default` của dạng, và được chọn người chấm như quest từ hạng B (người cấp cao hơn, sau luật khác họ và khác tộc). Quản sự đọc thay đổi của đất riêng khi nộp và ghi các đường dẫn đã chạm vào `quest.protected_changes`; dấu đã đặt thì không gỡ (ADR 0026, PS-04).",
+              "definition": "Các glob (tính từ gốc lãnh thổ, khớp ở mọi độ sâu như `forbidden_paths`) của thứ canh giữ thế giới: luật, check, người chấm, sổ đo, bản nâng cấp. Không chặn commit: quest có thay đổi chạm vùng bảo vệ thì cần dấu vua bất kể `seal_default` của dạng, và được chọn người chấm như quest từ hạng B (người cấp cao hơn, sau luật khác họ và khác tộc). Nhiếp chính đọc thay đổi của đất riêng khi nộp và ghi các đường dẫn đã chạm vào `quest.protected_changes`; dấu đã đặt thì không gỡ (ADR 0026, PS-04).",
               "used_in": "`territory.laws.protected_paths`, `quest.protected_changes`, `wantsStrongJudge`, `elvaria quest show`"
             },
             {
@@ -424,7 +424,7 @@
               "vi": "Thư giao hàng",
               "en": "Delivery note",
               "id": ["delivery.md"],
-              "definition": "Quản sự viết khi giao: quest, phán quyết, thư bàn giao, thứ đã chép hay đã mở, lệnh merge tay; với nhánh là mô tả PR.",
+              "definition": "Nhiếp chính viết khi giao: quest, phán quyết, thư bàn giao, thứ đã chép hay đã mở, lệnh merge tay; với nhánh là mô tả PR.",
               "used_in": "`.runs/<quest>-delivery.md`, `quest.deliverable.path`"
             },
             {
@@ -438,7 +438,7 @@
               "vi": "Thư",
               "en": "Letter",
               "id": ["memo"],
-              "definition": "Một việc nhân vật thấy ngoài quest của mình, viết thành một dòng ở mục `Memos` của thư bàn giao thay vì tự sửa. Quản sự lập và chuyển đi theo kiểu thư khi lượt người làm kết thúc qua nộp, hỏi hay hỏng; không ai trả lời thư, thư không đổi quest nào, chủ nhân quyết một lần (ADR 0024, PS-02). Trong code là `memo`, vì `letter` đã là thư bàn giao.",
+              "definition": "Một việc nhân vật thấy ngoài quest của mình, viết thành một dòng ở mục `Memos` của thư bàn giao thay vì tự sửa. Nhiếp chính lập và chuyển đi theo kiểu thư khi lượt người làm kết thúc qua nộp, hỏi hay hỏng; không ai trả lời thư, thư không đổi quest nào, chủ nhân quyết một lần (ADR 0024, PS-02). Trong code là `memo`, vì `letter` đã là thư bàn giao.",
               "used_in": "`memos/<id>.json`, mục `## Memos` của `handover.md`, `elvaria memo`, `elvaria say --memo`"
             },
             {
@@ -452,7 +452,7 @@
               "vi": "Phản biện",
               "en": "Objection",
               "id": ["objection"],
-              "definition": "Thư người làm viết ở lượt làm lại khi cho một ghi chú của phán quyết vừa trả bài là sai: ghi chú nào, vì sao, bằng chứng. Quản sự đưa nó tới một người chấm thứ hai, không phải người chấm đầu và không phải ai từng làm quest, người này đọc cả phán quyết đầu lẫn thư; phán quyết thứ hai là cuối: đạt thì quest đi tiếp và phán quyết đầu không tính vào danh tiếng hay chuỗi trượt của người làm, trượt thì người làm đọc cả hai ghi chú. Mỗi phán quyết tối đa một thư; thư thứ hai, thư chống phán quyết thứ hai hay lần trả của chủ nhân thì vào bản tấu (ADR 0024, ADR 0008, PS-22).",
+              "definition": "Thư người làm viết ở lượt làm lại khi cho một ghi chú của phán quyết vừa trả bài là sai: ghi chú nào, vì sao, bằng chứng. Nhiếp chính đưa nó tới một người chấm thứ hai, không phải người chấm đầu và không phải ai từng làm quest, người này đọc cả phán quyết đầu lẫn thư; phán quyết thứ hai là cuối: đạt thì quest đi tiếp và phán quyết đầu không tính vào danh tiếng hay chuỗi trượt của người làm, trượt thì người làm đọc cả hai ghi chú. Mỗi phán quyết tối đa một thư; thư thứ hai, thư chống phán quyết thứ hai hay lần trả của chủ nhân thì vào bản tấu (ADR 0024, ADR 0008, PS-22).",
               "used_in": "`memo.kind`, `quest.objection`, `verdict.objection`, mục `## Memos` của `handover.md`, `returned.md`, `objection.md`"
             },
             {
@@ -523,14 +523,14 @@
               "vi": "Phần test chấp nhận",
               "en": "Acceptance part",
               "id": ["acceptance"],
-              "definition": "Phần của Khảo hạch mù: Quản sự tự thêm vào đội; một nhân vật không làm phần nào viết test chấp nhận chỉ từ mô tả và hợp đồng, trên worktree tách từ nhánh hợp đồng; quest ghép gộp và chạy nó.",
+              "definition": "Phần của Khảo hạch mù: Nhiếp chính tự thêm vào đội; một nhân vật không làm phần nào viết test chấp nhận chỉ từ mô tả và hợp đồng, trên worktree tách từ nhánh hợp đồng; quest ghép gộp và chạy nó.",
               "used_in": "`party_role = acceptance` (P1-21)"
             },
             {
               "vi": "Quest ghép",
               "en": "Merge quest",
               "id": ["merge"],
-              "definition": "Quest cuối của đội: hợp nhất các nhánh phần, chạy toàn bộ kiểm tra; Quản sự tự tạo.",
+              "definition": "Quest cuối của đội: hợp nhất các nhánh phần, chạy toàn bộ kiểm tra; Nhiếp chính tự tạo.",
               "used_in": "`party_role = merge`"
             }
           ]
@@ -605,7 +605,7 @@
               "vi": "Máy (người chấm)",
               "en": "Machine",
               "id": ["machine"],
-              "definition": "Verdict do Quản sự lập từ kiểm tra máy, không có agent.",
+              "definition": "Verdict do Nhiếp chính lập từ kiểm tra máy, không có agent.",
               "used_in": "`verdict.verifier_id = machine`"
             },
             {
@@ -640,7 +640,7 @@
               "vi": "Sa lầy",
               "en": "Bogged down",
               "id": ["swamp"],
-              "definition": "Nhân vật kẹt tại chỗ đang làm khi cầu dao (thời gian, token, lượt) ngắt phiên, trong lúc Quản sự dừng tiến trình và lưu việc dở; hiển thị «Sa lầy trong nhiệm vụ {quest}». Là trạng thái, không phải nơi chốn.",
+              "definition": "Nhân vật kẹt tại chỗ đang làm khi cầu dao (thời gian, token, lượt) ngắt phiên, trong lúc Nhiếp chính dừng tiến trình và lưu việc dở; hiển thị «Sa lầy trong nhiệm vụ {quest}». Là trạng thái, không phải nơi chốn.",
               "used_in": "`character.status`"
             },
             {
@@ -745,7 +745,7 @@
               "vi": "Lần cần chủ nhân",
               "en": "Owner intervention",
               "id": ["owner_commands"],
-              "definition": "Lệnh hộp thư của chủ nhân trên một quest mà Quản sự đã áp, thuộc bảng `OWNER_COMMAND_KINDS` (return, retry, reassign, edit_quest, set_rank, answer, cancel); tạo, xác nhận, đóng dấu, lưu trữ không tính.",
+              "definition": "Lệnh hộp thư của chủ nhân trên một quest mà Nhiếp chính đã áp, thuộc bảng `OWNER_COMMAND_KINDS` (return, retry, reassign, edit_quest, set_rank, answer, cancel); tạo, xác nhận, đóng dấu, lưu trữ không tính.",
               "used_in": "`OWNER_COMMAND_KINDS`, `Metrics.owner_commands`"
             },
             {
@@ -1869,7 +1869,7 @@
             {
               "field": "`verdict.fail_kind` (cũng `consecutive_fail.fail_kind`)",
               "values": "`tests_fail`, `scope_creep`, `missing_i18n`, `wrong_facts`, `incomplete`, `style`, `unsafe`, `other`, `flaky`",
-              "meaning": "loại lỗi, để đếm \"cùng loại\"; `flaky` (từ P1-20, ADR 0022): một check vừa qua vừa trượt trên cùng commit, Quản sự mở quest Trừ tà"
+              "meaning": "loại lỗi, để đếm \"cùng loại\"; `flaky` (từ P1-20, ADR 0022): một check vừa qua vừa trượt trên cùng commit, Nhiếp chính mở quest Trừ tà"
             },
             {
               "field": "`verdict.verifier_id` (giá trị đặc biệt)",
@@ -1909,7 +1909,7 @@
             {
               "field": "`party_role` (quest, quest-draft)",
               "values": "`contract`, `part`, `acceptance`, `merge`",
-              "meaning": "quest hợp đồng / phần / phần test chấp nhận của Khảo hạch mù (Quản sự tạo, không có trong quest-draft) / quest ghép"
+              "meaning": "quest hợp đồng / phần / phần test chấp nhận của Khảo hạch mù (Nhiếp chính tạo, không có trong quest-draft) / quest ghép"
             },
             {
               "field": "`skill.source`",
@@ -1999,7 +1999,7 @@
             {
               "field": "event `quest.infirmary` → `data.trip`",
               "values": "`time`, `tokens`, `turns`, `commit`, `secrets`, `forbidden_paths`, `no_verdict`, `partial_verdicts`, `max_attempts`, `script_broken`, `script_usage`, `script_fail`",
-              "meaning": "vì sao vào trạm quân y (P1-32): sáu loại cầu dao (`forbidden_paths`, P1-49: phiên để lại một đường dẫn của `laws.forbidden_paths` bị đổi trong đất riêng, Quản sự không commit gì, `data.detail.paths` nêu các đường dẫn), việc nghiệm thu kẹt vì người chấm cứ rời đi không ra phán quyết (`no_verdict`, P1-33) hay cứ nộp phán quyết dở (`partial_verdicts`, P1-42), hết số lần thử, hay lượt bậc script mà script hỏng, không dùng được tham số, không đạt; dòng cũ không có trường này"
+              "meaning": "vì sao vào trạm quân y (P1-32): sáu loại cầu dao (`forbidden_paths`, P1-49: phiên để lại một đường dẫn của `laws.forbidden_paths` bị đổi trong đất riêng, Nhiếp chính không commit gì, `data.detail.paths` nêu các đường dẫn), việc nghiệm thu kẹt vì người chấm cứ rời đi không ra phán quyết (`no_verdict`, P1-33) hay cứ nộp phán quyết dở (`partial_verdicts`, P1-42), hết số lần thử, hay lượt bậc script mà script hỏng, không dùng được tham số, không đạt; dòng cũ không có trường này"
             },
             {
               "field": "event `quest.*` → `data.sequels`",
@@ -2135,7 +2135,7 @@
                 "quest.edited",
                 "quest.unclaimable"
               ],
-              "meaning": "mỗi chuyển trạng thái của quest (§2.5 của implementation-plan); `quest.edited`: người dùng sửa trường của quest (`edit_quest`, `set_rank`); `quest.unclaimable`: Quản sự báo quest `open` không ai nhận được (§3.1)"
+              "meaning": "mỗi chuyển trạng thái của quest (§2.5 của implementation-plan); `quest.edited`: người dùng sửa trường của quest (`edit_quest`, `set_rank`); `quest.unclaimable`: Nhiếp chính báo quest `open` không ai nhận được (§3.1)"
             },
             {
               "group": "Phiên agent",
@@ -2155,7 +2155,7 @@
             {
               "group": "Kiểm tra máy",
               "types": ["check.start", "check.end"],
-              "meaning": "kiểm tra máy của một lượt đã nộp chạy ngoài nhịp, quest nằm `review` chưa có người chấm trong lúc đó; `check.end` nói `pass`, `fail`, `error` (chưa chạy được, tick sau chạy lại) hay `stopped` (Quản sự dừng hoặc quest đi tiếp)"
+              "meaning": "kiểm tra máy của một lượt đã nộp chạy ngoài nhịp, quest nằm `review` chưa có người chấm trong lúc đó; `check.end` nói `pass`, `fail`, `error` (chưa chạy được, tick sau chạy lại) hay `stopped` (Nhiếp chính dừng hoặc quest đi tiếp)"
             },
             {
               "group": "Phán quyết",
@@ -2193,22 +2193,22 @@
             {
               "group": "Lệnh",
               "types": ["command.received", "command.applied", "command.rejected"],
-              "meaning": "Quản sự xử lý `inbox/`"
+              "meaning": "Nhiếp chính xử lý `inbox/`"
             },
             {
               "group": "Đồ thị code",
               "types": ["graph.built", "graph.failed"],
-              "meaning": "Quản sự dựng đồ thị code của một lãnh thổ bật `code_graph` bằng graphify, không gọi model, ngoài mọi đất, ở commit gốc của quest và ở đầu nhánh mặc định; dòng mang lãnh thổ, không mang quest (PS-21, ADR 0029). `graph.failed` ghi một lần cho mỗi commit trong đời một Quản sự"
+              "meaning": "Nhiếp chính dựng đồ thị code của một lãnh thổ bật `code_graph` bằng graphify, không gọi model, ngoài mọi đất, ở commit gốc của quest và ở đầu nhánh mặc định; dòng mang lãnh thổ, không mang quest (PS-21, ADR 0029). `graph.failed` ghi một lần cho mỗi commit trong đời một Nhiếp chính"
             },
             {
               "group": "Thư",
               "types": ["memo.filed", "memo.routed", "memo.closed", "memo.escalated"],
-              "meaning": "Quản sự lập thư từ mục `Memos` của thư bàn giao khi lượt người làm kết thúc qua nộp, hỏi hay hỏng (không khi cầu dao cắt), chuyển theo `registry/memos.json`, và đóng theo `decide_memo` (PS-02, ADR 0024), hoặc khi quest làm việc của thư mở ra (PS-03b); `memo.escalated` khi phân loại của Tể tướng đưa thư lên chủ nhân kèm lời khuyên (PS-03b)"
+              "meaning": "Nhiếp chính lập thư từ mục `Memos` của thư bàn giao khi lượt người làm kết thúc qua nộp, hỏi hay hỏng (không khi cầu dao cắt), chuyển theo `registry/memos.json`, và đóng theo `decide_memo` (PS-02, ADR 0024), hoặc khi quest làm việc của thư mở ra (PS-03b); `memo.escalated` khi phân loại của Tể tướng đưa thư lên chủ nhân kèm lời khuyên (PS-03b)"
             },
             {
               "group": "Lịch",
               "types": ["schedule.ran", "digest.written"],
-              "meaning": "Việc theo lịch của Quản sự (PS-03): `schedule.ran` khi một việc của `kingdom.schedule` chạy xong trong một ngày địa phương (lần khởi động sau đọc nó, nên mỗi ngày một lần dù đồng hồ nhảy); `digest.written` khi bản tấu của ngày đã ghi vào `digest/<ngày>.md` và chuông đã rung"
+              "meaning": "Việc theo lịch của Nhiếp chính (PS-03): `schedule.ran` khi một việc của `kingdom.schedule` chạy xong trong một ngày địa phương (lần khởi động sau đọc nó, nên mỗi ngày một lần dù đồng hồ nhảy); `digest.written` khi bản tấu của ngày đã ghi vào `digest/<ngày>.md` và chuông đã rung"
             },
             {
               "group": "Khác",
@@ -2224,7 +2224,7 @@
                 "sandbox.replay.start",
                 "sandbox.replay.end"
               ],
-              "meaning": "`plot.patched`: Quản sự áp bản vá của người làm vào `laws.patch_paths` trước commit `submit` (P1-28); `plot.merged`: Quản sự gộp các nhánh phần vào nhánh quest ghép, hoặc dừng ở một nhánh (P1-21); `plot.restored`: sau phiên người chấm ngoài đất nháp, Quản sự đưa đất của quest về commit của nó, bỏ những gì lệnh của người chấm để lại (P1-44)"
+              "meaning": "`plot.patched`: Nhiếp chính áp bản vá của người làm vào `laws.patch_paths` trước commit `submit` (P1-28); `plot.merged`: Nhiếp chính gộp các nhánh phần vào nhánh quest ghép, hoặc dừng ở một nhánh (P1-21); `plot.restored`: sau phiên người chấm ngoài đất nháp, Nhiếp chính đưa đất của quest về commit của nó, bỏ những gì lệnh của người chấm để lại (P1-44)"
             },
             {
               "group": "Bản",
