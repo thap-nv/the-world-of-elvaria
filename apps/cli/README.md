@@ -21,7 +21,10 @@
   the judge erred: the work goes back to be judged again and the return does not count against the assignee. `answer <quest> "<answer>"` takes
   a non-empty answer for a `blocked` quest; the Steward then goes on with the same attempt, in the asking session
   when the answer comes within `dispatch.resume_after_answer_minutes` (ADR 0017). The bell of `run` prints that
-  command with each question. `quest retry` opens a quest of the infirmary again; `quest reassign [--to <id>]`
+  command with each question. `quest retry` opens a quest of the infirmary again, for every free character of its
+  class (the line it prints says so); `quest retry --to <id>` sends `reassign` instead, so only that character takes
+  it, with a full attempt budget (`infirmary.reassign`; refused on a stalled review and a script-tier quest, lessons
+  of 2026-11-12); `quest reassign [--to <id>]`
   gives a quest to the character named (checked as the Steward checks it, `src/quest/assignee.ts` on the domain's
   `namedAssignee`: known, of the quest's class, not suspended, of an enabled tribe; a level below the rank is said,
   since the quest then waits for the seal) or, without `--to`, to the Steward's choice (P1-26). `quest add --to
