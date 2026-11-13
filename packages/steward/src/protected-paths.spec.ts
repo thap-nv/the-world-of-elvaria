@@ -59,6 +59,10 @@ async function open(touched: readonly string[]): Promise<{ kingdom: Bench; stewa
 const judgeOf = (kingdom: Bench): string | undefined =>
   kingdom.requests.find(({ role }) => role === 'verifier')?.character.id;
 
+/** The user part of the first judge's prompt. */
+const judgePromptOf = (kingdom: Bench): string | undefined =>
+  kingdom.requests.find(({ role }) => role === 'verifier')?.prompt.user;
+
 describe('a quest whose work changed a protected path (PS-04)', () => {
   it('waits for the royal seal although its kind has none, judged by the stronger judge', async () => {
     const touched = ['docs/notes.md', 'packages/hooks/src/run-hook.ts', 'sub/CLAUDE.md'];
@@ -70,6 +74,11 @@ describe('a quest whose work changed a protected path (PS-04)', () => {
     // A glob matches at any depth, as for forbidden_paths: `CLAUDE.md` names the one of a sub-folder too.
     expect(quest.protected_changes).toEqual(['packages/hooks/src/run-hook.ts', 'sub/CLAUDE.md']);
     expect(judgeOf(kingdom)).toBe('wren');
+    // The judge reads the paths line by line (the owner's settlement of PS-04 (c)).
+    expect(judgePromptOf(kingdom)).toContain(
+      "# Protected paths changed\n\nThe quest's work has changed these files",
+    );
+    expect(judgePromptOf(kingdom)).toContain('- `packages/hooks/src/run-hook.ts`\n- `sub/CLAUDE.md`');
     expect(kingdom.notices).toContainEqual({
       kind: 'awaiting_seal',
       quest: expect.objectContaining({ id: quest.id }) as unknown,
@@ -84,6 +93,7 @@ describe('a quest whose work changed a protected path (PS-04)', () => {
     expect(quest.seal_required).toBe(false);
     expect(quest.protected_changes).toBeUndefined();
     expect(judgeOf(kingdom)).toBe('ilse');
+    expect(judgePromptOf(kingdom)).not.toContain('Protected paths');
   });
 });
 
