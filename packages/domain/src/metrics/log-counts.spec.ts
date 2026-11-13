@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { at, commandOf, lineOf, questId } from './__fixtures__/ledger.ts';
 import { ownerCommandsOf } from './ledger.ts';
-import { outOfScopeOf, readsOf, setAsidesOf } from './log-counts.ts';
+import { checkRunsOf, outOfScopeOf, readsOf, setAsidesOf } from './log-counts.ts';
 import type { Event } from '../schema/event/event.ts';
 
 const NEXT_DAY = '2026-11-09';
@@ -88,6 +88,35 @@ describe('setAsidesOf (PS-01b, (b) of P1-54)', () => {
       { quest: null, attempt: null, check: 'e2e', at: at(5) },
     ]);
     expect(setAsidesOf(events, {})).toHaveLength(3);
+  });
+});
+
+describe('checkRunsOf (PS-25)', () => {
+  const environment = { check: 'e2e', line: 'Cannot connect to the Docker daemon' };
+  const end = (
+    outcome: string,
+    minute: number,
+    quest?: string,
+    extra: Record<string, unknown> = {},
+    day?: string,
+  ) => lineOf('check.end', { outcome, checks: [], ...extra }, at(minute, day), quest);
+
+  it('counts the runs that passed or failed per quest, those set aside apart; stopped, unquested and late lines aside', () => {
+    const events = [
+      end('pass', 3, questId(1)),
+      end('fail', 4, questId(1), { environment }),
+      end('fail', 5, questId(2)),
+      end('stopped', 6, questId(2)),
+      end('error', 7, questId(2)),
+      end('fail', 8),
+      end('pass', 1, questId(1), {}, NEXT_DAY),
+      lineOf('check.start', {}, at(2), questId(1)),
+    ];
+    expect([...checkRunsOf(events, ON_THE_DAY)]).toEqual([
+      [questId(1), { runs: 2, set_aside: 1 }],
+      [questId(2), { runs: 1, set_aside: 0 }],
+    ]);
+    expect(checkRunsOf(events, {}).get(questId(1))).toEqual({ runs: 3, set_aside: 1 });
   });
 });
 

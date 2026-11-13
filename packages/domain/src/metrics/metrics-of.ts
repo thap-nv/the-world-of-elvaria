@@ -4,7 +4,7 @@
 import { REWORK_CAUSES, OWNER_COMMAND_KINDS } from './causes.ts';
 import { escapedOf, firstPassOf, firstRunOf, sealedCostOf } from './judgement.ts';
 import { ownerCommandsOf, sequelsIn, sessionModelsOf, trailsOf } from './ledger.ts';
-import { outOfScopeOf, readsOf, setAsidesOf } from './log-counts.ts';
+import { checkRunsOf, outOfScopeOf, readsOf, setAsidesOf } from './log-counts.ts';
 import { memoCountsOf, objectionsOf } from './memo-counts.ts';
 import { firstPassRatesOf } from './rates.ts';
 import { reworkOf } from './rework.ts';
@@ -13,13 +13,13 @@ import { inWindow } from './window.ts';
 import type { OwnerCommandKind, ReworkCause } from './causes.ts';
 import type { EscapedDefect, SealedCost } from './judgement.ts';
 import type { MetricsInput, OwnerCommand } from './ledger.ts';
-import type { OutOfScope, Reads, SetAside } from './log-counts.ts';
+import type { CheckRunCount, OutOfScope, Reads, SetAside } from './log-counts.ts';
 import type { JudgeObjections, MemoCount } from './memo-counts.ts';
 import type { FirstPassRates } from './rates.ts';
 import type { QuestTrail, Rework } from './rework.ts';
 import type { FirstEdits, GraphQueries, PromptSizes } from './session-counts.ts';
 import type { MetricsWindow } from './window.ts';
-import type { ClassId, KindId, QuestId } from '../core/ids.ts';
+import type { ClassId, KindId, QuestId, TerritoryId } from '../core/ids.ts';
 import type { QuestStatus, Tier } from '../schema/quest/shared.ts';
 
 /** The attempt-log entries that started in the window. */
@@ -38,6 +38,8 @@ export interface RunCounts {
 export interface QuestMetrics {
   readonly id: QuestId;
   readonly kind: KindId;
+  /** PS-25: the territory's scorecard reads its quests' rows. */
+  readonly territory: TerritoryId;
   readonly tier: Tier;
   readonly class: ClassId | null;
   readonly status: QuestStatus;
@@ -48,6 +50,9 @@ export interface QuestMetrics {
   /** null while the first run is undecided, or when it lies outside the window. */
   readonly first_pass: boolean | null;
   readonly owner_commands: number;
+  /** Runs of checks in the window that passed or failed (`check.end`), and of them those set aside (PS-25). */
+  readonly check_runs: number;
+  readonly checks_set_aside: number;
 }
 
 export interface CommandCount {
@@ -106,12 +111,15 @@ const byCause = (rework: readonly Rework[]): Record<ReworkCause, number> =>
     REWORK_CAUSES.map((cause) => [cause, rework.filter((entry) => entry.cause === cause).length]),
   ) as Record<ReworkCause, number>;
 
-function questRow(
-  trail: QuestTrail,
-  rework: readonly Rework[],
-  commands: readonly OwnerCommand[],
-  window: MetricsWindow,
-): QuestMetrics {
+/** What a quest row counts from the lines of every quest, gathered once. */
+interface RowSources {
+  readonly rework: readonly Rework[];
+  readonly commands: readonly OwnerCommand[];
+  readonly checks: ReadonlyMap<QuestId, CheckRunCount>;
+}
+
+function questRow(trail: QuestTrail, sources: RowSources, window: MetricsWindow): QuestMetrics {
+  const { rework, commands, checks } = sources;
   const { quest } = trail;
   const entries = quest.attempt_log.filter(({ started_at }) => inWindow(window, started_at));
   const first = firstRunOf(quest);
@@ -119,6 +127,7 @@ function questRow(
   return {
     id: quest.id,
     kind: quest.kind,
+    territory: quest.territory,
     tier: quest.tier,
     class: quest.class_required ?? null,
     status: quest.status,
@@ -127,6 +136,8 @@ function questRow(
     rework: byCause(rework.filter((entry) => entry.quest === quest.id)),
     first_pass: decided ?? null,
     owner_commands: commands.filter((command) => command.quest === quest.id).length,
+    check_runs: checks.get(quest.id)?.runs ?? 0,
+    checks_set_aside: checks.get(quest.id)?.set_aside ?? 0,
   };
 }
 
@@ -135,6 +146,7 @@ export function metricsOf(input: MetricsInput, window: MetricsWindow = {}): Metr
   const trails = trailsOf(input);
   const rework = trails.flatMap(reworkOf).filter(({ started_at }) => inWindow(window, started_at));
   const commands = ownerCommandsOf(input, window);
+  const sources = { rework, commands, checks: checkRunsOf(input.events, window) };
   const worked = trails.filter(
     ({ quest }) =>
       quest.attempt_log.some(({ started_at }) => inWindow(window, started_at)) ||
@@ -153,9 +165,7 @@ export function metricsOf(input: MetricsInput, window: MetricsWindow = {}): Metr
       kind,
       count: commands.filter((command) => command.kind === kind).length,
     })),
-    quests: worked
-      .map((trail) => questRow(trail, rework, commands, window))
-      .sort((a, b) => a.id.localeCompare(b.id)),
+    quests: worked.map((trail) => questRow(trail, sources, window)).sort((a, b) => a.id.localeCompare(b.id)),
     set_aside: setAsidesOf(input.events, window),
     reads: readsOf(input.events, window),
     graph: graphQueriesOf(input.events, window),

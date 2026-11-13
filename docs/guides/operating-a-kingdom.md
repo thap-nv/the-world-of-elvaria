@@ -22,6 +22,8 @@ elvaria doctor                      # lần đầu: tìm CLI của từng tộc 
 # 3. Lãnh thổ: một repo git của bạn (§3)
 elvaria territory add "<thư mục repo>" --branch main   # in id của lãnh thổ; --branch: nhánh mà nhánh quest tách ra
 #    rồi điền commands, checks, laws trong <vương quốc>/territories/<id>/territory.json (mẫu ở §3)
+elvaria territory check <id>         # thẻ điểm (PS-25): thử setup và mọi check trên đất sạch, 0 mana; sửa tới khi
+                                     # mục thử khởi đầu đạt (§3, "Thẻ điểm lãnh thổ")
 
 # 4. Nhân vật: một người làm, một người chấm khác model (§3)
 elvaria character add thorn --class knight      # mặc định của nghề: tộc claude, claude-sonnet-5-5
@@ -121,6 +123,27 @@ Mỗi tộc có một ngoại hình (PS-24): `claude` là Sao Bạc, `gemini` l�
 - Đất riêng của quest nằm ở `<repo>/.elvaria/worktrees/<quest>`; Elvaria tự thêm nó vào `.git/info/exclude`. ESLint và Prettier chạy ở gốc repo vẫn quét thư mục đó, trừ khi repo bỏ qua `.elvaria/`.
 - Quest xin secret (`secrets_allowed` của lãnh thổ) thì giá trị nằm trong kho bảo vật, một file JSON `{ "tên": "giá trị" }` ngoài vương quốc (mặc định `~/.elvaria/treasury.json`, đổi bằng `init --treasury`); bạn sửa tay file đó, `doctor` kiểm tên, không bao giờ in giá trị.
 
+**Thẻ điểm lãnh thổ** (PS-25). Chạy `elvaria territory check <id>` sau khi điền `territory.json` và trước quest đầu tiên, rồi mỗi lần đổi `commands.setup` hay check. Lệnh dựng một đất sạch tách rời (`<repo>/.elvaria/worktrees/trial-<id>`, không tạo nhánh) ở đầu nhánh gốc, như đất của một quest mới, chạy `commands.setup` rồi **mọi** check của lãnh thổ như Nhiếp chính chạy chúng, xóa đất, rồi in thẻ điểm: mỗi mục ✓ đạt, ✗ không đạt hay — chưa đo được, kèm lý do. 0 mana, không ghi trạng thái quest; log ở `.runs/trial-<id>-setup.log` và `.runs/trial-<id>/checks/`. Mã thoát khác 0 khi mục thử khởi đầu không đạt; các mục khác chỉ để biết nên sửa gì. Ctrl+C dừng lệnh đang chạy, đất vẫn được xóa và kết quả không được ghi. Lần thử không nhận secret nào của kho bảo vật: setup cần một secret sẽ hỏng ở đây. Kết quả gần nhất nằm ở `.state/territory-trials/<id>.json`; `doctor` cảnh báo lãnh thổ git chưa thử, thử không đạt, hay đã đổi setup hoặc check từ lần thử.
+
+| Mục | Đạt khi | Sửa thế nào |
+|---|---|---|
+| Thử khởi đầu | `commands.setup` thoát 0 và mọi check xanh ở nhánh gốc | thẻ nêu lệnh hỏng, dòng lỗi đầu và log. Setup chỉ cài mà check cần bản build (A5 của bài học 2026-11-12: `@dc1/shared` chưa build) thì cho setup gọi một script cài rồi build. Check đỏ ở nhánh gốc thì sửa nhánh gốc trước: mọi quest sẽ trượt cùng chỗ đó. Dòng lỗi khớp `environment_errors` (Docker chưa chạy) thì bật Docker rồi chạy lại |
+| Thời gian từng check | mỗi check xong trong một nửa `timeout_minutes` của nó | máy bận lúc có quest thì check chậm hơn lúc thử: nâng `timeout_minutes`, hoặc tách phần chậm thành check `exclusive` hay `defer_to_merge` |
+| Lượt check bị gạt vì môi trường | không quá 10 % lượt check của lãnh thổ (cần ít nhất 3 lượt) | thường là Docker hay stack dùng chung: xem §14, `dispatch.max_background: 1` |
+| Địa chí | `territories/<id>/gazetteer.md` có; dòng đầu là `<!-- elvaria:commit <sha> -->` của commit lúc viết, chưa quá 100 commit từ đó; nêu mọi lệnh mà phiên gặp (`commands.setup`, `test`, `lint`, `typecheck`, `build`, từng lệnh `generate`, `run` của từng check) | thẻ nêu lệnh còn thiếu. Lệnh nêu nguyên dòng, hoặc phần trước tùy chọn đầu tiên khi phần đó có từ hai chữ (`pnpm install` cho `pnpm install --frozen-lockfile`); check nhiều lệnh thì nêu một lệnh là đủ. Đọc lại địa chí rồi đặt dấu commit mới khi nó cũ |
+| `shared_paths` và `protected_paths` | cả hai đã khai, danh sách rỗng cũng tính | khai file nóng mọi nhánh cùng sửa (§4, [elvaria-territory.md](elvaria-territory.md)) và thứ canh giữ thế giới (§7); không có thì khai `[]` |
+| Đạt lượt đầu | ít nhất một nửa quest của lãnh thổ đạt ở lượt đầu (cần ít nhất 3 quest có phán quyết) | xem `elvaria metrics` theo nghề, dạng và lãnh thổ; thường là địa chí, setup hay check còn thiếu ở các mục trên |
+
+Hai mục cuối và mục check bị gạt lấy từ sổ đo, nên lãnh thổ mới chưa có quest thì chúng là "—". Ngưỡng là hằng số có tên trong `packages/domain/src/scorecard/constants.ts`.
+
+**Phép thử khởi động nguội** (tùy chọn, **tốn mana**, bạn tự giao khi muốn): xem địa chí và repo có đủ cho một nhân vật mới không. Giao một quest `research` hạng thấp cho trinh sát, chỉ đọc; câu nào trinh sát không trả lời được, hay trả lời sai, là chỗ địa chí còn thiếu:
+
+```bash
+elvaria quest add --territory <id> --kind research --rank E --class scout \
+  --title "Khởi động nguội: đọc lãnh thổ <id> như người mới" \
+  --description "Chỉ đọc gazetteer của lãnh thổ và repo; không sửa file nào ngoài bản báo cáo của quest. Trả lời năm câu, mỗi câu kèm file và dòng làm căn cứ: (1) Hệ thống này là gì, cho ai? (2) Code tổ chức ra sao: thư mục chính và vai của từng thư mục. (3) Chạy nó thế nào trên máy: cài đặt, build, chạy. (4) Kiểm nó thế nào: lệnh lint, test, các check của lãnh thổ và khi nào mỗi check chạy. (5) Nó đang tới đâu: việc gần nhất, việc đang dở, chỗ còn thiếu. Câu nào gazetteer không giúp trả lời được thì ghi rõ 'gazetteer không nói'."
+```
+
 **Nhân vật.** `character add <id> --class <nghề>` lấy tộc và model mặc định của nghề; đổi bằng `--tribe <tộc>` và `--model <model>`. Model là tên mà CLI của tộc nhận: tộc claude có `claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5`; tộc gemini lấy slug của `agy models`, ví dụ `gemini-3.8-flash-high`, `gemini-4-argon-medium`. Cấp ban đầu lấy theo model (Opus 5, Sonnet hay Pro 4, Argon 3, Haiku hay Flash 2; `--level` để đặt khác); cấp quyết định hạng cao nhất nhân vật nhận (cấp 2 tới E, 3 tới D, 4–5 tới C, 6–7 tới B).
 
 Luật tách vai: người chấm là một nhân vật khác người làm, chạy **model khác** (`dispatch.verifier_same_family: different_model`: Sonnet chấm Opus được, Opus chấm Opus thì không); trong số người chấm hợp lệ, Nhiếp chính ưu tiên người khác họ model (một model Gemini chấm việc của một model Claude). Vì vậy **mỗi model người làm cần ít nhất một người chấm khác model, tốt nhất là hai, trên hai đồng hồ mana khác nhau** (§9): ở P1-50, khi trần Argon đóng, bài của hai nhân vật Opus không còn ai chấm vì người chấm còn lại cũng là Opus, và phải 50 phút sau mới có người thấy. Muốn soạn nhiệm vụ bằng lời (`elvaria say`) thì cần một nhân vật nghề `chancellor`.
@@ -202,7 +225,7 @@ Với một đội, chỉ merge nhánh của **quest ghép**; hợp đồng và 
 
 ## 8. `doctor`, phiên bản CLI và việc ghim
 
-Chạy `elvaria doctor` **đầu mỗi ngày chạy** và sau mỗi thay đổi cấu hình. Nó kiểm registry, git, CLI của từng tộc (đường dẫn, phiên bản, đăng nhập, hook đã build), shell của tộc, từng lãnh thổ và chương trình mà lệnh của chúng gọi, Docker khi một lệnh dùng nó, danh tính git (`user.email`) của từng repo, `.claude/rules/` có nằm trong `laws.patch_paths` không, model người làm mà mọi người chấm khác model chung một kho mana, hai người chấm trên một kho cũng tính (cảnh báo: kho đó đóng là bài của model đó không ai chấm; đếm theo kho từ PS-03), kho bảo vật, phiên còn sót, đồng hồ mana, và bản mà vương quốc ghim (lỗi khi bản ghim không còn trên đĩa hay `.state/build.json` không đọc được; cảnh báo khi lệnh chạy bằng mã khác với `--here`). Lỗi thì in "Chưa sẵn sàng: n lỗi"; cảnh báo không chặn.
+Chạy `elvaria doctor` **đầu mỗi ngày chạy** và sau mỗi thay đổi cấu hình. Nó kiểm registry, git, CLI của từng tộc (đường dẫn, phiên bản, đăng nhập, hook đã build), shell của tộc, từng lãnh thổ và chương trình mà lệnh của chúng gọi, Docker khi một lệnh dùng nó, danh tính git (`user.email`) của từng repo, `.claude/rules/` có nằm trong `laws.patch_paths` không, lần thử gần nhất của từng lãnh thổ git (cảnh báo khi chưa thử, thử không đạt, hay setup hoặc check đã đổi từ đó; PS-25), model người làm mà mọi người chấm khác model chung một kho mana, hai người chấm trên một kho cũng tính (cảnh báo: kho đó đóng là bài của model đó không ai chấm; đếm theo kho từ PS-03), kho bảo vật, phiên còn sót, đồng hồ mana, và bản mà vương quốc ghim (lỗi khi bản ghim không còn trên đĩa hay `.state/build.json` không đọc được; cảnh báo khi lệnh chạy bằng mã khác với `--here`). Lỗi thì in "Chưa sẵn sàng: n lỗi"; cảnh báo không chặn.
 
 Hai CLI **tự cập nhật qua đêm** theo VS Code (hai lần trong hai ngày của P1-50):
 
