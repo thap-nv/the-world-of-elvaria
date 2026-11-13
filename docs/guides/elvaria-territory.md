@@ -57,7 +57,7 @@ Dấu đã đặt thì không gỡ: lần nộp sau không còn chạm vùng b�
 
 ### Danh sách `protected_paths` của lãnh thổ Elvaria
 
-Theo §3.16.4 và [ADR 0026](../adr/0026-guarded-self-change.md): danh sách "Đọc trước khi sửa" của `CLAUDE.md`, cộng luật và cổng của repo (`.claude/**`, `CLAUDE.md`, `docs/adr/**`, `.github/**`, `packages/hooks/**`), mã sổ đo (`packages/domain/src/metrics/**`), ba file registry quyết định ai làm, ai chấm, chấm theo nghi thức nào, và (chủ nhân chốt 2026-11-12, sau PS-04b) phần thử của `elvaria upgrade`, vì nó quyết định bản nào được ghim.
+Theo §3.16.4 và [ADR 0026](../adr/0026-guarded-self-change.md): danh sách "Đọc trước khi sửa" của `CLAUDE.md`, cộng luật và cổng của repo (`.claude/**`, `CLAUDE.md`, `docs/adr/**`, `.github/**`, `packages/hooks/**`), mã sổ đo (`packages/domain/src/metrics/**`), ba file registry quyết định ai làm, ai chấm, chấm theo nghi thức nào, và (chủ nhân chốt 2026-11-12, sau PS-04b) phần thử của `elvaria upgrade`, vì nó quyết định bản nào được ghim. Chủ nhân chốt thêm ngày 2026-11-13 (đề xuất (b) của PS-04): cổng và preset lint của repo (`.husky/**`, `packages/config/**`) và prompt người chấm (`verifier.md`, `rejudge.md`).
 
 ```json
 "laws": {
@@ -81,7 +81,11 @@ Theo §3.16.4 và [ADR 0026](../adr/0026-guarded-self-change.md): danh sách "Đ
     "packages/registry-default/rituals.json",
     "packages/registry-default/classes.json",
     "packages/registry-default/kinds.json",
-    "apps/cli/src/upgrade/**"
+    "apps/cli/src/upgrade/**",
+    ".husky/**",
+    "packages/config/**",
+    "packages/runner-core/prompts/verifier.md",
+    "packages/runner-core/prompts/rejudge.md"
   ]
 }
 ```
