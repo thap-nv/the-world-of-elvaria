@@ -232,6 +232,22 @@ describe('the Chancellor’s triage (PS-03b)', () => {
     );
   });
 
+  it('sends up a letter whose files the territory protects, though the Chancellor flagged nothing', async () => {
+    const store = openKingdom(kingdom);
+    const read = await store.territories.read(SOURCE.territory);
+    if (!read.ok) throw new Error('fixture: dc1-se-team');
+    await store.territories.write({
+      ...read.value,
+      laws: { ...read.value.laws, protected_paths: ['docs/**'] },
+    });
+    for (const memo of [RENAME, LINK]) await store.memos.write(memo);
+    const io = testIo();
+    expect(await triage(io, chancellor(REPLY))).toBe(0);
+    expect(io.printed.out[1]).toContain(`${LINK.id}: merge into quest ${DOCS.id}.`);
+    expect(io.printed.out[1]).toContain('it touches protected paths');
+    expect((await inbox()).map(({ kind }) => kind)).toEqual(['escalate_memo', 'escalate_memo']);
+  });
+
   it('leaves out a letter a command in the inbox already decides, and says when a reply breaks its contract', async () => {
     for (const memo of [RENAME, LINK]) await openKingdom(kingdom).memos.write(memo);
     expect(await run(testIo(), 'memo', 'decide', LINK.id, 'rejected', '--kingdom', kingdom)).toBe(0);

@@ -41,6 +41,8 @@ export const PROMPT_TEMPLATES = [
   'partial',
   'objection',
   'out-of-scope',
+  // The owner's settlement of PS-04 (c): the protected paths the work changed, for the judge.
+  'protected-changes',
   'ritual-steps',
   'chancellor',
   'chancellor-context',

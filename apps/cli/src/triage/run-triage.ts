@@ -90,6 +90,8 @@ export async function runTriage(
     reply: reply.value,
     memos: batch,
     quests,
+    // The protected paths a memo's files may name are held for the owner whatever the Chancellor flagged (PS-03b (a)).
+    territories: speaker.territories,
     delegation: ctx.kingdom.delegation,
     source: {
       header: () => ({ ...commandHeader(ctx), source: 'chancellor' }),

@@ -2,7 +2,9 @@
 // §3.16.3, PS-03b; product plan 0.8 §14 "phạm vi ủy quyền"). Pure: the Chancellor's triage says what it would do and
 // which matters it sees; this reads `kingdom.delegation` and answers with what holds the memos for the owner, none
 // when the Steward may apply them. A unit of work is judged whole: memos merged into one quest, or made one new
-// quest, stand or fall together, so a quest is never half taken in.
+// quest, stand or fall together, so a quest is never half taken in. The owner's matter `protected_paths` is also seen
+// by the machine, not only flagged by the Chancellor: a memo whose files match the territory's laws.protected_paths
+// (ADR 0026) is held as if flagged (the owner's settlement of PS-03b (a), 2026-11-13).
 import { pathInScope } from '../dispatch/scope.ts';
 import { RANKS } from '../schema/common.ts';
 import { DELEGATION_HOLDS } from './constants.ts';
@@ -16,6 +18,11 @@ export interface DelegatedMemo {
   readonly refs: readonly string[];
   /** The territory of the quest whose letter held it; undefined when that quest is gone. */
   readonly territory: TerritoryId | undefined;
+  /**
+   * Its files under that territory's laws.protected_paths, as the caller matched them: the glob matcher is
+   * runner-core's (forbiddenChangesOf), which the domain does not import. None when it names none.
+   */
+  readonly protected_refs?: readonly string[];
 }
 
 /** The quest that would do the work: the open quest of a merge, or the draft of a new quest. */
@@ -57,12 +64,20 @@ function workHolds(work: WorkPlace, memos: readonly DelegatedMemo[], delegation:
   return holds;
 }
 
+/** The owner's matters in these memos: those the Chancellor flagged, and protected files the machine found. */
+function asksOf({ asks, memos }: TriagedWork): DelegationAskReason[] {
+  const guarded = memos.some(({ protected_refs: found }) => (found ?? []).length > 0);
+  return guarded ? [...asks, 'protected_paths'] : [...asks];
+}
+
 /**
  * What holds the triaged memos for the owner, in DELEGATION_HOLDS order; none when the Steward may apply the
- * Chancellor's decision alone. Sending a memo up, and work without its quest or draft, always hold.
+ * Chancellor's decision alone. Sending a memo up, and work without its quest or draft, always hold. A matter the
+ * owner left out of delegation.ask is the world's to decide, whoever saw it: a protected file too, whose quest still
+ * waits for the seal when its work changes it (PS-04).
  */
 export function delegationHolds(triaged: TriagedWork, delegation: Delegation): DelegationHold[] {
-  const holds = new Set<DelegationHold>(triaged.asks.filter((reason) => delegation.ask.includes(reason)));
+  const holds = new Set<DelegationHold>(asksOf(triaged).filter((reason) => delegation.ask.includes(reason)));
   const { action, work } = triaged;
   if (action === 'owner' || (doesWork(action) && work === undefined)) holds.add('chancellor_asks');
   if (doesWork(action) && work !== undefined)

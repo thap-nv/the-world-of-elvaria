@@ -3,7 +3,8 @@
 // the kingdom's and the memo's schemas can name the lists without importing the function.
 
 /**
- * The closed list of matters the owner keeps (product plan 0.8 §14): the Chancellor flags those it sees in a memo;
+ * The closed list of matters the owner keeps (product plan 0.8 §14): the Chancellor flags those it sees in a memo,
+ * and the machine sees `protected_paths` too (a memo's files under the territory's laws.protected_paths);
  * `kingdom.delegation.ask` says which of them send it to the owner (all by default).
  */
 export const DELEGATION_ASK_REASONS = [
