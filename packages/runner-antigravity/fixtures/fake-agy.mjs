@@ -1,8 +1,7 @@
 // A stand-in for Antigravity CLI 1.5.2 (`agy`) in the adapter's tests (ADR 0006, implementation-plan §3.7).
 // It answers `--version`, `--output-format json models`, `-p /usage` and `-p /hooks` from the spike's fixtures,
-// and runs a session in one of two ways:
-// - replay: env ELVARIA_FAKE_AGY_REPLAY=<fixture>.jsonl prints that recorded stream, its sibling .stderr.txt,
-//   and exits with ELVARIA_FAKE_AGY_EXIT (default 0);
+// and runs a session only in Default (--settings `"agentMode": ""`, fix/agy-1-5-7) in one of two ways:
+// - replay: env ELVARIA_FAKE_AGY_REPLAY=<x>.jsonl prints x and x.stderr.txt, exits ELVARIA_FAKE_AGY_EXIT (or 0);
 // - scenario: env ELVARIA_FAKE_SCENARIO (the conformance suite's) plays a session as agy 1.5.2 does (spike
 //   §3, §4): it runs the hooks of <cwd>/.agents/hooks.json through cmd /c or sh -c, applies the --settings rules
 //   as prefixes, and soft-denies a tool nothing grants, which ends the run.
@@ -91,6 +90,7 @@ function before() {
   } catch (error) {
     return refuse(1, `Error: --settings: ${error.message}`);
   }
+  if (settings.agentMode !== '') return refuse(2, 'fake agy: Elvaria runs agy in Default ("agentMode": "")');
   if (env.ELVARIA_FAKE_AGY_REPLAY === undefined) return undefined;
   const file = path.resolve(FIXTURES, env.ELVARIA_FAKE_AGY_REPLAY);
   process.stdout.write(readFileSync(file, 'utf8'));

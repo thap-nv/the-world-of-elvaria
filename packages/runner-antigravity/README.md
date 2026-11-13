@@ -13,7 +13,8 @@ terms_acknowledged_at, env, pools?, timeout_ms?})`. `hook` is `hookCommand()` of
   `write_file(.git/)` (P1-49: agy 1.5.4 wrote `.git/` itself; never `write_file(.git)`, a prefix that would deny
   `.gitignore` too, so a worktree's `.git` file is the hook's, through `cli_protected_paths`), plus the
   handover letter outside the plot, plus `command(git grep)` and `command(git ls-files)` for the policy's
-  `search_commands`, a shell or not, P1-53), `policy.json` (runner-core's `writePolicyFile`, with the class's `tools`:
+  `search_commands`, a shell or not, P1-53, and `"agentMode": ""`: agy 1.5.7 starts a headless run with no saved
+  mode in Auto, and the empty string keeps it in Default, where the spike measured everything), `policy.json` (runner-core's `writePolicyFile`, with the class's `tools`:
   agy has no `--tools`, so the hook refuses a tool the class lacks, such as `search_web` without `WebSearch`,
   and the names of the session's secrets), `schema.json` for
   `--json-schema`; writes into the plot `.agents/hooks.json` (`node [flags] elvaria-hook.mjs <Event>` for
@@ -86,7 +87,7 @@ pnpm --filter @elvaria/hooks build && ELVARIA_LIVE=1 pnpm --filter @elvaria/runn
 
 `fixtures/fake-agy.mjs` stands in for agy: it replays a recorded stream (`ELVARIA_FAKE_AGY_REPLAY`), or plays a
 conformance scenario the way agy 1.5.2 does, running the generated hooks through `cmd /c` or `sh -c` and applying
-the settings as prefix rules. Fixtures: the redacted runs of spike P1-12a, the `--conversation` pair and the
+the settings as prefix rules. It refuses (exit 2) a session whose settings lack `"agentMode": ""`. Fixtures: the redacted runs of spike P1-12a, the `--conversation` pair and the
 `/hooks` answer of P1-12b, the real quota error of P1-16 (`stream-quota-exhausted.*`), and `constructed-rate-limit.*`, built from agy's
 changelog for its other wording (`reset after 2h31m12s`). `ELVARIA_AGY` points the live specs at another agy. `run-files.spec.ts` checks the
 plot after a session that completed, was killed or never started: no `.agents/` and no `GEMINI.md` left of

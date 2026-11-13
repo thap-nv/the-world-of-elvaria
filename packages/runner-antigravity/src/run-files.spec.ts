@@ -1,12 +1,14 @@
 // The plot after an agy session (P1-23, phase-1 report §5.3): hooks.json, its shim and GEMINI.md live only as long
 // as the session, so the checks the Steward runs once it ends never read them; the territory's own files stay.
+import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import process from 'node:process';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { fakeRunner, openWorld, request } from './__fixtures__/agy.ts';
+import { FAKE_AGY, fakeRunner, minimalEnv, openWorld, request } from './__fixtures__/agy.ts';
 import { removeRunFiles, settleAll } from './run-files.ts';
 import type { World } from './__fixtures__/agy.ts';
 import type { RunningSession } from '@elvaria/runner-core';
@@ -78,6 +80,29 @@ describe('the files of an agy session in the plot', () => {
     await expect(fakeRunner().spawn(request(world))).rejects.toThrow(/EISDIR/);
     const stderr = await readFile(path.join(world.run_dir, 'stderr.log'), 'utf8');
     expect(stderr).toMatch(/^\[elvaria\] the hook files stay in the plot: .*EISDIR/);
+  });
+});
+
+describe("the run folder's settings.json (fix/agy-1-5-7)", () => {
+  it('keeps agy in the Default agent mode, a top-level key beside the permissions, and the fake agy runs it', async () => {
+    const result = await toTheEnd(await fakeRunner().spawn(request(world)));
+    expect(result.outcome).toBe('completed');
+    const settings = JSON.parse(await readFile(path.join(world.run_dir, 'settings.json'), 'utf8')) as object;
+    expect(Object.keys(settings)).toEqual(['permissions', 'agentMode']);
+    expect(settings).toMatchObject({ agentMode: '' });
+  });
+
+  it('is what the fake agy holds the adapter to: settings without the key would start agy 1.5.7 in Auto', async () => {
+    const file = path.join(world.run_dir, 'no-mode.json');
+    await writeFile(file, JSON.stringify({ permissions: { allow: [], deny: [], ask: [] } }), 'utf8');
+    const session = ['-p', 'hi', '--output-format', 'stream-json', '--model', 'gemini-3.8-flash-low'];
+    const ran = spawnSync(process.execPath, [FAKE_AGY, ...session, '--settings', file], {
+      cwd: world.plot,
+      env: minimalEnv(),
+      encoding: 'utf8',
+    });
+    expect(ran.status).toBe(2);
+    expect(ran.stderr).toContain('Elvaria runs agy in Default ("agentMode": "")');
   });
 });
 
