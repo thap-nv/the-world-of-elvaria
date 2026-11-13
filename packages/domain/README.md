@@ -106,6 +106,11 @@
   keeps the scoped quests after it in the claims of that tick (`claims` of `src/dispatch/tick-steps.ts`).
   `scopeHolderOf` names whom a quest waits for. The merge quest takes its parts' scopes together, the acceptance part
   and the follow-ups the scope of the quest they come from.
+- Marks a quest whose work changed a protected path (`src/verify/protected.ts`, implementation-plan §3.16.4, ADR 0026,
+  PS-04): `territory.laws.protected_paths` is optional, with no default; `protectedMarkOf` gives what the submit sets
+  (`seal_required: true` and `quest.protected_changes`, the paths gathered over the submits, never lowered), and
+  `wantsStrongJudge(quest)` puts the judge of the higher level first from rank B or once the quest is so marked,
+  below the separation rules of `selectVerifier`.
 - Decides the breakers (`src/breaker/`, §3.4, P1-06): `evaluateBreakers(attempt, limits, now, usage)` → `ok` or
   the first trip of `time` (on the minute `budget.max_minutes` is spent), `tokens` or `turns` (once past
   `budget.max_tokens`, `breakers.max_turns`); a tribe whose adapter reports no usage (its `TribeLimits.breakers`

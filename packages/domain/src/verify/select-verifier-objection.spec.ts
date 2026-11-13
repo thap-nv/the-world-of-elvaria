@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { CLASSES, Q1, character, inReview, quest } from '../dispatch/__fixtures__/snapshot.ts';
 import { selectVerifier, waitsForNoJudge } from './select-verifier.ts';
+import type { CharacterId } from '../core/ids.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 import type { VerifierPolicy } from './select-verifier.ts';
@@ -64,11 +65,33 @@ describe('selectVerifier with an objection', () => {
     expect(waits(objected('sable'), [SABLE, { ...ORIN, status: 'working' }])).toBe(false);
   });
 
+  const flash = judge('ilse', { tribe: 'gemini', model: 'gemini-3.8-flash-high', level: 2, since: 0 });
+  const pro = judge('wren', { tribe: 'gemini', model: 'gemini-3.5-pro', level: 4, since: 30 });
+  const ultra = judge('hale', { tribe: 'gemini', model: 'gemini-3.5-ultra', level: 3, since: 20 });
+
   it('still takes the stronger judge first on a quest of rank B or above, the first judge left out', () => {
-    const flash = judge('ilse', { tribe: 'gemini', model: 'gemini-3.8-flash-high', level: 2, since: 0 });
-    const pro = judge('wren', { tribe: 'gemini', model: 'gemini-3.5-pro', level: 4, since: 30 });
-    const ultra = judge('hale', { tribe: 'gemini', model: 'gemini-3.5-ultra', level: 3, since: 20 });
     const rankB = inReview(quest(Q1, { rank: 'B' }), 'thorn');
     expect(chosen(objected('wren', rankB), [flash, pro, ultra])).toEqual(['hale', 'other_family']);
+  });
+
+  it('takes the stronger judge first on a quest that changed a protected path, never the first judge nor a doer (PS-04)', () => {
+    const rankC = inReview(quest(Q1, { rank: 'C' }), 'thorn');
+    const guarded: Quest = { ...rankC, protected_changes: ['CLAUDE.md'] };
+    // A judge who once worked the quest is never its judge, however strong.
+    const formerDoer = judge('quill', { tribe: 'gemini', model: 'gemini-3.5-ultra', level: 9, since: 0 });
+    const doers = { doers: [THORN, character('quill', { tribe: 'gemini', model: 'gemini-4-argon-low' })] };
+    const worked = (q: Quest): Quest => ({
+      ...q,
+      attempt_log: [...q.attempt_log, { ...q.attempt_log[0]!, character: 'quill' as CharacterId }],
+    });
+    const candidates = [flash, pro, ultra, formerDoer];
+    expect(chosen(objected('wren', worked(rankC)), candidates, doers)).toEqual([
+      'ilse',
+      'same_family_other_model',
+    ]);
+    expect(chosen(objected('wren', worked(guarded)), candidates, doers)).toEqual([
+      'hale',
+      'same_family_other_model',
+    ]);
   });
 });

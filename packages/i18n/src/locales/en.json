@@ -464,6 +464,7 @@
     "cli.quest.field.merge_quest": "Merge quest",
     "cli.quest.field.party": "Party",
     "cli.quest.field.party_role": "Role in the party",
+    "cli.quest.field.protected": "Protected paths changed",
     "cli.quest.field.question": "Question",
     "cli.quest.field.rank": "Rank",
     "cli.quest.field.scope": "Scope",

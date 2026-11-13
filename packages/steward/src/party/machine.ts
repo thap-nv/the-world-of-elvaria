@@ -1,13 +1,15 @@
 // The machine's run of a party's merge quest (implementation-plan §2.5, §3.13; P1-18 proposal (h)): when every part
 // merges cleanly a knight's session would change nothing, so the Steward makes the first run itself, as it runs a
 // script: claimed with no assignee, the plot prepared on the contract's branch and started, the parts merged in, then
-// submitted to the checks (every one of the territory, and `party`) and to a judge from outside the party. A merge
+// submitted to the checks (every one of the territory, and `party`) and to a judge from outside the party; parts that
+// changed a protected path make it ask for the stronger judge, as a knight's submit would (PS-04). A merge
 // that stops (a conflict, a hook) is released instead, the merge left in progress in the plot: a knight takes the
 // next run, as it does after a judge fails the machine's (`review.verdict_fail.machine_retry`).
-import { err, ok, plotBaseOf } from '@elvaria/domain';
+import { err, ok, plotBaseOf, protectedMarkOf } from '@elvaria/domain';
 import type { Quest, QuestId, Result } from '@elvaria/domain';
 
 import { moveAndRing } from '../notices.ts';
+import { protectedChangesIn } from '../sessions/commit.ts';
 import { questSecretsOf } from '../sessions/secrets.ts';
 import { noteMerge, plotOptionsOf } from './plot.ts';
 import type { Context } from '../context.ts';
@@ -48,7 +50,9 @@ export async function mergeByMachine(ctx: Context, id: QuestId): Promise<Result<
   const outcome = await ctx.deps.plots.merge(plot.value, merge);
   await noteMerge(ctx, started.value, outcome);
   if (outcome.stop === undefined) {
-    return moveAndRing(ctx, { quest: id, event: { type: 'submit' }, actor: 'steward' });
+    const mark = protectedMarkOf(started.value, await protectedChangesIn(ctx, started.value));
+    const before = mark === undefined ? {} : { before: mark };
+    return moveAndRing(ctx, { quest: id, event: { type: 'submit' }, actor: 'steward', ...before });
   }
   const { reason, branch, detail } = outcome.stop;
   const where = branch === undefined ? '' : ` at ${branch}`;

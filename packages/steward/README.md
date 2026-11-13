@@ -176,6 +176,9 @@
   `detail.paths`, P1-49; every commit of a session's work checks so (`commitPlot`: the submit and each WIP; the
   Steward's own commit that takes a delivered contract's `subquests.json` off its branch, `closeContract`,
   goes through it too, P1-55), a WIP left in the plot with the reason, and a plot whose changes cannot be listed is not committed either;
+  the same read names the paths of `laws.protected_paths` the work changed, and the submit sets the royal seal and
+  `quest.protected_changes` through `Move.before` (`protectedMarkOf`, PS-04, ADR 0026), as the machine's merge of a
+  party does from its own changes (`protectedChangesIn`);
   before it, on a
   territory with `laws.patch_paths`, the assignee's `elvaria.patch` is applied through `Plots.applyPatch` and told
   in a `plot.patched` line, and a patch that touches other paths or does not apply sends the quest to the

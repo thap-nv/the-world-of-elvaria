@@ -464,6 +464,7 @@
     "cli.quest.field.merge_quest": "Quest ghép",
     "cli.quest.field.party": "Đội",
     "cli.quest.field.party_role": "Vai trong đội",
+    "cli.quest.field.protected": "Vùng bảo vệ đã chạm",
     "cli.quest.field.question": "Câu hỏi",
     "cli.quest.field.rank": "Hạng",
     "cli.quest.field.scope": "Vùng file",
