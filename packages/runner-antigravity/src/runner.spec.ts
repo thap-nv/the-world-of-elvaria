@@ -256,11 +256,9 @@ describe('probe and doctor', () => {
     const gone = await fakeRunner({
       launch: { command: path.join(world.root, 'no-agy.exe'), args: [] },
     }).doctor();
-    expect(gone).toMatchObject({
-      version: 'unknown',
-      auth_ok: false,
-      detail: expect.stringMatching(/agy models failed/) as unknown,
-    });
+    // A CLI that does not start is not a signed-out one.
+    expect(gone).toMatchObject({ version: 'unknown', auth_ok: false });
+    expect(gone.detail).toMatch(/^agy --version: did not start: .+; agy models: did not start: /);
   });
 
   it('declares what agy 1.5.2 can do: resume yes, sub-agents no', () => {

@@ -18,6 +18,7 @@ import {
 import type {
   AdapterTool,
   AgentRunner,
+  ChildRun,
   ProbeResult,
   RunningSession,
   SpawnRequest,
@@ -224,21 +225,29 @@ async function probe(options: AntigravityOptions): Promise<ProbeResult> {
   return windows.length === 0 ? answer : { ...answer, windows };
 }
 
+/** `agy models` that did not run to its end (its timeout, a failed start) says so, not "not signed in" (fix/busy-machine). */
+function signInProblems(models: ChildRun): string[] {
+  if (models.problem !== undefined) return [`agy models: ${models.problem}`];
+  const signedIn = models.code === 0 && /"models"\s*:\s*\[\s*\{/.test(models.stdout);
+  return signedIn ? [] : [`agy models failed (exit ${String(models.code)}): not signed in, or offline`];
+}
+
 /** Version, sign-in (`agy models` needs both login and network, 0 tokens) and the terms (ADR 0018). */
 async function doctor(options: AntigravityOptions): Promise<ToolInfo> {
   const call = { env: agyEnv(options.env, undefined), timeout_ms: options.timeout_ms ?? DEFAULT_TIMEOUT_MS };
-  const version = versionOf((await runToEnd(programOf(options.launch), ['--version'], call)).stdout);
+  const ran = await runToEnd(programOf(options.launch), ['--version'], call);
   const models = await runToEnd(programOf(options.launch), ['--output-format', 'json', 'models'], call);
-  const signedIn = models.code === 0 && /"models"\s*:\s*\[\s*\{/.test(models.stdout);
   const problems = [
-    ...(signedIn ? [] : [`agy models failed (exit ${String(models.code)}): not signed in, or offline`]),
+    ...signInProblems(models),
     ...(options.terms_acknowledged_at === undefined ? [TERMS] : []),
   ];
+  // A version that did not come is noted; it says nothing of whether a session can run.
+  const notes = [...(ran.problem === undefined ? [] : [`agy --version: ${ran.problem}`]), ...problems];
   return {
     path: options.launch.command,
-    version: version ?? 'unknown',
+    version: versionOf(ran.stdout) ?? 'unknown',
     auth_ok: problems.length === 0,
-    ...(problems.length === 0 ? {} : { detail: problems.join('; ') }),
+    ...(notes.length === 0 ? {} : { detail: notes.join('; ') }),
   };
 }
 

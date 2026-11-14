@@ -2,6 +2,7 @@ import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import { noAnswerWithin } from '@elvaria/runner-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
@@ -105,8 +106,18 @@ describe('doctor', () => {
     await writeFile(broken, '');
     const info = await fakeRunner({ executable: broken }).doctor();
     expect(info).toMatchObject({ path: broken, version: '', auth_ok: false });
-    expect(info.detail).toContain('no version from');
+    // It never started: doctor says so for both calls, not that the owner is logged out.
+    expect(info.detail).toContain(`${broken} --version: `);
+    expect(info.detail).toContain('claude auth status --json: ');
+    expect(info.detail).not.toContain('not logged in');
     await rm(path.dirname(broken), RM_TEMP);
+  });
+
+  it('says `claude auth status` ran out of time, and how long it had, never that the owner is logged out', async () => {
+    const info = await fakeRunner({ ...withEnv({ FAKE_CLAUDE_AUTH: 'hangs' }), timeoutMs: 1000 }).doctor();
+    expect(info.auth_ok).toBe(false);
+    expect(info.detail).toContain(`claude auth status --json: ${noAnswerWithin(1000)}`);
+    expect(info.detail).not.toContain('not logged in');
   });
 
   it('says when it found no CLI at all, and a session cannot start', async () => {
