@@ -116,7 +116,7 @@ describe('commitAll', () => {
   });
 
   it('keeps the start and complete redacted log of a 300-line hook refusal', async () => {
-    const { repo, plot, worktree } = await preparedPlot('long hook repo', 'j0k1l2');
+    const { repo, plot, worktree } = await preparedPlot('long hook repo', 'j0k1m2');
     const lines = Array.from({ length: 300 }, (_, i) => `Error ${i}: check failed`);
     const hook = path.join(repo, '.git', 'hooks', 'pre-commit');
     await writeFile(hook, `#!/bin/sh\n${lines.map((line) => `echo "${line}" >&2`).join('\n')}\nexit 1\n`);

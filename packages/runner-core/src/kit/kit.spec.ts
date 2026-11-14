@@ -156,7 +156,25 @@ describe('adapterOfModule', () => {
     ],
     [[{ code: 'unknown', params: {} }], [doctorNoteOf('doctor:bad_note', { code: 'unknown' })]],
     [[null], [doctorNoteOf('doctor:bad_note', { code: '?' })]],
+    [[{ code: 42 }], [doctorNoteOf('doctor:bad_note', { code: '42' })]],
     ['wrong', [doctorNoteOf('doctor:bad_note', { code: '?' })]],
+    [
+      [doctorNoteOf('doctor:command_timed_out', { command: 'cli', seconds: 0.01 })],
+      [doctorNoteOf('doctor:command_timed_out', { command: 'cli', seconds: 0.01 })],
+    ],
+    [[{ code: 'doctor:no_version' }], [doctorNoteOf('doctor:bad_note', { code: 'doctor:no_version' })]],
+    [
+      [
+        doctorNoteOf('doctor:terms_not_acknowledged'),
+        null,
+        doctorNoteOf('doctor:no_version', { command: 'cli' }),
+      ],
+      [
+        doctorNoteOf('doctor:terms_not_acknowledged'),
+        doctorNoteOf('doctor:bad_note', { code: '?' }),
+        doctorNoteOf('doctor:no_version', { command: 'cli' }),
+      ],
+    ],
     [
       [{ code: 'doctor:no_version', params: {} }],
       [doctorNoteOf('doctor:bad_note', { code: 'doctor:no_version' })],

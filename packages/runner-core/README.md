@@ -123,6 +123,12 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   `writePolicyFile(…, { dialect })` (`HookDialect`, `src/runner/hook-dialect.ts`, PS-23), so the hook reads that
   CLI without a branch of its own. A built-in package also exports an `AdapterTool` (its program, its search
   outside PATH, whether the provider's terms need acknowledging, its fake CLI) for the composition root (PS-23).
+- Summarizes refused commits with `hookOutputHead`: the first five nonempty lines without ANSI codes,
+  at most 200 characters per line including the ellipsis, with whole words where possible and intact
+  surrogate pairs. `head.errors` counts lines containing `error` regardless of case throughout the output;
+  `head.total_lines` counts all lines except trailing empty ones. With `CommitRescue`, the complete
+  redacted stderr then stdout is saved as `pre-commit.log` beside `wip.patch`; `CommitOutcome.log`
+  names that file and `detail` joins the head lines. Without rescue, no log file is written.
 - Proves in the conformance suite that a judge in its scratch plot, whose class allows commit and push, has both
   refused (`scratch_commit`, fakes only, P1-20).
 - Gives a tribe without a JSON Schema flag its structured reply (`src/structured/`, implementation-plan §3.14

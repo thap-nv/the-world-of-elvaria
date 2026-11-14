@@ -18,11 +18,16 @@ describe('hookOutputHead', () => {
     ['\nfirst\r\n\r\nsecond\n', ['first', 'second'], 4],
     ['\u001b[31mError\u001b[0m\nERROR\nwarning\n', ['Error', 'ERROR', 'warning'], 3],
     ['word '.repeat(50), [`${'word '.repeat(40).trimEnd()}…`], 1],
-    ['x'.repeat(300), [`${'x'.repeat(LINE_CHARS)}…`], 1],
-    [`${'x'.repeat(199)}😀${'y'.repeat(100)}`, [`${'x'.repeat(199)}😀…`], 1],
+    ['x'.repeat(300), [`${'x'.repeat(LINE_CHARS - 1)}…`], 1],
+    [`${'x'.repeat(198)}😀${'y'.repeat(100)}`, [`${'x'.repeat(198)}…`], 1],
+    [`${'x'.repeat(197)}😀${'y'.repeat(100)}`, [`${'x'.repeat(197)}😀…`], 1],
+    ['x'.repeat(200), ['x'.repeat(200)], 1],
   ])('summarizes %j', (output, lines, total) => {
     const head = hookOutputHead(output);
     expect(head.lines).toEqual(lines);
+    expect(head.lines.every((line) => line.length <= LINE_CHARS && !/[\uD800-\uDFFF]/u.test(line))).toBe(
+      true,
+    );
     expect(head.total_lines).toBe(total);
     expect(head.errors).toBe(output.includes('Error') ? 2 : 0);
   });

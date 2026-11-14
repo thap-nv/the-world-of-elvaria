@@ -6,7 +6,7 @@
 // path leaves everything uncommitted. The same read names the paths of laws.protected_paths the work changed (PS-04,
 // ADR 0026): never a refusal, the submit marks the quest for the royal seal and the stronger judge instead.
 import { currentRun, protectedPathsOf, runDirOf } from '@elvaria/domain';
-import { forbiddenChangesOf, forbiddenPathsOf } from '@elvaria/runner-core';
+import { forbiddenChangesOf, forbiddenPathsOf, hookOutputHead } from '@elvaria/runner-core';
 import { inKingdom } from '@elvaria/store';
 import type { Quest, QuestId } from '@elvaria/domain';
 import type { CommitOutcome } from '@elvaria/runner-core';
@@ -82,6 +82,7 @@ export async function commitPlot(ctx: Context, questId: QuestId, message: string
       );
     return guarded.length === 0 ? outcome : { ...outcome, protected_changes: guarded };
   } catch (error) {
-    return { status: 'refused', detail: messageOf(error) };
+    const head = hookOutputHead(messageOf(error));
+    return { status: 'refused', detail: head.lines.join('\n'), head };
   }
 }
