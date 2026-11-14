@@ -1,7 +1,8 @@
 // buildAmendmentPrompt (PS-22b, implementation-plan §3.16.2; ADR 0024): a doer contests its quest's description with
 // an `amendment` memo, and whoever wrote the description decides it in a fresh session with no tool, like the
-// Chancellor's: the quest, its description, the plan it came from, the amendment and the doer's letter. Its reply is
-// the amendment-decision structured output. What the doer reads of the decision is amendment-answer.ts.
+// Chancellor's: the quest, its description, the plan it came from with its plan file's summary (fix/mage-plan-file),
+// the amendment and the doer's letter. Its reply is the amendment-decision structured output. What the doer reads of
+// the decision is amendment-answer.ts.
 import { LANGUAGE_NAMES, classBlock, decreeBlock } from './blocks.ts';
 import { draftingValuesOf } from './drafting.ts';
 import { fill, joinBlocks } from './templates.ts';
@@ -33,6 +34,11 @@ export interface AmendmentContext {
   readonly memo: Memo;
   /** The plan quest a mage's sub-quest came from: its description holds the brief the owner sealed (PS-06). */
   readonly plan?: Quest | undefined;
+  /**
+   * The `## Summary` of each plan file that plan quest changed (`plans/<short-topic>.md`, PS-06b), as its plot holds
+   * them; none when the plot is gone or holds no summary (fix/mage-plan-file, PS-22b (C)).
+   */
+  readonly plan_summaries?: readonly { readonly file: string; readonly summary: string }[] | undefined;
   /** The doer's handover letter as the run left it; null when it cannot be read. */
   readonly letter: string | null;
 }
@@ -59,6 +65,12 @@ function planBlock(plan: Quest | undefined): string {
   return `# The plan it came from\n\n\`${plan.id}\` «${plan.title}»:\n\n${capped(plan.description.trim())}`;
 }
 
+/** The summary of each plan file, the one page that says how the work was cut; empty when there is none. */
+const planSummaryBlock = (summaries: AmendmentContext['plan_summaries'] = []): string =>
+  summaries
+    .map(({ file, summary }) => `# The plan's summary, in \`${file}\`\n\n${capped(summary.trim())}`)
+    .join('\n\n');
+
 const amendmentLines = (memo: Memo): string =>
   `\`${memo.id}\` from \`${memo.from}\`, at the end of run ${String(memo.attempt)}; files: ${paths(memo.refs)}\n\n${memo.body.trim()}`;
 
@@ -79,6 +91,7 @@ export function buildAmendmentPrompt(context: AmendmentContext, t: PromptTemplat
       quest: questLines(context.quest),
       description: context.quest.description.trim(),
       plan: planBlock(context.plan),
+      plan_summary: planSummaryBlock(context.plan_summaries),
       amendment: amendmentLines(context.memo),
       letter: context.letter === null ? 'The letter cannot be read.' : capped(context.letter.trim()),
     }),

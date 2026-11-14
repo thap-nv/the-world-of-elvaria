@@ -1,8 +1,9 @@
 // The author of an amendment, as `elvaria run` asks it (PS-22b, implementation-plan §3.16.2; ADR 0024): the memo
 // names the mage of the quest's plan, or no one, and then the Chancellor speaks. Either speaks in the Chancellor's
 // office: a session with no tool (the Chancellor's class gives the tools), its reply the amendment-decision output.
-// The mage reads its own class prompt and the plan quest its quest came from; both read the quest, the memo and the
-// doer's letter. Nothing here decides: decideAmendment asks, amendmentCommand holds the reply against the delegation.
+// The mage reads its own class prompt, the plan quest its quest came from and the summary of that plan's file while
+// the plan's plot holds it (fix/mage-plan-file, PS-22b (C)); both read the quest, the memo and the doer's letter.
+// Nothing here decides: decideAmendment asks, amendmentCommand holds the reply against the delegation.
 import { readFile } from 'node:fs/promises';
 
 import { CHANCELLOR_CLASS, tribeLimitsOf } from '@elvaria/domain';
@@ -11,6 +12,7 @@ import type { ChancellorSession } from '@elvaria/chancellor';
 import type { AmendmentContext } from '@elvaria/runner-core';
 import { inKingdom, kingdomLayout, readClassPrompt, readDecree } from '@elvaria/store';
 
+import { planSummariesOf } from '../quest/plan-view.ts';
 import { chancellorOf, sessionOf, speakerOf } from '../say/hearing.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 import type { Runners } from '../say/hearing.ts';
@@ -128,7 +130,7 @@ export async function authorshipOf(
     context_budget_tokens: ctx.kingdom.breakers.context_budget_tokens,
     quest,
     memo,
-    ...(plan === undefined ? {} : { plan }),
+    ...(plan === undefined ? {} : { plan, plan_summaries: await planSummariesOf(ctx, plan) }),
     letter: await letterOf(ctx, quest.id),
   };
   return { status: 'ready', session, context };

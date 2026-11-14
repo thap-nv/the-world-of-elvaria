@@ -46,6 +46,10 @@ const PLAN: Quest = {
   status: 'done',
 };
 
+// The plan file's `## Summary` (PS-06b), as the CLI reads it from the plan's plot (fix/mage-plan-file).
+const SUMMARY =
+  'Hai phần: d1 thêm script `check` (hiệp sĩ, D), d2 cập nhật README (thư lại, E). Rủi ro: lint chặn sửa tay package.json.';
+
 const context: AmendmentContext = {
   locale: 'vi',
   decree: null,
@@ -66,12 +70,34 @@ describe("an amendment's author", () => {
     expect(built.user).not.toContain('# The plan it came from');
   });
 
-  it('amendment-mage reads the plan it came from, under the decree', async () => {
-    const mage = { ...context, role: 'mage', decree: DECREE, class_prompt: null, plan: PLAN } as const;
+  it('amendment-mage reads the plan it came from and its plan file summary, under the decree', async () => {
+    const mage = {
+      ...context,
+      role: 'mage',
+      decree: DECREE,
+      class_prompt: null,
+      plan: PLAN,
+      plan_summaries: [{ file: 'plans/check.md', summary: SUMMARY }],
+    } as const;
     const built = buildAmendmentPrompt(mage, templates);
     await expect(show(built)).toMatchFileSnapshot('__snapshots__/amendment-mage.txt');
     expect(built.system.startsWith('# Royal decree')).toBe(true);
     expect(built.user).toContain('Gom mọi kiểm tra vào một lệnh.');
+    expect(built.user).toContain(
+      `# The plan's summary, in \`plans/check.md\`\n\n${SUMMARY}\n\n# The amendment`,
+    );
+  });
+
+  // fix/mage-plan-file: a plan whose plot is gone, or holds no summary, reads as it did before PS-22b (C).
+  it('leaves the summary out when the plan has none, with no empty block', () => {
+    const plain = buildAmendmentPrompt({ ...context, role: 'mage', plan: PLAN }, templates);
+    const none = buildAmendmentPrompt(
+      { ...context, role: 'mage', plan: PLAN, plan_summaries: [] },
+      templates,
+    );
+    expect(none.user).toBe(plain.user);
+    expect(plain.user).not.toContain("# The plan's summary");
+    expect(plain.user).toContain('Một lệnh `pnpm check` cho CI.\n\n# The amendment');
   });
 
   it('cuts a long letter or plan, and says when the letter cannot be read', () => {

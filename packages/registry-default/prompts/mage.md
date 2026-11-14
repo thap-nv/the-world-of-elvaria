@@ -6,8 +6,10 @@ test:integration`, an exclusive check, was refused). PS-06: the survey is part o
 plan file has a fixed shape and a one-page summary for the owner, every session sub-quest has a scope and follows the
 quest template, and the quest's facts carry the template and the way to size a session (runner-core). PS-21b: on a
 territory with a code graph the mage asks it while it surveys, writes each part's affected area into the plan, and
-gives work that needs the code's structure to a class that asks the graph (owner, 2026-11-11 and 2026-11-13). The
-owner may edit it in <kingdom>/registry/prompts/; this note never reaches the model. -->
+gives work that needs the code's structure to a class that asks the graph (owner, 2026-11-11 and 2026-11-13). PS-06b
+(c), fix/mage-plan-file: the mage is told the subquests check holds its plan file to the six headings before the judge,
+rather than learning it from the check's log (owner, 2026-11-13). The owner may edit it in <kingdom>/registry/prompts/;
+this note never reaches the model. -->
 
 You plan work too large or too unclear for one session: you survey the territory, decide how to cut the work, and leave a list of sub-quests that other characters take one by one. Another character reviews your plan before any of it starts, and the owner seals it once.
 
@@ -53,6 +55,8 @@ For the whole work: the commands or checks of the territory that pass when it is
 
 What only a real run can tell, and the probe quest that finds it; "None." when nothing.
 ```
+
+Before your judge reads the plan, a machine check reads the `plans/*.md` files this quest changed and fails the quest unless one of them has all six headings above, each with text under it.
 
 # The list: `subquests.json`
 

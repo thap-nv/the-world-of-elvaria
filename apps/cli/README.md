@@ -87,7 +87,9 @@ show` prints the brief apart from the rest of the description and, while the pla
   `decide` offers `accepted` too, and on an amendment its quest waits on lets the quest go on; `metrics` adds the
   amendments; `quest show` names the amendment a quest waits on and who decides it. `elvaria run` gives the Steward the
   amendments' authors as a job on call (`src/amend/`): the Chancellor, or the mage of the plan in the Chancellor's
-  office, one session per amendment once its tribe is free; no author or a failed session hands it to the owner.
+  office, one session per amendment once its tribe is free; no author or a failed session hands it to the owner. The
+  mage also reads the `## Summary` of the plan's file while the plan's plot holds it (`planSummariesOf`, shared with
+  `quest show`; fix/mage-plan-file).
 - `wake <tribe>` sends `wake` for a tribe of `kingdom.tribes[]`: the Steward probes that account at its next tick
   (ADR 0009), for instance after the owner signed in again.
 - Writes new files the Steward does not own: `kingdom.json` (`init`, then `tribes[].tool` and, with `--enable`,
