@@ -2,6 +2,8 @@
 // two Stewards (implementation-plan §3.1, ADR 0005). Every decision of a tick is planTick's, a pure function of the
 // files (ADR 0002); the Steward reads the files, carries the plan out and writes what happened. The tick (tick.ts),
 // the loop (loop.ts) and what the Steward keeps between ticks (steward-state.ts) live apart since PS-03.
+import process from 'node:process';
+
 import { err, ok, zonedTime } from '@elvaria/domain';
 import { loadPromptTemplates } from '@elvaria/runner-core';
 import { acquireLock, inKingdom, isLocked } from '@elvaria/store';
@@ -79,31 +81,35 @@ const idleOf = async (state: State): Promise<void> => {
   await Promise.all([state.background.idle(), state.graphs?.idle(), state.scheduler.idle()]);
 };
 
+/** What the Steward keeps between ticks, as it starts; `ended` is told once work outside the tick ended (P1-10b). */
+const stateOf = (deps: StewardDeps, ended: () => void): State => ({
+  sessions: createSessions(pidsWriter(deps.store.root)),
+  handled: new Set(),
+  limits: limitsOf(deps.runners, deps.platform ?? process.platform),
+  mana: createManaBook(),
+  background: createBackground(deps.log, ended),
+  judgeLocks: createJudgeLocks(deps.log),
+  graphs: deps.graphs === undefined ? undefined : createGraphBuilds(deps.graphs, deps.log),
+  reported: new Map(),
+  stopping: new AbortController(),
+  unjudged: new Set(),
+  judgeWaits: new Map(),
+  promptSizes: new Map(),
+  versions: createVersionBook(),
+  scheduler: createScheduler(jobsOf(deps), deps.onCall),
+  restart: undefined,
+  held: undefined,
+  beat: undefined,
+  timer: undefined,
+  woken: false,
+  queue: Promise.resolve(),
+});
+
 export function createSteward(deps: StewardDeps): Steward {
-  const state: State = {
-    sessions: createSessions(pidsWriter(deps.store.root)),
-    handled: new Set(),
-    limits: limitsOf(deps.runners),
-    mana: createManaBook(),
-    // Work that ended calls the loop's next tick at once (P1-10b).
-    background: createBackground(deps.log, () => {
-      wake(deps, state, tick);
-    }),
-    judgeLocks: createJudgeLocks(deps.log),
-    graphs: deps.graphs === undefined ? undefined : createGraphBuilds(deps.graphs, deps.log),
-    reported: new Map(),
-    stopping: new AbortController(),
-    unjudged: new Set(),
-    judgeWaits: new Map(),
-    versions: createVersionBook(),
-    scheduler: createScheduler(jobsOf(deps), deps.onCall),
-    restart: undefined,
-    held: undefined,
-    beat: undefined,
-    timer: undefined,
-    woken: false,
-    queue: Promise.resolve(),
-  };
+  // Work that ended calls the loop's next tick at once (P1-10b).
+  const state = stateOf(deps, () => {
+    wake(deps, state, tick);
+  });
   const tick = tickOf(deps, state);
   return {
     start: async (options = {}) => {

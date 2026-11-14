@@ -7,6 +7,7 @@ import type { HeldLock } from '@elvaria/store';
 import type { Background } from './background.ts';
 import type { GraphBuilds } from './graph-builds.ts';
 import type { JudgeLocks } from './review/exclusive.ts';
+import type { PromptSizes } from './review/prompt-size.ts';
 import type { ManaBook } from './mana/book.ts';
 import type { Restart } from './restart.ts';
 import type { Scheduler } from './schedule/scheduler.ts';
@@ -41,6 +42,8 @@ export interface State {
   readonly unjudged: Set<QuestId>;
   /** Submitted quests the bell named for judges all held by their mana, with their gauges (judge-waits.ts, PS-03). */
   readonly judgeWaits: Map<QuestId, JudgeWait>;
+  /** The judges' prompts measured for the reviews about to be judged (review/prompt-size.ts). */
+  readonly promptSizes: PromptSizes;
   /** What the tribes' CLIs said their version was, and the tribes held by it (tribe-versions.ts, A1b). */
   readonly versions: VersionBook;
   /** The scheduled jobs: the digest, and the jobs the composition root gives (PS-03). */

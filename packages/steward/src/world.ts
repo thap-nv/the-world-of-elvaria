@@ -1,6 +1,6 @@
 // The kingdom as one tick sees it: read from the files at the start of the tick, then kept current by every
 // write the tick makes, so later steps decide on what earlier steps did (implementation-plan §3.1).
-import { modelsOfTribes, tribeLimitsOf } from '@elvaria/domain';
+import { modelsOfTribes, tribeLimitsOn } from '@elvaria/domain';
 import type {
   BackgroundWork,
   Character,
@@ -11,6 +11,7 @@ import type {
   Quest,
   QuestId,
   Registry,
+  ReviewPrompt,
   Territory,
   TerritoryId,
   TribeId,
@@ -68,14 +69,18 @@ export async function loadWorld(store: KingdomStore, log: Logger): Promise<World
   };
 }
 
-/** What each tribe's runner allows (§3.14); a tribe without a runner has no entry and takes no work. */
+/**
+ * What each tribe's runner allows (§3.14) on this machine's `platform`, its prompt limit there included
+ * (fix/verifier-prompt-limit); a tribe without a runner has no entry and takes no work.
+ */
 export function limitsOf(
   runners: Readonly<Partial<Record<TribeId, AgentRunner>>>,
+  platform: string,
 ): Partial<Record<TribeId, TribeLimits>> {
   const limits: Partial<Record<TribeId, TribeLimits>> = {};
   for (const [tribe, runner] of Object.entries(runners)) {
     // Object.entries widens the TribeId keys to string.
-    if (runner !== undefined) limits[tribe as TribeId] = tribeLimitsOf(runner.capabilities);
+    if (runner !== undefined) limits[tribe as TribeId] = tribeLimitsOn(runner.capabilities, platform);
   }
   return limits;
 }
@@ -93,16 +98,21 @@ export function modelsOf(runners: Readonly<Partial<Record<TribeId, AgentRunner>>
   return modelsOfTribes(capabilities);
 }
 
-/** The snapshot planTick decides on, with the pools asleep, the gauges' readings (§3.5) and the background (P1-25). */
+/**
+ * The snapshot planTick decides on, with the pools asleep, the gauges' readings (§3.5), the background (P1-25) and the
+ * judges' prompts measured for the reviews about to be judged (review/prompt-size.ts).
+ */
 export const snapshotOf = (
   world: World,
   limits: Partial<Record<TribeId, TribeLimits>>,
   mana: Pick<ManaBook, 'asleep' | 'readings' | 'shares'>,
   sessions: readonly HeldSession[] = [],
   background: BackgroundWork = { running: [], checked: [] },
+  reviewPrompts: readonly ReviewPrompt[] = [],
 ): KingdomSnapshot => ({
   sessions,
   background,
+  review_prompts: reviewPrompts,
   kingdom: world.kingdom,
   territories: [...world.territories.values()],
   registry: world.registry,
