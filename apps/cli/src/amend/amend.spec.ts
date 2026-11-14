@@ -83,6 +83,8 @@ describe("an amendment's author, on call (PS-22b)", () => {
         },
       }),
     ]);
+    // fix/cli-lines (39): a decision nothing held for the owner says no reason in brackets.
+    expect(io.printed.out).toContain(`Amendment ${DRAFTED_MEMO.id} of quest ${DRAFTED.id}: accepted.`);
     // Its decision waits in the inbox: no second session for it.
     expect(await job.ready(view([DRAFTED.id]))).toBe(false);
     await job.run(view([DRAFTED.id]));
@@ -143,6 +145,9 @@ describe("an amendment's author, on call (PS-22b)", () => {
       note: 'Đúng: lint chặn.',
       holds: ['above_rank'],
     });
+    expect(io.printed.out).toContain(
+      `Amendment ${DRAFTED_MEMO.id} of quest ${DRAFTED.id}: owner (held for you by: above_rank).`,
+    );
     const failing = author({ version: 1 });
     await amendmentJob(ctx, { [CLAUDE]: failing }).run(view([CHILD.id]));
     expect((await inbox())[1]?.payload).toMatchObject({ decision: 'owner', holds: ['chancellor_asks'] });

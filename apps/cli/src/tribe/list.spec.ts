@@ -85,7 +85,7 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
     const io = testIo();
     expect(await elvaria(io, 'tribe', 'list')).toBe(0);
     const lantern = FAKE_LANTERN.replaceAll('\\', '/');
-    // The shell each adapter declares for this OS (P1-46): claude and agy declare only Windows' (P1-40). The looks
+    // The shell and the prompt limit each adapter declares for this OS (P1-46, fix/cli-lines): claude and agy declare only Windows' (P1-40). The looks
     // (PS-24): claude and gemini pinned, the others drawn by their ids in the order of kingdom.tribes[].
     const windows = process.platform === 'win32';
     const cells = io.printed.out.map((line) => line.split(/ {2,}/));
@@ -101,6 +101,7 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
         'Guarded',
         'Capabilities',
         'Shell',
+        'Prompt max',
         'Path',
       ],
       [
@@ -115,6 +116,7 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
         'headless, context_file, events, tool_gate, usage, structured_output, resume, compact, subagent',
         windows ? 'Git Bash' : '—',
         '—',
+        '—',
       ],
       [
         'gemini',
@@ -127,6 +129,8 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
         'yes',
         'headless, context_file, events, tool_gate, usage, structured_output, resume',
         windows ? 'Windows PowerShell (powershell.exe)' : '—',
+        // agy takes its prompt on the command line, which Windows cuts (fix/verifier-prompt-limit, fix/cli-lines).
+        windows ? '26000' : '—',
         '—',
       ],
       [
@@ -140,6 +144,7 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
         'no',
         // lantern has no JSON Schema flag since P1-33: its judges answer in text.
         'headless, usage',
+        '—',
         '—',
         lantern,
       ],
@@ -155,6 +160,7 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
         'no runner yet',
         '—',
         '—',
+        '—',
       ],
       [
         'broken',
@@ -166,6 +172,7 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
         '—',
         '—',
         'adapter file does not load: elvaria tribe check broken',
+        '—',
         '—',
         '—',
       ],

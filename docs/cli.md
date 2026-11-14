@@ -386,7 +386,7 @@ Quyết một thư, một lần: gác lại (shelved), bác (rejected), hoặc n
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
 | `<memo>` | id của thư, ví dụ m_20261112_4k2pqz (elvaria memo list in ra). |
-| `<decision>` | shelved, rejected hoặc handled. |
+| `<decision>` | shelved, rejected, handled, hoặc accepted (chỉ với thư phản biện). |
 | `--quest <quest>` | Đi với handled: nhiệm vụ làm việc đó. |
 | `--note <text>` | Ghi chú lưu cùng quyết định. |
 

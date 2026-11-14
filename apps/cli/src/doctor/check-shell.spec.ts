@@ -152,10 +152,11 @@ describe('elvaria doctor: PowerShell for agy (P1-41)', () => {
     },
   );
 
-  it('says the shell each tribe declares, and checks PowerShell for an adapter file that declares it (P1-46)', async () => {
+  it('says the shell and prompt limit each tribe declares, and checks PowerShell for an adapter file (P1-46)', async () => {
     await installLantern(kingdom);
     const lantern = pathToFileURL(path.join(kingdom, LANTERN_ADAPTER)).href;
     const shells = { win32: 'Windows PowerShell (powershell.exe)', darwin: 'zsh', linux: 'bash' };
+    const limits = { win32: 26_000, darwin: 200_000, linux: 100_000 };
     const adapter = await writeAdapter(
       kingdom,
       'shelled',
@@ -163,7 +164,7 @@ describe('elvaria doctor: PowerShell for agy (P1-41)', () => {
         `import { createAdapter as lantern } from ${JSON.stringify(lantern)};`,
         'export function createAdapter(kit) {',
         '  const runner = lantern(kit);',
-        `  return { ...runner, capabilities: { ...runner.capabilities, shell: ${JSON.stringify(shells)} } };`,
+        `  return { ...runner, capabilities: { ...runner.capabilities, shell: ${JSON.stringify(shells)}, prompt_max_chars: ${JSON.stringify(limits)} } };`,
         '}',
         '',
       ].join('\n'),
@@ -173,6 +174,12 @@ describe('elvaria doctor: PowerShell for agy (P1-41)', () => {
     const windows = process.platform === 'win32';
     const shell = shells[process.platform as keyof typeof shells];
     expect(text).toContain(`✓ Tribe shelled: its sessions run commands in ${shell}.`);
+    // fix/cli-lines (97): the limit for this OS alone, as the shell; claude declares none, so says none.
+    const max = limits[process.platform as keyof typeof limits];
+    expect(text).toContain(
+      `✓ Tribe shelled: its CLI takes a user prompt of at most ${String(max)} characters on this machine;`,
+    );
+    expect(text).not.toContain('Tribe claude: its CLI takes a user prompt');
     // Not a table of adapter ids any more: the file's PowerShell is asked as agy's is, on Windows only.
     expect(text.includes('✗ Tribe shelled: PowerShell refuses scripts (Execution Policy Restricted).')).toBe(
       windows,
