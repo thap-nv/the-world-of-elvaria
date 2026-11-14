@@ -157,4 +157,14 @@ describe('.claude/settings.json', () => {
       expect(existsSync(join(REPO, (script ?? '').replace('${CLAUDE_PROJECT_DIR}', '')))).toBe(true);
     }
   });
+
+  it('turns off claude.ai connectors, artifacts and workflows, which no session on the repo uses', () => {
+    // Their tool descriptions sat in the head of every request: 59-62k tokens before, 43.5k after (implementation-plan
+    // §11 2026-11-14, (57) and (58)). Characters run with --setting-sources project,local, so they get these too.
+    expect(settings).toMatchObject({
+      disableClaudeAiConnectors: true,
+      enableArtifact: false,
+      disableWorkflows: true,
+    });
+  });
 });

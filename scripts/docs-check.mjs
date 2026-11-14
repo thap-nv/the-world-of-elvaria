@@ -65,9 +65,12 @@ export function adrProblems(files, read) {
 export const DOC_MAX_KB = 150;
 /**
  * The most CLAUDE.md may weigh: every session on the repo loads all of it before its first step. It grew from 14.6 KB
- * to 32 KB in a week, mostly by repeating docs/cli.md and the plan; 29 KB is its size once cut, plus a few lines.
+ * to 32 KB in a week, mostly by repeating docs/cli.md and the plan, and was cut to 29 KB. At 28 KB it still took
+ * 10-12k of the ~27k tokens a session spends before its first step, so docs/slim-claude-md moved what is only looked
+ * up (repo map, commands, repo hooks) to docs/guides/repo-handbook.md and area steps to .claude/rules; 17 KB is its
+ * size after that, 16.2 KB, plus a few lines.
  */
-export const CLAUDE_MD_MAX_KB = 29;
+export const CLAUDE_MD_MAX_KB = 17;
 const DOC_MARKDOWN = /^docs\/.+\.md$/;
 
 /** Which files have a ceiling, and what to do when one passes it. */
@@ -80,7 +83,8 @@ const CEILINGS = [
   {
     weighs: (/** @type {string} */ file) => file === 'CLAUDE.md',
     maxKb: CLAUDE_MD_MAX_KB,
-    advice: 'point to docs/cli.md, the plan or .claude/rules instead of repeating them',
+    advice:
+      'move what is only looked up to docs/guides/repo-handbook.md or .claude/rules, or point to the plan',
   },
 ];
 

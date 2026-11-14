@@ -42,3 +42,4 @@ paths:
 
 - Payload stdin dựng theo tài liệu (`src/__fixtures__/claude-payloads.ts`, đủ 12 sự kiện) và payload thật của spike (`packages/runner-claude/fixtures/hook-payloads.jsonl`, `real-payloads.spec.ts`); mọi dòng ghi ra được đọc lại qua `EventSchema`.
 - Nhánh Antigravity của hook có từ P1-12b (`src/antigravity/`), nhánh Codex từ P1-12d (`src/codex/`, payload thật ở `packages/runner-codex/fixtures/hook-payloads.jsonl`); nhánh Gemini CLI đến cùng adapter (P1-12c, để dành). Hook đọc tên event của agy từ argv: payload của agy trước 1.5.4 không có nó, và từ 1.5.4 có `hookEventName` mà hook không dùng.
+- Đụng `packages/hooks/**` → `pnpm --filter @elvaria/hooks test` (tự build, gồm cổng khởi động). Đụng `packages/eventlog/**` → `pnpm --filter @elvaria/eventlog test` (fixture secret phải bị che hết) **và** `pnpm --filter @elvaria/hooks test`, vì hook chạy bản build của eventlog.

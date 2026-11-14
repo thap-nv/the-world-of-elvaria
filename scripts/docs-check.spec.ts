@@ -133,7 +133,7 @@ describe('sizeProblems', () => {
     const limit = CLAUDE_MD_MAX_KB * 1024;
     expect(sizeProblems(['CLAUDE.md'], () => 'x'.repeat(limit))).toEqual([]);
     expect(sizeProblems(['CLAUDE.md'], () => `${'x'.repeat(limit)}ạ`)).toEqual([
-      `CLAUDE.md: ${CLAUDE_MD_MAX_KB + 1} KB, over ${CLAUDE_MD_MAX_KB} KB; point to docs/cli.md, the plan or .claude/rules instead of repeating them`,
+      `CLAUDE.md: ${CLAUDE_MD_MAX_KB + 1} KB, over ${CLAUDE_MD_MAX_KB} KB; move what is only looked up to docs/guides/repo-handbook.md or .claude/rules, or point to the plan`,
     ]);
     expect(CLAUDE_MD_MAX_KB).toBeLessThan(DOC_MAX_KB);
   });
