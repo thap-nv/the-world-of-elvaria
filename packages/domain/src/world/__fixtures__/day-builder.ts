@@ -6,7 +6,7 @@ import { transitionCharacter } from '../../character/transition.ts';
 import { formatUlid } from '../../core/id-source.ts';
 import { currentRun } from '../../quest/attempt-log.ts';
 import { transition } from '../../quest/transition.ts';
-import { EventSchema } from '../../schema/event/event.ts';
+import { EVENT_VERSION, EventSchema } from '../../schema/event/event.ts';
 import { characterViewOf } from '../character-view.ts';
 import { questLogTypeOf } from '../quest-log-type.ts';
 import { questViewOf } from '../quest-view.ts';
@@ -112,7 +112,7 @@ export function dayBuilder(morning: WorldSource) {
     const ts = at(minute);
     const run = about === undefined ? 0 : currentRun(about);
     const line = EventSchema.parse({
-      v: 1,
+      v: EVENT_VERSION,
       id: formatUlid(Date.parse(ts) as Instant, BigInt(events.length)),
       ts,
       type,

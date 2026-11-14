@@ -4,10 +4,10 @@ import examples from '../../../examples/event.json' with { type: 'json' };
 import { CHARACTER_VIEW, QUEST_VIEW, TERRITORY_VIEW } from '../../world/__fixtures__/examples.ts';
 import { POOL, QUEST_CHANGE, SHA_NEW, ULID, VALID_DATA } from './__fixtures__/valid-data.ts';
 import { isKnownEventType } from './event-types.ts';
-import { EventSchema } from './event.ts';
+import { EVENT_VERSION, EventSchema } from './event.ts';
 
 const line = (type: string, data: Record<string, unknown>, change: Record<string, unknown> = {}) => ({
-  v: 1,
+  v: EVENT_VERSION,
   id: '01JCF8X4Z6Q3W9N2M5R7T8V0YB',
   ts: '2026-11-06T09:12:03+07:00',
   type,

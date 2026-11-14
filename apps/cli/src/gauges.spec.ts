@@ -1,6 +1,6 @@
 // The mana gauges the Steward logged (P1-32): folded from its `mana.*` lines, then shown by `character list` (the
 // characters the Steward put to sleep are marked with their gauge) and `doctor` (every gauge, readings, resets).
-import { EventSchema, InstantSchema } from '@elvaria/domain';
+import { EVENT_VERSION, EventSchema, InstantSchema } from '@elvaria/domain';
 import type { CharacterId, Event } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import { openKingdom } from '@elvaria/store';
@@ -21,7 +21,7 @@ let next = 0;
 function manaLine(type: string, data: Record<string, unknown>, ts = READ_AT): Event {
   next += 1;
   return EventSchema.parse({
-    v: 1,
+    v: EVENT_VERSION,
     id: `01M6RQ5Y000000000000001${String(next).padStart(3, '0')}`,
     ts,
     type,

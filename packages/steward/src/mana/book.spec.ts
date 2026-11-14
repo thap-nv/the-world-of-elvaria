@@ -1,3 +1,4 @@
+import { EVENT_VERSION } from '@elvaria/domain';
 import { describe, expect, it } from 'vitest';
 
 import { asleepFromLog, createManaBook, isAsleep, levelsFromLog } from './book.ts';
@@ -5,7 +6,7 @@ import type { Event } from '@elvaria/domain';
 
 function line(type: string, data: unknown): Event {
   const event: Event = {
-    v: 1,
+    v: EVENT_VERSION,
     id: '01JCF8X4Z6Q3W9N2M5R7T8V0YB' as Event['id'],
     ts: '2026-11-07T09:00:00+07:00',
     type,

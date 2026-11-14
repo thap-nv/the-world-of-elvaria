@@ -1,6 +1,6 @@
 // `quest show` of a quest in the infirmary says why, from the last `quest.infirmary` line of its journal (P1-32): the
 // trip and the detail in the owner's language, or the English reason of a line written before P1-32.
-import { EventSchema, questViewOf } from '@elvaria/domain';
+import { EVENT_VERSION, EventSchema, questViewOf } from '@elvaria/domain';
 import { openJournal } from '@elvaria/eventlog';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -16,7 +16,7 @@ let next = 0;
 function infirmaryLine(data: Record<string, unknown>, attempt?: number, quest: Quest = SICK) {
   next += 1;
   return EventSchema.parse({
-    v: 1,
+    v: EVENT_VERSION,
     id: `01M6RQ5Y000000000000000${String(next).padStart(3, '0')}`,
     ts: '2026-11-06T09:00:00+07:00',
     type: 'quest.infirmary',

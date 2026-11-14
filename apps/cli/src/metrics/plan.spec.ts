@@ -1,6 +1,6 @@
 // `elvaria metrics --plan <quest>` and the three numbers the research session asked for (PS-06b): a plan's sub-quests
 // against its plan; time in each status, the pass rate by run and the Chancellor's advice in the ledger.
-import { EventSchema, VerdictSchema, questViewOf } from '@elvaria/domain';
+import { EVENT_VERSION, EventSchema, VerdictSchema, questViewOf } from '@elvaria/domain';
 import type { Attempt, PlanAccuracy, Quest } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import { openKingdom } from '@elvaria/store';
@@ -63,7 +63,7 @@ const line = (
 ) => {
   ulid += 1;
   return EventSchema.parse({
-    v: 1,
+    v: EVENT_VERSION,
     id: `01JC${String(ulid).padStart(22, '0')}`,
     ts,
     type,

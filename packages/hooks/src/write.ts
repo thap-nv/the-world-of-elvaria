@@ -2,6 +2,7 @@
 // strings → append to the log and to the quest's journal. A failed write never blocks the session: it is
 // reported on stderr and the call exits as the laws decided.
 import {
+  CURRENT_EVENT_VERSION,
   createRedactor,
   createStamper,
   localTs,
@@ -21,7 +22,7 @@ import type { Draft } from './draft.ts';
 type Event = Parameters<EventLog['append']>[0][number];
 
 interface HookLine {
-  readonly v: 1;
+  readonly v: typeof CURRENT_EVENT_VERSION;
   readonly id: string;
   readonly ts: string;
   readonly type: string;
@@ -45,7 +46,7 @@ function lineOf(
   stamp: { id: string; ts: string },
 ) {
   const line: HookLine = {
-    v: 1,
+    v: CURRENT_EVENT_VERSION,
     id: stamp.id,
     ts: stamp.ts,
     type: draft.type,

@@ -4,6 +4,7 @@
 // So a fake day is valid against the state machines by construction, and replaying its lines from the morning
 // gives back its evening files (the spec checks it). A refused move is a bug in the sandbox: it throws.
 import {
+  EVENT_VERSION,
   EventSchema,
   characterViewOf,
   currentRun,
@@ -121,7 +122,7 @@ function write(book: Book, ts: string, line: Line): void {
   const run = line.quest === undefined ? 0 : currentRun(line.quest);
   const about = line.quest === undefined ? {} : { quest: line.quest.id, territory: line.quest.territory };
   const event = EventSchema.parse({
-    v: 1,
+    v: EVENT_VERSION,
     id: book.ids.ulid(),
     ts,
     type: line.type,

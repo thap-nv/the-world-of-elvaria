@@ -2,7 +2,7 @@
 // for P0-08), so it also writes the line the world learns of them from: territory.* and character.* events carry
 // the view after the change (P0-09), and the reducer puts it in place. P0-08 merged after P0-05, so it wires this
 // (implementation-plan §8).
-import { EventSchema, characterViewOf, territoryViewOf } from '@elvaria/domain';
+import { EVENT_VERSION, EventSchema, characterViewOf, territoryViewOf } from '@elvaria/domain';
 import type { Character, EventData, Territory } from '@elvaria/domain';
 import { createRedactor, openEventLog, redactDeep } from '@elvaria/eventlog';
 
@@ -20,7 +20,7 @@ async function append(ctx: KingdomContext, line: unknown): Promise<void> {
 
 export function recordTerritoryAttached(ctx: KingdomContext, territory: Territory): Promise<void> {
   return append(ctx, {
-    v: 1,
+    v: EVENT_VERSION,
     id: ctx.ids.ulid(),
     ts: ctx.now(),
     type: 'territory.attached',
@@ -39,12 +39,12 @@ export function recordUpgrade<T extends UpgradeEventType>(
   type: T,
   data: EventData<T>,
 ): Promise<void> {
-  return append(ctx, { v: 1, id: ctx.ids.ulid(), ts: ctx.now(), type, actor: OWNER, data });
+  return append(ctx, { v: EVENT_VERSION, id: ctx.ids.ulid(), ts: ctx.now(), type, actor: OWNER, data });
 }
 
 export function recordCharacterCreated(ctx: KingdomContext, character: Character): Promise<void> {
   return append(ctx, {
-    v: 1,
+    v: EVENT_VERSION,
     id: ctx.ids.ulid(),
     ts: ctx.now(),
     type: 'character.created',

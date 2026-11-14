@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { CharacterSchema } from '../schema/character/character.ts';
-import { EventSchema } from '../schema/event/event.ts';
+import { EVENT_VERSION, EventSchema } from '../schema/event/event.ts';
 import {
   CAMPAIGNS,
   CHARACTER_VIEW,
@@ -32,7 +32,7 @@ let counter = 0;
 function line(type: string, data: Record<string, unknown>, quest?: string): Event {
   counter += 1;
   return EventSchema.parse({
-    v: 1,
+    v: EVENT_VERSION,
     id: `01JCF8X4Z6Q3W9N2M5R7T8V${String(counter).padStart(3, '0')}`,
     ts: '2026-11-06T12:00:00+07:00',
     type,

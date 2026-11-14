@@ -2,10 +2,10 @@
 // one model's own cap. Lines written before them, without either, still parse.
 import { describe, expect, it } from 'vitest';
 
-import { EventSchema } from './event.ts';
+import { EVENT_VERSION, EventSchema } from './event.ts';
 
 const line = (type: string, data: Record<string, unknown>) => ({
-  v: 1,
+  v: EVENT_VERSION,
   id: '01M6RQ5Y00000000000000033A',
   ts: '2026-11-09T09:00:00+07:00',
   type,
