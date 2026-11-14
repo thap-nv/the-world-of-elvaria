@@ -5,10 +5,11 @@
 // `--memo <id>` hands the Chancellor a letter a character wrote (PS-02, ADR 0024): its text, who wrote it on which
 // quest and its files become the words, with the owner's own words after them when given. The drafts carry the
 // letter (PS-03b): the first one the owner confirms closes it as handled by that quest; until then it stays open.
-// Before the session, the CLI reads the files the words name and asks the code graph with them (PS-21b, code.ts).
+// Before the session, the CLI reads the files the words name and asks the code graph with them (PS-21b, code.ts), and
+// asks the tribes' CLIs as the Steward does: a Chancellor of a held tribe opens no session (fix/held-tribe-sessions).
 import { draftCommands, draftQuests } from '@elvaria/chancellor';
 import type { CommandHeader, DraftCommand } from '@elvaria/chancellor';
-import type { Memo, MemoId } from '@elvaria/domain';
+import type { Memo, MemoId, TribeHold } from '@elvaria/domain';
 import { gitOf } from '@elvaria/runner-core';
 import type { CodeGraphs, TerritoryCode } from '@elvaria/runner-core';
 import { questIdOfCommand } from '@elvaria/steward';
@@ -23,6 +24,7 @@ import { commandHeader } from '../quest/send-command.ts';
 import { crewOf } from '../run/crew.ts';
 import { graphsOf } from '../run/graphs.ts';
 import { processHostOf } from '../run/plots.ts';
+import { tribeHoldsOf } from '../run/tool-found.ts';
 import { codeOf } from './code.ts';
 import { hearingOf } from './hearing.ts';
 import { reportBrief, reportDropped, reportFailure, reportQuestion, reportSent } from './report.ts';
@@ -44,6 +46,11 @@ export interface SayDeps {
   readonly runnersOf: (place: KingdomPlace, io: CliIo) => Runners | Promise<Runners>;
   /** The pinned graphify's port (PS-21b); `graphsOf` of `elvaria run` by default, a fake in the specs. */
   readonly graphsOf?: (ctx: KingdomContext) => Promise<CodeGraphs | undefined>;
+  /**
+   * The tribes held by their CLI's version (fix/held-tribe-sessions): `tribeHoldsOf`, which asks each CLI as the
+   * Steward does; absent, none (the specs' scripted runners have no CLI).
+   */
+  readonly holdsOf?: (ctx: KingdomContext, runners: Runners) => Promise<readonly TribeHold[]>;
 }
 
 const pinnedGraphs = (ctx: KingdomContext): Promise<CodeGraphs | undefined> =>
@@ -83,11 +90,8 @@ async function say(
   deps: SayDeps,
   memos: readonly MemoId[] = [],
 ): Promise<ExitCode> {
-  const hearing = await hearingOf(
-    ctx,
-    utterance,
-    await deps.runnersOf({ kingdom: ctx.kingdom, root: ctx.store.root }, ctx.io),
-  );
+  const runners = await deps.runnersOf({ kingdom: ctx.kingdom, root: ctx.store.root }, ctx.io);
+  const hearing = await hearingOf(ctx, utterance, runners, (await deps.holdsOf?.(ctx, runners)) ?? []);
   if (hearing === undefined) return EXIT.failed;
   const { session } = hearing;
   const context = { ...hearing.context, code: await codeFor(ctx, utterance, deps) };
@@ -163,4 +167,5 @@ export function sayCommand(deps: SayDeps): CommandSpec {
 
 export const SAY: CommandSpec = sayCommand({
   runnersOf: async (place, io) => (await crewOf(place, io)).runners,
+  holdsOf: (ctx, runners) => tribeHoldsOf(ctx.kingdom, runners, ctx.io),
 });

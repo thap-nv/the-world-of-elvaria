@@ -1,13 +1,16 @@
 // What the Chancellor hears (implementation-plan §3.11, §10 question 3): the kingdom's territories, registry, characters
 // and mana, and who speaks as the Chancellor (selectChancellor, §10 question 6). The owner's words (`elvaria say`) and
 // the triage of memos (PS-03b: `elvaria triage`, `kingdom.schedule.triage`) share it, and an amendment's author (PS-22b).
-import { CHANCELLOR_CLASS, poolsOf, selectChancellor, tribeLimitsOf } from '@elvaria/domain';
+// A Chancellor of a tribe held by its CLI's version opens no session (fix/held-tribe-sessions), as in planTick.
+import { CHANCELLOR_CLASS, pickChancellor, poolsOf, tribeLimitsOf } from '@elvaria/domain';
 import type {
   ChancellorChoice,
+  ChancellorPick,
   Character,
   CharacterClass,
   Registry,
   Territory,
+  TribeHold,
   TribeId,
 } from '@elvaria/domain';
 import { loadPromptTemplates } from '@elvaria/runner-core';
@@ -15,6 +18,7 @@ import type { AgentRunner, ChancellorContext } from '@elvaria/runner-core';
 import { inKingdom, readClassPrompt, readDecree } from '@elvaria/store';
 
 import { registryIssueLines } from '../issues.ts';
+import { lineOf } from '../run/bell.ts';
 import type { ChancellorSession } from '@elvaria/chancellor';
 import type { KingdomContext } from '../kingdom-context.ts';
 
@@ -36,17 +40,29 @@ export interface Speaker {
   readonly class_prompt: string | null;
 }
 
-/** Who may speak: the limits of each tribe with a runner, then the multi-tribe rule of the domain. */
+/**
+ * Who may speak: the limits of each tribe with a runner, then the multi-tribe rule of the domain, a tribe held by its
+ * CLI's version giving way as in planTick (pickChancellor, fix/held-tribe-sessions).
+ */
 export function chancellorOf(
   runners: Runners,
-  characters: Parameters<typeof selectChancellor>[0],
-): ChancellorChoice | undefined {
+  characters: Parameters<typeof pickChancellor>[0],
+  holds: readonly TribeHold[] = [],
+): ChancellorPick {
   const limits = Object.fromEntries(
     Object.entries(runners).flatMap(([tribe, runner]) =>
       runner === undefined ? [] : [[tribe, tribeLimitsOf(runner.capabilities)]],
     ),
   );
-  return selectChancellor(characters, limits);
+  return pickChancellor(characters, limits, holds);
+}
+
+/** Why no session opens: the holds of the tribes that could speak, as the Steward's bell says them, and what to run. */
+export function heldLines(ctx: KingdomContext, holds: readonly TribeHold[]): string[] {
+  return [
+    ctx.t('cli.say.chancellor_held'),
+    ...holds.map((hold) => lineOf(ctx.t, { kind: 'tribe_held', ...hold })),
+  ];
 }
 
 /** The session's context for the hook (§3.6): no quest, the Chancellor's character and role. */
@@ -80,32 +96,45 @@ export async function sessionOf(
   };
 }
 
+/** The Chancellor and what it reads; `held` or `none` once the reason is printed. */
+export type SpeakerFound =
+  | { readonly status: 'ready'; readonly speaker: Speaker }
+  /** Every Chancellor who could speak is of a tribe held by its CLI's version: the session waits on a check. */
+  | { readonly status: 'held' }
+  | { readonly status: 'none' };
+
 /**
- * The Chancellor and what it reads, or undefined once the reason is printed: a registry that loads, and an idle
- * Chancellor whose tribe runs. `folder` names its run folder: `chancellor` for the owner's words, `triage`.
+ * The Chancellor and what it reads: a registry that loads, and an idle Chancellor whose tribe runs and is not held
+ * (`holds`, fix/held-tribe-sessions). `folder` names its run folder: `chancellor` for the owner's words, `triage`.
  */
 export async function speakerOf(
   ctx: KingdomContext,
   runners: Runners,
   folder: string,
-): Promise<Speaker | undefined> {
+  holds: readonly TribeHold[] = [],
+): Promise<SpeakerFound> {
   const registry = await ctx.store.loadRegistry();
   if (!registry.ok) {
     registry.error.flatMap((issue) => registryIssueLines(ctx.t, issue)).forEach(ctx.io.err);
-    return undefined;
+    return { status: 'none' };
   }
   const [territories, characters] = await Promise.all([
     ctx.store.territories.list(),
     ctx.store.characters.list(),
   ]);
-  const choice = chancellorOf(runners, characters.items);
+  const pick = chancellorOf(runners, characters.items, holds);
+  if (pick.status === 'held') {
+    heldLines(ctx, pick.holds).forEach(ctx.io.err);
+    return { status: 'held' };
+  }
+  const choice = pick.status === 'chosen' ? pick.choice : undefined;
   const runner = choice === undefined ? undefined : runners[choice.character.tribe];
   const characterClass = registry.value.classes.find(({ id }) => id === CHANCELLOR_CLASS);
   if (choice === undefined || runner === undefined || characterClass === undefined) {
     ctx.io.err(ctx.t('cli.say.no_chancellor', { class: CHANCELLOR_CLASS }));
-    return undefined;
+    return { status: 'none' };
   }
-  return {
+  const speaker: Speaker = {
     session: await sessionOf(ctx, { choice, runner, class: characterClass }, folder),
     registry: registry.value,
     territories: territories.items,
@@ -113,16 +142,19 @@ export async function speakerOf(
     decree: await readDecree(ctx.store.root),
     class_prompt: await readClassPrompt(ctx.store.root, characterClass),
   };
+  return { status: 'ready', speaker };
 }
 
-/** Everything one utterance needs, or undefined once the reason is printed. */
+/** Everything one utterance needs, or undefined once the reason is printed (a held tribe's among them). */
 export async function hearingOf(
   ctx: KingdomContext,
   utterance: string,
   runners: Runners,
+  holds: readonly TribeHold[] = [],
 ): Promise<Hearing | undefined> {
-  const speaker = await speakerOf(ctx, runners, 'chancellor');
-  if (speaker === undefined) return undefined;
+  const found = await speakerOf(ctx, runners, 'chancellor', holds);
+  if (found.status !== 'ready') return undefined;
+  const { speaker } = found;
   const context: ChancellorContext = {
     utterance,
     locale: ctx.kingdom.owner.locale,

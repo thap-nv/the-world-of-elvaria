@@ -5,9 +5,10 @@
 // the triage's does). The decision is one decide_amendment command of source `chancellor`; no author to speak, or a
 // session that failed, hands the amendment to the owner with the reason, so a quest never waits on nobody and no
 // session is spent twice on one memo. The Steward's stop ends the session and writes nothing; the next start asks again.
+// An author of a tribe held by its CLI's version (the Steward's notices) waits, writing nothing (fix/held-tribe-sessions).
 import { amendmentCommand, decideAmendment } from '@elvaria/chancellor';
 import type { AmendmentInput, ChancellorFailure } from '@elvaria/chancellor';
-import type { InboxCommandInput, MemoId, QuestId } from '@elvaria/domain';
+import type { InboxCommandInput, MemoId, QuestId, TribeHold } from '@elvaria/domain';
 import type { JobRun, JobView, OnCallJob } from '@elvaria/steward';
 
 import { storeIssueLines } from '../issues.ts';
@@ -37,14 +38,21 @@ async function waitingOf(ctx: KingdomContext, id: QuestId): Promise<Waiting | un
   return memo.ok && memo.value.state === 'open' ? { quest, memo: memo.value, quests } : undefined;
 }
 
-/** The first quest of the view the job may decide now: not decided in the inbox, its author's tribe free. */
+/** The tribes the Steward holds by their CLI's version, as the tick that started the job found them. */
+const holdsOf = (view: JobView): readonly TribeHold[] => view.notices.tribes_held ?? [];
+
+/**
+ * The first quest of the view the job may decide now: not decided in the inbox, its author's tribe free and not held
+ * (fix/held-tribe-sessions: the amendment waits for the check, it does not go to the owner).
+ */
 async function nextOf(ctx: KingdomContext, runners: Runners, view: JobView): Promise<Waiting | undefined> {
   const decided = await decidedInInbox(ctx);
   for (const id of view.amendments) {
     const waiting = await waitingOf(ctx, id);
     if (waiting === undefined || decided.has(waiting.memo.id)) continue;
-    const tribe = await authorTribeOf(ctx, runners, waiting.memo);
-    if (tribe === undefined || !view.busy.has(tribe)) return waiting;
+    const author = await authorTribeOf(ctx, runners, waiting.memo, holdsOf(view));
+    if (author.status === 'none' || (author.status === 'ready' && !view.busy.has(author.tribe)))
+      return waiting;
   }
   return undefined;
 }
@@ -62,17 +70,21 @@ async function send(ctx: KingdomContext, command: InboxCommandInput): Promise<vo
   throw new Error('the decision on the amendment could not be written');
 }
 
-/** The author's decision, or the owner's turn; undefined when the Steward stopped the session. */
-async function decisionOf(ctx: KingdomContext, runners: Runners, waiting: Waiting, signal: AbortSignal) {
-  const authorship = await authorshipOf(ctx, runners, waiting);
+/**
+ * The author's decision, or the owner's turn; undefined when the Steward stopped the session, or when the author's
+ * tribe is held (nothing written: the next tick asks again).
+ */
+async function decisionOf(ctx: KingdomContext, runners: Runners, waiting: Waiting, run: JobRun) {
+  const authorship = await authorshipOf(ctx, runners, waiting, holdsOf(run));
   const owner = (failure?: ChancellorFailure): Decision => ({
     decision: 'owner',
     note: failureNote(ctx, failure),
     ask: [],
   });
   if (authorship.status === 'none') return owner();
+  if (authorship.status === 'held') return undefined;
   ctx.io.out(ctx.t('cli.amend.listening', { memo: waiting.memo.id, quest: waiting.quest.id }));
-  const reply = await decideAmendment(authorship.context, authorship.session, signal);
+  const reply = await decideAmendment(authorship.context, authorship.session, run.signal);
   if (reply.ok) return reply.value.decision;
   if (reply.error.code === 'stopped') return undefined;
   ctx.io.err(ctx.t('cli.amend.failed', { code: reply.error.code }));
@@ -80,8 +92,8 @@ async function decisionOf(ctx: KingdomContext, runners: Runners, waiting: Waitin
   return owner(reply.error);
 }
 
-async function decide(ctx: KingdomContext, runners: Runners, waiting: Waiting, signal: AbortSignal) {
-  const decision = await decisionOf(ctx, runners, waiting, signal);
+async function decide(ctx: KingdomContext, runners: Runners, waiting: Waiting, run: JobRun) {
+  const decision = await decisionOf(ctx, runners, waiting, run);
   if (decision === undefined) return;
   const { command, holds } = amendmentCommand({
     decision,
@@ -102,7 +114,7 @@ export function amendmentJob(ctx: KingdomContext, runners: Runners): OnCallJob {
     ready: async (view) => view.amendments.length > 0 && (await nextOf(ctx, runners, view)) !== undefined,
     run: async (run: JobRun) => {
       const waiting = await nextOf(ctx, runners, run);
-      if (waiting !== undefined) await decide(ctx, runners, waiting, run.signal);
+      if (waiting !== undefined) await decide(ctx, runners, waiting, run);
     },
   };
 }

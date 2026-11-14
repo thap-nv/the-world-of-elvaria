@@ -65,6 +65,7 @@ export {
   prepareWorkspace,
 } from './conformance/workspace.ts';
 export type { Workspace } from './conformance/workspace.ts';
+export { hookMissing, hookProblem, hookScriptOf, withHookProblem } from './runner/hook-built.ts';
 export { ADAPTER_FACTORY, adapterOfModule, runnerProblems } from './kit/adapter-module.ts';
 export type { AdapterFactory } from './kit/adapter-module.ts';
 export { ADAPTER_KIT_VERSION, adapterKitOf } from './kit/kit.ts';

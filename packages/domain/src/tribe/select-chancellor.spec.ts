@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import { character } from '../dispatch/__fixtures__/snapshot.ts';
-import { CHANCELLOR_CLASS, selectChancellor } from './select-chancellor.ts';
+import { CHANCELLOR_CLASS, pickChancellor, selectChancellor } from './select-chancellor.ts';
 import { FULL_TRIBE_LIMITS } from './tribe-limits.ts';
 import type { TribeId } from '../core/ids.ts';
 import type { LimitsByTribe } from './select-chancellor.ts';
+import type { TribeHold } from './version-hold.ts';
 
 const CLAUDE = 'claude' as TribeId;
 const GEMINI = 'gemini' as TribeId;
@@ -60,5 +61,38 @@ describe('selectChancellor (§10 question 6)', () => {
       selectChancellor([chancellor('aldric', 'claude')], { [CLAUDE]: { ...NATIVE, enabled: false } }),
     ).toBe(undefined);
     expect(selectChancellor([], BOTH)).toBeUndefined();
+  });
+});
+
+describe('pickChancellor (fix/held-tribe-sessions)', () => {
+  const hold = (tribe: TribeId): TribeHold => ({
+    tribe,
+    path: 'C:/cli.exe',
+    version: '1.5.8',
+    checked: '1.5.7',
+  });
+  const roster = [chancellor('aldric', 'claude', 6), chancellor('vesna', 'gemini', 2)];
+
+  it('is selectChancellor when no tribe is held', () => {
+    expect(pickChancellor(roster, BOTH, [])).toEqual({
+      status: 'chosen',
+      choice: { character: roster[0], structured_output: 'native' },
+    });
+  });
+
+  it('gives way to the next Chancellor by the same rule when the first one is of a held tribe', () => {
+    expect(pickChancellor(roster, BOTH, [hold(CLAUDE)])).toEqual({
+      status: 'chosen',
+      choice: { character: roster[1], structured_output: 'prompt_and_parse' },
+    });
+  });
+
+  it('names the holds that keep every Chancellor who could speak, and only those', () => {
+    const holds = [hold(CLAUDE), hold(GEMINI), hold('codex' as TribeId)];
+    expect(pickChancellor(roster, BOTH, holds)).toEqual({ status: 'held', holds: holds.slice(0, 2) });
+    // A sleeping Chancellor of a held tribe could not speak anyway: nobody waits on its check.
+    const asleep = [chancellor('aldric', 'claude', 6, 'sleeping_mana')];
+    expect(pickChancellor(asleep, BOTH, [hold(CLAUDE)])).toEqual({ status: 'none' });
+    expect(pickChancellor([], BOTH, [])).toEqual({ status: 'none' });
   });
 });

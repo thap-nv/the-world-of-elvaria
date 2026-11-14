@@ -52,7 +52,7 @@ blocked by PreToolUse hook: <reason>. Command: <command>`) into `tool_blocked` s
 - `probe()` reads `account/rateLimits/read` of `codex app-server` (0 mana; the client keeps stdin open until every
   answer came, since the server leaves when it closes): the 5-hour and weekly windows, and a limit of one model
   named; rate limited while a window of the account is spent or the account allows no usage. `doctor()` runs
-  `--version` and `login status`, and checks the built hook; a call stopped at its timeout says so, with how long it
+  `--version` and `login status`, and checks the built hook (`hookProblem` of runner-core); a call stopped at its timeout says so, with how long it
   had, never "not signed in". `locateCodex` finds the CLI on PATH, in npm's folder
   or in the VS Code extension `openai.chatgpt` (`bin/<os-arch>/codex(.exe)`).
 

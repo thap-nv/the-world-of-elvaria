@@ -5,113 +5,29 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { MemoSchema, QuestSchema, TerritorySchema, TribeIdSchema } from '@elvaria/domain';
+import { TribeIdSchema } from '@elvaria/domain';
 import type { InboxCommand, Memo, Quest } from '@elvaria/domain';
 import { translator } from '@elvaria/i18n';
-import { createFakeRunner } from '@elvaria/runner-core';
-import type { AgentRunner, SpawnRequest } from '@elvaria/runner-core';
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { foundKingdom, run, tempDir, testIo } from '../../test/cli.ts';
+import {
+  ACCEPT,
+  ASKED,
+  BODY,
+  CHILD,
+  CHILD_MEMO,
+  CLAUDE,
+  DRAFTED,
+  DRAFTED_MEMO,
+  PLAN,
+  author,
+  seedAmendments,
+} from '../../test/amend.ts';
+import { foundKingdom, tempDir, testIo } from '../../test/cli.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { amendmentJob } from './job.ts';
 import type { TempDir, TestIo } from '../../test/cli.ts';
-
-const CLAUDE = TribeIdSchema.parse('claude');
-const ASKED = '2026-11-05T10:00:00+07:00';
-
-const questOf = (id: string, fields: Record<string, unknown> = {}): Quest =>
-  QuestSchema.parse({
-    version: 1,
-    id,
-    title: `Quest ${id}`,
-    description: `## Goal\n\nWork of ${id}.`,
-    kind: 'build',
-    rank: 'D',
-    class_required: 'knight',
-    tags: ['backend'],
-    territory: 'dc1-se-team',
-    status: 'open',
-    tier: 'session',
-    assignee: null,
-    verifier: null,
-    depends_on: [],
-    budget: { max_minutes: 45, max_tokens: 400000, max_attempts: 3 },
-    estimate: { tokens: 200000, minutes: 30 },
-    attempts: 0,
-    attempt_log: [],
-    plot: { type: 'none' },
-    deliverable: { type: 'branch' },
-    seal_required: false,
-    secrets_required: [],
-    checks_run: [],
-    created_by: 'chancellor',
-    created_at: '2026-11-05T09:00:00+07:00',
-    updated_at: '2026-11-05T09:30:00+07:00',
-    ...fields,
-  });
-
-const BODY = 'Đề bài: sửa `package.json` bằng tay. Đề nghị: `pnpm pkg set`. Vì: lint chặn.';
-const memoOf = (id: string, quest: string, to: Record<string, string>): Memo =>
-  MemoSchema.parse({
-    version: 1,
-    id,
-    kind: 'amendment',
-    from: 'thorn',
-    quest,
-    attempt: 1,
-    to,
-    body: BODY,
-    refs: ['package.json'],
-    state: 'open',
-    filed_at: ASKED,
-  });
-
-const blockedOn = (memo: string) => ({
-  status: 'blocked',
-  assignee: 'thorn',
-  blocked: { question: BODY, asked_at: ASKED, amendment: { memo, by: 'author' } },
-});
-
-const PLAN = questOf('q_20261105_p1anaa', {
-  kind: 'plan',
-  created_by: 'user',
-  status: 'done',
-  assignee: 'merlin',
-  description: '## Brief\n\nGom mọi kiểm tra vào một lệnh.',
-});
-const DRAFTED = questOf('q_20261105_dra0aa', blockedOn('m_20261105_aaaaaa'));
-const CHILD = questOf('q_20261105_ch1daa', {
-  ...blockedOn('m_20261105_bbbbbb'),
-  created_by: 'council',
-  parent_id: PLAN.id,
-});
-const DRAFTED_MEMO = memoOf('m_20261105_aaaaaa', DRAFTED.id, { route: 'author' });
-const CHILD_MEMO = memoOf('m_20261105_bbbbbb', CHILD.id, { route: 'author', author: 'merlin' });
-
-const ACCEPT = {
-  version: 1,
-  decision: 'accepted',
-  note: 'Đúng: lint chặn.',
-  description: '## Goal\n\nMới.',
-  ask: [],
-};
-
-/** An author whose sessions end with `structured`, and the requests it was given. */
-function author(structured: unknown): AgentRunner & { readonly heard: SpawnRequest[] } {
-  const fake = createFakeRunner();
-  const heard: SpawnRequest[] = [];
-  return {
-    ...fake,
-    heard,
-    spawn: async (req) => {
-      heard.push(req);
-      const session = await fake.spawn(req);
-      return { ...session, wait: async () => ({ ...(await session.wait()), structured }) };
-    },
-  };
-}
 
 describe("an amendment's author, on call (PS-22b)", () => {
   let dir: TempDir;
@@ -119,28 +35,7 @@ describe("an amendment's author, on call (PS-22b)", () => {
   beforeEach(async () => {
     dir = await tempDir();
     kingdom = await foundKingdom(dir.root);
-    const store = openKingdom(kingdom);
-    await store.territories.write(
-      TerritorySchema.parse({
-        version: 1,
-        id: 'dc1-se-team',
-        name: 'dc1-se-team',
-        path: path.join(dir.root, 'dc1-se-team').replaceAll('\\', '/'),
-        kind: 'code',
-        vcs: { type: 'git', default_branch: 'main' },
-        commands: {},
-        checks: [],
-        laws: { forbidden_paths: [], forbidden_commands: [] },
-        secrets_allowed: [],
-      }),
-    );
-    for (const [id, cls] of [
-      ['aldric', 'chancellor'],
-      ['merlin', 'mage'],
-    ] as const)
-      expect(await run(testIo(), 'character', 'add', id, '--class', cls, '--kingdom', kingdom)).toBe(0);
-    for (const quest of [PLAN, DRAFTED, CHILD]) await store.quests.write(quest);
-    for (const memo of [DRAFTED_MEMO, CHILD_MEMO]) await store.memos.write(memo);
+    await seedAmendments(dir.root, kingdom);
   });
   afterEach(() => dir.remove());
 

@@ -9,6 +9,7 @@ import {
   NOTE_PREFIX,
   STDERR_FILE,
   contextEnv,
+  hookProblem,
   openRunLog,
   openRunOutput,
   runContextOf,
@@ -215,6 +216,8 @@ async function startAgy(req: SpawnRequest, options: AntigravityOptions, plan: Ho
 async function probe(options: AntigravityOptions): Promise<ProbeResult> {
   const call = { env: agyEnv(options.env, undefined), timeout_ms: options.timeout_ms ?? DEFAULT_TIMEOUT_MS };
   const ran = await runToEnd(programOf(options.launch), ['-p', '/usage', '--output-format', 'json'], call);
+  // Stopped at its timeout or never started: runToEnd's words, not "exit null" ((b) of fix/busy-machine).
+  if (ran.problem !== undefined) return { status: 'error', detail: `agy -p /usage: ${ran.problem}` };
   const buckets = ran.code === 0 ? usageBuckets(ran.stdout) : undefined;
   if (buckets === undefined) {
     return { status: 'error', detail: `agy -p /usage: exit ${String(ran.code)} ${ran.stderr.trim()}`.trim() };
@@ -232,14 +235,19 @@ function signInProblems(models: ChildRun): string[] {
   return signedIn ? [] : [`agy models failed (exit ${String(models.code)}): not signed in, or offline`];
 }
 
-/** Version, sign-in (`agy models` needs both login and network, 0 tokens) and the terms (ADR 0018). */
-async function doctor(options: AntigravityOptions): Promise<ToolInfo> {
+/**
+ * Version, sign-in (`agy models` needs both login and network, 0 tokens), the terms (ADR 0018) and the built hook the
+ * shim imports: without it every hook call fails, so no session runs ((a) of fix/busy-machine, as every tribe's doctor).
+ */
+async function doctor(options: AntigravityOptions, plan: HookPlan): Promise<ToolInfo> {
   const call = { env: agyEnv(options.env, undefined), timeout_ms: options.timeout_ms ?? DEFAULT_TIMEOUT_MS };
   const ran = await runToEnd(programOf(options.launch), ['--version'], call);
   const models = await runToEnd(programOf(options.launch), ['--output-format', 'json', 'models'], call);
+  const hook = await hookProblem(plan.script);
   const problems = [
     ...signInProblems(models),
     ...(options.terms_acknowledged_at === undefined ? [TERMS] : []),
+    ...(hook === undefined ? [] : [hook]),
   ];
   // A version that did not come is noted; it says nothing of whether a session can run.
   const notes = [...(ran.problem === undefined ? [] : [`agy --version: ${ran.problem}`]), ...problems];
@@ -259,6 +267,6 @@ export function createAntigravityRunner(options: AntigravityOptions): AgentRunne
     capabilities: ANTIGRAVITY_CAPABILITIES,
     spawn: (req) => spawnAgy(req, options, plan),
     probe: () => probe(options),
-    doctor: () => doctor(options),
+    doctor: () => doctor(options, plan),
   };
 }

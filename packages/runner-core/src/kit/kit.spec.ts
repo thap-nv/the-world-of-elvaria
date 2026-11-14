@@ -1,3 +1,6 @@
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+
 import { TribeSchema, countedTokens } from '@elvaria/domain';
 import { describe, expect, it } from 'vitest';
 
@@ -7,6 +10,7 @@ import { runToEnd, startChild } from '../process/child.ts';
 import { KILL_GRACE_MS, killTree } from '../process/kill-tree.ts';
 import { createFakeRunner } from '../runner/fake-runner.ts';
 import { readQuestion } from '../runner/handover.ts';
+import { hookMissing } from '../runner/hook-built.ts';
 import { writePolicyFile } from '../runner/policy-file.ts';
 import { openRunLog } from '../runner/run-log.ts';
 import { openRunOutput } from '../runner/run-output.ts';
@@ -111,6 +115,36 @@ describe('adapterOfModule', () => {
       ok: false,
       error: ['runner.spawn is not a function'],
     });
+  });
+
+  it("makes the file's doctor fail while Elvaria's hook is not built, as the built-in adapters' do", async () => {
+    const missing = path.join(tmpdir(), 'elvaria no hook', 'elvaria-hook.js');
+    const unbuilt = adapterKitOf(
+      host({ hookCommand: () => ({ command: 'node', args: ['--conditions=elvaria-dist', missing] }) }),
+    );
+    const loaded = await adapterOfModule({ [ADAPTER_FACTORY]: () => runner() }, unbuilt);
+    if (!loaded.ok) throw new Error('the runner should load');
+    expect(await loaded.value.doctor()).toMatchObject({ auth_ok: false, detail: hookMissing(missing) });
+    // The rest of the runner is the file's own.
+    expect(loaded.value).toMatchObject({ tribe: kit.tribe.id, adapter: kit.tribe.adapter });
+    expect(await loaded.value.probe()).toEqual({ status: 'ok' });
+    const notes = runner({
+      doctor: () => Promise.resolve({ path: 'p', version: '1', auth_ok: true, detail: 'sign-in ends soon' }),
+    });
+    const noted = await adapterOfModule({ [ADAPTER_FACTORY]: () => notes }, unbuilt);
+    expect(noted.ok && (await noted.value.doctor()).detail).toBe(
+      `sign-in ends soon; ${hookMissing(missing)}`,
+    );
+  });
+
+  it("leaves the file's doctor as it is once the hook is built", async () => {
+    const built = adapterKitOf(
+      host({ hookCommand: () => ({ command: 'node', args: [import.meta.filename] }) }),
+    );
+    const loaded = await adapterOfModule({ [ADAPTER_FACTORY]: () => runner() }, built);
+    if (!loaded.ok) throw new Error('the runner should load');
+    expect(await loaded.value.doctor()).toMatchObject({ auth_ok: true });
+    expect((await loaded.value.doctor()).detail).toBeUndefined();
   });
 });
 

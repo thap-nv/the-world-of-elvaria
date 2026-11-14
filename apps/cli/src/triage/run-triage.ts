@@ -5,7 +5,7 @@
 import { triageCommands, triageMemos } from '@elvaria/chancellor';
 import type { ChancellorFailure, DroppedDraft, TriageOutcome } from '@elvaria/chancellor';
 import { MERGEABLE_STATUSES } from '@elvaria/domain';
-import type { InboxCommandInput, Quest } from '@elvaria/domain';
+import type { InboxCommandInput, Quest, TribeHold } from '@elvaria/domain';
 import { questIdOfCommand } from '@elvaria/steward';
 import type { TriageContext } from '@elvaria/runner-core';
 
@@ -21,6 +21,8 @@ export type TriageRun =
   | { readonly status: 'none' }
   /** No Chancellor, or a registry that does not load: the reason is printed. */
   | { readonly status: 'no_chancellor' }
+  /** Every Chancellor who could speak is of a tribe held by its CLI's version: the holds are printed. */
+  | { readonly status: 'held' }
   | { readonly status: 'failed'; readonly failure: ChancellorFailure; readonly run_dir: string }
   /** A command could not be written: the reason is printed; the ones before it stay. */
   | { readonly status: 'unwritten' }
@@ -65,19 +67,24 @@ async function send(ctx: KingdomContext, commands: readonly InboxCommandInput[])
   return true;
 }
 
-/** `onListening` is told who reads how many memos, once the session is about to start. */
+/**
+ * `onListening` is told who reads how many memos, once the session is about to start. `holds`: the tribes held by
+ * their CLI's version (fix/held-tribe-sessions), whose Chancellors give way as in planTick.
+ */
 export async function runTriage(
   ctx: KingdomContext,
   runners: Runners,
   options: {
     readonly signal?: AbortSignal;
     readonly onListening?: (name: string, count: number) => void;
+    readonly holds?: readonly TribeHold[];
   } = {},
 ): Promise<TriageRun> {
   const { batch, more } = await waitingMemos(ctx);
   if (batch.length === 0) return { status: 'none' };
-  const speaker = await speakerOf(ctx, runners, 'triage');
-  if (speaker === undefined) return { status: 'no_chancellor' };
+  const found = await speakerOf(ctx, runners, 'triage', options.holds);
+  if (found.status !== 'ready') return { status: found.status === 'held' ? 'held' : 'no_chancellor' };
+  const { speaker } = found;
   const quests = (await ctx.store.quests.list()).items;
   const memos = batch.map((memo) => {
     const source = quests.find(({ id }) => id === memo.quest);
