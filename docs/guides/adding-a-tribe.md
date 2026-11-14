@@ -116,7 +116,7 @@ Hàm thuần `tribeLimitsOf(capabilities)` của domain, mỗi năng lực một
 | `compact` | `compact: false` |
 | `subagent` | `apprentice: false` |
 
-`search`, `read`, `shell` và `models` không thu hẹp tộc: chúng đổi prompt, tool của nghề, luật tách vai và cấp khởi đầu (bảng 2.1). `prompt_max_chars` cũng không là một hàng của bảng: `tribeLimitsOn(capabilities, platform)` thêm `prompt_max_chars` của hệ điều hành đang chạy vào giới hạn của tộc, và chỉ lúc chọn người chấm đọc nó.
+`search`, `read`, `shell` và `models` không thu hẹp tộc: chúng đổi prompt, tool của nghề, luật tách vai và cấp khởi đầu (bảng 2.1). `prompt_max_chars` cũng không là một hàng của bảng: `tribeLimitsOn(capabilities, platform)` thêm `prompt_max_chars` của hệ điều hành đang chạy vào giới hạn của tộc, và chỉ lúc chọn người chấm đọc nó; `tribe list`, `tribe check` và `doctor` nêu nó như shell.
 
 ## 5. Agent Client Protocol
 

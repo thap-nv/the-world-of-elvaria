@@ -115,9 +115,13 @@ async function resultOf(kit, state, req, exit) {
 }
 
 async function spawn(kit, req) {
+  // How to start comes before the run's files open, as in the built-in runners: a CLI not pinned throws here and
+  // leaves no stdout.jsonl/stderr.log stream opening into a folder the specs remove (fix/cli-lines, (76)).
+  const started = await launch(kit);
+  const args = await argsOf(kit, req);
   const state = openState(kit, req);
   const options = { cwd: req.cwd, env: req.env, onStderr: (chunk) => state.output.stderr(chunk) };
-  const child = kit.process.startChild(await launch(kit), await argsOf(kit, req), options, (line) => {
+  const child = kit.process.startChild(started, args, options, (line) => {
     state.output.stdout(line);
     onLine(state, line);
   });

@@ -1,6 +1,6 @@
 // `elvaria tribe check <id> [--scenarios] [--model <slug>] [--tool <path>] [--timeout <seconds>]` (implementation-plan
 // §3.14, ADR 0021): the conformance suite of runner-core against the tribe's runner, built from its adapter as
-// `elvaria run` builds it (what it declares is printed first, the shell per OS too, P1-46), plus the sign-in kingdom.json
+// `elvaria run` builds it (what it declares is printed first, ./check-declared.ts), plus the sign-in kingdom.json
 // pins against the ones the adapter declares (checkTribeAuth, P1-19) and, once the suite passes, the login its adapter
 // reports, as doctor does (P1-34). A tribe that passes is enabled; one that fails stays as it is. With the real CLI only
 // the checks that burn no or almost no mana run (a tiny job, a forbidden push, a kill, the probe), on the CLI doctor
@@ -10,8 +10,8 @@
 // upgrade` runs the suite of a new build against the fake CLIs it carries (PS-04b).
 import path from 'node:path';
 
-import { ADAPTER_CAPABILITIES, SHELL_PLATFORMS, checkModelOf, shellOf, tribeLimitsOf } from '@elvaria/domain';
-import type { AdapterCapabilities, Tribe } from '@elvaria/domain';
+import { checkModelOf } from '@elvaria/domain';
+import type { Tribe } from '@elvaria/domain';
 import { runConformance } from '@elvaria/runner-core';
 import type { AgentRunner, ConformanceReport } from '@elvaria/runner-core';
 import { fromPortable, toPortable } from '@elvaria/store';
@@ -23,6 +23,7 @@ import { findingLines } from '../doctor/finding.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { minimalEnv } from '../process/minimal-env.ts';
 import { handOf } from '../run/crew.ts';
+import { capabilityLines } from './check-declared.ts';
 import { keepFailed, liveToolOf, pinChecked } from './check-live.ts';
 import { namedTribe, setEnabled } from './save.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
@@ -38,32 +39,6 @@ const FAKE_TIMEOUT_MS = 120_000;
  */
 const LIVE_TIMEOUT_MS = 300_000;
 const MS_PER_SECOND = 1000;
-
-/** The shell the adapter declares per OS (P1-46, (b) of P1-40): `win32: Git Bash`; none when it declares none. */
-function shellLine(ctx: KingdomContext, caps: AdapterCapabilities): string {
-  const shells = SHELL_PLATFORMS.flatMap((os) => {
-    const shell = shellOf(caps, os);
-    return shell === undefined ? [] : [`${os}: ${shell}`];
-  });
-  return shells.length === 0
-    ? ctx.t('cli.tribe.check.no_shell')
-    : ctx.t('cli.tribe.check.shell', { shells: shells.join('; ') });
-}
-
-/** What the adapter declares and how far tribeLimitsOf lets the tribe go. */
-function capabilityLines(ctx: KingdomContext, tribe: Tribe, caps: AdapterCapabilities): string[] {
-  const declared = ADAPTER_CAPABILITIES.filter((name) => caps[name]);
-  const missing = ADAPTER_CAPABILITIES.filter((name) => !caps[name]);
-  const limits = tribeLimitsOf(caps);
-  const params = { tribe: tribe.id, adapter: tribe.adapter, auth: caps.auth.join(', ') };
-  return [
-    ctx.t('cli.tribe.check.declared', { ...params, capabilities: declared.join(', ') }),
-    ...(missing.length === 0 ? [] : [ctx.t('cli.tribe.check.missing', { capabilities: missing.join(', ') })]),
-    shellLine(ctx, caps),
-    ctx.t('cli.tribe.check.max_rank', { rank: limits.max_rank }),
-    ...(limits.guarded_zones ? [] : [ctx.t('cli.tribe.check.no_guarded')]),
-  ];
-}
 
 function reportLine(ctx: KingdomContext, report: ConformanceReport): string {
   if (report.outcome === 'passed') return ctx.t('cli.tribe.check.passed_check', { check: report.id });
@@ -218,7 +193,7 @@ async function passes(
     return 'refused';
   }
   const { runner } = found.hand;
-  capabilityLines(ctx, tribe, runner.capabilities).forEach(ctx.io.out);
+  capabilityLines(ctx.t, tribe, runner.capabilities).forEach(ctx.io.out);
   const model = await modelToTry(ctx, input, tribe, runner);
   if (model.missing === true) {
     ctx.io.err(ctx.t('cli.tribe.check.no_model', { tribe: tribe.id }));
