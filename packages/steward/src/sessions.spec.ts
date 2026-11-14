@@ -92,7 +92,7 @@ describe("the end of an assignee's session", () => {
     expect(kingdom.notices).toEqual([
       expect.objectContaining({
         kind: 'infirmary',
-        reason: { code: 'legacy', params: { text: 'breaker:turns' } },
+        reason: { code: 'breaker:turns', params: { turns: 200, limit: 200 } },
       }),
     ]);
     expect((await kingdom.character('kael')).status).toBe('idle');
@@ -113,6 +113,24 @@ describe("the end of an assignee's session", () => {
     });
     expect((await typesOf(kingdom)).slice(-2)).toEqual(['quest.claimed', 'quest.released']);
     expect(kingdom.warnings.join('\n')).toContain('claude.exe not found');
+  });
+
+  it('records the token count when the CLI ends at its own budget', async () => {
+    const { kingdom, steward } = await open({}, (k) => ({
+      runners: {
+        claude: ending(k.fakes.claude, { outcome: 'budget', usage: { tokens: 12345 } }),
+        gemini: k.fakes.gemini,
+      },
+    }));
+    await kingdom.command('create_quest', questPayload('CLI budget'));
+    await tickUntil(
+      steward,
+      kingdom.clock,
+      async () => (await statusOf(kingdom, 'CLI budget')) === 'infirmary',
+    );
+    expect(kingdom.notices.at(-1)).toMatchObject({
+      reason: { code: 'breaker:tokens', params: { tokens: 12345, limit: 480000 } },
+    });
   });
 });
 
@@ -161,12 +179,8 @@ describe("the end of a verifier's session", () => {
       trip: 'no_verdict',
       detail: { verifiers_stopped: 2 },
       reason: {
-        code: 'legacy',
-        params: {
-          text: expect.stringMatching(
-            /^review:no_verdict: the verifier's output is no verdict \(invalid_verdict.*; 2 verifiers of run 1 left without a verdict/,
-          ) as unknown,
-        },
+        code: 'judge:not_a_verdict',
+        params: { stopped: 2, run: 1, error: expect.stringContaining('invalid_verdict') as unknown },
       },
     });
     // No third judge opens while the quest waits for the owner.
@@ -199,14 +213,10 @@ describe("the end of a verifier's session", () => {
     expect(kingdom.notices.at(-1)).toMatchObject({
       kind: 'infirmary',
       trip: 'partial_verdicts',
-      detail: { message: 'the last judge stopped at src/api/orders.ts', partial_verdicts: 3 },
+      detail: { partial_verdicts: 3 },
       reason: {
-        code: 'legacy',
-        params: {
-          text: expect.stringMatching(
-            /^review:partial_verdicts: the last judge stopped at src\/api\/orders\.ts; 3 verifiers of run 1 handed in a partial verdict/,
-          ) as unknown,
-        },
+        code: 'judge:partial_verdicts_until',
+        params: { count: 3, run: 1, until: 'src/api/orders.ts' },
       },
     });
     // No fourth judge opens while the quest waits for the owner; the owner's retry brings a new judge.
@@ -232,12 +242,7 @@ describe("the end of a verifier's session", () => {
     );
     expect(kingdom.notices.at(-1)).toMatchObject({
       trip: 'no_verdict',
-      reason: {
-        code: 'legacy',
-        params: {
-          text: expect.stringContaining("the verifier's session ended error, exit code 1") as unknown,
-        },
-      },
+      reason: { code: 'judge:session_ended', params: { stopped: 2, run: 1, outcome: 'error, exit code 1' } },
     });
   });
 

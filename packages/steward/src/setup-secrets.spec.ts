@@ -163,14 +163,12 @@ describe("a script-tier quest's plot", () => {
     expect(quest).toMatchObject({ status: 'infirmary', assignee: null, attempts: 0, attempt_log: [] });
     expect(prepared).toEqual([]);
     expect(envs).toEqual([]);
-    const why = 'the treasury has no npm_token';
     expect(kingdom.notices).toEqual([
       {
         kind: 'infirmary',
         quest: { id: quest.id, title: 'Links without the token', rank: 'D' },
-        reason: { code: 'legacy', params: { text: `breaker:secrets: ${why}` } },
+        reason: { code: 'breaker:secrets_missing', params: { names: 'npm_token' } },
         trip: 'secrets',
-        detail: { message: why },
       },
     ]);
   });

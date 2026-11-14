@@ -26,6 +26,77 @@ afterEach(async () => {
 });
 
 describe('what goes wrong on the way', () => {
+  it('records the external error when the treasury cannot be read', async () => {
+    const { kingdom, steward } = await open({}, () => ({
+      treasury: {
+        names: () => Promise.reject(new Error('EACCES: treasury.json')),
+        resolve: () => Promise.resolve({}),
+      },
+    }));
+    await kingdom.command('create_quest', questPayload('Unreadable', { secrets_required: ['npm_token'] }));
+    await steward.tick();
+    expect(kingdom.notices.at(-1)).toMatchObject({
+      reason: { code: 'breaker:treasury_unreadable', params: { error: 'EACCES: treasury.json' } },
+    });
+  });
+
+  it('records the storage error when judges cannot write their verdicts', async () => {
+    const { kingdom, steward } = await open({}, (k) => ({
+      store: {
+        ...k.store,
+        verdicts: {
+          ...k.store.verdicts,
+          write: () =>
+            Promise.resolve({
+              ok: false,
+              error: { code: 'locked', file: 'verdict.json', message: 'held' },
+            }),
+        },
+      },
+    }));
+    await kingdom.command('create_quest', questPayload('Unwritten'));
+    await tickUntil(steward, kingdom.clock, statusIs(kingdom, 'Unwritten', 'infirmary'));
+    expect(kingdom.notices.at(-1)).toMatchObject({
+      reason: {
+        code: 'judge:verdict_unwritten',
+        params: { stopped: 2, run: 1, error: expect.stringContaining('held') as unknown },
+      },
+    });
+  });
+
+  it('records sessions lost after their completed crash could not be saved', async () => {
+    let refuse = true;
+    const { kingdom, steward } = await open(
+      { plays: { verdicts: { Lost: [{ verdict: 'nothing' }, { verdict: 'nothing' }] } } },
+      (k) => ({
+        store: {
+          ...k.store,
+          quests: {
+            ...k.store.quests,
+            write: (quest) => {
+              const last = quest.attempt_log.at(-1);
+              if (quest.status === 'review' && last?.outcome === 'crash') {
+                const fail = refuse;
+                refuse = !refuse;
+                if (fail)
+                  return Promise.resolve({
+                    ok: false,
+                    error: { code: 'locked', file: 'quest.json', message: 'held' },
+                  });
+              }
+              return k.store.quests.write(quest);
+            },
+          },
+        },
+      }),
+    );
+    await kingdom.command('create_quest', questPayload('Lost'));
+    await tickUntil(steward, kingdom.clock, statusIs(kingdom, 'Lost', 'infirmary'));
+    expect(kingdom.notices.at(-1)).toMatchObject({
+      reason: { code: 'judge:session_lost', params: { stopped: 2, run: 1 } },
+    });
+  });
+
   it('leaves the quest in review while its checks cannot run, and judges once they can', async () => {
     let broken = true;
     const { kingdom, steward } = await open({}, (k) => ({
@@ -51,7 +122,14 @@ describe('what goes wrong on the way', () => {
     await kingdom.command('create_quest', questPayload('Locked index'));
     await tickUntil(steward, kingdom.clock, statusIs(kingdom, 'Locked index', 'infirmary'));
     expect(kingdom.notices.at(-1)).toMatchObject({
-      reason: { code: 'legacy', params: { text: 'breaker:commit: index.lock exists' } },
+      reason: {
+        code: 'breaker:commit',
+        params: {
+          lines: 'index.lock exists',
+          total_lines: 1,
+          log: expect.stringMatching(/pre-commit\.log$/) as unknown,
+        },
+      },
     });
   });
 

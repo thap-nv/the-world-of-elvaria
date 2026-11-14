@@ -34,6 +34,9 @@ afterEach(async () => {
 
 const HOOK = '#!/bin/sh\necho "lint failed: src/app.ts" >&2\nexit 1\n';
 
+const HOOK_LINES = Array.from({ length: 300 }, (_, index) => `echo "error ${index}: lint failed" >&2`);
+const LONG_HOOK = `#!/bin/sh\n${HOOK_LINES.join('\n')}\nexit 1\n`;
+
 /** The fake session writes its letter when it starts; this one's is gone once it ends, as when a session was cut. */
 const withoutLetter = (runner: AgentRunner): AgentRunner => ({
   ...runner,
@@ -100,6 +103,24 @@ describe('a scratch file at the plot root (P1-55)', () => {
 });
 
 describe("work the territory's hook refuses (P1-55)", () => {
+  it('keeps a 300-line hook log and reports its head and counts', async () => {
+    const { kingdom, steward } = await open(() => WORK, { hook: LONG_HOOK });
+    await kingdom.command('create_quest', questPayload('Long hook'));
+    await tickUntil(steward, kingdom.clock, statusIs(kingdom, 'Long hook', 'infirmary'));
+    const quest = await kingdom.quest('Long hook');
+    const log = `.runs/${quest.id}-1/pre-commit.log`;
+    const lines = Array.from({ length: 5 }, (_, index) => `error ${index}: lint failed`).join('\n');
+    expect(kingdom.notices.at(-1)).toMatchObject({
+      reason: {
+        code: 'breaker:commit_errors',
+        params: { lines, errors: 300, total_lines: 300, log },
+      },
+    });
+    const output = await readFile(path.join(kingdom.root, log), 'utf8');
+    expect(output.split(/\r?\n/)).toHaveLength(300);
+    expect(output).toContain('error 299: lint failed');
+  }, 120_000);
+
   it('is kept as a patch, and a quest with no letter gets a minimal one', async () => {
     const { kingdom, steward, repo } = await open(() => WORK, { hook: HOOK, letter: false });
     await kingdom.command('create_quest', questPayload('Refused by lint'));

@@ -107,9 +107,10 @@ describe('a patch for the paths the CLI guards (P1-28)', () => {
     expect(quest.attempt_log.at(-1)).toMatchObject({ outcome: 'breaker' });
     const [notice, ...others] = kingdom.notices;
     expect(others).toEqual([]);
-    expect(notice?.kind === 'infirmary' ? notice.reason.params.text : notice).toContain(
-      `breaker:commit: ${PATCH_FILE} was not applied: ${why}`,
-    );
+    expect(notice?.kind === 'infirmary' ? notice.reason : notice).toMatchObject({
+      code: 'breaker:patch',
+      params: { file: PATCH_FILE, why: expect.stringContaining(why) as unknown },
+    });
     // The line says it in parts (P1-32): the trip, and why the patch was refused, apart from the hook's words.
     const [line] = await linesOf(kingdom, 'quest.infirmary');
     const refused = expect.stringContaining(why) as unknown;

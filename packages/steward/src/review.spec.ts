@@ -84,7 +84,15 @@ describe('the machine checks and the pass rule', () => {
     expect(kingdom.notices).toEqual([
       expect.objectContaining({
         kind: 'infirmary',
-        reason: { code: 'legacy', params: { text: `breaker:commit: ${refusal}` } },
+        reason: {
+          code: 'breaker:commit_errors',
+          params: {
+            lines: refusal,
+            errors: 1,
+            total_lines: 1,
+            log: expect.stringMatching(/pre-commit\.log$/) as unknown,
+          },
+        },
       }),
     ]);
     expect((await kingdom.quest('Lint fails')).attempt_log.at(-1)).toMatchObject({ outcome: 'breaker' });
@@ -248,6 +256,9 @@ describe('the fail streak', () => {
       async () => (await kingdom.character('kael')).status === 'suspended',
     );
     expect((await kingdom.quest('Fails thrice')).status).toBe('infirmary');
+    expect(kingdom.notices).toContainEqual(
+      expect.objectContaining({ reason: { code: 'quest:max_attempts', params: {} } }),
+    );
     expect(kingdom.notices).toContainEqual({
       kind: 'suspended',
       character: 'kael',

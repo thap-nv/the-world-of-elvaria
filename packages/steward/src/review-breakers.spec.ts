@@ -64,6 +64,28 @@ const verifiersOf = (spawned: readonly SpawnRequest[]) => spawned.filter(({ role
 
 // A judge may spend breakers.verifier_tokens_multiplier (2) times the quest's 480 000 tokens (P1-18 (f); rank D, P1-54).
 describe('a review the breakers keep stopping', () => {
+  it('records the time breaker after two judges exhaust their time', async () => {
+    const { kingdom, steward } = await open((k) => ({
+      runners: {
+        claude: spendingJudges(k, 'claude', 0, []),
+        gemini: spendingJudges(k, 'gemini', 0, []),
+      },
+    }));
+    await kingdom.command('create_quest', questPayload('Timed judges'));
+    for (let count = 0; count < 2; count += 1) {
+      await tickUntil(
+        steward,
+        kingdom.clock,
+        async () => (await kingdom.quest('Timed judges')).verifier !== null,
+      );
+      kingdom.clock.advance(90);
+      await steward.tick();
+    }
+    expect(kingdom.notices.at(-1)).toMatchObject({
+      reason: { code: 'judge:time', params: { stopped: 2, run: 1 } },
+    });
+  });
+
   it('goes to the infirmary with the bell at the second verifier stopped, and opens no third', async () => {
     const spawned: SpawnRequest[] = [];
     const { kingdom, steward } = await open((k) => ({
@@ -94,15 +116,10 @@ describe('a review the breakers keep stopping', () => {
       {
         kind: 'infirmary',
         quest: { id: quest.id, title: 'Judged at length', rank: 'D' },
-        reason: {
-          code: 'legacy',
-          params: {
-            text: 'breaker:tokens: 960001 tokens, limit 960000; 2 verifiers of run 1 left without a verdict, so no further one opens: raise the budget (quest edit) before a retry',
-          },
-        },
+        reason: { code: 'judge:tokens', params: { stopped: 2, run: 1 } },
         // In parts too (P1-32): the last verifier's breaker, and how many of the run it stopped.
         trip: 'tokens',
-        detail: { message: '960001 tokens, limit 960000', verifiers_stopped: 2 },
+        detail: { verifiers_stopped: 2 },
       },
     ]);
     // The quest waits for the owner: no third verifier, no session left running.
@@ -147,10 +164,7 @@ describe('a review the breakers keep stopping', () => {
     ]);
     expect(kingdom.notices.at(-1)).toMatchObject({
       kind: 'infirmary',
-      reason: {
-        code: 'legacy',
-        params: { text: expect.stringContaining('2 verifiers of run 1 left without a verdict') as unknown },
-      },
+      reason: { code: 'judge:tokens', params: { stopped: 2, run: 1 } },
     });
   });
 
@@ -174,14 +188,7 @@ describe('a review the breakers keep stopping', () => {
     );
     expect(kingdom.notices.at(-1)).toMatchObject({
       kind: 'infirmary',
-      reason: {
-        code: 'legacy',
-        params: {
-          text: expect.stringMatching(
-            /^breaker:turns; 2 verifiers of run 1 left without a verdict/,
-          ) as unknown,
-        },
-      },
+      reason: { code: 'judge:turns', params: { stopped: 2, run: 1 } },
     });
     expect(verifiersOf(spawned)).toHaveLength(2);
     expect(kingdom.warnings.join('\n')).toContain("'s review stopped, breaker:turns");

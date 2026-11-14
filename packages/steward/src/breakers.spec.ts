@@ -108,11 +108,9 @@ describe('a session past a breaker', () => {
     expect(steward.running()).toBe(0);
     expect(commits).toEqual([`chore: wip ${quest.id} (time)`]);
     // Why, in parts too (P1-32): the trip, the breaker's words in the detail; the bell and the line say the same.
-    const message = 'ran 45 min, limit 45 min';
     const why = {
-      reason: { code: 'legacy', params: { text: `breaker:time: ${message}` } },
+      reason: { code: 'breaker:time', params: { minutes: 45, limit: 45 } },
       trip: 'time',
-      detail: { message },
     };
     const hangs = { id: quest.id, title: 'Hangs', rank: 'D' };
     expect(kingdom.notices).toEqual([{ kind: 'infirmary', quest: hangs, ...why }]);
@@ -141,7 +139,7 @@ describe('a session past a breaker', () => {
     expect(quest.status).toBe('infirmary');
     expect(quest.attempt_log.at(-1)?.outcome).toBe('breaker');
     expect(kingdom.notices.at(-1)).toMatchObject({
-      reason: { code: 'legacy', params: { text: 'breaker:tokens: 480001 tokens, limit 480000' } },
+      reason: { code: 'breaker:tokens', params: { tokens: 480001, limit: 480000 } },
     });
   });
 
@@ -193,12 +191,7 @@ describe('a session past a breaker', () => {
     const quest = await kingdom.quest('Loops');
     expect(commits).toEqual([`chore: wip ${quest.id} (turns)`]);
     expect(kingdom.notices.at(-1)).toMatchObject({
-      reason: {
-        code: 'legacy',
-        params: {
-          text: 'breaker:turns (WIP not committed, it stays in the plot: husky - pre-commit script failed (code 1))',
-        },
-      },
+      reason: { code: 'breaker:turns', params: { turns: 200, limit: 200 } },
     });
   });
 });

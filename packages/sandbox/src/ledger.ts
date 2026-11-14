@@ -25,6 +25,7 @@ import type {
   CharacterId,
   Event,
   IdSource,
+  InfirmaryReason,
   PoolKey,
   PoolView,
   Quest,
@@ -104,9 +105,18 @@ function actorOf(actor: QuestActor, quest: Quest): Actor {
 }
 
 /** Why a quest went to the infirmary, as the line says it (§3.4). */
-function infirmaryReason(event: QuestEvent, quest: Quest): string {
-  if (event.type === 'breaker') return `breaker:${event.trip}`;
-  return quest.tier === 'script' ? 'script_error' : 'max_attempts';
+function infirmaryReason(event: QuestEvent, quest: Quest): { reason: InfirmaryReason; trip: string } {
+  if (event.type === 'breaker' && event.trip === 'time')
+    return {
+      reason: infirmaryReasonOf('breaker:time', {
+        minutes: quest.budget.max_minutes,
+        limit: quest.budget.max_minutes,
+      }),
+      trip: 'time',
+    };
+  if (quest.tier === 'script' && quest.script !== undefined)
+    return { reason: infirmaryReasonOf('script:broken', { script: quest.script.id }), trip: 'script_broken' };
+  return { reason: infirmaryReasonOf('quest:max_attempts'), trip: 'max_attempts' };
 }
 
 interface Book {
@@ -153,9 +163,7 @@ function move(book: Book, id: QuestId, payload: MovePayload, actor: QuestActor, 
   const moved = editAll(book, edits, at);
   const type = questLogTypeOf(event.type, before.status, after.status);
   const data = {
-    ...(type === 'quest.infirmary'
-      ? { reason: infirmaryReasonOf('legacy', { text: infirmaryReason(event, after) }) }
-      : {}),
+    ...(type === 'quest.infirmary' ? infirmaryReason(event, after) : {}),
     quest: questViewOf(after),
     ...(moved.length > 0 ? { characters: moved.map(characterViewOf) } : {}),
   };

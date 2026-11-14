@@ -1,7 +1,7 @@
 // What a session's end does to its quest (implementation-plan §2.5, §3.7): the runner's RunResult becomes one move
 // of the table, the character's matching move, and for a verifier the verdict, the assignee's reputation and level.
 // An end that arrives for a quest that moved on meanwhile (cancelled, reassigned) changes nothing.
-import { amendmentDeciderOf, currentRun, protectedMarkOf } from '@elvaria/domain';
+import { amendmentDeciderOf, currentRun, infirmaryReasonOf, protectedMarkOf } from '@elvaria/domain';
 import { plotCommitMessage } from '@elvaria/runner-core';
 import type { CharacterId, Quest, Result } from '@elvaria/domain';
 import type { RunResult } from '@elvaria/runner-core';
@@ -167,7 +167,12 @@ async function settleVerifier(
   if (result.outcome === 'max_turns' || result.outcome === 'budget')
     return breakVerifier(ctx, running, { trip: TRIPS[result.outcome] }, ended(result));
   const exit = result.exit_code === null ? '' : `, exit code ${String(result.exit_code)}`;
-  return verifierLeaves(ctx, running, result, `the verifier's session ended ${result.outcome}${exit}`);
+  return verifierLeaves(
+    ctx,
+    running,
+    result,
+    infirmaryReasonOf('judge:session_ended', { outcome: `${result.outcome}${exit}` }),
+  );
 }
 
 /** The quest, while the session is still the one its file says runs: same status, same holder, same run. */
@@ -218,7 +223,9 @@ async function crashed(ctx: Context, quest: Quest, holder: CharacterId): Promise
     edits: holds ? { [holder]: edit } : {},
   });
   // A judge lost so left no verdict either: it counts toward a stalled review like any other (P1-33).
-  return quest.status === 'review' ? stallWithoutVerdict(ctx, left, "the verifier's session was lost") : left;
+  return quest.status === 'review'
+    ? stallWithoutVerdict(ctx, left, infirmaryReasonOf('judge:session_lost'))
+    : left;
 }
 
 /** The last Steward stopped or was killed under the session: the run says nothing and counts for nothing (P1-44). */
