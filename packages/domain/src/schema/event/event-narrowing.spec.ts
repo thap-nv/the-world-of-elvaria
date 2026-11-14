@@ -3,11 +3,11 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
 
 import examples from '../../../examples/event.json' with { type: 'json' };
-import { EventSchema, isEventOf, isTypedEvent } from './event.ts';
+import { EVENT_VERSION, EventSchema, isEventOf, isTypedEvent } from './event.ts';
 import type { ToolKind } from './event-data.ts';
 
 const line = (type: string) => ({
-  v: 1,
+  v: EVENT_VERSION,
   id: '01JCF8X4Z6Q3W9N2M5R7T8V0YB',
   ts: '2026-11-06T09:12:03+07:00',
   type,

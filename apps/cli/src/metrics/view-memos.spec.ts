@@ -1,6 +1,6 @@
 // The PS-22 parts of `elvaria metrics`: memos by kind, and the objections each first judge's verdicts drew; (PS-22b) the
 // amendments.
-import { EventSchema, VerdictSchema, metricsOf } from '@elvaria/domain';
+import { EVENT_VERSION, EventSchema, VerdictSchema, metricsOf } from '@elvaria/domain';
 import type { Event } from '@elvaria/domain';
 import { translator } from '@elvaria/i18n';
 import { describe, expect, it } from 'vitest';
@@ -16,7 +16,7 @@ let counter = 0;
 const line = (type: string, data: Record<string, unknown>): Event => {
   counter += 1;
   return EventSchema.parse({
-    v: 1,
+    v: EVENT_VERSION,
     id: `01JC${String(counter).padStart(22, '0')}`,
     ts: AT,
     type,

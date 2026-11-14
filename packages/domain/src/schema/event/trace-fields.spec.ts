@@ -3,10 +3,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { QUEST_VIEW } from '../../world/__fixtures__/examples.ts';
-import { EventSchema } from './event.ts';
+import { EVENT_VERSION, EventSchema } from './event.ts';
 
 const line = (type: string, data: Record<string, unknown>) => ({
-  v: 1,
+  v: EVENT_VERSION,
   id: '01JCF8X4Z6Q3W9N2M5R7T8V0YB',
   ts: '2026-11-12T09:12:03+07:00',
   type,

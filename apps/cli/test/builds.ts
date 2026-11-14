@@ -6,6 +6,8 @@ import { realpathSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { EVENT_VERSION } from '@elvaria/domain';
+
 import { git } from './cli.ts';
 import type { Launch } from '../src/process/launch.ts';
 
@@ -77,7 +79,7 @@ if (command === 'territory add') mkdirSync(path.join(kingdom, 'territories', 'la
 if (command === 'run') {
   if (behavior.run === 'exit') process.exit(4);
   mkdirSync(path.join(kingdom, 'events'), { recursive: true });
-  const line = JSON.stringify({ v: 1, type: behavior.run ?? 'verdict.pass' });
+  const line = JSON.stringify({ v: ${EVENT_VERSION}, type: behavior.run ?? 'verdict.pass' });
   writeFileSync(path.join(kingdom, 'events', '2026-11-12.jsonl'), '{"torn\\n' + line + '\\n');
   setInterval(() => undefined, 1000);
 }

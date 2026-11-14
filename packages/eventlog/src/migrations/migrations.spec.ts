@@ -2,7 +2,7 @@ import { readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { EVENT_DATA_SCHEMAS, EventSchema } from '@elvaria/domain';
+import { EVENT_VERSION, EVENT_DATA_SCHEMAS, EventSchema } from '@elvaria/domain';
 import { describe, expect, it } from 'vitest';
 
 import { DAY_1, makeEvent } from '../__fixtures__/events.ts';
@@ -24,6 +24,10 @@ const RENAME_SESSION: EventMigrationChain = [
 ];
 
 describe('event line migrations', () => {
+  it('keeps the hook writer version aligned with the domain schema', () => {
+    expect(CURRENT_EVENT_VERSION).toBe(EVENT_VERSION);
+  });
+
   it('ends at the v that EventSchema accepts: a schema bump without a step fails here', () => {
     expect(CURRENT_EVENT_VERSION).toBe(EVENT_MIGRATIONS.length + 1);
     const event = makeEvent(DAY_1, 1);
@@ -64,7 +68,7 @@ describe('event line migrations', () => {
   });
 
   it('runs every step from the line v up to the current one', () => {
-    const line = { v: 1, id: 'x', session: 's-1' };
+    const line = { v: EVENT_VERSION, id: 'x', session: 's-1' };
     expect(migrateEvent(line, RENAME_SESSION)).toEqual({
       ok: true,
       value: { v: 2, id: 'x', session_id: 's-1' },
@@ -86,11 +90,11 @@ describe('event line migrations', () => {
         throw new Error('unexpected shape');
       },
     ];
-    expect(migrateEvent({ v: 1 }, throws)).toEqual({
+    expect(migrateEvent({ v: EVENT_VERSION }, throws)).toEqual({
       ok: false,
       error: { code: 'migration_failed', from: 1, message: 'unexpected shape' },
     });
-    expect(migrateEvent({ v: 1 }, [() => 'not an object'])).toMatchObject({
+    expect(migrateEvent({ v: EVENT_VERSION }, [() => 'not an object'])).toMatchObject({
       error: { code: 'migration_failed', message: 'did not set v 2' },
     });
     const throwsText: EventMigrationChain = [
@@ -99,8 +103,10 @@ describe('event line migrations', () => {
         throw 'bare string' as unknown as Error;
       },
     ];
-    expect(migrateEvent({ v: 1 }, throwsText)).toMatchObject({ error: { message: 'bare string' } });
-    expect(versionOfLine({ v: 1.5 })).toBeUndefined();
+    expect(migrateEvent({ v: EVENT_VERSION }, throwsText)).toMatchObject({
+      error: { message: 'bare string' },
+    });
+    expect(versionOfLine({ v: EVENT_VERSION + 0.5 })).toBeUndefined();
   });
 
   it('upgrades a line before the schema sees it', () => {

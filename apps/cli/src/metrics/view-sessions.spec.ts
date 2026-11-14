@@ -1,6 +1,6 @@
 // The PS-21 parts of `elvaria metrics`: the graph's queries, the calls before a first edit and the prompt's size, from
 // lines as the hook and the Steward write them.
-import { EventSchema, metricsOf, questViewOf } from '@elvaria/domain';
+import { EVENT_VERSION, EventSchema, metricsOf, questViewOf } from '@elvaria/domain';
 import type { Event } from '@elvaria/domain';
 import { translator } from '@elvaria/i18n';
 import { describe, expect, it } from 'vitest';
@@ -42,7 +42,7 @@ let counter = 0;
 const line = (type: string, data: Record<string, unknown>, session: string): Event => {
   counter += 1;
   return EventSchema.parse({
-    v: 1,
+    v: EVENT_VERSION,
     id: `01JC${String(counter).padStart(22, '0')}`,
     ts: `${DAY}T09:30:00+07:00`,
     type,

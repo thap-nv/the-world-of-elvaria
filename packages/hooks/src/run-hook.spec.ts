@@ -3,6 +3,7 @@
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { CURRENT_EVENT_VERSION } from '@elvaria/eventlog';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
@@ -53,7 +54,7 @@ describe('runHook', () => {
     await call(PAYLOADS.PostToolUse);
     const [line] = (await kingdom.log()).events;
     expect(line).toMatchObject({
-      v: 1,
+      v: CURRENT_EVENT_VERSION,
       ts: '2026-11-06T23:59:59+07:00',
       type: 'agent.tool',
       actor: { kind: 'character', id: CHARACTER },

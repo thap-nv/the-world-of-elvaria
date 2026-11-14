@@ -1,7 +1,7 @@
 // The answer to a command (P1-56, (g) of the P1-50 report): with a Steward running, the CLI waits for its
 // `command.applied` or `command.rejected` line and says it, so a refused edit no longer ends at "sent"; with none,
 // the command waits in the inbox and the CLI does not wait for anything.
-import { EventSchema } from '@elvaria/domain';
+import { EVENT_VERSION, EventSchema } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import { acquireLock, inKingdom, openKingdom } from '@elvaria/store';
 import type { HeldLock } from '@elvaria/store';
@@ -54,7 +54,7 @@ describe('the answer the CLI waits for', () => {
         const data = { command_id: await commandId(), ...(reason === undefined ? {} : { reason }) };
         await openEventLog(kingdom).append([
           EventSchema.parse({
-            v: 1,
+            v: EVENT_VERSION,
             id: `01M6RQ5Y000000000000000${String(line).padStart(3, '0')}`,
             ts: '2026-11-06T09:00:05+07:00',
             type,

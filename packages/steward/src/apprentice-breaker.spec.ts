@@ -1,7 +1,7 @@
 // §3.12 invariant 3: a quest that meets a breaker while an apprentice of its session overran or was cut goes to the
 // infirmary with a note asking for a child quest. The runner writes the apprentice's lines into the quest's journal
 // under the session's id; here they are written by hand, as the runner would (P1-17).
-import { EventSchema } from '@elvaria/domain';
+import { EVENT_VERSION, EventSchema } from '@elvaria/domain';
 import { openJournal } from '@elvaria/eventlog';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -22,7 +22,7 @@ afterEach(async () => {
 /** A line the runner writes for the session `session` of `quest`. */
 const runnerLine = (k: Bench, quest: string, session: string, type: string, data: Record<string, unknown>) =>
   EventSchema.parse({
-    v: 1,
+    v: EVENT_VERSION,
     id: k.ids.ulid(),
     ts: '2026-11-07T09:10:00+07:00',
     type,

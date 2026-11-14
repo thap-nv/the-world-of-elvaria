@@ -9,6 +9,9 @@ import { EVENT_DATA_SCHEMAS, dataRules, hasDataSchema } from './event-data.ts';
 import { EVENT_TYPES } from './event-types.ts';
 import type { EventData, TypedEventType } from './event-data.ts';
 
+// Single source for event `v` in schemas and writers (ADR 0003).
+export const EVENT_VERSION = 1 as const;
+
 export const ACTOR_KINDS = ['character', 'user', 'steward', 'chancellor', 'herald', 'system'] as const;
 
 export const ActorSchema = z
@@ -33,7 +36,7 @@ function checkData(event: { type: string; data: Record<string, unknown> }, ctx: 
 export const EventSchema = z
   .strictObject({
     // Lines of an older `v` are upgraded by the eventlog reader before they reach this schema (ADR 0003).
-    v: z.literal(1),
+    v: z.literal(EVENT_VERSION),
     id: UlidSchema.meta({ description: 'ULID from IdSource; sortable by time.' }),
     ts: DateTimeSchema,
     type: z.string().regex(/^[a-z_]+(\.[a-z_]+)+$/),
