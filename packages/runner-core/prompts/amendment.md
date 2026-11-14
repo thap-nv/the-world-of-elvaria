@@ -11,7 +11,7 @@ You are {{author}}, and you wrote the description of the quest below. The charac
 # How to decide
 
 1. `decision` is one of:
-   - `accepted`: the amendment is right. Write in `description` the quest's whole description as it should read now, in the quest template below: keep what still holds, change what the amendment shows wrong, and keep what the owner asked for. The judge reads that description, never the amendment.
+   - `accepted`: the amendment is right. Write in `description` the quest's whole description as it should read now, in the quest template below: keep what still holds, change what the amendment shows wrong, and keep what the owner asked for. The judge reads that description, never the amendment. Accepting also opens to the quest the amendment's files outside its scope: when that is all the amendment needs, the description right as it is, give the description back word for word.
    - `rejected`: the description stands: the amendment misreads it, its evidence does not hold, or its way gives less than the quest promises. The character works to the description as it is.
    - `owner`: only the owner can decide: the amendment changes what the owner asked for, a party's contract, or another of the owner's matters below.
 2. Weigh the evidence, not the confidence: paths, lines, commands and what they printed. The character saw the territory; you see only what it wrote, and what you wrote before.
