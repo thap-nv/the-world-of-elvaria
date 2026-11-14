@@ -88,7 +88,8 @@ pnpm --filter @elvaria/hooks build && ELVARIA_LIVE=1 pnpm --filter @elvaria/runn
 ```
 
 `fixtures/fake-agy.mjs` stands in for agy: it replays a recorded stream (`ELVARIA_FAKE_AGY_REPLAY`), or plays a
-conformance scenario the way agy 1.5.2 does, running the generated hooks through `cmd /c` or `sh -c` and applying
+conformance scenario the way agy 1.5.2 does (the suite's `structured`: the verdict as the last JSON object of the
+answer), running the generated hooks (`fake-agy-hooks.mjs` lists them) through `cmd /c` or `sh -c` and applying
 the settings as prefix rules. It refuses (exit 2) a session whose settings lack `"agentMode": ""`. Fixtures: the redacted runs of spike P1-12a, the `--conversation` pair and the
 `/hooks` answer of P1-12b, the real quota error of P1-16 (`stream-quota-exhausted.*`), and `constructed-rate-limit.*`, built from agy's
 changelog for its other wording (`reset after 2h31m12s`). `ELVARIA_AGY` points the live specs at another agy. `run-files.spec.ts` checks the

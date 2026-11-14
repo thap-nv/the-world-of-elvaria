@@ -7,6 +7,7 @@ import {
   FAKE_FORBIDDEN_COMMAND,
   FAKE_QUESTION,
   FAKE_SCRATCH_COMMANDS,
+  FAKE_STRUCTURED_ANSWER,
   fakeLetter,
 } from '../conformance/scenarios.ts';
 import { runSpawnProbe } from '../conformance/spawn-probe.ts';
@@ -40,6 +41,7 @@ interface Ending {
   readonly exit_code: number | null;
   readonly rate_limited?: boolean;
   readonly denials?: readonly PermissionDenial[];
+  readonly structured?: unknown;
 }
 
 interface Play {
@@ -90,6 +92,12 @@ const SCRIPTS: Readonly<Record<FakeScenario, (play: Play) => Promise<Ending | un
     await runSpawnProbe(play.start.req.cwd);
     return work(play);
   },
+  // A schema in the request is honoured as a CLI with a JSON Schema flag does: the answer comes back as the value.
+  structured: (play) => {
+    if (play.start.req.structured === undefined) return work(play);
+    play.push({ kind: 'text', text: JSON.stringify(FAKE_STRUCTURED_ANSWER) });
+    return Promise.resolve({ ...COMPLETED, structured: FAKE_STRUCTURED_ANSWER });
+  },
 };
 
 export function startFakeSession(start: FakeStart): RunningSession {
@@ -115,6 +123,7 @@ export function startFakeSession(start: FakeStart): RunningSession {
       duration_ms: Math.round(performance.now() - begun),
       permission_denials: ending.denials ?? [],
       rate_limited: ending.rate_limited ?? false,
+      ...(ending.structured === undefined ? {} : { structured: ending.structured }),
       ...(question === undefined ? {} : { question }),
     });
   };

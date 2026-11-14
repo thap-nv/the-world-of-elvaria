@@ -10,7 +10,14 @@ launch, hook, env, timeout_ms?, platform?})`. `hook` is `hookCommand()` of `@elv
   Codex has no tool that reads or searches files, so runner-core gives a class with Glob or Grep `git grep` and
   `git ls-files`.
 - Per session writes `policy.json` (runner-core's `writePolicyFile`: laws, context, secret names, the class's
-  `tools`, `search_commands`) and, for a structured answer, `schema.json` in the run folder; and
+  `tools`, `search_commands`) and, for a structured answer, `schema.json` in the run folder, the core's schema made
+  strict (`strictSchemaOf`, fix/codex-output-schema): Codex sends it as OpenAI's strict structured output, which
+  refuses before any model call (a 400 at 0 tokens) a key of `properties` missing from `required`, an object without
+  `additionalProperties: false`, and `allOf`, `not`, `if`/`then`/`else`, `dependentRequired`, `dependentSchemas`,
+  `uniqueItems` at any depth. So every key becomes required, an optional one nullable (`type: [t, "null"]` for a
+  scalar type, else `anyOf` with `{type: "null"}`), every object closed (one without `properties`, as the drafts'
+  `script.params`, closes to `{}`: a Codex session gives no params), and those keywords go; the core's zod checks
+  what they said when the answer comes back; and
   `AGENTS.override.md` at the root of the plot, which Codex reads in place of `AGENTS.md`: the system part of the
   prompt, the territory's `AGENTS.md`, `CLAUDE.md` and `territory.context_files` copied in (runner-core's
   `readContextFiles`, each cut at 24 000 characters), then what Codex's tools are for this class (`apply_patch` writes; git's folder is read-only, the Steward commits; no sub-agents, no
@@ -46,7 +53,9 @@ image_generation -m <model> -c … --dangerously-bypass-hook-trust [--output-sch
 blocked by PreToolUse hook: <reason>. Command: <command>`) into `tool_blocked` signals and `permission_denials`.
   Outcome: a kill → `killed`, the action cap → `max_turns`, a completed turn with exit 0 → `completed`, anything
   else → `error`; a usage-limit message (`You've hit your usage limit`, `usage_limit_reached`…) adds
-  `rate_limited` and a `rate_limit` signal. A structured answer is the JSON object of the last message.
+  `rate_limited` and a `rate_limit` signal. A structured answer is the JSON object of the last message, without
+  the keys the model wrote null (`withoutNulls`): the strict schema makes it write every key, and the core's zod
+  refuses null where a key may only be absent. No schema of the core takes null today.
 - Writes `agent.session.end` (outcome and usage, a killed run included) with `openRunLog`, and stdout and stderr
   redacted into `<run_dir>/stdout.jsonl` and `stderr.log` with `openRunOutput`.
 - `probe()` reads `account/rateLimits/read` of `codex app-server` (0 mana; the client keeps stdin open until every
@@ -93,6 +102,12 @@ gives the fake P1-12d's sandbox, where the spawn probe's child fails with `EPERM
 (`fake-codex-server.mjs`: `hooks/list` from its own `-c` hooks, `account/rateLimits/read` from `rate-limits.json`),
 replays a recorded stream (`ELVARIA_FAKE_CODEX_REPLAY`), or plays a conformance scenario as Codex does: the prompt
 read on stdin, the `-c` hooks run through PowerShell's `command_windows` on Windows or `sh -c` elsewhere, and
-skipped unless the trust bypass is given. Fixtures are the spike's runs, redacted (`stream-*.jsonl` and their
+skipped unless the trust bypass is given. `fake-codex-schema.mjs` is the API's side of `--output-schema`, written
+apart from `strict-schema.ts`: a schema outside strict structured output fails the turn with the API's 400 before
+any item, and the answer under it has every key, null for those left out. `strict-schema.spec.ts` holds the
+Chancellor's three contracts of `docs/schemas/` to it. Fixtures are the spike's runs, redacted (`stream-*.jsonl` and their
 `.stderr.txt`, `hook-payloads.jsonl`, `hooks-list.json`, `rate-limits.json`), and `constructed-usage-limit.jsonl`,
 built from the binary's own words. `ELVARIA_CODEX` points the live specs at another Codex; they use `gpt-6-luna-low`.
+The live suite includes the conformance check `structured` and the memo-triage contract made strict: only the real
+API says which keywords it refuses. A failed live check keeps its workspace (run folder, Codex's output) in the OS
+temp folder, `elvaria live codex <time>/<check>`.

@@ -35,6 +35,8 @@ export {
   FAKE_QUESTION,
   FAKE_SCENARIOS,
   FAKE_SCENARIO_ENV,
+  FAKE_STRUCTURED_ANSWER,
+  FAKE_STRUCTURED_SCHEMA,
   fakeLetter,
   isFakeScenario,
 } from './conformance/scenarios.ts';

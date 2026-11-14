@@ -93,7 +93,7 @@ CLI không có hook: bỏ `dialect`, khai `tool_gate: false` và `events: false`
 1. Chủ nhân cài CLI và tự đăng nhập. Đặt adapter file vào `<vương quốc>/adapters/<tên>.mjs`.
 2. `elvaria tribe add <tộc> --adapter adapters/<tên>.mjs`: tộc **tắt**, in ngoại hình tự sinh của nó.
 3. `elvaria doctor --tool <tộc>=<đường dẫn CLI>`: hỏi `doctor()` của adapter, ghim đường dẫn và phiên bản.
-4. `elvaria tribe check <tộc>`: bộ test hợp đồng với CLI thật, chỉ các phép không tốn hay tốn rất ít mana (`capabilities`, `doctor`, `probe`, `submit`, `hang`, `forbidden_command`, `spawn_child`); qua thì bật tộc. Với một CLI giả của chính bạn, `--scenarios` chạy đủ mọi phép. Không qua thì tộc giữ nguyên trạng thái; đọc từng dòng ✗.
+4. `elvaria tribe check <tộc>`: bộ test hợp đồng với CLI thật, chỉ các phép không tốn hay tốn rất ít mana (`capabilities`, `doctor`, `probe`, `submit`, `hang`, `forbidden_command`, `spawn_child`, `structured`); qua thì bật tộc. Với một CLI giả của chính bạn, `--scenarios` chạy đủ mọi phép; CLI giả của một tộc khai `structured_output` phải diễn cả kịch bản `structured` (trả `FAKE_STRUCTURED_ANSWER` của runner-core theo schema của request). Không qua thì tộc giữ nguyên trạng thái; đọc từng dòng ✗.
 5. `elvaria tribe look <tộc>` in ngoại hình và nguồn của nó; `--palette`, `--crest`, `--figure`, `--aura`, `--frame`, `--name` đặt ngoại hình của chủ nhân (PS-24).
 6. `elvaria character add <id> --class judge --tribe <tộc> --model <model>` rồi một hiệp sĩ: tộc mới bắt đầu bằng một người chấm và một hiệp sĩ, quest nhỏ đầu tiên (chủ nhân chốt 2026-11-12).
 
