@@ -54,6 +54,7 @@ export type {
   CheckOutcome,
   ConformanceCheck,
   ConformanceTarget,
+  FailedWorkspace,
   LeftWorkspace,
 } from './conformance/target.ts';
 export {

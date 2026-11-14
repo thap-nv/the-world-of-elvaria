@@ -29,7 +29,16 @@ export interface ConformanceTarget {
    * On Windows a real agy kept its workspace for minutes after the session (`tribe check gemini`, 2026-11-12).
    */
   readonly onLeftover?: (left: LeftWorkspace) => void;
+  /**
+   * Handed the workspace of a failed check before it goes, its session's process tree killed: its run folder (the
+   * CLI's output, settings, policy.json), the hook's events, the letter. `elvaria tribe check` keeps them in the kingdom
+   * when it runs the real CLI (lessons of 2026-11-13). What it throws is said as a workspace left, not a failure.
+   */
+  readonly onFailed?: (failed: FailedWorkspace) => Promise<void> | void;
 }
+
+/** A failed check's workspace, still on disk: `problem` is the failure the check reports. */
+export type FailedWorkspace = LeftWorkspace;
 
 export type CheckOutcome = 'passed' | 'skipped';
 
