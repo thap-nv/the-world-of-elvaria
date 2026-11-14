@@ -2,8 +2,9 @@
 // PS-04b): the build a kingdom runs changes only through a step that tries it first and can be undone. The new
 // build is a detached worktree of the repo this CLI runs from, at `<kingdom>/.builds/<sha>/`; it is installed,
 // tried (trial.ts) and only then pinned in `.state/build.json`, with the build before it kept as the way back; then
-// its migrate runs on the kingdom (the trial ran it on a copy). Two builds stay on disk. The command itself always
-// runs on the code it is typed with (pin.ts).
+// its migrate runs on the kingdom (the trial ran it on a copy), and the registry defaults the new build changed come
+// in where the kingdom still held the old default (registry-defaults.ts). Two builds stay on disk. The command itself
+// always runs on the code it is typed with (pin.ts).
 import { inKingdom } from '@elvaria/store';
 
 import { flagOption, textOption } from '../args.ts';
@@ -21,6 +22,7 @@ import {
   removeBuild,
 } from './build.ts';
 import { BUILD_FILE, hasCli, readPointer, shortSha, writePointer } from './pointer.ts';
+import { refreshDefaults } from './registry-defaults.ts';
 import { holdKingdom, rollbackKingdom } from './rollback.ts';
 import { SELF_ROOT } from './self.ts';
 import { buildTrial } from './trial.ts';
@@ -134,6 +136,9 @@ async function switchTo(ctx: KingdomContext, deps: UpgradeDeps, plan: Plan): Pro
       : ctx.t('cli.upgrade.switched', { sha: shortSha(plan.sha), previous: shortSha(from) }),
   );
   const ready = await migrated(ctx, plan);
+  // After migrate, even a failed one: a prompt does not wait on a file version, and a data file migrate left behind
+  // is named, not written (fix/kingdom-upkeep).
+  await refreshDefaults(ctx, from, plan.sha);
   for (const sha of await buildsBesides(ctx.store.root, from === null ? [plan.sha] : [plan.sha, from]))
     await removeOne(ctx, deps, sha);
   if (!ready) return EXIT.failed;

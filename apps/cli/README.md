@@ -210,7 +210,10 @@ show` prints the brief apart from the rest of the description and, while the pla
   fake CLI the build carries for its adapter (an adapter file has none, and is named); last, one script-tier quest
   (`count-files`) on a throwaway kingdom with every tribe off, until its `verdict.pass`
   (`src/upgrade/script-trial.ts`). Only then does it write `.state/build.json` (`{current, previous}`), run the new
-  build's `migrate` on the kingdom (a failure leaves the build pinned and says how out), log `upgrade.started`, then
+  build's `migrate` on the kingdom (a failure leaves the build pinned and says how out), bring in the registry
+  defaults the new build changed where the kingdom still held the build before's (`src/upgrade/registry-defaults.ts`,
+  the store's `refreshRegistryDefaults`; old text in `.backup/<stamp>-registry/`) and name the ones the owner edited
+  with the `git diff --no-index` that shows the change, log `upgrade.started`, then
   `upgrade.switched` or `upgrade.failed`, and remove every build but those two; a failed build is removed. Node removes a build, then `git worktree prune` forgets it: pnpm's paths past 260
   characters are more than git for Windows deletes, and Node's rm takes pnpm's junctions off without following them.
   `--rollback` swaps the two (`upgrade.rolled_back`); upgrading to the build before tries it again without a

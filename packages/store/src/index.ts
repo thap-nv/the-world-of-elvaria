@@ -9,6 +9,8 @@ export type { MigrationReport } from './migrate-kingdom.ts';
 export { loadRegistry, missingRegistryFiles } from './registry.ts';
 export { addMissingRegistryEntries, registryGaps } from './registry-gaps.ts';
 export type { RegistryEntriesReport, RegistryGap } from './registry-gaps.ts';
+export { refreshRegistryDefaults } from './registry-refresh.ts';
+export type { RegistryDefault, RegistryDefaults, RegistryRefreshReport } from './registry-refresh.ts';
 export type { RegistryLoadIssue } from './registry.ts';
 export type { IssueDetail, StoreIssue, StoreIssueCode } from './issues.ts';
 export { DECREE_FILE, KINGDOM_DIRS, KINGDOM_FILE, kingdomLayout } from './layout.ts';

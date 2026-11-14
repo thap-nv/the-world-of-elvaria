@@ -200,4 +200,11 @@ describe('registryFiles', () => {
     expect(files.filter((file) => file.endsWith('.ts'))).toEqual([]);
     expect(files).toEqual([...files].sort());
   });
+
+  it('lists the same files of the package in another folder, as a build of another commit holds it', () => {
+    expect(registryFiles(path.join(REGISTRY_ROOT, 'prompts'))).toEqual(
+      ['classes', 'kinds', 'memos', 'rituals', 'scripts', 'tags'].map((file) => `${file}.json`),
+    );
+    expect(registryFiles(REGISTRY_ROOT)).toEqual(registryFiles());
+  });
 });
