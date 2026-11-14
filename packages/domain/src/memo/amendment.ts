@@ -93,28 +93,47 @@ export function submitEndOf<A, R>(amendment: A | undefined, refused: R | undefin
   return refused === undefined ? { end: 'submit' } : { end: 'breaker', refused };
 }
 
-/** A ref as a scope entry: `/` apart, no leading `./` or `/`, its case kept. */
-const entryOf = (ref: string): string => ref.replaceAll('\\', '/').replace(/^(?:\.\/|\/)+/, '');
+/** `path:12` or `path:12-20`: a ref may name lines, as chancellor's protectedRefsOf reads it. */
+const LINE_SUFFIX = /:\d+(?:[-:]\d+)*$/;
 
 /**
- * The scope an accepted amendment leaves its quest (gap 20 of the PS-07 report): the memo's refs that lie neither in
- * the scope nor in the territory's shared paths join it, so the doer may change them, its submit does not count them
- * as out of scope, and a quest whose scope meets them waits (ADR 0028). A ref the scope only may cover (a glob
- * pathInScope doubts) joins it too: one entry more costs nothing. A quest with no scope is not bounded and stays so.
- * Undefined when nothing changes.
+ * A ref as a scope entry: `/` apart, no leading `./` or `/`, no lines (fix/amendment-delegation: `src/a.ts:12` as an
+ * entry names no file, and would meet no other quest's scope), its case kept.
  */
-export function amendedScopeOf(
+const entryOf = (ref: string): string =>
+  ref
+    .replaceAll('\\', '/')
+    .replace(/^(?:\.\/|\/)+/, '')
+    .replace(LINE_SUFFIX, '');
+
+/**
+ * The entries an accepted amendment opens to its quest (gap 20 of the PS-07 report): the memo's refs that lie neither
+ * in the scope nor in the territory's shared paths, so the doer may change them, its submit does not count them as
+ * out of scope, and a quest whose scope meets them waits (ADR 0028). A ref the scope only may cover (a glob
+ * pathInScope doubts) is opened too: one entry more costs nothing. A quest with no scope is not bounded: none.
+ */
+export function openedPathsOf(
   scope: readonly string[] | undefined,
   refs: readonly string[],
   shared: readonly string[] = [],
-): string[] | undefined {
-  if (scope === undefined || scope.length === 0) return undefined;
+): string[] {
+  if (scope === undefined || scope.length === 0) return [];
   const added: string[] = [];
   for (const ref of refs.map(entryOf)) {
     if (ref === '' || pathInScope(ref, [...scope, ...added]) || pathInScope(ref, shared)) continue;
     added.push(ref);
   }
-  return added.length === 0 ? undefined : [...scope, ...added];
+  return added;
+}
+
+/** The scope an accepted amendment leaves its quest: openedPathsOf joins it. Undefined when nothing changes. */
+export function amendedScopeOf(
+  scope: readonly string[] | undefined,
+  refs: readonly string[],
+  shared: readonly string[] = [],
+): string[] | undefined {
+  const added = openedPathsOf(scope, refs, shared);
+  return scope === undefined || added.length === 0 ? undefined : [...scope, ...added];
 }
 
 /**

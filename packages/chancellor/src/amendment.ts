@@ -1,10 +1,18 @@
 // decideAmendment: an amendment's author decides it (implementation-plan §3.16.2, PS-22b; ADR 0024), in one session
 // of the Chancellor's office with no tool: the Chancellor for a quest it drafted, the mage of the plan for one of its
 // sub-quests. The reply is the amendment-decision structured output. amendmentCommand holds an acceptance against
-// kingdom.delegation (delegationHolds, with the memo's files matched against the territory's protected paths) and
+// kingdom.delegation (amendmentHolds, with the memo's files matched against the territory's protected paths) and
 // makes the one decide_amendment command the Steward applies (ADR 0005): within the delegation the description is
 // rewritten and the quest goes on; beyond it, or when the author hands it on, the quest asks the owner.
-import { AmendmentDecisionFileSchema, contractOf, delegationHolds, err, ok } from '@elvaria/domain';
+import {
+  AmendmentDecisionFileSchema,
+  amendmentHolds,
+  contractOf,
+  err,
+  ok,
+  opensOnly,
+  sharedGlobsOf,
+} from '@elvaria/domain';
 import { buildAmendmentPrompt, issueLines } from '@elvaria/runner-core';
 import type {
   AmendmentDecisionFile,
@@ -69,8 +77,10 @@ export interface AmendmentInput {
   readonly memo: Memo;
   /** The quest the memo contests, as the author read it. */
   readonly quest: Quest;
-  /** The quest's territory: the protected paths the memo's files may name. */
-  readonly territory: Pick<Territory, 'laws'> | undefined;
+  /** The quest's territory: the protected paths the memo's files may name, and its shared paths (R3). */
+  readonly territory: Pick<Territory, 'laws' | 'shared_paths'> | undefined;
+  /** The kingdom's quests: the quest's party contract, and the quests holding a scope (amendmentHolds). */
+  readonly quests: readonly Quest[];
   readonly delegation: Delegation;
   /** A header of source `chancellor`. */
   readonly header: CommandHeader;
@@ -83,42 +93,40 @@ export interface AmendmentOutcome {
 }
 
 /**
- * What holds the decision for the owner: a referral always; an acceptance when it touches a matter the owner keeps
- * (delegation.ask) or the quest's rank is above delegation.max_rank. A rejection keeps the description the owner saw,
- * and the memo's files are evidence, not work outside a scope: neither holds anything.
+ * What holds the decision for the owner (amendmentHolds): a referral always; an acceptance when it touches a matter
+ * the owner keeps (delegation.ask), its quest's rank is above delegation.max_rank (unless it only opens files inside
+ * its party's contract, up to the plan's rank), or the files it opens meet a scope another quest holds (R3).
  */
-function holdsOf(input: AmendmentInput): DelegationHold[] {
-  const { decision, quest, memo } = input;
-  if (decision.decision === 'rejected') return [];
-  const memos = [
+const holdsOf = (input: AmendmentInput): DelegationHold[] =>
+  amendmentHolds(
     {
-      refs: memo.refs,
-      territory: quest.territory,
-      protected_refs: protectedRefsOf(memo.refs, input.territory),
+      decision: input.decision,
+      quest: input.quest,
+      refs: input.memo.refs,
+      protected_refs: protectedRefsOf(input.memo.refs, input.territory),
+      quests: input.quests,
+      shared: sharedGlobsOf(input.territory),
     },
-  ];
-  const work = { rank: quest.rank, territory: quest.territory, scope_paths: quest.scope_paths };
-  const action = decision.decision === 'owner' ? 'owner' : 'merge';
-  return delegationHolds(
-    { action, work, memos, asks: decision.ask },
-    { ...input.delegation, same_scope: false },
+    input.delegation,
   );
+
+function payloadOf(
+  input: AmendmentInput,
+  holds: readonly DelegationHold[],
+): DecideAmendmentCommand['payload'] {
+  const { decision, memo, quest } = input;
+  const base = { memo: memo.id, note: decision.note };
+  if (holds.length > 0) return { ...base, decision: 'owner', holds: [...holds] };
+  if (decision.decision !== 'accepted') return { ...base, decision: 'rejected' };
+  const { description } = decision;
+  // An acceptance that leaves the description as it reads only opens files: the Steward rewrites nothing.
+  return description === undefined || opensOnly(decision, quest)
+    ? { ...base, decision: 'accepted' }
+    : { ...base, decision: 'accepted', description, expected_updated_at: quest.updated_at };
 }
 
 export function amendmentCommand(input: AmendmentInput): AmendmentOutcome {
-  const { decision, memo, quest, header } = input;
   const holds = holdsOf(input);
-  const base = { memo: memo.id, note: decision.note };
-  const payload: DecideAmendmentCommand['payload'] =
-    holds.length > 0
-      ? { ...base, decision: 'owner', holds }
-      : decision.decision === 'accepted' && decision.description !== undefined
-        ? {
-            ...base,
-            decision: 'accepted',
-            description: decision.description,
-            expected_updated_at: quest.updated_at,
-          }
-        : { ...base, decision: decision.decision === 'accepted' ? 'accepted' : 'rejected' };
-  return { command: { ...header, kind: 'decide_amendment', payload }, holds };
+  const payload = payloadOf(input, holds);
+  return { command: { ...input.header, kind: 'decide_amendment', payload }, holds };
 }

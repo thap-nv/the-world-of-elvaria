@@ -25,6 +25,7 @@ export * from './council/plan-file.ts';
 export * from './council/plan-issues.ts';
 export * from './council/plan-links.ts';
 export * from './council/template.ts';
+export * from './delegation/amendment.ts';
 export * from './delegation/constants.ts';
 export * from './delegation/delegation.ts';
 export * from './dispatch/background-room.ts';

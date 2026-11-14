@@ -7,6 +7,7 @@ import {
   baseChainOf,
   holdsScope,
   scopeBookOf,
+  scopeHolderMeeting,
   scopeHolderOf,
   scopeHoldsOf,
   scopesMeet,
@@ -126,6 +127,31 @@ describe('scopeHolderOf', () => {
     expect(scopeHolderOf(script, [script, working(Q2)])).toBeNull();
     const elsewhere = workingBy(quest(Q2, { territory: 'handbook' }), 'thorn');
     expect(scopeHolderOf(quest(Q1), [elsewhere])).toBeNull();
+  });
+});
+
+// fix/amendment-delegation, (91): the roster's R3 at the step an accepted amendment opens files.
+describe('scopeHolderMeeting', () => {
+  const blocked = ranThen(quest(Q1, { scope: ['a/**'], dependsOn: [Q3] }), 'blocked');
+
+  it('names the quest holding a scope the opened files meet', () => {
+    const holder = ranThen(quest(Q2, { scope: ['b/x.ts'] }), 'done');
+    expect(scopeHolderMeeting(blocked, ['b/x.ts'], [blocked, holder])).toBe(Q2);
+    expect(scopeHolderMeeting(blocked, ['b/**'], [blocked, holder])).toBe(Q2);
+    expect(scopeHolderMeeting(blocked, ['c/y.ts'], [blocked, holder])).toBeUndefined();
+    expect(scopeHolderMeeting(blocked, [], [blocked, holder])).toBeUndefined();
+  });
+
+  it('leaves out the quest itself, its base chain, quests holding nothing, other territories, shared paths', () => {
+    expect(scopeHolderMeeting(blocked, ['a/z.ts'], [blocked])).toBeUndefined();
+    const base = onWorktree(ranThen(quest(Q3, { scope: ['b/**'] }), 'done'));
+    expect(scopeHolderMeeting(blocked, ['b/x.ts'], [blocked, base])).toBeUndefined();
+    const open = quest(Q2, { scope: ['b/**'] });
+    expect(scopeHolderMeeting(blocked, ['b/x.ts'], [blocked, open])).toBeUndefined();
+    const elsewhere = ranThen(quest(Q4, { scope: ['b/**'], territory: 'handbook' }), 'done');
+    expect(scopeHolderMeeting(blocked, ['b/x.ts'], [blocked, elsewhere])).toBeUndefined();
+    const holder = ranThen(quest(Q2, { scope: ['b/x.ts'] }), 'done');
+    expect(scopeHolderMeeting(blocked, ['b/x.ts'], [blocked, holder], ['b/x.ts'])).toBeUndefined();
   });
 });
 
