@@ -118,6 +118,7 @@ export function payloadOf<T extends QuestEventType>(type: T, quest: Quest): Payl
     breaker: { trip: 'tokens' },
     answer: { answer: 'Giữ, đánh dấu deprecated.' },
     assign_verifier: { verifier: BRANN, session_id: 's-verify' },
+    no_session: { verifier: BRANN },
     seal: { note: 'ok' },
   };
   return payloads[type];

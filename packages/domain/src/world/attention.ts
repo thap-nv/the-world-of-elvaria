@@ -6,9 +6,12 @@
 // world state does not hold the quests' scopes. (PS-22) An open memo is an item by where it went: an objection on its way
 // to a second judge waits for nobody, one no judge may read (MEMO_ROUTES `owner`) is the owner's to settle. A tribe the
 // Steward holds because its CLI changed version (versionHoldsOf, A1b of the lessons of 2026-11-13) comes from its notices.
+// A review whose latest judge could not open a session comes from the quest files (unopenedReviewsOf,
+// fix/review-no-session).
 import { current } from '../mana/reading.ts';
 import { manaWarningOf } from '../mana/state.ts';
 import { RANKS } from '../schema/common.ts';
+import type { UnopenedReview } from '../breaker/review.ts';
 import type { Instant } from '../core/clock.ts';
 import type { CharacterId, MemoId, QuestId, TribeId } from '../core/ids.ts';
 import type { DelegationHold, TriageAction } from '../delegation/constants.ts';
@@ -48,6 +51,13 @@ export const ATTENTION_TABLE = {
     advice: 'summon_judge',
     command: ['character', 'add', '<id>', '--class', '{class}', '--model', '<model>'],
   },
+  // fix/review-no-session: the latest judge of a review could not open its session; the next one counts toward the
+  // stall too, and a judge whose CLI cannot take the quest fails on every review it is given.
+  judge_no_session: {
+    group: 'must',
+    advice: 'suspend_judge_or_wait',
+    command: ['character', 'suspend', '{judge}'],
+  },
   unclaimable: { group: 'must', advice: 'see_why', command: ['quest', 'show', '{quest}'] },
   scope_held: { group: 'must', advice: 'merge_and_archive', command: ['quest', 'archive', '{quest}'] },
   draft: { group: 'must', advice: 'confirm_or_cancel', command: ['quest', 'confirm', '{quest}'] },
@@ -79,6 +89,8 @@ export interface AttentionSubject {
   readonly question?: string;
   /** A judging class of the quest's kind, for the command that summons a judge. */
   readonly class?: string;
+  /** The judge whose session could not open (judge_no_session). */
+  readonly judge?: CharacterId;
   /** The quests that wait for a done quest's scope (scope_held, PS-05). */
   readonly waiting?: readonly QuestId[];
   /** The pools that hold every judge of a quest (judge_mana). */
@@ -121,6 +133,8 @@ export interface StewardNotices {
   }[];
   /** Done quests that still hold a scope quests wait for (scopeHoldsOf, PS-05); from the quest files, not the Steward's. */
   readonly scope_held?: readonly ScopeHold[];
+  /** Quests in review whose latest judge could not open a session (unopenedReviewsOf); from the quest files too. */
+  readonly judges_unopened?: readonly UnopenedReview[];
   /** Tribes whose CLI says another version than their checked one (versionHoldsOf), as the Steward last found them. */
   readonly tribes_held?: readonly TribeHold[];
 }
@@ -172,6 +186,9 @@ function noticeItems(state: WorldState, notices: StewardNotices): AttentionItem[
     ),
     ...(notices.judge_waits ?? []).map(({ quest, class: cls, gauges }) =>
       itemOf('judge_mana', { ...aboutId(state, quest), class: cls, gauges }),
+    ),
+    ...(notices.judges_unopened ?? []).map(({ quest, judge }) =>
+      itemOf('judge_no_session', { ...aboutId(state, quest), judge }),
     ),
     ...(notices.scope_held ?? []).map(({ quest, waiting }) =>
       itemOf('scope_held', { ...aboutId(state, quest), waiting }),
