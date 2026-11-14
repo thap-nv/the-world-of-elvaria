@@ -108,7 +108,7 @@ describe('elvaria doctor: tribe options and class prompts (P1-15)', () => {
     await fakeTool(loggedOut, 'claude', '2.1.318 (Claude Code)', 0, { loggedIn: false });
     const io = await doctorIo(loggedOut);
     expect(await doctor(io, '--enable', 'claude')).toBe(1);
-    expect(printed(io)).toContain('✗ Tribe claude: not logged in');
+    expect(printed(io)).toContain('✗ Tribe claude: claude auth status --json shows it is not signed in');
     expect(printed(io)).toContain('✗ Tribe claude stays disabled until the problem above is fixed.');
     expect((await readKingdom()).tribes[0]).toMatchObject({ enabled: false, tool: { auth: 'login' } });
 

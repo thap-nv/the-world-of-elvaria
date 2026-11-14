@@ -2,7 +2,7 @@ import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { hookMissing, noAnswerWithin } from '@elvaria/runner-core';
+import { doctorNoteOf } from '@elvaria/runner-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
@@ -96,15 +96,22 @@ describe('doctor', () => {
     const hookScript = path.join(tmpdir(), 'missing', 'elvaria-hook.js');
     const info = await fakeRunner({ ...withEnv({ FAKE_CLAUDE_AUTH: 'logged_out' }), hookScript }).doctor();
     expect(info.auth_ok).toBe(false);
-    expect(info.detail).toContain('not logged in');
-    expect(info.detail).toContain(hookMissing(hookScript));
+    expect(info.notes).toEqual([
+      doctorNoteOf('doctor:not_signed_in', {
+        command: 'claude auth status --json',
+        login: 'claude auth login',
+      }),
+      doctorNoteOf('doctor:hook_missing', { file: hookScript }),
+    ]);
+    expect(info.detail).toBeUndefined();
   });
 
   // A logged-in owner whose hook is not built still has no session that runs: an error, not a warning (fix/busy-machine (a)).
   it('fails while the hook is not built, however well the owner is logged in', async () => {
     const hookScript = path.join(tmpdir(), 'missing', 'elvaria-hook.js');
     const info = await fakeRunner({ hookScript }).doctor();
-    expect(info).toMatchObject({ version: '2.1.318', auth_ok: false, detail: hookMissing(hookScript) });
+    expect(info).toMatchObject({ version: '2.1.318', auth_ok: false });
+    expect(info.notes).toEqual([doctorNoteOf('doctor:hook_missing', { file: hookScript })]);
   });
 
   // Windows throws EFTYPE from spawn itself for a file that is no program; doctor must answer, not throw.
@@ -114,17 +121,19 @@ describe('doctor', () => {
     const info = await fakeRunner({ executable: broken }).doctor();
     expect(info).toMatchObject({ path: broken, version: '', auth_ok: false });
     // It never started: doctor says so for both calls, not that the owner is logged out.
-    expect(info.detail).toContain(`${broken} --version: `);
-    expect(info.detail).toContain('claude auth status --json: ');
-    expect(info.detail).not.toContain('not logged in');
+    expect(info.notes?.map(({ code, params }) => [code, params.command])).toEqual([
+      ['doctor:command_not_started', `${broken} --version`],
+      ['doctor:command_not_started', 'claude auth status --json'],
+    ]);
     await rm(path.dirname(broken), RM_TEMP);
   });
 
   it('says `claude auth status` ran out of time, and how long it had, never that the owner is logged out', async () => {
     const info = await fakeRunner({ ...withEnv({ FAKE_CLAUDE_AUTH: 'hangs' }), timeoutMs: 1000 }).doctor();
     expect(info.auth_ok).toBe(false);
-    expect(info.detail).toContain(`claude auth status --json: ${noAnswerWithin(1000)}`);
-    expect(info.detail).not.toContain('not logged in');
+    expect(info.notes).toEqual([
+      doctorNoteOf('doctor:command_timed_out', { command: 'claude auth status --json', seconds: 1 }),
+    ]);
   });
 
   it('says when it found no CLI at all, and a session cannot start', async () => {
@@ -134,7 +143,10 @@ describe('doctor', () => {
       hookScript: FAKE_HOOK,
       env: { PATH: '' },
     });
-    expect(await runner.doctor()).toEqual({ path: '', version: '', auth_ok: false, detail: NOT_FOUND });
+    const info = await runner.doctor();
+    expect(info).toMatchObject({ path: '', version: '', auth_ok: false });
+    expect(info.notes).toHaveLength(1);
+    expect(info.notes?.[0]).toMatchObject({ code: 'doctor:not_found', params: { cli: 'Claude Code' } });
     expect(await runner.probe()).toEqual({ status: 'error', detail: NOT_FOUND });
   });
 
@@ -146,7 +158,9 @@ describe('doctor', () => {
       now: () => now,
     }).doctor();
     expect(info).toMatchObject({ auth_ok: true });
-    expect(info.detail).toBe(`the sign-in ends by ${soon}: run claude auth login before then`);
+    expect(info.notes).toEqual([
+      doctorNoteOf('doctor:sign_in_ending', { date: soon, login: 'claude auth login' }),
+    ]);
     expect(signInEnding('2026-12-01T00:00:00Z', now)).toBeUndefined();
     expect(signInEnding('not a date', now)).toBeUndefined();
     expect(signInEnding(undefined, now)).toBeUndefined();
