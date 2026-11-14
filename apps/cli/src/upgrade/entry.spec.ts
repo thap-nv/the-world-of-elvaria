@@ -35,7 +35,15 @@ describe('elvaria on a kingdom that pins a build', () => {
     const words = ['quest', 'list', '--kingdom', kingdom, '--locale', 'en'];
     expect(await elvaria(words, io, new EventEmitter(), elsewhere())).toBe(3);
     expect(await calls(record)).toEqual([
-      { root: real(build), argv: words, cwd: real(cwd), pinned: SHA_A, token: null, git_dir: null },
+      {
+        root: real(build),
+        argv: words,
+        cwd: real(cwd),
+        pinned: SHA_A,
+        token: null,
+        git_dir: null,
+        trial: null,
+      },
     ]);
   });
 
