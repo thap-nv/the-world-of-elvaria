@@ -30,6 +30,12 @@
   P1-41). `addMissingRegistryEntries` appends the missing entries whole, under each file's lock with the old text in
   `.backup/<stamp>/` (kept if a migration of the same run saved it first), only when the registry with all of them
   still passes `parseRegistry`; an entry the kingdom has is never changed (`elvaria migrate`, P1-41).
+  `refreshRegistryDefaults` (`elvaria upgrade`, fix/kingdom-upkeep) compares the kingdom with the default registry of
+  the build it ran before and of the one it runs now: a prompt or script (text, line ends aside) or a data entry (by
+  id, key order aside) the new build changed and the kingdom still holds as the old default takes the new one, under
+  its file's lock with the old text in `.backup/<stamp>/`; one the owner edited is only named; data entries are
+  written only when the registry with all of them passes `parseRegistry`, and only into a file that, like the new
+  default, is at this Elvaria's version.
 - Reads the owner's royal decree (`readDecree`, `kingdomLayout.decree` = `decree.md`, null when absent) and masks
   secrets in free text it keeps (ADR 0013): every verdict write masks the secret patterns in `notes` (checked
   by the schema again after), every memo write masks them in its text (PS-02), and `redactHandover` masks a session's values and the patterns in its letter.
@@ -42,7 +48,8 @@
   command means is the domain's and the Steward's business. The store persists what it is handed.
 - Import `@elvaria/registry-default`: the composition root passes `initKingdom` the registry's folder and file
   list (`REGISTRY_ROOT`, `registryFiles()`), and `registryGaps` / `addMissingRegistryEntries` the folder.
-- Change an entry the owner's registry has, even to add a key the default entry gained (P1-41).
+- Change a registry file or entry the owner edited, even to add a key the default entry gained (P1-41): only one
+  still equal to the previous build's default takes the new default (`refreshRegistryDefaults`).
 - Write the event log or journals (`@elvaria/eventlog` does; the journal's name is its `journalOf`), know a
   session's secret values (the Steward passes them to `redactHandover`), or create or change `decree.md` (the
   owner's).

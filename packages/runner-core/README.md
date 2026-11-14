@@ -83,7 +83,8 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   Law 4 of `prompts/verifier.md`: a judge judges by the quest's goal and the checks, not the wording of its steps.
   (PS-22b) Law 9 of `prompts/assignee.md`: a change of what the quest promises is an amendment memo
   (`- amendment: … refs: …`), a change of the way is a decision under Decisions taken. `buildAmendmentPrompt`
-  (`prompts/amendment.md`, `amendment-context.md`) is the author's prompt; the doer's next session, fresh or resumed,
+  (`prompts/amendment.md`, `amendment-context.md`) is the author's prompt, a mage's with its plan file's summary
+  when the caller gives one (`AmendmentContext.plan_summaries`, fix/mage-plan-file); the doer's next session, fresh or resumed,
   reads the decision instead of an owner's answer (`amendmentAnswerBlock`, `prompts/amendment-answer.md` and its
   three `amendment-accepted|rejected|owner.md`), a resumed one with the description as accepted.
 - Runs the conformance suite (`conformanceChecks`, `runConformance`): plain checks with `node:assert`, so a spec
@@ -182,7 +183,8 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   log ran last and the line of its output that says why (`src/plot/trial-log.ts`: a test runner's `FAIL` line,
   else its `×`, else the first word of failure outside a table row or a file name, colours stripped), or the line the
   territory's `environment_errors` find; given the gazetteer's stamp it counts the commits since. No secret reaches
-  the trial: a setup that needs one fails there.
+  the trial: a setup that needs one fails there. `commitsSinceStamp` counts the same commits without a trial and
+  without a fetch (`forkPoint` with `fetch: false`: origin's branch as the last fetch left it), for `doctor`.
 - Runs the machine checks before a judge (`runChecks`, §3.2): the territory's `checks` whose `when` globs match
   what the quest touched (`selectChecks`, `globToRegExp`: dot names match, case-insensitive, like the laws' globs
   in the hook), one at a time in the plot, each logged to `<run_dir>/checks/<id>.log`; with

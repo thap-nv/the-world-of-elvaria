@@ -26,10 +26,11 @@ export function loadDefaultRegistry(): Result<Registry, RegistryIssue[]> {
 
 /**
  * What `elvaria init` copies, relative to REGISTRY_ROOT with `/`: the six data files, the catalog scripts with
- * their shared module, and the role prompts. Tests and fixtures stay in the package.
+ * their shared module, and the role prompts. Tests and fixtures stay in the package. `root` is this package in
+ * another build (`elvaria upgrade` compares the registry of the build it pins, fix/kingdom-upkeep).
  */
-export function registryFiles(): string[] {
-  const code = globSync(['scripts/*.mjs', 'prompts/*.md'], { cwd: REGISTRY_ROOT });
+export function registryFiles(root: string = REGISTRY_ROOT): string[] {
+  const code = globSync(['scripts/*.mjs', 'prompts/*.md'], { cwd: root });
   return [
     ...REGISTRY_FILES.map((file) => `${file}.json`),
     ...code.map((file) => file.split(path.sep).join('/')),

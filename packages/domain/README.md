@@ -263,6 +263,8 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   timeout, the share of runs of checks set aside, the gazetteer (there, fresh by its stamp, naming the commands a
   session meets: `sessionCommandsOf`, `namesCommand`), `shared_paths` and `protected_paths` declared, and the
   territory's first-pass rate. The thresholds are named in `src/scorecard/constants.ts`; `ready` is the trial alone.
+  Only `TRIAL_ITEMS` (the trial, each check's time) need a trial: `itemsWithoutTrialOf` gives the other four from the
+  territory file, the ledger and the gazetteer, which `doctor` reads again on each run (fix/kingdom-upkeep).
 - Decides when the Steward's scheduled jobs run (`src/schedule/`, PS-03): `dueJobs` over `kingdom.schedule`, the
   kingdom's local day and time (`localClockOf`) and the day each job last ran: a daily job is due once its `at` has
   come on a day it has not run (`DAILY_JOBS`: `chronicle`, `triage`, `digest`), so a late start catches up and a clock set back

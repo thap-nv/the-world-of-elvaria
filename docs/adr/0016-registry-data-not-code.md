@@ -9,7 +9,7 @@ Principle 7: mappings are data. The product plan (§5) has 11 quest kinds plus C
 
 ## Decision
 
-- `registry/kinds.json`, `classes.json`, `rituals.json` and `scripts.json` live in the kingdom, each with a `version` and a schema. Defaults ship in `@elvaria/registry-default` and are copied at `elvaria init`; the user may edit them. (`tags.json` joined them with ADR 0020; `parseRegistry` checks the five files against each other.)
+- `registry/kinds.json`, `classes.json`, `rituals.json` and `scripts.json` live in the kingdom, each with a `version` and a schema. Defaults ship in `@elvaria/registry-default` and are copied at `elvaria init`; the user may edit them. (`tags.json` joined them with ADR 0020; `parseRegistry` checks the five files against each other.) (Amended 2026-11-14, fix/kingdom-upkeep: `elvaria upgrade` brings in a default file or data entry the new build changed only where the kingdom still holds the previous pinned build's default, with a backup; one the user edited is named, never written.)
 - Domain treats `KindId`, `ClassId`, `RitualId` and `ScriptId` as strings validated against the loaded registry. There is no `switch` on kind in the core.
 - Ids are English; display names (`name_vi`, `name_en`) are fields, never ids.
 - Adding a kind = rows in `kinds.json` and `rituals.json` + theme mapping. Adding a theme = a `themes/<name>/` directory.

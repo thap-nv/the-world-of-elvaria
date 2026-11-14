@@ -10,8 +10,8 @@ import {
   territoryOf,
   trialOf,
 } from './__fixtures__/card.ts';
-import { SCORECARD_ITEMS } from './constants.ts';
-import { territoryScorecardOf } from './scorecard.ts';
+import { SCORECARD_ITEMS, TRIAL_ITEMS } from './constants.ts';
+import { itemsWithoutTrialOf, territoryScorecardOf } from './scorecard.ts';
 import { checkTimeItem, trialItem } from './trial-items.ts';
 import type { ScorecardItem } from './reasons.ts';
 
@@ -60,6 +60,28 @@ describe('territoryScorecardOf', () => {
       'pass',
       'unmeasured',
     ]);
+  });
+});
+
+describe('itemsWithoutTrialOf', () => {
+  it('gives the items after TRIAL_ITEMS, as the card does, with no trial at all', () => {
+    const input = { territory: territoryOf(), metrics: GOOD_LEDGER, gazetteer: fresh };
+    const items = itemsWithoutTrialOf(input);
+    expect([...TRIAL_ITEMS, ...items.map(({ id }) => id)]).toEqual([...SCORECARD_ITEMS]);
+    expect(items).toEqual(
+      territoryScorecardOf({ ...input, trial: trialOf() }).items.slice(TRIAL_ITEMS.length),
+    );
+  });
+
+  it('sees a gazetteer and the two lists fixed since a trial', () => {
+    const before = itemsWithoutTrialOf({
+      territory: territoryOf({ shared_paths: undefined }),
+      metrics: GOOD_LEDGER,
+      gazetteer: { text: null },
+    });
+    expect(before.map(({ status }) => status)).toEqual(['pass', 'fail', 'fail', 'pass']);
+    const after = itemsWithoutTrialOf({ territory: territoryOf(), metrics: GOOD_LEDGER, gazetteer: fresh });
+    expect(after.map(({ status }) => status)).toEqual(['pass', 'pass', 'pass', 'pass']);
   });
 });
 

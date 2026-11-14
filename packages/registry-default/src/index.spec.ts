@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import {
+  PLAN_FILE_SECTIONS,
   QuestDraftFileSchema,
   QuestDraftSchema,
   ScriptsFileSchema,
@@ -166,6 +167,20 @@ describe('the default registry', () => {
     expect(mage).toContain('## Summary');
   });
 
+  // PS-06b (c): the subquests check holds the plan file to PLAN_FILE_SECTIONS; the mage hears it before a return.
+  it('gives the plan file the headings the subquests check holds it to, and says the machine checks them', () => {
+    const mage = readFileSync(path.join(REGISTRY_ROOT, 'prompts/mage.md'), 'utf8').replace(
+      /<!--[\s\S]*?-->/,
+      '',
+    );
+    const template = /```markdown\n([\s\S]*?)```/.exec(mage)?.[1] ?? '';
+    const headings = [...template.matchAll(/^## (.+)$/gm)].map(([, heading]) => heading);
+    expect(headings).toEqual(PLAN_FILE_SECTIONS.map(({ heading }) => heading));
+    expect(mage).toContain(
+      'a machine check reads the `plans/*.md` files this quest changed and fails the quest unless one of them has all six headings above, each with text under it',
+    );
+  });
+
   // P1-45, P1-37 (g): a part told to run `pnpm test:integration`, an exclusive check of dc1, was refused.
   it('sends a part only to the check commands of its shell, and leaves locked checks to the merge quest', () => {
     const mage = readFileSync(path.join(REGISTRY_ROOT, 'prompts/mage.md'), 'utf8').replace(
@@ -199,5 +214,12 @@ describe('registryFiles', () => {
     );
     expect(files.filter((file) => file.endsWith('.ts'))).toEqual([]);
     expect(files).toEqual([...files].sort());
+  });
+
+  it('lists the same files of the package in another folder, as a build of another commit holds it', () => {
+    expect(registryFiles(path.join(REGISTRY_ROOT, 'prompts'))).toEqual(
+      ['classes', 'kinds', 'memos', 'rituals', 'scripts', 'tags'].map((file) => `${file}.json`),
+    );
+    expect(registryFiles(REGISTRY_ROOT)).toEqual(registryFiles());
   });
 });

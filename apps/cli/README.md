@@ -87,7 +87,9 @@ show` prints the brief apart from the rest of the description and, while the pla
   `decide` offers `accepted` too, and on an amendment its quest waits on lets the quest go on; `metrics` adds the
   amendments; `quest show` names the amendment a quest waits on and who decides it. `elvaria run` gives the Steward the
   amendments' authors as a job on call (`src/amend/`): the Chancellor, or the mage of the plan in the Chancellor's
-  office, one session per amendment once its tribe is free; no author or a failed session hands it to the owner.
+  office, one session per amendment once its tribe is free; no author or a failed session hands it to the owner. The
+  mage also reads the `## Summary` of the plan's file while the plan's plot holds it (`planSummariesOf`, shared with
+  `quest show`; fix/mage-plan-file).
 - `wake <tribe>` sends `wake` for a tribe of `kingdom.tribes[]`: the Steward probes that account at its next tick
   (ADR 0009), for instance after the owner signed in again.
 - Writes new files the Steward does not own: `kingdom.json` (`init`, then `tribes[].tool` and, with `--enable`,
@@ -217,7 +219,10 @@ show` prints the brief apart from the rest of the description and, while the pla
   fake CLI the build carries for its adapter (an adapter file has none, and is named); last, one script-tier quest
   (`count-files`) on a throwaway kingdom with every tribe off, until its `verdict.pass`
   (`src/upgrade/script-trial.ts`). Only then does it write `.state/build.json` (`{current, previous}`), run the new
-  build's `migrate` on the kingdom (a failure leaves the build pinned and says how out), log `upgrade.started`, then
+  build's `migrate` on the kingdom (a failure leaves the build pinned and says how out), bring in the registry
+  defaults the new build changed where the kingdom still held the build before's (`src/upgrade/registry-defaults.ts`,
+  the store's `refreshRegistryDefaults`; old text in `.backup/<stamp>-registry/`) and name the ones the owner edited
+  with the `git diff --no-index` that shows the change, log `upgrade.started`, then
   `upgrade.switched` or `upgrade.failed`, and remove every build but those two; a failed build is removed. Node removes a build, then `git worktree prune` forgets it: pnpm's paths past 260
   characters are more than git for Windows deletes, and Node's rm takes pnpm's junctions off without following them.
   `--rollback` swaps the two (`upgrade.rolled_back`); upgrading to the build before tries it again without a
@@ -238,8 +243,11 @@ show` prints the brief apart from the rest of the description and, while the pla
   (`src/territory/check-view.ts`), and exits 1 when the trial fails. It keeps how the card stood in
   `.state/territory-trials/<id>.json` (`src/territory/trial-record.ts`, the CLI's own file like `.state/build.json`),
   which `doctor` reads (`src/doctor/check-territory-trial.ts`): a git territory never tried, whose trial failed, or
-  whose setup or checks changed since is a warning. No quest, event or model; `metrics` prints the first-pass rate
-  by territory beside class, tag, model and kind.
+  whose setup or checks changed since is a warning. Once it passed, `doctor` takes only the trial and each check's
+  time from the record and reads the other four items again (the domain's `itemsWithoutTrialOf`: the ledger once
+  per run, the gazetteer's commits counted with no fetch), naming under its line which items come from the trial
+  and when, which are read now, and why each item read now fails. No quest, event or model; `metrics` prints the
+  first-pass rate by territory beside class, tag, model and kind.
 
 ## Does not
 
