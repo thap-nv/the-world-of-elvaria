@@ -4,38 +4,46 @@
 // opened, which since fix/review-no-session costs one of the review's REVIEW_BREAKS_MAX. The Steward measures each such
 // judge's prompt before the tick (its tribe declares `capabilities.prompt_max_chars` for this OS), and the choice
 // passes over one whose prompt is longer while another judge may take the quest. The tribe is data, never a switch.
+// An assignee is measured the same way for an open quest it may claim, and passed over the same way (selectAssignee,
+// fix/claim-step): in PS-07 an agy knight given a long quest went to the infirmary at once (`breaker:no_session`).
 import type { CharacterId, QuestId, TribeId } from '../core/ids.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { TribeLimits } from '../tribe/tribe-limits.ts';
 
-/** The prompt of one judge for a quest's next review, as the Steward measured it before the tick. */
-export interface ReviewPrompt {
+/** The prompt of one character for a quest's next session, as the Steward measured it before the tick. */
+export interface MeasuredPrompt {
   readonly quest: QuestId;
   readonly character: CharacterId;
   /** Characters of the prompt's user part: what agy takes on its command line (the system part goes to a file). */
   readonly chars: number;
 }
 
-/** What the rule reads: each tribe's limit on this OS, and each judge's measured prompt for the quest. */
+/** A judge's, for the quest's next review (review_prompts). */
+export type ReviewPrompt = MeasuredPrompt;
+
+/** An assignee's, for the session its claim of an open quest would start (claim_prompts, fix/claim-step). */
+export type ClaimPrompt = MeasuredPrompt;
+
+/** What the rule reads: each tribe's limit on this OS, and each character's measured prompt for the quest. */
 export interface PromptLimitPolicy {
   readonly limits?: Readonly<Partial<Record<TribeId, Pick<TribeLimits, 'prompt_max_chars'>>>>;
   readonly prompt_chars?: Readonly<Partial<Record<CharacterId, number>>>;
 }
 
-/** The measured prompt of each judge for `quest`, from the snapshot's list. */
+/** The measured prompt of each character for `quest`, from one of the snapshot's lists. */
 export function promptCharsOf(
   quest: QuestId,
-  prompts: readonly ReviewPrompt[] | undefined,
+  prompts: readonly MeasuredPrompt[] | undefined,
 ): Partial<Record<CharacterId, number>> {
   const chars: Partial<Record<CharacterId, number>> = {};
   for (const prompt of prompts ?? []) if (prompt.quest === quest) chars[prompt.character] = prompt.chars;
   return chars;
 }
 
-/** Whether `judge`'s tribe takes a shorter prompt than the one measured for it; a limit or a length unknown: no. */
-export function overPromptLimit(judge: Character, policy: PromptLimitPolicy): boolean {
-  const max = policy.limits?.[judge.tribe]?.prompt_max_chars;
-  const chars = policy.prompt_chars?.[judge.id];
+/** Whether `character`'s tribe takes a shorter prompt than the one measured for it; a limit or a length unknown: no. */
+export function overPromptLimit(character: Character, policy: PromptLimitPolicy): boolean {
+  const max = policy.limits?.[character.tribe]?.prompt_max_chars;
+  const chars = policy.prompt_chars?.[character.id];
   return max !== undefined && chars !== undefined && chars > max;
 }
 

@@ -81,7 +81,8 @@
   `Metrics.amendments` counts them (`src/metrics/amendment-counts.ts`).
 - Runs the character state machine (`src/character/`, `transitionCharacter`) and derives what is never stored:
   `reputationOf`, `affinityOf`, `titleOf`. Decides levels: `canTake` (which ranks the Steward may give a level),
-  `aboveCeiling` (a stretch that makes the quest wait for the royal seal) and `levelChange` (counting only the
+  `aboveCeiling` (a stretch that makes the quest wait for the royal seal, but a part of a party, `part` or
+  `acceptance`, whose merge quest waits for it: `mergedLater`, fix/claim-step) and `levelChange` (counting only the
   verdicts since the last change, `level_since`); the owner's `set_level` through `setLevelLine` (the line, or
   `invalid_level`/`same_level`) and `withLevel` (P1-29); the owner's `set_model` through `setModelLine` (`invalid_model`,
   `same_model`, `model_not_of_tribe`: `modelOfTribe`, a model some named pool claims, else the family of the
@@ -92,7 +93,9 @@
   ever take (`unjudgeable`, `waitsForNoJudge`, P1-15), those whose judges are all held by their mana, with the
   pools that hold them (`judge_waits`, `judgeWaitOf` over selectVerifier's `awaitedJudges` and the roster's
   `manaOpen`, PS-03), returned quests sent back, claims (class, level
-  by `canTake`, limits of tribe and territory, round-robin, affinity), the open quests nobody can take, and the
+  by `canTake`, limits of tribe and territory, round-robin, affinity; fix/claim-step: a character whose tribe takes a
+  shorter prompt on this OS than the one the Steward measured for it, `KingdomSnapshot.claim_prompts`, is passed over
+  while another that `Roster.mayClaim` may take the quest, `withinPromptLimit`), the open quests nobody can take, and the
   done quests still to deliver (`deliveries`, P1-14). (A1b of the lessons of 2026-11-13) A tribe whose CLI is gone or
   says another version than `checkedVersionOf` (the version its last `tribe check` with the real CLI passed on, else the
   pinned one) opens no session in any step (`versionHoldsOf` over `KingdomSnapshot.tools_found`, the one hold in the
