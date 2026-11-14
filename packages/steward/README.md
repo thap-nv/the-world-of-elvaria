@@ -429,6 +429,8 @@ submitted in one tick get their checks one after the other under a cap of one, b
 `infirmary.spec.ts` preserves coded reasons and structured detail, omits empty output, and reads patch refusals
 from both current detail and historical text. The session, breaker, restart, secret and script specs assert reason
 codes and parameters on real Steward ticks. `stop-letter.spec.ts` checks a 300-line hook refusal and its run log.
+`sessions/reason-codes.spec.ts` reads the table of `docs/contracts/infirmary-reason-codes.md` §2 and holds it to
+`INFIRMARY_REASONS` and their parameters, in order, and every breaker trip to its `breaker:<trip>` code.
 `scripts.spec.ts` copies the real `link-check` and `run-check` of `packages/registry-default/scripts/` into the
 kingdom (`src/__fixtures__/scripts.ts`) and takes script quests all the way with no runner asked: a link check
 that passes, one with a dead link and its scribe's follow-up, a territory check run from its resolved argv and its
