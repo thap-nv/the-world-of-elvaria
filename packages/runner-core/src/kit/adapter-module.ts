@@ -39,6 +39,25 @@ export function shellProblems(shell: unknown): string[] {
   ]);
 }
 
+/**
+ * What is wrong with `capabilities.prompt_max_chars` (fix/verifier-prompt-limit): optional like `shell`, by OS; when
+ * given, a positive whole number of characters for each OS it names.
+ */
+export function promptMaxProblems(limits: unknown): string[] {
+  if (limits === undefined) return [];
+  if (!isRecord(limits) || Array.isArray(limits))
+    return ['capability prompt_max_chars is not an object of OS to a number of characters'];
+  const known: readonly string[] = SHELL_PLATFORMS;
+  return Object.entries(limits).flatMap(([os, max]) => [
+    ...(known.includes(os)
+      ? []
+      : [`capability prompt_max_chars names ${os}, not one of ${known.join(', ')}`]),
+    ...(Number.isInteger(max) && Number(max) > 0
+      ? []
+      : [`capability prompt_max_chars.${os} is not a positive whole number`]),
+  ]);
+}
+
 /** What is wrong with `capabilities.search` (P1-53): optional like `shell`; when given, true or false. */
 export const searchProblems = (search: unknown): string[] =>
   search === undefined || typeof search === 'boolean' ? [] : ['capability search is not true or false'];
@@ -57,6 +76,7 @@ function capabilityProblems(capabilities: unknown): string[] {
     ...flags,
     ...auth,
     ...shellProblems(capabilities.shell),
+    ...promptMaxProblems(capabilities.prompt_max_chars),
     ...searchProblems(capabilities.search),
     ...readProblems(capabilities.read),
     // PS-23: the models it serves and their families, optional; an older adapter file without them still loads.

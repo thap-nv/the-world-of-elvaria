@@ -171,6 +171,15 @@ describe('the conformance suite', () => {
     expect(await problemOf({ win32: '' })).toMatch(/^capability shell is malformed/);
   });
 
+  it('passes a runner that declares a prompt limit per OS, and fails one whose limit is no number', async () => {
+    const problemOf = async (limits: unknown) =>
+      (await runConformance(fake({ capabilities: { prompt_max_chars: limits as never } }))).find(
+        ({ id }) => id === 'capabilities',
+      )?.problem;
+    expect(await problemOf({ win32: 28_000 })).toBeUndefined();
+    expect(await problemOf({ win32: -1 })).toMatch(/^capability prompt_max_chars is malformed/);
+  });
+
   it('passes a runner that says whether its CLI searches, and fails one that says it otherwise (P1-53)', async () => {
     const problemOf = async (search: unknown) =>
       (await runConformance(fake({ capabilities: { search: search as never } }))).find(
