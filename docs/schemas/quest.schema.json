@@ -297,7 +297,7 @@
             "format": "date-time"
           },
           "outcome": {
-            "description": "timeout = the time breaker tripped; breaker = the token or turn breaker tripped; partial = a judge handed in a partial verdict (since P1-42, submitted before).",
+            "description": "timeout = the time breaker tripped; breaker = the token or turn breaker tripped; partial = a judge handed in a partial verdict (since P1-42, submitted before); no_session = the Steward could not open the judge's session (its spawn failed), so it left the review at once.",
             "enum": [
               "submitted",
               "partial",
@@ -305,6 +305,7 @@
               "timeout",
               "breaker",
               "crash",
+              "no_session",
               "paused",
               "blocked",
               "cancelled"

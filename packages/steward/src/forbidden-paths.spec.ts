@@ -71,9 +71,10 @@ describe('a forbidden path changed in the plot (P1-49)', () => {
       trip: 'forbidden_paths',
       detail: { paths: ['infra/secrets/key.txt'] },
     });
-    expect(line && isEventOf(line, 'quest.infirmary') ? line.data.reason : '').toMatch(
-      /^breaker:forbidden_paths: infra\/secrets\/key\.txt changed in the plot, .*nothing was committed: .*tools\.allow/,
-    );
+    expect(line && isEventOf(line, 'quest.infirmary') ? line.data.reason : undefined).toEqual({
+      code: 'breaker:forbidden_paths',
+      params: { count: 1 },
+    });
     expect(kingdom.notices).toContainEqual(
       expect.objectContaining({ kind: 'infirmary', trip: 'forbidden_paths' }),
     );
@@ -126,7 +127,10 @@ describe('a plot whose changes cannot be listed (P1-49)', () => {
     const { events } = await openJournal(current.root, quest.id).read();
     expect(events.findLast((event) => isEventOf(event, 'quest.infirmary'))?.data).toMatchObject({
       trip: 'commit',
-      detail: { message: 'git status failed' },
+      reason: {
+        code: 'breaker:commit',
+        params: { lines: 'git status failed', total_lines: 1, log: `.runs/${quest.id}-1/pre-commit.log` },
+      },
     });
   });
 });

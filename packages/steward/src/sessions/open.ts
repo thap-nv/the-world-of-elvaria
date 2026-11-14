@@ -13,6 +13,7 @@ import { inScratch, judgeMayOpen } from '../review/scratch.ts';
 import { judgeParseOf } from '../review/verdict-file.ts';
 import { secretsBreaker } from './breaker.ts';
 import { continuationOf } from './continuation.ts';
+import { assigneeUnopened, judgeUnopened, unopenedLine } from './no-session.ts';
 import { requestOf } from './request.ts';
 import { questSecretsOf, rememberSecrets, secretsLacking } from './secrets.ts';
 import { spawnOf } from './spawn.ts';
@@ -73,7 +74,8 @@ interface Spawned {
 /**
  * Prepares the plot, builds the request and spawns as the tribe's limits ask (spawnOf, P1-33). `resume` continues
  * that CLI session with a prompt carrying only what is new (ADR 0017); the session's in-band mana windows are heard
- * by the gauge (§3.5).
+ * by the gauge (§3.5). A failure is logged whole and says, for the owner, who could not open a session and why
+ * (no-session.ts).
  */
 async function spawnFor(
   ctx: Context,
@@ -94,10 +96,9 @@ async function spawnFor(
     rememberSecrets(session, request);
     return ok({ session, plot: prepared.plot, spawned_at: spawnedAt, load_trace: loadTrace });
   } catch (error) {
-    ctx.deps.log.warn(
-      `steward: ${input.quest.id}: no session for ${input.character.id}: ${messageOf(error)}`,
-    );
-    return err('spawn_failed');
+    const message = messageOf(error);
+    ctx.deps.log.warn(`steward: ${input.quest.id}: no session for ${input.character.id}: ${message}`);
+    return err(unopenedLine(message));
   }
 }
 
@@ -158,7 +159,8 @@ const questSeen = (quest: Quest, opening: Opening): Quest =>
 /**
  * The assignee's session on `questId`: a start (claimed → working), a redispatch (returned → working), the
  * owner's answer (blocked → working) or the pool's mana back (paused_mana → working, the sleeper wakes into it).
- * A start that cannot spawn releases the claim (§2.5 `claimed.release`).
+ * A session that cannot open sends the quest to the infirmary, or lets a start's claim go while the Steward stops
+ * (assigneeUnopened).
  */
 export async function openAssignee(
   ctx: Context,
@@ -171,7 +173,7 @@ export async function openAssignee(
   const lacking = await secretsLacking(ctx, quest, territory);
   if (lacking !== undefined) {
     // A blocked quest has no way to the infirmary: the owner's answer is refused with the reason instead.
-    if (opening.kind === 'answer') return err(`secrets_lacking: ${lacking}`);
+    if (opening.kind === 'answer') return err(`secrets_lacking: ${lacking.code}`);
     return secretsBreaker(ctx, quest, lacking);
   }
   const n = goesOn(opening) ? currentRun(quest) : currentRun(quest) + 1;
@@ -188,11 +190,7 @@ export async function openAssignee(
     },
     resumeFor(ctx, quest, character, opening),
   );
-  if (!spawned.ok) {
-    if (opening.kind === 'start')
-      await ctx.record.move({ quest: questId, event: { type: 'release' }, actor: 'steward' });
-    return spawned;
-  }
+  if (!spawned.ok) return assigneeUnopened(ctx, quest, opening.kind, spawned.error);
   const { session, plot, spawned_at: spawnedAt, load_trace: loadTrace } = spawned.value;
   const sessionId = await session.session_id;
   const moved = await ctx.record.move({
@@ -224,7 +222,8 @@ export async function openAssignee(
 /**
  * The verifier's fresh session on a submitted quest (§3.2): the machine checks ran first, outside the tick (P1-25),
  * then the judge reads the letter, the checks and the work in the plot, never a transcript. A judge of tests as the
- * product opens in the scratch plot where they ran (ADR 0022).
+ * product opens in the scratch plot where they ran (ADR 0022). A judge whose session cannot open leaves the review
+ * (judgeUnopened).
  */
 export async function openVerifier(
   ctx: Context,
@@ -258,7 +257,7 @@ export async function openVerifier(
   } as const;
   const parse = judgeParseOf(ctx, quest, character, { n, checks: checks.value });
   const opened = await spawnFor(ctx, runner, input, null, parse);
-  if (!opened.ok) return opened;
+  if (!opened.ok) return judgeUnopened(ctx, quest, character.id, opened.error);
   const { session, spawned_at: spawnedAt, load_trace: loadTrace } = opened.value;
   const sessionId = await session.session_id;
   const moved = await ctx.record.move({

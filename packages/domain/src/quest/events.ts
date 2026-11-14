@@ -20,8 +20,19 @@ export type QuestActor = (typeof QUEST_ACTORS)[number];
  * instead of being claimed and released again every tick (§3.9, P1-06). `forbidden_paths`: a finished session left a
  * path of the territory's laws.forbidden_paths changed in its plot, which only a program its shell ran could do (the
  * fence stops the tools, not their children), so the Steward commits nothing and the owner looks first (P1-49).
+ * `no_session`: the Steward could not open the assignee's session (the spawn failed: its CLI is gone, the prompt is
+ * longer than the CLI takes, the plot could not be made), so the quest waits in the infirmary with the reason instead
+ * of being claimed and released, sent back or woken again every tick in silence (fix/review-no-session).
  */
-export const BREAKER_TRIPS = ['time', 'tokens', 'turns', 'commit', 'secrets', 'forbidden_paths'] as const;
+export const BREAKER_TRIPS = [
+  'time',
+  'tokens',
+  'turns',
+  'commit',
+  'secrets',
+  'forbidden_paths',
+  'no_session',
+] as const;
 export type BreakerTrip = (typeof BREAKER_TRIPS)[number];
 
 /**
@@ -84,6 +95,7 @@ export const QUEST_EVENT_TYPES = [
   'breaker',
   'answer',
   'assign_verifier',
+  'no_session',
   'seal',
 ] as const;
 export type QuestEventType = (typeof QUEST_EVENT_TYPES)[number];
@@ -145,6 +157,8 @@ export type QuestEvent =
   | Shaped<'breaker', RunEnd & { readonly trip: BreakerTrip }>
   | Shaped<'answer', SessionStart & { readonly answer: string }>
   | Shaped<'assign_verifier', SessionStart & { readonly verifier: CharacterId }>
+  /** The judge the Steward chose, whose session could not open (fix/review-no-session): no session id to give. */
+  | Shaped<'no_session', { readonly verifier: CharacterId }>
   | Shaped<'seal', { readonly note?: string }>;
 
 export type QuestEventOf<T extends QuestEventType> = Extract<QuestEvent, { readonly type: T }>;

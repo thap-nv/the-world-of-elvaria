@@ -1,12 +1,11 @@
 // §3.12 invariant 3: a quest that meets a breaker while an apprentice of its session overran or was cut goes to the
 // infirmary with a note asking for a child quest. The runner writes the apprentice's lines into the quest's journal
 // under the session's id; here they are written by hand, as the runner would (P1-17).
-import { EventSchema } from '@elvaria/domain';
+import { EVENT_VERSION, EventSchema } from '@elvaria/domain';
 import { openJournal } from '@elvaria/eventlog';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { bench, questPayload } from './__fixtures__/kingdom.ts';
-import { APPRENTICE_LEFT } from './infirmary.ts';
 import type { Bench } from './__fixtures__/kingdom.ts';
 import type { Steward } from './types.ts';
 
@@ -22,7 +21,7 @@ afterEach(async () => {
 /** A line the runner writes for the session `session` of `quest`. */
 const runnerLine = (k: Bench, quest: string, session: string, type: string, data: Record<string, unknown>) =>
   EventSchema.parse({
-    v: 1,
+    v: EVENT_VERSION,
     id: k.ids.ulid(),
     ts: '2026-11-07T09:10:00+07:00',
     type,
@@ -58,7 +57,10 @@ describe('a breaker after an apprentice ran long or was cut', () => {
     expect((await kingdom.quest('Hangs')).status).toBe('infirmary');
     expect(kingdom.notices.at(-1)).toMatchObject({
       kind: 'infirmary',
-      reason: `breaker:time: ran 45 min, limit 45 min${asks ? APPRENTICE_LEFT : ''}`,
+      reason: { code: 'breaker:time', params: { minutes: 45, limit: 45 } },
     });
+    const notice = kingdom.notices.at(-1);
+    const left = notice?.kind === 'infirmary' ? notice.detail?.apprentice_left : undefined;
+    expect(left).toBe(asks ? true : undefined);
   });
 });

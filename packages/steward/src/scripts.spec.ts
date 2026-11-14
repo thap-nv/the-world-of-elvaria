@@ -89,7 +89,7 @@ describe('the script tier: a run that gives a result', () => {
       ['not_done', followUp.id],
     ]);
     expect(await infirmaryLine(bench)).toMatchObject({
-      reason: `script:fail: link-check did not pass, see the verdict; follow-up quest ${followUp.id} opened`,
+      reason: { code: 'script:fail_follow_up', params: { script: 'link-check', follow_up: followUp.id } },
       trip: 'script_fail',
       detail: { script: 'link-check', follow_up: followUp.id },
     });
@@ -109,7 +109,7 @@ describe('the script tier: a run that gives a result', () => {
     await bench.command('create_quest', scriptQuest('Dead links', LINKS));
     await kingdom.run();
     expect((await bench.quests()).map(({ title }) => title)).toEqual(['Dead links']);
-    expect(await infirmaryReason(bench)).toBe('script:fail: link-check did not pass, see the verdict');
+    expect(await infirmaryReason(bench)).toEqual({ code: 'script:fail', params: { script: 'link-check' } });
   });
 
   it("runs one of the territory's checks with run-check, from the resolved argv the Steward hands it", async () => {
@@ -152,14 +152,16 @@ describe('the script tier: a run that gives none', () => {
   });
 
   it.each([
-    ['a script that breaks', 'process.stderr.write("boom\\n"); process.exit(1);', 'broken', 'boom'],
+    ['a script that breaks', 'process.stderr.write("boom\\n"); process.exit(1);', 'broken', 'boom\n'],
     [
       'a quest the script cannot use',
       'process.stderr.write("no such check\\n"); process.exitCode = 2;',
       'usage',
-      'no such check',
+      'no such check\n',
     ],
-    ['output outside the contract', 'console.log("done");', 'broken', 'stdout is not JSON'],
+    ['output outside the contract', 'console.log("done");', 'broken', 'done'],
+    ['JSON outside the contract', 'console.log("{}");', 'broken', '{}'],
+    ['a script that exits silently', 'process.exit(1);', 'broken', ''],
   ])('sends %s to the infirmary at once, with no retry and no follow-up', async (_, body, kind, message) => {
     const bench = await kingdom.setup();
     await fakeScript(bench.root, 'link-check', body);
@@ -168,11 +170,12 @@ describe('the script tier: a run that gives none', () => {
     const quest = await bench.quest('Broken');
     expect(quest).toMatchObject({ status: 'infirmary', attempts: 1 });
     expect(quest.attempt_log[0]?.outcome).toBe('crash');
-    expect(await infirmaryLine(bench)).toMatchObject({
-      reason: `script:${kind}: ${message}`,
+    const line = await infirmaryLine(bench);
+    expect(line).toMatchObject({
+      reason: { code: `script:${kind}`, params: { script: 'link-check' } },
       trip: `script_${kind}`,
-      detail: { message, script: 'link-check' },
     });
+    expect(line?.detail).toEqual({ script: 'link-check', ...(message === '' ? {} : { message }) });
     expect(await bench.quests()).toHaveLength(1);
   });
 
@@ -188,9 +191,9 @@ describe('the script tier: a run that gives none', () => {
     expect(quest.status).toBe('infirmary');
     expect(quest.attempt_log[0]?.outcome).toBe('timeout');
     expect(await infirmaryLine(bench)).toMatchObject({
-      reason: 'breaker:time: the script ran past 10 minutes',
+      reason: { code: 'breaker:time', params: { minutes: 10, limit: 10 } },
       trip: 'time',
-      detail: { message: 'the script ran past 10 minutes', script: 'link-check' },
+      detail: { script: 'link-check' },
     });
   });
 });

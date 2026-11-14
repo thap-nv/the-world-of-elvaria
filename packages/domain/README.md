@@ -2,6 +2,9 @@
 
 ## Does
 
+- Defines `INFIRMARY_REASONS`, their exact parameter keys and `infirmaryReasonOf` (`src/infirmary/`).
+  Event v2 carries `{ code, params }` for `quest.infirmary.reason`; `legacy.params.text` preserves v1 words.
+
 - Holds the zod schemas that are the source of the 20 data contracts (ADR 0003, `CONTRACTS` in
   `src/schema/contracts.ts`): kingdom, territory, quest, character, campaign, verdict, lesson, event,
   inbox-command, the six registry files, skill, quest-draft, world-map, memo (PS-02) and memo-triage (PS-03b), with
@@ -154,8 +157,10 @@
   handed in a partial one (P1-42), and the review goes to the infirmary instead of a fresh verifier. (P1-26) The owner's retry of
   such a quest goes back to review, same run, for a new judge (`infirmary.retry.stalled_review`); `reviewBreaksOf`
   counts only the verifiers that left without a verdict since that retry, derived from `attempt_log` (a stall closes each group of
-  `REVIEW_BREAKS_MAX`). (P1-38) `cutVerifiersOf` names the judges a breaker stopped in the open group, whom
-  `selectVerifier` passes over while another judge may take the review; (P1-48) `justPartialOf` names the judge
+  `REVIEW_BREAKS_MAX`). (P1-38) `leftVerifiersOf` names the judges that left the open group without a verdict, whom
+  `selectVerifier` passes over while another judge may take the review (a breaker's since P1-38; a crash's and a
+  session that never opened, `review.no_session` with outcome `no_session`, since fix/review-no-session, where
+  `unopenedReviewsOf` names for the digest the reviews whose latest judge could not open a session); (P1-48) `justPartialOf` names the judge
   whose session, the latest of the open group, handed in a partial verdict, passed over the same way. (P1-42) Judges that hand in a partial
   verdict count apart (`reviewPartialsOf`, outcome `partial`): the `REVIEW_PARTIALS_MAX`-th (3) of the open group
   stalls the review too (`partialsStalled`, `review.verdict_partial.needs_verifier`). A quest without an estimate gets

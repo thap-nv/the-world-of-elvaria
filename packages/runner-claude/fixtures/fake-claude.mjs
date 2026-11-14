@@ -208,6 +208,12 @@ const SCENARIOS = {
       play.core.runFakeShellLine(command, process.cwd());
     return work(play);
   },
+  // A judge's verdict: under --json-schema the result line carries it as structured_output (fix/codex-output-schema).
+  structured: (play) => {
+    const answer = play.schema === undefined ? undefined : play.core.FAKE_STRUCTURED_ANSWER;
+    speak(play, [{ type: 'text', text: JSON.stringify(answer ?? {}) }]);
+    return finish(play, { structured_output: answer });
+  },
   rate_limit: rateLimited,
   crash: (play) => {
     process.stderr.write('fake claude: crashed\n');
@@ -250,6 +256,7 @@ async function session(argv) {
     model: flag(argv, '--model'),
     settings,
     core,
+    schema: flag(argv, '--json-schema'),
     messages: 0,
   };
   runHooks(settings, 'SessionStart', { session_id: play.id, source: 'startup', cwd: process.cwd() });

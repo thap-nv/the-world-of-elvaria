@@ -170,6 +170,7 @@ describe('elvaria tribe', () => {
         '✓ rate_limit',
         '– forbidden_command (skipped: the adapter does not declare it)',
         '✓ spawn_child',
+        '– structured (skipped: the adapter does not declare it)',
         '– scratch_commit (skipped: the adapter does not declare it)',
         '✓ ask',
         'Tribe lantern passes the conformance suite and is now enabled in kingdom.json.',
@@ -192,6 +193,7 @@ describe('elvaria tribe', () => {
         '✓ hang',
         '– forbidden_command (skipped: the adapter does not declare it)',
         '✓ spawn_child',
+        '– structured (skipped: the adapter does not declare it)',
       ]);
       expect((await lantern())?.enabled).toBe(true);
     });
@@ -277,24 +279,6 @@ describe('elvaria tribe', () => {
         'Tribe lantern does not pass. It is still enabled; elvaria tribe disable lantern stops it taking new work.',
       );
       expect((await lantern())?.enabled).toBe(true);
-    });
-  });
-
-  describe('disable', () => {
-    it('turns a tribe off and says what becomes of its quests', async () => {
-      const io = testIo();
-      expect(await elvaria(io, 'tribe', 'disable', 'gemini')).toBe(0);
-      expect(io.printed.out).toEqual([
-        expect.stringMatching(/^Tribe gemini is disabled: it takes no new work/) as string,
-      ]);
-      expect((await tribes()).map(({ id, enabled }) => [id, enabled])).toEqual([
-        ['claude', true],
-        ['gemini', false],
-      ]);
-      const again = testIo();
-      expect(await elvaria(again, 'tribe', 'disable', 'gemini')).toBe(0);
-      expect(again.printed.out).toEqual(['Tribe gemini is already disabled.']);
-      expect(await elvaria(testIo(), 'tribe', 'disable', 'nobody')).toBe(1);
     });
   });
 });

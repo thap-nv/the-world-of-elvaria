@@ -1,7 +1,7 @@
 // The acceptance test of the sandbox (implementation-plan §7, P0-10): every fake day is valid against the event
 // contract and the state machines, and its lines alone rebuild its evening, whatever the seed. That makes the
 // sandbox an integration test of the domain too.
-import { EventSchema, canTake, reduce, worldStateOf } from '@elvaria/domain';
+import { EventSchema, canTake, isEventOf, reduce, worldStateOf } from '@elvaria/domain';
 import type { Event, QuestView } from '@elvaria/domain';
 import { describe, expect, it } from 'vitest';
 
@@ -30,6 +30,30 @@ const typesOf = (day: DayId): Set<string> =>
   );
 
 describe('a fake day', () => {
+  it('writes coded infirmary causes with the same parameters as the Steward', () => {
+    const causes = DAYS_PLAYED.flatMap(({ played }) =>
+      played.events
+        .filter((event) => event.type === 'quest.infirmary')
+        .map((event) => ({
+          event,
+          quest: played.evening.quests.find(({ id }) => id === event.quest),
+        })),
+    );
+    expect(causes.length).toBeGreaterThan(0);
+    for (const { event, quest } of causes) {
+      if (!isEventOf(event, 'quest.infirmary')) continue;
+      const { reason, trip } = event.data;
+      expect(reason.code).not.toBe('legacy');
+      if (trip === 'time')
+        expect(reason).toEqual({
+          code: 'breaker:time',
+          params: { minutes: quest?.budget.max_minutes, limit: quest?.budget.max_minutes },
+        });
+      else if (trip === 'script_broken') expect(reason.code).toBe('script:broken');
+      else expect(reason).toEqual({ code: 'quest:max_attempts', params: {} });
+    }
+  });
+
   it.each(DAYS_PLAYED)('$day, seed $seed: writes only lines the event contract accepts', ({ played }) => {
     for (const event of played.events) expect(EventSchema.parse(event)).toEqual(event);
   });

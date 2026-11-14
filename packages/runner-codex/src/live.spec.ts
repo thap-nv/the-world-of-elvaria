@@ -2,14 +2,22 @@
 // cheapest model (gpt-6-luna at low effort, spike Codex 2026-11-12 §2), so they run only on demand
 // (.claude/rules/runner.md). The hook runs as in production, built: `node --conditions=elvaria-dist
 // elvaria-hook.js`; run `pnpm --filter @elvaria/hooks build` first. ELVARIA_CODEX overrides where Codex is.
-import { readFile, readdir, writeFile } from 'node:fs/promises';
+import { cp, readFile, readdir, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { conformanceChecks, toolPolicyOf } from '@elvaria/runner-core';
-import type { ConformanceTarget, RunResult, RunnerSignal, SpawnRequest } from '@elvaria/runner-core';
+import { STDOUT_FILE, conformanceChecks, toolPolicyOf } from '@elvaria/runner-core';
+import type {
+  ConformanceTarget,
+  FailedWorkspace,
+  JsonSchema,
+  RunResult,
+  RunnerSignal,
+  SpawnRequest,
+} from '@elvaria/runner-core';
 
 import { TERRITORY, TRIBE, minimalEnv, openWorld, request } from './__fixtures__/codex.ts';
 import { locateCodex } from './locate.ts';
@@ -19,7 +27,16 @@ import type { World } from './__fixtures__/codex.ts';
 const LIVE = process.env.ELVARIA_LIVE === '1';
 const MODEL = 'gpt-6-luna-low';
 const HOOK_DIST = path.resolve(import.meta.dirname, '..', '..', 'hooks', 'dist', 'elvaria-hook.js');
+const CONTRACTS = path.resolve(import.meta.dirname, '..', '..', '..', 'docs', 'schemas');
 const MINUTES = 4 * 60_000;
+const STAMP = new Date().toISOString().replaceAll(':', '-');
+
+/** A failed check's workspace (its run folder holds what Codex printed), kept in the OS temp folder for the owner. */
+async function keepFailed({ scenario, dir }: FailedWorkspace): Promise<void> {
+  const kept = path.join(tmpdir(), `elvaria live codex ${STAMP}`, scenario);
+  await cp(dir, kept, { recursive: true });
+  process.emitWarning(`live ${scenario}: its workspace is kept in ${kept}`);
+}
 
 let codex = '';
 beforeAll(async () => {
@@ -78,6 +95,7 @@ describe.runIf(LIVE)('live: conformance suite against the real Codex CLI', () =>
     model: MODEL,
     env: minimalEnv(),
     timeout_ms: MINUTES,
+    onFailed: keepFailed,
   };
   for (const check of conformanceChecks(target)) {
     it(check.id, { timeout: MINUTES }, async () => {
@@ -127,4 +145,27 @@ describe.runIf(LIVE)('live: what only a real session shows', () => {
     const { result } = await run(req);
     expect(result.structured).toEqual({ result: 'pass', notes: 'probe' });
   });
+
+  it(
+    "takes the Chancellor's memo-triage contract once strict, and hands back the core's shape",
+    { timeout: MINUTES },
+    async () => {
+      // Every keyword of the core's contracts is in it (pattern, uniqueItems, default, $defs, if/then, a free object):
+      // only the real API says which it refuses, before any model call (fix/codex-output-schema). As forTheCli
+      // gives it: without the 2020-12 `$schema`.
+      const memo = 'm_20261114_abcdef';
+      const text = await readFile(path.join(CONTRACTS, 'memo-triage.schema.json'), 'utf8');
+      const { $schema: _, ...contract } = JSON.parse(text) as JsonSchema;
+      const ask = `Triage the memo ${memo}: action shelve, ask empty, note "probe". Fill in no other field. Use no tool.`;
+      const req = probeRequest(world, ask, ['Read'], { structured: contract });
+      const { result } = await run(req);
+      const printed = await readFile(path.join(world.run_dir, STDOUT_FILE), 'utf8').catch(() => '');
+      expect(result.outcome, printed).toBe('completed');
+      expect(result.structured).toMatchObject({
+        version: 1,
+        decisions: [{ memo, action: 'shelve', note: 'probe' }],
+      });
+      expect(JSON.stringify(result.structured)).not.toContain('null');
+    },
+  );
 });

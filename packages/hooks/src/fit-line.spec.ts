@@ -1,4 +1,4 @@
-import { MAX_LINE_BYTES } from '@elvaria/eventlog';
+import { CURRENT_EVENT_VERSION, MAX_LINE_BYTES } from '@elvaria/eventlog';
 import { describe, expect, it } from 'vitest';
 
 import { TRUNCATED, fitLine, truncate } from './fit-line.ts';
@@ -19,7 +19,11 @@ describe('truncate', () => {
 
 describe('fitLine', () => {
   it('leaves an ordinary line as it is', () => {
-    const line = { v: 1, type: 'agent.tool', data: { tool: 'bash', command: 'pnpm test', exit: 1 } };
+    const line = {
+      v: CURRENT_EVENT_VERSION,
+      type: 'agent.tool',
+      data: { tool: 'bash', command: 'pnpm test', exit: 1 },
+    };
     expect(fitLine(line)).toEqual(line);
   });
 

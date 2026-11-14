@@ -11,8 +11,9 @@
   `probe({ping: false})` only reads them, without calling a model.
 - Ships `createFakeRunner()`: characters that play a scenario in process (`submit`, `crash`, `hang`,
   `rate_limit`, `forbidden_command`, `ask`, `scratch_commit`: a judge in its scratch plot that tries
-  `git commit` then `git push`, P1-20, and `spawn_child`, which runs the suite's spawn probe for real, P1-12e),
-  chosen per spawn by `scenarioOf` or by env `ELVARIA_FAKE_SCENARIO`.
+  `git commit` then `git push`, P1-20, `spawn_child`, which runs the suite's spawn probe for real, P1-12e, and
+  `structured`, a judge's verdict `FAKE_STRUCTURED_ANSWER` handed back as `RunResult.structured` when the request
+  has a schema), chosen per spawn by `scenarioOf` or by env `ELVARIA_FAKE_SCENARIO`.
   It writes the letter, blocks the forbidden push through the policy when it declares `tool_gate`, keeps a
   resumed session id, and records every request for the Steward's tests. Its `probe` answers one result, or one
   per call (a pool that wakes on the second probe).
@@ -89,8 +90,13 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   three `amendment-accepted|rejected|owner.md`), a resumed one with the description as accepted.
 - Runs the conformance suite (`conformanceChecks`, `runConformance`): plain checks with `node:assert`, so a spec
   wraps them in `it` and `elvaria tribe check` (P1-19) runs them too. With a real CLI (`live`) only `capabilities`,
-  `doctor`, `probe`, `submit`, `hang`, `forbidden_command` and `spawn_child` run (a few cheap sessions, a little
-  mana); `crash`, `rate_limit`, `scratch_commit` and `ask` need a fake. `spawn_child` (P1-12e,
+  `doctor`, `probe`, `submit`, `hang`, `forbidden_command`, `spawn_child` and `structured` run (a few cheap
+  sessions, a little mana); `crash`, `rate_limit`, `scratch_commit` and `ask` need a fake. `structured`
+  (fix/codex-output-schema; skipped without `capabilities.structured_output`) asks a judge, as the Steward does (a
+  schema, no letter, read-only), for a verdict under `FAKE_STRUCTURED_SCHEMA`, the verdict's shape with optional
+  keys: the answer must come back with `result` and `notes`, no key outside the schema and no null at any depth,
+  since the core's zod refuses null where a key may only be absent. Codex's strict structured output refused such a
+  schema with a 400 before any model call, which only a real API shows. `spawn_child` (P1-12e,
   `src/conformance/spawn-probe.ts`) puts `elvaria-spawn-probe.mjs` in the plot and asks the session to run
   `node elvaria-spawn-probe.mjs`, which starts a child with piped stdio, as a territory's build and test do, and
   writes what became of it; a sandbox that runs the command but not its child (Codex's unelevated one on Windows,
@@ -113,13 +119,22 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   (`createAdapter` exported, called without throwing) and the runner it returns (`runnerProblems`: the kit's tribe
   and adapter, every capability, `spawn`, `probe`, `doctor`), one sentence per problem, and makes the runner's
   `doctor()` fail while the hook the kit names is not built, as every built-in adapter's does (`hookProblem`,
-  `withHookProblem`, `src/runner/hook-built.ts`, fix/held-tribe-sessions); the optional `shell` is
+  `withHookProblem`, `src/runner/hook-built.ts`, fix/held-tribe-sessions). `ToolInfo.notes` carries
+  `DoctorNote` codes and parameters (`DOCTOR_NOTES`, `DOCTOR_NOTE_PARAMS`, `doctorNoteOf`, `callNote`,
+  `hookNote`); `detail` remains verbatim external text. The kit validates adapter notes, replacing malformed
+  entries with `doctor:bad_note`, and appends `doctor:hook_missing` when needed. The optional `shell` is
   checked only when given (`shellProblems`, P1-40), and so are `search` (`searchProblems`, P1-53), `read`
   (`readProblems`) and `models` (the domain's `modelsProblems`, PS-23), here and in the suite's `capabilities`
   check. An adapter whose CLI has hooks of its own writes its neutral hook dialect into `policy.json` through
   `writePolicyFile(…, { dialect })` (`HookDialect`, `src/runner/hook-dialect.ts`, PS-23), so the hook reads that
   CLI without a branch of its own. A built-in package also exports an `AdapterTool` (its program, its search
   outside PATH, whether the provider's terms need acknowledging, its fake CLI) for the composition root (PS-23).
+- Summarizes refused commits with `hookOutputHead`: the first five nonempty lines without ANSI codes,
+  at most 200 characters per line including the ellipsis, with whole words where possible and intact
+  surrogate pairs. `head.errors` counts lines containing `error` regardless of case throughout the output;
+  `head.total_lines` counts all lines except trailing empty ones. With `CommitRescue`, the complete
+  redacted stderr then stdout is saved as `pre-commit.log` beside `wip.patch`; `CommitOutcome.log`
+  names that file and `detail` joins the head lines. Without rescue, no log file is written.
 - Proves in the conformance suite that a judge in its scratch plot, whose class allows commit and push, has both
   refused (`scratch_commit`, fakes only, P1-20).
 - Gives a tribe without a JSON Schema flag its structured reply (`src/structured/`, implementation-plan §3.14

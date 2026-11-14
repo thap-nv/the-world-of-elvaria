@@ -55,8 +55,9 @@
   (`EXIT`), `apps/cli/src/help.ts` (`optionLabel`), and `packages/i18n/src/locales/vi.json` (via
   `@elvaria/i18n`); `docs-gen.mjs` writes `docs/cli.md`.
 - `docs-tier-report.mjs` (`docs-tier-report.spec.ts`): `readKingdomEvents(kingdom)` reads every valid event line
-  of `<kingdom>/events/YYYY-MM-DD.jsonl` (ignoring `events/sandbox/` and lines `EventSchema` of
-  `@elvaria/domain` refuses) and `renderTierReport(events)` renders per-tier (`script`, `apprentice`, `session`)
+  of `<kingdom>/events/YYYY-MM-DD.jsonl` through the CLI's `readMetricsSource` and `openEventLog`, upgrading
+  old versions in memory and ignoring `events/sandbox/` and invalid lines. Both the reader and
+  `renderTierReport(events)` are asynchronous; the latter renders per-tier (`script`, `apprentice`, `session`)
   and per-quest numbers for `docs/tier-report.md` (`TIER_REPORT_FILE`, implementation-plan §3.12, ADR 0017).
   Called by `docs-gen.mjs` only when `--kingdom <dir>` (or `--kingdom=<dir>`) is passed (`pnpm docs:gen --check`
   without `--kingdom` leaves it alone). Reads `<kingdom>/events/YYYY-MM-DD.jsonl`; `docs-gen.mjs` writes

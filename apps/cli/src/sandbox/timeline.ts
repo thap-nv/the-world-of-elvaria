@@ -1,11 +1,19 @@
 // One line of a replayed day as the owner reads it: the local time, then a sentence in the owner's language
 // (ADR 0014). Every value comes from the line itself, the view it carries (P0-09) or a name met on an earlier
 // line, so a timeline needs no kingdom files; with the kingdom's registry, classes and kinds get their names.
-import type { CharacterView, Event, QuestView, Registry, TerritoryView } from '@elvaria/domain';
+import type {
+  CharacterView,
+  Event,
+  InfirmaryReason,
+  QuestView,
+  Registry,
+  TerritoryView,
+} from '@elvaria/domain';
 import type { Locale, MessageKey, Params, Translate } from '@elvaria/i18n';
 
 import { nameIn } from '../labels.ts';
 import { NONE } from '../listing.ts';
+import { reasonText } from '../quest/infirmary-reason.ts';
 
 export interface TimelineContext {
   readonly t: Translate;
@@ -92,6 +100,18 @@ const textIn = (data: Data, key: string): string | undefined => {
   return typeof value === 'string' || typeof value === 'number' ? String(value) : undefined;
 };
 
+/**
+ * A plain reason as written; the code and params of a `quest.infirmary` reason (contract infirmary-reason-codes)
+ * in the owner's language, its sentence only: a timeline gives each line one row, so a refusing hook's lines stay
+ * for `quest show`. EventSchema has checked that line's reason, so its shape is `InfirmaryReason`.
+ */
+function reasonIn(t: Translate, data: Data): string | undefined {
+  const reason = objectIn(data, 'reason') as InfirmaryReason | undefined;
+  if (reason === undefined) return textIn(data, 'reason');
+  const [sentence] = reasonText(t, reason).split('\n');
+  return sentence;
+}
+
 /** A quest moved into review by assign_verifier, or left there by its verifier, has a sentence of its own. */
 function keyOf(event: Event, quest: QuestView | undefined): MessageKey {
   const inReview = quest?.status === 'review';
@@ -173,7 +193,7 @@ function plainParams({ context }: Lookup, data: Data): Params {
     outcome: label('outcome'),
     tool: label('tool'),
     target: textIn(data, 'path') ?? textIn(data, 'command') ?? textIn(data, 'url') ?? '',
-    reason: textIn(data, 'reason') ?? NONE,
+    reason: reasonIn(context.t, data) ?? NONE,
     error: textIn(data, 'error') ?? NONE,
     fail_kind: textIn(data, 'fail_kind') ?? NONE,
   };

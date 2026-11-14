@@ -82,6 +82,7 @@ describe('attentionQueue', () => {
       unclaimable: [q(5)],
       unjudgeable: [{ quest: q(6), class: 'judge' }],
       judge_waits: [{ quest: q(7), class: 'judge', gauges: [judgePool] }],
+      judges_unopened: [{ quest: q(9), judge: 'ilse' as CharacterId }],
       scope_held: [{ quest: q(8), waiting: [q(5)] }],
       tribes_held: [
         { tribe: 'gemini' as TribeId, path: 'C:/agy.exe', version: '1.5.8', checked: '1.5.6' },
@@ -95,6 +96,7 @@ describe('attentionQueue', () => {
       ['must', 'infirmary', `quest retry ${q(3)}`],
       ['must', 'judge_mana', `character add <id> --class judge --tribe <tribe>`],
       ['must', 'unjudgeable', `character add <id> --class judge --model <model>`],
+      ['must', 'judge_no_session', 'character suspend ilse'],
       ['must', 'unclaimable', `quest show ${q(5)}`],
       ['must', 'scope_held', `quest archive ${q(8)}`],
       ['must', 'draft', `quest confirm ${q(4)}`],
@@ -104,8 +106,8 @@ describe('attentionQueue', () => {
       ['can_wait', 'memo', 'memo show m_20261112_4k2pqz'],
       ['can_wait', 'mana_asleep', 'wake claude'],
     ]);
-    expect(items[9]).toMatchObject({ advice: 'check_tribe', version: '1.5.8', checked_version: '1.5.6' });
-    expect(items[10]).toEqual({
+    expect(items[10]).toMatchObject({ advice: 'check_tribe', version: '1.5.8', checked_version: '1.5.6' });
+    expect(items[11]).toEqual({
       ...ATTENTION_TABLE.tribe_gone,
       kind: 'tribe_gone',
       command: ['tribe', 'check', 'codex'],

@@ -3,6 +3,7 @@
 // after it (implementation-plan §2.3, P0-09), so reduce(log) rebuilds what the files say. Files first: a line
 // lost in a crash costs nothing once the next line of that quest arrives; a line without its file would lie.
 import {
+  EVENT_VERSION,
   EventSchema,
   characterViewOf,
   currentRun,
@@ -139,7 +140,7 @@ const reasonOf = (error: unknown): string =>
 async function append(deps: RecorderDeps, line: Line, ts: string): Promise<void> {
   const run = line.quest === undefined ? 0 : currentRun(line.quest);
   const draft = {
-    v: 1,
+    v: EVENT_VERSION,
     id: deps.ids.ulid(),
     ts,
     type: line.type,
@@ -205,9 +206,7 @@ async function move(deps: RecorderDeps, request: Move): Promise<Result<Quest, st
   // The sessions that followed the first in the run that ends here (P1-49): attempt_log keeps one entry for them all.
   const sequels = 'sequels' in event ? event.sequels : undefined;
   const data = {
-    ...(type === 'quest.infirmary'
-      ? infirmaryData(request.infirmary ?? OUT_OF_ATTEMPTS, currentRun(after.value))
-      : {}),
+    ...(type === 'quest.infirmary' ? infirmaryData(request.infirmary ?? OUT_OF_ATTEMPTS) : {}),
     quest: questViewOf(after.value),
     ...(moved.value.length > 0 ? { characters: moved.value.map(characterViewOf) } : {}),
     ...(sequels === undefined || sequels.length === 0 ? {} : { sequels }),

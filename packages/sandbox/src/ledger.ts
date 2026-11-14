@@ -4,6 +4,8 @@
 // So a fake day is valid against the state machines by construction, and replaying its lines from the morning
 // gives back its evening files (the spec checks it). A refused move is a bug in the sandbox: it throws.
 import {
+  infirmaryReasonOf,
+  EVENT_VERSION,
   EventSchema,
   characterViewOf,
   currentRun,
@@ -23,6 +25,7 @@ import type {
   CharacterId,
   Event,
   IdSource,
+  InfirmaryReason,
   PoolKey,
   PoolView,
   Quest,
@@ -102,9 +105,18 @@ function actorOf(actor: QuestActor, quest: Quest): Actor {
 }
 
 /** Why a quest went to the infirmary, as the line says it (§3.4). */
-function infirmaryReason(event: QuestEvent, quest: Quest): string {
-  if (event.type === 'breaker') return `breaker:${event.trip}`;
-  return quest.tier === 'script' ? 'script_error' : 'max_attempts';
+function infirmaryReason(event: QuestEvent, quest: Quest): { reason: InfirmaryReason; trip: string } {
+  if (event.type === 'breaker' && event.trip === 'time')
+    return {
+      reason: infirmaryReasonOf('breaker:time', {
+        minutes: quest.budget.max_minutes,
+        limit: quest.budget.max_minutes,
+      }),
+      trip: 'time',
+    };
+  if (quest.tier === 'script' && quest.script !== undefined)
+    return { reason: infirmaryReasonOf('script:broken', { script: quest.script.id }), trip: 'script_broken' };
+  return { reason: infirmaryReasonOf('quest:max_attempts'), trip: 'max_attempts' };
 }
 
 interface Book {
@@ -121,7 +133,7 @@ function write(book: Book, ts: string, line: Line): void {
   const run = line.quest === undefined ? 0 : currentRun(line.quest);
   const about = line.quest === undefined ? {} : { quest: line.quest.id, territory: line.quest.territory };
   const event = EventSchema.parse({
-    v: 1,
+    v: EVENT_VERSION,
     id: book.ids.ulid(),
     ts,
     type: line.type,
@@ -151,7 +163,7 @@ function move(book: Book, id: QuestId, payload: MovePayload, actor: QuestActor, 
   const moved = editAll(book, edits, at);
   const type = questLogTypeOf(event.type, before.status, after.status);
   const data = {
-    ...(type === 'quest.infirmary' ? { reason: infirmaryReason(event, after) } : {}),
+    ...(type === 'quest.infirmary' ? infirmaryReason(event, after) : {}),
     quest: questViewOf(after),
     ...(moved.length > 0 ? { characters: moved.map(characterViewOf) } : {}),
   };

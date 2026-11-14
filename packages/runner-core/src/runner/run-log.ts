@@ -4,7 +4,7 @@
 // as the hook: stamp, redact, append to the log and to the quest's journal; a failed write never fails a session.
 import { stat } from 'node:fs/promises';
 
-import { EventSchema } from '@elvaria/domain';
+import { EVENT_VERSION, EventSchema } from '@elvaria/domain';
 import {
   createRedactor,
   createStamper,
@@ -62,7 +62,7 @@ function formatOf(tz: string | undefined): (timeMs: number) => string {
 function lineOf(ctx: RunContext, draft: RunEventDraft, session: string | undefined, stamp: Stamp) {
   const { id, ts } = stamp;
   return {
-    v: 1,
+    v: EVENT_VERSION,
     id,
     ts,
     type: draft.type,

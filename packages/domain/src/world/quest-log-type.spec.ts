@@ -5,7 +5,7 @@ import { at, eventOf, reachable } from '../quest/__fixtures__/quests.ts';
 import { transition } from '../quest/transition.ts';
 import { QUEST_TRANSITIONS } from '../quest/transitions.ts';
 import { hasDataSchema } from '../schema/event/event-data.ts';
-import { EventSchema } from '../schema/event/event.ts';
+import { EVENT_VERSION, EventSchema } from '../schema/event/event.ts';
 import { KINGDOM } from './__fixtures__/examples.ts';
 import { questLogTypeOf } from './quest-log-type.ts';
 import { questViewOf } from './quest-view.ts';
@@ -85,14 +85,16 @@ describe('a quest line for every move the machine makes', () => {
     for (const { before, type, after } of moves) {
       const logType = questLogTypeOf(type, before.status, after.status);
       const event = EventSchema.parse({
-        v: 1,
+        v: EVENT_VERSION,
         id: '01JCF8X4Z6Q3W9N2M5R7T8V0YB',
         ts: after.updated_at,
         type: logType,
         actor: { kind: 'steward' },
         quest: after.id,
         data: {
-          ...(logType === 'quest.infirmary' ? { reason: 'max_attempts' } : {}),
+          ...(logType === 'quest.infirmary'
+            ? { reason: { code: 'legacy', params: { text: 'max_attempts' } } }
+            : {}),
           quest: questViewOf(after),
         },
       });

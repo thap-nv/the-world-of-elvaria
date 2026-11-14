@@ -26,6 +26,7 @@ export interface Breaker {
   readonly role: Role;
   readonly trip: SessionTrip;
   readonly detail: string;
+  readonly params: Readonly<Record<string, number>>;
 }
 
 /** The session's own entry: the latest one of its role that has not ended. */

@@ -5,6 +5,8 @@
 // far the judge read; the next judge reads on, up to REVIEW_PARTIALS_MAX of them (P1-42). A judge that leaves no
 // verdict at all counts toward a stalled review (P1-33), as a judge a breaker stopped does.
 import {
+  currentRun,
+  infirmaryReasonOf,
   partialsStalled,
   partyOf,
   reviewBreaksOf,
@@ -14,7 +16,7 @@ import {
   validateVerdict,
   withBreaksWeighed,
 } from '@elvaria/domain';
-import type { Quest, Result, SequelRun, Verdict } from '@elvaria/domain';
+import type { InfirmaryReason, Quest, Result, SequelRun, Verdict } from '@elvaria/domain';
 import type { RunResult } from '@elvaria/runner-core';
 
 import { OUT_OF_ATTEMPTS } from '../infirmary.ts';
@@ -40,7 +42,7 @@ function sequelsOf(result: RunResult): { sequels?: SequelRun[] } {
   return sequels.length === 0 ? {} : { sequels };
 }
 
-export const runOf = (running: Running, result: RunResult) => ({
+export const runOf = (running: Pick<Running, 'session_id'>, result: RunResult) => ({
   session_id: result.session_id === '' ? running.session_id : result.session_id,
   tokens: result.usage.tokens,
   ...sequelsOf(result),
@@ -54,15 +56,16 @@ export const runOf = (running: Running, result: RunResult) => ({
 export function stallWithoutVerdict(
   ctx: Context,
   left: Result<Quest, string>,
-  why: string | undefined,
+  why: InfirmaryReason,
 ): Promise<Result<Quest, string>> {
   if (!left.ok || !reviewStalled(left.value)) return Promise.resolve(left);
-  const said = why === undefined ? {} : { message: why };
+  const stopped = reviewBreaksOf(left.value);
+  const reason = infirmaryReasonOf(why.code, { ...why.params, stopped, run: currentRun(left.value) });
   return moveAndRing(ctx, {
     quest: left.value.id,
     event: { type: 'crash' },
     actor: 'steward',
-    infirmary: { trip: 'no_verdict', detail: { ...said, verifiers_stopped: reviewBreaksOf(left.value) } },
+    infirmary: { trip: 'no_verdict', reason, detail: { verifiers_stopped: stopped } },
   });
 }
 
@@ -74,7 +77,7 @@ export async function verifierLeaves(
   ctx: Context,
   running: Running,
   result: RunResult,
-  why?: string,
+  why: InfirmaryReason,
 ): Promise<Result<Quest, string>> {
   const left = await moveAndRing(ctx, {
     quest: running.quest,
@@ -91,11 +94,11 @@ export async function verifierLeaves(
  * `review.verdict_partial.needs_verifier`, P1-42): a judge that cannot finish the ritual, its shell unable to run
  * the checks or its pass short of breaks, would be followed by another for ever, each with a session and a trial.
  */
-async function verifierHandsInPart(
+export async function verifierHandsInPart(
   ctx: Context,
-  running: Running,
+  running: Pick<Running, 'quest' | 'n' | 'character' | 'session_id'>,
   result: RunResult,
-  partial: Verdict,
+  partial: Pick<Verdict, 'progress'>,
 ): Promise<Result<Quest, string>> {
   const left = await moveAndRing(ctx, {
     quest: running.quest,
@@ -105,14 +108,19 @@ async function verifierHandsInPart(
   });
   if (!left.ok || !partialsStalled(left.value)) return left;
   const stop = partial.progress?.checked_until;
-  const said = stop === undefined ? {} : { message: `the last judge stopped at ${stop}` };
+  const params = { count: reviewPartialsOf(left.value), run: running.n };
+  const reason =
+    stop === undefined
+      ? infirmaryReasonOf('judge:partial_verdicts', params)
+      : infirmaryReasonOf('judge:partial_verdicts_until', { ...params, until: stop });
   return moveAndRing(ctx, {
     quest: left.value.id,
     event: { type: 'verdict_partial' },
     actor: 'steward',
     infirmary: {
       trip: 'partial_verdicts',
-      detail: { ...said, partial_verdicts: reviewPartialsOf(left.value) },
+      reason,
+      detail: { partial_verdicts: reviewPartialsOf(left.value) },
     },
   });
 }
@@ -158,14 +166,24 @@ export async function judge(
   if (!verdict.ok) {
     const why = `the verifier's output is no verdict (${verdict.error})`;
     ctx.deps.log.warn(`steward: ${quest.id}: ${why}`);
-    return verifierLeaves(ctx, running, result, why);
+    return verifierLeaves(
+      ctx,
+      running,
+      result,
+      infirmaryReasonOf('judge:not_a_verdict', { error: verdict.error }),
+    );
   }
   const actor = { kind: 'character', id: running.character } as const;
   const written = await recordVerdict(ctx, quest, verdict.value, actor);
   if (!written.ok) {
     const why = `the verdict could not be written: ${written.error}`;
     ctx.deps.log.warn(`steward: ${quest.id}: ${why}`);
-    return verifierLeaves(ctx, running, result, why);
+    return verifierLeaves(
+      ctx,
+      running,
+      result,
+      infirmaryReasonOf('judge:verdict_unwritten', { error: written.error }),
+    );
   }
   const outcome = verdict.value;
   if (outcome.result === 'partial') return verifierHandsInPart(ctx, running, result, outcome);

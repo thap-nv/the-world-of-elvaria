@@ -88,6 +88,7 @@ describe('a scheduled job outside the tick', () => {
       unjudgeable: [],
       judge_waits: [],
       scope_held: [],
+      judges_unopened: [],
       tribes_held: [],
     });
     expect(digest.runs).toEqual([]);

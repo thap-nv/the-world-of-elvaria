@@ -13,6 +13,8 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 import path from 'node:path';
 import process from 'node:process';
 
+import { declaredHooks, hookList } from './fake-agy-hooks.mjs';
+
 const FIXTURES = import.meta.dirname;
 const argv = process.argv.slice(2);
 const { env } = process;
@@ -45,32 +47,6 @@ if (env.ELVARIA_FAKE_AGY_LOG !== undefined) {
   appendFileSync(env.ELVARIA_FAKE_AGY_LOG, `${JSON.stringify(call)}\n`);
 }
 
-/** `.agents/hooks.json` of the workspace, listed as `agy -p /hooks` lists it (fixture hooks-json.jsonl). */
-function declaredHooks() {
-  const file = path.join(process.cwd(), '.agents', 'hooks.json');
-  if (!existsSync(file)) return [];
-  return Object.entries(JSON.parse(readFileSync(file, 'utf8'))).map(([name, events]) => ({
-    name,
-    enabled: true,
-    source: file,
-    actions: Object.entries(events).flatMap(([event, handlers]) =>
-      handlers.flatMap((handler) => (handler.hooks ?? [handler]).map(({ command }) => ({ event, command }))),
-    ),
-  }));
-}
-
-function hookList() {
-  const global = env.ELVARIA_FAKE_AGY_GLOBAL_HOOK;
-  const extra = global === undefined ? [] : [{ name: 'mine', enabled: true, source: global, actions: [] }];
-  const hooks = [...declaredHooks(), ...extra];
-  return {
-    conversation_id: '',
-    status: 'SUCCESS',
-    response: '',
-    command: { name: 'hooks', data: { hooks } },
-  };
-}
-
 const prompt = flag('-p');
 let settings = {};
 
@@ -82,7 +58,7 @@ function before() {
     return refuse(2, 'fake agy: Elvaria never skips review');
   if (argv.includes('--effort')) return refuse(1, 'fake agy: a full model slug conflicts with --effort');
   if (prompt === '/usage') return answer(fixture(env.ELVARIA_FAKE_AGY_USAGE ?? 'usage-json.jsonl'));
-  if (prompt === '/hooks') return answer(hookList());
+  if (prompt === '/hooks') return answer(hookList(env));
   if (prompt === undefined || flag('--output-format') !== 'stream-json' || flag('--model') === undefined)
     return refuse(2, 'usage: agy -p <prompt> --output-format stream-json --model <slug>');
   try {
@@ -276,6 +252,11 @@ const SCENARIOS = {
   },
   // The suite's spawn probe, which runs for real once the hook and the rules let it through (P1-12e).
   spawn_child: () => SCENARIOS.commands([core.SPAWN_PROBE_COMMAND]),
+  // A judge's verdict: its JSON the last object of the answer, where structuredOf reads it (fix/codex-output-schema).
+  structured: () => {
+    respond(JSON.stringify(core.FAKE_STRUCTURED_ANSWER));
+    return finish();
+  },
   crash: () => {
     respond('Fake crash.');
     return failWith('internal error', { status: 'INTERNAL', retryable: false, reason: 'model_error' });

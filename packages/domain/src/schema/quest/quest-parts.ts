@@ -44,6 +44,8 @@ export const BudgetSchema = z
 
 // `partial` came after v1 (P1-42): a judge's session that handed in a partial verdict, told apart from one that
 // judged, so the run's partials can be counted. An entry written before ended `submitted`; version stays 1.
+// `no_session` came after v1 too (fix/review-no-session): a judge whose session the Steward could not open, its
+// entry opened and ended at once, so it counts toward a stalled review; no entry written before has it.
 export const ATTEMPT_OUTCOMES = [
   'submitted',
   'partial',
@@ -51,6 +53,7 @@ export const ATTEMPT_OUTCOMES = [
   'timeout',
   'breaker',
   'crash',
+  'no_session',
   'paused',
   'blocked',
   'cancelled',
@@ -69,7 +72,7 @@ export const AttemptSchema = z.strictObject({
     .optional()
     .meta(
       describe(
-        'timeout = the time breaker tripped; breaker = the token or turn breaker tripped; partial = a judge handed in a partial verdict (since P1-42, submitted before).',
+        "timeout = the time breaker tripped; breaker = the token or turn breaker tripped; partial = a judge handed in a partial verdict (since P1-42, submitted before); no_session = the Steward could not open the judge's session (its spawn failed), so it left the review at once.",
       ),
     ),
   session_id: NonEmptyStringSchema.optional(),

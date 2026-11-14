@@ -1,3 +1,4 @@
+import { hookOutputHead } from '@elvaria/runner-core';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { KINGDOM, PASS, bench, questPayload, tickUntil } from './__fixtures__/kingdom.ts';
@@ -74,12 +75,25 @@ describe('the machine checks and the pass rule', () => {
   it('sends the quest to the infirmary when the territory refuses the commit of the finished work', async () => {
     const refusal = 'eslint: 2 errors in src/api/orders.ts';
     const { kingdom, steward } = await open({}, (k) => ({
-      plots: plotsWith(k.root, { commit: () => Promise.resolve({ status: 'refused', detail: refusal }) }),
+      plots: plotsWith(k.root, {
+        commit: () => Promise.resolve({ status: 'refused', detail: refusal, head: hookOutputHead(refusal) }),
+      }),
     }));
     await kingdom.command('create_quest', questPayload('Lint fails'));
     await tickUntil(steward, kingdom.clock, statusIs(kingdom, 'Lint fails', 'infirmary'));
     expect(kingdom.notices).toEqual([
-      expect.objectContaining({ kind: 'infirmary', reason: `breaker:commit: ${refusal}` }),
+      expect.objectContaining({
+        kind: 'infirmary',
+        reason: {
+          code: 'breaker:commit_errors',
+          params: {
+            lines: refusal,
+            errors: 1,
+            total_lines: 1,
+            log: expect.stringMatching(/pre-commit\.log$/) as unknown,
+          },
+        },
+      }),
     ]);
     expect((await kingdom.quest('Lint fails')).attempt_log.at(-1)).toMatchObject({ outcome: 'breaker' });
     expect((await kingdom.character('kael')).status).toBe('idle');
@@ -242,6 +256,9 @@ describe('the fail streak', () => {
       async () => (await kingdom.character('kael')).status === 'suspended',
     );
     expect((await kingdom.quest('Fails thrice')).status).toBe('infirmary');
+    expect(kingdom.notices).toContainEqual(
+      expect.objectContaining({ reason: { code: 'quest:max_attempts', params: {} } }),
+    );
     expect(kingdom.notices).toContainEqual({
       kind: 'suspended',
       character: 'kael',

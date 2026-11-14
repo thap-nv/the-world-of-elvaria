@@ -1,6 +1,6 @@
 // `elvaria digest` and the Steward's digest file (PS-03, implementation-plan §3.16.3): what waits for the owner in
 // two groups, each item with its advice and command, in the owner's language. Reads only; the port writes the file.
-import { EventSchema, MemoSchema, TribeIdSchema } from '@elvaria/domain';
+import { EVENT_VERSION, EventSchema, MemoSchema, TribeIdSchema } from '@elvaria/domain';
 import type { AttentionItem, QuestId, WaitGauge } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import { translator } from '@elvaria/i18n';
@@ -62,7 +62,7 @@ describe('elvaria digest', () => {
       JSON.stringify({ version: 1, quests: { [OTHER_QUEST_ID]: unclaimable } }),
     );
     const asleep = EventSchema.parse({
-      v: 1,
+      v: EVENT_VERSION,
       id: '01JCF8X4Z6Q3W9N2M5R7T8V001',
       ts: '2026-11-06T08:30:00+07:00',
       type: 'mana.exhausted',
@@ -119,6 +119,33 @@ describe('elvaria digest', () => {
     expect(await digest()).toContain(
       `- Quest ${OTHER_QUEST_ID} «Thêm script pnpm check» is done but still holds its scope; ${QUEST_ID} wait for it. Merge its branch, then archive it: the quests that wait for its scope start.`,
     );
+  });
+
+  // fix/review-no-session: on PS-07's kingdom an agy judge's session could not open for 16 minutes, and no digest
+  // said so.
+  it('names a quest that waits in review after its judge could not open a session, and the judge', async () => {
+    const at = '2026-11-06T08:20:00+07:00';
+    const run = (role: string, character: string) => ({ n: 1, character, role, started_at: at });
+    const reviewed = questFixture('review', QUEST_ID, {
+      assignee: 'thorn',
+      attempts: 1,
+      attempt_log: [
+        { ...run('assignee', 'thorn'), ended_at: at, outcome: 'submitted', run_dir: `.runs/${QUEST_ID}-1` },
+        {
+          ...run('verifier', 'ilse'),
+          ended_at: at,
+          outcome: 'no_session',
+          run_dir: `.runs/${QUEST_ID}-1/verify`,
+        },
+      ],
+    });
+    await plantQuests(kingdom, reviewed);
+    const said = await digest();
+    expect(said).toContain(
+      `- Quest ${QUEST_ID} «Thêm script pnpm check» waits in review, but the session of its judge ilse could not open (the Steward's log says why, on its «no session for ilse» line). Another judge takes it once free; each session that could not open counts toward the run's judges. If this judge's tribe cannot take work this size (a prompt longer than its CLI takes), suspend it until that is fixed.`,
+    );
+    expect(said).toContain('  `elvaria character suspend ilse`');
+    expect((await digest('vi')).join('\n')).toContain('nhưng phiên của người chấm ilse không mở được');
   });
 });
 

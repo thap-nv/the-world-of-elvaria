@@ -184,7 +184,8 @@ show` prints the brief apart from the rest of the description and, while the pla
 - `digest` (PS-03, `src/digest/`): the digest as it stands, from the files, the open memos, the mana lines of the
   log and `.state/unclaimable.json` (`digestStateOf` of `@elvaria/steward`, `attentionQueue` of the domain), worded
   by `digestMarkdown` and printed; writes nothing and spends no mana. Quests waiting for a judge are known to the
-  running Steward only, so they are in the digest it writes. `run` gives the Steward the `Digest` port
+  running Steward only, so they are in the digest it writes; a quest in review whose latest judge could not open a
+  session (`judge_no_session`, from the quest files, fix/review-no-session) is in both, with `character suspend`. `run` gives the Steward the `Digest` port
   (`src/run/digest-file.ts`): the same Markdown in `digest/<day>.md`, once a day at `kingdom.schedule.digest.at`;
   the bell says the digest is written and names a quest whose judges are all out of mana (`judge_mana`).
 - `metrics [--since <day>] [--until <day>] [--json] [--plan <quest>]` (PS-01, PS-01b: checks set aside for their environment, and the
