@@ -4,16 +4,19 @@
 // CLI passes it again.
 import { amendmentAnswerBlock } from './amendment-answer.ts';
 import { composed } from './prompt-blocks.ts';
-import { fill } from './templates.ts';
+import { refusedWorkBlock } from './refused-work.ts';
+import { fill, joinBlocks } from './templates.ts';
 import type { PromptWithBlocks } from './prompt-blocks.ts';
+import type { RefusedWork } from './refused-work.ts';
 import type { PromptTemplates } from './templates.ts';
 import type { BlockedAmendment } from '@elvaria/domain';
 
 /**
  * The question the session asked and the owner's answer to it; or (PS-22b) the amendment it ended on, decided, with
- * the description as accepted, which the cut prompt does not show.
+ * the description as accepted, which the cut prompt does not show, and what the Steward could not take of its work
+ * after it ended (fix/session-notes), which the session never saw.
  */
-export interface Answered {
+export interface Answered extends RefusedWork {
   readonly question: string;
   readonly answer: string;
   readonly amendment?: BlockedAmendment | undefined;
@@ -23,8 +26,11 @@ export interface Answered {
 function answerOf(answered: Answered | null, t: PromptTemplates): string {
   if (answered === null) return '';
   const { question, answer, amendment, description } = answered;
-  if (amendment !== undefined) return amendmentAnswerBlock({ question, answer, amendment, description }, t);
-  return fill(t.answer, { question, answer: answer.trim() });
+  if (amendment === undefined) return fill(t.answer, { question, answer: answer.trim() });
+  return joinBlocks([
+    amendmentAnswerBlock({ question, answer, amendment, description }, t),
+    refusedWorkBlock(answered, t),
+  ]);
 }
 
 /**

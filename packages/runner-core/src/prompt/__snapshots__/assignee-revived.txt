@@ -139,7 +139,7 @@ An earlier session of this quest stopped before it was done: mana ran out, it cr
 
 ## The patch that was not applied
 
-The last session wrote `elvaria.patch`, and the Steward did not apply it: the quest went to the infirmary instead of review, and nothing of that session was committed. The Steward said:
+The last session wrote `elvaria.patch`, and the Steward did not apply it, so nothing of that session was committed. The Steward said:
 
 ```text
 it touches src/app.ts, outside laws.patch_paths (.husky/**)

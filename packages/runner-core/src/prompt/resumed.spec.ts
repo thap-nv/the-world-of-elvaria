@@ -1,3 +1,4 @@
+import { MemoIdSchema } from '@elvaria/domain';
 import { describe, expect, it } from 'vitest';
 
 import { resumedPrompt } from './resumed.ts';
@@ -50,5 +51,22 @@ describe('resumedPrompt', () => {
     ]);
     expect(answered.blocks[1]?.chars).toBe(t.resumed.length);
     expect(resumedPrompt(BUILT, null, t).blocks.map(({ id }) => id)).toEqual(['role', 'resumed']);
+  });
+
+  it('says after the decision on its amendment why the work it left was refused (fix/session-notes)', async () => {
+    const t = await loadPromptTemplates();
+    const memo = MemoIdSchema.parse('m_20261115_4k2pqz');
+    const amendment = { memo, by: 'author', decision: 'rejected' } as const;
+    const decided = { question: 'Đề bài sai.', answer: 'Giữ đề.', amendment };
+    const hook = 'max-lines: breakers.spec.ts has 309 lines (300 allowed)';
+    const prompt = resumedPrompt(BUILT, { ...decided, refused_commit: hook }, t);
+    expect(prompt.user).toContain(`## The commit that was refused`);
+    expect(prompt.user).toContain(`\`\`\`text\n${hook}\n\`\`\``);
+    expect(prompt.user.indexOf('## The decision on your amendment')).toBeLessThan(
+      prompt.user.indexOf('## The commit that was refused'),
+    );
+    // In the answer's block: the load trace names no block of its own for it.
+    expect(prompt.blocks.map(({ id }) => id)).toEqual(['role', 'resumed', 'answer']);
+    expect(resumedPrompt(BUILT, decided, t).user).not.toContain('was refused');
   });
 });

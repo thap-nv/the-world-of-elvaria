@@ -31,6 +31,7 @@ import type {
   TerritoryId,
 } from '@elvaria/domain';
 import type { EventLog } from '@elvaria/eventlog';
+import type { RefusedWork } from '@elvaria/runner-core';
 import type { KingdomStore } from '@elvaria/store';
 
 import { OUT_OF_ATTEMPTS, infirmaryData } from './infirmary.ts';
@@ -63,6 +64,11 @@ export interface Move {
   readonly load_trace?: LoadTrace;
   /** On a submit, the files the work changed outside the quest's scope (PS-05): on the line only, as `load_trace`. */
   readonly out_of_scope?: readonly string[];
+  /**
+   * On the blocked line of a run that ended on its amendment, what the Steward could not take of its work and why
+   * (fix/session-notes): on the line only, as `out_of_scope`; the doer's next session reads it (continuation.ts).
+   */
+  readonly refused?: RefusedWork;
 }
 
 /** A line about something the files do not keep: verdict.*, command.*. */
@@ -214,6 +220,7 @@ async function move(deps: RecorderDeps, request: Move): Promise<Result<Quest, st
     ...(request.out_of_scope === undefined || request.out_of_scope.length === 0
       ? {}
       : { out_of_scope: request.out_of_scope }),
+    ...request.refused,
   };
   await append(deps, { type, actor: actorOf(request.actor, found), data, quest: after.value, session }, at);
   return ok(after.value);

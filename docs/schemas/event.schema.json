@@ -575,6 +575,16 @@
                   "type": "string",
                   "minLength": 1
                 }
+              },
+              "refused_patch": {
+                "description": "On the `quest.blocked` line of a run that ended on its amendment (PS-22b): why the Steward did not apply the run's patch, which stays in the plot while the quest waits. The doer's next session reads it (Continuation.refused_patch, P1-31).",
+                "type": "string",
+                "minLength": 1
+              },
+              "refused_commit": {
+                "description": "On the `quest.blocked` line of a run that ended on its amendment (PS-22b): the first lines of what git said when the Steward's commit of the run's work failed, most often a territory hook refusing it; the work stays uncommitted in the plot while the quest waits. The doer's next session reads it (Continuation.refused_commit).",
+                "type": "string",
+                "minLength": 1
               }
             }
           }
@@ -1171,6 +1181,16 @@
                   "type": "string",
                   "minLength": 1
                 }
+              },
+              "refused_patch": {
+                "description": "On the `quest.blocked` line of a run that ended on its amendment (PS-22b): why the Steward did not apply the run's patch, which stays in the plot while the quest waits. The doer's next session reads it (Continuation.refused_patch, P1-31).",
+                "type": "string",
+                "minLength": 1
+              },
+              "refused_commit": {
+                "description": "On the `quest.blocked` line of a run that ended on its amendment (PS-22b): the first lines of what git said when the Steward's commit of the run's work failed, most often a territory hook refusing it; the work stays uncommitted in the plot while the quest waits. The doer's next session reads it (Continuation.refused_commit).",
+                "type": "string",
+                "minLength": 1
               }
             }
           }

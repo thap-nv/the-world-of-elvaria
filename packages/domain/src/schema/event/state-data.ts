@@ -67,6 +67,18 @@ const QUEST_CHANGE = {
         "On the `quest.submitted` line of a quest with scope_paths: the files the work changed outside them, the territory's shared paths aside, relative to the plot with `/`. A signal for the judge, who sees the same list, and a number in the metrics; never a fail (ADR 0028).",
       ),
     ),
+  // Optional and added after v1 (fix/session-notes), as `sequels`: only the line of a run that ended on its amendment
+  // with work the Steward could not take has one, and the quest file keeps no reason.
+  refused_patch: NonEmptyStringSchema.optional().meta(
+    describe(
+      "On the `quest.blocked` line of a run that ended on its amendment (PS-22b): why the Steward did not apply the run's patch, which stays in the plot while the quest waits. The doer's next session reads it (Continuation.refused_patch, P1-31).",
+    ),
+  ),
+  refused_commit: NonEmptyStringSchema.optional().meta(
+    describe(
+      "On the `quest.blocked` line of a run that ended on its amendment (PS-22b): the first lines of what git said when the Steward's commit of the run's work failed, most often a territory hook refusing it; the work stays uncommitted in the plot while the quest waits. The doer's next session reads it (Continuation.refused_commit).",
+    ),
+  ),
 };
 
 export const QuestChangeDataSchema = z.strictObject(QUEST_CHANGE);

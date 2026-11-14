@@ -165,6 +165,7 @@ export type { PromptBlock, PromptBlockId, PromptPart, PromptWithBlocks } from '.
 export { resumedPrompt } from './prompt/resumed.ts';
 export { letterReminderPrompt } from './prompt/letter-reminder.ts';
 export type { Answered } from './prompt/resumed.ts';
+export type { RefusedWork } from './prompt/refused-work.ts';
 export { PROMPTS_DIR, PROMPT_TEMPLATES, loadPromptTemplates } from './prompt/templates.ts';
 export type { PromptTemplateName, PromptTemplates } from './prompt/templates.ts';
 export { FAKE_ADAPTER, FAKE_TOKENS, createFakeRunner, scenarioFromEnv } from './runner/fake-runner.ts';

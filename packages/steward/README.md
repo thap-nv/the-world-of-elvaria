@@ -63,7 +63,9 @@
   (PS-22b, `src/memos/{authoring,amendment}.ts`) An amendment is routed by who wrote its quest; the submit that filed
   one ends instead as an `ask` keeping `blocked.amendment`, no bell while its author decides, even when its patch or
   commit was refused: the memos are filed before the end is chosen (`src/sessions/submit.ts`, the domain's
-  `submitEndOf`), and the work waits uncommitted in the plot (fix/amendment-flow). Jobs on call
+  `submitEndOf`), and the work waits uncommitted in the plot (fix/amendment-flow), why on the `quest.blocked` line
+  (`refused_patch`, `refused_commit`), which the session after the decision reads (`refusedWhileWaiting`,
+  fix/session-notes). Jobs on call
   (`StewardDeps.onCall`) run outside the tick whenever they have work, one at a time with the scheduled ones; the
   view lists the quests waiting on their author (`JobView.amendments`). `decide_amendment` (source `chancellor`, told
   as the author's) rewrites the description and adds the memo's refs outside the quest's `scope_paths` to them (the
@@ -431,6 +433,8 @@ from both current detail and historical text. The session, breaker, restart, sec
 codes and parameters on real Steward ticks. `stop-letter.spec.ts` checks a 300-line hook refusal and its run log.
 `sessions/reason-codes.spec.ts` reads the table of `docs/contracts/infirmary-reason-codes.md` §2 and holds it to
 `INFIRMARY_REASONS` and their parameters, in order, and every breaker trip to its `breaker:<trip>` code.
+`amendment-refused.spec.ts` (fix/session-notes): work refused at a submit that ends on an amendment is named on
+the blocked line, and the session after the decision reads why, resumed or fresh, and only that session.
 `scripts.spec.ts` copies the real `link-check` and `run-check` of `packages/registry-default/scripts/` into the
 kingdom (`src/__fixtures__/scripts.ts`) and takes script quests all the way with no runner asked: a link check
 that passes, one with a dead link and its scribe's follow-up, a territory check run from its resolved argv and its
