@@ -61,12 +61,15 @@
   naming `memos` closes them as handled by its quest once the quest has the work (at creation or edit, or at the
   owner's confirm of a draft); `escalate_memo` keeps the triage's advice on an open memo (`memo.escalated`).
   (PS-22b, `src/memos/{authoring,amendment}.ts`) An amendment is routed by who wrote its quest; the submit that filed
-  one ends instead as an `ask` keeping `blocked.amendment`, no bell while its author decides. Jobs on call
+  one ends instead as an `ask` keeping `blocked.amendment`, no bell while its author decides, even when its patch or
+  commit was refused: the memos are filed before the end is chosen (`src/sessions/submit.ts`, the domain's
+  `submitEndOf`), and the work waits uncommitted in the plot (fix/amendment-flow). Jobs on call
   (`StewardDeps.onCall`) run outside the tick whenever they have work, one at a time with the scheduled ones; the
   view lists the quests waiting on their author (`JobView.amendments`). `decide_amendment` (source `chancellor`, told
-  as the author's) rewrites the description while no session holds the quest, closes the memo `accepted` or
-  `rejected` and answers the quest with the note, waiting in the inbox while the doer cannot go on; `owner` keeps the
-  memo open with the advice and makes the quest the owner's question. The owner's `answer` or `decide_memo` on such a
+  as the author's) rewrites the description and adds the memo's refs outside the quest's `scope_paths` to them (the
+  domain's `amendedScopeOf`; a quest with no scope stays unbounded) while no session holds the quest, closes the
+  memo `accepted` or `rejected` and answers the quest with the note, waiting in the inbox while the doer cannot go
+  on; `owner` keeps the memo open with the advice and makes the quest the owner's question. The owner's `answer` or `decide_memo` on such a
   quest settles it too.
   Commands with `source: chancellor` are told as the Chancellor's (`actorOfCommand`), and their `command.*` lines
   carry the source.

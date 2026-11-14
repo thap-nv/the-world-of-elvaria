@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
 import { MemoSchema } from '../schema/memo/memo.ts';
-import { NO_AUTHORING, amendmentDeciderOf, authorOf, authorRoute, awaitsAuthor } from './amendment.ts';
+import {
+  NO_AUTHORING,
+  amendedScopeOf,
+  amendmentDeciderOf,
+  authorOf,
+  authorRoute,
+  awaitsAuthor,
+  submitEndOf,
+} from './amendment.ts';
 import { memoOf, routeMemo } from './memo.ts';
 import type { AuthorLookup, Authoring } from './amendment.ts';
 import type { CharacterId, MemoId, QuestId } from '../core/ids.ts';
@@ -182,5 +190,49 @@ describe('an amendment through routeMemo and memoOf', () => {
     expect(MemoSchema.safeParse(memo).error?.issues.map(({ message }) => message)).toEqual([
       'only a memo to its author names one',
     ]);
+  });
+});
+
+describe('submitEndOf', () => {
+  const refused = { trip: 'commit' };
+
+  it('ends on the amendment, refused work or not, so the work waits in the plot for its author', () => {
+    expect(submitEndOf('m', refused)).toEqual({ end: 'amendment', amendment: 'm', refused });
+    expect(submitEndOf('m', undefined)).toEqual({ end: 'amendment', amendment: 'm', refused: undefined });
+  });
+
+  it('keeps a refusal without an amendment a breaker, and a run with neither a submit', () => {
+    expect(submitEndOf(undefined, refused)).toEqual({ end: 'breaker', refused });
+    expect(submitEndOf(undefined, undefined)).toEqual({ end: 'submit' });
+  });
+});
+
+describe('amendedScopeOf', () => {
+  const scope = ['packages/steward/src/sessions/**'];
+
+  it('adds the refs outside the scope, once each, in the order the memo names them', () => {
+    const refs = [
+      'packages/steward/src/breakers.spec.ts',
+      './packages/steward/src/sessions/settle.ts',
+      String.raw`packages\domain\src\memo\amendment.ts`,
+      '/packages/steward/src/breakers.spec.ts',
+    ];
+    expect(amendedScopeOf(scope, refs)).toEqual([
+      ...scope,
+      'packages/steward/src/breakers.spec.ts',
+      'packages/domain/src/memo/amendment.ts',
+    ]);
+  });
+
+  it("leaves the territory's shared paths out, and a ref a glob only may cover in", () => {
+    expect(amendedScopeOf(scope, ['docs/glossary.md'], ['docs/**'])).toBeUndefined();
+    expect(amendedScopeOf(['src/**/*.ts'], ['src/a.ts'])).toEqual(['src/**/*.ts', 'src/a.ts']);
+  });
+
+  it('changes nothing for refs in the scope, an empty ref, or a quest with no scope', () => {
+    expect(amendedScopeOf(scope, ['packages/steward/src/sessions/submit.ts', './'])).toBeUndefined();
+    expect(amendedScopeOf(scope, [])).toBeUndefined();
+    expect(amendedScopeOf(undefined, ['package.json'])).toBeUndefined();
+    expect(amendedScopeOf([], ['package.json'])).toBeUndefined();
   });
 });
