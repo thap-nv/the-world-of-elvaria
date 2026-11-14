@@ -4,6 +4,7 @@
 // So a fake day is valid against the state machines by construction, and replaying its lines from the morning
 // gives back its evening files (the spec checks it). A refused move is a bug in the sandbox: it throws.
 import {
+  infirmaryReasonOf,
   EVENT_VERSION,
   EventSchema,
   characterViewOf,
@@ -152,7 +153,9 @@ function move(book: Book, id: QuestId, payload: MovePayload, actor: QuestActor, 
   const moved = editAll(book, edits, at);
   const type = questLogTypeOf(event.type, before.status, after.status);
   const data = {
-    ...(type === 'quest.infirmary' ? { reason: infirmaryReason(event, after) } : {}),
+    ...(type === 'quest.infirmary'
+      ? { reason: infirmaryReasonOf('legacy', { text: infirmaryReason(event, after) }) }
+      : {}),
     quest: questViewOf(after),
     ...(moved.length > 0 ? { characters: moved.map(characterViewOf) } : {}),
   };

@@ -107,7 +107,7 @@ describe('a patch for the paths the CLI guards (P1-28)', () => {
     expect(quest.attempt_log.at(-1)).toMatchObject({ outcome: 'breaker' });
     const [notice, ...others] = kingdom.notices;
     expect(others).toEqual([]);
-    expect(notice?.kind === 'infirmary' ? notice.reason : notice).toContain(
+    expect(notice?.kind === 'infirmary' ? notice.reason.params.text : notice).toContain(
       `breaker:commit: ${PATCH_FILE} was not applied: ${why}`,
     );
     // The line says it in parts (P1-32): the trip, and why the patch was refused, apart from the hook's words.

@@ -90,7 +90,10 @@ describe("the end of an assignee's session", () => {
     const types = await typesOf(kingdom);
     expect(types.slice(-2)).toEqual(['character.swamp', 'quest.infirmary']);
     expect(kingdom.notices).toEqual([
-      expect.objectContaining({ kind: 'infirmary', reason: 'breaker:turns' }),
+      expect.objectContaining({
+        kind: 'infirmary',
+        reason: { code: 'legacy', params: { text: 'breaker:turns' } },
+      }),
     ]);
     expect((await kingdom.character('kael')).status).toBe('idle');
   });
@@ -157,9 +160,14 @@ describe("the end of a verifier's session", () => {
       kind: 'infirmary',
       trip: 'no_verdict',
       detail: { verifiers_stopped: 2 },
-      reason: expect.stringMatching(
-        /^review:no_verdict: the verifier's output is no verdict \(invalid_verdict.*; 2 verifiers of run 1 left without a verdict/,
-      ) as unknown,
+      reason: {
+        code: 'legacy',
+        params: {
+          text: expect.stringMatching(
+            /^review:no_verdict: the verifier's output is no verdict \(invalid_verdict.*; 2 verifiers of run 1 left without a verdict/,
+          ) as unknown,
+        },
+      },
     });
     // No third judge opens while the quest waits for the owner.
     for (let tick = 0; tick < 3; tick += 1) {
@@ -192,9 +200,14 @@ describe("the end of a verifier's session", () => {
       kind: 'infirmary',
       trip: 'partial_verdicts',
       detail: { message: 'the last judge stopped at src/api/orders.ts', partial_verdicts: 3 },
-      reason: expect.stringMatching(
-        /^review:partial_verdicts: the last judge stopped at src\/api\/orders\.ts; 3 verifiers of run 1 handed in a partial verdict/,
-      ) as unknown,
+      reason: {
+        code: 'legacy',
+        params: {
+          text: expect.stringMatching(
+            /^review:partial_verdicts: the last judge stopped at src\/api\/orders\.ts; 3 verifiers of run 1 handed in a partial verdict/,
+          ) as unknown,
+        },
+      },
     });
     // No fourth judge opens while the quest waits for the owner; the owner's retry brings a new judge.
     for (let tick = 0; tick < 3; tick += 1) {
@@ -219,7 +232,12 @@ describe("the end of a verifier's session", () => {
     );
     expect(kingdom.notices.at(-1)).toMatchObject({
       trip: 'no_verdict',
-      reason: expect.stringContaining("the verifier's session ended error, exit code 1") as unknown,
+      reason: {
+        code: 'legacy',
+        params: {
+          text: expect.stringContaining("the verifier's session ended error, exit code 1") as unknown,
+        },
+      },
     });
   });
 

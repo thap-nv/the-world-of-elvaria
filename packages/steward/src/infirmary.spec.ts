@@ -1,5 +1,6 @@
 // The reason of an infirmary line is built from its trip and detail (P1-32), as the Steward wrote it before: the bell,
 // the chronicle and the specs that read it see the same words. A refused patch reads back from either form.
+import { infirmaryReasonOf } from '@elvaria/domain';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -104,7 +105,9 @@ describe('infirmaryData', () => {
   it('carries the trip and the detail beside the reason', () => {
     const cause: InfirmaryCause = { trip: 'commit', detail: { patch: 'it does not apply' } };
     expect(infirmaryData(cause, 1)).toEqual({
-      reason: 'breaker:commit: elvaria.patch was not applied: it does not apply',
+      reason: infirmaryReasonOf('legacy', {
+        text: 'breaker:commit: elvaria.patch was not applied: it does not apply',
+      }),
       trip: 'commit',
       detail: { patch: 'it does not apply' },
     });
@@ -116,13 +119,16 @@ describe('infirmaryData', () => {
     // A hook or a WIP commit refused without a word: '' would fail the event schema.
     { trip: 'commit', detail: { message: '', wip: '' } },
   ])('leaves out a detail that says nothing: %j', (cause) => {
-    expect(infirmaryData(cause, 1)).toEqual({ reason: infirmaryReason(cause, 1), trip: cause.trip });
+    expect(infirmaryData(cause, 1)).toEqual({
+      reason: infirmaryReasonOf('legacy', { text: infirmaryReason(cause, 1) }),
+      trip: cause.trip,
+    });
   });
 
   it('drops the empty words and keeps the others, in the data and the reason alike', () => {
     const cause: InfirmaryCause = { trip: 'script_broken', detail: { message: '', script: 'lint' } };
     expect(infirmaryData(cause, 1)).toEqual({
-      reason: 'script:broken',
+      reason: infirmaryReasonOf('legacy', { text: 'script:broken' }),
       trip: 'script_broken',
       detail: { script: 'lint' },
     });
@@ -139,16 +145,26 @@ describe('refusedPatchOf', () => {
   });
 
   it("reads why from an older line's reason, without the note for the owner", () => {
-    expect(refusedPatchOf({ reason: legacy })).toBe(why);
-    expect(refusedPatchOf({ reason: `${legacy}${APPRENTICE_LEFT}` })).toBe(why);
+    expect(refusedPatchOf({ reason: infirmaryReasonOf('legacy', { text: legacy }) })).toBe(why);
+    expect(
+      refusedPatchOf({ reason: infirmaryReasonOf('legacy', { text: `${legacy}${APPRENTICE_LEFT}` }) }),
+    ).toBe(why);
   });
 
   it.each([
-    { reason: 'breaker:commit: husky - pre-commit script failed' },
-    { reason: 'breaker:time: elvaria.patch was not applied: it does not apply' },
-    { reason: 'max_attempts' },
+    { reason: infirmaryReasonOf('legacy', { text: 'breaker:commit: husky - pre-commit script failed' }) },
+    {
+      reason: infirmaryReasonOf('legacy', {
+        text: 'breaker:time: elvaria.patch was not applied: it does not apply',
+      }),
+    },
+    { reason: infirmaryReasonOf('legacy', { text: 'max_attempts' }) },
     // A trip is the whole truth: a hook's words that look like a refusal are not one.
-    { reason: legacy, trip: 'commit', detail: { message: `elvaria.patch was not applied: ${why}` } },
+    {
+      reason: infirmaryReasonOf('legacy', { text: legacy }),
+      trip: 'commit',
+      detail: { message: `elvaria.patch was not applied: ${why}` },
+    },
   ] as const)('is undefined for any other cause: %j', (line) => {
     expect(refusedPatchOf(line)).toBeUndefined();
   });

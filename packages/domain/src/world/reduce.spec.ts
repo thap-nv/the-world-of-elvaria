@@ -123,7 +123,14 @@ describe('applyEvent', () => {
     ],
   ])('applies the infirmary line like any quest line, %s; why is for the chronicle', (_, why) => {
     const view = { ...QUEST_VIEW, status: 'infirmary', verifier: null } as const;
-    const next = applyEvent(STATE, line('quest.infirmary', { ...why, quest: view }));
+    const next = applyEvent(
+      STATE,
+      line('quest.infirmary', {
+        ...why,
+        reason: { code: 'legacy', params: { text: why.reason } },
+        quest: view,
+      }),
+    );
     expect(next.quests[QUEST_VIEW.id]).toEqual(view);
   });
 

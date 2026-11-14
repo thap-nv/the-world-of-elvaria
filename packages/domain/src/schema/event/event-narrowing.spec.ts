@@ -16,7 +16,7 @@ const line = (type: string) => ({
 });
 
 describe('event narrowing', () => {
-  const [toolLine, manaLine] = examples.map((example) => EventSchema.parse(example));
+  const [toolLine, manaLine] = examples.map((example) => EventSchema.parse({ ...example, v: EVENT_VERSION }));
 
   it('narrows data by type through isTypedEvent', () => {
     expect(isTypedEvent(toolLine!)).toBe(true);

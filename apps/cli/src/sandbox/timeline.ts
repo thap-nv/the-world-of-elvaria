@@ -92,6 +92,13 @@ const textIn = (data: Data, key: string): string | undefined => {
   return typeof value === 'string' || typeof value === 'number' ? String(value) : undefined;
 };
 
+/** During the v2 transition, infirmary writers preserve the old words in legacy.params.text. */
+function reasonIn(data: Data): string | undefined {
+  const reason = objectIn(data, 'reason') as Data | undefined;
+  const params = reason === undefined ? undefined : objectIn(reason, 'params');
+  return params === undefined ? textIn(data, 'reason') : textIn(params as Data, 'text');
+}
+
 /** A quest moved into review by assign_verifier, or left there by its verifier, has a sentence of its own. */
 function keyOf(event: Event, quest: QuestView | undefined): MessageKey {
   const inReview = quest?.status === 'review';
@@ -173,7 +180,7 @@ function plainParams({ context }: Lookup, data: Data): Params {
     outcome: label('outcome'),
     tool: label('tool'),
     target: textIn(data, 'path') ?? textIn(data, 'command') ?? textIn(data, 'url') ?? '',
-    reason: textIn(data, 'reason') ?? NONE,
+    reason: reasonIn(data) ?? NONE,
     error: textIn(data, 'error') ?? NONE,
     fail_kind: textIn(data, 'fail_kind') ?? NONE,
   };

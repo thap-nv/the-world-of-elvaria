@@ -2,6 +2,9 @@
 
 ## Does
 
+- Defines `INFIRMARY_REASONS`, their exact parameter keys and `infirmaryReasonOf` (`src/infirmary/`).
+  Event v2 carries `{ code, params }` for `quest.infirmary.reason`; `legacy.params.text` preserves v1 words.
+
 - Holds the zod schemas that are the source of the 20 data contracts (ADR 0003, `CONTRACTS` in
   `src/schema/contracts.ts`): kingdom, territory, quest, character, campaign, verdict, lesson, event,
   inbox-command, the six registry files, skill, quest-draft, world-map, memo (PS-02) and memo-triage (PS-03b), with

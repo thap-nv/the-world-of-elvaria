@@ -5,6 +5,7 @@ import type {
   ClaimBlockerReason,
   FailKind,
   InfirmaryDetail,
+  InfirmaryReason,
   InfirmaryTrip,
   ManaWindow,
   Rank,
@@ -64,12 +65,12 @@ export type Notice =
   | { readonly kind: 'awaiting_seal'; readonly quest: NoticeQuest }
   /**
    * The quest went to the infirmary: why in parts (P1-32), for a bell that speaks the owner's language, and the
-   * English `reason` the `quest.infirmary` line carries.
+   * structured `reason` the `quest.infirmary` line carries.
    */
   | {
       readonly kind: 'infirmary';
       readonly quest: NoticeQuest;
-      readonly reason: string;
+      readonly reason: InfirmaryReason;
       readonly trip: InfirmaryTrip;
       readonly detail?: InfirmaryDetail;
     }

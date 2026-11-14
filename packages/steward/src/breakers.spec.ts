@@ -109,7 +109,11 @@ describe('a session past a breaker', () => {
     expect(commits).toEqual([`chore: wip ${quest.id} (time)`]);
     // Why, in parts too (P1-32): the trip, the breaker's words in the detail; the bell and the line say the same.
     const message = 'ran 45 min, limit 45 min';
-    const why = { reason: `breaker:time: ${message}`, trip: 'time', detail: { message } };
+    const why = {
+      reason: { code: 'legacy', params: { text: `breaker:time: ${message}` } },
+      trip: 'time',
+      detail: { message },
+    };
     const hangs = { id: quest.id, title: 'Hangs', rank: 'D' };
     expect(kingdom.notices).toEqual([{ kind: 'infirmary', quest: hangs, ...why }]);
     expect((await kingdom.character(started.assignee ?? '')).status).toBe('idle');
@@ -136,7 +140,9 @@ describe('a session past a breaker', () => {
     const quest = await kingdom.quest('Spends');
     expect(quest.status).toBe('infirmary');
     expect(quest.attempt_log.at(-1)?.outcome).toBe('breaker');
-    expect(kingdom.notices.at(-1)).toMatchObject({ reason: 'breaker:tokens: 480001 tokens, limit 480000' });
+    expect(kingdom.notices.at(-1)).toMatchObject({
+      reason: { code: 'legacy', params: { text: 'breaker:tokens: 480001 tokens, limit 480000' } },
+    });
   });
 
   it('lets a verifier past its time leave the review to the next one, with no bell', async () => {
@@ -186,8 +192,12 @@ describe('a session past a breaker', () => {
     const quest = await kingdom.quest('Loops');
     expect(commits).toEqual([`chore: wip ${quest.id} (turns)`]);
     expect(kingdom.notices.at(-1)).toMatchObject({
-      reason:
-        'breaker:turns (WIP not committed, it stays in the plot: husky - pre-commit script failed (code 1))',
+      reason: {
+        code: 'legacy',
+        params: {
+          text: 'breaker:turns (WIP not committed, it stays in the plot: husky - pre-commit script failed (code 1))',
+        },
+      },
     });
   });
 });
@@ -284,16 +294,4 @@ describe('the pids of the sessions (.state/sessions.json)', () => {
       expect(await readPids(current.root)).toEqual([]);
     },
   );
-
-  it('reads nothing from a torn or foreign record', async () => {
-    current = await bench();
-    const file = path.join(current.root, SESSIONS_FILE);
-    await mkdir(path.dirname(file), { recursive: true });
-    await writeFile(file, '{"version": 1, "sessions": [{"pid": "x"}');
-    expect(await readPids(current.root)).toEqual([]);
-    await writeFile(file, JSON.stringify({ version: 2, sessions: [] }));
-    expect(await readPids(current.root)).toEqual([]);
-    await writeFile(file, JSON.stringify({ version: 1, sessions: [{ quest: 'q', pid: 1 }] }));
-    expect(await readPids(current.root)).toEqual([]);
-  });
 });

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import commands from '../../examples/inbox-command.json' with { type: 'json' };
 import events from '../../examples/event.json' with { type: 'json' };
 import { InboxCommandSchema } from '../schema/command/inbox-command.ts';
-import { EventSchema } from '../schema/event/event.ts';
+import { EVENT_VERSION, EventSchema } from '../schema/event/event.ts';
 import { CAMPAIGNS, CHARACTERS, KINGDOM, QUESTS, TERRITORIES } from '../world/__fixtures__/examples.ts';
 import { worldStateOf } from '../world/world-state.ts';
 import { decodeClientMessage, decodeServerMessage, encodeMessage } from './codec.ts';
@@ -66,7 +66,7 @@ describe('the WebSocket protocol', () => {
     ['an empty batch of lines', { type: 'events', events: [] }, 'events: Too small'],
     [
       'a line that breaks the event contract',
-      { type: 'events', events: [{ ...events[0], v: 2 }] },
+      { type: 'events', events: [{ ...events[0], v: EVENT_VERSION + 1 }] },
       'events.0.v',
     ],
     ['a state that is not a world state', { type: 'snapshot', state: { quests: {} } }, 'state.kingdom'],

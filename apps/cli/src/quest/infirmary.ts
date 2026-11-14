@@ -76,7 +76,7 @@ export function detailLines(t: Translate, detail: InfirmaryDetail): string[] {
 /** The reason in the owner's language: why and in which attempt, then the detail, indented. */
 export function infirmaryLines(t: Translate, line: InfirmaryLine): string[] {
   const { trip, detail = {}, reason } = line.data;
-  const why = trip === undefined ? reason : tripLabel(t, trip);
+  const why = trip === undefined ? String(reason.params.text ?? reason.code) : tripLabel(t, trip);
   const head =
     line.attempt === undefined
       ? t('cli.quest.infirmary.head', { why })

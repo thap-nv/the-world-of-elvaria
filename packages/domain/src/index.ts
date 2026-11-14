@@ -88,6 +88,7 @@ export * from './schedule/due.ts';
 export * from './scorecard/constants.ts';
 export * from './scorecard/gazetteer.ts';
 export * from './scorecard/reasons.ts';
+export * from './infirmary/reasons.ts';
 export * from './scorecard/scorecard.ts';
 export type { TerritoryTrial, TrialCheck, TrialStep } from './scorecard/trial.ts';
 export * from './schema/campaign/campaign.ts';
