@@ -98,3 +98,36 @@ describe('the console bell on a tribe held by its CLI (A1b of the lessons of 202
     );
   });
 });
+
+// Contract infirmary-reason-codes: a coded reason as `quest show` says it, its sentence, the refusing hook's lines
+// verbatim and indented, then the detail the sentence did not say.
+describe('the console bell on a quest sent to the infirmary', () => {
+  const quest = {
+    id: QuestIdSchema.parse('q_20261106_7k3m2a'),
+    title: 'Đổi luồng đăng nhập',
+    rank: 'A',
+  } as const;
+
+  it('says a refused commit in Vietnamese, the hook lines under it', () => {
+    const reason = {
+      code: 'breaker:commit_errors',
+      params: { lines: 'lint: error x\nfix it', errors: 1, total_lines: 9, log: '.runs/q-1/pre-commit.log' },
+    } as const;
+    const detail = { wip: 'index.lock' };
+    const notice: Notice = { kind: 'infirmary', quest, reason, trip: 'commit', detail };
+    expect(lineOf(vi, notice)).toBe(
+      'Nhiệm vụ q_20261106_7k3m2a «Đổi luồng đăng nhập» vào trạm quân y: hook pre-commit từ chối commit, nên nhánh thiếu phần việc; output có 9 dòng, 1 dòng báo lỗi (đủ ở .runs/q-1/pre-commit.log), mấy dòng đầu ở dưới\n' +
+        '      lint: error x\n' +
+        '      fix it\n' +
+        '    Commit WIP cũng bị từ chối, việc vẫn nằm trong đất riêng: index.lock',
+    );
+  });
+
+  it('does not say again the script its reason named', () => {
+    const reason = { code: 'script:fail', params: { script: 'link-check' } } as const;
+    const notice: Notice = { kind: 'infirmary', quest, reason, trip: 'script_fail', detail: { script: 'x' } };
+    expect(lineOf(en, notice)).toBe(
+      'Quest q_20261106_7k3m2a «Đổi luồng đăng nhập» went to the infirmary: the script link-check ran but did not pass',
+    );
+  });
+});
