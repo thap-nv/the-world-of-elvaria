@@ -18,7 +18,7 @@ import { runOf } from '../review/judge.ts';
 import { afterJudge } from '../review/after-judge.ts';
 import { commitPlot, forbiddenWip } from './commit.ts';
 import { maskFinished } from './secrets.ts';
-import { writeStopLetter } from './stop-letter.ts';
+import { stopLeftOf, writeStopLetter } from './stop-letter.ts';
 import type { Context } from '../context.ts';
 import type { PlotCommit } from './commit.ts';
 import type { Refusal } from './stop-letter.ts';
@@ -54,10 +54,10 @@ export async function breakAssignee(
   const wip = UNCOMMITTED.has(trip)
     ? undefined
     : await commitPlot(ctx, running.quest, plotCommitMessage.wip(running.quest, trip));
-  // The hook refused the work this session left: a copy of it is kept, and a quest with no letter gets a minimal one.
-  const refused = wip?.status === 'refused' ? wip : breaker.refused;
-  if (refused !== undefined)
-    await writeStopLetter(ctx, { id: running.quest }, { character: who, trip }, refused);
+  // A quest with no letter gets a minimal one, whatever the trip (gap 23 of PS-07); after a refused hook, a copy of
+  // the work is kept too (P1-55).
+  const left = stopLeftOf(wip, breaker);
+  if (left !== undefined) await writeStopLetter(ctx, { id: running.quest }, { character: who, trip }, left);
   const said = {
     ...(patch === undefined ? {} : { patch }),
     ...(paths === undefined ? {} : { paths: [...paths] }),

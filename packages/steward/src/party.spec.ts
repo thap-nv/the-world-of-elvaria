@@ -39,7 +39,8 @@ describe('a party, from its contract to its merge quest (P1-18)', () => {
       'Book a room': {
         [CONTRACT]: 'openapi: 3.1.0\n',
         [SUBQUESTS_FILE]: list(
-          part('d1', 'Rooms API'),
+          // The draft leaves the seal out, as the mage is told to: a build part waits for none (gap 9 of PS-07).
+          part('d1', 'Rooms API', { seal_required: undefined }),
           part('d2', 'Rooms page', { tags: ['frontend'], depends_on_refs: ['d1'] }),
         ),
       },
@@ -62,6 +63,7 @@ describe('a party, from its contract to its merge quest (P1-18)', () => {
     const merge = await mergeOf(kingdom);
     expect(api).toMatchObject({
       status: 'done',
+      seal_required: false,
       party_id: contract.id,
       party_role: 'part',
       contract: CONTRACT,
