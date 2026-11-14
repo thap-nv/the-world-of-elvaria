@@ -3,6 +3,8 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     include: ['src/**/*.spec.ts'],
+    // The hook every runner starts, built once before the specs (test/global-setup.ts).
+    globalSetup: ['test/global-setup.ts'],
     // Commands spawn git and fake CLIs; Windows CI starts processes slowly.
     testTimeout: 30_000,
     coverage: {
