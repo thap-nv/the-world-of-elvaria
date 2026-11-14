@@ -173,7 +173,9 @@
   or of its party, never the model of anyone who worked the quest (`policy.doers`, P1-55), another model family first by `familyOfCharacter` (the family the tribe's adapter declares, else `familyOf` of the slug; PS-23: a family nobody knows is never another one, `apartFromAll`), then another tribe, then
   on a quest of rank `STRONG_JUDGE_MIN_RANK` (B) or above the judge of the higher level, P1-48;
   `dispatch.verifier_same_family` for the rest; not a judge a breaker stopped in the run, nor the one that just
-  handed in a partial verdict, while another may judge; (PS-22) never the judge whose verdict the quest's `objection`
+  handed in a partial verdict, while another may judge; before that, not a judge whose tribe takes a shorter prompt
+  on this OS than the one the Steward measured for it (`withinPromptLimit` over `KingdomSnapshot.review_prompts` and
+  `TribeLimits.prompt_max_chars`, `src/verify/prompt-limit.ts`, fix/verifier-prompt-limit), while another may judge; (PS-22) never the judge whose verdict the quest's `objection`
   contests, and never the machine for an objection, which waits as unjudgeable when no judge is left), `underPassRule` (a failing check fails the quest under
   `all_checks_and_agent`, as `tests_fail`, or `incomplete` for the Steward's `subquests` check, P1-15, and its
   `party` check of a merge quest, P1-18, and `coverage_not_lower`, P1-20, or `flaky` for `flake_check`), `machineVerdictOf` (the machine's verdict from the checks), `validateVerdict` (no
@@ -213,7 +215,8 @@
   session before the cap), for `elvaria doctor`.
 - Reads the tribe contract (`src/tribe/`, implementation-plan §3.14, ADR 0021): `AdapterCapabilities` (the
   yes-or-no `ADAPTER_CAPABILITIES`, `auth`, the sign-ins an adapter runs with, P1-19, the optional `shell` per
-  OS, read with `shellOf`, P1-40, and the optional `search`, false for a CLI with no search tool, P1-53; PS-23: the optional `read`, false for a
+  OS, read with `shellOf`, P1-40, the optional `prompt_max_chars` per OS, read with `promptMaxOf` and added to a
+  tribe's limits by `tribeLimitsOn(caps, platform)`, fix/verifier-prompt-limit, and the optional `search`, false for a CLI with no search tool, P1-53; PS-23: the optional `read`, false for a
   CLI with no tool that reads a file, and `models`, the models it serves with the maker family and starting level of
   each, `TribeModel`, read with `modelEntryOf`, checked with `modelsProblems`, gathered per tribe with
   `modelsOfTribes` for `KingdomSnapshot.models`), `tribeLimitsOf` (one

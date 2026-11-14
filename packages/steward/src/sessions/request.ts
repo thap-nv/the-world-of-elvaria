@@ -12,6 +12,7 @@ import type { JsonSchema, SpawnRequest } from '@elvaria/runner-core';
 
 import { handoverPath } from '../files.ts';
 import { sessionGraphOf } from './graph.ts';
+import type { SessionGraph } from './graph.ts';
 import { planGraphFactsOf } from './plan-graph.ts';
 import { promptOf, searchFor } from './prompt.ts';
 import { sessionEnvOf } from './secrets.ts';
@@ -68,14 +69,49 @@ export interface SessionRequest {
   readonly load_trace: LoadTrace;
 }
 
+const classOf = (ctx: Context, character: SessionInput['character']) => {
+  const characterClass = ctx.world.registry.classes.find(({ id }) => id === character.class);
+  if (characterClass === undefined) throw new Error(`registry has no class "${character.class}"`);
+  return characterClass;
+};
+
+/** What promptOf reads beside the input: the class, the secret values it masks, the graph and what it says. */
+async function givenOf(
+  ctx: Context,
+  input: SessionInput,
+  graph: SessionGraph | undefined,
+  known: readonly string[],
+) {
+  // A plan quest's mage reads the impact of its scope, its judge the sub-quests the graph links (PS-21b).
+  const { impact, plan_links: planLinks } = await planGraphFactsOf(ctx, input, graph);
+  return {
+    characterClass: classOf(ctx, input.character),
+    known,
+    ...(graph === undefined
+      ? {}
+      : { graph: { commit: graph.commit, ...(impact === undefined ? {} : { impact }) } }),
+    ...(planLinks === undefined ? {} : { plan_links: planLinks }),
+  };
+}
+
+/**
+ * The characters of the user part of the prompt `input`'s session would get, the part agy takes on its command line
+ * (review/prompt-size.ts, fix/verifier-prompt-limit). No plot, run folder or treasury: no secret value is masked, so
+ * a log tail that quotes one may count a few characters more or less than the session's prompt.
+ */
+export async function userPromptLengthOf(ctx: Context, input: SessionInput): Promise<number> {
+  const graph = await sessionGraphOf(ctx, input.quest, input.territory);
+  const { prompt } = await promptOf(ctx, input, await givenOf(ctx, input, graph, []), null);
+  return prompt.user.length;
+}
+
 export async function requestOf(
   ctx: Context,
   input: SessionInput,
   resume: Resume | null = null,
 ): Promise<SessionRequest> {
   const { quest, character, territory, role } = input;
-  const characterClass = ctx.world.registry.classes.find(({ id }) => id === character.class);
-  if (characterClass === undefined) throw new Error(`registry has no class "${character.class}"`);
+  const characterClass = classOf(ctx, character);
   const runDir = inKingdom(ctx.root, runDirOf(quest, input.n, role));
   await mkdir(runDir, { recursive: true });
   const graph = await sessionGraphOf(ctx, quest, territory);
@@ -83,17 +119,7 @@ export async function requestOf(
   // GRAPHIFY_OUT names the quest's graph, so no command names one (PS-21); graphify's folder goes first on PATH.
   const env =
     graph === undefined || ctx.deps.graphs === undefined ? own : ctx.deps.graphs.envFor(own, graph.dir);
-  const known = secretValuesOf({ quest, env });
-  // A plan quest's mage reads the impact of its scope, its judge the sub-quests the graph links (PS-21b).
-  const { impact, plan_links: planLinks } = await planGraphFactsOf(ctx, input, graph);
-  const given = {
-    characterClass,
-    known,
-    ...(graph === undefined
-      ? {}
-      : { graph: { commit: graph.commit, ...(impact === undefined ? {} : { impact }) } }),
-    ...(planLinks === undefined ? {} : { plan_links: planLinks }),
-  };
+  const given = await givenOf(ctx, input, graph, secretValuesOf({ quest, env }));
   const { prompt, load_trace: loadTrace } = await promptOf(ctx, input, given, resume);
   const request: SpawnRequest = {
     role,

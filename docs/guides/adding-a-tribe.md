@@ -45,6 +45,7 @@ Trước khi viết adapter, trả lời đủ mười sáu câu dưới, câu r
 | `subagent` | boolean | không học đồ |
 | `auth` | `['login']`, `['api_key']` hay cả hai | `tool.auth` của tộc phải nằm trong đó (`doctor`, `tribe check`) |
 | `shell` | `{win32?, darwin?, linux?}` tên shell | prompt không nói phiên chạy lệnh trong shell nào |
+| `prompt_max_chars` | `{win32?, darwin?, linux?}` số nguyên dương: số ký tự dài nhất của phần user của prompt mà CLI nhận trên hệ điều hành đó (fix/verifier-prompt-limit) | không trần. Có trần thì Nhiếp chính đo prompt của người chấm thuộc tộc này trước nhịp, và không chọn người chấm có prompt dài hơn trần khi còn người chấm khác nhận được quest; không còn ai thì vẫn thử, như cũ. Khai khi CLI nhận prompt trên dòng lệnh (agy: `win32` 26 000, chừa chỗ cho các đối số khác và dấu thoát; Windows dừng ở 32 767 ký tự cho cả dòng). Runner vẫn tự kiểm độ dài thật trước khi mở phiên |
 | `search` | boolean, mặc định `true` | `false`: nghề có Glob/Grep tìm bằng `git grep`, `git ls-files` trong tool lệnh; hook chặn cờ nguy hiểm |
 | `read` | boolean, mặc định `true` (PS-23) | `false`: prompt bảo nghề có shell đọc, liệt kê, tìm bằng lệnh chỉ đọc của shell, nghề không có shell đọc file đã theo dõi bằng `git grep -h -n -e '^' -- '<path>'`; adapter phải để các lệnh đó chạy |
 | `models` | danh sách (mục 2.2), PS-23 | mọi slug được nhận; họ đọc từ chữ đầu của slug; cấp khởi đầu theo chữ của slug |
@@ -115,7 +116,7 @@ Hàm thuần `tribeLimitsOf(capabilities)` của domain, mỗi năng lực một
 | `compact` | `compact: false` |
 | `subagent` | `apprentice: false` |
 
-`search`, `read`, `shell` và `models` không thu hẹp tộc: chúng đổi prompt, tool của nghề, luật tách vai và cấp khởi đầu (bảng 2.1).
+`search`, `read`, `shell` và `models` không thu hẹp tộc: chúng đổi prompt, tool của nghề, luật tách vai và cấp khởi đầu (bảng 2.1). `prompt_max_chars` cũng không là một hàng của bảng: `tribeLimitsOn(capabilities, platform)` thêm `prompt_max_chars` của hệ điều hành đang chạy vào giới hạn của tộc, và chỉ lúc chọn người chấm đọc nó.
 
 ## 5. Agent Client Protocol
 

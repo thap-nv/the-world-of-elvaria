@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 
 import { ADAPTER_CAPABILITIES, TRIBE_AUTHS, modelsProblems } from '@elvaria/domain';
 
-import { readProblems, searchProblems, shellProblems } from '../kit/adapter-module.ts';
+import { promptMaxProblems, readProblems, searchProblems, shellProblems } from '../kit/adapter-module.ts';
 import { FAKE_QUESTION, FAKE_STRUCTURED_ANSWER, FAKE_STRUCTURED_SCHEMA } from './scenarios.ts';
 import { SPAWN_PROBE_COMMAND, SPAWN_PROBE_OK } from './spawn-probe.ts';
 import { DEFAULT_TIMEOUT_MS, HANG_GRACE_MS, play, settlesWithin, within } from './play.ts';
@@ -200,6 +200,12 @@ const capabilities: ConformanceCheck = {
     for (const kind of auth) assert.ok(known.includes(kind), `unknown auth ${String(kind)}`);
     // Optional (P1-40): an adapter that names its shell names one per known OS.
     assert.deepEqual(shellProblems(runner.capabilities.shell), [], 'capability shell is malformed');
+    // Optional (fix/verifier-prompt-limit): the longest user prompt its CLI takes, a whole number per known OS.
+    assert.deepEqual(
+      promptMaxProblems(runner.capabilities.prompt_max_chars),
+      [],
+      'capability prompt_max_chars is malformed',
+    );
     // Optional (P1-53): whether the CLI searches on its own, true or false.
     assert.deepEqual(searchProblems(runner.capabilities.search), [], 'capability search is malformed');
     // Optional (PS-23): whether the CLI reads files with a tool of its own, and the models it serves with their families.

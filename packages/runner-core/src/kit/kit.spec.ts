@@ -234,6 +234,25 @@ describe('runnerProblems', () => {
     ]);
   });
 
+  it('takes a runner without a prompt limit, and names one that is not a whole number per known OS', () => {
+    const fake = { ...createFakeRunner({ tribe: kit.tribe.id }), adapter: kit.tribe.adapter };
+    const withLimit = (prompt_max_chars: unknown) =>
+      runnerProblems({ ...fake, capabilities: { ...fake.capabilities, prompt_max_chars } }, kit);
+    expect(withLimit({ win32: 28_000 })).toEqual([]);
+    expect(withLimit(28_000)).toEqual([
+      'capability prompt_max_chars is not an object of OS to a number of characters',
+    ]);
+    expect(withLimit([28_000])).toEqual([
+      'capability prompt_max_chars is not an object of OS to a number of characters',
+    ]);
+    expect(withLimit({ win32: '28000', darwin: 0, linux: 1.5, beos: 10 })).toEqual([
+      'capability prompt_max_chars.win32 is not a positive whole number',
+      'capability prompt_max_chars.darwin is not a positive whole number',
+      'capability prompt_max_chars.linux is not a positive whole number',
+      'capability prompt_max_chars names beos, not one of win32, darwin, linux',
+    ]);
+  });
+
   it('takes a runner that says nothing of search, or true or false, and nothing else (P1-53)', () => {
     const fake = { ...createFakeRunner({ tribe: kit.tribe.id }), adapter: kit.tribe.adapter };
     const withSearch = (search: unknown) =>

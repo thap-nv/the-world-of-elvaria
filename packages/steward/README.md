@@ -16,7 +16,12 @@
   to the Temple
   (`character.suspend`, the bell), paused quests whose pool woke go on, claimed quests start, submitted quests get
   their checks and, in a later tick once those ended, the judge `selectVerifier` chose (or the machine's verdict
-  under `machine_only`), returned quests go back to their assignee, open quests are claimed.
+  under `machine_only`), returned quests go back to their assignee, open quests are claimed. Before the plan the
+  Steward measures the user part of the prompt each judge of a tribe with a prompt limit on this OS
+  (`capabilities.prompt_max_chars`, agy on Windows) would get for each quest whose checks ended
+  (`src/review/prompt-size.ts`, `userPromptLengthOf`: no plot, run folder or treasury), kept until the review changes,
+  so `selectVerifier` passes over a judge whose prompt its tribe cannot take (`review_prompts`,
+  fix/verifier-prompt-limit).
 - Asks each tribe's CLI before the plan (A1b of the lessons of 2026-11-13, `src/tribe-versions.ts`): through
   `StewardDeps.toolFound` (the composition root runs `<cli> --version` on the CLI the tribe's runner starts: no model,
   no mana; at most once a minute a tribe, `VERSION_ASK_MS`), so `planTick` holds a tribe whose CLI is gone or says

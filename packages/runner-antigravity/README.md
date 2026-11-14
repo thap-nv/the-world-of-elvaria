@@ -33,7 +33,10 @@ terms_acknowledged_at, env, pools?, timeout_ms?})`. `hook` is `hookCommand()` of
   minus `GIT_*`, the session context as `ELVARIA_*` (runner-core's `runContextOf`),
   `AGY_CLI_DISABLE_AUTO_UPDATE=true` and Elvaria's Node first on `PATH` (the hook calls a bare `node`). agy
   takes the prompt on the command line: on Windows a prompt longer than CreateProcess takes (32 767 characters)
-  is refused before the session, with the reason (`commandLineProblem`, P1-15).
+  is refused before the session, with the reason (`commandLineProblem`, P1-15). The adapter declares
+  `capabilities.prompt_max_chars: {win32: 26000}` (`WINDOWS_PROMPT_MAX_CHARS`: the line less room for the other
+  arguments and for the prompt's escaped quotes and backslashes, one character in five), so the Steward passes over
+  an agy judge whose prompt is longer while another judge may take the review (fix/verifier-prompt-limit).
 - Reads the stream: `init` names the session; `agent_response` steps give text and usage signals (tokens of this
   run's own steps, since `result.usage` adds up a resumed conversation; `cache_read_tokens` at a tenth through
   runner-core's `countedTokens`, as for Claude, P1-22) and the turn count; refused tool steps

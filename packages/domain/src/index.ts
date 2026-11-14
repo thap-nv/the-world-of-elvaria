@@ -159,6 +159,7 @@ export * from './verify/flaky-follow-up.ts';
 export * from './verify/machine-verdict.ts';
 export * from './verify/pass-rule.ts';
 export * from './verify/past-assignees-of.ts';
+export * from './verify/prompt-limit.ts';
 export * from './verify/protected.ts';
 export * from './verify/ritual-of.ts';
 export * from './verify/select-verifier.ts';

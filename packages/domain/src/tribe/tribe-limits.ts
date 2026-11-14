@@ -2,8 +2,9 @@
 // ADR 0021). The narrowing is a table, not a switch over adapters: a missing capability overrides some limits,
 // and every row is applied in turn. Rules that compare several tribes ("no Chancellor on a tribe without
 // structured output while another has it") are a separate pure function (P1-13, §10 question 6).
+import { promptMaxOf } from './capabilities.ts';
 import { FULL_MAX_RANK, NO_TOOL_GATE_MAX_RANK } from './constants.ts';
-import type { AdapterCapability, AdapterFlags } from './capabilities.ts';
+import type { AdapterCapabilities, AdapterCapability, AdapterFlags } from './capabilities.ts';
 import type { Rank } from '../schema/common.ts';
 
 export interface TribeLimits {
@@ -34,6 +35,11 @@ export interface TribeLimits {
   readonly resume: boolean;
   /** May compact in place to meditate; without it meditation is a fresh session from the handover. */
   readonly compact: boolean;
+  /**
+   * The longest user prompt the tribe's CLI takes on this machine's OS (tribeLimitsOn, fix/verifier-prompt-limit): a
+   * judge whose measured prompt is longer is passed over while another may take the quest. Absent: no limit.
+   */
+  readonly prompt_max_chars?: number;
 }
 
 /** A tribe whose adapter declares every capability. */
@@ -80,4 +86,17 @@ export function tribeLimitsOf(caps: AdapterFlags): TribeLimits {
     (limits, { capability, missing }) => (caps[capability] ? limits : { ...limits, ...missing }),
     FULL_TRIBE_LIMITS,
   );
+}
+
+/**
+ * The limits of one tribe on the machine's `platform`: tribeLimitsOf, and the longest user prompt its CLI takes there
+ * when its adapter declares one (promptMaxOf). A length, not a yes or no, so it is no row of TRIBE_NARROWING.
+ */
+export function tribeLimitsOn(
+  caps: AdapterFlags & Pick<AdapterCapabilities, 'prompt_max_chars'>,
+  platform: string,
+): TribeLimits {
+  const limits = tribeLimitsOf(caps);
+  const max = promptMaxOf(caps, platform);
+  return max === undefined ? limits : { ...limits, prompt_max_chars: max };
 }
