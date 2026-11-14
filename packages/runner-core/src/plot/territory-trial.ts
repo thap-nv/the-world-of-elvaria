@@ -133,6 +133,29 @@ async function commitsSince(git: Git, repo: string, stamp: string, base: string)
   return run.code === 0 && Number.isInteger(count) ? count : null;
 }
 
+export interface StampCountRequest {
+  readonly territory: Territory;
+  readonly host: ProcessHost;
+  /** The gazetteer's stamp (gazetteerStampOf). */
+  readonly stamp: string;
+}
+
+/**
+ * Commits from the gazetteer's stamp to where a new quest would fork, counted as the trial counts them but without a
+ * fetch (origin's branch as the last fetch left it): `doctor` reads the gazetteer item each time it runs
+ * (fix/kingdom-upkeep) and must not wait on the network. null when git does not know the stamp; undefined when
+ * nothing could be counted (no git, not a repo, no default branch), which the card reads as "not counted".
+ */
+export async function commitsSinceStamp(request: StampCountRequest): Promise<number | null | undefined> {
+  const { territory, host, stamp } = request;
+  if (territory.vcs.type !== 'git') return undefined;
+  const git = await gitOf(host);
+  if (git === undefined) return undefined;
+  const repo = fromPortable(territory.path);
+  const fork = await forkPoint({ git, repo, vcs: territory.vcs, fetch: false });
+  return fork.ok ? commitsSince(git, repo, stamp, fork.value) : undefined;
+}
+
 /** The trial in its detached worktree at `base`, made here; the caller removes it. */
 async function inTrialPlot(
   request: TerritoryTrialRequest,
