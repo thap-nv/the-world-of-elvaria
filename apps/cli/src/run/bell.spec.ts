@@ -85,3 +85,16 @@ describe('the console bell on the judges’ mana and the digest', () => {
     );
   });
 });
+
+describe('the console bell on a tribe held by its CLI (A1b of the lessons of 2026-11-13)', () => {
+  const held = { tribe: gemini, path: 'C:/agy.exe', checked: '1.5.6' };
+
+  it('names the new version and the command, or the CLI gone and the restart', () => {
+    expect(lineOf(en, { kind: 'tribe_held', ...held, version: '1.5.8' })).toBe(
+      'Tribe gemini is held: its CLI C:/agy.exe now says 1.5.8, not 1.5.6, the version its last check with the real CLI passed on. No new session for it until elvaria tribe check gemini passes (a little mana).',
+    );
+    expect(lineOf(vi, { kind: 'tribe_held', ...held, version: undefined })).toBe(
+      'Tộc gemini bị giữ: CLI mà Nhiếp chính chạy cho tộc, C:/agy.exe, không còn. elvaria tribe check gemini tìm CLI đang cài và ghim nó khi qua (tốn chút mana); rồi khởi động lại elvaria run.',
+    );
+  });
+});

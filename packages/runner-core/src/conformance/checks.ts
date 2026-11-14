@@ -29,7 +29,8 @@ function sessionCheck(
     run: async (target) => {
       const runner = await target.createRunner();
       if (!applies(runner.capabilities)) return 'skipped';
-      verify(await play(target, runner, scenario));
+      // Verified inside play, so the workspace of a session that breaks the contract is still there to keep.
+      await play(target, runner, scenario, { verify });
       return 'passed';
     },
   };
@@ -126,12 +127,15 @@ const hang: ConformanceCheck = {
   live: true,
   run: async (target) => {
     const runner = await target.createRunner();
-    await play(target, runner, 'hang', async (session) => {
-      assert.equal(await settlesWithin(session.wait(), HANG_GRACE_MS), false, 'a hanging session ended');
-      await session.kill('conformance');
-      const result = await within(session.wait(), target.timeout_ms ?? DEFAULT_TIMEOUT_MS, 'wait after kill');
-      assert.equal(result.outcome, 'killed');
-      await session.kill('again');
+    await play(target, runner, 'hang', {
+      drive: async (session) => {
+        assert.equal(await settlesWithin(session.wait(), HANG_GRACE_MS), false, 'a hanging session ended');
+        await session.kill('conformance');
+        const timeout = target.timeout_ms ?? DEFAULT_TIMEOUT_MS;
+        const result = await within(session.wait(), timeout, 'wait after kill');
+        assert.equal(result.outcome, 'killed');
+        await session.kill('again');
+      },
     });
     return 'passed';
   },

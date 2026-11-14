@@ -99,7 +99,10 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   `capabilities` check also wants `capabilities.auth`, the sign-ins the adapter runs with (P1-19): a non-empty list
   of `login` / `api_key`. A check's workspace that still will not go after the retries of `rm` (a real agy held one
   for minutes on Windows, 2026-11-12) stays on disk: `play` tells `target.onLeftover` (a process warning without
-  it) and the check reports what its session did, never the cleanup.
+  it) and the check reports what its session did, never the cleanup. A check that fails, past its ceiling or on what
+  its session yielded (`PlaySteps.verify` runs while the workspace is still there), first has its session's process
+  tree killed (`killTree`, then the runner's own kill) and its workspace handed to `target.onFailed` before the
+  workspace goes (lessons of 2026-11-13: a real agy ran on to 80 369 tokens after its `submit` timed out).
 - Hands an owner adapter file its kit (`src/kit/`, P1-19, implementation-plan §3.14, ADR 0021): `adapterKitOf(host)`
   freezes the tribe, the kingdom folder, the minimal env, the CLI to drive (`tool_path`: the path the owner gave,
   else the pinned one), `launchOf`, `hookCommand` and runner-core's shared parts (`process`: `startChild`,
@@ -177,7 +180,8 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   as for a quest), runs commands.setup with the log and timeout of a quest plot's setup, then every check of the
   territory through `runChecks` (selected as for a party's merge quest: all of them), and removes the worktree, dirty
   or not; no branch is made, only the logs stay in `.runs/trial-<territory>*`. A failed step names the command its
-  log ran last and the first line of its output that says why (`src/plot/trial-log.ts`), or the line the
+  log ran last and the line of its output that says why (`src/plot/trial-log.ts`: a test runner's `FAIL` line,
+  else its `×`, else the first word of failure outside a table row or a file name, colours stripped), or the line the
   territory's `environment_errors` find; given the gazetteer's stamp it counts the commits since. No secret reaches
   the trial: a setup that needs one fails there. `commitsSinceStamp` counts the same commits without a trial and
   without a fetch (`forkPoint` with `fetch: false`: origin's branch as the last fetch left it), for `doctor`.

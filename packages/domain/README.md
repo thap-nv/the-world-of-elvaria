@@ -89,7 +89,10 @@
   pools that hold them (`judge_waits`, `judgeWaitOf` over selectVerifier's `awaitedJudges` and the roster's
   `manaOpen`, PS-03), returned quests sent back, claims (class, level
   by `canTake`, limits of tribe and territory, round-robin, affinity), the open quests nobody can take, and the
-  done quests still to deliver (`deliveries`, P1-14). Checks and scripts, which run outside the tick, start only in
+  done quests still to deliver (`deliveries`, P1-14). (A1b of the lessons of 2026-11-13) A tribe whose CLI is gone or
+  says another version than `checkedVersionOf` (the version its last `tribe check` with the real CLI passed on, else the
+  pinned one) opens no session in any step (`versionHoldsOf` over `KingdomSnapshot.tools_found`, the one hold in the
+  roster); it still counts and stands by, so nothing is named unclaimable or unjudgeable for it. Checks and scripts, which run outside the tick, start only in
   the room `dispatch.max_background` leaves beside the work running (`BackgroundWork.running`, P1-47), checks
   first; a sandbox day has no background, so no cap. (P1-54, `startingNow` of `src/dispatch/background-room.ts`) The
   checks of a blind trial's acceptance part, which run no command, go first and take no slot, and when trials in a
@@ -271,7 +274,9 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   work stands still; `can_wait`), an advice code and the `elvaria` command, both from `ATTENTION_TABLE` by kind:
   questions, seals, the infirmary, drafts, open memos, pools asleep or at the warning share, and (PS-05) the done
   quests that still hold a scope quests ready to start wait for (`scope_held`, from `scopeHoldsOf` over the quest
-  files, which the caller passes with the notices: the world state holds no scope). The world state holds the
+  files, which the caller passes with the notices: the world state holds no scope), and the tribes the Steward holds
+  by their CLI (`tribes_held`: `tribe_held` for a new version, `tribe_gone` for a CLI gone, both with `tribe check
+<tribe>`; A1b of the lessons of 2026-11-13). The world state holds the
   open memos since PS-03 (`memos`, `memoViewOf`; `memo.*` lines reduce into it; `WORLD_STATE_VERSION` 2). A memo the
   Chancellor's triage sent up carries its advice (`escalated`, PS-03b) and lists as `memo_escalated`.
 - Decides what the world takes in alone of the memos the Chancellor triages (`src/delegation/`, PS-03b):

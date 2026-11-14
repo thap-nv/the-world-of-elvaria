@@ -1,10 +1,12 @@
 // Who may take work in this tick, and how much room each tribe and territory has left (implementation-plan §3.1,
 // §3.14): the bookkeeping planTick shares between its steps, so a character, a tribe slot or a territory slot
 // given away in one step is gone for the next ones. A territory has room for a quest when it runs fewer quests than
-// its max_concurrent (R1) and the scope rules let the quest start (scope.ts, PS-05: R2, R3).
+// its max_concurrent (R1) and the scope rules let the quest start (scope.ts, PS-05: R2, R3). A tribe whose CLI changed
+// version since its last passing check opens no session at all (versionHoldsOf, A1b of the lessons of 2026-11-13).
 import { poolEnabled, poolKeyOf } from '../mana/pool.ts';
 import { admits, asleepFor, manaStateOf } from '../mana/state.ts';
 import { RANKS } from '../schema/common.ts';
+import { versionHoldsOf } from '../tribe/version-hold.ts';
 import { scopeBookOf } from './scope.ts';
 import type { Instant } from '../core/clock.ts';
 import type { CharacterId, TerritoryId, TribeId } from '../core/ids.ts';
@@ -17,6 +19,7 @@ import type { Kingdom } from '../schema/kingdom.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 import type { Territory } from '../schema/territory.ts';
 import type { TribeLimits } from '../tribe/tribe-limits.ts';
+import type { ToolsFound } from '../tribe/version-hold.ts';
 import type { PoolKey } from '../world/mana-view.ts';
 
 /** Statuses in which a character holds a CLI session of its tribe's account (tribe max_concurrent). */
@@ -42,11 +45,17 @@ export interface RosterSource {
   };
   /** What each tribe's runner can do (tribeLimitsOf, §3.14); a tribe with no runner is absent and takes no work. */
   readonly limits: Readonly<Partial<Record<TribeId, TribeLimits>>>;
+  /**
+   * The CLI each tribe's runner starts, as the Steward found it before the tick (A1b of the lessons of 2026-11-13): a
+   * tribe whose CLI is gone or says another than its checked version opens no session (versionHoldsOf). Absent: none
+   * is held (a sandbox day, the specs).
+   */
+  readonly tools_found?: ToolsFound;
 }
 
 // Function properties, not methods: planTick passes them to Array.filter on their own.
 export interface Roster {
-  /** Idle, of a tribe that may work and has a slot left, its pool open, and not given work yet this tick. */
+  /** Idle, of a tribe that may work (not held) and has a slot left, its pool open, and not given work yet this tick. */
   readonly canStart: (character: Character) => boolean;
   /** Asleep on a paused quest, its pool open again, its tribe with a slot left (§3.5). */
   readonly canWake: (character: Character) => boolean;
@@ -128,10 +137,18 @@ export function poolOpenOf(
   };
 }
 
+/**
+ * The tribes held by their CLI's version (versionHoldsOf). A held tribe still counts and stands by, as an asleep pool
+ * does: its wait ends with a passing `tribe check`, not with another character or judge.
+ */
+const heldTribesOf = (source: RosterSource): ReadonlySet<TribeId> =>
+  new Set(versionHoldsOf(source.kingdom.tribes, source.tools_found ?? {}).map(({ tribe }) => tribe));
+
 /** `now` weighs the gauge readings: one whose window has reset no longer counts. */
 export function rosterOf(source: RosterSource, now: Instant): Roster {
   const staffed = staffedTribes(source);
   const enabled = new Set(source.kingdom.tribes.filter((tribe) => tribe.enabled).map(({ id }) => id));
+  const held = heldTribesOf(source);
   const poolOpen = poolOpenOf(source, now);
   const taken = new Set<CharacterId>();
   const aside = new Set<CharacterId>();
@@ -152,6 +169,7 @@ export function rosterOf(source: RosterSource, now: Instant): Roster {
     const tribe = staffed.get(character.tribe);
     return (
       tribe !== undefined &&
+      !held.has(character.tribe) &&
       poolOpen(character) &&
       !taken.has(character.id) &&
       (inSession.get(character.tribe) ?? 0) < tribe.max

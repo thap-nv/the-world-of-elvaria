@@ -74,9 +74,38 @@ async function probe(tribe: Tribe, ctx: KingdomContext, options: DoctorOptions):
   return { path: toPortable(located.found, ctx.io.platform), version, from: located.from };
 }
 
+const NO_OPTIONS: DoctorOptions = { tools: new Map(), pin: false, acknowledge: new Set(), enable: new Set() };
+
+/**
+ * Where the tribe's CLI is and what version it says, as doctor finds it: `given` (a path the owner names), else the
+ * pinned file, else PATH or the adapter's own search; or the finding that says why there is none. `tribe check`
+ * runs the real CLI found so (B1 of the lessons of 2026-11-13).
+ */
+export const locateTribeTool = (tribe: Tribe, ctx: KingdomContext, given?: string): Promise<ToolFound> =>
+  probe(
+    tribe,
+    ctx,
+    given === undefined ? NO_OPTIONS : { ...NO_OPTIONS, tools: new Map([[tribe.id, given]]) },
+  );
+
+type Pinned = NonNullable<Tribe['tool']>;
+
+/**
+ * The tool a passing `tribe check` with the real CLI pins for its tribe alone (B1 of the lessons of 2026-11-13): the
+ * CLI it ran, path and version, that version the checked one (A1b); the sign-in, default model and terms stay.
+ */
+export const checkedToolOf = (pinned: Pinned, found: { path: string; version: string }): Pinned => ({
+  ...pinned,
+  path: found.path,
+  version: found.version,
+  checked_version: found.version,
+});
+
 /**
  * The tool to pin, or undefined when a pinned tool changed and the owner has not asked to re-pin. A first pin takes
- * the sign-in the adapter declares: the owner's login when it runs with one, Gemini CLI's paid key (ADR 0018).
+ * the sign-in the adapter declares: the owner's login when it runs with one, Gemini CLI's paid key (ADR 0018). A
+ * re-pin to another version keeps the old checked version (the pinned one when none was recorded): `doctor --pin`
+ * is no check, and the Steward holds the tribe until `tribe check` passes on the new one (A1b).
  */
 function nextTool(
   tribe: Tribe,
@@ -89,11 +118,14 @@ function nextTool(
   const changed = pinned !== undefined && (pinned.version !== found.version || pinned.path !== found.path);
   if (changed && !options.pin && found.from !== 'flag') return undefined;
   const acknowledged = options.acknowledge.has(tribe.id) ? { terms_acknowledged_at: ctx.now() } : {};
+  const checked = pinned?.checked_version ?? pinned?.version;
+  const kept = pinned?.version === found.version || checked === undefined ? {} : { checked_version: checked };
   return {
     ...pinned,
     path: found.path,
     version: found.version,
     auth: pinned?.auth ?? defaultAuthOf(capabilities ?? { auth: [] }),
+    ...kept,
     ...acknowledged,
   };
 }
@@ -123,6 +155,19 @@ function changedTool(
   return moved
     ? finding('error', ctx.t('cli.doctor.tool_moved', params), hint)
     : finding('warn', ctx.t('cli.doctor.tool_changed', params), hint);
+}
+
+/**
+ * A pinned version no `tribe check` with the real CLI passed on (`doctor --pin` re-pinned it): the Steward holds the
+ * tribe until one does (A1b), so doctor says so, as a warning with the command.
+ */
+function uncheckedFindings(tribe: Tribe, tool: Pinned, ctx: KingdomContext): Finding[] {
+  const checked = tool.checked_version;
+  if (checked === undefined || checked === tool.version) return [];
+  const params = { tribe: tribe.id, version: tool.version, checked };
+  return [
+    finding('warn', ctx.t('cli.doctor.tool_unchecked', params), [ctx.t('cli.doctor.pin_hint', params)]),
+  ];
 }
 
 /** A pinned sign-in the adapter does not run with (P1-19): the tribe cannot run until kingdom.json names another. */
@@ -226,6 +271,7 @@ async function checkFound(
   const refused = terms && next.data.tool?.terms_acknowledged_at === undefined;
   const findings = [
     finding('ok', t('cli.doctor.tool_found', { tribe: tribe.id, version: tool.version, path: tool.path })),
+    ...uncheckedFindings(tribe, tool, ctx),
     ...(refused
       ? [
           finding('error', t('cli.doctor.terms_refused', { tribe: tribe.id }), [

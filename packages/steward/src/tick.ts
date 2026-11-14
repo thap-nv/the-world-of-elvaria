@@ -15,6 +15,7 @@ import { wantTipGraphs } from './sessions/graph.ts';
 import { maskFinished } from './sessions/secrets.ts';
 import { reapLost } from './sessions/settle.ts';
 import { carryOut } from './steps.ts';
+import { versionStep } from './tribe-versions.ts';
 import { noteUnclaimable, reportedFromLog, writeUnclaimable } from './unclaimable.ts';
 import { noteUnjudgeable } from './unjudgeable.ts';
 import { loadWorld, modelsOf, snapshotOf } from './world.ts';
@@ -98,6 +99,7 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   const snapshot = {
     ...snapshotOf(world, limits, mana, sessions.held(), background.view()),
     models: modelsOf(deps.runners),
+    tools_found: await versionStep(ctx, state.versions),
   };
   const plan = planTick(snapshot, deps.clock.now());
   // Notices first: a quest someone can take now has its notice withdrawn before the claim that follows (§3.1).

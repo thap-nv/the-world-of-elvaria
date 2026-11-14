@@ -28,10 +28,15 @@ const TribeToolSchema = z
       description:
         "When the owner acknowledged the provider's terms for wrapping its CLI (Antigravity: not supported on consumer plans, ADR 0018).",
     }),
+    // Optional, added after v1 (fix/tribe-version-hold): a kingdom.json without it stays version 1.
+    checked_version: NonEmptyStringSchema.optional().meta({
+      description:
+        'The CLI version the last `elvaria tribe check` with the real CLI passed on; that check pins it, with path and version. The Steward opens no new session for the tribe while its CLI says another version (a CLI that updates itself in place, agy 1.5.6 → 1.5.7 on 2026-11-13). Absent: the pinned version stands in.',
+    }),
   })
   .meta({
     description:
-      'The CLI binary, filled and pinned by `elvaria doctor`. Doctor warns when the installed version differs and refuses adapter = antigravity without terms_acknowledged_at.',
+      'The CLI binary, filled and pinned by `elvaria doctor`, re-pinned by a passing `elvaria tribe check` with the real CLI. Doctor warns when the installed version differs and refuses adapter = antigravity without terms_acknowledged_at.',
   });
 
 const API_KEY = { properties: { auth: { const: 'api_key' } } };

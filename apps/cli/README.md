@@ -110,11 +110,16 @@ show` prints the brief apart from the rest of the description and, while the pla
   no character changes. `tribe check <id>` builds the tribe's runner as `run` does, prints what its adapter declares
   (the shell it declares per OS too, P1-46) and how far `tribeLimitsOf` lets it go, holds its pinned sign-in to the ones it declares (`checkTribeAuth`), and
   runs runner-core's conformance suite against it (with the real CLI only the checks that burn no or almost no mana;
-  `--scenarios` runs all of them against a fake CLI; `--tool <path>` tries another CLI than the pinned one and
-  writes nothing, PS-04b) and, once it passes, holds the tribe to the login its adapter
+  `--scenarios` runs all of them against a fake CLI; `--tool <path>` tries another CLI than the pinned one, and with
+  `--scenarios` writes nothing, PS-04b) and, once it passes, holds the tribe to the login its adapter
   reports, as doctor does (`loginFindings`, P1-34): a tribe that passes is enabled once doctor has pinned its CLI.
+  With the real CLI (`src/tribe/check-live.ts`, lessons of 2026-11-13) it runs the CLI doctor would find (the pinned
+  file, else PATH or the adapter's search, or `--tool`), and a pass pins that CLI's path and version for this tribe
+  alone, the version as `tool.checked_version` (B1, A1b); a session's ceiling is 300 s (120 s for a fake CLI),
+  `--timeout <seconds>` sets another, and a failed check's workspace is kept in `.runs/tribe-check-<tribe>-<stamp>/`.
   A check's temp folder that a process of the CLI still holds past the retries (agy on Windows) is named on stderr
-  and left for the owner; the check does not fail for it (`onLeftover`, lessons of 2026-11-12).
+  and left for the owner; the check does not fail for it (`onLeftover`, lessons of 2026-11-12). `run` gives the
+  Steward `toolFound` (`src/run/tool-found.ts`): the CLI each runner starts and its `--version`, or a file gone.
   `tribe disable <id>` stops a tribe taking new work. An owner adapter file is imported only here
   (`src/tribe/adapter-file.ts`): runner-core's `adapterKitOf` builds its kit (minimal env, the pinned or given CLI,
   `launchOf`, `hookCommand`) and `adapterOfModule` checks what `createAdapter(kit)` returns, so a broken file is a
@@ -131,7 +136,9 @@ show` prints the brief apart from the rest of the description and, while the pla
 - `doctor`: finds each tribe's CLI (`--tool <tribe>=<path>`, the pinned path, PATH, then the adapter's own search:
   Claude Code inside the VS Code extension; npm `.cmd` shims run as `node <script>`; an adapter file is asked
   through its runner's `doctor()`, `src/doctor/adapter-tool.ts`, P1-19), pins path and version with the sign-in the
-  adapter declares first (`defaultAuthOf`: the owner's login when it runs with one), refuses a pinned sign-in the
+  adapter declares first (`defaultAuthOf`: the owner's login when it runs with one; a CLI changed since is only said,
+  with `tribe check <tribe>` as the next step, and `--pin` keeps the old checked version, which the Steward holds the
+  tribe to, saying so: lessons of 2026-11-13), refuses a pinned sign-in the
   adapter does not declare (`checkTribeAuth`, P1-19), asks
   the tribe's adapter about its login (a CLI that cannot sign in is an error, with or without a reason, P1-34), how
   soon it ends and the built hook, refuses Antigravity without

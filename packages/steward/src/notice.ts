@@ -9,6 +9,7 @@ import type {
   ManaWindow,
   Rank,
   QuestId,
+  TribeHold,
   TribeId,
   WaitGauge,
 } from '@elvaria/domain';
@@ -88,6 +89,12 @@ export type Notice =
     }
   /** A plan was delivered but opened none of its sub-quests (P1-14); `reason` is English, for the owner and logs. */
   | { readonly kind: 'subquests_refused'; readonly quest: NoticeQuest; readonly reason: string }
+  /**
+   * The tribe's CLI at `path` says `version`, not `checked`, the version its last `tribe check` with the real CLI passed
+   * on, or (`version` undefined) it is gone (A1b of the lessons of 2026-11-13): no new session of the tribe until such
+   * a check passes. Rung once per version.
+   */
+  | (TribeHold & { readonly kind: 'tribe_held' })
   /** The character failed the same way breakers.same_fail_suspend times in a row: it went to the Temple. */
   | {
       readonly kind: 'suspended';
