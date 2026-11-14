@@ -1,5 +1,5 @@
 // The calls of fake-claude.mjs that open no session: `--version`, `auth status --json`, `purge --yes <dir>`.
-// Knobs: FAKE_CLAUDE_AUTH=logged_out, FAKE_CLAUDE_LOGIN_EXPIRES=<ISO> (loginExpiresAt), FAKE_CLAUDE_PURGE=
+// Knobs: FAKE_CLAUDE_AUTH=logged_out|hangs, FAKE_CLAUDE_LOGIN_EXPIRES=<ISO> (loginExpiresAt), FAKE_CLAUDE_PURGE=
 // nothing|fail (the two answers of the real purge run of P1-07 besides success).
 import process from 'node:process';
 
@@ -15,6 +15,11 @@ function purge(argv) {
 }
 
 function auth() {
+  if (env.FAKE_CLAUDE_AUTH === 'hangs') {
+    // A busy machine or a network that does not answer: never ends, doctor's timeout kills it (fix/busy-machine).
+    setInterval(() => undefined, 60_000);
+    return 0;
+  }
   const loggedIn = env.FAKE_CLAUDE_AUTH !== 'logged_out';
   out({
     loggedIn,

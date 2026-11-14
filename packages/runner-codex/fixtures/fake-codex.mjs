@@ -7,6 +7,7 @@
 //   prompt read on stdin, the `-c` hooks run through PowerShell on Windows (`command_windows`) or sh, and skipped
 //   without a word unless `--dangerously-bypass-hook-trust` is given; a refused shell call leaves only a stderr line.
 // ELVARIA_FAKE_CODEX_LOG=<file> appends each call's argv, cwd, prompt length and PowerShell policy, one JSON line each.
+// ELVARIA_FAKE_CODEX_LOGIN_HANGS=1 makes `login status` never answer; ELVARIA_FAKE_CODEX_LOGGED_OUT=1 refuses it.
 // Exit codes are set, never forced: process.exit() can cut a piped stdout short.
 import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
@@ -63,6 +64,8 @@ function before() {
   if (argv.includes('--version'))
     return answer(`codex-cli ${env.ELVARIA_FAKE_CODEX_VERSION ?? '0.167.0-alpha.4.1'}`);
   if (argv[0] === 'login' && argv[1] === 'status') {
+    // A busy machine or a network that does not answer: doctor's timeout stops it (fix/busy-machine).
+    if (env.ELVARIA_FAKE_CODEX_LOGIN_HANGS === '1') return 'hang';
     if (env.ELVARIA_FAKE_CODEX_LOGGED_OUT === '1') return refuse(1, 'Not logged in');
     return answer('Logged in using ChatGPT');
   }
@@ -252,6 +255,7 @@ const SCENARIOS = {
 async function main() {
   const early = before();
   if (early === 'server') return appServer(configs);
+  if (early === 'hang') return SCENARIOS.hang();
   if (early !== undefined) return early;
   const prompt = await readPrompt();
   log({ prompt_chars: prompt.length });

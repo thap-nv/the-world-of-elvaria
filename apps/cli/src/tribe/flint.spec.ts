@@ -9,10 +9,10 @@ import { setTimeout as sleep } from 'node:timers/promises';
 
 import { openEventLog } from '@elvaria/eventlog';
 import { openKingdom } from '@elvaria/store';
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { foundKingdom, printed, run, tempDir, testIo } from '../../test/cli.ts';
-import { FAKE_FLINT, FLINT_ADAPTER, ensureHookBuilt, installFlint } from '../../test/flint.ts';
+import { FAKE_FLINT, FLINT_ADAPTER, installFlint } from '../../test/flint.ts';
 import { editKingdom } from '../../test/lantern.ts';
 import type { TempDir, TestIo } from '../../test/cli.ts';
 
@@ -21,10 +21,6 @@ const TITLE = 'Rework the release pipeline';
 const ROUND_MS = 120_000;
 const POLL_MS = 100;
 const REPO = path.join(import.meta.dirname, '..', '..', '..', '..');
-
-beforeAll(() => {
-  ensureHookBuilt();
-}, 120_000);
 
 describe('a fourth tribe from an adapter file alone', () => {
   let dir: TempDir;

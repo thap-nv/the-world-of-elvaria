@@ -39,4 +39,5 @@ paths:
 - Coverage 100 % (statements, branches, functions, lines) là gate (`vitest.config.mjs`). Fixture và builder của spec nằm ở `src/**/__fixtures__/`, ngoài coverage.
 - Spec không đọc được file (program không có type Node). Cần dữ liệu trên đĩa thì `vitest.config.mjs` đọc rồi `provide`, spec `inject` (mẫu `designCss`).
 - Config vitest là `.mjs` ngoài tsconfig (`NO_NODE_TYPES` trong `boundaries.mjs`); đừng đổi thành `.ts`.
+- Spec của domain chỉ tốn CPU, nên trần thời gian chỉ đo độ bận của máy: `testTimeout` 60 s ở `vitest.config.mjs`. Trước đó trần mặc định 5 s làm `quest/transition-property.spec.ts` (340 000 nước mỗi lượt, 2,5 s với coverage lúc máy rảnh) đỏ khi nhiều `pnpm check` chạy cùng lúc (fix/busy-machine). Đừng đặt lại trần ngắn cho từng spec.
 - Đụng domain → `pnpm -r test` và `pnpm typecheck`: mọi package dùng domain.

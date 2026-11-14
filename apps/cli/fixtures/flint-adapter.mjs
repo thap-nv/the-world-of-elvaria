@@ -205,7 +205,9 @@ async function doctor(kit) {
     timeout_ms: SHORT_CALL_MS,
   });
   const version = run.stdout.trim().replace(/^flint\s+/, '');
-  return { path: kit.tool_path, version, auth_ok: run.code === 0 && version !== '' };
+  // A call stopped at its timeout or that never started says so, in runToEnd's words (fix/busy-machine).
+  const detail = run.problem === undefined ? {} : { detail: `flint --version: ${run.problem}` };
+  return { path: kit.tool_path, version, auth_ok: run.code === 0 && version !== '', ...detail };
 }
 
 export function createAdapter(kit) {

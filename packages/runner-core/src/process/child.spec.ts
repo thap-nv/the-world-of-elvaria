@@ -3,7 +3,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { IDLE_SCRIPT, cleanUp, goneWithin, treeScript } from '../__fixtures__/tree.ts';
-import { runToEnd, startChild } from './child.ts';
+import { noAnswerWithin, runToEnd, startChild } from './child.ts';
 import type { Tree } from '../__fixtures__/tree.ts';
 
 const NODE = { file: process.execPath, args: ['-e'] };
@@ -78,9 +78,22 @@ describe('runToEnd', () => {
     ).toEqual({ code: 0, signal: null, stdout: 'a\nb', stderr: '', timed_out: false });
   });
 
-  it('kills a program that runs past its timeout', async () => {
+  it('kills a program that runs past its timeout, and says how long it had', async () => {
     const ran = await runToEnd(NODE, [IDLE_SCRIPT], { env: ENV, timeout_ms: 200 });
     expect(ran.timed_out).toBe(true);
     expect(ran.code === 0).toBe(false);
+    expect(ran.problem).toBe(noAnswerWithin(200));
+    expect(noAnswerWithin(30_000)).toBe(
+      'no answer within 30 s, stopped (a busy machine or a slow network): try again',
+    );
+  });
+
+  it('says why a program could not start, and that it did not time out', async () => {
+    const ran = await runToEnd({ file: 'no such program here', args: [] }, [], {
+      env: ENV,
+      timeout_ms: 10_000,
+    });
+    expect(ran).toMatchObject({ code: null, timed_out: false });
+    expect(ran.problem).toMatch(/^did not start: .*ENOENT/);
   });
 });

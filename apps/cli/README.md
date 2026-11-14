@@ -270,6 +270,10 @@ pnpm --filter @elvaria/cli test   # builds dist/, then vitest: commands in-proce
 pnpm elvaria --help               # runs src/cli.ts directly (Node type stripping), no build
 ```
 
+Vitest's global setup (`test/global-setup.ts`) builds the hook of `packages/hooks` once, before any spec, when its
+build is missing or older than its source: the runners the specs start use it as `elvaria run` would, and Codex's
+doctor reports a missing build as `auth_ok: false`, so a spec run alone with no build failed (fix/busy-machine).
+
 Specs run `runCli` on a fake machine (`test/cli.ts`: fixed clock, captured output) and throwaway kingdoms in
 paths with a space and a Vietnamese letter. Fake CLIs are npm-style `.cmd` shims on Windows and shebang scripts
 elsewhere; `cli.spec.ts` spawns the built bin as the owner would. Lines the Steward would have written are
@@ -281,8 +285,7 @@ runs the Steward (`elvaria run`) with it until a rank D quest is done, while a r
 `src/tribe/list.spec.ts` lists it beside the built-in tribes, one with no runner and a broken file, and has
 `doctor --enable` refuse it (P1-34). `fixtures/flint-adapter.mjs` and `fixtures/fake-flint.mjs` are the fourth tribe of
 PS-23: a CLI with hooks of its own, described to Elvaria's hook by a neutral dialect in `policy.json`, and models of
-several makers under its own names; `src/tribe/flint.spec.ts` (with `test/flint.ts`, which builds the hook when its
-build is missing or stale) passes it through every check of the conformance suite, summons its characters at the
+several makers under its own names; `src/tribe/flint.spec.ts` (with `test/flint.ts`) passes it through every check of the conformance suite, summons its characters at the
 levels its models give, takes a rank C quest round, and finds its name in no source of `packages/` or `apps/`. `test/builds.ts` (PS-04b) has a stub build CLI that answers the trial's
 commands as its `behavior.json` says and records each call, a stub pnpm that leaves a link into the build (a
 junction on Windows, a symlink elsewhere), and a fixture repo builds are made from: `src/upgrade/upgrade.spec.ts`
