@@ -3,7 +3,7 @@ export type { CommandLineIssue } from './checks/command-line.ts';
 export { coverOf, globToRegExp, scopeCovers } from './checks/glob.ts';
 export { argvOf } from './checks/argv.ts';
 export type { CommandIssue } from './checks/argv.ts';
-export { runToEnd, startChild } from './process/child.ts';
+export { noAnswerWithin, runToEnd, startChild } from './process/child.ts';
 export type { Child, ChildExit, ChildOptions, ChildRun } from './process/child.ts';
 export { KILL_GRACE_MS, isAlive, killTree } from './process/kill-tree.ts';
 export type { KillTreeOptions } from './process/kill-tree.ts';
