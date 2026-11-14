@@ -57,9 +57,15 @@ async function nextOf(ctx: KingdomContext, runners: Runners, view: JobView): Pro
   return undefined;
 }
 
+/** Why the author's session failed: the CLI's own line when it ended the session in error (fix/amendment-schema). */
+const failedText = (ctx: KingdomContext, failure: ChancellorFailure): string =>
+  failure.code === 'cli_error'
+    ? ctx.t('cli.amend.cli_error', { line: failure.line })
+    : ctx.t('cli.amend.failed', { code: failure.code });
+
 /** Why the owner decides instead, in the owner's language: no author, or the author's session failed. */
 const failureNote = (ctx: KingdomContext, failure: ChancellorFailure | undefined): string =>
-  failure === undefined ? ctx.t('cli.amend.no_author') : ctx.t('cli.amend.failed', { code: failure.code });
+  failure === undefined ? ctx.t('cli.amend.no_author') : failedText(ctx, failure);
 
 type Decision = AmendmentInput['decision'];
 
@@ -87,7 +93,7 @@ async function decisionOf(ctx: KingdomContext, runners: Runners, waiting: Waitin
   const reply = await decideAmendment(authorship.context, authorship.session, run.signal);
   if (reply.ok) return reply.value.decision;
   if (reply.error.code === 'stopped') return undefined;
-  ctx.io.err(ctx.t('cli.amend.failed', { code: reply.error.code }));
+  ctx.io.err(failedText(ctx, reply.error));
   ctx.io.err(ctx.t('cli.say.run_dir', { dir: authorship.session.run_dir }));
   return owner(reply.error);
 }

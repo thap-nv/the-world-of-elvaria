@@ -12,6 +12,7 @@ import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { TZ, foundKingdom, run, tempDir, testIo } from '../../test/cli.ts';
+import { REFUSAL, refusing } from '../../test/refusing.ts';
 import { consoleBell } from '../run/bell.ts';
 import { sayCommand } from './say.ts';
 import type { TempDir, TestIo } from '../../test/cli.ts';
@@ -215,6 +216,9 @@ describe('elvaria say', () => {
     const silent = testIo();
     expect(await say(silent, 'Làm cho tốt hơn', { [CLAUDE]: createFakeRunner() })).toBe(1);
     expect(silent.printed.err[0]).toBe("The Chancellor's session ended without a reply (outcome completed).");
+    const refused = testIo();
+    expect(await say(refused, 'Làm cho tốt hơn', { [CLAUDE]: refusing() })).toBe(1);
+    expect(refused.printed.err[0]).toBe(`The Chancellor's session ended in error: ${REFUSAL}`);
   });
 
   it('needs an idle Chancellor whose tribe runs, and some words', async () => {
