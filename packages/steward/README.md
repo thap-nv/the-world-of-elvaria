@@ -78,9 +78,11 @@
   job (no model) runs there and then, an `off_tick` job (may call a model: PS-03b's triage, PS-21c's docs graph,
   given as `StewardDeps.jobs`) runs outside the tick, one at a time, and `stop()` aborts it. A job that ends without
   throwing writes `schedule.ran`; the next start reads the last day of each from the log, so a job runs once a day
-  however the clock moves, and one a stop cut short runs again. (PS-03b) Jobs due together go by their hour, an
-  in-tick job waits while an off-tick job of an earlier hour runs (the triage before the digest), and an off-tick job
-  may wait for `ready` (its view names the tribes a session runs on, `busy`). The first job is the digest (`digestJob`, given
+  however the clock moves, and one a stop cut short runs again. (PS-03b) Jobs due together go by their hour, and an
+  off-tick job may wait for `ready` (its view names the tribes a session runs on, `busy`). (fix/digest-timing) An
+  in-tick job waits for the day's off-tick jobs of an earlier or equal hour to end, run or not yet ready (the
+  domain's `awaitedJob`), and to have ended before the last tick's step, so the inbox commands they sent are applied:
+  the digest carries the triage's advice however late the Steward started. The first job is the digest (`digestJob`, given
   `StewardDeps.digest`): the domain's `attentionQueue` over the files, the open memos, mana as the log last read it
   (`digestStateOf`) and the Steward's own notices (`noticesOf`: unclaimable, unjudgeable, judges out of mana, tribes
   held by their CLI); the

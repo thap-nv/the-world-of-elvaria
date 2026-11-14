@@ -39,7 +39,8 @@ export interface ScheduledJob {
   readonly mode: JobMode;
   /**
    * Whether an off-tick job may start now (PS-03b); absent: always. One not ready is asked again at the next tick of
-   * the same day, and no job waits for it.
+   * the same day; no off-tick job waits for it, but an in-tick job of a later or equal hour does (fix/digest-timing): the
+   * digest waits for the triage.
    */
   ready?(view: JobView): Promise<boolean>;
   run(run: JobRun): Promise<void>;

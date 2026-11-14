@@ -3,11 +3,13 @@
 // Steward runs an in-tick job there and then, and starts an off-tick one outside the tick, one at a time. The day a job
 // last ran comes from the log (`schedule.ran`, written when a job ends without throwing), so a restart neither runs a
 // finished job again nor skips one a stop cut short; a job that threw waits for the next day or the next start.
-// (PS-03b) Jobs due together go by their hour, and an in-tick job waits while an off-tick job of an earlier or equal
-// hour runs: a Steward started late still triages the memos before it writes the digest. An off-tick job may also
-// wait for its tribe (`ready`), without holding back any other job. (PS-22b) A job on call (an amendment's author) has no
-// hour: it starts outside the tick once no job runs there and it says it has work, and records no `schedule.ran`.
-import { awaitsAuthor, dueJobs, isEventOf, localClockOf } from '@elvaria/domain';
+// (PS-03b) Jobs due together go by their hour. An off-tick job may wait for its tribe (`ready`) without holding back
+// another off-tick job. (fix/digest-timing) An in-tick job waits for the day's off-tick jobs of an earlier or equal
+// hour to end, whether they run, wait to be ready or have not started (awaitedJob), and to have ended before the tick
+// before this one closed, so what they sent to the inbox is applied: the digest carries the triage's advice, however
+// late the Steward started. (PS-22b) A job on call (an amendment's author) has no hour: it starts outside the tick once
+// no job runs there and it says it has work, and records no `schedule.ran`.
+import { awaitedJob, awaitsAuthor, dueJobs, isEventOf, localClockOf } from '@elvaria/domain';
 import type {
   DailyJobId,
   Event,
@@ -45,8 +47,6 @@ export interface Scheduler {
 }
 
 interface Outside {
-  /** A scheduled job's hour, which an in-tick job of a later hour waits for; undefined for a job on call. */
-  readonly at: string | undefined;
   readonly controller: AbortController;
   readonly done: Promise<void>;
 }
@@ -81,8 +81,13 @@ interface Slot {
   current: Outside | undefined;
 }
 
-/** Runs one scheduled job to its end; `schedule.ran` only when it ended without throwing and was not stopped. */
-async function runOne(ctx: Context, job: StewardJob, run: JobRun): Promise<void> {
+type Days = Partial<Record<DailyJobId, string>>;
+
+/**
+ * Runs one scheduled job to its end; `schedule.ran` only when it ended without throwing and was not stopped. `ended`
+ * takes its day either way, unless stopped: a triage that threw holds the digest back no longer.
+ */
+async function runOne(ctx: Context, job: StewardJob, run: JobRun, ended: Days): Promise<void> {
   try {
     await job.run(ctx, run);
     if (run.signal.aborted) return;
@@ -90,28 +95,35 @@ async function runOne(ctx: Context, job: StewardJob, run: JobRun): Promise<void>
   } catch (error) {
     if (!run.signal.aborted) ctx.deps.log.warn(`steward: scheduled ${job.id} failed: ${messageOf(error)}`);
   }
+  if (!run.signal.aborted) ended[job.id] = run.day;
 }
 
 /** `work` outside the tick, in the free slot, which it frees when it ends; the Steward's stop aborts it. */
-function occupy(slot: Slot, at: string | undefined, work: (signal: AbortSignal) => Promise<void>): void {
+function occupy(slot: Slot, work: (signal: AbortSignal) => Promise<void>): void {
   const controller = new AbortController();
   const done = work(controller.signal).finally(() => {
     slot.current = undefined;
   });
-  slot.current = { at, controller, done };
+  slot.current = { controller, done };
 }
 
 /** An off-tick job, started when none runs and it is ready; true when it started. */
-async function startOutside(ctx: Context, slot: Slot, job: StewardJob, view: JobView): Promise<boolean> {
+async function startOutside(
+  ctx: Context,
+  slot: Slot,
+  job: StewardJob,
+  view: JobView,
+  ended: Days,
+): Promise<boolean> {
   if (slot.current !== undefined || (job.ready !== undefined && !(await job.ready(view)))) return false;
-  occupy(slot, ctx.world.kingdom.schedule[job.id].at, (signal) => runOne(ctx, job, { ...view, signal }));
+  occupy(slot, (signal) => runOne(ctx, job, { ...view, signal }, ended));
   return true;
 }
 
 /** A job on call, started when no job runs outside the tick and it is ready; it records no `schedule.ran`. */
 async function startOnCall(ctx: Context, slot: Slot, job: OnCallJob, view: JobView): Promise<void> {
   if (slot.current !== undefined || !(await job.ready(view))) return;
-  occupy(slot, undefined, (signal) =>
+  occupy(slot, (signal) =>
     job.run({ ...view, signal }).catch((error: unknown) => {
       if (!signal.aborted) ctx.deps.log.warn(`steward: ${job.id} failed: ${messageOf(error)}`);
     }),
@@ -120,14 +132,25 @@ async function startOnCall(ctx: Context, slot: Slot, job: OnCallJob, view: JobVi
 
 export function createScheduler(jobs: readonly StewardJob[], onCall: readonly OnCallJob[] = []): Scheduler {
   /** The day each job last started in this Steward, or last ran by the log: it is not due again that day. */
-  const last: Partial<Record<DailyJobId, string>> = {};
+  const last: Days = {};
+  /** The day each job's run last ended in this Steward (ran or threw), or last ran by the log. */
+  const ended: Days = {};
+  /**
+   * `ended` as the last step left it. The tick applies the inbox before its step, so a job ended by then has had what
+   * it sent applied; one that ends during a tick, after the inbox, counts from the next step on.
+   */
+  let settled: Days = {};
   const slot: Slot = { current: undefined };
+  const awaited = jobs.filter(({ mode }) => mode === 'off_tick').map(({ id }) => id);
 
   return {
     recover: (events) => {
       for (const event of events)
-        if (isEventOf(event, 'schedule.ran') && (last[event.data.job] ?? '') < event.data.day)
+        if (isEventOf(event, 'schedule.ran') && (last[event.data.job] ?? '') < event.data.day) {
           last[event.data.job] = event.data.day;
+          ended[event.data.job] = event.data.day;
+        }
+      settled = { ...ended };
     },
     step: async (ctx, zone, notices) => {
       const local = localClockOf(zone, ctx.deps.clock.now());
@@ -136,16 +159,16 @@ export function createScheduler(jobs: readonly StewardJob[], onCall: readonly On
       const view: JobView = { day: local.day, notices, busy: busyTribes(ctx), amendments: amendmentsOf(ctx) };
       for (const job of byHour(jobs, schedule).filter(({ id }) => due.includes(id))) {
         if (job.mode === 'off_tick') {
-          if (await startOutside(ctx, slot, job, view)) last[job.id] = local.day;
+          if (await startOutside(ctx, slot, job, view, ended)) last[job.id] = local.day;
           continue;
         }
-        // The job outside the tick of an earlier hour goes first (PS-03b): the triage before the digest.
-        const outside = slot.current;
-        if (outside?.at !== undefined && outside.at <= schedule[job.id].at) continue;
+        // The day's off-tick jobs of an earlier hour end first (fix/digest-timing): the triage before the digest.
+        if (awaitedJob({ schedule, awaited, local, ended: settled }, job.id) !== undefined) continue;
         last[job.id] = local.day;
-        await runOne(ctx, job, { ...view, signal: ctx.stopping });
+        await runOne(ctx, job, { ...view, signal: ctx.stopping }, ended);
       }
       for (const job of onCall) await startOnCall(ctx, slot, job, view);
+      settled = { ...ended };
     },
     stop: async () => {
       const running = slot.current;

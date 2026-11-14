@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { zonedTime } from '../core/clock.ts';
-import { dueJobs, localClockOf } from './due.ts';
+import { awaitedJob, dueJobs, localClockOf } from './due.ts';
 import type { Instant, ZonedTime } from '../core/clock.ts';
 import type { DailyJobId } from './constants.ts';
-import type { DueSource } from './due.ts';
+import type { AwaitSource, DueSource } from './due.ts';
 
 const zoned = zonedTime('Asia/Ho_Chi_Minh');
 if (!zoned.ok) throw new Error('Asia/Ho_Chi_Minh is a time zone');
@@ -62,5 +62,37 @@ describe('dueJobs', () => {
       'digest',
       'chronicle',
     ]);
+  });
+});
+
+describe('awaitedJob', () => {
+  /** The Steward started late, at 11:29: the triage (07:30) is due with the digest (08:00). */
+  const late = (
+    ended: AwaitSource['ended'] = {},
+    awaited: AwaitSource['awaited'] = ['triage'],
+  ): AwaitSource => ({
+    schedule,
+    awaited,
+    local: localClockOf(zone, at('2026-11-12T11:29:00+07:00')),
+    ended,
+  });
+
+  it('holds the digest until the day’s triage has ended, however late the Steward started', () => {
+    expect(awaitedJob(late(), 'digest')).toBe('triage');
+    expect(awaitedJob(late({ triage: '2026-11-11' }), 'digest')).toBe('triage');
+    expect(awaitedJob(late({ triage: '2026-11-12' }), 'digest')).toBeUndefined();
+    // Ended on a day the clock had wrongly reached: not awaited again, as dueJobs does not run it again.
+    expect(awaitedJob(late({ triage: '2026-11-13' }), 'digest')).toBeUndefined();
+  });
+
+  it('awaits no disabled job, none of a later hour, none the caller lacks, and never the job itself', () => {
+    const off = { ...schedule, triage: { enabled: false, at: '07:30' } };
+    expect(awaitedJob({ ...late(), schedule: off }, 'digest')).toBeUndefined();
+    const after = { ...schedule, triage: { enabled: true, at: '08:30' } };
+    expect(awaitedJob({ ...late(), schedule: after }, 'digest')).toBeUndefined();
+    const same = { ...schedule, triage: { enabled: true, at: '08:00' } };
+    expect(awaitedJob({ ...late(), schedule: same }, 'digest')).toBe('triage');
+    expect(awaitedJob(late({}, []), 'digest')).toBeUndefined();
+    expect(awaitedJob(late({}, ['digest']), 'digest')).toBeUndefined();
   });
 });
