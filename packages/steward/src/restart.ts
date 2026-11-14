@@ -53,7 +53,9 @@ function stallMoveOf(stall: ReviewStall): {
       infirmary: { trip: 'partial_verdicts', detail: { message: MESSAGE, partial_verdicts: stall.count } },
     };
   const detail = { message: MESSAGE, verifiers_stopped: stall.count };
-  if (stall.by === 'crash') return { event: { type: 'crash' }, infirmary: { trip: 'no_verdict', detail } };
+  // A judge whose session never opened left as one that crashed (§2.5 `review.no_session`, fix/review-no-session).
+  if (stall.by === 'crash' || stall.by === 'no_session')
+    return { event: { type: 'crash' }, infirmary: { trip: 'no_verdict', detail } };
   // attempt_log tells time from the rest, not tokens from turns; the CLI's own turn limit is the rare one.
   const trip = stall.by === 'timeout' ? 'time' : 'tokens';
   return { event: { type: 'breaker', trip }, infirmary: { trip, detail } };

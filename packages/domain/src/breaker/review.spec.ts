@@ -1,12 +1,12 @@
 // reviewBreaksOf / reviewStalled (implementation-plan §3.4, P1-23, P1-33): the verifiers of the current run that left
 // without a verdict, a breaker stopped them or they crashed; one that judged, even in part, does not count, nor does
-// an earlier run.
+// an earlier run. A judge whose session never opened: review-no-session.spec.ts.
 import { describe, expect, it } from 'vitest';
 
 import { Q1, inReview, moved, quest } from '../dispatch/__fixtures__/snapshot.ts';
 import { REVIEW_PARTIALS_MAX } from '../constants.ts';
 import {
-  cutVerifiersOf,
+  leftVerifiersOf,
   justPartialOf,
   partialsStalled,
   reviewBreaksOf,
@@ -191,42 +191,51 @@ describe('reviewStallOf', () => {
   });
 });
 
-// cutVerifiersOf (P1-38, P1-35 (d)): the judges a breaker stopped in the open group of the current run.
-describe('cutVerifiersOf', () => {
+// leftVerifiersOf (P1-38, P1-35 (d), fix/review-no-session): the judges that left the open group of the current run
+// without a verdict.
+describe('leftVerifiersOf', () => {
   const review = inReview(quest(Q1), 'thorn', 10);
 
-  it('names nobody before a breaker stopped a judge', () => {
-    expect(cutVerifiersOf(review)).toEqual(new Set());
-    expect(cutVerifiersOf(judged(review, 'wren', 20))).toEqual(new Set());
+  it('names nobody before a judge left without a verdict', () => {
+    expect(leftVerifiersOf(review)).toEqual(new Set());
+    expect(leftVerifiersOf(judged(review, 'wren', 20))).toEqual(new Set());
   });
 
   it('names the judge a breaker stopped, for time, tokens or turns, and still after a partial verdict', () => {
-    expect(cutVerifiersOf(stopped(review, 'wren', 20, 'tokens'))).toEqual(new Set(['wren']));
-    expect(cutVerifiersOf(stopped(review, 'wren', 20, 'time'))).toEqual(new Set(['wren']));
+    expect(leftVerifiersOf(stopped(review, 'wren', 20, 'tokens'))).toEqual(new Set(['wren']));
+    expect(leftVerifiersOf(stopped(review, 'wren', 20, 'time'))).toEqual(new Set(['wren']));
     const read = moved(judged(stopped(review, 'wren', 20, 'turns'), 'brann', 30), 35, [
       'verdict_partial',
       'verifier',
     ]);
-    expect(cutVerifiersOf(read)).toEqual(new Set(['wren']));
+    expect(leftVerifiersOf(read)).toEqual(new Set(['wren']));
   });
 
-  it('does not name a judge that crashed: no breaker stopped it', () => {
-    expect(cutVerifiersOf(moved(judged(review, 'wren', 20), 25, ['crash', 'steward']))).toEqual(new Set());
+  it('names a judge that crashed, or whose session never opened, as one a breaker stopped (fix/review-no-session)', () => {
+    expect(leftVerifiersOf(moved(judged(review, 'wren', 20), 25, ['crash', 'steward']))).toEqual(
+      new Set(['wren']),
+    );
+    const unopened = moved(review, 20, ['no_session', 'steward', { verifier: 'wren' }]);
+    expect(leftVerifiersOf(unopened)).toEqual(new Set(['wren']));
+  });
+
+  it('does not name a judge whose session the Steward lost while it did not run (P1-44)', () => {
+    expect(leftVerifiersOf(moved(judged(review, 'wren', 20), 25, ['release', 'steward']))).toEqual(new Set());
   });
 
   it("names nobody once the owner's retry closed a full group, and counts the cuts after it", () => {
     const stalled = stopped(stopped(review, 'wren', 20, 'tokens'), 'brann', 30, 'time');
     const sick = moved(stalled, 35, ['breaker', 'steward', { trip: 'tokens' }]);
     const retried = moved(sick, 40, ['retry', 'user']);
-    expect(cutVerifiersOf(retried)).toEqual(new Set());
-    expect(cutVerifiersOf(stopped(retried, 'brann', 50, 'tokens'))).toEqual(new Set(['brann']));
+    expect(leftVerifiersOf(retried)).toEqual(new Set());
+    expect(leftVerifiersOf(stopped(retried, 'brann', 50, 'tokens'))).toEqual(new Set(['brann']));
   });
 
   it('forgets the cuts of an earlier run', () => {
     const once = stopped(review, 'wren', 20, 'tokens');
     const failed = moved(judged(once, 'brann', 30), 35, ['verdict_fail', 'verifier', { verdict_id: 'v1' }]);
     const again = moved(failed, 40, ['redispatch', 'steward'], ['submit', 'runner']);
-    expect(cutVerifiersOf(again)).toEqual(new Set());
+    expect(leftVerifiersOf(again)).toEqual(new Set());
   });
 });
 

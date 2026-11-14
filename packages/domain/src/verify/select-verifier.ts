@@ -8,12 +8,13 @@
 // `prompt_and_parse`, P1-33), then the one idle the longest. With no judge of another family free,
 // dispatch.verifier_same_family decides: `different_model` takes a free judge of the same family on another model
 // (or waits for one), `machine_only` waits for a judge of another family while the roster has one, and lets the
-// machine judge once it has none. A judge a breaker stopped in this review is not chosen again while another judge
-// may take it (P1-38, P1-35 (d)): it would most likely spend its budget the same way; nor is the judge that just
-// handed in a partial verdict (P1-48, P1-42 (c)): fresh eyes read on from where it stopped. (PS-22) An objection
+// machine judge once it has none. A judge that left this review without a verdict is not chosen again while another
+// judge may take it: one a breaker stopped would most likely spend its budget the same way (P1-38, P1-35 (d)), one
+// whose session crashed or never opened most likely fails the same way (fix/review-no-session); nor is the judge that
+// just handed in a partial verdict (P1-48, P1-42 (c)): fresh eyes read on from where it stopped. (PS-22) An objection
 // waiting on the quest takes a second judge: never the judge of the verdict it contests, and never the machine, which
 // cannot read a letter; with no such judge in the roster the quest waits as one nobody may judge.
-import { cutVerifiersOf, justPartialOf } from '../breaker/review.ts';
+import { justPartialOf, leftVerifiersOf } from '../breaker/review.ts';
 import { apartFromAll, familyOfCharacter } from '../character/family.ts';
 import { STRONG_JUDGE_MIN_RANK } from '../constants.ts';
 import { byIdleSince } from '../dispatch/roster.ts';
@@ -124,8 +125,8 @@ export function waitsForNoJudge(
 }
 
 /**
- * The fit judges less those a breaker stopped in this review (cutVerifiersOf) and the one that just handed in a
- * partial verdict (justPartialOf), when one that `may` take it is left, free now or later: the quest then waits for
+ * The fit judges less those that left this review without a verdict (leftVerifiersOf) and the one that just handed in
+ * a partial verdict (justPartialOf), when one that `may` take it is left, free now or later: the quest then waits for
  * that one. With nobody else, they may judge again, and REVIEW_BREAKS_MAX and REVIEW_PARTIALS_MAX bound the review as
  * before; neither the machine nor a waiting quest stands in for them.
  */
@@ -134,7 +135,7 @@ function besidesPassedOver(
   fit: readonly Character[],
   may: (character: Character) => boolean,
 ): readonly Character[] {
-  const passedOver = new Set(cutVerifiersOf(quest));
+  const passedOver = new Set(leftVerifiersOf(quest));
   const partial = justPartialOf(quest);
   if (partial !== undefined) passedOver.add(partial);
   const others = fit.filter(({ id }) => !passedOver.has(id));

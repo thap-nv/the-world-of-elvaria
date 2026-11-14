@@ -3,7 +3,8 @@
 // with the reason and the bell; a verifier stopped so leaves the review to the next one, until a breaker has stopped
 // REVIEW_BREAKS_MAX verifiers of the run and the review goes to the infirmary too (P1-23). The same end awaits an
 // assignee whose CLI stopped itself at its own limit (settle.ts), and a quest no session can open for because its
-// secrets are missing (open.ts): that one waits in the infirmary instead of being claimed again every tick.
+// secrets are missing (open.ts) or its spawn failed (no-session.ts): that one waits in the infirmary instead of being
+// claimed again every tick.
 import { reviewBreaksOf, reviewStalled } from '@elvaria/domain';
 import { openJournal } from '@elvaria/eventlog';
 import { plotCommitMessage } from '@elvaria/runner-core';
@@ -167,18 +168,29 @@ export async function tripBreakers(ctx: Context, breakers: readonly Breaker[]): 
 }
 
 /**
- * No session can open on `quest`: the treasury lacks a secret it asks for, or its territory dropped one (§3.9).
- * Only the owner can fix that, so the quest goes to the infirmary with the bell (trip `secrets`) instead of
- * being claimed and released every tick. A sleeper holding the paused quest lets go of it.
+ * No session can open on `quest` for its assignee, and only the owner can see to it: the treasury lacks a secret it
+ * asks for, or its territory dropped one (trip `secrets`, §3.9); or the spawn failed (trip `no_session`: its CLI is
+ * gone, the prompt is longer than the CLI takes, the plot could not be made; fix/review-no-session). The quest goes
+ * to the infirmary with the bell instead of being claimed and released, sent back or woken every tick. A sleeper
+ * holding the paused quest lets go of it.
  */
-export function secretsBreaker(ctx: Context, quest: Quest, why: string): Promise<Result<Quest, string>> {
+export function cannotOpen(
+  ctx: Context,
+  quest: Quest,
+  trip: Extract<BreakerTrip, 'secrets' | 'no_session'>,
+  why: string,
+): Promise<Result<Quest, string>> {
   const holder = typeof quest.assignee === 'string' ? ctx.world.characters.get(quest.assignee) : undefined;
   const holds = quest.status === 'paused_mana' && holder?.current?.quest === quest.id;
   return moveAndRing(ctx, {
     quest: quest.id,
-    event: { type: 'breaker', trip: 'secrets' },
+    event: { type: 'breaker', trip },
     actor: 'steward',
     edits: holds ? { [holder.id]: step('unassign') } : {},
-    infirmary: { trip: 'secrets', detail: { message: why } },
+    infirmary: { trip, detail: { message: why } },
   });
 }
+
+/** cannotOpen for secrets the quest asks for and cannot have (§3.9, P1-06). */
+export const secretsBreaker = (ctx: Context, quest: Quest, why: string): Promise<Result<Quest, string>> =>
+  cannotOpen(ctx, quest, 'secrets', why);

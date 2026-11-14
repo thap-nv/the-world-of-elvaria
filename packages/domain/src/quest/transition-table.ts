@@ -31,7 +31,7 @@ const GUARD_TEXT: Readonly<Record<QuestGuard, string>> = {
   has_verifier: 'có `verifier`',
   undelivered: 'chưa có `deliverable.delivered_at`',
   stalled_review:
-    '`REVIEW_BREAKS_MAX` người chấm của lượt đã rời đi không ra verdict (cầu dao cắt hoặc `crash`), hoặc `REVIEW_PARTIALS_MAX` người nộp verdict `partial` (`reviewStalled`)',
+    '`REVIEW_BREAKS_MAX` người chấm của lượt đã rời đi không ra verdict (cầu dao cắt, `crash` hoặc `no_session`), hoặc `REVIEW_PARTIALS_MAX` người nộp verdict `partial` (`reviewStalled`)',
   no_stalled_review: 'không phải `reviewStalled`',
 };
 
@@ -47,9 +47,10 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
   'open.cancel': 'lệnh `cancel`; mọi trạng thái chưa xong đều hủy được',
   'claimed.start':
     'đất riêng xong, phiên mở; `attempts` +1, mở lượt mới `n` trong `attempt_log`; lượt máy của quest ghép (không có `assignee`) mở lượt `n` mà `attempts` không tăng (P1-55)',
-  'claimed.release': 'spawn lỗi; `attempts` không tăng, bỏ `assignee`',
+  'claimed.release':
+    'Nhiếp chính đang dừng giữa lúc dựng đất riêng, nên phiên không mở; `attempts` không tăng, bỏ `assignee` (P1-49)',
   'claimed.breaker':
-    'trip `secrets`: kho bảo vật thiếu secret quest xin, hoặc lãnh thổ đã bỏ nó khỏi `secrets_allowed`; không mở phiên, `attempts` không đổi, chuông',
+    'trip `secrets`: kho bảo vật thiếu secret quest xin, hoặc lãnh thổ đã bỏ nó khỏi `secrets_allowed`; hoặc trip `no_session`: phiên không mở được (spawn lỗi: CLI không còn, prompt dài quá mức CLI nhận, đất riêng không dựng được), trước đó quest mở lại rồi được nhận lại mỗi nhịp mà không ai hay (fix/review-no-session); không mở phiên, `attempts` không đổi, chuông',
   'working.submit.by_character':
     'có handover.md; mọi thay đổi đã commit vào nhánh; lượt kết thúc `submitted`',
   'working.submit.by_machine':
@@ -73,12 +74,15 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
     'người dùng đổi người; hoặc Nhiếp chính, khi quest ngủ quá `mana.reassign_after_hours` và có người cùng nghề còn mana (`selectAssignee`, P1-22); mọi `reassign` vượt hạng trần của cấp người mới ⇒ `seal_required`; người cũ bỏ `current`',
   'paused_mana.suspend':
     'người dùng đình chỉ nhân vật đang ngủ trên quest (§2.6): quest thả người đó, bỏ `assignee`, mở lại cho Nhiếp chính giao như mọi quest open; `attempts` giữ, lượt đã kết thúc `paused` từ trước (P1-22)',
-  'paused_mana.breaker': 'trip `secrets`, như `claimed`; người làm đang ngủ bỏ `current`',
+  'paused_mana.breaker':
+    'trip `secrets` hay `no_session` (phiên đánh thức không mở được), như `claimed`; người làm đang ngủ bỏ `current`',
   'blocked.answer.has_assignee':
     'câu trả lời ghi vào `blocked.answer` và handover.md; phiên mới, cùng lượt `n`',
   'blocked.unblock.no_assignee': '`depends_on` xong',
   'review.assign_verifier.needs_verifier':
     '`selectVerifier` (§3.2), mở lượt vai verifier; quest bậc script không bao giờ có verifier là nhân vật',
+  'review.no_session.needs_verifier':
+    'người chấm được chọn không mở được phiên (spawn lỗi): mục vai verifier của nó mở và kết thúc ngay, `no_session`; như `crash`, nó rời lượt chấm, đếm vào `reviewBreaksOf` và không được chọn lại khi còn người khác; tới trần thì hàng `review.crash.needs_verifier` (fix/review-no-session)',
   'review.verdict_pass.no_seal':
     'verdict của verifier, hoặc của máy (`machine`) khi không có verifier (ADR 0008)',
   'review.verdict_pass.seal_required': 'chuông',
@@ -97,14 +101,14 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
   'review.breaker.needs_verifier':
     'trip `secrets`, như `claimed`: người chấm cần cùng secret với người làm; hoặc ngay sau hàng trên, khi `REVIEW_BREAKS_MAX` (2) người chấm của lượt đã rời đi không ra verdict (`reviewStalled`, P1-23) và người cuối bị cầu dao cắt, chuông; hoặc lúc Nhiếp chính khởi động, khi Nhiếp chính trước dừng giữa hàng trên và hàng này (P1-44)',
   'review.crash.has_verifier':
-    'phiên người chấm kết thúc mà không có phán quyết (CLI lỗi, output không thành verdict): như trên, lượt kết thúc `crash`, đếm vào `reviewBreaksOf` (P1-33)',
+    'phiên người chấm kết thúc mà không có phán quyết (CLI lỗi, output không thành verdict): như trên, lượt kết thúc `crash`, đếm vào `reviewBreaksOf` (P1-33); không được chọn lại trong lượt chấm khi còn người khác (fix/review-no-session)',
   'review.crash.needs_verifier':
-    'ngay sau hàng trên, khi `REVIEW_BREAKS_MAX` (2) người chấm của lượt đã rời đi không ra verdict (`reviewStalled`, P1-33): trip `no_verdict`, chuông; `retry` của người dùng đưa về review như với cầu dao; hoặc lúc Nhiếp chính khởi động, khi Nhiếp chính trước dừng giữa hàng trên và hàng này (P1-44)',
+    'ngay sau hàng trên hay hàng `review.no_session`, khi `REVIEW_BREAKS_MAX` (2) người chấm của lượt đã rời đi không ra verdict (`reviewStalled`, P1-33): trip `no_verdict`, chuông; `retry` của người dùng đưa về review như với cầu dao; hoặc lúc Nhiếp chính khởi động, khi Nhiếp chính trước dừng giữa hàng trên và hàng này (P1-44)',
   'review.release.has_verifier':
     'phiên người chấm kết thúc trong lúc không có Nhiếp chính nào chạy: người chấm rời đi, lượt kết thúc `cancelled`, không đếm vào `reviewBreaksOf` (P1-44)',
   'review.suspend.has_verifier': 'như trên, khi người dùng đình chỉ người chấm',
   'returned.redispatch': '`attempts` +1, lượt mới, cùng `assignee`, prompt kèm notes',
-  'returned.breaker': 'trip `secrets`, như `claimed`',
+  'returned.breaker': 'trip `secrets` hay `no_session` (phiên làm lại không mở được), như `claimed`',
   'awaiting_seal.seal': '`seal`, verdict `by_human = true` (nặng ×3)',
   'awaiting_seal.return.by_character': 'lệnh `return` kèm ghi chú; bỏ `verifier`',
   'awaiting_seal.return.merged_by_machine':

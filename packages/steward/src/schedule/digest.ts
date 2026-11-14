@@ -1,7 +1,7 @@
 // The digest (implementation-plan §3.16.3, PS-03): the first scheduled job, in the tick and without a model. The
 // Steward decides when (dueJobs) and what (attentionQueue over the world state and its own notices); the Digest port
 // of the composition root words it in the owner's language and writes `digest/<day>.md`. Then one line and one ring.
-import { attentionQueue, reduce, scopeHoldsOf, worldStateOf } from '@elvaria/domain';
+import { attentionQueue, reduce, scopeHoldsOf, unopenedReviewsOf, worldStateOf } from '@elvaria/domain';
 import type {
   Character,
   Event,
@@ -54,7 +54,8 @@ const classOf = (world: World, id: QuestId): string => {
 
 /**
  * What the Steward knows that no file holds, as this tick left it (unclaimable.ts, unjudgeable.ts, judge-waits.ts,
- * tribe-versions.ts), and the done quests whose scope others wait for (PS-05), which the world state cannot tell.
+ * tribe-versions.ts), and what the world state cannot tell from the quest files: the done quests whose scope others
+ * wait for (PS-05), the reviews whose latest judge could not open a session (fix/review-no-session).
  */
 export function noticesOf(
   world: World,
@@ -70,6 +71,7 @@ export function noticesOf(
       gauges,
     })),
     scope_held: scopeHoldsOf([...world.quests.values()], [...world.territories.values()]),
+    judges_unopened: unopenedReviewsOf([...world.quests.values()]),
   };
 }
 
