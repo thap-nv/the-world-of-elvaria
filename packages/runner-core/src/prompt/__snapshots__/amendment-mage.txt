@@ -77,6 +77,10 @@ Gom mọi kiểm tra vào một lệnh.
 
 Một lệnh `pnpm check` cho CI.
 
+# The plan's summary, in `plans/check.md`
+
+Hai phần: d1 thêm script `check` (hiệp sĩ, D), d2 cập nhật README (thư lại, E). Rủi ro: lint chặn sửa tay package.json.
+
 # The amendment
 
 `m_20261106_4k2pqz` from `thorn`, at the end of run 1; files: `package.json`

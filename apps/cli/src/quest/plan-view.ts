@@ -2,7 +2,8 @@
 // with, apart from the rest, and once the plan waits for the seal, the summary of its plan file, the page the owner
 // seals it on. The plan file is a `plans/*.md` the quest changed in its plot (planFilesOf), what the Steward's
 // subquests check read before the judge; what the plot changed comes from runner-core's PlotManager, as for the
-// Steward (git on a worktree, the folder's files on a folder).
+// Steward (git on a worktree, the folder's files on a folder). The mage that decides an amendment to one of the plan's
+// sub-quests reads the same summaries (planSummariesOf, fix/mage-plan-file).
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -37,16 +38,35 @@ async function changedIn(ctx: KingdomContext, quest: Quest): Promise<readonly st
   return manager.touched(quest.plot).catch(() => []);
 }
 
+/** A plan file the quest changed, and its `## Summary`. */
+export interface PlanSummary {
+  readonly file: string;
+  readonly summary: string;
+}
+
+/**
+ * The summary of each plan file the quest changed, in the files' order; none without a plot, or once its worktree is
+ * gone (the quest archived). Also what the mage reads when it decides an amendment (fix/mage-plan-file, PS-22b (C)).
+ */
+export async function planSummariesOf(ctx: KingdomContext, quest: Quest): Promise<PlanSummary[]> {
+  const dir = plotDirOf(ctx.store.root, quest.plot);
+  if (dir === undefined) return [];
+  const summaries: PlanSummary[] = [];
+  for (const file of planFilesOf(await changedIn(ctx, quest))) {
+    const text = await readFile(path.join(dir, ...file.split('/')), 'utf8').catch(() => '');
+    const summary = planSummaryOf(text);
+    if (summary !== undefined) summaries.push({ file, summary });
+  }
+  return summaries;
+}
+
 /** The summary of each plan file the quest changed, after its title; a line that says there is none else. */
 async function summaryLines(ctx: KingdomContext, quest: Quest): Promise<string[]> {
-  const dir = plotDirOf(ctx.store.root, quest.plot);
-  const files = dir === undefined ? [] : planFilesOf(await changedIn(ctx, quest));
-  const lines: string[] = [];
-  for (const file of files) {
-    const text = await readFile(path.join(dir ?? '', ...file.split('/')), 'utf8').catch(() => '');
-    const summary = planSummaryOf(text);
-    if (summary !== undefined) lines.push('', ctx.t('cli.quest.show.plan_summary', { file }), summary);
-  }
+  const lines = (await planSummariesOf(ctx, quest)).flatMap(({ file, summary }) => [
+    '',
+    ctx.t('cli.quest.show.plan_summary', { file }),
+    summary,
+  ]);
   return lines.length > 0 ? lines : ['', ctx.t('cli.quest.show.no_plan_summary')];
 }
 
