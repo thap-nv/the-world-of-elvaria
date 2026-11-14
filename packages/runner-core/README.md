@@ -179,7 +179,8 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   or not; no branch is made, only the logs stay in `.runs/trial-<territory>*`. A failed step names the command its
   log ran last and the first line of its output that says why (`src/plot/trial-log.ts`), or the line the
   territory's `environment_errors` find; given the gazetteer's stamp it counts the commits since. No secret reaches
-  the trial: a setup that needs one fails there.
+  the trial: a setup that needs one fails there. `commitsSinceStamp` counts the same commits without a trial and
+  without a fetch (`forkPoint` with `fetch: false`: origin's branch as the last fetch left it), for `doctor`.
 - Runs the machine checks before a judge (`runChecks`, §3.2): the territory's `checks` whose `when` globs match
   what the quest touched (`selectChecks`, `globToRegExp`: dot names match, case-insensitive, like the laws' globs
   in the hook), one at a time in the plot, each logged to `<run_dir>/checks/<id>.log`; with

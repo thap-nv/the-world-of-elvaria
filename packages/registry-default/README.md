@@ -24,7 +24,8 @@
   two examples that pass the Steward's `subquests` check (scopes, quest template, peak context). `council_review`
   runs the step `check_plan_ready` after `read_plan` (PS-06).
 - Exports `loadDefaultRegistry()` (read + validate through `@elvaria/domain`), `registryFiles()` (what init
-  copies) and `REGISTRY_ROOT`.
+  copies; given another folder, the same list in another build of this package, which `elvaria upgrade` compares
+  with the kingdom, fix/kingdom-upkeep) and `REGISTRY_ROOT`.
 
 ## Does not
 

@@ -31,20 +31,30 @@ export interface TerritoryScorecard {
   readonly ready: boolean;
 }
 
+/** What the items without a trial read: the territory file, the ledger and the gazetteer. */
+export type ScorecardInputWithoutTrial = Omit<ScorecardInput, 'trial'>;
+
+/**
+ * The items after TRIAL_ITEMS, in SCORECARD_ITEMS order: none needs a trial, so `doctor` reads them each time it
+ * runs and takes only TRIAL_ITEMS from the last trial (fix/kingdom-upkeep).
+ */
+export function itemsWithoutTrialOf(input: ScorecardInputWithoutTrial): ScorecardItem[] {
+  const { territory, metrics, gazetteer } = input;
+  return [
+    setAsideItem(territory, metrics),
+    gazetteerItem(territory, gazetteer),
+    pathsItem(territory),
+    firstPassItem(territory, metrics),
+  ];
+}
+
 export function territoryScorecardOf(input: ScorecardInput): TerritoryScorecard {
-  const { territory, metrics, trial, gazetteer } = input;
+  const { territory, trial } = input;
   const trialPart = trialItem(territory, trial);
   return {
     territory: territory.id,
     base: shownBase(trial),
-    items: [
-      trialPart,
-      checkTimeItem(territory, trial),
-      setAsideItem(territory, metrics),
-      gazetteerItem(territory, gazetteer),
-      pathsItem(territory),
-      firstPassItem(territory, metrics),
-    ],
+    items: [trialPart, checkTimeItem(territory, trial), ...itemsWithoutTrialOf(input)],
     ready: trialPart.status === 'pass',
   };
 }

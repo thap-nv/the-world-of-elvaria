@@ -37,19 +37,19 @@ export interface RegistryEntriesReport {
   readonly backup?: string;
 }
 
-type Entry = Readonly<Record<string, unknown>> & { readonly id: string };
-type RawFiles = Readonly<Record<RegistryFile, Readonly<Record<string, unknown>>>>;
+export type Entry = Readonly<Record<string, unknown>> & { readonly id: string };
+export type RawFiles = Readonly<Record<RegistryFile, Readonly<Record<string, unknown>>>>;
 
 const isEntry = (value: unknown): value is Entry =>
   typeof value === 'object' && value !== null && typeof (value as { id?: unknown }).id === 'string';
 
 /** The entries of one registry file's value (`{ version, kinds: [...] }`); anything else is the loader's to report. */
-const entriesOf = (value: Readonly<Record<string, unknown>>, file: RegistryFile): Entry[] => {
+export const entriesOf = (value: Readonly<Record<string, unknown>>, file: RegistryFile): Entry[] => {
   const list = value[file];
   return Array.isArray(list) ? list.filter(isEntry) : [];
 };
 
-const asObject = (value: unknown): Readonly<Record<string, unknown>> =>
+export const asObject = (value: unknown): Readonly<Record<string, unknown>> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : {};

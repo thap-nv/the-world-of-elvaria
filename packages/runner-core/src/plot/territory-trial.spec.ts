@@ -7,9 +7,11 @@ import path from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import type { Territory } from '@elvaria/domain';
+
 import { TEST_HOST, commitFile, git, gitRepo, territoryAt } from '../__fixtures__/git-repo.ts';
 import { RM_TEMP } from '../__fixtures__/temp.ts';
-import { trialIdOf, tryTerritory } from './territory-trial.ts';
+import { commitsSinceStamp, trialIdOf, tryTerritory } from './territory-trial.ts';
 
 const SCRIPTS: Record<string, string> = {
   'setup.mjs': "import { writeFileSync } from 'node:fs';\nwriteFileSync('setup-ran.txt', 'yes');\n",
@@ -141,5 +143,41 @@ describe('tryTerritory', () => {
       host: { ...TEST_HOST, resolve: () => Promise.resolve(undefined) },
     });
     expect(gitless.trial.plot_failure).toBe('git is not found');
+  });
+});
+
+describe('commitsSinceStamp', () => {
+  const countOf = (territory: Territory, stamp: string, host = TEST_HOST) =>
+    commitsSinceStamp({ territory, host, stamp });
+
+  it("counts to origin's branch as the last fetch left it, never fetching", async () => {
+    const local = await gitRepo(path.join(root, 'Tool - Counted'));
+    const stamp = git(local, 'rev-parse', 'HEAD');
+    await commitFile(local, 'a.txt', 'a');
+    const upstream = path.join(root, 'upstream counted.git');
+    git(root, 'clone', '-q', '--bare', local, upstream);
+    const other = path.join(root, 'Tool - Other clone');
+    git(root, 'clone', '-q', upstream, other);
+    git(other, 'config', 'user.name', 'Elvaria Test');
+    git(other, 'config', 'user.email', 'test@elvaria.invalid');
+    await commitFile(other, 'b.txt', 'b');
+    git(other, 'push', '-q', 'origin', 'main');
+    git(local, 'remote', 'add', 'origin', upstream);
+    const territory = territoryAt(local, { vcs: { type: 'git', default_branch: 'main', remote: 'origin' } });
+    expect(await countOf(territory, stamp)).toBe(1);
+    expect(git(local, 'branch', '--remotes')).toBe('');
+    git(local, 'fetch', '-q', 'origin');
+    expect(await countOf(territory, stamp)).toBe(2);
+    expect(await countOf(territory, 'deadbeefdeadbeef')).toBeNull();
+  });
+
+  it('counts nothing without git, outside a repo, or without the default branch', async () => {
+    expect(await countOf(territoryAt(repo, { vcs: { type: 'none' } }), first)).toBeUndefined();
+    expect(await countOf(territoryAt(kingdom), first)).toBeUndefined();
+    const branchless = territoryAt(repo, { vcs: { type: 'git', default_branch: 'nope' } });
+    expect(await countOf(branchless, first)).toBeUndefined();
+    const gitless = { ...TEST_HOST, resolve: () => Promise.resolve(undefined) };
+    expect(await countOf(territoryAt(repo), first, gitless)).toBeUndefined();
+    expect(await countOf(territoryAt(repo), first)).toBe(Object.keys(SCRIPTS).length);
   });
 });

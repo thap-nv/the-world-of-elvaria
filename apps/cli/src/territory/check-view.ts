@@ -3,7 +3,8 @@
 import type { ScorecardItem, ScorecardStatus, TerritoryScorecard } from '@elvaria/domain';
 import type { MessageKey, Translate } from '@elvaria/i18n';
 
-const MARK: Readonly<Record<ScorecardStatus, string>> = { pass: '✓', fail: '✗', unmeasured: '—' };
+/** The mark of an item's state, on the card and in `doctor`'s line of the territory. */
+export const MARK: Readonly<Record<ScorecardStatus, string>> = { pass: '✓', fail: '✗', unmeasured: '—' };
 const INDENT = '    ';
 
 export const itemKeyOf = (item: Pick<ScorecardItem, 'id'>): MessageKey =>
