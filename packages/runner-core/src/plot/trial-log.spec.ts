@@ -6,6 +6,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { RM_TEMP } from '../__fixtures__/temp.ts';
+import { TRIAL_TEST_FAILURE, TRIAL_TEST_LOG } from '../__fixtures__/trial-test-log.ts';
 import { failureInLog, failureInLogFile } from './trial-log.ts';
 
 describe('failureInLog', () => {
@@ -34,6 +35,30 @@ describe('failureInLog', () => {
     expect(failureInLog('$ node quiet.mjs\n\n')).toEqual({ command: 'node quiet.mjs' });
     expect(failureInLog('')).toEqual({});
     expect(failureInLog('fatal: not a git repository')).toEqual({ line: 'fatal: not a git repository' });
+  });
+
+  it("names vitest's FAIL line of a real log, never a coverage row whose file says fail (territory check elvaria)", () => {
+    expect(failureInLog(TRIAL_TEST_LOG)).toEqual({ command: 'pnpm test', line: TRIAL_TEST_FAILURE });
+    // Without FAIL lines, the first × of the tree; without either, the first line that says why, past the table.
+    const crosses = TRIAL_TEST_LOG.split('\n').filter((line) => !line.includes(' FAIL '));
+    expect(failureInLog(crosses.join('\n')).line).toBe(
+      'apps/cli test:      × reminds of a territory never tried 2647ms',
+    );
+    const table = ['$ pnpm test', 'pkg test:   fail-streak.ts   | 100 | 100 | 100 |', 'Error: no setup'];
+    expect(failureInLog(table.join('\n')).line).toBe('Error: no setup');
+  });
+
+  it('reads no word of failure inside a file name or path', () => {
+    for (const quiet of [
+      'see fail-streak.ts',
+      'tests_fail stays',
+      'logs/errors/a.txt',
+      'C:\\fail\\x',
+      'x.failed',
+    ]) {
+      expect(failureInLog(`$ x\n${quiet}\nlast`).line).toBe('last');
+    }
+    expect(failureInLog('$ x\nFound 3 errors.\nlast').line).toBe('Found 3 errors.');
   });
 
   it('cuts a long line to one line of the card', () => {

@@ -3,6 +3,7 @@
 // (logged-run.ts), so the last such header is the one that failed; it was masked when it closed.
 import { Buffer } from 'node:buffer';
 import { open } from 'node:fs/promises';
+import { stripVTControlCharacters } from 'node:util';
 
 import { inKingdom } from '@elvaria/store';
 
@@ -11,30 +12,59 @@ const READ_BYTES = 524_288;
 /** One line on the card: a stack trace's first frame is no reason. */
 const LINE_MAX_CHARS = 300;
 const HEADER = '$ ';
+/** A row of a table (vitest's coverage: `| 100 | 100 | …`) has this many `|` or more; it never tells why. */
+const TABLE_PIPES = 3;
 
-/** Words a tool writes when it fails: pnpm's ERR_PNPM_…, npm ERR!, vitest's FAIL, git's fatal, a missing program. */
-const SAYS_WHY =
-  /\b(?:error|errors|fail|failed|failure|fails|fatal|exception|cannot|not found|no such|denied|refused|missing)\b|\bERR_[A-Z_]+|ERR!/i;
+/** A test runner's own failure line, alone or after pnpm's `<package> test:` prefix: vitest's and jest's FAIL. */
+const RUNNER_FAIL = /(?:^|: )\s*FAIL\s/;
+/** A failed test in a runner's tree: vitest's `×`, node:test's `✖`. */
+const RUNNER_CROSS = /(?:^|: )\s*[×✖]\s/u;
+
+/**
+ * Words a tool writes when it fails: pnpm's ERR_PNPM_…, npm ERR!, git's fatal, a missing program. Never inside a file
+ * name or path (`fail-streak.ts`, `tests_fail`), whose words a table or a stack names (territory check elvaria,
+ * 2026-11-13: the card named a coverage row): no word character, `-`, `/` or `\` on either side, no `.` before.
+ */
+const WHY_WORDS =
+  'error|errors|fail|failed|failure|fails|fatal|exception|cannot|not found|no such|denied|refused|missing';
+const SAYS_WHY = new RegExp(
+  String.raw`(?<![\w./\\-])(?:${WHY_WORDS})(?![\w/\\-]|\.\w)|\bERR_[A-Z_]+|ERR!`,
+  'i',
+);
 
 export interface LogFailure {
   /** The command of the last `$` header; undefined when the read part of the log has none. */
   readonly command?: string;
-  /** The first output line after it that names a failure, else its last output line; undefined without output. */
+  /** The line that names the failure (failureLineOf), else its last output line; undefined without output. */
   readonly line?: string;
 }
 
 const shortened = (line: string): string =>
   line.length > LINE_MAX_CHARS ? `${line.slice(0, LINE_MAX_CHARS - 1)}…` : line;
 
-/** The failure a log's text tells. */
+const isTableRow = (line: string): boolean => line.split('|').length > TABLE_PIPES;
+
+/**
+ * The line that names the failure: a test runner's first `FAIL` line (it names the file and the test), else its first
+ * `×`, else the first line with a word of failure that is no table row; undefined when none says.
+ */
+function failureLineOf(output: readonly string[]): string | undefined {
+  return (
+    output.find((line) => RUNNER_FAIL.test(line)) ??
+    output.find((line) => RUNNER_CROSS.test(line)) ??
+    output.find((line) => !isTableRow(line) && SAYS_WHY.test(line))
+  );
+}
+
+/** The failure a log's text tells; colours (ANSI codes) are gone from the line it names. */
 export function failureInLog(text: string): LogFailure {
-  const lines = text.replaceAll('\r\n', '\n').split('\n');
+  const lines = stripVTControlCharacters(text).replaceAll('\r\n', '\n').split('\n');
   const header = lines.findLastIndex((line) => line.startsWith(HEADER));
   const output = lines
     .slice(header + 1)
     .map((line) => line.trim())
     .filter((line) => line !== '');
-  const line = output.find((entry) => SAYS_WHY.test(entry)) ?? output.at(-1);
+  const line = failureLineOf(output) ?? output.at(-1);
   const command = lines[header]?.slice(HEADER.length).trim();
   return {
     ...(command === undefined ? {} : { command }),
