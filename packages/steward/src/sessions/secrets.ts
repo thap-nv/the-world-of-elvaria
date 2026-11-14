@@ -5,11 +5,11 @@
 // the plot (P1-06) and by startChecks, questSecretsOf by startChecks too (the checks get the session's secrets,
 // P1-10b) and by the openings before the plot (its `commands.setup` gets them, P1-30), maskFinished by the tick
 // before settle and by the breakers after a kill.
-import { secretsBeyond } from '@elvaria/domain';
+import { infirmaryReasonOf, secretsBeyond } from '@elvaria/domain';
 import { createRedactor, redactDeep } from '@elvaria/eventlog';
 import { secretValuesOf, sessionEnv } from '@elvaria/runner-core';
 import { redactHandover } from '@elvaria/store';
-import type { Quest, Territory } from '@elvaria/domain';
+import type { InfirmaryReason, Quest, Territory } from '@elvaria/domain';
 import type { RunResult, RunningSession, SpawnRequest } from '@elvaria/runner-core';
 
 import type { Context } from '../context.ts';
@@ -55,18 +55,24 @@ export async function secretsLacking(
   ctx: Context,
   quest: Quest,
   territory: Territory,
-): Promise<string | undefined> {
+): Promise<InfirmaryReason | undefined> {
   if (quest.secrets_required.length === 0) return undefined;
   const refused = secretsBeyond(quest.secrets_required, territory);
-  if (refused.length > 0) return `territory ${territory.id} does not allow the secrets ${refused.join(', ')}`;
+  if (refused.length > 0)
+    return infirmaryReasonOf('breaker:secrets_refused', {
+      territory: territory.id,
+      names: refused.join(', '),
+    });
   let held: readonly string[];
   try {
     held = await ctx.deps.treasury.names();
   } catch (error) {
-    return `the treasury cannot be read: ${errorText(error)}`;
+    return infirmaryReasonOf('breaker:treasury_unreadable', { error: errorText(error) });
   }
   const missing = quest.secrets_required.filter((name) => !held.includes(name));
-  return missing.length === 0 ? undefined : `the treasury has no ${missing.join(', ')}`;
+  return missing.length === 0
+    ? undefined
+    : infirmaryReasonOf('breaker:secrets_missing', { names: missing.join(', ') });
 }
 
 /**

@@ -145,9 +145,10 @@ describe('a review the last Steward left stalled', () => {
       expect(kingdom.notices.at(-1)).toMatchObject({
         kind: 'infirmary',
         trip,
-        detail: {
-          ...detail,
-          message: expect.stringContaining('the Steward stopped before this move') as unknown,
+        detail,
+        reason: {
+          code: `restart:${trip}`,
+          params: trip === 'partial_verdicts' ? { count: 3 } : { stopped: 2 },
         },
       });
       // No further judge opens while the quest waits for the owner.
@@ -159,6 +160,27 @@ describe('a review the last Steward left stalled', () => {
       expect(second.running()).toBe(0);
     },
   );
+
+  it.each(['timeout', 'breaker'] as const)('recovers a review stopped by %s', async (outcome) => {
+    const kingdom = (current = await bench({ plays: { verdicts: { Interrupted: [NOTHING, NOTHING] } } }));
+    await kingdom.command('create_quest', questPayload('Interrupted'));
+    const first = await started(kingdom, failingInfirmary(kingdom));
+    await tickUntil(first, kingdom.clock, async () => {
+      const quest = await kingdom.quest('Interrupted');
+      return judgesOf(quest).length === 2 && quest.verifier === null;
+    });
+    await stopped(first);
+    const quest = await kingdom.quest('Interrupted');
+    const attempt_log = quest.attempt_log.map((entry) => {
+      return entry.role === 'verifier' ? { ...entry, outcome } : entry;
+    });
+    expect((await kingdom.store.quests.write({ ...quest, attempt_log })).ok).toBe(true);
+    const second = await started(kingdom);
+    await second.tick();
+    expect(kingdom.notices.at(-1)).toMatchObject({
+      reason: { code: outcome === 'timeout' ? 'restart:time' : 'restart:tokens', params: { stopped: 2 } },
+    });
+  });
 
   it('is judged again when the owner retried it before the stop', async () => {
     const kingdom = (current = await bench({ plays: { verdicts: { Retried: [NOTHING, NOTHING, PASS] } } }));

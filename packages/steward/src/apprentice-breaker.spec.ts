@@ -6,7 +6,6 @@ import { openJournal } from '@elvaria/eventlog';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { bench, questPayload } from './__fixtures__/kingdom.ts';
-import { APPRENTICE_LEFT } from './infirmary.ts';
 import type { Bench } from './__fixtures__/kingdom.ts';
 import type { Steward } from './types.ts';
 
@@ -58,10 +57,10 @@ describe('a breaker after an apprentice ran long or was cut', () => {
     expect((await kingdom.quest('Hangs')).status).toBe('infirmary');
     expect(kingdom.notices.at(-1)).toMatchObject({
       kind: 'infirmary',
-      reason: {
-        code: 'legacy',
-        params: { text: `breaker:time: ran 45 min, limit 45 min${asks ? APPRENTICE_LEFT : ''}` },
-      },
+      reason: { code: 'breaker:time', params: { minutes: 45, limit: 45 } },
     });
+    const notice = kingdom.notices.at(-1);
+    const left = notice?.kind === 'infirmary' ? notice.detail?.apprentice_left : undefined;
+    expect(left).toBe(asks ? true : undefined);
   });
 });

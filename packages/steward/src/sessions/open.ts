@@ -171,7 +171,7 @@ export async function openAssignee(
   const lacking = await secretsLacking(ctx, quest, territory);
   if (lacking !== undefined) {
     // A blocked quest has no way to the infirmary: the owner's answer is refused with the reason instead.
-    if (opening.kind === 'answer') return err(`secrets_lacking: ${lacking}`);
+    if (opening.kind === 'answer') return err(`secrets_lacking: ${lacking.code}`);
     return secretsBreaker(ctx, quest, lacking);
   }
   const n = goesOn(opening) ? currentRun(quest) : currentRun(quest) + 1;

@@ -149,7 +149,7 @@ describe('the checks of a submitted run (P1-10b)', () => {
     expect(kingdom.notices).toContainEqual(
       expect.objectContaining({
         kind: 'infirmary',
-        reason: { code: 'legacy', params: { text: 'breaker:secrets: the treasury has no npm_token' } },
+        reason: { code: 'breaker:secrets_missing', params: { names: 'npm_token' } },
       }),
     );
   });

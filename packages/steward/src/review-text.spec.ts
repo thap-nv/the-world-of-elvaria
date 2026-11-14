@@ -214,8 +214,8 @@ describe('a judge whose tribe answers in text', () => {
     expect(kingdom.notices.at(-1)).toMatchObject({
       trip: 'no_verdict',
       reason: {
-        code: 'legacy',
-        params: { text: expect.stringContaining('no_verdict: (reply): not a JSON object') as unknown },
+        code: 'judge:not_a_verdict',
+        params: { stopped: 2, run: 1, error: 'no_verdict: (reply): not a JSON object' },
       },
     });
   });

@@ -91,25 +91,28 @@
   `usage` signals against `budget.max_tokens`, times `breakers.verifier_tokens_multiplier` for a judge); turns are
   the CLI's own limit (`breakers.max_turns` in the request), which ends the same way; the Steward sinks the assignee into the swamp, kills
   the session's process tree, commits the work as `chore: wip <quest> (<trip>)` (a refusal keeps it in the plot
-  and says so in the reason), sends the quest to the infirmary (`quest.infirmary`, `breaker:<trip>: <detail>`) and
+  and says so in the detail), sends the quest to the infirmary (`quest.infirmary`, `breaker:<trip>`) and
   rings the bell; a verifier past a breaker leaves the review to the next one, until the second of a run
   (`reviewStalled`, P1-23): then the quest goes to the infirmary with the bell, and no third verifier opens; the
   owner's `retry` brings it back to review with a new judge, and the count starts over (P1-26). A verifier that
   leaves with no verdict at all (its CLI failed, its output was none, its session was lost while the Steward ran) counts the same, and
-  the stall it ends goes to the infirmary as `review:no_verdict` (P1-33); one that hands in a partial verdict
+  the stall it ends goes to the infirmary with a `judge:*` reason (P1-33); one that hands in a partial verdict
   (`verdict_partial`) made progress and counts apart: the third of the open group sends the review to the
-  infirmary as `review:partial_verdicts`, no fourth judge opening (P1-42). Breakers measure a session as its holder's tribe allows:
+  infirmary as `judge:partial_verdicts` or `judge:partial_verdicts_until`, no fourth judge opening (P1-42). Breakers measure a session as its holder's tribe allows:
   minutes only for a tribe without `usage` (`measureOf`, P1-33). A CLI
   that stopped at its own `--max-turns` or budget gets the same end, a verifier's included. When the quest's journal shows an apprentice of that session past
-  its minutes or cut at its turns, the reason asks the owner for a child quest for the work it left (§3.12). A quest whose secrets the treasury lacks, or its territory no longer
-  allows, goes to the infirmary (`breaker:secrets`) instead of being claimed and released every tick; an
+  its minutes or cut at its turns, `detail.apprentice_left` asks the owner for a child quest for the work it left (§3.12). A quest whose secrets the treasury lacks, or its territory no longer
+  allows, goes to the infirmary (`breaker:secrets_missing`, `breaker:secrets_refused`) instead of being claimed and released every tick; an
   owner's answer to such a blocked quest is refused (`secrets_lacking`).
 - Says why a quest goes to the infirmary once, as a cause (`src/infirmary.ts`, P1-32): a `trip` (the breaker, or
   `no_verdict`, `partial_verdicts`, `max_attempts`, `script_broken`, `script_usage`, `script_fail`) and a `detail`
   (what was said, a refused patch, the forbidden paths changed, a WIP commit refused, an apprentice cut short, the
   script and its follow-up, the verifiers stopped, the partial verdicts handed in). The
-  `quest.infirmary` line carries both, beside the one English `reason` built from them for the chronicle, worded
-  as before P1-32; the `infirmary` notice carries all three, so a bell can say why in the owner's language.
+  `quest.infirmary` line and `infirmary` notice carry all three. `reason` is an `InfirmaryReason` code with exactly
+  the parameters in [the contract](../../docs/contracts/infirmary-reason-codes.md): `breaker:*`, `judge:*`,
+  `restart:*`, `script:*` or `quest:max_attempts`. `detail.message` carries external output only; new events never
+  write `legacy`. Hook refusals keep their first lines, error count and total line count in `breaker:commit*`,
+  with the complete output at `.runs/<quest>-<n>/pre-commit.log`. Historical patch refusals remain readable.
 - Keeps the pid of every session it holds in `.state/sessions.json` (written before each tick ends, emptied at
   stop); a session that goes on in another process (a reply tried again, a reminder of the letter, P1-33) is
   written again with that process's pid and spawn time (`Sessions.respawned`), and the `quest.*` line that tells
@@ -203,7 +206,7 @@
   before it, on a
   territory with `laws.patch_paths`, the assignee's `elvaria.patch` is applied through `Plots.applyPatch` and told
   in a `plot.patched` line, and a patch that touches other paths or does not apply sends the quest to the
-  infirmary instead, `breaker:commit: elvaria.patch was not applied: …`, P1-28; the next run's prompt reads why
+  infirmary instead, `breaker:patch`, P1-28; the next run's prompt reads why
   back from the run's `quest.infirmary` line in the quest's journal, `continuationOf` and `refusedPatchOf`:
   `detail.patch` since P1-32, the reason's prefix on an older line, P1-31), a question (`ask`;
   one the owner already answered, left in the letter, is a submit), mana out, a crash, the CLI's turn or budget
@@ -248,7 +251,7 @@
 - Runs the territory's checks on what the quest touched before a judge's session opens (`Plots.check`: runChecks
   of P1-07 in `elvaria run`, outside the tick, its `signal` aborted when nobody waits for them any more), with the
   quest's secrets from the treasury (`PlotCheck.secrets`, `questSecretsOf`, P1-10b), resolved in the tick before
-  they start; a quest whose secrets are gone by then goes to the infirmary (`breaker:secrets`) and runs none: their
+  they start; a quest whose secrets are gone by then goes to the infirmary (`breaker:secrets_missing`) and runs none: their
   results go into the judge's prompt, the verdict and `quest.checks_run`. The run's next judge (after a partial
   verdict, a breaker or a session without a verdict) gets the same results while the plot's head is the commit they
   ran on (`Plots.head`, P1-38); a moved head and a plot without git get their own run. A judge in a scratch plot
@@ -278,7 +281,7 @@
 - Runs the script tier itself (§2.5, §3.12, ADR 0017; `src/script/`): a `create_quest` whose `script.params` do
   not fit the catalog's `params_schema` is refused (`invalid_script_params`); an open script-tier quest is claimed
   with no assignee, gets its plot (its `commands.setup` given the quest's secrets, or the quest goes to the
-  infirmary with `breaker:secrets` when the treasury or the territory cannot give them, P1-47), starts, and
+  infirmary with the coded secret cause when the treasury or the territory cannot give them, P1-47), starts, and
   `node registry/scripts/<id>.mjs --params <json> --context <json>`
   runs in the plot outside the tick (`StewardDeps.scripts`, `nodeScriptRunner`): the minimal env and no secret,
   `--context` with the run folder and the territory's checks resolved (`Plots.scriptChecks`), its tree killed at
@@ -407,8 +410,9 @@ the judge still opens. `scratch-again.spec.ts` (P1-42, P1-47): the run's second 
 plot at the same head and the first judge's trial, which runs once; with a `commands.reset`, that plot is reset
 once (its own log), the first judge's three times by the trial. `background-cap.spec.ts` (P1-47): two quests
 submitted in one tick get their checks one after the other under a cap of one, both at once under two.
-`infirmary.spec.ts` builds the reason of every trip from its detail, word for word as before P1-32, and reads a
-refused patch back from a new line and from an older one (P1-32).
+`infirmary.spec.ts` preserves coded reasons and structured detail, omits empty output, and reads patch refusals
+from both current detail and historical text. The session, breaker, restart, secret and script specs assert reason
+codes and parameters on real Steward ticks. `stop-letter.spec.ts` checks a 300-line hook refusal and its run log.
 `scripts.spec.ts` copies the real `link-check` and `run-check` of `packages/registry-default/scripts/` into the
 kingdom (`src/__fixtures__/scripts.ts`) and takes script quests all the way with no runner asked: a link check
 that passes, one with a dead link and its scribe's follow-up, a territory check run from its resolved argv and its

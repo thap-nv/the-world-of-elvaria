@@ -10,6 +10,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import {
+  infirmaryReasonOf,
   currentRun,
   err,
   ok,
@@ -111,7 +112,14 @@ async function verdictOn(ctx: Context, parts: Parts, result: ScriptResult, durat
       event: { type: VERDICT_EVENT[verdict] },
       actor: 'steward',
       before: { checks_run: [scriptCheckId(script.id)], ...handed },
-      infirmary: { trip: 'script_fail', detail: { script: script.id, ...opened } },
+      infirmary: {
+        trip: 'script_fail',
+        reason:
+          opened.follow_up === undefined
+            ? infirmaryReasonOf('script:fail', { script: script.id })
+            : infirmaryReasonOf('script:fail_follow_up', { script: script.id, follow_up: opened.follow_up }),
+        detail: { script: script.id, ...opened },
+      },
     },
   );
 }
@@ -122,16 +130,21 @@ function fall(
   quest: Quest,
   outcome: Exclude<ScriptOutcome, ScriptResult>,
   script: CatalogScript,
+  run: Pick<ScriptRunResult, 'stdout' | 'stderr'>,
 ) {
   if (outcome.kind === 'timeout') {
-    const message = `the script ran past ${script.timeout_minutes} minutes`;
     const event = { type: 'breaker', trip: 'time' } as const;
-    const infirmary = { trip: 'time', detail: { message, script: script.id } } as const;
+    const reason = infirmaryReasonOf('breaker:time', {
+      minutes: script.timeout_minutes,
+      limit: script.timeout_minutes,
+    });
+    const infirmary = { trip: 'time', reason, detail: { script: script.id } } as const;
     return moveAndRing(ctx, { quest: quest.id, event, actor: 'steward', infirmary });
   }
   const infirmary = {
+    reason: infirmaryReasonOf(`script:${outcome.kind}`, { script: script.id }),
     trip: SCRIPT_TRIPS[outcome.kind],
-    detail: { message: outcome.detail, script: script.id },
+    detail: { message: run.stderr === '' ? run.stdout : run.stderr, script: script.id },
   };
   return moveAndRing(ctx, { quest: quest.id, event: { type: 'crash' }, actor: 'steward', infirmary });
 }
@@ -162,7 +175,7 @@ export async function judgeScript(ctx: Context, questId: QuestId): Promise<Resul
   }
   if (saved === undefined) return runAgain(ctx, quest.id);
   const outcome = scriptOutcomeOf(script.produces, saved);
-  if (outcome.kind !== 'result') return fall(ctx, quest, outcome, script);
+  if (outcome.kind !== 'result') return fall(ctx, quest, outcome, script, saved);
   const units = outcome.units === undefined ? {} : { units: [...outcome.units] };
   const submitted = await moveAndRing(ctx, {
     quest: quest.id,
