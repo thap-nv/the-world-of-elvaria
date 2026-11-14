@@ -115,7 +115,8 @@ describe('a quest that asks for secrets', () => {
     expect(quest).toMatchObject({ status: 'infirmary', attempts: 0, attempt_log: [] });
     // Once, with its own reason: not claimed and released again every tick.
     const why = 'the treasury has no npm_token';
-    const said = { reason: `breaker:secrets: ${why}`, trip: 'secrets', detail: { message: why } };
+    const reason = { code: 'legacy', params: { text: `breaker:secrets: ${why}` } };
+    const said = { reason, trip: 'secrets', detail: { message: why } };
     const publish = { id: quest.id, title: 'Publish', rank: 'D' };
     expect(kingdom.notices).toEqual([{ kind: 'infirmary', quest: publish, ...said }]);
     expect(kingdom.warnings).toEqual([]);
@@ -133,9 +134,8 @@ describe('a quest that asks for secrets', () => {
     await steward.tick();
     expect(kingdom.requests).toEqual([]);
     expect((await kingdom.quest('Publish')).status).toBe('infirmary');
-    expect(kingdom.notices.at(-1)).toMatchObject({
-      reason: 'breaker:secrets: territory dc1-se-team does not allow the secrets npm_token',
-    });
+    const text = 'breaker:secrets: territory dc1-se-team does not allow the secrets npm_token';
+    expect(kingdom.notices.at(-1)).toMatchObject({ reason: { code: 'legacy', params: { text } } });
   });
 
   it('sends the quest to the infirmary when its secret leaves the treasury before the judge can open', async () => {
@@ -155,7 +155,7 @@ describe('a quest that asks for secrets', () => {
     expect(quest).toMatchObject({ status: 'infirmary', verifier: null });
     expect(kingdom.requests.map(({ role }) => role)).toEqual(['assignee']);
     expect(kingdom.notices.at(-1)).toMatchObject({
-      reason: 'breaker:secrets: the treasury has no npm_token',
+      reason: { code: 'legacy', params: { text: 'breaker:secrets: the treasury has no npm_token' } },
     });
   });
 
@@ -180,7 +180,7 @@ describe('a quest that asks for secrets', () => {
       async () => (await kingdom.quest('Publish')).status === 'infirmary',
     );
     expect(kingdom.notices.at(-1)).toMatchObject({
-      reason: 'breaker:secrets: the treasury has no npm_token',
+      reason: { code: 'legacy', params: { text: 'breaker:secrets: the treasury has no npm_token' } },
     });
     await steward.tick();
     expect(await kingdom.character(sleeper)).toMatchObject({ status: 'idle', current: null });

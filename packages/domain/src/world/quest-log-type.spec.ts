@@ -92,7 +92,9 @@ describe('a quest line for every move the machine makes', () => {
         actor: { kind: 'steward' },
         quest: after.id,
         data: {
-          ...(logType === 'quest.infirmary' ? { reason: 'max_attempts' } : {}),
+          ...(logType === 'quest.infirmary'
+            ? { reason: { code: 'legacy', params: { text: 'max_attempts' } } }
+            : {}),
           quest: questViewOf(after),
         },
       });

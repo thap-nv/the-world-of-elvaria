@@ -1,9 +1,8 @@
-// The chain of event line upgrades. Empty while every line is v1. When EventSchema moves to v2, add
-// `v1-to-v2.ts` here and a fixture `v2.jsonl` beside `v1.jsonl`: migrations.spec.ts reads every fixture with
-// the current reader and checks that this chain ends at the `v` the schema accepts.
+// Permanent read-time upgrades. Every version keeps its fixture and migration (ADR 0003).
 import { currentEventVersion } from './run.ts';
+import { v1ToV2 } from './v1-to-v2.ts';
 import type { EventMigrationChain } from './run.ts';
 
-export const EVENT_MIGRATIONS: EventMigrationChain = [];
+export const EVENT_MIGRATIONS: EventMigrationChain = [v1ToV2];
 
 export const CURRENT_EVENT_VERSION = currentEventVersion(EVENT_MIGRATIONS);

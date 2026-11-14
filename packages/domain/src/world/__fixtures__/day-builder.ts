@@ -161,7 +161,9 @@ export function dayBuilder(morning: WorldSource) {
         type,
         actorOf(actor, before),
         {
-          ...(type === 'quest.infirmary' ? { reason: reasonOf(event) } : {}),
+          ...(type === 'quest.infirmary'
+            ? { reason: { code: 'legacy', params: { text: reasonOf(event) } } }
+            : {}),
           quest: questViewOf(after),
           ...(moved.length > 0 ? { characters: moved.map(characterViewOf) } : {}),
         },

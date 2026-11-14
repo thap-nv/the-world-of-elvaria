@@ -50,7 +50,9 @@ describe('what goes wrong on the way', () => {
     }));
     await kingdom.command('create_quest', questPayload('Locked index'));
     await tickUntil(steward, kingdom.clock, statusIs(kingdom, 'Locked index', 'infirmary'));
-    expect(kingdom.notices.at(-1)).toMatchObject({ reason: 'breaker:commit: index.lock exists' });
+    expect(kingdom.notices.at(-1)).toMatchObject({
+      reason: { code: 'legacy', params: { text: 'breaker:commit: index.lock exists' } },
+    });
   });
 
   it('writes no verdict for an output the verdict schema refuses, and lets the next judge come', async () => {

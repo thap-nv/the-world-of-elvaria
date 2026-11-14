@@ -244,14 +244,14 @@ describe('the console bell', () => {
     expect(lineOf(t, { kind: 'awaiting_seal', quest })).toBe(
       'Quest q_20261106_7k3m2a «Đổi luồng đăng nhập» passed review and waits for your seal.',
     );
-    // The trip and the detail in the owner's language, not the English reason (P1-32).
-    const sick = { kind: 'infirmary', quest, reason: 'breaker:time: ran 45 min', trip: 'time' } as const;
+    const reason = { code: 'legacy', params: { text: 'breaker:time: ran 45 min' } } as const;
+    const sick = { kind: 'infirmary', quest, reason, trip: 'time' } as const;
     expect(lineOf(t, { ...sick, detail: { message: 'ran 45 min', apprentice_left: true } })).toBe(
       'Quest q_20261106_7k3m2a «Đổi luồng đăng nhập» went to the infirmary: the time breaker stopped the session\n' +
         '    What it said: ran 45 min\n' +
         '    An apprentice of the session ran past its minutes or was cut at its turns: open a child quest for the work it left (see handover.md).',
     );
-    expect(lineOf(translator('vi'), { ...sick, reason: 'max_attempts', trip: 'max_attempts' })).toBe(
+    expect(lineOf(translator('vi'), { ...sick, trip: 'max_attempts' })).toBe(
       'Nhiệm vụ q_20261106_7k3m2a «Đổi luồng đăng nhập» vào trạm quân y: đã hết số lần thử',
     );
     expect(lineOf(t, { kind: 'question', quest, question: 'main or release?' })).toBe(

@@ -24,7 +24,7 @@ function infirmaryLine(data: Record<string, unknown>, attempt?: number, quest: Q
     quest: quest.id,
     territory: quest.territory,
     ...(attempt === undefined ? {} : { attempt }),
-    data: { ...data, quest: questViewOf(quest) },
+    data: { ...data, reason: { code: 'legacy', params: { text: data.reason } }, quest: questViewOf(quest) },
   });
 }
 

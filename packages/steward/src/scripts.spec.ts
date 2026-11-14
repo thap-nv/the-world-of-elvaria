@@ -89,7 +89,12 @@ describe('the script tier: a run that gives a result', () => {
       ['not_done', followUp.id],
     ]);
     expect(await infirmaryLine(bench)).toMatchObject({
-      reason: `script:fail: link-check did not pass, see the verdict; follow-up quest ${followUp.id} opened`,
+      reason: {
+        code: 'legacy',
+        params: {
+          text: `script:fail: link-check did not pass, see the verdict; follow-up quest ${followUp.id} opened`,
+        },
+      },
       trip: 'script_fail',
       detail: { script: 'link-check', follow_up: followUp.id },
     });
@@ -169,7 +174,7 @@ describe('the script tier: a run that gives none', () => {
     expect(quest).toMatchObject({ status: 'infirmary', attempts: 1 });
     expect(quest.attempt_log[0]?.outcome).toBe('crash');
     expect(await infirmaryLine(bench)).toMatchObject({
-      reason: `script:${kind}: ${message}`,
+      reason: { code: 'legacy', params: { text: `script:${kind}: ${message}` } },
       trip: `script_${kind}`,
       detail: { message, script: 'link-check' },
     });
@@ -188,7 +193,7 @@ describe('the script tier: a run that gives none', () => {
     expect(quest.status).toBe('infirmary');
     expect(quest.attempt_log[0]?.outcome).toBe('timeout');
     expect(await infirmaryLine(bench)).toMatchObject({
-      reason: 'breaker:time: the script ran past 10 minutes',
+      reason: { code: 'legacy', params: { text: 'breaker:time: the script ran past 10 minutes' } },
       trip: 'time',
       detail: { message: 'the script ran past 10 minutes', script: 'link-check' },
     });

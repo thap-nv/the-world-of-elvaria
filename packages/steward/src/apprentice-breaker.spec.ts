@@ -58,7 +58,10 @@ describe('a breaker after an apprentice ran long or was cut', () => {
     expect((await kingdom.quest('Hangs')).status).toBe('infirmary');
     expect(kingdom.notices.at(-1)).toMatchObject({
       kind: 'infirmary',
-      reason: `breaker:time: ran 45 min, limit 45 min${asks ? APPRENTICE_LEFT : ''}`,
+      reason: {
+        code: 'legacy',
+        params: { text: `breaker:time: ran 45 min, limit 45 min${asks ? APPRENTICE_LEFT : ''}` },
+      },
     });
   });
 });

@@ -3,7 +3,8 @@
 // (`reason`) the bell and the chronicle say, so the two never disagree. The next run's prompt reads a refused patch
 // back from that data (P1-31); a line written before P1-32 has the reason alone, whose prefix is still read.
 import { PATCH_FILE } from '@elvaria/runner-core';
-import type { EventData, InfirmaryDetail, InfirmaryTrip } from '@elvaria/domain';
+import { infirmaryReasonOf } from '@elvaria/domain';
+import type { EventData, InfirmaryDetail, InfirmaryReason, InfirmaryTrip } from '@elvaria/domain';
 
 /** At most this many paths in the words of a reason; the infirmary data keeps them all. */
 const PATHS_SAID = 10;
@@ -23,7 +24,7 @@ type InfirmaryWhy = Pick<EventData<'quest.infirmary'>, 'reason' | 'trip' | 'deta
 
 /** What a line written since P1-32 says of why: always a trip. */
 interface InfirmarySaid {
-  readonly reason: string;
+  readonly reason: InfirmaryReason;
   readonly trip: InfirmaryTrip;
   readonly detail?: InfirmaryDetail;
 }
@@ -115,7 +116,7 @@ export function infirmaryReason(cause: InfirmaryCause, run: number): string {
 export function infirmaryData(cause: InfirmaryCause, run: number): InfirmarySaid {
   const detail = spoken(cause.detail);
   return {
-    reason: infirmaryReason(cause, run),
+    reason: infirmaryReasonOf('legacy', { text: infirmaryReason(cause, run) }),
     trip: cause.trip,
     ...(Object.keys(detail).length === 0 ? {} : { detail }),
   };
@@ -130,7 +131,8 @@ const REFUSED = `breaker:commit: ${patchRefusal('')}`;
  */
 export function refusedPatchOf(line: InfirmaryWhy): string | undefined {
   if (line.trip !== undefined) return line.detail?.patch;
-  if (!line.reason.startsWith(REFUSED)) return undefined;
-  const why = line.reason.slice(REFUSED.length);
+  const text = line.reason.code === 'legacy' ? line.reason.params.text : undefined;
+  if (typeof text !== 'string' || !text.startsWith(REFUSED)) return undefined;
+  const why = text.slice(REFUSED.length);
   return why.endsWith(APPRENTICE_LEFT) ? why.slice(0, -APPRENTICE_LEFT.length) : why;
 }

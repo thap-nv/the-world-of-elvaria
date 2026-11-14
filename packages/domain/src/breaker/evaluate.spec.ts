@@ -21,10 +21,12 @@ describe('evaluateBreakers', () => {
     expect(evaluateBreakers(attempt, LIMITS, after(45), { tokens: 0 })).toEqual({
       trip: 'time',
       detail: 'ran 45 min, limit 45 min',
+      params: { minutes: 45, limit: 45 },
     });
     expect(evaluateBreakers(attempt, LIMITS, after(130, 30_000), { tokens: 0 })).toEqual({
       trip: 'time',
       detail: 'ran 130 min, limit 45 min',
+      params: { minutes: 130, limit: 45 },
     });
   });
 
@@ -32,10 +34,12 @@ describe('evaluateBreakers', () => {
     expect(evaluateBreakers(attempt, LIMITS, after(1), { tokens: 120_001 })).toEqual({
       trip: 'tokens',
       detail: '120001 tokens, limit 120000',
+      params: { tokens: 120_001, limit: 120_000 },
     });
     expect(evaluateBreakers(attempt, LIMITS, after(1), { tokens: 10, turns: 201 })).toEqual({
       trip: 'turns',
       detail: '201 turns, limit 200',
+      params: { turns: 201, limit: 200 },
     });
   });
 

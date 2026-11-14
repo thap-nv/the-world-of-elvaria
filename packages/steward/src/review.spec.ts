@@ -79,7 +79,10 @@ describe('the machine checks and the pass rule', () => {
     await kingdom.command('create_quest', questPayload('Lint fails'));
     await tickUntil(steward, kingdom.clock, statusIs(kingdom, 'Lint fails', 'infirmary'));
     expect(kingdom.notices).toEqual([
-      expect.objectContaining({ kind: 'infirmary', reason: `breaker:commit: ${refusal}` }),
+      expect.objectContaining({
+        kind: 'infirmary',
+        reason: { code: 'legacy', params: { text: `breaker:commit: ${refusal}` } },
+      }),
     ]);
     expect((await kingdom.quest('Lint fails')).attempt_log.at(-1)).toMatchObject({ outcome: 'breaker' });
     expect((await kingdom.character('kael')).status).toBe('idle');

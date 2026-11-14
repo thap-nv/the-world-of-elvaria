@@ -13,6 +13,7 @@ import {
   TribeIdSchema,
 } from '../../core/ids.ts';
 import { INFIRMARY_TRIPS } from '../../quest/events.ts';
+import { INFIRMARY_REASONS, INFIRMARY_REASON_PARAMS } from '../../infirmary/reasons.ts';
 import { DateTimeSchema, NonEmptyStringSchema, RANKS } from '../common.ts';
 import { CharacterViewSchema } from '../../world/character-view.ts';
 import { QuestViewSchema } from '../../world/quest-view.ts';
@@ -78,7 +79,7 @@ export const InfirmaryDetailSchema = z
   .strictObject({
     message: NonEmptyStringSchema.optional().meta(
       describe(
-        "What stopped the run, as the breaker, the territory's hook, the treasury or the script said it (not translated).",
+        'Verbatim external text from a script or hook, never a sentence composed by Elvaria; Elvaria explains the cause through reason.',
       ),
     ),
     patch: NonEmptyStringSchema.optional().meta(
@@ -135,13 +136,27 @@ export const InfirmaryDetailSchema = z
   })
   .meta(describe('Absent when the trip says it all (max_attempts).'));
 
+export const InfirmaryReasonSchema = z
+  .strictObject({
+    code: z.enum(INFIRMARY_REASONS),
+    params: z.record(z.string(), z.union([z.string(), z.int()])),
+  })
+  .refine(
+    ({ code, params }) => {
+      const required = INFIRMARY_REASON_PARAMS[code];
+      const keys = Object.keys(params);
+      return keys.length === required.length && required.every((key) => Object.hasOwn(params, key));
+    },
+    { path: ['params'], message: 'params must have exactly the keys declared for code' },
+  );
+
 export const QuestInfirmaryDataSchema = z.strictObject({
-  reason: NonEmptyStringSchema.meta(
+  reason: InfirmaryReasonSchema.meta(
     describe(
-      'The whole reason in one English line, for the bell and the chronicle, e.g. breaker:time: <detail>, max_attempts, script:broken: <detail>. Built from trip and detail since P1-32.',
+      'A stable reason code and its exact parameter keys, rendered in the owner’s language. Migrated v1 reasons use legacy with the original text unchanged.',
     ),
   ),
-  // Optional and added after v1 (P1-32): every line written before them has the reason alone, so `v` stays 1.
+  // Optional since P1-32: migrated lines written before it still have the reason alone.
   trip: z
     .enum(INFIRMARY_TRIPS)
     .optional()

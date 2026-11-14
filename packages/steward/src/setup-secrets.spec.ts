@@ -168,7 +168,7 @@ describe("a script-tier quest's plot", () => {
       {
         kind: 'infirmary',
         quest: { id: quest.id, title: 'Links without the token', rank: 'D' },
-        reason: `breaker:secrets: ${why}`,
+        reason: { code: 'legacy', params: { text: `breaker:secrets: ${why}` } },
         trip: 'secrets',
         detail: { message: why },
       },

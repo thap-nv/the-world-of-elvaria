@@ -11,7 +11,7 @@
 - Reads from a cursor: per day file, the byte offset after the last line read (`EventCursor`, plain JSON for
   `.state/`). The newest two day files stay watched, so a line stamped before midnight and appended after it is
   not missed. A line without its newline yet is left for the next read.
-- Upgrades each line by `v` with the chain in `src/migrations/` (ADR 0003; empty while every line is v1), then
+- Upgrades each line by `v` with the chain in `src/migrations/` (ADR 0003; v1 → v2 wraps infirmary reason text as `legacy`), then
   checks it with the domain's `EventSchema`. Unusable lines are `EventLogIssue`s with a code and an offset;
   reading goes on. Unknown event types are kept (forward compatible). The fixture `src/migrations/v1.jsonl` holds
   a line of every type with a data schema, each with an id of its own, and lines from before an optional field

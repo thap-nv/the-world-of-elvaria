@@ -32,7 +32,10 @@ export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
   'quest.paused': QUEST_CHANGE,
   'quest.resumed': QUEST_CHANGE,
   'quest.infirmary': {
-    reason: 'breaker:commit: elvaria.patch was not applied: touches src/a.ts',
+    reason: {
+      code: 'legacy',
+      params: { text: 'breaker:commit: elvaria.patch was not applied: touches src/a.ts' },
+    },
     trip: 'commit',
     detail: { patch: 'touches src/a.ts', wip: 'hook refused', apprentice_left: true },
     ...QUEST_CHANGE,

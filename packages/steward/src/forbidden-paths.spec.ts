@@ -71,7 +71,7 @@ describe('a forbidden path changed in the plot (P1-49)', () => {
       trip: 'forbidden_paths',
       detail: { paths: ['infra/secrets/key.txt'] },
     });
-    expect(line && isEventOf(line, 'quest.infirmary') ? line.data.reason : '').toMatch(
+    expect(line && isEventOf(line, 'quest.infirmary') ? line.data.reason.params.text : '').toMatch(
       /^breaker:forbidden_paths: infra\/secrets\/key\.txt changed in the plot, .*nothing was committed: .*tools\.allow/,
     );
     expect(kingdom.notices).toContainEqual(

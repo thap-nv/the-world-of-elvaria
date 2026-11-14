@@ -24,7 +24,7 @@ const issuesOf = (value: unknown) => {
 };
 
 describe('EventSchema', () => {
-  it.each(examples)('accepts the v1 example $type unchanged', (example) => {
+  it.each(examples)('accepts the example $type at the current version', (example) => {
     expect(EventSchema.parse(example)).toEqual(example);
   });
 
@@ -83,13 +83,27 @@ describe('EventSchema', () => {
       },
     ],
   ])('accepts an infirmary line: %s', (_, data) => {
-    expect(issuesOf(line('quest.infirmary', data))).toEqual([]);
+    expect(
+      issuesOf(
+        line('quest.infirmary', { ...data, reason: { code: 'legacy', params: { text: data.reason } } }),
+      ),
+    ).toEqual([]);
   });
 
   it('takes a cleared notice: reason null, no best character', () => {
     const cleared = line('quest.unclaimable', { reason: null, rank: 'B', class: 'knight' });
     expect(issuesOf(cleared)).toEqual([]);
   });
+
+  it.each([{}, { text: 'old words', extra: 1 }])(
+    'reports incorrect reason keys at data.reason.params: %j',
+    (params) => {
+      const result = EventSchema.safeParse(
+        line('quest.infirmary', { ...QUEST_CHANGE, reason: { code: 'legacy', params } }),
+      );
+      expect(result.error?.issues).toEqual([expect.objectContaining({ path: ['data', 'reason', 'params'] })]);
+    },
+  );
 
   it('checks data without rewriting it: an omitted `characters` stays omitted', () => {
     const created = line('quest.created', { quest: QUEST_VIEW });
@@ -178,7 +192,7 @@ describe('EventSchema', () => {
   });
 
   it.each([
-    ['a line of another version', { v: 2 }, 'v: Invalid input: expected 1'],
+    ['a line of another version', { v: EVENT_VERSION + 1 }, `v: Invalid input: expected ${EVENT_VERSION}`],
     ['a type that is not group.action', { type: 'agent' }, 'type: Invalid string'],
     ['a type with capitals', { type: 'Agent.Tool' }, 'type: Invalid string'],
     ['a character without id', { actor: { kind: 'character' } }, 'actor.id: a character actor needs id'],

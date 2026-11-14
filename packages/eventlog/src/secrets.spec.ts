@@ -21,7 +21,10 @@ function transcript(): Event[] {
     makeEvent(DAY_1, 4 * n, { data: { tool: 'bash', command: line, exit: 1 } }),
     makeEvent(DAY_1, 4 * n + 1, { type: 'agent.tool.blocked', data: { tool: 'bash', reason: line } }),
     makeEvent(DAY_1, 4 * n + 2, { data: { tool: 'write', path: line } }),
-    makeEvent(DAY_1, 4 * n + 3, { type: 'quest.infirmary', data: { reason: line, quest: QUEST_VIEW } }),
+    makeEvent(DAY_1, 4 * n + 3, {
+      type: 'quest.infirmary',
+      data: { reason: { code: 'legacy', params: { text: line } }, quest: QUEST_VIEW },
+    }),
   ]);
 }
 
