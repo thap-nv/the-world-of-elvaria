@@ -162,7 +162,7 @@ export const QuestInfirmaryDataSchema = z.strictObject({
     .optional()
     .meta(
       describe(
-        'What sent the quest there: a breaker (time, tokens, turns, commit, secrets, forbidden_paths), a review whose judges left without a verdict (no_verdict, P1-33) or kept handing in partial ones (partial_verdicts, P1-42), max_attempts, or a script-tier run (script_broken, script_usage, script_fail). Absent on lines written before P1-32.',
+        "What sent the quest there: a breaker (time, tokens, turns, commit, secrets, forbidden_paths; no_session since fix/review-no-session: the assignee's session could not open), a review whose judges left without a verdict (no_verdict, P1-33) or kept handing in partial ones (partial_verdicts, P1-42), max_attempts, or a script-tier run (script_broken, script_usage, script_fail). Absent on lines written before P1-32.",
       ),
     ),
   detail: InfirmaryDetailSchema.optional(),

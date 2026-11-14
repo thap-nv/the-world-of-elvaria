@@ -1943,8 +1943,8 @@
             },
             {
               "field": "`attempt_log.outcome`",
-              "values": "`submitted`, `partial`, `returned`, `timeout`, `breaker`, `crash`, `paused`, `blocked`, `cancelled`",
-              "meaning": "kết thúc một lần thử; `timeout` = cầu dao thời gian, `breaker` = cầu dao token/lượt; `partial` = người chấm nộp phán quyết dở (P1-42; mục cũ ghi `submitted`)"
+              "values": "`submitted`, `partial`, `returned`, `timeout`, `breaker`, `crash`, `no_session`, `paused`, `blocked`, `cancelled`",
+              "meaning": "kết thúc một lần thử; `timeout` = cầu dao thời gian, `breaker` = cầu dao token/lượt; `partial` = người chấm nộp phán quyết dở (P1-42; mục cũ ghi `submitted`); `no_session` = phiên của người chấm không mở được (spawn lỗi), mục mở và kết thúc cùng lúc, tính như `crash` (fix/review-no-session)"
             },
             {
               "field": "`units[].outcome`",
@@ -2088,8 +2088,8 @@
             },
             {
               "field": "event `quest.infirmary` → `data.trip`",
-              "values": "`time`, `tokens`, `turns`, `commit`, `secrets`, `forbidden_paths`, `no_verdict`, `partial_verdicts`, `max_attempts`, `script_broken`, `script_usage`, `script_fail`",
-              "meaning": "vì sao vào trạm quân y (P1-32): sáu loại cầu dao (`forbidden_paths`, P1-49: phiên để lại một đường dẫn của `laws.forbidden_paths` bị đổi trong đất riêng, Nhiếp chính không commit gì, `data.detail.paths` nêu các đường dẫn), việc nghiệm thu kẹt vì người chấm cứ rời đi không ra phán quyết (`no_verdict`, P1-33) hay cứ nộp phán quyết dở (`partial_verdicts`, P1-42), hết số lần thử, hay lượt bậc script mà script hỏng, không dùng được tham số, không đạt; dòng cũ không có trường này"
+              "values": "`time`, `tokens`, `turns`, `commit`, `secrets`, `forbidden_paths`, `no_session`, `no_verdict`, `partial_verdicts`, `max_attempts`, `script_broken`, `script_usage`, `script_fail`",
+              "meaning": "vì sao vào trạm quân y (P1-32): bảy loại cầu dao (`forbidden_paths`, P1-49: phiên để lại một đường dẫn của `laws.forbidden_paths` bị đổi trong đất riêng, Nhiếp chính không commit gì, `data.detail.paths` nêu các đường dẫn; `no_session`, fix/review-no-session: phiên của người làm không mở được, `data.detail.message` nêu dòng lỗi đầu), việc nghiệm thu kẹt vì người chấm cứ rời đi không ra phán quyết (`no_verdict`, P1-33) hay cứ nộp phán quyết dở (`partial_verdicts`, P1-42), hết số lần thử, hay lượt bậc script mà script hỏng, không dùng được tham số, không đạt; dòng cũ không có trường này"
             },
             {
               "field": "event `quest.*` → `data.sequels`",

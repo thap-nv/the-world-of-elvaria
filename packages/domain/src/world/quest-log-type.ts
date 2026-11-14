@@ -36,6 +36,9 @@ const BY_EVENT: Readonly<Record<QuestEventType, QuestLogType>> = {
   redispatch: 'quest.started',
   // A verifier's session starts on the quest (§2.5: assign_verifier opens its entry in attempt_log).
   assign_verifier: 'quest.started',
+  // From review to review, which questLogTypeOf names a verdict before it reads this: the judge left the review
+  // without one, as a judge whose session crashed (fix/review-no-session).
+  no_session: 'quest.verdict',
   submit: 'quest.submitted',
   mana_out: 'quest.paused',
   mana_restored: 'quest.resumed',

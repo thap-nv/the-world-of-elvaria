@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { ADAPTER_CAPABILITIES, TRIBE_AUTHS, modelsProblems } from '@elvaria/domain';
 
 import { readProblems, searchProblems, shellProblems } from '../kit/adapter-module.ts';
-import { FAKE_QUESTION } from './scenarios.ts';
+import { FAKE_QUESTION, FAKE_STRUCTURED_ANSWER, FAKE_STRUCTURED_SCHEMA } from './scenarios.ts';
 import { SPAWN_PROBE_COMMAND, SPAWN_PROBE_OK } from './spawn-probe.ts';
 import { DEFAULT_TIMEOUT_MS, HANG_GRACE_MS, play, settlesWithin, within } from './play.ts';
 import type { Played } from './play.ts';
@@ -117,6 +117,44 @@ const scratchCommit = sessionCheck(
   },
 );
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+/** Where a value holds null, at any depth: `progress`, `breaks[0].red`. */
+function nullPaths(value: unknown, at = ''): string[] {
+  if (value === null) return [at];
+  const entries = Array.isArray(value) ? value.map((item, index) => [`[${index}]`, item] as const) : [];
+  const fields = isRecord(value)
+    ? Object.entries(value).map(([key, item]) => [`.${key}`, item] as const)
+    : [];
+  return [...entries, ...fields].flatMap(([step, item]) =>
+    nullPaths(item, `${at}${step}`.replace(/^\./, '')),
+  );
+}
+
+/**
+ * A structured answer to a schema whose keys are not all required, as the judge's verdict and the Chancellor's drafts
+ * are: it comes back in the shape the core asked for, with no null for a key left out, since the core's zod refuses
+ * null where the key may only be absent. Live too: Codex's strict structured output refused such a schema before any
+ * model call, which only the real API shows (fix/codex-output-schema, §11 of 2026-11-14).
+ */
+const structured = sessionCheck(
+  'structured',
+  true,
+  (caps) => caps.structured_output,
+  ({ result }) => {
+    assert.equal(result.outcome, 'completed', 'the session did not complete with a schema');
+    const answer = result.structured;
+    assert.ok(isRecord(answer), 'structured_output declared but the session gave no structured answer');
+    assert.equal(answer.result, FAKE_STRUCTURED_ANSWER.result);
+    assert.ok(typeof answer.notes === 'string' && answer.notes.length > 0, 'the answer has no notes');
+    assert.deepEqual(nullPaths(answer), [], 'a key the schema leaves optional came back null');
+    const known: readonly string[] = Object.keys(FAKE_STRUCTURED_SCHEMA.properties);
+    const unknown = Object.keys(answer).filter((key) => !known.includes(key));
+    assert.deepEqual(unknown, [], 'the answer has keys the schema does not');
+  },
+);
+
 const ask = sessionCheck('ask', false, always, ({ result }) => {
   assert.equal(result.question, FAKE_QUESTION, 'the Question section of the letter is the question');
 });
@@ -206,6 +244,7 @@ export const CONFORMANCE_CHECKS: readonly ConformanceCheck[] = [
   rateLimit,
   forbiddenCommand,
   spawnChild,
+  structured,
   scratchCommit,
   ask,
 ];

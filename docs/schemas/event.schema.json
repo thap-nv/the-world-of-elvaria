@@ -620,6 +620,7 @@
                       "breaker:secrets_refused",
                       "breaker:secrets_missing",
                       "breaker:treasury_unreadable",
+                      "breaker:no_session",
                       "judge:time",
                       "judge:tokens",
                       "judge:turns",
@@ -627,6 +628,7 @@
                       "judge:verdict_unwritten",
                       "judge:session_ended",
                       "judge:session_lost",
+                      "judge:no_session",
                       "judge:partial_verdicts",
                       "judge:partial_verdicts_until",
                       "restart:time",
@@ -657,7 +659,7 @@
                 }
               },
               "trip": {
-                "description": "What sent the quest there: a breaker (time, tokens, turns, commit, secrets, forbidden_paths), a review whose judges left without a verdict (no_verdict, P1-33) or kept handing in partial ones (partial_verdicts, P1-42), max_attempts, or a script-tier run (script_broken, script_usage, script_fail). Absent on lines written before P1-32.",
+                "description": "What sent the quest there: a breaker (time, tokens, turns, commit, secrets, forbidden_paths; no_session since fix/review-no-session: the assignee's session could not open), a review whose judges left without a verdict (no_verdict, P1-33) or kept handing in partial ones (partial_verdicts, P1-42), max_attempts, or a script-tier run (script_broken, script_usage, script_fail). Absent on lines written before P1-32.",
                 "enum": [
                   "time",
                   "tokens",
@@ -665,6 +667,7 @@
                   "commit",
                   "secrets",
                   "forbidden_paths",
+                  "no_session",
                   "no_verdict",
                   "partial_verdicts",
                   "max_attempts",

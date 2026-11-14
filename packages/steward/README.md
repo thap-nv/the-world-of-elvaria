@@ -103,7 +103,13 @@
   that stopped at its own `--max-turns` or budget gets the same end, a verifier's included. When the quest's journal shows an apprentice of that session past
   its minutes or cut at its turns, `detail.apprentice_left` asks the owner for a child quest for the work it left (§3.12). A quest whose secrets the treasury lacks, or its territory no longer
   allows, goes to the infirmary (`breaker:secrets_missing`, `breaker:secrets_refused`) instead of being claimed and released every tick; an
-  owner's answer to such a blocked quest is refused (`secrets_lacking`).
+  owner's answer to such a blocked quest is refused (`secrets_lacking`). So does a quest whose assignee's session
+  cannot open, the plot, the request or the spawn throwing (trip `no_session`, reason `breaker:no_session`,
+  `src/sessions/no-session.ts`, fix/review-no-session): a start, a redispatch or a wake goes to the infirmary with the
+  error's first line as the reason's `error` and the bell, an owner's answer is refused, and a start the Steward's own
+  stop cut short still gives its claim back (P1-49). A judge whose session cannot open leaves the review
+  (`review.no_session`), passed over and counted as a judge that crashed, so the next judge takes it and the
+  `REVIEW_BREAKS_MAX`-th sends it to the infirmary (trip `no_verdict`, reason `judge:no_session`).
 - Says why a quest goes to the infirmary once, as a cause (`src/infirmary.ts`, P1-32): a `trip` (the breaker, or
   `no_verdict`, `partial_verdicts`, `max_attempts`, `script_broken`, `script_usage`, `script_fail`) and a `detail`
   (what was said, a refused patch, the forbidden paths changed, a WIP commit refused, an apprentice cut short, the
@@ -258,8 +264,8 @@
   leaves with its plot: the next one gets a fresh scratch plot (`Plots.prepareScratch`, after `commands.setup`, then
   `commands.reset` once with its own log, P1-47, under the exclusive lock, P1-54) and the same trial while the head stays, the trial run again once
   it moved or the plot could not be made or reset (P1-42). A
-  judge a breaker stopped is not chosen again in that run while another judge may take the review (domain
-  `cutVerifiersOf`). The prompt shows the end of each failing check's log (`src/review/log-tail.ts`: the last 40 lines, at most
+  judge that left the review without a verdict (a breaker stopped it, its session crashed or never opened) is not
+  chosen again in that run while another judge may take the review (domain `leftVerifiersOf`, fix/review-no-session). The prompt shows the end of each failing check's log (`src/review/log-tail.ts`: the last 40 lines, at most
   2 000 characters a check and 4 000 for all of them), masked with the session's secret values and the patterns, because the log lies
   in `.runs/`, outside the plot, where the judge's tools do not reach; so does the prompt of an assignee whose work
   came back, for the checks of the verdict that returned it (P1-10b). Under
@@ -427,13 +433,18 @@ write `check.start` and `check.end` (`stopped` when the Steward stops under them
 gone by then to the infirmary, leave the returned assignee the end of the red check's log masked, and the loop
 ticks as soon as they end, not a beat later. `setup-secrets.spec.ts` (P1-30): the plot of the assignee and of the
 judge gets exactly the quest's secrets for its setup (none, and no treasury read, for a quest that asks for none),
-and a treasury that cannot give the values by then prepares no plot and gives the claim back; a script-tier quest's
+and a treasury that cannot give the values by then prepares no plot and sends the quest to the infirmary
+(`no_session`, fix/review-no-session; before, it gave the claim back to be taken again every tick); a script-tier quest's
 plot gets them too while its script gets none, and one whose secrets the treasury lacks goes to the infirmary once,
 never claimed and released every tick (P1-47). `stop-setup.spec.ts` (P1-49): a stop kills the setup of the plot in
 progress, gives the claim back and claims nothing more. `forbidden-paths.spec.ts` (P1-49): on real git repos, an
 assignee that leaves `infra/secrets/key.txt` or `apps/api/.env` in its plot goes to the infirmary with
 `forbidden_paths`, the bell and nothing committed; a clean plot submits as before; a pause for mana leaves such work
-uncommitted and says why; a plot whose changes cannot be listed is not committed.
+uncommitted and says why; a plot whose changes cannot be listed is not committed. `no-session.spec.ts`
+(fix/review-no-session): a judge whose session cannot open is passed over and the next judge judges; with none able
+to open, the review goes to the infirmary once, with the bell; a claimed or returned quest whose session cannot open
+goes to the infirmary once with why, never claimed again every tick; an answer whose session cannot open is refused;
+a stop during the opening gives the claim back; a review stalled so and left without its move gets it at the next start.
 `apprentice-breaker.spec.ts`: the
 infirmary note after an apprentice overran or was cut. `review-breakers.spec.ts`: two verifiers stopped by the
 token breaker, or by their CLI's turn limit, send the review to the infirmary and no third opens.

@@ -38,6 +38,7 @@ function subjectOf(t: Translate, item: AttentionItem): string {
     memo: item.memo ?? NONE,
     memo_kind: item.memo_kind ?? NONE,
     from: item.from ?? NONE,
+    judge: item.judge ?? NONE,
     tribe: item.tribe ?? NONE,
     path: item.path ?? NONE,
     version: item.version ?? NONE,

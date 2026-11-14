@@ -98,22 +98,8 @@ describe("the end of an assignee's session", () => {
     expect((await kingdom.character('kael')).status).toBe('idle');
   });
 
-  it('releases a claim whose session could not be spawned', async () => {
-    const { kingdom, steward } = await open({}, (k) => ({
-      runners: {
-        claude: { ...k.fakes.claude, spawn: () => Promise.reject(new Error('claude.exe not found')) },
-      },
-    }));
-    await kingdom.command('create_quest', questPayload('Never starts'));
-    await steward.tick();
-    expect(await kingdom.quest('Never starts')).toMatchObject({
-      status: 'open',
-      assignee: null,
-      attempts: 0,
-    });
-    expect((await typesOf(kingdom)).slice(-2)).toEqual(['quest.claimed', 'quest.released']);
-    expect(kingdom.warnings.join('\n')).toContain('claude.exe not found');
-  });
+  // A session that could not be spawned: no-session.spec.ts (fix/review-no-session; before, the claim was let go and
+  // taken again every tick).
 
   it('records the token count when the CLI ends at its own budget', async () => {
     const { kingdom, steward } = await open({}, (k) => ({

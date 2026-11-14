@@ -28,6 +28,7 @@ const TRIP_LABEL: Readonly<Record<InfirmaryTrip, MessageKey>> = {
   commit: 'cli.quest.infirmary.trip.commit',
   secrets: 'cli.quest.infirmary.trip.secrets',
   forbidden_paths: 'cli.quest.infirmary.trip.forbidden_paths',
+  no_session: 'cli.quest.infirmary.trip.no_session',
   no_verdict: 'cli.quest.infirmary.trip.no_verdict',
   partial_verdicts: 'cli.quest.infirmary.trip.partial_verdicts',
   max_attempts: 'cli.quest.infirmary.trip.max_attempts',

@@ -3,28 +3,32 @@
 // review too big for the quest's budget would stop every one of them, a loop that cost a session each time in
 // phase 1 (report §5.2). A verifier whose session ends with no verdict at all (its CLI failed, its output was none,
 // §2.5 `review.crash.has_verifier`) loops the same way: a tribe whose judges cannot hand in a verdict would open one
-// session per tick for ever (P1-33). After REVIEW_BREAKS_MAX such verifiers, the Steward sends the quest to the
-// infirmary instead, where the owner decides.
+// session per tick for ever (P1-33). So does a judge whose session never opened (`no_session`,
+// fix/review-no-session): before, nothing was written, and the Steward chose the same judge every tick, 16 minutes on
+// PS-07's kingdom. After REVIEW_BREAKS_MAX such verifiers, the Steward sends the quest to the infirmary instead, where
+// the owner decides.
 // A judge that hands in a partial verdict made progress, and the next judge reads on: such judges count apart, up to
 // REVIEW_PARTIALS_MAX (P1-42). In a scratch plot a pass without its breaks is taken as partial (P1-40), and a judge
 // whose shell cannot run the checks' commands hands in partial too, so the Steward could open judge after judge, each
 // after a trial of half an hour (P1-35), until the mana breaker stopped it.
 // The owner's retry sends a stalled review back to review, same run, for a new judge, and both counts start over
-// (P1-26). The judges a breaker stopped in the open group are not chosen again while another judge may take the
-// review (cutVerifiersOf, selectVerifier; P1-38, P1-35 (d)), nor is the judge that just handed in a partial verdict
-// (justPartialOf; P1-48, P1-42 (c)).
+// (P1-26). The judges that left the open group without a verdict are not chosen again while another judge may take
+// the review (leftVerifiersOf, selectVerifier): a breaker's (P1-38, P1-35 (d)), and since fix/review-no-session a
+// crash's or a session that never opened too (PS-07: a judge whose CLI refused the verdict's schema in a second took
+// both turns of a review). Nor is the judge that just handed in a partial verdict (justPartialOf; P1-48, P1-42 (c)).
 import { REVIEW_BREAKS_MAX, REVIEW_PARTIALS_MAX } from '../constants.ts';
 import { currentRun } from '../quest/attempt-log.ts';
-import type { CharacterId } from '../core/ids.ts';
+import type { CharacterId, QuestId } from '../core/ids.ts';
 import type { Attempt } from '../schema/quest/quest-parts.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 
 /**
  * How a session that left no verdict ends its entry: `timeout` for time, `breaker` for tokens and turns
- * (effects.ts), `crash` for an end with no verdict. A partial verdict ends `partial` (`verdict_partial`); a session
- * the Steward lost while it did not run ends `cancelled` and counts for nothing (P1-44).
+ * (effects.ts), `crash` for an end with no verdict, `no_session` for one that never opened. A partial verdict ends
+ * `partial` (`verdict_partial`); a session the Steward lost while it did not run ends `cancelled` and counts for
+ * nothing (P1-44).
  */
-const NO_VERDICT = ['timeout', 'breaker', 'crash'] as const;
+const NO_VERDICT = ['timeout', 'breaker', 'crash', 'no_session'] as const;
 type NoVerdict = (typeof NO_VERDICT)[number];
 
 /** A verifier session that left without a verdict. */
@@ -34,9 +38,6 @@ interface Left extends Attempt {
 
 const leftWithout = (entry: Attempt): entry is Left =>
   (NO_VERDICT as readonly Attempt['outcome'][]).includes(entry.outcome);
-
-/** The ends a breaker gave: time (`timeout`), tokens or turns (`breaker`), the CLI's own limits included. */
-const CUT: ReadonlySet<Attempt['outcome']> = new Set(['timeout', 'breaker']);
 
 /** The verifier sessions of a group that count toward a stalled review. */
 interface ReviewGroup {
@@ -85,17 +86,41 @@ export const reviewPartialsOf = (quest: Quest): number => openGroupOf(quest).par
 export const partialsStalled = (quest: Quest): boolean => reviewPartialsOf(quest) >= REVIEW_PARTIALS_MAX;
 
 /**
- * The judges a breaker stopped in the review's open group (P1-38, P1-35 (d)). A full group sent the quest to the
- * infirmary, so in review again it was closed by the owner's retry, which gives every judge its chance again: the
- * owner raised the budget for them. A judge that crashed is not among them.
+ * The judges that left the review's open group without a verdict: a breaker stopped them (P1-38, P1-35 (d)), their
+ * session crashed or never opened (fix/review-no-session). A full group sent the quest to the infirmary, so in review
+ * again it was closed by the owner's retry, which gives every judge its chance again: the owner raised the budget,
+ * or mended what kept the session from a verdict.
  */
-export const cutVerifiersOf = (quest: Quest): ReadonlySet<CharacterId> => {
+export const leftVerifiersOf = (quest: Quest): ReadonlySet<CharacterId> => {
   const group = openGroupOf(quest);
   if (full(group)) return new Set();
-  const cut = group.left.filter(({ outcome }) => CUT.has(outcome));
   // A verifier entry always names its judge; only a script-tier run has none.
-  return new Set(cut.map(({ character }) => character).filter((id): id is CharacterId => id !== null));
+  return new Set(group.left.map(({ character }) => character).filter((id): id is CharacterId => id !== null));
 };
+
+/**
+ * The judge whose session never opened (`no_session`), when it is the latest of the review's open group and the
+ * quest waits in review for the next one (fix/review-no-session): the digest names it, since the Steward's log alone
+ * says why. A judge that came after it, or holds the review now, makes it no longer the latest.
+ */
+export function unopenedJudgeOf(quest: Quest): CharacterId | undefined {
+  if (quest.status !== 'review' || typeof quest.verifier === 'string') return undefined;
+  const { last } = openGroupOf(quest);
+  return last?.outcome === 'no_session' ? (last.character ?? undefined) : undefined;
+}
+
+/** A quest that waits in review after its latest judge could not open a session, and that judge. */
+export interface UnopenedReview {
+  readonly quest: QuestId;
+  readonly judge: CharacterId;
+}
+
+/** unopenedJudgeOf over `quests`, as the digest lists them. */
+export const unopenedReviewsOf = (quests: readonly Quest[]): UnopenedReview[] =>
+  quests.flatMap((quest) => {
+    const judge = unopenedJudgeOf(quest);
+    return judge === undefined ? [] : [{ quest: quest.id, judge }];
+  });
 
 /**
  * The judge whose session, the latest of the review's open group, handed in a partial verdict (P1-48, P1-42 (c)):

@@ -115,21 +115,40 @@ function answer(
   return ok(to === 'working' ? resume(answered, event.at, event.session_id) : answered);
 }
 
-function assignVerifier(
+/** The verifier's entry of run n, or why `verifier` may not judge the quest: it worked on it. */
+function verifierEntry(
   quest: Quest,
-  event: QuestEventOf<'assign_verifier'>,
-): Result<Quest, QuestTransitionError> {
+  event: { readonly verifier: CharacterId; readonly at: string; readonly session_id?: string | undefined },
+): Result<Attempt, QuestTransitionError> {
   const { verifier } = event;
   const worked =
     verifier === quest.assignee ||
     quest.attempt_log.some((entry) => entry.role === 'assignee' && entry.character === verifier);
   if (worked) return err({ code: 'invalid_event', reason: 'verifier_worked' });
   const run = { n: currentRun(quest), role: 'verifier', character: verifier, at: event.at } as const;
-  return ok({
-    ...quest,
-    verifier,
-    attempt_log: [...quest.attempt_log, entryOf(quest, { ...run, session_id: event.session_id })],
-  });
+  return ok(entryOf(quest, { ...run, session_id: event.session_id }));
+}
+
+function assignVerifier(
+  quest: Quest,
+  event: QuestEventOf<'assign_verifier'>,
+): Result<Quest, QuestTransitionError> {
+  const entry = verifierEntry(quest, event);
+  if (!entry.ok) return entry;
+  return ok({ ...quest, verifier: event.verifier, attempt_log: [...quest.attempt_log, entry.value] });
+}
+
+/**
+ * The judge the Steward chose could not open its session (fix/review-no-session): its entry opens and ends at once,
+ * `no_session`, and the quest stays without a verifier. It counts toward a stalled review and is passed over while
+ * another judge may take the review, as a judge whose session crashed (breaker/review.ts); before, nothing was
+ * written, and the Steward chose the same judge every tick.
+ */
+function noSession(quest: Quest, event: QuestEventOf<'no_session'>): Result<Quest, QuestTransitionError> {
+  const entry = verifierEntry(quest, event);
+  if (!entry.ok) return entry;
+  const ended: Attempt = { ...entry.value, ended_at: event.at, outcome: 'no_session' };
+  return ok({ ...quest, attempt_log: [...quest.attempt_log, ended] });
 }
 
 const EFFECTS: { readonly [T in QuestEventType]: Effect<T> } = {
@@ -166,6 +185,7 @@ const EFFECTS: { readonly [T in QuestEventType]: Effect<T> } = {
   mana_restored: (quest, event) => ok(resume(quest, event.at, event.session_id)),
   answer,
   assign_verifier: assignVerifier,
+  no_session: noSession,
   verdict_pass: (quest, event) => ok(endRun(quest, event, 'submitted')),
   // The next attempt gets a fresh verifier, chosen again once it is submitted.
   verdict_fail: (quest, event) => ok(withoutVerifier(endRun(quest, event, 'submitted'))),

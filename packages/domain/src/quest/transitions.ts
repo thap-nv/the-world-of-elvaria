@@ -59,8 +59,9 @@ export const QUEST_GUARDS: Readonly<Record<QuestGuard, (quest: Quest) => boolean
   has_verifier: (quest) => typeof quest.verifier === 'string',
   // Delivery stamps deliverable.delivered_at instead of being a status of its own, so it happens once.
   undelivered: (quest) => quest.deliverable.delivered_at === undefined,
-  // REVIEW_BREAKS_MAX verifiers of the run left without a verdict, cut by a breaker (P1-23) or crashed (P1-33), or
-  // REVIEW_PARTIALS_MAX handed in a partial one (P1-42): the work is done, only its review stalled.
+  // REVIEW_BREAKS_MAX verifiers of the run left without a verdict, cut by a breaker (P1-23), crashed (P1-33) or
+  // unable to open a session (fix/review-no-session), or REVIEW_PARTIALS_MAX handed in a partial one (P1-42): the
+  // work is done, only its review stalled.
   stalled_review: reviewStalled,
   no_stalled_review: (quest) => !reviewStalled(quest),
 };
@@ -124,6 +125,9 @@ export const QUEST_TRANSITIONS: readonly QuestTransitionRow[] = [
   { from: 'blocked', event: 'unblock', actors: S, guard: 'no_assignee', to: 'open' },
   { from: 'blocked', event: 'cancel', actors: U, to: 'archived' },
   { from: 'review', event: 'assign_verifier', actors: S, guard: 'needs_verifier', to: 'review' },
+  // The judge chosen could not open its session (fix/review-no-session): it leaves the review as a crashed judge
+  // does, counted toward REVIEW_BREAKS_MAX, and `review.crash.needs_verifier` follows once the review stalls.
+  { from: 'review', event: 'no_session', actors: S, guard: 'needs_verifier', to: 'review' },
   { from: 'review', event: 'verdict_pass', actors: VS, guard: 'no_seal', to: 'done' },
   { from: 'review', event: 'verdict_pass', actors: VS, guard: 'seal_required', to: 'awaiting_seal' },
   { from: 'review', event: 'verdict_fail', actors: VS, guard: 'can_retry', to: 'returned' },

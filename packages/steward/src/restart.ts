@@ -53,7 +53,8 @@ function stallMoveOf(stall: ReviewStall): {
       },
     };
   const detail = { verifiers_stopped: stall.count };
-  if (stall.by === 'crash')
+  // A judge whose session never opened left as one that crashed (§2.5 `review.no_session`, fix/review-no-session).
+  if (stall.by === 'crash' || stall.by === 'no_session')
     return {
       event: { type: 'crash' },
       infirmary: {

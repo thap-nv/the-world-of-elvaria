@@ -65,6 +65,7 @@ Khóa i18n của mã `<nhóm>:<tên>` là `cli.quest.infirmary.reason.<nhóm>.<t
 | `breaker:secrets_refused` | cầu dao secret | `territory`, `names` | lãnh thổ không cho các secret `names` |
 | `breaker:secrets_missing` | cầu dao secret | `names` | kho bảo vật thiếu `names` |
 | `breaker:treasury_unreadable` | cầu dao secret | `error` | không đọc được kho bảo vật; `error` nguyên văn |
+| `breaker:no_session` | không mở được phiên người làm (trip `no_session`) | `error` | plot, request hay spawn ném lỗi; `error` là dòng đầu, tối đa 300 ký tự (thêm lúc giao hàng PS-07, khi merge fix/review-no-session) |
 | `judge:time` | cầu dao người chấm | `stopped`, `run` | `stopped` người chấm của lượt `run` bị cầu dao thời gian cắt |
 | `judge:tokens` | như trên | `stopped`, `run` | … cầu dao token |
 | `judge:turns` | như trên | `stopped`, `run` | … cầu dao lượt |
@@ -72,6 +73,7 @@ Khóa i18n của mã `<nhóm>:<tên>` là `cli.quest.infirmary.reason.<nhóm>.<t
 | `judge:verdict_unwritten` | người chấm | `stopped`, `run`, `error` | phán quyết không ghi được; `error` nguyên văn |
 | `judge:session_ended` | người chấm | `stopped`, `run`, `outcome` | phiên chấm kết thúc `outcome` (giá trị `RunResult.outcome`, kèm mã thoát nếu có, nguyên văn) |
 | `judge:session_lost` | người chấm | `stopped`, `run` | phiên chấm bị mất |
+| `judge:no_session` | người chấm | `stopped`, `run`, `error` | phiên chấm cuối không mở được (`review.no_session`); `error` như `breaker:no_session` (thêm lúc giao hàng PS-07) |
 | `judge:partial_verdicts` | người chấm | `count`, `run` | `count` phán quyết dở ở lượt `run` |
 | `judge:partial_verdicts_until` | người chấm | `count`, `run`, `until` | như trên; người chấm cuối dừng ở `until` (chữ của nó, nguyên văn) |
 | `restart:time` | lần khởi động lại | `stopped` | Nhiếp chính dừng trước nước này; làm ở lần khởi động sau; `stopped` người chấm bị cắt vì thời gian |
