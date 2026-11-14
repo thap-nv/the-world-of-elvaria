@@ -31,7 +31,7 @@ import type {
 
 import { hookPlanOf, hooksProblem } from './hook-files.ts';
 import { ANTIGRAVITY_MODELS } from './models.ts';
-import { commandLineProblem, programOf } from './launch.ts';
+import { WINDOWS_PROMPT_MAX_CHARS, commandLineProblem, programOf } from './launch.ts';
 import { removeRunFiles, writeRunFiles } from './run-files.ts';
 import { startSession } from './session.ts';
 import { probeOf, usageBuckets, windowsOf } from './usage.ts';
@@ -60,6 +60,9 @@ export const ANTIGRAVITY_CAPABILITIES: AgentRunner['capabilities'] = {
   // `run_command` runs through powershell.exe on Windows (spike P1-12a §1 row 16; P1-35: `pnpm.ps1` under the
   // Execution Policy). Not measured on macOS or Linux, so not declared there: the prompt then names no shell (P1-40).
   shell: { win32: 'Windows PowerShell (powershell.exe)' },
+  // The prompt goes on agy's command line (stdin is ignored under `-p`), which Windows stops at 32 767 characters
+  // (launch.ts); measured on Windows with agy 1.5.8 (PS-07). macOS and Linux take far more, so no limit there.
+  prompt_max_chars: { win32: WINDOWS_PROMPT_MAX_CHARS },
   // No tool searches files under `-p` (spike P1-12a, the tools a model reported): a class with Glob or Grep gets
   // runner-core's `git grep` and `git ls-files` instead, as `command(...)` rules (settings.ts, P1-53).
   search: false,

@@ -6,7 +6,13 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { fakeRunner, openWorld, request } from './__fixtures__/agy.ts';
-import { WINDOWS_COMMAND_LINE_MAX, commandLineLength, commandLineProblem } from './launch.ts';
+import {
+  WINDOWS_COMMAND_LINE_MAX,
+  WINDOWS_PROMPT_MAX_CHARS,
+  commandLineLength,
+  commandLineProblem,
+} from './launch.ts';
+import { ANTIGRAVITY_CAPABILITIES, sessionArgs } from './runner.ts';
 import type { World } from './__fixtures__/agy.ts';
 
 const AGY = { command: String.raw`C:\Users\owner\.gemini\bin\agy.exe`, args: [] };
@@ -39,6 +45,31 @@ describe('a session whose prompt Windows cannot pass', () => {
     world = await openWorld();
   });
   afterEach(() => world.remove());
+
+  it('passes a prompt of the length agy declares on Windows, with long paths and one quote in five', () => {
+    // The limit the judge's choice weighs (capabilities.prompt_max_chars) leaves room for the rest of the line.
+    expect(ANTIGRAVITY_CAPABILITIES.prompt_max_chars).toEqual({ win32: WINDOWS_PROMPT_MAX_CHARS });
+    const run = String.raw`C:\Users\an-owner-with-a-long-name\Documents\Elvaria kingdoms\my-kingdom\.runs\q_20261114_mggach-2\verify-2`;
+    const shim = {
+      command: String.raw`C:\Program Files\nodejs\node.exe`,
+      args: [
+        String.raw`C:\Users\an-owner-with-a-long-name\AppData\Roaming\npm\node_modules\@google\antigravity\bin\agy.js`,
+      ],
+    };
+    const user = '"abcd'.repeat(WINDOWS_PROMPT_MAX_CHARS / 5);
+    const base = request(world);
+    const files = {
+      settings: `${run}\\settings.json`,
+      policy: `${run}\\policy.json`,
+      hooks: `${run}\\hooks.json`,
+      log: `${run}\\agy.log`,
+      schema: `${run}\\schema.json`,
+    };
+    const resumed = { ...base, prompt: { ...base.prompt, user }, resume: { session_id: 'c'.repeat(36) } };
+    const args = sessionArgs(resumed, files);
+    expect(user).toHaveLength(WINDOWS_PROMPT_MAX_CHARS);
+    expect(commandLineProblem(shim, args, 'win32')).toBeUndefined();
+  });
 
   it('is refused before agy is asked anything about the session', async () => {
     const base = request(world);

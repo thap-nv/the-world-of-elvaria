@@ -19,6 +19,16 @@ export const WINDOWS_COMMAND_LINE_MAX = 32_767;
 const ARGUMENT_FRAME = 3;
 
 /**
+ * The longest user prompt agy is said to take on Windows (`capabilities.prompt_max_chars`, fix/verifier-prompt-limit):
+ * the command line less room for the other arguments (the CLI and run files under the kingdom, every backslash
+ * counted twice: under 1 000) and for the quotes and backslashes of the prompt itself, which Node escapes: one
+ * character in five, more than a whole diff of JSON (DIFF_MAX_CHARS, a quote in four) beside the prose around it. The
+ * Steward weighs a judge's prompt against it before choosing one; the real line is still measured here
+ * (commandLineProblem) before a session starts.
+ */
+export const WINDOWS_PROMPT_MAX_CHARS = 26_000;
+
+/**
  * An upper bound of the command line Node builds on Windows: every argument quoted, each of its quotes and
  * backslashes escaped (counting every backslash overestimates, which is the safe side).
  */
