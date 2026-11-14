@@ -6,6 +6,8 @@
 // - scenario: env ELVARIA_FAKE_SCENARIO (the conformance suite's) plays a session as Codex does (spike §1.5, §3): the
 //   prompt read on stdin, the `-c` hooks run through PowerShell on Windows (`command_windows`) or sh, and skipped
 //   without a word unless `--dangerously-bypass-hook-trust` is given; a refused shell call leaves only a stderr line.
+// `--output-schema` meets the API's strict structured output (fake-codex-schema.mjs): a schema outside it fails before
+// any item, as the 400 of 2026-11-14 did; under it the answer has every key, null for those the model left out.
 // ELVARIA_FAKE_CODEX_LOG=<file> appends each call's argv, cwd, prompt length and PowerShell policy, one JSON line each.
 // ELVARIA_FAKE_CODEX_LOGIN_HANGS=1 makes `login status` never answer; ELVARIA_FAKE_CODEX_LOGGED_OUT=1 refuses it.
 // Exit codes are set, never forced: process.exit() can cut a piped stdout short.
@@ -15,6 +17,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 import path from 'node:path';
 import process from 'node:process';
 
+import { schemaRefusal, strictAnswer } from './fake-codex-schema.mjs';
 import { appServer, declaredHooks } from './fake-codex-server.mjs';
 
 const FIXTURES = import.meta.dirname;
@@ -177,8 +180,11 @@ function letter(question) {
   writeFileSync(file, core.fakeLetter(question));
 }
 
-/** The end of a turn: Stop may ask for one more (spike §3.4), then the usage. */
-function finish(question) {
+const schemaOf = () => JSON.parse(readFileSync(flag('--output-schema'), 'utf8'));
+const VERDICT = '{"result":"pass","notes":"Fake verdict."}';
+
+/** The end of a turn: Stop may ask for one more (spike §3.4), then the answer a strict model writes, the usage. */
+function finish(question, answer = env.ELVARIA_FAKE_CODEX_STRUCTURED ?? VERDICT) {
   const stop = runHook(
     'Stop',
     base('Stop', { turn_id: 'turn', stop_hook_active: false, last_assistant_message: 'done' }),
@@ -188,7 +194,7 @@ function finish(question) {
     say('Letter updated.');
   }
   if (flag('--output-schema') !== undefined)
-    say(env.ELVARIA_FAKE_CODEX_STRUCTURED ?? '{"result":"pass","notes":"Fake verdict."}');
+    say(JSON.stringify(strictAnswer(JSON.parse(answer), schemaOf())));
   const usage = {
     input_tokens: 1000,
     cached_input_tokens: 800,
@@ -240,6 +246,8 @@ const SCENARIOS = {
   },
   // The suite's spawn probe (P1-12e).
   spawn_child: () => SCENARIOS.commands([core.SPAWN_PROBE_COMMAND]),
+  // A judge's verdict under a schema with optional keys (fix/codex-output-schema).
+  structured: () => finish(undefined, JSON.stringify(core.FAKE_STRUCTURED_ANSWER)),
   crash: () => {
     say('Fake crash.');
     return fail('stream disconnected before completion: internal error');
@@ -264,6 +272,9 @@ async function main() {
   print({ type: 'thread.started', thread_id: thread });
   runHook('SessionStart', base('SessionStart', { source: resumed === undefined ? 'startup' : 'resume' }));
   print({ type: 'turn.started' });
+  // The API refuses a schema outside strict structured output before any model call: no item, no token.
+  const refusal = flag('--output-schema') === undefined ? undefined : schemaRefusal(schemaOf());
+  if (refusal !== undefined) return fail(refusal);
   return (SCENARIOS[env[core.FAKE_SCENARIO_ENV]] ?? SCENARIOS.submit)();
 }
 
