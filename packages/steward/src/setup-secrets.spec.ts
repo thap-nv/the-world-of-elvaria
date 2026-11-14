@@ -96,7 +96,8 @@ describe("the plot's setup (P1-30)", () => {
     ]);
   });
 
-  it('is never prepared when the treasury cannot give the values: the claim goes back', async () => {
+  // fix/review-no-session: before, the claim went back and was taken again every tick, with a warning only.
+  it('is never prepared when the treasury cannot give the values: the quest waits in the infirmary, saying why', async () => {
     // The treasury lists the token (so secretsLacking lets the quest through), and then cannot be read.
     const counted = countedTreasury(() => Promise.reject(new Error('the treasury file is locked')));
     const { kingdom, steward, prepared } = await open((root, kept) => ({
@@ -107,8 +108,17 @@ describe("the plot's setup (P1-30)", () => {
     await tickUntil(steward, kingdom.clock, () => Promise.resolve(counted.reads.includes('resolve')));
     expect(prepared).toEqual([]);
     expect(kingdom.requests).toEqual([]);
-    expect(await kingdom.quest('Private registry')).toMatchObject({ status: 'open' });
+    expect(await kingdom.quest('Private registry')).toMatchObject({ status: 'infirmary' });
     expect(kingdom.warnings).toContainEqual(expect.stringContaining('the treasury file is locked'));
+    expect(kingdom.notices).toEqual([
+      expect.objectContaining({
+        kind: 'infirmary',
+        trip: 'no_session',
+        reason: expect.stringMatching(
+          /^breaker:no_session: \w+'s session could not open: .*the treasury file is locked/,
+        ) as unknown,
+      }),
+    ]);
   });
 });
 
