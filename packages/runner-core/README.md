@@ -111,7 +111,9 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   `policy`: `commandRefusal`, `toolOf`, `NO_PUSH_COMMAND`), so the file imports nothing. The prompt, the tool policy
   and the plot already come in each `SpawnRequest`. `adapterOfModule(module, kit)` checks the imported module
   (`createAdapter` exported, called without throwing) and the runner it returns (`runnerProblems`: the kit's tribe
-  and adapter, every capability, `spawn`, `probe`, `doctor`), one sentence per problem; the optional `shell` is
+  and adapter, every capability, `spawn`, `probe`, `doctor`), one sentence per problem, and makes the runner's
+  `doctor()` fail while the hook the kit names is not built, as every built-in adapter's does (`hookProblem`,
+  `withHookProblem`, `src/runner/hook-built.ts`, fix/held-tribe-sessions); the optional `shell` is
   checked only when given (`shellProblems`, P1-40), and so are `search` (`searchProblems`, P1-53), `read`
   (`readProblems`) and `models` (the domain's `modelsProblems`, PS-23), here and in the suite's `capabilities`
   check. An adapter whose CLI has hooks of its own writes its neutral hook dialect into `policy.json` through

@@ -1,10 +1,12 @@
 // What an owner adapter file must give back (implementation-plan §3.14, ADR 0021): a module exporting
 // `createAdapter(kit)` that returns an AgentRunner for the kit's tribe. `apps/cli` imports the file; this checks
 // the module and its runner before the Steward, doctor or the conformance suite touch it, so a broken file is
-// reported as one sentence per problem instead of a crash in the middle of a tick.
+// reported as one sentence per problem instead of a crash in the middle of a tick. Its doctor() also says whether
+// Elvaria's hook is built, as every built-in adapter's does (fix/held-tribe-sessions): the file need not know.
 import { ADAPTER_CAPABILITIES, SHELL_PLATFORMS, err, modelsProblems, ok } from '@elvaria/domain';
 import type { Result } from '@elvaria/domain';
 
+import { hookProblem, hookScriptOf, withHookProblem } from '../runner/hook-built.ts';
 import type { AgentRunner } from '../runner/types.ts';
 import type { AdapterKit } from './kit.ts';
 
@@ -90,5 +92,23 @@ export async function adapterOfModule(
     return err([`${ADAPTER_FACTORY}(kit) threw: ${errorText(error)}`]);
   }
   const problems = runnerProblems(runner, kit);
-  return problems.length === 0 ? ok(runner as AgentRunner) : err(problems);
+  return problems.length === 0 ? ok(withHookCheck(runner as AgentRunner, kit)) : err(problems);
+}
+
+/**
+ * The runner, its doctor() an error when the hook the kit names is not built ((a) of fix/busy-machine): without it
+ * every session of the tribe breaks, whatever the CLI says of its sign-in. A kit whose hook names no script (the
+ * specs') leaves the runner as it is.
+ */
+function withHookCheck(runner: AgentRunner, kit: Pick<AdapterKit, 'hookCommand'>): AgentRunner {
+  const script = hookScriptOf(kit.hookCommand());
+  if (script === undefined) return runner;
+  return {
+    tribe: runner.tribe,
+    adapter: runner.adapter,
+    capabilities: runner.capabilities,
+    spawn: (req) => runner.spawn(req),
+    probe: (options) => runner.probe(options),
+    doctor: async () => withHookProblem(await runner.doctor(), await hookProblem(script)),
+  };
 }
