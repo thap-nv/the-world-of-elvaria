@@ -120,6 +120,28 @@ export function baseChainOf(quest: Quest, quests: readonly Quest[]): ReadonlySet
   return chain;
 }
 
+/**
+ * The quest holding a scope that `entries`, opened to `quest` on its territory, would meet (R3): the roster's rule at
+ * the step that opens them, an amendment accepted (fix/amendment-delegation), since the quest that waits on it goes
+ * on without passing the roster. Undefined when none does, or nothing is opened.
+ */
+export function scopeHolderMeeting(
+  quest: Quest,
+  entries: readonly string[],
+  quests: readonly Quest[],
+  shared: readonly string[] = [],
+): QuestId | undefined {
+  const chain = baseChainOf(quest, quests);
+  return quests.find(
+    (other) =>
+      other.territory === quest.territory &&
+      other.id !== quest.id &&
+      !chain.has(other.id) &&
+      holdsScope(other) &&
+      scopesMeet(entries, scopeOf(other), shared),
+  )?.id;
+}
+
 /** Why a quest waits on its territory's scope rules: who it waits for, by which rule. */
 export interface ScopeWait {
   /**

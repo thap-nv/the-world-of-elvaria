@@ -904,6 +904,7 @@
     "cli.triage.hold.protected_paths": "nó chạm vùng bảo vệ",
     "cli.triage.hold.above_rank": "hạng của việc cao hơn phạm vi ủy quyền",
     "cli.triage.hold.outside_scope": "tệp của nó nằm ngoài vùng file của việc",
+    "cli.triage.hold.scope_held": "tệp nó mở chạm vùng file một quest khác đang giữ",
     "cli.triage.hold.chancellor_asks": "Tể tướng đưa lên bạn",
     "cli.tribe.add.added": "Đã thêm tộc {tribe} (adapter {adapter}), tạm thời tắt.",
     "cli.tribe.add.arg.id": "Id của tộc mới, ví dụ codex: chữ thường, chữ số và _, bắt đầu bằng chữ.",

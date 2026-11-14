@@ -22,6 +22,7 @@ import {
   DRAFTED_MEMO,
   PLAN,
   author,
+  questOf,
   seedAmendments,
 } from '../../test/amend.ts';
 import { foundKingdom, tempDir, testIo } from '../../test/cli.ts';
@@ -176,6 +177,39 @@ describe("an amendment's author, on call (PS-22b)", () => {
     expect((await inbox())[2]?.payload).toMatchObject({
       decision: 'owner',
       note: 'No author could read it (no Chancellor, or the mage of its plan is not here): you decide it.',
+    });
+  });
+
+  // fix/amendment-delegation, (67) and (91): the job hands amendmentCommand the kingdom's quests.
+  describe("a party part's acceptance that only opens files of the contract", () => {
+    const party = { party_id: PLAN.id, contract: 'docs/contract.md' };
+    const keep = { ...ACCEPT, description: CHILD.description };
+    /** The plan as the party's contract, rank B, on the whole territory; its sub-quest a part of rank C. */
+    const seedParty = async () => {
+      const store = openKingdom(kingdom);
+      await store.quests.write({ ...PLAN, ...party, party_role: 'contract', rank: 'B', scope_paths: ['**'] });
+      await store.quests.write(
+        questOf(CHILD.id, { ...CHILD, ...party, party_role: 'part', rank: 'C', scope_paths: ['src/**'] }),
+      );
+      return store;
+    };
+
+    it('is the mage’s to take in above the delegation’s rank: the Steward only opens the files', async () => {
+      await seedParty();
+      await amendmentJob(await contextOf(testIo()), { [CLAUDE]: author(keep) }).run(view([CHILD.id]));
+      expect((await inbox())[0]?.payload).toEqual({
+        memo: CHILD_MEMO.id,
+        decision: 'accepted',
+        note: 'Đúng: lint chặn.',
+      });
+    });
+
+    it('goes to the owner when a sibling part holds those files (R3)', async () => {
+      const store = await seedParty();
+      const sibling = { ...party, party_role: 'part', scope_paths: ['package.json'], attempts: 1 };
+      await store.quests.write(questOf('q_20261105_s1b0aa', sibling));
+      await amendmentJob(await contextOf(testIo()), { [CLAUDE]: author(keep) }).run(view([CHILD.id]));
+      expect((await inbox())[0]?.payload).toMatchObject({ decision: 'owner', holds: ['scope_held'] });
     });
   });
 
