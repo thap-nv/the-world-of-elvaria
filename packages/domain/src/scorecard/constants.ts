@@ -14,6 +14,14 @@ export const SCORECARD_ITEMS = [
 ] as const;
 export type ScorecardItemId = (typeof SCORECARD_ITEMS)[number];
 
+/**
+ * The items only a trial tells, at the head of SCORECARD_ITEMS. The others read the kingdom's files and git alone, so
+ * `doctor` reads them again each time it runs (itemsWithoutTrialOf) instead of keeping what the last trial saw: a
+ * gazetteer fixed by hand showed as failing until the next trial, a quarter of an hour of Docker (fix/kingdom-upkeep).
+ */
+export const TRIAL_ITEMS = ['trial', 'check_time'] as const satisfies readonly ScorecardItemId[];
+export type TrialItemId = (typeof TRIAL_ITEMS)[number];
+
 /** `unmeasured`: nothing to judge yet (no quest decided, no git to try on), which is no failure. */
 export const SCORECARD_STATUSES = ['pass', 'fail', 'unmeasured'] as const;
 export type ScorecardStatus = (typeof SCORECARD_STATUSES)[number];

@@ -231,8 +231,11 @@ show` prints the brief apart from the rest of the description and, while the pla
   (`src/territory/check-view.ts`), and exits 1 when the trial fails. It keeps how the card stood in
   `.state/territory-trials/<id>.json` (`src/territory/trial-record.ts`, the CLI's own file like `.state/build.json`),
   which `doctor` reads (`src/doctor/check-territory-trial.ts`): a git territory never tried, whose trial failed, or
-  whose setup or checks changed since is a warning. No quest, event or model; `metrics` prints the first-pass rate
-  by territory beside class, tag, model and kind.
+  whose setup or checks changed since is a warning. Once it passed, `doctor` takes only the trial and each check's
+  time from the record and reads the other four items again (the domain's `itemsWithoutTrialOf`: the ledger once
+  per run, the gazetteer's commits counted with no fetch), naming under its line which items come from the trial
+  and when, which are read now, and why each item read now fails. No quest, event or model; `metrics` prints the
+  first-pass rate by territory beside class, tag, model and kind.
 
 ## Does not
 
