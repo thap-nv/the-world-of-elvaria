@@ -11,7 +11,9 @@
 // machine judge once it has none. A judge that left this review without a verdict is not chosen again while another
 // judge may take it: one a breaker stopped would most likely spend its budget the same way (P1-38, P1-35 (d)), one
 // whose session crashed or never opened most likely fails the same way (fix/review-no-session); nor is the judge that
-// just handed in a partial verdict (P1-48, P1-42 (c)): fresh eyes read on from where it stopped. (PS-22) An objection
+// just handed in a partial verdict (P1-48, P1-42 (c)): fresh eyes read on from where it stopped. Before both, a judge
+// whose tribe takes a shorter prompt than the one measured for it is passed over while another judge may take the
+// quest (prompt-limit.ts, fix/verifier-prompt-limit): its session would not open. (PS-22) An objection
 // waiting on the quest takes a second judge: never the judge of the verdict it contests, and never the machine, which
 // cannot read a letter; with no such judge in the roster the quest waits as one nobody may judge.
 import { justPartialOf, leftVerifiersOf } from '../breaker/review.ts';
@@ -20,12 +22,13 @@ import { STRONG_JUDGE_MIN_RANK } from '../constants.ts';
 import { byIdleSince } from '../dispatch/roster.ts';
 import { RANKS } from '../schema/common.ts';
 import { pastAssigneesOf } from './past-assignees-of.ts';
+import { withinPromptLimit } from './prompt-limit.ts';
 import { touchesProtected } from './protected.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 import type { CharacterClass } from '../schema/registry-entries.ts';
-import type { TribeId } from '../core/ids.ts';
+import type { CharacterId, TribeId } from '../core/ids.ts';
 import type { TribeLimits } from '../tribe/tribe-limits.ts';
 import type { TribeModels } from '../tribe/models.ts';
 
@@ -44,10 +47,15 @@ export interface VerifierPolicy {
   /** Whether a candidate may open a session now: idle, its tribe awake and with a slot left. */
   readonly free: (character: Character) => boolean;
   /**
-   * Each tribe's limits (tribeLimitsOf): a judge whose tribe answers in text (`prompt_and_parse`) comes after an
-   * otherwise equal one whose CLI enforces the verdict's schema. Absent: no tribe is told apart.
+   * Each tribe's limits (tribeLimitsOn): a judge whose tribe answers in text (`prompt_and_parse`) comes after an
+   * otherwise equal one whose CLI enforces the verdict's schema, and one whose tribe takes a shorter prompt than
+   * `prompt_chars` says is passed over (withinPromptLimit). Absent: no tribe is told apart.
    */
-  readonly limits?: Readonly<Partial<Record<TribeId, Pick<TribeLimits, 'structured_output'>>>>;
+  readonly limits?: Readonly<
+    Partial<Record<TribeId, Pick<TribeLimits, 'structured_output' | 'prompt_max_chars'>>>
+  >;
+  /** The length of this review's prompt for each judge the Steward measured (ReviewPrompt). Absent: none. */
+  readonly prompt_chars?: Readonly<Partial<Record<CharacterId, number>>>;
   /**
    * The models each tribe's adapter declares, with their families (PS-23): a judge or doer on a model its tribe names
    * without a family, or does not name, is of no known family and never counts as another one. Absent: every family
@@ -142,7 +150,11 @@ function besidesPassedOver(
   return others.some(may) ? others : fit;
 }
 
-/** The judges selectVerifier draws from (besidesPassedOver), and whether one is of another family than the doers. */
+/**
+ * The judges selectVerifier draws from, and whether one is of another family than the doers: those whose prompt their
+ * tribe takes first (withinPromptLimit), as a session that cannot open is a sure loss where a breaker or a crash may
+ * not come again; then besidesPassedOver among them.
+ */
 function judgesFor(
   quest: Quest,
   candidates: readonly Character[],
@@ -156,10 +168,11 @@ function judgesFor(
   const otherFamily = (character: Character): boolean =>
     apartFromAll(familyOfCharacter(character, policy.models), families);
   const machineOnly = policy.same_family === 'machine_only';
+  const may = (c: Character): boolean => !machineOnly || otherFamily(c);
   const fit = besidesPassedOver(
     quest,
-    fitJudges(quest, candidates, policy),
-    (c) => !machineOnly || otherFamily(c),
+    withinPromptLimit(fitJudges(quest, candidates, policy), may, policy),
+    may,
   );
   return { fit, otherFamily, machineOnly };
 }

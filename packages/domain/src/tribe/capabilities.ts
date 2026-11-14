@@ -25,7 +25,10 @@ export type AdapterCapability = (typeof ADAPTER_CAPABILITIES)[number];
 /** The yes-or-no capabilities, what tribeLimitsOf narrows a tribe by. */
 export type AdapterFlags = Readonly<Record<AdapterCapability, boolean>>;
 
-/** The operating systems a shell is declared for, as Node's `process.platform` names them (ADR 0015). */
+/**
+ * The operating systems a capability that differs by OS (`shell`, `prompt_max_chars`) is declared for, as Node's
+ * `process.platform` names them (ADR 0015).
+ */
 export const SHELL_PLATFORMS = ['win32', 'darwin', 'linux'] as const;
 
 export type ShellPlatform = (typeof SHELL_PLATFORMS)[number];
@@ -43,6 +46,13 @@ export type AdapterCapabilities = AdapterFlags & {
    * where it was measured; an OS left out, or an adapter file older than the field, makes the prompt say nothing.
    */
   readonly shell?: Readonly<Partial<Record<ShellPlatform, string>>>;
+  /**
+   * The longest user prompt the CLI takes, in characters, by operating system (fix/verifier-prompt-limit): agy takes it
+   * on its command line, which Windows stops at 32 767 characters, and a judge's prompt carries a diff. Declared only
+   * where it was measured; an OS left out, or an adapter file older than the field, has no limit. The Steward measures
+   * a judge's prompt before the tick, and selectVerifier passes over a judge whose tribe takes a shorter one.
+   */
+  readonly prompt_max_chars?: Readonly<Partial<Record<ShellPlatform, number>>>;
   /**
    * Whether the CLI has tools of its own to search file names and contents in its headless mode (P1-53). false: a
    * class with Glob or Grep searches the files git tracks with the read-only `git grep` and `git ls-files` in its
@@ -76,6 +86,19 @@ export function shellOf(
   if (!isShellPlatform(platform)) return undefined;
   const shell = capabilities?.shell?.[platform]?.trim();
   return shell === '' ? undefined : shell;
+}
+
+/**
+ * The longest user prompt this adapter's CLI takes on `platform`, or undefined when it declares none there: a value
+ * that is not a positive whole number counts as none, as the adapter file's check (runner-core) refuses it.
+ */
+export function promptMaxOf(
+  capabilities: Pick<AdapterCapabilities, 'prompt_max_chars'> | undefined,
+  platform: string,
+): number | undefined {
+  if (!isShellPlatform(platform)) return undefined;
+  const max = capabilities?.prompt_max_chars?.[platform];
+  return max !== undefined && Number.isInteger(max) && max > 0 ? max : undefined;
 }
 
 /** The declared models of each tribe whose runner names its own (`capabilities.models`), for planTick (PS-23). */

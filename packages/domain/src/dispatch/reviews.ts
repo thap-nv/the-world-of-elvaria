@@ -4,6 +4,7 @@
 // the tick (P1-25): the Steward starts them, and the quest is judged in a tick after they ended, so a long check never
 // holds the inbox, the sessions' ends or the claims.
 import { recheckDue } from '../verify/environment.ts';
+import { promptCharsOf } from '../verify/prompt-limit.ts';
 import { awaitedJudges, selectVerifier, waitsForNoJudge } from '../verify/select-verifier.ts';
 import { partyOf, workedOn } from '../verify/past-assignees-of.ts';
 import { judgeWaitOf } from './judge-waits.ts';
@@ -15,6 +16,7 @@ import type { Character } from '../schema/character/character.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 import type { Registry } from '../schema/registry.ts';
+import type { ReviewPrompt } from '../verify/prompt-limit.ts';
 import type { VerifierClass, VerifierPolicy } from '../verify/select-verifier.ts';
 import type { TribeModels } from '../tribe/models.ts';
 
@@ -59,6 +61,12 @@ export interface ReviewSource {
   readonly background?: BackgroundWork;
   /** The models each tribe's adapter declares (PS-23): selectVerifier reads families from them. Absent: by the slug. */
   readonly models?: TribeModels;
+  /**
+   * The prompts the Steward measured for the next review of quests whose checks ended, one per judge whose tribe has a
+   * prompt limit on this OS (fix/verifier-prompt-limit): selectVerifier passes over a judge whose prompt is longer.
+   * Absent, as in a sandbox day: none measured, nobody passed over for it.
+   */
+  readonly review_prompts?: readonly ReviewPrompt[];
 }
 
 /**
@@ -129,6 +137,7 @@ export function planReviews(
       party: partyOf(quest, source.quests),
       limits: source.limits,
       models: source.models ?? {},
+      prompt_chars: promptCharsOf(quest.id, source.review_prompts),
     };
     if (waitsForNoJudge(quest, candidates, policy)) {
       planned.unjudgeable.push(quest.id);

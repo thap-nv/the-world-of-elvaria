@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { ADAPTER_CAPABILITIES } from './capabilities.ts';
-import { FULL_TRIBE_LIMITS, TRIBE_NARROWING, tribeLimitsOf } from './tribe-limits.ts';
+import { FULL_TRIBE_LIMITS, TRIBE_NARROWING, tribeLimitsOf, tribeLimitsOn } from './tribe-limits.ts';
 import type { AdapterCapability, AdapterFlags } from './capabilities.ts';
 import type { TribeLimits } from './tribe-limits.ts';
 
@@ -65,6 +65,13 @@ describe('tribeLimitsOf', () => {
     expect(tribeLimitsOf(without('events')).apprentice).toBe(false);
     expect(tribeLimitsOf(without('subagent')).apprentice).toBe(false);
     expect(tribeLimitsOf(without('subagent')).activity).toBe('full');
+  });
+
+  it('adds the prompt limit the adapter declares for the operating system, and nothing without one', () => {
+    const agy = { ...ALL, prompt_max_chars: { win32: 28_000 } };
+    expect(tribeLimitsOn(agy, 'win32')).toEqual({ ...FULL_TRIBE_LIMITS, prompt_max_chars: 28_000 });
+    expect(tribeLimitsOn(agy, 'darwin')).toEqual(FULL_TRIBE_LIMITS);
+    expect(tribeLimitsOn(ALL, 'win32')).toEqual(FULL_TRIBE_LIMITS);
   });
 
   it('narrows a tribe with nothing but a headless mode to the floor', () => {
