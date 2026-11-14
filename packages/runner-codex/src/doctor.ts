@@ -1,10 +1,8 @@
 // doctor(): which Codex CLI, which version, signed in or not (spike Codex 2026-11-12 §1.1, §1.2), 0 mana:
 // `codex --version` and `codex login status`, which answers `Logged in using ChatGPT` with exit 0; a call stopped at
 // its timeout says so, not "not signed in" (fix/busy-machine). A session also needs the built hook
-// (packages/hooks/dist): without it every hook call fails, so doctor says so first.
-import { stat } from 'node:fs/promises';
-
-import { runToEnd } from '@elvaria/runner-core';
+// (packages/hooks/dist): without it every hook call fails, so doctor says so, as every tribe's does (runner-core).
+import { hookProblem, runToEnd } from '@elvaria/runner-core';
 import type { ChildRun, ToolInfo } from '@elvaria/runner-core';
 
 import { programOf, versionOf } from './launch.ts';
@@ -19,16 +17,6 @@ export interface DoctorInput {
 }
 
 export const NOT_SIGNED_IN = 'codex login status: not signed in (run codex login), or offline';
-export const hookMissing = (file: string): string =>
-  `the Elvaria hook is not built: ${file} is missing (run pnpm --filter @elvaria/hooks build)`;
-
-async function isFile(file: string): Promise<boolean> {
-  try {
-    return (await stat(file)).isFile();
-  } catch {
-    return false;
-  }
-}
 
 /** The hook's script among its arguments: the one that ends in `.js`, `.mjs` or `.ts` (the source, in the specs). */
 const scriptOf = (hook: Launch): string | undefined => hook.args.find((arg) => /\.(?:m?js|ts)$/i.test(arg));
@@ -50,11 +38,8 @@ export async function doctorCodex(input: DoctorInput): Promise<ToolInfo> {
     runToEnd(program, ['--version'], call),
     runToEnd(program, ['login', 'status'], call),
   ]);
-  const script = scriptOf(input.hook);
-  const problems = [
-    ...loginProblems(login),
-    ...(script === undefined || (await isFile(script)) ? [] : [hookMissing(script)]),
-  ];
+  const hook = await hookProblem(scriptOf(input.hook));
+  const problems = [...loginProblems(login), ...(hook === undefined ? [] : [hook])];
   // A version that did not come is noted; it says nothing of whether a session can run.
   const notes = [
     ...(version.problem === undefined ? [] : [`codex --version: ${version.problem}`]),

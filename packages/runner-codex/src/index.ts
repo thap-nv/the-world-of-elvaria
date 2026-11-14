@@ -17,7 +17,7 @@ export {
   codexNote,
   contextFileText,
 } from './context-file.ts';
-export { NOT_SIGNED_IN, doctorCodex, hookMissing } from './doctor.ts';
+export { NOT_SIGNED_IN, doctorCodex } from './doctor.ts';
 export {
   HOOK_EVENTS,
   HOOK_TIMEOUT_SECONDS,
