@@ -108,6 +108,25 @@ describe('draftQuests with structured output (§3.11)', () => {
       error: { code: 'timed_out' },
     });
   });
+
+  // M2 of 2026-11-14: Claude Code 2.1.322 refused the schema before any model call, its only text the API's answer.
+  it("gives the first line of a session the CLI ended in error, and the outcome when it said nothing or didn't err", async () => {
+    const refusal = 'API Error: 400 tools.1.custom.input_schema: input_schema does not support oneOf';
+    expect(await speak([{ text: `\n ${refusal} \nmore`, outcome: 'error' }]).drafted).toEqual({
+      ok: false,
+      error: { code: 'cli_error', line: refusal },
+    });
+    const long = await speak([{ text: 'x'.repeat(400), outcome: 'error' }]).drafted;
+    expect(!long.ok && long.error.code === 'cli_error' && long.error.line).toHaveLength(300);
+    expect(await speak([{ text: ' \n ', outcome: 'error' }]).drafted).toEqual({
+      ok: false,
+      error: { code: 'no_reply', outcome: 'error' },
+    });
+    expect(await speak([{ text: 'Thinking…', outcome: 'max_turns' }]).drafted).toEqual({
+      ok: false,
+      error: { code: 'no_reply', outcome: 'max_turns' },
+    });
+  });
 });
 
 describe('draftQuests on a tribe without structured output (§3.14)', () => {
