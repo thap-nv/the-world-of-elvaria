@@ -32,4 +32,4 @@ pnpm boundaries                       # depcruise over the real repo
 runtime rule and for two of the per-workspace boundary rules;
 `eslint-boundaries.spec.ts` and `eslint-i18n.spec.ts` run the ESLint rules on sample code.
 Adding a workspace: add it to `WORKSPACES` (every planned one is listed already), then create `packages/<key>`
-or `apps/<key>` named `@elvaria/<key>`; CLAUDE.md "Adding a package" has the files it needs.
+or `apps/<key>` named `@elvaria/<key>`; "Adding a package" in docs/guides/repo-handbook.md has the files it needs.
