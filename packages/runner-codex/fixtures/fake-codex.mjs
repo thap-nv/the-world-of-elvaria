@@ -8,7 +8,8 @@
 //   without a word unless `--dangerously-bypass-hook-trust` is given; a refused shell call leaves only a stderr line.
 // `--output-schema` meets the API's strict structured output (fake-codex-schema.mjs): a schema outside it fails before
 // any item, as the 400 of 2026-11-14 did; under it the answer has every key, null for those the model left out.
-// ELVARIA_FAKE_CODEX_LOG=<file> appends each call's argv, cwd, prompt length and PowerShell policy, one JSON line each.
+// ELVARIA_FAKE_CODEX_LOG=<file> appends each call's argv, cwd, prompt length and PowerShell policy, one JSON line each,
+// and for a session whether AGENTS.override.md warns about Windows' mxc sandbox.
 // ELVARIA_FAKE_CODEX_LOGIN_HANGS=1 makes `login status` never answer; ELVARIA_FAKE_CODEX_LOGGED_OUT=1 refuses it.
 // Exit codes are set, never forced: process.exit() can cut a piped stdout short.
 import { spawnSync } from 'node:child_process';
@@ -266,7 +267,10 @@ async function main() {
   if (early === 'hang') return SCENARIOS.hang();
   if (early !== undefined) return early;
   const prompt = await readPrompt();
-  log({ prompt_chars: prompt.length });
+  const override = path.join(process.cwd(), 'AGENTS.override.md');
+  // Whether the override warns about Windows' sandbox, which the adapter writes on Windows only.
+  const mxc_note = existsSync(override) && readFileSync(override, 'utf8').includes("Codex's mxc sandbox");
+  log({ prompt_chars: prompt.length, mxc_note });
   if (prompt.trim() === '') return refuse(1, 'Error: no prompt on stdin');
   core = await import('@elvaria/runner-core');
   print({ type: 'thread.started', thread_id: thread });

@@ -136,8 +136,8 @@ describe('PreToolUse on agy', () => {
     expect(line).toMatchObject({ type: 'agent.tool.blocked', session: ROOT });
   });
 
-  it('denies every sub-agent tool, laws or not', async () => {
-    for (const name of ['invoke_subagent', 'define_subagent', 'browser_subagent']) {
+  it('denies every sub-agent tool, laws or not, agy 1.5.9 run_workflow included', async () => {
+    for (const name of ['invoke_subagent', 'define_subagent', 'browser_subagent', 'run_workflow']) {
       const outcome = await call('PreToolUse', toolCall(name, { Role: 'helper' }), kingdom.env());
       expect(decisionOf(outcome.stdout)).toMatchObject({ decision: 'deny' });
     }

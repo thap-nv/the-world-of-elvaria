@@ -31,7 +31,8 @@ async function existing(file: string): Promise<string | undefined> {
 export const sessionWrites = (req: Pick<SpawnRequest, 'permissions'>): boolean =>
   req.permissions.tools.some((tool) => tool === 'Edit' || tool === 'Write' || tool === 'NotebookEdit');
 
-export async function writeRunFiles(req: SpawnRequest, ctx: RunContext): Promise<RunFiles> {
+/** `windows`: the session runs in Windows' `mxc` sandbox, which AGENTS.override.md then warns about (context-file.ts). */
+export async function writeRunFiles(req: SpawnRequest, ctx: RunContext, windows: boolean): Promise<RunFiles> {
   const context = path.join(req.cwd, CONTEXT_FILE);
   const old = await existing(context);
   // Elvaria never edits a territory's file, and Codex reads only one override per folder.
@@ -47,7 +48,7 @@ export async function writeRunFiles(req: SpawnRequest, ctx: RunContext): Promise
     await writeFile(schema, `${JSON.stringify(strictSchemaOf(req.structured), null, 2)}\n`, 'utf8');
   const patterns = [...LAW_FILES, ...(req.territory?.context_files ?? [])];
   const files = await readContextFiles(req.cwd, patterns);
-  const note = codexNote(req.permissions, sessionWrites(req));
+  const note = codexNote(req.permissions, sessionWrites(req), windows);
   await writeFile(context, contextFileText(req.prompt.system, files, note), 'utf8');
   return { policy, context, ...(schema === undefined ? {} : { schema }) };
 }

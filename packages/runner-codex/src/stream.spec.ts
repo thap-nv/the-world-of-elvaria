@@ -52,11 +52,20 @@ describe('createStreamReader', () => {
     expect(state).toMatchObject({ completed: false, started: 1, turns: 0, tokens: 0 });
   });
 
-  it('reads a failed turn and its error', () => {
-    const { state } = replay('stream-bad-model');
+  it('reads a failed turn and its error, and tells the failure as a text', () => {
+    const { state, signals } = replay('stream-bad-model');
     expect(state.failure).toMatch(/not supported when using Codex with a ChatGPT account/);
     expect(state.last_error).toBe(state.failure);
     expect(rateLimitOf(state)).toBeUndefined();
+    expect(signals).toEqual([{ kind: 'text', text: `codex turn failed: ${state.failure ?? ''}` }]);
+  });
+
+  it('tells a failed turn without a message as a text too', () => {
+    const reader = createStreamReader();
+    expect(reader.read('{"type":"turn.failed","error":{}}')).toEqual([
+      { kind: 'text', text: 'codex turn failed: the turn failed' },
+    ]);
+    expect(reader.state.failure).toBe('the turn failed');
   });
 
   it('counts a sub-agent call as an action of its own', () => {

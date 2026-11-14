@@ -21,7 +21,9 @@ launch, hook, env, timeout_ms?, platform?})`. `hook` is `hookCommand()` of `@elv
   `AGENTS.override.md` at the root of the plot, which Codex reads in place of `AGENTS.md`: the system part of the
   prompt, the territory's `AGENTS.md`, `CLAUDE.md` and `territory.context_files` copied in (runner-core's
   `readContextFiles`, each cut at 24 000 characters), then what Codex's tools are for this class (`apply_patch` writes; git's folder is read-only, the Steward commits; no sub-agents, no
-  `request_user_input`; the file itself is Elvaria's, never edited or formatted). The file goes when the session
+  `request_user_input`; the file itself is Elvaria's, never edited or formatted; on Windows, what the `mxc` sandbox
+  breaks (a symlink, git with a folder as its remote, stopping a process tree, `sh`) is the sandbox's failure, not
+  the code's, not to be run again and again, and the Steward's checks outside the sandbox judge). The file goes when the session
   ends, or never started; a territory's own `AGENTS.override.md` refuses the session and stays. Its body sits
   between `<!-- prettier-ignore-start -->` and `<!-- prettier-ignore-end -->`, an open code fence of a cut law file
   closed first (`closeFences`), so a territory's `prettier --check .` passes in the session (P1-12e).
@@ -48,7 +50,8 @@ image_generation -m <model> -c … --dangerously-bypass-hook-trust [--output-sch
   session, since the bypass would run it unreviewed.
 - Reads the stream: `thread.started` names the session; `agent_message` items give text; tool items and messages
   count as the model's actions, and a session stops when one past `budget.max_turns` begins (Codex has no turn
-  cap); `turn.completed.usage` gives the tokens (input past the cache in full, cache reads at a tenth through
+  cap); `turn.failed` gives its message as a `text` signal (`codex turn failed: <message>`, which the Chancellor
+  reports as its `cli_error` line); `turn.completed.usage` gives the tokens (input past the cache in full, cache reads at a tenth through
   runner-core's `countedTokens`). The hook's refusals have no stream line: they are read from stderr (`Command
 blocked by PreToolUse hook: <reason>. Command: <command>`) into `tool_blocked` signals and `permission_denials`.
   Outcome: a kill → `killed`, the action cap → `max_turns`, a completed turn with exit 0 → `completed`, anything

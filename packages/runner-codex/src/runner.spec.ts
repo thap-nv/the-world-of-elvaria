@@ -96,17 +96,18 @@ describe('a session', () => {
     expect(existsSync(path.join(world.plot, CONTEXT_FILE))).toBe(false);
   });
 
-  it("sets PowerShell's policy for the session's commands on Windows only, where mxc cannot read it (P1-12e)", async () => {
+  it("sets PowerShell's policy and warns about mxc's failures on Windows only (P1-12e, gap 21)", async () => {
     const log = path.join(world.root, 'calls.jsonl');
     await run(request(world, { ELVARIA_FAKE_CODEX_LOG: log }));
     const calls = (await readFile(log, 'utf8'))
       .trim()
       .split('\n')
-      .map((line) => JSON.parse(line) as { argv: string[]; ps_policy?: string });
+      .map((line) => JSON.parse(line) as { argv: string[]; ps_policy?: string; mxc_note?: boolean });
     const session = calls.find((call) => call.argv[0] === 'exec');
     expect(session?.ps_policy).toBe(
       process.platform === 'win32' ? SHELL_POLICY_ENV.PSExecutionPolicyPreference : undefined,
     );
+    expect(session?.mxc_note).toBe(process.platform === 'win32');
     expect(SHELL_POLICY_ENV).toEqual({ PSExecutionPolicyPreference: 'RemoteSigned' });
   });
 });

@@ -28,12 +28,14 @@ const KINDS: Readonly<Record<string, ToolKind>> = {
 
 /**
  * Tools that start another agent. agy caps none of them and cannot stop one from a hook, and their tokens are
- * missing from the parent's usage (spike §6), so stage 1 denies them all (ADR 0017).
+ * missing from the parent's usage (spike §6), so stage 1 denies them all (ADR 0017). `run_workflow` (agy 1.5.9's
+ * changelog, cli-facts §2.6) runs a script that fans work out to many sub-agents: denied by name, unmeasured.
  */
 export const AGY_SUBAGENT_TOOLS: readonly string[] = [
   'invoke_subagent',
   'define_subagent',
   'browser_subagent',
+  'run_workflow',
 ];
 
 /** Any one of the writing tools of a class grants every agy write tool, as the settings translate them (§3.7). */
