@@ -4,7 +4,7 @@ import type { Translate } from '@elvaria/i18n';
 import type { Bell, ManaGaugeNotice, Notice } from '@elvaria/steward';
 
 import { gaugesOf } from '../digest/markdown.ts';
-import { detailLines, tripLabel } from '../quest/infirmary.ts';
+import { detailLines, whyLines } from '../quest/infirmary.ts';
 import { stretchOf } from '../quest/unclaimable.ts';
 import type { CliIo } from '../io.ts';
 
@@ -32,17 +32,15 @@ const gaugeOf = (t: Translate, notice: ManaGaugeNotice): string =>
     : t('cli.run.notice.gauge.model', { model: notice.model, tribe: notice.tribe });
 
 /**
- * Why a quest went to the infirmary, in the owner's language (P1-32): the trip, then each part of the detail on a
- * line of its own, as `quest show` says them.
+ * Why a quest went to the infirmary, in the owner's language (P1-32): the sentence of its reason (contract
+ * infirmary-reason-codes), then the hook's lines and each part of the detail on a line of its own, as `quest show`
+ * says them.
  */
 function infirmaryLine(t: Translate, notice: Extract<Notice, { kind: 'infirmary' }>): string {
-  const { quest, trip, detail = {} } = notice;
-  const head = t('cli.run.notice.infirmary', {
-    quest: quest.id,
-    title: quest.title,
-    reason: tripLabel(t, trip),
-  });
-  return [head, ...detailLines(t, detail).map((line) => `    ${line}`)].join('\n');
+  const { quest, trip, detail = {}, reason } = notice;
+  const [why = '', ...hook] = whyLines(t, reason, trip);
+  const head = t('cli.run.notice.infirmary', { quest: quest.id, title: quest.title, reason: why });
+  return [head, ...[...hook, ...detailLines(t, detail, reason)].map((line) => `    ${line}`)].join('\n');
 }
 
 type ManaNotice = Extract<Notice, { kind: 'mana_asleep' | 'mana_awake' | 'mana_warning' }>;

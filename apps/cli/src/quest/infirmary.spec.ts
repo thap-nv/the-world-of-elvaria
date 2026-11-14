@@ -12,9 +12,14 @@ import type { Quest } from '@elvaria/domain';
 const SICK = questFixture('infirmary', QUEST_ID, { attempts: 3 });
 
 let next = 0;
-/** A `quest.infirmary` line as the Steward writes it; ids differ so the journal keeps every line. */
+/**
+ * A `quest.infirmary` line as the Steward writes it; ids differ so the journal keeps every line. A string reason is
+ * an old line's words, as the reader lifts it (`legacy`); an object is a coded reason, kept as it is.
+ */
 function infirmaryLine(data: Record<string, unknown>, attempt?: number, quest: Quest = SICK) {
   next += 1;
+  const reason =
+    typeof data.reason === 'string' ? { code: 'legacy', params: { text: data.reason } } : data.reason;
   return EventSchema.parse({
     v: EVENT_VERSION,
     id: `01M6RQ5Y000000000000000${String(next).padStart(3, '0')}`,
@@ -24,7 +29,7 @@ function infirmaryLine(data: Record<string, unknown>, attempt?: number, quest: Q
     quest: quest.id,
     territory: quest.territory,
     ...(attempt === undefined ? {} : { attempt }),
-    data: { ...data, reason: { code: 'legacy', params: { text: data.reason } }, quest: questViewOf(quest) },
+    data: { ...data, reason, quest: questViewOf(quest) },
   });
 }
 
@@ -41,6 +46,12 @@ describe('elvaria quest show of a quest in the infirmary', () => {
     await openJournal(kingdom, QUEST_ID).append(lines);
     const io = testIo();
     expect(await run(io, 'quest', 'show', QUEST_ID, '--kingdom', kingdom, '--locale', 'en')).toBe(0);
+    return io.printed.out;
+  };
+  const showVi = async (...lines: ReturnType<typeof infirmaryLine>[]) => {
+    await openJournal(kingdom, QUEST_ID).append(lines);
+    const io = testIo();
+    expect(await run(io, 'quest', 'show', QUEST_ID, '--kingdom', kingdom, '--locale', 'vi')).toBe(0);
     return io.printed.out;
   };
 
@@ -80,10 +91,85 @@ describe('elvaria quest show of a quest in the infirmary', () => {
     expect(io.printed.out).toContain('  Lời báo: ran 45 min');
   });
 
-  it('shows the English reason of a line written before P1-32, which has no trip', async () => {
+  it('shows the English reason of a v1 line without a trip verbatim, in any locale', async () => {
     await plantQuests(kingdom, SICK);
     const out = await show(infirmaryLine({ reason: 'breaker:time' }, 3));
     expect(out).toContain('In the infirmary since attempt 3: breaker:time.');
+    const old = 'review:no_verdict: the verifier left';
+    const vi = await showVi(infirmaryLine({ reason: old }, 4));
+    expect(vi).toContain(`Vào trạm quân y ở lần thử 4: ${old}.`);
+  });
+
+  it('says a refused commit in Vietnamese, then the hook lines verbatim, indented under it', async () => {
+    await plantQuests(kingdom, SICK);
+    const params = {
+      lines: 'eslint: 2 errors\nsrc/a.ts:1 error',
+      errors: 2,
+      total_lines: 40,
+      log: '.runs/q-2/pre-commit.log',
+    };
+    const reason = { code: 'breaker:commit_errors', params };
+    const out = await showVi(infirmaryLine({ reason, trip: 'commit', detail: { wip: 'index.lock' } }, 2));
+    const at = out.indexOf(
+      'Vào trạm quân y ở lần thử 2: hook pre-commit từ chối commit, nên nhánh thiếu phần việc; output có 40 dòng, 2 dòng báo lỗi (đủ ở .runs/q-2/pre-commit.log), mấy dòng đầu ở dưới.',
+    );
+    expect(at).toBeGreaterThan(-1);
+    expect(out.slice(at + 1, at + 4)).toEqual([
+      '    eslint: 2 errors',
+      '    src/a.ts:1 error',
+      '  Commit WIP cũng bị từ chối, việc vẫn nằm trong đất riêng: index.lock',
+    ]);
+  });
+
+  it('says partial verdicts in Vietnamese once: the count in the sentence, only the advice in the detail', async () => {
+    await plantQuests(kingdom, SICK);
+    const reason = {
+      code: 'judge:partial_verdicts_until',
+      params: { count: 3, run: 2, until: 'break_and_expect_red' },
+    };
+    const detail = { partial_verdicts: 3 };
+    const out = await showVi(infirmaryLine({ reason, trip: 'partial_verdicts', detail }, 2));
+    expect(out).toContain(
+      'Vào trạm quân y ở lần thử 2: 3 người nghiệm thu của lần thử 2 nộp phán quyết dở; người cuối dừng ở break_and_expect_red.',
+    );
+    expect(out).toContainEqual(expect.stringMatching(/^ {2}Không mở thêm người nghiệm thu nào: đọc ghi chú/));
+    expect(out.join('\n')).not.toContain('3 người nghiệm thu của lần thử này');
+  });
+
+  it('says a restart in Vietnamese, the stopped verifiers counted once', async () => {
+    await plantQuests(kingdom, SICK);
+    const reason = { code: 'restart:no_verdict', params: { stopped: 2 } };
+    const detail = { verifiers_stopped: 2 };
+    const out = await showVi(infirmaryLine({ reason, trip: 'no_verdict', detail }));
+    expect(out).toContain(
+      'Vào trạm quân y: Nhiếp chính dừng trước nước này và làm nó ở lần khởi động sau: 2 người nghiệm thu rời đi mà không ra phán quyết.',
+    );
+    expect(out).toContainEqual(
+      expect.stringMatching(/^ {2}Không mở thêm người nghiệm thu nào: nâng ngân sách/),
+    );
+    expect(out.join('\n')).not.toContain('2 người nghiệm thu của lần thử này');
+  });
+
+  it('does not say again the patch, script or follow-up its reason already named', async () => {
+    await plantQuests(kingdom, SICK);
+    const patch = { code: 'breaker:patch', params: { file: 'elvaria.patch', why: 'does not apply' } };
+    const notApplied = { patch: 'does not apply' };
+    const refused = await show(infirmaryLine({ reason: patch, trip: 'commit', detail: notApplied }, 1));
+    expect(refused).toContain(
+      'In the infirmary since attempt 1: the Steward did not apply the patch elvaria.patch: does not apply.',
+    );
+    expect(refused.join('\n')).not.toContain('Patch elvaria.patch not applied');
+    const failed = {
+      code: 'script:fail_follow_up',
+      params: { script: 'link-check', follow_up: 'q_20261106_8m4n3b' },
+    };
+    const detail = { script: 'link-check', follow_up: 'q_20261106_8m4n3b' };
+    const out = await show(infirmaryLine({ reason: failed, trip: 'script_fail', detail }, 2));
+    expect(out).toContain(
+      'In the infirmary since attempt 2: the script link-check ran but did not pass; follow-up quest q_20261106_8m4n3b opened.',
+    );
+    expect(out.join('\n')).not.toContain('Script: link-check');
+    expect(out.join('\n')).not.toContain('Follow-up quest opened');
   });
 
   it('names the script, its follow-up, the verifiers stopped, and leaves out an attempt the line lacks', async () => {
