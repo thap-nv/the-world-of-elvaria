@@ -6,15 +6,17 @@
 // lets it go on. The owner's own quests, and a quest's second amendment, ask the owner at once. A decision changes no
 // other quest, reaches no running session, and the judge never reads the memo.
 import { openEventLog } from '@elvaria/eventlog';
-import type { Event, Memo, Quest } from '@elvaria/domain';
+import type { Event, Memo } from '@elvaria/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { authorJob } from './__fixtures__/author.ts';
 import { PASS, bench, questPayload, tickUntil } from './__fixtures__/kingdom.ts';
 import { letter, writing } from './__fixtures__/letters.ts';
 import { statusIs } from './__fixtures__/review.ts';
+import type { Decide } from './__fixtures__/author.ts';
 import type { Bench, BenchOptions } from './__fixtures__/kingdom.ts';
 import type { Letters } from './__fixtures__/letters.ts';
-import type { Digest, DigestRequest, JobRun, OnCallJob, Steward } from './types.ts';
+import type { Digest, DigestRequest, Steward } from './types.ts';
 
 let current: Bench | undefined;
 let running: Steward | undefined;
@@ -25,40 +27,6 @@ afterEach(async () => {
   running = undefined;
   current = undefined;
 });
-
-type Decide = (memo: Memo, quest: Quest) => Record<string, unknown>;
-
-/** The author's office, on call: one decide_amendment per quest waiting, written as the Chancellor's office does. */
-function authorJob(kingdom: () => Bench, decide: Decide): OnCallJob & { readonly asked: string[] } {
-  const asked: string[] = [];
-  return {
-    id: 'amendment',
-    asked,
-    ready: (view) => Promise.resolve(view.amendments.some((id) => !asked.includes(id))),
-    run: async ({ amendments }: JobRun) => {
-      const id = amendments.find((quest) => !asked.includes(quest));
-      if (id === undefined) return;
-      asked.push(id);
-      const { store, ids } = kingdom();
-      const quest = await store.quests.read(id);
-      const memo = quest.ok ? quest.value.blocked?.amendment?.memo : undefined;
-      const read = memo === undefined ? undefined : await store.memos.read(memo);
-      if (!quest.ok || read?.ok !== true) throw new Error('fixture: no amendment');
-      const payload = { memo: read.value.id, ...decide(read.value, quest.value) };
-      const ts = '2026-11-07T09:00:00+07:00';
-      const command = {
-        version: 1,
-        id: ids.ulid(),
-        ts,
-        kind: 'decide_amendment',
-        source: 'chancellor',
-        payload,
-      };
-      const written = await store.inbox.write(command as never);
-      if (!written.ok) throw new Error(`fixture: ${written.error.message}`);
-    },
-  };
-}
 
 function recordingPort(): Digest & { readonly asked: DigestRequest[] } {
   const asked: DigestRequest[] = [];
