@@ -34,7 +34,7 @@ interface Setup {
   readonly plots?: (kingdom: Bench) => Partial<Plots>;
   /** laws.patch_paths of dc1-se-team, when its assignees may leave a patch. */
   readonly patchPaths?: readonly string[];
-  readonly verdicts?: Readonly<Record<string, readonly (typeof PASS)[]>>;
+  readonly verdicts?: Readonly<Record<string, readonly unknown[]>>;
 }
 
 async function open({ letters, decide = () => ({}), plots = () => ({}), patchPaths, verdicts = {} }: Setup) {
