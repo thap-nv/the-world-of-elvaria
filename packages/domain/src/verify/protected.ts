@@ -23,6 +23,14 @@ export const touchesProtected = (quest: Pick<Quest, 'protected_changes'>): boole
  */
 const MERGED_LATER: ReadonlySet<PartyRole> = new Set(['part', 'acceptance']);
 
+/**
+ * Whether the quest is a place in a party whose work only the merge quest delivers (MERGED_LATER): no rule but the
+ * merge quest's own makes it wait for the seal, neither a protected path here nor a claim above the ceiling
+ * (quest/effects.ts, fix/claim-step).
+ */
+export const mergedLater = (quest: Pick<Quest, 'party_role'>): boolean =>
+  quest.party_role !== undefined && MERGED_LATER.has(quest.party_role);
+
 /** What a submit that changed protected paths sets on a quest: the paths, and the seal but on a part of a party. */
 export type ProtectedMark = Pick<Quest, 'protected_changes'> & { readonly seal_required?: true };
 
@@ -38,7 +46,6 @@ export function protectedMarkOf(
 ): ProtectedMark | undefined {
   if (changed.length === 0) return undefined;
   const gathered = [...new Set([...(quest.protected_changes ?? []), ...changed])];
-  if (quest.party_role !== undefined && MERGED_LATER.has(quest.party_role))
-    return { protected_changes: gathered };
+  if (mergedLater(quest)) return { protected_changes: gathered };
   return { seal_required: true, protected_changes: gathered };
 }
