@@ -3,7 +3,9 @@
 // description decides it in a fresh session: the Chancellor for a quest drafted from the owner's words, the mage of
 // the plan quest for one of its sub-quests. The quest records no author of its own: `created_by` and `parent_id` say
 // it. Where the memo goes is decided here, from the quest, its author and its memos so far; the owner decides an
-// amendment no author may (AMENDMENT_REFUSALS), as a question.
+// amendment no author may (AMENDMENT_REFUSALS), as a question. (fix/amendment-flow) So is how a submit the Steward
+// could not commit ends when its letter holds an amendment, and the scope an accepted one leaves its quest.
+import { pathInScope } from '../dispatch/scope.ts';
 import { RANKS } from '../schema/common.ts';
 import { AMENDMENT_REFUSALS } from '../schema/memo/constants.ts';
 import type { CharacterId, QuestId } from '../core/ids.ts';
@@ -72,6 +74,48 @@ export const awaitsAuthor = (quest: Pick<Quest, 'status' | 'blocked'>): boolean 
     quest.blocked?.answer === undefined
   );
 };
+
+/**
+ * How a run that completed without a question ends, once the Steward tried its patch and its commit and filed its
+ * letter's memos: on the amendment when the letter holds one, even when the patch or the commit was refused (the work
+ * stays in the plot while the author decides, and the next session goes on from there: a doer that stops because the
+ * fix it needs lies outside its scope leaves exactly such work, gap 16 of the PS-07 report); else a refusal is a
+ * breaker, and a run with neither is submitted.
+ */
+export type SubmitEnd<A, R> =
+  | { readonly end: 'amendment'; readonly amendment: A; readonly refused: R | undefined }
+  | { readonly end: 'breaker'; readonly refused: R }
+  | { readonly end: 'submit' };
+
+/** SubmitEnd from the run's open amendment and what refused its work, if anything did. */
+export function submitEndOf<A, R>(amendment: A | undefined, refused: R | undefined): SubmitEnd<A, R> {
+  if (amendment !== undefined) return { end: 'amendment', amendment, refused };
+  return refused === undefined ? { end: 'submit' } : { end: 'breaker', refused };
+}
+
+/** A ref as a scope entry: `/` apart, no leading `./` or `/`, its case kept. */
+const entryOf = (ref: string): string => ref.replaceAll('\\', '/').replace(/^(?:\.\/|\/)+/, '');
+
+/**
+ * The scope an accepted amendment leaves its quest (gap 20 of the PS-07 report): the memo's refs that lie neither in
+ * the scope nor in the territory's shared paths join it, so the doer may change them, its submit does not count them
+ * as out of scope, and a quest whose scope meets them waits (ADR 0028). A ref the scope only may cover (a glob
+ * pathInScope doubts) joins it too: one entry more costs nothing. A quest with no scope is not bounded and stays so.
+ * Undefined when nothing changes.
+ */
+export function amendedScopeOf(
+  scope: readonly string[] | undefined,
+  refs: readonly string[],
+  shared: readonly string[] = [],
+): string[] | undefined {
+  if (scope === undefined || scope.length === 0) return undefined;
+  const added: string[] = [];
+  for (const ref of refs.map(entryOf)) {
+    if (ref === '' || pathInScope(ref, [...scope, ...added]) || pathInScope(ref, shared)) continue;
+    added.push(ref);
+  }
+  return added.length === 0 ? undefined : [...scope, ...added];
+}
 
 /**
  * Statuses in which an accepted amendment rewrites the description: no session holds the quest and its work is not

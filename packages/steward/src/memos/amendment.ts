@@ -1,10 +1,10 @@
 // Amendments as the Steward settles them (PS-22b, implementation-plan §3.16.2, ADR 0024); who wrote a quest's
 // description routes its doer's amendment when it is filed (authoring.ts). The author's decision comes
-// back as one decide_amendment command: an acceptance rewrites the description while no session holds the quest,
-// and either decision closes the memo and lets the quest that waits on it go on, the note as the answer to its doer;
+// back as one decide_amendment command: an acceptance rewrites the description, and adds the memo's refs to the
+// quest's scope (fix/amendment-flow), while no session holds the quest; either decision closes the memo and lets the quest that waits on it go on, the note as the answer to its doer;
 // a referral hands it to the owner, who answers it as a question. The owner may also settle it first, by answering
 // the quest or deciding the memo. Nothing here asks a memo's kind: the memo's route and the quest's `blocked` say it.
-import { AMENDABLE_STATUSES, editQuest, escalateMemo } from '@elvaria/domain';
+import { AMENDABLE_STATUSES, amendedScopeOf, editQuest, escalateMemo, sharedGlobsOf } from '@elvaria/domain';
 import type { Actor, BlockedAmendment, CommandPayload, InboxCommandOf, Memo, Quest } from '@elvaria/domain';
 
 import { APPLIED, answer, answerWaits, rejected } from '../inbox/quest-commands.ts';
@@ -47,24 +47,42 @@ async function setAmendment(
 }
 
 /**
- * The description as accepted, while no session holds the quest and its work is not judged; one changed since the
- * author read it keeps the owner's change (warned), as does one a session holds: the doer reads the decision then.
+ * The quest as accepted, while no session holds it and its work is not judged: the description rewritten, and the
+ * memo's refs outside its scope added to it (amendedScopeOf, fix/amendment-flow), so the doer may change those files
+ * and the owner no longer opens the scope by hand. A description changed since the author read it keeps the owner's
+ * change (warned) while the scope still grows: adding refs overwrites nothing. A quest a session holds keeps both
+ * (warned): the doer reads the decision then.
  */
 async function rewrite(
   ctx: Context,
   quest: Quest | undefined,
+  memo: Memo,
   payload: CommandPayload<'decide_amendment'>,
   actor: Actor,
 ): Promise<void> {
+  if (quest === undefined) return;
   const { description, expected_updated_at: read } = payload;
-  if (quest === undefined || description === undefined || description === quest.description) return;
+  const describes = description !== undefined && description !== quest.description;
+  const shared = sharedGlobsOf(ctx.world.territories.get(quest.territory));
+  const scope = amendedScopeOf(quest.scope_paths, memo.refs, shared);
+  if (!describes && scope === undefined) return;
   const amendable = (AMENDABLE_STATUSES as readonly string[]).includes(quest.status);
-  const edit = { quest: quest.id, expected_updated_at: read ?? '', changes: { description } };
-  const changed = amendable ? editQuest(quest, edit, { at: ctx.record.stamp(), quests: [] }) : undefined;
+  const fresh = describes && read === quest.updated_at;
+  const changes = {
+    ...(fresh ? { description } : {}),
+    ...(scope === undefined ? {} : { scope_paths: scope }),
+  };
+  const edit = { quest: quest.id, expected_updated_at: quest.updated_at, changes };
+  const tried = amendable && (fresh || scope !== undefined);
+  const changed = tried ? editQuest(quest, edit, { at: ctx.record.stamp(), quests: [] }) : undefined;
   const put = changed?.ok === true ? await ctx.record.put(changed.value, 'quest.edited', actor) : undefined;
-  if (put?.ok !== true)
+  const kept = [
+    ...(describes && (put?.ok !== true || !fresh) ? ['description'] : []),
+    ...(scope !== undefined && put?.ok !== true ? ['scope'] : []),
+  ];
+  if (kept.length > 0)
     ctx.deps.log.warn(
-      `steward: ${quest.id}: the accepted amendment ${payload.memo} leaves its description as it is`,
+      `steward: ${quest.id}: the accepted amendment ${payload.memo} leaves its ${kept.join(' and ')} as it is`,
     );
 }
 
@@ -131,7 +149,7 @@ export async function decideAmendment(
   if (payload.decision === 'owner') return referToOwner(ctx, memo, payload, actor);
   const quest = ctx.world.quests.get(memo.quest);
   if (waitsOn(quest, memo.id) && answerWaits(ctx, quest)) return { status: 'waiting' };
-  if (payload.decision === 'accepted') await rewrite(ctx, quest, payload, actor);
+  if (payload.decision === 'accepted') await rewrite(ctx, quest, memo, payload, actor);
   const closed = await writeClosed(ctx, memo, { decision: payload.decision, note: payload.note }, actor);
   if (!closed.ok) return rejected(closed.error);
   return (await goOn(ctx, memo, payload.decision, payload.note, actor)) ?? APPLIED;

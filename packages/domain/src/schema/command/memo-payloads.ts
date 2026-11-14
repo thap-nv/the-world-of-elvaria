@@ -89,7 +89,7 @@ export const DecideAmendmentPayloadSchema = z
   .superRefine(checkAmendment)
   .meta({
     ...describe(
-      "An amendment's author decided it (PS-22b, ADR 0024; source = chancellor: the Chancellor's office, whether the Chancellor or the mage of the quest's plan spoke): accepted rewrites the quest's description, while no session holds the quest, and closes the memo; rejected closes it; both let the quest that waits on it go on, the note as the answer to its doer. owner sends it to the owner with the note and holds: the memo stays open and the quest asks the owner. The lines' actor is the memo's author. Refused when the memo is unknown, closed or sent up already, or not an amendment to an author.",
+      "An amendment's author decided it (PS-22b, ADR 0024; source = chancellor: the Chancellor's office, whether the Chancellor or the mage of the quest's plan spoke): accepted rewrites the quest's description and adds the memo's refs outside its scope_paths to them (a quest with none stays unbounded), while no session holds the quest, and closes the memo; rejected closes it; both let the quest that waits on it go on, the note as the answer to its doer. owner sends it to the owner with the note and holds: the memo stays open and the quest asks the owner. The lines' actor is the memo's author. Refused when the memo is unknown, closed or sent up already, or not an amendment to an author.",
     ),
     allOf: [
       { if: { properties: { decision: { const: 'owner' } } }, then: { required: ['holds'] } },

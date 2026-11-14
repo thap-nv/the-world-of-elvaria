@@ -70,6 +70,7 @@ export async function breakAssignee(
     actor: 'steward',
     edits: swamped.ok ? { [who]: step('quest_infirmary') } : {},
     infirmary: { trip, reason: assigneeReason(ctx, running, breaker, result), detail: said },
+    ...(breaker.before === undefined ? {} : { before: breaker.before }),
   });
 }
 
@@ -85,6 +86,8 @@ interface AssigneeBreaker {
   readonly paths?: readonly string[];
   /** The submit commit the hook refused (trip `commit`), whose rescue the WIP commit of the other trips gives (P1-55). */
   readonly refused?: Refusal;
+  /** Set on the quest with the move: the pending objection a refused submit's letter filed (fix/amendment-flow). */
+  readonly before?: Partial<Quest>;
 }
 
 /** Structured causes keep hook output separate from Elvaria's own wording. */

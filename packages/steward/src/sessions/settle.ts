@@ -1,42 +1,24 @@
 // What a session's end does to its quest (implementation-plan §2.5, §3.7): the runner's RunResult becomes one move
 // of the table, the character's matching move, and for a verifier the verdict, the assignee's reputation and level.
 // An end that arrives for a quest that moved on meanwhile (cancelled, reassigned) changes nothing.
-import { amendmentDeciderOf, currentRun, infirmaryReasonOf, protectedMarkOf } from '@elvaria/domain';
+import { currentRun, infirmaryReasonOf } from '@elvaria/domain';
 import { plotCommitMessage } from '@elvaria/runner-core';
 import type { CharacterId, Quest, Result } from '@elvaria/domain';
 import type { RunResult } from '@elvaria/runner-core';
 
 import { fileMemos } from '../memos/file.ts';
-import type { FiledMemos } from '../memos/file.ts';
 import { moveAndRing } from '../notices.ts';
 import { step } from '../record.ts';
 import { judge, runOf, stallWithoutVerdict, verifierLeaves } from '../review/judge.ts';
 import { afterJudge } from '../review/after-judge.ts';
 import { breakAssignee, breakVerifier } from './breaker.ts';
 import { commitPlot, warnUncommitted } from './commit.ts';
-import { checksLetterAfter, noteUnchangedLetter } from './letter.ts';
-import { outOfScopeIn } from './out-of-scope.ts';
-import { applyAssigneePatch } from './patch.ts';
+import { ended, submitWork } from './submit.ts';
 import type { Context } from '../context.ts';
 import type { Finished, Running } from './running.ts';
 
 /** The CLI's own limits are breakers (§3.4): max_turns trips `turns`, an exhausted budget trips `tokens`. */
 const TRIPS = { max_turns: 'turns', budget: 'tokens' } as const;
-
-/** The session has ended already: the breaker's `end` is the result it reported. */
-const ended = (result: RunResult) => () => Promise.resolve(result);
-
-/**
- * A tribe without the Stop hook (`handover_check: after_session`, P1-33): a letter still unchanged after the
- * Steward's reminders goes on to review, and the journal tells the judge, as the hook's let-through does (ADR 0010).
- */
-async function letLetterThrough(ctx: Context, running: Running, session: string): Promise<void> {
-  const quest = ctx.world.quests.get(running.quest);
-  const tribe = ctx.world.characters.get(running.character)?.tribe;
-  if (quest === undefined || tribe === undefined || !checksLetterAfter(ctx, tribe)) return;
-  if (await noteUnchangedLetter(ctx, quest, running.n, session))
-    ctx.deps.log.warn(`steward: ${running.quest}: ${running.character} left handover.md unchanged`);
-}
 
 async function settleAssignee(
   ctx: Context,
@@ -58,9 +40,9 @@ async function settleAssignee(
   }
   if (result.outcome === 'max_turns' || result.outcome === 'budget')
     return breakAssignee(ctx, running, { trip: TRIPS[result.outcome] }, ended(result));
-  // The memos of the letter are filed when the run ends through a crash, a question or a submit; a run a breaker
-  // cut (above, and the commit's trips in submitWork) wrote its letter in haste, and the next letter brings them (PS-02).
-  // The move carries the quest's pending objection, for its next review (PS-22).
+  // The memos of the letter are filed when the run ends through a crash, a question or a submit, its patch or commit
+  // refused included (submitWork, fix/amendment-flow); a run a breaker cut (above) wrote its letter in haste, and the
+  // next letter brings them (PS-02). The move carries the quest's pending objection, for its next review (PS-22).
   if (result.outcome !== 'completed') {
     const { before } = await fileMemos(ctx, running);
     return moveAndRing(ctx, {
@@ -82,71 +64,6 @@ async function settleAssignee(
     });
   }
   return submitWork(ctx, running, result);
-}
-
-/**
- * A run that completed without a question: the patch, the commit, the letter's memos, then the submit, whose line
- * names the files the work changed outside the quest's scope (PS-05). Work that changed a protected path sets the
- * royal seal and the mark that asks for the stronger judge on the quest, before the submit (PS-04, ADR 0026).
- */
-async function submitWork(ctx: Context, running: Running, result: RunResult): Promise<Result<Quest, string>> {
-  const who = running.character;
-  const run = runOf(running, result);
-  const quest = running.quest;
-  await letLetterThrough(ctx, running, run.session_id);
-  // What the CLI would not let the assignee write goes in first, as its patch, so the submit carries it (P1-28).
-  // A patch that touches other paths or does not apply leaves everything in the plot, and the quest no review.
-  const patched = await applyAssigneePatch(ctx, running);
-  if (patched.status === 'refused')
-    return breakAssignee(ctx, running, { trip: 'commit', patch: patched.detail }, ended(result));
-  // Five classes have no git of their own, and the judge reads the branch's diff (§3.3, P1-07).
-  const committed = await commitPlot(ctx, quest, plotCommitMessage.submit(quest));
-  // A forbidden path changed, which only a program the session's shell ran could do: nothing is committed, and the
-  // owner looks at the plot before anything else does (P1-49).
-  if (committed.status === 'forbidden')
-    return breakAssignee(ctx, running, { trip: 'forbidden_paths', paths: committed.paths }, ended(result));
-  // The branch would lack the work: the quest goes to the infirmary with the hook's last words, not to review.
-  if (committed.status === 'refused')
-    return breakAssignee(ctx, running, { trip: 'commit', refused: committed }, ended(result));
-  const { before, amendment } = await fileMemos(ctx, running);
-  if (amendment !== undefined) return waitOnAmendment(ctx, running, result, { before, amendment });
-  const submitted = ctx.world.quests.get(quest);
-  const mark =
-    submitted === undefined ? undefined : protectedMarkOf(submitted, committed.protected_changes ?? []);
-  return moveAndRing(ctx, {
-    quest,
-    event: { type: 'submit', ...run },
-    actor: 'runner',
-    edits: { [who]: step('submit') },
-    // The quest's pending objection (PS-22) and the protected paths the work changed (PS-04).
-    before: { ...before, ...mark },
-    ...(submitted === undefined ? {} : { out_of_scope: await outOfScopeIn(ctx, submitted) }),
-  });
-}
-
-/**
- * The run ends on the doer's amendment (PS-22b, ADR 0024): its work stays committed on the branch, unsubmitted, and
- * the quest waits as on a question, for its author's decision or the owner's; the same attempt goes on after it.
- */
-function waitOnAmendment(
-  ctx: Context,
-  running: Running,
-  result: RunResult,
-  { before, amendment }: Required<FiledMemos>,
-): Promise<Result<Quest, string>> {
-  const by = amendmentDeciderOf(amendment.to) ?? 'owner';
-  return moveAndRing(ctx, {
-    quest: running.quest,
-    event: {
-      type: 'ask',
-      question: amendment.body,
-      amendment: { memo: amendment.id, by },
-      ...runOf(running, result),
-    },
-    actor: 'runner',
-    edits: { [running.character]: step('ask') },
-    before,
-  });
 }
 
 async function settleVerifier(
