@@ -53,14 +53,15 @@ const classOf = (world: World, id: QuestId): string => {
 };
 
 /**
- * What the Steward knows that no file holds, as this tick left it (unclaimable.ts, unjudgeable.ts, judge-waits.ts),
- * and the done quests whose scope others wait for (PS-05), which the world state cannot tell.
+ * What the Steward knows that no file holds, as this tick left it (unclaimable.ts, unjudgeable.ts, judge-waits.ts,
+ * tribe-versions.ts), and the done quests whose scope others wait for (PS-05), which the world state cannot tell.
  */
 export function noticesOf(
   world: World,
-  state: Pick<State, 'reported' | 'unjudged' | 'judgeWaits'>,
+  state: Pick<State, 'reported' | 'unjudged' | 'judgeWaits' | 'versions'>,
 ): StewardNotices {
   return {
+    tribes_held: state.versions.holds,
     unclaimable: [...state.reported.keys()],
     unjudgeable: [...state.unjudged].map((quest) => ({ quest, class: classOf(world, quest) })),
     judge_waits: [...state.judgeWaits.values()].map(({ quest, gauges }) => ({

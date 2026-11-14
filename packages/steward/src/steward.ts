@@ -18,6 +18,7 @@ import { createSessions } from './sessions/running.ts';
 import { leftSessions, pidsWriter, reapOrphans } from './sessions/pids.ts';
 import type { LeftSession } from './sessions/pids.ts';
 import { recover, tickOf } from './tick.ts';
+import { createVersionBook } from './tribe-versions.ts';
 import { limitsOf } from './world.ts';
 import type { StewardJob } from './schedule/scheduler.ts';
 import type { Held, State } from './steward-state.ts';
@@ -94,6 +95,7 @@ export function createSteward(deps: StewardDeps): Steward {
     stopping: new AbortController(),
     unjudged: new Set(),
     judgeWaits: new Map(),
+    versions: createVersionBook(),
     scheduler: createScheduler(jobsOf(deps), deps.onCall),
     restart: undefined,
     held: undefined,

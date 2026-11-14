@@ -1,6 +1,15 @@
 // What the Steward is given and what it gives back (implementation-plan §3.1). It sees only AgentRunner and its
 // capabilities, never a CLI (ADR 0006, 0021): apps/cli, the composition root, injects the runners of the tribes.
-import type { Clock, IdSource, PartyRole, Quest, Result, Territory, TribeId } from '@elvaria/domain';
+import type {
+  Clock,
+  IdSource,
+  PartyRole,
+  Quest,
+  Result,
+  Territory,
+  ToolFound,
+  TribeId,
+} from '@elvaria/domain';
 import type { EventLog } from '@elvaria/eventlog';
 import type {
   AgentRunner,
@@ -219,6 +228,13 @@ export interface StewardDeps {
   readonly jobs?: readonly ScheduledJob[];
   /** Jobs with no hour, run outside the tick whenever they have work (PS-22b: an amendment's author). */
   readonly onCall?: readonly OnCallJob[];
+  /**
+   * The CLI the tribe's runner starts and what it says its version is now (`<cli> --version`: no model call, no mana),
+   * `version` undefined when the file is gone; undefined when the CLI did not answer. Asked before the plan
+   * (tribe-versions.ts, A1b of the lessons of 2026-11-13): a tribe whose CLI is gone or says another version than its
+   * checked one opens no new session. Absent: no tribe is held (a spec's Steward).
+   */
+  readonly toolFound?: (tribe: TribeId) => Promise<ToolFound | undefined>;
 }
 
 export interface TickReport {

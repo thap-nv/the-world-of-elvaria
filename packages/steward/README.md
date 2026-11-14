@@ -17,6 +17,11 @@
   (`character.suspend`, the bell), paused quests whose pool woke go on, claimed quests start, submitted quests get
   their checks and, in a later tick once those ended, the judge `selectVerifier` chose (or the machine's verdict
   under `machine_only`), returned quests go back to their assignee, open quests are claimed.
+- Asks each tribe's CLI before the plan (A1b of the lessons of 2026-11-13, `src/tribe-versions.ts`): through
+  `StewardDeps.toolFound` (the composition root runs `<cli> --version` on the CLI the tribe's runner starts: no model,
+  no mana; at most once a minute a tribe, `VERSION_ASK_MS`), so `planTick` holds a tribe whose CLI is gone or says
+  another version than the one its last real `tribe check` passed on. The bell `tribe_held` rings once per hold and
+  version, and the digest lists the hold. A CLI that does not answer holds nothing; without the port nothing is held.
 - Runs the machine's long work outside the tick (P1-25, `src/background.ts`): a submitted quest's checks and a
   script-tier run start in a tick and go on while later ticks apply the inbox, record the sessions' ends and give
   out work; `planTick` sees which quests have work running and which have checks ready (`BackgroundWork`). The
@@ -69,7 +74,8 @@
   in-tick job waits while an off-tick job of an earlier hour runs (the triage before the digest), and an off-tick job
   may wait for `ready` (its view names the tribes a session runs on, `busy`). The first job is the digest (`digestJob`, given
   `StewardDeps.digest`): the domain's `attentionQueue` over the files, the open memos, mana as the log last read it
-  (`digestStateOf`) and the Steward's own notices (`noticesOf`: unclaimable, unjudgeable, judges out of mana); the
+  (`digestStateOf`) and the Steward's own notices (`noticesOf`: unclaimable, unjudgeable, judges out of mana, tribes
+  held by their CLI); the
   `Digest` port of the composition root words it and writes `digest/<day>.md`, then one `digest.written` line and
   one bell (`digest`). No model, no mana.
 - Rings once for a submitted quest whose judges are all held by their mana (PS-03, (d) of P1-50;
