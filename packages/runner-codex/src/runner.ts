@@ -137,7 +137,7 @@ async function startCodex(req: SpawnRequest, options: CodexOptions): Promise<Run
   const ctx = runContextOf(req);
   const windows = (options.platform ?? process.platform) === 'win32';
   const env = codexEnv(req.env, { ...(windows ? SHELL_POLICY_ENV : {}), ...contextEnv(ctx) });
-  const files = await writeRunFiles(req, ctx);
+  const files = await writeRunFiles(req, ctx, windows);
   // The trust bypass runs every hook Codex has enabled: first make sure they are Elvaria's own (0 mana).
   const timeout = options.timeout_ms ?? DEFAULT_TIMEOUT_MS;
   const listed = await askAppServer(

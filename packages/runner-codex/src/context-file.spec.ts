@@ -15,6 +15,7 @@ import {
   CONTEXT_HEADER,
   FORMAT_IGNORE_END,
   FORMAT_IGNORE_START,
+  WINDOWS_SANDBOX_NOTE,
   closeFences,
   codexNote,
   contextFileText,
@@ -30,7 +31,7 @@ afterEach(() => world.remove());
 
 describe('codexNote', () => {
   it('sends a writing class to apply_patch, and leaves reading to the prompt (PS-23)', () => {
-    const note = codexNote({ tools: ['Read', 'Edit', 'Bash'] }, true);
+    const note = codexNote({ tools: ['Read', 'Edit', 'Bash'] }, true, false);
     expect(note).not.toMatch(/Read, Glob or Grep/);
     expect(note).toMatch(/only with the apply_patch tool/);
     expect(note).toMatch(/git add and git commit fail/);
@@ -38,8 +39,24 @@ describe('codexNote', () => {
   });
 
   it('gives a judge no write line', () => {
-    const note = codexNote({ tools: ['Read', 'Glob', 'Grep'] }, false);
+    const note = codexNote({ tools: ['Read', 'Glob', 'Grep'] }, false, false);
     expect(note).not.toMatch(/apply_patch|git commit fail/);
+  });
+
+  it("names what Windows' mxc sandbox breaks, for a knight and a judge alike, and only on Windows (gap 21)", () => {
+    for (const [tools, writes] of [
+      [['Read', 'Edit', 'Bash'], true],
+      [['Read', 'Glob', 'Grep'], false],
+    ] as const) {
+      const note = codexNote({ tools }, writes, true);
+      expect(note).toContain(WINDOWS_SANDBOX_NOTE);
+      expect(codexNote({ tools }, writes, false)).not.toMatch(/mxc/);
+    }
+    for (const broken of [/symlink \(EPERM\)/, /local folder as its remote/, /process tree/, /3221225794/]) {
+      expect(WINDOWS_SANDBOX_NOTE).toMatch(broken);
+    }
+    expect(WINDOWS_SANDBOX_NOTE).toMatch(/do not run it again and again/);
+    expect(WINDOWS_SANDBOX_NOTE).toMatch(/checks run outside the sandbox and are the judge/);
   });
 });
 
@@ -68,7 +85,7 @@ describe('contextFileText', () => {
       { path: 'CLAUDE.md', text: '#  Law\n* one\n+ two\n\n| a | b |\n|---|---|\n| long cell | x |\n' },
       { path: 'docs/cut.md', text: '## Commands\n\n```bash\npnpm   test\n' },
     ];
-    const note = codexNote({ tools: ['Read', 'Edit', 'Bash'] }, true);
+    const note = codexNote({ tools: ['Read', 'Edit', 'Bash'] }, true, true);
     const text = contextFileText('You  are   *Ember*.\n', files, note);
     for (const options of [{}, { proseWrap: 'always', printWidth: 40 } as const]) {
       expect(await check(text, { parser: 'markdown', endOfLine: 'lf', ...options })).toBe(true);
@@ -94,8 +111,9 @@ describe('the run files', () => {
     await writeFile(path.join(world.plot, 'CLAUDE.md'), 'Claude law.\n', 'utf8');
     await writeFile(path.join(world.plot, '.claude', 'rules', 'api.md'), 'API rule.\n', 'utf8');
     const req = request(world);
-    const files = await writeRunFiles(req, runContextOf(req));
+    const files = await writeRunFiles(req, runContextOf(req), false);
     const text = await readFile(files.context, 'utf8');
+    expect(text).not.toContain(WINDOWS_SANDBOX_NOTE);
     expect(text.indexOf('## AGENTS.md')).toBeLessThan(text.indexOf('## CLAUDE.md'));
     expect(text).toContain('## .claude/rules/api.md\n\nAPI rule.');
     expect(text).toContain('You are Ember, a Knight.');
@@ -125,8 +143,10 @@ describe('the run files', () => {
       cli_search: false,
     });
     const req = request(world, {}, { role: 'verifier', permissions: judge, structured: { type: 'object' } });
-    const files = await writeRunFiles(req, runContextOf(req));
+    const files = await writeRunFiles(req, runContextOf(req), true);
     expect(files.schema).toBeDefined();
-    expect(await readFile(files.context, 'utf8')).not.toMatch(/apply_patch/);
+    const text = await readFile(files.context, 'utf8');
+    expect(text).not.toMatch(/apply_patch/);
+    expect(text).toContain(WINDOWS_SANDBOX_NOTE);
   });
 });

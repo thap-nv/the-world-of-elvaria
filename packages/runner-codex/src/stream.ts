@@ -96,6 +96,15 @@ function turnCompleted(tally: Tally, usage: Json): RunnerSignal[] {
   return [{ kind: 'usage', tokens: countedTokens(tally.parts) }];
 }
 
+/**
+ * The failure is also told as a text, as Claude Code prints an API refusal as its text: the Steward's log and the
+ * Chancellor's `cli_error` line then say what went wrong, where they only had an outcome `error` (§11 2026-11-14 (47)).
+ */
+function turnFailed(tally: Tally, message: string): RunnerSignal[] {
+  tally.failure = message;
+  return [{ kind: 'text', text: `codex turn failed: ${message}` }];
+}
+
 function lineOf(tally: Tally, value: Json): RunnerSignal[] {
   switch (textAt(value, 'type')) {
     case 'thread.started':
@@ -108,8 +117,7 @@ function lineOf(tally: Tally, value: Json): RunnerSignal[] {
     case 'turn.completed':
       return turnCompleted(tally, recordAt(value, 'usage'));
     case 'turn.failed':
-      tally.failure = textAt(recordAt(value, 'error'), 'message') ?? 'the turn failed';
-      return [];
+      return turnFailed(tally, textAt(recordAt(value, 'error'), 'message') ?? 'the turn failed');
     case 'error':
       tally.last_error = textAt(value, 'message') ?? tally.last_error;
       return [];

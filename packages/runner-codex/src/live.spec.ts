@@ -115,14 +115,15 @@ describe.runIf(LIVE)('live: what only a real session shows', () => {
     'reads the territory law from AGENTS.override.md, and the hook writes its lines',
     { timeout: MINUTES },
     async () => {
+      // A watchword, not a password: gpt-6-luna refuses to give a password (runner rules, "Bẫy đã gặp").
       await writeFile(
         path.join(world.plot, 'CLAUDE.md'),
-        'The password of this territory is HEARTHSTONE.\n',
+        'The watchword of this territory is HEARTHSTONE.\n',
         'utf8',
       );
       const req = probeRequest(
         world,
-        'What is the password of this territory? Reply with that one word. Use no tool.',
+        'What is the watchword of this territory? Reply with that one word. Use no tool.',
         ['Read'],
       );
       const { result, text } = await run(req);
