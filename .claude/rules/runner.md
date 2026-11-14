@@ -60,4 +60,4 @@ Dữ kiện về CLI đã có, đừng tra lại: [cli-facts](../../docs/referen
 - `FakeRunner` và bộ test hợp đồng (conformance) chạy với mọi adapter. Adapter test bằng CLI giả phát lại fixture thật đã che trong `packages/runner-*/fixtures/`, giữ theo phiên bản CLI.
 - Test dựng repo git tạm lọc `GIT_*` khỏi env (`envWithoutGit` của `apps/cli/test/cli.ts`; spec của runner dùng `packages/runner-core/src/__fixtures__/git-repo.ts`): hook pre-push của husky export `GIT_DIR`, một `git init` kế thừa nó sẽ ghi vào repo đang push (§6).
 - Thư mục tạm có dấu cách trong tên; ca riêng một OS dùng `it.runIf(process.platform === 'win32')`.
-- `ELVARIA_LIVE=1 pnpm --filter <package> test` gọi CLI thật và tốn mana: chỉ khi đổi argv, settings hay cách parse.
+- Đụng `packages/runner-*/**` → `pnpm --filter <package> test` (CLI giả). `ELVARIA_LIVE=1 pnpm --filter <package> test` gọi CLI thật và tốn mana: thêm nó chỉ khi đổi argv, settings hay cách parse.

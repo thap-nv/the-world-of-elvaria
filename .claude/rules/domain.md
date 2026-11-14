@@ -24,7 +24,7 @@ paths:
 
 ## Schema và bảng sinh ra (ADR 0003)
 
-- Zod trong `src/schema/**` là nguồn. Đổi schema → `pnpm schemas`, commit `docs/schemas/**` cùng lúc. Đổi không tương thích → tăng `version`, thêm `packages/store/src/migrations/<contract>/v<n>-to-v<n+1>.ts` và fixture `v<n+1>.json` cạnh các fixture cũ; event thì tăng `v` và migrate trong `packages/eventlog/src/migrations/`.
+- Zod trong `src/schema/**` là nguồn. Đổi schema hay `examples/**` → `pnpm schemas`, commit `docs/schemas/**` cùng lúc, rồi `pnpm test`. Đổi không tương thích → tăng `version`, thêm `packages/store/src/migrations/<contract>/v<n>-to-v<n+1>.ts` và fixture `v<n+1>.json` cạnh các fixture cũ; event thì tăng `v` và migrate trong `packages/eventlog/src/migrations/`.
 - Đổi `EVENT_TYPES` hay schema `data` của event → `pnpm docs:gen` (`docs/events.md`); bảng `events` của `packages/i18n/src/glossary.json` phải chứa type mới (`pnpm docs:check`).
 - Đổi `QUEST_TRANSITIONS` → `pnpm docs:gen` (bảng §2.5 của implementation-plan). Trước khi sửa máy trạng thái, đọc `src/quest/transitions.ts`, `transition.ts`, `effects.ts`, spec của chúng và §2.5.
 
@@ -34,6 +34,7 @@ paths:
 - Luật người chấm khác model so với **mọi người từng làm** quest (`workedOn`, `VerifierPolicy.doers`), không chỉ `quest.assignee`: ở lượt của máy `assignee` là null (P1-50: người chấm Sonnet chấm quest ghép mà hiệp sĩ Sonnet đã làm hai lượt trước). "Khác họ" là họ không trùng họ của người làm nào.
 - Một lần mở phiên thất bại phải để lại dấu trong `attempt_log` hay đưa quest đi đâu đó, nếu không `planTick` lên đúng nước cũ ở nhịp sau, mãi mãi. Đo trên Windows, agy 1.5.8 (PS-07, 2026-11-14): prompt của người chấm khoảng 39 636 ký tự, CLI nhận prompt trên dòng lệnh mà Windows dừng ở 32 767, spawn lỗi; trước fix/review-no-session Nhiếp chính chỉ ghi `warn` rồi chọn lại đúng người đó mỗi nhịp 5 s suốt 16 phút, không chuông, bản tấu không nêu. Nay người chấm đi `review.no_session` (outcome `no_session`, đếm như `crash`), người làm đi `breaker` trip `no_session`. Luật chọn lại trong lượt chấm (`leftVerifiersOf`) phải tính **mọi** cách rời đi không ra verdict, không chỉ cầu dao: người chấm Codex mà CLI từ chối schema sau 1 s, 0 token, đã lấy cả hai lượt của `REVIEW_BREAKS_MAX`.
 - `runDirOf(quest, n, 'verifier')` là thư mục của phiên chấm **sắp mở** (`verify`, `verify-2`, …), tính từ `attempt_log` trước khi mục mới được thêm: Nhiếp chính dựng request trước nước `assign_verifier`, nên hai chỗ gọi cùng thấy một số. Đừng gọi nó sau khi mục đã thêm.
+- Một `BreakerTrip` mới, hay một chỗ mới ghi lý do trạm quân y, cần cùng lúc ba thứ: mã (và tham số) trong `INFIRMARY_REASONS` / `INFIRMARY_REASON_PARAMS` của `src/infirmary/reasons.ts`, một hàng trong [hợp đồng mã lý do](../../docs/contracts/infirmary-reason-codes.md), và chuỗi VI/EN `cli.quest.infirmary.reason.<nhóm>.<mã>`. `apps/cli/src/quest/infirmary-reason.spec.ts` chỉ bắt chuỗi thiếu của mã đã có; mã thiếu và hàng hợp đồng thiếu thì không gì bắt chắc (`steward/src/sessions/breaker.ts` ép trip về `SessionTrip` trước khi ghép `breaker:${trip}`). Người ghi mới không dùng `legacy` (câu tiếng Anh của dòng cũ). PS-07: fix/review-no-session thêm trip `no_session` song song với đội mã lý do, lúc gộp (1afef56) phải thêm `breaker:no_session` và `judge:no_session` ([báo cáo PS-07](../../docs/guides/phase-1.5-report.md) §8).
 
 ## Test
 
