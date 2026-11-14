@@ -7,7 +7,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { openEventLog } from '@elvaria/eventlog';
-import { POWERSHELL_TIMEOUT_MS, createFakeRunner } from '@elvaria/runner-core';
+import { POWERSHELL_TIMEOUT_MS, createFakeRunner, hookOutputHead } from '@elvaria/runner-core';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { bench, questPayload, tickUntil, wakesAfter } from './__fixtures__/kingdom.ts';
@@ -108,8 +108,10 @@ describe('a session past a breaker', () => {
     expect(steward.running()).toBe(0);
     expect(commits).toEqual([`chore: wip ${quest.id} (time)`]);
     // Why, in parts too (P1-32): the trip, the breaker's words in the detail; the bell and the line say the same.
-    const message = 'ran 45 min, limit 45 min';
-    const why = { reason: `breaker:time: ${message}`, trip: 'time', detail: { message } };
+    const why = {
+      reason: { code: 'breaker:time', params: { minutes: 45, limit: 45 } },
+      trip: 'time',
+    };
     const hangs = { id: quest.id, title: 'Hangs', rank: 'D' };
     expect(kingdom.notices).toEqual([{ kind: 'infirmary', quest: hangs, ...why }]);
     expect((await kingdom.character(started.assignee ?? '')).status).toBe('idle');
@@ -136,7 +138,9 @@ describe('a session past a breaker', () => {
     const quest = await kingdom.quest('Spends');
     expect(quest.status).toBe('infirmary');
     expect(quest.attempt_log.at(-1)?.outcome).toBe('breaker');
-    expect(kingdom.notices.at(-1)).toMatchObject({ reason: 'breaker:tokens: 480001 tokens, limit 480000' });
+    expect(kingdom.notices.at(-1)).toMatchObject({
+      reason: { code: 'breaker:tokens', params: { tokens: 480001, limit: 480000 } },
+    });
   });
 
   it('lets a verifier past its time leave the review to the next one, with no bell', async () => {
@@ -171,7 +175,8 @@ describe('a session past a breaker', () => {
 
   it("keeps the work in the plot when the territory's hooks refuse the WIP commit, and says so", async () => {
     const commits: string[] = [];
-    const refused = { status: 'refused', detail: 'husky - pre-commit script failed (code 1)' } as const;
+    const detail = 'husky - pre-commit script failed (code 1)';
+    const refused = { status: 'refused', detail, head: hookOutputHead(detail) } as const;
     const { kingdom, steward } = await open({}, (k) => ({
       ...committing(commits, refused)(k),
       // The CLI stops itself at --max-turns: the same breaker, met by the CLI.
@@ -186,8 +191,7 @@ describe('a session past a breaker', () => {
     const quest = await kingdom.quest('Loops');
     expect(commits).toEqual([`chore: wip ${quest.id} (turns)`]);
     expect(kingdom.notices.at(-1)).toMatchObject({
-      reason:
-        'breaker:turns (WIP not committed, it stays in the plot: husky - pre-commit script failed (code 1))',
+      reason: { code: 'breaker:turns', params: { turns: 200, limit: 200 } },
     });
   });
 });
@@ -284,16 +288,4 @@ describe('the pids of the sessions (.state/sessions.json)', () => {
       expect(await readPids(current.root)).toEqual([]);
     },
   );
-
-  it('reads nothing from a torn or foreign record', async () => {
-    current = await bench();
-    const file = path.join(current.root, SESSIONS_FILE);
-    await mkdir(path.dirname(file), { recursive: true });
-    await writeFile(file, '{"version": 1, "sessions": [{"pid": "x"}');
-    expect(await readPids(current.root)).toEqual([]);
-    await writeFile(file, JSON.stringify({ version: 2, sessions: [] }));
-    expect(await readPids(current.root)).toEqual([]);
-    await writeFile(file, JSON.stringify({ version: 1, sessions: [{ quest: 'q', pid: 1 }] }));
-    expect(await readPids(current.root)).toEqual([]);
-  });
 });

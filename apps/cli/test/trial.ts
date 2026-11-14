@@ -3,7 +3,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { EventSchema, VerdictSchema } from '@elvaria/domain';
+import { EVENT_VERSION, EventSchema, VerdictSchema } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import { openKingdom } from '@elvaria/store';
 
@@ -116,7 +116,7 @@ export async function seedLedger(kingdom: string): Promise<void> {
   await openEventLog(kingdom).append(
     ids.map((id, index) =>
       EventSchema.parse({
-        v: 1,
+        v: EVENT_VERSION,
         id: `01JC00000000000000000000T${index}`,
         ts: HOUR(2),
         type: 'check.end',

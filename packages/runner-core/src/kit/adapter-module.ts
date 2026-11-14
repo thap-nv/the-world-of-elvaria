@@ -6,7 +6,9 @@
 import { ADAPTER_CAPABILITIES, SHELL_PLATFORMS, err, modelsProblems, ok } from '@elvaria/domain';
 import type { Result } from '@elvaria/domain';
 
-import { hookProblem, hookScriptOf, withHookProblem } from '../runner/hook-built.ts';
+import { hookScriptOf, withHookProblem } from '../runner/hook-built.ts';
+import { hookNote } from '../runner/doctor-notes.ts';
+import { checkedDoctorNotes } from './doctor-notes.ts';
 import type { AgentRunner } from '../runner/types.ts';
 import type { AdapterKit } from './kit.ts';
 
@@ -102,13 +104,16 @@ export async function adapterOfModule(
  */
 function withHookCheck(runner: AgentRunner, kit: Pick<AdapterKit, 'hookCommand'>): AgentRunner {
   const script = hookScriptOf(kit.hookCommand());
-  if (script === undefined) return runner;
   return {
     tribe: runner.tribe,
     adapter: runner.adapter,
     capabilities: runner.capabilities,
     spawn: (req) => runner.spawn(req),
     probe: (options) => runner.probe(options),
-    doctor: async () => withHookProblem(await runner.doctor(), await hookProblem(script)),
+    doctor: async () => {
+      const info = await runner.doctor();
+      const notes = checkedDoctorNotes(info.notes);
+      return withHookProblem({ ...info, ...(notes === undefined ? {} : { notes }) }, await hookNote(script));
+    },
   };
 }

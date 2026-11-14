@@ -47,8 +47,10 @@ describe('antigravityRunner', () => {
     const onPath = antigravityRunner(tribeWith(), testIo({ env: baseEnv(await isolatedPath(signedOut)) }));
     const info = await onPath.doctor();
     expect(info).toMatchObject({ version: '1.5.3', auth_ok: false });
-    expect(info.detail).toContain('agy models failed (exit 1): not signed in, or offline');
-    expect(info.detail).toContain('elvaria doctor --acknowledge-terms');
+    expect(info.notes?.map(({ code }) => code)).toEqual([
+      'doctor:not_signed_in',
+      'doctor:terms_not_acknowledged',
+    ]);
 
     const nowhere = antigravityRunner(tribeWith(), testIo({ env: baseEnv(await isolatedPath()) }));
     await expect(nowhere.doctor()).rejects.toThrow('tribe gemini: agy is not pinned and not on PATH');

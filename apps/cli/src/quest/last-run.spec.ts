@@ -1,6 +1,6 @@
 // `quest show` says what the last run came to (P1-46: (c) of P1-44, (b) of P1-42): its verdicts with their notes, the
 // partial ones first, and the `plot.restored` lines of that run, so the owner need not open verdicts/ or the journal.
-import { EventSchema, VerdictSchema } from '@elvaria/domain';
+import { EVENT_VERSION, EventSchema, VerdictSchema } from '@elvaria/domain';
 import { openJournal } from '@elvaria/eventlog';
 import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -60,7 +60,7 @@ let next = 0;
 function restoredLine(n: number, paths: string[]) {
   next += 1;
   return EventSchema.parse({
-    v: 1,
+    v: EVENT_VERSION,
     id: `01M6RQ5Y000000000000000${String(next).padStart(3, '0')}`,
     ts: AT,
     type: 'plot.restored',

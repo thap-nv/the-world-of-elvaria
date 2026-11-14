@@ -68,6 +68,10 @@ export {
 } from './conformance/workspace.ts';
 export type { Workspace } from './conformance/workspace.ts';
 export { hookMissing, hookProblem, hookScriptOf, withHookProblem } from './runner/hook-built.ts';
+export { DOCTOR_NOTES, DOCTOR_NOTE_PARAMS, doctorNoteOf, callNote, hookNote } from './runner/doctor-notes.ts';
+export type { DoctorNoteCode, DoctorNote } from './runner/doctor-notes.ts';
+export { HEAD_LINES, LINE_CHARS, hookOutputHead } from './plot/hook-output.ts';
+export type { HookOutputHead } from './plot/hook-output.ts';
 export { ADAPTER_FACTORY, adapterOfModule, runnerProblems } from './kit/adapter-module.ts';
 export type { AdapterFactory } from './kit/adapter-module.ts';
 export { ADAPTER_KIT_VERSION, adapterKitOf } from './kit/kit.ts';

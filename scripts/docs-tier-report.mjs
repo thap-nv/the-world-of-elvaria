@@ -4,10 +4,7 @@
 // repo: `pnpm docs:gen --kingdom <dir>` writes it, and `pnpm docs:gen --check` without a kingdom leaves it alone.
 // An apprentice's tokens are inside its session's (`modelUsage` adds them up, spike P1-02), so the apprentice tier
 // counts runs, minutes, cuts and overruns, never tokens of its own.
-import { readFileSync, readdirSync } from 'node:fs';
-import path from 'node:path';
-
-import { EventSchema } from '@elvaria/domain';
+import { readMetricsSource } from '../apps/cli/src/metrics/read.ts';
 
 import { code, markdownDocument, table } from './docs-markdown.mjs';
 
@@ -23,7 +20,6 @@ export const TIER_REPORT_FILE = 'docs/tier-report.md';
  * }} QuestStats
  */
 
-const DAY_FILE = /^\d{4}-\d{2}-\d{2}\.jsonl$/;
 const MS_PER_MINUTE = 60_000;
 const PERCENT = 100;
 
@@ -32,29 +28,15 @@ const isJson = (value) => typeof value === 'object' && value !== null && !Array.
 /** @param {unknown} value */
 const count = (value) => (typeof value === 'number' && Number.isFinite(value) ? value : 0);
 
-/** @param {string} line @returns {Event[]} */
-function eventOf(line) {
-  if (line.trim() === '') return [];
-  try {
-    const parsed = EventSchema.safeParse(JSON.parse(line));
-    return parsed.success ? [parsed.data] : [];
-  } catch {
-    return [];
-  }
-}
-
 /**
  * Every valid line of `<kingdom>/events/<day>.jsonl`, day by day. The sandbox's fake days (events/sandbox/) are not
  * the kingdom's work, and a line the schema refuses is left out, as every reader of the log does.
  * @param {string} kingdom
- * @returns {Event[]}
+ * @returns {Promise<readonly Event[]>}
  */
-export function readKingdomEvents(kingdom) {
-  const dir = path.join(kingdom, 'events');
-  const days = readdirSync(dir)
-    .filter((name) => DAY_FILE.test(name))
-    .sort();
-  return days.flatMap((day) => readFileSync(path.join(dir, day), 'utf8').split('\n').flatMap(eventOf));
+export async function readKingdomEvents(kingdom) {
+  const { input } = await readMetricsSource(kingdom);
+  return input.events;
 }
 
 /** @param {string} id @returns {QuestStats} */
@@ -184,9 +166,10 @@ function questTable(quests) {
 
 /**
  * The report, from the kingdom's lines in the order they were written.
- * @param {readonly Event[]} events
+ * @param {readonly Event[] | Promise<readonly Event[]>} source
  */
-export function renderTierReport(events) {
+export async function renderTierReport(source) {
+  const events = await source;
   const all = questStatsOf(events);
   const quests = all.filter(({ id }) => id !== '');
   const outside = all.find(({ id }) => id === '');

@@ -114,9 +114,10 @@ describe("the plot's setup (P1-30)", () => {
       expect.objectContaining({
         kind: 'infirmary',
         trip: 'no_session',
-        reason: expect.stringMatching(
-          /^breaker:no_session: \w+'s session could not open: .*the treasury file is locked/,
-        ) as unknown,
+        reason: {
+          code: 'breaker:no_session',
+          params: { error: expect.stringContaining('the treasury file is locked') as unknown },
+        },
       }),
     ]);
   });
@@ -173,14 +174,12 @@ describe("a script-tier quest's plot", () => {
     expect(quest).toMatchObject({ status: 'infirmary', assignee: null, attempts: 0, attempt_log: [] });
     expect(prepared).toEqual([]);
     expect(envs).toEqual([]);
-    const why = 'the treasury has no npm_token';
     expect(kingdom.notices).toEqual([
       {
         kind: 'infirmary',
         quest: { id: quest.id, title: 'Links without the token', rank: 'D' },
-        reason: `breaker:secrets: ${why}`,
+        reason: { code: 'breaker:secrets_missing', params: { names: 'npm_token' } },
         trip: 'secrets',
-        detail: { message: why },
       },
     ]);
   });

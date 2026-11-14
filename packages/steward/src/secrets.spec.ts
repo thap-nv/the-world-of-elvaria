@@ -114,8 +114,8 @@ describe('a quest that asks for secrets', () => {
     const quest = await kingdom.quest('Publish');
     expect(quest).toMatchObject({ status: 'infirmary', attempts: 0, attempt_log: [] });
     // Once, with its own reason: not claimed and released again every tick.
-    const why = 'the treasury has no npm_token';
-    const said = { reason: `breaker:secrets: ${why}`, trip: 'secrets', detail: { message: why } };
+    const reason = { code: 'breaker:secrets_missing', params: { names: 'npm_token' } };
+    const said = { reason, trip: 'secrets' };
     const publish = { id: quest.id, title: 'Publish', rank: 'D' };
     expect(kingdom.notices).toEqual([{ kind: 'infirmary', quest: publish, ...said }]);
     expect(kingdom.warnings).toEqual([]);
@@ -134,7 +134,10 @@ describe('a quest that asks for secrets', () => {
     expect(kingdom.requests).toEqual([]);
     expect((await kingdom.quest('Publish')).status).toBe('infirmary');
     expect(kingdom.notices.at(-1)).toMatchObject({
-      reason: 'breaker:secrets: territory dc1-se-team does not allow the secrets npm_token',
+      reason: {
+        code: 'breaker:secrets_refused',
+        params: { territory: 'dc1-se-team', names: 'npm_token' },
+      },
     });
   });
 
@@ -155,7 +158,7 @@ describe('a quest that asks for secrets', () => {
     expect(quest).toMatchObject({ status: 'infirmary', verifier: null });
     expect(kingdom.requests.map(({ role }) => role)).toEqual(['assignee']);
     expect(kingdom.notices.at(-1)).toMatchObject({
-      reason: 'breaker:secrets: the treasury has no npm_token',
+      reason: { code: 'breaker:secrets_missing', params: { names: 'npm_token' } },
     });
   });
 
@@ -180,7 +183,7 @@ describe('a quest that asks for secrets', () => {
       async () => (await kingdom.quest('Publish')).status === 'infirmary',
     );
     expect(kingdom.notices.at(-1)).toMatchObject({
-      reason: 'breaker:secrets: the treasury has no npm_token',
+      reason: { code: 'breaker:secrets_missing', params: { names: 'npm_token' } },
     });
     await steward.tick();
     expect(await kingdom.character(sleeper)).toMatchObject({ status: 'idle', current: null });
@@ -201,7 +204,7 @@ describe('a quest that asks for secrets', () => {
       answer: 'Use the staging registry.',
     });
     await steward.tick();
-    expect(await rejections(kingdom)).toEqual(['secrets_lacking: the treasury has no npm_token']);
+    expect(await rejections(kingdom)).toEqual(['secrets_lacking: breaker:secrets_missing']);
     expect((await kingdom.quest('Publish')).status).toBe('blocked');
   });
 });

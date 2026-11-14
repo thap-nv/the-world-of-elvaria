@@ -1,8 +1,8 @@
-import { readdirSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { EVENT_DATA_SCHEMAS, EventSchema } from '@elvaria/domain';
+import { EVENT_VERSION, EVENT_DATA_SCHEMAS, EventSchema } from '@elvaria/domain';
 import { describe, expect, it } from 'vitest';
 
 import { DAY_1, makeEvent } from '../__fixtures__/events.ts';
@@ -10,6 +10,7 @@ import { readEventFile } from '../read-file.ts';
 import { parseEventLine } from '../parse-line.ts';
 import { CURRENT_EVENT_VERSION, EVENT_MIGRATIONS } from './index.ts';
 import { currentEventVersion, migrateEvent, versionOfLine } from './run.ts';
+import { v1ToV2 } from './v1-to-v2.ts';
 import type { EventMigrationChain } from './run.ts';
 
 const HERE = fileURLToPath(new URL('.', import.meta.url));
@@ -24,6 +25,40 @@ const RENAME_SESSION: EventMigrationChain = [
 ];
 
 describe('event line migrations', () => {
+  it('reads v1 infirmary reasons as legacy without rewriting the log or changing trip and detail', async () => {
+    const file = path.join(HERE, 'v1.jsonl');
+    const original = readFileSync(file, 'utf8');
+    const raw = original
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line) as Record<string, unknown>);
+    const read = await readEventFile(file);
+    for (const old of raw) {
+      const current = read.events.find(({ id }) => id === old.id);
+      const data = old.data as Record<string, unknown>;
+      expect(current).toEqual({
+        ...old,
+        v: EVENT_VERSION,
+        data:
+          old.type === 'quest.infirmary'
+            ? { ...data, reason: { code: 'legacy', params: { text: data.reason } } }
+            : data,
+      });
+    }
+    expect(readFileSync(file, 'utf8')).toBe(original);
+  });
+
+  it('leaves malformed and already structured infirmary data for schema validation', () => {
+    for (const data of [null, {}, 'invalid', { reason: { code: 'legacy', params: { text: 'old' } } }]) {
+      const old = { v: 1, type: 'quest.infirmary', data };
+      expect(v1ToV2(old)).toEqual({ ...old, v: EVENT_VERSION });
+    }
+  });
+
+  it('keeps the hook writer version aligned with the domain schema', () => {
+    expect(CURRENT_EVENT_VERSION).toBe(EVENT_VERSION);
+  });
+
   it('ends at the v that EventSchema accepts: a schema bump without a step fails here', () => {
     expect(CURRENT_EVENT_VERSION).toBe(EVENT_MIGRATIONS.length + 1);
     const event = makeEvent(DAY_1, 1);
@@ -99,18 +134,23 @@ describe('event line migrations', () => {
         throw 'bare string' as unknown as Error;
       },
     ];
-    expect(migrateEvent({ v: 1 }, throwsText)).toMatchObject({ error: { message: 'bare string' } });
-    expect(versionOfLine({ v: 1.5 })).toBeUndefined();
+    expect(migrateEvent({ v: 1 }, throwsText)).toMatchObject({
+      error: { message: 'bare string' },
+    });
+    expect(versionOfLine({ v: EVENT_VERSION + 0.5 })).toBeUndefined();
   });
 
   it('upgrades a line before the schema sees it', () => {
     const text = JSON.stringify(makeEvent(DAY_1, 1));
     expect(parseEventLine(text, EventSchema).ok).toBe(true);
-    // With a v1 → v2 step, the v1 schema meets the upgraded line, and says so about `v`.
-    const toV2: EventMigrationChain = [(old) => ({ ...(old as object), v: 2 })];
+    // An upgrade beyond the current schema is rejected at `v`.
+    const toV2: EventMigrationChain = [
+      ...EVENT_MIGRATIONS,
+      (old) => ({ ...(old as object), v: EVENT_VERSION + 1 }),
+    ];
     const upgraded = parseEventLine(text, EventSchema, toV2);
     expect(upgraded).toMatchObject({ ok: false, error: { code: 'invalid', details: [{ path: ['v'] }] } });
-    const broken = parseEventLine(text, EventSchema, [() => 'x']);
+    const broken = parseEventLine(text, EventSchema, [...EVENT_MIGRATIONS, () => 'x']);
     expect(broken).toMatchObject({ ok: false, error: { code: 'migration_failed' } });
   });
 });

@@ -1,4 +1,4 @@
-// event v1: one line of events/YYYY-MM-DD.jsonl or quests/<id>/journal.jsonl (implementation-plan §2.3).
+// event v2: one line of events/YYYY-MM-DD.jsonl or quests/<id>/journal.jsonl (implementation-plan §2.3).
 // `type` stays an open pattern so a reader keeps lines of a newer catalogue (ADR 0003); `data` is checked only
 // for the types that have a data schema, and TypeScript narrows on `type` through the guards below.
 import { z } from 'zod';
@@ -8,6 +8,9 @@ import { DateTimeSchema, GENERATED_NOTE, NonEmptyStringSchema } from '../common.
 import { EVENT_DATA_SCHEMAS, dataRules, hasDataSchema } from './event-data.ts';
 import { EVENT_TYPES } from './event-types.ts';
 import type { EventData, TypedEventType } from './event-data.ts';
+
+// Single source for event `v` in schemas and writers (ADR 0003).
+export const EVENT_VERSION = 2;
 
 export const ACTOR_KINDS = ['character', 'user', 'steward', 'chancellor', 'herald', 'system'] as const;
 
@@ -33,7 +36,7 @@ function checkData(event: { type: string; data: Record<string, unknown> }, ctx: 
 export const EventSchema = z
   .strictObject({
     // Lines of an older `v` are upgraded by the eventlog reader before they reach this schema (ADR 0003).
-    v: z.literal(1),
+    v: z.literal(EVENT_VERSION),
     id: UlidSchema.meta({ description: 'ULID from IdSource; sortable by time.' }),
     ts: DateTimeSchema,
     type: z.string().regex(/^[a-z_]+(\.[a-z_]+)+$/),
@@ -49,13 +52,13 @@ export const EventSchema = z
   .meta({
     title: 'Event',
     description:
-      "One line of events/YYYY-MM-DD.jsonl (and of quests/<id>/journal.jsonl). The event log is append-only and never rewritten: readers upgrade old lines by `v` on read. `type` is `group.action`; `data` has a shape per type. Unknown types are kept by readers and ignored by renderers (forward compatible), so `type` is a pattern, not an enum; the v1 catalog is in $defs.known_types. The world sees actor.id (character) and the character's provider (tribe), never which CLI ran.",
-    $comment: `${GENERATED_NOTE} Events use \`v\`, not \`version\` (implementation-plan §2.1). Secrets are redacted before append (hook, runner, store, herald). Reserved prefixes with no v1 types yet: campaign.*, battle.*, incident.*, patrol.* (stage 5), party.* and skill.* (product plan 0.5: parties and skills). One write() per line under 64 KB; readers drop a last line without a trailing newline.`,
+      "One line of events/YYYY-MM-DD.jsonl (and of quests/<id>/journal.jsonl). The event log is append-only and never rewritten: readers upgrade old lines by `v` on read. `type` is `group.action`; `data` has a shape per type. Unknown types are kept by readers and ignored by renderers (forward compatible), so `type` is a pattern, not an enum; the v2 catalog is in $defs.known_types. The world sees actor.id (character) and the character's provider (tribe), never which CLI ran.",
+    $comment: `${GENERATED_NOTE} Events use \`v\`, not \`version\` (implementation-plan §2.1). Secrets are redacted before append (hook, runner, store, herald). Reserved prefixes with no types yet: campaign.*, battle.*, incident.*, patrol.* (stage 5), party.* and skill.* (product plan 0.5: parties and skills). One write() per line under 64 KB; readers drop a last line without a trailing newline.`,
     allOf: dataRules(),
     $defs: {
       known_types: {
         $comment:
-          'v1 type catalog, for documentation and the generated docs/events.md. Not used to restrict `type`.',
+          'v2 type catalog, for documentation and the generated docs/events.md. Not used to restrict `type`.',
         enum: [...EVENT_TYPES],
       },
     },

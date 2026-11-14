@@ -1,6 +1,7 @@
 // Hand-made kingdom files for the metrics specs: quests with their attempt logs, verdicts, event lines and inbox
 // commands, shaped like the files of the stage-1 milestone day (docs/guides/phase-1-report.md §3).
 import { InboxCommandSchema } from '../../schema/command/inbox-command.ts';
+import { EVENT_VERSION } from '../../schema/event/event.ts';
 import { QuestSchema } from '../../schema/quest/quest.ts';
 import type { InboxCommand } from '../../schema/command/inbox-command.ts';
 import type { FailKind, Role } from '../../schema/common.ts';
@@ -133,7 +134,7 @@ const ulid = (): string => {
 /** An event line as the kingdom's log holds it (the reader has checked it against EventSchema). */
 export function lineOf(type: string, data: Record<string, unknown>, ts: string, quest?: string): Event {
   return {
-    v: 1,
+    v: EVENT_VERSION,
     id: ulid() as Event['id'],
     ts,
     type,

@@ -5,7 +5,7 @@
 // group would count as after the owner's retry: the move is made now, before the first plan. Right after the owner's
 // retry the quest looks the same in its file (the full group still stands, P1-26), so the log tells them apart: there
 // the last move of the quest is the retry, or the infirmary the retry left when its own line was lost.
-import { reviewStallOf } from '@elvaria/domain';
+import { infirmaryReasonOf, reviewStallOf } from '@elvaria/domain';
 import type { Event, Quest, QuestId, ReviewStall } from '@elvaria/domain';
 
 import { moveAndRing } from './notices.ts';
@@ -38,10 +38,6 @@ export function restartFromLog(events: readonly Event[]): Restart {
   return { retried: new Set([...last].filter(([, event]) => retriedBy(event)).map(([quest]) => quest)) };
 }
 
-/** Why the move is made by this Steward and not the one whose judge filled the group. */
-const MESSAGE =
-  "the Steward stopped before this move, after the last judge's end; it was made at the next start";
-
 /** The second move of a stall, as the Steward would have made it right after the judge's end. */
 function stallMoveOf(stall: ReviewStall): {
   readonly event: MovePayload;
@@ -50,15 +46,29 @@ function stallMoveOf(stall: ReviewStall): {
   if (stall.by === 'partial')
     return {
       event: { type: 'verdict_partial' },
-      infirmary: { trip: 'partial_verdicts', detail: { message: MESSAGE, partial_verdicts: stall.count } },
+      infirmary: {
+        trip: 'partial_verdicts',
+        reason: infirmaryReasonOf('restart:partial_verdicts', { count: stall.count }),
+        detail: { partial_verdicts: stall.count },
+      },
     };
-  const detail = { message: MESSAGE, verifiers_stopped: stall.count };
+  const detail = { verifiers_stopped: stall.count };
   // A judge whose session never opened left as one that crashed (§2.5 `review.no_session`, fix/review-no-session).
   if (stall.by === 'crash' || stall.by === 'no_session')
-    return { event: { type: 'crash' }, infirmary: { trip: 'no_verdict', detail } };
+    return {
+      event: { type: 'crash' },
+      infirmary: {
+        trip: 'no_verdict',
+        reason: infirmaryReasonOf('restart:no_verdict', { stopped: stall.count }),
+        detail,
+      },
+    };
   // attempt_log tells time from the rest, not tokens from turns; the CLI's own turn limit is the rare one.
   const trip = stall.by === 'timeout' ? 'time' : 'tokens';
-  return { event: { type: 'breaker', trip }, infirmary: { trip, detail } };
+  return {
+    event: { type: 'breaker', trip },
+    infirmary: { trip, reason: infirmaryReasonOf(`restart:${trip}`, { stopped: stall.count }), detail },
+  };
 }
 
 const waitsForJudge = (quest: Quest): boolean =>

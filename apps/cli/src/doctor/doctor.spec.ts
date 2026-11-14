@@ -199,7 +199,9 @@ describe('elvaria doctor', () => {
     await fakeTool(loggedOut, 'claude', '2.1.318 (Claude Code)', 0, { loggedIn: false });
     const io = await doctorIo(loggedOut, bin);
     expect(await doctor(io, '--acknowledge-terms', 'gemini')).toBe(1);
-    expect(printed(io)).toContain('✗ Tribe claude: not logged in: run `claude` once and sign in');
+    expect(printed(io)).toContain(
+      '✗ Tribe claude: claude auth status --json shows it is not signed in (or offline): sign in with claude auth login.',
+    );
   });
 
   it('finds Claude Code inside the VS Code extension when PATH has none', async () => {

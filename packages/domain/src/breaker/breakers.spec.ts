@@ -61,9 +61,27 @@ describe('breakersOf', () => {
         NOW,
       ),
     ).toEqual([
-      { quest: Q1, role: 'assignee', trip: 'time', detail: 'ran 45 min, limit 45 min' },
-      { quest: Q2, role: 'assignee', trip: 'tokens', detail: '400001 tokens, limit 400000' },
-      { quest: Q3, role: 'verifier', trip: 'turns', detail: '201 turns, limit 200' },
+      {
+        quest: Q1,
+        role: 'assignee',
+        trip: 'time',
+        detail: 'ran 45 min, limit 45 min',
+        params: { minutes: 45, limit: 45 },
+      },
+      {
+        quest: Q2,
+        role: 'assignee',
+        trip: 'tokens',
+        detail: '400001 tokens, limit 400000',
+        params: { tokens: 400001, limit: 400000 },
+      },
+      {
+        quest: Q3,
+        role: 'verifier',
+        trip: 'turns',
+        detail: '201 turns, limit 200',
+        params: { turns: 201, limit: 200 },
+      },
     ]);
   });
 
@@ -87,11 +105,23 @@ describe('breakersOf', () => {
     const quests = [judgedBy(quest(Q1), 110), judgedBy(quest(Q2), 110)];
     const sessions = [held(Q1, 'verifier', 800_000), held(Q2, 'verifier', 800_001)];
     expect(breakersOf(quests, sessions, RULES, NOW)).toEqual([
-      { quest: Q2, role: 'verifier', trip: 'tokens', detail: '800001 tokens, limit 800000' },
+      {
+        quest: Q2,
+        role: 'verifier',
+        trip: 'tokens',
+        detail: '800001 tokens, limit 800000',
+        params: { tokens: 800001, limit: 800000 },
+      },
     ]);
     const once = { ...RULES, verifier_tokens_multiplier: 1 };
     expect(breakersOf(quests, [held(Q1, 'verifier', 400_001)], once, NOW)).toEqual([
-      { quest: Q1, role: 'verifier', trip: 'tokens', detail: '400001 tokens, limit 400000' },
+      {
+        quest: Q1,
+        role: 'verifier',
+        trip: 'tokens',
+        detail: '400001 tokens, limit 400000',
+        params: { tokens: 400001, limit: 400000 },
+      },
     ]);
     expect(tokenCeilingOf(quests[0] ?? quest(Q1), 'assignee', RULES)).toBe(400_000);
   });
@@ -104,7 +134,13 @@ describe('planTick: breakers (§3.4)', () => {
     const quests = [workingBy(quest(Q1), 'thorn', 10), quest(Q2)];
     const plan = planTick(snapshot(quests, [thorn], { sessions: [held(Q1, 'assignee')] }), NOW);
     expect(plan.breakers).toEqual([
-      { quest: Q1, role: 'assignee', trip: 'time', detail: 'ran 110 min, limit 45 min' },
+      {
+        quest: Q1,
+        role: 'assignee',
+        trip: 'time',
+        detail: 'ran 110 min, limit 45 min',
+        params: { minutes: 110, limit: 45 },
+      },
     ]);
     expect(plan.claims).toEqual([]);
   });
@@ -121,7 +157,13 @@ describe('planTick: breakers (§3.4)', () => {
     expect(limits.gemini.breakers).toBe('minutes_only');
     const plan = planTick(snapshot(quests, [thorn, wren], { sessions, limits }), NOW);
     expect(plan.breakers).toEqual([
-      { quest: Q1, role: 'assignee', trip: 'tokens', detail: '400001 tokens, limit 400000' },
+      {
+        quest: Q1,
+        role: 'assignee',
+        trip: 'tokens',
+        detail: '400001 tokens, limit 400000',
+        params: { tokens: 400001, limit: 400000 },
+      },
     ]);
     // Its minutes still count.
     const late = [workingBy(quest(Q1), 'thorn', 100), workingBy(quest(Q2), 'wren', 10)];
@@ -130,6 +172,7 @@ describe('planTick: breakers (§3.4)', () => {
       role: 'assignee',
       trip: 'time',
       detail: 'ran 110 min, limit 45 min',
+      params: { minutes: 110, limit: 45 },
     });
   });
 });

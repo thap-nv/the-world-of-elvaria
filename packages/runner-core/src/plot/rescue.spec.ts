@@ -119,6 +119,8 @@ describe('commitAll with a rescue folder (P1-55)', () => {
     expect(outcome).toEqual({
       status: 'refused',
       detail: 'lint failed: src/app.ts',
+      head: { lines: ['lint failed: src/app.ts'], errors: 0, total_lines: 1 },
+      log: 'pre-commit.log',
       patch: path.join(rescue.dir, WIP_PATCH_FILE),
       files: ['src/app.ts', 'src/extra.ts'],
     });

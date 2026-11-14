@@ -1,7 +1,7 @@
 import { mkdir, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { EventSchema, VerdictSchema } from '@elvaria/domain';
+import { EVENT_VERSION, EventSchema, VerdictSchema } from '@elvaria/domain';
 import type { Attempt, Metrics } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import { openKingdom } from '@elvaria/store';
@@ -104,7 +104,7 @@ async function stageDay(kingdom: string): Promise<void> {
     await store.inbox.ack(ids[index] ?? '');
   }
   const line = (id: string, type: string, data: Record<string, unknown>) =>
-    EventSchema.parse({ v: 1, id, ts: at(8), type, actor: { kind: 'steward' }, data });
+    EventSchema.parse({ v: EVENT_VERSION, id, ts: at(8), type, actor: { kind: 'steward' }, data });
   await openEventLog(kingdom).append([
     line('01JC0000000000000000000010', 'agent.session.start', {
       session: 's-2a-assignee-1',
@@ -176,7 +176,8 @@ describe('elvaria metrics', () => {
       type: string,
       data: Record<string, unknown>,
       more: Record<string, unknown> = {},
-    ) => EventSchema.parse({ v: 1, id, ts: at(9), type, actor: { kind: 'steward' }, data, ...more });
+    ) =>
+      EventSchema.parse({ v: EVENT_VERSION, id, ts: at(9), type, actor: { kind: 'steward' }, data, ...more });
     const read = (id: string) =>
       line(id, 'agent.tool', { tool: 'read', path: 'apps/web/vi.json' }, { session: 's-9', quest: QUEST_ID });
     await openEventLog(kingdom).append([

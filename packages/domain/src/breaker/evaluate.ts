@@ -40,7 +40,13 @@ export interface UsageSoFar {
   readonly turns?: number;
 }
 
-export type BreakerVerdict = 'ok' | { readonly trip: SessionTrip; readonly detail: string };
+export type BreakerVerdict =
+  | 'ok'
+  | {
+      readonly trip: SessionTrip;
+      readonly detail: string;
+      readonly params: Readonly<Record<string, number>>;
+    };
 
 /**
  * The first breaker that trips, time before tokens before turns. Time trips the minute the budget is spent (a
@@ -58,12 +64,24 @@ export function evaluateBreakers(
   const elapsed = now - attempt.started_at;
   if (elapsed >= limits.max_minutes * MS_PER_MINUTE) {
     const minutes = Math.floor(elapsed / MS_PER_MINUTE);
-    return { trip: 'time', detail: `ran ${minutes} min, limit ${limits.max_minutes} min` };
+    return {
+      trip: 'time',
+      detail: `ran ${minutes} min, limit ${limits.max_minutes} min`,
+      params: { minutes, limit: limits.max_minutes },
+    };
   }
   if (measure === 'minutes_only') return 'ok';
   if (usage.tokens > limits.max_tokens)
-    return { trip: 'tokens', detail: `${usage.tokens} tokens, limit ${limits.max_tokens}` };
+    return {
+      trip: 'tokens',
+      detail: `${usage.tokens} tokens, limit ${limits.max_tokens}`,
+      params: { tokens: usage.tokens, limit: limits.max_tokens },
+    };
   if (usage.turns !== undefined && usage.turns > limits.max_turns)
-    return { trip: 'turns', detail: `${usage.turns} turns, limit ${limits.max_turns}` };
+    return {
+      trip: 'turns',
+      detail: `${usage.turns} turns, limit ${limits.max_turns}`,
+      params: { turns: usage.turns, limit: limits.max_turns },
+    };
   return 'ok';
 }

@@ -9,7 +9,9 @@ import {
   NOTE_PREFIX,
   STDERR_FILE,
   contextEnv,
-  hookProblem,
+  callNote,
+  doctorNoteOf,
+  hookNote,
   openRunLog,
   openRunOutput,
   runContextOf,
@@ -20,6 +22,7 @@ import type {
   AdapterTool,
   AgentRunner,
   ChildRun,
+  DoctorNote,
   ProbeResult,
   RunningSession,
   SpawnRequest,
@@ -229,10 +232,12 @@ async function probe(options: AntigravityOptions): Promise<ProbeResult> {
 }
 
 /** `agy models` that did not run to its end (its timeout, a failed start) says so, not "not signed in" (fix/busy-machine). */
-function signInProblems(models: ChildRun): string[] {
-  if (models.problem !== undefined) return [`agy models: ${models.problem}`];
+function signInProblems(models: ChildRun, timeoutMs: number): DoctorNote[] {
+  const command = 'agy models';
+  const ended = callNote(command, models, timeoutMs);
+  if (ended !== undefined) return [ended];
   const signedIn = models.code === 0 && /"models"\s*:\s*\[\s*\{/.test(models.stdout);
-  return signedIn ? [] : [`agy models failed (exit ${String(models.code)}): not signed in, or offline`];
+  return signedIn ? [] : [doctorNoteOf('doctor:not_signed_in', { command, login: 'agy' })];
 }
 
 /**
@@ -243,19 +248,20 @@ async function doctor(options: AntigravityOptions, plan: HookPlan): Promise<Tool
   const call = { env: agyEnv(options.env, undefined), timeout_ms: options.timeout_ms ?? DEFAULT_TIMEOUT_MS };
   const ran = await runToEnd(programOf(options.launch), ['--version'], call);
   const models = await runToEnd(programOf(options.launch), ['--output-format', 'json', 'models'], call);
-  const hook = await hookProblem(plan.script);
+  const hook = await hookNote(plan.script);
   const problems = [
-    ...signInProblems(models),
-    ...(options.terms_acknowledged_at === undefined ? [TERMS] : []),
+    ...signInProblems(models, call.timeout_ms),
+    ...(options.terms_acknowledged_at === undefined ? [doctorNoteOf('doctor:terms_not_acknowledged')] : []),
     ...(hook === undefined ? [] : [hook]),
   ];
   // A version that did not come is noted; it says nothing of whether a session can run.
-  const notes = [...(ran.problem === undefined ? [] : [`agy --version: ${ran.problem}`]), ...problems];
+  const versionNote = callNote('agy --version', ran, call.timeout_ms);
+  const notes = [...(versionNote === undefined ? [] : [versionNote]), ...problems];
   return {
     path: options.launch.command,
     version: versionOf(ran.stdout) ?? 'unknown',
     auth_ok: problems.length === 0,
-    ...(notes.length === 0 ? {} : { detail: notes.join('; ') }),
+    ...(notes.length === 0 ? {} : { notes }),
   };
 }
 

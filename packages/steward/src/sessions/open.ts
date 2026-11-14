@@ -13,7 +13,7 @@ import { inScratch, judgeMayOpen } from '../review/scratch.ts';
 import { judgeParseOf } from '../review/verdict-file.ts';
 import { secretsBreaker } from './breaker.ts';
 import { continuationOf } from './continuation.ts';
-import { assigneeUnopened, judgeUnopened, unopenedWhy } from './no-session.ts';
+import { assigneeUnopened, judgeUnopened, unopenedLine } from './no-session.ts';
 import { requestOf } from './request.ts';
 import { questSecretsOf, rememberSecrets, secretsLacking } from './secrets.ts';
 import { spawnOf } from './spawn.ts';
@@ -98,7 +98,7 @@ async function spawnFor(
   } catch (error) {
     const message = messageOf(error);
     ctx.deps.log.warn(`steward: ${input.quest.id}: no session for ${input.character.id}: ${message}`);
-    return err(unopenedWhy(input.character.id, message));
+    return err(unopenedLine(message));
   }
 }
 
@@ -173,7 +173,7 @@ export async function openAssignee(
   const lacking = await secretsLacking(ctx, quest, territory);
   if (lacking !== undefined) {
     // A blocked quest has no way to the infirmary: the owner's answer is refused with the reason instead.
-    if (opening.kind === 'answer') return err(`secrets_lacking: ${lacking}`);
+    if (opening.kind === 'answer') return err(`secrets_lacking: ${lacking.code}`);
     return secretsBreaker(ctx, quest, lacking);
   }
   const n = goesOn(opening) ? currentRun(quest) : currentRun(quest) + 1;

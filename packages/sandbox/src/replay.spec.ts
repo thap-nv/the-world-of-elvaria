@@ -1,4 +1,4 @@
-import { EventSchema } from '@elvaria/domain';
+import { EVENT_VERSION, EventSchema } from '@elvaria/domain';
 import type { Event } from '@elvaria/domain';
 import { describe, expect, it } from 'vitest';
 
@@ -6,7 +6,7 @@ import { replay, replaySchedule, replaySpan } from './replay.ts';
 
 const line = (ts: string, index: number): Event =>
   EventSchema.parse({
-    v: 1,
+    v: EVENT_VERSION,
     id: `01JCF8X4Z6Q3W9N2M5R7T8V0Y${'ABCDEFGH'.charAt(index)}`,
     ts,
     type: 'agent.notification',

@@ -102,13 +102,11 @@ describe('a judge whose session cannot open', () => {
     expect(infirmaries(kingdom)).toEqual([
       expect.objectContaining({
         trip: 'no_verdict',
-        detail: {
-          message: expect.stringMatching(/^sable's session could not open: agy takes .* 32767$/) as unknown,
-          verifiers_stopped: 2,
+        detail: { verifiers_stopped: 2 },
+        reason: {
+          code: 'judge:no_session',
+          params: { error: expect.stringMatching(/^agy takes .* 32767$/) as unknown, stopped: 2, run: 1 },
         },
-        reason: expect.stringMatching(
-          /^review:no_verdict: sable's session could not open: .*; 2 verifiers of run 1 left without a verdict/,
-        ) as unknown,
       }),
     ]);
     await idleTicks(kingdom, steward);
@@ -145,7 +143,8 @@ describe('a judge whose session cannot open', () => {
     expect(await kingdom.quest('Left stalled')).toMatchObject({ status: 'infirmary' });
     expect(infirmaries(kingdom).at(-1)).toMatchObject({
       trip: 'no_verdict',
-      detail: { verifiers_stopped: 2, message: expect.stringContaining('the Steward stopped') as unknown },
+      detail: { verifiers_stopped: 2 },
+      reason: { code: 'restart:no_verdict', params: { stopped: 2 } },
     });
   });
 });
@@ -163,7 +162,13 @@ describe("an assignee's session that cannot open", () => {
     expect(infirmaries(kingdom)).toEqual([
       expect.objectContaining({
         trip: 'no_session',
-        reason: `breaker:no_session: ${quest.assignee ?? ''}'s session could not open: agy takes its prompt on the command line, and this one would be about 39636 characters; Windows stops at 32767`,
+        reason: {
+          code: 'breaker:no_session',
+          params: {
+            error:
+              'agy takes its prompt on the command line, and this one would be about 39636 characters; Windows stops at 32767',
+          },
+        },
       }),
     ]);
     await idleTicks(kingdom, steward);

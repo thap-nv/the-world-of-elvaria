@@ -128,13 +128,25 @@ export const EVENTS = [
   session('q9a1', 'claude-opus-5-5'),
   lineOf(
     'quest.infirmary',
-    { reason: 'breaker:tokens: 269358 tokens, limit 240000', trip: 'tokens' },
+    {
+      reason: { code: 'legacy', params: { text: 'breaker:tokens: 269358 tokens, limit 240000' } },
+      trip: 'tokens',
+    },
     at(6),
     questId(3),
   ),
   // Before P1-32 a line had the reason alone; a line with no quest is no quest's trip.
-  lineOf('quest.infirmary', { reason: 'max_attempts' }, at(6), questId(3)),
-  lineOf('quest.infirmary', { reason: 'breaker:time', trip: 'time' }, at(6)),
+  lineOf(
+    'quest.infirmary',
+    { reason: { code: 'legacy', params: { text: 'max_attempts' } } },
+    at(6),
+    questId(3),
+  ),
+  lineOf(
+    'quest.infirmary',
+    { reason: { code: 'legacy', params: { text: 'breaker:time' } }, trip: 'time' },
+    at(6),
+  ),
   lineOf(
     'quest.submitted',
     { sequels: [{ why: 'reply tried once more' }, { why: 'letter unchanged' }] },

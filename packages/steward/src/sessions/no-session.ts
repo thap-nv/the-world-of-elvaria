@@ -3,8 +3,9 @@
 // nothing else, so the next tick planned the same move: on PS-07's kingdom an agy judge whose prompt was longer than
 // Windows takes was chosen every 5 s for 16 minutes, and the digest said nothing. Now the move says what happened, as
 // the state machine has it (§2.5): a judge leaves the review as one whose session crashed, an assignee's quest goes
-// to the infirmary with the reason and the bell.
-import { err } from '@elvaria/domain';
+// to the infirmary with the reason and the bell. The reason is a code with the error's first line as its parameter
+// (`breaker:no_session`, `judge:no_session`; docs/contracts/infirmary-reason-codes.md), the owner's language its words.
+import { err, infirmaryReasonOf } from '@elvaria/domain';
 import type { CharacterId, Quest, Result } from '@elvaria/domain';
 
 import { moveAndRing } from '../notices.ts';
@@ -16,10 +17,9 @@ import type { Context } from '../context.ts';
 /** At most this many characters of the error in the reason; the Steward's log keeps it whole. */
 const ERROR_LINE_MAX = 300;
 
-/** What the owner reads: who could not open a session, and the first line of why. */
-export function unopenedWhy(character: CharacterId, error: string): string {
-  const line = error.trim().split(/\r?\n/u)[0]?.trim().slice(0, ERROR_LINE_MAX) ?? '';
-  return `${character}'s session could not open${line === '' ? '' : `: ${line}`}`;
+/** What the owner reads of why the session could not open: the error's first line. */
+export function unopenedLine(error: string): string {
+  return error.trim().split(/\r?\n/u)[0]?.trim().slice(0, ERROR_LINE_MAX) ?? '';
 }
 
 /** How the assignee's session was to open (open.ts `Opening`). */
@@ -35,7 +35,7 @@ export async function assigneeUnopened(
   ctx: Context,
   quest: Quest,
   opening: OpeningKind,
-  why: string,
+  error: string,
 ): Promise<Result<Quest, string>> {
   if (opening === 'answer') return err('spawn_failed');
   if (ctx.stopping.aborted) {
@@ -43,7 +43,7 @@ export async function assigneeUnopened(
       await ctx.record.move({ quest: quest.id, event: { type: 'release' }, actor: 'steward' });
     return err('spawn_failed');
   }
-  return cannotOpen(ctx, quest, 'no_session', why);
+  return cannotOpen(ctx, quest, 'no_session', infirmaryReasonOf('breaker:no_session', { error }));
 }
 
 /**
@@ -57,7 +57,7 @@ export async function judgeUnopened(
   ctx: Context,
   quest: Quest,
   judge: CharacterId,
-  why: string,
+  error: string,
 ): Promise<Result<Quest, string>> {
   if (ctx.stopping.aborted) return err('spawn_failed');
   await releaseScratch(ctx, quest.id);
@@ -66,5 +66,5 @@ export async function judgeUnopened(
     event: { type: 'no_session', verifier: judge },
     actor: 'steward',
   });
-  return stallWithoutVerdict(ctx, left, why);
+  return stallWithoutVerdict(ctx, left, infirmaryReasonOf('judge:no_session', { error }));
 }

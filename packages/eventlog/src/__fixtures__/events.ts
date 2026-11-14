@@ -1,6 +1,6 @@
 // Valid events for the specs, built through the domain's EventSchema so a fixture can never be malformed.
 // Times are in the kingdom's zone (+07:00, no daylight saving), as a writer stamps them (§2.1).
-import { EventSchema, QuestViewSchema, formatUlid, zonedTime } from '@elvaria/domain';
+import { EVENT_VERSION, EventSchema, QuestViewSchema, formatUlid, zonedTime } from '@elvaria/domain';
 import type { Event, Instant } from '@elvaria/domain';
 
 export const TZ = 'Asia/Ho_Chi_Minh';
@@ -58,7 +58,7 @@ export const plus = (instant: Instant, ms: number): Instant =>
 /** One `agent.tool` event at `instant`; `n` makes the id unique and shows up in the command. */
 export function makeEvent(instant: Instant, n: number, change: Record<string, unknown> = {}): Event {
   return EventSchema.parse({
-    v: 1,
+    v: EVENT_VERSION,
     id: formatUlid(instant, BigInt(n)),
     ts: format(instant),
     type: 'agent.tool',

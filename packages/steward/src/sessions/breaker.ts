@@ -5,10 +5,10 @@
 // assignee whose CLI stopped itself at its own limit (settle.ts), and a quest no session can open for because its
 // secrets are missing (open.ts) or its spawn failed (no-session.ts): that one waits in the infirmary instead of being
 // claimed again every tick.
-import { reviewBreaksOf, reviewStalled } from '@elvaria/domain';
+import { infirmaryReasonOf, reviewBreaksOf, reviewStalled, runDirOf } from '@elvaria/domain';
 import { openJournal } from '@elvaria/eventlog';
 import { plotCommitMessage } from '@elvaria/runner-core';
-import type { Breaker, BreakerTrip, Quest, Result, SessionTrip } from '@elvaria/domain';
+import type { Breaker, BreakerTrip, InfirmaryReason, Quest, Result, SessionTrip } from '@elvaria/domain';
 import type { RunResult } from '@elvaria/runner-core';
 
 import { readAfterSession } from '../mana/read.ts';
@@ -47,7 +47,6 @@ export async function breakAssignee(
   end: () => Promise<RunResult>,
 ): Promise<Result<Quest, string>> {
   const { trip, patch, paths } = breaker;
-  const detail = breaker.detail ?? breaker.refused?.detail;
   const who = running.character;
   const swamped = await ctx.record.change(who, 'character.swamp', step('breaker'));
   if (!swamped.ok) ctx.deps.log.warn(`steward: ${running.quest}: ${who} is not swamped: ${swamped.error}`);
@@ -60,7 +59,6 @@ export async function breakAssignee(
   if (refused !== undefined)
     await writeStopLetter(ctx, { id: running.quest }, { character: who, trip }, refused);
   const said = {
-    ...(detail === undefined ? {} : { message: detail }),
     ...(patch === undefined ? {} : { patch }),
     ...(paths === undefined ? {} : { paths: [...paths] }),
     ...wipLeft(wip),
@@ -71,7 +69,7 @@ export async function breakAssignee(
     event: { type: 'breaker', trip, ...runOf(running, result) },
     actor: 'steward',
     edits: swamped.ok ? { [who]: step('quest_infirmary') } : {},
-    infirmary: { trip, detail: said },
+    infirmary: { trip, reason: assigneeReason(ctx, running, breaker, result), detail: said },
   });
 }
 
@@ -82,10 +80,42 @@ export async function breakAssignee(
 interface AssigneeBreaker {
   readonly trip: BreakerTrip;
   readonly detail?: string | undefined;
+  readonly params?: Readonly<Record<string, number>>;
   readonly patch?: string;
   readonly paths?: readonly string[];
   /** The submit commit the hook refused (trip `commit`), whose rescue the WIP commit of the other trips gives (P1-55). */
   readonly refused?: Refusal;
+}
+
+/** Structured causes keep hook output separate from Elvaria's own wording. */
+function assigneeReason(
+  ctx: Context,
+  running: Running,
+  breaker: AssigneeBreaker,
+  result: RunResult,
+): InfirmaryReason {
+  const quest = ctx.world.quests.get(running.quest);
+  if (quest === undefined) throw new Error(`unknown quest: ${running.quest}`);
+  if (breaker.patch !== undefined)
+    return infirmaryReasonOf('breaker:patch', { file: 'elvaria.patch', why: breaker.patch });
+  if (breaker.paths !== undefined)
+    return infirmaryReasonOf('breaker:forbidden_paths', { count: breaker.paths.length });
+  if (breaker.refused !== undefined) {
+    const { head, log } = breaker.refused;
+    const dir = runDirOf(quest, running.n, 'assignee');
+    const params = {
+      lines: head.lines.join('\n'),
+      total_lines: head.total_lines,
+      log: `${dir}/${log ?? 'pre-commit.log'}`,
+    };
+    return head.errors === 0
+      ? infirmaryReasonOf('breaker:commit', params)
+      : infirmaryReasonOf('breaker:commit_errors', { ...params, errors: head.errors });
+  }
+  const trip = breaker.trip as SessionTrip;
+  const limit = trip === 'turns' ? ctx.world.kingdom.breakers.max_turns : quest.budget.max_tokens;
+  const used = trip === 'turns' ? (result.usage.turns ?? limit) : result.usage.tokens;
+  return infirmaryReasonOf(`breaker:${trip}`, breaker.params ?? { [trip]: used, limit });
 }
 
 /**
@@ -137,12 +167,15 @@ export async function breakVerifier(
   });
   if (!left.ok || !reviewStalled(left.value)) return left;
   // `review.breaker.needs_verifier`: the review has no verifier now, and no further one opens for this run.
-  const said = detail === undefined ? {} : { message: detail };
   return moveAndRing(ctx, {
     quest: running.quest,
     event: { type: 'breaker', trip },
     actor: 'steward',
-    infirmary: { trip, detail: { ...said, verifiers_stopped: reviewBreaksOf(left.value) } },
+    infirmary: {
+      trip,
+      reason: infirmaryReasonOf(`judge:${trip}`, { stopped: reviewBreaksOf(left.value), run: running.n }),
+      detail: { verifiers_stopped: reviewBreaksOf(left.value) },
+    },
   });
 }
 
@@ -178,7 +211,7 @@ export function cannotOpen(
   ctx: Context,
   quest: Quest,
   trip: Extract<BreakerTrip, 'secrets' | 'no_session'>,
-  why: string,
+  why: InfirmaryReason,
 ): Promise<Result<Quest, string>> {
   const holder = typeof quest.assignee === 'string' ? ctx.world.characters.get(quest.assignee) : undefined;
   const holds = quest.status === 'paused_mana' && holder?.current?.quest === quest.id;
@@ -187,10 +220,13 @@ export function cannotOpen(
     event: { type: 'breaker', trip },
     actor: 'steward',
     edits: holds ? { [holder.id]: step('unassign') } : {},
-    infirmary: { trip, detail: { message: why } },
+    infirmary: { trip, reason: why },
   });
 }
 
 /** cannotOpen for secrets the quest asks for and cannot have (§3.9, P1-06). */
-export const secretsBreaker = (ctx: Context, quest: Quest, why: string): Promise<Result<Quest, string>> =>
-  cannotOpen(ctx, quest, 'secrets', why);
+export const secretsBreaker = (
+  ctx: Context,
+  quest: Quest,
+  why: InfirmaryReason,
+): Promise<Result<Quest, string>> => cannotOpen(ctx, quest, 'secrets', why);

@@ -1,6 +1,6 @@
 // `elvaria digest` and the Steward's digest file (PS-03, implementation-plan §3.16.3): what waits for the owner in
 // two groups, each item with its advice and command, in the owner's language. Reads only; the port writes the file.
-import { EventSchema, MemoSchema, TribeIdSchema } from '@elvaria/domain';
+import { EVENT_VERSION, EventSchema, MemoSchema, TribeIdSchema } from '@elvaria/domain';
 import type { AttentionItem, QuestId, WaitGauge } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import { translator } from '@elvaria/i18n';
@@ -62,7 +62,7 @@ describe('elvaria digest', () => {
       JSON.stringify({ version: 1, quests: { [OTHER_QUEST_ID]: unclaimable } }),
     );
     const asleep = EventSchema.parse({
-      v: 1,
+      v: EVENT_VERSION,
       id: '01JCF8X4Z6Q3W9N2M5R7T8V001',
       ts: '2026-11-06T08:30:00+07:00',
       type: 'mana.exhausted',
