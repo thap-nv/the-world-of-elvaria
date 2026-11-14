@@ -228,8 +228,10 @@
   (`capabilities.search: false`, P1-53).
 - Keeps what a character could not tidy when the Steward commits (P1-55, `src/sessions/commit.ts`, `stop-letter.ts`): every
   commit comes with the run's folder in `.runs/`, so a scratch file at the plot's root (`isScratchFile`) is moved to
-  `set-aside/` instead of into the commit, a commit the hook refuses leaves `wip.patch` there, and a quest left with no
-  `handover.md` gets a minimal one (`writeStopLetter`; a letter the character wrote is never touched).
+  `set-aside/` instead of into the commit, and a commit the hook refuses leaves `wip.patch` there. A quest whose
+  assignee a breaker cut with no `handover.md` gets a minimal one, whatever the trip (`writeStopLetter`, gap 23 of
+  PS-07): the trip, the WIP commit or why none was made, the files the plot changed, the hook's words after a refusal;
+  a letter the character wrote is never touched.
 - Applies the limits `tribeLimitsOf` gives a tribe its adapter narrows (§3.14, P1-33; `src/sessions/spawn.ts`):
   a judge of a tribe without `structured_output` gets the verdict's schema in its prompt and its verdict cut out of
   its last text (runner-core's `spawnParsed`), checked by `judgeVerdictOf`, which names each issue; an unusable

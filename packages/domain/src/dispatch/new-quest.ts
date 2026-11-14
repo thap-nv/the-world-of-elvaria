@@ -78,6 +78,16 @@ function partyFieldsOf(role: CreateQuest['party_role'], context: NewQuestContext
 }
 
 /**
+ * The seal of a new quest whose command leaves seal_required out: its kind's seal_default, but none for a part of a
+ * party (gap 9 of the PS-07 report): a part's branch reaches the base only through the party's merge quest, which
+ * always waits for the seal (party/merge-quest.ts), and the parts of build and refactor kinds that took the seal held
+ * the party almost two hours for the owner's seal of one. A part whose draft says `true` keeps it; protected paths
+ * likewise mark a part without the seal (verify/protected.ts).
+ */
+const sealDefaultOf = (kind: Kind, party: PartyPlace | undefined): boolean =>
+  party === undefined || party.role === 'merge' ? kind.seal_default : false;
+
+/**
  * The secrets a quest asks for that its territory does not allow (ADR 0013: `secrets_required ⊆
  * secrets_allowed`). The Steward refuses such a quest when it is created, and refuses its session if the
  * territory has dropped a name since.
@@ -181,7 +191,7 @@ export function questFromCommand(
     attempt_log: [],
     plot: { type: 'none' },
     deliverable: { type: kind.deliverable_type },
-    seal_required: payload.seal_required ?? kind.seal_default,
+    seal_required: payload.seal_required ?? sealDefaultOf(kind, context.party),
     ...(question === undefined ? {} : { blocked: { question, asked_at: context.at } }),
     created_at: context.at,
     updated_at: context.at,
