@@ -1,5 +1,6 @@
 // doctor(): which Claude Code, which version, logged in or not (implementation-plan §3.7; spike P1-02). The login
-// is read with `claude auth status --json` (no model call, exit 1 when logged out). A session also needs the
+// is read with `claude auth status --json` (no model call, exit 1 when logged out); a call stopped at its timeout or
+// that never started says so, not "not logged in" (fix/busy-machine). A session also needs the
 // built hook, `packages/hooks/dist/elvaria-hook.js`: without it every hook call fails and the runner judges each
 // session broken, so doctor says so first.
 import { stat } from 'node:fs/promises';
@@ -7,7 +8,7 @@ import { stat } from 'node:fs/promises';
 import { parseLine } from './json.ts';
 import { launchOf } from './launch.ts';
 import { runOnce } from './run-once.ts';
-import type { RunOnceOptions } from './run-once.ts';
+import type { Ran, RunOnceOptions } from './run-once.ts';
 import type { ToolInfo } from '@elvaria/runner-core';
 
 export interface DoctorDeps extends RunOnceOptions {
@@ -51,6 +52,20 @@ export function signInEnding(expiresAt: unknown, now: number): string | undefine
   return `the sign-in ends by ${expiresAt}: run claude auth login before then`;
 }
 
+const noVersion = (executable: string, ran: Ran): string =>
+  ran.problem === undefined
+    ? `no version from ${executable} --version`
+    : `${executable} --version: ${ran.problem}`;
+
+/**
+ * `claude auth status --json` that did not run to its end (its timeout, a failed start) says so: on a busy machine it
+ * runs out of time while the sign-in is fine, and "sign in" sends the owner the wrong way (fix/busy-machine).
+ */
+const notLoggedIn = (ran: Ran): string =>
+  ran.problem === undefined
+    ? 'not logged in: run `claude` once and sign in (claude auth status)'
+    : `claude auth status --json: ${ran.problem}`;
+
 export async function doctorClaude(deps: DoctorDeps): Promise<ToolInfo> {
   if (deps.executable === undefined) return { path: '', version: '', auth_ok: false, detail: NOT_FOUND };
   const launch = await launchOf(deps.executable, deps.nodePath);
@@ -64,8 +79,8 @@ export async function doctorClaude(deps: DoctorDeps): Promise<ToolInfo> {
   const authOk = auth.code === 0 && status?.loggedIn === true;
   const ending = authOk ? signInEnding(status.loginExpiresAt, deps.now()) : undefined;
   const problems = [
-    ...(found === undefined ? [`no version from ${deps.executable} --version`] : []),
-    ...(authOk ? [] : ['not logged in: run `claude` once and sign in (claude auth status)']),
+    ...(found === undefined ? [noVersion(deps.executable, version)] : []),
+    ...(authOk ? [] : [notLoggedIn(auth)]),
     ...(ending === undefined ? [] : [ending]),
     ...(hookBuilt ? [] : [hookMissing(deps.hookScript)]),
   ];

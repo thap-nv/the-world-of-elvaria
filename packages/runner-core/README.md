@@ -232,7 +232,9 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   SIGKILL to whoever is left after `KILL_GRACE_MS` (5 s). A check or setup past its timeout, a killed CLI
   (`runner-claude`'s `kill`, `startChild`'s) and the Steward's breakers all take the whole tree. `startChild` /
   `runToEnd` start a CLI and read it line by line, with stdin closed or holding `stdin` (Antigravity takes its
-  prompt in argv, Codex on stdin, P1-12d). `processStartOf(pid)`
+  prompt in argv, Codex on stdin, P1-12d); `runToEnd` says in `problem` why a call did not run to its end (stopped
+  at its timeout, `noAnswerWithin`, or never started), which every adapter's `doctor()` reports instead of "not
+  signed in" (fix/busy-machine). `processStartOf(pid)`
   (ps `etime`; on Windows .NET `Process.GetProcessById` through PowerShell, which a cold start makes slow, so it
   waits up to `POWERSHELL_TIMEOUT_MS`; a pid that runs nothing answers at once) lets the Steward tell a session's process from a later one
   under the same pid after a restart. System programs live at fixed paths (`/bin/ps`, `System32`), never PATH.

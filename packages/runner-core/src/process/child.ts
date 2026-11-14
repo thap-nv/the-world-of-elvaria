@@ -90,6 +90,27 @@ export interface ChildRun extends ChildExit {
   readonly stdout: string;
   readonly stderr: string;
   readonly timed_out: boolean;
+  /**
+   * Why it did not run to its end, in words: stopped at its timeout (`noAnswerWithin`) or never started. A doctor that
+   * reads only the exit code calls either "not signed in" (fix/busy-machine): it says this instead.
+   */
+  readonly problem?: string;
+}
+
+const MS_PER_SECOND = 1000;
+
+/**
+ * A call stopped at its timeout: how long it had, and the likely causes. On a busy machine (several `pnpm check` at
+ * once) `codex login status` runs out of time as surely as a lost sign-in fails, and asking the owner to sign in
+ * again sends them the wrong way.
+ */
+export const noAnswerWithin = (timeoutMs: number): string =>
+  `no answer within ${timeoutMs / MS_PER_SECOND} s, stopped (a busy machine or a slow network): try again`;
+
+/** Why a call did not run to its end, or undefined when it did. */
+function problemOf(timedOut: boolean, exit: ChildExit, timeoutMs: number): string | undefined {
+  if (timedOut) return noAnswerWithin(timeoutMs);
+  return exit.failure === undefined ? undefined : `did not start: ${exit.failure}`;
 }
 
 /** Runs a short command to its end (`--version`, `/usage`): all of stdout, its tree killed after `timeout_ms`. */
@@ -107,5 +128,13 @@ export async function runToEnd(
   }, options.timeout_ms);
   const exit = await child.exit;
   clearTimeout(timer);
-  return { ...exit, stdout: out.join('\n'), stderr: child.stderr(), timed_out: timedOut };
+  // The timer sets timedOut, which TypeScript cannot see from here: a function reads it as a boolean.
+  const problem = problemOf(timedOut, exit, options.timeout_ms);
+  return {
+    ...exit,
+    stdout: out.join('\n'),
+    stderr: child.stderr(),
+    timed_out: timedOut,
+    ...(problem === undefined ? {} : { problem }),
+  };
 }

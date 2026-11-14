@@ -128,6 +128,7 @@ Agent Client Protocol (ACP) là giao thức JSON-RPC qua stdio giữa một chư
 ## 6. Bẫy đã gặp
 
 - **CLI tự cập nhật dưới bản ghim** (bài học 2026-11-13): agy thay `agy.exe` tại chỗ từ 1.5.6 lên 1.5.7 và `tribe check` với agy thật còn 3/7. Tắt tự cập nhật nếu CLI cho (Q1). Từ fix/tribe-version-hold, Nhiếp chính tự giữ tộc có CLI không còn hay khác bản đã kiểm (`tool.checked_version`); `elvaria tribe check <tộc>` với CLI thật qua thì ghim bản mới cho riêng tộc đó, không cần `doctor --pin`.
+- **Lệnh của `doctor()` hết giờ trên máy bận** (fix/busy-machine): `codex login status` không trả lời kịp và doctor báo "chưa đăng nhập", bảo chủ nhân đăng nhập lại. `kit.process.runToEnd` trả `timed_out` và `problem` (hết giờ: lệnh có bao lâu; không khởi động được: vì sao); đưa `problem` vào `detail` kèm tên lệnh, giữ `auth_ok: false`, đừng đọc mỗi mã thoát.
 - **Sandbox chặn tiến trình con** (P1-12e): lệnh chạy được mà Vitest, esbuild không mở được tiến trình con; phép `spawn_child` bắt ca này cho mọi tộc.
 - **Lệnh của lãnh thổ không chạy trong sandbox của một tộc** (SWC trong sandbox Codex, P1-12e): hôm nay chỉ chủ nhân chọn tộc khác cho quest như vậy; check của Nhiếp chính (ngoài sandbox) là lưới an toàn.
 - File sinh theo lần chạy ở gốc đất riêng bị `prettier --check .` của lãnh thổ thấy: để file của CLI trong `<run_dir>` khi CLI cho.

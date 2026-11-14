@@ -55,7 +55,8 @@ terms_acknowledged_at, env, pools?, timeout_ms?})`. `hook` is `hookCommand()` of
   the account's windows for the mana gauge (`windowsOf`; the Argon bucket names its model; a group's buckets list
   the models its description names, `Models within this group: Gemini Flash, Gemini Pro`, so Argon on a Pro plan is
   bound by its own cap only, P1-22; `/usage` costs no mana, so `ping: false` changes nothing); `doctor()` checks
-  `--version`, `agy --output-format json models` (sign-in) and `terms_acknowledged_at`.
+  `--version`, `agy --output-format json models` (sign-in) and `terms_acknowledged_at`; a call stopped at its
+  timeout or that never started says so, never "not signed in".
 - Turns the policy's `graph_commands` (PS-21) into `command(<command>)` prefixes in the settings, as the search
   commands; the hook refuses what a prefix lets through (`--graph`, a line that does more).
 

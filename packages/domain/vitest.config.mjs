@@ -18,6 +18,10 @@ if (cssPath === undefined) throw new Error(`elvaria.css not found; looked in ${C
 export default defineConfig({
   test: {
     include: ['src/**/*.spec.ts'],
+    // The domain does no IO, so a spec's time is CPU alone and a ceiling measures only how busy the machine is:
+    // the property specs try 340 000 transitions per pass, 2.5 s under coverage on a quiet machine and over the
+    // default 5 s when several `pnpm check` run at once (fix/busy-machine). 60 s still stops a loop that never ends.
+    testTimeout: 60_000,
     provide: { designCss: { path: cssPath, text: readFileSync(cssPath, 'utf8') } },
     coverage: {
       provider: 'v8',

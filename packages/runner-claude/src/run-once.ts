@@ -4,7 +4,7 @@ import { spawn } from 'node:child_process';
 import type { ChildProcessByStdio } from 'node:child_process';
 import type { Readable } from 'node:stream';
 
-import { killTree } from '@elvaria/runner-core';
+import { killTree, noAnswerWithin } from '@elvaria/runner-core';
 
 import type { Launch } from './launch.ts';
 
@@ -53,7 +53,8 @@ export function runOnce(launch: Launch, args: readonly string[], options: RunOnc
     child.stdout.setEncoding('utf8').on('data', (chunk: string) => (stdout += chunk));
     child.stderr.setEncoding('utf8').on('data', (chunk: string) => (stderr += chunk));
     const timer = setTimeout(() => {
-      problem = `no answer within ${options.timeoutMs} ms`;
+      // The same words as runner-core's runToEnd: how long it had, not a failed sign-in (fix/busy-machine).
+      problem = noAnswerWithin(options.timeoutMs);
       // The whole tree (P1-06): a child left holding stdout would keep `close` from ever coming.
       void killTree(child.pid ?? 0);
     }, options.timeoutMs);

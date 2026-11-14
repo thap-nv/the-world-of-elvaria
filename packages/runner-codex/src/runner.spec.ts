@@ -5,6 +5,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
+import { noAnswerWithin } from '@elvaria/runner-core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { RunResult, RunnerSignal, SpawnRequest } from '@elvaria/runner-core';
@@ -141,6 +142,14 @@ describe('doctor and probe', () => {
     const missing = path.join(world.root, 'dist', 'elvaria-hook.js');
     const unbuilt = await fakeRunner({ hook: { command: process.execPath, args: [missing] } }).doctor();
     expect(unbuilt.detail).toMatch(/the Elvaria hook is not built/);
+  });
+
+  it('says `codex login status` ran out of time, and how long it had, never that the owner is signed out', async () => {
+    const env = { ...minimalEnv(), ELVARIA_FAKE_CODEX_LOGIN_HANGS: '1' };
+    const info = await fakeRunner({ env, timeout_ms: 1000 }).doctor();
+    expect(info.auth_ok).toBe(false);
+    expect(info.detail).toContain(`codex login status: ${noAnswerWithin(1000)}`);
+    expect(info.detail).not.toContain(NOT_SIGNED_IN);
   });
 
   it("reads the account's windows without a model call", async () => {
