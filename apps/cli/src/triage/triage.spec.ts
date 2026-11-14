@@ -15,6 +15,7 @@ import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { TZ, foundKingdom, run, tempDir, testIo } from '../../test/cli.ts';
+import { REFUSAL, refusing } from '../../test/refusing.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { consoleBell } from '../run/bell.ts';
 import { triageJob } from './job.ts';
@@ -284,6 +285,9 @@ describe('the Chancellor’s triage (PS-03b)', () => {
     expect(io.printed.out).toEqual([]);
     await openKingdom(kingdom).memos.write(LINK);
     await expect(job.run({ ...view, busy: new Set(), signal })).rejects.toThrow('invalid_reply');
+    const refused = triageJob(ctx, { [CLAUDE]: refusing() });
+    await expect(refused.run({ ...view, busy: new Set(), signal })).rejects.toThrow('cli_error');
+    expect(io.printed.err).toContain(`The Chancellor's session ended in error: ${REFUSAL}`);
     const stopping = new AbortController();
     stopping.abort();
     await job.run({ ...view, busy: new Set(), signal: stopping.signal });

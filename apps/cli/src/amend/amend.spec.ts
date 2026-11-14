@@ -25,6 +25,7 @@ import {
   seedAmendments,
 } from '../../test/amend.ts';
 import { foundKingdom, tempDir, testIo } from '../../test/cli.ts';
+import { REFUSAL, refusing } from '../../test/refusing.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { amendmentJob } from './job.ts';
 import type { TempDir, TestIo } from '../../test/cli.ts';
@@ -171,6 +172,21 @@ describe("an amendment's author, on call (PS-22b)", () => {
       decision: 'owner',
       note: 'No author could read it (no Chancellor, or the mage of its plan is not here): you decide it.',
     });
+  });
+
+  // M2 of 2026-11-14: the owner's note said only `no_reply`, not what the CLI refused (fix/amendment-schema).
+  it("hands to the owner an amendment whose author's CLI refused the session, with the CLI's line", async () => {
+    const io = testIo();
+    const refused = refusing();
+    await amendmentJob(await contextOf(io), { [CLAUDE]: refused }).run(view([DRAFTED.id]));
+    expect(refused.heard).toHaveLength(1);
+    const why = `The author of an amendment could not decide it, its session ended in error: ${REFUSAL}. It goes to you.`;
+    expect((await inbox())[0]?.payload).toMatchObject({
+      memo: DRAFTED_MEMO.id,
+      decision: 'owner',
+      note: why,
+    });
+    expect(io.printed.err).toContain(why);
   });
 
   it('writes nothing when the Steward stops the session, and skips a quest that waits no more', async () => {

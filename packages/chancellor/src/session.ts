@@ -41,6 +41,11 @@ export type ChancellorFailure =
   | { readonly code: 'timed_out' }
   /** The session ended without a reply to read. */
   | { readonly code: 'no_reply'; readonly outcome: RunOutcome }
+  /**
+   * The session ended in error with no reply, but with words: the first line of its last text, the CLI's own on a
+   * refusal (Claude Code: `API Error: 400 …`, `is_error: true`, 0 tokens; M2 of 2026-11-14, fix/amendment-schema).
+   */
+  | { readonly code: 'cli_error'; readonly line: string }
   | { readonly code: 'invalid_reply'; readonly issues: readonly string[] }
   /** The caller's signal ended it (PS-03b: the Steward stopped while its triage ran). */
   | { readonly code: 'stopped' };
@@ -134,8 +139,22 @@ export async function hear<T>(
   if (result.rate_limited) return err({ code: 'rate_limited' });
   if (seen.late) return err({ code: 'timed_out' });
   const reply = replyOf(session, asking, result.structured, seen.text);
-  if (reply === undefined) return err({ code: 'no_reply', outcome: result.outcome });
+  if (reply === undefined) return err(noReplyOf(result, seen.text));
   return ok({ result, reply });
+}
+
+/** Long enough for an API error with its reason; the line goes into a note of at most 1000 characters. */
+const ERROR_LINE_MAX = 300;
+
+/**
+ * Why there is no reply. Claude Code prints the API's refusal as the session's only text and ends in error
+ * (outcome `error`): that first line says what went wrong, where `no_reply` would only give the outcome. Only the
+ * CLI's flag gets here with a text: on the schema-in-the-prompt road a text is a reply to check.
+ */
+function noReplyOf(result: RunResult, text: string | undefined): ChancellorFailure {
+  const line = text?.trim().split(/\r?\n/u)[0]?.trim().slice(0, ERROR_LINE_MAX) ?? '';
+  if (result.outcome === 'error' && line !== '') return { code: 'cli_error', line };
+  return { code: 'no_reply', outcome: result.outcome };
 }
 
 /** The ids of the session and of its retry, when there was one: the owner may look both up. */

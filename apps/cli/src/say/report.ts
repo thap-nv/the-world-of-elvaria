@@ -42,6 +42,7 @@ export function reportFailure(
   else if (failure.code === 'timed_out') io.err(t('cli.say.failed.timed_out'));
   else if (failure.code === 'stopped') io.err(t('cli.say.failed.stopped'));
   else if (failure.code === 'no_reply') io.err(t('cli.say.failed.no_reply', { outcome: failure.outcome }));
+  else if (failure.code === 'cli_error') io.err(t('cli.say.failed.cli_error', { line: failure.line }));
   else {
     io.err(t('cli.say.failed.invalid_reply', { contract }));
     failure.issues.forEach((issue) => {
