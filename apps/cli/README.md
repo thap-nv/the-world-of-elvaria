@@ -112,7 +112,7 @@ show` prints the brief apart from the rest of the description and, while the pla
 - `tribe add <id> --adapter <adapter>` (P1-19, implementation-plan §3.14, ADR 0021): a new tribe in
   `kingdom.tribes[]`, disabled, its adapter a built-in one or an owner file `adapters/<name>.mjs` that must be there;
   no character changes. `tribe check <id>` builds the tribe's runner as `run` does, prints what its adapter declares
-  (the shell it declares per OS too, P1-46) and how far `tribeLimitsOf` lets it go, holds its pinned sign-in to the ones it declares (`checkTribeAuth`), and
+  (the shell and the longest user prompt it declares per OS too, P1-46 and fix/cli-lines, `src/tribe/check-declared.ts`) and how far `tribeLimitsOf` lets it go, holds its pinned sign-in to the ones it declares (`checkTribeAuth`), and
   runs runner-core's conformance suite against it (with the real CLI only the checks that burn no or almost no mana;
   `--scenarios` runs all of them against a fake CLI; `--tool <path>` tries another CLI than the pinned one, and with
   `--scenarios` writes nothing, PS-04b) and, once it passes, holds the tribe to the login its adapter
@@ -131,7 +131,7 @@ show` prints the brief apart from the rest of the description and, while the pla
   list of reasons for `run`, `doctor` and `tribe check`, never a crash. `tribe list` (P1-34, `src/tribe/list.ts`)
   prints one line per tribe: its look (PS-24: name, palette and crest), adapter, enabled or not, pinned CLI version, path and sign-in, and from its runner the
   highest rank `tribeLimitsOf` lets it take (none without `headless`), whether it takes guarded territories, and the
-  capabilities and the shell on this OS it declares (P1-46); a tribe with no runner yet or an adapter file that does not load says so instead.
+  capabilities, the shell and the prompt limit (`capabilities.prompt_max_chars`) on this OS it declares (P1-46, fix/cli-lines); a tribe with no runner yet or an adapter file that does not load says so instead.
   `tribe look <id>` (PS-24, `src/tribe/look.ts`, `look-view.ts`) prints the tribe's look from the domain's `tribeLookOf`
   and its source (the owner's choice, the theme's pinned entry, or drawn by the id), with the palettes and crests no
   tribe holds; with `--palette|--crest|--figure|--aura|--frame <id>` or `--name` it writes the owner's choice to
@@ -157,7 +157,8 @@ show` prints the brief apart from the rest of the description and, while the pla
   warning) and each territory, with the program of every command (`commands.*`, `checks[].run|cleanup`) looked up
   on PATH the way the Steward finds it (P1-41, `src/doctor/check-commands.ts`: missing, a `.cmd`/`.bat` only a
   shell starts, or a line with shell syntax is an error naming the territory and the commands); the shell each
-  tribe's adapter declares for this OS (`capabilities.shell`, P1-46) and, on Windows, for a tribe whose adapter
+  tribe's adapter declares for this OS (`capabilities.shell`, P1-46) and its prompt limit there
+  (`capabilities.prompt_max_chars`, fix/cli-lines, `src/doctor/check-prompt.ts`) and, on Windows, for a tribe whose adapter
   declares Windows PowerShell (agy, or an owner's adapter file: read from the declaration, not a table of adapter
   ids, P1-46), PowerShell's Execution Policy (P1-41, `src/doctor/check-shell.ts`: one that refuses local scripts such as `pnpm.ps1` is an error of the tribe, with
   the command that fixes it, so `--enable` keeps it off), the

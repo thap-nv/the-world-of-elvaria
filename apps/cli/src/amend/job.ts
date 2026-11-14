@@ -111,7 +111,9 @@ async function decide(ctx: KingdomContext, runners: Runners, waiting: Waiting, r
   });
   await send(ctx, command);
   const told = { memo: waiting.memo.id, quest: waiting.quest.id, decision: command.payload.decision };
-  ctx.io.out(ctx.t('cli.amend.decided', { ...told, holds: holds.join(', ') || '—' }));
+  // The reasons it was held for the owner only when there are some (fix/cli-lines, (39)).
+  if (holds.length === 0) ctx.io.out(ctx.t('cli.amend.decided', told));
+  else ctx.io.out(ctx.t('cli.amend.decided_held', { ...told, holds: holds.join(', ') }));
 }
 
 export function amendmentJob(ctx: KingdomContext, runners: Runners): OnCallJob {
