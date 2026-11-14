@@ -2,7 +2,7 @@ import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { noAnswerWithin } from '@elvaria/runner-core';
+import { hookMissing, noAnswerWithin } from '@elvaria/runner-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
@@ -14,7 +14,7 @@ import {
   minimalEnv,
 } from './__fixtures__/harness.ts';
 import { RM_TEMP } from './__fixtures__/temp.ts';
-import { NOT_FOUND, hookMissing, signInEnding, versionOf } from './doctor.ts';
+import { NOT_FOUND, signInEnding, versionOf } from './doctor.ts';
 import { launchOf } from './launch.ts';
 import { claudeCandidates, locateClaude } from './locate.ts';
 import { createClaudeForget, createClaudeRunner } from './runner.ts';
@@ -98,6 +98,13 @@ describe('doctor', () => {
     expect(info.auth_ok).toBe(false);
     expect(info.detail).toContain('not logged in');
     expect(info.detail).toContain(hookMissing(hookScript));
+  });
+
+  // A logged-in owner whose hook is not built still has no session that runs: an error, not a warning (fix/busy-machine (a)).
+  it('fails while the hook is not built, however well the owner is logged in', async () => {
+    const hookScript = path.join(tmpdir(), 'missing', 'elvaria-hook.js');
+    const info = await fakeRunner({ hookScript }).doctor();
+    expect(info).toMatchObject({ version: '2.1.318', auth_ok: false, detail: hookMissing(hookScript) });
   });
 
   // Windows throws EFTYPE from spawn itself for a file that is no program; doctor must answer, not throw.

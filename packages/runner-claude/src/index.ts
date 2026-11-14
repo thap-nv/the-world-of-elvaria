@@ -2,7 +2,7 @@ export { APPRENTICE, APPRENTICE_MODELS, agentsOf, apprenticeModelsOf } from './a
 export type { AgentDefinition, ApprenticeConfig } from './agents.ts';
 export { PING_PROMPT, USAGE_PROMPT, pingArgv, sessionArgv, usageArgv } from './argv.ts';
 export type { RunFiles } from './argv.ts';
-export { NOT_FOUND, SIGN_IN_WARNING_DAYS, hookMissing, signInEnding, versionOf } from './doctor.ts';
+export { NOT_FOUND, SIGN_IN_WARNING_DAYS, signInEnding, versionOf } from './doctor.ts';
 export { claudeCandidates, locateClaude } from './locate.ts';
 export { AGENTS_FILE, CLAUDE_ENV, PROMPT_FILE, SETTINGS_FILE, SYSTEM_FILE } from './run-files.ts';
 export {

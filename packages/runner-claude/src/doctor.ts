@@ -2,8 +2,8 @@
 // is read with `claude auth status --json` (no model call, exit 1 when logged out); a call stopped at its timeout or
 // that never started says so, not "not logged in" (fix/busy-machine). A session also needs the
 // built hook, `packages/hooks/dist/elvaria-hook.js`: without it every hook call fails and the runner judges each
-// session broken, so doctor says so first.
-import { stat } from 'node:fs/promises';
+// session broken, so doctor fails, as every tribe's does (runner-core; before fix/held-tribe-sessions, only a warning).
+import { hookProblem } from '@elvaria/runner-core';
 
 import { parseLine } from './json.ts';
 import { launchOf } from './launch.ts';
@@ -30,16 +30,6 @@ const DAY_MS = 86_400_000;
 
 export const NOT_FOUND =
   'Claude Code not found on PATH, in ~/.local/bin, in %APPDATA%\\npm or in a VS Code extension folder';
-export const hookMissing = (file: string): string =>
-  `the Elvaria hook is not built: ${file} is missing (run pnpm --filter @elvaria/hooks build)`;
-
-async function isFile(file: string): Promise<boolean> {
-  try {
-    return (await stat(file)).isFile();
-  } catch {
-    return false;
-  }
-}
 
 /** `2.1.318 (Claude Code)` → `2.1.318`. */
 export const versionOf = (stdout: string): string | undefined => VERSION.exec(stdout)?.[0];
@@ -69,10 +59,10 @@ const notLoggedIn = (ran: Ran): string =>
 export async function doctorClaude(deps: DoctorDeps): Promise<ToolInfo> {
   if (deps.executable === undefined) return { path: '', version: '', auth_ok: false, detail: NOT_FOUND };
   const launch = await launchOf(deps.executable, deps.nodePath);
-  const [version, auth, hookBuilt] = await Promise.all([
+  const [version, auth, hook] = await Promise.all([
     runOnce(launch, ['--version'], deps),
     runOnce(launch, ['auth', 'status', '--json'], deps),
-    isFile(deps.hookScript),
+    hookProblem(deps.hookScript),
   ]);
   const found = versionOf(version.stdout);
   const status = parseLine(auth.stdout.trim());
@@ -82,12 +72,12 @@ export async function doctorClaude(deps: DoctorDeps): Promise<ToolInfo> {
     ...(found === undefined ? [noVersion(deps.executable, version)] : []),
     ...(authOk ? [] : [notLoggedIn(auth)]),
     ...(ending === undefined ? [] : [ending]),
-    ...(hookBuilt ? [] : [hookMissing(deps.hookScript)]),
+    ...(hook === undefined ? [] : [hook]),
   ];
   return {
     path: deps.executable,
     version: found ?? '',
-    auth_ok: authOk,
+    auth_ok: authOk && hook === undefined,
     ...(problems.length === 0 ? {} : { detail: problems.join('; ') }),
   };
 }
