@@ -83,6 +83,11 @@ describe('attentionQueue', () => {
       unjudgeable: [{ quest: q(6), class: 'judge' }],
       judge_waits: [{ quest: q(7), class: 'judge', gauges: [judgePool] }],
       scope_held: [{ quest: q(8), waiting: [q(5)] }],
+      tribes_held: [
+        { tribe: 'gemini' as TribeId, path: 'C:/agy.exe', version: '1.5.8', checked: '1.5.6' },
+        { tribe: 'codex' as TribeId, path: 'C:/codex.exe', version: undefined, checked: '0.167.0' },
+        { tribe: 'claude' as TribeId, path: 'C:/claude.exe', version: '2.1.330', checked: '2.1.322' },
+      ],
     });
     expect(items.map(({ group, kind, command }) => [group, kind, command.join(' ')])).toEqual([
       ['must', 'question', `answer ${q(1)} <answer>`],
@@ -93,9 +98,21 @@ describe('attentionQueue', () => {
       ['must', 'unclaimable', `quest show ${q(5)}`],
       ['must', 'scope_held', `quest archive ${q(8)}`],
       ['must', 'draft', `quest confirm ${q(4)}`],
+      ['must', 'tribe_held', 'tribe check claude'],
+      ['must', 'tribe_held', 'tribe check gemini'],
+      ['must', 'tribe_gone', 'tribe check codex'],
       ['can_wait', 'memo', 'memo show m_20261112_4k2pqz'],
       ['can_wait', 'mana_asleep', 'wake claude'],
     ]);
+    expect(items[9]).toMatchObject({ advice: 'check_tribe', version: '1.5.8', checked_version: '1.5.6' });
+    expect(items[10]).toEqual({
+      ...ATTENTION_TABLE.tribe_gone,
+      kind: 'tribe_gone',
+      command: ['tribe', 'check', 'codex'],
+      tribe: 'codex',
+      path: 'C:/codex.exe',
+      checked_version: '0.167.0',
+    });
     expect(items[0]).toMatchObject({
       advice: 'answer',
       title: 'Quest 1',

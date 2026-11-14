@@ -146,6 +146,7 @@ export * from './tribe/look.ts';
 export * from './tribe/models.ts';
 export * from './tribe/select-chancellor.ts';
 export * from './tribe/tribe-limits.ts';
+export * from './tribe/version-hold.ts';
 export * from './script/constants.ts';
 export * from './script/follow-up.ts';
 export * from './script/outcome.ts';

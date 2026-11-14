@@ -4,7 +4,8 @@
 // an advice code and the `elvaria` command that acts on it, both looked up in ATTENTION_TABLE by the item's kind.
 // (PS-05) A done quest that still holds the scope other quests wait for comes from the caller too (scopeHoldsOf): the
 // world state does not hold the quests' scopes. (PS-22) An open memo is an item by where it went: an objection on its way
-// to a second judge waits for nobody, one no judge may read (MEMO_ROUTES `owner`) is the owner's to settle.
+// to a second judge waits for nobody, one no judge may read (MEMO_ROUTES `owner`) is the owner's to settle. A tribe the
+// Steward holds because its CLI changed version (versionHoldsOf, A1b of the lessons of 2026-11-13) comes from its notices.
 import { current } from '../mana/reading.ts';
 import { manaWarningOf } from '../mana/state.ts';
 import { RANKS } from '../schema/common.ts';
@@ -16,6 +17,7 @@ import type { ScopeHold } from '../dispatch/scope.ts';
 import type { Rank } from '../schema/common.ts';
 import { AMENDMENT_REFUSALS } from '../schema/memo/constants.ts';
 import type { MemoRoute } from '../schema/memo/memo.ts';
+import type { TribeHold } from '../tribe/version-hold.ts';
 import type { MemoView } from './memo-view.ts';
 import type { PoolView } from './mana-view.ts';
 import type { QuestView } from './quest-view.ts';
@@ -49,6 +51,10 @@ export const ATTENTION_TABLE = {
   unclaimable: { group: 'must', advice: 'see_why', command: ['quest', 'show', '{quest}'] },
   scope_held: { group: 'must', advice: 'merge_and_archive', command: ['quest', 'archive', '{quest}'] },
   draft: { group: 'must', advice: 'confirm_or_cancel', command: ['quest', 'confirm', '{quest}'] },
+  // A1b of the lessons of 2026-11-13: the tribe's CLI changed version since its last passing check with the real CLI,
+  // or the CLI its Steward starts is gone (a VS Code update moved it, 2026-11-14); either way no new session.
+  tribe_held: { group: 'must', advice: 'check_tribe', command: ['tribe', 'check', '{tribe}'] },
+  tribe_gone: { group: 'must', advice: 'check_tribe_and_restart', command: ['tribe', 'check', '{tribe}'] },
   objection: { group: 'can_wait', advice: 'settle_objection', command: ['memo', 'show', '{memo}'] },
   // PS-03b: a memo the Chancellor's triage sent up, with its advice, before the memos it has not read yet.
   memo_escalated: { group: 'can_wait', advice: 'weigh_triage', command: ['memo', 'show', '{memo}'] },
@@ -85,6 +91,10 @@ export interface AttentionSubject {
   readonly target?: QuestId;
   readonly holds?: readonly DelegationHold[];
   readonly tribe?: TribeId;
+  /** A held tribe (tribe_held, tribe_gone): its CLI, what it says now, and the version its last passing check ran on. */
+  readonly path?: string;
+  readonly version?: string;
+  readonly checked_version?: string;
   readonly pool?: string;
   readonly used_pct?: number;
   readonly resets_at?: string;
@@ -111,6 +121,8 @@ export interface StewardNotices {
   }[];
   /** Done quests that still hold a scope quests wait for (scopeHoldsOf, PS-05); from the quest files, not the Steward's. */
   readonly scope_held?: readonly ScopeHold[];
+  /** Tribes whose CLI says another version than their checked one (versionHoldsOf), as the Steward last found them. */
+  readonly tribes_held?: readonly TribeHold[];
 }
 
 const FIELD = /^\{(\w+)\}$/;
@@ -163,6 +175,11 @@ function noticeItems(state: WorldState, notices: StewardNotices): AttentionItem[
     ),
     ...(notices.scope_held ?? []).map(({ quest, waiting }) =>
       itemOf('scope_held', { ...aboutId(state, quest), waiting }),
+    ),
+    ...(notices.tribes_held ?? []).map(({ tribe, path, version, checked }) =>
+      version === undefined
+        ? itemOf('tribe_gone', { tribe, path, checked_version: checked })
+        : itemOf('tribe_held', { tribe, path, version, checked_version: checked }),
     ),
   ];
 }
@@ -237,7 +254,9 @@ const byOrder = (a: AttentionItem, b: AttentionItem): number =>
   ATTENTION_GROUPS.indexOf(a.group) - ATTENTION_GROUPS.indexOf(b.group) ||
   ATTENTION_KINDS.indexOf(a.kind) - ATTENTION_KINDS.indexOf(b.kind) ||
   rankOf(b) - rankOf(a) ||
-  String(a.memo ?? a.quest ?? a.pool).localeCompare(String(b.memo ?? b.quest ?? b.pool));
+  String(a.memo ?? a.quest ?? a.pool ?? a.tribe).localeCompare(
+    String(b.memo ?? b.quest ?? b.pool ?? b.tribe),
+  );
 
 /**
  * What waits for the owner at `now` (which tells a mana reading still current from one whose window reset): the

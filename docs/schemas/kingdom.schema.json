@@ -539,7 +539,7 @@
           "default": 1
         },
         "tool": {
-          "description": "The CLI binary, filled and pinned by `elvaria doctor`. Doctor warns when the installed version differs and refuses adapter = antigravity without terms_acknowledged_at.",
+          "description": "The CLI binary, filled and pinned by `elvaria doctor`, re-pinned by a passing `elvaria tribe check` with the real CLI. Doctor warns when the installed version differs and refuses adapter = antigravity without terms_acknowledged_at.",
           "type": "object",
           "additionalProperties": false,
           "required": [
@@ -569,6 +569,11 @@
               "description": "When the owner acknowledged the provider's terms for wrapping its CLI (Antigravity: not supported on consumer plans, ADR 0018).",
               "type": "string",
               "format": "date-time"
+            },
+            "checked_version": {
+              "description": "The CLI version the last `elvaria tribe check` with the real CLI passed on; that check pins it, with path and version. The Steward opens no new session for the tribe while its CLI says another version (a CLI that updates itself in place, agy 1.5.6 → 1.5.7 on 2026-11-13). Absent: the pinned version stands in.",
+              "type": "string",
+              "minLength": 1
             }
           }
         },
