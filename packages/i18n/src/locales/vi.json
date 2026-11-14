@@ -181,6 +181,7 @@
     "cli.doctor.territory_unchecked": "Lãnh thổ {id}: {path}; không kiểm được repo vì thiếu git.",
     "cli.doctor.tool_changed": "Tộc {tribe}: CLI ở {path} đã tự cập nhật từ bản {pinned} lên {version}. Nhiếp chính không mở phiên mới cho tộc tới khi một lần kiểm với CLI thật qua trên bản {version}.",
     "cli.doctor.tool_unchecked": "Tộc {tribe}: bản {version} đã được ghim nhưng chưa lần kiểm nào với CLI thật qua trên nó (lần qua gần nhất trên bản {checked}); Nhiếp chính không mở phiên mới cho tộc tới khi có một lần qua.",
+    "cli.doctor.held_in_trial": "Tộc {tribe} bị giữ (CLI của tộc đổi bản hay không còn): trong bước thử của elvaria upgrade, lỗi của tộc chỉ là cảnh báo, vì Nhiếp chính của bản mới không mở phiên cho tộc tới khi elvaria tribe check {tribe} qua.",
     "cli.doctor.tool_found": "Tộc {tribe}: {path}, phiên bản {version}.",
     "cli.doctor.tool_hint": "Chỉ đường cho doctor: elvaria doctor --tool {tribe}=<đường dẫn tới CLI>",
     "cli.doctor.tool_moved": "Tộc {tribe}: file đã ghim {pinned_path} không còn; tìm thấy {path}, phiên bản {version}. Tộc chưa chạy được, và Nhiếp chính không mở phiên mới cho tộc, tới khi một lần kiểm với CLI thật ghim CLI vừa tìm thấy.",

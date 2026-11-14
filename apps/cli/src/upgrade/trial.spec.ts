@@ -111,6 +111,10 @@ describe('the trial of a new build', () => {
         git_dir: null,
       });
     }
+    // Only doctor hears it is in a trial: a tribe the new build holds anyway only warns there (fix/held-tribe-sessions).
+    expect(made.map(({ argv, trial }) => [argv[0], trial])).toEqual(
+      made.map(({ argv }) => [argv[0], argv[0] === 'doctor' ? '1' : null]),
+    );
     // The kingdom itself was not written; the copy and the throwaway kingdom are gone.
     expect(await readdir(kingdom)).not.toContain(MIGRATED_MARK);
     await expect(access(path.dirname(mirror))).rejects.toThrow();

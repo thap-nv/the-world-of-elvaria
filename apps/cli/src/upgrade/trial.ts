@@ -2,7 +2,8 @@
 // copy of this kingdom's settings (mirror.ts), so nothing of the kingdom is written yet: the new build's `migrate`,
 // then its `doctor`, then its conformance suite for each enabled tribe against the fake CLI the build carries for
 // that adapter (`tribe check --scenarios --tool`, which writes nothing); last, one script-tier quest on a throwaway
-// kingdom. Each runs as the new build's own command; the first that fails stops the trial.
+// kingdom. Each runs as the new build's own command; the first that fails stops the trial. Its doctor runs with
+// ELVARIA_UPGRADE_TRIAL=1: a tribe the new build's Steward holds anyway only warns (fix/held-tribe-sessions).
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -10,6 +11,7 @@ import path from 'node:path';
 import type { Tribe, UpgradeStep } from '@elvaria/domain';
 import type { Translate } from '@elvaria/i18n';
 
+import { UPGRADE_TRIAL_ENV } from '../doctor/held-in-trial.ts';
 import { BUILT_IN_ADAPTERS } from '../run/crew.ts';
 import { buildCli } from './build-cli.ts';
 import { outputOf, reasonOf } from './build.ts';
@@ -106,8 +108,10 @@ async function onMirror(
     asFailure(await cli(['migrate', ...at], MIGRATE_MINUTES)),
   );
   if (migrated !== undefined) return { step: 'migrate', ...migrated };
+  // A tribe the new build holds anyway (its CLI gone or changed) only warns there (held-in-trial.ts).
+  const trialDoctor = buildCli(place.build, io, { [UPGRADE_TRIAL_ENV]: '1' });
   const doctor = await step(report, report.t('cli.upgrade.step.doctor'), async () =>
-    asFailure(await cli(['doctor', ...at], DOCTOR_MINUTES)),
+    asFailure(await trialDoctor(['doctor', ...at], DOCTOR_MINUTES)),
   );
   if (doctor !== undefined) return { step: 'doctor', ...doctor };
   const suite = await conformance(place, cli, mirror, report);

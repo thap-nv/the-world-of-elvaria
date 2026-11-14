@@ -220,7 +220,9 @@ show` prints the brief apart from the rest of the description and, while the pla
   runs, or while sessions of a stopped one still run), builds, then tries the build through its own commands as
   child processes (`src/upgrade/trial.ts`), first on a copy of the kingdom's settings (`src/upgrade/mirror.ts`:
   `kingdom.json`, registry, territories, characters, adapters, decree; no quest, log or inbox), so the kingdom is
-  not written yet: `migrate`, then `doctor`, then `tribe check --scenarios --tool` for each enabled tribe against the
+  not written yet: `migrate`, then `doctor` (with `ELVARIA_UPGRADE_TRIAL=1`: a tribe the new build's Steward
+  holds anyway, its CLI gone or changed, only warns, `src/doctor/held-in-trial.ts`, fix/held-tribe-sessions), then
+  `tribe check --scenarios --tool` for each enabled tribe against the
   fake CLI the build carries for its adapter (an adapter file has none, and is named); last, one script-tier quest
   (`count-files`) on a throwaway kingdom with every tribe off, until its `verdict.pass`
   (`src/upgrade/script-trial.ts`). Only then does it write `.state/build.json` (`{current, previous}`), run the new

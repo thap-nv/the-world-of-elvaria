@@ -33,6 +33,8 @@ export interface Call {
   readonly pinned: string | null;
   readonly token: string | null;
   readonly git_dir: string | null;
+  /** `ELVARIA_UPGRADE_TRIAL`: what `upgrade` tells the new build's doctor (fix/held-tribe-sessions). */
+  readonly trial: string | null;
 }
 
 /** Plain JavaScript, valid TypeScript: Node runs it as the build's `apps/cli/src/cli.ts`. */
@@ -48,7 +50,7 @@ const record = process.env.ELVARIA_TEST_RECORD ?? behavior.record;
 const env = process.env;
 if (record !== undefined)
   appendFileSync(record, JSON.stringify({ root, argv, cwd: process.cwd(), pinned: env.ELVARIA_PINNED_BUILD ?? null,
-    token: env.NPM_TOKEN ?? null, git_dir: env.GIT_DIR ?? null }) + '\\n');
+    token: env.NPM_TOKEN ?? null, git_dir: env.GIT_DIR ?? null, trial: env.ELVARIA_UPGRADE_TRIAL ?? null }) + '\\n');
 const groups = ['tribe', 'quest', 'territory'];
 const command = groups.includes(argv[0]) ? argv[0] + ' ' + argv[1] : argv[0];
 const code = (behavior.exit ?? {})[command] ?? 0;

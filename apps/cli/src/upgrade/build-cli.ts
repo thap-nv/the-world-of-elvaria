@@ -15,9 +15,9 @@ const MS_PER_MINUTE = 60_000;
 
 export type BuildCli = (args: readonly string[], minutes: number) => Promise<ProcessOutcome>;
 
-/** `elvaria <args>` on the build at `build`, run to its end. */
-export function buildCli(build: string, io: CliIo): BuildCli {
-  const env = minimalEnv(io.env);
+/** `elvaria <args>` on the build at `build`, run to its end; `extra` adds a variable of the trial's own. */
+export function buildCli(build: string, io: CliIo, extra: Readonly<Record<string, string>> = {}): BuildCli {
+  const env = { ...minimalEnv(io.env), ...extra };
   return (args, minutes) =>
     runProcess(io.nodePath, [cliEntryOf(build), ...args], {
       cwd: build,

@@ -28,6 +28,7 @@ import { checkTerritorySetup } from './check-territory-setup.ts';
 import { checkTerritoryTrials } from './check-territory-trial.ts';
 import { checkTribe, skipsTribe } from './check-tribe.ts';
 import { finding, findingLines } from './finding.ts';
+import { tribeFindings } from './held-in-trial.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 import type { DoctorOptions } from './check-tribe.ts';
@@ -115,7 +116,8 @@ async function runDoctor(input: CommandInput, cli: CliContext): Promise<ExitCode
   const findings = [
     ...(await checkRegistry(ctx)),
     await checkGit(ctx),
-    ...tribes.flatMap((check) => check.findings),
+    // In the trial of `elvaria upgrade`, a tribe the Steward holds anyway only warns (held-in-trial.ts).
+    ...(await tribeFindings(ctx, tribes)),
     ...(saved === undefined ? [] : [saved]),
     ...(await checkTerritories(ctx)),
     ...(await checkTerritoryCommands(ctx)),

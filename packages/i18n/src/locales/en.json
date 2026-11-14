@@ -181,6 +181,7 @@
     "cli.doctor.territory_unchecked": "Territory {id}: {path}; its repo cannot be checked without git.",
     "cli.doctor.tool_changed": "Tribe {tribe}: the CLI at {path} updated itself from {pinned} to {version}. The Steward opens no new session for the tribe until a check with the real CLI passes on {version}.",
     "cli.doctor.tool_unchecked": "Tribe {tribe}: version {version} is pinned, but no check with the real CLI passed on it (the last one passed on {checked}); the Steward opens no new session for the tribe until one does.",
+    "cli.doctor.held_in_trial": "Tribe {tribe} is held (its CLI changed version or is gone): in the trial of elvaria upgrade its errors are only warnings, since the new build's Steward opens no session for it until elvaria tribe check {tribe} passes.",
     "cli.doctor.tool_found": "Tribe {tribe}: {path}, version {version}.",
     "cli.doctor.tool_hint": "Show doctor the way: elvaria doctor --tool {tribe}=<path to the CLI>",
     "cli.doctor.tool_moved": "Tribe {tribe}: the pinned {pinned_path} is gone; found {path}, version {version}. The tribe cannot run, and the Steward opens no new session for it, until a check with the real CLI pins the one found.",
