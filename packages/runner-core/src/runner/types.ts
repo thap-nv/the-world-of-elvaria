@@ -12,6 +12,7 @@ import type {
 
 import type { ToolPolicy } from '../policy/tool-policy.ts';
 import type { SpawnRole } from './roles.ts';
+import type { DoctorNote } from './doctor-notes.ts';
 
 /**
  * `kingdom.tribes[].adapter`: a built-in adapter (`claude_code`, `antigravity`, `gemini_cli`, `codex_cli`), an owner
@@ -140,6 +141,8 @@ export interface ToolInfo {
   readonly path: AbsolutePath;
   readonly version: string;
   readonly auth_ok: boolean;
+  readonly notes?: readonly DoctorNote[];
+  /** External text, displayed verbatim; Elvaria's own messages belong in notes. */
   readonly detail?: string;
 }
 

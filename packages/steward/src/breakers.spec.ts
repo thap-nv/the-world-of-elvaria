@@ -7,7 +7,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { openEventLog } from '@elvaria/eventlog';
-import { POWERSHELL_TIMEOUT_MS, createFakeRunner } from '@elvaria/runner-core';
+import { POWERSHELL_TIMEOUT_MS, createFakeRunner, hookOutputHead } from '@elvaria/runner-core';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { bench, questPayload, tickUntil, wakesAfter } from './__fixtures__/kingdom.ts';
@@ -177,7 +177,8 @@ describe('a session past a breaker', () => {
 
   it("keeps the work in the plot when the territory's hooks refuse the WIP commit, and says so", async () => {
     const commits: string[] = [];
-    const refused = { status: 'refused', detail: 'husky - pre-commit script failed (code 1)' } as const;
+    const detail = 'husky - pre-commit script failed (code 1)';
+    const refused = { status: 'refused', detail, head: hookOutputHead(detail) } as const;
     const { kingdom, steward } = await open({}, (k) => ({
       ...committing(commits, refused)(k),
       // The CLI stops itself at --max-turns: the same breaker, met by the CLI.

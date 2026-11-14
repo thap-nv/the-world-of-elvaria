@@ -1,10 +1,16 @@
 // What the Steward does to a worktree plot after prepare (implementation-plan §3.3): read its state, list what the
 // quest touched for runChecks, commit everything before a kill, a pause or a review, and remove it at archive.
+import { writeFile } from 'node:fs/promises';
+import path from 'node:path';
+
 import { err, ok } from '@elvaria/domain';
 import type { Result } from '@elvaria/domain';
+import { redact } from '@elvaria/eventlog';
 import { pathExists } from '@elvaria/store';
 
 import { gitOut, zList } from './git.ts';
+import { hookOutputHead } from './hook-output.ts';
+import type { HookOutputHead } from './hook-output.ts';
 import { clearLeftover } from './leftover.ts';
 import type { Git } from './git.ts';
 import { plotRecordOf } from './plot-record.ts';
@@ -37,6 +43,8 @@ export type CommitOutcome =
   | ({
       readonly status: 'refused';
       readonly detail: string;
+      readonly head: HookOutputHead;
+      readonly log?: string;
       readonly patch?: string;
       readonly files?: readonly string[];
     } & Rescued)
@@ -56,9 +64,6 @@ export interface ReleasedPlot {
 
 /** A tribe CLI drops what it kept about a removed worktree (Claude Code: `claude purge --yes <worktree>`). */
 export type ForgetWorktree = (worktree: string) => Promise<void>;
-
-/** How much of a refusal to keep: the end of a hook's output says why. */
-const DETAIL_CHARS = 2000;
 
 /** What starts an entry of `git status --porcelain`: the two status letters and a space. */
 const STATUS = 'XY ';
@@ -142,9 +147,12 @@ export async function commitWorktree(
     throw new Error(`git diff --cached failed in ${worktree}: ${staged.stderr.trim()}`);
   const commit = await git(worktree, ['commit', '--quiet', '--message', message]);
   if (commit.code !== 0) {
-    const said = `${commit.stderr}\n${commit.stdout}`.trim();
+    const said = redact(`${commit.stderr}\n${commit.stdout}`.trim(), []);
+    const head = hookOutputHead(said);
     const kept = rescue === undefined ? {} : await saveStaged(git, worktree, rescue.dir);
-    return { status: 'refused', detail: said.slice(-DETAIL_CHARS), ...kept, ...rescued };
+    const log = rescue === undefined ? {} : { log: 'pre-commit.log' };
+    if (rescue !== undefined) await writeFile(path.join(rescue.dir, 'pre-commit.log'), said, 'utf8');
+    return { status: 'refused', detail: head.lines.join('\n'), head, ...log, ...kept, ...rescued };
   }
   const sha = (await gitOut(git, worktree, ['rev-parse', 'HEAD'])).trim();
   return { status: 'committed', sha, ...rescued };

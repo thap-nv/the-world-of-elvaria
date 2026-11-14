@@ -113,13 +113,22 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   (`createAdapter` exported, called without throwing) and the runner it returns (`runnerProblems`: the kit's tribe
   and adapter, every capability, `spawn`, `probe`, `doctor`), one sentence per problem, and makes the runner's
   `doctor()` fail while the hook the kit names is not built, as every built-in adapter's does (`hookProblem`,
-  `withHookProblem`, `src/runner/hook-built.ts`, fix/held-tribe-sessions); the optional `shell` is
+  `withHookProblem`, `src/runner/hook-built.ts`, fix/held-tribe-sessions). `ToolInfo.notes` carries
+  `DoctorNote` codes and parameters (`DOCTOR_NOTES`, `DOCTOR_NOTE_PARAMS`, `doctorNoteOf`, `callNote`,
+  `hookNote`); `detail` remains verbatim external text. The kit validates adapter notes, replacing malformed
+  entries with `doctor:bad_note`, and appends `doctor:hook_missing` when needed. The optional `shell` is
   checked only when given (`shellProblems`, P1-40), and so are `search` (`searchProblems`, P1-53), `read`
   (`readProblems`) and `models` (the domain's `modelsProblems`, PS-23), here and in the suite's `capabilities`
   check. An adapter whose CLI has hooks of its own writes its neutral hook dialect into `policy.json` through
   `writePolicyFile(…, { dialect })` (`HookDialect`, `src/runner/hook-dialect.ts`, PS-23), so the hook reads that
   CLI without a branch of its own. A built-in package also exports an `AdapterTool` (its program, its search
   outside PATH, whether the provider's terms need acknowledging, its fake CLI) for the composition root (PS-23).
+- Summarizes refused commits with `hookOutputHead`: the first five nonempty lines without ANSI codes,
+  at most 200 characters per line including the ellipsis, with whole words where possible and intact
+  surrogate pairs. `head.errors` counts lines containing `error` regardless of case throughout the output;
+  `head.total_lines` counts all lines except trailing empty ones. With `CommitRescue`, the complete
+  redacted stderr then stdout is saved as `pre-commit.log` beside `wip.patch`; `CommitOutcome.log`
+  names that file and `detail` joins the head lines. Without rescue, no log file is written.
 - Proves in the conformance suite that a judge in its scratch plot, whose class allows commit and push, has both
   refused (`scratch_commit`, fakes only, P1-20).
 - Gives a tribe without a JSON Schema flag its structured reply (`src/structured/`, implementation-plan §3.14

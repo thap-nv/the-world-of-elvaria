@@ -1,3 +1,4 @@
+import { hookOutputHead } from '@elvaria/runner-core';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { KINGDOM, PASS, bench, questPayload, tickUntil } from './__fixtures__/kingdom.ts';
@@ -74,7 +75,9 @@ describe('the machine checks and the pass rule', () => {
   it('sends the quest to the infirmary when the territory refuses the commit of the finished work', async () => {
     const refusal = 'eslint: 2 errors in src/api/orders.ts';
     const { kingdom, steward } = await open({}, (k) => ({
-      plots: plotsWith(k.root, { commit: () => Promise.resolve({ status: 'refused', detail: refusal }) }),
+      plots: plotsWith(k.root, {
+        commit: () => Promise.resolve({ status: 'refused', detail: refusal, head: hookOutputHead(refusal) }),
+      }),
     }));
     await kingdom.command('create_quest', questPayload('Lint fails'));
     await tickUntil(steward, kingdom.clock, statusIs(kingdom, 'Lint fails', 'infirmary'));

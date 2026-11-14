@@ -5,6 +5,7 @@
 import { stat } from 'node:fs/promises';
 
 import type { ToolInfo } from './types.ts';
+import type { DoctorNote } from './doctor-notes.ts';
 
 export const hookMissing = (file: string): string =>
   `the Elvaria hook is not built: ${file} is missing (run pnpm --filter @elvaria/hooks build)`;
@@ -24,11 +25,11 @@ export async function hookProblem(script: string | undefined): Promise<string | 
 }
 
 /** `info` with the hook's problem: no session can run, so `auth_ok` is false whatever the CLI said of its sign-in. */
-export const withHookProblem = (info: ToolInfo, problem: string | undefined): ToolInfo =>
+export const withHookProblem = (info: ToolInfo, problem: DoctorNote | undefined): ToolInfo =>
   problem === undefined
     ? info
     : {
         ...info,
         auth_ok: false,
-        detail: info.detail === undefined || info.detail === '' ? problem : `${info.detail}; ${problem}`,
+        notes: [...(info.notes ?? []), problem],
       };

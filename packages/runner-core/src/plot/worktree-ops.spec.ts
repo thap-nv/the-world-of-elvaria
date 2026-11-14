@@ -1,4 +1,4 @@
-import { chmod, mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -106,8 +106,31 @@ describe('commitAll', () => {
 
     const outcome = await plots().commitAll(plot, plotCommitMessage.wip(questId('e6f7g8'), 'time'));
 
-    expect(outcome).toEqual({ status: 'refused', detail: 'lint failed: src/app.ts' });
+    expect(outcome).toEqual({
+      status: 'refused',
+      detail: 'lint failed: src/app.ts',
+      head: { lines: ['lint failed: src/app.ts'], errors: 0, total_lines: 1 },
+    });
+    expect('log' in outcome).toBe(false);
     expect(await plots().status(plot)).toMatchObject({ dirty: true, ahead: 0 });
+  });
+
+  it('keeps the start and complete redacted log of a 300-line hook refusal', async () => {
+    const { repo, plot, worktree } = await preparedPlot('long hook repo', 'j0k1m2');
+    const lines = Array.from({ length: 300 }, (_, i) => `Error ${i}: check failed`);
+    const hook = path.join(repo, '.git', 'hooks', 'pre-commit');
+    await writeFile(hook, `#!/bin/sh\n${lines.map((line) => `echo "${line}" >&2`).join('\n')}\nexit 1\n`);
+    await chmod(hook, 0o755);
+    await writeFile(path.join(worktree, 'src', 'app.ts'), 'export const app = 9;\n');
+    const rescue = { dir: path.join(root, 'long hook run') };
+    const outcome = await plots().commitAll(plot, 'submit', rescue);
+    expect(outcome).toMatchObject({
+      status: 'refused',
+      detail: lines.slice(0, 5).join('\n'),
+      head: { lines: lines.slice(0, 5), errors: 300, total_lines: 300 },
+      log: 'pre-commit.log',
+    });
+    expect(await readFile(path.join(rescue.dir, 'pre-commit.log'), 'utf8')).toBe(lines.join('\n'));
   });
 });
 
