@@ -36,6 +36,13 @@ export const checkedVersionOf = (tribe: Pick<Tribe, 'tool'>): string | undefined
   tribe.tool?.checked_version ?? tribe.tool?.version;
 
 /**
+ * The hold that keeps `tribe` from a new session, if any. A session outside planTick (the Chancellor's triage and the
+ * owner's words, an amendment's author) waits on it as planTick's roster does (fix/held-tribe-sessions).
+ */
+export const holdOf = (holds: readonly TribeHold[], tribe: TribeId): TribeHold | undefined =>
+  holds.find((hold) => hold.tribe === tribe);
+
+/**
  * The tribes whose CLI is gone or says another version than the checked one, in kingdom order. A CLI that did not
  * answer holds nothing: no version is no proof it changed (a busy machine), and its sessions say what is wrong.
  */

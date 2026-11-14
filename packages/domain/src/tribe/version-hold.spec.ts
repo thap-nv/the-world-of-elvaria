@@ -1,7 +1,7 @@
 // Holding a tribe whose CLI changed since its last passing check (A1b of the lessons of 2026-11-13).
 import { describe, expect, it } from 'vitest';
 
-import { checkedVersionOf, versionHoldsOf } from './version-hold.ts';
+import { checkedVersionOf, holdOf, versionHoldsOf } from './version-hold.ts';
 import type { TribeId } from '../core/ids.ts';
 import type { Tribe } from '../schema/tribe.ts';
 
@@ -55,5 +55,13 @@ describe('versionHoldsOf', () => {
       [CODEX]: { path: OLD_CODEX, version: '0.168.0' },
     };
     expect(versionHoldsOf(tribes, found)).toEqual([]);
+  });
+});
+
+describe('holdOf (fix/held-tribe-sessions)', () => {
+  it('is the hold that keeps the tribe from a new session, if one does', () => {
+    const holds = [{ tribe: GEMINI, path: AGY, version: '1.5.8', checked: '1.5.7' }];
+    expect(holdOf(holds, GEMINI)).toBe(holds[0]);
+    expect(holdOf(holds, CLAUDE)).toBeUndefined();
   });
 });
