@@ -158,6 +158,27 @@ describe("work the territory's hook refuses (P1-55)", () => {
     expect(await readFile(handoverPath(kingdom.root, quest.id), 'utf8')).toContain('Written by the Steward');
   }, 120_000);
 
+  // Gap 23 of the PS-07 report: two sessions cut at their token ceiling left no letter, and no hook refused anything.
+  it('writes a minimal letter for a session a breaker cut whose WIP commit went in', async () => {
+    const options = { letter: false, plays: { work: { 'Cut, committed': ['hang' as const] } } };
+    const { kingdom, steward, repo } = await open(() => WORK, options);
+    await kingdom.command('create_quest', questPayload('Cut, committed'));
+    await steward.tick();
+    kingdom.clock.advance(45);
+    await steward.tick();
+
+    const quest = await kingdom.quest('Cut, committed');
+    expect(quest.status).toBe('infirmary');
+    const wip = git(repo, 'rev-parse', `quest/${quest.id}`);
+    expect(git(repo, 'log', '-1', '--format=%s', wip)).toBe(`chore: wip ${quest.id} (time)`);
+    const letter = await readFile(handoverPath(kingdom.root, quest.id), 'utf8');
+    expect(letter).toContain(`# Handover · ${quest.id}`);
+    expect(letter).toContain('its session ended (time) before a letter was written');
+    expect(letter).toContain(`as WIP ${wip} on the quest's branch`);
+    expect(letter).toContain('in 1 file(s), committed or not:\n\n- src/app.ts\n');
+    expect(letter).toMatch(/## Next step[\s\S]*## Question\s*$/);
+  }, 120_000);
+
   it('never overwrites the letter its character wrote, and keeps the copy of the work all the same', async () => {
     const { kingdom, steward } = await open(() => WORK, { hook: HOOK });
     await kingdom.command('create_quest', questPayload('Has its letter'));

@@ -38,8 +38,9 @@
 - Shapes a party (`src/party/`, §3.13, ADR 0020, P1-18): `mergeQuestOf` (the merge quest the Steward adds when a
   contract is delivered: a knight's build waiting for every part, their tags and secrets, the highest rank, the
   royal seal), `PartyPlace` (a part's or the merge quest's place, given to `questFromCommand` through
-  `NewQuestContext.party`, since the inbox names only a contract), `partyStatusOf` (`forming`, `parts`, `merging`,
-  `done` or `stuck`, derived, never stored) and `plotBaseOf` (the branches a quest's plot builds on: a part on its
+  `NewQuestContext.party`, since the inbox names only a contract; a part whose draft leaves `seal_required` out
+  waits for no seal, whatever its kind's `seal_default`, as the merge quest always does), `partyStatusOf`
+  (`forming`, `parts`, `merging`, `done` or `stuck`, derived, never stored) and `plotBaseOf` (the branches a quest's plot builds on: a part on its
   contract's, a merge quest on the contract's with every part merged in, any quest on a dependency's not merged
   yet, P1-16 (f)). The territory's `checks[].defer_to_merge` (§3.15) leaves a heavy check to the merge quest.
   `machineMergeDue` (P1-18 (h)): a merge quest's first run is the machine's, and only while no run was ever started on it (`attempts = 0` and an empty log, P1-55); the run takes a run number and no attempt (`machineRun`). `planTick` lists it in `merges`

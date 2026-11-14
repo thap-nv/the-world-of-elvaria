@@ -5,6 +5,7 @@ import { KINGDOM, Q1, Q2, TERRITORY, at, character } from './__fixtures__/snapsh
 import { questFromCommand, secretsBeyond } from './new-quest.ts';
 import type { CommandPayload } from '../schema/command/inbox-command.ts';
 import type { NewQuestContext } from './new-quest.ts';
+import type { PartyPlace } from '../party/party-place.ts';
 
 const REGISTRY = {
   kinds: [
@@ -184,6 +185,26 @@ describe('questFromCommand', () => {
       party: { ...party, role: 'merge' },
     });
     expect(merge).toMatchObject({ ok: true, value: { party_id: Q2, party_role: 'merge' } });
+  });
+
+  // Gap 9 of the PS-07 report: every part of a build kind waited for the seal, and the party stood two hours on d1's.
+  it("waits for no seal on a part that leaves it out, whatever its kind's default, and keeps a part's own seal", () => {
+    const sealOf = (fields: Record<string, unknown>, party?: Partial<PartyPlace>) => {
+      const place = { id: Q2, role: 'part', contract: 'apps/api/openapi.yaml', ...party } as const;
+      const made = questFromCommand(
+        payload(fields),
+        party === undefined ? CONTEXT : { ...CONTEXT, party: place },
+      );
+      if (!made.ok) throw new Error(made.error.code);
+      return made.value.seal_required;
+    };
+    expect(sealOf({}, {})).toBe(false);
+    expect(sealOf({}, { role: 'acceptance' })).toBe(false);
+    expect(sealOf({ seal_required: true }, {})).toBe(true);
+    // Outside a party, and for the merge quest, the kind's default stands: `build` is sealed.
+    expect(sealOf({})).toBe(true);
+    expect(sealOf({}, { role: 'merge' })).toBe(true);
+    expect(sealOf({ kind: 'research', class_required: 'scout' }, { role: 'merge' })).toBe(false);
   });
 
   it('keeps the secrets its territory allows, and names the ones it does not', () => {
