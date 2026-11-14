@@ -904,6 +904,7 @@
     "cli.triage.hold.protected_paths": "it touches protected paths",
     "cli.triage.hold.above_rank": "the work's rank is above the delegation",
     "cli.triage.hold.outside_scope": "its files lie outside the work's scope",
+    "cli.triage.hold.scope_held": "the files it opens meet a scope another quest holds",
     "cli.triage.hold.chancellor_asks": "the Chancellor sends it to you",
     "cli.tribe.add.added": "Tribe {tribe} added (adapter {adapter}), disabled for now.",
     "cli.tribe.add.arg.id": "The new tribe's id, e.g. codex: lowercase letters, digits and _, starting with a letter.",

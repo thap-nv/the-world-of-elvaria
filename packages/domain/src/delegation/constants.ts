@@ -18,10 +18,11 @@ export type DelegationAskReason = (typeof DELEGATION_ASK_REASONS)[number];
 
 /**
  * What the machine finds on its own: the work's rank above `delegation.max_rank`; its files outside the scope of the
- * quest that would do it (`delegation.same_scope`); the Chancellor itself sent the memo up (or its draft asks a
+ * quest that would do it (`delegation.same_scope`); the files an accepted amendment opens meet a scope another quest
+ * holds (R3, ADR 0028; fix/amendment-delegation); the Chancellor itself sent the memo up (or its draft asks a
  * question, which only the owner answers).
  */
-export const DELEGATION_LIMITS = ['above_rank', 'outside_scope', 'chancellor_asks'] as const;
+export const DELEGATION_LIMITS = ['above_rank', 'outside_scope', 'scope_held', 'chancellor_asks'] as const;
 export type DelegationLimit = (typeof DELEGATION_LIMITS)[number];
 
 /** Why a memo goes to the owner: a reason the kingdom keeps, or a limit the machine found. */

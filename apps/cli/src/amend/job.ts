@@ -105,6 +105,7 @@ async function decide(ctx: KingdomContext, runners: Runners, waiting: Waiting, r
     decision,
     memo: waiting.memo,
     quest: waiting.quest,
+    quests: waiting.quests,
     territory: await territoryOf(ctx, waiting.quest),
     delegation: ctx.kingdom.delegation,
     header: { ...commandHeader(ctx), source: 'chancellor' },

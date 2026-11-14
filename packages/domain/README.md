@@ -297,7 +297,11 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   memo's files lie under its territory's `laws.protected_paths`, `DelegatedMemo.protected_refs` as the caller
   matched them, the owner's settlement of PS-03b (a)), a rank above `max_rank`, files
   not surely inside the work's scope (`pathInScope`, the reverse doubt of `scopesMeet`), or the Chancellor's own
-  choice; none when the Steward may apply it. The memo-triage contract (`MemoTriageFileSchema`), `escalateMemo` and
+  choice; none when the Steward may apply it. `amendmentHolds` holds an amendment's decision the same way
+  (fix/amendment-delegation): a referral always, a rejection never; an acceptance that only opens files (`opensOnly`,
+  `openedPathsOf`) surely inside its party's contract quest's scope, up to that quest's rank, is not held by
+  `max_rank`; one whose opened files meet a scope another quest holds (`scopeHolderMeeting`, R3) is held by
+  `scope_held`. The memo-triage contract (`MemoTriageFileSchema`), `escalateMemo` and
   the memo's `escalation`, the command `escalate_memo`, `memos` on create_quest, edit_quest and the quest, the source
   `chancellor` and the line `memo.escalated` have their schemas here; `memoCountsOf` (PS-22) counts, by kind, the memos the owner
   and the triage decided and those the triage sent up (`Metrics.memos`), and a command of the triage is none of the
