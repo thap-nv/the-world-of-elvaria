@@ -113,7 +113,10 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   (`createAdapter` exported, called without throwing) and the runner it returns (`runnerProblems`: the kit's tribe
   and adapter, every capability, `spawn`, `probe`, `doctor`), one sentence per problem, and makes the runner's
   `doctor()` fail while the hook the kit names is not built, as every built-in adapter's does (`hookProblem`,
-  `withHookProblem`, `src/runner/hook-built.ts`, fix/held-tribe-sessions); the optional `shell` is
+  `withHookProblem`, `src/runner/hook-built.ts`, fix/held-tribe-sessions). `ToolInfo.notes` carries
+  `DoctorNote` codes and parameters (`DOCTOR_NOTES`, `DOCTOR_NOTE_PARAMS`, `doctorNoteOf`, `callNote`,
+  `hookNote`); `detail` remains verbatim external text. The kit validates adapter notes, replacing malformed
+  entries with `doctor:bad_note`, and appends `doctor:hook_missing` when needed. The optional `shell` is
   checked only when given (`shellProblems`, P1-40), and so are `search` (`searchProblems`, P1-53), `read`
   (`readProblems`) and `models` (the domain's `modelsProblems`, PS-23), here and in the suite's `capabilities`
   check. An adapter whose CLI has hooks of its own writes its neutral hook dialect into `policy.json` through

@@ -10,7 +10,7 @@ import { runToEnd, startChild } from '../process/child.ts';
 import { KILL_GRACE_MS, killTree } from '../process/kill-tree.ts';
 import { createFakeRunner } from '../runner/fake-runner.ts';
 import { readQuestion } from '../runner/handover.ts';
-import { hookMissing } from '../runner/hook-built.ts';
+import { doctorNoteOf } from '../runner/doctor-notes.ts';
 import { writePolicyFile } from '../runner/policy-file.ts';
 import { openRunLog } from '../runner/run-log.ts';
 import { openRunOutput } from '../runner/run-output.ts';
@@ -81,9 +81,9 @@ describe('adapterOfModule', () => {
 
   it("builds the runner with the module's createAdapter, sync or async", async () => {
     const built = runner();
-    expect(await adapterOfModule({ [ADAPTER_FACTORY]: () => built }, kit)).toEqual({
+    expect(await adapterOfModule({ [ADAPTER_FACTORY]: () => built }, kit)).toMatchObject({
       ok: true,
-      value: built,
+      value: { tribe: built.tribe, adapter: built.adapter },
     });
     const handed: unknown[] = [];
     const later = { [ADAPTER_FACTORY]: (given: unknown) => (handed.push(given), Promise.resolve(built)) };
@@ -124,7 +124,10 @@ describe('adapterOfModule', () => {
     );
     const loaded = await adapterOfModule({ [ADAPTER_FACTORY]: () => runner() }, unbuilt);
     if (!loaded.ok) throw new Error('the runner should load');
-    expect(await loaded.value.doctor()).toMatchObject({ auth_ok: false, detail: hookMissing(missing) });
+    expect(await loaded.value.doctor()).toMatchObject({
+      auth_ok: false,
+      notes: [doctorNoteOf('doctor:hook_missing', { file: missing })],
+    });
     // The rest of the runner is the file's own.
     expect(loaded.value).toMatchObject({ tribe: kit.tribe.id, adapter: kit.tribe.adapter });
     expect(await loaded.value.probe()).toEqual({ status: 'ok' });
@@ -132,9 +135,7 @@ describe('adapterOfModule', () => {
       doctor: () => Promise.resolve({ path: 'p', version: '1', auth_ok: true, detail: 'sign-in ends soon' }),
     });
     const noted = await adapterOfModule({ [ADAPTER_FACTORY]: () => notes }, unbuilt);
-    expect(noted.ok && (await noted.value.doctor()).detail).toBe(
-      `sign-in ends soon; ${hookMissing(missing)}`,
-    );
+    expect(noted.ok && (await noted.value.doctor()).detail).toBe('sign-in ends soon');
   });
 
   it("leaves the file's doctor as it is once the hook is built", async () => {
@@ -145,6 +146,37 @@ describe('adapterOfModule', () => {
     if (!loaded.ok) throw new Error('the runner should load');
     expect(await loaded.value.doctor()).toMatchObject({ auth_ok: true });
     expect((await loaded.value.doctor()).detail).toBeUndefined();
+  });
+
+  it.each([
+    [undefined, undefined],
+    [
+      [doctorNoteOf('doctor:no_version', { command: 'cli' })],
+      [doctorNoteOf('doctor:no_version', { command: 'cli' })],
+    ],
+    [[{ code: 'unknown', params: {} }], [doctorNoteOf('doctor:bad_note', { code: 'unknown' })]],
+    [[null], [doctorNoteOf('doctor:bad_note', { code: '?' })]],
+    ['wrong', [doctorNoteOf('doctor:bad_note', { code: '?' })]],
+    [
+      [{ code: 'doctor:no_version', params: {} }],
+      [doctorNoteOf('doctor:bad_note', { code: 'doctor:no_version' })],
+    ],
+    [
+      [{ code: 'doctor:no_version', params: { command: 'cli', extra: 1 } }],
+      [doctorNoteOf('doctor:bad_note', { code: 'doctor:no_version' })],
+    ],
+    [
+      [{ code: 'doctor:no_version', params: { command: null } }],
+      [doctorNoteOf('doctor:bad_note', { code: 'doctor:no_version' })],
+    ],
+  ])('checks adapter notes %j even without a hook script', async (notes, expected) => {
+    const info = { path: 'cli', version: '1', auth_ok: true, detail: 'verbatim external text', notes };
+    const loaded = await adapterOfModule(
+      { [ADAPTER_FACTORY]: () => runner({ doctor: () => Promise.resolve(info) }) },
+      kit,
+    );
+    if (!loaded.ok) throw new Error('the runner should load');
+    expect(await loaded.value.doctor()).toEqual({ ...info, notes: expected });
   });
 });
 
