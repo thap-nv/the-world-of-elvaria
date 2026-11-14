@@ -213,7 +213,7 @@ Registry mặc định (P0-02; id xem [glossary](../glossary.md)):
 
 **skill** (v1) — front matter của `temple/skills/<id>/SKILL.md`: version, id (kebab-case, tên thư mục), title, description (một dòng, thành mô tả của skill theo định dạng CLI), tags[] (≥ 1), scope (`global` \| id lãnh thổ), source: monk\|user, derived_from? (id bài học; bắt buộc khi `source = monk`), max_tokens (mặc định 2000, giá trị khởi điểm), created_at, updated_at?. Đường dẫn là quy ước nên không có trường `path` (như `journal`). Nội dung viết bằng tiếng Anh như prompt nhân vật.
 
-**quest-draft** (v1): {version, drafts: [{ref, title, description, kind, rank, territory, tier, script?, class_required (khi session), tags, party_role?: contract\|part, contract?, depends_on_refs[], parent_ref?, estimate, seal_required, secrets_required, question?}]}; tối đa một draft có `question` (Tể tướng hỏi lại tối đa một câu). Cùng schema này dùng cho output của trưởng đội khi chia phần (`party_role = part`).
+**quest-draft** (v1): {version, drafts: [{ref, title, description, kind, rank, territory, tier, script?, class_required (khi session), tags, party_role?: contract\|part, contract?, depends_on_refs[], parent_ref?, estimate, seal_required?, secrets_required, question?}]}; tối đa một draft có `question` (Tể tướng hỏi lại tối đa một câu). `seal_required` bỏ trống thì quest lấy `seal_default` của dạng, riêng phần của đội thì `false` (fix/party-part-seal, §3.13). Cùng schema này dùng cho output của trưởng đội khi chia phần (`party_role = part`).
 
 **world-map** (v1, giai đoạn 3): {version, generated_at, regions: [{id, territory, anchor, bounds, roads_to[]}]}.
 

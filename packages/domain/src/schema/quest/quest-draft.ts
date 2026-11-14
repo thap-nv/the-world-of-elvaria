@@ -77,7 +77,7 @@ const DraftFieldsSchema = z.strictObject({
     .optional()
     .meta(
       describe(
-        "Only when the owner's words say whether the result waits for the seal; left out, the quest takes its kind's seal_default.",
+        "Only when the owner's words say whether the result waits for the seal; left out, the quest takes its kind's seal_default, and a part of a party waits for no seal: its merge quest always does.",
       ),
     ),
   secrets_required: SecretNamesSchema,
