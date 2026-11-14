@@ -8,6 +8,7 @@ import {
   authorOf,
   authorRoute,
   awaitsAuthor,
+  openedPathsOf,
   submitEndOf,
 } from './amendment.ts';
 import { memoOf, routeMemo } from './memo.ts';
@@ -234,5 +235,14 @@ describe('amendedScopeOf', () => {
     expect(amendedScopeOf(scope, [])).toBeUndefined();
     expect(amendedScopeOf(undefined, ['package.json'])).toBeUndefined();
     expect(amendedScopeOf([], ['package.json'])).toBeUndefined();
+  });
+
+  // fix/amendment-delegation: `src/a.ts:12` as an entry names no file and meets no other scope (R3).
+  it('opens the file a ref names with its lines, not the lines', () => {
+    expect(openedPathsOf(scope, ['src/a.ts:12', 'src/b.ts:3-9', 'src/a.ts'])).toEqual([
+      'src/a.ts',
+      'src/b.ts',
+    ]);
+    expect(openedPathsOf(undefined, ['src/a.ts'])).toEqual([]);
   });
 });

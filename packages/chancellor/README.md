@@ -43,8 +43,10 @@
 - Decides an amendment as its author (PS-22b, implementation-plan §3.16.2): `decideAmendment(context, session,
 signal)` runs one session with no tool (`buildAmendmentPrompt`; the amendment-decision contract,
   `AMENDMENT_DECISION_JSON_SCHEMA`); `amendmentCommand` holds an acceptance against `kingdom.delegation`
-  (`delegationHolds`, `same_scope` off, the memo's protected files matched by `protectedRefsOf`) and gives one
-  `decide_amendment`: accepted or rejected, or to the owner with what holds it.
+  (the domain's `amendmentHolds`, given the kingdom's quests and the territory's shared paths, the memo's protected
+  files matched by `protectedRefsOf`) and gives one `decide_amendment`: accepted or rejected, or to the owner with
+  what holds it; an acceptance that leaves the description as it reads only opens files and carries no description
+  (fix/amendment-delegation).
 - Triages memos (PS-03b, implementation-plan §3.16.3): `triageMemos(context, session, signal)` runs one session for
   the whole batch (`buildTriagePrompt` of runner-core; the memo-triage contract, `MEMO_TRIAGE_JSON_SCHEMA`), checks
   that each memo of the batch is decided once and no other named (`triageCheckOf`), and screens the drafts of its new

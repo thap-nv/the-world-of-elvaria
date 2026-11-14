@@ -259,6 +259,7 @@
               "protected_paths",
               "above_rank",
               "outside_scope",
+              "scope_held",
               "chancellor_asks"
             ]
           }
