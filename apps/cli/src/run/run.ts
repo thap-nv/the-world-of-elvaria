@@ -17,6 +17,7 @@ import { crewOf } from './crew.ts';
 import { fileDigest } from './digest-file.ts';
 import { graphsOf } from './graphs.ts';
 import { plotsOf } from './plots.ts';
+import { toolFoundOf } from './tool-found.ts';
 import { triageJob } from '../triage/job.ts';
 import { amendmentJob } from '../amend/job.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
@@ -62,6 +63,8 @@ function stewardOf(ctx: KingdomContext, crew: Crew, graphs: CodeGraphs | undefin
     jobs: [triageJob(ctx, crew.runners)],
     // An amendment's author, whenever a quest waits on one (PS-22b).
     onCall: [amendmentJob(ctx, crew.runners)],
+    // Each tribe's CLI asked before the plan: one gone or changed since its last real check is held (A1b).
+    toolFound: toolFoundOf(ctx.kingdom, crew.runners, io),
     log: {
       warn: (message) => {
         io.err(t('cli.run.warning', { message }));

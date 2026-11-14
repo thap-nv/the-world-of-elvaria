@@ -1,6 +1,6 @@
 // `elvaria digest` and the Steward's digest file (PS-03, implementation-plan §3.16.3): what waits for the owner in
 // two groups, each item with its advice and command, in the owner's language. Reads only; the port writes the file.
-import { EventSchema, MemoSchema } from '@elvaria/domain';
+import { EventSchema, MemoSchema, TribeIdSchema } from '@elvaria/domain';
 import type { AttentionItem, QuestId, WaitGauge } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import { translator } from '@elvaria/i18n';
@@ -48,7 +48,7 @@ describe('elvaria digest', () => {
       '',
       'Nothing waits for you.',
       '',
-      'Built now from the files and the event log. Quests waiting for a judge are in the digest the Steward writes to digest/ only.',
+      'Built now from the files and the event log. Quests waiting for a judge, and tribes held by their CLI (elvaria doctor names those too), are in the digest the Steward writes to digest/ only.',
     ]);
     expect(await pathExists(inKingdom(kingdom, 'digest'))).toBe(false);
   });
@@ -151,5 +151,36 @@ describe('the digest file of the Steward', () => {
     expect(text).toContain(
       `- Quest ${QUEST_ID} «Thêm script pnpm check» waits in review, but every judge who may take it is out of mana (pool gemini_models of tribe gemini, until 2026-11-06T14:00:00+07:00, pool claude of tribe claude).`,
     );
+  });
+
+  it('names a tribe held by its CLI with the command that lifts the hold (A1b)', () => {
+    const items: AttentionItem[] = [
+      {
+        kind: 'tribe_held',
+        group: 'must',
+        advice: 'check_tribe',
+        command: ['tribe', 'check', 'gemini'],
+        tribe: TribeIdSchema.parse('gemini'),
+        path: 'C:/agy.exe',
+        version: '1.5.8',
+        checked_version: '1.5.6',
+      },
+      {
+        kind: 'tribe_gone',
+        group: 'must',
+        advice: 'check_tribe_and_restart',
+        command: ['tribe', 'check', 'codex'],
+        tribe: TribeIdSchema.parse('codex'),
+        path: 'C:/old/codex.exe',
+        checked_version: '0.167.0',
+      },
+    ];
+    const text = digestMarkdown(translator('en'), { day: '2026-11-06', name: 'Bình Minh', items });
+    expect(text).toContain(
+      '- Tribe gemini: its CLI C:/agy.exe now says 1.5.8, not 1.5.6, the version its last check with the real CLI passed on; the Steward opens no new session for it.',
+    );
+    expect(text).toContain('  `elvaria tribe check gemini`');
+    expect(text).toContain('- Tribe codex: the CLI its Steward starts, C:/old/codex.exe, is gone');
+    expect(text).toContain('then restart elvaria run');
   });
 });

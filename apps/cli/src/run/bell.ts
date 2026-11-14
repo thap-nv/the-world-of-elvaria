@@ -72,6 +72,12 @@ export function lineOf(t: Translate, notice: Notice): string {
     const { day, file, must, can_wait } = notice;
     return t('cli.run.notice.digest', { day, file, must, can_wait });
   }
+  if (notice.kind === 'tribe_held') {
+    const { tribe, path, version, checked } = notice;
+    return version === undefined
+      ? t('cli.run.notice.tribe_gone', { tribe, path, checked })
+      : t('cli.run.notice.tribe_held', { tribe, path, version, checked });
+  }
   const quest = { quest: notice.quest.id, title: notice.quest.title };
   switch (notice.kind) {
     case 'unclaimable':

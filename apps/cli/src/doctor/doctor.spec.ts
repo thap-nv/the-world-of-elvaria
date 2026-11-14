@@ -108,19 +108,28 @@ describe('elvaria doctor', () => {
     await fakeTool(bin, 'claude', '2.1.400 (Claude Code)');
     const changed = await doctorIo(bin);
     expect(await doctor(changed)).toBe(0);
-    // The file at the pinned path is the new version already: the pin does not keep the old one (A1a, 2026-11-13).
+    // The file at the pinned path is the new version already, and the Steward holds the tribe (A1b, 2026-11-13).
     expect(printed(changed)).toMatch(
-      /! Tribe claude: the CLI at .+ updated itself from the pinned 2\.1\.318 to 2\.1\.400;/,
+      /! Tribe claude: the CLI at .+ updated itself from 2\.1\.318 to 2\.1\.400\./,
     );
-    expect(printed(changed)).toContain("the tribe's next session runs 2.1.400, pinned or not.");
-    expect(printed(changed)).not.toContain('keeping the pinned');
-    // Try it with the real CLI first, then pin.
-    expect(printed(changed)).toMatch(
-      /elvaria tribe check claude --model <.+>.*; pin it once that passes: elvaria doctor --pin/,
+    expect(printed(changed)).toContain(
+      'The Steward opens no new session for the tribe until a check with the real CLI passes on 2.1.400.',
     );
+    // tribe check pins once it passes; doctor --pin is advised no more (B1).
+    expect(printed(changed)).toContain('elvaria tribe check claude (the real CLI');
+    expect(printed(changed)).not.toContain('doctor --pin');
     expect((await readKingdom()).tribes[0]?.tool?.version).toBe('2.1.318');
+    // --pin still re-pins, but checks nothing: 2.1.318 stays the checked version, and doctor says the tribe is held.
     expect(await doctor(await doctorIo(bin), '--pin')).toBe(0);
-    expect((await readKingdom()).tribes[0]?.tool?.version).toBe('2.1.400');
+    expect((await readKingdom()).tribes[0]?.tool).toMatchObject({
+      version: '2.1.400',
+      checked_version: '2.1.318',
+    });
+    const repinned = await doctorIo(bin);
+    expect(await doctor(repinned)).toBe(0);
+    expect(printed(repinned)).toContain(
+      '! Tribe claude: version 2.1.400 is pinned, but no check with the real CLI passed on it (the last one passed on 2.1.318);',
+    );
   });
 
   it('finds a CLI the owner points at, then uses the pinned path without PATH', async () => {
@@ -151,8 +160,9 @@ describe('elvaria doctor', () => {
     expect(printed(moved)).toContain(
       `✗ Tribe claude: the pinned ${old.replaceAll('\\', '/')} is gone; found `,
     );
-    // The pinned file is gone, so tribe check needs the one found (--tool).
-    expect(printed(moved)).toMatch(/elvaria tribe check claude --tool ".+\/bin\/claude(\.cmd)?" --model </);
+    // The pinned file is gone: tribe check tries the one found, and pins it for this tribe once it passes (B1).
+    expect(printed(moved)).toContain('elvaria tribe check claude (it tries the CLI just found');
+    expect(printed(moved)).not.toContain('doctor --pin');
     expect((await readKingdom()).tribes[0]?.tool?.path).toBe(old.replaceAll('\\', '/'));
     expect(await doctor(await doctorIo(bin), '--pin')).toBe(0);
     expect((await readKingdom()).tribes[0]?.tool?.path).toMatch(/\/bin\/claude(\.cmd)?$/);
