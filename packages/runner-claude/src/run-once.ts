@@ -15,6 +15,10 @@ export interface Ran {
   readonly stderr: string;
   /** Why it did not run to its end: a start error or the timeout. */
   readonly problem?: string;
+  /** Stopped at its timeout (for `callNote`). */
+  readonly timed_out: boolean;
+  /** The start error, when it never started (for `callNote`). */
+  readonly failure?: string;
 }
 
 export interface RunOnceOptions {
@@ -44,22 +48,33 @@ export function runOnce(launch: Launch, args: readonly string[], options: RunOnc
   return new Promise((resolve) => {
     const child = start(launch, args, options);
     if (child instanceof Error) {
-      resolve({ code: null, stdout: '', stderr: '', problem: child.message });
+      resolve({
+        code: null,
+        stdout: '',
+        stderr: '',
+        problem: child.message,
+        timed_out: false,
+        failure: child.message,
+      });
       return;
     }
     let stdout = '';
     let stderr = '';
     let problem: string | undefined;
+    let timedOut = false;
+    let failure: string | undefined;
     child.stdout.setEncoding('utf8').on('data', (chunk: string) => (stdout += chunk));
     child.stderr.setEncoding('utf8').on('data', (chunk: string) => (stderr += chunk));
     const timer = setTimeout(() => {
       // The same words as runner-core's runToEnd: how long it had, not a failed sign-in (fix/busy-machine).
       problem = noAnswerWithin(options.timeoutMs);
+      timedOut = true;
       // The whole tree (P1-06): a child left holding stdout would keep `close` from ever coming.
       void killTree(child.pid ?? 0);
     }, options.timeoutMs);
     child.on('error', (error) => {
       problem = error.message;
+      failure = error.message;
     });
     child.on('close', (code) => {
       clearTimeout(timer);
@@ -67,7 +82,9 @@ export function runOnce(launch: Launch, args: readonly string[], options: RunOnc
         code: problem === undefined ? code : null,
         stdout,
         stderr,
+        timed_out: timedOut,
         ...(problem === undefined ? {} : { problem }),
+        ...(failure === undefined ? {} : { failure }),
       });
     });
   });

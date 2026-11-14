@@ -5,16 +5,20 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
-import { noAnswerWithin } from '@elvaria/runner-core';
+import { doctorNoteOf } from '@elvaria/runner-core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { RunResult, RunnerSignal, SpawnRequest } from '@elvaria/runner-core';
 
 import { FAKE_CODEX, fakeRunner, minimalEnv, openWorld, request } from './__fixtures__/codex.ts';
 import { CONTEXT_FILE } from './context-file.ts';
-import { NOT_SIGNED_IN } from './doctor.ts';
 import { SHELL_POLICY_ENV } from './runner.ts';
 import type { World } from './__fixtures__/codex.ts';
+
+const notSignedIn = doctorNoteOf('doctor:not_signed_in', {
+  command: 'codex login status',
+  login: 'codex login',
+});
 
 let world: World;
 beforeEach(async () => {
@@ -138,18 +142,22 @@ describe('doctor and probe', () => {
       auth_ok: true,
     });
     const out = await fakeRunner({ env: { ...minimalEnv(), ELVARIA_FAKE_CODEX_LOGGED_OUT: '1' } }).doctor();
-    expect(out).toMatchObject({ auth_ok: false, detail: NOT_SIGNED_IN });
+    expect(out).toMatchObject({ auth_ok: false });
+    expect(out.notes).toEqual([notSignedIn]);
+    expect(out.detail).toBeUndefined();
     const missing = path.join(world.root, 'dist', 'elvaria-hook.js');
     const unbuilt = await fakeRunner({ hook: { command: process.execPath, args: [missing] } }).doctor();
-    expect(unbuilt.detail).toMatch(/the Elvaria hook is not built/);
+    expect(unbuilt.notes).toEqual([doctorNoteOf('doctor:hook_missing', { file: missing })]);
   });
 
   it('says `codex login status` ran out of time, and how long it had, never that the owner is signed out', async () => {
     const env = { ...minimalEnv(), ELVARIA_FAKE_CODEX_LOGIN_HANGS: '1' };
     const info = await fakeRunner({ env, timeout_ms: 1000 }).doctor();
     expect(info.auth_ok).toBe(false);
-    expect(info.detail).toContain(`codex login status: ${noAnswerWithin(1000)}`);
-    expect(info.detail).not.toContain(NOT_SIGNED_IN);
+    expect(info.notes).toEqual([
+      doctorNoteOf('doctor:command_timed_out', { command: 'codex login status', seconds: 1 }),
+    ]);
+    expect(info.notes).not.toContainEqual(notSignedIn);
   });
 
   it("reads the account's windows without a model call", async () => {

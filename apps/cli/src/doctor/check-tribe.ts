@@ -14,6 +14,7 @@ import { adapterFileTool } from './adapter-tool.ts';
 import { shellFindings } from './check-shell.ts';
 import { finding } from './finding.ts';
 import { locateTool } from './locate-tool.ts';
+import { infoText } from './note-text.ts';
 import { toolVersion } from './tool-version.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 import type { ToolFound } from './adapter-tool.ts';
@@ -203,11 +204,12 @@ async function adapterFindings(tribe: Tribe, ctx: KingdomContext): Promise<Findi
 export async function loginFindings(
   tribe: Tribe,
   runner: AgentRunner,
-  ctx: KingdomContext,
+  ctx: Pick<KingdomContext, 't'>,
 ): Promise<Finding[]> {
   const info = await runner.doctor();
-  if (info.auth_ok && info.detail === undefined) return [];
-  const detail = info.detail ?? ctx.t('cli.doctor.login_failed');
+  const said = infoText(ctx.t, info);
+  if (info.auth_ok && said === undefined) return [];
+  const detail = said ?? ctx.t('cli.doctor.login_failed');
   const text = ctx.t('cli.doctor.adapter_detail', { tribe: tribe.id, detail });
   return [finding(info.auth_ok ? 'warn' : 'error', text)];
 }
