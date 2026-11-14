@@ -8,8 +8,8 @@ import { err } from '@elvaria/domain';
 import type { CharacterId, Quest, Result } from '@elvaria/domain';
 
 import { moveAndRing } from '../notices.ts';
-import { afterJudge } from '../review/after-judge.ts';
 import { stallWithoutVerdict } from '../review/judge.ts';
+import { releaseScratch } from '../review/scratch.ts';
 import { cannotOpen } from './breaker.ts';
 import type { Context } from '../context.ts';
 
@@ -49,8 +49,9 @@ export async function assigneeUnopened(
 /**
  * The judge's session did not open: it leaves the review as a judge whose session crashed (§2.5
  * `review.no_session`), passed over while another judge may take the review, and the REVIEW_BREAKS_MAX-th judge to
- * leave so sends the quest to the infirmary with the bell (stallWithoutVerdict). A scratch plot made for it goes. While
- * the Steward stops, nothing moves: the stop cut the setup short, not the judge.
+ * leave so sends the quest to the infirmary with the bell (stallWithoutVerdict). A scratch plot made for it goes, and
+ * the exclusive lock it held; the quest's own plot is not put back, since no command ran there. While the Steward
+ * stops, nothing moves: the stop cut the setup short, not the judge.
  */
 export async function judgeUnopened(
   ctx: Context,
@@ -58,8 +59,8 @@ export async function judgeUnopened(
   judge: CharacterId,
   why: string,
 ): Promise<Result<Quest, string>> {
-  await afterJudge(ctx, quest.id);
   if (ctx.stopping.aborted) return err('spawn_failed');
+  await releaseScratch(ctx, quest.id);
   const left = await moveAndRing(ctx, {
     quest: quest.id,
     event: { type: 'no_session', verifier: judge },
