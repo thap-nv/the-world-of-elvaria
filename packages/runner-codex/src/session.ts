@@ -17,6 +17,7 @@ import type {
 
 import { programOf } from './launch.ts';
 import { blockedOf, lineSplitter, outcomeOf, rateLimitOf } from './outcome.ts';
+import { withoutNulls } from './strict-schema.ts';
 import { createStreamReader } from './stream.ts';
 import type { Launch } from './launch.ts';
 import type { Stopper } from './outcome.ts';
@@ -54,10 +55,13 @@ const unstarted = (pid: number): string => `codex-unstarted-${pid}`;
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
-/** The answer's JSON object, under `--output-schema` the whole last message (spike §1.9). */
+/**
+ * The answer's JSON object, under `--output-schema` the whole last message (spike §1.9), without the nulls the strict
+ * schema made the model write for the keys it left out (strict-schema.ts): the core sees the shape it asked for.
+ */
 function structuredOf(messages: readonly string[]): unknown {
   const value = jsonOfText(messages.at(-1));
-  return isRecord(value) ? value : undefined;
+  return isRecord(value) ? withoutNulls(value) : undefined;
 }
 
 async function resultOf(ended: Ended): Promise<RunResult> {

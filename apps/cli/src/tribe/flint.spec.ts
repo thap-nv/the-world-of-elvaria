@@ -60,6 +60,7 @@ describe('a fourth tribe from an adapter file alone', () => {
         '✓ rate_limit',
         '✓ forbidden_command',
         '✓ spawn_child',
+        '✓ structured',
         '✓ scratch_commit',
         '✓ ask',
       ]);

@@ -13,6 +13,8 @@ import {
   FAKE_QUESTION,
   FAKE_SCENARIO_ENV,
   FAKE_SCRATCH_COMMANDS,
+  FAKE_STRUCTURED_ANSWER,
+  FAKE_STRUCTURED_SCHEMA,
 } from './scenarios.ts';
 import { SPAWN_PROBE_COMMAND, writeSpawnProbe } from './spawn-probe.ts';
 import type { AgentRunner, BuiltPrompt, SpawnRequest } from '../runner/types.ts';
@@ -76,18 +78,25 @@ const ASKS: Readonly<Record<FakeScenario, string>> = {
   ask: `Write this question in the Question section of the handover letter, then stop: ${FAKE_QUESTION}`,
   scratch_commit: `Run these shell commands exactly once each, in order: ${FAKE_SCRATCH_COMMANDS.join(', then ')}. Then reply with the single word: done.`,
   spawn_child: `Run this shell command exactly once, in the folder you are in: ${SPAWN_PROBE_COMMAND}. Then reply with the single word: done.`,
+  structured: `Give the verdict ${FAKE_STRUCTURED_ANSWER.result} with the note "${FAKE_STRUCTURED_ANSWER.notes}". Fill in no other field. Use no tool.`,
 };
+
+const PROBE_SYSTEM =
+  'You are a probe of the Elvaria conformance suite. Do exactly what you are asked, nothing more.';
 
 /**
  * The probe is an assignee, and an assignee's hook does not let it stop before it has left a letter (ADR 0010),
- * so the system part says where the letter goes, as buildPrompt does for a real assignee.
+ * so the system part says where the letter goes, as buildPrompt does for a real assignee. A judge leaves none.
  */
-const promptOf = (scenario: FakeScenario, handover: string): BuiltPrompt => ({
-  system: [
-    'You are a probe of the Elvaria conformance suite. Do exactly what you are asked, nothing more.',
-    `Before you stop, write your handover letter, the file ${handover}: the heading "## Where I am" and one line`,
-    'under it saying what you did. Add no other heading unless you are asked to.',
-  ].join(' '),
+const promptOf = (scenario: FakeScenario, handover: string | undefined): BuiltPrompt => ({
+  system:
+    handover === undefined
+      ? PROBE_SYSTEM
+      : [
+          PROBE_SYSTEM,
+          `Before you stop, write your handover letter, the file ${handover}: the heading "## Where I am" and one line`,
+          'under it saying what you did. Add no other heading unless you are asked to.',
+        ].join(' '),
   user: ASKS[scenario],
 });
 
@@ -160,20 +169,34 @@ const SCRATCH_JUDGE_POLICY = toolPolicyOf({
   territory: PROBE_POLICY_TERRITORY,
 });
 
+/** A judge in its own plot, read-only, as the Steward's verdict sessions run (ADR 0008). */
+const JUDGE_POLICY = toolPolicyOf({
+  role: 'verifier',
+  characterClass: { tools: { allow: ['Read', 'Glob', 'Grep'], deny: ['Edit', 'Write', 'Agent'] } },
+  territory: PROBE_POLICY_TERRITORY,
+});
+
+const policyOf = (scenario: FakeScenario) => {
+  if (scenario === 'scratch_commit') return SCRATCH_JUDGE_POLICY;
+  return scenario === 'structured' ? JUDGE_POLICY : PROBE_POLICY;
+};
+
 export function conformanceRequest(
   workspace: Workspace,
   scenario: FakeScenario,
   runner: AgentRunner,
   target: ConformanceTarget,
 ): SpawnRequest {
-  // scratch_commit plays a judge in its scratch plot; every other scenario the knight probe.
-  const judge = scenario === 'scratch_commit';
+  // scratch_commit plays a judge in its scratch plot, structured a judge giving its verdict, as the Steward asks it
+  // (a schema, no letter); every other scenario the knight probe.
+  const judge = scenario === 'scratch_commit' || scenario === 'structured';
+  const verdict = scenario === 'structured';
   return {
     role: judge ? 'verifier' : 'assignee',
     character: probeCharacter(runner, target),
     cwd: workspace.plot,
-    prompt: promptOf(scenario, workspace.handover),
-    permissions: judge ? SCRATCH_JUDGE_POLICY : PROBE_POLICY,
+    prompt: promptOf(scenario, verdict ? undefined : workspace.handover),
+    permissions: policyOf(scenario),
     budget: PROBE_BUDGET,
     env: {
       ...target.env,
@@ -185,6 +208,6 @@ export function conformanceRequest(
       [FAKE_SCENARIO_ENV]: scenario,
     },
     run_dir: workspace.run_dir,
-    handover: workspace.handover,
+    ...(verdict ? { structured: FAKE_STRUCTURED_SCHEMA } : { handover: workspace.handover }),
   };
 }

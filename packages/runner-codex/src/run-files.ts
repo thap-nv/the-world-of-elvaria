@@ -8,6 +8,7 @@ import { readContextFiles, writePolicyFile } from '@elvaria/runner-core';
 import type { RunContext, SpawnRequest } from '@elvaria/runner-core';
 
 import { CONTEXT_FILE, LAW_FILES, codexNote, contextFileText, isElvariaContext } from './context-file.ts';
+import { strictSchemaOf } from './strict-schema.ts';
 
 export interface RunFiles {
   /** policy.json of runner-core's writePolicyFile: the laws, context, secret names and tools the hook reads. */
@@ -41,7 +42,9 @@ export async function writeRunFiles(req: SpawnRequest, ctx: RunContext): Promise
   }
   const policy = await writePolicyFile(req.run_dir, ctx, req.permissions);
   const schema = req.structured === undefined ? undefined : path.join(req.run_dir, 'schema.json');
-  if (schema !== undefined) await writeFile(schema, `${JSON.stringify(req.structured, null, 2)}\n`, 'utf8');
+  // The API's strict structured output, not the core's schema as is (strict-schema.ts, fix/codex-output-schema).
+  if (req.structured !== undefined && schema !== undefined)
+    await writeFile(schema, `${JSON.stringify(strictSchemaOf(req.structured), null, 2)}\n`, 'utf8');
   const patterns = [...LAW_FILES, ...(req.territory?.context_files ?? [])];
   const files = await readContextFiles(req.cwd, patterns);
   const note = codexNote(req.permissions, sessionWrites(req));

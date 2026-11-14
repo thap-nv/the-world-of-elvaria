@@ -12,6 +12,7 @@ export const FAKE_SCENARIOS = [
   'ask',
   'scratch_commit',
   'spawn_child',
+  'structured',
 ] as const;
 export type FakeScenario = (typeof FAKE_SCENARIOS)[number];
 
@@ -26,6 +27,41 @@ export const FAKE_FORBIDDEN_COMMAND = 'git push origin HEAD';
  * on a commit, then push it. Its class allows both; the fences of a scratch plot refuse both.
  */
 export const FAKE_SCRATCH_COMMANDS = ['git commit -am "break the walls"', FAKE_FORBIDDEN_COMMAND] as const;
+
+/**
+ * The schema of `structured`, in the shape of the judge's verdict (the Steward's VERDICT_OUTPUT_SCHEMA): two keys
+ * required, the others optional, one of each kind the core uses (an enum without a type, a string, an object, an array
+ * of objects). Codex's strict structured output refused such a schema before any model call, a 400 at 0 tokens, and
+ * both judging sessions of a quest were lost (§11 of 2026-11-14, fix/codex-output-schema).
+ */
+export const FAKE_STRUCTURED_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['result', 'notes'],
+  properties: {
+    result: { enum: ['pass', 'fail'] },
+    fail_kind: { enum: ['work', 'environment'] },
+    notes: { type: 'string', minLength: 1 },
+    hint: { type: 'string' },
+    progress: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['checked_until'],
+      properties: { checked_until: { type: 'string', minLength: 1 } },
+    },
+    breaks: {
+      type: 'array',
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['change', 'red'],
+        properties: { change: { type: 'string', minLength: 1 }, red: { type: 'string', minLength: 1 } },
+      },
+    },
+  },
+} as const;
+/** What a fake character answers in `structured`: the two required keys, every optional one left out. */
+export const FAKE_STRUCTURED_ANSWER = { result: 'pass', notes: 'probe' } as const;
 
 export const isFakeScenario = (value: unknown): value is FakeScenario =>
   typeof value === 'string' && (FAKE_SCENARIOS as readonly string[]).includes(value);

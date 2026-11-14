@@ -5,8 +5,9 @@ import { describe, expect, it } from 'vitest';
 
 import { createFakeRunner } from '../runner/fake-runner.ts';
 import { CONFORMANCE_CHECKS, conformanceChecks, runConformance } from './checks.ts';
-import { FAKE_SCENARIOS } from './scenarios.ts';
+import { FAKE_SCENARIOS, FAKE_STRUCTURED_ANSWER, FAKE_STRUCTURED_SCHEMA } from './scenarios.ts';
 import { SPAWN_PROBE_FAILED, SPAWN_PROBE_OUT } from './spawn-probe.ts';
+import { conformanceRequest } from './workspace.ts';
 import type { FakeRunnerOptions } from '../runner/fake-runner.ts';
 import type { AgentRunner } from '../runner/types.ts';
 import type { ConformanceTarget } from './target.ts';
@@ -43,16 +44,51 @@ describe('the conformance suite', () => {
       'hang',
       'forbidden_command',
       'spawn_child',
+      'structured',
     ]);
   });
 
   it('skips what a runner does not claim', async () => {
-    const reports = await runConformance(fake({ capabilities: { tool_gate: false, usage: false } }));
+    const reports = await runConformance(
+      fake({ capabilities: { tool_gate: false, usage: false, structured_output: false } }),
+    );
     expect(reports.filter(({ outcome }) => outcome !== 'passed')).toEqual([
       { id: 'rate_limit', outcome: 'skipped' },
       { id: 'forbidden_command', outcome: 'skipped' },
+      { id: 'structured', outcome: 'skipped' },
       { id: 'scratch_commit', outcome: 'skipped' },
     ]);
+  });
+
+  it('fails a runner that hands back null for a key the schema leaves optional (fix/codex-output-schema)', async () => {
+    // As runner-codex did before: Codex's strict output fills every key, null for those left out.
+    const inner = createFakeRunner();
+    const nulls: ConformanceTarget = {
+      name: 'nulls',
+      createRunner: (): AgentRunner => ({
+        ...inner,
+        spawn: async (req) => {
+          const session = await inner.spawn(req);
+          const wait = async () => {
+            const result = await session.wait();
+            return { ...result, structured: { ...FAKE_STRUCTURED_ANSWER, fail_kind: null, breaks: null } };
+          };
+          return { ...session, wait };
+        },
+      }),
+    };
+    const check = CONFORMANCE_CHECKS.find(({ id }) => id === 'structured');
+    await expect(check?.run(nulls)).rejects.toThrow(/a key the schema leaves optional came back null/);
+  });
+
+  it('asks a judge for its verdict with the schema and no letter, as the Steward does', () => {
+    const runner = createFakeRunner();
+    const workspace = { root: 'k', plot: 'p', run_dir: 'r', handover: 'h', remove: () => Promise.resolve() };
+    const req = conformanceRequest(workspace, 'structured', runner, fake());
+    expect(req).toMatchObject({ role: 'verifier', structured: FAKE_STRUCTURED_SCHEMA });
+    expect(req.handover).toBeUndefined();
+    expect(req.prompt.system).not.toContain('handover');
+    expect(req.permissions.tools).not.toContain('Edit');
   });
 
   it('fails a runner whose behaviour does not match its claims', async () => {
@@ -65,9 +101,11 @@ describe('the conformance suite', () => {
       'rate_limit',
       'forbidden_command',
       'spawn_child',
+      'structured',
       'scratch_commit',
       'ask',
     ]);
+    expect(reports.find(({ id }) => id === 'structured')?.problem).toContain('gave no structured answer');
     expect(reports.find(({ id }) => id === 'forbidden_command')?.problem).toContain(
       '`git push` was not refused',
     );

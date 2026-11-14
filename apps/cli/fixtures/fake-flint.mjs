@@ -69,13 +69,14 @@ function writeLetter(question) {
 }
 
 /** The end of a turn: finish may ask for one more, in which the letter is written; then the answer and usage. */
-function finish(question) {
+function finish(
+  question,
+  answer = env.FAKE_FLINT_STRUCTURED ?? '{"result":"pass","notes":"Read the diff; every check passes."}',
+) {
   if (hook('finish')?.verdict === 'again') {
     writeLetter(question);
     hook('finish');
   }
-  const answer =
-    env.FAKE_FLINT_STRUCTURED ?? '{"result":"pass","notes":"Read the diff; every check passes."}';
   print({ type: 'text', text: 'done' });
   print({ type: 'usage', tokens: TOKENS });
   if (flag('--json-schema') !== undefined) print({ type: 'result', structured: JSON.parse(answer) });
@@ -97,6 +98,8 @@ const SCENARIOS = {
     shell(core.SPAWN_PROBE_COMMAND);
     return finish();
   },
+  // A judge's verdict under --json-schema (fix/codex-output-schema).
+  structured: () => finish(undefined, JSON.stringify(core.FAKE_STRUCTURED_ANSWER)),
   crash: () => {
     process.stderr.write('flint: internal error\n');
     return 1;

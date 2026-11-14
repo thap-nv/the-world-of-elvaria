@@ -11,8 +11,9 @@
   `probe({ping: false})` only reads them, without calling a model.
 - Ships `createFakeRunner()`: characters that play a scenario in process (`submit`, `crash`, `hang`,
   `rate_limit`, `forbidden_command`, `ask`, `scratch_commit`: a judge in its scratch plot that tries
-  `git commit` then `git push`, P1-20, and `spawn_child`, which runs the suite's spawn probe for real, P1-12e),
-  chosen per spawn by `scenarioOf` or by env `ELVARIA_FAKE_SCENARIO`.
+  `git commit` then `git push`, P1-20, `spawn_child`, which runs the suite's spawn probe for real, P1-12e, and
+  `structured`, a judge's verdict `FAKE_STRUCTURED_ANSWER` handed back as `RunResult.structured` when the request
+  has a schema), chosen per spawn by `scenarioOf` or by env `ELVARIA_FAKE_SCENARIO`.
   It writes the letter, blocks the forbidden push through the policy when it declares `tool_gate`, keeps a
   resumed session id, and records every request for the Steward's tests. Its `probe` answers one result, or one
   per call (a pool that wakes on the second probe).
@@ -89,8 +90,13 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   three `amendment-accepted|rejected|owner.md`), a resumed one with the description as accepted.
 - Runs the conformance suite (`conformanceChecks`, `runConformance`): plain checks with `node:assert`, so a spec
   wraps them in `it` and `elvaria tribe check` (P1-19) runs them too. With a real CLI (`live`) only `capabilities`,
-  `doctor`, `probe`, `submit`, `hang`, `forbidden_command` and `spawn_child` run (a few cheap sessions, a little
-  mana); `crash`, `rate_limit`, `scratch_commit` and `ask` need a fake. `spawn_child` (P1-12e,
+  `doctor`, `probe`, `submit`, `hang`, `forbidden_command`, `spawn_child` and `structured` run (a few cheap
+  sessions, a little mana); `crash`, `rate_limit`, `scratch_commit` and `ask` need a fake. `structured`
+  (fix/codex-output-schema; skipped without `capabilities.structured_output`) asks a judge, as the Steward does (a
+  schema, no letter, read-only), for a verdict under `FAKE_STRUCTURED_SCHEMA`, the verdict's shape with optional
+  keys: the answer must come back with `result` and `notes`, no key outside the schema and no null at any depth,
+  since the core's zod refuses null where a key may only be absent. Codex's strict structured output refused such a
+  schema with a 400 before any model call, which only a real API shows. `spawn_child` (P1-12e,
   `src/conformance/spawn-probe.ts`) puts `elvaria-spawn-probe.mjs` in the plot and asks the session to run
   `node elvaria-spawn-probe.mjs`, which starts a child with piped stdio, as a territory's build and test do, and
   writes what became of it; a sandbox that runs the command but not its child (Codex's unelevated one on Windows,
