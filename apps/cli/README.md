@@ -74,7 +74,10 @@ show` prints the brief apart from the rest of the description and, while the pla
   Chancellor, not sent up yet, named by no command still in the inbox; at most 20, the oldest first), one session of
   `@elvaria/chancellor` for the batch, its commands written with `source: chancellor`; nothing when no letter waits.
   `run` gives the Steward the same as a scheduled job (`triageJob`, `kingdom.schedule.triage`), ready once no session
-  of the Chancellor's tribe runs. `memo show` prints the Chancellor's advice on a letter it sent up; the digest lists
+  of the Chancellor's tribe runs. A Chancellor of a tribe held by its CLI's version gives way to the next one
+  (`pickChancellor`, fix/held-tribe-sessions); with none left the job waits for the hold to end, and `triage` or
+  `say` by hand, which ask the CLIs first (`tribeHoldsOf`), open no session and print the bell's line of each hold
+  with its `tribe check`. `memo show` prints the Chancellor's advice on a letter it sent up; the digest lists
   it as `memo_escalated`; `metrics` counts the letters the owner and the triage decided.
 - `memo list [--all]`, `memo show <memo>`, `memo decide <memo> shelved|rejected|handled [--quest] [--note]` (PS-02,
   `src/memo/`, ADR 0024): the letters (memos) characters wrote about work outside their quests, the open ones
@@ -87,7 +90,8 @@ show` prints the brief apart from the rest of the description and, while the pla
   `decide` offers `accepted` too, and on an amendment its quest waits on lets the quest go on; `metrics` adds the
   amendments; `quest show` names the amendment a quest waits on and who decides it. `elvaria run` gives the Steward the
   amendments' authors as a job on call (`src/amend/`): the Chancellor, or the mage of the plan in the Chancellor's
-  office, one session per amendment once its tribe is free; no author or a failed session hands it to the owner. The
+  office, one session per amendment once its tribe is free and not held by its CLI's version (the Steward's
+  `notices.tribes_held`; held, it waits, writing nothing); no author or a failed session hands it to the owner. The
   mage also reads the `## Summary` of the plan's file while the plan's plot holds it (`planSummariesOf`, shared with
   `quest show`; fix/mage-plan-file).
 - `wake <tribe>` sends `wake` for a tribe of `kingdom.tribes[]`: the Steward probes that account at its next tick
@@ -119,7 +123,8 @@ show` prints the brief apart from the rest of the description and, while the pla
   `--timeout <seconds>` sets another, and a failed check's workspace is kept in `.runs/tribe-check-<tribe>-<stamp>/`.
   A check's temp folder that a process of the CLI still holds past the retries (agy on Windows) is named on stderr
   and left for the owner; the check does not fail for it (`onLeftover`, lessons of 2026-11-12). `run` gives the
-  Steward `toolFound` (`src/run/tool-found.ts`): the CLI each runner starts and its `--version`, or a file gone.
+  Steward `toolFound` (`src/run/tool-found.ts`): the CLI each runner starts and its `--version`, or a file gone;
+  `tribeHoldsOf` asks the same for a command run by hand.
   `tribe disable <id>` stops a tribe taking new work. An owner adapter file is imported only here
   (`src/tribe/adapter-file.ts`): runner-core's `adapterKitOf` builds its kit (minimal env, the pinned or given CLI,
   `launchOf`, `hookCommand`) and `adapterOfModule` checks what `createAdapter(kit)` returns, so a broken file is a

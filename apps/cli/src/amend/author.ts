@@ -6,8 +6,17 @@
 // Nothing here decides: decideAmendment asks, amendmentCommand holds the reply against the delegation.
 import { readFile } from 'node:fs/promises';
 
-import { CHANCELLOR_CLASS, tribeLimitsOf } from '@elvaria/domain';
-import type { Character, Memo, Quest, QuestId, Registry, Territory, TribeId } from '@elvaria/domain';
+import { CHANCELLOR_CLASS, holdOf, tribeLimitsOf } from '@elvaria/domain';
+import type {
+  Character,
+  Memo,
+  Quest,
+  QuestId,
+  Registry,
+  Territory,
+  TribeHold,
+  TribeId,
+} from '@elvaria/domain';
 import type { ChancellorSession } from '@elvaria/chancellor';
 import type { AmendmentContext } from '@elvaria/runner-core';
 import { inKingdom, kingdomLayout, readClassPrompt, readDecree } from '@elvaria/store';
@@ -24,31 +33,64 @@ export interface Waiting {
   readonly quests: readonly Quest[];
 }
 
-/** The author's session and what it reads; `none` when no author may speak now, so the owner decides. */
+/**
+ * The author's session and what it reads; `none` when no author may speak, so the owner decides; `held` when the author
+ * is of a tribe held by its CLI's version (fix/held-tribe-sessions): it speaks once a check passes, nobody else does.
+ */
 export type Authorship =
   | { readonly status: 'ready'; readonly session: ChancellorSession; readonly context: AmendmentContext }
-  | { readonly status: 'none' };
+  | { readonly status: 'none' }
+  | { readonly status: 'held' };
 
-/** The mage the memo names, when it is a character of the kingdom whose tribe runs. */
-async function mageOf(ctx: KingdomContext, runners: Runners, memo: Memo): Promise<Character | undefined> {
-  if (memo.to.author === undefined) return undefined;
+/** Who would author the memo now: a character of a tribe that runs, or why none does. */
+type Author =
+  | { readonly status: 'ready'; readonly character: Character }
+  | { readonly status: 'none' }
+  | { readonly status: 'held' };
+
+/**
+ * The mage the memo names, when it is a character of the kingdom whose tribe runs; one of a held tribe waits for its
+ * check (holdOf), as planTick holds a quest's doer, instead of handing its amendment to the owner.
+ */
+async function mageOf(
+  ctx: KingdomContext,
+  runners: Runners,
+  memo: Memo,
+  holds: readonly TribeHold[],
+): Promise<Author> {
+  if (memo.to.author === undefined) return { status: 'none' };
   const read = await ctx.store.characters.read(memo.to.author);
-  if (!read.ok || read.value.status === 'suspended') return undefined;
-  return runners[read.value.tribe] === undefined ? undefined : read.value;
+  if (!read.ok || read.value.status === 'suspended' || runners[read.value.tribe] === undefined)
+    return { status: 'none' };
+  return holdOf(holds, read.value.tribe) === undefined
+    ? { status: 'ready', character: read.value }
+    : { status: 'held' };
 }
 
 /**
- * The tribe the author speaks on, for a job that waits until that tribe runs no session; undefined when no author
- * may speak (no Chancellor, the mage gone), which needs no tribe.
+ * The tribe the author speaks on, for a job that waits until that tribe runs no session: `none` when no author may
+ * speak (no Chancellor, the mage gone), which needs no tribe; `held` while every author is of a held tribe.
  */
 export async function authorTribeOf(
   ctx: KingdomContext,
   runners: Runners,
   memo: Memo,
-): Promise<TribeId | undefined> {
-  if (memo.to.author !== undefined) return (await mageOf(ctx, runners, memo))?.tribe;
-  const characters = await ctx.store.characters.list();
-  return chancellorOf(runners, characters.items)?.character.tribe;
+  holds: readonly TribeHold[] = [],
+): Promise<{ readonly status: 'ready'; readonly tribe: TribeId } | Exclude<Author, { status: 'ready' }>> {
+  const author =
+    memo.to.author === undefined
+      ? await chancellorAuthor(ctx, runners, holds)
+      : await mageOf(ctx, runners, memo, holds);
+  return author.status === 'ready' ? { status: 'ready', tribe: author.character.tribe } : author;
+}
+
+async function chancellorAuthor(
+  ctx: KingdomContext,
+  runners: Runners,
+  holds: readonly TribeHold[],
+): Promise<Author> {
+  const pick = chancellorOf(runners, (await ctx.store.characters.list()).items, holds);
+  return pick.status === 'chosen' ? { status: 'ready', character: pick.choice.character } : pick;
 }
 
 /** The doer's letter as its run left it; null when it cannot be read. */
@@ -85,8 +127,11 @@ async function mageSpeaking(
   ctx: KingdomContext,
   runners: Runners,
   memo: Memo,
-): Promise<Speaking | undefined> {
-  const mage = await mageOf(ctx, runners, memo);
+  holds: readonly TribeHold[],
+): Promise<Speaking | 'held' | undefined> {
+  const author = await mageOf(ctx, runners, memo, holds);
+  if (author.status === 'held') return 'held';
+  const mage = author.status === 'ready' ? author.character : undefined;
   const registry = await ctx.store.loadRegistry();
   const runner = mage === undefined ? undefined : runners[mage.tribe];
   if (mage === undefined || runner === undefined || !registry.ok) return undefined;
@@ -104,21 +149,28 @@ async function mageSpeaking(
   };
 }
 
-async function speakingOf(ctx: KingdomContext, runners: Runners, memo: Memo): Promise<Speaking | undefined> {
-  if (memo.to.author !== undefined) return mageSpeaking(ctx, runners, memo);
-  const speaker = await speakerOf(ctx, runners, 'amendment');
-  if (speaker === undefined) return undefined;
-  const { session, registry, decree, class_prompt: classPrompt } = speaker;
+async function speakingOf(
+  ctx: KingdomContext,
+  runners: Runners,
+  memo: Memo,
+  holds: readonly TribeHold[],
+): Promise<Speaking | 'held' | undefined> {
+  if (memo.to.author !== undefined) return mageSpeaking(ctx, runners, memo, holds);
+  const found = await speakerOf(ctx, runners, 'amendment', holds);
+  if (found.status !== 'ready') return found.status === 'held' ? 'held' : undefined;
+  const { session, registry, decree, class_prompt: classPrompt } = found.speaker;
   return { session, registry, decree, class_prompt: classPrompt, role: 'chancellor' };
 }
 
-/** Who decides `waiting`, and what it reads; `none` when nobody may. */
+/** Who decides `waiting`, and what it reads; `none` when nobody may, `held` while its author's tribe is held. */
 export async function authorshipOf(
   ctx: KingdomContext,
   runners: Runners,
   { quest, memo, quests }: Waiting,
+  holds: readonly TribeHold[] = [],
 ): Promise<Authorship> {
-  const speaking = await speakingOf(ctx, runners, memo);
+  const speaking = await speakingOf(ctx, runners, memo, holds);
+  if (speaking === 'held') return { status: 'held' };
   if (speaking === undefined) return { status: 'none' };
   const { session, decree, class_prompt: classPrompt, role } = speaking;
   const plan = role === 'mage' ? planOf(quest, quests) : undefined;

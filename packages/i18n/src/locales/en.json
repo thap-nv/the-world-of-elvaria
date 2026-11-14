@@ -809,6 +809,7 @@
     "cli.say.files": "The Chancellor gets the size of the files your words name: {files} in all.",
     "cli.say.graph": "The Chancellor gets what the code graph of {territories} says of your words.",
     "cli.say.no_chancellor": "Nobody can speak as the Chancellor: summon an idle character of class {class} in a tribe that runs, e.g. elvaria character add aldric --class {class} --tribe claude.",
+    "cli.say.chancellor_held": "The Chancellor opens no session: every Chancellor who could speak now is of a held tribe.",
     "cli.say.option.memo": "Hand the Chancellor a letter (memo) instead of, or along with, your words: it drafts quests from it.",
     "cli.say.memo_words": "A letter ({kind}) that {from} wrote while working on quest {quest}: {body} Files: {refs}.",
     "cli.say.memo_hint": "The drafts carry letter {memo}: confirming one of them closes the letter as handled by that quest (elvaria quest confirm <id>).",

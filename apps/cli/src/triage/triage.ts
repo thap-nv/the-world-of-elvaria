@@ -1,12 +1,14 @@
 // `elvaria triage` (PS-03b, implementation-plan §3.16.3): the Chancellor's triage of the memos waiting, run by hand,
 // as the Steward runs it each day before the digest (`kingdom.schedule.triage`). One model call for the batch, none
-// when no memo waits; the commands go to the inbox, and a running Steward applies them at its next tick.
+// when no memo waits; the commands go to the inbox, and a running Steward applies them at its next tick. It asks the
+// tribes' CLIs first, as the Steward does: a Chancellor of a held tribe opens no session (fix/held-tribe-sessions).
 import type { TriageOutcome } from '@elvaria/chancellor';
-import type { DelegationHold } from '@elvaria/domain';
+import type { DelegationHold, TribeHold } from '@elvaria/domain';
 
 import { EXIT } from '../command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { crewOf } from '../run/crew.ts';
+import { tribeHoldsOf } from '../run/tool-found.ts';
 import { reportDropped, reportFailure } from '../say/report.ts';
 import { runTriage } from './run-triage.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
@@ -21,6 +23,11 @@ const NONE = '—';
 export interface TriageDeps {
   /** The runners of the tribes that work now; `crewOf` of `elvaria run`, a scripted runner in the specs. */
   readonly runnersOf: (place: KingdomPlace, io: CliIo) => Runners | Promise<Runners>;
+  /**
+   * The tribes held by their CLI's version (fix/held-tribe-sessions): `tribeHoldsOf`, which asks each CLI as the
+   * Steward does; absent, none (the specs' scripted runners have no CLI).
+   */
+  readonly holdsOf?: (ctx: KingdomContext, runners: Runners) => Promise<readonly TribeHold[]>;
 }
 
 /** What the Chancellor would do with a memo, in the owner's language. */
@@ -49,6 +56,7 @@ function reportSent(ctx: KingdomContext, run: Extract<TriageRun, { status: 'sent
 async function triage(ctx: KingdomContext, deps: TriageDeps): Promise<ExitCode> {
   const runners = await deps.runnersOf({ kingdom: ctx.kingdom, root: ctx.store.root }, ctx.io);
   const run = await runTriage(ctx, runners, {
+    holds: (await deps.holdsOf?.(ctx, runners)) ?? [],
     onListening: (name, count) => {
       ctx.io.out(ctx.t('cli.triage.listening', { name, count }));
     },
@@ -78,4 +86,5 @@ export function triageCommand(deps: TriageDeps): CommandSpec {
 
 export const TRIAGE: CommandSpec = triageCommand({
   runnersOf: async (place, io) => (await crewOf(place, io)).runners,
+  holdsOf: (ctx, runners) => tribeHoldsOf(ctx.kingdom, runners, ctx.io),
 });

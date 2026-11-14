@@ -1,6 +1,6 @@
 // The Steward's `toolFound` port (A1b of the lessons of 2026-11-13): the CLI each tribe's runner starts and what it
 // says with --version; a file gone said as such (Codex after a VS Code update, 2026-11-14), a CLI that does not answer
-// said as nothing.
+// said as nothing; and the holds a command run by hand asks for (fix/held-tribe-sessions).
 import path from 'node:path';
 
 import { KingdomSchema, TribeIdSchema } from '@elvaria/domain';
@@ -10,7 +10,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { fakeTool, foundKingdom, tempDir, testIo } from '../../test/cli.ts';
 import { kingdomJson } from '../../test/lantern.ts';
-import { toolFoundOf } from './tool-found.ts';
+import { toolFoundOf, tribeHoldsOf } from './tool-found.ts';
 import type { TempDir } from '../../test/cli.ts';
 
 const CLAUDE = TribeIdSchema.parse('claude');
@@ -71,5 +71,33 @@ describe('the CLIs the Steward asks before its plan', () => {
     expect(await found(MINE)).toEqual({ path: 'C:/mine/mine.exe', version: '1.0.0' });
     info = { ...info, version: '' };
     expect(await found(MINE)).toBeUndefined();
+  });
+
+  it('holds, for a command run by hand, the tribes the Steward would: enabled, with a CLI and a runner', async () => {
+    const claude = (await fakeTool(path.join(dir.root, 'bin'), 'claude', '2.1.330 (Claude Code)')).replaceAll(
+      '\\',
+      '/',
+    );
+    const gone = `${dir.root.replaceAll('\\', '/')}/gone/agy.exe`;
+    const tool = (file: string, version: string) => ({ path: file, version, auth: 'login' as const });
+    const tribes = kingdom.tribes.map((tribe) => ({
+      ...tribe,
+      enabled: true,
+      tool: tribe.id === CLAUDE ? tool(claude, '2.1.322') : tool(gone, '1.5.8'),
+    }));
+    const runners = {
+      [CLAUDE]: createFakeRunner({ tribe: CLAUDE }),
+      [GEMINI]: createFakeRunner({ tribe: GEMINI }),
+    };
+    expect(await tribeHoldsOf(pinned(tribes), runners, testIo())).toEqual([
+      { tribe: CLAUDE, path: claude, version: '2.1.330', checked: '2.1.322' },
+      { tribe: GEMINI, path: gone, version: undefined, checked: '1.5.8' },
+    ]);
+    // A tribe without a runner, or disabled, opens no session anyway: its CLI is not asked.
+    expect(await tribeHoldsOf(pinned(tribes), { [GEMINI]: runners[GEMINI] }, testIo())).toEqual([
+      { tribe: GEMINI, path: gone, version: undefined, checked: '1.5.8' },
+    ]);
+    const off = tribes.map((tribe) => ({ ...tribe, enabled: tribe.id !== GEMINI }));
+    expect(await tribeHoldsOf(pinned(off), runners, testIo())).toHaveLength(1);
   });
 });

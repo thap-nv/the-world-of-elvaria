@@ -4,7 +4,8 @@
 // the Steward holds the tribe until `tribe check` pins the CLI now installed and the Steward restarts.
 import { stat } from 'node:fs/promises';
 
-import type { Kingdom, ToolFound, TribeId } from '@elvaria/domain';
+import { versionHoldsOf } from '@elvaria/domain';
+import type { Kingdom, ToolFound, TribeHold, TribeId } from '@elvaria/domain';
 import type { AgentRunner } from '@elvaria/runner-core';
 import { fromPortable, toPortable } from '@elvaria/store';
 
@@ -25,6 +26,26 @@ async function adapterFileFound(runner: AgentRunner | undefined, io: CliIo): Pro
   return info === undefined || info.version === '' || info.path === ''
     ? undefined
     : { path: toPortable(info.path, io.platform), version: info.version };
+}
+
+/**
+ * The tribes held now, asked as the Steward asks before its plan (fix/held-tribe-sessions): a command run by hand that
+ * opens a session outside planTick (`elvaria say`, `elvaria triage`) has no Steward's book to read, so it asks the
+ * same CLIs once: the enabled tribes with a pinned CLI and a runner, as tribe-versions.ts of the Steward does.
+ */
+export async function tribeHoldsOf(
+  kingdom: Kingdom,
+  runners: Readonly<Partial<Record<TribeId, AgentRunner>>>,
+  io: CliIo,
+): Promise<TribeHold[]> {
+  const ask = toolFoundOf(kingdom, runners, io);
+  const tribes = kingdom.tribes.filter(
+    (tribe) => tribe.enabled && tribe.tool !== undefined && runners[tribe.id] !== undefined,
+  );
+  const answers = await Promise.all(tribes.map(async ({ id }) => [id, await ask(id)] as const));
+  const found: Partial<Record<TribeId, ToolFound>> = {};
+  for (const [id, answer] of answers) if (answer !== undefined) found[id] = answer;
+  return versionHoldsOf(kingdom.tribes, found);
 }
 
 /** The Steward's `toolFound` port (StewardDeps), over the tribes and runners `elvaria run` started with. */
