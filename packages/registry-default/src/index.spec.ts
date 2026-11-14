@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
 import {
+  PLAN_FILE_SECTIONS,
   QuestDraftFileSchema,
   QuestDraftSchema,
   ScriptsFileSchema,
@@ -164,6 +165,20 @@ describe('the default registry', () => {
     for (const { drafts } of examples)
       expect(planIssuesOf(drafts, { territories: [territory], context_budget_tokens: 120_000 })).toEqual([]);
     expect(mage).toContain('## Summary');
+  });
+
+  // PS-06b (c): the subquests check holds the plan file to PLAN_FILE_SECTIONS; the mage hears it before a return.
+  it('gives the plan file the headings the subquests check holds it to, and says the machine checks them', () => {
+    const mage = readFileSync(path.join(REGISTRY_ROOT, 'prompts/mage.md'), 'utf8').replace(
+      /<!--[\s\S]*?-->/,
+      '',
+    );
+    const template = /```markdown\n([\s\S]*?)```/.exec(mage)?.[1] ?? '';
+    const headings = [...template.matchAll(/^## (.+)$/gm)].map(([, heading]) => heading);
+    expect(headings).toEqual(PLAN_FILE_SECTIONS.map(({ heading }) => heading));
+    expect(mage).toContain(
+      'a machine check reads the `plans/*.md` files this quest changed and fails the quest unless one of them has all six headings above, each with text under it',
+    );
   });
 
   // P1-45, P1-37 (g): a part told to run `pnpm test:integration`, an exclusive check of dc1, was refused.
