@@ -277,7 +277,8 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
 - Writes the lines only a CLI's output knows (`openRunLog`): `agent.session.end`, `agent.subagent.*`,
   `mana.signal`, stamped and redacted like the hook's, checked by `EventSchema`, to the log and the journal; and
   tells whether Elvaria's SessionStart hook recorded a session (`recorded`). Keeps a CLI's raw stdout and stderr
-  in `.runs/`, redacted (`openRunOutput`).
+  in `.runs/`, redacted (`openRunOutput`); a file that cannot be written loses only its own lines, never ends the
+  process: stdout.jsonl's error is a note in stderr.log (fix/session-notes).
 - Code graphs (PS-21, ADR 0029, `src/graph/`): `buildGraph` runs graphify `update <source> --no-cluster` with
   `graphEnvOf`'s fixed env (`GRAPHIFY_BACKEND=none`, no query log, no skill refresh, `PYTHONHASHSEED=0`, no `.pyc`,
   `GRAPHIFY_OUT`) from a detached worktree of the territory (`.state/graphs/<territory>/source`) into
@@ -336,6 +337,8 @@ caller's `GIT_*` (`src/__fixtures__/git-repo.ts`), and one spec proves a `GIT_DI
 The `src/process/` specs kill real node process trees (`src/__fixtures__/tree.ts`: a node that starts an idle
 grandchild) on this machine: the CI matrix, started by hand since 2026-11-10, runs them on Windows and macOS, and the
 SIGTERM-then-SIGKILL case on POSIX only.
+`src/runner/run-output.spec.ts` (fix/session-notes) puts a folder where each output file should be, which macOS
+refuses to open and Windows to write, and removes the run folder before the files open: no error escapes.
 (P1-54) `src/checks/run-checks-environment.spec.ts` and `trial-environment.spec.ts` hold the territory's exclusive
 lock from the spec to show a reset, a cleanup and an exclusive check waiting for it, and print Docker's lines from
 fake checks to show a failing check, a reset and a rerun told apart as their environment's;
