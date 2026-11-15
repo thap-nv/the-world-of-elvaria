@@ -50,6 +50,12 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
 - Asks for the handover letter in `Stop` (ADR 0010): an assignee whose `quests/<id>/handover.md` is missing or
   unchanged since the attempt started is blocked at most twice per session, then let through with an
   `agent.notification` for the verifier.
+- Passes the soft-ceiling reminder of (F) (`src/wrap-up.ts`): when the Steward has written `<run_dir>/wrap-up.json`
+  (v1: `measure`, `used`, `limit`, `pct`), an assignee's next Claude Code `PostToolUse` that no other decision
+  answered gets `hookSpecificOutput.additionalContext` ("start no new work, commit, write the handover letter, end
+  the session"), once per session (a marker in `hook/wrap-up-reminded/`), never for an apprentice's call. Only the
+  tribes `plans/phase-2-probes/hook-reminder.md` concluded `có` for have a route: Codex and agy (`chưa rõ`) and the
+  neutral dialect get nothing, and the hard cut does the work. A missing or damaged file is silent.
 - Writes each line in the order §3.6 fixes: stamp (`createStamper` of the event log; the process sets `TZ` to
   the kingdom's zone) → `redactDeep` → long strings cut with `…[truncated]` until the line fits 64 KiB → append to
   `events/<day>.jsonl` and `quests/<id>/journal.jsonl`. The redactor masks the session's secret values first
@@ -89,7 +95,7 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
   gate. One class gate (`src/class-gate.ts`) serves agy, Codex and the dialect alike, so a class without a shell asks
   the code graph on Codex too. docs/guides/adding-a-tribe.md §2.3 has the fields.
 - Keeps what it must remember between calls in `.runs/<quest>-<n>/hook/` (handover fingerprint at start, Stop
-  reminders per session), one small versioned JSON file per concern.
+  reminders per session, wrap-up reminders per session), one small versioned JSON file per concern.
 - Code graph (PS-21, `src/graph.ts`): in both branches and for every class, refuses every graphify call but the
   policy's `graph_commands` (`query`, `path`, `explain`, `affected`) with the options that only shape the answer
   (`--graph`, `--backend` and any other refused), and any graphify call when the policy grants none; a class without
