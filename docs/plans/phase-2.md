@@ -42,6 +42,8 @@ Cột "Đổi so với 2026-11-10" ghi chỗ khác bản gốc. Số hiệu gi�
 
 Task `PS-…` của chặng tự cường xen vào giai đoạn 2 (đã có dòng ở §8, không đổi): PS-08 giao hàng tới merge và PS-11 nghi thức xem ảnh ở đầu giai đoạn; PS-09 hàng đợi merge sau PS-08; PS-10 thư `request` (thư `objection` đã chuyển lên giai đoạn 1.5 thành PS-22, chủ nhân chốt 2026-11-12); PS-12 Đền bản đầu; PS-13 bí kíp vào phiên; PS-18 tính cách.
 
+(Chủ nhân chốt 2026-11-15, §11) PS-08 và PS-11 đã có mục chi tiết ở [phase-2-wave-0.md](phase-2-wave-0.md) và chia thành task con: PS-08, PS-08c, PS-08d, PS-08e, PS-08f; PS-11a, PS-11, PS-11b. P2-02 nhận thêm một điều kiện xong chuyển từ PS-11: một quest giao diện thật mang tag `visual` bị trả về khi ảnh lệch thiết kế. Muốn vậy lãnh thổ Elvaria cần một check chụp ảnh ghi ảnh chụp và ảnh tham chiếu (dựng từ mockup của `design/`) vào `ELVARIA_SCREENS_DIR`.
+
 (Chủ nhân chốt 2026-11-12) **Tộc là danh sách mở.** Mọi màn của giai đoạn 2 vẽ tộc từ `kingdom.tribes[]` và `tribeLookOf` (PS-24 của giai đoạn 1.5): huy hiệu, khung chân dung, bảng màu, số thanh mana và chú giải theo số tộc đang có. Thiết kế v0.2 có hai màu tộc và hai thanh mana; P2-02 nhập nó rồi mở ra cho số tộc bất kỳ, P2-04 và P2-07 không mặc định hai tộc.
 
 ## 4. Thứ tự đề xuất
