@@ -190,7 +190,9 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   the territory, PS-08e, its base branch follows the parts: `mergeAll` merges the commit `forkPoint` gives, fetched
   first when there is a remote, unless HEAD holds it, and once git started that merge, clean or stopped on a conflict,
   `movePlotBase` makes the plot count from it and sets it up again, so `touched`, the judge's diff and the coverage
-  base never count what main changed on its own; setup waits while a merge is in progress),
+  base never count what main changed on its own; setup waits while a merge is in progress; with `{dependencies: true}`,
+  fix/council-run-gaps (d), `mergeDependencies` merges a quest's dependencies that exist into a plot with no work of
+  its own yet, undoes one that stops, and moves the plot's base past them),
   `unmerged` (the branches HEAD does not hold; given the territory, its base branch while HEAD lacks the record's
   base) and `release`
   (removes a clean worktree, keeps the branch, takes the folders git leaves on Windows around pnpm's dead

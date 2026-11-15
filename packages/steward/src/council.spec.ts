@@ -48,7 +48,8 @@ const planPayload = (title: string, fields: Record<string, unknown> = {}) =>
   questPayload(title, { kind: 'plan', class_required: 'mage', tags: ['backend'], ...fields });
 
 async function open(files: Readonly<Record<string, string>>) {
-  current = await bench({ cast: [...CAST, ...MAGES] });
+  // A scout for the research part: a plan names only classes the kingdom has (fix/council-run-gaps (c)).
+  current = await bench({ cast: [...CAST, ...MAGES, { id: 'skye', cls: 'scout' }] });
   const kingdom = current;
   const leaves = (req: { readonly quest?: Quest }) => {
     const text = files[req.quest?.title ?? ''];
@@ -81,6 +82,11 @@ describe('the subquests check holds a plan to planIssuesOf (PS-06)', () => {
           }),
         ),
         '- d1: "## Steps" has no numbered step',
+      ],
+      // fix/council-run-gaps (c), (145): the phase-2 plan's d4 asked for a dwarf, and the kingdom had none.
+      'A part for a class nobody has': [
+        list(draft('d1', ['apps/api/**'], { class_required: 'dwarf' })),
+        '- d1 asks for class dwarf, which no character of the kingdom has that is not suspended',
       ],
     };
     const { kingdom, steward } = await open(

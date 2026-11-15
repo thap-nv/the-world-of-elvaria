@@ -314,7 +314,8 @@
   its class (`registry/<class.prompt_file>`, as every session's does), and where the last judge of the run
   stopped when it left a `partial` verdict, and (PS-05) the files the work changed outside the quest's `scope_paths`,
   the territory's `shared_paths` aside (`src/sessions/out-of-scope.ts`, matched with `globToRegExp`), which the
-  `quest.submitted` line carries too as `out_of_scope`: a signal for the judge, never a fail. Gives the plot back when a quest is archived (`Plots.release`; a
+  `quest.submitted` line carries too as `out_of_scope`: a signal for the judge, never a fail; a plan quest's plan
+  file and `subquests.json` never count (fix/council-run-gaps (b)). Gives the plot back when a quest is archived (`Plots.release`; a
   dirty worktree stays, with a warning).
 - Runs the script tier itself (§2.5, §3.12, ADR 0017; `src/script/`): a `create_quest` whose `script.params` do
   not fit the catalog's `params_schema` is refused (`invalid_script_params`); an open script-tier quest is claimed
@@ -349,7 +350,10 @@
   opens none. Then the contract's `subquests.json` leaves its branch in a commit of its own (`closeContract`),
   since every branch of the party starts from it. A new plot starts on the branch its quest builds on (domain's
   `plotBaseOf` → `Plots.prepare({from})`): a part on its contract's (or a part it waits for), a quest on a
-  dependency done but not merged yet (P1-16 (f)). The merge quest's first run is the machine's (`party/machine.ts`,
+  dependency done but not merged yet (P1-16 (f)), with its other dependencies merged in before each session of its
+  assignee when it has two or more (fix/council-run-gaps (d), `Plots.merge` with `{dependencies: true}`; a stop is
+  undone and logged, no bell). A plan's sub-quest that waits for no part waits for the plan quest itself, and once
+  they are open the plan's branch loses `subquests.json` as a contract's does (`closeContract`). The merge quest's first run is the machine's (`party/machine.ts`,
   P1-18 (h)): claimed with no assignee, its parts merged in, submitted to the checks and a judge with no knight's
   session; a merge that stops is released (the conflict stays in progress in the plot) and a knight takes the next
   run, as after a judge fails the machine's. Before each session of the merge quest's knight, never a

@@ -118,9 +118,9 @@ async function deliverQuest(ctx: Context, quest: Quest): Promise<Result<Quest, s
   });
   if (moved.ok && done.value.subquests?.status === 'refused')
     await refusedPlan(ctx, moved.value, done.value.subquests.reason);
-  // A party's branches start from the contract's: its list goes before any part's worktree is made (P1-18).
-  if (moved.ok && done.value.subquests?.status === 'opened' && quest.party_role === 'contract')
-    await closeContract(ctx, moved.value);
+  // A party's branches start from the contract's, and any plan's sub-quests from the plan's (fix/council-run-gaps (d)):
+  // its list goes before any of their worktrees is made (P1-18), so no branch takes it to the default branch.
+  if (moved.ok && done.value.subquests?.status === 'opened') await closeContract(ctx, moved.value);
   return moved;
 }
 

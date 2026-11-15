@@ -17,7 +17,7 @@ import type { Drift } from './drift.ts';
 import { filesIn, prepareFolder } from './folder.ts';
 import { gitOf } from './git.ts';
 import { mergeAll, unmergedWithBase } from './merge.ts';
-import type { BaseBranch, MergeOutcome } from './merge.ts';
+import type { BaseBranch, MergeOptions, MergeOutcome } from './merge.ts';
 import { NO_PATCH, applyPatchIn } from './patch.ts';
 import type { CommitRescue } from './rescue.ts';
 import type { PatchOutcome } from './patch.ts';
@@ -111,12 +111,13 @@ export interface PlotManager {
    * Optional for a stand-in manager of a spec; createPlotManager has it.
    */
   drift?(plot: Plot, from: string): Promise<Drift | null>;
-  /**
-   * A party's merge quest, before each session (P1-18): merges each of `branches` its worktree does not hold, in
-   * order, until one stops on a conflict (left in progress for the character), then `base`'s base branch (mergeAll,
-   * PS-08e); nothing for a plot without git.
-   */
-  merge(plot: Plot, branches: readonly string[], base?: BaseBranch): Promise<MergeOutcome>;
+  /** Before a session: a merge quest's parts, then `base` (mergeAll), or a quest's dependencies (P1-18, PS-08e). */
+  merge(
+    plot: Plot,
+    branches: readonly string[],
+    base?: BaseBranch,
+    options?: MergeOptions,
+  ): Promise<MergeOutcome>;
   /** The branches of `branches` the plot does not hold, `base`'s too (P1-18, PS-08e); all for a plot without git. */
   unmerged(plot: Plot, branches: readonly string[], base?: BaseBranch): Promise<string[]>;
   /** Only when the quest is archived: removes the worktree, keeps the branch. */
@@ -280,9 +281,9 @@ export function createPlotManager(options: PlotManagerOptions): PlotManager {
     },
     drift: async (plot, from) =>
       plot.type === 'worktree' ? driftIn(await git(), worktreeOf(plot), from) : null,
-    merge: async (plot, branches, base) =>
+    merge: async (plot, branches, base, how) =>
       plot.type === 'worktree' && plot.branch !== undefined
-        ? mergeAll(await git(), worktreeOf(plot), plot.branch, branches, base)
+        ? mergeAll(await git(), worktreeOf(plot), plot.branch, branches, base, how)
         : { merged: [], pending: [...branches] },
     unmerged: async (plot, branches, base) =>
       plot.type === 'worktree'
