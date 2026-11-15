@@ -23,7 +23,8 @@ export async function madeProgress(
 ): Promise<boolean> {
   if (wip?.status === 'committed') return true;
   const plot = ctx.world.quests.get(running.quest)?.plot;
-  if (plot === undefined || running.head === undefined) return false;
+  // A tip git could not name at the start is no baseline: a later look would read an old commit as new.
+  if (plot === undefined || running.head === undefined || running.head === null) return false;
   const head = await branchHeadOf(ctx, plot);
   return head !== null && head !== running.head;
 }
