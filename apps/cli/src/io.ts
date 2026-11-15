@@ -3,6 +3,7 @@
 import type { Clock, RandomSource } from '@elvaria/domain';
 
 export type Env = Readonly<Record<string, string | undefined>>;
+export type Fetch = typeof globalThis.fetch;
 
 export interface CliIo {
   /** One line the owner reads (stdout). */
@@ -26,4 +27,6 @@ export interface CliIo {
   /** Resolves when the owner stops a long-running command (Ctrl+C, SIGTERM): `elvaria run` then stops the Steward. */
   readonly untilStopped: () => Promise<void>;
   readonly random: RandomSource;
+  /** HTTP to a forge (PS-08: `doctor` asks GitHub whether the owner's credential may push); tests pass a fake. */
+  readonly fetch: Fetch;
 }

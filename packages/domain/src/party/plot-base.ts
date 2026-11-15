@@ -2,7 +2,8 @@
 // contain, decided from the quests alone; runner-core's PlotManager asks git which of them the default branch
 // already holds. A part starts from the contract's branch, so every member of a party sees the same contract; the
 // merge quest starts there too and gets every part merged in, the blind trial's acceptance part among them, which
-// starts on the contract's branch alone (P1-21). Any other quest starts from the branch of a dependency
+// starts on the contract's branch alone (P1-21), then the territory's base branch (PS-08e). Any other quest starts
+// from the branch of a dependency
 // done but not merged yet (P1-16 proposal (f): two chained sub-quests editing one file no longer fork from the same
 // main and conflict when the owner merges the second).
 import type { QuestId } from '../core/ids.ts';
@@ -16,6 +17,11 @@ export interface PlotBase {
   readonly from: readonly string[];
   /** Branches merged into the plot before each session, each one unless it is in already: a merge quest's parts. */
   readonly merge: readonly string[];
+  /**
+   * A merge quest's (PS-08e): after the parts, the territory's base branch is merged too, so the party meets the base
+   * branch as it is now before its checks and its judge, not when the owner delivers it. Absent for any other quest.
+   */
+  readonly base?: true;
 }
 
 /** The branch of quest `id` when it has a worktree on the quest's own territory; none for any other plot. */
@@ -38,7 +44,7 @@ export function plotBaseOf(quest: Quest, quests: readonly Quest[]): PlotBase {
     return { from: branchesOf(quest, quest.depends_on, quests), merge: [] };
   const contract = branchesOf(quest, [party], quests);
   if (quest.party_role === 'merge')
-    return { from: contract, merge: branchesOf(quest, quest.depends_on, quests) };
+    return { from: contract, merge: branchesOf(quest, quest.depends_on, quests), base: true };
   // The blind trial's acceptance part (§3.15, P1-21): the contract and nothing of the parts' work, whatever it waits for.
   if (quest.party_role === 'acceptance') return { from: contract, merge: [] };
   // A part waits for the acceptance part (P1-37 (iii)) but never starts on its tests: they fail until the merge.

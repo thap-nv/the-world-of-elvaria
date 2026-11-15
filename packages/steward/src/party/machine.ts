@@ -1,17 +1,18 @@
 // The machine's run of a party's merge quest (implementation-plan §2.5, §3.13; P1-18 proposal (h)): when every part
 // merges cleanly a knight's session would change nothing, so the Steward makes the first run itself, as it runs a
 // script: claimed with no assignee, the plot prepared on the contract's branch and started, the parts merged in, then
-// submitted to the checks (every one of the territory, and `party`) and to a judge from outside the party; parts that
-// changed a protected path make it ask for the stronger judge, as a knight's submit would (PS-04). A merge
-// that stops (a conflict, a hook) is released instead, the merge left in progress in the plot: a knight takes the
-// next run, as it does after a judge fails the machine's (`review.verdict_fail.machine_retry`).
-import { err, ok, plotBaseOf, protectedMarkOf } from '@elvaria/domain';
+// the territory's base branch (PS-08e), then submitted to the checks (every one of the territory, and `party`) and to
+// a judge from outside the party; parts that changed a protected path make it ask for the stronger judge, as a
+// knight's submit would (PS-04), what the base branch changed on its own never does. A merge that stops (a conflict
+// with a part or the base branch, a hook) is released instead, the merge left in progress in the plot: a knight takes
+// the next run, as it does after a judge fails the machine's (`review.verdict_fail.machine_retry`).
+import { err, ok, protectedMarkOf } from '@elvaria/domain';
 import type { Quest, QuestId, Result } from '@elvaria/domain';
 
 import { moveAndRing } from '../notices.ts';
 import { protectedChangesIn } from '../sessions/commit.ts';
 import { questSecretsOf } from '../sessions/secrets.ts';
-import { noteMerge, plotOptionsOf } from './plot.ts';
+import { mergesOf, noteMerge, plotOptionsOf } from './plot.ts';
 import type { Context } from '../context.ts';
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
@@ -46,8 +47,9 @@ export async function mergeByMachine(ctx: Context, id: QuestId): Promise<Result<
     before: { plot: plot.value },
   });
   if (!started.ok) return started;
-  const { merge } = plotBaseOf(started.value, [...ctx.world.quests.values()]);
-  const outcome = await ctx.deps.plots.merge(plot.value, merge);
+  // The parts, then the base branch (PS-08e): the checks and the judge see the party against main as it is now.
+  const { branches, base } = mergesOf(ctx, started.value);
+  const outcome = await ctx.deps.plots.merge(plot.value, branches, base);
   await noteMerge(ctx, started.value, outcome);
   if (outcome.stop === undefined) {
     const mark = protectedMarkOf(started.value, await protectedChangesIn(ctx, started.value));

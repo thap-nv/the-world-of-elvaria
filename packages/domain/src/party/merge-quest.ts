@@ -1,8 +1,8 @@
 // The merge quest of a party (implementation-plan §3.13 step 3, ADR 0020): the Steward makes it itself when the
 // contract quest is delivered, beside the parts, so a party never depends on its lead remembering it. It waits for
-// every part, merges their branches on the contract's (the Steward does the merging, and makes the first run itself,
-// machine-merge.ts), runs every check of the territory and always waits for the royal seal: it is what the owner
-// merges into the main branch. In a blind trial the acceptance part is one of its parts (§3.15, P1-21).
+// every part, merges their branches on the contract's, then the territory's base branch (PS-08e; the Steward does the
+// merging, and makes the first run itself, machine-merge.ts), runs every check of the territory and always waits for
+// the royal seal: it is what the owner merges into the main branch. In a blind trial the acceptance part is one of its parts (§3.15, P1-21).
 import { QUEST_TAGS_MAX } from '../constants.ts';
 import { clipTitle, contractPathOf, highestRank, unionOf } from './party-quest.ts';
 import type { ClassId, KindId } from '../core/ids.ts';
@@ -35,6 +35,7 @@ function descriptionOf(contract: Quest, parts: Parts, path: string): string {
   return [
     `The merge quest of party ${contract.id} («${contract.title}»): one branch holding the contract (\`${path}\`) and every part below, checked as a whole. Each part was judged on its own already.`,
     `The Steward merges these part branches into this branch, one by one, before every run:\n${branches}`,
+    "Once every part is in, the Steward merges the territory's base branch too, as it is now, so a conflict with it shows before your judge and the royal seal, not when the work is delivered. Resolve such a conflict so that the party's work fits the base branch as it is now: keep both the parts' changes and the base branch's.",
     'When they all merge cleanly the Steward submits the merge itself, and a knight is called only when a merge stops or the checks or the judge fail it. When a merge stops on a conflict it is left in progress: `git status` names the conflicted files. Resolve them so that every part keeps to the contract, `git add` them and `git commit` to conclude the merge. A part not merged yet is merged before your next session.',
     'Then make every check of the territory pass on the merged branch: they all run before your judge, integration and e2e included. Change only what the merge needs; a verdict that sent the quest back is in front of you.',
     ...acceptanceNote(parts),
