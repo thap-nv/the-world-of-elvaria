@@ -8,6 +8,7 @@
 // (P1-25): a quest whose machine work still runs gets nothing more until it ends, and no more of them start than
 // dispatch.max_background leaves room for (P1-47), short work beside the trials included (background-room.ts, P1-54).
 import { breakersOf, measureOf } from '../breaker/breakers.ts';
+import { calibrationOf } from '../breaker/calibration.ts';
 import { machineMergeDue } from '../party/machine-merge.ts';
 import { questFinished } from '../quest/finished.ts';
 import { startingNow } from './background-room.ts';
@@ -144,6 +145,7 @@ const heldPastBreakers = (
     { ...snapshot.kingdom.breakers, characters, tribes: snapshot.kingdom.tribes },
     now,
     measureOf(characters, snapshot.limits),
+    calibrationOf(snapshot.quests, characters, snapshot.kingdom),
   );
 
 /** The plan of this tick; `now` dates the claims for the round-robin over territories. */

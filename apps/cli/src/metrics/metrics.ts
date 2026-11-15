@@ -1,7 +1,7 @@
 // `elvaria metrics [--since <day>] [--until <day>] [--json]`: the metrics ledger of the kingdom (implementation-plan
 // §3.16.1, ADR 0027). It only reads files, so it runs beside a Steward or without one, and spends no mana. (PS-06b)
 // `--plan <quest>`: instead of the ledger, how a plan quest's sub-quests went against its plan (§3.16.6).
-import { metricsOf, planAccuracyOf } from '@elvaria/domain';
+import { calibrationOf, metricsOf, planAccuracyOf } from '@elvaria/domain';
 import type { MetricsWindow } from '@elvaria/domain';
 
 import { flagOption, textOption } from '../args.ts';
@@ -14,6 +14,7 @@ import { metricsSections } from './view.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { MetricsSource } from './read.ts';
 import type { MetricsSection } from './view.ts';
+import type { KingdomContext } from '../kingdom-context.ts';
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 const JSON_INDENT = 2;
@@ -50,7 +51,12 @@ function printSections(cli: CliContext, sections: readonly MetricsSection[]): vo
 }
 
 /** The plan's accuracy, or the usage error of a quest that is not there or is no plan (PS-06b). */
-function printPlan(input: CommandInput, ctx: CliContext, source: MetricsSource, id: string): ExitCode {
+async function printPlan(
+  input: CommandInput,
+  ctx: KingdomContext,
+  source: MetricsSource,
+  id: string,
+): Promise<ExitCode> {
   const accuracy = planAccuracyOf(source.input, id);
   if (!accuracy.ok) {
     const { error } = accuracy;
@@ -62,7 +68,17 @@ function printPlan(input: CommandInput, ctx: CliContext, source: MetricsSource, 
     return EXIT.usage;
   }
   if (flagOption(input, 'json') === true) ctx.io.out(JSON.stringify(accuracy.value, null, JSON_INDENT));
-  else printSections(ctx, planSections(ctx.t, accuracy.value));
+  else {
+    const characters = await ctx.store.characters.list();
+    for (const { file, message } of characters.issues)
+      ctx.io.err(ctx.t('cli.metrics.skipped', { where: `${file}: ${message}` }));
+    const calibration = calibrationOf(
+      source.input.quests,
+      new Map(characters.items.map((character) => [character.id, character])),
+      ctx.kingdom,
+    );
+    printSections(ctx, planSections(ctx.t, accuracy.value, calibration));
+  }
   return EXIT.ok;
 }
 

@@ -349,6 +349,9 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   `tokenCeilingOf` and `turnCeilingOf` accept that tribe's result as an optional fourth argument. Without it,
   callers keep the existing ceilings. With it, tokens use estimate times factor, the existing rank floor, and
   an explicit budget raised above the creation budget as another floor; the verifier multiplier applies last.
+  `breakersOf` and `wrapUpsOf` accept an optional calibration map after the measure, selecting the entry by the
+  session holder's tribe; without an entry they keep their existing behavior. `planTick` computes the map from
+  the snapshot's quests and characters each time. Session ends preserve optional `turns` in the attempt log.
   Pass current `context_budget_tokens` and `mana_multiplier` through `SessionRules` for nondefault kingdom settings.
 
 ## Does not

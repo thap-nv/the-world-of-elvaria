@@ -4,7 +4,7 @@
 // session continues its CLI session (`--resume`, ADR 0017). Its load trace comes along for the opening line (PS-01b).
 import { mkdir } from 'node:fs/promises';
 
-import { FAIL_KINDS, runDirOf, turnCeilingOf } from '@elvaria/domain';
+import { FAIL_KINDS, calibrationOf, runDirOf, turnCeilingOf } from '@elvaria/domain';
 import { secretValuesOf, toolPolicyOf } from '@elvaria/runner-core';
 import { inKingdom } from '@elvaria/store';
 import type { LoadTrace } from '@elvaria/domain';
@@ -74,11 +74,13 @@ function budgetOf(ctx: Context, input: SessionInput): SpawnRequest['budget'] {
   const { quest, character, role } = input;
   const { breakers, tribes } = ctx.world.kingdom;
   const holder = role === 'assignee' ? { assignee: character.id } : { verifier: character.id };
-  const turns = turnCeilingOf({ ...quest, ...holder }, role, {
-    ...breakers,
-    characters: new Map([[character.id, character]]),
-    tribes,
-  });
+  const calibration = calibrationOf([...ctx.world.quests.values()], ctx.world.characters, ctx.world.kingdom);
+  const turns = turnCeilingOf(
+    { ...quest, ...holder },
+    role,
+    { ...breakers, characters: ctx.world.characters, tribes },
+    calibration.get(character.tribe),
+  );
   const hard = breakers.hard_pct;
   return {
     max_turns: Math.round((turns * hard) / PERCENT),
