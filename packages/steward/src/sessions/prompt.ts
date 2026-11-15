@@ -8,7 +8,7 @@ import { partialVerdictIdOf, shellOf, verifierSessionsOf } from '@elvaria/domain
 import { buildPrompt, readContextFiles, resumedPrompt } from '@elvaria/runner-core';
 import { readClassPrompt } from '@elvaria/store';
 import type { Character, CharacterClass, LoadTrace, PlanLink, Quest, Skill, Verdict } from '@elvaria/domain';
-import type { BuiltPrompt, PromptGraph, PromptWithBlocks } from '@elvaria/runner-core';
+import type { Answered, BuiltPrompt, PromptGraph, PromptWithBlocks } from '@elvaria/runner-core';
 
 import { handoverPath, readDecree, readHandover, readScriptures } from '../files.ts';
 import { objectionFor } from '../memos/objection.ts';
@@ -147,6 +147,16 @@ export interface SessionPrompt {
 }
 
 /**
+ * What a resumed session reads after the answer: the work the Steward refused once it ended, which the cut prompt
+ * leaves out with the continuation, though the session never saw it (fix/session-notes).
+ */
+function answeredOf(resume: Resume, continuation: SessionInput['continuation']): Answered | null {
+  if (resume.answered === null || continuation === undefined || continuation === null) return resume.answered;
+  const { refused_patch: patch, refused_commit: commit } = continuation;
+  return { ...resume.answered, refused_patch: patch, refused_commit: commit };
+}
+
+/**
  * The prompt of the session, cut down when it resumes a CLI session (`resume`, ADR 0017). Its blocks go into the load
  * trace, not to the CLI: the request's prompt is the system and the user part alone.
  */
@@ -158,7 +168,8 @@ export async function promptOf(
 ): Promise<SessionPrompt> {
   const parts = { ...given, scriptures: await readScriptures(ctx.root, input.character.id), skills: [] };
   const built = await builtPromptOf(ctx, input, parts);
-  const prompt = resume === null ? built : resumedPrompt(built, resume.answered, ctx.templates);
+  const prompt =
+    resume === null ? built : resumedPrompt(built, answeredOf(resume, input.continuation), ctx.templates);
   const skills = parts.skills.map(({ id }) => id);
   return {
     prompt: { system: prompt.system, user: prompt.user },

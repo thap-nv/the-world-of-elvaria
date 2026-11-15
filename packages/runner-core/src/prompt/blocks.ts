@@ -7,9 +7,11 @@ import { checksAheadBlock, failedChecksBlock } from './checks.ts';
 import { memoryBlock } from './memory.ts';
 import { finalVerdictBlock } from './objection.ts';
 import { readSentence } from './read-sentence.ts';
+import { refusedWorkBlock } from './refused-work.ts';
 import { fenced, fill, joinBlocks, withoutNotes } from './templates.ts';
 import type { PromptCheck } from './checks.ts';
 import type { Memory } from './memory.ts';
+import type { RefusedWork } from './refused-work.ts';
 import type { ToolPolicy } from '../policy/tool-policy.ts';
 import type { PromptTemplates } from './templates.ts';
 import { scopeFacts } from './scope.ts';
@@ -31,8 +33,9 @@ export type { Memory } from './memory.ts';
  * Continuing an assignee's work in a fresh session (§10 question 4): after a failed verdict, or a revival. A return
  * may carry the verdict's checks with the end of each failing one's log, masked by the caller (P1-10b); without
  * them the prompt names the verdict's failing checks alone. Either may say why the Steward refused the patch the
- * run before this one wrote (P1-31): the reason is otherwise only in the quest's infirmary line and the bell, and the
- * session would hand the same patch in again.
+ * run before this one wrote (P1-31), and a revival after the decision on the doer's amendment why git refused the
+ * commit of its work (fix/session-notes): the reason is otherwise only in the quest's journal and the bell, and the
+ * session would hand the same work in again.
  */
 export type Continuation = (
   | {
@@ -43,15 +46,14 @@ export type Continuation = (
       readonly contested?: Verdict;
     }
   | { readonly reason: 'revive' }
-) & {
-  /** Why the Steward did not apply that run's patch, masked as its log line; absent when it applied it or none came. */
-  readonly refused_patch?: string;
-  /**
-   * What the branch touched as the session opens (the Steward's Plots.touched, P1-43): the prompt names the checks
-   * selectChecks picks for it (checksAheadBlock). Absent: no such section.
-   */
-  readonly touched?: readonly string[];
-};
+) &
+  RefusedWork & {
+    /**
+     * What the branch touched as the session opens (the Steward's Plots.touched, P1-43): the prompt names the checks
+     * selectChecks picks for it (checksAheadBlock). Absent: no such section.
+     */
+    readonly touched?: readonly string[];
+  };
 
 interface WithId {
   readonly id: string;
@@ -138,12 +140,6 @@ export function patchBlock(policy: Pick<ToolPolicy, 'tools' | 'laws'>, t: Prompt
   const writes = policy.tools.some((tool) => (WRITE_TOOLS as readonly string[]).includes(tool));
   if (paths.length === 0 || !writes) return '';
   return fill(t.patch, { paths: bullets(paths), patch_file: PATCH_FILE });
-}
-
-/** Why the last run's patch was not applied (P1-31), for the session after it; empty when it was, or there was none. */
-export function refusedPatchBlock(why: string | undefined, t: PromptTemplates): string {
-  if (!present(why)) return '';
-  return fill(t['refused-patch'], { patch_file: PATCH_FILE, why: fenced(why.trim(), 'text') });
 }
 
 /**
@@ -269,7 +265,7 @@ export function continuationBlock(
   return joinBlocks([
     intro,
     checksAheadBlock(territory, quest.party_role, continuation.touched, t),
-    refusedPatchBlock(continuation.refused_patch, t),
+    refusedWorkBlock(continuation, t),
     answerBlock(quest, t),
     memoryBlock(continuation, t),
   ]);

@@ -12,7 +12,7 @@ import { checksRunOf, takeChecks } from '../review/checks.ts';
 import { inScratch, judgeMayOpen } from '../review/scratch.ts';
 import { judgeParseOf } from '../review/verdict-file.ts';
 import { secretsBreaker } from './breaker.ts';
-import { continuationOf } from './continuation.ts';
+import { continuationOf, refusedWhileWaiting } from './continuation.ts';
 import { assigneeUnopened, judgeUnopened, unopenedLine } from './no-session.ts';
 import { requestOf } from './request.ts';
 import { questSecretsOf, rememberSecrets, secretsLacking } from './secrets.ts';
@@ -114,6 +114,9 @@ export type Opening =
 const goesOn = (opening: Opening): boolean => opening.kind === 'answer' || opening.kind === 'wake';
 
 async function continuationFor(ctx: Context, quest: Quest, opening: Opening): Promise<Continuation | null> {
+  // The decision on an amendment ends a wait that may have begun with the run's work refused (fix/session-notes).
+  if (opening.kind === 'answer' && quest.blocked?.amendment !== undefined)
+    return { reason: 'revive', ...(await refusedWhileWaiting(ctx, quest)) };
   if (goesOn(opening)) return { reason: 'revive' };
   // A start after earlier runs (the owner gave the quest to someone new) goes on from the letter, like a revival.
   if (opening.kind === 'start' && currentRun(quest) === 0) return null;

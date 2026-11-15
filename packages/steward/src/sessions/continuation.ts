@@ -1,11 +1,11 @@
 // What an assignee that goes on with a quest in a fresh session reads instead of a transcript (implementation-plan
 // §10 question 4, ADR 0017): why it goes on (a return with its verdict, or a revival), the letter, the journal, what
-// the branch touched, why the Steward refused the last run's patch when it did (P1-31), and the memos its letters
-// filed (PS-02).
+// the branch touched, why the Steward refused the last run's patch when it did (P1-31), or its patch or commit while
+// the quest waited on the doer's amendment (fix/session-notes), and the memos its letters filed (PS-02).
 import { currentRun, isEventOf, ownerVerdictIdOf, verdictIdOf } from '@elvaria/domain';
 import { openJournal } from '@elvaria/eventlog';
 import type { Quest, Verdict } from '@elvaria/domain';
-import type { Continuation, Memory } from '@elvaria/runner-core';
+import type { Continuation, Memory, RefusedWork } from '@elvaria/runner-core';
 
 import { readHandover, readJournal } from '../files.ts';
 import { refusedPatchOf } from '../infirmary.ts';
@@ -44,6 +44,30 @@ async function refusedPatchOfRun(ctx: Context, quest: Quest, n: number): Promise
     // Nothing to tell: the session reads its letter and journal as after any revival.
   }
   return undefined;
+}
+
+/**
+ * What the Steward could not take of the work of the run a blocked quest waits on (fix/session-notes): the refusal on
+ * the run's last `quest.blocked` line, the one that blocked it, which says one when the run ended on its amendment
+ * with work refused (submit.ts). The same run goes on after the decision, so an earlier block of it tells nothing
+ * now; a line written before the field, or a journal that cannot be read, tells nothing either.
+ */
+export async function refusedWhileWaiting(ctx: Context, quest: Quest): Promise<RefusedWork> {
+  const n = currentRun(quest);
+  try {
+    const { events } = await openJournal(ctx.root, quest.id).read();
+    for (const event of events.toReversed()) {
+      if (!isEventOf(event, 'quest.blocked') || event.attempt !== n) continue;
+      const { data } = event;
+      return {
+        ...(data.refused_patch === undefined ? {} : { refused_patch: data.refused_patch }),
+        ...(data.refused_commit === undefined ? {} : { refused_commit: data.refused_commit }),
+      };
+    }
+  } catch {
+    // Nothing to tell: the session reads its letter and the decision on its amendment.
+  }
+  return {};
 }
 
 /** The verdict a second judge's fail answered the objection against (PS-22): the session reads both notes. */

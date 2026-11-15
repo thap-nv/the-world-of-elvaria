@@ -1,10 +1,13 @@
 // The raw output of a CLI in `.runs/<quest>-<n>/` (implementation-plan §2.2, §3.9): stdout and stderr, redacted
 // before they touch the disk, for the owner who wants to see what a session printed. A JSON line is redacted
 // string by string (a pattern that ran past a closing quote would break the JSON, eventlog redact.ts); stderr
-// is redacted a whole line at a time, so a secret split across two chunks is still masked.
+// is redacted a whole line at a time, so a secret split across two chunks is still masked. A file that cannot be
+// written (its folder gone, the disk full) costs only its own lines: an `error` nobody listened to would end the
+// Steward's process (fix/session-notes, (108)).
 import { createWriteStream, mkdirSync } from 'node:fs';
-import { once } from 'node:events';
+import { finished } from 'node:stream/promises';
 import path from 'node:path';
+import type { WriteStream } from 'node:fs';
 
 import { createRedactor, redactDeep } from '@elvaria/eventlog';
 import type { Redactor } from '@elvaria/eventlog';
@@ -33,7 +36,17 @@ function redactLine(line: string, redactor: Redactor): string {
   }
 }
 
-/** `known`: secret values of the session (`secretValuesOf(req)`), masked before the patterns. */
+/** Ends `stream` and waits until it is done; one that failed is done too, its error told by its listener. */
+async function end(stream: WriteStream): Promise<void> {
+  stream.end();
+  await finished(stream).catch(() => undefined);
+}
+
+/**
+ * `known`: secret values of the session (`secretValuesOf(req)`), masked before the patterns. A stream that fails
+ * writes nothing more: stdout.jsonl's error becomes a note in stderr.log; stderr.log's has nowhere left to go, as
+ * the adapters' own notes when they cannot append to it.
+ */
 export function openRunOutput(runDir: string, known: readonly string[] = []): RunOutput {
   mkdirSync(runDir, { recursive: true });
   const redactor = createRedactor(known);
@@ -41,16 +54,26 @@ export function openRunOutput(runDir: string, known: readonly string[] = []): Ru
   const err = createWriteStream(path.join(runDir, STDERR_FILE), { flags: 'a' });
   let pending = '';
   let closing: Promise<void> | undefined;
+  let outFailed = false;
+  let errOpen = true;
+  // Not behind `closing`: stdout.jsonl may fail while close() flushes it, before stderr.log is ended.
+  const errWrite = (line: string): void => {
+    if (errOpen) err.write(`${redactor(line)}\n`);
+  };
   const errLine = (line: string): void => {
-    if (closing === undefined) err.write(`${redactor(line)}\n`);
+    if (closing === undefined) errWrite(line);
   };
-  const end = async (stream: NodeJS.WritableStream): Promise<void> => {
-    stream.end();
-    await once(stream, 'finish');
-  };
+  out.on('error', (error) => {
+    outFailed = true;
+    errWrite(`${NOTE_PREFIX}${STDOUT_FILE} could not be written, its lines are lost: ${error.message}`);
+  });
+  err.on('error', () => {
+    errOpen = false;
+  });
   return {
     stdout: (line) => {
-      if (closing === undefined && line.trim() !== '') out.write(`${redactLine(line, redactor)}\n`);
+      if (closing === undefined && !outFailed && line.trim() !== '')
+        out.write(`${redactLine(line, redactor)}\n`);
     },
     stderr: (chunk) => {
       const lines = `${pending}${chunk}`.split(/\r?\n/);
@@ -63,7 +86,11 @@ export function openRunOutput(runDir: string, known: readonly string[] = []): Ru
     close: () => {
       if (closing === undefined) {
         if (pending !== '') errLine(pending);
-        closing = Promise.all([end(out), end(err)]).then(() => undefined);
+        // stderr.log last, so it can still tell what flushing stdout.jsonl failed on.
+        closing = end(out).then(() => {
+          errOpen = false;
+          return end(err);
+        });
       }
       return closing;
     },

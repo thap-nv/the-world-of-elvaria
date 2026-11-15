@@ -7,7 +7,7 @@
 import { amendmentDeciderOf, protectedMarkOf, submitEndOf } from '@elvaria/domain';
 import { plotCommitMessage } from '@elvaria/runner-core';
 import type { Memo, Quest, Result } from '@elvaria/domain';
-import type { PatchOutcome, RunResult } from '@elvaria/runner-core';
+import type { PatchOutcome, RefusedWork, RunResult } from '@elvaria/runner-core';
 
 import { fileMemos } from '../memos/file.ts';
 import type { MemoFields } from '../memos/file.ts';
@@ -92,10 +92,15 @@ export async function submitWork(
   });
 }
 
+/** What the blocked line says of refused work: the patch's reason, or what git said of the commit. */
+const refusedWorkOf = (refused: Refused): RefusedWork =>
+  'patch' in refused ? { refused_patch: refused.patch } : { refused_commit: refused.refused.detail };
+
 /**
  * The run ends on the doer's amendment (PS-22b, ADR 0024): its work stays on the branch, unsubmitted, or in the plot
  * when the Steward could not apply its patch or commit it (fix/amendment-flow), and the quest waits as on a question,
- * for its author's decision or the owner's; the same attempt goes on after it, from the plot as it was left.
+ * for its author's decision or the owner's; the same attempt goes on after it, from the plot as it was left. Why the
+ * work was refused goes on the blocked line, for the session after the decision (fix/session-notes).
  */
 function waitOnAmendment(
   ctx: Context,
@@ -122,5 +127,6 @@ function waitOnAmendment(
     actor: 'runner',
     edits: { [running.character]: step('ask') },
     before,
+    ...(refused === undefined ? {} : { refused: refusedWorkOf(refused) }),
   });
 }
