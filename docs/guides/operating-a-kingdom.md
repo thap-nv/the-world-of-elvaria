@@ -282,7 +282,7 @@ Các lệnh khác của chủ nhân:
 | Tình huống | Lệnh |
 |---|---|
 | quest không ai nhận được (cấp thấp, sai nghề, tộc tắt) | `quest show` in sẵn lệnh `quest reassign … --to …` cho ứng viên tốt nhất |
-| muốn một nhân vật cụ thể làm | `quest reassign <quest> --to <nhân vật>` (vượt hạng trần thì quest chờ dấu vua) |
+| muốn một nhân vật cụ thể làm | `quest reassign <quest> --to <nhân vật>` (vượt hạng trần thì quest chờ dấu vua, trừ phần của đội: dấu nằm ở quest ghép) |
 | nhân vật bị hạ cấp oan (check đỏ vì môi trường) | `elvaria character level <id> <cấp>` |
 | nhân vật trượt cùng một kiểu ba lần liền thì bị đình chỉ vào Đền | sửa nguyên nhân (kinh, mô tả), rồi `elvaria character release <id>` |
 | tạm cho một nhân vật nghỉ | `elvaria character suspend <id> --reason "…"` |

@@ -4,17 +4,19 @@
 // applies wherever a quest starts and the claims below guard against starving a quest without a scope.
 import { failStreakReached } from '../character/fail-streak.ts';
 import { partyOf } from '../verify/past-assignees-of.ts';
+import { promptCharsOf } from '../verify/prompt-limit.ts';
 import { claimBlocker } from './claim-blocker.ts';
 import { scopeOf } from './scope.ts';
 import { selectAssignee } from './select-assignee.ts';
 import type { ClaimBlocker } from './claim-blocker.ts';
-import type { Roster } from './roster.ts';
+import type { Roster, RosterSource } from './roster.ts';
 import type { Instant } from '../core/clock.ts';
 import type { CharacterId, QuestId, TerritoryId } from '../core/ids.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 import type { TribeModels } from '../tribe/models.ts';
+import type { ClaimPrompt } from '../verify/prompt-limit.ts';
 
 /** A session-tier quest and the character that takes it, with its level for the claim event (§2.6). */
 export interface Claim {
@@ -51,6 +53,10 @@ export interface StepSource {
   readonly characters: readonly Character[];
   /** The models each tribe's adapter declares (PS-23); absent: families by the slug. */
   readonly models?: TribeModels;
+  /** Each tribe's limits on this OS: its prompt_max_chars, for the claim's prompt rule (fix/claim-step). */
+  readonly limits: RosterSource['limits'];
+  /** The prompts the Steward measured for the claims of open quests (ClaimPrompt). Absent: none measured. */
+  readonly claim_prompts?: readonly ClaimPrompt[];
 }
 
 export interface Step {
@@ -78,7 +84,10 @@ export function suspensions(step: Step): CharacterId[] {
   return suspended.map(({ id }) => id);
 }
 
-/** The free character of its class that would take `quest`, its territory's room aside. */
+/**
+ * The free character of its class that would take `quest`, its territory's room aside; one whose tribe cannot take
+ * its measured prompt waits for another that may take the quest, free now or later (fix/claim-step).
+ */
 function takerOf(step: Step, quest: Quest): Character | undefined {
   const territory = step.roster.territory(quest.territory);
   if (territory === undefined) return undefined;
@@ -88,6 +97,11 @@ function takerOf(step: Step, quest: Quest): Character | undefined {
     party: partyOf(quest, quests),
     characters,
     models: step.snapshot.models ?? {},
+    prompts: {
+      limits: step.snapshot.limits,
+      prompt_chars: promptCharsOf(quest.id, step.snapshot.claim_prompts),
+    },
+    standing: characters.filter((c) => step.roster.mayClaim(c, quest, territory)),
   });
 }
 

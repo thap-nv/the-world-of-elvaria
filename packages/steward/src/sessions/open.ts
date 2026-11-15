@@ -120,6 +120,10 @@ async function continuationFor(ctx: Context, quest: Quest, opening: Opening): Pr
   return continuationOf(ctx, quest);
 }
 
+/** What the assignee of a start reads of the runs before (claim-prompt-size.ts measures it before the claim). */
+export const startContinuationOf = (ctx: Context, quest: Quest): Promise<Continuation | null> =>
+  continuationFor(ctx, quest, { kind: 'start' });
+
 function eventOf(opening: Opening, session_id: string): MovePayload {
   if (opening.kind === 'answer') return { type: 'answer', answer: opening.answer, session_id };
   if (opening.kind === 'wake') return { type: 'mana_restored', session_id };
