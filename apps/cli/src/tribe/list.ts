@@ -4,13 +4,14 @@
 // and what its adapter declares, with the shell its sessions run commands in on this OS (P1-46) and the longest
 // user prompt its CLI takes here (fix/cli-lines, (97)). A tribe whose adapter has no runner yet, or whose adapter
 // file does not load, says so in place of what it would declare; `elvaria tribe check` says why a file does not load.
-import { ADAPTER_CAPABILITIES, promptMaxOf, shellOf, tribeLimitsOf, tribeLookOf } from '@elvaria/domain';
+import { promptMaxOf, shellOf, tribeLimitsOf, tribeLookOf } from '@elvaria/domain';
 import type { Tribe, TribeLookPool } from '@elvaria/domain';
 
 import { EXIT } from '../command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { NONE, printListing } from '../listing.ts';
 import { handOf } from '../run/crew.ts';
+import { declaredCapabilities } from './check-declared.ts';
 import { kingdomPool, lookCellOf } from './look-view.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
@@ -27,7 +28,7 @@ async function limitCells(ctx: KingdomContext, tribe: Tribe): Promise<string[]> 
     // Without `headless` planTick gives the tribe nothing at all (P1-19).
     limits.enabled ? limits.max_rank : NONE,
     ctx.t(limits.guarded_zones ? 'cli.yes' : 'cli.no'),
-    ADAPTER_CAPABILITIES.filter((name) => caps[name]).join(', '),
+    declaredCapabilities(caps).join(', '),
     shellOf(caps, ctx.io.platform) ?? NONE,
     String(promptMaxOf(caps, ctx.io.platform) ?? NONE),
   ];

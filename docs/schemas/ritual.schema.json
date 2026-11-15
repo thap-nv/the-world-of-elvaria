@@ -71,6 +71,10 @@
           "description": "The judge works in a scratch plot (ADR 0022): a disposable worktree <quest-id>-verify detached at the quest branch's head, made after the work is submitted with commands.setup, then commands.reset before each run of the checks. The machine checks run there; the judge alone gets Edit and Write there, the hook refuses commit and push, and the plot is removed after the verdict, so the quest branch never changes. Absent: false. Git territories only: on a folder the checks run in the quest's plot and the judge has no write tool.",
           "type": "boolean"
         },
+        "vision": {
+          "description": "The judge reads images (PS-11): the screens the territory's checks capture, beside their references. Only a judge whose tribe's adapter declares capabilities.vision takes a quest of this ritual; with none in the roster the quest waits for one, and the machine never judges it alone. Absent: false.",
+          "type": "boolean"
+        },
         "flaky_follow_up": {
           "description": "The session quest the Steward opens when a verdict of this ritual fails as flaky (P1-20): one quest to exorcise the checks that passed and failed on the same commit. Absent: none is opened.",
           "type": "object",

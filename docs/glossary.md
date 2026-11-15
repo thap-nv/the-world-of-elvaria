@@ -189,6 +189,8 @@ Nghi thức chọn theo tag, không chỉ theo kind (kế hoạch sản phẩm 0
 |---|---|---|---|
 | Thả quái thử thành (0.7 gọi là Thử tường) | Loose a monster on the walls | ritual `mutation_check` | quest Kiến tạo/Gia cố có tag `e2e` hoặc `integration` (test là sản phẩm) |
 | Đất nháp của người chấm | Scratch plot | `scratch_plot` (cờ của ritual), worktree `<quest-id>-verify` | Thả quái thử thành: người chấm đập thử ở đây, không commit, xóa sau verdict |
+| Họa sư soi bức họa | The painter holds up the portrait | ritual `visual_review` | quest Kiến tạo/Trừ tà/Gia cố có tag `visual` (thay đổi nhìn thấy trên màn hình), không có `e2e` hay `integration` (PS-11) |
+| Mắt của người chấm | Vision | `vision` (cờ của ritual; `capabilities.vision` của adapter) | nghi thức cần mắt: chỉ người chấm thuộc tộc mà CLI đọc được ảnh nhận quest; không ai có mắt thì quest chờ, máy không chấm một mình (PS-11) |
 | Khảo hạch mù | Blind trial | `territory.blind_trial` | tùy chọn, quest hạng B+: người khác viết test chấp nhận mà không nhìn diff |
 
 ## 6. Nghề (class)
@@ -314,6 +316,7 @@ Nguồn lệnh (`source`): `cli`, `herald`, `lite`.
 | `i18n` | Đa ngôn ngữ | Internationalisation |
 | `e2e` | Kiểm thử đầu-cuối | End-to-end tests |
 | `integration` | Kiểm thử tích hợp | Integration tests |
+| `visual` | Giao diện nhìn thấy | Visible change |
 | `docs` | Tài liệu | Documentation |
 
 ## 11. Giá trị liệt kê trong schema
@@ -435,6 +438,7 @@ Bước nghi thức (`ritual.steps[]`):
 | `cross_check_sources` | đối chiếu tài liệu với nguồn gốc |
 | `check_regression_test` | có test tái hiện lỗi và test đó xanh |
 | `check_tests_cover_change` | thay đổi hành vi có test đi kèm (khi lãnh thổ có test); thiếu thì `fail_kind: incomplete` |
+| `compare_screens` | mở từng ảnh chụp màn hình do check sinh ra, so với ảnh tham chiếu (không có thì với mô tả của quest); chỗ khác mà quest không yêu cầu là không đạt; không mở được ảnh thì `partial` (PS-11) |
 | `compare_before_after` | so số liệu trước/sau |
 | `score_tone_checklist` | chấm theo checklist giọng điệu/thương hiệu |
 | `rerun_from_source` | tính lại từ dữ liệu gốc |

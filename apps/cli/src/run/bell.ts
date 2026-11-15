@@ -108,7 +108,8 @@ export function lineOf(t: Translate, notice: Notice): string {
         gauges: gaugesOf(t, notice.gauges),
       });
     case 'unjudgeable':
-      return t('cli.run.notice.unjudgeable', {
+      // PS-11: the judge it lacks is one whose tribe reads images, not one on another model.
+      return t(notice.vision === true ? 'cli.run.notice.unjudgeable_vision' : 'cli.run.notice.unjudgeable', {
         ...quest,
         classes: notice.classes.join(', ') || '—',
         class: notice.classes[0] ?? 'judge',

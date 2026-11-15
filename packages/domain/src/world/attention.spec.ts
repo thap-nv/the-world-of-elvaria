@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { CAMPAIGNS, CHARACTERS, KINGDOM, QUEST_VIEW, TERRITORIES } from './__fixtures__/examples.ts';
-import { ATTENTION_TABLE, attentionQueue } from './attention.ts';
+import { ATTENTION_TABLE } from './attention-table.ts';
+import { attentionQueue } from './attention.ts';
 import { worldStateOf } from './world-state.ts';
 import type { Instant } from '../core/clock.ts';
 import type { CharacterId, MemoId, MemoKindId, QuestId, TribeId } from '../core/ids.ts';

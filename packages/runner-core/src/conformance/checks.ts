@@ -5,7 +5,13 @@ import assert from 'node:assert/strict';
 
 import { ADAPTER_CAPABILITIES, TRIBE_AUTHS, modelsProblems } from '@elvaria/domain';
 
-import { promptMaxProblems, readProblems, searchProblems, shellProblems } from '../kit/adapter-module.ts';
+import {
+  promptMaxProblems,
+  readProblems,
+  searchProblems,
+  shellProblems,
+  visionProblems,
+} from '../kit/adapter-module.ts';
 import { FAKE_QUESTION, FAKE_STRUCTURED_ANSWER, FAKE_STRUCTURED_SCHEMA } from './scenarios.ts';
 import { SPAWN_PROBE_COMMAND, SPAWN_PROBE_OK } from './spawn-probe.ts';
 import { DEFAULT_TIMEOUT_MS, HANG_GRACE_MS, play, settlesWithin, within } from './play.ts';
@@ -211,6 +217,8 @@ const capabilities: ConformanceCheck = {
     // Optional (PS-23): whether the CLI reads files with a tool of its own, and the models it serves with their families.
     assert.deepEqual(readProblems(runner.capabilities.read), [], 'capability read is malformed');
     assert.deepEqual(modelsProblems(runner.capabilities.models), [], 'capability models is malformed');
+    // Optional (PS-11): whether the CLI's model reads images, true or false; only a spike of the CLI may say true.
+    assert.deepEqual(visionProblems(runner.capabilities.vision), [], 'capability vision is malformed');
     assert.ok(runner.tribe.length > 0 && runner.adapter.length > 0);
     return 'passed';
   },

@@ -15,6 +15,10 @@
 - Judges tests as the product by Thả quái thử thành (`mutation_check`, ADR 0022, P1-20): `build` and
   `refactor` choose it for tags `e2e` or `integration` (`ritual_overrides`); it runs in a scratch plot
   (`scratch_plot`) and a flake opens a `fix` quest for a knight (`flaky_follow_up`).
+- Judges a visible change by eye (`visual_review`, PS-11): `build`, `fix` and `refactor` choose it for the tag
+  `visual`, after the `e2e`/`integration` override, so a quest with both keeps `mutation_check`. Its step
+  `compare_screens` has the judge compare each screen the checks captured with its reference; the ritual's
+  `vision` gives the quest only to a judge whose tribe reads images.
 - Holds the class prompts `prompts/<class>.md` (P1-15): the craft of each class, which the Steward reads from the
   kingdom and runner-core adds to the system part of the character's session after the laws of its role. A leading
   `<!-- … -->` note is for the maintainer and never reaches a model. `mage.md` explains every field of

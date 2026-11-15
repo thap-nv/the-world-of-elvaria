@@ -11,13 +11,12 @@
 import { current } from '../mana/reading.ts';
 import { manaWarningOf } from '../mana/state.ts';
 import { RANKS } from '../schema/common.ts';
+import { ATTENTION_GROUPS, ATTENTION_KINDS, ATTENTION_TABLE } from './attention-table.ts';
 import type { UnopenedReview } from '../breaker/review.ts';
 import type { Instant } from '../core/clock.ts';
-import type { CharacterId, MemoId, QuestId, TribeId } from '../core/ids.ts';
-import type { DelegationHold, TriageAction } from '../delegation/constants.ts';
+import type { QuestId } from '../core/ids.ts';
 import type { WaitGauge } from '../dispatch/judge-waits.ts';
 import type { ScopeHold } from '../dispatch/scope.ts';
-import type { Rank } from '../schema/common.ts';
 import { AMENDMENT_REFUSALS } from '../schema/memo/constants.ts';
 import type { MemoRoute } from '../schema/memo/memo.ts';
 import type { TribeHold } from '../tribe/version-hold.ts';
@@ -25,106 +24,23 @@ import type { MemoView } from './memo-view.ts';
 import type { PoolView } from './mana-view.ts';
 import type { QuestView } from './quest-view.ts';
 import type { WorldState } from './world-state.ts';
+import type { AttentionItem, AttentionKind, AttentionSubject } from './attention-table.ts';
 
 type MemoRouteId = MemoRoute['route'];
-
-export const ATTENTION_GROUPS = ['must', 'can_wait'] as const;
-/** `must`: the work stands still until the owner decides; `can_wait`: nothing waits on it. */
-export type AttentionGroup = (typeof ATTENTION_GROUPS)[number];
-
-/**
- * Each kind of item, in the order the queue lists them within a group: its group, its advice (a code the renderer
- * words in the owner's language) and its command, the words after `elvaria`. `{field}` is the item's own field; `<…>`
- * is for the owner to fill in.
- */
-export const ATTENTION_TABLE = {
-  question: { group: 'must', advice: 'answer', command: ['answer', '{quest}', '<answer>'] },
-  awaiting_seal: { group: 'must', advice: 'seal_or_return', command: ['seal', '{quest}'] },
-  infirmary: { group: 'must', advice: 'retry_or_archive', command: ['quest', 'retry', '{quest}'] },
-  judge_mana: {
-    group: 'must',
-    advice: 'judge_other_pool_or_wait',
-    command: ['character', 'add', '<id>', '--class', '{class}', '--tribe', '<tribe>'],
-  },
-  unjudgeable: {
-    group: 'must',
-    advice: 'summon_judge',
-    command: ['character', 'add', '<id>', '--class', '{class}', '--model', '<model>'],
-  },
-  // fix/review-no-session: the latest judge of a review could not open its session; the next one counts toward the
-  // stall too, and a judge whose CLI cannot take the quest fails on every review it is given.
-  judge_no_session: {
-    group: 'must',
-    advice: 'suspend_judge_or_wait',
-    command: ['character', 'suspend', '{judge}'],
-  },
-  unclaimable: { group: 'must', advice: 'see_why', command: ['quest', 'show', '{quest}'] },
-  scope_held: { group: 'must', advice: 'merge_and_archive', command: ['quest', 'archive', '{quest}'] },
-  draft: { group: 'must', advice: 'confirm_or_cancel', command: ['quest', 'confirm', '{quest}'] },
-  // A1b of the lessons of 2026-11-13: the tribe's CLI changed version since its last passing check with the real CLI,
-  // or the CLI its Steward starts is gone (a VS Code update moved it, 2026-11-14); either way no new session.
-  tribe_held: { group: 'must', advice: 'check_tribe', command: ['tribe', 'check', '{tribe}'] },
-  tribe_gone: { group: 'must', advice: 'check_tribe_and_restart', command: ['tribe', 'check', '{tribe}'] },
-  objection: { group: 'can_wait', advice: 'settle_objection', command: ['memo', 'show', '{memo}'] },
-  // PS-03b: a memo the Chancellor's triage sent up, with its advice, before the memos it has not read yet.
-  memo_escalated: { group: 'can_wait', advice: 'weigh_triage', command: ['memo', 'show', '{memo}'] },
-  memo: { group: 'can_wait', advice: 'decide_memo', command: ['memo', 'show', '{memo}'] },
-  mana_asleep: { group: 'can_wait', advice: 'wait_or_wake', command: ['wake', '{tribe}'] },
-  mana_warning: { group: 'can_wait', advice: 'watch_mana', command: ['doctor'] },
-} as const satisfies Record<
-  string,
-  { readonly group: AttentionGroup; readonly advice: string; readonly command: readonly string[] }
->;
-
-export type AttentionKind = keyof typeof ATTENTION_TABLE;
-export type AttentionAdvice = (typeof ATTENTION_TABLE)[AttentionKind]['advice'];
-export const ATTENTION_KINDS = Object.keys(ATTENTION_TABLE) as readonly AttentionKind[];
-
-/** What an item is about: the fields its line and its command name. */
-export interface AttentionSubject {
-  readonly quest?: QuestId;
-  readonly title?: string;
-  readonly rank?: Rank;
-  /** The question of a quest that waits for the owner's answer. */
-  readonly question?: string;
-  /** A judging class of the quest's kind, for the command that summons a judge. */
-  readonly class?: string;
-  /** The judge whose session could not open (judge_no_session). */
-  readonly judge?: CharacterId;
-  /** The quests that wait for a done quest's scope (scope_held, PS-05). */
-  readonly waiting?: readonly QuestId[];
-  /** The pools that hold every judge of a quest (judge_mana). */
-  readonly gauges?: readonly WaitGauge[];
-  readonly memo?: MemoId;
-  readonly memo_kind?: string;
-  readonly from?: CharacterId;
-  /** A memo sent up (PS-03b): what the Chancellor would do, the quest it names, what holds it for the owner. */
-  readonly triage?: TriageAction;
-  readonly target?: QuestId;
-  readonly holds?: readonly DelegationHold[];
-  readonly tribe?: TribeId;
-  /** A held tribe (tribe_held, tribe_gone): its CLI, what it says now, and the version its last passing check ran on. */
-  readonly path?: string;
-  readonly version?: string;
-  readonly checked_version?: string;
-  readonly pool?: string;
-  readonly used_pct?: number;
-  readonly resets_at?: string;
-}
-
-export interface AttentionItem extends AttentionSubject {
-  readonly kind: AttentionKind;
-  readonly group: AttentionGroup;
-  readonly advice: AttentionAdvice;
-  readonly command: readonly string[];
-}
 
 /** What the Steward knows that the world state does not: its notices, kept in its memory or in `.state/`. */
 export interface StewardNotices {
   /** Open quests nobody can take (`quest.unclaimable`, `.state/unclaimable.json`). */
   readonly unclaimable?: readonly QuestId[];
-  /** Quests in review whose judge the roster does not have (P1-15), with a judging class of their kind. */
-  readonly unjudgeable?: readonly { readonly quest: QuestId; readonly class: string }[];
+  /**
+   * Quests in review whose judge the roster does not have (P1-15), with a judging class of their kind; `vision` when the
+   * quest needs a judge whose tribe reads images (judgedByEye, PS-11).
+   */
+  readonly unjudgeable?: readonly {
+    readonly quest: QuestId;
+    readonly class: string;
+    readonly vision?: boolean;
+  }[];
   /** Quests whose judges' mana is all closed (PS-03), with the pools that hold them. */
   readonly judge_waits?: readonly {
     readonly quest: QuestId;
@@ -181,8 +97,11 @@ function questItems(state: WorldState): AttentionItem[] {
 function noticeItems(state: WorldState, notices: StewardNotices): AttentionItem[] {
   return [
     ...(notices.unclaimable ?? []).map((id) => itemOf('unclaimable', aboutId(state, id))),
-    ...(notices.unjudgeable ?? []).map(({ quest, class: cls }) =>
-      itemOf('unjudgeable', { ...aboutId(state, quest), class: cls }),
+    ...(notices.unjudgeable ?? []).map(({ quest, class: cls, vision }) =>
+      itemOf(vision === true ? 'unjudgeable_vision' : 'unjudgeable', {
+        ...aboutId(state, quest),
+        class: cls,
+      }),
     ),
     ...(notices.judge_waits ?? []).map(({ quest, class: cls, gauges }) =>
       itemOf('judge_mana', { ...aboutId(state, quest), class: cls, gauges }),
