@@ -137,6 +137,20 @@ export const TERRITORY_DEFAULTS = {
 } as const;
 
 /**
+ * territory.delivery (§3.16.7, ADR 0023; PS-08): what a territory delivers by when its file names no delivery, or
+ * names one without these keys. `manual` is stage 1's delivery: the branch waits for the owner. An hour of the forge's
+ * checks before the Steward stops waiting is (V) of the PS-08 plan.
+ */
+export const DELIVERY_DEFAULTS = {
+  mode: 'manual',
+  forge: 'github',
+  merge_method: 'merge',
+  checks_timeout_minutes: 60,
+} as const;
+/** delivery.failed `detail`: one forge or git message, redacted, never a whole log. */
+export const DELIVERY_DETAIL_MAX_LENGTH = 2000;
+
+/**
  * Ritual steps the verifier prompt knows how to run (glossary §13). A step is code in runner-core's prompt
  * builder, not data, so a ritual naming any other step is rejected when the registry loads.
  */

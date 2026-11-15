@@ -55,6 +55,10 @@ export const EVENT_TYPES = [
   'command.applied',
   'command.rejected',
   'delivery.sent',
+  // PS-08 (ADR 0023): the Steward delivers a done quest's branch to its forge; PS-08c and PS-08d write them.
+  'delivery.pushed',
+  'delivery.merged',
+  'delivery.failed',
   'plot.patched',
   'plot.merged',
   'plot.restored',

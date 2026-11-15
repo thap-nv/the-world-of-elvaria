@@ -71,6 +71,8 @@ export function testIo(overrides: Partial<CliIo> = {}): TestIo {
         return Uint8Array.from({ length: count }, (_, index) => (seed * 31 + index) % 256);
       },
     },
+    // No test reaches a real forge: one that needs an answer passes its own fetch.
+    fetch: () => Promise.reject(new Error('no network in tests')),
     printed: { out, err },
     slept,
     ...overrides,

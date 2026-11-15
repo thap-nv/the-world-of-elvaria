@@ -48,5 +48,6 @@ export function nodeIo(): CliIo {
         process.once('SIGTERM', stop);
       }),
     random: { bytes: (count) => new Uint8Array(randomBytes(count)) },
+    fetch: (input, init) => globalThis.fetch(input, init),
   };
 }
