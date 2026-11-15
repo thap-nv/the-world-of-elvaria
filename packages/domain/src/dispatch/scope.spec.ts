@@ -155,6 +155,42 @@ describe('scopeHolderMeeting', () => {
   });
 });
 
+// fix/acceptance-scope, (117): in a blind trial, the acceptance part and the parts of its party, either way round.
+describe("R3 between a blind trial's acceptance part and the parts of its party", () => {
+  const acceptance = (status: Quest['status']): Quest => ({
+    ...ranThen(quest(Q4, { party: Q1, dependsOn: [Q1], scope: ['api/**'] }), status),
+    party_role: 'acceptance',
+  });
+  const part = quest(Q2, { party: Q1, dependsOn: [Q1, Q4], scope: ['api/src/**'] });
+
+  it('lets a part pass the acceptance part of its party, and the acceptance part pass a part', () => {
+    expect(scopeHolderOf(part, [acceptance('done'), part])).toBeNull();
+    const writing = { ...acceptance('open'), attempts: 0, attempt_log: [] };
+    expect(scopeHolderOf(writing, [writing, workingBy(part, 'kael')])).toBeNull();
+  });
+
+  it('opens to a part files the acceptance part holds without a scope_held (scopeHolderMeeting)', () => {
+    const blocked = ranThen(part, 'blocked');
+    expect(scopeHolderMeeting(blocked, ['api/openapi.yaml'], [acceptance('done'), blocked])).toBeUndefined();
+  });
+
+  it('holds the other parts of the party, its contract and merge quest, other parties and quests of none', () => {
+    const tests = acceptance('done');
+    const sibling = workingBy(quest(Q3, { party: Q1, dependsOn: [Q1, Q4], scope: ['api/src/x.ts'] }), 'ella');
+    expect(scopeHolderOf(part, [tests, sibling, part])).toEqual({ rule: 'scope', holder: Q3 });
+    const contract = quest(Q1, { party: Q1, kind: 'plan', cls: 'mage', scope: ['api/**'] });
+    expect(scopeHolderOf(contract, [tests, contract])).toEqual({ rule: 'scope', holder: Q4 });
+    const merge: Quest = { ...quest(Q3, { party: Q1, scope: ['api/**'] }), party_role: 'merge' };
+    expect(scopeHolderOf({ ...tests, status: 'open' }, [workingBy(merge, 'ella')])).toEqual({
+      rule: 'scope',
+      holder: Q3,
+    });
+    const stranger = quest(Q3, { party: Q2, dependsOn: [Q2], scope: ['api/x.ts'] });
+    expect(scopeHolderOf(stranger, [tests, stranger])).toEqual({ rule: 'scope', holder: Q4 });
+    expect(scopeHolderOf(quest(Q3, { scope: ['api/x.ts'] }), [tests])).toEqual({ rule: 'scope', holder: Q4 });
+  });
+});
+
 describe('scopeBookOf', () => {
   it('counts what starts in the tick: a quest without a scope works, one with a scope holds it too', () => {
     const territory = { id: TERRITORY, shared_paths: [] };

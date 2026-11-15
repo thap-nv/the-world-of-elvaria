@@ -111,7 +111,8 @@ function descriptionOf(contract: Quest, parts: Parts, path: string, territory: P
 /**
  * The `create_quest` payload of the party's acceptance part and its place in the party, for questFromCommand. It is
  * open at once, a child of the contract quest that waits for it alone; its rank and secrets are the parts' (the
- * highest rank, every secret: the tests run where the parts do), its scope the contract's (PS-05).
+ * highest rank, every secret: the tests run where the parts do), its scope the contract's (PS-05), which R3 lets the
+ * parts pass (fix/acceptance-scope): none of them is built on its branch, and it holds the scope until its archive.
  */
 export function acceptanceQuestOf(contract: Quest, parts: Parts, context: AcceptanceContext): PartyQuest {
   const path = contractPathOf(parts);

@@ -19,7 +19,9 @@ import {
   territory,
   workingBy,
 } from './__fixtures__/snapshot.ts';
+import { partWaitsFor } from '../party/acceptance-quest.ts';
 import { planTick } from './plan-tick.ts';
+import { scopeHoldsOf } from './scope.ts';
 import type { QuestId, TribeId } from '../core/ids.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Quest } from '../schema/quest/quest.ts';
@@ -189,5 +191,28 @@ describe('planTick: a party whose parts are apart (PS-05)', () => {
       ],
     };
     expect(claimed([contract, ...done, stopped], [character('kael')])).toEqual([Q4]);
+  });
+});
+
+// fix/acceptance-scope, (117): the acceptance part takes the contract's scope, which meets every part's, and its branch
+// is in no part's base chain; it holds that scope from its run until it is archived, after the merge quest's delivery.
+describe("planTick: a blind trial's acceptance part and the parts of its party (fix/acceptance-scope)", () => {
+  const scope = ['api/**', 'web/**'];
+  const contract = onWorktree(ranThen(quest(Q1, { party: Q1, kind: 'plan', cls: 'mage', scope }), 'done'));
+  const tests = onWorktree(
+    ranThen({ ...quest(Q4, { party: Q1, dependsOn: [Q1], scope }), party_role: 'acceptance' }, 'done'),
+  );
+  const part = (id: QuestId, own: string) =>
+    quest(id, { party: Q1, dependsOn: partWaitsFor(Q1, Q4), scope: [own] });
+  const parts = [part(Q2, 'api/src/**'), part(Q3, 'web/src/**')];
+
+  it('starts the parts beside the done acceptance part, and the digest asks the owner to archive nothing', () => {
+    expect(claimed([contract, tests, ...parts])).toEqual([Q2, Q3]);
+    expect(scopeHoldsOf([contract, tests, ...parts], [])).toEqual([]);
+  });
+
+  it('still holds a quest of no party whose scope meets the acceptance part', () => {
+    const delivered = { ...contract, status: 'archived' as const };
+    expect(claimed([delivered, tests, quest(Q2, { scope: ['api/src/x.ts'] })])).toEqual([]);
   });
 });

@@ -8,5 +8,11 @@
 export const DAILY_JOBS = ['chronicle', 'triage', 'digest'] as const;
 export type DailyJobId = (typeof DAILY_JOBS)[number];
 
+/**
+ * The jobs whose session is the Chancellor's, outside its tribe's slots: while one is due and has not started, planTick
+ * opens no new session of that tribe (fix/acceptance-scope).
+ */
+export const CHANCELLOR_JOBS: readonly DailyJobId[] = ['triage'];
+
 /** A local day as the digest's file is named: `yyyy-mm-dd`. */
 export const LOCAL_DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;

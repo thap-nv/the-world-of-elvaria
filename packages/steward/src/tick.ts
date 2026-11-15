@@ -1,7 +1,7 @@
 // One tick of the Steward (implementation-plan §3.1), and what the log already knows before the first one. Apart from
 // steward.ts since PS-03, which adds the scheduled jobs to both: they run at the end of the tick (§3.16.3).
 import { planTick } from '@elvaria/domain';
-import type { KingdomSnapshot } from '@elvaria/domain';
+import type { KingdomSnapshot, ZonedTime } from '@elvaria/domain';
 
 import { wantedIn } from './background.ts';
 import { applyInbox } from './inbox/apply.ts';
@@ -56,9 +56,10 @@ export async function recover(deps: StewardDeps, state: State): Promise<void> {
  * What planTick decides on: the files, the sessions, the background, the tribes' models and versions, and the judges'
  * prompts measured for the reviews about to be judged, so a judge whose tribe cannot take its prompt on this OS is
  * passed over (review/prompt-size.ts, fix/verifier-prompt-limit); the assignees' likewise for the open quests about to
- * be claimed (sessions/claim-prompt-size.ts, fix/claim-step).
+ * be claimed (sessions/claim-prompt-size.ts, fix/claim-step); and the scheduled jobs due that have not started, so the
+ * Chancellor's tribe takes no new session while the triage waits for it (fix/acceptance-scope).
  */
-async function snapshotFor(ctx: Context, state: State): Promise<KingdomSnapshot> {
+async function snapshotFor(ctx: Context, state: State, zone: ZonedTime): Promise<KingdomSnapshot> {
   const { world, deps } = ctx;
   const reviewPrompts = await reviewPromptsOf(ctx, state.promptSizes);
   const claimPrompts = await claimPromptsOf(ctx, state.claimPromptSizes);
@@ -74,6 +75,7 @@ async function snapshotFor(ctx: Context, state: State): Promise<KingdomSnapshot>
     claim_prompts: claimPrompts,
     models: modelsOf(deps.runners),
     tools_found: await versionStep(ctx, state.versions),
+    jobs_due: state.scheduler.due(ctx, zone),
   };
 }
 
@@ -124,7 +126,7 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   background.prune(wantedIn(world.quests));
   // Graphs of the default branches' tips build before the quests prepared from them open a session (PS-21).
   await wantTipGraphs(ctx);
-  const plan = planTick(await snapshotFor(ctx, state), deps.clock.now());
+  const plan = planTick(await snapshotFor(ctx, state, held.zone), deps.clock.now());
   // Notices first: a quest someone can take now has its notice withdrawn before the claim that follows (§3.1).
   if (await noteUnclaimable(ctx, state.reported, plan.unclaimable))
     await writeUnclaimable(root, state.reported);

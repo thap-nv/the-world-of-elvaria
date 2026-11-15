@@ -85,7 +85,9 @@
   given as `StewardDeps.jobs`) runs outside the tick, one at a time, and `stop()` aborts it. A job that ends without
   throwing writes `schedule.ran`; the next start reads the last day of each from the log, so a job runs once a day
   however the clock moves, and one a stop cut short runs again. (PS-03b) Jobs due together go by their hour, and an
-  off-tick job may wait for `ready` (its view names the tribes a session runs on, `busy`). (fix/digest-timing) An
+  off-tick job may wait for `ready` (its view names the tribes a session runs on, `busy`); before the plan the
+  scheduler gives planTick the jobs due that have not started (`due`, `KingdomSnapshot.jobs_due`), so the Chancellor's
+  tribe takes no new session until the triage starts (fix/acceptance-scope). (fix/digest-timing) An
   in-tick job waits for the day's off-tick jobs of an earlier or equal hour to end, run or not yet ready (the
   domain's `awaitedJob`), and to have ended before the last tick's step, so the inbox commands they sent are applied:
   the digest carries the triage's advice however late the Steward started. The first job is the digest (`digestJob`, given

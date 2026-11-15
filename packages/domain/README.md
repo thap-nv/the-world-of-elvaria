@@ -99,7 +99,9 @@
   done quests still to deliver (`deliveries`, P1-14). (A1b of the lessons of 2026-11-13) A tribe whose CLI is gone or
   says another version than `checkedVersionOf` (the version its last `tribe check` with the real CLI passed on, else the
   pinned one) opens no session in any step (`versionHoldsOf` over `KingdomSnapshot.tools_found`, the one hold in the
-  roster); it still counts and stands by, so nothing is named unclaimable or unjudgeable for it. Checks and scripts, which run outside the tick, start only in
+  roster); it still counts and stands by, so nothing is named unclaimable or unjudgeable for it. (fix/acceptance-scope)
+  So does the Chancellor's tribe (`pickChancellor`) while a job of `CHANCELLOR_JOBS` (the triage) is in
+  `KingdomSnapshot.jobs_due`: its session lies outside the tribe's slots and waits for the tribe to have none. Checks and scripts, which run outside the tick, start only in
   the room `dispatch.max_background` leaves beside the work running (`BackgroundWork.running`, P1-47), checks
   first; a sandbox day has no background, so no cap. (P1-54, `startingNow` of `src/dispatch/background-room.ts`) The
   checks of a blind trial's acceptance part, which run no command, go first and take no slot, and when trials in a
@@ -119,7 +121,8 @@
   it is archived (`holdsScope`); the roster gives a quest room only when its territory has a slot (R1), no session
   quest without a scope works there and it has one or no session quest works there (R2), and no quest outside its
   base chain (`baseChainOf`: the branches its plot is built on, and those a merge quest merges) holds a scope that
-  meets its own (R3). Script-tier quests stand outside R2 and R3. A quest without a scope that waits for its territory
+  meets its own (R3); in a blind trial the acceptance part and the parts of its party pass each other
+  (fix/acceptance-scope). Script-tier quests stand outside R2 and R3. A quest without a scope that waits for its territory
   keeps the scoped quests after it in the claims of that tick (`claims` of `src/dispatch/tick-steps.ts`).
   `scopeHolderOf` names whom a quest waits for. The merge quest takes its parts' scopes together, the acceptance part
   and the follow-ups the scope of the quest they come from.

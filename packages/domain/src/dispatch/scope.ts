@@ -2,7 +2,8 @@
 // the territory root. Within a territory the Steward never starts a quest whose scope meets one a quest holds (R3),
 // and a session-tier quest without a scope runs alone among working quests (R2); script-tier quests are outside both
 // rules. This file decides who holds what, when two scopes meet and why a quest waits, as pure functions of the
-// quests; the roster applies them (roster.ts) and `quest list` says them (scopeHolderOf).
+// quests; the roster applies them (roster.ts) and `quest list` says them (scopeHolderOf). R3 passes over the quests a
+// plot is built on (baseChainOf) and, in a blind trial, the acceptance part and the parts (fix/acceptance-scope).
 import { plotBaseOf } from '../party/plot-base.ts';
 import { questFinished } from '../quest/finished.ts';
 import type { QuestId } from '../core/ids.ts';
@@ -120,6 +121,28 @@ export function baseChainOf(quest: Quest, quests: readonly Quest[]): ReadonlySet
   return chain;
 }
 
+/** The roles of a blind trial R3 leaves apart: the acceptance part and the party's parts. */
+const TRIAL_ROLES: readonly Quest['party_role'][] = ['acceptance', 'part'];
+
+/**
+ * Whether `a` and `b` are the blind trial's acceptance part and a part of the same party, either way round
+ * (fix/acceptance-scope): the acceptance part takes the contract's scope, which meets every part's, yet no part's plot
+ * is built on its branch (plotBaseOf). Their branches meet in the merge quest alone, which merges both, and the tests'
+ * writer names its files apart (acceptance-quest.ts): left to R3, every part would wait for it until its archive.
+ */
+const trialPair = (a: Quest, b: Quest): boolean =>
+  a.party_id !== undefined &&
+  a.party_id === b.party_id &&
+  a.party_role !== b.party_role &&
+  TRIAL_ROLES.includes(a.party_role) &&
+  TRIAL_ROLES.includes(b.party_role);
+
+/** The quests R3 never holds `quest` back for: its base chain (baseChainOf), and its blind trial's partners. */
+function exemptOf(quest: Quest, quests: readonly Quest[]): (other: Quest) => boolean {
+  const chain = baseChainOf(quest, quests);
+  return (other) => chain.has(other.id) || trialPair(quest, other);
+}
+
 /**
  * The quest holding a scope that `entries`, opened to `quest` on its territory, would meet (R3): the roster's rule at
  * the step that opens them, an amendment accepted (fix/amendment-delegation), since the quest that waits on it goes
@@ -131,12 +154,12 @@ export function scopeHolderMeeting(
   quests: readonly Quest[],
   shared: readonly string[] = [],
 ): QuestId | undefined {
-  const chain = baseChainOf(quest, quests);
+  const exempt = exemptOf(quest, quests);
   return quests.find(
     (other) =>
       other.territory === quest.territory &&
       other.id !== quest.id &&
-      !chain.has(other.id) &&
+      !exempt(other) &&
       holdsScope(other) &&
       scopesMeet(entries, scopeOf(other), shared),
   )?.id;
@@ -171,9 +194,9 @@ function scopeWaitOf(quest: Quest, on: TerritoryScopes, quests: readonly Quest[]
     others.find((other) => scopeOf(other).length === 0) ?? (scope.length === 0 ? others[0] : undefined);
   if (alone !== undefined) return { rule: 'alone', holder: alone.id };
   if (scope.length === 0) return null;
-  const chain = baseChainOf(quest, quests);
+  const exempt = exemptOf(quest, quests);
   const holder = on.holders.find(
-    (other) => other.id !== quest.id && !chain.has(other.id) && scopesMeet(scope, scopeOf(other), on.shared),
+    (other) => other.id !== quest.id && !exempt(other) && scopesMeet(scope, scopeOf(other), on.shared),
   );
   return holder === undefined ? null : { rule: 'scope', holder: holder.id };
 }

@@ -5,7 +5,9 @@
 // version since its last passing check opens no session at all (versionHoldsOf, A1b of the lessons of 2026-11-13).
 import { poolEnabled, poolKeyOf } from '../mana/pool.ts';
 import { admits, asleepFor, manaStateOf } from '../mana/state.ts';
+import { CHANCELLOR_JOBS } from '../schedule/constants.ts';
 import { RANKS } from '../schema/common.ts';
+import { pickChancellor } from '../tribe/select-chancellor.ts';
 import { versionHoldsOf } from '../tribe/version-hold.ts';
 import { scopeBookOf } from './scope.ts';
 import type { Instant } from '../core/clock.ts';
@@ -18,8 +20,9 @@ import type { Rank } from '../schema/common.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 import type { Territory } from '../schema/territory.ts';
+import type { DailyJobId } from '../schedule/constants.ts';
 import type { TribeLimits } from '../tribe/tribe-limits.ts';
-import type { ToolsFound } from '../tribe/version-hold.ts';
+import type { ToolsFound, TribeHold } from '../tribe/version-hold.ts';
 import type { PoolKey } from '../world/mana-view.ts';
 
 /** Statuses in which a character holds a CLI session of its tribe's account (tribe max_concurrent). */
@@ -51,6 +54,12 @@ export interface RosterSource {
    * is held (a sandbox day, the specs).
    */
   readonly tools_found?: ToolsFound;
+  /**
+   * The scheduled jobs due today that have not started, as the Steward's scheduler saw them before the plan (dueJobs,
+   * fix/acceptance-scope): a job of the Chancellor's among them keeps its tribe from new sessions (reservedTribeOf).
+   * Absent: none (a sandbox day, the specs).
+   */
+  readonly jobs_due?: readonly DailyJobId[];
 }
 
 // Function properties, not methods: planTick passes them to Array.filter on their own.
@@ -143,11 +152,27 @@ export function poolOpenOf(
 }
 
 /**
- * The tribes held by their CLI's version (versionHoldsOf). A held tribe still counts and stands by, as an asleep pool
- * does: its wait ends with a passing `tribe check`, not with another character or judge.
+ * The Chancellor's tribe while a job of its (CHANCELLOR_JOBS: the triage) is due and has not started
+ * (fix/acceptance-scope): that session lies outside the tribe's slots and starts only once no session of the tribe
+ * runs (PS-03b), so new work given to the tribe at every tick would starve it, and the digest that waits for it, all
+ * day. The Chancellor is the one the job picks (pickChancellor, as `chancellorOf` of apps/cli does): nobody, or nobody
+ * but of a held tribe, keeps no tribe.
  */
-const heldTribesOf = (source: RosterSource): ReadonlySet<TribeId> =>
-  new Set(versionHoldsOf(source.kingdom.tribes, source.tools_found ?? {}).map(({ tribe }) => tribe));
+function reservedTribeOf(source: RosterSource, holds: readonly TribeHold[]): TribeId[] {
+  if (!(source.jobs_due ?? []).some((job) => CHANCELLOR_JOBS.includes(job))) return [];
+  const pick = pickChancellor(source.characters, source.limits, holds);
+  return pick.status === 'chosen' ? [pick.choice.character.tribe] : [];
+}
+
+/**
+ * The tribes that open no session in this tick: those held by their CLI's version (versionHoldsOf), and the one kept
+ * for the Chancellor (reservedTribeOf). Either still counts and stands by, as an asleep pool does: its wait ends with a
+ * passing `tribe check`, or once the Chancellor's job starts, not with another character or judge.
+ */
+function closedTribesOf(source: RosterSource): ReadonlySet<TribeId> {
+  const holds = versionHoldsOf(source.kingdom.tribes, source.tools_found ?? {});
+  return new Set([...holds.map(({ tribe }) => tribe), ...reservedTribeOf(source, holds)]);
+}
 
 /** Whether the character's tribe has a runner that may take the quest on the territory (tribeMayTake). */
 const tribeTakesOf =
@@ -161,7 +186,7 @@ const tribeTakesOf =
 export function rosterOf(source: RosterSource, now: Instant): Roster {
   const staffed = staffedTribes(source);
   const enabled = new Set(source.kingdom.tribes.filter((tribe) => tribe.enabled).map(({ id }) => id));
-  const held = heldTribesOf(source);
+  const held = closedTribesOf(source);
   const poolOpen = poolOpenOf(source, now);
   const taken = new Set<CharacterId>();
   const aside = new Set<CharacterId>();

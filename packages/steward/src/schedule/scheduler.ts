@@ -7,7 +7,9 @@
 // another off-tick job. (fix/digest-timing) An in-tick job waits for the day's off-tick jobs of an earlier or equal
 // hour to end, whether they run, wait to be ready or have not started (awaitedJob), and to have ended before the tick
 // before this one closed, so what they sent to the inbox is applied: the digest carries the triage's advice, however
-// late the Steward started. (PS-22b) A job on call (an amendment's author) has no hour: it starts outside the tick once
+// late the Steward started. (fix/acceptance-scope) Before the plan, `due` tells planTick the jobs due that have not
+// started (KingdomSnapshot.jobs_due): it keeps the Chancellor's tribe from new sessions until the triage starts, since
+// the triage starts only once that tribe has none (its `ready`). (PS-22b) A job on call (an amendment's author) has no hour: it starts outside the tick once
 // no job runs there and it says it has work, and records no `schedule.ran`.
 import { awaitedJob, awaitsAuthor, dueJobs, isEventOf, localClockOf } from '@elvaria/domain';
 import type {
@@ -35,6 +37,11 @@ export interface StewardJob {
 export interface Scheduler {
   /** At start: the day each job last ran, from the log. */
   recover(events: readonly Event[]): void;
+  /**
+   * Before the plan: the jobs due now that have not started today (dueJobs), for KingdomSnapshot.jobs_due, so planTick
+   * keeps the Chancellor's tribe free for a triage that waits for it (fix/acceptance-scope).
+   */
+  due(ctx: Context, zone: ZonedTime): DailyJobId[];
   /** At the end of a tick: runs the in-tick jobs due, and starts an off-tick one when none runs. */
   step(ctx: Context, zone: ZonedTime, notices: StewardNotices): Promise<void>;
   /** Aborts the job running outside the tick and waits for it to end. */
@@ -142,6 +149,13 @@ export function createScheduler(jobs: readonly StewardJob[], onCall: readonly On
   let settled: Days = {};
   const slot: Slot = { current: undefined };
   const awaited = jobs.filter(({ mode }) => mode === 'off_tick').map(({ id }) => id);
+  const dueNow = (ctx: Context, zone: ZonedTime) => {
+    const local = localClockOf(zone, ctx.deps.clock.now());
+    return {
+      local,
+      due: dueJobs({ schedule: ctx.world.kingdom.schedule, jobs: jobs.map(({ id }) => id), local, last }),
+    };
+  };
 
   return {
     recover: (events) => {
@@ -152,10 +166,10 @@ export function createScheduler(jobs: readonly StewardJob[], onCall: readonly On
         }
       settled = { ...ended };
     },
+    due: (ctx, zone) => dueNow(ctx, zone).due,
     step: async (ctx, zone, notices) => {
-      const local = localClockOf(zone, ctx.deps.clock.now());
+      const { local, due } = dueNow(ctx, zone);
       const { schedule } = ctx.world.kingdom;
-      const due = dueJobs({ schedule, jobs: jobs.map(({ id }) => id), local, last });
       const view: JobView = { day: local.day, notices, busy: busyTribes(ctx), amendments: amendmentsOf(ctx) };
       for (const job of byHour(jobs, schedule).filter(({ id }) => due.includes(id))) {
         if (job.mode === 'off_tick') {
