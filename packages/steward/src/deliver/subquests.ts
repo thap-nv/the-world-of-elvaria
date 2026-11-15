@@ -135,11 +135,14 @@ function payloadOf(
   // A part starts once the contract is delivered: it waits for the contract quest (§3.13 step 3), and in a blind
   // trial for the acceptance part too (P1-37 (iii)).
   const contract = partyPlaceOf(plan, draft) === undefined ? [] : partWaitsFor(plan.id, acceptance);
+  // One that waits for no part waits for the plan quest itself (fix/council-run-gaps (d), owner (154)): its plot starts
+  // on the plan's branch until the default branch holds it (P1-16 (f)), so it has the plan file.
+  const waits = [...contract, ...dependsOn.map(idOf)];
   return {
     draft: false,
     ...fields,
     estimate: questEstimateOf(estimate),
-    depends_on: [...contract, ...dependsOn.map(idOf)],
+    depends_on: waits.length === 0 ? [plan.id] : waits,
     parent_id: parentRef === undefined ? plan.id : idOf(parentRef),
     ...(typeof plan.campaign_id === 'string' ? { campaign_id: plan.campaign_id } : {}),
     created_by: 'council',
@@ -210,6 +213,7 @@ export async function plannedChildren(
   const issues = planIssuesOf(drafts.value, {
     territories: [...ctx.world.territories.values()],
     context_budget_tokens: ctx.world.kingdom.breakers.context_budget_tokens,
+    characters: [...ctx.world.characters.values()],
   });
   if (issues.length > 0)
     return err(`the plan is not ready:\n${issues.map((issue) => `- ${planIssueLine(issue)}`).join('\n')}`);

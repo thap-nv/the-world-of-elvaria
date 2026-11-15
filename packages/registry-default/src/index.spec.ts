@@ -204,8 +204,14 @@ describe('the default registry', () => {
     ]);
     // PS-06: the examples teach what the subquests check holds a plan to: scopes, the template, the peak context.
     const territory = { id: TerritoryIdSchema.parse('dc1-se-team'), checks: [] };
-    for (const { drafts } of examples)
-      expect(planIssuesOf(drafts, { territories: [territory], context_budget_tokens: 120_000 })).toEqual([]);
+    for (const { drafts } of examples) {
+      // fix/council-run-gaps (c): a kingdom with a character of every class the example names.
+      const characters = drafts.flatMap(({ class_required: cls }) =>
+        cls === undefined ? [] : [{ class: cls, status: 'idle' as const }],
+      );
+      const context = { territories: [territory], context_budget_tokens: 120_000, characters };
+      expect(planIssuesOf(drafts, context)).toEqual([]);
+    }
     expect(mage).toContain('## Summary');
   });
 

@@ -5,7 +5,8 @@
 // branches after it wait for the next session. Nothing is merged into a worktree with changes not committed, or
 // while a merge is in progress: the session that left them is not done with them. After the parts comes the
 // territory's base branch (PS-08e): the party meets the base branch as it is now before its checks and its judge,
-// not when the owner delivers it, and the plot counts from that commit from then on (mergeBase).
+// not when the owner delivers it, and the plot counts from that commit from then on (mergeBase). Any other quest with
+// two dependencies or more gets the ones its plot did not start from (mergeDependencies, fix/council-run-gaps (d)).
 import type { Territory } from '@elvaria/domain';
 import { fromPortable } from '@elvaria/store';
 
@@ -44,6 +45,11 @@ export type BaseBranch = Pick<Territory, 'path' | 'vcs'>;
 export interface BaseTarget {
   readonly branch: string;
   readonly commit: string;
+}
+
+/** `dependencies`: the branches are a quest's dependencies, not a merge quest's parts (mergeDependencies). */
+export interface MergeOptions {
+  readonly dependencies?: boolean;
 }
 
 /** How much of a refusal to keep: the end of git's output says why. */
@@ -144,6 +150,34 @@ export async function mergeBase(
 }
 
 /**
+ * A quest's dependencies other than the one its plot started from (fix/council-run-gaps (d), owner (155)): each branch
+ * that exists and HEAD lacks, as mergeIn merges a part, while the plot holds no work of its own (HEAD at the commit its
+ * record counts from); then the plot counts from where they are in, so its diff, touched files, files out of scope and
+ * protected changes stay the quest's own work. A branch that is gone (delivered, then deleted) is passed over; a plot
+ * with work of its own takes nothing, since their work would count as the quest's. A merge that stops is undone, as no
+ * knight waits to conclude it: the plot keeps the branches merged before it, and the stop is said.
+ */
+export async function mergeDependencies(
+  git: Git,
+  worktree: string,
+  into: string,
+  branches: readonly string[],
+): Promise<MergeOutcome> {
+  const present: string[] = [];
+  for (const branch of branches)
+    if ((await headOf(git, worktree, `refs/heads/${branch}`)) !== undefined) present.push(branch);
+  const pending = await unmergedIn(git, worktree, present);
+  const record = await plotRecordOf(git, worktree);
+  if (pending.length === 0 || (await headOf(git, worktree, 'HEAD')) !== record.base)
+    return { merged: [], pending };
+  const outcome = await mergeIn(git, worktree, into, pending);
+  if ((await headOf(git, worktree, 'MERGE_HEAD')) !== undefined) await git(worktree, ['merge', '--abort']);
+  const head = await headOf(git, worktree, 'HEAD');
+  if (head !== undefined && head !== record.base) await movePlotBase(git, worktree, head);
+  return outcome;
+}
+
+/**
  * A merge quest's merging (P1-18, PS-08e): its parts, then, given `base`, the territory's base branch where a new
  * quest would start (forkPoint: fetched first when there is a remote, else the local branch). The base branch waits
  * while a part is not in, since the knight resolves one conflict at a time.
@@ -154,7 +188,9 @@ export async function mergeAll(
   into: string,
   branches: readonly string[],
   base?: BaseBranch,
+  options: MergeOptions = {},
 ): Promise<MergeOutcome> {
+  if (options.dependencies === true) return mergeDependencies(git, worktree, into, branches);
   const parts = await mergeIn(git, worktree, into, branches);
   const branch = base?.vcs.default_branch;
   if (base === undefined || branch === undefined) return parts;

@@ -189,6 +189,7 @@ export function questBlock(
   territory: FactsTerritory,
   t: PromptTemplates,
   terms: DraftingTerms,
+  vision?: boolean,
 ): string {
   const kind = entryOf(registry.kinds, quest.kind, 'kind');
   const facts = [
@@ -199,7 +200,7 @@ export function questBlock(
     `- Limits: ${quest.budget.max_minutes} minutes, ${quest.budget.max_tokens} tokens`,
     ...partyFact(quest),
     ...scopeFacts(quest),
-    ...(DELIVERABLE_FACTS[kind.deliverable_type]?.(registry, territory) ?? []),
+    ...(DELIVERABLE_FACTS[kind.deliverable_type]?.(registry, territory, vision) ?? []),
   ];
   return fill(t.quest, {
     quest_id: quest.id,
