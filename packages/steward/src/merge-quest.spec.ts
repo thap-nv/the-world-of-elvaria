@@ -1,8 +1,9 @@
 // The merge quest of a party after the machine's run (implementation-plan §2.5, §3.13; P1-55, (e) of the P1-50 report):
 // the Steward merges the parts a conflict left once the knight concluded it, before the checks; the machine's run
 // takes no attempt, so the knights keep the whole budget, and a retry from the infirmary goes to a knight instead of
-// running the machine again on the commit that just failed; closing the contract's list is a commit like the others.
-import { readFile } from 'node:fs/promises';
+// running the machine again on the commit that just failed, and takes in what main did meanwhile (PS-08e); closing
+// the contract's list is a commit like the others.
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { SUBQUESTS_FILE } from '@elvaria/runner-core';
@@ -110,6 +111,10 @@ describe('a merge quest and its attempts (P1-55)', () => {
     expect(knights).toHaveLength(3);
     expect(knights.every(([, character]) => typeof character === 'string')).toBe(true);
 
+    // main moved on while the quest lay in the infirmary (PS-08e): the knight's run after the retry takes it in.
+    await writeFile(path.join(current.repo, 'LATER.md'), '# later\n');
+    git(current.repo, 'add', '--all');
+    git(current.repo, 'commit', '-q', '-m', 'main moves on');
     await kingdom.command('retry', { quest: stalled.id });
     await tickUntil(
       steward,
@@ -124,6 +129,7 @@ describe('a merge quest and its attempts (P1-55)', () => {
     expect(runs.filter(([, character]) => character === null)).toHaveLength(1);
     expect(runs.at(-1)).toEqual([5, expect.any(String), 'submitted']);
     expect(retried.attempts).toBe(1);
+    expect(git(current.repo, 'rev-list', '--count', `quest/${retried.id}..main`)).toBe('0');
   }, 240_000);
 });
 

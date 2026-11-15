@@ -1,10 +1,14 @@
 // `commands.setup` runs once per worktree plot (implementation-plan §3.3: `pnpm install` against the global store),
-// and again on the next prepare only while it has not succeeded, so a setup killed halfway is not taken as done.
+// and again on the next prepare only while it has not succeeded, so a setup killed halfway is not taken as done; a
+// merge quest that took the base branch in (PS-08e, mergeBase) sets it up once more.
 // It gets the quest's secrets the way its checks do (P1-30, §3.9): an install from a private registry needs the
 // token the session would get, and its log loses their values when it closes. The caller's signal kills it (P1-49,
 // (a) of P1-47): a Steward stopped with Ctrl+C no longer waits up to SETUP_TIMEOUT_MS for an install.
+import path from 'node:path';
+
 import { err, ok } from '@elvaria/domain';
 import type { Result } from '@elvaria/domain';
+import { pathExists } from '@elvaria/store';
 
 import { openLog, runLine } from '../checks/logged-run.ts';
 import type { ProcessHost } from '../process/program.ts';
@@ -53,10 +57,14 @@ function endOf(run: { exit_code: number | null; timed_out: boolean }, signal?: A
   return `ended with ${run.exit_code ?? 'no exit code'}`;
 }
 
-/** null when the territory has no setup or it already succeeded in this worktree. */
+/**
+ * null when the territory has no setup, it already succeeded in this worktree, or a merge is in progress there: a
+ * merge quest's conflict (PS-08e) may sit in the lockfile, so setup waits for the commit that concludes it.
+ */
 export async function runSetup(input: SetupInput): Promise<Result<SetupRun | null, PlotFailure>> {
   const { command, record, signal } = input;
   if (command === undefined || record.setup_done) return ok(null);
+  if (await pathExists(path.join(input.git_dir, 'MERGE_HEAD'))) return ok(null);
   const logPath = setupLogOf(input.quest_id);
   const given = withSecrets(input.host, input.secrets);
   const log = await openLog(input.kingdom, logPath, `$ ${command}`, given.known);

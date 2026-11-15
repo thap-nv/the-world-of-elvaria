@@ -53,7 +53,7 @@ async function plotFor(ctx: Context, input: Pick<SessionInput, 'quest' | 'territ
     input.territory,
     plotOptionsOf(ctx, input.quest, given),
   );
-  if (input.role === 'assignee') await mergeParts(ctx, input.quest, prepared.plot);
+  if (input.role === 'assignee') await mergeParts(ctx, input.quest, prepared.plot, given);
   return prepared;
 }
 
