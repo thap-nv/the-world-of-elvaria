@@ -123,6 +123,23 @@
       "flaky_follow_up": { "kind": "fix", "class": "knight" }
     },
     {
+      "id": "visual_review",
+      "name_vi": "Họa sư soi bức họa",
+      "name_en": "The painter holds up the portrait",
+      "steps": [
+        "run_checks",
+        "read_handover",
+        "read_diff",
+        "compare_screens",
+        "check_tests_cover_change",
+        "judge",
+        "write_verdict"
+      ],
+      "pass_rule": "all_checks_and_agent",
+      "max_seconds": 1800,
+      "vision": true
+    },
+    {
       "id": "unit_tally",
       "name_vi": "Điểm quân sau trận",
       "name_en": "Muster after battle",

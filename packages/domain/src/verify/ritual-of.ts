@@ -29,3 +29,13 @@ export const judgedInScratch = (
   quest: Pick<Quest, 'kind' | 'tags' | 'party_role' | 'plot'>,
   registry: Pick<Registry, 'kinds' | 'rituals'>,
 ): boolean => quest.plot.type === 'worktree' && ritualOf(quest, registry)?.scratch_plot === true;
+
+/**
+ * The quest's judge must see (PS-11): its ritual asks for eyes (`visual_review`, chosen by the tag `visual`), so only a
+ * judge whose tribe reads images may take it (selectVerifier, `needs_vision`). Any plot: the screens come from the
+ * checks, wherever they run.
+ */
+export const judgedByEye = (
+  quest: Pick<Quest, 'kind' | 'tags' | 'party_role'>,
+  registry: Pick<Registry, 'kinds' | 'rituals'>,
+): boolean => ritualOf(quest, registry)?.vision === true;

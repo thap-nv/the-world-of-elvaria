@@ -15,8 +15,9 @@
   kind that disagree, a follow-up (a script's `follow_up`, a ritual's `flaky_follow_up`) the kingdom cannot make.
 - Chooses the ritual that judges a quest (`ritualOf`, ADR 0011, 0022; P1-20): the kind's, unless one of its
   `ritual_overrides` meets the quest's tags (tests as the product: `build`/`refactor` tagged `e2e` or
-  `integration` → `mutation_check`); `judgedInScratch` says its judge works in a scratch plot (a ritual with
-  `scratch_plot`, a git worktree). What the machine decides there is pure too (`src/verify/trial.ts`):
+  `integration` → `mutation_check`; then `build`/`fix`/`refactor` tagged `visual` → `visual_review`, PS-11);
+  `judgedInScratch` says its judge works in a scratch plot (a ritual with `scratch_plot`, a git worktree), and
+  `judgedByEye` that its judge must see (a ritual with `vision`, PS-11). What the machine decides there is pure too (`src/verify/trial.ts`):
   `rerunDue` (up to `FLAKE_RUNS` runs while every run passes), `exclusiveWaitMinutes` (how long an exclusive check waits for a judge that holds the lock), `flakyChecksOf` (a run its environment failed is no flake, P1-54), `coverageTotalsOf` (an istanbul
   json-summary) and `coverageDropsOf` (counts compared, no rounding); `flakyFollowUpOf` builds the quest that
   exorcises a flake, of the kind and class the ritual's `flaky_follow_up` names. `commandLinesOf` reads a
@@ -182,7 +183,10 @@
   handed in a partial verdict, while another may judge; before that, not a judge whose tribe takes a shorter prompt
   on this OS than the one the Steward measured for it (`withinPromptLimit` over `KingdomSnapshot.review_prompts` and
   `TribeLimits.prompt_max_chars`, `src/verify/prompt-limit.ts`, fix/verifier-prompt-limit), while another may judge; (PS-22) never the judge whose verdict the quest's `objection`
-  contests, and never the machine for an objection, which waits as unjudgeable when no judge is left), `underPassRule` (a failing check fails the quest under
+  contests, and never the machine for an objection, which waits as unjudgeable when no judge is left; (PS-11) for a
+  quest that needs eyes (`VerifierPolicy.needs_vision`, set by `planReviews` from `judgedByEye`) never a judge
+  whose tribe reads no image (`TribeLimits.vision`, from the adapter's optional `capabilities.vision` through
+  `tribeLimitsOn`), however few, and never the machine, as with an objection), `underPassRule` (a failing check fails the quest under
   `all_checks_and_agent`, as `tests_fail`, or `incomplete` for the Steward's `subquests` check, P1-15, and its
   `party` check of a merge quest, P1-18, and `coverage_not_lower`, P1-20, or `flaky` for `flake_check`), `machineVerdictOf` (the machine's verdict from the checks), `validateVerdict` (no
   worker, only the session the Steward spawned, no pass over a failing check, not the objection's first judge) and the verdict ids of a run
@@ -286,7 +290,9 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   never runs it twice. `schedule.ran` and `digest.written` give the lines their shape (`src/schema/event/schedule-data.ts`).
 - Lists what waits for the owner (`attentionQueue`, `src/world/attention.ts`, PS-03): over the world state, `now`
   and the Steward's notices (unclaimable, unjudgeable, judges out of mana), each item with its group (`must`: the
-  work stands still; `can_wait`), an advice code and the `elvaria` command, both from `ATTENTION_TABLE` by kind:
+  work stands still; `can_wait`), an advice code and the `elvaria` command, both from `ATTENTION_TABLE` by kind
+  (`src/world/attention-table.ts`, apart since PS-11; a quest without a judge whose ritual asks for eyes is
+  `unjudgeable_vision`, advising a judge of a tribe that reads images):
   questions, seals, the infirmary, drafts, open memos, pools asleep or at the warning share, and (PS-05) the done
   quests that still hold a scope quests ready to start wait for (`scope_held`, from `scopeHoldsOf` over the quest
   files, which the caller passes with the notices: the world state holds no scope), and the tribes the Steward holds

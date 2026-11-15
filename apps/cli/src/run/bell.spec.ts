@@ -1,6 +1,7 @@
 // The console bell's mana lines (implementation-plan §3.5, P1-22): a gauge that warns, sleeps or wakes, a whole
-// pool or the cap of one model, in the owner's language; and a merge quest's merge that stopped (PS-08e). The other
-// quest notices are in compose.spec.ts.
+// pool or the cap of one model, in the owner's language. The quest notices are in compose.spec.ts, but for a quest
+// that waits for a judge who reads images (PS-11) and a merge quest's merge that stopped (PS-08e), here as
+// compose.spec.ts is at its size limit.
 import { QuestIdSchema, TribeIdSchema } from '@elvaria/domain';
 import { translator } from '@elvaria/i18n';
 import { describe, expect, it } from 'vitest';
@@ -150,6 +151,24 @@ describe('the console bell on a merge that stopped (PS-08e)', () => {
     );
     expect(lineOf(vi, { ...stopped, reason: 'conflict', conflicts: ['README.md'] })).toContain(
       'ghép main dừng vì xung đột ở README.md',
+    );
+  });
+});
+
+describe('the console bell on a quest that waits for a judge who reads images (PS-11)', () => {
+  const quest = { id: QuestIdSchema.parse('q_20261106_7k3m2a'), title: 'Đổi nút', rank: 'C' as const };
+  const notice = { kind: 'unjudgeable', quest, classes: ['judge'], model: 'claude-sonnet-5-5' } as const;
+
+  it('names the tribe it needs, not only another model', () => {
+    expect(lineOf(en, { ...notice, vision: true })).toBe(
+      'Quest q_20261106_7k3m2a «Đổi nút» waits in review for a judge who reads images, but no judge of the ' +
+        'kingdom may judge it: the judge must be of a tribe whose CLI reads images (its adapter declares vision), ' +
+        'must not have worked on it and must run another model than claude-sonnet-5-5. ' +
+        'Summon one: elvaria character add <id> --class judge --tribe <tribe>',
+    );
+    expect(lineOf(vi, { ...notice, vision: true })).toContain('chờ một người chấm đọc được ảnh');
+    expect(lineOf(en, notice)).toContain(
+      'Summon one: elvaria character add <id> --class judge --model <model>',
     );
   });
 });

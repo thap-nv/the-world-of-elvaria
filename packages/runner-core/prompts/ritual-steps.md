@@ -49,6 +49,10 @@ There must be a test that reproduces the bug: it fails without the fix and passe
 
 When the territory has tests, every change of behaviour in the diff comes with a test that covers it, written or updated in this quest. A change of behaviour without one fails the quest with `fail_kind` `incomplete`, even when every check is green. A change with no behaviour (comments, formatting, documentation) needs none.
 
+## compare_screens
+
+Open every image the review lists, one by one: each screen the checks captured (`<name>.png`), beside its reference (`<name>.ref.png`) and its difference image (`<name>.diff.png`) when there is one. For each pair, say where the screen differs from its reference. A difference the quest's description does not ask for fails the quest: name the image and where on it. A screen without a reference is compared with the description. When you cannot open an image, say so, name it, and give `partial`, instead of guessing what it shows.
+
 ## compare_before_after
 
 Compare the numbers the quest is about (time, size, counts) before and after the change; a regression fails it.

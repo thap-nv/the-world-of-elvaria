@@ -127,8 +127,8 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   `hookNote`); `detail` remains verbatim external text. The kit validates adapter notes, replacing malformed
   entries with `doctor:bad_note`, and appends `doctor:hook_missing` when needed. The optional `shell` is
   checked only when given (`shellProblems`, P1-40), and so are `search` (`searchProblems`, P1-53), `read`
-  (`readProblems`) and `models` (the domain's `modelsProblems`, PS-23), here and in the suite's `capabilities`
-  check. An adapter whose CLI has hooks of its own writes its neutral hook dialect into `policy.json` through
+  (`readProblems`), `vision` (`visionProblems`, PS-11) and `models` (the domain's `modelsProblems`, PS-23),
+  here and in the suite's `capabilities` check. An adapter whose CLI has hooks of its own writes its neutral hook dialect into `policy.json` through
   `writePolicyFile(…, { dialect })` (`HookDialect`, `src/runner/hook-dialect.ts`, PS-23), so the hook reads that
   CLI without a branch of its own. A built-in package also exports an `AdapterTool` (its program, its search
   outside PATH, whether the provider's terms need acknowledging, its fake CLI) for the composition root (PS-23).

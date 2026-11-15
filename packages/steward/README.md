@@ -370,7 +370,8 @@
 - Tells once when an open quest nobody can take (`quest.unclaimable`, the bell), withdraws it with
   `reason: null`, and keeps the notices in `.state/unclaimable.json` (`readUnclaimable`) for `elvaria quest list`
   and `show`. Rings once when a submitted quest waits for a judge the roster does not have (`unjudgeable`,
-  P1-15: `different_model` and no judge of the kind outside its doers on another model); no file, no event.
+  P1-15: `different_model` and no judge of the kind outside its doers on another model; PS-11: `vision` when the
+  quest's ritual asks for eyes, and so does the digest's notice); no file, no event.
 - Builds the territories' code graphs outside the tick (PS-21, ADR 0029, `graph-builds.ts`) through the optional
   `deps.graphs` port (runner-core's `codeGraphsOf`): for each territory with `code_graph` on, the default branch's tip
   every tick and a quest's base commit when its session opens; one build per territory, the latest commit next,
