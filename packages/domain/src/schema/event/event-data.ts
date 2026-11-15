@@ -76,6 +76,13 @@ const AgentToolBlockedDataSchema = z.strictObject({
 
 const AgentSessionStartDataSchema = z.strictObject({ session: NonEmptyStringSchema, model: ModelSlugSchema });
 
+const AgentSessionWrapUpDataSchema = z.strictObject({
+  measure: z.enum(['time', 'tokens', 'turns']),
+  used: z.number().min(0),
+  limit: z.number().positive().meta(describe('Nominal ceiling before the soft and hard percentages.')),
+  pct: z.number().min(0).meta(describe('Used as a percentage of the nominal ceiling.')),
+});
+
 const AgentSessionEndDataSchema = z.strictObject({
   outcome: z
     .enum(['completed', 'max_turns', 'budget', 'killed', 'error'])
@@ -214,6 +221,7 @@ export const EVENT_DATA_SCHEMAS = {
   'agent.tool.blocked': AgentToolBlockedDataSchema,
   'agent.session.start': AgentSessionStartDataSchema,
   'agent.session.end': AgentSessionEndDataSchema,
+  'agent.session.wrap_up': AgentSessionWrapUpDataSchema,
   'agent.subagent.end': AgentSubagentEndDataSchema,
   'agent.subagent.overrun': AgentSubagentOverrunDataSchema,
   'check.start': CheckStartDataSchema,

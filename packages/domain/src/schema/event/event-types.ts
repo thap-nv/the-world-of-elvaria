@@ -23,6 +23,7 @@ export const EVENT_TYPES = [
   'quest.unclaimable',
   'agent.session.start',
   'agent.session.end',
+  'agent.session.wrap_up',
   'agent.tool',
   'agent.tool.blocked',
   'agent.subagent.start',

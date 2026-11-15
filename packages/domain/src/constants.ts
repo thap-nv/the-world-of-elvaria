@@ -39,6 +39,8 @@ export const MS_PER_MINUTE = 60_000;
 export const MINUTES_PER_HOUR = 60;
 
 export const BREAKER_DEFAULTS = {
+  soft_pct: 85,
+  hard_pct: 150,
   attempt_minutes_low: 45,
   attempt_minutes_high: 120,
   high_rank_from: 'B',

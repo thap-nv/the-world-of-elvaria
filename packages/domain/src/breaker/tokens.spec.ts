@@ -37,8 +37,8 @@ describe('countedTokens', () => {
   });
 
   it('still trips a session that runs away, cache reads or not', () => {
-    expect(trips(countedTokens({ tokens: 250_000, cache_read: 0 }))).toMatchObject({ trip: 'tokens' });
-    expect(trips(countedTokens({ tokens: 100_000, cache_read: 1_500_000 }))).toMatchObject({
+    expect(trips(countedTokens({ tokens: 360_001, cache_read: 0 }))).toMatchObject({ trip: 'tokens' });
+    expect(trips(countedTokens({ tokens: 100_000, cache_read: 2_600_010 }))).toMatchObject({
       trip: 'tokens',
     });
   });

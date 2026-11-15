@@ -3,7 +3,7 @@
 // context (principle 13) with a fresh clock, and its tokens are the ones its own stream reported.
 import { parseInstant } from '../core/clock.ts';
 import { evaluateBreakers } from './evaluate.ts';
-import type { SessionTrip, UsageSoFar } from './evaluate.ts';
+import type { SessionTrip, UsageSoFar, WrapUp } from './evaluate.ts';
 import type { Instant } from '../core/clock.ts';
 import type { QuestId } from '../core/ids.ts';
 import type { Role } from '../schema/common.ts';
@@ -34,7 +34,20 @@ const openEntryOf = (quest: Quest, role: Role) =>
   quest.attempt_log.findLast((entry) => entry.role === role && entry.ended_at === undefined);
 
 /** The kingdom's breaker settings a session is held to beside its quest's budget. */
-export type SessionRules = Pick<Kingdom['breakers'], 'max_turns' | 'verifier_tokens_multiplier'>;
+export type SessionRules = Pick<Kingdom['breakers'], 'max_turns' | 'verifier_tokens_multiplier'> &
+  Partial<Pick<Kingdom['breakers'], 'soft_pct' | 'hard_pct'>> & {
+    readonly characters?: ReadonlyMap<string, Pick<Character, 'tribe'>>;
+    readonly tribes?: readonly Pick<Kingdom['tribes'][number], 'id' | 'max_turns'>[];
+  };
+
+/** The holder's tribe may override the kingdom's nominal turn ceiling, for either role. */
+export const turnCeilingOf = (quest: Quest, role: Role, rules: SessionRules): number => {
+  const holder = role === 'assignee' ? quest.assignee : quest.verifier;
+  const tribe = typeof holder === 'string' ? rules.characters?.get(holder)?.tribe : undefined;
+  return rules.tribes?.find(({ id }) => id === tribe)?.max_turns ?? rules.max_turns;
+};
+
+export type SessionWrapUp = WrapUp & Pick<HeldSession, 'quest' | 'role'>;
 
 /**
  * The token ceiling of a session: the quest's budget for its assignee, that budget times
@@ -67,13 +80,13 @@ export const measureOf =
  * The held sessions that tripped a breaker, in the order given. A session whose quest or entry is gone (the file
  * moved on in this tick) is not the plan's to stop: the end the runner reports settles it.
  */
-export function breakersOf(
+function evaluationsOf(
   quests: readonly Quest[],
   sessions: readonly HeldSession[],
   rules: SessionRules,
   now: Instant,
   measure: BreakerMeasure = () => 'tokens_and_minutes',
-): Breaker[] {
+) {
   const byId = new Map(quests.map((quest) => [quest.id, quest]));
   return sessions.flatMap((session) => {
     const quest = byId.get(session.quest);
@@ -83,7 +96,9 @@ export function breakersOf(
     const limits = {
       max_minutes: quest.budget.max_minutes,
       max_tokens: tokenCeilingOf(quest, session.role, rules),
-      max_turns: rules.max_turns,
+      max_turns: turnCeilingOf(quest, session.role, rules),
+      ...(rules.soft_pct === undefined ? {} : { soft_pct: rules.soft_pct }),
+      ...(rules.hard_pct === undefined ? {} : { hard_pct: rules.hard_pct }),
     };
     const verdict = evaluateBreakers(
       { started_at: started.value },
@@ -92,6 +107,20 @@ export function breakersOf(
       session.usage,
       measure(quest, session.role),
     );
-    return verdict === 'ok' ? [] : [{ quest: quest.id, role: session.role, ...verdict }];
+    return verdict === 'ok' ? [] : [{ quest: quest.id, role: session.role, verdict }];
   });
+}
+
+/** Hard stops only: existing callers never receive a soft warning as a breaker. */
+export function breakersOf(...args: Parameters<typeof evaluationsOf>): Breaker[] {
+  return evaluationsOf(...args).flatMap(({ quest, role, verdict }) =>
+    'trip' in verdict ? [{ quest, role, ...verdict }] : [],
+  );
+}
+
+/** Sessions needing a reminder, in held order; a hard stop is never also a reminder. */
+export function wrapUpsOf(...args: Parameters<typeof evaluationsOf>): SessionWrapUp[] {
+  return evaluationsOf(...args).flatMap(({ quest, role, verdict }) =>
+    'kind' in verdict ? [{ quest, role, ...verdict }] : [],
+  );
 }

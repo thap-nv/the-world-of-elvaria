@@ -57,6 +57,10 @@ export const TribeSchema = z
     // Required although `elvaria init` writes these defaults: the v1 contract keeps them explicit in the file.
     enabled: z.boolean().meta({ default: true }),
     max_concurrent: z.int().min(1).meta({ default: 1 }),
+    // Optional, added after v1: an absent ceiling uses kingdom.breakers.max_turns.
+    max_turns: z.int().min(1).optional().meta({
+      description: 'Nominal session turn ceiling for this tribe; absent uses breakers.max_turns.',
+    }),
     tool: TribeToolSchema.optional(),
     pools: z
       .record(z.string().regex(REGISTRY_ID_PATTERN), z.strictObject({ enabled: z.boolean() }))

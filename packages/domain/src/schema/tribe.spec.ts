@@ -13,6 +13,14 @@ const verdictOf = (value: object) => {
 };
 
 describe('TribeSchema', () => {
+  it('accepts an optional positive integer turn ceiling without changing old tribes', () => {
+    const tribe = { ...base, id: 'claude', adapter: 'claude_code' };
+    expect(TribeSchema.parse(tribe)).not.toHaveProperty('max_turns');
+    expect(TribeSchema.parse({ ...tribe, max_turns: 300 }).max_turns).toBe(300);
+    for (const max_turns of [0, -1, 1.5, '200', null]) {
+      expect(verdictOf({ ...tribe, max_turns })).toBe('max_turns');
+    }
+  });
   it('keeps enabled and max_concurrent required, as the v1 contract does', () => {
     expect(TribeSchema.safeParse({ id: 'claude', adapter: 'claude_code' }).success).toBe(false);
   });
