@@ -52,12 +52,12 @@ describe('a breaker after an apprentice ran long or was cut', () => {
       runnerLine(kingdom, started.id, 'an-older-session', 'agent.subagent.overrun', older),
     ]);
     await journal.append([runnerLine(kingdom, started.id, session, type, data)]);
-    kingdom.clock.advance(45);
+    kingdom.clock.advance(67.5);
     await steward.tick();
     expect((await kingdom.quest('Hangs')).status).toBe('infirmary');
     expect(kingdom.notices.at(-1)).toMatchObject({
       kind: 'infirmary',
-      reason: { code: 'breaker:time', params: { minutes: 45, limit: 45 } },
+      reason: { code: 'breaker:time', params: { minutes: 67.5, limit: 67.5 } },
     });
     const notice = kingdom.notices.at(-1);
     const left = notice?.kind === 'infirmary' ? notice.detail?.apprentice_left : undefined;
