@@ -2,6 +2,8 @@
 // The clock of a session is its own attempt_log entry: a session revived after mana or an answer is a fresh
 // context (principle 13) with a fresh clock, and its tokens are the ones its own stream reported.
 import { parseInstant } from '../core/clock.ts';
+import { BREAKER_DEFAULTS } from '../constants.ts';
+import { CONTEXT_BUDGETS_BY_RANK } from '../dispatch/constants.ts';
 import { evaluateBreakers } from './evaluate.ts';
 import type { SessionTrip, UsageSoFar, WrapUp } from './evaluate.ts';
 import type { Instant } from '../core/clock.ts';
@@ -12,6 +14,7 @@ import type { Quest } from '../schema/quest/quest.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { RosterSource } from '../dispatch/roster.ts';
 import type { TribeLimits } from '../tribe/tribe-limits.ts';
+import type { TribeCalibration } from './calibration.ts';
 
 /** A session the Steward holds on a quest, with what its stream reported so far. */
 export interface HeldSession {
@@ -36,12 +39,20 @@ const openEntryOf = (quest: Quest, role: Role) =>
 /** The kingdom's breaker settings a session is held to beside its quest's budget. */
 export type SessionRules = Pick<Kingdom['breakers'], 'max_turns' | 'verifier_tokens_multiplier'> &
   Partial<Pick<Kingdom['breakers'], 'soft_pct' | 'hard_pct'>> & {
+    readonly context_budget_tokens?: number;
+    readonly mana_multiplier?: number;
     readonly characters?: ReadonlyMap<string, Pick<Character, 'tribe'>>;
     readonly tribes?: readonly Pick<Kingdom['tribes'][number], 'id' | 'max_turns'>[];
   };
 
 /** The holder's tribe may override the kingdom's nominal turn ceiling, for either role. */
-export const turnCeilingOf = (quest: Quest, role: Role, rules: SessionRules): number => {
+export const turnCeilingOf = (
+  quest: Quest,
+  role: Role,
+  rules: SessionRules,
+  calibration?: TribeCalibration,
+): number => {
+  if (calibration !== undefined) return calibration.max_turns.value;
   const holder = role === 'assignee' ? quest.assignee : quest.verifier;
   const tribe = typeof holder === 'string' ? rules.characters?.get(holder)?.tribe : undefined;
   return rules.tribes?.find(({ id }) => id === tribe)?.max_turns ?? rules.max_turns;
@@ -53,10 +64,25 @@ export type SessionWrapUp = WrapUp & Pick<HeldSession, 'quest' | 'role'>;
  * The token ceiling of a session: the quest's budget for its assignee, that budget times
  * `verifier_tokens_multiplier` for a judge (P1-18 proposal (f)), who reads the whole diff and runs the checks again.
  */
-export const tokenCeilingOf = (quest: Quest, role: Role, rules: SessionRules): number =>
-  role === 'verifier'
-    ? Math.round(quest.budget.max_tokens * rules.verifier_tokens_multiplier)
-    : quest.budget.max_tokens;
+export const tokenCeilingOf = (
+  quest: Quest,
+  role: Role,
+  rules: SessionRules,
+  calibration?: TribeCalibration,
+): number => {
+  let tokens = quest.budget.max_tokens;
+  if (calibration !== undefined) {
+    const multiplier = rules.mana_multiplier ?? BREAKER_DEFAULTS.mana_multiplier;
+    const context = rules.context_budget_tokens ?? BREAKER_DEFAULTS.context_budget_tokens;
+    const rankTokens = Math.round(context * CONTEXT_BUDGETS_BY_RANK[quest.rank]);
+    const baseline = Math.round(Math.max(quest.estimate.tokens, rankTokens) * multiplier);
+    // An explicit raise above the creation budget remains a floor, not another estimate multiplier.
+    const raised = quest.budget.max_tokens > baseline ? quest.budget.max_tokens : 0;
+    const estimated = quest.estimate.tokens * calibration.estimate_factor.value;
+    tokens = Math.round(Math.max(rankTokens * multiplier, estimated, raised));
+  }
+  return role === 'verifier' ? Math.round(tokens * rules.verifier_tokens_multiplier) : tokens;
+};
 
 /** What the breakers of a session on `quest` in `role` measure: its holder's tribe's (tribeLimitsOf, §3.14). */
 export type BreakerMeasure = (quest: Quest, role: Role) => TribeLimits['breakers'];
