@@ -39,6 +39,9 @@ export const MS_PER_MINUTE = 60_000;
 export const MINUTES_PER_HOUR = 60;
 
 export const BREAKER_DEFAULTS = {
+  estimate_factor: 1.82,
+  soft_pct: 85,
+  hard_pct: 150,
   attempt_minutes_low: 45,
   attempt_minutes_high: 120,
   high_rank_from: 'B',
@@ -57,6 +60,9 @@ export const BREAKER_DEFAULTS = {
    */
   verifier_tokens_multiplier: 2,
 } as const;
+/** Ten completed first runs before a tribe replaces its provisional ceilings. */
+export const CALIBRATION_MIN_SAMPLES = 10;
+export const MEDIAN_PAIR_SIZE = 2;
 /**
  * Tokens read from the prompt cache that count as one token against quest.budget.max_tokens (P1-23). A cache read
  * costs a tenth of an input token (Claude API pricing; a twentieth on Opus 5.5) and does not count toward input
@@ -137,6 +143,20 @@ export const TERRITORY_DEFAULTS = {
 } as const;
 
 /**
+ * territory.delivery (§3.16.7, ADR 0023; PS-08): what a territory delivers by when its file names no delivery, or
+ * names one without these keys. `manual` is stage 1's delivery: the branch waits for the owner. An hour of the forge's
+ * checks before the Steward stops waiting is (V) of the PS-08 plan.
+ */
+export const DELIVERY_DEFAULTS = {
+  mode: 'manual',
+  forge: 'github',
+  merge_method: 'merge',
+  checks_timeout_minutes: 60,
+} as const;
+/** delivery.failed `detail`: one forge or git message, redacted, never a whole log. */
+export const DELIVERY_DETAIL_MAX_LENGTH = 2000;
+
+/**
  * Ritual steps the verifier prompt knows how to run (glossary §13). A step is code in runner-core's prompt
  * builder, not data, so a ritual naming any other step is rejected when the registry loads.
  */
@@ -153,6 +173,8 @@ export const RITUAL_STEPS = [
   'check_regression_test',
   // A change of behaviour comes with its test when the territory has tests (§3.15, ADR 0022; P1-01).
   'check_tests_cover_change',
+  // The judge reads the screens the checks captured against their references (PS-11, `visual_review`).
+  'compare_screens',
   'compare_before_after',
   'score_tone_checklist',
   'rerun_from_source',

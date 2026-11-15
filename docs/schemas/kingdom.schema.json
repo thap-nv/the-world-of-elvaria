@@ -158,6 +158,23 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "estimate_factor": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "default": 1.82
+        },
+        "soft_pct": {
+          "description": "Warn above this percentage of the nominal session ceiling.",
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "default": 85
+        },
+        "hard_pct": {
+          "description": "Stop above this percentage of the nominal ceiling; time stops at the threshold.",
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "default": 150
+        },
         "attempt_minutes": {
           "type": "object",
           "additionalProperties": false,
@@ -538,6 +555,11 @@
           "minimum": 1,
           "default": 1
         },
+        "max_turns": {
+          "description": "Nominal session turn ceiling for this tribe; absent uses breakers.max_turns.",
+          "type": "integer",
+          "minimum": 1
+        },
         "tool": {
           "description": "The CLI binary, filled and pinned by `elvaria doctor`, re-pinned by a passing `elvaria tribe check` with the real CLI. Doctor warns when the installed version differs and refuses adapter = antigravity without terms_acknowledged_at.",
           "type": "object",
@@ -795,9 +817,12 @@
         "high_rank_from": "B",
         "max_attempts": 3,
         "mana_multiplier": 2,
+        "estimate_factor": 1.82,
         "same_fail_suspend": 3,
         "patrol_weekly_pct": 10,
         "max_turns": 200,
+        "soft_pct": 85,
+        "hard_pct": 150,
         "subagent_max_minutes": 5,
         "subagent_max_turns": 30,
         "context_budget_tokens": 120000,

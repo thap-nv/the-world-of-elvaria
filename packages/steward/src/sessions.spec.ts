@@ -92,7 +92,8 @@ describe("the end of an assignee's session", () => {
     expect(kingdom.notices).toEqual([
       expect.objectContaining({
         kind: 'infirmary',
-        reason: { code: 'breaker:turns', params: { turns: 200, limit: 200 } },
+        // The first cut goes on, the second one without progress sends the quest here (ADR 0030).
+        reason: { code: 'breaker:no_progress', params: { trip: 'turns', run: 1 } },
       }),
     ]);
     expect((await kingdom.character('kael')).status).toBe('idle');
@@ -115,7 +116,7 @@ describe("the end of an assignee's session", () => {
       async () => (await statusOf(kingdom, 'CLI budget')) === 'infirmary',
     );
     expect(kingdom.notices.at(-1)).toMatchObject({
-      reason: { code: 'breaker:tokens', params: { tokens: 12345, limit: 480000 } },
+      reason: { code: 'breaker:no_progress', params: { trip: 'tokens', run: 1 } },
     });
   });
 });

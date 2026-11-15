@@ -36,6 +36,14 @@ export const BREAKER_TRIPS = [
 export type BreakerTrip = (typeof BREAKER_TRIPS)[number];
 
 /**
+ * The ceilings of a session: its time, its tokens, its turns. A character's session cut by one of them goes on in a
+ * fresh session when it made progress (breaker/continue.ts, ADR 0030); every other trip goes to the infirmary as
+ * before and never goes on by itself.
+ */
+export const CAP_TRIPS = ['time', 'tokens', 'turns'] as const satisfies readonly BreakerTrip[];
+export type CapTrip = (typeof CAP_TRIPS)[number];
+
+/**
  * Why a quest is in the infirmary (`quest.infirmary` data `trip`, P1-32): the breaker that tripped, the attempts
  * running out (a crash or a fail at max_attempts), or a script-tier run the machine could not finish: its script
  * broke, could not use the quest's params (`usage`), or did not pass. A script past its time trips `time`.
@@ -122,6 +130,7 @@ export interface SequelRun {
 export interface RunEnd {
   readonly session_id?: string;
   readonly tokens?: number;
+  readonly turns?: number;
   readonly sequels?: readonly SequelRun[];
 }
 
@@ -154,7 +163,11 @@ export type QuestEvent =
    * owner decides: the quest waits as on a question, no status of its own.
    */
   | Shaped<'ask', RunEnd & { readonly question: string; readonly amendment?: BlockedAmendment }>
-  | Shaped<'breaker', RunEnd & { readonly trip: BreakerTrip }>
+  /**
+   * `progress`: the assignee's session left a new commit, or a WIP commit with changes, before the cut. Only the
+   * ceilings read it; without it (a Steward that does not report it yet) the cut goes to the infirmary as before.
+   */
+  | Shaped<'breaker', RunEnd & { readonly trip: BreakerTrip; readonly progress?: boolean }>
   | Shaped<'answer', SessionStart & { readonly answer: string }>
   | Shaped<'assign_verifier', SessionStart & { readonly verifier: CharacterId }>
   /** The judge the Steward chose, whose session could not open (fix/review-no-session): no session id to give. */

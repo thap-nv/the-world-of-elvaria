@@ -16,8 +16,8 @@ import { driftIn } from './drift.ts';
 import type { Drift } from './drift.ts';
 import { filesIn, prepareFolder } from './folder.ts';
 import { gitOf } from './git.ts';
-import { mergeIn, unmergedIn } from './merge.ts';
-import type { MergeOutcome } from './merge.ts';
+import { mergeAll, unmergedWithBase } from './merge.ts';
+import type { BaseBranch, MergeOptions, MergeOutcome } from './merge.ts';
 import { NO_PATCH, applyPatchIn } from './patch.ts';
 import type { CommitRescue } from './rescue.ts';
 import type { PatchOutcome } from './patch.ts';
@@ -111,13 +111,15 @@ export interface PlotManager {
    * Optional for a stand-in manager of a spec; createPlotManager has it.
    */
   drift?(plot: Plot, from: string): Promise<Drift | null>;
-  /**
-   * A party's merge quest, before each session (P1-18): merges each of `branches` its worktree does not hold, in
-   * order, until one stops on a conflict (left in progress for the character); nothing for a plot without git.
-   */
-  merge(plot: Plot, branches: readonly string[]): Promise<MergeOutcome>;
-  /** The branches of `branches` the plot does not hold (P1-18); all of them for a plot without git. */
-  unmerged(plot: Plot, branches: readonly string[]): Promise<string[]>;
+  /** Before a session: a merge quest's parts, then `base` (mergeAll), or a quest's dependencies (P1-18, PS-08e). */
+  merge(
+    plot: Plot,
+    branches: readonly string[],
+    base?: BaseBranch,
+    options?: MergeOptions,
+  ): Promise<MergeOutcome>;
+  /** The branches of `branches` the plot does not hold, `base`'s too (P1-18, PS-08e); all for a plot without git. */
+  unmerged(plot: Plot, branches: readonly string[], base?: BaseBranch): Promise<string[]>;
   /** Only when the quest is archived: removes the worktree, keeps the branch. */
   release(plot: Plot): Promise<Result<ReleasedPlot, PlotFailure>>;
   /**
@@ -279,12 +281,14 @@ export function createPlotManager(options: PlotManagerOptions): PlotManager {
     },
     drift: async (plot, from) =>
       plot.type === 'worktree' ? driftIn(await git(), worktreeOf(plot), from) : null,
-    merge: async (plot, branches) =>
+    merge: async (plot, branches, base, how) =>
       plot.type === 'worktree' && plot.branch !== undefined
-        ? mergeIn(await git(), worktreeOf(plot), plot.branch, branches)
+        ? mergeAll(await git(), worktreeOf(plot), plot.branch, branches, base, how)
         : { merged: [], pending: [...branches] },
-    unmerged: async (plot, branches) =>
-      plot.type === 'worktree' ? unmergedIn(await git(), worktreeOf(plot), branches) : [...branches],
+    unmerged: async (plot, branches, base) =>
+      plot.type === 'worktree'
+        ? unmergedWithBase(await git(), worktreeOf(plot), branches, base)
+        : [...branches],
     release: async (plot) =>
       plot.type === 'worktree'
         ? releaseWorktree(await git(), worktreeOf(plot), forget)

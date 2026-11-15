@@ -73,6 +73,11 @@ describe('buildTriagePrompt (PS-03b)', () => {
     expect(decreed.system.length).toBeGreaterThan(plain.system.length);
   });
 
+  it('lists the tag that asks for eyes only when a tribe that works reads images (fix/council-run-gaps (a))', () => {
+    expect(buildTriagePrompt(context, templates).user).not.toContain('- `visual`');
+    expect(buildTriagePrompt({ ...context, vision: true }, templates).user).toContain('- `visual`: ');
+  });
+
   it('says so when there is no open quest, and keeps a short description whole', () => {
     const { user } = buildTriagePrompt(
       { ...context, memos: [], quests: [{ ...OPEN, description: 'Ngắn.' }] },

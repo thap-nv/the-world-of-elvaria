@@ -1,6 +1,7 @@
 // What an event changes in a quest besides its status (implementation-plan §2.5): who holds it, the attempt
 // counter, the attempt log, the question, the seal, the delivery. One effect per event type; the row of
 // QUEST_TRANSITIONS has already been chosen, and `to` is its target status.
+import { endedInCut, isCapTrip } from '../breaker/continue.ts';
 import { aboveCeiling } from '../character/level.ts';
 import { err, ok } from '../core/result.ts';
 import { machineMergeDue, machineRun } from '../party/machine-merge.ts';
@@ -57,6 +58,30 @@ function startAttempt(quest: Quest, event: QuestEventOf<'start' | 'redispatch'>)
   const entry = assigneeRun(quest, currentRun(quest) + 1, event.at, event.session_id);
   const attempts = machineRun(quest) ? quest.attempts : quest.attempts + 1;
   return ok({ ...quest, attempts, attempt_log: [...quest.attempt_log, entry] });
+}
+
+/**
+ * The redispatch of a quest a ceiling cut and let go on (ADR 0030) opens a fresh session of the same run: no new
+ * attempt, no new run number. Any other redispatch is a new attempt.
+ */
+function redispatch(quest: Quest, event: QuestEventOf<'redispatch'>): Result<Quest, never> {
+  return endedInCut(quest.attempt_log)
+    ? ok(resume(quest, event.at, event.session_id))
+    : startAttempt(quest, event);
+}
+
+/**
+ * A breaker ends the session; one of a character's sessions cut by a ceiling also keeps whether it made progress
+ * (ADR 0030), which the next cut of the run reads. Other trips ignore `progress`.
+ */
+function cut(quest: Quest, event: QuestEventOf<'breaker'>): Result<Quest, never> {
+  const ended = endRun(quest, event, event.trip === 'time' ? 'timeout' : 'breaker');
+  const { progress } = event;
+  const working = quest.status === 'working' && quest.assignee !== null;
+  if (!working || progress === undefined || !isCapTrip(event.trip)) return ok(dropVerifierInReview(ended));
+  const index = ended.attempt_log.findLastIndex((entry) => entry.role === 'assignee');
+  const log = ended.attempt_log.map((entry, at) => (at === index ? { ...entry, progress } : entry));
+  return ok({ ...ended, attempt_log: log });
 }
 
 /**
@@ -168,7 +193,7 @@ const EFFECTS: { readonly [T in QuestEventType]: Effect<T> } = {
     ok({ ...takenBy(quest, event), ...(quest.status === 'infirmary' ? { attempts: 0 } : {}) }),
   block: (quest, event) => ok({ ...quest, blocked: askedAt(event.question, event.at) }),
   start: startAttempt,
-  redispatch: startAttempt,
+  redispatch,
   submit: ending('submitted'),
   // An amendment is a question its author decides first (PS-22b): the quest keeps which memo it waits on, and who.
   ask: (quest, event) => {
@@ -177,7 +202,7 @@ const EFFECTS: { readonly [T in QuestEventType]: Effect<T> } = {
     return ok({ ...endRun(quest, event, 'blocked'), blocked });
   },
   mana_out: ending('paused'),
-  breaker: (quest, event) => ending(event.trip === 'time' ? 'timeout' : 'breaker')(quest, event),
+  breaker: cut,
   crash: ending('crash'),
   cancel: (quest, event) => ok(endRun(quest, event, 'cancelled')),
   // The assignee's attempt ends as returned (§2.6); a suspended verifier's session is simply cut short. A quest

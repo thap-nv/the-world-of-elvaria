@@ -209,7 +209,7 @@ Registry mặc định (P0-02; id xem [glossary](../glossary.md)):
 - 11 class: `chancellor, mage, knight, dwarf, scout, scribe, bard, astrologer, envoy, judge, monk` (thiết kế có 12 icon nghề vì `judge` có hai icon theo kind, ADR 0011).
 - 11 ritual, mỗi kind một: build → `build_review`, research → `source_check`, fix → `regression_check`, refactor → `stress_test`, document → `editorial_review`, publish → `audience_review`, analyze → `recompute`, plan → `council_review`, integrate → `stability_check`, negotiate → `sign_off`, batch → `unit_tally`.
 - 6 script: `link-check`, `run-check` (chạy một `checks[].id` của lãnh thổ), `count-files`, `diff-stat`, `compare-numbers`, `todo-scan` (đếm dấu TODO/FIXME/HACK/XXX theo file).
-- 7 tag: `frontend, backend, db, infra, i18n, e2e, docs` (danh sách của kế hoạch sản phẩm; người dùng thêm bằng cách sửa `tags.json`).
+- 7 tag: `frontend, backend, db, infra, i18n, e2e, docs` (danh sách của kế hoạch sản phẩm; người dùng thêm bằng cách sửa `tags.json`). Registry mặc định thêm `integration` (P1-20) và `visual` (PS-11: thay đổi nhìn thấy trên màn hình, chọn nghi thức `visual_review`).
 
 **skill** (v1) — front matter của `temple/skills/<id>/SKILL.md`: version, id (kebab-case, tên thư mục), title, description (một dòng, thành mô tả của skill theo định dạng CLI), tags[] (≥ 1), scope (`global` \| id lãnh thổ), source: monk\|user, derived_from? (id bài học; bắt buộc khi `source = monk`), max_tokens (mặc định 2000, giá trị khởi điểm), created_at, updated_at?. Đường dẫn là quy ước nên không có trường `path` (như `journal`). Nội dung viết bằng tiếng Anh như prompt nhân vật.
 
@@ -251,7 +251,8 @@ Tác nhân: **U** người dùng (qua inbox), **S** Nhiếp chính, **R** runner
 | working | `release` | `tier = session`, có `assignee` | S | returned | phiên của nhân vật kết thúc trong lúc không có Nhiếp chính nào chạy (Nhiếp chính dừng hay bị giết): lượt kết thúc `cancelled`, `attempts` trả lại một (lần `redispatch` ngay sau lấy lại nó), cùng nhân vật làm tiếp ở phiên mới từ handover (P1-44) |
 | working | `ask` |  | R | blocked | ghi `blocked.question`; lượt kết thúc `blocked` |
 | working | `mana_out` | `tier = session`, có `assignee` | M | paused_mana | giữ `assignee`; lượt kết thúc `paused` |
-| working | `breaker` |  | S | infirmary | kill tree, event `quest.infirmary` kèm lý do; lượt `timeout` (thời gian) hoặc `breaker` (token, lượt, hook từ chối commit lúc nộp); nhân vật → swamp rồi idle |
+| working | `breaker` | trip `time`, `tokens` hay `turns` có `progress`, bậc session có `assignee`, và lần cắt không là lần thứ hai liền không tiến triển trong lượt `n` (`cutCallOf`) | S | returned | kill tree; lượt kết thúc `timeout` (thời gian) hoặc `breaker` (token, lượt), ghi `progress`; giữ `assignee`, `attempts` không đổi; `redispatch` ngay sau mở phiên mới đọc handover, cùng lượt `n`, `continuation.reason = revive`; không có trần số lần đi tiếp, lần cắt có tiến triển luôn đi tiếp (ADR 0030) |
+| working | `breaker` | mọi trường hợp còn lại (trip khác, không có `progress`, bậc script, hai lần cắt liền không tiến triển) | S | infirmary | kill tree, event `quest.infirmary` kèm lý do; lượt `timeout` (thời gian) hoặc `breaker` (token, lượt, hook từ chối commit lúc nộp); nhân vật → swamp rồi idle; trip `time`/`tokens`/`turns` chỉ tới đây sau hai lần cắt liền không tiến triển (`breaker:no_progress`); trip `commit`, `secrets`, `forbidden_paths`, `no_session` luôn tới đây, bỏ qua `progress` |
 | working | `crash` | `tier = session`, có `assignee`, `attempts < max_attempts` | S | returned | outcome `crash`, cùng nhân vật thử lại |
 | working | `crash` | `tier = script` hoặc `attempts ≥ max_attempts` | S | infirmary | bậc script: lỗi script vào thẳng trạm quân y (lỗi của Elvaria hoặc dữ liệu) |
 | working | `suspend` | `tier = session`, có `assignee` | U | returned | người dùng đình chỉ nhân vật (§2.6); lượt kết thúc `returned`; người dùng giao lại |
@@ -282,7 +283,7 @@ Tác nhân: **U** người dùng (qua inbox), **S** Nhiếp chính, **R** runner
 | review | `release` | có `verifier` | S | review | phiên người chấm kết thúc trong lúc không có Nhiếp chính nào chạy: người chấm rời đi, lượt kết thúc `cancelled`, không đếm vào `reviewBreaksOf` (P1-44) |
 | review | `suspend` | có `verifier` | U | review | như trên, khi người dùng đình chỉ người chấm |
 | review | `cancel` |  | U | archived |  |
-| returned | `redispatch` |  | S | working | `attempts` +1, lượt mới, cùng `assignee`, prompt kèm notes |
+| returned | `redispatch` |  | S | working | `attempts` +1, lượt mới, cùng `assignee`, prompt kèm notes; sau một lần cắt đi tiếp (`working.breaker.cut_goes_on`) thì `attempts` không đổi, cùng lượt `n`, phiên mới đọc handover (ADR 0030) |
 | returned | `reassign` |  | U | claimed |  |
 | returned | `cancel` |  | U | archived |  |
 | returned | `breaker` |  | S | infirmary | trip `secrets` hay `no_session` (phiên làm lại không mở được), như `claimed` |

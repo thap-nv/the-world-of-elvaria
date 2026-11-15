@@ -239,6 +239,26 @@ describe('elvaria say', () => {
     ]);
   });
 
+  it('shows the Chancellor the tag that asks for eyes only when a tribe reads images (fix/council-run-gaps (a))', async () => {
+    await summon('aldric', 'chancellor');
+    const heard = async (vision: boolean): Promise<string> => {
+      const said: string[] = [];
+      const fake = replying(await replyOf('link-check'));
+      const listening: AgentRunner = {
+        ...fake,
+        capabilities: { ...fake.capabilities, vision },
+        spawn: (req) => {
+          said.push(req.prompt.user);
+          return fake.spawn(req);
+        },
+      };
+      await say(testIo(), 'Sửa màu nút', { [CLAUDE]: listening });
+      return said[0] ?? '';
+    };
+    const listed = [await heard(false), await heard(true)].map((user) => user.includes('- `visual`: '));
+    expect(listed).toEqual([false, true]);
+  });
+
   it("hands the Chancellor a letter with --memo, the owner's words after it, and drafts that close it (PS-02, PS-03b)", async () => {
     await summon('aldric', 'chancellor');
     await openKingdom(kingdom).memos.write(MEMO);

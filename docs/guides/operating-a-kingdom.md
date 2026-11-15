@@ -261,11 +261,23 @@ Nhiếp chính đọc hạn mức của từng tài khoản mà không gọi mod
 
 ## 10. Trạm quân y và các lệnh khi quest kẹt
 
+Nhiếp chính hiệu chỉnh trần theo tộc mỗi nhịp từ file quest và nhân vật, không đọc sổ sự kiện để học hệ số.
+`elvaria metrics --plan <quest kế hoạch>` in hệ số token, trần lượt, số mẫu riêng và nguồn của từng giá trị
+trong cả vương quốc. Dưới 10 lượt đầu đã kết thúc có ước lượng token dương và đủ số đo, hệ số dùng
+`breakers.estimate_factor` (mặc định 1,82), trần lượt dùng `max_turns` của tộc hoặc `breakers.max_turns`.
+Đủ mẫu thì dùng trung vị token lượt đầu / ước lượng và trung vị số lượt (làm tròn lên); các phiên tiếp của
+cùng lượt đầu được cộng lại. Mỗi tộc giữ cách đếm token riêng; lượt thiếu `turns` không thành mẫu 0.
+Trần token giữ mức sàn theo hạng và mức ngân sách được nâng riêng; người chấm nhận hệ số trần token dành
+cho người chấm sau cùng. `--json` giữ nguyên đối tượng độ chính xác của kế hoạch.
+
 Quest vào trạm quân y thì dừng hẳn và chuông rung. `elvaria quest show <quest>` in lý do. Phần dở của người làm đã được commit lên nhánh (`chore: wip <quest> (<lý do>)`), trừ khi `quest show` nói commit bị từ chối.
+
+Phiên người làm vượt trần không còn đưa quest vào trạm quân y ngay. Ở 85 % trần (phút, token hay lượt) Nhiếp chính nhắc phiên một lần (`wrap-up.json`, event `agent.session.wrap_up`) để nó dừng, commit và viết thư; ở 150 % nó cắt phiên. Cắt mà nhánh có commit mới (hay commit WIP có thay đổi) thì quest đi tiếp trong phiên mới của cùng lượt, cùng người làm, không tốn lần thử, không chuông, và không có trần số lần đi tiếp. Chỉ khi hai lần cắt liền nhau trong cùng lượt đều không có tiến triển thì quest vào trạm quân y (`breaker:no_progress`) và chuông rung: một lần cắt giảm nay không buộc bạn `retry`. Các trip `commit`, `secrets`, `forbidden_paths` và `no_session` giữ nguyên: vào trạm quân y ngay, không phiên tiếp nào mở. Người chấm vượt trần vẫn rời lượt chấm cho người kế.
 
 | Lý do | Nghĩa là | Làm gì |
 |---|---|---|
-| cầu dao token | phiên vượt trần token | `quest edit <quest> --max-tokens <n>` rồi `quest retry <quest>` (§4 có số đo) |
+| không tiến triển (`breaker:no_progress`) | hai lần cắt liền nhau của phiên người làm trong cùng một lượt, ở trần phút, token hay lượt, mà cả hai đều không để lại commit mới | đọc `git log` và thư bàn giao; nâng trần (`quest edit --max-tokens` hay `--max-minutes`), hoặc chia nhỏ việc, rồi `retry` |
+| cầu dao token | phiên vượt trần token (người làm: lý do hiện là `breaker:no_progress` với `trip` là `tokens`) | `quest edit <quest> --max-tokens <n>` rồi `quest retry <quest>` (§4 có số đo) |
 | cầu dao thời gian | phiên vượt trần phút | `quest edit --max-minutes <n>` rồi `retry`. Đổi trần khi quest đang có phiên thì phiên đó cũng theo trần mới từ nhịp kế: cầu dao của Nhiếp chính đọc trần của quest mỗi nhịp, nên hạ trần dưới số phút phiên đã chạy là cắt nó ngay (`quest edit` cảnh báo). Riêng agy tự giữ đồng hồ (`--print-timeout`) lúc mở phiên: nâng trần không kéo dài phiên agy đang chạy, phiên sau mới nhận trần mới |
 | cầu dao lượt | CLI dừng ở 200 lượt | `retry`; lặp lại thì chia nhỏ việc |
 | commit bị từ chối | hook của repo từ chối commit, hoặc bản vá `elvaria.patch` không áp được | đọc lý do, sửa trong đất riêng (`<repo>/.elvaria/worktrees/<quest>`) rồi `retry` |
@@ -353,6 +365,8 @@ Khi `main` của Elvaria có thay đổi ở `packages/` hay `apps/` mà bạn m
 2. Ở checkout của repo Elvaria: `node scripts/ritual-steps.mjs --kingdom <vương quốc> --dry-run` in các bước hiện có và các bước mới; bỏ `--dry-run` để ghi. Script chép `registry/rituals.json` vào `.backup/<giờ>-ritual-steps/` trước, chỉ đổi `steps` của nghi thức đó, và từ chối khi bạn đã sửa các bước theo cách khác (`--force` thay hẳn).
 3. `registry/prompts/mage.md` (mẫu `plans/<chủ đề>.md`, mẫu đề bài, `estimate.context`) và `registry/prompts/chancellor.md` đổi ở PS-06: chép bản mới vào vương quốc theo §12 (sao lưu, so). Mẫu đề bài và cách ước lượng đến với pháp sư từ bản ghim kể cả khi chưa chép, nhưng `mage.md` cũ vẫn dạy `seal_required` bắt buộc và không có mẫu `plans/`. Từ PS-06b check `subquests` trả về kế hoạch có file `plans/` thiếu một mục của mẫu (Summary, Survey, Shared decisions, Sub-quests, Done when, Unknowns): chưa chép `mage.md` mới thì kế hoạch đầu tiên gần như chắc bị trả một lần.
 4. `elvaria doctor` in "Sẵn sàng.".
+
+**Sau lần nâng lên một bản có PS-11** (nghi thức xem ảnh): `migrate` thêm nghi thức `visual_review` (bước mới `compare_screens`; bản ghim cũ từ chối registry có nó, nên `upgrade` trước như mọi lần) và tag `visual`. Ba mục của `registry/kinds.json` là giá trị đổi trong mục đã có: `upgrade` chép khi vương quốc còn giữ đúng mặc định của bản trước, không thì nêu tên và bạn thêm tay vào `ritual_overrides`, **sau** mục `e2e`/`integration` (quest mang cả hai giữ Thả quái thử thành): `build` và `refactor` thêm `{ "tags_any": ["visual"], "ritual": "visual_review" }`; `fix` (chưa có `ritual_overrides`) thêm `"ritual_overrides": [{ "tags_any": ["visual"], "ritual": "visual_review" }]`. **Đừng gắn tag `visual` trước khi PS-11b vào bản ghim**: chỉ người chấm thuộc tộc mà adapter khai `vision` (CLI đọc được ảnh; `tribe list` in nó trong cột năng lực) nhận quest đó, và trước PS-11b không adapter nào khai, nên quest gắn `visual` đứng ở `review` mãi, chuông `unjudgeable` và bản tấu (`unjudgeable_vision`) nói nó chờ một người chấm đọc được ảnh. Tể tướng và pháp sư thấy tag này trong danh sách tag như mọi tag, và `quest edit` không đổi tag: bản nháp mang `visual` thì đừng xác nhận, hủy nó và ra lại nhiệm vụ không có tag đó.
 
 Thay đổi chỉ ở `docs/` thì không cần làm gì. Khi repo Elvaria cũng là một lãnh thổ, checkout chính là gốc của worktree quest mới, còn code của Nhiếp chính nằm trong bản ghim: `pull` chỉ đổi điểm tách của quest mở sau đó.
 

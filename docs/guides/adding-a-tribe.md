@@ -49,6 +49,7 @@ Trước khi viết adapter, trả lời đủ mười sáu câu dưới, câu r
 | `search` | boolean, mặc định `true` | `false`: nghề có Glob/Grep tìm bằng `git grep`, `git ls-files` trong tool lệnh; hook chặn cờ nguy hiểm |
 | `read` | boolean, mặc định `true` (PS-23) | `false`: prompt bảo nghề có shell đọc, liệt kê, tìm bằng lệnh chỉ đọc của shell, nghề không có shell đọc file đã theo dõi bằng `git grep -h -n -e '^' -- '<path>'`; adapter phải để các lệnh đó chạy |
 | `models` | danh sách (mục 2.2), PS-23 | mọi slug được nhận; họ đọc từ chữ đầu của slug; cấp khởi đầu theo chữ của slug |
+| `vision` | boolean, mặc định `false` (PS-11) | model của CLI không đọc ảnh: người chấm của tộc không nhận quest có nghi thức cần mắt (`visual_review`, tag `visual`), dù là người chấm duy nhất. Chỉ khai `true` khi đã đo CLI đọc đúng một PNG trong phiên headless, với đúng cờ của người chấm |
 
 Khai đúng điều đã đo trong spike. Bộ test hợp đồng kiểm hình dạng của mọi trường, và kiểm hành vi của `tool_gate` (lệnh `git push` phải bị chặn thật), `usage` (phiên phải báo token), `headless`.
 
@@ -116,7 +117,7 @@ Hàm thuần `tribeLimitsOf(capabilities)` của domain, mỗi năng lực một
 | `compact` | `compact: false` |
 | `subagent` | `apprentice: false` |
 
-`search`, `read`, `shell` và `models` không thu hẹp tộc: chúng đổi prompt, tool của nghề, luật tách vai và cấp khởi đầu (bảng 2.1). `prompt_max_chars` cũng không là một hàng của bảng: `tribeLimitsOn(capabilities, platform)` thêm `prompt_max_chars` của hệ điều hành đang chạy vào giới hạn của tộc, và chỉ lúc chọn người chấm đọc nó; `tribe list`, `tribe check` và `doctor` nêu nó như shell.
+`search`, `read`, `shell` và `models` không thu hẹp tộc: chúng đổi prompt, tool của nghề, luật tách vai và cấp khởi đầu (bảng 2.1). `prompt_max_chars` cũng không là một hàng của bảng: `tribeLimitsOn(capabilities, platform)` thêm `prompt_max_chars` của hệ điều hành đang chạy vào giới hạn của tộc, và chỉ lúc chọn người chấm đọc nó; `tribe list`, `tribe check` và `doctor` nêu nó như shell. `vision` cũng vậy (PS-11): `tribeLimitsOn` đặt `vision` vào giới hạn của tộc khi adapter khai `true`, chỉ lúc chọn người chấm đọc nó; `tribe list` và `tribe check` in nó sau các cờ đã khai, `doctor` thêm một dòng ✓.
 
 ## 5. Agent Client Protocol
 

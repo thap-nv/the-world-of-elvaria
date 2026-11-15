@@ -13,12 +13,14 @@ import type {
 import type { EventLog } from '@elvaria/eventlog';
 import type {
   AgentRunner,
+  BaseBranch,
   CheckRun,
   CodeGraphs,
   CommitOutcome,
   CommitRescue,
   DiffScope,
   Drift,
+  MergeOptions,
   MergeOutcome,
   PatchOutcome,
   PlotFailure,
@@ -112,11 +114,18 @@ export interface Plots {
   prepare(quest: Quest, territory: Territory, options?: PrepareOptions): Promise<PreparedPlot>;
   /**
    * A party's merge quest, before each session (P1-18): merges each of `branches` its plot does not hold, until one
-   * stops on a conflict, which is left in progress for the character; nothing without git.
+   * stops on a conflict, which is left in progress for the character, then `base`'s base branch, after which the
+   * plot counts from it (PS-08e, runner-core's mergeAll); nothing without git. `options.dependencies`: a quest's
+   * dependencies instead (fix/council-run-gaps (d), runner-core's mergeDependencies).
    */
-  merge(plot: Quest['plot'], branches: readonly string[]): Promise<MergeOutcome>;
-  /** The branches of `branches` the plot does not hold (P1-18): the merge quest's check before its judge. */
-  unmerged(plot: Quest['plot'], branches: readonly string[]): Promise<readonly string[]>;
+  merge(
+    plot: Quest['plot'],
+    branches: readonly string[],
+    base?: BaseBranch,
+    options?: MergeOptions,
+  ): Promise<MergeOutcome>;
+  /** The branches of `branches` the plot does not hold, `base`'s too (P1-18, PS-08e): the merge quest's check. */
+  unmerged(plot: Quest['plot'], branches: readonly string[], base?: BaseBranch): Promise<readonly string[]>;
   /**
    * `git add --all` + commit with the territory's hooks (never bypassed): `refused` keeps the work in place. With a
    * `rescue` folder (P1-55), scratch files at the plot's root are set aside in it first, and a refusal leaves a patch

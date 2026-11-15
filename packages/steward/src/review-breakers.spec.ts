@@ -62,7 +62,7 @@ const judgesAtMaxTurns = (judging: AgentRunner, spawned: SpawnRequest[]): AgentR
 
 const verifiersOf = (spawned: readonly SpawnRequest[]) => spawned.filter(({ role }) => role === 'verifier');
 
-// A judge may spend breakers.verifier_tokens_multiplier (2) times the quest's 480 000 tokens (P1-18 (f); rank D, P1-54).
+// A judge's nominal ceiling is twice the quest's 480 000 tokens; hard_pct (150) allows 1 440 000.
 describe('a review the breakers keep stopping', () => {
   it('records the time breaker after two judges exhaust their time', async () => {
     const { kingdom, steward } = await open((k) => ({
@@ -78,7 +78,7 @@ describe('a review the breakers keep stopping', () => {
         kingdom.clock,
         async () => (await kingdom.quest('Timed judges')).verifier !== null,
       );
-      kingdom.clock.advance(90);
+      kingdom.clock.advance(67.5);
       await steward.tick();
     }
     expect(kingdom.notices.at(-1)).toMatchObject({
@@ -90,8 +90,8 @@ describe('a review the breakers keep stopping', () => {
     const spawned: SpawnRequest[] = [];
     const { kingdom, steward } = await open((k) => ({
       runners: {
-        claude: spendingJudges(k, 'claude', 960_001, spawned),
-        gemini: spendingJudges(k, 'gemini', 960_001, spawned),
+        claude: spendingJudges(k, 'claude', 1_440_001, spawned),
+        gemini: spendingJudges(k, 'gemini', 1_440_001, spawned),
       },
     }));
     await kingdom.command('create_quest', questPayload('Judged at length'));
@@ -137,8 +137,8 @@ describe('a review the breakers keep stopping', () => {
     const spawned: SpawnRequest[] = [];
     const { kingdom, steward } = await open((k) => ({
       runners: {
-        claude: spendingJudges(k, 'claude', 960_001, spawned),
-        gemini: spendingJudges(k, 'gemini', 960_001, spawned),
+        claude: spendingJudges(k, 'claude', 1_440_001, spawned),
+        gemini: spendingJudges(k, 'gemini', 1_440_001, spawned),
       },
     }));
     await kingdom.command('create_quest', questPayload('Judged again'));

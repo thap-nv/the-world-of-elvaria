@@ -35,11 +35,12 @@ export const INFIRMARY_REASON_PARAMS: Readonly<Record<InfirmaryReasonCode, reado
 export const infirmaryReasonOf = (code: InfirmaryReasonCode, params?: InfirmaryParams): InfirmaryReason;
 ```
 
-`InfirmaryReasonSchema` (zod, cùng chỗ với schema event): `z.strictObject({ code: z.enum(INFIRMARY_REASONS), params: z.record(z.string(), z.union([z.string(), z.int()])) })` cộng một luật: tập khóa của `params` **bằng đúng** `INFIRMARY_REASON_PARAMS[code]` (thiếu hay thừa khóa đều là lỗi, báo ở `data.reason.params`). Không có tham số tùy chọn: khi một chi tiết lúc có lúc không, nó là hai mã (ví dụ `breaker:commit` và `breaker:commit_errors`).
+`InfirmaryReasonSchema` (zod, cùng chỗ với schema event): `z.strictObject({ code: z.enum(INFIRMARY_REASONS), params: z.record(z.string(), z.union([z.string(), z.number()])) })` cộng một luật: tập khóa của `params` **bằng đúng** `INFIRMARY_REASON_PARAMS[code]` (thiếu hay thừa khóa đều là lỗi, báo ở `data.reason.params`). Không có tham số tùy chọn: khi một chi tiết lúc có lúc không, nó là hai mã (ví dụ `breaker:commit` và `breaker:commit_errors`).
 
 ### 1.3 Kiểu của tham số
 
-- Số đếm, giới hạn, phút: số nguyên (`z.int()`), không phải chuỗi.
+- Tham số số dùng `z.number()`: số hữu hạn, không phải chuỗi; không nhận `NaN` hoặc `Infinity`. Người ghi giữ số đếm là số nguyên theo ngữ nghĩa; giới hạn và phút được là số thập phân.
+- `minutes` và `limit` của `breaker:time` không làm tròn: phút đã chạy giữ nguyên kết quả đo, trần là trần phút nhân `hard_pct` / 100 (ví dụ 45 × 150% = 67,5). CLI hiển thị giá trị này nên có thể có phần thập phân dài.
 - Đường dẫn: tương đối với thư mục kingdom, dấu `/` (ADR 0015).
 - Danh sách tên (secret): một chuỗi, các tên nối bằng `, `.
 - `lines` của `breaker:commit*`: một chuỗi, các dòng nối bằng `\n`, nguyên văn từ hook (đã bỏ mã màu ANSI, đã che secret như mọi dòng event).
@@ -66,6 +67,7 @@ Khóa i18n của mã `<nhóm>:<tên>` là `cli.quest.infirmary.reason.<nhóm>.<t
 | `breaker:secrets_missing` | cầu dao secret | `names` | kho bảo vật thiếu `names` |
 | `breaker:treasury_unreadable` | cầu dao secret | `error` | không đọc được kho bảo vật; `error` nguyên văn |
 | `breaker:no_session` | không mở được phiên người làm (trip `no_session`) | `error` | plot, request hay spawn ném lỗi; `error` là dòng đầu, tối đa 300 ký tự (thêm lúc giao hàng PS-07, khi merge fix/review-no-session) |
+| `breaker:no_progress` | cầu dao (assignee), hai lần cắt liền không tiến triển | `trip`, `run` | phiên của người làm bị trần `trip` (`time`, `tokens` hay `turns`) cắt hai lần liền trong lượt `run` mà không có commit mới (ADR 0030); một lần cắt có tiến triển thì quest đi tiếp, không vào trạm quân y |
 | `judge:time` | cầu dao người chấm | `stopped`, `run` | `stopped` người chấm của lượt `run` bị cầu dao thời gian cắt |
 | `judge:tokens` | như trên | `stopped`, `run` | … cầu dao token |
 | `judge:turns` | như trên | `stopped`, `run` | … cầu dao lượt |

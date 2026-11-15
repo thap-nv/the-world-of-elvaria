@@ -3,7 +3,7 @@
 ## Does
 
 - Ships the `elvaria` command, the only composition root (implementation-plan §1.1): `init`, `doctor`,
-  `tribe list|add|check|disable|look`, `territory add|list|check|graph`, `character add|list|suspend|release|level|model`, `say`,
+  `tribe list|add|check|disable|look`, `territory add|list|check|graph|delivery`, `character add|list|suspend|release|level|model`, `say`,
   `quest add|list|show|confirm|cancel|archive|edit|retry|reassign`,
   `seal`, `return`, `answer`, `memo list|show|decide`, `triage`, `run`, `wake`, `digest`, `metrics`,
   `sandbox generate|replay`, `migrate`, `upgrade`. The command table (`src/commands.ts`) drives parsing (`util.parseArgs`), help, and the reference
@@ -159,7 +159,8 @@ show` prints the brief apart from the rest of the description and, while the pla
   on PATH the way the Steward finds it (P1-41, `src/doctor/check-commands.ts`: missing, a `.cmd`/`.bat` only a
   shell starts, or a line with shell syntax is an error naming the territory and the commands); the shell each
   tribe's adapter declares for this OS (`capabilities.shell`, P1-46) and its prompt limit there
-  (`capabilities.prompt_max_chars`, fix/cli-lines, `src/doctor/check-prompt.ts`) and, on Windows, for a tribe whose adapter
+  (`capabilities.prompt_max_chars`, fix/cli-lines, `src/doctor/check-prompt.ts`), whether its CLI reads images
+  (`capabilities.vision`, PS-11, a ✓ line when it does) and, on Windows, for a tribe whose adapter
   declares Windows PowerShell (agy, or an owner's adapter file: read from the declaration, not a table of adapter
   ids, P1-46), PowerShell's Execution Policy (P1-41, `src/doctor/check-shell.ts`: one that refuses local scripts such as `pnpm.ps1` is an error of the tribe, with
   the command that fixes it, so `--enable` keeps it off), the
@@ -200,7 +201,9 @@ show` prints the brief apart from the rest of the description and, while the pla
   `src/metrics/section.ts`; `src/metrics/view-waits.ts` those of PS-06b (time in each status, pass rate by run, the
   Chancellor's advice beside the owner's decisions). `--plan <quest>` prints instead how a plan quest's sub-quests went
   against its plan (`planAccuracyOf`, `src/metrics/view-plan.ts`); a quest that is no plan, one that is not there, or
-  `--plan` with a window is a usage error.
+  `--plan` with a window is a usage error. The text view also prints kingdom-wide calibration for every configured
+  tribe: token factor, turn ceiling, independent sample counts and default/measured sources, using the same domain
+  `calibrationOf` as the Steward. `--json` retains the plan accuracy object.
 - `migrate`: moves every older file to the current version, old text in `.backup/<stamp>/` (`migrateKingdom`),
   copies the registry files this Elvaria ships and the kingdom lacks (P1-15), then adds the default registry
   entries it lacks by id, whole, only when the registry still loads with them (P1-41, `addMissingRegistryEntries`):
@@ -258,6 +261,18 @@ show` prints the brief apart from the rest of the description and, while the pla
   per run, the gazetteer's commits counted with no fetch), naming under its line which items come from the trial
   and when, which are read now, and why each item read now fails. No quest, event or model; `metrics` prints the
   first-pass rate by territory beside class, tag, model and kind.
+- `territory delivery <id> [--mode manual|pr|pr_merge] [--merge-method merge|squash] [--required-check <name>]…
+[--timeout <minutes>]` (PS-08, ADR 0023, `src/territory/delivery.ts`) prints how a territory delivers (the
+  domain's `deliveryOf`: no `delivery` field reads as manual) or changes it, writing the `delivery` field of
+  territory.json under the store's lock (ADR 0005, as `territory add` writes the file), with no event: the field
+  is not in the territory view. A mode that pushes is refused unless `vcs.remote` names a repo on the forge
+  (`src/forge/remote.ts`: github.com only). `doctor` then checks each territory whose delivery is not manual
+  (`src/doctor/check-delivery.ts`): its remote, a credential from `git -c core.askPass= credential fill` in the
+  territory's folder (`src/forge/credential.ts`: minimal env plus `GIT_TERMINAL_PROMPT=0`, the one `GIT_*`
+  variable Elvaria sets, and `GCM_INTERACTIVE=never`; 10 s, then its tree is killed; on macOS a stopped call names
+  the Keychain's Always Allow), and `GET /repos/{owner}/{repo}` on GitHub (`src/forge/github.ts`, through
+  `CliIo.fetch`): no right to push is an error, a forge out of reach a warning. It prints neither the token nor
+  the account's name. Nothing is pushed yet: that is PS-08c.
 
 ## Does not
 
@@ -265,7 +280,9 @@ show` prints the brief apart from the rest of the description and, while the pla
 - Decide anything about quests or sessions, or talk to a CLI itself: the Steward and the adapters do; `doctor`
   asks only `--version` and, through the adapter, the login (no model call). Only `say`, `run` and `tribe check`
   with a real CLI start sessions that spend mana; `upgrade` tries a build with fake CLIs only.
-- Push, merge or pull the Elvaria repo: `upgrade` builds a commit the repo already has, and never fetches.
+- Push, merge or pull the Elvaria repo: `upgrade` builds a commit the repo already has, and never fetches. Nor push a
+  territory's branch: `territory delivery` only writes settings, and `doctor` only reads a credential and asks the
+  forge one question.
 - Inherit `process.env` into child processes: they get `minimalEnv` (ADR 0013), and never a shell (ADR 0015).
 
 ## Depends on
@@ -296,6 +313,11 @@ paths with a space and a Vietnamese letter. Fake CLIs are npm-style `.cmd` shims
 elsewhere; `cli.spec.ts` spawns the built bin as the owner would. Lines the Steward would have written are
 planted with `openEventLog` / `openJournal`: `src/quest/infirmary.spec.ts` (the infirmary reason of `quest show`,
 old lines included), `src/quest/last-run.spec.ts` (verdicts and `plot.restored` of the last run), `src/gauges.spec.ts` (the gauges, and `character list` and `doctor` showing them).
+No spec reads a real credential or reaches a forge (PS-08): `test/credential.ts` empties `credential.helper` in the
+fixture repo and names a Node script that answers as a helper does (a token of GitHub's `gho_` shape, nothing, or
+no answer at all), with an empty home folder; `testIo` hands every command a `fetch` that fails, and
+`src/doctor/check-delivery.spec.ts` passes a fake one. The specs compare the token, never print it, and look for it
+in the output and in every file of the kingdom.
 `fixtures/lantern-adapter.mjs` is an owner adapter file that imports nothing, for `fixtures/fake-lantern.mjs`, a
 fake CLI with no tool gate: `src/tribe/tribe.spec.ts` adds, pins, checks and disables it; `src/tribe/round.spec.ts`
 runs the Steward (`elvaria run`) with it until a rank D quest is done, while a rank C quest stays open (P1-19);

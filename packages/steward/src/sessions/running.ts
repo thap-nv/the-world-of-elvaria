@@ -19,6 +19,11 @@ export interface Running {
   readonly checks: readonly VerdictCheck[];
   /** When the runner had spawned the CLI (ISO 8601): tells its process from a later one under the same pid. */
   readonly spawned_at: string;
+  /**
+   * An assignee's: the tip of its branch as the session opened (null when git could not say). A cut by a ceiling
+   * made progress when the tip moved (progress.ts, ADR 0030).
+   */
+  readonly head?: string | null;
 }
 
 export interface Finished {

@@ -15,8 +15,10 @@
   kind that disagree, a follow-up (a script's `follow_up`, a ritual's `flaky_follow_up`) the kingdom cannot make.
 - Chooses the ritual that judges a quest (`ritualOf`, ADR 0011, 0022; P1-20): the kind's, unless one of its
   `ritual_overrides` meets the quest's tags (tests as the product: `build`/`refactor` tagged `e2e` or
-  `integration` → `mutation_check`); `judgedInScratch` says its judge works in a scratch plot (a ritual with
-  `scratch_plot`, a git worktree). What the machine decides there is pure too (`src/verify/trial.ts`):
+  `integration` → `mutation_check`; then `build`/`fix`/`refactor` tagged `visual` → `visual_review`, PS-11);
+  `judgedInScratch` says its judge works in a scratch plot (a ritual with `scratch_plot`, a git worktree), and
+  `judgedByEye` that its judge must see (a ritual with `vision`, PS-11), `eyeTagsOf` the tags that may ask for eyes,
+  which no drafter is shown while no tribe reads images (fix/council-run-gaps (a)). What the machine decides there is pure too (`src/verify/trial.ts`):
   `rerunDue` (up to `FLAKE_RUNS` runs while every run passes), `exclusiveWaitMinutes` (how long an exclusive check waits for a judge that holds the lock), `flakyChecksOf` (a run its environment failed is no flake, P1-54), `coverageTotalsOf` (an istanbul
   json-summary) and `coverageDropsOf` (counts compared, no rounding); `flakyFollowUpOf` builds the quest that
   exorcises a flake, of the kind and class the ritual's `flaky_follow_up` names. `commandLinesOf` reads a
@@ -42,7 +44,7 @@
   waits for no seal, whatever its kind's `seal_default`, as the merge quest always does), `partyStatusOf`
   (`forming`, `parts`, `merging`, `done` or `stuck`, derived, never stored) and `plotBaseOf` (the branches a quest's plot builds on: a part on its
   contract's, a merge quest on the contract's with every part merged in, any quest on a dependency's not merged
-  yet, P1-16 (f)). The territory's `checks[].defer_to_merge` (§3.15) leaves a heavy check to the merge quest.
+  yet, P1-16 (f), with every dependency merged in when it has two or more, `dependencies`, fix/council-run-gaps (d)). The territory's `checks[].defer_to_merge` (§3.15) leaves a heavy check to the merge quest.
   `machineMergeDue` (P1-18 (h)): a merge quest's first run is the machine's, and only while no run was ever started on it (`attempts = 0` and an empty log, P1-55); the run takes a run number and no attempt (`machineRun`). `planTick` lists it in `merges`
   instead of giving it to a knight; `claim` takes it with no assignee, and the rows `working.submit.by_machine`,
   `working.release.by_machine` (the merge stopped), `review.verdict_fail.machine_retry` and
@@ -131,7 +133,8 @@
   one the groups of scope globs that meet, shared paths aside); `templateIssuesOf` (the
   quest template of `QUEST_TEMPLATE_SECTIONS`: every section, numbered steps up to `STEPS_REQUIRED_UP_TO`, a check
   named in "Done when" that the territory has); `planIssuesOf` (a plan's sub-quests: a scope for each session one,
-  scopes apart for two that may run at once, a given peak context within the budget, the template);
+  scopes apart for two that may run at once, a given peak context within the budget, the template, a class some
+  character not suspended has, fix/council-run-gaps (c));
   `peakContextOf` and `questEstimateOf` (a draft's `estimate.context` is a planning number the quest does not
   keep). The brief (`BriefSchema`) is a block of the quest-draft file; `seal_required` of a draft is optional.
   PS-21b adds `planLinksOf`: two session sub-quests on the graph's territory that may run at once with scopes apart,
@@ -147,9 +150,20 @@
   part of a party, `part` or `acceptance`, the paths alone, since its merge quest always waits for the seal), and
   `wantsStrongJudge(quest)` puts the judge of the higher level first from rank B or once the quest is so marked,
   below the separation rules of `selectVerifier`.
-- Decides the breakers (`src/breaker/`, §3.4, P1-06): `evaluateBreakers(attempt, limits, now, usage)` → `ok` or
-  the first trip of `time` (on the minute `budget.max_minutes` is spent), `tokens` or `turns` (once past
-  `budget.max_tokens`, `breakers.max_turns`); a tribe whose adapter reports no usage (its `TribeLimits.breakers`
+- Decides what a ceiling cut of a character's session leads to (`src/breaker/continue.ts`, ADR 0030): `CAP_TRIPS`
+  (`time`, `tokens`, `turns`) are the only trips that read the `breaker` event's `progress`;
+  `cutCallOf(attempt_log, progress)` says `go_on` (any cut with progress, and a first cut without) or `infirmary`
+  (two cuts in a row of one run without progress, reason `breaker:no_progress`). `working.breaker.cut_goes_on` leads
+  to `returned`, and the `redispatch` after it keeps the run and `attempts` (`endedInCut`).
+- Decides the breakers (`src/breaker/`, §3.4, P1-06): `evaluateBreakers(attempt, limits, now, usage)` → `ok`,
+  `{kind: 'wrap_up', measure, used, limit, pct}` above `breakers.soft_pct` (85), or a hard trip at
+  `breakers.hard_pct` (150): time at the threshold, tokens and turns once past it. Warnings use nominal ceilings;
+  stop details and parameters use the hard ceilings. A hard trip takes priority over any warning, then time,
+  tokens and turns. `turnCeilingOf` reads the holder's `tribes[].max_turns`, falling back to `breakers.max_turns`;
+  `SessionRules` accepts the character map and tribes alongside percentages, and `planTick` supplies them.
+  `wrapUpsOf` takes the same arguments as `breakersOf` and returns reminders only; `agent.session.wrap_up`
+  carries `{measure, used, limit, pct}` at event v2. Sending reminders is the Steward's next integration step.
+  A tribe whose adapter reports no usage (its `TribeLimits.breakers`
   is `minutes_only`, handed in as `measure` by `measureOf`) has the time breaker alone (P1-33); `breakersOf`
   applies it to the sessions the Steward holds
   (`KingdomSnapshot.sessions`), each timed from its own attempt_log entry, and `planTick` returns them first as
@@ -182,7 +196,10 @@
   handed in a partial verdict, while another may judge; before that, not a judge whose tribe takes a shorter prompt
   on this OS than the one the Steward measured for it (`withinPromptLimit` over `KingdomSnapshot.review_prompts` and
   `TribeLimits.prompt_max_chars`, `src/verify/prompt-limit.ts`, fix/verifier-prompt-limit), while another may judge; (PS-22) never the judge whose verdict the quest's `objection`
-  contests, and never the machine for an objection, which waits as unjudgeable when no judge is left), `underPassRule` (a failing check fails the quest under
+  contests, and never the machine for an objection, which waits as unjudgeable when no judge is left; (PS-11) for a
+  quest that needs eyes (`VerifierPolicy.needs_vision`, set by `planReviews` from `judgedByEye`) never a judge
+  whose tribe reads no image (`TribeLimits.vision`, from the adapter's optional `capabilities.vision` through
+  `tribeLimitsOn`), however few, and never the machine, as with an objection), `underPassRule` (a failing check fails the quest under
   `all_checks_and_agent`, as `tests_fail`, or `incomplete` for the Steward's `subquests` check, P1-15, and its
   `party` check of a merge quest, P1-18, and `coverage_not_lower`, P1-20, or `flaky` for `flake_check`), `machineVerdictOf` (the machine's verdict from the checks), `validateVerdict` (no
   worker, only the session the Steward spawned, no pass over a failing check, not the objection's first judge) and the verdict ids of a run
@@ -286,7 +303,9 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   never runs it twice. `schedule.ran` and `digest.written` give the lines their shape (`src/schema/event/schedule-data.ts`).
 - Lists what waits for the owner (`attentionQueue`, `src/world/attention.ts`, PS-03): over the world state, `now`
   and the Steward's notices (unclaimable, unjudgeable, judges out of mana), each item with its group (`must`: the
-  work stands still; `can_wait`), an advice code and the `elvaria` command, both from `ATTENTION_TABLE` by kind:
+  work stands still; `can_wait`), an advice code and the `elvaria` command, both from `ATTENTION_TABLE` by kind
+  (`src/world/attention-table.ts`, apart since PS-11; a quest without a judge whose ritual asks for eyes is
+  `unjudgeable_vision`, advising a judge of a tribe that reads images):
   questions, seals, the infirmary, drafts, open memos, pools asleep or at the warning share, and (PS-05) the done
   quests that still hold a scope quests ready to start wait for (`scope_held`, from `scopeHoldsOf` over the quest
   files, which the caller passes with the notices: the world state holds no scope), and the tribes the Steward holds
@@ -318,6 +337,24 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   `code_graph` switch, `kingdom.programs.graphify` (`ProgramsSchema`) and the `graph.built` / `graph.failed` lines.
   Counts an area's impact from the graph's links (`impactOf`, `src/graph/links.ts`, PS-21b): the files outside it
   that use a file inside it, an input to the rank.
+- Shapes delivery to a forge (ADR 0023, PS-08): the territory's optional `delivery` (`TerritoryDeliverySchema`,
+  `src/schema/territory-delivery.ts`: mode `manual`, `pr` or `pr_merge`, forge, merge method, required checks and
+  how long to wait for them; no field means manual, read through `deliveryOf`, and a mode that pushes needs a git
+  vcs with a remote), and the `delivery.pushed` / `delivery.merged` / `delivery.failed` lines
+  (`src/schema/event/delivery-data.ts`), which PS-08c and PS-08d write.
+
+- Calibrates each tribe from quest files (`calibrationOf`, G): the median first-run tokens / estimate after
+  `CALIBRATION_MIN_SAMPLES` (10), otherwise `breakers.estimate_factor` (1.82). Turn ceilings use the upward-rounded
+  median first-run turns (at least one); missing turns have their own sample count. Only complete measurements
+  from ended, single-tribe first assignee runs with positive estimates count; resumed sessions are summed.
+  Each value reports `value`, `samples`, and `source` (`default` or `measured`), for every configured tribe.
+  `tokenCeilingOf` and `turnCeilingOf` accept that tribe's result as an optional fourth argument. Without it,
+  callers keep the existing ceilings. With it, tokens use estimate times factor, the existing rank floor, and
+  an explicit budget raised above the creation budget as another floor; the verifier multiplier applies last.
+  `breakersOf` and `wrapUpsOf` accept an optional calibration map after the measure, selecting the entry by the
+  session holder's tribe; without an entry they keep their existing behavior. `planTick` computes the map from
+  the snapshot's quests and characters each time. Session ends preserve optional `turns` in the attempt log.
+  Pass current `context_budget_tokens` and `mana_multiplier` through `SessionRules` for nondefault kingdom settings.
 
 ## Does not
 

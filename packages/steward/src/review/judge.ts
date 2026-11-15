@@ -45,6 +45,7 @@ function sequelsOf(result: RunResult): { sequels?: SequelRun[] } {
 export const runOf = (running: Pick<Running, 'session_id'>, result: RunResult) => ({
   session_id: result.session_id === '' ? running.session_id : result.session_id,
   tokens: result.usage.tokens,
+  ...(result.usage.turns === undefined ? {} : { turns: result.usage.turns }),
   ...sequelsOf(result),
 });
 

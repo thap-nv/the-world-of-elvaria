@@ -25,13 +25,15 @@ describe('infirmary reasons', () => {
     }
   });
 
-  it('accepts integers and rejects fractional numbers and unknown codes', () => {
-    expect(
-      InfirmaryReasonSchema.safeParse(infirmaryReasonOf('breaker:time', { minutes: 45, limit: 45 })).success,
-    ).toBe(true);
-    expect(
-      InfirmaryReasonSchema.safeParse(infirmaryReasonOf('breaker:time', { minutes: 1.5, limit: 45 })).success,
-    ).toBe(false);
+  it('accepts integer and fractional minutes and rejects nonfinite numbers and unknown codes', () => {
+    for (const minutes of [45, 67.5]) {
+      const reason = infirmaryReasonOf('breaker:time', { minutes, limit: minutes });
+      expect(InfirmaryReasonSchema.safeParse(reason).success).toBe(true);
+    }
+    for (const minutes of [NaN, Infinity, -Infinity]) {
+      const reason = infirmaryReasonOf('breaker:time', { minutes, limit: 67.5 });
+      expect(InfirmaryReasonSchema.safeParse(reason).success).toBe(false);
+    }
     expect(InfirmaryReasonSchema.safeParse({ code: 'unknown', params: {} }).success).toBe(false);
   });
 });

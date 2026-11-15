@@ -84,7 +84,7 @@
           }
         },
         "ritual_overrides": {
-          "description": "Rituals chosen by the quest's tags (ADR 0022): the first override whose tags_any meets the quest's tags wins, otherwise `ritual`; absent, `ritual` alone. Default registry: build and refactor tagged e2e or integration -> mutation_check.",
+          "description": "Rituals chosen by the quest's tags (ADR 0022): the first override whose tags_any meets the quest's tags wins, otherwise `ritual`; absent, `ritual` alone. Default registry: build and refactor tagged e2e or integration -> mutation_check; then build, fix and refactor tagged visual -> visual_review (PS-11).",
           "type": "array",
           "items": {
             "type": "object",

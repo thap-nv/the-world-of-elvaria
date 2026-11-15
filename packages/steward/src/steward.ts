@@ -93,6 +93,7 @@ const stateOf = (deps: StewardDeps, ended: () => void): State => ({
   reported: new Map(),
   stopping: new AbortController(),
   unjudged: new Set(),
+  wrapped: new Set(),
   judgeWaits: new Map(),
   promptSizes: new Map(),
   claimPromptSizes: new Map(),

@@ -39,7 +39,10 @@ export const PlotRestoredDataSchema = z
     ),
   );
 
-/** Why the Steward's merge of a party's parts stopped at a branch (runner-core's MergeStop of an attempted merge). */
+/**
+ * Why the Steward's merge of a party's parts, or of the base branch after them (PS-08e), stopped at a branch
+ * (runner-core's MergeStop of an attempted merge).
+ */
 export const PLOT_MERGE_STOPS = ['conflict', 'refused', 'missing'] as const;
 
 const BranchListSchema = z.array(NonEmptyStringSchema);
@@ -47,9 +50,15 @@ const BranchListSchema = z.array(NonEmptyStringSchema);
 export const PlotMergedDataSchema = z
   .strictObject({
     into: NonEmptyStringSchema.meta(describe("The merge quest's branch.")),
-    merged: BranchListSchema.meta(describe('The part branches this merge took in, in order.')),
+    merged: BranchListSchema.meta(
+      describe(
+        "The branches this merge took in, in order: the parts, then the territory's base branch by its name (PS-08e).",
+      ),
+    ),
     pending: BranchListSchema.meta(
-      describe('The part branches still not in, the one the merge stopped at first; empty once all are in.'),
+      describe(
+        'The branches still not in, the one the merge stopped at first (the base branch waits for the parts); empty once all are in.',
+      ),
     ),
     stop: z
       .enum(PLOT_MERGE_STOPS)
@@ -65,6 +74,6 @@ export const PlotMergedDataSchema = z
   })
   .meta(
     describe(
-      "The Steward merged a party's part branches into its merge quest's branch, or tried to (implementation-plan §3.13, P1-21 (d)): before the machine's run and each knight's session, never before a judge's. A merge with nothing left to take in writes no line.",
+      "The Steward merged a party's part branches, then the territory's base branch (PS-08e), into its merge quest's branch, or tried to (implementation-plan §3.13, P1-21 (d)): in the machine's run, before each knight's session and before the checks, never before a judge's. A merge with nothing left to take in writes no line.",
     ),
   );

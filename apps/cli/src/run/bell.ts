@@ -59,6 +59,13 @@ function manaLine(t: Translate, notice: ManaNotice): string {
   return t('cli.run.notice.mana_warning', { gauge, used_pct: notice.used_pct, window });
 }
 
+/** A merge into a merge quest's plot stopped (PS-08e): a conflict is the knight's next run, the rest the owner's. */
+function mergeLine(t: Translate, notice: Extract<Notice, { kind: 'merge_stopped' }>): string {
+  const { quest, branch, conflicts } = notice;
+  const said = { quest: quest.id, title: quest.title, branch, files: conflicts.join(', ') };
+  return t(`cli.run.notice.merge_${notice.reason}`, said);
+}
+
 export function lineOf(t: Translate, notice: Notice): string {
   if (notice.kind === 'suspended') {
     const { character, count } = notice;
@@ -92,6 +99,8 @@ export function lineOf(t: Translate, notice: Notice): string {
       return t('cli.run.notice.question', { ...quest, question: notice.question });
     case 'subquests_refused':
       return t('cli.run.notice.subquests_refused', { ...quest, reason: notice.reason });
+    case 'merge_stopped':
+      return mergeLine(t, notice);
     case 'environment':
       return t('cli.run.notice.environment', {
         ...quest,
@@ -108,7 +117,8 @@ export function lineOf(t: Translate, notice: Notice): string {
         gauges: gaugesOf(t, notice.gauges),
       });
     case 'unjudgeable':
-      return t('cli.run.notice.unjudgeable', {
+      // PS-11: the judge it lacks is one whose tribe reads images, not one on another model.
+      return t(notice.vision === true ? 'cli.run.notice.unjudgeable_vision' : 'cli.run.notice.unjudgeable', {
         ...quest,
         classes: notice.classes.join(', ') || '—',
         class: notice.classes[0] ?? 'judge',

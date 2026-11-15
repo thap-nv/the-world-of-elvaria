@@ -11,7 +11,7 @@ import { launchOf } from '../process/launch.ts';
 import { BUILT_IN_ADAPTERS, handOf } from '../run/crew.ts';
 import { isAdapterFile } from '../tribe/adapter-file.ts';
 import { adapterFileTool } from './adapter-tool.ts';
-import { promptMaxFindings } from './check-prompt.ts';
+import { promptMaxFindings, visionFindings } from './check-prompt.ts';
 import { shellFindings } from './check-shell.ts';
 import { finding } from './finding.ts';
 import { locateTool } from './locate-tool.ts';
@@ -285,6 +285,7 @@ async function checkFound(
     // An error here is the tribe's own (P1-41): `--enable` keeps it off, its sessions could not run pnpm.
     ...(await shellFindings(tribe, capabilities, ctx)),
     ...promptMaxFindings(tribe, capabilities, ctx.io.platform, t),
+    ...visionFindings(tribe, capabilities, t),
   ];
   const same = JSON.stringify(next.data) === JSON.stringify(stored);
   return same ? { findings } : { findings, updated: next.data };

@@ -75,8 +75,10 @@ Luật (ADR 0014, [implementation-plan](implementation-plan.md) §2.7 và §4.1)
 | Ngữ cảnh đỉnh | Peak context | `estimate.context` | Số token lớn nhất một phiên giữ trong ngữ cảnh cùng lúc, trường tùy chọn của ước lượng trong bản nháp. Quyết việc có vừa một phiên không: vượt `context_budget_tokens` thì chia (ADR 0017 sửa tại chỗ). Khác `estimate.tokens`, là token cả phiên như cầu dao đếm. Quest không giữ trường này (PS-06). | `quest-draft.drafts[].estimate.context`, `peakContextOf`, `screenDrafts`, `planIssuesOf` |
 | File kế hoạch | Plan file | `plan_file` | File `plans/<chủ đề>.md` pháp sư viết trong đất của quest kế hoạch và commit cùng danh sách quest con, tiêu đề mục bằng tiếng Anh: Summary (trang tóm tắt chủ nhân đóng dấu trên đó), Survey, Shared decisions, Sub-quests, Done when, Unknowns; mục nào cũng phải có chữ. Check `subquests` của Nhiếp chính kiểm nó trước người chấm; `elvaria quest show` in Summary khi kế hoạch chờ dấu (PS-06b). | `PLAN_FILE_SECTIONS`, `planFileIssuesOf`, `planSummaryOf`, `elvaria quest show` |
 | Vùng bảo vệ | Protected paths | `protected_paths` / `protected_changes` | Các glob (tính từ gốc lãnh thổ, khớp ở mọi độ sâu như `forbidden_paths`) của thứ canh giữ thế giới: luật, check, người chấm, sổ đo, bản nâng cấp. Không chặn commit: quest có thay đổi chạm vùng bảo vệ thì cần dấu vua bất kể `seal_default` của dạng, và được chọn người chấm như quest từ hạng B (người cấp cao hơn, sau luật khác họ và khác tộc). Nhiếp chính đọc thay đổi của đất riêng khi nộp và ghi các đường dẫn đã chạm vào `quest.protected_changes`; dấu đã đặt thì không gỡ (ADR 0026, PS-04). | `territory.laws.protected_paths`, `quest.protected_changes`, `wantsStrongJudge`, `elvaria quest show` |
-| Giao hàng | Delivery | `deliver` | Đưa kết quả ra theo quy ước của kind. | `quest.deliverable`, event `delivery.sent` |
+| Giao hàng | Delivery | `deliver` | Đưa kết quả ra theo quy ước của kind. | `quest.deliverable`, `territory.delivery`, event `delivery.sent`, `delivery.*` |
 | Thư giao hàng | Delivery note | `delivery.md` | Nhiếp chính viết khi giao: quest, phán quyết, thư bàn giao, thứ đã chép hay đã mở, lệnh merge tay; với nhánh là mô tả PR. | `.runs/<quest>-delivery.md`, `quest.deliverable.path` |
+| Forge | Forge | `forge` | Dịch vụ giữ remote của lãnh thổ và PR của nó; hôm nay chỉ `github`. Chủ và tên repo đọc từ `vcs.remote`; không có `delivery.remote` hay `delivery.base`: remote là `origin`, nhánh gốc là `vcs.default_branch`. Credential lấy bằng `git credential fill` mỗi lần cần, không hộp thoại (`GIT_TERMINAL_PROMPT=0`, `GCM_INTERACTIVE=never`), không lưu, không vào prompt, journal, log hay event (ADR 0023, PS-08). | `territory.delivery.forge`, `elvaria territory delivery`, `elvaria doctor`, event `delivery.*` |
+| Chế độ giao hàng | Delivery mode | `manual` / `pr` / `pr_merge` | Cách Nhiếp chính giao nhánh của quest `done`: `manual` (mặc định, như giai đoạn 1: nhánh chờ chủ nhân merge tay), `pr` (push `quest/<id>`, tìm hay mở PR, thư giao hàng làm mô tả), `pr_merge` (rồi merge khi forge báo ghép được, sau `required_checks` nếu có; tới PS-08b chỉ quest đã có dấu). Chỉ Nhiếp chính push, không bao giờ nhân vật; không force, không push nhánh gốc (ADR 0023). | `territory.delivery.mode`, `deliveryOf`, `elvaria territory delivery --mode` |
 | Thư bàn giao | Handover letter | `handover.md` | Agent viết: đang ở đâu, đã xong, chưa xong, quyết định, bước kế. | `quests/<id>/handover.md` |
 | Thư | Letter | `memo` | Một việc nhân vật thấy ngoài quest của mình, viết thành một dòng ở mục `Memos` của thư bàn giao thay vì tự sửa. Nhiếp chính lập và chuyển đi theo kiểu thư khi lượt người làm kết thúc qua nộp, hỏi hay hỏng; không ai trả lời thư, thư không đổi quest nào, chủ nhân quyết một lần (ADR 0024, PS-02). Trong code là `memo`, vì `letter` đã là thư bàn giao. | `memos/<id>.json`, mục `## Memos` của `handover.md`, `elvaria memo`, `elvaria say --memo` |
 | Kiểu thư | Letter kind | `memo_kind` | Dữ liệu registry: mỗi kiểu khai nơi nhận (`route`); định tuyến là hàm thuần `routeMemo` đọc bảng đó. Kiểu đầu tiên `proposal` (đề xuất: việc ngoài phạm vi quest) tới Tể tướng; `objection` (phản biện, PS-22) tới một người chấm thứ hai; `amendment` (phản biện đề bài, PS-22b) tới người viết đề của quest; `advisory`, `request` đến ở PS-09, PS-10. | `registry/memos.json`, `memo.kind` |
@@ -189,6 +191,8 @@ Nghi thức chọn theo tag, không chỉ theo kind (kế hoạch sản phẩm 0
 |---|---|---|---|
 | Thả quái thử thành (0.7 gọi là Thử tường) | Loose a monster on the walls | ritual `mutation_check` | quest Kiến tạo/Gia cố có tag `e2e` hoặc `integration` (test là sản phẩm) |
 | Đất nháp của người chấm | Scratch plot | `scratch_plot` (cờ của ritual), worktree `<quest-id>-verify` | Thả quái thử thành: người chấm đập thử ở đây, không commit, xóa sau verdict |
+| Họa sư soi bức họa | The painter holds up the portrait | ritual `visual_review` | quest Kiến tạo/Trừ tà/Gia cố có tag `visual` (thay đổi nhìn thấy trên màn hình), không có `e2e` hay `integration` (PS-11) |
+| Mắt của người chấm | Vision | `vision` (cờ của ritual; `capabilities.vision` của adapter) | nghi thức cần mắt: chỉ người chấm thuộc tộc mà CLI đọc được ảnh nhận quest; không ai có mắt thì quest chờ, máy không chấm một mình (PS-11) |
 | Khảo hạch mù | Blind trial | `territory.blind_trial` | tùy chọn, quest hạng B+: người khác viết test chấp nhận mà không nhìn diff |
 
 ## 6. Nghề (class)
@@ -314,6 +318,7 @@ Nguồn lệnh (`source`): `cli`, `herald`, `lite`.
 | `i18n` | Đa ngôn ngữ | Internationalisation |
 | `e2e` | Kiểm thử đầu-cuối | End-to-end tests |
 | `integration` | Kiểm thử tích hợp | Integration tests |
+| `visual` | Giao diện nhìn thấy | Visible change |
 | `docs` | Tài liệu | Documentation |
 
 ## 11. Giá trị liệt kê trong schema
@@ -329,6 +334,11 @@ Mọi giá trị enum xuất hiện trong [schemas/](schemas/) có ở bảng n�
 | `health.ci` | `green`, `red`, `unknown` | thời tiết lãnh thổ |
 | `plot.type` | `worktree`, `folder`, `none` | đất riêng |
 | `deliverable.type` (cũng `kind.deliverable_type`) | `branch`, `file`, `report`, `draft`, `subquests`, `none` | dạng giao hàng |
+| `territory.delivery.mode` | `manual`, `pr`, `pr_merge` | chế độ giao hàng; không có trường: `manual` |
+| `territory.delivery.forge` (cũng `delivery.pushed.forge`) | `github` | forge của lãnh thổ |
+| `territory.delivery.merge_method` (cũng `delivery.merged.method`) | `merge`, `squash` | merge commit (mặc định) / một commit gộp |
+| `delivery.failed.stage` | `scan`, `push`, `open`, `checks`, `merge`, `cleanup` | giao hàng dừng ở: quét secret, push, tìm hay mở PR, check của forge, merge, xóa nhánh trên remote |
+| `delivery.failed.reason` | `secret`, `push_refused`, `no_credential`, `forge_auth`, `forge_error`, `conflict`, `checks_red`, `checks_timeout`, `head_moved` | vì sao dừng: diff có secret, remote từ chối push, không có credential, forge không nhận credential, forge lỗi, conflict với nhánh gốc, check đỏ, check quá giờ, nhánh đã đổi đầu |
 | `created_by` | `chancellor`, `user`, `council`, `patrol`, `battle`, `campaign` | ai tạo quest (`council` = hội đồng Nghị hội, `battle` = Trận đánh) |
 | `role` (`attempt_log`, `character.current`) | `assignee`, `verifier` | người làm / người nghiệm thu |
 | `attempt_log.outcome` | `submitted`, `partial`, `returned`, `timeout`, `breaker`, `crash`, `no_session`, `paused`, `blocked`, `cancelled` | kết thúc một lần thử; `timeout` = cầu dao thời gian, `breaker` = cầu dao token/lượt; `partial` = người chấm nộp phán quyết dở (P1-42; mục cũ ghi `submitted`); `no_session` = phiên của người chấm không mở được (spawn lỗi), mục mở và kết thúc cùng lúc, tính như `crash` (fix/review-no-session) |
@@ -388,7 +398,7 @@ Mọi giá trị enum xuất hiện trong [schemas/](schemas/) có ở bảng n�
 | Nhóm | Type | Nghĩa (VI) |
 |---|---|---|
 | Quest | `quest.drafted`, `quest.created`, `quest.claimed`, `quest.released`, `quest.started`, `quest.submitted`, `quest.returned`, `quest.verdict`, `quest.done`, `quest.sealed`, `quest.archived`, `quest.blocked`, `quest.unblocked`, `quest.paused`, `quest.resumed`, `quest.infirmary`, `quest.delivered`, `quest.edited`, `quest.unclaimable` | mỗi chuyển trạng thái của quest (§2.5 của implementation-plan); `quest.edited`: người dùng sửa trường của quest (`edit_quest`, `set_rank`); `quest.unclaimable`: Nhiếp chính báo quest `open` không ai nhận được (§3.1) |
-| Phiên agent | `agent.session.start`, `agent.session.end`, `agent.tool`, `agent.tool.blocked`, `agent.subagent.start`, `agent.subagent.end`, `agent.subagent.overrun`, `agent.compact`, `agent.notification` | những gì phiên CLI làm, do hook và stream ghi; `overrun` = học đồ quá `subagent_max_minutes`; `compact` = ngồi thiền |
+| Phiên agent | `agent.session.start`, `agent.session.end`, `agent.session.wrap_up`, `agent.tool`, `agent.tool.blocked`, `agent.subagent.start`, `agent.subagent.end`, `agent.subagent.overrun`, `agent.compact`, `agent.notification` | những gì phiên CLI làm, do hook và stream ghi; `overrun` = học đồ quá `subagent_max_minutes`; `compact` = ngồi thiền |
 | Kiểm tra máy | `check.start`, `check.end` | kiểm tra máy của một lượt đã nộp chạy ngoài nhịp, quest nằm `review` chưa có người chấm trong lúc đó; `check.end` nói `pass`, `fail`, `error` (chưa chạy được, tick sau chạy lại) hay `stopped` (Nhiếp chính dừng hoặc quest đi tiếp) |
 | Phán quyết | `verdict.pass`, `verdict.fail`, `verdict.partial` | kết quả nghiệm thu |
 | Mana | `mana.level`, `mana.warning`, `mana.exhausted`, `mana.restored`, `mana.probe`, `mana.signal` | số đo, cảnh báo (một lần mỗi đồng hồ), hết, hồi sinh, thăm dò, tín hiệu hết trong băng (429, `StopFailure`); `exhausted`/`restored` có `model` khi chỉ trần riêng của một model ngủ hay thức |
@@ -397,6 +407,7 @@ Mọi giá trị enum xuất hiện trong [schemas/](schemas/) có ở bảng n�
 | Đồ thị code | `graph.built`, `graph.failed` | Nhiếp chính dựng đồ thị code của một lãnh thổ bật `code_graph` bằng graphify, không gọi model, ngoài mọi đất, ở commit gốc của quest và ở đầu nhánh mặc định; dòng mang lãnh thổ, không mang quest (PS-21, ADR 0029). `graph.failed` ghi một lần cho mỗi commit trong đời một Nhiếp chính |
 | Thư | `memo.filed`, `memo.routed`, `memo.closed`, `memo.escalated` | Nhiếp chính lập thư từ mục `Memos` của thư bàn giao khi lượt người làm kết thúc qua nộp, hỏi hay hỏng (không khi cầu dao cắt), chuyển theo `registry/memos.json`, và đóng theo `decide_memo` (PS-02, ADR 0024), hoặc khi quest làm việc của thư mở ra (PS-03b); `memo.escalated` khi phân loại của Tể tướng đưa thư lên chủ nhân kèm lời khuyên (PS-03b), hay khi người viết đề đưa thư phản biện đề bài lên chủ nhân (PS-22b) |
 | Lịch | `schedule.ran`, `digest.written` | Việc theo lịch của Nhiếp chính (PS-03): `schedule.ran` khi một việc của `kingdom.schedule` chạy xong trong một ngày địa phương (lần khởi động sau đọc nó, nên mỗi ngày một lần dù đồng hồ nhảy); `digest.written` khi bản tấu của ngày đã ghi vào `digest/<ngày>.md` và chuông đã rung |
+| Giao hàng | `delivery.pushed`, `delivery.merged`, `delivery.failed` | Nhiếp chính giao nhánh của quest `done` tới forge theo `territory.delivery` (ADR 0023; schema ở PS-08, PS-08c và PS-08d ghi): `delivery.pushed` khi nhánh đã push và PR đã có, mỗi đầu nhánh một dòng; `delivery.merged` khi `pr_merge` merge PR, mang `merge_sha`, `sealed`, `branch_deleted`; `delivery.failed` khi dừng ở một bước (`stage`) vì một lý do (`reason`), không tự thử lại. `data` mang `quest` và `territory`. `delivery.sent` (có từ v1, không schema) vẫn ở nhóm Khác |
 | Khác | `delivery.sent`, `plot.patched`, `plot.merged`, `plot.restored`, `chronicle.written`, `territory.attached`, `territory.surveyed`, `territory.health`, `sandbox.replay.start`, `sandbox.replay.end` | `plot.patched`: Nhiếp chính áp bản vá của người làm vào `laws.patch_paths` trước commit `submit` (P1-28); `plot.merged`: Nhiếp chính gộp các nhánh phần vào nhánh quest ghép, hoặc dừng ở một nhánh (P1-21); `plot.restored`: sau phiên người chấm ngoài đất nháp, Nhiếp chính đưa đất của quest về commit của nó, bỏ những gì lệnh của người chấm để lại (P1-44) |
 | Bản | `upgrade.started`, `upgrade.switched`, `upgrade.rolled_back`, `upgrade.failed` | `elvaria upgrade` ghi (actor `user`): bắt đầu dựng và thử một commit, chuyển con trỏ `.state/build.json` sang bản mới, lùi về bản trước, hay hỏng ở một bước (`prepare`, `migrate`, `doctor`, `conformance`, `trial`) và không chuyển |
 | Dành sẵn | `campaign.*`, `battle.*`, `incident.*`, `patrol.*`, `party.*`, `skill.*` | giai đoạn 5; đội và bí kíp |
@@ -435,6 +446,7 @@ Bước nghi thức (`ritual.steps[]`):
 | `cross_check_sources` | đối chiếu tài liệu với nguồn gốc |
 | `check_regression_test` | có test tái hiện lỗi và test đó xanh |
 | `check_tests_cover_change` | thay đổi hành vi có test đi kèm (khi lãnh thổ có test); thiếu thì `fail_kind: incomplete` |
+| `compare_screens` | mở từng ảnh chụp màn hình do check sinh ra, so với ảnh tham chiếu (không có thì với mô tả của quest); chỗ khác mà quest không yêu cầu là không đạt; không mở được ảnh thì `partial` (PS-11) |
 | `compare_before_after` | so số liệu trước/sau |
 | `score_tone_checklist` | chấm theo checklist giọng điệu/thương hiệu |
 | `rerun_from_source` | tính lại từ dữ liệu gốc |

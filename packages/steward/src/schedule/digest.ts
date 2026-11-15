@@ -1,7 +1,14 @@
 // The digest (implementation-plan §3.16.3, PS-03): the first scheduled job, in the tick and without a model. The
 // Steward decides when (dueJobs) and what (attentionQueue over the world state and its own notices); the Digest port
 // of the composition root words it in the owner's language and writes `digest/<day>.md`. Then one line and one ring.
-import { attentionQueue, reduce, scopeHoldsOf, unopenedReviewsOf, worldStateOf } from '@elvaria/domain';
+import {
+  attentionQueue,
+  judgedByEye,
+  reduce,
+  scopeHoldsOf,
+  unopenedReviewsOf,
+  worldStateOf,
+} from '@elvaria/domain';
 import type {
   Character,
   Event,
@@ -52,6 +59,12 @@ const classOf = (world: World, id: QuestId): string => {
   return (quest === undefined ? undefined : judgingClassesOf(world, quest)[0]) ?? '<class>';
 };
 
+/** Whether the quest waits for a judge whose tribe reads images (PS-11), so the digest advises one. */
+const needsVision = (world: World, id: QuestId): boolean => {
+  const quest = world.quests.get(id);
+  return quest !== undefined && judgedByEye(quest, world.registry);
+};
+
 /**
  * What the Steward knows that no file holds, as this tick left it (unclaimable.ts, unjudgeable.ts, judge-waits.ts,
  * tribe-versions.ts), and what the world state cannot tell from the quest files: the done quests whose scope others
@@ -64,7 +77,11 @@ export function noticesOf(
   return {
     tribes_held: state.versions.holds,
     unclaimable: [...state.reported.keys()],
-    unjudgeable: [...state.unjudged].map((quest) => ({ quest, class: classOf(world, quest) })),
+    unjudgeable: [...state.unjudged].map((quest) => ({
+      quest,
+      class: classOf(world, quest),
+      vision: needsVision(world, quest),
+    })),
     judge_waits: [...state.judgeWaits.values()].map(({ quest, gauges }) => ({
       quest,
       class: classOf(world, quest),

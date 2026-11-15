@@ -147,11 +147,12 @@ describe("work the territory's hook refuses (P1-55)", () => {
     const { kingdom, steward, repo } = await open(() => WORK, options);
     await kingdom.command('create_quest', questPayload('Cut by time'));
     await steward.tick();
-    kingdom.clock.advance(45);
+    kingdom.clock.advance(67.5);
     await steward.tick();
 
     const quest = await kingdom.quest('Cut by time');
-    expect(quest.status).toBe('infirmary');
+    // The first cut goes on in a fresh session that reads this letter (ADR 0030).
+    expect(quest.status).toBe('returned');
     expect(git(repo, 'rev-list', '--count', `main..quest/${quest.id}`)).toBe('0');
     const patch = await readFile(inKingdom(kingdom.root, `.runs/${quest.id}-1/${WIP_PATCH_FILE}`), 'utf8');
     expect(patch).toContain('+export const app = 2;');
@@ -164,11 +165,11 @@ describe("work the territory's hook refuses (P1-55)", () => {
     const { kingdom, steward, repo } = await open(() => WORK, options);
     await kingdom.command('create_quest', questPayload('Cut, committed'));
     await steward.tick();
-    kingdom.clock.advance(45);
+    kingdom.clock.advance(67.5);
     await steward.tick();
 
     const quest = await kingdom.quest('Cut, committed');
-    expect(quest.status).toBe('infirmary');
+    expect(quest.status).toBe('returned');
     const wip = git(repo, 'rev-parse', `quest/${quest.id}`);
     expect(git(repo, 'log', '-1', '--format=%s', wip)).toBe(`chore: wip ${quest.id} (time)`);
     const letter = await readFile(handoverPath(kingdom.root, quest.id), 'utf8');

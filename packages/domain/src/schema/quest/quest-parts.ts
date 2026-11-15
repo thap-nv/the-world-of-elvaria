@@ -77,6 +77,15 @@ export const AttemptSchema = z.strictObject({
     ),
   session_id: NonEmptyStringSchema.optional(),
   tokens: z.int().min(0).optional(),
+  turns: z.int().min(0).optional(),
+  progress: z
+    .boolean()
+    .optional()
+    .meta(
+      describe(
+        'Only on an assignee session cut by the time, token or turn ceiling: whether it left a new commit (or a WIP commit with changes) before the cut. A cut with progress goes on in a fresh session; two cuts in a row without it send the quest to the infirmary (ADR 0030). Added after v1: no entry written before has it.',
+      ),
+    ),
   run_dir: z
     .string()
     .regex(/^\.runs\/[^\\]+$/)

@@ -8,12 +8,16 @@ import type {
   InfirmaryReason,
   InfirmaryTrip,
   ManaWindow,
+  PLOT_MERGE_STOPS,
   Rank,
   QuestId,
   TribeHold,
   TribeId,
   WaitGauge,
 } from '@elvaria/domain';
+
+/** Why a merge into a merge quest's plot stopped at a branch it tried (the `stop` of `plot.merged`). */
+export type MergeStopReason = (typeof PLOT_MERGE_STOPS)[number];
 
 /** A quest as a notice names it: enough for the owner to recognise it without opening the file. */
 export interface NoticeQuest {
@@ -36,13 +40,15 @@ export type Notice =
     }
   /**
    * The quest waits in review for a judge the roster does not have (P1-15): no character of `classes` outside its
-   * doers on another model than the assignee's `model` (dispatch.verifier_same_family = different_model).
+   * doers on another model than the assignee's `model` (dispatch.verifier_same_family = different_model). `vision`
+   * (PS-11): its ritual asks for eyes, and none of them is of a tribe whose CLI reads images; absent on any other quest.
    */
   | {
       readonly kind: 'unjudgeable';
       readonly quest: NoticeQuest;
       readonly classes: readonly string[];
       readonly model: string | null;
+      readonly vision?: true;
     }
   /**
    * The quest has judges, but the mana of every one is closed (PS-03, (d) of P1-50): it waits for a gauge to reopen,
@@ -90,6 +96,18 @@ export type Notice =
     }
   /** A plan was delivered but opened none of its sub-quests (P1-14); `reason` is English, for the owner and logs. */
   | { readonly kind: 'subquests_refused'; readonly quest: NoticeQuest; readonly reason: string }
+  /**
+   * The Steward's merge into a party's merge quest stopped at `branch`, a part's or the territory's base branch
+   * (PS-08e): on a conflict in `conflicts`, left in progress for the knight of the quest's next run; refused by git or
+   * a hook, or the branch is gone (`conflicts` empty), which the owner looks at. Rung once per merge that stopped.
+   */
+  | {
+      readonly kind: 'merge_stopped';
+      readonly quest: NoticeQuest;
+      readonly branch: string;
+      readonly reason: MergeStopReason;
+      readonly conflicts: readonly string[];
+    }
   /**
    * The tribe's CLI at `path` says `version`, not `checked`, the version its last `tribe check` with the real CLI passed
    * on, or (`version` undefined) it is gone (A1b of the lessons of 2026-11-13): no new session of the tribe until such

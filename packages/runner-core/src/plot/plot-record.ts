@@ -12,9 +12,16 @@ export const PLOT_RECORD_FILE = 'elvaria-plot.json';
 
 export interface PlotRecord {
   readonly version: 1;
-  /** The commit the quest branch forked from: `ahead` and `touched` count from here, whatever main does next. */
+  /**
+   * The commit the plot counts from: where the quest branch forked, or the base branch's commit a party's merge quest
+   * merged last (PS-08e, mergeBase). `ahead`, `touched`, the judge's diff and the coverage base count from here,
+   * whatever main does next.
+   */
   readonly base: string;
-  /** `commands.setup` exited 0 in this worktree; it runs once, and again only until it succeeds (§3.3). */
+  /**
+   * `commands.setup` exited 0 in this worktree; it runs once, and again only until it succeeds (§3.3), or once more
+   * after a merge quest took the base branch in (PS-08e).
+   */
   readonly setup_done: boolean;
 }
 
@@ -54,4 +61,15 @@ export async function plotRecordOf(git: Git, worktree: string): Promise<PlotReco
   const record = await readPlotRecord(await gitDirOf(git, worktree));
   if (record === undefined) throw new Error(`${worktree} has no ${PLOT_RECORD_FILE}: prepare it first`);
   return record;
+}
+
+/**
+ * The plot counts from `base` now, and is not set up for what it holds (PS-08e): a merge quest took the base branch
+ * in, which may bring another lockfile.
+ */
+export async function movePlotBase(git: Git, worktree: string, base: string): Promise<void> {
+  const gitDir = await gitDirOf(git, worktree);
+  const record = await readPlotRecord(gitDir);
+  if (record === undefined) throw new Error(`${worktree} has no ${PLOT_RECORD_FILE}: prepare it first`);
+  await writePlotRecord(gitDir, { ...record, base, setup_done: false });
 }

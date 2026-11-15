@@ -7,12 +7,14 @@ import {
   QuestDraftSchema,
   ScriptsFileSchema,
   TerritoryIdSchema,
+  judgedByEye,
   planIssuesOf,
+  ritualOf,
 } from '@elvaria/domain';
 import { describe, expect, it } from 'vitest';
 
 import { loadDefaultRegistry, REGISTRY_ROOT, registryFiles } from './index.ts';
-import type { Registry } from '@elvaria/domain';
+import type { Quest, Registry } from '@elvaria/domain';
 
 function registry(): Registry {
   const result = loadDefaultRegistry();
@@ -56,7 +58,7 @@ describe('the default registry', () => {
       'judge',
       'monk',
     ]);
-    expect(rituals).toHaveLength(12);
+    expect(rituals).toHaveLength(13);
     expect(ids(scripts)).toEqual([
       'link-check',
       'run-check',
@@ -65,7 +67,17 @@ describe('the default registry', () => {
       'compare-numbers',
       'todo-scan',
     ]);
-    expect(ids(tags)).toEqual(['frontend', 'backend', 'db', 'infra', 'i18n', 'e2e', 'integration', 'docs']);
+    expect(ids(tags)).toEqual([
+      'frontend',
+      'backend',
+      'db',
+      'infra',
+      'i18n',
+      'e2e',
+      'integration',
+      'visual',
+      'docs',
+    ]);
     // PS-02: the first kind of memo; PS-22 the objection to a second judge; PS-22b the amendment; advisory and request come with PS-09 and
     // PS-10 (ADR 0024).
     expect(memos.map(({ id, route }) => [id, route])).toEqual([
@@ -104,12 +116,13 @@ describe('the default registry', () => {
   it('judges tests as the product with Thả quái thử thành, in a scratch plot (§3.15, ADR 0022)', () => {
     const { kinds, rituals } = registry();
     const overridden = kinds.filter((kind) => (kind.ritual_overrides ?? []).length > 0);
-    expect(overridden.map((kind) => [kind.id, kind.ritual_overrides])).toEqual(
-      ['build', 'refactor'].map((id) => [
-        id,
-        [{ tags_any: ['e2e', 'integration'], ritual: 'mutation_check' }],
-      ]),
-    );
+    // PS-11: the screens come after, so a quest both e2e and visual keeps mutation_check.
+    const visual = { tags_any: ['visual'], ritual: 'visual_review' };
+    expect(overridden.map((kind) => [kind.id, kind.ritual_overrides])).toEqual([
+      ['build', [{ tags_any: ['e2e', 'integration'], ritual: 'mutation_check' }, visual]],
+      ['fix', [visual]],
+      ['refactor', [{ tags_any: ['e2e', 'integration'], ritual: 'mutation_check' }, visual]],
+    ]);
     const trial = rituals.find((ritual) => ritual.id === 'mutation_check');
     expect(trial).toMatchObject({
       name_vi: 'Thả quái thử thành',
@@ -120,6 +133,35 @@ describe('the default registry', () => {
       expect.arrayContaining(['rerun_clean', 'break_and_expect_red', 'flake_check', 'coverage_not_lower']),
     );
     expect(rituals.filter((ritual) => ritual.scratch_plot === true)).toHaveLength(1);
+  });
+
+  it('judges a visible change by eye with visual_review, chosen by the tag visual alone (PS-11)', () => {
+    const defaults = registry();
+    const quest = (kind: string, ...tags: string[]) =>
+      ({ kind, tags, party_role: undefined }) as unknown as Pick<Quest, 'kind' | 'tags' | 'party_role'>;
+    const eye = defaults.rituals.find((ritual) => ritual.id === 'visual_review');
+    expect(eye).toMatchObject({ pass_rule: 'all_checks_and_agent', max_seconds: 1800, vision: true });
+    expect(eye?.steps).toEqual([
+      'run_checks',
+      'read_handover',
+      'read_diff',
+      'compare_screens',
+      'check_tests_cover_change',
+      'judge',
+      'write_verdict',
+    ]);
+    expect(defaults.rituals.filter((ritual) => ritual.vision === true)).toEqual([eye]);
+    for (const kind of ['build', 'fix', 'refactor']) {
+      expect(ritualOf(quest(kind, 'frontend', 'visual'), defaults)?.id).toBe('visual_review');
+      expect(judgedByEye(quest(kind, 'visual'), defaults)).toBe(true);
+    }
+    expect(ritualOf(quest('build', 'e2e', 'visual'), defaults)?.id).toBe('mutation_check');
+    expect(ritualOf(quest('fix', 'e2e'), defaults)?.id).toBe('regression_check');
+    // Not the frontend tag: frontend work nobody sees keeps its kind's ritual, and so does a kind without the override.
+    expect(ritualOf(quest('build', 'frontend'), defaults)?.id).toBe('build_review');
+    expect(judgedByEye(quest('document', 'visual'), defaults)).toBe(false);
+    const acceptance = { ...quest('build', 'visual'), party_role: 'acceptance' as const };
+    expect(ritualOf(acceptance, defaults)?.id).toBe('build_review');
   });
 
   it('has one judge for every kind, and keeps the judge and the monk from producing (ADR 0008, 0011)', () => {
@@ -162,8 +204,14 @@ describe('the default registry', () => {
     ]);
     // PS-06: the examples teach what the subquests check holds a plan to: scopes, the template, the peak context.
     const territory = { id: TerritoryIdSchema.parse('dc1-se-team'), checks: [] };
-    for (const { drafts } of examples)
-      expect(planIssuesOf(drafts, { territories: [territory], context_budget_tokens: 120_000 })).toEqual([]);
+    for (const { drafts } of examples) {
+      // fix/council-run-gaps (c): a kingdom with a character of every class the example names.
+      const characters = drafts.flatMap(({ class_required: cls }) =>
+        cls === undefined ? [] : [{ class: cls, status: 'idle' as const }],
+      );
+      const context = { territories: [territory], context_budget_tokens: 120_000, characters };
+      expect(planIssuesOf(drafts, context)).toEqual([]);
+    }
     expect(mage).toContain('## Summary');
   });
 

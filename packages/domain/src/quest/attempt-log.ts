@@ -69,6 +69,7 @@ export function closeRun(
           outcome: ending.outcome,
           ...(ending.run.session_id === undefined ? {} : { session_id: ending.run.session_id }),
           ...(ending.run.tokens === undefined ? {} : { tokens: ending.run.tokens }),
+          ...(ending.run.turns === undefined ? {} : { turns: ending.run.turns }),
         }
       : entry,
   );

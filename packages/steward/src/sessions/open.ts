@@ -1,7 +1,7 @@
 // Opening a session (implementation-plan §3.1 steps 4–6, §2.5): the plot, the request, the spawn, then the quest's
 // move with the session's id and the character's move with it. A move the state machine refuses kills the session
 // it was for, so no session ever runs for a quest the files do not say it runs for.
-import { currentRun, err, ok, resumedSession } from '@elvaria/domain';
+import { currentRun, endedInCut, err, ok, resumedSession } from '@elvaria/domain';
 import type { Character, CharacterId, LoadTrace, Quest, QuestId, Result, Revival } from '@elvaria/domain';
 import type { AgentRunner, Continuation, ParseOptions, RunningSession } from '@elvaria/runner-core';
 
@@ -14,7 +14,9 @@ import { judgeParseOf } from '../review/verdict-file.ts';
 import { secretsBreaker } from './breaker.ts';
 import { continuationOf, refusedWhileWaiting } from './continuation.ts';
 import { assigneeUnopened, judgeUnopened, unopenedLine } from './no-session.ts';
+import { branchHeadOf } from './progress.ts';
 import { requestOf } from './request.ts';
+import { clearWrapUp } from './wrap-up.ts';
 import { questSecretsOf, rememberSecrets, secretsLacking } from './secrets.ts';
 import { spawnOf } from './spawn.ts';
 import type { Context } from '../context.ts';
@@ -53,7 +55,7 @@ async function plotFor(ctx: Context, input: Pick<SessionInput, 'quest' | 'territ
     input.territory,
     plotOptionsOf(ctx, input.quest, given),
   );
-  if (input.role === 'assignee') await mergeParts(ctx, input.quest, prepared.plot);
+  if (input.role === 'assignee') await mergeParts(ctx, input.quest, prepared.plot, given);
   return prepared;
 }
 
@@ -69,6 +71,7 @@ interface Spawned {
   readonly plot: Quest['plot'];
   readonly spawned_at: string;
   readonly load_trace: LoadTrace;
+  readonly head: string | null | undefined;
 }
 
 /**
@@ -89,12 +92,12 @@ async function spawnFor(
     const quest = { ...input.quest, plot: prepared.plot };
     const built = await requestOf(ctx, { ...input, quest, cwd: prepared.cwd }, resume);
     const { request, load_trace: loadTrace } = built;
+    const head = input.role === 'assignee' ? await branchHeadOf(ctx, prepared.plot) : undefined; // before the CLI starts
     const session = heardBy(ctx.mana, input.character, await spawnOf(ctx, runner, request, parse));
-    // Right after the spawn: a restart tells the CLI's process by its start (sessions/pids.ts).
-    const spawnedAt = ctx.record.stamp();
+    const spawnedAt = ctx.record.stamp(); // right after the spawn: a restart tells the process by it (pids.ts)
     // Keyed by the session the Steward keeps (heardBy's wrapper): maskFinished finds it from Running.session.
     rememberSecrets(session, request);
-    return ok({ session, plot: prepared.plot, spawned_at: spawnedAt, load_trace: loadTrace });
+    return ok({ session, plot: prepared.plot, spawned_at: spawnedAt, load_trace: loadTrace, head });
   } catch (error) {
     const message = messageOf(error);
     ctx.deps.log.warn(`steward: ${input.quest.id}: no session for ${input.character.id}: ${message}`);
@@ -179,11 +182,13 @@ export async function openAssignee(
   const { quest, character, territory, runner } = parts.value;
   const lacking = await secretsLacking(ctx, quest, territory);
   if (lacking !== undefined) {
-    // A blocked quest has no way to the infirmary: the owner's answer is refused with the reason instead.
+    // A blocked quest has no way to the infirmary: the answer is refused with the reason.
     if (opening.kind === 'answer') return err(`secrets_lacking: ${lacking.code}`);
     return secretsBreaker(ctx, quest, lacking);
   }
-  const n = goesOn(opening) ? currentRun(quest) : currentRun(quest) + 1;
+  const same = goesOn(opening) || (opening.kind === 'redispatch' && endedInCut(quest.attempt_log));
+  const n = currentRun(quest) + (same ? 0 : 1);
+  await clearWrapUp(ctx, quest, n);
   const spawned = await spawnFor(
     ctx,
     runner,
@@ -198,7 +203,7 @@ export async function openAssignee(
     resumeFor(ctx, quest, character, opening),
   );
   if (!spawned.ok) return assigneeUnopened(ctx, quest, opening.kind, spawned.error);
-  const { session, plot, spawned_at: spawnedAt, load_trace: loadTrace } = spawned.value;
+  const { session, plot, spawned_at: spawnedAt, load_trace: loadTrace, head } = spawned.value;
   const sessionId = await session.session_id;
   const moved = await ctx.record.move({
     quest: questId,
@@ -222,6 +227,7 @@ export async function openAssignee(
     session_id: sessionId,
     checks: [],
     spawned_at: spawnedAt,
+    ...(head === undefined ? {} : { head }),
   });
   return moved;
 }

@@ -72,8 +72,8 @@ export function gitPlots(kingdom: string): Plots {
     touched: (plot) => manager.touched(plot),
     scriptChecks: () => Promise.resolve([]),
     diff: (plot, scope) => manager.diff(plot, scope),
-    merge: (plot, branches) => manager.merge(plot, branches),
-    unmerged: (plot, branches) => manager.unmerged(plot, branches),
+    merge: (plot, branches, base, options) => manager.merge(plot, branches, base, options),
+    unmerged: (plot, branches, base) => manager.unmerged(plot, branches, base),
     release: () => Promise.resolve(ok({ removed: false, forget_failures: [] })),
     // The judge's scratch plot as `elvaria run` makes it (P1-20): real worktrees, the checks for real.
     trial: ({ quest, territory, run_dir: runDir, runs, coverage, lock_wait_ms: wait }) => {

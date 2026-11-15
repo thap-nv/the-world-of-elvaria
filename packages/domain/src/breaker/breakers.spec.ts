@@ -49,14 +49,14 @@ const judgedBy = (base: Quest, minute: number): Quest =>
 describe('breakersOf', () => {
   it('stops an assignee past its minutes, one past its tokens, and a verifier past its turns', () => {
     const quests = [
-      workingBy(quest(Q1), 'thorn', 75),
+      workingBy(quest(Q1), 'thorn', 50),
       workingBy(quest(Q2), 'brann', 100),
       judgedBy(quest(Q3), 110),
     ];
     expect(
       breakersOf(
         quests,
-        [held(Q1, 'assignee'), held(Q2, 'assignee', 400_001), held(Q3, 'verifier', 10, 201)],
+        [held(Q1, 'assignee'), held(Q2, 'assignee', 600_001), held(Q3, 'verifier', 10, 301)],
         RULES,
         NOW,
       ),
@@ -65,22 +65,22 @@ describe('breakersOf', () => {
         quest: Q1,
         role: 'assignee',
         trip: 'time',
-        detail: 'ran 45 min, limit 45 min',
-        params: { minutes: 45, limit: 45 },
+        detail: 'ran 70 min, limit 67.5 min',
+        params: { minutes: 70, limit: 67.5 },
       },
       {
         quest: Q2,
         role: 'assignee',
         trip: 'tokens',
-        detail: '400001 tokens, limit 400000',
-        params: { tokens: 400001, limit: 400000 },
+        detail: '600001 tokens, limit 600000',
+        params: { tokens: 600001, limit: 600000 },
       },
       {
         quest: Q3,
         role: 'verifier',
         trip: 'turns',
-        detail: '201 turns, limit 200',
-        params: { turns: 201, limit: 200 },
+        detail: '301 turns, limit 300',
+        params: { turns: 301, limit: 300 },
       },
     ]);
   });
@@ -103,24 +103,24 @@ describe('breakersOf', () => {
 
   it("gives a judge verifier_tokens_multiplier times the quest's tokens, the assignee the budget (P1-18 (f))", () => {
     const quests = [judgedBy(quest(Q1), 110), judgedBy(quest(Q2), 110)];
-    const sessions = [held(Q1, 'verifier', 800_000), held(Q2, 'verifier', 800_001)];
+    const sessions = [held(Q1, 'verifier', 1_200_000), held(Q2, 'verifier', 1_200_001)];
     expect(breakersOf(quests, sessions, RULES, NOW)).toEqual([
       {
         quest: Q2,
         role: 'verifier',
         trip: 'tokens',
-        detail: '800001 tokens, limit 800000',
-        params: { tokens: 800001, limit: 800000 },
+        detail: '1200001 tokens, limit 1200000',
+        params: { tokens: 1200001, limit: 1200000 },
       },
     ]);
     const once = { ...RULES, verifier_tokens_multiplier: 1 };
-    expect(breakersOf(quests, [held(Q1, 'verifier', 400_001)], once, NOW)).toEqual([
+    expect(breakersOf(quests, [held(Q1, 'verifier', 600_001)], once, NOW)).toEqual([
       {
         quest: Q1,
         role: 'verifier',
         trip: 'tokens',
-        detail: '400001 tokens, limit 400000',
-        params: { tokens: 400001, limit: 400000 },
+        detail: '600001 tokens, limit 600000',
+        params: { tokens: 600001, limit: 600000 },
       },
     ]);
     expect(tokenCeilingOf(quests[0] ?? quest(Q1), 'assignee', RULES)).toBe(400_000);
@@ -138,8 +138,8 @@ describe('planTick: breakers (§3.4)', () => {
         quest: Q1,
         role: 'assignee',
         trip: 'time',
-        detail: 'ran 110 min, limit 45 min',
-        params: { minutes: 110, limit: 45 },
+        detail: 'ran 110 min, limit 67.5 min',
+        params: { minutes: 110, limit: 67.5 },
       },
     ]);
     expect(plan.claims).toEqual([]);
@@ -152,7 +152,7 @@ describe('planTick: breakers (§3.4)', () => {
   it('holds a tribe whose CLI reports no usage to its minutes alone (§3.14 minutes_only, P1-33)', () => {
     const wren = character('wren', { tribe: 'gemini', status: 'working' });
     const quests = [workingBy(quest(Q1), 'thorn', 100), workingBy(quest(Q2), 'wren', 100)];
-    const sessions = [held(Q1, 'assignee', 400_001), held(Q2, 'assignee', 400_001, 900)];
+    const sessions = [held(Q1, 'assignee', 720_001), held(Q2, 'assignee', 720_001, 900)];
     const limits = { claude: FULL_TRIBE_LIMITS, gemini: tribeLimitsOf({ ...EVERY, usage: false }) };
     expect(limits.gemini.breakers).toBe('minutes_only');
     const plan = planTick(snapshot(quests, [thorn, wren], { sessions, limits }), NOW);
@@ -161,8 +161,8 @@ describe('planTick: breakers (§3.4)', () => {
         quest: Q1,
         role: 'assignee',
         trip: 'tokens',
-        detail: '400001 tokens, limit 400000',
-        params: { tokens: 400001, limit: 400000 },
+        detail: '720001 tokens, limit 720000',
+        params: { tokens: 720001, limit: 720000 },
       },
     ]);
     // Its minutes still count.
@@ -171,8 +171,8 @@ describe('planTick: breakers (§3.4)', () => {
       quest: Q2,
       role: 'assignee',
       trip: 'time',
-      detail: 'ran 110 min, limit 45 min',
-      params: { minutes: 110, limit: 45 },
+      detail: 'ran 110 min, limit 67.5 min',
+      params: { minutes: 110, limit: 67.5 },
     });
   });
 });

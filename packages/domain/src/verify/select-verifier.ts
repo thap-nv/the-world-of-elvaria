@@ -15,7 +15,9 @@
 // whose tribe takes a shorter prompt than the one measured for it is passed over while another judge may take the
 // quest (prompt-limit.ts, fix/verifier-prompt-limit): its session would not open. (PS-22) An objection
 // waiting on the quest takes a second judge: never the judge of the verdict it contests, and never the machine, which
-// cannot read a letter; with no such judge in the roster the quest waits as one nobody may judge.
+// cannot read a letter; with no such judge in the roster the quest waits as one nobody may judge. (PS-11) A quest whose
+// ritual asks for eyes (judgedByEye, `needs_vision`) takes only a judge whose tribe reads images, however few: one that
+// cannot see the screens would judge them blind; and never the machine, as with an objection.
 import { justPartialOf, leftVerifiersOf } from '../breaker/review.ts';
 import { apartFromAll, familyOfCharacter } from '../character/family.ts';
 import { STRONG_JUDGE_MIN_RANK } from '../constants.ts';
@@ -49,11 +51,17 @@ export interface VerifierPolicy {
   /**
    * Each tribe's limits (tribeLimitsOn): a judge whose tribe answers in text (`prompt_and_parse`) comes after an
    * otherwise equal one whose CLI enforces the verdict's schema, and one whose tribe takes a shorter prompt than
-   * `prompt_chars` says is passed over (withinPromptLimit). Absent: no tribe is told apart.
+   * `prompt_chars` says is passed over (withinPromptLimit), and under `needs_vision` one whose tribe reads no image is
+   * never taken. Absent: no tribe is told apart, and none reads images.
    */
   readonly limits?: Readonly<
-    Partial<Record<TribeId, Pick<TribeLimits, 'structured_output' | 'prompt_max_chars'>>>
+    Partial<Record<TribeId, Pick<TribeLimits, 'structured_output' | 'prompt_max_chars' | 'vision'>>>
   >;
+  /**
+   * The quest's ritual asks for eyes (judgedByEye, PS-11): only a judge whose tribe's limits say `vision` may take it,
+   * and the machine never judges it alone. Absent: false.
+   */
+  readonly needs_vision?: boolean;
   /** The length of this review's prompt for each judge the Steward measured (ReviewPrompt). Absent: none. */
   readonly prompt_chars?: Readonly<Partial<Record<CharacterId, number>>>;
   /**
@@ -97,7 +105,8 @@ const byPreference = (quest: Quest, { doers, limits }: Pick<VerifierPolicy, 'doe
 
 /**
  * Who may ever judge `quest`: a judge of its kind, never one of its doers, never on a model one of them used, never
- * the judge whose verdict the quest's objection contests (PS-22).
+ * the judge whose verdict the quest's objection contests (PS-22), and for a quest that needs eyes never a judge whose
+ * tribe reads no image (PS-11).
  */
 function fitJudges(
   quest: Quest,
@@ -112,23 +121,34 @@ function fitJudges(
   const pastAssignees = pastAssigneesOf(quest, policy.party);
   const models = new Set(policy.doers.map(({ model }) => model));
   const contested = quest.objection?.judge;
+  const sees = (c: Character): boolean =>
+    policy.needs_vision !== true || policy.limits?.[c.tribe]?.vision === true;
   return candidates.filter(
-    (c) => judges.has(c.class) && !pastAssignees.has(c.id) && !models.has(c.model) && c.id !== contested,
+    (c) =>
+      judges.has(c.class) &&
+      !pastAssignees.has(c.id) &&
+      !models.has(c.model) &&
+      c.id !== contested &&
+      sees(c),
   );
 }
+
+/** Only a judge may answer the quest: the machine reads no objection (PS-22) and sees no screen (PS-11). */
+const judgeOnly = (quest: Quest, policy: Pick<VerifierPolicy, 'needs_vision'>): boolean =>
+  quest.objection !== undefined || policy.needs_vision === true;
 
 /**
  * Whether `quest` waits in review for a judge the roster does not have (P1-15): under `different_model`, nobody
  * among `candidates` may ever judge it, so it waits until the owner summons one. Under `machine_only` the machine
- * judges when no judge of another family exists, so a quest never waits for ever; except one with an objection, which
- * waits when the roster has no judge it would take (PS-22).
+ * judges when no judge of another family exists, so a quest never waits for ever; except one only a judge may answer
+ * (an objection, PS-22; screens to see, PS-11), which waits when the roster has no judge it would take.
  */
 export function waitsForNoJudge(
   quest: Quest,
   candidates: readonly Character[],
   policy: Omit<VerifierPolicy, 'free'>,
 ): boolean {
-  if (quest.objection !== undefined) return awaitedJudges(quest, candidates, policy).length === 0;
+  if (judgeOnly(quest, policy)) return awaitedJudges(quest, candidates, policy).length === 0;
   return policy.same_family === 'different_model' && fitJudges(quest, candidates, policy).length === 0;
 }
 
@@ -204,9 +224,9 @@ export function selectVerifier(
   const free = fit.filter(policy.free).toSorted(byPreference(quest, policy));
   const other = free.find(otherFamily);
   if (other !== undefined) return { reason: 'other_family', character: other };
-  // The machine reads no objection (PS-22): the quest waits for a judge, as waitsForNoJudge says.
+  // The quest waits for a judge, as waitsForNoJudge says.
   if (machineOnly)
-    return fit.some(otherFamily) || quest.objection !== undefined ? null : { reason: 'machine_only' };
+    return fit.some(otherFamily) || judgeOnly(quest, policy) ? null : { reason: 'machine_only' };
   const same = free[0];
   return same === undefined ? null : { reason: 'same_family_other_model', character: same };
 }

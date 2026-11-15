@@ -2,6 +2,11 @@
 
 ## Does
 
+- Records runner-reported `turns` alongside tokens in each session's attempt entry, leaving missing turns absent.
+  Uses `calibrationOf` over current quest and character files for soft warnings and runner turn budgets; domain
+  `planTick` computes the same calibration for hard stops on every tick. Token factors and turn ceilings learn
+  independently after ten complete first assignee runs of the holder's tribe, including resumed sessions.
+
 - Runs the Steward (implementation-plan §3.1): `createSteward(deps)` takes `.state/steward.lock` (one Steward per
   kingdom), rebuilds from the event log what it already answered, and ticks every `dispatch.tick_seconds`.
   Ticks never overlap.
@@ -110,7 +115,14 @@
   the CLI's own limit (`breakers.max_turns` in the request), which ends the same way; the Steward sinks the assignee into the swamp, kills
   the session's process tree, commits the work as `chore: wip <quest> (<trip>)` (a refusal keeps it in the plot
   and says so in the detail), sends the quest to the infirmary (`quest.infirmary`, `breaker:<trip>`) and
-  rings the bell; a verifier past a breaker leaves the review to the next one, until the second of a run
+  rings the bell. (F, phase 2, ADR 0030) A cut by one of the three ceilings (`time`, `tokens`, `turns`) is
+  measured for progress first (`src/sessions/progress.ts`: the branch tip moved since the session opened, or the
+  WIP commit committed): the domain then sends the quest back to the same character in a fresh session of the
+  same run, reading the letter (`returned`, then `redispatch`, no new attempt, no bell), or to the infirmary
+  as `breaker:no_progress` after two cuts in a row without progress. Before it, a session past `soft_pct` gets
+  `<run_dir>/wrap-up.json` and one `agent.session.wrap_up` line (`src/sessions/wrap-up.ts`, once per session, in
+  `State.wrapped`); the trips `commit`, `secrets`, `forbidden_paths` and `no_session` measure nothing and never go
+  on by themselves; a verifier past a breaker leaves the review to the next one, until the second of a run
   (`reviewStalled`, P1-23): then the quest goes to the infirmary with the bell, and no third verifier opens; the
   owner's `retry` brings it back to review with a new judge, and the count starts over (P1-26). A verifier that
   leaves with no verdict at all (its CLI failed, its output was none, its session was lost while the Steward ran) counts the same, and
@@ -302,7 +314,8 @@
   its class (`registry/<class.prompt_file>`, as every session's does), and where the last judge of the run
   stopped when it left a `partial` verdict, and (PS-05) the files the work changed outside the quest's `scope_paths`,
   the territory's `shared_paths` aside (`src/sessions/out-of-scope.ts`, matched with `globToRegExp`), which the
-  `quest.submitted` line carries too as `out_of_scope`: a signal for the judge, never a fail. Gives the plot back when a quest is archived (`Plots.release`; a
+  `quest.submitted` line carries too as `out_of_scope`: a signal for the judge, never a fail; a plan quest's plan
+  file and `subquests.json` never count (fix/council-run-gaps (b)). Gives the plot back when a quest is archived (`Plots.release`; a
   dirty worktree stays, with a warning).
 - Runs the script tier itself (§2.5, §3.12, ADR 0017; `src/script/`): a `create_quest` whose `script.params` do
   not fit the catalog's `params_schema` is refused (`invalid_script_params`); an open script-tier quest is claimed
@@ -337,13 +350,22 @@
   opens none. Then the contract's `subquests.json` leaves its branch in a commit of its own (`closeContract`),
   since every branch of the party starts from it. A new plot starts on the branch its quest builds on (domain's
   `plotBaseOf` → `Plots.prepare({from})`): a part on its contract's (or a part it waits for), a quest on a
-  dependency done but not merged yet (P1-16 (f)). The merge quest's first run is the machine's (`party/machine.ts`,
+  dependency done but not merged yet (P1-16 (f)), with its other dependencies merged in before each session of its
+  assignee when it has two or more (fix/council-run-gaps (d), `Plots.merge` with `{dependencies: true}`; a stop is
+  undone and logged, no bell). A plan's sub-quest that waits for no part waits for the plan quest itself, and once
+  they are open the plan's branch loses `subquests.json` as a contract's does (`closeContract`). The merge quest's first run is the machine's (`party/machine.ts`,
   P1-18 (h)): claimed with no assignee, its parts merged in, submitted to the checks and a judge with no knight's
   session; a merge that stops is released (the conflict stays in progress in the plot) and a knight takes the next
   run, as after a judge fails the machine's. Before each session of the merge quest's knight, never a
   judge's, its parts are merged in (`Plots.merge`; a conflict is left in progress for the knight, and the log
   says so), and again right before the checks of a run, so the parts a conflict left go in once the knight concluded
-  it (`mergePartsBeforeChecks`, P1-55); before its judge the check `party` says whether every part is in (`Plots.unmerged`; a missing part
+  it (`mergePartsBeforeChecks`, P1-55). (PS-08e) After the parts, each of these three merges takes the territory's
+  base branch in on a git territory (`mergesOf`: `plotBaseOf`'s `base`, then `Plots.merge(plot, branches, territory)`),
+  so the checks and the judge read the party against main as it is now, never again once the quest is in review; a
+  conflict with main goes the way of one between parts (the machine's run released, the knight of the next run
+  concludes it), and once main is in the plot is prepared again so `commands.setup` runs on what it holds. A merge
+  that stops rings the bell (`merge_stopped`: the quest, the branch, the reason, the conflicted files). Before its
+  judge the check `party` says whether every part, and the base branch, is in (`Plots.unmerged`; a missing branch
   fails the run as `incomplete`, so the next session gets it). The territory's checks run by the quest's place
   (`PlotCheck.party_role`: a part and the contract quest skip `defer_to_merge` checks, the merge quest runs them all), and the delivery
   note of a party's quest says where the party stands (`partyStatusOf`) and that only the merge quest's branch is
@@ -364,7 +386,8 @@
 - Tells once when an open quest nobody can take (`quest.unclaimable`, the bell), withdraws it with
   `reason: null`, and keeps the notices in `.state/unclaimable.json` (`readUnclaimable`) for `elvaria quest list`
   and `show`. Rings once when a submitted quest waits for a judge the roster does not have (`unjudgeable`,
-  P1-15: `different_model` and no judge of the kind outside its doers on another model); no file, no event.
+  P1-15: `different_model` and no judge of the kind outside its doers on another model; PS-11: `vision` when the
+  quest's ritual asks for eyes, and so does the digest's notice); no file, no event.
 - Builds the territories' code graphs outside the tick (PS-21, ADR 0029, `graph-builds.ts`) through the optional
   `deps.graphs` port (runner-core's `codeGraphsOf`): for each territory with `code_graph` on, the default branch's tip
   every tick and a quest's base commit when its session opens; one build per territory, the latest commit next,
@@ -415,6 +438,9 @@ first on the contract's branch, the second on the first's, which it waits for), 
 its `party` check, judges from outside the party, the seal and the notes; the machine's merge a judge failed, taken
 by a knight who reads the verdict; then three parts editing one file, two conflicts, the knight resolving them over
 two runs.
+`merge-base.spec.ts` (PS-08e) moves main on once the contract forked: the machine's run merges it, the checks run
+on the result and the judge's diff has none of main's files; main editing a part's line stops the machine's run, rings
+one `merge_stopped` bell, and a knight concludes it in the same quest; main's protected change is never the party's.
 `party-rules.spec.ts` refuses the lists that break the party rules, starts a sub-quest on the branch of the
 one it waits for (P1-16 (f)), and takes the parts of a contract archived after its delivery (P1-21 (a)).
 `blind-trial.spec.ts` runs a blind trial (P1-21): the acceptance part on the contract's branch, its writer apart

@@ -155,7 +155,7 @@ describe('assignee prompt', () => {
     );
     expect(user).toContain('# Picking up the quest');
     // A session the steward released when it stopped revives too (P1-44), so the reasons name it.
-    expect(user).toContain('a breaker tripped, or Elvaria stopped.');
+    expect(user).toContain('it was cut at the hard ceiling of its time, tokens or turns');
     expect(user).toContain('You asked: Gộp i18n:check?');
     expect(user).toContain('The owner answered: Có, chạy sau cùng.');
     expect(user).toContain('None: the earlier session left no letter.');
@@ -208,6 +208,7 @@ describe('assignee prompt', () => {
       '- Kinds of a sub-quest and the classes each allows: build (knight, dwarf; sealed by default);',
     );
     expect(user).toContain('plan (mage; no seal by default)');
+    // No tribe reads images: no tag that asks for eyes (fix/council-run-gaps (a); drafting.spec.ts has the rest).
     expect(user).toContain('- Tags: frontend, backend, db, infra, i18n, e2e, integration, docs');
     expect(user).toContain('- Secrets this territory allows: npm_token');
     expect(buildPrompt({ ...assignee, quest: plan }, templates).user).toContain(

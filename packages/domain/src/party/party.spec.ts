@@ -51,6 +51,9 @@ describe('mergeQuestOf', () => {
     });
     expect(made.payload.description).toContain(`- quest/${Q2}: ${api.title}\n- quest/${Q3}: ${web.title}`);
     expect(made.payload.description).toContain('`api/openapi.yaml`');
+    // PS-08e: the knight learns the base branch is merged too, and how to resolve a conflict with it.
+    expect(made.payload.description).toContain("the Steward merges the territory's base branch too");
+    expect(made.payload.description).toContain('fits the base branch as it is now');
   });
 
   it("keeps the contract's campaign, clips a long title and too many tags, and asks for no secret when none", () => {
@@ -94,8 +97,12 @@ describe('plotBaseOf', () => {
     expect(plotBaseOf(web, all)).toEqual({ from: [`quest/${Q2}`, `quest/${Q1}`], merge: [] });
   });
 
-  it("starts the merge quest from the contract's branch and merges every part into it", () => {
-    expect(plotBaseOf(merge, all)).toEqual({ from: [`quest/${Q1}`], merge: [`quest/${Q2}`, `quest/${Q3}`] });
+  it("starts the merge quest from the contract's branch, merges every part into it, then the base branch", () => {
+    expect(plotBaseOf(merge, all)).toEqual({
+      from: [`quest/${Q1}`],
+      merge: [`quest/${Q2}`, `quest/${Q3}`],
+      base: true,
+    });
   });
 
   it("starts the blind trial's acceptance part on the contract's branch alone, whatever it waits for (P1-21)", () => {
@@ -120,10 +127,26 @@ describe('plotBaseOf', () => {
   });
 
   it('starts any other quest, a contract too, from the branches of what it waits for (P1-16 (f))', () => {
-    const chained = quest(LONE, { dependsOn: [Q2, Q3] });
-    expect(plotBaseOf(chained, all)).toEqual({ from: [`quest/${Q2}`, `quest/${Q3}`], merge: [] });
     expect(plotBaseOf({ ...contract, depends_on: [Q2] }, all)).toEqual({ from: [`quest/${Q2}`], merge: [] });
     expect(plotBaseOf(quest(LONE), all)).toEqual({ from: [], merge: [] });
+  });
+
+  // fix/council-run-gaps (d), owner (155): a plot starts from one branch, so the others of a diamond come in.
+  it('merges every dependency into a quest that waits for two or more, a contract too; a chain merges nothing', () => {
+    const diamond = quest(LONE, { dependsOn: [Q2, Q3] });
+    const both = [`quest/${Q2}`, `quest/${Q3}`];
+    expect(plotBaseOf(diamond, all)).toEqual({ from: both, merge: both, dependencies: true });
+    expect(plotBaseOf({ ...contract, depends_on: [Q2, Q3] }, all)).toEqual({
+      from: both,
+      merge: both,
+      dependencies: true,
+    });
+    // A dependency elsewhere gives no branch, so one is left: nothing to merge.
+    const elsewhere = { ...web, territory: DOCS };
+    expect(plotBaseOf(diamond, [contract, api, elsewhere, merge])).toEqual({
+      from: [`quest/${Q2}`],
+      merge: [],
+    });
   });
 
   it('starts from nothing a dependency of another territory, without a worktree, without a branch or unknown', () => {

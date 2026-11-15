@@ -17,6 +17,11 @@ import { GraphBuiltDataSchema, GraphFailedDataSchema } from './graph-data.ts';
 import { PlotMergedDataSchema, PlotPatchedDataSchema, PlotRestoredDataSchema } from './plot-data.ts';
 import { CommandResultDataSchema } from './command-data.ts';
 import {
+  DeliveryFailedDataSchema,
+  DeliveryMergedDataSchema,
+  DeliveryPushedDataSchema,
+} from './delivery-data.ts';
+import {
   MemoClosedDataSchema,
   MemoEscalatedDataSchema,
   MemoFiledDataSchema,
@@ -75,6 +80,13 @@ const AgentToolBlockedDataSchema = z.strictObject({
 });
 
 const AgentSessionStartDataSchema = z.strictObject({ session: NonEmptyStringSchema, model: ModelSlugSchema });
+
+const AgentSessionWrapUpDataSchema = z.strictObject({
+  measure: z.enum(['time', 'tokens', 'turns']),
+  used: z.number().min(0),
+  limit: z.number().positive().meta(describe('Nominal ceiling before the soft and hard percentages.')),
+  pct: z.number().min(0).meta(describe('Used as a percentage of the nominal ceiling.')),
+});
 
 const AgentSessionEndDataSchema = z.strictObject({
   outcome: z
@@ -214,6 +226,7 @@ export const EVENT_DATA_SCHEMAS = {
   'agent.tool.blocked': AgentToolBlockedDataSchema,
   'agent.session.start': AgentSessionStartDataSchema,
   'agent.session.end': AgentSessionEndDataSchema,
+  'agent.session.wrap_up': AgentSessionWrapUpDataSchema,
   'agent.subagent.end': AgentSubagentEndDataSchema,
   'agent.subagent.overrun': AgentSubagentOverrunDataSchema,
   'check.start': CheckStartDataSchema,
@@ -238,6 +251,9 @@ export const EVENT_DATA_SCHEMAS = {
   'plot.patched': PlotPatchedDataSchema,
   'plot.merged': PlotMergedDataSchema,
   'plot.restored': PlotRestoredDataSchema,
+  'delivery.pushed': DeliveryPushedDataSchema,
+  'delivery.merged': DeliveryMergedDataSchema,
+  'delivery.failed': DeliveryFailedDataSchema,
   'territory.attached': TerritoryChangeDataSchema,
   'territory.surveyed': TerritoryChangeDataSchema,
   'territory.health': TerritoryChangeDataSchema,
