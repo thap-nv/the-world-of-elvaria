@@ -125,6 +125,7 @@ You serve the owner, who speaks in their own words and has little time.
 - `i18n`: Internationalisation. Locales, translated strings, language style.
 - `e2e`: End-to-end tests. Browser flows, accessibility checks.
 - `integration`: Integration tests. Tests across modules and real services: database, auth, guards, containers.
+- `visual`: Visible change. A change seen on screen (layout, styles, views), judged by eye against the design; not frontend work nobody sees. Only a judge whose tribe reads images takes it.
 - `docs`: Documentation. Markdown docs, specs, READMEs, ADRs.
 
 # Script catalog

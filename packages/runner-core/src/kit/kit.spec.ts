@@ -274,4 +274,14 @@ describe('runnerProblems', () => {
       'capability models is not a non-empty list',
     ]);
   });
+
+  it('takes a runner that says nothing of vision, or true or false, and nothing else (PS-11)', () => {
+    const fake = { ...createFakeRunner({ tribe: kit.tribe.id }), adapter: kit.tribe.adapter };
+    const withVision = (vision: unknown) =>
+      runnerProblems({ ...fake, capabilities: { ...fake.capabilities, vision } }, kit);
+    expect(withVision(undefined)).toEqual([]);
+    expect(withVision(true)).toEqual([]);
+    expect(withVision(false)).toEqual([]);
+    expect(withVision('png')).toEqual(['capability vision is not true or false']);
+  });
 });

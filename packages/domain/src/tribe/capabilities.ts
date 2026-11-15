@@ -73,6 +73,13 @@ export type AdapterCapabilities = AdapterFlags & {
    * file older than the field: any slug, its family read from its first word (familyOf).
    */
   readonly models?: readonly TribeModel[];
+  /**
+   * Whether the CLI's model reads an image file in a headless session (PS-11): only a judge of a tribe that declares it
+   * takes a quest whose ritual asks for eyes (`ritual.vision`, judgedByEye), as a judge that cannot see the screens
+   * would pass or fail them blind. Declared only once a spike measured it (PS-11a). Absent, as in an adapter file older
+   * than the field: it does not.
+   */
+  readonly vision?: boolean;
 };
 
 const isShellPlatform = (platform: string): platform is ShellPlatform =>

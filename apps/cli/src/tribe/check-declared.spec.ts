@@ -5,7 +5,7 @@ import type { AdapterCapabilities } from '@elvaria/domain';
 import { translator } from '@elvaria/i18n';
 import { describe, expect, it } from 'vitest';
 
-import { capabilityLines } from './check-declared.ts';
+import { capabilityLines, declaredCapabilities } from './check-declared.ts';
 
 const TRIBE = TribeSchema.parse({ id: 'gemini', adapter: 'antigravity', enabled: true, max_concurrent: 1 });
 const CAPS: AdapterCapabilities = {
@@ -44,5 +44,17 @@ describe('capabilityLines', () => {
     });
     for (const lines of [none, odd]) expect(lines.some((line) => line.startsWith(LIMIT))).toBe(false);
     expect(none).toContain('It declares no shell, so its prompt names none.');
+  });
+});
+
+describe('declaredCapabilities', () => {
+  it('names vision after the flags when the adapter declares it, and never as missing (PS-11)', () => {
+    const flags = ['headless', 'context_file', 'events', 'tool_gate', 'usage', 'structured_output', 'resume'];
+    expect(declaredCapabilities(CAPS)).toEqual(flags);
+    expect(declaredCapabilities({ ...CAPS, vision: false })).toEqual(flags);
+    expect(declaredCapabilities({ ...CAPS, vision: true })).toEqual([...flags, 'vision']);
+    const lines = capabilityLines(translator('en'), TRIBE, { ...CAPS, vision: true });
+    expect(lines[0]).toContain('structured_output, resume, vision');
+    expect(lines[1]).toBe('It lacks: compact, subagent.');
   });
 });

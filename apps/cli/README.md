@@ -159,7 +159,8 @@ show` prints the brief apart from the rest of the description and, while the pla
   on PATH the way the Steward finds it (P1-41, `src/doctor/check-commands.ts`: missing, a `.cmd`/`.bat` only a
   shell starts, or a line with shell syntax is an error naming the territory and the commands); the shell each
   tribe's adapter declares for this OS (`capabilities.shell`, P1-46) and its prompt limit there
-  (`capabilities.prompt_max_chars`, fix/cli-lines, `src/doctor/check-prompt.ts`) and, on Windows, for a tribe whose adapter
+  (`capabilities.prompt_max_chars`, fix/cli-lines, `src/doctor/check-prompt.ts`), whether its CLI reads images
+  (`capabilities.vision`, PS-11, a ✓ line when it does) and, on Windows, for a tribe whose adapter
   declares Windows PowerShell (agy, or an owner's adapter file: read from the declaration, not a table of adapter
   ids, P1-46), PowerShell's Execution Policy (P1-41, `src/doctor/check-shell.ts`: one that refuses local scripts such as `pnpm.ps1` is an error of the tribe, with
   the command that fixes it, so `--enable` keeps it off), the

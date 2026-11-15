@@ -102,8 +102,9 @@ describe('elvaria migrate', () => {
     await run(doctor, 'doctor', '--kingdom', kingdom, '--locale', 'en');
     expect(printed(doctor)).toContain(
       [
-        '! The registry lacks 4 entries or fields this Elvaria ships (they came after the kingdom was made):',
+        '! The registry lacks 5 entries or fields this Elvaria ships (they came after the kingdom was made):',
         '    registry/kinds.json, entry build: field ritual_overrides',
+        '    registry/kinds.json, entry fix: field ritual_overrides',
         '    registry/kinds.json, entry refactor: field ritual_overrides',
         '    registry/rituals.json: entry mutation_check',
         '    registry/tags.json: entry integration',
@@ -119,9 +120,10 @@ describe('elvaria migrate', () => {
       '  registry/rituals.json: entry mutation_check',
       '  registry/tags.json: entry integration',
       expect.stringMatching(
-        /^Entries you have lack 2 fields this Elvaria ships; migrate never changes an entry you have\. Copy a field from .+ if you want it:$/,
+        /^Entries you have lack 3 fields this Elvaria ships; migrate never changes an entry you have\. Copy a field from .+ if you want it:$/,
       ),
       '  registry/kinds.json, entry build: field ritual_overrides',
+      '  registry/kinds.json, entry fix: field ritual_overrides',
       '  registry/kinds.json, entry refactor: field ritual_overrides',
     ]);
     expect(await readFile(path.join(kingdom, 'registry', 'kinds.json'), 'utf8')).toBe(kinds);
@@ -157,6 +159,32 @@ describe('elvaria migrate', () => {
       ['amendment', 'author', expect.stringContaining('The quest waits as on a question')],
     ]);
     expect((await openKingdom(kingdom).loadRegistry()).ok).toBe(true);
+  });
+
+  it('adds visual_review and the visual tag to a kingdom made before PS-11, and names the field fix lacks', async () => {
+    const kingdom = await foundKingdom(dir.root);
+    // The registry as PS-11 found it: the e2e and integration overrides only, no visual tag, no visual_review.
+    await editRegistry(kingdom, 'rituals', (rituals) => rituals.filter(({ id }) => id !== 'visual_review'));
+    await editRegistry(kingdom, 'tags', (tags) => tags.filter(({ id }) => id !== 'visual'));
+    await editRegistry(kingdom, 'kinds', (kinds) =>
+      kinds.map(({ ritual_overrides: overrides, ...kind }) =>
+        kind.id === 'fix' || !Array.isArray(overrides)
+          ? kind
+          : { ...kind, ritual_overrides: overrides.slice(0, 1) },
+      ),
+    );
+    const io = testIo();
+    expect(await run(io, 'migrate', '--kingdom', kingdom, '--locale', 'en')).toBe(0);
+    expect(io.printed.out).toEqual([
+      'Every file is at the current version; nothing to migrate.',
+      'Added 2 registry entries this Elvaria ships and the kingdom lacked (entries you have are left as they are); the old files are in .backup/20261106T090000:',
+      '  registry/rituals.json: entry visual_review',
+      '  registry/tags.json: entry visual',
+      expect.stringMatching(/^Entries you have lack 1 fields this Elvaria ships;/),
+      '  registry/kinds.json, entry fix: field ritual_overrides',
+    ]);
+    const loaded = await openKingdom(kingdom).loadRegistry();
+    expect(loaded.ok && loaded.value.rituals.find(({ id }) => id === 'visual_review')?.vision).toBe(true);
   });
 
   it('adds no entry when the registry with them would not load, and says which (P1-41)', async () => {

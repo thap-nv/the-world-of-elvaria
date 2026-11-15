@@ -209,7 +209,7 @@ Registry mặc định (P0-02; id xem [glossary](../glossary.md)):
 - 11 class: `chancellor, mage, knight, dwarf, scout, scribe, bard, astrologer, envoy, judge, monk` (thiết kế có 12 icon nghề vì `judge` có hai icon theo kind, ADR 0011).
 - 11 ritual, mỗi kind một: build → `build_review`, research → `source_check`, fix → `regression_check`, refactor → `stress_test`, document → `editorial_review`, publish → `audience_review`, analyze → `recompute`, plan → `council_review`, integrate → `stability_check`, negotiate → `sign_off`, batch → `unit_tally`.
 - 6 script: `link-check`, `run-check` (chạy một `checks[].id` của lãnh thổ), `count-files`, `diff-stat`, `compare-numbers`, `todo-scan` (đếm dấu TODO/FIXME/HACK/XXX theo file).
-- 7 tag: `frontend, backend, db, infra, i18n, e2e, docs` (danh sách của kế hoạch sản phẩm; người dùng thêm bằng cách sửa `tags.json`).
+- 7 tag: `frontend, backend, db, infra, i18n, e2e, docs` (danh sách của kế hoạch sản phẩm; người dùng thêm bằng cách sửa `tags.json`). Registry mặc định thêm `integration` (P1-20) và `visual` (PS-11: thay đổi nhìn thấy trên màn hình, chọn nghi thức `visual_review`).
 
 **skill** (v1) — front matter của `temple/skills/<id>/SKILL.md`: version, id (kebab-case, tên thư mục), title, description (một dòng, thành mô tả của skill theo định dạng CLI), tags[] (≥ 1), scope (`global` \| id lãnh thổ), source: monk\|user, derived_from? (id bài học; bắt buộc khi `source = monk`), max_tokens (mặc định 2000, giá trị khởi điểm), created_at, updated_at?. Đường dẫn là quy ước nên không có trường `path` (như `journal`). Nội dung viết bằng tiếng Anh như prompt nhân vật.
 

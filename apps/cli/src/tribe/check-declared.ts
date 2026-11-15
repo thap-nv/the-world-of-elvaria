@@ -29,9 +29,18 @@ function promptLines(t: Translate, caps: AdapterCapabilities): string[] {
   return limits.length === 0 ? [] : [t('cli.tribe.check.prompt_max', { limits: limits.join('; ') })];
 }
 
+/**
+ * The capabilities the adapter declares: the nine flags it has, then `vision` when its CLI reads images (PS-11), an
+ * optional field and no flag, so an adapter that lacks it is not listed as missing it.
+ */
+export const declaredCapabilities = (caps: AdapterCapabilities): string[] => [
+  ...ADAPTER_CAPABILITIES.filter((name) => caps[name]),
+  ...(caps.vision === true ? ['vision'] : []),
+];
+
 /** What the adapter declares and how far tribeLimitsOf lets the tribe go. */
 export function capabilityLines(t: Translate, tribe: Tribe, caps: AdapterCapabilities): string[] {
-  const declared = ADAPTER_CAPABILITIES.filter((name) => caps[name]);
+  const declared = declaredCapabilities(caps);
   const missing = ADAPTER_CAPABILITIES.filter((name) => !caps[name]);
   const limits = tribeLimitsOf(caps);
   const params = { tribe: tribe.id, adapter: tribe.adapter, auth: caps.auth.join(', ') };

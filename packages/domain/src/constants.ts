@@ -167,6 +167,8 @@ export const RITUAL_STEPS = [
   'check_regression_test',
   // A change of behaviour comes with its test when the territory has tests (§3.15, ADR 0022; P1-01).
   'check_tests_cover_change',
+  // The judge reads the screens the checks captured against their references (PS-11, `visual_review`).
+  'compare_screens',
   'compare_before_after',
   'score_tone_checklist',
   'rerun_from_source',

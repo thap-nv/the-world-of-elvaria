@@ -2,7 +2,9 @@
 // the roster does not have (different_model, and no judge of the kind outside its doers on another model). The
 // Steward rings the bell once per quest, like a quest nobody can claim (§3.1), and again only after the quest left
 // the list and came back. It keeps no file and writes no event: nothing changes in the world, and after a restart
-// the bell rings once more, which reminds the owner of a quest still waiting. The digest (PS-03) lists them too.
+// the bell rings once more, which reminds the owner of a quest still waiting. The digest (PS-03) lists them too. A
+// quest whose ritual asks for eyes (PS-11) says so: the judge it lacks is one of a tribe whose CLI reads images.
+import { judgedByEye } from '@elvaria/domain';
 import type { Quest, QuestId } from '@elvaria/domain';
 
 import { noticeQuest, ring } from './context.ts';
@@ -33,6 +35,7 @@ export async function noteUnjudgeable(
       quest: noticeQuest(quest),
       classes: judgingClassesOf(ctx.world, quest),
       model: assignee?.model ?? null,
+      ...(judgedByEye(quest, ctx.world.registry) ? { vision: true } : {}),
     });
   }
 }

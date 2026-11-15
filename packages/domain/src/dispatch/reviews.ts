@@ -5,6 +5,7 @@
 // holds the inbox, the sessions' ends or the claims.
 import { recheckDue } from '../verify/environment.ts';
 import { promptCharsOf } from '../verify/prompt-limit.ts';
+import { judgedByEye } from '../verify/ritual-of.ts';
 import { awaitedJudges, selectVerifier, waitsForNoJudge } from '../verify/select-verifier.ts';
 import { partyOf, workedOn } from '../verify/past-assignees-of.ts';
 import { judgeWaitOf } from './judge-waits.ts';
@@ -52,7 +53,10 @@ export interface Verification {
 /** What step 4 reads of the snapshot. */
 export interface ReviewSource {
   readonly kingdom: Pick<Kingdom, 'dispatch'>;
-  /** Kinds and rituals tell a trial in a scratch plot from other checks (background-room.ts, P1-54). */
+  /**
+   * Kinds and rituals tell a trial in a scratch plot from other checks (background-room.ts, P1-54), and a quest whose
+   * judge must see from the others (judgedByEye, PS-11). Absent: neither.
+   */
   readonly registry: { readonly classes: readonly VerifierClass[] } & Partial<
     Pick<Registry, 'kinds' | 'rituals'>
   >;
@@ -115,6 +119,11 @@ function doersOf(
     .filter((character) => character !== undefined);
 }
 
+/** Whether only a judge whose tribe reads images may take `quest` (PS-11); without kinds or rituals, no. */
+function needsVision(quest: Quest, { kinds, rituals }: ReviewSource['registry']): boolean {
+  return kinds !== undefined && rituals !== undefined && judgedByEye(quest, { kinds, rituals });
+}
+
 /**
  * Step 4 for the quests in `review` that need a judge, in priority order. A judge is taken from the roster only for
  * a quest whose checks have ended; checks start for a quest that some judge may take, now or later, and again for
@@ -138,6 +147,7 @@ export function planReviews(
       limits: source.limits,
       models: source.models ?? {},
       prompt_chars: promptCharsOf(quest.id, source.review_prompts),
+      needs_vision: needsVision(quest, source.registry),
     };
     if (waitsForNoJudge(quest, candidates, policy)) {
       planned.unjudgeable.push(quest.id);

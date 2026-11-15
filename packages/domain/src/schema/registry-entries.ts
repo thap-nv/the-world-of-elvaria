@@ -57,7 +57,7 @@ export const KindSchema = z
       .optional()
       .meta(
         describe(
-          "Rituals chosen by the quest's tags (ADR 0022): the first override whose tags_any meets the quest's tags wins, otherwise `ritual`; absent, `ritual` alone. Default registry: build and refactor tagged e2e or integration -> mutation_check.",
+          "Rituals chosen by the quest's tags (ADR 0022): the first override whose tags_any meets the quest's tags wins, otherwise `ritual`; absent, `ritual` alone. Default registry: build and refactor tagged e2e or integration -> mutation_check; then build, fix and refactor tagged visual -> visual_review (PS-11).",
         ),
       ),
   })
@@ -107,6 +107,15 @@ export const RitualSchema = z
       .meta(
         describe(
           "The judge works in a scratch plot (ADR 0022): a disposable worktree <quest-id>-verify detached at the quest branch's head, made after the work is submitted with commands.setup, then commands.reset before each run of the checks. The machine checks run there; the judge alone gets Edit and Write there, the hook refuses commit and push, and the plot is removed after the verdict, so the quest branch never changes. Absent: false. Git territories only: on a folder the checks run in the quest's plot and the judge has no write tool.",
+        ),
+      ),
+    // Added after v1 (PS-11): optional, so a registry written before it reads unchanged and keeps version 1.
+    vision: z
+      .boolean()
+      .optional()
+      .meta(
+        describe(
+          "The judge reads images (PS-11): the screens the territory's checks capture, beside their references. Only a judge whose tribe's adapter declares capabilities.vision takes a quest of this ritual; with none in the roster the quest waits for one, and the machine never judges it alone. Absent: false.",
         ),
       ),
     flaky_follow_up: FollowUpSchema.optional().meta(
