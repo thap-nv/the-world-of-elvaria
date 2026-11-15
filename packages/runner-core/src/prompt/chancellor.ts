@@ -6,7 +6,7 @@ import { QUEST_TAGS_MAX, sharedGlobsOf } from '@elvaria/domain';
 
 import { LANGUAGE_NAMES, classBlock, decreeBlock } from './blocks.ts';
 import { chancellorCodeBlocks } from './chancellor-code.ts';
-import { classesOf, draftingValuesOf, graphedOf } from './drafting.ts';
+import { classesOf, draftingValuesOf, graphedOf, tagsShownOf } from './drafting.ts';
 import { fenced, fill, joinBlocks } from './templates.ts';
 import type { BuiltPrompt } from '../runner/types.ts';
 import type { TerritoryCode } from './chancellor-code.ts';
@@ -41,6 +41,11 @@ export interface ChancellorContext {
   /** Set on the second try only. */
   readonly returned?: ReturnedReply;
   /**
+   * A tribe that works reads images (PS-11): the tags whose ritual asks for eyes are listed. Absent or false, as long as
+   * no adapter declares `capabilities.vision`: they are not (tagsShownOf, fix/council-run-gaps (a)).
+   */
+  readonly vision?: boolean;
+  /**
    * What the code says of the owner's words (PS-21b): the files they name, and the code graph's answer where a
    * territory has one. Gathered by `elvaria say`; absent or empty, the prompt reads as before.
    */
@@ -67,8 +72,12 @@ export function territoriesOf(territories: readonly Territory[]): string {
   );
 }
 
-/** `graphed`: a territory has a code graph, so the classes say who asks it (PS-21b). */
-export function catalogOf({ kinds, tags, scripts, classes }: Registry, graphed = false) {
+/**
+ * `graphed`: a territory has a code graph, so the classes say who asks it (PS-21b). `vision`: a tribe that works reads
+ * images, so the tags that ask for eyes are listed too (tagsShownOf).
+ */
+export function catalogOf(registry: Registry, graphed = false, vision?: boolean) {
+  const { kinds, scripts, classes } = registry;
   return {
     // The seal of each kind (PS-06): a draft that leaves seal_required out takes it.
     kinds: list(
@@ -80,7 +89,7 @@ export function catalogOf({ kinds, tags, scripts, classes }: Registry, graphed =
     ),
     classes: list(classesOf(classes, graphed), 'None.'),
     tags: list(
-      tags.map(
+      tagsShownOf(registry, vision).map(
         (tag) =>
           `- \`${tag.id}\`: ${tag.name_en}${tag.description === undefined ? '' : `. ${tag.description}`}`,
       ),
@@ -146,7 +155,7 @@ export function buildChancellorPrompt(context: ChancellorContext, t: PromptTempl
     user: fill(t['chancellor-context'], {
       utterance: context.utterance.trim(),
       territories: territoriesOf(context.territories),
-      ...catalogOf(context.registry, graphedOf(context.territories)),
+      ...catalogOf(context.registry, graphedOf(context.territories), context.vision),
       roster: rosterOf(context.roster),
       mana: manaOf(context.mana),
       returned: returnedOf(context.returned, t),

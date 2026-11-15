@@ -52,6 +52,7 @@ function contextOf(
     context_budget_tokens: ctx.kingdom.breakers.context_budget_tokens,
     memos: batch,
     quests: quests.filter(mergeable),
+    vision: speaker.vision,
   } satisfies TriageContext;
 }
 

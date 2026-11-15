@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { judgedByEye, judgedInScratch, ritualOf } from './ritual-of.ts';
+import { eyeTagsOf, judgedByEye, judgedInScratch, ritualOf } from './ritual-of.ts';
 import type { Registry } from '../schema/registry.ts';
 import type { Kind, Ritual } from '../schema/registry-entries.ts';
 import type { Quest } from '../schema/quest/quest.ts';
@@ -89,6 +89,9 @@ describe('ritualOf', () => {
     // The blind trial's acceptance part keeps its kind's ritual (P1-21); its merge quest takes the override.
     expect(judgedByEye({ ...quest('build', 'visual'), party_role: 'acceptance' }, eyes)).toBe(false);
     expect(judgedByEye({ ...quest('build', 'visual'), party_role: 'merge' }, eyes)).toBe(true);
+    // The tags a drafter is not shown while no tribe sees (fix/council-run-gaps (a)): visual, not e2e.
+    expect([...eyeTagsOf(eyes)]).toEqual(['visual']);
+    expect(eyeTagsOf(REGISTRY).size).toBe(0);
   });
 
   it('finds nothing for a kind or a ritual the registry lacks', () => {

@@ -77,7 +77,7 @@ export function buildTriagePrompt(context: TriageContext, t: PromptTemplates): B
       memos: list(context.memos.map(memoItem), 'No memo.'),
       quests: list(context.quests.map(questItem), 'No open quest.'),
       territories: territoriesOf(context.territories),
-      ...catalogOf(context.registry),
+      ...catalogOf(context.registry, false, context.vision),
       roster: rosterOf(context.roster),
     }),
   };

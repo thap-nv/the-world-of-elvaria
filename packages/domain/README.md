@@ -17,7 +17,8 @@
   `ritual_overrides` meets the quest's tags (tests as the product: `build`/`refactor` tagged `e2e` or
   `integration` → `mutation_check`; then `build`/`fix`/`refactor` tagged `visual` → `visual_review`, PS-11);
   `judgedInScratch` says its judge works in a scratch plot (a ritual with `scratch_plot`, a git worktree), and
-  `judgedByEye` that its judge must see (a ritual with `vision`, PS-11). What the machine decides there is pure too (`src/verify/trial.ts`):
+  `judgedByEye` that its judge must see (a ritual with `vision`, PS-11), `eyeTagsOf` the tags that may ask for eyes,
+  which no drafter is shown while no tribe reads images (fix/council-run-gaps (a)). What the machine decides there is pure too (`src/verify/trial.ts`):
   `rerunDue` (up to `FLAKE_RUNS` runs while every run passes), `exclusiveWaitMinutes` (how long an exclusive check waits for a judge that holds the lock), `flakyChecksOf` (a run its environment failed is no flake, P1-54), `coverageTotalsOf` (an istanbul
   json-summary) and `coverageDropsOf` (counts compared, no rounding); `flakyFollowUpOf` builds the quest that
   exorcises a flake, of the kind and class the ritual's `flaky_follow_up` names. `commandLinesOf` reads a
@@ -43,7 +44,7 @@
   waits for no seal, whatever its kind's `seal_default`, as the merge quest always does), `partyStatusOf`
   (`forming`, `parts`, `merging`, `done` or `stuck`, derived, never stored) and `plotBaseOf` (the branches a quest's plot builds on: a part on its
   contract's, a merge quest on the contract's with every part merged in, any quest on a dependency's not merged
-  yet, P1-16 (f)). The territory's `checks[].defer_to_merge` (§3.15) leaves a heavy check to the merge quest.
+  yet, P1-16 (f), with every dependency merged in when it has two or more, `dependencies`, fix/council-run-gaps (d)). The territory's `checks[].defer_to_merge` (§3.15) leaves a heavy check to the merge quest.
   `machineMergeDue` (P1-18 (h)): a merge quest's first run is the machine's, and only while no run was ever started on it (`attempts = 0` and an empty log, P1-55); the run takes a run number and no attempt (`machineRun`). `planTick` lists it in `merges`
   instead of giving it to a knight; `claim` takes it with no assignee, and the rows `working.submit.by_machine`,
   `working.release.by_machine` (the merge stopped), `review.verdict_fail.machine_retry` and
@@ -132,7 +133,8 @@
   one the groups of scope globs that meet, shared paths aside); `templateIssuesOf` (the
   quest template of `QUEST_TEMPLATE_SECTIONS`: every section, numbered steps up to `STEPS_REQUIRED_UP_TO`, a check
   named in "Done when" that the territory has); `planIssuesOf` (a plan's sub-quests: a scope for each session one,
-  scopes apart for two that may run at once, a given peak context within the budget, the template);
+  scopes apart for two that may run at once, a given peak context within the budget, the template, a class some
+  character not suspended has, fix/council-run-gaps (c));
   `peakContextOf` and `questEstimateOf` (a draft's `estimate.context` is a planning number the quest does not
   keep). The brief (`BriefSchema`) is a block of the quest-draft file; `seal_required` of a draft is optional.
   PS-21b adds `planLinksOf`: two session sub-quests on the graph's territory that may run at once with scopes apart,

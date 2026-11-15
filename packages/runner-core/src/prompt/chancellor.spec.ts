@@ -81,6 +81,12 @@ describe('buildChancellorPrompt (§10 question 3)', () => {
     expect(buildChancellorPrompt(context, templates).user).not.toContain('shared paths');
   });
 
+  // fix/council-run-gaps (a), PS-11 (l): a quest tagged visual waits in review while no tribe reads images.
+  it('lists the tag that asks for eyes only when a tribe that works reads images', () => {
+    expect(buildChancellorPrompt(context, templates).user).not.toContain('- `visual`');
+    expect(buildChancellorPrompt({ ...context, vision: true }, templates).user).toContain('- `visual`: ');
+  });
+
   it("names each kind's seal and each class's tools, so no draft turns the seal off or asks a scribe for git log (PS-06)", () => {
     const { system, user } = buildChancellorPrompt(context, templates);
     expect(user).toContain('- `build`: deliverable branch; classes knight, dwarf; sealed by default');

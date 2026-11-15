@@ -87,6 +87,21 @@ describe('planTick: quests with scopes (PS-05)', () => {
     // ...not against one whose plot starts from its branch, which holds its work already.
     expect(claimed([base, quest(Q2, { scope: ['a/**'], dependsOn: [Q1] })])).toEqual([Q2]);
   });
+
+  // fix/council-run-gaps (d): a plan's sub-quests wait for the plan quest (154), and a diamond merges both sides (155).
+  it("starts a plan's chain and diamond on what their plots hold, whose scopes never hold them back", () => {
+    const plan = onWorktree(ranThen(quest(Q1, { scope: ['plans/x.md'], kind: 'plan', cls: 'mage' }), 'done'));
+    const head = quest(Q2, { scope: ['plans/**', 'a/**'], dependsOn: [Q1] });
+    expect(claimed([plan, head])).toEqual([Q2]);
+    // d4 waits for d2 and d3, which ran side by side: both hold scopes it meets, and both are in its plot.
+    const left = onWorktree(ranThen(quest(Q2, { scope: ['a/**'], dependsOn: [Q1] }), 'done'));
+    const right = onWorktree(ranThen(quest(Q3, { scope: ['b/**'], dependsOn: [Q1] }), 'done'));
+    const diamond = quest(Q4, { scope: ['a/**', 'b/**'], dependsOn: [Q2, Q3] });
+    expect(claimed([plan, left, right, diamond])).toEqual([Q4]);
+    // A side whose work is not in the plot (no branch to merge) still holds the diamond back until its archive.
+    const folder = { ...right, plot: { type: 'folder' as const, path: 'x' } };
+    expect(claimed([plan, left, folder, diamond])).toEqual([]);
+  });
 });
 
 describe('planTick: a session quest without a scope runs alone (PS-05)', () => {

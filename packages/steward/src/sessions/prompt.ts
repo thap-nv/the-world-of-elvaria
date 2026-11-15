@@ -114,6 +114,8 @@ async function builtPromptOf(
     locale: ctx.world.kingdom.owner.locale,
     // A plan quest's drafting rules quote it (PS-06).
     context_budget_tokens: ctx.world.kingdom.breakers.context_budget_tokens,
+    // A plan quest's mage and judge see the tags that ask for eyes once a tribe reads images (fix/council-run-gaps (a)).
+    vision: Object.values(ctx.limits).some((limits) => limits?.vision === true),
     decree: await readDecree(ctx.root),
     quest,
     character,

@@ -5,6 +5,7 @@
 // have scopes apart. A party's merge quest is the Steward's, not a draft: it waits for every part, so never overlaps.
 import { scopesMeet, sharedGlobsOf } from '../dispatch/scope.ts';
 import { templateIssueLine, templateIssuesOf } from './template.ts';
+import type { Character } from '../schema/character/character.ts';
 import type { QuestDraft } from '../schema/quest/quest-draft.ts';
 import type { Territory } from '../schema/territory.ts';
 import type { TemplateIssue } from './template.ts';
@@ -17,12 +18,24 @@ export type PlanIssue =
   /** Its peak context passes the kingdom's context budget: it does not fit one session (ADR 0017). */
   | { readonly code: 'over_context'; readonly ref: string; readonly context: number; readonly budget: number }
   /** Its description lacks part of the quest template. */
-  | { readonly code: 'template'; readonly ref: string; readonly issue: TemplateIssue };
+  | { readonly code: 'template'; readonly ref: string; readonly issue: TemplateIssue }
+  /**
+   * It asks for a class no character of the kingdom has that is not suspended (fix/council-run-gaps (c)): it would wait
+   * in open, and `quest reassign --to` takes no character of another class. `staffed`: the classes the kingdom has.
+   */
+  | {
+      readonly code: 'no_character';
+      readonly ref: string;
+      readonly class: string;
+      readonly staffed: readonly string[];
+    };
 
 export interface PlanContext {
   readonly territories: readonly Pick<Territory, 'id' | 'shared_paths' | 'checks'>[];
   /** `kingdom.breakers.context_budget_tokens`. */
   readonly context_budget_tokens: number;
+  /** The kingdom's characters: a session sub-quest asks for a class one of them has, not suspended. */
+  readonly characters: readonly Pick<Character, 'class' | 'status'>[];
 }
 
 /** Each draft's refs it waits on, directly or through others (depends_on_refs); a circle is refused elsewhere. */
@@ -74,6 +87,15 @@ function overContext(draft: QuestDraft, budget: number): PlanIssue[] {
     : [{ code: 'over_context', ref: draft.ref, context: peak, budget }];
 }
 
+/** Session sub-quests whose class no character of the kingdom has, not suspended; with the classes it has, sorted. */
+function unstaffed(sessions: readonly QuestDraft[], context: PlanContext): PlanIssue[] {
+  const working = context.characters.filter(({ status }) => status !== 'suspended');
+  const staffed: string[] = [...new Set(working.map((character) => character.class))].toSorted();
+  return sessions.flatMap(({ ref, class_required: cls }): PlanIssue[] =>
+    cls === undefined || staffed.includes(cls) ? [] : [{ code: 'no_character', ref, class: cls, staffed }],
+  );
+}
+
 /** What is wrong with a plan's sub-quests; none when the Steward can run them as listed. */
 export function planIssuesOf(drafts: readonly QuestDraft[], context: PlanContext): PlanIssue[] {
   const sessions = drafts.filter(({ tier }) => tier === 'session');
@@ -85,6 +107,7 @@ export function planIssuesOf(drafts: readonly QuestDraft[], context: PlanContext
     ),
     ...overlaps(sessions, waitsOf(drafts), context),
     ...sessions.flatMap((draft) => overContext(draft, context.context_budget_tokens)),
+    ...unstaffed(sessions, context),
     ...sessions.flatMap((draft) =>
       templateIssuesOf(draft, checksOf(draft.territory)).map((issue): PlanIssue => ({
         code: 'template',
@@ -103,5 +126,9 @@ export function planIssueLine(issue: PlanIssue): string {
     return `${issue.ref} and ${issue.other} may run at once and their scopes meet: one waits for the other (depends_on_refs), or their scopes part`;
   if (issue.code === 'over_context')
     return `${issue.ref} holds ${issue.context} tokens of context at its peak, above ${issue.budget}: split it`;
+  if (issue.code === 'no_character') {
+    const staffed = issue.staffed.length === 0 ? 'none' : issue.staffed.join(', ');
+    return `${issue.ref} asks for class ${issue.class}, which no character of the kingdom has that is not suspended: give it to a class the kingdom has (${staffed})`;
+  }
   return `${issue.ref}: ${templateIssueLine(issue.issue)}`;
 }
