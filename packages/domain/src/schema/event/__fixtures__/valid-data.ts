@@ -13,6 +13,14 @@ export const POOL = { tribe: 'gemini', pool: 'gemini_models' };
 /** Two commits of the Elvaria repo: the build pinned before an upgrade, and the one it moves to (PS-04b). */
 export const SHA_OLD = '4bc14e9d0c2a7f1e3b5d6a8c9e0f1a2b3c4d5e6f';
 export const SHA_NEW = 'b0b2605a1c3e5f7a9b1d3f5a7c9e1b3d5f7a9c1e';
+/** A quest branch pushed at SHA_OLD with its pull request (PS-08). */
+const DELIVERED = {
+  quest: QUEST_VIEW.id,
+  territory: 'elvaria',
+  branch: `quest/${QUEST_VIEW.id}`,
+  head: SHA_OLD,
+  pr: { number: 174, url: 'https://github.com/owner/repo/pull/174' },
+};
 
 // One valid `data` per type that has a data schema: the table must name every one of them.
 export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
@@ -94,6 +102,19 @@ export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
     conflicts: ['apps/web/src/api.ts'],
   },
   'plot.restored': { paths: ['apps/api/openapi.json', 'coverage/'] },
+  'delivery.pushed': {
+    ...DELIVERED,
+    forge: 'github',
+    warnings: ['docs/spec.md'],
+  },
+  'delivery.merged': {
+    ...DELIVERED,
+    merge_sha: SHA_NEW,
+    method: 'merge',
+    sealed: true,
+    branch_deleted: true,
+  },
+  'delivery.failed': { quest: QUEST_VIEW.id, territory: 'elvaria', stage: 'push', reason: 'no_credential' },
   'graph.built': { commit: SHA_NEW, nodes: 3534, edges: 9616, duration_ms: 12_481 },
   'graph.failed': { commit: SHA_NEW, reason: 'graphify update failed (exit 1): no such file' },
   'memo.filed': { memo: 'm_20261106_4k2pqz', kind: 'proposal', from: 'thorn' },

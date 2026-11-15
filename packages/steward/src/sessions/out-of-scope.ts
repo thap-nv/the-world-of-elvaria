@@ -21,12 +21,23 @@ export function outOfScopeOf(
   return changed.filter((path) => !covers.some((cover) => cover(path)));
 }
 
+/**
+ * The scope a quest's changes are read against: its own, and a party's merge quest adds its contract's (PS-08e). Its
+ * plot counts from the base branch once it took that in, so the contract's work, judged with the contract, is part of
+ * what the branch changed, and the merge quest's own scope holds the parts' alone.
+ */
+function readAgainst(ctx: Context, quest: Quest): Pick<Quest, 'scope_paths'> {
+  const party = quest.party_role === 'merge' ? quest.party_id : undefined;
+  const contract = party === undefined ? undefined : ctx.world.quests.get(party);
+  return contract === undefined ? quest : { scope_paths: [...scopeOf(quest), ...scopeOf(contract)] };
+}
+
 /** What the quest's plot changed outside its scope; nothing without a scope, or when git cannot say (logged). */
 export async function outOfScopeIn(ctx: Context, quest: Quest): Promise<string[]> {
   if (scopeOf(quest).length === 0) return [];
   try {
     const changed = await ctx.deps.plots.touched(quest.plot);
-    return outOfScopeOf(changed, quest, ctx.world.territories.get(quest.territory));
+    return outOfScopeOf(changed, readAgainst(ctx, quest), ctx.world.territories.get(quest.territory));
   } catch (error) {
     ctx.deps.log.warn(
       `steward: ${quest.id}: the files changed outside its scope are unknown: ${messageOf(error)}`,

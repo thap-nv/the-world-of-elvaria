@@ -159,14 +159,14 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   default branch: origin's after a fetch when it only adds to the local one, else the local one; the main
   checkout is never pulled. It is idempotent: a worktree already there is reused, a branch that outlived its
   worktree is checked out again. Each prepare also makes sure of the repo's `.git/info/exclude` lines
-  (`PLOT_EXCLUDES`) and, on Windows, `core.longpaths`, and runs `commands.setup` until it succeeds once (log in
+  (`PLOT_EXCLUDES`) and, on Windows, `core.longpaths`, and runs `commands.setup` until it succeeds once, and once more after a merge quest took the base branch in (log in
   `.runs/<quest>-setup.log`), with the quest's secrets when the caller passes them (P1-30:
   `prepare(quest, territory, {secrets})`, put in its env over the host's minimal env as a check's are); `{signal}`
   kills it (P1-49: the Steward's stop, so Ctrl+C does not wait for an install), the plot then not set up. A new
   worktree may start elsewhere (P1-18: `prepare(quest, territory, {from})`): on the first branch of `from` that
   exists and that the default branch does not hold yet, a party's contract or a dependency not merged yet; the
-  diff then counts from there. The fork point and the setup state live in `elvaria-plot.json` in the worktree's
-  private git folder. `status`, `head` (the commit at HEAD, null without git: the Steward reuses checks that ran on
+  diff then counts from there. The fork point (for a merge quest, the base branch's commit it merged last) and the
+  setup state live in `elvaria-plot.json` in the worktree's private git folder. `status`, `head` (the commit at HEAD, null without git: the Steward reuses checks that ran on
   it for the run's next judge, P1-38), `touched` (paths changed since the fork, committed or not, plus untracked files),
   `commitAll` (everything, through the territory's own hooks; `refused` when a hook says no; given a `CommitRescue` folder
   (P1-55, `plot/rescue.ts`) it first moves the scratch files at the plot's root to `set-aside/` there, and a refusal leaves
@@ -185,8 +185,13 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   `merge` (P1-18, a party's merge quest: each branch the worktree does
   not hold yet is merged with `--no-ff`, `plotCommitMessage.merge`, through the territory's hooks, until one stops;
   a conflict is left in progress for the character, whose commit, or the Steward's `commitAll`, concludes it even
-  when the resolution changes nothing; nothing is merged into uncommitted changes or a merge in progress),
-  `unmerged` (the branches HEAD does not hold) and `release`
+  when the resolution changes nothing; nothing is merged into uncommitted changes or a merge in progress; given
+  the territory, PS-08e, its base branch follows the parts: `mergeAll` merges the commit `forkPoint` gives, fetched
+  first when there is a remote, unless HEAD holds it, and once git started that merge, clean or stopped on a conflict,
+  `movePlotBase` makes the plot count from it and sets it up again, so `touched`, the judge's diff and the coverage
+  base never count what main changed on its own; setup waits while a merge is in progress),
+  `unmerged` (the branches HEAD does not hold; given the territory, its base branch while HEAD lacks the record's
+  base) and `release`
   (removes a clean worktree, keeps the branch, takes the folders git leaves on Windows around pnpm's dead
   junctions when nothing else is in them, `leftover` says why a folder stays, then calls each `forget` callback,
   such as a tribe CLI dropping its transcripts). A territory without git gets `quests/<id>/work/` in the kingdom.
@@ -337,6 +342,9 @@ you would a change of prose. `src/conformance/conformance.spec.ts` runs the suit
 runners that lie about their capabilities. The plot and check specs build real git repos (a bare origin, a clone,
 worktrees, a refusing pre-commit hook) and plots in temp folders with spaces in their names; git runs without the
 caller's `GIT_*` (`src/__fixtures__/git-repo.ts`), and one spec proves a `GIT_DIR` in the host env is ignored.
+`src/plot/merge-base.spec.ts` and `merge-base-remote.spec.ts` (PS-08e, `src/__fixtures__/party-repo.ts`) merge the
+base branch into a merge quest's plot: main moved, unchanged, in conflict, reset away, gone, from a remote, and
+setup run again once main is in.
 The `src/process/` specs kill real node process trees (`src/__fixtures__/tree.ts`: a node that starts an idle
 grandchild) on this machine: the CI matrix, started by hand since 2026-11-10, runs them on Windows and macOS, and the
 SIGTERM-then-SIGKILL case on POSIX only.

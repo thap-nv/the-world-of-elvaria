@@ -51,6 +51,9 @@ describe('mergeQuestOf', () => {
     });
     expect(made.payload.description).toContain(`- quest/${Q2}: ${api.title}\n- quest/${Q3}: ${web.title}`);
     expect(made.payload.description).toContain('`api/openapi.yaml`');
+    // PS-08e: the knight learns the base branch is merged too, and how to resolve a conflict with it.
+    expect(made.payload.description).toContain("the Steward merges the territory's base branch too");
+    expect(made.payload.description).toContain('fits the base branch as it is now');
   });
 
   it("keeps the contract's campaign, clips a long title and too many tags, and asks for no secret when none", () => {
@@ -94,8 +97,12 @@ describe('plotBaseOf', () => {
     expect(plotBaseOf(web, all)).toEqual({ from: [`quest/${Q2}`, `quest/${Q1}`], merge: [] });
   });
 
-  it("starts the merge quest from the contract's branch and merges every part into it", () => {
-    expect(plotBaseOf(merge, all)).toEqual({ from: [`quest/${Q1}`], merge: [`quest/${Q2}`, `quest/${Q3}`] });
+  it("starts the merge quest from the contract's branch, merges every part into it, then the base branch", () => {
+    expect(plotBaseOf(merge, all)).toEqual({
+      from: [`quest/${Q1}`],
+      merge: [`quest/${Q2}`, `quest/${Q3}`],
+      base: true,
+    });
   });
 
   it("starts the blind trial's acceptance part on the contract's branch alone, whatever it waits for (P1-21)", () => {

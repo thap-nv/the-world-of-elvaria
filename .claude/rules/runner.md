@@ -18,7 +18,7 @@ Dữ kiện về CLI đã có, đừng tra lại: [cli-facts](../../docs/referen
 ## Tiến trình con (ADR 0013, 0015)
 
 - `spawn` với `shell: false`, executable tuyệt đối từ `kingdom.tribes[].tool.path`; shim `.cmd` của npm thì chạy `node <js>`.
-- Env dựng tường minh, tối thiểu: không bao giờ `process.env` nguyên khối, không biến `GIT_*`. Secret của kho bảo vật chỉ vào env của lần chạy; không vào prompt, journal, log hay event (che bằng `redact` của eventlog trước khi ghi).
+- Env dựng tường minh, tối thiểu: không bao giờ `process.env` nguyên khối, không biến `GIT_*`, trừ đúng một ngoại lệ có tên: `GIT_TERMINAL_PROMPT=0`, đặt tường minh và chỉ cho git của giao hàng (đọc credential, push), để git thoát thay vì hỏi một terminal không ai ngồi (mục (L) của PS-08, `deliveryGitEnv` ở `apps/cli/src/forge/credential.ts`; cùng `GCM_INTERACTIVE=never`). Secret của kho bảo vật chỉ vào env của lần chạy; không vào prompt, journal, log hay event (che bằng `redact` của eventlog trước khi ghi).
 - Cấu hình theo lần chạy (settings, `policy.json`; `GEMINI_CLI_HOME` khi có `runner-gemini`) nằm trong `<kingdom>/.runs/<quest>-<n>/`; code không đọc, không ghi `~/.claude/`, `~/.gemini/`, `~/.codex/`.
 - Kill tree ở `src/process/kill-tree.ts`: `taskkill /PID <pid> /T /F` trên Windows, SIGTERM rồi SIGKILL trên macOS; test cả hai OS.
 

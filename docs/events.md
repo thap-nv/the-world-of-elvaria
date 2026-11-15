@@ -4,7 +4,7 @@
 
 Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là một event; log chỉ ghi thêm, không bao giờ viết lại. `type` là `nhóm.hành_động`; reader giữ nguyên type lạ, renderer bỏ qua nó. Hợp đồng đầy đủ: [schemas/event.schema.json](schemas/event.schema.json); nghĩa từng nhóm và các tiền tố dành sẵn: [glossary.md](glossary.md) mục 12.
 
-75 type trong danh mục v1, 63 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
+78 type trong danh mục v1, 66 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
 
 ## Khung một dòng
 
@@ -109,18 +109,21 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 | `command.applied` | `command_id`: string (khớp `^[0-9A-HJKMNP-TV-Z]{26}$`)<br>`reason` (tùy chọn): string<br>`kind` (tùy chọn): string (khớp `^[a-z][a-z0-9_]*$`) — The command's `kind` (InboxCommand.kind), so the metrics ledger counts the owner's steps from the log alone; inbox/done/ names it for lines written before PS-01b.<br>`source` (tùy chọn): một trong `chancellor` — `chancellor` when the command came from the Chancellor's triage (PS-03b): the metrics ledger leaves it out of the owner's steps. Absent for the owner's commands (CLI, Herald, phone). |
 | `command.rejected` | `command_id`: string (khớp `^[0-9A-HJKMNP-TV-Z]{26}$`)<br>`reason` (tùy chọn): string<br>`kind` (tùy chọn): string (khớp `^[a-z][a-z0-9_]*$`) — The command's `kind` (InboxCommand.kind), so the metrics ledger counts the owner's steps from the log alone; inbox/done/ names it for lines written before PS-01b.<br>`source` (tùy chọn): một trong `chancellor` — `chancellor` when the command came from the Chancellor's triage (PS-03b): the metrics ledger leaves it out of the owner's steps. Absent for the owner's commands (CLI, Herald, phone). |
 
-## `delivery` · 1 type
+## `delivery` · 4 type
 
 | Type | `data` |
 |---|---|
 | `delivery.sent` | object mở, chưa có schema |
+| `delivery.pushed` | `quest`: string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`territory`: string (khớp `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$`, khác `global`)<br>`branch`: string (không rỗng) — The quest branch, quest/<id>.<br>`head`: string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) — The tip of the quest branch that was pushed.<br>`forge`: một trong `github`<br>`pr`: object { number, url } — The branch's pull request on the forge.<br>`warnings` (tùy chọn): array of string (không rỗng) — Files whose added lines match a shared pattern of redact (a bearer token, credentials in a URL, a secret assignment): pushed all the same, for the owner to look at. Absent: none. |
+| `delivery.merged` | `quest`: string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`territory`: string (khớp `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$`, khác `global`)<br>`branch`: string (không rỗng) — The quest branch, quest/<id>.<br>`head`: string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) — The tip of the quest branch that was pushed.<br>`pr`: object { number, url } — The branch's pull request on the forge.<br>`merge_sha`: string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) — The commit the merge left on the base branch.<br>`method`: một trong `merge`, `squash`<br>`sealed`: boolean — The quest had the royal seal; false only under delegation (PS-08b).<br>`branch_deleted`: boolean — The Steward deleted quest/<id> on the remote. |
+| `delivery.failed` | `quest`: string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`territory`: string (khớp `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$`, khác `global`)<br>`stage`: một trong `scan`, `push`, `open`, `checks`, `merge`, `cleanup`<br>`reason`: một trong `secret`, `push_refused`, `no_credential`, `forge_auth`, `forge_error`, `conflict`, `checks_red`, `checks_timeout`, `head_moved`<br>`branch` (tùy chọn): string (không rỗng) — The quest branch, quest/<id>.<br>`head` (tùy chọn): string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) — Present: the branch was pushed at this tip before the delivery stopped.<br>`pr` (tùy chọn): object { number, url } — The branch's pull request on the forge.<br>`checks` (tùy chọn): array of object { name, conclusion, url? } — The checks that were red or never ended.<br>`paths` (tùy chọn): array of string (không rỗng) — With reason secret: the files that hold one; never the value.<br>`detail` (tùy chọn): string (không rỗng) — The forge's or git's message, redacted. |
 
 ## `plot` · 3 type
 
 | Type | `data` |
 |---|---|
 | `plot.patched` | `file`: string (không rỗng) — The patch file at the root of the plot, deleted once applied.<br>`paths`: array of string (không rỗng) — What the patch changed, relative to the plot, '/' separators. |
-| `plot.merged` | `into`: string (không rỗng) — The merge quest's branch.<br>`merged`: array of string (không rỗng) — The part branches this merge took in, in order.<br>`pending`: array of string (không rỗng) — The part branches still not in, the one the merge stopped at first; empty once all are in.<br>`stop` (tùy chọn): một trong `conflict`, `refused`, `missing` — Why the merge stopped at the first pending branch: a conflict left in progress for the knight, a refusal by git or a hook, or a branch that is gone.<br>`conflicts` (tùy chọn): array of string (không rỗng) — With stop = conflict: the conflicted files, relative to the plot. |
+| `plot.merged` | `into`: string (không rỗng) — The merge quest's branch.<br>`merged`: array of string (không rỗng) — The branches this merge took in, in order: the parts, then the territory's base branch by its name (PS-08e).<br>`pending`: array of string (không rỗng) — The branches still not in, the one the merge stopped at first (the base branch waits for the parts); empty once all are in.<br>`stop` (tùy chọn): một trong `conflict`, `refused`, `missing` — Why the merge stopped at the first pending branch: a conflict left in progress for the knight, a refusal by git or a hook, or a branch that is gone.<br>`conflicts` (tùy chọn): array of string (không rỗng) — With stop = conflict: the conflicted files, relative to the plot. |
 | `plot.restored` | `paths`: array of string (không rỗng) — What was changed or new in the plot and is gone now, relative to the plot, '/' separators; an untracked folder is one path ending in '/'. |
 
 ## `chronicle` · 1 type

@@ -21,6 +21,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria territory list` | Liệt kê các lãnh thổ. |
 | `elvaria territory check <id>` | Chấm một lãnh thổ: thử commands.setup và mọi check trên một đất sạch ở đầu nhánh gốc, rồi in thẻ điểm (0 mana). |
 | `elvaria territory graph <id>` | Dựng đồ thị code của một lãnh thổ ở một commit (0 mana) và hỏi nó một câu. |
+| `elvaria territory delivery <id>` | Xem lãnh thổ giao nhánh của quest xong bằng cách nào (manual, pr, pr_merge), hoặc đổi nó. |
 | `elvaria character add <id>` | Triệu hồi một nhân vật: nghề, tộc, model và cấp ban đầu. |
 | `elvaria character list` | Liệt kê các nhân vật. |
 | `elvaria character suspend <id>` | Đình chỉ một nhân vật: nhân vật không nhận việc và buông nhiệm vụ đang giữ, nhiệm vụ đi tiếp không có nó (lệnh suspend). |
@@ -172,6 +173,18 @@ Dựng đồ thị code của một lãnh thổ ở một commit (0 mana) và h�
 | `<id>` | Id của lãnh thổ. |
 | `--commit <ref>` | Commit, nhánh hoặc tag để dựng (mặc định: đầu nhánh mặc định). |
 | `--query <words>` | Các từ để hỏi đồ thị (tên mã và đường dẫn cho kết quả tốt nhất), như graphify query. |
+
+## `elvaria territory delivery`
+
+Xem lãnh thổ giao nhánh của quest xong bằng cách nào (manual, pr, pr_merge), hoặc đổi nó.
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<id>` | Id của lãnh thổ. |
+| `--mode <mode>` | manual (chủ nhân merge tay), pr (Nhiếp chính push và mở PR) hoặc pr_merge (rồi merge quest đã có dấu). |
+| `--merge-method <method>` | merge (merge commit, mặc định) hoặc squash. |
+| `--required-check <name>` | Một check run hay status context mà pr_merge chờ; lặp lại cho nhiều cái; thay cả danh sách. |
+| `--timeout <minutes>` | Số phút pr_merge chờ các check bắt buộc (mặc định 60). |
 
 ## `elvaria character add`
 

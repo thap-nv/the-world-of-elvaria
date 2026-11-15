@@ -17,6 +17,11 @@ import { GraphBuiltDataSchema, GraphFailedDataSchema } from './graph-data.ts';
 import { PlotMergedDataSchema, PlotPatchedDataSchema, PlotRestoredDataSchema } from './plot-data.ts';
 import { CommandResultDataSchema } from './command-data.ts';
 import {
+  DeliveryFailedDataSchema,
+  DeliveryMergedDataSchema,
+  DeliveryPushedDataSchema,
+} from './delivery-data.ts';
+import {
   MemoClosedDataSchema,
   MemoEscalatedDataSchema,
   MemoFiledDataSchema,
@@ -246,6 +251,9 @@ export const EVENT_DATA_SCHEMAS = {
   'plot.patched': PlotPatchedDataSchema,
   'plot.merged': PlotMergedDataSchema,
   'plot.restored': PlotRestoredDataSchema,
+  'delivery.pushed': DeliveryPushedDataSchema,
+  'delivery.merged': DeliveryMergedDataSchema,
+  'delivery.failed': DeliveryFailedDataSchema,
   'territory.attached': TerritoryChangeDataSchema,
   'territory.surveyed': TerritoryChangeDataSchema,
   'territory.health': TerritoryChangeDataSchema,
