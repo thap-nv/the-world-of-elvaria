@@ -40,7 +40,10 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   erred, `prompts/rejudge.md`; after either, the checks the machine will run on the work, as `selectChecks` picks
   them for what the branch touches (`Continuation.touched`), with those that may still run and those the party
   role leaves to the merge quest (`deferredChecks`), `prompts/checks-ahead.md`, P1-43; and why the Steward refused
-  the patch the run before wrote, `Continuation.refused_patch`, `prompts/refused-patch.md`, P1-31) and a verifier (the ritual's steps from `prompts/ritual-steps.md`, the
+  the patch the run before wrote, `Continuation.refused_patch`, `prompts/refused-patch.md`, P1-31, or, after the
+  decision on its amendment, why git refused the commit of its work while the quest waited,
+  `Continuation.refused_commit`, `prompts/refused-commit.md`, both in `src/prompt/refused-work.ts`, which a resumed
+  session reads after the decision instead, `Answered`, fix/session-notes) and a verifier (the ritual's steps from `prompts/ritual-steps.md`, the
   checks with the end of each failing one's log the caller read and masked (`PromptCheck.log_tail`, P1-25; both in `src/prompt/checks.ts`), the letter, the diff, or where to read it when the caller has none, and where the last judge of the
   run stopped when it left a `partial` verdict, P1-15); both list the shell commands
   their `ToolPolicy` allows, one per call (`prompts/shell.md`, P1-11), after the shell they run in when the caller
@@ -277,7 +280,8 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
 - Writes the lines only a CLI's output knows (`openRunLog`): `agent.session.end`, `agent.subagent.*`,
   `mana.signal`, stamped and redacted like the hook's, checked by `EventSchema`, to the log and the journal; and
   tells whether Elvaria's SessionStart hook recorded a session (`recorded`). Keeps a CLI's raw stdout and stderr
-  in `.runs/`, redacted (`openRunOutput`).
+  in `.runs/`, redacted (`openRunOutput`); a file that cannot be written loses only its own lines, never ends the
+  process: stdout.jsonl's error is a note in stderr.log (fix/session-notes).
 - Code graphs (PS-21, ADR 0029, `src/graph/`): `buildGraph` runs graphify `update <source> --no-cluster` with
   `graphEnvOf`'s fixed env (`GRAPHIFY_BACKEND=none`, no query log, no skill refresh, `PYTHONHASHSEED=0`, no `.pyc`,
   `GRAPHIFY_OUT`) from a detached worktree of the territory (`.state/graphs/<territory>/source`) into
@@ -336,6 +340,8 @@ caller's `GIT_*` (`src/__fixtures__/git-repo.ts`), and one spec proves a `GIT_DI
 The `src/process/` specs kill real node process trees (`src/__fixtures__/tree.ts`: a node that starts an idle
 grandchild) on this machine: the CI matrix, started by hand since 2026-11-10, runs them on Windows and macOS, and the
 SIGTERM-then-SIGKILL case on POSIX only.
+`src/runner/run-output.spec.ts` (fix/session-notes) puts a folder where each output file should be, which macOS
+refuses to open and Windows to write, and removes the run folder before the files open: no error escapes.
 (P1-54) `src/checks/run-checks-environment.spec.ts` and `trial-environment.spec.ts` hold the territory's exclusive
 lock from the spec to show a reset, a cleanup and an exclusive check waiting for it, and print Docker's lines from
 fake checks to show a failing check, a reset and a rerun told apart as their environment's;

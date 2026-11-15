@@ -32,6 +32,8 @@ export const PROMPT_TEMPLATES = [
   'failed-checks',
   'checks-ahead',
   'refused-patch',
+  // fix/session-notes: the commit git refused while the quest waited on the doer's amendment, for its next session.
+  'refused-commit',
   'memory',
   'memos',
   'answer',
