@@ -32,9 +32,9 @@ Theo quy tắc dò của quest:
 
 - **Kết luận:** `có`
 - **Nguồn và trích dẫn nguyên văn:**
-  - Tài liệu chính thức Claude Code, trang _Hooks reference_ tại `https://code.claude.com/docs/en/hooks` (và `https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/hooks`):
-    > "It must always be nested inside hookSpecificOutput alongside the matching hookEventName. Placing it at the top level of your JSON output will cause Claude Code to silently ignore it."
-    > "additionalContext: String - Text to add to Claude's context"
+  - Tài liệu chính thức Claude Code, trang _Hooks reference_ tại `https://code.claude.com/docs/en/hooks` (mục _Passing context to Claude_ và _Hook-specific output schemas_):
+    > "The `additionalContext` field passes a string from your hook into Claude's context window. Claude Code wraps the string in a system reminder and inserts it into the conversation at the point where the hook fired. Claude reads the reminder on the next model request, but it doesn't appear as a chat message in the interface."
+    > "`additionalContext` | String added to Claude's context alongside the tool result. Ignored when `permissionDecision` is `"defer"`."
   - Tài liệu repo Elvaria: `docs/reference/cli-facts-2026-11-06.md`, dòng 93 (ghi nhận theo tài liệu `[docs]`, bản đo hiện hành `docs/reference/cli-facts-2026-11-12.md` chưa đo riêng `additionalContext` trên CLI thật):
     > "JSON stdout: `hookSpecificOutput.permissionDecision` (PreToolUse), `decision: "block"` (Stop, tối đa **8 lần liên tiếp**), `additionalContext`. [docs]"
 
@@ -59,7 +59,7 @@ Theo quy tắc dò của quest:
 - **Kết luận:** `chưa rõ`
 - **Nguồn và trích dẫn nguyên văn:**
   - Tài liệu repo Elvaria: `docs/spikes/codex-2026-11-12.md`, dòng 186–187 (chỉ đo `permissionDecision: deny` và cổng `Stop`; chưa đo `additionalContext`):
-    > "Chặn tool: `{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": "…"}}, exit 0` — đúng dạng của Claude Code. Model đọc lý do và đi tiếp (T3: "The push command was blocked by a pre-tool hook"). [máy]"
+    > "Chặn tool: `{"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": "…"}}`, exit 0 — đúng dạng của Claude Code. Model đọc lý do và đi tiếp (T3: "The push command was blocked by a pre-tool hook"). [máy]"
     > "Stop: `{"decision": "block", "reason": "…"}` mở một lượt tiếp với lý do làm prompt; lần Stop sau có `stop_hook_active: true` (T3: model viết `STOPPED.txt` rồi kết thúc). Cùng dạng với Claude ⇒ cổng thư bàn giao (ADR 0010) dùng nguyên. [máy], [docs]"
   - Fixture repo Elvaria: `packages/runner-codex/fixtures/hooks-list.json`, dòng 15, 35, 55 (cho thấy CLI có trường cấu hình `additionalContextLimit`, nhưng chưa đo kiểm việc truyền text tới model qua hook stdout):
     > `"additionalContextLimit": null,`
@@ -98,15 +98,16 @@ hoặc:
 - **Nguồn và trích dẫn nguyên văn:**
   - Tài liệu repo Elvaria đã đo bằng CLI thật:
     1. `docs/spikes/antigravity-2026-11.md`, dòng 42:
-       > "PostToolUse chỉ có error ("" khi xong), không có output; tool bị chặn cứng không có PostToolUse. [máy M11]"
+       > "PostToolUse chỉ có `error` (`""` khi xong), không có output; tool bị chặn cứng không có PostToolUse. [máy M11]"
     2. `packages/hooks/src/antigravity/translate.ts`, dòng 61:
        > "/** agy's PostToolUse has no output and no exit code: those stay in the stream, which the runner reads. */"
     3. `docs/spikes/antigravity-2026-11.md`, dòng 126–134 (trả lời của PreToolUse):
-       > "Trả lời của PreToolUse (decision thuộc allow | deny | ask | force_ask | deny_unless_prior_grant theo schema trong nhị phân, cộng auto_approve được chấp nhận) [máy, nhị phân]:"
-       > "{"decision": "deny", "reason": …} | chặn cứng, model thấy tool call denied by pre-tool hook: <reason>, phiên chạy tiếp; thắng allow của settings"
-       > "{"decision": "deny_unless_prior_grant"} | allow của settings thì chạy; còn lại chặn cứng (không soft-deny); deny của settings vẫn chặn"
-       > "{"decision": "allow"} | chỉ là "không phản đối": vẫn qua kiểm tra quyền; ngoài allow → soft-deny, phiên kết thúc"
-       > "{"decision": "auto_approve"} | chạy luôn, bỏ qua cả permissions.deny"
+       > "Trả lời của PreToolUse (`decision` thuộc `allow | deny | ask | force_ask | deny_unless_prior_grant` theo schema trong nhị phân, cộng `auto_approve` được chấp nhận) [máy, nhị phân]:"
+       > "| `{"decision": "deny", "reason": …}` | chặn cứng, model thấy `tool call denied by pre-tool hook: <reason>`, phiên chạy tiếp; thắng allow của settings |"
+       > "| `{"decision": "deny_unless_prior_grant"}` | allow của settings thì chạy; còn lại chặn cứng (không soft-deny); deny của settings vẫn chặn |"
+       > "| `{"decision": "allow"}` | chỉ là "không phản đối": vẫn qua kiểm tra quyền; ngoài allow → soft-deny, phiên kết thúc |"
+       > "| `{"decision": "auto_approve"}` | chạy luôn, **bỏ qua cả `permissions.deny`** |"
+       > "| `{}` hoặc thiếu `decision` | chặn (`tool call denied by pre-tool hook:`) |"
     4. `docs/reference/cli-facts-2026-11-12.md`, dòng 197, 199:
        > "Runner khai bốn sự kiện: `SessionStart`, `PreToolUse`, `PostToolUse`, `Stop`."
        > "Trả lời của `PreToolUse`: Elvaria chỉ trả `deny` (chặn cứng, phiên chạy tiếp) hoặc `deny_unless_prior_grant` (theo allow của settings, còn lại chặn cứng). Không bao giờ `allow` (ngoài allow thành soft-deny), `auto_approve` (**vượt cả `permissions.deny`**) hay `{}`. `Stop` trả `{"decision": "continue", "reason": …}` cho cổng thư bàn giao."
