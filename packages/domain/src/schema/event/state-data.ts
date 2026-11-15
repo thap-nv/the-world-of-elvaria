@@ -151,7 +151,8 @@ export const InfirmaryDetailSchema = z
 export const InfirmaryReasonSchema = z
   .strictObject({
     code: z.enum(INFIRMARY_REASONS),
-    params: z.record(z.string(), z.union([z.string(), z.int()])),
+    // Fractional minutes are valid at a percentage-based time ceiling (45 * 150% = 67.5).
+    params: z.record(z.string(), z.union([z.string(), z.number()])),
   })
   .refine(
     ({ code, params }) => {

@@ -74,6 +74,8 @@
       "same_fail_suspend": 3,
       "patrol_weekly_pct": 10,
       "max_turns": 200,
+      "soft_pct": 85,
+      "hard_pct": 150,
       "subagent_max_minutes": 5,
       "subagent_max_turns": 30,
       "context_budget_tokens": 120000,

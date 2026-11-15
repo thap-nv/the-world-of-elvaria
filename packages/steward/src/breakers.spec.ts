@@ -97,19 +97,19 @@ describe('a session past a breaker', () => {
     kingdom.clock.advance(44);
     await steward.tick();
     expect((await kingdom.quest('Hangs')).status).toBe('working');
-    kingdom.clock.advance(1);
+    kingdom.clock.advance(23.5);
     await steward.tick();
     const quest = await kingdom.quest('Hangs');
     expect(quest.status).toBe('infirmary');
     expect(quest.attempt_log.at(-1)).toMatchObject({
       outcome: 'timeout',
-      ended_at: '2026-11-07T09:45:00+07:00',
+      ended_at: '2026-11-07T10:07:30+07:00',
     });
     expect(steward.running()).toBe(0);
     expect(commits).toEqual([`chore: wip ${quest.id} (time)`]);
     // Why, in parts too (P1-32): the trip, the breaker's words in the detail; the bell and the line say the same.
     const why = {
-      reason: { code: 'breaker:time', params: { minutes: 45, limit: 45 } },
+      reason: { code: 'breaker:time', params: { minutes: 67.5, limit: 67.5 } },
       trip: 'time',
     };
     const hangs = { id: quest.id, title: 'Hangs', rank: 'D' };
@@ -127,7 +127,7 @@ describe('a session past a breaker', () => {
 
   it('trips the tokens of a session that spent past the budget', async () => {
     const { kingdom, steward } = await open({ plays: { work: { Spends: ['hang'] } } }, (k) => ({
-      runners: { claude: spending(k.runners.claude, 480_001), gemini: k.runners.gemini },
+      runners: { claude: spending(k.runners.claude, 720_001), gemini: k.runners.gemini },
     }));
     await kingdom.command('create_quest', questPayload('Spends'));
     await steward.tick();
@@ -139,7 +139,7 @@ describe('a session past a breaker', () => {
     expect(quest.status).toBe('infirmary');
     expect(quest.attempt_log.at(-1)?.outcome).toBe('breaker');
     expect(kingdom.notices.at(-1)).toMatchObject({
-      reason: { code: 'breaker:tokens', params: { tokens: 480001, limit: 480000 } },
+      reason: { code: 'breaker:tokens', params: { tokens: 720001, limit: 720000 } },
     });
   });
 
@@ -158,7 +158,7 @@ describe('a session past a breaker', () => {
       return quest.status === 'review' && typeof quest.verifier === 'string';
     });
     const judge = (await kingdom.quest('Judged slowly')).verifier ?? '';
-    kingdom.clock.advance(45);
+    kingdom.clock.advance(67.5);
     await steward.tick();
     const quest = await kingdom.quest('Judged slowly');
     expect(quest).toMatchObject({ status: 'review', verifier: null });
@@ -169,7 +169,7 @@ describe('a session past a breaker', () => {
     });
     expect((await kingdom.character(judge)).status).toBe('idle');
     expect(kingdom.notices).toEqual([]);
-    expect(kingdom.warnings.join('\n')).toContain(`${judge}'s review stopped, breaker:time: ran 45 min`);
+    expect(kingdom.warnings.join('\n')).toContain(`${judge}'s review stopped, breaker:time: ran 67.5 min`);
     expect((await typesOf(kingdom)).at(-1)).toBe('quest.verdict');
   });
 

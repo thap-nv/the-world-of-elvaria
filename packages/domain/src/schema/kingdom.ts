@@ -49,6 +49,17 @@ const ManaSchema = z
   });
 
 const BreakersSchema = z.strictObject({
+  // Defaults added after v1: existing kingdom files remain valid (ADR 0003).
+  soft_pct: z
+    .number()
+    .positive()
+    .default(BREAKER_DEFAULTS.soft_pct)
+    .meta(describe('Warn above this percentage of the nominal session ceiling.')),
+  hard_pct: z
+    .number()
+    .positive()
+    .default(BREAKER_DEFAULTS.hard_pct)
+    .meta(describe('Stop above this percentage of the nominal ceiling; time stops at the threshold.')),
   attempt_minutes: z
     .strictObject({
       low: z

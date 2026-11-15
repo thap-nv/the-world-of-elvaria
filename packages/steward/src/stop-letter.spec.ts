@@ -147,7 +147,7 @@ describe("work the territory's hook refuses (P1-55)", () => {
     const { kingdom, steward, repo } = await open(() => WORK, options);
     await kingdom.command('create_quest', questPayload('Cut by time'));
     await steward.tick();
-    kingdom.clock.advance(45);
+    kingdom.clock.advance(67.5);
     await steward.tick();
 
     const quest = await kingdom.quest('Cut by time');
@@ -164,7 +164,7 @@ describe("work the territory's hook refuses (P1-55)", () => {
     const { kingdom, steward, repo } = await open(() => WORK, options);
     await kingdom.command('create_quest', questPayload('Cut, committed'));
     await steward.tick();
-    kingdom.clock.advance(45);
+    kingdom.clock.advance(67.5);
     await steward.tick();
 
     const quest = await kingdom.quest('Cut, committed');

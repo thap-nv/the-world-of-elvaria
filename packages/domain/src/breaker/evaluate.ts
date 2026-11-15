@@ -2,7 +2,7 @@
 // how many turns it took. A pure decision (ADR 0002): the Steward hands it the time and what the session's stream
 // reported, and stops the session when one trips. The CLI holds its own turn limit too (`--max-turns`, or the
 // runner's count for agy); the turn breaker here is the second fence, for a runner that reports turns.
-import { MS_PER_MINUTE } from '../constants.ts';
+import { BREAKER_DEFAULTS, MS_PER_MINUTE } from '../constants.ts';
 import type { Instant } from '../core/clock.ts';
 import type { BreakerTrip } from '../quest/events.ts';
 import type { TribeLimits } from '../tribe/tribe-limits.ts';
@@ -17,6 +17,8 @@ export interface RunningAttempt {
 }
 
 export interface BreakerLimits {
+  readonly soft_pct?: number;
+  readonly hard_pct?: number;
   /**
    * quest.budget.max_minutes: 45 for ranks below breakers.high_rank_from, 120 from it up, or the estimate's minutes
    * between the two (questFromCommand, P1-45).
@@ -27,7 +29,7 @@ export interface BreakerLimits {
    * P1-45), x breakers.mana_multiplier.
    */
   readonly max_tokens: number;
-  /** kingdom.breakers.max_turns. */
+  /** The holder's tribe ceiling, falling back to kingdom.breakers.max_turns. */
   readonly max_turns: number;
 }
 
@@ -40,8 +42,18 @@ export interface UsageSoFar {
   readonly turns?: number;
 }
 
+export interface WrapUp {
+  readonly kind: 'wrap_up';
+  readonly measure: SessionTrip;
+  readonly used: number;
+  /** Nominal ceiling, before either percentage is applied. */
+  readonly limit: number;
+  readonly pct: number;
+}
+
 export type BreakerVerdict =
   | 'ok'
+  | WrapUp
   | {
       readonly trip: SessionTrip;
       readonly detail: string;
@@ -49,10 +61,8 @@ export type BreakerVerdict =
     };
 
 /**
- * The first breaker that trips, time before tokens before turns. Time trips the minute the budget is spent (a
- * session of 45 minutes stops at 45:00), tokens and turns once they go past it: spending the whole budget is
- * allowed, going over is not. A tribe whose CLI reports no usage (`minutes_only`, §3.14, P1-33) has only the time
- * breaker: what it would report of tokens and turns is no measure.
+ * Hard stops take priority over soft warnings, then time before tokens before turns. Time stops at the hard
+ * threshold; tokens and turns stop once past it. A tribe without usage measures only time (P1-33).
  */
 export function evaluateBreakers(
   attempt: RunningAttempt,
@@ -61,27 +71,42 @@ export function evaluateBreakers(
   usage: UsageSoFar,
   measure: TribeLimits['breakers'] = 'tokens_and_minutes',
 ): BreakerVerdict {
-  const elapsed = now - attempt.started_at;
-  if (elapsed >= limits.max_minutes * MS_PER_MINUTE) {
-    const minutes = Math.floor(elapsed / MS_PER_MINUTE);
-    return {
-      trip: 'time',
-      detail: `ran ${minutes} min, limit ${limits.max_minutes} min`,
-      params: { minutes, limit: limits.max_minutes },
-    };
-  }
-  if (measure === 'minutes_only') return 'ok';
-  if (usage.tokens > limits.max_tokens)
-    return {
-      trip: 'tokens',
-      detail: `${usage.tokens} tokens, limit ${limits.max_tokens}`,
-      params: { tokens: usage.tokens, limit: limits.max_tokens },
-    };
-  if (usage.turns !== undefined && usage.turns > limits.max_turns)
-    return {
-      trip: 'turns',
-      detail: `${usage.turns} turns, limit ${limits.max_turns}`,
-      params: { turns: usage.turns, limit: limits.max_turns },
-    };
-  return 'ok';
+  const gauges: readonly Gauge[] = [
+    { measure: 'time', used: (now - attempt.started_at) / MS_PER_MINUTE, limit: limits.max_minutes },
+    ...(measure === 'minutes_only' ? [] : usageGauges(usage, limits)),
+  ];
+  const hard = limits.hard_pct ?? BREAKER_DEFAULTS.hard_pct;
+  const stopped = gauges.find((gauge) => {
+    const ceiling = (gauge.limit * hard) / 100;
+    return gauge.measure === 'time' ? gauge.used >= ceiling : gauge.used > ceiling;
+  });
+  if (stopped !== undefined) return stopOf(stopped, hard);
+  const soft = limits.soft_pct ?? BREAKER_DEFAULTS.soft_pct;
+  const warning = gauges.find((gauge) => gauge.used > (gauge.limit * soft) / 100);
+  if (warning === undefined) return 'ok';
+  return { kind: 'wrap_up', ...warning, pct: (warning.used * 100) / warning.limit };
 }
+
+interface Gauge {
+  readonly measure: SessionTrip;
+  readonly used: number;
+  readonly limit: number;
+}
+
+const usageGauges = (usage: UsageSoFar, limits: BreakerLimits): Gauge[] => [
+  { measure: 'tokens', used: usage.tokens, limit: limits.max_tokens },
+  ...(usage.turns === undefined
+    ? []
+    : [{ measure: 'turns' as const, used: usage.turns, limit: limits.max_turns }]),
+];
+
+const stopOf = ({ measure, used, limit }: Gauge, hard: number) => {
+  const ceiling = (limit * hard) / 100;
+  const key = measure === 'time' ? 'minutes' : measure;
+  return {
+    trip: measure,
+    detail:
+      measure === 'time' ? `ran ${used} min, limit ${ceiling} min` : `${used} ${measure}, limit ${ceiling}`,
+    params: { [key]: used, limit: ceiling },
+  };
+};

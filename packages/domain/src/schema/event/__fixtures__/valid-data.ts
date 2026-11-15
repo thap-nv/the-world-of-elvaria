@@ -76,6 +76,7 @@ export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
   'agent.tool.blocked': { tool: 'write', reason: 'forbidden path .env' },
   'agent.session.start': { session: 'abc-123', model: 'claude-opus-4.1' },
   'agent.session.end': { outcome: 'completed', usage: { tokens: 18_000, turns: 12 } },
+  'agent.session.wrap_up': { measure: 'tokens', used: 86_000, limit: 100_000, pct: 86 },
   'agent.subagent.end': { agent_type: 'apprentice', duration_ms: 90_000, stopped: 'max_turns' },
   'agent.subagent.overrun': { agent_type: 'apprentice', duration_ms: 400_000, limit_minutes: 5 },
   'check.start': {},

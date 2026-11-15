@@ -141,7 +141,7 @@ const heldPastBreakers = (
   breakersOf(
     snapshot.quests,
     snapshot.sessions ?? [],
-    snapshot.kingdom.breakers,
+    { ...snapshot.kingdom.breakers, characters, tribes: snapshot.kingdom.tribes },
     now,
     measureOf(characters, snapshot.limits),
   );
