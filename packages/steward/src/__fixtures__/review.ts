@@ -32,8 +32,8 @@ export function plotsWith(root: string, replace: Partial<Plots>, calls: string[]
   const base = folderPlots(root);
   return {
     prepare: (quest, territory, options) => (replace.prepare ?? base.prepare)(quest, territory, options),
-    merge: (plot, branches) => (replace.merge ?? base.merge)(plot, branches),
-    unmerged: (plot, branches) => (replace.unmerged ?? base.unmerged)(plot, branches),
+    merge: (plot, branches, given) => (replace.merge ?? base.merge)(plot, branches, given),
+    unmerged: (plot, branches, given) => (replace.unmerged ?? base.unmerged)(plot, branches, given),
     commit: (plot, message, rescue) => {
       calls.push(`commit ${message}`);
       return (replace.commit ?? base.commit)(plot, message, rescue);

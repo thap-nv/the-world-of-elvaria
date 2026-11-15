@@ -113,7 +113,7 @@ describe('a party, from its contract to its merge quest (P1-18)', () => {
     ]);
     const log = await readFile(inKingdom(kingdom.root, `.runs/${merge.id}-1/checks/party.log`), 'utf8');
     expect(log).toBe(
-      `party: every part of party ${contract.id} is merged into quest/${merge.id}\n✓ quest/${api.id}\n✓ quest/${page.id}\n`,
+      `party: every part of party ${contract.id} and the base branch is merged into quest/${merge.id}\n✓ quest/${api.id}\n✓ quest/${page.id}\n✓ main\n`,
     );
     // Nobody who worked on the party judged any quest of it (ADR 0020).
     expect(partyIssues(await kingdom.quests())).toEqual([]);

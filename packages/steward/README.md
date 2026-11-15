@@ -343,7 +343,13 @@
   run, as after a judge fails the machine's. Before each session of the merge quest's knight, never a
   judge's, its parts are merged in (`Plots.merge`; a conflict is left in progress for the knight, and the log
   says so), and again right before the checks of a run, so the parts a conflict left go in once the knight concluded
-  it (`mergePartsBeforeChecks`, P1-55); before its judge the check `party` says whether every part is in (`Plots.unmerged`; a missing part
+  it (`mergePartsBeforeChecks`, P1-55). (PS-08e) After the parts, each of these three merges takes the territory's
+  base branch in on a git territory (`mergesOf`: `plotBaseOf`'s `base`, then `Plots.merge(plot, branches, territory)`),
+  so the checks and the judge read the party against main as it is now, never again once the quest is in review; a
+  conflict with main goes the way of one between parts (the machine's run released, the knight of the next run
+  concludes it), and once main is in the plot is prepared again so `commands.setup` runs on what it holds. A merge
+  that stops rings the bell (`merge_stopped`: the quest, the branch, the reason, the conflicted files). Before its
+  judge the check `party` says whether every part, and the base branch, is in (`Plots.unmerged`; a missing branch
   fails the run as `incomplete`, so the next session gets it). The territory's checks run by the quest's place
   (`PlotCheck.party_role`: a part and the contract quest skip `defer_to_merge` checks, the merge quest runs them all), and the delivery
   note of a party's quest says where the party stands (`partyStatusOf`) and that only the merge quest's branch is
@@ -415,6 +421,9 @@ first on the contract's branch, the second on the first's, which it waits for), 
 its `party` check, judges from outside the party, the seal and the notes; the machine's merge a judge failed, taken
 by a knight who reads the verdict; then three parts editing one file, two conflicts, the knight resolving them over
 two runs.
+`merge-base.spec.ts` (PS-08e) moves main on once the contract forked: the machine's run merges it, the checks run
+on the result and the judge's diff has none of main's files; main editing a part's line stops the machine's run, rings
+one `merge_stopped` bell, and a knight concludes it in the same quest; main's protected change is never the party's.
 `party-rules.spec.ts` refuses the lists that break the party rules, starts a sub-quest on the branch of the
 one it waits for (P1-16 (f)), and takes the parts of a contract archived after its delivery (P1-21 (a)).
 `blind-trial.spec.ts` runs a blind trial (P1-21): the acceptance part on the contract's branch, its writer apart

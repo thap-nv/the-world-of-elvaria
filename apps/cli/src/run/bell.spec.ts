@@ -1,5 +1,6 @@
 // The console bell's mana lines (implementation-plan §3.5, P1-22): a gauge that warns, sleeps or wakes, a whole
-// pool or the cap of one model, in the owner's language. The quest notices are in compose.spec.ts.
+// pool or the cap of one model, in the owner's language; and a merge quest's merge that stopped (PS-08e). The other
+// quest notices are in compose.spec.ts.
 import { QuestIdSchema, TribeIdSchema } from '@elvaria/domain';
 import { translator } from '@elvaria/i18n';
 import { describe, expect, it } from 'vitest';
@@ -128,6 +129,27 @@ describe('the console bell on a quest sent to the infirmary', () => {
     const notice: Notice = { kind: 'infirmary', quest, reason, trip: 'script_fail', detail: { script: 'x' } };
     expect(lineOf(en, notice)).toBe(
       'Quest q_20261106_7k3m2a «Đổi luồng đăng nhập» went to the infirmary: the script link-check ran but did not pass',
+    );
+  });
+});
+
+describe('the console bell on a merge that stopped (PS-08e)', () => {
+  const quest = { id: QuestIdSchema.parse('q_20261115_m3m3m3'), title: 'Book a room', rank: 'C' } as const;
+  const stopped = { kind: 'merge_stopped', quest, branch: 'main' } as const;
+
+  it('names the conflicted files for the knight, and what the owner looks at otherwise', () => {
+    expect(lineOf(en, { ...stopped, reason: 'conflict', conflicts: ['README.md', 'src/a.ts'] })).toBe(
+      'Merge quest q_20261115_m3m3m3 «Book a room»: merging main stopped on a conflict in README.md, src/a.ts. ' +
+        "The merge waits in its plot; a knight concludes it in the quest's next run.",
+    );
+    expect(lineOf(en, { ...stopped, reason: 'refused', conflicts: [] })).toContain(
+      'git or a hook refused to merge main.',
+    );
+    expect(lineOf(en, { ...stopped, reason: 'missing', conflicts: [] })).toContain(
+      'there is no branch main to merge',
+    );
+    expect(lineOf(vi, { ...stopped, reason: 'conflict', conflicts: ['README.md'] })).toContain(
+      'ghép main dừng vì xung đột ở README.md',
     );
   });
 });
