@@ -15,6 +15,7 @@ import {
 } from './common.ts';
 import { CodeGraphFlagSchema } from './territory-graph.ts';
 import { CheckSchema, CommandLinesSchema } from './territory-checks.ts';
+import { TerritoryDeliverySchema, deliversWhereItCan } from './territory-delivery.ts';
 
 const describe = (description: string) => ({ description });
 
@@ -214,6 +215,7 @@ export const TerritorySchema = z
     laws: LawsSchema.prefault({}),
     blind_trial: BlindTrialSchema.prefault({}),
     code_graph: CodeGraphFlagSchema,
+    delivery: TerritoryDeliverySchema.optional(),
     shared_paths: z
       .array(SharedPathSchema)
       .optional()
@@ -252,11 +254,15 @@ export const TerritorySchema = z
       !(territory.shared_paths ?? []).some(({ merge }) => merge === 'regenerate'),
     { path: ['shared_paths'], message: 'a shared path merged by regenerate needs commands.generate' },
   )
+  .refine(deliversWhereItCan, {
+    path: ['delivery', 'mode'],
+    message: 'a delivery other than manual needs a git vcs with a remote',
+  })
   .meta({
     title: 'Territory',
     description:
       "territories/<id>/territory.json: one repo or folder attached to the kingdom ('opening a realm'). Holds how to set up and check work there (commands, checks), the territory's own laws enforced at the runner (deny lists and hooks, not only the prompt), allowed secret names, and health.",
-    $comment: `${GENERATED_NOTE} There is no \`map\` field: region geometry lives only in world/map.json (world-map schema) and the level of detail is computed by the Herald from camera and territory count, so it is never stored here. Not expressible here: check ids are unique; laws.forbidden_commands and environment_errors must compile as regular expressions; checks[].flake.run names ${SPECS_PLACEHOLDER} and comes with flake.specs; laws.patch_paths never names a .git folder (nor .GIT, .git. or git~1); a shared path merged by \`regenerate\` needs commands.generate.`,
+    $comment: `${GENERATED_NOTE} There is no \`map\` field: region geometry lives only in world/map.json (world-map schema) and the level of detail is computed by the Herald from camera and territory count, so it is never stored here. Not expressible here: check ids are unique; laws.forbidden_commands and environment_errors must compile as regular expressions; checks[].flake.run names ${SPECS_PLACEHOLDER} and comes with flake.specs; laws.patch_paths never names a .git folder (nor .GIT, .git. or git~1); a shared path merged by \`regenerate\` needs commands.generate; a delivery other than manual needs a git vcs with a remote.`,
   });
 
 export type Territory = z.infer<typeof TerritorySchema>;

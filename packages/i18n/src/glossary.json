@@ -467,7 +467,7 @@
               "en": "Delivery",
               "id": ["deliver"],
               "definition": "Đưa kết quả ra theo quy ước của kind.",
-              "used_in": "`quest.deliverable`, event `delivery.sent`"
+              "used_in": "`quest.deliverable`, `territory.delivery`, event `delivery.sent`, `delivery.*`"
             },
             {
               "vi": "Thư giao hàng",
@@ -475,6 +475,20 @@
               "id": ["delivery.md"],
               "definition": "Nhiếp chính viết khi giao: quest, phán quyết, thư bàn giao, thứ đã chép hay đã mở, lệnh merge tay; với nhánh là mô tả PR.",
               "used_in": "`.runs/<quest>-delivery.md`, `quest.deliverable.path`"
+            },
+            {
+              "vi": "Forge",
+              "en": "Forge",
+              "id": ["forge"],
+              "definition": "Dịch vụ giữ remote của lãnh thổ và PR của nó; hôm nay chỉ `github`. Chủ và tên repo đọc từ `vcs.remote`; không có `delivery.remote` hay `delivery.base`: remote là `origin`, nhánh gốc là `vcs.default_branch`. Credential lấy bằng `git credential fill` mỗi lần cần, không hộp thoại (`GIT_TERMINAL_PROMPT=0`, `GCM_INTERACTIVE=never`), không lưu, không vào prompt, journal, log hay event (ADR 0023, PS-08).",
+              "used_in": "`territory.delivery.forge`, `elvaria territory delivery`, `elvaria doctor`, event `delivery.*`"
+            },
+            {
+              "vi": "Chế độ giao hàng",
+              "en": "Delivery mode",
+              "id": ["manual", "pr", "pr_merge"],
+              "definition": "Cách Nhiếp chính giao nhánh của quest `done`: `manual` (mặc định, như giai đoạn 1: nhánh chờ chủ nhân merge tay), `pr` (push `quest/<id>`, tìm hay mở PR, thư giao hàng làm mô tả), `pr_merge` (rồi merge khi forge báo ghép được, sau `required_checks` nếu có; tới PS-08b chỉ quest đã có dấu). Chỉ Nhiếp chính push, không bao giờ nhân vật; không force, không push nhánh gốc (ADR 0023).",
+              "used_in": "`territory.delivery.mode`, `deliveryOf`, `elvaria territory delivery --mode`"
             },
             {
               "vi": "Thư bàn giao",
@@ -1949,6 +1963,31 @@
               "meaning": "dạng giao hàng"
             },
             {
+              "field": "`territory.delivery.mode`",
+              "values": "`manual`, `pr`, `pr_merge`",
+              "meaning": "chế độ giao hàng; không có trường: `manual`"
+            },
+            {
+              "field": "`territory.delivery.forge` (cũng `delivery.pushed.forge`)",
+              "values": "`github`",
+              "meaning": "forge của lãnh thổ"
+            },
+            {
+              "field": "`territory.delivery.merge_method` (cũng `delivery.merged.method`)",
+              "values": "`merge`, `squash`",
+              "meaning": "merge commit (mặc định) / một commit gộp"
+            },
+            {
+              "field": "`delivery.failed.stage`",
+              "values": "`scan`, `push`, `open`, `checks`, `merge`, `cleanup`",
+              "meaning": "giao hàng dừng ở: quét secret, push, tìm hay mở PR, check của forge, merge, xóa nhánh trên remote"
+            },
+            {
+              "field": "`delivery.failed.reason`",
+              "values": "`secret`, `push_refused`, `no_credential`, `forge_auth`, `forge_error`, `conflict`, `checks_red`, `checks_timeout`, `head_moved`",
+              "meaning": "vì sao dừng: diff có secret, remote từ chối push, không có credential, forge không nhận credential, forge lỗi, conflict với nhánh gốc, check đỏ, check quá giờ, nhánh đã đổi đầu"
+            },
+            {
               "field": "`created_by`",
               "values": "`chancellor`, `user`, `council`, `patrol`, `battle`, `campaign`",
               "meaning": "ai tạo quest (`council` = hội đồng Nghị hội, `battle` = Trận đánh)"
@@ -2326,6 +2365,11 @@
               "group": "Lịch",
               "types": ["schedule.ran", "digest.written"],
               "meaning": "Việc theo lịch của Nhiếp chính (PS-03): `schedule.ran` khi một việc của `kingdom.schedule` chạy xong trong một ngày địa phương (lần khởi động sau đọc nó, nên mỗi ngày một lần dù đồng hồ nhảy); `digest.written` khi bản tấu của ngày đã ghi vào `digest/<ngày>.md` và chuông đã rung"
+            },
+            {
+              "group": "Giao hàng",
+              "types": ["delivery.pushed", "delivery.merged", "delivery.failed"],
+              "meaning": "Nhiếp chính giao nhánh của quest `done` tới forge theo `territory.delivery` (ADR 0023; schema ở PS-08, PS-08c và PS-08d ghi): `delivery.pushed` khi nhánh đã push và PR đã có, mỗi đầu nhánh một dòng; `delivery.merged` khi `pr_merge` merge PR, mang `merge_sha`, `sealed`, `branch_deleted`; `delivery.failed` khi dừng ở một bước (`stage`) vì một lý do (`reason`), không tự thử lại. `data` mang `quest` và `territory`. `delivery.sent` (có từ v1, không schema) vẫn ở nhóm Khác"
             },
             {
               "group": "Khác",

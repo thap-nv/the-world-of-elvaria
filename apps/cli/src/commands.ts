@@ -26,6 +26,7 @@ import { SANDBOX_REPLAY } from './sandbox/replay.ts';
 import { SAY } from './say/say.ts';
 import { TERRITORY_ADD } from './territory/add.ts';
 import { TERRITORY_CHECK } from './territory/check.ts';
+import { TERRITORY_DELIVERY } from './territory/delivery.ts';
 import { TERRITORY_GRAPH } from './territory/graph.ts';
 import { TERRITORY_LIST } from './territory/list.ts';
 import { TRIAGE } from './triage/triage.ts';
@@ -50,6 +51,7 @@ export const COMMANDS: readonly CommandSpec[] = [
   TERRITORY_LIST,
   TERRITORY_CHECK,
   TERRITORY_GRAPH,
+  TERRITORY_DELIVERY,
   CHARACTER_ADD,
   CHARACTER_LIST,
   CHARACTER_SUSPEND,

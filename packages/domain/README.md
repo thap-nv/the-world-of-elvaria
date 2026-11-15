@@ -324,6 +324,11 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   `code_graph` switch, `kingdom.programs.graphify` (`ProgramsSchema`) and the `graph.built` / `graph.failed` lines.
   Counts an area's impact from the graph's links (`impactOf`, `src/graph/links.ts`, PS-21b): the files outside it
   that use a file inside it, an input to the rank.
+- Shapes delivery to a forge (ADR 0023, PS-08): the territory's optional `delivery` (`TerritoryDeliverySchema`,
+  `src/schema/territory-delivery.ts`: mode `manual`, `pr` or `pr_merge`, forge, merge method, required checks and
+  how long to wait for them; no field means manual, read through `deliveryOf`, and a mode that pushes needs a git
+  vcs with a remote), and the `delivery.pushed` / `delivery.merged` / `delivery.failed` lines
+  (`src/schema/event/delivery-data.ts`), which PS-08c and PS-08d write.
 
 ## Does not
 

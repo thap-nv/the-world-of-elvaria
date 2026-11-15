@@ -65,11 +65,11 @@ Khảo sát ở `b9386dfd`. Số dòng nối tiếp bảng "Điều code cho th�
 
 - **Mục tiêu**: lãnh thổ khai được cách giao hàng, máy biết mình có credential hay không; chưa gì được push.
 - **Trước tiên**: không tách file nào; schema mới nằm ở file mới (dòng 35).
-- **Dùng lại**: mẫu "Trường mới sau v1", "Event mới", "Lệnh CLI mới"; `gitIn` (`apps/cli/src/process/git.ts`); `finding` của `doctor`; `withoutCredentials`.
+- **Dùng lại**: mẫu "Trường mới sau v1", "Event mới", "Lệnh CLI mới"; `gitIn` (`apps/cli/src/process/git.ts`); `finding` của `doctor`; `withoutCredentials`. (PS-08: đọc credential dùng `runToEnd` của runner-core thay `gitIn`, vì cần stdin và kill tree khi hết hạn; §11 2026-11-15.)
 - **Thêm**:
   - `territory.delivery` (tùy chọn, thêm sau v1, `version` giữ 1; không mặc định, như `protected_paths`: file không có trường này vẫn đọc được bằng bản ghim trước PS-08), ở `packages/domain/src/schema/territory-delivery.ts`: `mode` (`manual`, `pr`, `pr_merge`), `forge` (hôm nay chỉ `github`), `merge_method` (`merge` mặc định, `squash`), `required_checks` (tên check run hoặc status context, mặc định rỗng), `checks_timeout_minutes` (mặc định 60, hằng trong domain). Không có trường: như `manual`. Luật chéo trong `TerritorySchema`: `mode` khác `manual` cần `vcs.type = git` và `vcs.remote`. Không có `remote` và `base` (dòng 27, mục (K)).
   - `deliveryOf(territory)` thuần: cấu hình sau mặc định; mọi nơi khác đọc qua nó.
-  - Ba event, `v` 1, `data` ở `schema/event/delivery-data.ts`, đều mang `quest`:
+  - Ba event, `data` ở `schema/event/delivery-data.ts`, đều mang `quest` (và `territory`) trong `data`; vỏ là `v` 2 hiện hành, thêm type không đổi `v` (PS-08, §11 2026-11-15):
     - `delivery.pushed`: `territory`, `branch`, `head`, `forge`, `pr` (`number`, `url`), `warnings` (đường dẫn file khớp mẫu chung, tùy chọn). Ghi một lần cho mỗi đầu nhánh, sau khi PR đã có.
     - `delivery.merged`: `territory`, `branch`, `head`, `pr`, `merge_sha`, `method`, `sealed` (quest có dấu hay không), `branch_deleted`.
     - `delivery.failed`: `territory`, `stage` (`scan`, `push`, `open`, `checks`, `merge`, `cleanup`), `reason` (`secret`, `push_refused`, `no_credential`, `forge_auth`, `forge_error`, `conflict`, `checks_red`, `checks_timeout`, `head_moved`), và khi có: `branch`, `head` (có nghĩa là nhánh đã được push), `pr`, `checks` (`name`, `conclusion`, `url`), `paths`, `detail` (đã qua `redact`, tối đa 2000 ký tự).
