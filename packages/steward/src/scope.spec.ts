@@ -123,4 +123,23 @@ describe('outOfScopeOf', () => {
       ),
     ).toEqual(['x']);
   });
+
+  it("reads a merge quest's changes against its contract's scope too (PS-08e): its plot counts from main", async () => {
+    const contract = { id: 'q_20261107_cccccc', scope_paths: ['api/**'] } as unknown as Quest;
+    const merge = {
+      id: 'q_20261107_mmmmmm',
+      territory: 'dc1-se-team',
+      party_role: 'merge',
+      party_id: contract.id,
+      scope_paths: ['src/**'],
+    } as unknown as Quest;
+    const ctx = (quests: readonly Quest[]) =>
+      ({
+        deps: { plots: { touched: () => Promise.resolve(['api/openapi.yaml', 'src/a.ts', 'README.md']) } },
+        world: { territories: new Map(), quests: new Map(quests.map((one) => [one.id, one])) },
+      }) as unknown as Context;
+    expect(await outOfScopeIn(ctx([contract, merge]), merge)).toEqual(['README.md']);
+    // A contract no longer in the world adds nothing.
+    expect(await outOfScopeIn(ctx([merge]), merge)).toEqual(['api/openapi.yaml', 'README.md']);
+  });
 });

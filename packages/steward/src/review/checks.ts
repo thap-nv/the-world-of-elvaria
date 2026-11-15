@@ -163,8 +163,9 @@ export async function startChecks(ctx: Context, questId: QuestId): Promise<Resul
   // The run's checks were set aside for their environment already: the owner heard of it then (P1-54).
   const told = ctx.background.held(questId, n) !== undefined;
   ctx.background.checks(questId, n, async (signal) => {
-    // The parts a knight's conflict left unmerged go in first, so the checks run on the whole party (P1-55).
-    await mergePartsBeforeChecks(ctx, quest);
+    // The parts a knight's conflict left unmerged go in first, then the base branch, so the checks run on the whole
+    // party as main is now (P1-55, PS-08e); setup runs again with the quest's secrets once main is in.
+    await mergePartsBeforeChecks(ctx, quest, secrets);
     if (kept !== undefined) {
       const reused = await keptTrial(ctx, { quest, territory, kept, secrets, signal });
       // Stopped while its plot was made again: nobody waits for a trial any more.

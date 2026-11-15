@@ -17,6 +17,6 @@ The product plan (§7, "Đất riêng") gives code quests a git worktree and doc
 
 ## Consequences
 
-- Each worktree has its own `node_modules`; `commands.setup` runs once and archive cleans it.
+- Each worktree has its own `node_modules`; `commands.setup` runs once and archive cleans it. (Amended 2026-11-15, PS-08e: a party's merge quest that merges the territory's base branch counts its plot from that commit and runs `commands.setup` once more, never while a merge is in progress.)
 - Tools of the main repo that scan recursively (ESLint, tsc, Playwright) may pick up `.elvaria/`; `territory add` checks their ignores and warns.
 - Until file-scope locks exist, `max_concurrent` per territory (default 1 for code) prevents two quests touching the same files. (Amended 2026-11-12, PS-05: `quest.scope_paths` and the scope rules of [ADR 0028](0028-plan-review-and-scope-paths.md) now keep quests whose scopes meet apart, so a code territory may raise `max_concurrent`.)
