@@ -35,11 +35,12 @@ export const INFIRMARY_REASON_PARAMS: Readonly<Record<InfirmaryReasonCode, reado
 export const infirmaryReasonOf = (code: InfirmaryReasonCode, params?: InfirmaryParams): InfirmaryReason;
 ```
 
-`InfirmaryReasonSchema` (zod, cùng chỗ với schema event): `z.strictObject({ code: z.enum(INFIRMARY_REASONS), params: z.record(z.string(), z.union([z.string(), z.int()])) })` cộng một luật: tập khóa của `params` **bằng đúng** `INFIRMARY_REASON_PARAMS[code]` (thiếu hay thừa khóa đều là lỗi, báo ở `data.reason.params`). Không có tham số tùy chọn: khi một chi tiết lúc có lúc không, nó là hai mã (ví dụ `breaker:commit` và `breaker:commit_errors`).
+`InfirmaryReasonSchema` (zod, cùng chỗ với schema event): `z.strictObject({ code: z.enum(INFIRMARY_REASONS), params: z.record(z.string(), z.union([z.string(), z.number()])) })` cộng một luật: tập khóa của `params` **bằng đúng** `INFIRMARY_REASON_PARAMS[code]` (thiếu hay thừa khóa đều là lỗi, báo ở `data.reason.params`). Không có tham số tùy chọn: khi một chi tiết lúc có lúc không, nó là hai mã (ví dụ `breaker:commit` và `breaker:commit_errors`).
 
 ### 1.3 Kiểu của tham số
 
-- Số đếm, giới hạn, phút: số nguyên (`z.int()`), không phải chuỗi.
+- Tham số số dùng `z.number()`: số hữu hạn, không phải chuỗi; không nhận `NaN` hoặc `Infinity`. Người ghi giữ số đếm là số nguyên theo ngữ nghĩa; giới hạn và phút được là số thập phân.
+- `minutes` và `limit` của `breaker:time` không làm tròn: phút đã chạy giữ nguyên kết quả đo, trần là trần phút nhân `hard_pct` / 100 (ví dụ 45 × 150% = 67,5). CLI hiển thị giá trị này nên có thể có phần thập phân dài.
 - Đường dẫn: tương đối với thư mục kingdom, dấu `/` (ADR 0015).
 - Danh sách tên (secret): một chuỗi, các tên nối bằng `, `.
 - `lines` của `breaker:commit*`: một chuỗi, các dòng nối bằng `\n`, nguyên văn từ hook (đã bỏ mã màu ANSI, đã che secret như mọi dòng event).
