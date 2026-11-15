@@ -77,7 +77,8 @@ describe('the Steward and quests with scopes (PS-05)', () => {
 });
 
 describe('outOfScopeOf', () => {
-  const quest = { scope_paths: ['apps/api/**', 'docs/api.md', 'scripts'] };
+  const branch = { type: 'branch' } as const;
+  const quest = { scope_paths: ['apps/api/**', 'docs/api.md', 'scripts'], deliverable: branch };
 
   it('leaves out what the scope covers: a glob, a file, a folder named without a wildcard', () => {
     const changed = [
@@ -94,7 +95,26 @@ describe('outOfScopeOf', () => {
   it("leaves out the territory's shared paths, and finds nothing outside a quest without a scope", () => {
     const shared = { shared_paths: [{ glob: 'docs/schemas/**', merge: 'union' as const }] };
     expect(outOfScopeOf(['docs/schemas/a.json', 'b.ts'], quest, shared)).toEqual(['b.ts']);
-    expect(outOfScopeOf(['b.ts'], {}, shared)).toEqual([]);
+    expect(outOfScopeOf(['b.ts'], { deliverable: branch }, shared)).toEqual([]);
+  });
+
+  // fix/council-run-gaps (b), (143): the scope of the phase-2 plan named docs/plans/phase-2-plan.md.
+  it("leaves out a plan quest's plan file and sub-quests at the root of its plot, whatever its scope names", () => {
+    const changed = [
+      'plans/phase-2.md',
+      'subquests.json',
+      'docs/plans/phase-2-plan.md',
+      'plans/notes.txt',
+      'a/subquests.json',
+    ];
+    const plan = { scope_paths: ['docs/plans/phase-2-plan.md'], deliverable: { type: 'subquests' } as const };
+    expect(outOfScopeOf(changed, plan, undefined)).toEqual(['plans/notes.txt', 'a/subquests.json']);
+    expect(outOfScopeOf(changed, { ...plan, deliverable: branch }, undefined)).toEqual([
+      'plans/phase-2.md',
+      'subquests.json',
+      'plans/notes.txt',
+      'a/subquests.json',
+    ]);
   });
 
   it('asks git nothing without a scope, and says when git cannot tell', async () => {
@@ -132,6 +152,7 @@ describe('outOfScopeOf', () => {
       party_role: 'merge',
       party_id: contract.id,
       scope_paths: ['src/**'],
+      deliverable: { type: 'branch' },
     } as unknown as Quest;
     const ctx = (quests: readonly Quest[]) =>
       ({

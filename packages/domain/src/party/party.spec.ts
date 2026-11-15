@@ -127,10 +127,26 @@ describe('plotBaseOf', () => {
   });
 
   it('starts any other quest, a contract too, from the branches of what it waits for (P1-16 (f))', () => {
-    const chained = quest(LONE, { dependsOn: [Q2, Q3] });
-    expect(plotBaseOf(chained, all)).toEqual({ from: [`quest/${Q2}`, `quest/${Q3}`], merge: [] });
     expect(plotBaseOf({ ...contract, depends_on: [Q2] }, all)).toEqual({ from: [`quest/${Q2}`], merge: [] });
     expect(plotBaseOf(quest(LONE), all)).toEqual({ from: [], merge: [] });
+  });
+
+  // fix/council-run-gaps (d), owner (155): a plot starts from one branch, so the others of a diamond come in.
+  it('merges every dependency into a quest that waits for two or more, a contract too; a chain merges nothing', () => {
+    const diamond = quest(LONE, { dependsOn: [Q2, Q3] });
+    const both = [`quest/${Q2}`, `quest/${Q3}`];
+    expect(plotBaseOf(diamond, all)).toEqual({ from: both, merge: both, dependencies: true });
+    expect(plotBaseOf({ ...contract, depends_on: [Q2, Q3] }, all)).toEqual({
+      from: both,
+      merge: both,
+      dependencies: true,
+    });
+    // A dependency elsewhere gives no branch, so one is left: nothing to merge.
+    const elsewhere = { ...web, territory: DOCS };
+    expect(plotBaseOf(diamond, [contract, api, elsewhere, merge])).toEqual({
+      from: [`quest/${Q2}`],
+      merge: [],
+    });
   });
 
   it('starts from nothing a dependency of another territory, without a worktree, without a branch or unknown', () => {
