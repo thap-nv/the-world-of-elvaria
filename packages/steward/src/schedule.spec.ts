@@ -242,3 +242,24 @@ describe('scheduled jobs due together (PS-03b)', () => {
     expect(views[0]?.busy).toEqual(new Set([tribe]));
   });
 });
+
+// fix/acceptance-scope, (122): a tribe given new work at every tick would starve the triage, and the digest after it.
+describe("the Chancellor's tribe while the triage is due (fix/acceptance-scope)", () => {
+  it('takes no new session until the triage starts, then works again', async () => {
+    let free = false;
+    const triage: ScheduledJob = { ...heldJob('triage'), ready: () => Promise.resolve(free) };
+    const cast = [
+      { id: 'thorn', cls: 'knight' },
+      { id: 'vizier', cls: 'chancellor' },
+    ];
+    const { kingdom, steward } = await open([triage], undefined, { cast });
+    await kingdom.command('create_quest', questPayload('Waits'));
+    await steward.tick();
+    await steward.tick();
+    expect(await kingdom.quest('Waits')).toMatchObject({ status: 'open', assignee: null });
+    free = true;
+    await steward.tick();
+    await steward.tick();
+    expect((await kingdom.quest('Waits')).assignee).toBe('thorn');
+  });
+});

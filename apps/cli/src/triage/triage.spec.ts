@@ -272,25 +272,24 @@ describe('the Chancellor’s triage (PS-03b)', () => {
     expect(runner.heard).toEqual([]);
   });
 
-  it('runs as a job of the schedule: waits for the Chancellor’s tribe, ends with the Steward, throws on a failure', async () => {
+  it('runs as a job of the schedule: waits for the Chancellor’s tribe while a letter waits, ends with the Steward, throws on a failure', async () => {
     const io = testIo();
     const ctx = await openKingdomContext({ values: { kingdom }, positionals: [] }, cli(io));
     if (ctx === undefined) throw new Error('kingdom');
     const view = { day: '2026-11-06', notices: {}, amendments: [] };
     const job = triageJob(ctx, { [CLAUDE]: chancellor({ version: 1 }) });
-    expect(await job.ready?.({ ...view, busy: new Set([CLAUDE]) })).toBe(false);
-    expect(await job.ready?.({ ...view, busy: new Set() })).toBe(true);
+    expect(await job.ready?.({ ...view, busy: new Set([CLAUDE]) })).toBe(true);
     const signal = new AbortController().signal;
     await job.run({ ...view, busy: new Set(), signal });
     expect(io.printed.out).toEqual([]);
     await openKingdom(kingdom).memos.write(LINK);
+    expect(await job.ready?.({ ...view, busy: new Set([CLAUDE]) })).toBe(false);
+    expect(await job.ready?.({ ...view, busy: new Set() })).toBe(true);
     await expect(job.run({ ...view, busy: new Set(), signal })).rejects.toThrow('invalid_reply');
     const refused = triageJob(ctx, { [CLAUDE]: refusing() });
     await expect(refused.run({ ...view, busy: new Set(), signal })).rejects.toThrow('cli_error');
     expect(io.printed.err).toContain(`The Chancellor's session ended in error: ${REFUSAL}`);
-    const stopping = new AbortController();
-    stopping.abort();
-    await job.run({ ...view, busy: new Set(), signal: stopping.signal });
+    await job.run({ ...view, busy: new Set(), signal: AbortSignal.abort() });
     const done = triageJob(ctx, { [CLAUDE]: chancellor({ ...REPLY, decisions: [REPLY.decisions[0]] }) });
     await done.run({ ...view, busy: new Set(), signal });
     expect(io.printed.out.at(-1)).toBe('Triage of 1 letters: 1 decided without you, 0 sent up to you.');

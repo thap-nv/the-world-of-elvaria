@@ -99,7 +99,9 @@
   done quests still to deliver (`deliveries`, P1-14). (A1b of the lessons of 2026-11-13) A tribe whose CLI is gone or
   says another version than `checkedVersionOf` (the version its last `tribe check` with the real CLI passed on, else the
   pinned one) opens no session in any step (`versionHoldsOf` over `KingdomSnapshot.tools_found`, the one hold in the
-  roster); it still counts and stands by, so nothing is named unclaimable or unjudgeable for it. Checks and scripts, which run outside the tick, start only in
+  roster); it still counts and stands by, so nothing is named unclaimable or unjudgeable for it. (fix/acceptance-scope)
+  So does the Chancellor's tribe (`pickChancellor`) while a job of `CHANCELLOR_JOBS` (the triage) is in
+  `KingdomSnapshot.jobs_due`: its session lies outside the tribe's slots and waits for the tribe to have none. Checks and scripts, which run outside the tick, start only in
   the room `dispatch.max_background` leaves beside the work running (`BackgroundWork.running`, P1-47), checks
   first; a sandbox day has no background, so no cap. (P1-54, `startingNow` of `src/dispatch/background-room.ts`) The
   checks of a blind trial's acceptance part, which run no command, go first and take no slot, and when trials in a
