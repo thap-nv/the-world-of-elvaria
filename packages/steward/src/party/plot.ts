@@ -2,8 +2,10 @@
 // quests, the PlotManager asks git. A part starts on its contract's branch, a quest on a dependency done but not
 // merged yet (P1-16 (f)); a merge quest starts on the contract's branch and gets its parts merged in, then the
 // territory's base branch (PS-08e), in the machine's run, before each session of its knight and before its checks,
-// never before a judge's, who reads the branch its checks ran on. Each merge that takes a branch in or stops at one
-// leaves a `plot.merged` line in the log and the quest's journal (P1-21 (d)); one that stops rings the bell.
+// never before a judge's, who reads the branch its checks ran on. Any other quest with two dependencies or more gets
+// the ones its plot did not start from before each session of its assignee (fix/council-run-gaps (d)). Each merge that
+// takes a branch in or stops at one leaves a `plot.merged` line in the log and the quest's journal (P1-21 (d)); a merge
+// quest's that stops rings the bell.
 import { PLOT_MERGE_STOPS, plotBaseOf } from '@elvaria/domain';
 import type { Quest, Territory } from '@elvaria/domain';
 import type { MergeOutcome, PrepareOptions } from '@elvaria/runner-core';
@@ -29,13 +31,19 @@ export function plotOptionsOf(ctx: Context, quest: Quest, secrets: Secrets | und
 
 export interface Merges {
   readonly branches: readonly string[];
+  /** The branches are the quest's dependencies (plotBaseOf, fix/council-run-gaps (d)): runner-core's mergeDependencies. */
+  readonly dependencies?: true;
   /** The territory whose base branch follows the parts (PS-08e): a merge quest's, on a git territory. */
   readonly base?: Territory;
 }
 
-/** What `quest`'s plot gets merged: a merge quest's parts, then its territory's base branch; none for another quest. */
+/**
+ * What `quest`'s plot gets merged: a merge quest's parts, then its territory's base branch; another quest's dependencies
+ * when it has two or more.
+ */
 export function mergesOf(ctx: Context, quest: Quest): Merges {
-  const { merge, base } = plotBaseOf(quest, [...ctx.world.quests.values()]);
+  const { merge, base, dependencies } = plotBaseOf(quest, [...ctx.world.quests.values()]);
+  if (dependencies === true) return { branches: merge, dependencies };
   const territory = ctx.world.territories.get(quest.territory);
   if (base !== true || territory?.vcs.type !== 'git') return { branches: merge };
   return { branches: merge, base: territory };
@@ -66,16 +74,18 @@ export async function noteMerge(ctx: Context, quest: Quest, outcome: MergeOutcom
     ...(reason === 'conflict' ? { conflicts } : {}),
   };
   await ctx.record.note({ type: 'plot.merged', actor: STEWARD, data, quest });
-  if (reason === undefined) return;
+  // The bell speaks of a merge quest's knight; a quest's dependencies that stop are undone, and said in the log.
+  if (reason === undefined || quest.party_role !== 'merge') return;
   const branch = stop?.branch ?? outcome.pending[0] ?? into;
   await ring(ctx, { kind: 'merge_stopped', quest: noticeQuest(quest), branch, reason, conflicts });
 }
 
 /**
- * Merges what a merge quest's plot does not hold yet: its parts, then the base branch (PS-08e). A merge that stops is
- * said once in the log: a conflict waits for the knight (`git status` shows it), anything else for the owner. Once
- * the base branch is in, the plot is prepared again, so `commands.setup` runs on what it holds now (the lockfile may
- * have changed; never while a merge waits in progress), with the quest's `secrets` as at its first prepare.
+ * Merges what a merge quest's plot does not hold yet: its parts, then the base branch (PS-08e); or another quest's
+ * dependencies. A merge that stops is said once in the log: a conflict waits for the knight (`git status` shows it),
+ * anything else for the owner. Once the base branch or a dependency is in, the plot is prepared again, so
+ * `commands.setup` runs on what it holds now (the lockfile may have changed; never while a merge waits in progress),
+ * with the quest's `secrets` as at its first prepare.
  */
 export async function mergeParts(
   ctx: Context,
@@ -83,16 +93,20 @@ export async function mergeParts(
   plot: Quest['plot'],
   secrets?: Secrets,
 ): Promise<void> {
-  const { branches, base } = mergesOf(ctx, quest);
+  const { branches, base, dependencies } = mergesOf(ctx, quest);
   if (branches.length === 0 && base === undefined) return;
-  const outcome = await ctx.deps.plots.merge(plot, branches, base);
+  const how = dependencies === true ? { dependencies } : undefined;
+  const outcome = await ctx.deps.plots.merge(plot, branches, base, how);
   await noteMerge(ctx, { ...quest, plot }, outcome);
-  if (base !== undefined) await ctx.deps.plots.prepare(quest, base, plotOptionsOf(ctx, quest, secrets));
+  const territory =
+    base ?? (outcome.merged.length > 0 ? ctx.world.territories.get(quest.territory) : undefined);
+  if (territory !== undefined)
+    await ctx.deps.plots.prepare(quest, territory, plotOptionsOf(ctx, quest, secrets));
   if (outcome.stop === undefined) return;
   const { reason, branch, detail } = outcome.stop;
   const where = branch === undefined ? '' : ` at ${branch}`;
   ctx.deps.log.warn(
-    `steward: ${quest.id}: merging the parts stopped${where} (${reason}): ${detail.replaceAll('\n', ', ')}; still to merge: ${outcome.pending.join(', ')}`,
+    `steward: ${quest.id}: merging ${dependencies === true ? 'its dependencies' : 'the parts'} stopped${where} (${reason}): ${detail.replaceAll('\n', ', ')}; still to merge: ${outcome.pending.join(', ')}`,
   );
 }
 

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { described, subquest } from './__fixtures__/drafts.ts';
 import { peakContextOf, questEstimateOf } from './estimate.ts';
 import { planIssueLine, planIssuesOf } from './plan-issues.ts';
+import { ClassIdSchema } from '../core/ids.ts';
 import type { PlanContext } from './plan-issues.ts';
 import type { QuestDraft } from '../schema/quest/quest-draft.ts';
 
@@ -11,7 +12,17 @@ const ELVARIA = {
   shared_paths: [{ glob: 'packages/domain/src/index.ts', merge: 'union' as const }],
   checks: [{ id: 'typecheck' }, { id: 'unit' }],
 } as unknown as PlanContext['territories'][number];
-const CONTEXT: PlanContext = { territories: [ELVARIA], context_budget_tokens: 120_000 };
+type Member = PlanContext['characters'][number];
+const member = (cls: string, status: Member['status']): Member => ({
+  class: ClassIdSchema.parse(cls),
+  status,
+});
+const KNIGHT = member('knight', 'idle');
+const CONTEXT: PlanContext = {
+  territories: [ELVARIA],
+  context_budget_tokens: 120_000,
+  characters: [KNIGHT],
+};
 
 const linesOf = (...drafts: QuestDraft[]) => planIssuesOf(drafts, CONTEXT).map(planIssueLine);
 
@@ -72,6 +83,24 @@ describe('planIssuesOf (the machine half of the plan review, PS-06)', () => {
       description: described().replace('`typecheck`', '`e2e`'),
     });
     expect(linesOf(nowhere)).toEqual([]);
+  });
+
+  it('returns a session part whose class no character has that is not suspended (fix/council-run-gaps (c))', () => {
+    const dwarf = subquest('d2', ['b/**'], { class_required: 'dwarf' });
+    const script = subquest('d3', [], { tier: 'script', script: { id: 'count-files', params: {} } });
+    const { class_required: _none, ...classless } = script;
+    expect(linesOf(subquest('d1', ['a/**']), dwarf, classless)).toEqual([
+      'd2 asks for class dwarf, which no character of the kingdom has that is not suspended: give it to a class the kingdom has (knight)',
+    ]);
+    const suspended = member('dwarf', 'suspended');
+    const lines = planIssuesOf([dwarf], { ...CONTEXT, characters: [suspended, KNIGHT, KNIGHT] }).map(
+      planIssueLine,
+    );
+    expect(lines).toHaveLength(1);
+    const none = planIssuesOf([dwarf], { ...CONTEXT, characters: [suspended] }).map(planIssueLine);
+    expect(none[0]).toContain('class the kingdom has (none)');
+    const brom = member('dwarf', 'working');
+    expect(planIssuesOf([dwarf], { ...CONTEXT, characters: [brom] })).toEqual([]);
   });
 
   it('measures a draft by its peak context, its tokens standing in, and keeps tokens and minutes for the quest', () => {

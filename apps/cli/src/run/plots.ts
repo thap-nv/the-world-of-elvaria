@@ -123,7 +123,7 @@ export function plotsOver(kingdom: string, manager: PlotManager, host: ProcessHo
     // How far the territory moved since its gazetteer was written (PS-21).
     drift: async (plot, from) => (await manager.drift?.(plot, from)) ?? null,
     // A merge quest: its parts, then main, merged before its knight's sessions and checks (P1-18, PS-08e).
-    merge: (plot, branches, base) => manager.merge(plot, branches, base),
+    merge: (plot, branches, base, options) => manager.merge(plot, branches, base, options),
     unmerged: (plot, branches, base) => manager.unmerged(plot, branches, base),
     // run-check spawns these without a shell; a check whose program is not found is left out (§3.12), and so is a
     // check of several commands (P1-20), which run-check cannot chain: the machine runs it before the judge.
