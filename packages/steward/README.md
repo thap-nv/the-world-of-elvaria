@@ -2,6 +2,11 @@
 
 ## Does
 
+- Records runner-reported `turns` alongside tokens in each session's attempt entry, leaving missing turns absent.
+  Uses `calibrationOf` over current quest and character files for soft warnings and runner turn budgets; domain
+  `planTick` computes the same calibration for hard stops on every tick. Token factors and turn ceilings learn
+  independently after ten complete first assignee runs of the holder's tribe, including resumed sessions.
+
 - Runs the Steward (implementation-plan §3.1): `createSteward(deps)` takes `.state/steward.lock` (one Steward per
   kingdom), rebuilds from the event log what it already answered, and ticks every `dispatch.tick_seconds`.
   Ticks never overlap.

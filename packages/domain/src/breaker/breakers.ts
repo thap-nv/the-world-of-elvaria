@@ -14,7 +14,7 @@ import type { Quest } from '../schema/quest/quest.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { RosterSource } from '../dispatch/roster.ts';
 import type { TribeLimits } from '../tribe/tribe-limits.ts';
-import type { TribeCalibration } from './calibration.ts';
+import type { Calibration, TribeCalibration } from './calibration.ts';
 
 /** A session the Steward holds on a quest, with what its stream reported so far. */
 export interface HeldSession {
@@ -112,6 +112,7 @@ function evaluationsOf(
   rules: SessionRules,
   now: Instant,
   measure: BreakerMeasure = () => 'tokens_and_minutes',
+  calibration?: Calibration,
 ) {
   const byId = new Map(quests.map((quest) => [quest.id, quest]));
   return sessions.flatMap((session) => {
@@ -119,10 +120,13 @@ function evaluationsOf(
     const entry = quest === undefined ? undefined : openEntryOf(quest, session.role);
     const started = entry === undefined ? undefined : parseInstant(entry.started_at);
     if (quest === undefined || started?.ok !== true) return [];
+    const holder = session.role === 'assignee' ? quest.assignee : quest.verifier;
+    const tribe = typeof holder === 'string' ? rules.characters?.get(holder)?.tribe : undefined;
+    const calibrated = tribe === undefined ? undefined : calibration?.get(tribe);
     const limits = {
       max_minutes: quest.budget.max_minutes,
-      max_tokens: tokenCeilingOf(quest, session.role, rules),
-      max_turns: turnCeilingOf(quest, session.role, rules),
+      max_tokens: tokenCeilingOf(quest, session.role, rules, calibrated),
+      max_turns: turnCeilingOf(quest, session.role, rules, calibrated),
       ...(rules.soft_pct === undefined ? {} : { soft_pct: rules.soft_pct }),
       ...(rules.hard_pct === undefined ? {} : { hard_pct: rules.hard_pct }),
     };

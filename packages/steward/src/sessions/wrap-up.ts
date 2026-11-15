@@ -5,7 +5,7 @@
 // breaker already leaves its review to the next one.
 import { rm } from 'node:fs/promises';
 
-import { currentRun, measureOf, runDirOf, wrapUpsOf } from '@elvaria/domain';
+import { calibrationOf, currentRun, measureOf, runDirOf, wrapUpsOf } from '@elvaria/domain';
 import { inKingdom, readTextFile, writeFileAtomic } from '@elvaria/store';
 import type { Quest, SessionWrapUp } from '@elvaria/domain';
 
@@ -59,7 +59,8 @@ export async function noteWrapUps(ctx: Context, told: Set<string>): Promise<void
   const rules = { ...world.kingdom.breakers, characters: world.characters, tribes: world.kingdom.tribes };
   const quests = [...world.quests.values()];
   const measure = measureOf(world.characters, limits);
-  const wraps = wrapUpsOf(quests, ctx.sessions.held(), rules, ctx.deps.clock.now(), measure);
+  const calibration = calibrationOf(quests, world.characters, world.kingdom);
+  const wraps = wrapUpsOf(quests, ctx.sessions.held(), rules, ctx.deps.clock.now(), measure, calibration);
   for (const wrap of wraps) {
     const running = ctx.sessions.get(wrap.quest);
     const quest = world.quests.get(wrap.quest);

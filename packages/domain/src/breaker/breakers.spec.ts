@@ -152,7 +152,7 @@ describe('planTick: breakers (§3.4)', () => {
   it('holds a tribe whose CLI reports no usage to its minutes alone (§3.14 minutes_only, P1-33)', () => {
     const wren = character('wren', { tribe: 'gemini', status: 'working' });
     const quests = [workingBy(quest(Q1), 'thorn', 100), workingBy(quest(Q2), 'wren', 100)];
-    const sessions = [held(Q1, 'assignee', 600_001), held(Q2, 'assignee', 600_001, 900)];
+    const sessions = [held(Q1, 'assignee', 720_001), held(Q2, 'assignee', 720_001, 900)];
     const limits = { claude: FULL_TRIBE_LIMITS, gemini: tribeLimitsOf({ ...EVERY, usage: false }) };
     expect(limits.gemini.breakers).toBe('minutes_only');
     const plan = planTick(snapshot(quests, [thorn, wren], { sessions, limits }), NOW);
@@ -161,8 +161,8 @@ describe('planTick: breakers (§3.4)', () => {
         quest: Q1,
         role: 'assignee',
         trip: 'tokens',
-        detail: '600001 tokens, limit 600000',
-        params: { tokens: 600001, limit: 600000 },
+        detail: '720001 tokens, limit 720000',
+        params: { tokens: 720001, limit: 720000 },
       },
     ]);
     // Its minutes still count.
