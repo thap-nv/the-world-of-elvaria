@@ -148,9 +148,15 @@
   part of a party, `part` or `acceptance`, the paths alone, since its merge quest always waits for the seal), and
   `wantsStrongJudge(quest)` puts the judge of the higher level first from rank B or once the quest is so marked,
   below the separation rules of `selectVerifier`.
-- Decides the breakers (`src/breaker/`, §3.4, P1-06): `evaluateBreakers(attempt, limits, now, usage)` → `ok` or
-  the first trip of `time` (on the minute `budget.max_minutes` is spent), `tokens` or `turns` (once past
-  `budget.max_tokens`, `breakers.max_turns`); a tribe whose adapter reports no usage (its `TribeLimits.breakers`
+- Decides the breakers (`src/breaker/`, §3.4, P1-06): `evaluateBreakers(attempt, limits, now, usage)` → `ok`,
+  `{kind: 'wrap_up', measure, used, limit, pct}` above `breakers.soft_pct` (85), or a hard trip at
+  `breakers.hard_pct` (150): time at the threshold, tokens and turns once past it. Warnings use nominal ceilings;
+  stop details and parameters use the hard ceilings. A hard trip takes priority over any warning, then time,
+  tokens and turns. `turnCeilingOf` reads the holder's `tribes[].max_turns`, falling back to `breakers.max_turns`;
+  `SessionRules` accepts the character map and tribes alongside percentages, and `planTick` supplies them.
+  `wrapUpsOf` takes the same arguments as `breakersOf` and returns reminders only; `agent.session.wrap_up`
+  carries `{measure, used, limit, pct}` at event v2. Sending reminders is the Steward's next integration step.
+  A tribe whose adapter reports no usage (its `TribeLimits.breakers`
   is `minutes_only`, handed in as `measure` by `measureOf`) has the time breaker alone (P1-33); `breakersOf`
   applies it to the sessions the Steward holds
   (`KingdomSnapshot.sessions`), each timed from its own attempt_log entry, and `planTick` returns them first as

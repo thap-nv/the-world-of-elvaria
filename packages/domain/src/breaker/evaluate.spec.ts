@@ -1,5 +1,5 @@
-// evaluateBreakers (implementation-plan §3.4) on a clock the spec sets: time trips on the minute, tokens and turns
-// once past their budget, and the first breaker that trips is the one named.
+// evaluateBreakers (implementation-plan §3.4) on a clock the spec sets: time trips at the hard threshold,
+// tokens and turns once past it, and the first hard breaker that trips is the one named.
 import { describe, expect, it } from 'vitest';
 
 import { MS_PER_MINUTE } from '../constants.ts';
@@ -13,39 +13,39 @@ const attempt = { started_at: START };
 
 describe('evaluateBreakers', () => {
   it('lets a session within every budget go on', () => {
-    expect(evaluateBreakers(attempt, LIMITS, after(44, 59_999), { tokens: 120_000, turns: 200 })).toBe('ok');
+    expect(evaluateBreakers(attempt, LIMITS, after(30), { tokens: 100_000, turns: 160 })).toBe('ok');
     expect(evaluateBreakers(attempt, LIMITS, START, { tokens: 0 })).toBe('ok');
   });
 
-  it('trips time on the minute the budget is spent', () => {
-    expect(evaluateBreakers(attempt, LIMITS, after(45), { tokens: 0 })).toEqual({
+  it('trips time exactly when the hard ceiling is spent', () => {
+    expect(evaluateBreakers(attempt, LIMITS, after(67.5), { tokens: 0 })).toEqual({
       trip: 'time',
-      detail: 'ran 45 min, limit 45 min',
-      params: { minutes: 45, limit: 45 },
+      detail: 'ran 67.5 min, limit 67.5 min',
+      params: { minutes: 67.5, limit: 67.5 },
     });
     expect(evaluateBreakers(attempt, LIMITS, after(130, 30_000), { tokens: 0 })).toEqual({
       trip: 'time',
-      detail: 'ran 130 min, limit 45 min',
-      params: { minutes: 130, limit: 45 },
+      detail: 'ran 130.5 min, limit 67.5 min',
+      params: { minutes: 130.5, limit: 67.5 },
     });
   });
 
-  it('trips tokens and turns once past the budget, not on it', () => {
-    expect(evaluateBreakers(attempt, LIMITS, after(1), { tokens: 120_001 })).toEqual({
+  it('trips tokens and turns once past the hard ceiling, not on it', () => {
+    expect(evaluateBreakers(attempt, LIMITS, after(1), { tokens: 180_001 })).toEqual({
       trip: 'tokens',
-      detail: '120001 tokens, limit 120000',
-      params: { tokens: 120_001, limit: 120_000 },
+      detail: '180001 tokens, limit 180000',
+      params: { tokens: 180_001, limit: 180_000 },
     });
-    expect(evaluateBreakers(attempt, LIMITS, after(1), { tokens: 10, turns: 201 })).toEqual({
+    expect(evaluateBreakers(attempt, LIMITS, after(1), { tokens: 10, turns: 301 })).toEqual({
       trip: 'turns',
-      detail: '201 turns, limit 200',
-      params: { turns: 201, limit: 200 },
+      detail: '301 turns, limit 300',
+      params: { turns: 301, limit: 300 },
     });
   });
 
   it('names the first breaker that trips: time, then tokens, then turns', () => {
     const everything = { tokens: 999_999, turns: 999 };
-    expect(evaluateBreakers(attempt, LIMITS, after(50), everything)).toMatchObject({ trip: 'time' });
+    expect(evaluateBreakers(attempt, LIMITS, after(70), everything)).toMatchObject({ trip: 'time' });
     expect(evaluateBreakers(attempt, LIMITS, after(5), everything)).toMatchObject({ trip: 'tokens' });
   });
 
