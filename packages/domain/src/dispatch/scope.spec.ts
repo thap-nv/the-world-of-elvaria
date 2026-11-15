@@ -97,6 +97,13 @@ describe('baseChainOf', () => {
     const self = onWorktree(quest(Q1, { dependsOn: [Q2] }));
     expect([...baseChainOf(self, [self, loop])]).toEqual([Q2]);
   });
+
+  it('takes every dependency of a diamond, merged into its plot, and what each is built on (fix/council-run-gaps)', () => {
+    const plan = onWorktree(ranThen(quest(Q1), 'done'));
+    const sides = [Q2, Q3].map((id) => onWorktree(ranThen(quest(id, { dependsOn: [Q1] }), 'done')));
+    const diamond = quest(Q4, { dependsOn: [Q2, Q3] });
+    expect([...baseChainOf(diamond, [plan, ...sides, diamond])].sort()).toEqual([Q1, Q2, Q3].sort());
+  });
 });
 
 describe('scopeHolderOf', () => {

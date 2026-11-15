@@ -19,7 +19,7 @@
   - `envoy` (Envoy): reads and searches files; writes files; no shell
   - `judge` (Judge): reads and searches files; writes no file; shell: `pnpm test`, `pnpm lint`, `pnpm typecheck`, `git diff`, and its territory's check commands
   - `monk` (Monk): reads and searches files; writes no file; no shell
-- Tags: frontend, backend, db, infra, i18n, e2e, integration, visual, docs
+- Tags: frontend, backend, db, infra, i18n, e2e, integration, docs
 - Secrets this territory allows: none
 - Checks of this territory: lint, unit, e2e
 

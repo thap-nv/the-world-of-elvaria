@@ -93,6 +93,11 @@ interface PromptBase {
    * (PS-06). Absent: the default of the breakers.
    */
   readonly context_budget_tokens?: number | undefined;
+  /**
+   * A tribe that works reads images (PS-11): a plan quest's mage and judge see the tags whose ritual asks for eyes too.
+   * Absent: they do not (tagsShownOf, fix/council-run-gaps (a)).
+   */
+  readonly vision?: boolean | undefined;
 }
 
 /** What the drafting rules of a plan quest quote, for its mage and its judge (PS-06). */
@@ -177,7 +182,7 @@ function assigneePrompt(input: AssigneePromptInput, t: PromptTemplates): PromptW
   });
   const graphText = graphBlock(policy, input.graph, 'assignee', t);
   return composed(systemOf(input, role, characterClass.name_en, graphText, t), [
-    ['quest', questBlock(quest, registry, input.territory, t, termsOf(input))],
+    ['quest', questBlock(quest, registry, input.territory, t, termsOf(input), input.vision)],
     ['gazetteer', gazetteerBlock(input.territory, input.gazetteer, t)],
     ['scripture', scriptureBlock(input.scriptures, t)],
     ['skills', skillsBlock(input.skills, t)],
@@ -243,7 +248,7 @@ function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): PromptW
   });
   const graphText = graphBlock(policy, input.graph, 'verifier', t);
   return composed(systemOf(input, role, characterClass.name_en, graphText, t), [
-    ['quest', questBlock(quest, registry, input.territory, t, termsOf(input))],
+    ['quest', questBlock(quest, registry, input.territory, t, termsOf(input), input.vision)],
     ['gazetteer', gazetteerBlock(input.territory, input.gazetteer, t)],
     ['scripture', scriptureBlock(input.scriptures, t)],
     ['partial', partialBlock(input.partial, t)],

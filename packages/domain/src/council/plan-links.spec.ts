@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { subquest } from './__fixtures__/drafts.ts';
 import { planIssuesOf } from './plan-issues.ts';
+import type { ClassId } from '../core/ids.ts';
 import { planLinksOf } from './plan-links.ts';
 import type { FileLink } from '../graph/links.ts';
 import type { PlanGraph } from './plan-links.ts';
@@ -28,7 +29,13 @@ describe('planLinksOf (the code graph in the plan review, PS-21b)', () => {
       { ref: 'd1', other: 'd2', from: CALL.from, to: CALL.to, count: 3 },
     ]);
     // The machine half finds nothing wrong: the warning is for the judge alone.
-    expect(planIssuesOf([cli, chancellor], { territories: [], context_budget_tokens: 120_000 })).toEqual([]);
+    expect(
+      planIssuesOf([cli, chancellor], {
+        territories: [],
+        context_budget_tokens: 120_000,
+        characters: [{ class: 'knight' as ClassId, status: 'idle' }],
+      }),
+    ).toEqual([]);
   });
 
   it('says nothing of parts in a row, parts whose scopes meet, or code linked within one part', () => {

@@ -38,6 +38,11 @@ export interface Speaker {
   readonly characters: readonly Character[];
   readonly decree: string | null;
   readonly class_prompt: string | null;
+  /**
+   * A tribe that works reads images (`capabilities.vision`, PS-11): the tags that ask for eyes are listed to the
+   * Chancellor and its triage, else hidden (fix/council-run-gaps (a)).
+   */
+  readonly vision: boolean;
 }
 
 /**
@@ -141,6 +146,7 @@ export async function speakerOf(
     characters: characters.items,
     decree: await readDecree(ctx.store.root),
     class_prompt: await readClassPrompt(ctx.store.root, characterClass),
+    vision: Object.values(runners).some((working) => working?.capabilities.vision === true),
   };
   return { status: 'ready', speaker };
 }
@@ -168,6 +174,7 @@ export async function hearingOf(
     context_budget_tokens: ctx.kingdom.breakers.context_budget_tokens,
     // How large work goes through the council (PS-06).
     council: ctx.kingdom.dispatch.council,
+    vision: speaker.vision,
   };
   return { context, session: speaker.session };
 }

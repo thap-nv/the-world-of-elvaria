@@ -1,8 +1,8 @@
 // What every draft of the Chancellor and of a mage follows (implementation-plan §3.16.6, PS-06): the quest template,
 // the way to size a session, and the tools of each class, so no step goes to a class that cannot do it (P1-50, Q8: a
 // scribe told to run `git log`). One text for the Chancellor, its triage of memos and a plan quest's mage and judge.
-import { RANKS, STEPS_REQUIRED_UP_TO } from '@elvaria/domain';
-import type { CharacterClass, Registry, Territory } from '@elvaria/domain';
+import { RANKS, STEPS_REQUIRED_UP_TO, eyeTagsOf } from '@elvaria/domain';
+import type { CharacterClass, Registry, Tag, Territory } from '@elvaria/domain';
 
 import { SEARCH_TOOLS, SHELL_TOOL, WRITE_TOOLS } from '../policy/constants.ts';
 import { asksGraph, toolOf } from '../policy/tool-policy.ts';
@@ -72,6 +72,20 @@ export function classToolsOf({ tools }: Pick<CharacterClass, 'tools'>, graphed =
     shellOf(tools.allow, denied),
     ...(graphed && asksGraph(tools.allow.map(toolOf), denied) ? [GRAPH_TOOLS] : []),
   ].join('; ');
+}
+
+/**
+ * The tags a draft may carry, as the Chancellor, its triage and a mage are shown them: all of them when `vision` (a tribe
+ * that works reads images, PS-11), else none whose ritual asks for eyes (eyeTagsOf, fix/council-run-gaps (a)), since such
+ * a quest would wait in review for a judge who can see. The owner may still give one, and the screen still takes it.
+ */
+export function tagsShownOf(
+  registry: Pick<Registry, 'tags' | 'kinds' | 'rituals'>,
+  vision?: boolean,
+): readonly Tag[] {
+  if (vision === true) return registry.tags;
+  const eyes = eyeTagsOf(registry);
+  return registry.tags.filter(({ id }) => !eyes.has(id));
 }
 
 /** Whether a territory has a code graph its characters may ask (PS-21, ADR 0029): who asks it is named then. */

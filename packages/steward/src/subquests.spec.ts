@@ -96,7 +96,8 @@ describe('delivering a plan: its sub-quests open', () => {
     expect(table).toMatchObject({
       status: 'open',
       parent_id: plan.id,
-      depends_on: [],
+      // It waits for no part, so for the plan: its plot starts on the plan's branch (fix/council-run-gaps (d)).
+      depends_on: [plan.id],
       created_by: 'council',
       class_required: 'knight',
       // The mage's 60 000 tokens are below the rank D floor (P1-45) of two context budgets (P1-54): 240 000 x 2.
@@ -168,7 +169,8 @@ describe('delivering a plan: its sub-quests open', () => {
         'the drafts wait on each other in a circle',
       ],
       'Unknown tag': [list(draft('d1', { tags: ['blockchain'] })), 'd1 is refused: unknown_tag'],
-      'Wrong class': [list(draft('d1', { class_required: 'bard' })), 'd1 is refused: class_not_allowed'],
+      // A class the kingdom has, which the kind does not allow (one it lacks: council.spec.ts).
+      'Wrong class': [list(draft('d1', { class_required: 'scribe' })), 'd1 is refused: class_not_allowed'],
     };
     const files = Object.fromEntries(
       Object.entries(cases).flatMap(([title, [text]]) => (text === undefined ? [] : [[title, text]])),
