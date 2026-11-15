@@ -74,6 +74,13 @@ describe('tribeLimitsOf', () => {
     expect(tribeLimitsOn(ALL, 'win32')).toEqual(FULL_TRIBE_LIMITS);
   });
 
+  it('says a tribe reads images only when its adapter declares it, an optional field and no row (PS-11)', () => {
+    expect(tribeLimitsOn({ ...ALL, vision: true }, 'darwin')).toEqual({ ...FULL_TRIBE_LIMITS, vision: true });
+    expect(tribeLimitsOn({ ...ALL, vision: false }, 'darwin')).toEqual(FULL_TRIBE_LIMITS);
+    expect(tribeLimitsOn(ALL, 'darwin')).not.toHaveProperty('vision');
+    expect(TRIBE_NARROWING.map(({ capability }) => capability)).not.toContain('vision');
+  });
+
   it('narrows a tribe with nothing but a headless mode to the floor', () => {
     const bare = Object.fromEntries(
       ADAPTER_CAPABILITIES.map((capability) => [capability, capability === 'headless']),

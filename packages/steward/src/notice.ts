@@ -36,13 +36,15 @@ export type Notice =
     }
   /**
    * The quest waits in review for a judge the roster does not have (P1-15): no character of `classes` outside its
-   * doers on another model than the assignee's `model` (dispatch.verifier_same_family = different_model).
+   * doers on another model than the assignee's `model` (dispatch.verifier_same_family = different_model). `vision`
+   * (PS-11): its ritual asks for eyes, and none of them is of a tribe whose CLI reads images; absent on any other quest.
    */
   | {
       readonly kind: 'unjudgeable';
       readonly quest: NoticeQuest;
       readonly classes: readonly string[];
       readonly model: string | null;
+      readonly vision?: true;
     }
   /**
    * The quest has judges, but the mana of every one is closed (PS-03, (d) of P1-50): it waits for a gauge to reopen,

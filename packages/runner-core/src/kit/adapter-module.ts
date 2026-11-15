@@ -66,6 +66,10 @@ export const searchProblems = (search: unknown): string[] =>
 export const readProblems = (read: unknown): string[] =>
   read === undefined || typeof read === 'boolean' ? [] : ['capability read is not true or false'];
 
+/** What is wrong with `capabilities.vision` (PS-11): optional like `read`; when given, true or false. */
+export const visionProblems = (vision: unknown): string[] =>
+  vision === undefined || typeof vision === 'boolean' ? [] : ['capability vision is not true or false'];
+
 function capabilityProblems(capabilities: unknown): string[] {
   if (!isRecord(capabilities)) return ['capabilities is not an object'];
   const flags = ADAPTER_CAPABILITIES.filter((name) => typeof capabilities[name] !== 'boolean').map(
@@ -79,6 +83,7 @@ function capabilityProblems(capabilities: unknown): string[] {
     ...promptMaxProblems(capabilities.prompt_max_chars),
     ...searchProblems(capabilities.search),
     ...readProblems(capabilities.read),
+    ...visionProblems(capabilities.vision),
     // PS-23: the models it serves and their families, optional; an older adapter file without them still loads.
     ...modelsProblems(capabilities.models),
   ];

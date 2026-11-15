@@ -44,6 +44,12 @@
       "description": "Tests across modules and real services: database, auth, guards, containers."
     },
     {
+      "id": "visual",
+      "name_vi": "Giao diện nhìn thấy",
+      "name_en": "Visible change",
+      "description": "A change seen on screen (layout, styles, views), judged by eye against the design; not frontend work nobody sees. Only a judge whose tribe reads images takes it."
+    },
+    {
       "id": "docs",
       "name_vi": "Tài liệu",
       "name_en": "Documentation",

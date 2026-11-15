@@ -1235,6 +1235,18 @@
               "when": "Thả quái thử thành: người chấm đập thử ở đây, không commit, xóa sau verdict"
             },
             {
+              "vi": "Họa sư soi bức họa",
+              "en": "The painter holds up the portrait",
+              "id": "ritual `visual_review`",
+              "when": "quest Kiến tạo/Trừ tà/Gia cố có tag `visual` (thay đổi nhìn thấy trên màn hình), không có `e2e` hay `integration` (PS-11)"
+            },
+            {
+              "vi": "Mắt của người chấm",
+              "en": "Vision",
+              "id": "`vision` (cờ của ritual; `capabilities.vision` của adapter)",
+              "when": "nghi thức cần mắt: chỉ người chấm thuộc tộc mà CLI đọc được ảnh nhận quest; không ai có mắt thì quest chờ, máy không chấm một mình (PS-11)"
+            },
+            {
               "vi": "Khảo hạch mù",
               "en": "Blind trial",
               "id": "`territory.blind_trial`",
@@ -1867,6 +1879,11 @@
               "en": "Integration tests"
             },
             {
+              "id": ["visual"],
+              "vi": "Giao diện nhìn thấy",
+              "en": "Visible change"
+            },
+            {
               "id": ["docs"],
               "vi": "Tài liệu",
               "en": "Documentation"
@@ -2475,6 +2492,10 @@
             {
               "id": ["check_tests_cover_change"],
               "meaning": "thay đổi hành vi có test đi kèm (khi lãnh thổ có test); thiếu thì `fail_kind: incomplete`"
+            },
+            {
+              "id": ["compare_screens"],
+              "meaning": "mở từng ảnh chụp màn hình do check sinh ra, so với ảnh tham chiếu (không có thì với mô tả của quest); chỗ khác mà quest không yêu cầu là không đạt; không mở được ảnh thì `partial` (PS-11)"
             },
             {
               "id": ["compare_before_after"],

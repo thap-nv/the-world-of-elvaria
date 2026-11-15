@@ -40,6 +40,11 @@ export interface TribeLimits {
    * judge whose measured prompt is longer is passed over while another may take the quest. Absent: no limit.
    */
   readonly prompt_max_chars?: number;
+  /**
+   * true: the tribe's CLI reads images (tribeLimitsOn, PS-11), so its judges may take a quest whose ritual asks for
+   * eyes; selectVerifier never gives such a quest to a judge of any other tribe. Absent: it does not.
+   */
+  readonly vision?: true;
 }
 
 /** A tribe whose adapter declares every capability. */
@@ -89,14 +94,19 @@ export function tribeLimitsOf(caps: AdapterFlags): TribeLimits {
 }
 
 /**
- * The limits of one tribe on the machine's `platform`: tribeLimitsOf, and the longest user prompt its CLI takes there
- * when its adapter declares one (promptMaxOf). A length, not a yes or no, so it is no row of TRIBE_NARROWING.
+ * The limits of one tribe on the machine's `platform`: tribeLimitsOf, the longest user prompt its CLI takes there when
+ * its adapter declares one (promptMaxOf), a length, not a yes or no, so it is no row of TRIBE_NARROWING; and whether it
+ * reads images (PS-11), optional so an adapter file older than it still passes, so no row either: a row narrows a tribe
+ * that lacks one of the nine flags every adapter declares.
  */
 export function tribeLimitsOn(
-  caps: AdapterFlags & Pick<AdapterCapabilities, 'prompt_max_chars'>,
+  caps: AdapterFlags & Pick<AdapterCapabilities, 'prompt_max_chars' | 'vision'>,
   platform: string,
 ): TribeLimits {
-  const limits = tribeLimitsOf(caps);
   const max = promptMaxOf(caps, platform);
-  return max === undefined ? limits : { ...limits, prompt_max_chars: max };
+  return {
+    ...tribeLimitsOf(caps),
+    ...(max === undefined ? {} : { prompt_max_chars: max }),
+    ...(caps.vision === true ? { vision: true } : {}),
+  };
 }

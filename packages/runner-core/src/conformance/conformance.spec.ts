@@ -195,6 +195,9 @@ describe('the conformance suite', () => {
     expect(await problemOf({ read: false, models: [{ id: 'auto' }] })).toBeUndefined();
     expect(await problemOf({ read: 'no' })).toMatch(/^capability read is malformed/);
     expect(await problemOf({ models: [{ id: 'Auto' }] })).toMatch(/^capability models is malformed/);
+    // PS-11: whether the CLI reads images.
+    expect(await problemOf({ vision: true })).toBeUndefined();
+    expect(await problemOf({ vision: 'png' })).toMatch(/^capability vision is malformed/);
   });
 
   it('reports a runner that throws instead of answering', async () => {

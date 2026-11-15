@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { judgedInScratch, ritualOf } from './ritual-of.ts';
+import { judgedByEye, judgedInScratch, ritualOf } from './ritual-of.ts';
 import type { Registry } from '../schema/registry.ts';
 import type { Kind, Ritual } from '../schema/registry-entries.ts';
 import type { Quest } from '../schema/quest/quest.ts';
@@ -58,6 +58,37 @@ describe('ritualOf', () => {
     expect(judgedInScratch({ ...quest('build', 'e2e'), plot: folder }, scratch)).toBe(false);
     expect(judgedInScratch({ ...quest('build', 'e2e'), plot: worktree }, REGISTRY)).toBe(false);
     expect(judgedInScratch({ ...quest('build'), plot: worktree }, scratch)).toBe(false);
+  });
+
+  it('judges by eye under a ritual that asks for it, as kinds.json picks it by the tag visual (PS-11)', () => {
+    // As the default registry: e2e first, so a quest both e2e and visual keeps mutation_check.
+    const visual = [
+      { tags_any: tags('e2e', 'integration'), ritual: 'mutation_check' },
+      { tags_any: tags('visual'), ritual: 'visual_review' },
+    ] as unknown as Kind['ritual_overrides'];
+    const eyes: Pick<Registry, 'kinds' | 'rituals'> = {
+      kinds: [
+        kind('build', 'build_review', visual),
+        kind('fix', 'regression_check', visual?.slice(1)),
+        kind('research', 'source_check'),
+      ],
+      rituals: [
+        ...['build_review', 'regression_check', 'source_check', 'mutation_check'].map(ritual),
+        { id: 'visual_review', vision: true } as unknown as Ritual,
+      ],
+    };
+    expect(ritualOf(quest('build', 'visual'), eyes)?.id).toBe('visual_review');
+    expect(ritualOf(quest('build', 'visual', 'e2e'), eyes)?.id).toBe('mutation_check');
+    expect(ritualOf(quest('fix', 'visual'), eyes)?.id).toBe('visual_review');
+    expect(judgedByEye(quest('build', 'frontend', 'visual'), eyes)).toBe(true);
+    expect(judgedByEye(quest('fix', 'visual'), eyes)).toBe(true);
+    expect(judgedByEye(quest('build', 'visual', 'e2e'), eyes)).toBe(false);
+    expect(judgedByEye(quest('build', 'frontend'), eyes)).toBe(false);
+    expect(judgedByEye(quest('research', 'visual'), eyes)).toBe(false);
+    expect(judgedByEye(quest('dance', 'visual'), eyes)).toBe(false);
+    // The blind trial's acceptance part keeps its kind's ritual (P1-21); its merge quest takes the override.
+    expect(judgedByEye({ ...quest('build', 'visual'), party_role: 'acceptance' }, eyes)).toBe(false);
+    expect(judgedByEye({ ...quest('build', 'visual'), party_role: 'merge' }, eyes)).toBe(true);
   });
 
   it('finds nothing for a kind or a ritual the registry lacks', () => {
