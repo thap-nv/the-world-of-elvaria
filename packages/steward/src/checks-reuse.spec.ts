@@ -109,9 +109,10 @@ describe("the run's next judge and the machine checks (P1-38)", () => {
   });
 
   it('runs them again for the next judge once the branch head moved', async () => {
-    // Read before the checks, at the first judge, then at the second: the owner committed in between.
+    // Read as the assignee's session opens (progress.ts), before the checks, at the first judge, then at the second:
+    // the owner committed in between.
     const { kingdom, quest, calls } = await twoJudges('Committed meanwhile', {
-      heads: ['f00d', 'f00d', 'beef'],
+      heads: ['f00d', 'f00d', 'f00d', 'beef'],
     });
     expect(runsOf(calls, 'check')).toEqual([`check .runs/${quest.id}-1`, `check .runs/${quest.id}-1`]);
     expect(kingdom.warnings).toContainEqual(expect.stringContaining('checks_stale'));
@@ -150,9 +151,10 @@ describe("the run's next judge in a scratch plot and the trial (P1-42)", () => {
   });
 
   it('runs the trial again for the next judge once the branch head moved', async () => {
-    // Read before the trial, at the first judge, then before the second judge's plot: the owner committed.
+    // Read as the assignee's session opens (progress.ts), before the trial, at the first judge, then before the second
+    // judge's plot: the owner committed.
     const { kingdom, quest, calls } = await twoJudges('Wall moved', {
-      heads: ['f00d', 'f00d', 'beef'],
+      heads: ['f00d', 'f00d', 'f00d', 'beef'],
       tags: ['e2e'],
       plots: scratchPlots(),
     });

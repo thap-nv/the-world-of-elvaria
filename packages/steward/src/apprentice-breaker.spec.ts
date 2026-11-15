@@ -38,12 +38,18 @@ describe('a breaker after an apprentice ran long or was cut', () => {
     ['agent.subagent.end', { agent_type: 'apprentice', duration_ms: 9_000, stopped: 'max_turns' }, true],
     ['agent.subagent.end', { agent_type: 'apprentice', duration_ms: 9_000 }, false],
   ])('after %s %j, asks for a child quest: %s', async (type, data, asks) => {
-    kingdom = await bench({ plays: { work: { Hangs: ['hang'] } } });
+    kingdom = await bench({ plays: { work: { Hangs: ['hang', 'hang'] } } });
     steward = kingdom.steward();
     await steward.start({ loop: false });
     await kingdom.command('create_quest', questPayload('Hangs'));
     await steward.tick();
+    // The first cut of a run goes on in a fresh session (ADR 0030); the note belongs to the cut that ends in the
+    // infirmary, the second one without progress.
+    kingdom.clock.advance(67.5);
+    await steward.tick();
+    await steward.tick();
     const started = await kingdom.quest('Hangs');
+    expect(started.status).toBe('working');
     const session = started.attempt_log.at(-1)?.session_id ?? '';
     const journal = openJournal(kingdom.root, started.id);
     // Another session's apprentice says nothing about this one.
@@ -57,7 +63,7 @@ describe('a breaker after an apprentice ran long or was cut', () => {
     expect((await kingdom.quest('Hangs')).status).toBe('infirmary');
     expect(kingdom.notices.at(-1)).toMatchObject({
       kind: 'infirmary',
-      reason: { code: 'breaker:time', params: { minutes: 67.5, limit: 67.5 } },
+      reason: { code: 'breaker:no_progress', params: { trip: 'time', run: 1 } },
     });
     const notice = kingdom.notices.at(-1);
     const left = notice?.kind === 'infirmary' ? notice.detail?.apprentice_left : undefined;

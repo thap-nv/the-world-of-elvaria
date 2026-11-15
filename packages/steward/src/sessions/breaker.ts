@@ -5,7 +5,7 @@
 // assignee whose CLI stopped itself at its own limit (settle.ts), and a quest no session can open for because its
 // secrets are missing (open.ts) or its spawn failed (no-session.ts): that one waits in the infirmary instead of being
 // claimed again every tick.
-import { infirmaryReasonOf, reviewBreaksOf, reviewStalled, runDirOf } from '@elvaria/domain';
+import { infirmaryReasonOf, isCapTrip, reviewBreaksOf, reviewStalled, runDirOf } from '@elvaria/domain';
 import { openJournal } from '@elvaria/eventlog';
 import { plotCommitMessage } from '@elvaria/runner-core';
 import type { Breaker, BreakerTrip, InfirmaryReason, Quest, Result, SessionTrip } from '@elvaria/domain';
@@ -18,6 +18,7 @@ import { runOf } from '../review/judge.ts';
 import { afterJudge } from '../review/after-judge.ts';
 import { commitPlot, forbiddenWip } from './commit.ts';
 import { maskFinished } from './secrets.ts';
+import { madeProgress } from './progress.ts';
 import { stopLeftOf, writeStopLetter } from './stop-letter.ts';
 import type { Context } from '../context.ts';
 import type { PlotCommit } from './commit.ts';
@@ -43,17 +44,24 @@ function wipLeft(wip: PlotCommit | undefined): { wip?: string } {
 export async function breakAssignee(
   ctx: Context,
   running: Running,
-  breaker: AssigneeBreaker,
+  cause: AssigneeBreaker,
   end: () => Promise<RunResult>,
 ): Promise<Result<Quest, string>> {
-  const { trip, patch, paths } = breaker;
+  let breaker = cause;
   const who = running.character;
   const swamped = await ctx.record.change(who, 'character.swamp', step('breaker'));
   if (!swamped.ok) ctx.deps.log.warn(`steward: ${running.quest}: ${who} is not swamped: ${swamped.error}`);
   const result = await end();
-  const wip = UNCOMMITTED.has(trip)
+  const wip = UNCOMMITTED.has(breaker.trip)
     ? undefined
-    : await commitPlot(ctx, running.quest, plotCommitMessage.wip(running.quest, trip));
+    : await commitPlot(ctx, running.quest, plotCommitMessage.wip(running.quest, breaker.trip));
+  // A program the session ran changed forbidden paths: whatever the trip was, the owner sees the plot first, so the
+  // cut is a `forbidden_paths` trip, never measured and never gone on from.
+  if (wip?.status === 'forbidden' && isCapTrip(breaker.trip))
+    breaker = { trip: 'forbidden_paths', paths: wip.paths };
+  const { trip, patch, paths } = breaker;
+  // Only a ceiling is measured for progress: the other trips keep the way to the infirmary (ADR 0030).
+  const progress = isCapTrip(trip) ? await madeProgress(ctx, running, wip) : undefined;
   // A quest with no letter gets a minimal one, whatever the trip (gap 23 of PS-07); after a refused hook, a copy of
   // the work is kept too (P1-55).
   const left = stopLeftOf(wip, breaker);
@@ -66,7 +74,12 @@ export async function breakAssignee(
   };
   return moveAndRing(ctx, {
     quest: running.quest,
-    event: { type: 'breaker', trip, ...runOf(running, result) },
+    event: {
+      type: 'breaker',
+      trip,
+      ...(progress === undefined ? {} : { progress }),
+      ...runOf(running, result),
+    },
     actor: 'steward',
     edits: swamped.ok ? { [who]: step('quest_infirmary') } : {},
     infirmary: { trip, reason: assigneeReason(ctx, running, breaker, result), detail: said },
@@ -115,6 +128,10 @@ function assigneeReason(
       ? infirmaryReasonOf('breaker:commit', params)
       : infirmaryReasonOf('breaker:commit_errors', { ...params, errors: head.errors });
   }
+  // A ceiling reaches the infirmary only as the second cut in a row of the run without progress (`cutCallOf`, ADR 0030);
+  // a cut that went on never rings, so its reason is unused.
+  if (isCapTrip(breaker.trip))
+    return infirmaryReasonOf('breaker:no_progress', { trip: breaker.trip, run: running.n });
   const trip = breaker.trip as SessionTrip;
   const limit = trip === 'turns' ? ctx.world.kingdom.breakers.max_turns : quest.budget.max_tokens;
   const used = trip === 'turns' ? (result.usage.turns ?? limit) : result.usage.tokens;

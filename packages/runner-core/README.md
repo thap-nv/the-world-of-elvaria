@@ -34,7 +34,8 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   `Scope:` fact, and its judge the files changed outside it (`prompts/out-of-scope.md`, `src/prompt/scope.ts`, PS-05),
   while a quest without one reads as before; the judge of a quest with `protected_changes` gets the files to read line
   by line (`prompts/protected-changes.md`, `src/prompt/protected.ts`, PS-04 (c)): `buildPrompt` for an
-  assignee (new, or continuing after `returned` / `revive` with the letter, the last 20 journal lines, the
+  assignee (new, or continuing after `returned` / `revive`, which also says when the earlier session was cut at its
+  hard ceiling, `prompts/revive.md`, (F) of phase 2, with the letter, the last 20 journal lines, the
   branch's log and the owner's answer; after `returned`, also the checks that failed with the end of each log,
   `prompts/failed-checks.md`, P1-10b, and after the owner's return for a new judgement a word that the judge
   erred, `prompts/rejudge.md`; after either, the checks the machine will run on the work, as `selectChecks` picks

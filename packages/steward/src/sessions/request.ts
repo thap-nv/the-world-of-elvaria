@@ -4,7 +4,7 @@
 // session continues its CLI session (`--resume`, ADR 0017). Its load trace comes along for the opening line (PS-01b).
 import { mkdir } from 'node:fs/promises';
 
-import { FAIL_KINDS, runDirOf } from '@elvaria/domain';
+import { FAIL_KINDS, runDirOf, turnCeilingOf } from '@elvaria/domain';
 import { secretValuesOf, toolPolicyOf } from '@elvaria/runner-core';
 import { inKingdom } from '@elvaria/store';
 import type { LoadTrace } from '@elvaria/domain';
@@ -18,6 +18,8 @@ import { promptOf, searchFor } from './prompt.ts';
 import { sessionEnvOf } from './secrets.ts';
 import type { Context } from '../context.ts';
 import type { Resume, SessionInput } from './input.ts';
+
+const PERCENT = 100;
 
 /**
  * The verifier's structured output (§3.2): what the verdict file takes from it. The Steward adds the checks, applies
@@ -62,6 +64,27 @@ const envOf = (ctx: Context, input: SessionInput): Record<string, string> => ({
   ELVARIA_MODEL: input.character.model,
   ELVARIA_TZ: ctx.world.kingdom.tz,
 });
+
+/**
+ * The budget the CLI enforces is the hard ceiling of the domain (F): the holder's tribe's turn ceiling and the quest's
+ * minutes, both at `hard_pct`, so the CLI never cuts a session before the Steward's own hard cut, nor before the
+ * soft reminder. The holder is `input.character` (the quest may not name it yet when the request is built).
+ */
+function budgetOf(ctx: Context, input: SessionInput): SpawnRequest['budget'] {
+  const { quest, character, role } = input;
+  const { breakers, tribes } = ctx.world.kingdom;
+  const holder = role === 'assignee' ? { assignee: character.id } : { verifier: character.id };
+  const turns = turnCeilingOf({ ...quest, ...holder }, role, {
+    ...breakers,
+    characters: new Map([[character.id, character]]),
+    tribes,
+  });
+  const hard = breakers.hard_pct;
+  return {
+    max_turns: Math.round((turns * hard) / PERCENT),
+    max_minutes: (quest.budget.max_minutes * hard) / PERCENT,
+  };
+}
 
 /** The request the runner gets, and what its prompt carried, for the line that opens the session. */
 export interface SessionRequest {
@@ -138,7 +161,7 @@ export async function requestOf(
       cli_search: searchFor(ctx, character),
       graph: graph !== undefined,
     }),
-    budget: { max_turns: ctx.world.kingdom.breakers.max_turns, max_minutes: quest.budget.max_minutes },
+    budget: budgetOf(ctx, input),
     env,
     run_dir: runDir,
     ...(role === 'verifier'
