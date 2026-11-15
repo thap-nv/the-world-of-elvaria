@@ -123,28 +123,81 @@ describe('a scheduled job outside the tick', () => {
   });
 });
 
+/** A digest port that keeps the days it wrote and how many commands still waited in the inbox then. */
+function keptDigest() {
+  const days: string[] = [];
+  const waiting: number[] = [];
+  const digest: Digest = {
+    write: async ({ day }) => {
+      days.push(day);
+      waiting.push((await current?.store.inbox.read())?.length ?? -1);
+      return `digest/${day}.md`;
+    },
+  };
+  return { digest, days, waiting };
+}
+
 describe('scheduled jobs due together (PS-03b)', () => {
-  it('go by their hour: the digest waits for the triage of an earlier hour while it runs', async () => {
-    const triage = heldJob('triage');
-    const days: string[] = [];
-    const digest: Digest = {
-      write: ({ day }) => {
-        days.push(day);
-        return Promise.resolve(`digest/${day}.md`);
+  it('go by their hour: the digest waits for the triage to end and for what it sent to be applied', async () => {
+    const held = heldJob('triage');
+    // The triage's advice reaches the Steward as inbox commands (ADR 0005), applied at the start of a tick.
+    const triage: ScheduledJob = {
+      ...held,
+      run: async (run) => {
+        await held.run(run);
+        await current?.command('create_quest', questPayload('Advised'));
       },
     };
+    const { digest, days, waiting } = keptDigest();
     const { kingdom, steward } = await open([triage], digest);
     await steward.tick();
     await steward.tick();
-    expect(triage.runs).toHaveLength(1);
+    expect(held.runs).toHaveLength(1);
     expect(days).toEqual([]);
-    triage.finish();
+    held.finish();
+    // fix/digest-timing: a triage that ended after the last step counts from the step after this one, so the tick
+    // that writes the digest has applied the triage's commands before it.
     await tickAfterFinish(steward);
+    expect(days).toEqual([]);
+    await steward.tick();
     expect(days).toEqual(['2026-11-07']);
+    expect(waiting).toEqual([0]);
     expect(await ran(kingdom)).toEqual([
       { job: 'triage', day: '2026-11-07' },
       { job: 'digest', day: '2026-11-07' },
     ]);
+  });
+
+  it('hold the digest while the triage waits to be ready, however late the Steward started (fix/digest-timing)', async () => {
+    const triage = heldJob('triage');
+    let free = false;
+    const waiting: ScheduledJob = { ...triage, ready: () => Promise.resolve(free) };
+    const { digest, days } = keptDigest();
+    const { steward } = await open([waiting], digest);
+    await steward.tick();
+    await steward.tick();
+    expect(triage.runs).toEqual([]);
+    expect(days).toEqual([]);
+    free = true;
+    await steward.tick();
+    expect(triage.runs).toHaveLength(1);
+    triage.finish();
+    await tickAfterFinish(steward);
+    await steward.tick();
+    expect(days).toEqual(['2026-11-07']);
+  });
+
+  it('let the digest go once the triage threw: the day is over for it, though not recorded', async () => {
+    const triage = heldJob('triage');
+    triage.fail = true;
+    const { digest, days } = keptDigest();
+    const { kingdom, steward } = await open([triage], digest);
+    await steward.tick();
+    await tickAfterFinish(steward);
+    await steward.tick();
+    expect(triage.runs).toHaveLength(1);
+    expect(days).toEqual(['2026-11-07']);
+    expect(await ran(kingdom)).toEqual([{ job: 'digest', day: '2026-11-07' }]);
   });
 
   it('start a job outside the tick only once it is ready, asked again each tick, holding no other job back', async () => {
