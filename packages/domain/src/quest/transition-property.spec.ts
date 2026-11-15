@@ -22,16 +22,23 @@ import type { QuestActor, QuestEvent, QuestEventType } from './events.ts';
 // Deep enough to reach every row: the longest path (three failed verdicts into the infirmary) is 13 events
 // with a budget of three attempts, 6 with a budget of one.
 const SAMPLES = reachable(10);
+/** The events tried for a type: a breaker is also tried as a cut that made progress (ADR 0030). */
+const eventsOf = (type: QuestEventType, quest: Quest): QuestEvent[] => {
+  const event = eventOf(type, quest, at(30));
+  return event.type === 'breaker' ? [event, { ...event, progress: true }] : [event];
+};
 const CASES = SAMPLES.flatMap((quest) =>
-  QUEST_EVENT_TYPES.flatMap((type) => QUEST_ACTORS.map((actor) => ({ quest, type, actor }))),
+  QUEST_EVENT_TYPES.flatMap((type) =>
+    eventsOf(type, quest).flatMap((event) => QUEST_ACTORS.map((actor) => ({ quest, type, actor, event }))),
+  ),
 );
 
-const matchingRows = (quest: Quest, type: QuestEventType) =>
+const matchingRows = (quest: Quest, type: QuestEventType, event?: QuestEvent) =>
   QUEST_TRANSITIONS.filter(
     (row) =>
       row.from === quest.status &&
       row.event === type &&
-      (row.guard === undefined || QUEST_GUARDS[row.guard](quest)),
+      (row.guard === undefined || QUEST_GUARDS[row.guard](quest, event)),
   );
 
 /** The actor rule of transition(), restated: who may speak for whom. */
@@ -42,8 +49,7 @@ const holds = (quest: Quest, type: QuestEventType, actor: QuestActor): boolean =
   return true;
 };
 
-const attempt = (quest: Quest, type: QuestEventType, actor: QuestActor, minute = 30) =>
-  transition(quest, eventOf(type, quest, at(minute)), actor);
+const attempt = (quest: Quest, event: QuestEvent, actor: QuestActor) => transition(quest, event, actor);
 
 /** The attempt log mirrors the status: a running session is an open entry, and only then. */
 function expectLogMatchesStatus(quest: Quest): void {
@@ -70,17 +76,17 @@ describe('the quest state machine, over every state it reaches', () => {
 
   it('takes every row of the table on some reachable quest', () => {
     const taken = new Set<string>();
-    for (const { quest, type, actor } of CASES) {
-      if (attempt(quest, type, actor).ok) taken.add(rowKey(matchingRows(quest, type)[0]!));
+    for (const { quest, type, actor, event } of CASES) {
+      if (attempt(quest, event, actor).ok) taken.add(rowKey(matchingRows(quest, type, event)[0]!));
     }
     expect(QUEST_TRANSITIONS.map(rowKey).filter((key) => !taken.has(key))).toEqual([]);
   });
 
   it('never moves a quest outside the table', () => {
-    for (const { quest, type, actor } of CASES) {
-      const result = attempt(quest, type, actor);
+    for (const { quest, type, actor, event } of CASES) {
+      const result = attempt(quest, event, actor);
       if (!result.ok) continue;
-      const [row, ...others] = matchingRows(quest, type);
+      const [row, ...others] = matchingRows(quest, type, event);
       expect(others).toEqual([]);
       expect(row!.actors).toContain(actor);
       expect(result.value.status).toBe(row!.to);
@@ -89,15 +95,18 @@ describe('the quest state machine, over every state it reaches', () => {
 
   it('never needs two rows: the guards of rows sharing status and event exclude each other', () => {
     for (const quest of SAMPLES) {
-      for (const type of QUEST_EVENT_TYPES) expect(matchingRows(quest, type).length).toBeLessThanOrEqual(1);
+      for (const type of QUEST_EVENT_TYPES) {
+        for (const event of eventsOf(type, quest))
+          expect(matchingRows(quest, type, event).length).toBeLessThanOrEqual(1);
+      }
     }
   });
 
   it('takes a matching row from every actor of the row who holds the quest', () => {
-    for (const { quest, type, actor } of CASES) {
-      const [row] = matchingRows(quest, type);
+    for (const { quest, type, actor, event } of CASES) {
+      const [row] = matchingRows(quest, type, event);
       if (row === undefined || !row.actors.includes(actor) || !holds(quest, type, actor)) continue;
-      expect(attempt(quest, type, actor)).toMatchObject({ ok: true, value: { status: row.to } });
+      expect(attempt(quest, event, actor)).toMatchObject({ ok: true, value: { status: row.to } });
     }
   });
 
@@ -126,7 +135,10 @@ function randomEvent(random: () => number, type: QuestEventType, quest: Quest, m
   if (event.type === 'reassign')
     return { ...event, assignee: pick(random, PEOPLE), level: pick(random, LEVELS) };
   if (event.type === 'assign_verifier') return { ...event, verifier: pick(random, PEOPLE) };
-  if (event.type === 'breaker') return { ...event, trip: pick(random, BREAKER_TRIPS) };
+  if (event.type === 'breaker') {
+    const progress = pick(random, [{}, { progress: true }, { progress: false }]);
+    return { ...event, trip: pick(random, BREAKER_TRIPS), ...progress };
+  }
   return event;
 }
 
@@ -150,9 +162,10 @@ describe('the quest state machine, on long random walks', () => {
         // An archived quest goes nowhere; the walk goes on with a new draft.
         if (quest.status === 'archived') quest = draftQuest(pick(random, VARIANTS));
         const { type, actor } = randomCause(random, quest);
-        const result = transition(quest, randomEvent(random, type, quest, step), actor);
+        const event = randomEvent(random, type, quest, step);
+        const result = transition(quest, event, actor);
         if (!result.ok) continue;
-        const rows = matchingRows(quest, type);
+        const rows = matchingRows(quest, type, event);
         expect(rows).toHaveLength(1);
         expect(result.value.status).toBe(rows[0]!.to);
         expect(questTierIssues(result.value)).toEqual([]);

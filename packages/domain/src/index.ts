@@ -1,4 +1,5 @@
 export * from './breaker/breakers.ts';
+export * from './breaker/continue.ts';
 export * from './breaker/evaluate.ts';
 export * from './breaker/review.ts';
 export * from './breaker/tokens.ts';
