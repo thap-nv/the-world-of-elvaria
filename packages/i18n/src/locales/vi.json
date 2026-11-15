@@ -603,6 +603,7 @@
     "cli.quest.infirmary.reason.breaker.secrets_missing": "kho bảo vật thiếu các secret {names}, nên không mở được phiên",
     "cli.quest.infirmary.reason.breaker.treasury_unreadable": "không đọc được kho bảo vật, nên không mở được phiên: {error}",
     "cli.quest.infirmary.reason.breaker.no_session": "không mở được phiên của người làm: {error}",
+    "cli.quest.infirmary.reason.breaker.no_progress": "phiên của người làm bị cắt hai lần liền ở lượt {run} (trần {trip}) mà không có commit mới",
     "cli.quest.infirmary.reason.judge.time": "cầu dao thời gian cắt {stopped} người nghiệm thu của lần thử {run}",
     "cli.quest.infirmary.reason.judge.tokens": "cầu dao token cắt {stopped} người nghiệm thu của lần thử {run}",
     "cli.quest.infirmary.reason.judge.turns": "cầu dao lượt cắt {stopped} người nghiệm thu của lần thử {run}",

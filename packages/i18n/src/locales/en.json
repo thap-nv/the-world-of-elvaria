@@ -603,6 +603,7 @@
     "cli.quest.infirmary.reason.breaker.secrets_missing": "the treasury lacks the secrets {names}, so no session can open",
     "cli.quest.infirmary.reason.breaker.treasury_unreadable": "the treasury could not be read, so no session can open: {error}",
     "cli.quest.infirmary.reason.breaker.no_session": "the assignee's session could not open: {error}",
+    "cli.quest.infirmary.reason.breaker.no_progress": "the assignee's session was cut twice in a row in run {run} (ceiling {trip}) with no new commit",
     "cli.quest.infirmary.reason.judge.time": "the time breaker cut {stopped} verifiers of attempt {run}",
     "cli.quest.infirmary.reason.judge.tokens": "the token breaker cut {stopped} verifiers of attempt {run}",
     "cli.quest.infirmary.reason.judge.turns": "the turn breaker cut {stopped} verifiers of attempt {run}",

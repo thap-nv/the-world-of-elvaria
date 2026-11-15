@@ -1,10 +1,11 @@
 // The quest state machine as data (implementation-plan §2.5): every status change of a quest is one row of this
 // table, and transition() refuses anything else. The table in the plan is rendered from these rows
 // (renderQuestTransitionTable), so the document cannot drift from the code. Read before changing: CLAUDE.md.
+import { cutCallOf, isCapTrip } from '../breaker/continue.ts';
 import { reviewStalled } from '../breaker/review.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 import type { QuestStatus } from '../schema/quest/shared.ts';
-import type { QuestActor, QuestEventType } from './events.ts';
+import type { QuestActor, QuestEvent, QuestEventType } from './events.ts';
 
 /** A condition on the quest that picks one row when an event leads to different statuses. */
 export type QuestGuard =
@@ -23,7 +24,9 @@ export type QuestGuard =
   | 'has_verifier'
   | 'undelivered'
   | 'stalled_review'
-  | 'no_stalled_review';
+  | 'no_stalled_review'
+  | 'cut_goes_on'
+  | 'cut_stops';
 
 /**
  * A character works the quest: a session quest's assignee. A script-tier quest has none, nor has the first run of a
@@ -42,7 +45,20 @@ const mergedByMachine = (quest: Quest): boolean =>
 /** The machine's run of a session quest failed its judge: open again, so a character takes the next run (P1-18). */
 const machineRetry = (quest: Quest): boolean => mergedByMachine(quest) && underBudget(quest);
 
-export const QUEST_GUARDS: Readonly<Record<QuestGuard, (quest: Quest) => boolean>> = {
+/**
+ * A character's session cut by a ceiling goes on in a fresh session (ADR 0030): the event names a ceiling and says
+ * whether it made progress, and cutCallOf reads the run's log. Any other trip, or a cut that does not say, keeps the
+ * way to the infirmary.
+ */
+const cutGoesOn = (quest: Quest, event?: QuestEvent): boolean =>
+  event?.type === 'breaker' &&
+  event.progress !== undefined &&
+  isCapTrip(event.trip) &&
+  byCharacter(quest) &&
+  cutCallOf(quest.attempt_log, event.progress) === 'go_on';
+
+/** Guards read the quest and, for the few that depend on what happened, the event (`findTransition` may lack it). */
+export const QUEST_GUARDS: Readonly<Record<QuestGuard, (quest: Quest, event?: QuestEvent) => boolean>> = {
   session: (quest) => quest.tier === 'session',
   by_character: byCharacter,
   by_machine: (quest) => !byCharacter(quest),
@@ -64,6 +80,8 @@ export const QUEST_GUARDS: Readonly<Record<QuestGuard, (quest: Quest) => boolean
   // work is done, only its review stalled.
   stalled_review: reviewStalled,
   no_stalled_review: (quest) => !reviewStalled(quest),
+  cut_goes_on: cutGoesOn,
+  cut_stops: (quest, event) => !cutGoesOn(quest, event),
 };
 
 export interface QuestTransitionRow {
@@ -108,7 +126,11 @@ export const QUEST_TRANSITIONS: readonly QuestTransitionRow[] = [
   { from: 'working', event: 'release', actors: S, guard: 'by_character', to: 'returned' },
   { from: 'working', event: 'ask', actors: R, to: 'blocked' },
   { from: 'working', event: 'mana_out', actors: M, guard: 'by_character', to: 'paused_mana' },
-  { from: 'working', event: 'breaker', actors: S, to: 'infirmary' },
+  // A ceiling cut a character's session that made progress, or the first without (ADR 0030): the same character goes
+  // on in a fresh session of the same run, as after a lost session (P1-44) but with the attempt kept. The
+  // `redispatch` that follows opens it. Right after, the other trips and the second cut in a row without progress.
+  { from: 'working', event: 'breaker', actors: S, guard: 'cut_goes_on', to: 'returned' },
+  { from: 'working', event: 'breaker', actors: S, guard: 'cut_stops', to: 'infirmary' },
   { from: 'working', event: 'crash', actors: S, guard: 'can_retry', to: 'returned' },
   { from: 'working', event: 'crash', actors: S, guard: 'out_of_retries', to: 'infirmary' },
   { from: 'working', event: 'suspend', actors: U, guard: 'by_character', to: 'returned' },
