@@ -17,10 +17,11 @@ import type { z } from 'zod';
 export function findTransition(
   quest: Quest,
   type: QuestEventType,
+  event?: QuestEvent,
 ): Result<QuestTransitionRow, QuestTransitionError> {
   const rows = QUEST_TRANSITIONS.filter((row) => row.from === quest.status && row.event === type);
   if (rows.length === 0) return err({ code: 'no_transition', from: quest.status, event: type });
-  const row = rows.find(({ guard }) => guard === undefined || QUEST_GUARDS[guard](quest));
+  const row = rows.find(({ guard }) => guard === undefined || QUEST_GUARDS[guard](quest, event));
   if (row !== undefined) return ok(row);
   // Only guarded rows can fail to match, so every row left here names its guard.
   const guards = rows.map(({ guard }) => guard).filter((guard) => guard !== undefined);
@@ -52,7 +53,7 @@ export function transition(
 ): Result<Quest, QuestTransitionError> {
   const tierIssues = questTierIssues(quest);
   if (tierIssues.length > 0) return err({ code: 'invalid_quest', issues: tierIssues });
-  const found = findTransition(quest, event.type);
+  const found = findTransition(quest, event.type, event);
   if (!found.ok) return found;
   const row = found.value;
   if (!row.actors.includes(actor)) return err({ code: 'actor_not_allowed', actor, allowed: row.actors });

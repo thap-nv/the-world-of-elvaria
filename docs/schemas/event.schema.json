@@ -631,6 +631,7 @@
                       "breaker:secrets_missing",
                       "breaker:treasury_unreadable",
                       "breaker:no_session",
+                      "breaker:no_progress",
                       "judge:time",
                       "judge:tokens",
                       "judge:turns",

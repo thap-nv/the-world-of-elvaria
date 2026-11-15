@@ -148,6 +148,11 @@
   part of a party, `part` or `acceptance`, the paths alone, since its merge quest always waits for the seal), and
   `wantsStrongJudge(quest)` puts the judge of the higher level first from rank B or once the quest is so marked,
   below the separation rules of `selectVerifier`.
+- Decides what a ceiling cut of a character's session leads to (`src/breaker/continue.ts`, ADR 0030): `CAP_TRIPS`
+  (`time`, `tokens`, `turns`) are the only trips that read the `breaker` event's `progress`;
+  `cutCallOf(attempt_log, progress)` says `go_on` (any cut with progress, and a first cut without) or `infirmary`
+  (two cuts in a row of one run without progress, reason `breaker:no_progress`). `working.breaker.cut_goes_on` leads
+  to `returned`, and the `redispatch` after it keeps the run and `attempts` (`endedInCut`).
 - Decides the breakers (`src/breaker/`, §3.4, P1-06): `evaluateBreakers(attempt, limits, now, usage)` → `ok`,
   `{kind: 'wrap_up', measure, used, limit, pct}` above `breakers.soft_pct` (85), or a hard trip at
   `breakers.hard_pct` (150): time at the threshold, tokens and turns once past it. Warnings use nominal ceilings;

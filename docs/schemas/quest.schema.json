@@ -319,6 +319,10 @@
             "type": "integer",
             "minimum": 0
           },
+          "progress": {
+            "description": "Only on an assignee session cut by the time, token or turn ceiling: whether it left a new commit (or a WIP commit with changes) before the cut. A cut with progress goes on in a fresh session; two cuts in a row without it send the quest to the infirmary (ADR 0030). Added after v1: no entry written before has it.",
+            "type": "boolean"
+          },
           "run_dir": {
             "description": "Relative to the kingdom: .runs/<quest>-<n> (verifier: .runs/<quest>-<n>/verify, and /verify-<k> for the k-th judge of the run, k ≥ 2).",
             "type": "string",

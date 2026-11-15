@@ -67,6 +67,7 @@ Khóa i18n của mã `<nhóm>:<tên>` là `cli.quest.infirmary.reason.<nhóm>.<t
 | `breaker:secrets_missing` | cầu dao secret | `names` | kho bảo vật thiếu `names` |
 | `breaker:treasury_unreadable` | cầu dao secret | `error` | không đọc được kho bảo vật; `error` nguyên văn |
 | `breaker:no_session` | không mở được phiên người làm (trip `no_session`) | `error` | plot, request hay spawn ném lỗi; `error` là dòng đầu, tối đa 300 ký tự (thêm lúc giao hàng PS-07, khi merge fix/review-no-session) |
+| `breaker:no_progress` | cầu dao (assignee), hai lần cắt liền không tiến triển | `trip`, `run` | phiên của người làm bị trần `trip` (`time`, `tokens` hay `turns`) cắt hai lần liền trong lượt `run` mà không có commit mới (ADR 0030); một lần cắt có tiến triển thì quest đi tiếp, không vào trạm quân y |
 | `judge:time` | cầu dao người chấm | `stopped`, `run` | `stopped` người chấm của lượt `run` bị cầu dao thời gian cắt |
 | `judge:tokens` | như trên | `stopped`, `run` | … cầu dao token |
 | `judge:turns` | như trên | `stopped`, `run` | … cầu dao lượt |

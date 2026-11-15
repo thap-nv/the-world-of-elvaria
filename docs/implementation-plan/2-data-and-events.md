@@ -251,7 +251,8 @@ Tác nhân: **U** người dùng (qua inbox), **S** Nhiếp chính, **R** runner
 | working | `release` | `tier = session`, có `assignee` | S | returned | phiên của nhân vật kết thúc trong lúc không có Nhiếp chính nào chạy (Nhiếp chính dừng hay bị giết): lượt kết thúc `cancelled`, `attempts` trả lại một (lần `redispatch` ngay sau lấy lại nó), cùng nhân vật làm tiếp ở phiên mới từ handover (P1-44) |
 | working | `ask` |  | R | blocked | ghi `blocked.question`; lượt kết thúc `blocked` |
 | working | `mana_out` | `tier = session`, có `assignee` | M | paused_mana | giữ `assignee`; lượt kết thúc `paused` |
-| working | `breaker` |  | S | infirmary | kill tree, event `quest.infirmary` kèm lý do; lượt `timeout` (thời gian) hoặc `breaker` (token, lượt, hook từ chối commit lúc nộp); nhân vật → swamp rồi idle |
+| working | `breaker` | trip `time`, `tokens` hay `turns` có `progress`, bậc session có `assignee`, và lần cắt không là lần thứ hai liền không tiến triển trong lượt `n` (`cutCallOf`) | S | returned | kill tree; lượt kết thúc `timeout` (thời gian) hoặc `breaker` (token, lượt), ghi `progress`; giữ `assignee`, `attempts` không đổi; `redispatch` ngay sau mở phiên mới đọc handover, cùng lượt `n`, `continuation.reason = revive`; không có trần số lần đi tiếp, lần cắt có tiến triển luôn đi tiếp (ADR 0030) |
+| working | `breaker` | mọi trường hợp còn lại (trip khác, không có `progress`, bậc script, hai lần cắt liền không tiến triển) | S | infirmary | kill tree, event `quest.infirmary` kèm lý do; lượt `timeout` (thời gian) hoặc `breaker` (token, lượt, hook từ chối commit lúc nộp); nhân vật → swamp rồi idle; trip `time`/`tokens`/`turns` chỉ tới đây sau hai lần cắt liền không tiến triển (`breaker:no_progress`); trip `commit`, `secrets`, `forbidden_paths`, `no_session` luôn tới đây, bỏ qua `progress` |
 | working | `crash` | `tier = session`, có `assignee`, `attempts < max_attempts` | S | returned | outcome `crash`, cùng nhân vật thử lại |
 | working | `crash` | `tier = script` hoặc `attempts ≥ max_attempts` | S | infirmary | bậc script: lỗi script vào thẳng trạm quân y (lỗi của Elvaria hoặc dữ liệu) |
 | working | `suspend` | `tier = session`, có `assignee` | U | returned | người dùng đình chỉ nhân vật (§2.6); lượt kết thúc `returned`; người dùng giao lại |
@@ -282,7 +283,7 @@ Tác nhân: **U** người dùng (qua inbox), **S** Nhiếp chính, **R** runner
 | review | `release` | có `verifier` | S | review | phiên người chấm kết thúc trong lúc không có Nhiếp chính nào chạy: người chấm rời đi, lượt kết thúc `cancelled`, không đếm vào `reviewBreaksOf` (P1-44) |
 | review | `suspend` | có `verifier` | U | review | như trên, khi người dùng đình chỉ người chấm |
 | review | `cancel` |  | U | archived |  |
-| returned | `redispatch` |  | S | working | `attempts` +1, lượt mới, cùng `assignee`, prompt kèm notes |
+| returned | `redispatch` |  | S | working | `attempts` +1, lượt mới, cùng `assignee`, prompt kèm notes; sau một lần cắt đi tiếp (`working.breaker.cut_goes_on`) thì `attempts` không đổi, cùng lượt `n`, phiên mới đọc handover (ADR 0030) |
 | returned | `reassign` |  | U | claimed |  |
 | returned | `cancel` |  | U | archived |  |
 | returned | `breaker` |  | S | infirmary | trip `secrets` hay `no_session` (phiên làm lại không mở được), như `claimed` |
