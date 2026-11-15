@@ -66,6 +66,11 @@ export interface Roster {
   readonly manaOpen: (character: Character) => boolean;
   /** canStart, and the tribe's runner may take this quest on this territory (§3.14). */
   readonly canClaim: (character: Character, quest: Quest, territory: TerritoryRules) => boolean;
+  /**
+   * May take this quest now or later: stands by, and its tribe's runner may take the quest on this territory. A
+   * candidate whose tribe cannot take its prompt waits for such a one (selectAssignee, fix/claim-step).
+   */
+  readonly mayClaim: (character: Character, quest: Quest, territory: TerritoryRules) => boolean;
   /** Of the quest's roster for claimBlocker: not suspended, of an enabled tribe (busy, asleep or without a runner yet). */
   readonly counts: (character: Character) => boolean;
   /** May judge now or later: not suspended, of an enabled tribe that has a runner (busy or asleep for now). */
@@ -144,6 +149,14 @@ export function poolOpenOf(
 const heldTribesOf = (source: RosterSource): ReadonlySet<TribeId> =>
   new Set(versionHoldsOf(source.kingdom.tribes, source.tools_found ?? {}).map(({ tribe }) => tribe));
 
+/** Whether the character's tribe has a runner that may take the quest on the territory (tribeMayTake). */
+const tribeTakesOf =
+  (staffed: ReadonlyMap<TribeId, Staffed>) =>
+  (character: Character, quest: Quest, territory: TerritoryRules): boolean => {
+    const tribe = staffed.get(character.tribe);
+    return tribe !== undefined && tribeMayTake(tribe.limits, quest, territory);
+  };
+
 /** `now` weighs the gauge readings: one whose window has reset no longer counts. */
 export function rosterOf(source: RosterSource, now: Instant): Roster {
   const staffed = staffedTribes(source);
@@ -176,19 +189,19 @@ export function rosterOf(source: RosterSource, now: Instant): Roster {
     );
   };
   const canStart = (character: Character): boolean => character.status === 'idle' && mayOpen(character);
+  const tribeTakes = tribeTakesOf(staffed);
+  const standsBy = (character: Character): boolean =>
+    character.status !== 'suspended' && !aside.has(character.id) && staffed.has(character.tribe);
 
   return {
     canStart,
     canWake: (character) => character.status === 'sleeping_mana' && mayOpen(character),
     manaOpen: poolOpen,
-    canClaim: (character, quest, territory) => {
-      const tribe = staffed.get(character.tribe);
-      return tribe !== undefined && canStart(character) && tribeMayTake(tribe.limits, quest, territory);
-    },
+    canClaim: (character, quest, territory) => canStart(character) && tribeTakes(character, quest, territory),
+    mayClaim: (character, quest, territory) => standsBy(character) && tribeTakes(character, quest, territory),
     counts: (character) =>
       character.status !== 'suspended' && !aside.has(character.id) && enabled.has(character.tribe),
-    standsBy: (character) =>
-      character.status !== 'suspended' && !aside.has(character.id) && staffed.has(character.tribe),
+    standsBy,
     setAside: (character) => {
       aside.add(character.id);
       taken.add(character.id);

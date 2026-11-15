@@ -40,10 +40,10 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
   'draft.confirm': 'Tể tướng tạo draft; `elvaria quest add` tạo thẳng open',
   'draft.discard': 'lệnh `archive`',
   'open.claim':
-    'có người rảnh đúng nghề, đủ cấp (`canTake`), tộc còn mana, `depends_on` xong; nhận vượt hạng trần của cấp ⇒ `seal_required`; bậc script: `assignee = null`, actor là Nhiếp chính',
+    'có người rảnh đúng nghề, đủ cấp (`canTake`), tộc còn mana, `depends_on` xong; nhận vượt hạng trần của cấp ⇒ `seal_required`, trừ `part` và `acceptance` của đội (fix/claim-step); bậc script: `assignee = null`, actor là Nhiếp chính',
   'open.block': '`depends_on` chưa xong hoặc câu hỏi của Tể tướng chưa trả lời; ghi `blocked.question`',
   'open.reassign.session':
-    'lệnh `reassign` có `character`: người dùng giao thẳng, không xét `canTake`; vượt hạng trần ⇒ `seal_required`; `depends_on` vẫn phải xong trước `start`',
+    'lệnh `reassign` có `character`: người dùng giao thẳng, không xét `canTake`; vượt hạng trần ⇒ `seal_required` (trừ `part`, `acceptance`); `depends_on` vẫn phải xong trước `start`',
   'open.cancel': 'lệnh `cancel`; mọi trạng thái chưa xong đều hủy được',
   'claimed.start':
     'đất riêng xong, phiên mở; `attempts` +1, mở lượt mới `n` trong `attempt_log`; lượt máy của quest ghép (không có `assignee`) mở lượt `n` mà `attempts` không tăng (P1-55)',
@@ -71,7 +71,7 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
   'working.cancel': 'kill, giữ worktree; lượt kết thúc `cancelled`',
   'paused_mana.mana_restored': 'cùng nhân vật, phiên mới từ handover, cùng lượt `n` (§3.5)',
   'paused_mana.reassign':
-    'người dùng đổi người; hoặc Nhiếp chính, khi quest ngủ quá `mana.reassign_after_hours` và có người cùng nghề còn mana (`selectAssignee`, P1-22); mọi `reassign` vượt hạng trần của cấp người mới ⇒ `seal_required`; người cũ bỏ `current`',
+    'người dùng đổi người; hoặc Nhiếp chính, khi quest ngủ quá `mana.reassign_after_hours` và có người cùng nghề còn mana (`selectAssignee`, P1-22); mọi `reassign` vượt hạng trần của cấp người mới ⇒ `seal_required` (trừ `part`, `acceptance`); người cũ bỏ `current`',
   'paused_mana.suspend':
     'người dùng đình chỉ nhân vật đang ngủ trên quest (§2.6): quest thả người đó, bỏ `assignee`, mở lại cho Nhiếp chính giao như mọi quest open; `attempts` giữ, lượt đã kết thúc `paused` từ trước (P1-22)',
   'paused_mana.breaker':

@@ -23,6 +23,7 @@ import type { Reassign } from './reassigns.ts';
 import type { ReviewSource, Verification } from './reviews.ts';
 import type { RosterSource } from './roster.ts';
 import type { Claim, Step, Unclaimable } from './tick-steps.ts';
+import type { ClaimPrompt } from '../verify/prompt-limit.ts';
 import type { Instant } from '../core/clock.ts';
 import type { CharacterId, QuestId } from '../core/ids.ts';
 import type { Character } from '../schema/character/character.ts';
@@ -41,6 +42,12 @@ export interface KingdomSnapshot extends RosterSource, ReviewSource {
   };
   /** The sessions the Steward holds, with their usage so far, for the breakers (§3.4); none in a sandbox day. */
   readonly sessions?: readonly HeldSession[];
+  /**
+   * The prompts the Steward measured for the claims of open quests, one per character of the quest's class whose tribe
+   * has a prompt limit on this OS (fix/claim-step): the claim passes over a character whose prompt is longer while
+   * another may take the quest. Absent, as in a sandbox day: none measured, nobody passed over for it.
+   */
+  readonly claim_prompts?: readonly ClaimPrompt[];
 }
 
 export interface TickPlan {

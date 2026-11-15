@@ -21,7 +21,11 @@
   (`capabilities.prompt_max_chars`, agy on Windows) would get for each quest whose checks ended
   (`src/review/prompt-size.ts`, `userPromptLengthOf`: no plot, run folder or treasury), kept until the review changes,
   so `selectVerifier` passes over a judge whose prompt its tribe cannot take (`review_prompts`,
-  fix/verifier-prompt-limit).
+  fix/verifier-prompt-limit). Likewise each assignee of such a tribe, for each open session-tier quest of its class
+  whose dependencies are done (`src/sessions/claim-prompt-size.ts`: the start's prompt, the continuation of earlier
+  runs included, the context files read from the territory as no plot exists yet), kept until the quest or its log
+  change, so `selectAssignee` passes over a character whose prompt its tribe cannot take (`claim_prompts`,
+  fix/claim-step).
 - Asks each tribe's CLI before the plan (A1b of the lessons of 2026-11-13, `src/tribe-versions.ts`): through
   `StewardDeps.toolFound` (the composition root runs `<cli> --version` on the CLI the tribe's runner starts: no model,
   no mana; at most once a minute a tribe, `VERSION_ASK_MS`), so `planTick` holds a tribe whose CLI is gone or says

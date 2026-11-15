@@ -44,6 +44,8 @@ export interface State {
   readonly judgeWaits: Map<QuestId, JudgeWait>;
   /** The judges' prompts measured for the reviews about to be judged (review/prompt-size.ts). */
   readonly promptSizes: PromptSizes;
+  /** The assignees' prompts measured for the open quests about to be claimed (sessions/claim-prompt-size.ts). */
+  readonly claimPromptSizes: PromptSizes;
   /** What the tribes' CLIs said their version was, and the tribes held by it (tribe-versions.ts, A1b). */
   readonly versions: VersionBook;
   /** The scheduled jobs: the digest, and the jobs the composition root gives (PS-03). */
