@@ -39,6 +39,7 @@ export const MS_PER_MINUTE = 60_000;
 export const MINUTES_PER_HOUR = 60;
 
 export const BREAKER_DEFAULTS = {
+  estimate_factor: 1.82,
   soft_pct: 85,
   hard_pct: 150,
   attempt_minutes_low: 45,
@@ -59,6 +60,9 @@ export const BREAKER_DEFAULTS = {
    */
   verifier_tokens_multiplier: 2,
 } as const;
+/** Ten completed first runs before a tribe replaces its provisional ceilings. */
+export const CALIBRATION_MIN_SAMPLES = 10;
+export const MEDIAN_PAIR_SIZE = 2;
 /**
  * Tokens read from the prompt cache that count as one token against quest.budget.max_tokens (P1-23). A cache read
  * costs a tenth of an input token (Claude API pricing; a twentieth on Opus 5.5) and does not count toward input

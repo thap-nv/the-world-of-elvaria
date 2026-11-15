@@ -341,6 +341,16 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   vcs with a remote), and the `delivery.pushed` / `delivery.merged` / `delivery.failed` lines
   (`src/schema/event/delivery-data.ts`), which PS-08c and PS-08d write.
 
+- Calibrates each tribe from quest files (`calibrationOf`, G): the median first-run tokens / estimate after
+  `CALIBRATION_MIN_SAMPLES` (10), otherwise `breakers.estimate_factor` (1.82). Turn ceilings use the upward-rounded
+  median first-run turns (at least one); missing turns have their own sample count. Only complete measurements
+  from ended, single-tribe first assignee runs with positive estimates count; resumed sessions are summed.
+  Each value reports `value`, `samples`, and `source` (`default` or `measured`), for every configured tribe.
+  `tokenCeilingOf` and `turnCeilingOf` accept that tribe's result as an optional fourth argument. Without it,
+  callers keep the existing ceilings. With it, tokens use estimate times factor, the existing rank floor, and
+  an explicit budget raised above the creation budget as another floor; the verifier multiplier applies last.
+  Pass current `context_budget_tokens` and `mana_multiplier` through `SessionRules` for nondefault kingdom settings.
+
 ## Does not
 
 - Do IO of any kind: no Node built-ins, no `process`, no `Date.now`, `Math.random` or timers (ADR 0002). Time
