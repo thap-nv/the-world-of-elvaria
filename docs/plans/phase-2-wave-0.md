@@ -1,6 +1,6 @@
 # Đợt 0 của giai đoạn 2 — PS-08 và PS-11: kế hoạch chi tiết
 
-Ngày: 2026-11-15 · Trạng thái: **đề xuất, chờ chủ nhân chốt** các mục (A)–(V) ở dòng "docs/ps-08-ps-11-plan" của [§11, 2026-11-15](../implementation-plan/11-2026-11-15.md). Hai task này là đợt 0 của giai đoạn 2 ([phase-2.md](phase-2.md) §4), không thuộc giai đoạn 1.5; [CLAUDE.md](../../CLAUDE.md) trỏ mọi task `PS-…` về [phase-1.5.md](phase-1.5.md), và file đó trỏ sang đây (nó đã gần trần 150 KB của `pnpm docs:check`). Phần "Ai đọc" và "Mẫu dùng lại" ở đầu [phase-1.5.md](phase-1.5.md) áp dụng nguyên cho các task dưới đây. Chưa task nào dưới đây được mở. Id của các task con là đề xuất: phiên điều phối đặt id, thêm dòng §8 và quyết thứ tự.
+Ngày: 2026-11-15 · Trạng thái: **chủ nhân đã chốt** ngày 2026-11-15, mọi mục theo khuyến nghị ([§11, 2026-11-15](../implementation-plan/11-2026-11-15.md): dòng "docs/ps-08-ps-11-plan" nêu các mục (A)–(V), dòng "Người dùng chốt (trong phiên kế hoạch…)" ngay sau nó ghi lời chốt; ba mục (I), (J), (Q) được chốt là chờ tới lúc ghi ở đó). Hai task này là đợt 0 của giai đoạn 2 ([phase-2.md](phase-2.md) §4), không thuộc giai đoạn 1.5; [CLAUDE.md](../../CLAUDE.md) trỏ mọi task `PS-…` về [phase-1.5.md](phase-1.5.md), và file đó trỏ sang đây (nó đã gần trần 150 KB của `pnpm docs:check`). Phần "Ai đọc" và "Mẫu dùng lại" ở đầu [phase-1.5.md](phase-1.5.md) áp dụng nguyên cho các task dưới đây. Chưa task nào dưới đây được mở: mỗi task con đã có dòng §8 `chưa làm`; phiên điều phối quyết thứ tự và lúc mở.
 
 ## Điều code cho thấy (2026-11-15)
 
@@ -48,9 +48,9 @@ Khảo sát ở `b9386dfd`. Số dòng nối tiếp bảng "Điều code cho th�
 - **Check của forge đỏ**: ở PS-08d là `delivery.failed` lý do `checks_red` và một mục bản tấu; quest ở lại `done`. Về `returned` là PS-08f, vì cần hai hàng mới trong máy trạng thái (dòng 24). Mục (B).
 - **Quest nào tự merge** (§10): PS-08 không thêm luật dấu. Ở `pr_merge`, chỉ quest **đã có dấu** (`quest.seal` có) được merge; quest tới `done` không qua dấu (dạng `research`, `analyze`, `batch`, `plan` có commit trên nhánh) dừng ở PR như chế độ `pr`. Merge không qua dấu là việc của PS-08b, nơi có cầu dao và mục bản tấu của nó. Mục (G).
 - **Chỗ chừa cho task khác**: PS-09 lấp bước 2, đổi lý do `conflict` của `delivery.failed` thành quest Hợp nhất, gửi `advisory`, và dừng nhận việc khi nhánh gốc đỏ. PS-08b nới luật "chỉ quest có dấu"; `delivery.merged` đã mang `sealed` cho sổ đo và bản tấu của nó. PS-26 đọc `territory` và `merge_sha` của `delivery.merged`. Bốn điểm còn mở của PS-08b không chốt ở đây.
-- **Chia** (đề xuất, mục (A); luật: một nhánh tối đa 3 ý khi chạm máy trạng thái của domain, 4–5 ý khi không):
+- **Chia** (chủ nhân chốt, mục (A); luật: một nhánh tối đa 3 ý khi chạm máy trạng thái của domain, 4–5 ý khi không):
 
-| Id đề xuất | Việc | Số ý | Máy trạng thái | Cần trước | File chạm chính |
+| Id | Việc | Số ý | Máy trạng thái | Cần trước | File chạm chính |
 |---|---|---|---|---|---|
 | PS-08 | Cấu hình giao hàng và credential | 4 | không | — | `p/domain/src/schema/{territory-delivery,event/delivery-data}.ts`, glossary, `a/cli/src/{territory,doctor,forge}` |
 | PS-08c | Push và PR (chế độ `pr`) | 5 | không | PS-08 | `p/steward/src/forge/**`, `background.ts`, `p/domain/src/{dispatch,world}/**`, `a/cli/src/{forge,quest,run}`, lệnh hộp thư `deliver` |
@@ -112,7 +112,7 @@ Khảo sát ở `b9386dfd`. Số dòng nối tiếp bảng "Điều code cho th�
   - Ghi chú của hàng `done.archive` ở bảng §2.5 đổi cho đúng (nguồn ở `packages/domain/src/quest/transition-table.ts`, rồi `pnpm docs:gen`); các hàng không đổi.
   - Bản tấu đề nghị nâng cấp: mục `upgrade_available` (nhóm `can_wait`, lệnh `upgrade`) khi repo nguồn của bản ghim có commit mới trên nhánh mặc định chạm `packages/` hay `apps/` so với commit đang ghim. `apps/cli` tính (nó giữ con trỏ `.state/build.json`) và đưa vào qua một cổng tùy chọn của `StewardDeps`, đọc lúc dựng bản tấu; `elvaria digest` dùng cùng hàm.
   - Tài liệu: [operating-a-kingdom.md](../guides/operating-a-kingdom.md) §7 và §15, [elvaria-territory.md](../guides/elvaria-territory.md) (bật giao hàng, `required_checks` rỗng, lùi về bản ghim trước PS-08 thì bỏ `delivery` khỏi `territory.json`); §3.16.7 sửa chỗ khác thực tế; ADR 0023 ghi `(Amended …)` cho mục (D) và (G).
-- **Lần chạy thật** (mục (J); tốn mana, do một phiên chạy thật riêng làm sau khi task merge và `my-kingdom` nâng lên bản có nó): chủ nhân bật `elvaria territory delivery elvaria --mode pr_merge`; một quest hạng F hay E dạng `document` trên lãnh thổ Elvaria; chủ nhân đóng một dấu; kỳ vọng `delivery.pushed`, `delivery.merged`, nhánh trên remote không còn, quest `archived`, đất đã trả, nhánh khác của remote không bị đụng. Trần 1 500 000 token theo cách Elvaria đếm; vượt thì dừng và báo. Sau lần chạy, chủ nhân chọn để `pr_merge` hay về `manual`.
+- **Lần chạy thật** (mục (J): các số dưới đây là đề xuất, chủ nhân chốt trước lần chạy; tốn mana, do một phiên chạy thật riêng làm sau khi task merge và `my-kingdom` nâng lên bản có nó): chủ nhân bật `elvaria territory delivery elvaria --mode pr_merge`; một quest hạng F hay E dạng `document` trên lãnh thổ Elvaria; chủ nhân đóng một dấu; kỳ vọng `delivery.pushed`, `delivery.merged`, nhánh trên remote không còn, quest `archived`, đất đã trả, nhánh khác của remote không bị đụng. Trần 1 500 000 token theo cách Elvaria đếm; vượt thì dừng và báo. Sau lần chạy, chủ nhân chọn để `pr_merge` hay về `manual`.
 - **Test**: forge giả và git thật: quest có dấu trên lãnh thổ `pr_merge` ⇒ `delivery.merged`, nhánh remote không còn, nhánh khác của remote còn nguyên, quest `archived`, đất đã trả; `required_checks` rỗng ⇒ merge không chờ; check `pending` rồi `green` ⇒ merge sau đó; `red` ⇒ `delivery.failed`, quest còn `done`, không merge; quá hạn ⇒ `checks_timeout`; quest không có dấu ⇒ dừng ở PR; đầu nhánh bị đổi trên remote ⇒ không merge, không xóa; `manual`: chủ nhân merge nhánh vào nhánh gốc bằng tay ⇒ quest được lưu trữ ở lần hỏi kế, cùng các phần của đội; quest `done` mà nhánh chưa có commit riêng không bị lưu trữ; đồng hồ giả cho nhịp 10 phút; mục `upgrade_available` có và hết sau `upgrade`.
 - **Xong khi**: `pnpm check` xanh; các ca trên; lần chạy thật đạt, ghi một dòng §11.
 
@@ -148,20 +148,20 @@ Khảo sát ở `b9386dfd`. Số dòng nối tiếp bảng "Điều code cho th�
 - **Mục tiêu**: quest đổi thứ người dùng nhìn thấy được chấm bằng mắt: người chấm đọc ảnh chụp do check của lãnh thổ sinh ra, so với ảnh tham chiếu và mô tả của quest; tộc không đọc được ảnh không chấm loại quest đó.
 - **Đọc trước**: §3.16.9 (ý PS-11); [ADR 0008](../adr/0008-separation-of-duties.md), [ADR 0016](../adr/0016-registry-data-not-code.md), [ADR 0021](../adr/0021-tribe-contract.md), [ADR 0022](../adr/0022-tests-in-the-world.md); dòng 37–42 ở trên; `packages/domain/src/verify/prompt-limit.ts` (mẫu của một luật chọn người chấm theo năng lực của tộc).
 - **Quest nào cần xem ảnh** (mục (P)): quest mang tag mới `visual`, thuộc dạng `build`, `fix` hay `refactor`; `kinds.json` chọn nghi thức `visual_review` cho nó bằng `ritual_overrides`. Không theo tag `frontend` (tag đó gồm cả việc không đổi gì trên màn hình), không cờ lãnh thổ, không `switch` theo dạng. Tể tướng và pháp sư gắn `visual` như mọi tag; mô tả của tag nói khi nào dùng.
-- **Hợp đồng ảnh** (mục (Q)):
+- **Hợp đồng ảnh** (mục (Q): chốt lại sau spike, trước khi mở PS-11b):
   - Mọi check của lãnh thổ nhận biến môi trường `ELVARIA_SCREENS_DIR`: thư mục `screens/` trong thư mục của lần chạy check, dưới `.runs/` của vương quốc. Check muốn người chấm xem gì thì ghi PNG vào đó: `<tên>.png` là ảnh chụp, `<tên>.ref.png` (tùy chọn) là ảnh tham chiếu cùng tên, `<tên>.diff.png` (tùy chọn) là ảnh so khác. Tên file `kebab-case`.
   - Lõi không biết thiết kế nằm ở đâu: check của lãnh thổ tự đưa ảnh tham chiếu (dựng từ mockup, hoặc chép từ ảnh đã lưu trong repo). Với lãnh thổ Elvaria, `design/**` chỉ được đọc (dòng 42); ảnh dựng từ nó sinh ra lúc chạy, không commit vào `design/`.
   - Ảnh không nằm trong đất của quest, nên việc đưa đất về đúng commit sau check và sau người chấm không xóa chúng, và chúng ở lại `.runs/` làm bằng chứng của lượt chấm.
   - Trần: 12 ảnh mỗi lượt chấm, mỗi ảnh tối đa 2 MiB, chỉ đuôi `.png`; là hằng trong runner-core, số cuối chốt theo spike.
-- **Chia** (đề xuất, mục (A); không task nào chạm máy trạng thái):
+- **Chia** (chủ nhân chốt, mục (A); không task nào chạm máy trạng thái):
 
-| Id đề xuất | Việc | Số ý | Mana | Cần trước | File chạm chính |
+| Id | Việc | Số ý | Mana | Cần trước | File chạm chính |
 |---|---|---|---|---|---|
 | PS-11a | Spike: ba CLI đọc ảnh PNG khi headless | 1 | có, trần 500 000 token | — | `docs/spikes/`, cli-facts, §10 |
 | PS-11 | Năng lực `vision` và nghi thức `visual_review` | 5 | 0 | — | `p/domain/src/{tribe,verify}/**`, `constants.ts`, `schema/registry-entries.ts`, `p/registry-default/{rituals,kinds,tags}.json`, `p/runner-core/prompts/ritual-steps.md`, glossary |
 | PS-11b | Ảnh tới người chấm | 5 | ít (phép `image` với CLI thật) | PS-11a, PS-11 | `p/runner-core/src/{checks,policy,prompt,conformance}/**`, ba adapter, `p/steward/src/{review,sessions}/**`, `docs/guides` |
 
-- **Điều kiện "một quest giao diện thật bị trả về khi ảnh lệch thiết kế"** của dòng §8: chỉ chạy được khi lãnh thổ Elvaria có check chụp ảnh, tức sau việc giao diện đầu tiên (P2-02 mang Playwright vào và dựng ảnh tham chiếu từ mockup HTML). Đề xuất chuyển nó thành điều kiện xong của P2-02 (mục (T)); PS-11b xong bằng ảnh fixture, check giả và phép `image` với CLI thật.
+- **Điều kiện "một quest giao diện thật bị trả về khi ảnh lệch thiết kế"** của dòng §8: chỉ chạy được khi lãnh thổ Elvaria có check chụp ảnh, tức sau việc giao diện đầu tiên (P2-02 mang Playwright vào và dựng ảnh tham chiếu từ mockup HTML). Chủ nhân chốt (mục (T)): nó thành điều kiện xong của P2-02; PS-11b xong bằng ảnh fixture, check giả và phép `image` với CLI thật.
 
 ## PS-11a — Spike đọc ảnh
 
