@@ -172,7 +172,7 @@ Khảo sát code ngày 2026-11-11 (ở commit `d245e5b`), và hệ quả cho t�
   - **Luật**, đặt trong roster (`territoryHasRoom` và `take` nhận thêm quest; sửa các chỗ gọi ở `plan-tick.ts`, `wakes.ts`, `reassigns.ts`):
     - **R1** số quest `working` nhỏ hơn `max_concurrent`, như cũ;
     - **R2** quest bậc phiên không khai vùng chỉ bắt đầu khi lãnh thổ không có quest bậc phiên nào đang làm, và khi nó đang làm thì không quest nào bắt đầu; quest bậc script đứng ngoài R2 và R3;
-    - **R3** quest có vùng chờ khi một quest đang giữ vùng giao với nó, trừ các quest nằm trong chuỗi nhánh mà plot của nó dựng trên (mục đầu của `plotBaseOf().from`, bắc cầu);
+    - **R3** quest có vùng chờ khi một quest đang giữ vùng giao với nó, trừ các quest nằm trong chuỗi nhánh mà plot của nó dựng trên (mục đầu của `plotBaseOf().from`, bắc cầu); (sửa 2026-11-15, fix/acceptance-scope) trong trận thử mù, phần nghiệm thu và các phần cùng đội không chờ nhau (quest ghép ghép cả hai);
     - **chống chết đói**: trong một lãnh thổ, khi một quest không khai vùng đang chờ thì quest có vùng mở sau nó không bắt đầu.
   - Quest do Nhiếp chính tạo: quest ghép lấy hợp vùng các phần; phần test chấp nhận và quest nối theo lấy vùng của quest sinh ra nó.
   - Lý do chờ **không** vào `CLAIM_BLOCKERS` (mỗi lý do ở đó rung chuông và ghi `quest.unclaimable`): một hàm thuần `scopeHolderOf` cho `quest list` và cho bản tấu.

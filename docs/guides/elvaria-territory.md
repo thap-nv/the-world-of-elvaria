@@ -8,7 +8,7 @@ Mỗi quest có thể khai `scope_paths`: các glob, tính từ gốc lãnh th�
 
 - **R1**: số quest đang làm nhỏ hơn `max_concurrent`, như trước.
 - **R2**: quest bậc phiên không khai vùng chỉ bắt đầu khi lãnh thổ không có quest bậc phiên nào đang làm, và khi nó đang làm thì không quest nào bắt đầu. Khi nó đang chờ lãnh thổ trống, quest có vùng xếp sau nó trong hàng không bắt đầu, để nó không chờ mãi.
-- **R3**: quest có vùng chờ khi một quest đang giữ vùng giao với nó. Quest giữ vùng từ lượt chạy đầu tới khi được lưu trữ, kể cả lúc đã xong và chờ chủ nhân merge; quest mà đất riêng dựng trên nhánh của quest giữ vùng (phụ thuộc đã xong, phần của đội trên nhánh hợp đồng, quest ghép với các phần nó ghép) không phải chờ.
+- **R3**: quest có vùng chờ khi một quest đang giữ vùng giao với nó. Quest giữ vùng từ lượt chạy đầu tới khi được lưu trữ, kể cả lúc đã xong và chờ chủ nhân merge; quest mà đất riêng dựng trên nhánh của quest giữ vùng (phụ thuộc đã xong, phần của đội trên nhánh hợp đồng, quest ghép với các phần nó ghép) không phải chờ; trong trận thử mù, phần nghiệm thu và các phần cùng đội cũng không chờ nhau (fix/acceptance-scope).
 
 Quest bậc script đứng ngoài R2 và R3. `elvaria quest list` ghi bên trạng thái quest đang chờ ai; `quest show` in thêm một dòng.
 

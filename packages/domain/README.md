@@ -119,7 +119,8 @@
   it is archived (`holdsScope`); the roster gives a quest room only when its territory has a slot (R1), no session
   quest without a scope works there and it has one or no session quest works there (R2), and no quest outside its
   base chain (`baseChainOf`: the branches its plot is built on, and those a merge quest merges) holds a scope that
-  meets its own (R3). Script-tier quests stand outside R2 and R3. A quest without a scope that waits for its territory
+  meets its own (R3); in a blind trial the acceptance part and the parts of its party pass each other
+  (fix/acceptance-scope). Script-tier quests stand outside R2 and R3. A quest without a scope that waits for its territory
   keeps the scoped quests after it in the claims of that tick (`claims` of `src/dispatch/tick-steps.ts`).
   `scopeHolderOf` names whom a quest waits for. The merge quest takes its parts' scopes together, the acceptance part
   and the follow-ups the scope of the quest they come from.
