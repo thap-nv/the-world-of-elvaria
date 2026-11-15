@@ -1,7 +1,7 @@
 // Opening a session (implementation-plan §3.1 steps 4–6, §2.5): the plot, the request, the spawn, then the quest's
 // move with the session's id and the character's move with it. A move the state machine refuses kills the session
 // it was for, so no session ever runs for a quest the files do not say it runs for.
-import { currentRun, err, ok, resumedSession } from '@elvaria/domain';
+import { currentRun, endedInCut, err, ok, resumedSession } from '@elvaria/domain';
 import type { Character, CharacterId, LoadTrace, Quest, QuestId, Result, Revival } from '@elvaria/domain';
 import type { AgentRunner, Continuation, ParseOptions, RunningSession } from '@elvaria/runner-core';
 
@@ -14,7 +14,9 @@ import { judgeParseOf } from '../review/verdict-file.ts';
 import { secretsBreaker } from './breaker.ts';
 import { continuationOf, refusedWhileWaiting } from './continuation.ts';
 import { assigneeUnopened, judgeUnopened, unopenedLine } from './no-session.ts';
+import { branchHeadOf } from './progress.ts';
 import { requestOf } from './request.ts';
+import { clearWrapUp } from './wrap-up.ts';
 import { questSecretsOf, rememberSecrets, secretsLacking } from './secrets.ts';
 import { spawnOf } from './spawn.ts';
 import type { Context } from '../context.ts';
@@ -183,7 +185,9 @@ export async function openAssignee(
     if (opening.kind === 'answer') return err(`secrets_lacking: ${lacking.code}`);
     return secretsBreaker(ctx, quest, lacking);
   }
-  const n = goesOn(opening) ? currentRun(quest) : currentRun(quest) + 1;
+  const sameRun = goesOn(opening) || (opening.kind === 'redispatch' && endedInCut(quest.attempt_log));
+  const n = sameRun ? currentRun(quest) : currentRun(quest) + 1;
+  await clearWrapUp(ctx, quest, n);
   const spawned = await spawnFor(
     ctx,
     runner,
@@ -222,6 +226,7 @@ export async function openAssignee(
     session_id: sessionId,
     checks: [],
     spawned_at: spawnedAt,
+    head: await branchHeadOf(ctx, plot),
   });
   return moved;
 }
