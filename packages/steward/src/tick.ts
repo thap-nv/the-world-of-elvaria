@@ -11,6 +11,7 @@ import { noteJudgeWaits } from './judge-waits.ts';
 import { createRecorder } from './record.ts';
 import { restartFromLog, stallLeftReviews } from './restart.ts';
 import { reviewPromptsOf } from './review/prompt-size.ts';
+import { claimPromptsOf } from './sessions/claim-prompt-size.ts';
 import { noticesOf } from './schedule/digest.ts';
 import { recordEnd } from './sessions/ended.ts';
 import { wantTipGraphs } from './sessions/graph.ts';
@@ -54,11 +55,13 @@ export async function recover(deps: StewardDeps, state: State): Promise<void> {
 /**
  * What planTick decides on: the files, the sessions, the background, the tribes' models and versions, and the judges'
  * prompts measured for the reviews about to be judged, so a judge whose tribe cannot take its prompt on this OS is
- * passed over (review/prompt-size.ts, fix/verifier-prompt-limit).
+ * passed over (review/prompt-size.ts, fix/verifier-prompt-limit); the assignees' likewise for the open quests about to
+ * be claimed (sessions/claim-prompt-size.ts, fix/claim-step).
  */
 async function snapshotFor(ctx: Context, state: State): Promise<KingdomSnapshot> {
   const { world, deps } = ctx;
   const reviewPrompts = await reviewPromptsOf(ctx, state.promptSizes);
+  const claimPrompts = await claimPromptsOf(ctx, state.claimPromptSizes);
   return {
     ...snapshotOf(
       world,
@@ -68,6 +71,7 @@ async function snapshotFor(ctx: Context, state: State): Promise<KingdomSnapshot>
       state.background.view(),
       reviewPrompts,
     ),
+    claim_prompts: claimPrompts,
     models: modelsOf(deps.runners),
     tools_found: await versionStep(ctx, state.versions),
   };

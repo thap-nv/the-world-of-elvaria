@@ -95,6 +95,7 @@ const stateOf = (deps: StewardDeps, ended: () => void): State => ({
   unjudged: new Set(),
   judgeWaits: new Map(),
   promptSizes: new Map(),
+  claimPromptSizes: new Map(),
   versions: createVersionBook(),
   scheduler: createScheduler(jobsOf(deps), deps.onCall),
   restart: undefined,

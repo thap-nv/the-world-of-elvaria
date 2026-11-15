@@ -39,6 +39,28 @@ describe('taking a quest above the level', () => {
     }
   });
 
+  it('leaves a part and the acceptance tests of a party to the merge quest’s seal (fix/claim-step)', () => {
+    const memberIn = (status: Quest['status'], role: NonNullable<Quest['party_role']>): Quest => {
+      const quest = questIn(status);
+      const party = role === 'contract' ? quest.id : ('q_20261106_5m2k8p' as Quest['id']);
+      return { ...quest, party_id: party, party_role: role, contract: 'apps/api/openapi.yaml' };
+    };
+    for (const role of ['part', 'acceptance'] as const) {
+      expect(claim(memberIn('open', role), 1)).toMatchObject({ ok: true, value: { seal_required: false } });
+      expect(reassign(memberIn('returned', role), 1)).toMatchObject({
+        ok: true,
+        value: { seal_required: false },
+      });
+      // A seal it needs for another reason stays.
+      const sealed = { ...memberIn('open', role), seal_required: true };
+      expect(claim(sealed, 1)).toMatchObject({ ok: true, value: { seal_required: true } });
+    }
+    // The contract and the merge quest are delivered themselves: above the ceiling, they wait for it.
+    for (const role of ['contract', 'merge'] as const) {
+      expect(claim(memberIn('open', role), 1)).toMatchObject({ ok: true, value: { seal_required: true } });
+    }
+  });
+
   it('sends a passing verdict to the owner instead of straight to done', () => {
     const taken = claim(questIn('open'), 1);
     if (!taken.ok) throw new Error(taken.error.code);
