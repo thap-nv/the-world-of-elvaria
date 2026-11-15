@@ -69,4 +69,14 @@ describe('the drafting rules of the Chancellor and a mage (PS-06)', () => {
     await expect(user).toMatchFileSnapshot('__snapshots__/assignee-plan.txt');
     expect(buildPrompt({ ...mage, quest: QUEST }, templates).user).not.toContain('# The quest template');
   });
+
+  // fix/council-run-gaps (a), PS-11 (l): a quest tagged visual waits in review while no tribe reads images.
+  it("shows a plan quest's mage the tag that asks for eyes only when a tribe that works reads images", () => {
+    const tags = (input: Parameters<typeof buildPrompt>[0]): string | undefined =>
+      buildPrompt(input, templates)
+        .user.split('\n')
+        .find((line) => line.startsWith('- Tags: frontend'));
+    expect(tags(mage)).not.toContain('visual');
+    expect(tags({ ...mage, vision: true })).toContain('visual');
+  });
 });

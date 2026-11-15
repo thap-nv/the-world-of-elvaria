@@ -20,6 +20,7 @@ import type {
   CommitRescue,
   DiffScope,
   Drift,
+  MergeOptions,
   MergeOutcome,
   PatchOutcome,
   PlotFailure,
@@ -114,9 +115,15 @@ export interface Plots {
   /**
    * A party's merge quest, before each session (P1-18): merges each of `branches` its plot does not hold, until one
    * stops on a conflict, which is left in progress for the character, then `base`'s base branch, after which the
-   * plot counts from it (PS-08e, runner-core's mergeAll); nothing without git.
+   * plot counts from it (PS-08e, runner-core's mergeAll); nothing without git. `options.dependencies`: a quest's
+   * dependencies instead (fix/council-run-gaps (d), runner-core's mergeDependencies).
    */
-  merge(plot: Quest['plot'], branches: readonly string[], base?: BaseBranch): Promise<MergeOutcome>;
+  merge(
+    plot: Quest['plot'],
+    branches: readonly string[],
+    base?: BaseBranch,
+    options?: MergeOptions,
+  ): Promise<MergeOutcome>;
   /** The branches of `branches` the plot does not hold, `base`'s too (P1-18, PS-08e): the merge quest's check. */
   unmerged(plot: Quest['plot'], branches: readonly string[], base?: BaseBranch): Promise<readonly string[]>;
   /**
