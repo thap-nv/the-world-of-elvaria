@@ -237,6 +237,23 @@ describe('the trips that are not a ceiling never go on by themselves, even with 
     await noProgressMeasured(kingdom, 'Forbidden', 'forbidden_paths');
   });
 
+  it('forbidden_paths: a session cut at the hard ceiling whose WIP finds a forbidden path, HEAD moved', async () => {
+    const { kingdom, steward } = await open({ plays: HANGS }, (k) => ({
+      plots: plotsWith(k.root, {
+        head: movingTip(),
+        touched: () => Promise.resolve(['infra/secrets/key.txt']),
+      }),
+    }));
+    await kingdom.store.territories.update('dc1-se-team' as never, (territory) =>
+      ok({ ...territory, laws: { ...territory.laws, forbidden_paths: ['infra/secrets/**'] } }),
+    );
+    await kingdom.command('create_quest', questPayload('Cut'));
+    await steward.tick();
+    kingdom.clock.advance(HARD);
+    await steward.tick();
+    await noProgressMeasured(kingdom, 'Cut', 'forbidden_paths');
+  });
+
   it('secrets: the treasury lacks one the quest asks for', async () => {
     const { kingdom, steward } = await open({ treasury: {} }, (k) => ({
       plots: plotsWith(k.root, { head: movingTip(), commit: () => Promise.resolve(CLEAN) }),

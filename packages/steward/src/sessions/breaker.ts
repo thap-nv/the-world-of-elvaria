@@ -44,17 +44,22 @@ function wipLeft(wip: PlotCommit | undefined): { wip?: string } {
 export async function breakAssignee(
   ctx: Context,
   running: Running,
-  breaker: AssigneeBreaker,
+  cause: AssigneeBreaker,
   end: () => Promise<RunResult>,
 ): Promise<Result<Quest, string>> {
-  const { trip, patch, paths } = breaker;
+  let breaker = cause;
   const who = running.character;
   const swamped = await ctx.record.change(who, 'character.swamp', step('breaker'));
   if (!swamped.ok) ctx.deps.log.warn(`steward: ${running.quest}: ${who} is not swamped: ${swamped.error}`);
   const result = await end();
-  const wip = UNCOMMITTED.has(trip)
+  const wip = UNCOMMITTED.has(breaker.trip)
     ? undefined
-    : await commitPlot(ctx, running.quest, plotCommitMessage.wip(running.quest, trip));
+    : await commitPlot(ctx, running.quest, plotCommitMessage.wip(running.quest, breaker.trip));
+  // A program the session ran changed forbidden paths: whatever the trip was, the owner sees the plot first, so the
+  // cut is a `forbidden_paths` trip, never measured and never gone on from.
+  if (wip?.status === 'forbidden' && isCapTrip(breaker.trip))
+    breaker = { trip: 'forbidden_paths', paths: wip.paths };
+  const { trip, patch, paths } = breaker;
   // Only a ceiling is measured for progress: the other trips keep the way to the infirmary (ADR 0030).
   const progress = isCapTrip(trip) ? await madeProgress(ctx, running, wip) : undefined;
   // A quest with no letter gets a minimal one, whatever the trip (gap 23 of PS-07); after a refused hook, a copy of
