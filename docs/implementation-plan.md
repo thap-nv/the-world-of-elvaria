@@ -63,7 +63,7 @@ Bối cảnh khi lập kế hoạch:
 | §8, task đã xong: Giai đoạn 1 — Tầng việc chạy thật | [8-done-phase-1.md](implementation-plan/8-done-phase-1.md) |
 | §8, task đã xong: Chặng tự cường — task `PS-…` (kế hoạch sản phẩm 0.8 mục 14, §3.16) | [8-done-ps.md](implementation-plan/8-done-ps.md) |
 | §9 Phản biện và rủi ro · §9.1 Chỗ khác kế hoạch sản phẩm (đã chốt 2026-11-06) · §9.2 Rủi ro kỹ thuật | [9-risks.md](implementation-plan/9-risks.md) |
-| §11 Nhật ký quyết định, mỗi ngày một file | [2026-11-06](implementation-plan/11-2026-11-06.md) · [2026-11-07](implementation-plan/11-2026-11-07.md) · [2026-11-08](implementation-plan/11-2026-11-08.md) · [2026-11-09](implementation-plan/11-2026-11-09.md) · [2026-11-10](implementation-plan/11-2026-11-10.md) · [2026-11-11](implementation-plan/11-2026-11-11.md) · [2026-11-12](implementation-plan/11-2026-11-12.md) · [2026-11-13](implementation-plan/11-2026-11-13.md) · [2026-11-14](implementation-plan/11-2026-11-14.md) · [2026-11-15](implementation-plan/11-2026-11-15.md) |
+| §11 Nhật ký quyết định, mỗi ngày một file | [2026-11-06](implementation-plan/11-2026-11-06.md) · [2026-11-07](implementation-plan/11-2026-11-07.md) · [2026-11-08](implementation-plan/11-2026-11-08.md) · [2026-11-09](implementation-plan/11-2026-11-09.md) · [2026-11-10](implementation-plan/11-2026-11-10.md) · [2026-11-11](implementation-plan/11-2026-11-11.md) · [2026-11-12](implementation-plan/11-2026-11-12.md) · [2026-11-13](implementation-plan/11-2026-11-13.md) · [2026-11-14](implementation-plan/11-2026-11-14.md) · [2026-11-15](implementation-plan/11-2026-11-15.md) · [2026-11-16](implementation-plan/11-2026-11-16.md) |
 <!-- /docs:gen plan-index -->
 
 **Ghi vào đâu.**
@@ -193,6 +193,13 @@ Dòng của task đã xong ở [8-done-ps.md](implementation-plan/8-done-ps.md).
    - macOS: chưa có lần chạy thật nào, chủ nhân không có máy macOS; chỉ có CI chạy tay.
    - (c) của P1-46 (`quest show` in lượt cuối có phán quyết khi quest đã sang lượt mới): chỉ khi chủ nhân thấy cần.
 5. **Chưa thấy trên CLI thật** ([cli-facts](reference/cli-facts-2026-11-12.md) §1.8, §2.5): dòng 429 của Claude Code (`system/api_retry`, `StopFailure`, `rate_limit_event` bị từ chối), mà Nhiếp chính đang đọc theo tài liệu và kiểu dữ liệu của Agent SDK; một phiên model trên agy 1.5.6. Không cần quyết định: ghi lại fixture khi gặp.
+6. **Chia sẻ bài học giữa các vương quốc** (định hướng (161) của chủ nhân, 2026-11-15; đề xuất ở [plans/lesson-sharing.md](plans/lesson-sharing.md), §11 ngày 2026-11-16). Chưa task nào được mở. Chờ chủ nhân chốt, khuyến nghị từng mục ở §11 của tài liệu đó:
+   - (L1–L4, hướng của đề xuất) Đường đi: bản phát hành là cửa vào mặc định, file gói do chủ nhân nhập là cửa thứ hai. Thời điểm: chưa dựng lệnh xuất hay nhập. Riêng tư: mặc định không gì rời vương quốc, máy chặn rồi chủ nhân duyệt từng dòng. Tin cậy: dòng nhập qua chỗ chờ, nhận từng dòng, thử việc bằng số đo tại chỗ.
+   - (L5) Bước 0, đưa bài học về chính Elvaria từ kinh lên bản phát hành: có làm ngay không, ai làm.
+   - (L6) Các câu của kế hoạch sản phẩm sẽ sửa (chủ nhân sửa): trước task đầu tiên của kinh mặc định.
+   - (L7) Địa chí có thêm một file nằm trong repo của lãnh thổ không.
+   - (L8) Ràng buộc S1–S8 cho định dạng của PS-12 (phạm vi có vai, `fail_kind` và `origin` trên từng dòng, phiên bản CLI là "đo ở bản nào"): khi lập kế hoạch PS-12.
+   - (L9, L10) ADR mới cho hai cửa vào, và một lượt tra web trước khi viết nó: cùng task đầu tiên chạm prompt.
 
 Đã trả lời (2026-11-11, chặng tự cường; §11): (PS-04b) bản ghim là một worktree tách rời tại `<kingdom>/.builds/<sha>/`, con trỏ ở `.state/build.json`, mọi lệnh CLI trên vương quốc chạy lại bằng bản đang ghim (§3.16.4, [plans/phase-1.5.md](plans/phase-1.5.md)). (PS-07) Việc làm bài thử của mốc: lý do trạm xá và dòng chi tiết của `doctor` thành mã cộng chuỗi VI/EN.
 
