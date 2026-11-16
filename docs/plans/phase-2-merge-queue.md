@@ -1,6 +1,6 @@
 # Sau dấu vua — PS-09, PS-26 và PS-08b: kế hoạch chi tiết
 
-Ngày: 2026-11-16 · Trạng thái: **đề xuất, chờ chủ nhân chốt** các mục K1–K17 ở cuối file ([§11, 2026-11-16](../implementation-plan/11-2026-11-16.md), dòng "docs/plan-ps-09"). Ba task này nối tiếp [phase-2-wave-0.md](phase-2-wave-0.md) (PS-08 và các task con của nó): hàng đợi merge và thư `advisory` (PS-09), tuần tra 0 mana (PS-26), ủy quyền dấu (PS-08b). Phần "Ai đọc" và "Mẫu dùng lại" ở đầu [phase-1.5.md](phase-1.5.md) áp dụng nguyên. Tên hàm, tên trường và các con số dưới đây là đề xuất khớp với code hiện có: phiên làm task được đổi cho hợp, miễn giữ hợp đồng, và ghi chỗ đổi vào §11. Chưa task nào dưới đây được mở; phiên điều phối quyết thứ tự và lúc mở.
+Ngày: 2026-11-16 · Trạng thái: **chủ nhân đã chốt** ngày 2026-11-16, mọi mục K1–K17 theo khuyến nghị ([§11, 2026-11-16](../implementation-plan/11-2026-11-16.md): dòng "docs/plan-ps-09" nêu các mục, dòng "Người dùng chốt (trong phiên kế hoạch plan-ps-09-86…)" ghi lời chốt; K12–K17 được chốt là chờ tới lúc ghi ở đó). Ba task này nối tiếp [phase-2-wave-0.md](phase-2-wave-0.md) (PS-08 và các task con của nó): hàng đợi merge và thư `advisory` (PS-09), tuần tra 0 mana (PS-26), ủy quyền dấu (PS-08b). Phần "Ai đọc" và "Mẫu dùng lại" ở đầu [phase-1.5.md](phase-1.5.md) áp dụng nguyên. Tên hàm, tên trường và các con số dưới đây là đề xuất khớp với code hiện có: phiên làm task được đổi cho hợp, miễn giữ hợp đồng, và ghi chỗ đổi vào §11. Chưa task nào dưới đây được mở; phiên điều phối quyết thứ tự và lúc mở.
 
 ## Điều code cho thấy (2026-11-16)
 
@@ -57,7 +57,7 @@ Khảo sát ở `1578486` (`main`) và ở nhánh của PS-08c; PS-08c vào `mai
 
 - **Thứ tự theo phụ thuộc** (đề xuất; phiên điều phối quyết): PS-26 không cần code của PS-08d, mở được ngay. Sau PS-08d: PS-09, PS-09c và PS-08b không cần nhau. PS-09b sau PS-09. PS-09d sau PS-26 và PS-09. PS-08g sau PS-08b và PS-26.
 - **Chồng nhau**: `packages/i18n/src/glossary.json`, hai file locale, `packages/domain/src/index.ts`, `docs/schemas/**`, `packages/domain/src/world/attention-table.ts` và `attention.ts` (mục bản tấu mới ở PS-26, PS-09d, PS-08b, PS-08g, cùng PS-08d), `packages/steward/src/types.ts` (cổng `Plots` ở PS-09, PS-26, PS-08b), `packages/steward/src/forge/**` (PS-08d, PS-09, PS-09b, PS-08b: không mở hai task trong nhóm này cùng lúc nếu tránh được), `packages/steward/src/tick.ts` (`recover` nhận thêm sổ ở PS-26, PS-08g), `apps/cli/src/commands.ts`. Nhánh merge sau giữ cả hai phía và sinh lại file sinh.
-- **Điều kiện mở lần chạy giai đoạn 2 kế tiếp** (quyết định (A) của lần chạy (130), mục K2): đề xuất đọc "PS-09 xong" là PS-09 và PS-09b xong. PS-09c, PS-09d, PS-26, PS-08b, PS-08g không chặn lần chạy đó.
+- **Điều kiện mở lần chạy giai đoạn 2 kế tiếp** (quyết định (A) của lần chạy (130), mục K2): "PS-09 xong" đọc là PS-09 và PS-09b xong. PS-09c, PS-09d, PS-26, PS-08b, PS-08g không chặn lần chạy đó.
 
 ## PS-09 — Cập nhật nhánh trong hàng đợi
 
@@ -203,9 +203,9 @@ Khảo sát ở `1578486` (`main`) và ở nhánh của PS-08c; PS-08c vào `mai
 - **Test**: quest không qua dấu merge, tuần tra kế thấy một check đỏ ⇒ `delegation.suspended` một lần, quest mới của lãnh thổ chờ dấu, lãnh thổ khác không đổi; khoảng nghi vấn chỉ có quest có dấu ⇒ không ngừng; `quest escaped` trên quest không qua dấu ⇒ ngừng, trên quest có dấu ⇒ chỉ sổ đo; `--resume` ⇒ quest mới lại được miễn dấu; khởi động lại Nhiếp chính giữ trạng thái ngừng; lệnh từ chối quest chưa merge. Domain 100 %.
 - **Xong khi**: `pnpm check` xanh; các ca trên; ADR 0023 nói đúng tín hiệu và lệnh bật lại.
 
-## Quyết định chờ chủ nhân
+## Quyết định (chủ nhân chốt 2026-11-16, theo khuyến nghị)
 
-**Phải chốt trước khi mở task** (ghi task bị chặn):
+**Cần trước khi mở task** (ghi task liên quan):
 
 - **K1** (mọi task) Cách chia và id: PS-09 thành PS-09, PS-09b, PS-09c, PS-09d; PS-08b thành PS-08b và PS-08g; PS-26 một task. Khuyến nghị: nhận. Lý do: mỗi task vừa một context và không task nào quá 5 ý; PS-08b nguyên khối trải từ schema tới forge, bản tấu và cầu dao.
 - **K2** (thứ tự của phiên điều phối) Điều kiện (A) của lần chạy (130) "PS-09 xong" đọc là PS-09 **và** PS-09b; `max_concurrent` của lãnh thổ Elvaria cũng theo mốc đó. Khuyến nghị: nhận. Phương án khác: chỉ PS-09 (nhanh hơn một task; theo dòng 47, khoảng 9 % lần merge từ 13/11 có conflict ngoài file nóng, mỗi lần sẽ là một mục bản tấu cho chủ nhân gỡ tay).
@@ -219,7 +219,7 @@ Khảo sát ở `1578486` (`main`) và ở nhánh của PS-08c; PS-08c vào `mai
 - **K10** (PS-08b) Ba điều ngoài chữ của dòng §8: hai trường tùy chọn mới trên quest (`seal_delegated`, `seal_raised`; hợp đồng dữ liệu của quest); hai lý do nâng thêm (máy chấm một mình, ủy quyền đang ngừng lúc phán quyết); lệnh hoàn tác là dòng `git revert` chủ nhân tự chạy. Khuyến nghị: nhận. Lý do: không có trường thì không phân biệt được quest được miễn nhờ ủy quyền với quest `research` vốn không dấu, và chủ nhân không biết vì sao một quest đã ủy quyền vẫn tới tay mình; dưới `machine_only` một quest có thể đạt mà không người chấm nào đọc.
 - **K11** (PS-08g) Tín hiệu của cầu dao: check nhánh gốc đỏ có một merge không qua dấu trong khoảng nghi vấn, và lệnh mới `elvaria quest escaped`; trạng thái theo lãnh thổ; bật lại bằng `elvaria territory delegation <id> --resume`. Khuyến nghị: nhận.
 
-**Chờ được**:
+**Chốt là chờ**:
 
 - **K12** `pnpm-lock.yaml` vào `shared_paths` của lãnh thổ Elvaria (kiểu `regenerate`, thêm `pnpm install --lockfile-only` vào `commands.generate`): chờ PS-09 xong rồi đo; khuyến nghị thử trên một vương quốc thử trước.
 - **K13** File nóng: chưa thêm snapshot prompt và `docs/plans/*.md` (0 và 1 lần conflict trong 377 merge); README của package và `CLAUDE.md` để quest Hợp nhất. Khuyến nghị: nhận, xét lại sau lần chạy giai đoạn 2 kế.

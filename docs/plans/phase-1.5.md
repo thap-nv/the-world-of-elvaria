@@ -432,4 +432,4 @@ Mục chi tiết của PS-08 (cùng các task con đề xuất PS-08c, PS-08d, P
 
 ## PS-09, PS-26 và PS-08b — sau dấu vua
 
-Mục chi tiết của PS-09 (cùng các task con đề xuất PS-09b, PS-09c, PS-09d), của PS-26 và của PS-08b (cùng PS-08g) nằm ở [phase-2-merge-queue.md](phase-2-merge-queue.md), kèm bảng "Điều code cho thấy" của ngày 2026-11-16 (dòng 43–64) và các quyết định K1–K17. Phần "Ai đọc" và "Mẫu dùng lại" ở đầu file này áp dụng cho chúng.
+Mục chi tiết của PS-09 (cùng các task con PS-09b, PS-09c, PS-09d), của PS-26 và của PS-08b (cùng PS-08g) nằm ở [phase-2-merge-queue.md](phase-2-merge-queue.md), kèm bảng "Điều code cho thấy" của ngày 2026-11-16 (dòng 43–64) và các quyết định K1–K17 chủ nhân chốt ngày 2026-11-16. Phần "Ai đọc" và "Mẫu dùng lại" ở đầu file này áp dụng cho chúng.
