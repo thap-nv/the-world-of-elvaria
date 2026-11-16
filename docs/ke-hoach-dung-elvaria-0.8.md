@@ -4,13 +4,15 @@ Ngày: 2026-11-10 · Phiên bản 0.8 (0.7 + tự cường: thế giới tự đ
 
 **Elvaria** là tên sản phẩm và repo. Mỗi người dùng tự đặt tên vương quốc của mình khi mở lần đầu và tên từng lãnh địa khi gắn dự án (mặc định là tên repo).
 
+(2026-11-16) Thêm định hướng (161): vương quốc của ai người nấy giữ, còn bài học chia sẻ được giữa các vương quốc. Các mục 1, 4, 6, 10, 11, 12, 14 sửa theo và ghi "(161)" ở chỗ sửa; đề xuất đầy đủ và các quyết định đã chốt ở [plans/lesson-sharing.md](plans/lesson-sharing.md). Không nguyên tắc nào của mục 2 đổi.
+
 ---
 
 ## 1. Tóm tắt
 
 Elvaria là một thế giới fantasy low-poly 3D chạy trên máy cá nhân (Windows và macOS), trong đó mỗi AI agent là một nhân vật có nghề: nhận việc thật từ bảng nhiệm vụ, làm, được nhân vật khác nghiệm thu, và giao ra code, tài liệu, nghiên cứu thật. Thế giới là giao diện quản lý, không phải trang trí bên cạnh giao diện quản lý.
 
-Một vương quốc = một người dùng = một máy. Developer, BA, marketing, researcher dùng cùng một thế giới nhưng sống ở những khu khác nhau của nó. Không có server chung, không đồng bộ giữa các máy.
+Một vương quốc = một người dùng = một máy. Developer, BA, marketing, researcher dùng cùng một thế giới nhưng sống ở những khu khác nhau của nó. Không có server chung, không đồng bộ giữa các máy. (161) Bài học thì chia sẻ được giữa các vương quốc, qua bản phát hành và qua file do người dùng xuất và nhập; việc, quest và mã nguồn của vương quốc nào ở lại vương quốc đó.
 
 Tiêu chí thành công của bản v1:
 
@@ -187,9 +189,11 @@ Luồng một quest từ đầu đến cuối:
 |---|---|
 | id, owner | character id hoặc `temple` |
 | text | một câu, mệnh lệnh |
-| source_verdict | bắt buộc: bài học phải bắt nguồn từ phán quyết |
+| source_verdict | bắt buộc với bài học do thầy tu viết: bài học phải bắt nguồn từ phán quyết. (161) Bài học tới từ ngoài không có phán quyết tại chỗ; nó gắn với số đo tại chỗ kể từ lúc nhận |
 | created_at, last_hit_at, retired_at | thanh lọc sau 3 mùa không chạm |
-| scope | (0.8) nơi bài học được đo: tộc, hệ điều hành, phiên bản CLI, lãnh thổ, tag; ngoài phạm vi đó thì không nạp |
+| scope | (0.8) nơi bài học được đo: tộc, hệ điều hành, phiên bản CLI, lãnh thổ, tag; ngoài phạm vi đó thì không nạp. (161) Thêm vai: bài học dành cho người chấm không vào prompt của người làm |
+| origin | (161) bản phát hành hay gói mà bài học tới từ đó; bài học không có `origin` là của vương quốc |
+| fail_kind | (161) loại lỗi bài học chữa, để vương quốc nhận đếm được `helped`, `missed` mà không cần phán quyết gốc |
 | helped, missed | (0.8) số lần chạy có nạp bài học mà lỗi tương ứng không xảy ra / vẫn xảy ra; căn cứ để giữ hay gỡ |
 
 ### Skill (bí kíp)
@@ -200,7 +204,7 @@ Luồng một quest từ đầu đến cuối:
 | tags[] | tag quest mà bí kíp này áp dụng |
 | scope | `global` hoặc id lãnh thổ |
 | path | `temple/skills/<id>/SKILL.md` + file kèm; runner chuyển sang định dạng skill của từng CLI khi nạp vào worktree |
-| source | `temple` (thầy tu viết từ bài học lặp) hoặc `user` |
+| source | `temple` (thầy tu viết từ bài học lặp) hoặc `user`; (161) hoặc bản phát hành (bí kíp mặc định đi theo bản Elvaria) |
 | max_tokens | trần kích thước; bí kíp dài quá thì chia |
 
 ### Letter (thư, 0.8)
@@ -360,6 +364,8 @@ Chỉ tách khi đáng: mỗi phiên mới có chi phí cố định, nên khôn
 - Kinh là file Markdown; người dùng sửa trực tiếp được.
 - (0.8) Thầy tu sửa kinh **từng dòng** (thêm, gỡ, gộp), không viết lại cả tập: viết lại làm kinh ngắn dần và mất chi tiết. Chi tiết dài chuyển thành bí kíp.
 - (0.8) Trước khi viết một dòng kinh, thầy tu đi hết thang sửa lỗi của nguyên tắc 14: lỗi chặn được bằng quyền, kiểm được bằng máy hay làm được bằng script thì thành một thư đề xuất, không thành kinh. Đền bản đầu làm ngay sau giai đoạn 1, không chờ giai đoạn 5 (mục 10, 14).
+- (161) Bài học đúng ở mọi vương quốc thì lên **bản phát hành**, ở bậc cao nhất của thang sửa lỗi (mục 14): một check, một script hay một câu trong mẫu prompt, và tới các vương quốc khi nâng bản. Bản phát hành cũng mang một bộ kinh mặc định, để vương quốc mới không bắt đầu từ số không.
+- (161) Bài học của vương quốc khác chỉ vào qua hai cửa: bản phát hành, và một file gói do người dùng nhập. Dòng nhập nằm ở chỗ chờ, người dùng nhận từng dòng, và bị gỡ khi số đo tại chỗ không ủng hộ. Mặc định không gì rời vương quốc: xuất là lệnh người dùng gõ, máy chặn trước thông tin riêng, người dùng duyệt từng dòng. Địa chí không trao giữa các vương quốc: dữ kiện của một repo đi theo repo đó.
 - **Ngồi thiền** = khi context gần đầy: nhân vật tóm tắt journal rồi mở phiên mới. Sự kiện `agent.compact` hiển thị như thiền.
 
 Kết hôn và thế hệ sau (tiến hóa cấu hình từ kinh của hai nhân vật) để chương hai; con kế thừa bài học, không kế thừa nghề.
@@ -558,11 +564,11 @@ Runner dịch output của mọi CLI về cùng schema sự kiện ở mục 4. 
 | **0. Xương sống và sa bàn** (1–2 tuần) | Repo, schema quest/character/event, thư mục kingdom, CLI tạo/xem quest, bộ sinh sự kiện giả, replay ra terminal | Replay một "ngày giả" in ra dòng thời gian đọc được |
 | **1. Tầng việc chạy thật** (2–3 tuần) | Tể tướng, Quản sự, runner Claude + runner Gemini, worktree, luật tách vai, verdict, journal, hồi sinh; 4 nhân vật: hiệp sĩ, elf, thư ký, thợ cả | 10 quest thật (code + docs + research) đi hết vòng không cần can thiệp; cố tình để hết mana rồi hồi sinh, việc tiếp tục đúng chỗ |
 | **1.5. Tự cường** (0.8; 2–3 tuần) | Sổ đo; thư đề xuất cho việc phát sinh, bản tấu mỗi ngày, phạm vi ủy quyền; vùng bảo vệ và nâng cấp có đường lùi; vùng file của quest; Nghị hội có khảo sát, hợp đồng và duyệt kế hoạch (mục 14) | Elvaria tự lập kế hoạch cho một việc của giai đoạn 2 và làm tới khi giao hàng; người dùng chỉ gặp một dấu trên kế hoạch, bản tấu và dấu vua |
-| **2. Sự kiện, chuông và khách nhẹ** (2 tuần) | Hooks hai CLI → events, mana tracking với phần của vua, chuông, Nhà thơ viết biên niên sử v1; khách nhẹ 2D cho điện thoại + đường hầm có xác thực. (0.8) Do chính Elvaria làm, qua Nghị hội; đầu giai đoạn: Quản sự giao hàng tới merge, hàng đợi merge, nghi thức xem ảnh; trong giai đoạn: Đền bản đầu, bí kíp theo loại việc, tính cách trong lời nói với người dùng | Biên niên sử tối đọc đúng những gì đã xảy ra; đóng dấu một quest từ điện thoại ngoài nhà và máy ở nhà làm tiếp. (0.8) Ba quest song song trên lãnh thổ Elvaria vào nhánh chính mà không ai gỡ conflict tay |
+| **2. Sự kiện, chuông và khách nhẹ** (2 tuần) | Hooks hai CLI → events, mana tracking với phần của vua, chuông, Nhà thơ viết biên niên sử v1; khách nhẹ 2D cho điện thoại + đường hầm có xác thực. (0.8) Do chính Elvaria làm, qua Nghị hội; đầu giai đoạn: Quản sự giao hàng tới merge, hàng đợi merge, nghi thức xem ảnh; trong giai đoạn: Đền bản đầu, bí kíp theo loại việc, tính cách trong lời nói với người dùng. (161) Đền bản đầu ghi phạm vi của từng dòng kinh ở dạng máy lọc được, kể cả vai, để bài học về sau mang đi được | Biên niên sử tối đọc đúng những gì đã xảy ra; đóng dấu một quest từ điện thoại ngoài nhà và máy ở nhà làm tiếp. (0.8) Ba quest song song trên lãnh thổ Elvaria vào nhánh chính mà không ai gỡ conflict tay |
 | **3. Thế giới xám** (3–4 tuần) | Three.js, địa hình tỉ lệ thật trong lãnh thổ, vùng lãnh thổ, tòa nhà hộp có nội thất hộp và mái cắt, nhân vật viên nang, tìm đường có độ dốc, xe ngựa giữa vùng, camera, click panel, render-on-demand, mức chi tiết theo lãnh thổ, sa bàn 3D | Replay một ngày trên bản đồ với 3 lãnh thổ; nhàn rỗi < 5% CPU; click mọi thứ đều ra thông tin |
 | **4. Nghi thức và sắc đẹp** (5–6 tuần) | Khảo sát điền địa và mở cõi, tài sản thật, trang bị theo cấp, hạng quest nhìn thấy được, 11 dạng có tòa nhà và hoạt hình, nội thất thật, nghi thức, thời tiết, ngày đêm, điện ảnh có ưu tiên, lớp "cần ngài", theme là dữ liệu | Người lạ nhìn 2 phút nói được dự án đang ở đâu và kẹt ở đâu; gắn repo thứ tư thì bản đồ mọc thêm vùng mà không chỉnh tay |
-| **5. Đền, tuần tra, chiến dịch, trận đánh** (4+ tuần) | Thầy tu và kinh (0.8: bản đầu đã có từ giai đoạn 2; ở đây thầy tu viết bí kíp từ bài học lặp, và tra cứu kho), danh tiếng và cấp, tuần tra có trần mana, Chiến tranh (tấn công và phòng thủ), Trận đánh với replay, điêu tàn và tái thiết | Một đợt triage 50 issue chạy thành một trận; kinh của một nhân vật khiến lỗi lặp giảm thấy được |
-| **6. Chương hai** (sau) | Kết hôn và thế hệ sau, liên minh (sync thư mục), theme thứ hai, chế độ đa nghề sâu hơn, đưa toàn bộ runner lên VM cloud bằng API key | — |
+| **5. Đền, tuần tra, chiến dịch, trận đánh** (4+ tuần) | Thầy tu và kinh (0.8: bản đầu đã có từ giai đoạn 2; ở đây thầy tu viết bí kíp từ bài học lặp, và tra cứu kho; (161) thêm kinh mặc định theo bản phát hành, rồi xuất và nhập gói bài học), danh tiếng và cấp, tuần tra có trần mana, Chiến tranh (tấn công và phòng thủ), Trận đánh với replay, điêu tàn và tái thiết | Một đợt triage 50 issue chạy thành một trận; kinh của một nhân vật khiến lỗi lặp giảm thấy được |
+| **6. Chương hai** (sau) | Kết hôn và thế hệ sau, (161) gói bí kíp, số hiệu chỉnh gộp và repo bài học chung (thay "liên minh (sync thư mục)" của các bản trước), theme thứ hai, chế độ đa nghề sâu hơn, đưa toàn bộ runner lên VM cloud bằng API key | — |
 
 Thứ làm trước trong mỗi giai đoạn: thứ chứng minh được giả định rủi ro nhất. Giai đoạn 1: luật tách vai và hồi sinh. Giai đoạn 3: render-on-demand. (0.8) Giai đoạn 1.5: sổ đo, vì mọi cơ chế học sau đó cần nó để biết mình có tác dụng; thao trường (mục 14) có trước giai đoạn 3; quan hệ giữa các nhân vật hiện lên cùng theme ở giai đoạn 4.
 
@@ -590,6 +596,8 @@ Thứ làm trước trong mỗi giai đoạn: thứ chứng minh được giả 
 | (0.8) Thư giữa các nhân vật thành kênh tán gẫu tốn mana | Từ vựng đóng, một thư một việc, không trả lời qua lại; Quản sự định tuyến; mọi thư nằm trong event log |
 | (0.8) Lập kế hoạch tốn hơn làm | Nghị hội đầy đủ chỉ cho việc nhiều vùng hoặc từ hạng B; việc nhỏ đi thẳng như cũ; chi phí của Nghị hội hiện trên sổ đo |
 | (0.8) Bài học đúng ở một nơi bị áp cho mọi nơi | Mỗi bài học ghi phạm vi nơi nó được đo (tộc, hệ điều hành, phiên bản CLI, lãnh thổ); ngoài phạm vi thì không nạp |
+| (161) Bài học nhập từ vương quốc khác là đường tiêm prompt | Chỉ hai cửa vào: bản phát hành và file gói do người dùng nhập; gói chỉ là câu chữ, không mang script, prompt hay nghi thức; dòng nhập nằm ở chỗ chờ, máy soát, người dùng nhận từng dòng; số đo tại chỗ quyết giữ hay gỡ |
+| (161) Bài học xuất làm lộ thông tin riêng | Mặc định không gì rời vương quốc; lệnh xuất chỉ đọc kinh; máy chặn tên lãnh thổ, đường dẫn, secret; người dùng duyệt từng dòng; Elvaria không tự gửi file đi đâu |
 
 Câu hỏi mở (trả lời trước giai đoạn 1):
 
@@ -641,6 +649,7 @@ Không còn câu hỏi mở trước giai đoạn 0.
 | 2026-11-10 | Tính cách và quan hệ: chỉ ở tầng hiển thị và lời nói với người dùng; quan hệ suy ra từ phán quyết, không là đầu vào của phán quyết |
 | 2026-11-10 | Vùng bảo vệ cần dấu vua; Quản sự chạy bản đã ghim, nâng cấp có thử và đường lùi; thao trường để thử thay đổi prompt, bí kíp, model trước khi dùng thật |
 | 2026-11-11 | Kế hoạch chi tiết giai đoạn 1.5 (`docs/plans/phase-1.5.md`): khảo sát gộp vào quest kế hoạch của pháp sư; thư mang tên `memo` trong dữ liệu; vùng file được giữ tới khi quest lưu trữ; bài thử của mốc 1.5 là mã lý do cộng chuỗi VI/EN cho trạm xá và `doctor`; Tể tướng phân loại thư theo lịch mỗi ngày một lần |
+| 2026-11-16 | (161) Vương quốc của ai người nấy giữ, bài học chia sẻ được giữa các vương quốc: hai cửa vào (bản phát hành là mặc định; file gói do người dùng nhập, nhận từng dòng), không server, không đồng bộ, không tự tải; mặc định không gì rời vương quốc; chưa dựng lệnh xuất hay nhập trước Đền bản đầu; địa chí đi theo repo (`docs/plans/lesson-sharing.md`) |
 
 ---
 
@@ -741,7 +750,7 @@ Trọng số của model đóng băng khi phát hành. Mỗi phiên bắt đầu
 | Fine-tuning | Không | CLI theo gói thuê bao không cho chạm trọng số; dữ liệu một vương quốc quá ít; model nền đổi là làm lại. Thứ tương đương đã có: ngộ đạo (nâng model) và bài mẫu |
 | RAG, chunking, embedding | Một phần, để sau | Với code, nhân vật tự tìm và đọc file là đủ và luôn mới. Kho đáng tra là thư bàn giao, phán quyết, bài học, báo cáo nghiên cứu. Thứ tự: chọn theo tag, rồi tìm theo từ khóa, embedding chỉ khi sổ đo cho thấy thiếu. Mỗi mẩu trong kho mang theo ngữ cảnh của nó (quest, lãnh thổ, ngày, phạm vi) |
 | Ngữ cảnh tự tiến hóa | Có | Đền: kinh sửa từng dòng, có nguồn, phạm vi và bộ đếm |
-| Thư viện kỹ năng | Có | Bí kíp dạng `SKILL.md`: chỉ tên và mô tả nạp sẵn, thân bài nạp khi cần. Chỉ dùng bí kíp do Đền hoặc người dùng viết, không tải từ ngoài |
+| Thư viện kỹ năng | Có | Bí kíp dạng `SKILL.md`: chỉ tên và mô tả nạp sẵn, thân bài nạp khi cần. Không tự tải từ ngoài: (161) bí kíp và bài học của người khác chỉ vào qua bản phát hành, hoặc qua file do người dùng nhập và nhận |
 | Bài mẫu | Có | Vài tài liệu người dùng ưng cho mỗi loại, cất ở `temple/exemplars/` |
 | Thử thay đổi prompt có đối chứng | Có giới hạn | Thao trường, có trần mana |
 | Chọn người theo số liệu | Có | Danh tiếng theo tag (đã có); thêm chọn model theo tag và hạng |
@@ -764,6 +773,8 @@ Mỗi lần chạy ghi lại kinh và bí kíp đã nạp, để biết bài h�
 
 ### Thang sửa lỗi và Đền
 
+(161) Lỗi mà vương quốc nào cũng sẽ gặp thì sửa trong Elvaria, không sửa trong kinh của một vương quốc: bài học đó lên bản phát hành.
+
 Khi một lỗi lặp lại, chọn bậc cao nhất làm được:
 
 1. Làm cho lỗi không xảy ra được: quyền, công cụ, lệnh của lãnh thổ.
@@ -776,6 +787,8 @@ Khi một lỗi lặp lại, chọn bậc cao nhất làm được:
 Kinh là bậc yếu và đắt nhất, vì tốn token ở mọi prompt. Thầy tu (kích hoạt như mục 6) đọc phán quyết theo loại lỗi và sổ đo, rồi với mỗi lỗi lặp: bậc 1–3 thành một thư đề xuất; bậc 4–5 là một lần sửa từng dòng, có nguồn là phán quyết và có phạm vi nơi nó được đo; bậc 6 là một đề nghị trong bản tấu.
 
 Ba điều kiện để thế giới thật sự học chứ không chỉ tích chữ: biết lần chạy nào đã nạp bài học nào; sổ đo cho thấy lỗi tương ứng giảm; thay đổi lớn được thử ở thao trường trước khi dùng thật.
+
+(161) Bài học tới từ ngoài, qua bản phát hành hay qua file gói, không có phán quyết tại chỗ. Nó vẫn theo nguyên tắc 14: gắn với số đo tại chỗ kể từ lúc nhận, và bị gỡ khi số đo đó không ủng hộ.
 
 ### Chất lượng theo loại việc
 

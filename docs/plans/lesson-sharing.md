@@ -165,7 +165,7 @@ Không làm ở bất kỳ bước nào: đồng bộ thư mục, tự tải, g�
 
 ## 9. Đề xuất cho kế hoạch sản phẩm (chủ nhân sửa)
 
-Phiên này không sửa `docs/ke-hoach-dung-elvaria-0.8.md`. Các chỗ sẽ đổi nếu chủ nhân theo khuyến nghị:
+(Sửa 2026-11-16, sau lời chốt) Chủ nhân giao phiên này sửa luôn [kế hoạch sản phẩm 0.8](../ke-hoach-dung-elvaria-0.8.md): các chỗ dưới đây đã vào file, mười bốn đoạn, mỗi đoạn ghi "(161)". Hook `guard-edit` chặn tool sửa file đó, nên chủ nhân cho phép riêng lần này ghi bằng một script Node; luật "chủ nhân sửa" không đổi. Cột "Hôm nay" là chữ trước khi sửa:
 
 | Mục | Hôm nay | Đề xuất |
 |---|---|---|
@@ -181,7 +181,7 @@ Phiên này không sửa `docs/ke-hoach-dung-elvaria-0.8.md`. Các chỗ sẽ đ
 | 14 "Thư viện kỹ năng" | "Chỉ dùng bí kíp do Đền hoặc người dùng viết, không tải từ ngoài" | "Không tự tải từ ngoài: bí kíp và bài học của người khác chỉ vào qua bản phát hành, hoặc qua file do chủ nhân nhập và nhận" |
 | 14 Thang sửa lỗi | Sáu bậc | Thêm một câu trước thang: lỗi mà vương quốc nào cũng sẽ gặp thì sửa trong Elvaria, không sửa trong kinh của một vương quốc |
 
-Có nâng số phiên bản của kế hoạch sản phẩm (0.9) hay sửa tại chỗ trong 0.8 là việc chủ nhân chọn.
+Chủ nhân chọn sửa tại chỗ trong 0.8, không nâng lên 0.9 (L6).
 
 ## 10. Đề xuất ADR (chưa viết)
 
@@ -191,7 +191,7 @@ Hai ADR đã có sẽ sửa tại chỗ khi PS-12 và PS-13 làm, theo mẫu "(A
 
 ## 11. Quyết định của chủ nhân
 
-**Chủ nhân chốt ngày 2026-11-16**, trong phiên kế hoạch này: L1–L9 theo khuyến nghị ở hai bảng dưới; L10 làm ngay trong phiên thay vì chờ tới trước ADR, kết quả ở §13. Việc còn lại sau lời chốt: chủ nhân sửa kế hoạch sản phẩm 0.8 theo §9 (L6); phiên điều phối mở bước 0 bằng một phiên của chủ nhân (L5); S1–S8 là đầu vào khi lập kế hoạch PS-12 (L8).
+**Chủ nhân chốt ngày 2026-11-16**, trong phiên kế hoạch này: L1–L9 theo khuyến nghị ở hai bảng dưới; L10 làm ngay trong phiên thay vì chờ tới trước ADR, kết quả ở §13. Việc còn lại sau lời chốt: phiên điều phối mở bước 0 bằng một phiên của chủ nhân (L5); S1–S8 là đầu vào khi lập kế hoạch PS-12 (L8). Kế hoạch sản phẩm 0.8 đã sửa theo §9 cùng ngày (L6).
 
 **Phải chốt** (hướng của tài liệu này):
 
