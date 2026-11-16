@@ -81,7 +81,8 @@
   domain's `amendedScopeOf`; a quest with no scope stays unbounded) while no session holds the quest, closes the
   memo `accepted` or `rejected` and answers the quest with the note, waiting in the inbox while the doer cannot go
   on; `owner` keeps the memo open with the advice and makes the quest the owner's question. The owner's `answer` or `decide_memo` on such a
-  quest settles it too.
+  quest settles it too; an acceptance of the owner's (`decide_memo` accepted) opens the scope as the author's does, the
+  description kept (fix/amendment-owner-accept).
   Commands with `source: chancellor` are told as the Chancellor's (`actorOfCommand`), and their `command.*` lines
   carry the source.
 - Runs the jobs of `kingdom.schedule` (PS-03, implementation-plan §3.16.3; `src/schedule/`): no cron. At the end

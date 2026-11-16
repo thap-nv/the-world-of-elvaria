@@ -2,8 +2,10 @@
 // §3.14): the bookkeeping planTick shares between its steps, so a character, a tribe slot or a territory slot
 // given away in one step is gone for the next ones. A territory has room for a quest when it runs fewer quests than
 // its max_concurrent (R1) and the scope rules let the quest start (scope.ts, PS-05: R2, R3). A tribe whose CLI changed
-// version since its last passing check opens no session at all (versionHoldsOf, A1b of the lessons of 2026-11-13).
+// version since its last passing check opens no session at all (versionHoldsOf, A1b of the lessons of 2026-11-13);
+// nor does one kept for a session outside the slots: the triage due, an amendment's author awaited (reservedTribesOf).
 import { poolEnabled, poolKeyOf } from '../mana/pool.ts';
+import { authorOf, awaitsAuthor } from '../memo/amendment.ts';
 import { admits, asleepFor, manaStateOf } from '../mana/state.ts';
 import { CHANCELLOR_JOBS } from '../schedule/constants.ts';
 import { RANKS } from '../schema/common.ts';
@@ -152,27 +154,59 @@ export function poolOpenOf(
   };
 }
 
-/**
- * The Chancellor's tribe while a job of its (CHANCELLOR_JOBS: the triage) is due and has not started
- * (fix/acceptance-scope): that session lies outside the tribe's slots and starts only once no session of the tribe
- * runs (PS-03b), so new work given to the tribe at every tick would starve it, and the digest that waits for it, all
- * day. The Chancellor is the one the job picks (pickChancellor, as `chancellorOf` of apps/cli does): nobody, or nobody
- * but of a held tribe, keeps no tribe.
- */
-function reservedTribeOf(source: RosterSource, holds: readonly TribeHold[]): TribeId[] {
-  if (!(source.jobs_due ?? []).some((job) => CHANCELLOR_JOBS.includes(job))) return [];
-  const pick = pickChancellor(source.characters, source.limits, holds);
-  return pick.status === 'chosen' ? [pick.choice.character.tribe] : [];
+/** Who the quests that wait on their author's decision (awaitsAuthor, PS-22b) wait for: the Chancellor, mages' tribes. */
+interface AwaitedAuthors {
+  readonly chancellor: boolean;
+  readonly tribes: readonly TribeId[];
 }
 
 /**
- * The tribes that open no session in this tick: those held by their CLI's version (versionHoldsOf), and the one kept
- * for the Chancellor (reservedTribeOf). Either still counts and stands by, as an asleep pool does: its wait ends with a
- * passing `tribe check`, or once the Chancellor's job starts, not with another character or judge.
+ * The authors the quests blocked on an amendment wait for (authorOf, as the memo was routed): the Chancellor, or the
+ * mage of the plan while it is a character of the kingdom and not suspended. A mage gone leaves the quest to the
+ * owner (apps/cli `mageOf`), so it keeps no tribe.
+ */
+function awaitedAuthorsOf(source: Pick<RosterSource, 'quests' | 'characters'>): AwaitedAuthors {
+  const waiting = source.quests.filter(awaitsAuthor);
+  if (waiting.length === 0) return { chancellor: false, tribes: [] };
+  const present = new Map(
+    source.characters.filter(({ status }) => status !== 'suspended').map(({ id, tribe }) => [id, tribe]),
+  );
+  // Every mage counts as present here: one gone is found absent from `present` below.
+  const lookup = { quests: new Map(source.quests.map((quest) => [quest.id, quest])), present: () => true };
+  const authors = waiting.map((quest) => authorOf(quest, lookup));
+  return {
+    chancellor: authors.some(({ kind }) => kind === 'chancellor'),
+    tribes: authors.flatMap((author) =>
+      author.kind === 'mage' ? (present.get(author.character) ?? []) : [],
+    ),
+  };
+}
+
+/**
+ * The tribes kept for a session that lies outside the tribes' slots and starts only once no session of its tribe runs
+ * (PS-03b), since new work given to the tribe at every tick would starve it all day (fix/acceptance-scope): the
+ * Chancellor's while a job of its (CHANCELLOR_JOBS: the triage, and the digest that waits for it) is due and has not
+ * started; (fix/amendment-owner-accept, (126)) the author's while a quest waits on its decision (PS-22b), until the
+ * decision is applied. The Chancellor is the one the job picks (pickChancellor, as `chancellorOf` of apps/cli does):
+ * nobody, or nobody but of a held tribe, keeps no tribe.
+ */
+function reservedTribesOf(source: RosterSource, holds: readonly TribeHold[]): TribeId[] {
+  const awaited = awaitedAuthorsOf(source);
+  const triage = (source.jobs_due ?? []).some((job) => CHANCELLOR_JOBS.includes(job));
+  if (!triage && !awaited.chancellor) return [...awaited.tribes];
+  const pick = pickChancellor(source.characters, source.limits, holds);
+  return pick.status === 'chosen' ? [...awaited.tribes, pick.choice.character.tribe] : [...awaited.tribes];
+}
+
+/**
+ * The tribes that open no session in this tick: those held by their CLI's version (versionHoldsOf), and those kept
+ * for the Chancellor or an amendment's author (reservedTribesOf). Either still counts and stands by, as an asleep pool
+ * does: its wait ends with a passing `tribe check`, or once the job starts or the decision is in, not with another
+ * character or judge.
  */
 function closedTribesOf(source: RosterSource): ReadonlySet<TribeId> {
   const holds = versionHoldsOf(source.kingdom.tribes, source.tools_found ?? {});
-  return new Set([...holds.map(({ tribe }) => tribe), ...reservedTribeOf(source, holds)]);
+  return new Set([...holds.map(({ tribe }) => tribe), ...reservedTribesOf(source, holds)]);
 }
 
 /** Whether the character's tribe has a runner that may take the quest on the territory (tribeMayTake). */
