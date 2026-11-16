@@ -1,7 +1,7 @@
 // `elvaria quest list`: the quest board, oldest first (ids sort by day). Commands still in the inbox are counted
 // under it, because a quest the owner just added exists only as a command until the Steward's next tick. A party's
 // member says its role and where the party stands (P1-21 (c)). A quest that waits on its territory's scope rules says
-// for whom (PS-05).
+// for whom (PS-05), and one the owner holds says so (fix/quest-hold).
 import { QUEST_STATUSES } from '@elvaria/domain';
 import type { Quest, QuestId, QuestStatus, Registry, ScopeWait } from '@elvaria/domain';
 
@@ -25,9 +25,13 @@ export function kindName(ctx: KingdomContext, registry: Registry | undefined, ki
   return entry === undefined ? kind : nameIn(ctx.locale, entry);
 }
 
-/** The status, marked when the Steward has said nobody can take the quest (§3.1), or when it waits for a scope (PS-05). */
+/**
+ * The status, marked when the owner holds the quest (fix/quest-hold), when the Steward has said nobody can take it
+ * (§3.1), or when it waits for a scope (PS-05). The hold comes first: the Steward reads nothing else of a held quest.
+ */
 const statusCell = (ctx: KingdomContext, quest: Quest, board: Board): string => {
   const status = ctx.t(QUEST_STATUS_LABEL[quest.status]);
+  if (quest.held !== undefined) return `${status} (${ctx.t('cli.quest.held.mark')})`;
   if (board.unclaimable.has(quest.id)) return `${status} (${ctx.t('cli.quest.unclaimable.mark')})`;
   const wait = board.waits.get(quest.id);
   return wait === undefined ? status : `${status} (${scopeWaitText(ctx, wait)})`;

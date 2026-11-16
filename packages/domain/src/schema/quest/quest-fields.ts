@@ -27,6 +27,7 @@ import {
   BlockedSchema,
   BudgetSchema,
   DeliverableSchema,
+  HeldSchema,
   PlotSchema,
   QuestScriptSchema,
   SealSchema,
@@ -107,6 +108,12 @@ export const QuestFieldsSchema = z.strictObject({
   objection: ObjectionSchema.optional().meta(
     describe(
       "(PS-22) The objection memo the next review answers: the Steward sets it when the run that filed it ends, and clears it with the second judge's verdict, or when the owner decides the memo first.",
+    ),
+  ),
+  // fix/quest-hold: optional and added after v1, so `version` stays 1 (ADR 0003); a quest never held has none.
+  held: HeldSchema.optional().meta(
+    describe(
+      'The owner holds the quest (`elvaria quest hold`), e.g. between two runs of a plan: while set, the Steward neither claims nor starts it, as if a dependency were unfinished, and the quest keeps its status (open, or claimed by the character the owner named), its description and its dependencies. Only an open or claimed quest is held; `elvaria quest unhold` removes the field. A held quest that is cancelled keeps it.',
     ),
   ),
   secrets_required: SecretNamesSchema.default(() => []),

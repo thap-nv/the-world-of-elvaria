@@ -26,7 +26,8 @@ export type QuestGuard =
   | 'stalled_review'
   | 'no_stalled_review'
   | 'cut_goes_on'
-  | 'cut_stops';
+  | 'cut_stops'
+  | 'assignee_last';
 
 /**
  * A character works the quest: a session quest's assignee. A script-tier quest has none, nor has the first run of a
@@ -57,6 +58,14 @@ const cutGoesOn = (quest: Quest, event?: QuestEvent): boolean =>
   byCharacter(quest) &&
   cutCallOf(quest.attempt_log, event.progress) === 'go_on';
 
+/**
+ * A character's work waits in the infirmary: the quest's last session was its assignee's (cut, crashed, its commit
+ * refused), not a judge's, so a judge has work of this run to read (fix/quest-hold). A review that stalled has its own
+ * way back (`infirmary.retry.stalled_review`), and a quest no session ran for has nothing to judge.
+ */
+const assigneeLast = (quest: Quest): boolean =>
+  byCharacter(quest) && quest.attempt_log.at(-1)?.role === 'assignee';
+
 /** Guards read the quest and, for the few that depend on what happened, the event (`findTransition` may lack it). */
 export const QUEST_GUARDS: Readonly<Record<QuestGuard, (quest: Quest, event?: QuestEvent) => boolean>> = {
   session: (quest) => quest.tier === 'session',
@@ -82,6 +91,7 @@ export const QUEST_GUARDS: Readonly<Record<QuestGuard, (quest: Quest, event?: Qu
   no_stalled_review: (quest) => !reviewStalled(quest),
   cut_goes_on: cutGoesOn,
   cut_stops: (quest, event) => !cutGoesOn(quest, event),
+  assignee_last: assigneeLast,
 };
 
 export interface QuestTransitionRow {
@@ -188,6 +198,9 @@ export const QUEST_TRANSITIONS: readonly QuestTransitionRow[] = [
   { from: 'infirmary', event: 'retry', actors: U, guard: 'no_stalled_review', to: 'open' },
   // A review the breakers kept cutting goes on, same run, with a new judge (P1-26): opening it would redo the work.
   { from: 'infirmary', event: 'retry', actors: U, guard: 'stalled_review', to: 'review' },
+  // The owner judges the work done and sends it to review, same run, same attempt (fix/quest-hold): a session cut
+  // after it finished its work, which `retry` would redo. A fail sends it back to its character as any review does.
+  { from: 'infirmary', event: 'submit', actors: U, guard: 'assignee_last', to: 'review' },
   { from: 'infirmary', event: 'reassign', actors: U, guard: 'session', to: 'claimed' },
   { from: 'infirmary', event: 'archive', actors: U, to: 'archived' },
 ];

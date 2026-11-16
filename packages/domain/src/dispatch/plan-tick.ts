@@ -12,6 +12,7 @@ import { breakersOf, measureOf } from '../breaker/breakers.ts';
 import { calibrationOf } from '../breaker/calibration.ts';
 import { machineMergeDue } from '../party/machine-merge.ts';
 import { questFinished } from '../quest/finished.ts';
+import { isHeld } from '../quest/hold.ts';
 import { startingNow } from './background-room.ts';
 import { forgeDeliveries } from './forge-due.ts';
 import { reassignsOf } from './reassigns.ts';
@@ -176,7 +177,9 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
   };
   // A dependency archived after its delivery is as good as done (P1-21 (a)): its branch stays, its work stands.
   const done = new Set(snapshot.quests.filter(questFinished).map(({ id }) => id));
-  const ready = (quest: Quest): boolean => quest.depends_on.every((id) => done.has(id));
+  // A quest the owner holds waits as one whose dependency is unfinished: never claimed, started, run by the machine or
+  // named unclaimable, until the owner lifts the hold (fix/quest-hold).
+  const ready = (quest: Quest): boolean => !isHeld(quest) && quest.depends_on.every((id) => done.has(id));
   const inStatus = (status: Quest['status']): Quest[] =>
     snapshot.quests.filter((quest) => quest.status === status).toSorted(byPriority);
   const open = inStatus('open').filter(ready);

@@ -35,7 +35,11 @@
   command with each question. `quest retry` opens a quest of the infirmary again, for every free character of its
   class (the line it prints says so); `quest retry --to <id>` sends `reassign` instead, so only that character takes
   it, with a full attempt budget (`infirmary.reassign`; refused on a stalled review and a script-tier quest, lessons
-  of 2026-11-12); `quest reassign [--to <id>]`
+  of 2026-11-12); `quest submit <id>` (fix/quest-hold, `src/quest/lifecycle.ts`) sends the work of a quest in the
+  infirmary whose last session was its assignee's to review, same run (`submit`; a stalled review is pointed to
+  `retry`); `quest hold <id> [--reason]` and `quest unhold <id>` (`src/quest/hold.ts`) hold an open or claimed quest
+  so the Steward neither claims nor starts it, and lift the hold (`hold`, `unhold`; `quest list` marks it held, `quest
+show` says since when and why); `quest reassign [--to <id>]`
   gives a quest to the character named (checked as the Steward checks it, `src/quest/assignee.ts` on the domain's
   `namedAssignee`: known, of the quest's class, not suspended, of an enabled tribe; a level below the rank is said,
   since the quest then waits for the seal) or, without `--to`, to the Steward's choice (P1-26). `quest add --to

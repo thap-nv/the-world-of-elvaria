@@ -154,4 +154,19 @@ export const CASES: Record<InboxCommandKind, { valid: object; invalid: object; i
     invalid: { quest: QUEST, force: true },
     issue: 'Unrecognized key: "force"',
   },
+  hold: {
+    valid: { quest: QUEST, reason: 'Waits for PS-09 on main.' },
+    invalid: { quest: QUEST, reason: 7 },
+    issue: 'payload.reason: Invalid input',
+  },
+  unhold: {
+    valid: { quest: QUEST },
+    invalid: { quest: QUEST, reason: 'now' },
+    issue: 'Unrecognized key: "reason"',
+  },
+  submit: {
+    valid: { quest: QUEST },
+    invalid: { quest: 'q_1' },
+    issue: 'payload.quest: Invalid string',
+  },
 };

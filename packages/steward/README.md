@@ -196,7 +196,13 @@
   fail streak and level alone, P1-40), `answer` (waits in the inbox until the asker is free and its pool has mana;
   within `dispatch.resume_after_answer_minutes` of the question, and when the adapter can, the asking session goes
   on with `--resume`), `reassign` (the owner's character, the level aside; or the Steward's own choice),
-  `set_rank`, `edit_quest` (refused when the quest moved since the owner read it), `wake`, `suspend` and `release`
+  `set_rank`, `edit_quest` (refused when the quest moved since the owner read it), `hold` and `unhold` (fix/quest-hold,
+  `inbox/hold-commands.ts`: the domain's `holdQuest`/`unholdQuest`, a `quest.edited` line), `submit` (fix/quest-hold,
+  `inbox/submit-command.ts`: a quest in the infirmary whose last session was its assignee's; as at a session's submit,
+  the assignee's patch for laws.patch_paths is applied, the plot's leftover work committed with the territory's hooks
+  and the protected paths marked, then the quest moves to review; a patch that does not apply, a refused commit or a
+  forbidden path refuses the command, `patch_refused`, `commit_refused` or `forbidden_paths`, so a judge's restore never
+  drops uncommitted work; `applyAssigneePatch` takes the quest id and an optional session for it), `wake`, `suspend` and `release`
   (P1-26, `inbox/character-commands.ts`): a suspended character takes no work; the quest it works on ends its
   attempt `returned` (the session killed, its work committed as WIP) and waits for it or for a `reassign`, the
   quest it judges goes back to review for the next judge, a claim not started opens again (`claimed.release`), and

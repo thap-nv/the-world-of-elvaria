@@ -37,6 +37,8 @@ const GUARD_TEXT: Readonly<Record<QuestGuard, string>> = {
     'trip `time`, `tokens` hay `turns` có `progress`, bậc session có `assignee`, và lần cắt không là lần thứ hai liền không tiến triển trong lượt `n` (`cutCallOf`)',
   cut_stops:
     'mọi trường hợp còn lại (trip khác, không có `progress`, bậc script, hai lần cắt liền không tiến triển)',
+  assignee_last:
+    '`tier = session`, có `assignee`, mục cuối của `attempt_log` là của người làm (không phải người chấm)',
 };
 
 /** Notes per row (rowKey); a row without a note needs none. The spec rejects a note for a row that is gone. */
@@ -44,13 +46,13 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
   'draft.confirm': 'Tể tướng tạo draft; `elvaria quest add` tạo thẳng open',
   'draft.discard': 'lệnh `archive`',
   'open.claim':
-    'có người rảnh đúng nghề, đủ cấp (`canTake`), tộc còn mana, `depends_on` xong; nhận vượt hạng trần của cấp ⇒ `seal_required`, trừ `part` và `acceptance` của đội (fix/claim-step); bậc script: `assignee = null`, actor là Nhiếp chính',
+    'có người rảnh đúng nghề, đủ cấp (`canTake`), tộc còn mana, `depends_on` xong, chủ nhân không giữ (`held`, fix/quest-hold); nhận vượt hạng trần của cấp ⇒ `seal_required`, trừ `part` và `acceptance` của đội (fix/claim-step); bậc script: `assignee = null`, actor là Nhiếp chính',
   'open.block': '`depends_on` chưa xong hoặc câu hỏi của Tể tướng chưa trả lời; ghi `blocked.question`',
   'open.reassign.session':
     'lệnh `reassign` có `character`: người dùng giao thẳng, không xét `canTake`; vượt hạng trần ⇒ `seal_required` (trừ `part`, `acceptance`); `depends_on` vẫn phải xong trước `start`',
   'open.cancel': 'lệnh `cancel`; mọi trạng thái chưa xong đều hủy được',
   'claimed.start':
-    'đất riêng xong, phiên mở; `attempts` +1, mở lượt mới `n` trong `attempt_log`; lượt máy của quest ghép (không có `assignee`) mở lượt `n` mà `attempts` không tăng (P1-55)',
+    'người làm rảnh, `depends_on` xong, chủ nhân không giữ (`held`); đất riêng xong, phiên mở; `attempts` +1, mở lượt mới `n` trong `attempt_log`; lượt máy của quest ghép (không có `assignee`) mở lượt `n` mà `attempts` không tăng (P1-55)',
   'claimed.release':
     'Nhiếp chính đang dừng giữa lúc dựng đất riêng, nên phiên không mở; `attempts` không tăng, bỏ `assignee` (P1-49)',
   'claimed.breaker':
@@ -128,6 +130,8 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
     '`attempts = 0`, bỏ `assignee`, giữ `attempt_log`; quest ghép đã có lượt máy thì hiệp sĩ làm tiếp, máy không chạy lại (P1-55)',
   'infirmary.retry.stalled_review':
     'việc đã xong, chỉ phần chấm bị cắt mãi: giữ `assignee`, `attempts`, lượt `n`; người chấm mới; `reviewBreaksOf` và `reviewPartialsOf` đếm lại từ lần `retry` này (P1-26, P1-42)',
+  'infirmary.submit.assignee_last':
+    'lệnh `submit` (`elvaria quest submit`, fix/quest-hold): chủ nhân thấy việc đã xong (phiên bị cắt sau khi làm xong); Nhiếp chính áp patch của người làm (`laws.patch_paths`) rồi commit phần còn trong đất riêng (patch không áp được, hook từ chối hay đường cấm ⇒ lệnh bị từ chối, quest ở lại), đánh dấu vùng bảo vệ như lúc nộp; giữ `assignee`, `attempts`, lượt `n`; check máy rồi người chấm mới; trượt thì về `returned` như mọi lượt chấm',
   'infirmary.reassign.session': 'người mới có đủ `max_attempts` (`attempts = 0`)',
   'infirmary.archive': 'lệnh `archive`',
 };

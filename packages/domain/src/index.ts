@@ -80,6 +80,7 @@ export * from './protocol/messages.ts';
 export * from './quest/attempt-log.ts';
 export * from './quest/events.ts';
 export * from './quest/finished.ts';
+export * from './quest/hold.ts';
 export * from './quest/invariants.ts';
 export * from './quest/party.ts';
 export * from './quest/status-tone.ts';
