@@ -65,6 +65,14 @@
   (done, or archived after its delivery) is what `planTick` counts a dependency as done by, so archiving a
   contract midway holds up nothing. The event `plot.merged` records a merge of a party's parts; `plot.restored`
   (P1-44) a plot the Steward put back to its commit after a judge outside a scratch plot.
+- Holds a quest for the owner (`src/quest/hold.ts`, fix/quest-hold): `holdQuest` and `unholdQuest` set and remove the
+  optional `held` field (`{at, reason?}`) of an open or claimed quest (`HOLDABLE_STATUSES`; `holdRefusal`,
+  `unholdRefusal`: `not_holdable`, `already_held`, `not_held`), and `planTick` treats a held quest as one whose
+  dependency is unfinished (`isHeld`): no claim, start, script run, machine merge or unclaimable notice. The status
+  does not move, so the quest keeps its description, dependencies and named assignee. The owner's row
+  `infirmary.submit.assignee_last` sends the work of a quest whose last session was its assignee's from the infirmary
+  to review, same run and attempt; `endedInCut` reads the last entry of the log, so the redispatch after that review's
+  fail is a new attempt, not the cut run resumed.
 - Decides memos (`src/memo/`, PS-02, ADR 0024): `routeMemo` sends a memo where its kind's entry in
   `registry/memos.json` says (no switch on the kind), `memoKeyOf` and `memoIdOf` make its id from the quest, the kind
   and the text normalized (one Unicode form, spaces collapsed, lower case; the caller hashes the key), so a letter

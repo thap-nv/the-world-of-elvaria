@@ -194,7 +194,10 @@ const EFFECTS: { readonly [T in QuestEventType]: Effect<T> } = {
   block: (quest, event) => ok({ ...quest, blocked: askedAt(event.question, event.at) }),
   start: startAttempt,
   redispatch,
-  submit: ending('submitted'),
+  // The owner's submit of work left in the infirmary closes no session, its run ended there; the review it opens
+  // starts with no judge, so planTick chooses one (fix/quest-hold).
+  submit: (quest, event) =>
+    quest.status === 'infirmary' ? ok(withoutVerifier(quest)) : ending('submitted')(quest, event),
   // An amendment is a question its author decides first (PS-22b): the quest keeps which memo it waits on, and who.
   ask: (quest, event) => {
     const asked = askedAt(event.question, event.at);

@@ -48,7 +48,7 @@ describe('cutCallOf', () => {
 });
 
 describe('endedInCut', () => {
-  it('holds when the latest assignee session carries progress, either way', () => {
+  it('holds when the latest session is the assignee’s and carries progress, either way', () => {
     expect(endedInCut([entry(1, { progress: true })])).toBe(true);
     expect(endedInCut([entry(1, { progress: false })])).toBe(true);
   });
@@ -57,5 +57,10 @@ describe('endedInCut', () => {
     expect(endedInCut([entry(1, { progress: true }), entry(1)])).toBe(false);
     expect(endedInCut([entry(1)])).toBe(false);
     expect(endedInCut([])).toBe(false);
+  });
+
+  it('does not hold once a judge read the cut work: the owner sent it from the infirmary (fix/quest-hold)', () => {
+    const judge = entry(1, { outcome: 'submitted' }, 'verifier');
+    expect(endedInCut([entry(1, { progress: false }), judge])).toBe(false);
   });
 });

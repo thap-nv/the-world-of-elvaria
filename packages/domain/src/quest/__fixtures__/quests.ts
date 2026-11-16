@@ -180,6 +180,8 @@ const keyOf = (quest: Quest): string =>
     // The stalled_review guards read them (P1-26, P1-42).
     reviewBreaksOf(quest),
     reviewPartialsOf(quest),
+    // The assignee_last guard reads whose session came last (fix/quest-hold).
+    quest.attempt_log.at(-1)?.role,
   ]);
 
 /**

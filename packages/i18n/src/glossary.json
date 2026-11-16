@@ -1781,6 +1781,24 @@
               "id": ["deliver"],
               "icon": "—",
               "remark": "`elvaria quest deliver` (PS-08c, ADR 0023): quest `done` trên lãnh thổ giao hàng khác `manual` được giao lại từ đầu (quét secret, push, tìm hay mở PR) sau một `delivery.failed`; Nhiếp chính không tự thử lại. Dòng `command.applied` mang `quest`, nên kết cục cũ bị quên cả với Nhiếp chính chạy sau"
+            },
+            {
+              "vi": "Giữ quest",
+              "id": ["hold"],
+              "icon": "—",
+              "remark": "`elvaria quest hold` (fix/quest-hold): quest `open`, hay `claimed` mà chưa bắt đầu, có trường `held` (`at`, `reason` tùy chọn); `planTick` không nhận, không bắt đầu, không chạy, không báo không ai nhận, như quest có phụ thuộc chưa xong; trạng thái, mô tả, phụ thuộc và người `--to` giữ nguyên; ghi `quest.edited`"
+            },
+            {
+              "vi": "Thôi giữ quest",
+              "id": ["unhold"],
+              "icon": "—",
+              "remark": "`elvaria quest unhold`: bỏ trường `held`, nhịp sau quest được nhận hay bắt đầu như mọi quest; ghi `quest.edited`"
+            },
+            {
+              "vi": "Gửi nghiệm thu",
+              "id": ["submit"],
+              "icon": "—",
+              "remark": "`elvaria quest submit` (fix/quest-hold): quest ở trạm quân y mà phiên cuối là của người làm (cầu dao cắt sau khi xong việc) sang `review`, cùng lượt và lượt thử (`infirmary.submit`); Nhiếp chính áp patch của người làm, commit phần còn trong đất riêng qua hook (patch không áp được, hook từ chối hay đường cấm ⇒ lệnh bị từ chối, quest ở lại) và đánh dấu vùng bảo vệ như lúc nộp; ghi `quest.submitted` với actor chủ nhân"
             }
           ]
         },

@@ -301,13 +301,15 @@ Phiên người làm vượt trần không còn đưa quest vào trạm quân y 
 
 `retry` mở quest cho **mọi** nhân vật đúng nghề đang rảnh, như một quest mới: Nhiếp chính chọn, không nhất thiết là người vừa làm (`--to` của `quest add` không được lưu trên quest, nên không còn tác dụng sau trạm quân y; quest `q_20261112_gwrz5m` vì vậy về tay người khác). Muốn đúng một nhân vật làm lại, kể cả người vừa làm: `retry <quest> --to <nhân vật>`; CLI gửi lệnh `reassign`, nhân vật đó nhận đủ lượt thử như mới. Quest chỉ kẹt ở phần chấm (người chấm rời đi không ra phán quyết) và quest bậc script không nhận `--to`. `quest reassign <quest> --to <nhân vật>` gửi đúng lệnh `reassign` đó (`retry --to` và `reassign --to` cùng đi qua `giveQuestTo` của `apps/cli/src/quest/`).
 
-**Quest ở trạm quân y mà việc đã xong** (cầu dao cắt phiên sau khi người làm đã làm xong, như d7 của lần chạy thật (130): 1 244 256 token trên trần 1 200 000). Chưa có đường đưa thẳng quest sang nghiệm thu (nhánh `fix/quest-hold`, mục (D) của §11 ngày 2026-11-15); tới lúc đó:
+**Quest ở trạm quân y mà việc đã xong** (cầu dao cắt phiên sau khi người làm đã làm xong, như d7 của lần chạy thật (130): 1 244 256 token trên trần 1 200 000): `elvaria quest submit <quest>` (từ nhánh `fix/quest-hold`). Ở nhịp sau, Nhiếp chính áp patch của người làm (nếu lãnh thổ có `laws.patch_paths`), commit phần còn trong đất riêng qua hook của lãnh thổ, đánh dấu vùng bảo vệ nếu việc chạm (quest chờ dấu vua), rồi quest sang chờ nghiệm thu, cùng người làm, cùng lượt và lượt thử: check máy chạy trước, người chấm mới đọc. Patch không áp được, hook từ chối commit hay một đường cấm bị đổi thì lệnh bị từ chối (dòng `command.rejected` mang `patch_refused`, `commit_refused` hay `forbidden_paths`), quest ở lại trạm quân y, phần việc vẫn trong đất riêng: sửa rồi gửi lại. Trượt thì quest về chính người làm với một lượt thử mới, như mọi lượt chấm. Lệnh chỉ nhận quest mà phiên cuối là của người làm: quest kẹt ở phần chấm dùng `retry`, quest hết lượt thử vì ba lần trượt dùng cách bên dưới.
+
+Vương quốc còn ghim bản dựng trước `fix/quest-hold` (lệnh `quest submit` chưa có) thì làm vòng:
 
 1. Trong đất riêng (`<repo>/.elvaria/worktrees/<quest>`), xem commit WIP (`git log -1`) và chạy check của lãnh thổ ngoài sandbox, với repo Elvaria là `NODE_OPTIONS=--max-old-space-size=8192 pnpm check`; `git status` vẫn sạch sau đó.
 2. Xanh thì thêm vào cuối mô tả một mục `## Còn lại sau lượt cắt`: việc đã xong ở commit nào, check nào đã xanh, phiên sau chỉ cần kiểm lại và nộp. `elvaria quest edit <quest> --description "<mô tả cũ và mục mới>"` (`--description` thay cả mô tả).
 3. `elvaria quest reassign <quest> --to <người vừa làm>`: phiên mới của chính người đó đọc mô tả và thư bàn giao, nộp, rồi người chấm chấm như mọi lượt. Ở d7: phiên 56 giây, 67 811 token, không đổi gì, người chấm pass.
 
-Cùng cách khi người chấm nêu mỗi lượt một chỗ mới tới hết lượt thử: mục `## Còn lại sau ba lượt chấm` gom mọi ghi chú còn mở, rồi `reassign --to` cùng người (quest kế hoạch và d5 của lần chạy (130)).
+Cùng cách khi người chấm nêu mỗi lượt một chỗ mới tới hết lượt thử (`quest submit` không nhận quest này, vì phiên cuối là của người chấm): mục `## Còn lại sau ba lượt chấm` gom mọi ghi chú còn mở, rồi `reassign --to` cùng người (quest kế hoạch và d5 của lần chạy (130)).
 
 Các lệnh khác của chủ nhân:
 
@@ -318,6 +320,7 @@ Các lệnh khác của chủ nhân:
 | nhân vật bị hạ cấp oan (check đỏ vì môi trường) | `elvaria character level <id> <cấp>` |
 | nhân vật trượt cùng một kiểu ba lần liền thì bị đình chỉ vào Đền | sửa nguyên nhân (kinh, mô tả), rồi `elvaria character release <id>` |
 | tạm cho một nhân vật nghỉ | `elvaria character suspend <id> --reason "…"` |
+| giữ một quest chưa bắt đầu tới lần chạy sau (quest `open`, hay `claimed` chờ người `--to`) | `elvaria quest hold <quest> --reason "…"` (từ `fix/quest-hold`): Nhiếp chính không nhận, không bắt đầu nó, `quest list` ghi «đang giữ»; trạng thái, mô tả, phụ thuộc và người `--to` giữ nguyên. Mở lại: `elvaria quest unhold <quest>`. Khác `cancel`, lệnh lưu trữ luôn quest (d8–d12 của lần chạy (130)) |
 | bỏ một quest chưa xong | `elvaria quest cancel <quest>`; worktree của quest đã hủy ở lại, dọn tay. Quest ở trạm quân y thì `quest archive` (hay `cancel`, cùng lệnh): Nhiếp chính gỡ worktree, giữ nhánh cùng phần việc dở |
 
 Chỗ từng thiếu đường, đã vá ở P1-55 và P1-56:

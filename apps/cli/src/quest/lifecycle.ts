@@ -1,5 +1,5 @@
-// `elvaria quest confirm|cancel|archive|retry <id>`: commands the Steward turns into a transition (implementation-plan
-// §2.5); `retry --to` sends `reassign` (lessons of 2026-11-12).
+// `elvaria quest confirm|cancel|archive|retry|submit <id>`: commands the Steward turns into a transition
+// (implementation-plan §2.5); `retry --to` sends `reassign` (lessons of 2026-11-12).
 // The CLI asks the same table first, so a command the quest cannot take now is refused at the terminal.
 import { findTransition } from '@elvaria/domain';
 import type { Quest, QuestEventType } from '@elvaria/domain';
@@ -132,6 +132,41 @@ async function runRetry(input: CommandInput, cli: CliContext): Promise<ExitCode>
   const params = { id: quest.id, class: className(quest.class_required) };
   return sendCommand(ctx, command, 'cli.quest.retry.sent_open', params);
 }
+
+/**
+ * `submit` (fix/quest-hold): the work of a quest in the infirmary goes to review, same run (`infirmary.submit`), when
+ * a breaker cut its session after the work was done. Before, the owner ran the checks on the WIP, wrote what was left
+ * into the description and reassigned it to the same character (run (130), d7). A stalled review is refused with the
+ * way it has, `retry`.
+ */
+async function runSubmit(input: CommandInput, cli: CliContext): Promise<ExitCode> {
+  const ctx = await openKingdomContext(input, cli);
+  if (ctx === undefined) return EXIT.failed;
+  const quest = await readQuest(ctx, input.positionals[0] ?? '');
+  if (Array.isArray(quest)) {
+    quest.forEach(ctx.io.err);
+    return EXIT.failed;
+  }
+  if (quest.status !== 'infirmary') {
+    const status = ctx.t(QUEST_STATUS_LABEL[quest.status]);
+    ctx.io.err(ctx.t('cli.quest.submit.refused', { id: quest.id, status }));
+    return EXIT.failed;
+  }
+  if (!ownerMay(quest, 'submit')) {
+    ctx.io.err(ctx.t('cli.quest.submit.no_work', { id: quest.id }));
+    return EXIT.failed;
+  }
+  const command = { ...commandHeader(ctx), kind: 'submit', payload: { quest: quest.id } } as const;
+  return sendCommand(ctx, command, 'cli.quest.submit.sent', { id: quest.id });
+}
+
+export const QUEST_SUBMIT: CommandSpec = {
+  name: ['quest', 'submit'],
+  summary: 'cli.quest.submit.summary',
+  args: [{ name: '<quest>', help: 'cli.quest.arg.quest' }],
+  options: {},
+  run: runSubmit,
+};
 
 export const QUEST_RETRY: CommandSpec = {
   name: ['quest', 'retry'],

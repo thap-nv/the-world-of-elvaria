@@ -61,7 +61,7 @@ export async function submitWork(
   await letLetterThrough(ctx, running, runOf(running, result).session_id);
   // What the CLI would not let the assignee write goes in first, as its patch, so the submit carries it (P1-28).
   // A patch that touches other paths or does not apply leaves everything in the plot: no commit is tried.
-  const patched = await applyAssigneePatch(ctx, running);
+  const patched = await applyAssigneePatch(ctx, running.quest, running.session_id);
   // Five classes have no git of their own, and the judge reads the branch's diff (§3.3, P1-07).
   const committed =
     patched.status === 'refused' ? undefined : await commitPlot(ctx, quest, plotCommitMessage.submit(quest));

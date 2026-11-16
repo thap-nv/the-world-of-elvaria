@@ -16,7 +16,8 @@ import { QUEST_ADD } from './quest/add.ts';
 import { ANSWER } from './quest/answer.ts';
 import { QUEST_EDIT } from './quest/edit.ts';
 import { QUEST_DELIVER } from './quest/deliver.ts';
-import { QUEST_ARCHIVE, QUEST_CANCEL, QUEST_CONFIRM, QUEST_RETRY } from './quest/lifecycle.ts';
+import { QUEST_HOLD, QUEST_UNHOLD } from './quest/hold.ts';
+import { QUEST_ARCHIVE, QUEST_CANCEL, QUEST_CONFIRM, QUEST_RETRY, QUEST_SUBMIT } from './quest/lifecycle.ts';
 import { QUEST_LIST } from './quest/list.ts';
 import { RETURN, SEAL } from './quest/owner-verdict.ts';
 import { QUEST_REASSIGN } from './quest/reassign.ts';
@@ -66,8 +67,11 @@ export const COMMANDS: readonly CommandSpec[] = [
   QUEST_CONFIRM,
   QUEST_CANCEL,
   QUEST_ARCHIVE,
+  QUEST_HOLD,
+  QUEST_UNHOLD,
   QUEST_EDIT,
   QUEST_RETRY,
+  QUEST_SUBMIT,
   QUEST_DELIVER,
   QUEST_REASSIGN,
   SEAL,
