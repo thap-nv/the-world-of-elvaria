@@ -429,3 +429,7 @@ Chạy thật, tốn mana: hỏi chủ nhân trước khi chạy, và chốt tr�
 ## PS-08 và PS-11 — đợt 0 của giai đoạn 2
 
 Mục chi tiết của PS-08 (cùng các task con đề xuất PS-08c, PS-08d, PS-08e, PS-08f) và của PS-11 (cùng PS-11a, PS-11b) nằm ở [phase-2-wave-0.md](phase-2-wave-0.md), kèm bảng "Điều code cho thấy" của ngày 2026-11-15 (dòng 23–42). Chúng ở file riêng vì file này đã gần trần 150 KB của `pnpm docs:check`; phần "Ai đọc" và "Mẫu dùng lại" ở đầu file này áp dụng cho cả hai.
+
+## PS-09, PS-26 và PS-08b — sau dấu vua
+
+Mục chi tiết của PS-09 (cùng các task con PS-09b, PS-09c, PS-09d), của PS-26 và của PS-08b (cùng PS-08g) nằm ở [phase-2-merge-queue.md](phase-2-merge-queue.md), kèm bảng "Điều code cho thấy" của ngày 2026-11-16 (dòng 43–64) và các quyết định K1–K17 chủ nhân chốt ngày 2026-11-16. Phần "Ai đọc" và "Mẫu dùng lại" ở đầu file này áp dụng cho chúng.
