@@ -193,6 +193,12 @@ Dòng của task đã xong ở [8-done-ps.md](implementation-plan/8-done-ps.md).
    - macOS: chưa có lần chạy thật nào, chủ nhân không có máy macOS; chỉ có CI chạy tay.
    - (c) của P1-46 (`quest show` in lượt cuối có phán quyết khi quest đã sang lượt mới): chỉ khi chủ nhân thấy cần.
 5. **Chưa thấy trên CLI thật** ([cli-facts](reference/cli-facts-2026-11-12.md) §1.8, §2.5): dòng 429 của Claude Code (`system/api_retry`, `StopFailure`, `rate_limit_event` bị từ chối), mà Nhiếp chính đang đọc theo tài liệu và kiểu dữ liệu của Agent SDK; một phiên model trên agy 1.5.6. Không cần quyết định: ghi lại fixture khi gặp.
+6. **Chia sẻ bài học giữa các vương quốc** (định hướng (161) của chủ nhân; [plans/lesson-sharing.md](plans/lesson-sharing.md), chủ nhân chốt hướng ngày 2026-11-16, xem cuối mục này). Chưa task nào được mở. Còn mở, mỗi câu chốt trước việc ghi trong ngoặc:
+   - (PS-12) Trần 40 dòng kinh tính trên số dòng được nạp cho một phiên sau khi lọc phạm vi, hay trên cả file (S6 của tài liệu đó).
+   - (Bước nhập gói) Sau bao nhiêu lượt nạp thì một dòng nhập đủ số đo để giữ hay gỡ: chọn sau khi PS-12 chạy thật.
+   - (Kinh mặc định theo bản phát hành) Elvaria phát hành ra ngoài bằng cách nào; hôm nay là một checkout git mà `upgrade` dựng bản ghim từ đó.
+
+Đã trả lời (2026-11-16, chia sẻ bài học, câu 6; §11): bài học của vương quốc khác vào prompt qua đúng hai cửa, bản phát hành là mặc định và file gói do chủ nhân nhập, nhận từng dòng là cửa thứ hai; chưa dựng lệnh xuất hay nhập, thứ tự là bước 0, PS-12 mang ràng buộc S1–S8, kinh mặc định, xuất, nhập; mặc định không gì rời vương quốc, máy chặn rồi chủ nhân duyệt từng dòng; dòng nhập qua chỗ chờ và thử việc bằng số đo tại chỗ; địa chí giữ là file của vương quốc; kế hoạch sản phẩm sửa trong bản 0.8 ([plans/lesson-sharing.md](plans/lesson-sharing.md) §11).
 
 Đã trả lời (2026-11-11, chặng tự cường; §11): (PS-04b) bản ghim là một worktree tách rời tại `<kingdom>/.builds/<sha>/`, con trỏ ở `.state/build.json`, mọi lệnh CLI trên vương quốc chạy lại bằng bản đang ghim (§3.16.4, [plans/phase-1.5.md](plans/phase-1.5.md)). (PS-07) Việc làm bài thử của mốc: lý do trạm xá và dòng chi tiết của `doctor` thành mã cộng chuỗi VI/EN.
 
