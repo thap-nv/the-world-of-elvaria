@@ -10,6 +10,7 @@ import { translateNeutral } from './neutral/translate.ts';
 import type { HookDialect } from './neutral/dialect.ts';
 import { flagValue, loadContext } from './context.ts';
 import { denyTool, errorText, translation } from './draft.ts';
+import { wrapUpReminder } from './wrap-up.ts';
 import { appendDrafts, intlTs } from './write.ts';
 import type { HookContext, HookEnv } from './context.ts';
 import type { Translation } from './draft.ts';
@@ -133,6 +134,23 @@ function sessionOf(payload: Record<string, unknown> | undefined, caller: Caller)
 }
 
 /**
+ * The soft-ceiling reminder (wrap-up.ts) rides on a call nothing else answered: a decision already made (a deny, a
+ * Stop block) is never replaced. Claude and Codex name the event in the payload, agy and a dialect before it.
+ */
+function withWrapUp(
+  result: Translation,
+  payload: Record<string, unknown> | undefined,
+  caller: Caller,
+  session: string | undefined,
+  ctx: HookContext,
+): Translation {
+  if (payload === undefined || result.decision !== undefined) return result;
+  const event = caller.event ?? textAt(payload, 'hook_event_name');
+  const reminder = wrapUpReminder({ cli: caller.cli, event, payload, session }, ctx);
+  return { ...result, decision: reminder.decision, problems: [...result.problems, ...reminder.problems] };
+}
+
+/**
  * Claude and Codex name their event in the payload; agy does not, so its hook command carries the event in argv
  * (spike P1-12a §4); a CLI read through the neutral dialect says where (PS-23), so the policy is read first. A
  * payload that is not a JSON object denies a PreToolUse call and is ignored elsewhere.
@@ -143,8 +161,8 @@ export async function runHook(io: HookIo): Promise<HookOutcome> {
   const caller = callerOf(io.argv, payload, ctx.dialect);
   if (payload === undefined && !isPreTool(caller))
     return { stdout: '', stderr: notes(['stdin is not a JSON object; ignored']) };
-  const result = translate(payload, caller, ctx);
   const session = sessionOf(payload, caller);
+  const result = withWrapUp(translate(payload, caller, ctx), payload, caller, session, ctx);
   let written: string[];
   try {
     written = await appendDrafts(result.drafts, ctx, {

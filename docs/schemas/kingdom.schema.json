@@ -158,6 +158,11 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "estimate_factor": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "default": 1.82
+        },
         "soft_pct": {
           "description": "Warn above this percentage of the nominal session ceiling.",
           "type": "number",
@@ -812,6 +817,7 @@
         "high_rank_from": "B",
         "max_attempts": 3,
         "mana_multiplier": 2,
+        "estimate_factor": 1.82,
         "same_fail_suspend": 3,
         "patrol_weekly_pct": 10,
         "max_turns": 200,

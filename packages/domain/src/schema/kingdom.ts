@@ -49,6 +49,7 @@ const ManaSchema = z
   });
 
 const BreakersSchema = z.strictObject({
+  estimate_factor: z.number().positive().default(BREAKER_DEFAULTS.estimate_factor),
   // Defaults added after v1: existing kingdom files remain valid (ADR 0003).
   soft_pct: z
     .number()

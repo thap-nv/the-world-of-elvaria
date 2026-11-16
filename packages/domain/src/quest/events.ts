@@ -130,6 +130,7 @@ export interface SequelRun {
 export interface RunEnd {
   readonly session_id?: string;
   readonly tokens?: number;
+  readonly turns?: number;
   readonly sequels?: readonly SequelRun[];
 }
 

@@ -2,6 +2,11 @@
 
 ## Does
 
+- Records runner-reported `turns` alongside tokens in each session's attempt entry, leaving missing turns absent.
+  Uses `calibrationOf` over current quest and character files for soft warnings and runner turn budgets; domain
+  `planTick` computes the same calibration for hard stops on every tick. Token factors and turn ceilings learn
+  independently after ten complete first assignee runs of the holder's tribe, including resumed sessions.
+
 - Runs the Steward (implementation-plan §3.1): `createSteward(deps)` takes `.state/steward.lock` (one Steward per
   kingdom), rebuilds from the event log what it already answered, and ticks every `dispatch.tick_seconds`.
   Ticks never overlap.
@@ -110,7 +115,14 @@
   the CLI's own limit (`breakers.max_turns` in the request), which ends the same way; the Steward sinks the assignee into the swamp, kills
   the session's process tree, commits the work as `chore: wip <quest> (<trip>)` (a refusal keeps it in the plot
   and says so in the detail), sends the quest to the infirmary (`quest.infirmary`, `breaker:<trip>`) and
-  rings the bell; a verifier past a breaker leaves the review to the next one, until the second of a run
+  rings the bell. (F, phase 2, ADR 0030) A cut by one of the three ceilings (`time`, `tokens`, `turns`) is
+  measured for progress first (`src/sessions/progress.ts`: the branch tip moved since the session opened, or the
+  WIP commit committed): the domain then sends the quest back to the same character in a fresh session of the
+  same run, reading the letter (`returned`, then `redispatch`, no new attempt, no bell), or to the infirmary
+  as `breaker:no_progress` after two cuts in a row without progress. Before it, a session past `soft_pct` gets
+  `<run_dir>/wrap-up.json` and one `agent.session.wrap_up` line (`src/sessions/wrap-up.ts`, once per session, in
+  `State.wrapped`); the trips `commit`, `secrets`, `forbidden_paths` and `no_session` measure nothing and never go
+  on by themselves; a verifier past a breaker leaves the review to the next one, until the second of a run
   (`reviewStalled`, P1-23): then the quest goes to the infirmary with the bell, and no third verifier opens; the
   owner's `retry` brings it back to review with a new judge, and the count starts over (P1-26). A verifier that
   leaves with no verdict at all (its CLI failed, its output was none, its session was lost while the Steward ran) counts the same, and
