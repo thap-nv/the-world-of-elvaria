@@ -3,7 +3,8 @@
 // back as one decide_amendment command: an acceptance rewrites the description, and adds the memo's refs to the
 // quest's scope (fix/amendment-flow), while no session holds the quest; either decision closes the memo and lets the quest that waits on it go on, the note as the answer to its doer;
 // a referral hands it to the owner, who answers it as a question. The owner may also settle it first, by answering
-// the quest or deciding the memo. Nothing here asks a memo's kind: the memo's route and the quest's `blocked` say it.
+// the quest or deciding the memo, and an acceptance of the owner's opens the scope as the author's does
+// (fix/amendment-owner-accept). Nothing here asks a memo's kind: the memo's route and the quest's `blocked` say it.
 import { AMENDABLE_STATUSES, amendedScopeOf, editQuest, escalateMemo, sharedGlobsOf } from '@elvaria/domain';
 import type { Actor, BlockedAmendment, CommandPayload, InboxCommandOf, Memo, Quest } from '@elvaria/domain';
 
@@ -46,6 +47,9 @@ async function setAmendment(
   return put.ok;
 }
 
+/** The description an acceptance brings, with the time its decider read the quest at: only the author's has one. */
+type Rewriting = Pick<CommandPayload<'decide_amendment'>, 'description' | 'expected_updated_at'>;
+
 /**
  * The quest as accepted, while no session holds it and its work is not judged: the description rewritten, and the
  * memo's refs outside its scope added to it (amendedScopeOf, fix/amendment-flow), so the doer may change those files
@@ -57,11 +61,11 @@ async function rewrite(
   ctx: Context,
   quest: Quest | undefined,
   memo: Memo,
-  payload: CommandPayload<'decide_amendment'>,
+  rewriting: Rewriting,
   actor: Actor,
 ): Promise<void> {
   if (quest === undefined) return;
-  const { description, expected_updated_at: read } = payload;
+  const { description, expected_updated_at: read } = rewriting;
   const describes = description !== undefined && description !== quest.description;
   const shared = sharedGlobsOf(ctx.world.territories.get(quest.territory));
   const scope = amendedScopeOf(quest.scope_paths, memo.refs, shared);
@@ -82,7 +86,7 @@ async function rewrite(
   ];
   if (kept.length > 0)
     ctx.deps.log.warn(
-      `steward: ${quest.id}: the accepted amendment ${payload.memo} leaves its ${kept.join(' and ')} as it is`,
+      `steward: ${quest.id}: the accepted amendment ${memo.id} leaves its ${kept.join(' and ')} as it is`,
     );
 }
 
@@ -181,18 +185,27 @@ export async function answerQuest(ctx: Context, quest: Quest, text: string): Pro
 
 /**
  * The owner decided an amendment its quest waits on (`elvaria memo decide`): the quest goes on as after the author's
- * decision, the owner's note (or the decision itself) as the answer. Waits, writing nothing, while the doer cannot
- * go on; undefined when no quest waits on the memo, which then closes as any other.
+ * decision, the owner's note (or the decision itself) as the answer. An acceptance opens the quest's scope to the
+ * memo's refs as the author's does (rewrite; (147) of the 2026-11-15 log): whether the memo came up past the
+ * delegation, came straight as the quest's second amendment, or the owner decided first. The description stays: the
+ * owner changes it with `elvaria quest edit`. Waits, writing nothing, while the doer cannot go on; undefined when no
+ * quest waits on the memo, which then closes as any other.
  */
 export async function ownerDecides(
   ctx: Context,
   memo: Memo,
   payload: CommandPayload<'decide_memo'>,
 ): Promise<Outcome | undefined> {
+  const waiting = ctx.world.quests.get(memo.quest);
+  if (!waitsOn(waiting, memo.id)) return undefined;
+  if (answerWaits(ctx, waiting)) return { status: 'waiting' };
+  if (payload.decision === 'accepted') await rewrite(ctx, waiting, memo, {}, OWNER);
+  // The quest as the rewrite left it, still waiting on the memo: the opened scope is not written over.
   const quest = ctx.world.quests.get(memo.quest);
-  if (!waitsOn(quest, memo.id)) return undefined;
-  if (answerWaits(ctx, quest)) return { status: 'waiting' };
-  if (!(await setAmendment(ctx, quest, { by: 'owner', decision: payload.decision }, OWNER)))
+  if (
+    !waitsOn(quest, memo.id) ||
+    !(await setAmendment(ctx, quest, { by: 'owner', decision: payload.decision }, OWNER))
+  )
     return rejected('not_written');
   const closed = await writeClosed(ctx, memo, payload, OWNER);
   if (!closed.ok) return rejected(closed.error);

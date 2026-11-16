@@ -72,6 +72,24 @@ const linesOf = async (kingdom: Bench, type: string): Promise<Event[]> =>
 const blockedOn = (kingdom: Bench, title: string) => async () =>
   (await kingdom.quest(title)).blocked?.amendment !== undefined;
 const infirmaries = (kingdom: Bench) => kingdom.notices.filter(({ kind }) => kind === 'infirmary');
+const ownerDecides = (kingdom: Bench, title: string) => async () =>
+  (await kingdom.quest(title)).blocked?.amendment?.by === 'owner';
+
+/** The owner accepts every open memo, as `elvaria memo decide <memo> accepted` does, the scope not opened before. */
+async function acceptAll(kingdom: Bench, title: string): Promise<void> {
+  expect((await kingdom.quest(title)).scope_paths).toEqual(['src/**']);
+  for (const memo of (await kingdom.store.memos.list()).items.filter(({ state }) => state === 'open'))
+    await kingdom.command('decide_memo', { memo: memo.id, decision: 'accepted', note: 'Nhận.' });
+}
+
+/** The amendment's ref outside the scope joined it, the description kept, and the submit counts only the rest. */
+async function expectOpenedByOwner(kingdom: Bench, title: string): Promise<void> {
+  const quest = await kingdom.quest(title);
+  expect(quest.scope_paths).toEqual(['src/**', 'package.json']);
+  expect(quest.description).toBe(questPayload(title).description);
+  const submitted = (await linesOf(kingdom, 'quest.submitted')).at(-1);
+  expect(submitted?.data).toMatchObject({ out_of_scope: ['README.md'] });
+}
 
 /** A commit the hook refuses for each run of `title` in `refusing` (1-based), as commitPlot sees a hook's exit. */
 function refusingCommits(kingdom: Bench, title: string, refusing: readonly number[]): Partial<Plots> {
@@ -191,6 +209,41 @@ describe('an accepted amendment', () => {
     expect(quest.scope_paths).toEqual(['src/**', 'package.json']);
     expect(quest.description).toBe(questPayload('Stale').description);
     expect(kingdom.warnings.join('\n')).toContain('leaves its description as it is');
+  });
+
+  // (147) of the 2026-11-15 log: run (130) accepted m_20261115_2cccp3 (held above_rank) and m_20261115_txkywz (a second
+  // amendment) by `memo decide`, and the owner had to open the scope by hand with `quest edit --scope`.
+  it('opens the scope likewise when the owner accepts it, after its author sent it up past the delegation', async () => {
+    const up: Decide = () => ({ decision: 'owner', note: 'Vượt trần ủy quyền.', holds: ['above_rank'] });
+    const { kingdom, steward } = await open({
+      letters: (title, nth) => letter(title === 'Up' && nth === 1 ? AMENDMENT : '-'),
+      decide: up,
+      plots: (k) => refusingCommits(k, 'Up', [1]),
+      verdicts: { Up: [PASS] },
+    });
+    await kingdom.command('create_quest', questPayload('Up', CHANCELLOR));
+    await tickUntil(steward, kingdom.clock, ownerDecides(kingdom, 'Up'));
+    await acceptAll(kingdom, 'Up');
+    await tickUntil(steward, kingdom.clock, statusIs(kingdom, 'Up', 'done'));
+    await expectOpenedByOwner(kingdom, 'Up');
+  });
+
+  it("opens the scope when the owner accepts the quest's second amendment, the first rejected", async () => {
+    const first = '- amendment: Đề bài thiếu mục cài đặt. refs: docs/setup.md';
+    const { kingdom, steward } = await open({
+      letters: (title, nth) => letter(title !== 'Again' || nth > 2 ? '-' : nth === 1 ? first : AMENDMENT),
+      decide: () => ({ decision: 'rejected', note: 'Không cần.' }),
+      plots: () => ({ touched: () => Promise.resolve(TOUCHED) }),
+      verdicts: { Again: [PASS] },
+    });
+    await kingdom.command('create_quest', questPayload('Again', CHANCELLOR));
+    await tickUntil(steward, kingdom.clock, ownerDecides(kingdom, 'Again'));
+    const memos = (await kingdom.store.memos.list()).items;
+    expect(memos.map(({ to }) => to)).toContainEqual({ route: 'owner', refusal: 'second_amendment' });
+    await acceptAll(kingdom, 'Again');
+    await tickUntil(steward, kingdom.clock, statusIs(kingdom, 'Again', 'done'));
+    // The rejected amendment's ref stays out: only the accepted one opens the scope.
+    await expectOpenedByOwner(kingdom, 'Again');
   });
 
   it('leaves a quest with no scope unbounded', async () => {
