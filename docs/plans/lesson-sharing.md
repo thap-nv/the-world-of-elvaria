@@ -1,6 +1,6 @@
 # Chia sẻ bài học giữa các vương quốc: đề xuất
 
-Ngày: 2026-11-16 · Trạng thái: **đề xuất, chờ chủ nhân chốt** các mục L1–L10 ở §11 (dòng "docs/plan-lesson-sharing" của [§11, 2026-11-16](../implementation-plan/11-2026-11-16.md)). Chưa task nào được mở và chưa dòng code nào đổi. Tài liệu này là căn cứ để chủ nhân sửa kế hoạch sản phẩm (§9) và để sau này viết task; nó chưa phải kế hoạch chi tiết của task nào.
+Ngày: 2026-11-16 · Trạng thái: **chủ nhân đã chốt** ngày 2026-11-16 cả mười mục L1–L10 ở §11, chín mục theo khuyến nghị và L10 làm ngay trong phiên (§13) ([§11, 2026-11-16](../implementation-plan/11-2026-11-16.md): dòng "docs/plan-lesson-sharing" nêu các mục, dòng "Người dùng chốt" sau nó ghi lời chốt). Chưa task nào được mở và chưa dòng code nào đổi. Tài liệu này là căn cứ để chủ nhân sửa kế hoạch sản phẩm (§9) và để sau này viết task; nó chưa phải kế hoạch chi tiết của task nào.
 
 Gốc: định hướng (161) của chủ nhân, ngày 2026-11-15: "Sau này nhiều người dùng Elvaria cho riêng mình; vương quốc của ai người nấy giữ, còn bài học (kinh, địa chí) chia sẻ được giữa các vương quốc để hoàn thiện hơn." Dòng ghi nó nằm ở [file §11 ngày 2026-11-15](../implementation-plan/11-2026-11-15.md), mới có trên nhánh `feat/ps-08c`, và tới `main` khi nhánh đó merge. Chủ nhân mở phiên kế hoạch này bằng quyết định (172).
 
@@ -110,9 +110,9 @@ Bật theo lựa chọn nghĩa là: không có công tắc "chia sẻ" nào ch�
 Luật của cửa vào:
 
 - **T1. Đúng hai cửa.** Bản phát hành, và file gói mà chủ nhân đưa đường dẫn. Elvaria không tự tải gì; Nhiếp chính và nhân vật không đọc gói.
-- **T2. Gói là dữ liệu, không phải mã.** Chỉ có câu chữ và siêu dữ liệu theo schema. Không script, không prompt nghề, không nghi thức, không check, không file kèm. Registry chỉ đổi qua bản phát hành (ADR 0016, 0026).
+- **T2. Gói là dữ liệu, không phải mã.** Chỉ có câu chữ và siêu dữ liệu theo schema. Không script, không prompt nghề, không nghi thức, không check, không file kèm. Registry chỉ đổi qua bản phát hành (ADR 0016, 0026). Với gói bí kíp của bước 5: định dạng Agent Skills cho phép thư mục `scripts/` và trường `allowed-tools`; bí kíp nhập không được mang `scripts/`, và `allowed-tools` bị bỏ khi nhập (§13).
 - **T3. Cách ly.** Dòng nhập nằm ở một chỗ chờ, không nằm trong `scripture.md`, và không vào prompt nào tới khi chủ nhân nhận nó. Không phiên model nào đọc chỗ chờ: một thầy tu đọc văn bản lạ cũng là một đường tiêm.
-- **T4. Máy soát trước khi chủ nhân đọc**, bằng cùng hàm thuần với `elvaria scripture lint`: một dòng, không quá `LESSON_TEXT_MAX_LENGTH` (300) ký tự; chỉ ký tự nhìn thấy được (từ chối ký tự ẩn, ký tự đổi chiều chữ, thẻ và comment HTML); không URL, không đường dẫn tuyệt đối; qua các mẫu của `redact`; có phạm vi hợp lệ theo registry của vương quốc nhận; có `fail_kind`. Dòng trượt không hiện ra để nhận, chỉ nêu lý do.
+- **T4. Máy soát trước khi chủ nhân đọc**, bằng cùng hàm thuần với `elvaria scripture lint`: một dòng, không quá `LESSON_TEXT_MAX_LENGTH` (300) ký tự; chỉ ký tự nhìn thấy được (từ chối ký tự ẩn, ký tự đổi chiều chữ, thẻ và comment HTML); không URL, không đường dẫn tuyệt đối; qua các mẫu của `redact`; có phạm vi hợp lệ theo registry của vương quốc nhận; có `fail_kind`. Dòng trượt không hiện ra để nhận, chỉ nêu lý do. Máy còn đánh dấu, không chặn, dòng nhắc tới cài gói, biến môi trường, cấu hình của CLI hay địa chỉ mạng: đó là các kiểu chỉ dẫn mà những vụ đầu độc file luật đã dùng (§13).
 - **T5. Chủ nhân nhận từng dòng**; không có "nhận tất cả". Dòng nói với người chấm chạm vào thước đo (nguyên tắc 17) và được nêu riêng khi duyệt.
 - **T6. Thử việc bằng số đo tại chỗ.** Dòng nhập bắt đầu với bộ đếm bằng 0; số đếm của nơi gửi chỉ là lời khai cho chủ nhân đọc. Bộ đếm `helped`, `missed` của PS-12 quyết định giữ hay gỡ, như mọi dòng (ADR 0027). Một gói lớn thì thử ở thao trường trước (PS-17), như ADR 0026 đã đòi với thay đổi lớn về prompt.
 - **T7. Hết hạn theo phiên bản CLI.** Dòng có phạm vi tộc ghi "đo ở bản nào". Khi `tool.checked_version` của tộc đổi, dòng vẫn được nạp nhưng mang dấu "chưa đo lại", bộ đếm tính lại từ bản mới, và số đo ở bản mới quyết định. Lọc cứng theo đúng số phiên bản thì mỗi lần CLI lên bản là mất hết bài học của tộc; từ 2026-11-06 tới 2026-11-14, agy đi từ 1.5.1 tới 1.5.8.
@@ -189,9 +189,11 @@ Một ADR mới, viết khi mở task đầu tiên chạm tới prompt (bước 
 
 Hai ADR đã có sẽ sửa tại chỗ khi PS-12 và PS-13 làm, theo mẫu "(Amended <ngày>, <task>: …)": ADR 0027 (phạm vi thêm vai; phiên bản CLI là "đo ở bản"; `origin`), ADR 0020 (nguồn của bí kíp). ADR 0016 không đổi: registry chỉ theo bản phát hành là điều nó đã nói.
 
-## 11. Quyết định chờ chủ nhân
+## 11. Quyết định của chủ nhân
 
-**Phải chốt** (hướng của tài liệu này; chốt xong thì merge):
+**Chủ nhân chốt ngày 2026-11-16**, trong phiên kế hoạch này: L1–L9 theo khuyến nghị ở hai bảng dưới; L10 làm ngay trong phiên thay vì chờ tới trước ADR, kết quả ở §13. Việc còn lại sau lời chốt: chủ nhân sửa kế hoạch sản phẩm 0.8 theo §9 (L6); phiên điều phối mở bước 0 bằng một phiên của chủ nhân (L5); S1–S8 là đầu vào khi lập kế hoạch PS-12 (L8).
+
+**Phải chốt** (hướng của tài liệu này):
 
 | # | Quyết định | Khuyến nghị |
 |---|---|---|
@@ -209,11 +211,23 @@ Hai ADR đã có sẽ sửa tại chỗ khi PS-12 và PS-13 làm, theo mẫu "(A
 | **L7** | Địa chí: giữ như hôm nay (file của vương quốc; dữ kiện repo đáng chia sẻ thì một quest chuyển vào tài liệu của chính repo), hay thêm một file địa chí nằm trong repo mà Elvaria đọc cùng địa chí của vương quốc | Giữ như hôm nay. File trong repo đổi hợp đồng dữ liệu của lãnh thổ và đặt một file của Elvaria vào repo của người khác; xét lại khi máy thứ hai cho thấy chép tay địa chí là vướng thật | Không chặn gì |
 | **L8** | Ràng buộc S1–S8 cho PS-12 | Nhận cả tám; S6 để PS-12 chọn | Khi lập kế hoạch PS-12 |
 | **L9** | ADR mới (§10) | Viết cùng task đầu tiên chạm prompt, không viết bây giờ | Bước 2 hoặc 4 |
-| **L10** | Tra web về cách các công cụ khác chia sẻ luật, prompt và skill (tốn token; phiên này chưa tra) | Làm một lần, trước khi viết ADR của L9, chủ yếu để kiểm danh sách của T4 với các kiểu tấn công đã biết | Trước L9 |
+| **L10** | Tra web về cách các công cụ khác chia sẻ luật, prompt và skill (tốn token) | Làm một lần, trước khi viết ADR của L9, chủ yếu để kiểm danh sách của T4 với các kiểu tấn công đã biết. Chủ nhân chọn làm ngay: §13 | Trước L9 |
 
 ## 12. Điều chưa biết
 
-- Phiên này không tra web. Hai điều dưới đây là trí nhớ của phiên, chưa kiểm lại ngày 2026-11-16: định dạng thư mục `SKILL.md` đã là một chuẩn mở mà nhiều CLI đọc được (§10 câu 2 của kế hoạch triển khai cũng ghi "nguồn thứ cấp" cho điều này), nên gói bí kíp có thể không cần định dạng riêng; và đã có báo cáo về file luật chia sẻ công khai mang ký tự ẩn để tiêm lệnh, là lý do của luật "chỉ ký tự nhìn thấy được" ở T4. Luật đó đứng được dù báo cáo đúng hay sai. Mục L10 là để kiểm.
 - Bộ đếm `helped` và `missed` chưa tồn tại, nên chưa biết sau bao nhiêu lượt nạp thì một dòng nhập đủ số đo để giữ hay gỡ. PS-12 đặt mốc "ít nhất 20 phán quyết" cho một loại lỗi; ngưỡng của T6 chọn sau khi PS-12 chạy thật.
 - Chưa có lần chạy thật nào trên macOS, nên mọi bài học loại C hôm nay đều đo trên Windows.
 - Elvaria phát hành ra ngoài bằng cách nào (hôm nay là một checkout git mà `upgrade` dựng bản ghim từ đó) chưa được quyết; đường C dựa vào cách đó, dù nó là gì.
+
+## 13. Tra web (L10, ngày 2026-11-16)
+
+Chủ nhân cho tra ngay trong phiên. Bốn điều tìm được, mỗi điều kèm hệ quả cho đề xuất. Không điều nào đổi L1–L4; hai điều siết thêm T2 và T4.
+
+| # | Điều tìm được | Nguồn | Hệ quả |
+|---|---|---|---|
+| 1 | Agent Skills là một đặc tả mở: một bí kíp là một thư mục có `SKILL.md` (frontmatter bắt buộc `name`, `description`; tùy chọn `license`, `compatibility`, `metadata`, `allowed-tools`), cùng các thư mục tùy chọn `scripts/` (mã chạy được), `references/`, `assets/`. Đặc tả không có phần nào về nguồn gốc, chữ ký hay độ tin cậy | [agentskills.io/specification](https://agentskills.io/specification), đọc trực tiếp | Gói bí kíp của bước 5 dùng thẳng định dạng này, không cần định dạng riêng; `origin` nằm được trong `metadata`. Vì định dạng cho mang mã và quyền tool, T2 nói rõ: bí kíp nhập không có `scripts/`, bỏ `allowed-tools` |
+| 2 | Một nghiên cứu quét 31 132 bí kíp của hai chợ công khai: 26,1 % có ít nhất một lỗ hổng, thuộc bốn nhóm (tiêm prompt, đưa dữ liệu ra ngoài, leo quyền, chuỗi cung ứng); đưa dữ liệu ra ngoài nhiều nhất (13,3 %); 5,2 % có dấu hiệu cố ý; bí kíp kèm script dễ có lỗ hổng gấp 2,12 lần bí kíp chỉ có chỉ dẫn | [arXiv 2601.10338](https://arxiv.org/abs/2601.10338) (Liu và cộng sự, 2026-01-15), đọc phần tóm tắt | Ủng hộ T2 (chỉ câu chữ) và việc không có chợ, không tự tải. Nhóm lỗi nhiều nhất trùng với chỗ còn hở nêu ở §6: đưa nội dung repo ra ngoài qua tool đã được phép |
+| 3 | Đầu độc file luật của agent là kiểu tấn công đã có tên: ký tự Unicode ẩn (nối không độ rộng, đổi chiều chữ) trong file luật chia sẻ, mắt người duyệt không thấy ("Rules File Backdoor", 2025-03); chỉ dẫn bảo agent tự đổi cấu hình, địa chỉ máy chủ hay cài một gói; một chỉ dẫn độc giấu giữa nhiều chỉ dẫn thật trong một file dài. Khuyến nghị: người có trách nhiệm duyệt file luật, quét và chặn ký tự ẩn, không cho agent ghi cấu hình của chính nó, đặt điều cấm ở quyền và sandbox chứ không ở câu chữ, thêm nguồn gốc cho file luật | [Ghi chú của Cloud Security Alliance, 2026-10-27](https://labs.cloudsecurityalliance.org/research/csa-research-note-agent-instruction-file-poisoning-20261027/), đọc trực tiếp. Vụ 2025-03 chỉ đọc qua nguồn thứ cấp | Khớp T4 (chỉ ký tự nhìn thấy được), T5 (nhận từng dòng ngắn, không có chỗ giấu trong một file dài), T9 (nguồn gốc), và khớp cách Elvaria đã làm: quyền chặn ở runner, không ở prompt. Thêm vào T4: đánh dấu dòng nhắc tới cài gói, biến môi trường, cấu hình CLI, địa chỉ mạng |
+| 4 | Chợ plugin của Claude Code là một repo git có file danh mục; mỗi mục ghim nguồn bằng `ref` và SHA đầy đủ của commit, file nén thì bằng `sha256`; tên có ký tự điều khiển hay đổi chiều chữ bị từ chối; tài liệu khuyên ghim vào commit đã duyệt để lần tự cập nhật không dời nó đi | [Tài liệu marketplace của Claude Code](https://code.claude.com/docs/en/plugins/marketplace-reference), đọc trực tiếp | Nếu sau này có repo bài học chung (phương án B), ghim theo SHA commit là quy ước sẵn có và cũng là cách bản ghim của Elvaria đang chạy. Không đổi gì hôm nay |
+
+Chỉ thấy qua nguồn thứ cấp, số liệu giữa các nguồn không khớp nên không dùng làm căn cứ: các đợt rà một chợ bí kíp công khai đầu năm 2026 báo từ vài chục tới vài trăm bí kíp độc; số công cụ đã đọc được `SKILL.md` (các bài viết nêu từ 26 tới hơn 30, trong đó có Claude Code, Codex CLI và Gemini CLI). Cách hai CLI đang ghim nạp bí kíp khi chạy headless vẫn là việc của spike PS-13.
