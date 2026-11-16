@@ -293,6 +293,7 @@ Họ model (suy ra từ slug, không lưu): `claude`, `gemini`, `gpt` (Codex thu
 | Quyết thư | `decide_memo` | — | `elvaria memo decide`; gác (`shelved`), bác (`rejected`) hay đã có quest làm (`handled`, kèm `quest`), hoặc nhận (`accepted`, thư phản biện đề bài); mỗi thư quyết một lần, không quest nào đổi, trừ quest đang chờ chính thư phản biện đề bài đó: nó đi tiếp với quyết định làm câu trả lời (PS-22b); ghi `memo.closed`. Phân loại thư cũng gác thư bằng lệnh này (nguồn `chancellor`, PS-03b) |
 | Đưa thư lên chủ nhân | `escalate_memo` | — | chỉ phân loại thư của Tể tướng ghi (nguồn `chancellor`, PS-03b): thư ngoài phạm vi ủy quyền giữ lời khuyên ở `memo.escalation`, vẫn mở, vào bản tấu; ghi `memo.escalated` |
 | Quyết thư phản biện đề bài | `decide_amendment` | — | chỉ văn phòng Tể tướng ghi (nguồn `chancellor`, PS-22b), thay người viết đề của quest (Tể tướng hay pháp sư của kế hoạch): `accepted` viết lại mô tả quest khi không phiên nào giữ nó, `rejected` giữ đề; cả hai đóng thư và cho quest đang chờ đi tiếp, lý do làm câu trả lời; `owner` giữ thư mở kèm lời khuyên và lý do (`holds`), quest hỏi chủ nhân; dòng sự kiện mang actor là người viết đề |
+| Giao lại tới forge | `deliver` | — | `elvaria quest deliver` (PS-08c, ADR 0023): quest `done` trên lãnh thổ giao hàng khác `manual` được giao lại từ đầu (quét secret, push, tìm hay mở PR) sau một `delivery.failed`; Nhiếp chính không tự thử lại. Dòng `command.applied` mang `quest`, nên kết cục cũ bị quên cả với Nhiếp chính chạy sau |
 
 Nguồn lệnh (`source`): `cli`, `herald`, `lite`.
 

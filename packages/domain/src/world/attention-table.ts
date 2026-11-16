@@ -5,6 +5,7 @@ import type { CharacterId, MemoId, QuestId, TribeId } from '../core/ids.ts';
 import type { DelegationHold, TriageAction } from '../delegation/constants.ts';
 import type { WaitGauge } from '../dispatch/judge-waits.ts';
 import type { Rank } from '../schema/common.ts';
+import type { DeliveryFailure, DeliveryStage } from '../schema/event/delivery-data.ts';
 
 export const ATTENTION_GROUPS = ['must', 'can_wait'] as const;
 /** `must`: the work stands still until the owner decides; `can_wait`: nothing waits on it. */
@@ -19,6 +20,9 @@ export const ATTENTION_TABLE = {
   question: { group: 'must', advice: 'answer', command: ['answer', '{quest}', '<answer>'] },
   awaiting_seal: { group: 'must', advice: 'seal_or_return', command: ['seal', '{quest}'] },
   infirmary: { group: 'must', advice: 'retry_or_archive', command: ['quest', 'retry', '{quest}'] },
+  // PS-08c: the Steward's delivery to the forge stopped; it does not try again on its own (ADR 0023). The item's line
+  // words what to do by its `reason`.
+  delivery_failed: { group: 'must', advice: 'deliver_again', command: ['quest', 'deliver', '{quest}'] },
   judge_mana: {
     group: 'must',
     advice: 'judge_other_pool_or_wait',
@@ -53,6 +57,12 @@ export const ATTENTION_TABLE = {
   // PS-03b: a memo the Chancellor's triage sent up, with its advice, before the memos it has not read yet.
   memo_escalated: { group: 'can_wait', advice: 'weigh_triage', command: ['memo', 'show', '{memo}'] },
   memo: { group: 'can_wait', advice: 'decide_memo', command: ['memo', 'show', '{memo}'] },
+  // PS-08c: the quest's pull request is open on the forge, for the owner to merge (mode `pr`); then archive the quest.
+  delivery_waits: {
+    group: 'can_wait',
+    advice: 'merge_pr_and_archive',
+    command: ['quest', 'archive', '{quest}'],
+  },
   mana_asleep: { group: 'can_wait', advice: 'wait_or_wake', command: ['wake', '{tribe}'] },
   mana_warning: { group: 'can_wait', advice: 'watch_mana', command: ['doctor'] },
 } as const satisfies Record<
@@ -94,6 +104,10 @@ export interface AttentionSubject {
   readonly pool?: string;
   readonly used_pct?: number;
   readonly resets_at?: string;
+  /** A delivery to the forge (PS-08c): where it stopped and why, and the pull request's address when there is one. */
+  readonly stage?: DeliveryStage;
+  readonly reason?: DeliveryFailure;
+  readonly url?: string;
 }
 
 export interface AttentionItem extends AttentionSubject {

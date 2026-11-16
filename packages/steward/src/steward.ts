@@ -10,6 +10,7 @@ import { acquireLock, inKingdom, isLocked } from '@elvaria/store';
 import type { Result } from '@elvaria/domain';
 
 import { createBackground } from './background.ts';
+import { createForgeBook } from './forge/book.ts';
 import { createGraphBuilds } from './graph-builds.ts';
 import { loop, wake } from './loop.ts';
 import { createJudgeLocks } from './review/exclusive.ts';
@@ -99,6 +100,7 @@ const stateOf = (deps: StewardDeps, ended: () => void): State => ({
   claimPromptSizes: new Map(),
   versions: createVersionBook(),
   scheduler: createScheduler(jobsOf(deps), deps.onCall),
+  forge: createForgeBook(),
   restart: undefined,
   held: undefined,
   beat: undefined,

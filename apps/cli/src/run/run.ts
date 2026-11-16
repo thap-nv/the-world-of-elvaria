@@ -1,13 +1,14 @@
 // `elvaria run`: the Steward of one kingdom, until the owner stops it (implementation-plan §3.1; P1-09 row,
 // "(Chốt sau P1-03)"). This is where the work engine is put together: a runner per tribe from its adapter, plots
 // over PlotManager, the console bell and the digest file (PS-03), the Chancellor's triage (PS-03b), the amendments'
-// authors (PS-22b), the event log; the Steward itself sees only interfaces (ADR 0006, 0021).
+// authors (PS-22b), the forges a done quest is delivered to (PS-08c), the event log; the Steward itself sees only
+// interfaces (ADR 0006, 0021).
 import { openEventLog } from '@elvaria/eventlog';
 import { minimalEnv, openFileTreasury } from '@elvaria/runner-core';
 import { createSteward, nodeScriptRunner } from '@elvaria/steward';
 import { fromPortable } from '@elvaria/store';
 import type { CodeGraphs } from '@elvaria/runner-core';
-import type { Steward } from '@elvaria/steward';
+import type { Forges, Steward } from '@elvaria/steward';
 
 import { EXIT } from '../command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
@@ -15,6 +16,7 @@ import { runningLine } from '../upgrade/running.ts';
 import { consoleBell } from './bell.ts';
 import { crewOf } from './crew.ts';
 import { fileDigest } from './digest-file.ts';
+import { forgesOf } from './forges.ts';
 import { graphsOf } from './graphs.ts';
 import { plotsOf } from './plots.ts';
 import { toolFoundOf } from './tool-found.ts';
@@ -40,7 +42,12 @@ function reportCrew(ctx: KingdomContext, crew: Crew): void {
   }
 }
 
-function stewardOf(ctx: KingdomContext, crew: Crew, graphs: CodeGraphs | undefined): Steward {
+interface Found {
+  readonly graphs: CodeGraphs | undefined;
+  readonly forges: Forges | undefined;
+}
+
+function stewardOf(ctx: KingdomContext, crew: Crew, { graphs, forges }: Found): Steward {
   const { io, t, store } = ctx;
   return createSteward({
     store,
@@ -49,6 +56,8 @@ function stewardOf(ctx: KingdomContext, crew: Crew, graphs: CodeGraphs | undefin
     plots: plotsOf(store.root, io, crew.forget),
     // The territories' code graphs (PS-21): none without a pinned graphify.
     ...(graphs === undefined ? {} : { graphs }),
+    // Where a done quest's branch goes on a territory that delivers to its forge (PS-08c); none without git.
+    ...(forges === undefined ? {} : { forges }),
     // Every session starts from the minimal env and takes only its quest's secrets from the treasury (ADR 0013).
     env: minimalEnv(io.env),
     treasury: openFileTreasury(fromPortable(ctx.kingdom.paths.treasury, io.platform)),
@@ -79,7 +88,8 @@ async function runSteward(input: CommandInput, cli: CliContext): Promise<ExitCod
   const { io, t, store } = ctx;
   const crew = await crewOf({ kingdom: ctx.kingdom, root: store.root }, io);
   reportCrew(ctx, crew);
-  const steward = stewardOf(ctx, crew, await graphsOf(ctx.kingdom, store.root, io));
+  const found = { graphs: await graphsOf(ctx.kingdom, store.root, io), forges: await forgesOf(io) };
+  const steward = stewardOf(ctx, crew, found);
   const started = await steward.start();
   if (!started.ok) {
     const line =
