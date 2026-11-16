@@ -28,7 +28,7 @@ Cây đầy đủ và luật phụ thuộc: [docs/implementation-plan.md](../imp
 | `scripts/` | P0-01 | Công cụ của repo: `gen-schemas.mjs`, `docs-gen.mjs` + `docs-*.mjs`, `docs-check.mjs`, `i18n-check.mjs`, `docs-note.mjs` (commitlint), `not-yet.mjs`, `plan-split.mjs` + `plan-*.mjs` (tách kế hoạch triển khai, P1-52), `ritual-steps.mjs` (PS-06); mỗi file có spec, trừ `docs-markdown.mjs` và `docs-repo.mjs` (test qua spec của `docs-gen`, `docs-check`) |
 | `.claude/` | P0-11 | `settings.json` bật bốn hook của repo trong `hooks/`; `rules/` là luật theo vùng code (frontmatter `paths`) |
 | `design/` | — | Bàn giao thiết kế v0.2 — bản gốc đầu tiên, giữ nguyên làm lịch sử, không build ([design/DESIGN-HANDOFF.md](../../design/DESIGN-HANDOFF.md)). Từ giai đoạn 2, sửa thiết kế trong `packages/ui-kit` / `packages/ui` |
-| `docs/` | — | Kế hoạch triển khai và [kế hoạch từng giai đoạn](../plans/), [ADR](../adr/), [tra cứu CLI](../reference/cli-facts-2026-11-12.md), [spike](../spikes/), [hướng dẫn và báo cáo các lần chạy thật](../guides/) (vận hành vương quốc, thêm một tộc, quest đầu tiên…), báo cáo do quest viết ([docs/reports/](../reports/)), brief thiết kế; file sinh ra (danh sách ở mục Cấm của CLAUDE.md), trong đó [cli](../cli.md) là mọi lệnh `elvaria` |
+| `docs/` | — | Kế hoạch triển khai và [kế hoạch từng giai đoạn](../plans/), [ADR](../adr/), tra cứu CLI ([2026-11-12](../reference/cli-facts-2026-11-12.md) và phần đổi ở [2026-11-16](../reference/cli-facts-2026-11-16.md)), [spike](../spikes/), [hướng dẫn và báo cáo các lần chạy thật](../guides/) (vận hành vương quốc, thêm một tộc, quest đầu tiên…), báo cáo do quest viết ([docs/reports/](../reports/)), brief thiết kế; file sinh ra (danh sách ở mục Cấm của CLAUDE.md), trong đó [cli](../cli.md) là mọi lệnh `elvaria` |
 
 Thư mục kingdom (trạng thái của người dùng) **không** nằm trong repo; worktree của quest nằm trong repo của lãnh thổ: `<repo>/.elvaria/worktrees/<quest-id>`.
 
@@ -67,7 +67,8 @@ pnpm elvaria <lệnh>      # CLI, chạy thẳng apps/cli/src/cli.ts; mọi lệ
 pnpm elvaria init --kingdom <tmp> --name Thu                          # vương quốc thử
 pnpm elvaria sandbox generate --day busy --seed 42 --kingdom <tmp>    # ngày giả vào <tmp>/events/sandbox/<ngày>.jsonl
 pnpm elvaria sandbox replay <tmp>/events/sandbox/<ngày>.jsonl --speed 20   # dòng thời gian ra terminal
-ELVARIA_LIVE=1 pnpm --filter @elvaria/runner-claude test              # smoke với CLI thật và hook đã build (từ P1-09) — tốn mana, chỉ khi cần
+pnpm --filter @elvaria/hooks build && ELVARIA_LIVE=1 pnpm --filter @elvaria/runner-claude exec vitest run src/live.spec.ts
+                         # bộ live với CLI thật (từ P1-09) — tốn mana, chỉ khi cần; `… test` chạy thêm spec CLI giả và coverage
 ```
 
 Mọi lệnh `elvaria` và tùy chọn: [docs/cli.md](../cli.md), sinh từ bảng lệnh. Chỉ `run`, `say`, `triage` và `tribe check` với CLI thật mở phiên tốn mana. Trên vương quốc đã ghim một bản (`elvaria upgrade`), `pnpm elvaria` chạy bằng bản ghim; thêm `--here` để chạy bằng mã của worktree đang sửa.
@@ -77,10 +78,10 @@ Mọi lệnh `elvaria` và tùy chọn: [docs/cli.md](../cli.md), sinh từ bả
 [.claude/settings.json](../../.claude/settings.json) bật bốn hook Node (dạng exec, không shell; test trong `pnpm test`):
 
 - `guard-bash.mjs` (trước Bash/PowerShell) chặn: force push, `--no-verify` / `git commit -n` / tắt husky, `git rebase` và `git pull --rebase`, `git stash` trần / `stash pop` / `drop` không ref / `clear`, `--dangerously-skip-permissions`, xóa đệ quy ngoài checkout và thư mục tạm. Luật khớp cả thân heredoc: ghi file bằng Edit/Write, đừng bằng heredoc.
-- `guard-edit.mjs` (trước Edit/Write/MultiEdit) chặn sửa tay file sinh và vùng `<!-- docs:gen … -->` (danh sách ở mục Cấm của CLAUDE.md), `design/**` và `docs/ke-hoach-dung-elvaria-*.md`. Lệnh shell ghi vào các file đó thì nó không thấy: vẫn là điều cấm.
+- `guard-edit.mjs` (trước Edit/Write/MultiEdit) chặn sửa tay file sinh và vùng `<!-- docs:gen … -->` (danh sách ở mục Cấm của CLAUDE.md), `design/**` và `docs/ke-hoach-dung-elvaria-*.md`. Lệnh shell ghi vào các file đó thì nó không thấy: vẫn là điều cấm. Nó chỉ gác file của checkout chứa chính nó (`REPO` và `repoPath` của `hook-io.mjs`): một phiên mở ở checkout chính mà Edit/Write vào file của worktree khác (hay ngược lại) thì không bị gác, nhưng điều cấm vẫn áp (kế hoạch sản phẩm 0.8, do người dùng chốt, được viết theo đường đó ở docs/plan-0.8, 2026-11-10). Sửa file của một worktree thì mở phiên trong chính worktree đó.
 - `typecheck-touched.mjs` (sau Edit/Write/MultiEdit) chạy `tsc -p` của workspace sở hữu file vừa sửa (file ở `scripts/`, `.claude/hooks/` và `*.mjs` ở gốc: tsconfig gốc) và trả lỗi về ngay.
 - `stop-checks.mjs` (khi kết thúc lượt) chạy `pnpm boundaries` nếu import, `package.json` của một workspace hay `boundaries.mjs` đổi, và `pnpm i18n:check` nếu locale hay glossary đổi.
 
 Bị chặn thì sửa nguyên nhân, đừng tìm đường vòng; cần làm điều bị chặn thì hỏi người dùng.
 
-Cùng file đó tắt ba thứ không phiên nào trên repo dùng: connector claude.ai (`disableClaudeAiConnectors`), Artifact (`enableArtifact: false`) và Workflow (`disableWorkflows`), vì mô tả công cụ của chúng nằm trong phần đầu mọi request (§11 2026-11-14, mục (57), (58): request đầu từ 59–62k xuống 43,5k token). Nhân vật Claude chạy với `--setting-sources project,local`, nên quest trên lãnh thổ Elvaria cũng nhận ba khóa này.
+Cùng file đó tắt ba thứ không phiên nào trên repo dùng: connector claude.ai (`disableClaudeAiConnectors`), Artifact (`enableArtifact: false`) và Workflow (`disableWorkflows`), vì mô tả công cụ của chúng nằm trong phần đầu mọi request (§11 2026-11-14, mục (57), (58): request đầu từ 59–62k xuống 43,5k token). Sửa `.claude/settings.json` có hiệu lực ngay với phiên đang chạy, không chờ phiên sau: phiên docs/slim-claude-md mất công cụ Artifact ngay sau lần sửa đó. Nhân vật Claude chạy với `--setting-sources project,local`, nên quest trên lãnh thổ Elvaria cũng nhận ba khóa này.
