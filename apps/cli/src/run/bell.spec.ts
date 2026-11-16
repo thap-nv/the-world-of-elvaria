@@ -1,7 +1,7 @@
 // The console bell's mana lines (implementation-plan §3.5, P1-22): a gauge that warns, sleeps or wakes, a whole
 // pool or the cap of one model, in the owner's language. The quest notices are in compose.spec.ts, but for a quest
-// that waits for a judge who reads images (PS-11) and a merge quest's merge that stopped (PS-08e), here as
-// compose.spec.ts is at its size limit.
+// that waits for a judge who reads images (PS-11), a merge quest's merge that stopped (PS-08e) and a delivery to the
+// forge (PS-08c), here as compose.spec.ts is at its size limit.
 import { QuestIdSchema, TribeIdSchema } from '@elvaria/domain';
 import { translator } from '@elvaria/i18n';
 import { describe, expect, it } from 'vitest';
@@ -151,6 +151,32 @@ describe('the console bell on a merge that stopped (PS-08e)', () => {
     );
     expect(lineOf(vi, { ...stopped, reason: 'conflict', conflicts: ['README.md'] })).toContain(
       'ghép main dừng vì xung đột ở README.md',
+    );
+  });
+});
+
+describe('the console bell on a delivery to the forge (PS-08c)', () => {
+  const quest = { id: QuestIdSchema.parse('q_20261116_aaaaa1'), title: 'Book a room', rank: 'C' } as const;
+  const url = 'https://github.com/elvaria-specs/kingdom-repo/pull/7';
+
+  it('names the open pull request, and the files a secret pattern matched', () => {
+    expect(lineOf(en, { kind: 'delivery_pushed', quest, url, warnings: [] })).toBe(
+      `Quest q_20261116_aaaaa1 «Book a room»: branch pushed, pull request open: ${url}`,
+    );
+    expect(lineOf(en, { kind: 'delivery_pushed', quest, url, warnings: ['src/a.ts', 'b.env'] })).toBe(
+      `Quest q_20261116_aaaaa1 «Book a room»: branch pushed, pull request open: ${url}. Added lines match a ` +
+        'shared secret pattern in src/a.ts, b.env: look at them before you merge.',
+    );
+  });
+
+  it('says where the delivery stopped, why, and the command that sends it again', () => {
+    expect(lineOf(en, { kind: 'delivery_failed', quest, stage: 'open', reason: 'forge_auth' })).toBe(
+      'Quest q_20261116_aaaaa1 «Book a room»: the delivery stopped at opening the pull request: the forge refused ' +
+        'the credential (expired, revoked, no push access, or SSO); sign in again, then deliver again. Deliver ' +
+        'again: elvaria quest deliver q_20261116_aaaaa1',
+    );
+    expect(lineOf(vi, { kind: 'delivery_failed', quest, stage: 'scan', reason: 'secret' })).toContain(
+      'elvaria quest deliver q_20261116_aaaaa1',
     );
   });
 });

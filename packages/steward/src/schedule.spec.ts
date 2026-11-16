@@ -90,6 +90,7 @@ describe('a scheduled job outside the tick', () => {
       scope_held: [],
       judges_unopened: [],
       tribes_held: [],
+      deliveries: [],
     });
     expect(digest.runs).toEqual([]);
     chronicle.finish();

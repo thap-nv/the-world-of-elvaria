@@ -4,7 +4,7 @@
 
 - Ships the `elvaria` command, the only composition root (implementation-plan §1.1): `init`, `doctor`,
   `tribe list|add|check|disable|look`, `territory add|list|check|graph|delivery`, `character add|list|suspend|release|level|model`, `say`,
-  `quest add|list|show|confirm|cancel|archive|edit|retry|reassign`,
+  `quest add|list|show|confirm|cancel|archive|edit|retry|reassign|deliver`,
   `seal`, `return`, `answer`, `memo list|show|decide`, `triage`, `run`, `wake`, `digest`, `metrics`,
   `sandbox generate|replay`, `migrate`, `upgrade`. The command table (`src/commands.ts`) drives parsing (`util.parseArgs`), help, and the reference
   `docs/cli.md` that `pnpm docs:gen` renders from it (`scripts/docs-cli.mjs`).
@@ -12,7 +12,7 @@
   `i18next/no-literal-string` (`packages/config/eslint-i18n.mjs`) guards it. Store and registry issues are
   translated by their `code`.
 - Sends every quest change as an inbox command (`create_quest`, `confirm`, `cancel`, `archive`, `edit_quest`,
-  `retry`, `reassign`, `seal`, `return`, `answer`; ADR 0005), after checking ids against the registry and the quest
+  `retry`, `reassign`, `seal`, `return`, `answer`, `deliver`; ADR 0005), after checking ids against the registry and the quest
   against the transition table; `archive` and `cancel` both take a quest in the infirmary (`infirmary.archive`, P1-56).
 - `say` (PS-06) gives the Chancellor `kingdom.dispatch.council` and prints the brief of work for the council (goal,
   out of scope, acceptance examples, assumptions, each question with its recommended answer) with the plan quest
@@ -272,7 +272,20 @@ show` prints the brief apart from the rest of the description and, while the pla
   variable Elvaria sets, and `GCM_INTERACTIVE=never`; 10 s, then its tree is killed; on macOS a stopped call names
   the Keychain's Always Allow), and `GET /repos/{owner}/{repo}` on GitHub (`src/forge/github.ts`, through
   `CliIo.fetch`): no right to push is an error, a forge out of reach a warning. It prints neither the token nor
-  the account's name. Nothing is pushed yet: that is PS-08c.
+  the account's name.
+- The forge the Steward delivers to (PS-08c, ADR 0023): `run` gives it `forgesOf` (`src/run/forges.ts`), the git
+  found on PATH (none without git) and GitHub's adapter of the Steward's `Forge` port (`src/forge/github-forge.ts`
+  over `github-api.ts`, `github-pulls.ts`, `github-merge.ts`): REST through `CliIo.fetch` with a time limit, the
+  token read from git's store at every call (`gitToken`) and kept by none, every `detail` masked with it and redact's
+  patterns. It finds the branch's pull request in any state (an open one first) or opens it (a 422 looks again),
+  reads where it stands (merged, closed, conflict, the required check runs and commit statuses), merges with the
+  head's sha (405 a conflict, 409 a moved head) and deletes a branch only while its tip is that head; a 401 or 403
+  is the credential's, a rate-limited 403 the forge's. `quest deliver <id>` (`src/quest/deliver.ts`) sends `deliver`
+  for a done quest whose territory delivers to its forge (the domain's `forgeDue`), refusing the others.
+  `quest show` prints the delivery's pull request, or where it stopped, why and the command
+  (`src/quest/delivery-view.ts`, `forgeOutcomesOf` on the quest's journal); `digest` lists `delivery_failed` and
+  `delivery_waits`; the bell says `delivery_pushed` (with the files a shared secret pattern matched) and
+  `delivery_failed`.
 
 ## Does not
 
@@ -281,17 +294,19 @@ show` prints the brief apart from the rest of the description and, while the pla
   asks only `--version` and, through the adapter, the login (no model call). Only `say`, `run` and `tribe check`
   with a real CLI start sessions that spend mana; `upgrade` tries a build with fake CLIs only.
 - Push, merge or pull the Elvaria repo: `upgrade` builds a commit the repo already has, and never fetches. Nor push a
-  territory's branch: `territory delivery` only writes settings, and `doctor` only reads a credential and asks the
-  forge one question.
+  territory's branch itself: the Steward of `run` does (PS-08c), with the git and the forge adapter given to it;
+  `territory delivery` only writes settings, `doctor` only reads a credential and asks the forge one question, and
+  `quest deliver` only writes a command.
 - Inherit `process.env` into child processes: they get `minimalEnv` (ADR 0013), and never a shell (ADR 0015).
 
 ## Depends on
 
 - `@elvaria/domain` (schemas, ids, transition table, views), `@elvaria/store` (kingdom folder, inbox, migrate),
   `@elvaria/eventlog` (append, redact; reads the log for the mana gauges, the metrics, and a quest's journal for its
-  infirmary reason), `@elvaria/sandbox` (fake days and their replay),
+  infirmary reason; `createRedactor` masks the forge adapter's messages), `@elvaria/sandbox` (fake days and their replay),
   `@elvaria/registry-default` (`REGISTRY_ROOT`, `registryFiles()` for `init` and `migrate`), `@elvaria/i18n`, `@elvaria/steward`
-  (the Steward, unclaimable notices, `questIdOfCommand`, `levelsFromLog`), `@elvaria/chancellor` (`draftQuests`,
+  (the Steward, unclaimable notices, `questIdOfCommand`, `levelsFromLog`, the `Forge` port and
+  `DELIVERY_GIT_SWITCHES`), `@elvaria/chancellor` (`draftQuests`,
   `draftCommands` for `say`), `@elvaria/runner-core` (`PlotManager`, the adapter kit, the conformance
   suite, `killTree` for `upgrade`), `@elvaria/runner-claude` (the
   `claude_code` adapter), `@elvaria/runner-antigravity` (the `antigravity` adapter, P1-15), `@elvaria/hooks` (the
@@ -317,7 +332,12 @@ No spec reads a real credential or reaches a forge (PS-08): `test/credential.ts`
 fixture repo and names a Node script that answers as a helper does (a token of GitHub's `gho_` shape, nothing, or
 no answer at all), with an empty home folder; `testIo` hands every command a `fetch` that fails, and
 `src/doctor/check-delivery.spec.ts` passes a fake one. The specs compare the token, never print it, and look for it
-in the output and in every file of the kingdom.
+in the output and in every file of the kingdom. (PS-08c) `test/github.ts` is a fake GitHub that answers by method
+and path and keeps every request: `src/forge/github-forge.spec.ts` takes each call of the forge port through it
+(a 422 that races, the credential's refusals apart from the forge's, a token echoed back or in a network error
+masked, `gitToken` on the fake helper), `src/forge/github-status.spec.ts` a pull request's state and its required
+checks. `src/quest/deliver.spec.ts` plants done quests and territories and reads the inbox; `delivery-view.spec.ts`,
+`run/bell.spec.ts` and `digest/digest.spec.ts` word a delivery's outcome; `run/forges.spec.ts` finds git or none.
 `fixtures/lantern-adapter.mjs` is an owner adapter file that imports nothing, for `fixtures/fake-lantern.mjs`, a
 fake CLI with no tool gate: `src/tribe/tribe.spec.ts` adds, pins, checks and disables it; `src/tribe/round.spec.ts`
 runs the Steward (`elvaria run`) with it until a rank D quest is done, while a rank C quest stays open (P1-19);

@@ -2,11 +2,13 @@
 // (P1-06), send characters on a fail streak to the Temple, wake paused quests whose pool has mana again (P1-05),
 // give those asleep past mana.reassign_after_hours to another character (P1-22), start claimed quests, start the checks of submitted quests and give those checked a verifier or the machine's
 // verdict, send returned quests back, claim open ones, start open script-tier quests (P1-17), deliver done ones
-// (P1-14). Checks and scripts run outside the tick (P1-25, background.ts): a long one holds nothing but its quest.
+// (P1-14) and send their branch to the forge (PS-08c). Checks, scripts and deliveries to the forge run outside the tick
+// (P1-25, background.ts): a long one holds nothing but its quest.
 import type { CharacterId, Reassign, TickPlan } from '@elvaria/domain';
 
 import { ring } from './context.ts';
 import { deliver } from './deliver/deliver.ts';
+import { startDelivery } from './forge/push.ts';
 import { moveAndRing } from './notices.ts';
 import { mergeByMachine } from './party/machine.ts';
 import { step } from './record.ts';
@@ -90,4 +92,9 @@ export async function carryOut(ctx: Context, plan: TickPlan): Promise<void> {
   }
   // Step 7: what is done goes to the owner by its kind's convention (P1-14).
   for (const quest of plan.deliveries) warnIfRefused(ctx, `${quest} deliver`, await deliver(ctx, quest));
+  // Then a delivered quest's branch goes to its territory's forge, outside the tick (PS-08c, ADR 0023).
+  for (const quest of plan.forge_deliveries) {
+    if (ctx.stopping.aborted) break;
+    warnIfRefused(ctx, `${quest} forge`, startDelivery(ctx, quest));
+  }
 }

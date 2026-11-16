@@ -6,6 +6,7 @@ import { UlidSchema } from '@elvaria/domain';
 import type { InboxCommand, Quest } from '@elvaria/domain';
 import type { InboxItem } from '@elvaria/store';
 
+import { deliverAgain } from '../forge/deliver-command.ts';
 import { wake } from '../mana/step.ts';
 import { answerQuest, decideAmendment } from '../memos/amendment.ts';
 import { decideMemo } from '../memos/decide.ts';
@@ -67,6 +68,8 @@ async function onQuest(ctx: Context, command: InboxCommand, quest: Quest): Promi
       return changeRank(ctx, quest, command.payload.rank);
     case 'edit_quest':
       return edit(ctx, quest, command);
+    case 'deliver':
+      return deliverAgain(ctx, quest);
     default:
       return rejected('unsupported');
   }
@@ -90,7 +93,8 @@ export async function applyCommand(ctx: Context, command: InboxCommand): Promise
 
 /**
  * The command's line. `kind` (PS-01b) lets the metrics ledger count the owner's steps from the log alone, and
- * `source` (PS-03b) tells the Chancellor's triage from them; a file no command could be read from has neither.
+ * `source` (PS-03b) tells the Chancellor's triage from them; a file no command could be read from has neither. A
+ * `deliver` names its quest on the line (PS-08c), so the log alone says the quest's delivery was asked again.
  */
 async function answered(
   ctx: Context,
@@ -105,7 +109,8 @@ async function answered(
     ...(command === undefined ? {} : { kind: command.kind }),
     ...(command?.source === 'chancellor' ? { source: command.source } : {}),
   };
-  await ctx.record.note({ type, actor: STEWARD, data });
+  const quest = outcome.status === 'applied' ? outcome.quest : undefined;
+  await ctx.record.note({ type, actor: STEWARD, data, ...(quest === undefined ? {} : { quest }) });
   if (outcome.status === 'applied') ctx.counts.applied += 1;
   else ctx.counts.rejected += 1;
 }

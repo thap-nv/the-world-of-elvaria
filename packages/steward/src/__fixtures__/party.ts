@@ -13,7 +13,7 @@ import { leavingRunners } from './deliver.ts';
 import { PLAN_FILE, PLAN_FILE_PATH, templated } from './template.ts';
 import { gitPlots, gitRepoWith, onRepo } from './git-plots.ts';
 import { CAST, RM_TEMP, bench, questPayload } from './kingdom.ts';
-import type { Plots, Steward } from '../types.ts';
+import type { Plots, Steward, StewardDeps } from '../types.ts';
 import type { Bench, CastMember, Plays } from './kingdom.ts';
 
 export const CONTRACT = 'api/openapi.yaml';
@@ -66,6 +66,8 @@ export interface BenchMore {
   readonly cast?: readonly CastMember[];
   /** Plots to put over the git ones (P1-55): given them, the answers to replace. */
   readonly plots?: (plots: Plots) => Partial<Plots>;
+  /** More of the Steward's deps (PS-08c: the forges, and an env git and its hooks run with). */
+  readonly deps?: Partial<StewardDeps>;
 }
 
 /** The key of `Files` a session's quest leaves. */
@@ -120,6 +122,7 @@ export async function partyBench(
   const steward = kingdom.steward({
     plots: { ...plots, check, trial, ...more.plots?.(plots) },
     runners: leavingRunners(kingdom, leaves),
+    ...more.deps,
   });
   const started = await steward.start({ loop: false });
   if (!started.ok) throw new Error(`fixture: the Steward did not start: ${started.error}`);

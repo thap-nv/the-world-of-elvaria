@@ -147,6 +147,44 @@ describe('elvaria digest', () => {
     expect(said).toContain('  `elvaria character suspend ilse`');
     expect((await digest('vi')).join('\n')).toContain('nhưng phiên của người chấm ilse không mở được');
   });
+
+  // PS-08c: the outcomes of the deliveries to the forge come from the log.
+  it('names a delivery that stopped with why and the command, and a pull request open for the owner', async () => {
+    await plantQuests(kingdom, questFixture('done'), questFixture('done', OTHER_QUEST_ID));
+    const url = 'https://github.com/elvaria-specs/kingdom-repo/pull/7';
+    const line = (id: string, type: string, data: Record<string, unknown>) =>
+      EventSchema.parse({
+        v: EVENT_VERSION,
+        id,
+        ts: '2026-11-06T08:40:00+07:00',
+        type,
+        actor: { kind: 'steward' },
+        data: { territory: 'do-an', ...data },
+      });
+    await openEventLog(kingdom).append([
+      line('01JCF8X4Z6Q3W9N2M5R7T8V002', 'delivery.failed', {
+        quest: QUEST_ID,
+        stage: 'push',
+        reason: 'no_credential',
+      }),
+      line('01JCF8X4Z6Q3W9N2M5R7T8V003', 'delivery.pushed', {
+        quest: OTHER_QUEST_ID,
+        branch: `quest/${OTHER_QUEST_ID}`,
+        head: 'a'.repeat(40),
+        forge: 'github',
+        pr: { number: 7, url },
+      }),
+    ]);
+    const said = await digest();
+    expect(said).toContain(
+      `- The delivery of quest ${QUEST_ID} «Thêm script pnpm check» stopped at the push: git has no credential for the forge; sign in (git credential, Git Credential Manager), then deliver again. Once fixed, deliver it again: the Steward does not try again on its own.`,
+    );
+    expect(said).toContain(`  \`elvaria quest deliver ${QUEST_ID}\``);
+    expect(said).toContain(
+      `- The pull request of quest ${OTHER_QUEST_ID} «Thêm script pnpm check» is open for you (${url}). Read and merge the pull request on the forge, then archive the quest to give its plot back.`,
+    );
+    expect(said).toContain(`  \`elvaria quest archive ${OTHER_QUEST_ID}\``);
+  });
 });
 
 describe('the digest file of the Steward', () => {
