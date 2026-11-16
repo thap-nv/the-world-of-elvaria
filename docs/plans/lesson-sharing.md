@@ -2,7 +2,7 @@
 
 Ngày: 2026-11-16 · Trạng thái: **chủ nhân đã chốt** ngày 2026-11-16 cả mười mục L1–L10 ở §11, chín mục theo khuyến nghị và L10 làm ngay trong phiên (§13) ([§11, 2026-11-16](../implementation-plan/11-2026-11-16.md): dòng "docs/plan-lesson-sharing" nêu các mục, dòng "Người dùng chốt" sau nó ghi lời chốt). Chưa task nào được mở và chưa dòng code nào đổi. Tài liệu này là căn cứ để chủ nhân sửa kế hoạch sản phẩm (§9) và để sau này viết task; nó chưa phải kế hoạch chi tiết của task nào.
 
-Gốc: định hướng (161) của chủ nhân, ngày 2026-11-15: "Sau này nhiều người dùng Elvaria cho riêng mình; vương quốc của ai người nấy giữ, còn bài học (kinh, địa chí) chia sẻ được giữa các vương quốc để hoàn thiện hơn." Dòng ghi nó nằm ở [file §11 ngày 2026-11-15](../implementation-plan/11-2026-11-15.md), mới có trên nhánh `feat/ps-08c`, và tới `main` khi nhánh đó merge. Chủ nhân mở phiên kế hoạch này bằng quyết định (172).
+Gốc: định hướng (161) của chủ nhân, ngày 2026-11-15: "Sau này nhiều người dùng Elvaria cho riêng mình; vương quốc của ai người nấy giữ, còn bài học (kinh, địa chí) chia sẻ được giữa các vương quốc để hoàn thiện hơn." Dòng ghi nó nằm ở [file §11 ngày 2026-11-15](../implementation-plan/11-2026-11-15.md) (tìm "(161) Định hướng"; tới `main` cùng PS-08c, #189). Chủ nhân mở phiên kế hoạch này bằng quyết định (172).
 
 ## 1. Tóm tắt
 
