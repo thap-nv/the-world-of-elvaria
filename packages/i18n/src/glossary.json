@@ -1775,6 +1775,12 @@
               "id": ["decide_amendment"],
               "icon": "—",
               "remark": "chỉ văn phòng Tể tướng ghi (nguồn `chancellor`, PS-22b), thay người viết đề của quest (Tể tướng hay pháp sư của kế hoạch): `accepted` viết lại mô tả quest khi không phiên nào giữ nó, `rejected` giữ đề; cả hai đóng thư và cho quest đang chờ đi tiếp, lý do làm câu trả lời; `owner` giữ thư mở kèm lời khuyên và lý do (`holds`), quest hỏi chủ nhân; dòng sự kiện mang actor là người viết đề"
+            },
+            {
+              "vi": "Giao lại tới forge",
+              "id": ["deliver"],
+              "icon": "—",
+              "remark": "`elvaria quest deliver` (PS-08c, ADR 0023): quest `done` trên lãnh thổ giao hàng khác `manual` được giao lại từ đầu (quét secret, push, tìm hay mở PR) sau một `delivery.failed`; Nhiếp chính không tự thử lại. Dòng `command.applied` mang `quest`, nên kết cục cũ bị quên cả với Nhiếp chính chạy sau"
             }
           ]
         },

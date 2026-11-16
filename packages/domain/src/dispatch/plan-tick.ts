@@ -4,14 +4,16 @@
 // slot given away is gone for the next step: characters on a fail streak go to the Temple, claimed quests start,
 // submitted quests get their checks, then a verifier or the machine's verdict (reviews.ts), returned quests go back
 // to their assignee, open quests are claimed (round-robin over territories, then rank, then age), and open quests
-// nobody can take are named. Step 7 lists the done quests still to deliver. Checks and scripts run outside the tick
-// (P1-25): a quest whose machine work still runs gets nothing more until it ends, and no more of them start than
-// dispatch.max_background leaves room for (P1-47), short work beside the trials included (background-room.ts, P1-54).
+// nobody can take are named. Step 7 lists the done quests still to deliver, then those whose branch goes to its forge
+// (PS-08c). Checks and scripts run outside the tick (P1-25): a quest whose machine work still runs gets nothing more
+// until it ends, and no more of them start than dispatch.max_background leaves room for (P1-47), short work beside the
+// trials included (background-room.ts, P1-54).
 import { breakersOf, measureOf } from '../breaker/breakers.ts';
 import { calibrationOf } from '../breaker/calibration.ts';
 import { machineMergeDue } from '../party/machine-merge.ts';
 import { questFinished } from '../quest/finished.ts';
 import { startingNow } from './background-room.ts';
+import { forgeDeliveries } from './forge-due.ts';
 import { reassignsOf } from './reassigns.ts';
 import { planReviews } from './reviews.ts';
 import { rosterOf } from './roster.ts';
@@ -49,6 +51,11 @@ export interface KingdomSnapshot extends RosterSource, ReviewSource {
    * another may take the quest. Absent, as in a sandbox day: none measured, nobody passed over for it.
    */
   readonly claim_prompts?: readonly ClaimPrompt[];
+  /**
+   * Done quests whose delivery to their forge has an outcome, or that have nothing to push (PS-08c, forgeDeliveries):
+   * none goes again until the owner's `deliver`. Absent, as in a sandbox day: none.
+   */
+  readonly forge?: readonly QuestId[];
 }
 
 export interface TickPlan {
@@ -123,6 +130,11 @@ export interface TickPlan {
    * its kind's convention (P1-14). It needs nobody, so the roster plays no part.
    */
   readonly deliveries: readonly QuestId[];
+  /**
+   * After step 7 (PS-08c, ADR 0023): delivered done quests whose branch the Steward pushes and whose pull request it
+   * opens, outside the tick, on a territory whose delivery is not manual; one per territory at a time (forgeDeliveries).
+   */
+  readonly forge_deliveries: readonly QuestId[];
 }
 
 const rankOrder = (quest: Quest): number => RANKS.indexOf(quest.rank);
@@ -147,6 +159,12 @@ const heldPastBreakers = (
     measureOf(characters, snapshot.limits),
     calibrationOf(snapshot.quests, characters, snapshot.kingdom),
   );
+
+/** Step 7, then the forge (PS-08c): done quests to deliver, and delivered ones whose branch goes to their forge. */
+const deliveriesOf = (snapshot: KingdomSnapshot, done: readonly Quest[]) => ({
+  deliveries: done.filter(({ deliverable }) => deliverable.delivered_at === undefined).map(({ id }) => id),
+  forge_deliveries: forgeDeliveries(snapshot, done),
+});
 
 /** The plan of this tick; `now` dates the claims for the round-robin over territories. */
 export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
@@ -204,8 +222,6 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
       .filter(({ tier, id }) => tier === 'script' && !running.has(id))
       .map(({ id }) => id),
     unclaimable: unclaimable(step, openSessions),
-    deliveries: inStatus('done')
-      .filter(({ deliverable }) => deliverable.delivered_at === undefined)
-      .map(({ id }) => id),
+    ...deliveriesOf(snapshot, inStatus('done')),
   };
 }

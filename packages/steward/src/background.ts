@@ -1,7 +1,8 @@
 // The machine's work outside the tick (implementation-plan §3.1, §3.12, P1-25): a submitted quest's checks before
-// its judge, a script-tier run. A tick starts the work and goes on, so a check of minutes never holds the inbox, the
-// sessions' ends or the claims. The work writes into its run's folder in `.runs/` and, for checks, a `check.start`
-// and a `check.end` line (P1-10b), never a quest or a character file (a tick does, one write at a time); the next
+// its judge, a script-tier run, a done quest's delivery to its forge (PS-08c). A tick starts the work and goes on, so
+// a check of minutes never holds the inbox, the sessions' ends or the claims. The work writes into its run's folder in
+// `.runs/` and, for checks, a `check.start` and a `check.end` line (P1-10b), for a delivery its `delivery.*` line,
+// never a quest or a character file (a tick does, one write at a time); the next
 // tick, which work that ended calls at once (P1-10b), reads what it left: the checks' results here, a script's output
 // in `script.json`. The table lives in memory: a Steward that stops kills the work, the next one runs it again.
 // Ended checks stay while their quest is in review on their run, for the run's next judge as long as the branch head
@@ -21,7 +22,8 @@ import type {
 
 import type { Logger } from './types.ts';
 
-export type BackgroundKind = 'checks' | 'script';
+/** `forge` (PS-08c): a done quest's delivery to its forge, a push and its pull request (forge/push.ts). */
+export type BackgroundKind = 'checks' | 'script' | 'forge';
 
 /** Checks whose environment failed (P1-54, environmentFailureOf): which check said so, and when they ended. */
 export interface EnvironmentHeld {
@@ -57,6 +59,8 @@ export interface Background {
   checks(quest: QuestId, n: number, work: Work<CheckedRun | undefined>): void;
   /** Runs the script of run `n` of `quest`; its files say how it ended. */
   script(quest: QuestId, n: number, work: Work<void>): void;
+  /** Delivers done `quest` (run `n`) to its forge; its lines say how it ended (PS-08c). */
+  forge(quest: QuestId, n: number, work: Work<void>): void;
   /** What planTick needs to know (BackgroundWork). */
   view(): BackgroundWork;
   /** The ended checks of run `n`, left in the table: a later judge of the run may reuse them (P1-38). */
@@ -125,6 +129,13 @@ function start<T>(state: State, piece: Piece<T>, keep: (value: T, entry: Entry) 
   void done.finally(() => state.live.delete(done));
 }
 
+/** Work whose result is on disk or in the log once it ended: nothing of it stays in the table. */
+const leavesNothing =
+  (state: State, kind: BackgroundKind) =>
+  (quest: QuestId, n: number, work: Work<void>): void => {
+    start(state, { quest, kind, n, work }, () => false);
+  };
+
 /**
  * What planTick sees of the table: the work running, the checks ended for a judge, and those set aside for their
  * environment (P1-54), with when they ended; spent checks wait out of view (P1-42).
@@ -163,10 +174,9 @@ export function createBackground(log: Logger, ended: () => void = () => undefine
         return true;
       });
     },
-    // A script that ended leaves its output on disk: nothing waits here.
-    script: (quest, n, work) => {
-      start(state, { quest, kind: 'script', n, work }, () => false);
-    },
+    // A script that ended leaves its output on disk, a delivery its outcome in the log: nothing waits here.
+    script: leavesNothing(state, 'script'),
+    forge: leavesNothing(state, 'forge'),
     view: () => viewOf(table),
     ended: (quest, n) => {
       const entry = table.get(quest);
@@ -210,12 +220,19 @@ export function createBackground(log: Logger, ended: () => void = () => undefine
 /**
  * The work still wanted for the quests as `quests` hold them: checks while the quest is in review, its judge at work
  * or still to come (P1-38: ended checks wait there for the run's next judge), a script while the quest works, both
- * on the same run. A quest cancelled, judged or moved on loses its work.
+ * on the same run, a delivery while the quest is done (PS-08c). A quest cancelled, judged, archived or moved on loses its
+ * work.
  */
+const WANTED_WHILE: Readonly<Record<BackgroundKind, Quest['status']>> = {
+  checks: 'review',
+  script: 'working',
+  forge: 'done',
+};
+
 export const wantedIn =
   (quests: ReadonlyMap<QuestId, Quest>) =>
   (id: QuestId, kind: BackgroundKind, n: number): boolean => {
     const quest = quests.get(id);
     if (quest === undefined || currentRun(quest) !== n) return false;
-    return quest.status === (kind === 'checks' ? 'review' : 'working');
+    return quest.status === WANTED_WHILE[kind];
   };

@@ -31,6 +31,7 @@ import type {
 } from '@elvaria/runner-core';
 import type { KingdomStore } from '@elvaria/store';
 
+import type { Forges } from './forge/forge.ts';
 import type { Bell } from './notice.ts';
 import type { Digest, OnCallJob, ScheduledJob } from './schedule/ports.ts';
 import type { ScriptRunner } from './script/run-script.ts';
@@ -244,6 +245,12 @@ export interface StewardDeps {
    * checked one opens no new session. Absent: no tribe is held (a spec's Steward).
    */
   readonly toolFound?: (tribe: TribeId) => Promise<ToolFound | undefined>;
+  /**
+   * The forges a done quest's branch is delivered to (PS-08c, ADR 0023), by territory.delivery.forge, and git as a
+   * delivery runs it; `apps/cli/src/run` gives them. Absent: a territory whose delivery is not manual gets one
+   * `delivery.failed` (`forge_error`) per quest, and nothing is pushed.
+   */
+  readonly forges?: Forges;
 }
 
 export interface TickReport {

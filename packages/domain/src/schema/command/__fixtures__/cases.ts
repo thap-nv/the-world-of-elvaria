@@ -149,4 +149,9 @@ export const CASES: Record<InboxCommandKind, { valid: object; invalid: object; i
     invalid: { memo: 'm_20261106_4k2pqz', decision: 'owner', note: 'Only you can say.' },
     issue: 'payload.holds: an amendment sent to the owner, and only one, says why',
   },
+  deliver: {
+    valid: { quest: QUEST },
+    invalid: { quest: QUEST, force: true },
+    issue: 'Unrecognized key: "force"',
+  },
 };

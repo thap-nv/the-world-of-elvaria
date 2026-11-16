@@ -91,6 +91,30 @@ describe('createBackground', () => {
   });
 });
 
+describe('createBackground, a delivery to the forge (PS-08c)', () => {
+  it('runs once at a time on its quest and leaves nothing in the table once it ended', async () => {
+    const ended: string[] = [];
+    const background = createBackground({ warn: () => undefined }, () => void ended.push('ended'));
+    const gate = waiting();
+    let runs = 0;
+    const work = async () => {
+      runs += 1;
+      await gate.promise;
+    };
+    background.forge(Q1, 1, work);
+    background.forge(Q1, 1, work);
+    expect(background.view()).toEqual({ running: [Q1], checked: [] });
+    gate.end();
+    await background.idle();
+    expect(runs).toBe(1);
+    expect(ended).toEqual(['ended']);
+    expect(background.view()).toEqual({ running: [], checked: [] });
+    background.forge(Q1, 1, work);
+    await background.idle();
+    expect(runs).toBe(2);
+  });
+});
+
 describe('wantedIn', () => {
   const quest = (status: Quest['status'], verifier: string | null = null) =>
     ({ id: Q1, status, verifier, attempt_log: [{ n: 1, role: 'assignee' }] }) as unknown as Quest;
@@ -105,6 +129,13 @@ describe('wantedIn', () => {
     expect(wanted(quest('working'))(Q1, 'script', 1)).toBe(true);
     expect(wanted(quest('archived'))(Q1, 'script', 1)).toBe(false);
     expect(wanted(undefined)(Q1, 'script', 1)).toBe(false);
+  });
+
+  it('wants a delivery to the forge while the quest is done on the same run, and none once it is archived (PS-08c)', () => {
+    expect(wanted(quest('done'))(Q1, 'forge', 1)).toBe(true);
+    expect(wanted(quest('done'))(Q1, 'forge', 2)).toBe(false);
+    expect(wanted(quest('archived'))(Q1, 'forge', 1)).toBe(false);
+    expect(wanted(quest('done'))(Q1, 'checks', 1)).toBe(false);
   });
 
   // P1-54: checks set aside because their environment failed wait out of every judge's reach for their recheck.

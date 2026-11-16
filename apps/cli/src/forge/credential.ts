@@ -8,6 +8,7 @@
 import { err, ok } from '@elvaria/domain';
 import type { Result } from '@elvaria/domain';
 import { runToEnd } from '@elvaria/runner-core';
+import { DELIVERY_GIT_SWITCHES } from '@elvaria/steward';
 
 import { findExecutable } from '../process/find-executable.ts';
 import { minimalEnv } from '../process/minimal-env.ts';
@@ -35,8 +36,7 @@ export type CredentialProblem = 'none' | 'timeout' | 'no_git';
  */
 export const deliveryGitEnv = (io: CliIo): Record<string, string> => ({
   ...minimalEnv(io.env),
-  GIT_TERMINAL_PROMPT: '0',
-  GCM_INTERACTIVE: 'never',
+  ...DELIVERY_GIT_SWITCHES,
 });
 
 /** `key=value` lines as git prints them; a value may hold `=`. */

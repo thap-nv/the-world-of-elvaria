@@ -29,12 +29,13 @@ import type { Context } from '../context.ts';
 import type { Edits } from '../record.ts';
 
 export type Outcome =
-  | { readonly status: 'applied' }
+  /** `quest`: the quest the command.applied line names (`deliver`, PS-08c: forgeOutcomesOf reads it). */
+  | { readonly status: 'applied'; readonly quest?: Quest }
   | { readonly status: 'rejected'; readonly reason: string }
   /** Not now, not refused: the command stays in the inbox for a later tick. */
   | { readonly status: 'waiting' };
 
-export const APPLIED: Outcome = { status: 'applied' };
+export const APPLIED = { status: 'applied' } as const satisfies Outcome;
 export const rejected = (reason: string): Extract<Outcome, { status: 'rejected' }> => ({
   status: 'rejected',
   reason,
