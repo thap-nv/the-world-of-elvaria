@@ -26,9 +26,13 @@ export function cutCallOf(log: readonly Attempt[], progress: boolean): CutCall {
 }
 
 /**
- * Whether the assignee's latest session ended in a cut that went on: such a cut writes `progress` on its entry, and
- * the infirmary is the only other place it leads, which `redispatch` never leaves. The next session then goes on in
- * the same run, without a new attempt, as one that follows an answer or mana coming back.
+ * Whether the quest's latest session was the assignee's and ended in a cut that went on: such a cut writes `progress`
+ * on its entry. The next session then goes on in the same run, without a new attempt, as one that follows an answer
+ * or mana coming back. A cut that stopped leads to the infirmary, and since fix/quest-hold the owner may send that work
+ * to review (`infirmary.submit`): a judge's entry then comes after the cut, and the redispatch after its fail is a new
+ * attempt, as after any fail. Reading the last assignee entry alone resumed the old run there, the budget untouched.
  */
-export const endedInCut = (log: readonly Attempt[]): boolean =>
-  log.findLast((entry) => entry.role === 'assignee')?.progress !== undefined;
+export const endedInCut = (log: readonly Attempt[]): boolean => {
+  const last = log.at(-1);
+  return last?.role === 'assignee' && last.progress !== undefined;
+};

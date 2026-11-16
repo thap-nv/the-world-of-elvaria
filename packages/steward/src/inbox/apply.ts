@@ -14,6 +14,7 @@ import { escalate } from '../memos/escalate.ts';
 import { STEWARD } from '../record.ts';
 import { release, suspend } from './character-commands.ts';
 import { setLevel, setModel } from './character-settings.ts';
+import { hold, unhold } from './hold-commands.ts';
 import {
   archive,
   cancel,
@@ -25,6 +26,7 @@ import {
   reassign,
   rejected,
 } from './quest-commands.ts';
+import { submitFromInfirmary } from './submit-command.ts';
 import { giveBack, seal } from './verdict-commands.ts';
 import type { Context } from '../context.ts';
 import type { Outcome } from './quest-commands.ts';
@@ -70,6 +72,12 @@ async function onQuest(ctx: Context, command: InboxCommand, quest: Quest): Promi
       return edit(ctx, quest, command);
     case 'deliver':
       return deliverAgain(ctx, quest);
+    case 'hold':
+      return hold(ctx, quest, command.payload.reason);
+    case 'unhold':
+      return unhold(ctx, quest);
+    case 'submit':
+      return submitFromInfirmary(ctx, quest);
     default:
       return rejected('unsupported');
   }

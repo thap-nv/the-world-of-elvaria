@@ -142,6 +142,12 @@ export const DeliverableSchema = z
 
 export const SealSchema = z.strictObject({ at: DateTimeSchema, note: z.string().optional() });
 
+/**
+ * The owner's hold on a quest not started yet (fix/quest-hold): a field, not a status, so the quest keeps its status,
+ * its description, its dependencies and the assignee the owner named, and the table has no row to add.
+ */
+export const HeldSchema = z.strictObject({ at: DateTimeSchema, reason: NonEmptyStringSchema.optional() });
+
 export const BlockedAmendmentSchema = z
   .strictObject({
     memo: MemoIdSchema.meta(describe('The amendment memo (memos/<memo>.json); its text is the question.')),

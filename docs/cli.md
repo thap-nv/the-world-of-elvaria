@@ -35,8 +35,11 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria quest confirm <quest>` | Xác nhận một nhiệm vụ nháp để nó mở (lệnh confirm). |
 | `elvaria quest cancel <quest>` | Hủy một nhiệm vụ chưa xong; nhiệm vụ nháp thì bỏ đi, nhiệm vụ ở trạm quân y thì được lưu trữ (lệnh cancel hoặc archive). |
 | `elvaria quest archive <quest>` | Lưu trữ một nhiệm vụ đã xong và giao hàng, hoặc một nhiệm vụ ở trạm quân y mà chủ nhân bỏ: Nhiếp chính gỡ worktree, giữ nhánh (lệnh archive). |
+| `elvaria quest hold <quest>` | Giữ một nhiệm vụ đang mở, hoặc đã có người nhận mà chưa bắt đầu, để Nhiếp chính không nhận hay bắt đầu nó tới khi elvaria quest unhold (lệnh hold): nhiệm vụ giữ nguyên trạng thái, mô tả, phụ thuộc và nhân vật --to đã chỉ, khác quest cancel, lệnh lưu trữ luôn nhiệm vụ. |
+| `elvaria quest unhold <quest>` | Thôi giữ một nhiệm vụ (lệnh unhold): Nhiếp chính lại nhận hoặc bắt đầu nó như mọi nhiệm vụ khác. |
 | `elvaria quest edit <quest>` | Sửa một nhiệm vụ mà không chạm vào file của nó (lệnh edit_quest). |
 | `elvaria quest retry <quest>` | Mở lại một nhiệm vụ ở trạm quân y với đủ lượt thử như mới, cho mọi nhân vật đúng nghề đang rảnh hoặc cho nhân vật --to chỉ định, hoặc đưa nhiệm vụ có người chấm cứ rời đi không ra phán quyết, hay chỉ chấm dở, về chờ nghiệm thu (lệnh retry; lệnh reassign khi có --to). |
+| `elvaria quest submit <quest>` | Gửi việc của một nhiệm vụ ở trạm quân y sang nghiệm thu, cùng lượt và lượt thử, khi nhân vật đã làm xong việc trước lúc cầu dao cắt phiên (lệnh submit): Nhiếp chính commit phần còn trong đất riêng qua hook của lãnh thổ, chạy check, rồi người chấm mới đọc. Trượt thì nhiệm vụ về lại đúng nhân vật đó. |
 | `elvaria quest deliver <quest>` | Giao lại nhánh của một nhiệm vụ đã xong tới forge của lãnh thổ (push rồi tìm hoặc mở PR), sau khi lần giao trước dừng (lệnh deliver). |
 | `elvaria quest reassign <quest>` | Giao lại một nhiệm vụ cho nhân vật khác, hoặc cho nhân vật bạn chỉ định (lệnh reassign). |
 | `elvaria seal <quest>` | Đóng dấu việc đang chờ dấu vua: nhiệm vụ xong (lệnh seal; nặng bằng ba phán quyết). |
@@ -313,6 +316,23 @@ Lưu trữ một nhiệm vụ đã xong và giao hàng, hoặc một nhiệm v�
 |---|---|
 | `<quest>` | id của nhiệm vụ, ví dụ q_20261106_7k3m2a. |
 
+## `elvaria quest hold`
+
+Giữ một nhiệm vụ đang mở, hoặc đã có người nhận mà chưa bắt đầu, để Nhiếp chính không nhận hay bắt đầu nó tới khi elvaria quest unhold (lệnh hold): nhiệm vụ giữ nguyên trạng thái, mô tả, phụ thuộc và nhân vật --to đã chỉ, khác quest cancel, lệnh lưu trữ luôn nhiệm vụ.
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<quest>` | id của nhiệm vụ, ví dụ q_20261106_7k3m2a. |
+| `--reason <text>` | Lý do giữ, quest show in ra (ví dụ nhiệm vụ đang chờ gì). |
+
+## `elvaria quest unhold`
+
+Thôi giữ một nhiệm vụ (lệnh unhold): Nhiếp chính lại nhận hoặc bắt đầu nó như mọi nhiệm vụ khác.
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<quest>` | id của nhiệm vụ, ví dụ q_20261106_7k3m2a. |
+
 ## `elvaria quest edit`
 
 Sửa một nhiệm vụ mà không chạm vào file của nó (lệnh edit_quest).
@@ -338,6 +358,14 @@ Mở lại một nhiệm vụ ở trạm quân y với đủ lượt thử như 
 |---|---|
 | `<quest>` | id của nhiệm vụ, ví dụ q_20261106_7k3m2a. |
 | `--to <character>` | Nhân vật làm lại, đúng nghề của nhiệm vụ, cấp nào cũng được (vượt hạng trần thì nhiệm vụ chờ dấu vua): chỉ nhân vật này nhận nhiệm vụ, với đủ lượt thử như mới (lệnh reassign). Không có thì nhiệm vụ mở cho mọi nhân vật đúng nghề đang rảnh. |
+
+## `elvaria quest submit`
+
+Gửi việc của một nhiệm vụ ở trạm quân y sang nghiệm thu, cùng lượt và lượt thử, khi nhân vật đã làm xong việc trước lúc cầu dao cắt phiên (lệnh submit): Nhiếp chính commit phần còn trong đất riêng qua hook của lãnh thổ, chạy check, rồi người chấm mới đọc. Trượt thì nhiệm vụ về lại đúng nhân vật đó.
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<quest>` | id của nhiệm vụ, ví dụ q_20261106_7k3m2a. |
 
 ## `elvaria quest deliver`
 

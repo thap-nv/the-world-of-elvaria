@@ -1,6 +1,7 @@
-// `elvaria quest show <id>`: one quest, its fields as labelled lines (its party too, P1-21 (c)), why it waits (nobody
-// can take it, P1-03; the infirmary, P1-32; a scope held, PS-05), the protected paths its work changed (PS-04), what its
-// last run came to (verdicts, plot put back, P1-46), its delivery to the forge (PS-08c), then its description.
+// `elvaria quest show <id>`: one quest, its fields as labelled lines (its party too, P1-21 (c); the owner's hold,
+// fix/quest-hold), why it waits (nobody can take it, P1-03; the infirmary, P1-32; a scope held, PS-05), the protected
+// paths its work changed (PS-04), what its last run came to (verdicts, plot put back, P1-46), its delivery to the forge
+// (PS-08c), then its description.
 // (PS-06b) A plan quest's brief comes apart from the rest of its description, with its plan's summary while the plan
 // waits for the seal.
 import type { Event, Quest, Registry } from '@elvaria/domain';
@@ -49,6 +50,7 @@ function fields(
     ['cli.quest.field.verifier', quest.verifier ?? NONE],
     ['cli.quest.field.attempts', `${quest.attempts}/${quest.budget.max_attempts}`],
     ['cli.quest.field.depends_on', listed(quest.depends_on)],
+    ...heldFields(ctx, quest),
     ['cli.quest.field.seal', t(quest.seal_required ? 'cli.yes' : 'cli.no')],
     // Why the seal, when the work changed a protected path (PS-04, ADR 0026).
     ...(quest.protected_changes === undefined
@@ -70,6 +72,17 @@ function fields(
         ]),
     ...deliveryFields(ctx, quest),
   ];
+}
+
+/** Since when the owner holds the quest, and why when it said (fix/quest-hold). */
+function heldFields(ctx: KingdomContext, quest: Quest): [MessageKey, string][] {
+  const { held } = quest;
+  if (held === undefined) return [];
+  const value =
+    held.reason === undefined
+      ? ctx.t('cli.quest.held.value', { at: held.at })
+      : ctx.t('cli.quest.held.value_reason', { at: held.at, reason: held.reason });
+  return [['cli.quest.field.held', value]];
 }
 
 /** Once delivered (P1-14): when, the branch to merge, and the delivery note as a path the owner can open. */

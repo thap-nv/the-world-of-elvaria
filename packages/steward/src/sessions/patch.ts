@@ -8,14 +8,22 @@ import { PATCH_FILE } from '@elvaria/runner-core';
 import type { PatchOutcome } from '@elvaria/runner-core';
 
 import { STEWARD } from '../record.ts';
+import type { QuestId } from '@elvaria/domain';
+
 import type { Context } from '../context.ts';
-import type { Running } from './running.ts';
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
-/** Applies the patch of `running`'s quest; `refused` says why, for the infirmary note. A failing git is a refusal. */
-export async function applyAssigneePatch(ctx: Context, running: Running): Promise<PatchOutcome> {
-  const quest = ctx.world.quests.get(running.quest);
+/**
+ * Applies the patch of the quest; `refused` says why, for the infirmary note. A failing git is a refusal. `session`:
+ * the session whose submit applies it, none when the owner submits work from the infirmary (fix/quest-hold).
+ */
+export async function applyAssigneePatch(
+  ctx: Context,
+  questId: QuestId,
+  session?: string,
+): Promise<PatchOutcome> {
+  const quest = ctx.world.quests.get(questId);
   const territory = quest === undefined ? undefined : ctx.world.territories.get(quest.territory);
   const patchPaths = territory?.laws.patch_paths ?? [];
   if (quest === undefined || patchPaths.length === 0) return { status: 'none' };
@@ -27,7 +35,7 @@ export async function applyAssigneePatch(ctx: Context, running: Running): Promis
   }
   if (outcome.status === 'applied') {
     const data = { file: PATCH_FILE, paths: [...outcome.paths] };
-    await ctx.record.note({ type: 'plot.patched', actor: STEWARD, data, quest, session: running.session_id });
+    await ctx.record.note({ type: 'plot.patched', actor: STEWARD, data, quest, session });
   }
   return outcome;
 }
