@@ -2,7 +2,7 @@
 // sub-quests went against what it said of them, from planAccuracyOf. The same shape as the ledger's sections, so
 // `--json` aside it prints the same way.
 import { REWORK_CAUSES } from '@elvaria/domain';
-import type { PlanAccuracy, PlanPart, ReworkCause } from '@elvaria/domain';
+import type { Calibration, PlanAccuracy, PlanPart, ReworkCause } from '@elvaria/domain';
 import type { MessageKey, Translate } from '@elvaria/i18n';
 
 import { QUEST_STATUS_LABEL } from '../labels.ts';
@@ -92,17 +92,39 @@ const outsideSection = (t: Translate, parts: readonly PlanPart[]): MetricsSectio
 
 const LIMITS = ['parts', 'first_run', 'written'] as const;
 
+const calibrationSection = (t: Translate, calibration: Calibration): MetricsSection =>
+  tableSection(t('cli.metrics.calibration.title'), t('cli.metrics.none'), {
+    header: ['tribe', 'factor', 'samples', 'source', 'turns', 'samples', 'source'].map((key) =>
+      t(`cli.metrics.calibration.${key}` as MessageKey),
+    ),
+    rows: [...calibration].map(([tribe, { estimate_factor: factor, max_turns: turns }]) => [
+      tribe,
+      count(factor.value),
+      count(factor.samples),
+      t(`cli.metrics.calibration.${factor.source}`),
+      count(turns.value),
+      count(turns.samples),
+      t(`cli.metrics.calibration.${turns.source}`),
+    ]),
+  });
+
 /** Every section of a plan's accuracy, in the order the command prints them. */
-export function planSections(t: Translate, accuracy: PlanAccuracy): MetricsSection[] {
+export function planSections(
+  t: Translate,
+  accuracy: PlanAccuracy,
+  calibration: Calibration = new Map(),
+): MetricsSection[] {
   const limits = {
     title: t('cli.metrics.title.limits'),
     lines: LIMITS.map((limit) => t(`cli.metrics.plan.limit.${limit}`)),
   };
-  if (accuracy.parts.length === 0) return [summarySection(t, accuracy), limits];
+  const calibrated = calibrationSection(t, calibration);
+  if (accuracy.parts.length === 0) return [summarySection(t, accuracy), calibrated, limits];
   return [
     summarySection(t, accuracy),
     partsSection(t, accuracy.parts),
     outsideSection(t, accuracy.parts),
+    calibrated,
     limits,
   ];
 }

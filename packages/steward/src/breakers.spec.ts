@@ -100,29 +100,17 @@ describe('a session past a breaker', () => {
     kingdom.clock.advance(23.5);
     await steward.tick();
     const quest = await kingdom.quest('Hangs');
-    expect(quest.status).toBe('infirmary');
+    // The first cut of a run goes on in a fresh session (ADR 0030); the infirmary is cut-goes-on.spec.ts's.
+    expect(quest.status).toBe('returned');
     expect(quest.attempt_log.at(-1)).toMatchObject({
       outcome: 'timeout',
       ended_at: '2026-11-07T10:07:30+07:00',
     });
     expect(steward.running()).toBe(0);
     expect(commits).toEqual([`chore: wip ${quest.id} (time)`]);
-    // Why, in parts too (P1-32): the trip, the breaker's words in the detail; the bell and the line say the same.
-    const why = {
-      reason: { code: 'breaker:time', params: { minutes: 67.5, limit: 67.5 } },
-      trip: 'time',
-    };
-    const hangs = { id: quest.id, title: 'Hangs', rank: 'D' };
-    expect(kingdom.notices).toEqual([{ kind: 'infirmary', quest: hangs, ...why }]);
+    expect(kingdom.notices).toEqual([]);
     expect((await kingdom.character(started.assignee ?? '')).status).toBe('idle');
-    expect((await typesOf(kingdom)).slice(-2)).toEqual(['character.swamp', 'quest.infirmary']);
-    const line = (await openEventLog(kingdom.root).read()).events.at(-1);
-    expect(line).toMatchObject({ attempt: 1, data: why });
-    // The quest waits for the owner: no second bell, no new session.
-    kingdom.clock.advance(1);
-    await steward.tick();
-    expect(kingdom.notices).toHaveLength(1);
-    expect(steward.running()).toBe(0);
+    expect((await typesOf(kingdom)).slice(-2)[0]).toBe('character.swamp');
   });
 
   it('trips the tokens of a session that spent past the budget', async () => {
@@ -136,11 +124,8 @@ describe('a session past a breaker', () => {
     await pause(20);
     await steward.tick();
     const quest = await kingdom.quest('Spends');
-    expect(quest.status).toBe('infirmary');
+    expect(quest.status).toBe('returned');
     expect(quest.attempt_log.at(-1)?.outcome).toBe('breaker');
-    expect(kingdom.notices.at(-1)).toMatchObject({
-      reason: { code: 'breaker:tokens', params: { tokens: 720001, limit: 720000 } },
-    });
   });
 
   it('lets a verifier past its time leave the review to the next one, with no bell', async () => {
@@ -189,9 +174,11 @@ describe('a session past a breaker', () => {
       async () => (await kingdom.quest('Loops')).status === 'infirmary',
     );
     const quest = await kingdom.quest('Loops');
-    expect(commits).toEqual([`chore: wip ${quest.id} (turns)`]);
+    // Two cuts in a row, a refused commit between them: no progress either time, so the infirmary (ADR 0030).
+    expect(commits).toEqual(Array.from({ length: commits.length }, () => `chore: wip ${quest.id} (turns)`));
+    expect(commits.length).toBeGreaterThanOrEqual(2);
     expect(kingdom.notices.at(-1)).toMatchObject({
-      reason: { code: 'breaker:turns', params: { turns: 200, limit: 200 } },
+      reason: { code: 'breaker:no_progress', params: { trip: 'turns', run: 1 } },
     });
   });
 });

@@ -17,6 +17,7 @@ import { recordEnd } from './sessions/ended.ts';
 import { wantTipGraphs } from './sessions/graph.ts';
 import { maskFinished } from './sessions/secrets.ts';
 import { reapLost } from './sessions/settle.ts';
+import { noteWrapUps } from './sessions/wrap-up.ts';
 import { carryOut } from './steps.ts';
 import { versionStep } from './tribe-versions.ts';
 import { noteUnclaimable, reportedFromLog, writeUnclaimable } from './unclaimable.ts';
@@ -126,6 +127,8 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   background.prune(wantedIn(world.quests));
   // Graphs of the default branches' tips build before the quests prepared from them open a session (PS-21).
   await wantTipGraphs(ctx);
+  // The soft ceiling: a session past `soft_pct` is told once, before the plan can stop it at `hard_pct` (F, phase 2).
+  await noteWrapUps(ctx, state.wrapped);
   const plan = planTick(await snapshotFor(ctx, state, held.zone), deps.clock.now());
   // Notices first: a quest someone can take now has its notice withdrawn before the claim that follows (§3.1).
   if (await noteUnclaimable(ctx, state.reported, plan.unclaimable))

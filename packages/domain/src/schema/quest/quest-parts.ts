@@ -77,6 +77,7 @@ export const AttemptSchema = z.strictObject({
     ),
   session_id: NonEmptyStringSchema.optional(),
   tokens: z.int().min(0).optional(),
+  turns: z.int().min(0).optional(),
   progress: z
     .boolean()
     .optional()

@@ -201,7 +201,9 @@ show` prints the brief apart from the rest of the description and, while the pla
   `src/metrics/section.ts`; `src/metrics/view-waits.ts` those of PS-06b (time in each status, pass rate by run, the
   Chancellor's advice beside the owner's decisions). `--plan <quest>` prints instead how a plan quest's sub-quests went
   against its plan (`planAccuracyOf`, `src/metrics/view-plan.ts`); a quest that is no plan, one that is not there, or
-  `--plan` with a window is a usage error.
+  `--plan` with a window is a usage error. The text view also prints kingdom-wide calibration for every configured
+  tribe: token factor, turn ceiling, independent sample counts and default/measured sources, using the same domain
+  `calibrationOf` as the Steward. `--json` retains the plan accuracy object.
 - `migrate`: moves every older file to the current version, old text in `.backup/<stamp>/` (`migrateKingdom`),
   copies the registry files this Elvaria ships and the kingdom lacks (P1-15), then adds the default registry
   entries it lacks by id, whole, only when the registry still loads with them (P1-41, `addMissingRegistryEntries`):

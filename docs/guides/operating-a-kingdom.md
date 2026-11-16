@@ -261,11 +261,23 @@ Nhiếp chính đọc hạn mức của từng tài khoản mà không gọi mod
 
 ## 10. Trạm quân y và các lệnh khi quest kẹt
 
+Nhiếp chính hiệu chỉnh trần theo tộc mỗi nhịp từ file quest và nhân vật, không đọc sổ sự kiện để học hệ số.
+`elvaria metrics --plan <quest kế hoạch>` in hệ số token, trần lượt, số mẫu riêng và nguồn của từng giá trị
+trong cả vương quốc. Dưới 10 lượt đầu đã kết thúc có ước lượng token dương và đủ số đo, hệ số dùng
+`breakers.estimate_factor` (mặc định 1,82), trần lượt dùng `max_turns` của tộc hoặc `breakers.max_turns`.
+Đủ mẫu thì dùng trung vị token lượt đầu / ước lượng và trung vị số lượt (làm tròn lên); các phiên tiếp của
+cùng lượt đầu được cộng lại. Mỗi tộc giữ cách đếm token riêng; lượt thiếu `turns` không thành mẫu 0.
+Trần token giữ mức sàn theo hạng và mức ngân sách được nâng riêng; người chấm nhận hệ số trần token dành
+cho người chấm sau cùng. `--json` giữ nguyên đối tượng độ chính xác của kế hoạch.
+
 Quest vào trạm quân y thì dừng hẳn và chuông rung. `elvaria quest show <quest>` in lý do. Phần dở của người làm đã được commit lên nhánh (`chore: wip <quest> (<lý do>)`), trừ khi `quest show` nói commit bị từ chối.
+
+Phiên người làm vượt trần không còn đưa quest vào trạm quân y ngay. Ở 85 % trần (phút, token hay lượt) Nhiếp chính nhắc phiên một lần (`wrap-up.json`, event `agent.session.wrap_up`) để nó dừng, commit và viết thư; ở 150 % nó cắt phiên. Cắt mà nhánh có commit mới (hay commit WIP có thay đổi) thì quest đi tiếp trong phiên mới của cùng lượt, cùng người làm, không tốn lần thử, không chuông, và không có trần số lần đi tiếp. Chỉ khi hai lần cắt liền nhau trong cùng lượt đều không có tiến triển thì quest vào trạm quân y (`breaker:no_progress`) và chuông rung: một lần cắt giảm nay không buộc bạn `retry`. Các trip `commit`, `secrets`, `forbidden_paths` và `no_session` giữ nguyên: vào trạm quân y ngay, không phiên tiếp nào mở. Người chấm vượt trần vẫn rời lượt chấm cho người kế.
 
 | Lý do | Nghĩa là | Làm gì |
 |---|---|---|
-| cầu dao token | phiên vượt trần token | `quest edit <quest> --max-tokens <n>` rồi `quest retry <quest>` (§4 có số đo) |
+| không tiến triển (`breaker:no_progress`) | hai lần cắt liền nhau của phiên người làm trong cùng một lượt, ở trần phút, token hay lượt, mà cả hai đều không để lại commit mới | đọc `git log` và thư bàn giao; nâng trần (`quest edit --max-tokens` hay `--max-minutes`), hoặc chia nhỏ việc, rồi `retry` |
+| cầu dao token | phiên vượt trần token (người làm: lý do hiện là `breaker:no_progress` với `trip` là `tokens`) | `quest edit <quest> --max-tokens <n>` rồi `quest retry <quest>` (§4 có số đo) |
 | cầu dao thời gian | phiên vượt trần phút | `quest edit --max-minutes <n>` rồi `retry`. Đổi trần khi quest đang có phiên thì phiên đó cũng theo trần mới từ nhịp kế: cầu dao của Nhiếp chính đọc trần của quest mỗi nhịp, nên hạ trần dưới số phút phiên đã chạy là cắt nó ngay (`quest edit` cảnh báo). Riêng agy tự giữ đồng hồ (`--print-timeout`) lúc mở phiên: nâng trần không kéo dài phiên agy đang chạy, phiên sau mới nhận trần mới |
 | cầu dao lượt | CLI dừng ở 200 lượt | `retry`; lặp lại thì chia nhỏ việc |
 | commit bị từ chối | hook của repo từ chối commit, hoặc bản vá `elvaria.patch` không áp được | đọc lý do, sửa trong đất riêng (`<repo>/.elvaria/worktrees/<quest>`) rồi `retry` |

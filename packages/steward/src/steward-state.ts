@@ -42,6 +42,8 @@ export interface State {
   readonly unjudged: Set<QuestId>;
   /** Submitted quests the bell named for judges all held by their mana, with their gauges (judge-waits.ts, PS-03). */
   readonly judgeWaits: Map<QuestId, JudgeWait>;
+  /** Sessions already given their soft-ceiling reminder (sessions/wrap-up.ts): once per session. */
+  readonly wrapped: Set<string>;
   /** The judges' prompts measured for the reviews about to be judged (review/prompt-size.ts). */
   readonly promptSizes: PromptSizes;
   /** The assignees' prompts measured for the open quests about to be claimed (sessions/claim-prompt-size.ts). */

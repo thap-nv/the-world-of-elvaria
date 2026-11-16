@@ -109,6 +109,8 @@ describe('elvaria metrics --plan', () => {
     expect(await elvaria(io, '--plan', QUEST_ID)).toBe(0);
     const text = printed(io);
     expect(text).toContain(`Plan ${QUEST_ID}: Thêm script pnpm check (Archived)`);
+    expect(text).toContain('Calibration by tribe (kingdom-wide first runs)');
+    expect(text).toMatch(/claude\s+1\.82\s+0\s+Default/);
     expect(text).toContain(
       'Sub-quests: 2, 1 of them begun; 1 changed files outside their scope; memos filed: 1.',
     );
@@ -137,6 +139,27 @@ describe('elvaria metrics --plan', () => {
     const alone = testIo();
     expect(await elvaria(alone, '--plan', 'q_20261106_aaaaa3')).toBe(0);
     expect(printed(alone)).toContain('No sub-quest yet: the plan is not delivered.');
+  });
+
+  it('prints measured calibration from kingdom-wide first runs in both locales, including defaults', async () => {
+    const added = testIo();
+    expect(await run(added, 'character', 'add', 'thorn', '--class', 'knight', '--kingdom', kingdom)).toBe(0);
+    const samples = Array.from({ length: 10 }, (_, index) =>
+      questFixture('archived', `q_20261106_bbbb${String(index).padStart(2, '0')}`, {
+        estimate: { tokens: 100_000, minutes: 30 },
+        attempt_log: [{ ...entry(1, 8, 200_000), turns: 20 }],
+      }),
+    );
+    await plantQuests(kingdom, { ...PLAN, attempt_log: [] }, ...samples);
+    for (const [locale, measured, fallback] of [
+      ['en', 'Measured', 'Default'],
+      ['vi', 'Đo được', 'Mặc định'],
+    ]) {
+      const io = testIo();
+      expect(await run(io, 'metrics', '--plan', QUEST_ID, '--kingdom', kingdom, '--locale', locale!)).toBe(0);
+      expect(printed(io)).toMatch(new RegExp(`claude\\s+2\\s+10\\s+${measured}\\s+20\\s+10\\s+${measured}`));
+      expect(printed(io)).toMatch(new RegExp(`gemini\\s+1\\.82\\s+0\\s+${fallback}`));
+    }
   });
 
   it('refuses a quest that is no plan, one that is not there, and a window', async () => {
