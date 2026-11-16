@@ -3,6 +3,8 @@
 import type {
   CharacterId,
   ClaimBlockerReason,
+  DeliveryFailure,
+  DeliveryStage,
   FailKind,
   InfirmaryDetail,
   InfirmaryReason,
@@ -114,6 +116,23 @@ export type Notice =
    * a check passes. Rung once per version.
    */
   | (TribeHold & { readonly kind: 'tribe_held' })
+  /**
+   * PS-08c: the Steward pushed the quest's branch and its pull request is open at `url`; `warnings` name the files
+   * whose added lines match a shared pattern of redact, for the owner to look at. Rung once per head.
+   */
+  | {
+      readonly kind: 'delivery_pushed';
+      readonly quest: NoticeQuest;
+      readonly url: string;
+      readonly warnings: readonly string[];
+    }
+  /** PS-08c: the delivery to the forge stopped at `stage`; the owner sends `deliver` once it is fixed. Rung once. */
+  | {
+      readonly kind: 'delivery_failed';
+      readonly quest: NoticeQuest;
+      readonly stage: DeliveryStage;
+      readonly reason: DeliveryFailure;
+    }
   /** The character failed the same way breakers.same_fail_suspend times in a row: it went to the Temple. */
   | {
       readonly kind: 'suspended';

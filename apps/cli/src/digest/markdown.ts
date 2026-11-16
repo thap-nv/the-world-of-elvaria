@@ -26,6 +26,13 @@ function triageOf(t: Translate, item: AttentionItem) {
   return { triage, holds: holds === '' ? NONE : holds };
 }
 
+/** Where a delivery to the forge stopped and what to do about it (PS-08c), and its pull request. */
+const deliveryOf = (t: Translate, item: AttentionItem) => ({
+  stage: item.stage === undefined ? NONE : t(`cli.forge.stage.${item.stage}`),
+  why: item.reason === undefined ? NONE : t(`cli.forge.reason.${item.reason}`),
+  url: item.url ?? NONE,
+});
+
 /** What the item is about, in one line; every field the line names is given, `—` when the item has none. */
 function subjectOf(t: Translate, item: AttentionItem): string {
   return t(`cli.digest.item.${item.kind}`, {
@@ -47,6 +54,7 @@ function subjectOf(t: Translate, item: AttentionItem): string {
     used_pct: item.used_pct ?? NONE,
     resets_at: item.resets_at ?? NONE,
     ...triageOf(t, item),
+    ...deliveryOf(t, item),
   });
 }
 

@@ -30,7 +30,8 @@ import type { PoolKey } from '../world/mana-view.ts';
 /** Statuses in which a character holds a CLI session of its tribe's account (tribe max_concurrent). */
 const IN_SESSION: readonly CharacterStatus[] = ['working', 'reviewing', 'meditating'];
 
-export type TerritoryRules = Pick<Territory, 'id' | 'max_concurrent' | 'laws' | 'shared_paths'>;
+/** `delivery` (PS-08c): which done quests go to the territory's forge (forgeDeliveries). */
+export type TerritoryRules = Pick<Territory, 'id' | 'max_concurrent' | 'laws' | 'shared_paths' | 'delivery'>;
 
 export interface RosterSource {
   readonly kingdom: Pick<Kingdom, 'tribes'>;

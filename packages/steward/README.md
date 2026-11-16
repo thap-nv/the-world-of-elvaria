@@ -384,6 +384,22 @@
   quest's `plot.patched` lines (P1-31), what was copied or opened, the commands to merge) and then stamps
   `deliverable.delivered_at` with `path` (and `branch`); a delivery that fails halfway is done again next tick and
   finds what it already did.
+- Sends a delivered quest's branch to its territory's forge when `territory.delivery.mode` is not `manual`
+  (implementation-plan §3.16.7, ADR 0023, PS-08c, `src/forge/`): planTick's `forge_deliveries` (the domain's
+  `forgeDeliveries`: one per territory at a time, only the merge quest of a party) starts it outside the tick
+  (`Background.forge`). It scans the lines the branch adds over the base branch (`scan.ts`): a treasury value or a
+  specific shape of redact stops it (`secret`, the files named, never the line), the three shared patterns only
+  warn; then `git push origin quest/<id>` (that branch alone, never forced, never the base branch; the territory's
+  pre-push hook runs; 30 minutes, then its tree is killed; output masked into `.runs/<quest>-delivery/push.log`)
+  with the git the composition root found, the minimal env and `DELIVERY_GIT_SWITCHES`; then finds or opens the
+  branch's pull request through the `Forge` port (`deps.forges`, one adapter per `delivery.forge`), the masked
+  delivery note as its description. One `delivery.pushed` (the pull request, the warned files) or `delivery.failed`
+  (stage, reason, the end of the redacted message) line, and the bell (`delivery_pushed`, `delivery_failed`); a
+  branch with nothing ahead of the base is left alone. A failure is never tried again on its own: the owner's
+  `deliver` command (`elvaria quest deliver`; refused while that delivery runs) forgets the outcome (`book.ts`,
+  rebuilt from the log at start by `forgeOutcomesOf`), and the next plan delivers it from the start. The digest
+  lists a stopped delivery (`delivery_failed`) and a pull request waiting for the owner (`delivery_waits`). Without
+  `deps.forges` such a quest gets one `delivery.failed` (`forge_error`).
 - Tells once when an open quest nobody can take (`quest.unclaimable`, the bell), withdraws it with
   `reason: null`, and keeps the notices in `.state/unclaimable.json` (`readUnclaimable`) for `elvaria quest list`
   and `show`. Rings once when a submitted quest waits for a judge the roster does not have (`unjudgeable`,
@@ -408,8 +424,11 @@
   through runner-core's `killTree`, a script through runner-core's `startChild`); know git or a territory's programs (`Plots` is given, with the
   territory's checks resolved for `run-check`; `folderPlots` is a folder with no git, no checks and no diff, for
   the specs).
-- Push, merge or send anything a quest delivered (stage 1, §9.1 item 11): the owner does, from the delivery note.
-  The parts it merges into a merge quest's branch stay in that branch, inside the territory's own repository.
+- Push, merge or send anything a quest delivered on a `manual` territory (stage 1, §9.1 item 11): the owner does,
+  from the delivery note. Elsewhere it pushes `quest/<id>` and opens its pull request only (PS-08c); it never merges
+  one yet (`pr_merge` merges from PS-08d), never pushes the base branch, and never lets a character push. The parts
+  it merges into a merge quest's branch stay in that branch, inside the territory's own repository.
+- Know a forge's API or read a credential: the `Forge` adapter of the composition root does, and keeps no token.
 - Read `process.env` or a treasury file itself: the composition root hands it the minimal env and a `Treasury`.
 - Import a concrete runner, the registry package or anything of the world layer (§1.3).
 - Word the digest or write its file: it decides when and what; the `Digest` port of `apps/cli` writes it in the
@@ -418,7 +437,8 @@
 ## Depends on
 
 - `@elvaria/domain` (state machines, `planTick`, schemas), `@elvaria/store` (files, inbox, lock),
-  `@elvaria/eventlog` (log, journals, redaction), `@elvaria/runner-core` (`AgentRunner`, prompts, tool policy).
+  `@elvaria/eventlog` (log, journals, redaction), `@elvaria/runner-core` (`AgentRunner`, prompts, tool policy;
+  `startChild` for a delivery's git). The `Forge` port (`src/forge/forge.ts`) is given by `apps/cli`.
 
 ## How to test
 
@@ -510,3 +530,10 @@ next start. `judge-waits.spec.ts` (PS-03): a quest whose only judge's account is
 in the digest with the pool asleep, and is judged by that judge once the window resets. `schedule.spec.ts` (PS-03):
 jobs outside the tick run one at a time without holding it, write `schedule.ran` when they end, stop unrecorded with
 the Steward and run again at the next start, and warn when they throw.
+`forge/scan.spec.ts` (PS-08c) holds the scan to redact's patterns: a treasury value or a specific shape is a secret,
+a shared pattern a warning, removed lines and headers never read. `forge-delivery.spec.ts` (PS-08c) delivers on a
+real git repo whose `origin` is a bare repo, with an in-memory forge (`src/__fixtures__/forge.ts`, `forge-bench.ts`):
+the branch pushed and one pull request, found again after a stop, a shared pattern warned, one `forge_error` without
+forges, nothing on a manual territory, and `deliver` refused where the Steward would refuse it; `forge-party.spec.ts`
+pushes only the merge quest of a party; `forge-stop.spec.ts` (one case on Windows, one on macOS) stops the Steward
+while a pre-push hook runs and finds the hook's grandchild killed and nothing recorded. No spec reaches a real forge.

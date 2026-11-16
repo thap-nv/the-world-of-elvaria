@@ -26,7 +26,8 @@ const PASSED = [
   'SystemRoot',
 ];
 
-const childEnv = (): Record<string, string> =>
+/** This process's toolchain and home, no GIT_* variable: what git and its hooks need to run. */
+export const childEnv = (): Record<string, string> =>
   Object.fromEntries(
     PASSED.flatMap((name) => (process.env[name] === undefined ? [] : [[name, process.env[name]]])),
   );

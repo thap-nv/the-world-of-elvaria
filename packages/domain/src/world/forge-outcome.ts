@@ -1,0 +1,40 @@
+// What became of each done quest's delivery to its forge (implementation-plan §3.16.7, ADR 0023; PS-08c), read from
+// the log alone: the quest file keeps no field for it. The last `delivery.pushed`, `delivery.merged` or
+// `delivery.failed` of a quest is its outcome; the owner's `deliver` command (its `command.applied` line names the
+// quest) forgets it, so the Steward delivers the quest again. The Steward rebuilds it at start (recover), the digest
+// and `quest show` read it from the log as it stands.
+import { isEventOf } from '../schema/event/event.ts';
+import type { QuestId } from '../core/ids.ts';
+import type { EventData } from '../schema/event/event-data.ts';
+import type { Event } from '../schema/event/event.ts';
+
+export type ForgeOutcome =
+  | { readonly type: 'delivery.pushed'; readonly data: EventData<'delivery.pushed'> }
+  | { readonly type: 'delivery.merged'; readonly data: EventData<'delivery.merged'> }
+  | { readonly type: 'delivery.failed'; readonly data: EventData<'delivery.failed'> };
+
+/** The `kind` of the inbox command that asks for a delivery again. */
+export const DELIVER_COMMAND = 'deliver';
+
+const outcomeOf = (event: Event): ForgeOutcome | undefined => {
+  if (isEventOf(event, 'delivery.pushed')) return { type: event.type, data: event.data };
+  if (isEventOf(event, 'delivery.merged')) return { type: event.type, data: event.data };
+  if (isEventOf(event, 'delivery.failed')) return { type: event.type, data: event.data };
+  return undefined;
+};
+
+/** The owner asked for the quest's delivery again: the line of an applied `deliver` names its quest. */
+const askedAgain = (event: Event): QuestId | undefined =>
+  isEventOf(event, 'command.applied') && event.data.kind === DELIVER_COMMAND ? event.quest : undefined;
+
+/** Each quest's latest outcome, in the order of `events` (the log's). */
+export function forgeOutcomesOf(events: readonly Event[]): Map<QuestId, ForgeOutcome> {
+  const outcomes = new Map<QuestId, ForgeOutcome>();
+  for (const event of events) {
+    const outcome = outcomeOf(event);
+    if (outcome !== undefined) outcomes.set(outcome.data.quest, outcome);
+    const again = askedAgain(event);
+    if (again !== undefined) outcomes.delete(again);
+  }
+  return outcomes;
+}

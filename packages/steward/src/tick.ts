@@ -4,6 +4,7 @@ import { planTick } from '@elvaria/domain';
 import type { KingdomSnapshot, ZonedTime } from '@elvaria/domain';
 
 import { wantedIn } from './background.ts';
+import { recoverForge, settledOf } from './forge/book.ts';
 import { applyInbox } from './inbox/apply.ts';
 import { asleepFromLog, levelsFromLog, warnedFromLog } from './mana/book.ts';
 import { manaStep } from './mana/step.ts';
@@ -51,6 +52,7 @@ export async function recover(deps: StewardDeps, state: State): Promise<void> {
   state.mana.history = levelsFromLog(log.events);
   state.restart = restartFromLog(log.events);
   state.scheduler.recover(log.events);
+  recoverForge(state.forge, log.events);
 }
 
 /**
@@ -77,6 +79,7 @@ async function snapshotFor(ctx: Context, state: State, zone: ZonedTime): Promise
     models: modelsOf(deps.runners),
     tools_found: await versionStep(ctx, state.versions),
     jobs_due: state.scheduler.due(ctx, zone),
+    forge: settledOf(state.forge),
   };
 }
 
@@ -88,7 +91,7 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   const counts: Counts = { applied: 0, rejected: 0, waiting: 0, started: 0, ended: 0 };
   const world = await loadWorld(deps.store, deps.log);
   if (world === undefined) return reportOf(counts);
-  const { sessions, handled, limits, mana, background, judgeLocks, graphs } = state;
+  const { sessions, handled, limits, mana, background, judgeLocks, graphs, forge } = state;
   const record = createRecorder({ ...deps, world, stamp: () => held.zone.format(deps.clock.now()) });
   const root = deps.store.root;
   const { templates } = held;
@@ -107,6 +110,7 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
     background,
     judgeLocks,
     graphs,
+    forge,
   };
   const waiting = await applyInbox(ctx, handled);
   // A session's leftovers lose its secrets before anything is recorded of them (§3.9).

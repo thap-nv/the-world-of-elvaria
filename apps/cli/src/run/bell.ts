@@ -66,6 +66,33 @@ function mergeLine(t: Translate, notice: Extract<Notice, { kind: 'merge_stopped'
   return t(`cli.run.notice.merge_${notice.reason}`, said);
 }
 
+/** A tribe held at its CLI's version, or whose CLI is gone (A1b). */
+function tribeLine(t: Translate, notice: Extract<Notice, { kind: 'tribe_held' }>): string {
+  const { tribe, path, version, checked } = notice;
+  return version === undefined
+    ? t('cli.run.notice.tribe_gone', { tribe, path, checked })
+    : t('cli.run.notice.tribe_held', { tribe, path, version, checked });
+}
+
+/** A delivery to the forge (PS-08c): the pull request, with the files to look at; or where it stopped and why. */
+function deliveryLine(
+  t: Translate,
+  notice: Extract<Notice, { kind: 'delivery_pushed' | 'delivery_failed' }>,
+): string {
+  const quest = { quest: notice.quest.id, title: notice.quest.title };
+  if (notice.kind === 'delivery_failed') {
+    const stage = t(`cli.forge.stage.${notice.stage}`);
+    return t('cli.run.notice.delivery_failed', {
+      ...quest,
+      stage,
+      why: t(`cli.forge.reason.${notice.reason}`),
+    });
+  }
+  if (notice.warnings.length === 0) return t('cli.run.notice.delivery_pushed', { ...quest, url: notice.url });
+  const files = notice.warnings.join(', ');
+  return t('cli.run.notice.delivery_pushed_warnings', { ...quest, url: notice.url, files });
+}
+
 export function lineOf(t: Translate, notice: Notice): string {
   if (notice.kind === 'suspended') {
     const { character, count } = notice;
@@ -77,12 +104,7 @@ export function lineOf(t: Translate, notice: Notice): string {
     const { day, file, must, can_wait } = notice;
     return t('cli.run.notice.digest', { day, file, must, can_wait });
   }
-  if (notice.kind === 'tribe_held') {
-    const { tribe, path, version, checked } = notice;
-    return version === undefined
-      ? t('cli.run.notice.tribe_gone', { tribe, path, checked })
-      : t('cli.run.notice.tribe_held', { tribe, path, version, checked });
-  }
+  if (notice.kind === 'tribe_held') return tribeLine(t, notice);
   const quest = { quest: notice.quest.id, title: notice.quest.title };
   switch (notice.kind) {
     case 'unclaimable':
@@ -101,6 +123,9 @@ export function lineOf(t: Translate, notice: Notice): string {
       return t('cli.run.notice.subquests_refused', { ...quest, reason: notice.reason });
     case 'merge_stopped':
       return mergeLine(t, notice);
+    case 'delivery_pushed':
+    case 'delivery_failed':
+      return deliveryLine(t, notice);
     case 'environment':
       return t('cli.run.notice.environment', {
         ...quest,

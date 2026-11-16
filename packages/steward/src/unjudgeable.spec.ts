@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { bench, characterOf, questPayload, tickUntil } from './__fixtures__/kingdom.ts';
 import { statusIs } from './__fixtures__/review.ts';
+import { createForgeBook } from './forge/book.ts';
 import { noticesOf } from './schedule/digest.ts';
 import { loadWorld } from './world.ts';
 import type { Bench } from './__fixtures__/kingdom.ts';
@@ -93,7 +94,14 @@ describe('a submitted quest that needs a judge who reads images (PS-11)', () => 
     const world = await loadWorld(kingdom.store, { warn: () => undefined });
     if (world === undefined) throw new Error('fixture: world');
     const versions = { asked: new Map(), told: new Map(), holds: [] };
-    const state = { reported: new Map(), unjudged: new Set([quest.id]), judgeWaits: new Map(), versions };
+    const forge = createForgeBook();
+    const state = {
+      reported: new Map(),
+      unjudged: new Set([quest.id]),
+      judgeWaits: new Map(),
+      versions,
+      forge,
+    };
     expect(noticesOf(world, state).unjudgeable).toEqual([{ quest: quest.id, class: 'judge', vision: true }]);
     // The owner summons a judge of the tribe that reads images: the review goes on with it.
     await kingdom.store.characters.write(

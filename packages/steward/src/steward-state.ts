@@ -5,6 +5,7 @@ import type { PromptTemplates } from '@elvaria/runner-core';
 import type { HeldLock } from '@elvaria/store';
 
 import type { Background } from './background.ts';
+import type { ForgeBook } from './forge/book.ts';
 import type { GraphBuilds } from './graph-builds.ts';
 import type { JudgeLocks } from './review/exclusive.ts';
 import type { PromptSizes } from './review/prompt-size.ts';
@@ -52,6 +53,8 @@ export interface State {
   readonly versions: VersionBook;
   /** The scheduled jobs: the digest, and the jobs the composition root gives (PS-03). */
   readonly scheduler: Scheduler;
+  /** The quests' deliveries to their forge (PS-08c): rebuilt from the log at start, kept as they are recorded. */
+  readonly forge: ForgeBook;
   /** Set by start(): what the first tick finishes of the last Steward's work (restart.ts, P1-44). */
   restart: Restart | undefined;
   held: Held | undefined;

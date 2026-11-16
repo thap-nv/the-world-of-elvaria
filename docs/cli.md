@@ -37,6 +37,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria quest archive <quest>` | Lưu trữ một nhiệm vụ đã xong và giao hàng, hoặc một nhiệm vụ ở trạm quân y mà chủ nhân bỏ: Nhiếp chính gỡ worktree, giữ nhánh (lệnh archive). |
 | `elvaria quest edit <quest>` | Sửa một nhiệm vụ mà không chạm vào file của nó (lệnh edit_quest). |
 | `elvaria quest retry <quest>` | Mở lại một nhiệm vụ ở trạm quân y với đủ lượt thử như mới, cho mọi nhân vật đúng nghề đang rảnh hoặc cho nhân vật --to chỉ định, hoặc đưa nhiệm vụ có người chấm cứ rời đi không ra phán quyết, hay chỉ chấm dở, về chờ nghiệm thu (lệnh retry; lệnh reassign khi có --to). |
+| `elvaria quest deliver <quest>` | Giao lại nhánh của một nhiệm vụ đã xong tới forge của lãnh thổ (push rồi tìm hoặc mở PR), sau khi lần giao trước dừng (lệnh deliver). |
 | `elvaria quest reassign <quest>` | Giao lại một nhiệm vụ cho nhân vật khác, hoặc cho nhân vật bạn chỉ định (lệnh reassign). |
 | `elvaria seal <quest>` | Đóng dấu việc đang chờ dấu vua: nhiệm vụ xong (lệnh seal; nặng bằng ba phán quyết). |
 | `elvaria return <quest>` | Trả việc đang chờ dấu vua về người làm, kèm ghi chú (lệnh return; nặng bằng ba phán quyết). |
@@ -337,6 +338,14 @@ Mở lại một nhiệm vụ ở trạm quân y với đủ lượt thử như 
 |---|---|
 | `<quest>` | id của nhiệm vụ, ví dụ q_20261106_7k3m2a. |
 | `--to <character>` | Nhân vật làm lại, đúng nghề của nhiệm vụ, cấp nào cũng được (vượt hạng trần thì nhiệm vụ chờ dấu vua): chỉ nhân vật này nhận nhiệm vụ, với đủ lượt thử như mới (lệnh reassign). Không có thì nhiệm vụ mở cho mọi nhân vật đúng nghề đang rảnh. |
+
+## `elvaria quest deliver`
+
+Giao lại nhánh của một nhiệm vụ đã xong tới forge của lãnh thổ (push rồi tìm hoặc mở PR), sau khi lần giao trước dừng (lệnh deliver).
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<quest>` | id của nhiệm vụ, ví dụ q_20261106_7k3m2a. |
 
 ## `elvaria quest reassign`
 

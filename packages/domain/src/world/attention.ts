@@ -7,7 +7,8 @@
 // to a second judge waits for nobody, one no judge may read (MEMO_ROUTES `owner`) is the owner's to settle. A tribe the
 // Steward holds because its CLI changed version (versionHoldsOf, A1b of the lessons of 2026-11-13) comes from its notices.
 // A review whose latest judge could not open a session comes from the quest files (unopenedReviewsOf,
-// fix/review-no-session).
+// fix/review-no-session). A done quest whose delivery to its forge stopped, or whose pull request waits for the owner,
+// comes from the log (forgeOutcomesOf, PS-08c).
 import { current } from '../mana/reading.ts';
 import { manaWarningOf } from '../mana/state.ts';
 import { RANKS } from '../schema/common.ts';
@@ -24,6 +25,7 @@ import type { MemoView } from './memo-view.ts';
 import type { PoolView } from './mana-view.ts';
 import type { QuestView } from './quest-view.ts';
 import type { WorldState } from './world-state.ts';
+import type { ForgeOutcome } from './forge-outcome.ts';
 import type { AttentionItem, AttentionKind, AttentionSubject } from './attention-table.ts';
 
 type MemoRouteId = MemoRoute['route'];
@@ -53,6 +55,8 @@ export interface StewardNotices {
   readonly judges_unopened?: readonly UnopenedReview[];
   /** Tribes whose CLI says another version than their checked one (versionHoldsOf), as the Steward last found them. */
   readonly tribes_held?: readonly TribeHold[];
+  /** The latest outcome of each quest's delivery to its forge (forgeOutcomesOf, PS-08c); from the log. */
+  readonly deliveries?: readonly ForgeOutcome[];
 }
 
 const FIELD = /^\{(\w+)\}$/;
@@ -94,6 +98,27 @@ function questItems(state: WorldState): AttentionItem[] {
   });
 }
 
+/**
+ * A done quest's delivery: stopped (the owner asks again with `deliver`), or its pull request open for the owner. A
+ * quest no longer done (archived) has nothing left to do there; a merged one neither.
+ */
+function deliveryItems(state: WorldState, outcome: ForgeOutcome): AttentionItem[] {
+  const quest = state.quests[outcome.data.quest];
+  if (quest?.status !== 'done') return [];
+  if (outcome.type === 'delivery.pushed')
+    return [itemOf('delivery_waits', { ...aboutQuest(quest), url: outcome.data.pr.url })];
+  if (outcome.type === 'delivery.merged') return [];
+  const { stage, reason, pr } = outcome.data;
+  return [
+    itemOf('delivery_failed', {
+      ...aboutQuest(quest),
+      stage,
+      reason,
+      ...(pr === undefined ? {} : { url: pr.url }),
+    }),
+  ];
+}
+
 function noticeItems(state: WorldState, notices: StewardNotices): AttentionItem[] {
   return [
     ...(notices.unclaimable ?? []).map((id) => itemOf('unclaimable', aboutId(state, id))),
@@ -112,6 +137,7 @@ function noticeItems(state: WorldState, notices: StewardNotices): AttentionItem[
     ...(notices.scope_held ?? []).map(({ quest, waiting }) =>
       itemOf('scope_held', { ...aboutId(state, quest), waiting }),
     ),
+    ...(notices.deliveries ?? []).flatMap((outcome) => deliveryItems(state, outcome)),
     ...(notices.tribes_held ?? []).map(({ tribe, path, version, checked }) =>
       version === undefined
         ? itemOf('tribe_gone', { tribe, path, checked_version: checked })

@@ -1,5 +1,6 @@
 // What every step of one tick works with: the deps, the world as the tick sees it, the pen, the sessions.
 import type { Background } from './background.ts';
+import type { ForgeBook } from './forge/book.ts';
 import type { GraphBuilds } from './graph-builds.ts';
 import type { JudgeLocks } from './review/exclusive.ts';
 import type { Notice, NoticeQuest, StewardDeps } from './types.ts';
@@ -38,6 +39,8 @@ export interface Context {
   readonly judgeLocks: JudgeLocks;
   /** The code graphs built outside the tick (PS-21); absent without `deps.graphs`: no quest gets a graph. */
   readonly graphs?: GraphBuilds | undefined;
+  /** The quests' deliveries to their forge (PS-08c): their outcomes, across ticks. */
+  readonly forge: ForgeBook;
 }
 
 /** Rings the bell; a bell that fails never stops a tick. */

@@ -68,11 +68,12 @@ const needsVision = (world: World, id: QuestId): boolean => {
 /**
  * What the Steward knows that no file holds, as this tick left it (unclaimable.ts, unjudgeable.ts, judge-waits.ts,
  * tribe-versions.ts), and what the world state cannot tell from the quest files: the done quests whose scope others
- * wait for (PS-05), the reviews whose latest judge could not open a session (fix/review-no-session).
+ * wait for (PS-05), the reviews whose latest judge could not open a session (fix/review-no-session); and the outcomes of
+ * the deliveries to the forge (PS-08c), as the log holds them.
  */
 export function noticesOf(
   world: World,
-  state: Pick<State, 'reported' | 'unjudged' | 'judgeWaits' | 'versions'>,
+  state: Pick<State, 'reported' | 'unjudged' | 'judgeWaits' | 'versions' | 'forge'>,
 ): StewardNotices {
   return {
     tribes_held: state.versions.holds,
@@ -89,6 +90,7 @@ export function noticesOf(
     })),
     scope_held: scopeHoldsOf([...world.quests.values()], [...world.territories.values()]),
     judges_unopened: unopenedReviewsOf([...world.quests.values()]),
+    deliveries: [...state.forge.outcomes.values()],
   };
 }
 
