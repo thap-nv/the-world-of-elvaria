@@ -807,7 +807,18 @@
       }
     },
     {
+      "$comment": "(PS-09b) The merge queue's merge quest (party_role merge, created_by patrol) of a quest outside a party has no contract: its party is that quest's own id.",
       "if": {
+        "not": {
+          "properties": {
+            "party_role": {
+              "const": "merge"
+            },
+            "created_by": {
+              "const": "patrol"
+            }
+          }
+        },
         "required": [
           "party_role"
         ],

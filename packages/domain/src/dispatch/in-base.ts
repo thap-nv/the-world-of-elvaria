@@ -4,7 +4,10 @@
 // after a `delivery.merged` there and every BASE_LOOK_MINUTES while a quest is there to ask about. A quest found
 // there, or whose pull request the Steward merged (a squash leaves no ancestry), is archived by the Steward, which
 // then releases its plot; a party's parts and contract go with their merge quest, whose merge holds their commits.
+// (PS-09b) The merge queue's merge quest in the base branch takes the quest it stands for with it (its parent): its
+// branch holds that quest's, but a squash or a rebase by the forge leaves no ancestry for a look to find.
 import { BASE_LOOK_MINUTES, MS_PER_MINUTE } from '../constants.ts';
+import { isQueueMerge } from '../party/queue-merge-quest.ts';
 import type { Instant } from '../core/clock.ts';
 import type { QuestId, TerritoryId } from '../core/ids.ts';
 import type { Quest } from '../schema/quest/quest.ts';
@@ -22,6 +25,8 @@ export interface InBaseSource {
   readonly in_base?: readonly QuestId[];
   /** The Steward's last looks; absent: none yet, so every territory with a quest to ask about is looked at. */
   readonly base_looks?: readonly BaseLookDone[];
+  /** Every quest, archived ones too (PS-09b): the parents of the merge queue's merge quests in base. Absent: none. */
+  readonly quests?: readonly Quest[];
 }
 
 /** One look: a territory's base branch fetched once, then each of its done quests asked. */
@@ -52,9 +57,18 @@ export function baseLooks(source: InBaseSource, done: readonly Quest[], now: Ins
     .map(([territory, quests]) => ({ territory, quests }));
 }
 
+/** The quests the merge queue's merge quests in `found` stand for (PS-09b): in the base branch with them. */
+const carriedBy = (found: ReadonlySet<QuestId>, quests: readonly Quest[]): QuestId[] =>
+  quests.flatMap((quest) =>
+    found.has(quest.id) && isQueueMerge(quest) && typeof quest.parent_id === 'string'
+      ? [quest.parent_id]
+      : [],
+  );
+
 /** The done quests the Steward archives now: in the base branch, no delivery of theirs still running. */
 export function forgeArchives(source: InBaseSource, done: readonly Quest[]): QuestId[] {
-  const found = new Set(source.in_base);
+  const inBase = new Set(source.in_base);
+  const found = new Set([...inBase, ...carriedBy(inBase, source.quests ?? [])]);
   const running = new Set(source.background?.running);
   return done.filter(({ id }) => found.has(id) && !running.has(id)).map(({ id }) => id);
 }

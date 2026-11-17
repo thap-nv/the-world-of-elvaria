@@ -79,6 +79,10 @@ describe('QuestSchema', () => {
       'a part that knows the contract',
       { party_id: OTHER_ID, party_role: 'part', contract: 'apps/api/openapi.json' },
     ],
+    [
+      "the merge queue's merge quest of a quest outside a party, without contract (PS-09b)",
+      { party_id: OTHER_ID, party_role: 'merge', created_by: 'patrol' },
+    ],
     ['a folder plot', { plot: { type: 'folder', path: `quests/${ID}/work` } }],
     ['a worktree plot on its own branch', { plot: worktree }],
     [

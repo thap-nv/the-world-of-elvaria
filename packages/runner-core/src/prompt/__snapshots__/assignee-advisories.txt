@@ -1,0 +1,25 @@
+# Quest q_20261106_7k3m2a: Thêm script pnpm check
+
+- Kind: build (deliverable: branch)
+- Rank: D
+- Tags: infra
+- Territory: dc1-se-team
+- Limits: 45 minutes, 400000 tokens
+
+Thêm script `pnpm check` gom lint + typecheck + test + i18n:check; cập nhật README.
+
+# Advisories: the base branch moved
+
+Since your quest last ran, other quests of this territory reached the base branch and changed files your scope may hold. The Steward wrote what each changed. Nobody answers an advisory and none asks you for anything: before you change one of these files again, read its new version, and keep your change off the lines these quests changed where the quest allows it. You read each advisory once; it does not come back.
+
+## `m_20261117_4k2pqz`, as quest `q_20261117_7pzkfv` reached the base branch (2026-11-17T14:20:00+07:00)
+
+Quest q_20261117_7pzkfv ("Dates in the kingdom's time zone") reached the base branch at 9d0e7b2, changing files your scope may hold: those this advisory names. Read the new version of one with `git show 9d0e7b2:<path>`. Your branch is merged with the base branch when it is delivered: where you change the same lines as this change, that merge stops on a conflict that a quest of its own must resolve.
+
+- Files: `apps/web/src/i18n/vi.json`, `apps/web/src/i18n/en.json`
+
+## `m_20261117_aaaaa1`, as quest `q_20261117_aaaaaa` reached the base branch (2026-11-17T11:00:00+07:00)
+
+Quest q_20261117_aaaaaa reached the base branch at 4f2a9c1.
+
+- Files: `apps/web/src/i18n/vi.json`

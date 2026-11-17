@@ -4,10 +4,16 @@
 import type { QuestId } from '../core/ids.ts';
 
 export interface PartyPlace {
-  /** party_id: the id of the party's contract quest. */
+  /**
+   * party_id: the id of the party's contract quest; for the merge queue's merge quest of a quest outside a party,
+   * that quest's own id (PS-09b).
+   */
   readonly id: QuestId;
   /** `acceptance`: the blind trial's part (P1-21), which the Steward adds itself like the merge quest. */
   readonly role: 'part' | 'acceptance' | 'merge';
-  /** The contract's path inside the territory, as the lead named it for the parts. */
-  readonly contract: string;
+  /**
+   * The contract's path inside the territory, as the lead named it for the parts. Absent for the merge queue's merge
+   * quest of a quest outside a party (PS-09b): it has no contract.
+   */
+  readonly contract?: string;
 }

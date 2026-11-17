@@ -146,6 +146,30 @@ describe('attentionQueue for deliveries to the forge', () => {
     expect(attentionQueue(state, NOW, { deliveries: [...outcomes.values()] })).toEqual([]);
   });
 
+  it('waits on a merge quest of the queue on its way, and asks the owner again once it is dropped (PS-09b)', () => {
+    const conflict = { stage: 'update', reason: 'conflict', paths: ['a.ts'], merge_quest: Q2 };
+    const deliveries = [...forgeOutcomesOf([failed(Q1, conflict)]).values()];
+    const merge = (status: Quest['status']): Quest => doneQuest(Q2, status);
+    const items = (quests: readonly Quest[], outcomes = deliveries) =>
+      attentionQueue(stateOf([doneQuest(Q1), ...quests]), NOW, { deliveries: outcomes }).map(
+        ({ kind, group, command }) => [kind, group, command.join(' ')],
+      );
+    const waiting = [['delivery_merging', 'can_wait', `quest show ${Q2}`]];
+    expect(items([merge('done')])).toEqual(waiting);
+    // Archived once the Steward merged it: it took the quest with it, archived at the same tick.
+    const both = [...forgeOutcomesOf([failed(Q1, conflict), merged(Q2)]).values()];
+    expect(items([merge('archived')], both)).toEqual(waiting);
+    expect(items([merge('archived')])).toEqual([['delivery_failed', 'must', `quest deliver ${Q1}`]]);
+    expect(items([])).toEqual([['delivery_failed', 'must', `quest deliver ${Q1}`]]);
+    const [item] = attentionQueue(stateOf([doneQuest(Q1), merge('open')]), NOW, { deliveries });
+    expect(item).toMatchObject({
+      stage: 'update',
+      reason: 'conflict',
+      merge_quest: Q2,
+      advice: 'follow_merge_quest',
+    });
+  });
+
   it('lists a stopped delivery among the items the work waits on, a waiting pull request among the others', () => {
     expect(ATTENTION_TABLE.delivery_failed.group).toBe('must');
     expect(ATTENTION_TABLE.delivery_waits.group).toBe('can_wait');

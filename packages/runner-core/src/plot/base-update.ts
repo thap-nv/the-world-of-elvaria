@@ -18,8 +18,8 @@ export type BaseUpdate =
   | { readonly state: 'current' }
   /** The base branch is in now (or was, by a stopped update): generators and checks follow. */
   | { readonly state: 'merged'; readonly base: string; readonly resolved: readonly ResolvedFile[] }
-  /** Files no rule resolves (the dry run): the plot was not touched. */
-  | { readonly state: 'conflict'; readonly paths: readonly string[] }
+  /** Files no rule resolves (the dry run) when merging `base`: the plot was not touched. */
+  | { readonly state: 'conflict'; readonly base: string; readonly paths: readonly string[] }
   /** git or a hook refused the merge or its commit: the merge was undone. */
   | { readonly state: 'refused'; readonly detail: string };
 
@@ -49,14 +49,14 @@ export async function updateFromBase(
     return { state: 'merged', base: target.commit, resolved: [] };
   }
   const dry = await dryMerge(git, worktree, target.commit, shared);
-  if (dry.state === 'conflict') return dry;
+  if (dry.state === 'conflict') return { state: 'conflict', base: target.commit, paths: dry.paths };
   if (dry.state === 'failed') return { state: 'refused', detail: dry.detail };
   const files = dry.state === 'resolvable' ? dry.files : [];
   await changePlotRecord(git, worktree, { update_pending: true });
   const stop = await mergeResolved(git, worktree, { into, ...target }, files);
   if (stop !== undefined) {
     await changePlotRecord(git, worktree, { update_pending: record.update_pending === true });
-    return stop;
+    return stop.state === 'conflict' ? { ...stop, base: target.commit } : stop;
   }
   await changePlotRecord(git, worktree, { base: target.commit, setup_done: false });
   return { state: 'merged', base: target.commit, resolved: resolvedOf(files) };

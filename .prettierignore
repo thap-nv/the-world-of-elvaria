@@ -1,4 +1,6 @@
 pnpm-lock.yaml
+# ESLint writes it (--suppress-rule, --prune-suppressions) in its own layout (packages/config/suppressions.mjs).
+eslint-suppressions.json
 dist/
 coverage/
 # The design handoff v0.2 stays as delivered (CLAUDE.md, ADR 0019).

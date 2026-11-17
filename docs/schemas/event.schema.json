@@ -553,7 +553,7 @@
                           ]
                         },
                         "id": {
-                          "description": "runner-core's PROMPT_BLOCK_IDS: decree, role, class, context_files, graph (PS-21), quest, gazetteer, scripture, skills, continuation, memos (PS-02), partial, review, resumed, answer.",
+                          "description": "runner-core's PROMPT_BLOCK_IDS: decree, role, class, context_files, graph (PS-21), quest, advisories (PS-09c), gazetteer, scripture, skills, continuation, memos (PS-02), partial, objection (PS-22), review, resumed, answer.",
                           "type": "string",
                           "pattern": "^[a-z][a-z0-9_]*$"
                         },
@@ -1156,7 +1156,7 @@
                           ]
                         },
                         "id": {
-                          "description": "runner-core's PROMPT_BLOCK_IDS: decree, role, class, context_files, graph (PS-21), quest, gazetteer, scripture, skills, continuation, memos (PS-02), partial, review, resumed, answer.",
+                          "description": "runner-core's PROMPT_BLOCK_IDS: decree, role, class, context_files, graph (PS-21), quest, advisories (PS-09c), gazetteer, scripture, skills, continuation, memos (PS-02), partial, objection (PS-22), review, resumed, answer.",
                           "type": "string",
                           "pattern": "^[a-z][a-z0-9_]*$"
                         },
@@ -2573,6 +2573,11 @@
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 2000
+              },
+              "merge_quest": {
+                "description": "With conflict or checks_red at update (PS-09b): the merge quest the Steward opened for a knight, or found open for this quest; the quest waits for it and goes into the base branch with it.",
+                "type": "string",
+                "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
               }
             }
           }
@@ -2926,13 +2931,12 @@
       "then": {
         "properties": {
           "data": {
-            "description": "The Steward filed memos/<memo>.json from the Memos section of the quest's handover letter, as the run ended through a submit, a question or a crash. The line's actor is the character who wrote it.",
+            "description": "The Steward filed memos/<memo>.json from the Memos section of the quest's handover letter, as the run ended through a submit, a question or a crash; the line's actor is the character who wrote it. (PS-09c) Or the Steward wrote it, an advisory to the quests at work whose scope meets the files the line's quest changed, as that quest reached its base branch; the actor is the Steward and `from` is absent.",
             "type": "object",
             "additionalProperties": false,
             "required": [
               "memo",
-              "kind",
-              "from"
+              "kind"
             ],
             "properties": {
               "memo": {
@@ -2944,6 +2948,7 @@
                 "pattern": "^[a-z][a-z0-9_]*$"
               },
               "from": {
+                "description": "Who wrote it; absent, the Steward did (PS-09c, an advisory after the quest reached its base branch).",
                 "type": "string",
                 "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
                 "not": {
@@ -2987,7 +2992,8 @@
                   "chancellor",
                   "judge",
                   "owner",
-                  "author"
+                  "author",
+                  "quests"
                 ]
               },
               "refusal": {
@@ -3018,7 +3024,7 @@
       "then": {
         "properties": {
           "data": {
-            "description": "The memo was closed, once: by the owner's decide_memo or the confirm of a draft made from it (actor: the owner), within kingdom.delegation by the Chancellor's triage (actor: the Chancellor, PS-03b), or (PS-22) an objection's second judge gave its verdict (`sustained`: it passed the work, `overruled`: it failed it). Closing it changed no quest.",
+            "description": "The memo was closed, once: by the owner's decide_memo or the confirm of a draft made from it (actor: the owner), within kingdom.delegation by the Chancellor's triage (actor: the Chancellor, PS-03b), or (PS-22) an objection's second judge gave its verdict (`sustained`: it passed the work, `overruled`: it failed it), or (PS-09c) the Steward closed a memo to quests once every quest it went to read it or left (`delivered`: one read it at least, `lapsed`: none did; actor: the Steward). Closing it changed no quest.",
             "type": "object",
             "additionalProperties": false,
             "required": [
@@ -3037,7 +3043,9 @@
                   "handled",
                   "accepted",
                   "sustained",
-                  "overruled"
+                  "overruled",
+                  "delivered",
+                  "lapsed"
                 ]
               },
               "quest": {
@@ -3108,6 +3116,33 @@
                     "chancellor_asks"
                   ]
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "memo.delivered"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "(PS-09c) The line's quest read the advisory: its assignee session that opened at the line's attempt carried it in the prompt's `advisories` block, once. The memo file records the delivery; a memo every quest it went to read or left is closed next (`delivered` or `lapsed`). Reading it changed no quest.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "memo"
+            ],
+            "properties": {
+              "memo": {
+                "type": "string",
+                "pattern": "^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
               }
             }
           }
@@ -3433,6 +3468,7 @@
         "memo.routed",
         "memo.closed",
         "memo.escalated",
+        "memo.delivered",
         "sandbox.replay.start",
         "sandbox.replay.end",
         "upgrade.started",

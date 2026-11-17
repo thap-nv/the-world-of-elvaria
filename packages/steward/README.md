@@ -82,7 +82,17 @@
   memo `accepted` or `rejected` and answers the quest with the note, waiting in the inbox while the doer cannot go
   on; `owner` keeps the memo open with the advice and makes the quest the owner's question. The owner's `answer` or `decide_memo` on such a
   quest settles it too; an acceptance of the owner's (`decide_memo` accepted) opens the scope as the author's does, the
-  description kept (fix/amendment-owner-accept).
+  description kept (fix/amendment-owner-accept). (PS-09c, `src/memos/advisory.ts`) As a done quest's branch is found
+  in its base branch, under every delivery mode (`archiveInBase`, after `delivery.merged` or a look), the Steward reads
+  what the quest touched (`Plots.touched`), leaves out the files its territory's `shared_paths` match (`ruleOf`, as
+  the merge queue reads them), and, before the archive, files one advisory without `from` to the quests at work whose
+  scope meets the rest (`memo.filed` and `memo.routed` by the Steward, in that quest's journal), its id from the quest
+  alone, so a Steward that stopped before the archive files it once; a registry with no kind routed to `quests` files
+  none, with a warning. The next assignee session of each quest it went to, fresh or resumed, carries it in the
+  `advisories` block (`advisoriesOf`); once the quest moved, the Steward records the reading (`deliveries`,
+  `memo.delivered` in the reader's journal) and closes the memo `delivered` or `lapsed` once no quest it went to
+  waits for it (at a reading, and at every landing). A judge never reads one; no quest moves. A character's `advisory`
+  line is routed to the quests at work its refs meet (`recipientsFor`).
   Commands with `source: chancellor` are told as the Chancellor's (`actorOfCommand`), and their `command.*` lines
   carry the source.
 - Runs the jobs of `kingdom.schedule` (PS-03, implementation-plan §3.16.3; `src/schedule/`): no cron. At the end
@@ -422,8 +432,12 @@
 - Runs the merge queue (PS-09, `src/forge/update.ts`): before the scan, a delivery brings the branch up to its base
   branch (`Plots.update`), then runs `commands.setup` again, the generators (`Plots.generate`), one `plot.merged`
   line (`resolved`, `restored`) and every check of the territory (`check.*` marked `delivery`, logs in
-  `.runs/<quest>-delivery/checks/`), settling the update once they pass; a conflict no rule resolves, red checks, a
-  failed generator or a refused update record `delivery.failed` at `update`. The queue's order comes from what each
+  `.runs/<quest>-delivery/checks/`), settling the update once they pass; a failed generator or a refused update
+  record `delivery.failed` at `update`. (PS-09b) A conflict no rule resolves, or red checks, open the merge queue's
+  merge quest first (`src/forge/queue-merge.ts`, the domain's `queueMergeQuestOf`: a party merge quest's way on the
+  quest's branch, its id from the quest and the base branch's commit, the red checks' log ends masked with the
+  treasury), and the `delivery.failed` names it (`merge_quest`, the bell too); one still on its way for the quest is
+  found instead, and the quest it stands for is archived once it is in the base branch (`forgeArchives`). The queue's order comes from what each
   done quest touched, read once (`src/forge/sizes.ts`); a sealed pull request under `pr_merge` holds its lane
   until merged. A pushed pull request that no longer merges cleanly (a look's `Plots.mergesClean`, or the forge's
   `conflict`) goes back into the queue, at most `UPDATE_ROUNDS_MAX` times (`src/forge/stale.ts`). A merge quest's
@@ -502,6 +516,10 @@ two runs.
 queue on real git with the fake forge: three sealed quests, two regenerating one index, all merged small work first
 with the index right; union lines joined, the same line a conflict; a file no rule names; main still, no check again;
 red checks, no push; an open pull request main overtook, pushed again once; a Steward stopped in a generator.
+`forge-queue-merge.spec.ts` (PS-09b) resolves a conflict no rule resolves in one merge quest: the machine's run stops,
+a knight concludes it, a judge who never worked the quest reads it, the seal takes both into main and both plots go,
+no second one on later ticks; dropped by the owner, `deliver` on the same commit opens none again. The red-check
+case of `forge-queue-update.spec.ts` checks the merge quest names the check and the end of its log.
 `merge-base.spec.ts` (PS-08e) moves main on once the contract forked: the machine's run merges it, the checks run
 on the result and the judge's diff has none of main's files; main editing a part's line stops the machine's run, rings
 one `merge_stopped` bell, and a knight concludes it in the same quest; main's protected change is never the party's.

@@ -3,8 +3,9 @@
 ## Does
 
 - Ships the default registry that `elvaria init` copies into `<kingdom>/registry/` (implementation-plan §2.2):
-  11 kinds, 11 classes, 12 rituals, 6 catalog scripts, 8 tags, 3 memo kinds (`proposal`, routed to the Chancellor,
-  PS-02; `objection`, routed to a second judge, PS-22; `amendment`, routed to the quest's author, PS-22b; `memos.json`,
+  11 kinds, 11 classes, 12 rituals, 6 catalog scripts, 8 tags, 4 memo kinds (`proposal`, routed to the Chancellor,
+  PS-02; `objection`, routed to a second judge, PS-22; `amendment`, routed to the quest's author, PS-22b; `advisory`,
+  routed to the quests at work, the one the Steward writes as a quest reaches its base branch, PS-09c; `memos.json`,
   ADR 0024), and one prompt per class. The package root is laid
   out like that folder.
 - Holds the catalog scripts of the script tier (ADR 0017): `link-check`, `run-check`, `count-files`,
@@ -28,7 +29,9 @@
   two examples that pass the Steward's `subquests` check (scopes, quest template, peak context). `council_review`
   runs the step `check_plan_ready` after `read_plan` (PS-06). Two lines of a real kingdom's scripture moved into
   the class prompts, so every kingdom gets them through `elvaria upgrade` (fix/lesson-step-0): `judge.md` puts every
-  blocking problem in one verdict, `mage.md` leaves a caller's part the files that wire a new core.
+  blocking problem in one verdict, `mage.md` leaves a caller's part the files that wire a new core. `judge.md` also
+  treats a change whose tests pass whatever the code does as untested (fix/test-guards, (196)): the judge's half of
+  the repo's `.claude/rules/tests.md`, in the class prompt rather than a scripture line.
 - Exports `loadDefaultRegistry()` (read + validate through `@elvaria/domain`), `registryFiles()` (what init
   copies; given another folder, the same list in another build of this package, which `elvaria upgrade` compares
   with the kingdom, fix/kingdom-upkeep) and `REGISTRY_ROOT`.

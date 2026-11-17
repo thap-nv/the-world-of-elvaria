@@ -16,10 +16,19 @@ import { MEMO_OUTCOME_DECISIONS, MEMO_REFUSALS, MEMO_ROUTES } from '../memo/cons
 const describe = (description: string) => ({ description });
 
 export const MemoFiledDataSchema = z
-  .strictObject({ memo: MemoIdSchema, kind: MemoKindIdSchema, from: CharacterIdSchema })
+  .strictObject({
+    memo: MemoIdSchema,
+    kind: MemoKindIdSchema,
+    // PS-09c; optional, added after v1, so `v` stays 1 (ADR 0003).
+    from: CharacterIdSchema.optional().meta(
+      describe(
+        'Who wrote it; absent, the Steward did (PS-09c, an advisory after the quest reached its base branch).',
+      ),
+    ),
+  })
   .meta(
     describe(
-      "The Steward filed memos/<memo>.json from the Memos section of the quest's handover letter, as the run ended through a submit, a question or a crash. The line's actor is the character who wrote it.",
+      "The Steward filed memos/<memo>.json from the Memos section of the quest's handover letter, as the run ended through a submit, a question or a crash; the line's actor is the character who wrote it. (PS-09c) Or the Steward wrote it, an advisory to the quests at work whose scope meets the files the line's quest changed, as that quest reached its base branch; the actor is the Steward and `from` is absent.",
     ),
   );
 
@@ -53,7 +62,15 @@ export const MemoClosedDataSchema = z
   })
   .meta(
     describe(
-      "The memo was closed, once: by the owner's decide_memo or the confirm of a draft made from it (actor: the owner), within kingdom.delegation by the Chancellor's triage (actor: the Chancellor, PS-03b), or (PS-22) an objection's second judge gave its verdict (`sustained`: it passed the work, `overruled`: it failed it). Closing it changed no quest.",
+      "The memo was closed, once: by the owner's decide_memo or the confirm of a draft made from it (actor: the owner), within kingdom.delegation by the Chancellor's triage (actor: the Chancellor, PS-03b), or (PS-22) an objection's second judge gave its verdict (`sustained`: it passed the work, `overruled`: it failed it), or (PS-09c) the Steward closed a memo to quests once every quest it went to read it or left (`delivered`: one read it at least, `lapsed`: none did; actor: the Steward). Closing it changed no quest.",
+    ),
+  );
+
+export const MemoDeliveredDataSchema = z
+  .strictObject({ memo: MemoIdSchema })
+  .meta(
+    describe(
+      "(PS-09c) The line's quest read the advisory: its assignee session that opened at the line's attempt carried it in the prompt's `advisories` block, once. The memo file records the delivery; a memo every quest it went to read or left is closed next (`delivered` or `lapsed`). Reading it changed no quest.",
     ),
   );
 

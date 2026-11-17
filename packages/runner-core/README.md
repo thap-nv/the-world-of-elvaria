@@ -80,7 +80,10 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   memo; a `-` or `none` line is nothing, as `fakeLetter` writes. The Steward calls it as a run ends; `RunResult` and
   the adapters do not change. A continuing assignee reads the memos its quest's letters filed
   (`Memory.memos`, `prompts/memos.md`, `memosBlock` of `src/prompt/memory.ts`): a block of its own, `memos` in
-  `PROMPT_BLOCK_IDS`, right after the continuation, so the load trace counts it apart. (PS-22) `prompts/returned.md`
+  `PROMPT_BLOCK_IDS`, right after the continuation, so the load trace counts it apart. (PS-09c) An assignee reads the
+  advisories its quest has yet to read in a block of its own (`advisories`, `prompts/advisories.md`, `advisoriesBlock`
+  of `src/prompt/advisories.ts`), right after the quest, or after the answer of a resumed session (`resumedPrompt`):
+  the newest `ADVISORY_BLOCK_MAX_MEMOS` within `ADVISORY_BLOCK_MAX_CHARS`, one line counting the rest. (PS-22) `prompts/returned.md`
   says a note held wrong is an objection memo (`- objection: … refs: …`), not a change to satisfy it nor a note passed
   over; a second judge reads the `objection` block (`prompts/objection.md`, `objectionBlock` of
   `src/prompt/objection.ts`, before the review: the contested verdict and the memo, the first judge never named), and
@@ -211,7 +214,8 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
 --write-tree`, git 2.38, `plot/dry-merge.ts`) resolves each conflicted file by the territory's `shared_paths`
   (`plot/shared-merge.ts`, pure: `regenerate` keeps the plot's side, `union` joins three-way line by line, a JSON
   file must parse, any other file is a conflict), and only when all are resolved does the real merge run with the
-  territory's hooks; the record's base moves and `update_pending` stays until `settle` (`plot/base-update.ts`).
+  territory's hooks; the record's base moves and `update_pending` stays until `settle` (`plot/base-update.ts`). A
+  conflict names the base branch's commit it met (`BaseUpdate.base`): the Steward's merge quest is made from it.
   `generate` runs `commands.generate` with the quest's secrets, gives back what it changed outside `shared_paths`
   and commits the rest (`plot/generate.ts`); `mergesClean` says whether an open branch still merges cleanly into
   the tips a look saw. A party's merge quest gets the same rules for its parts and base branch

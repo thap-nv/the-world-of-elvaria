@@ -18,7 +18,7 @@ import { textOption } from '../args.ts';
 import { EXIT } from '../command.ts';
 import { storeIssueLines } from '../issues.ts';
 import { NONE } from '../listing.ts';
-import { readMemo } from '../memo/memo.ts';
+import { memoFromOf, readMemo } from '../memo/memo.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { commandHeader } from '../quest/send-command.ts';
 import { crewOf } from '../run/crew.ts';
@@ -69,6 +69,8 @@ async function codeFor(ctx: KingdomContext, utterance: string, deps: SayDeps): P
     0,
   );
   if (files > 0) ctx.io.out(ctx.t('cli.say.files', { files: String(files) }));
+  // The owner sees the paths the Chancellor hears as not found (202), most often a typo in the words.
+  if (words.missing.length > 0) ctx.io.out(ctx.t('cli.say.missing', { paths: words.missing.join(', ') }));
   const graphed = code.flatMap(({ territory, graph }) => (graph === undefined ? [] : [territory]));
   if (graphed.length > 0) ctx.io.out(ctx.t('cli.say.graph', { territories: graphed.join(', ') }));
   return words;
@@ -128,7 +130,8 @@ async function say(
 /** The letter as the Chancellor hears it, then the owner's own words when there are any. */
 function memoWords(ctx: KingdomContext, memo: Memo, words: string): string {
   const refs = memo.refs.length === 0 ? NONE : memo.refs.join(', ');
-  const { kind, from, quest, body } = memo;
+  const { kind, quest, body } = memo;
+  const from = memoFromOf(ctx, memo);
   const heard = ctx.t('cli.say.memo_words', { kind, from, quest, body: body.trim(), refs });
   return words === '' ? heard : `${heard}\n\n${words}`;
 }

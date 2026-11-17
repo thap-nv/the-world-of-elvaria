@@ -72,7 +72,7 @@ type CreateQuest = CommandPayload<'create_quest'>;
 function partyFieldsOf(role: CreateQuest['party_role'], context: NewQuestContext) {
   if (context.party !== undefined) {
     const { id, role: place, contract } = context.party;
-    return { party_id: id, party_role: place, contract };
+    return { party_id: id, party_role: place, ...(contract === undefined ? {} : { contract }) };
   }
   return role === undefined ? {} : { party_role: role, party_id: context.id };
 }

@@ -38,6 +38,7 @@ export async function recordFailed(ctx: Context, quest: Quest, failure: Failure)
     quest: noticeQuest(quest),
     stage: data.stage,
     reason: data.reason,
+    ...(data.merge_quest === undefined ? {} : { merge_quest: data.merge_quest }),
   });
 }
 

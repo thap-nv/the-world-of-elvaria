@@ -102,6 +102,7 @@ describe('update from the base branch (PS-09)', () => {
 
     expect(await plots().update(plot, territory)).toEqual({
       state: 'conflict',
+      base: head(repo),
       paths: ['docs/plan.md', 'src/a.ts'],
     });
     expect(head(worktree)).toBe(before);
