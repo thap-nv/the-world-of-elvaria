@@ -13,7 +13,7 @@ import type { BaseUpdate } from './base-update.ts';
 import type { GenerateOutcome } from './generate.ts';
 import type { Git } from './git.ts';
 import type { BaseTips } from './in-base.ts';
-import type { PlotManagerOptions } from './plot-manager.ts';
+import type { ProcessHost } from '../process/program.ts';
 
 /** What a delivery's generators get beside the plot and the territory. */
 export interface GenerateRequest {
@@ -41,7 +41,13 @@ const worktreeOf = (plot: Plot): { readonly cwd: string; readonly branch: string
     ? { cwd: fromPortable(plot.path), branch: plot.branch }
     : undefined;
 
-export function queueMethods(options: PlotManagerOptions, git: () => Promise<Git>): QueueMethods {
+/** What the queue's methods need of the manager's options: the kingdom (the generators' logs) and the host. */
+export interface QueueOptions {
+  readonly kingdom: string;
+  readonly host: ProcessHost;
+}
+
+export function queueMethods(options: QueueOptions, git: () => Promise<Git>): QueueMethods {
   return {
     update: async (plot, territory) => {
       const at = worktreeOf(plot);
