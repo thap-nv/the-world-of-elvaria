@@ -139,6 +139,23 @@ describe('advisoryOf', () => {
     expect(advisoryOf(merge, [MEMO_FILE], [merge, other], [])?.quests).toEqual([B]);
     expect(advisoryOf(part, [MEMO_FILE], [part, other], [])).toBe(undefined);
   });
+
+  it("writes none for a quest the merge queue's merge quest took into the base branch, one once it was dropped (PS-09b)", () => {
+    const other = ran(B, undefined);
+    const merge = (delivered: boolean): Quest => ({
+      ...ran(C, undefined, { status: delivered ? 'done' : 'archived' }),
+      party_id: L as QuestId,
+      party_role: 'merge',
+      parent_id: L as QuestId,
+      created_by: 'patrol',
+      deliverable: { type: 'branch', ...(delivered ? { delivered_at: AT } : {}) },
+    });
+    expect(advisoryOf(LANDED, [MEMO_FILE], [LANDED, other, merge(true)], [])).toBe(undefined);
+    expect(advisoryOf(LANDED, [MEMO_FILE], [LANDED, other, merge(false)], [])?.quests).toEqual([B]);
+    // A party's own merge quest names its contract as parent: the contract writes none anyway, by its party.
+    const own = { ...merge(true), created_by: 'council' as const };
+    expect(advisoryOf(LANDED, [MEMO_FILE], [LANDED, other, own], [])?.quests).toEqual([B]);
+  });
 });
 
 const KIND = { id: 'advisory', name_vi: 'Báo tin', name_en: 'Advisory', route: 'quests', description: 'x' };

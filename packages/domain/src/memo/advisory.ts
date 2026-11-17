@@ -6,6 +6,7 @@
 // `lapsed`. Pure: the Steward reads what the quest touched and which of those files the territory's shared_paths
 // match (the merge queue's own reading), and hashes the key.
 import { baseChainOf, scopeOf, scopesMeet } from '../dispatch/scope.ts';
+import { isQueueMerge } from '../party/queue-merge-quest.ts';
 import { MEMO_REFS_MAX } from '../schema/memo/constants.ts';
 import { partyOf } from '../verify/past-assignees-of.ts';
 import type { QuestId } from '../core/ids.ts';
@@ -60,7 +61,8 @@ export interface Advisory {
 /**
  * The advisory of `landed` reaching its base branch with `changed` files, `shared` of them matched by the territory's
  * shared_paths (the machine merges those, so they never count); undefined when nobody gets one. A party's parts and
- * contract write none: their merge quest's one holds their work.
+ * contract write none: their merge quest's one holds their work. (PS-09b) Nor does a quest the merge queue's merge quest
+ * took into the base branch (delivered, its parent): that one's advisory holds its work, so one landing writes one.
  */
 export function advisoryOf(
   landed: Quest,
@@ -69,6 +71,9 @@ export function advisoryOf(
   shared: readonly string[],
 ): Advisory | undefined {
   if (landed.party_id !== undefined && landed.party_role !== 'merge') return undefined;
+  const carried = (other: Quest): boolean =>
+    isQueueMerge(other) && other.parent_id === landed.id && other.deliverable.delivered_at !== undefined;
+  if (quests.some(carried)) return undefined;
   const files = changed.filter((file) => !shared.includes(file)).toSorted();
   const recipients = recipientsOf(landed, files, quests);
   if (recipients.length === 0) return undefined;
