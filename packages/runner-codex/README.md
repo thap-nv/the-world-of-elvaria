@@ -23,7 +23,9 @@ launch, hook, env, timeout_ms?, platform?})`. `hook` is `hookCommand()` of `@elv
   `readContextFiles`, each cut at 24 000 characters), then what Codex's tools are for this class (`apply_patch` writes; git's folder is read-only, the Steward commits; no sub-agents, no
   `request_user_input`; the file itself is Elvaria's, never edited or formatted; on Windows, what the `mxc` sandbox
   breaks (a symlink, git with a folder as its remote, stopping a process tree, `sh`) is the sandbox's failure, not
-  the code's, not to be run again and again, and the Steward's checks outside the sandbox judge). The file goes when the session
+  the code's, not to be run again and again, and the Steward's checks outside the sandbox judge; a whole test suite
+  or repo-wide check it breaks or times out is not run again: the session runs the checks of the quest's files,
+  quotes the errors and ends, fix/lesson-step-0). The file goes when the session
   ends, or never started; a territory's own `AGENTS.override.md` refuses the session and stays. Its body sits
   between `<!-- prettier-ignore-start -->` and `<!-- prettier-ignore-end -->`, an open code fence of a cut law file
   closed first (`closeFences`), so a territory's `prettier --check .` passes in the session (P1-12e).

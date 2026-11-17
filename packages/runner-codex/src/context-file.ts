@@ -12,10 +12,12 @@ export const LAW_FILES = ['AGENTS.md', 'CLAUDE.md'] as const;
 /**
  * What Windows' `mxc` sandbox breaks (Codex 0.169.0-alpha.11.1, gap 21 of the phase 1.5 report): a knight took these
  * failures for its own and spent turns running them again. Said for every class, since a judge runs tests too; the
- * Steward's checks run outside the sandbox, so they decide (ADR 0008).
+ * Steward's checks run outside the sandbox, so they decide (ADR 0008). The last sentence was a line of a real
+ * kingdom's scripture: a Codex knight on Windows ran the whole suite and a repo-wide check again and again while the
+ * sandbox broke them (2026-11-15 run, gap (ii)); it is this adapter's fact, not every tribe's (fix/lesson-step-0).
  */
 export const WINDOWS_SANDBOX_NOTE =
-  "- On Windows your commands run in Codex's mxc sandbox, which breaks a few things that work outside it: creating a symlink (EPERM), git with a local folder as its remote, stopping a process tree, and sh (exit code 3221225794, 0xC0000142). A test or command that fails only for one of these reasons is a failure of the sandbox, not of the code: do not run it again and again, and do not change the code or the tests to get round it. Name what failed and why in what you report; the Steward's checks run outside the sandbox and are the judge.";
+  "- On Windows your commands run in Codex's mxc sandbox, which breaks a few things that work outside it: creating a symlink (EPERM), git with a local folder as its remote, stopping a process tree, and sh (exit code 3221225794, 0xC0000142). A test or command that fails only for one of these reasons is a failure of the sandbox, not of the code: do not run it again and again, and do not change the code or the tests to get round it. Name what failed and why in what you report; the Steward's checks run outside the sandbox and are the judge. When the full test suite or a repo-wide check fails in the sandbox this way, or times out there, do not run it again: run only the checks of the files the quest changed, quote the error lines in what you report, and end the session.";
 
 /**
  * What Codex's tools are, for the class this session runs: the prompt above names Claude Code's Edit and Write, which
