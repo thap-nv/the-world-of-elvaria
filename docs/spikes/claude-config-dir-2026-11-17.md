@@ -56,7 +56,7 @@ Nếu bước 2 hay bước 3 cho thấy số đo là của thư mục mặc đ�
 - Adapter đặt `CLAUDE_CONFIG_DIR` cho mọi tiến trình của tộc và không cần gì khác: không cờ dòng lệnh nào đổi thư mục cấu hình, và các cờ của phiên giữ nguyên.
 - `doctor()` đọc `configDirectory` để chắc CLI đã nghe biến, và băm `email` cùng `orgId` thành dấu tài khoản. Hai trường đó không được in hay ghi ra đâu.
 - CLI tự tạo `.claude.json`, `backups/`, `projects/`, `plugins/` và `sessions/` trong thư mục. Elvaria không tạo, không dọn và không đọc chúng; `purge` là lệnh của CLI.
-- Thư mục cấu hình không được nằm trong vương quốc hay lãnh thổ, vì nó chứa đăng nhập và transcript.
+- Thư mục cấu hình không được nằm trong vương quốc hay lãnh thổ, vì nó chứa đăng nhập và transcript. Chỗ theo quy ước là cạnh kho bảo vật, `~/.elvaria/accounts/<id tộc>/` (chủ nhân chốt mục CT15 của kế hoạch). Thư mục `config-b/` của spike chỉ là chỗ nháp.
 
 ## 5. Chưa đo
 
