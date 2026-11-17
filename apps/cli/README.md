@@ -301,6 +301,10 @@ show` prints the brief apart from the rest of the description and, while the pla
 - The newer build the digest offers (`upgrade_available`, PS-08d, `src/upgrade/offer.ts`): with a pin, the commits
   on `main` of the repo the CLI runs from (a build and `--here` share its refs; no fetch) that touch `packages/` or
   `apps/` since the pinned commit; `run` gives it to the Steward as `upgradeOffer`, `digest` reads it too.
+- The patrol (PS-26): `territory patrol <id> [--on|--off]` prints or writes `territory.patrol` (ADR 0005 exception,
+  as `territory delivery`); `run` gives the Steward `Plots.patrol` (`tryTerritory` under `patrol-<id>`, the scans
+  in the plot); `digest` lists `base_red` and `patrol_scan` from the log (`baseHealthOf`); the bell says `base_red`;
+  `metrics` has the table "Default branch red after a merge".
 
 ## Does not
 

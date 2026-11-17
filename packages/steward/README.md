@@ -435,6 +435,13 @@
   whose kind delivers sub-quests (PS-21b, `sessions/plan-graph.ts`), its mage reads the impact of the quest's scope
   in that block, and its judge the sub-quests the graph links (the domain's `planLinksOf` on `subquests.json`), a
   warning in the review that fails nothing.
+- The patrol (PS-26, `src/patrol/`): a scheduled job outside the tick, added when the plots can patrol
+  (`Plots.patrol`). For each git territory with `patrol`, one after another: the territory's trial under the plot
+  name `patrol-<id>`, its scans in that plot (`scans.ts`, the catalog's scripts with the script tier's runner), one
+  `patrol.ran` and one `territory.health`; for the checks that turned red (`stepPatrol`), the draft quest of
+  `patrol.follow_up` (`draft.ts`, before the line) and one `base_red` ring. A territory that throws does not hold
+  the next one back; a stop records nothing and no `schedule.ran`. The patrol's book (`book.ts`) is rebuilt at
+  `recover` and carried by the tick's notices to the digest.
 
 ## Does not
 

@@ -7,6 +7,7 @@ import type { HeldLock } from '@elvaria/store';
 import type { Background } from './background.ts';
 import type { ForgeBook } from './forge/book.ts';
 import type { BaseLooks } from './forge/looks.ts';
+import type { PatrolBook } from './patrol/book.ts';
 import type { GraphBuilds } from './graph-builds.ts';
 import type { JudgeLocks } from './review/exclusive.ts';
 import type { PromptSizes } from './review/prompt-size.ts';
@@ -58,6 +59,8 @@ export interface State {
   readonly forge: ForgeBook;
   /** The looks at the base branches outside the tick (PS-08d): stop() aborts them, the next start looks again. */
   readonly looks: BaseLooks;
+  /** The patrolled territories' health (PS-26): rebuilt from the log at start, set by each patrol. */
+  readonly patrol: PatrolBook;
   /** Set by start(): what the first tick finishes of the last Steward's work (restart.ts, P1-44). */
   restart: Restart | undefined;
   held: Held | undefined;

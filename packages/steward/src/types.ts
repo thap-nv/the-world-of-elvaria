@@ -7,6 +7,7 @@ import type {
   Quest,
   Result,
   Territory,
+  TerritoryTrial,
   ToolFound,
   TribeId,
   UpgradeOffer,
@@ -35,6 +36,7 @@ import type { KingdomStore } from '@elvaria/store';
 
 import type { Forges } from './forge/forge.ts';
 import type { Bell } from './notice.ts';
+import type { PatrolOptions } from './patrol/ports.ts';
 import type { Digest, OnCallJob, ScheduledJob } from './schedule/ports.ts';
 import type { ScriptRunner } from './script/run-script.ts';
 
@@ -193,6 +195,8 @@ export interface Plots {
    * PlotManager.drift); null when git cannot say. Absent (folder plots): a stamped gazetteer gets no note.
    */
   drift?(plot: Quest['plot'], from: string): Promise<Drift | null>;
+  /** The patrol (PS-26): tryTerritory under `patrol-<id>`, then `scan` in its plot. Absent: no patrol runs. */
+  patrol?(territory: Territory, options: PatrolOptions): Promise<TerritoryTrial>;
   /** At archive only: removes a worktree (its branch stays) and what the tribes' CLIs kept about it. */
   release(plot: Quest['plot']): Promise<Result<ReleasedPlot, PlotFailure>>;
   /**

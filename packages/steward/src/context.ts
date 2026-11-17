@@ -2,6 +2,7 @@
 import type { Background } from './background.ts';
 import type { ForgeBook } from './forge/book.ts';
 import type { BaseLooks } from './forge/looks.ts';
+import type { PatrolBook } from './patrol/book.ts';
 import type { GraphBuilds } from './graph-builds.ts';
 import type { JudgeLocks } from './review/exclusive.ts';
 import type { Notice, NoticeQuest, StewardDeps } from './types.ts';
@@ -44,6 +45,8 @@ export interface Context {
   readonly forge: ForgeBook;
   /** The looks at the base branches and the done quests found there (PS-08d), across ticks. */
   readonly looks: BaseLooks;
+  /** The health of the patrolled territories' default branches (PS-26), across ticks. */
+  readonly patrol: PatrolBook;
 }
 
 /** Rings the bell; a bell that fails never stops a tick. */

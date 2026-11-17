@@ -27,6 +27,7 @@ import type { PoolView } from './mana-view.ts';
 import type { QuestView } from './quest-view.ts';
 import type { WorldState } from './world-state.ts';
 import type { ForgeOutcome } from './forge-outcome.ts';
+import type { TerritoryHealth } from '../patrol/health.ts';
 import type { AttentionItem, AttentionKind, AttentionSubject } from './attention-table.ts';
 
 type MemoRouteId = MemoRoute['route'];
@@ -58,6 +59,8 @@ export interface StewardNotices {
   readonly tribes_held?: readonly TribeHold[];
   /** The latest outcome of each quest's delivery to its forge (forgeOutcomesOf, PS-08c); from the log. */
   readonly deliveries?: readonly ForgeOutcome[];
+  /** The health of each patrolled territory's default branch (baseHealthOf, PS-26); from the log. */
+  readonly patrols?: readonly TerritoryHealth[];
   /** A newer build to upgrade to (PS-08d): apps/cli reads it from the pinned build's repo as the digest is made. */
   readonly upgrade?: UpgradeOffer;
 }
@@ -129,6 +132,26 @@ function deliveryItems(state: WorldState, outcome: ForgeOutcome): AttentionItem[
   ];
 }
 
+/** A territory's red checks, then its scans that did not pass (PS-26). */
+function patrolItems({ territory, red, scans }: TerritoryHealth): AttentionItem[] {
+  return [
+    ...red.map((check) =>
+      itemOf('base_red', {
+        territory,
+        check: check.check,
+        ...(check.error_line === undefined ? {} : { error_line: check.error_line }),
+        log_path: check.log_path,
+        ...(check.commit === null ? {} : { commit: check.commit }),
+        since: check.since,
+        suspects: check.suspects.map(({ quest }) => quest),
+      }),
+    ),
+    ...scans.map(({ script, outcome, count }) =>
+      itemOf('patrol_scan', { territory, script, outcome, ...(count === undefined ? {} : { count }) }),
+    ),
+  ];
+}
+
 function noticeItems(state: WorldState, notices: StewardNotices): AttentionItem[] {
   return [
     ...(notices.unclaimable ?? []).map((id) => itemOf('unclaimable', aboutId(state, id))),
@@ -148,6 +171,7 @@ function noticeItems(state: WorldState, notices: StewardNotices): AttentionItem[
       itemOf('scope_held', { ...aboutId(state, quest), waiting }),
     ),
     ...(notices.deliveries ?? []).flatMap((outcome) => deliveryItems(state, outcome)),
+    ...(notices.patrols ?? []).flatMap(patrolItems),
     ...(notices.tribes_held ?? []).map(({ tribe, path, version, checked }) =>
       version === undefined
         ? itemOf('tribe_gone', { tribe, path, checked_version: checked })

@@ -84,6 +84,7 @@ describe('a scheduled job outside the tick', () => {
     await steward.tick();
     expect(chronicle.runs.map(({ day }) => day)).toEqual(['2026-11-07']);
     expect(chronicle.runs[0]?.notices).toEqual({
+      patrols: [],
       unclaimable: [],
       unjudgeable: [],
       judge_waits: [],

@@ -74,7 +74,7 @@ const needsVision = (world: World, id: QuestId): boolean => {
  */
 export function noticesOf(
   world: World,
-  state: Pick<State, 'reported' | 'unjudged' | 'judgeWaits' | 'versions' | 'forge'>,
+  state: Pick<State, 'reported' | 'unjudged' | 'judgeWaits' | 'versions' | 'forge' | 'patrol'>,
 ): StewardNotices {
   return {
     tribes_held: state.versions.holds,
@@ -96,6 +96,8 @@ export function noticesOf(
       [...world.quests.values()],
       [...world.territories.values()],
     ),
+    // PS-26: the health of the patrolled territories' default branches.
+    patrols: state.patrol.health,
   };
 }
 

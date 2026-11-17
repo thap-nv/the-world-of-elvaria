@@ -53,7 +53,7 @@ export const EventSchema = z
     title: 'Event',
     description:
       "One line of events/YYYY-MM-DD.jsonl (and of quests/<id>/journal.jsonl). The event log is append-only and never rewritten: readers upgrade old lines by `v` on read. `type` is `group.action`; `data` has a shape per type. Unknown types are kept by readers and ignored by renderers (forward compatible), so `type` is a pattern, not an enum; the v2 catalog is in $defs.known_types. The world sees actor.id (character) and the character's provider (tribe), never which CLI ran.",
-    $comment: `${GENERATED_NOTE} Events use \`v\`, not \`version\` (implementation-plan §2.1). Secrets are redacted before append (hook, runner, store, herald). Reserved prefixes with no types yet: campaign.*, battle.*, incident.*, patrol.* (stage 5), party.* and skill.* (product plan 0.5: parties and skills). One write() per line under 64 KB; readers drop a last line without a trailing newline.`,
+    $comment: `${GENERATED_NOTE} Events use \`v\`, not \`version\` (implementation-plan §2.1). Secrets are redacted before append (hook, runner, store, herald). Reserved prefixes with no types yet: campaign.*, battle.*, incident.*, party.* and skill.* (product plan 0.5: parties and skills). One write() per line under 64 KB; readers drop a last line without a trailing newline.`,
     allOf: dataRules(),
     $defs: {
       known_types: {

@@ -104,6 +104,11 @@ export const SCHEDULE_DEFAULTS = {
   triage_at: '07:30',
   temple_every_quests: 10,
   patrol_every: 'P1D',
+  /**
+   * The patrol (PS-26): before the triage and the digest, so the day's digest carries what it found. It runs each
+   * patrolled territory's setup and checks, minutes each, outside the tick.
+   */
+  patrol_at: '06:30',
 } as const;
 
 export const DISPATCH_DEFAULTS = {
@@ -155,6 +160,8 @@ export const DELIVERY_DEFAULTS = {
 } as const;
 /** delivery.failed `detail`: one forge or git message, redacted, never a whole log. */
 export const DELIVERY_DETAIL_MAX_LENGTH = 2000;
+/** patrol.ran's error lines (PS-26): the first line of a log that says what went wrong, never more. */
+export const PATROL_LINE_MAX_LENGTH = 500;
 
 /**
  * (V) of the PS-08 plan (PS-08d): under `pr_merge` the Steward asks the forge about a sealed quest's pull request at

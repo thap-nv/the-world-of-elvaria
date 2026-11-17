@@ -4,6 +4,7 @@
 // are all out of mana, or that no judge of the roster may take.
 import {
   attentionQueue,
+  baseHealthOf,
   forgeOutcomesOf,
   ownerDeliveries,
   scopeHoldsOf,
@@ -53,6 +54,8 @@ async function runDigest(input: CommandInput, cli: CliContext): Promise<ExitCode
     judges_unopened: unopenedReviewsOf(source.quests),
     deliveries: ownerDeliveries(forgeOutcomesOf(log.events).values(), source.quests, source.territories),
     ...(upgrade === undefined ? {} : { upgrade }),
+    // PS-26: the same health of the patrolled branches the Steward's book holds.
+    patrols: baseHealthOf(log.events),
   });
   // ctx.now() is written in the kingdom's zone: its date is the kingdom's local day, as the digest's file names it.
   const day = ctx.now().slice(0, 'yyyy-mm-dd'.length);

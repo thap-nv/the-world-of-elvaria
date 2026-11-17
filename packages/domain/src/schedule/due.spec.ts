@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { zonedTime } from '../core/clock.ts';
-import { awaitedJob, dueJobs, localClockOf } from './due.ts';
+import { awaitedJob, dueJobs, everyDaysOf, localClockOf } from './due.ts';
 import type { Instant, ZonedTime } from '../core/clock.ts';
 import type { DailyJobId } from './constants.ts';
 import type { AwaitSource, DueSource } from './due.ts';
@@ -15,6 +15,7 @@ const schedule: DueSource['schedule'] = {
   chronicle: { enabled: false, at: '21:00' },
   triage: { enabled: true, at: '07:30' },
   digest: { enabled: true, at: '08:00' },
+  patrol: { enabled: false, at: '06:30', every: 'P1D' },
 };
 
 /** The digest alone, and what the log says of its last day. */
@@ -94,5 +95,50 @@ describe('awaitedJob', () => {
     expect(awaitedJob({ ...late(), schedule: same }, 'digest')).toBe('triage');
     expect(awaitedJob(late({}, []), 'digest')).toBeUndefined();
     expect(awaitedJob(late({}, ['digest']), 'digest')).toBeUndefined();
+  });
+});
+
+describe('a job with `every` (the patrol, PS-26)', () => {
+  const weekly = { ...schedule, patrol: { enabled: true, at: '06:30', every: 'P7D' } };
+  const patrol = (iso: string, last: string | undefined, every = weekly): DailyJobId[] =>
+    dueJobs({
+      schedule: every,
+      jobs: ['patrol'],
+      local: localClockOf(zone, at(iso)),
+      last: last === undefined ? {} : { patrol: last },
+    });
+
+  it('runs at `at` on the first day, then not before `every` whole days have passed', () => {
+    expect(patrol('2026-11-12T06:29:00+07:00', undefined)).toEqual([]);
+    expect(patrol('2026-11-12T06:30:00+07:00', undefined)).toEqual(['patrol']);
+    expect(patrol('2026-11-18T23:00:00+07:00', '2026-11-12')).toEqual([]);
+    expect(patrol('2026-11-19T06:30:00+07:00', '2026-11-12')).toEqual(['patrol']);
+    // Across a month's end: days, not text.
+    expect(patrol('2026-12-03T06:30:00+07:00', '2026-11-26')).toEqual(['patrol']);
+  });
+
+  it('runs once a day with P1D, and never twice on a day the clock was set back to', () => {
+    const daily = { ...weekly, patrol: { enabled: true, at: '06:30', every: 'P1D' } };
+    expect(patrol('2026-11-13T06:30:00+07:00', '2026-11-12', daily)).toEqual(['patrol']);
+    expect(patrol('2026-11-12T09:00:00+07:00', '2026-11-12', daily)).toEqual([]);
+    expect(patrol('2026-11-12T09:00:00+07:00', '2026-11-13', daily)).toEqual([]);
+  });
+
+  it('is not awaited by the digest on a day its `every` keeps it from running', () => {
+    const local = localClockOf(zone, at('2026-11-14T08:00:00+07:00'));
+    const source = { schedule: weekly, awaited: ['patrol'] as const, local };
+    expect(awaitedJob({ ...source, ended: { patrol: '2026-11-12' } }, 'digest')).toBeUndefined();
+    expect(awaitedJob({ ...source, ended: { patrol: '2026-11-07' } }, 'digest')).toBe('patrol');
+  });
+});
+
+describe('everyDaysOf', () => {
+  it('reads whole days, drops a part of a day, and never goes below one', () => {
+    expect(everyDaysOf('P1D')).toBe(1);
+    expect(everyDaysOf('P7D')).toBe(7);
+    expect(everyDaysOf('P1DT36H')).toBe(2);
+    expect(everyDaysOf('PT12H')).toBe(1);
+    expect(everyDaysOf('PT90M')).toBe(1);
+    expect(everyDaysOf(undefined)).toBe(1);
   });
 });

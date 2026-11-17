@@ -316,6 +316,8 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   code's structure goes to one. `PromptGraph.impact` adds the impact line to a mage's graph block; a judge's
   `plan_links` adds `prompts/plan-links.md` to its review. `coverOf` and `scopeCovers` read a scope's globs as the
   judge's files outside the scope always have.
+- `tryTerritory` takes a plot name (`name`; `patrolIdOf` for the patrol, PS-26, so a `territory check` at the
+  same time keeps its plot) and an `inPlot` step that runs in the plot after the checks and before it goes.
 
 ## Does not
 

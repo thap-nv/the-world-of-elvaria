@@ -16,6 +16,7 @@ import {
 import { CodeGraphFlagSchema } from './territory-graph.ts';
 import { CheckSchema, CommandLinesSchema } from './territory-checks.ts';
 import { TerritoryDeliverySchema, deliversWhereItCan } from './territory-delivery.ts';
+import { TerritoryPatrolSchema } from './territory-patrol.ts';
 
 const describe = (description: string) => ({ description });
 
@@ -216,6 +217,7 @@ export const TerritorySchema = z
     blind_trial: BlindTrialSchema.prefault({}),
     code_graph: CodeGraphFlagSchema,
     delivery: TerritoryDeliverySchema.optional(),
+    patrol: TerritoryPatrolSchema.optional(),
     shared_paths: z
       .array(SharedPathSchema)
       .optional()
