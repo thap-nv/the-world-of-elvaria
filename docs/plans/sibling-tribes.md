@@ -1,6 +1,6 @@
 # Chi của tộc — PS-27 và PS-27b: kế hoạch chi tiết
 
-Ngày: 2026-11-17 · Trạng thái: **đề xuất, chờ chủ nhân chốt** các mục CT1–CT15 ở cuối file ([§11, 2026-11-17](../implementation-plan/11-2026-11-17.md), dòng "docs/plan-sibling-tribes"). Kế hoạch này mở đường cho **chi** của một tộc: tài khoản thứ hai của cùng một CLI, khai thành một dòng `kingdom.tribes[]` nữa và có bể mana riêng. Nguồn đã chốt là dòng §11 cùng ngày "Người dùng chốt (trong phiên hỏi đáp -a9 …) cách thêm tài khoản thứ hai của cùng một CLI" (#200, `2ee9eec`); năm ý của dòng đó là bất biến ở đây và được nhắc lại ngay dưới. Phép đo đi trước nằm ở [spike thư mục cấu hình của Claude Code](../spikes/claude-config-dir-2026-11-17.md). Phần "Ai đọc" và "Mẫu dùng lại" ở đầu [phase-1.5.md](phase-1.5.md) áp dụng nguyên. Tên hàm, tên trường và các con số dưới đây là đề xuất khớp với code hiện có: phiên làm task được đổi cho hợp, miễn giữ hợp đồng, và ghi chỗ đổi vào §11. Chưa task nào dưới đây được mở; phiên điều phối quyết thứ tự và lúc mở.
+Ngày: 2026-11-17 · Trạng thái: **chủ nhân đã chốt** ngày 2026-11-17 các mục CT1–CT9 và CT11–CT15 theo khuyến nghị ([§11, 2026-11-17](../implementation-plan/11-2026-11-17.md): dòng "docs/plan-sibling-tribes" nêu các mục, dòng "Người dùng chốt (trong phiên kế hoạch docs/plan-sibling-tribes …)" ghi lời chốt). Riêng **CT10 còn mở**: chủ nhân muốn kiểm ngay chi cho Codex có làm được không, và nếu được thì kế hoạch này thêm phần Codex để làm cùng chi cho Claude. Phần đó chưa có ở bản này, nên **chưa mở PS-27** cho tới khi nó xong. Kế hoạch này mở đường cho **chi** của một tộc: tài khoản thứ hai của cùng một CLI, khai thành một dòng `kingdom.tribes[]` nữa và có bể mana riêng. Nguồn đã chốt là dòng §11 cùng ngày "Người dùng chốt (trong phiên hỏi đáp -a9 …) cách thêm tài khoản thứ hai của cùng một CLI" (#200, `2ee9eec`); năm ý của dòng đó là bất biến ở đây và được nhắc lại ngay dưới. Phép đo đi trước nằm ở [spike thư mục cấu hình của Claude Code](../spikes/claude-config-dir-2026-11-17.md). Phần "Ai đọc" và "Mẫu dùng lại" ở đầu [phase-1.5.md](phase-1.5.md) áp dụng nguyên. Tên hàm, tên trường và các con số dưới đây là đề xuất khớp với code hiện có: phiên làm task được đổi cho hợp, miễn giữ hợp đồng, và ghi chỗ đổi vào §11. Chưa task nào dưới đây được mở; phiên điều phối quyết thứ tự và lúc mở.
 
 ## Năm ý đã chốt
 
@@ -167,7 +167,7 @@ Phiên kế hoạch không sửa ADR. Đây là lời đề xuất cho phiên l�
 - **Hướng dẫn**: `docs/guides/adding-a-tribe.md` (đoạn mới) và `docs/guides/operating-a-kingdom.md` (một dòng trỏ sang).
 - **Kế hoạch sản phẩm**: nguyên tắc 6 đã viết "mỗi tộc một tài khoản của người dùng" và "không bao giờ tự xoay tài khoản", nên không cần sửa. Nếu chủ nhân muốn nêu chi trong kế hoạch sản phẩm thì chủ nhân tự sửa.
 
-## Quyết định (chờ chủ nhân chốt)
+## Quyết định (chủ nhân chốt 2026-11-17, theo khuyến nghị; CT10 còn mở)
 
 **Cần trước khi mở task** (ghi task liên quan):
 
@@ -184,7 +184,7 @@ Phiên kế hoạch không sửa ADR. Đây là lời đề xuất cho phiên l�
 **Chốt là chờ**:
 
 - **CT9** macOS: tên mục Keychain của một thư mục cấu hình riêng chưa đo (máy đo là Windows). Cách đo ghi ở spike mục "Chưa đo". Khuyến nghị: PS-27 không chờ; đo khi có máy macOS, trước khi chủ nhân dùng chi trên macOS. Lý do: nếu hai thư mục dùng chung một mục Keychain thì cả hai dòng báo cùng một tài khoản và luật (b) của CT4 từ chối, không có hỏng hóc thầm lặng.
-- **CT10** Chi cho Codex (`CODEX_HOME`) và agy: chưa mở. Mỗi CLI cần một spike riêng (Codex: `codex login status` và `account/rateLimits/read` với một `CODEX_HOME` thứ hai, không gọi model; agy: chưa có thư mục nhà nào được ghi trong tài liệu). Khuyến nghị: chờ tới khi chủ nhân có tài khoản thứ hai của CLI đó.
+- **CT10** (**chủ nhân đổi ngày 2026-11-17**: kiểm ngay chi cho Codex có khả thi không; nếu khả thi thì viết kế hoạch để làm cùng chi cho Claude. Phiên kế tiếp của nhánh này làm việc đó trước khi merge. Phần agy giữ như đề xuất.) Đề xuất ban đầu: Chi cho Codex (`CODEX_HOME`) và agy: chưa mở. Mỗi CLI cần một spike riêng (Codex: `codex login status` và `account/rateLimits/read` với một `CODEX_HOME` thứ hai, không gọi model; agy: chưa có thư mục nhà nào được ghi trong tài liệu). Khuyến nghị: chờ tới khi chủ nhân có tài khoản thứ hai của CLI đó.
 - **CT11** Chặn mọi biến chọn tài khoản đến từ secret (`ANTHROPIC_API_KEY`, `CLAUDE_CODE_OAUTH_TOKEN`, `CODEX_HOME`…): mỗi adapter khai danh sách biến nó giữ, và `sessionEnv` từ chối secret trùng tên như đã làm với `ELVARIA_` và `GIT_`. Khuyến nghị: một nhánh sửa nhỏ sau PS-27, vì nó chạm `p/runner-core/src/treasury/**` (vùng "Đọc trước khi sửa") và cả ba adapter.
 - **CT12** Phần vẽ trong giao diện (chấm dưới huy hiệu, nhóm thanh mana) thuộc task `ui-kit` của giai đoạn 2; PS-27b chỉ trả dữ liệu. Khuyến nghị: nhận.
 - **CT13** Điều khoản của nhà cung cấp về việc một người dùng hai tài khoản: kế hoạch không đánh giá. Khuyến nghị: không thêm cổng kiểu `terms_acknowledged_at`; hướng dẫn thêm một câu nhắc chủ nhân tự xét điều khoản gói của mình.

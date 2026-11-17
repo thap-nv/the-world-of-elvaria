@@ -6,7 +6,7 @@ Spike trả lời các câu của ý (5) trong dòng §11 "tài khoản thứ ha
 
 Nguồn của từng dòng: **[máy]** đã chạy trên máy này ngày 2026-11-17; **[P1-02]** spike Claude, đo trên 2.1.318; **[code]** code của Elvaria ở `main` `fc4a2a1`; **[suy]** suy luận, chưa đo.
 
-**Chi phí.** Một phiên thật: một lượt `haiku` một câu, không tool, trong thư mục thứ hai, `total_cost_usd` 0,00063 (2 token vào, 3 125 token ghi cache, 649 token đọc cache, 4 token ra). Mọi lệnh khác không gọi model (`num_turns: 0`, `total_cost_usd: 0`): `--version` một lần, `auth status --json` mười hai lần, `-p /usage` tám lần, `-p /context` hai lần, `purge --dry-run` bốn lần và `purge --yes` một lần. Chủ nhân đã cho phép cả loạt lệnh này trước khi chạy.
+**Chi phí.** Một phiên thật: một lượt `haiku` một câu, không tool, trong thư mục thứ hai, `total_cost_usd` 0,00063 (2 token vào, 3 125 token ghi cache, 649 token đọc cache, 4 token ra). Mọi lệnh khác không gọi model (`num_turns: 0`, `total_cost_usd: 0`): `--version` một lần, `auth status --json` mười hai lần, `-p /usage` tám lần, `-p /context` hai lần, `purge --dry-run` bảy lần và `purge --yes` hai lần. Chủ nhân đã cho phép cả loạt lệnh này trước khi chạy.
 
 ---
 
@@ -16,7 +16,7 @@ Nguồn của từng dòng: **[máy]** đã chạy trên máy này ngày 2026-11
 - Script gọi CLI đúng như adapter `claude_code` gọi **[code]**: `spawn` không shell, stdin đóng ngay, env chỉ gồm 14 tên của `MINIMAL_ENV_NAMES` (`packages/runner-core/src/treasury/minimal-env.ts`), cộng `CLAUDE_CONFIG_DIR` khi đo thư mục thứ hai. Các lệnh `-p` mang đúng các cờ của adapter: `--output-format stream-json --verbose --setting-sources project,local --strict-mcp-config`.
 - Chủ nhân tự đăng nhập vào `config-b/` trong một cửa sổ PowerShell riêng: đặt `$env:CLAUDE_CONFIG_DIR` rồi chạy `claude auth login`. Phiên đo không chạm credential.
 - Script không mở file nào trong hai thư mục cấu hình. Nó chỉ liệt kê tên và kích thước trong `config-b/`. Mọi thứ in ra đã che email, mã dạng UUID và thư mục nhà. Với `auth status --json`, script in tên trường, in giá trị của các trường không nêu danh ai (`loggedIn`, `authMethod`, `apiProvider`, `subscriptionType`, `loginExpiresAt`), và với các trường còn lại chỉ in độ dài cùng kết quả so sánh giữa hai thư mục.
-- Thư mục mặc định bị gọi bằng ba lệnh: `auth status --json`, `-p /usage` và `purge --dry-run`. Hai lệnh đầu và cuối không đổi gì. Riêng `-p /usage` **có để lại dấu**: mỗi lần chạy ghi một transcript nhỏ vào `~/.claude/projects/<cwd đã mã hóa>/` (mục 3.5). Bốn lần chạy của spike để lại thư mục `…-sibling-spike-plot` ở đó; lệnh dọn là `claude purge --yes <plot>` với thư mục mặc định, và phiên đo chưa chạy nó vì chủ nhân chưa cho phép.
+- Thư mục mặc định bị gọi bằng ba lệnh: `auth status --json`, `-p /usage` và `purge --dry-run`. Hai lệnh đầu và cuối không đổi gì. Riêng `-p /usage` **có để lại dấu**: mỗi lần chạy ghi một transcript nhỏ vào `~/.claude/projects/<cwd đã mã hóa>/` (mục 3.5). Bốn lần chạy của spike để lại thư mục `…-sibling-spike-plot` ở đó; chủ nhân cho phép dọn, và `claude purge --yes <plot>` với thư mục mặc định đã xóa đúng một thư mục đó (`Purged 1 item(s)`); `purge --dry-run` sau đó lại trả "No Claude Code project state found".
 
 ## 1. Tóm tắt
 
