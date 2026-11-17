@@ -113,7 +113,8 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
         '—',
         'S',
         'yes',
-        'headless, context_file, events, tool_gate, usage, structured_output, resume, compact, subagent',
+        // PS-11b: the vision spike passed all three CLIs.
+        'headless, context_file, events, tool_gate, usage, structured_output, resume, compact, subagent, vision',
         windows ? 'Git Bash' : '—',
         '—',
         '—',
@@ -127,7 +128,7 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
         '—',
         'S',
         'yes',
-        'headless, context_file, events, tool_gate, usage, structured_output, resume',
+        'headless, context_file, events, tool_gate, usage, structured_output, resume, vision',
         windows ? 'Windows PowerShell (powershell.exe)' : '—',
         // agy takes its prompt on the command line, which Windows cuts (fix/verifier-prompt-limit, fix/cli-lines).
         windows ? '26000' : '—',
