@@ -84,4 +84,11 @@ describe('sectionsOf and prompts/ritual-steps.md', () => {
     expect([...steps.keys()]).toEqual([...RITUAL_STEPS]);
     expect([...steps.values()].every((text) => text.length > 0)).toBe(true);
   });
+
+  // (156)(b): a judge without the web had to guess the sources it could not open (run (130), gap 7).
+  it('has the judge of sources name one it cannot open instead of guessing what it says', async () => {
+    const step = sectionsOf((await loadPromptTemplates())['ritual-steps']).get('check_sources');
+    expect(step).toContain('When you cannot open a source, name it in your verdict');
+    expect(step).toContain('do not guess what it says');
+  });
 });

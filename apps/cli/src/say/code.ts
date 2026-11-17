@@ -34,13 +34,17 @@ export interface CodeSources {
   readonly platform: NodeJS.Platform;
 }
 
-/** The files git tracks in the territory's working tree, `/` apart; none when git cannot say. */
-async function trackedFiles(git: Git, folder: string): Promise<string[]> {
+/** The files git tracks in the territory's working tree, `/` apart; undefined when git cannot say. */
+async function trackedFiles(git: Git, folder: string): Promise<string[] | undefined> {
   const run = await git(folder, ['ls-files', '-z', '--cached']);
-  return run.code === 0 ? zList(run.stdout) : [];
+  return run.code === 0 ? zList(run.stdout) : undefined;
 }
 
-/** The files a path of the words names: a glob's matches, the file itself, a folder's files, or a name's files. */
+/**
+ * The files a path of the words names: a glob's matches, the file itself, a folder's files, or a name's files. A
+ * path of two parts or more also names them from a folder below the root (`runner-antigravity/src/doctor.ts` in
+ * `packages/`), as the owner writes it: else the Chancellor would read such a path as one no territory holds.
+ */
 function matchesOf(words: string, files: readonly string[]): string[] {
   const glob = words.replaceAll('\\', '/').replace(/^(?:\.\/|\/)+/, '');
   if (/[*?[{]/.test(glob)) {
@@ -49,10 +53,15 @@ function matchesOf(words: string, files: readonly string[]): string[] {
   }
   const folder = `${glob.replace(/\/+$/, '').toLowerCase()}/`;
   const name = `/${glob.toLowerCase()}`;
-  const bare = !glob.includes('/');
+  const deep = glob.replace(/\/+$/, '').includes('/');
   return files.filter((file) => {
     const lower = file.toLowerCase();
-    return lower === glob.toLowerCase() || lower.startsWith(folder) || (bare && lower.endsWith(name));
+    return (
+      lower === glob.toLowerCase() ||
+      lower.startsWith(folder) ||
+      lower.endsWith(name) ||
+      (deep && lower.includes(`/${folder}`))
+    );
   });
 }
 
@@ -136,20 +145,33 @@ async function graphOf({
   return { commit, question: question.join(' '), files, ...(impact === undefined ? {} : { impact }) };
 }
 
-/** What the code of each git territory says of the owner's words; a territory that says nothing is left out. */
+export interface WordsInCode {
+  /** What the code of each git territory says of the words; a territory that says nothing is left out. */
+  readonly territories: TerritoryCode[];
+  /**
+   * The paths of the words that name no file in any git territory whose files git listed ((156)(b): the Chancellor
+   * guessed a file the owner named and no territory holds, PS-07 gap 12); none when no territory could be read.
+   */
+  readonly missing: string[];
+}
+
+/** What the code of the git territories says of the owner's words, and the paths it holds no file at. */
 export async function codeOf(
   territories: readonly Territory[],
   utterance: string,
   sources: CodeSources,
-): Promise<TerritoryCode[]> {
+): Promise<WordsInCode> {
   const { git, graphs } = sources;
   const paths = namedPathsOf(utterance);
   const question = codeWordsOf(utterance);
   const code: TerritoryCode[] = [];
+  let listed = false;
   for (const territory of territories) {
     if (territory.vcs.type !== 'git' || git === undefined) continue;
     const root = fromPortable(territory.path, sources.platform);
-    const files = paths.length === 0 ? [] : await trackedFiles(git, root);
+    const tracked = paths.length === 0 ? [] : await trackedFiles(git, root);
+    listed ||= tracked !== undefined;
+    const files = tracked ?? [];
     const named = await namedOf(paths, files, root);
     const area = new Set(paths.flatMap((entry) => matchesOf(entry, files)));
     const graph =
@@ -159,5 +181,6 @@ export async function codeOf(
     if (named.length > 0 || graph !== undefined)
       code.push({ territory: territory.id, named, ...(graph === undefined ? {} : { graph }) });
   }
-  return code;
+  const found = new Set(code.flatMap(({ named }) => named.map(({ words }) => words)));
+  return { territories: code, missing: listed ? paths.filter((entry) => !found.has(entry)) : [] };
 }

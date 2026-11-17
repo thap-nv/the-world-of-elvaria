@@ -206,7 +206,9 @@
           "Bash(pnpm test:*)",
           "Bash(pnpm lint:*)",
           "Bash(pnpm typecheck:*)",
-          "Bash(git diff:*)"
+          "Bash(git diff:*)",
+          "WebFetch",
+          "WebSearch"
         ],
         "deny": ["Edit", "Write", "Agent"]
       },

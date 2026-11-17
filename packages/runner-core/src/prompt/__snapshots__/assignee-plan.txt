@@ -17,7 +17,7 @@
   - `bard` (Bard): reads and searches files; writes files; no shell
   - `astrologer` (Astrologer): reads and searches files; writes files; shell: `node`, `git diff`, and its territory's check commands
   - `envoy` (Envoy): reads and searches files; writes files; no shell
-  - `judge` (Judge): reads and searches files; writes no file; shell: `pnpm test`, `pnpm lint`, `pnpm typecheck`, `git diff`, and its territory's check commands
+  - `judge` (Judge): reads and searches files; writes no file; web; shell: `pnpm test`, `pnpm lint`, `pnpm typecheck`, `git diff`, and its territory's check commands
   - `monk` (Monk): reads and searches files; writes no file; no shell
 - Tags: frontend, backend, db, infra, i18n, e2e, integration, docs
 - Secrets this territory allows: none

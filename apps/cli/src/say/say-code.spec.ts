@@ -113,7 +113,7 @@ describe('elvaria say: the code in the Chancellor’s prompt (PS-21b)', () => {
     await openKingdom(kingdom).territories.write(territory(false));
     const off = testIo();
     expect(await sayWith(off)).toBe(0);
-    expect(heard[1]).toContain("# The files the owner's words name");
+    expect(heard[1]).toContain("# The paths the owner's words name");
     expect(heard[1]).not.toContain('# What the code graph answers');
     expect(off.printed.out).not.toContain(
       'The Chancellor gets what the code graph of elvaria says of your words.',
@@ -142,7 +142,27 @@ describe('elvaria say: the code in the Chancellor’s prompt (PS-21b)', () => {
     );
     expect(code).toBe(0);
     expect(asked).toEqual([]);
-    expect(heard[0]).not.toContain('# The files the owner');
+    expect(heard[0]).not.toContain('# The paths the owner');
     expect(heard[0]).not.toContain('# What the code graph answers');
+  });
+
+  // (156)(b): the owner named a file no territory held, and the Chancellor guessed one (PS-07 gap 12).
+  it('names to it the paths no territory holds a file at, beside those it does', async () => {
+    await openKingdom(kingdom).territories.write(territory(false));
+    const heard: string[] = [];
+    const chancellor = await listening(heard);
+    const code = await sayCommand({
+      runnersOf: () => ({ [CLAUDE]: chancellor }),
+      graphsOf: () => Promise.resolve(undefined),
+    }).run(
+      {
+        values: { kingdom },
+        positionals: ['Sửa chancellor/draft-quests.ts và runner-antigravity/src/doctor.ts'],
+      },
+      { io: testIo(), locale: 'en', localeFromFlag: true, t: translator('en') },
+    );
+    expect(code).toBe(0);
+    expect(heard[0]).toContain(`- \`chancellor/draft-quests.ts\`: 1 file, ${SOURCE.length} B in all`);
+    expect(heard[0]).toContain('## Not found\n\n- `runner-antigravity/src/doctor.ts`');
   });
 });

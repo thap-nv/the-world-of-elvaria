@@ -11,7 +11,7 @@ import { draftCommands, draftQuests } from '@elvaria/chancellor';
 import type { CommandHeader, DraftCommand } from '@elvaria/chancellor';
 import type { Memo, MemoId, TribeHold } from '@elvaria/domain';
 import { gitOf } from '@elvaria/runner-core';
-import type { CodeGraphs, TerritoryCode } from '@elvaria/runner-core';
+import type { CodeGraphs } from '@elvaria/runner-core';
 import { questIdOfCommand } from '@elvaria/steward';
 
 import { textOption } from '../args.ts';
@@ -39,6 +39,7 @@ import type {
 import type { KingdomContext } from '../kingdom-context.ts';
 import type { KingdomPlace } from '../run/crew.ts';
 import type { CliIo } from '../io.ts';
+import type { WordsInCode } from './code.ts';
 import type { Runners } from './hearing.ts';
 
 export interface SayDeps {
@@ -57,11 +58,12 @@ const pinnedGraphs = (ctx: KingdomContext): Promise<CodeGraphs | undefined> =>
   graphsOf(ctx.kingdom, ctx.store.root, ctx.io);
 
 /** What the code says of the words (PS-21b), 0 mana; the owner is told what the Chancellor got. */
-async function codeFor(ctx: KingdomContext, utterance: string, deps: SayDeps): Promise<TerritoryCode[]> {
+async function codeFor(ctx: KingdomContext, utterance: string, deps: SayDeps): Promise<WordsInCode> {
   const graphs = await (deps.graphsOf ?? pinnedGraphs)(ctx);
   const git = await gitOf(processHostOf(ctx.io));
   const territories = (await ctx.store.territories.list()).items;
-  const code = await codeOf(territories, utterance, { git, graphs, platform: ctx.io.platform });
+  const words = await codeOf(territories, utterance, { git, graphs, platform: ctx.io.platform });
+  const code = words.territories;
   const files = code.reduce(
     (sum, { named }) => sum + named.reduce((count, entry) => count + entry.files, 0),
     0,
@@ -69,7 +71,7 @@ async function codeFor(ctx: KingdomContext, utterance: string, deps: SayDeps): P
   if (files > 0) ctx.io.out(ctx.t('cli.say.files', { files: String(files) }));
   const graphed = code.flatMap(({ territory, graph }) => (graph === undefined ? [] : [territory]));
   if (graphed.length > 0) ctx.io.out(ctx.t('cli.say.graph', { territories: graphed.join(', ') }));
-  return code;
+  return words;
 }
 
 /** The commands in the inbox, in order; false once a write failed (the ones before it stay). */
@@ -94,7 +96,8 @@ async function say(
   const hearing = await hearingOf(ctx, utterance, runners, (await deps.holdsOf?.(ctx, runners)) ?? []);
   if (hearing === undefined) return EXIT.failed;
   const { session } = hearing;
-  const context = { ...hearing.context, code: await codeFor(ctx, utterance, deps) };
+  const code = await codeFor(ctx, utterance, deps);
+  const context = { ...hearing.context, code: code.territories, missing_paths: code.missing };
   ctx.io.out(ctx.t('cli.say.listening', { name: session.choice.character.name }));
   const reply = await draftQuests(context, session);
   if (!reply.ok) {
