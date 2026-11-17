@@ -25,8 +25,8 @@ import type { CommitRescue } from './rescue.ts';
 import type { PatchOutcome } from './patch.ts';
 import type { Git } from './git.ts';
 import { ensureLongPaths, ensurePlotExcludes } from './repo-settings.ts';
-import type { PreparedScratch } from './scratch.ts';
 import { scratchMethods } from './scratch-methods.ts';
+import type { ScratchMethods } from './scratch-methods.ts';
 import { runSetup } from './setup.ts';
 import type { SetupRun } from './setup.ts';
 import {
@@ -75,7 +75,8 @@ export interface PrepareOptions {
   readonly signal?: AbortSignal;
 }
 
-export interface PlotManager {
+/** The scratch plot's methods (P1-20, ADR 0022) are ScratchMethods', in scratch-methods.ts. */
+export interface PlotManager extends ScratchMethods {
   /**
    * Idempotent: the same quest and territory give the same plot, and setup runs until it succeeds once; a folder
    * plot has no setup and no branch to start from.
@@ -132,22 +133,6 @@ export interface PlotManager {
   baseTips?(territory: BaseBranch): Promise<BaseTips | undefined>;
   /** Whether the plot's branch is in the base branch `tips` hold (inBaseIn); false for a plot without git. */
   inBase?(plot: Plot, tips: BaseTips): Promise<boolean>;
-  /**
-   * The judge's scratch plot (ADR 0022, P1-20): a fresh worktree `<quest-id>-verify` detached at the head of the
-   * quest's branch, after commands.setup with `options.secrets`, killed by `options.signal` (P1-49); one left by an
-   * earlier judge is removed first. `not_a_repo` for a folder territory, which has none.
-   */
-  prepareScratch(
-    quest: Pick<Quest, 'id'>,
-    territory: Territory,
-    options?: Pick<PrepareOptions, 'secrets' | 'signal'>,
-  ): Promise<Result<PreparedScratch, PlotFailure>>;
-  /** Moves a scratch plot to `ref`, detached, dropping its changes (the trial's coverage on the base). */
-  checkoutScratch(scratch: PreparedScratch, ref: string): Promise<void>;
-  /** Removes the quest's scratch plot, dirty or not; what still holds its folder, if anything. */
-  releaseScratch(quest: Pick<Quest, 'id'>, territory: Territory): Promise<string | undefined>;
-  /** The quest's scratch plot, native, when it is on disk; a folder territory has none. */
-  scratchOf(quest: Pick<Quest, 'id'>, territory: Territory): Promise<string | undefined>;
 }
 
 const NO_GIT_STATUS: PlotStatus = { dirty: false, ahead: 0, branch: null };
