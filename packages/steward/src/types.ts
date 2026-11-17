@@ -9,11 +9,13 @@ import type {
   Territory,
   ToolFound,
   TribeId,
+  UpgradeOffer,
 } from '@elvaria/domain';
 import type { EventLog } from '@elvaria/eventlog';
 import type {
   AgentRunner,
   BaseBranch,
+  BaseTips,
   CheckRun,
   CodeGraphs,
   CommitOutcome,
@@ -193,6 +195,13 @@ export interface Plots {
   drift?(plot: Quest['plot'], from: string): Promise<Drift | null>;
   /** At archive only: removes a worktree (its branch stays) and what the tribes' CLIs kept about it. */
   release(plot: Quest['plot']): Promise<Result<ReleasedPlot, PlotFailure>>;
+  /**
+   * (PS-08d) A territory's base branch tips, origin's fetched first (PlotManager.baseTips), and whether a done quest's
+   * branch is in them (PlotManager.inBase): the look that archives a quest merged into the base branch. Absent (folder
+   * plots): no look, a quest is archived by the owner or by its own `delivery.merged`.
+   */
+  baseTips?(territory: Territory): Promise<BaseTips | undefined>;
+  inBase?(plot: Quest['plot'], tips: BaseTips): Promise<boolean>;
 }
 
 export interface StewardDeps {
@@ -251,6 +260,11 @@ export interface StewardDeps {
    * `delivery.failed` (`forge_error`) per quest, and nothing is pushed.
    */
   readonly forges?: Forges;
+  /**
+   * (PS-08d) A newer build of Elvaria than the one the kingdom pins, read as the digest is made: apps/cli keeps the pin
+   * (.state/build.json) and asks the repo it came from. Absent, or undefined: no `upgrade_available` item.
+   */
+  readonly upgradeOffer?: () => Promise<UpgradeOffer | undefined>;
 }
 
 export interface TickReport {

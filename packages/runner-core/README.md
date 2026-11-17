@@ -202,7 +202,9 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   base) and `release`
   (removes a clean worktree, keeps the branch, takes the folders git leaves on Windows around pnpm's dead
   junctions when nothing else is in them, `leftover` says why a folder stays, then calls each `forget` callback,
-  such as a tribe CLI dropping its transcripts). A territory without git gets `quests/<id>/work/` in the kingdom.
+  such as a tribe CLI dropping its transcripts), `baseTips` and `inBase` (PS-08d, `plot/in-base.ts`: the base
+  branch's local and origin tips after one fetch, never a pull; a plot's branch is in base when its head is an
+  ancestor of either and is not the commit its record counts from, so a branch with no commit of its own never is). A territory without git gets `quests/<id>/work/` in the kingdom.
 - Says how far a territory moved since its gazetteer was written (PS-21): `PlotManager.drift(plot, from)` counts the
   commits from `from` to the plot's fork point per top-level folder (`src/plot/drift.ts`, `git log --name-only`,
   root files left out; null without git, a record or a commit git knows), and `gazetteerWithDrift`

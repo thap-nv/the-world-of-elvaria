@@ -1,8 +1,9 @@
 // What the quests of a territory need from the machine besides its programs (P1-56, (c) and (h) of the P1-50 report),
 // each a thing that sent the owner in to fix something by hand in the P1-50 run: a Docker that is not running (five
 // interventions), a repo without `user.email` where the Steward's commit failed, `.claude/rules/` outside
-// `laws.patch_paths` where a character stopped on a question. All three are warnings: the machine can be put right
-// in a minute, and none is an error of the kingdom's files.
+// `laws.patch_paths` where a character stopped on a question; and, from (176), a `CLAUDE.local.md` the plots load
+// (P1-02, §3.3). All are warnings: the machine can be put right in a minute, and none is an error of the kingdom's
+// files.
 import { ENVIRONMENT_RECHECK_MINUTES } from '@elvaria/domain';
 import type { Territory } from '@elvaria/domain';
 import { fromPortable } from '@elvaria/store';
@@ -12,6 +13,7 @@ import { gitIn } from '../process/git.ts';
 import { launchOf } from '../process/launch.ts';
 import { minimalEnv } from '../process/minimal-env.ts';
 import { runProcess } from '../process/run-process.ts';
+import { claudeLocalReach } from '../territory/claude-local.ts';
 import { RULES_GLOB, ruleFilesOf } from '../territory/claude-rules.ts';
 import { territoryCommands } from './check-commands.ts';
 import { finding } from './finding.ts';
@@ -101,7 +103,19 @@ async function checkRules(ctx: KingdomContext, territory: Territory, folder: str
   return [finding('warn', t('cli.doctor.rules_outside_patch', params), uncovered.slice(0, FILES_SHOWN))];
 }
 
-/** Docker once for the kingdom, then identity and rules of each git territory (`patch_paths` is for git alone). */
+/** A CLAUDE.local.md that Claude Code loads into the territory's plots (P1-02, §3.3): the owner's notes, not the repo's. */
+async function checkClaudeLocal(
+  ctx: KingdomContext,
+  territory: Territory,
+  folder: string,
+): Promise<Finding[]> {
+  const reach = await claudeLocalReach(folder, territory.worktree_dir);
+  return reach === undefined
+    ? []
+    : [finding('warn', ctx.t('cli.doctor.claude_local', { id: territory.id, dir: reach }))];
+}
+
+/** Docker once for the kingdom, then identity, rules and CLAUDE.local.md of each git territory (plots are git's). */
 export async function checkTerritorySetup(ctx: KingdomContext): Promise<Finding[]> {
   const { items } = await ctx.store.territories.list();
   const perTerritory = await Promise.all(
@@ -112,6 +126,7 @@ export async function checkTerritorySetup(ctx: KingdomContext): Promise<Finding[
         return [
           ...(await checkIdentity(ctx, territory, folder)),
           ...(await checkRules(ctx, territory, folder)),
+          ...(await checkClaudeLocal(ctx, territory, folder)),
         ];
       }),
   );

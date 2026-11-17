@@ -53,6 +53,8 @@ export interface PullStatus {
   readonly state: PullState;
   readonly head: string;
   readonly checks: readonly ForgeCheck[];
+  /** With `merged`: the commit the merge left on the base branch, as the forge says it. */
+  readonly merge_sha?: string;
 }
 
 /** A merge the forge refused: the pull request cannot merge cleanly, or its head is not the one asked for. */
@@ -61,23 +63,33 @@ export interface MergeProblem {
   readonly detail?: string;
 }
 
+/**
+ * Every call that talks to the forge takes the Steward's `signal` ((ii) of PS-08c, done in PS-08d): a stop aborts the
+ * call in flight rather than waiting out the adapter's time limit, and the caller then records nothing.
+ */
 export interface Forge {
   /** The repo `remote` names on this forge, git asked in `cwd`; undefined when it names none. */
   repoOf(remote: string, cwd: string): ForgeRepo | undefined;
   /** Whether the credential's account may push to `repo`. */
-  access(repo: ForgeRepo): ForgeResult<'push' | 'read_only'>;
+  access(repo: ForgeRepo, signal?: AbortSignal): ForgeResult<'push' | 'read_only'>;
   /** The branch's pull request: found first, in any state (an open one before a closed one), else opened. */
-  open(repo: ForgeRepo, draft: PullRequestDraft): ForgeResult<PullRequest>;
+  open(repo: ForgeRepo, draft: PullRequestDraft, signal?: AbortSignal): ForgeResult<PullRequest>;
   /** Where pull request `pr` stands; `required` names the checks that count (none: the forge's mergeable says). */
-  status(repo: ForgeRepo, pr: number, required: readonly string[]): ForgeResult<PullStatus>;
+  status(
+    repo: ForgeRepo,
+    pr: number,
+    required: readonly string[],
+    signal?: AbortSignal,
+  ): ForgeResult<PullStatus>;
   /** Merges `pr` by `method` only while its head is `head`; the merge commit's sha. */
   merge(
     repo: ForgeRepo,
     pr: number,
     options: { readonly method: MergeMethod; readonly head: string },
+    signal?: AbortSignal,
   ): Promise<Result<string, MergeProblem>>;
   /** Deletes `branch` on the forge only while its tip is `head`: false when it moved or is gone. */
-  deleteBranch(repo: ForgeRepo, branch: string, head: string): ForgeResult<boolean>;
+  deleteBranch(repo: ForgeRepo, branch: string, head: string, signal?: AbortSignal): ForgeResult<boolean>;
 }
 
 /**

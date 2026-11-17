@@ -117,7 +117,7 @@ describe('elvaria digest', () => {
     const holder = questFixture('done', OTHER_QUEST_ID, { ...worked, scope_paths: ['scripts/**'] });
     await plantQuests(kingdom, holder, questFixture('open', QUEST_ID, { scope_paths: ['scripts/check.ts'] }));
     expect(await digest()).toContain(
-      `- Quest ${OTHER_QUEST_ID} «Thêm script pnpm check» is done but still holds its scope; ${QUEST_ID} wait for it. Merge its branch, then archive it: the quests that wait for its scope start.`,
+      `- Quest ${OTHER_QUEST_ID} «Thêm script pnpm check» is done but still holds its scope; ${QUEST_ID} wait for it. Merge its branch: the Steward archives it at its next look at the base branch (within 10 minutes), and the quests that wait for its scope start.`,
     );
   });
 
@@ -181,7 +181,7 @@ describe('elvaria digest', () => {
     );
     expect(said).toContain(`  \`elvaria quest deliver ${QUEST_ID}\``);
     expect(said).toContain(
-      `- The pull request of quest ${OTHER_QUEST_ID} «Thêm script pnpm check» is open for you (${url}). Read and merge the pull request on the forge, then archive the quest to give its plot back.`,
+      `- The pull request of quest ${OTHER_QUEST_ID} «Thêm script pnpm check» is open for you (${url}). Read and merge the pull request on the forge: the Steward archives the quest and gives its plot back at its next look (within 10 minutes).`,
     );
     expect(said).toContain(`  \`elvaria quest archive ${OTHER_QUEST_ID}\``);
   });

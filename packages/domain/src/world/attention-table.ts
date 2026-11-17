@@ -65,6 +65,8 @@ export const ATTENTION_TABLE = {
   },
   mana_asleep: { group: 'can_wait', advice: 'wait_or_wake', command: ['wake', '{tribe}'] },
   mana_warning: { group: 'can_wait', advice: 'watch_mana', command: ['doctor'] },
+  // PS-08d: the repo the pinned build came from has newer commits on its default branch that touch the code.
+  upgrade_available: { group: 'can_wait', advice: 'upgrade', command: ['upgrade'] },
 } as const satisfies Record<
   string,
   { readonly group: AttentionGroup; readonly advice: string; readonly command: readonly string[] }
@@ -108,6 +110,10 @@ export interface AttentionSubject {
   readonly stage?: DeliveryStage;
   readonly reason?: DeliveryFailure;
   readonly url?: string;
+  /** A newer build (upgrade_available, PS-08d): the commit pinned, the default branch's, and its commits since. */
+  readonly pinned?: string;
+  readonly latest?: string;
+  readonly commits?: number;
 }
 
 export interface AttentionItem extends AttentionSubject {

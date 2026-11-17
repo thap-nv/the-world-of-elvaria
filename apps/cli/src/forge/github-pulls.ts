@@ -138,7 +138,10 @@ export async function pullStatus(
   const answer = await githubCall(call, 'GET', repoPath(repo, 'pulls', String(pr)));
   if (!answer.ok) return err(answer.problem);
   const head = text(field(answer.body, 'head'), 'sha');
-  if (field(answer.body, 'merged') === true) return ok({ state: 'merged', head, checks: [] });
+  if (field(answer.body, 'merged') === true) {
+    const sha = text(answer.body, 'merge_commit_sha');
+    return ok({ state: 'merged', head, checks: [], ...(sha === '' ? {} : { merge_sha: sha }) });
+  }
   if (text(answer.body, 'state') === 'closed') return ok({ state: 'closed', head, checks: [] });
   const mergeable = field(answer.body, 'mergeable');
   if (mergeable === false) return ok({ state: 'conflict', head, checks: [] });

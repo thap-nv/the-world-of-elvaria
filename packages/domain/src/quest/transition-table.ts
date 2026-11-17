@@ -125,7 +125,8 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
   'awaiting_seal.reject': 'lệnh `archive`',
   'done.deliver.undelivered':
     'giao hàng theo kind, ghi `deliverable.delivered_at`; không là trạng thái riêng để không nhân đôi',
-  'done.archive': 'Nhiếp chính sau N ngày; xóa worktree khi archive, không sớm hơn',
+  'done.archive':
+    'lệnh `archive`, hoặc Nhiếp chính khi nhánh quest đã vào nhánh gốc (PS-08d: `delivery.merged`, hay lần dò mỗi 10 phút); xóa worktree khi archive, không sớm hơn',
   'infirmary.retry.no_stalled_review':
     '`attempts = 0`, bỏ `assignee`, giữ `attempt_log`; quest ghép đã có lượt máy thì hiệp sĩ làm tiếp, máy không chạy lại (P1-55)',
   'infirmary.retry.stalled_review':
