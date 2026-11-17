@@ -46,6 +46,23 @@ describe('depcruiseConfig', () => {
     );
   });
 
+  it('excludes a workspace dist/ or coverage/ folder by its own name, and no npm package (151)', () => {
+    const { exclude } = depcruiseConfig().options ?? {};
+    const path = typeof exclude === 'object' && 'path' in exclude ? exclude.path : undefined;
+    const pattern = new RegExp([path ?? []].flat().join('|'));
+    const excluded = (file: string): boolean => pattern.test(file);
+    expect(
+      ['packages/domain/coverage', 'packages/domain/coverage/.tmp', 'apps/cli/dist'].map(excluded),
+    ).toEqual([true, true, true]);
+    expect(
+      [
+        'packages/domain/src/coverage.ts',
+        'packages/domain/coverage-notes.md',
+        'node_modules/.pnpm/zod@4.1.0/node_modules/zod/dist/index.js',
+      ].map(excluded),
+    ).toEqual([false, false, false]);
+  });
+
   it('has one boundary rule per workspace', () => {
     const names = (depcruiseConfig().forbidden ?? []).map((rule) => rule.name);
     const expected = Object.keys(WORKSPACES).map((key) => `boundary-${key}`);
