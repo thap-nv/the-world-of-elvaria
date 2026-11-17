@@ -149,7 +149,10 @@ describe('elvaria() composes the rules in the right order', () => {
     return JSON.stringify(config.rules?.[rule] ?? 'unset');
   };
 
-  it('keeps the enum and class bans in the domain next to the clock ban', async () => {
+  // The first config lookup builds the whole preset (every plugin, typescript-eslint's configs): 0.5 s for this file
+  // alone, 2.5 s in the package run on an idle machine, 5.3 to 7.3 s on a busy one (2026-11-17), against vitest's
+  // 5 s default. The later lookups reuse it and keep the default.
+  it('keeps the enum and class bans in the domain next to the clock ban', { timeout: 30_000 }, async () => {
     const syntax = await ruleFor('packages/domain/src/quest.ts', 'no-restricted-syntax');
     expect(syntax).toContain('TSEnumDeclaration');
     expect(syntax).toContain('ClassDeclaration');
