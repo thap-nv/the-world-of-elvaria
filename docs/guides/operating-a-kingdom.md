@@ -342,7 +342,15 @@ Bốn loại file văn bản mà mọi phiên đọc lúc mở; sửa xong thì 
 | `characters/<id>/scripture.md` | một nhân vật | bài học của riêng nó |
 | `registry/prompts/<nghề>.md` | mọi nhân vật của nghề | cách làm của nghề; bản mặc định theo bản Elvaria (§13) |
 
-Giữ ngắn: mọi dòng vào prompt của mọi phiên, và với tộc gemini prompt đi trên dòng lệnh (Windows dừng ở 32 767 ký tự). Kinh là điều nhân vật học từ chính việc của nó (ADR 0020); bài học về cách bạn điều phối thì không phải kinh. Bảy dòng P1-50 thêm vào vương quốc thật là mẫu tốt: "không để file nháp trong đất riêng", "lỗi lúc dựng container là lỗi môi trường, không phải test đỏ", "file `implementation-plan.md` nặng 1 MB: tìm rồi đọc đúng đoạn".
+Giữ ngắn: mọi dòng vào prompt của mọi phiên, và với tộc gemini prompt đi trên dòng lệnh (Windows dừng ở 32 767 ký tự). Kinh là điều nhân vật học từ chính việc của nó (ADR 0020); bài học về cách bạn điều phối thì không phải kinh.
+
+**Phân loại trước khi viết** (bước 0 của [plans/lesson-sharing.md](../plans/lesson-sharing.md) §8, (178)). Hỏi bài học còn đúng ở đâu ngoài vương quốc này, rồi đặt nó ở bậc cao nhất được:
+
+1. **Về chính Elvaria** (thư bàn giao, mục Not done, luật đạt của người chấm, đất nháp, commit của Nhiếp chính, cách pháp sư chia kế hoạch): sửa repo Elvaria, không viết kinh. Theo thang sửa lỗi: check hay script nếu máy làm được; không thì một câu trong mẫu prompt của `packages/runner-core/prompts/` hay prompt nghề của `packages/registry-default/prompts/`, đúng vai mà bài học nói tới; dữ kiện đã đo của một tộc trên một hệ điều hành thì vào adapter của tộc đó. Mọi vương quốc nhận khi `elvaria upgrade` (§13). Trong lúc chờ nhánh sửa merge, một dòng kinh tạm được: ghi vào §11 nhánh nào sẽ thay nó, và gỡ dòng sau `upgrade`.
+2. **Về một repo** (lệnh, file lớn, file sinh, quy ước): vào địa chí của lãnh thổ, hay tốt hơn vào tài liệu của chính repo đó, đi theo repo bằng git.
+3. **Còn lại** mới là kinh: thói quen làm việc, dữ kiện về một công cụ ngoài, dữ kiện về một tộc chưa đủ chắc để vào adapter. Phạm vi ở đầu câu: vai ("As a judge, …"), tộc và hệ điều hành ("As a Codex judge on Windows, …"), phiên bản CLI khi dữ kiện phụ thuộc nó. Không đường dẫn, tên repo, id quest hay tên nhân vật trong câu.
+
+Mẫu tốt của loại 3 trong vương quốc thật: "lỗi lúc dựng container là lỗi môi trường, không phải test đỏ", "file lớn hơn khoảng 50 KB: tìm rồi đọc đúng đoạn". "Không để file nháp trong đất riêng" (P1-50) là bài học về Elvaria: nay nằm trong luật 3 của người làm (fix/lesson-step-0).
 
 ## 12. Sửa tay cấu hình của vương quốc
 

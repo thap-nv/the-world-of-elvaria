@@ -55,15 +55,16 @@ describe('cappedDiff', () => {
     expect(cappedDiff(stat, '  \n', 'b...HEAD')).toBe('');
   });
 
-  it('cuts a long patch at a line end and says where the rest is', () => {
+  it('cuts a long patch at a line end, says where the rest is and that the judge reads it', () => {
     const cut = cappedDiff(stat, patch, 'b...HEAD');
     expect(cut.length).toBeLessThanOrEqual(DIFF_MAX_CHARS);
     expect(cut.startsWith(stat.trimEnd())).toBe(true);
     const lines = cut.split('\n');
     expect(lines.at(-1)).toBe(
-      `[diff cut at ${DIFF_MAX_CHARS} characters; the rest is in the plot: git diff b...HEAD]`,
+      `[diff cut at ${DIFF_MAX_CHARS} characters; the rest is in the plot: git diff b...HEAD. Read the files you have not seen before you decide: a verdict on part of a diff is not a pass.]`,
     );
     expect(lines.at(-2)).toMatch(/^\+line \d+ x{60}$/);
-    expect(cappedDiff(stat, patch, 'b...HEAD', 100).length).toBeLessThanOrEqual(100 + stat.length);
+    // A ceiling below the summary and the note overruns by the summary alone: the note is never cut.
+    expect(cappedDiff(stat, patch, 'b...HEAD', 250).length).toBeLessThanOrEqual(250 + stat.length);
   });
 });
