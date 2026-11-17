@@ -6,6 +6,7 @@
 // commit of its own sits on the base branch from the start and has delivered nothing.
 import { fromPortable } from '@elvaria/store';
 
+import { fetchBase } from './fetch.ts';
 import { gitDirOf, readPlotRecord } from './plot-record.ts';
 import type { Git } from './git.ts';
 import type { BaseBranch } from './merge.ts';
@@ -29,7 +30,7 @@ export async function baseTipsIn(git: Git, base: BaseBranch): Promise<BaseTips |
   const branch = base.vcs.default_branch;
   if (branch === undefined) return undefined;
   const repo = fromPortable(base.path);
-  if (base.vcs.remote !== undefined) await git(repo, ['fetch', '--quiet', '--no-tags', 'origin', branch]);
+  if (base.vcs.remote !== undefined) await fetchBase(git, repo, branch);
   const local = await commitOf(git, repo, `refs/heads/${branch}`);
   const remote =
     base.vcs.remote === undefined ? null : await commitOf(git, repo, `refs/remotes/origin/${branch}`);

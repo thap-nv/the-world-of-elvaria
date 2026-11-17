@@ -85,6 +85,7 @@ describe('plots over PlotManager', () => {
     checks: [],
     laws: { forbidden_paths: [], forbidden_commands: [] },
   });
+  const unused = () => Promise.reject(new Error('unused'));
   const manager = (result: Awaited<ReturnType<PlotManager['prepare']>>): PlotManager => ({
     prepare: () => Promise.resolve(result),
     status: () => Promise.reject(new Error('unused')),
@@ -97,10 +98,8 @@ describe('plots over PlotManager', () => {
     merge: () => Promise.reject(new Error('unused')),
     unmerged: () => Promise.reject(new Error('unused')),
     release: () => Promise.reject(new Error('unused')),
-    prepareScratch: () => Promise.reject(new Error('unused')),
-    checkoutScratch: () => Promise.reject(new Error('unused')),
-    releaseScratch: () => Promise.reject(new Error('unused')),
-    scratchOf: () => Promise.reject(new Error('unused')),
+    ...{ prepareScratch: unused, checkoutScratch: unused, releaseScratch: unused, scratchOf: unused },
+    ...{ update: unused, generate: unused, settle: unused, mergesClean: unused },
   });
   const kingdom = path.resolve('kingdom root');
   const HOST = processHostOf(testIo());

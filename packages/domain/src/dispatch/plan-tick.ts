@@ -24,6 +24,7 @@ import { claims, holderGoes, suspensions, unclaimable } from './tick-steps.ts';
 import { wakesOf } from './wakes.ts';
 import { RANKS } from '../schema/common.ts';
 import type { Breaker, HeldSession } from '../breaker/breakers.ts';
+import type { ForgeSize } from './forge-due.ts';
 import type { ForgePoll, ForgeWait } from './forge-polls.ts';
 import type { BaseLook, BaseLookDone } from './in-base.ts';
 import type { JudgeWait } from './judge-waits.ts';
@@ -67,6 +68,10 @@ export interface KingdomSnapshot extends RosterSource, ReviewSource {
   readonly in_base?: readonly QuestId[];
   /** (PS-08d) The Steward's last look per territory at which done quests are in base (baseLooks). Absent: none yet. */
   readonly base_looks?: readonly BaseLookDone[];
+  /** (PS-09) What each done quest touched, the merge queue's order (forgeDeliveries). Absent: none known. */
+  readonly forge_sizes?: readonly ForgeSize[];
+  /** (PS-09) Pull requests open whose branch no longer merges cleanly: delivered again. Absent: none. */
+  readonly forge_stale?: readonly QuestId[];
 }
 
 export interface TickPlan {
@@ -143,7 +148,9 @@ export interface TickPlan {
   readonly deliveries: readonly QuestId[];
   /**
    * After step 7 (PS-08c, ADR 0023): delivered done quests whose branch the Steward pushes and whose pull request it
-   * opens, outside the tick, on a territory whose delivery is not manual; one per territory at a time (forgeDeliveries).
+   * opens, outside the tick, on a territory whose delivery is not manual; one per territory at a time, in the merge
+   * queue's order (forgeDeliveries, PS-09), as many as dispatch.max_background leaves room for after the checks and
+   * the scripts (startingNow).
    */
   readonly forge_deliveries: readonly QuestId[];
   /** (PS-08d) Sealed quests under `pr_merge` whose pull request the Steward asks about now, outside the tick. */
@@ -178,12 +185,13 @@ const heldPastBreakers = (
   );
 
 /**
- * Step 7, then the forge (PS-08c): done quests to deliver, and delivered ones whose branch goes to their forge; then
- * (PS-08d) the pull requests to ask about, the looks at the base branches, and the quests found there.
+ * Step 7, then the forge (PS-08c): done quests to deliver, and delivered ones whose branch goes to their forge, those
+ * the room took (`forge`); then (PS-08d) the pull requests to ask about, the looks at the base branches, and the
+ * quests found there.
  */
-const deliveriesOf = (snapshot: KingdomSnapshot, done: readonly Quest[], now: Instant) => ({
+const deliveriesOf = (snapshot: KingdomSnapshot, done: readonly Quest[], forge: QuestId[], now: Instant) => ({
   deliveries: done.filter(({ deliverable }) => deliverable.delivered_at === undefined).map(({ id }) => id),
-  forge_deliveries: forgeDeliveries(snapshot, done),
+  forge_deliveries: forge,
   forge_polls: forgePolls(snapshot, done, now),
   base_looks: baseLooks(snapshot, done, now),
   forge_archives: forgeArchives(snapshot, done),
@@ -225,7 +233,7 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
   );
   const running = new Set(snapshot.background?.running);
   const scripts = open.filter(({ tier }) => tier === 'script').map(({ id }) => id);
-  const machine = startingNow(snapshot, judged.checks, scripts);
+  const machine = startingNow(snapshot, judged.checks, scripts, forgeDeliveries(snapshot, inStatus('done')));
   return {
     breakers: heldPastBreakers(snapshot, byId, now),
     suspensions: suspended,
@@ -247,6 +255,6 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
       .filter(({ tier, id }) => tier === 'script' && !running.has(id))
       .map(({ id }) => id),
     unclaimable: unclaimable(step, openSessions),
-    ...deliveriesOf(snapshot, inStatus('done'), now),
+    ...deliveriesOf(snapshot, inStatus('done'), machine.deliveries, now),
   };
 }

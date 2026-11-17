@@ -18,7 +18,9 @@ import {
   partyOn,
   recordOf,
 } from '../__fixtures__/party-repo.ts';
+import { gitOf } from './git.ts';
 import { createPlotManager } from './plot-manager.ts';
+import { changePlotRecord } from './plot-record.ts';
 
 let root = '';
 let kingdom = '';
@@ -58,13 +60,26 @@ describe('merge with the base branch (PS-08e)', () => {
     expect(await plots().merge(plot, PARTS, territory)).toEqual({ merged: [], pending: [] });
   });
 
-  it('adds no merge commit when main did not move, and leaves the record as it was', async () => {
-    const { territory, plot, worktree } = await party('main still');
+  it('adds no merge commit when main did not move, and counts from main all the same (PS-09, PS-08e (6))', async () => {
+    const { repo, territory, plot, worktree } = await party('main still');
     const before = await recordOf(worktree);
+    const main = git(repo, 'rev-parse', 'main');
 
     expect(await plots().merge(plot, PARTS, territory)).toEqual({ merged: PARTS, pending: [] });
     expect(lastSubject(worktree)).toBe(`chore: merge ${PART_B} into quest/${MERGE}`);
-    expect(await recordOf(worktree)).toEqual(before);
+    // The same touched files as when main moved: the contract and both parts.
+    expect(await recordOf(worktree)).toEqual({ ...before, base: main, setup_done: false });
+    expect(sorted(await plots().touched(plot))).toEqual(['api/openapi.yaml', 'src/a.ts', 'src/shared.ts']);
+  });
+
+  it('sets the plot up again once a part is in, even without a base branch (PS-09, PS-08e (7))', async () => {
+    const { plot, worktree } = await party('part setup');
+    const resolved = await gitOf(TEST_HOST);
+    if (resolved === undefined) throw new Error('no git');
+    await changePlotRecord(resolved, worktree, { setup_done: true });
+
+    expect(await plots().merge(plot, [PART_A])).toEqual({ merged: [PART_A], pending: [] });
+    expect((await recordOf(worktree)).setup_done).toBe(false);
   });
 
   it('stops on a conflict with main, counted from main already, and the concluding commit keeps it so', async () => {
@@ -93,6 +108,28 @@ describe('merge with the base branch (PS-08e)', () => {
     expect(sorted(await plots().touched(plot))).toEqual(['api/openapi.yaml', 'src/a.ts', 'src/shared.ts']);
     expect(await plots().diff(plot, 'after_merges')).not.toContain('main-only.md');
     expect(await plots().merge(plot, PARTS, territory)).toEqual({ merged: [], pending: [] });
+  });
+
+  it('resolves a conflict with main in a hot file by its rule, so no knight meets it (PS-09)', async () => {
+    const shared = {
+      shared_paths: [{ glob: 'src/shared.ts', merge: 'regenerate' }],
+      commands: { generate: ['x'] },
+    };
+    const repo = await gitRepo(path.join(root, 'main hot'));
+    const { territory, plot, worktree } = await partyOn(plots(), repo, shared);
+    await commitFile(repo, 'src/shared.ts', 'export const n = 9;\n');
+    const main = git(repo, 'rev-parse', 'main');
+
+    const outcome = await plots().merge(plot, PARTS, territory, { shared: territory.shared_paths ?? [] });
+
+    expect(outcome).toEqual({
+      merged: [...PARTS, 'main'],
+      pending: [],
+      resolved: [{ path: 'src/shared.ts', rule: 'regenerate' }],
+    });
+    expect(await readFile(path.join(worktree, 'src', 'shared.ts'), 'utf8')).toBe('export const n = 2;\n');
+    expect(await recordOf(worktree)).toMatchObject({ base: main, setup_done: false });
+    expect(await plots().unmerged(plot, PARTS, territory)).toEqual([]);
   });
 
   it('leaves main unmerged when a reset takes the merge in progress away, and merges it again next time', async () => {

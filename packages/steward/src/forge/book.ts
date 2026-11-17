@@ -3,8 +3,11 @@
 // to push, in memory only (a later Steward looks once more). planTick sees both as settled (KingdomSnapshot.forge),
 // and the digest reads the outcomes (StewardNotices.deliveries). (PS-08d) A pull request the Steward merges itself
 // waits with the time of its push, which the log dates, and of the last question to the forge, in memory only.
-import { forgeOutcomesOf, isEventOf, parseInstant } from '@elvaria/domain';
-import type { Event, ForgeOutcome, ForgeWait, Instant, QuestId } from '@elvaria/domain';
+// (PS-09) The merge queue keeps beside them what each done quest touched (its order, read once from the plot), the
+// open pull requests whose branch no longer merges cleanly (in memory: the look at start finds them again), and how
+// many times each delivery was updated (its pushes after the first, which the log counts).
+import { forgeOutcomesOf, forgeRoundsOf, isEventOf, parseInstant } from '@elvaria/domain';
+import type { Event, ForgeOutcome, ForgeSize, ForgeWait, Instant, QuestId } from '@elvaria/domain';
 
 export interface ForgeBook {
   readonly outcomes: Map<QuestId, ForgeOutcome>;
@@ -14,6 +17,12 @@ export interface ForgeBook {
   readonly since: Map<QuestId, Instant>;
   /** When the Steward last asked the forge about a quest's pull request (PS-08d). */
   readonly asked: Map<QuestId, Instant>;
+  /** (PS-09) What each done quest touched, read once: the merge queue's order. */
+  readonly sizes: Map<QuestId, ForgeSize>;
+  /** (PS-09) Pull requests open whose branch no longer merges cleanly into the base branch: delivered again. */
+  readonly stale: Set<QuestId>;
+  /** (PS-09) The updates of each delivery so far: its pushes after the first. */
+  readonly rounds: Map<QuestId, number>;
 }
 
 export const createForgeBook = (): ForgeBook => ({
@@ -21,12 +30,16 @@ export const createForgeBook = (): ForgeBook => ({
   nothing: new Set(),
   since: new Map(),
   asked: new Map(),
+  sizes: new Map(),
+  stale: new Set(),
+  rounds: new Map(),
 });
 
 /** The outcomes the log holds, in place of what the book held, and when each latest push was written. */
 export function recoverForge(book: ForgeBook, events: readonly Event[]): void {
   book.outcomes.clear();
   for (const [quest, outcome] of forgeOutcomesOf(events)) book.outcomes.set(quest, outcome);
+  for (const [quest, rounds] of forgeRoundsOf(events)) book.rounds.set(quest, rounds);
   for (const event of events) {
     if (!isEventOf(event, 'delivery.pushed')) continue;
     const at = parseInstant(event.ts);
@@ -55,4 +68,6 @@ export function forget(book: ForgeBook, quest: QuestId): void {
   book.outcomes.delete(quest);
   book.nothing.delete(quest);
   book.asked.delete(quest);
+  book.stale.delete(quest);
+  book.rounds.delete(quest);
 }

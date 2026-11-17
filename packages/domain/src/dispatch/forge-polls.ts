@@ -33,10 +33,13 @@ export interface ForgePollSource extends ForgeSource {
   readonly forge_waits?: readonly ForgeWait[];
 }
 
-/** The pull requests to ask about now: sealed quests under `pr_merge` (mergeDue), none whose work still runs. */
+/**
+ * The pull requests to ask about now: sealed quests under `pr_merge` (mergeDue), none whose work still runs, none the
+ * merge queue updates again (PS-09: its branch no longer merges cleanly, its next push asks anew).
+ */
 export function forgePolls(source: ForgePollSource, done: readonly Quest[], now: Instant): ForgePoll[] {
   const waits = new Map((source.forge_waits ?? []).map((wait) => [wait.quest, wait]));
-  const running = new Set(source.background?.running);
+  const running = new Set([...(source.background?.running ?? []), ...(source.forge_stale ?? [])]);
   const territories = new Map(source.territories.map((territory) => [territory.id, territory]));
   return done.flatMap((quest) => {
     const wait = waits.get(quest.id);

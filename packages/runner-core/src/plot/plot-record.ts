@@ -23,6 +23,11 @@ export interface PlotRecord {
    * after a merge quest took the base branch in (PS-08e).
    */
   readonly setup_done: boolean;
+  /**
+   * The merge queue merged the base branch in (PS-09) and its generators and checks have not passed on the result yet:
+   * a Steward stopped there finds the merge made and runs only what follows it. Absent or false: nothing pending.
+   */
+  readonly update_pending?: boolean;
 }
 
 const isPlotRecord = (value: unknown): value is PlotRecord =>
@@ -68,8 +73,19 @@ export async function plotRecordOf(git: Git, worktree: string): Promise<PlotReco
  * in, which may bring another lockfile.
  */
 export async function movePlotBase(git: Git, worktree: string, base: string): Promise<void> {
+  await changePlotRecord(git, worktree, { base, setup_done: false });
+}
+
+/** The record of the plot `worktree` with `change` over it, written back; throws when it has none. */
+export async function changePlotRecord(
+  git: Git,
+  worktree: string,
+  change: Partial<Omit<PlotRecord, 'version'>>,
+): Promise<PlotRecord> {
   const gitDir = await gitDirOf(git, worktree);
   const record = await readPlotRecord(gitDir);
   if (record === undefined) throw new Error(`${worktree} has no ${PLOT_RECORD_FILE}: prepare it first`);
-  await writePlotRecord(gitDir, { ...record, base, setup_done: false });
+  const changed = { ...record, ...change };
+  await writePlotRecord(gitDir, changed);
+  return changed;
 }

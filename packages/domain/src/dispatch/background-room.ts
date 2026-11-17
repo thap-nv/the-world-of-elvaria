@@ -5,7 +5,11 @@
 // an hour each, held both slots, so a `format` check of six seconds waited 41 minutes, and the checks of two
 // acceptance parts, which run no command at all, kept every part of two parties waiting. So an acceptance part goes
 // first and takes no slot, and a trial never takes the last lane of short work: when trials hold every slot, one
-// check or script that is not a trial still runs beside them.
+// check or script that is not a trial still runs beside them. (PS-09, K4, (iii) of PS-08c) A delivery to the forge
+// takes a slot too, after the checks and the scripts: the merge queue runs every check of its territory on the updated
+// branch and the push runs its pre-push hook. It is never a trial, so it may run beside trials as short work does; a
+// question to the forge about a pull request takes none (it runs for seconds), though it sits in `running` while it
+// does.
 import { judgedInScratch } from '../verify/ritual-of.ts';
 import type { BackgroundWork } from './reviews.ts';
 import type { QuestId } from '../core/ids.ts';
@@ -25,6 +29,7 @@ export interface RoomSource {
 export interface StartingNow {
   readonly checks: QuestId[];
   readonly scripts: QuestId[];
+  readonly deliveries: QuestId[];
 }
 
 /**
@@ -33,25 +38,31 @@ export interface StartingNow {
  */
 const runsNoCommand = (quest: Quest | undefined): boolean => quest?.party_role === 'acceptance';
 
-/** A trial in a scratch plot: commands.reset, three runs of the checks, coverage on two commits (ADR 0022). */
+/**
+ * A trial in a scratch plot: commands.reset, three runs of the checks, coverage on two commits (ADR 0022). A done
+ * quest's work is its delivery (PS-09), never a trial, whatever ritual judged it.
+ */
 function isTrial(quest: Quest | undefined, registry: RoomSource['registry']): boolean {
   const { kinds, rituals } = registry;
-  if (quest === undefined || kinds === undefined || rituals === undefined) return false;
+  if (quest === undefined || kinds === undefined || rituals === undefined || quest.status === 'done')
+    return false;
   return quest.tier === 'session' && judgedInScratch(quest, { kinds, rituals });
 }
 
 /**
- * The checks (acceptance parts first, then in the order given) and scripts that start now. Each takes a free slot of
- * dispatch.max_background; when none is free and only trials run, one piece of work that is no trial runs beside
- * them. What finds no room waits for a later tick's plan.
+ * The checks (acceptance parts first, then in the order given), scripts and deliveries that start now. Each takes a
+ * free slot of dispatch.max_background; when none is free and only trials run, one piece of work that is no trial
+ * runs beside them. What finds no room waits for a later tick's plan.
  */
 export function startingNow(
   source: RoomSource,
   checks: readonly QuestId[],
   scripts: readonly QuestId[],
+  deliveries: readonly QuestId[] = [],
 ): StartingNow {
   const { background } = source;
-  if (background === undefined) return { checks: [...checks], scripts: [...scripts] };
+  if (background === undefined)
+    return { checks: [...checks], scripts: [...scripts], deliveries: [...deliveries] };
   const byId = new Map(source.quests.map((quest) => [quest.id, quest]));
   const trial = (id: QuestId): boolean => isTrial(byId.get(id), source.registry);
   let room = source.kingdom.dispatch.max_background - background.running.length;
@@ -66,5 +77,6 @@ export function startingNow(
   };
   const free = checks.filter((id) => runsNoCommand(byId.get(id)));
   const rest = checks.filter((id) => !runsNoCommand(byId.get(id))).filter(fits);
-  return { checks: [...free, ...rest], scripts: scripts.filter(fits) };
+  const ran = scripts.filter(fits);
+  return { checks: [...free, ...rest], scripts: ran, deliveries: deliveries.filter(fits) };
 }

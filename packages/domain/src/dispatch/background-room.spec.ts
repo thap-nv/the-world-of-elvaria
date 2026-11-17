@@ -48,23 +48,47 @@ describe('startingNow', () => {
   it('starts the checks of an acceptance part first and outside the cap', () => {
     const quests = [trial(Q1), trial(Q2), short(Q3), acceptance(Q4)];
     // Two trials hold both slots: the acceptance part's checks start all the same, ahead of the others.
-    expect(startingNow(sourceOf(quests, [Q1, Q2]), [Q3, Q4], [])).toEqual({ checks: [Q4, Q3], scripts: [] });
+    expect(startingNow(sourceOf(quests, [Q1, Q2]), [Q3, Q4], [])).toEqual({
+      checks: [Q4, Q3],
+      scripts: [],
+      deliveries: [],
+    });
   });
 
   it('runs one short piece of work beside trials that hold every slot, never a trial', () => {
     const quests = [trial(Q1), trial(Q2), short(Q3), trial(Q4), short(Q5)];
-    expect(startingNow(sourceOf(quests, [Q1, Q2]), [Q4, Q3, Q5], [])).toEqual({ checks: [Q3], scripts: [] });
+    expect(startingNow(sourceOf(quests, [Q1, Q2]), [Q4, Q3, Q5], [])).toEqual({
+      checks: [Q3],
+      scripts: [],
+      deliveries: [],
+    });
     // The lane is taken: the next short work waits.
-    expect(startingNow(sourceOf(quests, [Q1, Q2, Q3]), [Q5], [Q4])).toEqual({ checks: [], scripts: [] });
+    expect(startingNow(sourceOf(quests, [Q1, Q2, Q3]), [Q5], [Q4])).toEqual({
+      checks: [],
+      scripts: [],
+      deliveries: [],
+    });
     // A script is short work too.
     const scripts = [trial(Q1), trial(Q2), quest(Q4, { script: true })];
-    expect(startingNow(sourceOf(scripts, [Q1, Q2]), [], [Q4])).toEqual({ checks: [], scripts: [Q4] });
+    expect(startingNow(sourceOf(scripts, [Q1, Q2]), [], [Q4])).toEqual({
+      checks: [],
+      scripts: [Q4],
+      deliveries: [],
+    });
   });
 
   it('gives a trial any free slot, and short work the slots short work holds no lane beside', () => {
     const quests = [trial(Q1), trial(Q2), short(Q3), short(Q4), short(Q5)];
-    expect(startingNow(sourceOf(quests, [Q3]), [Q1, Q2], [])).toEqual({ checks: [Q1], scripts: [] });
-    expect(startingNow(sourceOf(quests, [Q3, Q4]), [Q5], [])).toEqual({ checks: [], scripts: [] });
+    expect(startingNow(sourceOf(quests, [Q3]), [Q1, Q2], [])).toEqual({
+      checks: [Q1],
+      scripts: [],
+      deliveries: [],
+    });
+    expect(startingNow(sourceOf(quests, [Q3, Q4]), [Q5], [])).toEqual({
+      checks: [],
+      scripts: [],
+      deliveries: [],
+    });
   });
 
   it('counts nothing as a trial without the kinds and rituals, and caps nothing without a background', () => {
@@ -72,13 +96,45 @@ describe('startingNow', () => {
     expect(startingNow(sourceOf(quests, [Q1, Q2], { registry: {} }), [Q3], [])).toEqual({
       checks: [],
       scripts: [],
+      deliveries: [],
     });
     const { background: _none, ...sandbox } = sourceOf(quests, []);
-    expect(startingNow(sandbox, [Q1, Q2, Q3], [Q4])).toEqual({ checks: [Q1, Q2, Q3], scripts: [Q4] });
+    expect(startingNow(sandbox, [Q1, Q2, Q3], [Q4], [Q5])).toEqual({
+      checks: [Q1, Q2, Q3],
+      scripts: [Q4],
+      deliveries: [Q5],
+    });
+  });
+
+  it('gives a delivery the room the checks and scripts leave, beside trials too, and never counts it a trial (PS-09)', () => {
+    const delivering = (id: QuestId): Quest => ({ ...trial(id), status: 'done' });
+    const quests = [trial(Q1), short(Q2), delivering(Q3), delivering(Q4)];
+    // One slot free: the check takes it, the delivery waits.
+    expect(startingNow(sourceOf(quests, [Q1]), [Q2], [], [Q3])).toEqual({
+      checks: [Q2],
+      scripts: [],
+      deliveries: [],
+    });
+    // Trials hold both slots: one delivery runs beside them, as short work does.
+    expect(startingNow(sourceOf([...quests, trial(Q5)], [Q1, Q5]), [], [], [Q3, Q4])).toEqual({
+      checks: [],
+      scripts: [],
+      deliveries: [Q3],
+    });
+    // A running delivery of a quest a trial judged is short work: no lane is left beside it.
+    expect(startingNow(sourceOf(quests, [Q1, Q3]), [], [], [Q4])).toEqual({
+      checks: [],
+      scripts: [],
+      deliveries: [],
+    });
   });
 
   it('counts a quest it does not know, or a script, as no trial', () => {
     const quests = [trial(Q1), trial(Q2)];
-    expect(startingNow(sourceOf(quests, [Q1, Q2]), [Q5], [])).toEqual({ checks: [Q5], scripts: [] });
+    expect(startingNow(sourceOf(quests, [Q1, Q2]), [Q5], [])).toEqual({
+      checks: [Q5],
+      scripts: [],
+      deliveries: [],
+    });
   });
 });

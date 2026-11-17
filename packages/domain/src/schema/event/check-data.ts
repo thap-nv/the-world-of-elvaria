@@ -12,8 +12,19 @@ const DurationMsSchema = z.int().min(0);
 // The machine checks of a submitted run run outside the tick (P1-25) for minutes, while the quest sits in review with
 // no judge: these two lines tell the owner and the world that they run (P1-10b). The world animates them; it does
 // not keep them (reduce.ts), since the checks live in the Steward's memory, not in a file worldStateOf reads.
+// Optional and added after v1 (PS-09): the merge queue's checks of a done quest before its delivery, on its branch with
+// the base branch merged in. They belong to no run of the quest, so the metrics leave them out (log-counts.ts).
+const DeliveryMarkSchema = z
+  .literal(true)
+  .optional()
+  .meta(
+    describe(
+      "The merge queue's checks of a done quest before its delivery (PS-09), not a run's: no judge reads them. Absent: a run's checks.",
+    ),
+  );
+
 export const CheckStartDataSchema = z
-  .strictObject({})
+  .strictObject({ delivery: DeliveryMarkSchema })
   .meta(
     describe(
       'The checks of the run the envelope\'s `attempt` names started, outside the Steward\'s tick (implementation-plan §3.1 "(P1-25)").',
@@ -24,6 +35,7 @@ export const CHECK_OUTCOMES = ['pass', 'fail', 'error', 'stopped'] as const;
 export type CheckOutcome = (typeof CHECK_OUTCOMES)[number];
 
 export const CheckEndDataSchema = z.strictObject({
+  delivery: DeliveryMarkSchema,
   outcome: z
     .enum(CHECK_OUTCOMES)
     .meta(

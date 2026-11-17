@@ -35,6 +35,7 @@ import type {
 import type { KingdomStore } from '@elvaria/store';
 
 import type { Forges } from './forge/forge.ts';
+import type { PlotQueue } from './forge/plot-queue.ts';
 import type { Bell } from './notice.ts';
 import type { PatrolOptions } from './patrol/ports.ts';
 import type { Digest, OnCallJob, ScheduledJob } from './schedule/ports.ts';
@@ -107,9 +108,9 @@ export interface ResolvedCheck {
 
 /**
  * The quest's own ground (§3.3): apps/cli puts PlotManager and runChecks of P1-07 behind it; folderPlots gives
- * every quest a folder with no git and no checks (the Steward's specs).
+ * every quest a folder with no git and no checks (the Steward's specs). The merge queue's methods (PS-09): PlotQueue.
  */
-export interface Plots {
+export interface Plots extends PlotQueue {
   /**
    * Idempotent: a quest that already has its plot gets the same one back. Throws when it cannot be prepared.
    * `secrets` (the quest's `secrets_required` from the treasury, P1-30) go to the territory's `commands.setup` as
@@ -200,9 +201,8 @@ export interface Plots {
   /** At archive only: removes a worktree (its branch stays) and what the tribes' CLIs kept about it. */
   release(plot: Quest['plot']): Promise<Result<ReleasedPlot, PlotFailure>>;
   /**
-   * (PS-08d) A territory's base branch tips, origin's fetched first (PlotManager.baseTips), and whether a done quest's
-   * branch is in them (PlotManager.inBase): the look that archives a quest merged into the base branch. Absent (folder
-   * plots): no look, a quest is archived by the owner or by its own `delivery.merged`.
+   * (PS-08d) A territory's base branch tips, origin's fetched first, and whether a done quest's branch is in them: the
+   * look that archives a quest merged there. Absent (folder plots): archived by the owner or its own `delivery.merged`.
    */
   baseTips?(territory: Territory): Promise<BaseTips | undefined>;
   inBase?(plot: Quest['plot'], tips: BaseTips): Promise<boolean>;

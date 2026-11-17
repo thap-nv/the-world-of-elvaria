@@ -25,6 +25,8 @@ import type { CommitRescue } from './rescue.ts';
 import type { PatchOutcome } from './patch.ts';
 import type { Git } from './git.ts';
 import { ensureLongPaths, ensurePlotExcludes } from './repo-settings.ts';
+import { queueMethods } from './queue-methods.ts';
+import type { QueueMethods } from './queue-methods.ts';
 import { scratchMethods } from './scratch-methods.ts';
 import type { ScratchMethods } from './scratch-methods.ts';
 import { runSetup } from './setup.ts';
@@ -75,8 +77,11 @@ export interface PrepareOptions {
   readonly signal?: AbortSignal;
 }
 
-/** The scratch plot's methods (P1-20, ADR 0022) are ScratchMethods', in scratch-methods.ts. */
-export interface PlotManager extends ScratchMethods {
+/**
+ * The scratch plot's methods (P1-20, ADR 0022) are ScratchMethods', in scratch-methods.ts; the merge queue's (PS-09)
+ * QueueMethods', in queue-methods.ts.
+ */
+export interface PlotManager extends ScratchMethods, QueueMethods {
   /**
    * Idempotent: the same quest and territory give the same plot, and setup runs until it succeeds once; a folder
    * plot has no setup and no branch to start from.
@@ -194,6 +199,13 @@ function baseMethods(
   };
 }
 
+/** The looks at the base branch (PS-08d), the scratch plot (P1-20) and the merge queue (PS-09), each in its file. */
+const laterMethods = (
+  options: PlotManagerOptions,
+  findGit: () => Promise<Git | undefined>,
+  git: () => Promise<Git>,
+) => ({ ...baseMethods(findGit, git), ...scratchMethods(options, git), ...queueMethods(options, git) });
+
 /** The manager with every optional method: drift, baseTips and inBase are only optional for stand-ins. */
 export function createPlotManager(options: PlotManagerOptions): Required<PlotManager> {
   let found: Promise<Git | undefined> | undefined;
@@ -251,7 +263,6 @@ export function createPlotManager(options: PlotManagerOptions): Required<PlotMan
       plot.type === 'worktree'
         ? releaseWorktree(await git(), worktreeOf(plot), forget)
         : ok({ removed: false, forget_failures: [] }),
-    ...baseMethods(findGit, git),
-    ...scratchMethods(options, git),
+    ...laterMethods(options, findGit, git),
   };
 }

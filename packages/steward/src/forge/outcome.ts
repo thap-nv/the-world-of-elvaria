@@ -31,6 +31,7 @@ export async function recordFailed(ctx: Context, quest: Quest, failure: Failure)
   };
   await ctx.record.note({ type: 'delivery.failed', actor: STEWARD, data, quest });
   ctx.forge.outcomes.set(quest.id, { type: 'delivery.failed', data });
+  ctx.forge.stale.delete(quest.id);
   ctx.deps.log.warn(`steward: ${quest.id}: its delivery stopped at ${data.stage} (${data.reason})`);
   await ring(ctx, {
     kind: 'delivery_failed',
@@ -45,6 +46,9 @@ export async function recordPushed(ctx: Context, quest: Quest, pushed: Omit<Push
   await ctx.record.note({ type: 'delivery.pushed', actor: STEWARD, data, quest });
   ctx.forge.outcomes.set(quest.id, { type: 'delivery.pushed', data });
   ctx.forge.since.set(quest.id, ctx.deps.clock.now());
+  // The first push of a delivery is no update: the merge queue counts the ones after it (PS-09).
+  const rounds = ctx.forge.rounds.get(quest.id);
+  ctx.forge.rounds.set(quest.id, rounds === undefined ? 0 : rounds + 1);
   const warnings = data.warnings ?? [];
   await ring(ctx, { kind: 'delivery_pushed', quest: noticeQuest(quest), url: data.pr.url, warnings });
 }
@@ -53,6 +57,7 @@ export async function recordMerged(ctx: Context, quest: Quest, merged: Omit<Merg
   const data: Merged = { quest: quest.id, territory: quest.territory, ...merged };
   await ctx.record.note({ type: 'delivery.merged', actor: STEWARD, data, quest });
   ctx.forge.outcomes.set(quest.id, { type: 'delivery.merged', data });
+  ctx.forge.stale.delete(quest.id);
   // The merge took in the quest and, through a merge quest, its party: the next tick looks at the territory at once.
   ctx.looks.looked.delete(quest.territory);
 }

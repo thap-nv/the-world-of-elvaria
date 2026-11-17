@@ -1570,7 +1570,12 @@
             "description": "The checks of the run the envelope's `attempt` names started, outside the Steward's tick (implementation-plan §3.1 \"(P1-25)\").",
             "type": "object",
             "additionalProperties": false,
-            "properties": {}
+            "properties": {
+              "delivery": {
+                "description": "The merge queue's checks of a done quest before its delivery (PS-09), not a run's: no judge reads them. Absent: a run's checks.",
+                "const": true
+              }
+            }
           }
         }
       }
@@ -1593,6 +1598,10 @@
               "checks"
             ],
             "properties": {
+              "delivery": {
+                "description": "The merge queue's checks of a done quest before its delivery (PS-09), not a run's: no judge reads them. Absent: a run's checks.",
+                "const": true
+              },
               "outcome": {
                 "description": "pass: every check passed, or none applied; fail: at least one failed; error: they could not run, a later tick runs them again; stopped: killed because the Steward stopped or the quest moved on.",
                 "enum": [
@@ -2139,7 +2148,7 @@
       "then": {
         "properties": {
           "data": {
-            "description": "The Steward merged a party's part branches, then the territory's base branch (PS-08e), into its merge quest's branch, or tried to (implementation-plan §3.13, P1-21 (d)): in the machine's run, before each knight's session and before the checks, never before a judge's. A merge with nothing left to take in writes no line.",
+            "description": "The Steward merged a party's part branches, then the territory's base branch (PS-08e), into its merge quest's branch, or tried to (implementation-plan §3.13, P1-21 (d)): in the machine's run, before each knight's session and before the checks, never before a judge's. (PS-09) The merge queue merged the base branch into a done quest's branch before its delivery. A merge with nothing left to take in writes no line.",
             "type": "object",
             "additionalProperties": false,
             "required": [
@@ -2149,7 +2158,7 @@
             ],
             "properties": {
               "into": {
-                "description": "The merge quest's branch.",
+                "description": "The merge quest's branch, or a done quest's in the merge queue (PS-09).",
                 "type": "string",
                 "minLength": 1
               },
@@ -2180,6 +2189,40 @@
               "conflicts": {
                 "description": "With stop = conflict: the conflicted files, relative to the plot.",
                 "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "resolved": {
+                "description": "Conflicted files the territory's shared_paths resolved by their rule, relative to the plot: regenerate kept the merging branch's side for commands.generate to rewrite, union joined both sides line by line (PS-09).",
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "path",
+                    "rule"
+                  ],
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "rule": {
+                      "enum": [
+                        "regenerate",
+                        "union"
+                      ]
+                    }
+                  }
+                }
+              },
+              "restored": {
+                "description": "Files the territory's commands.generate changed outside its shared_paths after the merge, given back as the branch had them: a generator that writes where it should not (PS-09).",
+                "type": "array",
+                "minItems": 1,
                 "items": {
                   "type": "string",
                   "minLength": 1
@@ -2434,6 +2477,7 @@
               },
               "stage": {
                 "enum": [
+                  "update",
                   "scan",
                   "push",
                   "open",
@@ -2452,7 +2496,9 @@
                   "conflict",
                   "checks_red",
                   "checks_timeout",
-                  "head_moved"
+                  "head_moved",
+                  "generate_failed",
+                  "update_failed"
                 ]
               },
               "branch": {
@@ -2485,7 +2531,7 @@
                 }
               },
               "checks": {
-                "description": "The checks that were red or never ended.",
+                "description": "The checks that were red or never ended: the forge's, or at update the territory's own.",
                 "type": "array",
                 "minItems": 1,
                 "items": {
@@ -2514,7 +2560,7 @@
                 }
               },
               "paths": {
-                "description": "With reason secret: the files that hold one; never the value.",
+                "description": "With reason secret: the files that hold one, never the value; with conflict at update: the files no rule of the territory's shared_paths resolves.",
                 "type": "array",
                 "minItems": 1,
                 "items": {
@@ -2523,7 +2569,7 @@
                 }
               },
               "detail": {
-                "description": "The forge's or git's message, redacted.",
+                "description": "The forge's or git's message, or the end of the generators' log, redacted.",
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 2000

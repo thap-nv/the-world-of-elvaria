@@ -9,6 +9,7 @@ import { err, ok } from '@elvaria/domain';
 import type { Result, Territory } from '@elvaria/domain';
 import { comparePath } from '@elvaria/store';
 
+import { fetchBase } from './fetch.ts';
 import { gitOut } from './git.ts';
 import type { Git } from './git.ts';
 import { gitDirOf, readPlotRecord, writePlotRecord } from './plot-record.ts';
@@ -116,9 +117,7 @@ export async function forkPoint(
   const branch = vcs.default_branch;
   if (branch === undefined) return failure('git_failed', 'the territory has no default_branch');
   const fetched =
-    vcs.remote !== undefined &&
-    (target.fetch === false ||
-      (await git(repo, ['fetch', '--quiet', '--no-tags', 'origin', branch])).code === 0);
+    vcs.remote !== undefined && (target.fetch === false || (await fetchBase(git, repo, branch)));
   const local = await commitOf(git, repo, `refs/heads/${branch}`);
   const remote = fetched ? await commitOf(git, repo, `refs/remotes/origin/${branch}`) : undefined;
   if (local === undefined)

@@ -100,6 +100,17 @@ const baseLooksOf = (manager: PlotManager): Pick<Plots, 'drift' | 'baseTips' | '
 });
 
 /**
+ * The merge queue (PS-09): a done quest's branch brought up to its base branch before its delivery, the generators run
+ * on the result, the update settled once its checks passed, and whether an open pull request still merges cleanly.
+ */
+const queueOf = (manager: PlotManager): Pick<Plots, 'update' | 'generate' | 'settle' | 'mergesClean'> => ({
+  update: (plot, territory) => manager.update(plot, territory),
+  generate: (plot, territory, request) => manager.generate(plot, territory, request),
+  settle: (plot) => manager.settle(plot),
+  mergesClean: (plot, tips) => manager.mergesClean(plot, tips),
+});
+
+/**
  * The patrol (PS-26): the territory's trial (PS-25) under a plot name of its own, so a `territory check` at the same
  * time keeps its plot; the scans run in it before it goes, and its logs go to .runs/patrol-<id>/.
  */
@@ -153,6 +164,7 @@ export function plotsOver(kingdom: string, manager: PlotManager, host: ProcessHo
     merge: (plot, branches, base, options) => manager.merge(plot, branches, base, options),
     unmerged: (plot, branches, base) => manager.unmerged(plot, branches, base),
     ...baseLooksOf(manager),
+    ...queueOf(manager),
     // run-check spawns these without a shell; a check whose program is not found is left out (§3.12), and so is a
     // check of several commands (P1-20), which run-check cannot chain: the machine runs it before the judge.
     scriptChecks: async (territory) => {

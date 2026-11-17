@@ -5,6 +5,7 @@ import type { KingdomSnapshot, ZonedTime } from '@elvaria/domain';
 
 import { wantedIn } from './background.ts';
 import { mergedOf, recoverForge, settledOf, waitsOf } from './forge/book.ts';
+import { forgeSizesOf } from './forge/sizes.ts';
 import { recoverPatrol } from './patrol/book.ts';
 import { applyInbox } from './inbox/apply.ts';
 import { asleepFromLog, levelsFromLog, warnedFromLog } from './mana/book.ts';
@@ -64,7 +65,7 @@ export async function recover(deps: StewardDeps, state: State): Promise<void> {
  * be claimed (sessions/claim-prompt-size.ts, fix/claim-step); and the scheduled jobs due that have not started, so the
  * Chancellor's tribe takes no new session while the triage waits for it (fix/acceptance-scope). Then the forge: the
  * deliveries settled, the pull requests that wait, the quests in base (found by a look, or merged by the Steward) and
- * the last looks (PS-08c, PS-08d).
+ * the last looks (PS-08c, PS-08d); the merge queue's sizes and the open pull requests the base branch overtook (PS-09).
  */
 async function snapshotFor(ctx: Context, state: State, zone: ZonedTime): Promise<KingdomSnapshot> {
   const { world, deps } = ctx;
@@ -87,6 +88,8 @@ async function snapshotFor(ctx: Context, state: State, zone: ZonedTime): Promise
     forge_waits: waitsOf(state.forge),
     in_base: [...state.looks.found, ...mergedOf(state.forge)],
     base_looks: [...state.looks.looked].map(([territory, at]) => ({ territory, at })),
+    forge_sizes: await forgeSizesOf(ctx, state.forge),
+    forge_stale: [...state.forge.stale],
   };
 }
 

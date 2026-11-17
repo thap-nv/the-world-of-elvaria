@@ -7,13 +7,18 @@
 // territory's base branch (PS-08e): the party meets the base branch as it is now before its checks and its judge,
 // not when the owner delivers it, and the plot counts from that commit from then on (mergeBase). Any other quest with
 // two dependencies or more gets the ones its plot did not start from (mergeDependencies, fix/council-run-gaps (d)).
+// (PS-09) Given the territory's shared_paths, a merge whose conflicts all lie in hot files is resolved by their rules
+// before any knight sees it (dry-merge.ts); a merge quest counts from the base branch even when it did not move, and a
+// part merged in sets the plot up again, as it may bring another lockfile (proposals (6) and (7) of PS-08e).
 import type { Territory } from '@elvaria/domain';
 import { fromPortable } from '@elvaria/store';
 
+import { dryMerge, mergeResolved, resolvedOf } from './dry-merge.ts';
 import { gitOut, zList } from './git.ts';
 import { plotCommitMessage } from './commit-message.ts';
-import { movePlotBase, plotRecordOf } from './plot-record.ts';
+import { changePlotRecord, movePlotBase, plotRecordOf } from './plot-record.ts';
 import { forkPoint } from './worktree.ts';
+import type { MergeTarget, ResolvedFile, SharedPaths } from './dry-merge.ts';
 import type { Git } from './git.ts';
 
 /**
@@ -36,6 +41,8 @@ export interface MergeOutcome {
   /** Branches still not in the plot, the one that stopped the merging first; the base branch waits for the parts. */
   readonly pending: readonly string[];
   readonly stop?: MergeStopped;
+  /** (PS-09) The conflicted files the territory's shared_paths resolved; absent: none. */
+  readonly resolved?: readonly ResolvedFile[];
 }
 
 /** The territory a merge quest takes its base branch from (PS-08e): its checkout and its default branch. */
@@ -50,6 +57,8 @@ export interface BaseTarget {
 /** `dependencies`: the branches are a quest's dependencies, not a merge quest's parts (mergeDependencies). */
 export interface MergeOptions {
   readonly dependencies?: boolean;
+  /** The territory's hot files (PS-09): a merge whose conflicts are all theirs is resolved by their rules. */
+  readonly shared?: SharedPaths;
 }
 
 /** How much of a refusal to keep: the end of git's output says why. */
@@ -60,7 +69,7 @@ async function headOf(git: Git, worktree: string, ref: string): Promise<string |
   return run.code === 0 ? run.stdout.trim() : undefined;
 }
 
-const inHead = async (git: Git, worktree: string, commit: string): Promise<boolean> =>
+export const inHead = async (git: Git, worktree: string, commit: string): Promise<boolean> =>
   (await git(worktree, ['merge-base', '--is-ancestor', commit, 'HEAD'])).code === 0;
 
 /** The branches of `branches` the plot's HEAD does not hold; a branch that does not exist is not held. */
@@ -89,40 +98,87 @@ async function stopOf(git: Git, worktree: string, branch: string, said: string):
     : { reason: 'refused', branch, detail: said.trim().slice(-DETAIL_CHARS) };
 }
 
-/** One `git merge --no-ff` of `ref`, named `branch`, into the plot (branch `into`); undefined once it is in. */
+/** The merge done by the rules of hot files when they resolve all its conflicts (PS-09); undefined when not. */
+async function mergeByRules(
+  git: Git,
+  worktree: string,
+  target: MergeTarget,
+  shared: SharedPaths,
+): Promise<ResolvedFile[] | undefined> {
+  if (shared.length === 0) return undefined;
+  const dry = await dryMerge(git, worktree, target.commit, shared);
+  if (dry.state !== 'resolvable') return undefined;
+  const refused = await mergeResolved(git, worktree, target, dry.files);
+  return refused === undefined ? resolvedOf(dry.files) : undefined;
+}
+
+interface MergeStep {
+  /** Absent once the merge is in. */
+  readonly stop?: MergeStopped;
+  readonly resolved: readonly ResolvedFile[];
+}
+
+/** One merge of `target` into the plot, by the rules of hot files when they resolve it, else `git merge --no-ff`. */
 async function mergeOne(
   git: Git,
   worktree: string,
-  into: string,
-  branch: string,
-  ref: string,
-): Promise<MergeStopped | undefined> {
-  const message = plotCommitMessage.merge(branch, into);
-  const run = await git(worktree, ['merge', '--no-ff', '--no-edit', '--quiet', '--message', message, ref]);
-  return run.code === 0 ? undefined : stopOf(git, worktree, branch, `${run.stderr}\n${run.stdout}`);
+  target: MergeTarget,
+  shared: SharedPaths,
+): Promise<MergeStep> {
+  const resolved = await mergeByRules(git, worktree, target, shared);
+  if (resolved !== undefined) return { resolved };
+  const message = plotCommitMessage.merge(target.branch, target.into);
+  const run = await git(worktree, [
+    'merge',
+    '--no-ff',
+    '--no-edit',
+    '--quiet',
+    '--message',
+    message,
+    target.commit,
+  ]);
+  if (run.code === 0) return { resolved: [] };
+  return { stop: await stopOf(git, worktree, target.branch, `${run.stderr}\n${run.stdout}`), resolved: [] };
 }
 
-/** Merges each of `branches` the plot does not hold yet into it (branch `into`), in order, until one stops. */
+/** `outcome` with the files `resolved` named, when there are any. */
+const withResolved = (outcome: MergeOutcome, resolved: readonly ResolvedFile[]): MergeOutcome =>
+  resolved.length === 0 ? outcome : { ...outcome, resolved: [...resolved] };
+
+/**
+ * Merges each of `branches` the plot does not hold yet into it (branch `into`), in order, until one stops; once one
+ * is in, the plot is set up again at its next prepare (PS-08e (7)): a part may bring another lockfile.
+ */
 export async function mergeIn(
   git: Git,
   worktree: string,
   into: string,
   branches: readonly string[],
+  shared: SharedPaths = [],
 ): Promise<MergeOutcome> {
   const pending = await unmergedIn(git, worktree, branches);
   if (pending.length === 0) return { merged: [], pending };
   const blocked = await blockedNow(git, worktree);
   if (blocked !== undefined) return { merged: [], pending, stop: blocked };
   const merged: string[] = [];
+  const resolved: ResolvedFile[] = [];
+  let stopped: MergeOutcome | undefined;
   for (const branch of pending) {
     const rest = pending.slice(merged.length);
-    if ((await headOf(git, worktree, `refs/heads/${branch}`)) === undefined)
-      return { merged, pending: rest, stop: { reason: 'missing', branch, detail: `no branch ${branch}` } };
-    const stop = await mergeOne(git, worktree, into, branch, branch);
-    if (stop !== undefined) return { merged, pending: rest, stop };
+    if ((await headOf(git, worktree, `refs/heads/${branch}`)) === undefined) {
+      stopped = { merged, pending: rest, stop: { reason: 'missing', branch, detail: `no branch ${branch}` } };
+      break;
+    }
+    const step = await mergeOne(git, worktree, { into, branch, commit: branch }, shared);
+    resolved.push(...step.resolved);
+    if (step.stop !== undefined) {
+      stopped = { merged, pending: rest, stop: step.stop };
+      break;
+    }
     merged.push(branch);
   }
-  return { merged, pending: [] };
+  if (merged.length > 0) await changePlotRecord(git, worktree, { setup_done: false });
+  return withResolved(stopped ?? { merged, pending: [] }, resolved);
 }
 
 /**
@@ -131,22 +187,29 @@ export async function mergeIn(
  * in, or waits in progress for the knight) the plot counts from `target`: touched, the judge's diff, the files out of
  * scope and the protected changes see the party's work and its resolutions, never what the base branch changed on
  * its own, and the knight's commit that concludes the merge is counted so too. Setup runs again (the lockfile may
- * have changed), at the next prepare without a merge in progress.
+ * have changed), at the next prepare without a merge in progress. (PS-09, PS-08e (6)) A plot that holds `target`
+ * already counts from it too, so a party's touched files are the same whether the base branch moved or not.
  */
 export async function mergeBase(
   git: Git,
   worktree: string,
   into: string,
   target: BaseTarget,
+  shared: SharedPaths = [],
 ): Promise<MergeOutcome> {
-  if (await inHead(git, worktree, target.commit)) return { merged: [], pending: [] };
+  if (await inHead(git, worktree, target.commit)) {
+    const record = await plotRecordOf(git, worktree);
+    if (record.base !== target.commit) await changePlotRecord(git, worktree, { base: target.commit });
+    return { merged: [], pending: [] };
+  }
   const pending = [target.branch];
   const blocked = await blockedNow(git, worktree);
   if (blocked !== undefined) return { merged: [], pending, stop: blocked };
-  const stop = await mergeOne(git, worktree, into, target.branch, target.commit);
+  const { stop, resolved } = await mergeOne(git, worktree, { into, ...target }, shared);
   const started = stop === undefined || (await headOf(git, worktree, 'MERGE_HEAD')) === target.commit;
   if (started) await movePlotBase(git, worktree, target.commit);
-  return stop === undefined ? { merged: pending, pending: [] } : { merged: [], pending, stop };
+  const outcome = stop === undefined ? { merged: pending, pending: [] } : { merged: [], pending, stop };
+  return withResolved(outcome, resolved);
 }
 
 /**
@@ -191,17 +254,19 @@ export async function mergeAll(
   options: MergeOptions = {},
 ): Promise<MergeOutcome> {
   if (options.dependencies === true) return mergeDependencies(git, worktree, into, branches);
-  const parts = await mergeIn(git, worktree, into, branches);
+  const shared = options.shared ?? [];
+  const parts = await mergeIn(git, worktree, into, branches, shared);
   const branch = base?.vcs.default_branch;
   if (base === undefined || branch === undefined) return parts;
   if (parts.stop !== undefined) return { ...parts, pending: [...parts.pending, branch] };
   const fork = await forkPoint({ git, repo: fromPortable(base.path), vcs: base.vcs });
   if (!fork.ok) {
     const stop: MergeStopped = { reason: 'missing', branch, detail: fork.error.detail };
-    return { merged: parts.merged, pending: [branch], stop };
+    return { ...parts, pending: [branch], stop };
   }
-  const outcome = await mergeBase(git, worktree, into, { branch, commit: fork.value });
-  return { ...outcome, merged: [...parts.merged, ...outcome.merged] };
+  const outcome = await mergeBase(git, worktree, into, { branch, commit: fork.value }, shared);
+  const merged = { ...outcome, merged: [...parts.merged, ...outcome.merged] };
+  return withResolved(merged, [...(parts.resolved ?? []), ...(outcome.resolved ?? [])]);
 }
 
 /**

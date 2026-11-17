@@ -44,6 +44,10 @@ describe("plots' checks with a quest's secrets", () => {
         checkoutScratch: unused,
         releaseScratch: unused,
         scratchOf: unused,
+        update: unused,
+        generate: unused,
+        settle: unused,
+        mergesClean: unused,
       };
       const territory = TerritorySchema.parse({
         version: 1,
@@ -99,6 +103,10 @@ describe("plots' prepare with a quest's secrets", () => {
       checkoutScratch: unused,
       releaseScratch: unused,
       scratchOf: unused,
+      update: unused,
+      generate: unused,
+      settle: unused,
+      mergesClean: unused,
     };
     const territory = TerritorySchema.parse({
       version: 1,
@@ -145,6 +153,10 @@ describe("plots' prepare with a quest's secrets", () => {
       checkoutScratch: unused,
       releaseScratch: unused,
       scratchOf: unused,
+      update: unused,
+      generate: unused,
+      settle: unused,
+      mergesClean: unused,
     };
     const territory = TerritorySchema.parse({
       version: 1,
@@ -209,6 +221,10 @@ describe("plots of a party's quests (P1-18)", () => {
         checkoutScratch: unused,
         releaseScratch: unused,
         scratchOf: unused,
+        update: unused,
+        generate: unused,
+        settle: unused,
+        mergesClean: unused,
       };
       const territory = TerritorySchema.parse({
         version: 1,

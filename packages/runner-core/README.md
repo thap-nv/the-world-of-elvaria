@@ -205,6 +205,18 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   such as a tribe CLI dropping its transcripts), `baseTips` and `inBase` (PS-08d, `plot/in-base.ts`: the base
   branch's local and origin tips after one fetch, never a pull; a plot's branch is in base when its head is an
   ancestor of either and is not the commit its record counts from, so a branch with no commit of its own never is). A territory without git gets `quests/<id>/work/` in the kingdom.
+- Runs the merge queue's part of a done quest's delivery (PS-09, `plot/queue-methods.ts`): `update` merges the
+  base branch where a new quest would start (`forkPoint`, fetched; fetches of one repo wait for each other,
+  `plot/fetch.ts`) into the plot's branch, nothing when it holds it already; a dry run first (`git merge-tree
+--write-tree`, git 2.38, `plot/dry-merge.ts`) resolves each conflicted file by the territory's `shared_paths`
+  (`plot/shared-merge.ts`, pure: `regenerate` keeps the plot's side, `union` joins three-way line by line, a JSON
+  file must parse, any other file is a conflict), and only when all are resolved does the real merge run with the
+  territory's hooks; the record's base moves and `update_pending` stays until `settle` (`plot/base-update.ts`).
+  `generate` runs `commands.generate` with the quest's secrets, gives back what it changed outside `shared_paths`
+  and commits the rest (`plot/generate.ts`); `mergesClean` says whether an open branch still merges cleanly into
+  the tips a look saw. A party's merge quest gets the same rules for its parts and base branch
+  (`MergeOptions.shared`), counts from the base branch even when it did not move, and is set up again once a part
+  is in (PS-08e (6), (7)).
 - Says how far a territory moved since its gazetteer was written (PS-21): `PlotManager.drift(plot, from)` counts the
   commits from `from` to the plot's fork point per top-level folder (`src/plot/drift.ts`, `git log --name-only`,
   root files left out; null without git, a record or a commit git knows), and `gazetteerWithDrift`
@@ -356,7 +368,10 @@ worktrees, a refusing pre-commit hook) and plots in temp folders with spaces in 
 caller's `GIT_*` (`src/__fixtures__/git-repo.ts`), and one spec proves a `GIT_DIR` in the host env is ignored.
 `src/plot/merge-base.spec.ts` and `merge-base-remote.spec.ts` (PS-08e, `src/__fixtures__/party-repo.ts`) merge the
 base branch into a merge quest's plot: main moved, unchanged, in conflict, reset away, gone, from a remote, and
-setup run again once main is in.
+setup run again once main is in. (PS-09) `src/plot/shared-merge.spec.ts` covers the rules; `base-update.spec.ts`
+and `generate.spec.ts` (`src/__fixtures__/queue-repo.ts`) the update on real git: nothing when main did not move,
+regenerate and union resolved, a conflict leaving the plot as it was, a stop resumed without a second merge, a hook
+refusing the commit, line endings kept, and the generators' commit and given-back files.
 The `src/process/` specs kill real node process trees (`src/__fixtures__/tree.ts`: a node that starts an idle
 grandchild) on this machine: the CI matrix, started by hand since 2026-11-10, runs them on Windows and macOS, and the
 SIGTERM-then-SIGKILL case on POSIX only.
