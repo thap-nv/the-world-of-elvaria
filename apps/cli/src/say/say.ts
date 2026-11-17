@@ -18,7 +18,7 @@ import { textOption } from '../args.ts';
 import { EXIT } from '../command.ts';
 import { storeIssueLines } from '../issues.ts';
 import { NONE } from '../listing.ts';
-import { readMemo } from '../memo/memo.ts';
+import { memoFromOf, readMemo } from '../memo/memo.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { commandHeader } from '../quest/send-command.ts';
 import { crewOf } from '../run/crew.ts';
@@ -128,7 +128,8 @@ async function say(
 /** The letter as the Chancellor hears it, then the owner's own words when there are any. */
 function memoWords(ctx: KingdomContext, memo: Memo, words: string): string {
   const refs = memo.refs.length === 0 ? NONE : memo.refs.join(', ');
-  const { kind, from, quest, body } = memo;
+  const { kind, quest, body } = memo;
+  const from = memoFromOf(ctx, memo);
   const heard = ctx.t('cli.say.memo_words', { kind, from, quest, body: body.trim(), refs });
   return words === '' ? heard : `${heard}\n\n${words}`;
 }

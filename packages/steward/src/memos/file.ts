@@ -8,6 +8,7 @@
 // owner (contestRoute), and the quest's pending objection goes on the quest with the move that ends the run, so its
 // next review answers it (objectionOf). (PS-22b) An amendment goes to the quest's author or to the owner by who wrote
 // the quest (authoringOf, authorRoute); the run that filed one ends on it, and the quest waits as on a question.
+// (PS-09c) An advisory goes to the quests at work whose scope meets its refs (recipientsFor), as the Steward's own does.
 import { createHash } from 'node:crypto';
 
 import { amendmentDeciderOf, memoIdOf, memoKeyOf, memoOf, objectionOf } from '@elvaria/domain';
@@ -16,6 +17,7 @@ import { memosOf } from '@elvaria/runner-core';
 
 import { readHandover } from '../files.ts';
 import { STEWARD } from '../record.ts';
+import { recipientsFor } from './advisory.ts';
 import { authoringOf } from './authoring.ts';
 import { contestOf } from './objection.ts';
 import type { Context } from '../context.ts';
@@ -58,8 +60,9 @@ async function fileOne(
   if (await alreadyFiled(ctx, running, id, key)) return undefined;
   const source = { quest: running.quest, attempt: running.n, from: running.character };
   const at = ctx.record.stamp();
+  const recipients = recipientsFor(ctx, quest, draft.refs);
   const made = memoOf(
-    { id, draft, source, at, contest, ...(authoring === undefined ? {} : { authoring }) },
+    { id, draft, source, at, contest, recipients, ...(authoring === undefined ? {} : { authoring }) },
     ctx.world.registry,
   );
   if (!made.ok) {
@@ -74,11 +77,11 @@ async function fileOne(
   }
   const memo = written.value;
   const where = quest === undefined ? {} : { quest };
-  const writer = { kind: 'character', id: memo.from } as const;
+  const writer = { kind: 'character', id: running.character } as const;
   await ctx.record.note({
     type: 'memo.filed',
     actor: writer,
-    data: { memo: memo.id, kind: memo.kind, from: memo.from },
+    data: { memo: memo.id, kind: memo.kind, from: running.character },
     ...where,
   });
   await ctx.record.note({

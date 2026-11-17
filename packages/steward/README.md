@@ -82,7 +82,17 @@
   memo `accepted` or `rejected` and answers the quest with the note, waiting in the inbox while the doer cannot go
   on; `owner` keeps the memo open with the advice and makes the quest the owner's question. The owner's `answer` or `decide_memo` on such a
   quest settles it too; an acceptance of the owner's (`decide_memo` accepted) opens the scope as the author's does, the
-  description kept (fix/amendment-owner-accept).
+  description kept (fix/amendment-owner-accept). (PS-09c, `src/memos/advisory.ts`) As a done quest's branch is found
+  in its base branch, under every delivery mode (`archiveInBase`, after `delivery.merged` or a look), the Steward reads
+  what the quest touched (`Plots.touched`), leaves out the files its territory's `shared_paths` match (`ruleOf`, as
+  the merge queue reads them), and, before the archive, files one advisory without `from` to the quests at work whose
+  scope meets the rest (`memo.filed` and `memo.routed` by the Steward, in that quest's journal), its id from the quest
+  alone, so a Steward that stopped before the archive files it once; a registry with no kind routed to `quests` files
+  none, with a warning. The next assignee session of each quest it went to, fresh or resumed, carries it in the
+  `advisories` block (`advisoriesOf`); once the quest moved, the Steward records the reading (`deliveries`,
+  `memo.delivered` in the reader's journal) and closes the memo `delivered` or `lapsed` once no quest it went to
+  waits for it (at a reading, and at every landing). A judge never reads one; no quest moves. A character's `advisory`
+  line is routed to the quests at work its refs meet (`recipientsFor`).
   Commands with `source: chancellor` are told as the Chancellor's (`actorOfCommand`), and their `command.*` lines
   carry the source.
 - Runs the jobs of `kingdom.schedule` (PS-03, implementation-plan §3.16.3; `src/schedule/`): no cron. At the end

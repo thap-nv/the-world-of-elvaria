@@ -46,6 +46,7 @@ export * from './dispatch/scope.ts';
 export * from './dispatch/select-assignee.ts';
 export * from './graph/commands.ts';
 export * from './graph/links.ts';
+export * from './memo/advisory.ts';
 export * from './memo/amendment.ts';
 export * from './memo/memo.ts';
 export * from './memo/objection.ts';

@@ -11,10 +11,11 @@ export const MEMO_REF_MAX_LENGTH = 300;
  * Where a kind of memo goes (`registry/memos.json`). (PS-22) `judge`: a second judge reads the objection beside the
  * verdict it contests; `owner`: the owner decides it, which is where an objection goes when no judge may take it
  * (OBJECTION_REFUSALS). (PS-22b) `author`: whoever wrote the quest's description decides an amendment, the Chancellor
- * or the mage of its plan; one no author may decide goes to the owner (AMENDMENT_REFUSALS). PS-09 and PS-10 add the
- * routes of advisory and request.
+ * or the mage of its plan; one no author may decide goes to the owner (AMENDMENT_REFUSALS). (PS-09c) `quests`: the
+ * quests at work whose scope meets the files an advisory names read it once, in their next assignee session. PS-10 adds
+ * the route of request.
  */
-export const MEMO_ROUTES = ['chancellor', 'judge', 'owner', 'author'] as const;
+export const MEMO_ROUTES = ['chancellor', 'judge', 'owner', 'author', 'quests'] as const;
 /** A memo waits for a decision while open; nobody answers it (ADR 0024), it is decided once and closed. */
 export const MEMO_STATES = ['open', 'closed'] as const;
 /**
@@ -37,8 +38,17 @@ export const TRIAGE_NOTE_MAX_LENGTH = 1000;
  * picks these.
  */
 export const MEMO_JUDGEMENTS = ['sustained', 'overruled'] as const;
-/** Every way a memo is closed: the owner's decisions and the second judge's (PS-22). */
-export const MEMO_OUTCOME_DECISIONS = [...MEMO_DECISIONS, ...MEMO_JUDGEMENTS] as const;
+/**
+ * How a memo to quests ends (PS-09c), by the Steward alone: `delivered` once every quest it went to read it or left
+ * (one read at least), `lapsed` once every one left without reading it (done, cancelled or archived first).
+ */
+export const MEMO_DELIVERY_OUTCOMES = ['delivered', 'lapsed'] as const;
+/** Every way a memo is closed: the owner's decisions, the second judge's (PS-22), a delivery's end (PS-09c). */
+export const MEMO_OUTCOME_DECISIONS = [
+  ...MEMO_DECISIONS,
+  ...MEMO_JUDGEMENTS,
+  ...MEMO_DELIVERY_OUTCOMES,
+] as const;
 /**
  * Why an objection goes to the owner instead of a judge (PS-22, ADR 0024: one per verdict, the second verdict is
  * final): the run came back with no fail to contest; the owner's own return; a verdict that answered an objection

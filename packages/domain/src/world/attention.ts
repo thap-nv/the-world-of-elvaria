@@ -183,13 +183,15 @@ function noticeItems(state: WorldState, notices: StewardNotices): AttentionItem[
 
 /**
  * The item an open memo makes, by its route: none on its way to a judge or to its quest's author (PS-22b), `objection`
- * for the owner (an objection no judge may read, PS-22), else `memo`, a route not yet written included.
+ * for the owner (an objection no judge may read, PS-22), else `memo`, a route not yet written included. (PS-09c) None
+ * for an advisory: the quests it went to read it, nobody decides it.
  */
 const MEMO_ITEMS: Readonly<Record<MemoRouteId, AttentionKind | null>> = {
   chancellor: 'memo',
   judge: null,
   owner: 'objection',
   author: null,
+  quests: null,
 };
 
 const AMENDMENT_REFUSED: readonly string[] = AMENDMENT_REFUSALS;
@@ -218,7 +220,8 @@ function memoItems(state: WorldState): AttentionItem[] {
     const kind = memoKindOf(state, memo);
     if (kind === null) return [];
     const quest = memo.quest === null ? {} : { quest: memo.quest };
-    const subject = { memo: memo.id, memo_kind: memo.kind, from: memo.from, ...quest };
+    const from = memo.from === undefined ? {} : { from: memo.from };
+    const subject = { memo: memo.id, memo_kind: memo.kind, ...from, ...quest };
     const sent = memo.escalated;
     if (sent === undefined) return [itemOf(kind, subject)];
     // PS-03b: the Chancellor's triage sent it up, with its advice.

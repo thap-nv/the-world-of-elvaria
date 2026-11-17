@@ -66,6 +66,13 @@ describe('worldStateOf', () => {
         route: 'owner',
         refusal: 'second_amendment',
       },
+      // PS-09c: the Steward's advisory, with no writer, open while a quest it went to has yet to read it.
+      m_20261112_adv1s0: {
+        id: 'm_20261112_adv1s0',
+        kind: 'advisory',
+        quest: 'q_20261112_7pzkfv',
+        route: 'quests',
+      },
     });
     const sent = MEMOS.find(({ escalation }) => escalation !== undefined);
     if (sent?.escalation === undefined) throw new Error('the examples have a memo sent up');

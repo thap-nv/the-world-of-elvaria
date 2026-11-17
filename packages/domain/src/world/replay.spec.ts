@@ -126,6 +126,7 @@ describe('replaying a fake day', () => {
       'memo.routed',
       'memo.closed',
       'memo.escalated',
+      'memo.delivered',
       'schedule.ran',
       'digest.written',
       'upgrade.started',
