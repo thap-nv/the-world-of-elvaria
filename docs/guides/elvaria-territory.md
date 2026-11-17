@@ -116,7 +116,7 @@ Lãnh thổ Elvaria giao `manual` cho tới khi chủ nhân bật khác: quest `
 - Bật: `elvaria territory delivery elvaria --mode pr` (Nhiếp chính push `quest/<id>` và mở PR) hay `--mode pr_merge` (rồi merge quest đã có dấu, xóa nhánh trên remote, lưu trữ quest). `elvaria doctor` kiểm credential của git cho `github.com` và quyền push trước lần giao đầu.
 - `required_checks` để rỗng: CI trên GitHub của repo này chỉ chạy tay (implementation-plan §7), nên không có check nào chạy theo PR để chờ; cổng là check của chính Nhiếp chính trước người chấm và hook pre-push (`pnpm check:fast`) mà lần push chạy. Có check theo PR thì khai tên check run (`--required-check <tên>`, lặp lại cho nhiều cái).
 - `merge_method` để `merge`: repo merge PR bằng merge commit (CLAUDE.md bước 5), và lần dò nhánh gốc nhận ra các phần của một đội đã vào `main` nhờ tổ tiên mà merge commit giữ lại.
-- Lùi về một bản ghim trước PS-08 (`elvaria upgrade --rollback`): bỏ khóa `delivery` khỏi `territories/elvaria.json` trước, vì bản cũ không đọc được nó.
+- Lùi về một bản ghim trước PS-08 (`elvaria upgrade --rollback`): bỏ khóa `delivery` khỏi `territories/elvaria/territory.json` trước, vì bản cũ không đọc được nó.
 
 ## Bẫy
 
