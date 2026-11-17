@@ -107,8 +107,10 @@ export function depcruiseConfig() {
     options: {
       // An excluded module disappears together with every import of it, so `exclude` must never match an
       // npm package (most resolve into their own dist/); otherwise the package.json rules see nothing.
+      // The scan tests each folder name before reading it: matching dist/ and coverage/ themselves means it never
+      // reads a coverage/ that a test run is deleting and writing again (151).
       doNotFollow: { path: '(^|/)node_modules/' },
-      exclude: { path: '^(packages|apps)/[^/]+/(dist|coverage)/|(^|/)__fixtures__/' },
+      exclude: { path: '^(packages|apps)/[^/]+/(dist|coverage)(/|$)|(^|/)__fixtures__/' },
       moduleSystems: ['es6', 'cjs'],
       // A type-only import still couples two packages.
       tsPreCompilationDeps: true,

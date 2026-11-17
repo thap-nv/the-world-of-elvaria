@@ -5,11 +5,32 @@ import { KingdomSchema, QuestIdSchema, QuestSchema, TerritorySchema, err, ok } f
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { fixture, plant, tempKingdom } from '../test/kingdom.ts';
+import { fileStore } from './entity-store.ts';
 import { openKingdom } from './kingdom-store.ts';
 import type { TempKingdom } from '../test/kingdom.ts';
 import type { EntityStore } from './entity-store.ts';
 import type { KingdomStore } from './kingdom-store.ts';
+import type { FileSpec } from './stored-file.ts';
 import type { Quest, QuestId } from '@elvaria/domain';
+
+/** A made-up contract at v2 whose `tags` default to []; v1 was {version: 1, body}. */
+interface Note {
+  version: 2;
+  text: string;
+  tags: string[];
+}
+const NOTE_SPEC: FileSpec<Note> = {
+  contract: 'kingdom',
+  parser: {
+    safeParse: (data) => {
+      const { version, text, tags = [] } = data as Partial<Note>;
+      return version === 2 && typeof text === 'string'
+        ? { success: true, data: { version, text, tags } }
+        : { success: false, error: { issues: [{ path: [], message: 'not a note' }] } };
+    },
+  },
+  migrations: [(old) => ({ version: 2, text: (old as { body: unknown }).body })],
+};
 
 const QUEST = QuestSchema.parse(fixture('quest'));
 const FILE = `quests/${QUEST.id}.json`;
@@ -155,6 +176,28 @@ describe('update', () => {
       ok: false,
       error: { code: 'not_found' },
     });
+  });
+
+  it('writes back the fields the file had and the change set, not the schema defaults (187)', async () => {
+    // Without laws, blind_trial, environment_errors, and most checks without their flags.
+    const planted = Object.fromEntries(
+      Object.entries(fixture('territory') as Record<string, unknown>).filter(([key]) => key !== 'laws'),
+    );
+    const id = TerritorySchema.parse(planted).id;
+    const file = await plant(kingdom.root, `territories/${id}/territory.json`, planted);
+    const result = await store.territories.update(id, (current) => ok({ ...current, name: 'Renamed' }));
+    expect(result).toEqual({ ok: true, value: TerritorySchema.parse({ ...planted, name: 'Renamed' }) });
+    expect(JSON.parse(await readFile(file, 'utf8'))).toEqual({ ...planted, name: 'Renamed' });
+  });
+
+  it('rewrites a migrated file at its new version, still without the defaults (187)', async () => {
+    const file = await plant(kingdom.root, 'notes/a.json', { version: 1, body: 'hi' });
+    const notes = fileStore(kingdom.root, NOTE_SPEC, 'notes/a.json');
+    expect(await notes.update((note) => ok({ ...note, text: 'hello' }))).toEqual({
+      ok: true,
+      value: { version: 2, text: 'hello', tags: [] },
+    });
+    expect(JSON.parse(await readFile(file, 'utf8'))).toEqual({ version: 2, text: 'hello' });
   });
 });
 

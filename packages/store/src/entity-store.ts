@@ -1,6 +1,7 @@
 // Read, write, update and list the files of one row of the entity table. Every write is validated first,
 // then made atomic under the file's lock; `update` reads, changes and writes inside one lock, so two writers
-// never lose each other's change (implementation-plan §6, ADR 0004). Only the Steward writes quests and
+// never lose each other's change (implementation-plan §6, ADR 0004), and it writes back the fields the file had
+// and the change set, not the schema's defaults (written-fields.ts). Only the Steward writes quests and
 // characters (ADR 0005); the store does not know who calls it.
 import { readdir } from 'node:fs/promises';
 
@@ -13,9 +14,10 @@ import { withLock } from './io/lock.ts';
 import { lockedIssue, notAFolderIssue, storeIssue } from './issues.ts';
 import { inKingdom } from './paths.ts';
 import { decode, encode, validate } from './stored-file.ts';
+import { toWrite } from './written-fields.ts';
 import type { EntitySpec } from './entities.ts';
 import type { StoreIssue } from './issues.ts';
-import type { FileSpec } from './stored-file.ts';
+import type { Decoded, FileSpec } from './stored-file.ts';
 
 /** What mkdir says when a file is in the way: the folder itself (EEXIST) or a folder above it (ENOTDIR). */
 const FOLDER_BLOCKED: ReadonlySet<string> = new Set(['EEXIST', 'ENOTDIR']);
@@ -43,6 +45,23 @@ export interface EntityStore<T, Id extends string> {
   list(): Promise<Listing<T>>;
 }
 
+const mismatch = (file: string): StoreIssue =>
+  storeIssue('id_mismatch', file, 'the id inside differs from the file name');
+
+/** The file at `target` decoded, when its value belongs there; `update` keeps the decoding for the rewrite. */
+async function readDecoded<T>(
+  target: string,
+  file: string,
+  spec: FileSpec<T>,
+  owns: (value: T) => boolean,
+): Promise<Result<Decoded<T>, StoreIssue>> {
+  const text = await readTextFile(target);
+  if (text === undefined) return err(storeIssue('not_found', file, 'no such file'));
+  const decoded = decode(text, file, spec);
+  if (!decoded.ok) return decoded;
+  return owns(decoded.value.value) ? decoded : err(mismatch(file));
+}
+
 /** `file` holds a value of `spec`; `owns` says whether a valid value belongs at this path (its id). */
 export function fileStore<T>(
   root: string,
@@ -51,25 +70,22 @@ export function fileStore<T>(
   owns: (value: T) => boolean = () => true,
 ): FileStore<T> {
   const target = inKingdom(root, file);
-  const mismatch = (): StoreIssue =>
-    storeIssue('id_mismatch', file, 'the id inside differs from the file name');
 
   const read = async (): Promise<Result<T, StoreIssue>> => {
-    const text = await readTextFile(target);
-    if (text === undefined) return err(storeIssue('not_found', file, 'no such file'));
-    const decoded = decode(text, file, spec);
-    if (!decoded.ok) return decoded;
-    return owns(decoded.value.value) ? ok(decoded.value.value) : err(mismatch());
+    const decoded = await readDecoded(target, file, spec, owns);
+    return decoded.ok ? ok(decoded.value.value) : decoded;
   };
 
-  const save = async (value: unknown): Promise<Result<T, StoreIssue>> => {
+  /** `before`: the file as `update` read it, whose shape the rewrite keeps; `write` replaces the file whole. */
+  const save = async (value: unknown, before?: Decoded<T>): Promise<Result<T, StoreIssue>> => {
     const checked = validate(value, spec.parser, file);
     if (!checked.ok) return checked;
     // Scrubbed text is checked again: masking may shorten a field the schema wants long enough.
     const valid = spec.scrub === undefined ? checked : validate(spec.scrub(checked.value), spec.parser, file);
     if (!valid.ok) return valid;
-    if (!owns(valid.value)) return err(mismatch());
-    await writeFileAtomic(target, encode(valid.value));
+    if (!owns(valid.value)) return err(mismatch(file));
+    const written = before === undefined ? valid.value : toWrite(valid.value, before, spec.parser);
+    await writeFileAtomic(target, encode(written));
     return valid;
   };
 
@@ -91,10 +107,10 @@ export function fileStore<T>(
     write: (value) => locked(() => save(value)),
     update: <E>(change: (current: T) => Result<T, E>) =>
       locked(async (): Promise<Result<T, StoreIssue | E>> => {
-        const current = await read();
+        const current = await readDecoded(target, file, spec, owns);
         if (!current.ok) return current;
-        const changed = change(current.value);
-        return changed.ok ? save(changed.value) : changed;
+        const changed = change(current.value.value);
+        return changed.ok ? save(changed.value, current.value) : changed;
       }),
   };
 }

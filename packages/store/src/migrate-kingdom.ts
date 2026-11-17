@@ -24,6 +24,7 @@ import { INBOX_DIR, KINGDOM_FILE, kingdomLayout } from './layout.ts';
 import { inKingdom } from './paths.ts';
 import { currentVersion } from './migrations/run.ts';
 import { decode, encode } from './stored-file.ts';
+import { toWrite } from './written-fields.ts';
 import type { StoreIssue } from './issues.ts';
 import type { FileSpec } from './stored-file.ts';
 
@@ -98,7 +99,8 @@ async function migrateFile(
     if (decoded.value.from === currentVersion(spec.migrations)) return ok(false);
     // The backup is written before the file changes, so a crash between the two loses nothing.
     await writeFileAtomic(inKingdom(root, `${backup}/${file}`), text);
-    await writeFileAtomic(target, encode(decoded.value.value));
+    // What the migration made, without the defaults the schema filled in, as `update` writes it (187).
+    await writeFileAtomic(target, encode(toWrite(decoded.value.value, decoded.value, spec.parser)));
     return ok(true);
   });
   return outcome.ok ? outcome.value : err(lockedIssue(file));

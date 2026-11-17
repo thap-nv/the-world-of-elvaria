@@ -37,6 +37,8 @@ export interface Decoded<T> {
   readonly value: T;
   /** Version on disk: below the current one, the next write (or `migrateKingdom`) upgrades the file. */
   readonly from: number;
+  /** The JSON after migration, before the schema filled its defaults: the fields a rewrite keeps (187). */
+  readonly raw: unknown;
 }
 
 /** Files are pretty-printed, keys in schema order, LF, with a final newline: diffable and hand-editable. */
@@ -89,5 +91,5 @@ export function decode<T>(text: string, file: string, spec: FileSpec<T>): Result
   const migrated = decodeRaw(text, file, spec.migrations);
   if (!migrated.ok) return migrated;
   const valid = validate(migrated.value.value, spec.parser, file);
-  return valid.ok ? ok({ value: valid.value, from: migrated.value.from }) : valid;
+  return valid.ok ? ok({ value: valid.value, from: migrated.value.from, raw: migrated.value.value }) : valid;
 }
