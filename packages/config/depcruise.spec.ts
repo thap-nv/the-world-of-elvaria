@@ -9,6 +9,11 @@ import { WORKSPACES } from './boundaries.mjs';
 // A fake repo with one planted violation per rule, next to imports that must stay allowed.
 const FIXTURE = fileURLToPath(new URL('__fixtures__/repo', import.meta.url));
 
+// Cruising the fixture loads dependency-cruiser and the TypeScript compiler: 0.3 s alone, 1 s next to this
+// package's other specs, up to 3.6 s with six workspaces testing alongside (2026-11-17). vitest's 5 s
+// default failed under such load (189); this ceiling still ends a hung cruise. Other specs keep the default.
+const CRUISE_TIMEOUT_MS = 30_000;
+
 /** `rule: from -> to`, with npm paths shortened to the package name so the list is stable. */
 async function violations(): Promise<string[]> {
   const { forbidden, options } = depcruiseConfig();
@@ -26,7 +31,7 @@ async function violations(): Promise<string[]> {
 }
 
 describe('depcruiseConfig', () => {
-  it('reports exactly the planted violations', async () => {
+  it('reports exactly the planted violations', { timeout: CRUISE_TIMEOUT_MS }, async () => {
     expect(await violations()).toEqual(
       [
         'boundary-domain: packages/domain/src/peek.ts -> packages/store/src/index.ts',
