@@ -180,6 +180,7 @@ Khảo sát ở `b9386dfd`. Số dòng nối tiếp bảng "Điều code cho th�
   6. Với Codex: nghề không có shell chỉ đọc được file git theo dõi (dòng 41); `view_image` có đọc được ảnh chưa theo dõi nằm ngoài đất không.
 - **Kết quả**: `docs/spikes/vision-<ngày>.md`; một mục "Đọc ảnh" trong [cli-facts](../reference/cli-facts-2026-11-12.md); câu §10 của PS-11 ("agy đọc ảnh bằng tool nào") được trả lời hoặc ghi là "không đọc được ở phiên bản đã đo". Tộc nào không qua spike thì adapter của nó không khai `vision`, và PS-11b không cố làm cho nó.
 - **Không code** trong `packages/`.
+- **Thực tế khi làm** (PS-11a, 2026-11-17; §11 cùng ngày, dòng "PS-11a (…)", chờ chủ nhân chốt): [spike đọc ảnh](../spikes/vision-2026-11-17.md), cả ba tộc qua. Khác dòng 41 ở trên: agy có đọc ảnh, bằng chính `read_file` (danh sách `init.tools` gọi nó `view_file`). Khác tiền đề của câu 6: `view_image` của Codex đọc mọi file, theo dõi hay không, trong đất hay ngoài, bất kể `sandbox_mode="read-only"`; chỉ hook của Elvaria rào được nó, và hôm nay mọi nghề có `Read` của tộc Codex đã xem được ảnh bất kỳ trên đĩa. Model rẻ nhất của tộc Codex mà vương quốc có là `gpt-6.1-sol-low`. Codex dùng lời gọi thứ năm để tìm trần cỡ (4 MiB đọc được, 6 MiB bị bỏ). Tổng 269 436 token đếm. Mục "Đọc ảnh" là §8 của [cli-facts 2026-11-12](../reference/cli-facts-2026-11-12.md). Bộ sinh PNG giữ thành khối code ở §7 của file spike (chủ nhân chốt cùng ngày); script chạy phiên không giữ. macOS chưa đo.
 
 ## PS-11 — Năng lực `vision` và nghi thức `visual_review`
 
