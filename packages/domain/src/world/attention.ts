@@ -8,7 +8,8 @@
 // Steward holds because its CLI changed version (versionHoldsOf, A1b of the lessons of 2026-11-13) comes from its notices.
 // A review whose latest judge could not open a session comes from the quest files (unopenedReviewsOf,
 // fix/review-no-session). A done quest whose delivery to its forge stopped, or whose pull request waits for the owner,
-// comes from the log (forgeOutcomesOf, PS-08c).
+// comes from the log (forgeOutcomesOf, PS-08c). A newer build of Elvaria comes from the CLI, which keeps the pin
+// (`upgrade`, PS-08d).
 import { current } from '../mana/reading.ts';
 import { manaWarningOf } from '../mana/state.ts';
 import { RANKS } from '../schema/common.ts';
@@ -60,6 +61,15 @@ export interface StewardNotices {
   readonly deliveries?: readonly ForgeOutcome[];
   /** The health of each patrolled territory's default branch (baseHealthOf, PS-26); from the log. */
   readonly patrols?: readonly TerritoryHealth[];
+  /** A newer build to upgrade to (PS-08d): apps/cli reads it from the pinned build's repo as the digest is made. */
+  readonly upgrade?: UpgradeOffer;
+}
+
+/** The pinned commit, the default branch's commit, and how many commits since touch `packages/` or `apps/`. */
+export interface UpgradeOffer {
+  readonly pinned: string;
+  readonly latest: string;
+  readonly commits: number;
 }
 
 const FIELD = /^\{(\w+)\}$/;
@@ -167,6 +177,7 @@ function noticeItems(state: WorldState, notices: StewardNotices): AttentionItem[
         ? itemOf('tribe_gone', { tribe, path, checked_version: checked })
         : itemOf('tribe_held', { tribe, path, version, checked_version: checked }),
     ),
+    ...(notices.upgrade === undefined ? [] : [itemOf('upgrade_available', { ...notices.upgrade })]),
   ];
 }
 

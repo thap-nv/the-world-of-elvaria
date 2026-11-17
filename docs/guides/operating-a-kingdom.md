@@ -245,9 +245,11 @@ Các lệnh trên chỉ đọc, không tốn mana, chạy được khi Nhiếp c
 1. Đọc nhánh trong repo của lãnh thổ (`git log main..quest/<quest>`, `git diff main...quest/<quest>`), thư bàn giao và phán quyết (`quest show`).
 2. `elvaria seal <quest> --note "…"`, hoặc `elvaria return <quest> --note "…" --fail-kind <kiểu>` để trả về người làm. `--note` của `return` bắt buộc, ít nhất 20 ký tự; `--fail-kind` là một trong `tests_fail`, `scope_creep`, `missing_i18n`, `wrong_facts`, `incomplete`, `style`, `unsafe`, `other` (mặc định `other`). `return --rejudge` khi lỗi là của người chấm: việc được chấm lại, người làm không bị tính trượt. Hai lệnh chỉ ghi vào `inbox/`: Nhiếp chính phải đang chạy thì quest mới chuyển.
 3. Nhiếp chính viết thư giao hàng `.runs/<quest>-delivery.md`. Push **từ trong worktree của quest**, để pre-push hook của repo (nếu có) kiểm đúng nhánh đó; mở PR với thư giao hàng làm mô tả; merge. Repo không có remote thì merge nhánh `quest/<quest>` tại chỗ.
-4. `elvaria quest archive <quest>`: Nhiếp chính gỡ worktree và cho Claude Code quên đường dẫn đó (Nhiếp chính không chạy thì lệnh chờ tới lần `run` sau). Nhánh ở lại; xóa khi đã merge (`git branch -d quest/<quest>`).
+4. Lưu trữ để trả đất. Từ PS-08d Nhiếp chính tự làm việc này ở mọi chế độ giao hàng: nó dò nhánh gốc của lãnh thổ (fetch `origin` một lần) ngay sau mỗi `delivery.merged` và mỗi 10 phút khi còn quest `done` để hỏi; quest đã giao mà đầu nhánh đã nằm trong `main` (local hay `origin/main`) thì nó `archive`, gỡ worktree và cho Claude Code quên đường dẫn đó. Nhánh chưa có commit riêng không tính. Không muốn chờ thì `elvaria quest archive <quest>` (Nhiếp chính không chạy thì lệnh chờ tới lần `run` sau). Nhánh local ở lại; xóa khi đã merge (`git branch -d quest/<quest>`).
 
-Với một đội, chỉ merge nhánh của **quest ghép**; hợp đồng và các phần vào `main` qua nó.
+Với một đội, chỉ merge nhánh của **quest ghép**; hợp đồng và các phần vào `main` qua nó, và được lưu trữ cùng lúc với nó ở lần dò kế. Merge bằng `squash` không để lại tổ tiên: quest ghép được lưu trữ theo `delivery.merged` của chính nó (khi Nhiếp chính merge), còn hợp đồng và các phần thì bạn lưu trữ tay.
+
+**Giao hàng tự động** (PS-08c, PS-08d; ADR 0023): `elvaria territory delivery <lãnh thổ> --mode pr` cho Nhiếp chính push `quest/<quest>` (chạy pre-push hook của repo) và mở PR với thư giao hàng làm mô tả; bạn đọc và merge PR, Nhiếp chính lưu trữ quest ở lần dò kế. `--mode pr_merge` thêm bước merge cho quest **đã có dấu**: Nhiếp chính hỏi forge mỗi 30 giây, merge khi các `required_checks` xanh (danh sách rỗng: ngay khi forge nói PR ghép được; cổng là check của chính Nhiếp chính trước người chấm), ở đúng đầu nhánh nó đã push, rồi xóa nhánh `quest/<quest>` trên remote (chỉ khi đầu nhánh còn đúng) và lưu trữ quest. Quest không qua dấu dừng ở PR như `pr`. Check đỏ, quá `--timeout` phút (mặc định 60) tính từ lúc push, conflict, đầu nhánh bị đổi trên forge, PR bị đóng: một `delivery.failed` và một mục bản tấu; Nhiếp chính không tự thử lại, quest ở `done`; sửa xong thì `elvaria quest deliver <quest>`. Lùi về một bản ghim trước PS-08 thì bỏ khóa `delivery` khỏi file lãnh thổ trước (bản cũ không đọc được nó).
 
 **Sửa quest kế trước khi đóng dấu.** Quest có `depends_on` tới quest đang chờ dấu mở ngay khi bạn `seal`, và Nhiếp chính có thể giao nó ở nhịp kế. Đọc nhánh mà thấy quest kế cần đổi đề (một đường nối quest này để lại, một file đổi chỗ) thì `elvaria quest edit <quest kế> --description "…"` **trước** lệnh `seal`. Sau đó người làm đã đọc đề cũ, và một lần sửa mô tả lúc quest đang chạy dễ bị trả `stale`, vì Nhiếp chính cập nhật quest đang chạy nhiều lần mỗi phút (chỉ sửa trần mới bỏ qua phép so đó).
 
@@ -357,7 +359,15 @@ Bốn loại file văn bản mà mọi phiên đọc lúc mở; sửa xong thì 
 | `characters/<id>/scripture.md` | một nhân vật | bài học của riêng nó |
 | `registry/prompts/<nghề>.md` | mọi nhân vật của nghề | cách làm của nghề; bản mặc định theo bản Elvaria (§13) |
 
-Giữ ngắn: mọi dòng vào prompt của mọi phiên, và với tộc gemini prompt đi trên dòng lệnh (Windows dừng ở 32 767 ký tự). Kinh là điều nhân vật học từ chính việc của nó (ADR 0020); bài học về cách bạn điều phối thì không phải kinh. Bảy dòng P1-50 thêm vào vương quốc thật là mẫu tốt: "không để file nháp trong đất riêng", "lỗi lúc dựng container là lỗi môi trường, không phải test đỏ", "file `implementation-plan.md` nặng 1 MB: tìm rồi đọc đúng đoạn".
+Giữ ngắn: mọi dòng vào prompt của mọi phiên, và với tộc gemini prompt đi trên dòng lệnh (Windows dừng ở 32 767 ký tự). Kinh là điều nhân vật học từ chính việc của nó (ADR 0020); bài học về cách bạn điều phối thì không phải kinh.
+
+**Phân loại trước khi viết** (bước 0 của [plans/lesson-sharing.md](../plans/lesson-sharing.md) §8, (178)). Hỏi bài học còn đúng ở đâu ngoài vương quốc này, rồi đặt nó ở bậc cao nhất được:
+
+1. **Về chính Elvaria** (thư bàn giao, mục Not done, luật đạt của người chấm, đất nháp, commit của Nhiếp chính, cách pháp sư chia kế hoạch): sửa repo Elvaria, không viết kinh. Theo thang sửa lỗi: check hay script nếu máy làm được; không thì một câu trong mẫu prompt của `packages/runner-core/prompts/` hay prompt nghề của `packages/registry-default/prompts/`, đúng vai mà bài học nói tới; dữ kiện đã đo của một tộc trên một hệ điều hành thì vào adapter của tộc đó. Mọi vương quốc nhận khi `elvaria upgrade` (§13). Trong lúc chờ nhánh sửa merge, một dòng kinh tạm được: ghi vào §11 nhánh nào sẽ thay nó, và gỡ dòng sau `upgrade`.
+2. **Về một repo** (lệnh, file lớn, file sinh, quy ước): vào địa chí của lãnh thổ, hay tốt hơn vào tài liệu của chính repo đó, đi theo repo bằng git.
+3. **Còn lại** mới là kinh: thói quen làm việc, dữ kiện về một công cụ ngoài, dữ kiện về một tộc chưa đủ chắc để vào adapter. Phạm vi ở đầu câu: vai ("As a judge, …"), tộc và hệ điều hành ("As a Codex judge on Windows, …"), phiên bản CLI khi dữ kiện phụ thuộc nó. Không đường dẫn, tên repo, id quest hay tên nhân vật trong câu.
+
+Mẫu tốt của loại 3 trong vương quốc thật: "lỗi lúc dựng container là lỗi môi trường, không phải test đỏ", "file lớn hơn khoảng 50 KB: tìm rồi đọc đúng đoạn". "Không để file nháp trong đất riêng" (P1-50) là bài học về Elvaria: nay nằm trong luật 3 của người làm (fix/lesson-step-0).
 
 ## 12. Sửa tay cấu hình của vương quốc
 
@@ -434,4 +444,4 @@ Ba điều không phải lỗi, nhưng nên biết trước:
 
 ## 15. Chưa có ở giai đoạn 1
 
-Chuông ngoài terminal, điện thoại, bản đồ (giai đoạn 2 và 3); Nhiếp chính tự push và merge (PS-08); Tể tướng tự phân loại thư (PS-03b); tộc Gemini CLI với API key và tộc Codex (P1-12c, P1-12d, để dành). Kế hoạch và trạng thái: [implementation-plan](../implementation-plan.md) §8.
+Chuông ngoài terminal, điện thoại, bản đồ (giai đoạn 2 và 3); hàng đợi merge và quest Hợp nhất khi conflict (PS-09), merge quest không qua dấu (PS-08b); Tể tướng tự phân loại thư (PS-03b); tộc Gemini CLI với API key và tộc Codex (P1-12c, P1-12d, để dành). Kế hoạch và trạng thái: [implementation-plan](../implementation-plan.md) §8.

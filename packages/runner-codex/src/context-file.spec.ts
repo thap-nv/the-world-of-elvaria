@@ -57,6 +57,10 @@ describe('codexNote', () => {
     }
     expect(WINDOWS_SANDBOX_NOTE).toMatch(/do not run it again and again/);
     expect(WINDOWS_SANDBOX_NOTE).toMatch(/checks run outside the sandbox and are the judge/);
+    // A whole suite the sandbox breaks is not run again: the session checks its own files and ends (fix/lesson-step-0).
+    expect(WINDOWS_SANDBOX_NOTE).toMatch(
+      /full test suite or a repo-wide check fails in the sandbox this way, or times out there, do not run it again: run only the checks of the files the quest changed/,
+    );
   });
 });
 

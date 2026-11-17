@@ -90,6 +90,16 @@ function scratchPlots(
 }
 
 /**
+ * What the Steward reads of the base branch: how far the territory moved since its gazetteer was written (PS-21), and
+ * the looks that archive a done quest merged there and give its plot back (PS-08d).
+ */
+const baseLooksOf = (manager: PlotManager): Pick<Plots, 'drift' | 'baseTips' | 'inBase'> => ({
+  drift: async (plot, from) => (await manager.drift?.(plot, from)) ?? null,
+  baseTips: async (territory) => (await manager.baseTips?.(territory)) ?? undefined,
+  inBase: async (plot, tips) => (await manager.inBase?.(plot, tips)) ?? false,
+});
+
+/**
  * The patrol (PS-26): the territory's trial (PS-25) under a plot name of its own, so a `territory check` at the same
  * time keeps its plot; the scans run in it before it goes, and its logs go to .runs/patrol-<id>/.
  */
@@ -139,11 +149,10 @@ export function plotsOver(kingdom: string, manager: PlotManager, host: ProcessHo
     touched: (plot) => manager.touched(plot),
     ...scratchPlots(kingdom, manager, host),
     diff: (plot, scope) => manager.diff(plot, scope),
-    // How far the territory moved since its gazetteer was written (PS-21).
-    drift: async (plot, from) => (await manager.drift?.(plot, from)) ?? null,
     // A merge quest: its parts, then main, merged before its knight's sessions and checks (P1-18, PS-08e).
     merge: (plot, branches, base, options) => manager.merge(plot, branches, base, options),
     unmerged: (plot, branches, base) => manager.unmerged(plot, branches, base),
+    ...baseLooksOf(manager),
     // run-check spawns these without a shell; a check whose program is not found is left out (§3.12), and so is a
     // check of several commands (P1-20), which run-check cannot chain: the machine runs it before the judge.
     scriptChecks: async (territory) => {

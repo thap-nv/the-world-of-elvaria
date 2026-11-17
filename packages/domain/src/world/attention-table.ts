@@ -71,6 +71,8 @@ export const ATTENTION_TABLE = {
   patrol_scan: { group: 'can_wait', advice: 'read_scan', command: ['territory', 'patrol', '{territory}'] },
   mana_asleep: { group: 'can_wait', advice: 'wait_or_wake', command: ['wake', '{tribe}'] },
   mana_warning: { group: 'can_wait', advice: 'watch_mana', command: ['doctor'] },
+  // PS-08d: the repo the pinned build came from has newer commits on its default branch that touch the code.
+  upgrade_available: { group: 'can_wait', advice: 'upgrade', command: ['upgrade'] },
 } as const satisfies Record<
   string,
   { readonly group: AttentionGroup; readonly advice: string; readonly command: readonly string[] }
@@ -114,6 +116,10 @@ export interface AttentionSubject {
   readonly stage?: DeliveryStage;
   readonly reason?: DeliveryFailure;
   readonly url?: string;
+  /** A newer build (upgrade_available, PS-08d): the commit pinned, the default branch's, and its commits since. */
+  readonly pinned?: string;
+  readonly latest?: string;
+  readonly commits?: number;
   /**
    * A red check of a territory's default branch (base_red, PS-26): its id (`setup` for commands.setup), its first error
    * line and log as the latest patrol found them, the commit and time it was first found red, and the quests merged

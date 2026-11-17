@@ -6,6 +6,8 @@ import type { AttentionGroup, AttentionItem, WaitGauge } from '@elvaria/domain';
 import type { Translate } from '@elvaria/i18n';
 
 const NONE = '—';
+/** The digits of a commit id the CLI prints (shortSha). */
+const SHORT_SHA = 12;
 
 /** The pools that hold a quest's judges, each with its reset when known; the bell says them so too. */
 export function gaugesOf(t: Translate, gauges: readonly WaitGauge[] = []): string {
@@ -33,7 +35,12 @@ const deliveryOf = (t: Translate, item: AttentionItem) => ({
   url: item.url ?? NONE,
 });
 
-const SHORT_SHA = 7;
+/** A newer build (PS-08d): the commits short, as the CLI prints them. */
+const upgradeOf = (item: AttentionItem) => ({
+  pinned: item.pinned?.slice(0, SHORT_SHA) ?? NONE,
+  latest: item.latest?.slice(0, SHORT_SHA) ?? NONE,
+  commits: item.commits ?? NONE,
+});
 
 /** A red check of a default branch, or a scan that did not pass (PS-26): what the patrol found, and where. */
 const patrolOf = (t: Translate, item: AttentionItem) => ({
@@ -74,6 +81,7 @@ function subjectOf(t: Translate, item: AttentionItem): string {
     resets_at: item.resets_at ?? NONE,
     ...triageOf(t, item),
     ...deliveryOf(t, item),
+    ...upgradeOf(item),
     ...patrolOf(t, item),
   });
 }

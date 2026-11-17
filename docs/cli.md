@@ -449,7 +449,7 @@ Quyết một thư, một lần: gác lại (shelved), bác (rejected), hoặc n
 | `<memo>` | id của thư, ví dụ m_20261112_4k2pqz (elvaria memo list in ra). |
 | `<decision>` | shelved, rejected, handled, hoặc accepted (chỉ với thư phản biện). |
 | `--quest <quest>` | Đi với handled: nhiệm vụ làm việc đó. |
-| `--note <text>` | Ghi chú lưu cùng quyết định. |
+| `--note <text>` | Ghi chú lưu cùng quyết định; ghi chú nêu id của một thư khác bị từ chối. |
 
 ## `elvaria triage`
 
@@ -520,5 +520,5 @@ Dựng một bản mới của Elvaria cạnh bản đang ghim, thử nó (migra
 
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
-| `--ref <ref>` | Commit, nhánh hay tag của repo Elvaria mà lệnh này chạy từ đó (mặc định: main). |
+| `--ref <ref>` | Commit, nhánh hay tag của repo Elvaria mà lệnh này chạy từ đó (mặc định: main). Nhánh ở máy chậm hơn bản origin/ của nó (theo lần fetch gần nhất) vẫn được dựng, kèm cảnh báo; lệnh không fetch. |
 | `--rollback` | Ghim lại bản trước, không dựng gì. |

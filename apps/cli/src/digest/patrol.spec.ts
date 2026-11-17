@@ -74,7 +74,7 @@ describe('the patrol in the digest and the metrics', () => {
     expect(await run(io, 'digest', '--kingdom', kingdom, '--locale', 'en')).toBe(0);
     const text = io.printed.out.join('\n');
     expect(text).toContain(
-      `- Territory do-an: check unit of the default branch is red since 2026-11-06T06:30:00+07:00 (commit abcdef1): FAIL src/a.spec.ts Log: .runs/patrol-do-an/checks/unit.log. Quests merged since the last green patrol: ${QUEST_ID}.`,
+      `- Territory do-an: check unit of the default branch is red since 2026-11-06T06:30:00+07:00 (commit abcdef123456): FAIL src/a.spec.ts Log: .runs/patrol-do-an/checks/unit.log. Quests merged since the last green patrol: ${QUEST_ID}.`,
     );
     expect(text).toContain('`elvaria territory check do-an`');
     expect(text).toContain('- Territory do-an: scan link-check of the latest patrol: fail, 2 found.');

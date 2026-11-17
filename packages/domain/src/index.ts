@@ -33,6 +33,8 @@ export * from './delegation/delegation.ts';
 export * from './dispatch/background-room.ts';
 export * from './dispatch/claim-blocker.ts';
 export * from './dispatch/forge-due.ts';
+export * from './dispatch/forge-polls.ts';
+export * from './dispatch/in-base.ts';
 export * from './dispatch/judge-waits.ts';
 export * from './dispatch/new-quest.ts';
 export * from './dispatch/plan-tick.ts';

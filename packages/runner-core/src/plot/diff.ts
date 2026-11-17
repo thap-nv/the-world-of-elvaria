@@ -16,14 +16,16 @@ const STAT_WIDTH = '--stat=200';
 
 /**
  * `stat` and `patch` as one text of at most `max` characters; empty when nothing changed. A patch that does not
- * fit is cut at a line end, and the last line says where the rest is.
+ * fit is cut at a line end, and the last line says where the rest is and that the judge reads it before deciding.
+ * Judges decided on the part they had read (PS-07 gap 13, twice by 2026-11-15); a real kingdom kept the rule in its
+ * scripture, for every session, until this note said it where it applies (fix/lesson-step-0).
  */
 export function cappedDiff(stat: string, patch: string, range: string, max = DIFF_MAX_CHARS): string {
   if (patch.trim() === '') return '';
   const head = stat.trimEnd();
   const whole = `${head}\n\n${patch.trimEnd()}`;
   if (whole.length <= max) return whole;
-  const note = `[diff cut at ${max} characters; the rest is in the plot: git diff ${range}]`;
+  const note = `[diff cut at ${max} characters; the rest is in the plot: git diff ${range}. Read the files you have not seen before you decide: a verdict on part of a diff is not a pass.]`;
   const room = Math.max(0, max - head.length - note.length - 3);
   const part = patch.slice(0, room);
   return `${head}\n\n${part.slice(0, part.lastIndexOf('\n') + 1)}${note}`;

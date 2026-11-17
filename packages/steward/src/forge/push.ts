@@ -9,16 +9,16 @@ import { readFile } from 'node:fs/promises';
 
 import { currentRun, deliveryOf, err, ok } from '@elvaria/domain';
 import { createRedactor } from '@elvaria/eventlog';
-import { fromPortable, inKingdom, writeFileAtomic } from '@elvaria/store';
-import type { Quest, QuestId, Result, Territory } from '@elvaria/domain';
+import { inKingdom, writeFileAtomic } from '@elvaria/store';
+import type { Quest, QuestId, Result } from '@elvaria/domain';
 
 import { deliveryNoteOf } from '../deliver/note.ts';
+import { detailOf, forgeError, foundOf, messageOf, stopped } from './delivery.ts';
 import { runDeliveryGit } from './git.ts';
 import { recordFailed, recordPushed } from './outcome.ts';
 import { scanDiff } from './scan.ts';
 import type { Context } from '../context.ts';
-import type { DeliveryGit } from './git.ts';
-import type { Forge, ForgeRepo } from './forge.ts';
+import type { Delivery } from './delivery.ts';
 import type { Failure } from './outcome.ts';
 
 const MS_PER_MINUTE = 60_000;
@@ -31,46 +31,6 @@ const LOCAL_GIT_TIMEOUT_MS = LOCAL_GIT_TIMEOUT_MINUTES * MS_PER_MINUTE;
 
 /** Portable, relative to the kingdom: the push's output, masked. */
 export const pushLogOf = (quest: QuestId): string => `.runs/${quest}-delivery/push.log`;
-
-/** What one delivery works with, found before its first step. */
-interface Delivery {
-  readonly quest: Quest;
-  readonly territory: Territory;
-  readonly forge: Forge;
-  readonly repo: ForgeRepo;
-  readonly git: DeliveryGit;
-  readonly branch: string;
-  /** vcs.default_branch, which a git territory always has (TerritorySchema). */
-  readonly base: string;
-  readonly worktree: string;
-  readonly signal: AbortSignal;
-}
-
-type Found = Result<Delivery, Failure>;
-
-const forgeError = (branch: string, detail: string): Failure => ({
-  stage: 'push',
-  reason: 'forge_error',
-  branch,
-  detail,
-});
-
-/** The forge's adapter, the repo, git and the plot; what is missing fails the delivery once. */
-function foundOf(ctx: Context, quest: Quest, signal: AbortSignal): Found {
-  const territory = ctx.world.territories.get(quest.territory);
-  const { branch = '', path = '' } = quest.plot;
-  if (territory === undefined) return err(forgeError(branch, 'the territory is gone'));
-  const id = deliveryOf(territory).forge;
-  const forge = ctx.deps.forges?.adapters[id];
-  if (forge === undefined || ctx.deps.forges === undefined)
-    return err(forgeError(branch, `this Steward has no adapter for the forge ${id}`));
-  const repo = forge.repoOf(territory.vcs.remote ?? '', fromPortable(territory.path));
-  const base = territory.vcs.default_branch;
-  if (repo === undefined || base === undefined)
-    return err(forgeError(branch, `vcs.remote names no repo on ${id}`));
-  const git = { launch: ctx.deps.forges.git, env: ctx.deps.env };
-  return ok({ quest, territory, forge, repo, git, branch, base, worktree: fromPortable(path), signal });
-}
 
 /** git in the plot with a short limit; its trimmed stdout, or undefined when it failed. */
 async function localGit(d: Delivery, args: readonly string[]): Promise<string | undefined> {
@@ -107,9 +67,6 @@ async function push(ctx: Context, d: Delivery, known: readonly string[]): Promis
     run.stopped && !d.signal.aborted ? `${masked}\nstopped after ${PUSH_TIMEOUT_MINUTES} minutes` : masked,
   );
 }
-
-/** The Steward stopped: asked anew after each await, which TypeScript's narrowing cannot see. */
-const stopped = (d: Delivery): boolean => d.signal.aborted;
 
 /** The steps after the plot is found; undefined when the Steward stopped, which records nothing. */
 async function deliverFound(ctx: Context, d: Delivery): Promise<Failure | undefined> {
@@ -156,7 +113,7 @@ async function openPullRequest(
   const note = await readFile(inKingdom(ctx.root, deliveryNoteOf(d.quest)), 'utf8');
   const body = createRedactor(pushed.known)(note);
   const draft = { head: d.branch, base: d.base, title: d.quest.title, body };
-  const opened = await d.forge.open(d.repo, draft);
+  const opened = await d.forge.open(d.repo, draft, d.signal);
   if (stopped(d)) return undefined;
   const { head, warnings } = pushed;
   if (!opened.ok)
@@ -177,10 +134,6 @@ async function openPullRequest(
   });
   return undefined;
 }
-
-const detailOf = (detail: string | undefined) => (detail === undefined || detail === '' ? {} : { detail });
-
-const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
 /** One delivery; an error nobody foresaw (a treasury that cannot be read, a note gone) fails it as the forge's. */
 async function deliverQuest(ctx: Context, quest: Quest, signal: AbortSignal): Promise<void> {

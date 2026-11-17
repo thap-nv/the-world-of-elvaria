@@ -10,11 +10,13 @@ import type {
   TerritoryTrial,
   ToolFound,
   TribeId,
+  UpgradeOffer,
 } from '@elvaria/domain';
 import type { EventLog } from '@elvaria/eventlog';
 import type {
   AgentRunner,
   BaseBranch,
+  BaseTips,
   CheckRun,
   CodeGraphs,
   CommitOutcome,
@@ -34,6 +36,7 @@ import type { KingdomStore } from '@elvaria/store';
 
 import type { Forges } from './forge/forge.ts';
 import type { Bell } from './notice.ts';
+import type { PatrolOptions } from './patrol/ports.ts';
 import type { Digest, OnCallJob, ScheduledJob } from './schedule/ports.ts';
 import type { ScriptRunner } from './script/run-script.ts';
 
@@ -192,16 +195,17 @@ export interface Plots {
    * PlotManager.drift); null when git cannot say. Absent (folder plots): a stamped gazetteer gets no note.
    */
   drift?(plot: Quest['plot'], from: string): Promise<Drift | null>;
-  /**
-   * The patrol of a territory's default branch (PS-26): runner-core's tryTerritory under the plot name
-   * `patrol-<id>`, then `scan` in the plot before it goes. Absent: no patrol runs (a spec's folder plots).
-   */
-  patrol?(
-    territory: Territory,
-    options: { readonly signal: AbortSignal; readonly scan: (cwd: string) => Promise<void> },
-  ): Promise<TerritoryTrial>;
+  /** The patrol (PS-26): tryTerritory under `patrol-<id>`, then `scan` in its plot. Absent: no patrol runs. */
+  patrol?(territory: Territory, options: PatrolOptions): Promise<TerritoryTrial>;
   /** At archive only: removes a worktree (its branch stays) and what the tribes' CLIs kept about it. */
   release(plot: Quest['plot']): Promise<Result<ReleasedPlot, PlotFailure>>;
+  /**
+   * (PS-08d) A territory's base branch tips, origin's fetched first (PlotManager.baseTips), and whether a done quest's
+   * branch is in them (PlotManager.inBase): the look that archives a quest merged into the base branch. Absent (folder
+   * plots): no look, a quest is archived by the owner or by its own `delivery.merged`.
+   */
+  baseTips?(territory: Territory): Promise<BaseTips | undefined>;
+  inBase?(plot: Quest['plot'], tips: BaseTips): Promise<boolean>;
 }
 
 export interface StewardDeps {
@@ -260,6 +264,11 @@ export interface StewardDeps {
    * `delivery.failed` (`forge_error`) per quest, and nothing is pushed.
    */
   readonly forges?: Forges;
+  /**
+   * (PS-08d) A newer build of Elvaria than the one the kingdom pins, read as the digest is made: apps/cli keeps the pin
+   * (.state/build.json) and asks the repo it came from. Absent, or undefined: no `upgrade_available` item.
+   */
+  readonly upgradeOffer?: () => Promise<UpgradeOffer | undefined>;
 }
 
 export interface TickReport {

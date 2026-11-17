@@ -1,6 +1,6 @@
 // Which build runs, said where the owner looks (PS-04b): `elvaria run` as it starts, `elvaria doctor` among its
 // findings.
-import { writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { translator } from '@elvaria/i18n';
@@ -45,6 +45,7 @@ describe('the build that runs', () => {
       `Pinned build ${SHA_A.slice(0, 12)}; there is no build before it to go back to.`,
     );
     await writePin(kingdom, SHA_A, SHA_B);
+    await placeBuild(kingdom, SHA_B, {});
     expect(await check(build)).toMatchObject({
       level: 'ok',
       text: `Pinned build ${SHA_A.slice(0, 12)}; the build before, ${SHA_B.slice(0, 12)}, is kept to go back to.`,
@@ -53,6 +54,21 @@ describe('the build that runs', () => {
       level: 'warn',
       text: `The kingdom pins build ${SHA_A.slice(0, 12)}, but this command runs from ${checkout} (--here).`,
     });
+  });
+
+  // (170): a kingdom moved to another machine without `.builds/` still names the build before in its pointer.
+  it('says there is no way back when the build before is no longer on disk', async () => {
+    const build = await placeBuild(kingdom, SHA_A, {});
+    await writePin(kingdom, SHA_A, SHA_B);
+    const gone = path.join(kingdom, '.builds', SHA_B);
+    expect(await check(build)).toEqual({
+      level: 'ok',
+      text: `Pinned build ${SHA_A.slice(0, 12)}; the build before, ${SHA_B.slice(0, 12)}, is no longer in ${gone}, so there is no build to go back to.`,
+      details: [],
+    });
+    // A folder left without its CLI is no way back either: rollback.ts refuses it.
+    await mkdir(gone, { recursive: true });
+    expect((await check(build)).text).toContain('is no longer in');
   });
 
   it('is an error for doctor when the pinned build cannot run', async () => {

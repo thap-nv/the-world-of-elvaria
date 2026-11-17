@@ -164,6 +164,16 @@ export const DELIVERY_DETAIL_MAX_LENGTH = 2000;
 export const PATROL_LINE_MAX_LENGTH = 500;
 
 /**
+ * (V) of the PS-08 plan (PS-08d): under `pr_merge` the Steward asks the forge about a sealed quest's pull request at
+ * most this often (forgePolls), and fetches a territory's base branch to look which done quests it holds at most every
+ * BASE_LOOK_MINUTES while one is there to ask about (baseLooks). Not measured: a forge's checks take minutes, and a
+ * merge by hand waits for the owner.
+ */
+export const FORGE_POLL_SECONDS = 30;
+export const BASE_LOOK_MINUTES = 10;
+export const MS_PER_SECOND = 1000;
+
+/**
  * Ritual steps the verifier prompt knows how to run (glossary §13). A step is code in runner-core's prompt
  * builder, not data, so a ritual naming any other step is rejected when the registry loads.
  */
