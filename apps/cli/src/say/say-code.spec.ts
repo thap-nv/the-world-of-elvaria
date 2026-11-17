@@ -147,22 +147,43 @@ describe('elvaria say: the code in the Chancellor’s prompt (PS-21b)', () => {
   });
 
   // (156)(b): the owner named a file no territory held, and the Chancellor guessed one (PS-07 gap 12).
-  it('names to it the paths no territory holds a file at, beside those it does', async () => {
+  it('names to it the paths no territory holds a file at, beside those it does, and tells the owner', async () => {
     await openKingdom(kingdom).territories.write(territory(false));
     const heard: string[] = [];
     const chancellor = await listening(heard);
+    const io = testIo();
     const code = await sayCommand({
       runnersOf: () => ({ [CLAUDE]: chancellor }),
       graphsOf: () => Promise.resolve(undefined),
     }).run(
       {
         values: { kingdom },
-        positionals: ['Sửa chancellor/draft-quests.ts và runner-antigravity/src/doctor.ts'],
+        positionals: ['Sửa chancellor/draft-quests.ts, runner-antigravity/src/doctor.ts và docs/nope.md'],
       },
-      { io: testIo(), locale: 'en', localeFromFlag: true, t: translator('en') },
+      { io, locale: 'en', localeFromFlag: true, t: translator('en') },
     );
     expect(code).toBe(0);
     expect(heard[0]).toContain(`- \`chancellor/draft-quests.ts\`: 1 file, ${SOURCE.length} B in all`);
     expect(heard[0]).toContain('## Not found\n\n- `runner-antigravity/src/doctor.ts`');
+    // (202): the owner reads the same paths, right under the size line.
+    expect(io.printed.out.slice(0, 2)).toEqual([
+      'The Chancellor gets the size of the files your words name: 1 in all.',
+      'No territory holds a file at runner-antigravity/src/doctor.ts, docs/nope.md: the Chancellor is told so, and does not guess one.',
+    ]);
+  });
+
+  it('tells the owner nothing is missing when every named path is found', async () => {
+    await openKingdom(kingdom).territories.write(territory(false));
+    const io = testIo();
+    const code = await sayCommand({
+      runnersOf: async () => ({ [CLAUDE]: await listening([]) }),
+      graphsOf: () => Promise.resolve(undefined),
+    }).run(
+      { values: { kingdom }, positionals: [WORDS] },
+      { io, locale: 'vi', localeFromFlag: true, t: translator('vi') },
+    );
+    expect(code).toBe(0);
+    expect(io.printed.out[0]).toBe('Tể tướng nhận cỡ của các file mà lời của chủ nhân nêu: 1 file.');
+    expect(io.printed.out.join('\n')).not.toContain('Không lãnh thổ nào có file');
   });
 });
