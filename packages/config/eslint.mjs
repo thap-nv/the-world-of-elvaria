@@ -10,6 +10,7 @@ import tseslint from 'typescript-eslint';
 
 import { NOT_RUNTIME, boundaryConfigs, pureDomainConfig } from './eslint-boundaries.mjs';
 import { cliOutputConfig } from './eslint-i18n.mjs';
+import { testTimeConfig } from './eslint-test-time.mjs';
 
 const TESTS = ['**/*.spec.ts'];
 // Tools load these through a default export.
@@ -114,6 +115,7 @@ export function elvaria({ root }) {
         '@typescript-eslint/no-non-null-assertion': 'off',
       },
     },
+    testTimeConfig(TESTS),
     { name: 'elvaria/config-files', files: CONFIG_FILES, rules: { 'import-x/no-default-export': 'off' } },
     // Repo scripts print to the terminal; that is their output.
     { name: 'elvaria/scripts', files: ['scripts/**'], rules: { 'no-console': 'off' } },
