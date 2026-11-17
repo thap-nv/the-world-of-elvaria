@@ -4,9 +4,8 @@
 //   --version | auth status --json | purge --yes <dir>   answers as the real CLI does
 //   -p /usage | -p "<ping>"                              replays usage-command.jsonl | probe.jsonl
 //   -p (prompt on stdin)                                 plays env ELVARIA_FAKE_SCENARIO, or replays FAKE_CLAUDE_REPLAY
-// Knobs: FAKE_CLAUDE_PING=rate_limit|error, FAKE_CLAUDE_USAGE_TEXT=<text of /usage>, FAKE_CLAUDE_RECORD=<file>
-// (argv, cwd, env and prompt of a session, for the specs to read), and those of fake-claude-commands.mjs and
-// fake-claude-leak.mjs (the fake-only scenario `leak`).
+// Knobs: FAKE_CLAUDE_PING=rate_limit|error, FAKE_CLAUDE_USAGE_TEXT=<text of /usage>, FAKE_CLAUDE_RECORD=<file> (argv,
+// cwd, env, prompt), and those of fake-claude-commands.mjs, -leak.mjs (fake-only `leak`) and -image.mjs (`image`).
 // Lines marked "self-built" have no real fixture yet: 429 is P1-16's (spike P1-02); they follow the docs.
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -15,6 +14,7 @@ import process from 'node:process';
 
 import { COMMANDS } from './fake-claude-commands.mjs';
 import { hookDenial, ruleDenial } from './fake-claude-denials.mjs';
+import { image } from './fake-claude-image.mjs';
 import { leak } from './fake-claude-leak.mjs';
 import { readStdin } from './read-stdin.mjs';
 
@@ -197,6 +197,7 @@ function rateLimited(play) {
 
 const SCENARIOS = {
   leak: (play) => leak(play, { speak, runHooks, writeLetter, finish }),
+  image: (play) => image(play, { speak, runHooks, finish }),
   submit: (play) => work(play),
   ask: (play) => work(play, play.core.FAKE_QUESTION),
   forbidden_command: (play) => forbidden(play),

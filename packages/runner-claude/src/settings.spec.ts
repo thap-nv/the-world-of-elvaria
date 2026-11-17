@@ -1,3 +1,6 @@
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+
 import { toolPolicyOf } from '@elvaria/runner-core';
 import { describe, expect, it } from 'vitest';
 
@@ -7,6 +10,7 @@ import {
   HOOK_EVENTS,
   absoluteRulePath,
   allowRules,
+  imageRules,
   letterRules,
   scopedRule,
   settingsOf,
@@ -133,6 +137,39 @@ describe('settingsOf', () => {
     expect(letterRules('/k/h.md')).toEqual(['Read(//k/h.md)', 'Edit(//k/h.md)', 'Write(//k/h.md)']);
     expect(settingsProblems(settingsOf(knight, HOOK, {}, String.raw`C:\a b\h.md`))).toEqual([]);
   });
+
+  it('opens each screen of a review by one Read rule, never their folder (PS-11b)', () => {
+    const home = String.raw`E:\Works\Kingdom of Agents\my kingdom\.runs\q-1\screens\home.png`;
+    expect(imageRules([home])).toEqual([
+      'Read(//e/Works/Kingdom of Agents/my kingdom/.runs/q-1/screens/home.png)',
+    ]);
+    expect(imageRules(['/Users/thu/my kingdom/.runs/q-1/screens/home.png'])).toEqual([
+      'Read(//Users/thu/my kingdom/.runs/q-1/screens/home.png)',
+    ]);
+    expect(imageRules()).toEqual([]);
+    const judge = { ...knight, images: [home] };
+    const { permissions } = settingsOf(judge, HOOK, {});
+    expect(permissions.allow).toContain(imageRules([home])[0]);
+    expect(permissions.allow.filter((rule) => rule.includes('.runs'))).toHaveLength(1);
+    expect(settingsProblems(settingsOf(judge, HOOK, {}))).toEqual([]);
+  });
+
+  it.runIf(process.platform === 'win32')(
+    'writes a native Windows path of a screen in the measured form',
+    () => {
+      const native = path.join(tmpdir(), 'my kingdom', '.runs', 'q-1', 'screens', 'home.png');
+      const [rule] = imageRules([native]);
+      expect(rule).toMatch(/^Read\(\/\/[a-z]\/[^\\]+\/screens\/home\.png\)$/);
+    },
+  );
+
+  it.runIf(process.platform !== 'win32')(
+    'writes a native POSIX path of a screen with the double slash',
+    () => {
+      const native = path.join(tmpdir(), 'my kingdom', '.runs', 'q-1', 'screens', 'home.png');
+      expect(imageRules([native])).toEqual([`Read(/${native})`]);
+    },
+  );
 
   it('is sound as generated', () => {
     expect(
