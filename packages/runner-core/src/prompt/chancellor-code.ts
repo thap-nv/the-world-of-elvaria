@@ -100,17 +100,27 @@ function graphText(territory: string, graph: GraphAnswer): string {
   ].join('\n\n');
 }
 
-/** The two blocks of the system part: the named files, then the graph's answer; empty when there is neither. */
+/** The paths no git territory holds a file at, under their heading; empty when there is none. */
+const missingText = (missing: readonly string[]): string =>
+  missing.length === 0
+    ? ''
+    : ['## Not found', missing.map((words) => `- ${quoted(words)}`).join('\n')].join('\n\n');
+
+/**
+ * The two blocks of the system part: the named paths, those found with their files and those not found ((156)(b)),
+ * then the graph's answer; empty when there is neither.
+ */
 export function chancellorCodeBlocks(
   code: readonly TerritoryCode[] | undefined,
   t: PromptTemplates,
+  missing: readonly string[] = [],
 ): string[] {
   const named = (code ?? []).filter((entry) => entry.named.length > 0);
   const graphs = (code ?? []).flatMap(({ territory, graph }) =>
     graph === undefined ? [] : [{ territory, graph }],
   );
   return [
-    named.length === 0
+    named.length === 0 && missing.length === 0
       ? ''
       : fill(t['chancellor-files'], {
           files: named
@@ -118,6 +128,7 @@ export function chancellorCodeBlocks(
               [`## Territory ${quoted(territory)}`, paths.flatMap(namedLines).join('\n')].join('\n\n'),
             )
             .join('\n\n'),
+          missing: missingText(missing),
         }),
     graphs.length === 0
       ? ''
