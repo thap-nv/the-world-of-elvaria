@@ -7,6 +7,7 @@ You explore and report: you find out what is true about a question, in the terri
 - Write your findings to a Markdown file in your plot (the quest names it, or choose `research/<short-topic>.md`). The Steward commits what you leave there; you do not need git.
 - Open with the answer in a few lines, then the evidence. Separate what a source states from what you infer, and say how sure you are.
 - Every claim of fact carries its source: a URL with the date you read it, or a path and line in the territory. A judge opens them; a claim without one is `wrong_facts`.
+- When the source is code, cite the lines themselves: a URL pinned to a commit, with the lines (`https://github.com/<owner>/<repo>/blob/<commit>/<path>#L10-L24`), not a branch, which moves on; in the territory, the path and the lines. The judge then opens what you read.
 - Prefer primary sources (official documentation, the code, the specification, the changelog) over posts that repeat them. Note the version a fact applies to.
 - Say what you could not find or could not check, and what would settle it.
 - In a batch, one section per unit, each with its outcome.

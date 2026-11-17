@@ -19,7 +19,7 @@ const COMMIT = '43566818d835f9acb3c24e8b2acffbfe90133284';
 const GRAPHED = TerritorySchema.parse({ ...TERRITORY, code_graph: true });
 
 const chancellor: ChancellorContext = {
-  utterance: 'Gộp `draftQuests` với packages/chancellor/src/** và sửa README.md',
+  utterance: 'Gộp `draftQuests` với packages/chancellor/src/** và sửa README.md, chancellor/src/gone.ts',
   locale: 'vi',
   decree: null,
   class_prompt: classPromptOf('chancellor'),
@@ -74,7 +74,10 @@ const CODE: TerritoryCode[] = [
 describe("the Chancellor's view of the code (PS-21b)", () => {
   it('names the files, their sizes and the graph’s answer in the system part, with the impact (snapshot)', async () => {
     const plain = buildChancellorPrompt(chancellor, templates);
-    const { system, user } = buildChancellorPrompt({ ...chancellor, code: CODE }, templates);
+    const { system, user } = buildChancellorPrompt(
+      { ...chancellor, code: CODE, missing_paths: ['chancellor/src/gone.ts'] },
+      templates,
+    );
     expect(user).toBe(plain.user);
     expect(system.startsWith(plain.system)).toBe(true);
     expect(system).toContain('- `packages/chancellor/src/**`: 14 files, 96.0 KB in all');
@@ -84,6 +87,7 @@ describe("the Chancellor's view of the code (PS-21b)", () => {
     expect(system).toContain(
       'Impact: 3 files outside the paths the owner names use code in them: `apps/cli/src/run/triage.ts`',
     );
+    expect(system).toContain('## Not found\n\n- `chancellor/src/gone.ts`\n\n# What the code graph answers');
     expect(system).not.toMatch(/\{\{/);
     await expect(system.slice(plain.system.length)).toMatchFileSnapshot('__snapshots__/chancellor.code.txt');
   });
@@ -94,8 +98,15 @@ describe("the Chancellor's view of the code (PS-21b)", () => {
     expect(chancellorCodeBlocks(undefined, templates)).toEqual(['', '']);
     const named = [{ territory: 'dc1-se-team', named: CODE[0]?.named ?? [] }];
     const [files, graph] = chancellorCodeBlocks(named, templates);
-    expect(files).toContain("# The files the owner's words name");
+    expect(files).toContain("# The paths the owner's words name");
+    expect(files).not.toContain('## Not found');
     expect(graph).toBe('');
+    // (156)(b): a path no territory holds is named even when no other path names a file, never guessed at.
+    const [missing] = chancellorCodeBlocks([], templates, ['docs/gone.md', 'src/*.py']);
+    expect(missing).toContain('do not guess which file the owner meant');
+    expect(missing).not.toContain('## Territory');
+    expect(missing?.endsWith('## Not found\n\n- `docs/gone.md`\n- `src/*.py`')).toBe(true);
+    expect(chancellorCodeBlocks([], templates, [])).toEqual(['', '']);
     const answer = { commit: COMMIT, question: 'nothing', files: [] };
     const [noFiles, alone] = chancellorCodeBlocks(
       [{ territory: 'dc1', named: [], graph: answer }],

@@ -1,8 +1,10 @@
 
 
-# The files the owner's words name
+# The paths the owner's words name
 
-Elvaria read these from the territories' working trees, without a model. Size every draft that reads or changes them from these numbers, as "How to estimate" says (about four characters make a token), and take its `scope_paths` from the paths it changes.
+Elvaria looked for them in the territories' working trees, without a model. Size every draft that reads or changes the files found from their numbers, as "How to estimate" says (about four characters make a token), and take its `scope_paths` from the paths it changes.
+
+A path under "Not found" names no file git tracks in any territory: do not guess which file the owner meant. Unless the owner asks for that file to be created, either leave it out of the drafts, or, when the work needs it, name it in your one question (in the brief, for the council) and ask what the owner meant.
 
 ## Territory `dc1-se-team`
 
@@ -15,6 +17,10 @@ Elvaria read these from the territories' working trees, without a model. Size ev
   - … and 9 more files
 - `README.md`: 1 file, 812 B in all
   - `README.md`: 812 B, 20 lines
+
+## Not found
+
+- `chancellor/src/gone.ts`
 
 # What the code graph answers
 

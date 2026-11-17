@@ -239,7 +239,9 @@
       "Read",
       "Glob",
       "Grep",
-      "Bash"
+      "Bash",
+      "WebFetch",
+      "WebSearch"
     ],
     "allow": [
       "Read",
@@ -249,6 +251,8 @@
       "Bash(pnpm lint:*)",
       "Bash(pnpm typecheck:*)",
       "Bash(git diff:*)",
+      "WebFetch",
+      "WebSearch",
       "Bash(pnpm -r test:*)"
     ],
     "apprentice": null
