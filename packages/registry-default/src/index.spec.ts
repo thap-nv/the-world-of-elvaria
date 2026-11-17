@@ -78,13 +78,15 @@ describe('the default registry', () => {
       'visual',
       'docs',
     ]);
-    // PS-02: the first kind of memo; PS-22 the objection to a second judge; PS-22b the amendment; advisory and request come with PS-09 and
-    // PS-10 (ADR 0024).
+    // PS-02: the first kind of memo; PS-22 the objection to a second judge; PS-22b the amendment; PS-09c the advisory;
+    // request comes with PS-10 (ADR 0024).
     expect(memos.map(({ id, route }) => [id, route])).toEqual([
       ['proposal', 'chancellor'],
       ['objection', 'judge'],
       // PS-22b: the amendment to the quest's author.
       ['amendment', 'author'],
+      // PS-09c: the Steward's advisory to the quests at work whose scope meets the files a quest changed.
+      ['advisory', 'quests'],
     ]);
   });
 

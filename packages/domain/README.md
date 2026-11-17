@@ -93,7 +93,16 @@ patrol`); `partyOf` counts the quest a party is named after, `partyStatusOf` and
   `no_author`, `below_rank` under `kingdom.dispatch.amendments.from_rank`, `second_amendment`); `amendmentDeciderOf` says
   who a quest blocked on it waits for (`blocked.amendment`, which the `ask` event carries), `awaitsAuthor` whether the
   author's session is due. The amendment-decision contract and the `decide_amendment` command have their schemas here;
-  `Metrics.amendments` counts them (`src/metrics/amendment-counts.ts`).
+  `Metrics.amendments` counts them (`src/metrics/amendment-counts.ts`). (PS-09c, `src/memo/advisory.ts`) The Steward's
+  advisory as a quest reaches its base branch: `advisoryOf` names the quests at work of its territory (run once, a
+  worktree plot, not done nor archived, session tier) whose scope meets the files it changed (`scopesMeet`, shared
+  files left out by the caller), never its party nor a quest on either side of its base chain, and the files they may
+  hold (at most `MEMO_REFS_MAX`, the rest counted); a party's parts and contract write none. `recipientsOf` is that
+  rule alone, for a character's `advisory` line too (route `quests`, `to.quests`). `advisoryKindOf` finds the kind in
+  the registry by its route, `advisoryKeyOf` keys the id on the quest alone, `advisoryBodyOf` writes the text;
+  `advisoriesFor`, `advisoryRefsFor`, `deliveredTo` and `deliveryEndOf` say what a quest reads, once (`deliveries`),
+  and when the memo ends `delivered` or `lapsed`. `memo.from` is optional (absent: the Steward wrote it), and the line
+  `memo.delivered` has its schema here; no memo to quests is an item of the attention queue.
 - Runs the character state machine (`src/character/`, `transitionCharacter`) and derives what is never stored:
   `reputationOf`, `affinityOf`, `titleOf`. Decides levels: `canTake` (which ranks the Steward may give a level),
   `aboveCeiling` (a stretch that makes the quest wait for the royal seal, but a part of a party, `part` or

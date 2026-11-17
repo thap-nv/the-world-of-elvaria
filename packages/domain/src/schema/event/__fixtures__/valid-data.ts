@@ -146,6 +146,7 @@ export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
     quest: 'q_20261106_7k3m2a',
     holds: ['above_rank'],
   },
+  'memo.delivered': { memo: 'm_20261106_4k2pqz' },
   'schedule.ran': { job: 'digest', day: '2026-11-06' },
   'digest.written': { day: '2026-11-06', file: 'digest/2026-11-06.md', must: 2, can_wait: 0 },
   'upgrade.started': { ref: 'main', to: SHA_NEW, from: SHA_OLD },

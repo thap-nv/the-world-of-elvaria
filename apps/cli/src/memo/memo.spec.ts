@@ -63,10 +63,12 @@ describe('elvaria memo', () => {
     await plant(memo(OPEN), memo(CLOSED, DECIDED));
     const open = testIo();
     expect(await elvaria(open, 'memo', 'list')).toBe(0);
-    expect(open.printed.out[0]).toMatch(/^ID\s+Kind\s+Status\s+From\s+Quest\s+Text$/);
+    expect(open.printed.out[0]).toMatch(/^ID\s+Kind\s+Status\s+From\s+To\s+Quest\s+Text$/);
     expect(open.printed.out.slice(1)).toEqual([
       expect.stringMatching(
-        new RegExp(`^${OPEN}\\s+proposal\\s+Open\\s+thorn\\s+${QUEST_ID}\\s+\`quest list\` in giờ UTC.*…$`),
+        new RegExp(
+          `^${OPEN}\\s+proposal\\s+Open\\s+thorn\\s+chancellor\\s+${QUEST_ID}\\s+\`quest list\` in giờ UTC.*…$`,
+        ),
       ),
     ]);
     const all = testIo();
@@ -97,6 +99,41 @@ describe('elvaria memo', () => {
     const unknown = testIo();
     expect(await elvaria(unknown, 'memo', 'show', 'm_1')).toBe(1);
     expect(printed(unknown)).toBe('There is no letter m_1.');
+  });
+
+  it("shows the Steward's advisory: no writer, the quests it went to and those that read it (PS-09c)", async () => {
+    const { from: _from, ...written } = memo(OPEN);
+    const advisory = MemoSchema.parse({
+      ...written,
+      kind: 'advisory',
+      to: { route: 'quests', quests: ['q_20261106_aaaaaa', 'q_20261106_bbbbbb'] },
+      deliveries: [{ quest: 'q_20261106_aaaaaa', attempt: 3, at: '2026-11-06T09:00:00+07:00' }],
+    });
+    await plant(advisory);
+    const list = testIo();
+    expect(await elvaria(list, 'memo', 'list')).toBe(0);
+    expect(list.printed.out[1]).toMatch(
+      new RegExp(`^${OPEN}\\s+advisory\\s+Open\\s+The Steward\\s+quests\\s+`),
+    );
+    const show = testIo();
+    expect(await elvaria(show, 'memo', 'show', OPEN)).toBe(0);
+    const text = show.printed.out.join('\n');
+    expect(text).toMatch(/From\s+The Steward/);
+    expect(text).toMatch(/To\s+quests/);
+    expect(text).toMatch(/Quests it went to\s+q_20261106_aaaaaa, q_20261106_bbbbbb/);
+    expect(text).toMatch(/Read by\s+q_20261106_aaaaaa \(run 3, 2026-11-06T09:00:00\+07:00\)/);
+    expect(show.printed.out.at(-1)).toContain('Nobody decides this letter');
+    const { deliveries: _read, ...unread } = advisory;
+    const outcome = { decision: 'lapsed', at: '2026-11-07T09:00:00+07:00' } as const;
+    await plant({ ...unread, to: { route: 'quests', quests: [] }, state: 'closed', outcome });
+    const lapsed = testIo();
+    expect(await elvaria(lapsed, 'memo', 'show', OPEN)).toBe(0);
+    const closed = lapsed.printed.out.join('\n');
+    expect(closed).toMatch(/Quests it went to\s+—/);
+    expect(closed).toMatch(/Read by\s+—/);
+    expect(closed).toMatch(
+      /Decision\s+Lapsed: the quests it went to finished or left before reading it \(lapsed\)/,
+    );
   });
 
   it('sends the decision as a decide_memo command', async () => {

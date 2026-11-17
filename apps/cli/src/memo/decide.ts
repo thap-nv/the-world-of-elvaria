@@ -11,7 +11,7 @@ import { EXIT } from '../command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { readQuest } from '../quest/references.ts';
 import { commandHeader, sendCommand } from '../quest/send-command.ts';
-import { MEMO_DECISION_LABEL, excerpt, memoKindName, readMemo } from './memo.ts';
+import { MEMO_DECISION_LABEL, excerpt, memoFromOf, memoKindName, readMemo } from './memo.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
@@ -54,7 +54,8 @@ async function letterLine(ctx: KingdomContext, memo: Memo): Promise<string> {
   const registry = await ctx.store.loadRegistry();
   const kind = memoKindName(ctx, registry.ok ? registry.value : undefined, memo.kind);
   const first = memo.body.split('\n').find((line) => line.trim() !== '') ?? '';
-  return ctx.t('cli.memo.decide.letter', { id: memo.id, kind, from: memo.from, line: excerpt(first) });
+  const from = memoFromOf(ctx, memo);
+  return ctx.t('cli.memo.decide.letter', { id: memo.id, kind, from, line: excerpt(first) });
 }
 
 async function runMemoDecide(input: CommandInput, cli: CliContext): Promise<ExitCode> {

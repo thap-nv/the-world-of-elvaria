@@ -87,6 +87,22 @@ describe('memoOf', () => {
     });
   });
 
+  it("files the Steward's advisory without a writer, to the quests it names (PS-09c)", () => {
+    const registry = {
+      memos: [...REGISTRY.memos, { ...REGISTRY.memos[0], id: 'advisory', route: 'quests' }] as MemoKind[],
+    };
+    const draft = { ...DRAFT, kind: 'advisory' };
+    const recipients = ['q_20261112_aaaaaa' as QuestId];
+    const made = memoOf(
+      { id: ID, draft, source: { quest: QUEST, attempt: 1 }, at: AT, recipients },
+      registry,
+    );
+    if (!made.ok) throw new Error('expected an advisory');
+    expect(made.value).not.toHaveProperty('from');
+    expect(made.value.to).toEqual({ route: 'quests', quests: recipients });
+    expect(routeMemo('advisory', registry)).toEqual({ ok: true, value: { route: 'quests', quests: [] } });
+  });
+
   it('refuses a memo of an unknown kind', () => {
     const made = memoOf({ id: ID, draft: { ...DRAFT, kind: 'gossip' }, source: SOURCE, at: AT }, REGISTRY);
     expect(made).toEqual({ ok: false, error: { code: 'unknown_kind', kind: 'gossip' } });

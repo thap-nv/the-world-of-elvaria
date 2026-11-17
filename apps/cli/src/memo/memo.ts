@@ -22,7 +22,14 @@ export const MEMO_DECISION_LABEL: Readonly<Record<MemoOutcome['decision'], Messa
   // PS-22: an objection closed by its second judge's verdict.
   sustained: 'cli.memo.decision.sustained',
   overruled: 'cli.memo.decision.overruled',
+  // PS-09c: an advisory every quest it went to read or left.
+  delivered: 'cli.memo.decision.delivered',
+  lapsed: 'cli.memo.decision.lapsed',
 };
+
+/** Who wrote the memo: its character, or (PS-09c) the Steward, whose advisory names none. */
+export const memoFromOf = (ctx: Pick<KingdomContext, 't'>, memo: Pick<Memo, 'from'>): string =>
+  memo.from ?? ctx.t('cli.memo.from_steward');
 
 /** The memo file, or the lines that say why it cannot be read. */
 export async function readMemo(ctx: KingdomContext, id: string): Promise<Memo | string[]> {

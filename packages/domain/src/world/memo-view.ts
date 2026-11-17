@@ -11,7 +11,8 @@ import type { Memo } from '../schema/memo/memo.ts';
 export const MemoViewSchema = z.strictObject({
   id: MemoIdSchema,
   kind: MemoKindIdSchema,
-  from: CharacterIdSchema,
+  /** Who wrote it; absent, the Steward did (PS-09c: an advisory after a quest reached its base branch). */
+  from: CharacterIdSchema.optional(),
   /** The quest whose letter held it; null when its `memo.filed` line named none (the quest file was unreadable). */
   quest: QuestIdSchema.nullable(),
   /** Where it went (`memo.routed`); null between the two lines the Steward writes one after the other. */
@@ -35,7 +36,7 @@ export function memoViewOf(memo: Memo): MemoView {
   const view: MemoView = {
     id: memo.id,
     kind: memo.kind,
-    from: memo.from,
+    ...(memo.from === undefined ? {} : { from: memo.from }),
     quest: memo.quest,
     route: memo.to.route,
     ...(memo.to.refusal === undefined ? {} : { refusal: memo.to.refusal }),

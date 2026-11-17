@@ -7,7 +7,7 @@ import { mkdir } from 'node:fs/promises';
 import { FAIL_KINDS, calibrationOf, judgedByEye, runDirOf, turnCeilingOf } from '@elvaria/domain';
 import { screensOf, secretValuesOf, toolPolicyOf } from '@elvaria/runner-core';
 import { inKingdom } from '@elvaria/store';
-import type { LoadTrace } from '@elvaria/domain';
+import type { LoadTrace, Memo } from '@elvaria/domain';
 import type { JsonSchema, Screens, SpawnRequest } from '@elvaria/runner-core';
 
 import { handoverPath } from '../files.ts';
@@ -88,10 +88,14 @@ function budgetOf(ctx: Context, input: SessionInput): SpawnRequest['budget'] {
   };
 }
 
-/** The request the runner gets, and what its prompt carried, for the line that opens the session. */
+/**
+ * The request the runner gets, what its prompt carried, for the line that opens the session, and (PS-09c) the
+ * advisories it carried, recorded as read once the session opened.
+ */
 export interface SessionRequest {
   readonly request: SpawnRequest;
   readonly load_trace: LoadTrace;
+  readonly advisories: readonly Memo[];
 }
 
 const classOf = (ctx: Context, character: SessionInput['character']) => {
@@ -158,7 +162,7 @@ export async function requestOf(
     graph === undefined || ctx.deps.graphs === undefined ? own : ctx.deps.graphs.envFor(own, graph.dir);
   const screens = await screensFor(ctx, input);
   const given = await givenOf(ctx, input, graph, secretValuesOf({ quest, env }), screens);
-  const { prompt, load_trace: loadTrace } = await promptOf(ctx, input, given, resume);
+  const { prompt, load_trace: loadTrace, advisories } = await promptOf(ctx, input, given, resume);
   const request: SpawnRequest = {
     role,
     quest,
@@ -186,5 +190,5 @@ export async function requestOf(
       : { handover: handoverPath(ctx.root, quest.id) }),
     ...(resume === null ? {} : { resume: { session_id: resume.session_id } }),
   };
-  return { request, load_trace: loadTrace };
+  return { request, load_trace: loadTrace, advisories };
 }

@@ -24,7 +24,7 @@ const PromptBlockSchema = z.strictObject({
   part: z.enum(PROMPT_PARTS),
   id: SnakeIdSchema.meta(
     describe(
-      "runner-core's PROMPT_BLOCK_IDS: decree, role, class, context_files, graph (PS-21), quest, gazetteer, scripture, skills, continuation, memos (PS-02), partial, review, resumed, answer.",
+      "runner-core's PROMPT_BLOCK_IDS: decree, role, class, context_files, graph (PS-21), quest, advisories (PS-09c), gazetteer, scripture, skills, continuation, memos (PS-02), partial, objection (PS-22), review, resumed, answer.",
     ),
   ),
   chars: z
