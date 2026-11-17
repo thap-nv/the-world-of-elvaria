@@ -86,6 +86,11 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   `src/prompt/objection.ts`, before the review: the contested verdict and the memo, the first judge never named), and
   an assignee its final verdict beside the contested one (`prompts/final-verdict.md`, `Continuation.contested`).
   Law 4 of `prompts/verifier.md`: a judge judges by the quest's goal and the checks, not the wording of its steps.
+  (fix/lesson-step-0) Lessons a real kingdom first kept in its scripture, true of every kingdom, live here instead:
+  law 3 of `prompts/assignee.md` (the judge fails what the letter calls untested; lint and format before the end; the
+  Steward's commit runs the territory's hooks and takes scratch files too), the pass rule `all_checks_and_agent` (a
+  red check: quote its lines and leave the cause to the assignee), `prompts/shell.md` (a command the machine stopped
+  gives no result) and the note of a cut diff (read the rest before deciding).
   (PS-22b) Law 9 of `prompts/assignee.md`: a change of what the quest promises is an amendment memo
   (`- amendment: … refs: …`), a change of the way is a decision under Decisions taken. `buildAmendmentPrompt`
   (`prompts/amendment.md`, `amendment-context.md`) is the author's prompt, a mage's with its plan file's summary
@@ -181,7 +186,7 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   (`patchProblem`), then `git apply --recount --check` and `git apply`, and the file goes; otherwise `refused`
   with why, the patch left in place; `none` without a patch, a patch path or git), `diff` (what a judge reads, P1-15:
   `git diff <base>...HEAD`, summary then patch, cut at `DIFF_MAX_CHARS` on a whole line with a note saying where
-  the rest is; null for a plot without git; with `after_merges`, P1-21 (e), a party's merge quest's own work:
+  the rest is and that a verdict on part of a diff is not a pass; null for a plot without git; with `after_merges`, P1-21 (e), a party's merge quest's own work:
   what changed after its last merge, then each merge with the conflicts it resolved, git's dense combined diff),
   `merge` (P1-18, a party's merge quest: each branch the worktree does
   not hold yet is merged with `--no-ff`, `plotCommitMessage.merge`, through the territory's hooks, until one stops;
@@ -197,7 +202,9 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   base) and `release`
   (removes a clean worktree, keeps the branch, takes the folders git leaves on Windows around pnpm's dead
   junctions when nothing else is in them, `leftover` says why a folder stays, then calls each `forget` callback,
-  such as a tribe CLI dropping its transcripts). A territory without git gets `quests/<id>/work/` in the kingdom.
+  such as a tribe CLI dropping its transcripts), `baseTips` and `inBase` (PS-08d, `plot/in-base.ts`: the base
+  branch's local and origin tips after one fetch, never a pull; a plot's branch is in base when its head is an
+  ancestor of either and is not the commit its record counts from, so a branch with no commit of its own never is). A territory without git gets `quests/<id>/work/` in the kingdom.
 - Says how far a territory moved since its gazetteer was written (PS-21): `PlotManager.drift(plot, from)` counts the
   commits from `from` to the plot's fork point per top-level folder (`src/plot/drift.ts`, `git log --name-only`,
   root files left out; null without git, a record or a commit git knows), and `gazetteerWithDrift`
@@ -309,6 +316,8 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   code's structure goes to one. `PromptGraph.impact` adds the impact line to a mage's graph block; a judge's
   `plan_links` adds `prompts/plan-links.md` to its review. `coverOf` and `scopeCovers` read a scope's globs as the
   judge's files outside the scope always have.
+- `tryTerritory` takes a plot name (`name`; `patrolIdOf` for the patrol, PS-26, so a `territory check` at the
+  same time keeps its plot) and an `inPlot` step that runs in the plot after the checks and before it goes.
 
 ## Does not
 

@@ -4,8 +4,10 @@ import { err } from '@elvaria/domain';
 import { describe, expect, it } from 'vitest';
 
 import { FAKE_TOKEN } from '../../test/credential.ts';
-import { HEAD, REPO, at, forgeOver } from '../../test/github.ts';
+import { HEAD, REPO, at, fixedToken, forgeOver } from '../../test/github.ts';
+import { githubForge } from './github-forge.ts';
 import type { Reply, Routes } from '../../test/github.ts';
+import type { Fetch } from '../io.ts';
 
 const PR = 7;
 const pull = `GET ${at('pulls', String(PR))}`;
@@ -54,6 +56,31 @@ describe('githubForge.status', () => {
     expect(await statusOf({ merged: true, state: 'closed' }, ['ci'])).toEqual(stands('merged'));
     expect(await statusOf({ state: 'closed' }, ['ci'])).toEqual(stands('closed'));
     expect(await statusOf({ mergeable: false }, ['ci'])).toEqual(stands('conflict'));
+  });
+
+  it('names the merge commit of a pull request merged, by the Steward or by hand (PS-08d)', async () => {
+    const sha = 'b'.repeat(40);
+    expect(await statusOf({ merged: true, state: 'closed', merge_commit_sha: sha })).toEqual({
+      ok: true,
+      value: { state: 'merged', head: HEAD, checks: [], merge_sha: sha },
+    });
+  });
+
+  it("ends at once when the Steward stops, not at the adapter's time limit ((ii) of PS-08c)", async () => {
+    // A GitHub that never answers: only the abort ends the request, at once when it came first, as fetch does.
+    const aborted = () => new Error('This operation was aborted');
+    const fetch: Fetch = (_input, init) =>
+      new Promise((_resolve, reject) => {
+        if (init?.signal?.aborted === true) reject(aborted());
+        init?.signal?.addEventListener('abort', () => {
+          reject(aborted());
+        });
+      });
+    const forge = githubForge({ fetch, token: fixedToken(FAKE_TOKEN), timeoutMs: 600_000 });
+    const control = new AbortController();
+    const asked = forge.status(REPO, PR, [], control.signal);
+    control.abort();
+    expect(await asked).toEqual(err({ reason: 'forge_error', detail: 'This operation was aborted' }));
   });
 
   it("leaves it to GitHub's mergeable with no required check: true is green, null not computed yet", async () => {

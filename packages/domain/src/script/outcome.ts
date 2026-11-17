@@ -77,8 +77,8 @@ const READERS: Readonly<Record<Produces, (output: unknown) => ScriptResult | und
   },
 };
 
-/** The one JSON line of stdout, or why there is not exactly one. */
-function jsonLineOf(stdout: string): { readonly value: unknown } | { readonly problem: string } {
+/** The one JSON line of stdout, or why there is not exactly one (the patrol reads a report's count from it, PS-26). */
+export function jsonLineOf(stdout: string): { readonly value: unknown } | { readonly problem: string } {
   const lines = stdout.split(/\r?\n/).filter((line) => line.trim() !== '');
   if (lines.length !== 1)
     return { problem: `stdout has ${lines.length} lines, the contract is one JSON line` };

@@ -222,8 +222,15 @@
               "vi": "Tuần tra",
               "en": "Patrol",
               "id": ["patrol"],
-              "definition": "Việc định kỳ phát hiện vấn đề, có trần mana tuần.",
-              "used_in": "`kingdom.schedule.patrol`, `created_by`"
+              "definition": "Việc theo lịch của Nhiếp chính, không gọi model, 0 mana (PS-26): mỗi ngày (theo `every`), cho từng lãnh thổ git bật `territory.patrol`, chạy `commands.setup` và mọi check trên một đất sạch ở đầu nhánh gốc, rồi các script quét của catalog; mỗi lãnh thổ một dòng `patrol.ran`. `breakers.patrol_weekly_pct` là trần dành cho tuần tra có model sau này.",
+              "used_in": "`kingdom.schedule.patrol`, `territory.patrol`, `elvaria territory patrol`, event `patrol.ran`, `created_by`"
+            },
+            {
+              "vi": "Nhánh gốc đỏ",
+              "en": "Base branch red",
+              "id": ["base_red"],
+              "definition": "Một check (hay `commands.setup`, id `setup`) của nhánh gốc mà lần tuần tra gần nhất thấy đỏ; đỏ từ lần tuần tra đầu tiên thấy nó đỏ tới khi một lần thấy nó xanh; check bị gạt vì môi trường không tính. Mỗi check đổi xanh sang đỏ là một mục bản tấu (nhóm phải quyết), một lần chuông, và một quest nháp khi lãnh thổ khai `patrol.follow_up`; các quest merge từ lần tuần tra xanh gần nhất là quest nghi vấn (PS-26).",
+              "used_in": "`baseHealthOf`, `stepPatrol`, mục bản tấu `base_red`, `elvaria metrics` (Nhánh gốc đỏ sau merge)"
             },
             {
               "vi": "Mùa",
@@ -2209,7 +2216,7 @@
             {
               "field": "`kingdom.schedule`",
               "values": "`chronicle`, `triage`, `digest`, `temple`, `patrol`",
-              "meaning": "năm lịch, mỗi cái tắt được; `triage` (phân loại thư, PS-03b) và `digest` (bản tấu, PS-03) bật sẵn"
+              "meaning": "năm lịch, mỗi cái tắt được; `triage` (phân loại thư, PS-03b) và `digest` (bản tấu, PS-03) bật sẵn; `patrol` (tuần tra, PS-26) có `at` (06:30) và `every` đọc theo ngày tròn, tắt sẵn"
             },
             {
               "field": "`kingdom.bell`",
@@ -2392,6 +2399,11 @@
               "meaning": "Việc theo lịch của Nhiếp chính (PS-03): `schedule.ran` khi một việc của `kingdom.schedule` chạy xong trong một ngày địa phương (lần khởi động sau đọc nó, nên mỗi ngày một lần dù đồng hồ nhảy); `digest.written` khi bản tấu của ngày đã ghi vào `digest/<ngày>.md` và chuông đã rung"
             },
             {
+              "group": "Tuần tra",
+              "types": ["patrol.ran"],
+              "meaning": "Tuần tra của Nhiếp chính chạy xong trên nhánh gốc của một lãnh thổ (PS-26): đầu nhánh đã thử (`head`), `trigger`, `setup`, từng check (đạt, thời gian, quá giờ, bị gạt vì môi trường, dòng lỗi đầu, log) và từng script quét (kết cục, số mục), hay `plot_failure` khi không dựng được đất. Cùng lúc một dòng `territory.health` mang `ci` và `last_patrol_at` cho tầng thế giới"
+            },
+            {
               "group": "Giao hàng",
               "types": ["delivery.pushed", "delivery.merged", "delivery.failed"],
               "meaning": "Nhiếp chính giao nhánh của quest `done` tới forge theo `territory.delivery` (ADR 0023; schema ở PS-08, PS-08c và PS-08d ghi): `delivery.pushed` khi nhánh đã push và PR đã có, mỗi đầu nhánh một dòng; `delivery.merged` khi `pr_merge` merge PR, mang `merge_sha`, `sealed`, `branch_deleted`; `delivery.failed` khi dừng ở một bước (`stage`) vì một lý do (`reason`), không tự thử lại. `data` mang `quest` và `territory`. `delivery.sent` (có từ v1, không schema) vẫn ở nhóm Khác"
@@ -2419,7 +2431,7 @@
             },
             {
               "group": "Dành sẵn",
-              "types": ["campaign.*", "battle.*", "incident.*", "patrol.*", "party.*", "skill.*"],
+              "types": ["campaign.*", "battle.*", "incident.*", "party.*", "skill.*"],
               "meaning": "giai đoạn 5; đội và bí kíp"
             }
           ]

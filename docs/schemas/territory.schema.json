@@ -430,6 +430,61 @@
         }
       }
     },
+    "patrol": {
+      "description": "The Steward's daily patrol (PS-26, kingdom.schedule.patrol): commands.setup and every check on a clean plot at the head of the default branch, then the scans; git territories only. `elvaria territory patrol <id> --on|--off` writes or removes it.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "scans": {
+          "description": "Catalog scripts the patrol runs in its plot after the checks (link-check, todo-scan): a scan whose result fails is an item of the digest that can wait; its count goes into `patrol.ran` either way. Never a check: a scan does not turn the branch red.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "script"
+            ],
+            "properties": {
+              "script": {
+                "description": "A script of the catalog (registry/scripts.json).",
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*$"
+              },
+              "params": {
+                "description": "The script's params, as its params_schema asks; the script refuses others (exit 2).",
+                "type": "object",
+                "default": {}
+              }
+            }
+          },
+          "default": []
+        },
+        "follow_up": {
+          "description": "When a check of the default branch turns red, the patrol opens one draft quest of this kind, rank and class that names the check, its first error line, its log and the quests merged since the last green patrol, for the owner to confirm. Absent: only the digest item.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "rank",
+            "class"
+          ],
+          "properties": {
+            "kind": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            },
+            "rank": {
+              "$ref": "#/$defs/rank"
+            },
+            "class": {
+              "description": "class_required of the draft.",
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            }
+          }
+        }
+      }
+    },
     "shared_paths": {
       "description": "Hot files every parallel quest edits (the plan's tables, a package index, the glossary, locales, generated files): never an overlap of two quests' scope_paths, nor a file changed outside a scope. Absent: none.",
       "type": "array",

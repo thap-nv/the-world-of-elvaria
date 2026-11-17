@@ -406,6 +406,21 @@
   rebuilt from the log at start by `forgeOutcomesOf`), and the next plan delivers it from the start. The digest
   lists a stopped delivery (`delivery_failed`) and a pull request waiting for the owner (`delivery_waits`). Without
   `deps.forges` such a quest gets one `delivery.failed` (`forge_error`).
+- Merges a sealed quest's pull request under `pr_merge` (PS-08d, `src/forge/merge.ts`): planTick's `forge_polls`
+  (the domain's `forgePolls` and `mergeDue`, rule (G)) asks the forge every 30 seconds, one short piece of work
+  outside the tick each, the Steward's stop aborting the call in flight (every `Forge` call takes its signal). Merged
+  already (by hand) or green: `Forge.merge` at the head the `delivery.pushed` named, `Forge.deleteBranch` while the
+  remote tip is still that head (a removal that fails is a warning, `branch_deleted: false`), one `delivery.merged`;
+  red, a conflict, a moved head, a closed pull request, or `checks_timeout_minutes` past the push's line: one
+  `delivery.failed`, the quest stays done. The digest drops the `delivery_waits` of such a quest (`ownerDeliveries`).
+- Archives a done quest whose branch reached its base branch, under every delivery mode (PS-08d, (E) of the PS-08
+  plan): planTick's `base_looks` (`baseLooks`: at start, right after a `delivery.merged` on the territory, then every
+  10 minutes while a delivered done quest is there to ask about) starts a look outside the tick (`src/forge/looks.ts`,
+  one per territory: `Plots.baseTips` fetches origin once, `Plots.inBase` asks each plot), and `forge_archives` (found
+  there, or merged by the Steward) moves the quest with `done.archive` as the Steward, then releases its plot
+  (`src/forge/archive.ts`). A party's contract and parts go with their merge quest.
+- Offers a newer build in the digest (`upgrade_available`, PS-08d) when the optional `deps.upgradeOffer` port of the
+  composition root says the pinned build's repo has one; read as the digest is made.
 - Tells once when an open quest nobody can take (`quest.unclaimable`, the bell), withdraws it with
   `reason: null`, and keeps the notices in `.state/unclaimable.json` (`readUnclaimable`) for `elvaria quest list`
   and `show`. Rings once when a submitted quest waits for a judge the roster does not have (`unjudgeable`,
@@ -420,6 +435,13 @@
   whose kind delivers sub-quests (PS-21b, `sessions/plan-graph.ts`), its mage reads the impact of the quest's scope
   in that block, and its judge the sub-quests the graph links (the domain's `planLinksOf` on `subquests.json`), a
   warning in the review that fails nothing.
+- The patrol (PS-26, `src/patrol/`): a scheduled job outside the tick, added when the plots can patrol
+  (`Plots.patrol`). For each git territory with `patrol`, one after another: the territory's trial under the plot
+  name `patrol-<id>`, its scans in that plot (`scans.ts`, the catalog's scripts with the script tier's runner), one
+  `patrol.ran` and one `territory.health`; for the checks that turned red (`stepPatrol`), the draft quest of
+  `patrol.follow_up` (`draft.ts`, before the line) and one `base_red` ring. A territory that throws does not hold
+  the next one back; a stop records nothing and no `schedule.ran`. The patrol's book (`book.ts`) is rebuilt at
+  `recover` and carried by the tick's notices to the digest.
 
 ## Does not
 
@@ -431,8 +453,9 @@
   territory's checks resolved for `run-check`; `folderPlots` is a folder with no git, no checks and no diff, for
   the specs).
 - Push, merge or send anything a quest delivered on a `manual` territory (stage 1, §9.1 item 11): the owner does,
-  from the delivery note. Elsewhere it pushes `quest/<id>` and opens its pull request only (PS-08c); it never merges
-  one yet (`pr_merge` merges from PS-08d), never pushes the base branch, and never lets a character push. The parts
+  from the delivery note. Elsewhere it pushes `quest/<id>` and opens its pull request (PS-08c), and under `pr_merge`
+  merges a sealed quest's one through the forge (PS-08d); it never pushes the base branch, never deletes a branch it
+  did not push, and never lets a character push. The parts
   it merges into a merge quest's branch stay in that branch, inside the territory's own repository.
 - Know a forge's API or read a credential: the `Forge` adapter of the composition root does, and keeps no token.
 - Read `process.env` or a treasury file itself: the composition root hands it the minimal env and a `Treasury`.

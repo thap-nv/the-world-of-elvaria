@@ -7,7 +7,13 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { TerritorySchema, ok } from '@elvaria/domain';
-import { createPlotManager, scratchAgain, trialInScratch } from '@elvaria/runner-core';
+import {
+  createPlotManager,
+  patrolIdOf,
+  scratchAgain,
+  trialInScratch,
+  tryTerritory,
+} from '@elvaria/runner-core';
 import { fromPortable, toPortable } from '@elvaria/store';
 import type { TerritoryId } from '@elvaria/domain';
 
@@ -51,8 +57,11 @@ export async function gitRepoWith(folder: string, files: Readonly<Record<string,
   return folder;
 }
 
-/** Plots of PlotManager: worktrees, commits and patches for real; no check, nothing to release. */
-export function gitPlots(kingdom: string): Plots {
+/**
+ * Plots of PlotManager: worktrees, commits, patches and the looks at the base branch (PS-08d) for real; no check, and
+ * nothing to release unless `release` (the specs that archive a quest by its branch in base, PS-08d).
+ */
+export function gitPlots(kingdom: string, options: { readonly release?: boolean } = {}): Plots {
   const host = {
     resolve: (name: string) => Promise.resolve({ file: name === 'node' ? process.execPath : name, args: [] }),
     env: childEnv(),
@@ -75,7 +84,12 @@ export function gitPlots(kingdom: string): Plots {
     diff: (plot, scope) => manager.diff(plot, scope),
     merge: (plot, branches, base, options) => manager.merge(plot, branches, base, options),
     unmerged: (plot, branches, base) => manager.unmerged(plot, branches, base),
-    release: () => Promise.resolve(ok({ removed: false, forget_failures: [] })),
+    release: (plot) =>
+      options.release === true
+        ? manager.release(plot)
+        : Promise.resolve(ok({ removed: false, forget_failures: [] })),
+    baseTips: (territory) => manager.baseTips(territory),
+    inBase: (plot, tips) => manager.inBase(plot, tips),
     // The judge's scratch plot as `elvaria run` makes it (P1-20): real worktrees, the checks for real.
     trial: ({ quest, territory, run_dir: runDir, runs, coverage, lock_wait_ms: wait }) => {
       const given = { kingdom, quest, territory, run_dir: runDir, runs, coverage };
@@ -90,6 +104,11 @@ export function gitPlots(kingdom: string): Plots {
       return { plot: { type: 'worktree', path: toPortable(cwd) }, cwd };
     },
     releaseScratch: (quest, territory) => manager.releaseScratch(quest, territory),
+    // The patrol as `elvaria run` makes it (PS-26): the territory's trial under its own plot name, the scans in it.
+    patrol: async (territory, { signal, scan }) => {
+      const name = patrolIdOf(territory.id);
+      return (await tryTerritory({ kingdom, territory, host, name, signal, inPlot: scan })).trial;
+    },
   };
 }
 

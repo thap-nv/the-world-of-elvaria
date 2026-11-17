@@ -3,9 +3,10 @@
 
 /**
  * The jobs of kingdom.schedule that run once a day at `at`; the Steward runs those it has a job for. `triage`
- * (PS-03b) is the Chancellor's triage of the memos waiting, before the digest.
+ * (PS-03b) is the Chancellor's triage of the memos waiting, before the digest; `patrol` (PS-26) runs the territories'
+ * checks on their default branch, before both, on the days its `every` allows.
  */
-export const DAILY_JOBS = ['chronicle', 'triage', 'digest'] as const;
+export const DAILY_JOBS = ['chronicle', 'triage', 'digest', 'patrol'] as const;
 export type DailyJobId = (typeof DAILY_JOBS)[number];
 
 /**

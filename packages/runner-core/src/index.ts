@@ -99,6 +99,7 @@ export { folderPlotOf } from './plot/folder.ts';
 export { createPlotManager } from './plot/plot-manager.ts';
 export type { PlotManager, PlotManagerOptions, PreparedPlot, PrepareOptions } from './plot/plot-manager.ts';
 export type { BaseBranch, MergeOptions, MergeOutcome, MergeStop, MergeStopped } from './plot/merge.ts';
+export type { BaseTips } from './plot/in-base.ts';
 export { PLOT_RECORD_FILE } from './plot/plot-record.ts';
 export type { PlotRecord } from './plot/plot-record.ts';
 export { PLOT_EXCLUDES } from './plot/repo-settings.ts';
@@ -115,7 +116,13 @@ export type { SetupRun } from './plot/setup.ts';
 export type { CommitOutcome, ForgetWorktree, PlotStatus, ReleasedPlot } from './plot/worktree-ops.ts';
 export { SET_ASIDE_DIR, WIP_PATCH_FILE, isScratchFile } from './plot/rescue.ts';
 export type { CommitRescue } from './plot/rescue.ts';
-export { commitsSinceStamp, trialIdOf, trialRunDirOf, tryTerritory } from './plot/territory-trial.ts';
+export {
+  commitsSinceStamp,
+  patrolIdOf,
+  trialIdOf,
+  trialRunDirOf,
+  tryTerritory,
+} from './plot/territory-trial.ts';
 export type { StampCountRequest, TerritoryTrialRequest, TerritoryTrialRun } from './plot/territory-trial.ts';
 export type { PlotFailure, PlotFailureReason } from './plot/worktree.ts';
 export { commandRefusal } from './policy/command-refusal.ts';

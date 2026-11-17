@@ -2,12 +2,20 @@
 // printed in the owner's language. It writes nothing and spends no mana, so it runs beside a Steward or without one.
 // The Steward's own digest (digest/<day>.md, once a day) also lists what only its memory holds: quests whose judges
 // are all out of mana, or that no judge of the roster may take.
-import { attentionQueue, forgeOutcomesOf, scopeHoldsOf, unopenedReviewsOf } from '@elvaria/domain';
+import {
+  attentionQueue,
+  baseHealthOf,
+  forgeOutcomesOf,
+  ownerDeliveries,
+  scopeHoldsOf,
+  unopenedReviewsOf,
+} from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import { digestStateOf, readUnclaimable } from '@elvaria/steward';
 
 import { EXIT } from '../command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
+import { upgradeOffer } from '../upgrade/offer.ts';
 import { digestMarkdown } from './markdown.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
@@ -33,17 +41,21 @@ async function sourceOf(ctx: KingdomContext) {
 async function runDigest(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);
   if (ctx === undefined) return EXIT.failed;
-  const [source, log, unclaimable] = await Promise.all([
+  const [source, log, unclaimable, upgrade] = await Promise.all([
     sourceOf(ctx),
     openEventLog(ctx.store.root).read(),
     readUnclaimable(ctx.store.root),
+    upgradeOffer(ctx.io, ctx.store.root),
   ]);
   const now = ctx.io.clock.now();
   const items = attentionQueue(digestStateOf(source, log.events), now, {
     unclaimable: [...unclaimable.keys()],
     scope_held: scopeHoldsOf(source.quests, source.territories),
     judges_unopened: unopenedReviewsOf(source.quests),
-    deliveries: [...forgeOutcomesOf(log.events).values()],
+    deliveries: ownerDeliveries(forgeOutcomesOf(log.events).values(), source.quests, source.territories),
+    ...(upgrade === undefined ? {} : { upgrade }),
+    // PS-26: the same health of the patrolled branches the Steward's book holds.
+    patrols: baseHealthOf(log.events),
   });
   // ctx.now() is written in the kingdom's zone: its date is the kingdom's local day, as the digest's file names it.
   const day = ctx.now().slice(0, 'yyyy-mm-dd'.length);

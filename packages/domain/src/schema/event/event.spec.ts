@@ -179,7 +179,7 @@ describe('EventSchema', () => {
     ['memo.escalated', { memo: 'm_20261106_4k2pqz', action: 'owner', holds: [] }, 'data.holds'],
     // PS-03b: only a command the owner did not write names its source.
     ['command.applied', { command_id: ULID, source: 'cli' }, 'data.source'],
-    ['schedule.ran', { job: 'patrol', day: '2026-11-06' }, 'data.job'],
+    ['schedule.ran', { job: 'temple', day: '2026-11-06' }, 'data.job'],
     ['schedule.ran', { job: 'digest', day: '20261106' }, 'data.day'],
     ['digest.written', { day: '2026-11-06', file: 'digest/x.md', must: 0, can_wait: 0 }, 'data.file'],
     [

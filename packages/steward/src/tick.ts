@@ -4,7 +4,8 @@ import { planTick } from '@elvaria/domain';
 import type { KingdomSnapshot, ZonedTime } from '@elvaria/domain';
 
 import { wantedIn } from './background.ts';
-import { recoverForge, settledOf } from './forge/book.ts';
+import { mergedOf, recoverForge, settledOf, waitsOf } from './forge/book.ts';
+import { recoverPatrol } from './patrol/book.ts';
 import { applyInbox } from './inbox/apply.ts';
 import { asleepFromLog, levelsFromLog, warnedFromLog } from './mana/book.ts';
 import { manaStep } from './mana/step.ts';
@@ -53,6 +54,7 @@ export async function recover(deps: StewardDeps, state: State): Promise<void> {
   state.restart = restartFromLog(log.events);
   state.scheduler.recover(log.events);
   recoverForge(state.forge, log.events);
+  recoverPatrol(state.patrol, log.events);
 }
 
 /**
@@ -60,7 +62,9 @@ export async function recover(deps: StewardDeps, state: State): Promise<void> {
  * prompts measured for the reviews about to be judged, so a judge whose tribe cannot take its prompt on this OS is
  * passed over (review/prompt-size.ts, fix/verifier-prompt-limit); the assignees' likewise for the open quests about to
  * be claimed (sessions/claim-prompt-size.ts, fix/claim-step); and the scheduled jobs due that have not started, so the
- * Chancellor's tribe takes no new session while the triage waits for it (fix/acceptance-scope).
+ * Chancellor's tribe takes no new session while the triage waits for it (fix/acceptance-scope). Then the forge: the
+ * deliveries settled, the pull requests that wait, the quests in base (found by a look, or merged by the Steward) and
+ * the last looks (PS-08c, PS-08d).
  */
 async function snapshotFor(ctx: Context, state: State, zone: ZonedTime): Promise<KingdomSnapshot> {
   const { world, deps } = ctx;
@@ -80,6 +84,9 @@ async function snapshotFor(ctx: Context, state: State, zone: ZonedTime): Promise
     tools_found: await versionStep(ctx, state.versions),
     jobs_due: state.scheduler.due(ctx, zone),
     forge: settledOf(state.forge),
+    forge_waits: waitsOf(state.forge),
+    in_base: [...state.looks.found, ...mergedOf(state.forge)],
+    base_looks: [...state.looks.looked].map(([territory, at]) => ({ territory, at })),
   };
 }
 
@@ -91,7 +98,7 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   const counts: Counts = { applied: 0, rejected: 0, waiting: 0, started: 0, ended: 0 };
   const world = await loadWorld(deps.store, deps.log);
   if (world === undefined) return reportOf(counts);
-  const { sessions, handled, limits, mana, background, judgeLocks, graphs, forge } = state;
+  const { sessions, handled, limits, mana, background, judgeLocks, graphs, forge, looks } = state;
   const record = createRecorder({ ...deps, world, stamp: () => held.zone.format(deps.clock.now()) });
   const root = deps.store.root;
   const { templates } = held;
@@ -111,6 +118,8 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
     judgeLocks,
     graphs,
     forge,
+    looks,
+    patrol: state.patrol,
   };
   const waiting = await applyInbox(ctx, handled);
   // A session's leftovers lose its secrets before anything is recorded of them (§3.9).

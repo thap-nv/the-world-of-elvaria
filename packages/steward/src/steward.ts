@@ -11,11 +11,14 @@ import type { Result } from '@elvaria/domain';
 
 import { createBackground } from './background.ts';
 import { createForgeBook } from './forge/book.ts';
+import { createBaseLooks } from './forge/looks.ts';
 import { createGraphBuilds } from './graph-builds.ts';
 import { loop, wake } from './loop.ts';
 import { createJudgeLocks } from './review/exclusive.ts';
 import { createManaBook } from './mana/book.ts';
 import { digestJob } from './schedule/digest.ts';
+import { createPatrolBook } from './patrol/book.ts';
+import { patrolJob } from './patrol/patrol.ts';
 import { createScheduler } from './schedule/scheduler.ts';
 import { createSessions } from './sessions/running.ts';
 import { leftSessions, pidsWriter, reapOrphans } from './sessions/pids.ts';
@@ -66,9 +69,13 @@ async function begin(deps: StewardDeps, state: State): Promise<Result<Held, Star
   return ok(held);
 }
 
-/** The digest when the composition root gives its port, then the jobs it injects, which ignore the tick (PS-03). */
+/**
+ * The digest when the composition root gives its port, the patrol when its plots can patrol (PS-26), then the jobs it
+ * injects, which ignore the tick (PS-03).
+ */
 const jobsOf = (deps: StewardDeps): StewardJob[] => [
   ...(deps.digest === undefined ? [] : [digestJob(deps.digest)]),
+  ...(deps.plots.patrol === undefined ? [] : [patrolJob()]),
   ...(deps.jobs ?? []).map((job): StewardJob => ({
     id: job.id,
     mode: job.mode,
@@ -77,9 +84,17 @@ const jobsOf = (deps: StewardDeps): StewardJob[] => [
   })),
 ];
 
-/** Steward.idle(): the checks, scripts and graph builds outside the tick, and the scheduled job outside it (PS-03). */
+/**
+ * Steward.idle(): the checks, scripts and graph builds outside the tick, the scheduled job outside it (PS-03), and the
+ * looks at the base branches (PS-08d).
+ */
 const idleOf = async (state: State): Promise<void> => {
-  await Promise.all([state.background.idle(), state.graphs?.idle(), state.scheduler.idle()]);
+  await Promise.all([
+    state.background.idle(),
+    state.graphs?.idle(),
+    state.scheduler.idle(),
+    state.looks.idle(),
+  ]);
 };
 
 /** What the Steward keeps between ticks, as it starts; `ended` is told once work outside the tick ended (P1-10b). */
@@ -101,6 +116,8 @@ const stateOf = (deps: StewardDeps, ended: () => void): State => ({
   versions: createVersionBook(),
   scheduler: createScheduler(jobsOf(deps), deps.onCall),
   forge: createForgeBook(),
+  looks: createBaseLooks(deps.log, ended),
+  patrol: createPatrolBook(),
   restart: undefined,
   held: undefined,
   beat: undefined,
@@ -135,6 +152,7 @@ export function createSteward(deps: StewardDeps): Steward {
       await state.scheduler.stop();
       // The checks and scripts outside the tick die before the lock goes: the next Steward runs them again (P1-25).
       await state.background.stop();
+      await state.looks.stop();
       await state.graphs?.stop();
       await state.sessions.close('the Steward stopped');
       await state.sessions.saved();

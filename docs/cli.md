@@ -22,6 +22,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria territory check <id>` | Chấm một lãnh thổ: thử commands.setup và mọi check trên một đất sạch ở đầu nhánh gốc, rồi in thẻ điểm (0 mana). |
 | `elvaria territory graph <id>` | Dựng đồ thị code của một lãnh thổ ở một commit (0 mana) và hỏi nó một câu. |
 | `elvaria territory delivery <id>` | Xem lãnh thổ giao nhánh của quest xong bằng cách nào (manual, pr, pr_merge), hoặc đổi nó. |
+| `elvaria territory patrol <id>` | Xem tuần tra hằng ngày có canh nhánh gốc của lãnh thổ không (check của nó, 0 mana), hoặc bật, tắt nó. |
 | `elvaria character add <id>` | Triệu hồi một nhân vật: nghề, tộc, model và cấp ban đầu. |
 | `elvaria character list` | Liệt kê các nhân vật. |
 | `elvaria character suspend <id>` | Đình chỉ một nhân vật: nhân vật không nhận việc và buông nhiệm vụ đang giữ, nhiệm vụ đi tiếp không có nó (lệnh suspend). |
@@ -189,6 +190,16 @@ Xem lãnh thổ giao nhánh của quest xong bằng cách nào (manual, pr, pr_m
 | `--merge-method <method>` | merge (merge commit, mặc định) hoặc squash. |
 | `--required-check <name>` | Một check run hay status context mà pr_merge chờ; lặp lại cho nhiều cái; thay cả danh sách. |
 | `--timeout <minutes>` | Số phút pr_merge chờ các check bắt buộc (mặc định 60). |
+
+## `elvaria territory patrol`
+
+Xem tuần tra hằng ngày có canh nhánh gốc của lãnh thổ không (check của nó, 0 mana), hoặc bật, tắt nó.
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<id>` | Id của lãnh thổ. |
+| `--on` | Bật tuần tra (ghi territory.patrol, giữ phần đã có). |
+| `--off` | Tắt tuần tra (xóa territory.patrol, cả scans và follow_up). |
 
 ## `elvaria character add`
 
