@@ -20,6 +20,8 @@ export {
 } from './checks/run-checks.ts';
 export type { CheckRun, ChecksOptions, ChecksRequest } from './checks/run-checks.ts';
 export { selectChecks } from './checks/select-checks.ts';
+export { SCREENS_ENV, SCREENS_FOLDER, clearScreens, screensDirOf, screensOf } from './checks/screens.ts';
+export type { ScreenPair, Screens } from './checks/screens.ts';
 export { COVERAGE_SUMMARY, COVERAGE_TIMEOUT_MS } from './checks/coverage.ts';
 export { scratchAgain, scratchResetLogOf } from './checks/scratch-again.ts';
 export type { ScratchAgainRequest } from './checks/scratch-again.ts';
@@ -41,6 +43,18 @@ export {
   isFakeScenario,
 } from './conformance/scenarios.ts';
 export type { FakeScenario } from './conformance/scenarios.ts';
+export {
+  FAKE_IMAGE_FILE,
+  FAKE_IMAGE_SCHEMA,
+  fakeImageAnswer,
+  fakeImageAsk,
+  fakeImageOf,
+  fakeImagePath,
+  writeFakeImage,
+} from './conformance/image-probe.ts';
+export type { FakeImageAnswer } from './conformance/image-probe.ts';
+export { COLORS as STRIPE_COLORS, randomColors, stripesOf, stripesPng } from './conformance/stripes.ts';
+export type { StripeColor } from './conformance/stripes.ts';
 export {
   SPAWN_PROBE_COMMAND,
   SPAWN_PROBE_FAILED,
@@ -66,7 +80,7 @@ export {
   openWorkspace,
   prepareWorkspace,
 } from './conformance/workspace.ts';
-export type { Workspace } from './conformance/workspace.ts';
+export type { Prepared, Workspace } from './conformance/workspace.ts';
 export { hookMissing, hookProblem, hookScriptOf, withHookProblem } from './runner/hook-built.ts';
 export { DOCTOR_NOTES, DOCTOR_NOTE_PARAMS, doctorNoteOf, callNote, hookNote } from './runner/doctor-notes.ts';
 export type { DoctorNoteCode, DoctorNote } from './runner/doctor-notes.ts';
@@ -135,6 +149,9 @@ export {
   NO_HISTORY_COMMAND,
   NO_PUSH_COMMAND,
   NO_PUSH_RULE,
+  SCREEN_EXTENSION,
+  SCREEN_MAX_BYTES,
+  SCREEN_MAX_FILES,
   SEARCH_COMMANDS,
   SECRET_FILES,
   WRITE_TOOLS,

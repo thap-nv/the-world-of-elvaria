@@ -10,6 +10,7 @@ import {
   FAKE_STRUCTURED_ANSWER,
   fakeLetter,
 } from '../conformance/scenarios.ts';
+import { fakeImageAnswer } from '../conformance/image-probe.ts';
 import { runSpawnProbe } from '../conformance/spawn-probe.ts';
 import { commandRefusal } from '../policy/command-refusal.ts';
 import { SHELL_TOOL } from '../policy/constants.ts';
@@ -97,6 +98,13 @@ const SCRIPTS: Readonly<Record<FakeScenario, (play: Play) => Promise<Ending | un
     if (play.start.req.structured === undefined) return work(play);
     play.push({ kind: 'text', text: JSON.stringify(FAKE_STRUCTURED_ANSWER) });
     return Promise.resolve({ ...COMPLETED, structured: FAKE_STRUCTURED_ANSWER });
+  },
+  // A judge reading a screen of its review (PS-11b): it "sees" the image its policy opens when its tribe reads images.
+  image: (play) => {
+    const { req, capabilities } = play.start;
+    const answer = fakeImageAnswer(req.permissions.images?.[0], capabilities.vision === true);
+    play.push({ kind: 'text', text: JSON.stringify(answer) });
+    return Promise.resolve({ ...COMPLETED, structured: answer });
   },
 };
 

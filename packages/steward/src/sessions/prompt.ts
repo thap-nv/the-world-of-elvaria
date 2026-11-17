@@ -8,7 +8,7 @@ import { partialVerdictIdOf, shellOf, verifierSessionsOf } from '@elvaria/domain
 import { buildPrompt, readContextFiles, resumedPrompt } from '@elvaria/runner-core';
 import { readClassPrompt } from '@elvaria/store';
 import type { Character, CharacterClass, LoadTrace, PlanLink, Quest, Skill, Verdict } from '@elvaria/domain';
-import type { Answered, BuiltPrompt, PromptGraph, PromptWithBlocks } from '@elvaria/runner-core';
+import type { Answered, BuiltPrompt, PromptGraph, PromptWithBlocks, ScreenPair } from '@elvaria/runner-core';
 
 import { handoverPath, readDecree, readHandover, readScriptures } from '../files.ts';
 import { objectionFor } from '../memos/objection.ts';
@@ -76,6 +76,8 @@ interface PromptParts {
   readonly graph?: PromptGraph | undefined;
   /** For a plan quest's judge, the sub-quests its graph links (PS-21b, plan-graph.ts). */
   readonly plan_links?: readonly PlanLink[];
+  /** For a judge by eye, the screens of its review (PS-11b, request.ts); the policy opens the same files. */
+  readonly screens?: readonly ScreenPair[];
 }
 
 /** What a judge reads beside the quest: the letter, the checks, the diff, and what the Steward found of the work. */
@@ -97,7 +99,8 @@ async function reviewOf(ctx: Context, input: SessionInput, parts: PromptParts) {
   const objection = await objectionFor(ctx, quest);
   // A plan's judge reads the sub-quests its graph links (PS-21b): a warning, never a fail.
   const links = parts.plan_links === undefined ? {} : { plan_links: parts.plan_links };
-  return { handover, diff, checks, partial, out_of_scope: outside, objection, ...links };
+  const screens = parts.screens === undefined ? {} : { screens: parts.screens };
+  return { handover, diff, checks, partial, out_of_scope: outside, objection, ...links, ...screens };
 }
 
 async function builtPromptOf(
@@ -165,7 +168,7 @@ function answeredOf(resume: Resume, continuation: SessionInput['continuation']):
 export async function promptOf(
   ctx: Context,
   input: SessionInput,
-  given: Pick<PromptParts, 'characterClass' | 'known' | 'graph' | 'plan_links'>,
+  given: Pick<PromptParts, 'characterClass' | 'known' | 'graph' | 'plan_links' | 'screens'>,
   resume: Resume | null,
 ): Promise<SessionPrompt> {
   const parts = { ...given, scriptures: await readScriptures(ctx.root, input.character.id), skills: [] };

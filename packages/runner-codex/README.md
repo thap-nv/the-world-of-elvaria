@@ -69,6 +69,7 @@ blocked by PreToolUse hook: <reason>. Command: <command>`) into `tool_blocked` s
   `--version` and `login status`, and checks the built hook (`hookProblem` of runner-core); a call stopped at its timeout says so, with how long it
   had, never "not signed in". `locateCodex` finds the CLI on PATH, in npm's folder
   or in the VS Code extension `openai.chatgpt` (`bin/<os-arch>/codex(.exe)`).
+- Declares `vision` (vision spike 2026-11-17): `view_image` reads any file whatever the sandbox, and no session starts without Elvaria's hook, which keeps a judge to the screens of its review (policy `images`, PS-11b); the fake CLI plays the conformance suite's `image` through that hook (`fixtures/fake-codex-image.mjs`).
 
 ## Does not
 

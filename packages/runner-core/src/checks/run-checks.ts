@@ -3,13 +3,15 @@
 // `.runs/<quest>-<n>/checks/<id>.log`. The machine is the primary judge, so a check that cannot run (shell syntax,
 // program not found, the exclusive lock never freed) fails rather than vanishing from the verdict. A failing check
 // whose log shows its environment failed (territory.environment_errors) says so (P1-54): its run says nothing of the
-// work. The checks that are not exclusive run first, so a check of seconds never waits out the lock (P1-54).
+// work. The checks that are not exclusive run first, so a check of seconds never waits out the lock (P1-54). Each
+// gets ELVARIA_SCREENS_DIR, where it leaves the screens its judge reads (PS-11b, screens.ts), emptied once a round.
 import type { PartyRole, Territory, TerritoryCheck, VerdictCheck } from '@elvaria/domain';
 
 import { withEnvironment } from './environment.ts';
 import { exclusiveWaitOf, underExclusiveLock } from './exclusive-lock.ts';
 import type { LockScope } from './exclusive-lock.ts';
 import { headerOf, openLog, runLine, runLines } from './logged-run.ts';
+import { clearScreens, screensEnvOf } from './screens.ts';
 import type { ProcessHost } from '../process/program.ts';
 import { selectChecks } from './select-checks.ts';
 import { sessionEnv } from '../treasury/session-env.ts';
@@ -151,10 +153,11 @@ export async function runCheck(
 ): Promise<CheckRun> {
   const logPath = checkLogOf(request.run_dir, check.id);
   const given = withSecrets(host, request.secrets);
+  const screens = await screensEnvOf(request.kingdom, request.run_dir);
   const log = await openLog(request.kingdom, logPath, headerOf(check.run), given.known);
   const context = {
     cwd: request.cwd,
-    host: given.host,
+    host: { ...given.host, env: { ...given.host.env, ...screens } },
     ...(request.signal === undefined ? {} : { signal: request.signal }),
   };
   let ran: CheckRun;
@@ -210,6 +213,7 @@ export async function runChecks(
   options: ChecksOptions = {},
 ): Promise<CheckRun[]> {
   const waitMs = lockWaitOf(request, options);
+  await clearScreens(request.kingdom, request.run_dir);
   const selected = selectChecks(request.territory.checks, request.touched, request.party_role);
   const ordered = [
     ...selected.filter((check) => !check.exclusive),

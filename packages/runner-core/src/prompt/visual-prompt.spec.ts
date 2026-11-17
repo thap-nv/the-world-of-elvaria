@@ -22,6 +22,8 @@ import type { BuiltPrompt } from '../runner/types.ts';
 const templates = await loadPromptTemplates();
 const show = ({ system, user }: BuiltPrompt) => `=== system ===\n${system}\n\n=== user ===\n${user}\n`;
 
+const SCREENS = 'D:\\Dummy\\Tool - Personal\\my kingdom\\.runs\\q_20261107_a1b2c3-1\\screens';
+
 /** A build quest tagged frontend and visual, judged by visual_review. */
 const visual: VerifierPromptInput = {
   role: 'verifier',
@@ -43,6 +45,11 @@ const visual: VerifierPromptInput = {
   diff: DIFF,
   partial: null,
   checks: CHECKS,
+  // PS-11b: the screens of the review, by the native path the judge's CLI opens; a literal, so the snapshot is one.
+  screens: [
+    { name: 'home', screen: `${SCREENS}\\home.png`, reference: `${SCREENS}\\home.ref.png` },
+    { name: 'settings', screen: `${SCREENS}\\settings.png`, diff: `${SCREENS}\\settings.diff.png` },
+  ],
 };
 
 describe('the verifier prompt of a visible change', () => {
@@ -59,6 +66,20 @@ describe('the verifier prompt of a visible change', () => {
     expect(user).toContain("A difference the quest's description does not ask for fails the quest");
     expect(user).toContain('When you cannot open an image, say so, name it, and give `partial`');
     expect(system).toContain('you have no Edit or Write');
+  });
+
+  it('lists every screen with its reference and difference, by the path the CLI opens, never the image (PS-11b)', () => {
+    const { user } = buildPrompt(visual, templates);
+    expect(user).toContain('# Screens');
+    expect(user).toContain(
+      `- \`home\`\n  - screen: \`${SCREENS}\\home.png\`\n  - reference: \`${SCREENS}\\home.ref.png\``,
+    );
+    expect(user).toContain(`  - difference: \`${SCREENS}\\settings.diff.png\``);
+    // The screens follow the machine checks that captured them.
+    expect(user.indexOf('# Screens')).toBeGreaterThan(user.indexOf('# Machine checks'));
+    const none = buildPrompt({ ...visual, screens: [] }, templates).user;
+    expect(none).not.toContain('# Screens');
+    expect(buildPrompt({ ...visual, screens: undefined as never }, templates).user).toBe(none);
   });
 
   it('keeps mutation_check for a quest both e2e and visual, and build_review without the tag', () => {

@@ -53,6 +53,7 @@
   gauge until then; `overage` or a type it does not know names none.
 - Turns the policy's `graph_commands` (PS-21) into one `Bash(<command>:*)` allow rule each, and adds `Bash` to
   `--tools` for a class without it (`src/graph-rules.ts`); the hook refuses any other line there.
+- Declares `vision` (vision spike 2026-11-17) and opens each screen of a judge's review by one rule, `Read(//e/…/screens/home.png)` (`imageRules`, the form of `absoluteRulePath`), never the run folder (PS-11b); the fake CLI plays the conformance suite's `image` through the hooks and those rules (`fixtures/fake-claude-image.mjs`).
 
 ## Does not
 

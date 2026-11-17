@@ -66,6 +66,11 @@ export interface HookPolicy {
    * neutral/dialect.ts): the adapter's own, so a fourth CLI needs no branch here. Absent: Claude Code, agy or Codex.
    */
   readonly dialect?: HookDialect;
+  /**
+   * The screens a judge reads (PS-11b; runner-core's ToolPolicy `images`), native and absolute: with the quest's
+   * letter, the only files outside the plot a read tool may open (outside.ts). Absent: none.
+   */
+  readonly images?: readonly string[];
   /** `territory.laws`; other law kinds may be present and are not the hook's to enforce. */
   readonly laws?: LawsInput;
 }
@@ -82,6 +87,7 @@ const LIST_FIELDS = [
   'elvaria_protected_paths',
   'search_commands',
   'graph_commands',
+  'images',
 ] as const;
 const LAW_LISTS = ['forbidden_paths', 'read_only_paths', 'patch_paths', 'forbidden_commands'] as const;
 

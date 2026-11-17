@@ -4,11 +4,11 @@
 // session continues its CLI session (`--resume`, ADR 0017). Its load trace comes along for the opening line (PS-01b).
 import { mkdir } from 'node:fs/promises';
 
-import { FAIL_KINDS, calibrationOf, runDirOf, turnCeilingOf } from '@elvaria/domain';
-import { secretValuesOf, toolPolicyOf } from '@elvaria/runner-core';
+import { FAIL_KINDS, calibrationOf, judgedByEye, runDirOf, turnCeilingOf } from '@elvaria/domain';
+import { screensOf, secretValuesOf, toolPolicyOf } from '@elvaria/runner-core';
 import { inKingdom } from '@elvaria/store';
 import type { LoadTrace } from '@elvaria/domain';
-import type { JsonSchema, SpawnRequest } from '@elvaria/runner-core';
+import type { JsonSchema, Screens, SpawnRequest } from '@elvaria/runner-core';
 
 import { handoverPath } from '../files.ts';
 import { sessionGraphOf } from './graph.ts';
@@ -100,18 +100,29 @@ const classOf = (ctx: Context, character: SessionInput['character']) => {
   return characterClass;
 };
 
+/**
+ * The screens a judge by eye reads (PS-11b): those the run's checks left in `.runs/<quest>-<n>/screens/`, where the
+ * check `screens` found them; none for any other session.
+ */
+async function screensFor(ctx: Context, input: SessionInput): Promise<Screens | undefined> {
+  if (input.role !== 'verifier' || !judgedByEye(input.quest, ctx.world.registry)) return undefined;
+  return screensOf(ctx.root, runDirOf(input.quest, input.n, 'assignee'));
+}
+
 /** What promptOf reads beside the input: the class, the secret values it masks, the graph and what it says. */
 async function givenOf(
   ctx: Context,
   input: SessionInput,
   graph: SessionGraph | undefined,
   known: readonly string[],
+  screens?: Screens,
 ) {
   // A plan quest's mage reads the impact of its scope, its judge the sub-quests the graph links (PS-21b).
   const { impact, plan_links: planLinks } = await planGraphFactsOf(ctx, input, graph);
   return {
     characterClass: classOf(ctx, input.character),
     known,
+    ...(screens === undefined ? {} : { screens: screens.pairs }),
     ...(graph === undefined
       ? {}
       : { graph: { commit: graph.commit, ...(impact === undefined ? {} : { impact }) } }),
@@ -126,7 +137,8 @@ async function givenOf(
  */
 export async function userPromptLengthOf(ctx: Context, input: SessionInput): Promise<number> {
   const graph = await sessionGraphOf(ctx, input.quest, input.territory);
-  const { prompt } = await promptOf(ctx, input, await givenOf(ctx, input, graph, []), null);
+  const given = await givenOf(ctx, input, graph, [], await screensFor(ctx, input));
+  const { prompt } = await promptOf(ctx, input, given, null);
   return prompt.user.length;
 }
 
@@ -144,7 +156,8 @@ export async function requestOf(
   // GRAPHIFY_OUT names the quest's graph, so no command names one (PS-21); graphify's folder goes first on PATH.
   const env =
     graph === undefined || ctx.deps.graphs === undefined ? own : ctx.deps.graphs.envFor(own, graph.dir);
-  const given = await givenOf(ctx, input, graph, secretValuesOf({ quest, env }));
+  const screens = await screensFor(ctx, input);
+  const given = await givenOf(ctx, input, graph, secretValuesOf({ quest, env }), screens);
   const { prompt, load_trace: loadTrace } = await promptOf(ctx, input, given, resume);
   const request: SpawnRequest = {
     role,
@@ -162,6 +175,8 @@ export async function requestOf(
       exclusive: input.exclusive !== false,
       cli_search: searchFor(ctx, character),
       graph: graph !== undefined,
+      // Exactly the screens its prompt lists, outside the plot (PS-11b): never the run folder.
+      images: screens?.files,
     }),
     budget: budgetOf(ctx, input),
     env,

@@ -7,6 +7,7 @@ import { stopGate } from '../handover.ts';
 import { grepOptionViolation } from '../search.ts';
 import { classViolation } from '../class-gate.ts';
 import { lawViolation, protectedViolation, refusalText } from '../claude/tool-events.ts';
+import { outsideReadViolation } from '../outside.ts';
 import { claudeInputOf } from '../claude/input.ts';
 import { plotPath } from '../claude/tools.ts';
 import { sessionStart } from '../claude/translate.ts';
@@ -45,9 +46,11 @@ const nameOf = (input: ClaudeInput): string => input.text('tool_name') ?? '';
 function preToolUse(input: ClaudeInput, ctx: HookContext): Translation {
   const call = codexToolCallOf(input.raw.tool_name, input.raw.tool_input);
   const rule = ruleViolation(nameOf(input), call, ctx) ?? protectedViolation(call, ctx.laws);
-  const reason = rule ?? lawViolation(call, ctx.laws);
+  const law = rule ?? lawViolation(call, ctx.laws);
+  // view_image reads any file on the disk, whatever the sandbox: this fence is the only one (PS-11b).
+  const reason = law ?? outsideReadViolation(call, input.text('cwd'), ctx);
   if (reason === undefined) return translation([]);
-  const source = rule === undefined ? 'law of this territory' : 'rule';
+  const source = rule === undefined && law !== undefined ? 'law of this territory' : 'rule';
   return translation([{ type: 'agent.tool.blocked', data: { tool: call.kind, reason } }], {
     decision: denyTool(refusalText(source, reason)),
   });

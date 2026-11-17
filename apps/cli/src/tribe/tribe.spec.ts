@@ -171,6 +171,7 @@ describe('elvaria tribe', () => {
         '– forbidden_command (skipped: the adapter does not declare it)',
         '✓ spawn_child',
         '– structured (skipped: the adapter does not declare it)',
+        '– image (skipped: the adapter does not declare it)',
         '– scratch_commit (skipped: the adapter does not declare it)',
         '✓ ask',
         'Tribe lantern passes the conformance suite and is now enabled in kingdom.json.',
@@ -194,6 +195,7 @@ describe('elvaria tribe', () => {
         '– forbidden_command (skipped: the adapter does not declare it)',
         '✓ spawn_child',
         '– structured (skipped: the adapter does not declare it)',
+        '– image (skipped: the adapter does not declare it)',
       ]);
       expect((await lantern())?.enabled).toBe(true);
     });

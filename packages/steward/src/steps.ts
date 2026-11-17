@@ -16,7 +16,7 @@ import { startDelivery } from './forge/push.ts';
 import { moveAndRing } from './notices.ts';
 import { mergeByMachine } from './party/machine.ts';
 import { step } from './record.ts';
-import { startChecks } from './review/checks.ts';
+import { startChecks } from './review/start-checks.ts';
 import { machineReview } from './review/machine.ts';
 import { judgeScript, runScriptQuest } from './script/script-quest.ts';
 import { tripBreakers } from './sessions/breaker.ts';
