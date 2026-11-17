@@ -25,6 +25,8 @@ export interface ForgeBenchOptions {
   readonly leaves?: Leaves;
   /** territory.delivery; absent: the field is left out, which reads as manual. */
   readonly delivery?: Readonly<Record<string, unknown>>;
+  /** Plots release the worktree at archive, as `elvaria run` does (PS-08d); by default they keep it. */
+  readonly release?: boolean;
 }
 
 export interface ForgeBench {
@@ -68,11 +70,11 @@ export async function forgeBench(options: ForgeBenchOptions = {}): Promise<Forge
     vcs,
     ...(options.delivery === undefined ? {} : { delivery: options.delivery }),
   });
-  const forge = fakeForge();
+  const forge = fakeForge(remote);
   const forges: Forges = { adapters: { github: forge }, git: { file: 'git', args: [] } };
   const started: Steward[] = [];
   const base = {
-    plots: gitPlots(kingdom.root),
+    plots: gitPlots(kingdom.root, { release: options.release === true }),
     runners: leavingRunners(kingdom, options.leaves ?? ROOMS),
     env: childEnv(),
   };

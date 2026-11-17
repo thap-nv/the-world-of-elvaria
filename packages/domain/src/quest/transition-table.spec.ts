@@ -21,7 +21,7 @@ describe('renderQuestTransitionTable', () => {
     );
     expect(lines).toContain('| claimed | `cancel` |  | U | archived |  |');
     expect(lines).toContain(
-      '| done | `archive` |  | U/S | archived | Nhiếp chính sau N ngày; xóa worktree khi archive, không sớm hơn |',
+      '| done | `archive` |  | U/S | archived | lệnh `archive`, hoặc Nhiếp chính khi nhánh quest đã vào nhánh gốc (PS-08d: `delivery.merged`, hay lần dò mỗi 10 phút); xóa worktree khi archive, không sớm hơn |',
     );
   });
 

@@ -4,6 +4,7 @@
 import {
   attentionQueue,
   judgedByEye,
+  ownerDeliveries,
   reduce,
   scopeHoldsOf,
   unopenedReviewsOf,
@@ -69,7 +70,7 @@ const needsVision = (world: World, id: QuestId): boolean => {
  * What the Steward knows that no file holds, as this tick left it (unclaimable.ts, unjudgeable.ts, judge-waits.ts,
  * tribe-versions.ts), and what the world state cannot tell from the quest files: the done quests whose scope others
  * wait for (PS-05), the reviews whose latest judge could not open a session (fix/review-no-session); and the outcomes of
- * the deliveries to the forge (PS-08c), as the log holds them.
+ * the deliveries to the forge (PS-08c), as the log holds them, but a pull request the Steward merges itself (PS-08d).
  */
 export function noticesOf(
   world: World,
@@ -90,7 +91,11 @@ export function noticesOf(
     })),
     scope_held: scopeHoldsOf([...world.quests.values()], [...world.territories.values()]),
     judges_unopened: unopenedReviewsOf([...world.quests.values()]),
-    deliveries: [...state.forge.outcomes.values()],
+    deliveries: ownerDeliveries(
+      state.forge.outcomes.values(),
+      [...world.quests.values()],
+      [...world.territories.values()],
+    ),
   };
 }
 
@@ -109,7 +114,10 @@ export const digestJob = (digest: Digest): StewardJob => ({
   run: async (ctx: Context, run) => {
     const [memos, log] = await Promise.all([ctx.deps.store.memos.list(), ctx.deps.events.read()]);
     const state = digestStateOf(sourceOf(ctx.world, memos.items), log.events);
-    const items = attentionQueue(state, ctx.deps.clock.now(), run.notices);
+    // A newer build is read now (PS-08d): the composition root asks the pinned build's repo, which no tick knows.
+    const upgrade = await ctx.deps.upgradeOffer?.();
+    const notices = upgrade === undefined ? run.notices : { ...run.notices, upgrade };
+    const items = attentionQueue(state, ctx.deps.clock.now(), notices);
     const file = await digest.write({ day: run.day, items });
     const must = items.filter(({ group }) => group === 'must').length;
     const counts = { must, can_wait: items.length - must };

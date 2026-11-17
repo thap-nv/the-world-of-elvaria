@@ -15,6 +15,8 @@ import { questFinished } from '../quest/finished.ts';
 import { isHeld } from '../quest/hold.ts';
 import { startingNow } from './background-room.ts';
 import { forgeDeliveries } from './forge-due.ts';
+import { forgePolls } from './forge-polls.ts';
+import { baseLooks, forgeArchives } from './in-base.ts';
 import { reassignsOf } from './reassigns.ts';
 import { planReviews } from './reviews.ts';
 import { rosterOf } from './roster.ts';
@@ -22,6 +24,8 @@ import { claims, holderGoes, suspensions, unclaimable } from './tick-steps.ts';
 import { wakesOf } from './wakes.ts';
 import { RANKS } from '../schema/common.ts';
 import type { Breaker, HeldSession } from '../breaker/breakers.ts';
+import type { ForgePoll, ForgeWait } from './forge-polls.ts';
+import type { BaseLook, BaseLookDone } from './in-base.ts';
 import type { JudgeWait } from './judge-waits.ts';
 import type { Reassign } from './reassigns.ts';
 import type { ReviewSource, Verification } from './reviews.ts';
@@ -57,6 +61,12 @@ export interface KingdomSnapshot extends RosterSource, ReviewSource {
    * none goes again until the owner's `deliver`. Absent, as in a sandbox day: none.
    */
   readonly forge?: readonly QuestId[];
+  /** (PS-08d) Pull requests open, the last outcome `delivery.pushed` (forgePolls). Absent, as in a sandbox day: none. */
+  readonly forge_waits?: readonly ForgeWait[];
+  /** (PS-08d) Done quests whose branch is in the base branch (forgeArchives). Absent: none. */
+  readonly in_base?: readonly QuestId[];
+  /** (PS-08d) The Steward's last look per territory at which done quests are in base (baseLooks). Absent: none yet. */
+  readonly base_looks?: readonly BaseLookDone[];
 }
 
 export interface TickPlan {
@@ -136,6 +146,12 @@ export interface TickPlan {
    * opens, outside the tick, on a territory whose delivery is not manual; one per territory at a time (forgeDeliveries).
    */
   readonly forge_deliveries: readonly QuestId[];
+  /** (PS-08d) Sealed quests under `pr_merge` whose pull request the Steward asks about now, outside the tick. */
+  readonly forge_polls: readonly ForgePoll[];
+  /** (PS-08d) Territories whose base branch the Steward fetches now, outside the tick, to look which quests it holds. */
+  readonly base_looks: readonly BaseLook[];
+  /** (PS-08d) Done quests in the base branch: the Steward archives them and releases their plot. */
+  readonly forge_archives: readonly QuestId[];
 }
 
 const rankOrder = (quest: Quest): number => RANKS.indexOf(quest.rank);
@@ -161,10 +177,16 @@ const heldPastBreakers = (
     calibrationOf(snapshot.quests, characters, snapshot.kingdom),
   );
 
-/** Step 7, then the forge (PS-08c): done quests to deliver, and delivered ones whose branch goes to their forge. */
-const deliveriesOf = (snapshot: KingdomSnapshot, done: readonly Quest[]) => ({
+/**
+ * Step 7, then the forge (PS-08c): done quests to deliver, and delivered ones whose branch goes to their forge; then
+ * (PS-08d) the pull requests to ask about, the looks at the base branches, and the quests found there.
+ */
+const deliveriesOf = (snapshot: KingdomSnapshot, done: readonly Quest[], now: Instant) => ({
   deliveries: done.filter(({ deliverable }) => deliverable.delivered_at === undefined).map(({ id }) => id),
   forge_deliveries: forgeDeliveries(snapshot, done),
+  forge_polls: forgePolls(snapshot, done, now),
+  base_looks: baseLooks(snapshot, done, now),
+  forge_archives: forgeArchives(snapshot, done),
 });
 
 /** The plan of this tick; `now` dates the claims for the round-robin over territories. */
@@ -225,6 +247,6 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
       .filter(({ tier, id }) => tier === 'script' && !running.has(id))
       .map(({ id }) => id),
     unclaimable: unclaimable(step, openSessions),
-    ...deliveriesOf(snapshot, inStatus('done')),
+    ...deliveriesOf(snapshot, inStatus('done'), now),
   };
 }

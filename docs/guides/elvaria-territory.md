@@ -98,6 +98,15 @@ Theo §3.16.4 và [ADR 0026](../adr/0026-guarded-self-change.md): danh sách "Đ
 - `docs/schemas/**` vừa là file nóng (`shared_paths`, `regenerate`) vừa là vùng bảo vệ: hai luật độc lập. Quest đổi schema zod sinh lại `docs/schemas/**` và cần dấu; quest chỉ chạy `pnpm schemas` mà không đổi gì thì không chạm.
 - Danh sách là dữ liệu: chủ nhân thu hẹp hay mở rộng bằng cách sửa file. Vương quốc đang ghim một bản trước PS-04 không đọc được lãnh thổ có trường này (`laws` là `strictObject`): chỉ thêm sau khi vương quốc ghim một bản có PS-04 (`elvaria upgrade`), và sau một lần `elvaria upgrade --rollback` về bản trước PS-04 thì gỡ nó đi.
 
+## Giao hàng (PS-08c, PS-08d)
+
+Lãnh thổ Elvaria giao `manual` cho tới khi chủ nhân bật khác: quest `done` chờ chủ nhân merge tay theo [operating-a-kingdom.md](operating-a-kingdom.md) §7, và Nhiếp chính lưu trữ quest ở lần dò nhánh gốc kế tiếp (mỗi 10 phút) sau khi nhánh vào `main`.
+
+- Bật: `elvaria territory delivery elvaria --mode pr` (Nhiếp chính push `quest/<id>` và mở PR) hay `--mode pr_merge` (rồi merge quest đã có dấu, xóa nhánh trên remote, lưu trữ quest). `elvaria doctor` kiểm credential của git cho `github.com` và quyền push trước lần giao đầu.
+- `required_checks` để rỗng: CI trên GitHub của repo này chỉ chạy tay (implementation-plan §7), nên không có check nào chạy theo PR để chờ; cổng là check của chính Nhiếp chính trước người chấm và hook pre-push (`pnpm check:fast`) mà lần push chạy. Có check theo PR thì khai tên check run (`--required-check <tên>`, lặp lại cho nhiều cái).
+- `merge_method` để `merge`: repo merge PR bằng merge commit (CLAUDE.md bước 5), và lần dò nhánh gốc nhận ra các phần của một đội đã vào `main` nhờ tổ tiên mà merge commit giữ lại.
+- Lùi về một bản ghim trước PS-08 (`elvaria upgrade --rollback`): bỏ khóa `delivery` khỏi `territories/elvaria.json` trước, vì bản cũ không đọc được nó.
+
 ## Bẫy
 
 - `union` với file JSON (glossary, locale) có thể để lại JSON hỏng (thiếu dấu phẩy giữa hai khối cùng thêm ở cuối). Sau khi ghép phải chạy lại check: `pnpm i18n:check`, `pnpm docs:check`; PS-09 chạy lại check của lãnh thổ sau mỗi lần ghép.

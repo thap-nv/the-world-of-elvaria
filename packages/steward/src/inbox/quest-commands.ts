@@ -142,7 +142,7 @@ const messageOf = (error: unknown): string => (error instanceof Error ? error.me
  * An archived quest gives its plot back (§2.5 `done.archive`: the worktree goes at archive, never sooner; its branch
  * stays). A worktree with uncommitted work is refused and stays for the owner (no `--force`, §3.3).
  */
-async function releasePlot(ctx: Context, quest: Quest): Promise<void> {
+export async function releasePlot(ctx: Context, quest: Quest): Promise<void> {
   // A judge's scratch plot that a stopped Steward left behind goes with the quest's own (ADR 0022, P1-20).
   await releaseScratch(ctx, quest.id);
   try {

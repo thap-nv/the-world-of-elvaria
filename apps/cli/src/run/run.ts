@@ -1,7 +1,8 @@
 // `elvaria run`: the Steward of one kingdom, until the owner stops it (implementation-plan §3.1; P1-09 row,
 // "(Chốt sau P1-03)"). This is where the work engine is put together: a runner per tribe from its adapter, plots
 // over PlotManager, the console bell and the digest file (PS-03), the Chancellor's triage (PS-03b), the amendments'
-// authors (PS-22b), the forges a done quest is delivered to (PS-08c), the event log; the Steward itself sees only
+// authors (PS-22b), the forges a done quest is delivered to (PS-08c), the newer build the digest offers (PS-08d), the
+// event log; the Steward itself sees only
 // interfaces (ADR 0006, 0021).
 import { openEventLog } from '@elvaria/eventlog';
 import { minimalEnv, openFileTreasury } from '@elvaria/runner-core';
@@ -12,6 +13,7 @@ import type { Forges, Steward } from '@elvaria/steward';
 
 import { EXIT } from '../command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
+import { upgradeOffer } from '../upgrade/offer.ts';
 import { runningLine } from '../upgrade/running.ts';
 import { consoleBell } from './bell.ts';
 import { crewOf } from './crew.ts';
@@ -68,6 +70,8 @@ function stewardOf(ctx: KingdomContext, crew: Crew, { graphs, forges }: Found): 
     bell: consoleBell(t, io),
     // The digest, once a day at kingdom.schedule.digest.at, in the owner's language (PS-03).
     digest: fileDigest(t, store.root, ctx.kingdom.name),
+    // A newer build than the pinned one, read as the digest is made (PS-08d).
+    upgradeOffer: () => upgradeOffer(io, store.root),
     // The Chancellor's triage of the memos waiting, before the digest, outside the tick (PS-03b).
     jobs: [triageJob(ctx, crew.runners)],
     // An amendment's author, whenever a quest waits on one (PS-22b).

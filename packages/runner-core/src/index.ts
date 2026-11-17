@@ -99,6 +99,7 @@ export { folderPlotOf } from './plot/folder.ts';
 export { createPlotManager } from './plot/plot-manager.ts';
 export type { PlotManager, PlotManagerOptions, PreparedPlot, PrepareOptions } from './plot/plot-manager.ts';
 export type { BaseBranch, MergeOptions, MergeOutcome, MergeStop, MergeStopped } from './plot/merge.ts';
+export type { BaseTips } from './plot/in-base.ts';
 export { PLOT_RECORD_FILE } from './plot/plot-record.ts';
 export type { PlotRecord } from './plot/plot-record.ts';
 export { PLOT_EXCLUDES } from './plot/repo-settings.ts';
