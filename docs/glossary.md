@@ -206,7 +206,7 @@ Nghi thức chọn theo tag, không chỉ theo kind (kế hoạch sản phẩm 0
 | Pháp sư | Mage | `mage` | `phap-su` → `class-mage` | Nghị hội, chia mặt trận |
 | Hiệp sĩ | Knight | `knight` | `hiep-si` → `class-knight` | viết code |
 | Người lùn | Dwarf | `dwarf` | `nguoi-lun` → `class-dwarf` | build, CI, hạ tầng, tích hợp |
-| Elf trinh sát | Scout | `scout` | `elf-trinh-sat` → `class-scout` | nghiên cứu, tuần tra; class duy nhất có web |
+| Elf trinh sát | Scout | `scout` | `elf-trinh-sat` → `class-scout` | nghiên cứu, tuần tra; nghề làm duy nhất có web (người chấm có web để mở nguồn bài dẫn) |
 | Thư ký | Scribe | `scribe` | `thu-ky` → `class-scribe` | tài liệu |
 | Nhà thơ | Bard | `bard` | `nha-tho` → `class-bard` | nội dung, biên niên sử |
 | Chiêm tinh gia | Astrologer | `astrologer` | `chiem-tinh-gia` → `class-astrologer` | phân tích dữ liệu |
