@@ -956,6 +956,7 @@
     "cli.say.failed.timed_out": "Tể tướng không trả lời kịp; phiên đã bị dừng.",
     "cli.say.listening": "Tể tướng {name} đang nghe…",
     "cli.say.files": "Tể tướng nhận cỡ của các file mà lời của chủ nhân nêu: {files} file.",
+    "cli.say.missing": "Không lãnh thổ nào có file ở {paths}: Tể tướng được báo điều đó, để không tự đoán một file khác.",
     "cli.say.graph": "Tể tướng nhận câu trả lời của đồ thị code của {territories} cho lời của chủ nhân.",
     "cli.say.no_chancellor": "Không ai làm Tể tướng được: hãy triệu hồi một nhân vật nghề {class} đang rảnh, thuộc một tộc đang chạy, ví dụ elvaria character add aldric --class {class} --tribe claude.",
     "cli.say.chancellor_held": "Tể tướng không mở phiên: mọi Tể tướng nói được lúc này đều thuộc một tộc đang bị giữ.",
