@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { bench, characterOf, questPayload, tickUntil } from './__fixtures__/kingdom.ts';
 import { statusIs } from './__fixtures__/review.ts';
+import { capturingPlots } from './__fixtures__/screens.ts';
 import { createForgeBook } from './forge/book.ts';
 import { createPatrolBook } from './patrol/book.ts';
 import { noticesOf } from './schedule/digest.ts';
@@ -75,7 +76,11 @@ describe('a submitted quest that needs a judge who reads images (PS-11)', () => 
     const kingdom = current;
     const { gemini } = kingdom.runners;
     const seeing = { ...gemini, capabilities: { ...gemini.capabilities, vision: true } };
-    running = kingdom.steward({ runners: { ...kingdom.runners, [TribeIdSchema.parse('gemini')]: seeing } });
+    // Its territory's checks capture a screen, which the check `screens` asks of a quest judged by eye (PS-11b).
+    running = kingdom.steward({
+      runners: { ...kingdom.runners, [TribeIdSchema.parse('gemini')]: seeing },
+      plots: capturingPlots(['button.png'])(kingdom.root),
+    });
     const steward = running;
     expect(await steward.start({ loop: false })).toEqual({ ok: true });
     await kingdom.command('create_quest', questPayload('Paint the button', { tags: ['frontend', 'visual'] }));

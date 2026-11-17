@@ -21,6 +21,7 @@ import type { EnvironmentFailure, Quest, Result, Territory, VerdictCheck } from 
 import { partyChecks } from '../party/check.ts';
 import { deliverableChecks } from './deliverable-checks.ts';
 import { inScratch, trialFor } from './scratch.ts';
+import { screensChecks } from './screens.ts';
 import type { Context } from '../context.ts';
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
@@ -66,11 +67,12 @@ export async function checksOf(
       ? await ctx.deps.plots.trial({ ...asked, quest, ...trialFor(ctx, quest) })
       : await ctx.deps.plots.check({ ...asked, plot: quest.plot });
     // The deliverable's own checks follow the territory's (P1-15: subquests.json of a plan quest), then the party's
-    // (P1-18: every part merged into the merge quest).
+    // (P1-18: every part merged into the merge quest), then the screens the territory's left a judge by eye (PS-11b).
     const checks = [
       ...runs.map(toVerdictCheck),
       ...(await deliverableChecks(ctx, quest, runDir)),
       ...(await partyChecks(ctx, quest, runDir)),
+      ...(await screensChecks(ctx, quest, runDir)),
     ];
     const environment = environmentFailureOf(runs);
     return ok(environment === undefined ? { checks } : { checks, environment });

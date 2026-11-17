@@ -442,6 +442,7 @@
   `patrol.follow_up` (`draft.ts`, before the line) and one `base_red` ring. A territory that throws does not hold
   the next one back; a stop records nothing and no `schedule.ran`. The patrol's book (`book.ts`) is rebuilt at
   `recover` and carried by the tick's notices to the digest.
+- Adds the machine check `screens` after the territory's for a quest whose ritual asks for eyes (`judgedByEye`, PS-11b, `src/review/screens.ts`): it fails when the checks captured no screen or one breaks the image contract, its log says why; that quest's judge gets exactly the valid screens of the run, by policy (`ToolPolicy.images`) and in its prompt (`src/sessions/request.ts`).
 
 ## Does not
 
