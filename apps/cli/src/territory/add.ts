@@ -15,6 +15,7 @@ import { recordTerritoryAttached } from '../events.ts';
 import { storeIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { gitIn } from '../process/git.ts';
+import { claudeLocalReach } from './claude-local.ts';
 import { RULES_GLOB, ruleFilesOf } from './claude-rules.ts';
 import { readGitInfo } from './git-info.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
@@ -142,6 +143,8 @@ async function runTerritoryAdd(input: CommandInput, cli: CliContext): Promise<Ex
   if (vcs.type === 'git') {
     ctx.io.out(ctx.t('cli.territory.git', { branch: vcs.default_branch ?? '' }));
     await hintRules(ctx, folder, territory);
+    const reach = await claudeLocalReach(folder, territory.worktree_dir);
+    if (reach !== undefined) ctx.io.out(ctx.t('cli.territory.claude_local', { dir: reach }));
   }
   return EXIT.ok;
 }
