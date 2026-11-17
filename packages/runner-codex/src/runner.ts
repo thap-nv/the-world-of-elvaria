@@ -59,6 +59,10 @@ export const CODEX_CAPABILITIES: AgentRunner['capabilities'] = {
   // No tool reads a file either (spike §1.7): the prompt says to read with the shell, or `git grep` without one (PS-23).
   read: false,
   models: CODEX_MODELS,
+  // view_image read a PNG and the model saw it (vision spike 2026-11-17, Windows). It reads any file on the disk, its
+  // sandbox aside, so only Elvaria's hook keeps a judge to the screens of its review (policy `images`, owner's (Q3)):
+  // declared because no session of this runner starts without that hook (hooksProblem, before every session).
+  vision: true,
 };
 
 /**
