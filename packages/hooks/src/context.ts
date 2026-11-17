@@ -42,6 +42,8 @@ export interface HookContext {
   readonly searchCommands: readonly string[];
   /** The code graph's commands (policy `graph_commands`, PS-21); empty: no graph, no graphify line runs. */
   readonly graphCommands: readonly string[];
+  /** Policy `images` (PS-11b): the screens of the review, the files outside the plot a read tool may open. */
+  readonly images: readonly string[];
   /** How the CLI's payload reads, when the adapter describes it (policy `dialect`, PS-23); undefined: a CLI by name. */
   readonly dialect: HookDialect | undefined;
   /** Context that was missing or malformed, for stderr; the call goes on with what is there. */
@@ -150,6 +152,7 @@ export function loadContext(env: HookEnv, argv: readonly string[]): HookContext 
     apprenticeModels: policy.apprentice_models,
     searchCommands: policy.search_commands ?? [],
     graphCommands: policy.graph_commands ?? [],
+    images: policy.images ?? [],
     dialect: policy.dialect,
     problems,
   };

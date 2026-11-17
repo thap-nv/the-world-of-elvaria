@@ -1,3 +1,4 @@
+import { writeFileSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -5,11 +6,13 @@ import { describe, expect, it } from 'vitest';
 
 import { createFakeRunner } from '../runner/fake-runner.ts';
 import { CONFORMANCE_CHECKS, conformanceChecks, runConformance } from './checks.ts';
+import { FAKE_IMAGE_FILE, FAKE_IMAGE_SCHEMA } from './image-probe.ts';
 import { FAKE_SCENARIOS, FAKE_STRUCTURED_ANSWER, FAKE_STRUCTURED_SCHEMA } from './scenarios.ts';
 import { SPAWN_PROBE_FAILED, SPAWN_PROBE_OUT } from './spawn-probe.ts';
+import { stripesPng } from './stripes.ts';
 import { conformanceRequest } from './workspace.ts';
 import type { FakeRunnerOptions } from '../runner/fake-runner.ts';
-import type { AgentRunner } from '../runner/types.ts';
+import type { AgentRunner, SpawnRequest } from '../runner/types.ts';
 import type { ConformanceTarget } from './target.ts';
 
 const fake = (options: FakeRunnerOptions = {}, name = 'FakeRunner'): ConformanceTarget => ({
@@ -20,7 +23,8 @@ const fake = (options: FakeRunnerOptions = {}, name = 'FakeRunner'): Conformance
 // The suite every adapter runs (implementation-plan §3.14): here against FakeRunner, as each adapter's spec will
 // run it against its fake CLI, and against the real CLI with ELVARIA_LIVE=1.
 describe('conformance suite: FakeRunner', () => {
-  const target = fake();
+  // A tribe that reads images, so the image probe plays too (PS-11b).
+  const target = fake({ capabilities: { vision: true } });
   for (const check of conformanceChecks(target)) {
     it(check.id, async () => {
       expect(await check.run(target)).toBe('passed');
@@ -45,6 +49,7 @@ describe('the conformance suite', () => {
       'forbidden_command',
       'spawn_child',
       'structured',
+      'image',
     ]);
   });
 
@@ -56,8 +61,47 @@ describe('the conformance suite', () => {
       { id: 'rate_limit', outcome: 'skipped' },
       { id: 'forbidden_command', outcome: 'skipped' },
       { id: 'structured', outcome: 'skipped' },
+      { id: 'image', outcome: 'skipped' },
       { id: 'scratch_commit', outcome: 'skipped' },
     ]);
+  });
+
+  it('asks a judge to name the stripes of the one image its policy opens, outside its plot (PS-11b)', () => {
+    const runner = createFakeRunner({ capabilities: { vision: true } });
+    const workspace = { root: 'k', plot: 'p', run_dir: 'r', handover: 'h', remove: () => Promise.resolve() };
+    const req = conformanceRequest(workspace, 'image', runner, fake());
+    const image = path.join('r', 'screens', FAKE_IMAGE_FILE);
+    expect(req).toMatchObject({ role: 'verifier', structured: FAKE_IMAGE_SCHEMA });
+    expect(req.permissions.images).toEqual([image]);
+    expect(req.prompt.user).toContain(image);
+    expect(req.handover).toBeUndefined();
+  });
+
+  /** A runner that reads images, whose sessions get `change` applied to their request first. */
+  const changing = (change: (req: SpawnRequest) => SpawnRequest): ConformanceTarget => {
+    const inner = createFakeRunner({ capabilities: { vision: true } });
+    return {
+      name: 'changing',
+      createRunner: (): AgentRunner => ({ ...inner, spawn: (req) => inner.spawn(change(req)) }),
+    };
+  };
+
+  it('fails a runner that declares vision but whose judge cannot open the image (PS-11b)', async () => {
+    const check = CONFORMANCE_CHECKS.find(({ id }) => id === 'image');
+    const closed = changing((req) => ({ ...req, permissions: { ...req.permissions, images: [] } }));
+    await expect(check?.run(closed)).rejects.toThrow(/could not open the one image its policy opens/);
+  });
+
+  it('fails a runner whose judge names the stripes in another order (PS-11b)', async () => {
+    const check = CONFORMANCE_CHECKS.find(({ id }) => id === 'image');
+    // Another image of stripes, which the policy opens in place of the probe's: a judge that saw something else.
+    const other = changing((req) => {
+      const [image = ''] = req.permissions.images ?? [];
+      const elsewhere = path.join(path.dirname(image), 'other.png');
+      writeFileSync(elsewhere, stripesPng(['red', 'red', 'red', 'red'], 64, 4));
+      return { ...req, permissions: { ...req.permissions, images: [elsewhere] } };
+    });
+    await expect(check?.run(other)).rejects.toThrow(/it did not see the image/);
   });
 
   it('fails a runner that hands back null for a key the schema leaves optional (fix/codex-output-schema)', async () => {

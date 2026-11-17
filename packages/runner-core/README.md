@@ -330,6 +330,7 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   judge's files outside the scope always have.
 - `tryTerritory` takes a plot name (`name`; `patrolIdOf` for the patrol, PS-26, so a `territory check` at the
   same time keeps its plot) and an `inPlot` step that runs in the plot after the checks and before it goes.
+- Gives every check of a round `ELVARIA_SCREENS_DIR`, the round's `.runs/<quest>-<n>/screens/` outside the plot, emptied before the round (PS-11b, `src/checks/screens.ts`); `screensOf` lists the PNGs there in pairs (`<name>.png`, `.ref.png`, `.diff.png`) and says what breaks the ceilings (`SCREEN_MAX_FILES` 12, `SCREEN_MAX_BYTES` 2 MiB, PNG only, kebab-case names). `ToolPolicy.images` holds the screens a judge reads (verifier only), `policy.json` hands them to the hook, and the judge's review lists them by path (`prompts/screens.md`); the images never go into a prompt. The conformance suite's `image` check (live too) has a judge of a runner that declares `vision` name the stripes of a PNG outside its plot, made by the vision spike's generator (`src/conformance/stripes.ts`); FakeRunner plays it.
 
 ## Does not
 

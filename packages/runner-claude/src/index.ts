@@ -19,6 +19,7 @@ export {
   HOOK_TIMEOUT_SECONDS,
   absoluteRulePath,
   allowRules,
+  imageRules,
   letterRules,
   scopedRule,
   settingsOf,

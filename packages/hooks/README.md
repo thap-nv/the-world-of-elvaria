@@ -101,6 +101,7 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
   (`--graph`, `--backend` and any other refused), and any graphify call when the policy grants none; a class without
   a shell runs them one plain call per line (Claude: a `Bash` call of a class whose policy `tools` lack it, the shell
   runner-claude gives for these alone; agy: as `search_commands`).
+- Refuses a read tool of any tribe (Claude `Read`, agy `read_file`/`view_file`, Codex `view_image`, a neutral dialect's `read`) outside the session's plot unless it names one of policy `images`, the screens of a judge's review, or the quest's handover letter (PS-11b, `src/outside.ts`), after the territory's laws: the second fence of Claude Code and agy, the only one of Codex, whose `view_image` reads any file whatever its sandbox.
 
 ## Does not
 

@@ -176,9 +176,17 @@ describe('the default registry', () => {
     }
   });
 
-  it('keeps web access for the scout alone (glossary §6)', () => {
-    const withWeb = registry().classes.filter((entry) => entry.tools.allow.includes('WebFetch'));
-    expect(ids(withWeb)).toEqual(['scout']);
+  // (156)(b): check_sources has the judge open the sources a work cites, and a judge without the web could not (run
+  // (130), gap 7). It still writes nothing (the test above), so a page cannot make it change the work (§9).
+  it('keeps web access for the scout among those who produce, and gives it to the judge to open sources (glossary §6)', () => {
+    const { classes } = registry();
+    for (const tool of ['WebFetch', 'WebSearch']) {
+      const withWeb = classes.filter((entry) => entry.tools.allow.includes(tool));
+      expect(ids(withWeb)).toEqual(['scout', 'judge']);
+    }
+    // And the scout cites code so that the judge opens the very lines it read.
+    const scout = readFileSync(path.join(REGISTRY_ROOT, 'prompts/scout.md'), 'utf8');
+    expect(scout).toContain('a URL pinned to a commit, with the lines');
   });
 
   it('ships the prompt of every class, opened by a note for the maintainer (P1-15)', () => {

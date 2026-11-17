@@ -33,9 +33,11 @@ import { planLinksBlock } from './plan-links.ts';
 import { composed } from './prompt-blocks.ts';
 import { protectedChangesBlock } from './protected.ts';
 import { outOfScopeBlock } from './scope.ts';
+import { screensBlock } from './screens.ts';
 import { fenced, fill, sectionsOf } from './templates.ts';
 import type { Continuation, Locale, Memory } from './blocks.ts';
 import type { PromptCheck } from './checks.ts';
+import type { ScreenPair } from '../checks/screens.ts';
 import type { NamedBlock, PromptWithBlocks } from './prompt-blocks.ts';
 import type { PromptTemplates } from './templates.ts';
 import type {
@@ -131,6 +133,8 @@ export interface VerifierPromptInput extends PromptBase {
   readonly objection?: PromptObjection | null;
   /** A plan's sub-quests free to run at once whose code the graph links (PS-21b); absent or empty, no block. */
   readonly plan_links?: readonly PlanLink[];
+  /** The screens of the review, for a ritual that asks for eyes (PS-11b); absent or empty, no block. */
+  readonly screens?: readonly ScreenPair[];
 }
 
 /**
@@ -240,6 +244,7 @@ function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): PromptW
     ritual: `${ritual.name_en} (\`${ritual.id}\`)`,
     steps: stepsOf(ritual, t),
     checks: verifierChecks(input.checks),
+    screens: screensBlock(input.screens, t),
     assignee: quest.assignee ?? 'the assignee',
     handover:
       input.handover === null || input.handover.trim() === ''

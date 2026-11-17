@@ -1,4 +1,7 @@
 // ToolPolicy → agy prefix rules (spike P1-12a §3): each class of the Gemini tribe, a judge, and the fences.
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { toolPolicyOf } from '@elvaria/runner-core';
@@ -136,6 +139,37 @@ describe('agySettingsOf', () => {
       'read_file(D:/Elvaria kingdom/quests/q_20261107_a9yb2k/handover.md)',
       'write_file(D:/Elvaria kingdom/quests/q_20261107_a9yb2k/handover.md)',
     ]);
+  });
+
+  /** A judge whose review has `images` (PS-11b). */
+  const judgeWith = (images: string[]) =>
+    agySettingsOf(
+      toolPolicyOf({ role: 'verifier', characterClass: { tools: { allow: ['Read'], deny: [] } }, images }),
+    ).permissions.allow;
+
+  it('opens each screen of a review by one read_file rule, never their folder (PS-11b)', () => {
+    expect(judgeWith(['E:\\Works\\Kingdom of Agents\\my kingdom\\.runs\\q-1\\screens\\home.png'])).toEqual([
+      'read_file(E:/Works/Kingdom of Agents/my kingdom/.runs/q-1/screens/home.png)',
+    ]);
+    expect(judgeWith(['/Users/thu/my kingdom/.runs/q-1/screens/home.png'])).toEqual([
+      'read_file(/Users/thu/my kingdom/.runs/q-1/screens/home.png)',
+    ]);
+    expect(judgeWith([])).toEqual([]);
+    expect(ANTIGRAVITY_CAPABILITIES.vision).toBe(true);
+  });
+
+  it.runIf(process.platform === 'win32')(
+    'writes a native Windows path of a screen with `/`, drive kept',
+    () => {
+      const native = path.join(tmpdir(), 'my kingdom', '.runs', 'q-1', 'screens', 'home.png');
+      expect(judgeWith([native])).toEqual([`read_file(${native.replaceAll('\\', '/')})`]);
+      expect(judgeWith([native])[0]).toMatch(/^read_file\([A-Za-z]:\/[^\\]+\/home\.png\)$/);
+    },
+  );
+
+  it.runIf(process.platform !== 'win32')('writes a native POSIX path of a screen as it is', () => {
+    const native = path.join(tmpdir(), 'my kingdom', '.runs', 'q-1', 'screens', 'home.png');
+    expect(judgeWith([native])).toEqual([`read_file(${native})`]);
   });
 });
 

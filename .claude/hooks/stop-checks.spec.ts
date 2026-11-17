@@ -1,10 +1,11 @@
 import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
 import { REPO } from './hook-io.mjs';
-import { changedFiles, checksFor, diffTouchesImports } from './stop-checks.mjs';
+import { BOUNDARIES_ARGS, changedFiles, checksFor, diffTouchesImports } from './stop-checks.mjs';
 
 const status = (...entries: string[]): string => `${entries.join('\0')}\0`;
 const file = (path: string, untracked = false) => ({ path, untracked });
@@ -91,6 +92,14 @@ describe('checksFor', () => {
     expect(
       checksFor(files, diffOf('packages/store/src/a.ts', '+const x = 1;'), () => "import x from 'y';"),
     ).toEqual([]);
+  });
+});
+
+describe('BOUNDARIES_ARGS', () => {
+  it('are the root boundaries script, and name folders rather than a glob (151)', () => {
+    const manifest: unknown = JSON.parse(readFileSync(join(REPO, 'package.json'), 'utf8'));
+    expect(manifest).toMatchObject({ scripts: { boundaries: `depcruise ${BOUNDARIES_ARGS.join(' ')}` } });
+    expect(BOUNDARIES_ARGS.filter((arg) => /[*?{}[\]]/.test(arg))).toEqual([]);
   });
 });
 

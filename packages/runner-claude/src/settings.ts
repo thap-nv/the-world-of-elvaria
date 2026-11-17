@@ -135,6 +135,14 @@ export function absoluteRulePath(file: string): string {
 export const letterRules = (letter: string): string[] =>
   ['Read', 'Edit', 'Write'].map((tool) => `${tool}(${absoluteRulePath(letter)})`);
 
+/**
+ * The screens a judge reads (PS-11b, owner's (Q2)): one Read rule a file, in the run folder outside the plot, never the
+ * folder; the vision spike measured `Read(//e/…/screens/home.png)` (lower-case drive, spaces kept, no quotes) and the
+ * refusal of an image beside it without a rule. The hook is the second fence (policy `images`).
+ */
+export const imageRules = (images: readonly string[] = []): string[] =>
+  images.map((image) => `Read(${absoluteRulePath(image)})`);
+
 export function settingsOf(
   policy: ToolPolicy,
   hook: HookCommand,
@@ -161,6 +169,7 @@ export function settingsOf(
         ...allowRules(policy.allow),
         ...graphRules(policy),
         ...(letter === undefined ? [] : letterRules(letter)),
+        ...imageRules(policy.images),
       ],
       deny: policy.deny,
     },

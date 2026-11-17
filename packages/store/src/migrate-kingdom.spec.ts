@@ -68,6 +68,23 @@ describe('migrateKingdom (implementation-plan §2.1, ADR 0003)', () => {
     ).toBe(old);
   });
 
+  it('writes what the migration made, not the defaults the schema fills in on read (187)', async () => {
+    await plant(kingdom.root, 'notes/a.json', { version: 1, body: 'hi' });
+    // The same contract, with a `tags` field the schema defaults to [].
+    const parser: Parser<Note & { tags: string[] }> = {
+      safeParse: (data) => {
+        const parsed = NOTE_PARSER.safeParse(data);
+        return parsed.success ? { success: true, data: { ...parsed.data, tags: [] } } : parsed;
+      },
+    };
+    const tagged: StoredGroup = { ...NOTES, spec: { ...NOTES.spec, parser } };
+    expect((await migrateKingdom(kingdom.root, 'stamp', [tagged])).migrated).toEqual(['notes/a.json']);
+    expect(JSON.parse(await readFile(path.join(kingdom.root, 'notes', 'a.json'), 'utf8'))).toEqual({
+      version: 2,
+      text: 'hi',
+    });
+  });
+
   it('leaves files it cannot migrate as they are and reports them', async () => {
     await plant(kingdom.root, 'notes/broken.json', '{');
     await plant(kingdom.root, 'notes/empty.json', { version: 1 });

@@ -68,6 +68,9 @@ export const ANTIGRAVITY_CAPABILITIES: AgentRunner['capabilities'] = {
   search: false,
   // Gemini, Claude and GPT models under their makers' slugs (PS-23): the family of each, for the separation of duties.
   models: ANTIGRAVITY_MODELS,
+  // read_file opens a PNG outside the plot by one rule a file, and the model saw it (vision spike 2026-11-17, Windows;
+  // macOS form inferred, owner's (A)): a judge of this tribe may take a quest whose ritual asks for eyes (PS-11b).
+  vision: true,
 };
 
 /**

@@ -73,16 +73,18 @@ export function checksFor(files, diff, read) {
 /** The last lines of a tool's output, enough to act on. @param {string} output */
 const tailOf = (output) => output.split('\n').slice(-SHOWN_LINES).join('\n');
 
+/**
+ * The arguments of the root `boundaries` script. Folders, never a glob: dependency-cruiser expands a glob by
+ * reading the whole tree under its static part (here the repo root) through every pnpm workspace link, before
+ * `exclude` or `doNotFollow` apply; that took 85 s and failed with ENOENT while a test rebuilt coverage/ (151).
+ */
+export const BOUNDARIES_ARGS = ['packages', 'apps', '--config', '.dependency-cruiser.mjs'];
+
 /** Each check is the root script of the same name, run without pnpm (hook-io.mjs says why). */
 const CHECKS = {
   boundaries: {
     name: 'pnpm boundaries',
-    run: () =>
-      runNode(
-        binOf('dependency-cruiser', 'depcruise'),
-        ['{packages,apps}/*', '--config', '.dependency-cruiser.mjs'],
-        TIMEOUT_MS,
-      ),
+    run: () => runNode(binOf('dependency-cruiser', 'depcruise'), BOUNDARIES_ARGS, TIMEOUT_MS),
   },
   i18n: { name: 'pnpm i18n:check', run: () => runNode(join(REPO, 'scripts/i18n-check.mjs'), [], TIMEOUT_MS) },
 };

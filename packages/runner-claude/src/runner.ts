@@ -37,6 +37,9 @@ export const CLAUDE_CAPABILITIES: AgentRunner['capabilities'] = {
   shell: { win32: 'Git Bash' },
   // Every model is Anthropic's (PS-23): the separation of duties reads the family from here.
   models: CLAUDE_MODELS,
+  // Read opens a PNG outside the plot through one rule a file, and the model saw it (vision spike 2026-11-17, Windows;
+  // macOS form inferred, owner's (A)): a judge of this tribe may take a quest whose ritual asks for eyes (PS-11b).
+  vision: true,
 };
 
 /**

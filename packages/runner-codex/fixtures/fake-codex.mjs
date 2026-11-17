@@ -18,6 +18,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 import path from 'node:path';
 import process from 'node:process';
 
+import { viewImage } from './fake-codex-image.mjs';
 import { schemaRefusal, strictAnswer } from './fake-codex-schema.mjs';
 import { appServer, declaredHooks } from './fake-codex-server.mjs';
 
@@ -249,6 +250,8 @@ const SCENARIOS = {
   spawn_child: () => SCENARIOS.commands([core.SPAWN_PROBE_COMMAND]),
   // A judge's verdict under a schema with optional keys (fix/codex-output-schema).
   structured: () => finish(undefined, JSON.stringify(core.FAKE_STRUCTURED_ANSWER)),
+  // A judge reading a screen of its review outside the plot with view_image (PS-11b): the hook alone fences it.
+  image: () => finish(undefined, viewImage({ core, runHook, base })),
   crash: () => {
     say('Fake crash.');
     return fail('stream disconnected before completion: internal error');

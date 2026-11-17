@@ -61,6 +61,7 @@ describe('a fourth tribe from an adapter file alone', () => {
         '✓ forbidden_command',
         '✓ spawn_child',
         '✓ structured',
+        '– image (skipped: the adapter does not declare it)',
         '✓ scratch_commit',
         '✓ ask',
       ]);

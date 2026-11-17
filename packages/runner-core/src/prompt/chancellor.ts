@@ -50,6 +50,11 @@ export interface ChancellorContext {
    * territory has one. Gathered by `elvaria say`; absent or empty, the prompt reads as before.
    */
   readonly code?: readonly TerritoryCode[];
+  /**
+   * The paths of the owner's words that name no file in any git territory ((156)(b)): the Chancellor asks about them
+   * or leaves them out, never guesses. Gathered by `elvaria say` with `code`; absent or empty, nothing is said.
+   */
+  readonly missing_paths?: readonly string[];
 }
 
 export const list = (lines: readonly string[], none: string): string =>
@@ -150,7 +155,7 @@ export function buildChancellorPrompt(context: ChancellorContext, t: PromptTempl
       decreeBlock(context.decree, t),
       role,
       classBlock(context.class_prompt, 'Chancellor', t),
-      ...chancellorCodeBlocks(context.code, t),
+      ...chancellorCodeBlocks(context.code, t, context.missing_paths),
     ]),
     user: fill(t['chancellor-context'], {
       utterance: context.utterance.trim(),
