@@ -16,6 +16,8 @@ import { loop, wake } from './loop.ts';
 import { createJudgeLocks } from './review/exclusive.ts';
 import { createManaBook } from './mana/book.ts';
 import { digestJob } from './schedule/digest.ts';
+import { createPatrolBook } from './patrol/book.ts';
+import { patrolJob } from './patrol/patrol.ts';
 import { createScheduler } from './schedule/scheduler.ts';
 import { createSessions } from './sessions/running.ts';
 import { leftSessions, pidsWriter, reapOrphans } from './sessions/pids.ts';
@@ -66,9 +68,13 @@ async function begin(deps: StewardDeps, state: State): Promise<Result<Held, Star
   return ok(held);
 }
 
-/** The digest when the composition root gives its port, then the jobs it injects, which ignore the tick (PS-03). */
+/**
+ * The digest when the composition root gives its port, the patrol when its plots can patrol (PS-26), then the jobs it
+ * injects, which ignore the tick (PS-03).
+ */
 const jobsOf = (deps: StewardDeps): StewardJob[] => [
   ...(deps.digest === undefined ? [] : [digestJob(deps.digest)]),
+  ...(deps.plots.patrol === undefined ? [] : [patrolJob()]),
   ...(deps.jobs ?? []).map((job): StewardJob => ({
     id: job.id,
     mode: job.mode,
@@ -101,6 +107,7 @@ const stateOf = (deps: StewardDeps, ended: () => void): State => ({
   versions: createVersionBook(),
   scheduler: createScheduler(jobsOf(deps), deps.onCall),
   forge: createForgeBook(),
+  patrol: createPatrolBook(),
   restart: undefined,
   held: undefined,
   beat: undefined,

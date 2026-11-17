@@ -7,6 +7,7 @@ import type {
   Quest,
   Result,
   Territory,
+  TerritoryTrial,
   ToolFound,
   TribeId,
 } from '@elvaria/domain';
@@ -191,6 +192,14 @@ export interface Plots {
    * PlotManager.drift); null when git cannot say. Absent (folder plots): a stamped gazetteer gets no note.
    */
   drift?(plot: Quest['plot'], from: string): Promise<Drift | null>;
+  /**
+   * The patrol of a territory's default branch (PS-26): runner-core's tryTerritory under the plot name
+   * `patrol-<id>`, then `scan` in the plot before it goes. Absent: no patrol runs (a spec's folder plots).
+   */
+  patrol?(
+    territory: Territory,
+    options: { readonly signal: AbortSignal; readonly scan: (cwd: string) => Promise<void> },
+  ): Promise<TerritoryTrial>;
   /** At archive only: removes a worktree (its branch stays) and what the tribes' CLIs kept about it. */
   release(plot: Quest['plot']): Promise<Result<ReleasedPlot, PlotFailure>>;
 }

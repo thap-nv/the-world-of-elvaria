@@ -93,6 +93,15 @@ function deliveryLine(
   return t('cli.run.notice.delivery_pushed_warnings', { ...quest, url: notice.url, files });
 }
 
+/** PS-26: checks of a default branch turned red, and the draft the patrol opened for them. */
+function baseRedLine(t: Translate, notice: Extract<Notice, { kind: 'base_red' }>): string {
+  const { territory, draft } = notice;
+  const checks = notice.checks.map(({ check }) => check).join(', ');
+  return draft === undefined
+    ? t('cli.run.notice.base_red', { territory, checks })
+    : t('cli.run.notice.base_red_draft', { territory, checks, quest: draft });
+}
+
 export function lineOf(t: Translate, notice: Notice): string {
   if (notice.kind === 'suspended') {
     const { character, count } = notice;
@@ -105,6 +114,7 @@ export function lineOf(t: Translate, notice: Notice): string {
     return t('cli.run.notice.digest', { day, file, must, can_wait });
   }
   if (notice.kind === 'tribe_held') return tribeLine(t, notice);
+  if (notice.kind === 'base_red') return baseRedLine(t, notice);
   const quest = { quest: notice.quest.id, title: notice.quest.title };
   switch (notice.kind) {
     case 'unclaimable':

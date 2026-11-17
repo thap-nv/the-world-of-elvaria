@@ -33,6 +33,25 @@ const deliveryOf = (t: Translate, item: AttentionItem) => ({
   url: item.url ?? NONE,
 });
 
+const SHORT_SHA = 7;
+
+/** A red check of a default branch, or a scan that did not pass (PS-26): what the patrol found, and where. */
+const patrolOf = (t: Translate, item: AttentionItem) => ({
+  territory: item.territory ?? NONE,
+  check: item.check ?? NONE,
+  error_line: item.error_line ?? NONE,
+  log_path: item.log_path ?? NONE,
+  commit: item.commit?.slice(0, SHORT_SHA) ?? NONE,
+  since: item.since ?? NONE,
+  suspects:
+    item.suspects === undefined || item.suspects.length === 0
+      ? t('cli.digest.no_suspects')
+      : item.suspects.join(', '),
+  script: item.script ?? NONE,
+  outcome: item.outcome ?? NONE,
+  count: item.count ?? NONE,
+});
+
 /** What the item is about, in one line; every field the line names is given, `—` when the item has none. */
 function subjectOf(t: Translate, item: AttentionItem): string {
   return t(`cli.digest.item.${item.kind}`, {
@@ -55,6 +74,7 @@ function subjectOf(t: Translate, item: AttentionItem): string {
     resets_at: item.resets_at ?? NONE,
     ...triageOf(t, item),
     ...deliveryOf(t, item),
+    ...patrolOf(t, item),
   });
 }
 

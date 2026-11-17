@@ -161,6 +161,27 @@ function escapedSection(t: Translate, metrics: Metrics): MetricsSection {
   });
 }
 
+/** (PS-26) Each check of a default branch that turned red, beside the quests merged since its last green patrol. */
+function baseRedSection(t: Translate, metrics: Metrics): MetricsSection {
+  return tableSection(t('cli.metrics.title.base_red'), t('cli.metrics.none'), {
+    header: ['territory', 'check', 'red_since', 'suspects'].map((column) =>
+      t(`cli.metrics.column.${column}` as 'cli.metrics.column.territory'),
+    ),
+    rows: metrics.base_red.map((flip) => [
+      flip.territory,
+      flip.check,
+      flip.since,
+      flip.green_at === undefined
+        ? t('cli.metrics.never_green')
+        : flip.suspects.length === 0
+          ? t('cli.metrics.outside_elvaria')
+          : flip.suspects
+              .map(({ quest, sealed }) => (sealed ? quest : t('cli.metrics.unsealed', { quest })))
+              .join(', '),
+    ]),
+  });
+}
+
 function sealedSection(t: Translate, metrics: Metrics): MetricsSection {
   return tableSection(t('cli.metrics.title.sealed'), t('cli.metrics.none'), {
     header: ['quest', 'tokens', 'span', 'session_minutes'].map((column) =>
@@ -236,6 +257,7 @@ export const metricsSections = (t: Translate, metrics: Metrics): MetricsSection[
   ownerSection(t, metrics),
   adviceSection(t, metrics),
   escapedSection(t, metrics),
+  baseRedSection(t, metrics),
   sealedSection(t, metrics),
   statusTimesSection(t, metrics),
   questSection(t, metrics),

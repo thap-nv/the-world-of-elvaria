@@ -366,6 +366,13 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   session holder's tribe; without an entry they keep their existing behavior. `planTick` computes the map from
   the snapshot's quests and characters each time. Session ends preserve optional `turns` in the attempt log.
   Pass current `context_budget_tokens` and `mana_multiplier` through `SessionRules` for nondefault kingdom settings.
+- The patrol (PS-26): `kingdom.schedule.patrol` has `at` and joins `DAILY_JOBS`, its `every` read in whole days by
+  `dueJobs` and `awaitedJob` (`everyDaysOf`); `territory.patrol` (`schema/territory-patrol.ts`) and `patrol.ran`
+  (`schema/event/patrol-data.ts`). `src/patrol/`: `stepPatrol` is the one place that says which checks of a
+  default branch turned red (a check set aside for its environment changes nothing; a failed setup is red as `setup`),
+  with the quests merged since the check's last green patrol; `baseHealthOf`, `redFlipsOf` fold the log;
+  `patrolRanOf` and `scanOf` build the line; `patrolFollowUpOf` the draft quest. `attentionQueue` lists
+  `base_red` and `patrol_scan` from `StewardNotices.patrols`; `metricsOf` has `base_red`.
 
 ## Does not
 

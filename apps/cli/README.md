@@ -290,6 +290,10 @@ show` prints the brief apart from the rest of the description and, while the pla
   (`src/quest/delivery-view.ts`, `forgeOutcomesOf` on the quest's journal); `digest` lists `delivery_failed` and
   `delivery_waits`; the bell says `delivery_pushed` (with the files a shared secret pattern matched) and
   `delivery_failed`.
+- The patrol (PS-26): `territory patrol <id> [--on|--off]` prints or writes `territory.patrol` (ADR 0005 exception,
+  as `territory delivery`); `run` gives the Steward `Plots.patrol` (`tryTerritory` under `patrol-<id>`, the scans
+  in the plot); `digest` lists `base_red` and `patrol_scan` from the log (`baseHealthOf`); the bell says `base_red`;
+  `metrics` has the table "Default branch red after a merge".
 
 ## Does not
 

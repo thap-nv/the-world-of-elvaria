@@ -14,6 +14,8 @@ import { passByRunOf } from './run-rates.ts';
 import { firstEditsOf, graphQueriesOf, promptSizesOf } from './session-counts.ts';
 import { statusTimesOf } from './status-times.ts';
 import { inWindow } from './window.ts';
+import { redFlipsOf } from '../patrol/health.ts';
+import type { RedFlip } from '../patrol/health.ts';
 import type { AdviceMatch } from './advice.ts';
 import type { AmendmentCount } from './amendment-counts.ts';
 import type { OwnerCommandKind, ReworkCause } from './causes.ts';
@@ -76,6 +78,11 @@ export interface Metrics {
   readonly first_pass: FirstPassRates;
   /** Owner returns inside the window of a run a judge or the machine had passed. */
   readonly escaped: readonly EscapedDefect[];
+  /**
+   * (PS-26) Checks of a default branch the patrol found turned red inside the window, each with the quests merged since
+   * its last green patrol (`suspects`, each `sealed` or not); none: the change came from outside Elvaria.
+   */
+  readonly base_red: readonly RedFlip[];
   /** Quests sealed inside the window, with what they cost. */
   readonly sealed: readonly SealedCost[];
   /** The owner's applied commands on quests inside the window, per kind of OWNER_COMMAND_KINDS. */
@@ -174,6 +181,7 @@ export function metricsOf(input: MetricsInput, window: MetricsWindow = {}): Metr
     rework,
     first_pass: firstPassRatesOf(trails, sessionModelsOf(input.events), window),
     escaped: trails.flatMap(escapedOf).filter(({ at }) => inWindow(window, at)),
+    base_red: redFlipsOf(input.events).filter(({ since }) => inWindow(window, since)),
     sealed: trails
       .flatMap(({ quest }) => sealedCostOf(quest) ?? [])
       .filter(({ sealed_at }) => inWindow(window, sealed_at)),

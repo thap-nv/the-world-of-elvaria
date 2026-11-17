@@ -4,7 +4,7 @@
 
 Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là một event; log chỉ ghi thêm, không bao giờ viết lại. `type` là `nhóm.hành_động`; reader giữ nguyên type lạ, renderer bỏ qua nó. Hợp đồng đầy đủ: [schemas/event.schema.json](schemas/event.schema.json); nghĩa từng nhóm và các tiền tố dành sẵn: [glossary.md](glossary.md) mục 12.
 
-78 type trong danh mục v1, 66 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
+79 type trong danh mục v1, 67 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
 
 ## Khung một dòng
 
@@ -136,7 +136,7 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 
 | Type | `data` |
 |---|---|
-| `schedule.ran` | `job`: một trong `chronicle`, `triage`, `digest`<br>`day`: string (khớp `^\d{4}-\d{2}-\d{2}$`) — The kingdom's local day, yyyy-mm-dd (kingdom.tz). |
+| `schedule.ran` | `job`: một trong `chronicle`, `triage`, `digest`, `patrol`<br>`day`: string (khớp `^\d{4}-\d{2}-\d{2}$`) — The kingdom's local day, yyyy-mm-dd (kingdom.tz). |
 
 ## `digest` · 1 type
 
@@ -151,6 +151,12 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 | `territory.attached` | `territory`: object { id, name, kind, health, surveyed_at } — The territory after this event (territoryViewOf). |
 | `territory.surveyed` | `territory`: object { id, name, kind, health, surveyed_at } — The territory after this event (territoryViewOf). |
 | `territory.health` | `territory`: object { id, name, kind, health, surveyed_at } — The territory after this event (territoryViewOf). |
+
+## `patrol` · 1 type
+
+| Type | `data` |
+|---|---|
+| `patrol.ran` | `territory`: string (khớp `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$`, khác `global`)<br>`head`: string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) hoặc null — The commit tried, the head of the default branch after a fetch; null when none was found.<br>`trigger`: một trong `schedule`<br>`plot_failure` (tùy chọn): string (không rỗng) — No plot could be made (no default branch, a folder in the way): nothing ran, and the health of the branch stays as the last run left it.<br>`setup`: object { pass, error_line?, log_path } hoặc null — commands.setup; null when the territory has none or no plot was made. Failed: counted red as `setup`.<br>`checks`: array of object { id, pass, duration_ms, timed_out, environment, error_line?, log_path } — Every check of the territory, in the order they ran; none after a failed setup.<br>`scans`: array of object { script, outcome, count? } — The territory's patrol.scans, in order. |
 
 ## `graph` · 2 type
 

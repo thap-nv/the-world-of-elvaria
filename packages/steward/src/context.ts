@@ -1,6 +1,7 @@
 // What every step of one tick works with: the deps, the world as the tick sees it, the pen, the sessions.
 import type { Background } from './background.ts';
 import type { ForgeBook } from './forge/book.ts';
+import type { PatrolBook } from './patrol/book.ts';
 import type { GraphBuilds } from './graph-builds.ts';
 import type { JudgeLocks } from './review/exclusive.ts';
 import type { Notice, NoticeQuest, StewardDeps } from './types.ts';
@@ -41,6 +42,8 @@ export interface Context {
   readonly graphs?: GraphBuilds | undefined;
   /** The quests' deliveries to their forge (PS-08c): their outcomes, across ticks. */
   readonly forge: ForgeBook;
+  /** The health of the patrolled territories' default branches (PS-26), across ticks. */
+  readonly patrol: PatrolBook;
 }
 
 /** Rings the bell; a bell that fails never stops a tick. */

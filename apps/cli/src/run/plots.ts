@@ -6,7 +6,15 @@
 // resolved to programs (P1-17). A ritual with a scratch plot (P1-20) has its checks run in a fresh scratch plot of
 // the quest's branch (trialInScratch), its judge opened there, and the plot removed after the judge; the run's next
 // judge gets the plot made again, with commands.reset once (scratchAgain, P1-42, P1-47).
-import { argvOf, createPlotManager, runChecks, scratchAgain, trialInScratch } from '@elvaria/runner-core';
+import {
+  argvOf,
+  createPlotManager,
+  patrolIdOf,
+  runChecks,
+  scratchAgain,
+  trialInScratch,
+  tryTerritory,
+} from '@elvaria/runner-core';
 import type { ForgetWorktree, PlotManager, ProcessHost } from '@elvaria/runner-core';
 import type { Plots } from '@elvaria/steward';
 import { fromPortable, inKingdom, toPortable } from '@elvaria/store';
@@ -81,6 +89,17 @@ function scratchPlots(
   };
 }
 
+/**
+ * The patrol (PS-26): the territory's trial (PS-25) under a plot name of its own, so a `territory check` at the same
+ * time keeps its plot; the scans run in it before it goes, and its logs go to .runs/patrol-<id>/.
+ */
+const patrolPlots = (kingdom: string, host: ProcessHost): Pick<Plots, 'patrol'> => ({
+  patrol: async (territory, { signal, scan }) => {
+    const name = patrolIdOf(territory.id);
+    return (await tryTerritory({ kingdom, territory, host, name, signal, inPlot: scan })).trial;
+  },
+});
+
 export function plotsOver(kingdom: string, manager: PlotManager, host: ProcessHost): Plots {
   return {
     // `commands.setup` gets the quest's secrets in the host's minimal env, its log masked with them (P1-30); a new
@@ -145,5 +164,5 @@ export function plotsOver(kingdom: string, manager: PlotManager, host: ProcessHo
 export function plotsOf(kingdom: string, io: CliIo, forget: readonly ForgetWorktree[]): Plots {
   const host = processHostOf(io);
   const manager = createPlotManager({ kingdom, host, platform: io.platform, forget });
-  return plotsOver(kingdom, manager, host);
+  return { ...plotsOver(kingdom, manager, host), ...patrolPlots(kingdom, host) };
 }

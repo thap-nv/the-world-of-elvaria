@@ -1,11 +1,12 @@
 // The kinds of item of the owner's attention queue (attentionQueue, attention.ts): each kind's group, advice code and
 // command, and what an item names. Out of attention.ts, which builds the queue, to keep both under the size limit
 // (PS-11, the coordinator's plan for PS-08c: split it before adding a kind).
-import type { CharacterId, MemoId, QuestId, TribeId } from '../core/ids.ts';
+import type { CharacterId, MemoId, QuestId, TerritoryId, TribeId } from '../core/ids.ts';
 import type { DelegationHold, TriageAction } from '../delegation/constants.ts';
 import type { WaitGauge } from '../dispatch/judge-waits.ts';
 import type { Rank } from '../schema/common.ts';
 import type { DeliveryFailure, DeliveryStage } from '../schema/event/delivery-data.ts';
+import type { ScanOutcome } from '../schema/event/patrol-data.ts';
 
 export const ATTENTION_GROUPS = ['must', 'can_wait'] as const;
 /** `must`: the work stands still until the owner decides; `can_wait`: nothing waits on it. */
@@ -23,6 +24,9 @@ export const ATTENTION_TABLE = {
   // PS-08c: the Steward's delivery to the forge stopped; it does not try again on its own (ADR 0023). The item's line
   // words what to do by its `reason`.
   delivery_failed: { group: 'must', advice: 'deliver_again', command: ['quest', 'deliver', '{quest}'] },
+  // PS-26: the patrol found a check of the territory's default branch red, until a patrol finds it green again. The
+  // command runs the same trial by hand (PS-25), to see it red or green before the next patrol.
+  base_red: { group: 'must', advice: 'fix_base', command: ['territory', 'check', '{territory}'] },
   judge_mana: {
     group: 'must',
     advice: 'judge_other_pool_or_wait',
@@ -63,6 +67,8 @@ export const ATTENTION_TABLE = {
     advice: 'merge_pr_and_archive',
     command: ['quest', 'archive', '{quest}'],
   },
+  // PS-26: a scan of the latest patrol (link-check) did not pass; it never turns the branch red.
+  patrol_scan: { group: 'can_wait', advice: 'read_scan', command: ['territory', 'patrol', '{territory}'] },
   mana_asleep: { group: 'can_wait', advice: 'wait_or_wake', command: ['wake', '{tribe}'] },
   mana_warning: { group: 'can_wait', advice: 'watch_mana', command: ['doctor'] },
 } as const satisfies Record<
@@ -108,6 +114,22 @@ export interface AttentionSubject {
   readonly stage?: DeliveryStage;
   readonly reason?: DeliveryFailure;
   readonly url?: string;
+  /**
+   * A red check of a territory's default branch (base_red, PS-26): its id (`setup` for commands.setup), its first error
+   * line and log as the latest patrol found them, the commit and time it was first found red, and the quests merged
+   * since the last patrol that found it green.
+   */
+  readonly territory?: TerritoryId;
+  readonly check?: string;
+  readonly error_line?: string;
+  readonly log_path?: string;
+  readonly commit?: string;
+  readonly since?: string;
+  readonly suspects?: readonly QuestId[];
+  /** A scan of the latest patrol that did not pass (patrol_scan): the script, how it ended, what it counted. */
+  readonly script?: string;
+  readonly outcome?: ScanOutcome;
+  readonly count?: number;
 }
 
 export interface AttentionItem extends AttentionSubject {

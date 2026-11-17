@@ -2,7 +2,13 @@
 // printed in the owner's language. It writes nothing and spends no mana, so it runs beside a Steward or without one.
 // The Steward's own digest (digest/<day>.md, once a day) also lists what only its memory holds: quests whose judges
 // are all out of mana, or that no judge of the roster may take.
-import { attentionQueue, forgeOutcomesOf, scopeHoldsOf, unopenedReviewsOf } from '@elvaria/domain';
+import {
+  attentionQueue,
+  baseHealthOf,
+  forgeOutcomesOf,
+  scopeHoldsOf,
+  unopenedReviewsOf,
+} from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import { digestStateOf, readUnclaimable } from '@elvaria/steward';
 
@@ -44,6 +50,8 @@ async function runDigest(input: CommandInput, cli: CliContext): Promise<ExitCode
     scope_held: scopeHoldsOf(source.quests, source.territories),
     judges_unopened: unopenedReviewsOf(source.quests),
     deliveries: [...forgeOutcomesOf(log.events).values()],
+    // PS-26: the same health of the patrolled branches the Steward's book holds.
+    patrols: baseHealthOf(log.events),
   });
   // ctx.now() is written in the kingdom's zone: its date is the kingdom's local day, as the digest's file names it.
   const day = ctx.now().slice(0, 'yyyy-mm-dd'.length);

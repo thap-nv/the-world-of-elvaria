@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { bench, characterOf, questPayload, tickUntil } from './__fixtures__/kingdom.ts';
 import { statusIs } from './__fixtures__/review.ts';
 import { createForgeBook } from './forge/book.ts';
+import { createPatrolBook } from './patrol/book.ts';
 import { noticesOf } from './schedule/digest.ts';
 import { loadWorld } from './world.ts';
 import type { Bench } from './__fixtures__/kingdom.ts';
@@ -101,6 +102,7 @@ describe('a submitted quest that needs a judge who reads images (PS-11)', () => 
       judgeWaits: new Map(),
       versions,
       forge,
+      patrol: createPatrolBook(),
     };
     expect(noticesOf(world, state).unjudgeable).toEqual([{ quest: quest.id, class: 'judge', vision: true }]);
     // The owner summons a judge of the tribe that reads images: the review goes on with it.

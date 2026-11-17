@@ -4,7 +4,9 @@
 // way a quest plot runs it (one log, SETUP_TIMEOUT_MS), then every check the way the Steward runs them (runChecks:
 // those that are not exclusive first, the exclusive ones under the territory's lock, a failure for the environment
 // told apart). No branch is made, and the worktree goes, whatever happened, once the trial ends: it leaves only its
-// logs in the kingdom's `.runs/`. 0 mana: no session, no model.
+// logs in the kingdom's `.runs/`. 0 mana: no session, no model. (PS-26) The Steward's patrol runs the same trial under a
+// name of its own (`patrol-<territory>`: a `territory check` at the same time keeps its plot), then its scans in the
+// plot before it goes (`inPlot`).
 import process from 'node:process';
 
 import { commandLinesOf } from '@elvaria/domain';
@@ -30,6 +32,9 @@ export const trialIdOf = (territory: string): string => `trial-${territory}`;
 /** Portable, relative to the kingdom: the checks' logs, `<dir>/checks/<id>.log`. */
 export const trialRunDirOf = (territory: string): string => `.runs/${trialIdOf(territory)}`;
 
+/** The patrol's plot and run id (PS-26); no quest id starts with it either. */
+export const patrolIdOf = (territory: string): string => `patrol-${territory}`;
+
 export interface TerritoryTrialRequest {
   /** The kingdom root, native: the logs and the exclusive lock live there. */
   readonly kingdom: string;
@@ -41,6 +46,13 @@ export interface TerritoryTrialRequest {
   readonly signal?: AbortSignal;
   /** The gazetteer's stamp: the trial counts the commits from it to the commit it tries. */
   readonly stamp?: string;
+  /**
+   * The plot's id in the kingdom's `.runs/` and in the territory's worktree folder; trialIdOf(territory) by default,
+   * patrolIdOf for the patrol (PS-26). Its logs are written over at each run.
+   */
+  readonly name?: string;
+  /** Runs in the plot after the checks and before it goes, unless stopped (PS-26: the patrol's scans). */
+  readonly inPlot?: (worktree: string) => Promise<void>;
 }
 
 export interface TerritoryTrialRun {
@@ -50,6 +62,8 @@ export interface TerritoryTrialRun {
   /** Why the trial's folder stays (a program holds it); absent when it is gone. */
   readonly leftover?: string;
 }
+
+const nameOf = (request: TerritoryTrialRequest): string => request.name ?? trialIdOf(request.territory.id);
 
 const failed = (detail: string, base: string | null = null): TerritoryTrialRun => ({
   trial: { base, plot_failure: detail, setup: null, checks: [] },
@@ -71,7 +85,7 @@ async function setupStep(request: TerritoryTrialRequest, worktree: string): Prom
   const { kingdom, territory, host, signal } = request;
   const command = territory.commands.setup;
   if (command === undefined) return null;
-  const logPath = setupLogOf(trialIdOf(territory.id));
+  const logPath = setupLogOf(nameOf(request));
   const log = await openLog(kingdom, logPath, `$ ${command}`);
   const context = { cwd: worktree, host, ...(signal === undefined ? {} : { signal }) };
   const run = await runLine(command, context, log, SETUP_TIMEOUT_MS).finally(() => log.close());
@@ -116,7 +130,7 @@ async function stepsIn(request: TerritoryTrialRequest, worktree: string) {
       territory,
       touched: [],
       cwd: worktree,
-      run_dir: trialRunDirOf(territory.id),
+      run_dir: `.runs/${nameOf(request)}`,
       party_role: 'merge',
       ...(signal === undefined ? {} : { signal }),
     },
@@ -167,6 +181,7 @@ async function inTrialPlot(
   const added = await git(repo, ['worktree', 'add', '--quiet', '--detach', worktree, base]);
   if (added.code !== 0) return failed(added.stderr.trim(), base);
   const steps = await stepsIn(request, worktree);
+  if (request.inPlot !== undefined && request.signal?.aborted !== true) await request.inPlot(worktree);
   const { stamp } = request;
   const commits = stamp === undefined ? {} : { commits_since: await commitsSince(git, repo, stamp, base) };
   return { trial: { base, ...steps }, ...commits };
@@ -187,7 +202,7 @@ export async function tryTerritory(request: TerritoryTrialRequest): Promise<Terr
   const fork = await forkPoint({ git, repo, vcs: territory.vcs });
   if (!fork.ok) return failed(fork.error.detail);
   const base = fork.value;
-  const target = { repo, worktree: worktreePathOf(repo, territory.worktree_dir, trialIdOf(territory.id)) };
+  const target = { repo, worktree: worktreePathOf(repo, territory.worktree_dir, nameOf(request)) };
   // A trial stopped hard (the terminal closed) left its folder: it goes first, as a judge's scratch plot does.
   const left = await removeScratch(git, target, []);
   if (left !== undefined) return failed(`${target.worktree}: ${left}`, base);

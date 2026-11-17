@@ -5,6 +5,7 @@ import type { KingdomSnapshot, ZonedTime } from '@elvaria/domain';
 
 import { wantedIn } from './background.ts';
 import { recoverForge, settledOf } from './forge/book.ts';
+import { recoverPatrol } from './patrol/book.ts';
 import { applyInbox } from './inbox/apply.ts';
 import { asleepFromLog, levelsFromLog, warnedFromLog } from './mana/book.ts';
 import { manaStep } from './mana/step.ts';
@@ -53,6 +54,7 @@ export async function recover(deps: StewardDeps, state: State): Promise<void> {
   state.restart = restartFromLog(log.events);
   state.scheduler.recover(log.events);
   recoverForge(state.forge, log.events);
+  recoverPatrol(state.patrol, log.events);
 }
 
 /**
@@ -111,6 +113,7 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
     judgeLocks,
     graphs,
     forge,
+    patrol: state.patrol,
   };
   const waiting = await applyInbox(ctx, handled);
   // A session's leftovers lose its secrets before anything is recorded of them (§3.9).

@@ -225,6 +225,21 @@ Các lệnh trên chỉ đọc, không tốn mana, chạy được khi Nhiếp c
 
 **Bản tấu** (PS-03): mỗi ngày một lần, lúc `schedule.digest.at` của `kingdom.json` (mặc định 08:00 giờ vương quốc; `"digest": {"enabled": false}` để tắt), Nhiếp chính đang chạy ghi `digest/<ngày>.md` và rung chuông một lần: mọi việc chờ bạn, chia hai nhóm (phải quyết để việc chạy tiếp; chờ được), mỗi việc kèm khuyến nghị và lệnh `elvaria` để chạy. Không gọi model, không tốn mana; đồng hồ máy nhảy hay Nhiếp chính khởi động lại thì vẫn một bản một ngày, Nhiếp chính khởi động sau giờ đó thì ghi ngay, nhưng luôn sau phân loại thư của Tể tướng trong ngày (nếu `schedule.triage` bật): bản tấu chờ phân loại kết thúc và lệnh của nó vào sổ, kể cả khi phân loại còn chờ tộc của Tể tướng rảnh, nên một bản tấu có thể tới muộn: tới khi các phiên đang chạy trên tộc ấy kết thúc, hay khi tộc bị giữ vì phiên bản CLI thì tới khi `tribe check` qua. `elvaria digest` in bản tấu lúc này từ file và sổ sự kiện, không ghi gì; nhiệm vụ chờ người chấm chỉ có trong bản Nhiếp chính ghi. Nhiếp chính cũng rung chuông một lần cho nhiệm vụ có người chấm mà ai cũng hết mana (nêu kho và giờ reset nếu biết): chờ tới giờ reset, hoặc triệu hồi một người chấm khác model ở kho mana khác. `elvaria doctor` cảnh báo trước khi chuyện đó xảy ra: model người làm nào mà mọi người chấm khác model đều chung một kho mana.
 
+**Tuần tra** (PS-26, 0 mana): mỗi ngày lúc `schedule.patrol.at` (mặc định 06:30, trước phân loại thư và bản tấu, nên bản tấu trong ngày mang kết quả), Nhiếp chính chạy `commands.setup` và mọi check của từng lãnh thổ git bật tuần tra trên một đất sạch `patrol-<lãnh thổ>` ở đầu nhánh gốc (phép thử của `territory check`), rồi các script quét, và ghi một dòng `patrol.ran`. Log ở `.runs/patrol-<lãnh thổ>/`, ghi đè mỗi lần; đất bị xóa sau mỗi lần, kể cả khi bạn dừng Nhiếp chính giữa chừng (lần khởi động sau chạy lại).
+
+- Bật: `"patrol": {"enabled": true}` trong `schedule` của `kingdom.json` (tắt sẵn; `every` đọc theo ngày tròn: `P1D` mỗi ngày, `P7D` mỗi tuần), rồi `elvaria territory patrol <lãnh thổ> --on` cho từng lãnh thổ. Không có lệnh nào trong hai thì không tuần tra. Mỗi lần chạy tốn thời gian máy bằng một `territory check` (khoảng tám phút với repo Elvaria, đo 2026-11-15), không tốn mana.
+- Script quét và quest nháp sửa trong `territories/<id>/territory.json`:
+
+  ```json
+  "patrol": {
+    "scans": [{ "script": "link-check", "params": { "globs": ["docs/**/*.md"] } }, { "script": "todo-scan", "params": { "globs": ["src/**"] } }],
+    "follow_up": { "kind": "fix", "rank": "D", "class": "knight" }
+  }
+  ```
+
+- Đọc mục: một check đổi xanh sang đỏ (hay `commands.setup` hỏng, tên `setup`) là **một** mục `base_red` nhóm phải quyết, kèm dòng lỗi đầu, log, commit và các quest merge từ lần tuần tra xanh gần nhất (không có: thay đổi đến từ ngoài Elvaria); chuông rung một lần. Mục còn trong mọi bản tấu tới khi một lần tuần tra thấy check xanh lại. Check bị gạt vì môi trường (Docker tắt) không tính là đỏ. Lãnh thổ khai `follow_up` thì tuần tra lập thêm một quest nháp nêu đủ những thứ đó: `elvaria quest confirm <quest>` để nó mở, hoặc sửa đề trước (`quest edit`). Script quét không làm nhánh đỏ: `link-check` hỏng là một mục chờ được, `todo-scan` chỉ ghi số vào `patrol.ran`. `elvaria metrics` có bảng "Nhánh gốc đỏ sau merge".
+- Khi nào tắt: lãnh thổ đang sửa lớn, nhánh gốc đỏ đã biết và chưa ai sửa (mục cứ nằm đó), hay máy bận việc khác buổi sáng: `elvaria territory patrol <lãnh thổ> --off` (xóa cả `scans` và `follow_up`), hoặc tắt lịch cho cả vương quốc.
+
 ## 7. Dấu vua và giao hàng
 
 1. Đọc nhánh trong repo của lãnh thổ (`git log main..quest/<quest>`, `git diff main...quest/<quest>`), thư bàn giao và phán quyết (`quest show`).

@@ -13,6 +13,7 @@ import type {
   PLOT_MERGE_STOPS,
   Rank,
   QuestId,
+  TerritoryId,
   TribeHold,
   TribeId,
   WaitGauge,
@@ -132,6 +133,16 @@ export type Notice =
       readonly quest: NoticeQuest;
       readonly stage: DeliveryStage;
       readonly reason: DeliveryFailure;
+    }
+  /**
+   * PS-26: the patrol found checks of the territory's default branch turned red (`setup` for commands.setup), with
+   * the draft quest it opened for them when the territory declares `patrol.follow_up`. Rung once per turn.
+   */
+  | {
+      readonly kind: 'base_red';
+      readonly territory: TerritoryId;
+      readonly checks: readonly { readonly check: string; readonly error_line?: string }[];
+      readonly draft?: QuestId;
     }
   /** The character failed the same way breakers.same_fail_suspend times in a row: it went to the Temple. */
   | {

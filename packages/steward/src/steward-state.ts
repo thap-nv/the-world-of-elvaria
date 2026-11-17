@@ -6,6 +6,7 @@ import type { HeldLock } from '@elvaria/store';
 
 import type { Background } from './background.ts';
 import type { ForgeBook } from './forge/book.ts';
+import type { PatrolBook } from './patrol/book.ts';
 import type { GraphBuilds } from './graph-builds.ts';
 import type { JudgeLocks } from './review/exclusive.ts';
 import type { PromptSizes } from './review/prompt-size.ts';
@@ -55,6 +56,8 @@ export interface State {
   readonly scheduler: Scheduler;
   /** The quests' deliveries to their forge (PS-08c): rebuilt from the log at start, kept as they are recorded. */
   readonly forge: ForgeBook;
+  /** The patrolled territories' health (PS-26): rebuilt from the log at start, set by each patrol. */
+  readonly patrol: PatrolBook;
   /** Set by start(): what the first tick finishes of the last Steward's work (restart.ts, P1-44). */
   restart: Restart | undefined;
   held: Held | undefined;

@@ -70,6 +70,8 @@ export const EVENT_TYPES = [
   'territory.attached',
   'territory.surveyed',
   'territory.health',
+  // PS-26: the Steward's daily patrol of a territory's default branch.
+  'patrol.ran',
   // PS-21 (ADR 0029): a territory's code graph, built by the Steward outside every plot.
   'graph.built',
   'graph.failed',

@@ -7,7 +7,13 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { TerritorySchema, ok } from '@elvaria/domain';
-import { createPlotManager, scratchAgain, trialInScratch } from '@elvaria/runner-core';
+import {
+  createPlotManager,
+  patrolIdOf,
+  scratchAgain,
+  trialInScratch,
+  tryTerritory,
+} from '@elvaria/runner-core';
 import { fromPortable, toPortable } from '@elvaria/store';
 import type { TerritoryId } from '@elvaria/domain';
 
@@ -90,6 +96,11 @@ export function gitPlots(kingdom: string): Plots {
       return { plot: { type: 'worktree', path: toPortable(cwd) }, cwd };
     },
     releaseScratch: (quest, territory) => manager.releaseScratch(quest, territory),
+    // The patrol as `elvaria run` makes it (PS-26): the territory's trial under its own plot name, the scans in it.
+    patrol: async (territory, { signal, scan }) => {
+      const name = patrolIdOf(territory.id);
+      return (await tryTerritory({ kingdom, territory, host, name, signal, inPlot: scan })).trial;
+    },
   };
 }
 

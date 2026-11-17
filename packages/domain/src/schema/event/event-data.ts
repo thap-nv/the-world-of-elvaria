@@ -29,6 +29,7 @@ import {
   MemoRoutedDataSchema,
 } from './memo-data.ts';
 import { DigestWrittenDataSchema, ScheduleRanDataSchema } from './schedule-data.ts';
+import { PatrolRanDataSchema } from './patrol-data.ts';
 import {
   UpgradeFailedDataSchema,
   UpgradeRolledBackDataSchema,
@@ -215,6 +216,7 @@ export const EVENT_DATA_SCHEMAS = {
   'territory.attached': TerritoryChangeDataSchema,
   'territory.surveyed': TerritoryChangeDataSchema,
   'territory.health': TerritoryChangeDataSchema,
+  'patrol.ran': PatrolRanDataSchema,
   'graph.built': GraphBuiltDataSchema,
   'graph.failed': GraphFailedDataSchema,
   'memo.filed': MemoFiledDataSchema,
