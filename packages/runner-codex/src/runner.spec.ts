@@ -4,6 +4,7 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
+import { isDeepStrictEqual } from 'node:util';
 
 import { doctorNoteOf } from '@elvaria/runner-core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -155,7 +156,10 @@ describe('doctor and probe', () => {
     const env = { ...minimalEnv(), ELVARIA_FAKE_CODEX_LOGIN_HANGS: '1' };
     const info = await fakeRunner({ env, timeout_ms: 1000 }).doctor();
     expect(info.auth_ok).toBe(false);
-    expect(info.notes).toEqual([
+    // `codex --version` runs alongside with the same 1 s, and on a busy machine it runs out too (fix/timing-flakes):
+    // that is its own note, true and beside the point here.
+    const version = doctorNoteOf('doctor:command_timed_out', { command: 'codex --version', seconds: 1 });
+    expect(info.notes?.filter((note) => !isDeepStrictEqual(note, version))).toEqual([
       doctorNoteOf('doctor:command_timed_out', { command: 'codex login status', seconds: 1 }),
     ]);
     expect(info.notes).not.toContainEqual(notSignedIn);

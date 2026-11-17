@@ -139,4 +139,5 @@ kingdoms (paths with a space) and reads every line back through the domain's `Ev
 `hook-process.spec.ts` spawns the build: every event, a backslash path to `.env` denied on stdout, a payload
 written in two halves on a stdin made non-blocking (a `process.stdin` preload: EAGAIN between the halves on
 POSIX) read whole, an empty `PreToolUse` denied, stamps in the kingdom's zone, the load trace, and the start time
-next to `node -e 0` on the same machine. `stdin.spec.ts` feeds the reader a part, EAGAIN, then the rest.
+next to `node -e 0` on the same machine (with each process's CPU time, which a busy machine does not stretch;
+`startup-gate.spec.ts` holds the rule). `stdin.spec.ts` feeds the reader a part, EAGAIN, then the rest.

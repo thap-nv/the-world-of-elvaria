@@ -191,6 +191,17 @@ interface Prepared {
   readonly version: string | undefined;
 }
 
+/**
+ * Why `agy -p /hooks` gave no hook list, when it did not run to its end or failed with nothing on stdout: runToEnd's
+ * words, not "did not answer JSON", which reads as a hooks.json agy refused (fix/timing-flakes; a busy machine, as
+ * fix/busy-machine found for doctor). An exit code alone says nothing: agy's code for `/hooks` was never measured.
+ */
+function listingFailure(listed: ChildRun): string | undefined {
+  if (listed.problem !== undefined) return `agy -p /hooks: ${listed.problem}`;
+  if (listed.code === 0 || listed.stdout.trim() !== '') return undefined;
+  return `agy -p /hooks: exit ${String(listed.code)} ${listed.stderr.trim()}`.trim();
+}
+
 async function startAgy(req: SpawnRequest, options: AntigravityOptions, plan: HookPlan, prepared: Prepared) {
   const { ctx, env, call, version } = prepared;
   const files = await writeRunFiles(req, ctx, plan);
@@ -204,7 +215,7 @@ async function startAgy(req: SpawnRequest, options: AntigravityOptions, plan: Ho
   // ends the run (spike §1 #18): check before the session burns mana.
   const listed = await runToEnd(programOf(options.launch), ['-p', '/hooks', '--output-format', 'json'], call);
   const problem = hooksProblem(listed.stdout, files.hooks);
-  if (problem !== undefined) throw new Error(problem);
+  if (problem !== undefined) throw new Error(listingFailure(listed) ?? problem);
   // The session's secret values are masked before the patterns in every line the runner writes (§3.9).
   const known = secretValuesOf(req);
   return startSession({
