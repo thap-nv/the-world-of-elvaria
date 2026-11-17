@@ -1,6 +1,7 @@
 // What a territory's quests need from the machine (P1-56, (c) and (h) of the P1-50 report): Docker running when a
-// command uses it, a git identity, `.claude/rules/` within `laws.patch_paths`; and `territory add` saying so for the
-// rules. Each is a warning: a doctor that fails on a stopped Docker Desktop would say the kingdom is broken.
+// command uses it, a git identity, `.claude/rules/` within `laws.patch_paths`, no CLAUDE.local.md the plots load; and
+// `territory add` saying so for the last two. Each is a warning: a doctor that fails on a stopped Docker Desktop would
+// say the kingdom is broken.
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
@@ -56,7 +57,9 @@ describe('elvaria doctor: what the quests of a territory need of the machine (P1
     const text = printed(io);
     // This kingdom has no tribe CLI, so the doctor fails on that; what these checks add is a warning, never an error.
     const errors = text.split('\n').filter((line) => line.startsWith('✗'));
-    expect(errors.filter((line) => /docker|user\.email|\.claude\/rules/i.test(line))).toEqual([]);
+    expect(errors.filter((line) => /docker|user\.email|\.claude\/rules|CLAUDE\.local/i.test(line))).toEqual(
+      [],
+    );
     return { text };
   };
 
@@ -127,6 +130,38 @@ describe('elvaria doctor: what the quests of a territory need of the machine (P1
       const quiet = testIo();
       expect(await run(quiet, 'territory', 'add', plain, '--kingdom', kingdom, '--locale', 'en')).toBe(0);
       expect(quiet.printed.out.join('\n')).not.toContain('Hint');
+    });
+  });
+
+  describe('CLAUDE.local.md of the repo (P1-02, §3.3)', () => {
+    const plant = (repo: string) => writeFile(path.join(repo, 'CLAUDE.local.md'), '# my own notes\n');
+    const loads = (dir: string) =>
+      `the repo has a CLAUDE.local.md, and Claude Code loads it into every plot under ${dir} (it sits in a parent folder), so characters read your personal notes.`;
+
+    it('warns when the plots sit inside the repo, and says nothing when they sit outside it or there is none', async () => {
+      const repo = await territory('dc1');
+      await plant(repo);
+      await plant(await territory('dc2', { worktree_dir: '../dc2.elvaria/worktrees' }));
+      await territory('plain');
+      const { text } = await doctor();
+      const plots = path.join(repo, '.elvaria', 'worktrees');
+      expect(text).toContain(`! Territory dc1: ${loads(plots)} Move it out of the repo.`);
+      expect(text).not.toContain('Territory dc2: the repo has a CLAUDE.local.md');
+      expect(text).not.toContain('Territory plain: the repo has a CLAUDE.local.md');
+    });
+
+    it('is said by territory add', async () => {
+      const repo = await gitRepo(path.join(dir.root, 'dc1'));
+      await plant(repo);
+      const io = testIo();
+      expect(await run(io, 'territory', 'add', repo, '--kingdom', kingdom, '--locale', 'en')).toBe(0);
+      expect(io.printed.out.at(-1)).toBe(
+        `Warning: ${loads(path.join(repo, '.elvaria', 'worktrees'))} Move it out of the repo before quests run there.`,
+      );
+      const plain = await gitRepo(path.join(dir.root, 'plain'));
+      const quiet = testIo();
+      expect(await run(quiet, 'territory', 'add', plain, '--kingdom', kingdom, '--locale', 'en')).toBe(0);
+      expect(quiet.printed.out.join('\n')).not.toContain('CLAUDE.local.md');
     });
   });
 

@@ -87,7 +87,8 @@ show` prints the brief apart from the rest of the description and, while the pla
 - `memo list [--all]`, `memo show <memo>`, `memo decide <memo> shelved|rejected|handled [--quest] [--note]` (PS-02,
   `src/memo/`, ADR 0024): the letters (memos) characters wrote about work outside their quests, the open ones
   unless `--all`; `decide` sends `decide_memo` after refusing what it can tell already (an unknown or decided
-  letter, a handled one without `--quest`, an unknown quest). The CLI writes no memo. `doctor` says a registry file
+  letter, a handled one without `--quest`, an unknown quest, a `--note` that names another letter's id), and says
+  back the letter it closes (kind, sender, first line of its text; lesson (151)). The CLI writes no memo. `doctor` says a registry file
   the kingdom lacks (`registry/memos.json` before PS-02) is what `elvaria migrate` copies. (PS-22) `memo show` names
   the verdict an objection contests, why it went to the owner, and the second judge's verdict that closed it;
   `decide` offers the owner's three decisions, never `sustained` or `overruled`. `metrics` adds memos by kind and
@@ -174,7 +175,9 @@ show` prints the brief apart from the rest of the description and, while the pla
   mana gauges (P1-32, `src/doctor/check-mana.ts`): a sleeping one as a warning, with the reset its sleep named,
   an awake one with its readings, then what a territory's quests need of the machine, as warnings (P1-56,
   `src/doctor/check-territory-setup.ts`: a Docker that does not answer `docker info` when a command mentions docker, a
-  repo with no `user.email`, `.claude/rules/` files outside `laws.patch_paths`, the last also said by `territory add`)
+  repo with no `user.email`, `.claude/rules/` files outside `laws.patch_paths`, a `CLAUDE.local.md` Claude Code
+  loads into the plots when they sit inside the repo (P1-02, `src/territory/claude-local.ts`), the last two also
+  said by `territory add`)
   and the models whose doers have judges of another model on a single mana pool only, two judges on one gauge
   included (`src/doctor/check-judges.ts`, counted by pool since PS-03, (b) of P1-56),
   "not measured" when the Steward has logged none; under each reading the share of the window a session took, as
@@ -224,7 +227,9 @@ show` prints the brief apart from the rest of the description and, while the pla
   says them), and `.state/steward.lock` (a second `run` is refused). It names the build it runs on as it starts
   (`src/upgrade/running.ts`, PS-04b).
 - `upgrade [--ref <ref>] | --rollback` and the pin (PS-04b, implementation-plan §3.16.4, ADR 0026; `src/upgrade/`):
-  a build is a detached worktree of the repo this CLI runs from (`--ref`, `main` by default) at
+  a build is a detached worktree of the repo this CLI runs from (`--ref`, `main` by default; a local branch that
+  lacks commits of its `origin/` copy as last fetched is built with a warning, and nothing is fetched,
+  `src/upgrade/behind.ts`) at
   `<kingdom>/.builds/<sha>/`, installed (`pnpm install --frozen-lockfile`, with husky off) with the hook and the
   event log built; its CLI runs from source. `upgrade` holds the Steward's lock throughout (refused while a Steward
   runs, or while sessions of a stopped one still run), builds, then tries the build through its own commands as
@@ -248,7 +253,7 @@ show` prints the brief apart from the rest of the description and, while the pla
   env of the minimal list, `ELVARIA_*` and `TZ`, and `ELVARIA_PINNED_BUILD` so it never hops twice; it waits
   through Ctrl+C and passes SIGTERM on. `--here` (a global option) and `upgrade` itself run on the code typed; a
   pointer it cannot read, or a pinned build no longer on disk, stops the command with the way out. `doctor` says
-  what the kingdom pins.
+  what the kingdom pins, and the build before as a way back only while its CLI is still on disk ((170)).
 - `territory graph <id> [--commit <ref>] [--query <words>]` (PS-21) builds the territory's code graph at a commit
   with the pinned graphify (0 mana), or finds it built, and asks it one question; `doctor` checks graphify when a
   territory has `code_graph` on or one is pinned (missing, unpinned or changed: a warning) and `--pin` writes

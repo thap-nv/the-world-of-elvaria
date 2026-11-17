@@ -33,7 +33,24 @@ export async function checkBuild(
   if (!(await hasCli(dir))) return finding('error', t('cli.build.missing', { sha: current, dir }));
   if (!(await sameFolder(self, dir, platform)))
     return finding('warn', t('cli.build.doctor_here', { sha: shortSha(current), root: self }));
-  return previous === null
-    ? finding('ok', t('cli.build.doctor_pinned_first', { sha: shortSha(current) }))
-    : finding('ok', t('cli.build.doctor_pinned', { sha: shortSha(current), previous: shortSha(previous) }));
+  return finding('ok', await wayBackLine(t, root, current, previous));
+}
+
+/**
+ * The pinned build's line with the way back: the build before counts only while its CLI is on disk, as rollback.ts
+ * checks before it moves the pointer (170): a kingdom moved to another machine without `.builds/` has none. Not a
+ * warning: a first pin has no way back either, and the next upgrade keeps one again.
+ */
+async function wayBackLine(
+  t: Translate,
+  root: string,
+  current: string,
+  previous: string | null,
+): Promise<string> {
+  const sha = shortSha(current);
+  if (previous === null) return t('cli.build.doctor_pinned_first', { sha });
+  const dir = buildDirOf(root, previous);
+  return (await hasCli(dir))
+    ? t('cli.build.doctor_pinned', { sha, previous: shortSha(previous) })
+    : t('cli.build.doctor_pinned_gone', { sha, previous: shortSha(previous), dir });
 }
