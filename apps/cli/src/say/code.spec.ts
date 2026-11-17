@@ -122,8 +122,10 @@ const territoryOf = (fields: Record<string, unknown> = {}): Territory =>
     ...fields,
   });
 
-const read = (words: string, territory: Territory, graphs?: CodeGraphs) =>
-  codeOf([territory], words, { git: gitRun, graphs, platform: process.platform });
+const words = (text: string, territories: readonly Territory[], graphs?: CodeGraphs) =>
+  codeOf(territories, text, { git: gitRun, graphs, platform: process.platform });
+const read = async (text: string, territory: Territory, graphs?: CodeGraphs) =>
+  (await words(text, [territory], graphs)).territories;
 
 describe('codeOf: the files the words name (PS-21b)', () => {
   it('reads their count, size and lines from the working tree, with the switch off', async () => {
@@ -169,6 +171,34 @@ describe('codeOf: the files the words name (PS-21b)', () => {
     expect(await read('Viết lại phần cài đặt cho rõ.', territoryOf())).toEqual([]);
   });
 
+  it('names a path of two parts or more from a folder below the root, as the owner writes it', async () => {
+    const [entry] = await read('sửa api/src/orders.ts, xem web/src/orders/', territoryOf());
+    expect(entry?.named.map(({ words, files }) => [words, files])).toEqual([
+      ['api/src/orders.ts', 1],
+      ['web/src/orders/', 1],
+    ]);
+    expect(await read('sửa src/', territoryOf())).toEqual([]);
+  });
+
+  it('gives the paths no git territory holds a file at, (156)(b)', async () => {
+    const other = territoryOf({ id: 'other', path: path.join(dir.root, 'gone').replaceAll('\\', '/') });
+    expect(
+      await words('sửa README.md, docs/missing.md và untracked.ts; `apps/*/gone/**`', [other, territoryOf()]),
+    ).toMatchObject({
+      territories: [{ territory: 'dc1-se-team', named: [{ words: 'README.md' }] }],
+      missing: ['apps/*/gone/**', 'docs/missing.md', 'untracked.ts'],
+    });
+    expect((await words('Viết lại phần cài đặt.', [territoryOf()])).missing).toEqual([]);
+  });
+
+  it('calls no path missing when no territory could be read', async () => {
+    const gone = territoryOf({ path: path.join(dir.root, 'gone').replaceAll('\\', '/') });
+    expect(await words('sửa docs/missing.md', [gone, territoryOf({ vcs: { type: 'none' } })])).toEqual({
+      territories: [],
+      missing: [],
+    });
+  });
+
   it('reads nothing of a territory without git, or on a machine without git', async () => {
     expect(await read('README.md', territoryOf({ vcs: { type: 'none' } }))).toEqual([]);
     expect(
@@ -177,7 +207,7 @@ describe('codeOf: the files the words name (PS-21b)', () => {
         graphs: undefined,
         platform: process.platform,
       }),
-    ).toEqual([]);
+    ).toEqual({ territories: [], missing: [] });
     const gone = territoryOf({ path: path.join(dir.root, 'gone').replaceAll('\\', '/') });
     expect(await read('README.md', gone)).toEqual([]);
   });

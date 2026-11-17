@@ -35,7 +35,7 @@ The machine has held the sub-quests to what it can check (the `subquests` check)
 
 ## check_sources
 
-Open the sources the work cites; every claim must be supported by its source.
+Open the sources the work cites; every claim must be supported by its source. When you cannot open a source, name it in your verdict as one you could not open, and do not guess what it says.
 
 ## cross_check_sources
 
