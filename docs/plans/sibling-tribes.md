@@ -48,7 +48,9 @@ Chi tiết ở [spike](../spikes/claude-config-dir-2026-11-17.md). Tóm tắt nh
 - **`claude auth status --json` đủ cho `doctor`.** Lệnh trả `configDirectory` ở mọi trạng thái, và khi đã đăng nhập thì có thêm `email`, `orgId`, `orgName`, `subscriptionType`, `planTier`. PS-27 dùng `configDirectory` để biết CLI có nghe biến không, và dùng `email` cùng `orgId` làm dấu tài khoản.
 - **Phiên trong thư mục riêng không nạp gì từ `~/.claude`.** `/context` không liệt kê file nhớ hay skill cấp người dùng nào, có hay không có `--setting-sources project,local`.
 - **`purge` theo thư mục.** `purge --dry-run` trong thư mục riêng chỉ liệt kê transcript của thư mục đó. Cùng lệnh với thư mục mặc định trả đúng câu mà `purgeWorktree` coi là "không có gì để xóa".
-- **Chưa đo ở bản này**: `/usage` và `rate_limit_event` của tài khoản thứ hai, vì thư mục thứ hai chưa được đăng nhập lúc viết; và tên mục Keychain trên macOS. Mục 3 và mục 5 của spike ghi cách đo. PS-27 dựa vào giả định rằng `/usage` và `rate_limit_event` đọc tài khoản của thư mục đang dùng; nếu phép đo cho kết quả khác thì PS-27 phải dừng lại ở bước adapter và báo chủ nhân.
+- **`/usage` và `rate_limit_event` đọc tài khoản của thư mục đang dùng.** Tài khoản thứ hai (gói `pro`) báo 0 % và 6 %, trong khi thư mục mặc định (gói `team`) báo 12 %, 40 % và 21 %. `rate_limit_event` của một phiên trong thư mục thứ hai mang đúng 6 % đó. Vì vậy phần mana không cần đổi gì.
+- **Trên Windows, đăng nhập là file `.credentials.json` trong thư mục cấu hình.** Tên mục Keychain trên macOS chưa đo (mục 5 của spike, mục CT9).
+- **Mỗi lần `-p /usage` để lại một transcript** trong thư mục cấu hình đang dùng. Lần thăm dò của adapter vì thế dồn transcript lại ở từng dòng. Điều này có từ trước và không do chi gây ra (mục "Gợi ý cho task khác").
 
 ## Tổng quan và cách chia
 
@@ -193,3 +195,4 @@ Phiên kế hoạch không sửa ADR. Đây là lời đề xuất cho phiên l�
 - **P2-02, P2-04, P2-07** ([phase-2.md](phase-2.md)): huy hiệu của `ui-kit` nhận `siblings.ordinal` để vẽ chấm; HUD nhóm các `PoolView` theo `siblings.root` của tộc; chú giải tộc liệt kê dòng gốc một lần, kèm số chi.
 - **`tribe check` sau khi CLI tự cập nhật**: hai dòng chung một file chạy cần hai lần kiểm thật (dòng 76). Nếu việc này thành phiền, một task sau có thể cho lần kiểm của một dòng ghim `checked_version` cho các dòng cùng `tool.path`; phần đăng nhập của từng dòng vẫn phải kiểm riêng.
 - **Dòng đang tắt**: `crewOf` không dựng runner cho dòng tắt, nên transcript của một chi đã tắt không được `purge` khi trả worktree. Điều này đã đúng với mọi tộc từ trước; ghi lại vì chi làm ca này dễ gặp hơn.
+- **Transcript của lần thăm dò**: mỗi lần `-p /usage` ghi một transcript khoảng 3 KB vào `<thư mục cấu hình>/projects/<cwd đã mã hóa>/` (spike mục 3.5), và adapter thăm dò mỗi 15 phút cùng sau mỗi phiên, với cwd là thư mục tạm của hệ thống. Một task sau có thể cho adapter chạy `claude purge --yes` trên cwd của thăm dò, hoặc đặt cwd đó vào `.runs/`. Việc này áp cho mọi dòng Claude, kể cả dòng gốc.
