@@ -1,6 +1,6 @@
 # Chi của tộc — PS-27 và PS-27b: kế hoạch chi tiết
 
-Ngày: 2026-11-17 · Trạng thái: **chủ nhân đã chốt** ngày 2026-11-17 các mục CT1–CT9 và CT11–CT15 theo khuyến nghị ([§11, 2026-11-17](../implementation-plan/11-2026-11-17.md): dòng "docs/plan-sibling-tribes" nêu các mục, dòng "Người dùng chốt (trong phiên kế hoạch docs/plan-sibling-tribes …)" ghi lời chốt). Riêng **CT10 còn mở**: chủ nhân muốn kiểm ngay chi cho Codex có làm được không, và nếu được thì kế hoạch này thêm phần Codex để làm cùng chi cho Claude. Phần đó chưa có ở bản này, nên **chưa mở PS-27** cho tới khi nó xong. Kế hoạch này mở đường cho **chi** của một tộc: tài khoản thứ hai của cùng một CLI, khai thành một dòng `kingdom.tribes[]` nữa và có bể mana riêng. Nguồn đã chốt là dòng §11 cùng ngày "Người dùng chốt (trong phiên hỏi đáp -a9 …) cách thêm tài khoản thứ hai của cùng một CLI" (#200, `2ee9eec`); năm ý của dòng đó là bất biến ở đây và được nhắc lại ngay dưới. Phép đo đi trước nằm ở [spike thư mục cấu hình của Claude Code](../spikes/claude-config-dir-2026-11-17.md). Phần "Ai đọc" và "Mẫu dùng lại" ở đầu [phase-1.5.md](phase-1.5.md) áp dụng nguyên. Tên hàm, tên trường và các con số dưới đây là đề xuất khớp với code hiện có: phiên làm task được đổi cho hợp, miễn giữ hợp đồng, và ghi chỗ đổi vào §11. Chưa task nào dưới đây được mở; phiên điều phối quyết thứ tự và lúc mở.
+Ngày: 2026-11-17 · Trạng thái: **chủ nhân đã chốt** ngày 2026-11-17 các mục CT1–CT9 và CT11–CT15 theo khuyến nghị ([§11, 2026-11-17](../implementation-plan/11-2026-11-17.md): dòng "docs/plan-sibling-tribes" nêu các mục, dòng "Người dùng chốt (trong phiên kế hoạch docs/plan-sibling-tribes …)" ghi lời chốt). Theo **CT10** mà chủ nhân đổi cùng ngày, kế hoạch có thêm phần Codex: task PS-27c, bảng dòng 84–87 và [spike `CODEX_HOME`](../spikes/codex-home-2026-11-17.md). Hai mục mới **CT16 và CT17 còn chờ chủ nhân chốt**, và phép đo sau đăng nhập của spike Codex chưa xong; **chưa mở PS-27** cho tới khi hai điều đó xong. Kế hoạch này mở đường cho **chi** của một tộc: tài khoản thứ hai của cùng một CLI, khai thành một dòng `kingdom.tribes[]` nữa và có bể mana riêng. Nguồn đã chốt là dòng §11 cùng ngày "Người dùng chốt (trong phiên hỏi đáp -a9 …) cách thêm tài khoản thứ hai của cùng một CLI" (#200, `2ee9eec`); năm ý của dòng đó là bất biến ở đây và được nhắc lại ngay dưới. Phép đo đi trước nằm ở [spike thư mục cấu hình của Claude Code](../spikes/claude-config-dir-2026-11-17.md). Phần "Ai đọc" và "Mẫu dùng lại" ở đầu [phase-1.5.md](phase-1.5.md) áp dụng nguyên. Tên hàm, tên trường và các con số dưới đây là đề xuất khớp với code hiện có: phiên làm task được đổi cho hợp, miễn giữ hợp đồng, và ghi chỗ đổi vào §11. Chưa task nào dưới đây được mở; phiên điều phối quyết thứ tự và lúc mở.
 
 ## Năm ý đã chốt
 
@@ -38,7 +38,11 @@ Trong file này, **dòng gốc** là dòng mà `sibling_of` trỏ tới, và **c
 | 80 | Kho `fantasy` (`p/domain/src/tribe/fantasy-looks.json`) có bốn hào quang theo thứ tự `glow`, `sparks`, `mist`, `rings`. Mục ghim `claude` dùng `glow`, `gemini` dùng `sparks`. | Chi thứ hai của `claude` nhận `sparks`, thứ ba `mist`, thứ tư `rings`, thứ năm quay lại `glow`. |
 | 81 | `hold()` của `look.ts` giữ cả năm phần của mỗi tộc đứng trước. Tộc tự sinh tránh phần đã có người giữ khi kho còn phần trống. | Hào quang của chi cũng được giữ như của mọi tộc. `tribe add` thêm vào cuối danh sách, nên thêm một chi không đổi ngoại hình của tộc nào đã có. |
 | 82 | Bộ kit của adapter file mang nguyên `tribe: Tribe` (`p/runner-core/src/kit/kit.ts`). | Adapter của chủ nhân đọc được `kit.tribe.tool.config_dir` mà không cần đổi kit. PS-27 thêm một trường tiện dụng ở dạng đường dẫn của máy, bên cạnh `tool_path`. |
-| 83 | Adapter Codex không bao giờ đổi `CODEX_HOME` (đăng nhập nằm ở đó). agy không có thư mục nhà nào được ghi trong tài liệu, chỉ có cờ ẩn `--app_data_dir` và `--cli_dir_name`. `GEMINI_CLI_HOME` được dành cho settings theo lần chạy của `runner-gemini`, một tộc dùng `api_key`. | Kế hoạch này chỉ làm Claude Code. Chi cho Codex và agy là mục CT10. |
+| 83 | Adapter Codex không bao giờ đổi `CODEX_HOME` (đăng nhập nằm ở đó). agy không có thư mục nhà nào được ghi trong tài liệu, chỉ có cờ ẩn `--app_data_dir` và `--cli_dir_name`. `GEMINI_CLI_HOME` được dành cho settings theo lần chạy của `runner-gemini`, một tộc dùng `api_key`. | Chi cho Codex là PS-27c (dòng 84–87). agy chưa có đường nào, nên vẫn chờ (mục CT10). |
+| 84 | Mọi tiến trình của adapter Codex lấy env qua một hàm `codexEnv` (`p/runner-codex/src/runner.ts`): phiên, lời gọi `hooks/list` trước phiên, lần thăm dò và `doctor`. | `CODEX_HOME` chỉ cần đặt ở một chỗ. Cũng như với Claude, adapter gỡ biến khi dòng không khai thư mục. |
+| 85 | `doctorCodex` chỉ chạy `--version` và `login status`; nó không hỏi app-server. `login status` chỉ in một câu, không nêu tài khoản. | `doctor` của Codex thêm một lần hỏi app-server (không gọi model) để lấy `codexHome` và mã tài khoản. |
+| 86 | Phép kiểm hook trước mỗi phiên (`hooks/list`, rồi mới truyền `--dangerously-bypass-hook-trust`) chạy với đúng env của phiên. | Phép kiểm đó tự liệt kê hook của thư mục nhà của chi. Thư mục mới không có hook nào của chủ nhân. |
+| 87 | `crew.ts` không gắn `forget` cho Codex: Codex không giữ gì theo worktree. Rollout của phiên nằm trong `<thư mục nhà>/sessions/`. | Chi của Codex không cần phần dọn nào. `exec resume` phải chạy trong đúng thư mục nhà đã sinh ra phiên, điều này tự đúng vì nhân vật cố định tộc. |
 
 ## Spike đã đo gì
 
@@ -51,6 +55,13 @@ Chi tiết ở [spike](../spikes/claude-config-dir-2026-11-17.md). Tóm tắt nh
 - **`/usage` và `rate_limit_event` đọc tài khoản của thư mục đang dùng.** Tài khoản thứ hai (gói `pro`) báo 0 % và 6 %, trong khi thư mục mặc định (gói `team`) báo 12 %, 40 % và 21 %. `rate_limit_event` của một phiên trong thư mục thứ hai mang đúng 6 % đó. Vì vậy phần mana không cần đổi gì.
 - **Trên Windows, đăng nhập là file `.credentials.json` trong thư mục cấu hình.** Tên mục Keychain trên macOS chưa đo (mục 5 của spike, mục CT9).
 - **Mỗi lần `-p /usage` để lại một transcript** trong thư mục cấu hình đang dùng. Lần thăm dò của adapter vì thế dồn transcript lại ở từng dòng. Điều này có từ trước và không do chi gây ra (mục "Gợi ý cho task khác").
+
+**Codex** (chi tiết ở [spike `CODEX_HOME`](../spikes/codex-home-2026-11-17.md), Codex 0.169.0-alpha.11.1, Windows):
+
+- **`CODEX_HOME` tách đăng nhập.** Thư mục mới rỗng là "Not logged in", trong khi thư mục mặc định vẫn đăng nhập.
+- **`codex app-server` báo thư mục nhà đang dùng** (`codexHome` của lời gọi `initialize`), nên `doctor` biết CLI có nghe biến không.
+- **Thăm dò ở thư mục chưa đăng nhập trả lỗi rõ**, không im lặng.
+- **Chưa đo ở bản này**: hạn mức và mã tài khoản của tài khoản thứ hai, phiên, `exec resume` và sandbox Windows trong thư mục mới, vì thư mục thứ hai chưa được đăng nhập lúc viết. PS-27c dựa vào giả định rằng `account/rateLimits/read` đọc tài khoản của thư mục đang dùng.
 
 ## Tổng quan và cách chia
 
@@ -68,11 +79,12 @@ Chi tiết ở [spike](../spikes/claude-config-dir-2026-11-17.md). Tóm tắt nh
 |---|---|---|---|---|
 | PS-27 | **Thư mục cấu hình của tộc** (tầng việc): `tool.config_dir`, năng lực `config_dir`, adapter Claude đặt `CLAUDE_CONFIG_DIR`, `doctor --config-dir` và luật giữa các dòng | 5 | không (PS-23, PS-24 đã xong) | `p/domain/src/schema/tribe.ts`, `p/domain/src/tribe/**`, `p/runner-core/src/{runner,kit}/**`, `p/runner-claude/src/**` và `fixtures/`, `a/cli/src/{doctor,run,tribe}/**`, i18n, `docs/schemas/**`, `docs/cli.md`, ADR 0021 và 0009, §3.5, §3.9, §3.14, hướng dẫn |
 | PS-27b | **Ngoại hình của chi** (hiển thị): `sibling_of`, `sibling_name`, `tribeLookOf`, `tribe add --sibling-of`, `tribe look`, `tribe list`, thuật ngữ | 4 | PS-27 | `p/domain/src/schema/tribe.ts`, `p/domain/src/tribe/**`, `a/cli/src/tribe/**`, `a/cli/src/doctor/**`, i18n và `glossary.json`, `docs/schemas/**`, `docs/cli.md`, `docs/glossary.md`, ADR 0021, §3.14, hướng dẫn |
+| PS-27c | **Chi cho Codex**: adapter `codex_cli` khai `config_dir`, đặt `CODEX_HOME`, `doctor` trả thư mục và dấu tài khoản | 2 | PS-27 | `p/runner-codex/src/**` và `fixtures/`, `a/cli/src/run/codex.ts`, ADR 0021, §3.7, §3.14, `.claude/rules/runner.md`, hướng dẫn |
 
 - **Spike không thành task riêng.** Phiên kế hoạch đã đo phần Windows. Phần macOS (tên mục Keychain) chưa đo và không chặn PS-27, vì luật của `doctor` bắt được hậu quả xấu nhất (mục CT9).
-- **Thứ tự theo phụ thuộc** (đề xuất; phiên điều phối quyết): PS-27 rồi PS-27b. PS-27b đứng sau vì hai task cùng sửa `schema/tribe.ts`, `a/cli/src/tribe/**`, file chuỗi i18n và §3.14, và vì `tribe add --sibling-of` chỉ có ích khi dòng mới có tài khoản riêng.
+- **Thứ tự theo phụ thuộc** (đề xuất; phiên điều phối quyết): PS-27, rồi PS-27b và PS-27c. Hai task sau chạy song song được: PS-27c chỉ chạm `runner-codex` và một file của `apps/cli`, PS-27b chạm domain và `a/cli/src/tribe/**`. PS-27b đứng sau vì hai task cùng sửa `schema/tribe.ts`, `a/cli/src/tribe/**`, file chuỗi i18n và §3.14, và vì `tribe add --sibling-of` chỉ có ích khi dòng mới có tài khoản riêng.
 - **Chồng nhau**: PS-27 chạm `a/cli/src/doctor/**` và `a/cli/src/run/crew.ts`. Task nào đang mở cũng chạm hai vùng đó thì không chạy cùng lúc. Cả hai task chạm file chuỗi `vi.json` và `en.json` như mọi task có CLI.
-- **Điều kiện mở PS-27**: CT1–CT5 đã chốt. **Điều kiện mở PS-27b**: PS-27 đã merge và CT6–CT8 đã chốt.
+- **Điều kiện mở PS-27**: CT1–CT5 đã chốt. **Điều kiện mở PS-27b**: PS-27 đã merge và CT6–CT8 đã chốt. **Điều kiện mở PS-27c**: PS-27 đã merge và CT16–CT17 đã chốt.
 
 ## PS-27 — Thư mục cấu hình của tộc
 
@@ -144,6 +156,25 @@ Chi tiết ở [spike](../spikes/claude-config-dir-2026-11-17.md). Tóm tắt nh
 - **Xong khi**: `pnpm check` xanh; các ca trên; `docs/glossary.md`, `docs/cli.md` và `docs/schemas/**` sinh lại sạch; §3.14 và ADR 0021 đã sửa; hướng dẫn thêm tộc có đủ năm bước.
 - **Chỗ chừa**: task `ui-kit` của giai đoạn 2 (P2-02 trong [phase-2.md](phase-2.md)) vẽ `siblings.ordinal` chấm dưới huy hiệu và xếp các thanh mana có cùng `siblings.root` thành một nhóm dưới một huy hiệu. Task nào đưa `look` của tộc tới tầng thế giới thì đưa cùng `sibling_of` và `sibling_name`. Theme thành thư mục riêng (giai đoạn 4) mang kho hào quang của nó theo.
 
+## PS-27c — Chi cho Codex
+
+- **Mục tiêu**: một dòng `kingdom.tribes[]` của adapter `codex_cli` chạy Codex trong `CODEX_HOME` mà chủ nhân chọn. Nhờ đó tài khoản ChatGPT thứ hai là một tộc nữa với bể mana riêng, đúng như chi của Claude.
+- **Đọc trước**: bảng dòng 84–87; [spike `CODEX_HOME`](../spikes/codex-home-2026-11-17.md); [spike Codex](../spikes/codex-2026-11-12.md) phần đăng nhập và hook; dòng về Codex trong `.claude/rules/runner.md`.
+- **Phạm vi**: chỉ `p/runner-codex` và chỗ `apps/cli` dựng runner Codex. Mọi thứ chung (schema, năng lực, `ToolInfo`, luật của `doctor`, `--config-dir`) đã có từ PS-27 và không đổi.
+- **Không làm**: không chép `auth.json`; không đọc hay ghi trong thư mục nhà; không đổi cờ của phiên; không agy.
+- **Thêm**:
+  1. `CodexOptions.configDir?`. `codexEnv` nhận nó: có thì đặt `CODEX_HOME`, không có thì **gỡ** `CODEX_HOME` khỏi env, và giá trị của adapter đè lên mọi nguồn khác. Bốn chỗ gọi `codexEnv` đều truyền nó.
+  2. `CODEX_CAPABILITIES.config_dir = true`.
+  3. `doctorCodex` thêm một lần hỏi `codex app-server`, không gọi model. `codexHome` của lời gọi `initialize` thành `ToolInfo.config_dir`; nếu nó khác thư mục đã cho thì `auth_ok: false` kèm `doctor:config_dir_ignored`. `ToolInfo.account` là chuỗi băm của mã tài khoản mà app-server trả (mục CT17). App-server không trả lời kịp thì ghi chú như mọi lời gọi hết giờ, không coi là chưa đăng nhập.
+  4. `a/cli/src/run/codex.ts` truyền `configDir` từ `tool.config_dir`.
+  5. CLI giả của `runner-codex`: `login status`, `initialize` và `account/rateLimits/read` trả theo `CODEX_HOME` nó nhận. Có một nút để mọi thư mục trả cùng một tài khoản và một nút để nó bỏ qua biến.
+- **Điều không đổi, và vì sao**: phép kiểm hook trước mỗi phiên chạy với env của phiên, nên nó liệt kê hook của đúng thư mục nhà (dòng 86). `exec resume` chạy trong thư mục nhà của tộc mà nhân vật thuộc về, là nơi có rollout của phiên (dòng 87). Cờ của phiên giữ nguyên, kể cả `--ignore-user-config`.
+- **Windows và macOS**: `tool.config_dir` viết bằng `/`, adapter nhận dạng của máy. Mỗi thư mục nhà có `.sandbox/` riêng. Trên macOS chưa đo gì; theo spike Codex, đăng nhập là file `auth.json` trong thư mục nhà.
+- **Test** (CLI giả, 0 mana): phiên, `hooks/list`, thăm dò và `doctor` của dòng có thư mục đều nhận đúng `CODEX_HOME`; dòng không khai thì không có biến, kể cả khi `req.env` mang nó; hai runner trong một test đọc hai bộ số đo; `doctor()` báo `config_dir_ignored` khi CLI giả bỏ qua biến; `account` bằng nhau khi cùng tài khoản và khác khi khác; `elvaria doctor` báo lỗi khi hai dòng `codex_cli` chung thư mục hay chung tài khoản; `tribe check --scenarios` của chi qua.
+- **Chạy thật** (chủ nhân quyết, gần như 0 mana): `elvaria tribe check codex_2` với CLI thật trong thư mục thứ hai, rồi `elvaria doctor`.
+- **Xong khi**: `pnpm check` xanh; các ca trên; README của `runner-codex` nói đúng; `.claude/rules/runner.md` và ADR 0021 đã sửa; hướng dẫn thêm tộc nêu lệnh đăng nhập của Codex (`CODEX_HOME` rồi `codex login`).
+- **Chỗ chừa**: agy khai `config_dir` khi CLI của nó có thư mục nhà được ghi trong tài liệu.
+
 ## Chỗ ghi chú #200 khác code
 
 Năm ý đều làm được như đã chốt. Có bốn chỗ ghi chú nói chưa đủ hoặc chưa khớp code:
@@ -164,6 +195,8 @@ Phiên kế hoạch không sửa ADR. Đây là lời đề xuất cho phiên l�
 - **ADR 0009, câu mở của Context** ("Principle 6: two accounts (Claude Code; Antigravity), never rotated"): "(Amended …, PS-27: one account per tribe since ADR 0021, and a second account of the same CLI is a tribe of its own, its pool keyed by its id. Never rotated still holds: no session, character or quest in flight changes account, and Elvaria never signs in or out.)"
 - **implementation-plan**: §3.14 (định nghĩa tộc ở đầu mục; bảng năng lực thêm `config_dir`; đoạn PS-24 thêm chi), §3.5 (câu "một pool: = tribe id" thêm ví dụ `claude_2`), §3.9 (câu về env tối thiểu: biến của CLI do adapter đặt).
 - **`.claude/rules/runner.md`**, mục "Tiến trình con": thêm một câu rằng `CLAUDE_CONFIG_DIR` chỉ đến từ `tool.config_dir` và do adapter đặt hay gỡ.
+- **`.claude/rules/runner.md`**, dòng về Codex (PS-27c): câu "không đổi `CODEX_HOME`" thành "`CODEX_HOME` chỉ đến từ `tool.config_dir` và do adapter đặt hay gỡ; không bao giờ trỏ nó vào thư mục của lần chạy".
+- **ADR 0021** (PS-27c), nối vào câu sửa của PS-27: "(Amended …, PS-27c: Codex declares `config_dir` too and runs every process of the tribe with `CODEX_HOME` set to it; its doctor reads the home and the account from `codex app-server`.)"
 - **Hướng dẫn**: `docs/guides/adding-a-tribe.md` (đoạn mới) và `docs/guides/operating-a-kingdom.md` (một dòng trỏ sang).
 - **Kế hoạch sản phẩm**: nguyên tắc 6 đã viết "mỗi tộc một tài khoản của người dùng" và "không bao giờ tự xoay tài khoản", nên không cần sửa. Nếu chủ nhân muốn nêu chi trong kế hoạch sản phẩm thì chủ nhân tự sửa.
 
@@ -180,6 +213,9 @@ Phiên kế hoạch không sửa ADR. Đây là lời đề xuất cho phiên l�
 - **CT7** (PS-27b) `sibling_of` không hợp lệ thì hàm ngoại hình coi như không có, `doctor` cảnh báo, và `tribe add` từ chối lúc ghi. Schema của `kingdom` không kiểm chéo. Khuyến nghị: nhận. Lý do: đây là trường chỉ để hiển thị (ADR 0025), nên một lỗi của nó không được làm `kingdom.json` thành không hợp lệ và dừng Nhiếp chính.
 - **CT8** (PS-27b) Ngoại hình và tên của chi: `look` khai trên chi bị bỏ qua và CLI từ chối ghi; tên mặc định của chi là tên dòng gốc kèm số La Mã; dòng gốc có tên chủ nhân đặt thì giữ nguyên, không thêm "I". Khuyến nghị: nhận.
 - **CT15** (PS-27; thêm sau câu hỏi của chủ nhân ngày 2026-11-17; **chủ nhân đã chốt cùng ngày: cạnh kho bảo vật**) Chỗ đặt thư mục cấu hình của một chi. Khuyến nghị: ngoài vương quốc, cạnh kho bảo vật, theo quy ước `~/.elvaria/accounts/<id tộc>/`; hướng dẫn nêu quy ước này, `doctor --config-dir` vẫn nhận mọi đường dẫn hợp lệ, và luật (c) của CT4 giữ nguyên. Lý do: chi vẫn là của vương quốc vì `kingdom.json` ghi đường dẫn tới nó, đúng như cách `paths.treasury` trỏ ra kho bảo vật; còn thư mục vương quốc là thứ chủ nhân có thể chép sang máy khác hay sao lưu, và không nên mang theo đăng nhập cùng transcript. Phương án khác: đặt trong vương quốc, `<vương quốc>/accounts/<id tộc>/`, và luật (c) đổi thành "chỉ được nằm ở đó". Cách này gọn hơn cho người có nhiều vương quốc trên một máy, nhưng mọi đoạn mã duyệt thư mục vương quốc từ nay phải chừa thư mục đó ra, và chép vương quốc đi đâu là chép cả đăng nhập. Bản thử của `elvaria upgrade` hiện chỉ chép sáu mục có tên (`mirror.ts`), nên hôm nay nó không chép thư mục đó.
+
+- **CT16** (PS-27c; thêm theo yêu cầu của chủ nhân ngày 2026-11-17) Cách chia phần Codex: một task riêng PS-27c sau PS-27, chạy song song được với PS-27b. Khuyến nghị: nhận. Lý do: PS-27 đã có năm ý; phần Codex chỉ chạm `runner-codex` và một file của `apps/cli`, và có lần `tribe check` thật của riêng nó. Phương án khác: gộp vào PS-27 để một PR mang cả hai CLI; khi đó PR lớn hơn và lần kiểm thật cần cả hai tài khoản thứ hai cùng lúc.
+- **CT17** (PS-27c) Dấu tài khoản của Codex lấy từ mã tài khoản mà `codex app-server` trả, băm như bên Claude; trường cụ thể chọn khi phép đo sau đăng nhập xong (spike mục 3). Khuyến nghị: nhận hướng này. Nếu app-server không trả mã nào dùng được thì `doctor` của Codex chỉ áp luật chung thư mục, và luật chung tài khoản bỏ qua dòng không có dấu, như `accountClashesOf` đã định.
 
 **Chốt là chờ**:
 
