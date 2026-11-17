@@ -10,6 +10,7 @@ import type { CharacterId, Reassign, TickPlan } from '@elvaria/domain';
 import { ring } from './context.ts';
 import { deliver } from './deliver/deliver.ts';
 import { archiveInBase } from './forge/archive.ts';
+import { startLook } from './forge/look.ts';
 import { startPoll } from './forge/merge.ts';
 import { startDelivery } from './forge/push.ts';
 import { moveAndRing } from './notices.ts';
@@ -106,7 +107,7 @@ export async function carryOut(ctx: Context, plan: TickPlan): Promise<void> {
     if (ctx.stopping.aborted) break;
     warnIfRefused(ctx, `${poll.quest} merge`, startPoll(ctx, poll));
   }
-  for (const look of plan.base_looks) if (!ctx.stopping.aborted) ctx.looks.start(ctx, look);
+  for (const look of plan.base_looks) if (!ctx.stopping.aborted) startLook(ctx, look);
   for (const quest of plan.forge_archives)
     warnIfRefused(ctx, `${quest} archive`, await archiveInBase(ctx, quest));
 }

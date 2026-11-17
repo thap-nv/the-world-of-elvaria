@@ -5,11 +5,10 @@
 // and fetches the base branch once (a fetch talks to the network). A table of its own, as the code graphs have: the
 // Background table keeps one piece of work per quest, and a look serves every done quest of its territory. The tips a
 // look saw stay, per territory, for the merge queue that comes next (PS-09). A Steward that stops aborts the look, and
-// the next one looks again at start.
-import type { BaseLook, Instant, QuestId, TerritoryId } from '@elvaria/domain';
+// the next one looks again at start. What a look does is look.ts's: this table knows no tick's Context, which holds it.
+import type { Instant, QuestId, TerritoryId } from '@elvaria/domain';
 import type { BaseTips } from '@elvaria/runner-core';
 
-import type { Context } from '../context.ts';
 import type { Logger } from '../types.ts';
 
 export interface BaseLooks {
@@ -19,8 +18,8 @@ export interface BaseLooks {
   readonly looked: Map<TerritoryId, Instant>;
   /** The base branch's tips each territory's last look saw. */
   readonly tips: Map<TerritoryId, BaseTips>;
-  /** Starts `look` outside the tick unless one runs on its territory. */
-  start(ctx: Context, look: BaseLook): void;
+  /** Starts the look `work` at `territory` outside the tick, unless one runs there; `at`: the Steward's now. */
+  start(territory: TerritoryId, at: Instant, work: (signal: AbortSignal) => Promise<void>): void;
   /** Resolves once no look runs. */
   idle(): Promise<void>;
   /** Aborts the looks and waits for them to end (the Steward stops). */
@@ -28,24 +27,6 @@ export interface BaseLooks {
 }
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
-
-/** The Steward stopped: asked anew after each await, which TypeScript's narrowing cannot see. */
-const stopped = (signal: AbortSignal): boolean => signal.aborted;
-
-/** One look: the tips fetched once, then each quest's plot asked; what it finds goes to `found`. */
-async function lookAt(ctx: Context, look: BaseLook, signal: AbortSignal): Promise<void> {
-  const { plots } = ctx.deps;
-  const territory = ctx.world.territories.get(look.territory);
-  if (territory === undefined || plots.baseTips === undefined || plots.inBase === undefined) return;
-  const tips = await plots.baseTips(territory);
-  if (tips === undefined || stopped(signal)) return;
-  ctx.looks.tips.set(territory.id, tips);
-  for (const id of look.quests) {
-    const quest = ctx.world.quests.get(id);
-    if (quest !== undefined && (await plots.inBase(quest.plot, tips))) ctx.looks.found.add(id);
-    if (stopped(signal)) return;
-  }
-}
 
 /** `ended` is told when a look ends on its own: the Steward ticks then, to archive what it found (P1-10b). */
 export function createBaseLooks(log: Logger, ended: () => void = () => undefined): BaseLooks {
@@ -55,17 +36,17 @@ export function createBaseLooks(log: Logger, ended: () => void = () => undefined
     found: new Set(),
     looked: new Map(),
     tips: new Map(),
-    start: (ctx, look) => {
-      if (running.has(look.territory)) return;
-      looks.looked.set(look.territory, ctx.deps.clock.now());
+    start: (territory, at, work) => {
+      if (running.has(territory)) return;
+      looks.looked.set(territory, at);
       const control = new AbortController();
-      running.set(look.territory, control);
-      const done = lookAt(ctx, look, control.signal)
+      running.set(territory, control);
+      const done = work(control.signal)
         .catch((error: unknown) => {
-          log.warn(`steward: the look at the base branch of ${look.territory} stopped: ${messageOf(error)}`);
+          log.warn(`steward: the look at the base branch of ${territory} stopped: ${messageOf(error)}`);
         })
         .then(() => {
-          running.delete(look.territory);
+          running.delete(territory);
           if (!control.signal.aborted) ended();
         });
       live.add(done);
