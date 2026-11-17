@@ -403,9 +403,10 @@
 - Sends a delivered quest's branch to its territory's forge when `territory.delivery.mode` is not `manual`
   (implementation-plan §3.16.7, ADR 0023, PS-08c, `src/forge/`): planTick's `forge_deliveries` (the domain's
   `forgeDeliveries`: one per territory at a time, only the merge quest of a party) starts it outside the tick
-  (`Background.forge`). It scans the lines the branch adds over the base branch (`scan.ts`): a treasury value or a
-  specific shape of redact stops it (`secret`, the files named, never the line), the three shared patterns only
-  warn; then `git push origin quest/<id>` (that branch alone, never forced, never the base branch; the territory's
+  (`Background.forge`). It scans the lines the branch adds over the base branch and those each commit of
+  `base..HEAD` adds (`scan.ts`; a merge's own with `--remerge-diff`; fix/push-scan), since a push sends every commit:
+  a treasury value or a specific shape of redact stops it (`secret`, the files named and in `detail` the commits that
+  add one, never the line), the three shared patterns only warn; then `git push origin quest/<id>` (that branch alone, never forced, never the base branch; the territory's
   pre-push hook runs; 30 minutes, then its tree is killed; output masked into `.runs/<quest>-delivery/push.log`)
   with the git the composition root found, the minimal env and `DELIVERY_GIT_SWITCHES`; then finds or opens the
   branch's pull request through the `Forge` port (`deps.forges`, one adapter per `delivery.forge`), the masked
@@ -592,8 +593,11 @@ in the digest with the pool asleep, and is judged by that judge once the window 
 jobs outside the tick run one at a time without holding it, write `schedule.ran` when they end, stop unrecorded with
 the Steward and run again at the next start, and warn when they throw.
 `forge/scan.spec.ts` (PS-08c) holds the scan to redact's patterns: a treasury value or a specific shape is a secret,
-a shared pattern a warning, removed lines and headers never read. `forge-delivery.spec.ts` (PS-08c) delivers on a
-real git repo whose `origin` is a bare repo, with an in-memory forge (`src/__fixtures__/forge.ts`, `forge-bench.ts`):
+a shared pattern a warning, removed lines and headers never read, each commit of a git log named apart.
+`forge-scan.spec.ts` (fix/push-scan) stops a branch on a real git repo whose secret a WIP commit or a merge added
+and a later commit took away, under any diff prefix setting, and pushes clean commits. `forge-delivery.spec.ts`
+(PS-08c) delivers on a real git repo whose `origin` is a bare repo, with an in-memory forge
+(`src/__fixtures__/forge.ts`, `forge-bench.ts`):
 the branch pushed and one pull request, found again after a stop, a shared pattern warned, one `forge_error` without
 forges, nothing on a manual territory, and `deliver` refused where the Steward would refuse it; `forge-party.spec.ts`
 pushes only the merge quest of a party; `forge-stop.spec.ts` (one case on Windows, one on macOS) stops the Steward

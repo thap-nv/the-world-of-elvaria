@@ -169,7 +169,7 @@ describe('a delivery that cannot go', () => {
         'src/clean.ts': 'export const a = 1;\n',
       }),
     });
-    const { quest, branch } = await deliverOne(current, await current.start());
+    const { quest, branch, head } = await deliverOne(current, await current.start());
     expect(current.remoteTip(branch)).toBe('');
     expect(current.forge.calls).toEqual([]);
     const [line, ...more] = await current.lines('delivery.failed');
@@ -181,6 +181,7 @@ describe('a delivery that cannot go', () => {
       reason: 'secret',
       branch,
       paths: ['src/config.ts'],
+      detail: `commit ${head} adds a secret to src/config.ts`,
     });
     expect(current.kingdom.notices).toContainEqual(
       expect.objectContaining({ kind: 'delivery_failed', stage: 'scan', reason: 'secret' }),

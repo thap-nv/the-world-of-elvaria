@@ -2569,7 +2569,7 @@
                 }
               },
               "detail": {
-                "description": "The forge's or git's message, or the end of the generators' log, redacted.",
+                "description": "The forge's or git's message, the end of the generators' log, or with reason secret the commits that add one and their files; redacted.",
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 2000

@@ -1,11 +1,12 @@
 // A done quest's delivery to its forge, outside the tick (implementation-plan §3.16.7, ADR 0023; PS-08c), in order:
 // (PS-09) the merge queue's update of the branch (update.ts: the base branch merged in, the generators, every check),
-// the secret scan of what the branch adds over the base branch (scan.ts), `git push` of quest/<id> alone (never
-// forced, never the base branch; the territory's pre-push hook runs as when the owner pushes), then the branch's pull
-// request, found or opened with the delivery note as its description, and one `delivery.pushed`. Each step may run
-// again: a Steward stopped between the push and the pull request pushes the same head again (git says it is up to
-// date) and finds the pull request it opened. Any step that fails records one `delivery.failed` and stops; nothing is
-// tried again until the owner's `deliver`. A stop of the Steward records nothing: the next one delivers anew.
+// the secret scan of what the branch and each of its commits add over the base branch (scan.ts), `git push` of
+// quest/<id> alone (never forced, never the base branch; the territory's pre-push hook runs as when the owner pushes),
+// then the branch's pull request, found or opened with the delivery note as its description, and one
+// `delivery.pushed`. Each step may run again: a Steward stopped between the push and the pull request pushes the same
+// head again (git says it is up to date) and finds the pull request it opened. Any step that fails records one
+// `delivery.failed` and stops; nothing is tried again until the owner's `deliver`. A stop of the Steward records
+// nothing: the next one delivers anew.
 import { readFile } from 'node:fs/promises';
 
 import { currentRun, deliveryOf, err, ok } from '@elvaria/domain';
@@ -17,17 +18,18 @@ import { deliveryNoteOf } from '../deliver/note.ts';
 import { detailOf, forgeError, foundOf, messageOf, stopped } from './delivery.ts';
 import { runDeliveryGit } from './git.ts';
 import { recordFailed, recordPushed } from './outcome.ts';
-import { scanDiff } from './scan.ts';
+import { COMMIT_FORMAT, scanDiff } from './scan.ts';
 import { updateBranch } from './update.ts';
 import type { Context } from '../context.ts';
 import type { Delivery } from './delivery.ts';
 import type { Failure } from './outcome.ts';
+import type { ScanResult } from './scan.ts';
 
 const MS_PER_MINUTE = 60_000;
 const PUSH_TIMEOUT_MINUTES = 30;
 /** A push runs the territory's pre-push hook, a check of minutes: it has half an hour, then its tree is killed. */
 export const PUSH_TIMEOUT_MS = PUSH_TIMEOUT_MINUTES * MS_PER_MINUTE;
-/** Local git (rev-parse, diff) is quick. */
+/** Local git (rev-parse, diff, log) is quick. */
 const LOCAL_GIT_TIMEOUT_MINUTES = 2;
 const LOCAL_GIT_TIMEOUT_MS = LOCAL_GIT_TIMEOUT_MINUTES * MS_PER_MINUTE;
 
@@ -54,6 +56,52 @@ async function knownOf(ctx: Context): Promise<string[]> {
   return Object.values(await ctx.deps.treasury.resolve(await ctx.deps.treasury.names()));
 }
 
+/**
+ * git's switches for a diff the scan reads: the added lines alone, no driver or filter between the scan and the bytes
+ * pushed, and the a/ and b/ that scan.ts reads whatever the owner's diff.noprefix or diff.mnemonicPrefix say.
+ */
+const SCAN_DIFF = [
+  '--no-color',
+  '--no-ext-diff',
+  '--no-textconv',
+  '--src-prefix=a/',
+  '--dst-prefix=b/',
+  '-U0',
+];
+
+/**
+ * What the scan reads (fix/push-scan, (212)): the branch's whole diff over the base, then each commit's own, since
+ * `git push` sends every one. A merge shows what it adds beyond git's own merge of its parents (--remerge-diff, git
+ * 2.36; the merge queue needs 2.38 already); an octopus merge shows nothing there, and the whole diff covers it.
+ */
+async function changesOf(d: Delivery, base: string): Promise<string | undefined> {
+  const quoted = ['-c', 'core.quotePath=false'];
+  const whole = await localGit(d, [...quoted, 'diff', ...SCAN_DIFF, `${base}...HEAD`]);
+  const format = `--format=${COMMIT_FORMAT}`;
+  const each = await localGit(d, [
+    ...quoted,
+    'log',
+    '-p',
+    ...SCAN_DIFF,
+    '--remerge-diff',
+    format,
+    `${base}..HEAD`,
+  ]);
+  return whole === undefined || each === undefined ? undefined : `${whole}\n${each}`;
+}
+
+/** The scan's stop: the files, and in `detail` each commit that adds a secret with its files, masked like a log. */
+function secretFailure(d: Delivery, scan: ScanResult, known: readonly string[]): Failure {
+  const lines = scan.commits.map(({ sha, files }) => `commit ${sha} adds a secret to ${files.join(', ')}`);
+  return {
+    stage: 'scan',
+    reason: 'secret',
+    branch: d.branch,
+    paths: [...scan.secrets],
+    ...(lines.length === 0 ? {} : { detail: createRedactor(known)(lines.join('\n')) }),
+  };
+}
+
 /** `git push` of the branch alone, its output masked into push.log; the output's end when git refused. */
 async function push(ctx: Context, d: Delivery, known: readonly string[]): Promise<Result<void, string>> {
   const refspec = `${d.branch}:refs/heads/${d.branch}`;
@@ -77,17 +125,9 @@ async function deliverFound(ctx: Context, d: Delivery): Promise<Failure | undefi
   const base = await baseOf(d);
   const ahead = await localGit(d, ['rev-list', '--count', `${base}..HEAD`]);
   const head = await localGit(d, ['rev-parse', 'HEAD']);
-  const diff = await localGit(d, [
-    '-c',
-    'core.quotePath=false',
-    'diff',
-    '--no-color',
-    '--no-ext-diff',
-    '-U0',
-    `${base}...HEAD`,
-  ]);
+  const changes = await changesOf(d, base);
   if (stopped(d)) return undefined;
-  if (ahead === undefined || head === undefined || diff === undefined)
+  if (ahead === undefined || head === undefined || changes === undefined)
     return {
       stage: 'scan',
       reason: 'push_refused',
@@ -99,9 +139,8 @@ async function deliverFound(ctx: Context, d: Delivery): Promise<Failure | undefi
     return undefined;
   }
   const known = await knownOf(ctx);
-  const scan = scanDiff(diff, known);
-  if (scan.secrets.length > 0)
-    return { stage: 'scan', reason: 'secret', branch: d.branch, paths: [...scan.secrets] };
+  const scan = scanDiff(changes, known);
+  if (scan.secrets.length > 0) return secretFailure(d, scan, known);
   const pushed = await push(ctx, d, known);
   if (stopped(d)) return undefined;
   if (!pushed.ok) return { stage: 'push', reason: 'push_refused', branch: d.branch, detail: pushed.error };

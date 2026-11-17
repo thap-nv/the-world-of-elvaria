@@ -116,7 +116,11 @@ export const DeliveryFailedDataSchema = z
     ),
     detail: NonEmptyStringSchema.max(DELIVERY_DETAIL_MAX_LENGTH)
       .optional()
-      .meta(describe("The forge's or git's message, or the end of the generators' log, redacted.")),
+      .meta(
+        describe(
+          "The forge's or git's message, the end of the generators' log, or with reason secret the commits that add one and their files; redacted.",
+        ),
+      ),
     merge_quest: QuestIdSchema.optional().meta(
       describe(
         'With conflict or checks_red at update (PS-09b): the merge quest the Steward opened for a knight, or found open for this quest; the quest waits for it and goes into the base branch with it.',
