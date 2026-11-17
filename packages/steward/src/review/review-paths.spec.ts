@@ -8,7 +8,7 @@ import { characterOf } from '../__fixtures__/kingdom.ts';
 import { createBackground } from '../background.ts';
 import { createJudgeLocks } from './exclusive.ts';
 import { judged, levelAfterVerdict, moveOnVerdict, recordVerdict, ritualOf } from '../verdicts.ts';
-import { startChecks } from './checks.ts';
+import { startChecks } from './start-checks.ts';
 import { machineReview } from './machine.ts';
 import type { Context } from '../context.ts';
 import type { Judged } from '../verdicts.ts';

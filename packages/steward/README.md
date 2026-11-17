@@ -284,7 +284,7 @@
   verdict and at archive). On a territory with exclusive checks the judge opens only once the Steward holds the territory's exclusive lock, kept for its session (`src/review/exclusive.ts`, released at its end, by a tick when it lost its session, and at `stop()`), so it runs e2e too; after failing checks it waits for no lock and runs no exclusive check (P1-54: the pass rule fails the quest, the judge reads why); the checks of other quests wait for it (`exclusiveWaitMinutes`). A verdict that fails on a flake (`flake_check`, or a judge's `flaky`) opens one quest
   of the ritual's `flaky_follow_up` (`fix`, knight) before the quest moves on; the quest's branch never changes.
 - Puts the quest's plot back to its commit after a judge outside a scratch plot (P1-44, `src/review/after-judge.ts`),
-  and after the machine checks in the quest's own plot, before the judge opens (P1-47, `src/review/checks.ts`): the
+  and after the machine checks in the quest's own plot, before the judge opens (P1-47, `src/review/start-checks.ts`): the
   judge has no Edit or Write, but the checks' commands, its own or the machine's, may write in the plot (a
   generator, a formatter); the work was all committed before its review, so what is changed or untracked goes
   (`Plots.restore`; ignored files stay, `src/review/restore.ts`), a warning names it and a `plot.restored` line in
