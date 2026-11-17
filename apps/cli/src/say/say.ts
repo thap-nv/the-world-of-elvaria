@@ -69,6 +69,8 @@ async function codeFor(ctx: KingdomContext, utterance: string, deps: SayDeps): P
     0,
   );
   if (files > 0) ctx.io.out(ctx.t('cli.say.files', { files: String(files) }));
+  // The owner sees the paths the Chancellor hears as not found (202), most often a typo in the words.
+  if (words.missing.length > 0) ctx.io.out(ctx.t('cli.say.missing', { paths: words.missing.join(', ') }));
   const graphed = code.flatMap(({ territory, graph }) => (graph === undefined ? [] : [territory]));
   if (graphed.length > 0) ctx.io.out(ctx.t('cli.say.graph', { territories: graphed.join(', ') }));
   return words;

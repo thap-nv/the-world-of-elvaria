@@ -21,7 +21,8 @@
   paths and globs of the words (`src/say/words.ts`) in every git territory's tracked files, with their sizes and
   lines, whatever `code_graph` says; and where a territory has `code_graph` on and graphify's graph of the default
   branch's tip is built, it asks `graphify query` with the code names and paths of the words and counts the impact of
-  the named files from the graph's links. It builds no graph, and says in one line each what the Chancellor got.
+  the named files from the graph's links. It builds no graph, and says in one line each what the Chancellor got,
+  including the paths no territory holds a file at, which the Chancellor hears as not found ((202), fix/test-guards).
   While a Steward holds the kingdom's lock, `sendCommand` waits one tick and a little more for its `command.applied` or
   `command.rejected` line and prints it (`stale` with what to do about it); without a Steward it only drops the file.
   `quest edit --max-minutes` on a quest with a running session says what the new ceiling does to it: the Steward's

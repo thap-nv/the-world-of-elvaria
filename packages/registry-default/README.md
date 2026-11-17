@@ -28,7 +28,9 @@
   two examples that pass the Steward's `subquests` check (scopes, quest template, peak context). `council_review`
   runs the step `check_plan_ready` after `read_plan` (PS-06). Two lines of a real kingdom's scripture moved into
   the class prompts, so every kingdom gets them through `elvaria upgrade` (fix/lesson-step-0): `judge.md` puts every
-  blocking problem in one verdict, `mage.md` leaves a caller's part the files that wire a new core.
+  blocking problem in one verdict, `mage.md` leaves a caller's part the files that wire a new core. `judge.md` also
+  treats a change whose tests pass whatever the code does as untested (fix/test-guards, (196)): the judge's half of
+  the repo's `.claude/rules/tests.md`, in the class prompt rather than a scripture line.
 - Exports `loadDefaultRegistry()` (read + validate through `@elvaria/domain`), `registryFiles()` (what init
   copies; given another folder, the same list in another build of this package, which `elvaria upgrade` compares
   with the kingdom, fix/kingdom-upkeep) and `REGISTRY_ROOT`.
