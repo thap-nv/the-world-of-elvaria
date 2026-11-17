@@ -2,12 +2,15 @@
 // (P1-06), send characters on a fail streak to the Temple, wake paused quests whose pool has mana again (P1-05),
 // give those asleep past mana.reassign_after_hours to another character (P1-22), start claimed quests, start the checks of submitted quests and give those checked a verifier or the machine's
 // verdict, send returned quests back, claim open ones, start open script-tier quests (P1-17), deliver done ones
-// (P1-14) and send their branch to the forge (PS-08c). Checks, scripts and deliveries to the forge run outside the tick
-// (P1-25, background.ts): a long one holds nothing but its quest.
+// (P1-14) and send their branch to the forge (PS-08c), merge it there and archive what reached the base branch
+// (PS-08d). Checks, scripts, deliveries to the forge and looks at the base branches run outside the tick (P1-25,
+// background.ts, forge/looks.ts): a long one holds nothing but its quest or its territory.
 import type { CharacterId, Reassign, TickPlan } from '@elvaria/domain';
 
 import { ring } from './context.ts';
 import { deliver } from './deliver/deliver.ts';
+import { archiveInBase } from './forge/archive.ts';
+import { startPoll } from './forge/merge.ts';
 import { startDelivery } from './forge/push.ts';
 import { moveAndRing } from './notices.ts';
 import { mergeByMachine } from './party/machine.ts';
@@ -97,4 +100,13 @@ export async function carryOut(ctx: Context, plan: TickPlan): Promise<void> {
     if (ctx.stopping.aborted) break;
     warnIfRefused(ctx, `${quest} forge`, startDelivery(ctx, quest));
   }
+  // PS-08d: the pull requests the Steward merges itself, asked about outside the tick; the base branches looked at,
+  // outside the tick too; and the done quests found there archived, their plot released.
+  for (const poll of plan.forge_polls) {
+    if (ctx.stopping.aborted) break;
+    warnIfRefused(ctx, `${poll.quest} merge`, startPoll(ctx, poll));
+  }
+  for (const look of plan.base_looks) if (!ctx.stopping.aborted) ctx.looks.start(ctx, look);
+  for (const quest of plan.forge_archives)
+    warnIfRefused(ctx, `${quest} archive`, await archiveInBase(ctx, quest));
 }

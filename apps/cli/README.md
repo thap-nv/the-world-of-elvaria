@@ -279,17 +279,23 @@ show` prints the brief apart from the rest of the description and, while the pla
   the account's name.
 - The forge the Steward delivers to (PS-08c, ADR 0023): `run` gives it `forgesOf` (`src/run/forges.ts`), the git
   found on PATH (none without git) and GitHub's adapter of the Steward's `Forge` port (`src/forge/github-forge.ts`
-  over `github-api.ts`, `github-pulls.ts`, `github-merge.ts`): REST through `CliIo.fetch` with a time limit, the
+  over `github-api.ts`, `github-pulls.ts`, `github-merge.ts`): REST through `CliIo.fetch` with a time limit and the
+  Steward's stop (every call takes its `AbortSignal`, PS-08d), the
   token read from git's store at every call (`gitToken`) and kept by none, every `detail` masked with it and redact's
   patterns. It finds the branch's pull request in any state (an open one first) or opens it (a 422 looks again),
-  reads where it stands (merged, closed, conflict, the required check runs and commit statuses), merges with the
+  reads where it stands (merged with its `merge_commit_sha`, closed, conflict, the required check runs and commit
+  statuses), merges with the
   head's sha (405 a conflict, 409 a moved head) and deletes a branch only while its tip is that head; a 401 or 403
   is the credential's, a rate-limited 403 the forge's. `quest deliver <id>` (`src/quest/deliver.ts`) sends `deliver`
   for a done quest whose territory delivers to its forge (the domain's `forgeDue`), refusing the others.
   `quest show` prints the delivery's pull request, or where it stopped, why and the command
   (`src/quest/delivery-view.ts`, `forgeOutcomesOf` on the quest's journal); `digest` lists `delivery_failed` and
   `delivery_waits`; the bell says `delivery_pushed` (with the files a shared secret pattern matched) and
-  `delivery_failed`.
+  `delivery_failed`. `run` gives the Steward `baseTips` and `inBase` of PlotManager (`src/run/plots.ts`), the looks
+  that archive a done quest merged into its base branch (PS-08d).
+- The newer build the digest offers (`upgrade_available`, PS-08d, `src/upgrade/offer.ts`): with a pin, the commits
+  on `main` of the repo the CLI runs from (a build and `--here` share its refs; no fetch) that touch `packages/` or
+  `apps/` since the pinned commit; `run` gives it to the Steward as `upgradeOffer`, `digest` reads it too.
 
 ## Does not
 

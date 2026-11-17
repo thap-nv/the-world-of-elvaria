@@ -11,6 +11,7 @@ import type { Result } from '@elvaria/domain';
 
 import { createBackground } from './background.ts';
 import { createForgeBook } from './forge/book.ts';
+import { createBaseLooks } from './forge/looks.ts';
 import { createGraphBuilds } from './graph-builds.ts';
 import { loop, wake } from './loop.ts';
 import { createJudgeLocks } from './review/exclusive.ts';
@@ -77,9 +78,17 @@ const jobsOf = (deps: StewardDeps): StewardJob[] => [
   })),
 ];
 
-/** Steward.idle(): the checks, scripts and graph builds outside the tick, and the scheduled job outside it (PS-03). */
+/**
+ * Steward.idle(): the checks, scripts and graph builds outside the tick, the scheduled job outside it (PS-03), and the
+ * looks at the base branches (PS-08d).
+ */
 const idleOf = async (state: State): Promise<void> => {
-  await Promise.all([state.background.idle(), state.graphs?.idle(), state.scheduler.idle()]);
+  await Promise.all([
+    state.background.idle(),
+    state.graphs?.idle(),
+    state.scheduler.idle(),
+    state.looks.idle(),
+  ]);
 };
 
 /** What the Steward keeps between ticks, as it starts; `ended` is told once work outside the tick ended (P1-10b). */
@@ -101,6 +110,7 @@ const stateOf = (deps: StewardDeps, ended: () => void): State => ({
   versions: createVersionBook(),
   scheduler: createScheduler(jobsOf(deps), deps.onCall),
   forge: createForgeBook(),
+  looks: createBaseLooks(deps.log, ended),
   restart: undefined,
   held: undefined,
   beat: undefined,
@@ -135,6 +145,7 @@ export function createSteward(deps: StewardDeps): Steward {
       await state.scheduler.stop();
       // The checks and scripts outside the tick die before the lock goes: the next Steward runs them again (P1-25).
       await state.background.stop();
+      await state.looks.stop();
       await state.graphs?.stop();
       await state.sessions.close('the Steward stopped');
       await state.sessions.saved();

@@ -124,4 +124,16 @@ describe('the digest', () => {
     await tickUntil(running, kingdom.clock, () => Promise.resolve(port.asked.length === 1));
     expect(await ofType(kingdom, 'schedule.ran')).toHaveLength(1);
   });
+
+  it('offers the newer build the composition root reads as the digest is made (PS-08d)', async () => {
+    const port = recordingPort();
+    current = await bench({ cast: [{ id: 'thorn', cls: 'knight', level: 5 }] });
+    const offer = { pinned: 'a'.repeat(40), latest: 'b'.repeat(40), commits: 2 };
+    running = current.steward({ digest: port, upgradeOffer: () => Promise.resolve(offer) });
+    await running.start({ loop: false });
+    await running.tick();
+    expect(port.asked[0]?.items).toEqual([
+      { kind: 'upgrade_available', group: 'can_wait', advice: 'upgrade', command: ['upgrade'], ...offer },
+    ]);
+  });
 });

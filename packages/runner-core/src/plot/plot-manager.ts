@@ -7,7 +7,7 @@ import process from 'node:process';
 
 import { err, ok } from '@elvaria/domain';
 import type { Plot, Quest, Result, Territory } from '@elvaria/domain';
-import { fromPortable, inKingdom, pathExists, toPortable } from '@elvaria/store';
+import { fromPortable, inKingdom, toPortable } from '@elvaria/store';
 
 import type { ProcessHost } from '../process/program.ts';
 import { diffAfterMerges, diffIn } from './diff.ts';
@@ -16,6 +16,8 @@ import { driftIn } from './drift.ts';
 import type { Drift } from './drift.ts';
 import { filesIn, prepareFolder } from './folder.ts';
 import { gitOf } from './git.ts';
+import { baseTipsIn, inBaseIn } from './in-base.ts';
+import type { BaseTips } from './in-base.ts';
 import { mergeAll, unmergedWithBase } from './merge.ts';
 import type { BaseBranch, MergeOptions, MergeOutcome } from './merge.ts';
 import { NO_PATCH, applyPatchIn } from './patch.ts';
@@ -23,8 +25,8 @@ import type { CommitRescue } from './rescue.ts';
 import type { PatchOutcome } from './patch.ts';
 import type { Git } from './git.ts';
 import { ensureLongPaths, ensurePlotExcludes } from './repo-settings.ts';
-import { checkoutScratch, prepareScratch, removeScratch, scratchIdOf } from './scratch.ts';
-import type { PreparedScratch, ScratchTarget } from './scratch.ts';
+import type { PreparedScratch } from './scratch.ts';
+import { scratchMethods } from './scratch-methods.ts';
 import { runSetup } from './setup.ts';
 import type { SetupRun } from './setup.ts';
 import {
@@ -123,6 +125,14 @@ export interface PlotManager {
   /** Only when the quest is archived: removes the worktree, keeps the branch. */
   release(plot: Plot): Promise<Result<ReleasedPlot, PlotFailure>>;
   /**
+   * The base branch's tips, origin's fetched first (PS-08d, baseTipsIn): one look per territory, before inBase asks
+   * its done quests; undefined for a territory without git or when git knows no such branch. Optional, as drift, for
+   * a stand-in manager of a spec; createPlotManager has both.
+   */
+  baseTips?(territory: BaseBranch): Promise<BaseTips | undefined>;
+  /** Whether the plot's branch is in the base branch `tips` hold (inBaseIn); false for a plot without git. */
+  inBase?(plot: Plot, tips: BaseTips): Promise<boolean>;
+  /**
    * The judge's scratch plot (ADR 0022, P1-20): a fresh worktree `<quest-id>-verify` detached at the head of the
    * quest's branch, after commands.setup with `options.secrets`, killed by `options.signal` (P1-49); one left by an
    * earlier judge is removed first. `not_a_repo` for a folder territory, which has none.
@@ -184,60 +194,23 @@ async function prepareGitPlot(
   });
 }
 
-/** Where the quest's scratch plot goes, beside its own worktree. */
-const scratchTargetOf = (git: Git, quest: Pick<Quest, 'id'>, territory: Territory): ScratchTarget => {
-  const repo = fromPortable(territory.path);
+/** The look at the base branch (PS-08d): its tips after one fetch, and whether a plot's branch is in them. */
+function baseMethods(
+  findGit: () => Promise<Git | undefined>,
+  git: () => Promise<Git>,
+): Required<Pick<PlotManager, 'baseTips' | 'inBase'>> {
   return {
-    git,
-    repo,
-    worktree: worktreePathOf(repo, territory.worktree_dir, scratchIdOf(quest.id)),
-    quest_worktree: worktreePathOf(repo, territory.worktree_dir, quest.id),
-    branch: `quest/${quest.id}`,
-  };
-};
-
-const NO_SCRATCH: PlotFailure = { reason: 'not_a_repo', detail: 'a folder territory has no scratch plot' };
-
-/** The scratch plot's part of the manager (P1-20): made, moved and removed with git, setup as a quest plot's. */
-type ScratchMethods = Pick<
-  PlotManager,
-  'prepareScratch' | 'checkoutScratch' | 'releaseScratch' | 'scratchOf'
->;
-
-function scratchMethods(options: PlotManagerOptions, git: () => Promise<Git>): ScratchMethods {
-  const forget = options.forget ?? [];
-  return {
-    prepareScratch: async (quest, territory, given = {}) => {
-      if (territory.vcs.type !== 'git') return err(NO_SCRATCH);
-      const setup = {
-        kingdom: options.kingdom,
-        host: options.host,
-        forget,
-        command: territory.commands.setup,
-      };
-      const target = scratchTargetOf(await git(), quest, territory);
-      const { secrets, signal } = given;
-      return prepareScratch(target, quest.id, {
-        ...setup,
-        ...(secrets === undefined ? {} : { secrets }),
-        ...(signal === undefined ? {} : { signal }),
-      });
-    },
-    checkoutScratch: async (scratch, ref) => checkoutScratch(await git(), scratch.worktree, ref),
-    releaseScratch: async (quest, territory) =>
-      territory.vcs.type === 'git'
-        ? removeScratch(await git(), scratchTargetOf(await git(), quest, territory), forget)
-        : undefined,
-    scratchOf: async (quest, territory) => {
+    baseTips: async (territory) => {
       if (territory.vcs.type !== 'git') return undefined;
-      const repo = fromPortable(territory.path);
-      const worktree = worktreePathOf(repo, territory.worktree_dir, scratchIdOf(quest.id));
-      return (await pathExists(worktree)) ? worktree : undefined;
+      const resolved = await findGit();
+      return resolved === undefined ? undefined : baseTipsIn(resolved, territory);
     },
+    inBase: async (plot, tips) => plot.type === 'worktree' && inBaseIn(await git(), worktreeOf(plot), tips),
   };
 }
 
-export function createPlotManager(options: PlotManagerOptions): PlotManager {
+/** The manager with every optional method: drift, baseTips and inBase are only optional for stand-ins. */
+export function createPlotManager(options: PlotManagerOptions): Required<PlotManager> {
   let found: Promise<Git | undefined> | undefined;
   const findGit = () => (found ??= gitOf(options.host));
   /** After prepare a plot has git behind it; its absence now is a broken machine, not a decision. */
@@ -293,6 +266,7 @@ export function createPlotManager(options: PlotManagerOptions): PlotManager {
       plot.type === 'worktree'
         ? releaseWorktree(await git(), worktreeOf(plot), forget)
         : ok({ removed: false, forget_failures: [] }),
+    ...baseMethods(findGit, git),
     ...scratchMethods(options, git),
   };
 }

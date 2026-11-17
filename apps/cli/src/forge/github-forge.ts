@@ -69,12 +69,14 @@ export function githubForge(options: GithubForgeOptions): Forge {
   async function withToken<T, P extends { readonly reason: string; readonly detail?: string }>(
     repo: ForgeRepo,
     use: (call: GithubCall) => Promise<Result<T, P>>,
+    signal?: AbortSignal,
   ): Promise<Result<T, P | ForgeProblem>> {
     const token = await options.token(repo);
     if (!token.ok)
       return err({ reason: 'no_credential', detail: `git has no credential for ${HOST}: ${token.error}` });
     try {
-      const done = await use({ fetch: options.fetch, token: token.value, timeoutMs });
+      const call = { fetch: options.fetch, token: token.value, timeoutMs };
+      const done = await use(signal === undefined ? call : { ...call, signal });
       return done.ok ? done : err(masked(done.error, token.value));
     } catch (error) {
       return err({ reason: 'forge_error', detail: createRedactor([token.value])(messageOf(error)) });
@@ -85,10 +87,12 @@ export function githubForge(options: GithubForgeOptions): Forge {
       const repo = forgeRepoOf(remote, 'github');
       return repo === undefined ? undefined : { owner: repo.owner, name: repo.name, cwd };
     },
-    access: (repo) => withToken(repo, (call) => accessOf(call, repo)),
-    open: (repo, draft) => withToken(repo, (call) => openPull(call, repo, draft)),
-    status: (repo, pr, required) => withToken(repo, (call) => pullStatus(call, repo, pr, required)),
-    merge: (repo, pr, merge) => withToken(repo, (call) => mergePull(call, repo, pr, merge)),
-    deleteBranch: (repo, branch, head) => withToken(repo, (call) => deleteBranch(call, repo, branch, head)),
+    access: (repo, signal) => withToken(repo, (call) => accessOf(call, repo), signal),
+    open: (repo, draft, signal) => withToken(repo, (call) => openPull(call, repo, draft), signal),
+    status: (repo, pr, required, signal) =>
+      withToken(repo, (call) => pullStatus(call, repo, pr, required), signal),
+    merge: (repo, pr, merge, signal) => withToken(repo, (call) => mergePull(call, repo, pr, merge), signal),
+    deleteBranch: (repo, branch, head, signal) =>
+      withToken(repo, (call) => deleteBranch(call, repo, branch, head), signal),
   };
 }

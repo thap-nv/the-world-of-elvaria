@@ -9,12 +9,22 @@ import type { ForgeProblem, ForgeRepo } from '@elvaria/steward';
 const HTTP_UNAUTHORIZED = 401;
 const HTTP_FORBIDDEN = 403;
 
-/** What one call needs: the network, the token for this call alone, and how long it may take. */
+/**
+ * What one call needs: the network, the token for this call alone, how long it may take, and the Steward's stop
+ * ((ii) of PS-08c, done in PS-08d): aborted, the request ends at once instead of at its time limit.
+ */
 export interface GithubCall {
   readonly fetch: Fetch;
   readonly token: string;
   readonly timeoutMs: number;
+  readonly signal?: AbortSignal;
 }
+
+/** The call's time limit, and the caller's stop when it gave one. */
+const signalOf = (call: GithubCall): AbortSignal => {
+  const limit = AbortSignal.timeout(call.timeoutMs);
+  return call.signal === undefined ? limit : AbortSignal.any([limit, call.signal]);
+};
 
 export type Answer =
   | { readonly ok: true; readonly status: number; readonly body: unknown }
@@ -62,7 +72,7 @@ export async function githubCall(
       method,
       headers: githubHeaders(call.token),
       ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
-      signal: AbortSignal.timeout(call.timeoutMs),
+      signal: signalOf(call),
     });
     const body = await bodyOf(response);
     if (response.ok || options.expected?.includes(response.status) === true)
