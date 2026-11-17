@@ -67,6 +67,13 @@ export const ATTENTION_TABLE = {
     advice: 'merge_pr_and_archive',
     command: ['quest', 'archive', '{quest}'],
   },
+  // PS-09b: the quest's delivery stopped at the merge queue's update and a merge quest resolves it for the owner; the
+  // quest goes into the base branch with it. A `delivery_failed` item again once that merge quest is dropped.
+  delivery_merging: {
+    group: 'can_wait',
+    advice: 'follow_merge_quest',
+    command: ['quest', 'show', '{merge_quest}'],
+  },
   // PS-26: a scan of the latest patrol (link-check) did not pass; it never turns the branch red.
   patrol_scan: { group: 'can_wait', advice: 'read_scan', command: ['territory', 'patrol', '{territory}'] },
   mana_asleep: { group: 'can_wait', advice: 'wait_or_wake', command: ['wake', '{tribe}'] },
@@ -116,6 +123,8 @@ export interface AttentionSubject {
   readonly stage?: DeliveryStage;
   readonly reason?: DeliveryFailure;
   readonly url?: string;
+  /** The merge queue's merge quest the quest waits for (delivery_merging, PS-09b). */
+  readonly merge_quest?: QuestId;
   /** A newer build (upgrade_available, PS-08d): the commit pinned, the default branch's, and its commits since. */
   readonly pinned?: string;
   readonly latest?: string;

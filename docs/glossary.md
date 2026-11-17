@@ -96,6 +96,7 @@ Luật (ADR 0014, [implementation-plan](implementation-plan.md) §2.7 và §4.1)
 | Phần (của đội) | Part | `part` | Một vùng, một tag chính, một nhân vật, một worktree, một verdict. | `party_role = part` |
 | Phần test chấp nhận | Acceptance part | `acceptance` | Phần của Khảo hạch mù: Nhiếp chính tự thêm vào đội; một nhân vật không làm phần nào viết test chấp nhận chỉ từ mô tả và hợp đồng, trên worktree tách từ nhánh hợp đồng; quest ghép gộp và chạy nó. | `party_role = acceptance` (P1-21) |
 | Quest ghép | Merge quest | `merge` | Quest cuối của đội: hợp nhất các nhánh phần, chạy toàn bộ kiểm tra; Nhiếp chính tự tạo. | `party_role = merge` |
+| Quest Hợp nhất | Queue merge quest | `merge` (vai, `created_by = patrol`) | Quest Nhiếp chính tự mở khi hàng đợi giao hàng không đưa được nhánh một quest đã xong lên nhánh gốc (conflict ngoài luật `shared_paths`, hay check đỏ sau khi ghép): đi đường của quest ghép trên nhánh quest gốc, hiệp sĩ gỡ, người chấm chưa từng làm quest gốc, luôn cần dấu; vào nhánh gốc thì quest gốc được lưu trữ theo. Khác quest ghép của đội. | `party_role = merge`, `delivery.failed.merge_quest` (PS-09b) |
 
 ## 3. Nghiệm thu, cầu dao, mana
 

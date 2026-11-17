@@ -28,11 +28,15 @@ function triageOf(t: Translate, item: AttentionItem) {
   return { triage, holds: holds === '' ? NONE : holds };
 }
 
-/** Where a delivery to the forge stopped and what to do about it (PS-08c), and its pull request. */
+/**
+ * Where a delivery to the forge stopped and what to do about it (PS-08c), its pull request, and the merge queue's merge
+ * quest it waits for (PS-09b).
+ */
 const deliveryOf = (t: Translate, item: AttentionItem) => ({
   stage: item.stage === undefined ? NONE : t(`cli.forge.stage.${item.stage}`),
   why: item.reason === undefined ? NONE : t(`cli.forge.reason.${item.reason}`),
   url: item.url ?? NONE,
+  merge_quest: item.merge_quest ?? NONE,
 });
 
 /** A newer build (PS-08d): the commits short, as the CLI prints them. */

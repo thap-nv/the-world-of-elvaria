@@ -112,16 +112,30 @@ function questItems(state: WorldState): AttentionItem[] {
 }
 
 /**
- * A done quest's delivery: stopped (the owner asks again with `deliver`), or its pull request open for the owner. A
- * quest no longer done (archived) has nothing left to do there; a merged one neither.
+ * A merge quest still on its way (PS-09b): in the world (an archived quest has left it), or merged by the Steward,
+ * which archives the quest it stands for at the same tick.
  */
-function deliveryItems(state: WorldState, outcome: ForgeOutcome): AttentionItem[] {
+const merging = (state: WorldState, merged: ReadonlySet<QuestId>, id: QuestId | undefined): id is QuestId =>
+  id !== undefined && (state.quests[id] !== undefined || merged.has(id));
+
+/**
+ * A done quest's delivery: stopped (the owner asks again with `deliver`), or its pull request open for the owner. A
+ * quest no longer done (archived) has nothing left to do there; a merged one neither. (PS-09b) One whose stop opened
+ * a merge quest waits for it, nothing for the owner to do; once that quest is dropped, the stop is the owner's again.
+ */
+function deliveryItems(
+  state: WorldState,
+  outcome: ForgeOutcome,
+  merged: ReadonlySet<QuestId>,
+): AttentionItem[] {
   const quest = state.quests[outcome.data.quest];
   if (quest?.status !== 'done') return [];
   if (outcome.type === 'delivery.pushed')
     return [itemOf('delivery_waits', { ...aboutQuest(quest), url: outcome.data.pr.url })];
   if (outcome.type === 'delivery.merged') return [];
-  const { stage, reason, pr } = outcome.data;
+  const { stage, reason, pr, merge_quest: merge } = outcome.data;
+  if (merging(state, merged, merge))
+    return [itemOf('delivery_merging', { ...aboutQuest(quest), stage, reason, merge_quest: merge })];
   return [
     itemOf('delivery_failed', {
       ...aboutQuest(quest),
@@ -152,6 +166,15 @@ function patrolItems({ territory, red, scans }: TerritoryHealth): AttentionItem[
   ];
 }
 
+/** The quests whose pull request the Steward merged, from the deliveries' outcomes. */
+const mergedOf = (deliveries: readonly ForgeOutcome[]): Set<QuestId> =>
+  new Set(deliveries.flatMap(({ type, data }) => (type === 'delivery.merged' ? [data.quest] : [])));
+
+function deliveriesOf(state: WorldState, deliveries: readonly ForgeOutcome[] = []): AttentionItem[] {
+  const merged = mergedOf(deliveries);
+  return deliveries.flatMap((outcome) => deliveryItems(state, outcome, merged));
+}
+
 function noticeItems(state: WorldState, notices: StewardNotices): AttentionItem[] {
   return [
     ...(notices.unclaimable ?? []).map((id) => itemOf('unclaimable', aboutId(state, id))),
@@ -170,7 +193,7 @@ function noticeItems(state: WorldState, notices: StewardNotices): AttentionItem[
     ...(notices.scope_held ?? []).map(({ quest, waiting }) =>
       itemOf('scope_held', { ...aboutId(state, quest), waiting }),
     ),
-    ...(notices.deliveries ?? []).flatMap((outcome) => deliveryItems(state, outcome)),
+    ...deliveriesOf(state, notices.deliveries),
     ...(notices.patrols ?? []).flatMap(patrolItems),
     ...(notices.tribes_held ?? []).map(({ tribe, path, version, checked }) =>
       version === undefined

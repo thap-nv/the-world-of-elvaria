@@ -294,9 +294,10 @@ show` prints the brief apart from the rest of the description and, while the pla
   is the credential's, a rate-limited 403 the forge's. `quest deliver <id>` (`src/quest/deliver.ts`) sends `deliver`
   for a done quest whose territory delivers to its forge (the domain's `forgeDue`), refusing the others.
   `quest show` prints the delivery's pull request, or where it stopped, why and the command
-  (`src/quest/delivery-view.ts`, `forgeOutcomesOf` on the quest's journal); `digest` lists `delivery_failed` and
-  `delivery_waits`; the bell says `delivery_pushed` (with the files a shared secret pattern matched) and
-  `delivery_failed`. `run` gives the Steward `baseTips` and `inBase` of PlotManager (`src/run/plots.ts`), the looks
+  (`src/quest/delivery-view.ts`, `forgeOutcomesOf` on the quest's journal); `digest` lists `delivery_failed`,
+  `delivery_waits` and (PS-09b) `delivery_merging`; the bell says `delivery_pushed` (with the files a shared secret
+  pattern matched) and `delivery_failed`, naming the merge queue's merge quest when one resolves the stop, as
+  `quest show` does; `quest list` and `quest show` call that quest's role "Queue merge quest" (`src/quest/party.ts`). `run` gives the Steward `baseTips` and `inBase` of PlotManager (`src/run/plots.ts`), the looks
   that archive a done quest merged into its base branch (PS-08d).
 - The newer build the digest offers (`upgrade_available`, PS-08d, `src/upgrade/offer.ts`): with a pin, the commits
   on `main` of the repo the CLI runs from (a build and `--here` share its refs; no fetch) that touch `packages/` or

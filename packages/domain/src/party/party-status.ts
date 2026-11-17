@@ -1,6 +1,7 @@
 // Where a party stands (implementation-plan §3.13 step 6, ADR 0020): derived from its quests, never stored, since a
 // party has no file of its own. The party is done when its merge quest is.
 import { questFinished } from '../quest/finished.ts';
+import { isQueueMerge } from './queue-merge-quest.ts';
 import type { QuestId } from '../core/ids.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 
@@ -38,13 +39,17 @@ function stageOf(contract: Quest, parts: readonly Quest[], merge: Quest | undefi
 export const isPartyPart = (quest: Pick<Quest, 'party_role'>): boolean =>
   quest.party_role === 'part' || quest.party_role === 'acceptance';
 
-/** The status of party `party` among `quests`; undefined when its contract quest is not among them. */
+/**
+ * The status of party `party` among `quests`; undefined when its contract quest is not among them, or `party` names a
+ * quest outside a party (the merge queue's merge quest of such a quest, PS-09b). The queue's merge quests of a party
+ * are not its merge quest.
+ */
 export function partyStatusOf(party: QuestId, quests: readonly Quest[]): PartyStatus | undefined {
   const members = quests.filter((quest) => quest.party_id === party);
   const contract = members.find((quest) => quest.id === party);
-  if (contract === undefined) return undefined;
+  if (contract?.party_role !== 'contract') return undefined;
   const parts = members.filter(isPartyPart);
-  const merge = members.find((quest) => quest.party_role === 'merge');
+  const merge = members.find((quest) => quest.party_role === 'merge' && !isQueueMerge(quest));
   return {
     party,
     stage: stageOf(contract, parts, merge),

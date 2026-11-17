@@ -76,6 +76,7 @@ export * from './party/merge-quest.ts';
 export * from './party/party-place.ts';
 export * from './party/party-status.ts';
 export * from './party/plot-base.ts';
+export * from './party/queue-merge-quest.ts';
 export type { Parts, PartyQuest } from './party/party-quest.ts';
 export * from './protocol/codec.ts';
 export * from './protocol/messages.ts';

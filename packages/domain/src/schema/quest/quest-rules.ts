@@ -139,15 +139,21 @@ const CONDITIONALS: readonly Rule<QuestFields>[] = [
   },
   {
     contract: {
+      $comment:
+        "(PS-09b) The merge queue's merge quest (party_role merge, created_by patrol) of a quest outside a party has no contract: its party is that quest's own id.",
       if: {
         required: ['party_role'],
         properties: { party_role: { enum: ['part', 'acceptance', 'merge'] } },
+        not: { properties: { party_role: { const: 'merge' }, created_by: { const: 'patrol' } } },
       },
       then: { required: ['contract'] },
     },
     check: (quest) =>
       issueIf(
-        quest.party_role !== undefined && quest.party_role !== 'contract' && quest.contract === undefined,
+        quest.party_role !== undefined &&
+          quest.party_role !== 'contract' &&
+          !(quest.party_role === 'merge' && quest.created_by === 'patrol') &&
+          quest.contract === undefined,
         ['contract'],
         `a party ${String(quest.party_role)} needs the contract path`,
       ),

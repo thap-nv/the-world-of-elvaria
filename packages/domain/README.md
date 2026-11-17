@@ -37,6 +37,11 @@
   again) or lets a judge leave without counting toward a stalled review (`review.release.has_verifier`), its entry
   `cancelled`; `reviewStallOf` names what stalled a review (partial verdicts, or how the last judge who left without
   one ended), for the move a Steward that starts on it makes.
+- Shapes the merge queue's merge quest (`src/party/queue-merge-quest.ts`, PS-09b, K5): `queueMergeQuestOf` (a
+  knight's sealed build under the quest whose delivery stopped at the update, in its party or named after it, its
+  scope and the conflicted files, the red checks' log ends), `isQueueMerge` (`party_role: merge`, `created_by:
+patrol`); `partyOf` counts the quest a party is named after, `partyStatusOf` and `partyIssues` leave it out, the
+  attention queue says `delivery_merging` while it is on its way, and `forgeArchives` archives its parent with it.
 - Shapes a party (`src/party/`, §3.13, ADR 0020, P1-18): `mergeQuestOf` (the merge quest the Steward adds when a
   contract is delivered: a knight's build waiting for every part, their tags and secrets, the highest rank, the
   royal seal), `PartyPlace` (a part's or the merge quest's place, given to `questFromCommand` through

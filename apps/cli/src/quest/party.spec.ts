@@ -11,6 +11,8 @@ const API_ID = 'q_20261109_a1a1a1';
 const TESTS_ID = 'q_20261109_t2t2t2';
 const MERGE_ID = 'q_20261109_m3m3m3';
 const STRAY_ID = 'q_20261109_s4s4s4';
+const QUEUED_ID = 'q_20261109_w5w5w5';
+const AGAIN_ID = 'q_20261109_v6v6v6';
 const CONTRACT_FILE = 'apps/api/openapi.json';
 
 const member = (status: 'done' | 'open', id: string, role: string, extra: Record<string, unknown> = {}) =>
@@ -79,5 +81,33 @@ describe('elvaria quest list and show of a party (P1-21 (c))', () => {
     const list = testIo();
     expect(await run(list, 'quest', 'list', '--kingdom', kingdom, '--locale', 'en')).toBe(0);
     expect(list.printed.out.find((line) => line.startsWith(STRAY_ID))).toMatch(/Build\s+Part\s+do-an/);
+  });
+
+  it("tells the merge queue's merge quest apart, and names the quest it stands for outside a party (PS-09b)", async () => {
+    const queued = (id: string, party: string, extra: Record<string, unknown> = {}) =>
+      questFixture('open', id, {
+        party_id: party,
+        party_role: 'merge',
+        created_by: 'patrol',
+        parent_id: party,
+        ...extra,
+      });
+    await plantQuests(
+      kingdom,
+      questFixture('done', STRAY_ID),
+      queued(QUEUED_ID, STRAY_ID),
+      queued(AGAIN_ID, CONTRACT_ID, { parent_id: MERGE_ID, contract: CONTRACT_FILE }),
+    );
+    const io = testIo();
+    expect(await run(io, 'quest', 'show', QUEUED_ID, '--kingdom', kingdom, '--locale', 'en')).toBe(0);
+    const text = io.printed.out.join('\n');
+    expect(text).toMatch(new RegExp(`Party\\s+stands for quest ${STRAY_ID}, outside a party`));
+    expect(text).toMatch(/Role in the party\s+Queue merge quest \(merge\)/);
+    const again = testIo();
+    expect(await run(again, 'quest', 'show', AGAIN_ID, '--kingdom', kingdom, '--locale', 'en')).toBe(0);
+    expect(again.printed.out.join('\n')).toMatch(new RegExp(`Merge quest\\s+${MERGE_ID}`));
+    const list = testIo();
+    expect(await run(list, 'quest', 'list', '--kingdom', kingdom)).toBe(0);
+    expect(list.printed.out.find((line) => line.startsWith(AGAIN_ID))).toContain('Quest Hợp nhất · ');
   });
 });
