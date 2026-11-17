@@ -46,7 +46,8 @@ describe('delivery.* data', () => {
   });
 
   it('names where a delivery stops and why, in the order of the flow', () => {
-    expect(DELIVERY_STAGES).toEqual(['scan', 'push', 'open', 'checks', 'merge', 'cleanup']);
+    expect(DELIVERY_STAGES).toEqual(['update', 'scan', 'push', 'open', 'checks', 'merge', 'cleanup']);
+    expect(DELIVERY_FAILURES).toContain('generate_failed');
     expect(DELIVERY_FAILURES).toContain('no_credential');
   });
 

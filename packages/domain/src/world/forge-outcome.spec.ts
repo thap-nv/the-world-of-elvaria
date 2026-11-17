@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { CAMPAIGNS, CHARACTERS, KINGDOM, TERRITORIES } from './__fixtures__/examples.ts';
 import { ATTENTION_KINDS, ATTENTION_TABLE } from './attention-table.ts';
 import { attentionQueue } from './attention.ts';
-import { forgeOutcomesOf } from './forge-outcome.ts';
+import { forgeOutcomesOf, forgeRoundsOf } from './forge-outcome.ts';
 import { worldStateOf } from './world-state.ts';
 import { EventSchema } from '../schema/event/event.ts';
 import { QuestSchema } from '../schema/quest/quest.ts';
@@ -64,6 +64,13 @@ describe('forgeOutcomesOf', () => {
     const outcomes = forgeOutcomesOf(events);
     expect([...outcomes.keys()]).toEqual([Q2]);
     expect(forgeOutcomesOf([...events, failed(Q1)]).get(Q1)?.type).toBe('delivery.failed');
+  });
+
+  it('counts the updates of each delivery: its pushes after the first, since the last deliver (PS-09)', () => {
+    const rounds = forgeRoundsOf([pushed(Q1), pushed(Q1), pushed(Q2), failed(Q1), pushed(Q1)]);
+    expect(Object.fromEntries(rounds)).toEqual({ [Q1]: 2, [Q2]: 0 });
+    expect(forgeRoundsOf([pushed(Q1), pushed(Q1), deliverAgain(Q1), pushed(Q1)]).get(Q1)).toBe(0);
+    expect(forgeRoundsOf([failed(Q1)]).size).toBe(0);
   });
 
   it('ignores every other line', () => {

@@ -27,6 +27,21 @@ const outcomeOf = (event: Event): ForgeOutcome | undefined => {
 const askedAgain = (event: Event): QuestId | undefined =>
   isEventOf(event, 'command.applied') && event.data.kind === DELIVER_COMMAND ? event.quest : undefined;
 
+/**
+ * (PS-09) How many times the merge queue updated each quest's open pull request in its delivery: its `delivery.pushed`
+ * lines after the first, since the owner's last `deliver`. A quest never pushed has none.
+ */
+export function forgeRoundsOf(events: readonly Event[]): Map<QuestId, number> {
+  const pushes = new Map<QuestId, number>();
+  for (const event of events) {
+    if (isEventOf(event, 'delivery.pushed'))
+      pushes.set(event.data.quest, (pushes.get(event.data.quest) ?? 0) + 1);
+    const again = askedAgain(event);
+    if (again !== undefined) pushes.delete(again);
+  }
+  return new Map([...pushes].map(([quest, count]) => [quest, count - 1]));
+}
+
 /** Each quest's latest outcome, in the order of `events` (the log's). */
 export function forgeOutcomesOf(events: readonly Event[]): Map<QuestId, ForgeOutcome> {
   const outcomes = new Map<QuestId, ForgeOutcome>();

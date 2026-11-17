@@ -3,6 +3,7 @@
 import { z } from 'zod';
 
 import { NonEmptyStringSchema } from '../common.ts';
+import { SHARED_PATH_MERGES } from '../territory.ts';
 
 const describe = (description: string) => ({ description });
 
@@ -49,7 +50,9 @@ const BranchListSchema = z.array(NonEmptyStringSchema);
 
 export const PlotMergedDataSchema = z
   .strictObject({
-    into: NonEmptyStringSchema.meta(describe("The merge quest's branch.")),
+    into: NonEmptyStringSchema.meta(
+      describe("The merge quest's branch, or a done quest's in the merge queue (PS-09)."),
+    ),
     merged: BranchListSchema.meta(
       describe(
         "The branches this merge took in, in order: the parts, then the territory's base branch by its name (PS-08e).",
@@ -71,9 +74,26 @@ export const PlotMergedDataSchema = z
     conflicts: BranchListSchema.optional().meta(
       describe('With stop = conflict: the conflicted files, relative to the plot.'),
     ),
+    // Optional and added after v1 (PS-09): a line without them resolved nothing and gave nothing back, so `v` stays 1.
+    resolved: z
+      .array(z.strictObject({ path: NonEmptyStringSchema, rule: z.enum(SHARED_PATH_MERGES) }))
+      .min(1)
+      .optional()
+      .meta(
+        describe(
+          "Conflicted files the territory's shared_paths resolved by their rule, relative to the plot: regenerate kept the merging branch's side for commands.generate to rewrite, union joined both sides line by line (PS-09).",
+        ),
+      ),
+    restored: BranchListSchema.min(1)
+      .optional()
+      .meta(
+        describe(
+          "Files the territory's commands.generate changed outside its shared_paths after the merge, given back as the branch had them: a generator that writes where it should not (PS-09).",
+        ),
+      ),
   })
   .meta(
     describe(
-      "The Steward merged a party's part branches, then the territory's base branch (PS-08e), into its merge quest's branch, or tried to (implementation-plan §3.13, P1-21 (d)): in the machine's run, before each knight's session and before the checks, never before a judge's. A merge with nothing left to take in writes no line.",
+      "The Steward merged a party's part branches, then the territory's base branch (PS-08e), into its merge quest's branch, or tried to (implementation-plan §3.13, P1-21 (d)): in the machine's run, before each knight's session and before the checks, never before a judge's. (PS-09) The merge queue merged the base branch into a done quest's branch before its delivery. A merge with nothing left to take in writes no line.",
     ),
   );

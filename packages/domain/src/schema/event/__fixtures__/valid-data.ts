@@ -100,6 +100,8 @@ export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
     pending: ['quest/q_20261109_bdyrzv'],
     stop: 'conflict',
     conflicts: ['apps/web/src/api.ts'],
+    resolved: [{ path: 'docs/events.md', rule: 'regenerate' }],
+    restored: ['README.md'],
   },
   'plot.restored': { paths: ['apps/api/openapi.json', 'coverage/'] },
   'delivery.pushed': {

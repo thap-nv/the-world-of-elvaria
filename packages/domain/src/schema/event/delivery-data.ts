@@ -13,11 +13,18 @@ import { CommitShaSchema } from './upgrade-data.ts';
 
 const describe = (description: string) => ({ description });
 
-/** Where a delivery stopped: the secret scan, the push, finding or opening the PR, its checks, the merge, the branch's removal. */
-export const DELIVERY_STAGES = ['scan', 'push', 'open', 'checks', 'merge', 'cleanup'] as const;
+/**
+ * Where a delivery stopped: the merge queue's update of the branch (PS-09: the base branch merged in, the generators,
+ * every check), the secret scan, the push, finding or opening the PR, its checks, the merge, the branch's removal.
+ */
+export const DELIVERY_STAGES = ['update', 'scan', 'push', 'open', 'checks', 'merge', 'cleanup'] as const;
 export type DeliveryStage = (typeof DELIVERY_STAGES)[number];
 
-/** Why it stopped. PS-09 turns `conflict` into a quest of its own. */
+/**
+ * Why it stopped. PS-09b turns `conflict` (and `checks_red`) at `update` into a quest of its own. At `update` (PS-09):
+ * `generate_failed`, a generator of commands.generate failed; `update_failed`, git, a hook or commands.setup refused
+ * the update (the merge, a commit of the Steward, git older than its merge-tree).
+ */
 export const DELIVERY_FAILURES = [
   'secret',
   'push_refused',
@@ -28,6 +35,8 @@ export const DELIVERY_FAILURES = [
   'checks_red',
   'checks_timeout',
   'head_moved',
+  'generate_failed',
+  'update_failed',
 ] as const;
 export type DeliveryFailure = (typeof DELIVERY_FAILURES)[number];
 
@@ -97,13 +106,17 @@ export const DeliveryFailedDataSchema = z
       .array(ForgeCheckSchema)
       .min(1)
       .optional()
-      .meta(describe('The checks that were red or never ended.')),
+      .meta(
+        describe("The checks that were red or never ended: the forge's, or at update the territory's own."),
+      ),
     paths: PathsSchema.optional().meta(
-      describe('With reason secret: the files that hold one; never the value.'),
+      describe(
+        "With reason secret: the files that hold one, never the value; with conflict at update: the files no rule of the territory's shared_paths resolves.",
+      ),
     ),
     detail: NonEmptyStringSchema.max(DELIVERY_DETAIL_MAX_LENGTH)
       .optional()
-      .meta(describe("The forge's or git's message, redacted.")),
+      .meta(describe("The forge's or git's message, or the end of the generators' log, redacted.")),
   })
   .meta(
     describe(

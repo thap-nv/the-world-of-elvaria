@@ -134,6 +134,13 @@ describe('EventSchema', () => {
     ['plot.patched', { file: 'elvaria.patch', paths: [] }, 'data.paths'],
     ['plot.merged', { into: 'quest/q', merged: [], pending: [], stop: 'dirty' }, 'data.stop'],
     ['plot.merged', { into: '', merged: [], pending: [] }, 'data.into'],
+    [
+      'plot.merged',
+      { into: 'q', merged: ['main'], pending: [], resolved: [{ path: 'a', rule: 'ours' }] },
+      'data.resolved.0.rule',
+    ],
+    ['plot.merged', { into: 'q', merged: ['main'], pending: [], restored: [] }, 'data.restored'],
+    ['check.end', { outcome: 'pass', checks: [], delivery: false }, 'data.delivery'],
     ['plot.restored', { paths: [] }, 'data.paths'],
     ['quest.infirmary', { ...QUEST_CHANGE, reason: '' }, 'data.reason'],
     ['quest.infirmary', { reason: 'breaker:time' }, 'data.quest'],

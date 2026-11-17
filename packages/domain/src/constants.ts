@@ -171,6 +171,13 @@ export const PATROL_LINE_MAX_LENGTH = 500;
  */
 export const FORGE_POLL_SECONDS = 30;
 export const BASE_LOOK_MINUTES = 10;
+
+/**
+ * The merge queue (PS-09): a pull request whose branch no longer merges cleanly into the base branch is updated again
+ * (merged, generated, checked, pushed) at most this many times per delivery; one more and the delivery fails, for the
+ * owner. Not measured: three merges overtaking one quest is a queue that needs a person.
+ */
+export const UPDATE_ROUNDS_MAX = 3;
 export const MS_PER_SECOND = 1000;
 
 /**

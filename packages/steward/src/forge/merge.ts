@@ -1,7 +1,7 @@
 // A sealed quest's pull request under `pr_merge` (implementation-plan §3.16.7, ADR 0023; PS-08d, (G) of the PS-08
 // plan): one question to the forge outside the tick, every FORGE_POLL_SECONDS as planTick says (forgePolls). Its
 // answer, in order: merged already (the owner merged by hand) ⇒ `delivery.merged`; closed ⇒ failed; a head other than
-// the one pushed ⇒ `head_moved`, nothing merged or deleted; `conflict` ⇒ failed (PS-09 turns it into a merge quest);
+// the one pushed ⇒ `head_moved`, nothing merged or deleted; `conflict` ⇒ back into the merge queue (PS-09, stale.ts);
 // red required checks ⇒ `checks_red`; pending ⇒ nothing, or `checks_timeout` once checks_timeout_minutes passed since
 // the push; green (or no required check and the forge says it can merge) ⇒ `Forge.merge` at the pushed head. After a
 // merge the remote quest branch goes, through the forge (a push would run the pre-push hook), only while its tip is
@@ -13,6 +13,7 @@ import type { EventData, ForgePoll, Quest, Result } from '@elvaria/domain';
 
 import { detailOf, foundOf, messageOf, stopped } from './delivery.ts';
 import { recordFailed, recordMerged } from './outcome.ts';
+import { staleOf } from './stale.ts';
 import type { Context } from '../context.ts';
 import type { Delivery } from './delivery.ts';
 import type { ForgeCheck } from './forge.ts';
@@ -64,6 +65,7 @@ async function mergeNow(ctx: Context, d: Delivery, pushed: Pushed): Promise<Fail
   const method = deliveryOf(d.territory).merge_method;
   const merge = await d.forge.merge(d.repo, pushed.pr.number, { method, head: pushed.head }, d.signal);
   if (stopped(d)) return undefined;
+  if (!merge.ok && merge.error.reason === 'conflict') return staleOf(ctx, d.quest, pushed);
   if (!merge.ok)
     return {
       stage: 'merge',
@@ -98,7 +100,7 @@ async function ask(ctx: Context, d: Delivery, pushed: Pushed, poll: ForgePoll): 
       ...about,
       detail: `the forge has ${head} at the head of the branch`,
     };
-  if (state === 'conflict') return { stage: 'merge', reason: 'conflict', ...about };
+  if (state === 'conflict') return staleOf(ctx, d.quest, pushed);
   if (state === 'red') return { stage: 'checks', reason: 'checks_red', ...about, ...checksOf(checks) };
   if (state === 'pending')
     return poll.timed_out

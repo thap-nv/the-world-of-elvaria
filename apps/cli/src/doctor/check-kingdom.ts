@@ -1,8 +1,12 @@
-// The doctor's checks that only read: the registry and the files it names, git, and every territory's folder.
+// The doctor's checks that only read: the registry and the files it names, git, and every territory's folder. (PS-09)
+// The merge queue tries each merge with `git merge-tree --write-tree`, which git has from 2.38: an older git on a
+// machine whose territories name hot files (shared_paths) is a warning, as their deliveries would stop at `update`.
 import { stat } from 'node:fs/promises';
 import path from 'node:path';
 
 import { REGISTRY_ROOT } from '@elvaria/registry-default';
+import { MERGE_TREE_MIN_GIT } from '@elvaria/runner-core';
+import type { Translate } from '@elvaria/i18n';
 import { fromPortable, missingRegistryFiles, registryGaps } from '@elvaria/store';
 
 import { registryGapLine, registryIssueLines, storeIssueLines } from '../issues.ts';
@@ -68,13 +72,36 @@ async function registryBehind(ctx: KingdomContext): Promise<Finding[]> {
   return [finding('warn', t('cli.doctor.registry_behind', { count: gaps.value.length }), details)];
 }
 
+/** Whether `version` (`2.37.1`, `2.56.0.windows.4`) comes before `min`, compared part by part as numbers. */
+export function olderThan(version: string, min: string): boolean {
+  const parts = (text: string): number[] =>
+    text
+      .split('.')
+      .slice(0, 3)
+      .map((part) => Number.parseInt(part, 10) || 0);
+  const [have, need] = [parts(version), parts(min)];
+  const at = need.findIndex((part, index) => (have[index] ?? 0) !== part);
+  return at !== -1 && (have[at] ?? 0) < (need[at] ?? 0);
+}
+
+/** git's line: missing, too old for the merge queue of the territories `hot` names, or its version. */
+export function gitFinding(t: Translate, version: string | undefined, hot: readonly string[]): Finding {
+  if (version === undefined) return finding('error', t('cli.doctor.git_missing'));
+  if (hot.length > 0 && olderThan(version, MERGE_TREE_MIN_GIT))
+    return finding(
+      'warn',
+      t('cli.doctor.git_merge_tree', { version, min: MERGE_TREE_MIN_GIT, territories: hot.join(', ') }),
+    );
+  return finding('ok', t('cli.doctor.git', { version }));
+}
+
 export async function checkGit(ctx: KingdomContext): Promise<Finding> {
   const git = await gitIn(ctx.io, ctx.io.cwd);
   const said = git === undefined ? undefined : await git(['--version']);
   const version = said === undefined ? undefined : parseVersion(said);
-  return version === undefined
-    ? finding('error', ctx.t('cli.doctor.git_missing'))
-    : finding('ok', ctx.t('cli.doctor.git', { version }));
+  const { items } = await ctx.store.territories.list();
+  const hot = items.filter(({ shared_paths: shared }) => (shared ?? []).length > 0).map(({ id }) => id);
+  return gitFinding(ctx.t, version, hot);
 }
 
 async function isFolder(target: string): Promise<boolean> {

@@ -419,6 +419,15 @@
   one per territory: `Plots.baseTips` fetches origin once, `Plots.inBase` asks each plot), and `forge_archives` (found
   there, or merged by the Steward) moves the quest with `done.archive` as the Steward, then releases its plot
   (`src/forge/archive.ts`). A party's contract and parts go with their merge quest.
+- Runs the merge queue (PS-09, `src/forge/update.ts`): before the scan, a delivery brings the branch up to its base
+  branch (`Plots.update`), then runs `commands.setup` again, the generators (`Plots.generate`), one `plot.merged`
+  line (`resolved`, `restored`) and every check of the territory (`check.*` marked `delivery`, logs in
+  `.runs/<quest>-delivery/checks/`), settling the update once they pass; a conflict no rule resolves, red checks, a
+  failed generator or a refused update record `delivery.failed` at `update`. The queue's order comes from what each
+  done quest touched, read once (`src/forge/sizes.ts`); a sealed pull request under `pr_merge` holds its lane
+  until merged. A pushed pull request that no longer merges cleanly (a look's `Plots.mergesClean`, or the forge's
+  `conflict`) goes back into the queue, at most `UPDATE_ROUNDS_MAX` times (`src/forge/stale.ts`). A merge quest's
+  merges use the territory's `shared_paths` rules, and the generators run when `regenerate` kept a side.
 - Offers a newer build in the digest (`upgrade_available`, PS-08d) when the optional `deps.upgradeOffer` port of the
   composition root says the pinned build's repo has one; read as the digest is made.
 - Tells once when an open quest nobody can take (`quest.unclaimable`, the bell), withdraws it with
@@ -489,6 +498,10 @@ first on the contract's branch, the second on the first's, which it waits for), 
 its `party` check, judges from outside the party, the seal and the notes; the machine's merge a judge failed, taken
 by a knight who reads the verdict; then three parts editing one file, two conflicts, the knight resolving them over
 two runs.
+`forge-queue.spec.ts` and `forge-queue-update.spec.ts` (PS-09, `src/__fixtures__/queue.ts` over the forge bench) run the merge
+queue on real git with the fake forge: three sealed quests, two regenerating one index, all merged small work first
+with the index right; union lines joined, the same line a conflict; a file no rule names; main still, no check again;
+red checks, no push; an open pull request main overtook, pushed again once; a Steward stopped in a generator.
 `merge-base.spec.ts` (PS-08e) moves main on once the contract forked: the machine's run merges it, the checks run
 on the result and the judge's diff has none of main's files; main editing a part's line stops the machine's run, rings
 one `merge_stopped` bell, and a knight concludes it in the same quest; main's protected change is never the party's.

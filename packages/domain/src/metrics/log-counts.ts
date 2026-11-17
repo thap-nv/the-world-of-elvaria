@@ -6,7 +6,7 @@ import { isEventOf } from '../schema/event/event.ts';
 import { inWindow } from './window.ts';
 import type { MetricsWindow } from './window.ts';
 import type { QuestId } from '../core/ids.ts';
-import type { Event } from '../schema/event/event.ts';
+import type { Event, EventOf } from '../schema/event/event.ts';
 
 /** A run of checks set aside because their environment failed (P1-54), from its `check.end` line. */
 export interface SetAside {
@@ -17,10 +17,14 @@ export interface SetAside {
   readonly at: string;
 }
 
+/** A run's checks ended: the merge queue's checks of a done quest (PS-09, `delivery`) belong to no run. */
+const runEnd = (event: Event): event is EventOf<'check.end'> =>
+  isEventOf(event, 'check.end') && event.data.delivery !== true;
+
 /** The set-aside runs inside the window, in the order they ended; a line written before PS-01b says none. */
 export const setAsidesOf = (events: readonly Event[], window: MetricsWindow): SetAside[] =>
   events.flatMap((event) => {
-    if (!isEventOf(event, 'check.end') || event.data.environment === undefined) return [];
+    if (!runEnd(event) || event.data.environment === undefined) return [];
     if (!inWindow(window, event.ts)) return [];
     const { quest, attempt } = event;
     return [
@@ -45,7 +49,7 @@ export function checkRunsOf(
 ): ReadonlyMap<QuestId, CheckRunCount> {
   const counts = new Map<QuestId, CheckRunCount>();
   for (const event of events) {
-    if (!isEventOf(event, 'check.end') || event.quest === undefined || !inWindow(window, event.ts)) continue;
+    if (!runEnd(event) || event.quest === undefined || !inWindow(window, event.ts)) continue;
     if (event.data.outcome !== 'pass' && event.data.outcome !== 'fail') continue;
     const seen = counts.get(event.quest) ?? { runs: 0, set_aside: 0 };
     const aside = event.data.environment === undefined ? 0 : 1;

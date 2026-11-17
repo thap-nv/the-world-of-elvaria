@@ -1,11 +1,17 @@
 // Which done quests the Steward delivers to their territory's forge (implementation-plan §3.16.7, ADR 0023; PS-08c):
 // after `done.deliver` wrote the delivery note, it pushes quest/<id> and opens its pull request, outside the tick.
 // A party's contract, parts and acceptance part reach the base branch through the merge quest (ADR 0020), so only the
-// merge quest of a party goes. One delivery runs at a time on a territory, highest rank first (byPriority): PS-09's
-// queue takes over from there. A quest whose delivery has an outcome (forgeOutcomesOf: pushed, merged, failed; or a
+// merge quest of a party goes. One delivery runs at a time on a territory: the merge queue (PS-09) takes first the
+// quest that touched the fewest hot files (shared_paths), then the fewest files, then the highest rank (byPriority),
+// so small work reaches the base branch before the work that will have to meet it. A pull request open whose branch
+// no longer merges cleanly (a look at the base branch, or the forge's conflict) is due again, ahead of the others, up
+// to UPDATE_ROUNDS_MAX times per delivery. A sealed quest's pull request that the Steward merges itself (mergeDue)
+// holds its territory's lane until it is merged or fails: the next quest is updated on top of it, so the checks the
+// queue ran are those of the very tree the forge merges (K16). A quest whose delivery has an outcome (forgeOutcomesOf: pushed, merged, failed; or a
 // branch the Steward found with nothing to push) is settled: a failure is never tried again on its own, only by the
 // owner's `deliver` command, which forgets the outcome. (PS-08d) A quest whose branch is in the base branch already
 // (merged by hand) is archived instead, and a sealed quest's pull request under `pr_merge` is merged (mergeDue).
+import { UPDATE_ROUNDS_MAX } from '../constants.ts';
 import { deliveryOf } from '../schema/territory-delivery.ts';
 import type { QuestId, TerritoryId } from '../core/ids.ts';
 import type { Quest } from '../schema/quest/quest.ts';
@@ -38,20 +44,68 @@ export interface ForgeSource {
   readonly forge?: readonly QuestId[];
   /** Done quests whose branch is in the base branch already (PS-08d, forgeArchives): archived, never pushed. */
   readonly in_base?: readonly QuestId[];
+  /** (PS-09) What each done quest touched, read once from its plot: the queue's order. Absent: none known. */
+  readonly forge_sizes?: readonly ForgeSize[];
+  /** (PS-09) Pull requests open whose branch no longer merges cleanly into the base branch: due again. */
+  readonly forge_stale?: readonly QuestId[];
+  /** Pull requests open, the last outcome `delivery.pushed` (PS-08d): a sealed one holds its lane (PS-09). */
+  readonly forge_waits?: readonly { readonly quest: QuestId }[];
+}
+
+/** How much a done quest's branch changed, from its plot's touched files (PS-09). */
+export interface ForgeSize {
+  readonly quest: QuestId;
+  /** Touched files that a glob of the territory's shared_paths matches. */
+  readonly shared: number;
+  readonly touched: number;
+}
+
+/** Whether a stale pull request may be updated once more (PS-09); `rounds`: the updates it had in this delivery. */
+export const updateRoundsLeft = (rounds: number): boolean => rounds < UPDATE_ROUNDS_MAX;
+
+/**
+ * The queue's order: a pull request the base branch overtook first (it was ahead), then fewer hot files, then fewer
+ * files; a quest whose size is not known yet goes after.
+ */
+function queueOrder(sizes: ReadonlyMap<QuestId, ForgeSize>, stale: ReadonlySet<QuestId>) {
+  const keyOf = (quest: Quest): readonly [number, number, number] => {
+    const size = sizes.get(quest.id);
+    const first = stale.has(quest.id) ? 0 : 1;
+    return size === undefined ? [first, Number.MAX_SAFE_INTEGER, 0] : [first, size.shared, size.touched];
+  };
+  return (a: Quest, b: Quest): number => {
+    const [[staleA, sharedA, touchedA], [staleB, sharedB, touchedB]] = [keyOf(a), keyOf(b)];
+    return staleA - staleB || sharedA - sharedB || touchedA - touchedB;
+  };
+}
+
+/** Territories whose lane is held: a delivery runs there, or a sealed pull request waits there to be merged. */
+function busyOf(source: ForgeSource, done: readonly Quest[], stale: ReadonlySet<QuestId>): Set<TerritoryId> {
+  const running = new Set(source.background?.running);
+  const waiting = new Set((source.forge_waits ?? []).map(({ quest }) => quest));
+  const territories = new Map(source.territories.map((territory) => [territory.id, territory]));
+  const holds = (quest: Quest): boolean =>
+    running.has(quest.id) ||
+    (waiting.has(quest.id) && !stale.has(quest.id) && mergeDue(quest, territories.get(quest.territory)));
+  return new Set(done.filter(holds).map(({ territory }) => territory));
 }
 
 /**
- * The deliveries that start now, from `done` (best first): one per territory, none on a territory whose delivery
- * still runs. A done quest's work in the background is its delivery: checks and scripts leave with `review` and
- * `working` (wantedIn).
+ * The deliveries due now, from `done` (by rank, byPriority) in the queue's order: one per territory, none on a
+ * territory whose delivery still runs. A done quest's work in the background is its delivery: checks and scripts leave
+ * with `review` and `working` (wantedIn). Whether each starts now is the room's (startingNow).
  */
 export function forgeDeliveries(source: ForgeSource, done: readonly Quest[]): QuestId[] {
-  const settled = new Set([...(source.forge ?? []), ...(source.in_base ?? [])]);
-  const running = new Set(source.background?.running);
+  const stale = new Set(source.forge_stale);
+  const settled = new Set([
+    ...(source.forge ?? []).filter((id) => !stale.has(id)),
+    ...(source.in_base ?? []),
+  ]);
   const territories = new Map(source.territories.map((territory) => [territory.id, territory]));
-  const busy = new Set(done.filter(({ id }) => running.has(id)).map(({ territory }) => territory));
+  const busy = busyOf(source, done, stale);
+  const sizes = new Map((source.forge_sizes ?? []).map((size) => [size.quest, size]));
   const picked: QuestId[] = [];
-  for (const quest of done) {
+  for (const quest of done.toSorted(queueOrder(sizes, stale))) {
     if (busy.has(quest.territory) || settled.has(quest.id)) continue;
     if (!forgeDue(quest, territories.get(quest.territory))) continue;
     busy.add(quest.territory);

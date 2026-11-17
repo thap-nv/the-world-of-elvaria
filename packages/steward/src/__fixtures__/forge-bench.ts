@@ -27,6 +27,9 @@ export interface ForgeBenchOptions {
   readonly delivery?: Readonly<Record<string, unknown>>;
   /** Plots release the worktree at archive, as `elvaria run` does (PS-08d); by default they keep it. */
   readonly release?: boolean;
+  /** (PS-09) Fields over the territory (shared_paths, commands.generate…), and the repo's first files besides README. */
+  readonly territory?: Readonly<Record<string, unknown>>;
+  readonly files?: Readonly<Record<string, string>>;
 }
 
 export interface ForgeBench {
@@ -60,7 +63,7 @@ async function kingdomHolds(root: string, text: string): Promise<boolean> {
 export async function forgeBench(options: ForgeBenchOptions = {}): Promise<ForgeBench> {
   const repo = await mkdtemp(path.join(os.tmpdir(), 'elvaria forge repo '));
   const remote = await mkdtemp(path.join(os.tmpdir(), 'elvaria forge remote '));
-  await gitRepoWith(repo, { 'README.md': '# dc1\n' });
+  await gitRepoWith(repo, { 'README.md': '# dc1\n', ...options.files });
   git(remote, 'init', '-q', '--bare', '-b', 'main');
   git(repo, 'remote', 'add', 'origin', remote);
   git(repo, 'push', '-q', 'origin', 'main');
@@ -69,6 +72,7 @@ export async function forgeBench(options: ForgeBenchOptions = {}): Promise<Forge
   await onRepo(kingdom, repo, [], {
     vcs,
     ...(options.delivery === undefined ? {} : { delivery: options.delivery }),
+    ...options.territory,
   });
   const forge = fakeForge(remote);
   const forges: Forges = { adapters: { github: forge }, git: { file: 'git', args: [] } };

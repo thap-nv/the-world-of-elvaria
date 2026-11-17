@@ -98,6 +98,17 @@ Theo §3.16.4 và [ADR 0026](../adr/0026-guarded-self-change.md): danh sách "Đ
 - `docs/schemas/**` vừa là file nóng (`shared_paths`, `regenerate`) vừa là vùng bảo vệ: hai luật độc lập. Quest đổi schema zod sinh lại `docs/schemas/**` và cần dấu; quest chỉ chạy `pnpm schemas` mà không đổi gì thì không chạm.
 - Danh sách là dữ liệu: chủ nhân thu hẹp hay mở rộng bằng cách sửa file. Vương quốc đang ghim một bản trước PS-04 không đọc được lãnh thổ có trường này (`laws` là `strictObject`): chỉ thêm sau khi vương quốc ghim một bản có PS-04 (`elvaria upgrade`), và sau một lần `elvaria upgrade --rollback` về bản trước PS-04 thì gỡ nó đi.
 
+## Cách hàng đợi ghép file nóng (PS-09)
+
+Ở lãnh thổ giao `pr` hay `pr_merge`, trước khi quét và push, Nhiếp chính ghép `main` vào nhánh quest (merge, không rebase) và gỡ conflict của file nóng theo luật:
+
+- `union` là ghép ba phía **theo từng dòng** trong mỗi đoạn conflict, không phải giữ hết dòng của hai bên: dòng chỉ một phía sửa thì lấy phía sửa (hai quest đổi ô Trạng thái của hai dòng kề nhau ở §8 ghép được), hai phía chỉ thêm dòng thì giữ dòng của `main` rồi dòng của quest (hai dòng §11 mới), cùng một dòng mà hai phía sửa khác nhau là conflict thật (hai quest đổi cùng một dòng §8). File `.json` ghép xong phải parse được, không thì là conflict. Kiểu xuống dòng theo nhánh quest.
+- `regenerate` giữ bản của nhánh quest, rồi Nhiếp chính chạy `commands.setup` và từng lệnh `commands.generate` (`pnpm schemas`, rồi `pnpm docs:gen`) trên kết quả và commit phần chúng đổi. Lệnh sinh chỉ được đổi file trong `shared_paths`: file khác bị đổi thì được trả về như cũ, có cảnh báo.
+- Mọi file khác là conflict: `delivery.failed` bước `update` (PS-09b sẽ mở quest Hợp nhất), đất giữ nguyên.
+- Rồi mọi check của lãnh thổ chạy trên nhánh mới; đỏ thì không push. Nhánh đã chứa `main` thì không làm gì, không chạy lại check.
+- `pnpm-lock.yaml` chưa vào danh sách (K12): muốn thì thêm `{ "glob": "pnpm-lock.yaml", "merge": "regenerate" }` và đặt `pnpm install --lockfile-only` trước các lệnh sinh, sau khi đo PS-09.
+- Cần git ≥ 2.38 (`git merge-tree --write-tree`); `elvaria doctor` cảnh báo khi cũ hơn.
+
 ## Giao hàng (PS-08c, PS-08d)
 
 Lãnh thổ Elvaria giao `manual` cho tới khi chủ nhân bật khác: quest `done` chờ chủ nhân merge tay theo [operating-a-kingdom.md](operating-a-kingdom.md) §7, và Nhiếp chính lưu trữ quest ở lần dò nhánh gốc kế tiếp (mỗi 10 phút) sau khi nhánh vào `main`.
@@ -109,6 +120,6 @@ Lãnh thổ Elvaria giao `manual` cho tới khi chủ nhân bật khác: quest `
 
 ## Bẫy
 
-- `union` với file JSON (glossary, locale) có thể để lại JSON hỏng (thiếu dấu phẩy giữa hai khối cùng thêm ở cuối). Sau khi ghép phải chạy lại check: `pnpm i18n:check`, `pnpm docs:check`; PS-09 chạy lại check của lãnh thổ sau mỗi lần ghép.
+- `union` với file JSON (glossary, locale) có thể để lại JSON hỏng (thiếu dấu phẩy giữa hai khối cùng thêm ở cuối). Từ PS-09 luật `union` là ghép theo từng dòng, và file `.json` không parse được sau khi ghép là conflict; ghép tay thì vẫn phải chạy lại `pnpm i18n:check`, `pnpm docs:check`.
 - Vùng khai quá rộng (`packages/**`) giao với mọi quest khác và làm lãnh thổ chạy từng quest một; vùng khai thiếu thì người chấm thấy file ngoài vùng. Khai theo thư mục của việc (`packages/domain/src/dispatch/**`), không theo package.
 - Ví dụ thật: PS-05 và PS-03 cùng sửa `packages/domain/src/dispatch/plan-tick.ts`; với vùng khai đúng, R3 cho quest sau chờ quest trước được lưu trữ, thay vì hai nhánh conflict khi merge.

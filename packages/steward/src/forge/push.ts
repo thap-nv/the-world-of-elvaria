@@ -1,4 +1,5 @@
 // A done quest's delivery to its forge, outside the tick (implementation-plan §3.16.7, ADR 0023; PS-08c), in order:
+// (PS-09) the merge queue's update of the branch (update.ts: the base branch merged in, the generators, every check),
 // the secret scan of what the branch adds over the base branch (scan.ts), `git push` of quest/<id> alone (never
 // forced, never the base branch; the territory's pre-push hook runs as when the owner pushes), then the branch's pull
 // request, found or opened with the delivery note as its description, and one `delivery.pushed`. Each step may run
@@ -17,6 +18,7 @@ import { detailOf, forgeError, foundOf, messageOf, stopped } from './delivery.ts
 import { runDeliveryGit } from './git.ts';
 import { recordFailed, recordPushed } from './outcome.ts';
 import { scanDiff } from './scan.ts';
+import { updateBranch } from './update.ts';
 import type { Context } from '../context.ts';
 import type { Delivery } from './delivery.ts';
 import type { Failure } from './outcome.ts';
@@ -70,6 +72,8 @@ async function push(ctx: Context, d: Delivery, known: readonly string[]): Promis
 
 /** The steps after the plot is found; undefined when the Steward stopped, which records nothing. */
 async function deliverFound(ctx: Context, d: Delivery): Promise<Failure | undefined> {
+  const updated = await updateBranch(ctx, d);
+  if (updated !== undefined || stopped(d)) return stopped(d) ? undefined : updated;
   const base = await baseOf(d);
   const ahead = await localGit(d, ['rev-list', '--count', `${base}..HEAD`]);
   const head = await localGit(d, ['rev-parse', 'HEAD']);
@@ -151,6 +155,8 @@ async function deliverQuest(ctx: Context, quest: Quest, signal: AbortSignal): Pr
 export function startDelivery(ctx: Context, id: QuestId): Result<void, string> {
   const quest = ctx.world.quests.get(id);
   if (quest === undefined) return err('unknown_quest');
+  // An open pull request the base branch overtook goes again (PS-09): this delivery updates it.
+  ctx.forge.stale.delete(id);
   ctx.background.forge(id, currentRun(quest), (signal) => deliverQuest(ctx, quest, signal));
   return ok(undefined);
 }

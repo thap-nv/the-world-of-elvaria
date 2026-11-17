@@ -5,7 +5,8 @@
 // never before a judge's, who reads the branch its checks ran on. Any other quest with two dependencies or more gets
 // the ones its plot did not start from before each session of its assignee (fix/council-run-gaps (d)). Each merge that
 // takes a branch in or stops at one leaves a `plot.merged` line in the log and the quest's journal (P1-21 (d)); a merge
-// quest's that stops rings the bell.
+// quest's that stops rings the bell. (PS-09) A merge quest's merge whose conflicts all lie in the territory's hot files
+// is resolved by their rules before its knight is called, and the generators run once a `regenerate` rule kept a side.
 import { PLOT_MERGE_STOPS, plotBaseOf } from '@elvaria/domain';
 import type { Quest, Territory } from '@elvaria/domain';
 import type { MergeOutcome, PrepareOptions } from '@elvaria/runner-core';
@@ -72,6 +73,7 @@ export async function noteMerge(ctx: Context, quest: Quest, outcome: MergeOutcom
     pending: [...outcome.pending],
     ...(reason === undefined ? {} : { stop: reason }),
     ...(reason === 'conflict' ? { conflicts } : {}),
+    ...(outcome.resolved === undefined ? {} : { resolved: [...outcome.resolved] }),
   };
   await ctx.record.note({ type: 'plot.merged', actor: STEWARD, data, quest });
   // The bell speaks of a merge quest's knight; a quest's dependencies that stop are undone, and said in the log.
@@ -95,13 +97,16 @@ export async function mergeParts(
 ): Promise<void> {
   const { branches, base, dependencies } = mergesOf(ctx, quest);
   if (branches.length === 0 && base === undefined) return;
-  const how = dependencies === true ? { dependencies } : undefined;
+  const shared = ctx.world.territories.get(quest.territory)?.shared_paths ?? [];
+  const how = dependencies === true ? { dependencies } : { shared };
   const outcome = await ctx.deps.plots.merge(plot, branches, base, how);
   await noteMerge(ctx, { ...quest, plot }, outcome);
   const territory =
     base ?? (outcome.merged.length > 0 ? ctx.world.territories.get(quest.territory) : undefined);
   if (territory !== undefined)
     await ctx.deps.plots.prepare(quest, territory, plotOptionsOf(ctx, quest, secrets));
+  if (territory !== undefined && outcome.resolved?.some(({ rule }) => rule === 'regenerate') === true)
+    await regenerate(ctx, { ...quest, plot }, territory, secrets);
   if (outcome.stop === undefined) return;
   const { reason, branch, detail } = outcome.stop;
   const where = branch === undefined ? '' : ` at ${branch}`;
@@ -111,6 +116,23 @@ export async function mergeParts(
 }
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
+
+/**
+ * A `regenerate` rule kept the merge quest's side of a generated file (PS-09): commands.generate writes it anew, and
+ * its commit goes before the knight's session. One that fails is said to the owner; the checks then find the file
+ * stale, as they would have before the rule.
+ */
+async function regenerate(
+  ctx: Context,
+  quest: Quest,
+  territory: Territory,
+  secrets?: Secrets,
+): Promise<void> {
+  const request = { quest_id: quest.id, signal: ctx.stopping, ...(secrets === undefined ? {} : { secrets }) };
+  const generated = await ctx.deps.plots.generate?.(quest.plot, territory, request);
+  if (generated?.status === 'failed' || generated?.status === 'refused')
+    ctx.deps.log.warn(`steward: ${quest.id}: commands.generate after its merge: ${generated.status}`);
+}
 
 /**
  * A merge quest's parts its knight left unmerged go in before its checks (P1-55), and the base branch after them

@@ -90,6 +90,11 @@ export function gitPlots(kingdom: string, options: { readonly release?: boolean 
         : Promise.resolve(ok({ removed: false, forget_failures: [] })),
     baseTips: (territory) => manager.baseTips(territory),
     inBase: (plot, tips) => manager.inBase(plot, tips),
+    // The merge queue as `elvaria run` makes it (PS-09); its checks are the spec's `check`.
+    update: (plot, territory) => manager.update(plot, territory),
+    generate: (plot, territory, request) => manager.generate(plot, territory, request),
+    settle: (plot) => manager.settle(plot),
+    mergesClean: (plot, tips) => manager.mergesClean(plot, tips),
     // The judge's scratch plot as `elvaria run` makes it (P1-20): real worktrees, the checks for real.
     trial: ({ quest, territory, run_dir: runDir, runs, coverage, lock_wait_ms: wait }) => {
       const given = { kingdom, quest, territory, run_dir: runDir, runs, coverage };

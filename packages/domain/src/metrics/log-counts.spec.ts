@@ -82,6 +82,8 @@ describe('setAsidesOf (PS-01b, (b) of P1-54)', () => {
       end({}, 4, questId(1)),
       end({ environment }, 5),
       lineOf('check.end', { outcome: 'fail', checks: [], environment }, at(1, NEXT_DAY), questId(2)),
+      // The merge queue's checks of a done quest belong to no run (PS-09).
+      end({ environment, delivery: true }, 6, questId(1)),
     ];
     expect(setAsidesOf(events, ON_THE_DAY)).toEqual([
       { quest: questId(1), attempt: 2, check: 'e2e', at: at(3) },
@@ -111,6 +113,7 @@ describe('checkRunsOf (PS-25)', () => {
       end('fail', 8),
       end('pass', 1, questId(1), {}, NEXT_DAY),
       lineOf('check.start', {}, at(2), questId(1)),
+      end('fail', 9, questId(1), { delivery: true }),
     ];
     expect([...checkRunsOf(events, ON_THE_DAY)]).toEqual([
       [questId(1), { runs: 2, set_aside: 1 }],

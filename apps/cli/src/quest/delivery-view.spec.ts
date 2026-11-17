@@ -78,7 +78,7 @@ describe('deliveryLines', () => {
     ]);
     expect(lines.slice(0, 4)).toEqual([
       '',
-      "The delivery stopped at the pull request's checks: a required check of the pull request is red; read it, then deliver again.",
+      "The delivery stopped at the pull request's checks: a check is red: a required check of the pull request, or a check of the territory on the branch with the base branch merged in (.runs/<quest>-delivery/checks/); read it, then deliver again.",
       `Pull request: ${PR.url}`,
       'Files: a.ts, b.ts',
     ]);
