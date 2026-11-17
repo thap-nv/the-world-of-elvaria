@@ -176,7 +176,7 @@ describe('toolPolicyOf', () => {
     expect(policy.deny).toContain('WebFetch');
     expect(
       toolPolicyOf({ role: 'verifier', characterClass: classOf('judge'), character: SABLE }).tools,
-    ).toEqual(['Read', 'Glob', 'Grep', 'Bash']);
+    ).toEqual(['Read', 'Glob', 'Grep', 'Bash', 'WebFetch', 'WebSearch']);
     expect(toolPolicyOf({ role: 'assignee', characterClass: knight, character: THORN }).tools).toContain(
       'Agent',
     );
