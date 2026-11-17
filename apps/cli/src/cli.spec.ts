@@ -19,6 +19,13 @@ import type { TempDir } from '../test/cli.ts';
 const CLI = fileURLToPath(new URL('../dist/cli.js', import.meta.url));
 /** The fake day of the sandbox specs: a fixed date keeps its file name the same on every run. */
 const DAY = '2026-11-06';
+/**
+ * A call of the built CLI loads every package it composes: about 1 s on a quiet machine, 9-13 s measured while other
+ * worktrees ran their tests (fix/timing-flakes), when a spec of six calls ran out of the package's 30 s. Each spec
+ * here makes at most this many calls, each given CALL_MS.
+ */
+const CALLS_PER_SPEC = 3;
+const CALL_MS = 20_000;
 
 interface Outcome {
   readonly code: number | null;
@@ -40,7 +47,7 @@ function elvaria(env: Env, ...args: string[]): Promise<Outcome> {
   });
 }
 
-describe('node dist/cli.js', () => {
+describe('node dist/cli.js', { timeout: CALLS_PER_SPEC * CALL_MS }, () => {
   let dir: TempDir;
   let env: Env;
   let kingdom: string;
@@ -79,7 +86,7 @@ describe('node dist/cli.js', () => {
     expect(list.stdout).toMatch(/thorn\s+Thorn\s+Knight\s+claude\s+claude-sonnet-5-5\s+5\s+Idle/);
   });
 
-  it('sends quest commands to the inbox and never writes a quest itself (ADR 0005)', async () => {
+  it('sends quest add to the inbox and never writes a quest itself (ADR 0005)', async () => {
     const add = await elvaria(
       env,
       'quest',
@@ -112,7 +119,9 @@ describe('node dist/cli.js', () => {
       payload: { draft: false, territory: 'dc1-se-team' },
     });
     expect(await readdir(path.join(kingdom, 'quests'))).toEqual([]);
+  });
 
+  it('lists and shows the quests the Steward wrote, and counts the commands waiting for it', async () => {
     // The Steward (P1-03) writes quests; here the test stands in for it.
     await plantQuests(
       kingdom,
@@ -124,6 +133,9 @@ describe('node dist/cli.js', () => {
     expect(list.stdout).toContain(`${QUEST_ID}  Draft`);
     expect(list.stdout).toContain('1 commands wait for the Steward in the inbox.');
     expect((await elvaria(env, 'quest', 'show', QUEST_ID)).stdout).toContain('Thêm script pnpm check');
+  });
+
+  it('sends confirm, edit and cancel to the inbox as commands too', async () => {
     expect((await elvaria(env, 'quest', 'confirm', QUEST_ID)).code).toBe(0);
     expect((await elvaria(env, 'quest', 'edit', OTHER_QUEST_ID, '--rank', 'C')).code).toBe(0);
     expect((await elvaria(env, 'quest', 'cancel', OTHER_QUEST_ID, '--reason', 'thử')).code).toBe(0);

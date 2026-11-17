@@ -2,6 +2,7 @@
 // owner is signed in, and doctor must say so, with how long it had, never send the owner to sign in again; probe()
 // says the same of `/usage` (fix/held-tribe-sessions). The CLI here is a Node script that never ends, whatever it is
 // asked. And a hook that is not built: doctor fails, as every tribe's does. The rest of doctor is in runner.spec.ts.
+// A session's `agy -p /hooks` that gives no list says why, as doctor does (fix/timing-flakes).
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
@@ -9,7 +10,7 @@ import process from 'node:process';
 import { doctorNoteOf, noAnswerWithin } from '@elvaria/runner-core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { fakeRunner, openWorld } from './__fixtures__/agy.ts';
+import { fakeRunner, openWorld, request } from './__fixtures__/agy.ts';
 import type { World } from './__fixtures__/agy.ts';
 
 let world: World;
@@ -47,5 +48,19 @@ describe('doctor, when the hook is not built', () => {
     const info = await fakeRunner({ hook: { command: process.execPath, args: [missing] } }).doctor();
     expect(info).toMatchObject({ auth_ok: false });
     expect(info.notes).toEqual([doctorNoteOf('doctor:hook_missing', { file: missing })]);
+  });
+});
+
+describe('a session, when agy -p /hooks gives no list', () => {
+  it('says the call ran out of time, not that agy did not answer JSON', async () => {
+    const session = fakeRunner({ launch: await silentAgy(), timeout_ms: 1000 }).spawn(request(world));
+    await expect(session).rejects.toThrow(`agy -p /hooks: ${noAnswerWithin(1000)}`);
+  });
+
+  it('says how it ended when it leaves with nothing on stdout', async () => {
+    const script = path.join(world.root, 'fails.mjs');
+    await writeFile(script, "process.stderr.write('out of memory\\n');\nprocess.exitCode = 3;\n", 'utf8');
+    const failing = fakeRunner({ launch: { command: process.execPath, args: [script] } });
+    await expect(failing.spawn(request(world))).rejects.toThrow('agy -p /hooks: exit 3 out of memory');
   });
 });

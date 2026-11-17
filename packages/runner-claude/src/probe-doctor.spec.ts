@@ -1,6 +1,7 @@
 import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 
 import { doctorNoteOf } from '@elvaria/runner-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -131,7 +132,13 @@ describe('doctor', () => {
   it('says `claude auth status` ran out of time, and how long it had, never that the owner is logged out', async () => {
     const info = await fakeRunner({ ...withEnv({ FAKE_CLAUDE_AUTH: 'hangs' }), timeoutMs: 1000 }).doctor();
     expect(info.auth_ok).toBe(false);
-    expect(info.notes).toEqual([
+    // `claude --version` runs alongside with the same 1 s, and on a busy machine it runs out too (fix/timing-flakes):
+    // that is its own note, true and beside the point here.
+    const version = doctorNoteOf('doctor:command_timed_out', {
+      command: `${FAKE_CLAUDE} --version`,
+      seconds: 1,
+    });
+    expect(info.notes?.filter((note) => !isDeepStrictEqual(note, version))).toEqual([
       doctorNoteOf('doctor:command_timed_out', { command: 'claude auth status --json', seconds: 1 }),
     ]);
   });
