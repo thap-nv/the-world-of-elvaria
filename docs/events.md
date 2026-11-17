@@ -4,7 +4,7 @@
 
 Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là một event; log chỉ ghi thêm, không bao giờ viết lại. `type` là `nhóm.hành_động`; reader giữ nguyên type lạ, renderer bỏ qua nó. Hợp đồng đầy đủ: [schemas/event.schema.json](schemas/event.schema.json); nghĩa từng nhóm và các tiền tố dành sẵn: [glossary.md](glossary.md) mục 12.
 
-79 type trong danh mục v1, 67 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
+80 type trong danh mục v1, 68 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
 
 ## Khung một dòng
 
@@ -165,14 +165,15 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 | `graph.built` | `commit`: string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) — The commit of the territory the graph is of: the folder `.state/graphs/<territory>/<commit>/`.<br>`nodes` (tùy chọn): integer ≥ 0 — graphify's count, when it printed one.<br>`edges` (tùy chọn): integer ≥ 0<br>`duration_ms`: integer ≥ 0 |
 | `graph.failed` | `commit`: string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) — The commit of the territory the graph is of: the folder `.state/graphs/<territory>/<commit>/`.<br>`reason`: string (không rỗng) — Why, with the end of graphify's output; redacted. |
 
-## `memo` · 4 type
+## `memo` · 5 type
 
 | Type | `data` |
 |---|---|
-| `memo.filed` | `memo`: string (khớp `^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`kind`: string (khớp `^[a-z][a-z0-9_]*$`)<br>`from`: string (khớp `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$`, khác `user`, `machine`, `temple`) |
-| `memo.routed` | `memo`: string (khớp `^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`route`: một trong `chancellor`, `judge`, `owner`, `author`<br>`refusal` (tùy chọn): một trong `no_verdict`, `owner_verdict`, `final_verdict`, `second_objection`, `no_author`, `below_rank`, `second_amendment` — (PS-22) An objection sent to the owner: why no second judge reads it. (PS-22b) An amendment sent to the owner: why no author decides it. |
-| `memo.closed` | `memo`: string (khớp `^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`decision`: một trong `shelved`, `rejected`, `handled`, `accepted`, `sustained`, `overruled`<br>`quest` (tùy chọn): string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`) — With decision = handled: the quest that does the work.<br>`verdict` (tùy chọn): string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*\|-user)?$`) — (PS-22) With decision = sustained or overruled: the second judge's verdict. |
+| `memo.filed` | `memo`: string (khớp `^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`kind`: string (khớp `^[a-z][a-z0-9_]*$`)<br>`from` (tùy chọn): string (khớp `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$`, khác `user`, `machine`, `temple`) — Who wrote it; absent, the Steward did (PS-09c, an advisory after the quest reached its base branch). |
+| `memo.routed` | `memo`: string (khớp `^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`route`: một trong `chancellor`, `judge`, `owner`, `author`, `quests`<br>`refusal` (tùy chọn): một trong `no_verdict`, `owner_verdict`, `final_verdict`, `second_objection`, `no_author`, `below_rank`, `second_amendment` — (PS-22) An objection sent to the owner: why no second judge reads it. (PS-22b) An amendment sent to the owner: why no author decides it. |
+| `memo.closed` | `memo`: string (khớp `^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`decision`: một trong `shelved`, `rejected`, `handled`, `accepted`, `sustained`, `overruled`, `delivered`, `lapsed`<br>`quest` (tùy chọn): string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`) — With decision = handled: the quest that does the work.<br>`verdict` (tùy chọn): string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*\|-user)?$`) — (PS-22) With decision = sustained or overruled: the second judge's verdict. |
 | `memo.escalated` | `memo`: string (khớp `^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`action`: một trong `merge`, `new_quest`, `shelve`, `owner`<br>`quest` (tùy chọn): string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`) — merge: the open quest; new_quest: the draft quest made for the owner to confirm.<br>`holds`: array of một trong `decision_change`, `contract_change`, `mana_over_budget`, `outward_action`, `protected_paths`, `above_rank`, `outside_scope`, `scope_held`, `chancellor_asks` |
+| `memo.delivered` | `memo`: string (khớp `^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`) |
 
 ## `sandbox` · 2 type
 

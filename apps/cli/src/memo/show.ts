@@ -1,4 +1,5 @@
 // `elvaria memo show <memo>`: one letter (memo) with its fields, how it was decided, then its whole text (PS-02).
+// (PS-09c) An advisory names the quests it went to and those that read it; nobody decides it.
 import type { Memo } from '@elvaria/domain';
 import type { MessageKey } from '@elvaria/i18n';
 
@@ -6,7 +7,7 @@ import { EXIT } from '../command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { NONE } from '../listing.ts';
 import { renderTable } from '../table.ts';
-import { MEMO_DECISION_LABEL, MEMO_STATE_LABEL, memoKindName, readMemo } from './memo.ts';
+import { MEMO_DECISION_LABEL, MEMO_STATE_LABEL, memoFromOf, memoKindName, readMemo } from './memo.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
@@ -24,6 +25,19 @@ function outcomeFields(ctx: KingdomContext, memo: Memo): Field[] {
       ? []
       : [['cli.memo.field.answered_by', outcome.verdict] satisfies Field]),
     ...(outcome.note === undefined ? [] : [['cli.memo.field.note', outcome.note] satisfies Field]),
+  ];
+}
+
+/** (PS-09c) Of a memo to quests: the quests it went to, and each reading, its run and when. */
+function deliveryFields(ctx: KingdomContext, memo: Memo): Field[] {
+  const to = memo.to.quests;
+  if (to === undefined) return [];
+  const read = (memo.deliveries ?? []).map(({ quest, attempt, at }) =>
+    ctx.t('cli.memo.reading', { quest, run: String(attempt), at }),
+  );
+  return [
+    ['cli.memo.field.recipients', to.length === 0 ? NONE : to.join(', ')],
+    ['cli.memo.field.read_by', read.length === 0 ? NONE : read.join(', ')],
   ];
 }
 
@@ -57,10 +71,11 @@ async function runMemoShow(input: CommandInput, cli: CliContext): Promise<ExitCo
       `${memoKindName(ctx, registry.ok ? registry.value : undefined, memo.kind)} (${memo.kind})`,
     ],
     ['cli.memo.field.status', `${ctx.t(MEMO_STATE_LABEL[memo.state])} (${memo.state})`],
-    ['cli.memo.field.from', memo.from],
+    ['cli.memo.field.from', memoFromOf(ctx, memo)],
     ['cli.memo.field.quest', memo.quest],
     ['cli.memo.field.run', String(memo.attempt)],
     ['cli.memo.field.to', memo.to.route],
+    ...deliveryFields(ctx, memo),
     // An amendment: the mage who decides it, when not the Chancellor (PS-22b).
     ...(memo.to.author === undefined ? [] : [['cli.memo.field.author', memo.to.author] satisfies Field]),
     // An objection: the verdict it contests, and why no second judge reads it (PS-22).
@@ -73,7 +88,8 @@ async function runMemoShow(input: CommandInput, cli: CliContext): Promise<ExitCo
     ...escalationFields(ctx, memo),
     ...outcomeFields(ctx, memo),
   ];
-  const hint = memo.state === 'open' ? ['', ctx.t('cli.memo.show.hint', { id: memo.id })] : [];
+  const hintKey = memo.to.quests === undefined ? 'cli.memo.show.hint' : 'cli.memo.show.hint_quests';
+  const hint = memo.state === 'open' ? ['', ctx.t(hintKey, { id: memo.id })] : [];
   [
     memo.id,
     ...renderTable(fields.map(([label, value]) => [ctx.t(label), value])),

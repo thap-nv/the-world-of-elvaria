@@ -137,19 +137,20 @@ describe('elvaria migrate', () => {
     ]);
   });
 
-  it('adds the objection and amendment kinds to the memos.json of a kingdom made before PS-22, its own kinds untouched', async () => {
+  it('adds the objection, amendment and advisory kinds to the memos.json of a kingdom made before PS-22, its own kinds untouched', async () => {
     const kingdom = await foundKingdom(dir.root);
     await editRegistry(kingdom, 'memos', (memos) =>
       memos
-        .filter((memo) => memo.id !== 'objection' && memo.id !== 'amendment')
+        .filter((memo) => memo.id === 'proposal')
         .map((memo) => ({ ...memo, description: 'Work outside the quest, my words.' })),
     );
     const io = testIo();
     expect(await run(io, 'migrate', '--kingdom', kingdom, '--locale', 'en')).toBe(0);
-    expect(io.printed.out.slice(1, 4)).toEqual([
-      'Added 2 registry entries this Elvaria ships and the kingdom lacked (entries you have are left as they are); the old files are in .backup/20261106T090000:',
+    expect(io.printed.out.slice(1, 5)).toEqual([
+      'Added 3 registry entries this Elvaria ships and the kingdom lacked (entries you have are left as they are); the old files are in .backup/20261106T090000:',
       '  registry/memos.json: entry objection',
       '  registry/memos.json: entry amendment',
+      '  registry/memos.json: entry advisory',
     ]);
     const memos = await registryOf(kingdom, 'memos');
     expect(memos.map(({ id, route, description }) => [id, route, description])).toEqual([
@@ -157,6 +158,8 @@ describe('elvaria migrate', () => {
       ['objection', 'judge', expect.stringContaining('A second judge reads it beside that verdict')],
       // PS-22b.
       ['amendment', 'author', expect.stringContaining('The quest waits as on a question')],
+      // PS-09c: the kind the Steward writes as a quest reaches its base branch.
+      ['advisory', 'quests', expect.stringContaining('The Steward writes one itself')],
     ]);
     expect((await openKingdom(kingdom).loadRegistry()).ok).toBe(true);
   });

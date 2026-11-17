@@ -14,6 +14,8 @@ export const PROMPT_BLOCK_IDS = [
   // PS-21: the code graph a class that searches code may ask, when its territory has one built.
   'graph',
   'quest',
+  // PS-09c: the advisories an assignee's quest has yet to read, after its quest (or after a resumed session's answer).
+  'advisories',
   'gazetteer',
   'scripture',
   'skills',

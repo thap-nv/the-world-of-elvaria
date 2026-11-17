@@ -22,27 +22,35 @@ export interface MemoDraft {
   readonly refs: readonly string[];
 }
 
-/** Whose letter held it: the quest, the run that ended, and its assignee. */
+/**
+ * Whose letter held it: the quest, the run that ended, and its assignee. (PS-09c) No `from`: the Steward wrote it, an
+ * advisory as the quest reached its base branch, its last run.
+ */
 export interface MemoSource {
   readonly quest: QuestId;
   readonly attempt: number;
-  readonly from: CharacterId;
+  readonly from?: CharacterId | undefined;
 }
 
 export type MemoRefusal =
   | { readonly code: 'unknown_kind'; readonly kind: string }
   | { readonly code: 'invalid'; readonly message: string };
 
-/** What a route reads beyond the registry: the verdict an objection contests (PS-22), who wrote the quest (PS-22b). */
+/**
+ * What a route reads beyond the registry: the verdict an objection contests (PS-22), who wrote the quest (PS-22b), the
+ * quests at work whose scope meets the memo's files (PS-09c, recipientsOf).
+ */
 export interface RouteFacts {
   readonly contest?: Contest | undefined;
   readonly authoring?: Authoring | undefined;
+  readonly recipients?: readonly QuestId[] | undefined;
 }
 
 /** The route of a registry entry, from the facts its route reads. */
 function routeOf(kind: string, route: MemoRoute['route'], facts: RouteFacts): MemoRoute {
   if (route === 'judge') return contestRoute(facts.contest ?? NO_CONTEST);
   if (route === 'author') return authorRoute(kind, facts.authoring ?? NO_AUTHORING);
+  if (route === 'quests') return { route, quests: [...(facts.recipients ?? [])] };
   return { route };
 }
 
@@ -87,20 +95,22 @@ export interface NewMemo {
   readonly contest?: Contest;
   /** Who wrote the quest a memo routed to its author is about (PS-22b); absent, the owner decides it. */
   readonly authoring?: Authoring;
+  /** The quests a memo routed to quests goes to (PS-09c, recipientsOf); absent, none. */
+  readonly recipients?: readonly QuestId[];
 }
 
 /** The open memo the Steward files, routed; refused when its kind is unknown or the contract refuses it. */
 export function memoOf(
-  { id, draft, source, at, contest, authoring }: NewMemo,
+  { id, draft, source, at, contest, authoring, recipients }: NewMemo,
   registry: Pick<Registry, 'memos'>,
 ): Result<Memo, MemoRefusal> {
-  const to = routeMemo(draft.kind, registry, { contest, authoring });
+  const to = routeMemo(draft.kind, registry, { contest, authoring, recipients });
   if (!to.ok) return to;
   const memo = {
     version: 1,
     id,
     kind: draft.kind,
-    from: source.from,
+    ...(source.from === undefined ? {} : { from: source.from }),
     quest: source.quest,
     attempt: source.attempt,
     to: to.value,

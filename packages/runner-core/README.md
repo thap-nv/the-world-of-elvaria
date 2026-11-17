@@ -80,7 +80,10 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   memo; a `-` or `none` line is nothing, as `fakeLetter` writes. The Steward calls it as a run ends; `RunResult` and
   the adapters do not change. A continuing assignee reads the memos its quest's letters filed
   (`Memory.memos`, `prompts/memos.md`, `memosBlock` of `src/prompt/memory.ts`): a block of its own, `memos` in
-  `PROMPT_BLOCK_IDS`, right after the continuation, so the load trace counts it apart. (PS-22) `prompts/returned.md`
+  `PROMPT_BLOCK_IDS`, right after the continuation, so the load trace counts it apart. (PS-09c) An assignee reads the
+  advisories its quest has yet to read in a block of its own (`advisories`, `prompts/advisories.md`, `advisoriesBlock`
+  of `src/prompt/advisories.ts`), right after the quest, or after the answer of a resumed session (`resumedPrompt`):
+  the newest `ADVISORY_BLOCK_MAX_MEMOS` within `ADVISORY_BLOCK_MAX_CHARS`, one line counting the rest. (PS-22) `prompts/returned.md`
   says a note held wrong is an objection memo (`- objection: … refs: …`), not a change to satisfy it nor a note passed
   over; a second judge reads the `objection` block (`prompts/objection.md`, `objectionBlock` of
   `src/prompt/objection.ts`, before the review: the contested verdict and the memo, the first judge never named), and

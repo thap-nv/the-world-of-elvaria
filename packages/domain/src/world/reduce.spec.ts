@@ -16,7 +16,7 @@ import {
 import { characterViewOf } from './character-view.ts';
 import { applyEvent, reduce } from './reduce.ts';
 import { worldStateOf } from './world-state.ts';
-import type { CharacterId } from '../core/ids.ts';
+import type { CharacterId, MemoId } from '../core/ids.ts';
 import type { Event } from '../schema/event/event.ts';
 
 const STATE = worldStateOf({
@@ -254,7 +254,7 @@ describe('applyEvent', () => {
     expect(applyEvent(routed, stray)).toBe(routed);
   });
 
-  it('opens a memo whose line names no quest, and routes no memo it does not hold', () => {
+  it('opens a memo whose line names no quest or no writer, and routes no memo it does not hold', () => {
     const filed = applyEvent(
       STATE,
       line('memo.filed', { memo: 'm_20261106_4k2pqz', kind: 'proposal', from: 'thorn' }),
@@ -262,6 +262,12 @@ describe('applyEvent', () => {
     expect(filed.memos).toMatchObject({ m_20261106_4k2pqz: { quest: null } });
     const stray = line('memo.routed', { memo: 'm_20261106_zzzzzz', route: 'chancellor' });
     expect(applyEvent(filed, stray)).toBe(filed);
+    // PS-09c: the Steward's advisory has no writer, and its reading changes nothing the world keeps.
+    const id = { memo: 'm_20261106_4k2pqz' as MemoId };
+    const advisory = applyEvent(STATE, line('memo.filed', { ...id, kind: 'advisory' }));
+    expect(advisory.memos[id.memo]).toEqual({ id: id.memo, kind: 'advisory', quest: null, route: null });
+    const routed = applyEvent(advisory, line('memo.routed', { ...id, route: 'quests' }));
+    expect(applyEvent(routed, line('memo.delivered', id))).toEqual(routed);
   });
 
   it('marks the state fake between the two lines of a sandbox replay', () => {

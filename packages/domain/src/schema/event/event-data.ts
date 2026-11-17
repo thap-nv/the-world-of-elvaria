@@ -24,6 +24,7 @@ import {
 } from './delivery-data.ts';
 import {
   MemoClosedDataSchema,
+  MemoDeliveredDataSchema,
   MemoEscalatedDataSchema,
   MemoFiledDataSchema,
   MemoRoutedDataSchema,
@@ -223,6 +224,7 @@ export const EVENT_DATA_SCHEMAS = {
   'memo.routed': MemoRoutedDataSchema,
   'memo.closed': MemoClosedDataSchema,
   'memo.escalated': MemoEscalatedDataSchema,
+  'memo.delivered': MemoDeliveredDataSchema,
   'schedule.ran': ScheduleRanDataSchema,
   'digest.written': DigestWrittenDataSchema,
   'upgrade.started': UpgradeStartedDataSchema,

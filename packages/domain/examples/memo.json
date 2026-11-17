@@ -108,5 +108,46 @@
     "refs": ["apps/cli/src/memo/list.ts"],
     "state": "open",
     "filed_at": "2026-11-13T10:30:00+07:00"
+  },
+  {
+    "version": 1,
+    "id": "m_20261112_adv1s0",
+    "kind": "advisory",
+    "quest": "q_20261112_7pzkfv",
+    "attempt": 3,
+    "to": {
+      "route": "quests",
+      "quests": ["q_20261112_b3m8ty", "q_20261113_3kd9wa"]
+    },
+    "body": "Quest q_20261112_7pzkfv (\"Quest list in the kingdom's time zone\") reached the base branch at 4f2a9c1, changing files your scope may hold: those this advisory names. Read the new version of one with `git show 4f2a9c1:<path>`. Your branch is merged with the base branch when it is delivered: where you change the same lines as this change, that merge stops on a conflict that a quest of its own must resolve.",
+    "refs": ["apps/cli/src/quest/list.ts"],
+    "state": "open",
+    "filed_at": "2026-11-12T16:02:10+07:00",
+    "deliveries": [
+      {
+        "quest": "q_20261112_b3m8ty",
+        "attempt": 2,
+        "at": "2026-11-12T16:30:00+07:00"
+      }
+    ]
+  },
+  {
+    "version": 1,
+    "id": "m_20261112_adv2s1",
+    "kind": "advisory",
+    "quest": "q_20261112_b3m8ty",
+    "attempt": 2,
+    "to": {
+      "route": "quests",
+      "quests": ["q_20261113_3kd9wa"]
+    },
+    "body": "Quest q_20261112_b3m8ty (\"Clean up the package READMEs\") reached the base branch at 9d0e7b2, changing files your scope may hold: those this advisory names. Read the new version of one with `git show 9d0e7b2:<path>`. Your branch is merged with the base branch when it is delivered: where you change the same lines as this change, that merge stops on a conflict that a quest of its own must resolve.",
+    "refs": ["packages/store/README.md"],
+    "state": "closed",
+    "filed_at": "2026-11-12T17:10:00+07:00",
+    "outcome": {
+      "decision": "lapsed",
+      "at": "2026-11-13T09:00:00+07:00"
+    }
   }
 ]
