@@ -185,6 +185,12 @@ Mỗi nhịp 5 giây Nhiếp chính áp lệnh trong `inbox/`, giao quest, dựn
 4. Làm việc cần làm (sao lưu, `upgrade`, sửa cấu hình theo §12).
 5. `elvaria doctor` lại, rồi `elvaria run`.
 
+**Trước một lần chạy có kiểm soát** (thử bản build mới, đo một quest, chạy lại sau nhiều giờ dừng): khi lên, Nhiếp chính chạy bù ngay mọi việc trong `kingdom.schedule` đã tới giờ mà hôm nay chưa chạy (§6: tuần tra `patrol.at`, mặc định 06:30; phân loại thư `triage.at`, 07:30; bản tấu `digest.at`, 08:00). Phân loại thư mở một phiên Tể tướng (tốn mana) cho các thư đang chờ, và quyết định nằm trong `kingdom.delegation` được áp luôn: quest mới được mở và giao ngay, chen vào việc bạn định chạy. Lần chạy thật (J) của PS-08d (2026-11-17), Nhiếp chính lên lúc 17:27, phân loại của 07:30 chạy bù lúc 17:36 và theo ủy quyền mở ba quest code. Trước `elvaria run`:
+
+1. Đọc `schedule` trong `kingdom.json`: việc nào bật, giờ nào; hôm nay việc nào đã chạy thì có dòng `schedule.ran` mang `job` của nó trong `events/<ngày>.jsonl`.
+2. `elvaria memo list`: các thư đang chờ, đầu vào của phân loại thư (không có thư thì phân loại không gọi model).
+3. Không muốn việc theo lịch chen vào: quyết trước các thư (`elvaria memo decide`), hay tắt tạm việc đó trong `kingdom.json` (`"triage": {"enabled": false}`, sửa theo §12) rồi bật lại sau lần chạy. `elvaria run` không có cờ hoãn lịch.
+
 **Chạy lại sau khi dừng hay sập** (P1-50 gặp năm lần, không mất quest hay lượt thử nào):
 
 1. `docker info` trả lời, nếu lãnh thổ cần Docker.
@@ -254,12 +260,12 @@ Với một đội, chỉ merge nhánh của **quest ghép**; hợp đồng và 
 
 **Hàng đợi merge** (PS-09): ở lãnh thổ giao `pr` hay `pr_merge`, mỗi lãnh thổ giao một quest một lúc, quest sửa ít file nóng và ít file trước. Trước khi push, Nhiếp chính ghép `main` vào nhánh quest, gỡ conflict của `shared_paths` theo luật, chạy lại `commands.setup`, `commands.generate` và mọi check; nhánh đã chứa `main` thì không làm gì. Quest có dấu dưới `pr_merge` giữ lượt tới khi PR được merge, nên quest sau luôn được ghép trên nó. PR đang mở mà `main` đi làm nó hết ghép sạch thì được cập nhật và push lại (tối đa 3 lần mỗi lần giao). Hỏng thì bản tấu có mục `delivery.failed` bước `update`: `conflict` (file ngoài luật, đất giữ nguyên), `checks_red` (commit merge nằm trên nhánh, chưa push; log ở `.runs/<quest>-delivery/checks/`), `generate_failed` (`.runs/<quest>-delivery/generate.log`) hay `update_failed`; gỡ trên nhánh rồi `elvaria quest deliver <quest>`. Việc giao hàng chiếm một chỗ của `dispatch.max_background`.
 
-Bảng tra các cặp bước (`stage`) và lý do (`reason`) của `delivery.failed` khi việc giao hàng dừng:
+Bảng tra các cặp bước (`stage`) và lý do (`reason`) của `delivery.failed` khi việc giao hàng dừng. Bạn dừng Nhiếp chính giữa lúc giao hàng thì không có dòng nào: lần chạy sau giao lại (lần ghép nhánh gốc đã xong thì nó chỉ chạy phần sau lần ghép).
 
 | Bước (`stage`) | Lý do (`reason`) | Nghĩa là | Làm gì |
 |---|---|---|---|
 | `update` | `conflict` | Xung đột khi ghép nhánh gốc (`main`) ở các file không giải quyết được bằng luật `shared_paths`, hoặc nhánh gốc đã vượt nhánh quest quá 3 lần (`UPDATE_ROUNDS_MAX`) trong hàng đợi merge | Đất giữ nguyên (lần ghép dở bị hủy). Vào worktree của quest gỡ conflict với nhánh gốc, commit, rồi `elvaria quest deliver <quest>` |
-| `update` | `generate_failed` | Một lệnh của `commands.generate` thất bại (mã thoát khác 0), quá 10 phút bị ngắt, hoặc bị dừng sau khi ghép nhánh gốc | Đất giữ commit merge; thay đổi dở của generator có thể còn lại trên cây làm việc (chưa hoàn nguyên); log ở `.runs/<quest>-delivery/generate.log`. Đọc log, dọn thay đổi dở nếu có, sửa code hoặc lệnh generator trong lãnh thổ, rồi `elvaria quest deliver <quest>` |
+| `update` | `generate_failed` | Một lệnh của `commands.generate` thất bại (mã thoát khác 0) hoặc quá 10 phút bị ngắt | Đất giữ commit merge; thay đổi dở của generator có thể còn lại trên cây làm việc (chưa hoàn nguyên); log ở `.runs/<quest>-delivery/generate.log`. Đọc log, dọn thay đổi dở nếu có, sửa code hoặc lệnh generator trong lãnh thổ, rồi `elvaria quest deliver <quest>` |
 | `update` | `checks_red` | Có check của lãnh thổ bị đỏ (thất bại hoặc quá giờ) trên commit merge mới (không phải lỗi môi trường) | Commit merge nằm trên nhánh quest ở local, chưa push; log từng check ở `.runs/<quest>-delivery/checks/<tên-check>.log`. Đọc log, sửa lỗi trên nhánh quest rồi `elvaria quest deliver <quest>` |
 | `update` | `update_failed` | Git từ chối ghép trước merge (lỗi điểm rẽ, git cũ hơn 2.38), hoặc lỗi sau merge (`commands.setup` lỗi, hook pre-commit từ chối commit của generator, check của lãnh thổ không chạy được) | Phân biệt theo thời điểm lỗi: lỗi trước merge (git từ chối ghép) thì lần ghép bị hủy, đất giữ nguyên; lỗi sau merge (`commands.setup`, hook commit generator, check không chạy được) thì đất giữ commit merge trên nhánh quest (chưa push). Đọc `detail` trong bản tấu, sửa nguyên nhân (setup, hook, git) rồi `elvaria quest deliver <quest>` |
 | `scan` | `push_refused` | Git ở worktree không đọc được số commit, HEAD hoặc diff của nhánh quest đối chiếu với nhánh gốc (`main`) | Đất giữ nguyên (chưa push). Kiểm tra trạng thái git trong worktree của quest, gỡ lỗi repo rồi `elvaria quest deliver <quest>` |
