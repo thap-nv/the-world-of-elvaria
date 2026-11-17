@@ -63,6 +63,7 @@ terms_acknowledged_at, env, pools?, timeout_ms?})`. `hook` is `hookCommand()` of
   started says so, never "not signed in", and so does `probe()` of `/usage` (`agy -p /usage: <problem>`).
 - Turns the policy's `graph_commands` (PS-21) into `command(<command>)` prefixes in the settings, as the search
   commands; the hook refuses what a prefix lets through (`--graph`, a line that does more).
+- Declares `vision` (vision spike 2026-11-17) and opens each screen of a judge's review by one rule, `read_file(E:/…/screens/home.png)`, a prefix the hook narrows to the exact file (PS-11b); the fake CLI plays the conformance suite's `image` through the hook and those rules (`fixtures/fake-agy-image.mjs`).
 
 ## Does not
 

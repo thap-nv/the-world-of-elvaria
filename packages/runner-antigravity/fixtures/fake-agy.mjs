@@ -14,6 +14,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { declaredHooks, hookList } from './fake-agy-hooks.mjs';
+import { readImage } from './fake-agy-image.mjs';
 
 const FIXTURES = import.meta.dirname;
 const argv = process.argv.slice(2);
@@ -255,6 +256,11 @@ const SCENARIOS = {
   // A judge's verdict: its JSON the last object of the answer, where structuredOf reads it (fix/codex-output-schema).
   structured: () => {
     respond(JSON.stringify(core.FAKE_STRUCTURED_ANSWER));
+    return finish();
+  },
+  // A judge reading a screen of its review outside the plot (PS-11b): the hook, then its read_file rules.
+  image: () => {
+    respond(JSON.stringify(readImage({ core, settings, runHook, base, stepIdx: run.step })));
     return finish();
   },
   crash: () => {

@@ -101,9 +101,18 @@ export function agySettingsOf(policy: ToolPolicy, letter?: string): AgySettings 
     letter === undefined
       ? []
       : [`read_file(${letter.replaceAll('\\', '/')})`, `write_file(${letter.replaceAll('\\', '/')})`];
+  // The screens a judge reads, one rule a file (PS-11b, owner's (Q2)); the rule is a prefix (`home.png` also opens
+  // `home.png.bak`), so the hook keeps to the exact files (policy `images`).
+  const images = (policy.images ?? []).map((image) => `read_file(${image.replaceAll('\\', '/')})`);
   return {
     permissions: {
-      allow: unique([...policy.allow.flatMap((rule) => allowOf(rule, tools)), ...search, ...graph, ...own]),
+      allow: unique([
+        ...policy.allow.flatMap((rule) => allowOf(rule, tools)),
+        ...search,
+        ...graph,
+        ...own,
+        ...images,
+      ]),
       deny: unique([...policy.deny.flatMap(denyOf), ...GENERATED]),
       ask: [],
     },
