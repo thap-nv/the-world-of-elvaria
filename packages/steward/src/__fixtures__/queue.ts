@@ -7,6 +7,7 @@ import path from 'node:path';
 import { forgeBench } from './forge-bench.ts';
 import { git } from './git-plots.ts';
 import { questPayload, tickUntil } from './kingdom.ts';
+import type { Leaves } from './deliver.ts';
 import type { ForgeBench } from './forge-bench.ts';
 import type { Steward } from '../types.ts';
 
@@ -54,18 +55,21 @@ export const sourceWithIndex = (name: string) => ({
 export interface QueueBenchOptions {
   readonly delivery?: Readonly<Record<string, unknown>>;
   readonly territory?: Readonly<Record<string, unknown>>;
+  /** Plots release the worktree at archive, as `elvaria run` does. */
+  readonly release?: boolean;
 }
 
-/** The bench, its assignees leaving `leaves[title]`, its Steward started. */
+/** The bench, its assignees leaving `leaves[title]` (or what `leaves` gives), its Steward started. */
 export async function queueBench(
-  leaves: Readonly<Record<string, Readonly<Record<string, string>>>>,
+  leaves: Readonly<Record<string, Readonly<Record<string, string>>>> | Leaves,
   options: QueueBenchOptions = {},
 ): Promise<{ bench: ForgeBench; steward: Steward }> {
   const bench = await forgeBench({
     delivery: options.delivery ?? { mode: 'pr_merge' },
     files: QUEUE_FILES,
     territory: { ...QUEUE_TERRITORY, ...options.territory },
-    leaves: (req) => leaves[req.quest?.title ?? ''] ?? {},
+    leaves: typeof leaves === 'function' ? leaves : (req) => leaves[req.quest?.title ?? ''] ?? {},
+    ...(options.release === undefined ? {} : { release: options.release }),
   });
   return { bench, steward: await bench.start() };
 }

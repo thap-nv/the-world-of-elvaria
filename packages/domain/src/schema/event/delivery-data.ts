@@ -21,7 +21,7 @@ export const DELIVERY_STAGES = ['update', 'scan', 'push', 'open', 'checks', 'mer
 export type DeliveryStage = (typeof DELIVERY_STAGES)[number];
 
 /**
- * Why it stopped. PS-09b turns `conflict` (and `checks_red`) at `update` into a quest of its own. At `update` (PS-09):
+ * Why it stopped. At `update`, `conflict` and `checks_red` open a merge quest of the queue (PS-09b, `merge_quest`). At `update` (PS-09):
  * `generate_failed`, a generator of commands.generate failed; `update_failed`, git, a hook or commands.setup refused
  * the update (the merge, a commit of the Steward, git older than its merge-tree).
  */
@@ -117,6 +117,11 @@ export const DeliveryFailedDataSchema = z
     detail: NonEmptyStringSchema.max(DELIVERY_DETAIL_MAX_LENGTH)
       .optional()
       .meta(describe("The forge's or git's message, or the end of the generators' log, redacted.")),
+    merge_quest: QuestIdSchema.optional().meta(
+      describe(
+        'With conflict or checks_red at update (PS-09b): the merge quest the Steward opened for a knight, or found open for this quest; the quest waits for it and goes into the base branch with it.',
+      ),
+    ),
   })
   .meta(
     describe(

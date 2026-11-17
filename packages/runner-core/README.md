@@ -214,7 +214,8 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
 --write-tree`, git 2.38, `plot/dry-merge.ts`) resolves each conflicted file by the territory's `shared_paths`
   (`plot/shared-merge.ts`, pure: `regenerate` keeps the plot's side, `union` joins three-way line by line, a JSON
   file must parse, any other file is a conflict), and only when all are resolved does the real merge run with the
-  territory's hooks; the record's base moves and `update_pending` stays until `settle` (`plot/base-update.ts`).
+  territory's hooks; the record's base moves and `update_pending` stays until `settle` (`plot/base-update.ts`). A
+  conflict names the base branch's commit it met (`BaseUpdate.base`): the Steward's merge quest is made from it.
   `generate` runs `commands.generate` with the quest's secrets, gives back what it changed outside `shared_paths`
   and commits the rest (`plot/generate.ts`); `mergesClean` says whether an open branch still merges cleanly into
   the tips a look saw. A party's merge quest gets the same rules for its parts and base branch

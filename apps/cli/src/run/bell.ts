@@ -82,6 +82,9 @@ function deliveryLine(
   const quest = { quest: notice.quest.id, title: notice.quest.title };
   if (notice.kind === 'delivery_failed') {
     const stage = t(`cli.forge.stage.${notice.stage}`);
+    // PS-09b: a merge quest resolves it; nothing for the owner until its seal.
+    if (notice.merge_quest !== undefined)
+      return t('cli.run.notice.delivery_merge_quest', { ...quest, stage, merge: notice.merge_quest });
     return t('cli.run.notice.delivery_failed', {
       ...quest,
       stage,

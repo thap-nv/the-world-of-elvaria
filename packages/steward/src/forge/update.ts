@@ -5,9 +5,10 @@
 // the generators (their commit apart), one `plot.merged` line naming what the rules resolved and what a generator was
 // not to change, and every check of the territory on the new head, as a merge quest runs them, logged under
 // `.runs/<quest>-delivery/checks/`, their `check.*` lines marked `delivery` for the metrics. Green, or set aside for
-// their environment: the scan and the push go on with the new head. Anything else stops the delivery at `update`, for
-// the owner's `deliver` (PS-09b opens a merge quest instead): a conflict leaves the plot as it was, red checks leave
-// the merge commit on the branch, not pushed, for whoever resolves it. A Steward that stops records nothing; the
+// their environment: the scan and the push go on with the new head. Anything else stops the delivery at `update`: a
+// conflict leaves the plot as it was, red checks leave the merge commit on the branch, not pushed, for whoever resolves
+// it. (PS-09b) Those two open the merge queue's merge quest (queue-merge.ts), which a knight resolves on this branch,
+// and `delivery.failed` names it; any other stop is the owner's `deliver`. A Steward that stops records nothing; the
 // next one finds the merge made (the plot's record says it is pending) and runs only what follows it.
 import { environmentFailureOf } from '@elvaria/domain';
 import { createRedactor } from '@elvaria/eventlog';
@@ -18,12 +19,16 @@ import { plotOptionsOf } from '../party/plot.ts';
 import { STEWARD } from '../record.ts';
 import { questSecretsOf } from '../sessions/secrets.ts';
 import { detailOf, messageOf, stopped } from './delivery.ts';
+import { openQueueMerge, redChecksOf } from './queue-merge.ts';
 import type { Context } from '../context.ts';
 import type { Delivery } from './delivery.ts';
 import type { Failure } from './outcome.ts';
+import type { Resolvable } from './queue-merge.ts';
 
 type Secrets = Readonly<Record<string, string>>;
 type Merged = Extract<BaseUpdate, { state: 'merged' }>;
+/** A stop of the update; with `resolvable`, one the merge queue's merge quest resolves (PS-09b). */
+type Stop = Failure & { readonly resolvable?: Resolvable };
 
 /** Portable, relative to the kingdom: the delivery's run folder, whose `checks/` holds the queue's check logs. */
 export const deliveryRunOf = (quest: QuestId): string => `.runs/${quest}-delivery`;
@@ -60,7 +65,12 @@ function endOf(runs: readonly CheckRun[] | undefined, signal: AbortSignal): Reco
 }
 
 /** Every check of the territory on the updated branch; red ones stop the delivery, set-aside ones do not. */
-async function checkUpdate(ctx: Context, d: Delivery, secrets: Secrets): Promise<Failure | undefined> {
+async function checkUpdate(
+  ctx: Context,
+  d: Delivery,
+  merged: Merged,
+  secrets: Secrets,
+): Promise<Stop | undefined> {
   const request = { plot: d.quest.plot, territory: d.territory, run_dir: deliveryRunOf(d.quest.id) };
   await note(ctx, d, { type: 'check.start', data: { delivery: true } });
   let runs: readonly CheckRun[] | undefined;
@@ -85,7 +95,8 @@ async function checkUpdate(ctx: Context, d: Delivery, secrets: Secrets): Promise
     name: id,
     conclusion: timed_out ? 'timed_out' : 'failure',
   }));
-  return failureOf(d, 'checks_red', { checks });
+  const stop = { reason: 'checks_red', checks: await redChecksOf(ctx, red) } as const;
+  return { ...failureOf(d, 'checks_red', { checks }), resolvable: { stop, base: merged.base } };
 }
 
 /** The generators after the merge, then the `plot.merged` line; a failure when one failed or its commit was refused. */
@@ -113,7 +124,7 @@ async function generateAfter(ctx: Context, d: Delivery, merged: Merged, secrets:
 }
 
 /** After the merge: setup again, the generators, every check; the update settled once they passed. */
-async function afterMerge(ctx: Context, d: Delivery, merged: Merged): Promise<Failure | undefined> {
+async function afterMerge(ctx: Context, d: Delivery, merged: Merged): Promise<Stop | undefined> {
   let secrets: Secrets;
   try {
     secrets = await questSecretsOf(ctx, d.quest, d.territory);
@@ -127,19 +138,39 @@ async function afterMerge(ctx: Context, d: Delivery, merged: Merged): Promise<Fa
   if (stopped(d)) return undefined;
   const generated = await generateAfter(ctx, d, merged, secrets);
   if (generated !== undefined || stopped(d)) return generated;
-  const checked = await checkUpdate(ctx, d, secrets);
+  const checked = await checkUpdate(ctx, d, merged, secrets);
   if (checked !== undefined || stopped(d)) return checked;
   await ctx.deps.plots.settle?.(d.quest.plot);
   return undefined;
 }
 
-/** The update before the scan; undefined when the delivery goes on (or the Steward stopped, which records nothing). */
-export async function updateBranch(ctx: Context, d: Delivery): Promise<Failure | undefined> {
+/** The update itself: the merge, then what follows it; undefined when the delivery goes on or the Steward stopped. */
+async function updateOf(ctx: Context, d: Delivery): Promise<Stop | undefined> {
   const { plots } = ctx.deps;
   if (plots.update === undefined) return undefined;
   const update = await plots.update(d.quest.plot, d.territory);
   if (stopped(d) || update.state === 'current') return undefined;
-  if (update.state === 'conflict') return failureOf(d, 'conflict', { paths: [...update.paths] });
+  if (update.state === 'conflict') {
+    const stop = { reason: 'conflict', paths: [...update.paths] } as const;
+    return {
+      ...failureOf(d, 'conflict', { paths: [...update.paths] }),
+      resolvable: { stop, base: update.base },
+    };
+  }
   if (update.state === 'refused') return failureOf(d, 'update_failed', detailOf(update.detail));
   return afterMerge(ctx, d, update);
+}
+
+/**
+ * The update before the scan; undefined when the delivery goes on (or the Steward stopped, which records nothing). A
+ * stop the merge queue's merge quest resolves opens it (PS-09b) and the failure names it; PS-09d tries the base branch
+ * here first, so a base branch red on its own opens none.
+ */
+export async function updateBranch(ctx: Context, d: Delivery): Promise<Failure | undefined> {
+  const outcome = await updateOf(ctx, d);
+  if (outcome === undefined || stopped(d)) return undefined;
+  const { resolvable, ...failure } = outcome;
+  if (resolvable === undefined) return failure;
+  const merge = await openQueueMerge(ctx, d, resolvable);
+  return merge === undefined ? failure : { ...failure, merge_quest: merge };
 }

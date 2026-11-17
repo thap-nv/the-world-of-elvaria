@@ -2573,6 +2573,11 @@
                 "type": "string",
                 "minLength": 1,
                 "maxLength": 2000
+              },
+              "merge_quest": {
+                "description": "With conflict or checks_red at update (PS-09b): the merge quest the Steward opened for a knight, or found open for this quest; the quest waits for it and goes into the base branch with it.",
+                "type": "string",
+                "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
               }
             }
           }

@@ -179,6 +179,22 @@ describe('the console bell on a delivery to the forge (PS-08c)', () => {
       'elvaria quest deliver q_20261116_aaaaa1',
     );
   });
+
+  it('names the merge quest that resolves the stop, for the seal (PS-09b)', () => {
+    const merge = QuestIdSchema.parse('q_20261116_m3m3m3');
+    const notice = {
+      kind: 'delivery_failed',
+      quest,
+      stage: 'update',
+      reason: 'conflict',
+      merge_quest: merge,
+    } as const;
+    expect(lineOf(en, notice)).toBe(
+      'Quest q_20261116_aaaaa1 «Book a room»: the delivery stopped at the update of the branch (the base branch ' +
+        'merged in, the generators, every check); the merge quest q_20261116_m3m3m3 resolves it, for your seal.',
+    );
+    expect(lineOf(vi, notice)).not.toContain('quest deliver');
+  });
 });
 
 describe('the console bell on a quest that waits for a judge who reads images (PS-11)', () => {

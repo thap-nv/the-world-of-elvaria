@@ -1,6 +1,11 @@
 // The merge queue's update of one branch (PS-09) on the forge bench: nothing when main did not move (no commit, no
-// check run again), red checks after the merge stop the delivery before its push, an open pull request that main
-// overtook is updated and pushed again once, and a Steward stopped in the middle of a generator makes no second merge.
+// check run again), red checks after the merge stop the delivery before its push and open the merge queue's merge
+// quest with the end of their log (PS-09b), an open pull request that main overtook is updated and pushed again once,
+// and a Steward stopped in the middle of a generator makes no second merge.
+import { mkdir, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+
+import { isQueueMerge } from '@elvaria/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { git, gitPlots } from './__fixtures__/git-plots.ts';
@@ -47,14 +52,20 @@ describe("the merge queue's update of a branch (PS-09)", () => {
     expect((await bench.lines('check.start')).filter(({ data }) => data.delivery === true)).toEqual([]);
   });
 
-  it('pushes nothing when a check is red on the merged branch', async () => {
+  it('pushes nothing when a check is red on the merged branch, and opens a merge quest with its log', async () => {
     const leaves = { Alpha: sourceWithIndex('alpha.ts'), Beta: sourceWithIndex('beta.ts') };
     const { bench, steward: first } = await queueBench(leaves);
     current = bench;
     await first.stop();
     const plots = gitPlots(bench.kingdom.root);
-    const check: Plots['check'] = (request) =>
-      Promise.resolve(request.run_dir.endsWith('-delivery') ? [RED] : []);
+    // The queue's checks write their log in the kingdom, as runner-core's do; a session's checks pass.
+    const check: Plots['check'] = async (request) => {
+      if (!request.run_dir.endsWith('-delivery')) return [];
+      const log = `${request.run_dir}/checks/unit.log`;
+      await mkdir(path.join(bench.kingdom.root, request.run_dir, 'checks'), { recursive: true });
+      await writeFile(path.join(bench.kingdom.root, log), '> vitest\nFAIL src/beta.spec.ts > adds a room\n');
+      return [{ ...RED, log_path: log }];
+    };
     const steward = await bench.start({ plots: { ...plots, check } });
     await sealedTogether(bench, steward, ['Alpha', 'Beta']);
     await tickUntil(
@@ -72,6 +83,12 @@ describe("the merge queue's update of a branch (PS-09)", () => {
       reason: 'checks_red',
       checks: [{ name: 'unit', conclusion: 'failure' }],
     });
+    const [merge, ...more] = (await bench.kingdom.quests()).filter(isQueueMerge);
+    expect(more).toEqual([]);
+    expect(failed?.data.merge_quest).toBe(merge?.id);
+    expect(merge?.description).toContain(
+      '- unit, the end of its log:\n```\n> vitest\nFAIL src/beta.spec.ts > adds a room\n```',
+    );
     expect(bench.remoteTip(`quest/${beta.id}`)).toBe('');
     // The merge stays on the branch, not pushed, for whoever resolves it.
     expect(git(beta.plot.path ?? '', 'log', '-2', '--format=%s')).toContain(

@@ -96,6 +96,14 @@ describe('deliveryLines', () => {
     ]);
   });
 
+  it('names the merge quest the stop waits for, instead of the command (PS-09b)', () => {
+    const merge = 'q_20261116_m3m3m3';
+    const stop = { stage: 'update', reason: 'conflict', paths: ['src/a.ts'], merge_quest: merge };
+    expect(deliveryLines(en, QUEST, [failed(stop)]).at(-1)).toBe(
+      `It waits for the merge quest ${merge}, which goes into the base branch with it. Should that quest be cancelled: elvaria quest deliver ${QUEST_ID}`,
+    );
+  });
+
   it("forgets the outcome once the owner's deliver command is applied", () => {
     const again = line(
       'command.applied',
