@@ -3,7 +3,7 @@
 // goes on in a fresh session of the same run, or to the infirmary after two cuts in a row without progress. The other
 // trips (`commit`, `secrets`, `forbidden_paths`, `no_session`) never go on by themselves, whatever the branch holds.
 import { ok } from '@elvaria/domain';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   CLEAN,
@@ -137,7 +137,11 @@ describe('an assignee cut at the hard ceiling', () => {
     expect(cut.attempt_log).toMatchObject([{ n: 1, outcome: 'timeout', progress: true }]);
     expect(kingdom.notices).toEqual([]);
     expect((await kingdom.character(started.assignee ?? '')).status).toBe('idle');
+    // A revival must not read a failed verdict or refused work from this run.
+    const verdictReads = vi.spyOn(kingdom.store.verdicts, 'read');
     await steward.tick();
+    expect(verdictReads).not.toHaveBeenCalled();
+    verdictReads.mockRestore();
     const again = await kingdom.quest('Cut');
     expect(again).toMatchObject({ status: 'working', attempts: 1, assignee: started.assignee });
     expect(again.attempt_log).toMatchObject([{ n: 1 }, { n: 1 }]);

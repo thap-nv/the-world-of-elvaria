@@ -10,6 +10,7 @@
 // trials included (background-room.ts, P1-54).
 import { breakersOf, measureOf } from '../breaker/breakers.ts';
 import { calibrationOf } from '../breaker/calibration.ts';
+import { endedInCut } from '../breaker/continue.ts';
 import { machineMergeDue } from '../party/machine-merge.ts';
 import { questFinished } from '../quest/finished.ts';
 import { isHeld } from '../quest/hold.ts';
@@ -92,8 +93,7 @@ export interface TickPlan {
    * open, takes now (`reassignsOf`, P1-22): the Steward moves them (`paused_mana.reassign`) and starts them.
    */
   readonly reassigns: readonly Reassign[];
-  /** Claimed quests whose dependencies are done and whose assignee is free: the owner's reassigns, or a claim
-   * the Steward made before it stopped. */
+  /** Claimed quests ready to start, and returned ceiling cuts reviving the same run (ADR 0030). */
   readonly starts: readonly QuestId[];
   /**
    * Step 4, first (P1-25): submitted session-tier quests whose checks the Steward starts now, outside the tick; their
@@ -197,6 +197,9 @@ const deliveriesOf = (snapshot: KingdomSnapshot, done: readonly Quest[], forge: 
   forge_archives: forgeArchives(snapshot, done),
 });
 
+const cutReturns = (quests: readonly Quest[]): Quest[] =>
+  quests.filter((quest) => endedInCut(quest.attempt_log));
+
 /** The plan of this tick; `now` dates the claims for the round-robin over territories. */
 export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
   const byId = new Map(snapshot.characters.map((character) => [character.id, character]));
@@ -221,7 +224,7 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
   const hours = snapshot.kingdom.mana?.reassign_after_hours ?? null;
   const asleep = paused.filter(({ id }) => !wakes.includes(id));
   const reassigns = reassignsOf(step.roster, snapshot, asleep, hours, now);
-  const starts = inStatus('claimed')
+  const starts = [...inStatus('claimed'), ...cutReturns(inStatus('returned'))]
     .filter((quest) => ready(quest) && holderGoes(step, quest))
     .map(({ id }) => id);
   const judged = planReviews(
@@ -246,7 +249,7 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
     unjudgeable: judged.unjudgeable,
     judge_waits: judged.judge_waits,
     redispatches: inStatus('returned')
-      .filter((quest) => holderGoes(step, quest))
+      .filter((quest) => !endedInCut(quest.attempt_log) && holderGoes(step, quest))
       .map(({ id }) => id),
     claims: claims(step, openSessions, now),
     scripts: machine.scripts,
