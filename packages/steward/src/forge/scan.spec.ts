@@ -58,6 +58,7 @@ describe('scanDiff', () => {
     expect(scanDiff(diff, [TREASURY_VALUE])).toEqual({
       secrets: ['config/npm.ts', 'src/key.ts'],
       warnings: [],
+      commits: [],
     });
   });
 
@@ -70,6 +71,7 @@ describe('scanDiff', () => {
     expect(scanDiff(diff, [])).toEqual({
       secrets: ['src/both.ts', 'src/later.ts'],
       warnings: ['src/auth.spec.ts'],
+      commits: [],
     });
   });
 
@@ -78,9 +80,13 @@ describe('scanDiff', () => {
       fileDiff('src/old.ts', [`-const key = '${ANTHROPIC_KEY}';`, `-${ASSIGNMENT}`], `a/${ANTHROPIC_KEY}.ts`),
       fileDiff(`${ANTHROPIC_KEY}.ts`, ['+export const renamed = 1;']),
     );
-    expect(scanDiff(removed, [])).toEqual({ secrets: [], warnings: [] });
+    expect(scanDiff(removed, [])).toEqual({ secrets: [], warnings: [], commits: [] });
     const plusPlus = diffOf(fileDiff('notes.md', [`+++ ${ASSIGNMENT}`, `+++ b/${TREASURY_VALUE}`]));
-    expect(scanDiff(plusPlus, [TREASURY_VALUE])).toEqual({ secrets: ['notes.md'], warnings: [] });
+    expect(scanDiff(plusPlus, [TREASURY_VALUE])).toEqual({
+      secrets: ['notes.md'],
+      warnings: [],
+      commits: [],
+    });
   });
 
   it('gives a deletion no file, so nothing under it is put on the file before', () => {
@@ -93,7 +99,7 @@ describe('scanDiff', () => {
         '/dev/null',
       ),
     );
-    expect(scanDiff(diff, [])).toEqual({ secrets: [], warnings: [] });
+    expect(scanDiff(diff, [])).toEqual({ secrets: [], warnings: [], commits: [] });
   });
 
   it("names a path with a space without git's closing tab, and a quoted path by its own name", () => {
@@ -107,11 +113,66 @@ describe('scanDiff', () => {
     expect(scanDiff(diffOf(spaced, quoted), [])).toEqual({
       secrets: ['src/say "hi"\tnow\\\u0001.ts'],
       warnings: ['src/my file.ts'],
+      commits: [],
     });
   });
 
   it('ignores an empty treasury value, which every line holds', () => {
     const diff = diffOf(fileDiff('src/clean.ts', ['+export const clean = 1;']));
-    expect(scanDiff(diff, [''])).toEqual({ secrets: [], warnings: [] });
+    expect(scanDiff(diff, [''])).toEqual({ secrets: [], warnings: [], commits: [] });
+  });
+});
+
+const NEWER = 'a2'.repeat(20);
+const OLDER = '1'.repeat(40);
+const SHA_256 = 'b3'.repeat(32);
+
+/** `git log -p -U0 --format='commit %H'` for one commit: its line, the blank line git puts after it, its diffs. */
+const commitOf = (sha: string, ...files: readonly (readonly string[])[]) => [
+  `commit ${sha}`,
+  '',
+  ...files.flat(),
+];
+
+describe('scanDiff on git log, commit by commit (fix/push-scan)', () => {
+  it('names each commit that adds a secret, also one a later commit takes away', () => {
+    const log = diffOf(
+      commitOf(
+        NEWER,
+        fileDiff('src/config.ts', [`-const key = '${ANTHROPIC_KEY}';`, '+const key = process.env.KEY;']),
+        fileDiff('src/auth.spec.ts', [`+${ASSIGNMENT}`]),
+      ),
+      commitOf(
+        OLDER,
+        fileDiff('src/config.ts', [`+const key = '${ANTHROPIC_KEY}';`]),
+        fileDiff('config/npm.ts', [`+export const npm = '${TREASURY_VALUE}';`]),
+      ),
+    );
+    expect(scanDiff(log, [TREASURY_VALUE])).toEqual({
+      secrets: ['config/npm.ts', 'src/config.ts'],
+      warnings: ['src/auth.spec.ts'],
+      commits: [{ sha: OLDER, files: ['config/npm.ts', 'src/config.ts'] }],
+    });
+  });
+
+  it('starts each commit afresh: a line before its first header is put on no file of the commit before', () => {
+    const log = diffOf(commitOf(NEWER, fileDiff('src/a.ts', ['+export const a = 1;'])), [
+      `commit ${OLDER}`,
+      `+const key = '${ANTHROPIC_KEY}';`,
+    ]);
+    expect(scanDiff(log, [])).toEqual({ secrets: [], warnings: [], commits: [] });
+  });
+
+  it('reads a whole diff then a log: a secret before the first commit line counts, naming no commit', () => {
+    const whole = diffOf(
+      fileDiff('src/config.ts', [`+const key = '${ANTHROPIC_KEY}';`]),
+      fileDiff('src/octopus.ts', [`+const key = '${ANTHROPIC_KEY}';`]),
+    );
+    const log = diffOf(commitOf(SHA_256, fileDiff('src/config.ts', [`+const key = '${ANTHROPIC_KEY}';`])));
+    expect(scanDiff(`${whole}\n${log}`, [])).toEqual({
+      secrets: ['src/config.ts', 'src/octopus.ts'],
+      warnings: [],
+      commits: [{ sha: SHA_256, files: ['src/config.ts'] }],
+    });
   });
 });

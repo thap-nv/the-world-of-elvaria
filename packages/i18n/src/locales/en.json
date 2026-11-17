@@ -801,7 +801,7 @@
     "cli.forge.stage.checks": "the pull request's checks",
     "cli.forge.stage.merge": "the merge",
     "cli.forge.stage.cleanup": "the branch's removal",
-    "cli.forge.reason.secret": "a line the branch adds holds a secret (a treasury value or a key's shape); take it off the branch (a new commit, or the branch's history rewritten), then deliver again.",
+    "cli.forge.reason.secret": "a line the branch or one of its commits adds holds a secret (a treasury value or a key's shape); a push sends every commit, so a later commit that removes it is not enough: take it out of the branch's history (git reset --soft to the base branch, then commit again, for one), change the secret if it may have leaked, then deliver again.",
     "cli.forge.reason.push_refused": "git or the territory's pre-push hook refused the push; read the push log (.runs/<quest>-delivery/push.log), fix it, then deliver again.",
     "cli.forge.reason.no_credential": "git has no credential for the forge; sign in (git credential, Git Credential Manager), then deliver again.",
     "cli.forge.reason.forge_auth": "the forge refused the credential (expired, revoked, no push access, or SSO); sign in again, then deliver again.",
