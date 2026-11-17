@@ -11,6 +11,7 @@ import { flagOption, textOption } from '../args.ts';
 import { EXIT } from '../command.ts';
 import { recordUpgrade } from '../events.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
+import { warnIfBehind } from './behind.ts';
 import { buildCli } from './build-cli.ts';
 import {
   buildDirOf,
@@ -172,6 +173,7 @@ export async function upgradeKingdom(ctx: KingdomContext, ref: string, deps: Upg
     io.err(t('cli.upgrade.unknown_ref', { ref, source: deps.source }));
     return EXIT.failed;
   }
+  await warnIfBehind(ctx, deps.tools, deps.source, ref);
   const read = await readPointer(root);
   if (read.kind === 'unreadable') {
     io.err(t('cli.build.unreadable', { file: inKingdom(root, BUILD_FILE) }));

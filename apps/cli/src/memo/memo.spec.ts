@@ -106,7 +106,10 @@ describe('elvaria memo', () => {
     expect(
       await elvaria(io, 'memo', 'decide', OPEN, 'handled', '--quest', QUEST_ID, '--note', ' Gộp vào. '),
     ).toBe(0);
-    expect(io.printed.out[0]).toBe(`Sent your decision on letter ${OPEN}: Handled by a quest.`);
+    expect(io.printed.out.slice(0, 2)).toEqual([
+      `Letter ${OPEN}, Proposal from thorn: ${memo(OPEN).body.slice(0, 59)}…`,
+      `Sent your decision on letter ${OPEN}: Handled by a quest.`,
+    ]);
     const shelve = testIo();
     expect(await elvaria(shelve, 'memo', 'decide', OPEN, 'shelved', '--note', '  ')).toBe(0);
     expect((await inbox()).map(({ kind, payload }) => [kind, payload])).toEqual([
@@ -120,12 +123,28 @@ describe('elvaria memo', () => {
     [['handled'], 2, 'A handled letter names the quest that does the work: --quest <quest>.'],
     [['rejected', '--quest', QUEST_ID], 2, '--quest goes with handled only.'],
     [['handled', '--quest', 'q_20261106_zzzzzz'], 1, 'There is no quest q_20261106_zzzzzz.'],
+    // (151): a note written for another letter closed the wrong one.
+    [
+      ['accepted', '--note', `Nhận, như ${OPEN} và m_20261106_7kq2rd.`],
+      2,
+      `The note names letter m_20261106_7kq2rd, but you are deciding letter ${OPEN}: a note goes with the letter it decides. Check the letter id, or take the other id out of the note.`,
+    ],
   ])('refuses %j before anything is sent', async (args, code, message) => {
     await plant(memo(OPEN));
     const io = testIo();
     expect(await elvaria(io, 'memo', 'decide', OPEN, ...args)).toBe(code);
     expect(printed(io)).toBe(message);
     expect(await inbox()).toEqual([]);
+  });
+
+  it('says back the first line of the text, by the kind id when the registry has no such kind', async () => {
+    await plant(memo(OPEN, { kind: 'lament', body: '\n  \nDòng đầu.\nDòng hai.' }));
+    const io = testIo();
+    expect(await elvaria(io, 'memo', 'decide', OPEN, 'rejected', '--note', `Bác ${OPEN}.`)).toBe(0);
+    expect(io.printed.out[0]).toBe(`Letter ${OPEN}, lament from thorn: Dòng đầu.`);
+    expect((await inbox()).map(({ payload }) => payload)).toEqual([
+      { memo: OPEN, decision: 'rejected', note: `Bác ${OPEN}.` },
+    ]);
   });
 
   it('refuses a letter that is unknown or decided already', async () => {
