@@ -31,17 +31,18 @@ function git(args: string[]): string {
 }
 
 /**
- * The list where this branch left main; undefined when git cannot tell (a shallow CI checkout has no main) or the
- * list is newer than that point.
+ * The list where this branch left main, or why there is none to compare with. Missing git or main is never a
+ * failure: a shallow CI checkout, a copy without git or a repo with no remote skips the comparison, and says so.
  */
-function listAtBase(): Suppressions | undefined {
+function listAtBase(): { list: Suppressions } | { why: string } {
   for (const ref of ['origin/main', 'main']) {
     const base = git(['merge-base', 'HEAD', ref]).trim();
     if (base === '') continue;
     const text = git(['show', `${base}:${SUPPRESSIONS_FILE}`]);
-    return text === '' ? undefined : (JSON.parse(text) as Suppressions);
+    if (text === '') return { why: `${ref} had no ${SUPPRESSIONS_FILE} at ${base.slice(0, 7)}` };
+    return { list: JSON.parse(text) as Suppressions };
   }
-  return undefined;
+  return { why: 'git knows no origin/main or main here' };
 }
 
 describe('suppressionGrowth', () => {
@@ -98,7 +99,12 @@ describe(`the repo's ${SUPPRESSIONS_FILE}`, () => {
   });
 
   // Fixing a test and running `eslint --prune-suppressions` shrinks the list; nothing else may change it.
-  it.skipIf(base === undefined)('has not grown since this branch left main', () => {
-    expect(suppressionGrowth(base ?? {}, list)).toEqual([]);
-  });
+  const grown = 'has not grown since this branch left main';
+  if ('list' in base) {
+    it(grown, () => {
+      expect(suppressionGrowth(base.list, list)).toEqual([]);
+    });
+  } else {
+    it.skip(`${grown} (not compared: ${base.why})`, () => undefined);
+  }
 });
