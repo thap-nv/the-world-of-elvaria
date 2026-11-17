@@ -3,11 +3,10 @@
 // machine's first run stops on the conflict, a knight concludes it, a judge who never worked the quest reads it, and
 // with the owner's seal it goes through the queue itself and takes the quest it stands for into main; both plots go.
 // Dropped, it is not opened again for the same commit of main, and the stop is the owner's again.
-import { existsSync } from 'node:fs';
-
 import { isQueueMerge } from '@elvaria/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { git } from './__fixtures__/git-plots.ts';
 import { tickUntil } from './__fixtures__/kingdom.ts';
 import { onMain, queueBench, sealedTogether, statusOf } from './__fixtures__/queue.ts';
 import type { Leaves } from './__fixtures__/deliver.ts';
@@ -28,6 +27,15 @@ const LEAVES: Leaves = (req) => {
 };
 
 const mergesOf = async (bench: ForgeBench) => (await bench.kingdom.quests()).filter(isQueueMerge);
+
+/**
+ * The repo's worktrees, as git lists them: a released plot is not among them. Its folder may stay a while on Windows
+ * (a process still holds a file: the release's `leftover`), so the folder is not what the release is.
+ */
+const slashed = (text: string): string => text.replaceAll('\\', '/').toLowerCase();
+
+const listed = (bench: ForgeBench, plot: { readonly path?: string | undefined }): boolean =>
+  slashed(git(bench.repo, 'worktree', 'list', '--porcelain')).includes(slashed(plot.path ?? ''));
 
 const workersOf = (quest: { attempt_log: readonly { role: string; character: string | null }[] }) =>
   quest.attempt_log.filter(({ role }) => role === 'assignee').map(({ character }) => character);
@@ -72,14 +80,15 @@ describe("the merge queue's merge quest (PS-09b)", () => {
     const judges = merge?.attempt_log.filter(({ role }) => role === 'verifier') ?? [];
     expect(judges.length).toBeGreaterThan(0);
     expect(judges.filter(({ character }) => workersOf(beta).includes(character))).toEqual([]);
+    expect([listed(bench, beta.plot), listed(bench, merge?.plot ?? {})]).toEqual([true, true]);
 
     await kingdom.command('seal', { quest: merge?.id ?? '' });
     await tickUntil(steward, kingdom.clock, async () => (await statusOf(bench, 'Beta')) === 'archived', 300);
     expect(onMain(bench, 'src/rooms.ts')).toBe('alpha\nbeta');
     const [archived] = await mergesOf(bench);
     expect(archived?.status).toBe('archived');
-    expect(existsSync(beta.plot.path ?? '')).toBe(false);
-    expect(existsSync(archived?.plot.path ?? '')).toBe(false);
+    expect(listed(bench, beta.plot)).toBe(false);
+    expect(listed(bench, archived?.plot ?? {})).toBe(false);
     for (let tick = 0; tick < 3; tick += 1) {
       await steward.tick();
       await steward.idle();
