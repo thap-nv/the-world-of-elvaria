@@ -8,7 +8,10 @@
 - Reads and writes `kingdom.json`, territories, quests, characters, campaigns, verdicts and memos (PS-02) through
   `openKingdom(dir)`, the `KingdomStore` the Steward gets injected (§3.1): `read`, `write`, `update` (read →
   change → write inside one lock) and `list` (good files plus one issue per bad file). Every read runs
-  JSON → migrate to the current version → the domain's zod schema; every write is validated first.
+  JSON → migrate to the current version → the domain's zod schema; every write is validated first. `update` and
+  `migrateKingdom` write back the fields the file had and those the change or migration set, not the defaults
+  the schema filled in on read (`written-fields.ts`); when that sparse form would not read back as the value,
+  they write it whole. `write` replaces the file with the value it is given.
 - Writes atomically (temp file in the same folder, flushed, renamed over the target) under `proper-lockfile`
   locks (ADR 0004, 0015). Windows' transient `EPERM`/`EACCES`/`EBUSY` are retried within a time budget. A
   file standing where an entity's folder must be is an issue (`not_a_folder`), not a throw (P1-15).
