@@ -13,6 +13,7 @@ export const FAKE_SCENARIOS = [
   'scratch_commit',
   'spawn_child',
   'structured',
+  'image',
 ] as const;
 export type FakeScenario = (typeof FAKE_SCENARIOS)[number];
 

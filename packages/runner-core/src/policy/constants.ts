@@ -58,3 +58,12 @@ export const SEARCH_COMMANDS = ['git grep', 'git ls-files'] as const;
 
 /** Territory commands a character with a shell may run to check its own work. */
 export const CHECK_COMMANDS = ['test', 'lint', 'typecheck'] as const;
+
+/**
+ * The screens a judge reads (PS-11b, owner's (Q1) after the vision spike of 2026-11-17): at most this many images in
+ * one review, each at most SCREEN_MAX_BYTES, PNG only. The spike read 15 images and 6 MiB with Claude Code and agy,
+ * 4 MiB with Codex (6 MiB was dropped); the ceilings stay below what every tribe read.
+ */
+export const SCREEN_MAX_FILES = 12;
+export const SCREEN_MAX_BYTES = 2 * 1024 * 1024;
+export const SCREEN_EXTENSION = '.png';

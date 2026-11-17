@@ -16,9 +16,11 @@ import {
   FAKE_STRUCTURED_ANSWER,
   FAKE_STRUCTURED_SCHEMA,
 } from './scenarios.ts';
+import { FAKE_IMAGE_SCHEMA, fakeImageAsk, fakeImagePath, writeFakeImage } from './image-probe.ts';
 import { SPAWN_PROBE_COMMAND, writeSpawnProbe } from './spawn-probe.ts';
 import type { AgentRunner, BuiltPrompt, SpawnRequest } from '../runner/types.ts';
 import type { FakeScenario } from './scenarios.ts';
+import type { StripeColor } from './stripes.ts';
 import type { ConformanceTarget } from './target.ts';
 
 /** A quest id in the domain's shape (`q_<date>_<6 Crockford>`), so hooks and readers accept the lines. */
@@ -63,13 +65,22 @@ export async function openWorkspace(): Promise<Workspace> {
   };
 }
 
-/** What a scenario needs in the plot before the session starts: the spawn probe's script. */
-export async function prepareWorkspace(workspace: Workspace, scenario: FakeScenario): Promise<void> {
-  if (scenario === 'spawn_child') await writeSpawnProbe(workspace.plot);
+/** What a scenario sees before the session starts: the stripes of the image probe, left to right (PS-11b). */
+export interface Prepared {
+  readonly colors?: readonly StripeColor[];
 }
 
-/** What each scenario asks; a real CLI follows the words, a fake one its env. */
-const ASKS: Readonly<Record<FakeScenario, string>> = {
+/**
+ * What a scenario needs before the session starts: the spawn probe's script in the plot, the image probe's PNG in the
+ * run folder's screens, outside the plot as a review's are.
+ */
+export async function prepareWorkspace(workspace: Workspace, scenario: FakeScenario): Promise<Prepared> {
+  if (scenario === 'spawn_child') await writeSpawnProbe(workspace.plot);
+  return scenario === 'image' ? { colors: await writeFakeImage(workspace.run_dir) } : {};
+}
+
+/** What each scenario asks; a real CLI follows the words, a fake one its env. The image probe names its file. */
+const ASKS: Readonly<Record<Exclude<FakeScenario, 'image'>, string>> = {
   submit: 'Reply with the single word: done. Use no tool.',
   crash: 'Stop with an error.',
   hang: 'Count from 1 to 100000, one number per line. Use no tool.',
@@ -88,7 +99,11 @@ const PROBE_SYSTEM =
  * The probe is an assignee, and an assignee's hook does not let it stop before it has left a letter (ADR 0010),
  * so the system part says where the letter goes, as buildPrompt does for a real assignee. A judge leaves none.
  */
-const promptOf = (scenario: FakeScenario, handover: string | undefined): BuiltPrompt => ({
+const promptOf = (
+  scenario: FakeScenario,
+  handover: string | undefined,
+  workspace: Workspace,
+): BuiltPrompt => ({
   system:
     handover === undefined
       ? PROBE_SYSTEM
@@ -97,7 +112,7 @@ const promptOf = (scenario: FakeScenario, handover: string | undefined): BuiltPr
           `Before you stop, write your handover letter, the file ${handover}: the heading "## Where I am" and one line`,
           'under it saying what you did. Add no other heading unless you are asked to.',
         ].join(' '),
-  user: ASKS[scenario],
+  user: scenario === 'image' ? fakeImageAsk(fakeImagePath(workspace.run_dir)) : ASKS[scenario],
 });
 
 function probeCharacter(runner: AgentRunner, target: ConformanceTarget) {
@@ -170,16 +185,26 @@ const SCRATCH_JUDGE_POLICY = toolPolicyOf({
 });
 
 /** A judge in its own plot, read-only, as the Steward's verdict sessions run (ADR 0008). */
-const JUDGE_POLICY = toolPolicyOf({
+const JUDGE_INPUT: ToolPolicyInput = {
   role: 'verifier',
   characterClass: { tools: { allow: ['Read', 'Glob', 'Grep'], deny: ['Edit', 'Write', 'Agent'] } },
   territory: PROBE_POLICY_TERRITORY,
-});
+};
+const JUDGE_POLICY = toolPolicyOf(JUDGE_INPUT);
 
-const policyOf = (scenario: FakeScenario) => {
+/** The judge of the image probe: its policy opens the one image of its review (PS-11b). */
+const imageJudgePolicy = (workspace: Workspace) =>
+  toolPolicyOf({ ...JUDGE_INPUT, images: [fakeImagePath(workspace.run_dir)] });
+
+const policyOf = (scenario: FakeScenario, workspace: Workspace) => {
   if (scenario === 'scratch_commit') return SCRATCH_JUDGE_POLICY;
+  if (scenario === 'image') return imageJudgePolicy(workspace);
   return scenario === 'structured' ? JUDGE_POLICY : PROBE_POLICY;
 };
+
+/** The schema a judging scenario answers in. */
+const schemaOf = (scenario: FakeScenario) =>
+  scenario === 'image' ? FAKE_IMAGE_SCHEMA : FAKE_STRUCTURED_SCHEMA;
 
 export function conformanceRequest(
   workspace: Workspace,
@@ -188,15 +213,15 @@ export function conformanceRequest(
   target: ConformanceTarget,
 ): SpawnRequest {
   // scratch_commit plays a judge in its scratch plot, structured a judge giving its verdict, as the Steward asks it
-  // (a schema, no letter); every other scenario the knight probe.
-  const judge = scenario === 'scratch_commit' || scenario === 'structured';
-  const verdict = scenario === 'structured';
+  // (a schema, no letter), image a judge reading a screen of its review; every other scenario the knight probe.
+  const verdict = scenario === 'structured' || scenario === 'image';
+  const judge = verdict || scenario === 'scratch_commit';
   return {
     role: judge ? 'verifier' : 'assignee',
     character: probeCharacter(runner, target),
     cwd: workspace.plot,
-    prompt: promptOf(scenario, verdict ? undefined : workspace.handover),
-    permissions: policyOf(scenario),
+    prompt: promptOf(scenario, verdict ? undefined : workspace.handover, workspace),
+    permissions: policyOf(scenario, workspace),
     budget: PROBE_BUDGET,
     env: {
       ...target.env,
@@ -208,6 +233,6 @@ export function conformanceRequest(
       [FAKE_SCENARIO_ENV]: scenario,
     },
     run_dir: workspace.run_dir,
-    ...(verdict ? { structured: FAKE_STRUCTURED_SCHEMA } : { handover: workspace.handover }),
+    ...(verdict ? { structured: schemaOf(scenario) } : { handover: workspace.handover }),
   };
 }

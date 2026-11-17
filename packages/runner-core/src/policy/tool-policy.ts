@@ -58,6 +58,12 @@ export interface ToolPolicy {
    * territory's checks: the adapters turn them into rules of the CLI, the hook allows one plain call per line.
    */
   readonly graph_commands?: readonly string[];
+  /**
+   * The screens a judge reads (PS-11b): native absolute paths in its run's `screens/` folder, outside the plot. Each
+   * adapter opens exactly these files for reading, one rule a file, never `.runs/` (owner's (Q2)); policy.json hands
+   * them to the hook, which refuses every other read outside the plot (Q3). Absent for every other session.
+   */
+  readonly images?: readonly string[];
 }
 
 export interface ToolPolicyInput {
@@ -82,6 +88,8 @@ export interface ToolPolicyInput {
   readonly cli_search?: boolean | undefined;
   /** The quest's code graph is built and its territory has `code_graph` on (PS-21); absent: no graph commands. */
   readonly graph?: boolean;
+  /** The screens of the review a judge reads (PS-11b), native and absolute; ignored for any other role. */
+  readonly images?: readonly string[] | undefined;
 }
 
 const unique = (items: readonly string[]): string[] => [...new Set(items)];
@@ -209,6 +217,7 @@ export function toolPolicyOf(input: ToolPolicyInput): ToolPolicy {
   ];
   const search = searchCommandsOf(tools, input);
   const graph = graphCommandsOf(tools, deniedTools, input);
+  const images = verifier ? unique(input.images ?? []) : [];
   return {
     tools,
     allow: unique([...granted, ...shell, ...generate]),
@@ -218,5 +227,6 @@ export function toolPolicyOf(input: ToolPolicyInput): ToolPolicy {
     laws,
     ...(search.length === 0 ? {} : { search_commands: search }),
     ...(graph.length === 0 ? {} : { graph_commands: graph }),
+    ...(images.length === 0 ? {} : { images }),
   };
 }

@@ -95,6 +95,17 @@ AssertionError: expected 120 to be 108
  Test Files  1 failed | 12 passed (13)
 ```
 
+# Screens
+
+The territory's checks captured these images for you. They lie in the kingdom, outside your plot, and are not part of this prompt: open each with your own tool for reading files or viewing images, never a shell command, giving it the path exactly as written below. You may open these files and no other file of that folder.
+
+- `home`
+  - screen: `D:\Dummy\Tool - Personal\my kingdom\.runs\q_20261107_a1b2c3-1\screens\home.png`
+  - reference: `D:\Dummy\Tool - Personal\my kingdom\.runs\q_20261107_a1b2c3-1\screens\home.ref.png`
+- `settings`
+  - screen: `D:\Dummy\Tool - Personal\my kingdom\.runs\q_20261107_a1b2c3-1\screens\settings.png`
+  - difference: `D:\Dummy\Tool - Personal\my kingdom\.runs\q_20261107_a1b2c3-1\screens\settings.diff.png`
+
 # Handover letter of thorn
 
 ```markdown

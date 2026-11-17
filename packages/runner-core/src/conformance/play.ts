@@ -9,6 +9,7 @@ import { readSpawnProbe } from './spawn-probe.ts';
 import { conformanceRequest, openWorkspace, prepareWorkspace } from './workspace.ts';
 import type { AgentRunner, RunResult, RunnerSignal, RunningSession } from '../runner/types.ts';
 import type { FakeScenario } from './scenarios.ts';
+import type { StripeColor } from './stripes.ts';
 import type { ConformanceTarget, LeftWorkspace } from './target.ts';
 import type { Workspace } from './workspace.ts';
 
@@ -24,6 +25,8 @@ export interface Played {
   readonly signals: readonly RunnerSignal[];
   /** What the spawn probe left in the plot (`spawn_child`); undefined when it never ran. */
   readonly spawned?: string;
+  /** The stripes of the image probe's PNG, left to right (`image`, PS-11b). */
+  readonly colors?: readonly StripeColor[];
 }
 
 /** What a check does with its session besides playing it: act on it while it runs, then judge what it yielded. */
@@ -116,7 +119,7 @@ async function follow(
   scenario: FakeScenario,
   timeout: number,
   drive: PlaySteps['drive'],
-): Promise<Omit<Played, 'runner' | 'spawned'>> {
+): Promise<Omit<Played, 'runner' | 'spawned' | 'colors'>> {
   const signals = drain(session.signals);
   const id = await within(session.session_id, timeout, 'session_id');
   assert.ok(id.length > 0, 'empty session id');
@@ -139,12 +142,12 @@ export async function play(
   const workspace = await openWorkspace();
   let running: RunningSession | undefined;
   try {
-    await prepareWorkspace(workspace, scenario);
+    const prepared = await prepareWorkspace(workspace, scenario);
     running = await runner.spawn(conformanceRequest(workspace, scenario, runner, target));
     const { result, signals } = await follow(running, scenario, timeout, steps.drive);
     running = undefined;
     const spawned = await readSpawnProbe(workspace.plot);
-    const played = { runner, result, signals, ...(spawned === undefined ? {} : { spawned }) };
+    const played = { runner, result, signals, ...(spawned === undefined ? {} : { spawned }), ...prepared };
     steps.verify?.(played);
     return played;
   } catch (error) {
