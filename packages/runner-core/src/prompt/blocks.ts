@@ -53,6 +53,8 @@ export type Continuation = (
      * selectChecks picks for it (checksAheadBlock). Absent: no such section.
      */
     readonly touched?: readonly string[];
+    /** The cut session left apprentice work that needs a child quest. */
+    readonly apprentice_left?: true;
   };
 
 interface WithId {
@@ -265,6 +267,9 @@ export function continuationBlock(
         ]);
   return joinBlocks([
     intro,
+    continuation.apprentice_left === true
+      ? 'apprentice_left: An apprentice of the previous session ran past its minutes or was cut at its turns. Record the unfinished apprentice work in handover.md and propose a child quest in Next step. Do not start that apprentice again on the same work.'
+      : '',
     checksAheadBlock(territory, quest.party_role, continuation.touched, t),
     refusedWorkBlock(continuation, t),
     answerBlock(quest, t),

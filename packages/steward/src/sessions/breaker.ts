@@ -147,10 +147,13 @@ function assigneeReason(
 
 /**
  * §3.12 invariant 3: a quest that met a breaker while an apprentice of its session ran past its minutes or was cut at
- * its turns has work left that belongs in a child quest; the infirmary note says so to the owner. The runner wrote
+ * its turns has work left that belongs in a child quest; the infirmary and continuation both need the note. The runner wrote
  * those lines into the quest's journal, under the session's id. A journal that cannot be read adds nothing.
  */
-async function apprenticeLeft(ctx: Context, running: Running): Promise<boolean> {
+export async function apprenticeLeft(
+  ctx: Context,
+  running: Pick<Running, 'quest' | 'session_id'>,
+): Promise<boolean> {
   try {
     const { events } = await openJournal(ctx.root, running.quest).read();
     return events.some(
