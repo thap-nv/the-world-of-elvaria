@@ -2,7 +2,7 @@
 // command, and what an item names. Out of attention.ts, which builds the queue, to keep both under the size limit
 // (PS-11, the coordinator's plan for PS-08c: split it before adding a kind).
 import type { CharacterId, MemoId, QuestId, TerritoryId, TribeId } from '../core/ids.ts';
-import type { DelegationHold, TriageAction } from '../delegation/constants.ts';
+import type { DelegationHold, SealRaise, TriageAction } from '../delegation/constants.ts';
 import type { WaitGauge } from '../dispatch/judge-waits.ts';
 import type { Rank } from '../schema/common.ts';
 import type { DeliveryFailure, DeliveryStage } from '../schema/event/delivery-data.ts';
@@ -68,6 +68,9 @@ export const ATTENTION_TABLE = {
     advice: 'merge_pr_and_archive',
     command: ['quest', 'archive', '{quest}'],
   },
+  // PS-08b: the Steward merged the quest without the royal seal, by the kingdom's delegation; the owner reads it after
+  // the fact, and undoes it with the item's `revert` line, which it runs and pushes itself.
+  merged_unsealed: { group: 'can_wait', advice: 'read_or_revert', command: ['quest', 'show', '{quest}'] },
   // PS-09b: the quest's delivery stopped at the merge queue's update and a merge quest resolves it for the owner; the
   // quest goes into the base branch with it. A `delivery_failed` item again once that merge quest is dropped.
   delivery_merging: {
@@ -132,6 +135,10 @@ export interface AttentionSubject {
   readonly stage?: DeliveryStage;
   readonly reason?: DeliveryFailure;
   readonly url?: string;
+  /** (PS-08b) Why the machine raised the seal of a quest the delegation had spared (awaiting_seal). */
+  readonly raised?: readonly SealRaise[];
+  /** (PS-08b) The git words that undo a merge without the seal (merged_unsealed), with `commit` its merge commit. */
+  readonly revert?: readonly string[];
   /** The merge queue's merge quest the quest waits for (delivery_merging, PS-09b). */
   readonly merge_quest?: QuestId;
   /** A newer build (upgrade_available, PS-08d): the commit pinned, the default branch's, and its commits since. */

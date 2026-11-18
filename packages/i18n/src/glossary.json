@@ -311,6 +311,13 @@
               "used_in": "`kingdom.delegation`, `memo.escalation.holds`"
             },
             {
+              "vi": "Ủy quyền dấu",
+              "en": "Seal delegation",
+              "id": ["seal_delegated"],
+              "definition": "Phần dấu của phạm vi ủy quyền: quest nhỏ trong phạm vi chủ nhân cho (hạng tới `max_rank`, dạng trong `kinds`, diff không quá `max_diff_lines`), trên lãnh thổ `pr_merge`, được tạo không cần dấu và được Nhiếp chính merge sau phán quyết đạt. Máy chỉ nâng dấu lên, không bao giờ hạ; lý do nâng ghi ở `seal_raised`. Mỗi lần merge không qua dấu là một mục `merged_unsealed` của bản tấu kế tiếp, kèm lệnh `git revert` để chủ nhân tự hoàn tác (PS-08b).",
+              "used_in": "`kingdom.delegation.seal`, `quest.seal_delegated`, `quest.seal_raised`, `sealDelegated`, `sealRaisesOf`, `mayMergeUnsealed`, mục bản tấu `merged_unsealed`"
+            },
+            {
               "vi": "Đền",
               "en": "Temple",
               "id": ["temple"],
@@ -2288,6 +2295,11 @@
               "field": "`memo.escalation.holds`",
               "values": "các giá trị của `ask`, cùng `above_rank`, `outside_scope`, `scope_held`, `chancellor_asks`",
               "meaning": "vì sao thư tới chủ nhân: một việc chủ nhân giữ, hay máy thấy hạng vượt `max_rank`, tệp ngoài vùng file của việc, tệp một thư `amendment` được nhận sẽ mở chạm vùng một quest khác đang giữ (R3), hoặc Tể tướng tự đưa lên"
+            },
+            {
+              "field": "`quest.seal_raised`",
+              "values": "`protected_paths`, `above_level`, `out_of_scope`, `diff_size`, `same_family_judge`, `machine_judge`, `objection`, `rank_above`, `out_of_delegation`, `suspended`",
+              "meaning": "vì sao máy nâng dấu của quest được miễn nhờ ủy quyền: chạm vùng bảo vệ, người nhận vượt hạng trần của cấp, có file ngoài `scope_paths`, diff vượt `max_diff_lines` (hay không đo được), người chấm không khác họ với mọi người từng làm, máy chấm một mình, lượt chấm trả lời thư phản biện, hạng nay vượt `max_rank`, ủy quyền không còn phủ (bỏ phần dấu, bỏ dạng, lãnh thổ thôi `pr_merge`), ủy quyền của lãnh thổ đang ngừng (PS-08b)"
             },
             {
               "field": "`inbox-command.source`",

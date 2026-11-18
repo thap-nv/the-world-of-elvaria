@@ -8,6 +8,7 @@ import { deliveryOf } from '../schema/territory-delivery.ts';
 import { mergeDue } from './forge-due.ts';
 import type { Instant } from '../core/clock.ts';
 import type { QuestId } from '../core/ids.ts';
+import type { SealPolicy } from '../delegation/seal.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 import type { ForgeOutcome } from '../world/forge-outcome.ts';
 import type { ForgeSource } from './forge-due.ts';
@@ -34,7 +35,7 @@ export interface ForgePollSource extends ForgeSource {
 }
 
 /**
- * The pull requests to ask about now: sealed quests under `pr_merge` (mergeDue), none whose work still runs, none the
+ * The pull requests to ask about now: quests the Steward merges under `pr_merge` (mergeDue: sealed, or PS-08b spared), none whose work still runs, none the
  * merge queue updates again (PS-09: its branch no longer merges cleanly, its next push asks anew).
  */
 export function forgePolls(source: ForgePollSource, done: readonly Quest[], now: Instant): ForgePoll[] {
@@ -45,7 +46,7 @@ export function forgePolls(source: ForgePollSource, done: readonly Quest[], now:
     const wait = waits.get(quest.id);
     const territory = territories.get(quest.territory);
     if (wait === undefined || territory === undefined || running.has(quest.id)) return [];
-    if (!mergeDue(quest, territory)) return [];
+    if (!mergeDue(quest, territory, source.seal_policy)) return [];
     if (wait.asked !== undefined && now - wait.asked < FORGE_POLL_SECONDS * MS_PER_SECOND) return [];
     const limit = deliveryOf(territory).checks_timeout_minutes * MS_PER_MINUTE;
     return [{ quest: quest.id, timed_out: now - wait.since >= limit }];
@@ -60,12 +61,13 @@ export function ownerDeliveries(
   outcomes: Iterable<ForgeOutcome>,
   quests: readonly Quest[],
   territories: ForgeSource['territories'],
+  policy: SealPolicy = {},
 ): ForgeOutcome[] {
   const byId = new Map(quests.map((quest) => [quest.id, quest]));
   const where = new Map(territories.map((territory) => [territory.id, territory]));
   return [...outcomes].filter(({ type, data }) => {
     const quest = byId.get(data.quest);
     if (type !== 'delivery.pushed' || quest === undefined) return true;
-    return !mergeDue(quest, where.get(quest.territory));
+    return !mergeDue(quest, where.get(quest.territory), policy);
   });
 }

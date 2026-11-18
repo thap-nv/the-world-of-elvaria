@@ -2,6 +2,7 @@
 // notices (StewardNotices), and the helpers every item is made with. Out of attention.ts, which builds the queue, to keep
 // both under the size limit (PS-09d, the coordinator's plan: split it before adding a kind).
 import { ATTENTION_TABLE } from './attention-table.ts';
+import { revertWordsOf } from './unsealed-merges.ts';
 import type { UnopenedReview } from '../breaker/review.ts';
 import type { QuestId } from '../core/ids.ts';
 import type { WaitGauge } from '../dispatch/judge-waits.ts';
@@ -12,6 +13,7 @@ import type { HeldQuest } from '../quest/hold.ts';
 import type { TribeHold } from '../tribe/version-hold.ts';
 import type { ForgeOutcome } from './forge-outcome.ts';
 import type { QuestView } from './quest-view.ts';
+import type { UnsealedMerge } from './unsealed-merges.ts';
 import type { WorldState } from './world-state.ts';
 import type { AttentionItem, AttentionKind, AttentionSubject } from './attention-table.ts';
 
@@ -53,6 +55,8 @@ export interface StewardNotices {
   readonly held?: readonly HeldQuest[];
   /** A newer build to upgrade to (PS-08d): apps/cli reads it from the pinned build's repo as the digest is made. */
   readonly upgrade?: UpgradeOffer;
+  /** (PS-08b) The merges without the seal since the last digest (unsealedMergesOf); from the log as it is made. */
+  readonly merged_unsealed?: readonly UnsealedMerge[];
 }
 
 /** The pinned commit, the default branch's commit, and how many commits since touch `packages/` or `apps/`. */
@@ -176,6 +180,15 @@ export function noticeItems(state: WorldState, notices: StewardNotices): Attenti
       itemOf('scope_held', { ...aboutId(state, quest), waiting }),
     ),
     ...deliveriesOf(state, notices.deliveries),
+    ...(notices.merged_unsealed ?? []).map((merge) =>
+      itemOf('merged_unsealed', {
+        ...aboutId(state, merge.quest),
+        territory: merge.territory,
+        url: merge.url,
+        commit: merge.merge_sha,
+        revert: revertWordsOf(merge),
+      }),
+    ),
     ...(notices.held ?? []).map(({ quest, reason }) =>
       itemOf('quest_held', {
         ...aboutId(state, quest),

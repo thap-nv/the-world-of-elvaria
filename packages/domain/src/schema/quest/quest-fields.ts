@@ -11,6 +11,7 @@ import {
   QuestIdSchema,
   TerritoryIdSchema,
 } from '../../core/ids.ts';
+import { SEAL_RAISES } from '../../delegation/constants.ts';
 import { DateTimeSchema, NonEmptyStringSchema, RankSchema, unique } from '../common.ts';
 import {
   EstimateSchema,
@@ -101,6 +102,22 @@ export const QuestFieldsSchema = z.strictObject({
     .meta(
       describe(
         "The files under the territory's laws.protected_paths that the quest's work changed, relative to its plot with `/`, gathered over its submits. The Steward sets it with seal_required at a submit: the quest waits for the royal seal whatever its kind's seal_default, and its judge is chosen as for a quest of rank B or above. A part of a party (part, acceptance) gets it without the seal, which its merge quest always asks for.",
+      ),
+    ),
+  // PS-08b, K10: optional and added after v1, so `version` stays 1; only a quest the delegation spared has them.
+  seal_delegated: z
+    .literal(true)
+    .optional()
+    .meta(
+      describe(
+        "The quest was made with seal_required false by the kingdom's delegation of the seal (kingdom.delegation.seal), not by its kind's seal_default or the owner's word: the Steward merges its pull request without the seal while seal_required stays false and the delegation still covers it. The owner's edit of seal_required drops it.",
+      ),
+    ),
+  seal_raised: unique(z.array(z.enum(SEAL_RAISES)).min(1))
+    .optional()
+    .meta(
+      describe(
+        'Why the machine raised the seal of a quest with seal_delegated (PS-08b), gathered over its submits and its passing verdict, in a fixed order; set with seal_required true and never lowered.',
       ),
     ),
   seal: SealSchema.optional(),
