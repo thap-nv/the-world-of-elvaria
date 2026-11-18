@@ -2,7 +2,8 @@
 // AgentRunner. Codex starts from the path `elvaria doctor` pinned, else PATH, else the VS Code extension's binary
 // (locateCodex); a Windows npm shim is read and its script run with Node, which needs a file read, so the adapter
 // is built on first use and the crew stays a plain function of kingdom.json. The hook's command comes from
-// @elvaria/hooks, which the adapter may not import (§1.3).
+// @elvaria/hooks, which the adapter may not import (§1.3). A tribe whose `tool.config_dir` names a home runs every
+// call of Codex there (CODEX_HOME, PS-27c): a second ChatGPT account is a second tribe.
 import { hookCommand } from '@elvaria/hooks';
 import { CODEX_ADAPTER, CODEX_CAPABILITIES, createCodexRunner, locateCodex } from '@elvaria/runner-codex';
 import type { Tribe } from '@elvaria/domain';
@@ -29,6 +30,7 @@ async function codexLaunch(tribe: Tribe, io: CliIo) {
 }
 
 export function codexRunner(tribe: Tribe, io: CliIo): AgentRunner {
+  const home = tribe.tool?.config_dir;
   let built: Promise<AgentRunner> | undefined;
   const runner = () =>
     (built ??= codexLaunch(tribe, io).then((launch) =>
@@ -38,6 +40,7 @@ export function codexRunner(tribe: Tribe, io: CliIo): AgentRunner {
         hook: hookCommand(),
         env: minimalEnv(io.env),
         platform: io.platform,
+        ...(home === undefined ? {} : { configDir: fromPortable(home, io.platform) }),
       }),
     ));
   return {
