@@ -224,7 +224,10 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   and commits the rest (`plot/generate.ts`); `mergesClean` says whether an open branch still merges cleanly into
   the tips a look saw. A party's merge quest gets the same rules for its parts and base branch
   (`MergeOptions.shared`), counts from the base branch even when it did not move, and is set up again once a part
-  is in (PS-08e (6), (7)).
+  is in (PS-08e (6), (7)). A generated file (`regenerate`) one of its merges left in a conflict for the knight, or
+  resolved by the rule before a later merge stopped, stays in the plot's record (`regenerate_pending`) until the
+  first merge that stops no more names it, once (`MergeOutcome.regenerate`, `plot/generate-later.ts`,
+  fix/merge-quest-followups (n)): the generators cannot run while a merge waits in progress.
 - Says how far a territory moved since its gazetteer was written (PS-21): `PlotManager.drift(plot, from)` counts the
   commits from `from` to the plot's fork point per top-level folder (`src/plot/drift.ts`, `git log --name-only`,
   root files left out; null without git, a record or a commit git knows), and `gazetteerWithDrift`
