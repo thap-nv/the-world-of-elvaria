@@ -1,7 +1,7 @@
 // How a tribe is turned on and seen (P1-34, implementation-plan §3.14 "không qua thì không bật được"): `doctor
 // --enable` refuses an owner adapter file, which only `tribe check` enables, `tribe check` holds the tribe to the login
-// its adapter reports as doctor does, and `tribe list` shows every tribe with its adapter, pinned CLI, sign-in and
-// limits: a built-in one, an adapter file, and one whose adapter has no runner.
+// its adapter reports as doctor does, and `tribe list` shows every tribe with its adapter, pinned CLI, sign-in, config
+// folder (PS-27) and limits: a built-in one, an adapter file, and one whose adapter has no runner.
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -74,10 +74,14 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
 
   it('prints one line per tribe: built in, adapter file, no runner yet, adapter file that does not load', async () => {
     const broken = await writeAdapter(kingdom, 'broken', 'export const createAdapter = 1;\n');
+    // A config folder of lantern's own (PS-27), shown as kingdom.json holds it.
+    const account = 'C:/Users/owner/.elvaria/accounts/lantern';
     await editKingdom(kingdom, (value) => ({
       ...value,
       tribes: [
-        ...(value.tribes as object[]),
+        ...(value.tribes as { id: string; tool?: object }[]).map((tribe) =>
+          tribe.id === 'lantern' ? { ...tribe, tool: { ...tribe.tool, config_dir: account } } : tribe,
+        ),
         { id: 'fallback', adapter: 'gemini_cli', enabled: false, max_concurrent: 1 },
         { id: 'broken', adapter: broken, enabled: false, max_concurrent: 1 },
       ],
@@ -97,6 +101,7 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
         'Enabled',
         'Version',
         'Sign-in',
+        'Config folder',
         'Max rank',
         'Guarded',
         'Capabilities',
@@ -111,10 +116,11 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
         'yes',
         '—',
         '—',
+        '—',
         'S',
         'yes',
         // PS-11b: the vision spike passed all three CLIs.
-        'headless, context_file, events, tool_gate, usage, structured_output, resume, compact, subagent, vision',
+        'headless, context_file, events, tool_gate, usage, structured_output, resume, compact, subagent, vision, config_dir',
         windows ? 'Git Bash' : '—',
         '—',
         '—',
@@ -124,6 +130,7 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
         'Red Fire (red, fire)',
         'antigravity',
         'yes',
+        '—',
         '—',
         '—',
         'S',
@@ -141,6 +148,7 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
         'no',
         '0.4.2',
         'login',
+        account,
         'D',
         'no',
         // lantern has no JSON Schema flag since P1-33: its judges answer in text.
@@ -158,6 +166,7 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
         '—',
         '—',
         '—',
+        '—',
         'no runner yet',
         '—',
         '—',
@@ -168,6 +177,7 @@ describe('elvaria tribe list, and doctor --enable of an adapter file', () => {
         'Green Thunder (green, thunder)',
         broken,
         'no',
+        '—',
         '—',
         '—',
         '—',

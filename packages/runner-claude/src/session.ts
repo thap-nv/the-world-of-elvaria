@@ -27,6 +27,7 @@ import type {
   SpawnRequest,
 } from '@elvaria/runner-core';
 
+import { accountEnv } from './account.ts';
 import { sessionArgv } from './argv.ts';
 import { parseLine } from './json.ts';
 import { outcomeOf, permissionDenialsOf, structuredOf, turnsOf } from './outcome.ts';
@@ -44,6 +45,8 @@ export interface SessionDeps {
   readonly launch: Launch;
   readonly hookCommand: (policyFile: string) => HookCommand;
   readonly apprentice: ApprenticeConfig;
+  /** The tribe's config folder (PS-27): CLAUDE_CONFIG_DIR of the session, set last; undefined: no such variable. */
+  readonly configDir?: string | undefined;
   /** Wait before reading the journal a second time for the SessionStart line; 500 ms by default. */
   readonly recheck_ms?: number;
   /** After a kill, how long a POSIX process tree gets before SIGKILL; runner-core's KILL_GRACE_MS by default. */
@@ -188,7 +191,8 @@ function launchChild(
   const base = Object.fromEntries(Object.entries(req.env).filter(([name]) => !name.startsWith('GIT_')));
   const child = spawn(deps.launch.file, [...deps.launch.args, ...argv], {
     cwd: req.cwd,
-    env: { ...base, ...env },
+    // The tribe's account wins over any CLAUDE_CONFIG_DIR in req.env, a secret named so included (PS-27).
+    env: accountEnv({ ...base, ...env }, deps.configDir),
     shell: false,
     stdio: ['pipe', 'pipe', 'pipe'],
     windowsHide: true,

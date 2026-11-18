@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { ADAPTER_CAPABILITIES, TRIBE_AUTHS, modelsProblems } from '@elvaria/domain';
 
 import {
+  configDirProblems,
   promptMaxProblems,
   readProblems,
   searchProblems,
@@ -220,6 +221,12 @@ const capabilities: ConformanceCheck = {
     assert.deepEqual(modelsProblems(runner.capabilities.models), [], 'capability models is malformed');
     // Optional (PS-11): whether the CLI's model reads images, true or false; only a spike of the CLI may say true.
     assert.deepEqual(visionProblems(runner.capabilities.vision), [], 'capability vision is malformed');
+    // Optional (PS-27): whether it runs every process of the tribe in `tool.config_dir`, true or false.
+    assert.deepEqual(
+      configDirProblems(runner.capabilities.config_dir),
+      [],
+      'capability config_dir is malformed',
+    );
     assert.ok(runner.tribe.length > 0 && runner.adapter.length > 0);
     return 'passed';
   },

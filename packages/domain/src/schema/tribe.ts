@@ -33,6 +33,12 @@ const TribeToolSchema = z
       description:
         'The CLI version the last `elvaria tribe check` with the real CLI passed on; that check pins it, with path and version. The Steward opens no new session for the tribe while its CLI says another version (a CLI that updates itself in place, agy 1.5.6 → 1.5.7 on 2026-11-13). Absent: the pinned version stands in.',
     }),
+    // Optional, added after v1 (PS-27): a kingdom.json without it stays version 1. A second account of one CLI is one
+    // more tribe, so the work layer needs no rule of its own for it (ADR 0021).
+    config_dir: AbsPathSchema.optional().meta({
+      description:
+        "The config directory of the tribe's CLI, which holds its sign-in (PS-27): the owner chooses the folder and signs in to the CLI there once. Absent: the CLI uses its own default folder. Elvaria only hands the path to the adapter, which runs every process of the tribe in it (Claude Code: CLAUDE_CONFIG_DIR) and must declare capabilities.config_dir; nothing in Elvaria reads or writes inside. Pinned by `elvaria doctor --config-dir <tribe>=<path>`, which refuses a folder inside the kingdom or a territory, and two login tribes of one adapter sharing a folder or an account.",
+    }),
   })
   .meta({
     description:

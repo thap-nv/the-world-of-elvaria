@@ -14,6 +14,7 @@ export const DOCTOR_NOTE_KEYS: Readonly<Record<DoctorNoteCode, MessageKey>> = {
   'doctor:sign_in_ending': 'cli.doctor.note.sign_in_ending',
   'doctor:terms_not_acknowledged': 'cli.doctor.note.terms_not_acknowledged',
   'doctor:hook_missing': 'cli.doctor.note.hook_missing',
+  'doctor:config_dir_ignored': 'cli.doctor.note.config_dir_ignored',
   'doctor:bad_note': 'cli.doctor.note.bad_note',
 };
 

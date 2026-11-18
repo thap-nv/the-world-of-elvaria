@@ -27,10 +27,15 @@ export interface Hand {
 
 type AdapterFactory = (tribe: Tribe, kingdom: Kingdom, io: CliIo) => Hand;
 
-/** How to reach a tribe's CLI: the path `elvaria doctor` pinned, else the adapter's own search. */
+/**
+ * How to reach a tribe's CLI: the path `elvaria doctor` pinned, else the adapter's own search; and the config folder it
+ * runs in, when the tribe names one (PS-27). An adapter file reads the folder from its kit.
+ */
 export function toolOptionsOf(tribe: Tribe, io: CliIo): ClaudeToolOptions {
+  const dir = tribe.tool?.config_dir;
   return {
     ...(tribe.tool === undefined ? {} : { executable: fromPortable(tribe.tool.path, io.platform) }),
+    ...(dir === undefined ? {} : { configDir: fromPortable(dir, io.platform) }),
     env: minimalEnv(io.env),
     platform: io.platform,
     nodePath: io.nodePath,

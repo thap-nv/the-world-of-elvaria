@@ -94,6 +94,7 @@ Thư mục vương quốc là trạng thái của bạn, nằm ngoài mọi repo
 - Chưa dùng Antigravity: `elvaria tribe disable gemini`.
 - Dùng Antigravity: cài và đăng nhập agy, rồi `elvaria doctor --acknowledge-terms gemini` để ghi nhận điều khoản của nó (ADR 0018, rủi ro ở [cli-facts](../reference/cli-facts-2026-11-12.md) §2.1).
 - Bật lại một tộc đã tắt: `elvaria doctor --enable <tộc>` (chỉ bật khi lần đó tộc không có lỗi nào).
+- Thêm tài khoản thứ hai của cùng một CLI (`claude_2`, thư mục cấu hình riêng, PS-27): [adding-a-tribe.md](adding-a-tribe.md) mục 3.1.
 
 `elvaria tribe list` in mỗi tộc một dòng. `tribes[].max_concurrent` là số phiên một tài khoản chạy cùng lúc (mặc định claude 2, gemini 1).
 

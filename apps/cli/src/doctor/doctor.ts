@@ -6,7 +6,8 @@
 // whose work has a single judge (P1-56), the treasury file, the sessions a
 // stopped Steward left running (P1-11), the mana gauges the Steward logged, asleep or not (P1-32), and the build the
 // kingdom pins (PS-04b), graphify when a territory has a code graph (PS-21), and a credential with the right to push
-// for each territory whose delivery pushes (PS-08). It writes only `tribes[].tool`,
+// for each territory whose delivery pushes (PS-08), and two tribes of one adapter on one account (PS-27). It writes only
+// `tribes[].tool` (its `config_dir` with `--config-dir`, PS-27),
 // `programs.graphify` with `--pin` (PS-21) and, with `--enable`, `tribes[].enabled` (P1-15) when this run finds
 // nothing wrong with that tribe (P1-34), through the kingdom file's lock.
 import { ok } from '@elvaria/domain';
@@ -28,15 +29,17 @@ import { checkMana } from './check-mana.ts';
 import { checkLeftSessions, checkTreasury } from './check-state.ts';
 import { checkTerritorySetup } from './check-territory-setup.ts';
 import { checkTerritoryTrials } from './check-territory-trial.ts';
-import { checkTribe, skipsTribe } from './check-tribe.ts';
+import { accountFindings } from './check-accounts.ts';
+import { checkTribe, settleEnabling, skipsTribe } from './check-tribe.ts';
+import { configDirsOf } from './config-dir.ts';
 import { finding, findingLines } from './finding.ts';
 import { tribeFindings } from './held-in-trial.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
-import type { DoctorOptions } from './check-tribe.ts';
+import type { DoctorOptions, TribeCheck } from './check-tribe.ts';
 import type { Finding } from './finding.ts';
 
-/** `--tool claude=C:/…/claude.exe` pairs; undefined when one has no `=`. */
+/** `--tool claude=C:/…/claude.exe` (or `--config-dir`) pairs; undefined when one has no `=`. */
 export function toolPaths(values: readonly string[]): Map<string, string> | undefined {
   const pairs = values.map((value) => {
     const at = value.indexOf('=');
@@ -58,6 +61,7 @@ export function optionProblems(tribes: readonly Tribe[], options: DoctorOptions,
   const list = [...known.keys()].join(', ');
   const named = [
     ...[...options.tools.keys()].map((tribe) => ({ option: '--tool', tribe })),
+    ...[...options.configDirs.keys()].map((tribe) => ({ option: '--config-dir', tribe })),
     ...[...options.enable].map((tribe) => ({ option: '--enable', tribe })),
     ...[...options.acknowledge].map((tribe) => ({ option: '--acknowledge-terms', tribe })),
   ];
@@ -91,26 +95,65 @@ async function saveTribes(ctx: KingdomContext, updated: readonly Tribe[]): Promi
   return finding('error', head, details);
 }
 
-async function runDoctor(input: CommandInput, cli: CliContext): Promise<ExitCode> {
-  const tools = toolPaths(textOptions(input, 'tool'));
-  if (tools === undefined) {
-    cli.io.err(cli.t('cli.doctor.bad_tool_option'));
-    return EXIT.usage;
-  }
-  const ctx = await openKingdomContext(input, cli);
-  if (ctx === undefined) return EXIT.failed;
+/**
+ * Each tribe's check, then the one across tribes (PS-27: two login tribes of one adapter on one account), then
+ * `--enable` settled with both in, so a tribe in such a pair stays off.
+ */
+async function checkTribes(ctx: KingdomContext, options: DoctorOptions): Promise<TribeCheck[]> {
+  const checks = await Promise.all(ctx.kingdom.tribes.map((tribe) => checkTribe(tribe, ctx, options)));
+  const clashes = accountFindings(
+    ctx,
+    checks.flatMap(({ account }) => (account === undefined ? [] : [account])),
+  );
+  return ctx.kingdom.tribes.map((tribe, index) => {
+    const check = checks[index] ?? { findings: [] };
+    const errors = clashes.get(tribe.id) ?? [];
+    return settleEnabling(tribe, { ...check, findings: [...check.findings, ...errors] }, ctx.t);
+  });
+}
+
+/** The options of this run, or undefined once why they cannot be honoured is printed (exit 2). */
+async function optionsOf(
+  input: CommandInput,
+  ctx: KingdomContext,
+  given: Pairs,
+): Promise<DoctorOptions | undefined> {
   const options: DoctorOptions = {
-    tools,
+    tools: given.tools,
     pin: flagOption(input, 'pin') ?? false,
     acknowledge: new Set(textOptions(input, 'acknowledge-terms')),
+    configDirs: given.configDirs,
     enable: new Set(textOptions(input, 'enable')),
   };
   const problems = optionProblems(ctx.kingdom.tribes, options, ctx.t);
-  if (problems.length > 0) {
-    problems.forEach(ctx.io.err);
-    return EXIT.usage;
-  }
-  const tribes = await Promise.all(ctx.kingdom.tribes.map((tribe) => checkTribe(tribe, ctx, options)));
+  const dirs = problems.length > 0 ? { problems } : await configDirsOf(ctx, given.configDirs);
+  if ('dirs' in dirs) return { ...options, configDirs: dirs.dirs };
+  dirs.problems.forEach(ctx.io.err);
+  return undefined;
+}
+
+interface Pairs {
+  readonly tools: ReadonlyMap<string, string>;
+  readonly configDirs: ReadonlyMap<string, string>;
+}
+
+/** `--tool` and `--config-dir` read as pairs, or undefined once the one without `=` is named. */
+function pairsOf(input: CommandInput, cli: CliContext): Pairs | undefined {
+  const tools = toolPaths(textOptions(input, 'tool'));
+  if (tools === undefined) cli.io.err(cli.t('cli.doctor.bad_tool_option'));
+  const configDirs = toolPaths(textOptions(input, 'config-dir'));
+  if (configDirs === undefined) cli.io.err(cli.t('cli.doctor.bad_config_dir_option'));
+  return tools === undefined || configDirs === undefined ? undefined : { tools, configDirs };
+}
+
+async function runDoctor(input: CommandInput, cli: CliContext): Promise<ExitCode> {
+  const pairs = pairsOf(input, cli);
+  if (pairs === undefined) return EXIT.usage;
+  const ctx = await openKingdomContext(input, cli);
+  if (ctx === undefined) return EXIT.failed;
+  const options = await optionsOf(input, ctx, pairs);
+  if (options === undefined) return EXIT.usage;
+  const tribes = await checkTribes(ctx, options);
   const saved = await saveTribes(
     ctx,
     tribes.flatMap((check) => (check.updated === undefined ? [] : [check.updated])),
@@ -145,6 +188,12 @@ export const DOCTOR: CommandSpec = {
   args: [],
   options: {
     tool: { type: 'string', value: '<tribe>=<path>', multiple: true, help: 'cli.doctor.option.tool' },
+    'config-dir': {
+      type: 'string',
+      value: '<tribe>=<folder>',
+      multiple: true,
+      help: 'cli.doctor.option.config_dir',
+    },
     pin: { type: 'boolean', help: 'cli.doctor.option.pin' },
     enable: { type: 'string', value: '<tribe>', multiple: true, help: 'cli.doctor.option.enable' },
     'acknowledge-terms': {
