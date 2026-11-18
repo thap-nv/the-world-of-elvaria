@@ -206,7 +206,7 @@ describe('tests as the product: Thả quái thử thành (ADR 0022)', () => {
     expect(git(repo, 'show', `quest/${quest.id}:src/sum.mjs`)).toBe(SUM.trim());
     expect(await pathExists(scratch)).toBe(false);
     expect(['returned', 'working', 'claimed']).toContain(quest.status);
-  }, 120_000);
+  }, 120_000); // real git, the checks run for real in a scratch plot: 6 s beside 13 slow specs (2026-11-18)
 
   it('passes a quest whose test goes red on the break, and its branch stays as the assignee left it', async () => {
     const { kingdom, steward, repo, seen } = await open({ 'e2e/sum.test.mjs': STRONG_TEST });
@@ -221,7 +221,7 @@ describe('tests as the product: Thả quái thử thành (ADR 0022)', () => {
     ]);
     expect(git(repo, 'rev-parse', `quest/${quest.id}`)).toBe(seen[0]!.branch_head);
     expect(git(repo, 'show', `quest/${quest.id}:e2e/sum.test.mjs`)).toBe(STRONG_TEST.trim());
-  }, 120_000);
+  }, 120_000); // real git, the checks run for real in a scratch plot: 6 s beside 13 slow specs (2026-11-18)
 
   it('takes a pass that names no breaks as partial, the next judge reading on from the break (P1-40)', async () => {
     const { kingdom, steward } = await open({ 'e2e/sum.test.mjs': STRONG_TEST }, { breaks: false });
@@ -236,7 +236,7 @@ describe('tests as the product: Thả quái thử thành (ADR 0022)', () => {
     expect(kingdom.warnings).toContainEqual(
       expect.stringContaining('without its breaks in the scratch plot'),
     );
-  }, 120_000);
+  }, 120_000); // real git, the checks run for real in a scratch plot: 6 s beside 13 slow specs (2026-11-18)
 
   it('fails a quest whose test flakes, whatever its judge says, and opens a fix quest', async () => {
     const counter = path.join(await mkdtemp(path.join(os.tmpdir(), 'elvaria flake ')), 'flaky.count');
@@ -260,7 +260,7 @@ describe('tests as the product: Thả quái thử thành (ADR 0022)', () => {
       tags: ['e2e'],
     });
     expect(fix?.description).toContain('✗ flake_check');
-  }, 120_000);
+  }, 120_000); // real git, the checks run for real in a scratch plot: 6 s beside 13 slow specs (2026-11-18)
 
   it('lets its judge run the exclusive e2e check while it holds the territory lock, freed after (P1-20 (a))', async () => {
     const { kingdom, steward, seen, lock } = await open(
@@ -272,7 +272,7 @@ describe('tests as the product: Thả quái thử thành (ADR 0022)', () => {
     expect(seen[0]?.lock_free).toBe(false);
     expect(seen[0]?.request.permissions.allow).toContain('Bash(node e2e/sum.test.mjs:*)');
     expect(await free(lock)).toBe(true);
-  }, 120_000);
+  }, 120_000); // real git, the exclusive e2e check run for real: 4 s beside 13 slow specs (2026-11-18)
 
   it('opens no judge while another holds the exclusive lock, says so once, and opens it once freed', async () => {
     let other: HeldLock | undefined;
@@ -292,5 +292,5 @@ describe('tests as the product: Thả quái thử thành (ADR 0022)', () => {
     await other?.release();
     await tickUntil(steward, kingdom.clock, statusIs(kingdom, 'Wall of glass', 'done'));
     expect(seen).toHaveLength(1);
-  }, 120_000);
+  }, 120_000); // real git, the exclusive e2e check run for real: 4 s beside 13 slow specs (2026-11-18)
 });

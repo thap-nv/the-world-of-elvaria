@@ -34,6 +34,8 @@ const planPayload = (title: string, tags: readonly string[] = ['backend']) =>
   questPayload(title, { kind: 'plan', class_required: 'mage', tags, seal_required: false });
 
 describe('a quest waiting for another one not merged yet (P1-16 proposal (f))', () => {
+  // Two quests on real git, the second's plot on the first's branch, both merged in order: 14 s beside 13
+  // other slow specs on Windows (2026-11-18), room for a busy machine.
   it('starts on the branch of the quest it waits for, so the two never conflict when merged in order', async () => {
     const doc = 'docs/architecture.md';
     const child = (ref: string, title: string, fields: Record<string, unknown> = {}) => {
@@ -71,6 +73,8 @@ describe('a quest waiting for another one not merged yet (P1-16 proposal (f))', 
 });
 
 describe("the party rules on a plan's list (P1-18)", () => {
+  // Several plans and parties on real git, each quest with its plot: 25 s beside 13 other slow specs on
+  // Windows (2026-11-18), room for a busy machine.
   it('opens no part but from a contract, nothing else from it, and no part on another territory', async () => {
     const cases: Readonly<Record<string, readonly [Record<string, unknown>, string, string]>> = {
       'Plain plan': [
@@ -122,6 +126,8 @@ describe("the party rules on a plan's list (P1-18)", () => {
 });
 
 describe('a party whose contract quest the owner archived after its delivery (P1-21 (a))', () => {
+  // A party on real git whose contract was archived after its delivery: 10 s beside 13 other slow specs on
+  // Windows (2026-11-18), room for a busy machine.
   it('still takes its parts and its merge quest, all on the contract branch', async () => {
     current = await partyBench({
       'Book a room': {

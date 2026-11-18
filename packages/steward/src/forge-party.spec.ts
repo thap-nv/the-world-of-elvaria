@@ -29,6 +29,8 @@ const lines = async (party: PartyBench, type: string) =>
   (await openEventLog(party.kingdom.root).read()).events.filter((event) => event.type === type);
 
 describe('a party on a territory that delivers by pull request', () => {
+  // A whole party on real git with a bare origin: contract, parts and merge quest, then its push: 18 s beside
+  // 13 other slow specs on Windows (2026-11-18), room for a busy machine.
   it('pushes the merge quest alone, after its seal', async () => {
     const forge = fakeForge();
     current = await partyBench(

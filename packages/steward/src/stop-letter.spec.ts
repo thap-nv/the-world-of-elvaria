@@ -83,6 +83,8 @@ async function open(leaves: Leaves, { hook, letter = true, plays = {} }: Options
 const WORK = { 'src/app.ts': 'export const app = 2;\n' };
 
 describe('a scratch file at the plot root (P1-55)', () => {
+  // Real git and the Steward's ticks up to the quest's end: 4 s beside 13 other slow specs on Windows
+  // (2026-11-18), room for a busy machine.
   it('stays out of the submit commit, and is set aside in the run folder', async () => {
     const { kingdom, steward, repo } = await open(() => ({ ...WORK, 'quests-handover-tmp.txt': 'x\n' }));
     await kingdom.command('create_quest', questPayload('Careless knight'));
@@ -103,6 +105,8 @@ describe('a scratch file at the plot root (P1-55)', () => {
 });
 
 describe("work the territory's hook refuses (P1-55)", () => {
+  // Real git, a pre-commit hook run for real and the Steward's ticks: 3 s beside 13 other slow specs on
+  // Windows (2026-11-18), room for a busy machine.
   it('keeps a 300-line hook log and reports its head and counts', async () => {
     const { kingdom, steward } = await open(() => WORK, { hook: LONG_HOOK });
     await kingdom.command('create_quest', questPayload('Long hook'));
@@ -121,6 +125,8 @@ describe("work the territory's hook refuses (P1-55)", () => {
     expect(output).toContain('error 299: lint failed');
   }, 120_000);
 
+  // Real git, a pre-commit hook run for real and the Steward's ticks: 3 s beside 13 other slow specs on
+  // Windows (2026-11-18), room for a busy machine.
   it('is kept as a patch, and a quest with no letter gets a minimal one', async () => {
     const { kingdom, steward, repo } = await open(() => WORK, { hook: HOOK, letter: false });
     await kingdom.command('create_quest', questPayload('Refused by lint'));
@@ -142,6 +148,8 @@ describe("work the territory's hook refuses (P1-55)", () => {
     expect(git(fromPortable(quest.plot.path ?? ''), 'status', '--porcelain')).toContain('src/app.ts');
   }, 120_000);
 
+  // Real git, a pre-commit hook run for real and the Steward's ticks: 3 s beside 13 other slow specs on
+  // Windows (2026-11-18), room for a busy machine.
   it('also keeps the work of a session a breaker cut, whose WIP commit it refused', async () => {
     const options = { hook: HOOK, letter: false, plays: { work: { 'Cut by time': ['hang' as const] } } };
     const { kingdom, steward, repo } = await open(() => WORK, options);
@@ -180,6 +188,8 @@ describe("work the territory's hook refuses (P1-55)", () => {
     expect(letter).toMatch(/## Next step[\s\S]*## Question\s*$/);
   }, 120_000);
 
+  // Real git, a pre-commit hook run for real and the Steward's ticks: 3 s beside 13 other slow specs on
+  // Windows (2026-11-18), room for a busy machine.
   it('never overwrites the letter its character wrote, and keeps the copy of the work all the same', async () => {
     const { kingdom, steward } = await open(() => WORK, { hook: HOOK });
     await kingdom.command('create_quest', questPayload('Has its letter'));
