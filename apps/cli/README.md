@@ -123,7 +123,9 @@ show` prints the brief apart from the rest of the description and, while the pla
   runs runner-core's conformance suite against it (with the real CLI only the checks that burn no or almost no mana;
   `--scenarios` runs all of them against a fake CLI; `--tool <path>` tries another CLI than the pinned one, and with
   `--scenarios` writes nothing, PS-04b) and, once it passes, holds the tribe to the login its adapter
-  reports, as doctor does (`loginFindings`, P1-34): a tribe that passes is enabled once doctor has pinned its CLI.
+  reports, as doctor does (`loginFindingsOf`, P1-34), its config folder, and the other enabled tribes of its adapter
+  on the same folder or account (PS-27, `accountFindingsAgainst`): a tribe that passes is enabled once doctor has
+  pinned its CLI.
   With the real CLI (`src/tribe/check-live.ts`, lessons of 2026-11-13) it runs the CLI doctor would find (the pinned
   file, else PATH or the adapter's search, or `--tool`), and a pass pins that CLI's path and version for this tribe
   alone, the version as `tool.checked_version` (B1, A1b); a session's ceiling is 300 s (120 s for a fake CLI),
@@ -136,7 +138,7 @@ show` prints the brief apart from the rest of the description and, while the pla
   (`src/tribe/adapter-file.ts`): runner-core's `adapterKitOf` builds its kit (minimal env, the pinned or given CLI,
   `launchOf`, `hookCommand`) and `adapterOfModule` checks what `createAdapter(kit)` returns, so a broken file is a
   list of reasons for `run`, `doctor` and `tribe check`, never a crash. `tribe list` (P1-34, `src/tribe/list.ts`)
-  prints one line per tribe: its look (PS-24: name, palette and crest), adapter, enabled or not, pinned CLI version, path and sign-in, and from its runner the
+  prints one line per tribe: its look (PS-24: name, palette and crest), adapter, enabled or not, pinned CLI version, path, sign-in and config folder (PS-27), and from its runner the
   highest rank `tribeLimitsOf` lets it take (none without `headless`), whether it takes guarded territories, and the
   capabilities, the shell and the prompt limit (`capabilities.prompt_max_chars`) on this OS it declares (P1-46, fix/cli-lines); a tribe with no runner yet or an adapter file that does not load says so instead.
   `tribe look <id>` (PS-24, `src/tribe/look.ts`, `look-view.ts`) prints the tribe's look from the domain's `tribeLookOf`
@@ -151,7 +153,12 @@ show` prints the brief apart from the rest of the description and, while the pla
   adapter declares first (`defaultAuthOf`: the owner's login when it runs with one; a CLI changed since is only said,
   with `tribe check <tribe>` as the next step, and `--pin` keeps the old checked version, which the Steward holds the
   tribe to, saying so: lessons of 2026-11-13), refuses a pinned sign-in the
-  adapter does not declare (`checkTribeAuth`, P1-19), asks
+  adapter does not declare (`checkTribeAuth`, P1-19), pins `tool.config_dir` with `--config-dir <tribe>=<folder>`
+  (PS-27, `src/doctor/config-dir.ts`; empty drops it; refused before anything runs for an unknown tribe, a relative
+  or missing folder, or one inside the kingdom or a territory's repo or worktree folder), holds a tribe's folder to
+  its adapter's `capabilities.config_dir` and outside those places, fails both tribes of every pair of login tribes
+  of one adapter on one folder or one account (`src/doctor/check-accounts.ts`, the domain's `accountClashesOf`,
+  never naming the account) and keeps such a tribe off with `--enable`, asks
   the tribe's adapter about its login (a CLI that cannot sign in is an error, with or without a reason, P1-34), how
   soon it ends and the built hook, refuses Antigravity without
   `--acknowledge-terms` (ADR 0018), turns a disabled tribe on with `--enable <tribe>` (P1-15) only when that run
@@ -222,7 +229,7 @@ show` prints the brief apart from the rest of the description and, while the pla
   `src/run/antigravity.ts`, and since P1-19 an owner adapter file; a tribe without a runner takes no quest, and one
   whose adapter file is broken says why), plots over runner-core's
   `PlotManager` and `runChecks` (`src/run/plots.ts`: prepare, its `commands.setup` given the quest's secrets
-  (P1-30), commit, the checks on what the quest touched, given them too (P1-10b), release) with a `ProcessHost` from PATH and each CLI's `forget` (`claude purge`), the console bell saying
+  (P1-30), commit, the checks on what the quest touched, given them too (P1-10b), release) with a `ProcessHost` from PATH and each CLI's `forget` (`claude purge`, one per Claude tribe, each in its own config folder, PS-27), the console bell saying
   the Steward's notices in the owner's language (from P1-22 also a mana gauge that warns, sleeps or wakes; from
   P1-32 a quest gone to the infirmary by its trip, then each part of the detail on a line of its own, as `quest show`
   says them), and `.state/steward.lock` (a second `run` is refused). It names the build it runs on as it starts

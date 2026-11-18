@@ -1,5 +1,5 @@
 // What doctor and `tribe check` pin into `tribes[].tool` (implementation-plan §3.14): the CLI found, its version,
-// the sign-in a first pin takes, the terms acknowledged (ADR 0018), and what a changed or unchecked pin says
+// the sign-in a first pin takes, the terms acknowledged (ADR 0018), the config folder (PS-27), and what a changed or unchecked pin says
 // (A1a, A1b of the lessons of 2026-11-13). Split out of ./check-tribe.ts, which only orders the checks of a tribe.
 import { defaultAuthOf } from '@elvaria/domain';
 import type { AdapterCapabilities, Tribe } from '@elvaria/domain';
@@ -14,6 +14,11 @@ export interface PinOptions {
   readonly pin: boolean;
   /** `--acknowledge-terms <tribe>`: the owner accepts the provider's terms for that tribe (ADR 0018). */
   readonly acknowledge: ReadonlySet<string>;
+  /**
+   * `--config-dir <tribe>=<folder>` (PS-27): the config folder of the tribe's CLI in kingdom.json's form, checked by
+   * configDirsOf; an empty one removes `tool.config_dir`.
+   */
+  readonly configDirs: ReadonlyMap<string, string>;
 }
 
 export type Pinned = NonNullable<Tribe['tool']>;
@@ -55,7 +60,7 @@ export function nextTool(
   const acknowledged = options.acknowledge.has(tribe.id) ? { terms_acknowledged_at: ctx.now() } : {};
   const checked = pinned?.checked_version ?? pinned?.version;
   const kept = pinned?.version === found.version || checked === undefined ? {} : { checked_version: checked };
-  return {
+  const next = {
     ...pinned,
     path: found.path,
     version: found.version,
@@ -63,6 +68,14 @@ export function nextTool(
     ...kept,
     ...acknowledged,
   };
+  return withConfigDir(next, options.configDirs.get(tribe.id));
+}
+
+/** The tool with the config folder `--config-dir` gives (PS-27): kept when it gives none, dropped when it gives ''. */
+function withConfigDir(tool: Pinned, dir: string | undefined): Pinned {
+  if (dir === undefined) return tool;
+  const { config_dir: _replaced, ...rest } = tool;
+  return dir === '' ? rest : { ...rest, config_dir: dir };
 }
 
 /**
