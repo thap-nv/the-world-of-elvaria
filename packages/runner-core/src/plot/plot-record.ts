@@ -28,6 +28,12 @@ export interface PlotRecord {
    * a Steward stopped there finds the merge made and runs only what follows it. Absent or false: nothing pending.
    */
   readonly update_pending?: boolean;
+  /**
+   * (fix/merge-quest-followups (n)) Generated files (a `regenerate` rule of shared_paths) that a merge quest's merge
+   * left for later: in a conflict left in progress for the knight, or resolved by the rule before a later merge
+   * stopped. The first merge that stops no more names them, once (generate-later.ts). Absent or empty: none.
+   */
+  readonly regenerate_pending?: readonly string[];
 }
 
 const isPlotRecord = (value: unknown): value is PlotRecord =>

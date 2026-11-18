@@ -181,6 +181,8 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   diff then counts from there. The fork point (for a merge quest, the base branch's commit it merged last) and the
   setup state live in `elvaria-plot.json` in the worktree's private git folder. `status`, `head` (the commit at HEAD, null without git: the Steward reuses checks that ran on
   it for the run's next judge, P1-38), `touched` (paths changed since the fork, committed or not, plus untracked files),
+  `diffLines` (PS-08b, `plot/diff-size.ts`: lines added plus removed since the fork by `git diff --numstat`, the given
+  globs aside, a binary file none; 0 without git),
   `commitAll` (everything, through the territory's own hooks; `refused` when a hook says no; given a `CommitRescue` folder
   (P1-55, `plot/rescue.ts`) it first moves the scratch files at the plot's root to `set-aside/` there, and a refusal leaves
   `wip.patch` and the staged paths; the Steward's messages
@@ -224,7 +226,10 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   and commits the rest (`plot/generate.ts`); `mergesClean` says whether an open branch still merges cleanly into
   the tips a look saw. A party's merge quest gets the same rules for its parts and base branch
   (`MergeOptions.shared`), counts from the base branch even when it did not move, and is set up again once a part
-  is in (PS-08e (6), (7)).
+  is in (PS-08e (6), (7)). A generated file (`regenerate`) one of its merges left in a conflict for the knight, or
+  resolved by the rule before a later merge stopped, stays in the plot's record (`regenerate_pending`) until the
+  first merge that stops no more names it, once (`MergeOutcome.regenerate`, `plot/generate-later.ts`,
+  fix/merge-quest-followups (n)): the generators cannot run while a merge waits in progress.
 - Says how far a territory moved since its gazetteer was written (PS-21): `PlotManager.drift(plot, from)` counts the
   commits from `from` to the plot's fork point per top-level folder (`src/plot/drift.ts`, `git log --name-only`,
   root files left out; null without git, a record or a commit git knows), and `gazetteerWithDrift`

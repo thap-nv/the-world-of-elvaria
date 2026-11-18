@@ -277,6 +277,25 @@
                   "seal_required": {
                     "type": "boolean"
                   },
+                  "seal_raised": {
+                    "description": "quest.seal_raised: why the machine raised the seal the kingdom's delegation had spared the quest; the digest's awaiting_seal item names them.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "enum": [
+                        "protected_paths",
+                        "above_level",
+                        "out_of_scope",
+                        "diff_size",
+                        "same_family_judge",
+                        "machine_judge",
+                        "objection",
+                        "rank_above",
+                        "out_of_delegation",
+                        "suspended"
+                      ]
+                    }
+                  },
                   "sealed_at": {
                     "type": [
                       "string",
@@ -575,6 +594,11 @@
                   "type": "string",
                   "minLength": 1
                 }
+              },
+              "diff_lines": {
+                "description": "On the `quest.submitted` line of a quest with seal_delegated: the lines its branch added and removed since its fork point, the territory's shared paths merged by `regenerate` aside, which the delegation's max_diff_lines bounds. PS-16 reads the same measure.",
+                "type": "integer",
+                "minimum": 0
               },
               "refused_patch": {
                 "description": "On the `quest.blocked` line of a run that ended on its amendment (PS-22b): why the Steward did not apply the run's patch, which stays in the plot while the quest waits. The doer's next session reads it (Continuation.refused_patch, P1-31).",
@@ -880,6 +904,25 @@
                   "seal_required": {
                     "type": "boolean"
                   },
+                  "seal_raised": {
+                    "description": "quest.seal_raised: why the machine raised the seal the kingdom's delegation had spared the quest; the digest's awaiting_seal item names them.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "enum": [
+                        "protected_paths",
+                        "above_level",
+                        "out_of_scope",
+                        "diff_size",
+                        "same_family_judge",
+                        "machine_judge",
+                        "objection",
+                        "rank_above",
+                        "out_of_delegation",
+                        "suspended"
+                      ]
+                    }
+                  },
                   "sealed_at": {
                     "type": [
                       "string",
@@ -1178,6 +1221,11 @@
                   "type": "string",
                   "minLength": 1
                 }
+              },
+              "diff_lines": {
+                "description": "On the `quest.submitted` line of a quest with seal_delegated: the lines its branch added and removed since its fork point, the territory's shared paths merged by `regenerate` aside, which the delegation's max_diff_lines bounds. PS-16 reads the same measure.",
+                "type": "integer",
+                "minimum": 0
               },
               "refused_patch": {
                 "description": "On the `quest.blocked` line of a run that ended on its amendment (PS-22b): why the Steward did not apply the run's patch, which stays in the plot while the quest waits. The doer's next session reads it (Continuation.refused_patch, P1-31).",

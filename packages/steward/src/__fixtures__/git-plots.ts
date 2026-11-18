@@ -95,6 +95,8 @@ export function gitPlots(kingdom: string, options: { readonly release?: boolean 
     generate: (plot, territory, request) => manager.generate(plot, territory, request),
     settle: (plot) => manager.settle(plot),
     mergesClean: (plot, tips) => manager.mergesClean(plot, tips),
+    // PS-08b: the size of a branch, as `elvaria run` measures it.
+    diffLines: (plot, exclude) => manager.diffLines(plot, exclude),
     // The judge's scratch plot as `elvaria run` makes it (P1-20): real worktrees, the checks for real.
     trial: ({ quest, territory, run_dir: runDir, runs, coverage, lock_wait_ms: wait }) => {
       const given = { kingdom, quest, territory, run_dir: runDir, runs, coverage };

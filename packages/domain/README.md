@@ -42,6 +42,8 @@
   scope and the conflicted files, the red checks' log ends), `isQueueMerge` (`party_role: merge`, `created_by:
 patrol`); `partyOf` counts the quest a party is named after, `partyStatusOf` and `partyIssues` leave it out, the
   attention queue says `delivery_merging` while it is on its way, and `forgeArchives` archives its parent with it.
+  Every merge quest of a party, its own or the queue's, takes the party's contract and parts with it into
+  `forgeArchives` (fix/merge-quest-followups (l)): a squash leaves their commits no ancestry for a look to find.
 - Shapes a party (`src/party/`, §3.13, ADR 0020, P1-18): `mergeQuestOf` (the merge quest the Steward adds when a
   contract is delivered: a knight's build waiting for every part, their tags and secrets, the highest rank, the
   royal seal), `PartyPlace` (a part's or the merge quest's place, given to `questFromCommand` through
@@ -346,6 +348,16 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
 <tribe>`; A1b of the lessons of 2026-11-13). The world state holds the
   open memos since PS-03 (`memos`, `memoViewOf`; `memo.*` lines reduce into it; `WORLD_STATE_VERSION` 2). A memo the
   Chancellor's triage sent up carries its advice (`escalated`, PS-03b) and lists as `memo_escalated`.
+- Decides the delegation of the royal seal (`src/delegation/seal.ts`, PS-08b, ADR 0023): `kingdom.delegation.seal`
+  (`SealDelegationSchema`: `max_rank`, `kinds`, `max_diff_lines`, default 400), `sealDelegated` (a new quest whose
+  command says nothing of the seal, not of a party, of a listed kind whose `seal_default` is true, within `max_rank`, on
+  a `pr_merge` territory not suspended, is made with `seal_required: false` and `seal_delegated`; `questFromCommand`
+  reads it from `NewQuestContext.seal`, and the owner's edit of `seal_required` drops the mark), `sealRaisesOf` and
+  `raisedSeal` (why the machine raises it at a submit or a pass, `SEAL_RAISES`, set through `Move.before` with
+  `seal_raised`; the transition table does not change), and `mayMergeUnsealed`, which widens rule (G) in `mergeDue`
+  (`ForgeSource.seal_policy`, `KingdomSnapshot.seal_policy`). `apartFromDoers` (`src/verify/`) is the one test of
+  "another family than every doer" that selectVerifier and the seal share. The digest's `merged_unsealed` item
+  (`unsealedMergesOf`, `revertWordsOf`) and `raised` on `awaiting_seal`; the ledger's `unsealed` counts.
 - Decides what the world takes in alone of the memos the Chancellor triages (`src/delegation/`, PS-03b):
   `kingdom.delegation` (`DelegationSchema`: `max_rank`, `same_scope`, `ask`) and `delegationHolds`, which answers with
   what holds a piece of work for the owner: a matter of `ask` the Chancellor flagged (or `protected_paths` when a

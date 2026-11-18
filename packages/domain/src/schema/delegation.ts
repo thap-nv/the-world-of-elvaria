@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 import { DELEGATION_ASK_REASONS, DELEGATION_MAX_RANK_DEFAULT } from '../delegation/constants.ts';
 import { RankSchema, unique } from './common.ts';
+import { SealDelegationSchema } from './delegation-seal.ts';
 
 const describe = (description: string) => ({ description });
 
@@ -29,6 +30,8 @@ export const DelegationSchema = z
           'The matters the owner keeps: a memo the Chancellor flags with one of them goes to the owner whatever its rank and scope. All five by default.',
         ),
       ),
+    // PS-08b: optional, no default: without it no quest goes without the seal by delegation.
+    seal: SealDelegationSchema.optional(),
   })
   .prefault({})
   .meta(

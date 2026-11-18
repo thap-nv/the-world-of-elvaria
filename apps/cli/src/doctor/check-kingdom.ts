@@ -49,6 +49,12 @@ export async function checkRegistry(ctx: KingdomContext): Promise<Finding[]> {
     tags: tags.length,
   };
   const findings = [finding('ok', t('cli.doctor.registry', counts))];
+  // PS-08b: a kind the delegation of the seal names that the registry lacks never spares a quest.
+  const unknown = (ctx.kingdom.delegation.seal?.kinds ?? []).filter(
+    (id) => !kinds.some((kind) => kind.id === id),
+  );
+  if (unknown.length > 0)
+    findings.push(finding('warn', t('cli.doctor.seal_kinds_unknown', { kinds: unknown.join(', ') })));
   const missing = await missingRegistryFiles(store.root, registry.value);
   if (missing.length > 0) {
     const files = missing.map((issue) => issue.file);

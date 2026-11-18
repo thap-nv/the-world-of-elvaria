@@ -8,6 +8,7 @@ import type { Quest, QuestId, Result } from '@elvaria/domain';
 
 import { OUT_OF_ATTEMPTS } from '../infirmary.ts';
 import { STEWARD } from '../record.ts';
+import { passRaiseOf } from '../seal.ts';
 import { VERDICT_EVENT, moveOnVerdict, recordVerdict, ritualOf } from '../verdicts.ts';
 import { checksRunOf, takeChecks } from './checks.ts';
 import { openFlakyFollowUp, releaseScratch } from './scratch.ts';
@@ -39,7 +40,11 @@ export async function machineReview(ctx: Context, questId: QuestId): Promise<Res
     {
       event: { type: VERDICT_EVENT[result] },
       actor: 'steward',
-      before: { checks_run: checksRunOf(checks.value) },
+      // PS-08b: the machine alone never passes a quest the delegation spared without the owner's seal.
+      before: {
+        checks_run: checksRunOf(checks.value),
+        ...(result === 'pass' ? passRaiseOf(ctx, quest, 'machine') : {}),
+      },
       infirmary: OUT_OF_ATTEMPTS,
     },
   );

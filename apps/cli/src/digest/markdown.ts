@@ -5,6 +5,8 @@ import { ATTENTION_GROUPS } from '@elvaria/domain';
 import type { AttentionGroup, AttentionItem, WaitGauge } from '@elvaria/domain';
 import type { Translate } from '@elvaria/i18n';
 
+import { raisesText } from '../quest/seal-view.ts';
+
 const NONE = '—';
 /** The digits of a commit id the CLI prints (shortSha). */
 const SHORT_SHA = 12;
@@ -98,10 +100,21 @@ function subjectOf(t: Translate, item: AttentionItem): string {
   });
 }
 
+/** (PS-08b) Why the machine raised the seal of a quest the delegation had spared, after its line. */
+const raisedOf = (t: Translate, item: AttentionItem): string =>
+  item.raised === undefined ? '' : ` ${t('cli.digest.raised', { reasons: raisesText(t, item.raised) })}`;
+
+/** (PS-08b) The git line that undoes a merge without the seal, for the owner to run and push. */
+const revertLines = (t: Translate, item: AttentionItem): string[] =>
+  item.revert === undefined
+    ? []
+    : [`  ${t('cli.digest.revert', { command: `\`${item.revert.join(' ')}\`` })}`];
+
 /** One item: its subject, its advice, and its command on a line of its own. */
 const itemLines = (t: Translate, item: AttentionItem): string[] => [
-  `- ${subjectOf(t, item)} ${t(`cli.digest.advice.${item.advice}`)}`,
+  `- ${subjectOf(t, item)}${raisedOf(t, item)} ${t(`cli.digest.advice.${item.advice}`)}`,
   `  \`elvaria ${item.command.join(' ')}\``,
+  ...revertLines(t, item),
 ];
 
 function groupLines(t: Translate, group: AttentionGroup, items: readonly AttentionItem[]): string[] {

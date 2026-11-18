@@ -13,6 +13,7 @@ import { reworkOf } from './rework.ts';
 import { passByRunOf } from './run-rates.ts';
 import { firstEditsOf, graphQueriesOf, promptSizesOf } from './session-counts.ts';
 import { statusTimesOf } from './status-times.ts';
+import { unsealedCountsOf } from './unsealed-counts.ts';
 import { inWindow } from './window.ts';
 import { redFlipsOf } from '../patrol/health.ts';
 import type { RedFlip } from '../patrol/health.ts';
@@ -28,6 +29,7 @@ import type { QuestTrail, Rework } from './rework.ts';
 import type { RunPassRate } from './run-rates.ts';
 import type { FirstEdits, GraphQueries, PromptSizes } from './session-counts.ts';
 import type { StatusTime } from './status-times.ts';
+import type { UnsealedCount } from './unsealed-counts.ts';
 import type { MetricsWindow } from './window.ts';
 import type { ClassId, KindId, QuestId, TerritoryId } from '../core/ids.ts';
 import type { QuestStatus, Tier } from '../schema/quest/shared.ts';
@@ -85,6 +87,8 @@ export interface Metrics {
   readonly base_red: readonly RedFlip[];
   /** Quests sealed inside the window, with what they cost. */
   readonly sealed: readonly SealedCost[];
+  /** (PS-08b) Per territory, the Steward's merges inside the window and those without the seal (delegation). */
+  readonly unsealed: readonly UnsealedCount[];
   /** The owner's applied commands on quests inside the window, per kind of OWNER_COMMAND_KINDS. */
   readonly owner_commands: readonly CommandCount[];
   /** The quests worked, or stepped into by the owner, inside the window, by id. */
@@ -185,6 +189,7 @@ export function metricsOf(input: MetricsInput, window: MetricsWindow = {}): Metr
     sealed: trails
       .flatMap(({ quest }) => sealedCostOf(quest) ?? [])
       .filter(({ sealed_at }) => inWindow(window, sealed_at)),
+    unsealed: unsealedCountsOf(input.events, window),
     owner_commands: OWNER_COMMAND_KINDS.map((kind) => ({
       kind,
       count: commands.filter((command) => command.kind === kind).length,

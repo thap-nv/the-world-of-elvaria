@@ -39,6 +39,7 @@ import {
   worktreeHead,
   worktreeStatus,
 } from './worktree-ops.ts';
+import { diffLinesIn } from './diff-size.ts';
 import type { CommitOutcome, ForgetWorktree, PlotStatus, ReleasedPlot } from './worktree-ops.ts';
 import { prepareWorktree, worktreePathOf } from './worktree.ts';
 import type { PlotFailure } from './worktree.ts';
@@ -96,6 +97,11 @@ export interface PlotManager extends ScratchMethods, QueueMethods {
   head(plot: Plot): Promise<string | null>;
   /** Paths the quest changed, relative to the plot with `/`: what `runChecks` selects checks by. */
   touched(plot: Plot): Promise<string[]>;
+  /**
+   * (PS-08b) Lines added and removed since the plot forked, files of the `exclude` globs aside (diffLinesIn); 0 for a
+   * plot without git. Throws when git cannot say.
+   */
+  diffLines(plot: Plot, exclude: readonly string[]): Promise<number>;
   /** `rescue` (P1-55): where scratch files at the plot's root go, and the patch of a commit the hooks refuse. */
   commitAll(plot: Plot, message: string, rescue?: CommitRescue): Promise<CommitOutcome>;
   /**
@@ -188,7 +194,7 @@ async function prepareGitPlot(
 function baseMethods(
   findGit: () => Promise<Git | undefined>,
   git: () => Promise<Git>,
-): Required<Pick<PlotManager, 'baseTips' | 'inBase'>> {
+): Required<Pick<PlotManager, 'baseTips' | 'inBase' | 'diffLines'>> {
   return {
     baseTips: async (territory) => {
       if (territory.vcs.type !== 'git') return undefined;
@@ -196,6 +202,9 @@ function baseMethods(
       return resolved === undefined ? undefined : baseTipsIn(resolved, territory);
     },
     inBase: async (plot, tips) => plot.type === 'worktree' && inBaseIn(await git(), worktreeOf(plot), tips),
+    // PS-08b: the size of the branch, which the delegation of the seal bounds.
+    diffLines: async (plot, exclude) =>
+      plot.type === 'worktree' ? diffLinesIn(await git(), worktreeOf(plot), exclude) : 0,
   };
 }
 

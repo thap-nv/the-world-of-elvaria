@@ -67,6 +67,16 @@ const QUEST_CHANGE = {
         "On the `quest.submitted` line of a quest with scope_paths: the files the work changed outside them, the territory's shared paths aside, relative to the plot with `/`. A signal for the judge, who sees the same list, and a number in the metrics; never a fail (ADR 0028).",
       ),
     ),
+  // Optional and added after v1 (PS-08b), as `sequels`: only the submit of a quest the delegation spared the seal has one.
+  diff_lines: z
+    .int()
+    .min(0)
+    .optional()
+    .meta(
+      describe(
+        "On the `quest.submitted` line of a quest with seal_delegated: the lines its branch added and removed since its fork point, the territory's shared paths merged by `regenerate` aside, which the delegation's max_diff_lines bounds. PS-16 reads the same measure.",
+      ),
+    ),
   // Optional and added after v1 (fix/session-notes), as `sequels`: only the line of a run that ended on its amendment
   // with work the Steward could not take has one, and the quest file keeps no reason.
   refused_patch: NonEmptyStringSchema.optional().meta(

@@ -431,6 +431,14 @@
   remote tip is still that head (a removal that fails is a warning, `branch_deleted: false`), one `delivery.merged`;
   red, a conflict, a moved head, a closed pull request, or `checks_timeout_minutes` past the push's line: one
   `delivery.failed`, the quest stays done. The digest drops the `delivery_waits` of such a quest (`ownerDeliveries`).
+- Carries out the delegation of the royal seal (PS-08b, `src/seal.ts`, ADR 0023): the inbox's `create_quest` and the
+  snapshot get `sealPolicyOf` (`kingdom.delegation.seal`, no territory suspended until PS-08g); a submit (a session's,
+  or the owner's `submit`) measures the branch of a quest with `seal_delegated` (`Plots.diffLines`, the territory's
+  `regenerate` shared paths aside; a plot that cannot say counts as over) and writes `diff_lines` on its line; the submit
+  and a passing verdict (`review/judge.ts`, `review/machine.ts`) set `seal_required` and `seal_raised` through `before`
+  when `sealRaisesOf` gives a reason, so the quest waits for the seal; one still covered is merged by the forge without
+  it (`delivery.merged` with `sealed: false`), and the next digest names it with its `git revert` line
+  (`unsealedMergesOf`).
 - Archives a done quest whose branch reached its base branch, under every delivery mode (PS-08d, (E) of the PS-08
   plan): planTick's `base_looks` (`baseLooks`: at start, right after a `delivery.merged` on the territory, then every
   10 minutes while a delivered done quest is there to ask about) starts a look outside the tick (`src/forge/looks.ts`,
@@ -449,7 +457,9 @@
   done quest touched, read once (`src/forge/sizes.ts`); a sealed pull request under `pr_merge` holds its lane
   until merged. A pushed pull request that no longer merges cleanly (a look's `Plots.mergesClean`, or the forge's
   `conflict`) goes back into the queue, at most `UPDATE_ROUNDS_MAX` times (`src/forge/stale.ts`). A merge quest's
-  merges use the territory's `shared_paths` rules, and the generators run when `regenerate` kept a side.
+  merges use the territory's `shared_paths` rules, the machine's run too (`mergeParts`, fix/merge-quest-followups
+  (m)), and the generators run when `regenerate` kept a side, or once a knight concluded a conflict that held a
+  generated file, before the checks (`MergeOutcome.regenerate`, (n)); never while a merge stopped.
 - Offers a newer build in the digest (`upgrade_available`, PS-08d) when the optional `deps.upgradeOffer` port of the
   composition root says the pinned build's repo has one; read as the digest is made.
 - Tells once when an open quest nobody can take (`quest.unclaimable`, the bell), withdraws it with
