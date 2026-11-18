@@ -25,7 +25,8 @@ export const ATTENTION_TABLE = {
   // words what to do by its `reason`.
   delivery_failed: { group: 'must', advice: 'deliver_again', command: ['quest', 'deliver', '{quest}'] },
   // PS-26: the patrol found a check of the territory's default branch red, until a patrol finds it green again. The
-  // command runs the same trial by hand (PS-25), to see it red or green before the next patrol.
+  // command runs the same trial by hand (PS-25), to see it red or green before the next patrol. (PS-09d) While it is
+  // red the territory takes no work: the item names the quests that wait (`waiting`).
   base_red: { group: 'must', advice: 'fix_base', command: ['territory', 'check', '{territory}'] },
   judge_mana: {
     group: 'must',
@@ -105,7 +106,10 @@ export interface AttentionSubject {
   readonly judge?: CharacterId;
   /** Why the owner holds the quest (quest_held), as the owner wrote it; absent when the owner gave no reason. */
   readonly held_reason?: string;
-  /** The quests that wait for a done quest's scope (scope_held, PS-05). */
+  /**
+   * The quests that wait for a done quest's scope (scope_held, PS-05); (PS-09d) the open quests that wait for a red
+   * default branch (base_red): present, maybe empty, when the territory takes no work.
+   */
   readonly waiting?: readonly QuestId[];
   /** The pools that hold every judge of a quest (judge_mana). */
   readonly gauges?: readonly WaitGauge[];

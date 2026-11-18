@@ -2725,7 +2725,10 @@
               },
               "trigger": {
                 "enum": [
-                  "schedule"
+                  "schedule",
+                  "base_moved",
+                  "owner",
+                  "queue"
                 ]
               },
               "plot_failure": {

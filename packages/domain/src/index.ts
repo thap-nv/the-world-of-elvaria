@@ -95,6 +95,7 @@ export * from './quest/transitions.ts';
 export * from './schedule/constants.ts';
 export * from './schedule/due.ts';
 export * from './patrol/follow-up.ts';
+export * from './patrol/base-red.ts';
 export * from './patrol/health.ts';
 export * from './patrol/report.ts';
 export * from './scorecard/constants.ts';

@@ -6,6 +6,7 @@ import type { UnopenedReview } from '../breaker/review.ts';
 import type { QuestId } from '../core/ids.ts';
 import type { WaitGauge } from '../dispatch/judge-waits.ts';
 import type { ScopeHold } from '../dispatch/scope.ts';
+import type { BaseHold } from '../patrol/base-red.ts';
 import type { TerritoryHealth } from '../patrol/health.ts';
 import type { HeldQuest } from '../quest/hold.ts';
 import type { TribeHold } from '../tribe/version-hold.ts';
@@ -43,6 +44,11 @@ export interface StewardNotices {
   readonly deliveries?: readonly ForgeOutcome[];
   /** The health of each patrolled territory's default branch (baseHealthOf, PS-26); from the log. */
   readonly patrols?: readonly TerritoryHealth[];
+  /**
+   * (PS-09d) The red territories that take no work now (baseHoldsOf over baseRedOf), with the open quests that wait for
+   * their branch to be green: their `base_red` items say so. From the log and the quest files.
+   */
+  readonly base_holds?: readonly BaseHold[];
   /** The quests the owner holds ((D) of fix/quest-hold, heldQuestsOf); from the quest files, not the Steward's. */
   readonly held?: readonly HeldQuest[];
   /** A newer build to upgrade to (PS-08d): apps/cli reads it from the pinned build's repo as the digest is made. */
@@ -115,8 +121,15 @@ function deliveryItems(
   ];
 }
 
-/** A territory's red checks, then its scans that did not pass (PS-26). */
-function patrolItems({ territory, red, scans }: TerritoryHealth): AttentionItem[] {
+/**
+ * A territory's red checks, then its scans that did not pass (PS-26); (PS-09d) a red check of a territory that takes no
+ * work names the quests that wait for it (`waiting`, maybe none).
+ */
+function patrolItems(
+  { territory, red, scans }: TerritoryHealth,
+  holds: readonly BaseHold[],
+): AttentionItem[] {
+  const hold = holds.find((held) => held.territory === territory);
   return [
     ...red.map((check) =>
       itemOf('base_red', {
@@ -127,6 +140,7 @@ function patrolItems({ territory, red, scans }: TerritoryHealth): AttentionItem[
         ...(check.commit === null ? {} : { commit: check.commit }),
         since: check.since,
         suspects: check.suspects.map(({ quest }) => quest),
+        ...(hold === undefined ? {} : { waiting: hold.waiting }),
       }),
     ),
     ...scans.map(({ script, outcome, count }) =>
@@ -168,7 +182,7 @@ export function noticeItems(state: WorldState, notices: StewardNotices): Attenti
         ...(reason === undefined ? {} : { held_reason: reason }),
       }),
     ),
-    ...(notices.patrols ?? []).flatMap(patrolItems),
+    ...(notices.patrols ?? []).flatMap((health) => patrolItems(health, notices.base_holds ?? [])),
     ...(notices.tribes_held ?? []).map(({ tribe, path, version, checked }) =>
       version === undefined
         ? itemOf('tribe_gone', { tribe, path, checked_version: checked })

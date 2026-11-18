@@ -387,6 +387,15 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   with the quests merged since the check's last green patrol; `baseHealthOf`, `redFlipsOf` fold the log;
   `patrolRanOf` and `scanOf` build the line; `patrolFollowUpOf` the draft quest. `attentionQueue` lists
   `base_red` and `patrol_scan` from `StewardNotices.patrols`; `metricsOf` has `base_red`.
+- A red default branch stops its territory taking work (PS-09d, `src/patrol/base-red.ts`): `baseRedOf` names the
+  patrolled territories whose latest patrol has a red check, with the patrol's own quests exempt (`isPatrolFix`:
+  `created_by: patrol`, not a queue's merge quest); `KingdomSnapshot.base_red` carries them, `planTick` claims no open
+  quest of them (`heldByBase`) and `forgeDeliveries` delivers none (`stoppedByBase`). `baseVerdictOf` says what the
+  patrols know of one commit (the merge queue asks it), `patrolsDue` which red territories to patrol again as their
+  tip moved (`base_moved`), `baseHoldsOf` the open quests each keeps waiting (`StewardNotices.base_holds`, the
+  `base_red` item's `waiting`). The inbox command `patrol` and the triggers `base_moved`, `owner`, `queue`.
+- The digest names the quests the owner holds ((D) of fix/quest-hold): `heldQuestsOf` (`src/quest/hold.ts`), passed
+  as `StewardNotices.held`, one `quest_held` item each, in the can-wait group.
 
 ## Does not
 
