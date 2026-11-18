@@ -1,6 +1,6 @@
 # Hợp đồng: mã lý do trạm quân y và ghi chú doctor
 
-Hợp đồng của đội q_20261114_mggach (kế hoạch: [plans/infirmary-reason-codes.md](../../plans/infirmary-reason-codes.md)). Mọi phần giữ đúng tên, kiểu và khóa dưới đây; phần nào thấy hợp đồng sai thì ghi vào thư bàn giao, không tự sửa file này.
+Hợp đồng của đội q_20261114_mggach (kế hoạch: [docs/plans/infirmary-reason-codes.md](../plans/infirmary-reason-codes.md)). Mọi phần giữ đúng tên, kiểu và khóa dưới đây; phần nào thấy hợp đồng sai thì ghi vào thư bàn giao, không tự sửa file này.
 
 Mẫu theo: `packages/domain/src/scorecard/reasons.ts` — lý do là một mã cộng tham số, không bao giờ là một câu; CLI nói nó bằng ngôn ngữ của chủ nhân qua `t()`. Chữ do hook, script hay CLI bên ngoài in ra đi vào tham số hoặc `detail` **nguyên văn**, không dịch.
 
