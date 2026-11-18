@@ -275,7 +275,9 @@
   `set-aside/` instead of into the commit, and a commit the hook refuses leaves `wip.patch` there. A quest whose
   assignee a breaker cut with no `handover.md` gets a minimal one, whatever the trip (`writeStopLetter`, gap 23 of
   PS-07): the trip, the WIP commit or why none was made, the files the plot changed, the hook's words after a refusal;
-  a letter the character wrote is never touched.
+  a letter the character wrote is never touched. After any cut but a refused hook it also carries the branch's diff
+  as a judge reads it (`plots.diff`), cut at `LETTER_DIFF_MAX_CHARS` (fix/stop-letter); the whole letter is masked
+  with the session's secret values and the patterns, as `maskFinished` masks the letter a session writes.
 - Applies the limits `tribeLimitsOf` gives a tribe its adapter narrows (§3.14, P1-33; `src/sessions/spawn.ts`):
   a judge of a tribe without `structured_output` gets the verdict's schema in its prompt and its verdict cut out of
   its last text (runner-core's `spawnParsed`), checked by `judgeVerdictOf`, which names each issue; an unusable
@@ -547,7 +549,8 @@ once (its own log), the first judge's three times by the trial. `background-cap.
 submitted in one tick get their checks one after the other under a cap of one, both at once under two.
 `infirmary.spec.ts` preserves coded reasons and structured detail, omits empty output, and reads patch refusals
 from both current detail and historical text. The session, breaker, restart, secret and script specs assert reason
-codes and parameters on real Steward ticks. `stop-letter.spec.ts` checks a 300-line hook refusal and its run log.
+codes and parameters on real Steward ticks. `stop-letter.spec.ts` checks a 300-line hook refusal and its run log,
+and the branch's diff in a minimal letter with its secrets masked, on real git.
 `sessions/reason-codes.spec.ts` reads the table of `docs/contracts/infirmary-reason-codes.md` §2 and holds it to
 `INFIRMARY_REASONS` and their parameters, in order, and every breaker trip to its `breaker:<trip>` code.
 `amendment-refused.spec.ts` (fix/session-notes): work refused at a submit that ends on an amendment is named on

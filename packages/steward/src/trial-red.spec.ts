@@ -64,6 +64,8 @@ function runnersOf(kingdom: Bench, judges: SpawnRequest[]) {
 }
 
 describe('the judge after failing checks in a scratch plot', () => {
+  // Real git, two quests' scratch plots and the territory's checks run for real: 4 s beside 13 other slow
+  // specs on Windows (2026-11-18), room for a busy machine.
   it('opens while another quest keeps the exclusive lock, and runs none of the exclusive checks', async () => {
     const repo = await mkdtemp(path.join(os.tmpdir(), 'elvaria trial red '));
     folders.push(repo);

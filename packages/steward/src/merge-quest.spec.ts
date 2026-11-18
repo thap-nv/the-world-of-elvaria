@@ -39,6 +39,8 @@ const runsOf = (merge: Awaited<ReturnType<typeof mergeOf>>) =>
     .map(({ n, character, outcome }) => [n, character, outcome]);
 
 describe('the parts a conflict left unmerged (P1-55)', () => {
+  // A party's merge quest on real git: a conflict between parts, the knight's session that concludes it and
+  // the merge before the checks: 27 s beside 13 other slow specs on Windows (2026-11-18), room for a busy machine.
   it('merges them before the checks once the knight concluded the conflict, so one session passes', async () => {
     const shared = 'apps/shared/rooms.ts';
     current = await partyBench({
@@ -80,6 +82,8 @@ describe('the parts a conflict left unmerged (P1-55)', () => {
 });
 
 describe('a merge quest and its attempts (P1-55)', () => {
+  // Every attempt of the merge quest's knights on real git, the infirmary, then a retry that takes in main:
+  // 26 s beside 13 other slow specs on Windows (2026-11-18), the most sessions of the file.
   it('gives its knights every attempt, and sends a retry from the infirmary to a knight, not to the machine', async () => {
     // The contract's judge passes it. The merge quest shares its title: the machine's run fails, then three knight
     // sessions fail (max_attempts 3: the machine's run is no attempt), then the owner's retry runs a knight that passes.
@@ -134,6 +138,8 @@ describe('a merge quest and its attempts (P1-55)', () => {
 });
 
 describe('closing the contract (P1-55)', () => {
+  // A party on real git up to its merge quest's commit, which a forbidden path stops: 2 s on Windows
+  // (2026-11-18); the same ceiling as the real-git specs of the package.
   it('commits as the Steward does everywhere: a forbidden path changed in the plot stops it', async () => {
     current = await partyBench(
       {

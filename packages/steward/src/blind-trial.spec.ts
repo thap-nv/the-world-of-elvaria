@@ -63,6 +63,8 @@ const assigneesOf = (quest: Quest) =>
   );
 
 describe('a blind trial (P1-21)', () => {
+  // A whole party on real git: contract, parts, the acceptance part and the merge quest, each with its plot,
+  // commits and merges: 24 s beside 13 other slow specs on Windows (2026-11-18), room for a busy machine.
   it("adds an acceptance part, written apart from the parts' work, that the merge quest merges and checks", async () => {
     current = await trialBench();
     const { kingdom, steward, repo, roles } = current;
@@ -134,6 +136,8 @@ describe('a blind trial (P1-21)', () => {
     expect(await noteOf(kingdom, tests)).toContain("This branch holds the blind trial's acceptance tests");
   }, 180_000);
 
+  // A whole party on real git up to its merge quest's judge: 20 s beside 13 other slow specs on Windows
+  // (2026-11-18), room for a busy machine.
   it("gives the merge quest's judge its own work, and logs each merge (P1-21 (d), (e))", async () => {
     current = await trialBench();
     const { kingdom, steward } = current;

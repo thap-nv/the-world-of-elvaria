@@ -86,6 +86,9 @@ export function rememberSecrets(session: RunningSession, request: SpawnRequest):
   given.set(session, secretValuesOf(request));
 }
 
+/** The values `session` was given, for what the Steward writes from its work after it ends (stop-letter.ts). */
+export const givenTo = (session: RunningSession): readonly string[] => given.get(session) ?? [];
+
 /**
  * A session's end as the kingdom keeps it: the assignee's handover letter rewritten masked (the next prompts and
  * the owner read it), and the question (into the quest file and its event) and the verifier's output (into the
@@ -93,7 +96,7 @@ export function rememberSecrets(session: RunningSession, request: SpawnRequest):
  */
 export async function maskFinished(ctx: Context, finished: Finished): Promise<Finished> {
   const { running, result } = finished;
-  const known = given.get(running.session) ?? [];
+  const known = givenTo(running.session);
   if (running.role === 'assignee') {
     try {
       await redactHandover(ctx.root, running.quest, known);

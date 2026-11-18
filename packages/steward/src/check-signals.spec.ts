@@ -172,6 +172,8 @@ describe('the checks of a submitted run (P1-10b)', () => {
 });
 
 describe('the loop (P1-10b)', () => {
+  // The Steward's own loop at a 3-second beat, waited on by the real clock for up to five beats: 7 s on
+  // Windows (2026-11-18). Below the package's 60 s, so a loop that never starts the checks fails sooner.
   it('ticks as soon as the checks end, not a beat later', async () => {
     current = await bench();
     const kingdom = await current.store.kingdom.read();

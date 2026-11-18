@@ -102,6 +102,8 @@ describe('a party whose part changed a protected path (PS-04)', () => {
   // contract, which wants no strong judge, so orin is the one idle the longer when the part comes to review.
   const STRONGER = { id: 'ilse', cls: 'judge', tribe: 'gemini', model: 'gemini-3.5-pro', level: 8 } as const;
 
+  // A whole party on real git, its part judged and its merge quest waiting for the seal: 15 s beside 13 other
+  // slow specs on Windows (2026-11-18), room for a busy machine.
   it('marks the part without the seal and gives it the stronger judge; the merge quest waits for the seal', async () => {
     party = await partyBench(
       {

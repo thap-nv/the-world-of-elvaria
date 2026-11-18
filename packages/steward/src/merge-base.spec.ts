@@ -100,6 +100,8 @@ const contract = {
 };
 
 describe('the merge quest takes main in after its parts (PS-08e)', () => {
+  // A whole party on real git whose merge quest also takes in main: 22 s beside 13 other slow specs on
+  // Windows (2026-11-18), room for a busy machine.
   it("merges main in the machine's run; the checks run on the result, the judge never reads main's own files", async () => {
     const seen: string[] = [];
     const files = {
@@ -137,6 +139,8 @@ describe('the merge quest takes main in after its parts (PS-08e)', () => {
     expect(kingdom.notices.filter(({ kind }) => kind === 'merge_stopped')).toEqual([]);
   }, 240_000);
 
+  // A whole party on real git, a conflict with main and the knight's run that concludes it: 20 s beside 13
+  // other slow specs on Windows (2026-11-18), room for a busy machine.
   it('stops on a conflict with main: one bell, the knight concludes it in the same quest, main in the branch', async () => {
     const files = {
       'Book a room': contract,

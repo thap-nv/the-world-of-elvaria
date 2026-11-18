@@ -137,6 +137,8 @@ describe('a sealed quest on a territory that delivers by pr_merge', () => {
     expect(bench.remoteTip(branch)).toBe(head);
   });
 
+  // Real git with a bare origin, and the Steward's ticks over the hour of checks_timeout_minutes on the fake
+  // clock, the forge asked at each: 15 s beside 13 other slow specs on Windows (2026-11-18), room for a busy machine.
   it('stops once checks_timeout_minutes passed since the push, the checks still pending', async () => {
     current = await forgeBench({ delivery: { ...PR_MERGE, checks_timeout_minutes: LIMIT_MINUTES } });
     const bench = current;
