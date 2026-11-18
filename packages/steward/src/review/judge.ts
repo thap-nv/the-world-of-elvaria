@@ -23,6 +23,7 @@ import { OUT_OF_ATTEMPTS } from '../infirmary.ts';
 import { closeObjection } from '../memos/objection.ts';
 import { moveAndRing } from '../notices.ts';
 import { step } from '../record.ts';
+import { passRaiseOf } from '../seal.ts';
 import { VERDICT_EVENT, moveOnVerdict, recordVerdict, ritualOf } from '../verdicts.ts';
 import { openFlakyFollowUp } from './scratch.ts';
 import { judgeVerdictOf, refusalText } from './verdict-file.ts';
@@ -190,6 +191,8 @@ export async function judge(
   if (outcome.result === 'partial') return verifierHandsInPart(ctx, running, result, outcome);
   // A flake fails the quest and opens the quest that exorcises it (P1-20), before the quest moves on.
   if (outcome.result === 'fail') await openFlakyFollowUp(ctx, quest, outcome);
+  // PS-08b: a pass raises the seal the delegation spared when its judge or its review asks for the owner's eyes.
+  const raise = outcome.result === 'pass' ? passRaiseOf(ctx, quest, running.character) : {};
   const moved = await moveOnVerdict(
     ctx,
     quest,
@@ -200,7 +203,7 @@ export async function judge(
       edits: { [running.character]: step('verdict') },
       infirmary: OUT_OF_ATTEMPTS,
       // The objection this verdict answered is settled (PS-22): the next review is any judge's again.
-      ...(quest.objection === undefined ? {} : { before: { objection: undefined } }),
+      before: { ...raise, ...(quest.objection === undefined ? {} : { objection: undefined }) },
     },
   );
   if (moved.ok) await closeObjection(ctx, quest, outcome, actor);

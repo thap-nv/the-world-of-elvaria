@@ -24,7 +24,7 @@ import { moveAndRing } from '../notices.ts';
 import { OWNER, actorOfCommand, step } from '../record.ts';
 import { releaseScratch } from '../review/scratch.ts';
 import { openAssignee } from '../sessions/open.ts';
-import { modelsOf } from '../world.ts';
+import { modelsOf, sealPolicyOf } from '../world.ts';
 import type { Context } from '../context.ts';
 import type { Edits } from '../record.ts';
 
@@ -92,6 +92,8 @@ async function newQuest(
     quests: [...ctx.world.quests.keys()],
     characters: [...ctx.world.characters.values()],
     tribes: ctx.world.kingdom.tribes,
+    // PS-08b: the owner's and the Chancellor's quests may be spared the seal by the kingdom's delegation.
+    seal: sealPolicyOf(ctx.world),
   });
   if (!made.ok) return err(rejected(made.error.code));
   const type = made.value.status === 'draft' ? 'quest.drafted' : 'quest.created';

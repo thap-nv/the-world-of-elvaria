@@ -12,6 +12,7 @@ import type {
   QuestId,
   Registry,
   ReviewPrompt,
+  SealPolicy,
   Territory,
   TerritoryId,
   TribeId,
@@ -98,6 +99,12 @@ export function modelsOf(runners: Readonly<Partial<Record<TribeId, AgentRunner>>
   return modelsOfTribes(capabilities);
 }
 
+/** kingdom.delegation.seal, and the territories whose delegation is suspended: none until the breaker (PS-08g). */
+export const sealPolicyOf = (world: Pick<World, 'kingdom'>): SealPolicy => ({
+  seal: world.kingdom.delegation.seal,
+  suspended: [],
+});
+
 /**
  * The snapshot planTick decides on, with the pools asleep, the gauges' readings (§3.5), the background (P1-25) and the
  * judges' prompts measured for the reviews about to be judged (review/prompt-size.ts).
@@ -121,4 +128,6 @@ export const snapshotOf = (
   asleep: mana.asleep,
   mana: { readings: mana.readings, config: world.kingdom.mana, shares: mana.shares },
   limits,
+  // PS-08b: which done quests without the seal the forge merges (mergeDue).
+  seal_policy: sealPolicyOf(world),
 });

@@ -11,6 +11,7 @@ import {
   reduce,
   scopeHoldsOf,
   unopenedReviewsOf,
+  unsealedMergesOf,
   worldStateOf,
 } from '@elvaria/domain';
 import type {
@@ -28,6 +29,7 @@ import type {
 import { ring } from '../context.ts';
 import { STEWARD } from '../record.ts';
 import { judgingClassesOf } from '../unjudgeable.ts';
+import { sealPolicyOf } from '../world.ts';
 import type { Context } from '../context.ts';
 import type { State } from '../steward-state.ts';
 import type { World } from '../world.ts';
@@ -99,6 +101,8 @@ export function noticesOf(
       state.forge.outcomes.values(),
       [...world.quests.values()],
       [...world.territories.values()],
+      // PS-08b: a pull request the Steward merges for the delegation of the seal waits for nobody either.
+      sealPolicyOf(world),
     ),
     // PS-26: the health of the patrolled territories' default branches.
     patrols: state.patrol.health,
@@ -126,7 +130,9 @@ export const digestJob = (digest: Digest): StewardJob => ({
     const state = digestStateOf(sourceOf(ctx.world, memos.items), log.events);
     // A newer build is read now (PS-08d): the composition root asks the pinned build's repo, which no tick knows.
     const upgrade = await ctx.deps.upgradeOffer?.();
-    const notices = upgrade === undefined ? run.notices : { ...run.notices, upgrade };
+    // PS-08b: the merges without the seal since the last digest, each once, from the log.
+    const unsealed = { ...run.notices, merged_unsealed: unsealedMergesOf(log.events) };
+    const notices = upgrade === undefined ? unsealed : { ...unsealed, upgrade };
     const items = attentionQueue(state, ctx.deps.clock.now(), notices);
     const file = await digest.write({ day: run.day, items });
     const must = items.filter(({ group }) => group === 'must').length;
