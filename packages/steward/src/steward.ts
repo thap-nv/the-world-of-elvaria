@@ -85,8 +85,8 @@ const jobsOf = (deps: StewardDeps): StewardJob[] => [
 ];
 
 /**
- * Steward.idle(): the checks, scripts and graph builds outside the tick, the scheduled job outside it (PS-03), and the
- * looks at the base branches (PS-08d).
+ * Steward.idle(): the checks, scripts and graph builds outside the tick, the scheduled job outside it (PS-03), the
+ * looks at the base branches (PS-08d), and the patrols of single territories (PS-09d).
  */
 const idleOf = async (state: State): Promise<void> => {
   await Promise.all([
@@ -94,6 +94,7 @@ const idleOf = async (state: State): Promise<void> => {
     state.graphs?.idle(),
     state.scheduler.idle(),
     state.looks.idle(),
+    state.patrol.runs.idle(),
   ]);
 };
 
@@ -117,7 +118,7 @@ const stateOf = (deps: StewardDeps, ended: () => void): State => ({
   scheduler: createScheduler(jobsOf(deps), deps.onCall),
   forge: createForgeBook(),
   looks: createBaseLooks(deps.log, ended),
-  patrol: createPatrolBook(),
+  patrol: createPatrolBook(deps.log, ended),
   restart: undefined,
   held: undefined,
   beat: undefined,
@@ -153,6 +154,7 @@ export function createSteward(deps: StewardDeps): Steward {
       // The checks and scripts outside the tick die before the lock goes: the next Steward runs them again (P1-25).
       await state.background.stop();
       await state.looks.stop();
+      await state.patrol.runs.stop();
       await state.graphs?.stop();
       await state.sessions.close('the Steward stopped');
       await state.sessions.saved();

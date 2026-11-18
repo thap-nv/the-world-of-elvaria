@@ -2,6 +2,8 @@
 // Steward decides when (dueJobs) and what (attentionQueue over the world state and its own notices); the Digest port
 // of the composition root words it in the owner's language and writes `digest/<day>.md`. Then one line and one ring.
 import {
+  baseHoldsOf,
+  baseRedOf,
   heldQuestsOf,
   attentionQueue,
   judgedByEye,
@@ -77,6 +79,7 @@ export function noticesOf(
   world: World,
   state: Pick<State, 'reported' | 'unjudged' | 'judgeWaits' | 'versions' | 'forge' | 'patrol'>,
 ): StewardNotices {
+  const quests = [...world.quests.values()];
   return {
     tribes_held: state.versions.holds,
     unclaimable: [...state.reported.keys()],
@@ -99,6 +102,8 @@ export function noticesOf(
     ),
     // PS-26: the health of the patrolled territories' default branches.
     patrols: state.patrol.health,
+    // PS-09d: the red territories that take no work, and the open quests that wait for them.
+    base_holds: baseHoldsOf(quests, baseRedOf(state.patrol.health, [...world.territories.values()], quests)),
     // (D) of fix/quest-hold: the quests the owner holds, from the quest files.
     held: heldQuestsOf([...world.quests.values()]),
   };
