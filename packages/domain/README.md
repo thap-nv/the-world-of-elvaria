@@ -128,6 +128,8 @@ patrol`); `partyOf` counts the quest a party is named after, `partyStatusOf` and
   roster); it still counts and stands by, so nothing is named unclaimable or unjudgeable for it. (fix/acceptance-scope)
   So does the Chancellor's tribe (`pickChancellor`) while a job of `CHANCELLOR_JOBS` (the triage) is in
   `KingdomSnapshot.jobs_due`: its session lies outside the tribe's slots and waits for the tribe to have none.
+  (fix/run-221-domain) The Steward puts there only the jobs its next step may start, so the tribe works while the
+  triage waits behind another job outside the tick (the patrol).
   (fix/amendment-owner-accept) So does the tribe of an amendment's author while a quest waits on its decision
   (`awaitsAuthor`; the Chancellor `pickChancellor` picks, or the plan's mage by `authorOf`), until the decision is
   applied: its session waits likewise. Checks and scripts, which run outside the tick, start only in
@@ -343,7 +345,9 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   `unjudgeable_vision`, advising a judge of a tribe that reads images):
   questions, seals, the infirmary, drafts, open memos, pools asleep or at the warning share, and (PS-05) the done
   quests that still hold a scope quests ready to start wait for (`scope_held`, from `scopeHoldsOf` over the quest
-  files, which the caller passes with the notices: the world state holds no scope), and the tribes the Steward holds
+  files, which the caller passes with the notices: the world state holds no scope; (fix/run-221-domain) but not one the
+  Steward still carries to its base branch, `deliveringOf`: in the merge queue, a pull request it merges itself, or a
+  stop whose merge quest is alive), and the tribes the Steward holds
   by their CLI (`tribes_held`: `tribe_held` for a new version, `tribe_gone` for a CLI gone, both with `tribe check
 <tribe>`; A1b of the lessons of 2026-11-13). The world state holds the
   open memos since PS-03 (`memos`, `memoViewOf`; `memo.*` lines reduce into it; `WORLD_STATE_VERSION` 2). A memo the

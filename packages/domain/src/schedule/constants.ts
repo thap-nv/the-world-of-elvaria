@@ -11,7 +11,8 @@ export type DailyJobId = (typeof DAILY_JOBS)[number];
 
 /**
  * The jobs whose session is the Chancellor's, outside its tribe's slots: while one is due and has not started, planTick
- * opens no new session of that tribe (fix/acceptance-scope).
+ * opens no new session of that tribe (fix/acceptance-scope); (fix/run-221-domain) only once it is the next job the
+ * Steward may start, not while it waits behind another job outside the tick (KingdomSnapshot.jobs_due).
  */
 export const CHANCELLOR_JOBS: readonly DailyJobId[] = ['triage'];
 
