@@ -2,7 +2,7 @@
 // §10 question 4, ADR 0017): why it goes on (a return with its verdict, or a revival), the letter, the journal, what
 // the branch touched, why the Steward refused the last run's patch when it did (P1-31), or its patch or commit while
 // the quest waited on the doer's amendment (fix/session-notes), and the memos its letters filed (PS-02).
-import { currentRun, isEventOf, ownerVerdictIdOf, verdictIdOf } from '@elvaria/domain';
+import { currentRun, endedInCut, isEventOf, ownerVerdictIdOf, verdictIdOf } from '@elvaria/domain';
 import { openJournal } from '@elvaria/eventlog';
 import type { Quest, Verdict } from '@elvaria/domain';
 import type { Continuation, Memory, RefusedWork } from '@elvaria/runner-core';
@@ -11,6 +11,7 @@ import { handoverPath, readHandover, readJournal } from '../files.ts';
 import { refusedPatchOf } from '../infirmary.ts';
 import { filedMemosOf } from '../memos/filed.ts';
 import { withLogTails } from '../review/log-tail.ts';
+import { apprenticeLeft } from './breaker.ts';
 import type { Context } from '../context.ts';
 import type { SessionInput } from './input.ts';
 
@@ -131,9 +132,16 @@ export async function continuationFor(
 ): Promise<(Continuation & Memory) | null> {
   const { continuation, quest } = input;
   if (continuation === undefined || continuation === null) return null;
+  const previous = quest.attempt_log.at(-1);
+  // Read the cut session's full journal: its apprentice may already be outside the prompt's journal tail.
+  const apprentice =
+    endedInCut(quest.attempt_log) &&
+    previous?.session_id !== undefined &&
+    (await apprenticeLeft(ctx, { quest: quest.id, session_id: previous.session_id }));
   const memory = {
     ...(await memoryOf(ctx, quest, input.letterAsPath === true)),
     ...(await touchedOf(ctx, quest)),
+    ...(apprentice ? { apprentice_left: true as const } : {}),
   };
   if (continuation.reason === 'revive') return { ...continuation, ...memory };
   const checks = await withLogTails(ctx.root, continuation.verdict.checks, known);
