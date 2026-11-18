@@ -15,7 +15,7 @@ export function sealRaiseOf(ctx: Context, quest: Quest, facts: SealFacts): Parti
     quest,
     facts,
     ctx.world.territories.get(quest.territory),
-    sealPolicyOf(ctx.world),
+    sealPolicyOf(ctx.world, ctx.delegation),
   );
   return raisedSeal(quest, raises) ?? {};
 }

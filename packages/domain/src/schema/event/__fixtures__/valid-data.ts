@@ -117,6 +117,9 @@ export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
     branch_deleted: true,
   },
   'delivery.failed': { quest: QUEST_VIEW.id, territory: 'elvaria', stage: 'push', reason: 'no_credential' },
+  'quest.escaped': { quest: QUEST_VIEW.id, territory: 'elvaria', delegated: true, note: 'broke the login' },
+  'delegation.suspended': { territory: 'elvaria', quest: QUEST_VIEW.id, cause: 'base_red', check: 'test' },
+  'delegation.resumed': { territory: 'elvaria' },
   'patrol.ran': {
     territory: 'elvaria',
     head: SHA_NEW,

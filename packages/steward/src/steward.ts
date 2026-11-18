@@ -18,6 +18,7 @@ import { createJudgeLocks } from './review/exclusive.ts';
 import { createManaBook } from './mana/book.ts';
 import { digestJob } from './schedule/digest.ts';
 import { createPatrolBook } from './patrol/book.ts';
+import { createDelegationBook } from './delegation/book.ts';
 import { patrolJob } from './patrol/patrol.ts';
 import { createScheduler } from './schedule/scheduler.ts';
 import { createSessions } from './sessions/running.ts';
@@ -119,6 +120,7 @@ const stateOf = (deps: StewardDeps, ended: () => void): State => ({
   forge: createForgeBook(),
   looks: createBaseLooks(deps.log, ended),
   patrol: createPatrolBook(deps.log, ended),
+  delegation: createDelegationBook(),
   restart: undefined,
   held: undefined,
   beat: undefined,

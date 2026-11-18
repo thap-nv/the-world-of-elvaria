@@ -1,6 +1,6 @@
 // The kingdom as one tick sees it: read from the files at the start of the tick, then kept current by every
 // write the tick makes, so later steps decide on what earlier steps did (implementation-plan §3.1).
-import { modelsOfTribes, tribeLimitsOn } from '@elvaria/domain';
+import { modelsOfTribes, suspendedTerritoriesOf, tribeLimitsOn } from '@elvaria/domain';
 import type {
   BackgroundWork,
   Character,
@@ -22,6 +22,7 @@ import type {
 import type { AgentRunner } from '@elvaria/runner-core';
 import type { KingdomStore, Listing, StoreIssue } from '@elvaria/store';
 
+import type { DelegationBook } from './delegation/book.ts';
 import type { ManaBook } from './mana/book.ts';
 import type { Logger } from './types.ts';
 
@@ -99,10 +100,13 @@ export function modelsOf(runners: Readonly<Partial<Record<TribeId, AgentRunner>>
   return modelsOfTribes(capabilities);
 }
 
-/** kingdom.delegation.seal, and the territories whose delegation is suspended: none until the breaker (PS-08g). */
-export const sealPolicyOf = (world: Pick<World, 'kingdom'>): SealPolicy => ({
+/** kingdom.delegation.seal, and the territories whose delegation the breaker suspended (PS-08g). */
+export const sealPolicyOf = (
+  world: Pick<World, 'kingdom'>,
+  delegation: Pick<DelegationBook, 'suspensions'>,
+): SealPolicy => ({
   seal: world.kingdom.delegation.seal,
-  suspended: [],
+  suspended: suspendedTerritoriesOf(delegation.suspensions),
 });
 
 /**
@@ -128,6 +132,4 @@ export const snapshotOf = (
   asleep: mana.asleep,
   mana: { readings: mana.readings, config: world.kingdom.mana, shares: mana.shares },
   limits,
-  // PS-08b: which done quests without the seal the forge merges (mergeDue).
-  seal_policy: sealPolicyOf(world),
 });

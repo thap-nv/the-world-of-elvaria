@@ -60,6 +60,10 @@ export const EVENT_TYPES = [
   'delivery.pushed',
   'delivery.merged',
   'delivery.failed',
+  // PS-08g: the owner's report of a defect that escaped, and the breaker of the seal delegation (ADR 0023).
+  'quest.escaped',
+  'delegation.suspended',
+  'delegation.resumed',
   'plot.patched',
   'plot.merged',
   'plot.restored',

@@ -16,6 +16,7 @@ import { QUEST_ADD } from './quest/add.ts';
 import { ANSWER } from './quest/answer.ts';
 import { QUEST_EDIT } from './quest/edit.ts';
 import { QUEST_DELIVER } from './quest/deliver.ts';
+import { QUEST_ESCAPED } from './quest/escaped.ts';
 import { QUEST_HOLD, QUEST_UNHOLD } from './quest/hold.ts';
 import { QUEST_ARCHIVE, QUEST_CANCEL, QUEST_CONFIRM, QUEST_RETRY, QUEST_SUBMIT } from './quest/lifecycle.ts';
 import { QUEST_LIST } from './quest/list.ts';
@@ -28,6 +29,7 @@ import { SANDBOX_REPLAY } from './sandbox/replay.ts';
 import { SAY } from './say/say.ts';
 import { TERRITORY_ADD } from './territory/add.ts';
 import { TERRITORY_CHECK } from './territory/check.ts';
+import { TERRITORY_DELEGATION } from './territory/delegation.ts';
 import { TERRITORY_DELIVERY } from './territory/delivery.ts';
 import { TERRITORY_PATROL } from './territory/patrol.ts';
 import { TERRITORY_GRAPH } from './territory/graph.ts';
@@ -55,6 +57,7 @@ export const COMMANDS: readonly CommandSpec[] = [
   TERRITORY_CHECK,
   TERRITORY_GRAPH,
   TERRITORY_DELIVERY,
+  TERRITORY_DELEGATION,
   TERRITORY_PATROL,
   CHARACTER_ADD,
   CHARACTER_LIST,
@@ -75,6 +78,7 @@ export const COMMANDS: readonly CommandSpec[] = [
   QUEST_RETRY,
   QUEST_SUBMIT,
   QUEST_DELIVER,
+  QUEST_ESCAPED,
   QUEST_REASSIGN,
   SEAL,
   RETURN,

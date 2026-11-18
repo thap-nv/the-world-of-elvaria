@@ -57,6 +57,11 @@ show` says since when and why); `quest reassign [--to <id>]`
   `quest show` says a quest was spared the seal by the kingdom's delegation, or why the machine raised it (PS-08b,
   `src/quest/seal-view.ts`); the digest prints a merge without the seal with its `git revert` line, `metrics` the
   merges without the seal per territory, and `doctor` a kind `kingdom.delegation.seal` names that the registry lacks;
+  (PS-08g) `quest escaped <id> [--note …]` reports a defect that escaped with a quest already merged
+  (`report_escape`), refused before the merge or a second time; `territory delegation <id> [--resume]` prints the
+  kingdom's scope of the delegation, whether the territory merges by itself and whether the breaker suspended it, since
+  which quest and why, and sends `resume_delegation` for a suspended one (`src/territory/delegation.ts`); the digest,
+  the bell and `metrics` say the suspension, the escapes among the merges without the seal and the owner's reports;
   `quest show` prints the protected paths a quest's work changed, the reason it waits for the royal seal (PS-04), and
   `quest show` prints the party, the role, the contract and the merge quest (`src/quest/party.ts`, the domain's
   `partyStatusOf`; P1-21 (c)): the merge quest and the acceptance part share the contract's title. `quest show` also
@@ -83,7 +88,7 @@ show` prints the brief apart from the rest of the description and, while the pla
   `@elvaria/chancellor` for the batch, its commands written with `source: chancellor`; nothing when no letter waits.
   `run` gives the Steward the same as a scheduled job (`triageJob`, `kingdom.schedule.triage`), ready once no session
   of the Chancellor's tribe runs, or at once when no letter waits (fix/acceptance-scope: until it starts, planTick
-  opens no new session of that tribe). A Chancellor of a tribe held by its CLI's version gives way to the next one
+  opens no new session of that tribe, once it is the next job to start: fix/run-221-domain). A Chancellor of a tribe held by its CLI's version gives way to the next one
   (`pickChancellor`, fix/held-tribe-sessions); with none left the job waits for the hold to end, and `triage` or
   `say` by hand, which ask the CLIs first (`tribeHoldsOf`), open no session and print the bell's line of each hold
   with its `tribe check`. `memo show` prints the Chancellor's advice on a letter it sent up; the digest lists

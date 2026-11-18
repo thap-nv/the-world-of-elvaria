@@ -5,7 +5,7 @@
 // the push, which the log dates, so a restart does not give the checks a new hour.
 import { FORGE_POLL_SECONDS, MS_PER_MINUTE, MS_PER_SECOND } from '../constants.ts';
 import { deliveryOf } from '../schema/territory-delivery.ts';
-import { mergeDue } from './forge-due.ts';
+import { forgeDue, mergeDue } from './forge-due.ts';
 import type { Instant } from '../core/clock.ts';
 import type { QuestId } from '../core/ids.ts';
 import type { SealPolicy } from '../delegation/seal.ts';
@@ -70,4 +70,40 @@ export function ownerDeliveries(
     if (type !== 'delivery.pushed' || quest === undefined) return true;
     return !mergeDue(quest, where.get(quest.territory), policy);
   });
+}
+
+/** What else deliveringOf reads: the delegation of the seal, and the quests the Steward found with nothing to push. */
+export interface DeliveringOptions {
+  readonly policy?: SealPolicy;
+  /** Known only to the Steward that looked (its forge book); a reader of the files alone passes none. */
+  readonly nothing?: Iterable<QuestId>;
+}
+
+/**
+ * (fix/run-221-domain) The done quests the Steward still carries to their base branch, so the owner has nothing to do
+ * for them yet (ADR 0023): on a territory that delivers (forgeDue), each with no outcome yet (in the merge queue, or its
+ * delivery running), a pull request the Steward merges itself (mergeDue), merged (it archives the quest at once), or
+ * (PS-09b) stopped at an update whose merge quest is still alive. Not one whose pull request waits for the owner, whose
+ * delivery stopped with no merge quest alive, nor one with nothing to push: the owner acts on those.
+ */
+export function deliveringOf(
+  outcomes: ReadonlyMap<QuestId, ForgeOutcome>,
+  quests: readonly Quest[],
+  territories: ForgeSource['territories'],
+  { policy = {}, nothing = [] }: DeliveringOptions = {},
+): Set<QuestId> {
+  const byId = new Map(quests.map((quest) => [quest.id, quest]));
+  const where = new Map(territories.map((territory) => [territory.id, territory]));
+  const idle = new Set(nothing);
+  const alive = (id: QuestId | undefined): boolean =>
+    id !== undefined && (byId.get(id)?.status ?? 'archived') !== 'archived';
+  const carried = (quest: Quest): boolean => {
+    const territory = where.get(quest.territory);
+    if (!forgeDue(quest, territory) || idle.has(quest.id)) return false;
+    const outcome = outcomes.get(quest.id);
+    if (outcome === undefined || outcome.type === 'delivery.merged') return true;
+    if (outcome.type === 'delivery.pushed') return mergeDue(quest, territory, policy);
+    return alive(outcome.data.merge_quest);
+  };
+  return new Set(quests.filter(carried).map(({ id }) => id));
 }

@@ -4,6 +4,7 @@
 import {
   baseHoldsOf,
   baseRedOf,
+  deliveringOf,
   heldQuestsOf,
   attentionQueue,
   judgedByEye,
@@ -79,7 +80,7 @@ const needsVision = (world: World, id: QuestId): boolean => {
  */
 export function noticesOf(
   world: World,
-  state: Pick<State, 'reported' | 'unjudged' | 'judgeWaits' | 'versions' | 'forge' | 'patrol'>,
+  state: Pick<State, 'reported' | 'unjudged' | 'judgeWaits' | 'versions' | 'forge' | 'patrol' | 'delegation'>,
 ): StewardNotices {
   const quests = [...world.quests.values()];
   return {
@@ -95,14 +96,22 @@ export function noticesOf(
       class: classOf(world, quest),
       gauges,
     })),
-    scope_held: scopeHoldsOf([...world.quests.values()], [...world.territories.values()]),
+    // fix/run-221-domain: not a quest the Steward still carries to its base branch, which it archives itself.
+    scope_held: scopeHoldsOf(
+      quests,
+      [...world.territories.values()],
+      deliveringOf(state.forge.outcomes, quests, [...world.territories.values()], {
+        policy: sealPolicyOf(world, state.delegation),
+        nothing: state.forge.nothing,
+      }),
+    ),
     judges_unopened: unopenedReviewsOf([...world.quests.values()]),
     deliveries: ownerDeliveries(
       state.forge.outcomes.values(),
       [...world.quests.values()],
       [...world.territories.values()],
       // PS-08b: a pull request the Steward merges for the delegation of the seal waits for nobody either.
-      sealPolicyOf(world),
+      sealPolicyOf(world, state.delegation),
     ),
     // PS-26: the health of the patrolled territories' default branches.
     patrols: state.patrol.health,
@@ -110,6 +119,8 @@ export function noticesOf(
     base_holds: baseHoldsOf(quests, baseRedOf(state.patrol.health, [...world.territories.values()], quests)),
     // (D) of fix/quest-hold: the quests the owner holds, from the quest files.
     held: heldQuestsOf([...world.quests.values()]),
+    // PS-08g: the territories whose delegation of the seal the breaker suspended.
+    delegation_suspended: state.delegation.suspensions,
   };
 }
 

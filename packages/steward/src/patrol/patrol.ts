@@ -8,10 +8,11 @@
 // next one back. The Steward's stop kills the run and records nothing of it: no `schedule.ran`, it runs again at the
 // next start. (PS-09d) One territory's patrol (patrolTerritory) also runs outside the job, with what started it as its
 // `trigger`; every patrol of a territory runs in its lane (runs.ts), and each sets its territory's health in the book.
-import { patrolLedgerOf, patrolRanOf, stepPatrol, territoryViewOf } from '@elvaria/domain';
+import { baseRedSuspension, patrolLedgerOf, patrolRanOf, stepPatrol, territoryViewOf } from '@elvaria/domain';
 import type { PatrolLedger, PatrolRanData, PatrolTrigger, RedCheck, Territory } from '@elvaria/domain';
 
 import { ring } from '../context.ts';
+import { suspendDelegation } from '../delegation/suspend.ts';
 import { STEWARD } from '../record.ts';
 import { setHealth } from './book.ts';
 import { openPatrolDraft } from './draft.ts';
@@ -61,6 +62,10 @@ async function record(ctx: Context, ledger: PatrolLedger, territory: Territory, 
   const turned = step.turned_red;
   const draft = turned.length === 0 ? undefined : await openPatrolDraft(ctx, territory, turned);
   const red = step.ledger.watches[territory.id]?.health.red ?? [];
+  // (PS-08g) A check turned red with a merge without the seal among its suspects suspends the territory's delegation,
+  // before the line too: a patrol stopped between them finds the check turned red again, the territory suspended.
+  const suspension = baseRedSuspension(territory.id, turned, ctx.delegation.suspensions);
+  if (suspension !== undefined) await suspendDelegation(ctx, suspension);
   await ctx.record.note({ type: 'patrol.ran', actor: STEWARD, territory: territory.id, data });
   const view = healthLine(territory, data, red, ts);
   await ctx.record.note({ type: 'territory.health', actor: STEWARD, territory: territory.id, data: view });

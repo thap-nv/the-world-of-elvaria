@@ -5,6 +5,7 @@ import type { PromptTemplates } from '@elvaria/runner-core';
 import type { HeldLock } from '@elvaria/store';
 
 import type { Background } from './background.ts';
+import type { DelegationBook } from './delegation/book.ts';
 import type { ForgeBook } from './forge/book.ts';
 import type { BaseLooks } from './forge/looks.ts';
 import type { PatrolBook } from './patrol/book.ts';
@@ -61,6 +62,8 @@ export interface State {
   readonly looks: BaseLooks;
   /** The patrolled territories' health (PS-26): rebuilt from the log at start, set by each patrol. */
   readonly patrol: PatrolBook;
+  /** The territories whose delegation of the seal the breaker suspended (PS-08g): rebuilt from the log at start. */
+  readonly delegation: DelegationBook;
   /** Set by start(): what the first tick finishes of the last Steward's work (restart.ts, P1-44). */
   restart: Restart | undefined;
   held: Held | undefined;
