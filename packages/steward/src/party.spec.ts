@@ -215,6 +215,8 @@ describe('a party, from its contract to its merge quest (P1-18)', () => {
     expect(third.ok && third.value).toMatchObject({ result: 'pass' });
     expect(await readFile(path.join(worktreeOf(merge), shared), 'utf8')).toBe('export const n = 123;\n');
     const stopped = `${merge.id}: merging the parts stopped at quest/q_\\d{8}_[0-9a-z]{6} \\(conflict\\): ${shared}`;
-    expect(kingdom.warnings.join('\n')).toMatch(new RegExp(`${stopped}; a knight takes the quest`));
+    const warned = kingdom.warnings.join('\n');
+    expect(warned).toMatch(new RegExp(`${stopped}; still to merge: `));
+    expect(warned).toContain(`${merge.id}: the machine's run stopped (conflict); a knight takes the quest`);
   }, 180_000);
 });

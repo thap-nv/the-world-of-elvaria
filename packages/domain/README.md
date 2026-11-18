@@ -42,6 +42,8 @@
   scope and the conflicted files, the red checks' log ends), `isQueueMerge` (`party_role: merge`, `created_by:
 patrol`); `partyOf` counts the quest a party is named after, `partyStatusOf` and `partyIssues` leave it out, the
   attention queue says `delivery_merging` while it is on its way, and `forgeArchives` archives its parent with it.
+  Every merge quest of a party, its own or the queue's, takes the party's contract and parts with it into
+  `forgeArchives` (fix/merge-quest-followups (l)): a squash leaves their commits no ancestry for a look to find.
 - Shapes a party (`src/party/`, §3.13, ADR 0020, P1-18): `mergeQuestOf` (the merge quest the Steward adds when a
   contract is delivered: a knight's build waiting for every part, their tags and secrets, the highest rank, the
   royal seal), `PartyPlace` (a part's or the merge quest's place, given to `questFromCommand` through

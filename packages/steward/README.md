@@ -452,7 +452,9 @@
   done quest touched, read once (`src/forge/sizes.ts`); a sealed pull request under `pr_merge` holds its lane
   until merged. A pushed pull request that no longer merges cleanly (a look's `Plots.mergesClean`, or the forge's
   `conflict`) goes back into the queue, at most `UPDATE_ROUNDS_MAX` times (`src/forge/stale.ts`). A merge quest's
-  merges use the territory's `shared_paths` rules, and the generators run when `regenerate` kept a side.
+  merges use the territory's `shared_paths` rules, the machine's run too (`mergeParts`, fix/merge-quest-followups
+  (m)), and the generators run when `regenerate` kept a side, or once a knight concluded a conflict that held a
+  generated file, before the checks (`MergeOutcome.regenerate`, (n)); never while a merge stopped.
 - Offers a newer build in the digest (`upgrade_available`, PS-08d) when the optional `deps.upgradeOffer` port of the
   composition root says the pinned build's repo has one; read as the digest is made.
 - Tells once when an open quest nobody can take (`quest.unclaimable`, the bell), withdraws it with

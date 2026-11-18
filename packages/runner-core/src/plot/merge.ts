@@ -14,6 +14,7 @@ import type { Territory } from '@elvaria/domain';
 import { fromPortable } from '@elvaria/store';
 
 import { dryMerge, mergeResolved, resolvedOf } from './dry-merge.ts';
+import { generateLater } from './generate-later.ts';
 import { gitOut, zList } from './git.ts';
 import { plotCommitMessage } from './commit-message.ts';
 import { changePlotRecord, movePlotBase, plotRecordOf } from './plot-record.ts';
@@ -43,6 +44,8 @@ export interface MergeOutcome {
   readonly stop?: MergeStopped;
   /** (PS-09) The conflicted files the territory's shared_paths resolved; absent: none. */
   readonly resolved?: readonly ResolvedFile[];
+  /** (fix/merge-quest-followups (n)) Generated files left for later, to write anew now (generate-later.ts). */
+  readonly regenerate?: readonly string[];
 }
 
 /** The territory a merge quest takes its base branch from (PS-08e): its checkout and its default branch. */
@@ -243,7 +246,8 @@ export async function mergeDependencies(
 /**
  * A merge quest's merging (P1-18, PS-08e): its parts, then, given `base`, the territory's base branch where a new
  * quest would start (forkPoint: fetched first when there is a remote, else the local branch). The base branch waits
- * while a part is not in, since the knight resolves one conflict at a time.
+ * while a part is not in, since the knight resolves one conflict at a time. The generated files a merge leaves for
+ * later are named once none stops (generateLater).
  */
 export async function mergeAll(
   git: Git,
@@ -255,18 +259,19 @@ export async function mergeAll(
 ): Promise<MergeOutcome> {
   if (options.dependencies === true) return mergeDependencies(git, worktree, into, branches);
   const shared = options.shared ?? [];
+  const later = (outcome: MergeOutcome) => generateLater(git, worktree, outcome, shared);
   const parts = await mergeIn(git, worktree, into, branches, shared);
   const branch = base?.vcs.default_branch;
-  if (base === undefined || branch === undefined) return parts;
-  if (parts.stop !== undefined) return { ...parts, pending: [...parts.pending, branch] };
+  if (base === undefined || branch === undefined) return later(parts);
+  if (parts.stop !== undefined) return later({ ...parts, pending: [...parts.pending, branch] });
   const fork = await forkPoint({ git, repo: fromPortable(base.path), vcs: base.vcs });
   if (!fork.ok) {
     const stop: MergeStopped = { reason: 'missing', branch, detail: fork.error.detail };
-    return { ...parts, pending: [branch], stop };
+    return later({ ...parts, pending: [branch], stop });
   }
   const outcome = await mergeBase(git, worktree, into, { branch, commit: fork.value }, shared);
   const merged = { ...outcome, merged: [...parts.merged, ...outcome.merged] };
-  return withResolved(merged, [...(parts.resolved ?? []), ...(outcome.resolved ?? [])]);
+  return later(withResolved(merged, [...(parts.resolved ?? []), ...(outcome.resolved ?? [])]));
 }
 
 /**
