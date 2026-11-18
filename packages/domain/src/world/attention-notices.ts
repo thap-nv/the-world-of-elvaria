@@ -5,6 +5,7 @@ import { ATTENTION_TABLE } from './attention-table.ts';
 import { revertWordsOf } from './unsealed-merges.ts';
 import type { UnopenedReview } from '../breaker/review.ts';
 import type { QuestId } from '../core/ids.ts';
+import type { SealSuspension } from '../delegation/breaker.ts';
 import type { WaitGauge } from '../dispatch/judge-waits.ts';
 import type { ScopeHold } from '../dispatch/scope.ts';
 import type { BaseHold } from '../patrol/base-red.ts';
@@ -57,6 +58,8 @@ export interface StewardNotices {
   readonly upgrade?: UpgradeOffer;
   /** (PS-08b) The merges without the seal since the last digest (unsealedMergesOf); from the log as it is made. */
   readonly merged_unsealed?: readonly UnsealedMerge[];
+  /** (PS-08g) The territories whose delegation of the seal the breaker suspended (sealSuspendedOf); from the log. */
+  readonly delegation_suspended?: readonly SealSuspension[];
 }
 
 /** The pinned commit, the default branch's commit, and how many commits since touch `packages/` or `apps/`. */
@@ -161,6 +164,19 @@ function deliveriesOf(state: WorldState, deliveries: readonly ForgeOutcome[] = [
   return deliveries.flatMap((outcome) => deliveryItems(state, outcome, merged));
 }
 
+/** A territory whose delegation the breaker suspended: why, since when, and the quest it blames. */
+const suspensionItem =
+  (state: WorldState) =>
+  ({ territory, quest, cause, check, note, since }: SealSuspension): AttentionItem =>
+    itemOf('delegation_suspended', {
+      ...aboutId(state, quest),
+      territory,
+      cause,
+      since,
+      ...(check === undefined ? {} : { check }),
+      ...(note === undefined ? {} : { note }),
+    });
+
 export function noticeItems(state: WorldState, notices: StewardNotices): AttentionItem[] {
   return [
     ...(notices.unclaimable ?? []).map((id) => itemOf('unclaimable', aboutId(state, id))),
@@ -189,6 +205,7 @@ export function noticeItems(state: WorldState, notices: StewardNotices): Attenti
         revert: revertWordsOf(merge),
       }),
     ),
+    ...(notices.delegation_suspended ?? []).map(suspensionItem(state)),
     ...(notices.held ?? []).map(({ quest, reason }) =>
       itemOf('quest_held', {
         ...aboutId(state, quest),

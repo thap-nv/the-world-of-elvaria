@@ -5,7 +5,7 @@
 // group would count as after the owner's retry: the move is made now, before the first plan. Right after the owner's
 // retry the quest looks the same in its file (the full group still stands, P1-26), so the log tells them apart: there
 // the last move of the quest is the retry, or the infirmary the retry left when its own line was lost.
-import { infirmaryReasonOf, reviewStallOf } from '@elvaria/domain';
+import { QUEST_NOTICE_TYPES, infirmaryReasonOf, reviewStallOf } from '@elvaria/domain';
 import type { Event, Quest, QuestId, ReviewStall } from '@elvaria/domain';
 
 import { moveAndRing } from './notices.ts';
@@ -22,8 +22,8 @@ export interface Restart {
   readonly retried: ReadonlySet<QuestId>;
 }
 
-/** Quest lines that move nothing: the owner's edit, the Steward's notice about an open quest. */
-const NOT_MOVES: ReadonlySet<string> = new Set(['quest.edited', 'quest.unclaimable']);
+/** Quest lines that move nothing: the owner's edit, the notices about a quest (unclaimable, escaped: PS-08g). */
+const NOT_MOVES: ReadonlySet<string> = new Set(['quest.edited', ...QUEST_NOTICE_TYPES]);
 
 /** The retry of a stalled review is the owner's `quest.submitted` (questLogTypeOf); a submit is a character's. */
 const retriedBy = (event: Event): boolean =>

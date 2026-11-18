@@ -6,7 +6,7 @@ import type { Translate } from '@elvaria/i18n';
 
 import { NONE } from '../listing.ts';
 import { count, tableSection } from './section.ts';
-import { unsealedSection } from './view-delegation.ts';
+import { reportedEscapesSection, unsealedSection } from './view-delegation.ts';
 import { amendmentsSection, memosSection, objectionsSection } from './view-memos.ts';
 import { firstEditsLine, graphLine, promptSection } from './view-sessions.ts';
 import { adviceSection, passByRunSection, statusTimesSection } from './view-waits.ts';
@@ -57,7 +57,10 @@ function summarySection(t: Translate, metrics: Metrics): MetricsSection {
         decided: rates.overall.decided,
         rate: rateText(rates.overall),
       }),
-      t('cli.metrics.line.escaped', { count: metrics.escaped.length }),
+      t('cli.metrics.line.escaped', {
+        count: metrics.escaped.length,
+        reported: metrics.reported_escapes.length,
+      }),
       t('cli.metrics.line.owner', { count: commands, quests: stepped, worked: metrics.quests.length }),
       t('cli.metrics.line.sealed', {
         count: sealed.length,
@@ -258,6 +261,7 @@ export const metricsSections = (t: Translate, metrics: Metrics): MetricsSection[
   ownerSection(t, metrics),
   adviceSection(t, metrics),
   escapedSection(t, metrics),
+  reportedEscapesSection(t, metrics),
   baseRedSection(t, metrics),
   sealedSection(t, metrics),
   unsealedSection(t, metrics),

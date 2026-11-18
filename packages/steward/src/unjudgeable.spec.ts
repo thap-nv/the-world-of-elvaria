@@ -9,6 +9,7 @@ import { statusIs } from './__fixtures__/review.ts';
 import { capturingPlots } from './__fixtures__/screens.ts';
 import { createForgeBook } from './forge/book.ts';
 import { createPatrolBook } from './patrol/book.ts';
+import { createDelegationBook } from './delegation/book.ts';
 import { noticesOf } from './schedule/digest.ts';
 import { loadWorld } from './world.ts';
 import type { Bench } from './__fixtures__/kingdom.ts';
@@ -108,6 +109,7 @@ describe('a submitted quest that needs a judge who reads images (PS-11)', () => 
       versions,
       forge,
       patrol: createPatrolBook(),
+      delegation: createDelegationBook(),
     };
     expect(noticesOf(world, state).unjudgeable).toEqual([{ quest: quest.id, class: 'judge', vision: true }]);
     // The owner summons a judge of the tribe that reads images: the review goes on with it.

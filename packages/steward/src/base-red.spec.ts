@@ -18,6 +18,7 @@ import { questPayload, settled, tickUntil } from './__fixtures__/kingdom.ts';
 import { QUEUE_FILES, QUEUE_TERRITORY, sourceWithIndex, statusOf } from './__fixtures__/queue.ts';
 import { createForgeBook } from './forge/book.ts';
 import { createPatrolBook, recoverPatrol } from './patrol/book.ts';
+import { createDelegationBook } from './delegation/book.ts';
 import { noticesOf } from './schedule/digest.ts';
 import { loadWorld } from './world.ts';
 import type { Leaves } from './__fixtures__/deliver.ts';
@@ -112,7 +113,7 @@ async function holdsOf(bench: ForgeBench) {
   const patrol = createPatrolBook();
   recoverPatrol(patrol, (await openEventLog(bench.kingdom.root).read()).events);
   const versions = { asked: new Map(), told: new Map(), holds: [] };
-  const books = { forge: createForgeBook(), patrol };
+  const books = { forge: createForgeBook(), patrol, delegation: createDelegationBook() };
   return noticesOf(world, {
     reported: new Map(),
     unjudged: new Set(),

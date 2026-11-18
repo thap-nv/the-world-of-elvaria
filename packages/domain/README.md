@@ -362,6 +362,14 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   (`ForgeSource.seal_policy`, `KingdomSnapshot.seal_policy`). `apartFromDoers` (`src/verify/`) is the one test of
   "another family than every doer" that selectVerifier and the seal share. The digest's `merged_unsealed` item
   (`unsealedMergesOf`, `revertWordsOf`) and `raised` on `awaiting_seal`; the ledger's `unsealed` counts.
+- Decides the breaker of the seal delegation (`src/delegation/breaker.ts`, `escape.ts`, PS-08g, ADR 0023):
+  `sealSuspendedOf` folds `delegation.suspended` and `delegation.resumed` into the suspended territories
+  (`SealPolicy.suspended`); `baseRedSuspension` (a check turned red with a merge without the seal among its suspects)
+  and `escapeSuspension` (the owner's report on such a quest) say when a signal suspends one, once per suspension;
+  `landingOf` and `escapeOf` say whether a quest reached its base branch and give its `quest.escaped` line, or why not
+  (`not_merged`, `already_reported`). `quest.escaped` is a notice about a quest, not a move (`QUEST_NOTICE_TYPES`,
+  `isQuestLogType`). The digest's `delegation_suspended` item (`can_wait`); the ledger's `unsealed.escaped` and
+  `reported_escapes`.
 - Decides what the world takes in alone of the memos the Chancellor triages (`src/delegation/`, PS-03b):
   `kingdom.delegation` (`DelegationSchema`: `max_rank`, `same_scope`, `ask`) and `delegationHolds`, which answers with
   what holds a piece of work for the owner: a matter of `ask` the Chancellor flagged (or `protected_paths` when a

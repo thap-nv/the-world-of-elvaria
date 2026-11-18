@@ -6,6 +6,7 @@ import type { Bell, ManaGaugeNotice, Notice } from '@elvaria/steward';
 import { gaugesOf } from '../digest/markdown.ts';
 import { detailLines, whyLines } from '../quest/infirmary.ts';
 import { stretchOf } from '../quest/unclaimable.ts';
+import { suspensionCause } from '../territory/delegation-view.ts';
 import type { CliIo } from '../io.ts';
 
 /** Why an open quest waits, with the sentences `quest show` uses for the same notice (P1-03). */
@@ -105,6 +106,12 @@ function baseRedLine(t: Translate, notice: Extract<Notice, { kind: 'base_red' }>
     : t('cli.run.notice.base_red_draft', { territory, checks, quest: draft });
 }
 
+/** PS-08g: the breaker suspended a territory's delegation of the seal, and why. */
+function suspensionLine(t: Translate, notice: Extract<Notice, { kind: 'delegation_suspended' }>): string {
+  const { territory, quest } = notice;
+  return t('cli.run.notice.delegation_suspended', { territory, quest, cause: suspensionCause(t, notice) });
+}
+
 export function lineOf(t: Translate, notice: Notice): string {
   if (notice.kind === 'suspended') {
     const { character, count } = notice;
@@ -118,6 +125,7 @@ export function lineOf(t: Translate, notice: Notice): string {
   }
   if (notice.kind === 'tribe_held') return tribeLine(t, notice);
   if (notice.kind === 'base_red') return baseRedLine(t, notice);
+  if (notice.kind === 'delegation_suspended') return suspensionLine(t, notice);
   const quest = { quest: notice.quest.id, title: notice.quest.title };
   switch (notice.kind) {
     case 'unclaimable':

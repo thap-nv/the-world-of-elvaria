@@ -13,7 +13,7 @@ import { reworkOf } from './rework.ts';
 import { passByRunOf } from './run-rates.ts';
 import { firstEditsOf, graphQueriesOf, promptSizesOf } from './session-counts.ts';
 import { statusTimesOf } from './status-times.ts';
-import { unsealedCountsOf } from './unsealed-counts.ts';
+import { reportedEscapesOf, unsealedCountsOf } from './unsealed-counts.ts';
 import { inWindow } from './window.ts';
 import { redFlipsOf } from '../patrol/health.ts';
 import type { RedFlip } from '../patrol/health.ts';
@@ -29,7 +29,7 @@ import type { QuestTrail, Rework } from './rework.ts';
 import type { RunPassRate } from './run-rates.ts';
 import type { FirstEdits, GraphQueries, PromptSizes } from './session-counts.ts';
 import type { StatusTime } from './status-times.ts';
-import type { UnsealedCount } from './unsealed-counts.ts';
+import type { ReportedEscape, UnsealedCount } from './unsealed-counts.ts';
 import type { MetricsWindow } from './window.ts';
 import type { ClassId, KindId, QuestId, TerritoryId } from '../core/ids.ts';
 import type { QuestStatus, Tier } from '../schema/quest/shared.ts';
@@ -80,6 +80,8 @@ export interface Metrics {
   readonly first_pass: FirstPassRates;
   /** Owner returns inside the window of a run a judge or the machine had passed. */
   readonly escaped: readonly EscapedDefect[];
+  /** (PS-08g) Defects the owner reported inside the window after the quest reached its base branch, sealed or not. */
+  readonly reported_escapes: readonly ReportedEscape[];
   /**
    * (PS-26) Checks of a default branch the patrol found turned red inside the window, each with the quests merged since
    * its last green patrol (`suspects`, each `sealed` or not); none: the change came from outside Elvaria.
@@ -87,7 +89,10 @@ export interface Metrics {
   readonly base_red: readonly RedFlip[];
   /** Quests sealed inside the window, with what they cost. */
   readonly sealed: readonly SealedCost[];
-  /** (PS-08b) Per territory, the Steward's merges inside the window and those without the seal (delegation). */
+  /**
+   * (PS-08b) Per territory, the Steward's merges inside the window and those without the seal (delegation); (PS-08g)
+   * of those, the ones a signal of the breaker named.
+   */
   readonly unsealed: readonly UnsealedCount[];
   /** The owner's applied commands on quests inside the window, per kind of OWNER_COMMAND_KINDS. */
   readonly owner_commands: readonly CommandCount[];
@@ -185,6 +190,7 @@ export function metricsOf(input: MetricsInput, window: MetricsWindow = {}): Metr
     rework,
     first_pass: firstPassRatesOf(trails, sessionModelsOf(input.events), window),
     escaped: trails.flatMap(escapedOf).filter(({ at }) => inWindow(window, at)),
+    reported_escapes: reportedEscapesOf(input.events, window),
     base_red: redFlipsOf(input.events).filter(({ since }) => inWindow(window, since)),
     sealed: trails
       .flatMap(({ quest }) => sealedCostOf(quest) ?? [])

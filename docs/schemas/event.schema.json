@@ -2636,6 +2636,140 @@
       "if": {
         "properties": {
           "type": {
+            "const": "quest.escaped"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "The owner reported a defect that escaped into the base branch with this quest (`elvaria quest escaped`), once per quest: merged by the Steward, or done and archived. The metrics count it among the escaped defects, sealed or not.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "quest",
+              "territory",
+              "delegated"
+            ],
+            "properties": {
+              "quest": {
+                "type": "string",
+                "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+              },
+              "territory": {
+                "type": "string",
+                "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                "not": {
+                  "enum": [
+                    "global"
+                  ]
+                }
+              },
+              "delegated": {
+                "description": "The Steward merged the quest without the royal seal, by the delegation (its delivery.merged says sealed false): only such a report suspends the delegation of its territory.",
+                "type": "boolean"
+              },
+              "note": {
+                "description": "The owner's words, as `--note` gave them.",
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "delegation.suspended"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "The Steward suspended the delegation of the seal for the territory, once per suspension: until the owner resumes it, every new quest there takes its kind's seal_default, and a quest it had spared stops at its pull request.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "territory",
+              "quest",
+              "cause"
+            ],
+            "properties": {
+              "territory": {
+                "type": "string",
+                "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                "not": {
+                  "enum": [
+                    "global"
+                  ]
+                }
+              },
+              "quest": {
+                "description": "The quest merged without the seal that the signal blames.",
+                "type": "string",
+                "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+              },
+              "cause": {
+                "enum": [
+                  "base_red",
+                  "escape_reported"
+                ]
+              },
+              "check": {
+                "description": "With cause base_red: the check that turned red (`setup` for commands.setup).",
+                "type": "string",
+                "minLength": 1
+              },
+              "note": {
+                "description": "The owner's words, as `--note` gave them.",
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "delegation.resumed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "The owner resumed the delegation of the seal for the territory (`elvaria territory delegation <id> --resume`): new quests there may go without the seal again.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "territory"
+            ],
+            "properties": {
+              "territory": {
+                "type": "string",
+                "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                "not": {
+                  "enum": [
+                    "global"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
             "enum": [
               "territory.attached",
               "territory.surveyed",
@@ -3503,6 +3637,9 @@
         "delivery.pushed",
         "delivery.merged",
         "delivery.failed",
+        "quest.escaped",
+        "delegation.suspended",
+        "delegation.resumed",
         "plot.patched",
         "plot.merged",
         "plot.restored",

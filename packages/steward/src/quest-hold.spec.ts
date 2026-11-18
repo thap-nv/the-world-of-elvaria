@@ -11,6 +11,7 @@ import { bench, questPayload } from './__fixtures__/kingdom.ts';
 import { plotsWith } from './__fixtures__/review.ts';
 import { createForgeBook } from './forge/book.ts';
 import { createPatrolBook } from './patrol/book.ts';
+import { createDelegationBook } from './delegation/book.ts';
 import { noticesOf } from './schedule/digest.ts';
 import { loadWorld } from './world.ts';
 import type { Bench, BenchOptions } from './__fixtures__/kingdom.ts';
@@ -109,7 +110,11 @@ describe('hold and unhold', () => {
       const world = await loadWorld(kingdom.store, { warn: () => undefined });
       if (world === undefined) throw new Error('fixture: world');
       const versions = { asked: new Map(), told: new Map(), holds: [] };
-      const books = { forge: createForgeBook(), patrol: createPatrolBook() };
+      const books = {
+        forge: createForgeBook(),
+        patrol: createPatrolBook(),
+        delegation: createDelegationBook(),
+      };
       return noticesOf(world, {
         reported: new Map(),
         unjudged: new Set(),
