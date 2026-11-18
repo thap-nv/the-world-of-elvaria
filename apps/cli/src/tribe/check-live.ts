@@ -12,8 +12,9 @@ import type { Tribe } from '@elvaria/domain';
 import type { FailedWorkspace } from '@elvaria/runner-core';
 import { inKingdom } from '@elvaria/store';
 
-import { checkedToolOf, locateTribeTool } from '../doctor/check-tribe.ts';
+import { locateTribeTool } from '../doctor/check-tribe.ts';
 import { findingLines } from '../doctor/finding.ts';
+import { checkedToolOf } from '../doctor/pin-tool.ts';
 import { backupStamp } from '../migrate.ts';
 import { refuse, saveTribes } from './save.ts';
 import type { KingdomContext } from '../kingdom-context.ts';

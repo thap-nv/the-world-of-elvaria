@@ -1,8 +1,8 @@
 // One tribe of kingdom.json: find its CLI, read the version, pin both into `tribes[].tool` (implementation-plan
-// §3.14), refuse Antigravity until the owner has acknowledged its terms (ADR 0018), and hold the pinned sign-in to
+// §3.14, ./pin-tool.ts), refuse Antigravity until the owner has acknowledged its terms (ADR 0018), and hold the pinned sign-in to
 // the ones the adapter declares (`capabilities.auth`, checkTribeAuth; P1-19). An owner adapter file names its own
 // CLI (./adapter-tool.ts).
-import { TribeSchema, checkTribeAuth, defaultAuthOf } from '@elvaria/domain';
+import { TribeSchema, checkTribeAuth } from '@elvaria/domain';
 import type { AdapterCapabilities, Tribe } from '@elvaria/domain';
 import type { AgentRunner } from '@elvaria/runner-core';
 import { toPortable } from '@elvaria/store';
@@ -16,18 +16,16 @@ import { shellFindings } from './check-shell.ts';
 import { finding } from './finding.ts';
 import { locateTool } from './locate-tool.ts';
 import { infoText } from './note-text.ts';
+import { changedTool, nextTool, uncheckedFindings } from './pin-tool.ts';
 import { toolVersion } from './tool-version.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 import type { ToolFound } from './adapter-tool.ts';
 import type { Finding } from './finding.ts';
+import type { PinOptions } from './pin-tool.ts';
 
-export interface DoctorOptions {
+export interface DoctorOptions extends PinOptions {
   /** `--tool <tribe>=<path>`: where the owner says a tribe's CLI is. */
   readonly tools: ReadonlyMap<string, string>;
-  /** `--pin`: accept a CLI whose version or path differs from the pinned one. */
-  readonly pin: boolean;
-  /** `--acknowledge-terms <tribe>`: the owner accepts the provider's terms for that tribe (ADR 0018). */
-  readonly acknowledge: ReadonlySet<string>;
   /** `--enable <tribe>`: turn a built-in tribe on once this run finds nothing wrong with it (P1-15, P1-34). */
   readonly enable: ReadonlySet<string>;
 }
@@ -89,88 +87,6 @@ export const locateTribeTool = (tribe: Tribe, ctx: KingdomContext, given?: strin
     ctx,
     given === undefined ? NO_OPTIONS : { ...NO_OPTIONS, tools: new Map([[tribe.id, given]]) },
   );
-
-type Pinned = NonNullable<Tribe['tool']>;
-
-/**
- * The tool a passing `tribe check` with the real CLI pins for its tribe alone (B1 of the lessons of 2026-11-13): the
- * CLI it ran, path and version, that version the checked one (A1b); the sign-in, default model and terms stay.
- */
-export const checkedToolOf = (pinned: Pinned, found: { path: string; version: string }): Pinned => ({
-  ...pinned,
-  path: found.path,
-  version: found.version,
-  checked_version: found.version,
-});
-
-/**
- * The tool to pin, or undefined when a pinned tool changed and the owner has not asked to re-pin. A first pin takes
- * the sign-in the adapter declares: the owner's login when it runs with one, Gemini CLI's paid key (ADR 0018). A
- * re-pin to another version keeps the old checked version (the pinned one when none was recorded): `doctor --pin`
- * is no check, and the Steward holds the tribe until `tribe check` passes on the new one (A1b).
- */
-function nextTool(
-  tribe: Tribe,
-  found: { path: string; version: string; from: string },
-  ctx: KingdomContext,
-  options: DoctorOptions,
-  capabilities: AdapterCapabilities | undefined,
-) {
-  const pinned = tribe.tool;
-  const changed = pinned !== undefined && (pinned.version !== found.version || pinned.path !== found.path);
-  if (changed && !options.pin && found.from !== 'flag') return undefined;
-  const acknowledged = options.acknowledge.has(tribe.id) ? { terms_acknowledged_at: ctx.now() } : {};
-  const checked = pinned?.checked_version ?? pinned?.version;
-  const kept = pinned?.version === found.version || checked === undefined ? {} : { checked_version: checked };
-  return {
-    ...pinned,
-    path: found.path,
-    version: found.version,
-    auth: pinned?.auth ?? defaultAuthOf(capabilities ?? { auth: [] }),
-    ...kept,
-    ...acknowledged,
-  };
-}
-
-/**
- * A pinned CLI that changed. locateTool tries the pinned file before PATH, so one found on PATH means the pinned
- * file is gone (a VS Code extension update moves Claude Code's folder): the tribe cannot run until re-pinned,
- * which is an error. A file updated in place (agy) still runs, so a new version there is a warning, and the pin does
- * not hold it back: the next session runs the new version (agy 1.5.6 → 1.5.7 on 2026-11-13, with a new default
- * agent mode). Either way the hint sends the owner to `tribe check` with the real CLI before pinning (A1a of the
- * lessons of 2026-11-13).
- */
-function changedTool(
-  tribe: Tribe,
-  found: { path: string; version: string; from: string },
-  ctx: KingdomContext,
-) {
-  const params = {
-    tribe: tribe.id,
-    pinned: tribe.tool?.version ?? '',
-    pinned_path: tribe.tool?.path ?? '',
-    version: found.version,
-    path: found.path,
-  };
-  const moved = found.from === 'path';
-  const hint = [ctx.t(moved ? 'cli.doctor.moved_hint' : 'cli.doctor.pin_hint', params)];
-  return moved
-    ? finding('error', ctx.t('cli.doctor.tool_moved', params), hint)
-    : finding('warn', ctx.t('cli.doctor.tool_changed', params), hint);
-}
-
-/**
- * A pinned version no `tribe check` with the real CLI passed on (`doctor --pin` re-pinned it): the Steward holds the
- * tribe until one does (A1b), so doctor says so, as a warning with the command.
- */
-function uncheckedFindings(tribe: Tribe, tool: Pinned, ctx: KingdomContext): Finding[] {
-  const checked = tool.checked_version;
-  if (checked === undefined || checked === tool.version) return [];
-  const params = { tribe: tribe.id, version: tool.version, checked };
-  return [
-    finding('warn', ctx.t('cli.doctor.tool_unchecked', params), [ctx.t('cli.doctor.pin_hint', params)]),
-  ];
-}
 
 /** A pinned sign-in the adapter does not run with (P1-19): the tribe cannot run until kingdom.json names another. */
 export function authFindings(
