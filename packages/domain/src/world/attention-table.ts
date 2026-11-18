@@ -5,6 +5,7 @@ import type { CharacterId, MemoId, QuestId, TerritoryId, TribeId } from '../core
 import type { DelegationHold, SealRaise, TriageAction } from '../delegation/constants.ts';
 import type { WaitGauge } from '../dispatch/judge-waits.ts';
 import type { Rank } from '../schema/common.ts';
+import type { SuspensionCause } from '../schema/event/delegation-data.ts';
 import type { DeliveryFailure, DeliveryStage } from '../schema/event/delivery-data.ts';
 import type { ScanOutcome } from '../schema/event/patrol-data.ts';
 
@@ -71,6 +72,13 @@ export const ATTENTION_TABLE = {
   // PS-08b: the Steward merged the quest without the royal seal, by the kingdom's delegation; the owner reads it after
   // the fact, and undoes it with the item's `revert` line, which it runs and pushes itself.
   merged_unsealed: { group: 'can_wait', advice: 'read_or_revert', command: ['quest', 'show', '{quest}'] },
+  // PS-08g: the breaker suspended the territory's delegation of the seal after an escaped defect. The work goes on,
+  // only every new quest there waits for the seal again, until the owner reads what escaped and resumes it.
+  delegation_suspended: {
+    group: 'can_wait',
+    advice: 'read_then_resume',
+    command: ['territory', 'delegation', '{territory}', '--resume'],
+  },
   // PS-09b: the quest's delivery stopped at the merge queue's update and a merge quest resolves it for the owner; the
   // quest goes into the base branch with it. A `delivery_failed` item again once that merge quest is dropped.
   delivery_merging: {
@@ -139,6 +147,12 @@ export interface AttentionSubject {
   readonly raised?: readonly SealRaise[];
   /** (PS-08b) The git words that undo a merge without the seal (merged_unsealed), with `commit` its merge commit. */
   readonly revert?: readonly string[];
+  /**
+   * (PS-08g) Why the breaker suspended a territory's delegation (delegation_suspended), with `quest` the quest it
+   * blames, `since` when, `check` the check that turned red (base_red) and `note` the owner's words (escape_reported).
+   */
+  readonly cause?: SuspensionCause;
+  readonly note?: string;
   /** The merge queue's merge quest the quest waits for (delivery_merging, PS-09b). */
   readonly merge_quest?: QuestId;
   /** A newer build (upgrade_available, PS-08d): the commit pinned, the default branch's, and its commits since. */

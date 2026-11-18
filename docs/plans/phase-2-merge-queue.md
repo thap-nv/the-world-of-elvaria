@@ -208,13 +208,13 @@ Khảo sát ở `1578486` (`main`) và ở nhánh của PS-08c; PS-08c vào `mai
 - **Mục tiêu**: một lỗi lọt trên một quest không qua dấu thì ủy quyền dấu của lãnh thổ đó ngừng cho tới khi chủ nhân bật lại.
 - **Tín hiệu lỗi lọt của quest không qua dấu** (dòng 56: sổ đo hôm nay không thể sinh ra nó):
   1. một check của nhánh gốc đổi sang đỏ (`patrol.ran` của PS-26) mà khoảng nghi vấn có ít nhất một `delivery.merged` với `sealed: false`;
-  2. chủ nhân báo: lệnh hộp thư mới `report_escape` (`elvaria quest escaped <id> [--note …]`) cho một quest đã merge, ghi event `quest.escaped`; sổ đo đếm nó trong mục Lỗi lọt cho mọi quest, có dấu hay không;
+  2. chủ nhân báo: lệnh hộp thư mới `report_escape` (`elvaria quest escaped <id> [--note …]`) cho một quest đã merge, ghi event `quest.escaped`; sổ đo đếm nó trong mục Lỗi lọt cho mọi quest, có dấu hay không (thực tế, §11: "đã merge" là có `delivery.merged`, hay đã `done` rồi `archived`; mỗi quest báo một lần; sổ đo liệt kê lời báo ở bảng riêng `reported_escapes` ngay sau bảng Lỗi lọt, dòng tóm tắt đếm cả hai, vì một lời báo không có lượt chạy để ghép vào bảng cũ);
   3. (khi PS-08f có) check của forge đỏ trả một quest không qua dấu.
 - **Thêm**:
-  - Event `delegation.suspended` (`territory`, `quest`, `cause`) do Nhiếp chính phát đúng một lần cho mỗi lần ngừng, và `delegation.resumed` (`territory`). Hàm thuần `sealSuspendedOf(events)`; Nhiếp chính dựng lại ở `recover` và đưa vào snapshot, ngữ cảnh tạo quest và việc giao hàng (ba chỗ PS-08b đã chừa).
+  - Event `delegation.suspended` (`territory`, `quest`, `cause`; thực tế, §11: `cause` là `base_red` hay `escape_reported`, thêm `check` hay `note` tùy chọn) do Nhiếp chính phát đúng một lần cho mỗi lần ngừng, và `delegation.resumed` (`territory`). Hàm thuần `sealSuspendedOf(events)`; Nhiếp chính dựng lại ở `recover` và đưa vào snapshot, ngữ cảnh tạo quest và việc giao hàng (ba chỗ PS-08b đã chừa).
   - Lệnh hộp thư `resume_delegation` và `elvaria territory delegation <id> [--resume]`: không tùy chọn thì in phạm vi dấu, lãnh thổ có `pr_merge` không, đang ngừng từ quest nào và vì sao.
   - Bản tấu: mục `delegation_suspended` (nhóm `can_wait`: việc vẫn chạy, chỉ là mọi quest lại chờ dấu) kèm lệnh bật lại; một chuông lúc ngừng.
-  - Sổ đo: số quest merge không qua dấu và số lỗi lọt trong đó, theo lãnh thổ.
+  - Sổ đo: số quest merge không qua dấu và số lỗi lọt trong đó, theo lãnh thổ (thực tế, §11: "lỗi lọt trong đó" là số merge không dấu mà một tín hiệu nêu: lời báo trên nó, hay nó nằm trong khoảng nghi vấn của một check đổi sang đỏ).
   - Hướng dẫn vận hành: đọc gì trước khi bật lại.
 - **Test**: quest không qua dấu merge, tuần tra kế thấy một check đỏ ⇒ `delegation.suspended` một lần, quest mới của lãnh thổ chờ dấu, lãnh thổ khác không đổi; khoảng nghi vấn chỉ có quest có dấu ⇒ không ngừng; `quest escaped` trên quest không qua dấu ⇒ ngừng, trên quest có dấu ⇒ chỉ sổ đo; `--resume` ⇒ quest mới lại được miễn dấu; khởi động lại Nhiếp chính giữ trạng thái ngừng; lệnh từ chối quest chưa merge. Domain 100 %.
 - **Xong khi**: `pnpm check` xanh; các ca trên; ADR 0023 nói đúng tín hiệu và lệnh bật lại.

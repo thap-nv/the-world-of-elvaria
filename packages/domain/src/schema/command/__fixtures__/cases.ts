@@ -174,4 +174,14 @@ export const CASES: Record<InboxCommandKind, { valid: object; invalid: object; i
     invalid: { territory: 'do-an', quest: QUEST },
     issue: 'Unrecognized key: "quest"',
   },
+  report_escape: {
+    valid: { quest: QUEST, note: 'the login page broke' },
+    invalid: { quest: QUEST, reason: 'the login page broke' },
+    issue: 'Unrecognized key: "reason"',
+  },
+  resume_delegation: {
+    valid: { territory: 'do-an' },
+    invalid: { territory: 'Do An' },
+    issue: 'payload.territory: Invalid string',
+  },
 };

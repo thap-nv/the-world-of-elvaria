@@ -3,8 +3,9 @@
 // the first line that moved it on. `review` is two: waiting for a judge (its checks included) and held by one; with
 // `awaiting_seal` they are where the world waits on someone, which a single run's numbers never show.
 import { MS_PER_MINUTE } from '../constants.ts';
-import { isEventOf, isTypedEvent } from '../schema/event/event.ts';
+import { isTypedEvent } from '../schema/event/event.ts';
 import { QUEST_STATUSES } from '../schema/quest/shared.ts';
+import { isQuestLogType } from '../world/quest-log-type.ts';
 import { middleOf } from './session-counts.ts';
 import { inWindow } from './window.ts';
 import type { MetricsWindow } from './window.ts';
@@ -32,10 +33,9 @@ interface Stay extends Place {
   readonly ms: number;
 }
 
-/** The quest's view on a quest line; `quest.unclaimable` is a notice with no view (P1-03). */
+/** The quest's view on a quest line; a notice about a quest (QUEST_NOTICE_TYPES) has none. */
 function viewOf(event: Event): QuestView | undefined {
-  if (!isTypedEvent(event) || !event.type.startsWith('quest.') || isEventOf(event, 'quest.unclaimable'))
-    return undefined;
+  if (!isTypedEvent(event) || !isQuestLogType(event.type)) return undefined;
   return (event as EventOf<QuestLogType>).data.quest;
 }
 

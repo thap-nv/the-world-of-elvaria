@@ -29,6 +29,11 @@ import {
   MemoFiledDataSchema,
   MemoRoutedDataSchema,
 } from './memo-data.ts';
+import {
+  DelegationResumedDataSchema,
+  DelegationSuspendedDataSchema,
+  QuestEscapedDataSchema,
+} from './delegation-data.ts';
 import { DigestWrittenDataSchema, ScheduleRanDataSchema } from './schedule-data.ts';
 import { PatrolRanDataSchema } from './patrol-data.ts';
 import {
@@ -214,6 +219,9 @@ export const EVENT_DATA_SCHEMAS = {
   'delivery.pushed': DeliveryPushedDataSchema,
   'delivery.merged': DeliveryMergedDataSchema,
   'delivery.failed': DeliveryFailedDataSchema,
+  'quest.escaped': QuestEscapedDataSchema,
+  'delegation.suspended': DelegationSuspendedDataSchema,
+  'delegation.resumed': DelegationResumedDataSchema,
   'territory.attached': TerritoryChangeDataSchema,
   'territory.surveyed': TerritoryChangeDataSchema,
   'territory.health': TerritoryChangeDataSchema,

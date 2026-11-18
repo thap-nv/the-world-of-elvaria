@@ -6,10 +6,23 @@ import type { QuestStatus } from '../schema/quest/shared.ts';
 import type { QuestEventType } from '../quest/events.ts';
 
 /**
- * The quest lines that carry the quest's view. `quest.unclaimable` is a notice about an open quest, not a change
- * to it (P1-03), so it has data of its own and no move of the table is named by it.
+ * Quest lines that are notices about a quest, not changes to it: data of their own, no view, no move of the table.
+ * `quest.unclaimable` is about an open quest (P1-03); `quest.escaped`, the owner's report of a defect that escaped
+ * with a quest already in its base branch (PS-08g).
  */
-export type QuestLogType = Exclude<Extract<EventType, `quest.${string}`>, 'quest.unclaimable'>;
+export const QUEST_NOTICE_TYPES = ['quest.unclaimable', 'quest.escaped'] as const;
+
+/** The quest lines that carry the quest's view. */
+export type QuestLogType = Exclude<
+  Extract<EventType, `quest.${string}`>,
+  (typeof QUEST_NOTICE_TYPES)[number]
+>;
+
+const NOTICES: ReadonlySet<string> = new Set(QUEST_NOTICE_TYPES);
+
+/** A type of a quest line that carries the quest's view (QuestLogType). */
+export const isQuestLogType = (type: string): type is QuestLogType =>
+  type.startsWith('quest.') && !NOTICES.has(type);
 
 /**
  * Where the quest lands says it best: the infirmary, a verdict waiting for the seal, back with its character (a
