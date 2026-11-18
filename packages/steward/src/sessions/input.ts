@@ -20,6 +20,8 @@ export interface SessionInput {
   readonly cwd: string;
   /** An assignee that goes on with the quest in a fresh session (§10 question 4); null for its first session. */
   readonly continuation?: Continuation | null;
+  /** The continuation names the letter's path instead of copying it: copied, the tribe could not take the prompt. */
+  readonly letterAsPath?: boolean;
   /** A verifier's: the machine checks that ran before its session (§3.2). */
   readonly checks?: readonly VerdictCheck[];
   /** A verifier in the scratch plot its trial made (ADR 0022, P1-20): Edit and Write there, no commit, no push. */

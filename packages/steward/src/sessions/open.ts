@@ -16,7 +16,7 @@ import { secretsBreaker } from './breaker.ts';
 import { continuationOf, refusedWhileWaiting } from './continuation.ts';
 import { assigneeUnopened, judgeUnopened, unopenedLine } from './no-session.ts';
 import { branchHeadOf } from './progress.ts';
-import { requestOf } from './request.ts';
+import { fittedRequestOf } from './letter-fit.ts';
 import type { SessionRequest } from './request.ts';
 import { clearWrapUp } from './wrap-up.ts';
 import { questSecretsOf, rememberSecrets, secretsLacking } from './secrets.ts';
@@ -89,7 +89,7 @@ async function spawnFor(
   try {
     const prepared = await plotFor(ctx, input);
     const quest = { ...input.quest, plot: prepared.plot };
-    const built = await requestOf(ctx, { ...input, quest, cwd: prepared.cwd }, resume);
+    const built = await fittedRequestOf(ctx, { ...input, quest, cwd: prepared.cwd }, resume);
     const { request, ...carried } = built; // its load trace and advisories go with the session
     const head = input.role === 'assignee' ? await branchHeadOf(ctx, prepared.plot) : undefined; // before the CLI starts
     const session = heardBy(ctx.mana, input.character, await spawnOf(ctx, runner, request, parse));

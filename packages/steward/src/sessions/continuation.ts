@@ -7,20 +7,26 @@ import { openJournal } from '@elvaria/eventlog';
 import type { Quest, Verdict } from '@elvaria/domain';
 import type { Continuation, Memory, RefusedWork } from '@elvaria/runner-core';
 
-import { readHandover, readJournal } from '../files.ts';
+import { handoverPath, readHandover, readJournal } from '../files.ts';
 import { refusedPatchOf } from '../infirmary.ts';
 import { filedMemosOf } from '../memos/filed.ts';
 import { withLogTails } from '../review/log-tail.ts';
 import type { Context } from '../context.ts';
 import type { SessionInput } from './input.ts';
 
+/** What the prompt says in place of a letter too long for the tribe to take copied (letter-fit.ts). */
+export const letterPathNote = (file: string): string =>
+  `Not copied here: with the letter in it, this prompt would be longer than your CLI takes. Read the letter before anything else: ${file}`;
+
 /**
  * What a continuing session reads instead of a transcript (ADR 0017), with the memos its letters filed (PS-02); the
- * branch's git log comes with P1-07.
+ * branch's git log comes with P1-07. The letter, or its path when the prompt names it instead (letter-fit.ts).
  */
-async function memoryOf(ctx: Context, quest: Quest): Promise<Memory> {
+async function memoryOf(ctx: Context, quest: Quest, letterAsPath: boolean): Promise<Memory> {
+  const letter = await readHandover(ctx.root, quest.id);
+  const named = letterAsPath && letter !== null && letter.trim() !== '';
   return {
-    handover: await readHandover(ctx.root, quest.id),
+    handover: named ? letterPathNote(handoverPath(ctx.root, quest.id)) : letter,
     journal: await readJournal(ctx.root, quest.id),
     git_log: null,
     memos: await filedMemosOf(ctx, quest.id),
@@ -125,7 +131,10 @@ export async function continuationFor(
 ): Promise<(Continuation & Memory) | null> {
   const { continuation, quest } = input;
   if (continuation === undefined || continuation === null) return null;
-  const memory = { ...(await memoryOf(ctx, quest)), ...(await touchedOf(ctx, quest)) };
+  const memory = {
+    ...(await memoryOf(ctx, quest, input.letterAsPath === true)),
+    ...(await touchedOf(ctx, quest)),
+  };
   if (continuation.reason === 'revive') return { ...continuation, ...memory };
   const checks = await withLogTails(ctx.root, continuation.verdict.checks, known);
   return { ...continuation, ...memory, checks };
