@@ -9,7 +9,7 @@ import { forgeSizesOf } from './forge/sizes.ts';
 import { patrolMoved } from './patrol/again.ts';
 import { recoverPatrol } from './patrol/book.ts';
 import { applyInbox } from './inbox/apply.ts';
-import { asleepFromLog, levelsFromLog, warnedFromLog } from './mana/book.ts';
+import { asleepFromLog, levelsFromLog, outsideFromLog, warnedFromLog } from './mana/book.ts';
 import { manaStep } from './mana/step.ts';
 import { noteJudgeWaits } from './judge-waits.ts';
 import { createRecorder } from './record.ts';
@@ -37,8 +37,8 @@ const reportOf = (counts: Counts): TickReport => ({
 });
 
 /**
- * What the log already knows: the commands answered, the notices in force (§3.1), the pools asleep (§3.5), the
- * stalled reviews the owner retried (P1-44).
+ * What the log already knows: the commands answered, the notices in force (§3.1), the pools asleep and what tribe
+ * checks spent (§3.5, run (221) (b)), the stalled reviews the owner retried (P1-44).
  */
 export async function recover(deps: StewardDeps, state: State): Promise<void> {
   const log = await deps.events.read();
@@ -53,6 +53,7 @@ export async function recover(deps: StewardDeps, state: State): Promise<void> {
   state.mana.asleep = asleepFromLog(log.events);
   state.mana.warned = warnedFromLog(log.events);
   state.mana.history = levelsFromLog(log.events);
+  state.mana.outside = outsideFromLog(log.events);
   state.restart = restartFromLog(log.events);
   state.scheduler.recover(log.events);
   recoverForge(state.forge, log.events);
