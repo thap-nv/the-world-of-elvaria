@@ -80,6 +80,13 @@ export type AdapterCapabilities = AdapterFlags & {
    * than the field: it does not.
    */
   readonly vision?: boolean;
+  /**
+   * Whether the adapter runs every process of the tribe (sessions, the usage probe, its doctor, purge) in the config
+   * directory `tribes[].tool.config_dir` names (PS-27): a second account of one CLI is then one more tribe. A tribe
+   * that names a directory its adapter does not declare this for is refused (checkTribeConfigDir), as its CLI would
+   * quietly run on the default account. Absent, as in an adapter file older than the field: it does not.
+   */
+  readonly config_dir?: boolean;
 };
 
 const isShellPlatform = (platform: string): platform is ShellPlatform =>

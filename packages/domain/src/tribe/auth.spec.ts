@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { TribeSchema } from '../schema/tribe.ts';
-import { checkTribeAuth, defaultAuthOf } from './auth.ts';
+import { checkTribeAuth, checkTribeConfigDir, defaultAuthOf } from './auth.ts';
 
 const tribe = (tool?: Record<string, unknown>) =>
   TribeSchema.parse({
@@ -42,5 +42,24 @@ describe('checkTribeAuth', () => {
       ok: false,
       error: { code: 'auth_not_declared', auth: 'login', declared: ['api_key'] },
     });
+  });
+});
+
+describe('checkTribeConfigDir', () => {
+  const named = tribe({ auth: 'api_key', config_dir: 'C:/Users/owner/.elvaria/accounts/gemini_2' });
+
+  it('accepts a config directory the adapter runs its CLI in', () => {
+    expect(checkTribeConfigDir({ config_dir: true }, named)).toEqual({ ok: true, value: undefined });
+  });
+
+  it('refuses a config directory the adapter does not declare, as its CLI would use the default account', () => {
+    const refused = { ok: false, error: { code: 'config_dir_not_declared' } };
+    expect(checkTribeConfigDir({}, named)).toEqual(refused);
+    expect(checkTribeConfigDir({ config_dir: false }, named)).toEqual(refused);
+  });
+
+  it('has nothing to check for a tribe that names no directory, or is not pinned yet', () => {
+    expect(checkTribeConfigDir({}, tribe({ auth: 'api_key' }))).toEqual({ ok: true, value: undefined });
+    expect(checkTribeConfigDir({}, tribe())).toEqual({ ok: true, value: undefined });
   });
 });

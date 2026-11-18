@@ -39,6 +39,17 @@ describe('TribeSchema', () => {
     );
   });
 
+  it('takes an optional config directory as an absolute path written with / (PS-27)', () => {
+    const claude = { id: 'claude_2', adapter: 'claude_code' };
+    const dirOf = (config_dir: string) => verdictOf({ ...claude, tool: { ...tool, config_dir } });
+    expect(TribeSchema.parse({ ...base, ...claude, tool }).tool).not.toHaveProperty('config_dir');
+    expect(dirOf('C:/Users/owner/.elvaria/accounts/claude_2')).toBe('ok');
+    expect(dirOf('/Users/owner/Elvaria accounts/claude_2')).toBe('ok');
+    for (const relative of ['accounts/claude_2', './claude_2', '~/.elvaria/accounts/claude_2', ''])
+      expect(dirOf(relative)).toBe('tool.config_dir');
+    expect(dirOf(String.raw`C:\Users\owner\.elvaria\accounts\claude_2`)).toBe('tool.config_dir');
+  });
+
   it('asks a paid key for a weekly spend ceiling', () => {
     expect(verdictOf({ id: 'claude', adapter: 'claude_code', tool: paid })).toBe('budget.usd_week');
     expect(verdictOf({ id: 'claude', adapter: 'claude_code', tool: paid, budget: {} })).toBe(
