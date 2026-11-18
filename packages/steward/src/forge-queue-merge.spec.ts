@@ -84,7 +84,10 @@ describe("the merge queue's merge quest (PS-09b)", () => {
     expect(
       merge?.attempt_log.filter(({ role }) => role === 'assignee').map(({ outcome }) => outcome),
     ).toEqual(['cancelled', 'submitted']);
-    expect(kingdom.notices.filter(({ kind }) => kind === 'merge_stopped')).toHaveLength(1);
+    // Rung as the queue's merge quest, which the bell names apart from a party's.
+    expect(kingdom.notices.filter(({ kind }) => kind === 'merge_stopped')).toEqual([
+      expect.objectContaining({ queue: true }),
+    ]);
     const judges = merge?.attempt_log.filter(({ role }) => role === 'verifier') ?? [];
     expect(judges.length).toBeGreaterThan(0);
     expect(judges.filter(({ character }) => workersOf(beta).includes(character))).toEqual([]);

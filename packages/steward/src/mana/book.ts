@@ -2,14 +2,15 @@
 // gauge, the gauges asleep (a whole pool, or the cap of one model: P1-22), the gauges warned, the share of each
 // window a session takes (P1-48), and when each tribe is next probed or read. Rebuilt from the event log at start:
 // the gauges asleep from `mana.exhausted` / `mana.restored`, the ones warned from `mana.warning`, the shares from the
-// `mana.level` lines (folded with the quests' sessions at the first reading); readings and schedules come back with
-// the first probe.
+// `mana.level` lines (folded with the quests' sessions at the first reading), what tribe checks spent from the
+// `tribe.checked` lines (run (221) (b)); readings and schedules come back with the first probe.
 import { DateTimeSchema, EVENT_DATA_SCHEMAS, keyOf, sameGauge, sameKey } from '@elvaria/domain';
 import type {
   CharacterId,
   Event,
   Instant,
   ManaReading,
+  OutsideSpend,
   PoolKey,
   ReportedWindow,
   SessionShare,
@@ -34,6 +35,8 @@ export interface ManaBook {
   shares: SessionShare[];
   /** The log's readings at start (`mana.level`), oldest first, until the first reading folds them into `shares`. */
   history: ManaReading[];
+  /** What the tribes' accounts spent outside every quest (`tribe.checked`), for the estimate (run (221) (b)). */
+  outside: OutsideSpend[];
   /** When a tribe with a pool asleep is probed next (ms); none: at once. */
   readonly probeAt: Map<TribeId, number>;
   /** The reset a sleeping tribe waits for (nextProbeOf): probes close after it come sooner. */
@@ -53,6 +56,7 @@ export const createManaBook = (): ManaBook => ({
   warned: [],
   shares: [],
   history: [],
+  outside: [],
   probeAt: new Map(),
   waited: new Map(),
   readAt: new Map(),
@@ -134,5 +138,20 @@ export function levelsFromLog(events: readonly Event[]): ManaReading[] {
         exhausted: level.used_pct >= 100,
       },
     ];
+  });
+}
+
+/**
+ * What `elvaria tribe check` spent with the real CLI, from the log's `tribe.checked` lines (run (221) (b)), which
+ * the estimate counts as it counts a quest's sessions. A check made while the Steward runs is read at its next start;
+ * the account's own figure, read every probe_interval_minutes while work is in play, shows it before that.
+ */
+export function outsideFromLog(events: readonly Event[]): OutsideSpend[] {
+  return events.flatMap((event) => {
+    const line =
+      event.type === 'tribe.checked' ? EVENT_DATA_SCHEMAS['tribe.checked'].safeParse(event.data) : undefined;
+    if (line?.success !== true || line.data.tokens === 0) return [];
+    const { tribe, model, tokens } = line.data;
+    return [{ tribe, model, tokens, at: event.ts }];
   });
 }

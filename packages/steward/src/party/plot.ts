@@ -8,7 +8,7 @@
 // quest's that stops rings the bell. (PS-09) A merge quest's merge whose conflicts all lie in the territory's hot files
 // is resolved by their rules before its knight is called, and the generators run once a `regenerate` rule kept a side,
 // or once the knight concluded a conflict on a generated file (fix/merge-quest-followups (n)): before its checks.
-import { PLOT_MERGE_STOPS, plotBaseOf } from '@elvaria/domain';
+import { PLOT_MERGE_STOPS, isQueueMerge, plotBaseOf } from '@elvaria/domain';
 import type { Quest, Territory } from '@elvaria/domain';
 import type { MergeOutcome, PrepareOptions } from '@elvaria/runner-core';
 
@@ -80,7 +80,9 @@ export async function noteMerge(ctx: Context, quest: Quest, outcome: MergeOutcom
   // The bell speaks of a merge quest's knight; a quest's dependencies that stop are undone, and said in the log.
   if (reason === undefined || quest.party_role !== 'merge') return;
   const branch = stop?.branch ?? outcome.pending[0] ?? into;
-  await ring(ctx, { kind: 'merge_stopped', quest: noticeQuest(quest), branch, reason, conflicts });
+  // The queue's merge quest is a merge quest too; the bell names it apart from a party's (glossary, run (221) (e)).
+  const queue = isQueueMerge(quest) ? { queue: true as const } : {};
+  await ring(ctx, { kind: 'merge_stopped', quest: noticeQuest(quest), branch, reason, conflicts, ...queue });
 }
 
 /**

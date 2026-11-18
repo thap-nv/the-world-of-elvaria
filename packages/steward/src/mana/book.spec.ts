@@ -1,7 +1,7 @@
 import { EVENT_VERSION } from '@elvaria/domain';
 import { describe, expect, it } from 'vitest';
 
-import { asleepFromLog, createManaBook, isAsleep, levelsFromLog } from './book.ts';
+import { asleepFromLog, createManaBook, isAsleep, levelsFromLog, outsideFromLog } from './book.ts';
 import type { Event } from '@elvaria/domain';
 
 function line(type: string, data: unknown): Event {
@@ -61,6 +61,22 @@ describe('levelsFromLog', () => {
         exhausted: false,
       },
       { ...week, ...observed, used_pct: 100, resets_at: null, exhausted: true },
+    ]);
+  });
+});
+
+// What tribe checks spent with the real CLI, counted by the estimate after a restart (run (221) (b)).
+describe('outsideFromLog', () => {
+  it('reads each tribe.checked line that spent tokens, when it was written, and skips the rest', () => {
+    const checked = { tribe: 'gemini', model: 'gemini-3.8-flash-high', outcome: 'failed', checks: [] };
+    const events = [
+      line('tribe.checked', { ...checked, tokens: 21_216 }),
+      line('tribe.checked', { ...checked, tokens: 0 }),
+      line('tribe.checked', { ...checked, tokens: 'many' }),
+      line('mana.level', { tribe: 'gemini', pool: 'gemini_models', window: 'weekly', used_pct: 3 }),
+    ];
+    expect(outsideFromLog(events)).toEqual([
+      { tribe: 'gemini', model: 'gemini-3.8-flash-high', tokens: 21_216, at: '2026-11-07T09:00:00+07:00' },
     ]);
   });
 });

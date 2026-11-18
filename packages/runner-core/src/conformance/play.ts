@@ -93,10 +93,11 @@ async function leave(workspace: Workspace, target: ConformanceTarget, scenario: 
  * folder held (`EBUSY`). runner-core's kill tree first, whatever the adapter's own kill does, then that kill, so the
  * runner settles its session; a short wait for the end frees the folder.
  */
-async function stop(session: RunningSession): Promise<void> {
+async function stop(session: RunningSession): Promise<RunResult | undefined> {
   await killTree(session.pid).catch(() => undefined);
   await settlesWithin(session.kill('conformance: the check gave up on the session'), STOP_WAIT_MS);
-  await settlesWithin(session.wait(), STOP_WAIT_MS);
+  // Its result, when it comes, says what the session spent before the kill (`submit` of agy past its ceiling, 2026-11-13).
+  return within(session.wait(), STOP_WAIT_MS, 'wait after the check gave up').catch(() => undefined);
 }
 
 /** The workspace of a failed check, handed to the target before it goes; a target that cannot keep it says why. */
@@ -141,20 +142,24 @@ export async function play(
   const timeout = target.timeout_ms ?? DEFAULT_TIMEOUT_MS;
   const workspace = await openWorkspace();
   let running: RunningSession | undefined;
+  // What the session reported spending, told to the target once, whether the check passes or not.
+  let spent: RunResult | undefined;
   try {
     const prepared = await prepareWorkspace(workspace, scenario);
     running = await runner.spawn(conformanceRequest(workspace, scenario, runner, target));
     const { result, signals } = await follow(running, scenario, timeout, steps.drive);
     running = undefined;
+    spent = result;
     const spawned = await readSpawnProbe(workspace.plot);
     const played = { runner, result, signals, ...(spawned === undefined ? {} : { spawned }), ...prepared };
     steps.verify?.(played);
     return played;
   } catch (error) {
-    if (running !== undefined) await stop(running);
+    if (running !== undefined) spent = await stop(running);
     await handOver(workspace, target, scenario, error);
     throw error;
   } finally {
+    if (spent !== undefined) target.onSpent?.(spent.usage.tokens);
     await leave(workspace, target, scenario);
   }
 }

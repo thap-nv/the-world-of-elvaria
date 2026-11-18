@@ -140,6 +140,9 @@ show` prints the brief apart from the rest of the description and, while the pla
   file, else PATH or the adapter's search, or `--tool`), and a pass pins that CLI's path and version for this tribe
   alone, the version as `tool.checked_version` (B1, A1b); a session's ceiling is 300 s (120 s for a fake CLI),
   `--timeout <seconds>` sets another, and a failed check's workspace is kept in `.runs/tribe-check-<tribe>-<stamp>/`.
+  It prints the tokens each check's sessions reported and their sum, and writes a `tribe.checked` line the Steward's
+  mana estimate counts (`src/tribe/check-spent.ts`, run (221) (b)); a fake CLI (`--scenarios`) spends nothing, so
+  neither.
   A check's temp folder that a process of the CLI still holds past the retries (agy on Windows) is named on stderr
   and left for the owner; the check does not fail for it (`onLeftover`, lessons of 2026-11-12). `run` gives the
   Steward `toolFound` (`src/run/tool-found.ts`): the CLI each runner starts and its `--version`, or a file gone;

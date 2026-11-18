@@ -104,6 +104,7 @@ export type Notice =
    * The Steward's merge into a party's merge quest stopped at `branch`, a part's or the territory's base branch
    * (PS-08e): on a conflict in `conflicts`, left in progress for the knight of the quest's next run; refused by git or
    * a hook, or the branch is gone (`conflicts` empty), which the owner looks at. Rung once per merge that stopped.
+   * `queue`: the quest is the merge queue's merge quest (PS-09b), not a party's, which the bell names apart.
    */
   | {
       readonly kind: 'merge_stopped';
@@ -111,6 +112,7 @@ export type Notice =
       readonly branch: string;
       readonly reason: MergeStopReason;
       readonly conflicts: readonly string[];
+      readonly queue?: true;
     }
   /**
    * The tribe's CLI at `path` says `version`, not `checked`, the version its last `tribe check` with the real CLI passed

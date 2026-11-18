@@ -19,7 +19,7 @@ import { SPAWN_PROBE_COMMAND, SPAWN_PROBE_OK } from './spawn-probe.ts';
 import { DEFAULT_TIMEOUT_MS, HANG_GRACE_MS, play, settlesWithin, within } from './play.ts';
 import type { Played } from './play.ts';
 import type { FakeScenario } from './scenarios.ts';
-import type { CheckOutcome, ConformanceCheck, ConformanceTarget } from './target.ts';
+import type { ConformanceCheck, ConformanceTarget } from './target.ts';
 import type { AdapterCapabilities } from '@elvaria/domain';
 
 const always = (): boolean => true;
@@ -275,26 +275,3 @@ export const CONFORMANCE_CHECKS: readonly ConformanceCheck[] = [
 /** The checks to run against `target`: all of them, or with a real CLI only those that burn no mana. */
 export const conformanceChecks = (target: ConformanceTarget): readonly ConformanceCheck[] =>
   CONFORMANCE_CHECKS.filter((check) => target.live !== true || check.live);
-
-export interface ConformanceReport {
-  readonly id: string;
-  readonly outcome: CheckOutcome | 'failed';
-  readonly problem?: string;
-}
-
-/** Runs every check in turn and reports each; what `elvaria tribe check` prints (P1-19). */
-export async function runConformance(target: ConformanceTarget): Promise<readonly ConformanceReport[]> {
-  const reports: ConformanceReport[] = [];
-  for (const check of conformanceChecks(target)) {
-    try {
-      reports.push({ id: check.id, outcome: await check.run(target) });
-    } catch (error) {
-      reports.push({
-        id: check.id,
-        outcome: 'failed',
-        problem: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-  return reports;
-}

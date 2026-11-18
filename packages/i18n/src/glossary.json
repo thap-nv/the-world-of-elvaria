@@ -2485,6 +2485,11 @@
               "meaning": "`elvaria upgrade` ghi (actor `user`): bắt đầu dựng và thử một commit, chuyển con trỏ `.state/build.json` sang bản mới, lùi về bản trước, hay hỏng ở một bước (`prepare`, `migrate`, `doctor`, `conformance`, `trial`) và không chuyển"
             },
             {
+              "group": "Tộc",
+              "types": ["tribe.checked"],
+              "meaning": "`elvaria tribe check` với CLI thật ghi (actor `user`, không ghi với `--scenarios`): model đã thử, số token các phiên của từng phép báo và tổng của chúng; ước lượng mana của Nhiếp chính tính tổng đó vào pool của model như phiên của một quest, đọc từ lần khởi động sau (lần chạy (221) (b))"
+            },
+            {
               "group": "Dành sẵn",
               "types": ["campaign.*", "battle.*", "incident.*", "party.*", "skill.*"],
               "meaning": "giai đoạn 5; đội và bí kíp"

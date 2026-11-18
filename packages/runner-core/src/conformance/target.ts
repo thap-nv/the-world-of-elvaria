@@ -35,6 +35,12 @@ export interface ConformanceTarget {
    * when it runs the real CLI (lessons of 2026-11-13). What it throws is said as a workspace left, not a failure.
    */
   readonly onFailed?: (failed: FailedWorkspace) => Promise<void> | void;
+  /**
+   * Told of the tokens each session of a check spent, as its RunResult reports them, passed or failed, and for a
+   * session the check gave up on once it ends after its kill. runConformance sets it to sum a check's sessions: with
+   * the real CLI they spend the account's mana, which `tribe check` neither said nor recorded before (run (221) (b)).
+   */
+  readonly onSpent?: (tokens: number) => void;
 }
 
 /** A failed check's workspace, still on disk: `problem` is the failure the check reports. */

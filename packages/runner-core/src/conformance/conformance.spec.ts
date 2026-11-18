@@ -5,7 +5,8 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { createFakeRunner } from '../runner/fake-runner.ts';
-import { CONFORMANCE_CHECKS, conformanceChecks, runConformance } from './checks.ts';
+import { CONFORMANCE_CHECKS, conformanceChecks } from './checks.ts';
+import { runConformance } from './run.ts';
 import { FAKE_IMAGE_FILE, FAKE_IMAGE_SCHEMA } from './image-probe.ts';
 import { FAKE_SCENARIOS, FAKE_STRUCTURED_ANSWER, FAKE_STRUCTURED_SCHEMA } from './scenarios.ts';
 import { SPAWN_PROBE_FAILED, SPAWN_PROBE_OUT } from './spawn-probe.ts';
@@ -58,11 +59,11 @@ describe('the conformance suite', () => {
       fake({ capabilities: { tool_gate: false, usage: false, structured_output: false } }),
     );
     expect(reports.filter(({ outcome }) => outcome !== 'passed')).toEqual([
-      { id: 'rate_limit', outcome: 'skipped' },
-      { id: 'forbidden_command', outcome: 'skipped' },
-      { id: 'structured', outcome: 'skipped' },
-      { id: 'image', outcome: 'skipped' },
-      { id: 'scratch_commit', outcome: 'skipped' },
+      { id: 'rate_limit', outcome: 'skipped', tokens: 0 },
+      { id: 'forbidden_command', outcome: 'skipped', tokens: 0 },
+      { id: 'structured', outcome: 'skipped', tokens: 0 },
+      { id: 'image', outcome: 'skipped', tokens: 0 },
+      { id: 'scratch_commit', outcome: 'skipped', tokens: 0 },
     ]);
   });
 
@@ -261,11 +262,13 @@ describe('the conformance suite', () => {
       id: 'doctor',
       outcome: 'failed',
       problem: 'no CLI on PATH',
+      tokens: 0,
     });
     expect(reports.find(({ id }) => id === 'submit')).toEqual({
       id: 'submit',
       outcome: 'failed',
       problem: 'spawn failed',
+      tokens: 0,
     });
   });
 

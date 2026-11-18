@@ -14,7 +14,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria doctor` | Kiểm tra máy đã sẵn sàng chưa: registry, git, CLI của từng tộc (và trên Windows, PowerShell có chạy script không, cho tộc mà phiên chạy lệnh trong nó), các lãnh thổ và chương trình mà lệnh của chúng gọi, kho bảo vật, phiên còn sót. |
 | `elvaria tribe list` | Liệt kê các tộc: adapter, bật hay tắt, CLI đã ghim và kiểu đăng nhập, hạng tối đa và vùng canh tộc được nhận, năng lực adapter khai. |
 | `elvaria tribe add <id>` | Thêm một tộc: một adapter (có sẵn, hoặc file adapters/<name>.mjs trong vương quốc) và tài khoản của chính bạn. Tộc mới tắt; nhân vật cũ không đổi. |
-| `elvaria tribe check <id>` | Chạy bộ test hợp đồng với adapter của một tộc và kiểm kiểu đăng nhập; bật tộc khi qua. Với CLI thật, bộ này chạy một việc nhỏ, một lệnh push bị cấm, một lần kill và một lần thăm dò, tốn chút mana, và khi qua thì ghim đường dẫn và phiên bản của CLI đó cho riêng tộc này. |
+| `elvaria tribe check <id>` | Chạy bộ test hợp đồng với adapter của một tộc và kiểm kiểu đăng nhập; bật tộc khi qua. Với CLI thật, bộ này chạy một việc nhỏ, một lệnh push bị cấm, một lần kill và một lần thăm dò, tốn chút mana: nó in số token của từng phép và tổng, và ghi tổng vào nhật ký cho ước lượng mana. Khi qua thì nó ghim đường dẫn và phiên bản của CLI đó cho riêng tộc này. |
 | `elvaria tribe disable <id>` | Tắt một tộc: không nhận việc mới; quest đang chạy chạy xong, quest đang chờ thì chờ. elvaria tribe check bật lại. |
 | `elvaria tribe look <id>` | Xem ngoại hình của một tộc (tên, bảng màu, huy hiệu, dáng người, hào quang, khung chân dung) và nguồn của nó; kèm tùy chọn thì ghi lựa chọn của ngài vào kingdom.json. Ngoại hình chỉ để hiển thị. |
 | `elvaria territory add <path>` | Gắn một repo hoặc thư mục vào vương quốc (mở cõi). |
@@ -114,7 +114,7 @@ Thêm một tộc: một adapter (có sẵn, hoặc file adapters/<name>.mjs tro
 
 ## `elvaria tribe check`
 
-Chạy bộ test hợp đồng với adapter của một tộc và kiểm kiểu đăng nhập; bật tộc khi qua. Với CLI thật, bộ này chạy một việc nhỏ, một lệnh push bị cấm, một lần kill và một lần thăm dò, tốn chút mana, và khi qua thì ghim đường dẫn và phiên bản của CLI đó cho riêng tộc này.
+Chạy bộ test hợp đồng với adapter của một tộc và kiểm kiểu đăng nhập; bật tộc khi qua. Với CLI thật, bộ này chạy một việc nhỏ, một lệnh push bị cấm, một lần kill và một lần thăm dò, tốn chút mana: nó in số token của từng phép và tổng, và ghi tổng vào nhật ký cho ước lượng mana. Khi qua thì nó ghim đường dẫn và phiên bản của CLI đó cho riêng tộc này.
 
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
