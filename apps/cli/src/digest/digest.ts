@@ -7,6 +7,7 @@ import {
   baseHealthOf,
   baseHoldsOf,
   baseRedOf,
+  deliveringOf,
   forgeOutcomesOf,
   heldQuestsOf,
   ownerDeliveries,
@@ -52,11 +53,18 @@ async function runDigest(input: CommandInput, cli: CliContext): Promise<ExitCode
   ]);
   const now = ctx.io.clock.now();
   const patrols = baseHealthOf(log.events);
+  const outcomes = forgeOutcomesOf(log.events);
   const items = attentionQueue(digestStateOf(source, log.events), now, {
     unclaimable: [...unclaimable.keys()],
-    scope_held: scopeHoldsOf(source.quests, source.territories),
+    // fix/run-221-domain: not a quest the Steward still carries to its base branch. Only the Steward knows a branch
+    // with nothing to push: here such a quest counts as carried.
+    scope_held: scopeHoldsOf(
+      source.quests,
+      source.territories,
+      deliveringOf(outcomes, source.quests, source.territories),
+    ),
     judges_unopened: unopenedReviewsOf(source.quests),
-    deliveries: ownerDeliveries(forgeOutcomesOf(log.events).values(), source.quests, source.territories),
+    deliveries: ownerDeliveries(outcomes.values(), source.quests, source.territories),
     ...(upgrade === undefined ? {} : { upgrade }),
     // PS-26: the same health of the patrolled branches the Steward's book holds.
     patrols,

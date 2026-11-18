@@ -252,15 +252,19 @@ export interface ScopeHold {
 
 /**
  * The done quests that hold a scope other quests wait for (R3), each with the quests that wait, their dependencies
- * finished: once the owner merges and archives it, they start. `territories` give the shared paths.
+ * finished: once the owner merges and archives it, they start. `territories` give the shared paths. (fix/run-221-domain)
+ * Not one of `delivering` (deliveringOf): the Steward carries it to the base branch and archives it, so archiving it by
+ * hand is wrong advice (the (221) run: a quest whose merge quest was alive under `pr_merge`).
  */
 export function scopeHoldsOf(
   quests: readonly Quest[],
   territories: readonly Pick<Territory, 'id' | 'shared_paths'>[],
+  delivering: ReadonlySet<QuestId> = new Set(),
 ): ScopeHold[] {
   const book = scopeBookOf(quests);
   const finished = new Set(quests.filter(questFinished).map(({ id }) => id));
-  const done = new Set(quests.filter(({ status }) => status === 'done').map(({ id }) => id));
+  const holding = (quest: Quest): boolean => quest.status === 'done' && !delivering.has(quest.id);
+  const done = new Set(quests.filter(holding).map(({ id }) => id));
   const held = new Map<QuestId, QuestId[]>();
   for (const quest of quests) {
     if (!SCOPE_WAITING_STATUSES.includes(quest.status)) continue;

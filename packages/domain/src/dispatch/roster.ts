@@ -59,8 +59,10 @@ export interface RosterSource {
   readonly tools_found?: ToolsFound;
   /**
    * The scheduled jobs due today that have not started, as the Steward's scheduler saw them before the plan (dueJobs,
-   * fix/acceptance-scope): a job of the Chancellor's among them keeps its tribe from new sessions (reservedTribeOf).
-   * Absent: none (a sandbox day, the specs).
+   * fix/acceptance-scope): a job of the Chancellor's among them keeps its tribe from new sessions (reservedTribesOf).
+   * (fix/run-221-domain) Only those its next step may start: not one that waits behind another job outside the tick,
+   * which would keep the tribe idle for nothing (the (221) run: 13 minutes of patrol). Absent: none (a sandbox day, the
+   * specs).
    */
   readonly jobs_due?: readonly DailyJobId[];
 }
@@ -185,8 +187,8 @@ function awaitedAuthorsOf(source: Pick<RosterSource, 'quests' | 'characters'>): 
 /**
  * The tribes kept for a session that lies outside the tribes' slots and starts only once no session of its tribe runs
  * (PS-03b), since new work given to the tribe at every tick would starve it all day (fix/acceptance-scope): the
- * Chancellor's while a job of its (CHANCELLOR_JOBS: the triage, and the digest that waits for it) is due and has not
- * started; (fix/amendment-owner-accept, (126)) the author's while a quest waits on its decision (PS-22b), until the
+ * Chancellor's while a job of its (CHANCELLOR_JOBS: the triage, and the digest that waits for it) is due, has not
+ * started and is next to start (jobs_due, fix/run-221-domain); (fix/amendment-owner-accept, (126)) the author's while a quest waits on its decision (PS-22b), until the
  * decision is applied. The Chancellor is the one the job picks (pickChancellor, as `chancellorOf` of apps/cli does):
  * nobody, or nobody but of a held tribe, keeps no tribe.
  */
