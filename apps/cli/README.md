@@ -118,7 +118,9 @@ show` prints the brief apart from the rest of the description and, while the pla
   owner's language (`src/sandbox/timeline.ts`), paced by `CliIo.sleep`. Closing the pipe (`| head`) ends it quietly.
 - `tribe add <id> --adapter <adapter>` (P1-19, implementation-plan §3.14, ADR 0021): a new tribe in
   `kingdom.tribes[]`, disabled, its adapter a built-in one or an owner file `adapters/<name>.mjs` that must be there;
-  no character changes. `tribe check <id>` builds the tribe's runner as `run` does, prints what its adapter declares
+  no character changes. `--sibling-of <root>` (PS-27b) writes `sibling_of`, the adapter the root's when `--adapter`
+  is absent, and refuses (exit 1) a root the kingdom lacks, a root that is a sibling and another adapter, again
+  under the kingdom file's lock. `tribe check <id>` builds the tribe's runner as `run` does, prints what its adapter declares
   (the shell and the longest user prompt it declares per OS too, P1-46 and fix/cli-lines, `src/tribe/check-declared.ts`) and how far `tribeLimitsOf` lets it go, holds its pinned sign-in to the ones it declares (`checkTribeAuth`), and
   runs runner-core's conformance suite against it (with the real CLI only the checks that burn no or almost no mana;
   `--scenarios` runs all of them against a fake CLI; `--tool <path>` tries another CLI than the pinned one, and with
@@ -146,7 +148,11 @@ show` prints the brief apart from the rest of the description and, while the pla
   tribe holds; with `--palette|--crest|--figure|--aura|--frame <id>` or `--name` it writes the owner's choice to
   `tribes[].look` through `saveTribes`, every part (the look as it stands with the options laid over it), refusing a
   part the theme's pool lacks (exit 2) and a palette or crest another tribe has or the theme pins to another tribe
-  (exit 1), and says which drawn looks moved with it; `--reset` drops the choice.
+  (exit 1), and says which drawn looks moved with it; `--reset` drops the choice. For a sibling (PS-27b,
+  `src/tribe/look-sibling.ts`) it prints the root and ordinal, writes only `sibling_name` (`--name`, `--reset`) and
+  refuses a part option (exit 1); a root lists its siblings and says they followed a change. `look-view.ts` names a
+  sibling by `sibling_name`, else the root's name with its Roman ordinal, and a root with siblings and no name of the
+  owner's with "I", in `tribe look`, `tribe list` and `tribe add`.
 - `doctor`: finds each tribe's CLI (`--tool <tribe>=<path>`, the pinned path, PATH, then the adapter's own search:
   Claude Code inside the VS Code extension; npm `.cmd` shims run as `node <script>`; an adapter file is asked
   through its runner's `doctor()`, `src/doctor/adapter-tool.ts`, P1-19), pins path and version with the sign-in the
@@ -158,7 +164,8 @@ show` prints the brief apart from the rest of the description and, while the pla
   or missing folder, or one inside the kingdom or a territory's repo or worktree folder), holds a tribe's folder to
   its adapter's `capabilities.config_dir` and outside those places, fails both tribes of every pair of login tribes
   of one adapter on one folder or one account (`src/doctor/check-accounts.ts`, the domain's `accountClashesOf`,
-  never naming the account) and keeps such a tribe off with `--enable`, asks
+  never naming the account) and keeps such a tribe off with `--enable`, warns of a sibling_of that is not valid,
+  one across adapters and a `look` on a sibling (PS-27b, `src/doctor/check-siblings.ts`), asks
   the tribe's adapter about its login (a CLI that cannot sign in is an error, with or without a reason, P1-34), how
   soon it ends and the built hook, refuses Antigravity without
   `--acknowledge-terms` (ADR 0018), turns a disabled tribe on with `--enable <tribe>` (P1-15) only when that run

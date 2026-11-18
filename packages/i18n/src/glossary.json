@@ -912,7 +912,7 @@
               "vi": "Tộc",
               "en": "Tribe",
               "id": ["tribe"],
-              "definition": "Một tài khoản người dùng tự đăng nhập + một adapter + một ngoại hình; tộc của nhân vật cố định suốt đời.",
+              "definition": "Một tài khoản người dùng tự đăng nhập + một adapter + một ngoại hình; tộc của nhân vật cố định suốt đời. Tài khoản thứ hai của cùng một CLI là một tộc nữa, khai là một chi của tộc gốc để nhìn như cùng tộc.",
               "used_in": "`kingdom.tribes[]`, `character.tribe` (§8)"
             },
             {
@@ -921,6 +921,13 @@
               "id": ["look"],
               "definition": "Bộ phần ghép lấy từ kho ngoại hình của theme, cùng tên hiển thị; nhìn là biết tộc. Chỉ để hiển thị: không vào prompt, không vào luật chọn người (ADR 0025).",
               "used_in": "`kingdom.tribes[].look`, `tribeLookOf`, `elvaria tribe look` (PS-24)"
+            },
+            {
+              "vi": "Chi",
+              "en": "Sibling tribe",
+              "id": ["sibling"],
+              "definition": "Một tộc khai `sibling_of` trỏ tới tộc gốc: tài khoản thứ hai của cùng một CLI. Ở tầng việc chi là một tộc riêng (bể mana, nhân vật, luật tách vai); chỉ ngoại hình đọc nó: bảng màu, huy hiệu, dáng người và khung của tộc gốc cùng hào quang kế tiếp trong kho. Số thứ tự (tộc gốc là I) suy từ thứ tự `kingdom.tribes[]`, không lưu; tên là `sibling_name`, không có thì tên tộc gốc kèm số La Mã (Sao Bạc II). Không gọi là nhánh: nhánh là nhánh git.",
+              "used_in": "`kingdom.tribes[].sibling_of`, `sibling_name`, `TribeLook.siblings`, `elvaria tribe add --sibling-of` (PS-27b)"
             },
             {
               "vi": "Phần ghép (bảng màu, huy hiệu, dáng người, hào quang, khung chân dung)",
@@ -937,10 +944,10 @@
               "used_in": "`tribe-looks.schema.json`, `lookPoolOf(theme)`, `packages/domain/src/tribe/fantasy-looks.json`"
             },
             {
-              "vi": "Nguồn ngoại hình (chủ nhân chọn / mục ghim / tự sinh)",
-              "en": "Look source (owner / pinned / generated)",
-              "id": ["owner", "pinned", "generated"],
-              "definition": "Ngoại hình lấy theo thứ tự: lựa chọn của chủ nhân, mục ghim của theme, ngoại hình tự sinh tất định theo id của tộc (bỏ qua bảng màu và huy hiệu tộc khác đang giữ).",
+              "vi": "Nguồn ngoại hình (chủ nhân chọn / mục ghim / tự sinh / chi)",
+              "en": "Look source (owner / pinned / generated / sibling)",
+              "id": ["owner", "pinned", "generated", "sibling"],
+              "definition": "Ngoại hình lấy theo thứ tự: lựa chọn của chủ nhân, mục ghim của theme, ngoại hình tự sinh tất định theo id của tộc (bỏ qua bảng màu và huy hiệu tộc khác đang giữ). Một chi lấy ngoại hình của tộc gốc, trừ hào quang.",
               "used_in": "`TribeLook.source`"
             },
             {
@@ -1569,7 +1576,7 @@
     {
       "heading": "8. Tộc (`tribe`)",
       "blocks": [
-        "Tộc là id mở trong `kingdom.tribes[]`; `elvaria init` ghi hai tộc đầu. Thêm tộc theo hợp đồng tộc (ADR 0021). Ngoại hình của tộc (PS-24): lựa chọn của chủ nhân (`elvaria tribe look`), mục ghim của theme, hay tự sinh từ kho ngoại hình theo id; tên dưới đây là của theme `fantasy`.",
+        "Tộc là id mở trong `kingdom.tribes[]`; `elvaria init` ghi hai tộc đầu. Thêm tộc theo hợp đồng tộc (ADR 0021). Ngoại hình của tộc (PS-24): lựa chọn của chủ nhân (`elvaria tribe look`), mục ghim của theme, hay tự sinh từ kho ngoại hình theo id; một chi (PS-27b) mang ngoại hình của tộc gốc với hào quang kế tiếp và số La Mã trong tên. Tên dưới đây là của theme `fantasy`.",
         {
           "table": "tribes",
           "columns": [
@@ -1609,6 +1616,12 @@
               "id": ["codex"],
               "icon": "`crest-wind` (tự sinh theo id khi đứng sau `claude`, `gemini`: bảng màu `yellow`, huy hiệu `wind`)",
               "adapter": "`codex_cli` (Codex CLI, tùy chọn)"
+            },
+            {
+              "vi": "Tộc Sao Bạc II (chi của `claude`; chủ nhân chưa đặt tên)",
+              "id": ["claude_2"],
+              "icon": "`crest-star` (của tộc gốc: bảng màu `silver`, huy hiệu `star`; hào quang `sparks`, kế sau `glow` của `claude`)",
+              "adapter": "`claude_code` (tài khoản thứ hai, `tool.config_dir` riêng)"
             }
           ]
         },
