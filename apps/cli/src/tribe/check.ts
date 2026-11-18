@@ -2,8 +2,9 @@
 // §3.14, ADR 0021): the conformance suite of runner-core against the tribe's runner, built from its adapter as
 // `elvaria run` builds it (what it declares is printed first, ./check-declared.ts), plus the sign-in kingdom.json
 // pins against the ones the adapter declares (checkTribeAuth, P1-19) and, once the suite passes, the login its adapter
-// reports, as doctor does (P1-34). A tribe that passes is enabled; one that fails stays as it is. With the real CLI only
-// the checks that burn no or almost no mana run (a tiny job, a forbidden push, a kill, the probe), on the CLI doctor
+// reports, as doctor does (P1-34), its config folder and, before it may be enabled, the other enabled tribes of its
+// adapter on the same account (PS-27). A tribe that passes is enabled; one that fails stays as it is. With the real
+// CLI only the checks that burn no or almost no mana run (a tiny job, a forbidden push, a kill, the probe), on the CLI doctor
 // would find; a pass pins that CLI for this tribe alone, and a failed check's workspace is kept (./check-live.ts,
 // lessons of 2026-11-13). `--scenarios` runs every check against a fake CLI that plays the suite's scenarios from
 // ELVARIA_FAKE_SCENARIO, as the specs' do, and pins nothing; with `--tool <path>` it writes nothing at all: `elvaria
@@ -18,7 +19,9 @@ import { fromPortable, toPortable } from '@elvaria/store';
 
 import { flagOption, textOption } from '../args.ts';
 import { EXIT } from '../command.ts';
-import { authFindings, loginFindings } from '../doctor/check-tribe.ts';
+import { accountFindingsAgainst } from '../doctor/check-accounts.ts';
+import { authFindings, loginFindingsOf } from '../doctor/check-tribe.ts';
+import { configDirFindings } from '../doctor/config-dir.ts';
 import { findingLines } from '../doctor/finding.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { minimalEnv } from '../process/minimal-env.ts';
@@ -29,6 +32,7 @@ import { namedTribe, setEnabled } from './save.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 import type { CliIo } from '../io.ts';
+import type { Finding } from '../doctor/finding.ts';
 import type { LiveTool } from './check-live.ts';
 
 /** How long one session of a fake CLI may take to answer: it answers at once, a hang is killed long before. */
@@ -172,6 +176,18 @@ async function passed(ctx: KingdomContext, named: Tribe, tried: Tried): Promise<
 }
 
 /**
+ * The login its adapter reports (P1-34) and, when a pass may pin or enable the tribe, the other enabled tribes of its
+ * adapter on the same account (PS-27); another CLI tried in place of the pinned one writes nothing, so it is spared.
+ */
+async function signInFindings(ctx: KingdomContext, tried: Tried, runner: AgentRunner): Promise<Finding[]> {
+  const info = await runner.doctor();
+  const login = loginFindingsOf(tried.tribe, info, ctx);
+  const writes = tried.live !== undefined || tried.toolPath === undefined;
+  const accounts = writes ? await accountFindingsAgainst(ctx, { tribe: tried.tribe, info }) : [];
+  return [...login, ...accounts];
+}
+
+/**
  * The suite and the sign-in of `tried`, on the runner built for it: whether it passes, or `refused` when it could not
  * run at all (no runner, a broken adapter file, no model), which says its own reason and no verdict.
  */
@@ -199,12 +215,16 @@ async function passes(
     ctx.io.err(ctx.t('cli.tribe.check.no_model', { tribe: tribe.id }));
     return 'refused';
   }
-  const auth = authFindings(tribe, runner.capabilities, ctx);
+  const auth = [
+    ...authFindings(tribe, runner.capabilities, ctx),
+    // A config folder its adapter does not run the CLI in, or one the characters reach (PS-27).
+    ...(await configDirFindings(tribe, runner.capabilities, ctx)),
+  ];
   auth.flatMap(findingLines).forEach(ctx.io.err);
   const suite = { ...run, ...(model.model === undefined ? {} : { model: model.model }) };
   const conformed = (await conforms(ctx, tried, runner, suite)) && auth.length === 0;
   // The suite asks only that doctor() answers; a CLI that cannot sign in keeps the tribe off, as in doctor (P1-34).
-  const login = conformed ? await loginFindings(tribe, runner, ctx) : [];
+  const login = conformed ? await signInFindings(ctx, tried, runner) : [];
   login.flatMap(findingLines).forEach(ctx.io.err);
   return conformed && login.every(({ level }) => level !== 'error');
 }

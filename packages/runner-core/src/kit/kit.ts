@@ -60,6 +60,12 @@ export interface AdapterKit {
   readonly node_path: AbsolutePath;
   /** The CLI in the machine's own path form, or undefined until doctor pins one. */
   readonly tool_path: AbsolutePath | undefined;
+  /**
+   * The tribe's `tool.config_dir` in the machine's own path form, or undefined when it names none (PS-27). An adapter
+   * that runs every process of its CLI there declares `capabilities.config_dir`; one that does not is refused for a
+   * tribe naming a directory. Added within kit version 1: a file written before reads nothing new.
+   */
+  readonly config_dir: AbsolutePath | undefined;
   readonly launchOf: KitHost['launchOf'];
   readonly hookCommand: KitHost['hookCommand'];
   /** Start a CLI without a shell and read it line by line; kill its whole tree (P1-06). */
@@ -97,8 +103,9 @@ export interface AdapterKit {
 
 /** The kit for one tribe. Frozen: an adapter file cannot change what the next one is handed. */
 export function adapterKitOf(host: KitHost): AdapterKit {
-  const pinned =
-    host.tribe.tool === undefined ? undefined : fromPortable(host.tribe.tool.path, host.platform);
+  const { tool } = host.tribe;
+  const pinned = tool === undefined ? undefined : fromPortable(tool.path, host.platform);
+  const configDir = tool?.config_dir === undefined ? undefined : fromPortable(tool.config_dir, host.platform);
   return Object.freeze({
     version: ADAPTER_KIT_VERSION,
     tribe: host.tribe,
@@ -107,6 +114,7 @@ export function adapterKitOf(host: KitHost): AdapterKit {
     platform: host.platform,
     node_path: host.node_path,
     tool_path: host.tool_path ?? pinned,
+    config_dir: configDir,
     launchOf: host.launchOf,
     hookCommand: host.hookCommand,
     process: Object.freeze({ startChild, runToEnd, killTree, KILL_GRACE_MS }),

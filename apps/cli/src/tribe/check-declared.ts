@@ -30,12 +30,14 @@ function promptLines(t: Translate, caps: AdapterCapabilities): string[] {
 }
 
 /**
- * The capabilities the adapter declares: the nine flags it has, then `vision` when its CLI reads images (PS-11), an
- * optional field and no flag, so an adapter that lacks it is not listed as missing it.
+ * The capabilities the adapter declares: the nine flags it has, then `vision` when its CLI reads images (PS-11) and
+ * `config_dir` when it runs its CLI in the tribe's config folder (PS-27), optional fields and no flags, so an adapter
+ * that lacks one is not listed as missing it.
  */
 export const declaredCapabilities = (caps: AdapterCapabilities): string[] => [
   ...ADAPTER_CAPABILITIES.filter((name) => caps[name]),
   ...(caps.vision === true ? ['vision'] : []),
+  ...(caps.config_dir === true ? ['config_dir'] : []),
 ];
 
 /** What the adapter declares and how far tribeLimitsOf lets the tribe go. */

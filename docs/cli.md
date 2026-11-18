@@ -88,6 +88,7 @@ Kiểm tra máy đã sẵn sàng chưa: registry, git, CLI của từng tộc (v
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
 | `--tool <tribe>=<path>` | Đường dẫn CLI của một tộc khi nó không có trên PATH, ví dụ claude=C:/…/claude.exe; lặp lại cho nhiều tộc. |
+| `--config-dir <tribe>=<folder>` | Thư mục cấu hình của CLI của một tộc, nơi CLI giữ đăng nhập, ví dụ claude_2=C:/Users/you/.elvaria/accounts/claude_2: đăng nhập CLI ở đó một lần, và tộc chạy trên tài khoản đó. Thư mục rỗng (claude_2=) thì bỏ trường; lặp lại cho nhiều tộc. |
 | `--pin` | Ghim lại phiên bản và đường dẫn CLI vừa tìm thấy khi chúng khác bản đã ghim, cho mọi tộc như vậy. Lệnh này không kiểm gì: Nhiếp chính giữ một tộc tới khi elvaria tribe check qua trên bản mới, và lệnh đó ghim riêng một tộc khi qua. |
 | `--enable <tribe>` | Kiểm một tộc đang tắt như mọi tộc đang bật và chỉ bật nó trong kingdom.json (enabled: true) khi không có lỗi nào. Tộc có adapter là file của bạn thì bật bằng elvaria tribe check. |
 | `--acknowledge-terms <tribe>` | Ghi nhận bạn đã đọc và chấp nhận điều khoản của nhà cung cấp cho tộc này (ADR 0018). |

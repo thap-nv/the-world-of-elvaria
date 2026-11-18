@@ -134,9 +134,13 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   `withHookProblem`, `src/runner/hook-built.ts`, fix/held-tribe-sessions). `ToolInfo.notes` carries
   `DoctorNote` codes and parameters (`DOCTOR_NOTES`, `DOCTOR_NOTE_PARAMS`, `doctorNoteOf`, `callNote`,
   `hookNote`); `detail` remains verbatim external text. The kit validates adapter notes, replacing malformed
-  entries with `doctor:bad_note`, and appends `doctor:hook_missing` when needed. The optional `shell` is
+  entries with `doctor:bad_note`, and appends `doctor:hook_missing` when needed. (PS-27) The kit hands the tribe's
+  `tool.config_dir` in the machine's form (`kit.config_dir`, undefined when it names none); `ToolInfo` carries the
+  optional `config_dir` (the folder the CLI says it runs in) and `account` (a fingerprint of its account, never the
+  account itself), kept from a file only when they are text, and `doctor:config_dir_ignored` (`given`, `used`) says
+  a CLI ran in another folder than the tribe names. The optional `shell` is
   checked only when given (`shellProblems`, P1-40), and so are `search` (`searchProblems`, P1-53), `read`
-  (`readProblems`), `vision` (`visionProblems`, PS-11) and `models` (the domain's `modelsProblems`, PS-23),
+  (`readProblems`), `vision` (`visionProblems`, PS-11), `config_dir` (`configDirProblems`, PS-27) and `models` (the domain's `modelsProblems`, PS-23),
   here and in the suite's `capabilities` check. An adapter whose CLI has hooks of its own writes its neutral hook dialect into `policy.json` through
   `writePolicyFile(…, { dialect })` (`HookDialect`, `src/runner/hook-dialect.ts`, PS-23), so the hook reads that
   CLI without a branch of its own. A built-in package also exports an `AdapterTool` (its program, its search

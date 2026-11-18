@@ -40,6 +40,9 @@ export const CLAUDE_CAPABILITIES: AgentRunner['capabilities'] = {
   // Read opens a PNG outside the plot through one rule a file, and the model saw it (vision spike 2026-11-17, Windows;
   // macOS form inferred, owner's (A)): a judge of this tribe may take a quest whose ritual asks for eyes (PS-11b).
   vision: true,
+  // Every process of the tribe runs with CLAUDE_CONFIG_DIR = tool.config_dir when it names one (./account.ts, PS-27):
+  // a second claude.ai account is a second tribe.
+  config_dir: true,
 };
 
 /**
@@ -71,7 +74,7 @@ export interface ClaudeRunnerOptions extends ClaudeToolOptions {
 
 export function createClaudeRunner(options: ClaudeRunnerOptions): AgentRunner {
   const tool = claudeTool(options);
-  const { env, cwd, timeoutMs, nodePath } = tool;
+  const { env, cwd, timeoutMs, nodePath, configDir } = tool;
   const now = options.now ?? Date.now;
   const apprentice = options.apprentice ?? DEFAULT_APPRENTICE;
   return {
@@ -79,7 +82,10 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): AgentRunner {
     adapter: CLAUDE_CODE_ADAPTER,
     capabilities: CLAUDE_CAPABILITIES,
     spawn: async (req) =>
-      startSession({ launch: await tool.launch(), hookCommand: options.hookCommand, apprentice }, req),
+      startSession(
+        { launch: await tool.launch(), hookCommand: options.hookCommand, apprentice, configDir },
+        req,
+      ),
     probe: async (probeOptions = {}) => {
       const model = options.probeModel ?? DEFAULT_PROBE_MODEL;
       try {
@@ -98,6 +104,8 @@ export function createClaudeRunner(options: ClaudeRunnerOptions): AgentRunner {
         cwd,
         timeoutMs,
         now,
+        configDir,
+        ...(options.platform === undefined ? {} : { platform: options.platform }),
       }),
   };
 }

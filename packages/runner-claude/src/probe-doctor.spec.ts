@@ -1,5 +1,5 @@
 import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 
@@ -89,7 +89,14 @@ describe('probe', () => {
 
 describe('doctor', () => {
   it('names the CLI, its version and the login', async () => {
-    expect(await fakeRunner().doctor()).toEqual({ path: FAKE_CLAUDE, version: '2.1.318', auth_ok: true });
+    // The CLI's default config folder and a fingerprint of its account (PS-27): the fake's home is this process's.
+    expect(await fakeRunner().doctor()).toEqual({
+      path: FAKE_CLAUDE,
+      version: '2.1.318',
+      auth_ok: true,
+      config_dir: path.join(homedir(), '.claude'),
+      account: expect.stringMatching(/^[0-9a-f]{64}$/) as string,
+    });
     expect(versionOf('2.1.318 (Claude Code)\n')).toBe('2.1.318');
   });
 
