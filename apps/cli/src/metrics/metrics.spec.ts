@@ -141,7 +141,7 @@ describe('elvaria metrics', () => {
     expect(text).toContain('Runs: 6 (6 character sessions, 0 machine runs); 0 sessions stopped by mana');
     expect(text).toContain('Rework: 2 sessions (infra 0, output 2, question 0, unknown 0).');
     expect(text).toContain('First pass: 0/2 quests (0 %).');
-    expect(text).toContain('Escaped defects (the owner returned a passed run): 1.');
+    expect(text).toContain('Escaped defects: 1 (the owner returned a passed run), 0 reported after a merge.');
     expect(text).toContain('Owner interventions: 1 commands, on 1 of 2 quests.');
     expect(text).toContain('Sealed quests: 1, 4000 tokens in all, 240.0 minutes on average');
     expect(text).toMatch(/output\s+verdict fail kind\s+style\s+1\s+1\s+2/);

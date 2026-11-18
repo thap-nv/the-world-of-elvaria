@@ -11,6 +11,7 @@ import {
   heldQuestsOf,
   ownerDeliveries,
   scopeHoldsOf,
+  sealSuspendedOf,
   unopenedReviewsOf,
 } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
@@ -64,6 +65,8 @@ async function runDigest(input: CommandInput, cli: CliContext): Promise<ExitCode
     base_holds: baseHoldsOf(source.quests, baseRedOf(patrols, source.territories, source.quests)),
     // (D) of fix/quest-hold: the quests the owner holds.
     held: heldQuestsOf(source.quests),
+    // PS-08g: the territories whose delegation of the seal the breaker suspended.
+    delegation_suspended: sealSuspendedOf(log.events),
   });
   // ctx.now() is written in the kingdom's zone: its date is the kingdom's local day, as the digest's file names it.
   const day = ctx.now().slice(0, 'yyyy-mm-dd'.length);
