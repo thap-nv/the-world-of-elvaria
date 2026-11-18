@@ -1,5 +1,6 @@
 // What every step of one tick works with: the deps, the world as the tick sees it, the pen, the sessions.
 import type { Background } from './background.ts';
+import type { DelegationBook } from './delegation/book.ts';
 import type { ForgeBook } from './forge/book.ts';
 import type { BaseLooks } from './forge/looks.ts';
 import type { PatrolBook } from './patrol/book.ts';
@@ -47,6 +48,8 @@ export interface Context {
   readonly looks: BaseLooks;
   /** The health of the patrolled territories' default branches (PS-26), across ticks. */
   readonly patrol: PatrolBook;
+  /** The territories whose delegation of the seal the breaker suspended (PS-08g), across ticks. */
+  readonly delegation: DelegationBook;
 }
 
 /** Rings the bell; a bell that fails never stops a tick. */

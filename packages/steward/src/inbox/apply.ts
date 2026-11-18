@@ -13,6 +13,7 @@ import { decideMemo } from '../memos/decide.ts';
 import { escalate } from '../memos/escalate.ts';
 import { STEWARD } from '../record.ts';
 import { release, suspend } from './character-commands.ts';
+import { reportEscape, resumeDelegation } from './delegation-commands.ts';
 import { setLevel, setModel } from './character-settings.ts';
 import { patrolNow } from '../patrol/again.ts';
 import { hold, unhold } from './hold-commands.ts';
@@ -79,6 +80,8 @@ async function onQuest(ctx: Context, command: InboxCommand, quest: Quest): Promi
       return unhold(ctx, quest);
     case 'submit':
       return submitFromInfirmary(ctx, quest);
+    case 'report_escape':
+      return reportEscape(ctx, quest, command.payload.note);
     default:
       return rejected('unsupported');
   }
@@ -97,6 +100,7 @@ export async function applyCommand(ctx: Context, command: InboxCommand): Promise
   if (command.kind === 'escalate_memo') return escalate(ctx, command);
   if (command.kind === 'decide_amendment') return decideAmendment(ctx, command);
   if (command.kind === 'patrol') return patrolNow(ctx, command.payload.territory);
+  if (command.kind === 'resume_delegation') return resumeDelegation(ctx, command.payload.territory);
   const quest = questOf(ctx, command);
   return quest === undefined ? rejected('unknown_quest') : onQuest(ctx, command, quest);
 }
