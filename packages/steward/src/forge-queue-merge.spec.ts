@@ -2,13 +2,21 @@
 // conflict no rule of shared_paths resolves opens one merge quest for a knight instead of leaving it to the owner. The
 // machine's first run stops on the conflict, a knight concludes it, a judge who never worked the quest reads it, and
 // with the owner's seal it goes through the queue itself and takes the quest it stands for into main; both plots go.
-// Dropped, it is not opened again for the same commit of main, and the stop is the owner's again.
+// Dropped, it is not opened again for the same commit of main, and the stop is the owner's again. A generated file the
+// knight resolved by hand is written anew before the checks (fix/merge-quest-followups (n)).
 import { isQueueMerge } from '@elvaria/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { git } from './__fixtures__/git-plots.ts';
 import { tickUntil } from './__fixtures__/kingdom.ts';
-import { onMain, queueBench, sealedTogether, statusOf } from './__fixtures__/queue.ts';
+import {
+  indexOf,
+  onMain,
+  queueBench,
+  sealedTogether,
+  sourceWithIndex,
+  statusOf,
+} from './__fixtures__/queue.ts';
 import type { Leaves } from './__fixtures__/deliver.ts';
 import type { ForgeBench } from './__fixtures__/forge-bench.ts';
 
@@ -126,4 +134,43 @@ describe("the merge queue's merge quest (PS-09b)", () => {
     expect(again?.data).toMatchObject({ quest: beta.id, reason: 'conflict', merge_quest: merge?.id });
     expect(await statusOf(bench, 'Beta')).toBe('done');
   }, 240_000);
+});
+
+/**
+ * Alpha and Beta each add a source file, regenerate the index, and write one file no rule names; the knight of the
+ * merge quest keeps both sides of that file, and its own side of the index, as a hurried knight would.
+ */
+const WITH_INDEX: Leaves = (req) => {
+  if (req.quest?.party_role === 'merge')
+    return { 'src/rooms.ts': 'alpha\nbeta\n', 'docs/gen/index.txt': indexOf('beta.ts', 'rooms.ts') };
+  const name = req.quest?.title.toLowerCase();
+  if (name === undefined) return {};
+  return {
+    'src/rooms.ts': `${name}\n`,
+    ...sourceWithIndex(`${name}.ts`),
+    'docs/gen/index.txt': indexOf(`${name}.ts`, 'rooms.ts'),
+  };
+};
+
+describe("the generated files of the merge queue's merge quest (fix/merge-quest-followups (n))", () => {
+  // Timeout: real git and the fake forge through two deliveries, a machine's run, a knight's and a judge's sessions,
+  // some 300 ticks; minutes when other worktrees run their checks at the same time.
+  it('writes the index anew once the knight concluded a conflict that held it, before the checks', async () => {
+    const { bench, steward } = await queueBench(WITH_INDEX);
+    current = bench;
+    const { kingdom } = bench;
+    await sealedTogether(bench, steward, ['Alpha', 'Beta']);
+    const awaiting = async () => (await mergesOf(bench))[0]?.status === 'awaiting_seal';
+    await tickUntil(steward, kingdom.clock, awaiting, 300);
+
+    const [merge] = await mergesOf(bench);
+    expect(
+      merge?.attempt_log.filter(({ role }) => role === 'assignee').map(({ outcome }) => outcome),
+    ).toEqual(['cancelled', 'submitted']);
+    const branch = `quest/${merge?.id ?? ''}`;
+    expect(git(bench.repo, 'show', `${branch}:src/rooms.ts`)).toBe('alpha\nbeta');
+    expect(git(bench.repo, 'show', `${branch}:docs/gen/index.txt`)).toBe(
+      indexOf('alpha.ts', 'beta.ts', 'rooms.ts').trim(),
+    );
+  }, 300_000);
 });

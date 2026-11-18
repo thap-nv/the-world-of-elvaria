@@ -5,8 +5,10 @@
 // there, or whose pull request the Steward merged (a squash leaves no ancestry), is archived by the Steward, which
 // then releases its plot; a party's parts and contract go with their merge quest, whose merge holds their commits.
 // (PS-09b) The merge queue's merge quest in the base branch takes the quest it stands for with it (its parent): its
-// branch holds that quest's, but a squash or a rebase by the forge leaves no ancestry for a look to find.
+// branch holds that quest's, but a squash or a rebase by the forge leaves no ancestry for a look to find. So does a
+// party's (fix/merge-quest-followups (l)): every merge quest of a party takes the party's contract and parts with it.
 import { BASE_LOOK_MINUTES, MS_PER_MINUTE } from '../constants.ts';
+import { isPartyPart } from '../party/party-status.ts';
 import { isQueueMerge } from '../party/queue-merge-quest.ts';
 import type { Instant } from '../core/clock.ts';
 import type { QuestId, TerritoryId } from '../core/ids.ts';
@@ -57,13 +59,26 @@ export function baseLooks(source: InBaseSource, done: readonly Quest[], now: Ins
     .map(([territory, quests]) => ({ territory, quests }));
 }
 
-/** The quests the merge queue's merge quests in `found` stand for (PS-09b): in the base branch with them. */
+/**
+ * The work of party `party` a merge quest's branch holds: its contract and its parts, the acceptance part too. A quest
+ * with a party role always names its party (quest schema), so a quest outside a party has none.
+ */
+const partyWorkOf = (party: QuestId | undefined, quests: readonly Quest[]): QuestId[] =>
+  quests
+    .filter((quest) => quest.party_id === party && (quest.party_role === 'contract' || isPartyPart(quest)))
+    .map(({ id }) => id);
+
+/**
+ * What the merge quests in `found` took into the base branch with them: the quest a merge queue's one stands for (its
+ * parent, PS-09b), and the contract and parts of the party a merge quest is of, its own or the queue's
+ * (fix/merge-quest-followups (l)). Their commits are in its merge, but a squash leaves them no ancestry to be found by.
+ */
 const carriedBy = (found: ReadonlySet<QuestId>, quests: readonly Quest[]): QuestId[] =>
-  quests.flatMap((quest) =>
-    found.has(quest.id) && isQueueMerge(quest) && typeof quest.parent_id === 'string'
-      ? [quest.parent_id]
-      : [],
-  );
+  quests.flatMap((quest) => {
+    if (!found.has(quest.id) || quest.party_role !== 'merge') return [];
+    const parent = isQueueMerge(quest) && typeof quest.parent_id === 'string' ? [quest.parent_id] : [];
+    return [...parent, ...partyWorkOf(quest.party_id, quests)];
+  });
 
 /** The done quests the Steward archives now: in the base branch, no delivery of theirs still running. */
 export function forgeArchives(source: InBaseSource, done: readonly Quest[]): QuestId[] {

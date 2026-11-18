@@ -214,15 +214,45 @@ describe('forgeArchives with the merge queue (PS-09b)', () => {
     expect(forgeArchives({ in_base: [QUEUED] }, [rooms, merge])).toEqual([QUEUED]);
   });
 
-  it("carries nothing for a party's own merge quest, nor for a merge quest not in base yet", () => {
-    const contract = done(quest(Q1, { party: Q1, kind: 'plan', cls: 'mage' }));
-    const own: Quest = {
-      ...done(quest(MERGE, { party: Q1, dependsOn: [Q4] })),
-      party_role: 'merge',
-      parent_id: Q1,
-    };
-    expect(forgeArchives({ in_base: [MERGE], quests: [contract, own] }, [contract, own])).toEqual([MERGE]);
+  it('carries nothing for a merge quest not in base yet', () => {
     const merge = done(queued(rooms));
     expect(forgeArchives({ in_base: [], quests: [rooms, merge] }, [rooms, merge])).toEqual([]);
+  });
+});
+
+describe('forgeArchives with a party (fix/merge-quest-followups (l))', () => {
+  const contract = done(quest(Q1, { party: Q1, kind: 'plan', cls: 'mage' }));
+  const part = done(quest(Q4, { party: Q1, dependsOn: [Q1] }));
+  const tests: Quest = { ...done(quest(Q3, { party: Q1, dependsOn: [Q1] })), party_role: 'acceptance' };
+  const own: Quest = {
+    ...done(quest(MERGE, { party: Q1, dependsOn: [Q3, Q4] })),
+    party_role: 'merge',
+    parent_id: Q1,
+  };
+  const party = [contract, part, tests, own];
+
+  it("takes the contract and every part with the party's merge quest: a squash leaves them no ancestry", () => {
+    expect(forgeArchives({ in_base: [MERGE], quests: party }, party)).toEqual([Q1, Q4, Q3, MERGE]);
+    // Only done ones, and none whose delivery still runs; a party not in base yet takes nothing.
+    const working = { ...part, status: 'working' } as const;
+    const running = { running: [Q3], checked: [] };
+    const some = [contract, working, tests, own];
+    const finished = [contract, tests, own];
+    expect(forgeArchives({ in_base: [MERGE], quests: some, background: running }, finished)).toEqual([
+      Q1,
+      MERGE,
+    ]);
+    expect(forgeArchives({ in_base: [Q4], quests: party }, party)).toEqual([Q4]);
+  });
+
+  it("takes the whole party with the merge queue's merge quest of the party's merge quest", () => {
+    const again = done(queued(own));
+    expect(again.party_id).toBe(Q1);
+    const all = [...party, again];
+    expect(forgeArchives({ in_base: [QUEUED], quests: all }, all)).toEqual([Q1, Q4, Q3, MERGE, QUEUED]);
+    // Another merge quest of the queue, not in base, stays: it is no part of the party's work.
+    const other = { ...again, id: 'q_20261106_x2y3z4' as QuestId };
+    const both = [...all, other];
+    expect(forgeArchives({ in_base: [QUEUED], quests: both }, both)).not.toContain(other.id);
   });
 });
