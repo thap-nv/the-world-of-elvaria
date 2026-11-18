@@ -3,10 +3,10 @@
 import { openEventLog } from '@elvaria/eventlog';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { heldJob } from './__fixtures__/jobs.ts';
 import { bench, questPayload, settled } from './__fixtures__/kingdom.ts';
 import type { Bench, BenchOptions } from './__fixtures__/kingdom.ts';
-import type { Digest, JobRun, JobView, ScheduledJob, Steward } from './types.ts';
-import type { DailyJobId } from '@elvaria/domain';
+import type { Digest, JobView, ScheduledJob, Steward } from './types.ts';
 
 let current: Bench | undefined;
 let running: Steward | undefined;
@@ -17,32 +17,6 @@ afterEach(async () => {
   running = undefined;
   current = undefined;
 });
-
-/** A job outside the tick that ends when the spec says, or when the Steward stops it; `fail` makes it throw. */
-function heldJob(id: DailyJobId) {
-  const runs: JobRun[] = [];
-  let finish: () => void = () => undefined;
-  const job: ScheduledJob & { readonly runs: JobRun[]; finish(): void; fail: boolean } = {
-    id,
-    mode: 'off_tick',
-    runs,
-    fail: false,
-    finish: () => {
-      finish();
-    },
-    run: (run) => {
-      runs.push(run);
-      if (job.fail) return Promise.reject(new Error('the model did not answer'));
-      return new Promise<void>((resolve) => {
-        finish = resolve;
-        run.signal.addEventListener('abort', () => {
-          resolve();
-        });
-      });
-    },
-  };
-  return job;
-}
 
 /** Every daily job on at 08:00, the triage at 07:30 (PS-03b); the bench's clock reads 09:00. */
 async function open(jobs: readonly ScheduledJob[], digest?: Digest, options: BenchOptions = { cast: [] }) {

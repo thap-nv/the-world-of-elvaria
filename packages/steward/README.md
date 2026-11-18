@@ -108,7 +108,9 @@
   however the clock moves, and one a stop cut short runs again. (PS-03b) Jobs due together go by their hour, and an
   off-tick job may wait for `ready` (its view names the tribes a session runs on, `busy`); before the plan the
   scheduler gives planTick the jobs due that have not started (`due`, `KingdomSnapshot.jobs_due`), so the Chancellor's
-  tribe takes no new session until the triage starts (fix/acceptance-scope). (fix/digest-timing) An
+  tribe takes no new session until the triage starts (fix/acceptance-scope); (fix/run-221-domain) only those its next
+  step may start (`nextOf`): none outside the tick while a job runs there, nor one behind a job of an earlier hour
+  without `ready` (the patrol), so the tribe works while the triage waits behind it. (fix/digest-timing) An
   in-tick job waits for the day's off-tick jobs of an earlier or equal hour to end, run or not yet ready (the
   domain's `awaitedJob`), and to have ended before the last tick's step, so the inbox commands they sent are applied:
   the digest carries the triage's advice however late the Steward started. The first job is the digest (`digestJob`, given

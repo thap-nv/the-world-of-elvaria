@@ -4,6 +4,7 @@
 import {
   baseHoldsOf,
   baseRedOf,
+  deliveringOf,
   heldQuestsOf,
   attentionQueue,
   judgedByEye,
@@ -95,7 +96,15 @@ export function noticesOf(
       class: classOf(world, quest),
       gauges,
     })),
-    scope_held: scopeHoldsOf([...world.quests.values()], [...world.territories.values()]),
+    // fix/run-221-domain: not a quest the Steward still carries to its base branch, which it archives itself.
+    scope_held: scopeHoldsOf(
+      quests,
+      [...world.territories.values()],
+      deliveringOf(state.forge.outcomes, quests, [...world.territories.values()], {
+        policy: sealPolicyOf(world),
+        nothing: state.forge.nothing,
+      }),
+    ),
     judges_unopened: unopenedReviewsOf([...world.quests.values()]),
     deliveries: ownerDeliveries(
       state.forge.outcomes.values(),

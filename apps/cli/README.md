@@ -88,7 +88,7 @@ show` prints the brief apart from the rest of the description and, while the pla
   `@elvaria/chancellor` for the batch, its commands written with `source: chancellor`; nothing when no letter waits.
   `run` gives the Steward the same as a scheduled job (`triageJob`, `kingdom.schedule.triage`), ready once no session
   of the Chancellor's tribe runs, or at once when no letter waits (fix/acceptance-scope: until it starts, planTick
-  opens no new session of that tribe). A Chancellor of a tribe held by its CLI's version gives way to the next one
+  opens no new session of that tribe, once it is the next job to start: fix/run-221-domain). A Chancellor of a tribe held by its CLI's version gives way to the next one
   (`pickChancellor`, fix/held-tribe-sessions); with none left the job waits for the hold to end, and `triage` or
   `say` by hand, which ask the CLIs first (`tribeHoldsOf`), open no session and print the bell's line of each hold
   with its `tribe check`. `memo show` prints the Chancellor's advice on a letter it sent up; the digest lists
