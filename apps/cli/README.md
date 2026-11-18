@@ -307,6 +307,9 @@ show` prints the brief apart from the rest of the description and, while the pla
   as `territory delivery`); `run` gives the Steward `Plots.patrol` (`tryTerritory` under `patrol-<id>`, the scans
   in the plot); `digest` lists `base_red` and `patrol_scan` from the log (`baseHealthOf`); the bell says `base_red`;
   `metrics` has the table "Default branch red after a merge".
+- A red default branch (PS-09d): `territory patrol <id> --now` sends the inbox command `patrol` for a patrolled
+  territory; `quest list` and `quest show` mark the open quests that wait for a green branch (`quest/base-wait.ts`,
+  `baseRedOf` over the log); `digest` says how many wait in the `base_red` item.
 
 ## Does not
 

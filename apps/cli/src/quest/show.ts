@@ -20,6 +20,7 @@ import { kindName } from './list.ts';
 import { partyFields } from './party.ts';
 import { planViewOf } from './plan-view.ts';
 import { readQuest } from './references.ts';
+import { baseWaitsOf } from './base-wait.ts';
 import { scopeWaitText, scopeWaitsOf } from './scope.ts';
 import { unclaimableLines, unclaimableOf } from './unclaimable.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
@@ -120,6 +121,9 @@ async function runQuestShow(input: CommandInput, cli: CliContext): Promise<ExitC
       : ['', ...(await unclaimableLines(ctx, registry.ok ? registry.value : undefined, quest, note))];
   const wait = (await scopeWaitsOf(ctx, items)).get(quest.id);
   const scope = wait === undefined ? [] : ['', scopeWaitText(ctx, wait)];
+  const base = (await baseWaitsOf(ctx, items)).has(quest.id)
+    ? ['', ctx.t('cli.quest.base_wait.why', { territory: quest.territory })]
+    : [];
   const journal = await journalOf(ctx, quest);
   const sick = infirmaryNote(ctx, quest, journal);
   const last = await lastRunLines(ctx, quest, journal);
@@ -129,6 +133,7 @@ async function runQuestShow(input: CommandInput, cli: CliContext): Promise<ExitC
     `${quest.id}  ${quest.title}`,
     ...renderTable(rows),
     ...why,
+    ...base,
     ...scope,
     ...sick,
     ...last,

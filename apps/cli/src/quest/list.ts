@@ -1,7 +1,8 @@
 // `elvaria quest list`: the quest board, oldest first (ids sort by day). Commands still in the inbox are counted
 // under it, because a quest the owner just added exists only as a command until the Steward's next tick. A party's
 // member says its role and where the party stands (P1-21 (c)). A quest that waits on its territory's scope rules says
-// for whom (PS-05), and one the owner holds says so (fix/quest-hold).
+// for whom (PS-05), and one the owner holds says so (fix/quest-hold), as one that waits for its territory's default
+// branch to be green (PS-09d).
 import { QUEST_STATUSES } from '@elvaria/domain';
 import type { Quest, QuestId, QuestStatus, Registry, ScopeWait } from '@elvaria/domain';
 
@@ -10,6 +11,7 @@ import { EXIT } from '../command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { QUEST_STATUS_LABEL, nameIn } from '../labels.ts';
 import { NONE, printListing } from '../listing.ts';
+import { baseWaitsOf } from './base-wait.ts';
 import { partyCell } from './party.ts';
 import { scopeWaitText, scopeWaitsOf } from './scope.ts';
 import { unclaimableOf } from './unclaimable.ts';
@@ -27,11 +29,13 @@ export function kindName(ctx: KingdomContext, registry: Registry | undefined, ki
 
 /**
  * The status, marked when the owner holds the quest (fix/quest-hold), when the Steward has said nobody can take it
- * (§3.1), or when it waits for a scope (PS-05). The hold comes first: the Steward reads nothing else of a held quest.
+ * (§3.1), or when it waits for a scope (PS-05). The hold comes first: the Steward reads nothing else of a held quest;
+ * then (PS-09d) a red base branch, which keeps the quest from the claim before anything else is weighed.
  */
 const statusCell = (ctx: KingdomContext, quest: Quest, board: Board): string => {
   const status = ctx.t(QUEST_STATUS_LABEL[quest.status]);
   if (quest.held !== undefined) return `${status} (${ctx.t('cli.quest.held.mark')})`;
+  if (board.base.has(quest.id)) return `${status} (${ctx.t('cli.quest.base_wait.mark')})`;
   if (board.unclaimable.has(quest.id)) return `${status} (${ctx.t('cli.quest.unclaimable.mark')})`;
   const wait = board.waits.get(quest.id);
   return wait === undefined ? status : `${status} (${scopeWaitText(ctx, wait)})`;
@@ -40,6 +44,8 @@ const statusCell = (ctx: KingdomContext, quest: Quest, board: Board): string => 
 interface Board {
   readonly registry: Registry | undefined;
   readonly unclaimable: ReadonlySet<QuestId>;
+  /** Open quests that wait for their territory's default branch to be green (PS-09d). */
+  readonly base: ReadonlySet<QuestId>;
   /** Quests that wait on their territory's scope rules, and for whom (PS-05). */
   readonly waits: ReadonlyMap<QuestId, ScopeWait>;
   /** Every quest read, for where each quest's party stands (P1-21 (c)). */
@@ -73,7 +79,14 @@ async function runQuestList(input: CommandInput, cli: CliContext): Promise<ExitC
   const { items, issues } = await ctx.store.quests.list();
   const unclaimable = new Set((await unclaimableOf(ctx, items)).keys());
   const waits = await scopeWaitsOf(ctx, items);
-  const board = { registry: registry.ok ? registry.value : undefined, unclaimable, waits, quests: items };
+  const base = await baseWaitsOf(ctx, items);
+  const board = {
+    registry: registry.ok ? registry.value : undefined,
+    unclaimable,
+    base,
+    waits,
+    quests: items,
+  };
   const shown = items.filter(
     (quest) =>
       (statuses.length === 0 || statuses.includes(quest.status)) &&

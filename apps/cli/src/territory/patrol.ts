@@ -2,7 +2,9 @@
 // default branch, or turns it on or off. The CLI writes territory.json itself, as `territory delivery` does (ADR 0005,
 // .claude/rules/cli.md): a territory is settings the Steward reads again at each tick, so the change counts from the
 // next patrol. `--on` keeps the scans and follow_up already there; `--off` removes `patrol`, them included. Scans and
-// follow_up are edited in the file (docs/guides/operating-a-kingdom.md). No event, no mana.
+// follow_up are edited in the file (docs/guides/operating-a-kingdom.md). No event, no mana. (PS-09d) `--now` asks the
+// Steward for one patrol of the territory now, through the inbox (`patrol`): after the owner fixed a red branch by
+// hand, or for a flaky check, so the territory takes work again without waiting for the next day's patrol.
 import { TerritoryIdSchema, ok } from '@elvaria/domain';
 import type { Territory } from '@elvaria/domain';
 
@@ -10,6 +12,7 @@ import { flagOption } from '../args.ts';
 import { EXIT } from '../command.ts';
 import { storeIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
+import { commandHeader, sendCommand } from '../quest/send-command.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
@@ -52,6 +55,17 @@ async function save(ctx: KingdomContext, territory: Territory, on: boolean): Pro
   return undefined;
 }
 
+/** `--now`: one patrol now, for a territory the patrol watches. */
+async function patrolNow(ctx: KingdomContext, territory: Territory): Promise<ExitCode> {
+  const { id, patrol, vcs } = territory;
+  if (patrol === undefined || vcs.type !== 'git') {
+    ctx.io.err(ctx.t('cli.territory.patrol.now_off', { id }));
+    return EXIT.failed;
+  }
+  const command = { ...commandHeader(ctx), kind: 'patrol', payload: { territory: id } } as const;
+  return sendCommand(ctx, command, 'cli.territory.patrol.now_sent', { id });
+}
+
 async function runTerritoryPatrol(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);
   if (ctx === undefined) return EXIT.failed;
@@ -64,6 +78,12 @@ async function runTerritoryPatrol(input: CommandInput, cli: CliContext): Promise
   }
   const on = flagOption(input, 'on') === true;
   const off = flagOption(input, 'off') === true;
+  const now = flagOption(input, 'now') === true;
+  if (now && (on || off)) {
+    io.err(t('cli.territory.patrol.now_alone'));
+    return EXIT.usage;
+  }
+  if (now) return patrolNow(ctx, found.value);
   if (on && off) {
     io.err(t('cli.territory.patrol.both'));
     return EXIT.usage;
@@ -86,6 +106,7 @@ export const TERRITORY_PATROL: CommandSpec = {
   options: {
     on: { type: 'boolean', help: 'cli.territory.patrol.option.on' },
     off: { type: 'boolean', help: 'cli.territory.patrol.option.off' },
+    now: { type: 'boolean', help: 'cli.territory.patrol.option.now' },
   },
   run: runTerritoryPatrol,
 };
