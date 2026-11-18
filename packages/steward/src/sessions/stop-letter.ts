@@ -5,7 +5,10 @@
 // ceiling (d5, d6) left none, and the next ones went on from git and the journal alone (gap 23 of the report). The
 // letter is minimal and says only what the Steward knows (the trip, the files, its WIP commit or the copy of the work,
 // the hook's last words); it follows the template's headings so the next session fills them in, and a letter the
-// character did write is never touched.
+// character did write is never touched. Since fix/stop-letter ((213)) it also carries the branch's diff, cut short:
+// in run (J) of PS-08d a session cut after its work was done left a letter that said only which files differed, and
+// the next one spent its whole budget reading the code again without changing a line.
+import { createRedactor } from '@elvaria/eventlog';
 import { writeFileAtomic } from '@elvaria/store';
 import type { Quest } from '@elvaria/domain';
 import type { CommitOutcome } from '@elvaria/runner-core';
@@ -31,6 +34,13 @@ interface Cut {
 
 /** At most this many paths in the letter; the patch file has them all. */
 const FILES_LISTED = 30;
+
+/**
+ * At most this many characters of the branch's diff in a letter. The letter goes whole into the next session's
+ * prompt, and agy takes its prompt on a command line of at most 26 000 characters on Windows, which nothing measures
+ * before a revived session opens (claim-prompt-size.ts measures claims only); the files listed hold the rest.
+ */
+export const LETTER_DIFF_MAX_CHARS = 4_000;
 
 const DECISIONS = 'None recorded: the session was cut before it wrote any.';
 
@@ -140,27 +150,61 @@ function placeOf(left: Exclude<StopLeft, Refusal>, trip: string): Pick<Sections,
   }
 }
 
+/** The diff cut at a line end within `max` characters, saying where the rest is; whole when it fits. */
+export function letterDiffOf(diff: string, max = LETTER_DIFF_MAX_CHARS): string {
+  const text = diff.trimEnd();
+  if (text.length <= max) return text;
+  const part = text.slice(0, max);
+  return `${part.slice(0, part.lastIndexOf('\n') + 1)}[diff cut at ${String(max)} characters: the files listed above hold the rest]`;
+}
+
+/** Markdown's shortest code fence. */
+const FENCE_MIN = 3;
+
+/** A fence longer than any run of backticks in `text`, as runner-core's `fenced`: a diff of Markdown holds some. */
+function fencedDiff(text: string): string {
+  const longest = Math.max(0, ...[...text.matchAll(/`+/g)].map(([run]) => run.length));
+  const fence = '`'.repeat(Math.max(FENCE_MIN, longest + 1));
+  return `${fence}diff\n${text}\n${fence}`;
+}
+
+const NOT_DONE =
+  'Not known: read the quest, then the work on its branch and in the plot (`git log`, `git status`, `git diff`).';
+const NOT_DONE_AFTER_DIFF =
+  'The Steward cannot tell. Compare the quest with the diff under Done before you read anything else: what it shows ' +
+  'is on the branch already. If that is all the quest asks, check it and finish; otherwise do only what it lacks ' +
+  '(`git status` shows work not committed).';
+
+/** What the plot changed: the files, committed or not, then the branch's diff when it has one (fix/stop-letter). */
+function doneOf(files: readonly string[] | undefined, diff: string): string {
+  const listed =
+    files === undefined
+      ? 'Not known: git could not list the changes of the plot.'
+      : files.length === 0
+        ? 'No file differs from where the quest started.'
+        : `The plot differs from where the quest started in ${String(files.length)} file(s), committed or not:\n\n${listOf(files)}`;
+  if (diff === '') return listed;
+  const intro = "The branch's commits since the quest started (work not committed is not in them):";
+  return `${listed}\n\n${intro}\n\n${fencedDiff(letterDiffOf(diff))}`;
+}
+
 /**
- * The letter after any other cut (gap 23 of the PS-07 report): the trip, where the work is, and the files the plot
- * changed since the quest started (`files`; undefined when git could not say).
+ * The letter after any other cut (gap 23 of the PS-07 report): the trip, where the work is, the files the plot
+ * changed since the quest started (`files`; undefined when git could not say), and the branch's diff since then as
+ * a judge reads it (`diff`, PlotManager.diff; empty without git or a commit), cut at LETTER_DIFF_MAX_CHARS.
  */
 export function cutLetterOf(
   quest: Pick<Quest, 'id'>,
   by: Cut,
   left: Exclude<StopLeft, Refusal>,
   files: readonly string[] | undefined,
+  diff = '',
 ): string {
-  const done =
-    files === undefined
-      ? 'Not known: git could not list the changes of the plot.'
-      : files.length === 0
-        ? 'No file differs from where the quest started.'
-        : `The plot differs from where the quest started in ${String(files.length)} file(s), committed or not:\n\n${listOf(files)}`;
+  const shown = diff.trim() !== '';
   return letterOf(quest, by, {
     ...placeOf(left, by.trip),
-    done,
-    notDone:
-      'Not known: read the quest, then the work on its branch and in the plot (`git log`, `git status`, `git diff`).',
+    done: doneOf(files, shown ? diff : ''),
+    notDone: shown ? NOT_DONE_AFTER_DIFF : NOT_DONE,
   });
 }
 
@@ -191,14 +235,33 @@ async function filesOf(ctx: Context, quest: Pick<Quest, 'id'>): Promise<readonly
 }
 
 /**
+ * The branch's diff since the quest started, as its judge reads it (a party's merge quest: its own work after its
+ * last merge); empty when the plot has no git or git cannot say.
+ */
+async function diffOf(ctx: Context, quest: Pick<Quest, 'id'>): Promise<string> {
+  const found = ctx.world.quests.get(quest.id);
+  if (found === undefined) return '';
+  try {
+    return (
+      (await ctx.deps.plots.diff(found.plot, found.party_role === 'merge' ? 'after_merges' : 'branch')) ?? ''
+    );
+  } catch {
+    return '';
+  }
+}
+
+/**
  * Writes the minimal letter of a cut session, unless the quest has one with something in it. A letter that cannot be
- * written costs a line in the log, never the move to the infirmary.
+ * written costs a line in the log, never the move to the infirmary. It goes into the next session's prompt and to the
+ * owner, and its diff quotes the work, so it is masked as the session's own letter is (maskFinished, ADR 0013): the
+ * values the session was given (`known`), then the patterns.
  */
 export async function writeStopLetter(
   ctx: Context,
   quest: Pick<Quest, 'id'>,
   by: Cut,
   left: StopLeft,
+  known: readonly string[],
 ): Promise<void> {
   try {
     const letter = await readHandover(ctx.root, quest.id);
@@ -206,8 +269,8 @@ export async function writeStopLetter(
     const text =
       left.status === 'refused'
         ? stopLetterOf(quest, by, left)
-        : cutLetterOf(quest, by, left, await filesOf(ctx, quest));
-    await writeFileAtomic(handoverPath(ctx.root, quest.id), text);
+        : cutLetterOf(quest, by, left, await filesOf(ctx, quest), await diffOf(ctx, quest));
+    await writeFileAtomic(handoverPath(ctx.root, quest.id), createRedactor(known)(text));
     ctx.deps.log.warn(`steward: ${quest.id}: ${by.character} left no handover.md: wrote a minimal one`);
   } catch (error) {
     ctx.deps.log.warn(`steward: ${quest.id}: no minimal handover.md: ${messageOf(error)}`);

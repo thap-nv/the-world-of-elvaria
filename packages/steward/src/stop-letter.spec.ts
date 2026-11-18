@@ -13,7 +13,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { leavingRunners } from './__fixtures__/deliver.ts';
 import { git, gitPlots, gitRepoWith, onRepo } from './__fixtures__/git-plots.ts';
-import { RM_TEMP, bench, questPayload, tickUntil } from './__fixtures__/kingdom.ts';
+import { NPM_TOKEN, RM_TEMP, bench, questPayload, tickUntil } from './__fixtures__/kingdom.ts';
 import { statusIs } from './__fixtures__/review.ts';
 import { handoverPath } from './files.ts';
 import type { Leaves } from './__fixtures__/deliver.ts';
@@ -185,7 +185,30 @@ describe("work the territory's hook refuses (P1-55)", () => {
     expect(letter).toContain('its session ended (time) before a letter was written');
     expect(letter).toContain(`as WIP ${wip} on the quest's branch`);
     expect(letter).toContain('in 1 file(s), committed or not:\n\n- src/app.ts\n');
+    // fix/stop-letter ((213)): what the WIP commit holds, so the next session need not read the files again.
+    expect(letter).toContain('-export const app = 1;\n+export const app = 2;\n');
     expect(letter).toMatch(/## Next step[\s\S]*## Question\s*$/);
+  }, 120_000);
+
+  // fix/stop-letter ((213)): real git and the Steward's ticks up to the cut, as the test above: 3 s on Windows
+  // (2026-11-18), room for a busy machine.
+  it("masks the branch's diff in the letter: the session's secret values, then the patterns (ADR 0013)", async () => {
+    const key = ['sk-ant-', 'k'.repeat(24)].join('');
+    const work = { 'src/app.ts': `export const token = '${NPM_TOKEN}';\nexport const key = '${key}';\n` };
+    const options = { letter: false, plays: { work: { 'Cut with secrets': ['hang' as const] } } };
+    const { kingdom, steward } = await open(() => work, options);
+    const needs = { secrets_required: ['npm_token'] };
+    await kingdom.command('create_quest', questPayload('Cut with secrets', needs));
+    await steward.tick();
+    kingdom.clock.advance(67.5);
+    await steward.tick();
+
+    const quest = await kingdom.quest('Cut with secrets');
+    expect(quest.status).toBe('returned');
+    const letter = await readFile(handoverPath(kingdom.root, quest.id), 'utf8');
+    expect(letter).toContain("+export const token = '[redacted]';\n+export const key = '[redacted]';\n");
+    expect(letter).not.toContain(NPM_TOKEN);
+    expect(letter).not.toContain(key);
   }, 120_000);
 
   // Real git, a pre-commit hook run for real and the Steward's ticks: 3 s beside 13 other slow specs on

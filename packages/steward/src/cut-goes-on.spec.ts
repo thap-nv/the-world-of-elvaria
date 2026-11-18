@@ -176,7 +176,8 @@ describe('an assignee cut at the hard ceiling', () => {
         reason: { code: 'breaker:no_progress', params: { trip: 'time', run: 1 } },
       }),
     ]);
-    expect(commits).toHaveLength(2);
+    // One WIP commit per cut; the plot's other calls (the diff the first cut's letter quotes) are not counted.
+    expect(commits.filter((call) => call.startsWith('commit '))).toHaveLength(2);
     // The quest waits for the owner: no third session, no second bell.
     await steward.tick();
     expect(assigneeSessions(kingdom)).toHaveLength(2);
