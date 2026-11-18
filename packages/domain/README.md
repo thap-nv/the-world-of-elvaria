@@ -271,7 +271,11 @@ patrol`); `partyOf` counts the quest a party is named after, `partyStatusOf` and
   tribe narrowed by what its adapter lacks, `TRIBE_NARROWING`; `planTick` gives nothing to a tribe whose runner
   has no headless mode, no rank above its `max_rank`, and nothing on a guarded territory without a tool gate),
   `checkTribeAuth` and `defaultAuthOf` (the sign-in `tribes[].tool.auth` pins must be one the adapter declares;
-  doctor pins the owner's login first; P1-19, where TribeSchema used to name Gemini CLI), `selectChancellor`, and
+  doctor pins the owner's login first; P1-19, where TribeSchema used to name Gemini CLI), `checkTribeConfigDir`
+  (PS-27: a tribe naming `tool.config_dir` needs an adapter that declares `capabilities.config_dir`, else
+  `config_dir_not_declared`), `accountClashesOf` (PS-27: the pairs of login tribes of one adapter on one config
+  folder, two that name none included, or one account fingerprint; a tribe on a treasury key is not weighed),
+  `selectChancellor`, and
   `tribeLookOf` / `tribeLooksOf` (PS-24: a tribe's look, a set of parts of the theme's look pool — palette, crest,
   figure, aura, portrait frame — and a name: the owner's choice `tribes[].look`, else the theme's pinned entry,
   else drawn by the tribe id, the same on every run, in the order of `kingdom.tribes[]`, past the palettes and

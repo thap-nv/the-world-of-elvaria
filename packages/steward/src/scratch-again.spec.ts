@@ -108,6 +108,8 @@ async function judgedTwice(title: string, commands: Readonly<Record<string, stri
 }
 
 describe("the run's next judge in a scratch plot", () => {
+  // Real git, commands.setup run for real, and a judge's scratch plot made twice: 7 s beside 13 other slow
+  // specs on Windows (2026-11-18), room for a busy machine.
   it("gets a fresh scratch plot and the last judge's trial (P1-42)", async () => {
     const { kingdom, quest, scratch, seen, trials } = await judgedTwice('Wall judged twice', {});
     expect(trials).toBe(1);
@@ -126,6 +128,8 @@ describe("the run's next judge in a scratch plot", () => {
     expect(await pathExists(inKingdom(kingdom.root, scratchResetLogOf(quest.id)))).toBe(false);
   }, 120_000);
 
+  // Real git, commands.setup and commands.reset run for real in a scratch plot: 7 s beside 13 other slow
+  // specs on Windows (2026-11-18), room for a busy machine.
   it('gets it reset once after setup, with a log of its own (P1-47)', async () => {
     const { kingdom, quest, seen, trials } = await judgedTwice('Wall reset for the second', {
       reset: 'node reset.mjs',

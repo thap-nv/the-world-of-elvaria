@@ -70,6 +70,12 @@ export const readProblems = (read: unknown): string[] =>
 export const visionProblems = (vision: unknown): string[] =>
   vision === undefined || typeof vision === 'boolean' ? [] : ['capability vision is not true or false'];
 
+/** What is wrong with `capabilities.config_dir` (PS-27): optional like `vision`; when given, true or false. */
+export const configDirProblems = (configDir: unknown): string[] =>
+  configDir === undefined || typeof configDir === 'boolean'
+    ? []
+    : ['capability config_dir is not true or false'];
+
 function capabilityProblems(capabilities: unknown): string[] {
   if (!isRecord(capabilities)) return ['capabilities is not an object'];
   const flags = ADAPTER_CAPABILITIES.filter((name) => typeof capabilities[name] !== 'boolean').map(
@@ -84,6 +90,7 @@ function capabilityProblems(capabilities: unknown): string[] {
     ...searchProblems(capabilities.search),
     ...readProblems(capabilities.read),
     ...visionProblems(capabilities.vision),
+    ...configDirProblems(capabilities.config_dir),
     // PS-23: the models it serves and their families, optional; an older adapter file without them still loads.
     ...modelsProblems(capabilities.models),
   ];
@@ -136,9 +143,16 @@ function withHookCheck(runner: AgentRunner, kit: Pick<AdapterKit, 'hookCommand'>
     spawn: (req) => runner.spawn(req),
     probe: (options) => runner.probe(options),
     doctor: async () => {
-      const info = await runner.doctor();
+      // The file is untyped: a config directory or an account fingerprint that is not text is dropped (PS-27), as
+      // doctor compares them across tribes.
+      const { config_dir, account, ...info } = await runner.doctor();
       const notes = checkedDoctorNotes(info.notes);
-      return withHookProblem({ ...info, ...(notes === undefined ? {} : { notes }) }, await hookNote(script));
+      const said = {
+        ...(typeof config_dir === 'string' ? { config_dir } : {}),
+        ...(typeof account === 'string' ? { account } : {}),
+        ...(notes === undefined ? {} : { notes }),
+      };
+      return withHookProblem({ ...info, ...said }, await hookNote(script));
     },
   };
 }

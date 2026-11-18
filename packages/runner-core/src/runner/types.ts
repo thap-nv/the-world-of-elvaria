@@ -144,6 +144,17 @@ export interface ToolInfo {
   readonly notes?: readonly DoctorNote[];
   /** External text, displayed verbatim; Elvaria's own messages belong in notes. */
   readonly detail?: string;
+  /**
+   * The config directory the CLI says it runs in, as a path of this machine (PS-27); absent when the adapter cannot
+   * tell. doctor weighs it against the other tribes of the adapter (accountClashesOf): two may not share one.
+   */
+  readonly config_dir?: string;
+  /**
+   * A fingerprint of the account signed in there (PS-27): a hash the adapter makes of what its CLI says of the
+   * account, never the account's name or address, so it can be compared and not read back. Absent when the CLI does
+   * not say. doctor refuses two login tribes of one adapter with the same fingerprint, and keeps it in memory only.
+   */
+  readonly account?: string;
 }
 
 export interface AgentRunner {

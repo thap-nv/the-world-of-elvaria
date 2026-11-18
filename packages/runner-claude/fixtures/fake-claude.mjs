@@ -4,15 +4,15 @@
 //   --version | auth status --json | purge --yes <dir>   answers as the real CLI does
 //   -p /usage | -p "<ping>"                              replays usage-command.jsonl | probe.jsonl
 //   -p (prompt on stdin)                                 plays env ELVARIA_FAKE_SCENARIO, or replays FAKE_CLAUDE_REPLAY
-// Knobs: FAKE_CLAUDE_PING=rate_limit|error, FAKE_CLAUDE_USAGE_TEXT=<text of /usage>, FAKE_CLAUDE_RECORD=<file> (argv,
-// cwd, env, prompt), and those of fake-claude-commands.mjs, -leak.mjs (fake-only `leak`) and -image.mjs (`image`).
+// Knobs: FAKE_CLAUDE_PING=rate_limit|error, FAKE_CLAUDE_RECORD=<file> (argv, cwd, env, prompt), and those of
+// fake-claude-commands.mjs, -leak.mjs (fake-only `leak`) and -image.mjs (`image`).
 // Lines marked "self-built" have no real fixture yet: 429 is P1-16's (spike P1-02); they follow the docs.
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 
-import { COMMANDS } from './fake-claude-commands.mjs';
+import { COMMANDS, noteCall, usage } from './fake-claude-commands.mjs';
 import { hookDenial, ruleDenial } from './fake-claude-denials.mjs';
 import { image } from './fake-claude-image.mjs';
 import { leak } from './fake-claude-leak.mjs';
@@ -274,14 +274,6 @@ async function session(argv) {
   return SCENARIOS[env[core.FAKE_SCENARIO_ENV] ?? 'submit'](play);
 }
 
-function usage() {
-  const text = env.FAKE_CLAUDE_USAGE_TEXT;
-  if (text === undefined) return replay({}, 'usage-command.jsonl');
-  out({ type: 'system', subtype: 'init', session_id: 'fake-usage' });
-  out({ type: 'result', subtype: 'success', is_error: false, num_turns: 0, result: text, session_id: 'u' });
-  return 0;
-}
-
 function ping() {
   if (env.FAKE_CLAUDE_PING === 'error') return replay({}, 'error-model-not-found.jsonl');
   if (env.FAKE_CLAUDE_PING !== 'rate_limit') return replay({}, 'probe.jsonl');
@@ -289,6 +281,7 @@ function ping() {
 }
 
 async function main(argv) {
+  noteCall(argv, PING);
   if (COMMANDS[argv[0]] !== undefined) return COMMANDS[argv[0]](argv);
   if (argv[0] !== '-p') return 2;
   if (argv[1] === '/usage') return usage();

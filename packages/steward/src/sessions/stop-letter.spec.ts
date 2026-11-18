@@ -2,7 +2,7 @@
 // the text P1-55 wrote, word for word; any other cut says its trip, where the work is and the files the plot changed.
 import { describe, expect, it } from 'vitest';
 
-import { cutLetterOf, stopLeftOf, stopLetterOf } from './stop-letter.ts';
+import { cutLetterOf, letterDiffOf, stopLeftOf, stopLetterOf } from './stop-letter.ts';
 import type { QuestId } from '@elvaria/domain';
 import type { Refusal } from './stop-letter.ts';
 
@@ -106,6 +106,77 @@ describe('the letter after any other cut (gap 23 of PS-07)', () => {
     expect(patch).toContain('could not apply the patch it left, so nothing was committed');
     expect(patch).toContain('The patch was refused: it touches docs/a.md');
     for (const text of [forbidden, patch]) expect(text).toMatch(HEADINGS);
+  });
+});
+
+describe("the branch's diff in the letter after a cut (fix/stop-letter, (213))", () => {
+  const COMMITTED = { status: 'committed', sha: 'abc1234' } as const;
+  const DIFF = [
+    ' src/app.ts | 2 +-',
+    ' 1 file changed, 1 insertion(+), 1 deletion(-)',
+    '',
+    'diff --git a/src/app.ts b/src/app.ts',
+    '-export const app = 1;',
+    '+export const app = 2;',
+    '',
+  ].join('\n');
+
+  it('follows the files under Done, and Not done says to weigh it against the quest first', () => {
+    const letter = cutLetterOf(QUEST, ODO, COMMITTED, ['src/app.ts'], DIFF);
+    expect(letter).toMatch(HEADINGS);
+    expect(letter).toContain(
+      [
+        'committed or not:',
+        '',
+        '- src/app.ts',
+        '',
+        "The branch's commits since the quest started (work not committed is not in them):",
+        '',
+        '```diff',
+        ' src/app.ts | 2 +-',
+        ' 1 file changed, 1 insertion(+), 1 deletion(-)',
+        '',
+        'diff --git a/src/app.ts b/src/app.ts',
+        '-export const app = 1;',
+        '+export const app = 2;',
+        '```',
+        '',
+        '## Not done',
+        '',
+        'The Steward cannot tell. Compare the quest with the diff under Done before you read anything else:',
+      ].join('\n'),
+    );
+    expect(letter).not.toContain('Not known: read the quest');
+    // No diff, or one of blanks: the letter of before.
+    for (const diff of [undefined, ' \n'])
+      expect(cutLetterOf(QUEST, ODO, { status: 'clean' }, [], diff)).toContain(
+        '## Done\n\nNo file differs from where the quest started.\n\n## Not done\n\nNot known: read the quest',
+      );
+  });
+
+  it('is fenced longer than any run of backticks it quotes', () => {
+    const markdown = 'diff --git a/README.md b/README.md\n+```ts\n+const a = 1;\n+```\n';
+    expect(cutLetterOf(QUEST, ODO, COMMITTED, ['README.md'], markdown)).toContain(
+      '````diff\ndiff --git a/README.md b/README.md\n+```ts\n+const a = 1;\n+```\n````\n',
+    );
+  });
+
+  it('is cut at a line end, saying where the rest is', () => {
+    // 100 lines of 50 characters: 5 099 with the line ends between them, more than a letter carries.
+    const long = Array.from(
+      { length: 100 },
+      (_, index) => `+${String(index).padStart(3, '0')} ${'y'.repeat(45)}`,
+    );
+    const letter = cutLetterOf(QUEST, ODO, COMMITTED, ['src/app.ts'], long.join('\n'));
+    expect(letter).toContain(
+      `${long[77] ?? ''}\n[diff cut at 4000 characters: the files listed above hold the rest]\n\`\`\`\n`,
+    );
+    expect(letter).not.toContain('+078 ');
+    // Whole when it fits, its last line end aside; one character more and its last line goes.
+    expect(letterDiffOf('+a\n+b\n', 5)).toBe('+a\n+b');
+    expect(letterDiffOf('+abc\n+def\n', 6)).toBe(
+      '+abc\n[diff cut at 6 characters: the files listed above hold the rest]',
+    );
   });
 });
 

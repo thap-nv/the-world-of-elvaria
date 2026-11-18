@@ -94,6 +94,7 @@ Thư mục vương quốc là trạng thái của bạn, nằm ngoài mọi repo
 - Chưa dùng Antigravity: `elvaria tribe disable gemini`.
 - Dùng Antigravity: cài và đăng nhập agy, rồi `elvaria doctor --acknowledge-terms gemini` để ghi nhận điều khoản của nó (ADR 0018, rủi ro ở [cli-facts](../reference/cli-facts-2026-11-12.md) §2.1).
 - Bật lại một tộc đã tắt: `elvaria doctor --enable <tộc>` (chỉ bật khi lần đó tộc không có lỗi nào).
+- Thêm tài khoản thứ hai của cùng một CLI (`claude_2`, thư mục cấu hình riêng, PS-27): [adding-a-tribe.md](adding-a-tribe.md) mục 3.1.
 
 `elvaria tribe list` in mỗi tộc một dòng. `tribes[].max_concurrent` là số phiên một tài khoản chạy cùng lúc (mặc định claude 2, gemini 1).
 
@@ -381,6 +382,7 @@ Chỗ từng thiếu đường, đã vá ở P1-55 và P1-56:
 - (P1-55, đã vá) Quest ghép: `retry` từ trạm quân y đưa quest tới hiệp sĩ, không chạy lại lượt gộp của máy trên commit vừa trượt; lượt máy không tính vào `max_attempts`; sau khi hiệp sĩ gỡ xung đột và nộp, Nhiếp chính gộp nốt các phần còn chờ trước check; người chấm khác model với mọi người từng làm quest; mỗi phiên chấm của một lượt có thư mục riêng `.runs/<quest>-<n>/verify`, `verify-2`, …
 - (P1-55, đã vá) File nháp nhân vật lỡ tạo ở gốc đất riêng (tên có `tmp`/`temp`, đuôi `.tmp`, `.bak`…) không vào commit của Nhiếp chính: nó được chuyển sang `.runs/<quest>-<n>/set-aside/`, plot sạch. Commit bị hook của repo từ chối thì phần đã stage được chép ra `.runs/<quest>-<n>/wip.patch`, và quest chưa có `handover.md` có chữ thì Nhiếp chính viết một thư tối thiểu (file đã sửa, đoạn cuối output của hook); phần dở vẫn nằm đã stage trong plot.
 - (fix/party-part-seal, đã vá) Phần của đội mà bản nháp bỏ trống `seal_required` không chờ dấu, kể cả dạng `build`, `refactor`; chỉ quest ghép chờ dấu của chủ nhân. Phiên người làm bị cầu dao cắt (trần token, thời gian, lượt…) mà không để lại thư thì Nhiếp chính viết thư tối thiểu: trip, SHA commit WIP hay vì sao chưa commit, các file đất đã đổi. Prompt pháp sư mới tới vương quốc qua `elvaria upgrade`.
+- (fix/stop-letter, đã vá) Thư tối thiểu đó kèm thêm diff của nhánh từ chỗ quest bắt đầu, cắt ở 4 000 ký tự, đã che giá trị secret của phiên và các mẫu secret. Ở lần chạy (J) của PS-08d, phiên 1 đã sửa xong hai file rồi bị cắt; thư chỉ nêu tên file nên phiên 2 đọc lại code tới hết ngân sách mà không sửa gì.
 
 ## 11. Bài học: kinh, gazetteer, chiếu chỉ, prompt nghề
 

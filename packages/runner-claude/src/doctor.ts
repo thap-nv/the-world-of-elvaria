@@ -3,8 +3,10 @@
 // that never started says so, not "not logged in" (fix/busy-machine). A session also needs the
 // built hook, `packages/hooks/dist/elvaria-hook.js`: without it every hook call fails and the runner judges each
 // session broken, so doctor fails, as every tribe's does (runner-core; before fix/held-tribe-sessions, only a warning).
+// It also says which config folder and account the CLI runs on, and fails when that is not the tribe's (PS-27).
 import { callNote, doctorNoteOf, hookNote } from '@elvaria/runner-core';
 
+import { accountOf } from './account.ts';
 import { parseLine } from './json.ts';
 import { launchOf } from './launch.ts';
 import { runOnce } from './run-once.ts';
@@ -18,6 +20,9 @@ export interface DoctorDeps extends RunOnceOptions {
   readonly hookScript: string;
   /** Epoch ms: when the sign-in is close to its end. */
   readonly now: () => number;
+  /** The tribe's config folder (PS-27): the CLI must say it runs there. */
+  readonly configDir?: string | undefined;
+  readonly platform?: NodeJS.Platform;
 }
 
 const VERSION = /\d+\.\d+\.\d+(?:[-+.][0-9A-Za-z.-]+)?/;
@@ -77,16 +82,19 @@ export async function doctorClaude(deps: DoctorDeps): Promise<ToolInfo> {
   const status = parseLine(auth.stdout.trim());
   const authOk = auth.code === 0 && status?.loggedIn === true;
   const ending = authOk ? signInEnding(status.loginExpiresAt, deps.now()) : undefined;
+  const { info: account, ignored } = accountOf(status, deps.configDir, deps.platform ?? process.platform);
   const notes = [
     ...(found === undefined ? [noVersion(deps.executable, version, deps.timeoutMs)] : []),
     ...(authOk ? [] : [notLoggedIn(auth, deps.timeoutMs)]),
+    ...(ignored === undefined ? [] : [ignored]),
     ...(ending === undefined ? [] : [ending]),
     ...(hook === undefined ? [] : [hook]),
   ];
   return {
     path: deps.executable,
     version: found ?? '',
-    auth_ok: authOk && hook === undefined,
+    auth_ok: authOk && hook === undefined && ignored === undefined,
+    ...account,
     ...(notes.length === 0 ? {} : { notes }),
   };
 }

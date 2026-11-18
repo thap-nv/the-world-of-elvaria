@@ -139,5 +139,132 @@
       "mode": "night",
       "eco": false
     }
+  },
+  {
+    "version": 1,
+    "name": "Vương quốc Hai Tài Khoản",
+    "created_at": "2026-11-06T09:00:00+07:00",
+    "tz": "Asia/Ho_Chi_Minh",
+    "owner": {
+      "profession": "developer",
+      "locale": "vi"
+    },
+    "paths": {
+      "treasury": "/Users/owner/.elvaria/treasury.json"
+    },
+    "tribes": [
+      {
+        "id": "claude",
+        "adapter": "claude_code",
+        "enabled": true,
+        "max_concurrent": 2,
+        "tool": {
+          "path": "/Users/owner/.local/bin/claude",
+          "version": "2.1.325",
+          "default_model": "claude-sonnet-5-5",
+          "auth": "login"
+        },
+        "budget": {
+          "tokens_5h": 4000000,
+          "tokens_7d": 60000000
+        }
+      },
+      {
+        "id": "claude_2",
+        "adapter": "claude_code",
+        "enabled": true,
+        "max_concurrent": 1,
+        "tool": {
+          "path": "/Users/owner/.local/bin/claude",
+          "version": "2.1.325",
+          "default_model": "claude-sonnet-5-5",
+          "auth": "login",
+          "config_dir": "/Users/owner/.elvaria/accounts/claude_2"
+        }
+      }
+    ],
+    "mana": {
+      "cap_pct": 98,
+      "king_reserve_pct": 2,
+      "warn_margin_pct": 10,
+      "probe_interval_minutes": 15,
+      "reassign_after_hours": null
+    },
+    "breakers": {
+      "attempt_minutes": {
+        "low": 45,
+        "high": 120
+      },
+      "high_rank_from": "B",
+      "max_attempts": 3,
+      "mana_multiplier": 2,
+      "estimate_factor": 1.82,
+      "same_fail_suspend": 3,
+      "patrol_weekly_pct": 10,
+      "max_turns": 200,
+      "soft_pct": 85,
+      "hard_pct": 150,
+      "subagent_max_minutes": 5,
+      "subagent_max_turns": 30,
+      "context_budget_tokens": 120000,
+      "verifier_tokens_multiplier": 2
+    },
+    "schedule": {
+      "chronicle": {
+        "enabled": false,
+        "at": "21:00"
+      },
+      "triage": {
+        "enabled": true,
+        "at": "07:30"
+      },
+      "digest": {
+        "enabled": true,
+        "at": "08:00"
+      },
+      "temple": {
+        "enabled": false,
+        "every_quests": 10,
+        "weekly": true
+      },
+      "patrol": {
+        "enabled": false,
+        "at": "06:30",
+        "every": "P1D"
+      }
+    },
+    "dispatch": {
+      "tick_seconds": 5,
+      "fairness": "round_robin_territory",
+      "verifier_same_family": "different_model",
+      "resume_after_mana": false,
+      "resume_after_answer_minutes": 55,
+      "max_background": 2,
+      "council": {
+        "from_rank": "B",
+        "from_areas": 2
+      },
+      "amendments": {
+        "from_rank": "F"
+      }
+    },
+    "delegation": {
+      "max_rank": "D",
+      "same_scope": true,
+      "ask": ["decision_change", "contract_change", "mana_over_budget", "outward_action", "protected_paths"]
+    },
+    "bell": {
+      "desktop": true,
+      "web_push": false,
+      "messaging": null
+    },
+    "tunnel": {
+      "enabled": false
+    },
+    "theme": "fantasy",
+    "ui": {
+      "mode": "night",
+      "eco": false
+    }
   }
 ]

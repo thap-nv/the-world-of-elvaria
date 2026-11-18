@@ -155,6 +155,7 @@ export * from './schema/tribe-look.ts';
 export * from './schema/tribe.ts';
 export * from './schema/world-map/constants.ts';
 export * from './schema/world-map/world-map.ts';
+export * from './tribe/accounts.ts';
 export * from './tribe/auth.ts';
 export * from './tribe/capabilities.ts';
 export * from './tribe/check-model.ts';
