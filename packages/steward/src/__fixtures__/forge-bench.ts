@@ -1,7 +1,7 @@
 // What the delivery specs share (PS-08c): dc1-se-team on a real git repo whose `origin` is a bare repo in another
 // temp folder, its vcs.remote a GitHub URL for the fake forge to read, git plots, assignees that leave files, this
 // process's env (git and the territory's hooks need its PATH; no GIT_* in it) and the fake forge.
-import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, realpath, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -60,9 +60,16 @@ async function kingdomHolds(root: string, text: string): Promise<boolean> {
   return false;
 }
 
+/**
+ * A temp folder by its long path. Git prints worktree paths long, while the TEMP of GitHub's Windows runner is an 8.3
+ * path (`C:\Users\RUNNER~1\…`): plot paths under the 8.3 form never match `git worktree list` (fix/ci-red).
+ */
+const tempFolder = async (prefix: string): Promise<string> =>
+  realpath(await mkdtemp(path.join(os.tmpdir(), prefix)));
+
 export async function forgeBench(options: ForgeBenchOptions = {}): Promise<ForgeBench> {
-  const repo = await mkdtemp(path.join(os.tmpdir(), 'elvaria forge repo '));
-  const remote = await mkdtemp(path.join(os.tmpdir(), 'elvaria forge remote '));
+  const repo = await tempFolder('elvaria forge repo ');
+  const remote = await tempFolder('elvaria forge remote ');
   await gitRepoWith(repo, { 'README.md': '# dc1\n', ...options.files });
   git(remote, 'init', '-q', '--bare', '-b', 'main');
   git(repo, 'remote', 'add', 'origin', remote);
