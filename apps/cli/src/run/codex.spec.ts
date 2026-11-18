@@ -1,6 +1,8 @@
 // The Codex tribe's runner of `elvaria run` (P1-12d): built on first use from the Codex doctor pinned, else PATH,
 // else the VS Code extension's binary. Only the calls outside a session run here (`--version`, `login status`, the
-// app-server's windows), against runner-codex's fake CLI: they cost no mana.
+// app-server's windows), against runner-codex's fake CLI: they cost no mana. A tribe's `tool.config_dir` reaches the
+// adapter as this machine's path (PS-27c).
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { TribeSchema } from '@elvaria/domain';
@@ -39,6 +41,19 @@ describe('codexRunner', () => {
     expect(runner.capabilities).toMatchObject({ tool_gate: true, search: false });
     expect(await runner.doctor()).toMatchObject({ version: '0.167.0-alpha.4.1', auth_ok: true });
     expect(await runner.probe()).toMatchObject({ status: 'ok' });
+  });
+
+  it("runs Codex in the tribe's home, in this machine's path form: its doctor and its own gauge (PS-27c)", async () => {
+    const home = path.join(dir.root, 'accounts', 'codex_2');
+    await mkdir(home, { recursive: true });
+    await writeFile(path.join(home, 'auth.json'), '{}');
+    const primary = { usedPercent: 12, windowDurationMins: 300, resetsAt: 1794502073 };
+    await writeFile(path.join(home, 'fake-rate-limits.json'), JSON.stringify({ rateLimits: { primary } }));
+    const tool = { path: FAKE_CODEX.split(path.sep).join('/'), version: '0.167.0-alpha.4.1', auth: 'login' };
+    const tribe = tribeWith({ tool: { ...tool, config_dir: home.split(path.sep).join('/') } });
+    const runner = codexRunner(tribe, testIo({ env: baseEnv(await isolatedPath()) }));
+    expect(await runner.doctor()).toMatchObject({ auth_ok: true, config_dir: home });
+    expect((await runner.probe()).windows).toMatchObject([{ window: 'five_hour', used_pct: 12 }]);
   });
 
   it('says so when doctor pinned none and none is found', async () => {

@@ -23,6 +23,7 @@ import type {
   ToolInfo,
 } from '@elvaria/runner-core';
 
+import { homeEnv } from './account.ts';
 import { askAppServer } from './app-server.ts';
 import { hooksCheckArgs, sessionArgs } from './args.ts';
 import { doctorCodex } from './doctor.ts';
@@ -52,6 +53,9 @@ export const CODEX_CAPABILITIES: AgentRunner['capabilities'] = {
   subagent: false,
   // The owner's ChatGPT sign-in; CODEX_API_KEY was not tried (spike §1.2).
   auth: ['login'],
+  // Every process of the tribe runs with CODEX_HOME = tool.config_dir when it names one (./account.ts, PS-27c): a
+  // second ChatGPT account is a second tribe.
+  config_dir: true,
   // The shell tool runs `powershell.exe -Command` on Windows (spike §1.8); macOS and Linux not measured.
   shell: { win32: 'Windows PowerShell (powershell.exe)' },
   // No tool of its own reads or searches files (spike §1.7): a class with Glob or Grep gets git grep and git ls-files.
@@ -87,6 +91,11 @@ export interface CodexOptions {
   readonly timeout_ms?: number;
   /** Which form of the hook command Codex runs (PowerShell on Windows); this machine's by default. */
   readonly platform?: NodeJS.Platform;
+  /**
+   * `tribes[].tool.config_dir` in the machine's path form (PS-27c): every call and session runs with CODEX_HOME set to
+   * it, and doctor checks Codex heard it; undefined runs every one without the variable.
+   */
+  readonly configDir?: string | undefined;
 }
 
 const DEFAULT_TIMEOUT_MS = 30_000;
@@ -101,13 +110,18 @@ export const SHELL_POLICY_ENV: Readonly<Record<string, string>> = {
   PSExecutionPolicyPreference: 'RemoteSigned',
 };
 
-/** Codex's env: the given one without git's variables (§6), and `extra` (the session context as `ELVARIA_*`) over it. */
+/**
+ * Codex's env: the given one without git's variables (§6), `extra` (the session context as `ELVARIA_*`) over it, and
+ * CODEX_HOME last, the tribe's folder or none (./account.ts, PS-27c). `configDir` takes no default, so no call of the
+ * tribe can forget it.
+ */
 export function codexEnv(
   env: Readonly<Record<string, string>>,
+  configDir: string | undefined,
   extra: Readonly<Record<string, string>> = {},
 ): Record<string, string> {
   const base = Object.entries(env).filter(([name]) => !name.toUpperCase().startsWith('GIT_'));
-  return { ...Object.fromEntries(base), ...extra };
+  return homeEnv({ ...Object.fromEntries(base), ...extra }, configDir);
 }
 
 /** The plot without Elvaria's file; one that will not go costs the session nothing but a note (as agy's runner). */
@@ -140,7 +154,11 @@ function clearingOnEnd(session: RunningSession, req: SpawnRequest): RunningSessi
 async function startCodex(req: SpawnRequest, options: CodexOptions): Promise<RunningSession> {
   const ctx = runContextOf(req);
   const windows = (options.platform ?? process.platform) === 'win32';
-  const env = codexEnv(req.env, { ...(windows ? SHELL_POLICY_ENV : {}), ...contextEnv(ctx) });
+  // The tribe's home wins over any CODEX_HOME in req.env, a secret named so included (PS-27c).
+  const env = codexEnv(req.env, options.configDir, {
+    ...(windows ? SHELL_POLICY_ENV : {}),
+    ...contextEnv(ctx),
+  });
   const files = await writeRunFiles(req, ctx, windows);
   // The trust bypass runs every hook Codex has enabled: first make sure they are Elvaria's own (0 mana).
   const timeout = options.timeout_ms ?? DEFAULT_TIMEOUT_MS;
@@ -181,7 +199,10 @@ async function spawnCodex(req: SpawnRequest, options: CodexOptions): Promise<Run
 
 /** The account's windows, 0 mana: `ping: false` changes nothing, no model is ever called. */
 async function probe(options: CodexOptions): Promise<ProbeResult> {
-  const call = { env: codexEnv(options.env), timeout_ms: options.timeout_ms ?? DEFAULT_TIMEOUT_MS };
+  const call = {
+    env: codexEnv(options.env, options.configDir),
+    timeout_ms: options.timeout_ms ?? DEFAULT_TIMEOUT_MS,
+  };
   const read = await askAppServer(options.launch, [], [{ method: 'account/rateLimits/read' }], call);
   return read.ok ? probeOf(read.results[0]) : { status: 'error', detail: read.problem };
 }
@@ -190,8 +211,10 @@ function doctor(options: CodexOptions): Promise<ToolInfo> {
   return doctorCodex({
     launch: options.launch,
     hook: options.hook,
-    env: codexEnv(options.env),
+    env: codexEnv(options.env, options.configDir),
     timeout_ms: options.timeout_ms ?? DEFAULT_TIMEOUT_MS,
+    configDir: options.configDir,
+    platform: options.platform ?? process.platform,
   });
 }
 
