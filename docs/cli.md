@@ -106,7 +106,8 @@ Thêm một tộc: một adapter (có sẵn, hoặc file adapters/<name>.mjs tro
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
 | `<id>` | Id của tộc mới, ví dụ codex: chữ thường, chữ số và _, bắt đầu bằng chữ. |
-| `--adapter <adapter>` | claude_code, antigravity, gemini_cli, codex_cli, hoặc adapters/<name>.mjs: một file bạn đặt trong thư mục adapters của vương quốc, export createAdapter(kit). (bắt buộc) |
+| `--adapter <adapter>` | claude_code, antigravity, gemini_cli, codex_cli, hoặc adapters/<name>.mjs: một file bạn đặt trong thư mục adapters của vương quốc, export createAdapter(kit). Có --sibling-of thì bỏ được: mặc định là adapter của tộc gốc. |
+| `--sibling-of <root>` | Tộc gốc: tộc mới là tài khoản thứ hai của cùng CLI (một chi), mang ngoại hình của tộc gốc với hào quang kế tiếp; --adapter mặc định là adapter của tộc gốc. |
 | `--max-concurrent <n>` | Số phiên tài khoản chạy cùng lúc (mặc định 1). |
 
 ## `elvaria tribe check`

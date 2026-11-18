@@ -15,6 +15,8 @@ import {
   snapshot,
 } from '../dispatch/__fixtures__/snapshot.ts';
 import { planTick } from '../dispatch/plan-tick.ts';
+import { TribeSchema } from '../schema/tribe.ts';
+import { FULL_TRIBE_LIMITS } from './tribe-limits.ts';
 import type { TribeLookChoice } from '../schema/tribe-look.ts';
 
 const SILVER_STAR = { palette: 'silver', crest: 'star', figure: 'slender', aura: 'glow', frame: 'round' };
@@ -42,6 +44,33 @@ describe('a tribe look never reaches dispatch', () => {
     const looked = planTick(snapshot(quests, characters, { kingdom: LOOKED }), NOW);
     expect(LOOKED.tribes.every(({ look }) => look !== undefined)).toBe(true);
     expect(plain.claims.length + plain.verifications.length).toBeGreaterThan(0);
+    expect(looked).toEqual(plain);
+  });
+
+  it('leaves them as they are when a second account of claude is its sibling (PS-27b)', () => {
+    // claude_2 is one more tribe of its own in the work layer (ADR 0021): sibling_of only changes how it looks.
+    const second = TribeSchema.parse({
+      id: 'claude_2',
+      adapter: 'claude_code',
+      enabled: true,
+      max_concurrent: 1,
+    });
+    const apart = { ...KINGDOM, tribes: [...KINGDOM.tribes, second] };
+    const marked = TribeSchema.parse({ ...second, sibling_of: 'claude', sibling_name: 'Sao Đêm' });
+    const siblings = { ...KINGDOM, tribes: [...KINGDOM.tribes, marked] };
+    const limits = { claude: FULL_TRIBE_LIMITS, gemini: FULL_TRIBE_LIMITS, claude_2: FULL_TRIBE_LIMITS };
+    const characters = [
+      character('thorn'),
+      character('nyx', { tribe: 'claude_2' }),
+      character('sable', { cls: 'judge', model: 'claude-opus-5-5', since: 0 }),
+      character('vale', { cls: 'judge', tribe: 'claude_2', since: 50 }),
+      character('orin', { cls: 'judge', tribe: 'gemini', since: 60 }),
+    ];
+    const quests = [quest(Q1), quest(Q2), inReview(quest(Q3), 'thorn'), inReview(quest(Q4), 'nyx')];
+    const plain = planTick(snapshot(quests, characters, { kingdom: apart, limits }), NOW);
+    const looked = planTick(snapshot(quests, characters, { kingdom: siblings, limits }), NOW);
+    expect(plain.claims.map(({ assignee }) => assignee)).toContain('nyx');
+    expect(plain.verifications.length).toBeGreaterThan(0);
     expect(looked).toEqual(plain);
   });
 });

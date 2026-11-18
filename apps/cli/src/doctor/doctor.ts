@@ -6,7 +6,8 @@
 // whose work has a single judge (P1-56), the treasury file, the sessions a
 // stopped Steward left running (P1-11), the mana gauges the Steward logged, asleep or not (P1-32), and the build the
 // kingdom pins (PS-04b), graphify when a territory has a code graph (PS-21), and a credential with the right to push
-// for each territory whose delivery pushes (PS-08), and two tribes of one adapter on one account (PS-27). It writes only
+// for each territory whose delivery pushes (PS-08), two tribes of one adapter on one account (PS-27), and sibling rows
+// that do not read as meant (PS-27b, warnings only). It writes only
 // `tribes[].tool` (its `config_dir` with `--config-dir`, PS-27),
 // `programs.graphify` with `--pin` (PS-21) and, with `--enable`, `tribes[].enabled` (P1-15) when this run finds
 // nothing wrong with that tribe (P1-34), through the kingdom file's lock.
@@ -30,6 +31,7 @@ import { checkLeftSessions, checkTreasury } from './check-state.ts';
 import { checkTerritorySetup } from './check-territory-setup.ts';
 import { checkTerritoryTrials } from './check-territory-trial.ts';
 import { accountFindings } from './check-accounts.ts';
+import { siblingFindings } from './check-siblings.ts';
 import { checkTribe, settleEnabling, skipsTribe } from './check-tribe.ts';
 import { configDirsOf } from './config-dir.ts';
 import { finding, findingLines } from './finding.ts';
@@ -164,6 +166,7 @@ async function runDoctor(input: CommandInput, cli: CliContext): Promise<ExitCode
     // In the trial of `elvaria upgrade`, a tribe the Steward holds anyway only warns (held-in-trial.ts).
     ...(await tribeFindings(ctx, tribes)),
     ...(saved === undefined ? [] : [saved]),
+    ...siblingFindings(ctx),
     ...(await checkTerritories(ctx)),
     ...(await checkTerritoryCommands(ctx)),
     ...(await checkTerritorySetup(ctx)),

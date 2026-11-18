@@ -279,7 +279,11 @@ patrol`); `partyOf` counts the quest a party is named after, `partyStatusOf` and
   `tribeLookOf` / `tribeLooksOf` (PS-24: a tribe's look, a set of parts of the theme's look pool — palette, crest,
   figure, aura, portrait frame — and a name: the owner's choice `tribes[].look`, else the theme's pinned entry,
   else drawn by the tribe id, the same on every run, in the order of `kingdom.tribes[]`, past the palettes and
-  crests other tribes hold; display only, no prompt and no dispatch reads it), `lookPoolOf(theme)` and
+  crests other tribes hold; display only, no prompt and no dispatch reads it; PS-27b: a sibling, a row whose
+  `sibling_of` names a root without one, takes the root's palette, crest, figure and frame with the aura
+  `ordinal − 1` steps after the root's, source `sibling`, and root and siblings carry `siblings {root, ordinal,
+count}` counted in the list's order, never stored: `siblingRootOf`, `siblingsOf`, `siblingProblemOf` in
+  `src/tribe/siblings.ts`, `romanOf` in `src/tribe/roman.ts`), `lookPoolOf(theme)` and
   `parseLookPool` (the pools the themes ship: `src/tribe/fantasy-looks.json`, checked by `TribeLookPoolSchema`; the
   spec holds its palettes to the design system's tokens, read through `designCss`).
   `ADAPTER_FILE_PATTERN` tells an owner adapter file `adapters/<name>.mjs`.
