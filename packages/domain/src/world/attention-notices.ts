@@ -7,6 +7,7 @@ import type { QuestId } from '../core/ids.ts';
 import type { WaitGauge } from '../dispatch/judge-waits.ts';
 import type { ScopeHold } from '../dispatch/scope.ts';
 import type { TerritoryHealth } from '../patrol/health.ts';
+import type { HeldQuest } from '../quest/hold.ts';
 import type { TribeHold } from '../tribe/version-hold.ts';
 import type { ForgeOutcome } from './forge-outcome.ts';
 import type { QuestView } from './quest-view.ts';
@@ -42,6 +43,8 @@ export interface StewardNotices {
   readonly deliveries?: readonly ForgeOutcome[];
   /** The health of each patrolled territory's default branch (baseHealthOf, PS-26); from the log. */
   readonly patrols?: readonly TerritoryHealth[];
+  /** The quests the owner holds ((D) of fix/quest-hold, heldQuestsOf); from the quest files, not the Steward's. */
+  readonly held?: readonly HeldQuest[];
   /** A newer build to upgrade to (PS-08d): apps/cli reads it from the pinned build's repo as the digest is made. */
   readonly upgrade?: UpgradeOffer;
 }
@@ -159,6 +162,12 @@ export function noticeItems(state: WorldState, notices: StewardNotices): Attenti
       itemOf('scope_held', { ...aboutId(state, quest), waiting }),
     ),
     ...deliveriesOf(state, notices.deliveries),
+    ...(notices.held ?? []).map(({ quest, reason }) =>
+      itemOf('quest_held', {
+        ...aboutId(state, quest),
+        ...(reason === undefined ? {} : { held_reason: reason }),
+      }),
+    ),
     ...(notices.patrols ?? []).flatMap(patrolItems),
     ...(notices.tribes_held ?? []).map(({ tribe, path, version, checked }) =>
       version === undefined

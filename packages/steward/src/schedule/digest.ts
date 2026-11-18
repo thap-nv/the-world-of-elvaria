@@ -2,6 +2,7 @@
 // Steward decides when (dueJobs) and what (attentionQueue over the world state and its own notices); the Digest port
 // of the composition root words it in the owner's language and writes `digest/<day>.md`. Then one line and one ring.
 import {
+  heldQuestsOf,
   attentionQueue,
   judgedByEye,
   ownerDeliveries,
@@ -98,6 +99,8 @@ export function noticesOf(
     ),
     // PS-26: the health of the patrolled territories' default branches.
     patrols: state.patrol.health,
+    // (D) of fix/quest-hold: the quests the owner holds, from the quest files.
+    held: heldQuestsOf([...world.quests.values()]),
   };
 }
 

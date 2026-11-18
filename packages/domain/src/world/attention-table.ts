@@ -74,6 +74,9 @@ export const ATTENTION_TABLE = {
     advice: 'follow_merge_quest',
     command: ['quest', 'show', '{merge_quest}'],
   },
+  // (D) of fix/quest-hold: a quest the owner holds (`quest hold`) waits for nobody but the owner, who lifts the hold
+  // when it is time; the line says why, as the owner wrote it.
+  quest_held: { group: 'can_wait', advice: 'unhold_when_ready', command: ['quest', 'unhold', '{quest}'] },
   // PS-26: a scan of the latest patrol (link-check) did not pass; it never turns the branch red.
   patrol_scan: { group: 'can_wait', advice: 'read_scan', command: ['territory', 'patrol', '{territory}'] },
   mana_asleep: { group: 'can_wait', advice: 'wait_or_wake', command: ['wake', '{tribe}'] },
@@ -100,6 +103,8 @@ export interface AttentionSubject {
   readonly class?: string;
   /** The judge whose session could not open (judge_no_session). */
   readonly judge?: CharacterId;
+  /** Why the owner holds the quest (quest_held), as the owner wrote it; absent when the owner gave no reason. */
+  readonly held_reason?: string;
   /** The quests that wait for a done quest's scope (scope_held, PS-05). */
   readonly waiting?: readonly QuestId[];
   /** The pools that hold every judge of a quest (judge_mana). */

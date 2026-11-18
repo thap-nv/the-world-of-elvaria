@@ -83,6 +83,7 @@ function subjectOf(t: Translate, item: AttentionItem): string {
     pool: item.pool ?? NONE,
     used_pct: item.used_pct ?? NONE,
     resets_at: item.resets_at ?? NONE,
+    held_reason: item.held_reason ?? NONE,
     ...triageOf(t, item),
     ...deliveryOf(t, item),
     ...upgradeOf(item),

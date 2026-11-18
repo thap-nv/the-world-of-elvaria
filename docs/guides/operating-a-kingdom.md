@@ -371,7 +371,7 @@ Các lệnh khác của chủ nhân:
 | nhân vật bị hạ cấp oan (check đỏ vì môi trường) | `elvaria character level <id> <cấp>` |
 | nhân vật trượt cùng một kiểu ba lần liền thì bị đình chỉ vào Đền | sửa nguyên nhân (kinh, mô tả), rồi `elvaria character release <id>` |
 | tạm cho một nhân vật nghỉ | `elvaria character suspend <id> --reason "…"` |
-| giữ một quest chưa bắt đầu tới lần chạy sau (quest `open`, hay `claimed` chờ người `--to`) | `elvaria quest hold <quest> --reason "…"` (từ `fix/quest-hold`): Nhiếp chính không nhận, không bắt đầu nó, `quest list` ghi «đang giữ»; trạng thái, mô tả, phụ thuộc và người `--to` giữ nguyên. Mở lại: `elvaria quest unhold <quest>`. Khác `cancel`, lệnh lưu trữ luôn quest (d8–d12 của lần chạy (130)) |
+| giữ một quest chưa bắt đầu tới lần chạy sau (quest `open`, hay `claimed` chờ người `--to`) | `elvaria quest hold <quest> --reason "…"` (từ `fix/quest-hold`): Nhiếp chính không nhận, không bắt đầu nó, `quest list` ghi «đang giữ», bản tấu có một dòng «Đang giữ: …, lý do: …» ở nhóm chờ được (ý (D), PS-09d); trạng thái, mô tả, phụ thuộc và người `--to` giữ nguyên. Mở lại: `elvaria quest unhold <quest>`. Khác `cancel`, lệnh lưu trữ luôn quest (d8–d12 của lần chạy (130)) |
 | bỏ một quest chưa xong | `elvaria quest cancel <quest>`; worktree của quest đã hủy ở lại, dọn tay. Quest ở trạm quân y thì `quest archive` (hay `cancel`, cùng lệnh): Nhiếp chính gỡ worktree, giữ nhánh cùng phần việc dở |
 
 Chỗ từng thiếu đường, đã vá ở P1-55 và P1-56:

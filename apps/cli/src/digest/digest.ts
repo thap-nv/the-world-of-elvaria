@@ -6,6 +6,7 @@ import {
   attentionQueue,
   baseHealthOf,
   forgeOutcomesOf,
+  heldQuestsOf,
   ownerDeliveries,
   scopeHoldsOf,
   unopenedReviewsOf,
@@ -56,6 +57,8 @@ async function runDigest(input: CommandInput, cli: CliContext): Promise<ExitCode
     ...(upgrade === undefined ? {} : { upgrade }),
     // PS-26: the same health of the patrolled branches the Steward's book holds.
     patrols: baseHealthOf(log.events),
+    // (D) of fix/quest-hold: the quests the owner holds.
+    held: heldQuestsOf(source.quests),
   });
   // ctx.now() is written in the kingdom's zone: its date is the kingdom's local day, as the digest's file names it.
   const day = ctx.now().slice(0, 'yyyy-mm-dd'.length);
