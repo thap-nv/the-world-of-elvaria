@@ -115,11 +115,14 @@ export type Opening =
 /** Openings that go on with the attempt in progress rather than start a new one (§2.5: same run `n`). */
 const goesOn = (opening: Opening): boolean => opening.kind === 'answer' || opening.kind === 'wake';
 
+const sameRun = (quest: Quest, opening: Opening): boolean =>
+  goesOn(opening) || (opening.kind === 'redispatch' && endedInCut(quest.attempt_log));
+
 async function continuationFor(ctx: Context, quest: Quest, opening: Opening): Promise<Continuation | null> {
   // The decision on an amendment ends a wait that may have begun with the run's work refused (fix/session-notes).
   if (opening.kind === 'answer' && quest.blocked?.amendment !== undefined)
     return { reason: 'revive', ...(await refusedWhileWaiting(ctx, quest)) };
-  if (goesOn(opening)) return { reason: 'revive' };
+  if (sameRun(quest, opening)) return { reason: 'revive' };
   // A start after earlier runs (the owner gave the quest to someone new) goes on from the letter, like a revival.
   if (opening.kind === 'start' && currentRun(quest) === 0) return null;
   return continuationOf(ctx, quest);
@@ -137,10 +140,7 @@ function eventOf(opening: Opening, session_id: string): MovePayload {
 
 const ACTORS = { answer: 'user', wake: 'mana', start: 'steward', redispatch: 'steward' } as const;
 
-/**
- * The CLI session to continue (`--resume`) instead of a fresh one from the letter (ADR 0017): after an answer in
- * time, or after mana with resume_after_mana, and only when the tribe's adapter can resume (§3.14).
- */
+/** CLI resume after an answer or mana, only when allowed by ADR 0017 and the tribe (§3.14). */
 function resumeFor(ctx: Context, quest: Quest, character: Character, opening: Opening): Resume | null {
   if (!goesOn(opening)) return null;
   const canResume = ctx.limits[character.tribe]?.resume ?? false;
@@ -165,28 +165,28 @@ const questSeen = (quest: Quest, opening: Opening): Quest =>
     ? { ...quest, blocked: { ...quest.blocked, answer: opening.answer } }
     : quest;
 
-/**
- * The assignee's session on `questId`: a start (claimed → working), a redispatch (returned → working), the
- * owner's answer (blocked → working) or the pool's mana back (paused_mana → working, the sleeper wakes into it).
- * A session that cannot open sends the quest to the infirmary, or lets a start's claim go while the Steward stops
- * (assigneeUnopened).
- */
+const openingFor = (quest: Quest, opening: Opening): Opening =>
+  opening.kind === 'start' && quest.status === 'returned' && endedInCut(quest.attempt_log)
+    ? { kind: 'redispatch' }
+    : opening;
+
+/** Opens the assignee, including a returned ceiling cut listed among the plan's starts (ADR 0030). */
 export async function openAssignee(
   ctx: Context,
   questId: QuestId,
-  opening: Opening,
+  requested: Opening,
 ): Promise<Result<Quest, string>> {
   const parts = partsOf(ctx, questId, ctx.world.quests.get(questId)?.assignee);
   if (!parts.ok) return parts;
   const { quest, character, territory, runner } = parts.value;
+  const opening = openingFor(quest, requested);
   const lacking = await secretsLacking(ctx, quest, territory);
   if (lacking !== undefined) {
     // A blocked quest has no way to the infirmary: the answer is refused with the reason.
     if (opening.kind === 'answer') return err(`secrets_lacking: ${lacking.code}`);
     return secretsBreaker(ctx, quest, lacking);
   }
-  const same = goesOn(opening) || (opening.kind === 'redispatch' && endedInCut(quest.attempt_log));
-  const n = currentRun(quest) + (same ? 0 : 1);
+  const n = currentRun(quest) + (sameRun(quest, opening) ? 0 : 1);
   await clearWrapUp(ctx, quest, n);
   const spawned = await spawnFor(
     ctx,
