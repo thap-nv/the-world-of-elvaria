@@ -29,8 +29,9 @@ export { trialInScratch } from './checks/scratch-trial.ts';
 export type { ScratchTrialRequest } from './checks/scratch-trial.ts';
 export { runTrial } from './checks/trial.ts';
 export type { TrialPlot, TrialRequest } from './checks/trial.ts';
-export { CONFORMANCE_CHECKS, conformanceChecks, runConformance } from './conformance/checks.ts';
-export type { ConformanceReport } from './conformance/checks.ts';
+export { CONFORMANCE_CHECKS, conformanceChecks } from './conformance/checks.ts';
+export { runConformance } from './conformance/run.ts';
+export type { ConformanceReport } from './conformance/run.ts';
 export {
   FAKE_FORBIDDEN_COMMAND,
   FAKE_SCRATCH_COMMANDS,

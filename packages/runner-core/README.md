@@ -103,7 +103,9 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
 - Runs the conformance suite (`conformanceChecks`, `runConformance`): plain checks with `node:assert`, so a spec
   wraps them in `it` and `elvaria tribe check` (P1-19) runs them too. With a real CLI (`live`) only `capabilities`,
   `doctor`, `probe`, `submit`, `hang`, `forbidden_command`, `spawn_child` and `structured` run (a few cheap
-  sessions, a little mana); `crash`, `rate_limit`, `scratch_commit` and `ask` need a fake. `structured`
+  sessions, a little mana); `crash`, `rate_limit`, `scratch_commit` and `ask` need a fake. Each report carries the
+  `tokens` its check's sessions reported, passed or failed, a session the check gave up on included once it ends
+  (`ConformanceTarget.onSpent`, `src/conformance/run.ts`, run (221) (b)). `structured`
   (fix/codex-output-schema; skipped without `capabilities.structured_output`) asks a judge, as the Steward does (a
   schema, no letter, read-only), for a verdict under `FAKE_STRUCTURED_SCHEMA`, the verdict's shape with optional
   keys: the answer must come back with `result` and `notes`, no key outside the schema and no null at any depth,
