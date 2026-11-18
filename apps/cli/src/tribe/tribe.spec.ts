@@ -190,10 +190,11 @@ describe('elvaria tribe', () => {
         '✓ capabilities',
         '✓ doctor',
         '✓ probe',
-        '✓ submit',
+        // With the real CLI a check says what its sessions spent (run (221) (b)).
+        '✓ submit · 900 tokens',
         '✓ hang',
         '– forbidden_command (skipped: the adapter does not declare it)',
-        '✓ spawn_child',
+        '✓ spawn_child · 900 tokens',
         '– structured (skipped: the adapter does not declare it)',
         '– image (skipped: the adapter does not declare it)',
       ]);

@@ -6,6 +6,7 @@ import { access, copyFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+import { openEventLog } from '@elvaria/eventlog';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { foundKingdom, printed, run, tempDir, testIo } from '../../test/cli.ts';
@@ -35,6 +36,11 @@ describe('tribe check with the real CLI pins it for its tribe alone', () => {
   const elvaria = (io: TestIo, ...args: string[]) => run(io, ...args, '--kingdom', kingdom, '--locale', 'en');
   const tribes = async () => (await kingdomJson(kingdom)).tribes as Tribes;
   const lantern = async () => (await tribes()).find(({ id }) => id === 'lantern');
+  /** The tribe.checked lines of the log: what the checks with the real CLI spent (run (221) (b)). */
+  const checkedLines = async () =>
+    (await openEventLog(kingdom).read()).events
+      .filter(({ type }) => type === 'tribe.checked')
+      .map(({ data, actor }) => ({ data, actor }));
   /** lantern as an owner finds it after its CLI replaced itself in place: kingdom.json still pins 0.4.1. */
   const pinOld = (more: Record<string, unknown> = {}) =>
     editKingdom(kingdom, (value) => ({
@@ -61,11 +67,46 @@ describe('tribe check with the real CLI pins it for its tribe alone', () => {
     expect((await tribes()).filter(({ id }) => id !== 'lantern')).toEqual(others);
   });
 
-  it('pins nothing with the fake CLI of --scenarios', async () => {
+  it('pins nothing with the fake CLI of --scenarios, and says and records no tokens: it spends none', async () => {
     await pinOld();
-    expect(await elvaria(testIo(), 'tribe', 'check', 'lantern', '--scenarios')).toBe(0);
+    const io = testIo();
+    expect(await elvaria(io, 'tribe', 'check', 'lantern', '--scenarios')).toBe(0);
     expect((await lantern())?.tool).toMatchObject({ version: '0.4.1' });
     expect((await lantern())?.tool).not.toHaveProperty('checked_version');
+    expect(io.printed.out).toContain('✓ submit');
+    expect(printed(io)).not.toContain('tokens');
+    expect(await checkedLines()).toEqual([]);
+  });
+
+  it('says what each check and the whole check spent, and records it for the mana estimate (run (221) (b))', async () => {
+    // The lantern CLI reports 900 tokens a finished session; the hang is killed before it says any.
+    const io = testIo();
+    expect(await elvaria(io, 'tribe', 'check', 'lantern', '--model', 'lantern-small')).toBe(0);
+    expect(io.printed.out).toEqual(
+      expect.arrayContaining([
+        '✓ probe',
+        '✓ submit · 900 tokens',
+        '✓ hang',
+        '✓ spawn_child · 900 tokens',
+        'The sessions of this check reported 1800 tokens on the account of tribe lantern (model lantern-small). ' +
+          "The log has them, and the Steward's mana estimate counts them from its next start.",
+      ]),
+    );
+    const [line, ...more] = await checkedLines();
+    expect(more).toEqual([]);
+    expect(line).toEqual({
+      actor: { kind: 'user' },
+      data: {
+        tribe: 'lantern',
+        model: 'lantern-small',
+        outcome: 'passed',
+        tokens: 1800,
+        checks: expect.arrayContaining([
+          { check: 'submit', outcome: 'passed', tokens: 900 },
+          { check: 'forbidden_command', outcome: 'skipped', tokens: 0 },
+        ]) as unknown,
+      },
+    });
   });
 
   it('pins the CLI --tool names once the pinned one is gone, path and version (Codex, 2026-11-14)', async () => {
@@ -103,6 +144,10 @@ describe('tribe check with the real CLI pins it for its tribe alone', () => {
     expect(folder).toMatch(/[/\\]\.runs[/\\]tribe-check-lantern-\d{8}T\d{6}[/\\]submit$/);
     await expect(access(path.join(folder, '.runs', 'q_20261107_c0nf0r-1'))).resolves.toBeUndefined();
     expect((await lantern())?.tool).toMatchObject({ version: '0.4.1' });
+    // A failed check spent its tokens all the same: the crash none, the other sessions theirs.
+    expect((await checkedLines()).map(({ data }) => data)).toEqual([
+      expect.objectContaining({ outcome: 'failed', tokens: 900 }),
+    ]);
   });
 
   it('takes --timeout in whole seconds only', async () => {

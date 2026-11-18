@@ -42,6 +42,18 @@ export function recordUpgrade<T extends UpgradeEventType>(
   return append(ctx, { v: EVENT_VERSION, id: ctx.ids.ulid(), ts: ctx.now(), type, actor: OWNER, data });
 }
 
+/** What a tribe check against the real CLI spent (run (221) (b)): the Steward's mana estimate counts it. */
+export function recordTribeChecked(ctx: KingdomContext, data: EventData<'tribe.checked'>): Promise<void> {
+  return append(ctx, {
+    v: EVENT_VERSION,
+    id: ctx.ids.ulid(),
+    ts: ctx.now(),
+    type: 'tribe.checked',
+    actor: OWNER,
+    data,
+  });
+}
+
 export function recordCharacterCreated(ctx: KingdomContext, character: Character): Promise<void> {
   return append(ctx, {
     v: EVENT_VERSION,

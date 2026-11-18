@@ -149,9 +149,18 @@ describe('the console bell on a merge that stopped (PS-08e)', () => {
     expect(lineOf(en, { ...stopped, reason: 'missing', conflicts: [] })).toContain(
       'there is no branch main to merge',
     );
-    expect(lineOf(vi, { ...stopped, reason: 'conflict', conflicts: ['README.md'] })).toContain(
-      'ghép main dừng vì xung đột ở README.md',
+    expect(lineOf(vi, { ...stopped, reason: 'conflict', conflicts: ['README.md'] })).toBe(
+      'Quest ghép q_20261115_m3m3m3 «Book a room»: ghép main dừng vì xung đột ở README.md. ' +
+        'Lần ghép dở để nguyên trong đất; một hiệp sĩ gỡ nó ở lượt kế của nhiệm vụ.',
     );
+  });
+
+  it("names the merge queue's merge quest as quest show does, not as a party's (run (221) (e))", () => {
+    const queued = { ...stopped, queue: true, reason: 'conflict', conflicts: ['src/plan-tick.ts'] } as const;
+    expect(lineOf(vi, queued)).toMatch(/^Quest Hợp nhất q_20261115_m3m3m3 «Book a room»: ghép main dừng/);
+    expect(lineOf(en, queued)).toMatch(/^Queue merge quest q_20261115_m3m3m3 «Book a room»: merging main/);
+    expect(lineOf(vi, { ...queued, reason: 'refused', conflicts: [] })).toMatch(/^Quest Hợp nhất /);
+    expect(lineOf(vi, { ...queued, reason: 'missing', conflicts: [] })).toMatch(/^Quest Hợp nhất /);
   });
 });
 
