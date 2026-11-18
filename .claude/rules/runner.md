@@ -7,7 +7,7 @@ paths:
 
 Áp dụng khi sửa `packages/runner-core/**` và các adapter `packages/runner-*/**`; cộng thêm vào [CLAUDE.md](../../CLAUDE.md).
 
-Dữ kiện về CLI đã có, đừng tra lại: [cli-facts 2026-11-16](../../docs/reference/cli-facts-2026-11-16.md) (Claude Code 2.1.325: quyền `dontAsk` chặt hơn, chỉ ghi phần đổi) và [cli-facts 2026-11-12](../../docs/reference/cli-facts-2026-11-12.md) (Claude Code 2.1.322, agy 1.5.5–1.5.9, Codex 0.167.0-alpha.4.1 và 0.169.0-alpha.11.1), spike [Claude](../../docs/spikes/claude-2026-11.md), [Antigravity](../../docs/spikes/antigravity-2026-11.md) và [Codex](../../docs/spikes/codex-2026-11-12.md) (spike thắng cli-facts khi khác), implementation-plan §3.3, §3.5–§3.7, §3.9, §3.10, §3.12, §3.14.
+Dữ kiện về CLI đã có, đừng tra lại: [cli-facts 2026-11-16](../../docs/reference/cli-facts-2026-11-16.md) (Claude Code 2.1.325: quyền `dontAsk` chặt hơn, chỉ ghi phần đổi; Claude Code 2.1.326 qua cả 9 phép `tribe check claude` ngày 2026-11-18, model thử `claude-sonnet-5-5`, không đo gì thêm) và [cli-facts 2026-11-12](../../docs/reference/cli-facts-2026-11-12.md) (Claude Code 2.1.322, agy 1.5.5–1.5.9, Codex 0.167.0-alpha.4.1 và 0.169.0-alpha.11.1), spike [Claude](../../docs/spikes/claude-2026-11.md), [Antigravity](../../docs/spikes/antigravity-2026-11.md) và [Codex](../../docs/spikes/codex-2026-11-12.md) (spike thắng cli-facts khi khác), implementation-plan §3.3, §3.5–§3.7, §3.9, §3.10, §3.12, §3.14.
 
 ## Ranh giới (ADR 0006, 0021)
 
