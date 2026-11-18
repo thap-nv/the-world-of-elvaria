@@ -201,6 +201,7 @@ Xem tuần tra hằng ngày có canh nhánh gốc của lãnh thổ không (chec
 | `<id>` | Id của lãnh thổ. |
 | `--on` | Bật tuần tra (ghi territory.patrol, giữ phần đã có). |
 | `--off` | Tắt tuần tra (xóa territory.patrol, cả scans và follow_up). |
+| `--now` | Xin Nhiếp chính tuần tra lãnh thổ ngay (lệnh hộp thư patrol): sau khi tự sửa nhánh gốc đang đỏ, hay khi một check chập chờn; xanh thì lãnh thổ nhận việc lại ở nhịp kế. |
 
 ## `elvaria character add`
 

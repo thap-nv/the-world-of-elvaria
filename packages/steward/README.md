@@ -468,6 +468,14 @@
   `patrol.follow_up` (`draft.ts`, before the line) and one `base_red` ring. A territory that throws does not hold
   the next one back; a stop records nothing and no `schedule.ran`. The patrol's book (`book.ts`) is rebuilt at
   `recover` and carried by the tick's notices to the digest.
+- A red default branch stops its territory (PS-09d): the tick gives `planTick` the red territories (`base_red`,
+  from the patrol's book) and the digest the quests they keep waiting (`base_holds`). One territory's patrol
+  (`patrolTerritory`) also runs outside the scheduled job, every patrol of a territory in its lane
+  (`patrol/runs.ts`, one plot `patrol-<id>`): after the tick when a red territory's tip, as the look at the base
+  branch saw it, moved (`patrol/again.ts`, `base_moved`), at the inbox command `patrol` (`owner`), and in a
+  delivery whose update's checks are red after a clean merge (`forge/base-trial.ts`, `queue`): the base branch red
+  at that commit, or the territory red now, the quest stays in the queue with nothing recorded, no merge quest.
+  A patrol's end ticks the Steward; its stop aborts them.
 - Adds the machine check `screens` after the territory's for a quest whose ritual asks for eyes (`judgedByEye`, PS-11b, `src/review/screens.ts`): it fails when the checks captured no screen or one breaks the image contract, its log says why; that quest's judge gets exactly the valid screens of the run, by policy (`ToolPolicy.images`) and in its prompt (`src/sessions/request.ts`).
 
 ## Does not

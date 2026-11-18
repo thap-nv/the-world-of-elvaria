@@ -11,8 +11,12 @@ import { CommitShaSchema } from './upgrade-data.ts';
 
 const describe = (description: string) => ({ description });
 
-/** What started the run: the schedule (PS-26). PS-09d adds the base branch moving, the owner and the merge queue. */
-export const PATROL_TRIGGERS = ['schedule'] as const;
+/**
+ * What started the run: the schedule (PS-26); (PS-09d) the default branch of a red territory moving (`base_moved`), the
+ * owner's `territory patrol --now` (`owner`), and the merge queue asking whether the branch it merged is red on its own
+ * before it opens a merge quest (`queue`). Values added to a payload enum: older lines still read (ADR 0003).
+ */
+export const PATROL_TRIGGERS = ['schedule', 'base_moved', 'owner', 'queue'] as const;
 export type PatrolTrigger = (typeof PATROL_TRIGGERS)[number];
 
 /**

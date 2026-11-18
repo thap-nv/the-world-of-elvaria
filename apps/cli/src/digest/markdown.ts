@@ -46,8 +46,15 @@ const upgradeOf = (item: AttentionItem) => ({
   commits: item.commits ?? NONE,
 });
 
-/** A red check of a default branch, or a scan that did not pass (PS-26): what the patrol found, and where. */
+/**
+ * A red check of a default branch, or a scan that did not pass (PS-26): what the patrol found, and where; (PS-09d) that
+ * the territory takes no work, and how many quests wait for it.
+ */
 const patrolOf = (t: Translate, item: AttentionItem) => ({
+  stopped:
+    item.kind === 'base_red' && item.waiting !== undefined
+      ? ` ${t('cli.digest.base_stopped', { count: item.waiting.length })}`
+      : '',
   territory: item.territory ?? NONE,
   check: item.check ?? NONE,
   error_line: item.error_line ?? NONE,
@@ -83,6 +90,7 @@ function subjectOf(t: Translate, item: AttentionItem): string {
     pool: item.pool ?? NONE,
     used_pct: item.used_pct ?? NONE,
     resets_at: item.resets_at ?? NONE,
+    held_reason: item.held_reason ?? NONE,
     ...triageOf(t, item),
     ...deliveryOf(t, item),
     ...upgradeOf(item),

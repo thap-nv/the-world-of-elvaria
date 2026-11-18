@@ -9,6 +9,10 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { CLEAN } from './__fixtures__/cuts.ts';
 import { bench, questPayload } from './__fixtures__/kingdom.ts';
 import { plotsWith } from './__fixtures__/review.ts';
+import { createForgeBook } from './forge/book.ts';
+import { createPatrolBook } from './patrol/book.ts';
+import { noticesOf } from './schedule/digest.ts';
+import { loadWorld } from './world.ts';
 import type { Bench, BenchOptions } from './__fixtures__/kingdom.ts';
 import type { Plots, Steward, StewardDeps } from './types.ts';
 
@@ -88,6 +92,36 @@ describe('hold and unhold', () => {
       ['command.rejected', 'hold', 'not_holdable'],
       ['command.rejected', 'unhold', 'not_held'],
     ]);
+  });
+
+  // (D) of fix/quest-hold: the digest names the held quest with the owner's reason, and no longer once lifted.
+  it('gives the digest each held quest with why, from the quest files', async () => {
+    const { kingdom, steward } = await open({ plays: HANGS });
+    // The one knight works on Cut: Later stays open.
+    await kingdom.command('create_quest', questPayload('Cut'));
+    await steward.tick();
+    await kingdom.command('create_quest', questPayload('Later'));
+    await steward.tick();
+    const quest = await kingdom.quest('Later');
+    await kingdom.command('hold', { quest: quest.id, reason: 'next run' });
+    await steward.tick();
+    const heldOf = async () => {
+      const world = await loadWorld(kingdom.store, { warn: () => undefined });
+      if (world === undefined) throw new Error('fixture: world');
+      const versions = { asked: new Map(), told: new Map(), holds: [] };
+      const books = { forge: createForgeBook(), patrol: createPatrolBook() };
+      return noticesOf(world, {
+        reported: new Map(),
+        unjudged: new Set(),
+        judgeWaits: new Map(),
+        versions,
+        ...books,
+      }).held;
+    };
+    expect(await heldOf()).toEqual([{ quest: quest.id, reason: 'next run' }]);
+    await kingdom.command('unhold', { quest: quest.id });
+    await steward.tick();
+    expect(await heldOf()).toEqual([]);
   });
 });
 

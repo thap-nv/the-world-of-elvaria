@@ -50,3 +50,23 @@ export function unholdQuest(quest: Quest, at: string): Result<Quest, HoldError> 
   const { held: _, ...rest } = quest;
   return ok({ ...rest, updated_at: at });
 }
+
+/** A quest the owner holds, with why when the owner said (the digest's `quest_held` item, (D) of fix/quest-hold). */
+export interface HeldQuest {
+  readonly quest: Quest['id'];
+  readonly reason?: string;
+}
+
+/**
+ * The quests the owner holds that still wait on it, oldest hold first: a held quest cancelled since keeps its `held`
+ * field, but nothing waits on it any more.
+ */
+export const heldQuestsOf = (quests: readonly Quest[]): HeldQuest[] =>
+  quests
+    .flatMap(({ id, status, held }) =>
+      held !== undefined && (HOLDABLE_STATUSES as readonly QuestStatus[]).includes(status)
+        ? [{ id, held }]
+        : [],
+    )
+    .toSorted((a, b) => a.held.at.localeCompare(b.held.at) || a.id.localeCompare(b.id))
+    .map(({ id, held }) => ({ quest: id, ...(held.reason === undefined ? {} : { reason: held.reason }) }));

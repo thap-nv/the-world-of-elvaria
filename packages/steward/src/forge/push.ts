@@ -3,10 +3,11 @@
 // the secret scan of what the branch and each of its commits add over the base branch (scan.ts), `git push` of
 // quest/<id> alone (never forced, never the base branch; the territory's pre-push hook runs as when the owner pushes),
 // then the branch's pull request, found or opened with the delivery note as its description, and one
-// `delivery.pushed`. Each step may run again: a Steward stopped between the push and the pull request pushes the same
-// head again (git says it is up to date) and finds the pull request it opened. Any step that fails records one
-// `delivery.failed` and stops; nothing is tried again until the owner's `deliver`. A stop of the Steward records
-// nothing: the next one delivers anew.
+// `delivery.pushed`. (PS-09d) An update whose checks are red as its base branch is records nothing: the quest
+// waits in the queue for the branch to be green. Each step may run again: a Steward stopped between the push and the
+// pull request pushes the same head again (git says it is up to date) and finds the pull request it opened. Any step
+// that fails records one `delivery.failed` and stops; nothing is tried again until the owner's `deliver`. A stop of
+// the Steward records nothing: the next one delivers anew.
 import { readFile } from 'node:fs/promises';
 
 import { currentRun, deliveryOf, err, ok } from '@elvaria/domain';
@@ -121,6 +122,12 @@ async function push(ctx: Context, d: Delivery, known: readonly string[]): Promis
 /** The steps after the plot is found; undefined when the Steward stopped, which records nothing. */
 async function deliverFound(ctx: Context, d: Delivery): Promise<Failure | undefined> {
   const updated = await updateBranch(ctx, d);
+  if (updated === 'base_red') {
+    ctx.deps.log.warn(
+      `steward: ${d.quest.id}: its update's checks are red as its base branch is; it waits for it`,
+    );
+    return undefined;
+  }
   if (updated !== undefined || stopped(d)) return stopped(d) ? undefined : updated;
   const base = await baseOf(d);
   const ahead = await localGit(d, ['rev-list', '--count', `${base}..HEAD`]);

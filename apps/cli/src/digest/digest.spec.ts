@@ -121,6 +121,24 @@ describe('elvaria digest', () => {
     );
   });
 
+  // (D) of fix/quest-hold: a held quest waited for the owner and no digest said so.
+  it('names each quest the owner holds, with why, and the command that lifts the hold', async () => {
+    const hold = { at: '2026-11-06T08:20:00+07:00', reason: 'Waits for PS-09d on main.' };
+    await plantQuests(
+      kingdom,
+      questFixture('open', QUEST_ID, { held: hold }),
+      questFixture('open', OTHER_QUEST_ID, { held: { at: hold.at } }),
+    );
+    const out = await digest('vi');
+    expect(out.join('\n')).toContain(
+      `- Đang giữ: nhiệm vụ ${QUEST_ID} «Thêm script pnpm check», lý do: Waits for PS-09d on main.`,
+    );
+    expect(out).toContain(`  \`elvaria quest unhold ${QUEST_ID}\``);
+    expect(out.join('\n')).toContain(
+      `- Đang giữ: nhiệm vụ ${OTHER_QUEST_ID} «Thêm script pnpm check», lý do: —.`,
+    );
+  });
+
   // fix/review-no-session: on PS-07's kingdom an agy judge's session could not open for 16 minutes, and no digest
   // said so.
   it('names a quest that waits in review after its judge could not open a session, and the judge', async () => {

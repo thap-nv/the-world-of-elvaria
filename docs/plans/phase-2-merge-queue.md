@@ -162,6 +162,13 @@ Khảo sát ở `1578486` (`main`) và ở nhánh của PS-08c; PS-08c vào `mai
   - §3.16.7 và hướng dẫn vận hành: cách ra khỏi trạng thái đỏ (xác nhận quest nháp, sửa tay rồi `--now`, hay tắt cờ tuần tra).
 - **Test**: git thật: nhánh gốc đỏ ⇒ quest `open` của lãnh thổ không được nhận, quest của lãnh thổ khác vẫn chạy, quest đang làm chạy tiếp, hàng đợi đứng, đúng một mục bản tấu; quest sửa do tuần tra lập được nhận, được giao, merge xong thì tuần tra chạy lại, xanh, quest đang chờ được nhận ở nhịp kế; `--now` khi vẫn đỏ không mở cổng; check của hàng đợi đỏ và nhánh gốc đỏ ⇒ không quest Hợp nhất, quest được giao sau khi xanh lại; check của hàng đợi đỏ và nhánh gốc xanh ⇒ quest Hợp nhất; lãnh thổ không bật tuần tra không bị giữ. Domain 100 %.
 - **Xong khi**: `pnpm check` xanh; các ca trên.
+- **Thực tế** (2026-11-18, chờ chủ nhân chốt, §11):
+  - Cổng nằm ở `planTick`, không ở `roomFor`: `planTick` lọc quest `open` của lãnh thổ đỏ khỏi danh sách nhận việc (`heldByBase`), như quest đang bị chủ nhân giữ. Đặt trong `roomFor` thì quest không vùng đang chờ sẽ chặn quest sửa có vùng (luật vùng của PS-05), và quest bị giữ vẫn bị báo `unclaimable`. Cổng giữ mọi quest `open`, kể cả quest bậc script và quest Hợp nhất của một đội; quest đã `claimed` mà chưa bắt đầu vẫn chạy.
+  - Miễn là quest có `created_by: patrol` mà không phải quest Hợp nhất của hàng đợi (`isPatrolFix`); domain không đọc tag hay dạng của quest.
+  - `base_moved` dựa trên đầu nhánh gốc mà lần dò của PS-08d thấy (remote, không có thì local). Lần dò chỉ chạy khi lãnh thổ còn quest đã giao để hỏi, nên nhánh sửa tay ngoài Elvaria cần `--now`. Đầu nhánh đã tuần tra (`tried`) giữ trong bộ nhớ, để một lần tuần tra không dựng được đất không bị chạy lại ở mỗi nhịp; Nhiếp chính khởi động lại thì nhìn lại.
+  - Mọi lần tuần tra một lãnh thổ (lịch, `base_moved`, `owner`, `queue`) chạy lần lượt trong làn của lãnh thổ, vì chúng dùng chung đất `patrol-<id>`. Lần `queue` chạy trong việc giao hàng. Nhánh gốc đã đi tiếp sau commit hàng đợi merge thì hàng đợi theo trạng thái đỏ hiện tại của lãnh thổ. Lãnh thổ không tuần tra, hay quest sửa của tuần tra, đi như PS-09b.
+  - `forgePolls` không bị chặn: PR có dấu đã push vẫn được hỏi và merge, để nó không rơi vào `checks_timeout` trong lúc nhánh gốc đỏ lâu.
+  - Lệnh `patrol` và ba giá trị `trigger` mới là đổi tương thích (không tăng `version`), như `hold`, `unhold`, `submit`.
 
 ## PS-08b — Ủy quyền dấu
 

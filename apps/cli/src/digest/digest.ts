@@ -5,7 +5,10 @@
 import {
   attentionQueue,
   baseHealthOf,
+  baseHoldsOf,
+  baseRedOf,
   forgeOutcomesOf,
+  heldQuestsOf,
   ownerDeliveries,
   scopeHoldsOf,
   unopenedReviewsOf,
@@ -48,6 +51,7 @@ async function runDigest(input: CommandInput, cli: CliContext): Promise<ExitCode
     upgradeOffer(ctx.io, ctx.store.root),
   ]);
   const now = ctx.io.clock.now();
+  const patrols = baseHealthOf(log.events);
   const items = attentionQueue(digestStateOf(source, log.events), now, {
     unclaimable: [...unclaimable.keys()],
     scope_held: scopeHoldsOf(source.quests, source.territories),
@@ -55,7 +59,11 @@ async function runDigest(input: CommandInput, cli: CliContext): Promise<ExitCode
     deliveries: ownerDeliveries(forgeOutcomesOf(log.events).values(), source.quests, source.territories),
     ...(upgrade === undefined ? {} : { upgrade }),
     // PS-26: the same health of the patrolled branches the Steward's book holds.
-    patrols: baseHealthOf(log.events),
+    patrols,
+    // PS-09d: the red territories that take no work, and the open quests that wait for them.
+    base_holds: baseHoldsOf(source.quests, baseRedOf(patrols, source.territories, source.quests)),
+    // (D) of fix/quest-hold: the quests the owner holds.
+    held: heldQuestsOf(source.quests),
   });
   // ctx.now() is written in the kingdom's zone: its date is the kingdom's local day, as the digest's file names it.
   const day = ctx.now().slice(0, 'yyyy-mm-dd'.length);

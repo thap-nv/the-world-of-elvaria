@@ -12,8 +12,10 @@
 // owner's `deliver` command, which forgets the outcome. (PS-08d) A quest whose branch is in the base branch already
 // (merged by hand) is archived instead, and a sealed quest's pull request under `pr_merge` is merged (mergeDue).
 import { UPDATE_ROUNDS_MAX } from '../constants.ts';
+import { stoppedByBase } from '../patrol/base-red.ts';
 import { deliveryOf } from '../schema/territory-delivery.ts';
 import type { QuestId, TerritoryId } from '../core/ids.ts';
+import type { BaseRed } from '../patrol/base-red.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 import type { Territory } from '../schema/territory.ts';
 import type { BackgroundWork } from './reviews.ts';
@@ -50,6 +52,8 @@ export interface ForgeSource {
   readonly forge_stale?: readonly QuestId[];
   /** Pull requests open, the last outcome `delivery.pushed` (PS-08d): a sealed one holds its lane (PS-09). */
   readonly forge_waits?: readonly { readonly quest: QuestId }[];
+  /** (PS-09d) Territories whose default branch is red: their queue stands, the patrol's fix aside (baseRedOf). */
+  readonly base_red?: readonly BaseRed[];
 }
 
 /** How much a done quest's branch changed, from its plot's touched files (PS-09). */
@@ -92,8 +96,9 @@ function busyOf(source: ForgeSource, done: readonly Quest[], stale: ReadonlySet<
 
 /**
  * The deliveries due now, from `done` (by rank, byPriority) in the queue's order: one per territory, none on a
- * territory whose delivery still runs. A done quest's work in the background is its delivery: checks and scripts leave
- * with `review` and `working` (wantedIn). Whether each starts now is the room's (startingNow).
+ * territory whose delivery still runs, nor (PS-09d) on one whose default branch is red, the patrol's fix aside. A done
+ * quest's work in the background is its delivery: checks and scripts leave with `review` and `working` (wantedIn).
+ * Whether each starts now is the room's (startingNow).
  */
 export function forgeDeliveries(source: ForgeSource, done: readonly Quest[]): QuestId[] {
   const stale = new Set(source.forge_stale);
@@ -104,9 +109,10 @@ export function forgeDeliveries(source: ForgeSource, done: readonly Quest[]): Qu
   const territories = new Map(source.territories.map((territory) => [territory.id, territory]));
   const busy = busyOf(source, done, stale);
   const sizes = new Map((source.forge_sizes ?? []).map((size) => [size.quest, size]));
+  const stopped = stoppedByBase(source.base_red);
   const picked: QuestId[] = [];
   for (const quest of done.toSorted(queueOrder(sizes, stale))) {
-    if (busy.has(quest.territory) || settled.has(quest.id)) continue;
+    if (busy.has(quest.territory) || settled.has(quest.id) || stopped(quest)) continue;
     if (!forgeDue(quest, territories.get(quest.territory))) continue;
     busy.add(quest.territory);
     picked.push(quest.id);
