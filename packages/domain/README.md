@@ -37,6 +37,13 @@
   again) or lets a judge leave without counting toward a stalled review (`review.release.has_verifier`), its entry
   `cancelled`; `reviewStallOf` names what stalled a review (partial verdicts, or how the last judge who left without
   one ended), for the move a Steward that starts on it makes.
+- Shapes the merge queue's merge quest (`src/party/queue-merge-quest.ts`, PS-09b, K5): `queueMergeQuestOf` (a
+  knight's sealed build under the quest whose delivery stopped at the update, in its party or named after it, its
+  scope and the conflicted files, the red checks' log ends), `isQueueMerge` (`party_role: merge`, `created_by:
+patrol`); `partyOf` counts the quest a party is named after, `partyStatusOf` and `partyIssues` leave it out, the
+  attention queue says `delivery_merging` while it is on its way, and `forgeArchives` archives its parent with it.
+  Every merge quest of a party, its own or the queue's, takes the party's contract and parts with it into
+  `forgeArchives` (fix/merge-quest-followups (l)): a squash leaves their commits no ancestry for a look to find.
 - Shapes a party (`src/party/`, §3.13, ADR 0020, P1-18): `mergeQuestOf` (the merge quest the Steward adds when a
   contract is delivered: a knight's build waiting for every part, their tags and secrets, the highest rank, the
   royal seal), `PartyPlace` (a part's or the merge quest's place, given to `questFromCommand` through
@@ -88,7 +95,16 @@
   `no_author`, `below_rank` under `kingdom.dispatch.amendments.from_rank`, `second_amendment`); `amendmentDeciderOf` says
   who a quest blocked on it waits for (`blocked.amendment`, which the `ask` event carries), `awaitsAuthor` whether the
   author's session is due. The amendment-decision contract and the `decide_amendment` command have their schemas here;
-  `Metrics.amendments` counts them (`src/metrics/amendment-counts.ts`).
+  `Metrics.amendments` counts them (`src/metrics/amendment-counts.ts`). (PS-09c, `src/memo/advisory.ts`) The Steward's
+  advisory as a quest reaches its base branch: `advisoryOf` names the quests at work of its territory (run once, a
+  worktree plot, not done nor archived, session tier) whose scope meets the files it changed (`scopesMeet`, shared
+  files left out by the caller), never its party nor a quest on either side of its base chain, and the files they may
+  hold (at most `MEMO_REFS_MAX`, the rest counted); a party's parts and contract write none. `recipientsOf` is that
+  rule alone, for a character's `advisory` line too (route `quests`, `to.quests`). `advisoryKindOf` finds the kind in
+  the registry by its route, `advisoryKeyOf` keys the id on the quest alone, `advisoryBodyOf` writes the text;
+  `advisoriesFor`, `advisoryRefsFor`, `deliveredTo` and `deliveryEndOf` say what a quest reads, once (`deliveries`),
+  and when the memo ends `delivered` or `lapsed`. `memo.from` is optional (absent: the Steward wrote it), and the line
+  `memo.delivered` has its schema here; no memo to quests is an item of the attention queue.
 - Runs the character state machine (`src/character/`, `transitionCharacter`) and derives what is never stored:
   `reputationOf`, `affinityOf`, `titleOf`. Decides levels: `canTake` (which ranks the Steward may give a level),
   `aboveCeiling` (a stretch that makes the quest wait for the royal seal, but a part of a party, `part` or
@@ -257,11 +273,19 @@
   tribe narrowed by what its adapter lacks, `TRIBE_NARROWING`; `planTick` gives nothing to a tribe whose runner
   has no headless mode, no rank above its `max_rank`, and nothing on a guarded territory without a tool gate),
   `checkTribeAuth` and `defaultAuthOf` (the sign-in `tribes[].tool.auth` pins must be one the adapter declares;
-  doctor pins the owner's login first; P1-19, where TribeSchema used to name Gemini CLI), `selectChancellor`, and
+  doctor pins the owner's login first; P1-19, where TribeSchema used to name Gemini CLI), `checkTribeConfigDir`
+  (PS-27: a tribe naming `tool.config_dir` needs an adapter that declares `capabilities.config_dir`, else
+  `config_dir_not_declared`), `accountClashesOf` (PS-27: the pairs of login tribes of one adapter on one config
+  folder, two that name none included, or one account fingerprint; a tribe on a treasury key is not weighed),
+  `selectChancellor`, and
   `tribeLookOf` / `tribeLooksOf` (PS-24: a tribe's look, a set of parts of the theme's look pool — palette, crest,
   figure, aura, portrait frame — and a name: the owner's choice `tribes[].look`, else the theme's pinned entry,
   else drawn by the tribe id, the same on every run, in the order of `kingdom.tribes[]`, past the palettes and
-  crests other tribes hold; display only, no prompt and no dispatch reads it), `lookPoolOf(theme)` and
+  crests other tribes hold; display only, no prompt and no dispatch reads it; PS-27b: a sibling, a row whose
+  `sibling_of` names a root without one, takes the root's palette, crest, figure and frame with the aura
+  `ordinal − 1` steps after the root's, source `sibling`, and root and siblings carry `siblings {root, ordinal,
+count}` counted in the list's order, never stored: `siblingRootOf`, `siblingsOf`, `siblingProblemOf` in
+  `src/tribe/siblings.ts`, `romanOf` in `src/tribe/roman.ts`), `lookPoolOf(theme)` and
   `parseLookPool` (the pools the themes ship: `src/tribe/fantasy-looks.json`, checked by `TribeLookPoolSchema`; the
   spec holds its palettes to the design system's tokens, read through `designCss`).
   `ADAPTER_FILE_PATTERN` tells an owner adapter file `adapters/<name>.mjs`.
@@ -324,6 +348,16 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
 <tribe>`; A1b of the lessons of 2026-11-13). The world state holds the
   open memos since PS-03 (`memos`, `memoViewOf`; `memo.*` lines reduce into it; `WORLD_STATE_VERSION` 2). A memo the
   Chancellor's triage sent up carries its advice (`escalated`, PS-03b) and lists as `memo_escalated`.
+- Decides the delegation of the royal seal (`src/delegation/seal.ts`, PS-08b, ADR 0023): `kingdom.delegation.seal`
+  (`SealDelegationSchema`: `max_rank`, `kinds`, `max_diff_lines`, default 400), `sealDelegated` (a new quest whose
+  command says nothing of the seal, not of a party, of a listed kind whose `seal_default` is true, within `max_rank`, on
+  a `pr_merge` territory not suspended, is made with `seal_required: false` and `seal_delegated`; `questFromCommand`
+  reads it from `NewQuestContext.seal`, and the owner's edit of `seal_required` drops the mark), `sealRaisesOf` and
+  `raisedSeal` (why the machine raises it at a submit or a pass, `SEAL_RAISES`, set through `Move.before` with
+  `seal_raised`; the transition table does not change), and `mayMergeUnsealed`, which widens rule (G) in `mergeDue`
+  (`ForgeSource.seal_policy`, `KingdomSnapshot.seal_policy`). `apartFromDoers` (`src/verify/`) is the one test of
+  "another family than every doer" that selectVerifier and the seal share. The digest's `merged_unsealed` item
+  (`unsealedMergesOf`, `revertWordsOf`) and `raised` on `awaiting_seal`; the ledger's `unsealed` counts.
 - Decides what the world takes in alone of the memos the Chancellor triages (`src/delegation/`, PS-03b):
   `kingdom.delegation` (`DelegationSchema`: `max_rank`, `same_scope`, `ask`) and `delegationHolds`, which answers with
   what holds a piece of work for the owner: a matter of `ask` the Chancellor flagged (or `protected_paths` when a
@@ -373,6 +407,15 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   with the quests merged since the check's last green patrol; `baseHealthOf`, `redFlipsOf` fold the log;
   `patrolRanOf` and `scanOf` build the line; `patrolFollowUpOf` the draft quest. `attentionQueue` lists
   `base_red` and `patrol_scan` from `StewardNotices.patrols`; `metricsOf` has `base_red`.
+- A red default branch stops its territory taking work (PS-09d, `src/patrol/base-red.ts`): `baseRedOf` names the
+  patrolled territories whose latest patrol has a red check, with the patrol's own quests exempt (`isPatrolFix`:
+  `created_by: patrol`, not a queue's merge quest); `KingdomSnapshot.base_red` carries them, `planTick` claims no open
+  quest of them (`heldByBase`) and `forgeDeliveries` delivers none (`stoppedByBase`). `baseVerdictOf` says what the
+  patrols know of one commit (the merge queue asks it), `patrolsDue` which red territories to patrol again as their
+  tip moved (`base_moved`), `baseHoldsOf` the open quests each keeps waiting (`StewardNotices.base_holds`, the
+  `base_red` item's `waiting`). The inbox command `patrol` and the triggers `base_moved`, `owner`, `queue`.
+- The digest names the quests the owner holds ((D) of fix/quest-hold): `heldQuestsOf` (`src/quest/hold.ts`), passed
+  as `StewardNotices.held`, one `quest_held` item each, in the can-wait group.
 
 ## Does not
 

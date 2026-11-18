@@ -14,6 +14,7 @@ import { escalate } from '../memos/escalate.ts';
 import { STEWARD } from '../record.ts';
 import { release, suspend } from './character-commands.ts';
 import { setLevel, setModel } from './character-settings.ts';
+import { patrolNow } from '../patrol/again.ts';
 import { hold, unhold } from './hold-commands.ts';
 import {
   archive,
@@ -95,6 +96,7 @@ export async function applyCommand(ctx: Context, command: InboxCommand): Promise
   if (command.kind === 'decide_memo') return decideMemo(ctx, command);
   if (command.kind === 'escalate_memo') return escalate(ctx, command);
   if (command.kind === 'decide_amendment') return decideAmendment(ctx, command);
+  if (command.kind === 'patrol') return patrolNow(ctx, command.payload.territory);
   const quest = questOf(ctx, command);
   return quest === undefined ? rejected('unknown_quest') : onQuest(ctx, command, quest);
 }

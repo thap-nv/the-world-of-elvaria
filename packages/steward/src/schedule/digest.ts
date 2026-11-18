@@ -2,12 +2,16 @@
 // Steward decides when (dueJobs) and what (attentionQueue over the world state and its own notices); the Digest port
 // of the composition root words it in the owner's language and writes `digest/<day>.md`. Then one line and one ring.
 import {
+  baseHoldsOf,
+  baseRedOf,
+  heldQuestsOf,
   attentionQueue,
   judgedByEye,
   ownerDeliveries,
   reduce,
   scopeHoldsOf,
   unopenedReviewsOf,
+  unsealedMergesOf,
   worldStateOf,
 } from '@elvaria/domain';
 import type {
@@ -25,6 +29,7 @@ import type {
 import { ring } from '../context.ts';
 import { STEWARD } from '../record.ts';
 import { judgingClassesOf } from '../unjudgeable.ts';
+import { sealPolicyOf } from '../world.ts';
 import type { Context } from '../context.ts';
 import type { State } from '../steward-state.ts';
 import type { World } from '../world.ts';
@@ -76,6 +81,7 @@ export function noticesOf(
   world: World,
   state: Pick<State, 'reported' | 'unjudged' | 'judgeWaits' | 'versions' | 'forge' | 'patrol'>,
 ): StewardNotices {
+  const quests = [...world.quests.values()];
   return {
     tribes_held: state.versions.holds,
     unclaimable: [...state.reported.keys()],
@@ -95,9 +101,15 @@ export function noticesOf(
       state.forge.outcomes.values(),
       [...world.quests.values()],
       [...world.territories.values()],
+      // PS-08b: a pull request the Steward merges for the delegation of the seal waits for nobody either.
+      sealPolicyOf(world),
     ),
     // PS-26: the health of the patrolled territories' default branches.
     patrols: state.patrol.health,
+    // PS-09d: the red territories that take no work, and the open quests that wait for them.
+    base_holds: baseHoldsOf(quests, baseRedOf(state.patrol.health, [...world.territories.values()], quests)),
+    // (D) of fix/quest-hold: the quests the owner holds, from the quest files.
+    held: heldQuestsOf([...world.quests.values()]),
   };
 }
 
@@ -118,7 +130,9 @@ export const digestJob = (digest: Digest): StewardJob => ({
     const state = digestStateOf(sourceOf(ctx.world, memos.items), log.events);
     // A newer build is read now (PS-08d): the composition root asks the pinned build's repo, which no tick knows.
     const upgrade = await ctx.deps.upgradeOffer?.();
-    const notices = upgrade === undefined ? run.notices : { ...run.notices, upgrade };
+    // PS-08b: the merges without the seal since the last digest, each once, from the log.
+    const unsealed = { ...run.notices, merged_unsealed: unsealedMergesOf(log.events) };
+    const notices = upgrade === undefined ? unsealed : { ...unsealed, upgrade };
     const items = attentionQueue(state, ctx.deps.clock.now(), notices);
     const file = await digest.write({ day: run.day, items });
     const must = items.filter(({ group }) => group === 'must').length;

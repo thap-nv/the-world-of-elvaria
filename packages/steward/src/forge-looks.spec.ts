@@ -79,6 +79,8 @@ describe('a done quest the owner merged by hand on a manual territory', () => {
     expect(bench.forge.calls).toEqual([]);
   });
 
+  // A whole party on real git with a bare origin, merged by hand, then the looks: 14 s beside 13 other slow
+  // specs on Windows (2026-11-18), room for a busy machine.
   it("archives the merge quest with its party's contract and parts once its branch is in main", async () => {
     party = await partyBench(
       {

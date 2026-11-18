@@ -6,6 +6,7 @@ import type { Translate } from '@elvaria/i18n';
 
 import { NONE } from '../listing.ts';
 import { count, tableSection } from './section.ts';
+import { unsealedSection } from './view-delegation.ts';
 import { amendmentsSection, memosSection, objectionsSection } from './view-memos.ts';
 import { firstEditsLine, graphLine, promptSection } from './view-sessions.ts';
 import { adviceSection, passByRunSection, statusTimesSection } from './view-waits.ts';
@@ -259,6 +260,7 @@ export const metricsSections = (t: Translate, metrics: Metrics): MetricsSection[
   escapedSection(t, metrics),
   baseRedSection(t, metrics),
   sealedSection(t, metrics),
+  unsealedSection(t, metrics),
   statusTimesSection(t, metrics),
   questSection(t, metrics),
   memosSection(t, metrics),

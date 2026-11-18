@@ -169,4 +169,9 @@ export const CASES: Record<InboxCommandKind, { valid: object; invalid: object; i
     invalid: { quest: 'q_1' },
     issue: 'payload.quest: Invalid string',
   },
+  patrol: {
+    valid: { territory: 'do-an' },
+    invalid: { territory: 'do-an', quest: QUEST },
+    issue: 'Unrecognized key: "quest"',
+  },
 };

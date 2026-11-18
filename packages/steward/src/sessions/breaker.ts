@@ -17,7 +17,7 @@ import { step } from '../record.ts';
 import { runOf } from '../review/judge.ts';
 import { afterJudge } from '../review/after-judge.ts';
 import { commitPlot, forbiddenWip } from './commit.ts';
-import { maskFinished } from './secrets.ts';
+import { givenTo, maskFinished } from './secrets.ts';
 import { madeProgress } from './progress.ts';
 import { stopLeftOf, writeStopLetter } from './stop-letter.ts';
 import type { Context } from '../context.ts';
@@ -65,7 +65,14 @@ export async function breakAssignee(
   // A quest with no letter gets a minimal one, whatever the trip (gap 23 of PS-07); after a refused hook, a copy of
   // the work is kept too (P1-55).
   const left = stopLeftOf(wip, breaker);
-  if (left !== undefined) await writeStopLetter(ctx, { id: running.quest }, { character: who, trip }, left);
+  if (left !== undefined)
+    await writeStopLetter(
+      ctx,
+      { id: running.quest },
+      { character: who, trip },
+      left,
+      givenTo(running.session),
+    );
   const said = {
     ...(patch === undefined ? {} : { patch }),
     ...(paths === undefined ? {} : { paths: [...paths] }),

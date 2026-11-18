@@ -2,10 +2,11 @@
 // move with the session's id and the character's move with it. A move the state machine refuses kills the session
 // it was for, so no session ever runs for a quest the files do not say it runs for.
 import { currentRun, endedInCut, err, ok, resumedSession } from '@elvaria/domain';
-import type { Character, CharacterId, LoadTrace, Quest, QuestId, Result, Revival } from '@elvaria/domain';
+import type { Character, CharacterId, Quest, QuestId, Result, Revival } from '@elvaria/domain';
 import type { AgentRunner, Continuation, ParseOptions, RunningSession } from '@elvaria/runner-core';
 
 import { heardBy } from '../mana/heard.ts';
+import { deliverAdvisories } from '../memos/advisory.ts';
 import { mergeParts, plotOptionsOf } from '../party/plot.ts';
 import { step } from '../record.ts';
 import { checksRunOf, takeChecks } from '../review/checks.ts';
@@ -15,7 +16,8 @@ import { secretsBreaker } from './breaker.ts';
 import { continuationOf, refusedWhileWaiting } from './continuation.ts';
 import { assigneeUnopened, judgeUnopened, unopenedLine } from './no-session.ts';
 import { branchHeadOf } from './progress.ts';
-import { requestOf } from './request.ts';
+import { fittedRequestOf } from './letter-fit.ts';
+import type { SessionRequest } from './request.ts';
 import { clearWrapUp } from './wrap-up.ts';
 import { questSecretsOf, rememberSecrets, secretsLacking } from './secrets.ts';
 import { spawnOf } from './spawn.ts';
@@ -23,8 +25,6 @@ import type { Context } from '../context.ts';
 import type { MovePayload } from '../record.ts';
 import type { Resume, SessionInput } from './input.ts';
 import type { Running } from './running.ts';
-
-const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
 /** The quest, the character and the runner a session needs; a gap is a reason not to open it. */
 function partsOf(ctx: Context, questId: QuestId, characterId: CharacterId | null | undefined) {
@@ -65,12 +65,11 @@ function keep(ctx: Context, running: Running): void {
   ctx.counts.started += 1;
 }
 
-/** A session that spawned: the plot the quest gets, and what its prompt carried for its opening line (PS-01b). */
-interface Spawned {
+/** A session that spawned: the plot the quest gets, what its prompt carried (PS-01b), its advisories (PS-09c). */
+interface Spawned extends Pick<SessionRequest, 'load_trace' | 'advisories'> {
   readonly session: RunningSession;
   readonly plot: Quest['plot'];
   readonly spawned_at: string;
-  readonly load_trace: LoadTrace;
   readonly head: string | null | undefined;
 }
 
@@ -90,16 +89,16 @@ async function spawnFor(
   try {
     const prepared = await plotFor(ctx, input);
     const quest = { ...input.quest, plot: prepared.plot };
-    const built = await requestOf(ctx, { ...input, quest, cwd: prepared.cwd }, resume);
-    const { request, load_trace: loadTrace } = built;
+    const built = await fittedRequestOf(ctx, { ...input, quest, cwd: prepared.cwd }, resume);
+    const { request, ...carried } = built; // its load trace and advisories go with the session
     const head = input.role === 'assignee' ? await branchHeadOf(ctx, prepared.plot) : undefined; // before the CLI starts
     const session = heardBy(ctx.mana, input.character, await spawnOf(ctx, runner, request, parse));
     const spawnedAt = ctx.record.stamp(); // right after the spawn: a restart tells the process by it (pids.ts)
     // Keyed by the session the Steward keeps (heardBy's wrapper): maskFinished finds it from Running.session.
     rememberSecrets(session, request);
-    return ok({ session, plot: prepared.plot, spawned_at: spawnedAt, load_trace: loadTrace, head });
+    return ok({ ...carried, session, plot: prepared.plot, spawned_at: spawnedAt, head });
   } catch (error) {
-    const message = messageOf(error);
+    const message = error instanceof Error ? error.message : String(error);
     ctx.deps.log.warn(`steward: ${input.quest.id}: no session for ${input.character.id}: ${message}`);
     return err(unopenedLine(message));
   }
@@ -116,12 +115,14 @@ export type Opening =
 /** Openings that go on with the attempt in progress rather than start a new one (§2.5: same run `n`). */
 const goesOn = (opening: Opening): boolean => opening.kind === 'answer' || opening.kind === 'wake';
 
+const sameRun = (quest: Quest, opening: Opening): boolean =>
+  goesOn(opening) || (opening.kind === 'redispatch' && endedInCut(quest.attempt_log));
+
 async function continuationFor(ctx: Context, quest: Quest, opening: Opening): Promise<Continuation | null> {
   // The decision on an amendment ends a wait that may have begun with the run's work refused (fix/session-notes).
   if (opening.kind === 'answer' && quest.blocked?.amendment !== undefined)
     return { reason: 'revive', ...(await refusedWhileWaiting(ctx, quest)) };
-  if (goesOn(opening) || (opening.kind === 'redispatch' && endedInCut(quest.attempt_log)))
-    return { reason: 'revive' };
+  if (sameRun(quest, opening)) return { reason: 'revive' };
   // A start after earlier runs (the owner gave the quest to someone new) goes on from the letter, like a revival.
   if (opening.kind === 'start' && currentRun(quest) === 0) return null;
   return continuationOf(ctx, quest);
@@ -185,8 +186,7 @@ export async function openAssignee(
     if (opening.kind === 'answer') return err(`secrets_lacking: ${lacking.code}`);
     return secretsBreaker(ctx, quest, lacking);
   }
-  const same = goesOn(opening) || (opening.kind === 'redispatch' && endedInCut(quest.attempt_log));
-  const n = currentRun(quest) + (same ? 0 : 1);
+  const n = currentRun(quest) + (sameRun(quest, opening) ? 0 : 1);
   await clearWrapUp(ctx, quest, n);
   const spawned = await spawnFor(
     ctx,
@@ -202,7 +202,7 @@ export async function openAssignee(
     resumeFor(ctx, quest, character, opening),
   );
   if (!spawned.ok) return assigneeUnopened(ctx, quest, opening.kind, spawned.error);
-  const { session, plot, spawned_at: spawnedAt, load_trace: loadTrace, head } = spawned.value;
+  const { session, plot, spawned_at: spawnedAt, load_trace: loadTrace, head, advisories } = spawned.value;
   const sessionId = await session.session_id;
   const moved = await ctx.record.move({
     quest: questId,
@@ -228,6 +228,7 @@ export async function openAssignee(
     spawned_at: spawnedAt,
     ...(head === undefined ? {} : { head }),
   });
+  await deliverAdvisories(ctx, questId, n, advisories); // read once the quest moved, so the session runs (PS-09c)
   return moved;
 }
 

@@ -19,6 +19,8 @@ export const PROMPT_TEMPLATES = [
   'handover',
   'letter-reminder',
   'quest',
+  // PS-09c: the advisories the Steward wrote as other quests reached the base branch, for an assignee.
+  'advisories',
   'gazetteer',
   'context-files',
   'scripture',

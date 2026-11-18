@@ -80,7 +80,10 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   memo; a `-` or `none` line is nothing, as `fakeLetter` writes. The Steward calls it as a run ends; `RunResult` and
   the adapters do not change. A continuing assignee reads the memos its quest's letters filed
   (`Memory.memos`, `prompts/memos.md`, `memosBlock` of `src/prompt/memory.ts`): a block of its own, `memos` in
-  `PROMPT_BLOCK_IDS`, right after the continuation, so the load trace counts it apart. (PS-22) `prompts/returned.md`
+  `PROMPT_BLOCK_IDS`, right after the continuation, so the load trace counts it apart. (PS-09c) An assignee reads the
+  advisories its quest has yet to read in a block of its own (`advisories`, `prompts/advisories.md`, `advisoriesBlock`
+  of `src/prompt/advisories.ts`), right after the quest, or after the answer of a resumed session (`resumedPrompt`):
+  the newest `ADVISORY_BLOCK_MAX_MEMOS` within `ADVISORY_BLOCK_MAX_CHARS`, one line counting the rest. (PS-22) `prompts/returned.md`
   says a note held wrong is an objection memo (`- objection: … refs: …`), not a change to satisfy it nor a note passed
   over; a second judge reads the `objection` block (`prompts/objection.md`, `objectionBlock` of
   `src/prompt/objection.ts`, before the review: the contested verdict and the memo, the first judge never named), and
@@ -131,9 +134,13 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   `withHookProblem`, `src/runner/hook-built.ts`, fix/held-tribe-sessions). `ToolInfo.notes` carries
   `DoctorNote` codes and parameters (`DOCTOR_NOTES`, `DOCTOR_NOTE_PARAMS`, `doctorNoteOf`, `callNote`,
   `hookNote`); `detail` remains verbatim external text. The kit validates adapter notes, replacing malformed
-  entries with `doctor:bad_note`, and appends `doctor:hook_missing` when needed. The optional `shell` is
+  entries with `doctor:bad_note`, and appends `doctor:hook_missing` when needed. (PS-27) The kit hands the tribe's
+  `tool.config_dir` in the machine's form (`kit.config_dir`, undefined when it names none); `ToolInfo` carries the
+  optional `config_dir` (the folder the CLI says it runs in) and `account` (a fingerprint of its account, never the
+  account itself), kept from a file only when they are text, and `doctor:config_dir_ignored` (`given`, `used`) says
+  a CLI ran in another folder than the tribe names. The optional `shell` is
   checked only when given (`shellProblems`, P1-40), and so are `search` (`searchProblems`, P1-53), `read`
-  (`readProblems`), `vision` (`visionProblems`, PS-11) and `models` (the domain's `modelsProblems`, PS-23),
+  (`readProblems`), `vision` (`visionProblems`, PS-11), `config_dir` (`configDirProblems`, PS-27) and `models` (the domain's `modelsProblems`, PS-23),
   here and in the suite's `capabilities` check. An adapter whose CLI has hooks of its own writes its neutral hook dialect into `policy.json` through
   `writePolicyFile(…, { dialect })` (`HookDialect`, `src/runner/hook-dialect.ts`, PS-23), so the hook reads that
   CLI without a branch of its own. A built-in package also exports an `AdapterTool` (its program, its search
@@ -174,6 +181,8 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   diff then counts from there. The fork point (for a merge quest, the base branch's commit it merged last) and the
   setup state live in `elvaria-plot.json` in the worktree's private git folder. `status`, `head` (the commit at HEAD, null without git: the Steward reuses checks that ran on
   it for the run's next judge, P1-38), `touched` (paths changed since the fork, committed or not, plus untracked files),
+  `diffLines` (PS-08b, `plot/diff-size.ts`: lines added plus removed since the fork by `git diff --numstat`, the given
+  globs aside, a binary file none; 0 without git),
   `commitAll` (everything, through the territory's own hooks; `refused` when a hook says no; given a `CommitRescue` folder
   (P1-55, `plot/rescue.ts`) it first moves the scratch files at the plot's root to `set-aside/` there, and a refusal leaves
   `wip.patch` and the staged paths; the Steward's messages
@@ -211,12 +220,16 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
 --write-tree`, git 2.38, `plot/dry-merge.ts`) resolves each conflicted file by the territory's `shared_paths`
   (`plot/shared-merge.ts`, pure: `regenerate` keeps the plot's side, `union` joins three-way line by line, a JSON
   file must parse, any other file is a conflict), and only when all are resolved does the real merge run with the
-  territory's hooks; the record's base moves and `update_pending` stays until `settle` (`plot/base-update.ts`).
+  territory's hooks; the record's base moves and `update_pending` stays until `settle` (`plot/base-update.ts`). A
+  conflict names the base branch's commit it met (`BaseUpdate.base`): the Steward's merge quest is made from it.
   `generate` runs `commands.generate` with the quest's secrets, gives back what it changed outside `shared_paths`
   and commits the rest (`plot/generate.ts`); `mergesClean` says whether an open branch still merges cleanly into
   the tips a look saw. A party's merge quest gets the same rules for its parts and base branch
   (`MergeOptions.shared`), counts from the base branch even when it did not move, and is set up again once a part
-  is in (PS-08e (6), (7)).
+  is in (PS-08e (6), (7)). A generated file (`regenerate`) one of its merges left in a conflict for the knight, or
+  resolved by the rule before a later merge stopped, stays in the plot's record (`regenerate_pending`) until the
+  first merge that stops no more names it, once (`MergeOutcome.regenerate`, `plot/generate-later.ts`,
+  fix/merge-quest-followups (n)): the generators cannot run while a merge waits in progress.
 - Says how far a territory moved since its gazetteer was written (PS-21): `PlotManager.drift(plot, from)` counts the
   commits from `from` to the plot's fork point per top-level folder (`src/plot/drift.ts`, `git log --name-only`,
   root files left out; null without git, a record or a commit git knows), and `gazetteerWithDrift`

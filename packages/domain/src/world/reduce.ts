@@ -52,14 +52,15 @@ const onSleep =
     return { ...state, pools: updatePool(state.pools, data, withSleep(asleep, resets)) };
   };
 
-/** A memo filed opens in the world; it has no route until the Steward's next line routes it (PS-03). */
-const onMemoFiled: Handler<'memo.filed'> = (state, { data, quest }) => ({
-  ...state,
-  memos: {
-    ...state.memos,
-    [data.memo]: { id: data.memo, kind: data.kind, from: data.from, quest: quest ?? null, route: null },
-  },
-});
+/**
+ * A memo filed opens in the world; it has no route until the Steward's next line routes it (PS-03). One without
+ * `from` the Steward wrote (PS-09c).
+ */
+const onMemoFiled: Handler<'memo.filed'> = (state, { data, quest }) => {
+  const from = data.from === undefined ? {} : { from: data.from };
+  const memo = { id: data.memo, kind: data.kind, ...from, quest: quest ?? null, route: null };
+  return { ...state, memos: { ...state.memos, [data.memo]: memo } };
+};
 
 const onMemoRouted: Handler<'memo.routed'> = (state, { data }) => {
   const memo = state.memos[data.memo];

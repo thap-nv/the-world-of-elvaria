@@ -18,6 +18,8 @@ import {
   workingBy,
 } from './__fixtures__/snapshot.ts';
 import { planTick } from './plan-tick.ts';
+import { TribeSchema } from '../schema/tribe.ts';
+import { FULL_TRIBE_LIMITS } from '../tribe/tribe-limits.ts';
 import { pausedSince } from './reassigns.ts';
 import type { TribeId } from '../core/ids.ts';
 import type { ManaReading } from '../mana/reading.ts';
@@ -67,6 +69,31 @@ describe('planTick: mana (§3.5)', () => {
     expect(takers([quest(Q1, { cls: 'scribe' })], scribes, asleep)).toEqual([[Q1, 'ash']]);
     // Off by default: the Gemini tribe stays the Gemini model family.
     expect(takers([quest(Q1, { cls: 'scribe' })], scribes.slice(1))).toEqual([]);
+  });
+
+  it('keeps two tribes of one adapter apart: the asleep one does not hold the awake one (PS-27)', () => {
+    // A second account of one CLI is one more tribe (ADR 0021): its own pool, keyed by its id (poolOf).
+    const CLAUDE_2 = 'claude_2' as TribeId;
+    const second = TribeSchema.parse({
+      id: CLAUDE_2,
+      adapter: 'claude_code',
+      enabled: true,
+      max_concurrent: 1,
+      tool: {
+        path: 'C:/claude.exe',
+        version: '2.1.325',
+        config_dir: 'C:/Users/owner/.elvaria/accounts/claude_2',
+      },
+    });
+    const kingdom = { ...KINGDOM, tribes: [...KINGDOM.tribes, second] };
+    const limits = { [CLAUDE]: FULL_TRIBE_LIMITS, [CLAUDE_2]: FULL_TRIBE_LIMITS };
+    const knights = [character('thorn'), character('nyx', { tribe: CLAUDE_2 })];
+    const firstAsleep = { kingdom, limits, asleep: [{ tribe: CLAUDE, pool: 'claude' }] };
+    expect(takers([quest(Q1)], knights, firstAsleep)).toEqual([[Q1, 'nyx']]);
+    const secondAsleep = { kingdom, limits, asleep: [{ tribe: CLAUDE_2, pool: 'claude_2' }] };
+    expect(takers([quest(Q1)], knights, secondAsleep)).toEqual([[Q1, 'thorn']]);
+    const bothAsleep = { kingdom, limits, asleep: [...firstAsleep.asleep, ...secondAsleep.asleep] };
+    expect(takers([quest(Q1)], knights, bothAsleep)).toEqual([]);
   });
 
   it('takes no new work on a pool at the cap, and goes on while it only warns', () => {

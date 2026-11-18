@@ -4,9 +4,10 @@
 
 - Implements `AgentRunner` for Codex CLI, adapter id `codex_cli`, the third tribe (implementation-plan §3.7, §3.14,
   ADR 0006, 0021; [spike Codex 2026-11-12](../../docs/spikes/codex-2026-11-12.md)): `createCodexRunner({tribe,
-launch, hook, env, timeout_ms?, platform?})`. `hook` is `hookCommand()` of `@elvaria/hooks`, handed over by
+launch, hook, env, timeout_ms?, platform?, configDir?})`. `hook` is `hookCommand()` of `@elvaria/hooks`, handed over by
   `apps/cli`. Capabilities for Codex 0.167.0-alpha.4.1: everything but `compact` and `subagent`; `auth: ['login']`
-  (the owner's ChatGPT sign-in); `shell: {win32: 'Windows PowerShell (powershell.exe)'}`; `search: false`, since
+  (the owner's ChatGPT sign-in); `config_dir` (PS-27c: a tribe's `tool.config_dir` is Codex's home, CODEX_HOME,
+  where its sign-in and session rollouts live, so a second ChatGPT account is a second tribe); `shell: {win32: 'Windows PowerShell (powershell.exe)'}`; `search: false`, since
   Codex has no tool that reads or searches files, so runner-core gives a class with Glob or Grep `git grep` and
   `git ls-files`.
 - Per session writes `policy.json` (runner-core's `writePolicyFile`: laws, context, secret names, the class's
@@ -35,7 +36,9 @@ launch, hook, env, timeout_ms?, platform?})`. `hook` is `hookCommand()` of `@elv
 - Spawns `codex exec --json --ignore-user-config --skip-git-repo-check --disable plugins --disable apps --disable
 image_generation -m <model> -c … --dangerously-bypass-hook-trust [--output-schema <run_dir>/schema.json] -` (or
   `codex exec resume … <thread_id> -`), without a shell, the prompt's user part on stdin, with the request's env
-  minus `GIT_*` and the session context as `ELVARIA_*`, and on Windows `PSExecutionPolicyPreference=RemoteSigned`
+  minus `GIT_*` and the session context as `ELVARIA_*`, CODEX_HOME last (`homeEnv` of `src/account.ts`: the
+  tribe's home, or no such variable in any spelling for a tribe that names none, whatever the request's env held;
+  the same for the hooks check, the probe and doctor), and on Windows `PSExecutionPolicyPreference=RemoteSigned`
   (`SHELL_POLICY_ENV`: inside `mxc` PowerShell cannot read its policy, and `pnpm`, `npm`, `npx` are `.ps1` shims).
   Everything else goes through `-c`, the same for a new and a resumed session (`exec resume` takes neither `-s`,
   `-C` nor `--add-dir`): `approval_policy="never"`, `sandbox_mode` (`workspace-write` for a session with a write
@@ -67,14 +70,20 @@ blocked by PreToolUse hook: <reason>. Command: <command>`) into `tool_blocked` s
   answer came, since the server leaves when it closes): the 5-hour and weekly windows, and a limit of one model
   named; rate limited while a window of the account is spent or the account allows no usage. `doctor()` runs
   `--version` and `login status`, and checks the built hook (`hookProblem` of runner-core); a call stopped at its timeout says so, with how long it
-  had, never "not signed in". `locateCodex` finds the CLI on PATH, in npm's folder
+  had, never "not signed in". It also asks the app-server once (PS-27c, no model call): `codexHome` of `initialize`
+  is `ToolInfo.config_dir`, another home than the tribe names fails it (`doctor:config_dir_ignored`), and a SHA-256
+  of `accountId` in `account/rateLimits/read` is `ToolInfo.account`, so `elvaria doctor` tells two tribes on one
+  account apart without the id; a home not signed in has no account. An app-server out of time is a note, and fails
+  doctor only for a tribe that names a home, which it could not confirm. `askAppServer` keeps `initialize`'s answer
+  apart, even when a later call fails. `locateCodex` finds the CLI on PATH, in npm's folder
   or in the VS Code extension `openai.chatgpt` (`bin/<os-arch>/codex(.exe)`).
 - Declares `vision` (vision spike 2026-11-17): `view_image` reads any file whatever the sandbox, and no session starts without Elvaria's hook, which keeps a judge to the screens of its review (policy `images`, PS-11b); the fake CLI plays the conformance suite's `image` through that hook (`fixtures/fake-codex-image.mjs`).
 
 ## Does not
 
-- Read or write `~/.codex`, change `CODEX_HOME` (the sign-in lives there), or load the owner's `config.toml`
-  (`--ignore-user-config`); Codex itself keeps its session rollouts there, which Elvaria never parses.
+- Read or write `~/.codex` or anything inside a tribe's home, copy `auth.json`, set CODEX_HOME from anything but
+  `tool.config_dir` or point it at a run's folder, or load the owner's `config.toml` (`--ignore-user-config`); Codex
+  itself keeps its session rollouts in its home, which Elvaria never parses.
 - Pass `--dangerously-bypass-approvals-and-sandbox`, `--worktree` or `--ephemeral` (a resumed session needs its
   rollout); pass the hook-trust bypass without the `hooks/list` check.
 - Enforce a class's Bash rules command by command: Codex has no per-command allow rules. The sandbox fences the
@@ -105,7 +114,10 @@ that runs the spec (`npm_execpath`), and a script that tries to write outside. O
 gives the fake P1-12d's sandbox, where the spawn probe's child fails with `EPERM` as it did on the real CLI.
 
 `fixtures/fake-codex.mjs` stands in for Codex: it answers `--version`, `login status` and `app-server`
-(`fake-codex-server.mjs`: `hooks/list` from its own `-c` hooks, `account/rateLimits/read` from `rate-limits.json`),
+(`fake-codex-server.mjs`: `hooks/list` from its own `-c` hooks, `account/rateLimits/read` from `rate-limits.json`;
+`fake-codex-home.mjs`: the home is CODEX_HOME, each call noted in its `fake-calls.jsonl`, signed in once it holds
+`auth.json`, its account its folder's name, its own `fake-rate-limits.json` when there; `ELVARIA_FAKE_CODEX_IGNORES_HOME=1`
+plays a Codex deaf to the variable, `ELVARIA_FAKE_CODEX_SERVER_HANGS=1` an app-server that never answers),
 replays a recorded stream (`ELVARIA_FAKE_CODEX_REPLAY`), or plays a conformance scenario as Codex does: the prompt
 read on stdin, the `-c` hooks run through PowerShell's `command_windows` on Windows or `sh -c` elsewhere, and
 skipped unless the trust bypass is given. `fake-codex-schema.mjs` is the API's side of `--output-schema`, written

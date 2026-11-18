@@ -127,12 +127,16 @@ export type Notice =
       readonly url: string;
       readonly warnings: readonly string[];
     }
-  /** PS-08c: the delivery to the forge stopped at `stage`; the owner sends `deliver` once it is fixed. Rung once. */
+  /**
+   * PS-08c: the delivery to the forge stopped at `stage`; the owner sends `deliver` once it is fixed. Rung once. (PS-09b)
+   * With `merge_quest`: the merge queue opened that quest, or found it open, and a knight resolves the stop there.
+   */
   | {
       readonly kind: 'delivery_failed';
       readonly quest: NoticeQuest;
       readonly stage: DeliveryStage;
       readonly reason: DeliveryFailure;
+      readonly merge_quest?: QuestId;
     }
   /**
    * PS-26: the patrol found checks of the territory's default branch turned red (`setup` for commands.setup), with

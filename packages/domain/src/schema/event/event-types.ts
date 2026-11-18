@@ -81,6 +81,8 @@ export const EVENT_TYPES = [
   'memo.closed',
   // PS-03b: the Chancellor's triage sends a memo to the owner, kingdom.delegation not letting the world decide it.
   'memo.escalated',
+  // PS-09c: an advisory the Steward wrote read by a quest it went to, in its next assignee session.
+  'memo.delivered',
   'sandbox.replay.start',
   'sandbox.replay.end',
   'upgrade.started',

@@ -2,15 +2,34 @@
 // the quest, the character, its class and the territory, plus what the role reads: a judge the letter, the checks
 // and the diff, a continuing assignee its continuation (continuation.ts). A resumed session gets only what is new
 // (resumedPrompt, ADR 0017). With it comes its load trace (PS-01b, load-trace.ts), for the line that opens it.
+// (PS-09c) An assignee's prompt, resumed or not, carries the advisories its quest has yet to read; the Steward records
+// them as read once the session opened (deliverAdvisories).
 import process from 'node:process';
 
 import { partialVerdictIdOf, shellOf, verifierSessionsOf } from '@elvaria/domain';
 import { buildPrompt, readContextFiles, resumedPrompt } from '@elvaria/runner-core';
 import { readClassPrompt } from '@elvaria/store';
-import type { Character, CharacterClass, LoadTrace, PlanLink, Quest, Skill, Verdict } from '@elvaria/domain';
-import type { Answered, BuiltPrompt, PromptGraph, PromptWithBlocks, ScreenPair } from '@elvaria/runner-core';
+import type {
+  Character,
+  CharacterClass,
+  LoadTrace,
+  Memo,
+  PlanLink,
+  Quest,
+  Skill,
+  Verdict,
+} from '@elvaria/domain';
+import type {
+  Answered,
+  BuiltPrompt,
+  PromptAdvisory,
+  PromptGraph,
+  PromptWithBlocks,
+  ScreenPair,
+} from '@elvaria/runner-core';
 
 import { handoverPath, readDecree, readHandover, readScriptures } from '../files.ts';
+import { advisoriesOf, promptAdvisoriesOf } from '../memos/advisory.ts';
 import { objectionFor } from '../memos/objection.ts';
 import { gazetteerFor } from './gazetteer.ts';
 import { withLogTails } from '../review/log-tail.ts';
@@ -78,6 +97,8 @@ interface PromptParts {
   readonly plan_links?: readonly PlanLink[];
   /** For a judge by eye, the screens of its review (PS-11b, request.ts); the policy opens the same files. */
   readonly screens?: readonly ScreenPair[];
+  /** For an assignee, the advisories its quest has yet to read (PS-09c); none for a judge. */
+  readonly advisories: readonly PromptAdvisory[];
 }
 
 /** What a judge reads beside the quest: the letter, the checks, the diff, and what the Steward found of the work. */
@@ -140,15 +161,17 @@ async function builtPromptOf(
       skills: parts.skills,
       handover_path: handoverPath(ctx.root, quest.id),
       continuation,
+      advisories: parts.advisories,
     },
     ctx.templates,
   );
 }
 
-/** The prompt the session gets, and its load trace (PS-01b): what that prompt carried. */
+/** The prompt the session gets, its load trace (PS-01b): what that prompt carried, and its advisories (PS-09c). */
 export interface SessionPrompt {
   readonly prompt: BuiltPrompt;
   readonly load_trace: LoadTrace;
+  readonly advisories: readonly Memo[];
 }
 
 /**
@@ -171,13 +194,20 @@ export async function promptOf(
   given: Pick<PromptParts, 'characterClass' | 'known' | 'graph' | 'plan_links' | 'screens'>,
   resume: Resume | null,
 ): Promise<SessionPrompt> {
-  const parts = { ...given, scriptures: await readScriptures(ctx.root, input.character.id), skills: [] };
+  const advisories = input.role === 'assignee' ? await advisoriesOf(ctx, input.quest) : [];
+  const parts = {
+    ...given,
+    scriptures: await readScriptures(ctx.root, input.character.id),
+    skills: [],
+    advisories: promptAdvisoriesOf(advisories, input.quest),
+  };
   const built = await builtPromptOf(ctx, input, parts);
-  const prompt =
-    resume === null ? built : resumedPrompt(built, answeredOf(resume, input.continuation), ctx.templates);
+  const answered = resume === null ? null : answeredOf(resume, input.continuation);
+  const prompt = resume === null ? built : resumedPrompt(built, answered, ctx.templates, parts.advisories);
   const skills = parts.skills.map(({ id }) => id);
   return {
     prompt: { system: prompt.system, user: prompt.user },
     load_trace: loadTraceOf(prompt, parts.scriptures, skills),
+    advisories,
   };
 }

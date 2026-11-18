@@ -31,6 +31,11 @@
   runs included, the context files read from the territory as no plot exists yet), kept until the quest or its log
   change, so `selectAssignee` passes over a character whose prompt its tribe cannot take (`claim_prompts`,
   fix/claim-step).
+- Names the letter's path instead of copying it into the prompt of an assignee that goes on from a letter, when its
+  tribe has a prompt limit on this OS and the prompt with the letter copied is longer
+  (`src/sessions/letter-fit.ts`, fix/wrap-up-agy-codex): before, an agy session with a long letter could not open
+  on Windows and the quest went to the infirmary. The session reads the letter with its read tool; the claim's
+  measure counts the prompt the same way. A resumed CLI session is left as it is.
 - Asks each tribe's CLI before the plan (A1b of the lessons of 2026-11-13, `src/tribe-versions.ts`): through
   `StewardDeps.toolFound` (the composition root runs `<cli> --version` on the CLI the tribe's runner starts: no model,
   no mana; at most once a minute a tribe, `VERSION_ASK_MS`), so `planTick` holds a tribe whose CLI is gone or says
@@ -82,7 +87,17 @@
   memo `accepted` or `rejected` and answers the quest with the note, waiting in the inbox while the doer cannot go
   on; `owner` keeps the memo open with the advice and makes the quest the owner's question. The owner's `answer` or `decide_memo` on such a
   quest settles it too; an acceptance of the owner's (`decide_memo` accepted) opens the scope as the author's does, the
-  description kept (fix/amendment-owner-accept).
+  description kept (fix/amendment-owner-accept). (PS-09c, `src/memos/advisory.ts`) As a done quest's branch is found
+  in its base branch, under every delivery mode (`archiveInBase`, after `delivery.merged` or a look), the Steward reads
+  what the quest touched (`Plots.touched`), leaves out the files its territory's `shared_paths` match (`ruleOf`, as
+  the merge queue reads them), and, before the archive, files one advisory without `from` to the quests at work whose
+  scope meets the rest (`memo.filed` and `memo.routed` by the Steward, in that quest's journal), its id from the quest
+  alone, so a Steward that stopped before the archive files it once; a registry with no kind routed to `quests` files
+  none, with a warning. The next assignee session of each quest it went to, fresh or resumed, carries it in the
+  `advisories` block (`advisoriesOf`); once the quest moved, the Steward records the reading (`deliveries`,
+  `memo.delivered` in the reader's journal) and closes the memo `delivered` or `lapsed` once no quest it went to
+  waits for it (at a reading, and at every landing). A judge never reads one; no quest moves. A character's `advisory`
+  line is routed to the quests at work its refs meet (`recipientsFor`).
   Commands with `source: chancellor` are told as the Chancellor's (`actorOfCommand`), and their `command.*` lines
   carry the source.
 - Runs the jobs of `kingdom.schedule` (PS-03, implementation-plan §3.16.3; `src/schedule/`): no cron. At the end
@@ -265,7 +280,9 @@
   `set-aside/` instead of into the commit, and a commit the hook refuses leaves `wip.patch` there. A quest whose
   assignee a breaker cut with no `handover.md` gets a minimal one, whatever the trip (`writeStopLetter`, gap 23 of
   PS-07): the trip, the WIP commit or why none was made, the files the plot changed, the hook's words after a refusal;
-  a letter the character wrote is never touched.
+  a letter the character wrote is never touched. After any cut but a refused hook it also carries the branch's diff
+  as a judge reads it (`plots.diff`), cut at `LETTER_DIFF_MAX_CHARS` (fix/stop-letter); the whole letter is masked
+  with the session's secret values and the patterns, as `maskFinished` masks the letter a session writes.
 - Applies the limits `tribeLimitsOf` gives a tribe its adapter narrows (§3.14, P1-33; `src/sessions/spawn.ts`):
   a judge of a tribe without `structured_output` gets the verdict's schema in its prompt and its verdict cut out of
   its last text (runner-core's `spawnParsed`), checked by `judgeVerdictOf`, which names each issue; an unusable
@@ -393,9 +410,10 @@
 - Sends a delivered quest's branch to its territory's forge when `territory.delivery.mode` is not `manual`
   (implementation-plan §3.16.7, ADR 0023, PS-08c, `src/forge/`): planTick's `forge_deliveries` (the domain's
   `forgeDeliveries`: one per territory at a time, only the merge quest of a party) starts it outside the tick
-  (`Background.forge`). It scans the lines the branch adds over the base branch (`scan.ts`): a treasury value or a
-  specific shape of redact stops it (`secret`, the files named, never the line), the three shared patterns only
-  warn; then `git push origin quest/<id>` (that branch alone, never forced, never the base branch; the territory's
+  (`Background.forge`). It scans the lines the branch adds over the base branch and those each commit of
+  `base..HEAD` adds (`scan.ts`; a merge's own with `--remerge-diff`; fix/push-scan), since a push sends every commit:
+  a treasury value or a specific shape of redact stops it (`secret`, the files named and in `detail` the commits that
+  add one, never the line), the three shared patterns only warn; then `git push origin quest/<id>` (that branch alone, never forced, never the base branch; the territory's
   pre-push hook runs; 30 minutes, then its tree is killed; output masked into `.runs/<quest>-delivery/push.log`)
   with the git the composition root found, the minimal env and `DELIVERY_GIT_SWITCHES`; then finds or opens the
   branch's pull request through the `Forge` port (`deps.forges`, one adapter per `delivery.forge`), the masked
@@ -413,6 +431,14 @@
   remote tip is still that head (a removal that fails is a warning, `branch_deleted: false`), one `delivery.merged`;
   red, a conflict, a moved head, a closed pull request, or `checks_timeout_minutes` past the push's line: one
   `delivery.failed`, the quest stays done. The digest drops the `delivery_waits` of such a quest (`ownerDeliveries`).
+- Carries out the delegation of the royal seal (PS-08b, `src/seal.ts`, ADR 0023): the inbox's `create_quest` and the
+  snapshot get `sealPolicyOf` (`kingdom.delegation.seal`, no territory suspended until PS-08g); a submit (a session's,
+  or the owner's `submit`) measures the branch of a quest with `seal_delegated` (`Plots.diffLines`, the territory's
+  `regenerate` shared paths aside; a plot that cannot say counts as over) and writes `diff_lines` on its line; the submit
+  and a passing verdict (`review/judge.ts`, `review/machine.ts`) set `seal_required` and `seal_raised` through `before`
+  when `sealRaisesOf` gives a reason, so the quest waits for the seal; one still covered is merged by the forge without
+  it (`delivery.merged` with `sealed: false`), and the next digest names it with its `git revert` line
+  (`unsealedMergesOf`).
 - Archives a done quest whose branch reached its base branch, under every delivery mode (PS-08d, (E) of the PS-08
   plan): planTick's `base_looks` (`baseLooks`: at start, right after a `delivery.merged` on the territory, then every
   10 minutes while a delivered done quest is there to ask about) starts a look outside the tick (`src/forge/looks.ts`,
@@ -422,12 +448,18 @@
 - Runs the merge queue (PS-09, `src/forge/update.ts`): before the scan, a delivery brings the branch up to its base
   branch (`Plots.update`), then runs `commands.setup` again, the generators (`Plots.generate`), one `plot.merged`
   line (`resolved`, `restored`) and every check of the territory (`check.*` marked `delivery`, logs in
-  `.runs/<quest>-delivery/checks/`), settling the update once they pass; a conflict no rule resolves, red checks, a
-  failed generator or a refused update record `delivery.failed` at `update`. The queue's order comes from what each
+  `.runs/<quest>-delivery/checks/`), settling the update once they pass; a failed generator or a refused update
+  record `delivery.failed` at `update`. (PS-09b) A conflict no rule resolves, or red checks, open the merge queue's
+  merge quest first (`src/forge/queue-merge.ts`, the domain's `queueMergeQuestOf`: a party merge quest's way on the
+  quest's branch, its id from the quest and the base branch's commit, the red checks' log ends masked with the
+  treasury), and the `delivery.failed` names it (`merge_quest`, the bell too); one still on its way for the quest is
+  found instead, and the quest it stands for is archived once it is in the base branch (`forgeArchives`). The queue's order comes from what each
   done quest touched, read once (`src/forge/sizes.ts`); a sealed pull request under `pr_merge` holds its lane
   until merged. A pushed pull request that no longer merges cleanly (a look's `Plots.mergesClean`, or the forge's
   `conflict`) goes back into the queue, at most `UPDATE_ROUNDS_MAX` times (`src/forge/stale.ts`). A merge quest's
-  merges use the territory's `shared_paths` rules, and the generators run when `regenerate` kept a side.
+  merges use the territory's `shared_paths` rules, the machine's run too (`mergeParts`, fix/merge-quest-followups
+  (m)), and the generators run when `regenerate` kept a side, or once a knight concluded a conflict that held a
+  generated file, before the checks (`MergeOutcome.regenerate`, (n)); never while a merge stopped.
 - Offers a newer build in the digest (`upgrade_available`, PS-08d) when the optional `deps.upgradeOffer` port of the
   composition root says the pinned build's repo has one; read as the digest is made.
 - Tells once when an open quest nobody can take (`quest.unclaimable`, the bell), withdraws it with
@@ -451,6 +483,14 @@
   `patrol.follow_up` (`draft.ts`, before the line) and one `base_red` ring. A territory that throws does not hold
   the next one back; a stop records nothing and no `schedule.ran`. The patrol's book (`book.ts`) is rebuilt at
   `recover` and carried by the tick's notices to the digest.
+- A red default branch stops its territory (PS-09d): the tick gives `planTick` the red territories (`base_red`,
+  from the patrol's book) and the digest the quests they keep waiting (`base_holds`). One territory's patrol
+  (`patrolTerritory`) also runs outside the scheduled job, every patrol of a territory in its lane
+  (`patrol/runs.ts`, one plot `patrol-<id>`): after the tick when a red territory's tip, as the look at the base
+  branch saw it, moved (`patrol/again.ts`, `base_moved`), at the inbox command `patrol` (`owner`), and in a
+  delivery whose update's checks are red after a clean merge (`forge/base-trial.ts`, `queue`): the base branch red
+  at that commit, or the territory red now, the quest stays in the queue with nothing recorded, no merge quest.
+  A patrol's end ticks the Steward; its stop aborts them.
 - Adds the machine check `screens` after the territory's for a quest whose ritual asks for eyes (`judgedByEye`, PS-11b, `src/review/screens.ts`): it fails when the checks captured no screen or one breaks the image contract, its log says why; that quest's judge gets exactly the valid screens of the run, by policy (`ToolPolicy.images`) and in its prompt (`src/sessions/request.ts`).
 
 ## Does not
@@ -502,6 +542,10 @@ two runs.
 queue on real git with the fake forge: three sealed quests, two regenerating one index, all merged small work first
 with the index right; union lines joined, the same line a conflict; a file no rule names; main still, no check again;
 red checks, no push; an open pull request main overtook, pushed again once; a Steward stopped in a generator.
+`forge-queue-merge.spec.ts` (PS-09b) resolves a conflict no rule resolves in one merge quest: the machine's run stops,
+a knight concludes it, a judge who never worked the quest reads it, the seal takes both into main and both plots go,
+no second one on later ticks; dropped by the owner, `deliver` on the same commit opens none again. The red-check
+case of `forge-queue-update.spec.ts` checks the merge quest names the check and the end of its log.
 `merge-base.spec.ts` (PS-08e) moves main on once the contract forked: the machine's run merges it, the checks run
 on the result and the judge's diff has none of main's files; main editing a part's line stops the machine's run, rings
 one `merge_stopped` bell, and a knight concludes it in the same quest; main's protected change is never the party's.
@@ -528,7 +572,8 @@ once (its own log), the first judge's three times by the trial. `background-cap.
 submitted in one tick get their checks one after the other under a cap of one, both at once under two.
 `infirmary.spec.ts` preserves coded reasons and structured detail, omits empty output, and reads patch refusals
 from both current detail and historical text. The session, breaker, restart, secret and script specs assert reason
-codes and parameters on real Steward ticks. `stop-letter.spec.ts` checks a 300-line hook refusal and its run log.
+codes and parameters on real Steward ticks. `stop-letter.spec.ts` checks a 300-line hook refusal and its run log,
+and the branch's diff in a minimal letter with its secrets masked, on real git.
 `sessions/reason-codes.spec.ts` reads the table of `docs/contracts/infirmary-reason-codes.md` §2 and holds it to
 `INFIRMARY_REASONS` and their parameters, in order, and every breaker trip to its `breaker:<trip>` code.
 `amendment-refused.spec.ts` (fix/session-notes): work refused at a submit that ends on an amendment is named on
@@ -574,8 +619,11 @@ in the digest with the pool asleep, and is judged by that judge once the window 
 jobs outside the tick run one at a time without holding it, write `schedule.ran` when they end, stop unrecorded with
 the Steward and run again at the next start, and warn when they throw.
 `forge/scan.spec.ts` (PS-08c) holds the scan to redact's patterns: a treasury value or a specific shape is a secret,
-a shared pattern a warning, removed lines and headers never read. `forge-delivery.spec.ts` (PS-08c) delivers on a
-real git repo whose `origin` is a bare repo, with an in-memory forge (`src/__fixtures__/forge.ts`, `forge-bench.ts`):
+a shared pattern a warning, removed lines and headers never read, each commit of a git log named apart.
+`forge-scan.spec.ts` (fix/push-scan) stops a branch on a real git repo whose secret a WIP commit or a merge added
+and a later commit took away, under any diff prefix setting, and pushes clean commits. `forge-delivery.spec.ts`
+(PS-08c) delivers on a real git repo whose `origin` is a bare repo, with an in-memory forge
+(`src/__fixtures__/forge.ts`, `forge-bench.ts`):
 the branch pushed and one pull request, found again after a stop, a shared pattern warned, one `forge_error` without
 forges, nothing on a manual territory, and `deliver` refused where the Steward would refuse it; `forge-party.spec.ts`
 pushes only the merge quest of a party; `forge-stop.spec.ts` (one case on Windows, one on macOS) stops the Steward

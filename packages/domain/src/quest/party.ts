@@ -2,6 +2,7 @@
 // schema nor transition() can see them. The Steward checks them on the quests of a party after every change,
 // and the sandbox checks every generated day.
 import { isPartyPart } from '../party/party-status.ts';
+import { isQueueMerge } from '../party/queue-merge-quest.ts';
 import { charactersIn } from './characters-in.ts';
 import type { QuestId } from '../core/ids.ts';
 import type { Quest } from '../schema/quest/quest.ts';
@@ -58,9 +59,12 @@ const partsNeedContract: Rule = (party) =>
     .filter((quest) => isPartyPart(quest) && !quest.depends_on.includes(party.id))
     .map((quest) => issue(party, quest.id, 'part_without_contract', 'a part depends on the contract quest'));
 
-/** One merge quest per party, and it waits for every part (§3.13 step 3). */
+/**
+ * One merge quest per party, and it waits for every part (§3.13 step 3). The merge queue's merge quests (PS-09b) stand
+ * for the party's merge quest at its delivery, built on its branch: neither counted nor waiting for the parts.
+ */
 const oneMergeAfterParts: Rule = (party) => {
-  const merges = party.members.filter((quest) => quest.party_role === 'merge');
+  const merges = party.members.filter((quest) => quest.party_role === 'merge' && !isQueueMerge(quest));
   const parts = party.members.filter(isPartyPart);
   return [
     ...merges.slice(1).map((merge) => issue(party, merge.id, 'many_merges', 'a party has one merge quest')),
@@ -142,9 +146,11 @@ function partiesOf(quests: readonly Quest[]): Party[] {
  */
 export function partyIssues(quests: readonly Quest[]): PartyIssue[] {
   return partiesOf(quests).flatMap((party) => {
-    const contract = party.members.find((quest) => quest.id === party.id);
+    const contract = quests.find((quest) => quest.id === party.id);
     if (contract === undefined)
       return [issue(party, party.id, 'missing_contract', 'the contract quest of this party is missing')];
+    // The merge queue's merge quest of a quest outside a party is named after that quest (PS-09b): no party to check.
+    if (contract.party_role !== 'contract') return [];
     return RULES.flatMap((rule) => rule(party, contract));
   });
 }

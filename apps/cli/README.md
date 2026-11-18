@@ -21,7 +21,8 @@
   paths and globs of the words (`src/say/words.ts`) in every git territory's tracked files, with their sizes and
   lines, whatever `code_graph` says; and where a territory has `code_graph` on and graphify's graph of the default
   branch's tip is built, it asks `graphify query` with the code names and paths of the words and counts the impact of
-  the named files from the graph's links. It builds no graph, and says in one line each what the Chancellor got.
+  the named files from the graph's links. It builds no graph, and says in one line each what the Chancellor got,
+  including the paths no territory holds a file at, which the Chancellor hears as not found ((202), fix/test-guards).
   While a Steward holds the kingdom's lock, `sendCommand` waits one tick and a little more for its `command.applied` or
   `command.rejected` line and prints it (`stale` with what to do about it); without a Steward it only drops the file.
   `quest edit --max-minutes` on a quest with a running session says what the new ceiling does to it: the Steward's
@@ -53,6 +54,9 @@ show` says since when and why); `quest reassign [--to <id>]`
   owner's language (a line written before P1-32 shows its English reason). `quest add --scope` and `quest edit --scope` declare the files a quest changes (PS-05); `quest list` marks a quest
   that waits on its territory's scope rules and for whom, `quest show` prints its scope and that wait
   (`src/quest/scope.ts`). `quest list` has a column for a party's member, its role and where the party stands, and
+  `quest show` says a quest was spared the seal by the kingdom's delegation, or why the machine raised it (PS-08b,
+  `src/quest/seal-view.ts`); the digest prints a merge without the seal with its `git revert` line, `metrics` the
+  merges without the seal per territory, and `doctor` a kind `kingdom.delegation.seal` names that the registry lacks;
   `quest show` prints the protected paths a quest's work changed, the reason it waits for the royal seal (PS-04), and
   `quest show` prints the party, the role, the contract and the merge quest (`src/quest/party.ts`, the domain's
   `partyStatusOf`; P1-21 (c)): the merge quest and the acceptance part share the contract's title. `quest show` also
@@ -117,12 +121,16 @@ show` prints the brief apart from the rest of the description and, while the pla
   owner's language (`src/sandbox/timeline.ts`), paced by `CliIo.sleep`. Closing the pipe (`| head`) ends it quietly.
 - `tribe add <id> --adapter <adapter>` (P1-19, implementation-plan §3.14, ADR 0021): a new tribe in
   `kingdom.tribes[]`, disabled, its adapter a built-in one or an owner file `adapters/<name>.mjs` that must be there;
-  no character changes. `tribe check <id>` builds the tribe's runner as `run` does, prints what its adapter declares
+  no character changes. `--sibling-of <root>` (PS-27b) writes `sibling_of`, the adapter the root's when `--adapter`
+  is absent, and refuses (exit 1) a root the kingdom lacks, a root that is a sibling and another adapter, again
+  under the kingdom file's lock. `tribe check <id>` builds the tribe's runner as `run` does, prints what its adapter declares
   (the shell and the longest user prompt it declares per OS too, P1-46 and fix/cli-lines, `src/tribe/check-declared.ts`) and how far `tribeLimitsOf` lets it go, holds its pinned sign-in to the ones it declares (`checkTribeAuth`), and
   runs runner-core's conformance suite against it (with the real CLI only the checks that burn no or almost no mana;
   `--scenarios` runs all of them against a fake CLI; `--tool <path>` tries another CLI than the pinned one, and with
   `--scenarios` writes nothing, PS-04b) and, once it passes, holds the tribe to the login its adapter
-  reports, as doctor does (`loginFindings`, P1-34): a tribe that passes is enabled once doctor has pinned its CLI.
+  reports, as doctor does (`loginFindingsOf`, P1-34), its config folder, and the other enabled tribes of its adapter
+  on the same folder or account (PS-27, `accountFindingsAgainst`): a tribe that passes is enabled once doctor has
+  pinned its CLI.
   With the real CLI (`src/tribe/check-live.ts`, lessons of 2026-11-13) it runs the CLI doctor would find (the pinned
   file, else PATH or the adapter's search, or `--tool`), and a pass pins that CLI's path and version for this tribe
   alone, the version as `tool.checked_version` (B1, A1b); a session's ceiling is 300 s (120 s for a fake CLI),
@@ -135,7 +143,7 @@ show` prints the brief apart from the rest of the description and, while the pla
   (`src/tribe/adapter-file.ts`): runner-core's `adapterKitOf` builds its kit (minimal env, the pinned or given CLI,
   `launchOf`, `hookCommand`) and `adapterOfModule` checks what `createAdapter(kit)` returns, so a broken file is a
   list of reasons for `run`, `doctor` and `tribe check`, never a crash. `tribe list` (P1-34, `src/tribe/list.ts`)
-  prints one line per tribe: its look (PS-24: name, palette and crest), adapter, enabled or not, pinned CLI version, path and sign-in, and from its runner the
+  prints one line per tribe: its look (PS-24: name, palette and crest), adapter, enabled or not, pinned CLI version, path, sign-in and config folder (PS-27), and from its runner the
   highest rank `tribeLimitsOf` lets it take (none without `headless`), whether it takes guarded territories, and the
   capabilities, the shell and the prompt limit (`capabilities.prompt_max_chars`) on this OS it declares (P1-46, fix/cli-lines); a tribe with no runner yet or an adapter file that does not load says so instead.
   `tribe look <id>` (PS-24, `src/tribe/look.ts`, `look-view.ts`) prints the tribe's look from the domain's `tribeLookOf`
@@ -143,14 +151,24 @@ show` prints the brief apart from the rest of the description and, while the pla
   tribe holds; with `--palette|--crest|--figure|--aura|--frame <id>` or `--name` it writes the owner's choice to
   `tribes[].look` through `saveTribes`, every part (the look as it stands with the options laid over it), refusing a
   part the theme's pool lacks (exit 2) and a palette or crest another tribe has or the theme pins to another tribe
-  (exit 1), and says which drawn looks moved with it; `--reset` drops the choice.
+  (exit 1), and says which drawn looks moved with it; `--reset` drops the choice. For a sibling (PS-27b,
+  `src/tribe/look-sibling.ts`) it prints the root and ordinal, writes only `sibling_name` (`--name`, `--reset`) and
+  refuses a part option (exit 1); a root lists its siblings and says they followed a change. `look-view.ts` names a
+  sibling by `sibling_name`, else the root's name with its Roman ordinal, and a root with siblings and no name of the
+  owner's with "I", in `tribe look`, `tribe list` and `tribe add`.
 - `doctor`: finds each tribe's CLI (`--tool <tribe>=<path>`, the pinned path, PATH, then the adapter's own search:
   Claude Code inside the VS Code extension; npm `.cmd` shims run as `node <script>`; an adapter file is asked
   through its runner's `doctor()`, `src/doctor/adapter-tool.ts`, P1-19), pins path and version with the sign-in the
   adapter declares first (`defaultAuthOf`: the owner's login when it runs with one; a CLI changed since is only said,
   with `tribe check <tribe>` as the next step, and `--pin` keeps the old checked version, which the Steward holds the
   tribe to, saying so: lessons of 2026-11-13), refuses a pinned sign-in the
-  adapter does not declare (`checkTribeAuth`, P1-19), asks
+  adapter does not declare (`checkTribeAuth`, P1-19), pins `tool.config_dir` with `--config-dir <tribe>=<folder>`
+  (PS-27, `src/doctor/config-dir.ts`; empty drops it; refused before anything runs for an unknown tribe, a relative
+  or missing folder, or one inside the kingdom or a territory's repo or worktree folder), holds a tribe's folder to
+  its adapter's `capabilities.config_dir` and outside those places, fails both tribes of every pair of login tribes
+  of one adapter on one folder or one account (`src/doctor/check-accounts.ts`, the domain's `accountClashesOf`,
+  never naming the account) and keeps such a tribe off with `--enable`, warns of a sibling_of that is not valid,
+  one across adapters and a `look` on a sibling (PS-27b, `src/doctor/check-siblings.ts`), asks
   the tribe's adapter about its login (a CLI that cannot sign in is an error, with or without a reason, P1-34), how
   soon it ends and the built hook, refuses Antigravity without
   `--acknowledge-terms` (ADR 0018), turns a disabled tribe on with `--enable <tribe>` (P1-15) only when that run
@@ -221,7 +239,7 @@ show` prints the brief apart from the rest of the description and, while the pla
   `src/run/antigravity.ts`, and since P1-19 an owner adapter file; a tribe without a runner takes no quest, and one
   whose adapter file is broken says why), plots over runner-core's
   `PlotManager` and `runChecks` (`src/run/plots.ts`: prepare, its `commands.setup` given the quest's secrets
-  (P1-30), commit, the checks on what the quest touched, given them too (P1-10b), release) with a `ProcessHost` from PATH and each CLI's `forget` (`claude purge`), the console bell saying
+  (P1-30), commit, the checks on what the quest touched, given them too (P1-10b), release) with a `ProcessHost` from PATH and each CLI's `forget` (`claude purge`, one per Claude tribe, each in its own config folder, PS-27), the console bell saying
   the Steward's notices in the owner's language (from P1-22 also a mana gauge that warns, sleeps or wakes; from
   P1-32 a quest gone to the infirmary by its trip, then each part of the detail on a line of its own, as `quest show`
   says them), and `.state/steward.lock` (a second `run` is refused). It names the build it runs on as it starts
@@ -294,9 +312,10 @@ show` prints the brief apart from the rest of the description and, while the pla
   is the credential's, a rate-limited 403 the forge's. `quest deliver <id>` (`src/quest/deliver.ts`) sends `deliver`
   for a done quest whose territory delivers to its forge (the domain's `forgeDue`), refusing the others.
   `quest show` prints the delivery's pull request, or where it stopped, why and the command
-  (`src/quest/delivery-view.ts`, `forgeOutcomesOf` on the quest's journal); `digest` lists `delivery_failed` and
-  `delivery_waits`; the bell says `delivery_pushed` (with the files a shared secret pattern matched) and
-  `delivery_failed`. `run` gives the Steward `baseTips` and `inBase` of PlotManager (`src/run/plots.ts`), the looks
+  (`src/quest/delivery-view.ts`, `forgeOutcomesOf` on the quest's journal); `digest` lists `delivery_failed`,
+  `delivery_waits` and (PS-09b) `delivery_merging`; the bell says `delivery_pushed` (with the files a shared secret
+  pattern matched) and `delivery_failed`, naming the merge queue's merge quest when one resolves the stop, as
+  `quest show` does; `quest list` and `quest show` call that quest's role "Queue merge quest" (`src/quest/party.ts`). `run` gives the Steward `baseTips` and `inBase` of PlotManager (`src/run/plots.ts`), the looks
   that archive a done quest merged into its base branch (PS-08d).
 - The newer build the digest offers (`upgrade_available`, PS-08d, `src/upgrade/offer.ts`): with a pin, the commits
   on `main` of the repo the CLI runs from (a build and `--here` share its refs; no fetch) that touch `packages/` or
@@ -305,6 +324,9 @@ show` prints the brief apart from the rest of the description and, while the pla
   as `territory delivery`); `run` gives the Steward `Plots.patrol` (`tryTerritory` under `patrol-<id>`, the scans
   in the plot); `digest` lists `base_red` and `patrol_scan` from the log (`baseHealthOf`); the bell says `base_red`;
   `metrics` has the table "Default branch red after a merge".
+- A red default branch (PS-09d): `territory patrol <id> --now` sends the inbox command `patrol` for a patrolled
+  territory; `quest list` and `quest show` mark the open quests that wait for a green branch (`quest/base-wait.ts`,
+  `baseRedOf` over the log); `digest` says how many wait in the `base_red` item.
 
 ## Does not
 

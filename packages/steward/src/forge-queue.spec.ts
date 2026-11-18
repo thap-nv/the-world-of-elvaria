@@ -2,7 +2,8 @@
 // git repo whose origin is a bare repo and a fake forge that merges there for real: each sealed quest's branch is
 // brought up to main before its push, hot files resolved by their rule and the generators run, so every quest reaches
 // main with no merge quest and nobody resolving a hot file by hand; small work goes first; a conflict no rule resolves
-// stops the delivery at `update`, the plot left as it was.
+// stops the delivery at `update`, the plot left as it was, and opens the merge queue's merge quest
+// (forge-queue-merge.spec.ts, PS-09b).
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { git } from './__fixtures__/git-plots.ts';
@@ -101,30 +102,12 @@ describe('the merge queue under pr_merge (PS-09)', () => {
       reason: 'conflict',
       branch: `quest/${gamma.id}`,
       paths: ['docs/plan.md'],
+      merge_quest: expect.any(String) as unknown,
     });
     expect(git(worktree, 'rev-parse', 'HEAD')).toBe(before.head);
     expect(git(worktree, 'status', '--porcelain')).toBe('');
     expect(await recordOf(worktree)).toEqual(before.record);
     expect(bench.remoteTip(`quest/${gamma.id}`)).toBe('');
     expect(await statusOf(bench, 'Gamma')).toBe('done');
-  });
-
-  it('stops at update with the file when two quests changed one file no rule names', async () => {
-    const leaves = { Alpha: { 'src/rooms.ts': 'alpha\n' }, Beta: { 'src/rooms.ts': 'beta\n' } };
-    const { bench, steward } = await queueBench(leaves);
-    current = bench;
-    await sealedTogether(bench, steward, ['Alpha', 'Beta']);
-    await tickUntil(
-      steward,
-      bench.kingdom.clock,
-      async () => (await bench.lines('delivery.failed')).length > 0,
-      120,
-    );
-
-    const failed = (await bench.lines('delivery.failed')).at(-1);
-    expect(failed?.data).toMatchObject({ stage: 'update', reason: 'conflict', paths: ['src/rooms.ts'] });
-    expect(await titlesOf(bench, 'delivery.failed')).toEqual(['Beta']);
-    const beta = await bench.kingdom.quest('Beta');
-    expect(() => git(beta.plot.path ?? '', 'rev-parse', '--verify', '--quiet', 'MERGE_HEAD')).toThrow();
   });
 });

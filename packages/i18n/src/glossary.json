@@ -311,6 +311,13 @@
               "used_in": "`kingdom.delegation`, `memo.escalation.holds`"
             },
             {
+              "vi": "Ủy quyền dấu",
+              "en": "Seal delegation",
+              "id": ["seal_delegated"],
+              "definition": "Phần dấu của phạm vi ủy quyền: quest nhỏ trong phạm vi chủ nhân cho (hạng tới `max_rank`, dạng trong `kinds`, diff không quá `max_diff_lines`), trên lãnh thổ `pr_merge`, được tạo không cần dấu và được Nhiếp chính merge sau phán quyết đạt. Máy chỉ nâng dấu lên, không bao giờ hạ; lý do nâng ghi ở `seal_raised`. Mỗi lần merge không qua dấu là một mục `merged_unsealed` của bản tấu kế tiếp, kèm lệnh `git revert` để chủ nhân tự hoàn tác (PS-08b).",
+              "used_in": "`kingdom.delegation.seal`, `quest.seal_delegated`, `quest.seal_raised`, `sealDelegated`, `sealRaisesOf`, `mayMergeUnsealed`, mục bản tấu `merged_unsealed`"
+            },
+            {
               "vi": "Đền",
               "en": "Temple",
               "id": ["temple"],
@@ -508,14 +515,14 @@
               "vi": "Thư",
               "en": "Letter",
               "id": ["memo"],
-              "definition": "Một việc nhân vật thấy ngoài quest của mình, viết thành một dòng ở mục `Memos` của thư bàn giao thay vì tự sửa. Nhiếp chính lập và chuyển đi theo kiểu thư khi lượt người làm kết thúc qua nộp, hỏi hay hỏng; không ai trả lời thư, thư không đổi quest nào, chủ nhân quyết một lần (ADR 0024, PS-02). Trong code là `memo`, vì `letter` đã là thư bàn giao.",
+              "definition": "Một việc nhân vật thấy ngoài quest của mình, viết thành một dòng ở mục `Memos` của thư bàn giao thay vì tự sửa. Nhiếp chính lập và chuyển đi theo kiểu thư khi lượt người làm kết thúc qua nộp, hỏi hay hỏng; không ai trả lời thư, thư không đổi quest nào, chủ nhân quyết một lần (ADR 0024, PS-02). Riêng thư `advisory` (PS-09c) do Nhiếp chính tự viết khi một quest vào nhánh gốc, không có người viết (`from` vắng): các quest nhận đọc nó một lần, không ai quyết. Trong code là `memo`, vì `letter` đã là thư bàn giao.",
               "used_in": "`memos/<id>.json`, mục `## Memos` của `handover.md`, `elvaria memo`, `elvaria say --memo`"
             },
             {
               "vi": "Kiểu thư",
               "en": "Letter kind",
               "id": ["memo_kind"],
-              "definition": "Dữ liệu registry: mỗi kiểu khai nơi nhận (`route`); định tuyến là hàm thuần `routeMemo` đọc bảng đó. Kiểu đầu tiên `proposal` (đề xuất: việc ngoài phạm vi quest) tới Tể tướng; `objection` (phản biện, PS-22) tới một người chấm thứ hai; `amendment` (phản biện đề bài, PS-22b) tới người viết đề của quest; `advisory`, `request` đến ở PS-09, PS-10.",
+              "definition": "Dữ liệu registry: mỗi kiểu khai nơi nhận (`route`); định tuyến là hàm thuần `routeMemo` đọc bảng đó. Kiểu đầu tiên `proposal` (đề xuất: việc ngoài phạm vi quest) tới Tể tướng; `objection` (phản biện, PS-22) tới một người chấm thứ hai; `amendment` (phản biện đề bài, PS-22b) tới người viết đề của quest; `advisory` (báo tin, PS-09c) tới các quest đang dở cùng lãnh thổ có vùng giao với file của thư, do Nhiếp chính tự viết khi một quest vào nhánh gốc (vùng `shared_paths` không tính), mỗi quest nhận đọc một lần ở phiên người làm kế tiếp; `request` đến ở PS-10. Nhiếp chính viết thư báo tin theo kiểu đầu tiên có `route` là `quests`.",
               "used_in": "`registry/memos.json`, `memo.kind`"
             },
             {
@@ -609,6 +616,14 @@
               "id": ["merge"],
               "definition": "Quest cuối của đội: hợp nhất các nhánh phần, chạy toàn bộ kiểm tra; Nhiếp chính tự tạo.",
               "used_in": "`party_role = merge`"
+            },
+            {
+              "vi": "Quest Hợp nhất",
+              "en": "Queue merge quest",
+              "id": ["merge"],
+              "id_note": "(vai, `created_by = patrol`)",
+              "definition": "Quest Nhiếp chính tự mở khi hàng đợi giao hàng không đưa được nhánh một quest đã xong lên nhánh gốc (conflict ngoài luật `shared_paths`, hay check đỏ sau khi ghép): đi đường của quest ghép trên nhánh quest gốc, hiệp sĩ gỡ, người chấm chưa từng làm quest gốc, luôn cần dấu; vào nhánh gốc thì quest gốc được lưu trữ theo. Khác quest ghép của đội.",
+              "used_in": "`party_role = merge`, `delivery.failed.merge_quest` (PS-09b)"
             }
           ]
         }
@@ -904,7 +919,7 @@
               "vi": "Tộc",
               "en": "Tribe",
               "id": ["tribe"],
-              "definition": "Một tài khoản người dùng tự đăng nhập + một adapter + một ngoại hình; tộc của nhân vật cố định suốt đời.",
+              "definition": "Một tài khoản người dùng tự đăng nhập + một adapter + một ngoại hình; tộc của nhân vật cố định suốt đời. Tài khoản thứ hai của cùng một CLI là một tộc nữa, khai là một chi của tộc gốc để nhìn như cùng tộc.",
               "used_in": "`kingdom.tribes[]`, `character.tribe` (§8)"
             },
             {
@@ -913,6 +928,13 @@
               "id": ["look"],
               "definition": "Bộ phần ghép lấy từ kho ngoại hình của theme, cùng tên hiển thị; nhìn là biết tộc. Chỉ để hiển thị: không vào prompt, không vào luật chọn người (ADR 0025).",
               "used_in": "`kingdom.tribes[].look`, `tribeLookOf`, `elvaria tribe look` (PS-24)"
+            },
+            {
+              "vi": "Chi",
+              "en": "Sibling tribe",
+              "id": ["sibling"],
+              "definition": "Một tộc khai `sibling_of` trỏ tới tộc gốc: tài khoản thứ hai của cùng một CLI. Ở tầng việc chi là một tộc riêng (bể mana, nhân vật, luật tách vai); chỉ ngoại hình đọc nó: bảng màu, huy hiệu, dáng người và khung của tộc gốc cùng hào quang kế tiếp trong kho. Số thứ tự (tộc gốc là I) suy từ thứ tự `kingdom.tribes[]`, không lưu; tên là `sibling_name`, không có thì tên tộc gốc kèm số La Mã (Sao Bạc II). Không gọi là nhánh: nhánh là nhánh git.",
+              "used_in": "`kingdom.tribes[].sibling_of`, `sibling_name`, `TribeLook.siblings`, `elvaria tribe add --sibling-of` (PS-27b)"
             },
             {
               "vi": "Phần ghép (bảng màu, huy hiệu, dáng người, hào quang, khung chân dung)",
@@ -929,10 +951,10 @@
               "used_in": "`tribe-looks.schema.json`, `lookPoolOf(theme)`, `packages/domain/src/tribe/fantasy-looks.json`"
             },
             {
-              "vi": "Nguồn ngoại hình (chủ nhân chọn / mục ghim / tự sinh)",
-              "en": "Look source (owner / pinned / generated)",
-              "id": ["owner", "pinned", "generated"],
-              "definition": "Ngoại hình lấy theo thứ tự: lựa chọn của chủ nhân, mục ghim của theme, ngoại hình tự sinh tất định theo id của tộc (bỏ qua bảng màu và huy hiệu tộc khác đang giữ).",
+              "vi": "Nguồn ngoại hình (chủ nhân chọn / mục ghim / tự sinh / chi)",
+              "en": "Look source (owner / pinned / generated / sibling)",
+              "id": ["owner", "pinned", "generated", "sibling"],
+              "definition": "Ngoại hình lấy theo thứ tự: lựa chọn của chủ nhân, mục ghim của theme, ngoại hình tự sinh tất định theo id của tộc (bỏ qua bảng màu và huy hiệu tộc khác đang giữ). Một chi lấy ngoại hình của tộc gốc, trừ hào quang.",
               "used_in": "`TribeLook.source`"
             },
             {
@@ -1561,7 +1583,7 @@
     {
       "heading": "8. Tộc (`tribe`)",
       "blocks": [
-        "Tộc là id mở trong `kingdom.tribes[]`; `elvaria init` ghi hai tộc đầu. Thêm tộc theo hợp đồng tộc (ADR 0021). Ngoại hình của tộc (PS-24): lựa chọn của chủ nhân (`elvaria tribe look`), mục ghim của theme, hay tự sinh từ kho ngoại hình theo id; tên dưới đây là của theme `fantasy`.",
+        "Tộc là id mở trong `kingdom.tribes[]`; `elvaria init` ghi hai tộc đầu. Thêm tộc theo hợp đồng tộc (ADR 0021). Ngoại hình của tộc (PS-24): lựa chọn của chủ nhân (`elvaria tribe look`), mục ghim của theme, hay tự sinh từ kho ngoại hình theo id; một chi (PS-27b) mang ngoại hình của tộc gốc với hào quang kế tiếp và số La Mã trong tên. Tên dưới đây là của theme `fantasy`.",
         {
           "table": "tribes",
           "columns": [
@@ -1601,6 +1623,12 @@
               "id": ["codex"],
               "icon": "`crest-wind` (tự sinh theo id khi đứng sau `claude`, `gemini`: bảng màu `yellow`, huy hiệu `wind`)",
               "adapter": "`codex_cli` (Codex CLI, tùy chọn)"
+            },
+            {
+              "vi": "Tộc Sao Bạc II (chi của `claude`; chủ nhân chưa đặt tên)",
+              "id": ["claude_2"],
+              "icon": "`crest-star` (của tộc gốc: bảng màu `silver`, huy hiệu `star`; hào quang `sparks`, kế sau `glow` của `claude`)",
+              "adapter": "`claude_code` (tài khoản thứ hai, `tool.config_dir` riêng)"
             }
           ]
         },
@@ -2229,14 +2257,14 @@
               "meaning": "thư đang chờ quyết, hay đã quyết (có `outcome`)"
             },
             {
-              "field": "`memo.outcome.decision` (cũng `decide_memo.decision`, trừ `sustained`, `overruled`)",
-              "values": "`shelved`, `rejected`, `handled`, `accepted`, `sustained`, `overruled`",
-              "meaning": "gác lại, bác, hay đã có quest làm (`handled` thì kèm `quest`); nhận thư phản biện đề bài, đề đã viết lại (`accepted`, PS-22b); thư phản biện do người chấm thứ hai đóng: chấp nhận (phán quyết của nó đạt) hay bác (trượt), kèm `verdict` (PS-22)"
+              "field": "`memo.outcome.decision` (cũng `decide_memo.decision`, trừ `sustained`, `overruled`, `delivered`, `lapsed`)",
+              "values": "`shelved`, `rejected`, `handled`, `accepted`, `sustained`, `overruled`, `delivered`, `lapsed`",
+              "meaning": "gác lại, bác, hay đã có quest làm (`handled` thì kèm `quest`); nhận thư phản biện đề bài, đề đã viết lại (`accepted`, PS-22b); thư phản biện do người chấm thứ hai đóng: chấp nhận (phán quyết của nó đạt) hay bác (trượt), kèm `verdict` (PS-22); thư tới các quest (đường `quests`, PS-09c) do Nhiếp chính đóng: mọi quest nhận đã đọc hay đã rời đi, ít nhất một đã đọc (`delivered`), hay mọi quest nhận rời đi (xong, hủy, lưu trữ) mà chưa đọc (`lapsed`)"
             },
             {
               "field": "`memo_kind.route` (cũng `memo.to.route`)",
-              "values": "`chancellor`, `judge`, `owner`, `author`",
-              "meaning": "nơi nhận của một kiểu thư: Tể tướng, người chấm thứ hai (thư phản biện, kèm `verdict`), chủ nhân (thư không ai khác được quyết, kèm `refusal`), hay người viết đề của quest (thư phản biện đề bài, PS-22b; `author` là pháp sư của kế hoạch, không có thì Tể tướng)"
+              "values": "`chancellor`, `judge`, `owner`, `author`, `quests`",
+              "meaning": "nơi nhận của một kiểu thư: Tể tướng, người chấm thứ hai (thư phản biện, kèm `verdict`), chủ nhân (thư không ai khác được quyết, kèm `refusal`), người viết đề của quest (thư phản biện đề bài, PS-22b; `author` là pháp sư của kế hoạch, không có thì Tể tướng), hay các quest đang dở có vùng giao với file của thư (thư báo tin, PS-09c; kèm `quests`, mỗi quest đọc một lần, ghi ở `memo.deliveries`)"
             },
             {
               "field": "`quest.blocked.amendment.by`",
@@ -2267,6 +2295,11 @@
               "field": "`memo.escalation.holds`",
               "values": "các giá trị của `ask`, cùng `above_rank`, `outside_scope`, `scope_held`, `chancellor_asks`",
               "meaning": "vì sao thư tới chủ nhân: một việc chủ nhân giữ, hay máy thấy hạng vượt `max_rank`, tệp ngoài vùng file của việc, tệp một thư `amendment` được nhận sẽ mở chạm vùng một quest khác đang giữ (R3), hoặc Tể tướng tự đưa lên"
+            },
+            {
+              "field": "`quest.seal_raised`",
+              "values": "`protected_paths`, `above_level`, `out_of_scope`, `diff_size`, `same_family_judge`, `machine_judge`, `objection`, `rank_above`, `out_of_delegation`, `suspended`",
+              "meaning": "vì sao máy nâng dấu của quest được miễn nhờ ủy quyền: chạm vùng bảo vệ, người nhận vượt hạng trần của cấp, có file ngoài `scope_paths`, diff vượt `max_diff_lines` (hay không đo được), người chấm không khác họ với mọi người từng làm, máy chấm một mình, lượt chấm trả lời thư phản biện, hạng nay vượt `max_rank`, ủy quyền không còn phủ (bỏ phần dấu, bỏ dạng, lãnh thổ thôi `pr_merge`), ủy quyền của lãnh thổ đang ngừng (PS-08b)"
             },
             {
               "field": "`inbox-command.source`",
@@ -2390,8 +2423,8 @@
             },
             {
               "group": "Thư",
-              "types": ["memo.filed", "memo.routed", "memo.closed", "memo.escalated"],
-              "meaning": "Nhiếp chính lập thư từ mục `Memos` của thư bàn giao khi lượt người làm kết thúc qua nộp, hỏi hay hỏng (không khi cầu dao cắt), chuyển theo `registry/memos.json`, và đóng theo `decide_memo` (PS-02, ADR 0024), hoặc khi quest làm việc của thư mở ra (PS-03b); `memo.escalated` khi phân loại của Tể tướng đưa thư lên chủ nhân kèm lời khuyên (PS-03b), hay khi người viết đề đưa thư phản biện đề bài lên chủ nhân (PS-22b)"
+              "types": ["memo.filed", "memo.routed", "memo.closed", "memo.escalated", "memo.delivered"],
+              "meaning": "Nhiếp chính lập thư từ mục `Memos` của thư bàn giao khi lượt người làm kết thúc qua nộp, hỏi hay hỏng (không khi cầu dao cắt), chuyển theo `registry/memos.json`, và đóng theo `decide_memo` (PS-02, ADR 0024), hoặc khi quest làm việc của thư mở ra (PS-03b); `memo.escalated` khi phân loại của Tể tướng đưa thư lên chủ nhân kèm lời khuyên (PS-03b), hay khi người viết đề đưa thư phản biện đề bài lên chủ nhân (PS-22b); (PS-09c) Nhiếp chính tự lập thư báo tin (`memo.filed` không có `from`, actor Nhiếp chính) khi một quest vào nhánh gốc, trước khi lưu trữ nó; `memo.delivered` vào journal của quest nhận khi phiên người làm kế tiếp của nó đã mở với thư trong khối `advisories`; thư đóng `delivered` hay `lapsed` khi không còn quest nhận nào chờ đọc"
             },
             {
               "group": "Lịch",

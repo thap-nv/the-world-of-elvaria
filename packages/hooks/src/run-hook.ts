@@ -2,7 +2,7 @@
 // (implementation-plan §3.6). elvaria-hook.ts wires it to the real process. The exit code is always 0: a
 // decision travels as JSON on stdout (draft.ts).
 import { argvEvent } from './antigravity/input.ts';
-import { denyAgyTool, translateAntigravity } from './antigravity/translate.ts';
+import { DEFER_TO_SETTINGS, denyAgyTool, translateAntigravity } from './antigravity/translate.ts';
 import { translateClaude } from './claude/translate.ts';
 import { translateCodex } from './codex/translate.ts';
 import { EVENT_IN_ARGV, answerOf, textAt } from './neutral/dialect.ts';
@@ -13,7 +13,7 @@ import { denyTool, errorText, translation } from './draft.ts';
 import { wrapUpReminder } from './wrap-up.ts';
 import { appendDrafts, intlTs } from './write.ts';
 import type { HookContext, HookEnv } from './context.ts';
-import type { Translation } from './draft.ts';
+import type { Decision, Translation } from './draft.ts';
 import type { TsFormat } from './write.ts';
 
 export interface HookIo {
@@ -133,9 +133,14 @@ function sessionOf(payload: Record<string, unknown> | undefined, caller: Caller)
   return textAt(payload, caller.cli === 'agy' ? 'conversationId' : 'session_id');
 }
 
+/** Nothing stopped the call: no answer, or agy's that leaves it to the CLI's own check (antigravity/translate.ts). */
+const unanswered = (decision: Decision | undefined): boolean =>
+  decision === undefined || decision === DEFER_TO_SETTINGS;
+
 /**
  * The soft-ceiling reminder (wrap-up.ts) rides on a call nothing else answered: a decision already made (a deny, a
- * Stop block) is never replaced. Claude and Codex name the event in the payload, agy and a dialect before it.
+ * Stop block) is never replaced, and without a reminder the answer stays as it was (agy reads none as a block).
+ * Claude and Codex name the event in the payload, agy and a dialect before it.
  */
 function withWrapUp(
   result: Translation,
@@ -144,10 +149,11 @@ function withWrapUp(
   session: string | undefined,
   ctx: HookContext,
 ): Translation {
-  if (payload === undefined || result.decision !== undefined) return result;
+  if (payload === undefined || !unanswered(result.decision)) return result;
   const event = caller.event ?? textAt(payload, 'hook_event_name');
   const reminder = wrapUpReminder({ cli: caller.cli, event, payload, session }, ctx);
-  return { ...result, decision: reminder.decision, problems: [...result.problems, ...reminder.problems] };
+  const decision = reminder.decision ?? result.decision;
+  return { ...result, decision, problems: [...result.problems, ...reminder.problems] };
 }
 
 /**

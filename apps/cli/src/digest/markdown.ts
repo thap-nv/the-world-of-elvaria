@@ -5,6 +5,8 @@ import { ATTENTION_GROUPS } from '@elvaria/domain';
 import type { AttentionGroup, AttentionItem, WaitGauge } from '@elvaria/domain';
 import type { Translate } from '@elvaria/i18n';
 
+import { raisesText } from '../quest/seal-view.ts';
+
 const NONE = '—';
 /** The digits of a commit id the CLI prints (shortSha). */
 const SHORT_SHA = 12;
@@ -28,11 +30,15 @@ function triageOf(t: Translate, item: AttentionItem) {
   return { triage, holds: holds === '' ? NONE : holds };
 }
 
-/** Where a delivery to the forge stopped and what to do about it (PS-08c), and its pull request. */
+/**
+ * Where a delivery to the forge stopped and what to do about it (PS-08c), its pull request, and the merge queue's merge
+ * quest it waits for (PS-09b).
+ */
 const deliveryOf = (t: Translate, item: AttentionItem) => ({
   stage: item.stage === undefined ? NONE : t(`cli.forge.stage.${item.stage}`),
   why: item.reason === undefined ? NONE : t(`cli.forge.reason.${item.reason}`),
   url: item.url ?? NONE,
+  merge_quest: item.merge_quest ?? NONE,
 });
 
 /** A newer build (PS-08d): the commits short, as the CLI prints them. */
@@ -42,8 +48,15 @@ const upgradeOf = (item: AttentionItem) => ({
   commits: item.commits ?? NONE,
 });
 
-/** A red check of a default branch, or a scan that did not pass (PS-26): what the patrol found, and where. */
+/**
+ * A red check of a default branch, or a scan that did not pass (PS-26): what the patrol found, and where; (PS-09d) that
+ * the territory takes no work, and how many quests wait for it.
+ */
 const patrolOf = (t: Translate, item: AttentionItem) => ({
+  stopped:
+    item.kind === 'base_red' && item.waiting !== undefined
+      ? ` ${t('cli.digest.base_stopped', { count: item.waiting.length })}`
+      : '',
   territory: item.territory ?? NONE,
   check: item.check ?? NONE,
   error_line: item.error_line ?? NONE,
@@ -79,6 +92,7 @@ function subjectOf(t: Translate, item: AttentionItem): string {
     pool: item.pool ?? NONE,
     used_pct: item.used_pct ?? NONE,
     resets_at: item.resets_at ?? NONE,
+    held_reason: item.held_reason ?? NONE,
     ...triageOf(t, item),
     ...deliveryOf(t, item),
     ...upgradeOf(item),
@@ -86,10 +100,21 @@ function subjectOf(t: Translate, item: AttentionItem): string {
   });
 }
 
+/** (PS-08b) Why the machine raised the seal of a quest the delegation had spared, after its line. */
+const raisedOf = (t: Translate, item: AttentionItem): string =>
+  item.raised === undefined ? '' : ` ${t('cli.digest.raised', { reasons: raisesText(t, item.raised) })}`;
+
+/** (PS-08b) The git line that undoes a merge without the seal, for the owner to run and push. */
+const revertLines = (t: Translate, item: AttentionItem): string[] =>
+  item.revert === undefined
+    ? []
+    : [`  ${t('cli.digest.revert', { command: `\`${item.revert.join(' ')}\`` })}`];
+
 /** One item: its subject, its advice, and its command on a line of its own. */
 const itemLines = (t: Translate, item: AttentionItem): string[] => [
-  `- ${subjectOf(t, item)} ${t(`cli.digest.advice.${item.advice}`)}`,
+  `- ${subjectOf(t, item)}${raisedOf(t, item)} ${t(`cli.digest.advice.${item.advice}`)}`,
   `  \`elvaria ${item.command.join(' ')}\``,
+  ...revertLines(t, item),
 ];
 
 function groupLines(t: Translate, group: AttentionGroup, items: readonly AttentionItem[]): string[] {

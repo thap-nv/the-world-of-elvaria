@@ -1,7 +1,8 @@
 // What `quest list` and `quest show` say of a quest's party (implementation-plan §3.13, P1-21 (c)): its role, and where
 // the party stands (the domain's partyStatusOf, derived from the quests, never stored), in the owner's language. The
-// merge quest and the blind trial's acceptance part carry the contract's title: the role tells the three apart.
-import { partyStatusOf } from '@elvaria/domain';
+// merge quest and the blind trial's acceptance part carry the contract's title: the role tells the three apart. (PS-09b)
+// The merge queue's merge quest has a role of its own, and outside a party names the quest it stands for.
+import { isQueueMerge, partyStatusOf } from '@elvaria/domain';
 import type { PartyStatus, Quest } from '@elvaria/domain';
 import type { MessageKey } from '@elvaria/i18n';
 
@@ -13,10 +14,14 @@ import type { KingdomContext } from '../kingdom-context.ts';
 const statusOf = (quest: Quest, quests: readonly Quest[]): PartyStatus | undefined =>
   quest.party_id === undefined ? undefined : partyStatusOf(quest.party_id, quests);
 
+/** The label of the quest's role in its party; the merge queue's merge quest is told apart from a party's (PS-09b). */
+const roleOf = (quest: Quest, role: NonNullable<Quest['party_role']>): MessageKey =>
+  isQueueMerge(quest) ? 'cli.quest.party.role.queue_merge' : PARTY_ROLE_LABEL[role];
+
 /** The board's cell: role · stage; a dash outside a party. */
 export function partyCell(ctx: KingdomContext, quest: Quest, quests: readonly Quest[]): string {
   if (quest.party_role === undefined) return NONE;
-  const role = ctx.t(PARTY_ROLE_LABEL[quest.party_role]);
+  const role = ctx.t(roleOf(quest, quest.party_role));
   const status = statusOf(quest, quests);
   return status === undefined
     ? role
@@ -32,8 +37,10 @@ export function partyFields(
   const { party_id: party, party_role: role } = quest;
   if (party === undefined || role === undefined) return [];
   const status = statusOf(quest, quests);
-  const line =
-    status === undefined
+  const alone = status === undefined && isQueueMerge(quest);
+  const line = alone
+    ? ctx.t('cli.quest.party.queue_merge', { quest: quest.parent_id ?? party })
+    : status === undefined
       ? ctx.t('cli.quest.party.unknown', { party })
       : ctx.t('cli.quest.party.line', {
           party,
@@ -43,7 +50,7 @@ export function partyFields(
         });
   return [
     ['cli.quest.field.party', line],
-    ['cli.quest.field.party_role', `${ctx.t(PARTY_ROLE_LABEL[role])} (${role})`],
+    ['cli.quest.field.party_role', `${ctx.t(roleOf(quest, role))} (${role})`],
     ['cli.quest.field.contract', quest.contract ?? NONE],
     ['cli.quest.field.merge_quest', status?.merge ?? NONE],
   ];

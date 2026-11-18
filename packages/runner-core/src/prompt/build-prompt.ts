@@ -21,6 +21,8 @@ import {
   skillsBlock,
 } from './blocks.ts';
 import { verifierChecks } from './checks.ts';
+import { advisoriesBlock } from './advisories.ts';
+import type { PromptAdvisory } from './advisories.ts';
 import { contextFilesBlock } from './context-files.ts';
 import type { DraftingTerms } from './drafting.ts';
 import type { ContextFile } from './context-files.ts';
@@ -116,6 +118,8 @@ export interface AssigneePromptInput extends PromptBase {
   readonly handover_path: string;
   /** null for a quest's first session. */
   readonly continuation: (Continuation & Memory) | null;
+  /** (PS-09c) The advisories the quest has yet to read, newest first; absent or empty, no block. */
+  readonly advisories?: readonly PromptAdvisory[];
 }
 
 export interface VerifierPromptInput extends PromptBase {
@@ -191,6 +195,7 @@ function assigneePrompt(input: AssigneePromptInput, t: PromptTemplates): PromptW
   const graphText = graphBlock(policy, input.graph, 'assignee', t);
   return composed(systemOf(input, role, characterClass.name_en, graphText, t), [
     ['quest', questBlock(quest, registry, input.territory, t, termsOf(input), input.vision)],
+    ['advisories', advisoriesBlock(input.advisories, t)],
     ['gazetteer', gazetteerBlock(input.territory, input.gazetteer, t)],
     ['scripture', scriptureBlock(input.scriptures, t)],
     ['skills', skillsBlock(input.skills, t)],

@@ -8,7 +8,7 @@ import { CAMPAIGNS, CHARACTERS, KINGDOM, TERRITORIES } from './__fixtures__/exam
 import { attentionQueue } from './attention.ts';
 import { worldStateOf } from './world-state.ts';
 import type { Instant } from '../core/clock.ts';
-import type { QuestId } from '../core/ids.ts';
+import type { QuestId, TerritoryId } from '../core/ids.ts';
 
 const NOW = Date.parse('2026-11-17T08:00:00+07:00') as Instant;
 const state = worldStateOf({
@@ -69,5 +69,22 @@ describe('attentionQueue: the patrol (PS-26)', () => {
       expect.objectContaining({ kind: 'patrol_scan', script: 'x', outcome: 'broken' }),
     ]);
     expect(patrolItems([ran(DAY2, [{ id: 'unit', pass: true }])])).toEqual([]);
+  });
+
+  // PS-09d: the territory takes no work while the check is red; its one item names the quests that wait.
+  it('a red check of a territory that takes no work names the quests that wait, none when none does', () => {
+    const health = baseHealthOf([ran(DAY2, [{ id: 'unit', pass: false }])]);
+    const territory = 'elvaria' as TerritoryId;
+    const items = (waiting: readonly QuestId[]) =>
+      attentionQueue(state, NOW, { patrols: health, base_holds: [{ territory, waiting }] }).filter(
+        ({ kind }) => kind === 'base_red',
+      );
+    expect(items([Q1])).toEqual([expect.objectContaining({ territory, check: 'unit', waiting: [Q1] })]);
+    expect(items([])).toEqual([expect.objectContaining({ waiting: [] })]);
+    const elsewhere = attentionQueue(state, NOW, {
+      patrols: health,
+      base_holds: [{ territory: 'atlas' as TerritoryId, waiting: [Q1] }],
+    });
+    expect(elsewhere.find(({ kind }) => kind === 'base_red')).not.toHaveProperty('waiting');
   });
 });

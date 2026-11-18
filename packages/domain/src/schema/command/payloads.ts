@@ -40,6 +40,9 @@ const QuestListSchema = unique(z.array(QuestIdSchema));
 
 export const QuestPayloadSchema = z.strictObject({ quest: QuestIdSchema });
 
+/** (PS-09d) A territory the owner names: `patrol` asks for its patrol now. */
+export const TerritoryPayloadSchema = z.strictObject({ territory: TerritoryIdSchema });
+
 export const QuestReasonPayloadSchema = z.strictObject({
   quest: QuestIdSchema,
   reason: z.string().optional(),

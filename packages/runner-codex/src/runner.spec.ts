@@ -2,6 +2,7 @@
 // before the trust bypass, the territory's own AGENTS.override.md, resume, the prompt on stdin, doctor and probe.
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { isDeepStrictEqual } from 'node:util';
@@ -138,10 +139,13 @@ describe('before a session', () => {
 
 describe('doctor and probe', () => {
   it('names the CLI and its version, and checks the sign-in and the built hook', async () => {
+    // Without a home of its own Codex names its default one (only a name to the fake CLI); account.spec.ts has the rest.
     expect(await fakeRunner().doctor()).toEqual({
       path: process.execPath,
       version: '0.167.0-alpha.4.1',
       auth_ok: true,
+      config_dir: path.join(homedir(), '.codex'),
+      account: expect.stringMatching(/^[0-9a-f]{64}$/) as unknown,
     });
     const out = await fakeRunner({ env: { ...minimalEnv(), ELVARIA_FAKE_CODEX_LOGGED_OUT: '1' } }).doctor();
     expect(out).toMatchObject({ auth_ok: false });

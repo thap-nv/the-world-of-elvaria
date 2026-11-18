@@ -3,24 +3,24 @@
 // or drawn from the theme's pool by the id). With options it writes the owner's choice to kingdom.tribes[].look,
 // on the path `tribe add` writes (save.ts): the look as it stands with the options laid over it, every part, so the
 // tribe keeps it whatever the pool or the other tribes do later. A palette or a crest another tribe holds, or the
-// theme pins to another tribe, is refused: two tribes would look alike. Display only (ADR 0025).
+// theme pins to another tribe, is refused: two tribes would look alike. A sibling's look follows its root's, so only
+// its name is the owner's to write (./look-sibling.ts, PS-27b). Display only (ADR 0025).
 import {
   LOOK_PARTS,
   NameSchema,
-  POOL_LISTS,
   TELLING_PARTS,
-  err,
-  ok,
+  siblingRootOf,
   tribeLookOf,
   tribeLooksOf,
 } from '@elvaria/domain';
-import type { LookPart, Tribe, TribeLookChoice, TribeLookPool } from '@elvaria/domain';
+import type { LookPart, Tribe, TribeLook, TribeLookChoice, TribeLookPool } from '@elvaria/domain';
 
 import { flagOption, textOption } from '../args.ts';
 import { EXIT } from '../command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
-import { kingdomPool, lookLines, lookNameOf } from './look-view.ts';
-import { namedTribe, refuse, saveTribes } from './save.ts';
+import { siblingLook } from './look-sibling.ts';
+import { idsOf, kingdomPool, showLook } from './look-view.ts';
+import { namedTribe, updateTribe } from './save.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
@@ -44,8 +44,6 @@ const requestOf = (input: CommandInput): LookRequest => ({
 const isEmpty = (request: LookRequest) =>
   Object.keys(request.changes).length === 0 && request.name === undefined;
 
-const idsOf = (pool: TribeLookPool, part: LookPart): string[] => pool[POOL_LISTS[part]].map(({ id }) => id);
-
 /** What is wrong with the command line itself: --reset with a change, a part the pool lacks, a bad name. */
 function usageProblems(ctx: KingdomContext, pool: TribeLookPool, request: LookRequest): string[] {
   if (request.reset && !isEmpty(request)) return [ctx.t('cli.tribe.look.reset_alone')];
@@ -62,6 +60,10 @@ function usageProblems(ctx: KingdomContext, pool: TribeLookPool, request: LookRe
   return problems;
 }
 
+/** Whether `look` is one of the tribe's siblings, which hold its palette and crest by design (PS-27b). */
+const isSiblingOf = (tribe: Tribe, look: TribeLook): boolean =>
+  look.siblings?.root === tribe.id && look.tribe !== tribe.id;
+
 /** The tribe that holds, or that the theme pins, the palette or crest the owner asks for. */
 function takenProblems(
   ctx: KingdomContext,
@@ -69,7 +71,9 @@ function takenProblems(
   tribe: Tribe,
   request: LookRequest,
 ): string[] {
-  const others = tribeLooksOf(pool, ctx.kingdom.tribes).filter((look) => look.tribe !== tribe.id);
+  const others = tribeLooksOf(pool, ctx.kingdom.tribes).filter(
+    (look) => look.tribe !== tribe.id && !isSiblingOf(tribe, look),
+  );
   const pinned = Object.entries(pool.pinned).filter(([id]) => id !== tribe.id);
   return TELLING_PARTS.flatMap((part) => {
     const id = request.changes[part];
@@ -79,41 +83,6 @@ function takenProblems(
     const params = { part: ctx.t(`tribe_look.part.${part}`), id, other: other ?? '' };
     return other === undefined ? [] : [ctx.t('cli.tribe.look.taken', params)];
   });
-}
-
-/** The palettes and crests no tribe of the kingdom holds and the theme pins to none. */
-function freeLines(ctx: KingdomContext, pool: TribeLookPool, tribes: readonly Tribe[]): string[] {
-  const looks = tribeLooksOf(pool, tribes);
-  const pinned = Object.values(pool.pinned);
-  return TELLING_PARTS.flatMap((part) => {
-    const held = new Set([...looks, ...pinned].map((look) => look[part]));
-    const free = idsOf(pool, part).filter((id) => !held.has(id));
-    return free.length === 0
-      ? []
-      : [ctx.t('cli.tribe.look.free', { part: ctx.t(`tribe_look.part.${part}`), ids: free.join(', ') })];
-  });
-}
-
-function showLook(
-  ctx: KingdomContext,
-  pool: TribeLookPool,
-  tribes: readonly Tribe[],
-  tribe: Tribe['id'],
-): void {
-  const look = tribeLookOf(pool, tribes, tribe);
-  const source = ctx.t(`cli.tribe.look.source.${look.source}`);
-  ctx.io.out(ctx.t('cli.tribe.look.heading', { tribe, name: lookNameOf(ctx.t, look), source }));
-  lookLines(ctx.t, pool, look).forEach((line) => {
-    ctx.io.out(`  ${line}`);
-  });
-  if (look.unknown !== undefined) {
-    const parts = look.unknown.map(
-      (part) => `${part} ${tribes.find(({ id }) => id === tribe)?.look?.[part] ?? ''}`,
-    );
-    ctx.io.err(ctx.t('cli.tribe.look.set_aside', { tribe, theme: pool.theme, parts: parts.join(', ') }));
-  }
-  freeLines(ctx, pool, tribes).forEach(ctx.io.out);
-  ctx.io.out(ctx.t('cli.tribe.look.how', { tribe }));
 }
 
 /** The owner's choice: the look as it stands, every part, with the request laid over it. */
@@ -137,53 +106,38 @@ function choiceOf(
 }
 
 /** Writes `look` of one tribe (undefined drops it), and returns the tribes as written, or undefined once refused. */
-async function writeLook(
+const writeLook = (
   ctx: KingdomContext,
   tribe: Tribe,
   look: TribeLookChoice | undefined,
-): Promise<readonly Tribe[] | undefined> {
-  let written: readonly Tribe[] | undefined;
-  const saved = await saveTribes(ctx, (tribes) => {
-    if (!tribes.some(({ id }) => id === tribe.id)) {
-      const known = tribes.map(({ id }) => id).join(', ');
-      return err(refuse(ctx.t('cli.tribe.unknown', { tribe: tribe.id, tribes: known })));
-    }
-    const next = tribes.map((entry) => {
-      if (entry.id !== tribe.id) return entry;
-      const { look: _dropped, ...rest } = entry;
-      return look === undefined ? rest : { ...rest, look };
-    });
-    written = next;
-    return ok(next);
+): Promise<readonly Tribe[] | undefined> =>
+  updateTribe(ctx, tribe.id, (entry) => {
+    const { look: _dropped, ...rest } = entry;
+    return look === undefined ? rest : { ...rest, look };
   });
-  return saved ? written : undefined;
-}
 
-/** The other tribes whose drawn look moved with the change. */
+/** The other tribes whose drawn look moved with the change, and the tribe's siblings, which follow it (PS-27b). */
 function alsoChanged(ctx: KingdomContext, pool: TribeLookPool, tribe: Tribe, after: readonly Tribe[]): void {
   const before = new Map(
     tribeLooksOf(pool, ctx.kingdom.tribes).map((look) => [look.tribe, JSON.stringify(look)]),
   );
-  const moved = tribeLooksOf(pool, after)
-    .filter((look) => look.tribe !== tribe.id && before.get(look.tribe) !== JSON.stringify(look))
-    .map((look) => look.tribe);
+  const changed = tribeLooksOf(pool, after).filter(
+    (look) => look.tribe !== tribe.id && before.get(look.tribe) !== JSON.stringify(look),
+  );
+  const moved = changed.filter((look) => !isSiblingOf(tribe, look)).map((look) => look.tribe);
+  const follow = changed.filter((look) => isSiblingOf(tribe, look)).map((look) => look.tribe);
   if (moved.length > 0) ctx.io.out(ctx.t('cli.tribe.look.also_changed', { tribes: moved.join(', ') }));
+  if (follow.length > 0)
+    ctx.io.out(ctx.t('cli.tribe.look.siblings_follow', { tribe: tribe.id, tribes: follow.join(', ') }));
 }
 
-async function runLook(input: CommandInput, cli: CliContext): Promise<ExitCode> {
-  const ctx = await openKingdomContext(input, cli);
-  if (ctx === undefined) return EXIT.failed;
-  const tribe = namedTribe(ctx, input.positionals[0]);
-  const pool = tribe === undefined ? undefined : kingdomPool(ctx);
-  if (tribe === undefined || pool === undefined) return EXIT.failed;
-  const request = requestOf(input);
-  const usage = usageProblems(ctx, pool, request);
-  usage.forEach(ctx.io.err);
-  if (usage.length > 0) return EXIT.usage;
-  if (!request.reset && isEmpty(request)) {
-    showLook(ctx, pool, ctx.kingdom.tribes, tribe.id);
-    return EXIT.ok;
-  }
+/** The owner's choice for a tribe that is no sibling: written whole, or dropped with --reset. */
+async function writeChoice(
+  ctx: KingdomContext,
+  pool: TribeLookPool,
+  tribe: Tribe,
+  request: LookRequest,
+): Promise<ExitCode> {
   if (request.reset && tribe.look === undefined) {
     ctx.io.out(ctx.t('cli.tribe.look.no_choice', { tribe: tribe.id }));
     return EXIT.ok;
@@ -200,6 +154,28 @@ async function runLook(input: CommandInput, cli: CliContext): Promise<ExitCode> 
   alsoChanged(ctx, pool, tribe, written);
   showLook(ctx, pool, written, tribe.id);
   return EXIT.ok;
+}
+
+async function runLook(input: CommandInput, cli: CliContext): Promise<ExitCode> {
+  const ctx = await openKingdomContext(input, cli);
+  if (ctx === undefined) return EXIT.failed;
+  const tribe = namedTribe(ctx, input.positionals[0]);
+  const pool = tribe === undefined ? undefined : kingdomPool(ctx);
+  if (tribe === undefined || pool === undefined) return EXIT.failed;
+  const request = requestOf(input);
+  const usage = usageProblems(ctx, pool, request);
+  usage.forEach(ctx.io.err);
+  if (usage.length > 0) return EXIT.usage;
+  const root = siblingRootOf(ctx.kingdom.tribes, tribe);
+  if (root !== undefined) {
+    const parts = Object.keys(request.changes);
+    return siblingLook(ctx, pool, { tribe, root }, { parts, name: request.name, reset: request.reset });
+  }
+  if (!request.reset && isEmpty(request)) {
+    showLook(ctx, pool, ctx.kingdom.tribes, tribe.id);
+    return EXIT.ok;
+  }
+  return writeChoice(ctx, pool, tribe, request);
 }
 
 export const TRIBE_LOOK: CommandSpec = {

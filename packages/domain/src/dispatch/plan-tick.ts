@@ -13,6 +13,7 @@ import { calibrationOf } from '../breaker/calibration.ts';
 import { endedInCut } from '../breaker/continue.ts';
 import { machineMergeDue } from '../party/machine-merge.ts';
 import { questFinished } from '../quest/finished.ts';
+import { heldByBase } from '../patrol/base-red.ts';
 import { isHeld } from '../quest/hold.ts';
 import { startingNow } from './background-room.ts';
 import { forgeDeliveries } from './forge-due.ts';
@@ -25,6 +26,7 @@ import { claims, holderGoes, suspensions, unclaimable } from './tick-steps.ts';
 import { wakesOf } from './wakes.ts';
 import { RANKS } from '../schema/common.ts';
 import type { Breaker, HeldSession } from '../breaker/breakers.ts';
+import type { BaseRed } from '../patrol/base-red.ts';
 import type { ForgeSize } from './forge-due.ts';
 import type { ForgePoll, ForgeWait } from './forge-polls.ts';
 import type { BaseLook, BaseLookDone } from './in-base.ts';
@@ -38,6 +40,7 @@ import type { Instant } from '../core/clock.ts';
 import type { CharacterId, QuestId } from '../core/ids.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
+import type { SealPolicy } from '../delegation/seal.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 
 export type { Claim, Unclaimable } from './tick-steps.ts';
@@ -73,6 +76,13 @@ export interface KingdomSnapshot extends RosterSource, ReviewSource {
   readonly forge_sizes?: readonly ForgeSize[];
   /** (PS-09) Pull requests open whose branch no longer merges cleanly: delivered again. Absent: none. */
   readonly forge_stale?: readonly QuestId[];
+  /**
+   * (PS-09d) Territories whose default branch the latest patrol found red, with the quests of the patrol exempt from
+   * the stop (baseRedOf): their other open quests are not claimed, and their merge queue stands. Absent: none.
+   */
+  readonly base_red?: readonly BaseRed[];
+  /** (PS-08b) The delegation of the seal: done quests without it the forge merges (mergeDue). Absent: none. */
+  readonly seal_policy?: SealPolicy;
 }
 
 export interface TickPlan {
@@ -200,6 +210,19 @@ const deliveriesOf = (snapshot: KingdomSnapshot, done: readonly Quest[], forge: 
 const cutReturns = (quests: readonly Quest[]): Quest[] =>
   quests.filter((quest) => endedInCut(quest.attempt_log));
 
+/**
+ * The open quests ready to go; (PS-09d) one of a territory whose default branch is red waits as a held one does, the
+ * patrol's fix aside.
+ */
+function readyOpen(
+  snapshot: KingdomSnapshot,
+  open: readonly Quest[],
+  ready: (quest: Quest) => boolean,
+): Quest[] {
+  const stopped = heldByBase(snapshot.base_red);
+  return open.filter((quest) => ready(quest) && !stopped(quest));
+}
+
 /** The plan of this tick; `now` dates the claims for the round-robin over territories. */
 export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
   const byId = new Map(snapshot.characters.map((character) => [character.id, character]));
@@ -215,7 +238,7 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
   const ready = (quest: Quest): boolean => !isHeld(quest) && quest.depends_on.every((id) => done.has(id));
   const inStatus = (status: Quest['status']): Quest[] =>
     snapshot.quests.filter((quest) => quest.status === status).toSorted(byPriority);
-  const open = inStatus('open').filter(ready);
+  const open = readyOpen(snapshot, inStatus('open'), ready);
   const openSessions = open.filter((quest) => quest.tier === 'session' && !machineMergeDue(quest));
   const suspended = suspensions(step);
   // The paused work takes its slots before anything new.

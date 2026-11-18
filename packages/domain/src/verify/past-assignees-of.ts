@@ -21,8 +21,15 @@ export const workedOn = (quest: Quest): CharacterId[] => [
 export const pastAssigneesOf = (quest: Quest, party: readonly Quest[] = []): Set<CharacterId> =>
   new Set([quest, ...party].flatMap(workedOn));
 
-/** The other quests of the quest's party among `quests`; none outside a party. */
+/**
+ * The other quests of the quest's party among `quests`; none outside a party. The quest the party is named after
+ * counts even without a party_id of its own: the merge queue's merge quest of a quest outside a party takes that
+ * quest's id as its party (PS-09b, K5), so whoever worked it never judges the merge; a contract has its own id anyway.
+ */
 export const partyOf = (quest: Quest, quests: readonly Quest[]): Quest[] =>
   quest.party_id === undefined
     ? []
-    : quests.filter((other) => other.party_id === quest.party_id && other.id !== quest.id);
+    : quests.filter(
+        (other) =>
+          other.id !== quest.id && (other.party_id === quest.party_id || other.id === quest.party_id),
+      );

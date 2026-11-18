@@ -101,6 +101,19 @@ CLI không có hook: bỏ `dialect`, khai `tool_gate: false` và `events: false`
 
 Nhân vật cũ không đổi: tộc của một nhân vật cố định suốt đời.
 
+### 3.1 Tài khoản thứ hai của cùng một CLI
+
+Mỗi dòng `kingdom.tribes[]` là một tài khoản (ADR 0021, PS-27). Tài khoản thứ hai của Claude Code là một dòng nữa, ví dụ `claude_2` cùng adapter `claude_code`, với `tool.config_dir` là thư mục cấu hình riêng của CLI: đăng nhập, transcript và cài đặt của tài khoản đó nằm ở đây. Với tầng việc, dòng mới là một tộc riêng: bể mana riêng (khóa `claude_2`), ngủ và thức riêng, `budget` và `max_concurrent` riêng, nhân vật riêng. Không nhân vật, phiên hay quest nào chuyển tài khoản. Adapter khai năng lực `config_dir` mới nhận được thư mục; hôm nay `claude_code` và `codex_cli` khai (Codex từ PS-27c, thư mục nhà `CODEX_HOME`, nơi có đăng nhập và rollout của phiên), agy chờ spike.
+
+1. Tạo thư mục, đặt nó ngoài vương quốc và ngoài mọi lãnh thổ (đề xuất: cạnh kho bảo vật), rồi đăng nhập CLI ở đó một lần. Windows (PowerShell): `New-Item -ItemType Directory -Force "$HOME\.elvaria\accounts\claude_2"`, rồi `$env:CLAUDE_CONFIG_DIR = "$HOME\.elvaria\accounts\claude_2"; claude auth login`. macOS: `mkdir -p ~/.elvaria/accounts/claude_2 && CLAUDE_CONFIG_DIR=~/.elvaria/accounts/claude_2 claude auth login`. Mở terminal mới sau đó, để biến không ở lại phiên shell của bạn.
+   Với Codex (PS-27c), thư mục là `codex_2` và lệnh đăng nhập là `codex login` dưới `CODEX_HOME`. Windows: `New-Item -ItemType Directory -Force "$HOME\.elvaria\accounts\codex_2"`, rồi `$env:CODEX_HOME = "$HOME\.elvaria\accounts\codex_2"; codex login`. macOS: `mkdir -p ~/.elvaria/accounts/codex_2 && CODEX_HOME=~/.elvaria/accounts/codex_2 codex login`. Lần gọi đầu, Codex tự ghi trạng thái của nó vào thư mục (cơ sở dữ liệu, `.sandbox/` trên Windows); Elvaria không tạo, không dọn, không đọc gì trong đó.
+2. `elvaria tribe add claude_2 --sibling-of claude`: dòng mới, **tắt**, cùng adapter với `claude` (`--adapter` bỏ được), và là một chi của `claude` (PS-27b). Chi mang bảng màu, huy hiệu, dáng người và khung của tộc gốc với hào quang kế tiếp, tên mặc định là tên tộc gốc kèm số La Mã (Sao Bạc II; tộc gốc thành Sao Bạc I); `elvaria tribe look claude_2 --name <tên>` đặt tên riêng, còn phần ghép thì đổi ở `elvaria tribe look claude`. Lệnh từ chối (exit 1) khi `claude` không có, khi `claude` là một chi, hay khi `--adapter` khác adapter của `claude`. Chi chỉ là chuyện ngoại hình: với tầng việc nó vẫn là một tộc riêng như đoạn trên. Muốn dòng mới trông như một tộc riêng thì dùng `--adapter claude_code`, không kèm `--sibling-of`.
+3. `elvaria doctor --config-dir claude_2=<thư mục tuyệt đối>`: ghim CLI và thư mục cùng lúc, kiểm đăng nhập trong thư mục đó. Lệnh từ chối (exit 2, không ghi gì) khi tộc không có, đường dẫn không tuyệt đối, thư mục không tồn tại, hay thư mục nằm trong vương quốc hay một lãnh thổ: thư mục đó chứa đăng nhập và mọi transcript, mà tool của nhân vật với tới vương quốc và lãnh thổ. `doctor` báo lỗi cho cả hai dòng khi hai dòng `login` cùng adapter chạy chung một thư mục (kể cả khi cả hai không khai, tức cùng thư mục mặc định) hay đăng nhập cùng một tài khoản ở hai thư mục; câu báo nêu hai tộc và thư mục, không bao giờ nêu email. `--config-dir claude_2=` (rỗng) bỏ trường.
+4. `elvaria tribe check claude_2`: bộ test hợp đồng với CLI thật trong thư mục mới (gần như 0 mana); qua và không trùng tài khoản với dòng nào đang bật thì bật tộc.
+5. `elvaria character add <id> --class judge --tribe claude_2 --model <model>` rồi một hiệp sĩ, như mục 3.
+
+Chạy hai tài khoản của một nhà cung cấp cho cùng một người có thể chạm điều khoản của gói bạn dùng: đọc điều khoản trước khi thêm dòng (CT13). `elvaria tribe list` có cột "Thư mục cấu hình" (`—` là thư mục mặc định của CLI).
+
 ## 4. Thiếu năng lực thì tộc bị thu hẹp thế nào
 
 Hàm thuần `tribeLimitsOf(capabilities)` của domain, mỗi năng lực một hàng (`TRIBE_NARROWING`), `planTick` áp:

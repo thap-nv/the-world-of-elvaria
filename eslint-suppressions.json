@@ -1,0 +1,249 @@
+{
+  ".claude/hooks/hook-io.spec.ts": {
+    "elvaria/no-real-clock": {
+      "count": 2
+    },
+    "elvaria/no-real-wait": {
+      "count": 1
+    }
+  },
+  ".claude/hooks/typecheck-touched.spec.ts": {
+    "elvaria/timeout-reason": {
+      "count": 1
+    }
+  },
+  "apps/cli/src/doctor/check-state.spec.ts": {
+    "elvaria/no-real-clock": {
+      "count": 1
+    }
+  },
+  "apps/cli/src/forge/credential.spec.ts": {
+    "elvaria/no-real-clock": {
+      "count": 2
+    }
+  },
+  "apps/cli/src/run/run.spec.ts": {
+    "elvaria/no-real-wait": {
+      "count": 2
+    }
+  },
+  "apps/cli/src/tribe/flint.spec.ts": {
+    "elvaria/no-real-clock": {
+      "count": 2
+    },
+    "elvaria/no-real-wait": {
+      "count": 2
+    },
+    "elvaria/timeout-reason": {
+      "count": 2
+    }
+  },
+  "apps/cli/src/tribe/round.spec.ts": {
+    "elvaria/no-real-clock": {
+      "count": 2
+    },
+    "elvaria/no-real-wait": {
+      "count": 2
+    }
+  },
+  "apps/cli/src/upgrade/upgrade.spec.ts": {
+    "elvaria/no-real-wait": {
+      "count": 2
+    }
+  },
+  "packages/eventlog/src/concurrency.spec.ts": {
+    "elvaria/no-real-wait": {
+      "count": 2
+    }
+  },
+  "packages/eventlog/src/crash.spec.ts": {
+    "elvaria/no-real-wait": {
+      "count": 3
+    }
+  },
+  "packages/eventlog/src/tail.spec.ts": {
+    "elvaria/no-real-wait": {
+      "count": 2
+    }
+  },
+  "packages/hooks/src/hook-process.spec.ts": {
+    "elvaria/no-real-clock": {
+      "count": 4
+    },
+    "elvaria/no-real-wait": {
+      "count": 1
+    }
+  },
+  "packages/hooks/src/stdin.spec.ts": {
+    "elvaria/no-real-clock": {
+      "count": 2
+    }
+  },
+  "packages/runner-antigravity/src/live.spec.ts": {
+    "elvaria/no-real-clock": {
+      "count": 1
+    },
+    "elvaria/timeout-reason": {
+      "count": 4
+    }
+  },
+  "packages/runner-antigravity/src/quota.spec.ts": {
+    "elvaria/no-real-clock": {
+      "count": 2
+    }
+  },
+  "packages/runner-antigravity/src/run-files.spec.ts": {
+    "elvaria/no-real-wait": {
+      "count": 1
+    }
+  },
+  "packages/runner-claude/src/live.spec.ts": {
+    "elvaria/timeout-reason": {
+      "count": 5
+    }
+  },
+  "packages/runner-claude/src/run-once.spec.ts": {
+    "elvaria/no-real-wait": {
+      "count": 1
+    }
+  },
+  "packages/runner-claude/src/session.spec.ts": {
+    "elvaria/no-real-wait": {
+      "count": 2
+    }
+  },
+  "packages/runner-codex/src/live-sandbox.spec.ts": {
+    "elvaria/timeout-reason": {
+      "count": 7
+    }
+  },
+  "packages/runner-codex/src/live.spec.ts": {
+    "elvaria/no-real-clock": {
+      "count": 1
+    },
+    "elvaria/timeout-reason": {
+      "count": 4
+    }
+  },
+  "packages/runner-core/src/checks/run-checks.spec.ts": {
+    "elvaria/no-real-clock": {
+      "count": 2
+    },
+    "elvaria/no-real-wait": {
+      "count": 3
+    }
+  },
+  "packages/runner-core/src/plot/setup-signal.spec.ts": {
+    "elvaria/no-real-clock": {
+      "count": 2
+    },
+    "elvaria/no-real-wait": {
+      "count": 1
+    }
+  },
+  "packages/runner-core/src/process/child.spec.ts": {
+    "elvaria/no-real-wait": {
+      "count": 2
+    }
+  },
+  "packages/runner-core/src/process/kill-tree.spec.ts": {
+    "elvaria/no-real-clock": {
+      "count": 2
+    }
+  },
+  "packages/runner-core/src/process/program.spec.ts": {
+    "elvaria/no-real-wait": {
+      "count": 1
+    }
+  },
+  "packages/runner-core/src/process/started-at.spec.ts": {
+    "elvaria/no-real-clock": {
+      "count": 1
+    }
+  },
+  "packages/steward/src/background-cap.spec.ts": {
+    "elvaria/no-real-wait": {
+      "count": 1
+    }
+  },
+  "packages/steward/src/background-checks.spec.ts": {
+    "elvaria/no-real-clock": {
+      "count": 4
+    }
+  },
+  "packages/steward/src/breakers.spec.ts": {
+    "elvaria/no-real-clock": {
+      "count": 2
+    },
+    "elvaria/no-real-wait": {
+      "count": 1
+    }
+  },
+  "packages/steward/src/check-signals.spec.ts": {
+    "elvaria/no-real-clock": {
+      "count": 4
+    },
+    "elvaria/no-real-wait": {
+      "count": 1
+    }
+  },
+  "packages/steward/src/cut-goes-on.spec.ts": {
+    "elvaria/no-real-wait": {
+      "count": 1
+    }
+  },
+  "packages/steward/src/forge-delivery.spec.ts": {
+    "elvaria/no-real-wait": {
+      "count": 1
+    }
+  },
+  "packages/steward/src/forge-stop.spec.ts": {
+    "elvaria/no-real-wait": {
+      "count": 1
+    }
+  },
+  "packages/steward/src/lifecycle.spec.ts": {
+    "elvaria/no-real-clock": {
+      "count": 2
+    },
+    "elvaria/no-real-wait": {
+      "count": 1
+    }
+  },
+  "packages/steward/src/patrol.spec.ts": {
+    "elvaria/no-real-wait": {
+      "count": 1
+    }
+  },
+  "packages/steward/src/scripts-restart.spec.ts": {
+    "elvaria/no-real-clock": {
+      "count": 4
+    }
+  },
+  "packages/steward/src/sessions-left.spec.ts": {
+    "elvaria/no-real-clock": {
+      "count": 1
+    }
+  },
+  "packages/store/src/concurrency.spec.ts": {
+    "elvaria/no-real-wait": {
+      "count": 1
+    },
+    "elvaria/timeout-reason": {
+      "count": 1
+    }
+  },
+  "packages/store/src/io/atomic.spec.ts": {
+    "elvaria/no-real-clock": {
+      "count": 2
+    }
+  },
+  "packages/store/src/io/lock.spec.ts": {
+    "elvaria/no-real-clock": {
+      "count": 2
+    },
+    "elvaria/no-real-wait": {
+      "count": 3
+    }
+  }
+}

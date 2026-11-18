@@ -19,10 +19,10 @@
 // ritual asks for eyes (judgedByEye, `needs_vision`) takes only a judge whose tribe reads images, however few: one that
 // cannot see the screens would judge them blind; and never the machine, as with an objection.
 import { justPartialOf, leftVerifiersOf } from '../breaker/review.ts';
-import { apartFromAll, familyOfCharacter } from '../character/family.ts';
 import { STRONG_JUDGE_MIN_RANK } from '../constants.ts';
 import { byIdleSince } from '../dispatch/roster.ts';
 import { RANKS } from '../schema/common.ts';
+import { apartFromDoers } from './apart-from-doers.ts';
 import { pastAssigneesOf } from './past-assignees-of.ts';
 import { withinPromptLimit } from './prompt-limit.ts';
 import { touchesProtected } from './protected.ts';
@@ -184,9 +184,8 @@ function judgesFor(
   readonly otherFamily: (character: Character) => boolean;
   readonly machineOnly: boolean;
 } {
-  const families = policy.doers.map((doer) => familyOfCharacter(doer, policy.models));
   const otherFamily = (character: Character): boolean =>
-    apartFromAll(familyOfCharacter(character, policy.models), families);
+    apartFromDoers(character, policy.doers, policy.models);
   const machineOnly = policy.same_family === 'machine_only';
   const may = (c: Character): boolean => !machineOnly || otherFamily(c);
   const fit = besidesPassedOver(

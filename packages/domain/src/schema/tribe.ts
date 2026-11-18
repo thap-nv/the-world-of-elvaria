@@ -2,7 +2,13 @@
 import { z } from 'zod';
 
 import { REGISTRY_ID_PATTERN, TribeIdSchema } from '../core/ids.ts';
-import { AbsPathSchema, DateTimeSchema, ModelSlugSchema, NonEmptyStringSchema } from './common.ts';
+import {
+  AbsPathSchema,
+  DateTimeSchema,
+  ModelSlugSchema,
+  NameSchema,
+  NonEmptyStringSchema,
+} from './common.ts';
 import { TribeLookChoiceSchema } from './tribe-look.ts';
 
 /** A built-in adapter: a package of this repo (`claude_code`, `antigravity`, `gemini_cli`, `codex_cli`). */
@@ -32,6 +38,12 @@ const TribeToolSchema = z
     checked_version: NonEmptyStringSchema.optional().meta({
       description:
         'The CLI version the last `elvaria tribe check` with the real CLI passed on; that check pins it, with path and version. The Steward opens no new session for the tribe while its CLI says another version (a CLI that updates itself in place, agy 1.5.6 → 1.5.7 on 2026-11-13). Absent: the pinned version stands in.',
+    }),
+    // Optional, added after v1 (PS-27): a kingdom.json without it stays version 1. A second account of one CLI is one
+    // more tribe, so the work layer needs no rule of its own for it (ADR 0021).
+    config_dir: AbsPathSchema.optional().meta({
+      description:
+        "The config directory of the tribe's CLI, which holds its sign-in (PS-27): the owner chooses the folder and signs in to the CLI there once. Absent: the CLI uses its own default folder. Elvaria only hands the path to the adapter, which runs every process of the tribe in it (Claude Code: CLAUDE_CONFIG_DIR) and must declare capabilities.config_dir; nothing in Elvaria reads or writes inside. Pinned by `elvaria doctor --config-dir <tribe>=<path>`, which refuses a folder inside the kingdom or a territory, and two login tribes of one adapter sharing a folder or an account.",
     }),
   })
   .meta({
@@ -92,6 +104,16 @@ export const TribeSchema = z
       }),
     // Optional, added after v1 (PS-24): a kingdom.json without it stays version 1 and every tribe still has a look.
     look: TribeLookChoiceSchema.optional(),
+    // Optional, added after v1 (PS-27b): a kingdom.json without them stays version 1. Display only (ADR 0025): no
+    // rule of the work layer reads them, and the kingdom schema does not check them across tribes; doctor warns.
+    sibling_of: TribeIdSchema.optional().meta({
+      description:
+        'The root tribe this one is a sibling of (PS-27b): a second account of the same CLI, so the world shows the two as one tribe. Valid when it names another tribe of kingdom.tribes[] that has no sibling_of itself; then the tribe looks as its root does (palette, crest, figure, frame) with the next aura of the pool, its `look` is ignored, and its ordinal (the root is I) follows the order of kingdom.tribes[]. Not valid: the tribe looks as one of its own, and `elvaria doctor` warns. Display only: the Steward, prompts and dispatch never read it (ADR 0025).',
+    }),
+    sibling_name: NameSchema.optional().meta({
+      description:
+        "The sibling's display name (`elvaria tribe look <id> --name`), the owner's words like a tribe's `look.name`; absent: the root's name with the sibling's Roman ordinal (Sao Bạc II). Read only while sibling_of is valid.",
+    }),
   })
   // Only rules that hold whatever the adapter: which sign-ins an adapter runs with is its own declaration, checked
   // by checkTribeAuth (tribe/auth.ts), so the core never asks which CLI a tribe runs (ADR 0021; P1-19).

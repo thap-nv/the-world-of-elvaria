@@ -20,7 +20,9 @@ import { kindName } from './list.ts';
 import { partyFields } from './party.ts';
 import { planViewOf } from './plan-view.ts';
 import { readQuest } from './references.ts';
+import { baseWaitsOf } from './base-wait.ts';
 import { scopeWaitText, scopeWaitsOf } from './scope.ts';
+import { sealText } from './seal-view.ts';
 import { unclaimableLines, unclaimableOf } from './unclaimable.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
@@ -51,7 +53,8 @@ function fields(
     ['cli.quest.field.attempts', `${quest.attempts}/${quest.budget.max_attempts}`],
     ['cli.quest.field.depends_on', listed(quest.depends_on)],
     ...heldFields(ctx, quest),
-    ['cli.quest.field.seal', t(quest.seal_required ? 'cli.yes' : 'cli.no')],
+    // Spared by the kingdom's delegation, or raised by the machine since and why (PS-08b).
+    ['cli.quest.field.seal', sealText(t, quest)],
     // Why the seal, when the work changed a protected path (PS-04, ADR 0026).
     ...(quest.protected_changes === undefined
       ? []
@@ -120,6 +123,9 @@ async function runQuestShow(input: CommandInput, cli: CliContext): Promise<ExitC
       : ['', ...(await unclaimableLines(ctx, registry.ok ? registry.value : undefined, quest, note))];
   const wait = (await scopeWaitsOf(ctx, items)).get(quest.id);
   const scope = wait === undefined ? [] : ['', scopeWaitText(ctx, wait)];
+  const base = (await baseWaitsOf(ctx, items)).has(quest.id)
+    ? ['', ctx.t('cli.quest.base_wait.why', { territory: quest.territory })]
+    : [];
   const journal = await journalOf(ctx, quest);
   const sick = infirmaryNote(ctx, quest, journal);
   const last = await lastRunLines(ctx, quest, journal);
@@ -129,6 +135,7 @@ async function runQuestShow(input: CommandInput, cli: CliContext): Promise<ExitC
     `${quest.id}  ${quest.title}`,
     ...renderTable(rows),
     ...why,
+    ...base,
     ...scope,
     ...sick,
     ...last,

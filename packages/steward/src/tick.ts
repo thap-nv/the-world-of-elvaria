@@ -1,11 +1,12 @@
 // One tick of the Steward (implementation-plan §3.1), and what the log already knows before the first one. Apart from
 // steward.ts since PS-03, which adds the scheduled jobs to both: they run at the end of the tick (§3.16.3).
-import { planTick } from '@elvaria/domain';
+import { baseRedOf, planTick } from '@elvaria/domain';
 import type { KingdomSnapshot, ZonedTime } from '@elvaria/domain';
 
 import { wantedIn } from './background.ts';
 import { mergedOf, recoverForge, settledOf, waitsOf } from './forge/book.ts';
 import { forgeSizesOf } from './forge/sizes.ts';
+import { patrolMoved } from './patrol/again.ts';
 import { recoverPatrol } from './patrol/book.ts';
 import { applyInbox } from './inbox/apply.ts';
 import { asleepFromLog, levelsFromLog, warnedFromLog } from './mana/book.ts';
@@ -65,7 +66,8 @@ export async function recover(deps: StewardDeps, state: State): Promise<void> {
  * be claimed (sessions/claim-prompt-size.ts, fix/claim-step); and the scheduled jobs due that have not started, so the
  * Chancellor's tribe takes no new session while the triage waits for it (fix/acceptance-scope). Then the forge: the
  * deliveries settled, the pull requests that wait, the quests in base (found by a look, or merged by the Steward) and
- * the last looks (PS-08c, PS-08d); the merge queue's sizes and the open pull requests the base branch overtook (PS-09).
+ * the last looks (PS-08c, PS-08d); the merge queue's sizes and the open pull requests the base branch overtook (PS-09);
+ * and (PS-09d) the territories whose default branch the latest patrol found red, with the patrol's quests exempt.
  */
 async function snapshotFor(ctx: Context, state: State, zone: ZonedTime): Promise<KingdomSnapshot> {
   const { world, deps } = ctx;
@@ -90,7 +92,23 @@ async function snapshotFor(ctx: Context, state: State, zone: ZonedTime): Promise
     base_looks: [...state.looks.looked].map(([territory, at]) => ({ territory, at })),
     forge_sizes: await forgeSizesOf(ctx, state.forge),
     forge_stale: [...state.forge.stale],
+    base_red: baseRedOf(state.patrol.health, [...world.territories.values()], [...world.quests.values()]),
   };
+}
+
+/**
+ * The plan of the snapshot, its notices first: a quest someone can take now has its notice withdrawn before the claim
+ * that follows (§3.1); then the plan carried out, and (PS-09d) a red territory whose default branch moved patrolled
+ * again, outside the tick.
+ */
+async function planAndAct(ctx: Context, state: State, snapshot: KingdomSnapshot): Promise<void> {
+  const plan = planTick(snapshot, ctx.deps.clock.now());
+  if (await noteUnclaimable(ctx, state.reported, plan.unclaimable))
+    await writeUnclaimable(ctx.root, state.reported);
+  await noteUnjudgeable(ctx, state.unjudged, plan.unjudgeable);
+  await noteJudgeWaits(ctx, state.judgeWaits, plan.judge_waits);
+  await carryOut(ctx, plan);
+  patrolMoved(ctx, snapshot.base_red ?? []);
 }
 
 /**
@@ -145,13 +163,7 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   await wantTipGraphs(ctx);
   // The soft ceiling: a session past `soft_pct` is told once, before the plan can stop it at `hard_pct` (F, phase 2).
   await noteWrapUps(ctx, state.wrapped);
-  const plan = planTick(await snapshotFor(ctx, state, held.zone), deps.clock.now());
-  // Notices first: a quest someone can take now has its notice withdrawn before the claim that follows (§3.1).
-  if (await noteUnclaimable(ctx, state.reported, plan.unclaimable))
-    await writeUnclaimable(root, state.reported);
-  await noteUnjudgeable(ctx, state.unjudged, plan.unjudgeable);
-  await noteJudgeWaits(ctx, state.judgeWaits, plan.judge_waits);
-  await carryOut(ctx, plan);
+  await planAndAct(ctx, state, await snapshotFor(ctx, state, held.zone));
   // The pids of the sessions opened or ended in this tick are on disk before the next one (sessions/pids.ts).
   await sessions.saved();
   await state.scheduler.step(ctx, held.zone, noticesOf(world, state));

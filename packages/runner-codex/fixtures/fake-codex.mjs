@@ -9,8 +9,9 @@
 // `--output-schema` meets the API's strict structured output (fake-codex-schema.mjs): a schema outside it fails before
 // any item, as the 400 of 2026-11-14 did; under it the answer has every key, null for those the model left out.
 // ELVARIA_FAKE_CODEX_LOG=<file> appends each call's argv, cwd, prompt length and PowerShell policy, one JSON line each,
-// and for a session whether AGENTS.override.md warns about Windows' mxc sandbox.
-// ELVARIA_FAKE_CODEX_LOGIN_HANGS=1 makes `login status` never answer; ELVARIA_FAKE_CODEX_LOGGED_OUT=1 refuses it.
+// and for a session whether AGENTS.override.md warns about Windows' mxc sandbox and its CODEX_HOME.
+// ELVARIA_FAKE_CODEX_LOGIN_HANGS=1 makes `login status` never answer; a home not signed in refuses it, on stderr as
+// Codex does (fake-codex-home.mjs: CODEX_HOME, the calls noted there, ELVARIA_FAKE_CODEX_LOGGED_OUT).
 // Exit codes are set, never forced: process.exit() can cut a piped stdout short.
 import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
@@ -19,6 +20,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { viewImage } from './fake-codex-image.mjs';
+import { noteArgv, signedIn } from './fake-codex-home.mjs';
 import { schemaRefusal, strictAnswer } from './fake-codex-schema.mjs';
 import { appServer, declaredHooks } from './fake-codex-server.mjs';
 
@@ -71,7 +73,7 @@ function before() {
   if (argv[0] === 'login' && argv[1] === 'status') {
     // A busy machine or a network that does not answer: doctor's timeout stops it (fix/busy-machine).
     if (env.ELVARIA_FAKE_CODEX_LOGIN_HANGS === '1') return 'hang';
-    if (env.ELVARIA_FAKE_CODEX_LOGGED_OUT === '1') return refuse(1, 'Not logged in');
+    if (!signedIn()) return refuse(1, 'Not logged in');
     return answer('Logged in using ChatGPT');
   }
   if (argv[0] === 'app-server') return 'server';
@@ -265,6 +267,7 @@ const SCENARIOS = {
 };
 
 async function main() {
+  noteArgv(argv);
   const early = before();
   if (early === 'server') return appServer(configs);
   if (early === 'hang') return SCENARIOS.hang();
@@ -273,7 +276,7 @@ async function main() {
   const override = path.join(process.cwd(), 'AGENTS.override.md');
   // Whether the override warns about Windows' sandbox, which the adapter writes on Windows only.
   const mxc_note = existsSync(override) && readFileSync(override, 'utf8').includes("Codex's mxc sandbox");
-  log({ prompt_chars: prompt.length, mxc_note });
+  log({ prompt_chars: prompt.length, mxc_note, codex_home: env.CODEX_HOME });
   if (prompt.trim() === '') return refuse(1, 'Error: no prompt on stdin');
   core = await import('@elvaria/runner-core');
   print({ type: 'thread.started', thread_id: thread });

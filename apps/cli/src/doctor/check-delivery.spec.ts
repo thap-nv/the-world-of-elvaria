@@ -28,6 +28,12 @@ const pushes: Fetch = () => Promise.resolve(Response.json({ permissions: { push:
 const readsOnly: Fetch = () => Promise.resolve(Response.json({ permissions: { push: false } }));
 const offline: Fetch = () => Promise.reject(new TypeError('fetch failed'));
 
+// A delivery line starts with its mark and "Territory <id>", then names the mode or asks about the forge. The
+// filter reads that start alone: matching words anywhere caught the Build line of a checkout whose path held
+// "push", and other territory lines (its folder, git identity) carry paths too (222).
+const DELIVERY_LINE =
+  /^[✓✗!] Territory \S+(?: delivers by | \(|: (?:git gave|github\.com|that account|could not ask))/u;
+
 describe('elvaria doctor: delivery (PS-08)', () => {
   let dir: TempDir;
   let kingdom: string;
@@ -71,7 +77,7 @@ describe('elvaria doctor: delivery (PS-08)', () => {
     expect(await filesHolding(kingdom, FAKE_TOKEN)).toEqual([]);
     return {
       text,
-      lines: text.split('\n').filter((line) => /delivers|credential|push|github\.com/.test(line)),
+      lines: text.split('\n').filter((line) => DELIVERY_LINE.test(line)),
       asked,
     };
   };

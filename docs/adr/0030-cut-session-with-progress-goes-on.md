@@ -1,7 +1,7 @@
 # ADR 0030 · A character's session cut by a ceiling with progress goes on in a fresh session
 
 - Status: accepted · 2026-11-15
-- Related: [implementation-plan §3.4](../implementation-plan/3.4-breakers.md); rule (F) of [plans/phase-2.md](../plans/phase-2.md); [ADR 0009](0009-mana-model.md), [ADR 0017](0017-one-quest-one-context-three-tiers.md)
+- Related: [implementation-plan §3.4](../implementation-plan/3.4-breakers.md); rule (F) of [docs/plans/phase-2-plan.md](../plans/phase-2-plan.md); [ADR 0009](0009-mana-model.md), [ADR 0017](0017-one-quest-one-context-three-tiers.md)
 
 ## Context
 

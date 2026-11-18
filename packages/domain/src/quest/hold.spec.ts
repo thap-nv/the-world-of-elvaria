@@ -4,8 +4,9 @@ import { describe, expect, it } from 'vitest';
 
 import { QuestSchema } from '../schema/quest/quest.ts';
 import { ELLA, LEVEL, at, questIn, walk } from './__fixtures__/quests.ts';
-import { holdQuest, holdRefusal, isHeld, unholdQuest, unholdRefusal } from './hold.ts';
+import { heldQuestsOf, holdQuest, holdRefusal, isHeld, unholdQuest, unholdRefusal } from './hold.ts';
 import { transition } from './transition.ts';
+import type { QuestId } from '../core/ids.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 import type { QuestStatus } from '../schema/quest/shared.ts';
 
@@ -84,5 +85,32 @@ describe('a held quest and the table', () => {
     const quest = held(questIn('open'));
     expect(walk(quest, ['reassign']).held).toEqual({ at: at(40) });
     expect(walk(quest, ['cancel'])).toMatchObject({ status: 'archived', held: { at: at(40) } });
+  });
+});
+
+describe('heldQuestsOf ((D) of fix/quest-hold)', () => {
+  const quest = (
+    id: string,
+    status: QuestStatus,
+    hold?: { readonly at: string; readonly reason?: string },
+  ): Quest => ({
+    ...questIn(status),
+    id: id as QuestId,
+    ...(hold === undefined ? {} : { held: hold }),
+  });
+
+  it('names the quests that wait on a hold of the owner, oldest hold first, with why when the owner said', () => {
+    const quests = [
+      quest('q_20261118_aaaaa1', 'open', { at: at(41), reason: 'Waits for PS-09d.' }),
+      quest('q_20261118_aaaaa2', 'claimed', { at: at(40) }),
+      quest('q_20261118_aaaaa4', 'open', { at: at(40) }),
+      quest('q_20261118_aaaaa3', 'archived', { at: at(39) }),
+      quest('q_20261118_aaaaa5', 'open'),
+    ];
+    expect(heldQuestsOf(quests)).toEqual([
+      { quest: 'q_20261118_aaaaa2' },
+      { quest: 'q_20261118_aaaaa4' },
+      { quest: 'q_20261118_aaaaa1', reason: 'Waits for PS-09d.' },
+    ]);
   });
 });

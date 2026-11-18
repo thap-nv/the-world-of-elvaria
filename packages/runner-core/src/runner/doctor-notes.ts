@@ -9,6 +9,7 @@ export const DOCTOR_NOTES = [
   'doctor:sign_in_ending',
   'doctor:terms_not_acknowledged',
   'doctor:hook_missing',
+  'doctor:config_dir_ignored',
   'doctor:bad_note',
 ] as const;
 
@@ -27,6 +28,8 @@ export const DOCTOR_NOTE_PARAMS: Readonly<Record<DoctorNoteCode, readonly string
   'doctor:sign_in_ending': ['date', 'login'],
   'doctor:terms_not_acknowledged': [],
   'doctor:hook_missing': ['file'],
+  // The CLI runs in another config directory than the tribe names (PS-27): every session would use the wrong account.
+  'doctor:config_dir_ignored': ['given', 'used'],
   'doctor:bad_note': ['code'],
 };
 

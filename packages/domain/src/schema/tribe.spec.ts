@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { KINGDOM } from '../dispatch/__fixtures__/snapshot.ts';
+import { KingdomSchema } from './kingdom.ts';
 import { ADAPTER_FILE_PATTERN, TribeSchema } from './tribe.ts';
 
 const base = { enabled: true, max_concurrent: 1 };
@@ -39,6 +41,17 @@ describe('TribeSchema', () => {
     );
   });
 
+  it('takes an optional config directory as an absolute path written with / (PS-27)', () => {
+    const claude = { id: 'claude_2', adapter: 'claude_code' };
+    const dirOf = (config_dir: string) => verdictOf({ ...claude, tool: { ...tool, config_dir } });
+    expect(TribeSchema.parse({ ...base, ...claude, tool }).tool).not.toHaveProperty('config_dir');
+    expect(dirOf('C:/Users/owner/.elvaria/accounts/claude_2')).toBe('ok');
+    expect(dirOf('/Users/owner/Elvaria accounts/claude_2')).toBe('ok');
+    for (const relative of ['accounts/claude_2', './claude_2', '~/.elvaria/accounts/claude_2', ''])
+      expect(dirOf(relative)).toBe('tool.config_dir');
+    expect(dirOf(String.raw`C:\Users\owner\.elvaria\accounts\claude_2`)).toBe('tool.config_dir');
+  });
+
   it('asks a paid key for a weekly spend ceiling', () => {
     expect(verdictOf({ id: 'claude', adapter: 'claude_code', tool: paid })).toBe('budget.usd_week');
     expect(verdictOf({ id: 'claude', adapter: 'claude_code', tool: paid, budget: {} })).toBe(
@@ -60,6 +73,22 @@ describe('TribeSchema', () => {
     expect(verdictOf({ id: 'codex', adapter: 'codex_cli', look: { ...look, crest: 'Moon' } })).toBe(
       'look.crest',
     );
+  });
+
+  it('takes an optional root tribe id and sibling name, checked across tribes by no schema (PS-27b)', () => {
+    const claude2 = { id: 'claude_2', adapter: 'claude_code' };
+    expect(verdictOf({ ...claude2, sibling_of: 'claude', sibling_name: 'Sao Đêm' })).toBe('ok');
+    expect(verdictOf({ ...claude2, sibling_of: 'Claude' })).toBe('sibling_of');
+    expect(verdictOf({ ...claude2, sibling_of: 'claude', sibling_name: '' })).toBe('sibling_name');
+    expect(verdictOf({ ...claude2, sibling_of: 'claude', sibling_name: 'x'.repeat(25) })).toBe(
+      'sibling_name',
+    );
+    // Display only (ADR 0025, CT7): a sibling_of that names no tribe, or the tribe itself, never stops kingdom.json.
+    const stray = [
+      { ...base, ...claude2, sibling_of: 'nobody' },
+      { ...base, id: 'mine', adapter: 'claude_code', sibling_of: 'mine' },
+    ];
+    expect(KingdomSchema.safeParse({ ...KINGDOM, tribes: [...KINGDOM.tribes, ...stray] }).success).toBe(true);
   });
 
   it('accepts an adapter file from the kingdom and rejects one elsewhere', () => {

@@ -437,6 +437,30 @@
         "minLength": 1
       }
     },
+    "seal_delegated": {
+      "description": "The quest was made with seal_required false by the kingdom's delegation of the seal (kingdom.delegation.seal), not by its kind's seal_default or the owner's word: the Steward merges its pull request without the seal while seal_required stays false and the delegation still covers it. The owner's edit of seal_required drops it.",
+      "const": true
+    },
+    "seal_raised": {
+      "description": "Why the machine raised the seal of a quest with seal_delegated (PS-08b), gathered over its submits and its passing verdict, in a fixed order; set with seal_required true and never lowered.",
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "protected_paths",
+          "above_level",
+          "out_of_scope",
+          "diff_size",
+          "same_family_judge",
+          "machine_judge",
+          "objection",
+          "rank_above",
+          "out_of_delegation",
+          "suspended"
+        ]
+      }
+    },
     "seal": {
       "type": "object",
       "additionalProperties": false,
@@ -807,7 +831,18 @@
       }
     },
     {
+      "$comment": "(PS-09b) The merge queue's merge quest (party_role merge, created_by patrol) of a quest outside a party has no contract: its party is that quest's own id.",
       "if": {
+        "not": {
+          "properties": {
+            "party_role": {
+              "const": "merge"
+            },
+            "created_by": {
+              "const": "patrol"
+            }
+          }
+        },
         "required": [
           "party_role"
         ],

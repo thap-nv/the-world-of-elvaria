@@ -14,10 +14,10 @@ import type { MemoFields } from '../memos/file.ts';
 import { moveAndRing } from '../notices.ts';
 import { step } from '../record.ts';
 import { runOf } from '../review/judge.ts';
+import { lineOf, submitSealOf } from '../seal.ts';
 import { breakAssignee } from './breaker.ts';
 import { commitPlot } from './commit.ts';
 import { checksLetterAfter, noteUnchangedLetter } from './letter.ts';
-import { outOfScopeIn } from './out-of-scope.ts';
 import { applyAssigneePatch } from './patch.ts';
 import type { Context } from '../context.ts';
 import type { PlotCommit } from './commit.ts';
@@ -81,14 +81,16 @@ export async function submitWork(
   const changes =
     committed !== undefined && 'protected_changes' in committed ? committed.protected_changes : [];
   const mark = submitted === undefined ? undefined : protectedMarkOf(submitted, changes);
+  const seal = submitted === undefined ? undefined : await submitSealOf(ctx, submitted, changes);
   return moveAndRing(ctx, {
     quest,
     event: { type: 'submit', ...runOf(running, result) },
     actor: 'runner',
     edits: { [running.character]: step('submit') },
-    // The quest's pending objection (PS-22) and the protected paths the work changed (PS-04).
-    before: { ...before, ...mark },
-    ...(submitted === undefined ? {} : { out_of_scope: await outOfScopeIn(ctx, submitted) }),
+    // The quest's pending objection (PS-22), the protected paths the work changed (PS-04), and the seal the
+    // delegation's limits raise (PS-08b).
+    before: { ...before, ...mark, ...seal?.before },
+    ...(seal === undefined ? {} : lineOf(seal)),
   });
 }
 

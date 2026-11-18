@@ -6,7 +6,8 @@
 // the ones its plot did not start from before each session of its assignee (fix/council-run-gaps (d)). Each merge that
 // takes a branch in or stops at one leaves a `plot.merged` line in the log and the quest's journal (P1-21 (d)); a merge
 // quest's that stops rings the bell. (PS-09) A merge quest's merge whose conflicts all lie in the territory's hot files
-// is resolved by their rules before its knight is called, and the generators run once a `regenerate` rule kept a side.
+// is resolved by their rules before its knight is called, and the generators run once a `regenerate` rule kept a side,
+// or once the knight concluded a conflict on a generated file (fix/merge-quest-followups (n)): before its checks.
 import { PLOT_MERGE_STOPS, plotBaseOf } from '@elvaria/domain';
 import type { Quest, Territory } from '@elvaria/domain';
 import type { MergeOutcome, PrepareOptions } from '@elvaria/runner-core';
@@ -83,20 +84,30 @@ export async function noteMerge(ctx: Context, quest: Quest, outcome: MergeOutcom
 }
 
 /**
+ * Whether the generators run after `outcome`: a `regenerate` rule kept a side in it, or it names the generated files
+ * an earlier merge left for later, now concluded (fix/merge-quest-followups (n)); never while a merge stopped, whose
+ * conflicts the generators' commit would conclude (runner-core keeps those files for the merge after it).
+ */
+const generatesNow = (outcome: MergeOutcome): boolean =>
+  outcome.stop === undefined &&
+  (outcome.regenerate !== undefined || outcome.resolved?.some(({ rule }) => rule === 'regenerate') === true);
+
+/**
  * Merges what a merge quest's plot does not hold yet: its parts, then the base branch (PS-08e); or another quest's
  * dependencies. A merge that stops is said once in the log: a conflict waits for the knight (`git status` shows it),
  * anything else for the owner. Once the base branch or a dependency is in, the plot is prepared again, so
  * `commands.setup` runs on what it holds now (the lockfile may have changed; never while a merge waits in progress),
- * with the quest's `secrets` as at its first prepare.
+ * with the quest's `secrets` as at its first prepare. The machine's run merges so too (fix/merge-quest-followups
+ * (m)), and reads the outcome; undefined when there was nothing to merge.
  */
 export async function mergeParts(
   ctx: Context,
   quest: Quest,
   plot: Quest['plot'],
   secrets?: Secrets,
-): Promise<void> {
+): Promise<MergeOutcome | undefined> {
   const { branches, base, dependencies } = mergesOf(ctx, quest);
-  if (branches.length === 0 && base === undefined) return;
+  if (branches.length === 0 && base === undefined) return undefined;
   const shared = ctx.world.territories.get(quest.territory)?.shared_paths ?? [];
   const how = dependencies === true ? { dependencies } : { shared };
   const outcome = await ctx.deps.plots.merge(plot, branches, base, how);
@@ -105,22 +116,23 @@ export async function mergeParts(
     base ?? (outcome.merged.length > 0 ? ctx.world.territories.get(quest.territory) : undefined);
   if (territory !== undefined)
     await ctx.deps.plots.prepare(quest, territory, plotOptionsOf(ctx, quest, secrets));
-  if (territory !== undefined && outcome.resolved?.some(({ rule }) => rule === 'regenerate') === true)
+  if (territory !== undefined && generatesNow(outcome))
     await regenerate(ctx, { ...quest, plot }, territory, secrets);
-  if (outcome.stop === undefined) return;
+  if (outcome.stop === undefined) return outcome;
   const { reason, branch, detail } = outcome.stop;
   const where = branch === undefined ? '' : ` at ${branch}`;
   ctx.deps.log.warn(
     `steward: ${quest.id}: merging ${dependencies === true ? 'its dependencies' : 'the parts'} stopped${where} (${reason}): ${detail.replaceAll('\n', ', ')}; still to merge: ${outcome.pending.join(', ')}`,
   );
+  return outcome;
 }
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
 /**
- * A `regenerate` rule kept the merge quest's side of a generated file (PS-09): commands.generate writes it anew, and
- * its commit goes before the knight's session. One that fails is said to the owner; the checks then find the file
- * stale, as they would have before the rule.
+ * A `regenerate` rule kept the merge quest's side of a generated file (PS-09), or its knight did by hand:
+ * commands.generate writes it anew, and its commit goes before the knight's session or the checks. One that fails is
+ * said to the owner; the checks then find the file stale, as they would have before the rule.
  */
 async function regenerate(
   ctx: Context,

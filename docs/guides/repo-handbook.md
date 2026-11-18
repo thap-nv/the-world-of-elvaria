@@ -50,6 +50,7 @@ pnpm check               # mọi thứ CI chạy (trừ audit): lint, format:che
                          #   schemas --check, docs:gen --check, docs:check, i18n:check
 pnpm check:fast          # typecheck + test + boundaries (husky pre-push)
 pnpm lint && pnpm typecheck  # lint tự cho eslint heap 8 GB, không cần NODE_OPTIONS
+pnpm exec eslint --prune-suppressions <file>   # sau khi sửa một chỗ có trong eslint-suppressions.json (.claude/rules/tests.md)
 pnpm test                # vitest của scripts/ và .claude/hooks/, rồi từng package; một package: pnpm --filter @elvaria/<key> test
 pnpm boundaries          # dependency-cruiser theo packages/config/boundaries.mjs
 pnpm schemas             # sinh docs/schemas/*.schema.json từ zod; --check: so, không ghi, exit 1 khi lệch

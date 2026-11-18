@@ -1,10 +1,11 @@
 // `elvaria memo list [--all]`: the letters (memos) characters wrote outside their quests, oldest first (PS-02). Open
-// ones only, unless `--all`. Reads memos/, writes nothing.
+// ones only, unless `--all`. Reads memos/, writes nothing. (PS-09c) Each says where it went, `quests` for the
+// Steward's advisory, whose writer is the Steward.
 import { flagOption } from '../args.ts';
 import { EXIT } from '../command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { printListing } from '../listing.ts';
-import { MEMO_STATE_LABEL, excerpt } from './memo.ts';
+import { MEMO_STATE_LABEL, excerpt, memoFromOf } from './memo.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 
 async function runMemoList(input: CommandInput, cli: CliContext): Promise<ExitCode> {
@@ -21,6 +22,7 @@ async function runMemoList(input: CommandInput, cli: CliContext): Promise<ExitCo
       'cli.column.kind',
       'cli.column.status',
       'cli.column.from',
+      'cli.column.to',
       'cli.column.quest',
       'cli.column.text',
     ],
@@ -28,7 +30,8 @@ async function runMemoList(input: CommandInput, cli: CliContext): Promise<ExitCo
       memo.id,
       memo.kind,
       ctx.t(MEMO_STATE_LABEL[memo.state]),
-      memo.from,
+      memoFromOf(ctx, memo),
+      memo.to.route,
       memo.quest,
       excerpt(memo.body),
     ]),

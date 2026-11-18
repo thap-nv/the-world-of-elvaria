@@ -88,6 +88,7 @@ Kiểm tra máy đã sẵn sàng chưa: registry, git, CLI của từng tộc (v
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
 | `--tool <tribe>=<path>` | Đường dẫn CLI của một tộc khi nó không có trên PATH, ví dụ claude=C:/…/claude.exe; lặp lại cho nhiều tộc. |
+| `--config-dir <tribe>=<folder>` | Thư mục cấu hình của CLI của một tộc, nơi CLI giữ đăng nhập, ví dụ claude_2=C:/Users/you/.elvaria/accounts/claude_2: đăng nhập CLI ở đó một lần, và tộc chạy trên tài khoản đó. Thư mục rỗng (claude_2=) thì bỏ trường; lặp lại cho nhiều tộc. |
 | `--pin` | Ghim lại phiên bản và đường dẫn CLI vừa tìm thấy khi chúng khác bản đã ghim, cho mọi tộc như vậy. Lệnh này không kiểm gì: Nhiếp chính giữ một tộc tới khi elvaria tribe check qua trên bản mới, và lệnh đó ghim riêng một tộc khi qua. |
 | `--enable <tribe>` | Kiểm một tộc đang tắt như mọi tộc đang bật và chỉ bật nó trong kingdom.json (enabled: true) khi không có lỗi nào. Tộc có adapter là file của bạn thì bật bằng elvaria tribe check. |
 | `--acknowledge-terms <tribe>` | Ghi nhận bạn đã đọc và chấp nhận điều khoản của nhà cung cấp cho tộc này (ADR 0018). |
@@ -105,7 +106,8 @@ Thêm một tộc: một adapter (có sẵn, hoặc file adapters/<name>.mjs tro
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
 | `<id>` | Id của tộc mới, ví dụ codex: chữ thường, chữ số và _, bắt đầu bằng chữ. |
-| `--adapter <adapter>` | claude_code, antigravity, gemini_cli, codex_cli, hoặc adapters/<name>.mjs: một file bạn đặt trong thư mục adapters của vương quốc, export createAdapter(kit). (bắt buộc) |
+| `--adapter <adapter>` | claude_code, antigravity, gemini_cli, codex_cli, hoặc adapters/<name>.mjs: một file bạn đặt trong thư mục adapters của vương quốc, export createAdapter(kit). Có --sibling-of thì bỏ được: mặc định là adapter của tộc gốc. |
+| `--sibling-of <root>` | Tộc gốc: tộc mới là tài khoản thứ hai của cùng CLI (một chi), mang ngoại hình của tộc gốc với hào quang kế tiếp; --adapter mặc định là adapter của tộc gốc. |
 | `--max-concurrent <n>` | Số phiên tài khoản chạy cùng lúc (mặc định 1). |
 
 ## `elvaria tribe check`
@@ -200,6 +202,7 @@ Xem tuần tra hằng ngày có canh nhánh gốc của lãnh thổ không (chec
 | `<id>` | Id của lãnh thổ. |
 | `--on` | Bật tuần tra (ghi territory.patrol, giữ phần đã có). |
 | `--off` | Tắt tuần tra (xóa territory.patrol, cả scans và follow_up). |
+| `--now` | Xin Nhiếp chính tuần tra lãnh thổ ngay (lệnh hộp thư patrol): sau khi tự sửa nhánh gốc đang đỏ, hay khi một check chập chờn; xanh thì lãnh thổ nhận việc lại ở nhịp kế. |
 
 ## `elvaria character add`
 

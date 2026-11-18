@@ -4,15 +4,18 @@
 // the quest went to the infirmary at its start (`breaker:no_session`). Only a character of a tribe with such a limit
 // is measured (agy on Windows: `capabilities.prompt_max_chars`, in ctx.limits), of the quest's class, only for an open
 // session-tier quest a character takes whose dependencies are done, and once per quest and character: the length is
-// kept until the quest or its log change. A kingdom without such a tribe measures nothing.
+// kept until the quest or its log change. A kingdom without such a tribe measures nothing. The prompt is the one the
+// session would get: a letter too long to copy goes by its path (letter-fit.ts). A quest its assignee goes on with
+// has nobody to choose, so it is not measured here: its session names the letter's path as it opens, when it must.
 import { currentRun, machineMergeDue, questFinished } from '@elvaria/domain';
 import type { Character, ClaimPrompt, Quest } from '@elvaria/domain';
 
+import { fittedInput } from './letter-fit.ts';
 import { startContinuationOf } from './open.ts';
 import { userPromptLengthOf } from './request.ts';
 import type { Context } from '../context.ts';
 import type { PromptSizes } from '../review/prompt-size.ts';
-import type { SessionInput } from './input.ts';
+import type { LengthOf } from './letter-fit.ts';
 
 /** The characters that may be measured: not in the Temple, of a tribe with a prompt limit here. */
 const limitedCharacters = (ctx: Context): Character[] =>
@@ -34,9 +37,6 @@ function dueClaim(ctx: Context, quest: Quest): boolean {
 const keyOf = (quest: Quest, character: Character): string =>
   [quest.id, quest.updated_at, quest.attempt_log.length, character.id].join('|');
 
-/** How a prompt is measured: userPromptLengthOf, or a stand-in in the specs. */
-type LengthOf = (ctx: Context, input: SessionInput) => Promise<number>;
-
 async function measure(
   ctx: Context,
   { quest, character }: { quest: Quest; character: Character },
@@ -56,7 +56,8 @@ async function measure(
       cwd: territory.path,
       continuation: await startContinuationOf(ctx, quest),
     } as const;
-    return await lengthOf(ctx, input);
+    // As the session would open: a letter too long to copy goes by its path (letter-fit.ts).
+    return (await fittedInput(ctx, input, lengthOf)).chars ?? (await lengthOf(ctx, input));
   } catch (error) {
     // The session would fail the same way when it opens: the log says why there, and nobody is passed over.
     const message = error instanceof Error ? error.message : String(error);

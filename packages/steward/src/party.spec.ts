@@ -34,6 +34,8 @@ afterEach(async () => {
 });
 
 describe('a party, from its contract to its merge quest (P1-18)', () => {
+  // A whole party on real git: the contract, its parts on its branch, their merge, the checks and the judge:
+  // 21 s beside 13 other slow specs on Windows (2026-11-18), room for a busy machine.
   it('opens the parts on the contract branch, merges them, and waits for the seal, judged from outside', async () => {
     current = await partyBench({
       'Book a room': {
@@ -135,6 +137,8 @@ describe('a party, from its contract to its merge quest (P1-18)', () => {
     expect(mergeNote).toContain(`merge --no-ff quest/${merge.id}`);
   }, 120_000);
 
+  // A party on real git whose machine merge a judge fails, then a knight's session: 18 s beside 13 other slow
+  // specs on Windows (2026-11-18), room for a busy machine.
   it("opens the machine's merge a judge failed for a knight, whose session reads the verdict (P1-18 (h))", async () => {
     // The contract's judge passes it; the merge quest shares its title, and its first judge fails the machine's run.
     current = await partyBench(
@@ -172,6 +176,8 @@ describe('a party, from its contract to its merge quest (P1-18)', () => {
     expect(knight?.prompt.user).toContain(FAIL.notes);
   }, 120_000);
 
+  // A party on real git with a conflict between parts, a run of its knight, and a part sent back and merged
+  // again: 19 s beside 13 other slow specs on Windows (2026-11-18), the most runs of the file.
   it("leaves a conflict to the merge quest's knight, and sends it back for a part still not merged", async () => {
     const shared = 'apps/shared/rooms.ts';
     current = await partyBench({
@@ -209,6 +215,8 @@ describe('a party, from its contract to its merge quest (P1-18)', () => {
     expect(third.ok && third.value).toMatchObject({ result: 'pass' });
     expect(await readFile(path.join(worktreeOf(merge), shared), 'utf8')).toBe('export const n = 123;\n');
     const stopped = `${merge.id}: merging the parts stopped at quest/q_\\d{8}_[0-9a-z]{6} \\(conflict\\): ${shared}`;
-    expect(kingdom.warnings.join('\n')).toMatch(new RegExp(`${stopped}; a knight takes the quest`));
+    const warned = kingdom.warnings.join('\n');
+    expect(warned).toMatch(new RegExp(`${stopped}; still to merge: `));
+    expect(warned).toContain(`${merge.id}: the machine's run stopped (conflict); a knight takes the quest`);
   }, 180_000);
 });
