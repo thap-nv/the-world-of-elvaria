@@ -110,4 +110,34 @@ describe('estimatedReadings', () => {
       ['claude', 'weekly', 5],
     ]);
   });
+
+  it('counts what a tribe check spent outside every quest against the pool of its model (run (221) (b))', () => {
+    const outside = [
+      { tribe: CLAUDE, model: 'claude-sonnet-5-5', at: ago(1), tokens: 300 },
+      { tribe: CLAUDE, model: 'claude-sonnet-5-5', at: ago(6), tokens: 1000 },
+      { tribe: GEMINI, model: 'gemini-4-argon-medium', at: ago(1), tokens: 5000 },
+    ];
+    const readings = estimatedReadings(source([run('thorn', 2, 1, 200)], { outside }), NOW, NOW_ISO);
+    // 5 h: 200 of the quest and 300 of the check out of 1000; the week adds the check of 6 h ago, out of 10 000.
+    expect(used(readings)).toEqual([
+      ['claude', 'five_hour', 50],
+      ['claude', 'weekly', 15],
+    ]);
+  });
+
+  it('charges a check nowhere when no character draws on its pool, or when its tribe is measured in minutes', () => {
+    const gemini = {
+      id: GEMINI,
+      pools: { gemini_models: { enabled: true }, claude_gpt_models: { enabled: true } },
+      budget: { tokens_5h: 1000, minutes_5h: 120 },
+    };
+    const outside = [
+      { tribe: GEMINI, model: 'claude-sonnet-5-5', at: ago(1), tokens: 900 },
+      { tribe: GEMINI, model: 'gemini-4-argon-medium', at: ago(1), tokens: 900 },
+    ];
+    const tokens = source([], { tribes: [gemini], outside, limits: { [GEMINI]: { mana_source: 'usage' } } });
+    expect(used(estimatedReadings(tokens, NOW, NOW_ISO))).toEqual([['gemini_models', 'five_hour', 90]]);
+    const minutes = { ...tokens, limits: { [GEMINI]: { mana_source: 'elapsed_time' as const } } };
+    expect(used(estimatedReadings(minutes, NOW, NOW_ISO))).toEqual([['gemini_models', 'five_hour', 0]]);
+  });
 });

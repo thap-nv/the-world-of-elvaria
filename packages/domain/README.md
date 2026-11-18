@@ -252,7 +252,8 @@ patrol`); `partyOf` counts the quest a party is named after, `partyStatusOf` and
   account's window as a reading); `decideManaState(readings, key, cfg, now)` → `ok | warning | closed | asleep` of
   one gauge, `manaStateOf` of a character (every gauge that binds it), against `min(cap_pct, 100 − king_reserve_pct)`;
   `asleepFor` (a gauge asleep binds the character), `spentFor` (the spent gauges a usage limit put to sleep);
-  `estimatedReadings` (`estimate`: the sessions' tokens, or minutes for `mana_source: elapsed_time`, in five hours
+  `estimatedReadings` (`estimate`: the sessions' tokens, with what a tribe check spent outside every quest
+  (`outside`, run (221) (b)), or minutes for `mana_source: elapsed_time`, in five hours
   and seven days against `tribes[].budget`, for a pool and window the account gives no figure for; never spent);
   `warningsOf` (a gauge warns once at `warn_margin_pct` below the cap); `nextProbeOf`, when a sleeping gauge is
   probed next (just after a known reset, soon again when the account is late). (P1-48) `sessionShareOf` measures

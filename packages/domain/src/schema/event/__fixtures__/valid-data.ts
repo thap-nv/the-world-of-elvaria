@@ -153,4 +153,14 @@ export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
   'upgrade.switched': { from: null, to: SHA_NEW },
   'upgrade.rolled_back': { from: SHA_NEW, to: SHA_OLD },
   'upgrade.failed': { to: SHA_NEW, step: 'doctor', reason: 'exit:1' },
+  'tribe.checked': {
+    tribe: 'gemini',
+    model: 'gemini-3.8-flash-high',
+    outcome: 'failed',
+    tokens: 21_216,
+    checks: [
+      { check: 'doctor', outcome: 'passed', tokens: 0 },
+      { check: 'forbidden_command', outcome: 'failed', tokens: 21_216 },
+    ],
+  },
 };
