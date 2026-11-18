@@ -35,7 +35,8 @@ afterEach(() => {
 const KILLED: RunResult = {
   outcome: 'killed',
   exit_code: null,
-  usage: { tokens: 0 },
+  // What the session spent before its kill, as the real agy ran on past its ceiling (2026-11-13).
+  usage: { tokens: 8037 },
   session_id: 'hung',
   duration_ms: 0,
   permission_denials: [],
@@ -72,8 +73,10 @@ function hungRunner(): AgentRunner {
 describe('a check that fails', () => {
   it("kills its session's process tree, then hands its workspace over before removing it", async () => {
     const handed: { kept: FailedWorkspace; runs: boolean; gone: boolean }[] = [];
+    const spent: number[] = [];
     const target = {
       name: 'hung',
+      onSpent: (tokens: number) => spent.push(tokens),
       timeout_ms: 300,
       createRunner: hungRunner,
       onFailed: async (kept: FailedWorkspace) => {
@@ -92,6 +95,8 @@ describe('a check that fails', () => {
     ]);
     expect(await goneWithin(tree?.parent.pid ?? 0)).toBe(true);
     expect(await exists(handed[0]?.kept.dir ?? '')).toBe(false);
+    // The session it gave up on still says what it spent once killed (run (221) (b)).
+    expect(spent).toEqual([8037]);
   });
 
   it('hands over the workspace of a session that breaks the contract, and none of one that keeps it', async () => {

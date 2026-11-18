@@ -29,6 +29,11 @@ import {
   MemoFiledDataSchema,
   MemoRoutedDataSchema,
 } from './memo-data.ts';
+import {
+  DelegationResumedDataSchema,
+  DelegationSuspendedDataSchema,
+  QuestEscapedDataSchema,
+} from './delegation-data.ts';
 import { DigestWrittenDataSchema, ScheduleRanDataSchema } from './schedule-data.ts';
 import { PatrolRanDataSchema } from './patrol-data.ts';
 import {
@@ -37,6 +42,7 @@ import {
   UpgradeStartedDataSchema,
   UpgradeSwitchedDataSchema,
 } from './upgrade-data.ts';
+import { TribeCheckedDataSchema } from './tribe-data.ts';
 import type { EventType } from './event-types.ts';
 
 // Where it always was for the Steward and the specs (P1-21); plot-data.ts holds it since P1-44.
@@ -214,6 +220,9 @@ export const EVENT_DATA_SCHEMAS = {
   'delivery.pushed': DeliveryPushedDataSchema,
   'delivery.merged': DeliveryMergedDataSchema,
   'delivery.failed': DeliveryFailedDataSchema,
+  'quest.escaped': QuestEscapedDataSchema,
+  'delegation.suspended': DelegationSuspendedDataSchema,
+  'delegation.resumed': DelegationResumedDataSchema,
   'territory.attached': TerritoryChangeDataSchema,
   'territory.surveyed': TerritoryChangeDataSchema,
   'territory.health': TerritoryChangeDataSchema,
@@ -231,6 +240,7 @@ export const EVENT_DATA_SCHEMAS = {
   'upgrade.switched': UpgradeSwitchedDataSchema,
   'upgrade.rolled_back': UpgradeRolledBackDataSchema,
   'upgrade.failed': UpgradeFailedDataSchema,
+  'tribe.checked': TribeCheckedDataSchema,
 } as const satisfies Partial<Record<EventType, z.ZodType>>;
 
 export type TypedEventType = keyof typeof EVENT_DATA_SCHEMAS;

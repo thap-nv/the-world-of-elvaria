@@ -103,7 +103,10 @@ describe('unsealedSection', () => {
       commands: [],
     });
     expect(unsealedSection(t, metrics)).toMatchObject({
-      table: { header: ['Territory', 'Merged', 'Without the seal'], rows: [['dc1', '2', '1']] },
+      table: {
+        header: ['Territory', 'Merged', 'Without the seal', 'Of them, named by an escape'],
+        rows: [['dc1', '2', '1', '0']],
+      },
     });
   });
 });

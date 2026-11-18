@@ -14,7 +14,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria doctor` | Kiểm tra máy đã sẵn sàng chưa: registry, git, CLI của từng tộc (và trên Windows, PowerShell có chạy script không, cho tộc mà phiên chạy lệnh trong nó), các lãnh thổ và chương trình mà lệnh của chúng gọi, kho bảo vật, phiên còn sót. |
 | `elvaria tribe list` | Liệt kê các tộc: adapter, bật hay tắt, CLI đã ghim và kiểu đăng nhập, hạng tối đa và vùng canh tộc được nhận, năng lực adapter khai. |
 | `elvaria tribe add <id>` | Thêm một tộc: một adapter (có sẵn, hoặc file adapters/<name>.mjs trong vương quốc) và tài khoản của chính bạn. Tộc mới tắt; nhân vật cũ không đổi. |
-| `elvaria tribe check <id>` | Chạy bộ test hợp đồng với adapter của một tộc và kiểm kiểu đăng nhập; bật tộc khi qua. Với CLI thật, bộ này chạy một việc nhỏ, một lệnh push bị cấm, một lần kill và một lần thăm dò, tốn chút mana, và khi qua thì ghim đường dẫn và phiên bản của CLI đó cho riêng tộc này. |
+| `elvaria tribe check <id>` | Chạy bộ test hợp đồng với adapter của một tộc và kiểm kiểu đăng nhập; bật tộc khi qua. Với CLI thật, bộ này chạy một việc nhỏ, một lệnh push bị cấm, một lần kill và một lần thăm dò, tốn chút mana: nó in số token của từng phép và tổng, và ghi tổng vào nhật ký cho ước lượng mana. Khi qua thì nó ghim đường dẫn và phiên bản của CLI đó cho riêng tộc này. |
 | `elvaria tribe disable <id>` | Tắt một tộc: không nhận việc mới; quest đang chạy chạy xong, quest đang chờ thì chờ. elvaria tribe check bật lại. |
 | `elvaria tribe look <id>` | Xem ngoại hình của một tộc (tên, bảng màu, huy hiệu, dáng người, hào quang, khung chân dung) và nguồn của nó; kèm tùy chọn thì ghi lựa chọn của ngài vào kingdom.json. Ngoại hình chỉ để hiển thị. |
 | `elvaria territory add <path>` | Gắn một repo hoặc thư mục vào vương quốc (mở cõi). |
@@ -22,6 +22,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria territory check <id>` | Chấm một lãnh thổ: thử commands.setup và mọi check trên một đất sạch ở đầu nhánh gốc, rồi in thẻ điểm (0 mana). |
 | `elvaria territory graph <id>` | Dựng đồ thị code của một lãnh thổ ở một commit (0 mana) và hỏi nó một câu. |
 | `elvaria territory delivery <id>` | Xem lãnh thổ giao nhánh của quest xong bằng cách nào (manual, pr, pr_merge), hoặc đổi nó. |
+| `elvaria territory delegation <id>` | Xem ủy quyền dấu trên một lãnh thổ (phạm vi ủy quyền của vương quốc, lãnh thổ có tự merge không, cầu dao có ngừng nó không, từ quest nào và vì sao), hoặc bật lại nó. 0 mana. |
 | `elvaria territory patrol <id>` | Xem tuần tra hằng ngày có canh nhánh gốc của lãnh thổ không (check của nó, 0 mana), hoặc bật, tắt nó. |
 | `elvaria character add <id>` | Triệu hồi một nhân vật: nghề, tộc, model và cấp ban đầu. |
 | `elvaria character list` | Liệt kê các nhân vật. |
@@ -42,6 +43,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria quest retry <quest>` | Mở lại một nhiệm vụ ở trạm quân y với đủ lượt thử như mới, cho mọi nhân vật đúng nghề đang rảnh hoặc cho nhân vật --to chỉ định, hoặc đưa nhiệm vụ có người chấm cứ rời đi không ra phán quyết, hay chỉ chấm dở, về chờ nghiệm thu (lệnh retry; lệnh reassign khi có --to). |
 | `elvaria quest submit <quest>` | Gửi việc của một nhiệm vụ ở trạm quân y sang nghiệm thu, cùng lượt và lượt thử, khi nhân vật đã làm xong việc trước lúc cầu dao cắt phiên (lệnh submit): Nhiếp chính commit phần còn trong đất riêng qua hook của lãnh thổ, chạy check, rồi người chấm mới đọc. Trượt thì nhiệm vụ về lại đúng nhân vật đó. |
 | `elvaria quest deliver <quest>` | Giao lại nhánh của một nhiệm vụ đã xong tới forge của lãnh thổ (push rồi tìm hoặc mở PR), sau khi lần giao trước dừng (lệnh deliver). |
+| `elvaria quest escaped <quest>` | Báo một lỗi lọt vào nhánh gốc theo một quest đã vào đó (lệnh report_escape): sổ đo đếm nó; trên quest được merge không qua dấu, ủy quyền dấu của lãnh thổ đó ngừng tới khi bạn bật lại. |
 | `elvaria quest reassign <quest>` | Giao lại một nhiệm vụ cho nhân vật khác, hoặc cho nhân vật bạn chỉ định (lệnh reassign). |
 | `elvaria seal <quest>` | Đóng dấu việc đang chờ dấu vua: nhiệm vụ xong (lệnh seal; nặng bằng ba phán quyết). |
 | `elvaria return <quest>` | Trả việc đang chờ dấu vua về người làm, kèm ghi chú (lệnh return; nặng bằng ba phán quyết). |
@@ -112,7 +114,7 @@ Thêm một tộc: một adapter (có sẵn, hoặc file adapters/<name>.mjs tro
 
 ## `elvaria tribe check`
 
-Chạy bộ test hợp đồng với adapter của một tộc và kiểm kiểu đăng nhập; bật tộc khi qua. Với CLI thật, bộ này chạy một việc nhỏ, một lệnh push bị cấm, một lần kill và một lần thăm dò, tốn chút mana, và khi qua thì ghim đường dẫn và phiên bản của CLI đó cho riêng tộc này.
+Chạy bộ test hợp đồng với adapter của một tộc và kiểm kiểu đăng nhập; bật tộc khi qua. Với CLI thật, bộ này chạy một việc nhỏ, một lệnh push bị cấm, một lần kill và một lần thăm dò, tốn chút mana: nó in số token của từng phép và tổng, và ghi tổng vào nhật ký cho ước lượng mana. Khi qua thì nó ghim đường dẫn và phiên bản của CLI đó cho riêng tộc này.
 
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
@@ -192,6 +194,15 @@ Xem lãnh thổ giao nhánh của quest xong bằng cách nào (manual, pr, pr_m
 | `--merge-method <method>` | merge (merge commit, mặc định) hoặc squash. |
 | `--required-check <name>` | Một check run hay status context mà pr_merge chờ; lặp lại cho nhiều cái; thay cả danh sách. |
 | `--timeout <minutes>` | Số phút pr_merge chờ các check bắt buộc (mặc định 60). |
+
+## `elvaria territory delegation`
+
+Xem ủy quyền dấu trên một lãnh thổ (phạm vi ủy quyền của vương quốc, lãnh thổ có tự merge không, cầu dao có ngừng nó không, từ quest nào và vì sao), hoặc bật lại nó. 0 mana.
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<id>` | Id của lãnh thổ. |
+| `--resume` | Bật lại ủy quyền mà cầu dao đã ngừng (lệnh hộp thư resume_delegation): quest mới ở đó lại có thể được miễn dấu. |
 
 ## `elvaria territory patrol`
 
@@ -388,6 +399,15 @@ Giao lại nhánh của một nhiệm vụ đã xong tới forge của lãnh th�
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
 | `<quest>` | id của nhiệm vụ, ví dụ q_20261106_7k3m2a. |
+
+## `elvaria quest escaped`
+
+Báo một lỗi lọt vào nhánh gốc theo một quest đã vào đó (lệnh report_escape): sổ đo đếm nó; trên quest được merge không qua dấu, ủy quyền dấu của lãnh thổ đó ngừng tới khi bạn bật lại.
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<quest>` | id của nhiệm vụ, ví dụ q_20261106_7k3m2a. |
+| `--note <text>` | Lỗi gì đã lọt, vài chữ (giữ trong log; territory delegation và bản tấu in nó). |
 
 ## `elvaria quest reassign`
 

@@ -6,6 +6,7 @@ import type { Bell, ManaGaugeNotice, Notice } from '@elvaria/steward';
 import { gaugesOf } from '../digest/markdown.ts';
 import { detailLines, whyLines } from '../quest/infirmary.ts';
 import { stretchOf } from '../quest/unclaimable.ts';
+import { suspensionCause } from '../territory/delegation-view.ts';
 import type { CliIo } from '../io.ts';
 
 /** Why an open quest waits, with the sentences `quest show` uses for the same notice (P1-03). */
@@ -59,10 +60,14 @@ function manaLine(t: Translate, notice: ManaNotice): string {
   return t('cli.run.notice.mana_warning', { gauge, used_pct: notice.used_pct, window });
 }
 
-/** A merge into a merge quest's plot stopped (PS-08e): a conflict is the knight's next run, the rest the owner's. */
+/**
+ * A merge into a merge quest's plot stopped (PS-08e): a conflict is the knight's next run, the rest the owner's. The
+ * merge queue's merge quest (PS-09b) rings it too, named as `quest show` names its role, not as a party's.
+ */
 function mergeLine(t: Translate, notice: Extract<Notice, { kind: 'merge_stopped' }>): string {
   const { quest, branch, conflicts } = notice;
-  const said = { quest: quest.id, title: quest.title, branch, files: conflicts.join(', ') };
+  const role = t(notice.queue === true ? 'cli.quest.party.role.queue_merge' : 'cli.quest.party.role.merge');
+  const said = { role, quest: quest.id, title: quest.title, branch, files: conflicts.join(', ') };
   return t(`cli.run.notice.merge_${notice.reason}`, said);
 }
 
@@ -105,6 +110,12 @@ function baseRedLine(t: Translate, notice: Extract<Notice, { kind: 'base_red' }>
     : t('cli.run.notice.base_red_draft', { territory, checks, quest: draft });
 }
 
+/** PS-08g: the breaker suspended a territory's delegation of the seal, and why. */
+function suspensionLine(t: Translate, notice: Extract<Notice, { kind: 'delegation_suspended' }>): string {
+  const { territory, quest } = notice;
+  return t('cli.run.notice.delegation_suspended', { territory, quest, cause: suspensionCause(t, notice) });
+}
+
 export function lineOf(t: Translate, notice: Notice): string {
   if (notice.kind === 'suspended') {
     const { character, count } = notice;
@@ -118,6 +129,7 @@ export function lineOf(t: Translate, notice: Notice): string {
   }
   if (notice.kind === 'tribe_held') return tribeLine(t, notice);
   if (notice.kind === 'base_red') return baseRedLine(t, notice);
+  if (notice.kind === 'delegation_suspended') return suspensionLine(t, notice);
   const quest = { quest: notice.quest.id, title: notice.quest.title };
   switch (notice.kind) {
     case 'unclaimable':

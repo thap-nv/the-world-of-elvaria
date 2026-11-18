@@ -60,6 +60,10 @@ export const EVENT_TYPES = [
   'delivery.pushed',
   'delivery.merged',
   'delivery.failed',
+  // PS-08g: the owner's report of a defect that escaped, and the breaker of the seal delegation (ADR 0023).
+  'quest.escaped',
+  'delegation.suspended',
+  'delegation.resumed',
   'plot.patched',
   'plot.merged',
   'plot.restored',
@@ -89,6 +93,8 @@ export const EVENT_TYPES = [
   'upgrade.switched',
   'upgrade.rolled_back',
   'upgrade.failed',
+  // Run (221) (b): `elvaria tribe check` against the real CLI says what its sessions spent, for the mana estimate.
+  'tribe.checked',
 ] as const;
 
 export type EventType = (typeof EVENT_TYPES)[number];

@@ -117,6 +117,9 @@ export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
     branch_deleted: true,
   },
   'delivery.failed': { quest: QUEST_VIEW.id, territory: 'elvaria', stage: 'push', reason: 'no_credential' },
+  'quest.escaped': { quest: QUEST_VIEW.id, territory: 'elvaria', delegated: true, note: 'broke the login' },
+  'delegation.suspended': { territory: 'elvaria', quest: QUEST_VIEW.id, cause: 'base_red', check: 'test' },
+  'delegation.resumed': { territory: 'elvaria' },
   'patrol.ran': {
     territory: 'elvaria',
     head: SHA_NEW,
@@ -153,4 +156,14 @@ export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
   'upgrade.switched': { from: null, to: SHA_NEW },
   'upgrade.rolled_back': { from: SHA_NEW, to: SHA_OLD },
   'upgrade.failed': { to: SHA_NEW, step: 'doctor', reason: 'exit:1' },
+  'tribe.checked': {
+    tribe: 'gemini',
+    model: 'gemini-3.8-flash-high',
+    outcome: 'failed',
+    tokens: 21_216,
+    checks: [
+      { check: 'doctor', outcome: 'passed', tokens: 0 },
+      { check: 'forbidden_command', outcome: 'failed', tokens: 21_216 },
+    ],
+  },
 };

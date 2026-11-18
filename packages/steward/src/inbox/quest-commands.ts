@@ -92,8 +92,9 @@ async function newQuest(
     quests: [...ctx.world.quests.keys()],
     characters: [...ctx.world.characters.values()],
     tribes: ctx.world.kingdom.tribes,
-    // PS-08b: the owner's and the Chancellor's quests may be spared the seal by the kingdom's delegation.
-    seal: sealPolicyOf(ctx.world),
+    // PS-08b: the owner's and the Chancellor's quests may be spared the seal by the kingdom's delegation, unless the
+    // breaker suspended it on their territory (PS-08g).
+    seal: sealPolicyOf(ctx.world, ctx.delegation),
   });
   if (!made.ok) return err(rejected(made.error.code));
   const type = made.value.status === 'draft' ? 'quest.drafted' : 'quest.created';

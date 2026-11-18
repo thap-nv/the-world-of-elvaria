@@ -13,6 +13,7 @@ import type {
   PLOT_MERGE_STOPS,
   Rank,
   QuestId,
+  SuspensionCause,
   TerritoryId,
   TribeHold,
   TribeId,
@@ -103,6 +104,7 @@ export type Notice =
    * The Steward's merge into a party's merge quest stopped at `branch`, a part's or the territory's base branch
    * (PS-08e): on a conflict in `conflicts`, left in progress for the knight of the quest's next run; refused by git or
    * a hook, or the branch is gone (`conflicts` empty), which the owner looks at. Rung once per merge that stopped.
+   * `queue`: the quest is the merge queue's merge quest (PS-09b), not a party's, which the bell names apart.
    */
   | {
       readonly kind: 'merge_stopped';
@@ -110,6 +112,7 @@ export type Notice =
       readonly branch: string;
       readonly reason: MergeStopReason;
       readonly conflicts: readonly string[];
+      readonly queue?: true;
     }
   /**
    * The tribe's CLI at `path` says `version`, not `checked`, the version its last `tribe check` with the real CLI passed
@@ -147,6 +150,19 @@ export type Notice =
       readonly territory: TerritoryId;
       readonly checks: readonly { readonly check: string; readonly error_line?: string }[];
       readonly draft?: QuestId;
+    }
+  /**
+   * PS-08g: the breaker suspended the territory's delegation of the seal, blaming `quest`, merged without the seal
+   * (`check`: the check of the default branch that turned red; `note`: the owner's words on an escaped defect). Rung once
+   * per suspension.
+   */
+  | {
+      readonly kind: 'delegation_suspended';
+      readonly territory: TerritoryId;
+      readonly quest: QuestId;
+      readonly cause: SuspensionCause;
+      readonly check?: string;
+      readonly note?: string;
     }
   /** The character failed the same way breakers.same_fail_suspend times in a row: it went to the Temple. */
   | {

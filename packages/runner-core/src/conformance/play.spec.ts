@@ -12,7 +12,8 @@ vi.mock('node:fs/promises', async (importOriginal) => {
 });
 
 import { createFakeRunner } from '../runner/fake-runner.ts';
-import { CONFORMANCE_CHECKS, runConformance } from './checks.ts';
+import { CONFORMANCE_CHECKS } from './checks.ts';
+import { runConformance } from './run.ts';
 import type { FakeRunnerOptions } from '../runner/fake-runner.ts';
 import type { ConformanceTarget, LeftWorkspace } from './target.ts';
 

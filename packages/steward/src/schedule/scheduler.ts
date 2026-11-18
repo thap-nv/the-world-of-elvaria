@@ -9,8 +9,11 @@
 // before this one closed, so what they sent to the inbox is applied: the digest carries the triage's advice, however
 // late the Steward started. (fix/acceptance-scope) Before the plan, `due` tells planTick the jobs due that have not
 // started (KingdomSnapshot.jobs_due): it keeps the Chancellor's tribe from new sessions until the triage starts, since
-// the triage starts only once that tribe has none (its `ready`). (PS-22b) A job on call (an amendment's author) has no hour: it starts outside the tick once
-// no job runs there and it says it has work, and records no `schedule.ran`.
+// the triage starts only once that tribe has none (its `ready`). (fix/run-221-domain) Only those the next step may
+// start, though (nextOf): not an off-tick job while another runs outside the tick, nor one behind a job of an earlier
+// hour that starts as soon as the slot is free, so the patrol does not keep the Chancellor's tribe idle while it runs.
+// (PS-22b) A job on call (an amendment's author) has no hour: it starts outside the tick once no job runs there and it
+// says it has work, and records no `schedule.ran`.
 import { awaitedJob, awaitsAuthor, dueJobs, isEventOf, localClockOf } from '@elvaria/domain';
 import type {
   DailyJobId,
@@ -38,8 +41,9 @@ export interface Scheduler {
   /** At start: the day each job last ran, from the log. */
   recover(events: readonly Event[]): void;
   /**
-   * Before the plan: the jobs due now that have not started today (dueJobs), for KingdomSnapshot.jobs_due, so planTick
-   * keeps the Chancellor's tribe free for a triage that waits for it (fix/acceptance-scope).
+   * Before the plan: the jobs due now that have not started today (dueJobs) and that the next step may start (nextOf,
+   * fix/run-221-domain), for KingdomSnapshot.jobs_due, so planTick keeps the Chancellor's tribe free for a triage that
+   * waits for it (fix/acceptance-scope).
    */
   due(ctx: Context, zone: ZonedTime): DailyJobId[];
   /** At the end of a tick: runs the in-tick jobs due, and starts an off-tick one when none runs. */
@@ -82,6 +86,28 @@ function amendmentsOf(ctx: Context): QuestId[] {
 /** The jobs by their hour (`HH:MM` compares as text), in the order given within one hour. */
 const byHour = (jobs: readonly StewardJob[], schedule: Kingdom['schedule']): StewardJob[] =>
   jobs.toSorted((a, b) => schedule[a.id].at.localeCompare(schedule[b.id].at));
+
+/**
+ * The due jobs (by hour, byHour) that the next step may start (fix/run-221-domain): every in-tick job, and the off-tick
+ * ones up to the first that takes the slot whatever its tribes do, having no `ready` (the patrol); none while a job
+ * runs outside the tick. One that may wait to be ready does not stop the list: the next may start before it. In the
+ * (221) run the patrol ran 13 minutes ahead of the triage, and the Chancellor's tribe opened no session all that time.
+ */
+function nextOf(
+  jobs: readonly StewardJob[],
+  schedule: Kingdom['schedule'],
+  due: readonly DailyJobId[],
+  running: boolean,
+): DailyJobId[] {
+  let taken = running;
+  const next: DailyJobId[] = [];
+  for (const job of byHour(jobs, schedule).filter(({ id }) => due.includes(id))) {
+    if (job.mode === 'off_tick' && taken) continue;
+    next.push(job.id);
+    if (job.mode === 'off_tick' && job.ready === undefined) taken = true;
+  }
+  return next;
+}
 
 /** The one job outside the tick, when one runs. */
 interface Slot {
@@ -166,7 +192,8 @@ export function createScheduler(jobs: readonly StewardJob[], onCall: readonly On
         }
       settled = { ...ended };
     },
-    due: (ctx, zone) => dueNow(ctx, zone).due,
+    due: (ctx, zone) =>
+      nextOf(jobs, ctx.world.kingdom.schedule, dueNow(ctx, zone).due, slot.current !== undefined),
     step: async (ctx, zone, notices) => {
       const { local, due } = dueNow(ctx, zone);
       const { schedule } = ctx.world.kingdom;

@@ -8,8 +8,9 @@ import { mergedOf, recoverForge, settledOf, waitsOf } from './forge/book.ts';
 import { forgeSizesOf } from './forge/sizes.ts';
 import { patrolMoved } from './patrol/again.ts';
 import { recoverPatrol } from './patrol/book.ts';
+import { recoverDelegation } from './delegation/book.ts';
 import { applyInbox } from './inbox/apply.ts';
-import { asleepFromLog, levelsFromLog, warnedFromLog } from './mana/book.ts';
+import { asleepFromLog, levelsFromLog, outsideFromLog, warnedFromLog } from './mana/book.ts';
 import { manaStep } from './mana/step.ts';
 import { noteJudgeWaits } from './judge-waits.ts';
 import { createRecorder } from './record.ts';
@@ -26,7 +27,7 @@ import { carryOut } from './steps.ts';
 import { versionStep } from './tribe-versions.ts';
 import { noteUnclaimable, reportedFromLog, writeUnclaimable } from './unclaimable.ts';
 import { noteUnjudgeable } from './unjudgeable.ts';
-import { loadWorld, modelsOf, snapshotOf } from './world.ts';
+import { loadWorld, modelsOf, sealPolicyOf, snapshotOf } from './world.ts';
 import type { Context, Counts } from './context.ts';
 import type { Held, State } from './steward-state.ts';
 import type { StewardDeps, TickReport } from './types.ts';
@@ -37,8 +38,9 @@ const reportOf = (counts: Counts): TickReport => ({
 });
 
 /**
- * What the log already knows: the commands answered, the notices in force (§3.1), the pools asleep (§3.5), the
- * stalled reviews the owner retried (P1-44).
+ * What the log already knows: the commands answered, the notices in force (§3.1), the pools asleep and what tribe
+ * checks spent (§3.5, run (221) (b)), the stalled reviews the owner retried (P1-44), and (PS-08g) the territories
+ * whose delegation of the seal is suspended.
  */
 export async function recover(deps: StewardDeps, state: State): Promise<void> {
   const log = await deps.events.read();
@@ -53,10 +55,12 @@ export async function recover(deps: StewardDeps, state: State): Promise<void> {
   state.mana.asleep = asleepFromLog(log.events);
   state.mana.warned = warnedFromLog(log.events);
   state.mana.history = levelsFromLog(log.events);
+  state.mana.outside = outsideFromLog(log.events);
   state.restart = restartFromLog(log.events);
   state.scheduler.recover(log.events);
   recoverForge(state.forge, log.events);
   recoverPatrol(state.patrol, log.events);
+  recoverDelegation(state.delegation, log.events);
 }
 
 /**
@@ -93,6 +97,8 @@ async function snapshotFor(ctx: Context, state: State, zone: ZonedTime): Promise
     forge_sizes: await forgeSizesOf(ctx, state.forge),
     forge_stale: [...state.forge.stale],
     base_red: baseRedOf(state.patrol.health, [...world.territories.values()], [...world.quests.values()]),
+    // PS-08b, PS-08g: which done quests without the seal the forge merges (mergeDue), the suspended territories aside.
+    seal_policy: sealPolicyOf(world, state.delegation),
   };
 }
 
@@ -141,6 +147,7 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
     forge,
     looks,
     patrol: state.patrol,
+    delegation: state.delegation,
   };
   const waiting = await applyInbox(ctx, handled);
   // A session's leftovers lose its secrets before anything is recorded of them (§3.9).

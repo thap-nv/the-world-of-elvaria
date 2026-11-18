@@ -109,6 +109,7 @@ async function estimate(ctx: Context): Promise<void> {
     quests: [...world.quests.values()],
     limits: ctx.limits,
     readings: ctx.mana.readings,
+    outside: ctx.mana.outside,
   };
   await absorb(ctx, estimatedReadings(source, ctx.deps.clock.now(), ctx.record.stamp()));
 }

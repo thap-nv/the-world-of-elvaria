@@ -6,6 +6,7 @@ import type { AttentionGroup, AttentionItem, WaitGauge } from '@elvaria/domain';
 import type { Translate } from '@elvaria/i18n';
 
 import { raisesText } from '../quest/seal-view.ts';
+import { suspensionCause } from '../territory/delegation-view.ts';
 
 const NONE = '—';
 /** The digits of a commit id the CLI prints (shortSha). */
@@ -72,6 +73,11 @@ const patrolOf = (t: Translate, item: AttentionItem) => ({
   count: item.count ?? NONE,
 });
 
+/** (PS-08g) Why the breaker suspended a territory's delegation of the seal. */
+const suspensionOf = (t: Translate, { cause, check, note }: AttentionItem) => ({
+  cause: cause === undefined ? NONE : suspensionCause(t, { cause, check, note }),
+});
+
 /** What the item is about, in one line; every field the line names is given, `—` when the item has none. */
 function subjectOf(t: Translate, item: AttentionItem): string {
   return t(`cli.digest.item.${item.kind}`, {
@@ -97,6 +103,7 @@ function subjectOf(t: Translate, item: AttentionItem): string {
     ...deliveryOf(t, item),
     ...upgradeOf(item),
     ...patrolOf(t, item),
+    ...suspensionOf(t, item),
   });
 }
 

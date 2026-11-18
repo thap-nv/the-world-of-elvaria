@@ -108,7 +108,9 @@
   however the clock moves, and one a stop cut short runs again. (PS-03b) Jobs due together go by their hour, and an
   off-tick job may wait for `ready` (its view names the tribes a session runs on, `busy`); before the plan the
   scheduler gives planTick the jobs due that have not started (`due`, `KingdomSnapshot.jobs_due`), so the Chancellor's
-  tribe takes no new session until the triage starts (fix/acceptance-scope). (fix/digest-timing) An
+  tribe takes no new session until the triage starts (fix/acceptance-scope); (fix/run-221-domain) only those its next
+  step may start (`nextOf`): none outside the tick while a job runs there, nor one behind a job of an earlier hour
+  without `ready` (the patrol), so the tribe works while the triage waits behind it. (fix/digest-timing) An
   in-tick job waits for the day's off-tick jobs of an earlier or equal hour to end, run or not yet ready (the
   domain's `awaitedJob`), and to have ended before the last tick's step, so the inbox commands they sent are applied:
   the digest carries the triage's advice however late the Steward started. The first job is the digest (`digestJob`, given
@@ -194,7 +196,8 @@
   is set against the one it replaces for the share of its window a session takes, `mana/shares.ts`, the largest
   kept and folded again from the log's `mana.level` lines after a restart; 7 % before any is measured), one whose window reads spent sleeps (a tribe with only a model's cap asleep
   is still read, and probed without a model call). A pool and window the account gives no figure for is estimated
-  from the sessions (`mana.level` `source: estimate`); a gauge the world draws on that nears the cap warns once
+  from the sessions (`mana.level` `source: estimate`), and from what `tribe check` spent with the real CLI, read from
+  the log's `tribe.checked` lines at start (`outsideFromLog`, run (221) (b)); a gauge the world draws on that nears the cap warns once
   (`mana.warning`). The bell rings when a gauge warns, sleeps or wakes (`mana_warning`, `mana_asleep`,
   `mana_awake`). With `mana.reassign_after_hours`, a quest asleep that long goes to the character planTick chose
   (`paused_mana.reassign` by the Steward; the sleeper lets go) and starts. The owner's `wake` (`elvaria wake`)
@@ -432,13 +435,19 @@
   red, a conflict, a moved head, a closed pull request, or `checks_timeout_minutes` past the push's line: one
   `delivery.failed`, the quest stays done. The digest drops the `delivery_waits` of such a quest (`ownerDeliveries`).
 - Carries out the delegation of the royal seal (PS-08b, `src/seal.ts`, ADR 0023): the inbox's `create_quest` and the
-  snapshot get `sealPolicyOf` (`kingdom.delegation.seal`, no territory suspended until PS-08g); a submit (a session's,
+  snapshot get `sealPolicyOf` (`kingdom.delegation.seal`, the territories the breaker suspended); a submit (a session's,
   or the owner's `submit`) measures the branch of a quest with `seal_delegated` (`Plots.diffLines`, the territory's
   `regenerate` shared paths aside; a plot that cannot say counts as over) and writes `diff_lines` on its line; the submit
   and a passing verdict (`review/judge.ts`, `review/machine.ts`) set `seal_required` and `seal_raised` through `before`
   when `sealRaisesOf` gives a reason, so the quest waits for the seal; one still covered is merged by the forge without
   it (`delivery.merged` with `sealed: false`), and the next digest names it with its `git revert` line
   (`unsealedMergesOf`).
+- Keeps the breaker of the seal delegation (PS-08g, `src/delegation/`, ADR 0023): the suspended territories,
+  rebuilt from the log at start (`sealSuspendedOf`), so a restart keeps them. A patrol whose check turned red with a
+  merge without the seal among its suspects writes `delegation.suspended` before its `patrol.ran` (`baseRedSuspension`)
+  and rings once; the inbox's `report_escape` writes `quest.escaped` for a quest in its base branch and suspends on one
+  merged without the seal (`escapeSuspension`), and `resume_delegation` writes `delegation.resumed`
+  (`src/inbox/delegation-commands.ts`). The digest's notices carry the suspensions (`delegation_suspended`).
 - Archives a done quest whose branch reached its base branch, under every delivery mode (PS-08d, (E) of the PS-08
   plan): planTick's `base_looks` (`baseLooks`: at start, right after a `delivery.merged` on the territory, then every
   10 minutes while a delivered done quest is there to ask about) starts a look outside the tick (`src/forge/looks.ts`,

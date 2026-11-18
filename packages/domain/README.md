@@ -128,6 +128,8 @@ patrol`); `partyOf` counts the quest a party is named after, `partyStatusOf` and
   roster); it still counts and stands by, so nothing is named unclaimable or unjudgeable for it. (fix/acceptance-scope)
   So does the Chancellor's tribe (`pickChancellor`) while a job of `CHANCELLOR_JOBS` (the triage) is in
   `KingdomSnapshot.jobs_due`: its session lies outside the tribe's slots and waits for the tribe to have none.
+  (fix/run-221-domain) The Steward puts there only the jobs its next step may start, so the tribe works while the
+  triage waits behind another job outside the tick (the patrol).
   (fix/amendment-owner-accept) So does the tribe of an amendment's author while a quest waits on its decision
   (`awaitsAuthor`; the Chancellor `pickChancellor` picks, or the plan's mage by `authorOf`), until the decision is
   applied: its session waits likewise. Checks and scripts, which run outside the tick, start only in
@@ -252,7 +254,8 @@ patrol`); `partyOf` counts the quest a party is named after, `partyStatusOf` and
   account's window as a reading); `decideManaState(readings, key, cfg, now)` → `ok | warning | closed | asleep` of
   one gauge, `manaStateOf` of a character (every gauge that binds it), against `min(cap_pct, 100 − king_reserve_pct)`;
   `asleepFor` (a gauge asleep binds the character), `spentFor` (the spent gauges a usage limit put to sleep);
-  `estimatedReadings` (`estimate`: the sessions' tokens, or minutes for `mana_source: elapsed_time`, in five hours
+  `estimatedReadings` (`estimate`: the sessions' tokens, with what a tribe check spent outside every quest
+  (`outside`, run (221) (b)), or minutes for `mana_source: elapsed_time`, in five hours
   and seven days against `tribes[].budget`, for a pool and window the account gives no figure for; never spent);
   `warningsOf` (a gauge warns once at `warn_margin_pct` below the cap); `nextProbeOf`, when a sleeping gauge is
   probed next (just after a known reset, soon again when the account is late). (P1-48) `sessionShareOf` measures
@@ -343,7 +346,9 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   `unjudgeable_vision`, advising a judge of a tribe that reads images):
   questions, seals, the infirmary, drafts, open memos, pools asleep or at the warning share, and (PS-05) the done
   quests that still hold a scope quests ready to start wait for (`scope_held`, from `scopeHoldsOf` over the quest
-  files, which the caller passes with the notices: the world state holds no scope), and the tribes the Steward holds
+  files, which the caller passes with the notices: the world state holds no scope; (fix/run-221-domain) but not one the
+  Steward still carries to its base branch, `deliveringOf`: in the merge queue, a pull request it merges itself, or a
+  stop whose merge quest is alive), and the tribes the Steward holds
   by their CLI (`tribes_held`: `tribe_held` for a new version, `tribe_gone` for a CLI gone, both with `tribe check
 <tribe>`; A1b of the lessons of 2026-11-13). The world state holds the
   open memos since PS-03 (`memos`, `memoViewOf`; `memo.*` lines reduce into it; `WORLD_STATE_VERSION` 2). A memo the
@@ -358,6 +363,14 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   (`ForgeSource.seal_policy`, `KingdomSnapshot.seal_policy`). `apartFromDoers` (`src/verify/`) is the one test of
   "another family than every doer" that selectVerifier and the seal share. The digest's `merged_unsealed` item
   (`unsealedMergesOf`, `revertWordsOf`) and `raised` on `awaiting_seal`; the ledger's `unsealed` counts.
+- Decides the breaker of the seal delegation (`src/delegation/breaker.ts`, `escape.ts`, PS-08g, ADR 0023):
+  `sealSuspendedOf` folds `delegation.suspended` and `delegation.resumed` into the suspended territories
+  (`SealPolicy.suspended`); `baseRedSuspension` (a check turned red with a merge without the seal among its suspects)
+  and `escapeSuspension` (the owner's report on such a quest) say when a signal suspends one, once per suspension;
+  `landingOf` and `escapeOf` say whether a quest reached its base branch and give its `quest.escaped` line, or why not
+  (`not_merged`, `already_reported`). `quest.escaped` is a notice about a quest, not a move (`QUEST_NOTICE_TYPES`,
+  `isQuestLogType`). The digest's `delegation_suspended` item (`can_wait`); the ledger's `unsealed.escaped` and
+  `reported_escapes`.
 - Decides what the world takes in alone of the memos the Chancellor triages (`src/delegation/`, PS-03b):
   `kingdom.delegation` (`DelegationSchema`: `max_rank`, `same_scope`, `ask`) and `delegationHolds`, which answers with
   what holds a piece of work for the owner: a matter of `ask` the Chancellor flagged (or `protected_paths` when a

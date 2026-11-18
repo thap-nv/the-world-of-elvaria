@@ -7,7 +7,7 @@ import { QUEST_TRANSITIONS } from '../quest/transitions.ts';
 import { hasDataSchema } from '../schema/event/event-data.ts';
 import { EVENT_VERSION, EventSchema } from '../schema/event/event.ts';
 import { KINGDOM } from './__fixtures__/examples.ts';
-import { questLogTypeOf } from './quest-log-type.ts';
+import { isQuestLogType, questLogTypeOf } from './quest-log-type.ts';
 import { questViewOf } from './quest-view.ts';
 import { applyEvent } from './reduce.ts';
 import { worldStateOf } from './world-state.ts';
@@ -101,5 +101,16 @@ describe('a quest line for every move the machine makes', () => {
       const quests = applyEvent(stateWith(before), event).quests;
       expect(quests[after.id]).toEqual(after.status === 'archived' ? undefined : questViewOf(after));
     }
+  });
+});
+
+describe('isQuestLogType', () => {
+  it('a quest line that carries a view; not a notice about a quest (P1-03, PS-08g), nor a line of another kind', () => {
+    expect(['quest.done', 'quest.archived', 'quest.edited'].map(isQuestLogType)).toEqual([true, true, true]);
+    expect(['quest.unclaimable', 'quest.escaped', 'delegation.suspended'].map(isQuestLogType)).toEqual([
+      false,
+      false,
+      false,
+    ]);
   });
 });
