@@ -344,15 +344,16 @@ Phiên người làm vượt trần không còn đưa quest vào trạm quân y 
 | Lý do | Nghĩa là | Làm gì |
 |---|---|---|
 | không tiến triển (`breaker:no_progress`) | hai lần cắt liền nhau của phiên người làm trong cùng một lượt, ở trần phút, token hay lượt, mà cả hai đều không để lại commit mới | đọc `git log` và thư bàn giao; nâng trần (`quest edit --max-tokens` hay `--max-minutes`), hoặc chia nhỏ việc, rồi `retry` |
-| cầu dao token | phiên vượt trần token (người làm: lý do hiện là `breaker:no_progress` với `trip` là `tokens`) | `quest edit <quest> --max-tokens <n>` rồi `quest retry <quest>` (§4 có số đo) |
-| cầu dao thời gian | phiên vượt trần phút | `quest edit --max-minutes <n>` rồi `retry`. Đổi trần khi quest đang có phiên thì phiên đó cũng theo trần mới từ nhịp kế: cầu dao của Nhiếp chính đọc trần của quest mỗi nhịp, nên hạ trần dưới số phút phiên đã chạy là cắt nó ngay (`quest edit` cảnh báo). Riêng agy tự giữ đồng hồ (`--print-timeout`) lúc mở phiên: nâng trần không kéo dài phiên agy đang chạy, phiên sau mới nhận trần mới |
-| cầu dao lượt | CLI dừng ở 200 lượt | `retry`; lặp lại thì chia nhỏ việc |
 | commit bị từ chối | hook của repo từ chối commit, hoặc bản vá `elvaria.patch` không áp được | đọc lý do, sửa trong đất riêng (`<repo>/.elvaria/worktrees/<quest>`) rồi `retry` |
 | đường dẫn cấm bị đổi | một chương trình của phiên ghi vào `laws.forbidden_paths` hay file `.env`; không có gì được commit | trả các file đó về như cũ hoặc xóa trong đất riêng, rồi `retry` |
 | thiếu secret | kho bảo vật thiếu tên mà quest xin, hoặc lãnh thổ không cho | thêm vào kho bảo vật hay `secrets_allowed`, rồi `retry` |
 | người chấm rời đi không ra phán quyết; cứ nộp phán quyết dở | hai người chấm của một lượt bị cầu dao cắt hay hỏng, hoặc ba người chấm dở | nâng trần (người chấm được gấp đôi trần của quest), `retry`: quest về chờ nghiệm thu với người chấm mới |
 | đã hết số lần thử | ba lượt đều trượt | đọc các phán quyết; sửa mô tả (`quest edit --description`) hay `--max-attempts`, rồi `retry`; hoặc `retry <quest> --to <nhân vật>` |
 | script hỏng, không dùng được tham số, không đạt | bậc script | đọc `.runs/<quest>-<n>/script.log`; quest tiếp nối (nếu có) đã được mở |
+
+Ba mã `breaker:time`, `breaker:tokens`, `breaker:turns` chỉ còn xuất hiện trong dữ liệu cũ; Nhiếp chính không còn ghi chúng cho người làm.
+
+Đổi trần khi quest đang có phiên thì phiên đó cũng theo trần mới từ nhịp kế: cầu dao của Nhiếp chính đọc trần của quest mỗi nhịp, nên hạ trần dưới số phút phiên đã chạy là cắt nó ngay (`quest edit` cảnh báo). Riêng agy tự giữ đồng hồ (`--print-timeout`) lúc mở phiên: nâng trần không kéo dài phiên agy đang chạy, phiên sau mới nhận trần mới. §4 có số đo để chọn trần token.
 
 `retry` mở quest cho **mọi** nhân vật đúng nghề đang rảnh, như một quest mới: Nhiếp chính chọn, không nhất thiết là người vừa làm (`--to` của `quest add` không được lưu trên quest, nên không còn tác dụng sau trạm quân y; quest `q_20261112_gwrz5m` vì vậy về tay người khác). Muốn đúng một nhân vật làm lại, kể cả người vừa làm: `retry <quest> --to <nhân vật>`; CLI gửi lệnh `reassign`, nhân vật đó nhận đủ lượt thử như mới. Quest chỉ kẹt ở phần chấm (người chấm rời đi không ra phán quyết) và quest bậc script không nhận `--to`. `quest reassign <quest> --to <nhân vật>` gửi đúng lệnh `reassign` đó (`retry --to` và `reassign --to` cùng đi qua `giveQuestTo` của `apps/cli/src/quest/`).
 

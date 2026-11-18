@@ -1,5 +1,7 @@
 /** Stable reason codes in contract order; display text belongs to the caller's locale. */
 export const INFIRMARY_REASONS = [
+  // These three codes are retained only to read old data; the steward no longer writes them
+  // for assignees, using breaker:no_progress instead.
   'breaker:time',
   'breaker:tokens',
   'breaker:turns',
