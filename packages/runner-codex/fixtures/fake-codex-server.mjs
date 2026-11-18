@@ -1,11 +1,14 @@
 // The parts of fake-codex.mjs that are not a session (spike Codex 2026-11-12 §1.11, §3.1): the `-c` hooks it was
 // given, and `codex app-server` answering JSON-RPC on stdio until stdin closes: `initialize`,
 // `account/rateLimits/read` from rate-limits.json (or ELVARIA_FAKE_CODEX_RATE_LIMITS), `hooks/list` built from the
-// `-c` hooks, with one of the owner's added when ELVARIA_FAKE_CODEX_USER_HOOK=1.
+// `-c` hooks, with one of the owner's added when ELVARIA_FAKE_CODEX_USER_HOOK=1. `initialize` names the home and
+// `account/rateLimits/read` answers for it, its account included, or refuses a home not signed in as Codex does
+// (fake-codex-home.mjs, PS-27c). ELVARIA_FAKE_CODEX_SERVER_HANGS=1 makes it answer nothing.
 import { readFileSync } from 'node:fs';
-import path from 'node:path';
 import process from 'node:process';
 import { createInterface } from 'node:readline';
+
+import { accountId, homeDir, noteCall, rateLimitsFile, signedIn } from './fake-codex-home.mjs';
 
 const FIXTURES = import.meta.dirname;
 const { env } = process;
@@ -55,22 +58,30 @@ function hookList(configs, cwds) {
   return { data: (cwds ?? [process.cwd()]).map((cwd) => ({ cwd, hooks: listed, warnings: [], errors: [] })) };
 }
 
+/** What Codex 0.169 answers account/rateLimits/read in a home not signed in (spike codex-home §1). */
+const SIGNED_OUT = { code: -32600, message: 'codex account authentication required to read rate limits' };
+
 /** JSON-RPC on stdio until stdin closes, as `codex app-server` does; resolves with its exit code. */
 export function appServer(configs) {
-  const rateLimits = path.resolve(FIXTURES, env.ELVARIA_FAKE_CODEX_RATE_LIMITS ?? 'rate-limits.json');
   const answers = {
-    initialize: () => ({ userAgent: 'fake-codex', codexHome: 'fake', platformFamily: process.platform }),
-    'account/rateLimits/read': () => JSON.parse(readFileSync(rateLimits, 'utf8')),
+    initialize: () => ({ userAgent: 'fake-codex', codexHome: homeDir(), platformFamily: process.platform }),
+    'account/rateLimits/read': () =>
+      signedIn()
+        ? { ...JSON.parse(readFileSync(rateLimitsFile(FIXTURES), 'utf8')), accountId: accountId() }
+        : SIGNED_OUT,
     'hooks/list': (params) => hookList(configs, params?.cwds),
   };
   const lines = createInterface({ input: process.stdin, crlfDelay: Infinity });
   lines.on('line', (line) => {
     const request = JSON.parse(line);
-    if (request.id === undefined) return;
+    if (request.id === undefined || env.ELVARIA_FAKE_CODEX_SERVER_HANGS === '1') return;
+    noteCall(request.method);
     const reply = answers[request.method];
+    const result = reply?.(request.params);
     if (reply === undefined) {
       print({ id: request.id, error: { code: -32601, message: `unknown method ${request.method}` } });
-    } else print({ id: request.id, result: reply(request.params) });
+    } else if (result === SIGNED_OUT) print({ id: request.id, error: SIGNED_OUT });
+    else print({ id: request.id, result });
   });
   return new Promise((resolve) => lines.on('close', () => resolve(0)));
 }

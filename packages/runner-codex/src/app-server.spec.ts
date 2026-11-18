@@ -20,16 +20,16 @@ describe('askAppServer', () => {
     );
     expect(answer.ok).toBe(true);
     if (answer.ok) {
+      expect(answer.initialized).toMatchObject({ userAgent: 'fake-codex' });
       expect(answer.results).toHaveLength(2);
       expect(answer.results[1]).toEqual({ data: [{ cwd: 'C:/plot', hooks: [], warnings: [], errors: [] }] });
     }
   });
 
-  it("ends on the server's error", async () => {
-    expect(await askAppServer(FAKE, [], [{ method: 'no/such' }], OPTIONS)).toEqual({
-      ok: false,
-      problem: 'codex app-server: unknown method no/such',
-    });
+  it("ends on the server's error, with initialize's answer when it came (PS-27c)", async () => {
+    const answer = await askAppServer(FAKE, [], [{ method: 'no/such' }], OPTIONS);
+    expect(answer).toMatchObject({ ok: false, problem: 'codex app-server: unknown method no/such' });
+    expect(answer.initialized).toMatchObject({ userAgent: 'fake-codex' });
   });
 
   it('ends when the server leaves, never starts, or keeps silent past the timeout', async () => {
@@ -39,14 +39,17 @@ describe('askAppServer', () => {
       problem: 'codex app-server left early (exit 4)',
     });
     const missing = { command: 'no such codex here', args: [] };
-    expect(await askAppServer(missing, [], [], OPTIONS)).toMatchObject({
+    const notStarted = await askAppServer(missing, [], [], OPTIONS);
+    expect(notStarted).toMatchObject({
       ok: false,
       problem: expect.stringMatching(/did not start/) as unknown,
     });
+    expect(notStarted).toMatchObject({ failure: expect.stringMatching(/ENOENT/) as unknown });
     const silent = { command: process.execPath, args: ['-e', 'setInterval(() => {}, 1000)'] };
     expect(await askAppServer(silent, [], [], { ...OPTIONS, timeout_ms: 500 })).toEqual({
       ok: false,
       problem: 'codex app-server gave no answer within 500 ms',
+      timed_out: true,
     });
   });
 });

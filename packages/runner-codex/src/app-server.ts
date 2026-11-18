@@ -21,9 +21,23 @@ export interface AppServerOptions {
   readonly timeout_ms: number;
 }
 
+/**
+ * The answers in order, `initialize`'s apart: it names the home Codex runs in (`codexHome`, PS-27c), which doctor
+ * reads even when a later call fails, as `account/rateLimits/read` does in a folder not signed in.
+ */
 export type AppServerAnswer =
-  | { readonly ok: true; readonly results: readonly unknown[] }
-  | { readonly ok: false; readonly problem: string };
+  | { readonly ok: true; readonly initialized: unknown; readonly results: readonly unknown[] }
+  | {
+      readonly ok: false;
+      readonly problem: string;
+      readonly initialized?: unknown;
+      /** Stopped at `timeout_ms`: on a busy machine that says nothing of the sign-in (fix/busy-machine). */
+      readonly timed_out?: true;
+      /** Why the server never started. */
+      readonly failure?: string;
+    };
+
+type Failure = Omit<Extract<AppServerAnswer, { ok: false }>, 'ok' | 'initialized'>;
 
 /** Elvaria introduces itself; the server puts the name in its user agent. */
 const CLIENT_INFO = { clientInfo: { name: 'elvaria', title: 'Elvaria', version: '1' } };
@@ -47,10 +61,6 @@ const errorOf = (answer: Json): string => {
   return isRecord(error) && typeof error.message === 'string' ? error.message : JSON.stringify(error);
 };
 
-/**
- * Runs `codex [launch args] app-server [args]`, introduces itself, then makes `calls` in turn. The answers come back
- * in order; the first error, a server that leaves early, or `timeout_ms` passing ends it with a problem.
- */
 /** The server, without a shell (ADR 0015); its stderr is its log, read and dropped. */
 function startServer(launch: Launch, args: readonly string[], options: AppServerOptions) {
   const program = programOf(launch);
@@ -66,6 +76,10 @@ function startServer(launch: Launch, args: readonly string[], options: AppServer
   return { child, lines: createInterface({ input: child.stdout, crlfDelay: Infinity }) };
 }
 
+/**
+ * Runs `codex [launch args] app-server [args]`, introduces itself, then makes `calls` in turn. The answers come back
+ * in order; the first error, a server that leaves early, or `timeout_ms` passing ends it with a problem.
+ */
 export function askAppServer(
   launch: Launch,
   args: readonly string[],
@@ -75,6 +89,7 @@ export function askAppServer(
   const { child, lines } = startServer(launch, args, options);
   return new Promise<AppServerAnswer>((resolve) => {
     const results: unknown[] = [];
+    let initialized: unknown;
     // Ids from 1: initialize is 1, the calls follow.
     let next = 1;
     let done = false;
@@ -87,8 +102,11 @@ export function askAppServer(
       if (child.exitCode === null && child.pid !== undefined) void killTree(child.pid);
       resolve(answer);
     };
+    const fail = (failure: Failure): void => {
+      finish({ ok: false, ...failure, ...(next > 1 ? { initialized } : {}) });
+    };
     const timer = setTimeout(() => {
-      finish({ ok: false, problem: `codex app-server gave no answer within ${options.timeout_ms} ms` });
+      fail({ problem: `codex app-server gave no answer within ${options.timeout_ms} ms`, timed_out: true });
     }, options.timeout_ms);
     const send = (id: number, method: string, params?: unknown): void => {
       child.stdin.write(
@@ -99,21 +117,23 @@ export function askAppServer(
       const answer = parse(line);
       if (answer?.id !== next) return;
       if ('error' in answer) {
-        finish({ ok: false, problem: `codex app-server: ${errorOf(answer)}` });
+        fail({ problem: `codex app-server: ${errorOf(answer)}` });
         return;
       }
-      if (next === 1) child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', method: 'initialized' })}\n`);
-      else results.push(answer.result);
+      if (next === 1) {
+        initialized = answer.result;
+        child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', method: 'initialized' })}\n`);
+      } else results.push(answer.result);
       next += 1;
       const call = calls[next - 2];
-      if (call === undefined) finish({ ok: true, results });
+      if (call === undefined) finish({ ok: true, initialized, results });
       else send(next, call.method, call.params);
     });
     child.once('error', (error) => {
-      finish({ ok: false, problem: `codex app-server did not start: ${error.message}` });
+      fail({ problem: `codex app-server did not start: ${error.message}`, failure: error.message });
     });
     child.once('close', (code) => {
-      finish({ ok: false, problem: `codex app-server left early (exit ${String(code)})` });
+      fail({ problem: `codex app-server left early (exit ${String(code)})` });
     });
     send(1, 'initialize', CLIENT_INFO);
   });
