@@ -102,12 +102,16 @@ const baseLooksOf = (manager: PlotManager): Pick<Plots, 'drift' | 'baseTips' | '
 /**
  * The merge queue (PS-09): a done quest's branch brought up to its base branch before its delivery, the generators run
  * on the result, the update settled once its checks passed, and whether an open pull request still merges cleanly.
+ * (PS-08b) The size of a branch the delegation of the seal bounds.
  */
-const queueOf = (manager: PlotManager): Pick<Plots, 'update' | 'generate' | 'settle' | 'mergesClean'> => ({
+const queueOf = (
+  manager: PlotManager,
+): Pick<Plots, 'update' | 'generate' | 'settle' | 'mergesClean' | 'diffLines'> => ({
   update: (plot, territory) => manager.update(plot, territory),
   generate: (plot, territory, request) => manager.generate(plot, territory, request),
   settle: (plot) => manager.settle(plot),
   mergesClean: (plot, tips) => manager.mergesClean(plot, tips),
+  diffLines: (plot, exclude) => manager.diffLines(plot, exclude),
 });
 
 /**
