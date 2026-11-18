@@ -5,3 +5,12 @@ packages:
 # pnpm 10 blocks dependency build scripts by default. None of today's dependencies needs one;
 # a dependency that does is added here on purpose, with the reason in the commit (implementation-plan §7).
 onlyBuiltDependencies: []
+
+# `pnpm audit` skips these advisories (CI step `pnpm audit --prod --audit-level high`, implementation-plan §7).
+auditConfig:
+  ignoreGhsas:
+    # picomatch <=4.0.7 ReDoS on single-branch repeated extglobs; high, no patched version yet.
+    # Reached only through the lint tooling (packages/config > eslint-plugin-import-x >
+    # @typescript-eslint/typescript-estree > tinyglobby), whose globs are this repo's own config,
+    # never outside input. Ignored 2026-11-18 (fix/ci-red); remove once picomatch ships a fix.
+    - GHSA-fc5q-39xc-vjpf

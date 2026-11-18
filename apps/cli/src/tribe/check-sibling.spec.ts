@@ -14,7 +14,10 @@ import type { TempDir, TestIo } from '../../test/cli.ts';
 const FAKE_CLAUDE = path.join(SELF_ROOT, 'packages', 'runner-claude', 'fixtures', 'fake-claude.mjs');
 const portable = (file: string) => file.replaceAll('\\', '/');
 
-describe('elvaria tribe check of a second Claude Code account (PS-27)', () => {
+// Timeout: each test runs the whole conformance suite (97 % of its time) through the claude adapter, the fake CLI and
+// the built hook: ten fake sessions, each a Node process and one more per hook call. 8.5 s on an idle Windows machine,
+// 20 s beside another test run, 31 s in a busy pre-push (fix/ci-red); flint.spec.ts gives its full run as much.
+describe('elvaria tribe check of a second Claude Code account (PS-27)', { timeout: 120_000 }, () => {
   let dir: TempDir;
   let kingdom: string;
   let home: string;
