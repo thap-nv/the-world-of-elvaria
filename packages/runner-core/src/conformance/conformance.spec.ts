@@ -242,6 +242,9 @@ describe('the conformance suite', () => {
     // PS-11: whether the CLI reads images.
     expect(await problemOf({ vision: true })).toBeUndefined();
     expect(await problemOf({ vision: 'png' })).toMatch(/^capability vision is malformed/);
+    // PS-27: whether it runs the tribe's CLI in its config folder.
+    expect(await problemOf({ config_dir: true })).toBeUndefined();
+    expect(await problemOf({ config_dir: 'C:/accounts' })).toMatch(/^capability config_dir is malformed/);
   });
 
   it('reports a runner that throws instead of answering', async () => {
