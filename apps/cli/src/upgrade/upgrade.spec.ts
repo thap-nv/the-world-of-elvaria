@@ -132,7 +132,10 @@ describe('elvaria upgrade', () => {
       expect.objectContaining({ type: 'upgrade.started', data: { ref: b, to: b, from: a } }),
       expect.objectContaining({ type: 'upgrade.failed', data: { to: b, step: 'doctor', reason: 'exit:1' } }),
     ]);
-    expect(git(source.repo, 'worktree', 'list')).not.toContain(b);
+    // A build's folder is named by its full SHA: the pinned build listed shows that the removed one would be (fix/ci-red).
+    const worktrees = git(source.repo, 'worktree', 'list');
+    expect(worktrees).toContain(a);
+    expect(worktrees).not.toContain(b);
   });
 
   it('pins nothing when the first build fails to install', async () => {
@@ -192,7 +195,9 @@ describe('elvaria upgrade', () => {
     expect(await builds()).toEqual([c, d].sort());
     // The link out of the removed build was taken off, not followed: what it led to is still there.
     expect(await readFile(path.join(dir.root, OUTSIDE_STORE, 'keep.txt'), 'utf8')).toBe('kept');
-    expect(git(source.repo, 'worktree', 'list')).not.toContain(a);
+    const worktrees = git(source.repo, 'worktree', 'list');
+    expect([worktrees.includes(c), worktrees.includes(d)]).toEqual([true, true]);
+    expect(worktrees).not.toContain(a);
   });
 
   it("runs the new build's migrate on the kingdom once it is pinned, and says so when it fails", async () => {
