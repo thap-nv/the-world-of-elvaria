@@ -6,6 +6,7 @@ import type { ForgeOutcome, Quest, QuestId, TerritoryDelivery, TerritoryId } fro
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { bench } from './__fixtures__/kingdom.ts';
+import { createDelegationBook } from './delegation/book.ts';
 import { createForgeBook } from './forge/book.ts';
 import { createPatrolBook } from './patrol/book.ts';
 import { noticesOf } from './schedule/digest.ts';
@@ -102,6 +103,7 @@ async function scopeHeldOf(quests: readonly Quest[], forge: ForgeBook) {
       versions: { asked: new Map(), told: new Map(), holds: [] },
       forge,
       patrol: createPatrolBook(),
+      delegation: createDelegationBook(),
     },
   ).scope_held;
 }

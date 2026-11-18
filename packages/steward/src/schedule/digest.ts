@@ -101,7 +101,7 @@ export function noticesOf(
       quests,
       [...world.territories.values()],
       deliveringOf(state.forge.outcomes, quests, [...world.territories.values()], {
-        policy: sealPolicyOf(world),
+        policy: sealPolicyOf(world, state.delegation),
         nothing: state.forge.nothing,
       }),
     ),
