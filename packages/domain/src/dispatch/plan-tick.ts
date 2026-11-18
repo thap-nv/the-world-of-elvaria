@@ -39,6 +39,7 @@ import type { Instant } from '../core/clock.ts';
 import type { CharacterId, QuestId } from '../core/ids.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
+import type { SealPolicy } from '../delegation/seal.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 
 export type { Claim, Unclaimable } from './tick-steps.ts';
@@ -79,6 +80,8 @@ export interface KingdomSnapshot extends RosterSource, ReviewSource {
    * the stop (baseRedOf): their other open quests are not claimed, and their merge queue stands. Absent: none.
    */
   readonly base_red?: readonly BaseRed[];
+  /** (PS-08b) The delegation of the seal: done quests without it the forge merges (mergeDue). Absent: none. */
+  readonly seal_policy?: SealPolicy;
 }
 
 export interface TickPlan {

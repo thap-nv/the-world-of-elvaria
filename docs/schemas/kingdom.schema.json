@@ -464,6 +464,37 @@
             "outward_action",
             "protected_paths"
           ]
+        },
+        "seal": {
+          "description": "Delegation of the royal seal (PS-08b, product plan 0.8 §14): a quest of one of `kinds`, of rank at most `max_rank`, on a territory whose delivery.mode is pr_merge, made by a command that says nothing of the seal, and not of a party, is made with seal_required false and seal_delegated; the Steward merges its pull request once its judge passes it. The machine only raises its seal afterwards (seal_raised says why): a protected path, a claim above the level's ceiling, files outside its scope, a diff over max_diff_lines, a judge of a doer's family, the machine judging alone, an objection, a rank above max_rank, or its territory's delegation suspended. Each such merge is an item of the next digest, with the `git revert` that undoes it.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "max_rank",
+            "kinds"
+          ],
+          "properties": {
+            "max_rank": {
+              "description": "The highest rank of a quest that goes without the seal.",
+              "$ref": "#/$defs/rank"
+            },
+            "kinds": {
+              "description": "The kinds (registry/kinds.json ids) whose quests go without the seal; only a kind whose seal_default is true changes anything. `elvaria doctor` names an id the registry does not have.",
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              }
+            },
+            "max_diff_lines": {
+              "description": "The most lines the quest's branch may add and remove together, measured at each submit from its fork point, the territory's shared paths merged by `regenerate` aside; above it the machine raises the seal.",
+              "type": "integer",
+              "minimum": 1,
+              "default": 400
+            }
+          }
         }
       },
       "default": {}

@@ -22,6 +22,7 @@ import { planViewOf } from './plan-view.ts';
 import { readQuest } from './references.ts';
 import { baseWaitsOf } from './base-wait.ts';
 import { scopeWaitText, scopeWaitsOf } from './scope.ts';
+import { sealText } from './seal-view.ts';
 import { unclaimableLines, unclaimableOf } from './unclaimable.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
@@ -52,7 +53,8 @@ function fields(
     ['cli.quest.field.attempts', `${quest.attempts}/${quest.budget.max_attempts}`],
     ['cli.quest.field.depends_on', listed(quest.depends_on)],
     ...heldFields(ctx, quest),
-    ['cli.quest.field.seal', t(quest.seal_required ? 'cli.yes' : 'cli.no')],
+    // Spared by the kingdom's delegation, or raised by the machine since and why (PS-08b).
+    ['cli.quest.field.seal', sealText(t, quest)],
     // Why the seal, when the work changed a protected path (PS-04, ADR 0026).
     ...(quest.protected_changes === undefined
       ? []

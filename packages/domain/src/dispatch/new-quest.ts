@@ -5,12 +5,14 @@ import { err, ok } from '../core/result.ts';
 import { RANKS } from '../schema/common.ts';
 import { QuestSchema } from '../schema/quest/quest.ts';
 import { scriptParamsIssues } from '../script/params.ts';
+import { sealDelegated } from '../delegation/seal.ts';
 import { CONTEXT_BUDGETS_BY_RANK } from './constants.ts';
 import { namedAssignee } from './select-assignee.ts';
 import type { CharacterId, QuestId } from '../core/ids.ts';
 import type { Result } from '../core/result.ts';
 import type { AssigneeCandidate, NamedAssigneeProblem } from './select-assignee.ts';
 import type { CommandPayload } from '../schema/command/inbox-command.ts';
+import type { SealPolicy } from '../delegation/seal.ts';
 import type { PartyPlace } from '../party/party-place.ts';
 import type { Rank } from '../schema/common.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
@@ -50,8 +52,11 @@ export interface NewQuestContext {
   readonly at: string;
   readonly breakers: Kingdom['breakers'];
   readonly registry: Pick<Registry, 'kinds' | 'tags' | 'scripts'>;
-  /** The kingdom's territories, with the treasury names each lets its quests ask for. */
-  readonly territories: readonly Pick<Territory, 'id' | 'secrets_allowed'>[];
+  /**
+   * The kingdom's territories, with the treasury names each lets its quests ask for, and (PS-08b) how each delivers:
+   * the delegation of the seal covers only a territory that merges by itself.
+   */
+  readonly territories: readonly Pick<Territory, 'id' | 'secrets_allowed' | 'delivery'>[];
   readonly quests: readonly QuestId[];
   /**
    * Who an `assignee` may name (P1-29): the kingdom's characters, and its tribes for which are enabled. Quests the
@@ -64,6 +69,11 @@ export interface NewQuestContext {
    * names only a contract, whose party is its own id. It takes the place of the payload's `party_role`.
    */
   readonly party?: PartyPlace;
+  /**
+   * kingdom.delegation.seal and the territories whose delegation is suspended (PS-08b, sealDelegated). Absent, as for
+   * the quests the Steward makes itself: no quest goes without the seal by delegation.
+   */
+  readonly seal?: SealPolicy;
 }
 
 type CreateQuest = CommandPayload<'create_quest'>;
@@ -167,6 +177,19 @@ export function questBudgetOf(
   };
 }
 
+/** Whether the kingdom's delegation spares the new quest the seal (sealDelegated, PS-08b). */
+const delegatedOf = (payload: CreateQuest, kind: Kind, context: NewQuestContext): boolean =>
+  sealDelegated(
+    {
+      kind,
+      rank: payload.rank,
+      territory: context.territories.find(({ id }) => id === payload.territory),
+      asked: payload.seal_required !== undefined,
+      party: context.party !== undefined || payload.party_role !== undefined,
+    },
+    context.seal ?? {},
+  );
+
 /** The quest a `create_quest` command asks for: `draft` from the Chancellor, `open` from `elvaria quest add`. */
 export function questFromCommand(
   payload: CreateQuest,
@@ -178,6 +201,7 @@ export function questFromCommand(
   if (problem !== undefined) return err({ code: problem });
   // The assignee is not a field of the quest: the Steward gives it the new quest by the owner's reassign (§2.5).
   const { draft, question, party_role: partyRole, estimate, assignee: _, ...fields } = payload;
+  const delegated = delegatedOf(payload, kind, context);
   return parsed({
     version: 1,
     id: context.id,
@@ -191,7 +215,8 @@ export function questFromCommand(
     attempt_log: [],
     plot: { type: 'none' },
     deliverable: { type: kind.deliverable_type },
-    seal_required: payload.seal_required ?? sealDefaultOf(kind, context.party),
+    seal_required: payload.seal_required ?? (!delegated && sealDefaultOf(kind, context.party)),
+    ...(delegated ? { seal_delegated: true } : {}),
     ...(question === undefined ? {} : { blocked: { question, asked_at: context.at } }),
     created_at: context.at,
     updated_at: context.at,
@@ -200,13 +225,23 @@ export function questFromCommand(
 
 type Changes = CommandPayload<'edit_quest'>['changes'];
 
+/**
+ * The owner's word on the seal ends its delegation (PS-08b, K9 (4)): a quest the owner seals stays sealed, one it
+ * spares stops at its pull request, as one made with `--no-seal` does; the reasons the machine raised go with it.
+ */
+function withoutDelegation(quest: Quest): Quest {
+  const { seal_delegated: _delegated, seal_raised: _raised, ...rest } = quest;
+  return rest;
+}
+
 function withChanges(quest: Quest, changes: Changes, at: string, quests: readonly QuestId[]) {
   if (quest.status === 'archived') return err({ code: 'archived' } as const);
   const dependsOn = changes.depends_on ?? [];
   if (dependsOn.includes(quest.id)) return err({ code: 'self_dependency' } as const);
   if (dependsOn.some((id) => !quests.includes(id))) return err({ code: 'unknown_dependency' } as const);
   const { budget, ...rest } = changes;
-  return parsed({ ...quest, ...rest, budget: { ...quest.budget, ...budget }, updated_at: at });
+  const kept = changes.seal_required === undefined ? quest : withoutDelegation(quest);
+  return parsed({ ...kept, ...rest, budget: { ...quest.budget, ...budget }, updated_at: at });
 }
 
 /**

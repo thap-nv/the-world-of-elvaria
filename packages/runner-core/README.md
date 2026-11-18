@@ -181,6 +181,8 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   diff then counts from there. The fork point (for a merge quest, the base branch's commit it merged last) and the
   setup state live in `elvaria-plot.json` in the worktree's private git folder. `status`, `head` (the commit at HEAD, null without git: the Steward reuses checks that ran on
   it for the run's next judge, P1-38), `touched` (paths changed since the fork, committed or not, plus untracked files),
+  `diffLines` (PS-08b, `plot/diff-size.ts`: lines added plus removed since the fork by `git diff --numstat`, the given
+  globs aside, a binary file none; 0 without git),
   `commitAll` (everything, through the territory's own hooks; `refused` when a hook says no; given a `CommitRescue` folder
   (P1-55, `plot/rescue.ts`) it first moves the scratch files at the plot's root to `set-aside/` there, and a refusal leaves
   `wip.patch` and the staged paths; the Steward's messages

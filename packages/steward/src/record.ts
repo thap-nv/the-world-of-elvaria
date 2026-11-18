@@ -64,6 +64,8 @@ export interface Move {
   readonly load_trace?: LoadTrace;
   /** On a submit, the files the work changed outside the quest's scope (PS-05): on the line only, as `load_trace`. */
   readonly out_of_scope?: readonly string[];
+  /** On a submit of a quest the delegation spared the seal, its branch's size (PS-08b): on the line only. */
+  readonly diff_lines?: number;
   /**
    * On the blocked line of a run that ended on its amendment, what the Steward could not take of its work and why
    * (fix/session-notes): on the line only, as `out_of_scope`; the doer's next session reads it (continuation.ts).
@@ -220,6 +222,7 @@ async function move(deps: RecorderDeps, request: Move): Promise<Result<Quest, st
     ...(request.out_of_scope === undefined || request.out_of_scope.length === 0
       ? {}
       : { out_of_scope: request.out_of_scope }),
+    ...(request.diff_lines === undefined ? {} : { diff_lines: request.diff_lines }),
     ...request.refused,
   };
   await append(deps, { type, actor: actorOf(request.actor, found), data, quest: after.value, session }, at);

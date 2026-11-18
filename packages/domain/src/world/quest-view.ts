@@ -11,6 +11,7 @@ import {
   QuestIdSchema,
   TerritoryIdSchema,
 } from '../core/ids.ts';
+import { SEAL_RAISES } from '../delegation/constants.ts';
 import { DateTimeSchema, NonEmptyStringSchema, RANKS } from '../schema/common.ts';
 import {
   PartyRoleSchema,
@@ -44,6 +45,16 @@ export const QuestViewSchema = z.strictObject({
     .min(1)
     .meta(describe('budget.max_attempts: "3 attempts used" on the infirmary card.')),
   seal_required: z.boolean(),
+  // PS-08b: optional, unlike the fields above, so the lines written before it still read; absent: none raised.
+  seal_raised: z
+    .array(z.enum(SEAL_RAISES))
+    .min(1)
+    .optional()
+    .meta(
+      describe(
+        "quest.seal_raised: why the machine raised the seal the kingdom's delegation had spared the quest; the digest's awaiting_seal item names them.",
+      ),
+    ),
   sealed_at: DateTimeSchema.nullable(),
   question: NonEmptyStringSchema.nullable().meta(
     describe(
@@ -90,6 +101,7 @@ export function questViewOf(quest: Quest): QuestView {
     attempts: quest.attempts,
     max_attempts: quest.budget.max_attempts,
     seal_required: quest.seal_required,
+    ...(quest.seal_raised === undefined ? {} : { seal_raised: quest.seal_raised }),
     sealed_at: quest.seal?.at ?? null,
     question: ownerAsked(blocked) ? blocked.question : null,
     party_id: quest.party_id ?? null,

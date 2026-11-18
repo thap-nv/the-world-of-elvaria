@@ -11,8 +11,8 @@ import { plotCommitMessage } from '@elvaria/runner-core';
 import type { Quest } from '@elvaria/domain';
 
 import { moveAndRing } from '../notices.ts';
+import { lineOf, submitSealOf } from '../seal.ts';
 import { commitPlot, forbiddenWip } from '../sessions/commit.ts';
-import { outOfScopeIn } from '../sessions/out-of-scope.ts';
 import { applyAssigneePatch } from '../sessions/patch.ts';
 import { APPLIED, rejected } from './quest-commands.ts';
 import type { Context } from '../context.ts';
@@ -40,13 +40,15 @@ export async function submitFromInfirmary(ctx: Context, quest: Quest): Promise<O
     );
     return rejected('commit_refused');
   }
-  const mark = protectedMarkOf(quest, committed.protected_changes ?? []);
+  const changed = committed.protected_changes ?? [];
+  const seal = await submitSealOf(ctx, quest, changed);
   const moved = await moveAndRing(ctx, {
     quest: quest.id,
     event: { type: 'submit' },
     actor: 'user',
-    before: { ...mark },
-    out_of_scope: await outOfScopeIn(ctx, quest),
+    // PS-08b: the delegation's limits raise the seal at this submit as at a session's.
+    before: { ...protectedMarkOf(quest, changed), ...seal.before },
+    ...lineOf(seal),
   });
   return moved.ok ? APPLIED : rejected(moved.error);
 }

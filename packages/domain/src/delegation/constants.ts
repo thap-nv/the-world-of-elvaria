@@ -44,3 +44,31 @@ export const DELEGATION_MAX_RANK_DEFAULT = 'D';
 
 /** Quests a merge may name: work not begun yet, so its first session reads the merged text. */
 export const MERGEABLE_STATUSES = ['draft', 'open'] as const;
+
+/**
+ * Delegation of the seal (PS-08b, ADR 0023; K9 (2) of the merge queue plan): the most lines a delegated quest's branch
+ * may add and remove together, the territory's `regenerate` shared paths aside, before the machine raises the seal.
+ */
+export const SEAL_DIFF_LINES_DEFAULT = 400;
+
+/**
+ * Why the machine raised the seal of a quest the delegation spared it (PS-08b): the machine only ever raises it. At a
+ * submit: its work changed a protected path (ADR 0026), a character above its level's ceiling took it, files outside
+ * its scope_paths, a diff over `max_diff_lines`. At a pass: the judge is not of another family than every doer (an
+ * unknown family counts as the same), the machine judged alone, the review answered an objection. At both: its rank is
+ * now above `max_rank`, the delegation no longer covers it (gone, its kind no longer listed, its territory no longer
+ * `pr_merge`), or its territory's delegation is suspended (PS-08g).
+ */
+export const SEAL_RAISES = [
+  'protected_paths',
+  'above_level',
+  'out_of_scope',
+  'diff_size',
+  'same_family_judge',
+  'machine_judge',
+  'objection',
+  'rank_above',
+  'out_of_delegation',
+  'suspended',
+] as const;
+export type SealRaise = (typeof SEAL_RAISES)[number];

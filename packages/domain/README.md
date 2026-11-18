@@ -348,6 +348,16 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
 <tribe>`; A1b of the lessons of 2026-11-13). The world state holds the
   open memos since PS-03 (`memos`, `memoViewOf`; `memo.*` lines reduce into it; `WORLD_STATE_VERSION` 2). A memo the
   Chancellor's triage sent up carries its advice (`escalated`, PS-03b) and lists as `memo_escalated`.
+- Decides the delegation of the royal seal (`src/delegation/seal.ts`, PS-08b, ADR 0023): `kingdom.delegation.seal`
+  (`SealDelegationSchema`: `max_rank`, `kinds`, `max_diff_lines`, default 400), `sealDelegated` (a new quest whose
+  command says nothing of the seal, not of a party, of a listed kind whose `seal_default` is true, within `max_rank`, on
+  a `pr_merge` territory not suspended, is made with `seal_required: false` and `seal_delegated`; `questFromCommand`
+  reads it from `NewQuestContext.seal`, and the owner's edit of `seal_required` drops the mark), `sealRaisesOf` and
+  `raisedSeal` (why the machine raises it at a submit or a pass, `SEAL_RAISES`, set through `Move.before` with
+  `seal_raised`; the transition table does not change), and `mayMergeUnsealed`, which widens rule (G) in `mergeDue`
+  (`ForgeSource.seal_policy`, `KingdomSnapshot.seal_policy`). `apartFromDoers` (`src/verify/`) is the one test of
+  "another family than every doer" that selectVerifier and the seal share. The digest's `merged_unsealed` item
+  (`unsealedMergesOf`, `revertWordsOf`) and `raised` on `awaiting_seal`; the ledger's `unsealed` counts.
 - Decides what the world takes in alone of the memos the Chancellor triages (`src/delegation/`, PS-03b):
   `kingdom.delegation` (`DelegationSchema`: `max_rank`, `same_scope`, `ask`) and `delegationHolds`, which answers with
   what holds a piece of work for the owner: a matter of `ask` the Chancellor flagged (or `protected_paths` when a

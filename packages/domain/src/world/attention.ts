@@ -40,7 +40,11 @@ function questItems(state: WorldState): AttentionItem[] {
     if (quest.question !== null)
       return [itemOf('question', { ...aboutQuest(quest), question: quest.question })];
     const kind = STATUS_KINDS[quest.status];
-    return kind === undefined ? [] : [itemOf(kind, aboutQuest(quest))];
+    if (kind === undefined) return [];
+    // PS-08b: the seal the machine raised on a quest the delegation had spared says why.
+    const raised =
+      kind === 'awaiting_seal' && quest.seal_raised !== undefined ? { raised: quest.seal_raised } : {};
+    return [itemOf(kind, { ...aboutQuest(quest), ...raised })];
   });
 }
 
