@@ -6,12 +6,17 @@
 // its outcome, once, and the Steward runs commands.generate on what the knight concluded.
 import { changePlotRecord, plotRecordOf } from './plot-record.ts';
 import { ruleOf } from './shared-merge.ts';
-import type { SharedPaths } from './dry-merge.ts';
+import type { ResolvedFile, SharedPaths } from './dry-merge.ts';
 import type { Git } from './git.ts';
-import type { MergeOutcome } from './merge.ts';
+
+/** What this reads of merge.ts's MergeOutcome; named here, as merge.ts imports this file. */
+interface Outcome {
+  readonly stop?: { readonly reason: string; readonly detail: string };
+  readonly resolved?: readonly ResolvedFile[];
+}
 
 /** The generated files of `outcome`: those a rule resolved, then those its stop left in conflict. */
-function generatedIn(outcome: MergeOutcome, shared: SharedPaths): string[] {
+function generatedIn(outcome: Outcome, shared: SharedPaths): string[] {
   const resolved = (outcome.resolved ?? [])
     .filter(({ rule }) => rule === 'regenerate')
     .map(({ path }) => path);
@@ -21,12 +26,12 @@ function generatedIn(outcome: MergeOutcome, shared: SharedPaths): string[] {
 }
 
 /** `outcome` of a merge quest's merge, its generated files kept for later while it stops, named once it does not. */
-export async function generateLater(
+export async function generateLater<T extends Outcome>(
   git: Git,
   worktree: string,
-  outcome: MergeOutcome,
+  outcome: T,
   shared: SharedPaths,
-): Promise<MergeOutcome> {
+): Promise<T & { readonly regenerate?: readonly string[] }> {
   const waiting = (await plotRecordOf(git, worktree)).regenerate_pending ?? [];
   if (outcome.stop !== undefined) {
     const kept = [...new Set([...waiting, ...generatedIn(outcome, shared)])];
