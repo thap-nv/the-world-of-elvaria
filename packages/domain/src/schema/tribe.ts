@@ -2,7 +2,13 @@
 import { z } from 'zod';
 
 import { REGISTRY_ID_PATTERN, TribeIdSchema } from '../core/ids.ts';
-import { AbsPathSchema, DateTimeSchema, ModelSlugSchema, NonEmptyStringSchema } from './common.ts';
+import {
+  AbsPathSchema,
+  DateTimeSchema,
+  ModelSlugSchema,
+  NameSchema,
+  NonEmptyStringSchema,
+} from './common.ts';
 import { TribeLookChoiceSchema } from './tribe-look.ts';
 
 /** A built-in adapter: a package of this repo (`claude_code`, `antigravity`, `gemini_cli`, `codex_cli`). */
@@ -98,6 +104,16 @@ export const TribeSchema = z
       }),
     // Optional, added after v1 (PS-24): a kingdom.json without it stays version 1 and every tribe still has a look.
     look: TribeLookChoiceSchema.optional(),
+    // Optional, added after v1 (PS-27b): a kingdom.json without them stays version 1. Display only (ADR 0025): no
+    // rule of the work layer reads them, and the kingdom schema does not check them across tribes; doctor warns.
+    sibling_of: TribeIdSchema.optional().meta({
+      description:
+        'The root tribe this one is a sibling of (PS-27b): a second account of the same CLI, so the world shows the two as one tribe. Valid when it names another tribe of kingdom.tribes[] that has no sibling_of itself; then the tribe looks as its root does (palette, crest, figure, frame) with the next aura of the pool, its `look` is ignored, and its ordinal (the root is I) follows the order of kingdom.tribes[]. Not valid: the tribe looks as one of its own, and `elvaria doctor` warns. Display only: the Steward, prompts and dispatch never read it (ADR 0025).',
+    }),
+    sibling_name: NameSchema.optional().meta({
+      description:
+        "The sibling's display name (`elvaria tribe look <id> --name`), the owner's words like a tribe's `look.name`; absent: the root's name with the sibling's Roman ordinal (Sao Bạc II). Read only while sibling_of is valid.",
+    }),
   })
   // Only rules that hold whatever the adapter: which sign-ins an adapter runs with is its own declaration, checked
   // by checkTribeAuth (tribe/auth.ts), so the core never asks which CLI a tribe runs (ADR 0021; P1-19).

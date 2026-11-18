@@ -702,6 +702,17 @@
               "maxLength": 24
             }
           }
+        },
+        "sibling_of": {
+          "description": "The root tribe this one is a sibling of (PS-27b): a second account of the same CLI, so the world shows the two as one tribe. Valid when it names another tribe of kingdom.tribes[] that has no sibling_of itself; then the tribe looks as its root does (palette, crest, figure, frame) with the next aura of the pool, its `look` is ignored, and its ordinal (the root is I) follows the order of kingdom.tribes[]. Not valid: the tribe looks as one of its own, and `elvaria doctor` warns. Display only: the Steward, prompts and dispatch never read it (ADR 0025).",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "sibling_name": {
+          "description": "The sibling's display name (`elvaria tribe look <id> --name`), the owner's words like a tribe's `look.name`; absent: the root's name with the sibling's Roman ordinal (Sao Bạc II). Read only while sibling_of is valid.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 24
         }
       },
       "allOf": [
