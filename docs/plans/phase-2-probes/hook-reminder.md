@@ -2,9 +2,9 @@
 
 ## Bối cảnh và yêu cầu thăm dò
 
-Trích nguyên văn từ mục Shared decisions của `plans/phase-2.md`:
+Trích nguyên văn từ mục Shared decisions của `docs/plans/phase-2-plan.md`:
 
-> Tín hiệu trần mềm: Nhiếp chính ghi một lần mỗi phiên file `<run_dir>/wrap-up.json` (`{"version": 1, "measure": "tokens" | "minutes" | "turns", "used": n, "limit": n, "pct": n}`) và một event mới `agent.session.wrap_up`; hook của Elvaria đọc file đó và đưa lời "dừng, commit, viết thư bàn giao" vào phiên ở lượt tool kế tiếp, chỉ qua sự kiện và trường mà file dò `plans/phase-2-probes/hook-reminder.md` (d3) kết luận `có` cho tộc đó.
+> Tín hiệu trần mềm: Nhiếp chính ghi một lần mỗi phiên file `<run_dir>/wrap-up.json` (`{"version": 1, "measure": "tokens" | "minutes" | "turns", "used": n, "limit": n, "pct": n}`) và một event mới `agent.session.wrap_up`; hook của Elvaria đọc file đó và đưa lời "dừng, commit, viết thư bàn giao" vào phiên ở lượt tool kế tiếp, chỉ qua sự kiện và trường mà file dò `docs/plans/phase-2-probes/hook-reminder.md` (d3) kết luận `có` cho tộc đó.
 
 Theo quy tắc dò của quest:
 

@@ -14,7 +14,10 @@ import type { TempDir } from '../../test/cli.ts';
 
 const FAKE_CODEX = path.join(SELF_ROOT, 'packages', 'runner-codex', 'fixtures', 'fake-codex.mjs');
 
-describe('elvaria doctor with two Codex tribes (PS-27c)', () => {
+// Timeout: every test runs the whole `elvaria doctor` on two Codex tribes, each tribe's checks starting the fake CLI
+// as a Node process, and one test runs it twice. 2.2-2.7 s a run on an idle Windows machine, about 20 s a run on CI's
+// Windows runner, where the two-run test ran past the 30 s testTimeout (run 44235469109, (231)).
+describe('elvaria doctor with two Codex tribes (PS-27c)', { timeout: 120_000 }, () => {
   let dir: TempDir;
   let kingdom: string;
   let home: string;

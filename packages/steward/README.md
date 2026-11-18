@@ -31,6 +31,11 @@
   runs included, the context files read from the territory as no plot exists yet), kept until the quest or its log
   change, so `selectAssignee` passes over a character whose prompt its tribe cannot take (`claim_prompts`,
   fix/claim-step).
+- Names the letter's path instead of copying it into the prompt of an assignee that goes on from a letter, when its
+  tribe has a prompt limit on this OS and the prompt with the letter copied is longer
+  (`src/sessions/letter-fit.ts`, fix/wrap-up-agy-codex): before, an agy session with a long letter could not open
+  on Windows and the quest went to the infirmary. The session reads the letter with its read tool; the claim's
+  measure counts the prompt the same way. A resumed CLI session is left as it is.
 - Asks each tribe's CLI before the plan (A1b of the lessons of 2026-11-13, `src/tribe-versions.ts`): through
   `StewardDeps.toolFound` (the composition root runs `<cli> --version` on the CLI the tribe's runner starts: no model,
   no mana; at most once a minute a tribe, `VERSION_ASK_MS`), so `planTick` holds a tribe whose CLI is gone or says

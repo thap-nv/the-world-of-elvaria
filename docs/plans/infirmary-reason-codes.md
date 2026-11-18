@@ -4,7 +4,7 @@
 
 **Mục tiêu.** Lý do của event `quest.infirmary` do Elvaria tự viết (cầu dao, người chấm, lần khởi động lại) và các dòng chi tiết `doctor()` của adapter trở thành mã cộng tham số, CLI dịch qua i18n như `packages/domain/src/scorecard/reasons.ts`; bản tiếng Việt không còn lẫn câu tiếng Anh do Elvaria viết. `breaker:commit` giữ tối đa 5 dòng lỗi đầu (không cắt giữa chữ), số dòng chứa `error`, tổng số dòng, và đường dẫn tới `pre-commit.log` (toàn bộ output của hook) trong thư mục lượt chạy. `v` của event lên 2; dòng v1 được nâng khi đọc (mã `legacy`, câu cũ in nguyên văn); event log trên đĩa không bị viết lại. Mọi câu trả lời đã khuyên trong brief được giữ.
 
-**Hợp đồng** (đã commit cùng kế hoạch): [docs/contracts/infirmary-reason-codes.md](../docs/contracts/infirmary-reason-codes.md) — danh sách mã, tham số, hình dạng payload v2, bước migrate, `hookOutputHead`, `ToolInfo.notes`, khóa i18n.
+**Hợp đồng** (đã commit cùng kế hoạch): [docs/contracts/infirmary-reason-codes.md](../contracts/infirmary-reason-codes.md) — danh sách mã, tham số, hình dạng payload v2, bước migrate, `hookOutputHead`, `ToolInfo.notes`, khóa i18n.
 
 **Cắt thành 6 phần** (mọi phần là `part` của đội, lớp `knight`):
 
@@ -50,7 +50,7 @@
 
 ## Shared decisions
 
-Mọi điều dưới đây được viết chi tiết trong [hợp đồng](../docs/contracts/infirmary-reason-codes.md); phần nào không tự quyết lại:
+Mọi điều dưới đây được viết chi tiết trong [hợp đồng](../contracts/infirmary-reason-codes.md); phần nào không tự quyết lại:
 
 1. `quest.infirmary` v2: `reason: { code, params }`, `trip?` và `detail?` giữ nguyên khóa; `detail.message` chỉ còn chữ bên ngoài nguyên văn. Tập khóa `params` bằng đúng `INFIRMARY_REASON_PARAMS[code]`; không tham số tùy chọn (chi tiết lúc có lúc không là hai mã).
 2. `EVENT_VERSION` của domain là nguồn của `v`; hooks dùng `CURRENT_EVENT_VERSION` của eventlog. Bước `v1ToV2` chỉ đổi `v`, trừ `quest.infirmary` có `reason` chuỗi → `legacy { text }`.

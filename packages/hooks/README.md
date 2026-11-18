@@ -51,11 +51,15 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
   unchanged since the attempt started is blocked at most twice per session, then let through with an
   `agent.notification` for the verifier.
 - Passes the soft-ceiling reminder of (F) (`src/wrap-up.ts`): when the Steward has written `<run_dir>/wrap-up.json`
-  (v1: `measure`, `used`, `limit`, `pct`), an assignee's next Claude Code `PostToolUse` that no other decision
-  answered gets `hookSpecificOutput.additionalContext` ("start no new work, commit, write the handover letter, end
-  the session"), once per session (a marker in `hook/wrap-up-reminded/`), never for an apprentice's call. Only the
-  tribes `plans/phase-2-probes/hook-reminder.md` concluded `có` for have a route: Codex and agy (`chưa rõ`) and the
-  neutral dialect get nothing, and the hard cut does the work. A missing or damaged file is silent.
+  (v1: `measure`, `used`, `limit`, `pct`), an assignee hears "start no new work, commit, write the handover letter,
+  end the session" once per session (a marker in `hook/wrap-up-reminded/`), never through an apprentice's call. A
+  class without a shell is told to write the letter and that the Steward commits. Claude Code gets it as
+  `hookSpecificOutput.additionalContext` of the next `PostToolUse` no other decision answered, the route
+  `docs/plans/phase-2-probes/hook-reminder.md` concluded `có` for. Codex and agy get it as the reason of one denied
+  `PreToolUse` (`permissionDecision: "deny"`; agy `{"decision": "deny"}` in place of its settings answer), the next
+  call no rule already denied and that neither names `handover.md` nor runs `git commit`; both show that reason to
+  the model, which goes on (fix/wrap-up-agy-codex). The neutral dialect gets nothing, and the hard cut does the
+  work. A missing or damaged file is silent.
 - Writes each line in the order §3.6 fixes: stamp (`createStamper` of the event log; the process sets `TZ` to
   the kingdom's zone) → `redactDeep` → long strings cut with `…[truncated]` until the line fits 64 KiB → append to
   `events/<day>.jsonl` and `quests/<id>/journal.jsonl`. The redactor masks the session's secret values first

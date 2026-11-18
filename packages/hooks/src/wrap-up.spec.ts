@@ -1,5 +1,5 @@
 // The soft-ceiling reminder of (F) through runHook, with made-up payloads of the three tribes: Claude Code (probe
-// `có`) is reminded once per session at PostToolUse; Codex and agy (`chưa rõ`) answer as they did without the file.
+// `có`) is reminded once per session at PostToolUse; Codex and agy through one denied PreToolUse per session.
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -9,7 +9,7 @@ import { PAYLOADS, SESSION, payload } from './__fixtures__/claude-payloads.ts';
 import { tempKingdom } from './__fixtures__/temp.ts';
 import { DEFER_TO_SETTINGS } from './antigravity/translate.ts';
 import { runHook } from './run-hook.ts';
-import { WRAP_UP_FILE, readWrapUp, wrapUpText } from './wrap-up.ts';
+import { WRAP_UP_FILE, readWrapUp, wrapsUp } from './wrap-up.ts';
 import type { TempKingdom } from './__fixtures__/temp.ts';
 
 const NOW = Date.parse('2026-11-15T10:00:00Z');
@@ -39,8 +39,19 @@ const call = async (raw: unknown, argv: string[] = [], role = 'assignee') =>
     now: NOW,
   });
 
+// Written out by hand: the words the model reads are the contract.
+const TEXT =
+  'Elvaria: this session has used 86% of its tokens limit (344000 of 400000). Start no new work. ' +
+  'Commit what you have, write the handover letter (Where I am / Done / Not done / Next step), then end the session.';
+const NO_SHELL_TEXT =
+  'Elvaria: this session has used 86% of its tokens limit (344000 of 400000). Start no new work. ' +
+  'Write the handover letter (Where I am / Done / Not done / Next step), then end the session; ' +
+  'the Steward commits what you leave in the plot.';
+const HELD_BACK =
+  'This one tool call was held back to tell you so; nothing else is blocked, so make it again if you need it.';
+
 const REMINDER = `${JSON.stringify({
-  hookSpecificOutput: { hookEventName: 'PostToolUse', additionalContext: wrapUpText(SIGNAL) },
+  hookSpecificOutput: { hookEventName: 'PostToolUse', additionalContext: TEXT },
 })}\n`;
 
 describe('wrap-up reminder, Claude Code (probe: có)', () => {
@@ -48,8 +59,6 @@ describe('wrap-up reminder, Claude Code (probe: có)', () => {
     await writeSignal(SIGNAL);
     const first = await call(PAYLOADS.PostToolUse);
     expect(first).toEqual({ stdout: REMINDER, stderr: '' });
-    expect(wrapUpText(SIGNAL)).toMatch(/86% of its tokens limit \(344000 of 400000\)/);
-    expect(wrapUpText(SIGNAL)).toMatch(/Commit what you have, write the handover letter/);
     expect((await call(PAYLOADS.PostToolUse)).stdout).toBe('');
     // The tool line is written either way.
     expect((await kingdom.log()).events.map(({ type }) => type)).toEqual(['agent.tool', 'agent.tool']);
@@ -111,21 +120,129 @@ describe('wrap-up reminder, Claude Code (probe: có)', () => {
   });
 });
 
-describe('wrap-up reminder, tribes the probe left chưa rõ', () => {
-  it('Codex: PostToolUse stays silent with the file present', async () => {
+const HELD = `${TEXT} ${HELD_BACK}`;
+const codexCall = (tool: string, input: Record<string, unknown>) =>
+  payload('PreToolUse', { tool_name: tool, tool_input: input });
+const CODEX = ['--dialect', 'codex'];
+const codexDeny = (reason: string) =>
+  `${JSON.stringify({
+    hookSpecificOutput: {
+      hookEventName: 'PreToolUse',
+      permissionDecision: 'deny',
+      permissionDecisionReason: reason,
+    },
+  })}\n`;
+const CODEX_DENY = codexDeny(HELD);
+
+describe('wrap-up reminder, Codex: one PreToolUse held back per session', () => {
+  it('denies the first call with the reminder as its reason, then lets every call through', async () => {
+    expect((await call(codexCall('Bash', { command: 'ls' }), CODEX)).stdout).toBe('');
     await writeSignal(SIGNAL);
-    for (let index = 0; index < 2; index += 1) {
-      expect(await call(PAYLOADS.PostToolUse, ['--dialect', 'codex'])).toEqual({ stdout: '', stderr: '' });
-    }
-    expect((await kingdom.log()).events.map(({ type }) => type)).toEqual(['agent.tool', 'agent.tool']);
+    expect(await call(codexCall('Bash', { command: 'ls' }), CODEX)).toEqual({
+      stdout: CODEX_DENY,
+      stderr: '',
+    });
+    expect((await call(codexCall('Bash', { command: 'ls' }), CODEX)).stdout).toBe('');
+    // PostToolUse carries nothing: the route is the deny.
+    expect((await call(PAYLOADS.PostToolUse, CODEX)).stdout).toBe('');
   });
 
-  it('agy: PostToolUse stays silent and PreToolUse answers as before', async () => {
+  it('never holds back the letter, a commit, an assistant, or a call a rule already denied', async () => {
     await writeSignal(SIGNAL);
-    const agy = { conversationId: SESSION, toolName: 'read_file', toolArgs: { AbsolutePath: 'README.md' } };
-    expect((await call(agy, ['PostToolUse'])).stdout).toBe('');
-    expect((await call(agy, ['PreToolUse'])).stdout).toBe(`${JSON.stringify(DEFER_TO_SETTINGS)}\n`);
-    expect((await call(agy, ['PostToolUse'])).stdout).toBe('');
+    const letter = path.join(kingdom.root, 'quests', 'q', 'handover.md');
+    const patch = `*** Begin Patch\n*** Update File: ${letter}\n@@\n-a\n+b\n*** End Patch`;
+    for (const [tool, input] of [
+      ['apply_patch', { command: patch }],
+      ['Bash', { command: 'git add -A && git -c core.hooksPath=x commit -m "wip"' }],
+      ['Bash', { command: `cat > ${letter}` }],
+    ] as const) {
+      expect((await call(codexCall(tool, input), CODEX)).stdout).toBe('');
+    }
+    const asked = await call(codexCall('request_user_input', {}), CODEX);
+    expect(asked.stdout).toMatch(/nobody answers inside this session/);
+    expect((await call(codexCall('Bash', { command: 'ls' }), CODEX, 'verifier')).stdout).toBe('');
+    // None of them used up the one reminder.
+    expect((await call(codexCall('Bash', { command: 'git log --grep commit' }), CODEX)).stdout).toBe(
+      CODEX_DENY,
+    );
+  });
+
+  it('tells a class without a shell that the Steward commits', async () => {
+    await writeFile(
+      policy,
+      JSON.stringify({ version: 1, laws: {}, tools: ['Read', 'Edit', 'Write'] }),
+      'utf8',
+    );
+    await writeSignal(SIGNAL);
+    const patch = '*** Begin Patch\n*** Add File: notes.md\n+a\n*** End Patch';
+    const outcome = await call(codexCall('apply_patch', { command: patch }), CODEX);
+    expect(outcome.stdout).toBe(codexDeny(`${NO_SHELL_TEXT} ${HELD_BACK}`));
+  });
+});
+
+const agyCall = (name: string, args: Record<string, unknown>, extra: Record<string, unknown> = {}) => ({
+  conversationId: SESSION,
+  lastUserInput: 'Do the quest.',
+  workspacePaths: [kingdom.root.replaceAll('\\', '/')],
+  toolCall: { name, args },
+  ...extra,
+});
+const DEFER = `${JSON.stringify(DEFER_TO_SETTINGS)}\n`;
+
+describe('wrap-up reminder, agy: one PreToolUse held back per session', () => {
+  it('denies the first call in place of the settings answer, then defers again', async () => {
+    const read = agyCall('read_file', { AbsolutePath: path.join(kingdom.root, 'README.md') });
+    expect((await call(read, ['PreToolUse'])).stdout).toBe(DEFER);
+    await writeSignal(SIGNAL);
+    expect(await call(read, ['PreToolUse'])).toEqual({
+      stdout: `${JSON.stringify({ decision: 'deny', reason: HELD })}\n`,
+      stderr: '',
+    });
+    expect((await call(read, ['PreToolUse'])).stdout).toBe(DEFER);
+    expect((await call(read, ['PostToolUse'])).stdout).toBe('');
+  });
+
+  it("waits for the session's own call that is not the letter, and keeps a deny already made", async () => {
+    await writeSignal(SIGNAL);
+    const letter = path.join(kingdom.root, 'quests', 'q', 'handover.md');
+    const write = agyCall('write_to_file', { TargetFile: letter, CodeContent: 'x' });
+    expect((await call(write, ['PreToolUse'])).stdout).toBe(DEFER);
+    const sub = agyCall('read_file', { AbsolutePath: 'README.md' }, { lastUserInput: '' });
+    expect((await call(sub, ['PreToolUse'])).stdout).toBe(DEFER);
+    expect((await call(agyCall('ask_question', {}), ['PreToolUse'])).stdout).toMatch(/nobody answers/);
+    expect((await call(agyCall('list_dir', { DirectoryPath: '.' }), ['PreToolUse'])).stdout).toMatch(
+      /"decision":"deny","reason":"Elvaria: this session has used 86%/,
+    );
+  });
+
+  it('keeps the settings answer, and says why, when the marker cannot be written', async () => {
+    await writeSignal(SIGNAL);
+    await writeFile(path.join(kingdom.runDir, 'hook'), 'x', 'utf8');
+    const outcome = await call(agyCall('list_dir', { DirectoryPath: '.' }), ['PreToolUse']);
+    expect(outcome.stdout).toBe(DEFER);
+    expect(outcome.stderr).toMatch(/^elvaria-hook: wrap-up reminder not given: /m);
+  });
+});
+
+describe('wrapsUp', () => {
+  const tool = (paths: string[], command?: string) => ({
+    kind: 'other' as const,
+    paths,
+    guarded: paths,
+    command,
+    url: undefined,
+    subagent: undefined,
+    model: undefined,
+  });
+
+  it('reads the letter in a path or a shell line, and a commit under any options', () => {
+    expect(wrapsUp(tool(['C:\\k\\quests\\q\\handover.md']))).toBe(true);
+    expect(wrapsUp(tool(['/k/quests/q/handover.md']))).toBe(true);
+    expect(wrapsUp(tool([], 'git -C . commit -m x'))).toBe(true);
+    expect(wrapsUp(tool([], 'git --no-pager commit --amend'))).toBe(true);
+    expect(wrapsUp(tool(['src/handover.md.bak']))).toBe(false);
+    expect(wrapsUp(tool([], 'git log --grep commit'))).toBe(false);
+    expect(wrapsUp(tool(['a.ts']))).toBe(false);
   });
 });
 
