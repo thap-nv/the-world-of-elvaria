@@ -25,7 +25,7 @@ paths:
 ## Schema và bảng sinh ra (ADR 0003)
 
 - Zod trong `src/schema/**` là nguồn. Đổi schema hay `examples/**` → `pnpm schemas`, commit `docs/schemas/**` cùng lúc, rồi `pnpm test`. Đổi không tương thích → tăng `version`, thêm `packages/store/src/migrations/<contract>/v<n>-to-v<n+1>.ts` và fixture `v<n+1>.json` cạnh các fixture cũ; event thì tăng `v` và migrate trong `packages/eventlog/src/migrations/`.
-- Đổi `EVENT_TYPES` hay schema `data` của event → `pnpm docs:gen` (`docs/events.md`); bảng `events` của `packages/i18n/src/glossary.json` phải chứa type mới (`pnpm docs:check`).
+- Đổi `EVENT_TYPES` hay schema `data` của event → `pnpm docs:gen` (`docs/events.md`); bảng `events` của `packages/i18n/src/glossary.json` phải chứa type mới (`pnpm docs:check`). Type mới có schema `data` (`EVENT_DATA_SCHEMAS`) cần thêm một dòng mẫu, id riêng, vào `packages/eventlog/src/migrations/v1.jsonl` (`migrations.spec.ts`), và sửa số type của nhóm nó trong `scripts/docs-events.spec.ts` khi spec đếm nhóm đó (dòng ``## `<nhóm>` · <n> type``); `35beecf`, `4377dee`, `25075e9` là ba nhánh đã quên số này.
 - Đổi `QUEST_TRANSITIONS` → `pnpm docs:gen` (bảng §2.5 của implementation-plan). Trước khi sửa máy trạng thái, đọc `src/quest/transitions.ts`, `transition.ts`, `effects.ts`, spec của chúng và §2.5.
 
 ## Bẫy đã gặp
