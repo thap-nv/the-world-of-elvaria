@@ -182,7 +182,7 @@ Cách thứ tư tốn mana: một phiên Claude nhỏ có trần thấp và mộ
 - **Không làm**: đọc `stdout.jsonl` hay transcript của CLI; đổi hook; event mới.
 - **Test**: ba phiên của lần (J) cho một dòng của tộc `gemini` với ba phiên được nhắc, một tự kết thúc, hai bị cắt, và trung vị 206 504 token. Dòng `wrap_up` không có dòng kết thúc (phiên còn chạy) không được tính. Lời nhắc theo thước phút không có số token thêm. Tộc không có phiên nào được nhắc không có dòng. Domain 100 %.
 - **Xong khi**: `pnpm check` xanh; `elvaria metrics` trên một vương quốc thử in đúng bảng.
-- **Chỗ chừa**: khi PS-28 đã có, bảng có thể thêm cột "tiếp sức" (số phiên có `limit` tăng giữa chừng).
+- **Chỗ chừa**: khi PS-28 đã có, bảng có thể thêm cột "tiếp sức" (số phiên có `limit` tăng giữa chừng). (Làm ở PS-12b, 2026-11-19, theo mục (270) của §11: `AfterWrapUp.raised` đếm, trong các phiên được nhắc và đã kết thúc, những phiên có một dòng `agent.session.usage` ghi `limit` cao hơn lần trước của cùng phiên trên cùng thước; cột "Tiếp sức" của bảng. Chi tiết ở [temple-first.md](temple-first.md) mục PS-12b.)
 
 ## PS-28d — Canary lời nhắc của Claude (spike, tốn mana)
 
