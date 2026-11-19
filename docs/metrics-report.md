@@ -2,31 +2,31 @@
 
 > Sinh từ một vương quốc bằng `pnpm docs:gen --kingdom <thư mục>`; không sửa file này. Cùng số với `elvaria metrics` (implementation-plan §3.16.1, ADR 0027).
 
-Khoảng: 2026-11-07T19:20:38+07:00 → 2026-11-14T18:38:52+07:00; 9771 dòng event, 70 quest, 134 phán quyết, 289 lệnh đã xử lý.
+Khoảng: 2026-11-07T19:20:38+07:00 → 2026-11-19T11:26:28+07:00; 12586 dòng event, 92 quest, 171 phán quyết, 372 lệnh đã xử lý.
 
 ## Sổ đo (toàn bộ vương quốc)
 
-Lượt: 234 (225 phiên của nhân vật, 9 lượt của máy); 1 phiên dừng vì hết mana; 0 phiên thêm bên trong một lượt.
+Lượt: 294 (284 phiên của nhân vật, 10 lượt của máy); 1 phiên dừng vì hết mana; 0 phiên thêm bên trong một lượt.
 
-Làm lại: 98 phiên (hạ tầng 43, đầu ra 49, câu hỏi 6, không rõ 0).
+Làm lại: 131 phiên (hạ tầng 47, đầu ra 72, câu hỏi 12, không rõ 0).
 
-Đạt lượt đầu: 24/61 quest (39 %).
+Đạt lượt đầu: 31/74 quest (42 %).
 
-Lỗi lọt (chủ nhân trả bài sau một phán quyết đạt): 1.
+Lỗi lọt: 2 (chủ nhân trả bài sau một phán quyết đạt), 0 chủ nhân báo sau merge.
 
-Lần cần chủ nhân: 108 lệnh, trên 51 của 70 quest.
+Lần cần chủ nhân: 140 lệnh, trên 64 của 88 quest.
 
-Quest được đóng dấu: 39, tổng 28091001 token, trung bình 77.7 phút từ phiên đầu tới phiên cuối.
+Quest được đóng dấu: 51, tổng 44152710 token, trung bình 69.7 phút từ phiên đầu tới phiên cuối.
 
 Lượt check bị gạt vì môi trường (Docker tắt, container mất): 0.
 
-Lượt đọc file: 3201; 280 file bị một phiên đọc hơn một lần.
+Lượt đọc file: 3493; 327 file bị một phiên đọc hơn một lần.
 
 Lượt hỏi đồ thị code: 0 trong 0 phiên (query 0, path 0, explain 0, affected 0).
 
-Phiên người làm: 120, 114 phiên có sửa file; trước lần sửa đầu: trung vị 12 lần gọi tool, 45 % mọi lần gọi của chúng (trung vị 46 %).
+Phiên người làm: 149, 142 phiên có sửa file; trước lần sửa đầu: trung vị 12 lần gọi tool, 43 % mọi lần gọi của chúng (trung vị 41 %).
 
-Lần nộp có file đổi ngoài vùng của quest: 0 (0 file).
+Lần nộp có file đổi ngoài vùng của quest: 2 (2 file).
 
 ## Theo ngày
 
@@ -39,23 +39,27 @@ Lần nộp có file đổi ngoài vùng của quest: 0 (0 file).
 | 2026-11-11 | 91 | 43 (19/23/1/0) | 6/22 | 37 |
 | 2026-11-12 | 10 | 4 (2/1/1/0) | 2/3 | 6 |
 | 2026-11-14 | 25 | 9 (8/0/1/0) | 2/7 | 18 |
+| 2026-11-15 | 42 | 26 (2/19/5/0) | 3/8 | 31 |
+| 2026-11-17 | 11 | 7 (2/4/1/0) | 1/2 | 1 |
+| 2026-11-18 | 7 | 0 (0/0/0/0) | 3/3 | 0 |
 
 ## Làm lại theo nguyên nhân
 
 | Nguyên nhân | Căn cứ | Giá trị | Người làm | Người chấm | Tổng |
 |---|---|---|---|---|---|
-| hạ tầng | kết thúc phiên | breaker | 25 | 6 | 31 |
+| hạ tầng | kết thúc phiên | breaker | 29 | 6 | 35 |
 | hạ tầng | kết thúc phiên | crash | 2 | 4 | 6 |
 | hạ tầng | loại lỗi của phán quyết | flaky | 2 | 2 | 4 |
 | hạ tầng | kết thúc phiên | partial | 0 | 1 | 1 |
 | hạ tầng | kết thúc phiên | timeout | 1 | 0 | 1 |
+| đầu ra | loại lỗi của phán quyết | incomplete | 11 | 8 | 19 |
 | đầu ra | loại lỗi của phán quyết | tests_fail | 8 | 9 | 17 |
-| đầu ra | loại lỗi của phán quyết | incomplete | 6 | 4 | 10 |
-| đầu ra | loại lỗi của phán quyết | other | 4 | 4 | 8 |
-| đầu ra | loại lỗi của phán quyết | wrong_facts | 4 | 4 | 8 |
+| đầu ra | loại lỗi của phán quyết | wrong_facts | 8 | 8 | 16 |
+| đầu ra | loại lỗi của phán quyết | other | 5 | 5 | 10 |
 | đầu ra | loại lỗi của phán quyết | style | 2 | 2 | 4 |
+| đầu ra | loại lỗi của phán quyết | unsafe | 2 | 2 | 4 |
 | đầu ra | loại lỗi của phán quyết | scope_creep | 1 | 1 | 2 |
-| câu hỏi | kết thúc phiên | blocked | 6 | 0 | 6 |
+| câu hỏi | kết thúc phiên | blocked | 12 | 0 | 12 |
 
 ## Đạt lượt đầu
 
@@ -63,69 +67,80 @@ Lần nộp có file đổi ngoài vùng của quest: 0 (0 file).
 |---|---|---|---|---|
 | Nghề | astrologer | 0 | 1 | 0 % |
 | Nghề | bard | 0 | 1 | 0 % |
-| Nghề | knight | 19 | 43 | 44 % |
-| Nghề | mage | 2 | 7 | 29 % |
-| Nghề | scout | 1 | 3 | 33 % |
-| Nghề | scribe | 2 | 6 | 33 % |
-| Tag | backend | 10 | 26 | 38 % |
+| Nghề | dwarf | 1 | 1 | 100 % |
+| Nghề | knight | 25 | 52 | 48 % |
+| Nghề | mage | 2 | 8 | 25 % |
+| Nghề | scout | 1 | 4 | 25 % |
+| Nghề | scribe | 2 | 7 | 29 % |
+| Tag | backend | 16 | 35 | 46 % |
 | Tag | db | 1 | 2 | 50 % |
-| Tag | docs | 6 | 21 | 29 % |
+| Tag | docs | 7 | 25 | 28 % |
 | Tag | e2e | 3 | 19 | 16 % |
 | Tag | frontend | 7 | 25 | 28 % |
 | Tag | i18n | 3 | 14 | 21 % |
 | Tag | infra | 4 | 5 | 80 % |
-| Tag | integration | 0 | 5 | 0 % |
-| Model | claude-opus-5-5 | 4 | 14 | 29 % |
+| Tag | integration | 1 | 7 | 14 % |
+| Model | claude-opus-5-5 | 5 | 16 | 31 % |
 | Model | claude-opus-5-5-high | 1 | 1 | 100 % |
-| Model | claude-sonnet-5-5 | 13 | 29 | 45 % |
-| Model | gemini-3.8-flash-high | 0 | 4 | 0 % |
+| Model | claude-sonnet-5-5 | 14 | 31 | 45 % |
+| Model | gemini-3.8-flash-high | 0 | 6 | 0 % |
 | Model | gemini-4-argon-medium | 2 | 6 | 33 % |
-| Model | gpt-6.1-sol | 4 | 7 | 57 % |
+| Model | gpt-6.1-sol | 9 | 14 | 64 % |
 | Dạng | analyze | 0 | 1 | 0 % |
-| Dạng | build | 17 | 37 | 46 % |
-| Dạng | document | 2 | 6 | 33 % |
-| Dạng | fix | 0 | 4 | 0 % |
-| Dạng | plan | 2 | 7 | 29 % |
+| Dạng | build | 21 | 44 | 48 % |
+| Dạng | document | 2 | 7 | 29 % |
+| Dạng | fix | 3 | 7 | 43 % |
+| Dạng | plan | 2 | 8 | 25 % |
 | Dạng | publish | 0 | 1 | 0 % |
 | Dạng | refactor | 2 | 2 | 100 % |
-| Dạng | research | 1 | 3 | 33 % |
+| Dạng | research | 1 | 4 | 25 % |
 | Lãnh thổ | dc1-se-team | 19 | 48 | 40 % |
-| Lãnh thổ | elvaria | 5 | 13 | 38 % |
+| Lãnh thổ | elvaria | 12 | 26 | 46 % |
 
 ## Tỉ lệ đạt theo lượt làm
 
 | Lượt | Đạt | Đã quyết | Tỉ lệ |
 |---|---|---|---|
-| 1 | 24 | 61 | 39 % |
-| 2 | 21 | 35 | 60 % |
-| 3 | 10 | 14 | 71 % |
-| 4 | 4 | 4 | 100 % |
+| 1 | 31 | 74 | 42 % |
+| 2 | 23 | 41 | 56 % |
+| 3 | 11 | 18 | 61 % |
+| 4 | 6 | 7 | 86 % |
 
 ## Lần cần chủ nhân, theo lệnh
 
 | Lệnh | Số lần |
 |---|---|
-| return | 1 |
+| return | 2 |
 | retry | 22 |
-| reassign | 9 |
-| edit_quest | 66 |
+| reassign | 14 |
+| edit_quest | 87 |
 | set_rank | 0 |
 | answer | 5 |
-| cancel | 5 |
+| cancel | 10 |
 
 ## Lời khuyên của Tể tướng trên các thư đưa lên chủ nhân
 
-Làm theo lời khuyên: 0 trên 0 thư chủ nhân đã quyết sau một lời khuyên (—); thư đưa lên: 1.
+Làm theo lời khuyên: 0 trên 0 thư chủ nhân đã quyết sau một lời khuyên (—); thư đưa lên: 8.
 
 | Lời khuyên | Đưa lên | Đã quyết | Quyết như lời khuyên |
 |---|---|---|---|
-| owner | 1 | 1 | 0 |
+| new_quest | 4 | 0 | 0 |
+| owner | 4 | 3 | 0 |
 
 ## Lỗi lọt
 
 | Quest | Lượt | Loại lỗi | Chấm lại |
 |---|---|---|---|
 | q_20261109_k8ejj6 | 1 | other | không |
+| q_20261117_m8d5t2 | 2 | wrong_facts | không |
+
+## Lỗi lọt chủ nhân báo sau merge (elvaria quest escaped)
+
+Không có.
+
+## Nhánh gốc đỏ sau merge
+
+Không có.
 
 ## Quest được đóng dấu
 
@@ -170,23 +185,41 @@ Làm theo lời khuyên: 0 trên 0 thư chủ nhân đã quyết sau một lời
 | q_20261114_42nr8g | 156713 | 7.6 | 1.4 |
 | q_20261114_mggach | 1051861 | 53.1 | 15.3 |
 | q_20261114_rbwpcr | 493778 | 19.3 | 13.3 |
+| q_20261115_5k5xxv | 3620613 | 83.1 | 48.8 |
+| q_20261115_7wvx50 | 955349 | 29.8 | 23.7 |
+| q_20261115_fh4hbp | 2883435 | 91.6 | 59.8 |
+| q_20261115_m2pkrz | 1893477 | 35.5 | 26.9 |
+| q_20261115_ncx3k3 | 1616599 | 56.2 | 23.8 |
+| q_20261115_p64dv4 | 756896 | 39.5 | 18.2 |
+| q_20261115_qyppt6 | 828785 | 29.2 | 23.2 |
+| q_20261117_7t6wsn | 542580 | 24.8 | 16.5 |
+| q_20261117_k5y5j0 | 202349 | 20.3 | 6.9 |
+| q_20261117_m8d5t2 | 2069464 | 76.5 | 69.7 |
+| q_20261117_rg43ry | 329515 | 15.6 | 7.9 |
+| q_20261118_1vrgtm | 362647 | 19.6 | 8.3 |
+
+## Merge không qua dấu (ủy quyền dấu)
+
+| Lãnh thổ | Đã merge | Không qua dấu | Trong đó, bị nêu vì lỗi lọt |
+|---|---|---|---|
+| elvaria | 4 | 0 | 0 |
 
 ## Thời gian ở từng trạng thái (phút, các lần ở đã kết thúc)
 
 | Trạng thái | Số lần | Trung vị | Lâu nhất |
 |---|---|---|---|
-| Nháp | 12 | 5.4 | 183.4 |
-| Mở | 95 | 0.6 | 326.8 |
-| Đã nhận | 101 | 0.2 | 16.4 |
-| Đang làm | 135 | 3.9 | 206.5 |
-| Chờ nghiệm thu, chưa có người chấm | 105 | 2.5 | 205.3 |
-| Chờ nghiệm thu, người chấm đang chấm | 99 | 1.4 | 90.0 |
-| Bị trả bài | 27 | 0.2 | 21.5 |
-| Chờ dấu vua | 40 | 4.5 | 447.6 |
-| Xong | 64 | 141.0 | 4968.6 |
-| Chờ trả lời | 7 | 9.1 | 20.4 |
+| Nháp | 15 | 6.1 | 1385.8 |
+| Mở | 114 | 1.1 | 1451.9 |
+| Đã nhận | 120 | 0.2 | 16.4 |
+| Đang làm | 171 | 4.2 | 206.5 |
+| Chờ nghiệm thu, chưa có người chấm | 129 | 2.6 | 205.3 |
+| Chờ nghiệm thu, người chấm đang chấm | 123 | 1.4 | 90.0 |
+| Bị trả bài | 38 | 0.1 | 21.5 |
+| Chờ dấu vua | 53 | 5.2 | 1367.1 |
+| Xong | 76 | 111.8 | 4968.6 |
+| Chờ trả lời | 13 | 6.3 | 20.4 |
 | Tạm dừng (hết mana) | 1 | 301.7 | 301.7 |
-| Trạm quân y | 30 | 5.3 | 1611.0 |
+| Trạm quân y | 36 | 6.2 | 1611.0 |
 
 ## Theo quest
 
@@ -262,13 +295,31 @@ Làm theo lời khuyên: 0 trên 0 thư chủ nhân đã quyết sau một lời
 | q_20261114_mggach | plan | mage | 5 | 3/0/0/0 | không | 1051861 | 2 |
 | q_20261114_rbwpcr | refactor | knight | 2 | 0/0/0/0 | có | 493778 | 0 |
 | q_20261114_rrjpgx | build | knight | 3 | 1/0/0/0 | không | 708416 | 3 |
+| q_20261115_16khsq | plan | mage | 0 | 0/0/0/0 | — | 0 | 2 |
+| q_20261115_5k5xxv | build | knight | 7 | 0/2/3/0 | không | 3620613 | 5 |
+| q_20261115_7wvx50 | build | knight | 2 | 0/0/0/0 | có | 955349 | 1 |
+| q_20261115_byxq11 | research | scout | 8 | 1/5/0/0 | không | 3185762 | 4 |
+| q_20261115_fh4hbp | build | knight | 8 | 0/6/0/0 | không | 2883435 | 5 |
+| q_20261115_fspfxs | research | scout | 0 | 0/0/0/0 | — | 0 | 1 |
+| q_20261115_m2pkrz | plan | mage | 8 | 0/6/0/0 | không | 1893477 | 1 |
+| q_20261115_mqmt6q | plan | mage | 0 | 0/0/0/0 | — | 0 | 2 |
+| q_20261115_ncx3k3 | build | knight | 5 | 1/0/2/0 | không | 1616599 | 5 |
+| q_20261115_p64dv4 | build | dwarf | 2 | 0/0/0/0 | có | 756896 | 2 |
+| q_20261115_qyppt6 | build | knight | 2 | 0/0/0/0 | có | 828785 | 0 |
+| q_20261115_vqm963 | plan | mage | 0 | 0/0/0/0 | — | 0 | 2 |
+| q_20261115_zts5cp | research | scout | 0 | 0/0/0/0 | — | 0 | 1 |
+| q_20261117_7t6wsn | fix | knight | 3 | 0/0/1/0 | có | 542580 | 0 |
+| q_20261117_k5y5j0 | fix | knight | 2 | 0/0/0/0 | có | 202349 | 0 |
+| q_20261117_m8d5t2 | document | scribe | 8 | 2/4/0/0 | không | 2069464 | 1 |
+| q_20261117_rg43ry | fix | knight | 2 | 0/0/0/0 | có | 329515 | 0 |
+| q_20261118_1vrgtm | build | knight | 3 | 0/0/0/0 | có | 362647 | 0 |
 
 ## Thư theo kiểu
 
 | Dạng | Đã lập | Tới chủ nhân | Bạn quyết | Phân loại quyết |
 |---|---|---|---|---|
-| amendment | 1 | 1 | 1 | 0 |
-| proposal | 3 | 0 | 0 | 0 |
+| amendment | 7 | 6 | 6 | 1 |
+| proposal | 9 | 5 | 1 | 3 |
 
 ## Phản biện theo người chấm đầu
 
@@ -278,7 +329,7 @@ Không có.
 
 | Đã lập | Nhận | Bác | Tới chủ nhân | Bị trả sau khi bác |
 |---|---|---|---|---|
-| 1 | 1 | 0 | 1 | 0 |
+| 7 | 7 | 0 | 6 | 0 |
 
 ## File một phiên đọc lại (tối đa 10 dòng, nhiều lượt nhất trước)
 
@@ -295,27 +346,33 @@ Không có.
 | 229e8b03-d84f-4d56-b970-41d59cdae45e | q_20261110_vtrjmr | packages/shared/src/api-types.ts | 8 |
 | 4583762b-2f34-402d-8b0a-9e224cfcb3e9 | q_20261109_bdyrzv | packages/shared/src/api-types.ts | 8 |
 
+## Sau lời nhắc thu dọn, theo tộc (phiên người làm đã kết thúc)
+
+| Tộc | Được nhắc | Tự kết thúc | Bị cắt | Token thêm (trung vị) | Phút tới lúc kết thúc (trung vị) |
+|---|---|---|---|---|---|
+| gemini | 3 | 1 | 2 | 206504 | 5.0 |
+
 ## Cỡ prompt theo vai và khối (ký tự)
 
 | Vai | Phần | Khối | Phiên | Trung vị | Lớn nhất |
 |---|---|---|---|---|---|
-| Người làm | — | cả prompt | 20 | 17193 | 51134 |
-| Người làm | system | role | 20 | 6842 | 7659 |
-| Người làm | system | class | 20 | 1002 | 13349 |
-| Người làm | user | continuation | 8 | 15056 | 19004 |
-| Người làm | user | quest | 18 | 4427 | 11504 |
-| Người làm | user | answer | 2 | 3585 | 6685 |
-| Người làm | user | scripture | 18 | 2265 | 2265 |
-| Người làm | user | gazetteer | 18 | 1385 | 2524 |
-| Người làm | user | memos | 1 | 1163 | 1163 |
-| Người làm | user | resumed | 2 | 210 | 210 |
-| Người chấm | — | cả prompt | 13 | 34068 | 43897 |
-| Người chấm | system | role | 13 | 2827 | 3643 |
-| Người chấm | system | class | 13 | 1177 | 1177 |
-| Người chấm | user | review | 13 | 22820 | 24918 |
-| Người chấm | user | quest | 13 | 4427 | 11504 |
-| Người chấm | user | scripture | 13 | 2265 | 2265 |
-| Người chấm | user | gazetteer | 13 | 1363 | 2524 |
+| Người làm | — | cả prompt | 55 | 20509 | 54775 |
+| Người làm | system | role | 55 | 7114 | 8265 |
+| Người làm | system | class | 55 | 1002 | 14027 |
+| Người làm | user | continuation | 25 | 15909 | 25397 |
+| Người làm | user | answer | 8 | 5403 | 6685 |
+| Người làm | user | quest | 47 | 4426 | 11504 |
+| Người làm | user | gazetteer | 47 | 3153 | 4037 |
+| Người làm | user | scripture | 47 | 2265 | 2956 |
+| Người làm | user | memos | 9 | 1004 | 3996 |
+| Người làm | user | resumed | 8 | 210 | 210 |
+| Người chấm | — | cả prompt | 37 | 36096 | 44562 |
+| Người chấm | system | role | 37 | 3294 | 4111 |
+| Người chấm | system | class | 37 | 1177 | 1692 |
+| Người chấm | user | review | 37 | 21968 | 26278 |
+| Người chấm | user | quest | 37 | 4651 | 11504 |
+| Người chấm | user | gazetteer | 37 | 3153 | 4037 |
+| Người chấm | user | scripture | 37 | 2265 | 2956 |
 
 ## Giới hạn đã biết
 
@@ -340,3 +397,5 @@ Cỡ prompt tính bằng ký tự, đã cắt khoảng trắng hai đầu, từ 
 Thời gian ở một trạng thái tính từ dòng đưa quest vào tới dòng đưa nó đi, đếm vào ngày nó kết thúc; quest còn ở đó thì không tính. Review chưa có người chấm gồm cả lúc máy chạy check.
 
 Lời khuyên "owner" không khuyên gì nên không vào tỉ lệ; merge và new_quest là làm theo khi chủ nhân giao việc cho một quest (handled), shelve khi chủ nhân gác thư. Chỉ tính thư chủ nhân quyết, không tính thư phân loại tự quyết.
+
+Sau lời nhắc chỉ đếm phiên người làm có dòng agent.session.wrap_up (Nhiếp chính ghi lời nhắc khi phiên qua soft_pct) và đã có dòng agent.session.end; phiên còn chạy không tính, và phiên tính vào ngày của lời nhắc. Bị cắt là killed, max_turns hay budget: cầu dao, trần của CLI, hay Nhiếp chính dừng phiên vì lý do khác (hết mana, chủ nhân dừng); phiên kết thúc vì lỗi chỉ vào cột được nhắc. Token thêm chỉ tính khi lời nhắc theo thước token và dòng kết thúc có usage. Bảng không nói lời nhắc của hook có tới model không (câu (f)).
