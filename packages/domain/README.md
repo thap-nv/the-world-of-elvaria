@@ -341,7 +341,19 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   (`adviceOf`, `ADVICE_DECISIONS`). (PS-28c, `src/metrics/after-wrap-up.ts`) Per tribe, the assignee sessions the
   Steward reminded at the soft ceiling that have ended (`afterWrapUpOf`: each `agent.session.wrap_up` paired with
   the session's `agent.session.end`, the tribe from the optional `characters` of the input): how many ended on their
-  own, how many were cut, and the median tokens and minutes from the reminder to the end. `planAccuracyOf(input, quest)` sets a plan quest's sub-quests, the mage's only,
+  own, how many were cut, the median tokens and minutes from the reminder to the end, and (PS-12b, "tiếp sức") how
+  many had their limit raised while they ran (a later `agent.session.usage` notch with a higher `limit` on the same
+  gauge). (PS-12b, temple-first plan) The lesson ledger, in three tables of `Metrics`, all pure and none stored:
+  `lessonEvidenceOf` gathers one record per assignee **run** (the first opening line of the run speaks for it; its
+  `load_trace.lessons`, the fail that counts: a fail the owner returned with `rejudge`, or a second judge overturned
+  through an objection, is no fail, and a run no verdict decided has loads only) and one per judge session (did its
+  verdict stand?). `lessonCountsOf` gives each line's `loads`, `helped` and `missed`, and `lessonEffectOf` the rate of
+  the kind of failure the line cures before its first load and among the runs that carried it (`too_early` until
+  `FAIL_RATE_BUCKET_RUNS` of them) as `Metrics.lessons`; `failKindRatesOf`, each kind's failures by bucket of
+  `FAIL_RATE_BUCKET_RUNS` judged runs, as `Metrics.fail_kinds`; `repeatedFailuresOf`, the kinds that
+  `TEMPLE_REPEAT_MIN` runs or more of the last `TEMPLE_WINDOW_RUNS` share (flaky left out), as `Metrics.repeats`, the
+  Temple's evidence (PS-12d). The ledger never reads a scripture: the optional `lessons` of the input carries the kind
+  and scope of each line, read by the caller. `planAccuracyOf(input, quest)` sets a plan quest's sub-quests, the mage's only,
   beside what they did: scope and files edited and changed outside it, estimate and first run, memos, rework.
 - Scores a territory (`src/scorecard/`, PS-25): `territoryScorecardOf` over the territory file, the metrics ledger,
   one trial (runner-core's `tryTerritory`) and the gazetteer gives six items, each `pass`, `fail` or `unmeasured`,
