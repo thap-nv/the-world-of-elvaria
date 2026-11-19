@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { at, lineOf, questId } from '../metrics/__fixtures__/ledger.ts';
-import { templeDue, templeLogOf } from './due.ts';
+import { EMPTY_TEMPLE_FOLD, foldTempleLog, templeDue, templeLogOf, templeLogOfFold } from './due.ts';
 import type { Event } from '../schema/event/event.ts';
 import type { TempleLog, TempleSchedule } from './due.ts';
 
@@ -76,6 +76,38 @@ describe('templeLogOf (PS-12d)', () => {
   it('forgets a suspension a run of the Temple has seen, so one suspension makes one run', () => {
     const events = [character('character.suspend', 'thorn', 'suspended'), ran(DAY)];
     expect(templeLogOf(events).suspended).toEqual([]);
+  });
+});
+
+describe('foldTempleLog (PS-12f)', () => {
+  const events = [
+    verdict(1, 'fail'),
+    ran('2026-11-18'),
+    verdict(2, 'pass'),
+    character('character.suspend', 'thorn', 'suspended'),
+    verdict(3, 'fail'),
+    verdict(3, 'fail', '-user'),
+    character('character.suspend', 'vesper', 'suspended'),
+    character('character.release', 'vesper', 'idle'),
+  ];
+
+  it('reads the log in parts as templeLogOf reads it whole, wherever it is cut', () => {
+    for (let cut = 0; cut <= events.length; cut += 1) {
+      const first = foldTempleLog(EMPTY_TEMPLE_FOLD, events.slice(0, cut));
+      expect(templeLogOfFold(foldTempleLog(first, events.slice(cut)))).toEqual(templeLogOf(events));
+    }
+  });
+
+  it('leaves the fold it goes on from as it was', () => {
+    const first = foldTempleLog(EMPTY_TEMPLE_FOLD, events.slice(0, 3));
+    foldTempleLog(first, events.slice(3));
+    expect(templeLogOfFold(first)).toEqual({ last_day: '2026-11-18', judged: 1, fails: 0, suspended: [] });
+    expect(templeLogOfFold(EMPTY_TEMPLE_FOLD)).toEqual({
+      last_day: null,
+      judged: 0,
+      fails: 0,
+      suspended: [],
+    });
   });
 });
 
