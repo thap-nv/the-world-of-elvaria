@@ -335,7 +335,10 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   each status, review split by whether a judge holds it (`statusTimesOf`, from the quest lines' views; a stay still
   open is not counted); the pass rate of each quest's first, second, … run (`passByRunOf` over `runJudgementsOf`,
   of which `firstPassOf` is the first); the Chancellor's advice on the memos it sent up beside the owner's decisions
-  (`adviceOf`, `ADVICE_DECISIONS`). `planAccuracyOf(input, quest)` sets a plan quest's sub-quests, the mage's only,
+  (`adviceOf`, `ADVICE_DECISIONS`). (PS-28c, `src/metrics/after-wrap-up.ts`) Per tribe, the assignee sessions the
+  Steward reminded at the soft ceiling that have ended (`afterWrapUpOf`: each `agent.session.wrap_up` paired with
+  the session's `agent.session.end`, the tribe from the optional `characters` of the input): how many ended on their
+  own, how many were cut, and the median tokens and minutes from the reminder to the end. `planAccuracyOf(input, quest)` sets a plan quest's sub-quests, the mage's only,
   beside what they did: scope and files edited and changed outside it, estimate and first run, memos, rework.
 - Scores a territory (`src/scorecard/`, PS-25): `territoryScorecardOf` over the territory file, the metrics ledger,
   one trial (runner-core's `tryTerritory`) and the gazetteer gives six items, each `pass`, `fail` or `unmeasured`,

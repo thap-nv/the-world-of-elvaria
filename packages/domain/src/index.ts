@@ -55,6 +55,7 @@ export * from './memo/amendment.ts';
 export * from './memo/memo.ts';
 export * from './memo/objection.ts';
 export * from './metrics/advice.ts';
+export * from './metrics/after-wrap-up.ts';
 export * from './metrics/causes.ts';
 export * from './metrics/judgement.ts';
 export * from './metrics/ledger.ts';
