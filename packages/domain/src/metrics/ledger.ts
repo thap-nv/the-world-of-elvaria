@@ -7,6 +7,7 @@ import type { OwnerCommandKind } from './causes.ts';
 import type { QuestTrail, TripAt } from './rework.ts';
 import type { MetricsWindow } from './window.ts';
 import type { QuestId } from '../core/ids.ts';
+import type { Character } from '../schema/character/character.ts';
 import type { InboxCommand, InboxCommandOf } from '../schema/command/inbox-command.ts';
 import type { Event } from '../schema/event/event.ts';
 import type { Quest } from '../schema/quest/quest.ts';
@@ -22,6 +23,11 @@ export interface MetricsInput {
    * quest a command was on, and its kind to a line written before PS-01b, which names none.
    */
   readonly commands: readonly InboxCommand[];
+  /**
+   * The characters, for the tribe of a session (PS-28c, `afterWrapUpOf`). Optional so a ledger read without them still
+   * counts everything else; then no session's tribe is known.
+   */
+  readonly characters?: readonly Pick<Character, 'id' | 'tribe'>[];
 }
 
 /** An owner's command on a quest that the Steward applied. */
