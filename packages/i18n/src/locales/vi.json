@@ -1029,6 +1029,7 @@
     "cli.say.nothing": "Không còn bản nháp nào để gửi.",
     "cli.say.question": "Tể tướng hỏi: {question}",
     "cli.say.run_dir": "Prompt và output của phiên nằm ở {dir}.",
+    "cli.say.spent_unrecorded": "! Không ghi được số token của phiên vào nhật ký ({problem}), nên ước lượng mana không tính nó.",
     "cli.say.summary": "Nói với Tể tướng việc bạn muốn: Tể tướng soạn nhiệm vụ nháp, bạn xác nhận (lệnh create_quest, nháp).",
     "cli.seal.option.note": "Một lời cho người làm, lưu cùng dấu vua.",
     "cli.seal.refused": "Nhiệm vụ {id} đang «{status}»: chỉ đóng dấu được việc đang chờ dấu vua.",

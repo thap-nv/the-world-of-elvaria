@@ -109,6 +109,11 @@ show` prints the brief apart from the rest of the description and, while the pla
   `notices.tribes_held`; held, it waits, writing nothing); no author or a failed session hands it to the owner. The
   mage also reads the `## Summary` of the plan's file while the plan's plot holds it (`planSummariesOf`, shared with
   `quest show`; fix/mage-plan-file).
+- Each session of the Chancellor's office that answers (`say`, `triage` by hand or as the job, an amendment's author)
+  writes a `chancellor.answered` line (`src/say/answered.ts`, fix/run-221-followups): the character who spoke, its
+  tribe and model, `matter` (`drafts`, `triage`, `amendment`) and the tokens the session reported; the Steward's
+  mana estimate counts them from its next start, as a tribe check's. A session with no reply to use writes none; a
+  line that cannot be written is said, and what the session answered stands.
 - `wake <tribe>` sends `wake` for a tribe of `kingdom.tribes[]`: the Steward probes that account at its next tick
   (ADR 0009), for instance after the owner signed in again.
 - Writes new files the Steward does not own: `kingdom.json` (`init`, then `tribes[].tool` and, with `--enable`,

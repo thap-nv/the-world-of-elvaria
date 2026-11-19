@@ -13,6 +13,7 @@ import type { JobRun, JobView, OnCallJob } from '@elvaria/steward';
 
 import { storeIssueLines } from '../issues.ts';
 import { commandHeader } from '../quest/send-command.ts';
+import { recordAnswered } from '../say/answered.ts';
 import { authorTribeOf, authorshipOf, territoryOf } from './author.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 import type { Runners } from '../say/hearing.ts';
@@ -91,7 +92,10 @@ async function decisionOf(ctx: KingdomContext, runners: Runners, waiting: Waitin
   if (authorship.status === 'held') return undefined;
   ctx.io.out(ctx.t('cli.amend.listening', { memo: waiting.memo.id, quest: waiting.quest.id }));
   const reply = await decideAmendment(authorship.context, authorship.session, run.signal);
-  if (reply.ok) return reply.value.decision;
+  if (reply.ok) {
+    await recordAnswered(ctx, authorship.session, 'amendment', reply.value.tokens);
+    return reply.value.decision;
+  }
   if (reply.error.code === 'stopped') return undefined;
   ctx.io.err(failedText(ctx, reply.error));
   ctx.io.err(ctx.t('cli.say.run_dir', { dir: authorship.session.run_dir }));

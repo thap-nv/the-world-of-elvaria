@@ -25,6 +25,7 @@ import { crewOf } from '../run/crew.ts';
 import { graphsOf } from '../run/graphs.ts';
 import { processHostOf } from '../run/plots.ts';
 import { tribeHoldsOf } from '../run/tool-found.ts';
+import { recordAnswered } from './answered.ts';
 import { codeOf } from './code.ts';
 import { hearingOf } from './hearing.ts';
 import { reportBrief, reportDropped, reportFailure, reportQuestion, reportSent } from './report.ts';
@@ -106,6 +107,7 @@ async function say(
     reportFailure(ctx, reply.error, session.run_dir);
     return EXIT.failed;
   }
+  await recordAnswered(ctx, session, 'drafts', reply.value.tokens);
   reportDropped(ctx, reply.value.dropped);
   if (reply.value.kept.length === 0) {
     reportQuestion(ctx, reply.value.question);
