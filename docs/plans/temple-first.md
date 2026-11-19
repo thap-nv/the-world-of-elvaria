@@ -213,6 +213,12 @@ Khảo sát ở `f02e9a1` (nhánh `docs/plan-ps-12`, tách từ `main` `821ea38`
 
 ## PS-12d — Thầy tu: việc của Đền và phiên model
 
+**Chia** (mục (281) của §11, 2026-11-19): mục này làm thành ba task. **PS-12d** là phần thuần: luật kích hoạt,
+gói bằng chứng, hợp đồng `temple-reply` cùng hàm kiểm, `templeCommands`, event `temple.ran` trong sổ mana và
+`elvaria temple evidence`. **PS-12f** (sau PS-12d) là phiên Thầy tu: việc ngoài nhịp, prompt, mở phiên, `elvaria
+temple run` và lúc ghi `temple.ran`. **PS-12g** (song song với PS-12d) là tự thả nhân vật và mục bản tấu khi Đền
+không chạy được. Phần "Tài liệu" và "Test" dưới đây đi theo task của phần chúng nói tới.
+
 - **Mục tiêu**: khi bằng chứng đã đủ và Đền được bật, một phiên Thầy tu đọc các lỗi lặp cùng số đo rồi trả mỗi lỗi một quyết định có bậc. Mỗi lần chạy tốn nhiều nhất một phiên có trần.
 - **Đọc trước**: dòng 6–12 ở trên; `apps/cli/src/triage/**`, `apps/cli/src/say/hearing.ts`, `packages/chancellor/src/{session,triage-memos}.ts`; `packages/steward/src/schedule/**`; `packages/steward/src/mana/book.ts`; [§3.5](../implementation-plan/3.5-mana.md); [runner.md](../../.claude/rules/runner.md) mục structured output của Codex và agy.
 - **Thêm**:
