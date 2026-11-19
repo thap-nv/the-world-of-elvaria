@@ -183,6 +183,19 @@ export type Notice =
       readonly check?: string;
       readonly note?: string;
     }
+  /**
+   * (PS-12c) A temple report of the Monk `character` was applied, once per report: lines of scripture added, taken out
+   * (retired or merged) and refused, letters filed; or refused whole (`rejected`) because it would replace a scripture.
+   */
+  | {
+      readonly kind: 'temple';
+      readonly character: CharacterId;
+      readonly added: number;
+      readonly retired: number;
+      readonly refused: number;
+      readonly letters: number;
+      readonly rejected?: 'replaces_scripture';
+    }
   /** The character failed the same way breakers.same_fail_suspend times in a row: it went to the Temple. */
   | {
       readonly kind: 'suspended';
