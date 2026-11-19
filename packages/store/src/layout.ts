@@ -56,6 +56,14 @@ export const kingdomLayout = {
   journal: (id: QuestId): string => journalOf(id),
   character: (id: CharacterId): string => `characters/${id}/character.json`,
   scripture: (id: CharacterId): string => `characters/${id}/scripture.md`,
+  /**
+   * The file beside a scripture (temple-first plan, DB2): the Steward keeps there what a line cannot say and the owner
+   * need not type (source, verdict, dates); the scope stays at the head of the line in the Markdown.
+   */
+  scriptureLedger: (id: CharacterId): string => `characters/${id}/scripture.json`,
+  /** The temple's scripture, shared by every character (§3.7); loaded after the character's own. */
+  templeScripture: (): string => 'temple/scripture.md',
+  templeScriptureLedger: (): string => 'temple/scripture.json',
   campaign: (id: CampaignId): string => `campaigns/${id}.json`,
   verdict: (id: VerdictId): string => `verdicts/${id}.json`,
   /** A memo the Steward filed from a handover letter (PS-02, ADR 0024). */

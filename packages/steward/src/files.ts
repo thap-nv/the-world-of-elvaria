@@ -3,9 +3,6 @@
 import { inKingdom, kingdomLayout, readTextFile } from '@elvaria/store';
 import type { CharacterId, QuestId, TerritoryId } from '@elvaria/domain';
 
-/** The temple's own scripture, which the store's layout does not list yet. */
-const TEMPLE_SCRIPTURE = 'temple/scripture.md';
-
 /** The text of a kingdom file, or null when it does not exist. */
 export const readOptional = async (root: string, relative: string): Promise<string | null> =>
   (await readTextFile(inKingdom(root, relative))) ?? null;
@@ -24,7 +21,7 @@ export interface Scripture {
 
 /** The character's scripture, then the temple's (§3.7), those that exist; the prompt leaves out empty ones. */
 export async function readScriptures(root: string, character: CharacterId): Promise<Scripture[]> {
-  const files = [kingdomLayout.scripture(character), TEMPLE_SCRIPTURE];
+  const files = [kingdomLayout.scripture(character), kingdomLayout.templeScripture()];
   const texts = await Promise.all(files.map((file) => readOptional(root, file)));
   return files.flatMap((file, index) => {
     const text = texts[index];
