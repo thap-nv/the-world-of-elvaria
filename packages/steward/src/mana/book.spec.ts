@@ -104,4 +104,23 @@ describe('outsideFromLog', () => {
       { tribe: 'codex', model: 'gpt-5.1-codex', tokens: 12_000, at },
     ]);
   });
+
+  // PS-12d: the Monk's session of the Temple spends its tribe's account; a run that called no model spent nothing.
+  it('reads each temple.ran line whose session spent tokens, and skips a run with no session', () => {
+    const ran = { trigger: 'quests', day: '2026-11-07', groups: 2, operations: 1, letters: 0 };
+    const events = [
+      line('temple.ran', {
+        ...ran,
+        tribe: 'gemini',
+        model: 'gemini-3.8-flash-low',
+        tokens: 9_840,
+        session: 's1',
+      }),
+      line('temple.ran', { ...ran, groups: 0, operations: 0 }),
+      line('temple.ran', { ...ran, tribe: 'gemini', tokens: 300 }),
+    ];
+    expect(outsideFromLog(events)).toEqual([
+      { tribe: 'gemini', model: 'gemini-3.8-flash-low', tokens: 9_840, at: '2026-11-07T09:00:00+07:00' },
+    ]);
+  });
 });

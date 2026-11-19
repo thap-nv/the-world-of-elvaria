@@ -3,8 +3,8 @@
 // window a session takes (P1-48), and when each tribe is next probed or read. Rebuilt from the event log at start:
 // the gauges asleep from `mana.exhausted` / `mana.restored`, the ones warned from `mana.warning`, the shares from the
 // `mana.level` lines (folded with the quests' sessions at the first reading), what tribe checks and the sessions of
-// the Chancellor's office spent from the `tribe.checked` and `chancellor.answered` lines (run (221) (b),
-// fix/run-221-followups); readings and schedules come back with the first probe.
+// the Chancellor's office and of the Temple spent from the `tribe.checked`, `chancellor.answered` and `temple.ran`
+// lines (run (221) (b), fix/run-221-followups, PS-12d); readings and schedules come back with the first probe.
 import { DateTimeSchema, EVENT_DATA_SCHEMAS, keyOf, sameGauge, sameKey } from '@elvaria/domain';
 import type {
   CharacterId,
@@ -36,7 +36,7 @@ export interface ManaBook {
   shares: SessionShare[];
   /** The log's readings at start (`mana.level`), oldest first, until the first reading folds them into `shares`. */
   history: ManaReading[];
-  /** What the tribes' accounts spent outside every quest (`tribe.checked`, `chancellor.answered`), for the estimate. */
+  /** What the tribes' accounts spent outside every quest (`tribe.checked`, `chancellor.answered`, `temple.ran`), for the estimate. */
   outside: OutsideSpend[];
   /** When a tribe with a pool asleep is probed next (ms); none: at once. */
   readonly probeAt: Map<TribeId, number>;
@@ -146,6 +146,7 @@ export function levelsFromLog(events: readonly Event[]): ManaReading[] {
 const OUTSIDE_LINES = {
   'tribe.checked': EVENT_DATA_SCHEMAS['tribe.checked'],
   'chancellor.answered': EVENT_DATA_SCHEMAS['chancellor.answered'],
+  'temple.ran': EVENT_DATA_SCHEMAS['temple.ran'],
 } as const;
 
 const spendsOutside = (type: string): type is keyof typeof OUTSIDE_LINES =>
@@ -153,15 +154,16 @@ const spendsOutside = (type: string): type is keyof typeof OUTSIDE_LINES =>
 
 /**
  * What `elvaria tribe check` spent with the real CLI (`tribe.checked`, run (221) (b)) and what the sessions of the
- * Chancellor's office spent (`chancellor.answered`, fix/run-221-followups), from the log, which the estimate counts as
+ * Chancellor's office and the Monk's spent (`chancellor.answered`, fix/run-221-followups; `temple.ran`, PS-12d), from the log, which the estimate counts as
  * it counts a quest's sessions. A line written while the Steward runs (its own triage among them) is read at its next
  * start; the account's own figure, read every probe_interval_minutes while work is in play, shows it before that.
  */
 export function outsideFromLog(events: readonly Event[]): OutsideSpend[] {
   return events.flatMap((event) => {
     const line = spendsOutside(event.type) ? OUTSIDE_LINES[event.type].safeParse(event.data) : undefined;
+    // A run of the Temple that called no model names no tribe and spent nothing.
     if (line?.success !== true || line.data.tokens === 0) return [];
     const { tribe, model, tokens } = line.data;
-    return [{ tribe, model, tokens, at: event.ts }];
+    return tribe === undefined || model === undefined ? [] : [{ tribe, model, tokens, at: event.ts }];
   });
 }
