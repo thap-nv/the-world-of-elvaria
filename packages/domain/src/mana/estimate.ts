@@ -1,6 +1,7 @@
 // The `estimate` gauge source (implementation-plan §3.5, §3.14, ADR 0009): for a pool and window the account reports
 // no figure for, the sessions of the tribe in that window measured against the owner's `tribes[].budget` — their
 // tokens (attempt_log), or their minutes for a tribe whose adapter reports no usage (mana_source elapsed_time).
+// Tokens the account spent outside every quest count too (run (221) (b)): `elvaria tribe check` against the real CLI.
 // An estimate closes a pool at the cap; only the account's own word (a usage limit, a spent window) puts it to sleep.
 import { MS_PER_MINUTE } from '../constants.ts';
 import { parseInstant } from '../core/clock.ts';
@@ -16,6 +17,17 @@ import type { Tribe } from '../schema/tribe.ts';
 import type { TribeLimits } from '../tribe/tribe-limits.ts';
 import type { ManaReading, ManaWindow } from './reading.ts';
 
+/**
+ * Tokens a tribe's account spent outside every quest, as the sessions reported them, ended at `at` (ISO): a
+ * `tribe.checked` line. Charged to the pool of `model`; a tribe measured in minutes counts none of it.
+ */
+export interface OutsideSpend {
+  readonly tribe: TribeId;
+  readonly model: string;
+  readonly at: string;
+  readonly tokens: number;
+}
+
 export interface EstimateSource {
   readonly tribes: readonly Pick<Tribe, 'id' | 'pools' | 'budget'>[];
   readonly characters: readonly Pick<Character, 'id' | 'tribe' | 'model'>[];
@@ -24,7 +36,12 @@ export interface EstimateSource {
   readonly limits: Readonly<Partial<Record<TribeId, Pick<TribeLimits, 'mana_source'>>>>;
   /** What the gauges hold: a pool and window with a current figure of the account's gets no estimate. */
   readonly readings: readonly ManaReading[];
+  /** What the tribes' accounts spent outside every quest (`tribe.checked`); none when absent. */
+  readonly outside?: readonly OutsideSpend[];
 }
+
+/** What the estimate reads of a session: when it ran and the tokens it reported. */
+type Spent = Pick<Attempt, 'started_at' | 'ended_at' | 'tokens'>;
 
 type Budget = NonNullable<Tribe['budget']>;
 const BUDGET_KEYS = {
@@ -38,7 +55,7 @@ const instantOf = (text: string | undefined, fallback: Instant): Instant => {
 };
 
 /** What one session spent inside the window that began at `since`: its tokens once ended there, or its minutes. */
-function spentBy(entry: Attempt, source: TribeLimits['mana_source'], since: Instant, now: Instant): number {
+function spentBy(entry: Spent, source: TribeLimits['mana_source'], since: Instant, now: Instant): number {
   const end = instantOf(entry.ended_at, now);
   if (source === 'usage') return entry.ended_at !== undefined && end > since ? (entry.tokens ?? 0) : 0;
   const start = Math.max(instantOf(entry.started_at, now), since);
@@ -69,20 +86,28 @@ interface Measured {
   readonly measure: TribeLimits['mana_source'];
 }
 
-/** The tribe's sessions by the pool of their character's model; a script run has no character and counts nowhere. */
-function sessionsByPool(source: EstimateSource, tribe: Pick<Tribe, 'id' | 'pools'>): Map<string, Attempt[]> {
-  const pools = new Map(poolsOfTribe(source, tribe).map((pool): [string, Attempt[]] => [pool, []]));
+/**
+ * The tribe's sessions by the pool of their character's model; a script run has no character and counts nowhere.
+ * What it spent outside every quest goes to the pool of its model, when a character draws on that pool.
+ */
+function sessionsByPool(source: EstimateSource, tribe: Pick<Tribe, 'id' | 'pools'>): Map<string, Spent[]> {
+  const pools = new Map(poolsOfTribe(source, tribe).map((pool): [string, Spent[]] => [pool, []]));
   const byId = new Map(source.characters.map((character) => [character.id, character]));
   for (const entry of source.quests.flatMap(({ attempt_log: log }) => log)) {
     const holder = entry.character === null ? undefined : byId.get(entry.character);
     if (holder?.tribe === tribe.id) pools.get(poolKeyOf([tribe], holder).pool)?.push(entry);
+  }
+  for (const spend of source.outside ?? []) {
+    if (spend.tribe !== tribe.id) continue;
+    const entry = { started_at: spend.at, ended_at: spend.at, tokens: spend.tokens };
+    pools.get(poolKeyOf([tribe], spend).pool)?.push(entry);
   }
   return pools;
 }
 
 function estimateOf(
   tribe: Measured,
-  [pool, sessions]: readonly [string, readonly Attempt[]],
+  [pool, sessions]: readonly [string, readonly Spent[]],
   window: ManaWindow,
   at: { readonly now: Instant; readonly iso: string },
 ): ManaReading | undefined {

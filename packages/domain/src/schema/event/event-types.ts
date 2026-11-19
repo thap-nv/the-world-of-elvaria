@@ -93,6 +93,8 @@ export const EVENT_TYPES = [
   'upgrade.switched',
   'upgrade.rolled_back',
   'upgrade.failed',
+  // Run (221) (b): `elvaria tribe check` against the real CLI says what its sessions spent, for the mana estimate.
+  'tribe.checked',
 ] as const;
 
 export type EventType = (typeof EVENT_TYPES)[number];

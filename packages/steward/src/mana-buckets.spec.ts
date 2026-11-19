@@ -2,6 +2,7 @@
 // only the gauges it spent (the cap of one model stops only that model's characters); a gauge nearing the cap warns
 // once; a pool the account gives no figure for is estimated; a quest asleep too long changes hands; the owner moves
 // a character to another model of its tribe.
+import { EVENT_VERSION, EventSchema } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -166,6 +167,28 @@ describe('the owner hears the gauges (P1-22)', () => {
       .filter(({ source }) => source === 'estimate');
     expect(estimates.map(({ tribe, window }) => [tribe, window])).toContainEqual(['claude', 'five_hour']);
     expect(estimates.some(({ window }) => window === 'weekly')).toBe(false);
+  });
+
+  it('counts in the estimate what a tribe check spent before it started, as the log says (run (221) (b))', async () => {
+    current = await bench();
+    const tribes = KINGDOM.tribes.map((tribe) =>
+      tribe.id === 'claude' ? { ...tribe, budget: { tokens_5h: 1_000_000 } } : tribe,
+    );
+    await current.store.kingdom.write({ ...KINGDOM, tribes });
+    const checks = [{ check: 'submit', outcome: 'passed', tokens: 250_000 }];
+    const data = { tribe: 'claude', model: 'claude-sonnet-5-5', outcome: 'passed', tokens: 250_000, checks };
+    const ts = new Date(current.clock.now() - 60_000).toISOString();
+    const checked = { v: EVENT_VERSION, id: '01JCF8X4Z6Q3W9N2M5R7T8V0YB', ts, type: 'tribe.checked', data };
+    await openEventLog(current.root).append([EventSchema.parse({ ...checked, actor: { kind: 'user' } })]);
+    running = current.steward();
+    expect(await running.start({ loop: false })).toEqual({ ok: true });
+    await running.tick();
+    const estimates = (await linesOf(current, 'mana.level'))
+      .map(({ data: line }) => line as { tribe: string; window: string; source: string; used_pct: number })
+      .filter(({ source }) => source === 'estimate');
+    expect(estimates).toContainEqual(
+      expect.objectContaining({ tribe: 'claude', window: 'five_hour', used_pct: 25 }),
+    );
   });
 });
 

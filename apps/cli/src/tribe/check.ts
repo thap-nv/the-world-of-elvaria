@@ -28,6 +28,7 @@ import { minimalEnv } from '../process/minimal-env.ts';
 import { handOf } from '../run/crew.ts';
 import { capabilityLines } from './check-declared.ts';
 import { keepFailed, liveToolOf, pinChecked } from './check-live.ts';
+import { recordSpent, withTokens } from './check-spent.ts';
 import { namedTribe, setEnabled } from './save.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
@@ -134,9 +135,11 @@ async function conforms(ctx: KingdomContext, tried: Tried, runner: AgentRunner, 
     },
     ...(run.live ? { onFailed: keepFailed(ctx, tried.tribe) } : {}),
   });
+  // The real CLI spends the account's mana: each check and the sum are said and recorded (run (221) (b)).
   reports.forEach((report) => {
-    ctx.io.out(reportLine(ctx, report));
+    ctx.io.out(run.live ? withTokens(ctx, report, reportLine(ctx, report)) : reportLine(ctx, report));
   });
+  if (run.live && run.model !== undefined) await recordSpent(ctx, tried.tribe.id, run.model, reports);
   return reports.every(({ outcome }) => outcome !== 'failed');
 }
 

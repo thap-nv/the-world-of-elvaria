@@ -4,7 +4,7 @@
 
 Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là một event; log chỉ ghi thêm, không bao giờ viết lại. `type` là `nhóm.hành_động`; reader giữ nguyên type lạ, renderer bỏ qua nó. Hợp đồng đầy đủ: [schemas/event.schema.json](schemas/event.schema.json); nghĩa từng nhóm và các tiền tố dành sẵn: [glossary.md](glossary.md) mục 12.
 
-83 type trong danh mục v1, 71 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
+84 type trong danh mục v1, 72 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
 
 ## Khung một dòng
 
@@ -198,3 +198,9 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 | `upgrade.switched` | `from`: string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) hoặc null — A full commit id of the Elvaria repo: the name of the build folder `.builds/<sha>/`.<br>`to`: string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) — A full commit id of the Elvaria repo: the name of the build folder `.builds/<sha>/`. |
 | `upgrade.rolled_back` | `from`: string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) — A full commit id of the Elvaria repo: the name of the build folder `.builds/<sha>/`.<br>`to`: string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) — A full commit id of the Elvaria repo: the name of the build folder `.builds/<sha>/`. |
 | `upgrade.failed` | `to`: string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) — A full commit id of the Elvaria repo: the name of the build folder `.builds/<sha>/`.<br>`step`: một trong `prepare`, `migrate`, `doctor`, `conformance`, `trial`<br>`reason`: string (không rỗng) — One line, redacted: the exit code or the error. |
+
+## `tribe` · 1 type
+
+| Type | `data` |
+|---|---|
+| `tribe.checked` | `tribe`: string (khớp `^[a-z][a-z0-9_]*$`) — TribeId from kingdom.tribes[].<br>`model`: string (khớp `^[a-z0-9][a-z0-9.-]*$`) — The model the sessions ran on: its pool is the one they drew on.<br>`outcome`: một trong `passed`, `failed` — Whether every check passed or was skipped.<br>`tokens`: integer ≥ 0 — The sum of `checks[].tokens`.<br>`checks`: array of object { check, outcome, tokens } |

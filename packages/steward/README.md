@@ -196,7 +196,8 @@
   is set against the one it replaces for the share of its window a session takes, `mana/shares.ts`, the largest
   kept and folded again from the log's `mana.level` lines after a restart; 7 % before any is measured), one whose window reads spent sleeps (a tribe with only a model's cap asleep
   is still read, and probed without a model call). A pool and window the account gives no figure for is estimated
-  from the sessions (`mana.level` `source: estimate`); a gauge the world draws on that nears the cap warns once
+  from the sessions (`mana.level` `source: estimate`), and from what `tribe check` spent with the real CLI, read from
+  the log's `tribe.checked` lines at start (`outsideFromLog`, run (221) (b)); a gauge the world draws on that nears the cap warns once
   (`mana.warning`). The bell rings when a gauge warns, sleeps or wakes (`mana_warning`, `mana_asleep`,
   `mana_awake`). With `mana.reassign_after_hours`, a quest asleep that long goes to the character planTick chose
   (`paused_mana.reassign` by the Steward; the sleeper lets go) and starts. The owner's `wake` (`elvaria wake`)
