@@ -36,11 +36,12 @@ const sectionBlocks = (section) => [
  * The report over the whole kingdom, from what the reader found; `skipped` names what it could not read.
  * @param {MetricsInput} input
  * @param {readonly string[]} skipped
+ * @param {ReadonlyMap<string, string>} sentences the text of each line of the scriptures by ref (PS-12b)
  */
-export function renderMetricsReport(input, skipped = []) {
+export function renderMetricsReport(input, skipped = [], sentences = new Map()) {
   const t = translator('vi');
   const days = daysOf(input).map((day) => ({ day, metrics: metricsOf(input, { since: day, until: day }) }));
-  const [summary, ...rest] = metricsSections(t, metricsOf(input));
+  const [summary, ...rest] = metricsSections(t, metricsOf(input), sentences);
   const note = `> Sinh từ một vương quốc bằng ${code('pnpm docs:gen --kingdom <thư mục>')}; không sửa file này. Cùng số với ${code('elvaria metrics')} (implementation-plan §3.16.1, ADR 0027).`;
   const { events } = input;
   const span = events.length === 0 ? 'chưa có dòng nào' : `${events[0]?.ts} → ${events.at(-1)?.ts}`;
@@ -62,6 +63,6 @@ export function renderMetricsReport(input, skipped = []) {
 
 /** @param {string} kingdom */
 export async function metricsReportOf(kingdom) {
-  const { input, skipped } = await readMetricsSource(kingdom);
-  return renderMetricsReport(input, skipped);
+  const { input, skipped, sentences } = await readMetricsSource(kingdom);
+  return renderMetricsReport(input, skipped, sentences);
 }

@@ -55,6 +55,7 @@ describe('afterWrapUpOf (PS-28c)', () => {
         median_tokens: 206_504,
         // 5 min 10 s, 4 min 31 s and 5 min 1 s: the middle one.
         median_minutes: 301 / 60,
+        raised: 0,
       },
     ]);
   });
@@ -93,7 +94,15 @@ describe('afterWrapUpOf (PS-28c)', () => {
       end('e3', on17('10:05:00'), 'budget', 290_000),
     ];
     expect(afterWrapUpOf(events, CHARACTERS)).toEqual([
-      { tribe: 'gemini', reminded: 3, completed: 0, cut: 2, median_tokens: 10_000, median_minutes: 3 },
+      {
+        tribe: 'gemini',
+        reminded: 3,
+        completed: 0,
+        cut: 2,
+        median_tokens: 10_000,
+        median_minutes: 3,
+        raised: 0,
+      },
     ]);
   });
 
@@ -119,6 +128,7 @@ describe('afterWrapUpOf (PS-28c)', () => {
         cut: 1,
         median_tokens: 206_504,
         median_minutes: 310 / 60,
+        raised: 0,
       },
     ]);
   });
@@ -151,6 +161,65 @@ describe('afterWrapUpOf (PS-28c)', () => {
     ];
     expect(afterWrapUpOf(events, CHARACTERS, { since: '2026-11-18' })).toEqual([]);
     expect(afterWrapUpOf(events, CHARACTERS, { until: '2026-11-17' })[0]?.reminded).toBe(4);
+  });
+
+  describe('the sessions whose limit went up while they ran (PS-12b, "tiếp sức")', () => {
+    /** The notch of a session's bar: its limit in force on one gauge. */
+    const notch = (session: string, minute: string, limit: number, measure = 'tokens'): Event => ({
+      ...lineOf(
+        'agent.session.usage',
+        { role: 'assignee', measure, used: 1, limit, pct: 1, soft_pct: 85, hard_pct: 100 },
+        on17(minute),
+        QUEST,
+      ),
+      session,
+    });
+
+    it('counts a reminded session once the owner raised its limit, and not one that kept it or saw it lowered', () => {
+      const events = [
+        notch('r1', '10:00:00', 300_000),
+        wrapUp('r1', on17('10:20:00'), 260_000),
+        notch('r1', '10:21:00', 600_000),
+        notch('r1', '10:22:00', 600_000),
+        end('r1', on17('10:30:00'), 'completed', 500_000),
+        notch('k1', '11:00:00', 300_000),
+        notch('k1', '11:01:00', 300_000),
+        wrapUp('k1', on17('11:20:00'), 260_000),
+        end('k1', on17('11:30:00'), 'killed', 400_000),
+        notch('l1', '12:00:00', 300_000),
+        notch('l1', '12:01:00', 200_000),
+        wrapUp('l1', on17('12:20:00'), 170_000),
+        end('l1', on17('12:30:00'), 'killed', 300_000),
+      ];
+      expect(afterWrapUpOf(events, CHARACTERS)).toMatchObject([{ tribe: 'gemini', reminded: 3, raised: 1 }]);
+    });
+
+    it('reads one gauge at a time: a new gauge has no limit before it, so it is no raise', () => {
+      const events = [
+        notch('g1', '10:00:00', 45, 'time'),
+        notch('g1', '10:01:00', 300_000, 'tokens'),
+        wrapUp('g1', on17('10:20:00'), 260_000),
+        end('g1', on17('10:30:00'), 'killed', 400_000),
+        // The limit of another session on the same gauge is no earlier limit of this one.
+        notch('g2', '11:00:00', 900_000),
+        wrapUp('g2', on17('11:20:00'), 260_000),
+        end('g2', on17('11:30:00'), 'killed', 400_000),
+      ];
+      expect(afterWrapUpOf(events, CHARACTERS)).toMatchObject([{ reminded: 2, raised: 0 }]);
+    });
+
+    it('counts a raise made before the reminder, and ignores a session that was never reminded', () => {
+      const events = [
+        notch('p1', '10:00:00', 300_000),
+        notch('p1', '10:05:00', 450_000),
+        wrapUp('p1', on17('10:20:00'), 380_000),
+        end('p1', on17('10:30:00'), 'completed', 440_000),
+        notch('u1', '11:00:00', 300_000),
+        notch('u1', '11:05:00', 450_000),
+        end('u1', on17('11:30:00'), 'completed', 440_000),
+      ];
+      expect(afterWrapUpOf(events, CHARACTERS)).toMatchObject([{ reminded: 1, raised: 1 }]);
+    });
   });
 
   it('is part of the ledger, by the characters the ledger read', () => {

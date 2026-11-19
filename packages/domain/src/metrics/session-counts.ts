@@ -161,9 +161,10 @@ export interface PromptSizes {
   readonly blocks: readonly PromptBlockSize[];
 }
 
-type Opening = EventOf<'quest.started' | 'quest.unblocked' | 'quest.resumed'>;
+export type Opening = EventOf<'quest.started' | 'quest.unblocked' | 'quest.resumed'>;
 
-const isOpening = (event: Event): event is Opening =>
+/** The lines that open a session, and so carry its load trace (PS-01b). */
+export const isOpening = (event: Event): event is Opening =>
   isEventOf(event, 'quest.started') ||
   isEventOf(event, 'quest.unblocked') ||
   isEventOf(event, 'quest.resumed');
