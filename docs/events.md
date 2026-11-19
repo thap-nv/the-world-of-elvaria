@@ -4,7 +4,7 @@
 
 Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là một event; log chỉ ghi thêm, không bao giờ viết lại. `type` là `nhóm.hành_động`; reader giữ nguyên type lạ, renderer bỏ qua nó. Hợp đồng đầy đủ: [schemas/event.schema.json](schemas/event.schema.json); nghĩa từng nhóm và các tiền tố dành sẵn: [glossary.md](glossary.md) mục 12.
 
-84 type trong danh mục v1, 72 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
+85 type trong danh mục v1, 73 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
 
 ## Khung một dòng
 
@@ -204,3 +204,9 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 | Type | `data` |
 |---|---|
 | `tribe.checked` | `tribe`: string (khớp `^[a-z][a-z0-9_]*$`) — TribeId from kingdom.tribes[].<br>`model`: string (khớp `^[a-z0-9][a-z0-9.-]*$`) — The model the sessions ran on: its pool is the one they drew on.<br>`outcome`: một trong `passed`, `failed` — Whether every check passed or was skipped.<br>`tokens`: integer ≥ 0 — The sum of `checks[].tokens`.<br>`checks`: array of object { check, outcome, tokens } |
+
+## `chancellor` · 1 type
+
+| Type | `data` |
+|---|---|
+| `chancellor.answered` | `tribe`: string (khớp `^[a-z][a-z0-9_]*$`) — TribeId from kingdom.tribes[]: the account the session spent.<br>`model`: string (khớp `^[a-z0-9][a-z0-9.-]*$`) — The model the session ran on: its pool is the one it drew on.<br>`matter`: một trong `drafts`, `triage`, `amendment`<br>`tokens`: integer ≥ 0 — What the session reported (with the second try of the owner's words, when one ran). |

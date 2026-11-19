@@ -3654,6 +3654,54 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "chancellor.answered"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "A session of the Chancellor's office answered: the owner's words, a triage of memos, or an amendment's author. Written by the composition root (actor: the character who spoke) once the reply came back; the mana estimate counts `tokens` against the pool of `model` at the line's time, as a session of a quest, from the Steward's next start. A session with no reply to use writes none.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "tribe",
+              "model",
+              "matter",
+              "tokens"
+            ],
+            "properties": {
+              "tribe": {
+                "description": "TribeId from kingdom.tribes[]: the account the session spent.",
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "model": {
+                "description": "The model the session ran on: its pool is the one it drew on.",
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9.-]*$"
+              },
+              "matter": {
+                "enum": [
+                  "drafts",
+                  "triage",
+                  "amendment"
+                ]
+              },
+              "tokens": {
+                "description": "What the session reported (with the second try of the owner's words, when one ran).",
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "$defs": {
@@ -3743,7 +3791,8 @@
         "upgrade.switched",
         "upgrade.rolled_back",
         "upgrade.failed",
-        "tribe.checked"
+        "tribe.checked",
+        "chancellor.answered"
       ]
     }
   },

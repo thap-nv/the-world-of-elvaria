@@ -2490,6 +2490,11 @@
               "meaning": "`elvaria tribe check` với CLI thật ghi (actor `user`, không ghi với `--scenarios`): model đã thử, số token các phiên của từng phép báo và tổng của chúng; ước lượng mana của Nhiếp chính tính tổng đó vào pool của model như phiên của một quest, đọc từ lần khởi động sau (lần chạy (221) (b))"
             },
             {
+              "group": "Tể tướng",
+              "types": ["chancellor.answered"],
+              "meaning": "Một phiên của văn phòng Tể tướng đã trả lời (`matter`: `drafts` cho lời chủ nhân qua `elvaria say`, `triage` cho một mẻ thư, `amendment` cho quyết định của người viết đề); `apps/cli` ghi khi có câu trả lời (actor là nhân vật đã nói), với tộc, model và số token phiên báo; ước lượng mana của Nhiếp chính tính số đó vào pool của model như `tribe.checked`, đọc từ lần khởi động sau (fix/run-221-followups)"
+            },
+            {
               "group": "Dành sẵn",
               "types": ["campaign.*", "battle.*", "incident.*", "party.*", "skill.*"],
               "meaning": "giai đoạn 5; đội và bí kíp"
