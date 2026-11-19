@@ -30,6 +30,8 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria character release <id>` | Thả một nhân vật bị đình chỉ: nhân vật rảnh lại và nhận việc (lệnh release). |
 | `elvaria character level <id> <level>` | Đặt cấp của một nhân vật, lên hay xuống: những lần nhận việc sau theo hạng trần của cấp mới (lệnh set_level). |
 | `elvaria character model <id> <model>` | Chuyển một nhân vật sang model khác của chính tộc nó: phiên sau chạy model mới, và đồng hồ mana của model đó ràng nhân vật (lệnh set_model). |
+| `elvaria scripture lint` | Soát mọi dòng kinh (của Đền và của từng nhân vật) theo văn phạm và luật của một bài học: một câu, chỉ ký tự nhìn thấy được, không URL hay đường dẫn tuyệt đối, phạm vi đọc được, có fail_kind. Thoát 1 khi có lỗi. Chỉ đọc vương quốc, không tốn mana. |
+| `elvaria scripture list` | Liệt kê các bài học trong kinh với tham chiếu, phạm vi, fail_kind và nguồn; với --character, phiên nặng nhất của nhân vật đó nạp dòng nào và dòng nào bị trần 40 dòng cắt. Không tốn mana. |
 | `elvaria say [<words>]` | Nói với Tể tướng việc bạn muốn: Tể tướng soạn nhiệm vụ nháp, bạn xác nhận (lệnh create_quest, nháp). |
 | `elvaria quest add` | Thêm một nhiệm vụ mở ngay, không qua Tể tướng (lệnh create_quest). |
 | `elvaria quest list` | Liệt kê các nhiệm vụ trên bảng nhiệm vụ. |
@@ -268,6 +270,20 @@ Chuyển một nhân vật sang model khác của chính tộc nó: phiên sau c
 |---|---|
 | `<id>` | id của nhân vật, ví dụ thorn. |
 | `<model>` | Model CLI mới, cùng tộc, ví dụ gemini-3.8-flash-high. |
+
+## `elvaria scripture lint`
+
+Soát mọi dòng kinh (của Đền và của từng nhân vật) theo văn phạm và luật của một bài học: một câu, chỉ ký tự nhìn thấy được, không URL hay đường dẫn tuyệt đối, phạm vi đọc được, có fail_kind. Thoát 1 khi có lỗi. Chỉ đọc vương quốc, không tốn mana.
+
+Không có tham số riêng, chỉ các tùy chọn chung.
+
+## `elvaria scripture list`
+
+Liệt kê các bài học trong kinh với tham chiếu, phạm vi, fail_kind và nguồn; với --character, phiên nặng nhất của nhân vật đó nạp dòng nào và dòng nào bị trần 40 dòng cắt. Không tốn mana.
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `--character <id>` | Nhân vật cần xem: kinh riêng của nó rồi kinh của Đền, theo thứ tự nạp. |
 
 ## `elvaria say`
 

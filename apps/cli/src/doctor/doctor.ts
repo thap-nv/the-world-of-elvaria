@@ -7,7 +7,8 @@
 // stopped Steward left running (P1-11), the mana gauges the Steward logged, asleep or not (P1-32), and the build the
 // kingdom pins (PS-04b), graphify when a territory has a code graph (PS-21), and a credential with the right to push
 // for each territory whose delivery pushes (PS-08), two tribes of one adapter on one account (PS-27), and sibling rows
-// that do not read as meant (PS-27b, warnings only). It writes only
+// that do not read as meant (PS-27b, warnings only), and the summary of the scripture lint (PS-12, a warning at
+// most). It writes only
 // `tribes[].tool` (its `config_dir` with `--config-dir`, PS-27),
 // `programs.graphify` with `--pin` (PS-21) and, with `--enable`, `tribes[].enabled` (P1-15) when this run finds
 // nothing wrong with that tribe (P1-34), through the kingdom file's lock.
@@ -27,6 +28,7 @@ import { checkGraph } from './check-graph.ts';
 import { checkJudges } from './check-judges.ts';
 import { checkGit, checkRegistry, checkTerritories } from './check-kingdom.ts';
 import { checkMana } from './check-mana.ts';
+import { checkScripture } from './check-scripture.ts';
 import { checkLeftSessions, checkTreasury } from './check-state.ts';
 import { checkTerritorySetup } from './check-territory-setup.ts';
 import { checkTerritoryTrials } from './check-territory-trial.ts';
@@ -174,6 +176,7 @@ async function runDoctor(input: CommandInput, cli: CliContext): Promise<ExitCode
     ...(await checkDelivery(ctx)),
     ...(await checkGraph(ctx, options.pin)),
     ...(await checkJudges(ctx)),
+    ...(await checkScripture(ctx)),
     await checkTreasury(ctx),
     ...(await checkLeftSessions(ctx)),
     ...(await checkMana(ctx)),

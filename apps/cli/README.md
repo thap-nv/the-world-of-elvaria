@@ -345,6 +345,13 @@ show` prints the brief apart from the rest of the description and, while the pla
 - A red default branch (PS-09d): `territory patrol <id> --now` sends the inbox command `patrol` for a patrolled
   territory; `quest list` and `quest show` mark the open quests that wait for a green branch (`quest/base-wait.ts`,
   `baseRedOf` over the log); `digest` says how many wait in the `base_red` item.
+- Scripture line by line (PS-12, `src/scripture/`, 0 mana, reads only): `scripture lint` checks every line of the
+  temple's scripture and each character's against the grammar and the rules of lesson-sharing T4 (`lintScripture`
+  of the domain, the event log's redaction through the Steward's `lessonsIn`), prints `<file>:<line>: <level>:
+<issue>`, warns of a character whose heaviest session would load more than 40 lessons (`worstLoadOf`), and exits
+  1 on an error. `scripture list [--character <id>]` prints each lesson with its ref, scope, fail kind and source;
+  with a character, its own lines then the temple's and what its heaviest session loads or the cap cuts. `doctor`
+  adds the lint's summary as one line, a warning at most (`doctor/check-scripture.ts`).
 
 ## Does not
 
