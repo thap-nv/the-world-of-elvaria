@@ -154,6 +154,14 @@
   `<kingdom>/.backup/<stamp>-ritual-steps/registry/rituals.json`, then writes it whole through a file beside it.
   Exits `0` (done, nothing to do, or `--dry-run`), `1` (refused, no such ritual) or `2` (no `--kingdom`). Run by
   hand after `elvaria upgrade` (`docs/guides/operating-a-kingdom.md` §13).
+- `check-stamp.mjs` (`check-stamp.spec.ts`): the check stamp that lets the husky pre-push hook skip
+  `pnpm check:fast` (fix/pre-push-stamp). `start`, the first step of `pnpm check`, removes the worktree's stamp and
+  notes HEAD when `git status --porcelain` is empty; `write`, its last step, stamps HEAD only when the tree is still
+  clean and HEAD is the one `start` noted. `verify`, which `.husky/pre-push` runs before `pnpm check:fast`, reads the
+  hook's stdin and exits `0` (the hook skips check:fast) when every commit the push sends is HEAD, the stamp is HEAD
+  and the tree is clean, or when the push sends no commit (only branch deletions); otherwise, or on input or a git
+  it cannot read, it exits `1` and the hook runs check:fast. Reads git through `git rev-parse` and `git status` with
+  a minimal env; writes only `git rev-parse --git-path elvaria-check-ok`, a file in the worktree's own git dir.
 
 ## Does not
 
@@ -162,7 +170,8 @@
   the owner, or a session acting for the owner, runs it by hand.
 - Edit source schemas (`packages/domain/src/schema/`), `packages/i18n/src/glossary.json`, locale files, or
   `packages/config/boundaries.mjs`: the generators only write derived files under `docs/`, `plan-split.mjs` only
-  moves lines of the implementation plan, and the check scripts never write to disk.
+  moves lines of the implementation plan, and the check scripts never write to disk (`check-stamp.mjs` writes only
+  its stamp, inside the git dir).
 - Change a line of the implementation plan when `plan-split.mjs` moves it, beyond its relative link targets.
 - Run shell scripts or pass `process.env` wholesale to child `git` processes (ADR 0013, 0015).
 - Follow web URLs, `mailto:` links, in-page `#` anchors, or links under `design/` in `docs-links.mjs` (ADR
@@ -181,7 +190,7 @@
 - `apps/cli` (`src/commands.ts`, `src/args.ts`, `src/command.ts`, `src/help.ts`), imported by `docs-cli.mjs` to
   render `docs/cli.md`; `src/metrics/read.ts` and `src/metrics/view.ts`, imported by `docs-metrics-report.mjs`.
 - Node built-ins (`node:child_process`, `node:fs`, `node:path`, `node:process`, `node:url`) and `git`
-  (`docs-repo.mjs`, `docs-note.mjs`).
+  (`docs-repo.mjs`, `docs-note.mjs`, `check-stamp.mjs`).
 
 ## How to test
 

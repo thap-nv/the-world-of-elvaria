@@ -1,1 +1,4 @@
-pnpm check:fast
+# A push of the commit a green `pnpm check` stamped, on a clean tree, skips check:fast: check ran all of it already
+# (scripts/check-stamp.mjs, fix/pre-push-stamp). Any doubt runs check:fast. pnpm is called here, from sh, because Node
+# would need a shell to start pnpm.cmd on Windows (ADR 0015).
+node scripts/check-stamp.mjs verify || pnpm check:fast

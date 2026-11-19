@@ -47,8 +47,8 @@ Mọi package đã có tên và danh sách phụ thuộc được phép trong `W
 ```bash
 pnpm install
 pnpm check               # mọi thứ CI chạy (trừ audit): lint, format:check, typecheck, test, boundaries,
-                         #   schemas --check, docs:gen --check, docs:check, i18n:check
-pnpm check:fast          # typecheck + test + boundaries (husky pre-push)
+                         #   schemas --check, docs:gen --check, docs:check, i18n:check; xanh trên cây sạch thì đóng dấu HEAD
+pnpm check:fast          # typecheck + test + boundaries (husky pre-push, trừ khi push đúng commit có dấu)
 pnpm lint && pnpm typecheck  # lint tự cho eslint heap 8 GB, không cần NODE_OPTIONS
 pnpm exec eslint --prune-suppressions <file>   # sau khi sửa một chỗ có trong eslint-suppressions.json (.claude/rules/tests.md)
 pnpm test                # vitest của scripts/ và .claude/hooks/, rồi từng package; một package: pnpm --filter @elvaria/<key> test
@@ -71,6 +71,8 @@ pnpm elvaria sandbox replay <tmp>/events/sandbox/<ngày>.jsonl --speed 20   # d�
 pnpm --filter @elvaria/hooks build && ELVARIA_LIVE=1 pnpm --filter @elvaria/runner-claude exec vitest run src/live.spec.ts
                          # bộ live với CLI thật (từ P1-09) — tốn mana, chỉ khi cần; `… test` chạy thêm spec CLI giả và coverage
 ```
+
+**Dấu check của pre-push** (`fix/pre-push-stamp`): `pnpm check` mở đầu bằng `node scripts/check-stamp.mjs start` và kết thúc bằng `… write`. Dấu là SHA của HEAD, ghi vào `git rev-parse --git-path elvaria-check-ok` (mỗi worktree một file), và chỉ được ghi khi cây làm việc sạch lúc check bắt đầu lẫn lúc xanh, HEAD không đổi giữa chừng. Hook pre-push (`.husky/pre-push`) chạy `node scripts/check-stamp.mjs verify || pnpm check:fast`: nó bỏ qua `check:fast` khi mọi commit được push là HEAD, dấu trỏ đúng HEAD và cây vẫn sạch, hay khi lần push không gửi commit nào (chỉ xóa nhánh); mọi trường hợp khác chạy `check:fast` như cũ. Commit thêm sau khi check xanh thì lần push chạy `check:fast`, hoặc chạy lại `pnpm check` trước khi push.
 
 Mọi lệnh `elvaria` và tùy chọn: [docs/cli.md](../cli.md), sinh từ bảng lệnh. Chỉ `run`, `say`, `triage` và `tribe check` với CLI thật mở phiên tốn mana. Trên vương quốc đã ghim một bản (`elvaria upgrade`), `pnpm elvaria` chạy bằng bản ghim; thêm `--here` để chạy bằng mã của worktree đang sửa.
 
