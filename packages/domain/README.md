@@ -254,8 +254,9 @@ patrol`); `partyOf` counts the quest a party is named after, `partyStatusOf` and
   account's window as a reading); `decideManaState(readings, key, cfg, now)` → `ok | warning | closed | asleep` of
   one gauge, `manaStateOf` of a character (every gauge that binds it), against `min(cap_pct, 100 − king_reserve_pct)`;
   `asleepFor` (a gauge asleep binds the character), `spentFor` (the spent gauges a usage limit put to sleep);
-  `estimatedReadings` (`estimate`: the sessions' tokens, with what a tribe check spent outside every quest
-  (`outside`, run (221) (b)), or minutes for `mana_source: elapsed_time`, in five hours
+  `estimatedReadings` (`estimate`: the sessions' tokens, with what a tribe check and the Chancellor's office spent
+  outside every quest (`outside`, run (221) (b), fix/run-221-followups: the `chancellor.answered` line of
+  `src/schema/event/chancellor-data.ts`), or minutes for `mana_source: elapsed_time`, in five hours
   and seven days against `tribes[].budget`, for a pool and window the account gives no figure for; never spent);
   `warningsOf` (a gauge warns once at `warn_margin_pct` below the cap); `nextProbeOf`, when a sleeping gauge is
   probed next (just after a known reset, soon again when the account is late). (P1-48) `sessionShareOf` measures
@@ -365,7 +366,8 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   (`unsealedMergesOf`, `revertWordsOf`) and `raised` on `awaiting_seal`; the ledger's `unsealed` counts.
 - Decides the breaker of the seal delegation (`src/delegation/breaker.ts`, `escape.ts`, PS-08g, ADR 0023):
   `sealSuspendedOf` folds `delegation.suspended` and `delegation.resumed` into the suspended territories
-  (`SealPolicy.suspended`); `baseRedSuspension` (a check turned red with a merge without the seal among its suspects)
+  (`SealPolicy.suspended`), and `sealPolicyOf` joins them to `kingdom.delegation.seal` for the Steward and
+  `elvaria digest` alike (fix/run-221-followups); `baseRedSuspension` (a check turned red with a merge without the seal among its suspects)
   and `escapeSuspension` (the owner's report on such a quest) say when a signal suspends one, once per suspension;
   `landingOf` and `escapeOf` say whether a quest reached its base branch and give its `quest.escaped` line, or why not
   (`not_merged`, `already_reported`). `quest.escaped` is a notice about a quest, not a move (`QUEST_NOTICE_TYPES`,

@@ -12,6 +12,7 @@ import {
   heldQuestsOf,
   ownerDeliveries,
   scopeHoldsOf,
+  sealPolicyOf,
   sealSuspendedOf,
   unopenedReviewsOf,
 } from '@elvaria/domain';
@@ -55,6 +56,10 @@ async function runDigest(input: CommandInput, cli: CliContext): Promise<ExitCode
   const now = ctx.io.clock.now();
   const patrols = baseHealthOf(log.events);
   const outcomes = forgeOutcomesOf(log.events);
+  const suspended = sealSuspendedOf(log.events);
+  // fix/run-221-followups: the delegation of the seal as the Steward reads it (kingdom.json, the breaker's lines), so a
+  // pull request the Steward merges itself is neither waiting for the owner nor holding a scope here either.
+  const policy = sealPolicyOf(ctx.kingdom, suspended);
   const items = attentionQueue(digestStateOf(source, log.events), now, {
     unclaimable: [...unclaimable.keys()],
     // fix/run-221-domain: not a quest the Steward still carries to its base branch. Only the Steward knows a branch
@@ -62,10 +67,10 @@ async function runDigest(input: CommandInput, cli: CliContext): Promise<ExitCode
     scope_held: scopeHoldsOf(
       source.quests,
       source.territories,
-      deliveringOf(outcomes, source.quests, source.territories),
+      deliveringOf(outcomes, source.quests, source.territories, { policy }),
     ),
     judges_unopened: unopenedReviewsOf(source.quests),
-    deliveries: ownerDeliveries(outcomes.values(), source.quests, source.territories),
+    deliveries: ownerDeliveries(outcomes.values(), source.quests, source.territories, policy),
     ...(upgrade === undefined ? {} : { upgrade }),
     // PS-26: the same health of the patrolled branches the Steward's book holds.
     patrols,
@@ -74,7 +79,7 @@ async function runDigest(input: CommandInput, cli: CliContext): Promise<ExitCode
     // (D) of fix/quest-hold: the quests the owner holds.
     held: heldQuestsOf(source.quests),
     // PS-08g: the territories whose delegation of the seal the breaker suspended.
-    delegation_suspended: sealSuspendedOf(log.events),
+    delegation_suspended: suspended,
   });
   // ctx.now() is written in the kingdom's zone: its date is the kingdom's local day, as the digest's file names it.
   const day = ctx.now().slice(0, 'yyyy-mm-dd'.length);

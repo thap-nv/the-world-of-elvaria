@@ -8,7 +8,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm boundaries && pnpm schemas --check && pnpm docs:gen --check && pnpm docs:check && pnpm i18n:check",
+    "check": "node scripts/check-stamp.mjs start && pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm boundaries && pnpm schemas --check && pnpm docs:gen --check && pnpm docs:check && pnpm i18n:check && node scripts/check-stamp.mjs write",
     "check:fast": "pnpm typecheck && pnpm test && pnpm boundaries",
     "lint": "node --max-old-space-size=8192 node_modules/eslint/bin/eslint.js . --max-warnings=0",
     "format": "prettier --write .",

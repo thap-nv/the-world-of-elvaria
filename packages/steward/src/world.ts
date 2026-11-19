@@ -1,6 +1,6 @@
 // The kingdom as one tick sees it: read from the files at the start of the tick, then kept current by every
 // write the tick makes, so later steps decide on what earlier steps did (implementation-plan §3.1).
-import { modelsOfTribes, suspendedTerritoriesOf, tribeLimitsOn } from '@elvaria/domain';
+import { modelsOfTribes, tribeLimitsOn } from '@elvaria/domain';
 import type {
   BackgroundWork,
   Character,
@@ -12,7 +12,6 @@ import type {
   QuestId,
   Registry,
   ReviewPrompt,
-  SealPolicy,
   Territory,
   TerritoryId,
   TribeId,
@@ -22,7 +21,6 @@ import type {
 import type { AgentRunner } from '@elvaria/runner-core';
 import type { KingdomStore, Listing, StoreIssue } from '@elvaria/store';
 
-import type { DelegationBook } from './delegation/book.ts';
 import type { ManaBook } from './mana/book.ts';
 import type { Logger } from './types.ts';
 
@@ -99,15 +97,6 @@ export function modelsOf(runners: Readonly<Partial<Record<TribeId, AgentRunner>>
   }
   return modelsOfTribes(capabilities);
 }
-
-/** kingdom.delegation.seal, and the territories whose delegation the breaker suspended (PS-08g). */
-export const sealPolicyOf = (
-  world: Pick<World, 'kingdom'>,
-  delegation: Pick<DelegationBook, 'suspensions'>,
-): SealPolicy => ({
-  seal: world.kingdom.delegation.seal,
-  suspended: suspendedTerritoriesOf(delegation.suspensions),
-});
 
 /**
  * The snapshot planTick decides on, with the pools asleep, the gauges' readings (§3.5), the background (P1-25) and the

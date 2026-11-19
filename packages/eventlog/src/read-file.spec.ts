@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { linesOf, plantText, tempDir } from '../test/temp.ts';
 import { DAY_1, idsOf, makeEvent, makeEvents } from './__fixtures__/events.ts';
-import { appendEvents } from './append.ts';
+import { appendEvents, serializeEvent } from './append.ts';
 import { readEventFile } from './read-file.ts';
 import type { TempDir } from '../test/temp.ts';
 
@@ -21,11 +21,14 @@ describe('readEventFile', () => {
   });
   afterEach(() => temp.remove());
 
+  // The lines are the appender's (serializeEvent, then one appendEvents batch), but all except the last batch go to
+  // disk in one write: appendEvents awaits one write() per line, and 10 000 awaits in a row took 30 s and more with
+  // every core busy, where the reading took 0.1 s ((247), fix/pre-push-stamp). The file stays 2.6 MiB: three chunks.
   it('writes and reads back 10 000 lines unchanged, in order, with nothing pending', async () => {
     const events = makeEvents(TEN_THOUSAND, DAY_1, 1);
-    for (let start = 0; start < events.length; start += BATCH) {
-      await appendEvents(file, events.slice(start, start + BATCH));
-    }
+    const bulk = events.slice(0, -BATCH).map((event) => serializeEvent(event).toString('utf8'));
+    await plantText(file, bulk.join(''));
+    await appendEvents(file, events.slice(-BATCH));
     expect(await linesOf(file)).toHaveLength(TEN_THOUSAND);
     const read = await readEventFile(file);
     expect(read.issues).toEqual([]);

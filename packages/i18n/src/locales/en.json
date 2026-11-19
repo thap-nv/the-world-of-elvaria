@@ -1029,6 +1029,7 @@
     "cli.say.nothing": "No draft is left to send.",
     "cli.say.question": "The Chancellor asks: {question}",
     "cli.say.run_dir": "The prompt and the session's output are in {dir}.",
+    "cli.say.spent_unrecorded": "! The tokens of the session could not be written to the log ({problem}), so the mana estimate does not count them.",
     "cli.say.summary": "Tell the Chancellor what you want: it drafts the quests, you confirm them (create_quest commands, draft).",
     "cli.seal.option.note": "A word for the assignee, kept with the seal.",
     "cli.seal.refused": "Quest {id} is «{status}»: only work waiting for your seal can be sealed.",

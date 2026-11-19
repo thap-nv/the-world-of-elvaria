@@ -2,11 +2,11 @@
 // domain decides (sealDelegated, sealRaisesOf, mayMergeUnsealed); this reads what it needs from the world and the plot.
 // At a submit the Steward measures the branch (Plots.diffLines) and gathers the reasons the work gives; at a passing
 // verdict, the reasons the judge gives; both go into the move's `before`, so the transition table does not change.
-import { apartFromDoers, raisedSeal, sealRaisesOf, workedOn } from '@elvaria/domain';
+import { apartFromDoers, raisedSeal, sealPolicyOf, sealRaisesOf, workedOn } from '@elvaria/domain';
 import type { CharacterId, Quest, SealFacts } from '@elvaria/domain';
 
 import { outOfScopeIn } from './sessions/out-of-scope.ts';
-import { modelsOf, sealPolicyOf } from './world.ts';
+import { modelsOf } from './world.ts';
 import type { Context } from './context.ts';
 
 /** The fields a move sets when the machine raises the seal now (raisedSeal); none for a quest the delegation did not spare. */
@@ -15,7 +15,7 @@ export function sealRaiseOf(ctx: Context, quest: Quest, facts: SealFacts): Parti
     quest,
     facts,
     ctx.world.territories.get(quest.territory),
-    sealPolicyOf(ctx.world, ctx.delegation),
+    sealPolicyOf(ctx.world.kingdom, ctx.delegation.suspensions),
   );
   return raisedSeal(quest, raises) ?? {};
 }

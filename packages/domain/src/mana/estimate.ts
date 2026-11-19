@@ -1,7 +1,8 @@
 // The `estimate` gauge source (implementation-plan §3.5, §3.14, ADR 0009): for a pool and window the account reports
 // no figure for, the sessions of the tribe in that window measured against the owner's `tribes[].budget` — their
 // tokens (attempt_log), or their minutes for a tribe whose adapter reports no usage (mana_source elapsed_time).
-// Tokens the account spent outside every quest count too (run (221) (b)): `elvaria tribe check` against the real CLI.
+// Tokens the account spent outside every quest count too: `elvaria tribe check` against the real CLI (run (221) (b)),
+// and the sessions of the Chancellor's office (fix/run-221-followups).
 // An estimate closes a pool at the cap; only the account's own word (a usage limit, a spent window) puts it to sleep.
 import { MS_PER_MINUTE } from '../constants.ts';
 import { parseInstant } from '../core/clock.ts';
@@ -19,7 +20,8 @@ import type { ManaReading, ManaWindow } from './reading.ts';
 
 /**
  * Tokens a tribe's account spent outside every quest, as the sessions reported them, ended at `at` (ISO): a
- * `tribe.checked` line. Charged to the pool of `model`; a tribe measured in minutes counts none of it.
+ * `tribe.checked` or `chancellor.answered` line. Charged to the pool of `model`; a tribe measured in minutes counts
+ * none of it.
  */
 export interface OutsideSpend {
   readonly tribe: TribeId;
@@ -36,7 +38,7 @@ export interface EstimateSource {
   readonly limits: Readonly<Partial<Record<TribeId, Pick<TribeLimits, 'mana_source'>>>>;
   /** What the gauges hold: a pool and window with a current figure of the account's gets no estimate. */
   readonly readings: readonly ManaReading[];
-  /** What the tribes' accounts spent outside every quest (`tribe.checked`); none when absent. */
+  /** What the tribes' accounts spent outside every quest (`tribe.checked`, `chancellor.answered`); none when absent. */
   readonly outside?: readonly OutsideSpend[];
 }
 

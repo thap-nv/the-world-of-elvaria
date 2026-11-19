@@ -79,4 +79,29 @@ describe('outsideFromLog', () => {
       { tribe: 'gemini', model: 'gemini-3.8-flash-high', tokens: 21_216, at: '2026-11-07T09:00:00+07:00' },
     ]);
   });
+
+  // fix/run-221-followups: the Chancellor's office spends its tribe's account too.
+  it("reads each chancellor.answered line that spent tokens, beside the tribe checks', and skips the rest", () => {
+    const answered = { tribe: 'codex', model: 'gpt-5.1-codex', matter: 'triage' };
+    const checked = {
+      tribe: 'gemini',
+      model: 'gemini-3.8-flash-high',
+      outcome: 'passed',
+      checks: [],
+      tokens: 900,
+    };
+    const events = [
+      line('chancellor.answered', { ...answered, tokens: 61_204 }),
+      line('tribe.checked', checked),
+      line('chancellor.answered', { ...answered, matter: 'amendment', tokens: 0 }),
+      line('chancellor.answered', { ...answered, matter: 'council', tokens: 5 }),
+      line('chancellor.answered', { ...answered, matter: 'drafts', tokens: 12_000 }),
+    ];
+    const at = '2026-11-07T09:00:00+07:00';
+    expect(outsideFromLog(events)).toEqual([
+      { tribe: 'codex', model: 'gpt-5.1-codex', tokens: 61_204, at },
+      { tribe: 'gemini', model: 'gemini-3.8-flash-high', tokens: 900, at },
+      { tribe: 'codex', model: 'gpt-5.1-codex', tokens: 12_000, at },
+    ]);
+  });
 });

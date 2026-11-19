@@ -1,6 +1,6 @@
 // One tick of the Steward (implementation-plan §3.1), and what the log already knows before the first one. Apart from
 // steward.ts since PS-03, which adds the scheduled jobs to both: they run at the end of the tick (§3.16.3).
-import { baseRedOf, planTick } from '@elvaria/domain';
+import { baseRedOf, planTick, sealPolicyOf } from '@elvaria/domain';
 import type { KingdomSnapshot, ZonedTime } from '@elvaria/domain';
 
 import { wantedIn } from './background.ts';
@@ -27,7 +27,7 @@ import { carryOut } from './steps.ts';
 import { versionStep } from './tribe-versions.ts';
 import { noteUnclaimable, reportedFromLog, writeUnclaimable } from './unclaimable.ts';
 import { noteUnjudgeable } from './unjudgeable.ts';
-import { loadWorld, modelsOf, sealPolicyOf, snapshotOf } from './world.ts';
+import { loadWorld, modelsOf, snapshotOf } from './world.ts';
 import type { Context, Counts } from './context.ts';
 import type { Held, State } from './steward-state.ts';
 import type { StewardDeps, TickReport } from './types.ts';
@@ -98,7 +98,7 @@ async function snapshotFor(ctx: Context, state: State, zone: ZonedTime): Promise
     forge_stale: [...state.forge.stale],
     base_red: baseRedOf(state.patrol.health, [...world.territories.values()], [...world.quests.values()]),
     // PS-08b, PS-08g: which done quests without the seal the forge merges (mergeDue), the suspended territories aside.
-    seal_policy: sealPolicyOf(world, state.delegation),
+    seal_policy: sealPolicyOf(world.kingdom, state.delegation.suspensions),
   };
 }
 

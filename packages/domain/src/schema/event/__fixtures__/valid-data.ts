@@ -166,4 +166,5 @@ export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
       { check: 'forbidden_command', outcome: 'failed', tokens: 21_216 },
     ],
   },
+  'chancellor.answered': { tribe: 'claude', model: 'claude-opus-4-7', matter: 'triage', tokens: 48_310 },
 };
