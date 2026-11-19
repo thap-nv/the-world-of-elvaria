@@ -160,10 +160,14 @@ describe('doctor and probe', () => {
     const env = { ...minimalEnv(), ELVARIA_FAKE_CODEX_LOGIN_HANGS: '1' };
     const info = await fakeRunner({ env, timeout_ms: 1000 }).doctor();
     expect(info.auth_ok).toBe(false);
-    // `codex --version` runs alongside with the same 1 s, and on a busy machine it runs out too (fix/timing-flakes):
-    // that is its own note, true and beside the point here.
-    const version = doctorNoteOf('doctor:command_timed_out', { command: 'codex --version', seconds: 1 });
-    expect(info.notes?.filter((note) => !isDeepStrictEqual(note, version))).toEqual([
+    // `codex --version` and the `codex app-server` account read run alongside with the same 1 s, and on a busy
+    // machine they run out too (fix/timing-flakes; app-server seen on the Windows CI runner 2026-11-19): those are
+    // their own notes, true and beside the point here.
+    const sideNotes = ['codex --version', 'codex app-server'].map((command) =>
+      doctorNoteOf('doctor:command_timed_out', { command, seconds: 1 }),
+    );
+    const isSide = (note: unknown): boolean => sideNotes.some((side) => isDeepStrictEqual(note, side));
+    expect(info.notes?.filter((note) => !isSide(note))).toEqual([
       doctorNoteOf('doctor:command_timed_out', { command: 'codex login status', seconds: 1 }),
     ]);
     expect(info.notes).not.toContainEqual(notSignedIn);
