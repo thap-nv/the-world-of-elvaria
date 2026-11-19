@@ -29,6 +29,7 @@ import {
   rejected,
 } from './quest-commands.ts';
 import { submitFromInfirmary } from './submit-command.ts';
+import { applyTempleReport } from '../temple/apply.ts';
 import { giveBack, seal } from './verdict-commands.ts';
 import type { Context } from '../context.ts';
 import type { Outcome } from './quest-commands.ts';
@@ -101,13 +102,15 @@ export async function applyCommand(ctx: Context, command: InboxCommand): Promise
   if (command.kind === 'decide_amendment') return decideAmendment(ctx, command);
   if (command.kind === 'patrol') return patrolNow(ctx, command.payload.territory);
   if (command.kind === 'resume_delegation') return resumeDelegation(ctx, command.payload.territory);
+  if (command.kind === 'temple_report') return applyTempleReport(ctx, command);
   const quest = questOf(ctx, command);
   return quest === undefined ? rejected('unknown_quest') : onQuest(ctx, command, quest);
 }
 
 /**
  * The command's line. `kind` (PS-01b) lets the metrics ledger count the owner's steps from the log alone, and
- * `source` (PS-03b) tells the Chancellor's triage from them; a file no command could be read from has neither. A
+ * `source` (PS-03b) tells the Chancellor's triage, and (PS-12c) the temple, from them; a file no command could be read
+ * from has neither. A
  * `deliver` names its quest on the line (PS-08c), so the log alone says the quest's delivery was asked again.
  */
 async function answered(
@@ -121,7 +124,7 @@ async function answered(
     command_id: id,
     ...(outcome.status === 'rejected' ? { reason: outcome.reason } : {}),
     ...(command === undefined ? {} : { kind: command.kind }),
-    ...(command?.source === 'chancellor' ? { source: command.source } : {}),
+    ...(command?.source === 'chancellor' || command?.source === 'monk' ? { source: command.source } : {}),
   };
   const quest = outcome.status === 'applied' ? outcome.quest : undefined;
   await ctx.record.note({ type, actor: STEWARD, data, ...(quest === undefined ? {} : { quest }) });

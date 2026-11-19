@@ -117,5 +117,51 @@
       "holds": ["above_rank"],
       "note": "Quest dọn CLI cùng vùng file nhưng hạng C, trên hạng D chủ nhân ủy quyền."
     }
+  },
+  {
+    "version": 1,
+    "id": "01JCG2N7RZ4WQ8E5T3Y6V9A0AQ",
+    "ts": "2026-11-19T21:09:58+07:00",
+    "kind": "temple_report",
+    "source": "monk",
+    "payload": {
+      "character": "sage",
+      "operations": [
+        {
+          "op": "add",
+          "owner": "temple",
+          "scope": {
+            "role": ["verifier"],
+            "tribe": ["codex"],
+            "os": ["win32"]
+          },
+          "fail_kind": "wrong_facts",
+          "text": "Compare commits with `git diff <base>...HEAD`, not with the plot alone.",
+          "source_verdict": "q_20261118_7k3m2a-2"
+        },
+        {
+          "op": "merge",
+          "lessons": ["L_20261118_9tw3hx", "L_20261117_a1b2c3"],
+          "owner": "thorn",
+          "fail_kind": "tests_fail",
+          "text": "Run the tests of every package you touched before you hand in.",
+          "source_verdict": "q_20261118_7k3m2a-2"
+        },
+        {
+          "op": "retire",
+          "lesson": "L_20261110_m2n3p4",
+          "why": "Loaded in 24 runs; tests_fail came back in 13 of them."
+        }
+      ],
+      "letters": [
+        {
+          "rung": "check",
+          "to": "chancellor",
+          "source_verdict": "q_20261117_b3m8ty-1",
+          "body": "A check that runs pnpm i18n:check on every quest touching packages/i18n would catch the missing key before review.",
+          "refs": ["packages/i18n/src/locales/en.json"]
+        }
+      ]
+    }
   }
 ]

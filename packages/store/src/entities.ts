@@ -17,6 +17,7 @@ import {
   QuestSchema,
   RitualsFileSchema,
   ScriptsFileSchema,
+  ScriptureLedgerSchema,
   TagsFileSchema,
   TerritoryIdSchema,
   TerritorySchema,
@@ -36,6 +37,7 @@ import type {
   Quest,
   QuestId,
   RegistryFile,
+  ScriptureLedger,
   Territory,
   TerritoryId,
   Verdict,
@@ -59,6 +61,13 @@ export interface EntitySpec<T, Id extends string> extends FileSpec<T> {
 /** Kingdom-relative path of the entity with this id. */
 export const entityFile = (spec: { readonly dir: string; readonly nested?: string }, id: string): string =>
   spec.nested === undefined ? `${spec.dir}/${id}.json` : `${spec.dir}/${id}/${spec.nested}`;
+
+/** The ledger beside a scripture (PS-12c): one per scripture file, written by the Steward only. */
+export const SCRIPTURE_SPEC: FileSpec<ScriptureLedger> = {
+  contract: 'scripture',
+  parser: ScriptureLedgerSchema,
+  migrations: MIGRATIONS.scripture,
+};
 
 export const KINGDOM_SPEC: FileSpec<Kingdom> = {
   contract: 'kingdom',

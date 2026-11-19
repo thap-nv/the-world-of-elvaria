@@ -124,6 +124,23 @@ describe('elvaria scripture lint, list (PS-12)', () => {
     expect(unknown.code).toBe(1);
   });
 
+  it("tells the Monk's lines from the owner's by the ledger beside the scripture (PS-12c)", async () => {
+    const [monk, owners] = ['L_20261119_4k2pqz', 'L_20261119_9tw3hx'];
+    await scripture('temple/scripture.md', [
+      `- [${monk}] Written by the Monk.`,
+      `- [${owners}] The owner's.`,
+    ]);
+    const entry = {
+      id: monk,
+      source: 'monk',
+      source_verdict: 'q_20261118_aaaaaa-1',
+      added_at: '2026-11-19T21:10:02+07:00',
+    };
+    await scripture('temple/scripture.json', [JSON.stringify({ version: 1, lessons: [entry] })]);
+    const { io } = await elvaria('list');
+    expect(io.printed.out.slice(1).map((row) => row.split(/ {2,}/u)[5])).toEqual(['Monk', 'owner']);
+  });
+
   it('gives the doctor one line: ready, or the counts with the first issues', async () => {
     const io = testIo({ platform: 'win32' });
     const cli = { io, locale: 'en' as const, localeFromFlag: true, t: translator('en') };

@@ -26,6 +26,10 @@
 - Loads `registry/` (`loadRegistry`: migrate each file, then the domain's `parseRegistry`, then every
   `class.prompt_file` must exist, P1-15) and names the catalog scripts whose `entry` is missing
   (`missingRegistryFiles`). `readClassPrompt` reads a class's prompt for a session (null when it is gone).
+- Reads and writes a scripture with the ledger beside it (PS-12c, `scriptures`, `src/scripture.ts`): `read(owner)`
+  gives the Markdown and the `scripture` ledger of `temple` or a character, an absent file as an empty one;
+  `writeLedger` checks the ledger against its schema before the atomic write, `writeText` writes the Markdown as
+  given. `elvaria migrate` walks every ledger with the other stored contracts.
 - Lays out a new kingdom (`initKingdom`): folders, a copy of the registry it is given, `kingdom.json` last.
   `addMissingRegistryFiles` copies into an older kingdom the registry files it lacks, never one it has
   (`elvaria migrate`, P1-15). `registryGaps` compares the kingdom's registry with a default one by entry id: the

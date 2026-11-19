@@ -2,7 +2,7 @@
 // `.backup/<stamp>/` (implementation-plan §2.1, ADR 0003). Without it a file is upgraded on its next write;
 // reads always migrate in memory. The event log is never rewritten (@elvaria/eventlog migrates per line).
 import { REGISTRY_FILES, err, ok } from '@elvaria/domain';
-import type { Result } from '@elvaria/domain';
+import type { CharacterId, Result } from '@elvaria/domain';
 
 import {
   CAMPAIGN_SPEC,
@@ -12,6 +12,7 @@ import {
   MEMO_SPEC,
   QUEST_SPEC,
   REGISTRY_SPECS,
+  SCRIPTURE_SPEC,
   TERRITORY_SPEC,
   VERDICT_SPEC,
   entityFile,
@@ -48,6 +49,16 @@ export const STORED_GROUPS: readonly StoredGroup[] = [
     files: () => Promise.resolve([kingdomLayout.registryFile(name)]),
   })),
   ...[TERRITORY_SPEC, QUEST_SPEC, CHARACTER_SPEC, CAMPAIGN_SPEC, VERDICT_SPEC, MEMO_SPEC].map(entityGroup),
+  {
+    spec: SCRIPTURE_SPEC,
+    files: async (root) => [
+      kingdomLayout.templeScriptureLedger(),
+      // A folder of characters/ is a character's; the path only joins its name, as for the character file.
+      ...(await idsOnDisk(root, CHARACTER_SPEC)).map((id) =>
+        kingdomLayout.scriptureLedger(id as CharacterId),
+      ),
+    ],
+  },
   {
     spec: INBOX_SPEC,
     files: async (root) => (await idsOnDisk(root, { dir: INBOX_DIR })).map(kingdomLayout.inboxCommand),

@@ -210,7 +210,7 @@ describe('attentionQueue', () => {
     const state = stateWith(
       [],
       [
-        { ...objection, route: 'owner' },
+        { ...objection, route: 'owner', refusal: 'no_verdict' },
         { ...objection, id: 'm_20261112_4k2pqz' as MemoId, route: 'judge' },
         { ...memo('m_20261112_zzzzzz'), route: null },
       ],

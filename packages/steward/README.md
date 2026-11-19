@@ -253,9 +253,18 @@
   the lessons of the session's role, class, tribe, OS (`StewardDeps.platform`, else `process.platform`), territory
   and tags, at most 40, the character's first (`selectLessons`), and gives `buildPrompt` their sentences alone. A
   line whose sentence the event log would mask (its patterns and the session's secret values) never loads (ADR 0013).
-  A line without an id is named `T_…` by a SHA-256 of its normalized sentence; the Steward never writes into a
+  A line without an id is named `T_…` by a SHA-256 of its normalized sentence; a session never writes into a
   scripture file. The load trace names the lessons that loaded (`lessons`) and, per file, how many; a resumed
   session's line has no `lessons`. `elvaria scripture list` uses the same `lessonsIn` and `sessionLessonsOf`.
+- Applies the Monk's `temple_report` (PS-12c, `temple/`, ADR 0005, ADR 0027): refused when its writer is no Monk
+  (`unknown_character`, `not_monk`), a scripture cannot be read (`scripture_unreadable`), or the domain refuses it
+  whole (`replaces_scripture`); else reads every scripture and its ledger again before each operation, lets the
+  domain decide (`scriptureEditOf`), and writes the ledgers first, the Markdown second, then `lesson.added`,
+  `lesson.retired` or `lesson.refused`. Only the Monk's lines are ever appended or taken out; the owner's keep every
+  byte. The 40-line rule weighs the characters whose class takes quests. Each letter becomes a `proposal` memo from
+  the Monk on its verdict's quest and run (`memo.filed`, `memo.routed`), to the Chancellor or, for a stronger
+  model, to the owner; the bell rings once per report (`Notice` `temple`). A report applied again after a stop adds
+  no line and files no letter twice. `command.applied` and `command.rejected` carry `source: monk`.
 - Quotes a gazetteer stamped with the commit it was written at (`<!-- elvaria:commit <sha> -->`, PS-21) without the
   stamp and with how many commits touched each top-level folder since, up to the quest's fork point
   (`sessions/gazetteer.ts`, `Plots.drift`, optional: folder plots have none); a drift that cannot be read costs the

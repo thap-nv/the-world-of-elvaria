@@ -148,6 +148,7 @@ describe('inbox command narrowing', () => {
       'set_model',
       'session',
       'escalate_memo',
+      'temple_report',
     ]);
     expectTypeOf<CommandPayload<'pin_tag'>['tag']>().toEqualTypeOf<TagId | null>();
   });

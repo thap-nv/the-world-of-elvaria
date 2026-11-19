@@ -1,8 +1,8 @@
 // What `elvaria scripture lint`, `scripture list` and the doctor read (PS-12): the temple's scripture and every
 // character's, with what a scope may name in this kingdom. The lines are parsed and named by the Steward's own
 // `lessonsIn`, so what these commands show is what a session loads.
-import { SCRIPTURE_LINES_MAX, lessonVocabularyOf, worstLoadOf } from '@elvaria/domain';
-import type { Character, LessonVocabulary, WorstLoad } from '@elvaria/domain';
+import { EMPTY_LEDGER, SCRIPTURE_LINES_MAX, lessonVocabularyOf, worstLoadOf } from '@elvaria/domain';
+import type { Character, LessonVocabulary, ScriptureLedger, WorstLoad } from '@elvaria/domain';
 import { lessonsIn } from '@elvaria/steward';
 import type { Scripture, ScriptureLesson } from '@elvaria/steward';
 import { inKingdom, kingdomLayout, readTextFile } from '@elvaria/store';
@@ -13,6 +13,8 @@ import type { KingdomContext } from '../kingdom-context.ts';
 export interface KingdomScriptures {
   /** The temple's file first, then each character's that exists. */
   readonly files: readonly Scripture[];
+  /** (PS-12c) The ledger beside each scripture, by owner: who wrote each line; an absent one is empty. */
+  readonly ledgers: ReadonlyMap<string, ScriptureLedger>;
   readonly characters: readonly Character[];
   readonly vocabulary: LessonVocabulary;
   /** Every tag of the registry: a character's heaviest load counts a quest that carries them all. */
@@ -42,13 +44,21 @@ export async function readKingdomScriptures(
       await Promise.all(characters.items.map(({ id }) => scriptureOf(root, kingdomLayout.scripture(id), id)))
     ).flat(),
   ];
+  const ledgers = new Map<string, ScriptureLedger>();
+  const ledgerIssues: StoreIssue[] = [];
+  for (const { owner } of files) {
+    const read = await ctx.store.scriptures.read(owner);
+    if (!read.ok) ledgerIssues.push(read.error);
+    ledgers.set(owner, read.ok ? read.value.ledger : EMPTY_LEDGER);
+  }
   return {
     files,
+    ledgers,
     characters: characters.items,
     vocabulary: lessonVocabularyOf(registry.value, ctx.kingdom, territories.items),
     tags: registry.value.tags.map(({ id }) => id),
     os: ctx.io.platform,
-    issues: [...characters.issues, ...territories.issues],
+    issues: [...characters.issues, ...territories.issues, ...ledgerIssues],
   };
 }
 
