@@ -189,14 +189,18 @@ describe('elvaria quest confirm, cancel, edit', () => {
     it('holds the running session to it from the next tick, raised or lowered', async () => {
       await plantQuests(kingdom, questFixture('working', QUEST_ID, working));
       expect(await said(QUEST_ID, '--max-minutes', '103')).toEqual([
-        `Quest ${QUEST_ID} has a session running, 30 minutes so far: the Steward's time breaker reads the quest's ceiling on every tick, so from its next tick this session may run up to 103 minutes (was 45), not only the next one. Unless its CLI took its own clock when the session opened (agy, --print-timeout): that one still stops it at 45 minutes, as the time breaker would, and the next session has the new ceiling.`,
+        `Quest ${QUEST_ID} has a session running, 30 minutes so far: the Steward's time breaker reads the quest's ceiling on every tick, so from its next tick this session is held to 103 minutes (was 45) and cut at 154.5 (was 67.5), not only the next one. Unless its CLI took its own clock when the session opened (agy, --print-timeout): that one still stops it at the old cut, 67.5 minutes, and the next session has the new ceiling.`,
       ]);
       expect(await said(QUEST_ID, '--max-minutes', '40')).toEqual([
-        `Quest ${QUEST_ID} has a session running, 30 minutes so far: the Steward's time breaker reads the quest's ceiling on every tick, so this session too is cut at 40 minutes (was 45), not only the next one.`,
+        `Quest ${QUEST_ID} has a session running, 30 minutes so far: the Steward's time breaker reads the quest's ceiling on every tick, so this session too is held to 40 minutes (was 45) and cut at 60 (was 67.5), not only the next one.`,
+      ]);
+      // Run past the new ceiling but not its cut (30 of 30, cut at 45): the breaker lets it go on.
+      expect(await said(QUEST_ID, '--max-minutes', '30')).toEqual([
+        `Quest ${QUEST_ID} has a session running, 30 minutes so far: the Steward's time breaker reads the quest's ceiling on every tick, so this session too is held to 30 minutes (was 45) and cut at 45 (was 67.5), not only the next one.`,
       ]);
     });
 
-    it('warns when the session has already run past it: the next tick cuts it', async () => {
+    it('warns when the session has already run to its cut, at hard_pct of it: the next tick cuts it', async () => {
       const judged = {
         assignee: 'wren',
         attempts: 1,
@@ -211,33 +215,27 @@ describe('elvaria quest confirm, cancel, edit', () => {
         questFixture('working', QUEST_ID, working),
         questFixture('review', OTHER_QUEST_ID, judged),
       );
-      expect(await said(QUEST_ID, '--max-minutes', '30')).toEqual([
-        `Warning: the session working quest ${QUEST_ID} has run 30 minutes, past the new 30-minute ceiling: the Steward cuts it at its next tick, as the time breaker does. If the session made progress, a fresh session goes on from its commit; the quest goes to the infirmary only when two cuts in a row of its run made none (elvaria quest show says why; elvaria quest retry opens it again).`,
+      // 30 minutes run, cut at 30 (150 % of 20): the time breaker stops at the cut itself.
+      expect(await said(QUEST_ID, '--max-minutes', '20')).toEqual([
+        `Warning: the session working quest ${QUEST_ID} has run 30 minutes, at or past 30, where the time breaker cuts under the new 20-minute ceiling: the Steward cuts it at its next tick, as the time breaker does. If the session made progress, a fresh session goes on from its commit; the quest goes to the infirmary only when two cuts in a row of its run made none (elvaria quest show says why; elvaria quest retry opens it again).`,
       ]);
       expect(await said(OTHER_QUEST_ID, '--max-minutes', '5')).toEqual([
-        `Warning: the judge's session on quest ${OTHER_QUEST_ID} has run 10 minutes, past the new 5-minute ceiling: the Steward cuts it at its next tick, as the time breaker does; the judge leaves and the next one takes the review, under the new ceiling.`,
+        `Warning: the judge's session on quest ${OTHER_QUEST_ID} has run 10 minutes, at or past 7.5, where the time breaker cuts under the new 5-minute ceiling: the Steward cuts it at its next tick, as the time breaker does; the judge leaves and the next one takes the review, under the new ceiling.`,
       ]);
     });
 
     it('says the same of the cut in Vietnamese: it goes on with progress, the infirmary after two without', async () => {
       await plantQuests(kingdom, questFixture('working', QUEST_ID, working));
       const io = testIo();
-      expect(
-        await run(
-          io,
-          'quest',
-          'edit',
-          QUEST_ID,
-          '--max-minutes',
-          '30',
-          '--kingdom',
-          kingdom,
-          '--locale',
-          'vi',
-        ),
-      ).toBe(0);
+      const args = ['edit', QUEST_ID, '--max-minutes', '20', '--kingdom', kingdom, '--locale', 'vi'];
+      expect(await run(io, 'quest', ...args)).toBe(0);
       expect(io.printed.out.filter((line) => line.startsWith('Cảnh báo'))).toEqual([
-        `Cảnh báo: phiên làm nhiệm vụ ${QUEST_ID} đã chạy 30 phút, quá trần mới 30 phút: Nhiếp chính cắt nó ở nhịp kế, như cầu dao thời gian. Nếu phiên đã có tiến độ thì một phiên mới đi tiếp từ commit của nó; nhiệm vụ chỉ vào trạm quân y khi hai lần cắt liền nhau trong lượt đều không có tiến độ (elvaria quest show nói lý do; elvaria quest retry mở lại nó).`,
+        `Cảnh báo: phiên làm nhiệm vụ ${QUEST_ID} đã chạy 30 phút, tới hoặc quá 30 phút, ngưỡng cầu dao thời gian cắt theo trần mới 20 phút: Nhiếp chính cắt nó ở nhịp kế, như cầu dao thời gian. Nếu phiên đã có tiến độ thì một phiên mới đi tiếp từ commit của nó; nhiệm vụ chỉ vào trạm quân y khi hai lần cắt liền nhau trong lượt đều không có tiến độ (elvaria quest show nói lý do; elvaria quest retry mở lại nó).`,
+      ]);
+      const lowered = testIo();
+      expect(await run(lowered, 'quest', ...args.with(3, '30'))).toBe(0);
+      expect(lowered.printed.out.filter((line) => line.startsWith('Nhiệm vụ'))).toEqual([
+        `Nhiệm vụ ${QUEST_ID} đang có phiên chạy, đã 30 phút: cầu dao thời gian của Nhiếp chính đọc trần của nhiệm vụ mỗi nhịp, nên chính phiên này cũng theo trần 30 phút (trước là 45) và bị cắt ở 45 phút (trước là 67.5), không chỉ phiên sau.`,
       ]);
     });
 
