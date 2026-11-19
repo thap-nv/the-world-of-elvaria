@@ -1,6 +1,7 @@
 // What can be wrong with a line of scripture (PS-12, lesson-sharing T4): one closed list of codes, each with its level.
-// An `error` fails `elvaria scripture lint`; the first six also keep the line out of every prompt (temple-first plan
-// DB3: a scope the machine cannot read must not widen to every session). A `warning` is shown and never blocks.
+// An `error` fails `elvaria scripture lint`; UNLOADABLE_CODES also keep the line out of every prompt (temple-first plan
+// DB3: a scope the machine cannot read must not widen to every session; ADR 0013: no secret in a prompt). A `warning`
+// is shown and never blocks.
 
 /** In the order the lint prints them for one line. */
 export const LESSON_ISSUE_CODES = [
@@ -16,7 +17,8 @@ export const LESSON_ISSUE_CODES = [
   'html',
   'url',
   'absolute_path',
-  // A pattern of the event log's redaction matched; the caller checks it, the domain cannot import `eventlog`.
+  // A pattern of the event log's redaction matched: the caller sets this flaw on the line, the domain cannot import
+  // `eventlog`.
   'secret',
   'missing_fail_kind',
   // Kinds of instruction rule-file poisoning used (lesson-sharing §13): flagged for the owner's eye, never blocked.
@@ -64,6 +66,7 @@ export const UNLOADABLE_CODES: readonly LessonIssueCode[] = [
   'unknown_value',
   'empty_text',
   'hidden_char',
+  'secret',
 ];
 
 /** One thing wrong with a line; `key` and `value` name the part of the scope head at fault. */

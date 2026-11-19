@@ -67,6 +67,14 @@ describe('selectLessons (PS-12, DB3, DB4)', () => {
     expect(selection.unreadable).toHaveLength(1);
   });
 
+  it('never loads a line its caller found a secret in, and still loads a line that only breaks a T4 rule', () => {
+    const secret = { ...lineOf('- Use ghp_xxx to push.'), flaws: [{ code: 'secret' as const }] };
+    const url = lineOf('- See https://example.com first.');
+    const selection = selectLessons([secret, url], SESSION, VOCABULARY);
+    expect(textsOf(selection.loaded)).toEqual(['See https://example.com first.']);
+    expect(textsOf(selection.unreadable)).toEqual(['Use ghp_xxx to push.']);
+  });
+
   it('loads 40 lines and puts the 41st and later over the cap, the character first', () => {
     const own = linesOf(30, 'thorn');
     const temple = linesOf(12, 'temple');
