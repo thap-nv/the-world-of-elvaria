@@ -361,6 +361,9 @@ show` prints the brief apart from the rest of the description and, while the pla
   1 on an error. `scripture list [--character <id>]` prints each lesson with its ref, scope, fail kind and source;
   with a character, its own lines then the temple's and what its heaviest session loads or the cap cuts. `doctor`
   adds the lint's summary as one line, a warning at most (`doctor/check-scripture.ts`).
+- (PS-12c) `scripture list` reads who wrote each line from the ledger beside the scripture (`scripture.json`,
+  `sourceOf`): the Monk, the owner (every line the ledger does not keep), or outside. The bell of `run` says a temple
+  report once: lines added, taken out and refused, letters filed, or that it was refused whole (`src/run/temple-line.ts`).
 
 ## Does not
 

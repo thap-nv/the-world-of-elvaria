@@ -7,6 +7,7 @@ import { gaugesOf } from '../digest/markdown.ts';
 import { detailLines, whyLines } from '../quest/infirmary.ts';
 import { stretchOf } from '../quest/unclaimable.ts';
 import { suspensionCause } from '../territory/delegation-view.ts';
+import { templeLine } from './temple-line.ts';
 import { wrapUpLine } from './wrap-up-line.ts';
 import type { CliIo } from '../io.ts';
 
@@ -129,6 +130,7 @@ export function lineOf(t: Translate, notice: Notice): string {
   if (notice.kind === 'base_red') return baseRedLine(t, notice);
   if (notice.kind === 'delegation_suspended') return suspensionLine(t, notice);
   if (notice.kind === 'wrap_up') return wrapUpLine(t, notice);
+  if (notice.kind === 'temple') return templeLine(t, notice);
   const quest = { quest: notice.quest.id, title: notice.quest.title };
   switch (notice.kind) {
     case 'unclaimable':

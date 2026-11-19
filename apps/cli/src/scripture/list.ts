@@ -2,7 +2,14 @@
 // of its line, or `T_…` for a line without one, as the load trace names it), its scope, its fail kind and its source.
 // With a character, its own scripture then the temple's in load order, and which lines its heaviest session loads
 // (worstLoadOf: the role and territory that load the most, a quest with every tag) and which the 40-line cap cuts.
-import { LESSON_SCOPE_KEYS, SCRIPTURE_LINES_MAX, loadableIn, selectLessons } from '@elvaria/domain';
+import {
+  EMPTY_LEDGER,
+  LESSON_SCOPE_KEYS,
+  SCRIPTURE_LINES_MAX,
+  loadableIn,
+  selectLessons,
+  sourceOf,
+} from '@elvaria/domain';
 import type { Character, LessonScope, LessonSelection } from '@elvaria/domain';
 import { lessonsIn } from '@elvaria/steward';
 import type { ScriptureLesson } from '@elvaria/steward';
@@ -56,15 +63,21 @@ function stateOf(
   return states.find((state) => selection[state].includes(lesson)) ?? null;
 }
 
-function rowOf(ctx: KingdomContext, lesson: ScriptureLesson, state: LoadState | null): string[] {
+function rowOf(
+  ctx: KingdomContext,
+  scriptures: KingdomScriptures,
+  lesson: ScriptureLesson,
+  state: LoadState | null,
+): string[] {
+  // (PS-12c) The ledger beside the scripture says which lines the Monk wrote; every other line is the owner's.
+  const source = sourceOf(lesson, scriptures.ledgers.get(lesson.owner) ?? EMPTY_LEDGER);
   return [
     lesson.ref,
     lesson.file,
     String(lesson.line),
     scopeCell(lesson.scope),
     lesson.fail_kind ?? NONE,
-    // Until the ledger beside the scripture (PS-12c), every line is the owner's (ADR 0027).
-    ctx.t('cli.scripture.source.user'),
+    ctx.t(`cli.scripture.source.${source}`),
     state === null ? NONE : ctx.t(STATE_LABELS[state]),
     lesson.text,
   ];
@@ -126,7 +139,7 @@ async function runScriptureList(input: CommandInput, cli: CliContext): Promise<E
       : characterSelection(ctx, scriptures, character, lessons);
   return printListing(ctx, {
     header: HEADER,
-    rows: lessons.map((lesson) => rowOf(ctx, lesson, stateOf(scriptures, selection, lesson))),
+    rows: lessons.map((lesson) => rowOf(ctx, scriptures, lesson, stateOf(scriptures, selection, lesson))),
     issues: scriptures.issues,
     empty: 'cli.scripture.list.none',
   });
