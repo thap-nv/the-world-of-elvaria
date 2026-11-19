@@ -1,7 +1,16 @@
 // What the Steward's scheduled jobs are given and what the digest's port does (implementation-plan §3.16.3, PS-03).
 // Apart from types.ts, which re-exports them, and free of the tick's Context, so a job the composition root injects
 // (the Chancellor's triage of PS-03b, the docs graph of PS-21c) forms no import cycle.
-import type { AttentionItem, DailyJobId, QuestId, StewardNotices, TribeId } from '@elvaria/domain';
+import type {
+  AttentionItem,
+  CharacterId,
+  DailyJobId,
+  QuestId,
+  StewardNotices,
+  TempleDue,
+  TempleLog,
+  TribeId,
+} from '@elvaria/domain';
 
 /**
  * `in_tick`: short and without a model (the digest): it runs to its end inside the tick. `off_tick`: may call a model;
@@ -22,6 +31,18 @@ export interface JobView {
   readonly busy: ReadonlySet<TribeId>;
   /** (PS-22b) Quests blocked on their doer's amendment while its author has not decided it, the oldest ask first. */
   readonly amendments: readonly QuestId[];
+  /**
+   * (PS-12f) The Temple as the log says it now (templeLogOf, kept by the Steward: the whole log at start, then only its
+   * new lines at each tick), and whether it is due on `day` (templeDue, kingdom.schedule.temple as the tick read it).
+   */
+  readonly temple: TempleView;
+  /** (PS-12f) The characters whose mana opens a session now (poolOpenOf, as planTick weighs them). */
+  readonly mana_open: ReadonlySet<CharacterId>;
+}
+
+export interface TempleView {
+  readonly log: TempleLog;
+  readonly due: TempleDue;
 }
 
 /** One run of a job. */
