@@ -441,6 +441,14 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   read who wrote a line from it. `templeMemoOf` files a letter as the registry's proposal kind, to the Chancellor or,
   for a stronger model, to the owner, whom the attention queue lists as a `memo`, not an `objection`. The
   `temple_report` command (source `monk`) and the `lesson.*` events are in the contracts.
+- Decides when the Temple runs and what it reads (PS-12d, temple-first plan DB9, DB10): `templeDue` over `templeLogOf`
+  (runs judged and fails since the last `temple.ran`, the Steward's fail-streak suspensions no run has seen) runs it
+  for `every_quests` runs or a week with a new fail at most once a day, and once per suspension at once.
+  `templeEvidenceOf` packs the repeated failures with notes cut at 600 characters, the lines with their counts, the
+  Monk's lines worth a review, checks and scripts, cut at the smaller of 24 000 characters and the tribe's
+  `prompt_max_chars`. The `temple-reply` contract (`TempleReplySchema`) is the Monk's answer, one rung of the fix
+  ladder per group; `templeReplyIssues` holds it against the pack and `templeCommands` turns it into one
+  `temple_report` payload. `temple.ran` is in the contracts.
 - Gives the core types every package builds on: `Result`, branded ids (`QuestId`, `TribeId`, ...), `Clock` and
   `Instant`, `zonedTime` (local day and ISO offset in `kingdom.tz`), `IdSource` (ULIDs and dated ids).
 - Names every number it decides with in `src/constants.ts` and the `constants.ts` of the folders that have one.

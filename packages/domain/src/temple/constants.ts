@@ -24,6 +24,19 @@ export const TEMPLE_REMOVALS_FLOOR = 2;
 /** Letters one temple report carries: one per repeated failure of a run is plenty (temple-first plan PS-12c). */
 export const TEMPLE_LETTERS_MAX = 6;
 
+/** What makes the Temple run (PS-12d, DB9): judged runs, a week, a fail-streak suspension, or the owner's command. */
+export const TEMPLE_TRIGGERS = ['quests', 'weekly', 'suspension', 'owner'] as const;
+export type TempleTrigger = (typeof TEMPLE_TRIGGERS)[number];
+
+/** `weekly`: the Temple runs once this many days passed since its last run, if a fail came since (DB9). */
+export const TEMPLE_WEEK_DAYS = 7;
+
+/** The notes of one fail verdict in the evidence pack, cut to this many characters (PS-12d). */
+export const TEMPLE_NOTES_MAX_CHARS = 600;
+
+/** The evidence pack never exceeds this many characters, nor the Monk tribe's own prompt_max_chars (DB10, DB16). */
+export const TEMPLE_PROMPT_MAX_CHARS = 24_000;
+
 /**
  * The fix ladder (ADR 0027, temple-first plan DB8), lowest rung first: make the failure impossible, a check, a script,
  * knowledge (a lesson bound to a territory until skills, PS-13), a line of scripture, a stronger model. The Monk

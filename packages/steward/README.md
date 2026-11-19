@@ -206,8 +206,9 @@
   kept and folded again from the log's `mana.level` lines after a restart; 7 % before any is measured), one whose window reads spent sleeps (a tribe with only a model's cap asleep
   is still read, and probed without a model call). A pool and window the account gives no figure for is estimated
   from the sessions (`mana.level` `source: estimate`), and from what `tribe check` spent with the real CLI and what
-  the sessions of the Chancellor's office spent, read from the log's `tribe.checked` and `chancellor.answered` lines
-  at start (`outsideFromLog`, run (221) (b), fix/run-221-followups); a gauge the world draws on that nears the cap warns once
+  the sessions of the Chancellor's office and of the Temple spent, read from the log's `tribe.checked`,
+  `chancellor.answered` and `temple.ran` lines at start (`outsideFromLog`, run (221) (b), fix/run-221-followups, PS-12d;
+  a run of the Temple that called no model names no tribe and is skipped); a gauge the world draws on that nears the cap warns once
   (`mana.warning`). The bell rings when a gauge warns, sleeps or wakes (`mana_warning`, `mana_asleep`,
   `mana_awake`). With `mana.reassign_after_hours`, a quest asleep that long goes to the character planTick chose
   (`paused_mana.reassign` by the Steward; the sleeper lets go) and starts. The owner's `wake` (`elvaria wake`)

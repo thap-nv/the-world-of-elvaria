@@ -49,6 +49,8 @@ describe('renderEvents', () => {
     expect(text).toContain('\n## `delegation` · 2 type\n');
     // fix/run-221-followups: the Chancellor's office says what its sessions spent, a group of its own.
     expect(text).toContain('\n## `chancellor` · 1 type\n');
+    // PS-12d: the Temple's run, with what its session spent, a group of its own.
+    expect(text).toContain('\n## `temple` · 1 type\n');
     // PS-28: the Steward's notch of a session's stamina joins the agent group.
     expect(text).toContain('\n## `agent` · 11 type\n');
     expect(text).toContain('\n## `sandbox` · 2 type\n');

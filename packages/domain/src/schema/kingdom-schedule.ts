@@ -38,7 +38,12 @@ export const ScheduleSchema = z
         every_quests: z.int().min(1).default(SCHEDULE_DEFAULTS.temple_every_quests),
         weekly: z.boolean().default(true),
       })
-      .prefault({}),
+      .prefault({})
+      .meta(
+        describe(
+          "The Temple (PS-12d, ADR 0027): a Monk's session reads the repeated failures of the last 50 judged runs and answers each at the lowest rung of the fix ladder: a proposal letter, a line of scripture, a word to the owner. Enabled, it SPENDS MANA: one session of the Monk's tribe (an evidence pack of at most 24 000 characters), at most once a day when `every_quests` runs were judged across the kingdom since the last run, or when `weekly` and a week passed with a new fail; and once for each character the Steward suspended for a fail streak. No repeated failure and no line to review: no model. Off by default.",
+        ),
+      ),
     // PS-26: `at` added after v1 with a default, so a kingdom.json written before it stays version 1.
     patrol: z
       .strictObject({

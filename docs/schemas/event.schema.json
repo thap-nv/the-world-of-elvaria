@@ -3682,6 +3682,82 @@
       "if": {
         "properties": {
           "type": {
+            "const": "temple.ran"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "The Temple ran (PS-12d): the Monk read the evidence pack and its report went to the inbox, or there was nothing to decide and no model ran. A run stopped with the Steward writes none and runs again. The mana estimate counts `tokens` against the pool of `model` at the line's time, as a session of a quest, from the Steward's next start.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "trigger",
+              "day",
+              "groups",
+              "operations",
+              "letters"
+            ],
+            "properties": {
+              "trigger": {
+                "description": "quests: every_quests runs judged since the last run; weekly: a week and a new fail; suspension: a fail-streak suspension no run has seen; owner: `elvaria temple run`.",
+                "enum": [
+                  "quests",
+                  "weekly",
+                  "suspension",
+                  "owner"
+                ]
+              },
+              "day": {
+                "description": "The kingdom's local day, yyyy-mm-dd (kingdom.tz).",
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+              },
+              "groups": {
+                "description": "Groups of repeated failures the evidence pack carried.",
+                "type": "integer",
+                "minimum": 0
+              },
+              "operations": {
+                "description": "Operations on single lines the report asked for.",
+                "type": "integer",
+                "minimum": 0
+              },
+              "letters": {
+                "description": "Letters the report carried.",
+                "type": "integer",
+                "minimum": 0
+              },
+              "tribe": {
+                "description": "The Monk's tribe; absent when no session ran.",
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "model": {
+                "description": "The model the session ran on; absent when none ran.",
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9.-]*$"
+              },
+              "tokens": {
+                "description": "What the session reported; 0 when none ran.",
+                "type": "integer",
+                "minimum": 0,
+                "default": 0
+              },
+              "session": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
             "const": "schedule.ran"
           }
         }
@@ -4133,6 +4209,7 @@
         "lesson.added",
         "lesson.retired",
         "lesson.refused",
+        "temple.ran",
         "sandbox.replay.start",
         "sandbox.replay.end",
         "upgrade.started",

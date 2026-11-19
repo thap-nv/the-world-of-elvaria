@@ -3,7 +3,9 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { TempleReplySchema, contractOf } from '@elvaria/domain';
 import { NO_JSON } from '@elvaria/runner-core';
+import type { JsonSchema } from '@elvaria/runner-core';
 
 import { reply } from './__fixtures__/kingdom.ts';
 import { AMENDMENT_DECISION_JSON_SCHEMA, amendmentCheck } from './amendment.ts';
@@ -57,6 +59,8 @@ describe('the reply (§3.11, §3.14)', () => {
     ['quest-draft', QUEST_DRAFT_JSON_SCHEMA],
     ['memo-triage', MEMO_TRIAGE_JSON_SCHEMA],
     ['amendment-decision', AMENDMENT_DECISION_JSON_SCHEMA],
+    // PS-12d: the Monk's reply; its session (PS-12f) sends it the same way to Claude Code.
+    ['temple-reply', forTheCli(contractOf('temple-reply', TempleReplySchema)) as JsonSchema],
   ])('sends the %s schema as an object with no combinator nor $schema at its top', (_, schema) => {
     expect(schema.type).toBe('object');
     expect(Object.keys(schema).filter((key) => TOP_REFUSED.includes(key))).toEqual([]);

@@ -219,6 +219,12 @@ gói bằng chứng, hợp đồng `temple-reply` cùng hàm kiểm, `templeComm
 temple run` và lúc ghi `temple.ran`. **PS-12g** (song song với PS-12d) là tự thả nhân vật và mục bản tấu khi Đền
 không chạy được. Phần "Tài liệu" và "Test" dưới đây đi theo task của phần chúng nói tới.
 
+**Thực tế PS-12d** (2026-11-19, dòng PS-12d của [§11](../implementation-plan/11-2026-11-19.md)): `templeDue` đọc
+`templeLogOf(events)` (lượt được chấm, lượt trượt và các lần đình chỉ do Nhiếp chính ghi kể từ `temple.ran` gần nhất);
+gói bằng chứng ở `temple/evidence.ts`, câu trả lời ở `schema/temple/reply.ts` cùng `temple/reply.ts`
+(`templeReplyIssues`, `templeCommands`). Một quyết định bậc `scripture` có thể mang `replaces` (hai dòng của Thầy tu trở
+lên), thành thao tác `merge`. `elvaria temple evidence` có `--json`.
+
 - **Mục tiêu**: khi bằng chứng đã đủ và Đền được bật, một phiên Thầy tu đọc các lỗi lặp cùng số đo rồi trả mỗi lỗi một quyết định có bậc. Mỗi lần chạy tốn nhiều nhất một phiên có trần.
 - **Đọc trước**: dòng 6–12 ở trên; `apps/cli/src/triage/**`, `apps/cli/src/say/hearing.ts`, `packages/chancellor/src/{session,triage-memos}.ts`; `packages/steward/src/schedule/**`; `packages/steward/src/mana/book.ts`; [§3.5](../implementation-plan/3.5-mana.md); [runner.md](../../.claude/rules/runner.md) mục structured output của Codex và agy.
 - **Thêm**:

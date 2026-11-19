@@ -133,6 +133,7 @@ describe('replaying a fake day', () => {
       'lesson.added',
       'lesson.retired',
       'lesson.refused',
+      'temple.ran',
       'schedule.ran',
       'digest.written',
       'upgrade.started',
