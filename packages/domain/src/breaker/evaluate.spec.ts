@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { MS_PER_MINUTE } from '../constants.ts';
-import { SESSION_TRIPS, evaluateBreakers } from './evaluate.ts';
+import { SESSION_TRIPS, evaluateBreakers, gaugesOf } from './evaluate.ts';
 import type { Instant } from '../core/clock.ts';
 
 const START = Date.parse('2026-11-07T09:00:00+07:00') as Instant;
@@ -51,5 +51,25 @@ describe('evaluateBreakers', () => {
 
   it('trips only while a session runs: commit and secrets are not its breakers', () => {
     expect(SESSION_TRIPS).toEqual(['time', 'tokens', 'turns']);
+  });
+});
+
+describe('gaugesOf', () => {
+  it('lists what the breakers measure, in their order, against the nominal ceilings', () => {
+    expect(gaugesOf(attempt, LIMITS, after(30), { tokens: 100_000, turns: 160 })).toEqual([
+      { measure: 'time', used: 30, limit: 45 },
+      { measure: 'tokens', used: 100_000, limit: 120_000 },
+      { measure: 'turns', used: 160, limit: 200 },
+    ]);
+  });
+
+  it('has no turn gauge while the runner counts none, and the time gauge alone for a tribe without usage', () => {
+    expect(gaugesOf(attempt, LIMITS, after(30), { tokens: 5 }).map(({ measure }) => measure)).toEqual([
+      'time',
+      'tokens',
+    ]);
+    expect(gaugesOf(attempt, LIMITS, after(30), { tokens: 5, turns: 3 }, 'minutes_only')).toEqual([
+      { measure: 'time', used: 30, limit: 45 },
+    ]);
   });
 });
