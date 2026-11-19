@@ -4,7 +4,14 @@
 import { describe, expect, it } from 'vitest';
 
 import { DOCS, ELVARIA, Q1, Q2, Q3, resumed, suspended } from './__fixtures__/breaker-log.ts';
-import { baseRedSuspension, escapeSuspension, sealSuspendedOf, suspendedTerritoriesOf } from './breaker.ts';
+import { DelegationSchema } from '../schema/delegation.ts';
+import {
+  baseRedSuspension,
+  escapeSuspension,
+  sealPolicyOf,
+  sealSuspendedOf,
+  suspendedTerritoriesOf,
+} from './breaker.ts';
 import type { TerritoryId } from '../core/ids.ts';
 import type { RedCheck } from '../patrol/health.ts';
 import type { QuestId } from '../core/ids.ts';
@@ -52,6 +59,24 @@ describe('sealSuspendedOf', () => {
     ]);
     expect(found[0]?.note).toBe('the menu broke');
     expect(suspendedTerritoriesOf(found)).toEqual([DOCS, ELVARIA]);
+  });
+});
+
+// fix/run-221-followups: the Steward's digest and `elvaria digest` spare the same pull requests.
+describe('sealPolicyOf', () => {
+  const seal = { max_rank: 'D', kinds: ['fix', 'build'], max_diff_lines: 400 };
+
+  it("the kingdom's delegation of the seal, less the territories suspended and not resumed", () => {
+    const kingdom = { delegation: DelegationSchema.parse({ seal }) };
+    const events = [suspended(ELVARIA, Q1), suspended(DOCS, Q3), resumed(DOCS)];
+    expect(sealPolicyOf(kingdom, sealSuspendedOf(events))).toEqual({ seal, suspended: [ELVARIA] });
+  });
+
+  it('no delegation of the seal in a kingdom that names none, and no territory suspended in a quiet log', () => {
+    expect(sealPolicyOf({ delegation: DelegationSchema.parse({}) }, [])).toEqual({
+      seal: undefined,
+      suspended: [],
+    });
   });
 });
 

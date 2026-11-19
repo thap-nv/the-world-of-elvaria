@@ -365,7 +365,8 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   (`unsealedMergesOf`, `revertWordsOf`) and `raised` on `awaiting_seal`; the ledger's `unsealed` counts.
 - Decides the breaker of the seal delegation (`src/delegation/breaker.ts`, `escape.ts`, PS-08g, ADR 0023):
   `sealSuspendedOf` folds `delegation.suspended` and `delegation.resumed` into the suspended territories
-  (`SealPolicy.suspended`); `baseRedSuspension` (a check turned red with a merge without the seal among its suspects)
+  (`SealPolicy.suspended`), and `sealPolicyOf` joins them to `kingdom.delegation.seal` for the Steward and
+  `elvaria digest` alike (fix/run-221-followups); `baseRedSuspension` (a check turned red with a merge without the seal among its suspects)
   and `escapeSuspension` (the owner's report on such a quest) say when a signal suspends one, once per suspension;
   `landingOf` and `escapeOf` say whether a quest reached its base branch and give its `quest.escaped` line, or why not
   (`not_merged`, `already_reported`). `quest.escaped` is a notice about a quest, not a move (`QUEST_NOTICE_TYPES`,
