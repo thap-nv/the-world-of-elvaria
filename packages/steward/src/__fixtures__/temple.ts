@@ -8,7 +8,7 @@ import { VerdictSchema } from '@elvaria/domain';
 import type { Event, InboxCommandInput, ScriptureLedger } from '@elvaria/domain';
 
 import { bench } from './kingdom.ts';
-import type { Bench } from './kingdom.ts';
+import type { Bench, CastMember } from './kingdom.ts';
 
 export const TEMPLE_CAST = [
   { id: 'kael', cls: 'knight' },
@@ -36,9 +36,9 @@ const verdictOf = (id: string, attempt: number, result: 'pass' | 'fail') =>
     created_at: '2026-11-06T09:58:40+07:00',
   });
 
-/** The bench with the two verdicts on disk. */
-export async function templeBench(): Promise<Bench> {
-  const kingdom = await bench({ cast: TEMPLE_CAST });
+/** The bench with the two verdicts on disk; (PS-12g) another cast when given. */
+export async function templeBench(cast: readonly CastMember[] = TEMPLE_CAST): Promise<Bench> {
+  const kingdom = await bench({ cast });
   for (const verdict of [verdictOf(FAILED, 1, 'fail'), verdictOf(PASSED, 2, 'pass')]) {
     const written = await kingdom.store.verdicts.write(verdict);
     if (!written.ok) throw new Error(`fixture: ${written.error.message}`);

@@ -2,11 +2,9 @@
 // the scriptures' ledgers, and of a scripture's Markdown only to append or take out a line of the Monk. The domain
 // decides each operation (scriptureEditOf) on the files as they are when it is applied, read again before each one; this
 // writes what it decided, ledgers first, then the Markdown, then the lesson lines. A report that would replace a
-// scripture is refused whole (templeReportIssues) and nothing is written. The letters become memos (letters.ts). The
-// bell rings once for the report.
-import { createHash } from 'node:crypto';
-
-import { lessonIdOf, scriptureEditOf, templeLessonKeyOf, templeReportIssues } from '@elvaria/domain';
+// scripture is refused whole (templeReportIssues) and nothing is written. The letters become memos (letters.ts). Then the
+// characters a new line frees are released (release.ts, PS-12g), and the bell rings once for the report.
+import { scriptureEditOf, templeReportIssues } from '@elvaria/domain';
 import type { CharacterId, EditFacts, InboxCommandOf, ScriptureOperation, Verdict } from '@elvaria/domain';
 import { redact } from '@elvaria/eventlog';
 
@@ -14,6 +12,7 @@ import { ring } from '../context.ts';
 import { rejected } from '../inbox/quest-commands.ts';
 import { STEWARD } from '../record.ts';
 import { fileLetters } from './letters.ts';
+import { newLineIdOf, releaseFreed } from './release.ts';
 import { readScriptures, templeStateOf, writeEdit } from './scriptures.ts';
 import type { Context } from '../context.ts';
 import type { Outcome } from '../inbox/quest-commands.ts';
@@ -27,9 +26,6 @@ interface Tally {
 }
 
 const NONE: Tally = { added: 0, retired: 0, refused: 0 };
-
-/** The hash a new line's id is made with, as memo ids are (lessonIdOf). */
-const digestOf = (key: string): Uint8Array => createHash('sha256').update(key).digest();
 
 const warn = (ctx: Context, command: TempleReport, message: string): void => {
   ctx.deps.log.warn(`steward: temple report ${command.id}: ${message}`);
@@ -76,7 +72,7 @@ const factsOf = (
   verdicts: ReadonlyMap<string, Verdict>,
 ): EditFacts => ({
   command: command.id,
-  id: lessonIdOf(command.ts, digestOf(templeLessonKeyOf(command.id, index))),
+  id: newLineIdOf(command, index),
   at: ctx.record.stamp(),
   verdicts: new Map([...verdicts].map(([id, verdict]) => [id, verdict.result])),
   versions: versionsOf(ctx),
@@ -153,7 +149,9 @@ export async function applyTempleReport(ctx: Context, command: TempleReport): Pr
     };
   }
   const filed = await fileLetters(ctx, character, letters, verdicts);
-  if (tally.added + tally.retired + tally.refused + filed > 0)
-    await ring(ctx, { kind: 'temple', character, ...tally, letters: filed });
+  const released = await releaseFreed(ctx, command);
+  const freed = released.length === 0 ? {} : { released };
+  if (tally.added + tally.retired + tally.refused + filed + released.length > 0)
+    await ring(ctx, { kind: 'temple', character, ...tally, letters: filed, ...freed });
   return { status: 'applied' };
 }

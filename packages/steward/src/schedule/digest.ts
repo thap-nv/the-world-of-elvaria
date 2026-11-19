@@ -12,6 +12,7 @@ import {
   reduce,
   scopeHoldsOf,
   sealPolicyOf,
+  templeNoticesOf,
   unopenedReviewsOf,
   unsealedMergesOf,
   worldStateOf,
@@ -24,7 +25,9 @@ import type {
   Quest,
   QuestId,
   StewardNotices,
+  TempleNotices,
   Territory,
+  Verdict,
   WorldState,
 } from '@elvaria/domain';
 
@@ -132,17 +135,45 @@ const sourceOf = (world: World, memos: readonly Memo[]): DigestSource => ({
   memos,
 });
 
+/**
+ * (PS-12g) What waits on the Temple, from the files and the log as the digest is made: the characters suspended for a
+ * fail streak, and the repeated failures while the Temple is off or has no Monk. Counted here, without a model.
+ */
+const templeNoticesIn = (
+  world: World,
+  memos: readonly Memo[],
+  verdicts: readonly Verdict[],
+  events: readonly Event[],
+): TempleNotices =>
+  templeNoticesOf({
+    enabled: world.kingdom.schedule.temple.enabled,
+    classes: world.registry.classes,
+    characters: [...world.characters.values()],
+    quests: [...world.quests.values()],
+    verdicts,
+    memos,
+    events,
+  });
+
 /** The digest as a job: the port writes the file, the Steward writes `digest.written` and rings once. */
 export const digestJob = (digest: Digest): StewardJob => ({
   id: 'digest',
   mode: 'in_tick',
   run: async (ctx: Context, run) => {
-    const [memos, log] = await Promise.all([ctx.deps.store.memos.list(), ctx.deps.events.read()]);
+    const [memos, log, verdicts] = await Promise.all([
+      ctx.deps.store.memos.list(),
+      ctx.deps.events.read(),
+      ctx.deps.store.verdicts.list(),
+    ]);
     const state = digestStateOf(sourceOf(ctx.world, memos.items), log.events);
     // A newer build is read now (PS-08d): the composition root asks the pinned build's repo, which no tick knows.
     const upgrade = await ctx.deps.upgradeOffer?.();
     // PS-08b: the merges without the seal since the last digest, each once, from the log.
-    const unsealed = { ...run.notices, merged_unsealed: unsealedMergesOf(log.events) };
+    const unsealed = {
+      ...run.notices,
+      merged_unsealed: unsealedMergesOf(log.events),
+      ...templeNoticesIn(ctx.world, memos.items, verdicts.items, log.events),
+    };
     const notices = upgrade === undefined ? unsealed : { ...unsealed, upgrade };
     const items = attentionQueue(state, ctx.deps.clock.now(), notices);
     const file = await digest.write({ day: run.day, items });
