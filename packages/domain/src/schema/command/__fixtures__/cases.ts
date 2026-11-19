@@ -184,4 +184,13 @@ export const CASES: Record<InboxCommandKind, { valid: object; invalid: object; i
     invalid: { territory: 'Do An' },
     issue: 'payload.territory: Invalid string',
   },
+  temple_report: {
+    valid: {
+      character: 'sage',
+      operations: [{ op: 'retire', lesson: 'L_20261119_4k2pqz', why: 'merged by hand' }],
+      letters: [],
+    },
+    invalid: { character: 'sage', operations: [{ op: 'replace', text: 'every line' }], letters: [] },
+    issue: 'payload.operations.0.op: Invalid discriminator value',
+  },
 };

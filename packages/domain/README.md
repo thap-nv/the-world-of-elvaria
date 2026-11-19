@@ -417,6 +417,18 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   `LESSON_ISSUE_CODES` with its level; the redaction patterns are the caller's (`secret`). `lessonRefOf` names a line
   by its id or by a hash of its normalized sentence, which the caller computes (`lessonTextKeyOf`, `lessonTextRefOf`).
   The `lesson` contract has the optional `scope`, `fail_kind`, `cli_version` and `origin`, and the source `outside`.
+- Decides a temple report line by line (`src/temple/{edit,refusal,report,format,ledger,letters}.ts`, PS-12c, ADR 0027):
+  `templeReportIssues` refuses a report whole (`replaces_scripture`) that adds more than `TEMPLE_ADDS_MAX` (3) lines
+  or takes out of one file more than half the Monk's lines there (`TEMPLE_REMOVALS_FLOOR`, 2, at least);
+  `scriptureEditOf(state, operation, facts)` checks one `add`, `retire` or `merge` against the scriptures as they
+  are now and gives the files to write and the `lesson.added` and `lesson.retired` lines, or one refusal code of
+  `LESSON_REFUSALS`; an operation a stopped Steward began is completed, not checked again, and none is applied twice
+  (`lessonIdOf` makes the new line's id from the report's command id and the operation's place). `formatLessonLine`,
+  `appendLine` and `removeLines` write a line the parser reads back and leave every other byte of a file. The
+  ledger beside a scripture is the `scripture` contract (`ScriptureLedgerSchema`); `sourceOf` and `deletedByOwnerOf`
+  read who wrote a line from it. `templeMemoOf` files a letter as the registry's proposal kind, to the Chancellor or,
+  for a stronger model, to the owner, whom the attention queue lists as a `memo`, not an `objection`. The
+  `temple_report` command (source `monk`) and the `lesson.*` events are in the contracts.
 - Gives the core types every package builds on: `Result`, branded ids (`QuestId`, `TribeId`, ...), `Clock` and
   `Instant`, `zonedTime` (local day and ISO offset in `kingdom.tz`), `IdSource` (ULIDs and dated ids).
 - Names every number it decides with in `src/constants.ts` and the `constants.ts` of the folders that have one.

@@ -77,9 +77,17 @@ function amendmentItem(state: WorldState, memo: MemoView): AttentionKind | null 
 const isAmendment = (memo: MemoView): boolean =>
   memo.route === 'author' || (memo.refusal !== undefined && AMENDMENT_REFUSED.includes(memo.refusal));
 
+/**
+ * (PS-12c) A memo sent to the owner is an `objection` only when an objection went there for want of a judge, which its
+ * refusal says (an amendment's is read first); one sent there as it is, the temple's letter for a stronger model, is a
+ * `memo` the owner decides.
+ */
+const isLetterToOwner = (memo: MemoView): boolean => memo.route === 'owner' && memo.refusal === undefined;
+
 function memoKindOf(state: WorldState, memo: MemoView): AttentionKind | null {
   if (memo.route === null) return 'memo';
-  return isAmendment(memo) ? amendmentItem(state, memo) : MEMO_ITEMS[memo.route];
+  if (isAmendment(memo)) return amendmentItem(state, memo);
+  return isLetterToOwner(memo) ? 'memo' : MEMO_ITEMS[memo.route];
 }
 
 function memoItems(state: WorldState): AttentionItem[] {

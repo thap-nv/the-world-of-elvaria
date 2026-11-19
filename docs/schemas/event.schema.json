@@ -2222,9 +2222,10 @@
                 "pattern": "^[a-z][a-z0-9_]*$"
               },
               "source": {
-                "description": "`chancellor` when the command came from the Chancellor's triage (PS-03b): the metrics ledger leaves it out of the owner's steps. Absent for the owner's commands (CLI, Herald, phone).",
+                "description": "`chancellor` when the command came from the Chancellor's triage (PS-03b), `monk` from the temple (PS-12c): the metrics ledger leaves it out of the owner's steps. Absent for the owner's commands (CLI, Herald, phone).",
                 "enum": [
-                  "chancellor"
+                  "chancellor",
+                  "monk"
                 ]
               }
             }
@@ -3423,6 +3424,264 @@
       "if": {
         "properties": {
           "type": {
+            "const": "lesson.added"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "The Steward appended one line with a new id to the end of the owner's scripture and its entry to the ledger beside it (scripture.json), from a temple_report's add or merge (actor: the Steward). Every other line of the file kept every character.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "lesson",
+              "owner",
+              "fail_kind",
+              "source"
+            ],
+            "properties": {
+              "lesson": {
+                "type": "string",
+                "pattern": "^L_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+              },
+              "owner": {
+                "description": "Whose scripture: `temple`, or a character's id.",
+                "type": "string",
+                "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$"
+              },
+              "scope": {
+                "description": "Absent: the line loads in every session.",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "role": {
+                    "description": "The role of the session: assignee, verifier.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "enum": [
+                        "assignee",
+                        "verifier"
+                      ]
+                    }
+                  },
+                  "class": {
+                    "description": "The character's class, a registry id.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    }
+                  },
+                  "tribe": {
+                    "description": "The character's tribe, an id of kingdom.tribes[].",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    }
+                  },
+                  "os": {
+                    "description": "The OS the Steward runs on.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "enum": [
+                        "win32",
+                        "darwin",
+                        "linux"
+                      ]
+                    }
+                  },
+                  "territory": {
+                    "description": "The quest's territory: a scope that never leaves the kingdom (lesson-sharing S2, P3).",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$"
+                    }
+                  },
+                  "tag": {
+                    "description": "At least one of these tags on the quest.",
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    }
+                  }
+                }
+              },
+              "fail_kind": {
+                "enum": [
+                  "tests_fail",
+                  "scope_creep",
+                  "missing_i18n",
+                  "wrong_facts",
+                  "incomplete",
+                  "style",
+                  "unsafe",
+                  "other",
+                  "flaky"
+                ]
+              },
+              "source": {
+                "enum": [
+                  "monk",
+                  "user",
+                  "outside"
+                ]
+              },
+              "source_verdict": {
+                "type": "string",
+                "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user)?$"
+              },
+              "merged_from": {
+                "description": "A merge: the lines this one replaced, each with its own lesson.retired.",
+                "type": "array",
+                "minItems": 2,
+                "items": {
+                  "type": "string",
+                  "pattern": "^L_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "lesson.retired"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "The Steward took one of the Monk's lines out of the owner's scripture, from a temple_report's retire or merge (actor: the Steward); the ledger keeps what it said.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "lesson",
+              "owner",
+              "by"
+            ],
+            "properties": {
+              "lesson": {
+                "type": "string",
+                "pattern": "^L_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+              },
+              "owner": {
+                "description": "Whose scripture: `temple`, or a character's id.",
+                "type": "string",
+                "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$"
+              },
+              "by": {
+                "enum": [
+                  "monk",
+                  "user"
+                ]
+              },
+              "why": {
+                "type": "string",
+                "minLength": 1
+              },
+              "merged_into": {
+                "description": "A merge took it out: the line that replaced it.",
+                "type": "string",
+                "pattern": "^L_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "lesson.refused"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "The Steward refused one operation of a temple_report and wrote nothing for it (actor: the Steward); the report's other operations went on. A report refused whole (replaces_scripture) has no such line, only its command.rejected.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "op",
+              "code"
+            ],
+            "properties": {
+              "op": {
+                "enum": [
+                  "add",
+                  "retire",
+                  "merge"
+                ]
+              },
+              "code": {
+                "enum": [
+                  "no_source_verdict",
+                  "unknown_verdict",
+                  "unknown_lesson",
+                  "not_monk_lesson",
+                  "unknown_owner",
+                  "over_cap",
+                  "lint",
+                  "duplicate"
+                ]
+              },
+              "lesson": {
+                "description": "The line the operation named (retire), or the first of a merge that is at fault.",
+                "type": "string",
+                "pattern": "^L_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+              },
+              "issues": {
+                "description": "With code = lint: what the lint found, most serious first.",
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "enum": [
+                    "bad_id",
+                    "bad_head",
+                    "unknown_key",
+                    "unknown_value",
+                    "empty_text",
+                    "hidden_char",
+                    "too_long",
+                    "html",
+                    "url",
+                    "absolute_path",
+                    "secret",
+                    "missing_fail_kind",
+                    "install",
+                    "env",
+                    "cli_config",
+                    "network",
+                    "stray",
+                    "over_cap"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
             "const": "schedule.ran"
           }
         }
@@ -3871,6 +4130,9 @@
         "memo.closed",
         "memo.escalated",
         "memo.delivered",
+        "lesson.added",
+        "lesson.retired",
+        "lesson.refused",
         "sandbox.replay.start",
         "sandbox.replay.end",
         "upgrade.started",

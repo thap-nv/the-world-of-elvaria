@@ -89,6 +89,10 @@ export const EVENT_TYPES = [
   'memo.escalated',
   // PS-09c: an advisory the Steward wrote read by a quest it went to, in its next assignee session.
   'memo.delivered',
+  // PS-12c (ADR 0027): the Steward applied an operation of the Monk's temple report on one line of scripture, or refused it.
+  'lesson.added',
+  'lesson.retired',
+  'lesson.refused',
   'sandbox.replay.start',
   'sandbox.replay.end',
   'upgrade.started',

@@ -4,7 +4,7 @@
 
 Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là một event; log chỉ ghi thêm, không bao giờ viết lại. `type` là `nhóm.hành_động`; reader giữ nguyên type lạ, renderer bỏ qua nó. Hợp đồng đầy đủ: [schemas/event.schema.json](schemas/event.schema.json); nghĩa từng nhóm và các tiền tố dành sẵn: [glossary.md](glossary.md) mục 12.
 
-86 type trong danh mục v1, 74 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
+89 type trong danh mục v1, 77 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
 
 ## Khung một dòng
 
@@ -108,8 +108,8 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 | Type | `data` |
 |---|---|
 | `command.received` | object mở, chưa có schema |
-| `command.applied` | `command_id`: string (khớp `^[0-9A-HJKMNP-TV-Z]{26}$`)<br>`reason` (tùy chọn): string<br>`kind` (tùy chọn): string (khớp `^[a-z][a-z0-9_]*$`) — The command's `kind` (InboxCommand.kind), so the metrics ledger counts the owner's steps from the log alone; inbox/done/ names it for lines written before PS-01b.<br>`source` (tùy chọn): một trong `chancellor` — `chancellor` when the command came from the Chancellor's triage (PS-03b): the metrics ledger leaves it out of the owner's steps. Absent for the owner's commands (CLI, Herald, phone). |
-| `command.rejected` | `command_id`: string (khớp `^[0-9A-HJKMNP-TV-Z]{26}$`)<br>`reason` (tùy chọn): string<br>`kind` (tùy chọn): string (khớp `^[a-z][a-z0-9_]*$`) — The command's `kind` (InboxCommand.kind), so the metrics ledger counts the owner's steps from the log alone; inbox/done/ names it for lines written before PS-01b.<br>`source` (tùy chọn): một trong `chancellor` — `chancellor` when the command came from the Chancellor's triage (PS-03b): the metrics ledger leaves it out of the owner's steps. Absent for the owner's commands (CLI, Herald, phone). |
+| `command.applied` | `command_id`: string (khớp `^[0-9A-HJKMNP-TV-Z]{26}$`)<br>`reason` (tùy chọn): string<br>`kind` (tùy chọn): string (khớp `^[a-z][a-z0-9_]*$`) — The command's `kind` (InboxCommand.kind), so the metrics ledger counts the owner's steps from the log alone; inbox/done/ names it for lines written before PS-01b.<br>`source` (tùy chọn): một trong `chancellor`, `monk` — `chancellor` when the command came from the Chancellor's triage (PS-03b), `monk` from the temple (PS-12c): the metrics ledger leaves it out of the owner's steps. Absent for the owner's commands (CLI, Herald, phone). |
+| `command.rejected` | `command_id`: string (khớp `^[0-9A-HJKMNP-TV-Z]{26}$`)<br>`reason` (tùy chọn): string<br>`kind` (tùy chọn): string (khớp `^[a-z][a-z0-9_]*$`) — The command's `kind` (InboxCommand.kind), so the metrics ledger counts the owner's steps from the log alone; inbox/done/ names it for lines written before PS-01b.<br>`source` (tùy chọn): một trong `chancellor`, `monk` — `chancellor` when the command came from the Chancellor's triage (PS-03b), `monk` from the temple (PS-12c): the metrics ledger leaves it out of the owner's steps. Absent for the owner's commands (CLI, Herald, phone). |
 
 ## `delivery` · 4 type
 
@@ -183,6 +183,14 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 | `memo.closed` | `memo`: string (khớp `^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`decision`: một trong `shelved`, `rejected`, `handled`, `accepted`, `sustained`, `overruled`, `delivered`, `lapsed`<br>`quest` (tùy chọn): string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`) — With decision = handled: the quest that does the work.<br>`verdict` (tùy chọn): string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*\|-user)?$`) — (PS-22) With decision = sustained or overruled: the second judge's verdict. |
 | `memo.escalated` | `memo`: string (khớp `^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`action`: một trong `merge`, `new_quest`, `shelve`, `owner`<br>`quest` (tùy chọn): string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`) — merge: the open quest; new_quest: the draft quest made for the owner to confirm.<br>`holds`: array of một trong `decision_change`, `contract_change`, `mana_over_budget`, `outward_action`, `protected_paths`, `above_rank`, `outside_scope`, `scope_held`, `chancellor_asks` |
 | `memo.delivered` | `memo`: string (khớp `^m_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`) |
+
+## `lesson` · 3 type
+
+| Type | `data` |
+|---|---|
+| `lesson.added` | `lesson`: string (khớp `^L_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`owner`: string (khớp `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$`) — Whose scripture: `temple`, or a character's id.<br>`scope` (tùy chọn): object { role?, class?, tribe?, os?, territory?, tag? } — Absent: the line loads in every session.<br>`fail_kind`: một trong `tests_fail`, `scope_creep`, `missing_i18n`, `wrong_facts`, `incomplete`, `style`, `unsafe`, `other`, `flaky`<br>`source`: một trong `monk`, `user`, `outside`<br>`source_verdict` (tùy chọn): string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*\|-user)?$`)<br>`merged_from` (tùy chọn): array of string (khớp `^L_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`) — A merge: the lines this one replaced, each with its own lesson.retired. |
+| `lesson.retired` | `lesson`: string (khớp `^L_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`owner`: string (khớp `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$`) — Whose scripture: `temple`, or a character's id.<br>`by`: một trong `monk`, `user`<br>`why` (tùy chọn): string (không rỗng)<br>`merged_into` (tùy chọn): string (khớp `^L_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`) — A merge took it out: the line that replaced it. |
+| `lesson.refused` | `op`: một trong `add`, `retire`, `merge`<br>`code`: một trong `no_source_verdict`, `unknown_verdict`, `unknown_lesson`, `not_monk_lesson`, `unknown_owner`, `over_cap`, `lint`, `duplicate`<br>`lesson` (tùy chọn): string (khớp `^L_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`) — The line the operation named (retire), or the first of a merge that is at fault.<br>`issues` (tùy chọn): array of một trong `bad_id`, `bad_head`, `unknown_key`, `unknown_value`, `empty_text`, `hidden_char`, `too_long`, `html`, `url`, `absolute_path`, `secret`, `missing_fail_kind`, `install`, `env`, `cli_config`, `network`, `stray`, `over_cap` — With code = lint: what the lint found, most serious first. |
 
 ## `sandbox` · 2 type
 

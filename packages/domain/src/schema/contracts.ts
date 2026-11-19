@@ -6,6 +6,7 @@ import { InboxCommandSchema } from './command/inbox-command.ts';
 import { EventSchema } from './event/event.ts';
 import { KingdomSchema } from './kingdom.ts';
 import { LessonSchema } from './lesson/lesson.ts';
+import { ScriptureLedgerSchema } from './lesson/scripture.ts';
 import { AmendmentDecisionFileSchema } from './memo/amendment-decision.ts';
 import { MemosFileSchema } from './memo/memo-kind.ts';
 import { MemoTriageFileSchema } from './memo/memo-triage.ts';
@@ -34,6 +35,7 @@ export const CONTRACTS = {
   campaign: CampaignSchema,
   verdict: VerdictSchema,
   lesson: LessonSchema,
+  scripture: ScriptureLedgerSchema,
   memo: MemoSchema,
   event: EventSchema,
   'inbox-command': InboxCommandSchema,

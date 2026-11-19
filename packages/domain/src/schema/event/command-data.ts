@@ -28,7 +28,7 @@ export const CommandResultDataSchema = z.strictObject({
     .optional()
     .meta(
       describe(
-        "`chancellor` when the command came from the Chancellor's triage (PS-03b): the metrics ledger leaves it out of the owner's steps. Absent for the owner's commands (CLI, Herald, phone).",
+        "`chancellor` when the command came from the Chancellor's triage (PS-03b), `monk` from the temple (PS-12c): the metrics ledger leaves it out of the owner's steps. Absent for the owner's commands (CLI, Herald, phone).",
       ),
     ),
 });
