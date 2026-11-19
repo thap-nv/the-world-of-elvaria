@@ -12,11 +12,13 @@ import {
 } from '../conformance/scenarios.ts';
 import { fakeImageAnswer } from '../conformance/image-probe.ts';
 import { runSpawnProbe } from '../conformance/spawn-probe.ts';
+import { writeFakeLines } from './fake-lines.ts';
 import { commandRefusal } from '../policy/command-refusal.ts';
 import { SHELL_TOOL } from '../policy/constants.ts';
 import { readQuestion } from './handover.ts';
 import { createSignalChannel } from './signal-channel.ts';
 import type { FakeScenario } from '../conformance/scenarios.ts';
+import type { FakeLinesOptions } from './fake-lines.ts';
 import type {
   PermissionDenial,
   RunOutcome,
@@ -35,6 +37,8 @@ export interface FakeStart {
   /** Tokens a finished session reports; 0 when the runner declares no `usage`. */
   readonly tokens: number;
   readonly delay_ms: number;
+  /** Write the session's start and end lines to the log and the journal (fake-lines.ts); none by default. */
+  readonly lines?: FakeLinesOptions;
 }
 
 interface Ending {
@@ -108,6 +112,24 @@ const SCRIPTS: Readonly<Record<FakeScenario, (play: Play) => Promise<Ending | un
   },
 };
 
+interface Report {
+  readonly tokens: number;
+  readonly question: string | undefined;
+  readonly duration_ms: number;
+}
+
+const resultOf = (start: FakeStart, ending: Ending, report: Report): RunResult => ({
+  outcome: ending.outcome,
+  exit_code: ending.exit_code,
+  usage: { tokens: report.tokens },
+  session_id: start.session_id,
+  duration_ms: report.duration_ms,
+  permission_denials: ending.denials ?? [],
+  rate_limited: ending.rate_limited ?? false,
+  ...(ending.structured === undefined ? {} : { structured: ending.structured }),
+  ...(report.question === undefined ? {} : { question: report.question }),
+});
+
 export function startFakeSession(start: FakeStart): RunningSession {
   const channel = createSignalChannel<RunnerSignal>();
   const begun = performance.now();
@@ -116,24 +138,25 @@ export function startFakeSession(start: FakeStart): RunningSession {
     deliver = resolve;
   });
   let ended = false;
+  // What a line could not be written for is told as a text signal, as the real runner notes it in its output.
+  const lines =
+    start.lines === undefined
+      ? undefined
+      : writeFakeLines(start.req, start.session_id, start.lines, (text) => {
+          channel.push({ kind: 'text', text });
+        });
 
   const end = async (ending: Ending): Promise<void> => {
     if (ended) return;
     ended = true;
+    const tokens = ending.outcome === 'completed' && start.capabilities.usage ? start.tokens : 0;
+    await lines?.end(ending.outcome, tokens);
     channel.close();
     // wait() must settle whatever happens to the letter: one that cannot be read asks nothing.
     const question = await readQuestion(start.req.handover).catch(() => undefined);
-    deliver({
-      outcome: ending.outcome,
-      exit_code: ending.exit_code,
-      usage: { tokens: ending.outcome === 'completed' && start.capabilities.usage ? start.tokens : 0 },
-      session_id: start.session_id,
-      duration_ms: Math.round(performance.now() - begun),
-      permission_denials: ending.denials ?? [],
-      rate_limited: ending.rate_limited ?? false,
-      ...(ending.structured === undefined ? {} : { structured: ending.structured }),
-      ...(question === undefined ? {} : { question }),
-    });
+    deliver(
+      resultOf(start, ending, { tokens, question, duration_ms: Math.round(performance.now() - begun) }),
+    );
   };
 
   const play: Play = {
