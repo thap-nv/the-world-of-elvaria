@@ -120,6 +120,7 @@ export * from './schema/amendments.ts';
 export * from './schema/council.ts';
 export * from './schema/delegation.ts';
 export * from './schema/delegation-seal.ts';
+export * from './schema/event/chancellor-data.ts';
 export * from './schema/event/delegation-data.ts';
 export * from './schema/event/delivery-data.ts';
 export * from './schema/event/patrol-data.ts';

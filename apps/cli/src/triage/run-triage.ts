@@ -11,6 +11,7 @@ import type { TriageContext } from '@elvaria/runner-core';
 
 import { storeIssueLines } from '../issues.ts';
 import { commandHeader } from '../quest/send-command.ts';
+import { recordAnswered } from '../say/answered.ts';
 import { speakerOf } from '../say/hearing.ts';
 import { waitingMemos } from './waiting.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
@@ -94,6 +95,7 @@ export async function runTriage(
   options.onListening?.(speaker.session.choice.character.name, batch.length);
   const reply = await triageMemos(contextOf(ctx, speaker, memos, quests), speaker.session, options.signal);
   if (!reply.ok) return { status: 'failed', failure: reply.error, run_dir: speaker.session.run_dir };
+  await recordAnswered(ctx, speaker.session, 'triage', reply.value.tokens);
   const { commands, outcomes } = triageCommands({
     reply: reply.value,
     memos: batch,

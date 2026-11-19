@@ -13,6 +13,7 @@ import {
   poolOpenOf,
   ok,
   questFromCommand,
+  sealPolicyOf,
   selectAssignee,
   setRank,
   zonedTime,
@@ -24,7 +25,7 @@ import { moveAndRing } from '../notices.ts';
 import { OWNER, actorOfCommand, step } from '../record.ts';
 import { releaseScratch } from '../review/scratch.ts';
 import { openAssignee } from '../sessions/open.ts';
-import { modelsOf, sealPolicyOf } from '../world.ts';
+import { modelsOf } from '../world.ts';
 import type { Context } from '../context.ts';
 import type { Edits } from '../record.ts';
 
@@ -94,7 +95,7 @@ async function newQuest(
     tribes: ctx.world.kingdom.tribes,
     // PS-08b: the owner's and the Chancellor's quests may be spared the seal by the kingdom's delegation, unless the
     // breaker suspended it on their territory (PS-08g).
-    seal: sealPolicyOf(ctx.world, ctx.delegation),
+    seal: sealPolicyOf(ctx.world.kingdom, ctx.delegation.suspensions),
   });
   if (!made.ok) return err(rejected(made.error.code));
   const type = made.value.status === 'draft' ? 'quest.drafted' : 'quest.created';

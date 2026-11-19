@@ -47,6 +47,8 @@ describe('renderEvents', () => {
     // PS-08g: quest.escaped joins the quest group; the breaker's two lines make a group of their own.
     expect(text).toContain('\n## `quest` · 20 type\n');
     expect(text).toContain('\n## `delegation` · 2 type\n');
+    // fix/run-221-followups: the Chancellor's office says what its sessions spent, a group of its own.
+    expect(text).toContain('\n## `chancellor` · 1 type\n');
     expect(text).toContain('\n## `sandbox` · 2 type\n');
   });
 

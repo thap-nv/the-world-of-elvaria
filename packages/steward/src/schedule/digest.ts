@@ -11,6 +11,7 @@ import {
   ownerDeliveries,
   reduce,
   scopeHoldsOf,
+  sealPolicyOf,
   unopenedReviewsOf,
   unsealedMergesOf,
   worldStateOf,
@@ -30,7 +31,6 @@ import type {
 import { ring } from '../context.ts';
 import { STEWARD } from '../record.ts';
 import { judgingClassesOf } from '../unjudgeable.ts';
-import { sealPolicyOf } from '../world.ts';
 import type { Context } from '../context.ts';
 import type { State } from '../steward-state.ts';
 import type { World } from '../world.ts';
@@ -101,7 +101,7 @@ export function noticesOf(
       quests,
       [...world.territories.values()],
       deliveringOf(state.forge.outcomes, quests, [...world.territories.values()], {
-        policy: sealPolicyOf(world, state.delegation),
+        policy: sealPolicyOf(world.kingdom, state.delegation.suspensions),
         nothing: state.forge.nothing,
       }),
     ),
@@ -111,7 +111,7 @@ export function noticesOf(
       [...world.quests.values()],
       [...world.territories.values()],
       // PS-08b: a pull request the Steward merges for the delegation of the seal waits for nobody either.
-      sealPolicyOf(world, state.delegation),
+      sealPolicyOf(world.kingdom, state.delegation.suspensions),
     ),
     // PS-26: the health of the patrolled territories' default branches.
     patrols: state.patrol.health,

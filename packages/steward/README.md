@@ -196,8 +196,9 @@
   is set against the one it replaces for the share of its window a session takes, `mana/shares.ts`, the largest
   kept and folded again from the log's `mana.level` lines after a restart; 7 % before any is measured), one whose window reads spent sleeps (a tribe with only a model's cap asleep
   is still read, and probed without a model call). A pool and window the account gives no figure for is estimated
-  from the sessions (`mana.level` `source: estimate`), and from what `tribe check` spent with the real CLI, read from
-  the log's `tribe.checked` lines at start (`outsideFromLog`, run (221) (b)); a gauge the world draws on that nears the cap warns once
+  from the sessions (`mana.level` `source: estimate`), and from what `tribe check` spent with the real CLI and what
+  the sessions of the Chancellor's office spent, read from the log's `tribe.checked` and `chancellor.answered` lines
+  at start (`outsideFromLog`, run (221) (b), fix/run-221-followups); a gauge the world draws on that nears the cap warns once
   (`mana.warning`). The bell rings when a gauge warns, sleeps or wakes (`mana_warning`, `mana_asleep`,
   `mana_awake`). With `mana.reassign_after_hours`, a quest asleep that long goes to the character planTick chose
   (`paused_mana.reassign` by the Steward; the sleeper lets go) and starts. The owner's `wake` (`elvaria wake`)
@@ -435,7 +436,7 @@
   red, a conflict, a moved head, a closed pull request, or `checks_timeout_minutes` past the push's line: one
   `delivery.failed`, the quest stays done. The digest drops the `delivery_waits` of such a quest (`ownerDeliveries`).
 - Carries out the delegation of the royal seal (PS-08b, `src/seal.ts`, ADR 0023): the inbox's `create_quest` and the
-  snapshot get `sealPolicyOf` (`kingdom.delegation.seal`, the territories the breaker suspended); a submit (a session's,
+  snapshot get the domain's `sealPolicyOf` (`kingdom.delegation.seal`, the territories the breaker suspended); a submit (a session's,
   or the owner's `submit`) measures the branch of a quest with `seal_delegated` (`Plots.diffLines`, the territory's
   `regenerate` shared paths aside; a plot that cannot say counts as over) and writes `diff_lines` on its line; the submit
   and a passing verdict (`review/judge.ts`, `review/machine.ts`) set `seal_required` and `seal_raised` through `before`

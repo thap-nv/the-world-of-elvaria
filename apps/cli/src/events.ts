@@ -54,6 +54,25 @@ export function recordTribeChecked(ctx: KingdomContext, data: EventData<'tribe.c
   });
 }
 
+/**
+ * What a session of the Chancellor's office spent once it answered (fix/run-221-followups): the character who spoke is
+ * the actor, and the Steward's mana estimate counts the tokens against the pool of its model, as a tribe check's.
+ */
+export function recordChancellorAnswered(
+  ctx: KingdomContext,
+  speaker: Pick<Character, 'id' | 'tribe' | 'model'>,
+  spent: Pick<EventData<'chancellor.answered'>, 'matter' | 'tokens'>,
+): Promise<void> {
+  return append(ctx, {
+    v: EVENT_VERSION,
+    id: ctx.ids.ulid(),
+    ts: ctx.now(),
+    type: 'chancellor.answered',
+    actor: { kind: 'character', id: speaker.id },
+    data: { tribe: speaker.tribe, model: speaker.model, ...spent },
+  });
+}
+
 export function recordCharacterCreated(ctx: KingdomContext, character: Character): Promise<void> {
   return append(ctx, {
     v: EVENT_VERSION,

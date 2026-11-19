@@ -109,6 +109,11 @@ show` prints the brief apart from the rest of the description and, while the pla
   `notices.tribes_held`; held, it waits, writing nothing); no author or a failed session hands it to the owner. The
   mage also reads the `## Summary` of the plan's file while the plan's plot holds it (`planSummariesOf`, shared with
   `quest show`; fix/mage-plan-file).
+- Each session of the Chancellor's office that answers (`say`, `triage` by hand or as the job, an amendment's author)
+  writes a `chancellor.answered` line (`src/say/answered.ts`, fix/run-221-followups): the character who spoke, its
+  tribe and model, `matter` (`drafts`, `triage`, `amendment`) and the tokens the session reported; the Steward's
+  mana estimate counts them from its next start, as a tribe check's. A session with no reply to use writes none; a
+  line that cannot be written is said, and what the session answered stands.
 - `wake <tribe>` sends `wake` for a tribe of `kingdom.tribes[]`: the Steward probes that account at its next tick
   (ADR 0009), for instance after the owner signed in again.
 - Writes new files the Steward does not own: `kingdom.json` (`init`, then `tribes[].tool` and, with `--enable`,
@@ -221,7 +226,10 @@ show` prints the brief apart from the rest of the description and, while the pla
   log and `.state/unclaimable.json` (`digestStateOf` of `@elvaria/steward`, `attentionQueue` of the domain), worded
   by `digestMarkdown` and printed; writes nothing and spends no mana. Quests waiting for a judge are known to the
   running Steward only, so they are in the digest it writes; a quest in review whose latest judge could not open a
-  session (`judge_no_session`, from the quest files, fix/review-no-session) is in both, with `character suspend`. `run` gives the Steward the `Digest` port
+  session (`judge_no_session`, from the quest files, fix/review-no-session) is in both, with `character suspend`. A
+  pull request the Steward merges itself under the delegation of the seal names nothing for the owner, as in the
+  Steward's digest: the policy is `sealPolicyOf` of the domain, from `kingdom.delegation.seal` and the breaker's lines
+  of the log (fix/run-221-followups). `run` gives the Steward the `Digest` port
   (`src/run/digest-file.ts`): the same Markdown in `digest/<day>.md`, once a day at `kingdom.schedule.digest.at`;
   the bell says the digest is written and names a quest whose judges are all out of mana (`judge_mana`).
 - `metrics [--since <day>] [--until <day>] [--json] [--plan <quest>]` (PS-01, PS-01b: checks set aside for their environment, and the
