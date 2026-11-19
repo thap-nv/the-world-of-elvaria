@@ -29,12 +29,19 @@ export interface AfterWrapUp {
   readonly median_tokens: number | null;
   /** The median of the minutes from the reminder to the end. */
   readonly median_minutes: number;
+  /**
+   * (PS-12b, the "tiếp sức" column) Of the sessions reminded, those whose limit went up while they ran: the owner raised
+   * the budget (`elvaria quest edit --max-tokens`) and the Steward drew the bar again. Read from the notches of
+   * `agent.session.usage`, one gauge at a time (a session that changes gauge has no "before" on the new one).
+   */
+  readonly raised: number;
 }
 
 /** The ends of a session that a ceiling or the Steward forced (the breaker's cut, the CLI's own ceiling, a kill). */
 const CUT_OUTCOMES: ReadonlySet<string> = new Set(['killed', 'max_turns', 'budget']);
 
 type WrapUpLine = EventOf<'agent.session.wrap_up'>;
+type UsageLine = EventOf<'agent.session.usage'>;
 type EndLine = EventOf<'agent.session.end'>;
 
 interface Ended {
@@ -42,9 +49,15 @@ interface Ended {
   readonly outcome: EndLine['data']['outcome'];
   readonly tokens: number | null;
   readonly ms: number;
+  readonly raised: boolean;
 }
 
-function endedOf(wrap: WrapUpLine, end: EndLine, tribes: ReadonlyMap<CharacterId, TribeId>): Ended {
+function endedOf(
+  wrap: WrapUpLine,
+  end: EndLine,
+  tribes: ReadonlyMap<CharacterId, TribeId>,
+  raised: boolean,
+): Ended {
   const { actor, data } = end;
   const character = actor.kind === 'character' ? actor.id : undefined;
   // The reminder's `used` and the end's usage count tokens alike (breaker/tokens.ts): the difference is what the
@@ -58,7 +71,16 @@ function endedOf(wrap: WrapUpLine, end: EndLine, tribes: ReadonlyMap<CharacterId
     outcome: data.outcome,
     tokens,
     ms: Math.max(0, Date.parse(end.ts) - Date.parse(wrap.ts)),
+    raised,
   };
+}
+
+/** Whether the notch raises the limit its session had in force on the same gauge; the notch becomes the one in force. */
+function raisesLimit(limits: Map<string, number>, session: string, { data }: UsageLine): boolean {
+  const key = `${session}|${data.measure}`;
+  const before = limits.get(key);
+  limits.set(key, data.limit);
+  return before !== undefined && data.limit > before;
 }
 
 /**
@@ -72,10 +94,16 @@ function endedAfterWrapUp(
 ): Ended[] {
   const tribes = new Map(characters.map(({ id, tribe }) => [id, tribe]));
   const told = new Map<string, WrapUpLine>();
+  const limits = new Map<string, number>();
+  const raised = new Set<string>();
   const ended: Ended[] = [];
   for (const event of events) {
     const { session } = event;
     if (session === undefined) continue;
+    if (isEventOf(event, 'agent.session.usage')) {
+      if (raisesLimit(limits, session, event)) raised.add(session);
+      continue;
+    }
     if (isEventOf(event, 'agent.session.wrap_up')) {
       if (!told.has(session)) told.set(session, event);
       continue;
@@ -83,7 +111,7 @@ function endedAfterWrapUp(
     const wrap = told.get(session);
     if (wrap === undefined || !isEventOf(event, 'agent.session.end')) continue;
     told.delete(session);
-    if (inWindow(window, wrap.ts)) ended.push(endedOf(wrap, event, tribes));
+    if (inWindow(window, wrap.ts)) ended.push(endedOf(wrap, event, tribes, raised.has(session)));
   }
   return ended;
 }
@@ -96,6 +124,7 @@ function rowOf(tribe: TribeId | null, ended: readonly Ended[]): AfterWrapUp {
     cut: ended.filter(({ outcome }) => CUT_OUTCOMES.has(outcome)).length,
     median_tokens: medianOf(ended.flatMap(({ tokens }) => (tokens === null ? [] : [tokens]))),
     median_minutes: middleOf(ended.map(({ ms }) => ms)) / MS_PER_MINUTE,
+    raised: ended.filter(({ raised }) => raised).length,
   };
 }
 

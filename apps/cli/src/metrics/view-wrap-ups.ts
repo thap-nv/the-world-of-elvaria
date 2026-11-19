@@ -10,7 +10,7 @@ import type { MetricsSection } from './section.ts';
 
 const MINUTE_DIGITS = 1;
 
-const COLUMNS = ['tribe', 'reminded', 'completed', 'cut', 'tokens_after', 'minutes_after'] as const;
+const COLUMNS = ['tribe', 'reminded', 'completed', 'cut', 'tokens_after', 'minutes_after', 'raised'] as const;
 
 export const afterWrapUpSection = (t: Translate, metrics: Metrics): MetricsSection =>
   tableSection(t('cli.metrics.title.after_wrap_up'), t('cli.metrics.none'), {
@@ -22,5 +22,6 @@ export const afterWrapUpSection = (t: Translate, metrics: Metrics): MetricsSecti
       count(row.cut),
       row.median_tokens === null ? NONE : count(row.median_tokens),
       row.median_minutes.toFixed(MINUTE_DIGITS),
+      count(row.raised),
     ]),
   });

@@ -79,15 +79,33 @@ describe('the table after the reminder (PS-28c)', () => {
       'Cut',
       'Tokens after (median)',
       'Minutes to the end (median)',
+      'Raised',
     ]);
-    expect(section.table?.rows).toEqual([['gemini', '3', '1', '2', '206504', '5.0']]);
+    expect(section.table?.rows).toEqual([['gemini', '3', '1', '2', '206504', '5.0', '0']]);
   });
 
   it('says none with no reminded session, and dashes for no tribe and no tokens', () => {
     expect(afterWrapUpSection(t, ledger([])).lines).toEqual(['None.']);
     const minutes = [wrapUp('m1', '10:00:00', 51, 'time'), end('m1', '10:09:30', 'killed', 400_000)];
     expect(afterWrapUpSection(t, ledger(minutes, [])).table?.rows).toEqual([
-      ['—', '1', '0', '1', '—', '9.5'],
+      ['—', '1', '0', '1', '—', '9.5', '0'],
+    ]);
+  });
+
+  it('counts in the raised column the reminded sessions whose limit went up while they ran', () => {
+    const notch = (session: string, time: string, limit: number): Event =>
+      line('agent.session.usage', time, session, {
+        role: 'assignee',
+        measure: 'tokens',
+        used: 1,
+        limit,
+        pct: 1,
+        soft_pct: 85,
+        hard_pct: 100,
+      });
+    const events = [notch('s1', '17:30:00', 300_000), notch('s1', '17:41:00', 600_000), ...RUN_J()];
+    expect(afterWrapUpSection(t, ledger(events)).table?.rows).toEqual([
+      ['gemini', '3', '1', '2', '206504', '5.0', '1'],
     ]);
   });
 
@@ -103,6 +121,7 @@ describe('the table after the reminder (PS-28c)', () => {
       'After the reminder counts only assignee sessions with an agent.session.wrap_up line',
     );
     expect(limits).toContain("does not say whether the hook's reminder reached the model");
+    expect(limits).toContain('Raised counts the reminded sessions that had an agent.session.usage line');
   });
 });
 
@@ -133,6 +152,6 @@ describe('elvaria metrics after the reminder', () => {
     const args = ['--since', DAY, '--until', DAY, '--kingdom', kingdom, '--locale', 'en'];
     expect(await run(io, 'metrics', ...args)).toBe(0);
     expect(printed(io)).toContain('After the wrap-up reminder, by tribe (assignee sessions that ended)');
-    expect(printed(io)).toMatch(/gemini\s+3\s+1\s+2\s+206504\s+5\.0/);
+    expect(printed(io)).toMatch(/gemini\s+3\s+1\s+2\s+206504\s+5\.0\s+0/);
   });
 });

@@ -4,12 +4,16 @@
 import { adviceOf } from './advice.ts';
 import { afterWrapUpOf } from './after-wrap-up.ts';
 import { REWORK_CAUSES, OWNER_COMMAND_KINDS } from './causes.ts';
+import { failKindRatesOf } from './fail-kind-rates.ts';
 import { escapedOf, firstPassOf, firstRunOf, sealedCostOf } from './judgement.ts';
+import { lessonRowsOf } from './lesson-effect.ts';
+import { lessonEvidenceOf } from './lesson-runs.ts';
 import { ownerCommandsOf, sequelsIn, sessionModelsOf, trailsOf } from './ledger.ts';
 import { checkRunsOf, outOfScopeOf, readsOf, setAsidesOf } from './log-counts.ts';
 import { amendmentCountsOf } from './amendment-counts.ts';
 import { memoCountsOf, objectionsOf } from './memo-counts.ts';
 import { firstPassRatesOf } from './rates.ts';
+import { repeatedFailuresOf } from './repeated-failures.ts';
 import { reworkOf } from './rework.ts';
 import { passByRunOf } from './run-rates.ts';
 import { firstEditsOf, graphQueriesOf, promptSizesOf } from './session-counts.ts';
@@ -22,11 +26,14 @@ import type { AdviceMatch } from './advice.ts';
 import type { AfterWrapUp } from './after-wrap-up.ts';
 import type { AmendmentCount } from './amendment-counts.ts';
 import type { OwnerCommandKind, ReworkCause } from './causes.ts';
+import type { FailKindRates } from './fail-kind-rates.ts';
 import type { EscapedDefect, SealedCost } from './judgement.ts';
+import type { LessonRow } from './lesson-effect.ts';
 import type { MetricsInput, OwnerCommand } from './ledger.ts';
 import type { CheckRunCount, OutOfScope, Reads, SetAside } from './log-counts.ts';
 import type { JudgeObjections, MemoCount } from './memo-counts.ts';
 import type { FirstPassRates } from './rates.ts';
+import type { RepeatedFailure } from './repeated-failures.ts';
 import type { QuestTrail, Rework } from './rework.ts';
 import type { RunPassRate } from './run-rates.ts';
 import type { FirstEdits, GraphQueries, PromptSizes } from './session-counts.ts';
@@ -126,6 +133,12 @@ export interface Metrics {
   readonly amendments: AmendmentCount;
   /** Per tribe, what the assignee sessions reminded at the soft ceiling did until their end (PS-28c). */
   readonly after_wrap_up: readonly AfterWrapUp[];
+  /** (PS-12b) Each lesson a prompt of the window carried: its loads, `helped`, `missed` and its effect. */
+  readonly lessons: readonly LessonRow[];
+  /** (PS-12b) Each kind of failure over the judged runs, in buckets of FAIL_RATE_BUCKET_RUNS, oldest first. */
+  readonly fail_kinds: readonly FailKindRates[];
+  /** (PS-12b) The kinds of failure that repeat among the most recent judged runs: the Temple's evidence. */
+  readonly repeats: readonly RepeatedFailure[];
 }
 
 function runCountsOf(trails: readonly QuestTrail[], input: MetricsInput, window: MetricsWindow): RunCounts {
@@ -183,6 +196,7 @@ export function metricsOf(input: MetricsInput, window: MetricsWindow = {}): Metr
   const rework = trails.flatMap(reworkOf).filter(({ started_at }) => inWindow(window, started_at));
   const commands = ownerCommandsOf(input, window);
   const sources = { rework, commands, checks: checkRunsOf(input.events, window) };
+  const evidence = lessonEvidenceOf(input, window, trails);
   const worked = trails.filter(
     ({ quest }) =>
       quest.attempt_log.some(({ started_at }) => inWindow(window, started_at)) ||
@@ -218,5 +232,8 @@ export function metricsOf(input: MetricsInput, window: MetricsWindow = {}): Metr
     advice: adviceOf(input.events, window),
     amendments: amendmentCountsOf(input.events, window),
     after_wrap_up: afterWrapUpOf(input.events, input.characters ?? [], window),
+    lessons: lessonRowsOf(evidence, input.lessons ?? []),
+    fail_kinds: failKindRatesOf(evidence),
+    repeats: repeatedFailuresOf(evidence),
   };
 }

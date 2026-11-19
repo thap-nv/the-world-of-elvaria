@@ -2,7 +2,7 @@
 
 > Sinh từ một vương quốc bằng `pnpm docs:gen --kingdom <thư mục>`; không sửa file này. Cùng số với `elvaria metrics` (implementation-plan §3.16.1, ADR 0027).
 
-Khoảng: 2026-11-07T19:20:38+07:00 → 2026-11-19T11:26:28+07:00; 12586 dòng event, 92 quest, 171 phán quyết, 372 lệnh đã xử lý.
+Khoảng: 2026-11-07T19:20:38+07:00 → 2026-11-19T13:31:06+07:00; 12588 dòng event, 92 quest, 171 phán quyết, 372 lệnh đã xử lý.
 
 ## Sổ đo (toàn bộ vương quốc)
 
@@ -346,11 +346,35 @@ Không có.
 | 229e8b03-d84f-4d56-b970-41d59cdae45e | q_20261110_vtrjmr | packages/shared/src/api-types.ts | 8 |
 | 4583762b-2f34-402d-8b0a-9e224cfcb3e9 | q_20261109_bdyrzv | packages/shared/src/api-types.ts | 8 |
 
+## Bài học trong kinh: lượt nạp, trúng, trượt và tác dụng
+
+Chưa phiên nào ghi dấu vết nạp theo dòng (load_trace.lessons, từ PS-12), nên chưa có bài học nào để đếm.
+
+## Loại lỗi theo thời gian (số lượt trượt trên số lượt được chấm, mỗi khoảng 20 lượt)
+
+| Loại lỗi | Lượt trượt | Mỗi 20 lượt được chấm (cũ → mới) |
+|---|---|---|
+| incomplete | 11 | 0/20 · 1/20 · 2/20 · 3/20 · 5/20 · 0/10 |
+| tests_fail | 8 | 1/20 · 4/20 · 2/20 · 1/20 · 0/20 · 0/10 |
+| wrong_facts | 8 | 2/20 · 0/20 · 1/20 · 1/20 · 2/20 · 2/10 |
+| other | 5 | 1/20 · 1/20 · 1/20 · 1/20 · 1/20 · 0/10 |
+| style | 2 | 2/20 · 0/20 · 0/20 · 0/20 · 0/20 · 0/10 |
+| unsafe | 2 | 0/20 · 0/20 · 0/20 · 0/20 · 2/20 · 0/10 |
+| flaky | 2 | 0/20 · 0/20 · 1/20 · 1/20 · 0/20 · 0/10 |
+| scope_creep | 1 | 0/20 · 0/20 · 0/20 · 1/20 · 0/20 · 0/10 |
+
+## Lỗi lặp trong 50 lượt được chấm gần nhất (từ 3 phán quyết cùng loại)
+
+| Loại lỗi | Số lần | Phán quyết | Nghề | Tộc | Model | Lãnh thổ | Tag | Bài học đã nạp |
+|---|---|---|---|---|---|---|---|---|
+| incomplete | 8 | q_20261111_8gg2w0-1, q_20261111_2cse0x-1, q_20261111_qk3s1r-1, q_20261115_m2pkrz-1, q_20261115_m2pkrz-3, q_20261115_5k5xxv-1, q_20261115_byxq11-4, q_20261115_fh4hbp-3 | knight, mage, scout | claude, codex, gemini | claude-sonnet-5-5, claude-opus-5-5, gpt-6.1-sol, gemini-3.8-flash-high | dc1-se-team, elvaria | frontend, i18n, e2e, backend, docs, integration | |
+| wrong_facts | 5 | q_20261111_2cse0x-2, q_20261115_byxq11-2, q_20261115_byxq11-3, q_20261117_m8d5t2-1, q_20261117_m8d5t2-2-user | knight, scout, scribe | claude, gemini | claude-sonnet-5-5, gemini-3.8-flash-high | dc1-se-team, elvaria | frontend, i18n, e2e, integration, docs | |
+
 ## Sau lời nhắc thu dọn, theo tộc (phiên người làm đã kết thúc)
 
-| Tộc | Được nhắc | Tự kết thúc | Bị cắt | Token thêm (trung vị) | Phút tới lúc kết thúc (trung vị) |
-|---|---|---|---|---|---|
-| gemini | 3 | 1 | 2 | 206504 | 5.0 |
+| Tộc | Được nhắc | Tự kết thúc | Bị cắt | Token thêm (trung vị) | Phút tới lúc kết thúc (trung vị) | Tiếp sức |
+|---|---|---|---|---|---|---|
+| gemini | 3 | 1 | 2 | 206504 | 5.0 | 0 |
 
 ## Cỡ prompt theo vai và khối (ký tự)
 
@@ -399,3 +423,7 @@ Thời gian ở một trạng thái tính từ dòng đưa quest vào tới dòn
 Lời khuyên "owner" không khuyên gì nên không vào tỉ lệ; merge và new_quest là làm theo khi chủ nhân giao việc cho một quest (handled), shelve khi chủ nhân gác thư. Chỉ tính thư chủ nhân quyết, không tính thư phân loại tự quyết.
 
 Sau lời nhắc chỉ đếm phiên người làm có dòng agent.session.wrap_up (Nhiếp chính ghi lời nhắc khi phiên qua soft_pct) và đã có dòng agent.session.end; phiên còn chạy không tính, và phiên tính vào ngày của lời nhắc. Bị cắt là killed, max_turns hay budget: cầu dao, trần của CLI, hay Nhiếp chính dừng phiên vì lý do khác (hết mana, chủ nhân dừng); phiên kết thúc vì lỗi chỉ vào cột được nhắc. Token thêm chỉ tính khi lời nhắc theo thước token và dòng kết thúc có usage. Bảng không nói lời nhắc của hook có tới model không (câu (f)).
+
+Tiếp sức đếm phiên được nhắc mà một dòng agent.session.usage ghi limit cao hơn lần trước của cùng phiên trên cùng thước: chủ nhân đã nâng ngân sách khi phiên còn chạy.
+
+Bảng bài học đếm theo lượt của người làm, lấy dòng mở phiên đầu của lượt, nên phiên theo sau hay phiên chạy lại không đếm thêm; chỉ lượt có dấu vết nạp theo dòng (từ PS-12) mới có. Trúng và trượt cần dòng nêu loại lỗi nó chữa; dòng đã bị xóa khỏi file kinh vẫn có số đếm nhưng không còn câu. Tác dụng so các lượt thuộc phạm vi của dòng trước lần nạp đầu với các lượt có nạp. Sổ không ghi hệ điều hành của lượt, nên khóa os không lọc ở đây; dòng chỉ người chấm đọc không có lượt người làm để đo, nên cột này trống.

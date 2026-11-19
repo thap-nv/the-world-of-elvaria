@@ -6,12 +6,17 @@ import { inWindow } from './window.ts';
 import type { OwnerCommandKind } from './causes.ts';
 import type { QuestTrail, TripAt } from './rework.ts';
 import type { MetricsWindow } from './window.ts';
-import type { QuestId } from '../core/ids.ts';
+import type { LessonRef, QuestId } from '../core/ids.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { InboxCommand, InboxCommandOf } from '../schema/command/inbox-command.ts';
+import type { FailKind } from '../schema/common.ts';
 import type { Event } from '../schema/event/event.ts';
+import type { LessonScope } from '../schema/lesson/scope.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 import type { Verdict } from '../schema/quest/verdict.ts';
+
+/** A character as the ledger reads it; its class is optional so a reader of PS-28c's shape still fits (PS-12b). */
+export type MetricsCharacter = Pick<Character, 'id' | 'tribe'> & Partial<Pick<Character, 'class'>>;
 
 export interface MetricsInput {
   readonly quests: readonly Quest[];
@@ -24,10 +29,23 @@ export interface MetricsInput {
    */
   readonly commands: readonly InboxCommand[];
   /**
-   * The characters, for the tribe of a session (PS-28c, `afterWrapUpOf`). Optional so a ledger read without them still
-   * counts everything else; then no session's tribe is known.
+   * The characters, for the tribe of a session (PS-28c, `afterWrapUpOf`) and the class and tribe of a run (PS-12b).
+   * Optional so a ledger read without them still counts everything else; then no session's tribe is known.
    */
-  readonly characters?: readonly Pick<Character, 'id' | 'tribe'>[];
+  readonly characters?: readonly MetricsCharacter[];
+  /**
+   * (PS-12b) What the scriptures say about the lines the load traces name: the reader parses the files, the ledger
+   * never does. A ref the facts do not know (a line the owner has since deleted) is counted for its loads only.
+   */
+  readonly lessons?: readonly LessonFact[];
+}
+
+/** What the ledger needs of a lesson line: the kind of failure it cures, and who it was written for. */
+export interface LessonFact {
+  readonly ref: LessonRef;
+  /** null: the line names none, and then it has loads and nothing else (`helped` and `missed` need a kind). */
+  readonly fail_kind: FailKind | null;
+  readonly scope: LessonScope;
 }
 
 /** An owner's command on a quest that the Steward applied. */
