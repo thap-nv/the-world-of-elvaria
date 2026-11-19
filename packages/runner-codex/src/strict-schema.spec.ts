@@ -211,7 +211,8 @@ describe("the fake CLI's API side", () => {
     expect((await exec(strictSchemaOf(schema))).status).toBe(0);
   });
 
-  for (const contract of ['quest-draft', 'memo-triage', 'amendment-decision']) {
+  // PS-12d: the Monk's temple-reply, whose session (PS-12f) may run on Codex.
+  for (const contract of ['quest-draft', 'memo-triage', 'amendment-decision', 'temple-reply']) {
     it(`takes the ${contract} contract once strict, and refuses it as it is`, async () => {
       const text = await readFile(path.join(CONTRACTS, `${contract}.schema.json`), 'utf8');
       const schema = JSON.parse(text) as JsonSchema;
