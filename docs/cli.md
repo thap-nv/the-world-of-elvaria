@@ -32,6 +32,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria character model <id> <model>` | Chuyển một nhân vật sang model khác của chính tộc nó: phiên sau chạy model mới, và đồng hồ mana của model đó ràng nhân vật (lệnh set_model). |
 | `elvaria scripture lint` | Soát mọi dòng kinh (của Đền và của từng nhân vật) theo văn phạm và luật của một bài học: một câu, chỉ ký tự nhìn thấy được, không URL hay đường dẫn tuyệt đối, phạm vi đọc được, có fail_kind. Thoát 1 khi có lỗi. Chỉ đọc vương quốc, không tốn mana. |
 | `elvaria scripture list` | Liệt kê các bài học trong kinh với tham chiếu, phạm vi, fail_kind và nguồn; với --character, phiên nặng nhất của nhân vật đó nạp dòng nào và dòng nào bị trần 40 dòng cắt. Không tốn mana. |
+| `elvaria temple evidence` | In gói bằng chứng một phiên Thầy tu sẽ đọc lúc này: các lỗi lặp trong 50 lượt được chấm gần nhất kèm ghi chú của từng phán quyết (đã che secret, cắt ở 600 ký tự), các dòng kinh kèm số đếm, các dòng của Thầy tu đáng xét gỡ, các check của từng lãnh thổ và các script của catalog, cắt ở trần prompt của tộc Thầy tu (nhiều nhất 24 000 ký tự). Chỉ đọc vương quốc, không tốn mana. |
 | `elvaria say [<words>]` | Nói với Tể tướng việc bạn muốn: Tể tướng soạn nhiệm vụ nháp, bạn xác nhận (lệnh create_quest, nháp). |
 | `elvaria quest add` | Thêm một nhiệm vụ mở ngay, không qua Tể tướng (lệnh create_quest). |
 | `elvaria quest list` | Liệt kê các nhiệm vụ trên bảng nhiệm vụ. |
@@ -284,6 +285,14 @@ Liệt kê các bài học trong kinh với tham chiếu, phạm vi, fail_kind v
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
 | `--character <id>` | Nhân vật cần xem: kinh riêng của nó rồi kinh của Đền, theo thứ tự nạp. |
+
+## `elvaria temple evidence`
+
+In gói bằng chứng một phiên Thầy tu sẽ đọc lúc này: các lỗi lặp trong 50 lượt được chấm gần nhất kèm ghi chú của từng phán quyết (đã che secret, cắt ở 600 ký tự), các dòng kinh kèm số đếm, các dòng của Thầy tu đáng xét gỡ, các check của từng lãnh thổ và các script của catalog, cắt ở trần prompt của tộc Thầy tu (nhiều nhất 24 000 ký tự). Chỉ đọc vương quốc, không tốn mana.
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `--json` | In gói dạng JSON, đúng như Thầy tu đọc. |
 
 ## `elvaria say`
 

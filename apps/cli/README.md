@@ -369,6 +369,11 @@ show` prints the brief apart from the rest of the description and, while the pla
 - (PS-12c) `scripture list` reads who wrote each line from the ledger beside the scripture (`scripture.json`,
   `sourceOf`): the Monk, the owner (every line the ledger does not keep), or outside. The bell of `run` says a temple
   report once: lines added, taken out and refused, letters filed, or that it was refused whole (`src/run/temple-line.ts`).
+- (PS-12d, `src/temple/evidence.ts`, 0 mana, reads only) `temple evidence [--json]` prints the evidence pack a session
+  of the Monk would read now (`templeEvidenceOf` of the domain): each repeated failure of the last 50 judged runs with
+  its verdicts' notes, redacted by the event log's patterns and cut at 600 characters, the lines of scripture with
+  their counts and who wrote them, the Monk's lines worth a review, each territory's checks and the catalog's scripts,
+  cut at the prompt ceiling of the first Monk's tribe on this OS (read from its runner's capabilities, not spawned).
 
 ## Does not
 
