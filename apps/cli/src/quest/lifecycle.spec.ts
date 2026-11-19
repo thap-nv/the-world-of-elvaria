@@ -212,10 +212,32 @@ describe('elvaria quest confirm, cancel, edit', () => {
         questFixture('review', OTHER_QUEST_ID, judged),
       );
       expect(await said(QUEST_ID, '--max-minutes', '30')).toEqual([
-        `Warning: the session working quest ${QUEST_ID} has run 30 minutes, past the new 30-minute ceiling: the Steward cuts it at its next tick, as the time breaker does, and the quest goes to the infirmary (elvaria quest show says why; elvaria quest retry opens it again).`,
+        `Warning: the session working quest ${QUEST_ID} has run 30 minutes, past the new 30-minute ceiling: the Steward cuts it at its next tick, as the time breaker does. If the session made progress, a fresh session goes on from its commit; the quest goes to the infirmary only when two cuts in a row of its run made none (elvaria quest show says why; elvaria quest retry opens it again).`,
       ]);
       expect(await said(OTHER_QUEST_ID, '--max-minutes', '5')).toEqual([
         `Warning: the judge's session on quest ${OTHER_QUEST_ID} has run 10 minutes, past the new 5-minute ceiling: the Steward cuts it at its next tick, as the time breaker does; the judge leaves and the next one takes the review, under the new ceiling.`,
+      ]);
+    });
+
+    it('says the same of the cut in Vietnamese: it goes on with progress, the infirmary after two without', async () => {
+      await plantQuests(kingdom, questFixture('working', QUEST_ID, working));
+      const io = testIo();
+      expect(
+        await run(
+          io,
+          'quest',
+          'edit',
+          QUEST_ID,
+          '--max-minutes',
+          '30',
+          '--kingdom',
+          kingdom,
+          '--locale',
+          'vi',
+        ),
+      ).toBe(0);
+      expect(io.printed.out.filter((line) => line.startsWith('Cảnh báo'))).toEqual([
+        `Cảnh báo: phiên làm nhiệm vụ ${QUEST_ID} đã chạy 30 phút, quá trần mới 30 phút: Nhiếp chính cắt nó ở nhịp kế, như cầu dao thời gian. Nếu phiên đã có tiến độ thì một phiên mới đi tiếp từ commit của nó; nhiệm vụ chỉ vào trạm quân y khi hai lần cắt liền nhau trong lượt đều không có tiến độ (elvaria quest show nói lý do; elvaria quest retry mở lại nó).`,
       ]);
     });
 
