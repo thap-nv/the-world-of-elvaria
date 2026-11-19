@@ -60,6 +60,31 @@ export type BreakerVerdict =
       readonly params: Readonly<Record<string, number>>;
     };
 
+/** One measure of a session: what it used so far against its nominal ceiling, before either percentage. */
+export interface SessionGauge {
+  readonly measure: SessionTrip;
+  readonly used: number;
+  readonly limit: number;
+}
+
+/**
+ * The gauges a session is held to, in the breakers' order: time, then tokens, then turns. The turn gauge is there
+ * only when the runner counts turns, and a tribe without usage has the time gauge alone (P1-33). The breakers and
+ * the stamina bar (PS-28) both read this one list, so the bar never measures what the breakers do not.
+ */
+export function gaugesOf(
+  attempt: RunningAttempt,
+  limits: BreakerLimits,
+  now: Instant,
+  usage: UsageSoFar,
+  measure: TribeLimits['breakers'] = 'tokens_and_minutes',
+): SessionGauge[] {
+  return [
+    { measure: 'time', used: (now - attempt.started_at) / MS_PER_MINUTE, limit: limits.max_minutes },
+    ...(measure === 'minutes_only' ? [] : usageGauges(usage, limits)),
+  ];
+}
+
 /**
  * Hard stops take priority over soft warnings, then time before tokens before turns. Time stops at the hard
  * threshold; tokens and turns stop once past it. A tribe without usage measures only time (P1-33).
@@ -71,10 +96,7 @@ export function evaluateBreakers(
   usage: UsageSoFar,
   measure: TribeLimits['breakers'] = 'tokens_and_minutes',
 ): BreakerVerdict {
-  const gauges: readonly Gauge[] = [
-    { measure: 'time', used: (now - attempt.started_at) / MS_PER_MINUTE, limit: limits.max_minutes },
-    ...(measure === 'minutes_only' ? [] : usageGauges(usage, limits)),
-  ];
+  const gauges = gaugesOf(attempt, limits, now, usage, measure);
   const hard = limits.hard_pct ?? BREAKER_DEFAULTS.hard_pct;
   const stopped = gauges.find((gauge) => {
     const ceiling = (gauge.limit * hard) / 100;
@@ -87,20 +109,14 @@ export function evaluateBreakers(
   return { kind: 'wrap_up', ...warning, pct: (warning.used * 100) / warning.limit };
 }
 
-interface Gauge {
-  readonly measure: SessionTrip;
-  readonly used: number;
-  readonly limit: number;
-}
-
-const usageGauges = (usage: UsageSoFar, limits: BreakerLimits): Gauge[] => [
+const usageGauges = (usage: UsageSoFar, limits: BreakerLimits): SessionGauge[] => [
   { measure: 'tokens', used: usage.tokens, limit: limits.max_tokens },
   ...(usage.turns === undefined
     ? []
     : [{ measure: 'turns' as const, used: usage.turns, limit: limits.max_turns }]),
 ];
 
-const stopOf = ({ measure, used, limit }: Gauge, hard: number) => {
+const stopOf = ({ measure, used, limit }: SessionGauge, hard: number) => {
   const ceiling = (limit * hard) / 100;
   const key = measure === 'time' ? 'minutes' : measure;
   return {
