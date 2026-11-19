@@ -6,19 +6,22 @@
 // as the reminders' does: a session never outlives the Steward that opened it (restart.ts reaps it), so a restarted
 // Steward has nothing of the last one's to say again.
 import { calibrationOf, measureOf, sessionReadingsOf, staminaMoved } from '@elvaria/domain';
-import type { SessionReading, StaminaMark } from '@elvaria/domain';
+import type { Instant, SessionReading, StaminaMark } from '@elvaria/domain';
 
 import { STEWARD } from '../record.ts';
 import type { Context } from '../context.ts';
 
-/** Every held session read against its ceilings once, for the reminders and the stamina of this tick. */
-export function heldReadingsOf(ctx: Context): SessionReading[] {
+/**
+ * Every held session read against its ceilings once, at `now`, for the reminders and the stamina of this tick. The
+ * tick hands `planTick` the same instant, so the line written and the cut decided see the same minutes.
+ */
+export function heldReadingsOf(ctx: Context, now: Instant): SessionReading[] {
   const { world, limits } = ctx;
   const rules = { ...world.kingdom.breakers, characters: world.characters, tribes: world.kingdom.tribes };
   const quests = [...world.quests.values()];
   const measure = measureOf(world.characters, limits);
   const calibration = calibrationOf(quests, world.characters, world.kingdom);
-  return sessionReadingsOf(quests, ctx.sessions.held(), rules, ctx.deps.clock.now(), measure, calibration);
+  return sessionReadingsOf(quests, ctx.sessions.held(), rules, now, measure, calibration);
 }
 
 /** The data of the line: the gauge the bar follows and the thresholds in force, so a reader needs no kingdom.json. */

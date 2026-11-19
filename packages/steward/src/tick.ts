@@ -1,7 +1,7 @@
 // One tick of the Steward (implementation-plan §3.1), and what the log already knows before the first one. Apart from
 // steward.ts since PS-03, which adds the scheduled jobs to both: they run at the end of the tick (§3.16.3).
 import { baseRedOf, planTick, sealPolicyOf } from '@elvaria/domain';
-import type { KingdomSnapshot, ZonedTime } from '@elvaria/domain';
+import type { Instant, KingdomSnapshot, ZonedTime } from '@elvaria/domain';
 
 import { wantedIn } from './background.ts';
 import { mergedOf, recoverForge, settledOf, waitsOf } from './forge/book.ts';
@@ -104,12 +104,17 @@ async function snapshotFor(ctx: Context, state: State, zone: ZonedTime): Promise
 }
 
 /**
- * The plan of the snapshot, its notices first: a quest someone can take now has its notice withdrawn before the claim
- * that follows (§3.1); then the plan carried out, and (PS-09d) a red territory whose default branch moved patrolled
- * again, outside the tick.
+ * The plan of the snapshot at `now`, its notices first: a quest someone can take now has its notice withdrawn before
+ * the claim that follows (§3.1); then the plan carried out, and (PS-09d) a red territory whose default branch moved
+ * patrolled again, outside the tick.
  */
-async function planAndAct(ctx: Context, state: State, snapshot: KingdomSnapshot): Promise<void> {
-  const plan = planTick(snapshot, ctx.deps.clock.now());
+async function planAndAct(
+  ctx: Context,
+  state: State,
+  snapshot: KingdomSnapshot,
+  now: Instant,
+): Promise<void> {
+  const plan = planTick(snapshot, now);
   if (await noteUnclaimable(ctx, state.reported, plan.unclaimable))
     await writeUnclaimable(ctx.root, state.reported);
   await noteUnjudgeable(ctx, state.unjudged, plan.unjudgeable);
@@ -170,11 +175,13 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   // Graphs of the default branches' tips build before the quests prepared from them open a session (PS-21).
   await wantTipGraphs(ctx);
   // The soft ceiling: a session past `soft_pct` is told once, before the plan can stop it at `hard_pct` (F, phase 2);
-  // and its stamina moved a notch is in the log before the plan cuts it, from the same reading of its gauges (PS-28).
-  const readings = heldReadingsOf(ctx);
+  // and its stamina moved a notch is in the log before the plan cuts it, from the same reading of its gauges (PS-28),
+  // taken at the same instant as the plan's: a clock read twice could cut a session at a notch no line was written for.
+  const now = deps.clock.now();
+  const readings = heldReadingsOf(ctx, now);
   await noteWrapUps(ctx, state.wrapped, readings);
   await noteStamina(ctx, state.notches, readings);
-  await planAndAct(ctx, state, await snapshotFor(ctx, state, held.zone));
+  await planAndAct(ctx, state, await snapshotFor(ctx, state, held.zone), now);
   // The pids of the sessions opened or ended in this tick are on disk before the next one (sessions/pids.ts).
   await sessions.saved();
   await state.scheduler.step(ctx, held.zone, noticesOf(world, state));
