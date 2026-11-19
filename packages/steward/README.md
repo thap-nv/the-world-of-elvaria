@@ -435,7 +435,7 @@
   red, a conflict, a moved head, a closed pull request, or `checks_timeout_minutes` past the push's line: one
   `delivery.failed`, the quest stays done. The digest drops the `delivery_waits` of such a quest (`ownerDeliveries`).
 - Carries out the delegation of the royal seal (PS-08b, `src/seal.ts`, ADR 0023): the inbox's `create_quest` and the
-  snapshot get `sealPolicyOf` (`kingdom.delegation.seal`, the territories the breaker suspended); a submit (a session's,
+  snapshot get the domain's `sealPolicyOf` (`kingdom.delegation.seal`, the territories the breaker suspended); a submit (a session's,
   or the owner's `submit`) measures the branch of a quest with `seal_delegated` (`Plots.diffLines`, the territory's
   `regenerate` shared paths aside; a plot that cannot say counts as over) and writes `diff_lines` on its line; the submit
   and a passing verdict (`review/judge.ts`, `review/machine.ts`) set `seal_required` and `seal_raised` through `before`

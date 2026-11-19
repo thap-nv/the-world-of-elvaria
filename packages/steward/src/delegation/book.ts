@@ -1,8 +1,8 @@
 // The breaker of the seal delegation as the Steward keeps it (implementation-plan §3.16.7, ADR 0023; PS-08g): the
 // territories whose delegation is suspended, rebuilt from the log at start (sealSuspendedOf, so a restart keeps a
 // suspension) and kept as the Steward writes the two lines (suspend.ts, inbox/delegation-commands.ts). The quests'
-// making, their submits and verdicts, the snapshot and the digest read the book through sealPolicyOf (world.ts), the
-// places PS-08b left for it. Apart from suspend.ts, which writes and rings through the tick's Context: the Context and
+// making, their submits and verdicts, the snapshot and the digest read the book through the domain's sealPolicyOf
+// (as `elvaria digest` reads the log's lines, fix/run-221-followups), the places PS-08b left for it. Apart from suspend.ts, which writes and rings through the tick's Context: the Context and
 // the world hold this book, and a book that imported them back would close a cycle.
 import { sealSuspendedOf } from '@elvaria/domain';
 import type { Event, SealSuspension } from '@elvaria/domain';
