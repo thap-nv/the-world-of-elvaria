@@ -47,6 +47,12 @@ export type SessionRules = Pick<Kingdom['breakers'], 'max_turns' | 'verifier_tok
     readonly tribes?: readonly Pick<Kingdom['tribes'][number], 'id' | 'max_turns'>[];
   };
 
+/** The tribe of the character holding `role` on the quest; none for an empty seat or a character not in `rules`. */
+export const holderTribeOf = (quest: Quest, role: Role, rules: SessionRules): string | undefined => {
+  const holder = role === 'assignee' ? quest.assignee : quest.verifier;
+  return typeof holder === 'string' ? rules.characters?.get(holder)?.tribe : undefined;
+};
+
 /** The holder's tribe may override the kingdom's nominal turn ceiling, for either role. */
 export const turnCeilingOf = (
   quest: Quest,
@@ -55,12 +61,43 @@ export const turnCeilingOf = (
   calibration?: TribeCalibration,
 ): number => {
   if (calibration !== undefined) return calibration.max_turns.value;
-  const holder = role === 'assignee' ? quest.assignee : quest.verifier;
-  const tribe = typeof holder === 'string' ? rules.characters?.get(holder)?.tribe : undefined;
+  const tribe = holderTribeOf(quest, role, rules);
   return rules.tribes?.find(({ id }) => id === tribe)?.max_turns ?? rules.max_turns;
 };
 
 export type SessionWrapUp = WrapUp & Pick<HeldSession, 'quest' | 'role'>;
+
+/** A calibrated token ceiling in parts, so a reader can say which one set it (PS-28b). */
+export interface TokenParts {
+  /** The rank's share of context_budget_tokens times mana_multiplier: the floor. */
+  readonly rank_share: number;
+  /** estimate.tokens times the tribe's estimate factor. */
+  readonly estimated: number;
+  /** The budget at creation, max(estimate, rank's share) times mana_multiplier: a budget counts as a raise above it. */
+  readonly baseline: number;
+  /** The budget when it is above the baseline, else 0. */
+  readonly raised: number;
+  /** The assignee's ceiling: the largest of the three, rounded. */
+  readonly tokens: number;
+}
+
+export function tokenPartsOf(quest: Quest, rules: SessionRules, calibration: TribeCalibration): TokenParts {
+  const multiplier = rules.mana_multiplier ?? BREAKER_DEFAULTS.mana_multiplier;
+  const context = rules.context_budget_tokens ?? BREAKER_DEFAULTS.context_budget_tokens;
+  const rankTokens = Math.round(context * CONTEXT_BUDGETS_BY_RANK[quest.rank]);
+  const baseline = Math.round(Math.max(quest.estimate.tokens, rankTokens) * multiplier);
+  // An explicit raise above the creation budget remains a floor, not another estimate multiplier.
+  const raised = quest.budget.max_tokens > baseline ? quest.budget.max_tokens : 0;
+  const rank_share = rankTokens * multiplier;
+  const estimated = quest.estimate.tokens * calibration.estimate_factor.value;
+  return {
+    rank_share,
+    estimated,
+    baseline,
+    raised,
+    tokens: Math.round(Math.max(rank_share, estimated, raised)),
+  };
+}
 
 /**
  * The token ceiling of a session: the quest's budget for its assignee, that budget times
@@ -72,17 +109,8 @@ export const tokenCeilingOf = (
   rules: SessionRules,
   calibration?: TribeCalibration,
 ): number => {
-  let tokens = quest.budget.max_tokens;
-  if (calibration !== undefined) {
-    const multiplier = rules.mana_multiplier ?? BREAKER_DEFAULTS.mana_multiplier;
-    const context = rules.context_budget_tokens ?? BREAKER_DEFAULTS.context_budget_tokens;
-    const rankTokens = Math.round(context * CONTEXT_BUDGETS_BY_RANK[quest.rank]);
-    const baseline = Math.round(Math.max(quest.estimate.tokens, rankTokens) * multiplier);
-    // An explicit raise above the creation budget remains a floor, not another estimate multiplier.
-    const raised = quest.budget.max_tokens > baseline ? quest.budget.max_tokens : 0;
-    const estimated = quest.estimate.tokens * calibration.estimate_factor.value;
-    tokens = Math.round(Math.max(rankTokens * multiplier, estimated, raised));
-  }
+  const tokens =
+    calibration === undefined ? quest.budget.max_tokens : tokenPartsOf(quest, rules, calibration).tokens;
   return role === 'verifier' ? Math.round(tokens * rules.verifier_tokens_multiplier) : tokens;
 };
 
@@ -130,8 +158,7 @@ export function sessionReadingsOf(
     const entry = quest === undefined ? undefined : openEntryOf(quest, session.role);
     const started = entry === undefined ? undefined : parseInstant(entry.started_at);
     if (quest === undefined || started?.ok !== true) return [];
-    const holder = session.role === 'assignee' ? quest.assignee : quest.verifier;
-    const tribe = typeof holder === 'string' ? rules.characters?.get(holder)?.tribe : undefined;
+    const tribe = holderTribeOf(quest, session.role, rules);
     const calibrated = tribe === undefined ? undefined : calibration?.get(tribe);
     const limits = {
       max_minutes: quest.budget.max_minutes,

@@ -232,7 +232,8 @@ describe('elvaria quest confirm, cancel, edit', () => {
       );
       expect(await said(OTHER_QUEST_ID, '--max-minutes', '10')).toEqual([]);
       expect(await said(QUEST_ID, '--max-minutes', '45')).toEqual([]);
-      expect(await said(QUEST_ID, '--max-tokens', '900000')).toEqual([]);
+      // A token budget is said in edit-tokens.spec.ts (PS-28b): never in minutes.
+      expect((await said(QUEST_ID, '--max-tokens', '900000')).join('\n')).not.toMatch(/minute/);
       // In review before a judge opens its session.
       await plantQuests(kingdom, questFixture('review', OTHER_QUEST_ID, waiting));
       expect(await said(OTHER_QUEST_ID, '--max-minutes', '10')).toEqual([]);

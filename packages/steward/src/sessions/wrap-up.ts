@@ -2,7 +2,7 @@
 // its run folder and one `agent.session.wrap_up` line, once per session. The Elvaria hook of its tribe reads the file
 // and tells the session to stop, commit and write its letter; the Steward only writes it, and the hard stop
 // (`hard_pct`, breaker.ts) is what follows if the session ignores it. A judge gets none: it commits nothing, and a
-// breaker already leaves its review to the next one.
+// breaker already leaves its review to the next one. The owner's bell rings for both (wrap-up-bell.ts, PS-28b).
 import { rm } from 'node:fs/promises';
 
 import { currentRun, runDirOf, wrapUpsIn } from '@elvaria/domain';
@@ -10,6 +10,7 @@ import { inKingdom, readTextFile, writeFileAtomic } from '@elvaria/store';
 import type { Quest, SessionReading, SessionWrapUp } from '@elvaria/domain';
 
 import { STEWARD } from '../record.ts';
+import { ringWrapUp } from './wrap-up-bell.ts';
 import type { Context } from '../context.ts';
 
 const FILE = 'wrap-up.json';
@@ -51,8 +52,9 @@ async function note(ctx: Context, quest: Quest, wrap: SessionWrapUp, session: st
 }
 
 /**
- * Every tick: the assignees' sessions past the soft ceiling that were not told yet, from the readings of the tick
- * (usage.ts reads the held sessions once, for the reminders and the stamina, PS-28). `told` holds the session ids
+ * Every tick: the sessions past the soft ceiling that were not told yet, from the readings of the tick (usage.ts reads
+ * the held sessions once, for the reminders and the stamina, PS-28). An assignee's gets the file and the line; then the
+ * owner's bell rings for it, and for a judge's too, which gets nothing else (PS-28b, TL4). `told` holds the session ids
  * already handled, in the Steward's state; a session ends once, so an id never comes back.
  */
 export async function noteWrapUps(
@@ -63,14 +65,15 @@ export async function noteWrapUps(
   for (const wrap of wrapUpsIn(readings)) {
     const running = ctx.sessions.get(wrap.quest);
     const quest = ctx.world.quests.get(wrap.quest);
-    if (running?.role !== 'assignee' || wrap.role !== 'assignee' || quest === undefined) continue;
+    if (running?.role !== wrap.role || quest === undefined) continue;
     if (told.has(running.session_id)) continue;
     told.add(running.session_id);
     try {
-      await note(ctx, quest, wrap, running.session_id);
+      if (wrap.role === 'assignee') await note(ctx, quest, wrap, running.session_id);
     } catch (error) {
       const why = error instanceof Error ? error.message : String(error);
       ctx.deps.log.warn(`steward: ${quest.id}: no ${FILE}: ${why}`);
     }
+    await ringWrapUp(ctx, quest, wrap);
   }
 }

@@ -139,9 +139,13 @@
   same run, reading the letter (`returned`, then `redispatch`, no new attempt, no bell), or to the infirmary
   as `breaker:no_progress` after two cuts in a row without progress. Before it, a session past `soft_pct` gets
   `<run_dir>/wrap-up.json` and one `agent.session.wrap_up` line (`src/sessions/wrap-up.ts`, once per session, in
-  `State.wrapped`). (PS-28) Each tick reads every held session once (`heldReadingsOf`, `src/sessions/usage.ts`)
-  for the reminder and the stamina, at the one instant it also hands `planTick`, so a clock that moves while the
-  snapshot builds cannot cut a session at a notch no line was written for: a session of either role whose bar crossed a notch of the way to its cut, or
+  `State.wrapped`). (PS-28b) In that same step the bell rings `wrap_up` once per session, for an assignee and for a
+  judge past `soft_pct` alike (a judge gets no file and no line): the ceiling in force, the figure of the cut, and
+  `raise_from`, the smallest `quest edit --max-tokens` (`tokenCeilingFor`) or `--max-minutes` that lifts the ceiling
+  (`src/sessions/wrap-up-bell.ts`). (PS-28) Each tick reads every held session once (`heldReadingsOf`,
+  `src/sessions/usage.ts`) for the reminder and the stamina, at the one instant it also hands `planTick`, so a clock
+  that moves while the snapshot builds cannot cut a session at a notch no line was written for: a session of either
+  role whose bar crossed a notch of the way to its cut, or
   whose gauge's ceiling changed (the owner raised the budget), gets one `agent.session.usage` line in the log and
   the quest's journal, before the plan can cut it (`State.notches`, in memory, forgets the sessions no longer
   held); the trips `commit`, `secrets`, `forbidden_paths` and `no_session` measure nothing and never go

@@ -28,7 +28,16 @@
   `quest edit --max-minutes` on a quest with a running session says what the new ceiling does to it: the Steward's
   time breaker reads the quest's ceiling on every tick, so a lower one cuts the session at its next tick (a warning
   when it has already run past it) and a higher one gives it the time, unless its CLI took its own clock when it
-  opened (agy's `--print-timeout`; lessons of 2026-11-12, which corrected P1-56's "next session only"). `return` asks for a note of at least 20 characters (`--note`) and a `--fail-kind`
+  opened (agy's `--print-timeout`; lessons of 2026-11-12, which corrected P1-56's "next session only").
+  (PS-28b) `quest edit --max-tokens` sends the command whatever the figure, then computes the token ceiling before and
+  after on the edited quest (`src/quest/edit-tokens.ts`, the domain's `tokenCeilingFor` with the calibration the
+  Steward uses): a figure that lifts nothing says so and names the smallest that would; a running session hears its
+  new ceiling and cut from the next tick, or a warning when its latest notch line is already past the new cut.
+  `quest show` prints the budget, the ceilings in force for the assignee and the judge (nominal, at the reminder mark,
+  at the cut, and why the token ceiling is not the budget; `src/quest/ceiling.ts`) and, for a running session, the
+  `Stamina` line folded from the journal by `sessionStaminaOf` (`src/quest/stamina-view.ts`: ten cells, the mark, the
+  gauge, then the fixed sentence that it measures the way to the cut, and the cut before after one that went on). The
+  bell of `run` says `wrap_up` with the command that gives the session more (`src/run/wrap-up-line.ts`). `return` asks for a note of at least 20 characters (`--note`) and a `--fail-kind`
   (`other` by default), since the Steward writes it as the owner's fail verdict; `return --rejudge` (P1-40) says
   the judge erred: the work goes back to be judged again and the return does not count against the assignee. `answer <quest> "<answer>"` takes
   a non-empty answer for a `blocked` quest; the Steward then goes on with the same attempt, in the asking session
@@ -386,7 +395,9 @@ Specs run `runCli` on a fake machine (`test/cli.ts`: fixed clock, captured outpu
 paths with a space and a Vietnamese letter. Fake CLIs are npm-style `.cmd` shims on Windows and shebang scripts
 elsewhere; `cli.spec.ts` spawns the built bin as the owner would. Lines the Steward would have written are
 planted with `openEventLog` / `openJournal`: `src/quest/infirmary.spec.ts` (the infirmary reason of `quest show`,
-old lines included), `src/quest/last-run.spec.ts` (verdicts and `plot.restored` of the last run), `src/gauges.spec.ts` (the gauges, and `character list` and `doctor` showing them).
+old lines included), `src/quest/last-run.spec.ts` (verdicts and `plot.restored` of the last run), `src/gauges.spec.ts` (the gauges, and `character list` and `doctor` showing them),
+`src/quest/stamina-view.spec.ts` and `src/quest/edit-tokens.spec.ts` (PS-28b: the session and notch lines of
+`test/stamina.ts`, for the ceilings, the stamina bar and what a new token budget does).
 No spec reads a real credential or reaches a forge (PS-08): `test/credential.ts` empties `credential.helper` in the
 fixture repo and names a Node script that answers as a helper does (a token of GitHub's `gho_` shape, nothing, or
 no answer at all), with an empty home folder; `testIo` hands every command a `fetch` that fails, and
