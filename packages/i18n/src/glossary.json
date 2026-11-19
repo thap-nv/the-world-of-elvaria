@@ -865,7 +865,7 @@
               "vi": "Dấu vết nạp",
               "en": "Load trace",
               "id": ["load_trace"],
-              "definition": "Những gì prompt của một phiên mang theo, ghi trên dòng mở phiên (PS-01b): file kinh và số dòng, id bí kíp, cỡ từng khối prompt theo ký tự. Chỉ ở dòng event, không vào file quest hay `attempt_log`.",
+              "definition": "Những gì prompt của một phiên mang theo, ghi trên dòng mở phiên (PS-01b): file kinh và số bài học đã nạp của từng file, tham chiếu từng bài học đã nạp theo thứ tự (`lessons`, PS-12), id bí kíp, cỡ từng khối prompt theo ký tự. Chỉ ở dòng event, không vào file quest hay `attempt_log`; phiên `--resume` không có `lessons`.",
               "used_in": "`loadTraceOf`, `LoadTraceSchema`, event `quest.*` → `data.load_trace`"
             },
             {
@@ -1031,15 +1031,22 @@
               "vi": "Kinh (riêng / chung)",
               "en": "Scripture (personal / temple)",
               "id": ["scripture"],
-              "definition": "Bài học dạng Markdown, mỗi dòng một bài.",
-              "used_in": "`characters/<id>/scripture.md`, `temple/scripture.md`"
+              "definition": "Bài học dạng Markdown chủ nhân sửa tay, mỗi bài một mục danh sách trên một dòng. Một phiên nạp kinh riêng rồi kinh chung, chỉ các dòng thuộc phạm vi của nó, nhiều nhất 40 dòng; file không có trần (PS-12).",
+              "used_in": "`characters/<id>/scripture.md`, `temple/scripture.md`, `elvaria scripture lint`, `elvaria scripture list`"
             },
             {
               "vi": "Bài học",
               "en": "Lesson",
               "id": ["lesson"],
-              "definition": "Một dòng kinh, trỏ tới một verdict.",
-              "used_in": "`lesson.schema.json`"
+              "definition": "Một dòng kinh: `- [id] {phạm vi} câu`, id và đầu phạm vi tùy chọn, chỉ câu vào prompt. Bài học của thầy tu trỏ tới phán quyết nó sinh ra; dòng chủ nhân viết tay không cần. Dòng không id được gọi bằng `T_…`, băm từ câu.",
+              "used_in": "`lesson.schema.json`, `parseScripture`, `LessonRef`"
+            },
+            {
+              "vi": "Phạm vi bài học",
+              "en": "Lesson scope",
+              "id": ["lesson_scope"],
+              "definition": "Đầu dòng `{khóa=giá trị,…}` của một bài học: `role`, `class`, `tribe`, `os`, `territory`, `tag`. Mọi khóa có mặt phải khớp phiên thì dòng mới được nạp; không có đầu phạm vi là dòng cho mọi phiên; phạm vi máy không đọc được thì không nạp. `fail_kind` và `cli` ghi loại lỗi dòng chữa và nơi đo, không lọc (PS-12).",
+              "used_in": "`LessonScopeSchema`, `selectLessons`, `lesson.scope`"
             },
             {
               "vi": "Ngồi thiền",

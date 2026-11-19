@@ -72,6 +72,10 @@ describe('the load trace on the line that opens a session (PS-01b)', () => {
       { file: 'characters/kael/scripture.md', lines: 2 },
       { file: 'temple/scripture.md', lines: 1 },
     ]);
+    // (PS-12) The three lessons by the ref of their sentence; the judge, without kael's scripture, has the temple's,
+    // under the same ref.
+    expect(assignee?.lessons).toHaveLength(3);
+    expect(verifier?.lessons).toEqual([assignee?.lessons?.[2]]);
     expect(assignee?.skills).toEqual([]);
     expect(assignee?.blocks.map(({ id }) => id)).toEqual(['role', 'class', 'quest', 'scripture']);
     expect(verifier?.blocks.map(({ id }) => id)).toEqual(['role', 'class', 'quest', 'scripture', 'review']);
@@ -104,6 +108,7 @@ describe('the load trace on the line that opens a session (PS-01b)', () => {
     const unblocked = events.find((event) => isEventOf(event, 'quest.unblocked'));
     const trace = unblocked?.data.load_trace;
     expect(trace?.scriptures).toEqual([]);
+    expect(trace?.lessons).toBeUndefined();
     expect(trace?.blocks.map(({ part, id }) => `${part}:${id}`)).toEqual([
       'system:role',
       'system:class',

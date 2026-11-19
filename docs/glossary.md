@@ -132,7 +132,7 @@ Luật (ADR 0014, [implementation-plan](implementation-plan.md) §2.7 và §4.1)
 | Đạt lượt đầu | First pass | `first_pass` | Lượt đầu của quest có phán quyết đạt và không có phán quyết không đạt (kể cả của chủ nhân); tỉ lệ theo nghề, tag, model, dạng và (PS-25) lãnh thổ. | `firstPassOf`, `Metrics.first_pass` |
 | Lỗi lọt | Escaped defect | `escaped` | Chủ nhân trả bài một lượt mà người chấm hay máy đã cho đạt. | `escapedOf`, `Metrics.escaped` |
 | Lần cần chủ nhân | Owner intervention | `owner_commands` | Lệnh hộp thư của chủ nhân trên một quest mà Nhiếp chính đã áp, thuộc bảng `OWNER_COMMAND_KINDS` (return, retry, reassign, edit_quest, set_rank, answer, cancel); tạo, xác nhận, đóng dấu, lưu trữ không tính. | `OWNER_COMMAND_KINDS`, `Metrics.owner_commands` |
-| Dấu vết nạp | Load trace | `load_trace` | Những gì prompt của một phiên mang theo, ghi trên dòng mở phiên (PS-01b): file kinh và số dòng, id bí kíp, cỡ từng khối prompt theo ký tự. Chỉ ở dòng event, không vào file quest hay `attempt_log`. | `loadTraceOf`, `LoadTraceSchema`, event `quest.*` → `data.load_trace` |
+| Dấu vết nạp | Load trace | `load_trace` | Những gì prompt của một phiên mang theo, ghi trên dòng mở phiên (PS-01b): file kinh và số bài học đã nạp của từng file, tham chiếu từng bài học đã nạp theo thứ tự (`lessons`, PS-12), id bí kíp, cỡ từng khối prompt theo ký tự. Chỉ ở dòng event, không vào file quest hay `attempt_log`; phiên `--resume` không có `lessons`. | `loadTraceOf`, `LoadTraceSchema`, event `quest.*` → `data.load_trace` |
 | Khối prompt | Prompt block | `prompt_block` | Một phần của prompt có id riêng (`decree`, `role`, `class`, `quest`, `scripture`…), nằm ở phần `system` hay `user`; khối rỗng không vào prompt và không vào dấu vết nạp. | `PROMPT_BLOCK_IDS`, `PromptBlock`, `buildPrompt` |
 
 ## 4. Nhân vật
@@ -156,8 +156,9 @@ Luật (ADR 0014, [implementation-plan](implementation-plan.md) §2.7 và §4.1)
 | Cấp (1–10) | Level | `level` | Quyết định hạng quest được nhận. | `character.level` |
 | Bậc trang bị | Gear tier | `gear_tier` | Suy ra từ cấp (1–3, 4–6, 7–9, 10), không lưu. | `gearTierOf(level)` |
 | Danh tiếng | Reputation | `reputation` | Tỉ lệ đạt trong 20 phán quyết gần nhất. | `character.reputation.window` |
-| Kinh (riêng / chung) | Scripture (personal / temple) | `scripture` | Bài học dạng Markdown, mỗi dòng một bài. | `characters/<id>/scripture.md`, `temple/scripture.md` |
-| Bài học | Lesson | `lesson` | Một dòng kinh, trỏ tới một verdict. | `lesson.schema.json` |
+| Kinh (riêng / chung) | Scripture (personal / temple) | `scripture` | Bài học dạng Markdown chủ nhân sửa tay, mỗi bài một mục danh sách trên một dòng. Một phiên nạp kinh riêng rồi kinh chung, chỉ các dòng thuộc phạm vi của nó, nhiều nhất 40 dòng; file không có trần (PS-12). | `characters/<id>/scripture.md`, `temple/scripture.md`, `elvaria scripture lint`, `elvaria scripture list` |
+| Bài học | Lesson | `lesson` | Một dòng kinh: `- [id] {phạm vi} câu`, id và đầu phạm vi tùy chọn, chỉ câu vào prompt. Bài học của thầy tu trỏ tới phán quyết nó sinh ra; dòng chủ nhân viết tay không cần. Dòng không id được gọi bằng `T_…`, băm từ câu. | `lesson.schema.json`, `parseScripture`, `LessonRef` |
+| Phạm vi bài học | Lesson scope | `lesson_scope` | Đầu dòng `{khóa=giá trị,…}` của một bài học: `role`, `class`, `tribe`, `os`, `territory`, `tag`. Mọi khóa có mặt phải khớp phiên thì dòng mới được nạp; không có đầu phạm vi là dòng cho mọi phiên; phạm vi máy không đọc được thì không nạp. `fail_kind` và `cli` ghi loại lỗi dòng chữa và nơi đo, không lọc (PS-12). | `LessonScopeSchema`, `selectLessons`, `lesson.scope` |
 | Ngồi thiền | Meditate | `meditating` | Context gần đầy, agent nén lại. | `character.status`, event `agent.compact` |
 | Ngộ đạo | Enlightenment | `enlighten` | Nâng model của nhân vật (cấp ≥ 7, người dùng duyệt). | giai đoạn 5 |
 | Đình chỉ | Suspend | `suspended` / `suspend` | Nhân vật bị đưa về Đền. | `character.status`, lệnh `suspend` |

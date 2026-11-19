@@ -37,7 +37,7 @@ import { protectedChangesBlock } from './protected.ts';
 import { outOfScopeBlock } from './scope.ts';
 import { screensBlock } from './screens.ts';
 import { fenced, fill, sectionsOf } from './templates.ts';
-import type { Continuation, Locale, Memory } from './blocks.ts';
+import type { Continuation, Locale, Memory, PromptLesson } from './blocks.ts';
 import type { PromptCheck } from './checks.ts';
 import type { ScreenPair } from '../checks/screens.ts';
 import type { NamedBlock, PromptWithBlocks } from './prompt-blocks.ts';
@@ -61,8 +61,8 @@ interface PromptBase {
   readonly character: Character;
   readonly territory: Territory;
   readonly registry: Registry;
-  /** The character's scripture, then the temple's; empty texts are left out. */
-  readonly scriptures: readonly string[];
+  /** The lessons the Steward chose by scope (PS-12): the character's scripture, then the temple's, at most 40. */
+  readonly scriptures: readonly PromptLesson[];
   /** `territories/<id>/gazetteer.md`, or null. */
   readonly gazetteer: string | null;
   /** The kingdom's `registry/<class.prompt_file>` for the character's class (P1-15), or null when it is gone. */

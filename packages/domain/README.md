@@ -404,7 +404,19 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   and the triage decided and those the triage sent up (`Metrics.memos`), and a command of the triage is none of the
   owner's steps.
 - Gives the load trace of a session's opening line its shape (`LoadTraceSchema`, `src/schema/event/load-trace.ts`,
-  PS-01b): the scripture files and their lines, the skill ids and the prompt's blocks by part, id and size.
+  PS-01b): the scripture files and their lines, the skill ids and the prompt's blocks by part, id and size. (PS-12)
+  `lessons` names each lesson the prompt carried, in order: its id `L_…`, or `T_…` for a line without one; each
+  file's `lines` counts its lessons that loaded.
+- Reads scripture line by line (`src/temple/`, PS-12, temple-first plan, ADR 0027): `parseScripture(text, owner)`
+  reads each `- [L_…] {key=value,value …} sentence` list item, tolerant, with its flaws; headings and blank lines are
+  layout, other text is `stray`. `selectLessons(lines, session, vocabulary)` keeps the lines whose every scope key
+  (`role`, `class`, `tribe`, `os`, `territory`, `tag`; `LessonScopeSchema`) matches the session, the character's
+  scripture first, at most `SCRIPTURE_LINES_MAX` (40); a line with a scope the kingdom does not know or a hidden
+  character never loads. `worstLoadOf` weighs a character's heaviest load for the 41st-line rule of PS-12c.
+  `lintLesson` and `lintScripture` check the grammar and the rules of lesson-sharing T4, each issue a code of
+  `LESSON_ISSUE_CODES` with its level; the redaction patterns are the caller's (`secret`). `lessonRefOf` names a line
+  by its id or by a hash of its normalized sentence, which the caller computes (`lessonTextKeyOf`, `lessonTextRefOf`).
+  The `lesson` contract has the optional `scope`, `fail_kind`, `cli_version` and `origin`, and the source `outside`.
 - Gives the core types every package builds on: `Result`, branded ids (`QuestId`, `TribeId`, ...), `Clock` and
   `Instant`, `zonedTime` (local day and ISO offset in `kingdom.tz`), `IdSource` (ULIDs and dated ids).
 - Names every number it decides with in `src/constants.ts` and the `constants.ts` of the folders that have one.

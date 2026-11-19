@@ -14,6 +14,14 @@ export const SCRIPT_ID_PATTERN = /^[a-z][a-z0-9-]*$/;
 export const QUEST_ID_PATTERN = new RegExp(`^q_${DATE}_${CROCKFORD6}$`);
 export const CAMPAIGN_ID_PATTERN = new RegExp(`^c_${DATE}_${CROCKFORD6}$`);
 export const LESSON_ID_PATTERN = new RegExp(`^L_${DATE}_${CROCKFORD6}$`);
+const CROCKFORD10 = '[0-9a-hjkmnp-tv-z]{10}';
+/**
+ * A scripture line without an id (PS-12, temple-first plan DB5): `T_` and ten base32 digits of a hash of its
+ * normalized sentence, so a load trace names it without the Steward ever writing into the owner's line.
+ */
+export const LESSON_TEXT_REF_PATTERN = new RegExp(`^T_${CROCKFORD10}$`);
+/** What names a scripture line in a load trace (PS-12): its id, or the ref of its sentence when it has none. */
+export const LESSON_REF_PATTERN = new RegExp(`^(?:L_${DATE}_${CROCKFORD6}|T_${CROCKFORD10})$`);
 /**
  * A memo's id (PS-02, ADR 0024): the day of the quest it comes from and six base32 digits of a hash of the quest, the
  * memo's kind and its normalized text, so reading the same letter again finds the memo already filed.
@@ -30,6 +38,7 @@ export const ULID_PATTERN = /^[0-9A-HJKMNP-TV-Z]{26}$/;
 export const QuestIdSchema = z.string().regex(QUEST_ID_PATTERN).brand<'QuestId'>();
 export const CampaignIdSchema = z.string().regex(CAMPAIGN_ID_PATTERN).brand<'CampaignId'>();
 export const LessonIdSchema = z.string().regex(LESSON_ID_PATTERN).brand<'LessonId'>();
+export const LessonRefSchema = z.string().regex(LESSON_REF_PATTERN).brand<'LessonRef'>();
 export const MemoIdSchema = z.string().regex(MEMO_ID_PATTERN).brand<'MemoId'>();
 export const VerdictIdSchema = z.string().regex(VERDICT_ID_PATTERN).brand<'VerdictId'>();
 export const UlidSchema = z.string().regex(ULID_PATTERN).brand<'Ulid'>();
@@ -66,6 +75,7 @@ export const MemoKindIdSchema = z.string().regex(REGISTRY_ID_PATTERN).brand<'Mem
 export type QuestId = z.infer<typeof QuestIdSchema>;
 export type CampaignId = z.infer<typeof CampaignIdSchema>;
 export type LessonId = z.infer<typeof LessonIdSchema>;
+export type LessonRef = z.infer<typeof LessonRefSchema>;
 export type MemoId = z.infer<typeof MemoIdSchema>;
 export type VerdictId = z.infer<typeof VerdictIdSchema>;
 export type Ulid = z.infer<typeof UlidSchema>;

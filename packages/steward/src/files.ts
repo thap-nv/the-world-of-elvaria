@@ -3,9 +3,6 @@
 import { inKingdom, kingdomLayout, readTextFile } from '@elvaria/store';
 import type { CharacterId, QuestId, TerritoryId } from '@elvaria/domain';
 
-/** The temple's own scripture, which the store's layout does not list yet. */
-const TEMPLE_SCRIPTURE = 'temple/scripture.md';
-
 /** The text of a kingdom file, or null when it does not exist. */
 export const readOptional = async (root: string, relative: string): Promise<string | null> =>
   (await readTextFile(inKingdom(root, relative))) ?? null;
@@ -16,19 +13,26 @@ export { readDecree } from '@elvaria/store';
 export const readGazetteer = (root: string, territory: TerritoryId) =>
   readOptional(root, kingdomLayout.gazetteer(territory));
 
-/** A scripture file: where it is in the kingdom (with `/`, as the load trace names it, PS-01b), and its text. */
+/**
+ * A scripture file: where it is in the kingdom (with `/`, as the load trace names it, PS-01b), whose it is (the
+ * character's slug, or `temple`, PS-12), and its text.
+ */
 export interface Scripture {
   readonly file: string;
+  readonly owner: string;
   readonly text: string;
 }
 
-/** The character's scripture, then the temple's (§3.7), those that exist; the prompt leaves out empty ones. */
+/** The character's scripture, then the temple's (§3.7), those that exist. */
 export async function readScriptures(root: string, character: CharacterId): Promise<Scripture[]> {
-  const files = [kingdomLayout.scripture(character), TEMPLE_SCRIPTURE];
-  const texts = await Promise.all(files.map((file) => readOptional(root, file)));
-  return files.flatMap((file, index) => {
+  const files = [
+    { file: kingdomLayout.scripture(character), owner: character },
+    { file: kingdomLayout.templeScripture(), owner: 'temple' },
+  ];
+  const texts = await Promise.all(files.map(({ file }) => readOptional(root, file)));
+  return files.flatMap((entry, index) => {
     const text = texts[index];
-    return text === null || text === undefined ? [] : [{ file, text }];
+    return text === null || text === undefined ? [] : [{ ...entry, text }];
   });
 }
 

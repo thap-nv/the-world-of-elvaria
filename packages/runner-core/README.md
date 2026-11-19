@@ -68,6 +68,9 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   whose CLI loads none (P1-33). `buildPrompt` and `resumedPrompt` also give the prompt's blocks (`PromptBlock`:
   part, id of `PROMPT_BLOCK_IDS`, size in characters; `src/prompt/prompt-blocks.ts`, PS-01b), the empty ones left
   out; the text is joined as before, and the Steward writes the blocks into the session's load trace.
+  (PS-12) `scriptures` is the list of lessons the Steward chose by scope (`PromptLesson`: a ref and a sentence;
+  `selectLessons` of the domain): the `scripture` block prints one `- <sentence>` per lesson, so a line's id and
+  scope head never reach a model; runner-core chooses nothing.
   The quest's facts carry its kind's delivery convention when the Steward needs a file of a given shape: a plan
   (`subquests`) writes its sub-quests as quest-draft JSON to `SUBQUESTS_FILE` (`subquests.json`) at the root of
   its plot, where its judge reads them and the Steward opens them once the quest is done (P1-14), with the

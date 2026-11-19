@@ -419,17 +419,41 @@ Bốn loại file văn bản mà mọi phiên đọc lúc mở; sửa xong thì 
 |---|---|---|
 | `decree.md` | mọi nhân vật, mọi tộc | chỉ dẫn chung của bạn (ví dụ luật viết commit). Nhân vật không đọc `~/.claude/CLAUDE.md` của bạn |
 | `territories/<id>/gazetteer.md` | mọi phiên trên lãnh thổ đó | điều riêng của repo mà CLAUDE.md của nó không nói: file lớn và cách đọc, stack Docker dùng chung, file sinh ra |
-| `temple/scripture.md` | mọi nhân vật | bài học rút từ những lần bị chấm trượt, mỗi dòng một điều kiểm được |
+| `temple/scripture.md` | mọi nhân vật, theo phạm vi của từng dòng | bài học rút từ những lần bị chấm trượt, mỗi dòng một điều kiểm được |
 | `characters/<id>/scripture.md` | một nhân vật | bài học của riêng nó |
 | `registry/prompts/<nghề>.md` | mọi nhân vật của nghề | cách làm của nghề; bản mặc định theo bản Elvaria (§13) |
 
-Giữ ngắn: mọi dòng vào prompt của mọi phiên, và với tộc gemini prompt đi trên dòng lệnh (Windows dừng ở 32 767 ký tự). Kinh là điều nhân vật học từ chính việc của nó (ADR 0020); bài học về cách bạn điều phối thì không phải kinh.
+Giữ ngắn: một dòng kinh vào prompt của mọi phiên thuộc phạm vi của nó (một phiên nạp nhiều nhất 40 dòng, kinh riêng trước), các file khác vào mọi phiên, và với tộc gemini prompt đi trên dòng lệnh (Windows dừng ở 32 767 ký tự). Kinh là điều nhân vật học từ chính việc của nó (ADR 0020); bài học về cách bạn điều phối thì không phải kinh.
 
 **Phân loại trước khi viết** (bước 0 của [plans/lesson-sharing.md](../plans/lesson-sharing.md) §8, (178)). Hỏi bài học còn đúng ở đâu ngoài vương quốc này, rồi đặt nó ở bậc cao nhất được:
 
 1. **Về chính Elvaria** (thư bàn giao, mục Not done, luật đạt của người chấm, đất nháp, commit của Nhiếp chính, cách pháp sư chia kế hoạch): sửa repo Elvaria, không viết kinh. Theo thang sửa lỗi: check hay script nếu máy làm được; không thì một câu trong mẫu prompt của `packages/runner-core/prompts/` hay prompt nghề của `packages/registry-default/prompts/`, đúng vai mà bài học nói tới; dữ kiện đã đo của một tộc trên một hệ điều hành thì vào adapter của tộc đó. Mọi vương quốc nhận khi `elvaria upgrade` (§13). Trong lúc chờ nhánh sửa merge, một dòng kinh tạm được: ghi vào §11 nhánh nào sẽ thay nó, và gỡ dòng sau `upgrade`.
 2. **Về một repo** (lệnh, file lớn, file sinh, quy ước): vào địa chí của lãnh thổ, hay tốt hơn vào tài liệu của chính repo đó, đi theo repo bằng git.
-3. **Còn lại** mới là kinh: thói quen làm việc, dữ kiện về một công cụ ngoài, dữ kiện về một tộc chưa đủ chắc để vào adapter. Phạm vi ở đầu câu: vai ("As a judge, …"), tộc và hệ điều hành ("As a Codex judge on Windows, …"), phiên bản CLI khi dữ kiện phụ thuộc nó. Không đường dẫn, tên repo, id quest hay tên nhân vật trong câu.
+3. **Còn lại** mới là kinh: thói quen làm việc, dữ kiện về một công cụ ngoài, dữ kiện về một tộc chưa đủ chắc để vào adapter. Phạm vi viết ở **đầu phạm vi** của dòng (mục kế), không trong câu. Không đường dẫn, tên repo, id quest hay tên nhân vật trong câu.
+
+**Viết đầu phạm vi** (từ PS-12, [plans/temple-first.md](../plans/temple-first.md) mục "Văn phạm"). Mỗi bài học là một dòng bắt đầu bằng `- `; ngay sau đó, tùy chọn, là đầu phạm vi trong ngoặc nhọn, rồi tới câu. Chỉ câu vào prompt.
+
+```
+- {role=verifier tribe=codex os=win32 fail_kind=wrong_facts} Git commands that need the work tree fail with "must be run in a work tree": compare commits with `git diff <base>...HEAD` and read files with `git show HEAD:<path>`.
+```
+
+| Khóa | Giá trị | Dòng được nạp khi |
+|---|---|---|
+| `role` | `assignee`, `verifier` | phiên có vai đó |
+| `class` | id nghề (`knight`, `judge`…) | nhân vật thuộc nghề đó |
+| `tribe` | id tộc của `kingdom.json` | nhân vật thuộc tộc đó |
+| `os` | `win32`, `darwin`, `linux` | Nhiếp chính chạy trên hệ điều hành đó |
+| `territory` | id lãnh thổ | quest thuộc lãnh thổ đó |
+| `tag` | id tag | quest mang ít nhất một tag trong danh sách |
+| `fail_kind` | một loại lỗi của phán quyết | không lọc: loại lỗi dòng này chữa, để sổ đo đếm |
+| `cli` | phiên bản CLI | không lọc: bản đã đo |
+
+- Nhiều giá trị của một khóa cách nhau bằng dấu phẩy (`tribe=codex,gemini`), các khóa cách nhau bằng dấu cách. Mọi khóa có mặt phải khớp. Không có đầu phạm vi thì dòng cho mọi phiên.
+- Phạm vi viết sai (khóa lạ, giá trị vương quốc không có) thì dòng **không được nạp ở đâu cả**, kể cả ở phiên bạn định cho nó. Dòng có ký tự ẩn, ký tự đổi chiều chữ hay một chuỗi giống secret cũng vậy. Chữ không bắt đầu bằng `- ` (trừ tiêu đề) không được nạp.
+- Dòng do bạn viết không cần id; máy không ghi gì vào dòng đó, và gọi nó bằng `T_…` băm từ câu. Sửa câu thì sổ đo coi là bài học mới.
+- Sau khi sửa: `elvaria scripture lint` soát mọi dòng (lỗi thì thoát 1; thiếu `fail_kind` chỉ là cảnh báo), `elvaria scripture list --character <id>` cho biết phiên nặng nhất của nhân vật đó nạp dòng nào và dòng nào bị trần 40 dòng cắt. `elvaria doctor` có một dòng tóm tắt.
+
+Ví dụ trong vương quốc thật: hai dòng "As a Codex judge on Windows, …" của `temple/scripture.md` đang vào prompt của mọi người làm. Viết lại thành `- {role=verifier tribe=codex os=win32 fail_kind=…} <câu bỏ phần "As a Codex judge on Windows,">` thì chỉ người chấm tộc Codex trên Windows nạp chúng: trên một bản sao của kinh thật, prompt của người làm còn 6 trong 8 dòng.
 
 Mẫu tốt của loại 3 trong vương quốc thật: "lỗi lúc dựng container là lỗi môi trường, không phải test đỏ", "file lớn hơn khoảng 50 KB: tìm rồi đọc đúng đoạn". "Không để file nháp trong đất riêng" (P1-50) là bài học về Elvaria: nay nằm trong luật 3 của người làm (fix/lesson-step-0).
 

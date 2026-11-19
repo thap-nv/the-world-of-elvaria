@@ -55,12 +55,17 @@ export function formatUlid(time: Instant, random: bigint): Ulid {
   return text.toUpperCase() as Ulid;
 }
 
-/** `<prefix>_<yyyymmdd>_<6 random base32>`, readable in logs and sorted by day (implementation-plan §2.1). */
-export function formatDatedId(prefix: 'q' | 'c' | 'L' | 'm', localDate: string, random: Uint8Array): string {
-  const bits = bigintOf(random.subarray(0, DATED_RANDOM_BYTES));
-  const spare = BigInt(DATED_RANDOM_BYTES * BYTE_BITS - DATED_ID_RANDOM_CHARS * BITS_PER_BASE32_CHAR);
-  return `${prefix}_${localDate}_${base32(bits >> spare, DATED_ID_RANDOM_CHARS)}`;
+/** The first `length` Crockford base32 digits of `bytes`, read from their most significant bit. */
+export function crockfordDigits(bytes: Uint8Array, length: number): string {
+  const count = Math.ceil((length * BITS_PER_BASE32_CHAR) / BYTE_BITS);
+  const bits = bigintOf(bytes.subarray(0, count));
+  const spare = BigInt(count * BYTE_BITS - length * BITS_PER_BASE32_CHAR);
+  return base32(bits >> spare, length);
 }
+
+/** `<prefix>_<yyyymmdd>_<6 random base32>`, readable in logs and sorted by day (implementation-plan §2.1). */
+export const formatDatedId = (prefix: 'q' | 'c' | 'L' | 'm', localDate: string, random: Uint8Array): string =>
+  `${prefix}_${localDate}_${crockfordDigits(random, DATED_ID_RANDOM_CHARS)}`;
 
 export interface IdSourceDeps {
   clock: Clock;

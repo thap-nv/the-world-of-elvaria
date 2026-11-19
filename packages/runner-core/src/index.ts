@@ -169,7 +169,7 @@ export { forbiddenChangesOf, forbiddenPathsOf } from './policy/forbidden-changes
 export { toolOf, toolPolicyOf } from './policy/tool-policy.ts';
 export type { ToolLaws, ToolPolicy, ToolPolicyInput } from './policy/tool-policy.ts';
 export { JOURNAL_TAIL_LINES, LANGUAGE_NAMES } from './prompt/blocks.ts';
-export type { Continuation, Locale, Memory } from './prompt/blocks.ts';
+export type { Continuation, Locale, Memory, PromptLesson } from './prompt/blocks.ts';
 export type { FiledMemo } from './prompt/memory.ts';
 export { ADVISORY_BLOCK_MAX_CHARS, ADVISORY_BLOCK_MAX_MEMOS, advisoriesBlock } from './prompt/advisories.ts';
 export type { PromptAdvisory } from './prompt/advisories.ts';

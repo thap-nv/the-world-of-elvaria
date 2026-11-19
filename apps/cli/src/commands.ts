@@ -27,6 +27,8 @@ import { RUN } from './run/run.ts';
 import { SANDBOX_GENERATE } from './sandbox/generate.ts';
 import { SANDBOX_REPLAY } from './sandbox/replay.ts';
 import { SAY } from './say/say.ts';
+import { SCRIPTURE_LINT } from './scripture/lint.ts';
+import { SCRIPTURE_LIST } from './scripture/list.ts';
 import { TERRITORY_ADD } from './territory/add.ts';
 import { TERRITORY_CHECK } from './territory/check.ts';
 import { TERRITORY_DELEGATION } from './territory/delegation.ts';
@@ -65,6 +67,8 @@ export const COMMANDS: readonly CommandSpec[] = [
   CHARACTER_RELEASE,
   CHARACTER_LEVEL,
   CHARACTER_MODEL,
+  SCRIPTURE_LINT,
+  SCRIPTURE_LIST,
   SAY,
   QUEST_ADD,
   QUEST_LIST,

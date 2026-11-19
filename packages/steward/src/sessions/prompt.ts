@@ -6,7 +6,7 @@
 // them as read once the session opened (deliverAdvisories).
 import process from 'node:process';
 
-import { partialVerdictIdOf, shellOf, verifierSessionsOf } from '@elvaria/domain';
+import { lessonVocabularyOf, partialVerdictIdOf, shellOf, verifierSessionsOf } from '@elvaria/domain';
 import { buildPrompt, readContextFiles, resumedPrompt } from '@elvaria/runner-core';
 import { readClassPrompt } from '@elvaria/store';
 import type {
@@ -34,10 +34,11 @@ import { objectionFor } from '../memos/objection.ts';
 import { gazetteerFor } from './gazetteer.ts';
 import { withLogTails } from '../review/log-tail.ts';
 import { continuationFor } from './continuation.ts';
+import { lessonSessionOf, sessionLessonsOf } from './lessons.ts';
 import { loadTraceOf } from './load-trace.ts';
 import { outOfScopeIn } from './out-of-scope.ts';
 import type { Context } from '../context.ts';
-import type { Scripture } from '../files.ts';
+import type { ScriptureLesson } from './lessons.ts';
 import type { Resume, SessionInput } from './input.ts';
 
 /**
@@ -83,12 +84,13 @@ export const searchFor = (ctx: Context, character: Character): boolean | undefin
 const readFor = (ctx: Context, character: Character): boolean | undefined =>
   ctx.deps.runners[character.tribe]?.capabilities.read;
 
-/** What builtPromptOf reads beside the session's input: its class, its secret values, its scriptures and skills. */
+/** What builtPromptOf reads beside the session's input: its class, its secret values, its lessons and skills. */
 interface PromptParts {
   readonly characterClass: CharacterClass;
   /** The session's secret values, masked in what the prompt quotes of the kingdom's logs (P1-25). */
   readonly known: readonly string[];
-  readonly scriptures: readonly Scripture[];
+  /** The lessons chosen by the session's scope, at most 40 (PS-12, sessionLessonsOf). */
+  readonly lessons: readonly ScriptureLesson[];
   /** Chosen by selectSkills (§3.13); none in stage 1. */
   readonly skills: readonly Skill[];
   /** The quest's code graph, when the session asks one (PS-21, sessionGraphOf). */
@@ -145,7 +147,7 @@ async function builtPromptOf(
     character,
     territory,
     registry: ctx.world.registry,
-    scriptures: parts.scriptures.map(({ text }) => text),
+    scriptures: parts.lessons.map(({ ref, text }) => ({ ref, text })),
     gazetteer: await gazetteerFor(ctx, quest, territory),
     class_prompt: await readClassPrompt(ctx.root, parts.characterClass),
     ...(await contextFilesFor(ctx, input)),
@@ -195,9 +197,13 @@ export async function promptOf(
   resume: Resume | null,
 ): Promise<SessionPrompt> {
   const advisories = input.role === 'assignee' ? await advisoriesOf(ctx, input.quest) : [];
+  const scriptures = await readScriptures(ctx.root, input.character.id);
+  const session = lessonSessionOf(input, ctx.deps.platform);
+  const { kingdom, registry, territories } = ctx.world;
+  const vocabulary = lessonVocabularyOf(registry, kingdom, [...territories.values()]);
   const parts = {
     ...given,
-    scriptures: await readScriptures(ctx.root, input.character.id),
+    lessons: sessionLessonsOf(scriptures, session, vocabulary, given.known).loaded,
     skills: [],
     advisories: promptAdvisoriesOf(advisories, input.quest),
   };
@@ -207,7 +213,7 @@ export async function promptOf(
   const skills = parts.skills.map(({ id }) => id);
   return {
     prompt: { system: prompt.system, user: prompt.user },
-    load_trace: loadTraceOf(prompt, parts.scriptures, skills),
+    load_trace: loadTraceOf(prompt, parts.lessons, skills),
     advisories,
   };
 }

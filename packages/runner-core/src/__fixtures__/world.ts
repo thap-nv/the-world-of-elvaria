@@ -7,6 +7,7 @@ import path from 'node:path';
 import {
   CharacterSchema,
   CheckIdSchema,
+  LessonRefSchema,
   MemoIdSchema,
   MemoKindIdSchema,
   QuestSchema,
@@ -35,6 +36,14 @@ function defaultRegistry(): Registry {
 }
 
 export const REGISTRY = defaultRegistry();
+
+/** One lesson the Steward chose for the session (PS-12): its prompt shows the sentence alone. */
+export const LESSONS = [
+  {
+    ref: LessonRefSchema.parse('L_20261105_a1b2c3'),
+    text: 'Run `pnpm i18n:check` before submitting any locale change.',
+  },
+];
 
 export const QUEST_ID = 'q_20261106_7k3m2a';
 

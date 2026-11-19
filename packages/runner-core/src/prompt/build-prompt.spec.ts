@@ -7,6 +7,7 @@ import {
   DIFF,
   FILED_MEMO,
   JOURNAL,
+  LESSONS,
   LETTER,
   PARTIAL,
   QUEST,
@@ -36,7 +37,7 @@ const assignee: AssigneePromptInput = {
   character: THORN,
   territory: TERRITORY,
   registry: REGISTRY,
-  scriptures: ['- [L_20261105_a1b2c3] Run `pnpm i18n:check` before submitting any locale change.', '  '],
+  scriptures: LESSONS,
   skills: [],
   gazetteer: '`apps/api`: NestJS. `apps/web`: React + TanStack Query.',
   class_prompt: classPromptOf('knight'),
@@ -73,8 +74,7 @@ const continuing: AssigneePromptInput = {
     handover: LETTER,
     journal: JOURNAL,
     git_log: '1a2b3c4 feat: add pnpm check',
-    // What the Steward filed from the Memos section of the last letter (PS-02).
-    memos: [FILED_MEMO],
+    memos: [FILED_MEMO], // What the Steward filed from the Memos section of the last letter (PS-02).
   },
 };
 

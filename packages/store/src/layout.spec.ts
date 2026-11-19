@@ -39,6 +39,9 @@ describe('kingdomLayout (implementation-plan §2.2)', () => {
       kingdomLayout.journal(quest),
       kingdomLayout.character(character),
       kingdomLayout.scripture(character),
+      kingdomLayout.scriptureLedger(character),
+      kingdomLayout.templeScripture(),
+      kingdomLayout.templeScriptureLedger(),
       kingdomLayout.campaign(campaign),
       kingdomLayout.verdict(verdict),
       kingdomLayout.memo(MemoIdSchema.parse('m_20261106_4k2pqz')),
@@ -61,6 +64,9 @@ describe('kingdomLayout (implementation-plan §2.2)', () => {
     expect(kingdomLayout.runDir(quest, 1)).toBe('.runs/q_20261106_7k3m2a-1');
     expect(kingdomLayout.stewardLock()).toBe('.state/steward.lock');
     expect(kingdomLayout.inboxDone('X')).toBe('inbox/done/X.json');
+    expect(kingdomLayout.templeScripture()).toBe('temple/scripture.md');
+    expect(kingdomLayout.templeScriptureLedger()).toBe('temple/scripture.json');
+    expect(kingdomLayout.scriptureLedger(character)).toBe('characters/thorn/scripture.json');
   });
 
   it('agrees with where the entity table stores each entity', () => {

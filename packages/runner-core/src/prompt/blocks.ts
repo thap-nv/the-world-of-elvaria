@@ -18,7 +18,7 @@ import { scopeFacts } from './scope.ts';
 import { DELIVERABLE_FACTS, draftingFor } from './deliverable-facts.ts';
 import type { FactsTerritory } from './deliverable-facts.ts';
 import type { DraftingTerms } from './drafting.ts';
-import type { Kingdom, Quest, Registry, Skill, Territory, Verdict } from '@elvaria/domain';
+import type { Kingdom, LessonRef, Quest, Registry, Skill, Territory, Verdict } from '@elvaria/domain';
 
 export type Locale = Kingdom['owner']['locale'];
 
@@ -216,10 +216,20 @@ export function questBlock(
 export const gazetteerBlock = (territory: Territory, gazetteer: string | null, t: PromptTemplates): string =>
   present(gazetteer) ? fill(t.gazetteer, { territory: territory.name, gazetteer: gazetteer.trim() }) : '';
 
-export function scriptureBlock(scriptures: readonly string[], t: PromptTemplates): string {
-  const texts = scriptures.filter(present).map((text) => text.trim());
-  return texts.length === 0 ? '' : fill(t.scripture, { scriptures: texts.join('\n\n') });
+/**
+ * A lesson the Steward chose for the session (PS-12, selectLessons of the domain): its ref names it in the load trace,
+ * its sentence is all the prompt carries; the id and the scope head of its line never reach a model.
+ */
+export interface PromptLesson {
+  readonly ref: LessonRef;
+  readonly text: string;
 }
+
+/** One list item per lesson, in the order chosen; nothing when none was chosen. */
+export const scriptureBlock = (lessons: readonly PromptLesson[], t: PromptTemplates): string =>
+  lessons.length === 0
+    ? ''
+    : fill(t.scripture, { scriptures: lessons.map(({ text }) => `- ${text}`).join('\n') });
 
 /** Stage 1 has no skills (§3.13); the block is ready for stage 5, which decides how a CLI loads them. */
 export function skillsBlock(skills: readonly Skill[], t: PromptTemplates): string {
