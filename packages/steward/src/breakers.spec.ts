@@ -108,7 +108,8 @@ describe('a session past a breaker', () => {
     });
     expect(steward.running()).toBe(0);
     expect(commits).toEqual([`chore: wip ${quest.id} (time)`]);
-    expect(kingdom.notices).toEqual([]);
+    // The one bell is the reminder mark's, at minute 44 (PS-28b); the cut that goes on rings none.
+    expect(kingdom.notices.map(({ kind }) => kind)).toEqual(['wrap_up']);
     expect((await kingdom.character(started.assignee ?? '')).status).toBe('idle');
     expect((await typesOf(kingdom)).slice(-2)[0]).toBe('character.swamp');
   });
