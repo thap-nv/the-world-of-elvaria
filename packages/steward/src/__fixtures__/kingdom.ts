@@ -144,6 +144,8 @@ export interface CastMember {
   readonly model?: string;
   readonly level?: number;
   readonly status?: 'idle' | 'suspended';
+  /** (PS-12g) Its fail streak; none by default. */
+  readonly fail?: { readonly fail_kind: string; readonly count: number };
   /** Passed verdicts from earlier days in the reputation window. */
   readonly passes?: number;
 }
@@ -170,7 +172,7 @@ export const characterOf = (member: CastMember): Character =>
     status_since: '2026-11-07T08:00:00+07:00',
     current: null,
     vow_no_production: member.cls === 'judge',
-    consecutive_fail: { count: 0 },
+    consecutive_fail: member.fail ?? { count: 0 },
     stats: { quests_done: 0, tokens_today: 0, tokens_day: '2026-11-07' },
     created_at: '2026-11-01T08:00:00+07:00',
   });

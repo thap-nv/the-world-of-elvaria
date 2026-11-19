@@ -368,7 +368,11 @@ show` prints the brief apart from the rest of the description and, while the pla
   adds the lint's summary as one line, a warning at most (`doctor/check-scripture.ts`).
 - (PS-12c) `scripture list` reads who wrote each line from the ledger beside the scripture (`scripture.json`,
   `sourceOf`): the Monk, the owner (every line the ledger does not keep), or outside. The bell of `run` says a temple
-  report once: lines added, taken out and refused, letters filed, or that it was refused whole (`src/run/temple-line.ts`).
+  report once: lines added, taken out and refused, letters filed, or that it was refused whole (`src/run/temple-line.ts`);
+  (PS-12g) and the characters its new lines freed. `scripture lint` and `doctor` also name each ledger entry whose line
+  the owner deleted (`deletedByOwnerOf`), which is no error. `digest` lists the characters suspended for a fail streak
+  with the Monk's letters, and the repeated failures that wait while the Temple cannot run (`templeNoticesOf`); an item
+  without a command (`temple_off`) prints no command line.
 - (PS-12d, `src/temple/evidence.ts`, 0 mana, reads only) `temple evidence [--json]` prints the evidence pack a session
   of the Monk would read now (`templeEvidenceOf` of the domain): each repeated failure of the last 50 judged runs with
   its verdicts' notes, redacted by the event log's patterns and cut at 600 characters, the lines of scripture with

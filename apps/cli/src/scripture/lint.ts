@@ -1,7 +1,8 @@
 // `elvaria scripture lint` (PS-12, lesson-sharing S8): every line of the temple's scripture and of each character's,
 // the owner's too, against the grammar and the rules of lesson-sharing T4, then each character whose heaviest session
-// would load more than 40 lessons. One line per issue with its file and line; exit 1 when there is an error. It reads
-// the kingdom only: nothing is written and no model is called.
+// would load more than 40 lessons. One line per issue with its file and line; exit 1 when there is an error. (PS-12g)
+// Then each line the owner deleted that the ledger still keeps, which is no error. It reads the kingdom only: nothing
+// is written and no model is called.
 import { EXIT } from '../command.ts';
 import { registryIssueLines, storeIssueLines } from '../issues.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
@@ -25,6 +26,7 @@ async function runScriptureLint(input: CommandInput, cli: CliContext): Promise<E
   const report = scriptureReportOf(ctx.t, scriptures);
   report.issues.map((issue) => issueLine(ctx.t, issue)).forEach(ctx.io.out);
   report.overCap.forEach(ctx.io.out);
+  report.deleted.forEach(ctx.io.out);
   ctx.io.out(
     ctx.t('cli.scripture.lint.result', {
       files: report.files,

@@ -78,6 +78,17 @@ const suspensionOf = (t: Translate, { cause, check, note }: AttentionItem) => ({
   cause: cause === undefined ? NONE : suspensionCause(t, { cause, check, note }),
 });
 
+/** (PS-12g) A character suspended for a fail streak with the Monk's letters, and why the Temple cannot run. */
+const templeOf = (t: Translate, item: AttentionItem) => ({
+  character: item.character ?? NONE,
+  fail_kind: item.fail_kind ?? NONE,
+  letters:
+    item.letters === undefined || item.letters.length === 0
+      ? t('cli.digest.no_letters')
+      : item.letters.join(', '),
+  reasons: (item.temple_reasons ?? []).map((reason) => t(`cli.digest.temple_reason.${reason}`)).join(', '),
+});
+
 /** What the item is about, in one line; every field the line names is given, `—` when the item has none. */
 function subjectOf(t: Translate, item: AttentionItem): string {
   return t(`cli.digest.item.${item.kind}`, {
@@ -104,6 +115,7 @@ function subjectOf(t: Translate, item: AttentionItem): string {
     ...upgradeOf(item),
     ...patrolOf(t, item),
     ...suspensionOf(t, item),
+    ...templeOf(t, item),
   });
 }
 
@@ -117,10 +129,10 @@ const revertLines = (t: Translate, item: AttentionItem): string[] =>
     ? []
     : [`  ${t('cli.digest.revert', { command: `\`${item.revert.join(' ')}\`` })}`];
 
-/** One item: its subject, its advice, and its command on a line of its own. */
+/** One item: its subject, its advice, and its command on a line of its own; (PS-12g) none when the kind has none. */
 const itemLines = (t: Translate, item: AttentionItem): string[] => [
   `- ${subjectOf(t, item)}${raisedOf(t, item)} ${t(`cli.digest.advice.${item.advice}`)}`,
-  `  \`elvaria ${item.command.join(' ')}\``,
+  ...(item.command.length === 0 ? [] : [`  \`elvaria ${item.command.join(' ')}\``]),
   ...revertLines(t, item),
 ];
 
