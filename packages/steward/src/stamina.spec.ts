@@ -171,6 +171,38 @@ describe("a held session's stamina", () => {
     });
   });
 
+  it('is read at one instant for the line and for the cut, so a clock that moves between them cuts a tick later', async () => {
+    const { kingdom, steward } = await open({ plays: HANGS }, (k) => {
+      const log = openEventLog(k.root);
+      // The clock moves seven minutes right after the line of a notch is written: the time a real clock takes between
+      // the Steward's reading of the gauges and the plan's (the awaits of the snapshot in between).
+      return {
+        plots: plotsOf(k, true),
+        events: {
+          ...log,
+          append: async (lines) => {
+            await log.append(lines);
+            if (lines.some(({ type }) => type === 'agent.session.usage')) k.clock.advance(7);
+          },
+        },
+      };
+    });
+    await kingdom.command('create_quest', questPayload('Cut'));
+    await steward.tick();
+    // 61.25 of the 67.5 minutes of the cut: the ninth notch, then the clock goes on to 68.25, past the cut.
+    kingdom.clock.advance(NOTCH * 9 + 0.5);
+    await steward.tick();
+    expect((await usageLines(kingdom)).map(({ data }) => data.used)).toEqual([NOTCH * 9 + 0.5]);
+    expect((await kingdom.quest('Cut')).status).toBe('working');
+    // The next reading sees 68.25: the last notch is written before the plan cuts the session at it.
+    await steward.tick();
+    expect((await kingdom.quest('Cut')).status).toBe('returned');
+    expect((await usageLines(kingdom)).map(({ data }) => data.used)).toEqual([
+      NOTCH * 9 + 0.5,
+      NOTCH * 9 + 7.5,
+    ]);
+  });
+
   it('is not written again by a Steward started after the one that held the session', async () => {
     const { kingdom, steward } = await open({ plays: HANGS });
     await kingdom.command('create_quest', questPayload('Cut'));
