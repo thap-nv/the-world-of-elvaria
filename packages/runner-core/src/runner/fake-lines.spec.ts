@@ -93,11 +93,15 @@ describe('createFakeRunner with lines', () => {
     expect(events.map(({ data }) => data.outcome)).toEqual([undefined, 'error']);
   });
 
-  it('writes nothing unless asked: a spec that reads the log sees the Steward’s lines alone', async () => {
+  it('writes the lines by default, without being asked, as a real session leaves them', async () => {
     const kingdom = await kingdomDir();
     const session = await createFakeRunner().spawn(requestIn(kingdom, 'submit'));
     await Promise.all([session.wait(), signalsOf(session.signals)]);
-    expect((await openEventLog(kingdom).read()).events).toEqual([]);
+    const { events } = await openEventLog(kingdom).read();
+    expect(events.map(({ type, data }) => [type, data])).toEqual([
+      ['agent.session.start', { session: 'fake-claude-1', model: THORN.model }],
+      ['agent.session.end', { outcome: 'completed', usage: { tokens: FAKE_TOKENS } }],
+    ]);
   });
 
   it('tells in its signals that a line could not be written, as the real runner notes it', async () => {
