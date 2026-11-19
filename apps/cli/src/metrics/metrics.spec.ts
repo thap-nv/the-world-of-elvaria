@@ -248,7 +248,7 @@ describe('readMetricsSource', () => {
     await mkdir(path.join(dir.root, 'quests'), { recursive: true });
     await writeFile(path.join(dir.root, 'quests', `${QUEST_ID}.json`), '{}', 'utf8');
     const source = await readMetricsSource(dir.root);
-    expect(source.input).toEqual({ quests: [], verdicts: [], events: [], commands: [] });
+    expect(source.input).toEqual({ quests: [], verdicts: [], events: [], commands: [], characters: [] });
     expect(source.skipped).toHaveLength(1);
     expect(source.skipped[0]).toContain(`quests/${QUEST_ID}.json`);
   });
