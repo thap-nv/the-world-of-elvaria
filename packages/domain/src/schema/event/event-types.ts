@@ -93,6 +93,8 @@ export const EVENT_TYPES = [
   'lesson.added',
   'lesson.retired',
   'lesson.refused',
+  // PS-12d: the Temple ran, with what its session spent (ADR 0027, ADR 0009).
+  'temple.ran',
   'sandbox.replay.start',
   'sandbox.replay.end',
   'upgrade.started',

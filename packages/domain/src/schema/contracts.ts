@@ -22,6 +22,7 @@ import {
   TagsFileSchema,
 } from './registry-entries.ts';
 import { SkillSchema } from './skill/skill.ts';
+import { TempleReplySchema } from './temple/reply.ts';
 import { TerritorySchema } from './territory.ts';
 import { TribeLookPoolSchema } from './tribe-look.ts';
 import { WorldMapSchema } from './world-map/world-map.ts';
@@ -49,6 +50,7 @@ export const CONTRACTS = {
   'quest-draft': QuestDraftFileSchema,
   'memo-triage': MemoTriageFileSchema,
   'amendment-decision': AmendmentDecisionFileSchema,
+  'temple-reply': TempleReplySchema,
   'world-map': WorldMapSchema,
   'tribe-looks': TribeLookPoolSchema,
 } as const satisfies Record<string, z.ZodType>;

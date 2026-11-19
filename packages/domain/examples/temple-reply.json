@@ -1,0 +1,65 @@
+[
+  {
+    "version": 1,
+    "decisions": [
+      {
+        "group": "incomplete",
+        "rung": "scripture",
+        "why": "Three runs of knights stopped before the README the quest named; no check can tell which README a quest means.",
+        "lesson": {
+          "owner": "temple",
+          "scope": { "role": ["assignee"], "class": ["knight"] },
+          "text": "Before you hand in, reread the quest's done-when and tick each item in your handover.",
+          "source_verdict": "q_20261118_7h2kqm-1"
+        }
+      },
+      {
+        "group": "wrong_facts",
+        "rung": "knowledge",
+        "why": "Every fail of this kind is on one territory, whose CLAUDE.md names the generated files.",
+        "lesson": {
+          "owner": "temple",
+          "scope": { "territory": ["elvaria"] },
+          "text": "Edit the zod source, never docs/schemas, then run pnpm schemas.",
+          "source_verdict": "q_20261117_3m9xtw-2"
+        }
+      },
+      {
+        "group": "style",
+        "rung": "check",
+        "why": "The judges flag the same lint rule each time: a check catches it before review.",
+        "letter": {
+          "source_verdict": "q_20261116_b4n8pz-1",
+          "body": "Add `pnpm lint` to the checks of territory elvaria for every *.ts path: three fails of kind style were lint errors a check would have caught.",
+          "refs": ["territory.json"]
+        }
+      },
+      {
+        "group": "unsafe",
+        "rung": "none",
+        "why": "Three fails, three different causes: not enough to choose a rung yet."
+      }
+    ],
+    "reviews": [
+      {
+        "lesson": "L_20261110_q8w2ec",
+        "review": "retire",
+        "why": "Loaded 24 times, helped 9 and missed 15: the tests_fail rate did not move."
+      }
+    ]
+  },
+  {
+    "version": 1,
+    "decisions": [
+      {
+        "group": "tests_fail",
+        "rung": "model",
+        "why": "Every fail is the same class on the same cheap model, and the checks already say what failed.",
+        "letter": {
+          "source_verdict": "q_20261119_k5t7vd-1",
+          "body": "Move class sage to a stronger model of its tribe: 6 of its last 8 runs failed tests_fail on gemini-3.8-flash-low."
+        }
+      }
+    ]
+  }
+]

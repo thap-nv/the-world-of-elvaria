@@ -46,6 +46,7 @@ import { TribeCheckedDataSchema } from './tribe-data.ts';
 import { AgentSessionUsageDataSchema } from './session-data.ts';
 import { ChancellorAnsweredDataSchema } from './chancellor-data.ts';
 import { LessonAddedDataSchema, LessonRefusedDataSchema, LessonRetiredDataSchema } from './lesson-data.ts';
+import { TempleRanDataSchema } from './temple-data.ts';
 import type { EventType } from './event-types.ts';
 
 // Where it always was for the Steward and the specs (P1-21); plot-data.ts holds it since P1-44.
@@ -241,6 +242,7 @@ export const EVENT_DATA_SCHEMAS = {
   'lesson.added': LessonAddedDataSchema,
   'lesson.retired': LessonRetiredDataSchema,
   'lesson.refused': LessonRefusedDataSchema,
+  'temple.ran': TempleRanDataSchema,
   'schedule.ran': ScheduleRanDataSchema,
   'digest.written': DigestWrittenDataSchema,
   'upgrade.started': UpgradeStartedDataSchema,

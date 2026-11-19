@@ -21,7 +21,7 @@ import { LessonScopeSchema } from '../lesson/scope.ts';
 const describe = (description: string) => ({ description });
 
 // Longer than a lesson may be, so the lint refuses a long one by name (too_long) instead of the whole report failing.
-const TextSchema = z
+export const OperationTextSchema = z
   .string()
   .min(1)
   .max(MEMO_BODY_MAX_LENGTH)
@@ -38,7 +38,7 @@ const lineFields = {
   fail_kind: FailKindSchema.optional().meta(
     describe('The kind of failure the line cures; required to apply.'),
   ),
-  text: TextSchema,
+  text: OperationTextSchema,
   source_verdict: VerdictIdSchema.optional().meta(
     describe('The fail verdict the line comes from; required to apply (no_source_verdict).'),
   ),

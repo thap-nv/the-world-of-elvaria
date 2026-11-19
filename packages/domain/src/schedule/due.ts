@@ -42,7 +42,7 @@ export function everyDaysOf(every: string | undefined): number {
 }
 
 /** Days from local day `from` to local day `to` (`yyyy-mm-dd`), negative when `to` comes first. */
-function daysBetween(from: string, to: string): number {
+export function daysBetween(from: string, to: string): number {
   const dayOf = (text: string): number => {
     // LOCAL_DAY_PATTERN: three numbers.
     const [year, month, day] = text.split('-').map(Number) as [number, number, number];
