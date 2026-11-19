@@ -2,7 +2,8 @@
 // would read, now: the repeated failures of the last 50 judged runs with each verdict's notes (redacted, cut at 600
 // characters), the lines of scripture with their counts, the Monk's lines worth a review, the checks of each territory
 // and the catalog's scripts. The pack is cut at the Monk tribe's prompt ceiling on this OS; with no Monk, at 24 000.
-// It reads the kingdom only: nothing is written and no model is called.
+// It reads the kingdom only: nothing is written and no model is called. (PS-12f) A run of the Temple reads the same
+// pack (evidenceOf), cut at the prompt ceiling of the Monk who speaks.
 import {
   EMPTY_LEDGER,
   evidenceIsEmpty,
@@ -61,7 +62,14 @@ async function monkPromptMaxOf(
   return found.kind === 'ready' ? promptMaxOf(found.hand.runner.capabilities, ctx.io.platform) : undefined;
 }
 
-async function evidenceOf(ctx: KingdomContext): Promise<TempleEvidence | undefined> {
+/**
+ * The pack now; undefined once the reason is printed. `promptMaxOf` gives the ceiling of the Monk's tribe from the
+ * Monk classes of the registry, none for the 24 000 of the Temple.
+ */
+export async function evidenceOf(
+  ctx: KingdomContext,
+  promptMaxOf: (monkClasses: ReadonlySet<string>) => Promise<number | undefined>,
+): Promise<TempleEvidence | undefined> {
   const registry = await ctx.store.loadRegistry();
   const scriptures = await readKingdomScriptures(ctx);
   if (!registry.ok || 'problems' in scriptures) {
@@ -76,7 +84,7 @@ async function evidenceOf(ctx: KingdomContext): Promise<TempleEvidence | undefin
   const ledger = lessonEvidenceOf(metrics.input);
   const territories = (await ctx.store.territories.list()).items;
   const monkClasses = new Set(registry.value.classes.filter(({ is_monk }) => is_monk).map(({ id }) => id));
-  const promptMax = await monkPromptMaxOf(ctx, monkClasses);
+  const promptMax = await promptMaxOf(monkClasses);
   return templeEvidenceOf({
     failures: repeatedFailuresOf(ledger),
     // No secret reaches a prompt (ADR 0013): the log's patterns, as the Steward redacts a line it writes.
@@ -121,7 +129,7 @@ function printEvidence(ctx: KingdomContext, evidence: TempleEvidence): void {
 async function runTempleEvidence(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);
   if (ctx === undefined) return EXIT.failed;
-  const evidence = await evidenceOf(ctx);
+  const evidence = await evidenceOf(ctx, (monkClasses) => monkPromptMaxOf(ctx, monkClasses));
   if (evidence === undefined) return EXIT.failed;
   if (flagOption(input, 'json') === true) ctx.io.out(JSON.stringify(evidence, null, JSON_INDENT));
   else printEvidence(ctx, evidence);

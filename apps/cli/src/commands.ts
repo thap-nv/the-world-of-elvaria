@@ -30,6 +30,7 @@ import { SAY } from './say/say.ts';
 import { SCRIPTURE_LINT } from './scripture/lint.ts';
 import { SCRIPTURE_LIST } from './scripture/list.ts';
 import { TEMPLE_EVIDENCE } from './temple/evidence.ts';
+import { TEMPLE_RUN } from './temple/run.ts';
 import { TERRITORY_ADD } from './territory/add.ts';
 import { TERRITORY_CHECK } from './territory/check.ts';
 import { TERRITORY_DELEGATION } from './territory/delegation.ts';
@@ -71,6 +72,7 @@ export const COMMANDS: readonly CommandSpec[] = [
   SCRIPTURE_LINT,
   SCRIPTURE_LIST,
   TEMPLE_EVIDENCE,
+  TEMPLE_RUN,
   SAY,
   QUEST_ADD,
   QUEST_LIST,

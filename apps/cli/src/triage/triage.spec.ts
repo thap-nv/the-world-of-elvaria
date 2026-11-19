@@ -16,6 +16,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { TZ, foundKingdom, run, tempDir, testIo } from '../../test/cli.ts';
 import { REFUSAL, refusing } from '../../test/refusing.ts';
+import { QUIET_VIEW } from '../../test/job-view.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { consoleBell } from '../run/bell.ts';
 import { triageJob } from './job.ts';
@@ -276,7 +277,7 @@ describe('the Chancellor’s triage (PS-03b)', () => {
     const io = testIo();
     const ctx = await openKingdomContext({ values: { kingdom }, positionals: [] }, cli(io));
     if (ctx === undefined) throw new Error('kingdom');
-    const view = { day: '2026-11-06', notices: {}, amendments: [] };
+    const view = { day: '2026-11-06', notices: {}, amendments: [], ...QUIET_VIEW };
     const job = triageJob(ctx, { [CLAUDE]: chancellor({ version: 1 }) });
     expect(await job.ready?.({ ...view, busy: new Set([CLAUDE]) })).toBe(true);
     const signal = new AbortController().signal;

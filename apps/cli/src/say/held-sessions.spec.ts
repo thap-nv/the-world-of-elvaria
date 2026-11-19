@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { ACCEPT, CHILD, CLAUDE, DRAFTED, author, seedAmendments } from '../../test/amend.ts';
 import { foundKingdom, tempDir, testIo } from '../../test/cli.ts';
+import { QUIET_VIEW } from '../../test/job-view.ts';
 import { amendmentJob } from '../amend/job.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { triageJob } from '../triage/job.ts';
@@ -62,6 +63,7 @@ describe('sessions outside planTick on a held tribe', () => {
     day: '2026-11-05',
     notices: { tribes_held: holds },
     amendments: amendments as (typeof DRAFTED.id)[],
+    ...QUIET_VIEW,
     busy: new Set<typeof CLAUDE>(),
     signal: new AbortController().signal,
   });

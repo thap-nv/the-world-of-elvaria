@@ -33,6 +33,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria scripture lint` | Soát mọi dòng kinh (của Đền và của từng nhân vật) theo văn phạm và luật của một bài học: một câu, chỉ ký tự nhìn thấy được, không URL hay đường dẫn tuyệt đối, phạm vi đọc được, có fail_kind. Thoát 1 khi có lỗi. Chỉ đọc vương quốc, không tốn mana. |
 | `elvaria scripture list` | Liệt kê các bài học trong kinh với tham chiếu, phạm vi, fail_kind và nguồn; với --character, phiên nặng nhất của nhân vật đó nạp dòng nào và dòng nào bị trần 40 dòng cắt. Không tốn mana. |
 | `elvaria temple evidence` | In gói bằng chứng một phiên Thầy tu sẽ đọc lúc này: các lỗi lặp trong 50 lượt được chấm gần nhất kèm ghi chú của từng phán quyết (đã che secret, cắt ở 600 ký tự), các dòng kinh kèm số đếm, các dòng của Thầy tu đáng xét gỡ, các check của từng lãnh thổ và các script của catalog, cắt ở trần prompt của tộc Thầy tu (nhiều nhất 24 000 ký tự). Chỉ đọc vương quốc, không tốn mana. |
+| `elvaria temple run` | Chạy Đền một lần, ngay: Thầy tu đọc gói bằng chứng trong một phiên không tool, và tờ trình (thao tác trên từng dòng kinh, thư) vào hộp thư; Nhiếp chính đang chạy áp nó ở nhịp kế. Chạy dù kingdom.schedule.temple bật hay tắt, tới hạn hay chưa. Tốn mana; không có lỗi lặp nào và không dòng nào cần xét thì không gọi model. |
 | `elvaria say [<words>]` | Nói với Tể tướng việc bạn muốn: Tể tướng soạn nhiệm vụ nháp, bạn xác nhận (lệnh create_quest, nháp). |
 | `elvaria quest add` | Thêm một nhiệm vụ mở ngay, không qua Tể tướng (lệnh create_quest). |
 | `elvaria quest list` | Liệt kê các nhiệm vụ trên bảng nhiệm vụ. |
@@ -293,6 +294,12 @@ In gói bằng chứng một phiên Thầy tu sẽ đọc lúc này: các lỗi 
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
 | `--json` | In gói dạng JSON, đúng như Thầy tu đọc. |
+
+## `elvaria temple run`
+
+Chạy Đền một lần, ngay: Thầy tu đọc gói bằng chứng trong một phiên không tool, và tờ trình (thao tác trên từng dòng kinh, thư) vào hộp thư; Nhiếp chính đang chạy áp nó ở nhịp kế. Chạy dù kingdom.schedule.temple bật hay tắt, tới hạn hay chưa. Tốn mana; không có lỗi lặp nào và không dòng nào cần xét thì không gọi model.
+
+Không có tham số riêng, chỉ các tùy chọn chung.
 
 ## `elvaria say`
 
