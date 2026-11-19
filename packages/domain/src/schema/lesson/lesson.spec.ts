@@ -36,12 +36,39 @@ describe('LessonSchema', () => {
     ['a lesson of the Monk', monk],
     ['a retired lesson', { ...monk, last_hit_at: '2026-11-08', retired_at: '2027-02-08' }],
     ['a text of 300 characters', { ...minimal, text: 'x'.repeat(300) }],
+    [
+      'a scoped lesson with its fail kind and CLI version (PS-12)',
+      {
+        ...monk,
+        scope: { role: ['verifier'], tribe: ['codex'], os: ['win32'], territory: ['dc1-se-team'] },
+        fail_kind: 'tests_fail',
+        cli_version: '0.130.0',
+      },
+    ],
+    [
+      'a lesson from outside with its origin (lesson-sharing S4)',
+      { ...minimal, source: 'outside', origin: { from: 'elvaria-1.0', received_at: '2026-11-19' } },
+    ],
   ])('accepts %s', (_, value) => {
     expect(issuesOf(value)).toEqual([]);
   });
 
   it.each([
     ['an unknown field', { ...minimal, hits: 3 }, ': Unrecognized key'],
+    ['an empty scope list', { ...minimal, scope: { role: [] } }, 'scope.role: '],
+    ['an unknown scope key', { ...minimal, scope: { lang: ['en'] } }, 'scope: Unrecognized key'],
+    ['an OS Node does not name', { ...minimal, scope: { os: ['windows'] } }, 'scope.os.0: '],
+    ['a fail kind outside the vocabulary', { ...minimal, fail_kind: 'typo' }, 'fail_kind: '],
+    [
+      'a lesson from outside without its origin',
+      { ...minimal, source: 'outside' },
+      'origin: a lesson from outside needs origin',
+    ],
+    [
+      'an origin whose lesson is no ref',
+      { ...minimal, origin: { from: 'pack', lesson: 'x', received_at: '2026-11-19' } },
+      'origin.lesson: ',
+    ],
     ['version 2', { ...minimal, version: 2 }, 'version: '],
     ['a quest id as lesson id', { ...minimal, id: 'q_20261107_x4y5z6' }, 'id: '],
     ['an id with a letter Crockford leaves out', { ...minimal, id: 'L_20261107_x4y5zo' }, 'id: '],

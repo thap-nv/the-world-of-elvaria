@@ -41,6 +41,15 @@ describe('the load trace on a session opening line', () => {
     expect(reads(blocks([{ part: 'middle', id: 'quest', chars: 1 }]))).toBe(false);
     expect(reads(blocks([]))).toBe(false);
   });
+
+  it('reads the lessons of PS-12 by id or sentence ref, and refuses anything else as a lesson', () => {
+    const lessons = (value: unknown) =>
+      line('quest.started', { quest: QUEST_VIEW, load_trace: { ...LOAD_TRACE, lessons: value } });
+    expect(reads(lessons(['L_20261119_4k2pqz', 'T_0123456789']))).toBe(true);
+    expect(reads(lessons([]))).toBe(true);
+    expect(reads(lessons(['characters/thorn/scripture.md']))).toBe(false);
+    expect(reads(lessons(['T_012345678']))).toBe(false);
+  });
 });
 
 describe("the command's kind on command.applied and command.rejected", () => {

@@ -521,7 +521,7 @@
                 ],
                 "properties": {
                   "scriptures": {
-                    "description": "The scripture files the prompt carried, each whole (PS-12 brings an id per line); empty when it carried none.",
+                    "description": "The scripture files the prompt carried a lesson of; empty when it carried none. A file none of whose lessons loaded is absent (PS-12).",
                     "type": "array",
                     "items": {
                       "type": "object",
@@ -537,11 +537,19 @@
                           "minLength": 1
                         },
                         "lines": {
-                          "description": "Its lines as the prompt carried them, trimmed.",
+                          "description": "Its lessons the prompt carried, after scope filtering and the 40-line cap (PS-12); before PS-12, its lines as the prompt carried them, trimmed.",
                           "type": "integer",
                           "minimum": 1
                         }
                       }
+                    }
+                  },
+                  "lessons": {
+                    "description": "The lessons the prompt carried, in order (PS-12, lesson-sharing S7): a line's id `L_…`, or `T_…`, the hash of the sentence of a line without one. Absent before PS-12 and from a resumed session's line.",
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^(?:L_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}|T_[0-9a-hjkmnp-tv-z]{10})$"
                     }
                   },
                   "skills": {
@@ -1148,7 +1156,7 @@
                 ],
                 "properties": {
                   "scriptures": {
-                    "description": "The scripture files the prompt carried, each whole (PS-12 brings an id per line); empty when it carried none.",
+                    "description": "The scripture files the prompt carried a lesson of; empty when it carried none. A file none of whose lessons loaded is absent (PS-12).",
                     "type": "array",
                     "items": {
                       "type": "object",
@@ -1164,11 +1172,19 @@
                           "minLength": 1
                         },
                         "lines": {
-                          "description": "Its lines as the prompt carried them, trimmed.",
+                          "description": "Its lessons the prompt carried, after scope filtering and the 40-line cap (PS-12); before PS-12, its lines as the prompt carried them, trimmed.",
                           "type": "integer",
                           "minimum": 1
                         }
                       }
+                    }
+                  },
+                  "lessons": {
+                    "description": "The lessons the prompt carried, in order (PS-12, lesson-sharing S7): a line's id `L_…`, or `T_…`, the hash of the sentence of a line without one. Absent before PS-12 and from a resumed session's line.",
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^(?:L_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}|T_[0-9a-hjkmnp-tv-z]{10})$"
                     }
                   },
                   "skills": {

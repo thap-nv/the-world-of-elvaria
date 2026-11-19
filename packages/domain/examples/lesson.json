@@ -16,5 +16,21 @@
     "text": "Never read .env or infra/secrets; ask for the secret by name.",
     "source": "user",
     "created_at": "2026-11-07"
+  },
+  {
+    "version": 1,
+    "id": "L_20261119_4k2pqz",
+    "owner": "temple",
+    "text": "Compare commits with `git diff <base>...HEAD` and read files with `git show HEAD:<path>`.",
+    "source": "monk",
+    "source_verdict": "q_20261118_9m4k2a-1",
+    "scope": {
+      "role": ["verifier"],
+      "tribe": ["codex"],
+      "os": ["win32"]
+    },
+    "fail_kind": "wrong_facts",
+    "cli_version": "0.130.0",
+    "created_at": "2026-11-19"
   }
 ]

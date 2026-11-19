@@ -3,7 +3,7 @@
 // that line, never of the quest file or attempt_log: the quest's view stays as it was (ADR 0003).
 import { z } from 'zod';
 
-import { REGISTRY_ID_PATTERN } from '../../core/ids.ts';
+import { LESSON_REF_PATTERN, REGISTRY_ID_PATTERN } from '../../core/ids.ts';
 import { NonEmptyStringSchema } from '../common.ts';
 
 const describe = (description: string) => ({ description });
@@ -17,8 +17,18 @@ const ScriptureLoadSchema = z.strictObject({
   file: NonEmptyStringSchema.meta(
     describe("The scripture's file, relative to the kingdom with `/`: the character's, then the temple's."),
   ),
-  lines: z.int().min(1).meta(describe('Its lines as the prompt carried them, trimmed.')),
+  lines: z
+    .int()
+    .min(1)
+    .meta(
+      describe(
+        'Its lessons the prompt carried, after scope filtering and the 40-line cap (PS-12); before PS-12, its lines as the prompt carried them, trimmed.',
+      ),
+    ),
 });
+
+// The pattern alone, without the id of LessonRefSchema, for the reason SnakeIdSchema gives above.
+const LessonRefPatternSchema = z.string().regex(LESSON_REF_PATTERN);
 
 const PromptBlockSchema = z.strictObject({
   part: z.enum(PROMPT_PARTS),
@@ -39,7 +49,15 @@ export const LoadTraceSchema = z
       .array(ScriptureLoadSchema)
       .meta(
         describe(
-          'The scripture files the prompt carried, each whole (PS-12 brings an id per line); empty when it carried none.',
+          'The scripture files the prompt carried a lesson of; empty when it carried none. A file none of whose lessons loaded is absent (PS-12).',
+        ),
+      ),
+    lessons: z
+      .array(LessonRefPatternSchema)
+      .optional()
+      .meta(
+        describe(
+          "The lessons the prompt carried, in order (PS-12, lesson-sharing S7): a line's id `L_…`, or `T_…`, the hash of the sentence of a line without one. Absent before PS-12 and from a resumed session's line.",
         ),
       ),
     skills: z
