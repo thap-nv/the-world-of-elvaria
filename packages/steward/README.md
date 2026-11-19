@@ -139,7 +139,11 @@
   same run, reading the letter (`returned`, then `redispatch`, no new attempt, no bell), or to the infirmary
   as `breaker:no_progress` after two cuts in a row without progress. Before it, a session past `soft_pct` gets
   `<run_dir>/wrap-up.json` and one `agent.session.wrap_up` line (`src/sessions/wrap-up.ts`, once per session, in
-  `State.wrapped`); the trips `commit`, `secrets`, `forbidden_paths` and `no_session` measure nothing and never go
+  `State.wrapped`). (PS-28) Each tick reads every held session once (`heldReadingsOf`, `src/sessions/usage.ts`)
+  for the reminder and the stamina: a session of either role whose bar crossed a notch of the way to its cut, or
+  whose gauge's ceiling changed (the owner raised the budget), gets one `agent.session.usage` line in the log and
+  the quest's journal, before the plan can cut it (`State.notches`, in memory, forgets the sessions no longer
+  held); the trips `commit`, `secrets`, `forbidden_paths` and `no_session` measure nothing and never go
   on by themselves; a verifier past a breaker leaves the review to the next one, until the second of a run
   (`reviewStalled`, P1-23): then the quest goes to the infirmary with the bell, and no third verifier opens; the
   owner's `retry` brings it back to review with a new judge, and the count starts over (P1-26). A verifier that

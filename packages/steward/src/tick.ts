@@ -22,6 +22,7 @@ import { recordEnd } from './sessions/ended.ts';
 import { wantTipGraphs } from './sessions/graph.ts';
 import { maskFinished } from './sessions/secrets.ts';
 import { reapLost } from './sessions/settle.ts';
+import { heldReadingsOf, noteStamina } from './sessions/usage.ts';
 import { noteWrapUps } from './sessions/wrap-up.ts';
 import { carryOut } from './steps.ts';
 import { versionStep } from './tribe-versions.ts';
@@ -168,8 +169,11 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   background.prune(wantedIn(world.quests));
   // Graphs of the default branches' tips build before the quests prepared from them open a session (PS-21).
   await wantTipGraphs(ctx);
-  // The soft ceiling: a session past `soft_pct` is told once, before the plan can stop it at `hard_pct` (F, phase 2).
-  await noteWrapUps(ctx, state.wrapped);
+  // The soft ceiling: a session past `soft_pct` is told once, before the plan can stop it at `hard_pct` (F, phase 2);
+  // and its stamina moved a notch is in the log before the plan cuts it, from the same reading of its gauges (PS-28).
+  const readings = heldReadingsOf(ctx);
+  await noteWrapUps(ctx, state.wrapped, readings);
+  await noteStamina(ctx, state.notches, readings);
   await planAndAct(ctx, state, await snapshotFor(ctx, state, held.zone));
   // The pids of the sessions opened or ended in this tick are on disk before the next one (sessions/pids.ts).
   await sessions.saved();

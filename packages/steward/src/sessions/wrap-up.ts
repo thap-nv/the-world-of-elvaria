@@ -5,9 +5,9 @@
 // breaker already leaves its review to the next one.
 import { rm } from 'node:fs/promises';
 
-import { calibrationOf, currentRun, measureOf, runDirOf, wrapUpsOf } from '@elvaria/domain';
+import { currentRun, runDirOf, wrapUpsIn } from '@elvaria/domain';
 import { inKingdom, readTextFile, writeFileAtomic } from '@elvaria/store';
-import type { Quest, SessionWrapUp } from '@elvaria/domain';
+import type { Quest, SessionReading, SessionWrapUp } from '@elvaria/domain';
 
 import { STEWARD } from '../record.ts';
 import type { Context } from '../context.ts';
@@ -51,19 +51,18 @@ async function note(ctx: Context, quest: Quest, wrap: SessionWrapUp, session: st
 }
 
 /**
- * Every tick: the assignees' sessions past the soft ceiling that were not told yet. `told` holds the session ids
+ * Every tick: the assignees' sessions past the soft ceiling that were not told yet, from the readings of the tick
+ * (usage.ts reads the held sessions once, for the reminders and the stamina, PS-28). `told` holds the session ids
  * already handled, in the Steward's state; a session ends once, so an id never comes back.
  */
-export async function noteWrapUps(ctx: Context, told: Set<string>): Promise<void> {
-  const { world, limits } = ctx;
-  const rules = { ...world.kingdom.breakers, characters: world.characters, tribes: world.kingdom.tribes };
-  const quests = [...world.quests.values()];
-  const measure = measureOf(world.characters, limits);
-  const calibration = calibrationOf(quests, world.characters, world.kingdom);
-  const wraps = wrapUpsOf(quests, ctx.sessions.held(), rules, ctx.deps.clock.now(), measure, calibration);
-  for (const wrap of wraps) {
+export async function noteWrapUps(
+  ctx: Context,
+  told: Set<string>,
+  readings: readonly SessionReading[],
+): Promise<void> {
+  for (const wrap of wrapUpsIn(readings)) {
     const running = ctx.sessions.get(wrap.quest);
-    const quest = world.quests.get(wrap.quest);
+    const quest = ctx.world.quests.get(wrap.quest);
     if (running?.role !== 'assignee' || wrap.role !== 'assignee' || quest === undefined) continue;
     if (told.has(running.session_id)) continue;
     told.add(running.session_id);
