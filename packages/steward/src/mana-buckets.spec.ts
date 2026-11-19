@@ -169,7 +169,8 @@ describe('the owner hears the gauges (P1-22)', () => {
     expect(estimates.some(({ window }) => window === 'weekly')).toBe(false);
   });
 
-  it('counts in the estimate what a tribe check spent before it started, as the log says (run (221) (b))', async () => {
+  // Run (221) (b); fix/run-221-followups: a session of the Chancellor's office, beside the check.
+  it('counts in the estimate what a tribe check and the Chancellor spent before it started, as the log says', async () => {
     current = await bench();
     const tribes = KINGDOM.tribes.map((tribe) =>
       tribe.id === 'claude' ? { ...tribe, budget: { tokens_5h: 1_000_000 } } : tribe,
@@ -179,7 +180,16 @@ describe('the owner hears the gauges (P1-22)', () => {
     const data = { tribe: 'claude', model: 'claude-sonnet-5-5', outcome: 'passed', tokens: 250_000, checks };
     const ts = new Date(current.clock.now() - 60_000).toISOString();
     const checked = { v: EVENT_VERSION, id: '01JCF8X4Z6Q3W9N2M5R7T8V0YB', ts, type: 'tribe.checked', data };
-    await openEventLog(current.root).append([EventSchema.parse({ ...checked, actor: { kind: 'user' } })]);
+    const answered = {
+      ...checked,
+      id: '01JCF8X4Z6Q3W9N2M5R7T8V0YC',
+      type: 'chancellor.answered',
+      data: { tribe: 'claude', model: 'claude-sonnet-5-5', matter: 'triage', tokens: 100_000 },
+    };
+    await openEventLog(current.root).append([
+      EventSchema.parse({ ...checked, actor: { kind: 'user' } }),
+      EventSchema.parse({ ...answered, actor: { kind: 'character', id: 'kael' } }),
+    ]);
     running = current.steward();
     expect(await running.start({ loop: false })).toEqual({ ok: true });
     await running.tick();
@@ -187,7 +197,7 @@ describe('the owner hears the gauges (P1-22)', () => {
       .map(({ data: line }) => line as { tribe: string; window: string; source: string; used_pct: number })
       .filter(({ source }) => source === 'estimate');
     expect(estimates).toContainEqual(
-      expect.objectContaining({ tribe: 'claude', window: 'five_hour', used_pct: 25 }),
+      expect.objectContaining({ tribe: 'claude', window: 'five_hour', used_pct: 35 }),
     );
   });
 });
