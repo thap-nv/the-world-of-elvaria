@@ -44,6 +44,7 @@ export type {
   PreparedPlot,
   ResolvedCheck,
   ScheduledJob,
+  TempleView,
   StartError,
   Steward,
   StewardDeps,

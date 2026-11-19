@@ -13,21 +13,33 @@
 // start, though (nextOf): not an off-tick job while another runs outside the tick, nor one behind a job of an earlier
 // hour that starts as soon as the slot is free, so the patrol does not keep the Chancellor's tribe idle while it runs.
 // (PS-22b) A job on call (an amendment's author) has no hour: it starts outside the tick once no job runs there and it
-// says it has work, and records no `schedule.ran`.
-import { awaitedJob, awaitsAuthor, dueJobs, isEventOf, localClockOf } from '@elvaria/domain';
+// says it has work, and records no `schedule.ran`. (PS-12f) Every job sees the Temple's count (temple-book.ts) and
+// whose mana opens a session now: the Temple's job waits for a free, open tribe instead of holding one.
+import {
+  awaitedJob,
+  awaitsAuthor,
+  dueJobs,
+  isEventOf,
+  localClockOf,
+  poolOpenOf,
+  templeDue,
+} from '@elvaria/domain';
 import type {
+  CharacterId,
   DailyJobId,
-  Event,
   Kingdom,
   QuestId,
   StewardNotices,
   TribeId,
   ZonedTime,
 } from '@elvaria/domain';
+import type { EventBatch } from '@elvaria/eventlog';
 
 import { STEWARD } from '../record.ts';
+import { createTempleBook, recoverTemple, templeLogNow } from './temple-book.ts';
+import type { TempleBook } from './temple-book.ts';
 import type { Context } from '../context.ts';
-import type { JobMode, JobRun, JobView, OnCallJob } from './ports.ts';
+import type { JobMode, JobRun, JobView, OnCallJob, TempleView } from './ports.ts';
 
 /** A job as the Steward runs it: the built-in digest works on the tick's Context, an injected job ignores it. */
 export interface StewardJob {
@@ -38,8 +50,8 @@ export interface StewardJob {
 }
 
 export interface Scheduler {
-  /** At start: the day each job last ran, from the log. */
-  recover(events: readonly Event[]): void;
+  /** At start: the day each job last ran, and (PS-12f) the Temple's count, from the log and where it ended. */
+  recover(log: Pick<EventBatch, 'events' | 'cursor'>): void;
   /**
    * Before the plan: the jobs due now that have not started today (dueJobs) and that the next step may start (nextOf,
    * fix/run-221-domain), for KingdomSnapshot.jobs_due, so planTick keeps the Chancellor's tribe free for a triage that
@@ -75,6 +87,14 @@ function busyTribes(ctx: Context): ReadonlySet<TribeId> {
   );
 }
 
+/** (PS-12f) The characters whose mana opens a session now, as answerWaits weighs an asker's. */
+function manaOpen(ctx: Context): ReadonlySet<CharacterId> {
+  const { kingdom } = ctx.world;
+  const mana = { readings: ctx.mana.readings, config: kingdom.mana };
+  const open = poolOpenOf({ kingdom, asleep: ctx.mana.asleep, mana }, ctx.deps.clock.now());
+  return new Set([...ctx.world.characters.values()].filter(open).map(({ id }) => id));
+}
+
 /** The quests waiting on their author's decision, the oldest ask first (PS-22b). */
 function amendmentsOf(ctx: Context): QuestId[] {
   return [...ctx.world.quests.values()]
@@ -82,6 +102,27 @@ function amendmentsOf(ctx: Context): QuestId[] {
     .sort((a, b) => (a.blocked?.asked_at ?? '').localeCompare(b.blocked?.asked_at ?? ''))
     .map(({ id }) => id);
 }
+
+/** The Temple's count now, and whether it is due on `day` (PS-12f). */
+async function templeOf(ctx: Context, book: TempleBook, day: string): Promise<TempleView> {
+  const log = await templeLogNow(book, ctx.deps.events);
+  return { log, due: templeDue(ctx.world.kingdom.schedule.temple, log, day) };
+}
+
+/** What the jobs see of this tick. */
+const viewOf = async (
+  ctx: Context,
+  book: TempleBook,
+  day: string,
+  notices: StewardNotices,
+): Promise<JobView> => ({
+  day,
+  notices,
+  busy: busyTribes(ctx),
+  amendments: amendmentsOf(ctx),
+  temple: await templeOf(ctx, book, day),
+  mana_open: manaOpen(ctx),
+});
 
 /** The jobs by their hour (`HH:MM` compares as text), in the order given within one hour. */
 const byHour = (jobs: readonly StewardJob[], schedule: Kingdom['schedule']): StewardJob[] =>
@@ -163,6 +204,15 @@ async function startOnCall(ctx: Context, slot: Slot, job: OnCallJob, view: JobVi
   );
 }
 
+/** The day each job last ran by the log, as the day it last started and ended. */
+function recoverDays(events: EventBatch['events'], last: Days, ended: Days): void {
+  for (const event of events)
+    if (isEventOf(event, 'schedule.ran') && (last[event.data.job] ?? '') < event.data.day) {
+      last[event.data.job] = event.data.day;
+      ended[event.data.job] = event.data.day;
+    }
+}
+
 export function createScheduler(jobs: readonly StewardJob[], onCall: readonly OnCallJob[] = []): Scheduler {
   /** The day each job last started in this Steward, or last ran by the log: it is not due again that day. */
   const last: Days = {};
@@ -174,6 +224,7 @@ export function createScheduler(jobs: readonly StewardJob[], onCall: readonly On
    */
   let settled: Days = {};
   const slot: Slot = { current: undefined };
+  const temple = createTempleBook();
   const awaited = jobs.filter(({ mode }) => mode === 'off_tick').map(({ id }) => id);
   const dueNow = (ctx: Context, zone: ZonedTime) => {
     const local = localClockOf(zone, ctx.deps.clock.now());
@@ -184,12 +235,9 @@ export function createScheduler(jobs: readonly StewardJob[], onCall: readonly On
   };
 
   return {
-    recover: (events) => {
-      for (const event of events)
-        if (isEventOf(event, 'schedule.ran') && (last[event.data.job] ?? '') < event.data.day) {
-          last[event.data.job] = event.data.day;
-          ended[event.data.job] = event.data.day;
-        }
+    recover: (log) => {
+      recoverTemple(temple, log);
+      recoverDays(log.events, last, ended);
       settled = { ...ended };
     },
     due: (ctx, zone) =>
@@ -197,7 +245,7 @@ export function createScheduler(jobs: readonly StewardJob[], onCall: readonly On
     step: async (ctx, zone, notices) => {
       const { local, due } = dueNow(ctx, zone);
       const { schedule } = ctx.world.kingdom;
-      const view: JobView = { day: local.day, notices, busy: busyTribes(ctx), amendments: amendmentsOf(ctx) };
+      const view = await viewOf(ctx, temple, local.day, notices);
       for (const job of byHour(jobs, schedule).filter(({ id }) => due.includes(id))) {
         if (job.mode === 'off_tick') {
           if (await startOutside(ctx, slot, job, view, ended)) last[job.id] = local.day;

@@ -378,6 +378,16 @@ show` prints the brief apart from the rest of the description and, while the pla
   its verdicts' notes, redacted by the event log's patterns and cut at 600 characters, the lines of scripture with
   their counts and who wrote them, the Monk's lines worth a review, each territory's checks and the catalog's scripts,
   cut at the prompt ceiling of the first Monk's tribe on this OS (read from its runner's capabilities, not spawned).
+- (PS-12f, `src/temple/`, spends mana) `temple run` and the Temple as a job on call: `runTemple` takes the evidence pack
+  (`templeEvidenceOf`), and when it holds a repeated failure or a line worth a review asks the Monk once
+  (`askTemple`: a session with no tool, on the Monk's own tribe and model; `monkOf` picks a Monk of a class with
+  `is_monk`, not suspended, on a tribe with a runner) and files its reply as one `temple_report` in the inbox (the
+  Steward applies it, PS-12c). A pack with nothing to ask opens no session. Either way it writes `temple.ran` (day,
+  operations, letters, tokens; a session that failed too, so the Temple does not reopen it each tick); a Steward
+  stopped mid-session writes nothing, so the next start runs it again. `elvaria run` gives the Steward the same as a
+  job on call (`templeJob`, `kingdom.schedule.temple`): ready once the Temple is due, a Monk is free, its tribe is
+  not held by its CLI's version and a pool opens a session; unlike the triage it holds no tribe free. No Monk at all
+  is printed once. `temple run` runs it now, whether the schedule is on or off.
 
 ## Does not
 

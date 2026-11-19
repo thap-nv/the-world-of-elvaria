@@ -12,7 +12,12 @@ export type {
 } from './amendment.ts';
 export { draftCommands, draftPayloadOf } from './commands.ts';
 export type { CommandHeader, CommandSource, CreateQuestCommand, DraftCommand } from './commands.ts';
-export { CHANCELLOR_MAX_MINUTES, CHANCELLOR_MAX_TURNS } from './constants.ts';
+export {
+  CHANCELLOR_MAX_MINUTES,
+  CHANCELLOR_MAX_TURNS,
+  TEMPLE_MAX_MINUTES,
+  TEMPLE_MAX_TURNS,
+} from './constants.ts';
 export { draftQuests } from './draft-quests.ts';
 export type { ChancellorReply } from './draft-quests.ts';
 export { QUEST_DRAFT_JSON_SCHEMA, checkReply } from './reply.ts';
@@ -20,6 +25,8 @@ export type { DraftCheck } from './reply.ts';
 export { DROP_REASONS, screenDrafts } from './screen.ts';
 export type { DropReason, DroppedDraft, ScreenContext, ScreenedDrafts } from './screen.ts';
 export type { ChancellorFailure, ChancellorSession } from './session.ts';
+export { TEMPLE_REPLY_JSON_SCHEMA, askTemple, templeCheckOf, templeIssueText } from './temple.ts';
+export type { TempleAnswer, TempleCheck, TempleFailure } from './temple.ts';
 export { triageCommands } from './triage-commands.ts';
 export type { TriageCommands, TriageInput, TriageOutcome } from './triage-commands.ts';
 export { MEMO_TRIAGE_JSON_SCHEMA, triageCheckOf, triageMemos } from './triage-memos.ts';

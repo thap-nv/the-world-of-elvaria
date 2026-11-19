@@ -5,3 +5,8 @@
 export const CHANCELLOR_MAX_TURNS = 3;
 export const CHANCELLOR_MAX_MINUTES = 5;
 export const MS_PER_MINUTE = 60_000;
+
+// (PS-12f) Limits of one session of the Temple's Monk, its own: no tool and one question, as the Chancellor's, but a
+// prompt of up to TEMPLE_PROMPT_MAX_CHARS of evidence to weigh, group by group, so it may take longer to answer.
+export const TEMPLE_MAX_TURNS = 3;
+export const TEMPLE_MAX_MINUTES = 10;

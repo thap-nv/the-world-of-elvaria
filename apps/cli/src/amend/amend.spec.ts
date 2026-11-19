@@ -26,6 +26,7 @@ import {
   seedAmendments,
 } from '../../test/amend.ts';
 import { foundKingdom, tempDir, testIo } from '../../test/cli.ts';
+import { QUIET_VIEW } from '../../test/job-view.ts';
 import { REFUSAL, refusing } from '../../test/refusing.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { amendmentJob } from './job.ts';
@@ -53,6 +54,7 @@ describe("an amendment's author, on call (PS-22b)", () => {
     day: '2026-11-05',
     notices: {},
     amendments: amendments as Quest['id'][],
+    ...QUIET_VIEW,
     busy: new Set(busy.map((tribe) => TribeIdSchema.parse(tribe))),
     signal: new AbortController().signal,
   });

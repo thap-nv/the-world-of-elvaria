@@ -24,6 +24,7 @@ import { plotsOf } from './plots.ts';
 import { toolFoundOf } from './tool-found.ts';
 import { triageJob } from '../triage/job.ts';
 import { amendmentJob } from '../amend/job.ts';
+import { templeJob } from '../temple/job.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 import type { Crew } from './crew.ts';
@@ -74,8 +75,8 @@ function stewardOf(ctx: KingdomContext, crew: Crew, { graphs, forges }: Found): 
     upgradeOffer: () => upgradeOffer(io, store.root),
     // The Chancellor's triage of the memos waiting, before the digest, outside the tick (PS-03b).
     jobs: [triageJob(ctx, crew.runners)],
-    // An amendment's author, whenever a quest waits on one (PS-22b).
-    onCall: [amendmentJob(ctx, crew.runners)],
+    // An amendment's author, whenever a quest waits on one (PS-22b); the Temple, whenever it is due (PS-12f).
+    onCall: [amendmentJob(ctx, crew.runners), templeJob(ctx, crew.runners)],
     // Each tribe's CLI asked before the plan: one gone or changed since its last real check is held (A1b).
     toolFound: toolFoundOf(ctx.kingdom, crew.runners, io),
     log: {

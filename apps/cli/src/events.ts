@@ -3,7 +3,7 @@
 // the view after the change (P0-09), and the reducer puts it in place. P0-08 merged after P0-05, so it wires this
 // (implementation-plan §8).
 import { EVENT_VERSION, EventSchema, characterViewOf, territoryViewOf } from '@elvaria/domain';
-import type { Character, EventData, Territory } from '@elvaria/domain';
+import type { Character, Event, EventData, Territory } from '@elvaria/domain';
 import { createRedactor, openEventLog, redactDeep } from '@elvaria/eventlog';
 
 import type { KingdomContext } from './kingdom-context.ts';
@@ -70,6 +70,26 @@ export function recordChancellorAnswered(
     type: 'chancellor.answered',
     actor: { kind: 'character', id: speaker.id },
     data: { tribe: speaker.tribe, model: speaker.model, ...spent },
+  });
+}
+
+/**
+ * (PS-12f) One run of the Temple: the Monk who spoke is the actor when a session ran, else whoever ran it (the Steward's
+ * job, or the owner's `elvaria temple run`). Written also when no model was called, so the count of judged runs starts
+ * again; the Steward's mana estimate counts its tokens from its next start (ADR 0009).
+ */
+export function recordTempleRan(
+  ctx: KingdomContext,
+  actor: Event['actor'],
+  data: EventData<'temple.ran'>,
+): Promise<void> {
+  return append(ctx, {
+    v: EVENT_VERSION,
+    id: ctx.ids.ulid(),
+    ts: ctx.now(),
+    type: 'temple.ran',
+    actor,
+    data,
   });
 }
 

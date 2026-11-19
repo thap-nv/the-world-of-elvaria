@@ -58,7 +58,7 @@ export async function recover(deps: StewardDeps, state: State): Promise<void> {
   state.mana.history = levelsFromLog(log.events);
   state.mana.outside = outsideFromLog(log.events);
   state.restart = restartFromLog(log.events);
-  state.scheduler.recover(log.events);
+  state.scheduler.recover(log);
   recoverForge(state.forge, log.events);
   recoverPatrol(state.patrol, log.events);
   recoverDelegation(state.delegation, log.events);

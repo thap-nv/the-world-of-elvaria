@@ -50,6 +50,7 @@ export type {
   JobView,
   OnCallJob,
   ScheduledJob,
+  TempleView,
 } from './schedule/ports.ts';
 
 /** Problems nobody is waiting for an answer to: a refused move, a failed spawn, a lost lock. English, for logs. */

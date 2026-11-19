@@ -1,7 +1,8 @@
 // One session of the Chancellor (implementation-plan §3.11, §3.14): no tool, its prompt only, and a reply that is a
 // structured output, given to a CLI with a JSON Schema flag, or JSON in text with one retry in a folder of its own on a
 // tribe without it (runner-core's spawnParsed, P1-33). Shared by the owner's words (draftQuests) and the triage of
-// memos (triageMemos, PS-03b), which also ends when the Steward stops.
+// memos (triageMemos, PS-03b), which also ends when the Steward stops. (PS-12f) The Temple's Monk speaks the same way,
+// in its own role and within its own caps (askTemple): who speaks and within what come from the session.
 import { mkdir } from 'node:fs/promises';
 
 import { err, ok } from '@elvaria/domain';
@@ -9,6 +10,7 @@ import { checkTextReply, spawnParsed, toolPolicyOf } from '@elvaria/runner-core'
 import type { CharacterClass, ChancellorChoice, Result } from '@elvaria/domain';
 import type {
   AgentRunner,
+  Budget,
   BuiltPrompt,
   JsonSchema,
   PromptTemplates,
@@ -17,22 +19,27 @@ import type {
   RunResult,
   RunningSession,
   SpawnRequest,
+  SpawnRole,
 } from '@elvaria/runner-core';
 
 import { CHANCELLOR_MAX_MINUTES, CHANCELLOR_MAX_TURNS, MS_PER_MINUTE } from './constants.ts';
 
 export interface ChancellorSession {
   readonly runner: AgentRunner;
-  /** selectChancellor: who speaks, and how its reply comes back. */
+  /** selectChancellor: who speaks, and how its reply comes back (the Monk's likewise, PS-12f). */
   readonly choice: ChancellorChoice;
   /** Its class in the registry: the tool policy (no tool at all). */
   readonly characterClass: CharacterClass;
+  /** (PS-12f) The role it speaks in: `chancellor` when absent; the Temple's session is the Monk's. */
+  readonly role?: Extract<SpawnRole, 'chancellor' | 'monk'>;
+  /** (PS-12f) Turns and minutes the CLI is given: CHANCELLOR_MAX_TURNS and CHANCELLOR_MAX_MINUTES when absent. */
+  readonly budget?: Budget;
   readonly templates: PromptTemplates;
   /** Absolute `<kingdom>/.runs/<prefix>-<id>/`: the session's cwd and its generated files. */
   readonly run_dir: string;
   /** The `ELVARIA_*` context the hook reads (§3.6). */
   readonly env: Readonly<Record<string, string>>;
-  /** A session still running after this long is killed; CHANCELLOR_MAX_MINUTES by default. */
+  /** A session still running after this long is killed; the budget's minutes by default. */
   readonly timeout_ms?: number;
 }
 
@@ -73,15 +80,20 @@ const issuesOf =
     return checked.ok ? [] : checked.issues;
   };
 
+const CHANCELLOR_BUDGET: Budget = { max_turns: CHANCELLOR_MAX_TURNS, max_minutes: CHANCELLOR_MAX_MINUTES };
+
+const budgetOf = (session: ChancellorSession): Budget => session.budget ?? CHANCELLOR_BUDGET;
+
 function requestOf<T>(session: ChancellorSession, asking: Asking<T>) {
   const { character } = session.choice;
+  const role = session.role ?? 'chancellor';
   return {
-    role: 'chancellor',
+    role,
     character,
     cwd: session.run_dir,
     prompt: asking.prompt,
-    permissions: toolPolicyOf({ role: 'chancellor', characterClass: session.characterClass, character }),
-    budget: { max_turns: CHANCELLOR_MAX_TURNS, max_minutes: CHANCELLOR_MAX_MINUTES },
+    permissions: toolPolicyOf({ role, characterClass: session.characterClass, character }),
+    budget: budgetOf(session),
     structured: asking.schema,
     env: session.env,
     run_dir: session.run_dir,
@@ -121,9 +133,9 @@ export async function hear<T>(
   const timer = setTimeout(
     () => {
       seen.late = true;
-      void running.kill('the Chancellor did not answer in time');
+      void running.kill(`the ${session.role ?? 'chancellor'} did not answer in time`);
     },
-    session.timeout_ms ?? CHANCELLOR_MAX_MINUTES * MS_PER_MINUTE,
+    session.timeout_ms ?? budgetOf(session).max_minutes * MS_PER_MINUTE,
   );
   const stop = () => {
     seen.stopped = true;

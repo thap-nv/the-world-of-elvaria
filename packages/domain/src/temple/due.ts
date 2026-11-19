@@ -39,15 +39,34 @@ const runOf = (verdict: unknown): string | undefined =>
   typeof verdict === 'string' ? verdict.replace(OWNER_SUFFIX, '') : undefined;
 
 /**
- * The log folded for the rule, in its order. A suspension by the owner (actor `user`) is the owner's to lift, so it is
- * not counted; one the Steward wrote is the fail streak's (§2.6). Any later line of the character that is not
- * `suspended` ends it.
+ * What templeLogOf keeps while it reads, so a reader of the log in parts goes on where it stopped (PS-12f: the Steward
+ * reads the log once at start, then only its new lines at each tick, and its jobs see the count without reading it).
  */
-export function templeLogOf(events: readonly Event[]): TempleLog {
-  let last: string | null = null;
-  let judged = new Set<string>();
-  let fails = new Set<string>();
-  let suspended = new Set<CharacterId>();
+export interface TempleFold {
+  readonly last_day: string | null;
+  /** The runs judged since the last `temple.ran`, by the id of the run. */
+  readonly judged: ReadonlySet<string>;
+  readonly fails: ReadonlySet<string>;
+  readonly suspended: ReadonlySet<CharacterId>;
+}
+
+export const EMPTY_TEMPLE_FOLD: TempleFold = {
+  last_day: null,
+  judged: new Set(),
+  fails: new Set(),
+  suspended: new Set(),
+};
+
+/**
+ * `fold` with `events` read after it, in their order. A suspension by the owner (actor `user`) is the owner's to lift,
+ * so it is not counted; one the Steward wrote is the fail streak's (§2.6). Any later line of the character that is not
+ * `suspended` ends it. `fold` itself is left as it was.
+ */
+export function foldTempleLog(fold: TempleFold, events: readonly Event[]): TempleFold {
+  let last = fold.last_day;
+  let judged = new Set(fold.judged);
+  let fails = new Set(fold.fails);
+  let suspended = new Set(fold.suspended);
   for (const event of events) {
     if (event.type === 'temple.ran') {
       last = typeof event.data.day === 'string' ? event.data.day : last;
@@ -61,8 +80,20 @@ export function templeLogOf(events: readonly Event[]): TempleLog {
     }
     if (CHARACTER_LINES.has(event.type)) suspended = withCharacterLine(suspended, event);
   }
-  return { last_day: last, judged: judged.size, fails: fails.size, suspended: [...suspended] };
+  return { last_day: last, judged, fails, suspended };
 }
+
+/** What the rule reads of a fold. */
+export const templeLogOfFold = (fold: TempleFold): TempleLog => ({
+  last_day: fold.last_day,
+  judged: fold.judged.size,
+  fails: fold.fails.size,
+  suspended: [...fold.suspended],
+});
+
+/** The log folded for the rule, in its order (foldTempleLog from nothing). */
+export const templeLogOf = (events: readonly Event[]): TempleLog =>
+  templeLogOfFold(foldTempleLog(EMPTY_TEMPLE_FOLD, events));
 
 /** The lines that carry a character's view after its change. */
 const CHARACTER_LINES: ReadonlySet<string> = new Set(

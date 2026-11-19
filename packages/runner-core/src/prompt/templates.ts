@@ -72,6 +72,9 @@ export const PROMPT_TEMPLATES = [
   'amendment-owner',
   'amendment',
   'amendment-context',
+  // PS-12f: the Monk's session of the Temple, its rules and its evidence pack.
+  'temple',
+  'temple-context',
 ] as const;
 export type PromptTemplateName = (typeof PROMPT_TEMPLATES)[number];
 export type PromptTemplates = Readonly<Record<PromptTemplateName, string>>;
