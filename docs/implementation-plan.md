@@ -209,7 +209,7 @@ Dòng của task đã xong ở [8-done-ps.md](implementation-plan/8-done-ps.md).
    - (c) của P1-46 (`quest show` in lượt cuối có phán quyết khi quest đã sang lượt mới): chỉ khi chủ nhân thấy cần.
 5. **Chưa thấy trên CLI thật** ([cli-facts](reference/cli-facts-2026-11-12.md) §1.8, §2.5): dòng 429 của Claude Code (`system/api_retry`, `StopFailure`, `rate_limit_event` bị từ chối), mà Nhiếp chính đang đọc theo tài liệu và kiểu dữ liệu của Agent SDK; một phiên model trên agy 1.5.6. Không cần quyết định: ghi lại fixture khi gặp.
 6. **Chia sẻ bài học giữa các vương quốc** (định hướng (161) của chủ nhân; [plans/lesson-sharing.md](plans/lesson-sharing.md), chủ nhân chốt hướng ngày 2026-11-16, xem cuối mục này). Chưa task nào được mở. Còn mở, mỗi câu chốt trước việc ghi trong ngoặc:
-   - (PS-12) Trần 40 dòng kinh tính trên số dòng được nạp cho một phiên sau khi lọc phạm vi, hay trên cả file (S6 của tài liệu đó).
+   - (PS-12, **đã trả lời** ngày 2026-11-19 bằng DB4 của [plans/temple-first.md](plans/temple-first.md), §11) Trần 40 dòng kinh tính trên số dòng được nạp cho một phiên sau khi lọc phạm vi, gộp kinh riêng và kinh chung; file không có trần. Vượt thì phiên nạp 40 dòng đầu và `elvaria scripture lint` báo nhân vật nào vượt (S6 của tài liệu đó). PS-12 làm theo câu trả lời này.
    - (Bước nhập gói) Sau bao nhiêu lượt nạp thì một dòng nhập đủ số đo để giữ hay gỡ: chọn sau khi PS-12 chạy thật.
    - (Kinh mặc định theo bản phát hành) Elvaria phát hành ra ngoài bằng cách nào; hôm nay là một checkout git mà `upgrade` dựng bản ghim từ đó.
 
