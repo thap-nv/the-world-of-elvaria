@@ -4,7 +4,7 @@
 
 Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là một event; log chỉ ghi thêm, không bao giờ viết lại. `type` là `nhóm.hành_động`; reader giữ nguyên type lạ, renderer bỏ qua nó. Hợp đồng đầy đủ: [schemas/event.schema.json](schemas/event.schema.json); nghĩa từng nhóm và các tiền tố dành sẵn: [glossary.md](glossary.md) mục 12.
 
-85 type trong danh mục v1, 73 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
+86 type trong danh mục v1, 74 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
 
 ## Khung một dòng
 
@@ -46,13 +46,14 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 | `quest.unclaimable` | `reason`: một trong `no_class`, `level_too_low`, `party_bars` — no_class: no character of the class outside the suspended ones and the disabled tribes; level_too_low: even the highest level among them cannot take the rank, not even when nobody else could (canTake); party_bars: every one of them is barred by the quest's party, having judged one of its quests or worked the other side of its blind trial (partyBarsOf, P1-37); null: the reason is gone.<br>`rank`: một trong `F`, `E`, `D`, `C`, `B`, `A`, `S`<br>`class`: string (khớp `^[a-z][a-z0-9_]*$`) — The quest's class_required.<br>`best_character` (tùy chọn): string (khớp `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$`, khác `user`, `machine`, `temple`) — level_too_low: the highest-level character of the class.<br>`best_level` (tùy chọn): integer ≥ 1 |
 | `quest.escaped` | `quest`: string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`)<br>`territory`: string (khớp `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$`, khác `global`)<br>`delegated`: boolean — The Steward merged the quest without the royal seal, by the delegation (its delivery.merged says sealed false): only such a report suspends the delegation of its territory.<br>`note` (tùy chọn): string (không rỗng) — The owner's words, as `--note` gave them. |
 
-## `agent` · 10 type
+## `agent` · 11 type
 
 | Type | `data` |
 |---|---|
 | `agent.session.start` | `session`: string (không rỗng)<br>`model`: string (khớp `^[a-z0-9][a-z0-9.-]*$`) |
 | `agent.session.end` | `outcome`: một trong `completed`, `max_turns`, `budget`, `killed`, `error` — RunResult.outcome (implementation-plan §3.7).<br>`usage` (tùy chọn): object { tokens, turns? } |
 | `agent.session.wrap_up` | `measure`: một trong `time`, `tokens`, `turns`<br>`used`: number ≥ 0<br>`limit`: number — Nominal ceiling before the soft and hard percentages.<br>`pct`: number ≥ 0 — Used as a percentage of the nominal ceiling. |
+| `agent.session.usage` | `role`: một trong `assignee`, `verifier` — Whose session: an assignee's bar has the reminder mark, a judge's none.<br>`measure`: một trong `time`, `tokens`, `turns` — The gauge the bar follows: of the ones the breakers read, the nearest its cut.<br>`used`: number ≥ 0 — Minutes for `time`, as on `agent.session.wrap_up`.<br>`limit`: number — Nominal ceiling in force, before the soft and hard percentages: tokenCeilingOf for tokens (the tribe calibrated, a judge times verifier_tokens_multiplier), budget.max_minutes for time.<br>`pct`: number ≥ 0 — Used as a percentage of the nominal ceiling.<br>`soft_pct`: number — breakers.soft_pct in force: the reminder mark of the bar.<br>`hard_pct`: number — breakers.hard_pct in force: the bar is empty here, where the session is cut. |
 | `agent.tool` | `tool`: một trong `read`, `write`, `bash`, `web`, `search`, `other` — Normalised tool kind (implementation-plan §3.10): Read and read_file map to read, Glob/Grep/LS and grep_search/find_by_name/list_dir to search (read before PS-21), Edit/Write and write_file/replace to write, Bash and run_shell_command to bash, WebFetch/WebSearch to web.<br>`path` (tùy chọn): string (không rỗng) — Relative to the plot, '/' separators.<br>`command` (tùy chọn): string — Redacted.<br>`url` (tùy chọn): string<br>`exit` (tùy chọn): integer<br>`duration_ms` (tùy chọn): integer ≥ 0<br>`agent_type` (tùy chọn): string (không rỗng) — The sub-agent that made the call (`apprentice`), from the hook payload; absent when the character itself did (implementation-plan §3.12). |
 | `agent.tool.blocked` | `tool`: một trong `read`, `write`, `bash`, `web`, `search`, `other` — Normalised tool kind (implementation-plan §3.10): Read and read_file map to read, Glob/Grep/LS and grep_search/find_by_name/list_dir to search (read before PS-21), Edit/Write and write_file/replace to write, Bash and run_shell_command to bash, WebFetch/WebSearch to web.<br>`reason`: string (không rỗng)<br>`agent_type` (tùy chọn): string (không rỗng) — The sub-agent that made the call (`apprentice`), from the hook payload; absent when the character itself did (implementation-plan §3.12). |
 | `agent.subagent.start` | object mở, chưa có schema |

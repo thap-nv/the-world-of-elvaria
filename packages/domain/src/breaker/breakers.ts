@@ -5,7 +5,9 @@ import { parseInstant } from '../core/clock.ts';
 import { BREAKER_DEFAULTS } from '../constants.ts';
 import { CONTEXT_BUDGETS_BY_RANK } from '../dispatch/constants.ts';
 import { evaluateBreakers } from './evaluate.ts';
-import type { SessionTrip, UsageSoFar, WrapUp } from './evaluate.ts';
+import { staminaOf } from './stamina.ts';
+import type { BreakerVerdict, SessionTrip, UsageSoFar, WrapUp } from './evaluate.ts';
+import type { Stamina } from './stamina.ts';
 import type { Instant } from '../core/clock.ts';
 import type { QuestId } from '../core/ids.ts';
 import type { Role } from '../schema/common.ts';
@@ -102,18 +104,26 @@ export const measureOf =
     return (tribe === undefined ? undefined : limits[tribe]?.breakers) ?? 'tokens_and_minutes';
   };
 
+/** A held session read once: what the breakers say of it, and its stamina bar (PS-28) from the same gauges. */
+export interface SessionReading {
+  readonly quest: QuestId;
+  readonly role: Role;
+  readonly verdict: BreakerVerdict;
+  readonly stamina: Stamina;
+}
+
 /**
- * The held sessions that tripped a breaker, in the order given. A session whose quest or entry is gone (the file
- * moved on in this tick) is not the plan's to stop: the end the runner reports settles it.
+ * Every held session read against its ceilings, in the order given. A session whose quest or entry is gone (the file
+ * moved on in this tick) is not the plan's to stop: the end the runner reports settles it, and it has no bar.
  */
-function evaluationsOf(
+export function sessionReadingsOf(
   quests: readonly Quest[],
   sessions: readonly HeldSession[],
   rules: SessionRules,
   now: Instant,
   measure: BreakerMeasure = () => 'tokens_and_minutes',
   calibration?: Calibration,
-) {
+): SessionReading[] {
   const byId = new Map(quests.map((quest) => [quest.id, quest]));
   return sessions.flatMap((session) => {
     const quest = byId.get(session.quest);
@@ -130,27 +140,38 @@ function evaluationsOf(
       ...(rules.soft_pct === undefined ? {} : { soft_pct: rules.soft_pct }),
       ...(rules.hard_pct === undefined ? {} : { hard_pct: rules.hard_pct }),
     };
-    const verdict = evaluateBreakers(
+    const read = [
       { started_at: started.value },
       limits,
       now,
       session.usage,
       measure(quest, session.role),
-    );
-    return verdict === 'ok' ? [] : [{ quest: quest.id, role: session.role, verdict }];
+    ] as const;
+    return [
+      {
+        quest: quest.id,
+        role: session.role,
+        verdict: evaluateBreakers(...read),
+        stamina: staminaOf(...read, session.role),
+      },
+    ];
   });
 }
 
 /** Hard stops only: existing callers never receive a soft warning as a breaker. */
-export function breakersOf(...args: Parameters<typeof evaluationsOf>): Breaker[] {
-  return evaluationsOf(...args).flatMap(({ quest, role, verdict }) =>
-    'trip' in verdict ? [{ quest, role, ...verdict }] : [],
+export function breakersOf(...args: Parameters<typeof sessionReadingsOf>): Breaker[] {
+  return sessionReadingsOf(...args).flatMap(({ quest, role, verdict }) =>
+    verdict !== 'ok' && 'trip' in verdict ? [{ quest, role, ...verdict }] : [],
   );
 }
 
-/** Sessions needing a reminder, in held order; a hard stop is never also a reminder. */
-export function wrapUpsOf(...args: Parameters<typeof evaluationsOf>): SessionWrapUp[] {
-  return evaluationsOf(...args).flatMap(({ quest, role, verdict }) =>
-    'kind' in verdict ? [{ quest, role, ...verdict }] : [],
+/** The sessions of `readings` needing a reminder, in their order; a hard stop is never also a reminder. */
+export const wrapUpsIn = (readings: readonly SessionReading[]): SessionWrapUp[] =>
+  readings.flatMap(({ quest, role, verdict }) =>
+    verdict !== 'ok' && 'kind' in verdict ? [{ quest, role, ...verdict }] : [],
   );
+
+/** Sessions needing a reminder, in held order. */
+export function wrapUpsOf(...args: Parameters<typeof sessionReadingsOf>): SessionWrapUp[] {
+  return wrapUpsIn(sessionReadingsOf(...args));
 }

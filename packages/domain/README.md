@@ -192,6 +192,15 @@ patrol`); `partyOf` counts the quest a party is named after, `partyStatusOf` and
   `SessionRules` accepts the character map and tribes alongside percentages, and `planTick` supplies them.
   `wrapUpsOf` takes the same arguments as `breakersOf` and returns reminders only; `agent.session.wrap_up`
   carries `{measure, used, limit, pct}` at event v2. Sending reminders is the Steward's next integration step.
+  (PS-28) A session's stamina (`src/breaker/stamina.ts`): `gaugesOf` is the list of gauges the breakers measure,
+  `staminaOf` (the arguments of `evaluateBreakers` and the session's role) the bar of the gauge nearest its cut,
+  empty where `hard_pct` cuts, in notches of `STAMINA_STEP_PCT` (10), with the reminder mark for an assignee only
+  and a red zone at `STAMINA_CRITICAL_LEFT_PCT` (20) left; `staminaMoved` says when the Steward writes an
+  `agent.session.usage` line (`src/schema/event/session-data.ts`: the notch moved, or the same gauge's ceiling).
+  `sessionReadingsOf` reads every held session once, verdict and bar from the same ceilings, and `wrapUpsIn` takes
+  the reminders out of it. `sessionStaminaOf(events)` (`src/world/stamina-view.ts`) folds a journal or the day's log
+  into the bar of each quest's open session, with `previous` after a cut that went on (ADR 0030); the bar is never
+  stored and never part of `WorldState`.
   A tribe whose adapter reports no usage (its `TribeLimits.breakers`
   is `minutes_only`, handed in as `measure` by `measureOf`) has the time breaker alone (P1-33); `breakersOf`
   applies it to the sessions the Steward holds
@@ -326,7 +335,10 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   each status, review split by whether a judge holds it (`statusTimesOf`, from the quest lines' views; a stay still
   open is not counted); the pass rate of each quest's first, second, … run (`passByRunOf` over `runJudgementsOf`,
   of which `firstPassOf` is the first); the Chancellor's advice on the memos it sent up beside the owner's decisions
-  (`adviceOf`, `ADVICE_DECISIONS`). `planAccuracyOf(input, quest)` sets a plan quest's sub-quests, the mage's only,
+  (`adviceOf`, `ADVICE_DECISIONS`). (PS-28c, `src/metrics/after-wrap-up.ts`) Per tribe, the assignee sessions the
+  Steward reminded at the soft ceiling that have ended (`afterWrapUpOf`: each `agent.session.wrap_up` paired with
+  the session's `agent.session.end`, the tribe from the optional `characters` of the input): how many ended on their
+  own, how many were cut, and the median tokens and minutes from the reminder to the end. `planAccuracyOf(input, quest)` sets a plan quest's sub-quests, the mage's only,
   beside what they did: scope and files edited and changed outside it, estimate and first run, memos, rework.
 - Scores a territory (`src/scorecard/`, PS-25): `territoryScorecardOf` over the territory file, the metrics ledger,
   one trial (runner-core's `tryTerritory`) and the gazetteer gives six items, each `pass`, `fail` or `unmeasured`,

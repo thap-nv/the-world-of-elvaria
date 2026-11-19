@@ -52,6 +52,8 @@ Bốn điều rút ra cho kế hoạch:
 
 **Trả lời: chưa có chứng cứ nào, và dấu vết đã có không trả lời được.**
 
+(Cập nhật 2026-11-19, PS-28d: phép đo trên CLI thật trả lời `có`. Chuỗi `additionalContext` tới model, và lời nhắc thật làm một phiên opus ngừng việc mới, viết thư rồi kết thúc; phần commit chưa đo. Xem kết quả ở mục PS-28d dưới. Phần còn lại của mục này là tình trạng trước phép đo.)
+
 - Trong 355 thư mục chạy, không thư mục nào có `hook/wrap-up-reminded/`. Thư mục này là biên nhận của hook: nó được tạo lúc hook trao lời nhắc cho CLI (`packages/hooks/src/wrap-up.ts:131-134,169`).
 - Ba dòng `agent.session.wrap_up` duy nhất đều là phiên agy, chạy trước khi #220 (`fix/wrap-up-agy-codex`) cho agy một đường nhắc. Từ đó tới hết ngày 2026-11-18 không phiên nào của tộc nào qua `soft_pct` nữa.
 - Vì vậy chưa phiên Claude nào từng qua `soft_pct` kể từ khi có lời nhắc. Không có `stdout.jsonl` nào để xem phiên có đổi cách làm không.
@@ -104,6 +106,7 @@ Cách thứ tư tốn mana: một phiên Claude nhỏ có trần thấp và mộ
 - **Dùng lại**: `evaluationsOf` và các tham số của nó (`tokenCeilingOf`, `turnCeilingOf`, `measureOf`, `calibrationOf`); `ctx.sessions.held()`; `ctx.record.note`; sổ `state.wrapped` làm mẫu cho sổ nấc.
 - **Thêm**:
   - **Hàm thuần `staminaOf`** (`packages/domain/src/breaker/stamina.ts`): nhận đúng các đối số của `evaluateBreakers`, trả thước gần cạn nhất kèm `measure`, `used`, `limit`, `pct`, `left_pct`, `notch`, vị trí mốc nhắc và vùng, theo "Định nghĩa thanh". Hằng `STAMINA_STEP_PCT` (10) và `STAMINA_CRITICAL_LEFT_PCT` (20) nằm ở `constants.ts`. Một hàm bọc tính cho mọi phiên đang giữ, cạnh `breakersOf` và `wrapUpsOf`.
+    - (Thực tế PS-28) `staminaOf` nhận thêm vai của phiên ở tham số thứ sáu (mặc định `assignee`), vì mốc nhắc và vùng vàng tùy vai. Kết quả mang `measure`, `used`, `limit`, `pct`, `soft_pct`, `hard_pct`, `role`, `left_pct`, `notch`, `mark_left_pct` (mốc nhắc tính bằng phần còn lại, `undefined` cho người chấm) và `zone`. Vùng vàng dùng đúng phép so của cầu dao: vượt `soft_pct`, không tính lúc bằng. `barOf(gauge)` tính thanh của một thước, dùng chung cho `staminaOf` và hàm gấp. Hàm bọc là `sessionReadingsOf`: mỗi phiên đang giữ một lần đọc, gồm kết luận của cầu dao và thanh; `breakersOf`, `wrapUpsOf` giữ tham số và kết quả, `wrapUpsIn(readings)` lọc lời nhắc từ một lần đọc. Luật ghi dòng nấc là hàm thuần `staminaMoved(last, now)` trong domain, Nhiếp chính chỉ thực thi.
   - **Event `agent.session.usage`** (mục TL2), do Nhiếp chính ghi, `actor` là `steward`. Phong bì mang `quest`, `attempt`, `territory`, `session` như dòng `wrap_up`. Data:
     - `role`: `assignee` hay `verifier`;
     - `measure`: `time`, `tokens` hay `turns`, là thước mà thanh đang theo;
@@ -116,6 +119,8 @@ Cách thứ tư tốn mana: một phiên Claude nhỏ có trần thấp và mộ
     - `agent.session.start` mở một thanh đầy. `agent.session.usage` đặt giá trị. `agent.session.wrap_up` bật `reminded`. `agent.session.end` đóng thanh.
     - "Bị cắt" đọc từ `outcome` của dòng kết thúc (`killed`, `max_turns`, `budget`). `previous` mang thước và phần trăm của dòng nấc cuối cùng của phiên đó.
     - Dòng thiếu `session`, dòng lặp và type lạ không làm hàm hỏng.
+    - (Thực tế PS-28) Dòng `agent.session.start` không nói vai, và có thể tới trước hay sau dòng quest của Nhiếp chính. Vì vậy dòng quest mang `session` cũng mở thanh và nói ghế: quest `working` là người làm, `review` có người chấm là người chấm. Dòng quest nói ghế đã trống (§2.5: mục đang mở chỉ có khi quest `working`, hay `review` có người chấm) thì đóng thanh mà dòng kết thúc chưa tới. Dòng nấc hay dòng nhắc mở thanh khi người đọc không thấy dòng start (đuôi journal); dòng của phiên đã kết thúc thì bỏ qua, trừ khi một dòng mở phiên mở lại nó (phiên nối lại dưới cùng id).
+    - (Thực tế PS-28) Chỉ `outcome` thì chưa đủ để nói "bị cắt": Nhiếp chính cũng giết phiên khi pool hết mana hay chủ nhân hủy quest, và các lần đó cũng ghi `killed`. `previous` vì vậy chỉ có khi phiên trước là của người làm, cùng lượt, kết thúc bằng `killed`, `max_turns` hay `budget`, và quest đã có dòng `quest.returned` sau đó, đúng chuỗi cắt rồi đi tiếp của ADR 0030. `previous` mang `session`, `outcome` và thanh của dòng nấc cuối (`undefined` khi phiên bị cắt trước nấc 1).
   - **Glossary**: thuật ngữ `stamina` (VI "Thể lực", EN "Stamina") ở bảng `verification`, cạnh `mana` và `swamp`. Định nghĩa nói rõ ba điều: thanh theo phiên, thanh là giá trị suy ra không lưu, và thanh đo quãng tới lúc bị cắt. Nhóm "Phiên agent" của bảng `events` thêm type mới và một câu giải thích cho cả `wrap_up`. Chạy `pnpm docs:gen` và `pnpm schemas`.
   - **Tài liệu**: [§3.4](../implementation-plan/3.4-breakers.md) thêm đoạn "Thể lực"; README của domain và steward.
 - **Không làm**: chuông, chữ hiển thị và lệnh CLI (PS-28b); trường mới trên `WorldState`, `QuestView` hay `CharacterView`; mục bản tấu; lời nhắc cho người chấm; đổi `soft_pct`, `hard_pct` hay cách cầu dao cắt.
@@ -166,6 +171,8 @@ Cách thứ tư tốn mana: một phiên Claude nhỏ có trần thấp và mộ
 - **Thêm**:
   - Hàm thuần `afterWrapUpOf(events, characters)` (`packages/domain/src/metrics/`): ghép mỗi dòng `agent.session.wrap_up` với dòng `agent.session.end` của cùng `session`, lấy tộc từ nhân vật của phiên. Mỗi tộc một dòng: số phiên đã được ghi lời nhắc, số phiên tự kết thúc (`completed`), số phiên bị cắt, trung vị số token thêm và trung vị số phút từ lời nhắc tới lúc kết thúc. Số token thêm chỉ tính khi thước của lời nhắc là token và dòng kết thúc có `usage`.
   - `elvaria metrics` in bảng "Sau lời nhắc" và `docs/metrics-report.md` có bảng đó (`pnpm docs:gen --kingdom <dir>`).
+  - (Sửa 2026-11-19, PS-28c, chờ người dùng chốt, §11) Thực tế: hàm nhận thêm cửa sổ ngày, `afterWrapUpOf(events, characters, window)`, như mọi số đo khác; phiên tính vào ngày của lời nhắc. Nhân vật vào sổ đo qua trường tùy chọn `characters` của `MetricsInput`, và `elvaria metrics` đọc thêm `characters/`. Dòng kết thúc không mang nhân vật nào đã đọc thì phiên vào dòng "không tộc". Phiên kết thúc vì `error` chỉ vào số được nhắc, không vào hai cột kia. Bảng nằm trước bảng cỡ prompt, kèm một dòng ở "Giới hạn đã biết".
+  - (Sửa 2026-11-19, PS-28c) `docs/metrics-report.md` trong repo chưa sinh lại: bản đó sinh từ vương quốc thật, và phiên làm task không chạm vương quốc thật. Bảng có mặt từ lần `pnpm docs:gen --kingdom <dir>` kế tiếp.
 - **Không làm**: đọc `stdout.jsonl` hay transcript của CLI; đổi hook; event mới.
 - **Test**: ba phiên của lần (J) cho một dòng của tộc `gemini` với ba phiên được nhắc, một tự kết thúc, hai bị cắt, và trung vị 206 504 token. Dòng `wrap_up` không có dòng kết thúc (phiên còn chạy) không được tính. Lời nhắc theo thước phút không có số token thêm. Tộc không có phiên nào được nhắc không có dòng. Domain 100 %.
 - **Xong khi**: `pnpm check` xanh; `elvaria metrics` trên một vương quốc thử in đúng bảng.
@@ -192,6 +199,10 @@ Cách thứ tư tốn mana: một phiên Claude nhỏ có trần thấp và mộ
   - `có` ở cả hai bước: không đổi gì.
   - `không` ở bước 1: đề xuất một task sửa đổi dòng `claude` của bảng `ROUTES` (`packages/hooks/src/wrap-up.ts:53-77`) sang đường từ chối một lời gọi `PreToolUse`, như agy và Codex. Task đó nên xong trước lần chạy thật dài kế tiếp.
   - `có` ở bước 1 nhưng phiên không thu dọn ở bước 2: đề xuất sửa chữ của lời nhắc, và dùng bảng của PS-28c để đo trước và sau.
+- **Kết quả** (2026-11-19, [spike](../spikes/claude-wrap-up-2026-11-19.md), Claude Code 2.1.327, 14 356 token): bước 1 là `có` ở cả hai lần với `claude-sonnet-5-5`. Bước 2 là `có` với `claude-opus-5-5`: sau lời nhắc phiên không đọc ghi chú nào, viết `handover.md` ở lượt kế tiếp rồi kết thúc. Ba chỗ thực tế khác kế hoạch:
+  - Bước 2 không đo được phần commit. `wrap-up.json` có sẵn nên lời nhắc tới ngay sau lời gọi tool đầu tiên, khi phiên chưa có gì để commit. Phần đó chờ dấu vết tự nhiên ở bảng "Sau lời nhắc" của PS-28c.
+  - Bước 2 cần một vương quốc giả trong thư mục tạm: `quests/<id>/handover.md` và `.runs/<id>-1/`, với id quest đúng dạng `QUEST_ID_SHAPE`. Thiếu nó thì hook bỏ `quest`, nên cổng Stop và journal tắt và phiên không giống phiên thật.
+  - Bản cli-facts mới kéo theo bốn chỗ trỏ tới nó: CLAUDE.md, `.claude/rules/runner.md`, `docs/guides/repo-handbook.md` và `docs/guides/operating-a-kingdom.md`, như lúc thêm bản 2026-11-16. Bốn file này nằm ngoài cột "File chạm chính" của PS-28d.
 
 ## Chỗ dòng §11 khác code
 

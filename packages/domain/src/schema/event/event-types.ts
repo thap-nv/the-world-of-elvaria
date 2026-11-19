@@ -24,6 +24,8 @@ export const EVENT_TYPES = [
   'agent.session.start',
   'agent.session.end',
   'agent.session.wrap_up',
+  // PS-28: a notch of a running session's stamina bar, written by the Steward for both roles.
+  'agent.session.usage',
   'agent.tool',
   'agent.tool.blocked',
   'agent.subagent.start',

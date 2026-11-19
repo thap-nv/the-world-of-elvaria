@@ -1,6 +1,6 @@
 // What a Steward holds while it runs and keeps between ticks (implementation-plan §3.1). Apart from steward.ts, which
 // creates it, since PS-03: the tick (tick.ts) and the loop (loop.ts) work on it too.
-import type { JudgeWait, QuestId, TribeId, TribeLimits, ZonedTime } from '@elvaria/domain';
+import type { JudgeWait, QuestId, StaminaMark, TribeId, TribeLimits, ZonedTime } from '@elvaria/domain';
 import type { PromptTemplates } from '@elvaria/runner-core';
 import type { HeldLock } from '@elvaria/store';
 
@@ -48,6 +48,8 @@ export interface State {
   readonly judgeWaits: Map<QuestId, JudgeWait>;
   /** Sessions already given their soft-ceiling reminder (sessions/wrap-up.ts): once per session. */
   readonly wrapped: Set<string>;
+  /** What the last `agent.session.usage` line of each held session said (sessions/usage.ts, PS-28). */
+  readonly notches: Map<string, StaminaMark>;
   /** The judges' prompts measured for the reviews about to be judged (review/prompt-size.ts). */
   readonly promptSizes: PromptSizes;
   /** The assignees' prompts measured for the open quests about to be claimed (sessions/claim-prompt-size.ts). */

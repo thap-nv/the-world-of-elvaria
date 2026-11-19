@@ -736,6 +736,13 @@
               "used_in": "`character.status`"
             },
             {
+              "vi": "Thể lực",
+              "en": "Stamina",
+              "id": ["stamina"],
+              "definition": "Thanh của một phiên nhân vật, người làm hay người chấm, đo quãng còn lại tới lúc cầu dao cắt phiên, không đo việc còn lại. Thanh đi theo thước (phút, token, lượt) đang gần ngưỡng cắt `hard_pct` nhất và cạn đúng ở đó; phiên người làm có mốc nhắc ở `soft_pct`. Thanh theo phiên: phiên mới, kể cả sau một lần cắt đi tiếp, bắt đầu đầy. Thanh là giá trị suy ra từ sổ sự kiện, không lưu ở file hay trường nào. Khác mana: thể lực cạn thì phiên bị cắt và nhân vật sa lầy, mana cạn thì nhân vật ngủ.",
+              "used_in": "event `agent.session.usage`, `staminaOf`, `sessionStaminaOf` (PS-28)"
+            },
+            {
               "vi": "Trạm quân y",
               "en": "Infirmary",
               "id": ["infirmary"],
@@ -2380,6 +2387,7 @@
                 "agent.session.start",
                 "agent.session.end",
                 "agent.session.wrap_up",
+                "agent.session.usage",
                 "agent.tool",
                 "agent.tool.blocked",
                 "agent.subagent.start",
@@ -2388,7 +2396,7 @@
                 "agent.compact",
                 "agent.notification"
               ],
-              "meaning": "những gì phiên CLI làm, do hook và stream ghi; `overrun` = học đồ quá `subagent_max_minutes`; `compact` = ngồi thiền"
+              "meaning": "những gì phiên CLI làm, do hook và stream ghi; `overrun` = học đồ quá `subagent_max_minutes`; `compact` = ngồi thiền. Hai dòng do Nhiếp chính ghi: `wrap_up` = lời nhắc thu dọn đã được ghi cho phiên người làm qua `soft_pct` (một lần mỗi phiên, kèm `wrap-up.json`; không nói phiên đã đọc nó); `usage` = một nấc 10 % của thanh thể lực, cho cả người làm lẫn người chấm, ghi khi nấc đổi hay trần đổi, không kèm file nào và không đổi gì của phiên (PS-28)"
             },
             {
               "group": "Kiểm tra máy",

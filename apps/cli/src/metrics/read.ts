@@ -1,5 +1,6 @@
-// The files the metrics ledger reads (implementation-plan §3.16.1): quests, verdicts, the event log and the inbox
-// commands the Steward handled (inbox/done/: the quest of a command, and the kind of a line written before PS-01b).
+// The files the metrics ledger reads (implementation-plan §3.16.1): quests, verdicts, the event log, the inbox
+// commands the Steward handled (inbox/done/: the quest of a command, and the kind of a line written before PS-01b) and
+// the characters (the tribe of a session, PS-28c).
 // Everything is read, nothing written: no lock, no migration written back, so a kingdom is measured while its
 // Steward runs, or stopped. Shared with scripts/docs-metrics-report.mjs, so the report and the command count alike.
 import { readFile, readdir } from 'node:fs/promises';
@@ -52,16 +53,25 @@ async function readHandledCommands(root: string): Promise<{ commands: InboxComma
 /** What the ledger reads from the kingdom at `dir`. */
 export async function readMetricsSource(dir: string): Promise<MetricsSource> {
   const store = openKingdom(dir);
-  const [quests, verdicts, log, inbox] = await Promise.all([
+  const [quests, verdicts, log, inbox, characters] = await Promise.all([
     store.quests.list(),
     store.verdicts.list(),
     openEventLog(store.root).read(),
     readHandledCommands(store.root),
+    store.characters.list(),
   ]);
   return {
-    input: { quests: quests.items, verdicts: verdicts.items, events: log.events, commands: inbox.commands },
+    input: {
+      quests: quests.items,
+      verdicts: verdicts.items,
+      events: log.events,
+      commands: inbox.commands,
+      characters: characters.items,
+    },
     skipped: [
-      ...[...quests.issues, ...verdicts.issues].map(({ file, message }) => `${file}: ${message}`),
+      ...[...quests.issues, ...verdicts.issues, ...characters.issues].map(
+        ({ file, message }) => `${file}: ${message}`,
+      ),
       ...log.issues.map(
         ({ file, offset, message }) => `${toPortable(path.relative(store.root, file))}@${offset}: ${message}`,
       ),
