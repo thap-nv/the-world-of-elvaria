@@ -1,6 +1,6 @@
-# Thể lực của phiên — PS-28, PS-28b và PS-28c: kế hoạch chi tiết
+# Thể lực của phiên — PS-28, PS-28b, PS-28c và PS-28d: kế hoạch chi tiết
 
-Ngày: 2026-11-19 · Trạng thái: **chờ chủ nhân chốt** các mục TL1–TL10 ở cuối file. Nguồn là dòng "Người dùng chốt (trong phiên hỏi đáp `the-world-of-elvaria-d4` …) ý **Thể lực của phiên**" ở [§11, 2026-11-18](../implementation-plan/11-2026-11-18.md). Năm ý (a)–(e) của dòng đó là bất biến của kế hoạch này. Ý (f) là câu hỏi, và mục "Câu (f)" dưới đây trả lời nó bằng dấu vết của một lần chạy thật. Phần "Ai đọc" và "Mẫu dùng lại" ở đầu [phase-1.5.md](phase-1.5.md) áp dụng nguyên. Tên hàm, tên trường và các con số dưới đây là đề xuất khớp với code hiện có. Phiên làm task được đổi cho hợp, miễn giữ hợp đồng, và ghi chỗ đổi vào §11. Chưa task nào dưới đây được mở. Phiên điều phối quyết thứ tự và lúc mở.
+Ngày: 2026-11-19 · Trạng thái: **chủ nhân đã chốt** sáng 2026-11-19 các mục TL1–TL10 ở cuối file: TL1–TL5 và TL7–TL10 theo khuyến nghị, riêng TL6 chủ nhân đổi thành "chạy canary ngay", nên có thêm task PS-28d ([§11, 2026-11-18](../implementation-plan/11-2026-11-18.md): dòng **docs/plan-stamina** nêu các mục, dòng "Người dùng chốt (trong phiên kế hoạch `plan-stamina` …)" ghi lời chốt). Nguồn là dòng "Người dùng chốt (trong phiên hỏi đáp `the-world-of-elvaria-d4` …) ý **Thể lực của phiên**" ở [§11, 2026-11-18](../implementation-plan/11-2026-11-18.md). Năm ý (a)–(e) của dòng đó là bất biến của kế hoạch này. Ý (f) là câu hỏi, và mục "Câu (f)" dưới đây trả lời nó bằng dấu vết của một lần chạy thật. Phần "Ai đọc" và "Mẫu dùng lại" ở đầu [phase-1.5.md](phase-1.5.md) áp dụng nguyên. Tên hàm, tên trường và các con số dưới đây là đề xuất khớp với code hiện có. Phiên làm task được đổi cho hợp, miễn giữ hợp đồng, và ghi chỗ đổi vào §11. Chưa task nào dưới đây được mở. Phiên điều phối quyết thứ tự và lúc mở.
 
 ## Năm ý đã chốt
 
@@ -63,7 +63,7 @@ Kế hoạch xử lý câu hỏi còn mở này theo ba cách:
 2. **PS-28c trả lời bằng số, 0 mana.** Sổ đo thêm bảng "sau lời nhắc" theo tộc: bao nhiêu phiên đã được ghi lời nhắc, bao nhiêu phiên tự kết thúc và bao nhiêu phiên bị cắt, cùng số token và số phút từ lời nhắc tới lúc kết thúc. Phiên Claude đầu tiên qua mốc sẽ hiện ngay trong bảng. Lần (J) là mốc so sánh của một tộc lúc chưa có đường nhắc: hai trong ba phiên bị cắt, mỗi phiên đốt thêm 140 000 tới 233 000 token.
 3. **Cách đọc tay một phiên.** Có file `hook/wrap-up-reminded/<session>.json` nghĩa là hook đã trao chữ cho CLI. Sau giờ ghi của file đó, xem trong `stdout.jsonl` phiên có viết `handover.md`, commit rồi kết thúc trong vài lượt không.
 
-Cách thứ tư tốn mana: một phiên Claude nhỏ có trần thấp và một chuỗi canary, khoảng 20 000 tới 30 000 token theo ước lượng của [file dò](phase-2-probes/hook-reminder.md). Chủ nhân quyết ở mục TL6.
+Cách thứ tư tốn mana: một phiên Claude nhỏ có trần thấp và một chuỗi canary, khoảng 20 000 tới 30 000 token theo ước lượng của [file dò](phase-2-probes/hook-reminder.md). Chủ nhân chốt ở mục TL6 là chạy canary ngay. Việc đó là task PS-28d dưới đây. Ba cách trên vẫn giữ: thanh vẫn không dựa vào (f), và PS-28c đo cả những lần sửa đường nhắc về sau.
 
 ## Tổng quan và cách chia
 
@@ -90,10 +90,11 @@ Cách thứ tư tốn mana: một phiên Claude nhỏ có trần thấp và mộ
 | PS-28 | Thước thể lực, event `agent.session.usage`, hàm gấp từ sổ | 4 | — | `p/domain/src/{breaker,world,schema/event}/**`, `p/steward/src/{sessions,tick.ts,steward-state.ts}`, `p/i18n/src/glossary.json` |
 | PS-28b | Thanh dạng chữ, trần đang áp, chuông ở mốc nhắc | 4 | PS-28 | `a/cli/src/{quest,run}/**`, `p/steward/src/{notice.ts,sessions/**}`, hai file locale, hướng dẫn vận hành |
 | PS-28c | Sổ đo "sau lời nhắc" | 2 | — | `p/domain/src/metrics/**`, `a/cli/src/metrics/**`, `docs/metrics-report.md` |
+| PS-28d | Canary lời nhắc của Claude (spike, tốn mana, trần 30 000 token) | 2 | — | `docs/spikes/`, `docs/reference/cli-facts-*.md` |
 
-- **Thứ tự theo phụ thuộc** (đề xuất; phiên điều phối quyết): PS-28 và PS-28c không cần nhau và không cần task nào trước. PS-28b sau PS-28.
+- **Thứ tự theo phụ thuộc** (đề xuất; phiên điều phối quyết): PS-28, PS-28c và PS-28d không cần nhau và không cần task nào trước. PS-28b sau PS-28. PS-28d không chặn task nào, vì thanh không dựa vào câu (f).
 - **Chồng nhau**: `packages/i18n/src/glossary.json`, hai file locale, `packages/domain/src/index.ts`, `docs/schemas/**`, `docs/events.md`. PS-28 và PS-28b cùng chạm `packages/steward/src/sessions/**`. PS-16 (trần cỡ diff) cũng chạm `packages/domain/src/breaker/**`. Nhánh merge sau giữ cả hai phía và sinh lại file sinh.
-- **Mana**: cả ba task dùng CLI giả và đồng hồ giả, 0 mana.
+- **Mana**: PS-28, PS-28b và PS-28c dùng CLI giả và đồng hồ giả, 0 mana. Riêng PS-28d chạy CLI thật, trần 30 000 token, do một phiên của chủ nhân chạy.
 
 ## PS-28 — Thước thể lực và event `agent.session.usage`
 
@@ -170,6 +171,28 @@ Cách thứ tư tốn mana: một phiên Claude nhỏ có trần thấp và mộ
 - **Xong khi**: `pnpm check` xanh; `elvaria metrics` trên một vương quốc thử in đúng bảng.
 - **Chỗ chừa**: khi PS-28 đã có, bảng có thể thêm cột "tiếp sức" (số phiên có `limit` tăng giữa chừng).
 
+## PS-28d — Canary lời nhắc của Claude (spike, tốn mana)
+
+- **Mục tiêu**: trả lời câu (f) bằng một phép đo trên CLI thật. Phép đo có hai câu hỏi. Chuỗi mà hook `PostToolUse` trả trong `hookSpecificOutput.additionalContext` có tới model của Claude Code trong phiên headless không? Và khi chuỗi đó là lời nhắc thật của Elvaria, phiên có thu dọn và kết thúc không?
+- **Ai chạy và tốn gì** (mục TL6): một phiên Claude Code của chủ nhân chạy, như spike PS-11a. Trần là 30 000 token cho cả spike. Phiên dừng và báo chủ nhân khi tổng đã dùng tới 25 000 token mà chưa xong. Spike chạy trong một thư mục tạm ngoài mọi vương quốc, không cần Nhiếp chính và không chạm `my-kingdom`.
+- **Đọc trước**: [file dò](phase-2-probes/hook-reminder.md) mục 1 và mục 4 (mẫu canary đã viết cho Codex và agy); [cli-facts 2026-11-12](../reference/cli-facts-2026-11-12.md) §1.4 và [cli-facts 2026-11-16](../reference/cli-facts-2026-11-16.md) §1.4; [spike Claude](../spikes/claude-2026-11.md); `packages/hooks/src/wrap-up.ts`; `packages/runner-claude/src/settings.ts`; [runner.md](../../.claude/rules/runner.md) (phiên bản CLI đã đo).
+- **Bước 1: chuỗi có tới model không.** Bước này dùng model rẻ nhất của tộc và tốn vài nghìn token.
+  - Thư mục tạm có một file chữ ngắn. `settings.json` của lần chạy khai một hook `PostToolUse` là một script Node nhỏ. Script in ra đúng JSON của đường Claude, với `additionalContext` là một chuỗi canary ngẫu nhiên. Chuỗi đó không có trong prompt, trong file hay trong tên file nào.
+  - Prompt bảo phiên đọc file, rồi chép lại nguyên văn mọi lời nhắc hệ thống nó nhận được sau lần đọc đó, và trả lời `NONE` nếu không có.
+  - Phiên chạy bằng `claude -p` với `--settings`, `--output-format stream-json`, số lượt nhỏ và cùng bộ cờ quyền mà `runner-claude` dùng.
+  - Kết luận là `có` khi câu trả lời chứa chuỗi canary, và là `không` khi câu trả lời là `NONE`. Phiên chạy hai lần để loại kết quả ngẫu nhiên.
+- **Bước 2: lời nhắc thật có đổi cách làm không.** Bước này chỉ chạy khi bước 1 là `có`, và dùng model mà nhân vật tộc Claude hay làm việc nhất.
+  - Thư mục tạm là một repo git tí hon có năm file chữ. Hook là hook thật của Elvaria (`hookCommand()` trên bản build), với `policy.json` vai `assignee` và một `run_dir` đã có sẵn `wrap-up.json` phiên bản 1.
+  - Prompt giao một việc nhiều bước: đọc lần lượt năm file và viết tóm tắt từng file vào một file kết quả. Prompt kèm luật thư bàn giao rút gọn của prompt người làm.
+  - Phiên quan sát hai điều. File `hook/wrap-up-reminded/<session>.json` có xuất hiện sau lời gọi tool đầu tiên không? Sau đó phiên có ngừng nhận việc mới, commit, viết `handover.md` rồi kết thúc trong vài lượt không, hay nó làm tiếp tới hết năm file?
+- **Ghi lại**: file `docs/spikes/claude-wrap-up-<ngày>.md` ghi lệnh đã chạy, phiên bản CLI, model, số token đã tốn, kết luận `có` hay `không` cho từng bước và trích đoạn stream làm chứng. Một bản cli-facts mới theo ngày thay câu "chưa đo bằng CLI thật" ở §1.4. Một dòng §11 ghi kết quả.
+- **Không làm**: sửa hook, runner hay prompt; chạy trên vương quốc thật; đo lại Codex và agy (đã đo ở #220).
+- **Xong khi**: file spike có kết luận cho bước 1, và cho bước 2 nếu bước đó chạy; cli-facts nói đúng; tổng token nằm trong trần; `pnpm docs:check` xanh.
+- **Hệ quả của kết quả** (mỗi hệ quả là một đề xuất ở dòng §11 của spike, không làm trong spike):
+  - `có` ở cả hai bước: không đổi gì.
+  - `không` ở bước 1: đề xuất một task sửa đổi dòng `claude` của bảng `ROUTES` (`packages/hooks/src/wrap-up.ts:53-77`) sang đường từ chối một lời gọi `PreToolUse`, như agy và Codex. Task đó nên xong trước lần chạy thật dài kế tiếp.
+  - `có` ở bước 1 nhưng phiên không thu dọn ở bước 2: đề xuất sửa chữ của lời nhắc, và dùng bảng của PS-28c để đo trước và sau.
+
 ## Chỗ dòng §11 khác code
 
 Dòng §11 nguồn đúng về hướng. Sáu chỗ sau cần đọc chính xác hơn khi làm:
@@ -188,11 +211,13 @@ Dòng §11 nguồn đúng về hướng. Sáu chỗ sau cần đọc chính xác
 - [operating-a-kingdom.md](../guides/operating-a-kingdom.md): mục tiếp sức (PS-28b).
 - Không ADR nào đổi. ADR 0030 giữ nguyên: thể lực chỉ hiển thị, không quyết định gì. ADR 0009 giữ nguyên: thể lực không phải mana và không đi vào ước lượng mana.
 
-## Quyết định (chờ chủ nhân chốt)
+## Quyết định (chủ nhân chốt 2026-11-19, theo khuyến nghị; TL6 chủ nhân đổi)
+
+Chủ nhân chốt trong phiên kế hoạch, qua hộp hỏi đáp: TL1–TL5 và TL7–TL10 theo khuyến nghị dưới đây. Riêng TL6 chủ nhân chọn phương án khác.
 
 **Cần trước khi mở task** (ghi task liên quan):
 
-- **TL1** (mọi task) Cách chia và id: PS-28, PS-28b, PS-28c như bảng ở "Tổng quan". Khuyến nghị: nhận. Lý do: mỗi task vừa một context và không task nào quá 4 ý. PS-28c đứng riêng vì nó ở vùng sổ đo và không cần hai task kia.
+- **TL1** (mọi task) Cách chia và id: PS-28, PS-28b, PS-28c như bảng ở "Tổng quan". Khuyến nghị: nhận. Lý do: mỗi task vừa một context và không task nào quá 4 ý. PS-28c đứng riêng vì nó ở vùng sổ đo và không cần hai task kia. (Sau lời chốt TL6, bảng có thêm PS-28d.)
 - **TL2** (PS-28) Event mới tên `agent.session.usage`, do Nhiếp chính ghi cho cả hai vai, data gồm `role`, `measure`, `used`, `limit`, `pct`, `soft_pct`, `hard_pct`. Nấc là 10 % của **thanh**, tức là của quãng tới ngưỡng cắt. Nhiếp chính ghi thêm một dòng khi trần đổi. Khuyến nghị: nhận. Phương án khác: nấc là 10 % của trần danh nghĩa. Khi đó mỗi phiên có tới 15 dòng, và nấc không trùng với ô của thanh.
 - **TL3** (PS-28) Thuật ngữ `stamina` (VI "Thể lực", EN "Stamina") và định nghĩa thanh ở "Tổng quan": thanh là giá trị suy từ sổ sự kiện, không lưu ở đâu và không là trường của `WorldState`. Vùng đỏ bắt đầu khi thanh còn 20 %. Thanh của người chấm không có mốc nhắc. Khuyến nghị: nhận. Lý do: giữ được phép thử P0-09, và một nguồn cho mọi nơi hiển thị.
 - **TL4** (PS-28b) Chuông ở mốc `soft_pct` rung cho cả phiên người làm lẫn phiên người chấm, mỗi phiên một lần, với chữ riêng cho từng vai. Chỉ có chuông, không có mục bản tấu. Khuyến nghị: nhận. Lý do: người chấm bị cắt thì cả lượt chấm bỏ đi và mở lại từ đầu, không có "đi tiếp" như người làm, nên tiếp sức cho người chấm đáng giá hơn. Bản tấu là file của cả ngày, còn mốc này chỉ có nghĩa trong vài phút. Phương án khác: chỉ rung cho người làm, ít chuông hơn.
@@ -200,7 +225,7 @@ Dòng §11 nguồn đúng về hướng. Sáu chỗ sau cần đọc chính xác
 
 **Chờ được**:
 
-- **TL6** Câu (f): chờ dấu vết tự nhiên và để PS-28c trả lời bằng số. Phương án khác: chạy một canary Claude thật, khoảng 20 000 tới 30 000 token, do một phiên của chủ nhân chạy. Khuyến nghị: chờ, vì thanh không dựa vào câu trả lời và PS-28c tốn 0 mana. Nếu sau hai tuần chạy thật vẫn chưa có phiên Claude nào qua mốc thì xét lại canary.
+- **TL6** Câu (f). Khuyến nghị của phiên là chờ dấu vết tự nhiên và để PS-28c trả lời bằng số, vì thanh không dựa vào câu trả lời và PS-28c tốn 0 mana. **Chủ nhân chốt khác: chạy canary ngay**, tức là một phiên Claude nhỏ có trần thấp và một chuỗi canary, khoảng 20 000 tới 30 000 token, do một phiên của chủ nhân chạy. Hệ quả: thêm task PS-28d với trần 30 000 token. PS-28c vẫn giữ theo TL1.
 - **TL7** Thanh trong thế giới 3D và khách nhẹ: chưa mở task. Kế hoạch chỉ ghi hợp đồng (`sessionStaminaOf`) vào "Gợi ý cho task khác" cho các việc P2-01, P2-04 và P2-07. Khuyến nghị: nhận, theo ý (e).
 - **TL8** Cột thể lực trong `quest list` và `character list`: chưa làm. Khuyến nghị: xét sau khi chủ nhân đã dùng `quest show` vài ngày.
 - **TL9** Hook ghi một dòng event lúc trao lời nhắc (biên nhận trong sổ, thay cho thư mục `wrap-up-reminded/`), và lời nhắc cho người chấm: chưa làm. Khuyến nghị: xét sau khi PS-28c có số.
