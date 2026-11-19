@@ -10,6 +10,7 @@ import { reportedEscapesSection, unsealedSection } from './view-delegation.ts';
 import { amendmentsSection, memosSection, objectionsSection } from './view-memos.ts';
 import { firstEditsLine, graphLine, promptSection } from './view-sessions.ts';
 import { adviceSection, passByRunSection, statusTimesSection } from './view-waits.ts';
+import { afterWrapUpSection } from './view-wrap-ups.ts';
 import type { MetricsSection } from './section.ts';
 
 export type { MetricsSection, MetricsTable } from './section.ts';
@@ -245,6 +246,7 @@ const LIMITS = [
   'prompts',
   'status_times',
   'advice',
+  'after_wrap_up',
 ] as const;
 
 const limitsSection = (t: Translate): MetricsSection => ({
@@ -271,6 +273,7 @@ export const metricsSections = (t: Translate, metrics: Metrics): MetricsSection[
   objectionsSection(t, metrics),
   amendmentsSection(t, metrics),
   readsSection(t, metrics),
+  afterWrapUpSection(t, metrics),
   promptSection(t, metrics),
   limitsSection(t),
 ];
