@@ -225,6 +225,8 @@ gói bằng chứng ở `temple/evidence.ts`, câu trả lời ở `schema/templ
 (`templeReplyIssues`, `templeCommands`). Một quyết định bậc `scripture` có thể mang `replaces` (hai dòng của Thầy tu trở
 lên), thành thao tác `merge`. `elvaria temple evidence` có `--json`.
 
+**Thực tế PS-12f** (2026-11-19, dòng PS-12f của [§11](../implementation-plan/11-2026-11-19.md)): việc ngoài nhịp ở `apps/cli/src/temple/{job,run-temple,monk,report,run}.ts` (`runTemple` dùng chung cho `temple run` và việc ngoài nhịp); `askTemple` ở `packages/chancellor/src/temple.ts` (file mới); `hear` nhận `role?` và `budget?` ở `ChancellorSession`, phần chung giữ trong `chancellor`. Mẫu prompt là hai file `temple.md` và `temple-context.md` (như `triage`), gói in JSON gọn vì trần đo trên chuỗi đó. `JobView` thêm `temple { log, due }` và `mana_open`; Nhiếp chính gấp sổ Đền một lần lúc khởi động rồi đọc tiếp từ con trỏ (`schedule/temple-book.ts`), nên `foldTempleLog` được thêm ở domain. Phiên Thầy tu không tool: `asMonk` bỏ `tools.allow` của nghề, giữ `deny`. Lần chạy hỏng vẫn ghi `temple.ran` (0 thao tác, 0 thư, token đã tốn). Thử lại một lần chỉ trên tộc không có cờ JSON Schema.
+
 - **Mục tiêu**: khi bằng chứng đã đủ và Đền được bật, một phiên Thầy tu đọc các lỗi lặp cùng số đo rồi trả mỗi lỗi một quyết định có bậc. Mỗi lần chạy tốn nhiều nhất một phiên có trần.
 - **Đọc trước**: dòng 6–12 ở trên; `apps/cli/src/triage/**`, `apps/cli/src/say/hearing.ts`, `packages/chancellor/src/{session,triage-memos}.ts`; `packages/steward/src/schedule/**`; `packages/steward/src/mana/book.ts`; [§3.5](../implementation-plan/3.5-mana.md); [runner.md](../../.claude/rules/runner.md) mục structured output của Codex và agy.
 - **Thêm**:

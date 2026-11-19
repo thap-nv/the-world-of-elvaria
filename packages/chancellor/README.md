@@ -56,6 +56,14 @@ signal)` runs one session with no tool (`buildAmendmentPrompt`; the amendment-de
   number aside, so a protected file holds the memo whatever the Chancellor flagged) and gives inbox commands:
   within it an `edit_quest` that merges, a `create_quest` made open, a `decide_memo` that sets a memo aside; beyond it
   an `escalate_memo` per memo, a new quest waiting as a draft. One session's plumbing (`src/session.ts`) serves both.
+- Asks the Temple's Monk (PS-12f, implementation-plan §3.16.8, ADR 0027): `askTemple(context, session, signal)` runs one
+  session of the Monk's own role and caps (`asMonk`: the class's `tools.allow` dropped so the session has no tool,
+  `deny` kept; `ChancellorSession.role?` and `budget?` let `hear` open it, `TEMPLE_MAX_TURNS`,
+  `TEMPLE_MAX_MINUTES`) with the evidence pack (`buildTemplePrompt` of runner-core; the `temple-reply` contract,
+  `TEMPLE_REPLY_JSON_SCHEMA`) and checks the reply against the pack (`templeCheckOf`, the domain's
+  `templeReplyIssues`). A tribe with no JSON Schema flag gets one retry on a reply that fails the check; a session
+  that fails (`TempleFailure`: invalid reply, CLI error, timeout, rate limit, no reply, stopped) still carries the
+  tokens it spent.
 
 ## Does not
 

@@ -271,6 +271,11 @@
   the bell names them (`released`), and a report applied again still frees them. The digest lists the characters still
   suspended for a streak and, while the Temple is off or has no Monk, the repeated failures that wait
   (`templeNoticesOf` over the files, the verdicts and the log, no model).
+  (PS-12f, `schedule/temple-book.ts`) The Temple's count for the schedule is kept by the Steward: it folds the whole
+  log once at start (`foldTempleLog`, then `events.read(cursor)` each tick, so a run `elvaria temple run` wrote is
+  counted) and gives every on-call job `JobView.temple` (`log`, and `due` = the domain's `templeDue` over
+  `kingdom.schedule.temple` of that tick, so switching the Temple on needs no restart) and `JobView.mana_open`
+  (the pools that still open a session), so a job's `ready` reads no log.
 - Quotes a gazetteer stamped with the commit it was written at (`<!-- elvaria:commit <sha> -->`, PS-21) without the
   stamp and with how many commits touched each top-level folder since, up to the quest's fork point
   (`sessions/gazetteer.ts`, `Plots.drift`, optional: folder plots have none); a drift that cannot be read costs the
