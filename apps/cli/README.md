@@ -251,7 +251,12 @@ show` prints the brief apart from the rest of the description and, while the pla
   `src/metrics/section.ts`; `src/metrics/view-waits.ts` those of PS-06b (time in each status, pass rate by run, the
   Chancellor's advice beside the owner's decisions); `src/metrics/view-wrap-ups.ts` the table of PS-28c (per tribe,
   the assignee sessions reminded at the soft ceiling that ended on their own or were cut, from the characters
-  `read.ts` reads too). `--plan <quest>` prints instead how a plan quest's sub-quests went
+  `read.ts` reads too; (PS-12b) with a column for those whose limit was raised while they ran);
+  `src/metrics/view-lessons.ts` the three tables of PS-12b: each lesson's loads, `helped`, `missed` and effect, each
+  kind of failure by bucket of 20 judged runs, and the failures that repeat. For these `read.ts` also parses the
+  scriptures with the Steward's `lessonsIn` and hands the ledger the kind and scope of each line; the sentence stays
+  in `MetricsSource.sentences` and the view joins it when it prints, so `--json` names lines by ref alone
+  (`src/metrics/view-limits.ts` holds the known limits). `--plan <quest>` prints instead how a plan quest's sub-quests went
   against its plan (`planAccuracyOf`, `src/metrics/view-plan.ts`); a quest that is no plan, one that is not there, or
   `--plan` with a window is a usage error. The text view also prints kingdom-wide calibration for every configured
   tribe: token factor, turn ceiling, independent sample counts and default/measured sources, using the same domain

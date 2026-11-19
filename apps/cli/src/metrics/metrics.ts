@@ -101,7 +101,7 @@ async function runMetrics(input: CommandInput, cli: CliContext): Promise<ExitCod
   if (plan !== undefined) return printPlan(input, ctx, source, plan);
   const metrics = metricsOf(source.input, window);
   if (flagOption(input, 'json') === true) ctx.io.out(JSON.stringify(metrics, null, JSON_INDENT));
-  else printSections(ctx, metricsSections(ctx.t, metrics));
+  else printSections(ctx, metricsSections(ctx.t, metrics, source.sentences));
   return EXIT.ok;
 }
 

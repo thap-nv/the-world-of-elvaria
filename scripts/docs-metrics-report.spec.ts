@@ -76,6 +76,45 @@ describe('renderMetricsReport', () => {
     expect(report.endsWith('\n')).toBe(true);
   });
 
+  it('has the three lesson tables of PS-12b, empty, in Vietnamese', () => {
+    const report = renderMetricsReport(INPUT);
+    expect(report).toContain('## Bài học trong kinh: lượt nạp, trúng, trượt và tác dụng');
+    expect(report).toContain('Chưa phiên nào ghi dấu vết nạp theo dòng');
+    expect(report).toContain(
+      '## Loại lỗi theo thời gian (số lượt trượt trên số lượt được chấm, mỗi khoảng 20 lượt)',
+    );
+    expect(report).toContain('## Lỗi lặp trong 50 lượt được chấm gần nhất (từ 3 phán quyết cùng loại)');
+  });
+
+  it('joins the sentence of a line of the scriptures into its row, by ref', () => {
+    const ref = 'L_20261108_4k2pqz';
+    const first = {
+      v: 1,
+      id: '01JC0000000000000000000001',
+      ts: '2026-11-08T01:00:00+07:00',
+      type: 'quest.started',
+      actor: { kind: 'steward' },
+      quest: QUEST,
+      session: 's-1',
+      data: {
+        quest: { id: QUEST, status: 'working', attempts: 1 },
+        load_trace: {
+          scriptures: [],
+          skills: [],
+          blocks: [{ part: 'user', id: 'quest', chars: 1 }],
+          lessons: [ref],
+        },
+      },
+    } as unknown as MetricsInput['events'][number];
+    const input = { ...INPUT, events: [first] };
+    const report = renderMetricsReport(input, [], new Map([[ref, 'Keep the README in step with the code.']]));
+    expect(report).toMatch(
+      new RegExp(
+        `\\| ${ref} \\| — \\| 1 \\| 0 \\| 0 \\| — \\| 2026-11-08 \\| 2026-11-08 \\| Keep the README`,
+      ),
+    );
+  });
+
   it('names what the reader skipped', () => {
     expect(renderMetricsReport(INPUT, ['inbox/done/torn.json: not JSON'])).toContain(
       'Bỏ qua 1 file hay dòng không đọc được: `inbox/done/torn.json: not JSON`.',

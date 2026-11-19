@@ -10,6 +10,8 @@ import { reportedEscapesSection, unsealedSection } from './view-delegation.ts';
 import { amendmentsSection, memosSection, objectionsSection } from './view-memos.ts';
 import { firstEditsLine, graphLine, promptSection } from './view-sessions.ts';
 import { adviceSection, passByRunSection, statusTimesSection } from './view-waits.ts';
+import { failKindsSection, lessonsSection, repeatsSection } from './view-lessons.ts';
+import { limitsSection } from './view-limits.ts';
 import { afterWrapUpSection } from './view-wrap-ups.ts';
 import type { MetricsSection } from './section.ts';
 
@@ -234,28 +236,15 @@ function readsSection(t: Translate, metrics: Metrics): MetricsSection {
   });
 }
 
-const LIMITS = [
-  'rule',
-  'check',
-  'crash',
-  'cancelled',
-  'day',
-  'set_aside',
-  'reads',
-  'first_edits',
-  'prompts',
-  'status_times',
-  'advice',
-  'after_wrap_up',
-] as const;
-
-const limitsSection = (t: Translate): MetricsSection => ({
-  title: t('cli.metrics.title.limits'),
-  lines: LIMITS.map((limit) => t(`cli.metrics.limit.${limit}`)),
-});
-
-/** Every section of the ledger, in the order the command prints them. */
-export const metricsSections = (t: Translate, metrics: Metrics): MetricsSection[] => [
+/**
+ * Every section of the ledger, in the order the command prints them. `sentences` is the text of each line of the
+ * scriptures by ref, for the lessons table (PS-12b); without it the table names its lines by ref alone.
+ */
+export const metricsSections = (
+  t: Translate,
+  metrics: Metrics,
+  sentences: ReadonlyMap<string, string> = new Map(),
+): MetricsSection[] => [
   summarySection(t, metrics),
   reworkSection(t, metrics.rework),
   firstPassSection(t, metrics),
@@ -273,6 +262,9 @@ export const metricsSections = (t: Translate, metrics: Metrics): MetricsSection[
   objectionsSection(t, metrics),
   amendmentsSection(t, metrics),
   readsSection(t, metrics),
+  lessonsSection(t, metrics, sentences),
+  failKindsSection(t, metrics),
+  repeatsSection(t, metrics),
   afterWrapUpSection(t, metrics),
   promptSection(t, metrics),
   limitsSection(t),
