@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   JOURNAL,
+  LESSONS,
   LETTER,
   QUEST,
   REGISTRY,
@@ -34,7 +35,7 @@ const assignee: AssigneePromptInput = {
   character: THORN,
   territory: TERRITORY,
   registry: REGISTRY,
-  scriptures: ['- [L_20261105_a1b2c3] Run `pnpm i18n:check` before submitting any locale change.'],
+  scriptures: LESSONS,
   skills: [],
   gazetteer: '`apps/api`: NestJS. `apps/web`: React + TanStack Query.',
   class_prompt: classPromptOf('knight'),

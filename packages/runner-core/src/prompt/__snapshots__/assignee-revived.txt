@@ -133,7 +133,7 @@ Thêm script `pnpm check` gom lint + typecheck + test + i18n:check; cập nhật
 
 Lessons from earlier verdicts. Follow them unless the territory's rules say otherwise.
 
-- [L_20261105_a1b2c3] Run `pnpm i18n:check` before submitting any locale change.
+- Run `pnpm i18n:check` before submitting any locale change.
 
 # Picking up the quest
 
