@@ -60,6 +60,13 @@ export const BREAKER_DEFAULTS = {
    */
   verifier_tokens_multiplier: 2,
 } as const;
+/**
+ * A session's stamina bar (PS-28) moves in notches of this share of the way to its hard threshold: the Steward writes
+ * one `agent.session.usage` line per notch crossed, ten at most for a session cut, not one every tick.
+ */
+export const STAMINA_STEP_PCT = 10;
+/** A bar with this much left or less is in its red zone, whatever its reminder mark says (PS-28). */
+export const STAMINA_CRITICAL_LEFT_PCT = 20;
 /** Ten completed first runs before a tribe replaces its provisional ceilings. */
 export const CALIBRATION_MIN_SAMPLES = 10;
 export const MEDIAN_PAIR_SIZE = 2;

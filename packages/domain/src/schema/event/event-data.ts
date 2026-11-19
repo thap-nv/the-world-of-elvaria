@@ -43,6 +43,7 @@ import {
   UpgradeSwitchedDataSchema,
 } from './upgrade-data.ts';
 import { TribeCheckedDataSchema } from './tribe-data.ts';
+import { AgentSessionUsageDataSchema } from './session-data.ts';
 import { ChancellorAnsweredDataSchema } from './chancellor-data.ts';
 import type { EventType } from './event-types.ts';
 
@@ -194,6 +195,7 @@ export const EVENT_DATA_SCHEMAS = {
   'agent.session.start': AgentSessionStartDataSchema,
   'agent.session.end': AgentSessionEndDataSchema,
   'agent.session.wrap_up': AgentSessionWrapUpDataSchema,
+  'agent.session.usage': AgentSessionUsageDataSchema,
   'agent.subagent.end': AgentSubagentEndDataSchema,
   'agent.subagent.overrun': AgentSubagentOverrunDataSchema,
   'check.start': CheckStartDataSchema,

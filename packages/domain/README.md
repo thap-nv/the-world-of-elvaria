@@ -192,6 +192,15 @@ patrol`); `partyOf` counts the quest a party is named after, `partyStatusOf` and
   `SessionRules` accepts the character map and tribes alongside percentages, and `planTick` supplies them.
   `wrapUpsOf` takes the same arguments as `breakersOf` and returns reminders only; `agent.session.wrap_up`
   carries `{measure, used, limit, pct}` at event v2. Sending reminders is the Steward's next integration step.
+  (PS-28) A session's stamina (`src/breaker/stamina.ts`): `gaugesOf` is the list of gauges the breakers measure,
+  `staminaOf` (the arguments of `evaluateBreakers` and the session's role) the bar of the gauge nearest its cut,
+  empty where `hard_pct` cuts, in notches of `STAMINA_STEP_PCT` (10), with the reminder mark for an assignee only
+  and a red zone at `STAMINA_CRITICAL_LEFT_PCT` (20) left; `staminaMoved` says when the Steward writes an
+  `agent.session.usage` line (`src/schema/event/session-data.ts`: the notch moved, or the same gauge's ceiling).
+  `sessionReadingsOf` reads every held session once, verdict and bar from the same ceilings, and `wrapUpsIn` takes
+  the reminders out of it. `sessionStaminaOf(events)` (`src/world/stamina-view.ts`) folds a journal or the day's log
+  into the bar of each quest's open session, with `previous` after a cut that went on (ADR 0030); the bar is never
+  stored and never part of `WorldState`.
   A tribe whose adapter reports no usage (its `TribeLimits.breakers`
   is `minutes_only`, handed in as `measure` by `measureOf`) has the time breaker alone (P1-33); `breakersOf`
   applies it to the sessions the Steward holds

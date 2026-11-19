@@ -1537,6 +1537,75 @@
       "if": {
         "properties": {
           "type": {
+            "const": "agent.session.usage"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "A notch of the session's stamina bar (PS-28): the bar is what is left of the way to the cut, not of the work, and is never stored; readers fold these lines (sessionStaminaOf).",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "role",
+              "measure",
+              "used",
+              "limit",
+              "pct",
+              "soft_pct",
+              "hard_pct"
+            ],
+            "properties": {
+              "role": {
+                "description": "Whose session: an assignee's bar has the reminder mark, a judge's none.",
+                "enum": [
+                  "assignee",
+                  "verifier"
+                ]
+              },
+              "measure": {
+                "description": "The gauge the bar follows: of the ones the breakers read, the nearest its cut.",
+                "enum": [
+                  "time",
+                  "tokens",
+                  "turns"
+                ]
+              },
+              "used": {
+                "description": "Minutes for `time`, as on `agent.session.wrap_up`.",
+                "type": "number",
+                "minimum": 0
+              },
+              "limit": {
+                "description": "Nominal ceiling in force, before the soft and hard percentages: tokenCeilingOf for tokens (the tribe calibrated, a judge times verifier_tokens_multiplier), budget.max_minutes for time.",
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "pct": {
+                "description": "Used as a percentage of the nominal ceiling.",
+                "type": "number",
+                "minimum": 0
+              },
+              "soft_pct": {
+                "description": "breakers.soft_pct in force: the reminder mark of the bar.",
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "hard_pct": {
+                "description": "breakers.hard_pct in force: the bar is empty here, where the session is cut.",
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
             "const": "agent.subagent.end"
           }
         }
@@ -3730,6 +3799,7 @@
         "agent.session.start",
         "agent.session.end",
         "agent.session.wrap_up",
+        "agent.session.usage",
         "agent.tool",
         "agent.tool.blocked",
         "agent.subagent.start",
