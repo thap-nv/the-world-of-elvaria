@@ -1,6 +1,6 @@
 # Đền bản đầu — PS-12, PS-12b, PS-12c, PS-12d và PS-12e: kế hoạch chi tiết
 
-Ngày: 2026-11-19 · Trạng thái: **chờ chủ nhân chốt** các mục DB1–DB17 ở cuối file ([§11, 2026-11-19](../implementation-plan/11-2026-11-19.md): dòng **docs/plan-ps-12**). Chủ nhân mở phiên kế hoạch này bằng quyết định (258). Nguồn bất biến là [§3.16.8](../implementation-plan/3.16-self-strengthening.md), [ADR 0027](../adr/0027-measured-learning.md), nguyên tắc 14 cùng mục 6 và mục 14 của kế hoạch sản phẩm 0.8, và [lesson-sharing.md](lesson-sharing.md) (chủ nhân chốt cả file ngày 2026-11-16): luật xếp bài học L5, bước 0 và tám ràng buộc S1–S8. Phần "Ai đọc" và "Mẫu dùng lại" ở đầu [phase-1.5.md](phase-1.5.md) áp dụng nguyên. Tên hàm, tên trường, tên file và các con số dưới đây là đề xuất khớp với code hiện có. Phiên làm task được đổi cho hợp, miễn giữ hợp đồng, và ghi chỗ đổi vào §11. Chưa task nào dưới đây được mở. Phiên điều phối quyết thứ tự và lúc mở.
+Ngày: 2026-11-19 · Trạng thái: **chủ nhân đã chốt ba mục** DB5, DB8 và DB11 theo khuyến nghị; tám mục phải chốt còn lại (DB1–DB4, DB6, DB7, DB9, DB10) **chưa chốt**, chủ nhân muốn bàn thêm ([§11, 2026-11-19](../implementation-plan/11-2026-11-19.md): dòng **docs/plan-ps-12** nêu các mục, dòng "Người dùng chốt (trong phiên kế hoạch `plan-ps-12` …)" ghi lời chốt). Chưa task nào mở được cho tới khi tám mục đó được chốt. Chủ nhân mở phiên kế hoạch này bằng quyết định (258). Nguồn bất biến là [§3.16.8](../implementation-plan/3.16-self-strengthening.md), [ADR 0027](../adr/0027-measured-learning.md), nguyên tắc 14 cùng mục 6 và mục 14 của kế hoạch sản phẩm 0.8, và [lesson-sharing.md](lesson-sharing.md) (chủ nhân chốt cả file ngày 2026-11-16): luật xếp bài học L5, bước 0 và tám ràng buộc S1–S8. Phần "Ai đọc" và "Mẫu dùng lại" ở đầu [phase-1.5.md](phase-1.5.md) áp dụng nguyên. Tên hàm, tên trường, tên file và các con số dưới đây là đề xuất khớp với code hiện có. Phiên làm task được đổi cho hợp, miễn giữ hợp đồng, và ghi chỗ đổi vào §11. Chưa task nào dưới đây được mở. Phiên điều phối quyết thứ tự và lúc mở.
 
 ## Điều đã chốt mà kế hoạch này giữ
 
@@ -291,6 +291,8 @@ Mười bốn chỗ dưới đây cần đọc chính xác hơn khi làm. Không
 ## Quyết định chờ chủ nhân
 
 Mỗi mục có một khuyến nghị. Mục nào tốn mana thì ghi rõ.
+
+**Lời chốt ngày 2026-11-19** (trong phiên kế hoạch, qua hộp hỏi đáp): chủ nhân nhận **DB5** (khóa suy từ câu, máy không ghi vào dòng của chủ nhân), **DB8** (bậc 4 là dòng kinh có phạm vi lãnh thổ) và **DB11** (Thầy tu của vương quốc thật thuộc tộc `claude`, model rẻ nhất), cả ba theo khuyến nghị. Với DB1–DB4, DB6, DB7, DB9 và DB10, chủ nhân trả lời "chưa chốt" và muốn bàn thêm. DB12–DB17 chưa được hỏi.
 
 **Cần trước khi mở task** (ghi task liên quan):
 
