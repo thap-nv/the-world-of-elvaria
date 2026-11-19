@@ -4,6 +4,8 @@
 // (PS-08c), then its description.
 // (PS-06b) A plan quest's brief comes apart from the rest of its description, with its plan's summary while the plan
 // waits for the seal.
+// (PS-28b) Its budget, the ceilings in force for the assignee and the judge as the breakers compute them, and the
+// stamina bar of its running session.
 import type { Event, Quest, Registry } from '@elvaria/domain';
 import type { MessageKey } from '@elvaria/i18n';
 import { inKingdom } from '@elvaria/store';
@@ -13,6 +15,7 @@ import { openKingdomContext } from '../kingdom-context.ts';
 import { QUEST_STATUS_LABEL } from '../labels.ts';
 import { NONE } from '../listing.ts';
 import { renderTable } from '../table.ts';
+import { ceilingLines, ceilingRulesOf } from './ceiling.ts';
 import { deliveryLines } from './delivery-view.ts';
 import { infirmaryLines, journalOf, lastInfirmaryOf } from './infirmary.ts';
 import { lastRunLines } from './last-run.ts';
@@ -23,6 +26,7 @@ import { readQuest } from './references.ts';
 import { baseWaitsOf } from './base-wait.ts';
 import { scopeWaitText, scopeWaitsOf } from './scope.ts';
 import { sealText } from './seal-view.ts';
+import { staminaLines } from './stamina-view.ts';
 import { unclaimableLines, unclaimableOf } from './unclaimable.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
@@ -51,6 +55,15 @@ function fields(
     ['cli.quest.field.assignee', quest.assignee ?? NONE],
     ['cli.quest.field.verifier', quest.verifier ?? NONE],
     ['cli.quest.field.attempts', `${quest.attempts}/${quest.budget.max_attempts}`],
+    // What the owner set; the ceilings in force come after the fields (PS-28b).
+    [
+      'cli.quest.field.budget',
+      t('cli.quest.budget.value', {
+        tokens: quest.budget.max_tokens,
+        minutes: quest.budget.max_minutes,
+        attempts: quest.budget.max_attempts,
+      }),
+    ],
     ['cli.quest.field.depends_on', listed(quest.depends_on)],
     ...heldFields(ctx, quest),
     // Spared by the kingdom's delegation, or raised by the machine since and why (PS-08b).
@@ -131,9 +144,12 @@ async function runQuestShow(input: CommandInput, cli: CliContext): Promise<ExitC
   const last = await lastRunLines(ctx, quest, journal);
   const delivery = deliveryLines(ctx.t, quest, journal);
   const plan = await planViewOf(ctx, quest);
+  const ceilings = await ceilingRulesOf(ctx, items);
   [
     `${quest.id}  ${quest.title}`,
     ...renderTable(rows),
+    ...ceilingLines(ctx.t, quest, ceilings),
+    ...staminaLines(ctx.t, quest, journal, ceilings),
     ...why,
     ...base,
     ...scope,

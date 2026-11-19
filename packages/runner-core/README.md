@@ -16,7 +16,11 @@
   has a schema), chosen per spawn by `scenarioOf` or by env `ELVARIA_FAKE_SCENARIO`.
   It writes the letter, blocks the forbidden push through the policy when it declares `tool_gate`, keeps a
   resumed session id, and records every request for the Steward's tests. Its `probe` answers one result, or one
-  per call (a pool that wakes on the second probe).
+  per call (a pool that wakes on the second probe). With `lines` (`{ now? }`, off by default so a spec's log
+  holds the Steward's lines alone) a session also writes what a real one leaves in the log and the quest's
+  journal: `agent.session.start` as the hook does and `agent.session.end` as the runner does, a killed
+  session's included (`src/runner/fake-lines.ts`, through `openRunLog`; needs `ELVARIA_KINGDOM` in the request's
+  env, else the problem is told as a `text` signal); `now` stamps them, so a bench passes its fake clock (PS-28).
 - Builds `ToolPolicy` from class + territory laws + role (`toolPolicyOf`): `tools` (Claude `--tools`), `allow` and
   `deny` rules in Claude Code syntax, the apprentice (`Agent(apprentice)` in a class is a flag), and the laws the
   hook enforces; `search_commands` (`git grep`, `git ls-files`) for a class with Glob or Grep on a git plot when

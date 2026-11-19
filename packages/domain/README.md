@@ -200,7 +200,10 @@ patrol`); `partyOf` counts the quest a party is named after, `partyStatusOf` and
   `sessionReadingsOf` reads every held session once, verdict and bar from the same ceilings, and `wrapUpsIn` takes
   the reminders out of it. `sessionStaminaOf(events)` (`src/world/stamina-view.ts`) folds a journal or the day's log
   into the bar of each quest's open session, with `previous` after a cut that went on (ADR 0030); the bar is never
-  stored and never part of `WorldState`.
+  stored and never part of `WorldState`. (PS-28b) `tokenCeilingFor` (`src/breaker/token-ceiling.ts`) says what set a
+  seat's token ceiling (the budget, the owner's raise, the rank's share or the estimate times the tribe's factor, from
+  `tokenPartsOf`, which `tokenCeilingOf` uses too) and `raise_from`, the smallest budget that lifts it: above both the
+  ceiling and the budget the quest was created with.
   A tribe whose adapter reports no usage (its `TribeLimits.breakers`
   is `minutes_only`, handed in as `measure` by `measureOf`) has the time breaker alone (P1-33); `breakersOf`
   applies it to the sessions the Steward holds

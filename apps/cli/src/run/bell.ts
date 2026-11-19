@@ -7,6 +7,7 @@ import { gaugesOf } from '../digest/markdown.ts';
 import { detailLines, whyLines } from '../quest/infirmary.ts';
 import { stretchOf } from '../quest/unclaimable.ts';
 import { suspensionCause } from '../territory/delegation-view.ts';
+import { wrapUpLine } from './wrap-up-line.ts';
 import type { CliIo } from '../io.ts';
 
 /** Why an open quest waits, with the sentences `quest show` uses for the same notice (P1-03). */
@@ -123,13 +124,11 @@ export function lineOf(t: Translate, notice: Notice): string {
   }
   if (notice.kind === 'mana_asleep' || notice.kind === 'mana_awake' || notice.kind === 'mana_warning')
     return manaLine(t, notice);
-  if (notice.kind === 'digest') {
-    const { day, file, must, can_wait } = notice;
-    return t('cli.run.notice.digest', { day, file, must, can_wait });
-  }
+  if (notice.kind === 'digest') return t('cli.run.notice.digest', notice);
   if (notice.kind === 'tribe_held') return tribeLine(t, notice);
   if (notice.kind === 'base_red') return baseRedLine(t, notice);
   if (notice.kind === 'delegation_suspended') return suspensionLine(t, notice);
+  if (notice.kind === 'wrap_up') return wrapUpLine(t, notice);
   const quest = { quest: notice.quest.id, title: notice.quest.title };
   switch (notice.kind) {
     case 'unclaimable':

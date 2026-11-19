@@ -2,12 +2,15 @@
 // §9.2). The command carries the quest's updated_at as read now; the Steward rejects it if the quest changed in
 // between, so an edit never overwrites a change the owner has not seen; an edit of the budget alone is taken whatever
 // the quest became (P1-54: the Steward moves a running quest many times a minute, and only the owner sets a budget).
+// After a new budget it says what the figure does to the session running now: minutes here, tokens in edit-tokens.ts
+// (PS-28b), whose ceiling in force is seldom the budget.
 import { MS_PER_MINUTE, QUEST_TITLE_MAX_LENGTH, RANKS, parseInstant } from '@elvaria/domain';
 import type { Quest, Rank } from '@elvaria/domain';
 
 import { flagOption, textOption, textOptions } from '../args.ts';
 import { EXIT } from '../command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
+import { SESSION_ROLE, tokenLines } from './edit-tokens.ts';
 import { questsMissing, readQuest } from './references.ts';
 import { readScope } from './scope.ts';
 import { commandHeader, sendCommand } from './send-command.ts';
@@ -15,12 +18,6 @@ import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command
 import type { KingdomContext } from '../kingdom-context.ts';
 
 const isRank = (value: string): value is Rank => (RANKS as readonly string[]).includes(value);
-
-/** The role whose session may be running in a status: a character works the quest, or a judge reads it. */
-const SESSION_ROLE: Partial<Record<Quest['status'], 'assignee' | 'verifier'>> = {
-  working: 'assignee',
-  review: 'verifier',
-};
 
 /** A whole number ≥ `min` from `--<name>`; undefined when absent, NaN when not such a number. */
 function wholeNumber(input: CommandInput, name: string, min: number): number | undefined {
@@ -122,6 +119,9 @@ async function runQuestEdit(input: CommandInput, cli: CliContext): Promise<ExitC
   const code = await sendCommand(ctx, command, 'cli.quest.edit.sent', { id: quest.id });
   const minutes = changes.budget?.max_minutes;
   if (code === EXIT.ok && minutes !== undefined) minuteLines(ctx, quest, minutes).forEach(ctx.io.out);
+  // Sent whatever the figure (TL5): a figure that lifts nothing now stays a valid budget for later sessions.
+  const tokens = changes.budget?.max_tokens;
+  if (code === EXIT.ok && tokens !== undefined) (await tokenLines(ctx, quest, tokens)).forEach(ctx.io.out);
   return code;
 }
 

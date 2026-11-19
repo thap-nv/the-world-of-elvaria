@@ -204,7 +204,7 @@ Cái mất khi dừng giữa chừng: phút check đã chạy (một lần 20 ph
 
 | Xem gì | Ở đâu |
 |---|---|
-| bảng nhiệm vụ, một quest | `elvaria quest list [--status <trạng thái>]`, `elvaria quest show <quest>` (phán quyết của lượt cuối, lý do trạm quân y, câu hỏi) |
+| bảng nhiệm vụ, một quest | `elvaria quest list [--status <trạng thái>]`, `elvaria quest show <quest>` (phán quyết của lượt cuối, lý do trạm quân y, câu hỏi, ngân sách, trần đang áp và thể lực của phiên đang chạy) |
 | nhân vật, ai đang ngủ vì mana | `elvaria character list` |
 | đồng hồ mana, phiên bản CLI, lỗi cấu hình | `elvaria doctor` |
 | việc nhân vật làm | `quests/<quest>/journal.jsonl` |
@@ -248,6 +248,26 @@ Các lệnh trên chỉ đọc, không tốn mana, chạy được khi Nhiếp c
 - Đọc mục: một check đổi xanh sang đỏ (hay `commands.setup` hỏng, tên `setup`) là **một** mục `base_red` nhóm phải quyết, kèm dòng lỗi đầu, log, commit và các quest merge từ lần tuần tra xanh gần nhất (không có: thay đổi đến từ ngoài Elvaria); chuông rung một lần. Mục còn trong mọi bản tấu tới khi một lần tuần tra thấy check xanh lại. Check bị gạt vì môi trường (Docker tắt) không tính là đỏ. Lãnh thổ khai `follow_up` thì tuần tra lập thêm một quest nháp nêu đủ những thứ đó: `elvaria quest confirm <quest>` để nó mở, hoặc sửa đề trước (`quest edit`). Script quét không làm nhánh đỏ: `link-check` hỏng là một mục chờ được, `todo-scan` chỉ ghi số vào `patrol.ran`. `elvaria metrics` có bảng "Nhánh gốc đỏ sau merge".
 - Nhánh gốc đỏ thì lãnh thổ dừng nhận việc (PS-09d). Khi lần tuần tra gần nhất thấy một check đỏ, Nhiếp chính không giao quest `open` nào của lãnh thổ đó và hàng đợi merge của nó đứng yên. Quest đang làm, đang chấm hay chờ dấu vẫn chạy tiếp, vì đất của chúng tách từ trước. Mục `base_red` của bản tấu ghi thêm số quest đang chờ, còn `quest list` và `quest show` đánh dấu chúng «chờ nhánh gốc xanh». Quest sửa do tuần tra lập (quest nháp sau khi bạn `confirm`) được miễn: nó được giao, được merge, rồi Nhiếp chính tuần tra lại khi đầu nhánh gốc đổi. Thấy xanh thì lãnh thổ nhận việc lại ở nhịp kế. Có ba cách ra khỏi trạng thái đỏ: xác nhận quest nháp của tuần tra; tự sửa nhánh gốc rồi chạy `elvaria territory patrol <lãnh thổ> --now` (cũng dùng khi một check chập chờn); hoặc tắt tuần tra của lãnh thổ, vì lãnh thổ không bật tuần tra thì không bao giờ bị coi là đỏ. Lần dò nhánh gốc mỗi 10 phút chỉ chạy khi lãnh thổ còn quest đã giao để hỏi, nên sau khi sửa tay ngoài Elvaria bạn nên dùng `--now`.
 - Khi nào tắt: lãnh thổ đang sửa lớn, nhánh gốc đỏ đã biết và chưa ai sửa (mục cứ nằm đó, và lãnh thổ không nhận việc), hay máy bận việc khác buổi sáng: `elvaria territory patrol <lãnh thổ> --off` (xóa cả `scans` và `follow_up`), hoặc tắt lịch cho cả vương quốc.
+
+### Thể lực của phiên và tiếp sức
+
+(PS-28, PS-28b) Mỗi phiên đang chạy, của người làm hay người chấm, có một thanh **Thể lực**. Thanh đo quãng còn lại tới lúc cầu dao cắt phiên, không đo việc còn lại: một phiên có thể tự nộp bài khi thanh chỉ còn vài phần trăm. Thanh đi theo thước gần ngưỡng cắt nhất (phút hay token) và cạn đúng ở `hard_pct` (mặc định 150 % trần). Phiên mới luôn bắt đầu với thanh đầy. Thể lực khác mana: mana cạn thì nhân vật ngủ, còn thể lực cạn thì phiên bị cắt.
+
+**Đọc thanh.** `elvaria quest show <quest>` in ba thứ:
+
+- Dòng `Ngân sách`: các số bạn đã đặt (`max_tokens`, `max_minutes`, `max_attempts`).
+- Khối "Trần đang áp" cho người làm và người chấm: trần token, trần phút, số ở mốc nhắc (`soft_pct`, mặc định 85 %) và số ở ngưỡng cắt. Đây là số cầu dao thật sự dùng, và nó thường khác `max_tokens`. Khi tộc của người giữ ghế đã biết, trần token là số lớn nhất trong ba số: ước lượng nhân hệ số của tộc, phần của hạng, và mức bạn đã nâng. Dòng dưới mỗi trần nói số nào thắng và nâng `--max-tokens` có tác dụng từ số nào. Người chấm có trần token gấp `verifier_tokens_multiplier` lần. Ghế chưa có người thì trần theo ngân sách, và trần đổi khi có người nhận.
+- Dòng `Thể lực` khi quest có phiên đang mở: thanh mười ô, dấu `|` ở mốc nhắc (chỉ người làm có), phần trăm còn lại, thước, số đã dùng trên trần, ngưỡng cắt và giờ của dòng nấc mới nhất. Nhiếp chính ghi một dòng nấc (`agent.session.usage`) mỗi khi thanh qua một nấc 10 %, nên thanh có thể trễ hơn số thật tới một nấc. Chữ "đã qua mốc nhắc" chỉ nói Nhiếp chính đã ghi lời nhắc, không nói phiên đã đọc nó. Sau một lần cắt đi tiếp, lệnh nói phiên trước bị cắt ở thước nào: phiên mới đọc lại thư bàn giao và git nên thể lực đầy lại, còn trí nhớ của phiên trước thì mất.
+
+**Chuông ở mốc nhắc.** Khi một phiên qua `soft_pct`, chuông rung một lần cho phiên đó, cả người làm lẫn người chấm. Dòng chuông nói ai đang làm quest nào và đã dùng bao nhiêu trên trần nào, chuyện gì xảy ra nếu bạn không làm gì, rồi đưa câu lệnh tiếp sức có sẵn id của quest và số nhỏ nhất có tác dụng. Ở lần chạy thật (J) ghi trong kế hoạch thể lực, từ mốc nhắc tới lúc bị cắt chỉ khoảng năm phút, nên chuông mang sẵn mọi thứ bạn cần.
+
+**Tiếp sức hay để phiên bị cắt.** Tiếp sức là `elvaria quest edit <quest> --max-tokens <số>` (hay `--max-minutes <số>`). Nhiếp chính áp số mới từ nhịp kế cho chính phiên đang chạy. CLI gửi lệnh với mọi số, rồi nói ngay số đó có tác dụng không:
+
+- Số không vượt trần đang áp, hay không vượt ngân sách lúc tạo quest, thì không đổi gì. CLI nói vậy và nêu số nhỏ nhất có tác dụng. Chuyện này hay gặp: hệ số mặc định 1,82 nhỏ hơn `mana_multiplier` 2, nên trần đang áp nằm dưới ngân sách lúc tạo, và một số nằm giữa hai số đó chưa được tính là mức nâng. Lệnh vẫn được gửi, vì số đó vẫn là ngân sách hợp lệ cho các phiên sau, khi hệ số của tộc đổi.
+- Số có tác dụng thì CLI nói trần mới và ngưỡng cắt mới của phiên đang chạy.
+- Số hạ ngưỡng cắt xuống dưới mức phiên đã dùng (theo dòng nấc mới nhất) thì CLI cảnh báo phiên bị cắt ở nhịp kế.
+
+Nên tiếp sức khi phiên sắp xong một việc dài và trí nhớ của nó đáng giữ, hay khi người chấm sắp bị cắt: người chấm bị cắt thì lượt chấm mở lại từ đầu với người khác, và mọi thứ nó đã đọc mất theo. Nên để phiên bị cắt khi người làm đã commit đều: phiên mới đi tiếp từ commit và thư bàn giao, không tốn lần thử, và thanh đầy lại (ADR 0030). Trần lượt không có nút theo quest, nên chuông của thước lượt chỉ để báo.
 
 ## 7. Dấu vua và giao hàng
 

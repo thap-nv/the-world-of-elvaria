@@ -13,6 +13,8 @@ import type {
   PLOT_MERGE_STOPS,
   Rank,
   QuestId,
+  Role,
+  SessionTrip,
   SuspensionCause,
   TerritoryId,
   TribeHold,
@@ -85,6 +87,23 @@ export type Notice =
       readonly detail?: InfirmaryDetail;
     }
   | { readonly kind: 'question'; readonly quest: NoticeQuest; readonly question: string }
+  /**
+   * PS-28b: a session went past `soft_pct` of a ceiling, rung once per session, for the assignee (told to wrap up, in
+   * the same tick as its `agent.session.wrap_up` line) and the judge (told nothing; a cut leaves the review to another).
+   * `limit` is the ceiling in force, `cut_at` the figure the breaker cuts at; `raise_from` the smallest
+   * `quest edit --max-tokens` or `--max-minutes` that lifts the ceiling, absent for turns, which have no knob.
+   */
+  | {
+      readonly kind: 'wrap_up';
+      readonly quest: NoticeQuest;
+      readonly role: Role;
+      readonly character: CharacterId | null;
+      readonly measure: SessionTrip;
+      readonly used: number;
+      readonly limit: number;
+      readonly cut_at: number;
+      readonly raise_from?: number;
+    }
   /**
    * The checks of the quest's run failed because of their environment (P1-54): Docker down, a container gone. No
    * judge reads them and nobody's level moves; they run again `recheck_minutes` later. Rung once per run.
