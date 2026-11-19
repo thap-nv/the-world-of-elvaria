@@ -1,7 +1,15 @@
 // The lint of the kingdom's scriptures (PS-12, lesson-sharing T4 and S8), for `elvaria scripture lint` and the doctor:
 // every line of every scripture file by the domain's rules, the redaction patterns of the event log on each sentence
-// (through the Steward's lessonsIn), and each character whose heaviest session would load more than 40 lessons.
-import { SCRIPTURE_LINES_MAX, lintScripture, parseScripture } from '@elvaria/domain';
+// (through the Steward's lessonsIn), and each character whose heaviest session would load more than 40 lessons. (PS-12g,
+// item (r) of the PS-12c row) Then the lines the owner deleted that the ledger still keeps: a fact, neither an error nor a
+// warning, so the exit code and the doctor's level stay as they were.
+import {
+  EMPTY_LEDGER,
+  SCRIPTURE_LINES_MAX,
+  deletedByOwnerOf,
+  lintScripture,
+  parseScripture,
+} from '@elvaria/domain';
 import type { LessonIssue, LessonIssueCode, ScriptureIssue } from '@elvaria/domain';
 import { lessonsIn } from '@elvaria/steward';
 import type { MessageKey, Translate } from '@elvaria/i18n';
@@ -19,6 +27,8 @@ export interface ScriptureReport {
   readonly issues: readonly FileIssue[];
   /** One line per character over the cap, already in the owner's language. */
   readonly overCap: readonly string[];
+  /** One line per ledger entry whose line the owner deleted, already in the owner's language. */
+  readonly deleted: readonly string[];
   readonly errors: number;
   readonly warnings: number;
 }
@@ -72,6 +82,14 @@ function fileIssuesOf(scriptures: KingdomScriptures): { lessons: number; issues:
   return { lessons, issues };
 }
 
+/** The entries of each file's ledger that no line carries any more and that were not retired (deletedByOwnerOf). */
+const deletedOf = (t: Translate, scriptures: KingdomScriptures): string[] =>
+  scriptures.files.flatMap(({ file, owner, text }) =>
+    deletedByOwnerOf({ owner, text, ledger: scriptures.ledgers.get(owner) ?? EMPTY_LEDGER }).map((entry) =>
+      t('cli.scripture.deleted', { file, lesson: entry.id, added_at: entry.added_at }),
+    ),
+  );
+
 export function scriptureReportOf(t: Translate, scriptures: KingdomScriptures): ScriptureReport {
   const { lessons, issues } = fileIssuesOf(scriptures);
   const overCap = overCapOf(scriptures).map(({ character, load }) =>
@@ -85,5 +103,6 @@ export function scriptureReportOf(t: Translate, scriptures: KingdomScriptures): 
   );
   const errors = issues.filter(({ level }) => level === 'error').length;
   const warnings = issues.length - errors + overCap.length;
-  return { files: scriptures.files.length, lessons, issues, overCap, errors, warnings };
+  const deleted = deletedOf(t, scriptures);
+  return { files: scriptures.files.length, lessons, issues, overCap, deleted, errors, warnings };
 }

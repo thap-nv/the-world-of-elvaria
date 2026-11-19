@@ -11,6 +11,7 @@ import type { ScopeHold } from '../dispatch/scope.ts';
 import type { BaseHold } from '../patrol/base-red.ts';
 import type { TerritoryHealth } from '../patrol/health.ts';
 import type { HeldQuest } from '../quest/hold.ts';
+import type { StreakWait, TempleWaiting } from '../temple/waiting.ts';
 import type { TribeHold } from '../tribe/version-hold.ts';
 import type { ForgeOutcome } from './forge-outcome.ts';
 import type { QuestView } from './quest-view.ts';
@@ -60,6 +61,10 @@ export interface StewardNotices {
   readonly merged_unsealed?: readonly UnsealedMerge[];
   /** (PS-08g) The territories whose delegation of the seal the breaker suspended (sealSuspendedOf); from the log. */
   readonly delegation_suspended?: readonly SealSuspension[];
+  /** (PS-12g) The characters suspended for a fail streak that the Temple did not free (streakWaitsOf); from the log. */
+  readonly streak_suspended?: readonly StreakWait[];
+  /** (PS-12g) The repeated failures that wait while the Temple cannot run (templeWaitingOf). */
+  readonly temple_waiting?: TempleWaiting;
 }
 
 /** The pinned commit, the default branch's commit, and how many commits since touch `packages/` or `apps/`. */
@@ -177,6 +182,33 @@ const suspensionItem =
       ...(note === undefined ? {} : { note }),
     });
 
+/**
+ * (PS-12g) What waits on the Temple: each character suspended for a fail streak, with the Monk's letters; and one item
+ * for the repeated failures, that adds a Monk when none can run, else turns the Temple on.
+ */
+function templeItems(notices: StewardNotices): AttentionItem[] {
+  const waiting = notices.temple_waiting;
+  return [
+    ...(notices.streak_suspended ?? []).map(({ character, fail_kind: kind, count, letters }) =>
+      itemOf('character_suspended', {
+        character,
+        ...(kind === null ? {} : { fail_kind: kind }),
+        count,
+        letters,
+      }),
+    ),
+    ...(waiting === undefined
+      ? []
+      : [
+          itemOf(waiting.reasons.includes('no_monk') ? 'temple_no_monk' : 'temple_off', {
+            count: waiting.groups,
+            temple_reasons: waiting.reasons,
+            class: waiting.class ?? '<class>',
+          }),
+        ]),
+  ];
+}
+
 export function noticeItems(state: WorldState, notices: StewardNotices): AttentionItem[] {
   return [
     ...(notices.unclaimable ?? []).map((id) => itemOf('unclaimable', aboutId(state, id))),
@@ -206,6 +238,7 @@ export function noticeItems(state: WorldState, notices: StewardNotices): Attenti
       }),
     ),
     ...(notices.delegation_suspended ?? []).map(suspensionItem(state)),
+    ...templeItems(notices),
     ...(notices.held ?? []).map(({ quest, reason }) =>
       itemOf('quest_held', {
         ...aboutId(state, quest),

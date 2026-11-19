@@ -265,7 +265,12 @@
   byte. The 40-line rule weighs the characters whose class takes quests. Each letter becomes a `proposal` memo from
   the Monk on its verdict's quest and run (`memo.filed`, `memo.routed`), to the Chancellor or, for a stronger
   model, to the owner; the bell rings once per report (`Notice` `temple`). A report applied again after a stop adds
-  no line and files no letter twice. `command.applied` and `command.rejected` carry `source: monk`.
+  no line and files no letter twice. `command.applied` and `command.rejected` carry `source: monk`. (PS-12g,
+  `temple/release.ts`) Then it reads the scriptures and the log again and releases (`temple_done`, a `character.release`
+  line of its own) each character suspended for a fail streak that a new line of the report frees (`templeReleasesOf`);
+  the bell names them (`released`), and a report applied again still frees them. The digest lists the characters still
+  suspended for a streak and, while the Temple is off or has no Monk, the repeated failures that wait
+  (`templeNoticesOf` over the files, the verdicts and the log, no model).
 - Quotes a gazetteer stamped with the commit it was written at (`<!-- elvaria:commit <sha> -->`, PS-21) without the
   stamp and with how many commits touched each top-level folder since, up to the quest's fork point
   (`sessions/gazetteer.ts`, `Plots.drift`, optional: folder plots have none); a drift that cannot be read costs the

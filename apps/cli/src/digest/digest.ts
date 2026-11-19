@@ -1,7 +1,8 @@
 // `elvaria digest`: the digest as it stands now (implementation-plan §3.16.3, PS-03), from the files and the event log,
 // printed in the owner's language. It writes nothing and spends no mana, so it runs beside a Steward or without one.
 // The Steward's own digest (digest/<day>.md, once a day) also lists what only its memory holds: quests whose judges
-// are all out of mana, or that no judge of the roster may take.
+// are all out of mana, or that no judge of the roster may take. (PS-12g) What waits on the Temple is the same in both: it
+// comes from the files and the log alone (templeNoticesOf).
 import {
   attentionQueue,
   baseHealthOf,
@@ -14,8 +15,10 @@ import {
   scopeHoldsOf,
   sealPolicyOf,
   sealSuspendedOf,
+  templeNoticesOf,
   unopenedReviewsOf,
 } from '@elvaria/domain';
+import type { Event, TempleNotices } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import { digestStateOf, readUnclaimable } from '@elvaria/steward';
 
@@ -42,6 +45,27 @@ async function sourceOf(ctx: KingdomContext) {
     quests: quests.items,
     memos: memos.items,
   };
+}
+
+/**
+ * (PS-12g) The characters suspended for a fail streak, and the repeated failures while the Temple cannot run. A registry
+ * that cannot be read names no class of the Monk: the item says the kingdom has none, and `doctor` says why.
+ */
+async function templeOf(
+  ctx: KingdomContext,
+  source: Awaited<ReturnType<typeof sourceOf>>,
+  events: readonly Event[],
+): Promise<TempleNotices> {
+  const [registry, verdicts] = await Promise.all([ctx.store.loadRegistry(), ctx.store.verdicts.list()]);
+  return templeNoticesOf({
+    enabled: ctx.kingdom.schedule.temple.enabled,
+    classes: registry.ok ? registry.value.classes : [],
+    characters: source.characters,
+    quests: source.quests,
+    verdicts: verdicts.items,
+    memos: source.memos,
+    events,
+  });
 }
 
 async function runDigest(input: CommandInput, cli: CliContext): Promise<ExitCode> {
@@ -80,6 +104,7 @@ async function runDigest(input: CommandInput, cli: CliContext): Promise<ExitCode
     held: heldQuestsOf(source.quests),
     // PS-08g: the territories whose delegation of the seal the breaker suspended.
     delegation_suspended: suspended,
+    ...(await templeOf(ctx, source, log.events)),
   });
   // ctx.now() is written in the kingdom's zone: its date is the kingdom's local day, as the digest's file names it.
   const day = ctx.now().slice(0, 'yyyy-mm-dd'.length);

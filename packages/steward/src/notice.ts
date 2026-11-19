@@ -186,6 +186,7 @@ export type Notice =
   /**
    * (PS-12c) A temple report of the Monk `character` was applied, once per report: lines of scripture added, taken out
    * (retired or merged) and refused, letters filed; or refused whole (`rejected`) because it would replace a scripture.
+   * (PS-12g) `released`: the characters suspended for a fail streak that a new line freed (`temple_done`), when any.
    */
   | {
       readonly kind: 'temple';
@@ -195,6 +196,7 @@ export type Notice =
       readonly refused: number;
       readonly letters: number;
       readonly rejected?: 'replaces_scripture';
+      readonly released?: readonly CharacterId[];
     }
   /** The character failed the same way breakers.same_fail_suspend times in a row: it went to the Temple. */
   | {

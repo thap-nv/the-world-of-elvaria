@@ -22,6 +22,16 @@ describe('the console bell of a temple report', () => {
     );
   });
 
+  it('names the characters a new line freed from the Temple (PS-12g)', () => {
+    const freed: Notice = { ...APPLIED, released: [CharacterIdSchema.parse('kael')] };
+    expect(lineOf(en, freed)).toBe(
+      "Temple: sage's report added 2 line(s) of scripture, took 1 out and had 1 refused; it filed 3 letter(s). Read them with elvaria scripture list and elvaria memo list. Released: kael, fail streak back at 0 (a new line cures its failure).",
+    );
+    expect(lineOf(vi, freed)).toBe(
+      'Đền: tờ trình của sage thêm 2 dòng kinh, gỡ 1 dòng, 1 thao tác bị từ chối; lập 3 thư. Xem bằng elvaria scripture list và elvaria memo list. Thả: kael, chuỗi trượt về 0 (dòng mới chữa đúng lỗi của nó).',
+    );
+  });
+
   it('tells a report refused whole, nothing written', () => {
     const refused: Notice = {
       ...APPLIED,

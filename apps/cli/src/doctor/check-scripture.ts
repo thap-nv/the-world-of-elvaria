@@ -1,6 +1,7 @@
 // The doctor's line on scripture (PS-12): the summary of `elvaria scripture lint`. A warning, never an error: a line
 // with an error is left out of the prompts or only breaks a rule of lesson-sharing T4, and the kingdom still runs.
-// Nothing when the kingdom has no scripture, or when the registry cannot be read (checkRegistry says so).
+// Nothing when the kingdom has no scripture, or when the registry cannot be read (checkRegistry says so). (PS-12g) The
+// lines the owner deleted that the ledger keeps are quoted under it too, after the issues, and change no level.
 import { readKingdomScriptures } from '../scripture/read.ts';
 import { issueLine, scriptureReportOf } from '../scripture/report.ts';
 import { finding } from './finding.ts';
@@ -15,8 +16,18 @@ export async function checkScripture(ctx: KingdomContext): Promise<Finding[]> {
   if ('problems' in scriptures || scriptures.files.length === 0) return [];
   const report = scriptureReportOf(ctx.t, scriptures);
   if (report.errors + report.warnings === 0)
-    return [finding('ok', ctx.t('cli.doctor.scripture_ok', { lessons: report.lessons }))];
-  const details = [...report.issues.map((issue) => issueLine(ctx.t, issue)), ...report.overCap];
+    return [
+      finding(
+        'ok',
+        ctx.t('cli.doctor.scripture_ok', { lessons: report.lessons }),
+        report.deleted.slice(0, DETAILS_MAX),
+      ),
+    ];
+  const details = [
+    ...report.issues.map((issue) => issueLine(ctx.t, issue)),
+    ...report.overCap,
+    ...report.deleted,
+  ];
   return [
     finding(
       'warn',
