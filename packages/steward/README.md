@@ -243,6 +243,14 @@
   the scripture files and their lines, the skills and the prompt's blocks; `command.applied` and `command.rejected`
   name the command's `kind`, and `check.end` names the check whose environment failed when the run is set aside
   (`environment`, (b) of P1-54), so the metrics ledger reads them from the log.
+- Loads scripture by scope (PS-12, `sessions/lessons.ts`, temple-first plan DB3-DB5): reads the character's
+  scripture and the temple's (`readScriptures`, paths from the store's layout), lets the domain parse them and choose
+  the lessons of the session's role, class, tribe, OS (`StewardDeps.platform`, else `process.platform`), territory
+  and tags, at most 40, the character's first (`selectLessons`), and gives `buildPrompt` their sentences alone. A
+  line whose sentence the event log would mask (its patterns and the session's secret values) never loads (ADR 0013).
+  A line without an id is named `T_…` by a SHA-256 of its normalized sentence; the Steward never writes into a
+  scripture file. The load trace names the lessons that loaded (`lessons`) and, per file, how many; a resumed
+  session's line has no `lessons`. `elvaria scripture list` uses the same `lessonsIn` and `sessionLessonsOf`.
 - Quotes a gazetteer stamped with the commit it was written at (`<!-- elvaria:commit <sha> -->`, PS-21) without the
   stamp and with how many commits touched each top-level folder since, up to the quest's fork point
   (`sessions/gazetteer.ts`, `Plots.drift`, optional: folder plots have none); a drift that cannot be read costs the
