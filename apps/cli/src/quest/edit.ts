@@ -10,6 +10,7 @@ import type { Quest, Rank } from '@elvaria/domain';
 import { flagOption, textOption, textOptions } from '../args.ts';
 import { EXIT } from '../command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
+import { atPct, figureOf } from './ceiling.ts';
 import { SESSION_ROLE, tokenLines } from './edit-tokens.ts';
 import { questsMissing, readQuest } from './references.ts';
 import { readScope } from './scope.ts';
@@ -74,10 +75,11 @@ function readChanges(input: CommandInput, ctx: KingdomContext) {
 
 /**
  * What a new minute ceiling does to the session running now. The Steward applies the edit, then its time breaker reads
- * the quest's ceiling on every tick, against the session's own attempt_log entry (breakersOf in planTick): lower, it
- * cuts a session already past it at that tick; higher, the session has the time from then on. Only a CLI that took its
- * own clock when the session opened (agy's `--print-timeout`) still stops it at the old ceiling. P1-56 said the ceiling
- * reached the next session only, which held for agy alone (lessons of 2026-11-12, A2).
+ * the quest's ceiling on every tick, against the session's own attempt_log entry (breakersOf in planTick), and cuts at
+ * hard_pct of it (evaluateBreakers), the figure `quest show` prints: lower, it cuts a session already at that cut at
+ * that tick; higher, the session has the time from then on. Only a CLI that took its own clock when the session opened
+ * (agy's `--print-timeout`, the old cut) still stops it there. P1-56 said the ceiling reached the next session only,
+ * which held for agy alone (lessons of 2026-11-12, A2).
  */
 function minuteLines(ctx: KingdomContext, quest: Quest, minutes: number): string[] {
   const role = SESSION_ROLE[quest.status];
@@ -88,9 +90,19 @@ function minuteLines(ctx: KingdomContext, quest: Quest, minutes: number): string
   // In review before a judge opens its session, or a quest file without one: nothing runs to tell about.
   if (started?.ok !== true) return [];
   const elapsed = ctx.io.clock.now() - started.value;
-  const params = { id: quest.id, minutes, was, ran: Math.floor(elapsed / MS_PER_MINUTE) };
+  const { hard_pct } = ctx.kingdom.breakers;
+  const cutAt = atPct(minutes, hard_pct);
+  const params = {
+    id: quest.id,
+    minutes,
+    was,
+    ran: Math.floor(elapsed / MS_PER_MINUTE),
+    cut: figureOf('time', cutAt),
+    was_cut: figureOf('time', atPct(was, hard_pct)),
+  };
   if (minutes > was) return [ctx.t('cli.quest.edit.minutes_raised', params)];
-  if (elapsed < minutes * MS_PER_MINUTE) return [ctx.t('cli.quest.edit.minutes_lowered', params)];
+  // The time breaker stops at the cut itself (`used >= ceiling`), unlike tokens, which stop past it.
+  if (elapsed < cutAt * MS_PER_MINUTE) return [ctx.t('cli.quest.edit.minutes_lowered', params)];
   const cut = role === 'assignee' ? 'cli.quest.edit.minutes_cut' : 'cli.quest.edit.minutes_cut_judge';
   return [ctx.t(cut, params)];
 }
