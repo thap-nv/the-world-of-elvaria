@@ -2,6 +2,7 @@
 // verdicts, the event log and the handled inbox commands. `elvaria metrics` prints it and docs/metrics-report.md
 // renders it; nothing here writes, so a kingdom is measured without a Steward and without mana.
 import { adviceOf } from './advice.ts';
+import { afterWrapUpOf } from './after-wrap-up.ts';
 import { REWORK_CAUSES, OWNER_COMMAND_KINDS } from './causes.ts';
 import { escapedOf, firstPassOf, firstRunOf, sealedCostOf } from './judgement.ts';
 import { ownerCommandsOf, sequelsIn, sessionModelsOf, trailsOf } from './ledger.ts';
@@ -18,6 +19,7 @@ import { inWindow } from './window.ts';
 import { redFlipsOf } from '../patrol/health.ts';
 import type { RedFlip } from '../patrol/health.ts';
 import type { AdviceMatch } from './advice.ts';
+import type { AfterWrapUp } from './after-wrap-up.ts';
 import type { AmendmentCount } from './amendment-counts.ts';
 import type { OwnerCommandKind, ReworkCause } from './causes.ts';
 import type { EscapedDefect, SealedCost } from './judgement.ts';
@@ -122,6 +124,8 @@ export interface Metrics {
   readonly advice: AdviceMatch;
   /** Amendments: filed, taken, refused, sent to the owner, and quests returned after a refusal (PS-22b). */
   readonly amendments: AmendmentCount;
+  /** Per tribe, what the assignee sessions reminded at the soft ceiling did until their end (PS-28c). */
+  readonly after_wrap_up: readonly AfterWrapUp[];
 }
 
 function runCountsOf(trails: readonly QuestTrail[], input: MetricsInput, window: MetricsWindow): RunCounts {
@@ -213,5 +217,6 @@ export function metricsOf(input: MetricsInput, window: MetricsWindow = {}): Metr
     pass_by_run: passByRunOf(trails, window),
     advice: adviceOf(input.events, window),
     amendments: amendmentCountsOf(input.events, window),
+    after_wrap_up: afterWrapUpOf(input.events, input.characters ?? [], window),
   };
 }

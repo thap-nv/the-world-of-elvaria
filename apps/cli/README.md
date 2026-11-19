@@ -240,7 +240,9 @@ show` prints the brief apart from the rest of the description and, while the pla
   also renders into `docs/metrics-report.md`; `src/metrics/view-sessions.ts` adds the parts of PS-21 (graph
   queries, tool calls before an assignee's first edit, prompt size by role and block), on the section shape of
   `src/metrics/section.ts`; `src/metrics/view-waits.ts` those of PS-06b (time in each status, pass rate by run, the
-  Chancellor's advice beside the owner's decisions). `--plan <quest>` prints instead how a plan quest's sub-quests went
+  Chancellor's advice beside the owner's decisions); `src/metrics/view-wrap-ups.ts` the table of PS-28c (per tribe,
+  the assignee sessions reminded at the soft ceiling that ended on their own or were cut, from the characters
+  `read.ts` reads too). `--plan <quest>` prints instead how a plan quest's sub-quests went
   against its plan (`planAccuracyOf`, `src/metrics/view-plan.ts`); a quest that is no plan, one that is not there, or
   `--plan` with a window is a usage error. The text view also prints kingdom-wide calibration for every configured
   tribe: token factor, turn ceiling, independent sample counts and default/measured sources, using the same domain
