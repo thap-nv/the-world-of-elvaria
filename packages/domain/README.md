@@ -449,6 +449,13 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   `prompt_max_chars`. The `temple-reply` contract (`TempleReplySchema`) is the Monk's answer, one rung of the fix
   ladder per group; `templeReplyIssues` holds it against the pack and `templeCommands` turns it into one
   `temple_report` payload. `temple.ran` is in the contracts.
+- Frees and lists what waits on the Temple (PS-12g, temple-first plan DB10, DB13): `streakSuspendedOf` folds the log
+  into the characters the Steward suspended for a fail streak and still suspended (the same fold as `templeLogOf`,
+  over the whole log); `templeReleasesOf` frees one of them once a temple report wrote a line of its streak's fail kind
+  that one of its next sessions as assignee loads (its own scripture or the temple's, scope and 40-line cap included);
+  `templeWaitingOf` counts the repeated failures that wait while the Temple is off or has no Monk not suspended, and
+  `streakWaitsOf` lists the suspended with the Monk's open letters on their runs; `templeNoticesOf` gives both to the
+  attention queue (`character_suspended`, `temple_no_monk`, `temple_off`, all `can_wait`).
 - Gives the core types every package builds on: `Result`, branded ids (`QuestId`, `TribeId`, ...), `Clock` and
   `Instant`, `zonedTime` (local day and ISO offset in `kingdom.tz`), `IdSource` (ULIDs and dated ids).
 - Names every number it decides with in `src/constants.ts` and the `constants.ts` of the folders that have one.

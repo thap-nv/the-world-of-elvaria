@@ -79,6 +79,19 @@ function withCharacterLine(suspended: Set<CharacterId>, event: Event): Set<Chara
   return suspended;
 }
 
+/**
+ * (PS-12g) Every character the Steward suspended for a fail streak that is suspended still, whether or not the Temple
+ * ran since: the same fold as templeLogOf's, over the whole log. Only `release` and `temple_done` take a character out
+ * of `suspended` (§2.6), and both write a `character.release` line; the owner's suspension of a character that holds a
+ * quest rides on a `quest.*` line, but it never starts a fail streak's, so the character lines are enough.
+ */
+export function streakSuspendedOf(events: readonly Event[]): CharacterId[] {
+  let suspended = new Set<CharacterId>();
+  for (const event of events)
+    if (CHARACTER_LINES.has(event.type)) suspended = withCharacterLine(suspended, event);
+  return [...suspended];
+}
+
 /** Why the Temple is not due: off, it ran today (or on a later day the clock went back from), or nothing new yet. */
 export type TempleIdle = 'disabled' | 'ran_today' | 'waiting';
 

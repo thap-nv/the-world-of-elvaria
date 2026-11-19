@@ -4,10 +4,11 @@
 import type { CharacterId, MemoId, QuestId, TerritoryId, TribeId } from '../core/ids.ts';
 import type { DelegationHold, SealRaise, TriageAction } from '../delegation/constants.ts';
 import type { WaitGauge } from '../dispatch/judge-waits.ts';
-import type { Rank } from '../schema/common.ts';
+import type { FailKind, Rank } from '../schema/common.ts';
 import type { SuspensionCause } from '../schema/event/delegation-data.ts';
 import type { DeliveryFailure, DeliveryStage } from '../schema/event/delivery-data.ts';
 import type { ScanOutcome } from '../schema/event/patrol-data.ts';
+import type { TempleBlock } from '../temple/waiting.ts';
 
 export const ATTENTION_GROUPS = ['must', 'can_wait'] as const;
 /** `must`: the work stands still until the owner decides; `can_wait`: nothing waits on it. */
@@ -79,6 +80,22 @@ export const ATTENTION_TABLE = {
     advice: 'read_then_resume',
     command: ['territory', 'delegation', '{territory}', '--resume'],
   },
+  // PS-12g: a character the Steward suspended for a fail streak that no line of the Temple freed (templeReleasesOf); the
+  // line names the Monk's open letters on the runs it failed, to read before the owner releases it.
+  character_suspended: {
+    group: 'can_wait',
+    advice: 'read_letters_then_release',
+    command: ['character', 'release', '{character}'],
+  },
+  // PS-12g: repeated failures wait while the Temple cannot run (templeWaitingOf), one item at most. No Monk that is not
+  // suspended: add one, of the registry's first class of the Monk (the line says when the Temple is off too). Off with a
+  // Monk: no command turns it on, so the advice gives the lines of kingdom.json, and says that a run spends mana.
+  temple_no_monk: {
+    group: 'can_wait',
+    advice: 'add_monk',
+    command: ['character', 'add', '<id>', '--class', '{class}', '--model', '<model>'],
+  },
+  temple_off: { group: 'can_wait', advice: 'enable_temple', command: [] },
   // PS-09b: the quest's delivery stopped at the merge queue's update and a merge quest resolves it for the owner; the
   // quest goes into the base branch with it. A `delivery_failed` item again once that merge quest is dropped.
   delivery_merging: {
@@ -174,7 +191,14 @@ export interface AttentionSubject {
   /** A scan of the latest patrol that did not pass (patrol_scan): the script, how it ended, what it counted. */
   readonly script?: string;
   readonly outcome?: ScanOutcome;
+  /** (PS-12g) Also the fails in a row of a character suspended for them, and the repeated failures that wait (temple_*). */
   readonly count?: number;
+  /** (PS-12g) A character suspended for a fail streak (character_suspended): who, the kind, the Monk's open letters. */
+  readonly character?: CharacterId;
+  readonly fail_kind?: FailKind;
+  readonly letters?: readonly MemoId[];
+  /** (PS-12g) Why the Temple cannot run (temple_no_monk, temple_off). */
+  readonly temple_reasons?: readonly TempleBlock[];
 }
 
 export interface AttentionItem extends AttentionSubject {
