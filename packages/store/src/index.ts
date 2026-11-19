@@ -15,6 +15,8 @@ export type { RegistryLoadIssue } from './registry.ts';
 export type { IssueDetail, StoreIssue, StoreIssueCode } from './issues.ts';
 export { DECREE_FILE, KINGDOM_DIRS, KINGDOM_FILE, kingdomLayout } from './layout.ts';
 export { readClassPrompt, readDecree, redactHandover } from './texts.ts';
+export { scripturePaths } from './scripture.ts';
+export type { ScriptureStore } from './scripture.ts';
 export { comparePath, fromPortable, inKingdom, staysInside, toPortable } from './paths.ts';
 export { acquireLock, isLocked, withLock } from './io/lock.ts';
 export type { HeldLock, LockOptions } from './io/lock.ts';

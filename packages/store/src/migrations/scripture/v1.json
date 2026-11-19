@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "lessons": [
+    {
+      "id": "L_20261118_4k2pqz",
+      "source": "monk",
+      "source_verdict": "q_20261118_7k3m2a-2",
+      "cli_version": "2.1.327",
+      "added_at": "2026-11-18T21:04:10+07:00"
+    },
+    {
+      "id": "L_20261118_9tw3hx",
+      "source": "monk",
+      "source_verdict": "q_20261117_b3m8ty-1",
+      "added_at": "2026-11-18T21:04:10+07:00",
+      "retired": {
+        "at": "2026-11-19T21:10:02+07:00",
+        "by": "monk",
+        "text": "Run the tests of the touched package before you hand in.",
+        "merged_into": "L_20261119_x4y5z6",
+        "command": "01JCG2N7RZ4WQ8E5T3Y6V9A0AQ"
+      }
+    },
+    {
+      "id": "L_20261119_x4y5z6",
+      "source": "monk",
+      "source_verdict": "q_20261118_7k3m2a-2",
+      "added_at": "2026-11-19T21:10:02+07:00",
+      "merged_from": ["L_20261118_9tw3hx", "L_20261117_a1b2c3"]
+    }
+  ]
+}

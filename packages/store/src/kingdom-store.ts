@@ -33,9 +33,11 @@ import { entityStore, fileStore } from './entity-store.ts';
 import { inboxStore } from './inbox.ts';
 import { KINGDOM_FILE } from './layout.ts';
 import { loadRegistry } from './registry.ts';
+import { scriptureStore } from './scripture.ts';
 import type { EntityStore, FileStore } from './entity-store.ts';
 import type { InboxStore } from './inbox.ts';
 import type { RegistryLoadIssue } from './registry.ts';
+import type { ScriptureStore } from './scripture.ts';
 
 export interface KingdomStore {
   /** Absolute path of the kingdom folder. */
@@ -48,6 +50,8 @@ export interface KingdomStore {
   readonly verdicts: EntityStore<Verdict, VerdictId>;
   readonly memos: EntityStore<Memo, MemoId>;
   readonly inbox: InboxStore;
+  /** The temple's and each character's scripture with its ledger (PS-12c). */
+  readonly scriptures: ScriptureStore;
   loadRegistry(): Promise<Result<Registry, readonly RegistryLoadIssue[]>>;
 }
 
@@ -64,6 +68,7 @@ export function openKingdom(dir: string): KingdomStore {
     verdicts: entityStore(root, VERDICT_SPEC),
     memos: entityStore(root, MEMO_SPEC),
     inbox: inboxStore(root),
+    scriptures: scriptureStore(root),
     loadRegistry: () => loadRegistry(root),
   };
 }
