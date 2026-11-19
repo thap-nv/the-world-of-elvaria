@@ -541,7 +541,9 @@ pnpm --filter @elvaria/steward test
 ```
 
 Specs build a throwaway kingdom in the OS temp folder (a space in the name) with the default registry read by
-path, and run `FakeRunner` for both tribes; a fake verifier hands in its verdict as structured output.
+path, and run `FakeRunner` for both tribes; a fake verifier hands in its verdict as structured output. A spec
+that needs the lines a real session leaves (`agent.session.start`, and `agent.session.end` even for a killed
+session) gives the runner `lines` (`stamina.spec.ts`: a cut session, then the one that goes on, with its `previous`).
 `integration.spec.ts` takes ten quests all the way round (a crash, a failed review, a question, a seal, a
 dependency, a hang) and stops the Steward in the middle: the new one loses no quest, every `attempt_log`
 entry matches exactly one session, and the replayed log equals the files. `deliver.spec.ts` delivers a build, a
