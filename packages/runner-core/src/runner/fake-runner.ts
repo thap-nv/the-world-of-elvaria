@@ -4,6 +4,7 @@ import { TribeIdSchema } from '@elvaria/domain';
 
 import { FAKE_SCENARIO_ENV, isFakeScenario } from '../conformance/scenarios.ts';
 import { startFakeSession } from './fake-session.ts';
+import type { FakeLinesOptions } from './fake-lines.ts';
 import type { FakeScenario } from '../conformance/scenarios.ts';
 import type { AgentRunner, ProbeOptions, ProbeResult, SpawnRequest } from './types.ts';
 import type { AdapterCapabilities, TribeId } from '@elvaria/domain';
@@ -37,6 +38,12 @@ export interface FakeRunnerOptions {
   readonly delay_ms?: number;
   /** What probe() answers: one result, or one per call (a pool that wakes on the second probe). */
   readonly probe?: ProbeResult | ((options: ProbeOptions) => ProbeResult);
+  /**
+   * Write what a real session leaves in the log and its quest's journal: `agent.session.start` (the hook's line) when
+   * it opens and `agent.session.end` (the runner's, so also for a killed session) when it ends. Needs the request's
+   * `ELVARIA_KINGDOM`, as the real runner does. Absent: no line, which keeps the event log of a spec to the Steward's.
+   */
+  readonly lines?: FakeLinesOptions;
 }
 
 export interface FakeRunner extends AgentRunner {
@@ -71,6 +78,7 @@ export function createFakeRunner(options: FakeRunnerOptions = {}): FakeRunner {
           capabilities,
           tokens: options.tokens ?? FAKE_TOKENS,
           delay_ms: options.delay_ms ?? 0,
+          ...(options.lines === undefined ? {} : { lines: options.lines }),
         }),
       );
     },

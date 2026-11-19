@@ -102,12 +102,48 @@ describe("a held session's stamina", () => {
     expect(after.slice(10).map(({ session, data }) => [session === first, data.used])).toEqual([
       [false, NOTCH],
     ]);
-    // The journal alone draws the new session's bar: its quest line names the seat, its notch line the figure. (The
-    // fake CLI writes no agent.session.end, which a real runner always does, so `previous` is the domain spec's.)
+    // The journal alone draws the new session's bar: its quest line names the seat, its notch line the figure. (This
+    // fake runner writes no agent.session.end, which a real one always does, so `previous` is the next spec's.)
     const all = (await openJournal(kingdom.root, quest.id).read()).events;
     const bar = sessionStaminaOf(all).get(quest.id);
     expect(bar).toMatchObject({ session: after[10]?.session, role: 'assignee', attempt: 1 });
     expect(bar?.stamina).toMatchObject({ measure: 'time', used: NOTCH, notch: 1, zone: 'ok' });
+    expect(bar?.previous).toBeUndefined();
+  });
+
+  it('names the cut session as `previous` of the one that goes on, from the lines a runner leaves', async () => {
+    // A runner that writes the start and the end of its sessions, as a real one does, and a session that never ends.
+    const { kingdom, steward } = await open({ plays: { work: {} } }, (k) => {
+      const hanging = (tribe: 'claude' | 'gemini') =>
+        k.fake({ tribe: tribe as never, scenarioOf: () => 'hang', lines: { now: () => k.clock.now() } });
+      return { plots: plotsOf(k, true), runners: { claude: hanging('claude'), gemini: hanging('gemini') } };
+    });
+    await kingdom.command('create_quest', questPayload('Cut'));
+    await steward.tick();
+    const quest = await kingdom.quest('Cut');
+    for (let half = 1; half <= 20; half += 1) {
+      kingdom.clock.advance(NOTCH / 2);
+      await steward.tick();
+    }
+    expect((await kingdom.quest('Cut')).status).toBe('returned');
+    await steward.tick();
+    kingdom.clock.advance(NOTCH);
+    await steward.tick();
+    const lines = await usageLines(kingdom);
+    const [cut, next] = [lines[0]?.session, lines[10]?.session];
+    expect(cut).not.toBe(next);
+    const all = (await openJournal(kingdom.root, quest.id).read()).events;
+    const bar = sessionStaminaOf(all).get(quest.id);
+    expect(bar).toMatchObject({ session: next, role: 'assignee', attempt: 1 });
+    // The cut one's last notch is its bar at the cut, and the Steward's kill is the end the runner wrote for it.
+    expect(bar?.previous).toMatchObject({
+      session: cut,
+      outcome: 'killed',
+      stamina: { measure: 'time', used: 10 * NOTCH, notch: 10 },
+    });
+    expect(all.filter(({ type }) => type === 'agent.session.end').map(({ session }) => session)).toEqual([
+      cut,
+    ]);
   });
 
   it('writes one line for a reading that crossed three notches at once', async () => {
@@ -169,6 +205,38 @@ describe("a held session's stamina", () => {
       used: NOTCH * 2,
       limit: 45,
     });
+  });
+
+  it('is read at one instant for the line and for the cut, so a clock that moves between them cuts a tick later', async () => {
+    const { kingdom, steward } = await open({ plays: HANGS }, (k) => {
+      const log = openEventLog(k.root);
+      // The clock moves seven minutes right after the line of a notch is written: the time a real clock takes between
+      // the Steward's reading of the gauges and the plan's (the awaits of the snapshot in between).
+      return {
+        plots: plotsOf(k, true),
+        events: {
+          ...log,
+          append: async (lines) => {
+            await log.append(lines);
+            if (lines.some(({ type }) => type === 'agent.session.usage')) k.clock.advance(7);
+          },
+        },
+      };
+    });
+    await kingdom.command('create_quest', questPayload('Cut'));
+    await steward.tick();
+    // 61.25 of the 67.5 minutes of the cut: the ninth notch, then the clock goes on to 68.25, past the cut.
+    kingdom.clock.advance(NOTCH * 9 + 0.5);
+    await steward.tick();
+    expect((await usageLines(kingdom)).map(({ data }) => data.used)).toEqual([NOTCH * 9 + 0.5]);
+    expect((await kingdom.quest('Cut')).status).toBe('working');
+    // The next reading sees 68.25: the last notch is written before the plan cuts the session at it.
+    await steward.tick();
+    expect((await kingdom.quest('Cut')).status).toBe('returned');
+    expect((await usageLines(kingdom)).map(({ data }) => data.used)).toEqual([
+      NOTCH * 9 + 0.5,
+      NOTCH * 9 + 7.5,
+    ]);
   });
 
   it('is not written again by a Steward started after the one that held the session', async () => {

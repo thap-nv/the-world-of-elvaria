@@ -142,8 +142,10 @@
   `State.wrapped`). (PS-28b) In that same step the bell rings `wrap_up` once per session, for an assignee and for a
   judge past `soft_pct` alike (a judge gets no file and no line): the ceiling in force, the figure of the cut, and
   `raise_from`, the smallest `quest edit --max-tokens` (`tokenCeilingFor`) or `--max-minutes` that lifts the ceiling
-  (`src/sessions/wrap-up-bell.ts`). (PS-28) Each tick reads every held session once (`heldReadingsOf`, `src/sessions/usage.ts`)
-  for the reminder and the stamina: a session of either role whose bar crossed a notch of the way to its cut, or
+  (`src/sessions/wrap-up-bell.ts`). (PS-28) Each tick reads every held session once (`heldReadingsOf`,
+  `src/sessions/usage.ts`) for the reminder and the stamina, at the one instant it also hands `planTick`, so a clock
+  that moves while the snapshot builds cannot cut a session at a notch no line was written for: a session of either
+  role whose bar crossed a notch of the way to its cut, or
   whose gauge's ceiling changed (the owner raised the budget), gets one `agent.session.usage` line in the log and
   the quest's journal, before the plan can cut it (`State.notches`, in memory, forgets the sessions no longer
   held); the trips `commit`, `secrets`, `forbidden_paths` and `no_session` measure nothing and never go
@@ -543,7 +545,9 @@ pnpm --filter @elvaria/steward test
 ```
 
 Specs build a throwaway kingdom in the OS temp folder (a space in the name) with the default registry read by
-path, and run `FakeRunner` for both tribes; a fake verifier hands in its verdict as structured output.
+path, and run `FakeRunner` for both tribes; a fake verifier hands in its verdict as structured output. A spec
+that needs the lines a real session leaves (`agent.session.start`, and `agent.session.end` even for a killed
+session) gives the runner `lines` (`stamina.spec.ts`: a cut session, then the one that goes on, with its `previous`).
 `integration.spec.ts` takes ten quests all the way round (a crash, a failed review, a question, a seal, a
 dependency, a hang) and stops the Steward in the middle: the new one loses no quest, every `attempt_log`
 entry matches exactly one session, and the replayed log equals the files. `deliver.spec.ts` delivers a build, a

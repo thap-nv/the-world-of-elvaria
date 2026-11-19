@@ -2,7 +2,7 @@
 
 > Sinh từ event log của một vương quốc bằng `pnpm docs:gen --kingdom <thư mục>`; không sửa file này. Số đo để chỉnh `kingdom.json` (`breakers.subagent_max_turns`, `subagent_max_minutes`, `context_budget_tokens`): implementation-plan §3.12, ADR 0017.
 
-Khoảng: 2026-11-07T19:20:38+07:00 → 2026-11-14T18:38:52+07:00; 9771 dòng event, 70 quest.
+Khoảng: 2026-11-07T19:20:38+07:00 → 2026-11-19T11:26:28+07:00; 12586 dòng event, 92 quest.
 
 ## Theo bậc
 
@@ -10,9 +10,9 @@ Khoảng: 2026-11-07T19:20:38+07:00 → 2026-11-14T18:38:52+07:00; 9771 dòng ev
 |---|---|---|---|---|---|
 | Script | 3 | 3 | 0 | 0 | không model, mana 0 |
 | Học đồ | — | 3 | — | trong phiên | 0.2 phút; 0 lần bị cắt ở maxTurns; 0 lần quá giờ; 0 lời gọi tool |
-| Phiên | 67 | 224 | 223 | 45599634 | 4759 lượt; 6547 lời gọi tool của nhân vật |
+| Phiên | 89 | 278 | 282 | 64847105 | 6734 lượt; 8361 lời gọi tool của nhân vật |
 
-Tỉ lệ: 4 % quest bậc script; 4 % quest có học đồ; 3 lần học đồ trên 223 phiên. Token của học đồ đã nằm trong token của phiên (`modelUsage` gộp). Ngoài quest (Tể tướng): 13 phiên, 90495 token.
+Tỉ lệ: 3 % quest bậc script; 3 % quest có học đồ; 3 lần học đồ trên 282 phiên. Token của học đồ đã nằm trong token của phiên (`modelUsage` gộp). Ngoài quest (Tể tướng): 20 phiên, 209180 token.
 
 ## Theo quest
 
@@ -88,3 +88,25 @@ Tỉ lệ: 4 % quest bậc script; 4 % quest có học đồ; 3 lần học đ�
 | `q_20261114_rrjpgx` | session | build | archived | 3 | 3 | 708416 | 0 | 0 | 0 |
 | `q_20261114_b6dxqw` | session | build | archived | 3 | 3 | 950792 | 1 | 0 | 0 |
 | `q_20261114_42nr8g` | session | build | archived | 2 | 1 | 156713 | 0 | 0 | 0 |
+| `q_20261115_2r6538` | session | plan | draft | 0 | 0 | 0 | 0 | 0 | 0 |
+| `q_20261115_8ap4j0` | session | fix | draft | 0 | 0 | 0 | 0 | 0 | 0 |
+| `q_20261115_dgwf3a` | session | plan | archived | 0 | 0 | 0 | 0 | 0 | 0 |
+| `q_20261115_m2pkrz` | session | plan | archived | 8 | 8 | 1893477 | 0 | 0 | 0 |
+| `q_20261115_5k5xxv` | session | build | archived | 4 | 7 | 3620613 | 0 | 0 | 0 |
+| `q_20261115_qyppt6` | session | build | archived | 2 | 2 | 828785 | 0 | 0 | 0 |
+| `q_20261115_byxq11` | session | research | archived | 8 | 8 | 3185762 | 0 | 0 | 0 |
+| `q_20261115_p64dv4` | session | build | archived | 2 | 2 | 756896 | 0 | 0 | 0 |
+| `q_20261115_fh4hbp` | session | build | archived | 8 | 8 | 2883435 | 0 | 0 | 0 |
+| `q_20261115_7wvx50` | session | build | archived | 2 | 2 | 955349 | 0 | 0 | 0 |
+| `q_20261115_ncx3k3` | session | build | archived | 3 | 5 | 1616599 | 0 | 0 | 0 |
+| `q_20261115_fspfxs` | session | research | archived | 0 | 0 | 0 | 0 | 0 | 0 |
+| `q_20261115_mqmt6q` | session | plan | archived | 0 | 0 | 0 | 0 | 0 | 0 |
+| `q_20261115_zts5cp` | session | research | archived | 0 | 0 | 0 | 0 | 0 | 0 |
+| `q_20261115_16khsq` | session | plan | archived | 0 | 0 | 0 | 0 | 0 | 0 |
+| `q_20261115_vqm963` | session | plan | archived | 0 | 0 | 0 | 0 | 0 | 0 |
+| `q_20261117_m8d5t2` | session | document | archived | 8 | 8 | 2069464 | 0 | 0 | 0 |
+| `q_20261117_7t6wsn` | session | fix | archived | 2 | 3 | 542580 | 0 | 0 | 0 |
+| `q_20261117_rg43ry` | session | fix | archived | 2 | 2 | 329515 | 0 | 0 | 0 |
+| `q_20261117_basq1e` | session | fix | archived | 0 | 0 | 0 | 0 | 0 | 0 |
+| `q_20261117_k5y5j0` | session | fix | archived | 2 | 2 | 202349 | 0 | 0 | 0 |
+| `q_20261118_1vrgtm` | session | build | archived | 3 | 2 | 362647 | 0 | 0 | 0 |
