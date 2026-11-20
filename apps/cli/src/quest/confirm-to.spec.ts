@@ -31,8 +31,9 @@ describe('elvaria quest confirm --to', () => {
     await summon('ember', '--class', 'knight', '--level', '1');
     const io = testIo();
     expect(await quest(io, 'confirm', QUEST_ID, '--to', 'kael')).toBe(0);
-    // Level 5 takes up to C: a rank D quest needs no seal, so nothing more is said.
-    expect(io.printed.out).toEqual([`Sent the command to confirm quest ${QUEST_ID} and give it to kael.`]);
+    // Level 5 takes up to C: a rank D quest needs no seal, so no ceiling line follows (as reassign --to).
+    expect(io.printed.out).toHaveLength(2);
+    expect(io.printed.out[0]).toBe(`Sent the command to confirm quest ${QUEST_ID} and give it to kael.`);
     const below = testIo();
     expect(await quest(below, 'confirm', OTHER_QUEST_ID, '--to', 'ember')).toBe(0);
     expect(below.printed.out.at(-1)).toBe(
