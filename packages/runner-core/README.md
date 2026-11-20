@@ -83,7 +83,7 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   (`prompts/chancellor-returned.md`, `ReturnedReply`).
   Its drafting guidance requires scopes to cover old behavior specs, locale keys and generated outputs (through
   generators), small work below the council thresholds to be drafted directly, and append-only journal updates
-  (`src/prompt/drafting.ts`); elvaria paths and commands are examples for that territory.
+  (`prompts/chancellor.md`), written for every territory.
 - Reads the memos a character wrote (PS-02, ADR 0024): the letter template has a `## Memos` section
   (`HANDOVER_SECTIONS`), law 8 of `prompts/assignee.md` says work outside the quest is a memo, not a change
   (`- <kind>: <text> refs: <path>, <path>`), and `memosOf(letter)` returns the memos and the lines that follow no
