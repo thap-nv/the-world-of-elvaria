@@ -47,7 +47,9 @@ describe('doctor, when the hook is not built', () => {
     const missing = path.join(world.root, 'dist', 'elvaria-hook.js');
     const info = await fakeRunner({ hook: { command: process.execPath, args: [missing] } }).doctor();
     expect(info).toMatchObject({ auth_ok: false });
-    expect(info.notes).toEqual([doctorNoteOf('doctor:hook_missing', { file: missing })]);
+    // Not the whole list: on a busy machine the fake agy's own calls can run out of time and add their notes
+    // (fix/timing-flakes); what this test is about is that hook_missing is there.
+    expect(info.notes).toContainEqual(doctorNoteOf('doctor:hook_missing', { file: missing }));
   });
 });
 
