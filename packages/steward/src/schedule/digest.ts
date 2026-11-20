@@ -140,16 +140,17 @@ const sourceOf = (world: World, memos: readonly Memo[]): DigestSource => ({
  * fail streak, and the repeated failures while the Temple is off or has no Monk. Counted here, without a model.
  */
 const templeNoticesIn = (
-  world: World,
+  ctx: Context,
   memos: readonly Memo[],
   verdicts: readonly Verdict[],
   events: readonly Event[],
 ): TempleNotices =>
   templeNoticesOf({
-    enabled: world.kingdom.schedule.temple.enabled,
-    classes: world.registry.classes,
-    characters: [...world.characters.values()],
-    quests: [...world.quests.values()],
+    enabled: ctx.world.kingdom.schedule.temple.enabled,
+    classes: ctx.world.registry.classes,
+    characters: [...ctx.world.characters.values()],
+    quests: [...ctx.world.quests.values()],
+    streak: [...ctx.streak.suspended],
     verdicts,
     memos,
     events,
@@ -172,7 +173,7 @@ export const digestJob = (digest: Digest): StewardJob => ({
     const unsealed = {
       ...run.notices,
       merged_unsealed: unsealedMergesOf(log.events),
-      ...templeNoticesIn(ctx.world, memos.items, verdicts.items, log.events),
+      ...templeNoticesIn(ctx, memos.items, verdicts.items, log.events),
     };
     const notices = upgrade === undefined ? unsealed : { ...unsealed, upgrade };
     const items = attentionQueue(state, ctx.deps.clock.now(), notices);

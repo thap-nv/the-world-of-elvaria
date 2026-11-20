@@ -9,6 +9,7 @@ import { forgeSizesOf } from './forge/sizes.ts';
 import { patrolMoved } from './patrol/again.ts';
 import { recoverPatrol } from './patrol/book.ts';
 import { recoverDelegation } from './delegation/book.ts';
+import { recordStreak, recoverStreak } from './temple/streak-book.ts';
 import { applyInbox } from './inbox/apply.ts';
 import { asleepFromLog, levelsFromLog, outsideFromLog, warnedFromLog } from './mana/book.ts';
 import { manaStep } from './mana/step.ts';
@@ -32,6 +33,7 @@ import { loadWorld, modelsOf, snapshotOf } from './world.ts';
 import type { Context, Counts } from './context.ts';
 import type { Held, State } from './steward-state.ts';
 import type { StewardDeps, TickReport } from './types.ts';
+import type { World } from './world.ts';
 
 const reportOf = (counts: Counts): TickReport => ({
   commands: { applied: counts.applied, rejected: counts.rejected, waiting: counts.waiting },
@@ -62,6 +64,7 @@ export async function recover(deps: StewardDeps, state: State): Promise<void> {
   recoverForge(state.forge, log.events);
   recoverPatrol(state.patrol, log.events);
   recoverDelegation(state.delegation, log.events);
+  recoverStreak(state.streak, log.events);
 }
 
 /**
@@ -123,6 +126,16 @@ async function planAndAct(
   patrolMoved(ctx, snapshot.base_red ?? []);
 }
 
+const recorderFor = (deps: StewardDeps, state: State, held: Held, world: World) =>
+  createRecorder({
+    ...deps,
+    world,
+    stamp: () => held.zone.format(deps.clock.now()),
+    onEvent: (event) => {
+      recordStreak(state.streak, event);
+    },
+  });
+
 /**
  * One tick, in the order of §3.1: the inbox, the sessions' ends, the mana gauges, the plan, the notices, the plan
  * carried out; then the scheduled jobs due (PS-03), which see what the tick did.
@@ -132,13 +145,12 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   const world = await loadWorld(deps.store, deps.log);
   if (world === undefined) return reportOf(counts);
   const { sessions, handled, limits, mana, background, judgeLocks, graphs, forge, looks } = state;
-  const record = createRecorder({ ...deps, world, stamp: () => held.zone.format(deps.clock.now()) });
-  const root = deps.store.root;
+  const record = recorderFor(deps, state, held, world);
   const { templates } = held;
   const stopping = state.stopping.signal;
   const ctx: Context = {
     deps,
-    root,
+    root: deps.store.root,
     world,
     record,
     sessions,
@@ -154,6 +166,7 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
     looks,
     patrol: state.patrol,
     delegation: state.delegation,
+    streak: state.streak,
   };
   const waiting = await applyInbox(ctx, handled);
   // A session's leftovers lose its secrets before anything is recorded of them (§3.9).

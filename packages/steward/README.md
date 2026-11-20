@@ -271,6 +271,9 @@
   the bell names them (`released`), and a report applied again still frees them. The digest lists the characters still
   suspended for a streak and, while the Temple is off or has no Monk, the repeated failures that wait
   (`templeNoticesOf` over the files, the verdicts and the log, no model).
+  The fail-streak suspension book (`temple/streak-book.ts`) is rebuilt from the whole log at start, like delegation.
+  The recorder folds each successfully appended event into it; reports and digest notices read this live set instead
+  of folding the whole log again. A Temple run leaves the set intact, and a release removes the character immediately.
   (PS-12f, `schedule/temple-book.ts`) The Temple's count for the schedule is kept by the Steward: it folds the whole
   log once at start (`foldTempleLog`, then `events.read(cursor)` each tick, so a run `elvaria temple run` wrote is
   counted) and gives every on-call job `JobView.temple` (`log`, and `due` = the domain's `templeDue` over

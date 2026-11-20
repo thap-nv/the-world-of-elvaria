@@ -451,7 +451,9 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   `temple_report` payload. `temple.ran` is in the contracts.
 - Frees and lists what waits on the Temple (PS-12g, temple-first plan DB10, DB13): `streakSuspendedOf` folds the log
   into the characters the Steward suspended for a fail streak and still suspended (the same fold as `templeLogOf`,
-  over the whole log); `templeReleasesOf` frees one of them once a temple report wrote a line of its streak's fail kind
+  over the whole log). `foldStreakSuspended` applies one event without mutating the previous set; the full-log reader
+  uses the same fold. `templeNoticesOf` accepts the Steward's cached `streak`, or folds the log for standalone readers.
+  `templeReleasesOf` frees one of them once a temple report wrote a line of its streak's fail kind
   that one of its next sessions as assignee loads (its own scripture or the temple's, scope and 40-line cap included);
   `templeWaitingOf` counts the repeated failures that wait while the Temple is off or has no Monk not suspended, and
   `streakWaitsOf` lists the suspended with the Monk's open letters on their runs; `templeNoticesOf` gives both to the
