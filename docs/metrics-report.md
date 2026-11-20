@@ -2,29 +2,29 @@
 
 > Sinh từ một vương quốc bằng `pnpm docs:gen --kingdom <thư mục>`; không sửa file này. Cùng số với `elvaria metrics` (implementation-plan §3.16.1, ADR 0027).
 
-Khoảng: 2026-11-07T19:20:38+07:00 → 2026-11-19T13:31:06+07:00; 12588 dòng event, 92 quest, 171 phán quyết, 372 lệnh đã xử lý.
+Khoảng: 2026-11-07T19:20:38+07:00 → 2026-11-20T13:55:41+07:00; 14617 dòng event, 109 quest, 208 phán quyết, 429 lệnh đã xử lý.
 
 ## Sổ đo (toàn bộ vương quốc)
 
-Lượt: 294 (284 phiên của nhân vật, 10 lượt của máy); 1 phiên dừng vì hết mana; 0 phiên thêm bên trong một lượt.
+Lượt: 345 (335 phiên của nhân vật, 10 lượt của máy); 1 phiên dừng vì hết mana; 0 phiên thêm bên trong một lượt.
 
-Làm lại: 131 phiên (hạ tầng 47, đầu ra 72, câu hỏi 12, không rõ 0).
+Làm lại: 148 phiên (hạ tầng 50, đầu ra 83, câu hỏi 15, không rõ 0).
 
-Đạt lượt đầu: 31/74 quest (42 %).
+Đạt lượt đầu: 42/91 quest (46 %).
 
 Lỗi lọt: 2 (chủ nhân trả bài sau một phán quyết đạt), 0 chủ nhân báo sau merge.
 
-Lần cần chủ nhân: 140 lệnh, trên 64 của 88 quest.
+Lần cần chủ nhân: 143 lệnh, trên 67 của 105 quest.
 
-Quest được đóng dấu: 51, tổng 44152710 token, trung bình 69.7 phút từ phiên đầu tới phiên cuối.
+Quest được đóng dấu: 66, tổng 50208471 token, trung bình 68.7 phút từ phiên đầu tới phiên cuối.
 
 Lượt check bị gạt vì môi trường (Docker tắt, container mất): 0.
 
-Lượt đọc file: 3493; 327 file bị một phiên đọc hơn một lần.
+Lượt đọc file: 3623; 337 file bị một phiên đọc hơn một lần.
 
 Lượt hỏi đồ thị code: 0 trong 0 phiên (query 0, path 0, explain 0, affected 0).
 
-Phiên người làm: 149, 142 phiên có sửa file; trước lần sửa đầu: trung vị 12 lần gọi tool, 43 % mọi lần gọi của chúng (trung vị 41 %).
+Phiên người làm: 174, 167 phiên có sửa file; trước lần sửa đầu: trung vị 11 lần gọi tool, 41 % mọi lần gọi của chúng (trung vị 37 %).
 
 Lần nộp có file đổi ngoài vùng của quest: 2 (2 file).
 
@@ -42,24 +42,26 @@ Lần nộp có file đổi ngoài vùng của quest: 2 (2 file).
 | 2026-11-15 | 42 | 26 (2/19/5/0) | 3/8 | 31 |
 | 2026-11-17 | 11 | 7 (2/4/1/0) | 1/2 | 1 |
 | 2026-11-18 | 7 | 0 (0/0/0/0) | 3/3 | 0 |
+| 2026-11-19 | 9 | 2 (0/0/2/0) | 3/4 | 2 |
+| 2026-11-20 | 42 | 15 (3/11/1/0) | 8/13 | 1 |
 
 ## Làm lại theo nguyên nhân
 
 | Nguyên nhân | Căn cứ | Giá trị | Người làm | Người chấm | Tổng |
 |---|---|---|---|---|---|
-| hạ tầng | kết thúc phiên | breaker | 29 | 6 | 35 |
-| hạ tầng | kết thúc phiên | crash | 2 | 4 | 6 |
+| hạ tầng | kết thúc phiên | breaker | 30 | 6 | 36 |
+| hạ tầng | kết thúc phiên | crash | 3 | 5 | 8 |
 | hạ tầng | loại lỗi của phán quyết | flaky | 2 | 2 | 4 |
 | hạ tầng | kết thúc phiên | partial | 0 | 1 | 1 |
 | hạ tầng | kết thúc phiên | timeout | 1 | 0 | 1 |
-| đầu ra | loại lỗi của phán quyết | incomplete | 11 | 8 | 19 |
-| đầu ra | loại lỗi của phán quyết | tests_fail | 8 | 9 | 17 |
-| đầu ra | loại lỗi của phán quyết | wrong_facts | 8 | 8 | 16 |
+| đầu ra | loại lỗi của phán quyết | incomplete | 14 | 11 | 25 |
+| đầu ra | loại lỗi của phán quyết | tests_fail | 10 | 11 | 21 |
+| đầu ra | loại lỗi của phán quyết | wrong_facts | 9 | 8 | 17 |
 | đầu ra | loại lỗi của phán quyết | other | 5 | 5 | 10 |
 | đầu ra | loại lỗi của phán quyết | style | 2 | 2 | 4 |
 | đầu ra | loại lỗi của phán quyết | unsafe | 2 | 2 | 4 |
 | đầu ra | loại lỗi của phán quyết | scope_creep | 1 | 1 | 2 |
-| câu hỏi | kết thúc phiên | blocked | 12 | 0 | 12 |
+| câu hỏi | kết thúc phiên | blocked | 15 | 0 | 15 |
 
 ## Đạt lượt đầu
 
@@ -68,42 +70,42 @@ Lần nộp có file đổi ngoài vùng của quest: 2 (2 file).
 | Nghề | astrologer | 0 | 1 | 0 % |
 | Nghề | bard | 0 | 1 | 0 % |
 | Nghề | dwarf | 1 | 1 | 100 % |
-| Nghề | knight | 25 | 52 | 48 % |
-| Nghề | mage | 2 | 8 | 25 % |
+| Nghề | knight | 35 | 67 | 52 % |
+| Nghề | mage | 2 | 9 | 22 % |
 | Nghề | scout | 1 | 4 | 25 % |
-| Nghề | scribe | 2 | 7 | 29 % |
-| Tag | backend | 16 | 35 | 46 % |
+| Nghề | scribe | 3 | 8 | 38 % |
+| Tag | backend | 22 | 44 | 50 % |
 | Tag | db | 1 | 2 | 50 % |
-| Tag | docs | 7 | 25 | 28 % |
+| Tag | docs | 12 | 31 | 39 % |
 | Tag | e2e | 3 | 19 | 16 % |
 | Tag | frontend | 7 | 25 | 28 % |
-| Tag | i18n | 3 | 14 | 21 % |
-| Tag | infra | 4 | 5 | 80 % |
+| Tag | i18n | 4 | 16 | 25 % |
+| Tag | infra | 5 | 6 | 83 % |
 | Tag | integration | 1 | 7 | 14 % |
-| Model | claude-opus-5-5 | 5 | 16 | 31 % |
+| Model | claude-opus-5-5 | 6 | 19 | 32 % |
 | Model | claude-opus-5-5-high | 1 | 1 | 100 % |
-| Model | claude-sonnet-5-5 | 14 | 31 | 45 % |
-| Model | gemini-3.8-flash-high | 0 | 6 | 0 % |
+| Model | claude-sonnet-5-5 | 17 | 36 | 47 % |
+| Model | gemini-3.8-flash-high | 1 | 8 | 13 % |
 | Model | gemini-4-argon-medium | 2 | 6 | 33 % |
-| Model | gpt-6.1-sol | 9 | 14 | 64 % |
+| Model | gpt-6.1-sol | 15 | 21 | 71 % |
 | Dạng | analyze | 0 | 1 | 0 % |
-| Dạng | build | 21 | 44 | 48 % |
-| Dạng | document | 2 | 7 | 29 % |
-| Dạng | fix | 3 | 7 | 43 % |
-| Dạng | plan | 2 | 8 | 25 % |
+| Dạng | build | 23 | 46 | 50 % |
+| Dạng | document | 3 | 8 | 38 % |
+| Dạng | fix | 8 | 17 | 47 % |
+| Dạng | plan | 2 | 9 | 22 % |
 | Dạng | publish | 0 | 1 | 0 % |
-| Dạng | refactor | 2 | 2 | 100 % |
+| Dạng | refactor | 5 | 5 | 100 % |
 | Dạng | research | 1 | 4 | 25 % |
 | Lãnh thổ | dc1-se-team | 19 | 48 | 40 % |
-| Lãnh thổ | elvaria | 12 | 26 | 46 % |
+| Lãnh thổ | elvaria | 23 | 43 | 53 % |
 
 ## Tỉ lệ đạt theo lượt làm
 
 | Lượt | Đạt | Đã quyết | Tỉ lệ |
 |---|---|---|---|
-| 1 | 31 | 74 | 42 % |
-| 2 | 23 | 41 | 56 % |
-| 3 | 11 | 18 | 61 % |
+| 1 | 42 | 91 | 46 % |
+| 2 | 27 | 46 | 59 % |
+| 3 | 11 | 19 | 58 % |
 | 4 | 6 | 7 | 86 % |
 
 ## Lần cần chủ nhân, theo lệnh
@@ -115,17 +117,17 @@ Lần nộp có file đổi ngoài vùng của quest: 2 (2 file).
 | reassign | 14 |
 | edit_quest | 87 |
 | set_rank | 0 |
-| answer | 5 |
-| cancel | 10 |
+| answer | 7 |
+| cancel | 11 |
 
 ## Lời khuyên của Tể tướng trên các thư đưa lên chủ nhân
 
-Làm theo lời khuyên: 0 trên 0 thư chủ nhân đã quyết sau một lời khuyên (—); thư đưa lên: 8.
+Làm theo lời khuyên: 0 trên 0 thư chủ nhân đã quyết sau một lời khuyên (—); thư đưa lên: 9.
 
 | Lời khuyên | Đưa lên | Đã quyết | Quyết như lời khuyên |
 |---|---|---|---|
 | new_quest | 4 | 0 | 0 |
-| owner | 4 | 3 | 0 |
+| owner | 5 | 3 | 0 |
 
 ## Lỗi lọt
 
@@ -140,7 +142,15 @@ Không có.
 
 ## Nhánh gốc đỏ sau merge
 
-Không có.
+| Lãnh thổ | Check | Đỏ từ | Quest merge từ lần xanh gần nhất |
+|---|---|---|---|
+| elvaria | test | 2026-11-20T07:28:09+07:00 | ngoài Elvaria |
+| elvaria | boundaries | 2026-11-20T07:28:09+07:00 | ngoài Elvaria |
+| elvaria | schemas | 2026-11-20T07:28:09+07:00 | ngoài Elvaria |
+| elvaria | docs_gen | 2026-11-20T07:28:09+07:00 | ngoài Elvaria |
+| elvaria | docs_check | 2026-11-20T07:28:09+07:00 | ngoài Elvaria |
+| elvaria | i18n | 2026-11-20T07:28:09+07:00 | ngoài Elvaria |
+| elvaria | setup | 2026-11-20T07:29:10+07:00 | ngoài Elvaria |
 
 ## Quest được đóng dấu
 
@@ -197,6 +207,21 @@ Không có.
 | q_20261117_m8d5t2 | 2069464 | 76.5 | 69.7 |
 | q_20261117_rg43ry | 329515 | 15.6 | 7.9 |
 | q_20261118_1vrgtm | 362647 | 19.6 | 8.3 |
+| q_20261119_7jb6de | 262330 | 26.6 | 15.4 |
+| q_20261119_hh9z0a | 690126 | 579.8 | 43.8 |
+| q_20261119_tkv9e4 | 395634 | 27.4 | 8.4 |
+| q_20261119_txr2c6 | 643670 | 38.7 | 14.8 |
+| q_20261120_09t42t | 478385 | 44.7 | 25.2 |
+| q_20261120_22124s | 439568 | 28.4 | 9.8 |
+| q_20261120_4m6cte | 93255 | 2.2 | 1.9 |
+| q_20261120_8km8rm | 660470 | 59.5 | 43.2 |
+| q_20261120_csc4ma | 661346 | 37.0 | 27.9 |
+| q_20261120_fbvq67 | 310473 | 36.6 | 17.4 |
+| q_20261120_hasm74 | 154878 | 22.8 | 11.9 |
+| q_20261120_hezs1j | 262113 | 24.6 | 8.2 |
+| q_20261120_kxnqyc | 122528 | 4.3 | 3.3 |
+| q_20261120_mxpx9q | 608569 | 28.4 | 15.7 |
+| q_20261120_yvrgwh | 272416 | 18.4 | 8.2 |
 
 ## Merge không qua dấu (ủy quyền dấu)
 
@@ -208,18 +233,18 @@ Không có.
 
 | Trạng thái | Số lần | Trung vị | Lâu nhất |
 |---|---|---|---|
-| Nháp | 15 | 6.1 | 1385.8 |
-| Mở | 114 | 1.1 | 1451.9 |
-| Đã nhận | 120 | 0.2 | 16.4 |
-| Đang làm | 171 | 4.2 | 206.5 |
-| Chờ nghiệm thu, chưa có người chấm | 129 | 2.6 | 205.3 |
-| Chờ nghiệm thu, người chấm đang chấm | 123 | 1.4 | 90.0 |
-| Bị trả bài | 38 | 0.1 | 21.5 |
-| Chờ dấu vua | 53 | 5.2 | 1367.1 |
-| Xong | 76 | 111.8 | 4968.6 |
-| Chờ trả lời | 13 | 6.3 | 20.4 |
+| Nháp | 32 | 1.7 | 1385.8 |
+| Mở | 131 | 0.8 | 1451.9 |
+| Đã nhận | 137 | 0.2 | 16.4 |
+| Đang làm | 199 | 4.8 | 206.5 |
+| Chờ nghiệm thu, chưa có người chấm | 152 | 5.4 | 205.3 |
+| Chờ nghiệm thu, người chấm đang chấm | 146 | 1.3 | 90.0 |
+| Bị trả bài | 46 | 0.1 | 21.5 |
+| Chờ dấu vua | 68 | 4.1 | 1367.1 |
+| Xong | 91 | 98.8 | 4968.6 |
+| Chờ trả lời | 17 | 6.3 | 515.0 |
 | Tạm dừng (hết mana) | 1 | 301.7 | 301.7 |
-| Trạm quân y | 36 | 6.2 | 1611.0 |
+| Trạm quân y | 37 | 6.3 | 1611.0 |
 
 ## Theo quest
 
@@ -313,13 +338,31 @@ Không có.
 | q_20261117_m8d5t2 | document | scribe | 8 | 2/4/0/0 | không | 2069464 | 1 |
 | q_20261117_rg43ry | fix | knight | 2 | 0/0/0/0 | có | 329515 | 0 |
 | q_20261118_1vrgtm | build | knight | 3 | 0/0/0/0 | có | 362647 | 0 |
+| q_20261119_7jb6de | fix | knight | 2 | 0/0/0/0 | có | 262330 | 0 |
+| q_20261119_hh9z0a | fix | knight | 5 | 1/0/2/0 | không | 690126 | 1 |
+| q_20261119_tkv9e4 | document | scribe | 2 | 0/0/0/0 | có | 395634 | 0 |
+| q_20261119_txr2c6 | build | knight | 3 | 0/0/1/0 | có | 643670 | 1 |
+| q_20261120_09t42t | fix | knight | 2 | 0/0/0/0 | có | 478385 | 0 |
+| q_20261120_22124s | fix | knight | 4 | 0/2/0/0 | không | 439568 | 0 |
+| q_20261120_2c0sj1 | fix | knight | 4 | 1/1/0/0 | không | 1541595 | 1 |
+| q_20261120_4m6cte | fix | knight | 2 | 0/0/0/0 | có | 93255 | 0 |
+| q_20261120_8km8rm | fix | knight | 4 | 0/2/0/0 | không | 660470 | 0 |
+| q_20261120_csc4ma | refactor | knight | 2 | 0/0/0/0 | có | 661346 | 0 |
+| q_20261120_fbvq67 | fix | knight | 4 | 0/2/0/0 | không | 310473 | 0 |
+| q_20261120_hasm74 | refactor | knight | 2 | 0/0/0/0 | có | 154878 | 0 |
+| q_20261120_hezs1j | fix | knight | 2 | 0/0/0/0 | có | 262113 | 0 |
+| q_20261120_kxnqyc | fix | knight | 3 | 1/0/0/0 | có | 122528 | 0 |
+| q_20261120_mxpx9q | build | knight | 2 | 0/0/0/0 | có | 608569 | 0 |
+| q_20261120_yp3jmk | plan | mage | 6 | 0/4/0/0 | không | 1084317 | 0 |
+| q_20261120_yvrgwh | refactor | knight | 2 | 0/0/0/0 | có | 272416 | 0 |
 
 ## Thư theo kiểu
 
 | Dạng | Đã lập | Tới chủ nhân | Bạn quyết | Phân loại quyết |
 |---|---|---|---|---|
-| amendment | 7 | 6 | 6 | 1 |
-| proposal | 9 | 5 | 1 | 3 |
+| advisory | 3 | 0 | 0 | 0 |
+| amendment | 10 | 7 | 7 | 2 |
+| proposal | 12 | 5 | 1 | 3 |
 
 ## Phản biện theo người chấm đầu
 
@@ -329,7 +372,7 @@ Không có.
 
 | Đã lập | Nhận | Bác | Tới chủ nhân | Bị trả sau khi bác |
 |---|---|---|---|---|
-| 7 | 7 | 0 | 6 | 0 |
+| 10 | 8 | 0 | 7 | 0 |
 
 ## File một phiên đọc lại (tối đa 10 dòng, nhiều lượt nhất trước)
 
@@ -348,55 +391,67 @@ Không có.
 
 ## Bài học trong kinh: lượt nạp, trúng, trượt và tác dụng
 
-Chưa phiên nào ghi dấu vết nạp theo dòng (load_trace.lessons, từ PS-12), nên chưa có bài học nào để đếm.
+| Tham chiếu | Loại lỗi | Lượt nạp | Trúng | Trượt | Tác dụng | Nạp đầu | Nạp cuối | Nội dung |
+|---|---|---|---|---|---|---|---|---|
+| L_20261119_a61684 | wrong_facts | 47 | 43 | 1 | 8/110 → 1/22 (-3 điểm) | 2026-11-19 | 2026-11-20 | Every file you cite must exist and every quote must be verb… |
+| L_20261119_ar8614 | style | 47 | 44 | 0 | 2/110 → 0/22 (-2 điểm) | 2026-11-19 | 2026-11-20 | Write files with LF line endings. |
+| L_20261119_da20we | wrong_facts | 47 | 43 | 1 | 8/110 → 1/22 (-3 điểm) | 2026-11-19 | 2026-11-20 | When you cite code as evidence, give its URL or path, the c… |
+| L_20261119_mmw792 | style | 47 | 44 | 0 | 2/110 → 0/22 (-2 điểm) | 2026-11-19 | 2026-11-20 | When a quest names a style or glossary file, check each ter… |
+| L_20261119_nj1bcx | — | 47 | 0 | 0 | — | 2026-11-19 | 2026-11-20 | Before reading a file larger than about 50 KB, find the par… |
+| L_20261119_s4x1pw | wrong_facts | 47 | 43 | 1 | 8/110 → 1/22 (-3 điểm) | 2026-11-19 | 2026-11-20 | Before you assert the order or completeness of a list an AP… |
+| L_20261119_t90y28 | wrong_facts | 47 | 43 | 1 | 8/110 → 1/22 (-3 điểm) | 2026-11-19 | 2026-11-20 | Before you state what a code path does (its results, its er… |
+| L_20261119_agshqk | incomplete | 24 | 18 | 4 | 11/110 → 4/22 (+8 điểm) | 2026-11-19 | 2026-11-20 | Before you submit, list each requirement of the quest and e… |
+| L_20261119_25hqeh | wrong_facts | 8 | 8 | 0 | — | 2026-11-19 | 2026-11-20 | The sandbox cannot write the plot's git metadata or Vite's … |
+| L_20261119_m22zq0 | wrong_facts | 8 | 8 | 0 | — | 2026-11-19 | 2026-11-20 | Git commands that need the work tree (git grep, git diff HE… |
 
 ## Loại lỗi theo thời gian (số lượt trượt trên số lượt được chấm, mỗi khoảng 20 lượt)
 
 | Loại lỗi | Lượt trượt | Mỗi 20 lượt được chấm (cũ → mới) |
 |---|---|---|
-| incomplete | 11 | 0/20 · 1/20 · 2/20 · 3/20 · 5/20 · 0/10 |
-| tests_fail | 8 | 1/20 · 4/20 · 2/20 · 1/20 · 0/20 · 0/10 |
-| wrong_facts | 8 | 2/20 · 0/20 · 1/20 · 1/20 · 2/20 · 2/10 |
-| other | 5 | 1/20 · 1/20 · 1/20 · 1/20 · 1/20 · 0/10 |
-| style | 2 | 2/20 · 0/20 · 0/20 · 0/20 · 0/20 · 0/10 |
-| unsafe | 2 | 0/20 · 0/20 · 0/20 · 0/20 · 2/20 · 0/10 |
-| flaky | 2 | 0/20 · 0/20 · 1/20 · 1/20 · 0/20 · 0/10 |
-| scope_creep | 1 | 0/20 · 0/20 · 0/20 · 1/20 · 0/20 · 0/10 |
+| incomplete | 15 | 0/20 · 1/20 · 2/20 · 3/20 · 5/20 · 3/20 · 1/12 |
+| tests_fail | 10 | 1/20 · 4/20 · 2/20 · 1/20 · 0/20 · 1/20 · 1/12 |
+| wrong_facts | 9 | 2/20 · 0/20 · 1/20 · 1/20 · 2/20 · 2/20 · 1/12 |
+| other | 5 | 1/20 · 1/20 · 1/20 · 1/20 · 1/20 · 0/20 · 0/12 |
+| style | 2 | 2/20 · 0/20 · 0/20 · 0/20 · 0/20 · 0/20 · 0/12 |
+| unsafe | 2 | 0/20 · 0/20 · 0/20 · 0/20 · 2/20 · 0/20 · 0/12 |
+| flaky | 2 | 0/20 · 0/20 · 1/20 · 1/20 · 0/20 · 0/20 · 0/12 |
+| scope_creep | 1 | 0/20 · 0/20 · 0/20 · 1/20 · 0/20 · 0/20 · 0/12 |
 
 ## Lỗi lặp trong 50 lượt được chấm gần nhất (từ 3 phán quyết cùng loại)
 
 | Loại lỗi | Số lần | Phán quyết | Nghề | Tộc | Model | Lãnh thổ | Tag | Bài học đã nạp |
 |---|---|---|---|---|---|---|---|---|
-| incomplete | 8 | q_20261111_8gg2w0-1, q_20261111_2cse0x-1, q_20261111_qk3s1r-1, q_20261115_m2pkrz-1, q_20261115_m2pkrz-3, q_20261115_5k5xxv-1, q_20261115_byxq11-4, q_20261115_fh4hbp-3 | knight, mage, scout | claude, codex, gemini | claude-sonnet-5-5, claude-opus-5-5, gpt-6.1-sol, gemini-3.8-flash-high | dc1-se-team, elvaria | frontend, i18n, e2e, backend, docs, integration | |
-| wrong_facts | 5 | q_20261111_2cse0x-2, q_20261115_byxq11-2, q_20261115_byxq11-3, q_20261117_m8d5t2-1, q_20261117_m8d5t2-2-user | knight, scout, scribe | claude, gemini | claude-sonnet-5-5, gemini-3.8-flash-high | dc1-se-team, elvaria | frontend, i18n, e2e, integration, docs | |
+| incomplete | 9 | q_20261115_m2pkrz-1, q_20261115_m2pkrz-3, q_20261115_5k5xxv-1, q_20261115_byxq11-4, q_20261115_fh4hbp-3, q_20261120_yp3jmk-1, q_20261120_yp3jmk-2, q_20261120_yp3jmk-3, q_20261120_fbvq67-1 | mage, knight, scout | claude, codex, gemini | claude-opus-5-5, gpt-6.1-sol, gemini-3.8-flash-high, claude-sonnet-5-5 | elvaria | docs, backend, integration, i18n | L_20261119_a61684, L_20261119_mmw792, L_20261119_s4x1pw, L_20261119_ar8614, L_20261119_nj1bcx, L_20261119_da20we, L_20261119_agshqk, L_20261119_t90y28 |
+| wrong_facts | 5 | q_20261115_byxq11-2, q_20261115_byxq11-3, q_20261117_m8d5t2-1, q_20261117_m8d5t2-2-user, q_20261120_2c0sj1-1 | scout, scribe, knight | gemini | gemini-3.8-flash-high | elvaria | integration, docs | L_20261119_a61684, L_20261119_mmw792, L_20261119_s4x1pw, L_20261119_ar8614, L_20261119_nj1bcx, L_20261119_da20we, L_20261119_agshqk, L_20261119_t90y28 |
 
 ## Sau lời nhắc thu dọn, theo tộc (phiên người làm đã kết thúc)
 
 | Tộc | Được nhắc | Tự kết thúc | Bị cắt | Token thêm (trung vị) | Phút tới lúc kết thúc (trung vị) | Tiếp sức |
 |---|---|---|---|---|---|---|
-| gemini | 3 | 1 | 2 | 206504 | 5.0 | 0 |
+| gemini | 7 | 4 | 3 | 140169 | 2.9 | 0 |
 
 ## Cỡ prompt theo vai và khối (ký tự)
 
 | Vai | Phần | Khối | Phiên | Trung vị | Lớn nhất |
 |---|---|---|---|---|---|
-| Người làm | — | cả prompt | 55 | 20509 | 54775 |
-| Người làm | system | role | 55 | 7114 | 8265 |
-| Người làm | system | class | 55 | 1002 | 14027 |
-| Người làm | user | continuation | 25 | 15909 | 25397 |
-| Người làm | user | answer | 8 | 5403 | 6685 |
-| Người làm | user | quest | 47 | 4426 | 11504 |
-| Người làm | user | gazetteer | 47 | 3153 | 4037 |
-| Người làm | user | scripture | 47 | 2265 | 2956 |
-| Người làm | user | memos | 9 | 1004 | 3996 |
-| Người làm | user | resumed | 8 | 210 | 210 |
-| Người chấm | — | cả prompt | 37 | 36096 | 44562 |
-| Người chấm | system | role | 37 | 3294 | 4111 |
-| Người chấm | system | class | 37 | 1177 | 1692 |
-| Người chấm | user | review | 37 | 21968 | 26278 |
-| Người chấm | user | quest | 37 | 4651 | 11504 |
-| Người chấm | user | gazetteer | 37 | 3153 | 4037 |
-| Người chấm | user | scripture | 37 | 2265 | 2956 |
+| Người làm | — | cả prompt | 83 | 19085 | 54775 |
+| Người làm | system | role | 83 | 7448 | 8265 |
+| Người làm | system | class | 83 | 1002 | 14300 |
+| Người làm | user | continuation | 34 | 15871 | 25397 |
+| Người làm | user | answer | 10 | 4836 | 6685 |
+| Người làm | user | quest | 73 | 3527 | 11504 |
+| Người làm | user | gazetteer | 73 | 3197 | 4157 |
+| Người làm | user | advisories | 1 | 2591 | 2591 |
+| Người làm | user | scripture | 73 | 2154 | 2956 |
+| Người làm | user | memos | 13 | 1004 | 3996 |
+| Người làm | user | resumed | 10 | 210 | 210 |
+| Người chấm | — | cả prompt | 60 | 33873 | 44562 |
+| Người chấm | system | role | 60 | 3295 | 4111 |
+| Người chấm | system | class | 60 | 1277 | 1692 |
+| Người chấm | user | review | 60 | 20514 | 26278 |
+| Người chấm | user | quest | 60 | 3621 | 11504 |
+| Người chấm | user | gazetteer | 60 | 3423 | 4157 |
+| Người chấm | user | scripture | 60 | 1793 | 2956 |
 
 ## Giới hạn đã biết
 
