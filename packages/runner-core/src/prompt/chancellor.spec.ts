@@ -45,6 +45,34 @@ const context: ChancellorContext = {
 };
 
 describe('buildChancellorPrompt (§10 question 3)', () => {
+  it('includes old specs, locale keys and generated outputs in the drafting instructions', () => {
+    const { system } = buildChancellorPrompt(context, templates);
+    expect(system).toContain('include existing specs that assert the old behavior');
+    expect(system).toContain('allow those assertions to change with the new behavior');
+    expect(system).toContain('new keys in both `packages/i18n/src/locales/vi.json` and `en.json`');
+    expect(system).toContain(
+      'regenerate them only with `pnpm docs:gen` or `pnpm schemas`, never edit them by hand',
+    );
+    expect(system).toContain('Keep `scope_paths`, Files and Steps consistent');
+  });
+
+  it('drafts small work directly while preserving the council requirement', () => {
+    const { system } = buildChancellorPrompt(context, templates);
+    expect(system).toContain('Small work that fits one session gets one direct quest');
+    expect(system).toContain('no `plan` quest, no child quests and no `parent_ref`');
+    expect(system).toContain('especially when the owner explicitly asks for a direct quest');
+    expect(system).toContain(
+      'This applies only below the council thresholds; the council rules still take precedence.',
+    );
+    expect(system).toContain('of rank B or above, or when it carries 2 tags or more');
+  });
+
+  it('requires new journal lines instead of changing old entries', () => {
+    const { system } = buildChancellorPrompt(context, templates);
+    expect(system).toContain('§11 (`docs/implementation-plan/11-*.md`) is append-only');
+    expect(system).toContain('never instruct a character to edit or delete an existing §11 line');
+  });
+
   it('snapshot', async () => {
     const { system, user } = buildChancellorPrompt(context, templates);
     await expect(`=== system ===\n${system}\n\n=== user ===\n${user}\n`).toMatchFileSnapshot(
