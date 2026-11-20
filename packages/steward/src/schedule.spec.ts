@@ -63,6 +63,7 @@ describe('a scheduled job outside the tick', () => {
       unjudgeable: [],
       judge_waits: [],
       scope_held: [],
+      scope_waits: [],
       judges_unopened: [],
       tribes_held: [],
       deliveries: [],
