@@ -139,6 +139,8 @@ export interface RecorderDeps {
   readonly ids: IdSource;
   readonly log: Logger;
   readonly stamp: () => string;
+  /** Update in-memory books only after the log accepted the line. */
+  readonly onEvent?: (event: Event) => void;
 }
 
 const reasonOf = (error: unknown): string =>
@@ -161,6 +163,7 @@ async function append(deps: RecorderDeps, line: Line, ts: string): Promise<void>
   };
   const event: Event = EventSchema.parse(redactDeep(draft, createRedactor([])));
   await deps.events.append([event]);
+  deps.onEvent?.(event);
   // The quest's journal carries its own lines too: a revived session reads its tail (ADR 0010, 0017).
   if (line.quest !== undefined) await openJournal(deps.store.root, line.quest.id).append([event]);
 }

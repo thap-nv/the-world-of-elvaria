@@ -3,7 +3,8 @@
 // Steward releases it (`temple_done`) with its streak back at 0, and the report's bell names it. It stays suspended when
 // the Monk only writes a letter (`rung: check`), when the operation is refused, when the line is for another tribe, and
 // when the owner, not the streak, suspended it.
-import { afterEach, describe, expect, it } from 'vitest';
+import { openEventLog } from '@elvaria/eventlog';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { FAILED, TEMPLE_CAST, linesOf, report, templeBench } from './__fixtures__/temple.ts';
 import type { Bench } from './__fixtures__/kingdom.ts';
@@ -47,6 +48,21 @@ const releases = async (kingdom: Bench) =>
   (await linesOf(kingdom, 'character.release')).map(({ actor, data }) => [actor, data.character]);
 
 describe('the Temple frees a character suspended for a fail streak (PS-12g)', () => {
+  it('rebuilds suspensions on restart and releases without rereading the whole log', async () => {
+    const { kingdom, steward } = await suspendedByStreak();
+    await steward.stop();
+    const events = openEventLog(kingdom.root);
+    const read = vi.spyOn(events, 'read');
+    running = kingdom.steward({ events });
+    expect(await running.start({ loop: false })).toEqual({ ok: true });
+    read.mockClear();
+    await report(kingdom, { character: 'sage', operations: [add()], letters: [] });
+    await running.tick();
+    expect(await kingdom.character('kael')).toMatchObject({ status: 'idle', consecutive_fail: { count: 0 } });
+    expect(await releases(kingdom)).toHaveLength(1);
+    expect(read.mock.calls.filter(([cursor]) => cursor === undefined)).toEqual([]);
+  });
+
   it('releases it as soon as a line of its fail kind in its scope is applied, its streak back at 0', async () => {
     const { kingdom, steward } = await suspendedByStreak();
     await report(kingdom, { character: 'sage', operations: [add()], letters: [] });

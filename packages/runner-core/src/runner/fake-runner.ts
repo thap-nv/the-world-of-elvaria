@@ -41,7 +41,8 @@ export interface FakeRunnerOptions {
   /**
    * Write what a real session leaves in the log and its quest's journal: `agent.session.start` (the hook's line) when
    * it opens and `agent.session.end` (the runner's, so also for a killed session) when it ends. Needs the request's
-   * `ELVARIA_KINGDOM`, as the real runner does. Absent: no line, which keeps the event log of a spec to the Steward's.
+   * `ELVARIA_KINGDOM`, as the real runner does. Written by default (fix/stamina-followups, (j)), so a Steward spec sees
+   * the log a real session leaves; a spec that reads the log picks the Steward's lines by type.
    */
   readonly lines?: FakeLinesOptions;
 }
@@ -78,7 +79,7 @@ export function createFakeRunner(options: FakeRunnerOptions = {}): FakeRunner {
           capabilities,
           tokens: options.tokens ?? FAKE_TOKENS,
           delay_ms: options.delay_ms ?? 0,
-          ...(options.lines === undefined ? {} : { lines: options.lines }),
+          lines: options.lines ?? {},
         }),
       );
     },

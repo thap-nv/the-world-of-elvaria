@@ -6,6 +6,7 @@ import type { HeldLock } from '@elvaria/store';
 
 import type { Background } from './background.ts';
 import type { DelegationBook } from './delegation/book.ts';
+import type { StreakBook } from './temple/streak-book.ts';
 import type { ForgeBook } from './forge/book.ts';
 import type { BaseLooks } from './forge/looks.ts';
 import type { PatrolBook } from './patrol/book.ts';
@@ -66,6 +67,7 @@ export interface State {
   readonly patrol: PatrolBook;
   /** The territories whose delegation of the seal the breaker suspended (PS-08g): rebuilt from the log at start. */
   readonly delegation: DelegationBook;
+  readonly streak: StreakBook;
   /** Set by start(): what the first tick finishes of the last Steward's work (restart.ts, P1-44). */
   restart: Restart | undefined;
   held: Held | undefined;

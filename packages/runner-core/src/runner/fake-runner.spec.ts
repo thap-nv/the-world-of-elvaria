@@ -90,7 +90,8 @@ describe('createFakeRunner', () => {
     const limited = await runner.spawn(request('rate_limit'));
     const [result, signals] = await Promise.all([limited.wait(), signalsOf(limited.signals)]);
     expect(result).toMatchObject({ outcome: 'error', rate_limited: true, usage: { tokens: 0 } });
-    expect(signals.map(({ kind }) => kind)).toEqual(['rate_limit']);
+    // The `text` signals are the session's lines telling that this request has no kingdom to write them to.
+    expect(signals.filter(({ kind }) => kind !== 'text').map(({ kind }) => kind)).toEqual(['rate_limit']);
     const hanging = await runner.spawn(request('hang'));
     await hanging.kill('test');
     await hanging.kill('again');

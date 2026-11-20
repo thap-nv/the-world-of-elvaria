@@ -7,6 +7,7 @@ import { repeatedFailuresOf } from '../metrics/repeated-failures.ts';
 import { streakSuspendedOf } from './due.ts';
 import { streakWaitsOf, templeWaitingOf } from './waiting.ts';
 import type { Character } from '../schema/character/character.ts';
+import type { CharacterId } from '../core/ids.ts';
 import type { Event } from '../schema/event/event.ts';
 import type { Memo } from '../schema/memo/memo.ts';
 import type { Quest } from '../schema/quest/quest.ts';
@@ -24,6 +25,8 @@ export interface TempleNoticeSource {
   readonly memos: readonly Memo[];
   /** The kingdom's whole log, in its order. */
   readonly events: readonly Event[];
+  /** The Steward's live book; standalone readers can derive it from events instead. */
+  readonly streak?: readonly CharacterId[];
 }
 
 export interface TempleNotices {
@@ -40,7 +43,7 @@ export function templeNoticesOf(source: TempleNoticeSource): TempleNotices {
     classes,
     groups: repeatedFailuresOf(evidence).length,
   });
-  const streak = streakSuspendedOf(events);
+  const streak = source.streak ?? streakSuspendedOf(events);
   return {
     streak_suspended: streakWaitsOf({ characters, classes, streak, memos, quests }),
     ...(waiting === undefined ? {} : { temple_waiting: waiting }),

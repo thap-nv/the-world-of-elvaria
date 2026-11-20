@@ -3,7 +3,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { at, lineOf, questId } from '../metrics/__fixtures__/ledger.ts';
-import { streakSuspendedOf, templeLogOf } from './due.ts';
+import { foldStreakSuspended, streakSuspendedOf, templeLogOf } from './due.ts';
+import type { CharacterId } from '../core/ids.ts';
 import type { Event } from '../schema/event/event.ts';
 
 const STEWARD: Event['actor'] = { kind: 'steward' };
@@ -23,6 +24,65 @@ const questLine = (id: string, status: string): Event =>
   lineOf('quest.returned', { quest: { id: questId(1) }, characters: [{ id, status }] }, at(2), questId(1));
 
 describe('streakSuspendedOf (PS-12g)', () => {
+  it('matches every prefix of all three-line combinations of suspension, release and unrelated events', () => {
+    const choices = [
+      character('character.suspend', 'kael', 'suspended'),
+      character('character.suspend', 'mira', 'suspended'),
+      character('character.suspend', 'kael', 'suspended', OWNER),
+      character('character.release', 'kael', 'idle'),
+      character('character.level_up', 'mira', 'suspended'),
+      questLine('kael', 'suspended'),
+      ran,
+    ];
+    const sequences = choices.flatMap((first) =>
+      choices.flatMap((second) => choices.map((third) => [first, second, third])),
+    );
+    for (const events of sequences) {
+      let state: ReadonlySet<CharacterId> = new Set();
+      for (const [index, event] of events.entries()) {
+        state = foldStreakSuspended(state, event);
+        expect([...state]).toEqual(streakSuspendedOf(events.slice(0, index + 1)));
+      }
+    }
+  });
+
+  it('matches every prefix without mutating earlier sets', () => {
+    const events = [
+      character('character.suspend', 'kael', 'suspended'),
+      character('character.suspend', 'mira', 'suspended'),
+      ran,
+      character('character.level_up', 'kael', 'suspended'),
+      character('character.suspend', 'sable', 'suspended', OWNER),
+      character('character.release', 'kael', 'idle', OWNER),
+      questLine('sable', 'suspended'),
+      character('character.release', 'mira', 'idle'),
+      character('character.suspend', 'kael', 'suspended'),
+    ];
+    const expected = [
+      [],
+      ['kael'],
+      ['kael', 'mira'],
+      ['kael', 'mira'],
+      ['kael', 'mira'],
+      ['kael', 'mira'],
+      ['mira'],
+      ['mira'],
+      [],
+      ['kael'],
+    ];
+    let state: ReadonlySet<CharacterId> = new Set();
+    expect([...state]).toEqual(streakSuspendedOf([]));
+    expect([...state]).toEqual(expected[0]);
+    for (const [index, event] of events.entries()) {
+      const before = [...state];
+      const previous = state;
+      state = foldStreakSuspended(state, event);
+      expect([...previous]).toEqual(before);
+      expect([...state]).toEqual(expected[index + 1]);
+      expect([...state]).toEqual(streakSuspendedOf(events.slice(0, index + 1)));
+    }
+  });
+
   it('keeps a suspension of the Steward across a run of the Temple, which templeLogOf forgets', () => {
     const events = [character('character.suspend', 'kael', 'suspended'), ran];
     expect(streakSuspendedOf(events)).toEqual(['kael']);

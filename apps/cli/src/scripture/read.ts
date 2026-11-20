@@ -24,9 +24,22 @@ export interface KingdomScriptures {
   readonly issues: readonly StoreIssue[];
 }
 
-async function scriptureOf(root: string, file: string, owner: string): Promise<Scripture[]> {
-  const text = await readTextFile(inKingdom(root, file));
-  return text === undefined ? [] : [{ file, owner, text }];
+// A ledger whose scripture.md the owner deleted still counts: the file is read as empty, so its entries come out as
+// "deleted lines" in lint and the doctor, instead of vanishing with the file (PS-12g, item (i)).
+async function scriptureOf(
+  ctx: KingdomContext,
+  file: string,
+  owner: string,
+): Promise<{ files: Scripture[]; ledger: ScriptureLedger; issue?: StoreIssue }> {
+  const text = await readTextFile(inKingdom(ctx.store.root, file));
+  const read = await ctx.store.scriptures.read(owner);
+  const ledger = read.ok ? read.value.ledger : EMPTY_LEDGER;
+  const kept = text !== undefined || ledger.lessons.length > 0;
+  return {
+    files: kept ? [{ file, owner, text: text ?? '' }] : [],
+    ledger,
+    ...(read.ok ? {} : { issue: read.error }),
+  };
 }
 
 /** The kingdom's scriptures, or the registry's problems when it cannot be read. */
@@ -37,19 +50,18 @@ export async function readKingdomScriptures(
   if (!registry.ok) return { problems: registry.error };
   const characters = await ctx.store.characters.list();
   const territories = await ctx.store.territories.list();
-  const root = ctx.store.root;
-  const files = [
-    ...(await scriptureOf(root, kingdomLayout.templeScripture(), 'temple')),
-    ...(
-      await Promise.all(characters.items.map(({ id }) => scriptureOf(root, kingdomLayout.scripture(id), id)))
-    ).flat(),
+  const reads = [
+    await scriptureOf(ctx, kingdomLayout.templeScripture(), 'temple'),
+    ...(await Promise.all(
+      characters.items.map(({ id }) => scriptureOf(ctx, kingdomLayout.scripture(id), id)),
+    )),
   ];
+  const files = reads.flatMap((read) => read.files);
   const ledgers = new Map<string, ScriptureLedger>();
   const ledgerIssues: StoreIssue[] = [];
-  for (const { owner } of files) {
-    const read = await ctx.store.scriptures.read(owner);
-    if (!read.ok) ledgerIssues.push(read.error);
-    ledgers.set(owner, read.ok ? read.value.ledger : EMPTY_LEDGER);
+  for (const read of reads) {
+    for (const { owner } of read.files) ledgers.set(owner, read.ledger);
+    if (read.issue !== undefined && read.files.length > 0) ledgerIssues.push(read.issue);
   }
   return {
     files,
