@@ -1,5 +1,6 @@
 // `confirm` naming its assignee (`elvaria quest confirm --to`): the Steward checks the character before it writes,
 // and gives it the quest in the same apply, so the tick that follows cannot claim it for another (q_20261120_tpzvk5).
+import type { Quest } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -66,6 +67,33 @@ describe('confirm with an assignee', () => {
       ['command.applied', undefined],
       ['command.applied', undefined],
     ]);
+  });
+
+  it('applied again after a stop between its two moves, only gives the open quest, with no second confirm', async () => {
+    const { kingdom, steward, draft } = await withDraft();
+    // What a Steward that stopped after the confirm leaves: the quest open, nobody holds it.
+    const open: Quest = { ...draft, status: 'open' };
+    await kingdom.store.quests.write(open);
+    await kingdom.command('confirm', { quest: draft.id, assignee: 'thorn' });
+    await steward.tick();
+    expect(await kingdom.quest(TITLE)).toMatchObject({ status: 'working', assignee: 'thorn' });
+    expect(await answers(kingdom)).toEqual([
+      ['command.applied', undefined],
+      ['command.applied', undefined],
+    ]);
+    // A confirm writes `quest.created` (draft → open); the file was opened by hand, so none may appear.
+    expect(await questLines(kingdom)).not.toContain('quest.created');
+    expect(await questLines(kingdom)).toContain('quest.claimed');
+  });
+
+  it('does not give a quest somebody holds again, nor confirm an open one without an assignee', async () => {
+    const { kingdom, steward, draft } = await withDraft();
+    await kingdom.command('confirm', { quest: draft.id, assignee: 'thorn' });
+    await steward.tick();
+    await kingdom.command('confirm', { quest: draft.id, assignee: 'kael' });
+    await steward.tick();
+    expect(await kingdom.quest(TITLE)).toMatchObject({ status: 'working', assignee: 'thorn' });
+    expect((await answers(kingdom)).at(-1)).toEqual(['command.rejected', 'no_transition']);
   });
 
   it('refuses a character who may not take it, and leaves the draft as it was', async () => {
