@@ -285,6 +285,7 @@ Liệt kê các bài học trong kinh với tham chiếu, phạm vi, fail_kind v
 
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
+| `--quest <id>` | Xem các dòng kinh đã ghi nhận cho từng phiên của nhiệm vụ; không dùng cùng --character. Ví dụ: elvaria scripture list --quest q_20261106_7k3m2a in tiêu đề «Phiên s1 · lượt 1 · assignee · thorn · 2026-11-19T10:00:00+07:00», rồi «L_20261119_4k2pqz: Chạy kiểm tra trước khi nộp.». Tham chiếu lấy từ load_trace.lessons; câu lấy từ kinh hiện tại, dòng đã xóa vẫn có tham chiếu. Chưa có phiên hoặc không ghi nhận dòng nào thì có thông báo riêng; nhiệm vụ không tồn tại thì thoát 1. |
 | `--character <id>` | Nhân vật cần xem: kinh riêng của nó rồi kinh của Đền, theo thứ tự nạp. |
 
 ## `elvaria temple evidence`
