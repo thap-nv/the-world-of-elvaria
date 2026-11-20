@@ -102,7 +102,12 @@ async function printReport(
  * After the switch from `from` to `to`. Nothing on the first pin: the kingdom ran the code it was typed with, whose
  * defaults nothing recorded. Nothing either for a build without the package, which is no Elvaria build.
  */
-export async function refreshDefaults(ctx: KingdomContext, from: string | null, to: string): Promise<void> {
+export async function refreshDefaults(
+  ctx: KingdomContext,
+  from: string | null,
+  to: string,
+  switchedAt: string,
+): Promise<void> {
   const root = ctx.store.root;
   const next = registryOfBuild(buildDirOf(root, to));
   if (from === null || !(await isFolder(next))) return;
@@ -111,7 +116,7 @@ export async function refreshDefaults(ctx: KingdomContext, from: string | null, 
     ctx.io.out(ctx.t('cli.upgrade.defaults_no_previous', { sha: shortSha(from), path: next }));
     return;
   }
-  const stamp = `${backupStamp(ctx.now())}-${BACKUP_LABEL}`;
+  const stamp = `${backupStamp(switchedAt)}-${BACKUP_LABEL}`;
   const defaults = { previous, next };
   const report = await refreshRegistryDefaults(
     root,
