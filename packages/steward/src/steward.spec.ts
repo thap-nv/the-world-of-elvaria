@@ -38,7 +38,15 @@ describe('the Steward, one quest', () => {
       ['verifier', 'submitted'],
     ]);
     const types = await typesOf(kingdom.root);
-    expect(types).toEqual([
+    // Each fake session writes its own start and end, as a real one does; the rest are the Steward's lines.
+    const isSession = (type: string) => type.startsWith('agent.session.');
+    expect(types.filter(isSession)).toEqual([
+      'agent.session.start',
+      'agent.session.end',
+      'agent.session.start',
+      'agent.session.end',
+    ]);
+    expect(types.filter((type) => !isSession(type))).toEqual([
       'quest.created',
       'command.applied',
       'quest.claimed',

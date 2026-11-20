@@ -37,7 +37,7 @@ export interface FakeStart {
   /** Tokens a finished session reports; 0 when the runner declares no `usage`. */
   readonly tokens: number;
   readonly delay_ms: number;
-  /** Write the session's start and end lines to the log and the journal (fake-lines.ts); none by default. */
+  /** Write the session's start and end lines to the log and the journal (fake-lines.ts); FakeRunner passes them by default. */
   readonly lines?: FakeLinesOptions;
 }
 
