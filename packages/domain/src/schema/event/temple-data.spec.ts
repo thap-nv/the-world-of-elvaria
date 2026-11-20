@@ -26,6 +26,11 @@ const SESSION = {
 };
 
 describe('temple.ran data', () => {
+  it('accepts an optional lowercase sha256 hash and rejects malformed hashes', () => {
+    expect(issuesOf(line({ ...SESSION, evidence_hash: 'ab'.repeat(32) }))).toBe('');
+    for (const evidence_hash of ['ab'.repeat(31), 'ab'.repeat(33), 'AB'.repeat(32), 'g'.repeat(64), 42])
+      expect(issuesOf(line({ ...SESSION, evidence_hash }))).toBe('data.evidence_hash');
+  });
   it('takes a run with no session, and a run whose session names its tribe, model and tokens', () => {
     expect(issuesOf(line(NO_SESSION))).toBe('');
     expect(issuesOf(line(SESSION))).toBe('');
