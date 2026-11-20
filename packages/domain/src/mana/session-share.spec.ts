@@ -62,6 +62,17 @@ describe('endedSessionsOf', () => {
 });
 
 describe('sessionShareOf', () => {
+  it.each(['claude-fable-5-1', 'claude-fable-5-1-high', 'claude-fable-5-1-xhigh'])(
+    'measures the same model cap share for %s',
+    (model) => {
+      const tribe = 'claude' as TribeId;
+      const before = argon(80, 9, { tribe, pool: 'claude', model: 'fable' });
+      const after = { ...before, observed_at: at(11), used_pct: 87 };
+      const sessions = [{ at: instant(10), tribe, model }];
+      expect(sessionShareOf(before, after, sessions, [{ id: tribe }])).toBe(7);
+    },
+  );
+
   it('is the rise over the sessions the gauge binds that ended between the two readings', () => {
     expect(sessionShareOf(argon(80, 9), argon(87, 11), [ended(10)], TRIBES)).toBe(7);
     // Ended after the first reading and by the second; an Argon cap counts Argon sessions only.

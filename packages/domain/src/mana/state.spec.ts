@@ -111,6 +111,8 @@ describe('manaStateOf', () => {
   it("binds a model's own cap to the characters on that model only", () => {
     const fable = reading(100, { window: 'weekly', model: 'fable', exhausted: true });
     expect(manaStateOf([fable], TRIBES, ON('claude-fable-5-1'), CFG, NOW)).toBe('asleep');
+    expect(manaStateOf([fable], TRIBES, ON('claude-fable-5-1-xhigh'), CFG, NOW)).toBe('asleep');
+    expect(manaStateOf([fable], TRIBES, ON('claude-opus-5-5-high'), CFG, NOW)).toBe('ok');
     expect(manaStateOf([fable], TRIBES, ON('claude-opus-5-5'), CFG, NOW)).toBe('ok');
   });
 

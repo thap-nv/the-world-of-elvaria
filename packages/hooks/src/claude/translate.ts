@@ -27,8 +27,17 @@ export const snakeIdOf = (value: string | undefined): string => {
  * Under `-p` the payload has no `model` (spike P1-02, hook-payloads.jsonl), so the runner's `model` in the
  * context stands in for it. Codex's SessionStart has the same shape and names its model (P1-12d).
  */
-export function sessionStart(input: ClaudeInput, ctx: HookContext): Translation {
-  const data = { session: input.session ?? UNKNOWN, model: modelSlugOf(input.text('model') ?? ctx.model) };
+export function sessionStart(input: ClaudeInput, ctx: HookContext, claudeEffort = false): Translation {
+  // The runner keeps its effort suffix in context even when the CLI reports only the base model.
+  // Keep this tiny parser local: hooks must not load domain or runner-core (ADR 0007).
+  const requested = claudeEffort ? /^(\S+)-(low|medium|high|xhigh|max)$/.exec(ctx.model ?? '') : null;
+  const actual = modelSlugOf(input.text('model') ?? requested?.[1] ?? ctx.model);
+  const model = claudeEffort ? actual.replace(/^(.+)-(low|medium|high|xhigh|max)$/, '$1') : actual;
+  const data = {
+    session: input.session ?? UNKNOWN,
+    model,
+    ...(requested === null ? {} : { effort: requested[2] }),
+  };
   return translation([{ type: 'agent.session.start', data }], { problems: recordHandoverStart(ctx) });
 }
 
@@ -53,7 +62,7 @@ const notice: Handler = (input) => {
 };
 
 const HANDLERS = new Map<string, Handler>([
-  ['SessionStart', sessionStart],
+  ['SessionStart', (input, ctx) => sessionStart(input, ctx, true)],
   // agent.session.end comes from the stream's `result` (runner, P1-09): only it knows outcome and usage.
   ['SessionEnd', () => translation([])],
   ['PreToolUse', preToolUse],
