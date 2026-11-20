@@ -168,6 +168,7 @@ describe('elvaria upgrade', () => {
     expect(await rollbackKingdom(await contextOf(back))).toBe(0);
     expect(await readPin(kingdom)).toMatchObject({ current: a, previous: c });
     expect(back.printed.out).toEqual([
+      'No registry backup for this upgrade at .backup/20261106T090000-registry; only the build pointer is changed.',
       `Went back to build ${short(a)}. The build just left (${short(c)}) is kept: elvaria upgrade --ref ${c} tries and pins it again.`,
     ]);
     expect((await upgradeEvents()).at(-1)).toMatchObject({

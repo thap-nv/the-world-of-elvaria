@@ -1337,6 +1337,8 @@
     "cli.upgrade.option.ref": "Commit, nhánh hay tag của repo Elvaria mà lệnh này chạy từ đó (mặc định: main). Nhánh ở máy chậm hơn bản origin/ của nó (theo lần fetch gần nhất) vẫn được dựng, kèm cảnh báo; lệnh không fetch.",
     "cli.upgrade.option.rollback": "Ghim lại bản trước, không dựng gì.",
     "cli.upgrade.rollback_ref": "--rollback không đi cùng --ref.",
+    "cli.upgrade.rollback_no_defaults": "Không có bản sao lưu registry của lần nâng cấp này tại {backup}; chỉ đổi con trỏ bản ghim.",
+    "cli.upgrade.rollback_defaults": "Đã trả lại các file registry từ {backup}:",
     "cli.upgrade.no_tool": "Không tìm thấy {program} trên PATH: elvaria upgrade cần git và pnpm.",
     "cli.upgrade.unknown_ref": "{ref} không chỉ tới commit nào của {source}.",
     "cli.upgrade.behind": "Cảnh báo: {ref} ở máy chậm hơn {upstream} {count} commit, theo lần fetch gần nhất của {source} (upgrade không fetch), mà bản dựng lấy từ {ref} ở máy. Muốn dựng mã mới hơn thì git pull trong {source} trước, hoặc dùng --ref {upstream}.",
