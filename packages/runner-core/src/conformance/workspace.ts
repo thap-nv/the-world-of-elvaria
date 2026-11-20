@@ -6,6 +6,7 @@ import path from 'node:path';
 
 import { CharacterSchema } from '@elvaria/domain';
 
+import { WORKSPACE_PREFIX, sweepStaleWorkspaces } from './sweep.ts';
 import { toolPolicyOf } from '../policy/tool-policy.ts';
 import type { ToolPolicyInput } from '../policy/tool-policy.ts';
 import {
@@ -50,8 +51,20 @@ export interface Workspace {
   remove(): Promise<void>;
 }
 
-export async function openWorkspace(): Promise<Workspace> {
-  const root = await mkdtemp(path.join(tmpdir(), 'elvaria conformance '));
+/** Where workspaces are made and what time it is; a test injects both. */
+export interface WorkspaceOptions {
+  readonly tmp?: string;
+  readonly now?: () => number;
+}
+
+/**
+ * Opens a fresh workspace, first clearing the ones an earlier killed turn left (sweep.ts): the one point every turn
+ * passes through, so rubbish never outlives the next check by more than the hour a live turn could still be using it.
+ */
+export async function openWorkspace(options: WorkspaceOptions = {}): Promise<Workspace> {
+  const tmp = options.tmp ?? tmpdir();
+  await sweepStaleWorkspaces({ tmp, now: options.now ?? Date.now });
+  const root = await mkdtemp(path.join(tmp, WORKSPACE_PREFIX));
   const plot = path.join(root, 'plot');
   const runDir = path.join(root, '.runs', `${CONFORMANCE_QUEST}-1`);
   await Promise.all([mkdir(plot), mkdir(runDir, { recursive: true })]);
