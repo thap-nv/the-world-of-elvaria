@@ -40,6 +40,15 @@ const QuestListSchema = unique(z.array(QuestIdSchema));
 
 export const QuestPayloadSchema = z.strictObject({ quest: QuestIdSchema });
 
+// Its own shape, not QuestPayloadSchema's: the other kinds sharing that shape must keep refusing an assignee.
+export const ConfirmPayloadSchema = QuestPayloadSchema.extend({
+  assignee: CharacterIdSchema.optional().meta(
+    describe(
+      "The character the owner gives the draft to as it opens (`elvaria quest confirm --to`): the Steward checks it as create_quest's assignee and gives it the quest in the same apply, before any tick could claim the quest for another. The Steward refuses the command, leaving the draft as it is, when the character is unknown, of another class, suspended or of a disabled tribe. Absent: the Steward picks, as before.",
+    ),
+  ),
+});
+
 /** (PS-09d) A territory the owner names: `patrol` asks for its patrol now. */
 export const TerritoryPayloadSchema = z.strictObject({ territory: TerritoryIdSchema });
 

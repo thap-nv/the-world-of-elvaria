@@ -105,6 +105,21 @@ describe('create_quest payload', () => {
   });
 });
 
+describe('confirm payload', () => {
+  it('takes an assignee, and a command written before it, without one, stays valid', () => {
+    const parsed = InboxCommandSchema.parse(command('confirm', { quest: QUEST, assignee: 'ember' }));
+    expect(parsed.payload).toEqual({ quest: QUEST, assignee: 'ember' });
+    expect(InboxCommandSchema.parse(command('confirm', { quest: QUEST })).payload).toEqual({ quest: QUEST });
+  });
+
+  it('leaves the kinds that share the plain quest payload without an assignee', () => {
+    for (const kind of ['retry', 'deliver', 'unhold', 'submit'])
+      expect(issuesOf(command(kind, { quest: QUEST, assignee: 'ember' }))).toEqual([
+        'payload: Unrecognized key: "assignee"',
+      ]);
+  });
+});
+
 describe('edit_quest payload', () => {
   const edit = (changes: object) => command('edit_quest', { quest: QUEST, expected_updated_at: TS, changes });
 

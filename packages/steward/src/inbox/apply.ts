@@ -54,7 +54,7 @@ const questOf = (ctx: Context, command: InboxCommand): Quest | undefined =>
 async function onQuest(ctx: Context, command: InboxCommand, quest: Quest): Promise<Outcome> {
   switch (command.kind) {
     case 'confirm':
-      return confirm(ctx, quest);
+      return confirm(ctx, quest, command.payload.assignee);
     case 'retry':
       return ownerMove(ctx, quest, command.kind);
     case 'cancel':
