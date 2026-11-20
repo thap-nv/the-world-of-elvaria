@@ -106,6 +106,8 @@ export const ATTENTION_TABLE = {
   // (D) of fix/quest-hold: a quest the owner holds (`quest hold`) waits for nobody but the owner, who lifts the hold
   // when it is time; the line says why, as the owner wrote it.
   quest_held: { group: 'can_wait', advice: 'unhold_when_ready', command: ['quest', 'unhold', '{quest}'] },
+  // An open quest waits for a quest whose scope meets its own (R3); it starts by itself once that quest is archived.
+  scope_wait: { group: 'can_wait', advice: 'wait_for_scope', command: ['quest', 'show', '{quest}'] },
   // PS-26: a scan of the latest patrol (link-check) did not pass; it never turns the branch red.
   patrol_scan: { group: 'can_wait', advice: 'read_scan', command: ['territory', 'patrol', '{territory}'] },
   mana_asleep: { group: 'can_wait', advice: 'wait_or_wake', command: ['wake', '{tribe}'] },
@@ -139,6 +141,9 @@ export interface AttentionSubject {
    * default branch (base_red): present, maybe empty, when the territory takes no work.
    */
   readonly waiting?: readonly QuestId[];
+  /** The quest an open quest waits for, and the glob of the open quest's scope that meets the holder's (scope_wait). */
+  readonly holder?: QuestId;
+  readonly overlap?: string;
   /** The pools that hold every judge of a quest (judge_mana). */
   readonly gauges?: readonly WaitGauge[];
   readonly memo?: MemoId;
