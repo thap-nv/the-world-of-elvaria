@@ -72,7 +72,10 @@ describe('elvaria quest --scope', () => {
     const shown = testIo();
     expect(await elvaria(shown, 'show', QUEST_ID)).toBe(0);
     expect(shown.printed.out.join('\n')).toMatch(/Scope\s+packages\/domain\/\*\*/);
-    expect(shown.printed.out).toContain(`waits for ${OTHER_QUEST_ID}, whose scope meets its own`);
+    // The Status row says what the board says (scopeWaitText).
+    expect(shown.printed.out.join('\n')).toMatch(
+      new RegExp(`Status\\s+Open \\(open\\) \\(waits for ${OTHER_QUEST_ID}, whose scope meets its own\\)`),
+    );
   });
 
   it('marks the quest without a scope that waits for a working one to run alone, in Vietnamese too', async () => {
@@ -84,5 +87,27 @@ describe('elvaria quest --scope', () => {
     const shown = testIo();
     expect(await elvaria(shown, 'show', OTHER_QUEST_ID)).toBe(0);
     expect(shown.printed.out.join('\n')).not.toContain('waits for');
+  });
+
+  it('keeps a quest that waits for nobody as "Open (open)" in quest show, and out of the digest', async () => {
+    const holder = questFixture('done', OTHER_QUEST_ID, { ...worked, scope_paths: ['apps/**'] });
+    await plantQuests(kingdom, questFixture('open', QUEST_ID, { scope_paths: ['docs/**'] }), holder);
+    const shown = testIo();
+    expect(await elvaria(shown, 'show', QUEST_ID)).toBe(0);
+    expect(shown.printed.out.join('\n')).toMatch(/Status\s+Open \(open\)\s*\n/);
+    const digest = testIo();
+    expect(await run(digest, 'digest', '--kingdom', kingdom, '--locale', 'en')).toBe(0);
+    expect(digest.printed.out.join('\n')).not.toContain('whose scope meets its own at');
+  });
+
+  it('tells in the digest, under what can wait, which quest an open quest waits for and where scopes meet', async () => {
+    const holder = questFixture('done', OTHER_QUEST_ID, { ...worked, scope_paths: ['packages/**'] });
+    const open = questFixture('open', QUEST_ID, { scope_paths: ['docs/a.md', 'packages/domain/**'] });
+    await plantQuests(kingdom, open, holder);
+    const digest = testIo();
+    expect(await run(digest, 'digest', '--kingdom', kingdom, '--locale', 'en')).toBe(0);
+    expect(digest.printed.out.join('\n')).toContain(
+      `is open and waits for ${OTHER_QUEST_ID}, whose scope meets its own at packages/domain/**.`,
+    );
   });
 });

@@ -6,7 +6,7 @@
 // waits for the seal.
 // (PS-28b) Its budget, the ceilings in force for the assignee and the judge as the breakers compute them, and the
 // stamina bar of its running session.
-import type { Event, Quest, Registry } from '@elvaria/domain';
+import type { Event, Quest, Registry, ScopeWait } from '@elvaria/domain';
 import type { MessageKey } from '@elvaria/i18n';
 import { inKingdom } from '@elvaria/store';
 
@@ -38,10 +38,13 @@ function fields(
   registry: Registry | undefined,
   quest: Quest,
   quests: readonly Quest[],
+  wait: ScopeWait | undefined,
 ): [MessageKey, string][] {
   const { t } = ctx;
+  // The reason `quest list` gives for a quest that waits on its territory's scope rules (scopeWaitText).
+  const because = wait === undefined ? '' : ` (${scopeWaitText(ctx, wait)})`;
   return [
-    ['cli.quest.field.status', `${t(QUEST_STATUS_LABEL[quest.status])} (${quest.status})`],
+    ['cli.quest.field.status', `${t(QUEST_STATUS_LABEL[quest.status])} (${quest.status})${because}`],
     ['cli.quest.field.kind', `${kindName(ctx, registry, quest.kind)} (${quest.kind})`],
     ['cli.quest.field.rank', quest.rank],
     ...(quest.scope_paths === undefined
@@ -125,17 +128,15 @@ async function runQuestShow(input: CommandInput, cli: CliContext): Promise<ExitC
   const registry = await ctx.store.loadRegistry();
   // Where its party stands is read from every quest (P1-21 (c)); a file that cannot be read counts as none.
   const { items } = await ctx.store.quests.list();
-  const rows = fields(ctx, registry.ok ? registry.value : undefined, quest, items).map(([label, value]) => [
-    ctx.t(label),
-    value,
-  ]);
+  const wait = (await scopeWaitsOf(ctx, items)).get(quest.id);
+  const rows = fields(ctx, registry.ok ? registry.value : undefined, quest, items, wait).map(
+    ([label, value]) => [ctx.t(label), value],
+  );
   const note = (await unclaimableOf(ctx, [quest])).get(quest.id);
   const why =
     note === undefined
       ? []
       : ['', ...(await unclaimableLines(ctx, registry.ok ? registry.value : undefined, quest, note))];
-  const wait = (await scopeWaitsOf(ctx, items)).get(quest.id);
-  const scope = wait === undefined ? [] : ['', scopeWaitText(ctx, wait)];
   const base = (await baseWaitsOf(ctx, items)).has(quest.id)
     ? ['', ctx.t('cli.quest.base_wait.why', { territory: quest.territory })]
     : [];
@@ -152,7 +153,6 @@ async function runQuestShow(input: CommandInput, cli: CliContext): Promise<ExitC
     ...staminaLines(ctx.t, quest, journal, ceilings),
     ...why,
     ...base,
-    ...scope,
     ...sick,
     ...last,
     ...delivery,

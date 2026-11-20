@@ -97,6 +97,8 @@ function subjectOf(t: Translate, item: AttentionItem): string {
     rank: item.rank ?? NONE,
     question: item.question ?? NONE,
     waiting: item.waiting?.join(', ') ?? NONE,
+    holder: item.holder ?? NONE,
+    overlap: item.overlap ?? NONE,
     gauges: gaugesOf(t, item.gauges),
     memo: item.memo ?? NONE,
     memo_kind: item.memo_kind ?? NONE,
