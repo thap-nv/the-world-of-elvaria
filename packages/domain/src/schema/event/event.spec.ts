@@ -24,6 +24,20 @@ const issuesOf = (value: unknown) => {
 };
 
 describe('EventSchema', () => {
+  it.each([undefined, 'low', 'medium', 'high', 'xhigh', 'max'])(
+    'accepts session start effort %s, including old lines without it',
+    (effort) => {
+      const data = { session: 's', model: 'claude-opus-5-5', ...(effort === undefined ? {} : { effort }) };
+      expect(EventSchema.parse(line('agent.session.start', data)).data).toEqual(data);
+    },
+  );
+
+  it('rejects unsupported session effort', () => {
+    expect(issuesOf(line('agent.session.start', { session: 's', model: 'opus', effort: 'ultra' }))).toEqual([
+      expect.stringContaining('data.effort'),
+    ]);
+  });
+
   it.each(examples)('accepts the example $type at the current version', (example) => {
     expect(EventSchema.parse(example)).toEqual(example);
   });

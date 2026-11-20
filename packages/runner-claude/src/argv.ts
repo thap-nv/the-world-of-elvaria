@@ -2,6 +2,7 @@
 // OAuth), `--worktree` (it leaves a lock), `--dangerously-skip-permissions`, nor `--disable-slash-commands`
 // (`/usage` is a slash command, and without the Skill tool the skill list costs no context).
 import { sessionTools } from './graph-rules.ts';
+import { modelArgs } from './model.ts';
 import type { SpawnRequest } from '@elvaria/runner-core';
 
 /** Files of the run folder the session reads. */
@@ -40,8 +41,7 @@ export function sessionArgv(req: SpawnRequest, files: RunFiles, sessionId: strin
     'dontAsk',
     '--settings',
     files.settings,
-    '--model',
-    req.character.model,
+    ...modelArgs(req.character.model),
     '--max-turns',
     String(budget.max_turns),
     ...(budget.max_usd === undefined ? [] : ['--max-budget-usd', String(budget.max_usd)]),
@@ -68,8 +68,7 @@ export const pingArgv = (model: string): string[] => [
   '-p',
   PING_PROMPT,
   ...STREAM,
-  '--model',
-  model,
+  ...modelArgs(model),
   '--max-turns',
   '1',
   '--tools',

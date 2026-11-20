@@ -50,7 +50,7 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 
 | Type | `data` |
 |---|---|
-| `agent.session.start` | `session`: string (không rỗng)<br>`model`: string (khớp `^[a-z0-9][a-z0-9.-]*$`) |
+| `agent.session.start` | `session`: string (không rỗng)<br>`model`: string (khớp `^[a-z0-9][a-z0-9.-]*$`)<br>`effort` (tùy chọn): một trong `low`, `medium`, `high`, `xhigh`, `max` |
 | `agent.session.end` | `outcome`: một trong `completed`, `max_turns`, `budget`, `killed`, `error` — RunResult.outcome (implementation-plan §3.7).<br>`usage` (tùy chọn): object { tokens, turns? } |
 | `agent.session.wrap_up` | `measure`: một trong `time`, `tokens`, `turns`<br>`used`: number ≥ 0<br>`limit`: number — Nominal ceiling before the soft and hard percentages.<br>`pct`: number ≥ 0 — Used as a percentage of the nominal ceiling. |
 | `agent.session.usage` | `role`: một trong `assignee`, `verifier` — Whose session: an assignee's bar has the reminder mark, a judge's none.<br>`measure`: một trong `time`, `tokens`, `turns` — The gauge the bar follows: of the ones the breakers read, the nearest its cut.<br>`used`: number ≥ 0 — Minutes for `time`, as on `agent.session.wrap_up`.<br>`limit`: number — Nominal ceiling in force, before the soft and hard percentages: tokenCeilingOf for tokens (the tribe calibrated, a judge times verifier_tokens_multiplier), budget.max_minutes for time.<br>`pct`: number ≥ 0 — Used as a percentage of the nominal ceiling.<br>`soft_pct`: number — breakers.soft_pct in force: the reminder mark of the bar.<br>`hard_pct`: number — breakers.hard_pct in force: the bar is empty here, where the session is cut. |

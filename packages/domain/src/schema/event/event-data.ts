@@ -95,7 +95,11 @@ const AgentToolBlockedDataSchema = z.strictObject({
   agent_type: CallerSchema,
 });
 
-const AgentSessionStartDataSchema = z.strictObject({ session: NonEmptyStringSchema, model: ModelSlugSchema });
+const AgentSessionStartDataSchema = z.strictObject({
+  session: NonEmptyStringSchema,
+  model: ModelSlugSchema,
+  effort: z.enum(['low', 'medium', 'high', 'xhigh', 'max']).optional(),
+});
 
 const AgentSessionWrapUpDataSchema = z.strictObject({
   measure: z.enum(['time', 'tokens', 'turns']),
