@@ -1,6 +1,6 @@
 # Sức khỏe cấu trúc của repo trước giai đoạn 2: số đo, kế hoạch dọn và máy gác
 
-Ngày: 2026-11-20 · Trạng thái: **chờ chủ nhân chốt** các mục K1 tới K13 ở cuối file.
+Ngày: 2026-11-20 · Trạng thái: **chủ nhân đã chốt** ngày 2026-11-20, mọi mục K1 tới K13 theo khuyến nghị ([§11, 2026-11-20](../implementation-plan/11-2026-11-20.md), dòng "docs/architecture-health").
 
 **Ai đọc.** Chủ nhân đọc mục Summary và mục Quyết định. Phiên điều phối đọc mục Việc để mở task và xếp đợt. Phiên làm một việc đọc mục Phát hiện, mục Cấu trúc đích và dòng của việc đó. File này không mở task và không thêm dòng §8.
 
@@ -174,4 +174,20 @@ Chờ được:
 
 ## Quyết định
 
-Chưa có. Chủ nhân chốt thì ghi ở đây và một dòng §11 của ngày chốt.
+Chủ nhân chốt ngày 2026-11-20, trong phiên rà soát, mọi mục theo khuyến nghị:
+
+- K1: thêm knip vào `pnpm check` (V1).
+- K2: luật thư mục R1 tới R8 với ba ngưỡng 10, 20, 30 và cổng `pnpm layout` có baseline (V2).
+- K3: barrel theo thư mục cho `domain` và `runner-core` (V3), làm trước package đầu tiên của giai đoạn 2.
+- K4: tách file chuỗi theo namespace (V4).
+- K5: dọn gốc `steward` (V5, V6) trong một khoảng lặng do phiên điều phối chọn.
+- K6: package `@elvaria/testkit` chỉ dev, chỉ có thư mục tạm và repo git (V7). Task làm việc này sửa ADR 0001 tại chỗ và `boundaries.mjs`.
+- K7: gom phần chép của adapter về `runner-core` (V9) trước adapter thứ tư.
+- K8: không thêm jscpd.
+- K9: ngưỡng `complexity` 15 với baseline, làm cùng V2.
+- K10: làm V11 ngay. Việc chia README lớn chờ sau V6.
+- K11: dọn gốc `apps/cli` và nhóm file của `runner-claude` (V12) chờ lúc vùng đó rảnh.
+- K12: knip `--production` vào cổng cùng K1. Hai báo cáo coverage (V15) làm sau và không là cổng.
+- K13: cổng khung chép có danh sách cặp được giữ kèm lý do (V13), bật cùng V1 và V2. 71 cặp hiện có được rà dần theo cụm (V14), cụm lệnh quest của `apps/cli` trước.
+
+Phiên điều phối đặt id cho V1 tới V15, mở task và xếp đợt. Các dòng đề xuất cho `CLAUDE.md`, §4 và sổ tay repo ở mục Máy gác do task của V1, V2 và V13 đưa vào.
