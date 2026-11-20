@@ -1,6 +1,6 @@
 # ADR 0031 · The Herald authenticates by one-time pairing and a session cookie
 
-- Status: proposed · 2026-11-20
+- Status: accepted · 2026-11-20
 - Related: [threat model](../plans/phase-2-threat-model.md) (R5, R6, N1–N5); [docs/plans/phase-2.md](../plans/phase-2.md) P2-01; [ADR 0005](0005-single-writer-steward-inbox.md), [ADR 0013](0013-treasury-and-redaction.md)
 
 ## Context

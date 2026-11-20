@@ -1,7 +1,7 @@
 # Threat model trước giai đoạn 2
 
-Ngày: 2026-11-20 · Trạng thái: **đề xuất, chờ chủ nhân chốt** (mục "Quyết định cho chủ nhân") · Bản nháp ADR đi kèm:
-[ADR 0031](../adr/0031-herald-pairing-and-session-cookie.md) (Proposed).
+Ngày: 2026-11-20 · Trạng thái: **chủ nhân đã chốt** ngày 2026-11-20, B1–B11 (mục "Quyết định") · ADR đi kèm:
+[ADR 0031](../adr/0031-herald-pairing-and-session-cookie.md) (Accepted).
 
 Tài liệu này gom các biện pháp bảo mật đang rải ở ADR 0005, 0007, 0008, 0013, 0015, 0021, 0023, 0024, 0026 vào một
 chỗ, đối chiếu với code ở `main` 69fa05b, rồi nêu điều phải có trước khi Sứ giả mở cổng mạng. Phiên này không sửa
@@ -172,6 +172,8 @@ Cổng máy muốn thêm, không cái nào cần dependency mới:
 
 ## Quyết định cho chủ nhân
 
+Đã chốt cả ngày 2026-11-20; các khuyến nghị dưới đây giữ làm lý do, kết quả ở mục "Quyết định" cuối file.
+
 **Phải chốt trước P2-01:**
 
 - **B1 · Xác thực của Sứ giả.** Khuyến nghị: duyệt ADR 0031 (mã ghép đôi dùng một lần, cookie `HttpOnly` +
@@ -230,7 +232,7 @@ tay người khác, và passkey đóng chỗ đó. Mọi lệnh làm được t�
 | 2 · Hậu quả lớn | đóng dấu, giao hàng, nâng trần mana | Xác nhận passkey |
 | 3 · Đổi cấu hình tin cậy | lãnh thổ và chế độ giao hàng, tộc và adapter, tên secret, giới hạn ủy quyền, mức trần, ghép thiết bị mới, `upgrade`, nhập bài học | Xác nhận passkey |
 
-Ba điều đi kèm, là cách phiên này hiểu quyết định, chủ nhân sửa nếu khác ý:
+Ba điều đi kèm, chủ nhân chốt cùng ngày:
 
 - Lần ghép đôi đầu tiên và passkey đầu tiên vẫn bắt đầu từ mã in trên máy; thiết bị và passkey về sau thêm được từ
   một thiết bị đã có passkey.
@@ -239,4 +241,19 @@ Ba điều đi kèm, là cách phiên này hiểu quyết định, chủ nhân s
 - Nhiều lệnh nhóm 3 hôm nay là ngoại lệ của ADR 0005 (CLI ghi file thẳng), chưa có loại lệnh `inbox/`. Chúng tới được
   điện thoại khi loại lệnh tương ứng được dựng; đợt 1 có nhóm 1, nhóm 2 và cơ chế passkey.
 
-B1, B2, B4–B11: chưa chốt.
+**B1, B2, B4–B11, chốt 2026-11-20**, tất cả theo khuyến nghị:
+
+- **B1:** ADR 0031 chuyển sang Accepted; câu "token Bearer trong header" của §8 hết hiệu lực.
+- **B2:** Tailscale trong tailnet riêng (`tailscale serve`); không Funnel, không Cloudflare công khai; Sứ giả chỉ nghe
+  127.0.0.1.
+- **B4:** không dựng sandbox hệ điều hành trong giai đoạn 2; làm V1 và V6; luật vận hành "chỉ gắn lãnh thổ mà bạn tin
+  code của nó như code của mình".
+- **B5:** token fine-grained chỉ cho repo lãnh thổ, và V2; xong trước khi bật `pr_merge` cho lãnh thổ thứ hai.
+- **B6:** làm V4 (quét secret trước commit, `pnpm audit --prod` ở lượt merge).
+- **B7:** `minimumReleaseAge` 7 ngày (V5), trước khi thêm dependency của giai đoạn 2.
+- **B8:** V7 bây giờ; adapter keychain khi khóa VAPID vào kho (P2-08).
+- **B9:** nhập bài học giữ đóng tới khi có ADR; từ điện thoại thì theo nhóm 3 của B3.
+- **B10:** trần mana mỗi ngày cho lượt Tể tướng và nút "nâng trần"; đổi mức trần từ điện thoại cần passkey.
+- **B11:** ghim hash file adapter (V3).
+
+Việc V1–V8 chưa có id: phiên điều phối mở task và xếp thứ tự.
