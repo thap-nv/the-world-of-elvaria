@@ -19,6 +19,7 @@ import { createManaBook } from './mana/book.ts';
 import { digestJob } from './schedule/digest.ts';
 import { createPatrolBook } from './patrol/book.ts';
 import { createDelegationBook } from './delegation/book.ts';
+import { createStreakBook } from './temple/streak-book.ts';
 import { patrolJob } from './patrol/patrol.ts';
 import { createScheduler } from './schedule/scheduler.ts';
 import { createSessions } from './sessions/running.ts';
@@ -122,6 +123,7 @@ const stateOf = (deps: StewardDeps, ended: () => void): State => ({
   looks: createBaseLooks(deps.log, ended),
   patrol: createPatrolBook(deps.log, ended),
   delegation: createDelegationBook(),
+  streak: createStreakBook(),
   restart: undefined,
   held: undefined,
   beat: undefined,

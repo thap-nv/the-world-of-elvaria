@@ -117,10 +117,14 @@ function withCharacterLine(suspended: Set<CharacterId>, event: Event): Set<Chara
  * quest rides on a `quest.*` line, but it never starts a fail streak's, so the character lines are enough.
  */
 export function streakSuspendedOf(events: readonly Event[]): CharacterId[] {
-  let suspended = new Set<CharacterId>();
-  for (const event of events)
-    if (CHARACTER_LINES.has(event.type)) suspended = withCharacterLine(suspended, event);
+  let suspended: ReadonlySet<CharacterId> = new Set();
+  for (const event of events) suspended = foldStreakSuspended(suspended, event);
   return [...suspended];
+}
+
+/** One line in log order, without changing the previous state; Temple runs do not clear suspensions. */
+export function foldStreakSuspended(state: ReadonlySet<CharacterId>, event: Event): ReadonlySet<CharacterId> {
+  return CHARACTER_LINES.has(event.type) ? withCharacterLine(new Set(state), event) : state;
 }
 
 /** Why the Temple is not due: off, it ran today (or on a later day the clock went back from), or nothing new yet. */

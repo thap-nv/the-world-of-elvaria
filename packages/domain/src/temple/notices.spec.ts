@@ -36,6 +36,13 @@ const sourceOf = (rows: readonly RunRow[]): TempleNoticeSource => {
 };
 
 describe('templeNoticesOf (PS-12g)', () => {
+  it('uses the live suspension book even when the supplied evidence log predates it', () => {
+    expect(templeNoticesOf({ ...sourceOf([]), events: [], streak: [THORN.id] })).toEqual({
+      streak_suspended: [{ character: 'thorn', fail_kind: 'tests_fail', count: 3, letters: [] }],
+    });
+    expect(templeNoticesOf({ ...sourceOf([]), streak: [] })).toEqual({ streak_suspended: [] });
+  });
+
   it('counts two groups of repeated failures for a Temple that is off and has no Monk, and the suspended', () => {
     expect(templeNoticesOf(sourceOf([...fails('tests_fail'), ...fails('style')]))).toEqual({
       streak_suspended: [{ character: 'thorn', fail_kind: 'tests_fail', count: 3, letters: [] }],
