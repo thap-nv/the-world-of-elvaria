@@ -49,6 +49,9 @@ pnpm install
 pnpm check               # mọi thứ CI chạy (trừ audit): lint, format:check, typecheck, test, boundaries,
                          #   schemas --check, docs:gen --check, docs:check, i18n:check; xanh trên cây sạch thì đóng dấu HEAD
 pnpm check:fast          # typecheck + test + boundaries (husky pre-push, trừ khi push đúng commit có dấu)
+pnpm check:changed       # giữa chừng: chỉ các check mà bảng "Change impact" đòi cho file đổi so với merge-base với origin/main (commit, chưa commit, file mới); KHÔNG thay `pnpm check`, cổng trước merge vẫn là `pnpm check` đầy đủ (không lint, không format, không package ngoài diff)
+pnpm check:changed --dry-run          # chỉ in đường dẫn đổi, các lệnh sẽ chạy và đường dẫn không có luật
+pnpm check:changed --base <ref>       # nhánh gốc khác origin/main; dừng ở lệnh đỏ đầu tiên; phải gọi qua pnpm (Windows, không shell)
 pnpm lint && pnpm typecheck  # lint tự cho eslint heap 8 GB, không cần NODE_OPTIONS
 pnpm exec eslint --prune-suppressions <file>   # sau khi sửa một chỗ có trong eslint-suppressions.json (.claude/rules/tests.md)
 pnpm test                # vitest của scripts/ và .claude/hooks/, rồi từng package; một package: pnpm --filter @elvaria/<key> test
