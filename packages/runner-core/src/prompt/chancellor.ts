@@ -6,7 +6,13 @@ import { QUEST_TAGS_MAX, sharedGlobsOf } from '@elvaria/domain';
 
 import { LANGUAGE_NAMES, classBlock, decreeBlock } from './blocks.ts';
 import { chancellorCodeBlocks } from './chancellor-code.ts';
-import { classesOf, draftingValuesOf, graphedOf, tagsShownOf } from './drafting.ts';
+import {
+  CHANCELLOR_DRAFTING_RULES,
+  classesOf,
+  draftingValuesOf,
+  graphedOf,
+  tagsShownOf,
+} from './drafting.ts';
 import { fenced, fill, joinBlocks } from './templates.ts';
 import type { BuiltPrompt } from '../runner/types.ts';
 import type { TerritoryCode } from './chancellor-code.ts';
@@ -142,13 +148,18 @@ function returnedOf(returned: ReturnedReply | undefined, t: PromptTemplates): st
 
 export function buildChancellorPrompt(context: ChancellorContext, t: PromptTemplates): BuiltPrompt {
   const language = LANGUAGE_NAMES[context.locale];
+  const drafting = draftingValuesOf(t, {
+    language,
+    context_budget_tokens: context.context_budget_tokens,
+  });
   const role = fill(t.chancellor, {
     context_budget_tokens: String(context.context_budget_tokens),
     tags_max: String(QUEST_TAGS_MAX),
     language,
     council_rank: context.council.from_rank,
     council_areas: String(context.council.from_areas),
-    ...draftingValuesOf(t, { language, context_budget_tokens: context.context_budget_tokens }),
+    ...drafting,
+    quest_template: `${drafting.quest_template}\n\n${CHANCELLOR_DRAFTING_RULES}`,
   });
   return {
     system: joinBlocks([
