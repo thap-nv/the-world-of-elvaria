@@ -39,6 +39,7 @@ export function reportTemple(ctx: KingdomContext, run: TempleRun, registry?: Reg
     });
   } else if (run.status === 'waiting') ctx.io.out(ctx.t('cli.temple.run.waiting'));
   else if (run.status === 'empty') ctx.io.out(ctx.t('cli.temple.run.empty'));
+  else if (run.status === 'unchanged') ctx.io.out(ctx.t('cli.temple.run.unchanged'));
   else if (run.status === 'stopped') ctx.io.err(ctx.t('cli.temple.run.stopped'));
   else if (run.status === 'failed') reportFailed(ctx, run.failure, run.run_dir);
   else if (run.status === 'sent')

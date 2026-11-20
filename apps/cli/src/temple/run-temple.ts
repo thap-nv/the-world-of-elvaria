@@ -7,7 +7,13 @@
 // the Temple is due, so the next start runs it again.
 import { askTemple, templeIssueText } from '@elvaria/chancellor';
 import type { ChancellorFailure, TempleFailure } from '@elvaria/chancellor';
-import { evidenceIsEmpty, lessonVocabularyOf, promptMaxOf, templeCommands } from '@elvaria/domain';
+import {
+  evidenceIsEmpty,
+  lessonVocabularyOf,
+  promptMaxOf,
+  shouldSkipTempleSession,
+  templeCommands,
+} from '@elvaria/domain';
 import type {
   Event,
   EventData,
@@ -16,12 +22,14 @@ import type {
   TempleTrigger,
   TribeHold,
 } from '@elvaria/domain';
+import { openEventLog } from '@elvaria/eventlog';
 import { readClassPrompt, readDecree } from '@elvaria/store';
 
 import { recordTempleRan } from '../events.ts';
 import { registryIssueLines, storeIssueLines } from '../issues.ts';
 import { commandHeader } from '../quest/send-command.ts';
 import { sessionOf } from '../say/hearing.ts';
+import { evidenceHashOf } from './evidence-hash.ts';
 import { evidenceOf } from './evidence.ts';
 import { monkOf, structuredOf } from './monk.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
@@ -36,6 +44,7 @@ export type TempleRun =
   | { readonly status: 'waiting' }
   /** Nothing to decide: no model was called, `temple.ran` is written. */
   | { readonly status: 'empty' }
+  | { readonly status: 'unchanged' }
   /** The Steward stopped the session: nothing is written. */
   | { readonly status: 'stopped' }
   | { readonly status: 'failed'; readonly failure: ChancellorFailure; readonly run_dir: string }
@@ -69,6 +78,7 @@ async function ran(ctx: KingdomContext, options: TempleOptions, evidence: Temple
   const [session] = spent?.session_ids ?? [];
   const data: EventData<'temple.ran'> = {
     trigger: options.trigger,
+    evidence_hash: evidenceHashOf(evidence),
     day: options.day,
     groups: evidence.groups.length,
     operations: done.operations,
@@ -153,6 +163,11 @@ export async function runTemple(
     Promise.resolve(promptMaxOf(monk.runner.capabilities, ctx.io.platform)),
   );
   if (evidence === undefined) return { status: 'unreadable' };
+  const { events } = await openEventLog(ctx.store.root).read();
+  if (shouldSkipTempleSession({ trigger: options.trigger, evidenceHash: evidenceHashOf(evidence), events })) {
+    await ran(ctx, options, evidence, { operations: 0, letters: 0 });
+    return { status: 'unchanged' };
+  }
   if (!evidenceIsEmpty(evidence)) return hearMonk(ctx, monk, evidence, options);
   await ran(ctx, options, evidence, { operations: 0, letters: 0 });
   return { status: 'empty' };
