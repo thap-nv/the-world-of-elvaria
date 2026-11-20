@@ -53,6 +53,10 @@ const agyCall = (payload: Payload): AgyInput => agyInputOf(payload, 'PreToolUse'
 const ROUTES: Readonly<Record<WrapUpCli, ReminderRoute | undefined>> = {
   claude: {
     event: 'PostToolUse',
+    // Delivered via PostToolUse additionalContext without denying a tool call (unlike Codex and agy).
+    // Measured on Claude Code 2.1.327: canary context reached the model 2/2 times, and the real hook
+    // prompted the session to stop new work, write handover.md, and end cleanly within two turns.
+    // See docs/spikes/claude-wrap-up-2026-11-19.md (PS-28d) and implementation-plan §11 (264).
     answer: (text) => ({ hookSpecificOutput: { hookEventName: 'PostToolUse', additionalContext: text } }),
     // `agent_type` is set only when an apprentice made the call (spike P1-02).
     fromSubagent: (payload) => typeof payload.agent_type === 'string' && payload.agent_type !== '',
