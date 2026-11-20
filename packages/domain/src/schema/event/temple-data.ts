@@ -38,6 +38,10 @@ export const TempleRanDataSchema = z
       describe('What the session spent, also when the run failed; 0 when none ran.'),
     ),
     session: z.string().min(1).optional(),
+    evidence_hash: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/)
+      .optional(),
   })
   .refine((data) => (data.tribe === undefined) === (data.model === undefined), {
     path: ['model'],

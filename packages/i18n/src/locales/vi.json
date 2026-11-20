@@ -1176,6 +1176,7 @@
     "cli.temple.run.summary": "Chạy Đền một lần, ngay: Thầy tu đọc gói bằng chứng trong một phiên không tool, và tờ trình (thao tác trên từng dòng kinh, thư) vào hộp thư; Nhiếp chính đang chạy áp nó ở nhịp kế. Chạy dù kingdom.schedule.temple bật hay tắt, tới hạn hay chưa. Tốn mana; không có lỗi lặp nào và không dòng nào cần xét thì không gọi model.",
     "cli.temple.run.listening": "Thầy tu {name} đọc {groups} lỗi lặp và {reviews} dòng cần xét…",
     "cli.temple.run.empty": "Đền không có gì để quyết: không có lỗi lặp nào và không dòng nào cần xét. Không gọi model.",
+    "cli.temple.run.unchanged": "Gói bằng chứng của Đền không đổi từ phiên model gần nhất. Không gọi model.",
     "cli.temple.run.sent": "Tờ trình của Đền đã vào hộp thư: {operations} thao tác trên kinh, {letters} thư. Nhiếp chính áp nó ở nhịp kế.",
     "cli.temple.run.nothing": "Thầy tu không đổi dòng kinh nào và không viết thư nào.",
     "cli.temple.run.no_monk": "Không có Thầy tu nào chạy được Đền: không nhân vật nghề Thầy tu nào chưa bị đình chỉ mà tộc của nó đang làm việc. Thêm một nhân vật: elvaria character add <id> --class {class} --model <model>",

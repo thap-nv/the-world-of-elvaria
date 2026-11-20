@@ -192,6 +192,7 @@ export * from './temple/release.ts';
 export * from './temple/reply.ts';
 export * from './temple/report.ts';
 export * from './temple/select.ts';
+export * from './temple/skip.ts';
 export * from './temple/waiting.ts';
 export * from './tribe/accounts.ts';
 export * from './tribe/auth.ts';

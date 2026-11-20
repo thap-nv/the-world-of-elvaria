@@ -170,6 +170,7 @@ export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
   'lesson.retired': { lesson: 'L_20261119_4k2pqz', owner: 'thorn', by: 'monk', why: 'never helped' },
   'lesson.refused': { op: 'add', code: 'lint', issues: ['url'] },
   'temple.ran': {
+    evidence_hash: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
     trigger: 'suspension',
     day: '2026-11-19',
     groups: 2,

@@ -68,12 +68,14 @@ describe('elvaria temple run (PS-12f)', () => {
     expect(ran?.actor).toEqual({ kind: 'user' });
     expect(ran?.data).toEqual({
       trigger: 'owner',
+      evidence_hash: ran?.data.evidence_hash,
       day: ran?.ts.slice(0, 10),
       groups: 0,
       operations: 0,
       letters: 0,
       tokens: 0,
     });
+    expect(ran?.data.evidence_hash).toMatch(/^[a-f0-9]{64}$/);
   });
 
   it('turns rung scripture into one temple_report, whose line the next session of an assignee loads', async () => {
