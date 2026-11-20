@@ -8,6 +8,7 @@ import type { HeldLock } from '@elvaria/store';
 
 import { EXIT } from '../command.ts';
 import { recordUpgrade } from '../events.ts';
+import { restoreDefaults } from './restore-defaults.ts';
 import { BUILD_FILE, buildDirOf, hasCli, readPointer, shortSha, writePointer } from './pointer.ts';
 import type { ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
@@ -62,6 +63,7 @@ export async function rollbackKingdom(ctx: KingdomContext): Promise<ExitCode> {
   const lock = await holdKingdom(ctx, false);
   if (lock === undefined) return EXIT.failed;
   try {
+    await restoreDefaults(ctx, read.pointer.switched_at);
     await writePointer(root, { current: previous, previous: current, switched_at: ctx.now() });
     await recordUpgrade(ctx, 'upgrade.rolled_back', { from: current, to: previous });
   } finally {

@@ -129,7 +129,8 @@ async function migrated(ctx: KingdomContext, plan: Plan): Promise<boolean> {
 
 async function switchTo(ctx: KingdomContext, deps: UpgradeDeps, plan: Plan): Promise<ExitCode> {
   const from = plan.pinned?.current ?? null;
-  await writePointer(ctx.store.root, { current: plan.sha, previous: from, switched_at: ctx.now() });
+  const switchedAt = ctx.now();
+  await writePointer(ctx.store.root, { current: plan.sha, previous: from, switched_at: switchedAt });
   await recordUpgrade(ctx, 'upgrade.switched', { from, to: plan.sha });
   ctx.io.out(
     from === null
@@ -139,7 +140,7 @@ async function switchTo(ctx: KingdomContext, deps: UpgradeDeps, plan: Plan): Pro
   const ready = await migrated(ctx, plan);
   // After migrate, even a failed one: a prompt does not wait on a file version, and a data file migrate left behind
   // is named, not written (fix/kingdom-upkeep).
-  await refreshDefaults(ctx, from, plan.sha);
+  await refreshDefaults(ctx, from, plan.sha, switchedAt);
   for (const sha of await buildsBesides(ctx.store.root, from === null ? [plan.sha] : [plan.sha, from]))
     await removeOne(ctx, deps, sha);
   if (!ready) return EXIT.failed;

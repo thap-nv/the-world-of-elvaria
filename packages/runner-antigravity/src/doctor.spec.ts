@@ -30,10 +30,13 @@ describe('doctor and probe, when agy does not answer', () => {
   it('says which call ran out of time and how long it had, never that the owner is signed out', async () => {
     const info = await fakeRunner({ launch: await silentAgy(), timeout_ms: 1000 }).doctor();
     expect(info).toMatchObject({ version: 'unknown', auth_ok: false });
-    expect(info.notes).toEqual([
-      doctorNoteOf('doctor:command_timed_out', { command: 'agy --version', seconds: 1 }),
+    // The version call shares the timeout; its extra note must not decide this sign-in check.
+    expect(info.notes).toContainEqual(
       doctorNoteOf('doctor:command_timed_out', { command: 'agy models', seconds: 1 }),
-    ]);
+    );
+    expect(info.notes).not.toContainEqual(
+      doctorNoteOf('doctor:not_signed_in', { command: 'agy models', login: 'agy' }),
+    );
   });
 
   it('says /usage ran out of time, not that agy exited with no code', async () => {
@@ -47,7 +50,9 @@ describe('doctor, when the hook is not built', () => {
     const missing = path.join(world.root, 'dist', 'elvaria-hook.js');
     const info = await fakeRunner({ hook: { command: process.execPath, args: [missing] } }).doctor();
     expect(info).toMatchObject({ auth_ok: false });
-    expect(info.notes).toEqual([doctorNoteOf('doctor:hook_missing', { file: missing })]);
+    // Not the whole list: on a busy machine the fake agy's own calls can run out of time and add their notes
+    // (fix/timing-flakes); what this test is about is that hook_missing is there.
+    expect(info.notes).toContainEqual(doctorNoteOf('doctor:hook_missing', { file: missing }));
   });
 });
 

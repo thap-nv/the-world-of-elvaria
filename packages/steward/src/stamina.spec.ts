@@ -102,13 +102,13 @@ describe("a held session's stamina", () => {
     expect(after.slice(10).map(({ session, data }) => [session === first, data.used])).toEqual([
       [false, NOTCH],
     ]);
-    // The journal alone draws the new session's bar: its quest line names the seat, its notch line the figure. (This
-    // fake runner writes no agent.session.end, which a real one always does, so `previous` is the next spec's.)
+    // The journal alone draws the new session's bar: its quest line names the seat, its notch line the figure, and
+    // the end line the fake runner writes by default names the cut session as `previous`.
     const all = (await openJournal(kingdom.root, quest.id).read()).events;
     const bar = sessionStaminaOf(all).get(quest.id);
     expect(bar).toMatchObject({ session: after[10]?.session, role: 'assignee', attempt: 1 });
     expect(bar?.stamina).toMatchObject({ measure: 'time', used: NOTCH, notch: 1, zone: 'ok' });
-    expect(bar?.previous).toBeUndefined();
+    expect(bar?.previous).toMatchObject({ session: first, outcome: 'killed' });
   });
 
   it('names the cut session as `previous` of the one that goes on, from the lines a runner leaves', async () => {

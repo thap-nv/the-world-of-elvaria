@@ -3689,7 +3689,7 @@
       "then": {
         "properties": {
           "data": {
-            "description": "The Temple ran (PS-12d): the Monk read the evidence pack and its report went to the inbox, or there was nothing to decide and no model ran. A run stopped with the Steward writes none and runs again. The mana estimate counts `tokens` against the pool of `model` at the line's time, as a session of a quest, from the Steward's next start.",
+            "description": "The Temple ran (PS-12d): the Monk read the evidence pack and its report went to the inbox, or there was nothing to decide and no model ran. A run that failed still writes `temple.ran`, with 0 operations, 0 letters and the tokens it spent. A run stopped with the Steward writes none and runs again. The mana estimate counts `tokens` against the pool of `model` at the line's time, as a session of a quest, from the Steward's next start.",
             "type": "object",
             "additionalProperties": false,
             "required": [
@@ -3720,12 +3720,12 @@
                 "minimum": 0
               },
               "operations": {
-                "description": "Operations on single lines the report asked for.",
+                "description": "Operations on single lines the report asked for; 0 when the run failed.",
                 "type": "integer",
                 "minimum": 0
               },
               "letters": {
-                "description": "Letters the report carried.",
+                "description": "Letters the report carried; 0 when the run failed.",
                 "type": "integer",
                 "minimum": 0
               },
@@ -3740,7 +3740,7 @@
                 "pattern": "^[a-z0-9][a-z0-9.-]*$"
               },
               "tokens": {
-                "description": "What the session reported; 0 when none ran.",
+                "description": "What the session spent, also when the run failed; 0 when none ran.",
                 "type": "integer",
                 "minimum": 0,
                 "default": 0

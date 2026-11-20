@@ -59,6 +59,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria run` | Chạy Nhiếp chính: giao nhiệm vụ cho nhân vật và cho nghiệm thu, tới khi bạn dừng (Ctrl+C). |
 | `elvaria wake <tribe>` | Nhờ Nhiếp chính thăm dò mana của một tộc ngay, ví dụ sau khi đăng nhập lại (lệnh wake). |
 | `elvaria digest` | In bản tấu lúc này: mọi việc chờ bạn, chia hai nhóm (phải quyết để việc chạy tiếp, chờ được), mỗi việc kèm khuyến nghị và lệnh. Chỉ đọc vương quốc, không tốn mana. |
+| `elvaria watch` | Theo dõi nhiệm vụ chưa kết thúc và việc chờ bạn. Chỉ đọc; tự làm mới trong terminal. |
 | `elvaria metrics` | Sổ đo: lượt, làm lại theo nguyên nhân, đạt lượt đầu, lỗi lọt, lần cần chủ nhân. Chỉ đọc vương quốc, không tốn mana. |
 | `elvaria sandbox generate` | Sinh một ngày giả vào events/sandbox/ của vương quốc (sa bàn): không chạy phiên nào, không chạm nhiệm vụ thật. |
 | `elvaria sandbox replay <file>` | Phát lại một ngày giả thành dòng thời gian trên terminal. |
@@ -285,6 +286,7 @@ Liệt kê các bài học trong kinh với tham chiếu, phạm vi, fail_kind v
 
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
+| `--quest <id>` | Xem các dòng kinh đã ghi nhận cho từng phiên của nhiệm vụ; không dùng cùng --character. Ví dụ: elvaria scripture list --quest q_20261106_7k3m2a in tiêu đề «Phiên s1 · lượt 1 · assignee · thorn · 2026-11-19T10:00:00+07:00», rồi «L_20261119_4k2pqz: Chạy kiểm tra trước khi nộp.». Tham chiếu lấy từ load_trace.lessons; câu lấy từ kinh hiện tại, dòng đã xóa vẫn có tham chiếu. Chưa có phiên hoặc không ghi nhận dòng nào thì có thông báo riêng; nhiệm vụ không tồn tại thì thoát 1. |
 | `--character <id>` | Nhân vật cần xem: kinh riêng của nó rồi kinh của Đền, theo thứ tự nạp. |
 
 ## `elvaria temple evidence`
@@ -531,6 +533,14 @@ Nhờ Nhiếp chính thăm dò mana của một tộc ngay, ví dụ sau khi đ�
 In bản tấu lúc này: mọi việc chờ bạn, chia hai nhóm (phải quyết để việc chạy tiếp, chờ được), mỗi việc kèm khuyến nghị và lệnh. Chỉ đọc vương quốc, không tốn mana.
 
 Không có tham số riêng, chỉ các tùy chọn chung.
+
+## `elvaria watch`
+
+Theo dõi nhiệm vụ chưa kết thúc và việc chờ bạn. Chỉ đọc; tự làm mới trong terminal.
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `--interval <seconds>` | Khoảng làm mới tính bằng giây nguyên (mặc định: 5). |
 
 ## `elvaria metrics`
 

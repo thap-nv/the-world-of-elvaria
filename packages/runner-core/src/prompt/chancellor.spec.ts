@@ -45,6 +45,49 @@ const context: ChancellorContext = {
 };
 
 describe('buildChancellorPrompt (§10 question 3)', () => {
+  it('includes old specs, locale keys and generated outputs in the drafting instructions', () => {
+    const { system } = buildChancellorPrompt(context, templates);
+    expect(system).toContain('include existing specs that assert the old behavior');
+    expect(system).toContain('allow those assertions to change with the new behavior');
+    expect(system).toContain('new keys in every required locale in Files and Steps');
+    expect(system).toContain("Use the territory's generators, never hand edits.");
+    expect(system).toContain('Keep `scope_paths`, Files and Steps consistent');
+  });
+
+  it('drafts small work directly while preserving the council requirement', () => {
+    const { system } = buildChancellorPrompt(context, templates);
+    expect(system).toContain('Small work that fits one session gets one direct quest');
+    expect(system).toContain('no `plan` quest, no child quests and no `parent_ref`');
+    expect(system).toContain('especially when the owner explicitly asks for a direct quest');
+    expect(system).toContain(
+      'This applies only below the council thresholds; the council rules still take precedence.',
+    );
+    expect(system).toContain('of rank B or above, or when it carries 2 tags or more');
+  });
+
+  it('requires new journal lines instead of changing old entries', () => {
+    const { system } = buildChancellorPrompt(context, templates);
+    expect(system).toContain('Respect append-only journals in the territory: add a new entry');
+    expect(system).toContain('never instruct a character to edit or delete an existing entry');
+  });
+
+  it('loads all five territory-neutral rules once from the Chancellor template', () => {
+    const rules = templates.chancellor.slice(
+      templates.chancellor.indexOf('11. Keep'),
+      templates.chancellor.indexOf('\n# The council'),
+    );
+    expect(rules.match(/^\d+\./gm)).toHaveLength(5);
+    expect(rules).not.toMatch(/pnpm|§11|elvaria|packages\/i18n|locales\//i);
+    const { system } = buildChancellorPrompt(context, templates);
+    expect(system.split(rules)).toHaveLength(2);
+    expect(system.indexOf(rules)).toBeLessThan(system.indexOf('# The council'));
+    const { system: withoutRules } = buildChancellorPrompt(context, {
+      ...templates,
+      chancellor: templates.chancellor.replace(rules, ''),
+    });
+    expect(withoutRules).not.toContain('Keep `scope_paths`, Files and Steps consistent');
+  });
+
   it('snapshot', async () => {
     const { system, user } = buildChancellorPrompt(context, templates);
     await expect(`=== system ===\n${system}\n\n=== user ===\n${user}\n`).toMatchFileSnapshot(

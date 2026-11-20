@@ -11,3 +11,4 @@ docs/
 CLAUDE.md
 # Quest worktrees when this repo is a territory (ADR 0012): each is its own checkout, checked there.
 .elvaria/
+.agents/

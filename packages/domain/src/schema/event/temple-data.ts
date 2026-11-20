@@ -28,11 +28,15 @@ export const TempleRanDataSchema = z
       .regex(LOCAL_DAY_PATTERN)
       .meta(describe("The kingdom's local day, yyyy-mm-dd (kingdom.tz).")),
     groups: CountSchema.meta(describe('Groups of repeated failures the evidence pack carried.')),
-    operations: CountSchema.meta(describe('Operations on single lines the report asked for.')),
-    letters: CountSchema.meta(describe('Letters the report carried.')),
+    operations: CountSchema.meta(
+      describe('Operations on single lines the report asked for; 0 when the run failed.'),
+    ),
+    letters: CountSchema.meta(describe('Letters the report carried; 0 when the run failed.')),
     tribe: TribeIdSchema.optional().meta(describe("The Monk's tribe; absent when no session ran.")),
     model: ModelSlugSchema.optional().meta(describe('The model the session ran on; absent when none ran.')),
-    tokens: CountSchema.default(0).meta(describe('What the session reported; 0 when none ran.')),
+    tokens: CountSchema.default(0).meta(
+      describe('What the session spent, also when the run failed; 0 when none ran.'),
+    ),
     session: z.string().min(1).optional(),
   })
   .refine((data) => (data.tribe === undefined) === (data.model === undefined), {
@@ -41,7 +45,7 @@ export const TempleRanDataSchema = z
   })
   .meta(
     describe(
-      "The Temple ran (PS-12d): the Monk read the evidence pack and its report went to the inbox, or there was nothing to decide and no model ran. A run stopped with the Steward writes none and runs again. The mana estimate counts `tokens` against the pool of `model` at the line's time, as a session of a quest, from the Steward's next start.",
+      "The Temple ran (PS-12d): the Monk read the evidence pack and its report went to the inbox, or there was nothing to decide and no model ran. A run that failed still writes `temple.ran`, with 0 operations, 0 letters and the tokens it spent. A run stopped with the Steward writes none and runs again. The mana estimate counts `tokens` against the pool of `model` at the line's time, as a session of a quest, from the Steward's next start.",
     ),
   );
 export type TempleRanData = z.infer<typeof TempleRanDataSchema>;

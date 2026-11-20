@@ -1,11 +1,11 @@
 // The Temple frees a character (PS-12g, temple-first plan DB13 as the owner settled it): once a temple report is applied,
-// the Steward reads the scriptures and the log again and releases (`temple_done`, §2.6, a `character.release` line of its
+// the Steward reads the scriptures and its suspension book and releases (`temple_done`, §2.6, a `character.release` line of its
 // own) every character suspended for a fail streak whose fail kind a new line of the report now cures in a session of it
 // (templeReleasesOf). The lines are named by the ids the report's operations make, not by the lines written now: a report
 // applied again after a stop writes nothing new and still frees the character.
 import { createHash } from 'node:crypto';
 
-import { lessonIdOf, streakSuspendedOf, templeLessonKeyOf, templeReleasesOf } from '@elvaria/domain';
+import { lessonIdOf, templeLessonKeyOf, templeReleasesOf } from '@elvaria/domain';
 import type { CharacterId, InboxCommandOf, LessonId } from '@elvaria/domain';
 
 import { step } from '../record.ts';
@@ -36,12 +36,11 @@ export async function releaseFreed(ctx: Context, command: TempleReport): Promise
   const added = command.payload.operations.flatMap((operation, index) =>
     operation.op === 'retire' ? [] : [newLineIdOf(command, index)],
   );
-  const log = await ctx.deps.events.read();
   const freed = templeReleasesOf({
     files,
     added,
     characters: [...ctx.world.characters.values()],
-    streak: streakSuspendedOf(log.events),
+    streak: [...ctx.streak.suspended],
     vocabulary,
     os,
   });

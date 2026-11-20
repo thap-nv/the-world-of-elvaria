@@ -27,8 +27,11 @@ afterEach(async () => {
 });
 
 const statusOf = async (kingdom: Bench, title: string) => (await kingdom.quest(title)).status;
+/** The Steward's lines, by type: the fake sessions write their own `agent.session.*` lines, as real ones do. */
 const typesOf = async (kingdom: Bench) =>
-  (await openEventLog(kingdom.root).read()).events.map(({ type }) => type);
+  (await openEventLog(kingdom.root).read()).events
+    .map(({ type }) => type)
+    .filter((type) => !type.startsWith('agent.session.'));
 
 /** A runner whose assignee sessions end as `outcome` instead of what the fake played. */
 function ending(runner: AgentRunner, change: Partial<RunResult>): AgentRunner {

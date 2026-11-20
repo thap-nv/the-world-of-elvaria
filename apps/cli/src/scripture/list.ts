@@ -24,6 +24,7 @@ import { heaviestLoadOf, lessonsOfCharacter, readKingdomScriptures } from './rea
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 import type { KingdomScriptures } from './read.ts';
+import { listQuestScripture } from './quest.ts';
 
 const HEADER: readonly MessageKey[] = [
   'cli.column.ref',
@@ -120,6 +121,8 @@ function characterSelection(
 async function runScriptureList(input: CommandInput, cli: CliContext): Promise<ExitCode> {
   const ctx = await openKingdomContext(input, cli);
   if (ctx === undefined) return EXIT.failed;
+  const quest = textOption(input, 'quest');
+  if (quest !== undefined) return listQuestScripture(ctx, quest, textOption(input, 'character'));
   const scriptures = await readKingdomScriptures(ctx);
   if ('problems' in scriptures) {
     scriptures.problems.flatMap((issue) => registryIssueLines(ctx.t, issue)).forEach(ctx.io.err);
@@ -150,6 +153,7 @@ export const SCRIPTURE_LIST: CommandSpec = {
   summary: 'cli.scripture.list.summary',
   args: [],
   options: {
+    quest: { type: 'string', value: '<id>', help: 'cli.scripture.option.quest' },
     character: { type: 'string', value: '<id>', help: 'cli.scripture.option.character' },
   },
   run: runScriptureList,

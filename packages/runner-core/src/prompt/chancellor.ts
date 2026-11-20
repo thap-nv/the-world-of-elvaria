@@ -142,13 +142,17 @@ function returnedOf(returned: ReturnedReply | undefined, t: PromptTemplates): st
 
 export function buildChancellorPrompt(context: ChancellorContext, t: PromptTemplates): BuiltPrompt {
   const language = LANGUAGE_NAMES[context.locale];
+  const drafting = draftingValuesOf(t, {
+    language,
+    context_budget_tokens: context.context_budget_tokens,
+  });
   const role = fill(t.chancellor, {
     context_budget_tokens: String(context.context_budget_tokens),
     tags_max: String(QUEST_TAGS_MAX),
     language,
     council_rank: context.council.from_rank,
     council_areas: String(context.council.from_areas),
-    ...draftingValuesOf(t, { language, context_budget_tokens: context.context_budget_tokens }),
+    ...drafting,
   });
   return {
     system: joinBlocks([

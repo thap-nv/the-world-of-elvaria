@@ -48,8 +48,11 @@ afterEach(async () => {
 });
 
 const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+/** The Steward's lines, by type: the fake sessions write their own `agent.session.*` lines, as real ones do. */
 const typesOf = async (kingdom: Bench) =>
-  (await openEventLog(kingdom.root).read()).events.map(({ type }) => type);
+  (await openEventLog(kingdom.root).read()).events
+    .map(({ type }) => type)
+    .filter((type) => !type.startsWith('agent.session.'));
 
 /** Plots that keep each commit message and answer `outcome`. */
 const committing =

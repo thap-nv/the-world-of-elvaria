@@ -72,7 +72,10 @@ describe('a session that went with the last Steward', () => {
       [1, 'assignee', 'cancelled'],
       [2, 'assignee', undefined],
     ]);
-    const types = (await openEventLog(kingdom.root).read()).events.map(({ type }) => type);
+    // The Steward's lines, by type: the fake sessions write their own `agent.session.*` lines, as real ones do.
+    const types = (await openEventLog(kingdom.root).read()).events
+      .map(({ type }) => type)
+      .filter((type) => !type.startsWith('agent.session.'));
     expect(types.slice(-2)).toEqual(['quest.returned', 'quest.started']);
     const revived = kingdom.requests.filter((req) => req.quest?.id === before.id && req.role === 'assignee');
     expect(revived.at(-1)?.prompt.user).toContain('# Picking up the quest');

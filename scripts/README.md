@@ -162,6 +162,16 @@
   and the tree is clean, or when the push sends no commit (only branch deletions); otherwise, or on input or a git
   it cannot read, it exits `1` and the hook runs check:fast. Reads git through `git rev-parse` and `git status` with
   a minimal env; writes only `git rev-parse --git-path elvaria-check-ok`, a file in the worktree's own git dir.
+- `check-changed.mjs` (`check-changed.spec.ts`): `pnpm check:changed` (fix/check-changed). `changedPaths()` lists the
+  files that differ from the merge-base with `origin/main` (or `--base <ref>`): tracked changes, committed or not, and
+  untracked files git does not ignore. `plan()` maps them through `RULES`, the "Change impact" table of CLAUDE.md as
+  data (domain → `pnpm test` + `pnpm typecheck`; another workspace → `pnpm --filter @elvaria/<key> test`; i18n →
+  `docs:gen --check`, `docs:check`, `i18n:check`; `scripts/` and `.claude/hooks/` → root vitest and tsc; docs and
+  package READMEs → `docs:check`; a contract → `schemas --check`; a manifest or `boundaries.mjs` → `boundaries`), drops
+  repeats and what `SUBSUMES` covers, and lists paths no rule covers. It prints the plan and runs the commands in
+  order, stopping at the first failure; `--dry-run` only prints. `pnpm check` stays the gate before a merge. Reads git
+  through `git merge-base`, `git diff` and `git ls-files` with a minimal env; writes nothing itself. Runs pnpm as
+  `node <npm_execpath>` (no shell), so call it through `pnpm check:changed`.
 
 ## Does not
 
@@ -190,7 +200,7 @@
 - `apps/cli` (`src/commands.ts`, `src/args.ts`, `src/command.ts`, `src/help.ts`), imported by `docs-cli.mjs` to
   render `docs/cli.md`; `src/metrics/read.ts` and `src/metrics/view.ts`, imported by `docs-metrics-report.mjs`.
 - Node built-ins (`node:child_process`, `node:fs`, `node:path`, `node:process`, `node:url`) and `git`
-  (`docs-repo.mjs`, `docs-note.mjs`, `check-stamp.mjs`).
+  (`docs-repo.mjs`, `docs-note.mjs`, `check-stamp.mjs`, `check-changed.mjs`).
 
 ## How to test
 
@@ -202,6 +212,7 @@ pnpm docs:gen --check  # verifies generated docs, the §2.5 region and the plan'
 pnpm plan:split --check  # loses no line of the plan and finds no done §8 row left in the index
 pnpm docs:check        # runs all repository documentation, link, and identifier checks
 pnpm i18n:check        # verifies locale keys, placeholders, and glossary.json shape
+pnpm check:changed --dry-run  # prints the checks the changed files call for
 ```
 
 Each script takes an injected file or repository abstraction (`Files`, `Repo`, or pure arguments) so its

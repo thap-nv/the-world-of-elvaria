@@ -141,6 +141,39 @@ describe('elvaria scripture lint, list (PS-12)', () => {
     expect(io.printed.out.slice(1).map((row) => row.split(/ {2,}/u)[5])).toEqual(['Monk', 'owner']);
   });
 
+  describe('scripture.json kept while scripture.md is gone (PS-12g, item (i))', () => {
+    const id = 'L_20261119_4k2pqz';
+    const ledger = async (): Promise<void> => {
+      const entry = {
+        id,
+        source: 'monk',
+        source_verdict: 'q_20261118_aaaaaa-1',
+        added_at: '2026-11-19T21:10:02+07:00',
+      };
+      await scripture('temple/scripture.json', [JSON.stringify({ version: 1, lessons: [entry] })]);
+    };
+
+    it('lint still names the ledger entry as a deleted line and exits 0', async () => {
+      await ledger();
+      const { code, io } = await elvaria('lint');
+      expect(io.printed.out.join('\n')).toContain(id);
+      expect(io.printed.out.join('\n')).not.toContain('no scripture');
+      expect(code).toBe(0);
+    });
+
+    it('the doctor quotes the entry, and list shows no lesson and does not fail', async () => {
+      await ledger();
+      const io = testIo({ platform: 'win32' });
+      const cli = { io, locale: 'en' as const, localeFromFlag: true, t: translator('en') };
+      const ctx = await openKingdomContext({ values: { kingdom }, positionals: [] }, cli);
+      if (ctx === undefined) throw new Error('no kingdom');
+      const [found] = await checkScripture(ctx);
+      expect(found?.level).toBe('ok');
+      expect((found?.details ?? []).join('\n')).toContain(id);
+      expect((await elvaria('list')).code).toBe(0);
+    });
+  });
+
   it('gives the doctor one line: ready, or the counts with the first issues', async () => {
     const io = testIo({ platform: 'win32' });
     const cli = { io, locale: 'en' as const, localeFromFlag: true, t: translator('en') };
