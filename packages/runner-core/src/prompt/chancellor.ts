@@ -6,13 +6,7 @@ import { QUEST_TAGS_MAX, sharedGlobsOf } from '@elvaria/domain';
 
 import { LANGUAGE_NAMES, classBlock, decreeBlock } from './blocks.ts';
 import { chancellorCodeBlocks } from './chancellor-code.ts';
-import {
-  CHANCELLOR_DRAFTING_RULES,
-  classesOf,
-  draftingValuesOf,
-  graphedOf,
-  tagsShownOf,
-} from './drafting.ts';
+import { classesOf, draftingValuesOf, graphedOf, tagsShownOf } from './drafting.ts';
 import { fenced, fill, joinBlocks } from './templates.ts';
 import type { BuiltPrompt } from '../runner/types.ts';
 import type { TerritoryCode } from './chancellor-code.ts';
@@ -159,7 +153,6 @@ export function buildChancellorPrompt(context: ChancellorContext, t: PromptTempl
     council_rank: context.council.from_rank,
     council_areas: String(context.council.from_areas),
     ...drafting,
-    quest_template: `${drafting.quest_template}\n\n${CHANCELLOR_DRAFTING_RULES}`,
   });
   return {
     system: joinBlocks([
