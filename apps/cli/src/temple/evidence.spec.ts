@@ -129,6 +129,27 @@ describe('elvaria temple evidence (PS-12d)', () => {
     expect(pack.dropped).toEqual([]);
   });
 
+  it('still reads when scripture.md is gone and only the ledger is left (PS-12g, item (i))', async () => {
+    await mkdir(path.join(kingdom, 'temple'), { recursive: true });
+    const ledger = ScriptureLedgerSchema.parse({
+      version: 1,
+      lessons: [
+        {
+          id: MONK_LINE,
+          source: 'monk',
+          source_verdict: `${QUEST_ID}-1`,
+          added_at: '2026-11-05T09:00:00+07:00',
+        },
+      ],
+    });
+    await writeFile(path.join(kingdom, 'temple', 'scripture.json'), JSON.stringify(ledger), 'utf8');
+    const io = testIo({ platform: 'win32' });
+    const code = await run(io, 'temple', 'evidence', '--json', '--kingdom', kingdom, '--locale', 'en');
+    expect(code).toBe(0);
+    expect(io.printed.err).toEqual([]);
+    expect((JSON.parse(printed(io)) as TempleEvidence).lines).toEqual([]);
+  });
+
   it('says the Temple would call no model when nothing repeats', async () => {
     const { code, out } = await evidence();
     expect(code).toBe(0);
