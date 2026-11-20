@@ -11,6 +11,7 @@ import { sourceRepo, stubPnpm } from '../../test/builds.ts';
 import { baseEnv, foundKingdom, printed, tempDir, testIo } from '../../test/cli.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { findExecutable } from '../process/find-executable.ts';
+import { rollbackKingdom } from './rollback.ts';
 import { upgradeKingdom } from './upgrade.ts';
 import type { SourceRepo } from '../../test/builds.ts';
 import type { TempDir, TestIo } from '../../test/cli.ts';
@@ -42,7 +43,7 @@ describe('elvaria upgrade: the registry defaults the new build changed', () => {
   });
   afterEach(() => dir.remove());
 
-  const upgrade = async (io: TestIo = testIo()) => {
+  const upgrade = async (io: TestIo = testIo(), rollback = false) => {
     const input = { values: { kingdom, locale: 'en' }, positionals: [] };
     const ctx = await openKingdomContext(input, {
       io,
@@ -51,7 +52,7 @@ describe('elvaria upgrade: the registry defaults the new build changed', () => {
       t: translator('en'),
     });
     if (ctx === undefined) throw new Error(printed(io));
-    return upgradeKingdom(ctx, 'main', deps);
+    return rollback ? rollbackKingdom(ctx) : upgradeKingdom(ctx, 'main', deps);
   };
   const inKingdom = (relative: string) => readFile(path.join(kingdom, ...relative.split('/')), 'utf8');
   const buildRegistry = (sha: string, file: string) =>
@@ -73,7 +74,7 @@ describe('elvaria upgrade: the registry defaults the new build changed', () => {
     await writeDefault('rituals.json', ritualsText);
     const a = await source.commit({});
     const first = testIo();
-    expect(await upgrade(first)).toBe(0);
+    expect(await upgrade(first), printed(first)).toBe(0);
     expect(printed(first)).not.toContain('Registry defaults');
     await writeFile(
       path.join(kingdom, 'registry', 'prompts', 'chancellor.md'),
@@ -110,6 +111,12 @@ describe('elvaria upgrade: the registry defaults the new build changed', () => {
     expect((await rituals()).rituals[0]).toEqual(changed);
     expect(await inKingdom(`${BACKUP}/registry/rituals.json`)).toBe(ritualsText);
     expect(io.printed.err).toEqual([]);
+    const back = testIo();
+    expect(await upgrade(back, true)).toBe(0);
+    expect(back.printed.out).toContain(`Restored registry files from ${BACKUP}:`);
+    expect(await inKingdom('registry/prompts/mage.md')).toBe(mage);
+    expect(await inKingdom('registry/rituals.json')).toBe(ritualsText);
+    expect(await inKingdom('registry/prompts/chancellor.md')).toBe(`${chancellor}\nMy own rule.\n`);
   });
 
   it('says when nothing is left to bring in, and when the build before has no registry to compare', async () => {

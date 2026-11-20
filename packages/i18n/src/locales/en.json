@@ -1337,6 +1337,8 @@
     "cli.upgrade.option.ref": "Commit, branch or tag of the Elvaria repo this command runs from (default: main). A local branch that lacks commits of its origin/ copy, as last fetched, is built with a warning; nothing is fetched.",
     "cli.upgrade.option.rollback": "Pin the build before again; nothing is built.",
     "cli.upgrade.rollback_ref": "--rollback does not go with --ref.",
+    "cli.upgrade.rollback_no_defaults": "No registry backup for this upgrade at {backup}; only the build pointer is changed.",
+    "cli.upgrade.rollback_defaults": "Restored registry files from {backup}:",
     "cli.upgrade.no_tool": "{program} is not on PATH: elvaria upgrade needs git and pnpm.",
     "cli.upgrade.unknown_ref": "{ref} names no commit of {source}.",
     "cli.upgrade.behind": "Warning: local {ref} is {count} commits behind {upstream} as {source} last fetched it (upgrade does not fetch), and the build is made from local {ref}. To build the newer code, git pull in {source} first, or give --ref {upstream}.",
