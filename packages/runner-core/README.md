@@ -129,7 +129,9 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   `capabilities` check also wants `capabilities.auth`, the sign-ins the adapter runs with (P1-19): a non-empty list
   of `login` / `api_key`. A check's workspace that still will not go after the retries of `rm` (a real agy held one
   for minutes on Windows, 2026-11-12) stays on disk: `play` tells `target.onLeftover` (a process warning without
-  it) and the check reports what its session did, never the cleanup. A check that fails, past its ceiling or on what
+  it) and the check reports what its session did, never the cleanup. `openWorkspace` first clears the `elvaria conformance *`
+  folders in the temp folder untouched for over an hour (`sweepStaleWorkspaces`, `src/conformance/sweep.ts`, a killed turn's
+  rubbish; best effort, a folder it cannot remove stays; clock and temp folder injected). A check that fails, past its ceiling or on what
   its session yielded (`PlaySteps.verify` runs while the workspace is still there), first has its session's process
   tree killed (`killTree`, then the runner's own kill) and its workspace handed to `target.onFailed` before the
   workspace goes (lessons of 2026-11-13: a real agy ran on to 80 369 tokens after its `submit` timed out).
