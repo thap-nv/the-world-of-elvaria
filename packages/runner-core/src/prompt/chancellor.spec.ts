@@ -49,10 +49,8 @@ describe('buildChancellorPrompt (§10 question 3)', () => {
     const { system } = buildChancellorPrompt(context, templates);
     expect(system).toContain('include existing specs that assert the old behavior');
     expect(system).toContain('allow those assertions to change with the new behavior');
-    expect(system).toContain('new keys in both `packages/i18n/src/locales/vi.json` and `en.json`');
-    expect(system).toContain(
-      'regenerate them only with `pnpm docs:gen` or `pnpm schemas`, never edit them by hand',
-    );
+    expect(system).toContain('new keys in every required locale in Files and Steps');
+    expect(system).toContain("Use the territory's generators, never hand edits.");
     expect(system).toContain('Keep `scope_paths`, Files and Steps consistent');
   });
 
@@ -69,8 +67,25 @@ describe('buildChancellorPrompt (§10 question 3)', () => {
 
   it('requires new journal lines instead of changing old entries', () => {
     const { system } = buildChancellorPrompt(context, templates);
-    expect(system).toContain('§11 (`docs/implementation-plan/11-*.md`) is append-only');
-    expect(system).toContain('never instruct a character to edit or delete an existing §11 line');
+    expect(system).toContain('Respect append-only journals in the territory: add a new entry');
+    expect(system).toContain('never instruct a character to edit or delete an existing entry');
+  });
+
+  it('loads all five territory-neutral rules once from the Chancellor template', () => {
+    const rules = templates.chancellor.slice(
+      templates.chancellor.indexOf('11. Keep'),
+      templates.chancellor.indexOf('\n# The council'),
+    );
+    expect(rules.match(/^\d+\./gm)).toHaveLength(5);
+    expect(rules).not.toMatch(/pnpm|§11|elvaria|packages\/i18n|locales\//i);
+    const { system } = buildChancellorPrompt(context, templates);
+    expect(system.split(rules)).toHaveLength(2);
+    expect(system.indexOf(rules)).toBeLessThan(system.indexOf('# The council'));
+    const { system: withoutRules } = buildChancellorPrompt(context, {
+      ...templates,
+      chancellor: templates.chancellor.replace(rules, ''),
+    });
+    expect(withoutRules).not.toContain('Keep `scope_paths`, Files and Steps consistent');
   });
 
   it('snapshot', async () => {
