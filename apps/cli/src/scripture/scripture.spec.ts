@@ -144,7 +144,12 @@ describe('elvaria scripture lint, list (PS-12)', () => {
   describe('scripture.json kept while scripture.md is gone (PS-12g, item (i))', () => {
     const id = 'L_20261119_4k2pqz';
     const ledger = async (): Promise<void> => {
-      const entry = { id, source: 'monk', added_at: '2026-11-19T21:10:02+07:00' };
+      const entry = {
+        id,
+        source: 'monk',
+        source_verdict: 'q_20261118_aaaaaa-1',
+        added_at: '2026-11-19T21:10:02+07:00',
+      };
       await scripture('temple/scripture.json', [JSON.stringify({ version: 1, lessons: [entry] })]);
     };
 
