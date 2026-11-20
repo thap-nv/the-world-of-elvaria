@@ -111,8 +111,9 @@ Cột STRIDE: S giả danh, T sửa đổi, R chối bỏ, I lộ tin, D từ ch
 
 `docs/plans/lesson-sharing.md` §6 (T1–T9) đã đủ cho nội dung: file gói do chủ nhân đưa bằng đường dẫn, chỉ dữ liệu,
 vùng chờ không vào prompt, kiểm ký tự ẩn, URL, đường dẫn tuyệt đối, chủ nhân nhận từng dòng. Thiếu hai điều: lệnh nhập
-chỉ chạy từ CLI trên máy, không bao giờ là một loại lệnh `inbox/` (nếu không, R6 nối sang R9); và vùng chờ in ra
-terminal phải bỏ ký tự điều khiển. Mức: Vừa, và bằng không chừng nào lệnh nhập chưa được dựng.
+đi từ mạng thì thuộc nhóm cần passkey và chỉ trỏ tới file gói đã nằm trên máy, nội dung gói không đi qua Sứ giả (nếu
+không, R6 nối sang R9); và vùng chờ in ra terminal phải bỏ ký tự điều khiển. Mức: Vừa, và bằng không chừng nào lệnh
+nhập chưa được dựng.
 
 ## Biện pháp bắt buộc
 
@@ -130,11 +131,12 @@ terminal phải bỏ ký tự điều khiển. Mức: Vừa, và bằng không c
 
 **Trước P2-07 và P2-08:**
 
-7. Danh sách loại lệnh cho nguồn `lite` (B3); đóng dấu, giao hàng, ủy quyền, lãnh thổ, tộc không nằm trong đó.
+7. Ba nhóm lệnh cho nguồn `lite` (B3, đã chốt): việc hằng ngày đi thẳng; đóng dấu, giao hàng, nâng trần và mọi lệnh
+   đổi cấu hình tin cậy cần một lần xác nhận passkey ký trên chính lệnh đó (V8).
 8. Endpoint push chỉ nhận khi máy chủ thuộc danh sách dịch vụ push đã biết, `https`, không theo redirect.
 9. Khóa VAPID chỉ tiến trình gửi chuông đọc; nội dung chuông không mang câu hỏi, diff hay đường dẫn.
 10. Mỗi thiết bị một phiên, thu hồi được từng cái; event lệnh mang mã thiết bị.
-11. Nút "nâng trần" trên chuông có trần riêng do chủ nhân đặt trên máy (B10).
+11. Nút "nâng trần" trên chuông có trần riêng do chủ nhân đặt; đổi mức trần cần xác nhận passkey (B10).
 
 **Trước P2-09 và P2-10:** trần độ dài và nhịp cho chữ từ điện thoại; trần mana mỗi ngày cho lượt Tể tướng do điện
 thoại gọi; chữ của người dùng vào prompt như dữ liệu có khung, không nối vào chỉ dẫn.
@@ -157,6 +159,7 @@ lõi khó hay cần phán đoán thiết kế thì một phiên tự làm.
 | V5 · `minimumReleaseAge` trong `pnpm-workspace.yaml` | S | `pnpm-workspace.yaml`, `docs/implementation-plan/7-tooling-and-ci.md` | `pnpm install` từ chối bản phát hành mới hơn ngưỡng | Phiên điều phối làm thẳng |
 | V6 · Mục "Bảo mật" trong hướng dẫn vận hành: lãnh thổ là code tin như chính mình, token hẹp, kho bảo vật chỉ giữ secret phạm vi hẹp | S | `docs/guides/operating-a-kingdom.md` | Có mục, `pnpm docs:check` xanh | Giao quest (thư lại) |
 | V7 · `doctor` cảnh báo kho bảo vật trên Windows khi ACL cho người khác đọc | S | `apps/cli/src/doctor/**` | Test riêng cho Windows | Giao quest, chờ được |
+| V8 · Xác nhận passkey (WebAuthn) của Sứ giả: đăng ký khóa lúc ghép đôi, chữ ký trên mã băm của `kind` và `payload`, kiểm bằng `node:crypto`, không dependency mới | M | `packages/herald/**`, `apps/lite/**`, hàm nhóm lệnh trong `packages/domain` | Test: lệnh nhóm hai và ba thiếu chữ ký, chữ ký của lệnh khác, hay khóa đã thu hồi đều bị từ chối | Phiên tự làm (lõi bảo mật), trước P2-07 |
 
 Cổng máy muốn thêm, không cái nào cần dependency mới:
 
@@ -175,8 +178,8 @@ Cổng máy muốn thêm, không cái nào cần dependency mới:
   `SameSite=Strict`, kiểm `Origin`/`Host`, thu hồi theo thiết bị). Thay câu "token Bearer trong header" của §8.
 - **B2 · Đường hầm.** Khuyến nghị: Tailscale trong tailnet riêng (`tailscale serve`, có HTTPS cho service worker);
   không Funnel, không Cloudflare công khai; Sứ giả không có cờ nghe ngoài 127.0.0.1.
-- **B3 · Điện thoại được ra lệnh gì.** Khuyến nghị: đợt 1 chỉ xem, trả lời câu hỏi của nhân vật, thử lại, tạm dừng;
-  đóng dấu, giao hàng, ủy quyền, sửa lãnh thổ và tộc chỉ làm trên máy. Cơ chế danh sách theo nguồn nằm trong P2-01.
+- **B3 · Điện thoại được ra lệnh gì.** **Đã chốt 2026-11-20** (mục "Quyết định"): mọi lệnh đều làm được từ điện
+  thoại, chia ba nhóm theo hậu quả; hai nhóm sau cần xác nhận passkey. Cơ chế nhóm theo nguồn nằm trong P2-01.
 - **B4 · Chấp nhận R1 có điều kiện.** Khuyến nghị: không dựng sandbox hệ điều hành trong giai đoạn 2; làm V1 và V6;
   ghi thành luật vận hành "chỉ gắn lãnh thổ mà bạn tin code của nó như code của mình". Lý do: sandbox thật là việc
   cỡ L trên Windows, còn rủi ro chính (tiêm prompt dẫn tới lộ secret) giảm được nhiều bằng token hẹp (B5).
@@ -188,9 +191,10 @@ Cổng máy muốn thêm, không cái nào cần dependency mới:
 - **B6 · Cổng audit và quét secret (V4).** Khuyến nghị: làm, theo cách không cần mạng trong `pnpm check`.
 - **B7 · `minimumReleaseAge` (V5).** Khuyến nghị: 7 ngày, làm trước khi thêm 7 dependency của giai đoạn 2.
 - **B8 · Kho bảo vật trên Windows.** Khuyến nghị: V7 bây giờ; adapter keychain khi khóa VAPID vào kho (P2-08).
-- **B9 · Nhập bài học.** Khuyến nghị: giữ đóng tới khi có ADR; lệnh nhập chỉ từ CLI trên máy.
+- **B9 · Nhập bài học.** Khuyến nghị: giữ đóng tới khi có ADR. Theo B3, lệnh nhập từ điện thoại cần passkey và chỉ
+  trỏ tới file gói đã nằm trên máy.
 - **B10 · Trần cho điện thoại.** Khuyến nghị: trần mana mỗi ngày cho lượt Tể tướng và cho nút "nâng trần", đặt
-  trong `kingdom.json`, chỉ sửa trên máy. Chốt trước P2-08.
+  trong `kingdom.json`; đổi mức trần từ điện thoại cần passkey (B3). Chốt trước P2-08.
 - **B11 · Ghim hash adapter (V3).** Khuyến nghị: làm, cỡ S.
 
 ## Lệnh để kiểm lại
@@ -216,4 +220,23 @@ CLI đọc env của nó để dựng env tối thiểu (`apps/cli/src/node-io.t
 
 ## Quyết định
 
-Chưa có. Chủ nhân chốt thì ghi ở đây, kèm ngày và dòng §11.
+**B3, chốt 2026-11-20** ([§11, 2026-11-20](../implementation-plan/11-2026-11-20.md)). Chủ nhân không muốn việc nào
+buộc phải ngồi máy. Xác thực theo thiết bị cùng Tailscale đủ cho phần mạng; điều còn hở là điện thoại đang mở khóa vào
+tay người khác, và passkey đóng chỗ đó. Mọi lệnh làm được từ điện thoại đã ghép đôi, chia theo hậu quả:
+
+| Nhóm | Lệnh | Từ điện thoại |
+|---|---|---|
+| 1 · Vận hành hằng ngày | xem, trả lời câu hỏi, thử lại, tạm dừng, tạo và sửa quest, quyết thư, triệu hồi, gọi Tể tướng | Đi thẳng |
+| 2 · Hậu quả lớn | đóng dấu, giao hàng, nâng trần mana | Xác nhận passkey |
+| 3 · Đổi cấu hình tin cậy | lãnh thổ và chế độ giao hàng, tộc và adapter, tên secret, giới hạn ủy quyền, mức trần, ghép thiết bị mới, `upgrade`, nhập bài học | Xác nhận passkey |
+
+Ba điều đi kèm, là cách phiên này hiểu quyết định, chủ nhân sửa nếu khác ý:
+
+- Lần ghép đôi đầu tiên và passkey đầu tiên vẫn bắt đầu từ mã in trên máy; thiết bị và passkey về sau thêm được từ
+  một thiết bị đã có passkey.
+- Lệnh nhóm 3 từ điện thoại chỉ trỏ tới thứ đã nằm trên máy (file adapter, file gói bài học, repo); Sứ giả không nhận
+  nội dung file qua mạng. Passkey chứng minh ai ra lệnh, không chứng minh file sạch.
+- Nhiều lệnh nhóm 3 hôm nay là ngoại lệ của ADR 0005 (CLI ghi file thẳng), chưa có loại lệnh `inbox/`. Chúng tới được
+  điện thoại khi loại lệnh tương ứng được dựng; đợt 1 có nhóm 1, nhóm 2 và cơ chế passkey.
+
+B1, B2, B4–B11: chưa chốt.
