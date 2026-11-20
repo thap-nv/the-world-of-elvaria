@@ -25,6 +25,15 @@ export const draftingValuesOf = (t: PromptTemplates, terms: DraftingTerms) => ({
   estimate: fill(t.estimate, { context_budget_tokens: String(terms.context_budget_tokens) }),
 });
 
+/** Chancellor-only guidance: shared templates also serve already-open plan quests. */
+export const CHANCELLOR_DRAFTING_RULES = [
+  '- Keep `scope_paths`, Files and Steps consistent and complete, respecting the shared-path exclusions above. When behavior changes, include existing specs that assert the old behavior, and explicitly allow those assertions to change with the new behavior.',
+  '- When adding display strings, include the new keys in every required locale in Files and Steps and the locale files in `scope_paths` unless shared. For example, in the elvaria territory, include new keys in both `packages/i18n/src/locales/vi.json` and `en.json`.',
+  "- Include generated outputs in Files and their regeneration in Steps; include their paths in `scope_paths` unless shared. Use the territory's generators, never hand edits. For example, in elvaria, for `docs/schemas/**`, `docs/events.md` and `docs/cli.md`, regenerate them only with `pnpm docs:gen` or `pnpm schemas`, never edit them by hand.",
+  '- Small work that fits one session gets one direct quest: no `plan` quest, no child quests and no `parent_ref`, especially when the owner explicitly asks for a direct quest. This applies only below the council thresholds; the council rules still take precedence.',
+  '- Respect append-only journals in the territory. In elvaria, §11 (`docs/implementation-plan/11-*.md`) is append-only: add a new line for an update; never instruct a character to edit or delete an existing §11 line.',
+].join('\n');
+
 /** The drafting rules as one block, for a quest that delivers sub-quests. */
 export const draftingBlock = (t: PromptTemplates, terms: DraftingTerms): string =>
   fill(t.drafting, draftingValuesOf(t, terms));
