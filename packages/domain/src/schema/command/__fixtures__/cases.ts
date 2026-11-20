@@ -23,7 +23,11 @@ export const SCRIPT_QUEST = {
 
 // One valid and one invalid payload per kind, in the order of the contract; the type makes it name every kind.
 export const CASES: Record<InboxCommandKind, { valid: object; invalid: object; issue: string }> = {
-  confirm: { valid: { quest: QUEST }, invalid: { quest: 'q_1' }, issue: 'payload.quest: Invalid string' },
+  confirm: {
+    valid: { quest: QUEST, assignee: 'thorn' },
+    invalid: { quest: QUEST, assignee: 'Thorn' },
+    issue: 'payload.assignee: Invalid string',
+  },
   seal: {
     valid: { quest: QUEST },
     invalid: { quest: QUEST, note: 42 },

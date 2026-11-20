@@ -261,11 +261,22 @@ export async function edit(
   return outcomeOf(put);
 }
 
-/** The owner confirms a draft; the memos it was made from close as handled by it (PS-03b). */
-export async function confirm(ctx: Context, quest: Quest): Promise<Outcome> {
+/**
+ * The owner confirms a draft; the memos it was made from close as handled by it (PS-03b). With an assignee
+ * (`quest confirm --to`), the character is checked before anything is written, as a reassign naming it, so a wrong
+ * name leaves the draft untouched; then the open quest goes to it by the owner's reassign (§2.5 `open.reassign`) in
+ * this same apply. Inbox commands are applied before the tick plans, so no claim can take the quest in between,
+ * which a later `quest reassign --to` could not undo once the quest was working (q_20261120_tpzvk5).
+ */
+export async function confirm(ctx: Context, quest: Quest, named?: string): Promise<Outcome> {
+  const chosen = named === undefined ? undefined : newAssignee(ctx, quest, named);
+  if (chosen?.ok === false) return rejected(chosen.error);
   const confirmed = await ownerMove(ctx, quest, 'confirm');
-  if (confirmed.status === 'applied') await closeTaken(ctx, quest.memos, quest.id, OWNER);
-  return confirmed;
+  if (confirmed.status !== 'applied') return confirmed;
+  await closeTaken(ctx, quest.memos, quest.id, OWNER);
+  if (chosen === undefined) return confirmed;
+  const event = { type: 'reassign', assignee: chosen.value.id, level: chosen.value.level } as const;
+  return outcomeOf(await moveAndRing(ctx, { quest: quest.id, event, actor: 'user' }));
 }
 
 /** A plain move of the owner: confirm, retry. */

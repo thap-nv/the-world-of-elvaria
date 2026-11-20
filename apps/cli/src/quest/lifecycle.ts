@@ -8,7 +8,7 @@ import { textOption } from '../args.ts';
 import { EXIT } from '../command.ts';
 import { openKingdomContext } from '../kingdom-context.ts';
 import { QUEST_STATUS_LABEL } from '../labels.ts';
-import { classNames, giveQuestTo } from './assignee.ts';
+import { assigneeFor, ceilingLines, classNames, giveQuestTo } from './assignee.ts';
 import { readQuest } from './references.ts';
 import { commandHeader, sendCommand } from './send-command.ts';
 import type { CliContext, CommandInput, CommandSpec, ExitCode } from '../command.ts';
@@ -43,8 +43,28 @@ async function runConfirm(input: CommandInput, cli: CliContext): Promise<ExitCod
   if (ctx === undefined) return EXIT.failed;
   const quest = await questFor(input, ctx, () => 'confirm', 'cli.quest.confirm.refused');
   if (quest === undefined) return EXIT.failed;
+  const to = textOption(input, 'to');
+  if (to !== undefined) return confirmFor(ctx, quest, to);
   const command = { ...commandHeader(ctx), kind: 'confirm', payload: { quest: quest.id } } as const;
   return sendCommand(ctx, command, 'cli.quest.confirm.sent', { id: quest.id });
+}
+
+/**
+ * `confirm --to`: the draft opens for the character named, in the one command, so no tick between a confirm and a
+ * reassign can give it to another (q_20261120_tpzvk5). The CLI checks the character first, as `reassign --to` does.
+ */
+async function confirmFor(ctx: KingdomContext, quest: Quest, to: string): Promise<ExitCode> {
+  const character = await assigneeFor(ctx, to, quest.class_required);
+  if (Array.isArray(character)) {
+    character.forEach(ctx.io.err);
+    return EXIT.failed;
+  }
+  const payload = { quest: quest.id, assignee: character.id };
+  const command = { ...commandHeader(ctx), kind: 'confirm', payload } as const;
+  const params = { id: quest.id, character: character.id };
+  const code = await sendCommand(ctx, command, 'cli.quest.confirm.sent_to', params);
+  if (code === EXIT.ok) ceilingLines(ctx, character, quest.rank).forEach(ctx.io.out);
+  return code;
 }
 
 /**
@@ -188,7 +208,7 @@ export const QUEST_CONFIRM: CommandSpec = {
   name: ['quest', 'confirm'],
   summary: 'cli.quest.confirm.summary',
   args: [{ name: '<quest>', help: 'cli.quest.arg.quest' }],
-  options: {},
+  options: { to: { type: 'string', value: '<character>', help: 'cli.quest.confirm.option.to' } },
   run: runConfirm,
 };
 

@@ -357,6 +357,7 @@ Xác nhận một nhiệm vụ nháp để nó mở (lệnh confirm).
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
 | `<quest>` | id của nhiệm vụ, ví dụ q_20261106_7k3m2a. |
+| `--to <character>` | Nhân vật nhận nhiệm vụ ngay khi nháp mở, đúng nghề của nhiệm vụ, cấp nào cũng được (vượt hạng trần thì nhiệm vụ chờ dấu vua). Không có thì Nhiếp chính chọn trong những người đang rảnh. |
 
 ## `elvaria quest cancel`
 
