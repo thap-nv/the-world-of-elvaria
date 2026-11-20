@@ -231,6 +231,10 @@ show` prints the brief apart from the rest of the description and, while the pla
   (`sleeping_mana`) with the gauge it waits for, a model's own cap before its pool, and lists the sleeping gauges
   under the table. Only those: the log does not keep the models an account lists in a group, so the prefix table
   alone would call an Argon character bound by "Gemini Models", which the Steward, reading agy's `/usage`, does not.
+- `elvaria watch [--interval <seconds>]` (`src/watch/`): a read-only board of unfinished quests, including
+  drafts and blocked quests, followed by the attention queue from the snapshot files and event log.
+  Refreshes every 5 seconds by default; the interval must be a positive integer in seconds.
+  Non-TTY output prints once. Ctrl+C clears the timer and removes the signal listener; no raw terminal mode is used.
 - `digest` (PS-03, `src/digest/`): the digest as it stands, from the files, the open memos, the mana lines of the
   log and `.state/unclaimable.json` (`digestStateOf` of `@elvaria/steward`, `attentionQueue` of the domain), worded
   by `digestMarkdown` and printed; writes nothing and spends no mana. Quests waiting for a judge are known to the

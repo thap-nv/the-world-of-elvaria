@@ -46,6 +46,7 @@ import { TRIBE_LIST } from './tribe/list.ts';
 import { TRIBE_LOOK } from './tribe/look.ts';
 import { UPGRADE } from './upgrade/upgrade.ts';
 import { WAKE } from './wake.ts';
+import { WATCH } from './watch/watch.ts';
 import type { CommandSpec } from './command.ts';
 
 export const COMMANDS: readonly CommandSpec[] = [
@@ -98,6 +99,7 @@ export const COMMANDS: readonly CommandSpec[] = [
   RUN,
   WAKE,
   DIGEST,
+  WATCH,
   METRICS,
   SANDBOX_GENERATE,
   SANDBOX_REPLAY,
