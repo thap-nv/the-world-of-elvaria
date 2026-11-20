@@ -267,11 +267,15 @@ export async function edit(
  * name leaves the draft untouched; then the open quest goes to it by the owner's reassign (§2.5 `open.reassign`) in
  * this same apply. Inbox commands are applied before the tick plans, so no claim can take the quest in between,
  * which a later `quest reassign --to` could not undo once the quest was working (q_20261120_tpzvk5).
+ * A stopped Steward may leave the quest open between the two moves; the command applied again finds it open and
+ * unclaimed, skips the confirm (the table would refuse it, `no_transition`) and only gives it, as `givenTo` does.
  */
 export async function confirm(ctx: Context, quest: Quest, named?: string): Promise<Outcome> {
   const chosen = named === undefined ? undefined : newAssignee(ctx, quest, named);
   if (chosen?.ok === false) return rejected(chosen.error);
-  const confirmed = await ownerMove(ctx, quest, 'confirm');
+  // Only an open, unclaimed quest: one held by anyone is not given again, and a plain confirm stays refused.
+  const resumed = chosen !== undefined && quest.status === 'open' && quest.assignee === null;
+  const confirmed = resumed ? APPLIED : await ownerMove(ctx, quest, 'confirm');
   if (confirmed.status !== 'applied') return confirmed;
   await closeTaken(ctx, quest.memos, quest.id, OWNER);
   if (chosen === undefined) return confirmed;
