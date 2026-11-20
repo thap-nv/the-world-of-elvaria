@@ -228,6 +228,7 @@ export * from './verify/validate-verdict.ts';
 export * from './verify/verdict-id.ts';
 export * from './world/attention.ts';
 export * from './world/attention-table.ts';
+export * from './world/attention-scope-wait.ts';
 export * from './world/banner.ts';
 export * from './world/character-view.ts';
 export * from './world/constants.ts';

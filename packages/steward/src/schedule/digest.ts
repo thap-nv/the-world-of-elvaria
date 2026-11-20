@@ -11,6 +11,7 @@ import {
   ownerDeliveries,
   reduce,
   scopeHoldsOf,
+  scopeWaitNoticesOf,
   sealPolicyOf,
   templeNoticesOf,
   unopenedReviewsOf,
@@ -108,6 +109,7 @@ export function noticesOf(
         nothing: state.forge.nothing,
       }),
     ),
+    scope_waits: scopeWaitNoticesOf(quests, [...world.territories.values()]),
     judges_unopened: unopenedReviewsOf([...world.quests.values()]),
     deliveries: ownerDeliveries(
       state.forge.outcomes.values(),

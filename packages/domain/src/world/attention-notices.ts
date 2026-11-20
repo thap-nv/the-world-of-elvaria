@@ -15,6 +15,7 @@ import type { StreakWait, TempleWaiting } from '../temple/waiting.ts';
 import type { TribeHold } from '../tribe/version-hold.ts';
 import type { ForgeOutcome } from './forge-outcome.ts';
 import type { QuestView } from './quest-view.ts';
+import type { ScopeWaitNotice } from './attention-scope-wait.ts';
 import type { UnsealedMerge } from './unsealed-merges.ts';
 import type { WorldState } from './world-state.ts';
 import type { AttentionItem, AttentionKind, AttentionSubject } from './attention-table.ts';
@@ -40,6 +41,8 @@ export interface StewardNotices {
   }[];
   /** Done quests that still hold a scope quests wait for (scopeHoldsOf, PS-05); from the quest files, not the Steward's. */
   readonly scope_held?: readonly ScopeHold[];
+  /** Open quests that wait for a quest whose scope meets theirs (scopeWaitNoticesOf); from the quest files too. */
+  readonly scope_waits?: readonly ScopeWaitNotice[];
   /** Quests in review whose latest judge could not open a session (unopenedReviewsOf); from the quest files too. */
   readonly judges_unopened?: readonly UnopenedReview[];
   /** Tribes whose CLI says another version than their checked one (versionHoldsOf), as the Steward last found them. */
@@ -226,6 +229,9 @@ export function noticeItems(state: WorldState, notices: StewardNotices): Attenti
     ),
     ...(notices.scope_held ?? []).map(({ quest, waiting }) =>
       itemOf('scope_held', { ...aboutId(state, quest), waiting }),
+    ),
+    ...(notices.scope_waits ?? []).map(({ quest, holder, overlap }) =>
+      itemOf('scope_wait', { ...aboutId(state, quest), holder, overlap }),
     ),
     ...deliveriesOf(state, notices.deliveries),
     ...(notices.merged_unsealed ?? []).map((merge) =>
