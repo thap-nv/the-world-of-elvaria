@@ -348,6 +348,7 @@ Nhiếp chính đọc hạn mức của từng tài khoản mà không gọi mod
 - **Hết giữa phiên.** Phiên gặp giới hạn của tài khoản thì quest sang `Tạm dừng (hết mana)`, giữ người làm; Nhiếp chính thăm dò lại sau giờ reset và việc tiếp tục bằng phiên mới từ thư bàn giao.
 - **Sau khi bạn đăng nhập lại hay hạn mức được hồi**: `elvaria wake <tộc>` để Nhiếp chính đo ngay; không thì nó đo ở lần thăm dò kế.
 - **Đổi model của một nhân vật** sang đồng hồ còn chỗ: `elvaria character model <id> <model>` (cùng tộc), áp cho phiên sau.
+- **Đặt effort** cho nhân vật thuộc tộc claude, codex hoặc gemini: nối đuôi mức effort vào tên model bằng cùng lệnh đổi model, ví dụ `elvaria character model thorn claude-opus-5-5-high`. Claude nhận `low`, `medium`, `high`, `xhigh`, `max`; adapter truyền model gốc và `--effort high`. Chọn mức mà CLI/model của tộc hỗ trợ; tên không có đuôi effort giữ mặc định của CLI.
 - Pool `claude_gpt_models` của tộc gemini mặc định tắt: đừng dùng model `claude-*` qua agy để chấm việc của tộc claude (cùng họ model).
 
 ## 10. Trạm quân y và các lệnh khi quest kẹt

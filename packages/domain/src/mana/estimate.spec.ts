@@ -42,6 +42,19 @@ const source = (attempts: readonly Attempt[], more: Partial<EstimateSource> = {}
 const used = (readings: readonly ManaReading[]) => readings.map((r) => [r.pool, r.window, r.used_pct]);
 
 describe('estimatedReadings', () => {
+  it.each(['claude-opus-5-5', 'claude-opus-5-5-high', 'claude-opus-5-5-xhigh'])(
+    'charges the same token budget for %s',
+    (model) => {
+      const input = source([run('thorn', 2, 1, 250)], {
+        characters: [{ id: 'thorn' as CharacterId, tribe: CLAUDE, model }],
+      });
+      expect(used(estimatedReadings(input, NOW, NOW_ISO))).toEqual([
+        ['claude', 'five_hour', 25],
+        ['claude', 'weekly', 2.5],
+      ]);
+    },
+  );
+
   it("sums the tokens of the sessions that ended in each window against the tribe's budget", () => {
     const attempts = [
       run('thorn', 3, 2, 250),

@@ -74,7 +74,7 @@ export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
   'mana.restored': { ...POOL, model: 'argon' },
   'agent.tool': { tool: 'bash', command: 'pnpm test', exit: 0, duration_ms: 5120, url: 'https://x.dev' },
   'agent.tool.blocked': { tool: 'write', reason: 'forbidden path .env' },
-  'agent.session.start': { session: 'abc-123', model: 'claude-opus-4.1' },
+  'agent.session.start': { session: 'abc-123', model: 'claude-opus-4.1', effort: 'high' },
   'agent.session.end': { outcome: 'completed', usage: { tokens: 18_000, turns: 12 } },
   'agent.session.wrap_up': { measure: 'tokens', used: 86_000, limit: 100_000, pct: 86 },
   'agent.session.usage': {
