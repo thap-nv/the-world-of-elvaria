@@ -6,6 +6,10 @@ packages:
 # a dependency that does is added here on purpose, with the reason in the commit (implementation-plan §7).
 onlyBuiltDependencies: []
 
+# pnpm resolves no version published less than seven days ago (unit: minutes). Most hijacked npm
+# releases are caught within days, so a new dependency waits out that window (SEC-05, threat model B7).
+minimumReleaseAge: 10080
+
 # `pnpm audit` skips these advisories (CI step `pnpm audit --prod --audit-level high`, implementation-plan §7).
 auditConfig:
   ignoreGhsas:
