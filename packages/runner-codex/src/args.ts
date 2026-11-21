@@ -33,8 +33,10 @@ const toml = (text: string): string => JSON.stringify(text);
 
 /**
  * The `-c` settings of a session: no approvals asked, Windows' sandbox without an administrator's setup, the temp
- * folders out of the writable roots (else a plot in %TEMP% lets every write out, spike §4), the network on as for
- * the other tribes, and the quest's folder writable for the handover letter, which lives outside the plot.
+ * folders out of the writable roots (else a plot in %TEMP% lets every write out, spike §4), no network, and the quest's
+ * folder writable for the handover letter, which lives outside the plot. The sandbox fences writes, not reads: a command
+ * reads any file of the owner, so the network is what keeps it in (SEC-01, owner's choice, cli-facts 2026-11-21 §2). Off
+ * closes 127.0.0.1 too; the Steward's checks run outside the sandbox, and a read-only session never had any network.
  */
 export function configOf(req: SpawnRequest): string[] {
   const writes = sessionWrites(req);
@@ -47,7 +49,7 @@ export function configOf(req: SpawnRequest): string[] {
     `windows.sandbox="${WINDOWS_SANDBOX}"`,
     'sandbox_workspace_write.exclude_tmpdir_env_var=true',
     'sandbox_workspace_write.exclude_slash_tmp=true',
-    'sandbox_workspace_write.network_access=true',
+    'sandbox_workspace_write.network_access=false',
     ...(letter.length === 0
       ? []
       : [`sandbox_workspace_write.writable_roots=[${letter.map(toml).join(',')}]`]),

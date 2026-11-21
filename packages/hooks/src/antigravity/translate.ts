@@ -3,8 +3,7 @@
 // missing decision as a block, and a soft-deny under `-p` would end the whole run (spike §1 #12).
 import { translation, withoutUndefined } from '../draft.ts';
 import { recordHandoverStart, stopGate } from '../handover.ts';
-import { lawViolation, protectedViolation, refusalText } from '../claude/tool-events.ts';
-import { outsideReadViolation } from '../outside.ts';
+import { protectedViolation, refusalOf } from '../claude/tool-events.ts';
 import { plotPath } from '../claude/tools.ts';
 import { modelSlugOf } from '../claude/translate.ts';
 import { classViolation } from '../class-gate.ts';
@@ -51,13 +50,11 @@ function ruleViolation(name: unknown, call: ToolCall, ctx: HookContext): string 
 function preToolUse(input: AgyInput, ctx: HookContext): Translation {
   const call = agyToolCallOf(input.toolName, input.toolArgs);
   const rule = ruleViolation(input.toolName, call, ctx) ?? protectedViolation(call, ctx.laws);
-  const law = rule ?? lawViolation(call, ctx.laws);
   // Its read_file rule is a prefix (`home.png` opens `home.png.bak`): the hook keeps to the exact file (PS-11b).
-  const reason = law ?? outsideReadViolation(call, input.workspace, ctx);
-  if (reason === undefined) return translation([], { decision: DEFER_TO_SETTINGS });
-  const source = rule === undefined && law !== undefined ? 'law of this territory' : 'rule';
-  return translation([{ type: 'agent.tool.blocked', data: { tool: call.kind, reason } }], {
-    decision: denyAgyTool(refusalText(source, reason)),
+  const refusal = refusalOf(rule, call, input.workspace, ctx);
+  if (refusal === undefined) return translation([], { decision: DEFER_TO_SETTINGS });
+  return translation([{ type: 'agent.tool.blocked', data: { tool: call.kind, reason: refusal.reason } }], {
+    decision: denyAgyTool(refusal.text),
   });
 }
 

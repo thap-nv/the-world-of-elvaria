@@ -6,8 +6,7 @@ import { graphLineViolation } from '../graph.ts';
 import { stopGate } from '../handover.ts';
 import { grepOptionViolation } from '../search.ts';
 import { classViolation } from '../class-gate.ts';
-import { lawViolation, protectedViolation, refusalText } from '../claude/tool-events.ts';
-import { outsideReadViolation } from '../outside.ts';
+import { protectedViolation, refusalOf } from '../claude/tool-events.ts';
 import { claudeInputOf } from '../claude/input.ts';
 import { plotPath } from '../claude/tools.ts';
 import { sessionStart } from '../claude/translate.ts';
@@ -46,13 +45,12 @@ const nameOf = (input: ClaudeInput): string => input.text('tool_name') ?? '';
 function preToolUse(input: ClaudeInput, ctx: HookContext): Translation {
   const call = codexToolCallOf(input.raw.tool_name, input.raw.tool_input);
   const rule = ruleViolation(nameOf(input), call, ctx) ?? protectedViolation(call, ctx.laws);
-  const law = rule ?? lawViolation(call, ctx.laws);
-  // view_image reads any file on the disk, whatever the sandbox: this fence is the only one (PS-11b).
-  const reason = law ?? outsideReadViolation(call, input.text('cwd'), ctx);
-  if (reason === undefined) return translation([]);
-  const source = rule === undefined && law !== undefined ? 'law of this territory' : 'rule';
-  return translation([{ type: 'agent.tool.blocked', data: { tool: call.kind, reason } }], {
-    decision: denyTool(refusalText(source, reason)),
+  // view_image reads any file on the disk, and a shell command too, whatever the sandbox: these fences are the only
+  // ones on reading (PS-11b, SEC-01).
+  const refusal = refusalOf(rule, call, input.text('cwd'), ctx);
+  if (refusal === undefined) return translation([]);
+  return translation([{ type: 'agent.tool.blocked', data: { tool: call.kind, reason: refusal.reason } }], {
+    decision: denyTool(refusal.text),
   });
 }
 

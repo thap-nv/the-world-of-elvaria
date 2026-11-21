@@ -48,9 +48,31 @@ function sessionStart(payload, env) {
   appendFileSync(path.join(dir, 'journal.jsonl'), `${JSON.stringify(line)}\n`);
 }
 
-function preToolUse(payload, laws) {
+/**
+ * Whether a word of `command` names a place of `secret_paths` (SEC-01) at some depth: `dir/**` or a plain name, the
+ * only shapes the list has. Coarser than the real hook, which keeps the plot's own folders open.
+ */
+function namesSecret(command, globs = []) {
+  const words = command.replace(/["'`]/g, ' ').split(/[\s;|&<>(){}=,]+/);
+  return words.some((word) => {
+    const segments = word.replaceAll('\\', '/').toLowerCase().split('/');
+    return segments.some((_, start) => {
+      const tail = segments.slice(start).join('/');
+      return globs.some((glob) => {
+        const base = glob.toLowerCase().replace(/\/\*\*$/, '');
+        return base === glob.toLowerCase() ? tail === base : tail === base || tail.startsWith(`${base}/`);
+      });
+    });
+  });
+}
+
+function preToolUse(payload, laws, secrets) {
   const command = payload.tool_input?.command;
   if (payload.tool_name !== 'Bash' || typeof command !== 'string') return;
+  if (namesSecret(command, secrets)) {
+    deny(`Elvaria: "${command}" names a place that holds the owner's secrets.`);
+    return;
+  }
   const law = (laws?.forbidden_commands ?? []).find((pattern) => new RegExp(pattern, 'i').test(command));
   if (law === undefined) return;
   deny(`Elvaria: "${command}" is forbidden by a law of this run.`);
@@ -83,5 +105,5 @@ if (payload === undefined) {
 } else {
   const policy = policyOf(process.argv);
   if (payload.hook_event_name === 'SessionStart') sessionStart(payload, process.env);
-  if (payload.hook_event_name === 'PreToolUse') preToolUse(payload, policy.laws);
+  if (payload.hook_event_name === 'PreToolUse') preToolUse(payload, policy.laws, policy.secret_paths);
 }

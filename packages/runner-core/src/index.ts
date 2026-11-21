@@ -35,6 +35,7 @@ export type { ConformanceReport } from './conformance/run.ts';
 export {
   FAKE_FORBIDDEN_COMMAND,
   FAKE_SCRATCH_COMMANDS,
+  FAKE_SECRET_COMMANDS,
   FAKE_QUESTION,
   FAKE_SCENARIOS,
   FAKE_SCENARIO_ENV,

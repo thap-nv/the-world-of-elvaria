@@ -3,8 +3,7 @@
 // written; the rules are the same as for the three CLIs the hook knows by name (the laws, the class's tools, the
 // apprentice rule as agy and Codex keep it: no sub-agent at all, the handover letter's Stop gate).
 import { classViolation, missingTools } from '../class-gate.ts';
-import { lawViolation, protectedViolation, refusalText } from '../claude/tool-events.ts';
-import { outsideReadViolation } from '../outside.ts';
+import { protectedViolation, refusalOf } from '../claude/tool-events.ts';
 import { plotPath } from '../claude/tools.ts';
 import { modelSlugOf } from '../claude/translate.ts';
 import { patchPathsOf } from '../codex/tools.ts';
@@ -79,13 +78,11 @@ function ruleViolation(input: NeutralInput, call: ToolCall, ctx: HookContext): s
 function preTool(input: NeutralInput, ctx: HookContext): Translation {
   const call = callOf(input);
   const rule = ruleViolation(input, call, ctx) ?? protectedViolation(call, ctx.laws);
-  const law = rule ?? lawViolation(call, ctx.laws);
-  const reason = law ?? outsideReadViolation(call, textAt(input.raw, input.dialect.cwd), ctx);
+  const refusal = refusalOf(rule, call, textAt(input.raw, input.dialect.cwd), ctx);
   const { answers } = input.dialect;
-  if (reason === undefined) return translation([], { decision: answers.pass });
-  const source = rule === undefined && law !== undefined ? 'law of this territory' : 'rule';
-  return translation([{ type: 'agent.tool.blocked', data: { tool: call.kind, reason } }], {
-    decision: answerOf(answers.deny, refusalText(source, reason)),
+  if (refusal === undefined) return translation([], { decision: answers.pass });
+  return translation([{ type: 'agent.tool.blocked', data: { tool: call.kind, reason: refusal.reason } }], {
+    decision: answerOf(answers.deny, refusal.text),
   });
 }
 

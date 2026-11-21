@@ -14,6 +14,7 @@ import {
   visionProblems,
 } from '../kit/adapter-module.ts';
 import { imageCheck } from './image-check.ts';
+import { secretCheck } from './secret-check.ts';
 import { FAKE_QUESTION, FAKE_STRUCTURED_ANSWER, FAKE_STRUCTURED_SCHEMA } from './scenarios.ts';
 import { SPAWN_PROBE_COMMAND, SPAWN_PROBE_OK } from './spawn-probe.ts';
 import { DEFAULT_TIMEOUT_MS, HANG_GRACE_MS, play, settlesWithin, within } from './play.ts';
@@ -265,6 +266,7 @@ export const CONFORMANCE_CHECKS: readonly ConformanceCheck[] = [
   hang,
   rateLimit,
   forbiddenCommand,
+  secretCheck,
   spawnChild,
   structured,
   imageCheck,

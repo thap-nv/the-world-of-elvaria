@@ -71,6 +71,11 @@ export interface HookPolicy {
    * letter, the only files outside the plot a read tool may open (outside.ts). Absent: none.
    */
   readonly images?: readonly string[];
+  /**
+   * Globs of the places that hold the owner's secrets (SEC-01; runner-core's ToolPolicy `secret_paths`): no tool path
+   * and no word of a shell line may name one, at any depth, unless the word stays inside the plot. Absent: none.
+   */
+  readonly secret_paths?: readonly string[];
   /** `territory.laws`; other law kinds may be present and are not the hook's to enforce. */
   readonly laws?: LawsInput;
 }
@@ -88,6 +93,7 @@ const LIST_FIELDS = [
   'search_commands',
   'graph_commands',
   'images',
+  'secret_paths',
 ] as const;
 const LAW_LISTS = ['forbidden_paths', 'read_only_paths', 'patch_paths', 'forbidden_commands'] as const;
 

@@ -244,6 +244,8 @@ const SCENARIOS = {
     letter();
     return finish();
   },
+  // SEC-01: a command naming a file of a CLI's folder, then git's credential helper.
+  secret_place: () => SCENARIOS.commands(core.FAKE_SECRET_COMMANDS),
   // Each shell line of ELVARIA_FAKE_COMMANDS (a JSON list) once, in order, as a model told to run them (P1-53).
   commands: (lines = JSON.parse(env.ELVARIA_FAKE_COMMANDS ?? '[]')) => {
     for (const command of lines) if (!shell(command)) return softDenied();

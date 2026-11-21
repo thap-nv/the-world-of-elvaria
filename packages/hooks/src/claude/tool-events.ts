@@ -5,6 +5,7 @@ import { denyTool, translation, withoutUndefined } from '../draft.ts';
 import { graphLineViolation, shelllessViolation } from '../graph.ts';
 import { commandViolation, forbiddenPathOf, matchingGlobOf, readOnlyReason } from '../laws.ts';
 import { outsideReadViolation } from '../outside.ts';
+import { secretPlaceViolation } from '../secret-place.ts';
 import { plotPath, toolCallOf } from './tools.ts';
 import type { HookContext } from '../context.ts';
 import type { Translation } from '../draft.ts';
@@ -46,7 +47,7 @@ const callerOf = (input: ClaudeInput): { agent_type?: string } => {
  * Why `call` breaks the laws, if it does. Tools that name no file and run no command are not guarded; a
  * read-only path (P1-24) stops only a write tool, so a generated file stays readable.
  */
-export function lawViolation(call: ToolCall, laws: CompiledLaws): string | undefined {
+function lawViolation(call: ToolCall, laws: CompiledLaws): string | undefined {
   if (call.guarded.length === 0 && call.command === undefined) return undefined;
   if (laws.broken !== undefined) {
     return `the territory laws could not be loaded (${laws.broken}), so file and shell tools are blocked`;
@@ -88,11 +89,35 @@ export function protectedViolation(call: ToolCall, laws: CompiledLaws): string |
   return undefined;
 }
 
-/** What the model reads when a call is stopped, from either CLI's PreToolUse. */
-export const refusalText = (source: string, reason: string): string =>
+/** What the model reads when a call is stopped, from every dialect's PreToolUse. */
+const refusalText = (source: string, reason: string): string =>
   reason.endsWith(PATCH_WAY)
     ? `Elvaria ${source}: ${reason}.`
     : `Elvaria ${source}: ${reason}. Do not try another way around it; if the work needs it, say so in handover.md.`;
+
+/** A stopped call: the reason the event log keeps, and the text the model reads. */
+export interface Refusal {
+  readonly reason: string;
+  readonly text: string;
+}
+
+/**
+ * Why a call is stopped once the dialect has read its own rules (`rule`), in the order of every dialect: Elvaria's
+ * rule, then the territory's law, which names the path first, then Elvaria's fences on the places that hold the
+ * owner's secrets (SEC-01) and on reading outside the plot (PS-11b). `cwd` is the session's folder as the payload names it.
+ */
+export function refusalOf(
+  rule: string | undefined,
+  call: ToolCall,
+  cwd: string | undefined,
+  ctx: HookContext,
+): Refusal | undefined {
+  const law = rule === undefined ? lawViolation(call, ctx.laws) : undefined;
+  const reason =
+    rule ?? law ?? secretPlaceViolation(call, cwd, ctx.laws) ?? outsideReadViolation(call, cwd, ctx);
+  if (reason === undefined) return undefined;
+  return { reason, text: refusalText(law === undefined ? 'rule' : 'law of this territory', reason) };
+}
 
 /** The code graph's rules (PS-21): no graphify call but the quest's own, and a shell-less class runs nothing else. */
 const graphRule = (call: ToolCall, ctx: HookContext): string | undefined =>
@@ -106,15 +131,10 @@ export function preToolUse(input: ClaudeInput, ctx: HookContext): Translation {
     subagentViolation(call, ctx.apprenticeModels) ??
     protectedViolation(call, ctx.laws) ??
     graphRule(call, ctx);
-  const law = apprenticeRule ?? lawViolation(call, ctx.laws);
-  // The territory's own law names the path first; reading outside the plot is Elvaria's rule (PS-11b).
-  const reason = law ?? outsideReadViolation(call, input.text('cwd'), ctx);
-  if (reason === undefined) return translation([]);
-  const source = apprenticeRule === undefined && law !== undefined ? 'law of this territory' : 'rule';
-  const data = { tool: call.kind, reason, ...callerOf(input) };
-  return translation([{ type: 'agent.tool.blocked', data }], {
-    decision: denyTool(refusalText(source, reason)),
-  });
+  const refusal = refusalOf(apprenticeRule, call, input.text('cwd'), ctx);
+  if (refusal === undefined) return translation([]);
+  const data = { tool: call.kind, reason: refusal.reason, ...callerOf(input) };
+  return translation([{ type: 'agent.tool.blocked', data }], { decision: denyTool(refusal.text) });
 }
 
 /** `Exit code N`, the first line of a failed shell call's `error` (Claude Code hooks reference). */

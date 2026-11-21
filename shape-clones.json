@@ -1,0 +1,743 @@
+{
+  "version": 1,
+  "pairs": [
+    {
+      "a": "packages/runner-claude/src/locate.ts",
+      "b": "packages/runner-codex/src/locate.ts",
+      "tokens": 560,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/hooks/src/glob.ts",
+      "b": "packages/runner-core/src/checks/glob.ts",
+      "tokens": 515,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/runner-antigravity/src/session.ts",
+      "b": "packages/runner-codex/src/session.ts",
+      "tokens": 471,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/quest/hold.ts",
+      "b": "apps/cli/src/quest/lifecycle.ts",
+      "tokens": 336,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/runner-antigravity/src/runner.ts",
+      "b": "packages/runner-codex/src/runner.ts",
+      "tokens": 312,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/character/suspend.ts",
+      "b": "apps/cli/src/quest/lifecycle.ts",
+      "tokens": 306,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/territory/delivery.ts",
+      "b": "apps/cli/src/territory/patrol.ts",
+      "tokens": 286,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/character/suspend.ts",
+      "b": "apps/cli/src/quest/hold.ts",
+      "tokens": 251,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/runner-claude/src/account.ts",
+      "b": "packages/runner-codex/src/account.ts",
+      "tokens": 236,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/quest/hold.ts",
+      "b": "apps/cli/src/quest/owner-verdict.ts",
+      "tokens": 231,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/eventlog/src/migrations/run.ts",
+      "b": "packages/store/src/migrations/run.ts",
+      "tokens": 203,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/steward/src/review/scratch.ts",
+      "b": "packages/steward/src/script/follow-up.ts",
+      "tokens": 203,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/quest/deliver.ts",
+      "b": "apps/cli/src/quest/lifecycle.ts",
+      "tokens": 199,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/quest/lifecycle.ts",
+      "b": "apps/cli/src/quest/reassign.ts",
+      "tokens": 198,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/runner-antigravity/src/stream.ts",
+      "b": "packages/runner-codex/src/stream.ts",
+      "tokens": 189,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/steward/src/review/prompt-size.ts",
+      "b": "packages/steward/src/sessions/claim-prompt-size.ts",
+      "tokens": 188,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/temple/run.ts",
+      "b": "apps/cli/src/triage/triage.ts",
+      "tokens": 182,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/hooks/src/antigravity/translate.ts",
+      "b": "packages/hooks/src/codex/translate.ts",
+      "tokens": 109,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/quest/lifecycle.ts",
+      "b": "apps/cli/src/quest/owner-verdict.ts",
+      "tokens": 163,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/run/antigravity.ts",
+      "b": "apps/cli/src/run/codex.ts",
+      "tokens": 157,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/quest/hold.ts",
+      "b": "apps/cli/src/quest/reassign.ts",
+      "tokens": 156,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/metrics/view-delegation.ts",
+      "b": "apps/cli/src/metrics/view-memos.ts",
+      "tokens": 147,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/quest/escaped.ts",
+      "b": "apps/cli/src/quest/lifecycle.ts",
+      "tokens": 146,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/quest/edit.ts",
+      "b": "apps/cli/src/quest/escaped.ts",
+      "tokens": 139,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/steward/src/forge/looks.ts",
+      "b": "packages/steward/src/patrol/runs.ts",
+      "tokens": 139,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/quest/edit.ts",
+      "b": "apps/cli/src/quest/lifecycle.ts",
+      "tokens": 138,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/domain/src/schema/memo/memo-triage.ts",
+      "b": "packages/domain/src/schema/quest/quest-draft.ts",
+      "tokens": 138,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/store/src/registry-gaps.ts",
+      "b": "packages/store/src/registry-refresh-entries.ts",
+      "tokens": 138,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/labels.ts",
+      "b": "packages/domain/src/metrics/causes.ts",
+      "tokens": 135,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/hooks/src/write.ts",
+      "b": "packages/runner-core/src/runner/run-log.ts",
+      "tokens": 133,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/steward/src/patrol/draft.ts",
+      "b": "packages/steward/src/review/scratch.ts",
+      "tokens": 131,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/steward/src/patrol/draft.ts",
+      "b": "packages/steward/src/script/follow-up.ts",
+      "tokens": 131,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/domain/src/core/clock.ts",
+      "b": "packages/eventlog/src/stamp.ts",
+      "tokens": 127,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/character/level.ts",
+      "b": "apps/cli/src/character/model.ts",
+      "tokens": 123,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/runner-core/src/checks/environment.ts",
+      "b": "packages/runner-core/src/plot/trial-log.ts",
+      "tokens": 123,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/territory/check.ts",
+      "b": "apps/cli/src/territory/graph.ts",
+      "tokens": 122,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/hooks/src/antigravity/tools.ts",
+      "b": "packages/hooks/src/claude/tools.ts",
+      "tokens": 119,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/territory/delivery.ts",
+      "b": "apps/cli/src/territory/graph.ts",
+      "tokens": 118,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/metrics/view-delegation.ts",
+      "b": "apps/cli/src/metrics/view-waits.ts",
+      "tokens": 115,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/territory/graph.ts",
+      "b": "apps/cli/src/territory/patrol.ts",
+      "tokens": 113,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/territory/trial-record.ts",
+      "b": "apps/cli/src/upgrade/pointer.ts",
+      "tokens": 112,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/memo/memo.ts",
+      "b": "apps/cli/src/quest/references.ts",
+      "tokens": 111,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/sandbox/generate.ts",
+      "b": "apps/cli/src/scripture/list.ts",
+      "tokens": 108,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/territory/delegation.ts",
+      "b": "apps/cli/src/territory/patrol.ts",
+      "tokens": 108,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/character/suspend.ts",
+      "b": "apps/cli/src/quest/edit.ts",
+      "tokens": 107,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/territory/delegation.ts",
+      "b": "apps/cli/src/territory/delivery.ts",
+      "tokens": 107,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/runner-claude/src/model.ts",
+      "b": "packages/runner-codex/src/launch.ts",
+      "tokens": 107,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/chancellor/src/amendment.ts",
+      "b": "packages/chancellor/src/triage-memos.ts",
+      "tokens": 106,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/character/add.ts",
+      "b": "apps/cli/src/quest/add.ts",
+      "tokens": 105,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/memo/show.ts",
+      "b": "apps/cli/src/quest/show.ts",
+      "tokens": 104,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/quest/edit.ts",
+      "b": "apps/cli/src/quest/hold.ts",
+      "tokens": 104,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/quest/lifecycle.ts",
+      "b": "apps/cli/src/tribe/look.ts",
+      "tokens": 102,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/chancellor/src/temple.ts",
+      "b": "packages/chancellor/src/triage-memos.ts",
+      "tokens": 100,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/runner-core/src/conformance/scenarios.ts",
+      "b": "packages/steward/src/sessions/request.ts",
+      "tokens": 98,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/character/suspend.ts",
+      "b": "apps/cli/src/quest/reassign.ts",
+      "tokens": 97,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/runner-core/src/plot/folder.ts",
+      "b": "packages/steward/src/deliver/copy.ts",
+      "tokens": 96,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/domain/src/script/follow-up.ts",
+      "b": "packages/domain/src/verify/flaky-follow-up.ts",
+      "tokens": 94,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/character/suspend.ts",
+      "b": "apps/cli/src/quest/deliver.ts",
+      "tokens": 93,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/sandbox/src/review.ts",
+      "b": "packages/sandbox/src/work.ts",
+      "tokens": 91,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/memo/show.ts",
+      "b": "apps/cli/src/quest/edit.ts",
+      "tokens": 89,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/quest/edit.ts",
+      "b": "apps/cli/src/quest/show.ts",
+      "tokens": 89,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/steward/src/forge/update.ts",
+      "b": "packages/steward/src/review/start-checks.ts",
+      "tokens": 89,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/memo/show.ts",
+      "b": "apps/cli/src/quest/escaped.ts",
+      "tokens": 88,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/quest/assignee.ts",
+      "b": "apps/cli/src/quest/lifecycle.ts",
+      "tokens": 88,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/quest/escaped.ts",
+      "b": "apps/cli/src/quest/show.ts",
+      "tokens": 88,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/character/read.ts",
+      "b": "apps/cli/src/quest/references.ts",
+      "tokens": 87,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/memo/show.ts",
+      "b": "apps/cli/src/quest/lifecycle.ts",
+      "tokens": 87,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/quest/lifecycle.ts",
+      "b": "apps/cli/src/quest/show.ts",
+      "tokens": 87,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/memo/show.ts",
+      "b": "apps/cli/src/quest/deliver.ts",
+      "tokens": 85,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/quest/deliver.ts",
+      "b": "apps/cli/src/quest/edit.ts",
+      "tokens": 85,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/quest/deliver.ts",
+      "b": "apps/cli/src/quest/escaped.ts",
+      "tokens": 85,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/quest/deliver.ts",
+      "b": "apps/cli/src/quest/show.ts",
+      "tokens": 85,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/hooks/src/claude/tools.ts",
+      "b": "packages/hooks/src/codex/tools.ts",
+      "tokens": 83,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/quest/deliver.ts",
+      "b": "apps/cli/src/quest/hold.ts",
+      "tokens": 82,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/quest/deliver.ts",
+      "b": "apps/cli/src/quest/reassign.ts",
+      "tokens": 82,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/eventlog/src/redact.ts",
+      "b": "packages/hooks/src/fit-line.ts",
+      "tokens": 81,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/quest/owner-verdict.ts",
+      "b": "apps/cli/src/quest/reassign.ts",
+      "tokens": 79,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/domain/src/schema/memo/memo-triage.ts",
+      "b": "packages/domain/src/schema/quest/verdict.ts",
+      "tokens": 79,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/domain/src/schema/lesson/lesson.ts",
+      "b": "packages/domain/src/schema/lesson/scripture.ts",
+      "tokens": 78,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/character/read.ts",
+      "b": "apps/cli/src/memo/memo.ts",
+      "tokens": 77,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/hooks/src/claude/translate.ts",
+      "b": "packages/hooks/src/codex/translate.ts",
+      "tokens": 77,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/domain/src/infirmary/reasons.ts",
+      "b": "packages/domain/src/scorecard/reasons.ts",
+      "tokens": 76,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/domain/src/schema/memo/memo-triage.ts",
+      "b": "packages/domain/src/schema/quest/quest-rules.ts",
+      "tokens": 76,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/hooks/src/antigravity/translate.ts",
+      "b": "packages/hooks/src/neutral/translate.ts",
+      "tokens": 74,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/hooks/src/codex/translate.ts",
+      "b": "packages/hooks/src/neutral/translate.ts",
+      "tokens": 74,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/domain/src/schema/lesson/lesson.ts",
+      "b": "packages/domain/src/schema/memo/memo.ts",
+      "tokens": 72,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/runner-core/src/checks/scratch-again.ts",
+      "b": "packages/runner-core/src/checks/scratch-trial.ts",
+      "tokens": 72,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/steward/src/delegation/book.ts",
+      "b": "packages/steward/src/patrol/book.ts",
+      "tokens": 72,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/domain/src/core/id-source.ts",
+      "b": "packages/eventlog/src/stamp.ts",
+      "tokens": 70,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/domain/src/schema/memo/memo-kind.ts",
+      "b": "packages/domain/src/schema/registry-entries.ts",
+      "tokens": 69,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/hooks/src/antigravity/tools.ts",
+      "b": "packages/hooks/src/neutral/translate.ts",
+      "tokens": 69,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/domain/src/schema/quest/quest-rules.ts",
+      "b": "packages/domain/src/schema/quest/verdict.ts",
+      "tokens": 68,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/doctor/doctor.ts",
+      "b": "apps/cli/src/tribe/add.ts",
+      "tokens": 66,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/quest/add.ts",
+      "b": "apps/cli/src/quest/list.ts",
+      "tokens": 66,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/say/hearing.ts",
+      "b": "apps/cli/src/temple/run-temple.ts",
+      "tokens": 66,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/domain/src/infirmary/reasons.ts",
+      "b": "packages/runner-core/src/prompt/templates.ts",
+      "tokens": 66,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/domain/src/scorecard/reasons.ts",
+      "b": "packages/runner-core/src/prompt/templates.ts",
+      "tokens": 66,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/run/bell.ts",
+      "b": "packages/steward/src/inbox/apply.ts",
+      "tokens": 65,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/scripture/lint.ts",
+      "b": "apps/cli/src/scripture/quest.ts",
+      "tokens": 65,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/steward/src/deliver/deliver.ts",
+      "b": "packages/steward/src/party/machine.ts",
+      "tokens": 65,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/run-cli.ts",
+      "b": "apps/cli/src/upgrade/pin.ts",
+      "tokens": 64,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/say/say.ts",
+      "b": "apps/cli/src/temple/run.ts",
+      "tokens": 64,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/say/say.ts",
+      "b": "apps/cli/src/triage/triage.ts",
+      "tokens": 64,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/territory/patrol.ts",
+      "b": "apps/cli/src/tribe/check.ts",
+      "tokens": 64,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/runner-antigravity/src/usage.ts",
+      "b": "packages/runner-claude/src/probe.ts",
+      "tokens": 64,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/runner-core/src/plot/merge.ts",
+      "b": "packages/runner-core/src/plot/worktree.ts",
+      "tokens": 64,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/quest/escaped.ts",
+      "b": "apps/cli/src/quest/hold.ts",
+      "tokens": 63,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/quest/escaped.ts",
+      "b": "apps/cli/src/quest/reassign.ts",
+      "tokens": 63,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/sandbox/replay.ts",
+      "b": "apps/cli/src/tribe/look.ts",
+      "tokens": 63,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/metrics/view.ts",
+      "b": "packages/domain/src/metrics/metrics-of.ts",
+      "tokens": 62,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/territory/add.ts",
+      "b": "apps/cli/src/territory/delegation.ts",
+      "tokens": 62,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/domain/src/core/ids.ts",
+      "b": "packages/domain/src/schema/quest/quest-parts.ts",
+      "tokens": 62,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/domain/src/core/ids.ts",
+      "b": "packages/domain/src/schema/registry-entries.ts",
+      "tokens": 62,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/domain/src/schema/quest/quest-parts.ts",
+      "b": "packages/domain/src/schema/registry-entries.ts",
+      "tokens": 62,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/steward/src/memos/decide.ts",
+      "b": "packages/steward/src/memos/escalate.ts",
+      "tokens": 62,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/steward/src/review/machine.ts",
+      "b": "packages/steward/src/script/script-quest.ts",
+      "tokens": 62,
+      "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/memo/memo.ts",
+      "b": "apps/cli/src/quest/list.ts",
+      "tokens": 61,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/runner-claude/src/stream.ts",
+      "b": "packages/runner-core/src/runner/types.ts",
+      "tokens": 61,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/domain/src/character/transition.ts",
+      "b": "packages/domain/src/quest/transition.ts",
+      "tokens": 60,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/domain/src/schema/campaign/campaign.ts",
+      "b": "packages/domain/src/schema/skill/skill.ts",
+      "tokens": 60,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/runner-core/src/checks/environment.ts",
+      "b": "packages/steward/src/review/log-tail.ts",
+      "tokens": 60,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/runner-core/src/plot/trial-log.ts",
+      "b": "packages/steward/src/review/log-tail.ts",
+      "tokens": 60,
+      "status": "unreviewed"
+    },
+    {
+      "a": "packages/steward/src/memos/amendment.ts",
+      "b": "packages/steward/src/memos/decide.ts",
+      "tokens": 60,
+      "status": "unreviewed"
+    }
+  ]
+}

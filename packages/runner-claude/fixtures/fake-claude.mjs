@@ -202,6 +202,8 @@ const SCENARIOS = {
   ask: (play) => work(play, play.core.FAKE_QUESTION),
   forbidden_command: (play) => forbidden(play),
   scratch_commit: (play) => forbidden(play, play.core.FAKE_SCRATCH_COMMANDS),
+  // SEC-01: a command naming a file of a CLI's folder, then git's credential helper.
+  secret_place: (play) => forbidden(play, play.core.FAKE_SECRET_COMMANDS),
   // The suite's spawn probe runs for real once the hooks and rules let it through (P1-12e).
   spawn_child: (play) => {
     const command = play.core.SPAWN_PROBE_COMMAND;
