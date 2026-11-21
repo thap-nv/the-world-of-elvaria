@@ -59,6 +59,7 @@ describe('a fourth tribe from an adapter file alone', () => {
         '✓ hang',
         '✓ rate_limit',
         '✓ forbidden_command',
+        '✓ secret_place',
         '✓ spawn_child',
         '✓ structured',
         '– image (skipped: the adapter does not declare it)',

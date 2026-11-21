@@ -90,6 +90,11 @@ const SCENARIOS = {
     shell(core.FAKE_FORBIDDEN_COMMAND);
     return finish();
   },
+  // SEC-01: a command naming a file of a CLI's folder, then git's credential helper; Elvaria's hook refuses both.
+  secret_place: () => {
+    for (const line of core.FAKE_SECRET_COMMANDS) shell(line);
+    return finish();
+  },
   scratch_commit: () => {
     for (const line of core.FAKE_SCRATCH_COMMANDS) shell(line);
     return finish();
