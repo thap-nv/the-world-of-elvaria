@@ -10,7 +10,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { NPM_TOKEN, bench, questPayload, tickUntil } from './__fixtures__/kingdom.ts';
 import { plotsWith, questOfRun, statusIs, unitFails } from './__fixtures__/review.ts';
 import type { Bench } from './__fixtures__/kingdom.ts';
-import type { PlotCheck, Steward } from './types.ts';
+import type { PlotCheck } from './plot-types.ts';
+import type { Steward } from './types.ts';
 import type { CheckRun } from '@elvaria/runner-core';
 
 /** A token of a shape the patterns know, built so no scanner takes the spec for a leak. */

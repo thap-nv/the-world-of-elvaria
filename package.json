@@ -8,7 +8,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "check": "node scripts/check-stamp.mjs start && pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm boundaries && pnpm schemas --check && pnpm docs:gen --check && pnpm docs:check && pnpm i18n:check && node scripts/check-stamp.mjs write",
+    "check": "node scripts/check-stamp.mjs start && pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm boundaries && pnpm knip && pnpm schemas --check && pnpm docs:gen --check && pnpm docs:check && pnpm i18n:check && node scripts/check-stamp.mjs write",
     "check:fast": "pnpm typecheck && pnpm test && pnpm boundaries",
     "check:changed": "node scripts/check-changed.mjs",
     "lint": "node --max-old-space-size=8192 node_modules/eslint/bin/eslint.js . --max-warnings=0",
@@ -17,6 +17,7 @@
     "typecheck": "tsc -p tsconfig.json && pnpm -r --if-present typecheck",
     "test": "vitest run && pnpm -r --if-present test",
     "boundaries": "depcruise packages apps --config .dependency-cruiser.mjs",
+    "knip": "knip --no-progress --no-config-hints && knip --production --no-progress --treat-config-hints-as-errors",
     "schemas": "node scripts/gen-schemas.mjs",
     "docs:gen": "node scripts/docs-gen.mjs",
     "docs:check": "node scripts/docs-check.mjs",
@@ -46,6 +47,7 @@
     "dependency-cruiser": "^18.7.2",
     "eslint": "^10.15.0",
     "husky": "^9.1.7",
+    "knip": "^6.45.1",
     "lint-staged": "^17.6.0",
     "prettier": "^3.9.10",
     "typescript": "~5.9.3",

@@ -13,6 +13,8 @@ const SKIPPED = [
   /^(?:docs|design)\//,
   /\.spec\.ts$/,
   /\.config\.(?:[cm]?[jt]s)$/,
+  // knip's config: its keys (`project`) are knip's, not ours (AH-01).
+  /^knip\.json$/,
   // The glossary is where the banned words are listed.
   /^packages\/i18n\/src\/glossary\.json$/,
 ];

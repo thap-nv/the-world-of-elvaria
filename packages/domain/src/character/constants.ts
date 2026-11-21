@@ -15,8 +15,13 @@ export const LEVEL_UP_PCT = 85;
 export const LEVEL_DOWN_MIN_VERDICTS = 5;
 export const LEVEL_DOWN_PCT = 60;
 
-/** A title needs the bar of a level-up, on that one tag: expertise is earned the way a level is. */
+/**
+ * A title needs the bar of a level-up, on that one tag: expertise is earned the way a level is. Named apart so the
+ * two bars can part later (knip reads `@alias` as a name on purpose, not a duplicate).
+ * @alias
+ */
 export const TITLE_MIN_VERDICTS = LEVEL_UP_MIN_VERDICTS;
+/** @alias */
 export const TITLE_MIN_PCT = LEVEL_UP_PCT;
 
 /**

@@ -12,8 +12,9 @@ import type { Digest, OnCallJob, ScheduledJob } from './schedule/ports.ts';
 import type { ScriptRunner } from './script/run-script.ts';
 
 export type { Bell, ManaGaugeNotice, Notice, NoticeQuest } from './notice.ts';
-// The quest's ground (PreparedPlot, PlotCheck, PlotTrial, ResolvedCheck, Plots) lives in plot-types.ts.
-export type { PlotCheck, PlotTrial, Plots, PreparedPlot, ResolvedCheck } from './plot-types.ts';
+// The quest's ground (PreparedPlot, ResolvedCheck, Plots; PlotCheck and PlotTrial, what a Plots call takes) lives in
+// plot-types.ts.
+export type { Plots, PreparedPlot, ResolvedCheck } from './plot-types.ts';
 export type {
   Digest,
   DigestRequest,

@@ -4,12 +4,12 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { TempleReplySchema, contractOf } from '@elvaria/domain';
-import { NO_JSON } from '@elvaria/runner-core';
+import { NO_JSON, checkTextReply } from '@elvaria/runner-core';
 import type { JsonSchema } from '@elvaria/runner-core';
 
 import { reply } from './__fixtures__/kingdom.ts';
 import { AMENDMENT_DECISION_JSON_SCHEMA, amendmentCheck } from './amendment.ts';
-import { QUEST_DRAFT_JSON_SCHEMA, checkReply, checkTextReply, forTheCli } from './reply.ts';
+import { QUEST_DRAFT_JSON_SCHEMA, checkReply, forTheCli } from './reply.ts';
 import { MEMO_TRIAGE_JSON_SCHEMA } from './triage-memos.ts';
 
 const contractFile = (name: string): string =>
@@ -97,8 +97,8 @@ describe('the reply (§3.11, §3.14)', () => {
 
   // Cutting the JSON out, the format block and the retry block are runner-core's now (structured/reply.spec.ts).
   it('checks a text reply with the shared cut, and names one without JSON', () => {
-    expect(checkTextReply(`Here:\n${JSON.stringify(reply('vague'))}`).ok).toBe(true);
-    expect(checkTextReply('I would rather not.')).toEqual({ ok: false, issues: [NO_JSON] });
+    expect(checkTextReply(`Here:\n${JSON.stringify(reply('vague'))}`, checkReply).ok).toBe(true);
+    expect(checkTextReply('I would rather not.', checkReply)).toEqual({ ok: false, issues: [NO_JSON] });
   });
 
   it('tells the shared retry what is wrong (session.ts), and nothing when the reply can be used', () => {

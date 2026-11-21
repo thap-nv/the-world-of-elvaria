@@ -143,8 +143,3 @@ export function translateNeutral(
   const input = { raw, dialect, name, tool: dialectToolOf(dialect, name) };
   return handlersOf(dialect).get(event)?.(input, ctx) ?? translation([]);
 }
-
-/** The deny of an unreadable call, written as the dialect's deny (run-hook.ts fails closed, P1-36). */
-export const neutralDeny = (dialect: HookDialect, reason: string): Record<string, unknown> => ({
-  ...answerOf(dialect.answers.deny, reason),
-});

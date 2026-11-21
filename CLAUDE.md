@@ -77,12 +77,14 @@ Trước khi sửa các file sau, đọc file đó, test của nó và ADR liên
 | `packages/i18n/**` | `pnpm docs:gen`, `pnpm docs:check`, `pnpm i18n:check` |
 | `scripts/**`, `.claude/hooks/**` | `pnpm test`, `pnpm typecheck` (tsconfig gốc, `checkJs`) |
 | `docs/**`, `CLAUDE.md`, `.claude/rules/**`, README của package | `pnpm docs:check` |
+| File mới, đổi tên hay xóa file | `pnpm knip` |
 | Bất kỳ thứ gì, trước khi báo xong | `pnpm check` |
 
 ## Definition of done
 
-- Test cho thay đổi; `pnpm check` xanh (lint, format, typecheck, unit, boundaries, drift của schemas và docs:gen, docs:check, i18n:check).
+- Test cho thay đổi; `pnpm check` xanh (lint, format, typecheck, unit, boundaries, knip, drift của schemas và docs:gen, docs:check, i18n:check).
 - Chạy được trên Windows **và** macOS: ca riêng của một OS có test riêng. CI chạy tay (bước 5), không là cổng của PR; task chạm vùng nhạy hệ điều hành (`runner-*`, `hooks`, plot, kill tree, `store`) thì nêu trong báo cáo để chủ nhân quyết có chạy CI không.
+- Thay đổi không để lại file, export hay dependency không ai dùng: code bị thay thế thì xóa trong cùng commit (`pnpm knip`).
 - README của package chạm vào vẫn đủ 4 mục *Does* / *Does not* / *Depends on* / *How to test* và nói đúng code.
 - ADR mới hoặc cập nhật nếu đổi một quyết định đã ghi; `glossary.json` cập nhật (rồi `pnpm docs:gen`) nếu thêm thuật ngữ.
 - Cột Trạng thái của task trong [docs/implementation-plan.md](docs/implementation-plan.md) §8 đã đổi; kế hoạch đã sửa và §11 có dòng "chờ người dùng chốt" nếu thực tế khác.
