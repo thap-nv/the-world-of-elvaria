@@ -106,7 +106,7 @@
     {
       "a": "packages/hooks/src/antigravity/translate.ts",
       "b": "packages/hooks/src/codex/translate.ts",
-      "tokens": 166,
+      "tokens": 109,
       "status": "unreviewed"
     },
     {
@@ -622,12 +622,6 @@
     {
       "a": "apps/cli/src/territory/patrol.ts",
       "b": "apps/cli/src/tribe/check.ts",
-      "tokens": 64,
-      "status": "unreviewed"
-    },
-    {
-      "a": "packages/hooks/src/claude/tool-events.ts",
-      "b": "packages/hooks/src/codex/translate.ts",
       "tokens": 64,
       "status": "unreviewed"
     },
