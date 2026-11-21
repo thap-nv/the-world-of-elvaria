@@ -543,3 +543,10 @@ Ba điều không phải lỗi, nhưng nên biết trước:
 ## 15. Chưa có ở giai đoạn 1
 
 Chuông ngoài terminal, điện thoại, bản đồ (giai đoạn 2 và 3); tộc Gemini CLI với API key (P1-12c, để dành). Kế hoạch và trạng thái: [implementation-plan](../implementation-plan.md) §8.
+
+## 16. Bảo mật
+
+- **Lãnh thổ là code bạn tin như code của chính mình**: chỉ gắn những lãnh thổ như vậy. Elvaria không dựng sandbox hệ điều hành trong giai đoạn 2; các lệnh kiểm tra và tiến trình do tool khởi động chạy bằng quyền của bạn trên máy.
+- **Token GitHub dùng loại fine-grained**: chỉ cấp cho các repo lãnh thổ (quyền contents và pull requests), không dùng token tài khoản rộng mở.
+- **Kho bảo vật chỉ giữ secret phạm vi hẹp**: chỉ đưa vào kho bảo vật những secret thực sự cần cho quest và giới hạn quyền ở mức tối thiểu.
+- **Giới hạn**: mọi tiến trình chạy dưới cùng tài khoản người dùng đều ghi được vào `inbox/` và tự khai trường `source` của lệnh; Elvaria không chặn được điều đó. Sứ giả của giai đoạn 2 tự đóng `source` cho lệnh đến từ mạng.
