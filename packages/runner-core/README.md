@@ -13,8 +13,9 @@
   `rate_limit`, `forbidden_command`, `ask`, `scratch_commit`: a judge in its scratch plot that tries
   `git commit` then `git push`, P1-20, `spawn_child`, which runs the suite's spawn probe for real, P1-12e, and
   `structured`, a judge's verdict `FAKE_STRUCTURED_ANSWER` handed back as `RunResult.structured` when the request
-  has a schema), chosen per spawn by `scenarioOf` or by env `ELVARIA_FAKE_SCENARIO`.
-  It writes the letter, blocks the forbidden push through the policy when it declares `tool_gate`, keeps a
+  has a schema, and `secret_place`, SEC-01, `FAKE_SECRET_COMMANDS`), chosen per spawn by `scenarioOf` or by env `ELVARIA_FAKE_SCENARIO`.
+  It writes the letter, blocks the forbidden push and a line naming a secret place (`secret_paths`, `git credential`; raw, with no
+  exemption for the plot) through the policy when it declares `tool_gate`, keeps a
   resumed session id, and records every request for the Steward's tests. Its `probe` answers one result, or one
   per call (a pool that wakes on the second probe). With `lines` (`{ now? }`, off by default so a spec's log
   holds the Steward's lines alone) a session also writes what a real one leaves in the log and the quest's
@@ -28,9 +29,13 @@
   ADR 0022, P1-20): Edit and Write even when its class denies them, `git status`/`git restore`, the territory's exclusive checks (the Steward holds their lock for its session; not with `exclusive: false`, a judge after failing checks, P1-54), and a deny rule on
   `git commit` plus the law `NO_HISTORY_COMMAND` (commit, merge, reset, branch, stash, worktree…) for the hook; a character with a shell may run the
   territory's non-exclusive checks, and one that also edits files its `commands.generate` (P1-24); every session
-  is fenced (no `git push`, no `.env`, no built-in agent, no `Edit` on `laws.read_only_paths`, which stay
+  is fenced (no `git push`, no `git credential` (`NO_CREDENTIAL_RULE`, `NO_CREDENTIAL_COMMAND`, SEC-01), no `.env`, no built-in agent, no `Edit` on `laws.read_only_paths`, which stay
   readable, nor on git's own folder `GIT_PATHS` = `.git/**`, P1-49: agy 1.5.4 wrote `.git/`, Claude Code refuses it
-  by itself; reads stay allowed, since the hook matches a forbidden path against every word of a shell line).
+  by itself; reads stay allowed, since the hook matches a forbidden path against every word of a shell line), and
+  every `ToolPolicy` carries `secret_paths` (`SECRET_PATHS`, SEC-01, threat model V1): the places that hold the owner's
+  secrets outside every territory (`.ssh/`, `.git-credentials`, git's credential file, the treasury and the tribes'
+  accounts, the CLIs' folders), which the hook refuses in any tool path or shell word, for every tribe. A fence on the
+  command line, not a sandbox: a program the line starts reads what it likes (ADR 0007).
   `forbiddenPathsOf(territory)` is the dotenv files plus `laws.forbidden_paths`, and `forbiddenChangesOf(changed,
 globs)` the changed paths a glob matches at any depth as the hook's do: the Steward reads a plot's changes against
   them before it commits (P1-49), since a program a session's shell runs writes past the fence.
@@ -112,7 +117,7 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   three `amendment-accepted|rejected|owner.md`), a resumed one with the description as accepted.
 - Runs the conformance suite (`conformanceChecks`, `runConformance`): plain checks with `node:assert`, so a spec
   wraps them in `it` and `elvaria tribe check` (P1-19) runs them too. With a real CLI (`live`) only `capabilities`,
-  `doctor`, `probe`, `submit`, `hang`, `forbidden_command`, `spawn_child` and `structured` run (a few cheap
+  `doctor`, `probe`, `submit`, `hang`, `forbidden_command`, `spawn_child`, `structured` and `secret_place` run (a few cheap
   sessions, a little mana); `crash`, `rate_limit`, `scratch_commit` and `ask` need a fake. Each report carries the
   `tokens` its check's sessions reported, passed or failed, a session the check gave up on included once it ends
   (`ConformanceTarget.onSpent`, `src/conformance/run.ts`, run (221) (b)). `structured`
@@ -125,7 +130,10 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   `node elvaria-spawn-probe.mjs`, which starts a child with piped stdio, as a territory's build and test do, and
   writes what became of it; a sandbox that runs the command but not its child (Codex's unelevated one on Windows,
   `spawn EPERM`) fails it. A fake CLI runs the probe for real through `runFakeShellLine` once its gates let the line
-  through. `openWorkspace` and `conformanceRequest` give an adapter's specs the same requests. The
+  through. `secret_place` (SEC-01, `src/conformance/secret-check.ts`) has a knight whose class allows `git status` run
+  one naming a file of a CLI's folder (`~/.codex/config.toml`), then `git credential fill`: both must be refused and
+  the session go on; with a real CLI only the first is asked, since Codex's model would not run a line naming
+  credentials or `~/.ssh` (cli-facts 2026-11-21 §3). `openWorkspace` and `conformanceRequest` give an adapter's specs the same requests. The
   `capabilities` check also wants `capabilities.auth`, the sign-ins the adapter runs with (P1-19): a non-empty list
   of `login` / `api_key`. A check's workspace that still will not go after the retries of `rm` (a real agy held one
   for minutes on Windows, 2026-11-12) stays on disk: `play` tells `target.onLeftover` (a process warning without
@@ -321,7 +329,7 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   whatever the rules say (P1-24), then `GIT_PATHS` for every tribe (P1-49), so the hook refuses a write tool there
   first, and `elvaria_protected_paths` (P1-56): the part of it the adapter did not list, Elvaria's own rule, which the
   hook's refusal does not blame on the CLI; `laws.patch_paths` (only on a git territory) and, when there are some, `patch_file` (P1-28);
-  `search_commands` when the tool policy has them (P1-53).
+  `search_commands` when the tool policy has them (P1-53); `secret_paths` (SEC-01).
   The `apprentice` prompt tells the assignee to leave the apprentice's `model` out for lookups, name a stronger
   one only for reasoning, and to stop and write the unfinished child work in the letter when an apprentice is
   cut at its turn limit or runs long.
