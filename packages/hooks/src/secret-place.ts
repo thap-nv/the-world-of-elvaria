@@ -21,9 +21,16 @@ const FOLDER_CHANGES = new Set(['cd', 'chdir', 'pushd', 'set-location', 'push-lo
 const NAMES_HOME =
   /(?:^|[^\w@])~|\$\{?(?:env:)?(?:home|userprofile)\b|%(?:userprofile|homepath|home)%|homedir|expanduser|\b(?:env|environ)\b.{0,4}\b(?:home|userprofile)\b|\bpath\.home\b|getfolderpath/i;
 
+/**
+ * A drive-letter path (`C:\Users\…`). On macOS and Linux `path.resolve` reads it as a relative name inside `root`, so
+ * without this a Windows spelling of a secret place would pass there unchecked (CI of 97565f8, SEC-01).
+ */
+const DRIVE_PATH = /^[a-z]:[\\/]/i;
+
 /** Whether `raw`, read from `root`, stays inside it: a plain relative or absolute path, not one through a variable. */
 function staysInside(root: string, raw: string): boolean {
   if (/^[~$%]/.test(raw)) return false;
+  if (path.sep === '/' && DRIVE_PATH.test(raw)) return false;
   const relative = path.relative(root, path.resolve(root, raw));
   return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
 }
