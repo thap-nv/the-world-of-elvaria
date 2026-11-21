@@ -61,6 +61,7 @@ pnpm docs:gen            # sinh docs/glossary.md, events.md, dependency-graph.md
 pnpm docs:gen --kingdom <dir>   # thêm docs/tier-report.md (§3.12) và docs/metrics-report.md (§3.16.1) từ vương quốc đó; --check không kèm --kingdom (như trong pnpm check) không so hai file này
 pnpm docs:check          # README 4 mục, ADR có dòng Status, từ cấm trong identifier, id dữ liệu, link sống, glossary ↔ domain, cấm .sh/.ps1/.cmd/.bat, file .md trong docs/ ≤ 150 KB, CLAUDE.md ≤ 17 KB
 pnpm i18n:check          # khóa và placeholder VI/EN khớp nhau, hình dạng glossary.json
+pnpm audit:prod          # pnpm audit --prod --audit-level high: cần mạng nên KHÔNG nằm trong `pnpm check`; phiên điều phối chạy trước mỗi lần merge có đổi pnpm-lock.yaml
 pnpm plan:split          # chuyển dòng §8 đã xong của kế hoạch triển khai sang file lưu, so tập dòng trước và sau; --check như trên
 pnpm format
 
@@ -76,6 +77,10 @@ pnpm --filter @elvaria/hooks build && ELVARIA_LIVE=1 pnpm --filter @elvaria/runn
 ```
 
 **Dấu check của pre-push** (`fix/pre-push-stamp`): `pnpm check` mở đầu bằng `node scripts/check-stamp.mjs start` và kết thúc bằng `… write`. Dấu là SHA của HEAD, ghi vào `git rev-parse --git-path elvaria-check-ok` (mỗi worktree một file), và chỉ được ghi khi cây làm việc sạch lúc check bắt đầu lẫn lúc xanh, HEAD không đổi giữa chừng. Hook pre-push (`.husky/pre-push`) chạy `node scripts/check-stamp.mjs verify || pnpm check:fast`: nó bỏ qua `check:fast` khi mọi commit được push là HEAD, dấu trỏ đúng HEAD và cây vẫn sạch, hay khi lần push không gửi commit nào (chỉ xóa nhánh); mọi trường hợp khác chạy `check:fast` như cũ. Commit thêm sau khi check xanh thì lần push chạy `check:fast`, hoặc chạy lại `pnpm check` trước khi push.
+
+**Cổng quét secret trước commit** (SEC-04): `.husky/pre-commit` chạy thêm `node scripts/scan-staged-secrets.mjs` sau lint-staged. Script đọc bản đã stage (`git show :<file>`, không phải cây làm việc) của các file thêm, sửa, đổi tên (bỏ file xóa và file nhị phân) và áp các mẫu của `packages/eventlog/src/redact-patterns.json`, cùng file mẫu với cổng quét trước push của nhánh giao hàng. Trúng một dạng cụ thể (khóa riêng, khóa của nhà cung cấp model, token forge…) thì commit bị chặn, exit 1, mỗi dòng báo `<file>:<số dòng>: <id mẫu>`, ví dụ `src/key.ts:3: anthropic_api_key`; chuỗi khớp không bao giờ được in. Ba mẫu chung (`bearer_token`, `url_credentials`, `secret_assignment`), vốn trúng fixture và tài liệu khá thường, chỉ in `warning:` và vẫn cho commit, như cổng trước push. Bị chặn thì bỏ secret khỏi file, stage lại rồi commit; đừng `--no-verify`. Fixture token giả trong spec phải ghép lúc chạy (nối chuỗi, `repeat`) để file nguồn không khớp mẫu.
+
+**Audit phụ thuộc ở lượt merge** (SEC-04): `pnpm audit:prod` chạy `pnpm audit --prod --audit-level high`, cần mạng nên không vào `pnpm check` (check phải chạy offline). Phiên điều phối chạy nó trước mỗi lần merge có đổi `pnpm-lock.yaml`; lỗ hổng mức high trở lên trong dependency chạy thật thì dừng merge và báo chủ nhân.
 
 Mọi lệnh `elvaria` và tùy chọn: [docs/cli.md](../cli.md), sinh từ bảng lệnh. Chỉ `run`, `say`, `triage` và `tribe check` với CLI thật mở phiên tốn mana. Trên vương quốc đã ghim một bản (`elvaria upgrade`), `pnpm elvaria` chạy bằng bản ghim; thêm `--here` để chạy bằng mã của worktree đang sửa.
 

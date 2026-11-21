@@ -9,6 +9,7 @@
   },
   "scripts": {
     "check": "node scripts/check-stamp.mjs start && pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm boundaries && pnpm schemas --check && pnpm docs:gen --check && pnpm docs:check && pnpm i18n:check && node scripts/check-stamp.mjs write",
+    "audit:prod": "pnpm audit --prod --audit-level high",
     "check:fast": "pnpm typecheck && pnpm test && pnpm boundaries",
     "check:changed": "node scripts/check-changed.mjs",
     "lint": "node --max-old-space-size=8192 node_modules/eslint/bin/eslint.js . --max-warnings=0",
