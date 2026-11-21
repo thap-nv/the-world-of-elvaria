@@ -167,7 +167,7 @@ Chờ được:
 
 - **K7. Gom phần chép của adapter về `runner-core` (V9).** Khuyến nghị: làm trước adapter thứ tư, không chặn giai đoạn 2.
 - **K8. Cổng jscpd.** Khuyến nghị: không thêm. Bộ dò khung của K13 thấy cả chép nguyên văn và không cần dependency mới.
-- **K9. Ngưỡng `complexity` 15 với baseline.** Khuyến nghị: có, làm cùng V2. Không sửa 52 hàm hiện có, chỉ chặn hàm mới.
+- **K9. Ngưỡng `complexity` 15 với baseline.** Khuyến nghị: có, làm cùng V2. Không sửa 52 hàm hiện có, chỉ chặn hàm mới. (Amended 2026-11-21, AH-02: 52 là số hàm trên 12; ở ngưỡng 15 chỉ có 23 hàm vượt, gồm 2 hàm trong spec và 2 trong chương trình giả của `fixtures/`, và đó là số vào `eslint-suppressions.json`.)
 - **K10. README lớn.** Khuyến nghị: làm V11 ngay. Còn việc chia README trên 20 KB thành README theo thư mục khái niệm thì chờ sau V6, khi thư mục của `steward` đã yên.
 - **K11. Dọn gốc `apps/cli` và nhóm file của `runner-claude` (V12).** Khuyến nghị: chờ, làm khi vùng đó rảnh.
 - **K12. Báo cáo dòng không chạy (V15).** Khuyến nghị: knip `--production` vào cổng cùng K1. Hai báo cáo coverage làm sau, chạy định kỳ, không làm cổng vì đường xử lý lỗi hiếm vẫn là code cần giữ. Phiên rà soát chưa đo hai báo cáo này.

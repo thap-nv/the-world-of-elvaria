@@ -48,7 +48,7 @@ elvaria/
   design/                      # bàn giao thiết kế v0.2 — bản gốc đầu tiên, giữ nguyên làm lịch sử, không build
 ```
 
-17 package + 3 app (thêm `runner-codex` khi làm P1-12d). Adapter tộc còn có thể là **một file của người dùng** trong kingdom (`adapters/<name>.mjs`, §3.14), không cần package. Thư mục **kingdom** (trạng thái của người dùng) **không** nằm trong repo: người dùng chọn khi `elvaria init --kingdom <dir>`, ví dụ `D:\Dummy\Tool - Personal\Kingdom of Agents\kingdom`.
+17 package + 3 app (thêm `runner-codex` khi làm P1-12d). (AH-02, sửa F10 của [plans/architecture-health.md](../plans/architecture-health.md)) Đó là cây đích: trên đĩa hôm nay có 14 package và 1 app (`apps/cli`); `herald`, `ui-kit`, `ui`, `lite` và `themes/` là của giai đoạn 2 và theo luật thư mục R1–R8 (§4.2) từ commit đầu. Đồ dùng test có hai chỗ (R4): mã TypeScript của test ở `src/**/__fixtures__/`, dữ liệu và chương trình giả chạy như tiến trình ở `<package>/fixtures/`; không thư mục `test/` (`apps/cli`, `eventlog`, `store` còn một thư mục như vậy, chờ AH-08). Adapter tộc còn có thể là **một file của người dùng** trong kingdom (`adapters/<name>.mjs`, §3.14), không cần package. Thư mục **kingdom** (trạng thái của người dùng) **không** nằm trong repo: người dùng chọn khi `elvaria init --kingdom <dir>`, ví dụ `D:\Dummy\Tool - Personal\Kingdom of Agents\kingdom`.
 
 ### 1.2 Ba tầng ↔ package
 

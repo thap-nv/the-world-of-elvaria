@@ -57,6 +57,8 @@ const BASE_RULES = {
   'max-lines': ['error', 300],
   'max-lines-per-function': ['error', 60],
   'max-depth': ['error', 3],
+  // Branches a reader holds at once; older functions above it wait in eslint-suppressions.json (K9, AH-02).
+  complexity: ['error', 15],
   'unicorn/filename-case': ['error', { case: 'kebabCase' }],
   'unicorn/prefer-node-protocol': 'error',
   'import-x/no-default-export': 'error',

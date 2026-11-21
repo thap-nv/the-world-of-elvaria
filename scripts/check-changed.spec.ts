@@ -17,27 +17,29 @@ const lines = (paths: string[]): string[] => plan(paths).commands.map((c) => c.j
 
 describe('plan', () => {
   it('runs every package test and the typecheck for the domain', () => {
-    expect(lines(['packages/domain/src/quest/transition.ts'])).toEqual(['test', 'typecheck']);
+    expect(lines(['packages/domain/src/quest/transition.ts'])).toEqual(['test', 'typecheck', 'layout']);
   });
 
   it('runs one package test for another package, keyed by its folder', () => {
     expect(lines(['packages/runner-core/src/a.ts', 'packages/runner-core/src/b.ts'])).toEqual([
       '--filter @elvaria/runner-core test',
+      'layout',
     ]);
-    expect(lines(['apps/cli/src/cli.ts'])).toEqual(['--filter @elvaria/cli test']);
+    expect(lines(['apps/cli/src/cli.ts'])).toEqual(['--filter @elvaria/cli test', 'layout']);
   });
 
   it('lets the full test and typecheck cover the narrower ones', () => {
     expect(lines(['packages/domain/src/a.ts', 'packages/store/src/b.ts', 'scripts/c.mjs'])).toEqual([
       'test',
       'typecheck',
+      'layout',
     ]);
   });
 
   it('keeps the root vitest and tsc for scripts and hooks, and drops them only when covered', () => {
     expect(lines(['scripts/docs-gen.mjs'])).toEqual(['exec vitest run', 'exec tsc -p tsconfig.json']);
     expect(lines(['.claude/hooks/guard-bash.mjs'])).toEqual(['exec vitest run', 'exec tsc -p tsconfig.json']);
-    expect(lines(['scripts/a.mjs', 'packages/domain/src/a.ts'])).toEqual(['test', 'typecheck']);
+    expect(lines(['scripts/a.mjs', 'packages/domain/src/a.ts'])).toEqual(['test', 'typecheck', 'layout']);
   });
 
   it('checks docs and generated output for i18n', () => {
@@ -46,6 +48,7 @@ describe('plan', () => {
       'docs:gen --check',
       'docs:check',
       'i18n:check',
+      'layout',
     ]);
   });
 
@@ -59,13 +62,24 @@ describe('plan', () => {
       '--filter @elvaria/store test',
       'boundaries',
       'docs:gen --check',
+      'layout',
     ]);
     expect(lines(['packages/config/boundaries.mjs'])).toContain('boundaries');
   });
 
   it('checks the schemas when a contract or its output moves', () => {
     expect(lines(['docs/schemas/quest.schema.json'])).toEqual(['docs:check', 'schemas --check']);
-    expect(lines(['packages/domain/src/schema/quest.ts'])).toEqual(['test', 'typecheck', 'schemas --check']);
+    expect(lines(['packages/domain/src/schema/quest.ts'])).toEqual([
+      'test',
+      'typecheck',
+      'layout',
+      'schemas --check',
+    ]);
+  });
+
+  it('checks the folder rules for any workspace file and for their baseline, not for a README', () => {
+    expect(lines(['layout-baseline.json'])).toEqual(['layout']);
+    expect(lines(['packages/store/README.md'])).not.toContain('layout');
   });
 
   it('reports the paths no rule covers and has nothing to run for them', () => {
