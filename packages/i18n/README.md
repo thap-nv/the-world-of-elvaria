@@ -19,7 +19,8 @@
 
 ## Depends on
 
-- No other workspace and no npm package.
+- No other workspace and no npm package at run time.
+- `@elvaria/config` (dev only: `tsconfig.json` extends its `tsconfig/base.json`).
 
 ## How to test
 

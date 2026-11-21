@@ -512,7 +512,8 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
 
 ## Depends on
 
-- `zod` only. No other workspace.
+- `zod` only at run time. No other workspace at run time.
+- `@elvaria/config` (dev only: `tsconfig.json` extends its `tsconfig/base.json`).
 
 ## How to test
 
