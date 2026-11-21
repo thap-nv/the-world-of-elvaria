@@ -44,7 +44,7 @@ Task `PS-…` của chặng tự cường xen vào giai đoạn 2 (đã có dòn
 
 (Chủ nhân chốt 2026-11-15, §11) PS-08 và PS-11 đã có mục chi tiết ở [phase-2-wave-0.md](phase-2-wave-0.md) và chia thành task con: PS-08, PS-08c, PS-08d, PS-08e, PS-08f; PS-11a, PS-11, PS-11b. P2-02 nhận thêm một điều kiện xong chuyển từ PS-11: một quest giao diện thật mang tag `visual` bị trả về khi ảnh lệch thiết kế. Muốn vậy lãnh thổ Elvaria cần một check chụp ảnh ghi ảnh chụp và ảnh tham chiếu (dựng từ mockup của `design/`) vào `ELVARIA_SCREENS_DIR`.
 
-(2026-11-21, đề xuất, chờ chủ nhân chốt W1–W15) Bốn việc của đợt 1 (P2-01, P2-03, P2-04, P2-06) có mục chi tiết ở [phase-2-wave-1.md](phase-2-wave-1.md) và chia thành task con: P2-01, P2-01b, P2-01c, P2-01d; P2-03; P2-04, P2-04b; P2-06, P2-06b.
+(Chủ nhân chốt 2026-11-21, §11, W1–W15) Bốn việc của đợt 1 (P2-01, P2-03, P2-04, P2-06) có mục chi tiết ở [phase-2-wave-1.md](phase-2-wave-1.md) và chia thành task con: P2-01, P2-01b, P2-01c, P2-01d; P2-03; P2-04, P2-04b; P2-06, P2-06b.
 
 (Chủ nhân chốt 2026-11-12) **Tộc là danh sách mở.** Mọi màn của giai đoạn 2 vẽ tộc từ `kingdom.tribes[]` và `tribeLookOf` (PS-24 của giai đoạn 1.5): huy hiệu, khung chân dung, bảng màu, số thanh mana và chú giải theo số tộc đang có. Thiết kế v0.2 có hai màu tộc và hai thanh mana; P2-02 nhập nó rồi mở ra cho số tộc bất kỳ, P2-04 và P2-07 không mặc định hai tộc.
 

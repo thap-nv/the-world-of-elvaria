@@ -1,6 +1,6 @@
 # Đợt 1 của giai đoạn 2 — P2-01, P2-03, P2-04, P2-06: kế hoạch chi tiết
 
-Ngày: 2026-11-21 · Trạng thái: **đề xuất, chờ chủ nhân chốt** các quyết định W1–W15 ở cuối file ([§11, 2026-11-21](../implementation-plan/11-2026-11-21.md), dòng "docs/plan-phase-2-wave-1"). Phiên kế hoạch mở theo (364); không sửa code, không mở task. Bất biến đã chốt mà kế hoạch này giữ: luật thư mục R1–R8 ([§4.2](../implementation-plan/4-code-quality.md)), "Cấu trúc đích" và K1–K13 của [architecture-health.md](architecture-health.md), "Biện pháp bắt buộc" và B1–B11 của [phase-2-threat-model.md](phase-2-threat-model.md), [ADR 0031](../adr/0031-herald-pairing-and-session-cookie.md), [ADR 0005](../adr/0005-single-writer-steward-inbox.md), ba tầng tách biệt, và ba ý (383a)–(383c) của chủ nhân về phân quyền theo thiết bị.
+Ngày: 2026-11-21 · Trạng thái: **chủ nhân đã chốt** W1–W15 ngày 2026-11-21 (mục "Quyết định" cuối file; [§11, 2026-11-21](../implementation-plan/11-2026-11-21.md), dòng "docs/plan-phase-2-wave-1" và dòng chốt sau nó): W9 và W10 khác khuyến nghị, các mục còn lại theo khuyến nghị. Phiên kế hoạch mở theo (364); không sửa code, không mở task. Bất biến đã chốt mà kế hoạch này giữ: luật thư mục R1–R8 ([§4.2](../implementation-plan/4-code-quality.md)), "Cấu trúc đích" và K1–K13 của [architecture-health.md](architecture-health.md), "Biện pháp bắt buộc" và B1–B11 của [phase-2-threat-model.md](phase-2-threat-model.md), [ADR 0031](../adr/0031-herald-pairing-and-session-cookie.md), [ADR 0005](../adr/0005-single-writer-steward-inbox.md), ba tầng tách biệt, và ba ý (383a)–(383c) của chủ nhân về phân quyền theo thiết bị.
 
 Việc vào đợt nào và mở khi nào do phiên điều phối xếp; file này chỉ ghi phụ thuộc.
 
@@ -25,13 +25,12 @@ Khảo sát ở `6da3de72` (`main` sau tàu H1b). Số dòng nối tiếp bảng
 | 55 | Không có khái niệm quest chỉ đọc. `forgeDue` nhận mọi quest `done` có nhánh trên lãnh thổ không `manual`, kể cả dạng `research`: nhánh được push và PR được mở. Nghề `scout` có `Edit`, `Write`, `WebFetch`, `WebSearch`; dạng `analyze` (cũng `report`) có `Bash(node:*)` | "Hỏi đáp không sửa gì" (383a) không suy ra được từ dạng hay nghề hôm nay. Cần một dấu trên quest do Nhiếp chính đóng (P2-01d) |
 | 56 | SEC-01 đã merge: `SECRET_PATHS` (9 glob) có trong mọi `ToolPolicy` và `policy.json` (`secret_paths`), hook từ chối ở cả bốn dialect; `.env` cấm đọc ghi; `redact` chạy trước khi ghi ở hook, runner và store | "Không tra được secret" dựa trên hàng rào đã có; Sứ giả chỉ gửi thứ đã che lúc ghi, rồi che thêm bằng mẫu |
 | 57 | `packages/i18n/src/locales/` còn hai file `en.json`, `vi.json`; AH-04 (đợt H2) tách theo namespace. Gốc `packages/steward/src` còn 25 file chạy; AH-05, AH-06 dọn | Task của đợt 1 mở sau H2 (đã chốt ở (363)): chuỗi mới vào file namespace riêng, file mới của `steward` vào thư mục khái niệm theo bản đồ AH-06 |
-| 58 | `packages/herald` chưa tồn tại; `ws` chưa có trong lockfile. `minimumReleaseAge` 7 ngày đang bật (SEC-05) | Dependency mới của đợt 1 chỉ có `ws` (bản đủ 7 ngày tuổi); xem W9 cho chuông |
+| 58 | `packages/herald` chưa tồn tại; `ws` chưa có trong lockfile. `minimumReleaseAge` 7 ngày đang bật (SEC-05) | Dependency mới của đợt 1: `ws` (P2-01c) và `node-notifier` (P2-03, W9), bản đủ 7 ngày tuổi |
 
 ### Chỗ kế hoạch cũ nói sai so với code hay với quyết định sau nó
 
 - §8 "Giai đoạn 2", [phase-2.md](phase-2.md) dòng P2-01 và §10 câu 3: "token Bearer trong header". ADR 0031 đã thay; phiên này sửa hai chỗ sau.
 - §8 "Giai đoạn 2": "protocol … sống trong `domain/src/protocol` từ P0-09, nên herald và lite không cần đổi domain". Sai từ ADR 0031 mục 5 (dòng 43). Câu đó nằm trong đoạn lịch sử của §8; kế hoạch này là nguồn đúng, task P2-01 sửa câu đó khi làm.
-- Kế hoạch sản phẩm 0.8 và [§6](../implementation-plan/6-windows-and-macos.md): chuông máy tính bằng `node-notifier`. W9 đề xuất không dùng dependency; nếu chủ nhân nhận, P2-03 sửa §6 tại chỗ.
 - [phase-2.md](phase-2.md) P2-04: "thông báo của hook và của Nhiếp chính thành một luồng cho `MBell`". (d) của P1-33 chỉ nói hai nguồn `agent.notification` hiển thị như nhau; `MBell` của thiết kế còn có dòng "đã đóng dấu", "cả tộc ngủ", "biên niên sử". Kế hoạch này hiểu "một luồng" là một hàm suy từ log (P2-04b).
 - Dòng PS-03 ở §8 ghi (a) vào "P2-03"; (a) thuộc P2-04 ([phase-2.md](phase-2.md) đã ghi đúng).
 - Dòng SEC-08 ở §8 ghi "ba nhóm lệnh của B3 là hàm thuần trong domain" trong SEC-08, còn biện pháp bắt buộc 2 đặt cơ chế đó vào P2-01. Kế hoạch này đặt hàm nhóm lệnh vào P2-01; SEC-08 dùng nó.
@@ -58,7 +57,7 @@ Yêu cầu của chủ nhân (383) và ba ý đã chốt (383a)–(383c). Phần
   - `answer` và `cancel` chỉ trên quest `read_only` của lãnh thổ được cấp.
   - Về sau: lượt Tể tướng (P2-09) chỉ soạn được quest `read_only`; triệu hồi (P2-10) chỉ vào phiên của quest `read_only`. Hai task đó thêm kind của mình vào bảng hỏi đáp.
 - **Bảo đảm "không sửa"** (P2-01d): quest `read_only` chạy với `ToolPolicy` đã thu hẹp (không shell, `Edit` và `Write` chỉ vào sản phẩm báo cáo và thư bàn giao, Codex ở sandbox `read-only`), `secrets_required` phải rỗng, `forgeDue` trả `false` (không push, không PR, không merge), không cần và không nhận dấu vua, đất bị trả ngay khi `done`. Dấu `read_only` do Nhiếp chính đóng theo vai của thiết bị ghi trong lệnh, không lấy từ payload.
-- **Bảo đảm "không secret"**: phiên của quest `read_only` không nhận secret nào của kho bảo vật; `forbidden_paths` của lãnh thổ, `.env` và `secret_paths` của SEC-01 vẫn áp; khuyến nghị thêm: quest `read_only` không có `WebFetch`, `WebSearch` (nội dung lãnh thổ không ra ngoài qua URL, A4 của threat model). Câu trả lời tới thiết bị là thư bàn giao và báo cáo như `store` đã lưu (đã qua `redact` với giá trị của kho bảo vật lúc ghi), rồi qua redactor theo mẫu của Sứ giả. Sứ giả không mở kho bảo vật.
+- **Bảo đảm "không secret"**: phiên của quest `read_only` không nhận secret nào của kho bảo vật; `forbidden_paths` của lãnh thổ, `.env` và `secret_paths` của SEC-01 vẫn áp; quest `read_only` không có `WebFetch`, `WebSearch` (W7; nội dung lãnh thổ không ra ngoài qua URL, A4 của threat model). Câu trả lời tới thiết bị là thư bàn giao và báo cáo như `store` đã lưu (đã qua `redact` với giá trị của kho bảo vật lúc ghi), rồi qua redactor theo mẫu của Sứ giả. Sứ giả không mở kho bảo vật.
 - **Nhiếp chính kiểm lại** (P2-01): khi áp một lệnh nguồn `herald` hay `lite`, Nhiếp chính đọc file thiết bị theo `command.device` và gọi đúng `deviceMay`; thiếu `device`, thiết bị lạ hay đã thu hồi thì `command.rejected` với mã riêng. Lệnh nguồn `cli`, `chancellor`, `monk` không đổi. Giới hạn đã nhận ở (365): tiến trình cục bộ ghi được `inbox/` vẫn tự khai `source: cli`; lớp kiểm này chặn lỗi của Sứ giả, không chặn người dùng hệ điều hành.
 - **Lọc theo lãnh thổ** (W6, khuyến nghị: có): hai hàm thuần `scopeState(state, territories)` và `scopeEvents(events, state, territories)` trong `packages/domain/src/device/`. Thiết bị giới hạn nhận: lãnh thổ được cấp; quest của các lãnh thổ đó; thư gắn với quest đó; nhân vật (tên, nghề, cấp, tộc, trạng thái) với `current` để trống khi quest đang làm nằm ngoài vùng; `pools`, `tribes`, ngưỡng mana (của cả vương quốc, cần để hiểu vì sao việc chờ). Không nhận: lãnh thổ và quest khác, chiến dịch, thư không gắn quest, biên niên sử và bản tấu của cả vương quốc. Event đi theo danh sách cho phép: có `territory` hay `quest` trong vùng, hoặc thuộc nhóm của cả vương quốc đã kê (`mana.*`, `character.*` sau khi xóa `current` ngoài vùng); loại event lạ thì bỏ (đóng khi không chắc). Test tính chất: `scopeState(reduce(s, e))` bằng `reduce(scopeState(s), scopeEvents(e))` với mọi dãy event của bộ sinh sẵn có.
 - **ADR** (W4, khuyến nghị): ADR 0032 mới "Paired devices carry a role and a list of territories" (vai, file thiết bị, ai cấp, lọc theo lãnh thổ, quest chỉ đọc), kèm sửa tại chỗ ADR 0031 mục 3 và 5 với ghi chú `(Amended …)`. Viết sau khi chủ nhân chốt W2–W8; nội dung đề xuất là mục này.
@@ -151,20 +150,20 @@ Yêu cầu của chủ nhân (383) và ba ý đã chốt (383a)–(383c). Phần
   - `ToolPolicy` của phiên làm quest `read_only`: giao của tool nghề với bộ chỉ đọc (`Read`, `Glob`, `Grep`), `Edit` và `Write` chỉ vào đường dẫn sản phẩm và thư bàn giao, không shell, không `WebFetch`, `WebSearch` (W7); Codex chạy sandbox `read-only`. Hook nhận cờ qua `policy.json` và từ chối ghi ngoài hai chỗ đó ở cả bốn dialect.
   - Trả đất ngay khi quest `done` (không chờ nhánh vào nhánh gốc, vì nhánh không đi đâu).
   - Kịch bản conformance mới `read_only_write` (phiên thử ghi một file trong đất, bị từ chối) cho CLI giả của ba tộc.
-- **Test**: domain 100 %; steward với CLI giả: `create_quest` dạng `research` từ `inquiry` ⇒ quest có `read_only`, phiên không ghi được file nguồn, `done` rồi không có `delivery.*`, đất được trả; cùng lệnh từ `full` không có `read_only`; `answer` từ `inquiry` lên quest thường bị từ chối. 0 mana. Chạy kịch bản với CLI thật là quyết định tốn mana của chủ nhân (ghi ở W7).
+- **Test**: domain 100 %; steward với CLI giả: `create_quest` dạng `research` từ `inquiry` ⇒ quest có `read_only`, phiên không ghi được file nguồn, `done` rồi không có `delivery.*`, đất được trả; cùng lệnh từ `full` không có `read_only`; `answer` từ `inquiry` lên quest thường bị từ chối. 0 mana. Sau đó chạy kịch bản một lần với CLI thật của ba tộc (tốn mana, chủ nhân chốt W7) và ghi kết quả vào §11.
 - **Xong khi**: `pnpm check` và `pnpm -r test` xanh; bản build của hook dựng lại; README của `hooks`, `runner-core` nói đúng.
 
 ## P2-03 — Chuông máy tính
 
 - **Mục tiêu**: khi `elvaria run` rung chuông, chủ nhân thấy một thông báo hệ thống trên Windows và macOS, không cần nhìn terminal.
-- **Cách làm** (W9, khuyến nghị: không dependency): `DesktopBell` là adapter spawn công cụ có sẵn của hệ điều hành, `shell: false`, env tối thiểu: Windows gọi `powershell.exe -NoProfile -NonInteractive -Command <kịch bản cố định>` dựng toast bằng API thông báo của Windows; macOS gọi `osascript -e <kịch bản cố định>`. Tiêu đề và nội dung đi qua biến môi trường của tiến trình con, không nối vào chuỗi lệnh. Linux và máy không có công cụ: adapter báo "không có" một lần ở log rồi im. Phương án khác: `node-notifier` như kế hoạch cũ (kèm hai binary dựng sẵn trong gói, bản phát hành gần nhất đã cũ; thêm bề mặt chuỗi cung ứng mà C3 của threat model muốn giảm).
-- **Việc đầu tiên của task**: đo hai lệnh trên máy thật (Windows của chủ nhân; macOS qua CI chạy tay) và ghi kết quả vào [§6](../implementation-plan/6-windows-and-macos.md); nếu toast của Windows không hiện được từ tiến trình nền thì dừng và hỏi chủ nhân về `node-notifier`.
+- **Cách làm** (W9, chủ nhân chốt 2026-11-21: `node-notifier`): `DesktopBell` là adapter gọi `node-notifier` (toast của Windows qua SnoreToast, Notification Center của macOS qua `terminal-notifier`), như [§6](../implementation-plan/6-windows-and-macos.md) đã ghi. Chủ nhân chọn nó sau khi so với cách không dependency (`powershell.exe`, `osascript`): ít mã phải giữ, thông báo có tên và biểu tượng riêng, bấm vào mở được URL; đổi lại gói mang file chạy dựng sẵn của bên thứ ba. Linux và máy không hiện được thông báo: adapter ghi một dòng log rồi im.
+- **Việc đầu tiên của task** (dependency mới, C3 của threat model): trước khi thêm, kiểm trên registry và ghi vào commit: phiên bản và tuổi của bản phát hành (phải đủ 7 ngày, SEC-05), danh sách gói con, các file chạy kèm trong gói và gói có script cài đặt không (`onlyBuiltDependencies` giữ tường minh). Gói cần script cài đặt, hay bản mới nhất không chạy trên Node 24, thì dừng và hỏi chủ nhân.
 - **Thêm** (`apps/cli/src/bell/`, thư mục khái niệm mới; `run/bell.ts` giữ nguyên chỗ):
-  - `desktop.ts`: adapter; `fan-out.ts`: một `Bell` rung nhiều `Bell`, cái này lỗi không chặn cái kia, không bao giờ làm hỏng nhịp; `toast.ts`: `Notice` → tiêu đề và một dòng (tên loại, tên quest), qua `t()`, đã `redact`, không mang câu hỏi, diff hay đường dẫn.
+  - `desktop.ts`: adapter quanh `node-notifier` (gói nhận tiêu đề và nội dung như dữ liệu, không qua shell); `fan-out.ts`: một `Bell` rung nhiều `Bell`, cái này lỗi không chặn cái kia, không bao giờ làm hỏng nhịp; `toast.ts`: `Notice` → tiêu đề và một dòng (tên loại, tên quest), qua `t()`, đã `redact`, không mang câu hỏi, diff hay đường dẫn.
   - Bảng dữ liệu `DESKTOP_RINGS` (W13, khuyến nghị): `awaiting_seal`, `infirmary`, `question`, `mana_asleep` của cả pool, và mọi mục báo động (`base_red`, `delegation_suspended`). Các loại khác chỉ ra terminal.
   - `kingdom.bell.desktop.enabled` (tùy chọn, mặc định `true`); composition root không gắn `DesktopBell` khi terminal không tương tác hay khi `--once`.
 - **Chỗ chừa**: `WebPushBell` (P2-08) là `Bell` thứ ba trong cùng `fan-out`.
-- **Test**: adapter với trình spawn giả: đúng chương trình và tham số cho từng hệ điều hành, chữ có dấu nháy và ký tự xuống dòng không vào dòng lệnh; công cụ thiếu ⇒ một dòng log, không ném; `fan-out` với một chuông ném lỗi; mọi loại `Notice` có ô trong bảng (kiểu). Ca riêng của Windows và của macOS có test riêng. 0 mana.
+- **Test**: adapter với một notifier giả tiêm vào (không gọi `node-notifier` thật trong spec): đúng tiêu đề và nội dung cho từng loại `Notice`, chữ có dấu nháy và ký tự xuống dòng đi nguyên như dữ liệu; notifier báo lỗi hay hệ điều hành không hỗ trợ ⇒ một dòng log, không ném; `fan-out` với một chuông ném lỗi; mọi loại `Notice` có ô trong bảng (kiểu). Ca riêng của Windows và của macOS có test riêng. 0 mana.
 - **Xong khi**: `pnpm check` xanh; một toast thật trên máy chủ nhân khi một quest sang `awaiting_seal`, ghi vào dòng §11 của task; README của `apps/cli` nói đúng. Vùng nhạy hệ điều hành: nêu trong báo cáo để chủ nhân quyết chạy CI.
 
 ## P2-04 — Trạng thái thế giới cho điện thoại: tổng quan và cách chia
@@ -207,7 +206,7 @@ Yêu cầu của chủ nhân (383) và ba ý đã chốt (383a)–(383c). Phần
 | Id | Việc | Mana | Cần trước | File chạm chính |
 |---|---|---|---|---|
 | P2-06 | Bảng sự kiện của ngày, máy kiểm, biên niên sử bản máy | 0 | H2 (AH-03, AH-04, AH-06) | `p/domain/src/chronicle/**` (mới), `p/steward/src/schedule/**`, `a/cli/src/chronicle/**`, schema event |
-| P2-06b | Nhà thơ viết văn | có, mỗi ngày một lượt khi bật | P2-06 | `a/cli/src/chronicle/**`, `p/runner-core/prompts/**`, `kingdom-schedule.ts` |
+| P2-06b | Nhà thơ viết văn | có, mỗi ngày một lượt, bật mặc định | P2-06 | `a/cli/src/chronicle/**`, `p/runner-core/prompts/**`, `kingdom-schedule.ts` |
 
 ## P2-06 — Bảng sự kiện của ngày, máy kiểm, biên niên sử bản máy
 
@@ -224,15 +223,15 @@ Yêu cầu của chủ nhân (383) và ba ý đã chốt (383a)–(383c). Phần
 ## P2-06b — Nhà thơ viết văn
 
 - **Mục tiêu**: phần văn của biên niên sử do một nhân vật nghề `bard` viết từ bảng sự kiện; sai một dữ kiện thì bỏ phần văn, bản máy còn nguyên.
-- **Tốn mana**: mỗi ngày tối đa một lượt, trên pool của nhân vật `bard` của vương quốc. Ước lượng chưa đo: đầu vào là bảng sự kiện đã cắt ở 12 000 ký tự cùng mẫu prompt, đầu ra dưới 600 từ, tức khoảng 10 nghìn token mỗi ngày. Tắt mặc định.
+- **Tốn mana**: mỗi ngày tối đa một lượt, trên pool của nhân vật `bard` của vương quốc. Ước lượng chưa đo: đầu vào là bảng sự kiện đã cắt ở 12 000 ký tự cùng mẫu prompt, đầu ra dưới 600 từ, tức khoảng 10 nghìn token mỗi ngày. **Bật mặc định** (W10, chủ nhân chốt 2026-11-21): vương quốc nào có nhân vật nghề `bard` thì tốn mana mỗi tối từ khi P2-06b vào bản ghim; tắt bằng `schedule.chronicle.prose: false`. Hướng dẫn vận hành và ghi chú của `elvaria upgrade` nói rõ điều này.
 - **Thêm**:
-  - `schedule.chronicle.prose` (tùy chọn, mặc định `false`): bật thì job `off_tick` chạy sau bản máy, theo mẫu triage của PS-03b.
+  - `schedule.chronicle.prose` (tùy chọn, mặc định `true`; mô tả của schema ghi rõ SPENDS MANA như `schedule.temple`): bật thì job `off_tick` chạy sau bản máy, theo mẫu triage của PS-03b.
   - Ai viết: nhân vật nghề `bard` đầu tiên của đội hình, với tộc và model của chính nó (tộc là dữ liệu; chủ nhân chọn model rẻ bằng `character add` hay `set_model`). Không có nhân vật `bard`, pool của nó đang đóng (`mana_open` của `JobView`), hay ngày không có gì: không gọi model.
   - Lượt gọi không tool (`allow: []`), prompt là mẫu `runner-core/prompts/` mới nhận bảng sự kiện như dữ liệu có khung; không đọc file, không vào đất nào.
   - Sau lượt gọi: `redact`, rồi `checkChronicle`. Đạt thì nối phần văn vào `chronicle/<ngày>.md` và ghi `chronicle.written` với `prose: true`. Trượt thì thử lại một lần kèm danh sách lỗi; trượt nữa thì giữ bản máy và ghi một dòng log. Mana của lượt gọi ghi như mọi phiên (`mana.level`), sổ đo thấy được.
   - Bản tấu: không thêm mục. Tính cách trong lời văn là PS-18, không thuộc task này.
 - **Test** (CLI giả, 0 mana): văn đúng ⇒ file có hai phần; văn nhắc quest không có ⇒ thử lại rồi giữ bản máy; pool đóng ⇒ không phiên nào mở; `prose` tắt ⇒ không phiên nào mở; snapshot của prompt; secret giả trong tên quest không lọt vào file.
-- **Xong khi**: `pnpm check` xanh; một lần chạy thật trên vương quốc của chủ nhân (tốn mana, chủ nhân bật) có biên niên sử đúng với `elvaria chronicle --day` bản máy, ghi vào §11.
+- **Xong khi**: `pnpm check` xanh; một lần chạy thật trên vương quốc của chủ nhân (tốn mana) có biên niên sử đúng với `elvaria chronicle --day` bản máy, ghi vào §11.
 
 ## Phụ thuộc giữa các task
 
@@ -240,28 +239,30 @@ Yêu cầu của chủ nhân (383) và ba ý đã chốt (383a)–(383c). Phần
 - P2-04 → P2-04b. P2-06 → P2-06b. P2-03 đứng riêng.
 - SEC-08 cần P2-01, P2-01b, P2-01c. P2-07 cần P2-01c, P2-01d, P2-04b. P2-08 cần P2-03, P2-04b.
 - Mọi task cần đợt H2 đã merge (AH-03 barrel của `domain`, AH-04 file chuỗi theo namespace, AH-05 và AH-06 gốc `steward`), đúng (363).
-- **File nóng** mà nhiều task cùng chạm: `packages/i18n/src/glossary.json` và file locale (sau AH-04 mỗi task một namespace riêng: `herald`, `device`, `bell`, `chronicle`), `packages/domain/src/schema/event/event-types.ts`, `packages/domain/src/protocol/messages.ts` (P2-01, P2-04, P2-04b), `packages/domain/src/schema/kingdom.ts` (P2-01 `herald`, P2-03 `bell`), `packages/steward/src/inbox/apply.ts` (P2-01, P2-01d), `apps/cli/src/commands.ts` (P2-01b, P2-06), `pnpm-lock.yaml` (P2-01c), các file sinh. Nhánh merge sau giữ cả hai phía rồi chạy lại generator.
+- **File nóng** mà nhiều task cùng chạm: `packages/i18n/src/glossary.json` và file locale (sau AH-04 mỗi task một namespace riêng: `herald`, `device`, `bell`, `chronicle`), `packages/domain/src/schema/event/event-types.ts`, `packages/domain/src/protocol/messages.ts` (P2-01, P2-04, P2-04b), `packages/domain/src/schema/kingdom.ts` (P2-01 `herald`, P2-03 `bell`), `packages/steward/src/inbox/apply.ts` (P2-01, P2-01d), `apps/cli/src/commands.ts` (P2-01b, P2-06), `pnpm-lock.yaml` (P2-01c, P2-03), các file sinh. Nhánh merge sau giữ cả hai phía rồi chạy lại generator.
 - **Vùng nhạy hệ điều hành**: P2-01b, P2-01c (socket, tín hiệu dừng), P2-01d (hook), P2-03 (thông báo hệ thống).
 
-## Quyết định cho chủ nhân
+## Quyết định
+
+Chủ nhân chốt ngày 2026-11-21, trong phiên kế hoạch ([§11, 2026-11-21](../implementation-plan/11-2026-11-21.md)). W9 và W10 khác khuyến nghị của phiên; các mục còn lại theo khuyến nghị.
 
 **Phải chốt trước khi mở task:**
 
-- **W1 · Cách chia và id.** P2-01, P2-01b, P2-01c, P2-01d; P2-03; P2-04, P2-04b; P2-06, P2-06b. Khuyến nghị: nhận. Chặn mọi task.
-- **W2 · Vai và lãnh thổ của thiết bị lưu ở đâu.** (A) mỗi thiết bị một file `devices/<id>.json` có schema; (B) mảng `herald.devices[]` trong `kingdom.json`; (C) trong `.state/herald-sessions.json` như ADR 0031 đang ghi nhãn thiết bị. Khuyến nghị (A): vai là cấu hình tin cậy chứ không phải cache; Nhiếp chính đọc được mà không biết Sứ giả; `kingdom.json` không có thêm người ghi. Chặn P2-01.
-- **W3 · Tên ba vai và cách cấp từ máy.** Id `full`, `scoped`, `inquiry`; `elvaria herald pair` bắt buộc nêu `--role` (không có vai mặc định), `scoped` và `inquiry` bắt buộc ít nhất một `--territory`. Khuyến nghị: nhận. Chặn P2-01.
-- **W4 · ADR.** ADR 0032 mới cho vai, file thiết bị, lọc theo lãnh thổ và quest chỉ đọc; ADR 0031 sửa tại chỗ mục 3 và 5 kèm `(Amended …)`. Phương án khác: chỉ sửa ADR 0031. Khuyến nghị: ADR mới, vì đây là quyết định mới chứ không phải chỉnh cho khớp. Viết trong task P2-01. Chặn P2-01.
-- **W5 · Đổi hợp đồng protocol.** `command` chỉ còn `ref`, `kind`, `payload`; thêm `accepted`, `refused`, rồi `attention` (P2-04) và `bell` (P2-04b). Khuyến nghị: nhận; chưa client nào dùng hợp đồng cũ. Chặn P2-01.
-- **W6 · Thiết bị giới hạn thấy gì.** Lọc snapshot và `events` theo lãnh thổ ở Sứ giả, đóng khi không chắc; vẫn thấy mana, tộc và nhân vật (không kèm quest ngoài vùng); không thấy chiến dịch, bản tấu và biên niên sử của cả vương quốc. Khuyến nghị: nhận. Chặn P2-01.
-- **W7 · "Hỏi đáp" gồm lệnh nào, và quest chỉ đọc chặt tới đâu.** `create_quest` dạng `report` (thành quest `read_only`), `answer` và `cancel` trên quest `read_only`; quest `read_only` không shell, không `WebFetch`, `WebSearch`, không secret, không giao hàng. Khuyến nghị: nhận, kể cả cấm web (việc cần tra web thì giao từ thiết bị `scoped` hay `full`). Kịch bản `read_only_write` với CLI thật của ba tộc **tốn mana** (cỡ SEC-01: vài phiên ngắn mỗi tộc); khuyến nghị: chạy một lần khi P2-01d xong. Chặn P2-01 (bảng hỏi đáp) và P2-01d.
-- **W8 · Trước khi có SEC-08.** Lệnh nhóm 2 và 3 từ nguồn `lite` bị từ chối `passkey_required`; trên loopback không hỏi passkey (ADR 0031). Khuyến nghị: nhận. Chặn P2-01.
-- **W9 · Chuông máy tính không dependency.** `powershell.exe` và `osascript` thay cho `node-notifier`; đo trên máy thật là bước đầu của task, không đạt thì quay lại hỏi. Khuyến nghị: nhận. Chặn P2-03.
-- **W10 · Biên niên sử hai tầng, và mana của Nhà thơ.** Bản máy (P2-06, 0 mana) luôn có; phần văn của Nhà thơ (P2-06b) **tốn mana** mỗi ngày một lượt (ước lượng 10 nghìn token, chưa đo), tắt mặc định, viết bằng model của nhân vật nghề `bard`. Khuyến nghị: nhận; mở P2-06b sau khi bản máy chạy được vài ngày. Chặn P2-06.
+- **W1 · Cách chia và id.** P2-01, P2-01b, P2-01c, P2-01d; P2-03; P2-04, P2-04b; P2-06, P2-06b.
+- **W2 · Vai và lãnh thổ của thiết bị lưu ở đâu.** Mỗi thiết bị một file `devices/<id>.json` có schema; `.state/herald-sessions.json` chỉ còn mã băm phiên. Phương án đã loại: mảng `herald.devices[]` trong `kingdom.json` (thêm người ghi vào `kingdom.json`), và giữ vai trong `.state/herald-sessions.json` (vai nằm trong vùng cache, Nhiếp chính phải đọc file của Sứ giả).
+- **W3 · Tên ba vai và cách cấp từ máy.** Id `full`, `scoped`, `inquiry`; `elvaria herald pair` bắt buộc nêu `--role`, không có vai mặc định; `scoped` và `inquiry` bắt buộc ít nhất một `--territory`.
+- **W4 · ADR.** ADR 0032 mới cho vai, file thiết bị, lọc theo lãnh thổ và quest chỉ đọc; ADR 0031 sửa tại chỗ mục 3 và 5 kèm `(Amended …)`. Task P2-01 viết.
+- **W5 · Đổi hợp đồng protocol.** `command` chỉ còn `ref`, `kind`, `payload`; thêm `accepted`, `refused`, rồi `attention` (P2-04) và `bell` (P2-04b).
+- **W6 · Thiết bị giới hạn thấy gì.** Sứ giả lọc snapshot và `events` theo lãnh thổ, đóng khi không chắc; vẫn thấy mana, tộc và nhân vật (không kèm quest ngoài vùng); không thấy lãnh thổ và quest khác, chiến dịch, bản tấu và biên niên sử của cả vương quốc.
+- **W7 · "Hỏi đáp" và quest chỉ đọc.** `create_quest` dạng `report` (thành quest `read_only`), `answer` và `cancel` trên quest `read_only`; quest `read_only` không shell, không `WebFetch`, `WebSearch`, không secret, không giao hàng. Khi P2-01d xong, chạy kịch bản `read_only_write` một lần với CLI thật của ba tộc (**tốn mana**, cỡ SEC-01: vài phiên ngắn mỗi tộc).
+- **W8 · Trước khi có SEC-08.** Lệnh nhóm 2 và 3 từ nguồn `lite` bị từ chối `passkey_required`; trên loopback không hỏi passkey (ADR 0031).
+- **W9 · Chuông máy tính: `node-notifier`** (khác khuyến nghị). Phiên khuyến nghị không dependency (`powershell.exe`, `osascript`); chủ nhân chọn `node-notifier` sau khi so ưu nhược: ít mã phải giữ, thông báo có tên và biểu tượng riêng, bấm mở được URL, nhận việc gói mang file chạy dựng sẵn của bên thứ ba. P2-03 kiểm gói trước khi thêm (mục P2-03).
+- **W10 · Biên niên sử hai tầng, Nhà thơ bật mặc định** (khác khuyến nghị). Bản máy (P2-06, 0 mana) luôn có; phần văn của Nhà thơ (P2-06b) **tốn mana** mỗi ngày một lượt trên model của nhân vật nghề `bard` (ước lượng 10 nghìn token, chưa đo) và bật sẵn: `schedule.chronicle.prose` mặc định `true`. Phiên khuyến nghị tắt mặc định.
 
-**Chờ được:**
+**Chờ được, chốt cùng lúc theo khuyến nghị:**
 
-- **W11 · Mã QR lúc ghép đôi.** ADR 0031 nói in URL và mã QR, và cũng nói không dependency ngoài `ws`. Khuyến nghị: P2-01b chỉ in URL; mã QR (bộ mã hóa tự viết, thuần, có test) làm cùng hướng dẫn đường hầm của P2-11, lúc điện thoại thật sự cần quét.
-- **W12 · Cổng mặc định 7411 và `herald.origins` sửa tay** trong `kingdom.json` (như `dispatch`). Khuyến nghị: nhận; lệnh riêng để thêm origin thuộc nhóm 3, làm khi cần.
-- **W13 · Loại chuông nào thành thông báo hệ thống.** Chờ dấu, bệnh xá, câu hỏi của nhân vật, cả pool ngủ, báo động. Khuyến nghị: nhận; sửa được sau bằng một dòng của bảng.
-- **W14 · Dòng §8 của các task `P2-…`** nằm trong bảng của chặng tự cường như `AH-…` và `SEC-…` ((362)), để dòng xong chuyển file lưu mà không sửa script. Khuyến nghị: nhận.
-- **W15 · `schedule.chronicle.enabled` mặc định `true`** từ P2-06: vương quốc đang chạy sẽ có thêm một file mỗi tối, 0 mana. Khuyến nghị: nhận.
+- **W11 · Mã QR lúc ghép đôi.** P2-01b chỉ in URL; mã QR (bộ mã hóa tự viết, thuần, có test, vì ADR 0031 không cho dependency ngoài `ws` ở Sứ giả) làm cùng hướng dẫn đường hầm của P2-11.
+- **W12 · Cổng mặc định 7411**; `herald.origins` sửa tay trong `kingdom.json` như `dispatch`. Lệnh riêng để thêm origin thuộc nhóm 3, làm khi cần.
+- **W13 · Loại chuông thành thông báo hệ thống**: chờ dấu, bệnh xá, câu hỏi của nhân vật, cả pool ngủ, báo động.
+- **W14 · Dòng §8 của các task `P2-…`** nằm trong bảng của chặng tự cường như `AH-…` và `SEC-…` ((362)).
+- **W15 · `schedule.chronicle.enabled` mặc định `true`** từ P2-06: vương quốc đang chạy có thêm một file mỗi tối.
