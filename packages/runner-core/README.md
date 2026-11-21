@@ -380,6 +380,7 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   `@elvaria/eventlog` (append, read a journal, stamp, redact), `@elvaria/store` (`readTextFile`,
   `writeFileAtomic`, `acquireLock`, kingdom paths). No third-party package; git is the territory's own, found
   by the host.
+- `@elvaria/config` (dev only: `tsconfig.json` extends its `tsconfig/node.json`).
 
 ## How to test
 

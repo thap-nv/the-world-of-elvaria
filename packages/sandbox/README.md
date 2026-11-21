@@ -42,6 +42,7 @@
 
 - `@elvaria/domain` (schemas, state machines, `planTick`, views, ids and time), `@elvaria/eventlog` (serialize,
   read, redact, the sandbox folder), `@elvaria/store` (`writeFileAtomic`). No third-party package.
+- `@elvaria/config` (dev only: `tsconfig.json` extends its `tsconfig/node.json`).
 
 ## How to test
 

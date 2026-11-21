@@ -49,8 +49,16 @@ export const RULES = [
     pattern: /^(?:docs\/|CLAUDE\.md$|\.claude\/rules\/|(?:packages|apps)\/[^/]+\/README\.md$)/,
     run: [['docs:check']],
   },
+  // a file added, moved or removed in a workspace, and the layout baseline: the folder rules (AH-02, §4.2 R1–R8)
+  { pattern: /^(?:packages|apps)\/[^/]+\/(?!README\.md$)|^layout-baseline\.json$/, run: [['layout']] },
   // the contract and its generated output (ADR 0003)
   { pattern: /^packages\/domain\/src\/schema\/|^docs\/schemas\//, run: [['schemas', '--check']] },
+  // new, renamed or deleted files (AH-01): any code change, since an edit can leave an export or a file unused too
+  {
+    pattern:
+      /^(?:(?:packages|apps)\/[^/]+\/(?!README\.md$)|scripts\/|\.claude\/hooks\/|knip\.json$|package\.json$)/,
+    run: [['knip']],
+  },
 ];
 
 /**

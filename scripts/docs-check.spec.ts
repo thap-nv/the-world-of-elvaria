@@ -12,6 +12,7 @@ import {
   README_SECTIONS,
   adrProblems,
   checkRepo,
+  dependsOnProblems,
   readmeProblems,
   run,
   shellScriptProblems,
@@ -89,6 +90,58 @@ describe('readmeProblems', () => {
     expect(
       readmeProblems(['package.json', 'packages/a/node_modules/z/package.json'], () => undefined),
     ).toEqual([]);
+  });
+});
+
+describe('dependsOnProblems', () => {
+  const CLI = JSON.stringify({
+    name: '@elvaria/cli',
+    dependencies: { '@elvaria/runner-codex': 'workspace:*', zod: '^4' },
+  });
+  const LACKS_CODEX =
+    'apps/cli/README.md: "Depends on" lacks @elvaria/runner-codex, which @elvaria/cli depends on in package.json';
+  /** apps/cli whose "Depends on" holds `dependsOn`; its "Does" names @elvaria/runner-codex, which must not count. */
+  const cli = (dependsOn: string, after = '## How to test\n\n- text\n'): Record<string, string> => {
+    const readme = ['# cli', '## Does', '- `@elvaria/runner-codex`.', '## Depends on', dependsOn, after];
+    return { 'apps/cli/package.json': CLI, 'apps/cli/README.md': readme.join('\n\n') };
+  };
+  const problemsOf = (texts: Record<string, string>) =>
+    dependsOnProblems(Object.keys(texts), (file) => texts[file]);
+
+  it('names the package and the dependency its "Depends on" lacks, though "Does" names it', () => {
+    expect(problemsOf(cli('- `@elvaria/domain`.'))).toEqual([LACKS_CODEX]);
+  });
+
+  it('matches whole names: @elvaria/runner does not stand in for @elvaria/runner-codex', () => {
+    expect(problemsOf(cli('- `@elvaria/runner`.'))).toEqual([LACKS_CODEX]);
+    expect(problemsOf(cli('- `@elvaria/runner-codex` (the Codex adapter).'))).toEqual([]);
+  });
+
+  it('reads the section up to the next heading or the end, and ignores names the manifest lacks', () => {
+    const after = '## How to test\n\n- `@elvaria/runner-codex` in a spec.\n';
+    expect(problemsOf(cli('- `@elvaria/hooks`.', after))).toEqual([LACKS_CODEX]);
+    expect(problemsOf(cli('- `@elvaria/hooks`, `@elvaria/runner-codex`.', after))).toEqual([]);
+    expect(problemsOf(cli('- `@elvaria/runner-codex`.', ''))).toEqual([]);
+  });
+
+  it('counts devDependencies, and every name when "Depends on" or the README is missing', () => {
+    const manifest = (name: string, dependencies: Record<string, string> = {}) =>
+      JSON.stringify({ name, dependencies, devDependencies: { '@elvaria/config': '*' } });
+    const texts = {
+      'packages/a/package.json': manifest('@elvaria/a', { '@elvaria/domain': '*' }),
+      'packages/a/README.md': '# a\n\n## Does\n\n- `@elvaria/domain`, `@elvaria/config`.\n',
+      'packages/b/package.json': manifest('@elvaria/b'),
+    };
+    expect(problemsOf(texts)).toEqual([
+      'packages/a/README.md: "Depends on" lacks @elvaria/domain, @elvaria/config, which @elvaria/a depends on in package.json',
+      'packages/b/README.md: "Depends on" lacks @elvaria/config, which @elvaria/b depends on in package.json',
+    ]);
+  });
+
+  it('runs in checkRepo, and leaves a package with no @elvaria dependency alone', () => {
+    const zodOnly = JSON.stringify({ dependencies: { zod: '^4' } });
+    expect(check({ 'apps/y/package.json': zodOnly, 'apps/y/README.md': README })).toEqual([]);
+    expect(check({ 'apps/cli/package.json': CLI, 'apps/cli/README.md': README })).toEqual([LACKS_CODEX]);
   });
 });
 

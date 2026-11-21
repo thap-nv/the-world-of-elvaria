@@ -51,6 +51,10 @@ export function tempPathFor(target: string): string {
   return path.join(path.dirname(target), `.${path.basename(target)}.${process.pid}.${random}${TEMP_SUFFIX}`);
 }
 
+/**
+ * The name test of tempPathFor, kept for its spec (`@internal`: the test API `knip --production` allows).
+ * @internal
+ */
 export const isTempFile = (name: string): boolean => name.startsWith('.') && name.endsWith(TEMP_SUFFIX);
 
 /** Replaces `target` with `data` in one step; creates the folder if needed. */

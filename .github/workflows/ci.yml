@@ -33,6 +33,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm boundaries
+      - run: pnpm knip
       # --check also fails on a generated file that was never committed, which git diff cannot see:
       # the regenerated file would be untracked (implementation-plan §7).
       - name: docs/schemas is generated from zod (P0-03)

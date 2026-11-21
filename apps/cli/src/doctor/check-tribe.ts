@@ -7,7 +7,7 @@
 import { TribeSchema, checkTribeAuth } from '@elvaria/domain';
 import type { AdapterCapabilities, Tribe } from '@elvaria/domain';
 import type { Translate } from '@elvaria/i18n';
-import type { AgentRunner, ToolInfo } from '@elvaria/runner-core';
+import type { ToolInfo } from '@elvaria/runner-core';
 import { toPortable } from '@elvaria/store';
 
 import { launchOf } from '../process/launch.ts';
@@ -151,13 +151,6 @@ export function loginFindingsOf(tribe: Tribe, info: ToolInfo, ctx: Pick<KingdomC
   const text = ctx.t('cli.doctor.adapter_detail', { tribe: tribe.id, detail });
   return [finding(info.auth_ok ? 'warn' : 'error', text)];
 }
-
-/** loginFindingsOf what `runner.doctor()` says now. */
-export const loginFindings = async (
-  tribe: Tribe,
-  runner: AgentRunner,
-  ctx: Pick<KingdomContext, 't'>,
-): Promise<Finding[]> => loginFindingsOf(tribe, await runner.doctor(), ctx);
 
 /**
  * One tribe checked by this run. `--enable` is asked of it but not decided yet: the check across tribes

@@ -79,6 +79,7 @@ signal)` runs one session with no tool (`buildAmendmentPrompt`; the amendment-de
 - `@elvaria/domain` (`QuestDraftFileSchema`, `contractOf`, registry and territory types, `Result`),
   `@elvaria/runner-core` (`AgentRunner`, `buildChancellorPrompt`, `toolPolicyOf`, prompt templates, `spawnParsed`
   and the text-reply helpers of `src/structured/`). No third-party package.
+- `@elvaria/config` (dev only: `tsconfig.json` extends its `tsconfig/node.json`).
 
 ## How to test
 

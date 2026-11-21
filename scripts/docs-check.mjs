@@ -47,6 +47,50 @@ export function readmeProblems(files, read) {
     });
 }
 
+/** A workspace name: greedy, so `@elvaria/runner` never stands in for `@elvaria/runner-codex`. */
+const WORKSPACE_NAME = /@elvaria\/[a-z0-9-]+/g;
+
+/** The lines under `## Depends on` up to the next `## ` heading; empty when the README has no such section. */
+const dependsOnSection = (/** @type {string} */ text) => {
+  const lines = text.split(/\r?\n/);
+  const start = lines.findIndex((line) => /^## Depends on\s*$/.test(line));
+  if (start === -1) return '';
+  const end = lines.findIndex((line, i) => i > start && line.startsWith('## '));
+  return lines.slice(start + 1, end === -1 ? undefined : end).join('\n');
+};
+
+/** The `@elvaria/*` names of a manifest's dependencies and devDependencies, in manifest order. */
+const workspaceDependencies = (/** @type {Record<string, unknown>} */ manifest) => {
+  const names = [manifest['dependencies'], manifest['devDependencies']].flatMap((field) =>
+    typeof field === 'object' && field !== null ? Object.keys(field) : [],
+  );
+  return [...new Set(names.filter((name) => name.startsWith('@elvaria/')))];
+};
+
+/**
+ * Workspaces whose README's "Depends on" omits an `@elvaria/*` dependency of its package.json (architecture-health
+ * F8: apps/cli lacked @elvaria/runner-codex and nothing saw it). Names elsewhere in the README do not count; a name
+ * the README has and the manifest lacks is not reported.
+ * @param {readonly string[]} files
+ * @param {Read} read
+ */
+export function dependsOnProblems(files, read) {
+  return files
+    .filter((file) => WORKSPACE_MANIFEST.test(file))
+    .flatMap((manifestFile) => {
+      /** @type {Record<string, unknown>} */
+      const manifest = JSON.parse(read(manifestFile) ?? '{}');
+      const readme = manifestFile.replace(/package\.json$/, 'README.md');
+      const listed = new Set(dependsOnSection(read(readme) ?? '').match(WORKSPACE_NAME));
+      const missing = workspaceDependencies(manifest).filter((name) => !listed.has(name));
+      if (missing.length === 0) return [];
+      const name = typeof manifest['name'] === 'string' ? manifest['name'] : manifestFile;
+      return [
+        `${readme}: "Depends on" lacks ${missing.join(', ')}, which ${name} depends on in package.json`,
+      ];
+    });
+}
+
 /**
  * ADRs without a `- Status:` line (implementation-plan §5.2).
  * @param {readonly string[]} files
@@ -152,6 +196,7 @@ export function checkRepo(files, read, glossary = GLOSSARY) {
   const text = (/** @type {string} */ file) => read(file) ?? '';
   return [
     ...readmeProblems(files, read),
+    ...dependsOnProblems(files, read),
     ...adrProblems(files, read),
     ...shellScriptProblems(files),
     ...sizeProblems(files, read),

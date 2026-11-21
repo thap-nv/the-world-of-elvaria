@@ -163,7 +163,7 @@ Adapter file (người ngoài viết) **không buộc** trả mã: `doctor()` c�
 
 ### 4.4 CLI in
 
-`loginFindings` (`apps/cli/src/doctor/check-tribe.ts`) dựng một dòng `cli.doctor.adapter_detail` với `detail` = từng ghi chú dịch bằng `t('cli.doctor.note.<tên>', params)`, rồi `ToolInfo.detail` nguyên văn, nối bằng `; `. Không ghi chú, không `detail` và `auth_ok: false` thì như nay `cli.doctor.login_failed`. Mức (`error`/`warn`) giữ như nay theo `auth_ok`.
+`loginFindingsOf` (`apps/cli/src/doctor/check-tribe.ts`) dựng một dòng `cli.doctor.adapter_detail` với `detail` = từng ghi chú dịch bằng `t('cli.doctor.note.<tên>', params)`, rồi `ToolInfo.detail` nguyên văn, nối bằng `; `. Không ghi chú, không `detail` và `auth_ok: false` thì như nay `cli.doctor.login_failed`. Mức (`error`/`warn`) giữ như nay theo `auth_ok`.
 
 ## 5. Ai sở hữu gì
 

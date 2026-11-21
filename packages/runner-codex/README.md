@@ -98,6 +98,7 @@ blocked by PreToolUse hook: <reason>. Command: <command>`) into `tool_blocked` s
   conformance suite, the spawn probe). No third-party package at run time; `prettier` (dev only) checks in a spec
   that `AGENTS.override.md` is as Prettier would write it. The specs run the hook from `packages/hooks/src` by path,
   never by import.
+- `@elvaria/config` (dev only: `tsconfig.json` extends its `tsconfig/node.json`).
 
 ## How to test
 

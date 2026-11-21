@@ -15,7 +15,7 @@ import { limitsSection } from './view-limits.ts';
 import { afterWrapUpSection } from './view-wrap-ups.ts';
 import type { MetricsSection } from './section.ts';
 
-export type { MetricsSection, MetricsTable } from './section.ts';
+export type { MetricsSection } from './section.ts';
 
 /** One day's ledger, for the report's table by day. */
 export interface DayMetrics {

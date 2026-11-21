@@ -86,6 +86,7 @@ describe('scansIdentifiers', () => {
       'packages/steward/src/tick.spec.ts',
       'packages/config/__fixtures__/repo/a.ts',
       'packages/domain/vitest.config.mjs',
+      'knip.json',
       'docs/schemas/quest.schema.json',
       'design/project/app.js',
       'packages/i18n/src/glossary.json',

@@ -24,7 +24,7 @@ import type { CheckRun } from './run-checks.ts';
 import { selectChecks } from './select-checks.ts';
 import type { Reset, TrialPlot, TrialRequest } from './trial-types.ts';
 
-export type { Reset, TrialPlot, TrialRequest } from './trial-types.ts';
+export type { TrialPlot, TrialRequest } from './trial-types.ts';
 
 /** Lines of each failing rerun's log at the end of the flake_check log: the judge reads why (P1-54, Q7 of P1-50). */
 const RERUN_TAIL_LINES = 15;

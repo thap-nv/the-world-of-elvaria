@@ -7,7 +7,7 @@ import { transition } from '../../quest/transition.ts';
 import { FULL_TRIBE_LIMITS } from '../../tribe/tribe-limits.ts';
 import kingdomExamples from '../../../examples/kingdom.json' with { type: 'json' };
 import type { Instant } from '../../core/clock.ts';
-import type { QuestId, TagId, TerritoryId, TribeId } from '../../core/ids.ts';
+import type { QuestId, TerritoryId, TribeId } from '../../core/ids.ts';
 import type { QuestActor, QuestEvent } from '../../quest/events.ts';
 import type { Character } from '../../schema/character/character.ts';
 import type { Quest } from '../../schema/quest/quest.ts';
@@ -187,8 +187,6 @@ export const Q1 = 'q_20261106_a1b2c3' as QuestId;
 export const Q2 = 'q_20261106_d4e5f6' as QuestId;
 export const Q3 = 'q_20261106_g7h8j9' as QuestId;
 export const Q4 = 'q_20261106_k1m2n3' as QuestId;
-
-export const TAG = (id: string): TagId => id as TagId;
 
 const LIMITS = { claude: FULL_TRIBE_LIMITS, gemini: FULL_TRIBE_LIMITS } as Partial<
   Record<TribeId, typeof FULL_TRIBE_LIMITS>

@@ -69,6 +69,7 @@
 - `@elvaria/domain` (schemas, ids, `Result`, `parseRegistry`).
 - `@elvaria/eventlog` (`journalOf`, `createRedactor`): one source for the journal's name and the patterns.
 - `proper-lockfile` (file locks that survive a crashed holder, on Windows and macOS).
+- `@elvaria/config` (dev only: `tsconfig.json` extends its `tsconfig/node.json`).
 
 ## How to test
 

@@ -83,6 +83,7 @@ terms_acknowledged_at, env, pools?, timeout_ms?})`. `hook` is `hookCommand()` of
 
 - `@elvaria/runner-core` (types, `toolOf`, `readQuestion`, the signal channel, `runContextOf`, `contextEnv`,
   `writePolicyFile`, `openRunLog`, `openRunOutput`, `startChild`, `runToEnd`, the conformance suite). No third-party package. The specs run the hook from `packages/hooks/src` by path, never by import.
+- `@elvaria/config` (dev only: `tsconfig.json` extends its `tsconfig/node.json`).
 
 ## How to test
 
