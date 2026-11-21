@@ -162,6 +162,13 @@
   and the tree is clean, or when the push sends no commit (only branch deletions); otherwise, or on input or a git
   it cannot read, it exits `1` and the hook runs check:fast. Reads git through `git rev-parse` and `git status` with
   a minimal env; writes only `git rev-parse --git-path elvaria-check-ok`, a file in the worktree's own git dir.
+- `scan-staged-secrets.mjs` (`scan-staged-secrets.spec.ts`): the secret scan `.husky/pre-commit` runs (SEC-04).
+  `stagedPaths()` lists the staged files (`git diff --cached --name-only --diff-filter=ACMR -z`), `stagedContent()`
+  reads each one's staged blob (`git show :<path>`), and `scanStaged()` (pure: files and contents in, findings out)
+  skips binary files (a NUL byte in the first 8000 bytes) and applies the patterns of
+  `packages/eventlog/src/redact-patterns.json`, the file the pre-push scan (PS-08c) reads. A specific shape stops the
+  commit (exit `1`); the three `SHARED_PATTERN_IDS` only warn. It prints `<file>:<line>: <pattern id>` and never the
+  matched text. Runs git with the hook's own env, because `GIT_INDEX_FILE` names the index of the commit.
 - `check-changed.mjs` (`check-changed.spec.ts`): `pnpm check:changed` (fix/check-changed). `changedPaths()` lists the
   files that differ from the merge-base with `origin/main` (or `--base <ref>`): tracked changes, committed or not, and
   untracked files git does not ignore. `plan()` maps them through `RULES`, the "Change impact" table of CLAUDE.md as
