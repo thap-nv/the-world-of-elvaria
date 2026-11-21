@@ -41,14 +41,15 @@ Mọi package đã có tên và danh sách phụ thuộc được phép trong `W
 - `vitest.config.ts`: coverage v8 trên `src/**/*.ts` trừ `*.spec.ts` và `src/**/__fixtures__/**`, ngưỡng 80 (domain 100).
 - `README.md` đủ 4 mục `## Does`, `## Does not`, `## Depends on`, `## How to test` (`pnpm docs:check` kiểm).
 - Entry khác `exports` (bin, script, fixture của CLI giả) thì khai trong `knip.json`: `!` ở cuối là entry của chế độ `--production`.
-- Rồi `pnpm install`, `pnpm boundaries`, `pnpm knip`, `pnpm docs:gen` (`docs/dependency-graph.md` đổi theo), `pnpm check`.
+- Bố cục theo R8 (implementation-plan §4.2): luật thư mục R1–R6 từ commit đầu (mỗi khái niệm một thư mục `src/<khái-niệm>/` có barrel `index.ts`, gốc `src/` chỉ phần ráp nối, đồ dùng test ở `__fixtures__/` hay `fixtures/`), chuỗi hiển thị vào file namespace riêng, không thêm dòng vào file nóng nào ngoài barrel của chính nó. `pnpm layout` không cho package mới một dòng nào trong `layout-baseline.json`.
+- Rồi `pnpm install`, `pnpm boundaries`, `pnpm layout`, `pnpm knip`, `pnpm docs:gen` (`docs/dependency-graph.md` đổi theo), `pnpm check`.
 
 ## Lệnh / Commands
 
 ```bash
 pnpm install
-pnpm check               # mọi thứ CI chạy (trừ audit): lint, format:check, typecheck, test, boundaries, knip,
-                         #   schemas --check, docs:gen --check, docs:check, i18n:check; xanh trên cây sạch thì đóng dấu HEAD
+pnpm check               # mọi thứ CI chạy (trừ audit): lint, format:check, typecheck, test, boundaries, layout,
+                         #   knip, schemas --check, docs:gen --check, docs:check, i18n:check; xanh trên cây sạch thì đóng dấu HEAD
 pnpm check:fast          # typecheck + test + boundaries (husky pre-push, trừ khi push đúng commit có dấu)
 pnpm check:changed       # giữa chừng: chỉ các check mà bảng "Change impact" đòi cho file đổi so với merge-base với origin/main (commit, chưa commit, file mới); KHÔNG thay `pnpm check`, cổng trước merge vẫn là `pnpm check` đầy đủ (không lint, không format, không package ngoài diff)
 pnpm check:changed --dry-run          # chỉ in đường dẫn đổi, các lệnh sẽ chạy và đường dẫn không có luật
@@ -57,6 +58,8 @@ pnpm lint && pnpm typecheck  # lint tự cho eslint heap 8 GB, không cần NODE
 pnpm exec eslint --prune-suppressions <file>   # sau khi sửa một chỗ có trong eslint-suppressions.json (.claude/rules/tests.md)
 pnpm test                # vitest của scripts/ và .claude/hooks/, rồi từng package; một package: pnpm --filter @elvaria/<key> test
 pnpm boundaries          # dependency-cruiser theo packages/config/boundaries.mjs
+pnpm layout              # luật thư mục R2, R3, R4, R6 (§4.2) so với layout-baseline.json; đỏ cả khi danh sách ghi cao hơn hôm nay
+pnpm layout --prune      # hạ layout-baseline.json về hôm nay sau khi dọn (không bao giờ thêm)
 pnpm knip                # file, export, dependency không ai dùng (knip.json ở gốc, AH-01): chạy thường, rồi --production
                          #   (không tính spec, __fixtures__, fixtures/, test/: export chỉ test dùng cũng đỏ, trừ khi JSDoc có @internal);
                          #   hai hằng cố ý cùng giá trị thì đánh @alias

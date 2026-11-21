@@ -188,6 +188,20 @@ describe('elvaria() composes the rules in the right order', () => {
     expect(await severity('packages/domain/src/mana.ts', 'import-x/no-default-export')).toBe('[2');
   });
 
+  it('fails a new function above complexity 15, in a script as in a package (K9, AH-02)', async () => {
+    const ifs = (n: number) => Array.from({ length: n }, (_, i) => `  if (a === ${i}) return ${i};`);
+    const fn = (n: number) => ['export function f(a) {', ...ifs(n), '  return -1;', '}', ''].join('\n');
+    const complexity = async (n: number, file: string) => {
+      const [result] = await eslint.lintText(fn(n), { filePath: join(REPO, file) });
+      return result?.messages.filter((m) => m.ruleId === 'complexity').map((m) => m.message) ?? [];
+    };
+    expect(await complexity(14, 'scripts/new-script.mjs')).toEqual([]);
+    expect(await complexity(15, 'scripts/new-script.mjs')).toEqual([
+      "Function 'f' has a complexity of 16. Maximum allowed is 15.",
+    ]);
+    expect(await complexity(15, 'packages/steward/fixtures/fake.mjs')).toHaveLength(1);
+  });
+
   it('ignores the design handoff and docs', async () => {
     expect(await eslint.isPathIgnored(join(REPO, 'design/project/app.js'))).toBe(true);
     expect(await eslint.isPathIgnored(join(REPO, 'packages/domain/src/quest.ts'))).toBe(false);
