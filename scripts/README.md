@@ -174,7 +174,7 @@
   untracked files git does not ignore. `plan()` maps them through `RULES`, the "Change impact" table of CLAUDE.md as
   data (domain → `pnpm test` + `pnpm typecheck`; another workspace → `pnpm --filter @elvaria/<key> test`; i18n →
   `docs:gen --check`, `docs:check`, `i18n:check`; `scripts/` and `.claude/hooks/` → root vitest and tsc; docs and
-  package READMEs → `docs:check`; a contract → `schemas --check`; a manifest or `boundaries.mjs` → `boundaries`; any code, `knip.json` or the root manifest → `knip`), drops
+  package READMEs → `docs:check`; a contract → `schemas --check`; a manifest or `boundaries.mjs` → `boundaries`; any code, `knip.json` or the root manifest → `knip`; workspace code, `shape-clones.json` or its detector → `dup`), drops
   repeats and what `SUBSUMES` covers, and lists paths no rule covers. It prints the plan and runs the commands in
   order, stopping at the first failure; `--dry-run` only prints. `pnpm check` stays the gate before a merge. Reads git
   through `git merge-base`, `git diff` and `git ls-files` with a minimal env; writes nothing itself. Runs pnpm as
@@ -184,6 +184,15 @@
   out, so an export only tests use fails unless its JSDoc says `@internal`). The spec builds a throwaway workspace
   with the repo's `knip.json`, runs the script's two steps there and shows each red on a file nothing imports, an
   export nothing imports and an export only test code imports.
+- `shape-clones.mjs` (`shape-clones.spec.ts`) and `shape-detect.mjs` (`shape-detect.spec.ts`): the `pnpm dup`
+  gate (AH-13). `shape-detect.mjs` scans each file with the `typescript` scanner (templates and regular expressions
+  re-scanned as the parser would), leaves out imports and interfaces, makes identifiers, strings and numbers alike,
+  and pairs files that share a 50-token window (skipping data tables and shapes shared by more than 12 files).
+  `shape-clones.mjs` walks the runtime code of `packages/` and `apps/` (no spec, `index.ts`, `*.config.*` or test
+  helper) and compares the pairs of 60 tokens or more with `shape-clones.json`: a pair it does not hold, or one that
+  grew, is red; one that shrank or went is red until `--prune`; `--stats` prints the share of tokens in a clone. A
+  listed pair is `unreviewed` or `kept` with a reason, and the spec fails a branch that adds or raises an unreviewed
+  one. Reads files only; writes `shape-clones.json` with `--prune`.
 
 ## Does not
 
@@ -208,7 +217,7 @@
   (`ritual-steps.mjs`, read as a file), `@elvaria/i18n` (`GLOSSARY`,
   `LOCALE_FILES`, `DEFAULT_LOCALE`, `translator`, `bannedWords`, `glossaryTable`, `idsOf`, `isGlossaryTable`,
   `isIdList`, `glossaryProblems`, `localeProblems`), `dependency-cruiser` (`docs-graph.mjs`), `typescript`
-  (`docs-identifiers.mjs`), `ajv` + `ajv-formats` (`gen-schemas.spec.ts`), and `knip` (`knip-gate.spec.ts`).
+  (`docs-identifiers.mjs`, `shape-detect.mjs`), `ajv` + `ajv-formats` (`gen-schemas.spec.ts`), and `knip` (`knip-gate.spec.ts`).
 - `apps/cli` (`src/commands.ts`, `src/args.ts`, `src/command.ts`, `src/help.ts`), imported by `docs-cli.mjs` to
   render `docs/cli.md`; `src/metrics/read.ts` and `src/metrics/view.ts`, imported by `docs-metrics-report.mjs`.
 - Node built-ins (`node:child_process`, `node:fs`, `node:path`, `node:process`, `node:url`) and `git`
@@ -226,6 +235,7 @@ pnpm docs:check        # runs all repository documentation, link, and identifier
 pnpm i18n:check        # verifies locale keys, placeholders, and glossary.json shape
 pnpm check:changed --dry-run  # prints the checks the changed files call for
 pnpm knip              # no file, export or dependency nothing uses (knip.json)
+pnpm dup               # no shape clone of 60 tokens or more beyond shape-clones.json
 ```
 
 Each script takes an injected file or repository abstraction (`Files`, `Repo`, or pure arguments) so its
