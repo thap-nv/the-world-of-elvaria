@@ -1,6 +1,7 @@
-// Whether a ToolPolicy stops a shell command: the fences only (deny rules and laws), not the whole permission
-// model of a CLI. FakeRunner enforces it when it declares `tool_gate`, so the conformance suite can tell a gate
-// that blocks from one that only claims to.
+// Whether a ToolPolicy stops a shell command: the fences only (deny rules, laws and the places that hold secrets), not
+// the whole permission model of a CLI. FakeRunner enforces it when it declares `tool_gate`, so the conformance suite can
+// tell a gate that blocks from one that only claims to.
+import { globToRegExp } from '../checks/glob.ts';
 import { SHELL_TOOL } from './constants.ts';
 import type { ToolPolicy } from './tool-policy.ts';
 
@@ -16,6 +17,26 @@ function bashRuleMatches(rule: string, command: string): boolean {
   return command === prefix || command.startsWith(`${prefix} `);
 }
 
+/**
+ * The glob of `secret_paths` that a word of `command` names at some depth (SEC-01). Coarser than the hook, which keeps
+ * the plot's own folders open: a fake session never names one, so the model of the fence need not.
+ */
+function secretPathOf(policy: ToolPolicy, command: string): string | undefined {
+  const globs = (policy.secret_paths ?? []).map((glob) => ({ glob, regex: globToRegExp(glob) }));
+  for (const word of command.replace(/["'`]/g, ' ').split(/[\s;|&<>(){}=,]+/)) {
+    const segments = word
+      .replaceAll('\\', '/')
+      .split('/')
+      .filter((segment) => segment !== '');
+    for (let start = 0; start < segments.length; start += 1) {
+      const tail = segments.slice(start).join('/');
+      const named = globs.find(({ regex }) => regex.test(tail));
+      if (named !== undefined) return named.glob;
+    }
+  }
+  return undefined;
+}
+
 /** Why the policy refuses `command`, or undefined when no fence stops it. */
 export function commandRefusal(policy: ToolPolicy, command: string): string | undefined {
   const line = command.trim();
@@ -23,5 +44,7 @@ export function commandRefusal(policy: ToolPolicy, command: string): string | un
   const rule = policy.deny.find((deny) => bashRuleMatches(deny, line));
   if (rule !== undefined) return `denied by rule ${rule}`;
   const law = policy.laws.forbidden_commands.find((pattern) => new RegExp(pattern, 'i').test(line));
-  return law === undefined ? undefined : `forbidden by law /${law}/`;
+  if (law !== undefined) return `forbidden by law /${law}/`;
+  const secret = secretPathOf(policy, line);
+  return secret === undefined ? undefined : `names a place that holds secrets (${secret})`;
 }

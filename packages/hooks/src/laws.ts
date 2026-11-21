@@ -20,6 +20,8 @@ export interface LawExtras {
   readonly ownProtected?: readonly string[] | undefined;
   /** Policy `patch_file` (P1-28): where the assignee writes its patch; absent, no patch is offered. */
   readonly patchFile?: string | undefined;
+  /** Policy `secret_paths` (SEC-01): the places that hold the owner's secrets. */
+  readonly secretPaths?: readonly string[] | undefined;
 }
 
 export type CompiledPaths = readonly { readonly glob: string; readonly regex: RegExp }[];
@@ -40,6 +42,8 @@ export interface CompiledLaws {
   readonly patchPaths: CompiledPaths;
   readonly patchFile: string | undefined;
   readonly commands: readonly { readonly source: string; readonly regex: RegExp }[];
+  /** Neither named by a tool nor by a shell line, unless inside the plot (policy `secret_paths`, secret-place.ts). */
+  readonly secretPaths: CompiledPaths;
   /** Why the laws could not be loaded; then every guarded call is blocked (fail closed). */
   readonly broken: string | undefined;
 }
@@ -52,6 +56,7 @@ export const NO_LAWS: CompiledLaws = {
   patchPaths: [],
   patchFile: undefined,
   commands: [],
+  secretPaths: [],
   broken: undefined,
 };
 
@@ -83,6 +88,7 @@ export function compileLaws(laws: LawsInput, extras: LawExtras = {}): CompiledLa
     patchPaths: extras.patchFile === undefined ? [] : compilePaths(laws.patch_paths),
     patchFile: extras.patchFile,
     commands,
+    secretPaths: compilePaths(extras.secretPaths),
     broken: undefined,
   };
 }

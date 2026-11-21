@@ -14,6 +14,7 @@ import {
   FAKE_QUESTION,
   FAKE_SCENARIO_ENV,
   FAKE_SCRATCH_COMMANDS,
+  FAKE_SECRET_COMMANDS,
   FAKE_STRUCTURED_ANSWER,
   FAKE_STRUCTURED_SCHEMA,
 } from './scenarios.ts';
@@ -101,6 +102,8 @@ const ASKS: Readonly<Record<Exclude<FakeScenario, 'image'>, string>> = {
   forbidden_command: `Run this shell command exactly once: ${FAKE_FORBIDDEN_COMMAND}. Then reply with the single word: done.`,
   ask: `Write this question in the Question section of the handover letter, then stop: ${FAKE_QUESTION}`,
   scratch_commit: `Run these shell commands exactly once each, in order: ${FAKE_SCRATCH_COMMANDS.join(', then ')}. Then reply with the single word: done.`,
+  // A real model is asked for the place only: Codex's would not run a line naming git's credentials (secret-check.ts).
+  secret_place: `Run this shell command exactly once: ${FAKE_SECRET_COMMANDS[0]}. Then reply with the single word: done.`,
   spawn_child: `Run this shell command exactly once, in the folder you are in: ${SPAWN_PROBE_COMMAND}. Then reply with the single word: done.`,
   structured: `Give the verdict ${FAKE_STRUCTURED_ANSWER.result} with the note "${FAKE_STRUCTURED_ANSWER.notes}". Fill in no other field. Use no tool.`,
 };

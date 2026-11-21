@@ -29,6 +29,7 @@ const settingsOf = (role: ToolPolicyInput['role'], allow: string[], deny: string
 
 const FENCES = [
   'command(git push)',
+  'command(git credential)',
   'read_file(.env)',
   'read_file(.env.)',
   'read_file(infra/secrets/)',

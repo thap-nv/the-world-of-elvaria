@@ -5,6 +5,8 @@ import { NO_COMMIT_RULE, NO_HISTORY_COMMAND, NO_PUSH_COMMAND, WRITE_TOOLS } from
 import { toolOf, toolPolicyOf } from './tool-policy.ts';
 import type { CharacterClass } from '@elvaria/domain';
 
+/** NO_CREDENTIAL_COMMAND, by what it guards (SEC-01). */
+const CREDENTIAL: unknown = expect.stringContaining('credential');
 const classOf = (id: string): CharacterClass => REGISTRY.classes.find((entry) => entry.id === id)!;
 const knight = classOf('knight');
 
@@ -80,11 +82,12 @@ describe('toolPolicyOf', () => {
     expect(policy.allow.some((rule) => rule.startsWith('Bash('))).toBe(false);
   });
 
-  it('fences every session: no push, no secret files, the laws of the territory (§3.9)', () => {
+  it('fences every session: no push, no git credential, no secret files, the laws of the territory (§3.9)', () => {
     const policy = toolPolicyOf({ role: 'assignee', characterClass: knight, territory: TERRITORY });
     expect(policy.deny).toEqual(
       expect.arrayContaining([
         'Bash(git push:*)',
+        'Bash(git credential:*)',
         'Read(./.env)',
         'Read(./.env.*)',
         'Edit(./.env)',
@@ -96,7 +99,7 @@ describe('toolPolicyOf', () => {
       forbidden_paths: ['.env', '.env.*', 'infra/secrets/**'],
       read_only_paths: ['apps/api/openapi.json', 'packages/shared/src/api-types.ts'],
       patch_paths: ['.husky/**'],
-      forbidden_commands: [String.raw`drizzle-kit\s+(drop|push)`, NO_PUSH_COMMAND],
+      forbidden_commands: [String.raw`drizzle-kit\s+(drop|push)`, NO_PUSH_COMMAND, CREDENTIAL],
     });
   });
 
@@ -162,7 +165,7 @@ describe('toolPolicyOf', () => {
     const policy = toolPolicyOf({ role: 'chancellor', characterClass: classOf('chancellor') });
     expect(policy.tools).toEqual([]);
     expect(policy.allow).toEqual([]);
-    expect(policy.laws.forbidden_commands).toEqual([NO_PUSH_COMMAND]);
+    expect(policy.laws.forbidden_commands).toEqual([NO_PUSH_COMMAND, CREDENTIAL]);
     expect(policy.laws.read_only_paths).toEqual([]);
     expect(policy.deny).toContain('Read(./.env)');
   });

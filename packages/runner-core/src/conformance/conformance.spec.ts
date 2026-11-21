@@ -48,6 +48,7 @@ describe('the conformance suite', () => {
       'submit',
       'hang',
       'forbidden_command',
+      'secret_place',
       'spawn_child',
       'structured',
       'image',
@@ -61,6 +62,7 @@ describe('the conformance suite', () => {
     expect(reports.filter(({ outcome }) => outcome !== 'passed')).toEqual([
       { id: 'rate_limit', outcome: 'skipped', tokens: 0 },
       { id: 'forbidden_command', outcome: 'skipped', tokens: 0 },
+      { id: 'secret_place', outcome: 'skipped', tokens: 0 },
       { id: 'structured', outcome: 'skipped', tokens: 0 },
       { id: 'image', outcome: 'skipped', tokens: 0 },
       { id: 'scratch_commit', outcome: 'skipped', tokens: 0 },
@@ -145,6 +147,7 @@ describe('the conformance suite', () => {
       'hang',
       'rate_limit',
       'forbidden_command',
+      'secret_place',
       'spawn_child',
       'structured',
       'scratch_commit',
@@ -153,6 +156,9 @@ describe('the conformance suite', () => {
     expect(reports.find(({ id }) => id === 'structured')?.problem).toContain('gave no structured answer');
     expect(reports.find(({ id }) => id === 'forbidden_command')?.problem).toContain(
       '`git push` was not refused',
+    );
+    expect(reports.find(({ id }) => id === 'secret_place')?.problem).toContain(
+      '`git status --short -- ~/.codex/config.toml` was not refused',
     );
     // A session that never runs the probe (P1-12e).
     expect(reports.find(({ id }) => id === 'spawn_child')?.problem).toContain(

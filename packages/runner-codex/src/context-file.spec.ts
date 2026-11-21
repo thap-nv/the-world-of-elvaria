@@ -43,6 +43,15 @@ describe('codexNote', () => {
     expect(note).not.toMatch(/apply_patch|git commit fail/);
   });
 
+  it('tells a class with a shell that its commands have no network, the loopback included (SEC-01)', () => {
+    for (const writes of [true, false]) {
+      expect(codexNote({ tools: ['Read', 'Edit', 'Bash'] }, writes, false)).toMatch(
+        /no network, not even 127\.0\.0\.1/,
+      );
+    }
+    expect(codexNote({ tools: ['Read', 'Glob', 'Grep'] }, false, false)).not.toMatch(/network/);
+  });
+
   it("names what Windows' mxc sandbox breaks, for a knight and a judge alike, and only on Windows (gap 21)", () => {
     for (const [tools, writes] of [
       [['Read', 'Edit', 'Bash'], true],

@@ -45,7 +45,9 @@ image_generation -m <model> -c … --dangerously-bypass-hook-trust [--output-sch
   tool, `read-only` otherwise), `windows.sandbox="mxc"` (`WINDOWS_SANDBOX`, P1-12e: Windows' own isolation, no
   administrator, no setup, and a command may start its children; `unelevated` refused a piped child, `spawn EPERM`,
   so no Vitest, esbuild or `pnpm -r`), the temp folders out of the writable roots and the quest's folder in (the
-  handover letter), the network on, `history.persistence="none"`, `project_doc_max_bytes`, `web_search` (`live`
+  handover letter), no network (`network_access=false`, SEC-01: the sandbox fences writes, not reads, so a command reads
+  any file of the owner and the network is what keeps it in; off closes 127.0.0.1 too, and `AGENTS.override.md` of a
+  class with a shell says so, `NO_NETWORK_NOTE`), `history.persistence="none"`, `project_doc_max_bytes`, `web_search` (`live`
   for a class with WebFetch or WebSearch), `model_reasoning_effort` from the slug's end (`gpt-6-luna-low`), and the
   four hooks (`SessionStart`, `PreToolUse`, `PostToolUse`, `Stop`) as session flags, each with a POSIX `command`
   and a PowerShell `command_windows` (`& '<node>' '<arg>' …`), `--policy <run_dir>/policy.json --dialect codex`.
@@ -87,7 +89,10 @@ blocked by PreToolUse hook: <reason>. Command: <command>`) into `tool_blocked` s
 - Pass `--dangerously-bypass-approvals-and-sandbox`, `--worktree` or `--ephemeral` (a resumed session needs its
   rollout); pass the hook-trust bypass without the `hooks/list` check.
 - Enforce a class's Bash rules command by command: Codex has no per-command allow rules. The sandbox fences the
-  writes, the hook the laws, `git push`, the scratch plot's history and the class's tools (spike §5).
+  writes, the hook the laws, `git push`, the scratch plot's history and the class's tools (spike §5), and the places
+  that hold the owner's secrets (policy `secret_paths`, `git credential`, SEC-01). That is a fence on the command
+  line, not a sandbox: Codex's sandbox reads the whole disk (cli-facts 2026-11-21 §2), so a program the line starts
+  (`node script.js`, a test) reads what it likes, and only the closed network keeps it in.
 - Spawn or kill a session itself: runner-core's `startChild` (with the prompt on stdin) and `killTree` do. Only the
   app-server client spawns its own child, because it talks both ways.
 
@@ -108,8 +113,9 @@ pnpm --filter @elvaria/hooks build && ELVARIA_LIVE=1 pnpm --filter @elvaria/runn
 ```
 
 With `ELVARIA_LIVE=1`, `live-sandbox.spec.ts` checks each fence of a writing session (its plot and quest folder
-writable; nothing beside the plot, nothing in the machine's temp folder, nothing in `.git`, no commit; the network
-on; a piped child starts) through `codex app-server` → `command/exec` with the session's own `-c` settings, no model
+writable; nothing beside the plot, nothing in the machine's temp folder, nothing in `.git`, no commit; a decoy file
+outside the plot readable, writing or read-only, since only the hook fences a secret place; no network, not even
+127.0.0.1; a piped child starts) through `codex app-server` → `command/exec` with the session's own `-c` settings, no model
 call; then one session runs a test repo's `pnpm test` (Vitest) and `pnpm build` (esbuild), installed with the pnpm
 that runs the spec (`npm_execpath`), and a script that tries to write outside. On Windows `fake-codex-unelevated.mjs`
 gives the fake P1-12d's sandbox, where the spawn probe's child fails with `EPERM` as it did on the real CLI.

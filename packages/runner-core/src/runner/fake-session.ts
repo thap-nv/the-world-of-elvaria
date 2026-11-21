@@ -7,6 +7,7 @@ import {
   FAKE_FORBIDDEN_COMMAND,
   FAKE_QUESTION,
   FAKE_SCRATCH_COMMANDS,
+  FAKE_SECRET_COMMANDS,
   FAKE_STRUCTURED_ANSWER,
   fakeLetter,
 } from '../conformance/scenarios.ts';
@@ -92,6 +93,7 @@ const SCRIPTS: Readonly<Record<FakeScenario, (play: Play) => Promise<Ending | un
   },
   forbidden_command: (play) => Promise.resolve(forbidden(play)),
   scratch_commit: (play) => Promise.resolve(forbidden(play, FAKE_SCRATCH_COMMANDS)),
+  secret_place: (play) => Promise.resolve(forbidden(play, FAKE_SECRET_COMMANDS)),
   // The probe runs for real: what this machine allows a session's command (P1-12e).
   spawn_child: async (play) => {
     await runSpawnProbe(play.start.req.cwd);

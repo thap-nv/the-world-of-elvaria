@@ -13,7 +13,9 @@ Hiện tại (giai đoạn 1.5):
 
 - **R1 · Code do phiên chạy có quyền của chủ nhân.** Hàng rào gác tool của nhân vật, không gác chương trình mà tool
   khởi động: `pnpm test`, `node`, `pnpm install`, shell của Codex đọc được kho bảo vật, đăng nhập của các tộc, kho
-  credential của git, khóa SSH, và ra được mạng.
+  credential của git, khóa SSH, và ra được mạng. (Sửa tại chỗ 2026-11-21, SEC-01: dòng shell và đường dẫn của tool
+  nêu các chỗ đó bị hook từ chối ở cả ba tộc, và shell của Codex không còn mạng; chương trình mà dòng lệnh khởi
+  động vẫn đọc được, và ở Claude Code, agy vẫn ra được mạng.)
 - **R2 · Thư mục kingdom là vùng tin tuyệt đối.** Ai ghi được một file vào `inbox/` thì có quyền chủ nhân (`source`
   tự khai), ghi được `adapters/*.mjs` thì chạy code trong tiến trình Nhiếp chính.
 - **R3 · Token giao hàng rộng hơn việc nó làm.** `git credential fill` trả credential của cả tài khoản GitHub, và
@@ -51,7 +53,7 @@ Giai đoạn 2:
 1. **Máy chủ nhân ↔ bên ngoài.** Tới giai đoạn 1.5 không có cổng nghe nào; Elvaria chỉ gọi ra (CLI của tộc, GitHub).
 2. **Nhiếp chính ↔ thư mục kingdom.** Nhiếp chính tin mọi file trong kingdom.
 3. **Nhiếp chính ↔ phiên nhân vật** (worktree). Phiên chạy cùng người dùng hệ điều hành; ngăn cách bằng luật của CLI
-   và hook, không phải sandbox (trừ Codex).
+   và hook, không phải sandbox (trừ Codex, mà sandbox rào ghi và mạng, không rào đọc: SEC-01, 2026-11-21).
 4. **Nhân vật ↔ nội dung lãnh thổ và web.** File trong repo, kết quả WebFetch/WebSearch là dữ liệu, có thể mang lệnh.
 5. **Elvaria ↔ CLI của tộc.** Binary bên thứ ba tự cập nhật; adapter chủ nhân viết chạy với quyền của chủ nhân.
 6. **Mạng (giai đoạn 2):** trình duyệt trên máy ↔ Sứ giả; điện thoại ↔ đường hầm ↔ Sứ giả; Nhiếp chính ↔ dịch vụ
@@ -66,9 +68,9 @@ Cột STRIDE: S giả danh, T sửa đổi, R chối bỏ, I lộ tin, D từ ch
 
 | # | Đường | Đang có | Chỗ hở | Mức |
 |---|---|---|---|---|
-| A1 | I, E: phiên đọc secret ngoài plot bằng tool đọc | Tool đọc ngoài plot bị từ chối: `packages/hooks/src/outside.ts:29-43`; `.env` cấm đọc ghi: `packages/runner-core/src/policy/constants.ts:38`; đường cấm khớp mọi chữ của dòng shell: `packages/hooks/src/laws.ts:171-184` | Hàng rào chỉ áp cho tool đọc (`outside.ts:34`), không cho dòng shell | Thấp |
+| A1 | I, E: phiên đọc secret ngoài plot bằng tool đọc | Tool đọc ngoài plot bị từ chối: `packages/hooks/src/outside.ts:29-43`; `.env` cấm đọc ghi: `packages/runner-core/src/policy/constants.ts:38`; đường cấm khớp mọi chữ của dòng shell: `packages/hooks/src/laws.ts:171-184` | Hàng rào chỉ áp cho tool đọc (`outside.ts:34`), không cho dòng shell. (Sửa tại chỗ 2026-11-21, SEC-01: chỗ chứa bí mật ngoài mọi lãnh thổ, `secret_paths` của `packages/runner-core/src/policy/constants.ts`, bị từ chối cả trong đường dẫn của tool lẫn trong chữ của dòng shell, ở cả ba tộc: `packages/hooks/src/secret-place.ts`; hàng rào trên dòng lệnh, không là sandbox) | Thấp |
 | A2 | I, E: code phiên khởi động (`pnpm test`, `node`, `pnpm install`) đọc kho bảo vật, `~/.ssh`, kho credential, rồi gửi ra mạng | Shell theo danh sách cho phép của nghề (`packages/registry-default/classes.json`); env tối thiểu, không có secret ngoài `secrets_required` (`packages/runner-core/src/treasury/session-env.ts:28-38`); `git push` cấm (`constants.ts:25`) | Env tối thiểu vẫn có `HOME`/`USERPROFILE`/`APPDATA` (`treasury/minimal-env.ts:11-26`) vì CLI cần để tìm đăng nhập; test là code tùy ý; không chặn mạng. ADR 0007 đã nói "hàng rào, không phải sandbox" | **Cao** |
-| A3 | I, E: shell của Codex | Sandbox `workspace-write`/`read-only`, thư mục tạm ngoài vùng ghi (`packages/runner-codex/src/args.ts:45-50`) | Theo code: mạng bật (`args.ts:50`), sandbox không chặn đọc ngoài plot, và `policy.json` không mang danh sách lệnh cho phép (`packages/hooks/src/policy.ts:82-91`), nên hook chỉ gác theo tên tool, deny và luật. Chưa thử bằng CLI thật | **Cao** |
+| A3 | I, E: shell của Codex | Sandbox `workspace-write`/`read-only`, thư mục tạm ngoài vùng ghi (`packages/runner-codex/src/args.ts:45-50`) | Theo code: mạng bật (`args.ts:50`), sandbox không chặn đọc ngoài plot, và `policy.json` không mang danh sách lệnh cho phép (`packages/hooks/src/policy.ts:82-91`), nên hook chỉ gác theo tên tool, deny và luật. Chưa thử bằng CLI thật. (Sửa tại chỗ 2026-11-21, SEC-01, đo trên codex-cli 0.171.0-alpha.13, [cli-facts 2026-11-21](../reference/cli-facts-2026-11-21.md) §2: sandbox đọc được mọi file, cả ở `read-only`; mạng nay tắt, cả `127.0.0.1` (`args.ts:52`, chủ nhân chốt); hook rào chỗ bí mật trên dòng lệnh như hai tộc kia, không thêm danh sách lệnh cho phép vì shell là tool đọc của Codex. Còn hở: chương trình mà lệnh khởi động đọc được chỗ bí mật, và model đọc được thì đưa được vào câu trả lời) | Vừa (trước SEC-01: **Cao**) |
 | A4 | T: tiêm prompt từ file lãnh thổ hay trang web khiến phiên làm A2, hoặc viết code xấu | WebFetch chỉ cho do thám và phán quan; phán quan không Edit/Write; check máy là trọng tài; verifier khác người làm (ADR 0008) | Do thám có WebFetch và đọc được cả plot: nội dung repo đi ra ngoài qua URL. Phán quan có WebFetch cùng `pnpm test` | Vừa |
 | A5 | T, E: phiên sửa `.git/config` của lãnh thổ qua code nó chạy (`core.fsmonitor`, `core.sshCommand`, `credential.helper`) để git của Nhiếp chính chạy chương trình lạ | Tool ghi không chạm `.git/**` (`constants.ts:47`); Codex để `.git` chỉ đọc | Git của plot và của giao hàng không tắt các khóa cấu hình đó; `credential fill` chạy trong thư mục lãnh thổ (`apps/cli/src/forge/credential.ts:62`) | Vừa |
 | A6 | T: phiên ghi vào kingdom (`inbox/`, `adapters/`) qua code nó chạy | Tool ghi chỉ trong plot và lá thư bàn giao; hook đóng khi không đọc được policy | Xem R2: không có gì chặn một chương trình con ghi vào kingdom; đường dẫn kingdom nằm trong `ELVARIA_*` | **Cao** |
@@ -152,7 +154,7 @@ lõi khó hay cần phán đoán thiết kế thì một phiên tự làm.
 
 | Việc | Cỡ | `scope_paths` | Điều kiện xong | Ai làm |
 |---|---|---|---|---|
-| V1 · Hàng rào shell cho chỗ chứa bí mật: dòng shell nhắc tới file kho bảo vật, `.ssh`, `.git-credentials`, thư mục cấu hình của tộc, hay `git credential` thì bị từ chối ở cả ba tộc | M | `packages/runner-core/src/policy/**`, `packages/hooks/src/**` | Kịch bản conformance mới bị từ chối ở Claude, agy, Codex; README nói rõ đây là hàng rào | Phiên tự làm (hook là `protected_paths`, lõi bảo mật) |
+| V1 · Hàng rào shell cho chỗ chứa bí mật: dòng shell nhắc tới file kho bảo vật, `.ssh`, `.git-credentials`, thư mục cấu hình của tộc, hay `git credential` thì bị từ chối ở cả ba tộc | M | `packages/runner-core/src/policy/**`, `packages/hooks/src/**` (thực tế SEC-01 chạm thêm `runner-core/src/conformance/**` và `src/runner/**`, CLI giả của ba adapter cùng hook giả của `runner-claude/fixtures`, `runner-codex/src/**` cho mạng, `eslint-suppressions.json`) | Kịch bản conformance mới bị từ chối ở Claude, agy, Codex; README nói rõ đây là hàng rào | Phiên tự làm (hook là `protected_paths`, lõi bảo mật) |
 | V2 · Git của Nhiếp chính không nghe cấu hình repo: `credential fill` chạy ngoài thư mục lãnh thổ; git của plot và giao hàng thêm `-c core.fsmonitor=false`, bỏ `core.sshCommand` | S | `apps/cli/src/forge/credential.ts`, `packages/runner-core/src/plot/git.ts`, `packages/steward/src/forge/git.ts` | Test: repo có `credential.helper` và `core.fsmonitor` độc không chạy chương trình nào | Phiên tự làm (đổi một lựa chọn của PS-08, B5) |
 | V3 · Ghim hash của file adapter trong `kingdom.tribes[]`; lệch thì không nạp | S | `apps/cli/src/tribe/**`, schema tộc | Test: file đổi sau khi bật thì `run` từ chối và nêu cách bật lại | Giao quest (cần dấu vua vì chạm schema) |
 | V4 · Quét secret của chính repo trước commit bằng mẫu `redact` sẵn có, và `pnpm audit:prod` cho lượt merge | S | `scripts/**`, `package.json`, `.husky/**` | Commit có token giả bị chặn; `pnpm check` vẫn không cần mạng | Giao quest |

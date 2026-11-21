@@ -184,7 +184,7 @@
   },
   "packages/runner-codex/src/live-sandbox.spec.ts": {
     "elvaria/timeout-reason": {
-      "count": 7
+      "count": 6
     }
   },
   "packages/runner-codex/src/live.spec.ts": {

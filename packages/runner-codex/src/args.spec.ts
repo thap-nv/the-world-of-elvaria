@@ -89,9 +89,10 @@ describe('configOf: the fences of a writing session', () => {
       expect(config).toContain('sandbox_workspace_write.exclude_slash_tmp=true');
     }));
 
-  it('opens the network, as the other tribes have it', () =>
+  it('closes the network of a writing session, which may read any file (SEC-01)', () =>
     withConfig((config) => {
-      expect(config).toContain('sandbox_workspace_write.network_access=true');
+      expect(config).toContain('sandbox_workspace_write.network_access=false');
+      expect(config).not.toContain('sandbox_workspace_write.network_access=true');
       expect(config).toContain('web_search="disabled"');
     }));
 

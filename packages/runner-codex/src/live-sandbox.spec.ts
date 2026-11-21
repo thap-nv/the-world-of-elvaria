@@ -30,6 +30,21 @@ const MINUTE = 60_000;
 /** What a write attempt became: `written`, or the error's code. */
 const WRITE = `const tryWrite = (file) => { try { require('node:fs').writeFileSync(file, 'x'); require('node:fs').rmSync(file); return 'written'; } catch (error) { return error.code ?? String(error); } };`;
 
+/** What a request reached: the status, or `ERR <code>`. By name, by address, and a server of its own on the loopback. */
+const reached = (url: string): string =>
+  `fetch(${JSON.stringify(url)}, { method: 'HEAD' }).then((r) => process.stdout.write(String(r.status)), (e) => process.stdout.write('ERR ' + String(e.cause?.code ?? e)))`;
+const FETCH_NAME = reached('https://registry.npmjs.org/');
+const FETCH_ADDRESS = reached('http://1.1.1.1/');
+const LOOPBACK = `const s = require('node:http').createServer((q, r) => r.end('ok')).listen(0, '127.0.0.1', () => fetch('http://127.0.0.1:' + s.address().port + '/').then((r) => { process.stdout.write(String(r.status)); s.close(); }, (e) => { process.stdout.write('ERR ' + String(e.cause?.code ?? e)); s.close(); }))`;
+
+/** A judge in its own plot: no write tool, so Codex's read-only sandbox. */
+const judgeRequest = (world: World): SpawnRequest =>
+  request(
+    world,
+    {},
+    { role: 'verifier', permissions: { ...request(world).permissions, tools: ['Read', 'Bash'] } },
+  );
+
 let codex = '';
 beforeAll(async () => {
   if (!LIVE) return;
@@ -43,8 +58,8 @@ interface Exec {
 }
 
 /** `argv` under the sandbox a writing session on `world` gets, through the app-server: no model call. */
-async function sandboxed(world: World, argv: readonly string[]): Promise<Exec> {
-  const config = configOf(request(world));
+async function sandboxed(world: World, argv: readonly string[], req = request(world)): Promise<Exec> {
+  const config = configOf(req);
   const args = [
     ...FEATURES_OFF.flatMap((feature) => ['--disable', feature]),
     ...config.flatMap((setting) => ['-c', setting]),
@@ -105,9 +120,32 @@ describe.runIf(LIVE)('live: the fences of a writing session (command/exec, 0 man
     expect((await sandboxed(world, [process.execPath, '-e', commit])).stdout).not.toBe('0');
   });
 
-  it('reaches the network, as the other tribes do', { timeout: 3 * MINUTE }, async () => {
-    const script = `fetch('https://registry.npmjs.org/', { method: 'HEAD' }).then((r) => process.stdout.write(String(r.status)), (e) => process.stdout.write(String(e.cause?.code ?? e)));`;
-    expect(Number((await sandboxed(world, [process.execPath, '-e', script])).stdout)).toBeLessThan(500);
+  // SEC-01 (codex 0.171.0-alpha.13, cli-facts 2026-11-21): the sandbox fences writes, not reads. The decoy has a
+  // secret's name and no secret: what a command reads anywhere on the disk, only the hook can keep out of its line.
+  it(
+    'reads a file outside its plot, writing or read-only: only the hook fences it',
+    { timeout: 3 * MINUTE },
+    async () => {
+      const decoy = path.join(world.root, 'home', '.ssh', 'id_decoy');
+      await mkdir(path.dirname(decoy), { recursive: true });
+      await writeFile(decoy, 'decoy-not-a-key', 'utf8');
+      const read = `process.stdout.write(require('node:fs').readFileSync(${JSON.stringify(decoy)}, 'utf8'))`;
+      expect((await sandboxed(world, [process.execPath, '-e', read])).stdout).toBe('decoy-not-a-key');
+      expect((await sandboxed(world, [process.execPath, '-e', read], judgeRequest(world))).stdout).toBe(
+        'decoy-not-a-key',
+      );
+    },
+  );
+
+  // SEC-01: what is read cannot leave. Off means off: DNS, an address, and the loopback, which a test's own server
+  // needs too (owner's choice, §11 of 2026-11-21); the Steward's checks run outside the sandbox.
+  it('reaches no network, not even 127.0.0.1, writing or read-only', { timeout: 6 * MINUTE }, async () => {
+    for (const req of [request(world), judgeRequest(world)]) {
+      const outcomes = [];
+      for (const script of [FETCH_NAME, FETCH_ADDRESS, LOOPBACK])
+        outcomes.push((await sandboxed(world, [process.execPath, '-e', script], req)).stdout);
+      expect(outcomes.filter((outcome) => !outcome.startsWith('ERR '))).toEqual([]);
+    }
   });
 
   it('starts a child process with piped stdio from a command', { timeout: 3 * MINUTE }, async () => {

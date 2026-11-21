@@ -5,6 +5,7 @@
 import { classViolation, missingTools } from '../class-gate.ts';
 import { lawViolation, protectedViolation, refusalText } from '../claude/tool-events.ts';
 import { outsideReadViolation } from '../outside.ts';
+import { secretPlaceViolation } from '../secret-place.ts';
 import { plotPath } from '../claude/tools.ts';
 import { modelSlugOf } from '../claude/translate.ts';
 import { patchPathsOf } from '../codex/tools.ts';
@@ -80,7 +81,10 @@ function preTool(input: NeutralInput, ctx: HookContext): Translation {
   const call = callOf(input);
   const rule = ruleViolation(input, call, ctx) ?? protectedViolation(call, ctx.laws);
   const law = rule ?? lawViolation(call, ctx.laws);
-  const reason = law ?? outsideReadViolation(call, textAt(input.raw, input.dialect.cwd), ctx);
+  const reason =
+    law ??
+    secretPlaceViolation(call, textAt(input.raw, input.dialect.cwd), ctx.laws) ??
+    outsideReadViolation(call, textAt(input.raw, input.dialect.cwd), ctx);
   const { answers } = input.dialect;
   if (reason === undefined) return translation([], { decision: answers.pass });
   const source = rule === undefined && law !== undefined ? 'law of this territory' : 'rule';

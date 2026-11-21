@@ -106,6 +106,16 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
   a shell runs them one plain call per line (Claude: a `Bash` call of a class whose policy `tools` lack it, the shell
   runner-claude gives for these alone; agy: as `search_commands`).
 - Refuses a read tool of any tribe (Claude `Read`, agy `read_file`/`view_file`, Codex `view_image`, a neutral dialect's `read`) outside the session's plot unless it names one of policy `images`, the screens of a judge's review, or the quest's handover letter (PS-11b, `src/outside.ts`), after the territory's laws: the second fence of Claude Code and agy, the only one of Codex, whose `view_image` reads any file whatever its sandbox.
+- Refuses, as an Elvaria rule for every tribe and dialect (SEC-01, threat model V1, `src/secret-place.ts`), a tool
+  path or a word of a shell line that names a place holding the owner's secrets, at any depth: policy
+  `secret_paths` (runner-core's `SECRET_PATHS`: `.ssh/`, `.git-credentials`, git's credential file, the treasury and
+  the tribes' accounts, the CLIs' folders `.claude/`, `.codex/`, `.gemini/` and `.claude.json`), after the
+  territory's laws and before the read fence. A word that stays inside the plot is the territory's own (a repo's
+  `.claude/`), unless the line changes folder (`cd`, `pushd`, `Set-Location`…) or names the home folder (`~`,
+  `$HOME`, `%USERPROFILE%`, `$env:USERPROFILE`, `os.homedir()`…). `git credential` is a law like `git push`
+  (`forbidden_commands`). A fence on the command line, **not a sandbox**: a program the line starts reads what it
+  likes, and a name built at run time (`'.s' + 'sh'`) gets through (ADR 0007); Codex's sandbox reads the whole disk
+  (cli-facts 2026-11-21 §2).
 
 ## Does not
 

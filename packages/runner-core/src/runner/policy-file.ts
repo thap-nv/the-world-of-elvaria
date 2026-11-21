@@ -18,7 +18,7 @@ export const POLICY_FILE = 'policy.json';
 /**
  * `secrets` and `tools` (P1-10), `apprentice_models` (P1-17), `laws.read_only_paths` and `cli_protected_paths`
  * (P1-24), `laws.patch_paths` and `patch_file` (P1-28), `search_commands` (P1-53), `graph_commands` (PS-21), `dialect` (PS-23),
- * `images` (PS-11b) are optional fields added later: a v1 reader without them still reads the rest. Since P1-49 every file has `cli_protected_paths`, with git's own folder.
+ * `images` (PS-11b), `secret_paths` (SEC-01) are optional fields added later: a v1 reader without them still reads the rest. Since P1-49 every file has `cli_protected_paths`, with git's own folder.
  */
 export const POLICY_VERSION = 1;
 
@@ -74,6 +74,11 @@ export interface PolicyFile extends RunContext {
    * image is read outside the plot.
    */
   readonly images?: readonly string[];
+  /**
+   * ToolPolicy.secret_paths (SEC-01): globs of the places that hold the owner's secrets. The hook refuses a tool path or a
+   * word of a shell line that names one, at any depth, unless the word stays inside the plot. Absent: no such fence.
+   */
+  readonly secret_paths?: readonly string[];
 }
 
 /** What only the adapter knows, for the policy file. */
@@ -98,7 +103,10 @@ const protectedOf = (extras: PolicyExtras): string[] => [
 const ownProtectedOf = (extras: PolicyExtras): string[] =>
   GIT_PATHS.filter((glob) => !(extras.cli_protected_paths ?? []).includes(glob));
 
-type PolicyPart = Pick<ToolPolicy, 'tools' | 'laws' | 'search_commands' | 'graph_commands' | 'images'>;
+type PolicyPart = Pick<
+  ToolPolicy,
+  'tools' | 'laws' | 'search_commands' | 'graph_commands' | 'images' | 'secret_paths'
+>;
 
 export const policyFileOf = (ctx: RunContext, policy: PolicyPart, extras: PolicyExtras = {}): PolicyFile => ({
   version: POLICY_VERSION,
@@ -118,6 +126,7 @@ export const policyFileOf = (ctx: RunContext, policy: PolicyPart, extras: Policy
   ...(policy.graph_commands === undefined ? {} : { graph_commands: [...policy.graph_commands] }),
   ...(extras.dialect === undefined ? {} : { dialect: extras.dialect }),
   ...(policy.images === undefined ? {} : { images: [...policy.images] }),
+  ...(policy.secret_paths === undefined ? {} : { secret_paths: [...policy.secret_paths] }),
 });
 
 /** Writes the run's policy file and returns its native path, for `hookCommand(policyFile)`. */
