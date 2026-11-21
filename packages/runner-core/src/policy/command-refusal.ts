@@ -3,6 +3,7 @@
 // tell a gate that blocks from one that only claims to.
 import { globToRegExp } from '../checks/glob.ts';
 import { SHELL_TOOL } from './constants.ts';
+import { globIndexAtAnyDepth } from './forbidden-changes.ts';
 import type { ToolPolicy } from './tool-policy.ts';
 
 const BASH_RULE = /^Bash\((.+)\)$/;
@@ -22,17 +23,11 @@ function bashRuleMatches(rule: string, command: string): boolean {
  * the plot's own folders open: a fake session never names one, so the model of the fence need not.
  */
 function secretPathOf(policy: ToolPolicy, command: string): string | undefined {
-  const globs = (policy.secret_paths ?? []).map((glob) => ({ glob, regex: globToRegExp(glob) }));
+  const globs = policy.secret_paths ?? [];
+  const regexes = globs.map(globToRegExp);
   for (const word of command.replace(/["'`]/g, ' ').split(/[\s;|&<>(){}=,]+/)) {
-    const segments = word
-      .replaceAll('\\', '/')
-      .split('/')
-      .filter((segment) => segment !== '');
-    for (let start = 0; start < segments.length; start += 1) {
-      const tail = segments.slice(start).join('/');
-      const named = globs.find(({ regex }) => regex.test(tail));
-      if (named !== undefined) return named.glob;
-    }
+    const index = globIndexAtAnyDepth(word, regexes);
+    if (index !== -1) return globs[index];
   }
   return undefined;
 }

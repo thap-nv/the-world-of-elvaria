@@ -13,17 +13,22 @@ export const forbiddenPathsOf = (territory?: Pick<Territory, 'laws'>): string[] 
   ...new Set([...SECRET_FILES, ...(territory?.laws.forbidden_paths ?? [])]),
 ];
 
-/** `path` (relative to the plot, `/` or `\`) as the hook reads it: every tail is tried, at any depth. */
-function matches(path: string, globs: readonly RegExp[]): boolean {
+/**
+ * The index of the first of `globs` that matches `path` (`/` or `\`) at some depth, or -1: every tail is tried, as the
+ * hook reads a path (`matchingGlobOf` of packages/hooks/src/laws.ts, which may import nothing from here, §1.4). The
+ * paths of a plot's changes and the words of a fake session's shell line (`command-refusal.ts`) are read alike.
+ */
+export function globIndexAtAnyDepth(path: string, globs: readonly RegExp[]): number {
   const segments = path
     .replaceAll('\\', '/')
     .split('/')
     .filter((segment) => segment !== '');
   for (let start = 0; start < segments.length; start += 1) {
     const tail = segments.slice(start).join('/');
-    if (globs.some((glob) => glob.test(tail))) return true;
+    const index = globs.findIndex((glob) => glob.test(tail));
+    if (index !== -1) return index;
   }
-  return false;
+  return -1;
 }
 
 /**
@@ -32,5 +37,5 @@ function matches(path: string, globs: readonly RegExp[]): boolean {
  */
 export function forbiddenChangesOf(changed: readonly string[], forbidden: readonly string[]): string[] {
   const globs = forbidden.map(globToRegExp);
-  return changed.filter((path) => matches(path, globs));
+  return changed.filter((path) => globIndexAtAnyDepth(path, globs) !== -1);
 }
