@@ -5,6 +5,7 @@ import { denyTool, translation, withoutUndefined } from '../draft.ts';
 import { graphLineViolation, shelllessViolation } from '../graph.ts';
 import { commandViolation, forbiddenPathOf, matchingGlobOf, readOnlyReason } from '../laws.ts';
 import { outsideReadViolation } from '../outside.ts';
+import { secretPlaceViolation } from '../secret-place.ts';
 import { plotPath, toolCallOf } from './tools.ts';
 import type { HookContext } from '../context.ts';
 import type { Translation } from '../draft.ts';
@@ -108,7 +109,10 @@ export function preToolUse(input: ClaudeInput, ctx: HookContext): Translation {
     graphRule(call, ctx);
   const law = apprenticeRule ?? lawViolation(call, ctx.laws);
   // The territory's own law names the path first; reading outside the plot is Elvaria's rule (PS-11b).
-  const reason = law ?? outsideReadViolation(call, input.text('cwd'), ctx);
+  const reason =
+    law ??
+    secretPlaceViolation(call, input.text('cwd'), ctx.laws) ??
+    outsideReadViolation(call, input.text('cwd'), ctx);
   if (reason === undefined) return translation([]);
   const source = apprenticeRule === undefined && law !== undefined ? 'law of this territory' : 'rule';
   const data = { tool: call.kind, reason, ...callerOf(input) };

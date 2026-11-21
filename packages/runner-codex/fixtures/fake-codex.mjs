@@ -248,6 +248,8 @@ const SCENARIOS = {
     letter();
     return finish();
   },
+  // SEC-01: a command naming the owner's SSH folder, then git's credential helper.
+  secret_place: () => SCENARIOS.commands(core.FAKE_SECRET_COMMANDS),
   // The suite's spawn probe (P1-12e).
   spawn_child: () => SCENARIOS.commands([core.SPAWN_PROBE_COMMAND]),
   // A judge's verdict under a schema with optional keys (fix/codex-output-schema).

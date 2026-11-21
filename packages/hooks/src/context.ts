@@ -146,6 +146,7 @@ export function loadContext(env: HookEnv, argv: readonly string[]): HookContext 
             cliProtected: policy.cli_protected_paths,
             ownProtected: policy.elvaria_protected_paths,
             patchFile: policy.patch_file,
+            secretPaths: policy.secret_paths,
           }),
     known: knownSecrets(env, policy.secrets ?? [], problems),
     tools: policy.tools,

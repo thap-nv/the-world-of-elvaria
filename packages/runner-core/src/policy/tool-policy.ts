@@ -7,6 +7,8 @@ import {
   BUILT_IN_AGENTS,
   CHECK_COMMANDS,
   GIT_PATHS,
+  NO_CREDENTIAL_COMMAND,
+  NO_CREDENTIAL_RULE,
   NO_COMMIT_RULE,
   NO_HISTORY_COMMAND,
   NO_PUSH_COMMAND,
@@ -14,6 +16,7 @@ import {
   SCRATCH_RULES,
   SEARCH_COMMANDS,
   SEARCH_TOOLS,
+  SECRET_PATHS,
   SHELL_TOOL,
   WRITE_TOOLS,
 } from './constants.ts';
@@ -64,6 +67,11 @@ export interface ToolPolicy {
    * them to the hook, which refuses every other read outside the plot (Q3). Absent for every other session.
    */
   readonly images?: readonly string[];
+  /**
+   * SECRET_PATHS (SEC-01): globs of the places that hold the owner's secrets, which policy.json hands to the hook of
+   * every tribe. Always set by toolPolicyOf; absent only in a policy built by hand, which then has no such fence.
+   */
+  readonly secret_paths?: readonly string[];
 }
 
 export interface ToolPolicyInput {
@@ -133,7 +141,12 @@ function lawsOf(territory: ToolPolicyInput['territory'], scratch: boolean): Tool
     forbidden_paths: forbiddenPathsOf(territory),
     read_only_paths: unique(territory?.laws.read_only_paths ?? []),
     patch_paths: territory?.vcs.type === 'git' ? unique(territory.laws.patch_paths) : [],
-    forbidden_commands: unique([...(territory?.laws.forbidden_commands ?? []), NO_PUSH_COMMAND, ...history]),
+    forbidden_commands: unique([
+      ...(territory?.laws.forbidden_commands ?? []),
+      NO_PUSH_COMMAND,
+      NO_CREDENTIAL_COMMAND,
+      ...history,
+    ]),
   };
 }
 
@@ -151,7 +164,7 @@ function classRulesOf(input: ToolPolicyInput, scratch: boolean) {
 }
 
 /**
- * Rules every session carries, whatever its class: no push, no secret files, no hand-written generated file, no
+ * Rules every session carries, whatever its class: no push, no git credential (SEC-01), no secret files, no hand-written generated file, no
  * write tool in git's own folder (P1-49), only the apprentice as agent. Edit rules cover Write and NotebookEdit
  * (runner-claude settings.ts); agy's settings turn them into `write_file` prefixes (runner-antigravity settings.ts).
  */
@@ -161,6 +174,7 @@ function fenceRules(laws: ToolLaws): string[] {
   const git = GIT_PATHS.map(plotPath);
   return [
     NO_PUSH_RULE,
+    NO_CREDENTIAL_RULE,
     ...hidden.map((glob) => `Read(${glob})`),
     ...[...hidden, ...readOnly, ...git].map((glob) => `Edit(${glob})`),
     ...BUILT_IN_AGENTS.map((agent) => `${AGENT_TOOL}(${agent})`),
@@ -225,6 +239,7 @@ export function toolPolicyOf(input: ToolPolicyInput): ToolPolicy {
     // The apprentice gets the character's tools without Agent, so it cannot start another (§3.12).
     apprentice: withApprentice ? { tools: ownTools } : null,
     laws,
+    secret_paths: [...SECRET_PATHS],
     ...(search.length === 0 ? {} : { search_commands: search }),
     ...(graph.length === 0 ? {} : { graph_commands: graph }),
     ...(images.length === 0 ? {} : { images }),

@@ -16,6 +16,13 @@ export const LAW_FILES = ['AGENTS.md', 'CLAUDE.md'] as const;
  * kingdom's scripture: a Codex knight on Windows ran the whole suite and a repo-wide check again and again while the
  * sandbox broke them (2026-11-15 run, gap (ii)); it is this adapter's fact, not every tribe's (fix/lesson-step-0).
  */
+/**
+ * Codex's sandbox gives a command no network, not even the loopback (args.ts, SEC-01): a test that starts its own server
+ * fails there and nowhere else, which the session cannot tell from a real failure.
+ */
+export const NO_NETWORK_NOTE =
+  "- Your commands have no network, not even 127.0.0.1: a download, or a test that starts a server of its own, fails in Codex's sandbox. That is a failure of the sandbox, not of the code: do not change the code or the tests to get round it; name it in what you report, since the Steward's checks run outside the sandbox and are the judge.";
+
 export const WINDOWS_SANDBOX_NOTE =
   "- On Windows your commands run in Codex's mxc sandbox, which breaks a few things that work outside it: creating a symlink (EPERM), git with a local folder as its remote, stopping a process tree, and sh (exit code 3221225794, 0xC0000142). A test or command that fails only for one of these reasons is a failure of the sandbox, not of the code: do not run it again and again, and do not change the code or the tests to get round it. Name what failed and why in what you report; the Steward's checks run outside the sandbox and are the judge. When the full test suite or a repo-wide check fails in the sandbox this way, or times out there, do not run it again: run only the checks of the files the quest changed, quote the error lines in what you report, and end the session.";
 
@@ -46,6 +53,7 @@ export function codexNote(
       "- Git's own folder is read-only in your sandbox, so git add and git commit fail: leave your changes uncommitted; the Steward commits them when the session ends.",
     );
   }
+  if (tools.has('Bash')) lines.push(NO_NETWORK_NOTE);
   if (windows) lines.push(WINDOWS_SANDBOX_NOTE);
   lines.push(
     '- Do not start sub-agents and do not call request_user_input: both are refused; a question for the owner goes in the Question section of the handover letter.',

@@ -14,6 +14,7 @@ export const FAKE_SCENARIOS = [
   'spawn_child',
   'structured',
   'image',
+  'secret_place',
 ] as const;
 export type FakeScenario = (typeof FAKE_SCENARIOS)[number];
 
@@ -28,6 +29,16 @@ export const FAKE_FORBIDDEN_COMMAND = 'git push origin HEAD';
  * on a commit, then push it. Its class allows both; the fences of a scratch plot refuse both.
  */
 export const FAKE_SCRATCH_COMMANDS = ['git commit -am "break the walls"', FAKE_FORBIDDEN_COMMAND] as const;
+/**
+ * What the fake character tries in `secret_place` (SEC-01): a command its class allows, naming a file in the folder of a
+ * tribe's CLI, then git's credential helper. Harmless if a fence failed: git refuses a path outside the repository, and
+ * `fill` without a host asks no helper. Not the SSH folder: Codex's model would not run a line naming it (`I can't run
+ * commands that could expose saved SSH host details`, gpt-6-luna, 2026-11-21), so its hook had nothing to refuse.
+ */
+export const FAKE_SECRET_COMMANDS = [
+  'git status --short -- ~/.codex/config.toml',
+  'git credential fill',
+] as const;
 
 /**
  * The schema of `structured`, in the shape of the judge's verdict (the Steward's VERDICT_OUTPUT_SCHEMA): two keys

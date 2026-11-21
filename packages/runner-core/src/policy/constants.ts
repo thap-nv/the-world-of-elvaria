@@ -34,6 +34,35 @@ export const NO_HISTORY_COMMAND = String.raw`\bgit(?:\s+-{1,2}[\w-]+(?:[=\s][^\s
 /** What a scratch judge gets beyond its class: the write tools, and git to see and undo its breaks. */
 export const SCRATCH_RULES = ['Edit', 'Write', 'Bash(git status:*)', 'Bash(git restore:*)'] as const;
 
+/**
+ * The places that hold the owner's secrets outside every territory (SEC-01, threat model V1): SSH keys, git's credential
+ * store, the treasury and the tribes' accounts at the places `elvaria init` and `doctor --config-dir` name, and the
+ * folders where the CLIs keep their sign-in and transcripts, whatever the tribe of the session (a Codex session could
+ * read Claude's sign-in as well as its own). The hook matches them at any depth against every path of a tool and every
+ * word of a shell line, except a word that stays inside the plot, whose own `.claude/` is the territory's. A fence on the
+ * command line, not a sandbox: a program the line starts reads what it likes (ADR 0007). A treasury or a `config_dir`
+ * the owner put elsewhere is not on the list yet (§11 of 2026-11-21).
+ */
+export const SECRET_PATHS = [
+  '.ssh/**',
+  '.git-credentials',
+  '.config/git/credentials',
+  '.elvaria/treasury.json',
+  '.elvaria/accounts/**',
+  '.claude/**',
+  '.claude.json',
+  '.codex/**',
+  '.gemini/**',
+] as const;
+
+/**
+ * `git credential fill` prints a credential of the owner's whole account (threat model R3), and so do the helpers
+ * behind it (`git credential-manager get`, `git-credential-store`). The rule is the CLI's fence, the pattern the hook's,
+ * under any spelling of git's options, as for push.
+ */
+export const NO_CREDENTIAL_RULE = 'Bash(git credential:*)';
+export const NO_CREDENTIAL_COMMAND = String.raw`\bgit(?:\s+-{1,2}[\w-]+(?:[=\s][^\s;&|]+)?)*\s+credential|\bgit-credential`;
+
 /** Dotenv files are never read nor written, whatever the territory says (§3.9). */
 export const SECRET_FILES = ['.env', '.env.*'] as const;
 

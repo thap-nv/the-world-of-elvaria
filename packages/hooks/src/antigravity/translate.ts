@@ -5,6 +5,7 @@ import { translation, withoutUndefined } from '../draft.ts';
 import { recordHandoverStart, stopGate } from '../handover.ts';
 import { lawViolation, protectedViolation, refusalText } from '../claude/tool-events.ts';
 import { outsideReadViolation } from '../outside.ts';
+import { secretPlaceViolation } from '../secret-place.ts';
 import { plotPath } from '../claude/tools.ts';
 import { modelSlugOf } from '../claude/translate.ts';
 import { classViolation } from '../class-gate.ts';
@@ -53,7 +54,10 @@ function preToolUse(input: AgyInput, ctx: HookContext): Translation {
   const rule = ruleViolation(input.toolName, call, ctx) ?? protectedViolation(call, ctx.laws);
   const law = rule ?? lawViolation(call, ctx.laws);
   // Its read_file rule is a prefix (`home.png` opens `home.png.bak`): the hook keeps to the exact file (PS-11b).
-  const reason = law ?? outsideReadViolation(call, input.workspace, ctx);
+  const reason =
+    law ??
+    secretPlaceViolation(call, input.workspace, ctx.laws) ??
+    outsideReadViolation(call, input.workspace, ctx);
   if (reason === undefined) return translation([], { decision: DEFER_TO_SETTINGS });
   const source = rule === undefined && law !== undefined ? 'law of this territory' : 'rule';
   return translation([{ type: 'agent.tool.blocked', data: { tool: call.kind, reason } }], {
