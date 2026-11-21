@@ -415,8 +415,9 @@ show` prints the brief apart from the rest of the description and, while the pla
   `DELIVERY_GIT_SWITCHES`), `@elvaria/chancellor` (`draftQuests`,
   `draftCommands` for `say`), `@elvaria/runner-core` (`PlotManager`, the adapter kit, the conformance
   suite, `killTree` for `upgrade`), `@elvaria/runner-claude` (the
-  `claude_code` adapter), `@elvaria/runner-antigravity` (the `antigravity` adapter, P1-15), `@elvaria/hooks` (the
-  hook's command).
+  `claude_code` adapter), `@elvaria/runner-antigravity` (the `antigravity` adapter, P1-15), `@elvaria/runner-codex`
+  (the `codex_cli` adapter), `@elvaria/hooks` (the hook's command).
+- `@elvaria/config` (dev only: `tsconfig.json` extends its `tsconfig/node.json`).
 
 ## How to test
 

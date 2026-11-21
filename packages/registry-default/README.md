@@ -45,6 +45,7 @@
 ## Depends on
 
 - `@elvaria/domain` (schemas and the registry check).
+- `@elvaria/config` (dev only: `tsconfig.json` extends its `tsconfig/node.json`).
 
 ## How to test
 

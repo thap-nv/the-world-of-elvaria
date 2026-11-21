@@ -39,6 +39,7 @@
 ## Depends on
 
 - `@elvaria/domain` (`Event`, `EventSchema`), loaded only when reading. No third-party package.
+- `@elvaria/config` (dev only: `tsconfig.json` extends its `tsconfig/node.json`).
 
 ## How to test
 
