@@ -49,7 +49,7 @@ Mọi package đã có tên và danh sách phụ thuộc được phép trong `W
 ```bash
 pnpm install
 pnpm check               # mọi thứ CI chạy (trừ audit): lint, format:check, typecheck, test, boundaries, layout,
-                         #   knip, schemas --check, docs:gen --check, docs:check, i18n:check; xanh trên cây sạch thì đóng dấu HEAD
+                         #   knip, dup, schemas --check, docs:gen --check, docs:check, i18n:check; xanh trên cây sạch thì đóng dấu HEAD
 pnpm check:fast          # typecheck + test + boundaries (husky pre-push, trừ khi push đúng commit có dấu)
 pnpm check:changed       # giữa chừng: chỉ các check mà bảng "Change impact" đòi cho file đổi so với merge-base với origin/main (commit, chưa commit, file mới); KHÔNG thay `pnpm check`, cổng trước merge vẫn là `pnpm check` đầy đủ (không lint, không format, không package ngoài diff)
 pnpm check:changed --dry-run          # chỉ in đường dẫn đổi, các lệnh sẽ chạy và đường dẫn không có luật
@@ -63,6 +63,9 @@ pnpm layout --prune      # hạ layout-baseline.json về hôm nay sau khi dọn
 pnpm knip                # file, export, dependency không ai dùng (knip.json ở gốc, AH-01): chạy thường, rồi --production
                          #   (không tính spec, __fixtures__, fixtures/, test/: export chỉ test dùng cũng đỏ, trừ khi JSDoc có @internal);
                          #   hai hằng cố ý cùng giá trị thì đánh @alias
+pnpm dup                 # khung chép (AH-13): cặp file từ 60 token giống khung (tên, chuỗi, số coi như nhau) ngoài shape-clones.json,
+                         #   hay cặp trong danh sách lớn lên, thì đỏ; cặp mới thì gom về nhà chung (R7) hay ghi "kept" kèm lý do
+pnpm dup --prune         # hạ shape-clones.json về hôm nay sau khi gom (không bao giờ thêm); --stats in tỉ lệ token trong khung chép
 pnpm schemas             # sinh docs/schemas/*.schema.json từ zod; --check: so, không ghi, exit 1 khi lệch
 pnpm docs:gen            # sinh docs/glossary.md, events.md, dependency-graph.md, cli.md, bảng §2.5 và mục lục của kế hoạch triển khai; --check như trên
 pnpm docs:gen --kingdom <dir>   # thêm docs/tier-report.md (§3.12) và docs/metrics-report.md (§3.16.1) từ vương quốc đó; --check không kèm --kingdom (như trong pnpm check) không so hai file này

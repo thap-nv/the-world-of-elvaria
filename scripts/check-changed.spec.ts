@@ -22,6 +22,7 @@ describe('plan', () => {
       'typecheck',
       'layout',
       'knip',
+      'dup',
     ]);
   });
 
@@ -30,8 +31,9 @@ describe('plan', () => {
       '--filter @elvaria/runner-core test',
       'layout',
       'knip',
+      'dup',
     ]);
-    expect(lines(['apps/cli/src/cli.ts'])).toEqual(['--filter @elvaria/cli test', 'layout', 'knip']);
+    expect(lines(['apps/cli/src/cli.ts'])).toEqual(['--filter @elvaria/cli test', 'layout', 'knip', 'dup']);
   });
 
   it('lets the full test and typecheck cover the narrower ones', () => {
@@ -40,6 +42,7 @@ describe('plan', () => {
       'typecheck',
       'layout',
       'knip',
+      'dup',
     ]);
   });
 
@@ -55,6 +58,7 @@ describe('plan', () => {
       'test',
       'typecheck',
       'layout',
+      'dup',
     ]);
   });
 
@@ -66,6 +70,7 @@ describe('plan', () => {
       'i18n:check',
       'layout',
       'knip',
+      'dup',
     ]);
   });
 
@@ -81,6 +86,7 @@ describe('plan', () => {
       'docs:gen --check',
       'layout',
       'knip',
+      'dup',
     ]);
     expect(lines(['packages/config/boundaries.mjs'])).toContain('boundaries');
   });
@@ -93,6 +99,7 @@ describe('plan', () => {
       'layout',
       'schemas --check',
       'knip',
+      'dup',
     ]);
   });
 
@@ -103,8 +110,20 @@ describe('plan', () => {
       '--filter @elvaria/store test',
       'layout',
       'knip',
+      'dup',
     ]);
     expect(lines(['packages/store/README.md', 'docs/cli.md'])).not.toContain('knip');
+  });
+
+  it('runs dup for workspace code, the clone list and its detector, not for other scripts or documentation', () => {
+    expect(lines(['shape-clones.json'])).toEqual(['dup']);
+    expect(lines(['scripts/shape-detect.mjs'])).toEqual([
+      'exec vitest run',
+      'exec tsc -p tsconfig.json',
+      'knip',
+      'dup',
+    ]);
+    expect(lines(['scripts/docs-gen.mjs', 'packages/store/README.md'])).not.toContain('dup');
   });
 
   it('reports the paths no rule covers and has nothing to run for them', () => {

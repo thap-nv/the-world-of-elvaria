@@ -59,6 +59,12 @@ export const RULES = [
       /^(?:(?:packages|apps)\/[^/]+\/(?!README\.md$)|scripts\/|\.claude\/hooks\/|knip\.json$|package\.json$)/,
     run: [['knip']],
   },
+  // any workspace code, the clone list and the detector (AH-13): an edit can copy a shape as well as add a file
+  {
+    pattern:
+      /^(?:packages|apps)\/[^/]+\/(?!README\.md$)|^shape-clones\.json$|^scripts\/shape-(?:clones|detect)\.mjs$/,
+    run: [['dup']],
+  },
 ];
 
 /**
