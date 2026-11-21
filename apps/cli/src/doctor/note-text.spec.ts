@@ -21,7 +21,7 @@ import {
   testIo,
 } from '../../test/cli.ts';
 import { minimalEnv } from '../process/minimal-env.ts';
-import { loginFindings } from './check-tribe.ts';
+import { loginFindingsOf } from './check-tribe.ts';
 import { DOCTOR_NOTE_KEYS, infoText } from './note-text.ts';
 import type { TempDir } from '../../test/cli.ts';
 import type { MessageKey } from '@elvaria/i18n';
@@ -121,7 +121,7 @@ describe('the Codex adapter’s doctor, as the CLI prints it', () => {
     const env = { ...minimalEnv(baseEnv(await isolatedPath())), ELVARIA_FAKE_CODEX_LOGGED_OUT: '1' };
     const launch = { command: process.execPath, args: [fake] };
     const runner = createCodexRunner({ tribe: tribe.id, launch, hook: hookCommand(), env });
-    const [found] = await loginFindings(tribe, runner, { t: translator('vi') });
+    const [found] = loginFindingsOf(tribe, await runner.doctor(), { t: translator('vi') });
     expect(found?.level).toBe('error');
     expect(found?.text).toContain(
       'codex login status cho thấy chưa đăng nhập (hoặc mất mạng): đăng nhập bằng codex login.',

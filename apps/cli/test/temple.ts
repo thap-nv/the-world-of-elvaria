@@ -20,7 +20,6 @@ import { OTHER_QUEST_ID, QUEST_ID, plantQuests, questFixture } from './quest.ts'
 import type { TestIo } from './cli.ts';
 
 export const FAILED = `${QUEST_ID}-1`;
-export const ALSO_FAILED = `${OTHER_QUEST_ID}-1`;
 export const MONK_TOKENS = 2400;
 const at = (hour: number) => `2026-11-06T${String(hour).padStart(2, '0')}:00:00+07:00`;
 

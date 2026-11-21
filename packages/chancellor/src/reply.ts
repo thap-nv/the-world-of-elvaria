@@ -3,7 +3,7 @@
 // cannot say (one question, refs that name other drafts). A tribe without the flag gets the schema in its prompt and
 // answers in text: that road is runner-core's (spawnParsed, P1-33), shared with the judge's verdict.
 import { QuestDraftFileSchema, contractOf } from '@elvaria/domain';
-import { checkTextReply as checkText, issueLines } from '@elvaria/runner-core';
+import { issueLines } from '@elvaria/runner-core';
 import type { QuestDraftFile } from '@elvaria/domain';
 import type { JsonSchema, ReplyCheck } from '@elvaria/runner-core';
 
@@ -55,6 +55,3 @@ export function checkReply(value: unknown): DraftCheck {
   if (parsed.success) return { ok: true, value: parsed.data };
   return { ok: false, issues: issueLines(parsed.error.issues) };
 }
-
-/** A text reply against the schema: a text without a JSON object is a reply that cannot be used. */
-export const checkTextReply = (text: string | undefined): DraftCheck => checkText(text, checkReply);

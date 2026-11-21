@@ -17,27 +17,33 @@ const lines = (paths: string[]): string[] => plan(paths).commands.map((c) => c.j
 
 describe('plan', () => {
   it('runs every package test and the typecheck for the domain', () => {
-    expect(lines(['packages/domain/src/quest/transition.ts'])).toEqual(['test', 'typecheck']);
+    expect(lines(['packages/domain/src/quest/transition.ts'])).toEqual(['test', 'typecheck', 'knip']);
   });
 
   it('runs one package test for another package, keyed by its folder', () => {
     expect(lines(['packages/runner-core/src/a.ts', 'packages/runner-core/src/b.ts'])).toEqual([
       '--filter @elvaria/runner-core test',
+      'knip',
     ]);
-    expect(lines(['apps/cli/src/cli.ts'])).toEqual(['--filter @elvaria/cli test']);
+    expect(lines(['apps/cli/src/cli.ts'])).toEqual(['--filter @elvaria/cli test', 'knip']);
   });
 
   it('lets the full test and typecheck cover the narrower ones', () => {
     expect(lines(['packages/domain/src/a.ts', 'packages/store/src/b.ts', 'scripts/c.mjs'])).toEqual([
       'test',
       'typecheck',
+      'knip',
     ]);
   });
 
   it('keeps the root vitest and tsc for scripts and hooks, and drops them only when covered', () => {
-    expect(lines(['scripts/docs-gen.mjs'])).toEqual(['exec vitest run', 'exec tsc -p tsconfig.json']);
-    expect(lines(['.claude/hooks/guard-bash.mjs'])).toEqual(['exec vitest run', 'exec tsc -p tsconfig.json']);
-    expect(lines(['scripts/a.mjs', 'packages/domain/src/a.ts'])).toEqual(['test', 'typecheck']);
+    expect(lines(['scripts/docs-gen.mjs'])).toEqual(['exec vitest run', 'exec tsc -p tsconfig.json', 'knip']);
+    expect(lines(['.claude/hooks/guard-bash.mjs'])).toEqual([
+      'exec vitest run',
+      'exec tsc -p tsconfig.json',
+      'knip',
+    ]);
+    expect(lines(['scripts/a.mjs', 'packages/domain/src/a.ts'])).toEqual(['knip', 'test', 'typecheck']);
   });
 
   it('checks docs and generated output for i18n', () => {
@@ -46,6 +52,7 @@ describe('plan', () => {
       'docs:gen --check',
       'docs:check',
       'i18n:check',
+      'knip',
     ]);
   });
 
@@ -59,13 +66,26 @@ describe('plan', () => {
       '--filter @elvaria/store test',
       'boundaries',
       'docs:gen --check',
+      'knip',
     ]);
     expect(lines(['packages/config/boundaries.mjs'])).toContain('boundaries');
   });
 
   it('checks the schemas when a contract or its output moves', () => {
     expect(lines(['docs/schemas/quest.schema.json'])).toEqual(['docs:check', 'schemas --check']);
-    expect(lines(['packages/domain/src/schema/quest.ts'])).toEqual(['test', 'typecheck', 'schemas --check']);
+    expect(lines(['packages/domain/src/schema/quest.ts'])).toEqual([
+      'test',
+      'typecheck',
+      'schemas --check',
+      'knip',
+    ]);
+  });
+
+  it('runs knip for code, its config and the root manifest, not for documentation', () => {
+    expect(lines(['knip.json'])).toEqual(['knip']);
+    expect(lines(['package.json'])).toEqual(['knip']);
+    expect(lines(['packages/store/src/io/atomic.ts'])).toEqual(['--filter @elvaria/store test', 'knip']);
+    expect(lines(['packages/store/README.md', 'docs/cli.md'])).not.toContain('knip');
   });
 
   it('reports the paths no rule covers and has nothing to run for them', () => {

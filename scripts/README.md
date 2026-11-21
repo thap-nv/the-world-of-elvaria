@@ -167,11 +167,16 @@
   untracked files git does not ignore. `plan()` maps them through `RULES`, the "Change impact" table of CLAUDE.md as
   data (domain → `pnpm test` + `pnpm typecheck`; another workspace → `pnpm --filter @elvaria/<key> test`; i18n →
   `docs:gen --check`, `docs:check`, `i18n:check`; `scripts/` and `.claude/hooks/` → root vitest and tsc; docs and
-  package READMEs → `docs:check`; a contract → `schemas --check`; a manifest or `boundaries.mjs` → `boundaries`), drops
+  package READMEs → `docs:check`; a contract → `schemas --check`; a manifest or `boundaries.mjs` → `boundaries`; any code, `knip.json` or the root manifest → `knip`), drops
   repeats and what `SUBSUMES` covers, and lists paths no rule covers. It prints the plan and runs the commands in
   order, stopping at the first failure; `--dry-run` only prints. `pnpm check` stays the gate before a merge. Reads git
   through `git merge-base`, `git diff` and `git ls-files` with a minimal env; writes nothing itself. Runs pnpm as
   `node <npm_execpath>` (no shell), so call it through `pnpm check:changed`.
+- `knip-gate.spec.ts`: the `pnpm knip` gate (AH-01). No script of its own: the root `knip` script runs knip with
+  `knip.json` twice, in its default mode, then `--production` (specs, `__fixtures__`, `fixtures/` and `test/` left
+  out, so an export only tests use fails unless its JSDoc says `@internal`). The spec builds a throwaway workspace
+  with the repo's `knip.json`, runs the script's two steps there and shows each red on a file nothing imports, an
+  export nothing imports and an export only test code imports.
 
 ## Does not
 
@@ -196,7 +201,7 @@
   (`ritual-steps.mjs`, read as a file), `@elvaria/i18n` (`GLOSSARY`,
   `LOCALE_FILES`, `DEFAULT_LOCALE`, `translator`, `bannedWords`, `glossaryTable`, `idsOf`, `isGlossaryTable`,
   `isIdList`, `glossaryProblems`, `localeProblems`), `dependency-cruiser` (`docs-graph.mjs`), `typescript`
-  (`docs-identifiers.mjs`), and `ajv` + `ajv-formats` (`gen-schemas.spec.ts`).
+  (`docs-identifiers.mjs`), `ajv` + `ajv-formats` (`gen-schemas.spec.ts`), and `knip` (`knip-gate.spec.ts`).
 - `apps/cli` (`src/commands.ts`, `src/args.ts`, `src/command.ts`, `src/help.ts`), imported by `docs-cli.mjs` to
   render `docs/cli.md`; `src/metrics/read.ts` and `src/metrics/view.ts`, imported by `docs-metrics-report.mjs`.
 - Node built-ins (`node:child_process`, `node:fs`, `node:path`, `node:process`, `node:url`) and `git`
@@ -213,6 +218,7 @@ pnpm plan:split --check  # loses no line of the plan and finds no done §8 row l
 pnpm docs:check        # runs all repository documentation, link, and identifier checks
 pnpm i18n:check        # verifies locale keys, placeholders, and glossary.json shape
 pnpm check:changed --dry-run  # prints the checks the changed files call for
+pnpm knip              # no file, export or dependency nothing uses (knip.json)
 ```
 
 Each script takes an injected file or repository abstraction (`Files`, `Repo`, or pure arguments) so its

@@ -1,7 +1,7 @@
 // What the hook remembers between calls of one run lives in `.runs/<quest>-<n>/hook/` (§2.2): small JSON files,
 // one per concern, so calls that run at the same time (parallel tool calls, parallel apprentices) never
 // rewrite each other's file. Every file has a `version` (CLAUDE.md, "Dữ liệu có schema").
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 export const RUN_STATE_VERSION = 1;
@@ -39,7 +39,3 @@ export function writeState(file: string, value: Record<string, unknown>, once = 
     throw error;
   }
 }
-
-export const removeState = (file: string): void => {
-  rmSync(file, { force: true });
-};
