@@ -282,6 +282,7 @@ show` prints the brief apart from the rest of the description and, while the pla
   says them), and `.state/steward.lock` (a second `run` is refused). It names the build it runs on as it starts
   (`src/upgrade/running.ts`, PS-04b).
 - `upgrade [--ref <ref>] | --rollback` and the pin (PS-04b, implementation-plan §3.16.4, ADR 0026; `src/upgrade/`):
+  every git call uses runner-core's `gitGuard` switches before its command (SEC-02b).
   a build is a detached worktree of the repo this CLI runs from (`--ref`, `main` by default; a local branch that
   lacks commits of its `origin/` copy as last fetched is built with a warning, and nothing is fetched,
   `src/upgrade/behind.ts`) at

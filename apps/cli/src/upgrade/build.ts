@@ -4,6 +4,7 @@
 // with the minimal env (ADR 0013, 0015) plus HUSKY=0: a build is never a place to commit from.
 import { readdir, rm } from 'node:fs/promises';
 
+import { gitGuard } from '@elvaria/runner-core';
 import { inKingdom } from '@elvaria/store';
 
 import { findExecutable } from '../process/find-executable.ts';
@@ -59,8 +60,10 @@ const failureOf = (outcome: ProcessOutcome): StepFailure | undefined =>
 
 export function gitRun(tools: Tools, io: CliIo) {
   const env = minimalEnv(io.env);
-  return (cwd: string, args: readonly string[]): Promise<ProcessOutcome> =>
-    runProcess(tools.git, args, { cwd, env, timeoutMs: GIT_MINUTES * MS_PER_MINUTE });
+  return async (cwd: string, args: readonly string[]): Promise<ProcessOutcome> => {
+    const guard = await gitGuard({ file: tools.git, args: [] }, cwd, env);
+    return runProcess(tools.git, [...guard, ...args], { cwd, env, timeoutMs: GIT_MINUTES * MS_PER_MINUTE });
+  };
 }
 
 /** The commit `ref` names in `source`, or undefined when it names none. */

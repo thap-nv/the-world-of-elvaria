@@ -469,7 +469,9 @@
   pre-push hook runs; 30 minutes, then its tree is killed; output masked into `.runs/<quest>-delivery/push.log`)
   with the git the composition root found, the minimal env, `DELIVERY_GIT_SWITCHES` and runner-core's `gitGuard`
   (SEC-02: no fsmonitor, ssh command, askpass or credential helper that the territory's own config names, so the
-  push hands the credential to the owner's helpers alone); then finds or opens the
+  push hands the credential to the owner's helpers alone); SEC-02b also refuses local/worktree filter, diff,
+  merge, signing-program (when signing is enabled), remote-program, proxy, protocol and URL-rewrite settings
+  before the update and push, reporting only their keys as `delivery.failed` (`push`, `push_refused`); then finds or opens the
   branch's pull request through the `Forge` port (`deps.forges`, one adapter per `delivery.forge`), the masked
   delivery note as its description. One `delivery.pushed` (the pull request, the warned files) or `delivery.failed`
   (stage, reason, the end of the redacted message) line, and the bell (`delivery_pushed`, `delivery_failed`); a
