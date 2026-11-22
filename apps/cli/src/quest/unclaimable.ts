@@ -81,8 +81,18 @@ export async function unclaimableLines(
       }),
       ctx.t('cli.quest.unclaimable.cancel', { command: `elvaria quest cancel ${quest.id}` }),
     ];
+  const { items } = await ctx.store.characters.list();
+  const suspended = items.filter(
+    (character) => character.class === note.class && character.status === 'suspended',
+  );
   return [
     ctx.t('cli.quest.unclaimable.no_class', { class: cls }),
+    ...suspended.map((character) =>
+      ctx.t('cli.quest.unclaimable.release', {
+        character: character.name,
+        command: `elvaria character release ${character.id}`,
+      }),
+    ),
     ctx.t('cli.quest.unclaimable.summon', { command: summon }),
     ctx.t('cli.quest.unclaimable.cancel', { command: `elvaria quest cancel ${quest.id}` }),
   ];
