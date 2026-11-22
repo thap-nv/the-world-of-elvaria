@@ -80,6 +80,7 @@
     "cli.doctor.terms_hint": "Đọc docs/adr/0018-gemini-tribe-on-antigravity-cli.md, rồi chạy: elvaria doctor --acknowledge-terms {tribe}",
     "cli.doctor.terms_refused": "Tộc {tribe}: chưa ghi nhận điều khoản của Antigravity, nên tộc này chưa được chạy (ADR 0018).",
     "cli.doctor.territory": "Lãnh thổ {id}: {path}.",
+    "cli.doctor.territory_glob_unmatched": "Lãnh thổ {id}: glob {glob} không khớp file đã track nào trên nhánh mặc định.",
     "cli.doctor.territory_missing": "Lãnh thổ {id}: không còn thư mục {path}.",
     "cli.doctor.territory_not_git": "Lãnh thổ {id}: {path} không còn là repo git.",
     "cli.doctor.territory_unchecked": "Lãnh thổ {id}: {path}; không kiểm được repo vì thiếu git.",
