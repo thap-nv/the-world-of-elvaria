@@ -236,17 +236,17 @@
       "count": 1
     }
   },
-  "packages/steward/src/background-cap.spec.ts": {
+  "packages/steward/src/flows/background-cap.spec.ts": {
     "elvaria/no-real-wait": {
       "count": 1
     }
   },
-  "packages/steward/src/background-checks.spec.ts": {
+  "packages/steward/src/flows/background-checks.spec.ts": {
     "elvaria/no-real-clock": {
       "count": 4
     }
   },
-  "packages/steward/src/breakers.spec.ts": {
+  "packages/steward/src/sessions/breakers.spec.ts": {
     "elvaria/no-real-clock": {
       "count": 2
     },
@@ -254,7 +254,7 @@
       "count": 1
     }
   },
-  "packages/steward/src/check-signals.spec.ts": {
+  "packages/steward/src/review/check-signals.spec.ts": {
     "elvaria/no-real-clock": {
       "count": 4
     },
@@ -262,17 +262,17 @@
       "count": 1
     }
   },
-  "packages/steward/src/cut-goes-on.spec.ts": {
+  "packages/steward/src/sessions/cut-goes-on.spec.ts": {
     "elvaria/no-real-wait": {
       "count": 1
     }
   },
-  "packages/steward/src/forge-delivery.spec.ts": {
+  "packages/steward/src/forge/forge-delivery.spec.ts": {
     "elvaria/no-real-wait": {
       "count": 1
     }
   },
-  "packages/steward/src/forge-stop.spec.ts": {
+  "packages/steward/src/forge/forge-stop.spec.ts": {
     "elvaria/no-real-wait": {
       "count": 1
     }
@@ -282,7 +282,7 @@
       "count": 1
     }
   },
-  "packages/steward/src/lifecycle.spec.ts": {
+  "packages/steward/src/flows/lifecycle.spec.ts": {
     "elvaria/no-real-clock": {
       "count": 2
     },
@@ -295,7 +295,7 @@
       "count": 1
     }
   },
-  "packages/steward/src/objection.spec.ts": {
+  "packages/steward/src/memos/objection.spec.ts": {
     "complexity": {
       "count": 1
     }
@@ -305,7 +305,7 @@
       "count": 1
     }
   },
-  "packages/steward/src/patrol.spec.ts": {
+  "packages/steward/src/patrol/patrol.spec.ts": {
     "elvaria/no-real-wait": {
       "count": 1
     }
@@ -315,17 +315,17 @@
       "count": 1
     }
   },
-  "packages/steward/src/scripts-restart.spec.ts": {
+  "packages/steward/src/script/scripts-restart.spec.ts": {
     "elvaria/no-real-clock": {
       "count": 4
     }
   },
-  "packages/steward/src/scripture-scope.spec.ts": {
+  "packages/steward/src/temple/scripture-scope.spec.ts": {
     "complexity": {
       "count": 1
     }
   },
-  "packages/steward/src/sessions-left.spec.ts": {
+  "packages/steward/src/sessions/sessions-left.spec.ts": {
     "elvaria/no-real-clock": {
       "count": 1
     }
