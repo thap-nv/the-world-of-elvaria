@@ -12,7 +12,7 @@
 // owner's `deliver` command, which forgets the outcome. (PS-08d) A quest whose branch is in the base branch already
 // (merged by hand) is archived instead, and a sealed quest's pull request under `pr_merge` is merged (mergeDue); (PS-08b)
 // so is one the delegation of the seal still covers (mayMergeUnsealed).
-import { UPDATE_ROUNDS_MAX } from '../constants.ts';
+import { UPDATE_ROUNDS_MAX } from './constants.ts';
 import { mayMergeUnsealed } from '../delegation/seal.ts';
 import { stoppedByBase } from '../patrol/base-red.ts';
 import { deliveryOf } from '../schema/territory-delivery.ts';

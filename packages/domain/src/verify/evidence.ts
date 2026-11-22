@@ -4,7 +4,7 @@
 // checked; in a scratch plot whose ritual breaks code it also names its breaks and the red runs they caused, else
 // it is taken as partial, and the next judge reads on from the step it skipped. The schema leaves both to the
 // Steward, so verdict files written before stay valid.
-import { MIN_BREAKS } from '../constants.ts';
+import { MIN_BREAKS } from './constants.ts';
 import { judgedInScratch, ritualOf } from './ritual-of.ts';
 import { partialVerdictIdOf, verifierSessionsOf } from './verdict-id.ts';
 import type { Quest } from '../schema/quest/quest.ts';

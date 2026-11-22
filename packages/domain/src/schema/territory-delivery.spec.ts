@@ -2,7 +2,7 @@
 // and a remote.
 import { describe, expect, it } from 'vitest';
 
-import { DELIVERY_DEFAULTS } from '../constants.ts';
+import { DELIVERY_DEFAULTS } from './constants.ts';
 import { TerritoryDeliverySchema, deliveryOf } from './territory-delivery.ts';
 import { TerritorySchema } from './territory.ts';
 

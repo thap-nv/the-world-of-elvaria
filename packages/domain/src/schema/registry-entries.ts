@@ -2,7 +2,7 @@
 // Cross-file rules live in registry.ts.
 import { z } from 'zod';
 
-import { TAG_DESCRIPTION_MAX_LENGTH, TAG_NAME_MAX_LENGTH } from '../constants.ts';
+import { TAG_DESCRIPTION_MAX_LENGTH, TAG_NAME_MAX_LENGTH } from './constants.ts';
 import {
   ClassIdSchema,
   KindIdSchema,

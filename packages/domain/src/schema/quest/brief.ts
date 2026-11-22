@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 import { NonEmptyStringSchema } from '../common.ts';
-import { QUESTION_MAX_LENGTH } from '../../constants.ts';
+import { QUESTION_MAX_LENGTH } from '../constants.ts';
 import { DraftRefSchema } from './shared.ts';
 
 const describe = (description: string) => ({ description });

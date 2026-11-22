@@ -3,7 +3,8 @@
 // as for a claim (selectAssignee). Its sleeping assignee lets go. Elvaria still never switches accounts: only a
 // character whose own gauges are open takes it. planTick runs this after the wakes, so a pool that woke keeps its
 // own quests.
-import { MINUTES_PER_HOUR, MS_PER_MINUTE } from '../constants.ts';
+import { MINUTES_PER_HOUR } from './constants.ts';
+import { MS_PER_MINUTE } from '../constants.ts';
 import { parseInstant } from '../core/clock.ts';
 import { partyOf } from '../verify/past-assignees-of.ts';
 import { selectAssignee } from './select-assignee.ts';

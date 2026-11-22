@@ -2,7 +2,7 @@
 // the size limit (PS-26).
 import { z } from 'zod';
 
-import { SCHEDULE_DEFAULTS } from '../constants.ts';
+import { SCHEDULE_DEFAULTS } from './constants.ts';
 
 const describe = (description: string) => ({ description });
 

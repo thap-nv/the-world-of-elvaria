@@ -1,5 +1,5 @@
 // File snapshots only: each tribe keeps the token measure its runner recorded (G).
-import { CALIBRATION_MIN_SAMPLES, MEDIAN_PAIR_SIZE } from '../constants.ts';
+import { CALIBRATION_MIN_SAMPLES, MEDIAN_PAIR_SIZE } from './constants.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
 import type { Quest } from '../schema/quest/quest.ts';

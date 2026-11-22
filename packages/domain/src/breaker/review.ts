@@ -16,7 +16,7 @@
 // the review (leftVerifiersOf, selectVerifier): a breaker's (P1-38, P1-35 (d)), and since fix/review-no-session a
 // crash's or a session that never opened too (PS-07: a judge whose CLI refused the verdict's schema in a second took
 // both turns of a review). Nor is the judge that just handed in a partial verdict (justPartialOf; P1-48, P1-42 (c)).
-import { REVIEW_BREAKS_MAX, REVIEW_PARTIALS_MAX } from '../constants.ts';
+import { REVIEW_BREAKS_MAX, REVIEW_PARTIALS_MAX } from './constants.ts';
 import { currentRun } from '../quest/attempt-log.ts';
 import type { CharacterId, QuestId } from '../core/ids.ts';
 import type { Attempt } from '../schema/quest/quest-parts.ts';

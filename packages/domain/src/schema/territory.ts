@@ -1,7 +1,7 @@
 // territory.json v1: one repo or folder attached to the kingdom (implementation-plan §2.3).
 import { z } from 'zod';
 
-import { SPECS_PLACEHOLDER, TERRITORY_DEFAULTS } from '../constants.ts';
+import { SPECS_PLACEHOLDER, TERRITORY_DEFAULTS } from './constants.ts';
 import { REGISTRY_ID_PATTERN, SLUG_PATTERN, TerritoryIdSchema } from '../core/ids.ts';
 import {
   AbsPathSchema,
