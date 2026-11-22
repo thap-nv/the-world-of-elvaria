@@ -14,12 +14,19 @@ export interface RedactPatternEntry {
   /** JavaScript regex source. A named group `keep` is left in front of the mask (`password=[redacted]`). */
   readonly regex: string;
   readonly flags: string;
+  /** When true, secret scans only warn instead of blocking. Defaults to false (block). */
+  readonly warn_only?: boolean;
+}
+
+export interface RedactPattern extends RegExp {
+  readonly id?: string;
+  readonly warn_only?: boolean;
 }
 
 /** `g` is added by the compiler; `y` and `d` would change what replace() does. */
 const ALLOWED_FLAGS = /^[imsu]*$/;
 
-export function compileRedactPatterns(entries: readonly RedactPatternEntry[]): RegExp[] {
+export function compileRedactPatterns(entries: readonly RedactPatternEntry[]): RedactPattern[] {
   return entries.map((entry) => {
     if (!ALLOWED_FLAGS.test(entry.flags)) {
       throw new EventLogError(
@@ -27,12 +34,18 @@ export function compileRedactPatterns(entries: readonly RedactPatternEntry[]): R
         `redact pattern ${entry.id}: flags "${entry.flags}"; allowed are i, m, s, u`,
       );
     }
-    return new RegExp(entry.regex, `${entry.flags}g`);
+    const regex = new RegExp(entry.regex, `${entry.flags}g`);
+    return Object.assign(regex, {
+      id: entry.id,
+      warn_only: Boolean(entry.warn_only),
+    });
   });
 }
 
 /** The patterns of redact-patterns.json, in file order: specific shapes first, generic assignments last. */
-export const REDACT_PATTERNS: readonly RegExp[] = Object.freeze(compileRedactPatterns(patternFile.patterns));
+export const REDACT_PATTERNS: readonly RedactPattern[] = Object.freeze(
+  compileRedactPatterns(patternFile.patterns),
+);
 
 export type Redactor = (text: string) => string;
 

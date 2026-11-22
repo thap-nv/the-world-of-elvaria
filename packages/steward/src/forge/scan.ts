@@ -7,12 +7,6 @@
 // diff, and names the commits that add a secret: a secret added then removed is on the remote all the same.
 import { REDACT_PATTERNS } from '@elvaria/eventlog';
 
-/**
- * redact-patterns.json lists the specific shapes first and the shared assignments last (REDACT_PATTERNS keeps file
- * order, without ids); scan.spec.ts checks the last three are `bearer_token`, `url_credentials`, `secret_assignment`.
- */
-export const SHARED_PATTERN_COUNT = 3;
-
 /** A commit of the branch whose own added lines hold a secret, and the files they are in. */
 export interface CommitSecrets {
   readonly sha: string;
@@ -36,8 +30,8 @@ export const COMMIT_FORMAT = 'commit %H';
 /** A SHA-1 or a SHA-256 object name. */
 const COMMIT_LINE = /^commit ([0-9a-f]{40}(?:[0-9a-f]{24})?)$/;
 
-const SPECIFIC = REDACT_PATTERNS.slice(0, -SHARED_PATTERN_COUNT);
-const SHARED = REDACT_PATTERNS.slice(-SHARED_PATTERN_COUNT);
+const SPECIFIC = REDACT_PATTERNS.filter((pattern) => !pattern.warn_only);
+const SHARED = REDACT_PATTERNS.filter((pattern) => Boolean(pattern.warn_only));
 
 const matches = (patterns: readonly RegExp[], line: string): boolean =>
   patterns.some((pattern) => {
