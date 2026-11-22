@@ -3,7 +3,7 @@
 // updates per delivery, and a delivery that takes a slot of dispatch.max_background.
 import { describe, expect, it } from 'vitest';
 
-import { UPDATE_ROUNDS_MAX } from '../constants.ts';
+import { UPDATE_ROUNDS_MAX } from './constants.ts';
 import { NOW, Q1, Q2, Q3, Q4, TERRITORY, at, quest, snapshot, territory } from './__fixtures__/snapshot.ts';
 import { updateRoundsLeft } from './forge-due.ts';
 import { planTick } from './plan-tick.ts';

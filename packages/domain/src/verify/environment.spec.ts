@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { ENVIRONMENT_RECHECK_MINUTES, MS_PER_MINUTE, TERRITORY_DEFAULTS } from '../constants.ts';
+import { ENVIRONMENT_RECHECK_MINUTES } from './constants.ts';
+import { MS_PER_MINUTE } from '../constants.ts';
+import { TERRITORY_DEFAULTS } from '../schema/constants.ts';
 import { environmentFailureOf, environmentLineOf, recheckDue } from './environment.ts';
 import type { Instant } from '../core/clock.ts';
 

@@ -3,7 +3,8 @@
 // nothing of the work, so no judge reads it, its assignee keeps its level and no quest hunts a flake in it; the
 // Steward tells the owner and runs the checks again later. What an environment failure looks like is the territory's
 // data (`environment_errors`, ADR 0016), never a list written for one repo here. Pure: runner-core reads the logs.
-import { ENVIRONMENT_RECHECK_MINUTES, MS_PER_MINUTE } from '../constants.ts';
+import { ENVIRONMENT_RECHECK_MINUTES } from './constants.ts';
+import { MS_PER_MINUTE } from '../constants.ts';
 import type { Instant } from '../core/clock.ts';
 
 /**

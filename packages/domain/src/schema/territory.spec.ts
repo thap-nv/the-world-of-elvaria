@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import examples from '../../examples/territory.json' with { type: 'json' };
-import { TERRITORY_DEFAULTS } from '../constants.ts';
+import { TERRITORY_DEFAULTS } from './constants.ts';
 import { commandLinesOf } from './territory-checks.ts';
 import { TerritorySchema, namesNoGitFolder } from './territory.ts';
 

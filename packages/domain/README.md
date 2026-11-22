@@ -460,7 +460,9 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   attention queue (`character_suspended`, `temple_no_monk`, `temple_off`, all `can_wait`).
 - Gives the core types every package builds on: `Result`, branded ids (`QuestId`, `TribeId`, ...), `Clock` and
   `Instant`, `zonedTime` (local day and ISO offset in `kingdom.tz`), `IdSource` (ULIDs and dated ids).
-- Names every number it decides with in `src/constants.ts` and the `constants.ts` of the folders that have one.
+- Names every number it decides with in the `constants.ts` of the folder that uses it, or in `src/constants.ts`
+  when two or more folders do. Its public surface is the barrel `index.ts` of each folder, which `src/index.ts`
+  gathers.
 - Names the code graph's read-only commands (`GRAPH_COMMANDS`, `graphCommandOf`, PS-21), the territory's optional
   `code_graph` switch, `kingdom.programs.graphify` (`ProgramsSchema`) and the `graph.built` / `graph.failed` lines.
   Counts an area's impact from the graph's links (`impactOf`, `src/graph/links.ts`, PS-21b): the files outside it

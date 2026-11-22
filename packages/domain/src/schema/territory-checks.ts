@@ -2,7 +2,7 @@
 // they run. Split out of territory.ts, unchanged, before PS-05 added shared_paths there.
 import { z } from 'zod';
 
-import { SPECS_PLACEHOLDER } from '../constants.ts';
+import { SPECS_PLACEHOLDER } from './constants.ts';
 import { CheckIdSchema } from '../core/ids.ts';
 import { NonEmptyStringSchema } from './common.ts';
 

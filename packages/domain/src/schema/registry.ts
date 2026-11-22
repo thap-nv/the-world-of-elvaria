@@ -1,7 +1,7 @@
 // The six registry files load together: each passes its own schema, then the cross-file rules that the v1
 // schemas leave to "the registry loader" ($comment of kind, class and ritual .schema.json) run here, so a hand
 // edit of registry/*.json fails when the kingdom loads instead of in the middle of a quest (ADR 0016).
-import { RITUAL_STEPS } from '../constants.ts';
+import { RITUAL_STEPS } from './constants.ts';
 import { err, ok } from '../core/result.ts';
 import {
   ClassesFileSchema,

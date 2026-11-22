@@ -1,13 +1,8 @@
 // kingdom.json v1: the owner's settings for one kingdom (implementation-plan §2.3).
 import { z } from 'zod';
 
-import {
-  BREAKER_DEFAULTS,
-  DISPATCH_DEFAULTS,
-  MANA_DEFAULTS,
-  MANA_MARGIN_MAX_PCT,
-  MINUTES_PER_DAY,
-} from '../constants.ts';
+import { BREAKER_DEFAULTS } from '../constants.ts';
+import { DISPATCH_DEFAULTS, MANA_DEFAULTS, MANA_MARGIN_MAX_PCT, MINUTES_PER_DAY } from './constants.ts';
 import { isTimeZone } from '../core/clock.ts';
 import {
   AbsPathSchema,

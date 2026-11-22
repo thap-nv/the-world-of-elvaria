@@ -5,7 +5,7 @@
 // `data` names them so the schema can require them. `delivery.sent`, in the catalogue since v1, keeps no shape.
 import { z } from 'zod';
 
-import { DELIVERY_DETAIL_MAX_LENGTH } from '../../constants.ts';
+import { DELIVERY_DETAIL_MAX_LENGTH } from '../constants.ts';
 import { QuestIdSchema, TerritoryIdSchema } from '../../core/ids.ts';
 import { NonEmptyStringSchema } from '../common.ts';
 import { DELIVERY_FORGES, MERGE_METHODS } from '../territory-delivery.ts';

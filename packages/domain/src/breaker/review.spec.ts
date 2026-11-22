@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { Q1, inReview, moved, quest } from '../dispatch/__fixtures__/snapshot.ts';
-import { REVIEW_PARTIALS_MAX } from '../constants.ts';
+import { REVIEW_PARTIALS_MAX } from './constants.ts';
 import {
   leftVerifiersOf,
   justPartialOf,

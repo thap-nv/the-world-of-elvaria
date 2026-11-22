@@ -11,7 +11,7 @@ paths:
 ## Trước khi tạo file
 
 - Đặt file vào thư mục khái niệm của nó (`src/<khái-niệm>/`, tên số ít, id glossary). Gốc `src/` chỉ cho phần ráp nối: `index.ts`, file ráp, `types.ts` và `constants.ts` dùng chung. Không có thư mục khái niệm hợp thì tạo một, đừng thả file ở gốc.
-- Ngưỡng file chạy (không tính spec và fixture): gốc `src/` ≤ 20, ≤ 10 khi package trên 40 file chạy; mọi thư mục khác ≤ 30 file trực tiếp.
+- Ngưỡng file chạy (không tính spec và fixture): gốc `src/` ≤ 20, ≤ 10 khi package trên 40 file chạy; mọi thư mục khác ≤ 30 file trực tiếp, không tính barrel `index.ts` của nó (R5, AH-03).
 - Spec đứng cạnh file nó thử; spec kịch bản vào thư mục khái niệm, kịch bản qua nhiều khái niệm vào `src/flows/`.
 - Đồ dùng test: mã TS ở `src/**/__fixtures__/`, dữ liệu và chương trình giả chạy như tiến trình ở `<package>/fixtures/`. Không tạo thư mục `test/`.
 - Không đặt `x.ts` cạnh `xs.ts`, không đặt tên vì trần (`-types`, `-more`, `-2`): tách theo khái niệm.

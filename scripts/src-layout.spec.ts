@@ -60,6 +60,16 @@ describe('layoutViolations', () => {
     expect(layoutViolations(many('packages/a/src/plot', 30)).dir_size).toEqual({});
   });
 
+  it('leaves the index.ts barrel of a folder out of its count, not the one of the root', () => {
+    const plot = [...many('packages/a/src/plot', 30), 'packages/a/src/plot/index.ts'];
+    expect(layoutViolations(plot).dir_size).toEqual({});
+    expect(layoutViolations([...plot, 'packages/a/src/plot/extra.ts']).dir_size).toEqual({
+      'packages/a/src/plot': 31,
+    });
+    const root = [...many('packages/a/src', 20), 'packages/a/src/index.ts'];
+    expect(layoutViolations(root).root_size).toEqual({ 'packages/a/src': 21 });
+  });
+
   it('names a root spec without its runtime file, in a package above 40 runtime files only', () => {
     const files = [
       'packages/s/src/steward.ts',
