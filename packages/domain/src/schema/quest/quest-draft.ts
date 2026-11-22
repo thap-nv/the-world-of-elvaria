@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { ClassIdSchema, KindIdSchema, ScriptIdSchema, TerritoryIdSchema } from '../../core/ids.ts';
 import { GENERATED_NOTE, NonEmptyStringSchema, RankSchema, unique } from '../common.ts';
-import { QUESTION_MAX_LENGTH } from '../../constants.ts';
+import { QUESTION_MAX_LENGTH } from '../constants.ts';
 import { DRAFTS_MAX } from './constants.ts';
 import { BriefSchema } from './brief.ts';
 import { allOfRules, checkRules, issueIf } from './rules.ts';

@@ -2,7 +2,7 @@
 // becomes a `$defs` entry in every generated contract that uses it.
 import { z } from 'zod';
 
-import { NAME_MAX_LENGTH } from '../constants.ts';
+import { NAME_MAX_LENGTH } from './constants.ts';
 
 export const AbsPathSchema = z
   .string()

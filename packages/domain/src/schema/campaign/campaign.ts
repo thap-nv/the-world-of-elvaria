@@ -10,7 +10,7 @@ import {
   rejectDuplicateIds,
   unique,
 } from '../common.ts';
-import { CAMPAIGN_NAME_MAX_LENGTH } from '../../constants.ts';
+import { CAMPAIGN_NAME_MAX_LENGTH } from '../constants.ts';
 
 const describe = (description: string) => ({ description });
 const SlugSchema = z.string().regex(SLUG_PATTERN);

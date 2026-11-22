@@ -6,7 +6,7 @@
 // are read from vcs.remote.
 import { z } from 'zod';
 
-import { DELIVERY_DEFAULTS } from '../constants.ts';
+import { DELIVERY_DEFAULTS } from './constants.ts';
 import { NonEmptyStringSchema, unique } from './common.ts';
 
 const describe = (description: string) => ({ description });

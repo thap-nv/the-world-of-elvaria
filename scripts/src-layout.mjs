@@ -5,7 +5,7 @@
 //   pnpm layout --prune   lower layout-baseline.json to today: drop what was fixed, lower counts; never adds or raises
 //
 // R2 root_size: a src/ root holds at most 20 runtime files, 10 once the package has more than 40.
-// R2 dir_size: any other folder holds at most 30 runtime files directly.
+// R2 dir_size: any other folder holds at most 30 runtime files directly, its index.ts barrel (R5) aside.
 // R3 root_spec: in a package of more than 40 runtime files, a spec at the src/ root sits next to its runtime file.
 // R4 test_dir: test helpers live in src/**/__fixtures__/ or <package>/fixtures/, never in a test/ folder.
 // R6 name_pair: one folder never holds a singular and a plural name (notice.ts and notices.ts).
@@ -79,7 +79,9 @@ function workspaceViolations(workspace, files, out) {
   const big = runtime.length > BIG_PACKAGE;
   for (const [dir, inDir] of byDir) {
     const limit = dir === src ? (big ? BIG_ROOT_LIMIT : ROOT_LIMIT) : DIR_LIMIT;
-    if (inDir.length > limit) out[dir === src ? 'root_size' : 'dir_size'][dir] = inDir.length;
+    // R5 gives every concept folder an index.ts of re-exports only: it adds no concept, so it fills no folder (AH-03).
+    const counted = dir === src ? inDir : inDir.filter((f) => nameOf(f) !== 'index.ts');
+    if (counted.length > limit) out[dir === src ? 'root_size' : 'dir_size'][dir] = counted.length;
     namePairsOf(dir, inDir, out);
   }
   const rootStems = new Set((byDir.get(src) ?? []).map((f) => stemOf(nameOf(f))));

@@ -2,7 +2,8 @@
 // nearest its hard threshold. It is read from the gauges the breakers read (gaugesOf), so the bar is empty exactly where
 // they cut; it decides nothing (ADR 0030) and is not mana (ADR 0009). Nothing stores it: the Steward writes a line when
 // a session's bar crosses a notch (`agent.session.usage`), and every reader rebuilds the bar from such lines.
-import { BREAKER_DEFAULTS, STAMINA_CRITICAL_LEFT_PCT, STAMINA_STEP_PCT } from '../constants.ts';
+import { BREAKER_DEFAULTS } from '../constants.ts';
+import { STAMINA_CRITICAL_LEFT_PCT, STAMINA_STEP_PCT } from './constants.ts';
 import { gaugesOf } from './evaluate.ts';
 import type { Instant } from '../core/clock.ts';
 import type { Role } from '../schema/common.ts';

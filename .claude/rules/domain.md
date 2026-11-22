@@ -17,9 +17,9 @@ paths:
 
 - Quyết định là hàm thuần trên snapshot (`transition`, `planTick`, `canTake`…); steward, sandbox, CLI chỉ thực thi kết quả.
 - Không `switch` theo kind, class, ritual, script, tag hay tộc: đó là dữ liệu registry và `kingdom.tribes[]` (ADR 0016, 0021). Lõi chỉ thấy `capabilities`; phần thiếu năng lực đi qua `tribeLimitsOf`.
-- Số dùng để quyết định có tên trong `src/constants.ts` hoặc `constants.ts` của thư mục (`no-magic-numbers`, bỏ qua 0, 1, -1, 100, `0n`, `1n`).
+- Số dùng để quyết định có tên trong `constants.ts` của thư mục dùng nó; `src/constants.ts` chỉ giữ hằng mà từ hai thư mục trở lên dùng (AH-03; `no-magic-numbers`, bỏ qua 0, 1, -1, 100, `0n`, `1n`).
 - Không enum, class, namespace (`erasableSyntaxOnly`): union chuỗi từ mảng `as const` (`QUEST_STATUSES`…), branded id (`QuestId`, `TribeId`…).
-- Import tương đối viết đuôi `.ts`. Package khác chỉ dùng được thứ `src/index.ts` export: thêm export ở đó.
+- Import tương đối viết đuôi `.ts`. Package khác chỉ dùng được thứ `src/index.ts` export, và nó chỉ `export *` từ barrel `index.ts` của từng thư mục (R5, AH-03): thêm export ở barrel của thư mục chứa file; thư mục mới thì thêm barrel và một dòng `export *` ở gốc. File trong package import thẳng file cần dùng, không import barrel. Hai barrel có cùng một tên là lỗi TS2308: barrel nào không công khai tên đó thì liệt kê tên thay vì `export *` (mẫu `verify/index.ts`).
 - Mỗi thay đổi quest, nhân vật, lãnh thổ là một dòng event mang view sau thay đổi (`questViewOf`, `characterViewOf`, `territoryViewOf`; tên dòng quest từ `questLogTypeOf`), để `reduce(events)` bằng `worldStateOf(files)` (P0-09).
 
 ## Schema và bảng sinh ra (ADR 0003)

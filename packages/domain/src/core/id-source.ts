@@ -9,7 +9,7 @@ import {
   ULID_RANDOM_BYTES,
   ULID_RANDOM_CHARS,
   ULID_TIME_CHARS,
-} from '../constants.ts';
+} from './constants.ts';
 import { zonedTime } from './clock.ts';
 import { ok } from './result.ts';
 import type { Clock, Instant } from './clock.ts';

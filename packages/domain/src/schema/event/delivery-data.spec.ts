@@ -1,7 +1,7 @@
 // The delivery.* lines (PS-08, ADR 0023): what each must carry, so PS-08c and PS-08d write them the same way.
 import { describe, expect, it } from 'vitest';
 
-import { DELIVERY_DETAIL_MAX_LENGTH } from '../../constants.ts';
+import { DELIVERY_DETAIL_MAX_LENGTH } from '../constants.ts';
 import { DELIVERY_FAILURES, DELIVERY_STAGES } from './delivery-data.ts';
 import { isKnownEventType } from './event-types.ts';
 import { EVENT_VERSION, EventSchema } from './event.ts';
