@@ -29,7 +29,7 @@ Theo bài học điều phối giai đoạn 1 (lượt soát kế hoạch giai �
   { "glob": "docs/implementation-plan/11-*.md", "merge": "union" },
   { "glob": "packages/domain/src/index.ts", "merge": "union" },
   { "glob": "packages/i18n/src/glossary.json", "merge": "union" },
-  { "glob": "packages/i18n/src/locales/*/*.json", "merge": "union" },
+  { "glob": "packages/i18n/src/locales/**", "merge": "union" },
   { "glob": "apps/cli/src/commands.ts", "merge": "union" },
   { "glob": "docs/schemas/**", "merge": "regenerate" },
   { "glob": "docs/glossary.md", "merge": "regenerate" },
@@ -41,6 +41,8 @@ Theo bài học điều phối giai đoạn 1 (lượt soát kế hoạch giai �
 
 - `docs/implementation-plan.md` giữ bảng §8 (dòng task chưa xong) và §10; các file `11-<ngày>.md` nhận dòng §11 mới ở cuối. Vùng `<!-- docs:gen plan-index -->` của file chính là phần sinh: sau khi ghép `union`, `pnpm docs:gen` sinh lại nó.
 - `apps/cli/src/commands.ts` không có trong danh sách của kế hoạch: thêm theo lời phiên điều phối khi mở PS-05 (bảng lệnh là chỗ chung của mọi task thêm lệnh).
+- `shared_paths` chỉ khớp đường dẫn viết đúng chữ (ví dụ `docs/implementation-plan.md`) hoặc dạng `<thư mục>/**` (như `packages/i18n/src/locales/**`, `docs/schemas/**`): theo `isShared` (`packages/domain/src/dispatch/scope.ts`), một mục của `scope_paths` chỉ được coi là dùng chung khi trùng đúng chữ của glob hoặc nằm dưới một glob thư mục (`<thư mục>/**` hay `**`).
+- Glob khác (ví dụ `*.json` giữa đường dẫn) không khớp: hàm coi mọi dạng khác là giao vùng, thà báo giao nhau nhầm để quest chờ nhau còn hơn để hai quest cùng sửa một file.
 - Lãnh thổ có mục `regenerate` thì phải có `commands.generate` (schema territory từ chối nếu thiếu). `pnpm schemas` chạy trước `pnpm docs:gen`.
 - Chưa vào danh sách: snapshot prompt của `packages/runner-core/src/prompt/__snapshots__/` (task nào đổi prompt cũng đổi chúng, nhưng không lệnh `generate` nào sinh lại chúng: sinh bằng `vitest -u`), và `docs/plans/phase-1.5.md` (mỗi task sửa mục của mình, hiếm khi cùng một đoạn). Xét lại khi PS-09 đo được số conflict thật.
 
