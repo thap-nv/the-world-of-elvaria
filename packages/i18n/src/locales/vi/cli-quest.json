@@ -284,6 +284,7 @@
     "cli.quest.unclaimable.party_bars": "Đội của nó chặn mọi {class} hiện có: mỗi người đã chấm một quest của đội, hoặc đã làm phía bên kia của Khảo hạch mù.",
     "cli.quest.unclaimable.reassign": "Giao cho {character} (chờ dấu vua): {command}",
     "cli.quest.unclaimable.reassign_barred": "Vẫn giao cho một người trong số đó (lệnh giao của bạn không bị chặn; đội mất phần tách người đó): {command}",
+    "cli.quest.unclaimable.release": "{character} đang bị đình chỉ. Gỡ đình chỉ: {command}",
     "cli.quest.unclaimable.summon": "Triệu hồi: {command}",
     "cli.quest.unknown_quest": "Không có nhiệm vụ {id}.",
     "cli.quest.unknown_territory": "Không có lãnh thổ {id}. Xem: elvaria territory list"

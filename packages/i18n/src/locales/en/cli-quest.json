@@ -284,6 +284,7 @@
     "cli.quest.unclaimable.party_bars": "Its party bars every {class} there is: each one judged a quest of the party, or worked the other side of its blind trial.",
     "cli.quest.unclaimable.reassign": "Give it to {character} (waits for your seal): {command}",
     "cli.quest.unclaimable.reassign_barred": "Give it to one of them anyway (your reassign is not barred; the party loses that separation): {command}",
+    "cli.quest.unclaimable.release": "{character} is suspended. Release: {command}",
     "cli.quest.unclaimable.summon": "Summon: {command}",
     "cli.quest.unknown_quest": "There is no quest {id}.",
     "cli.quest.unknown_territory": "There is no territory {id}. See: elvaria territory list"
