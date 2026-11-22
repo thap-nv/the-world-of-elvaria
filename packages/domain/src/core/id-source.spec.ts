@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ULID_MAX_TIME_MS } from '../constants.ts';
+import { ULID_MAX_TIME_MS } from './constants.ts';
 import { InstantSchema } from './clock.ts';
 import { createIdSource, formatDatedId, formatUlid } from './id-source.ts';
 import { CAMPAIGN_ID_PATTERN, LESSON_ID_PATTERN, QUEST_ID_PATTERN, ULID_PATTERN } from './ids.ts';

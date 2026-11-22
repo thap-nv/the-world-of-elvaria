@@ -29,3 +29,22 @@ export const CONTEXT_BUDGETS_BY_RANK: Readonly<Record<Rank, number>> = {
   A: 4,
   S: 6.375,
 };
+
+export const MINUTES_PER_HOUR = 60;
+
+/**
+ * (V) of the PS-08 plan (PS-08d): under `pr_merge` the Steward asks the forge about a sealed quest's pull request at
+ * most this often (forgePolls), and fetches a territory's base branch to look which done quests it holds at most every
+ * BASE_LOOK_MINUTES while one is there to ask about (baseLooks). Not measured: a forge's checks take minutes, and a
+ * merge by hand waits for the owner.
+ */
+export const FORGE_POLL_SECONDS = 30;
+export const BASE_LOOK_MINUTES = 10;
+
+/**
+ * The merge queue (PS-09): a pull request whose branch no longer merges cleanly into the base branch is updated again
+ * (merged, generated, checked, pushed) at most this many times per delivery; one more and the delivery fails, for the
+ * owner. Not measured: three merges overtaking one quest is a queue that needs a person.
+ */
+export const UPDATE_ROUNDS_MAX = 3;
+export const MS_PER_SECOND = 1000;

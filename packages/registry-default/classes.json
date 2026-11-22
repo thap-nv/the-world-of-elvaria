@@ -94,6 +94,10 @@
           "Bash(git diff:*)",
           "Bash(git add:*)",
           "Bash(git commit:*)",
+          "Bash(git mv:*)",
+          "Bash(pnpm layout:*)",
+          "Bash(pnpm dup:*)",
+          "Bash(pnpm knip:*)",
           "Bash(pnpm build:*)",
           "Bash(pnpm install:*)",
           "Agent(apprentice)"

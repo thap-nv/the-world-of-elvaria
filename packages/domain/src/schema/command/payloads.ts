@@ -27,12 +27,8 @@ import {
 import { CHARACTER_LEVEL_MAX } from '../character/constants.ts';
 import { MemoListSchema } from './memo-payloads.ts';
 import { ScopePathsSchema } from '../quest/shared.ts';
-import {
-  CAMPAIGN_NAME_MAX_LENGTH,
-  QUEST_TAGS_MAX,
-  QUEST_TITLE_MAX_LENGTH,
-  QUESTION_MAX_LENGTH,
-} from '../../constants.ts';
+import { CAMPAIGN_NAME_MAX_LENGTH, QUESTION_MAX_LENGTH } from '../constants.ts';
+import { QUEST_TAGS_MAX, QUEST_TITLE_MAX_LENGTH } from '../../constants.ts';
 
 const describe = (description: string) => ({ description });
 const TitleSchema = z.string().min(1).max(QUEST_TITLE_MAX_LENGTH);

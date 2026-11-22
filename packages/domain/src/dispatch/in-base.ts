@@ -7,7 +7,8 @@
 // (PS-09b) The merge queue's merge quest in the base branch takes the quest it stands for with it (its parent): its
 // branch holds that quest's, but a squash or a rebase by the forge leaves no ancestry for a look to find. So does a
 // party's (fix/merge-quest-followups (l)): every merge quest of a party takes the party's contract and parts with it.
-import { BASE_LOOK_MINUTES, MS_PER_MINUTE } from '../constants.ts';
+import { BASE_LOOK_MINUTES } from './constants.ts';
+import { MS_PER_MINUTE } from '../constants.ts';
 import { isPartyPart } from '../party/party-status.ts';
 import { isQueueMerge } from '../party/queue-merge-quest.ts';
 import type { Instant } from '../core/clock.ts';

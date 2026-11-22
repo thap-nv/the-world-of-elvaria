@@ -1,7 +1,7 @@
 // What the machine decides in a scratch plot (implementation-plan §3.15, ADR 0022; P1-20): whether the checks run
 // again (flake_check: up to FLAKE_RUNS runs on one commit, while every run passes), which checks flaked, and whether
 // coverage dropped against the base. Pure: runner-core runs the commands and reads the files, the domain decides.
-import { LOCK_MARGIN_MINUTES } from '../constants.ts';
+import { LOCK_MARGIN_MINUTES } from './constants.ts';
 import { err, ok } from '../core/result.ts';
 import type { Result } from '../core/result.ts';
 import type { Kingdom } from '../schema/kingdom.ts';

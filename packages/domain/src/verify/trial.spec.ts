@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { FLAKE_RUNS, LOCK_MARGIN_MINUTES } from '../constants.ts';
+import { FLAKE_RUNS, LOCK_MARGIN_MINUTES } from './constants.ts';
 import {
   coverageDropsOf,
   coveragePctOf,

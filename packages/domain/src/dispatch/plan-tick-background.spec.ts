@@ -13,7 +13,8 @@ import {
   snapshot,
 } from './__fixtures__/snapshot.ts';
 import { planTick } from './plan-tick.ts';
-import { ENVIRONMENT_RECHECK_MINUTES, MS_PER_MINUTE } from '../constants.ts';
+import { ENVIRONMENT_RECHECK_MINUTES } from '../verify/constants.ts';
+import { MS_PER_MINUTE } from '../constants.ts';
 import type { Instant } from '../core/clock.ts';
 import type { QuestId } from '../core/ids.ts';
 import type { BackgroundWork } from './reviews.ts';

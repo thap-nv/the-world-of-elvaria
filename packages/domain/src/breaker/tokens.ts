@@ -2,7 +2,7 @@
 // it sent and got; reads of the prompt cache count at a tenth, as their price does, so a long session that reads its
 // cached context again on every call is not cut while a runaway one still is. One rule for every adapter: the
 // runner counts with it, and attempt_log, `agent.session.end` and the breaker all hold the same number.
-import { CACHE_READS_PER_TOKEN } from '../constants.ts';
+import { CACHE_READS_PER_TOKEN } from './constants.ts';
 
 /** What a CLI reported, split where the price differs. */
 export interface SessionTokens {

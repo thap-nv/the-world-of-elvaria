@@ -3,7 +3,8 @@
 // outside the tick (steward forge/merge.ts) that merges the pull request once the forge says it can. Short pieces
 // rather than one long wait: a Steward that stops loses only the question in flight, and the time limit counts from
 // the push, which the log dates, so a restart does not give the checks a new hour.
-import { FORGE_POLL_SECONDS, MS_PER_MINUTE, MS_PER_SECOND } from '../constants.ts';
+import { FORGE_POLL_SECONDS, MS_PER_SECOND } from './constants.ts';
+import { MS_PER_MINUTE } from '../constants.ts';
 import { deliveryOf } from '../schema/territory-delivery.ts';
 import { forgeDue, mergeDue } from './forge-due.ts';
 import type { Instant } from '../core/clock.ts';
