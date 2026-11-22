@@ -10,7 +10,7 @@ import { redact } from '@elvaria/eventlog';
 
 import { ring } from '../context.ts';
 import { rejected } from '../inbox/quest-commands.ts';
-import { STEWARD } from '../record.ts';
+import { STEWARD } from '../quest/record.ts';
 import { fileLetters } from './letters.ts';
 import { newLineIdOf, releaseFreed } from './release.ts';
 import { readScriptures, templeStateOf, writeEdit } from './scriptures.ts';

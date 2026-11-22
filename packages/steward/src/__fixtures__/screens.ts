@@ -6,7 +6,7 @@ import path from 'node:path';
 import { screensDirOf, stripesPng } from '@elvaria/runner-core';
 import { inKingdom } from '@elvaria/store';
 
-import { folderPlots } from '../plots.ts';
+import { folderPlots } from '../plot/folder-plots.ts';
 import type { Plots } from '../types.ts';
 
 export const SCREEN_PNG = stripesPng(['red', 'green', 'blue', 'yellow'], 64, 8);

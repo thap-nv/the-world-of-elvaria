@@ -35,7 +35,7 @@ import type {
 } from '@elvaria/domain';
 import type { EventBatch } from '@elvaria/eventlog';
 
-import { STEWARD } from '../record.ts';
+import { STEWARD } from '../quest/record.ts';
 import { createTempleBook, recoverTemple, templeLogNow } from './temple-book.ts';
 import type { TempleBook } from './temple-book.ts';
 import type { Context } from '../context.ts';

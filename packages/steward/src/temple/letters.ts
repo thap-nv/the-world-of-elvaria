@@ -8,7 +8,7 @@ import { createHash } from 'node:crypto';
 import { memoIdOf, templeLetterKeyOf, templeLetterKindOf, templeMemoOf } from '@elvaria/domain';
 import type { CharacterId, TempleLetter, Verdict } from '@elvaria/domain';
 
-import { STEWARD } from '../record.ts';
+import { STEWARD } from '../quest/record.ts';
 import type { Context } from '../context.ts';
 
 /** The hash memo ids are made with (memoIdOf), as file.ts makes them. */

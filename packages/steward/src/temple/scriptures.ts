@@ -7,7 +7,7 @@ import process from 'node:process';
 import { lessonVocabularyOf } from '@elvaria/domain';
 import type { ScriptureEdit, ScriptureFile, TempleState } from '@elvaria/domain';
 
-import { describeIssue } from '../world.ts';
+import { describeIssue } from '../tick/world.ts';
 import type { Context } from '../context.ts';
 
 /** `temple` first, then each character of the kingdom. */

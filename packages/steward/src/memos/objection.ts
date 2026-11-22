@@ -6,7 +6,7 @@ import { closeMemo, objectionOutcomeOf, ownerVerdictIdOf, verdictIdOf } from '@e
 import type { Actor, Contest, Memo, Quest, Verdict } from '@elvaria/domain';
 import type { PromptObjection } from '@elvaria/runner-core';
 
-import { OWNER } from '../record.ts';
+import { OWNER } from '../quest/record.ts';
 import type { Context } from '../context.ts';
 
 /**

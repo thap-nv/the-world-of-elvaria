@@ -19,12 +19,12 @@ import {
 import type { InfirmaryReason, Quest, Result, SequelRun, Verdict } from '@elvaria/domain';
 import type { RunResult } from '@elvaria/runner-core';
 
-import { OUT_OF_ATTEMPTS } from '../infirmary.ts';
+import { OUT_OF_ATTEMPTS } from '../quest/infirmary.ts';
 import { closeObjection } from '../memos/objection.ts';
-import { moveAndRing } from '../notices.ts';
-import { step } from '../record.ts';
-import { passRaiseOf } from '../seal.ts';
-import { VERDICT_EVENT, moveOnVerdict, recordVerdict, ritualOf } from '../verdicts.ts';
+import { moveAndRing } from '../bell/move-and-ring.ts';
+import { step } from '../quest/record.ts';
+import { passRaiseOf } from '../delegation/seal.ts';
+import { VERDICT_EVENT, moveOnVerdict, recordVerdict, ritualOf } from './verdicts.ts';
 import { openFlakyFollowUp } from './scratch.ts';
 import { judgeVerdictOf, refusalText } from './verdict-file.ts';
 import type { Context } from '../context.ts';

@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { reviewPromptsOf } from './prompt-size.ts';
 import type { Character, Quest, TribeLimits } from '@elvaria/domain';
-import type { CheckedRun } from '../background.ts';
+import type { CheckedRun } from '../background/background.ts';
 import type { Context } from '../context.ts';
 import type { SessionInput } from '../sessions/input.ts';
 

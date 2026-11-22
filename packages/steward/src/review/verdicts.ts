@@ -5,10 +5,10 @@
 import { CharacterSchema, ritualOf as ritualIn, err, levelChange, ok, withVerdict } from '@elvaria/domain';
 import type { Actor, Character, Quest, Result, Ritual, Verdict } from '@elvaria/domain';
 
-import { moveAndRing } from './notices.ts';
-import { describeIssue } from './world.ts';
-import type { Context } from './context.ts';
-import type { CharacterEdit, Move } from './record.ts';
+import { moveAndRing } from '../bell/move-and-ring.ts';
+import { describeIssue } from '../tick/world.ts';
+import type { Context } from '../context.ts';
+import type { CharacterEdit, Move } from '../quest/record.ts';
 
 /**
  * The assignee's windows after a pass or a fail on `quest`; the owner's seal or return weighs three (by_human), and

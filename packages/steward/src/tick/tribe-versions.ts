@@ -6,8 +6,8 @@
 import { versionHoldsOf } from '@elvaria/domain';
 import type { ToolFound, ToolsFound, TribeHold, TribeId } from '@elvaria/domain';
 
-import { ring } from './context.ts';
-import type { Context } from './context.ts';
+import { ring } from '../context.ts';
+import type { Context } from '../context.ts';
 
 /**
  * `<cli> --version` costs no mana but is a process: each tribe is asked at most once a minute. A CLI that updates

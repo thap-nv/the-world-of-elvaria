@@ -9,7 +9,7 @@ import { exclusiveLockOf } from '@elvaria/runner-core';
 import { inKingdom } from '@elvaria/store';
 
 import { childIdOf } from '../deliver/subquests.ts';
-import { STEWARD } from '../record.ts';
+import { STEWARD } from '../quest/record.ts';
 import type { Context } from '../context.ts';
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));

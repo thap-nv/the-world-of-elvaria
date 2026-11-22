@@ -7,9 +7,9 @@
 import { judgedByEye } from '@elvaria/domain';
 import type { Quest, QuestId } from '@elvaria/domain';
 
-import { noticeQuest, ring } from './context.ts';
-import type { Context } from './context.ts';
-import type { World } from './world.ts';
+import { noticeQuest, ring } from '../context.ts';
+import type { Context } from '../context.ts';
+import type { World } from '../tick/world.ts';
 
 /** The judging classes of the quest's kind: who the owner would summon. */
 export const judgingClassesOf = (world: World, quest: Quest): string[] =>

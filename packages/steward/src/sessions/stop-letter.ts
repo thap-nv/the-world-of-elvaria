@@ -13,7 +13,7 @@ import { writeFileAtomic } from '@elvaria/store';
 import type { Quest } from '@elvaria/domain';
 import type { CommitOutcome } from '@elvaria/runner-core';
 
-import { handoverPath, readHandover } from '../files.ts';
+import { handoverPath, readHandover } from '../texts/files.ts';
 import type { Context } from '../context.ts';
 import type { PlotCommit } from './commit.ts';
 

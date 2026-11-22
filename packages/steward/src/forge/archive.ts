@@ -10,7 +10,7 @@ import type { QuestId, Result } from '@elvaria/domain';
 
 import { releasePlot } from '../inbox/quest-commands.ts';
 import { adviseOnLanding } from '../memos/advisory.ts';
-import { moveAndRing } from '../notices.ts';
+import { moveAndRing } from '../bell/move-and-ring.ts';
 import type { Context } from '../context.ts';
 
 export async function archiveInBase(ctx: Context, id: QuestId): Promise<Result<void, string>> {

@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { NPM_TOKEN, bench, memoryTreasury, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
 import { plotsWith, statusIs } from '../__fixtures__/review.ts';
 import { ENV, LINKS, withCatalog } from '../__fixtures__/scripts.ts';
-import { folderPlots } from '../plots.ts';
+import { folderPlots } from '../plot/folder-plots.ts';
 import { nodeScriptRunner } from './run-script.ts';
 import type { Bench, BenchOptions } from '../__fixtures__/kingdom.ts';
 import type { ScriptRunner } from './run-script.ts';

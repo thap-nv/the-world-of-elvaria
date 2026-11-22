@@ -6,7 +6,7 @@ import { followUpOf, questFromCommand } from '@elvaria/domain';
 import type { CatalogScript, Quest, QuestId, Verdict } from '@elvaria/domain';
 
 import { childIdOf } from '../deliver/subquests.ts';
-import { STEWARD } from '../record.ts';
+import { STEWARD } from '../quest/record.ts';
 import type { Context } from '../context.ts';
 
 /**

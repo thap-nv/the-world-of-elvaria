@@ -15,14 +15,14 @@ export type {
 export { pushLogOf } from './forge/push.ts';
 export { questIdOfCommand } from './inbox/quest-commands.ts';
 export { levelsFromLog } from './mana/book.ts';
-export { folderPlots } from './plots.ts';
+export { folderPlots } from './plot/folder-plots.ts';
 export { digestStateOf } from './schedule/digest.ts';
 export type { DigestSource } from './schedule/digest.ts';
 export { nodeScriptRunner } from './script/run-script.ts';
 export type { ScriptRequest, ScriptRunResult, ScriptRunner } from './script/run-script.ts';
 export { SCRIPT_LOG, SCRIPT_RUN } from './script/script-quest.ts';
-export { readScriptures } from './files.ts';
-export type { Scripture } from './files.ts';
+export { readScriptures } from './texts/files.ts';
+export type { Scripture } from './texts/files.ts';
 export { lessonSessionOf, lessonsIn, sessionLessonsOf } from './sessions/lessons.ts';
 export type { ScriptureLesson } from './sessions/lessons.ts';
 export { VERDICT_OUTPUT_SCHEMA } from './sessions/request.ts';
@@ -50,5 +50,5 @@ export type {
   StewardDeps,
   TickReport,
 } from './types.ts';
-export { UNCLAIMABLE_FILE, readUnclaimable } from './unclaimable.ts';
-export type { Reported, UnclaimableNote } from './unclaimable.ts';
+export { UNCLAIMABLE_FILE, readUnclaimable } from './waits/unclaimable.ts';
+export type { Reported, UnclaimableNote } from './waits/unclaimable.ts';

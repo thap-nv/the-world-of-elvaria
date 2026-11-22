@@ -5,7 +5,7 @@ import { escalateMemo } from '@elvaria/domain';
 import type { InboxCommandOf } from '@elvaria/domain';
 
 import { APPLIED, rejected } from '../inbox/quest-commands.ts';
-import { actorOfCommand } from '../record.ts';
+import { actorOfCommand } from '../quest/record.ts';
 import type { Context } from '../context.ts';
 import type { Outcome } from '../inbox/quest-commands.ts';
 

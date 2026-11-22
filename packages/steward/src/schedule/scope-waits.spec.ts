@@ -9,7 +9,7 @@ import { createDelegationBook } from '../delegation/book.ts';
 import { createForgeBook } from '../forge/book.ts';
 import { createPatrolBook } from '../patrol/book.ts';
 import { noticesOf } from './digest.ts';
-import { loadWorld } from '../world.ts';
+import { loadWorld } from '../tick/world.ts';
 import type { Bench } from '../__fixtures__/kingdom.ts';
 
 const HOLDER = 'q_20261120_858fcc' as QuestId;

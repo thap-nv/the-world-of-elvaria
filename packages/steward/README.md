@@ -2,6 +2,13 @@
 
 ## Does
 
+- Keeps one concept per folder of `src/` (AH-06): at the root only `index.ts`, `steward.ts` (`createSteward`),
+  `context.ts` (what every step of a tick works with) and `types.ts`; `tick/` the loop, the tick, its steps, the
+  state kept between ticks, the world a tick sees, the restart and the tribes' CLI versions; `quest/` the pen
+  (`record.ts`, the only writer of quest and character files) and the infirmary's causes; `bell/` the notices and
+  `move-and-ring.ts`; `waits/` the quests nobody can claim or judge; `background/` the work outside the tick and
+  the code graphs; `plot/` the Steward's view of a plot and `folder-plots.ts`; `texts/` the kingdom's text files a
+  session is built from; `delegation/seal.ts` the delegation of the seal; `review/verdicts.ts` what a verdict does.
 - Records runner-reported `turns` alongside tokens in each session's attempt entry, leaving missing turns absent.
   Uses `calibrationOf` over current quest and character files for soft warnings and runner turn budgets; domain
   `planTick` computes the same calibration for hard stops on every tick. Token factors and turn ceilings learn
@@ -15,7 +22,7 @@
   start those the last Steward ran when it stopped or was killed count for nothing (P1-44, `reapLost` of
   `src/sessions/settle.ts`: the assignee goes on in a fresh session with its attempt given back, a judge leaves
   without counting toward a stalled review), and a review it left stalled without the move to the infirmary goes
-  there before the plan (`src/restart.ts`); later, a
+  there before the plan (`src/tick/restart.ts`); later, a
   session whose end could not be recorded ends as a crash; the inbox commands that waited, once more; the mana gauges; then the domain's
   `planTick` decides and the Steward carries it out: sessions past a breaker stop, characters on a fail streak go
   to the Temple
@@ -36,12 +43,12 @@
   (`src/sessions/letter-fit.ts`, fix/wrap-up-agy-codex): before, an agy session with a long letter could not open
   on Windows and the quest went to the infirmary. The session reads the letter with its read tool; the claim's
   measure counts the prompt the same way. A resumed CLI session is left as it is.
-- Asks each tribe's CLI before the plan (A1b of the lessons of 2026-11-13, `src/tribe-versions.ts`): through
+- Asks each tribe's CLI before the plan (A1b of the lessons of 2026-11-13, `src/tick/tribe-versions.ts`): through
   `StewardDeps.toolFound` (the composition root runs `<cli> --version` on the CLI the tribe's runner starts: no model,
   no mana; at most once a minute a tribe, `VERSION_ASK_MS`), so `planTick` holds a tribe whose CLI is gone or says
   another version than the one its last real `tribe check` passed on. The bell `tribe_held` rings once per hold and
   version, and the digest lists the hold. A CLI that does not answer holds nothing; without the port nothing is held.
-- Runs the machine's long work outside the tick (P1-25, `src/background.ts`): a submitted quest's checks and a
+- Runs the machine's long work outside the tick (P1-25, `src/background/background.ts`): a submitted quest's checks and a
   script-tier run start in a tick and go on while later ticks apply the inbox, record the sessions' ends and give
   out work; `planTick` sees which quests have work running and which have checks ready (`BackgroundWork`). The
   work writes into its run folder and, for checks, a `check.start` and a `check.end` line (P1-10b: the owner
@@ -120,13 +127,13 @@
   `Digest` port of the composition root words it and writes `digest/<day>.md`, then one `digest.written` line and
   one bell (`digest`). No model, no mana.
 - Rings once for a submitted quest whose judges are all held by their mana (PS-03, (d) of P1-50;
-  `src/judge-waits.ts`): `planTick`'s `judge_waits` name it with the pools that hold its judges and their reset when
+  `src/waits/judge-waits.ts`): `planTick`'s `judge_waits` name it with the pools that hold its judges and their reset when
   a reading says; the bell `judge_mana` rings once per quest, as for a quest without a judge (`unjudgeable.ts`), and
   the digest lists it. Who judges, and when, is unchanged: the judge opens once a gauge reopens (ADR 0008).
 - Sets aside checks that failed because of their environment (P1-54, `src/review/environment.ts`): a failing check
   whose log shows a line of the territory's `environment_errors` (Docker not running, a container gone) gets no
   judge, so its assignee keeps its level and no flake quest opens; the bell says so once per run (`environment`
-  notice, `src/notice.ts`) and the checks run again `ENVIRONMENT_RECHECK_MINUTES` later until they pass.
+  notice, `src/bell/notice.ts`) and the checks run again `ENVIRONMENT_RECHECK_MINUTES` later until they pass.
 - Trips the breakers (§3.4, P1-06; `src/sessions/breaker.ts`): `planTick` names each held session past its
   minutes (`quest.budget.max_minutes`, from its own attempt_log entry) or its tokens (the running total of its
   `usage` signals against `budget.max_tokens`, times `breakers.verifier_tokens_multiplier` for a judge); turns are
@@ -167,7 +174,7 @@
   stop cut short still gives its claim back (P1-49). A judge whose session cannot open leaves the review
   (`review.no_session`), passed over and counted as a judge that crashed, so the next judge takes it and the
   `REVIEW_BREAKS_MAX`-th sends it to the infirmary (trip `no_verdict`, reason `judge:no_session`).
-- Says why a quest goes to the infirmary once, as a cause (`src/infirmary.ts`, P1-32): a `trip` (the breaker, or
+- Says why a quest goes to the infirmary once, as a cause (`src/quest/infirmary.ts`, P1-32): a `trip` (the breaker, or
   `no_verdict`, `partial_verdicts`, `max_attempts`, `script_broken`, `script_usage`, `script_fail`) and a `detail`
   (what was said, a refused patch, the forbidden paths changed, a WIP commit refused, an apprentice cut short, the
   script and its follow-up, the verifiers stopped, the partial verdicts handed in). The
@@ -477,7 +484,7 @@
   remote tip is still that head (a removal that fails is a warning, `branch_deleted: false`), one `delivery.merged`;
   red, a conflict, a moved head, a closed pull request, or `checks_timeout_minutes` past the push's line: one
   `delivery.failed`, the quest stays done. The digest drops the `delivery_waits` of such a quest (`ownerDeliveries`).
-- Carries out the delegation of the royal seal (PS-08b, `src/seal.ts`, ADR 0023): the inbox's `create_quest` and the
+- Carries out the delegation of the royal seal (PS-08b, `src/delegation/seal.ts`, ADR 0023): the inbox's `create_quest` and the
   snapshot get the domain's `sealPolicyOf` (`kingdom.delegation.seal`, the territories the breaker suspended); a submit (a session's,
   or the owner's `submit`) measures the branch of a quest with `seal_delegated` (`Plots.diffLines`, the territory's
   `regenerate` shared paths aside; a plot that cannot say counts as over) and writes `diff_lines` on its line; the submit
@@ -519,7 +526,7 @@
   and `show`. Rings once when a submitted quest waits for a judge the roster does not have (`unjudgeable`,
   P1-15: `different_model` and no judge of the kind outside its doers on another model; PS-11: `vision` when the
   quest's ritual asks for eyes, and so does the digest's notice); no file, no event.
-- Builds the territories' code graphs outside the tick (PS-21, ADR 0029, `graph-builds.ts`) through the optional
+- Builds the territories' code graphs outside the tick (PS-21, ADR 0029, `src/background/graph-builds.ts`) through the optional
   `deps.graphs` port (runner-core's `codeGraphsOf`): for each territory with `code_graph` on, the default branch's tip
   every tick and a quest's base commit when its session opens; one build per territory, the latest commit next,
   `graph.built` / `graph.failed` lines (a failed commit is not tried again by this Steward), killed at stop. A session

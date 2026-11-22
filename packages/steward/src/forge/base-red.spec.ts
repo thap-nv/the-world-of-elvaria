@@ -20,7 +20,7 @@ import { createForgeBook } from './book.ts';
 import { createPatrolBook, recoverPatrol } from '../patrol/book.ts';
 import { createDelegationBook } from '../delegation/book.ts';
 import { noticesOf } from '../schedule/digest.ts';
-import { loadWorld } from '../world.ts';
+import { loadWorld } from '../tick/world.ts';
 import type { Leaves } from '../__fixtures__/deliver.ts';
 import type { ForgeBench } from '../__fixtures__/forge-bench.ts';
 import type { Plots, Steward } from '../types.ts';

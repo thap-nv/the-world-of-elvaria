@@ -3,9 +3,9 @@
 // still to build is asked for here and the session opens without it: a build never holds a session.
 import type { Quest, Territory } from '@elvaria/domain';
 
-import { STEWARD } from '../record.ts';
+import { STEWARD } from '../quest/record.ts';
 import type { Context } from '../context.ts';
-import type { GraphNote } from '../graph-builds.ts';
+import type { GraphNote } from '../background/graph-builds.ts';
 
 /** The graph a session gets: the commit, for its prompt, and the folder, for its GRAPHIFY_OUT. */
 export interface SessionGraph {

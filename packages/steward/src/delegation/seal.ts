@@ -5,9 +5,9 @@
 import { apartFromDoers, raisedSeal, sealPolicyOf, sealRaisesOf, workedOn } from '@elvaria/domain';
 import type { CharacterId, Quest, SealFacts } from '@elvaria/domain';
 
-import { outOfScopeIn } from './sessions/out-of-scope.ts';
-import { modelsOf } from './world.ts';
-import type { Context } from './context.ts';
+import { outOfScopeIn } from '../sessions/out-of-scope.ts';
+import { modelsOf } from '../tick/world.ts';
+import type { Context } from '../context.ts';
 
 /** The fields a move sets when the machine raises the seal now (raisedSeal); none for a quest the delegation did not spare. */
 export function sealRaiseOf(ctx: Context, quest: Quest, facts: SealFacts): Partial<Quest> {

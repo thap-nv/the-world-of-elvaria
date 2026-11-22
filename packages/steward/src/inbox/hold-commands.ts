@@ -4,7 +4,7 @@
 import { holdQuest, unholdQuest } from '@elvaria/domain';
 import type { HoldError, Quest, Result } from '@elvaria/domain';
 
-import { OWNER } from '../record.ts';
+import { OWNER } from '../quest/record.ts';
 import { APPLIED, rejected } from './quest-commands.ts';
 import type { Context } from '../context.ts';
 import type { Outcome } from './quest-commands.ts';

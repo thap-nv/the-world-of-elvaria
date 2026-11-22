@@ -3,9 +3,9 @@ import { openEventLog } from '@elvaria/eventlog';
 import { afterEach, expect, it } from 'vitest';
 
 import { bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
-import { createRecorder } from '../record.ts';
+import { createRecorder } from '../quest/record.ts';
 import { verifierHandsInPart } from './judge.ts';
-import { loadWorld } from '../world.ts';
+import { loadWorld } from '../tick/world.ts';
 import type { Bench } from '../__fixtures__/kingdom.ts';
 import type { Context } from '../context.ts';
 import type { Notice, Steward } from '../types.ts';

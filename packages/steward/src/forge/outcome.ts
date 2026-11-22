@@ -7,7 +7,7 @@ import { DELIVERY_DETAIL_MAX_LENGTH } from '@elvaria/domain';
 import type { EventData, Quest } from '@elvaria/domain';
 
 import { noticeQuest, ring } from '../context.ts';
-import { STEWARD } from '../record.ts';
+import { STEWARD } from '../quest/record.ts';
 import type { Context } from '../context.ts';
 
 type Pushed = EventData<'delivery.pushed'>;

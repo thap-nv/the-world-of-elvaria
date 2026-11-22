@@ -8,11 +8,11 @@ import path from 'node:path';
 import { openEventLog } from '@elvaria/eventlog';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { PASS, bench, questPayload, tickUntil } from './__fixtures__/kingdom.ts';
+import { PASS, bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
 import { restartFromLog } from './restart.ts';
-import { SESSIONS_FILE } from './sessions/pids.ts';
-import type { Bench } from './__fixtures__/kingdom.ts';
-import type { Steward, StewardDeps } from './types.ts';
+import { SESSIONS_FILE } from '../sessions/pids.ts';
+import type { Bench } from '../__fixtures__/kingdom.ts';
+import type { Steward, StewardDeps } from '../types.ts';
 import type { Event, Quest } from '@elvaria/domain';
 
 let current: Bench | undefined;

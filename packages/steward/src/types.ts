@@ -6,15 +6,15 @@ import type { AgentRunner, CodeGraphs, PromptTemplates, Treasury } from '@elvari
 import type { KingdomStore } from '@elvaria/store';
 
 import type { Forges } from './forge/forge.ts';
-import type { Bell } from './notice.ts';
-import type { Plots } from './plot-types.ts';
+import type { Bell } from './bell/notice.ts';
+import type { Plots } from './plot/plot.ts';
 import type { Digest, OnCallJob, ScheduledJob } from './schedule/ports.ts';
 import type { ScriptRunner } from './script/run-script.ts';
 
-export type { Bell, ManaGaugeNotice, Notice, NoticeQuest } from './notice.ts';
+export type { Bell, ManaGaugeNotice, Notice, NoticeQuest } from './bell/notice.ts';
 // The quest's ground (PreparedPlot, ResolvedCheck, Plots; PlotCheck and PlotTrial, what a Plots call takes) lives in
-// plot-types.ts.
-export type { Plots, PreparedPlot, ResolvedCheck } from './plot-types.ts';
+// plot/plot.ts.
+export type { Plots, PreparedPlot, ResolvedCheck } from './plot/plot.ts';
 export type {
   Digest,
   DigestRequest,

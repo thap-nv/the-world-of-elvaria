@@ -5,12 +5,12 @@
 import { FAIL_NOTES_MIN_LENGTH, findTransition } from '@elvaria/domain';
 import type { FailKind, Quest } from '@elvaria/domain';
 
-import { OWNER } from '../record.ts';
+import { OWNER } from '../quest/record.ts';
 import { ownerVerdictOf } from '../review/verdict-file.ts';
-import { moveOnVerdict, recordVerdict, ritualOf } from '../verdicts.ts';
+import { moveOnVerdict, recordVerdict, ritualOf } from '../review/verdicts.ts';
 import { APPLIED, rejected } from './quest-commands.ts';
 import type { Context } from '../context.ts';
-import type { MovePayload } from '../record.ts';
+import type { MovePayload } from '../quest/record.ts';
 import type { OwnerWord } from '../review/verdict-file.ts';
 import type { Outcome } from './quest-commands.ts';
 

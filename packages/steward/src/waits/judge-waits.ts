@@ -4,9 +4,9 @@
 // and after a restart rings once more. Who judges, and when, does not change (ADR 0008).
 import type { JudgeWait, QuestId } from '@elvaria/domain';
 
-import { noticeQuest, ring } from './context.ts';
+import { noticeQuest, ring } from '../context.ts';
 import { judgingClassesOf } from './unjudgeable.ts';
-import type { Context } from './context.ts';
+import type { Context } from '../context.ts';
 
 /** Rings for each quest newly named; keeps the latest gauges of each, and forgets the quests no longer named. */
 export async function noteJudgeWaits(

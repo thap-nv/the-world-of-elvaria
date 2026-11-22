@@ -4,7 +4,7 @@
 import type { SuspensionData } from '@elvaria/domain';
 
 import { ring } from '../context.ts';
-import { STEWARD } from '../record.ts';
+import { STEWARD } from '../quest/record.ts';
 import { setSuspension } from './book.ts';
 import type { Context } from '../context.ts';
 

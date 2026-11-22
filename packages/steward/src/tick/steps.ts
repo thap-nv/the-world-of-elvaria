@@ -7,21 +7,21 @@
 // background.ts, forge/looks.ts): a long one holds nothing but its quest or its territory.
 import type { CharacterId, Reassign, TickPlan } from '@elvaria/domain';
 
-import { ring } from './context.ts';
-import { deliver } from './deliver/deliver.ts';
-import { archiveInBase } from './forge/archive.ts';
-import { startLook } from './forge/look.ts';
-import { startPoll } from './forge/merge.ts';
-import { startDelivery } from './forge/push.ts';
-import { moveAndRing } from './notices.ts';
-import { mergeByMachine } from './party/machine.ts';
-import { step } from './record.ts';
-import { startChecks } from './review/start-checks.ts';
-import { machineReview } from './review/machine.ts';
-import { judgeScript, runScriptQuest } from './script/script-quest.ts';
-import { tripBreakers } from './sessions/breaker.ts';
-import { openAssignee, openVerifier } from './sessions/open.ts';
-import type { Context } from './context.ts';
+import { ring } from '../context.ts';
+import { deliver } from '../deliver/deliver.ts';
+import { archiveInBase } from '../forge/archive.ts';
+import { startLook } from '../forge/look.ts';
+import { startPoll } from '../forge/merge.ts';
+import { startDelivery } from '../forge/push.ts';
+import { moveAndRing } from '../bell/move-and-ring.ts';
+import { mergeByMachine } from '../party/machine.ts';
+import { step } from '../quest/record.ts';
+import { startChecks } from '../review/start-checks.ts';
+import { machineReview } from '../review/machine.ts';
+import { judgeScript, runScriptQuest } from '../script/script-quest.ts';
+import { tripBreakers } from '../sessions/breaker.ts';
+import { openAssignee, openVerifier } from '../sessions/open.ts';
+import type { Context } from '../context.ts';
 
 const warnIfRefused = (ctx: Context, what: string, result: { ok: boolean; error?: string }): void => {
   if (!result.ok) ctx.deps.log.warn(`steward: ${what}: ${result.error ?? 'refused'}`);

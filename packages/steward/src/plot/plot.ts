@@ -1,5 +1,5 @@
-// The Steward's view of the quest's ground (implementation-plan §3.3): moved out of types.ts to keep it under the
-// 300-line cap; types.ts re-exports all of it, so every import of these types still works.
+// The Steward's view of the quest's ground (implementation-plan §3.3): the plot it prepares, the checks it resolves
+// and runs there, and Plots, what the composition root gives it. types.ts re-exports the public part.
 import type { PartyRole, Quest, Result, Territory, TerritoryTrial } from '@elvaria/domain';
 import type {
   BaseBranch,
@@ -17,8 +17,8 @@ import type {
   ReleasedPlot,
 } from '@elvaria/runner-core';
 
-import type { PlotQueue } from './forge/plot-queue.ts';
-import type { PatrolOptions } from './patrol/ports.ts';
+import type { PlotQueue } from '../forge/plot-queue.ts';
+import type { PatrolOptions } from '../patrol/ports.ts';
 
 /** The quest's own ground, prepared for a session (§3.3): what the quest records, and where the session runs. */
 export interface PreparedPlot {

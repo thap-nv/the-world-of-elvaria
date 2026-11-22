@@ -6,10 +6,10 @@
 import { currentRun, err, machineVerdictOf } from '@elvaria/domain';
 import type { Quest, QuestId, Result } from '@elvaria/domain';
 
-import { OUT_OF_ATTEMPTS } from '../infirmary.ts';
-import { STEWARD } from '../record.ts';
-import { passRaiseOf } from '../seal.ts';
-import { VERDICT_EVENT, moveOnVerdict, recordVerdict, ritualOf } from '../verdicts.ts';
+import { OUT_OF_ATTEMPTS } from '../quest/infirmary.ts';
+import { STEWARD } from '../quest/record.ts';
+import { passRaiseOf } from '../delegation/seal.ts';
+import { VERDICT_EVENT, moveOnVerdict, recordVerdict, ritualOf } from './verdicts.ts';
 import { checksRunOf, takeChecks } from './checks.ts';
 import { openFlakyFollowUp, releaseScratch } from './scratch.ts';
 import type { Context } from '../context.ts';

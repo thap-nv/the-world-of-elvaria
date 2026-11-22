@@ -7,7 +7,7 @@ import process from 'node:process';
 
 import type { Quest } from '@elvaria/domain';
 
-import { folderPlots } from '../plots.ts';
+import { folderPlots } from '../plot/folder-plots.ts';
 import { bench, questPayload } from './kingdom.ts';
 import type { Bench } from './kingdom.ts';
 import type { Plots, ResolvedCheck, Steward, StewardDeps } from '../types.ts';

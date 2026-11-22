@@ -7,7 +7,7 @@ import { mkdir } from 'node:fs/promises';
 import { ok } from '@elvaria/domain';
 import { inKingdom, kingdomLayout } from '@elvaria/store';
 
-import type { Plots } from './types.ts';
+import type { Plots } from '../types.ts';
 
 export function folderPlots(root: string): Plots {
   return {
