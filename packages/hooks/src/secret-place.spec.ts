@@ -14,6 +14,11 @@ import type { ToolCall } from './claude/tools.ts';
 
 /** runner-core's SECRET_PATHS as policy.json carries them. */
 const SECRET_PATHS = [
+  '.config/gh/**',
+  '.npmrc',
+  '.netrc',
+  '.aws/**',
+  '.docker/config.json',
   '.ssh/**',
   '.git-credentials',
   '.config/git/credentials',
@@ -48,6 +53,13 @@ const refusal = (call: ToolCall): string | undefined => secretPlaceViolation(cal
 describe('secretPlaceViolation', () => {
   it.each([
     ['cat ~/.ssh/id_rsa', '.ssh/**'],
+    ['cat ~/.config/gh/hosts.yml', '.config/gh/**'],
+    ['cat ~/.npmrc', '.npmrc'],
+    ['cat ~/.netrc', '.netrc'],
+    ['cat .npmrc', '.npmrc'],
+    ['cat nested/.netrc', '.netrc'],
+    ['cat ~/.aws/credentials', '.aws/**'],
+    ['cat ~/.docker/config.json', '.docker/config.json'],
     [String.raw`type %USERPROFILE%\.ssh\id_ed25519`, '.ssh/**'],
     [String.raw`Get-Content $env:USERPROFILE\.claude\.credentials.json`, '.claude/**'],
     ['cat "${HOME}/.codex/auth.json"', '.codex/**'],
@@ -77,6 +89,10 @@ describe('secretPlaceViolation', () => {
     'grep -rn hook --exclude-dir=.codex .',
     `cat "${path.join(PLOT, '.gemini', 'settings.json')}"`,
     'git status --short',
+    'cat ~/.npmrc.example',
+    'cat ~/.netrc-backup',
+    'cat ~/.docker/config.json.example',
+    'gh auth status',
   ])("keeps the plot's own folders open: %s", (command) => {
     expect(refusal(shell(command))).toBeUndefined();
   });
@@ -89,6 +105,29 @@ describe('secretPlaceViolation', () => {
   it('refuses nothing without secret paths: a policy written before SEC-01', () => {
     expect(secretPlaceViolation(shell('cat ~/.ssh/id_rsa'), PLOT, compileLaws({}))).toBeUndefined();
   });
+
+  it('refuses GitHub tokens', () => {
+    expect(refusal(shell('gh auth token'))).toContain('gh auth token');
+  });
+
+  it('fences configured places even inside the plot, with spaces and Windows spellings', () => {
+    const laws = compileLaws(
+      {},
+      {
+        secretPaths: [`${PLOT.replaceAll('\\', '/')}/private accounts/**`, 'C:/private vault/treasury.json'],
+      },
+    );
+    expect(
+      secretPlaceViolation(read(path.join(PLOT, 'private accounts', 'auth.json')), PLOT, laws),
+    ).toContain('private accounts/**');
+    expect(secretPlaceViolation(shell('cat "c:\\PRIVATE VAULT\\treasury.json"'), PLOT, laws)).toContain(
+      'C:/private vault/treasury.json',
+    );
+    expect(secretPlaceViolation(read('private accounts/auth.json'), PLOT, laws)).toContain(
+      'private accounts/**',
+    );
+    expect(secretPlaceViolation(read('C:/private vault/treasury.json.example'), PLOT, laws)).toBeUndefined();
+  });
 });
 
 describe('the hook, through a CLI', () => {
@@ -100,6 +139,65 @@ describe('the hook, through a CLI', () => {
     await writeFile(policy, JSON.stringify({ version: 1, secret_paths: SECRET_PATHS }), 'utf8');
   });
   afterEach(() => kingdom.remove());
+
+  it.each(['claude', 'codex', 'antigravity'])('fences every SEC-01b probe through %s', async (cli) => {
+    const treasury = path.resolve('/custom vault/values.json').replaceAll('\\', '/');
+    const account = path.resolve('/custom accounts/tribe').replaceAll('\\', '/');
+    await writeFile(
+      policy,
+      JSON.stringify({
+        version: 1,
+        secret_paths: [...SECRET_PATHS, treasury, `${account}/**`],
+      }),
+      'utf8',
+    );
+    const commands = [
+      `git status -- "${treasury}"`,
+      `git status -- "${account}/auth.json"`,
+      'gh auth token',
+      'cat ~/.config/gh/hosts.yml',
+      'cat ~/.npmrc',
+      'cat ~/.netrc',
+      'cat ~/.aws/credentials',
+      'cat ~/.docker/config.json',
+    ];
+    for (const command of commands) {
+      const payload =
+        cli === 'antigravity'
+          ? {
+              conversationId: 's',
+              workspacePaths: [PLOT],
+              toolCall: { name: 'run_command', args: { CommandLine: command } },
+            }
+          : {
+              session_id: 's',
+              cwd: PLOT,
+              hook_event_name: 'PreToolUse',
+              tool_name: 'Bash',
+              tool_input: { command },
+            };
+      const outcome = await runHook({
+        stdin: JSON.stringify(payload),
+        env: kingdom.env(),
+        argv: [
+          '--policy',
+          policy,
+          ...(cli === 'codex' ? ['--dialect', 'codex'] : []),
+          ...(cli === 'antigravity' ? ['PreToolUse'] : ['--event', 'PreToolUse']),
+        ],
+        now: Date.parse('2026-11-22T12:00:00Z'),
+      });
+      const answer = JSON.parse(outcome.stdout) as {
+        decision?: string;
+        reason?: string;
+        hookSpecificOutput?: { permissionDecision: string; permissionDecisionReason: string };
+      };
+      expect(answer.decision ?? answer.hookSpecificOutput?.permissionDecision, command).toBe('deny');
+      expect(answer.reason ?? answer.hookSpecificOutput?.permissionDecisionReason, command).toContain(
+        'secrets',
+      );
+    }
+  });
 
   it.each([
     ['claude', []],

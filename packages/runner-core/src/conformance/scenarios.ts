@@ -35,9 +35,18 @@ export const FAKE_SCRATCH_COMMANDS = ['git commit -am "break the walls"', FAKE_F
  * `fill` without a host asks no helper. Not the SSH folder: Codex's model would not run a line naming it (`I can't run
  * commands that could expose saved SSH host details`, gpt-6-luna, 2026-11-21), so its hook had nothing to refuse.
  */
+export const FAKE_SECRET_PATHS = ['C:/elvaria-private/vault.json', 'C:/elvaria-private/tribe-account/**'];
 export const FAKE_SECRET_COMMANDS = [
   'git status --short -- ~/.codex/config.toml',
   'git credential fill',
+  'git status --short -- "C:/elvaria-private/vault.json"',
+  'git status --short -- "C:/elvaria-private/tribe-account/auth.json"',
+  'gh auth token',
+  'git status --short -- ~/.config/gh/hosts.yml',
+  'git status --short -- ~/.npmrc',
+  'git status --short -- ~/.netrc',
+  'git status --short -- ~/.aws/credentials',
+  'git status --short -- ~/.docker/config.json',
 ] as const;
 
 /**

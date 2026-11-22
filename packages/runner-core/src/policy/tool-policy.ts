@@ -1,6 +1,9 @@
 // ToolPolicy = class tools + territory laws + role (implementation-plan §3.7, ADR 0007, 0008, 0013, 0017). One
 // shape for every tribe: the Claude adapter writes it into `--tools` and settings.json, the others translate the
 // rules; the laws go to the hook through policy.json, because a regex cannot be written as a permission rule.
+import path from 'node:path';
+import { homedir } from 'node:os';
+
 import {
   AGENT_TOOL,
   APPRENTICE_RULE,
@@ -75,6 +78,8 @@ export interface ToolPolicy {
 }
 
 export interface ToolPolicyInput {
+  /** Absolute secret files and directory globs supplied by the Steward (SEC-01b). */
+  readonly secret_paths?: readonly string[];
   readonly role: SpawnRole;
   readonly characterClass: Pick<CharacterClass, 'tools'>;
   /** `character.tools`: a list given there replaces the class's list (schema: "Overrides of the class default"). */
@@ -239,9 +244,21 @@ export function toolPolicyOf(input: ToolPolicyInput): ToolPolicy {
     // The apprentice gets the character's tools without Agent, so it cannot start another (§3.12).
     apprentice: withApprentice ? { tools: ownTools } : null,
     laws,
-    secret_paths: [...SECRET_PATHS],
+    secret_paths: unique([...SECRET_PATHS, ...(input.secret_paths ?? []).map(secretPathOf)]),
     ...(search.length === 0 ? {} : { search_commands: search }),
     ...(graph.length === 0 ? {} : { graph_commands: graph }),
     ...(images.length === 0 ? {} : { images }),
   };
+}
+
+/** Resolve home and dot segments before the policy crosses into a CLI; Windows paths use one spelling. */
+function secretPathOf(raw: string): string {
+  const expanded = raw.replace(/^~(?=[\\/]|$)/, homedir());
+  const windows = path.sep === '\\' || /^[a-z]:[\\/]/i.test(expanded);
+  const api = windows ? path.win32 : path.posix;
+  const directory = /[\\/]\*\*$/.test(expanded);
+  const resolved = api.resolve(directory ? expanded.slice(0, -3) : expanded).replaceAll('\\', '/');
+  const normalized = windows ? resolved.toLowerCase() : resolved;
+  const literal = normalized.replace(/[[*?{}]/g, (char) => `[${char}]`);
+  return directory ? `${literal}/**` : literal;
 }
