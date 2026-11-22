@@ -15,6 +15,7 @@ import {
   FAKE_SCENARIO_ENV,
   FAKE_SCRATCH_COMMANDS,
   FAKE_SECRET_COMMANDS,
+  FAKE_SECRET_PATHS,
   FAKE_STRUCTURED_ANSWER,
   FAKE_STRUCTURED_SCHEMA,
 } from './scenarios.ts';
@@ -168,6 +169,7 @@ const PROBE_POLICY_TERRITORY: NonNullable<ToolPolicyInput['territory']> = {
 
 /** A knight's shell: git is allowed, so only the fences can stop the push; node runs the spawn probe (P1-12e). */
 const PROBE_POLICY = toolPolicyOf({
+  secret_paths: FAKE_SECRET_PATHS,
   role: 'assignee',
   characterClass: {
     tools: {
@@ -178,6 +180,7 @@ const PROBE_POLICY = toolPolicyOf({
         'Glob',
         'Grep',
         'Bash(git status:*)',
+        'Bash(gh auth token:*)',
         'Bash(git commit:*)',
         'Bash(node:*)',
       ],

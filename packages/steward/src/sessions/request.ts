@@ -3,6 +3,7 @@
 // ELVARIA_* context the hook reads, and the run folder `.runs/<quest>-<n>` (verifier: `/verify` below it). A resumed
 // session continues its CLI session (`--resume`, ADR 0017). Its load trace comes along for the opening line (PS-01b).
 import { mkdir } from 'node:fs/promises';
+import path from 'node:path';
 
 import { FAIL_KINDS, calibrationOf, judgedByEye, runDirOf, turnCeilingOf } from '@elvaria/domain';
 import { screensOf, secretValuesOf, toolPolicyOf } from '@elvaria/runner-core';
@@ -173,6 +174,14 @@ export async function requestOf(
     permissions: toolPolicyOf({
       role,
       characterClass,
+      secret_paths: [
+        ctx.world.kingdom.paths.treasury.startsWith('~')
+          ? ctx.world.kingdom.paths.treasury
+          : path.resolve(ctx.root, ctx.world.kingdom.paths.treasury),
+        ...ctx.world.kingdom.tribes.flatMap(({ tool }) =>
+          tool?.config_dir === undefined ? [] : [`${tool.config_dir}/**`],
+        ),
+      ],
       character,
       territory,
       scratch: input.scratch === true,

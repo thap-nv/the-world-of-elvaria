@@ -44,6 +44,11 @@ export const SCRATCH_RULES = ['Edit', 'Write', 'Bash(git status:*)', 'Bash(git r
  * the owner put elsewhere is not on the list yet (§11 of 2026-11-21).
  */
 export const SECRET_PATHS = [
+  '.config/gh/**',
+  '.npmrc',
+  '.netrc',
+  '.aws/**',
+  '.docker/config.json',
   '.ssh/**',
   '.git-credentials',
   '.config/git/credentials',
@@ -61,7 +66,7 @@ export const SECRET_PATHS = [
  * under any spelling of git's options, as for push.
  */
 export const NO_CREDENTIAL_RULE = 'Bash(git credential:*)';
-export const NO_CREDENTIAL_COMMAND = String.raw`\bgit(?:\s+-{1,2}[\w-]+(?:[=\s][^\s;&|]+)?)*\s+credential|\bgit-credential`;
+export const NO_CREDENTIAL_COMMAND = String.raw`\bgit(?:\s+-{1,2}[\w-]+(?:[=\s][^\s;&|]+)?)*\s+credential|\bgit-credential|\bgh(?:\.exe)?\s+auth\s+token\b`;
 
 /** Dotenv files are never read nor written, whatever the territory says (§3.9). */
 export const SECRET_FILES = ['.env', '.env.*'] as const;

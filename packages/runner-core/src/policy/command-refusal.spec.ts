@@ -72,6 +72,11 @@ describe('commandRefusal', () => {
 
   it.each([
     ['git status --short -- ~/.ssh/known_hosts', '.ssh/**'],
+    ['cat ~/.config/gh/hosts.yml', '.config/gh/**'],
+    ['cat /accounts/.npmrc', '.npmrc'],
+    ['cat /accounts/.netrc', '.netrc'],
+    ['cat ~/.aws/credentials', '.aws/**'],
+    ['cat ~/.docker/config.json', '.docker/config.json'],
     [String.raw`git status -- C:\Users\owner\.codex\auth.json`, '.codex/**'],
     ['git status -- "$HOME/.elvaria/treasury.json"', '.elvaria/treasury.json'],
   ])('refuses a command naming a secret place: %s', (command, glob) => {
@@ -80,5 +85,12 @@ describe('commandRefusal', () => {
 
   it('refuses no place without secret paths: a policy built by hand', () => {
     expect(commandRefusal(policy({}), 'cat ~/.ssh/id_rsa')).toBeUndefined();
+  });
+
+  it('refuses GitHub tokens but leaves other auth commands open', () => {
+    expect(commandRefusal(knight, 'gh auth token')).toBeDefined();
+    expect(commandRefusal(knight, 'gh auth status')).toBeUndefined();
+    expect(commandRefusal(knight, 'cat /accounts/project.npmrc')).toBeUndefined();
+    expect(commandRefusal(knight, 'cat /accounts/.netrc.example')).toBeUndefined();
   });
 });

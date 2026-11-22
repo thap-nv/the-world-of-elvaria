@@ -286,7 +286,8 @@
 - Opens sessions through `AgentRunner` only (ADR 0006, 0021): the plot, the prompt (`sessions/prompt.ts`) and tool
   policy of `runner-core`, the budget, `.runs/<quest>-<n>`, and the env (§3.9): the minimal env it was given, the
   `ELVARIA_*` context of the hook and exactly the quest's `secrets_required` from the treasury (`sessionEnvOf`
-  of `sessions/secrets.ts`); a name the territory no longer allows or the treasury lacks opens no session
+  of `sessions/secrets.ts`); SEC-01b passes the absolute treasury path and every tribe's configured account directory
+  into `ToolPolicy.secret_paths`, even when the session belongs to another tribe. A name the territory no longer allows or the treasury lacks opens no session
   (`secretsLacking` asks first, by name only). The same secrets (`questSecretsOf`, read before the plot) go to
   `Plots.prepare` for the territory's `commands.setup`, so an install from a private registry works before the
   first session (P1-30); a quest that asks for none gives setup none and reads no treasury. A

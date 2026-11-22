@@ -25,7 +25,8 @@ function bashRuleMatches(rule: string, command: string): boolean {
 function secretPathOf(policy: ToolPolicy, command: string): string | undefined {
   const globs = policy.secret_paths ?? [];
   const regexes = globs.map(globToRegExp);
-  for (const word of command.replace(/["'`]/g, ' ').split(/[\s;|&<>(){}=,]+/)) {
+  const quoted = [...command.matchAll(/"([^"]+)"|'([^']+)'/g)].map((match) => match[1] ?? match[2] ?? '');
+  for (const word of [...quoted, ...command.replace(/["'`]/g, ' ').split(/[\s;|&<>(){}=,]+/)]) {
     const index = globIndexAtAnyDepth(word, regexes);
     if (index !== -1) return globs[index];
   }
