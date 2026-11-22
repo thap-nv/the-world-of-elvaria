@@ -191,18 +191,13 @@ describe('the default registry', () => {
     expect(scout).toContain('a URL pinned to a commit, with the lines');
   });
 
-  // (397): a refactor quest that moves files keeps their history only with `git mv`, and its done-when runs the
-  // layout, dup and knip gates; without them the dwarf of AH-05 stopped blocked three times.
-  it('lets the dwarf move files and run the layout gates its refactor quests name', () => {
-    const dwarf = registry().classes.find((entry) => entry.id === 'dwarf');
-    expect(dwarf?.tools.allow).toEqual(
-      expect.arrayContaining([
-        'Bash(git mv:*)',
-        'Bash(pnpm layout:*)',
-        'Bash(pnpm dup:*)',
-        'Bash(pnpm knip:*)',
-      ]),
-    );
+  // (397) a refactor quest keeps file history only with `git mv` and must leave layout, dup and knip green; (402)
+  // `pnpm --filter X test` runs one package's tests and did not match `pnpm test:*`. AH-05's dwarf lacked all of them.
+  it('lets the dwarf move files, run the layout gates and test one package', () => {
+    const allowOf = (id: string) => registry().classes.find((entry) => entry.id === id)?.tools.allow;
+    const dwarfTools = ['Bash(git mv:*)', 'Bash(pnpm layout:*)', 'Bash(pnpm dup:*)', 'Bash(pnpm knip:*)'];
+    expect(allowOf('dwarf')).toEqual(expect.arrayContaining([...dwarfTools, 'Bash(pnpm --filter:*)']));
+    expect(allowOf('knight')).toContain('Bash(pnpm --filter:*)');
   });
 
   it('ships the prompt of every class, opened by a note for the maintainer (P1-15)', () => {

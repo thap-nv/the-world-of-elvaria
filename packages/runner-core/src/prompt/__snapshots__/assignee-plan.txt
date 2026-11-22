@@ -10,8 +10,8 @@
 - Classes and their tools:
   - `chancellor` (Chancellor): no tools
   - `mage` (Mage): reads and searches files; writes files; shell: `git status`, `git diff`, `git add`, `git commit`, and its territory's check commands
-  - `knight` (Knight): reads and searches files; writes files; shell: `pnpm test`, `pnpm lint`, `pnpm typecheck`, `git status`, `git diff`, `git add`, `git commit`, and its territory's check commands
-  - `dwarf` (Dwarf): reads and searches files; writes files; shell: `pnpm test`, `pnpm lint`, `pnpm typecheck`, `git status`, `git diff`, `git add`, `git commit`, `git mv`, `pnpm layout`, `pnpm dup`, `pnpm knip`, `pnpm build`, `pnpm install`, and its territory's check commands
+  - `knight` (Knight): reads and searches files; writes files; shell: `pnpm test`, `pnpm --filter`, `pnpm lint`, `pnpm typecheck`, `git status`, `git diff`, `git add`, `git commit`, and its territory's check commands
+  - `dwarf` (Dwarf): reads and searches files; writes files; shell: `pnpm test`, `pnpm --filter`, `pnpm lint`, `pnpm typecheck`, `git status`, `git diff`, `git add`, `git commit`, `git mv`, `pnpm layout`, `pnpm dup`, `pnpm knip`, `pnpm build`, `pnpm install`, and its territory's check commands
   - `scout` (Scout): reads and searches files; writes files; web; no shell
   - `scribe` (Scribe): reads and searches files; writes files; no shell
   - `bard` (Bard): reads and searches files; writes files; no shell

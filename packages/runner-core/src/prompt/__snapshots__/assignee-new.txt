@@ -28,6 +28,7 @@ Your shell runs only the commands below, one command per call, each starting exa
 A command that cannot start (execution policy, command not found) or fails because of the machine (EPERM, blocked by a sandbox) gives no result: quote its error line under Not done in the letter, or in a judge's notes, never claim a result for it, and do not work around it. The Steward's checks run outside your session.
 
 - `pnpm test`
+- `pnpm --filter`
 - `pnpm lint`
 - `pnpm typecheck`
 - `git status`
