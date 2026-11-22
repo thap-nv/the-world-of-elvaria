@@ -218,6 +218,7 @@ show` prints the brief apart from the rest of the description and, while the pla
   repo with no `user.email`, `.claude/rules/` files outside `laws.patch_paths`, a `CLAUDE.local.md` Claude Code
   loads into the plots when they sit inside the repo (P1-02, `src/territory/claude-local.ts`), the last two also
   said by `territory add`)
+  and globs in `shared_paths`, `laws.read_only_paths` and `laws.patch_paths` matching no tracked file on the default branch (AH-16; `laws.forbidden_paths` is excluded),
   and the models whose doers have judges of another model on a single mana pool only, two judges on one gauge
   included (`src/doctor/check-judges.ts`, counted by pool since PS-03, (b) of P1-56),
   "not measured" when the Steward has logged none; under each reading the share of the window a session took, as

@@ -32,6 +32,7 @@ import { checkScripture } from './check-scripture.ts';
 import { checkLeftSessions, checkTreasury } from './check-state.ts';
 import { checkTreasuryAcl } from './treasury-acl.ts';
 import { checkTerritorySetup } from './check-territory-setup.ts';
+import { checkTerritoryGlobs } from './check-territory-globs.ts';
 import { checkTerritoryTrials } from './check-territory-trial.ts';
 import { accountFindings } from './check-accounts.ts';
 import { siblingFindings } from './check-siblings.ts';
@@ -173,6 +174,7 @@ async function runDoctor(input: CommandInput, cli: CliContext): Promise<ExitCode
     ...(await checkTerritories(ctx)),
     ...(await checkTerritoryCommands(ctx)),
     ...(await checkTerritorySetup(ctx)),
+    ...(await checkTerritoryGlobs(ctx)),
     ...(await checkTerritoryTrials(ctx)),
     ...(await checkDelivery(ctx)),
     ...(await checkGraph(ctx, options.pin)),

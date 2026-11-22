@@ -80,6 +80,7 @@
     "cli.doctor.terms_hint": "Read docs/adr/0018-gemini-tribe-on-antigravity-cli.md, then run: elvaria doctor --acknowledge-terms {tribe}",
     "cli.doctor.terms_refused": "Tribe {tribe}: Antigravity's terms are not acknowledged, so this tribe does not run yet (ADR 0018).",
     "cli.doctor.territory": "Territory {id}: {path}.",
+    "cli.doctor.territory_glob_unmatched": "Territory {id}: glob {glob} matches no tracked file on its default branch.",
     "cli.doctor.territory_missing": "Territory {id}: the folder {path} is gone.",
     "cli.doctor.territory_not_git": "Territory {id}: {path} is no longer a git repo.",
     "cli.doctor.territory_unchecked": "Territory {id}: {path}; its repo cannot be checked without git.",
