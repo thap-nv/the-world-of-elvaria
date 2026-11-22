@@ -19,6 +19,7 @@ import { deliveryNoteOf } from '../deliver/note.ts';
 import { detailOf, forgeError, foundOf, messageOf, stopped } from './delivery.ts';
 import { runDeliveryGit } from './git.ts';
 import { recordFailed, recordPushed } from './outcome.ts';
+import { repoConfigFailure } from './repo-config.ts';
 import { COMMIT_FORMAT, scanDiff } from './scan.ts';
 import { updateBranch } from './update.ts';
 import type { Context } from '../context.ts';
@@ -121,6 +122,13 @@ async function push(ctx: Context, d: Delivery, known: readonly string[]): Promis
 
 /** The steps after the plot is found; undefined when the Steward stopped, which records nothing. */
 async function deliverFound(ctx: Context, d: Delivery): Promise<Failure | undefined> {
+  const config = await checkRepoConfig(d);
+  if (stopped(d)) return undefined;
+  return config ?? deliverChecked(ctx, d);
+}
+
+/** Config is safe to use for the update; check it again after the territory's generators and checks. */
+async function deliverChecked(ctx: Context, d: Delivery): Promise<Failure | undefined> {
   const updated = await updateBranch(ctx, d);
   if (updated === 'base_red') {
     ctx.deps.log.warn(
@@ -148,10 +156,22 @@ async function deliverFound(ctx: Context, d: Delivery): Promise<Failure | undefi
   const known = await knownOf(ctx);
   const scan = scanDiff(changes, known);
   if (scan.secrets.length > 0) return secretFailure(d, scan, known);
+  const beforePush = await checkRepoConfig(d);
+  if (stopped(d)) return undefined;
+  if (beforePush !== undefined) return beforePush;
   const pushed = await push(ctx, d, known);
   if (stopped(d)) return undefined;
   if (!pushed.ok) return { stage: 'push', reason: 'push_refused', branch: d.branch, detail: pushed.error };
   return openPullRequest(ctx, d, { head, known, warnings: scan.warnings });
+}
+
+/** The territory and the plot can each have their own worktree config (SEC-02b). */
+async function checkRepoConfig(d: Delivery): Promise<Failure | undefined> {
+  for (const cwd of new Set([d.repo.cwd, d.worktree])) {
+    const failure = await repoConfigFailure(d.git, cwd, d.branch, d.signal);
+    if (failure !== undefined || stopped(d)) return failure;
+  }
+  return undefined;
 }
 
 /** The branch's pull request, the delivery note (masked) as its description; `delivery.pushed` once it exists. */
