@@ -19,16 +19,13 @@ const PATTERNS_FILE = path.join(
   'redact-patterns.json',
 );
 
-/** The patterns that only warn: they match test fixtures and docs often (same split as the push scan). */
-export const SHARED_PATTERN_IDS = ['bearer_token', 'url_credentials', 'secret_assignment'];
-
 /** How much of a file git sniffs for a NUL byte to call it binary. */
 const BINARY_SNIFF_BYTES = 8000;
 /** `git show` of a big staged file must not stop the hook at the default 1 MiB buffer. */
 const MAX_FILE_BYTES = 64 * 1024 * 1024;
 
 /**
- * @typedef {{ id: string, regex: string, flags: string }} PatternEntry
+ * @typedef {{ id: string, regex: string, flags: string, warn_only?: boolean }} PatternEntry
  * @typedef {{ file: string, line: number, pattern: string }} Finding
  * @typedef {{ path: string, content: Buffer | string }} StagedFile
  */
@@ -58,6 +55,7 @@ export function scanStaged(files, entries) {
   const compiled = entries.map((entry) => ({
     id: entry.id,
     regex: new RegExp(entry.regex, `${entry.flags}g`),
+    warn_only: Boolean(entry.warn_only),
   }));
   /** @type {Finding[]} */
   const blocked = [];
@@ -66,12 +64,12 @@ export function scanStaged(files, entries) {
   for (const { path: file, content } of files) {
     if (content === null || isBinary(content)) continue;
     const text = content.toString();
-    for (const { id, regex } of compiled) {
+    for (const { id, regex, warn_only } of compiled) {
       regex.lastIndex = 0;
       const hit = regex.exec(text);
       if (hit === null) continue;
       const line = text.slice(0, hit.index).split('\n').length;
-      (SHARED_PATTERN_IDS.includes(id) ? warned : blocked).push({ file, line, pattern: id });
+      (warn_only ? warned : blocked).push({ file, line, pattern: id });
     }
   }
   return { blocked, warned };

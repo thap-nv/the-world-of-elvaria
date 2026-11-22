@@ -9,7 +9,7 @@ import process from 'node:process';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { SHARED_PATTERN_IDS, loadPatterns, scanStaged } from './scan-staged-secrets.mjs';
+import { loadPatterns, scanStaged } from './scan-staged-secrets.mjs';
 
 const SCRIPT = path.join(import.meta.dirname, 'scan-staged-secrets.mjs');
 
@@ -42,11 +42,21 @@ const entries = loadPatterns();
 
 describe('scanStaged', () => {
   it('has a fake secret for every specific pattern of the file, and one for every shared one', () => {
-    const ids = entries.map(({ id }: { id: string }) => id);
-    expect(ids.filter((id: string) => !SHARED_PATTERN_IDS.includes(id)).toSorted()).toEqual(
-      Object.keys(SPECIFIC_TOKENS).toSorted(),
-    );
-    expect(Object.keys(SHARED_VALUES).toSorted()).toEqual([...SHARED_PATTERN_IDS].toSorted());
+    const specificIds = entries
+      .filter((e: { warn_only?: boolean }) => !e.warn_only)
+      .map(({ id }: { id: string }) => id);
+    const warnIds = entries
+      .filter((e: { warn_only?: boolean }) => e.warn_only)
+      .map(({ id }: { id: string }) => id);
+    expect(specificIds.toSorted()).toEqual(Object.keys(SPECIFIC_TOKENS).toSorted());
+    expect(warnIds.toSorted()).toEqual(Object.keys(SHARED_VALUES).toSorted());
+  });
+
+  it('treats a pattern missing warn_only as blocking', () => {
+    const custom = [{ id: 'legacy_pattern', regex: 'LEGACY_[0-9]+', flags: '' }];
+    const result = scanStaged([{ path: 'src/a.ts', content: 'LEGACY_123456\n' }], custom);
+    expect(result.blocked).toEqual([{ file: 'src/a.ts', line: 1, pattern: 'legacy_pattern' }]);
+    expect(result.warned).toEqual([]);
   });
 
   it.each(Object.entries(SPECIFIC_TOKENS))('blocks %s with its file, line and pattern', (id, token) => {
