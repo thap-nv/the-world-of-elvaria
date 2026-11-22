@@ -1,7 +1,9 @@
-// A fake git credential helper for the specs (PS-08): the repo's own config empties credential.helper, which drops the
-// machine's helpers (Git Credential Manager, osxkeychain) read before it, then names a Node script that answers as a
-// helper does. No spec ever reads a real credential. The token has the shape Git Credential Manager hands out
-// (`gho_…`), which redact masks, so a spec can look for it in everything the CLI printed or wrote.
+// A fake git credential helper for the specs (PS-08): the spec's own home (its HOME and USERPROFILE) holds a
+// .gitconfig that empties credential.helper, which drops the machine's helpers (Git Credential Manager, osxkeychain)
+// read before it, then names a Node script that answers as a helper does. The home, not the repo: git of a delivery
+// asks the owner's helpers alone, never one that a territory's config names (SEC-02). No spec ever reads a real
+// credential. The token has the shape Git Credential Manager hands out (`gho_…`), which redact masks, so a spec can
+// look for it in everything the CLI printed or wrote.
 import { readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
@@ -21,6 +23,9 @@ const ANSWERS: Readonly<Record<HelperAnswer, string>> = {
   hang: 'setInterval(() => undefined, 1000);',
 };
 
+/** git runs a `!` helper (and fsmonitor, ssh) through sh, on Windows too: forward slashes, quoted for the spaces. */
+const slash = (file: string) => file.replaceAll('\\', '/');
+
 /** The helper reads git's whole question first, as a real one does, and keeps it in `asked` for the spec. */
 const helperSource = (answer: HelperAnswer, asked: string): string =>
   [
@@ -34,18 +39,51 @@ const helperSource = (answer: HelperAnswer, asked: string): string =>
     '',
   ].join('\n');
 
-/** Makes git in `repo` ask the fake helper alone; returns the file where the helper keeps what git asked. */
-export async function useFakeHelper(repo: string, dir: string, answer: HelperAnswer): Promise<string> {
+/**
+ * Makes git, run with `home` as its HOME and USERPROFILE, ask the fake helper alone; returns the file where the
+ * helper keeps what git asked.
+ */
+export async function useFakeHelper(home: string, dir: string, answer: HelperAnswer): Promise<string> {
   const script = path.join(dir, `credential-${answer}.mjs`);
   const asked = path.join(dir, `credential-${answer}-asked.txt`);
   await writeFile(script, helperSource(answer, asked));
   await writeFile(asked, '');
-  // git runs a `!` helper through sh, on Windows too: forward slashes, quoted for the spaces in the folders.
-  const slash = (file: string) => file.replaceAll('\\', '/');
-  git(repo, 'config', 'credential.helper', '');
-  git(repo, 'config', '--add', 'credential.helper', `!"${slash(process.execPath)}" "${slash(script)}"`);
+  const config = ['config', '--file', path.join(home, '.gitconfig')];
+  // --replace-all: a second territory of the same spec names the helper again, in place of the first.
+  git(dir, ...config, '--replace-all', 'credential.helper', '');
+  git(dir, ...config, '--add', 'credential.helper', `!"${slash(process.execPath)}" "${slash(script)}"`);
   return asked;
 }
+
+/**
+ * A program that notes each run of it in a file (its name and git's arguments, one line a run) and ends at once: it
+ * reads no input, since git keeps an ssh command's stdin open, and answers nothing.
+ */
+const MARK_SOURCE = [
+  "import { appendFileSync } from 'node:fs';",
+  "appendFileSync(process.argv[2], `${process.argv.slice(3).join(' ')}\\n`);",
+  '',
+].join('\n');
+
+/**
+ * Makes `repo`'s own config name a program for fsmonitor, ssh and the credential helper, as code a session runs
+ * could (threat model A5, SEC-02); returns the file where each run of one is noted.
+ */
+export async function poisonRepo(repo: string, dir: string): Promise<string> {
+  const script = path.join(dir, 'poison.mjs');
+  const marker = path.join(dir, 'poison-ran.txt');
+  await writeFile(script, MARK_SOURCE);
+  const program = (name: string) =>
+    `"${slash(process.execPath)}" "${slash(script)}" "${slash(marker)}" ${name}`;
+  git(repo, 'config', 'core.fsmonitor', program('fsmonitor'));
+  git(repo, 'config', 'core.sshCommand', program('ssh'));
+  git(repo, 'config', 'credential.helper', `!${program('helper')}`);
+  return marker;
+}
+
+/** What `poisonRepo`'s programs noted: one line a run, none when git ran none of them. */
+export const poisonRuns = async (marker: string): Promise<string[]> =>
+  (await readFile(marker, 'utf8').catch(() => '')).split('\n').filter((line) => line !== '');
 
 /** Every file under `dir` whose text holds `needle`, relative to `dir`: none, for a token. */
 export async function filesHolding(dir: string, needle: string): Promise<string[]> {

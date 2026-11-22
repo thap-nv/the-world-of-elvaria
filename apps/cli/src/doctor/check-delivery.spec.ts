@@ -46,11 +46,11 @@ describe('elvaria doctor: delivery (PS-08)', () => {
   });
   afterEach(() => dir.remove());
 
-  /** A territory attached by the CLI from a repo with `remote` as origin, its git asking the fake helper. */
+  /** A territory attached by the CLI from a repo with `remote` as origin, the owner's git asking the fake helper. */
   async function territory(id: string, answer: HelperAnswer, remote = GITHUB_REMOTE): Promise<string> {
     const repo = await gitRepo(path.join(dir.root, `repo ${id}`));
     git(repo, 'remote', 'add', 'origin', remote);
-    await useFakeHelper(repo, dir.root, answer);
+    await useFakeHelper(home, dir.root, answer);
     await run(testIo(), 'territory', 'add', repo, '--id', id, '--kingdom', kingdom);
     return repo;
   }

@@ -13,6 +13,7 @@ import { FAKE_TOKEN, GITHUB_REMOTE, useFakeHelper } from '../../test/credential.
 import { BRANCH, HEAD, REPO, at, fakeGithub, forgeOver } from '../../test/github.ts';
 import { gitToken, githubForge } from './github-forge.ts';
 import type { TempDir } from '../../test/cli.ts';
+import type { HelperAnswer } from '../../test/credential.ts';
 
 const PULL = (number: number, state: string) => ({
   number,
@@ -278,17 +279,17 @@ describe('gitToken', () => {
   });
   afterEach(() => dir.remove());
 
-  it("asks git's store in the territory's folder, and says when it has none", async () => {
-    const stored = await gitRepo(path.join(dir.root, 'lãnh thổ'));
-    const empty = await gitRepo(path.join(dir.root, 'lãnh thổ trống'));
-    // An empty home: the machine's ~/.gitconfig names no helper here.
-    const home = path.join(dir.root, 'home');
-    await mkdir(home);
-    const io = testIo({ env: { ...baseEnv(await isolatedPath()), HOME: home, USERPROFILE: home } });
-    await useFakeHelper(stored, dir.root, 'token');
-    await useFakeHelper(empty, dir.root, 'nothing');
-    const token = await gitToken(io)({ ...REPO, cwd: stored });
+  it("asks the owner's git store in the territory's folder, and says when it has none", async () => {
+    const territory = await gitRepo(path.join(dir.root, 'lãnh thổ'));
+    // A home of the spec's own, so the machine's ~/.gitconfig names no helper here: the fake one answers.
+    const ioAnswering = async (answer: HelperAnswer) => {
+      const home = path.join(dir.root, `home ${answer}`);
+      await mkdir(home);
+      await useFakeHelper(home, dir.root, answer);
+      return testIo({ env: { ...baseEnv(await isolatedPath()), HOME: home, USERPROFILE: home } });
+    };
+    const token = await gitToken(await ioAnswering('token'))({ ...REPO, cwd: territory });
     expect(token.ok && token.value === FAKE_TOKEN).toBe(true);
-    expect(await gitToken(io)({ ...REPO, cwd: empty })).toEqual(err('none'));
+    expect(await gitToken(await ioAnswering('nothing'))({ ...REPO, cwd: territory })).toEqual(err('none'));
   });
 });

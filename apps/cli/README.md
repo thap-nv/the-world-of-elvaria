@@ -330,8 +330,9 @@ show` prints the brief apart from the rest of the description and, while the pla
   territory.json under the store's lock (ADR 0005, as `territory add` writes the file), with no event: the field
   is not in the territory view. A mode that pushes is refused unless `vcs.remote` names a repo on the forge
   (`src/forge/remote.ts`: github.com only). `doctor` then checks each territory whose delivery is not manual
-  (`src/doctor/check-delivery.ts`): its remote, a credential from `git -c core.askPass= credential fill` in the
-  territory's folder (`src/forge/credential.ts`: minimal env plus `GIT_TERMINAL_PROMPT=0`, the one `GIT_*`
+  (`src/doctor/check-delivery.ts`): its remote, a credential from `git credential fill` in the territory's
+  folder with runner-core's `gitGuard` switches (`src/forge/credential.ts`: the owner's helpers alone, never one
+  that the territory's config names, and an empty `core.askPass`, SEC-02; minimal env plus `GIT_TERMINAL_PROMPT=0`, the one `GIT_*`
   variable Elvaria sets, and `GCM_INTERACTIVE=never`; 10 s, then its tree is killed; on macOS a stopped call names
   the Keychain's Always Allow), and `GET /repos/{owner}/{repo}` on GitHub (`src/forge/github.ts`, through
   `CliIo.fetch`): no right to push is an error, a forge out of reach a warning. It prints neither the token nor
@@ -438,8 +439,9 @@ old lines included), `src/quest/last-run.spec.ts` (verdicts and `plot.restored` 
 `src/quest/stamina-view.spec.ts` and `src/quest/edit-tokens.spec.ts` (PS-28b: the session and notch lines of
 `test/stamina.ts`, for the ceilings, the stamina bar and what a new token budget does).
 No spec reads a real credential or reaches a forge (PS-08): `test/credential.ts` empties `credential.helper` in the
-fixture repo and names a Node script that answers as a helper does (a token of GitHub's `gho_` shape, nothing, or
-no answer at all), with an empty home folder; `testIo` hands every command a `fetch` that fails, and
+`.gitconfig` of the spec's own home folder (the owner's config: a delivery's git asks no helper of the repo's own,
+SEC-02) and names a Node script that answers as a helper does (a token of GitHub's `gho_` shape, nothing, or no
+answer at all), and `poisonRepo` makes a repo's own config name programs that must never run; `testIo` hands every command a `fetch` that fails, and
 `src/doctor/check-delivery.spec.ts` passes a fake one. The specs compare the token, never print it, and look for it
 in the output and in every file of the kingdom. (PS-08c) `test/github.ts` is a fake GitHub that answers by method
 and path and keeps every request: `src/forge/github-forge.spec.ts` takes each call of the forge port through it

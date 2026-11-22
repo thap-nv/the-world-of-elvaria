@@ -1,13 +1,15 @@
-// A forge credential from git's own store (PS-08, ADR 0023): `git credential fill` each time one is needed, in the
-// territory's folder so its own helper settings count, and never kept. No window and no prompt, since nobody sits at
-// a background delivery: GIT_TERMINAL_PROMPT=0 is the one GIT_* variable Elvaria sets ((L) of the PS-08 plan,
-// .claude/rules/runner.md), GCM_INTERACTIVE=never keeps Git Credential Manager from opening its window, and an empty
-// core.askPass any askpass program. macOS's osxkeychain has no such switch and may ask once whether git may read the
-// Keychain, so every call has a time limit (measured on Windows only, row 29 of the plan). The value goes back to the
-// caller alone, never to stdout, an event or a log.
+// A forge credential from git's own store (PS-08, ADR 0023): `git credential fill` each time one is needed, and never
+// kept. It runs in the territory's folder as the push does, so the owner's conditional includes and the territory's
+// credential.username count, with the switches of gitGuard: the owner's helpers alone (system and global config),
+// never one that the territory's own config names (SEC-02). No window and no prompt, since nobody sits at a background
+// delivery: GIT_TERMINAL_PROMPT=0 is the one GIT_* variable Elvaria sets ((L) of the PS-08 plan,
+// .claude/rules/runner.md), GCM_INTERACTIVE=never keeps Git Credential Manager from opening its window, and
+// gitGuard's empty core.askPass any askpass program. macOS's osxkeychain has no such switch and may ask once whether
+// git may read the Keychain, so every call has a time limit (measured on Windows only, row 29 of the plan). The value
+// goes back to the caller alone, never to stdout, an event or a log.
 import { err, ok } from '@elvaria/domain';
 import type { Result } from '@elvaria/domain';
-import { runToEnd } from '@elvaria/runner-core';
+import { gitGuard, runToEnd } from '@elvaria/runner-core';
 import { DELIVERY_GIT_SWITCHES } from '@elvaria/steward';
 
 import { findExecutable } from '../process/find-executable.ts';
@@ -18,8 +20,6 @@ import type { ForgeRepo } from './remote.ts';
 
 /** A stored credential answers in 0.3 s on Windows (row 29); the rest is a busy machine or a dialog nobody sees. */
 export const CREDENTIAL_TIMEOUT_MS = 10_000;
-/** An empty askpass: git asks no program for what the helper does not have. */
-const EMPTY_ASKPASS = 'core.askPass=';
 
 export interface ForgeCredential {
   readonly username: string;
@@ -59,9 +59,12 @@ export async function readCredential(
   const file = await findExecutable('git', io.env, io.platform);
   if (file === undefined) return err('no_git');
   const query = `protocol=https\nhost=${repo.host}\npath=${credentialPathOf(repo)}\n\n`;
-  const run = await runToEnd({ file, args: [] }, ['-c', EMPTY_ASKPASS, 'credential', 'fill'], {
+  const launch = { file, args: [] };
+  const env = deliveryGitEnv(io);
+  const guard = await gitGuard(launch, cwd, env);
+  const run = await runToEnd(launch, [...guard, 'credential', 'fill'], {
     cwd,
-    env: deliveryGitEnv(io),
+    env,
     stdin: query,
     timeout_ms: timeoutMs,
   });

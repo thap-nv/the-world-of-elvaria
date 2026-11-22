@@ -109,6 +109,7 @@ export { USE_RELATIONS, graphLinksOf, readGraphLinks } from './graph/graph-links
 export { answerFilesOf } from './graph/query-answer.ts';
 export type { AnswerFile } from './graph/query-answer.ts';
 export { gitOf, zList } from './plot/git.ts';
+export { gitGuard } from './process/git-guard.ts';
 export type { Git, GitRun } from './plot/git.ts';
 export { plotCommitMessage } from './plot/commit-message.ts';
 export { folderPlotOf } from './plot/folder.ts';
