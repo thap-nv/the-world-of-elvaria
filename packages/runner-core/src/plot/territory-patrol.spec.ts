@@ -55,8 +55,12 @@ describe('tryTerritory as the patrol', () => {
       tryTerritory({ kingdom, territory, host: TEST_HOST, name: patrolIdOf('demo') }),
       tryTerritory({ kingdom, territory, host: TEST_HOST }),
     ]);
+    expect(patrol.trial.plot_failure).toBeUndefined();
+    expect(trial.trial.plot_failure).toBeUndefined();
     expect(patrol.trial.checks.map(({ pass }) => pass)).toEqual([true]);
     expect(trial.trial.checks.map(({ pass }) => pass)).toEqual([true]);
+    expect(patrol.leftover).toBeUndefined();
+    expect(trial.leftover).toBeUndefined();
     expect(existsSync(folderOf(trialIdOf('demo')))).toBe(false);
     expect(existsSync(folderOf(patrolIdOf('demo')))).toBe(false);
   });
