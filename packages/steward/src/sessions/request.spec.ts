@@ -22,6 +22,7 @@ afterEach(async () => {
 describe('session secret paths', () => {
   it('fences the treasury and every tribe account for both the worker and judge', async () => {
     current = await bench();
+    const root = current.root;
     const read = await current.store.kingdom.read();
     if (!read.ok) throw new Error('fixture: no kingdom');
     const treasury = path.resolve(current.root, '..', 'custom vault', 'values.json').replaceAll('\\', '/');
@@ -31,7 +32,7 @@ describe('session secret paths', () => {
         path: 'C:/fake/cli',
         version: '1.0.0',
         ...tribe.tool,
-        config_dir: path.resolve(current.root, '..', 'custom accounts', tribe.id).replaceAll('\\', '/'),
+        config_dir: path.resolve(root, '..', 'custom accounts', tribe.id).replaceAll('\\', '/'),
       },
     }));
     const written = await current.store.kingdom.write(
