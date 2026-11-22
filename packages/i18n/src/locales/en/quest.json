@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "messages": {
+    "quest.status.archived": "Archived",
+    "quest.status.awaiting_seal": "Awaiting the seal",
+    "quest.status.blocked": "Waiting for an answer",
+    "quest.status.claimed": "Claimed",
+    "quest.status.done": "Done",
+    "quest.status.draft": "Draft",
+    "quest.status.infirmary": "Infirmary",
+    "quest.status.open": "Open",
+    "quest.status.paused_mana": "Paused (out of mana)",
+    "quest.status.returned": "Returned",
+    "quest.status.review": "In review",
+    "quest.status.working": "Working"
+  }
+}

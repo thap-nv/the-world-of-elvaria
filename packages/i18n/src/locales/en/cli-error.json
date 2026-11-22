@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.error.absolute_path": "This needs an absolute path: {path}",
+    "cli.error.bad_value": "Option {option} is missing its value, or takes none.",
+    "cli.error.choice": "{option} takes one of: {choices}.",
+    "cli.error.extra_argument": "Unexpected argument: {value}",
+    "cli.error.locale": "There is no language «{value}»; choose one of: {choices}.",
+    "cli.error.missing_argument": "Missing argument {name}.",
+    "cli.error.missing_option": "Missing required option {option}.",
+    "cli.error.name_length": "A name has 1 to {max} characters.",
+    "cli.error.no_kingdom": "No kingdom given: add --kingdom <dir> or set ELVARIA_KINGDOM.",
+    "cli.error.not_a_kingdom": "{dir} is not a kingdom yet (no kingdom.json). Found one with: elvaria init --kingdom \"{dir}\" --name <name>",
+    "cli.error.see_command_help": "See: elvaria {command} --help",
+    "cli.error.see_help": "See: elvaria --help",
+    "cli.error.time_zone": "Time zone «{tz}» is not in the IANA time zone list.",
+    "cli.error.unexpected": "Unexpected error: {message}",
+    "cli.error.unknown": "{option} «{value}» does not exist; choose one of: {choices}.",
+    "cli.error.unknown_command": "There is no command «{command}».",
+    "cli.error.unknown_option": "There is no option {option}."
+  }
+}

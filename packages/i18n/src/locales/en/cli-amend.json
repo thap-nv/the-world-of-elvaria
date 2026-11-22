@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.amend.listening": "The author of quest {quest} reads its amendment {memo}…",
+    "cli.amend.decided": "Amendment {memo} of quest {quest}: {decision}.",
+    "cli.amend.decided_held": "Amendment {memo} of quest {quest}: {decision} (held for you by: {holds}).",
+    "cli.amend.failed": "The author of an amendment could not decide it ({code}): it goes to you.",
+    "cli.amend.cli_error": "The author of an amendment could not decide it, its session ended in error: {line}. It goes to you.",
+    "cli.amend.no_author": "No author could read it (no Chancellor, or the mage of its plan is not here): you decide it."
+  }
+}

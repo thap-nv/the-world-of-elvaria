@@ -81,7 +81,9 @@ describe('checksFor', () => {
   });
 
   it('runs i18n:check for a locale or the glossary', () => {
-    expect(checksFor([file('packages/i18n/src/locales/vi.json')], '', noRead)).toEqual(['i18n']);
+    expect(checksFor([file('packages/i18n/src/locales/vi/cli-quest.json')], '', noRead)).toEqual(['i18n']);
+    expect(checksFor([file('packages/i18n/src/locales/en.ts')], '', noRead)).toEqual(['i18n']);
+    expect(checksFor([file('packages/i18n/src/messages.ts')], '', noRead)).toEqual([]);
     expect(
       checksFor([file('packages/i18n/src/glossary.json'), file('apps/cli/package.json')], '', noRead),
     ).toEqual(['boundaries', 'i18n']);

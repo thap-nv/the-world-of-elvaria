@@ -37,7 +37,8 @@ export function cliOutputConfig() {
           mode: 'all',
           words: { exclude: NOT_PROSE },
           callees: { exclude: ['t', 'translate', 'Error', 'RegExp'] },
-          message: 'Text the owner reads goes through t() with a key in vi.json and en.json (ADR 0014)',
+          message:
+            'Text the owner reads goes through t() with a key in packages/i18n/src/locales/vi/ and en/ (ADR 0014)',
         },
       ],
     },

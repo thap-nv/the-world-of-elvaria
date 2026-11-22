@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.watch.summary": "Theo dõi nhiệm vụ chưa kết thúc và việc chờ bạn. Chỉ đọc; tự làm mới trong terminal.",
+    "cli.watch.interval": "Khoảng làm mới tính bằng giây nguyên (mặc định: 5).",
+    "cli.watch.invalid_interval": "--interval phải là số giây nguyên lớn hơn hoặc bằng 1.",
+    "cli.watch.empty": "Không có nhiệm vụ chưa kết thúc.",
+    "cli.watch.attention": "Việc chờ bạn",
+    "cli.watch.read_failed": "Không đọc được vương quốc để theo dõi."
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.delegation.cause.base_red": "check {check} của nhánh gốc đổi sang đỏ, và quest này được merge không qua dấu từ lần tuần tra xanh gần nhất",
+    "cli.delegation.cause.escape_reported": "chủ nhân báo một lỗi lọt theo quest này, quest được merge không qua dấu (ghi chú: {note})"
+  }
+}

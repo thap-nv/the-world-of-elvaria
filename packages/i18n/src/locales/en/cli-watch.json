@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.watch.summary": "Watch unfinished quests and work waiting for you. Reads only; refreshes in a terminal.",
+    "cli.watch.interval": "Refresh interval in whole seconds (default: 5).",
+    "cli.watch.invalid_interval": "--interval must be a whole number of seconds, at least 1.",
+    "cli.watch.empty": "No unfinished quests.",
+    "cli.watch.attention": "Waiting for you",
+    "cli.watch.read_failed": "Could not read the kingdom for watch."
+  }
+}

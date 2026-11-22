@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.wake.arg.tribe": "The tribe whose account to probe (an id of kingdom.json).",
+    "cli.wake.sent": "Sent the command to wake tribe {tribe}: the Steward probes its account at its next tick.",
+    "cli.wake.summary": "Ask the Steward to probe a tribe's mana now, e.g. after signing in again (wake command).",
+    "cli.wake.unknown": "This kingdom has no tribe {tribe}. Its tribes: {tribes}."
+  }
+}

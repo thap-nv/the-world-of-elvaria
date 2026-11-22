@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { localeProblems } from './locale-problems.ts';
-import type { LocaleFile } from './messages.ts';
+import { localeProblems, namespaceProblems } from './locale-problems.ts';
+import type { LocaleFile } from './locales/namespace.ts';
 
 const file = (messages: Record<string, string>, version = 1): LocaleFile => ({ version, messages });
 
@@ -41,5 +41,40 @@ describe('localeProblems', () => {
 
   it('needs the reference locale', () => {
     expect(localeProblems({ en: file({}) }, 'vi')).toEqual(['no vi locale file']);
+  });
+});
+
+describe('namespaceProblems', () => {
+  it('finds nothing when every key sits in its longest namespace, in both locales', () => {
+    const vi = { cli: file({ 'cli.yes': 'Có' }), 'cli.quest': file({ 'cli.quest.list.title': 'Quest' }) };
+    const en = { cli: file({ 'cli.yes': 'Yes' }), 'cli.quest': file({ 'cli.quest.list.title': 'Quests' }) };
+    expect(namespaceProblems({ vi, en }, 'vi')).toEqual([]);
+  });
+
+  it('reports a key in the wrong file, a key no namespace holds and a wrong version', () => {
+    const vi = {
+      cli: file({ 'cli.quest.list.title': 'Quest', 'store.busy': 'Bận' }, 2),
+      'cli.quest': file({ 'cli.quest.done': 'Xong' }),
+    };
+    expect(namespaceProblems({ vi }, 'vi')).toEqual([
+      'vi/cli.json: version 2, expected 1',
+      'vi/cli.json: "cli.quest.list.title" belongs in vi/cli-quest.json',
+      'vi/cli.json: "store.busy" belongs in no namespace',
+    ]);
+  });
+
+  it('reports a namespace missing on either side and two namespaces sharing one file', () => {
+    const vi = { cli: file({}), quest: file({}) };
+    const en = { cli: file({}), 'tribe.look': file({}), tribe_look: file({}) };
+    expect(namespaceProblems({ vi, en }, 'vi')).toEqual([
+      'en: namespace "tribe_look" shares the file tribe-look.json',
+      'en: no namespace "quest" (in vi)',
+      'en: namespace "tribe.look" is not in vi',
+      'en: namespace "tribe_look" is not in vi',
+    ]);
+  });
+
+  it('needs the reference locale', () => {
+    expect(namespaceProblems({ en: {} }, 'vi')).toEqual(['no vi namespaces']);
   });
 });

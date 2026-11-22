@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.inbox.applied": "The Steward applied command {id}.",
+    "cli.inbox.reason.stale": "the quest changed since you read it, so the edit does not overwrite it; read it again with elvaria quest show and send the edit again (an edit that changes only the budget is never refused for this)",
+    "cli.inbox.rejected": "The Steward refused command {id}: {reason}",
+    "cli.inbox.sent": "Command {id} is in the inbox; the Steward applies it at its next tick.",
+    "cli.inbox.unanswered": "A Steward is running but has not answered command {id}: it stays in the inbox (a command that waits for a free character or for mana stays until it can be done); the answer will be a command.applied or command.rejected line in the event log."
+  }
+}

@@ -130,8 +130,8 @@ describe('bannedIdentifierProblems', () => {
 
   it('reads only the keys of the locale files', () => {
     const text = '{"version": 1, "messages": {"worker.name": "dispatcher"}}';
-    expect(bannedIdentifierProblems('packages/i18n/src/locales/en.json', text, BANNED)).toEqual([
-      'packages/i18n/src/locales/en.json:1: "worker.name" uses the banned word "worker"; use assignee',
+    expect(bannedIdentifierProblems('packages/i18n/src/locales/en/worker.json', text, BANNED)).toEqual([
+      'packages/i18n/src/locales/en/worker.json:1: "worker.name" uses the banned word "worker"; use assignee',
     ]);
   });
 });

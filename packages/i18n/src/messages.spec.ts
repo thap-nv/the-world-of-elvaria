@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { localeProblems } from './locale-problems.ts';
+import { localeProblems, namespaceProblems } from './locale-problems.ts';
 import {
   DEFAULT_LOCALE,
   LOCALES,
   LOCALE_FILES,
+  LOCALE_NAMESPACES,
   format,
   isLocale,
   isMessageKey,
@@ -25,6 +26,14 @@ describe('translator', () => {
 
   it('ships locale files that i18n:check accepts', () => {
     expect(localeProblems(LOCALE_FILES, DEFAULT_LOCALE)).toEqual([]);
+    expect(namespaceProblems(LOCALE_NAMESPACES, DEFAULT_LOCALE)).toEqual([]);
+  });
+
+  it('reads a string from whichever namespace file holds it (AH-04)', () => {
+    expect(translator('vi')('cli.yes')).toBe('có');
+    const look = { palette: 'Ember', crest: 'Hawk' };
+    expect(translator('vi')('tribe_look.name', look)).toBe('Hawk Ember');
+    expect(translator('en')('tribe_look.name', look)).toBe('Ember Hawk');
   });
 });
 
