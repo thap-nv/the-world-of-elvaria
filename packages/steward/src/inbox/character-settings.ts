@@ -5,10 +5,10 @@
 import { ok, setLevelLine, setModelLine, withLevel, withModel } from '@elvaria/domain';
 import type { Character, CharacterId, Result } from '@elvaria/domain';
 
-import { OWNER } from '../record.ts';
+import { OWNER } from '../quest/record.ts';
 import { APPLIED, rejected } from './quest-commands.ts';
 import type { Context } from '../context.ts';
-import type { CharacterEdit } from '../record.ts';
+import type { CharacterEdit } from '../quest/record.ts';
 import type { Outcome } from './quest-commands.ts';
 
 /** What a setting does to a character: the line that tells it and the edit, or why it is refused. */

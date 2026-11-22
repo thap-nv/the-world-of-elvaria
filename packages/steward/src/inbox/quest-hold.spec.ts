@@ -13,7 +13,7 @@ import { createForgeBook } from '../forge/book.ts';
 import { createPatrolBook } from '../patrol/book.ts';
 import { createDelegationBook } from '../delegation/book.ts';
 import { noticesOf } from '../schedule/digest.ts';
-import { loadWorld } from '../world.ts';
+import { loadWorld } from '../tick/world.ts';
 import type { Bench, BenchOptions } from '../__fixtures__/kingdom.ts';
 import type { Plots, Steward, StewardDeps } from '../types.ts';
 

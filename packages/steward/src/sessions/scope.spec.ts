@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { bench, questPayload, settled, tickUntil } from '../__fixtures__/kingdom.ts';
 import { statusIs } from '../__fixtures__/review.ts';
-import { folderPlots } from '../plots.ts';
+import { folderPlots } from '../plot/folder-plots.ts';
 import { outOfScopeIn, outOfScopeOf } from './out-of-scope.ts';
 import type { Bench } from '../__fixtures__/kingdom.ts';
 import type { Context } from '../context.ts';

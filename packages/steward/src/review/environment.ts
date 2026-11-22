@@ -9,7 +9,7 @@ import { ENVIRONMENT_RECHECK_MINUTES } from '@elvaria/domain';
 import type { EnvironmentFailure, Quest } from '@elvaria/domain';
 
 import { noticeQuest, ring } from '../context.ts';
-import type { EnvironmentHeld } from '../background.ts';
+import type { EnvironmentHeld } from '../background/background.ts';
 import type { Context } from '../context.ts';
 
 /**

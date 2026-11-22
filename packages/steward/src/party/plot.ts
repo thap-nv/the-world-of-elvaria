@@ -13,7 +13,7 @@ import type { Quest, Territory } from '@elvaria/domain';
 import type { MergeOutcome, PrepareOptions } from '@elvaria/runner-core';
 
 import { noticeQuest, ring } from '../context.ts';
-import { STEWARD } from '../record.ts';
+import { STEWARD } from '../quest/record.ts';
 import type { Context } from '../context.ts';
 
 type Secrets = Readonly<Record<string, string>>;

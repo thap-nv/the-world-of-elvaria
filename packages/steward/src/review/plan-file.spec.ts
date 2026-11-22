@@ -10,7 +10,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { CAST, bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
 import { leavingRunners } from '../__fixtures__/deliver.ts';
 import { PLAN_FILE, templated } from '../__fixtures__/template.ts';
-import { folderPlots } from '../plots.ts';
+import { folderPlots } from '../plot/folder-plots.ts';
 import type { Bench } from '../__fixtures__/kingdom.ts';
 import type { Plots, Steward } from '../types.ts';
 

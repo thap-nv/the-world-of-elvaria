@@ -16,7 +16,7 @@ import type { DeliveryFailure, QuestId } from '@elvaria/domain';
 import type { BaseUpdate, CheckRun } from '@elvaria/runner-core';
 
 import { plotOptionsOf } from '../party/plot.ts';
-import { STEWARD } from '../record.ts';
+import { STEWARD } from '../quest/record.ts';
 import { questSecretsOf } from '../sessions/secrets.ts';
 import { baseRedAt } from './base-trial.ts';
 import { detailOf, messageOf, stopped } from './delivery.ts';

@@ -3,10 +3,10 @@
 // gauge reopens, the judge's session opens as before (ADR 0008 unchanged).
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { bench, questPayload, tickUntil } from './__fixtures__/kingdom.ts';
-import { statusIs } from './__fixtures__/review.ts';
-import type { Bench } from './__fixtures__/kingdom.ts';
-import type { Digest, DigestRequest, Steward } from './types.ts';
+import { bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
+import { statusIs } from '../__fixtures__/review.ts';
+import type { Bench } from '../__fixtures__/kingdom.ts';
+import type { Digest, DigestRequest, Steward } from '../types.ts';
 import type { ProbeResult } from '@elvaria/runner-core';
 
 let current: Bench | undefined;

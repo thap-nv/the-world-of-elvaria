@@ -28,7 +28,7 @@ import type {
   ScreenPair,
 } from '@elvaria/runner-core';
 
-import { handoverPath, readDecree, readHandover, readScriptures } from '../files.ts';
+import { handoverPath, readDecree, readHandover, readScriptures } from '../texts/files.ts';
 import { advisoriesOf, promptAdvisoriesOf } from '../memos/advisory.ts';
 import { objectionFor } from '../memos/objection.ts';
 import { gazetteerFor } from './gazetteer.ts';

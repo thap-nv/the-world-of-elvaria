@@ -21,8 +21,8 @@ import type {
 import type { AgentRunner } from '@elvaria/runner-core';
 import type { KingdomStore, Listing, StoreIssue } from '@elvaria/store';
 
-import type { ManaBook } from './mana/book.ts';
-import type { Logger } from './types.ts';
+import type { ManaBook } from '../mana/book.ts';
+import type { Logger } from '../types.ts';
 
 export interface World {
   readonly kingdom: Kingdom;

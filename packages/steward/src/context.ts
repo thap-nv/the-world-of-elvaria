@@ -1,17 +1,17 @@
 // What every step of one tick works with: the deps, the world as the tick sees it, the pen, the sessions.
-import type { Background } from './background.ts';
+import type { Background } from './background/background.ts';
 import type { DelegationBook } from './delegation/book.ts';
 import type { StreakBook } from './temple/streak-book.ts';
 import type { ForgeBook } from './forge/book.ts';
 import type { BaseLooks } from './forge/looks.ts';
 import type { PatrolBook } from './patrol/book.ts';
-import type { GraphBuilds } from './graph-builds.ts';
+import type { GraphBuilds } from './background/graph-builds.ts';
 import type { JudgeLocks } from './review/exclusive.ts';
 import type { Notice, NoticeQuest, StewardDeps } from './types.ts';
 import type { ManaBook } from './mana/book.ts';
-import type { Recorder } from './record.ts';
+import type { Recorder } from './quest/record.ts';
 import type { Sessions } from './sessions/running.ts';
-import type { World } from './world.ts';
+import type { World } from './tick/world.ts';
 import type { TribeId, TribeLimits } from '@elvaria/domain';
 import type { PromptTemplates } from '@elvaria/runner-core';
 

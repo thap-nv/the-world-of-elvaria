@@ -4,10 +4,10 @@ import path from 'node:path';
 import { openEventLog } from '@elvaria/eventlog';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { bench, characterOf, questPayload } from './__fixtures__/kingdom.ts';
+import { bench, characterOf, questPayload } from '../__fixtures__/kingdom.ts';
 import { UNCLAIMABLE_FILE, readUnclaimable } from './unclaimable.ts';
-import type { Bench } from './__fixtures__/kingdom.ts';
-import type { Steward } from './types.ts';
+import type { Bench } from '../__fixtures__/kingdom.ts';
+import type { Steward } from '../types.ts';
 
 let current: Bench | undefined;
 let running: Steward | undefined;

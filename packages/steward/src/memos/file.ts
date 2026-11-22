@@ -15,8 +15,8 @@ import { amendmentDeciderOf, memoIdOf, memoKeyOf, memoOf, objectionOf } from '@e
 import type { Authoring, Contest, Memo, MemoDraft, MemoId, Quest } from '@elvaria/domain';
 import { memosOf } from '@elvaria/runner-core';
 
-import { readHandover } from '../files.ts';
-import { STEWARD } from '../record.ts';
+import { readHandover } from '../texts/files.ts';
+import { STEWARD } from '../quest/record.ts';
 import { recipientsFor } from './advisory.ts';
 import { authoringOf } from './authoring.ts';
 import { contestOf } from './objection.ts';

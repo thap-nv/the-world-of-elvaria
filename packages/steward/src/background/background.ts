@@ -20,7 +20,7 @@ import type {
   VerdictCheck,
 } from '@elvaria/domain';
 
-import type { Logger } from './types.ts';
+import type { Logger } from '../types.ts';
 
 /** `forge` (PS-08c): a done quest's delivery to its forge, a push and its pull request (forge/push.ts). */
 export type BackgroundKind = 'checks' | 'script' | 'forge';

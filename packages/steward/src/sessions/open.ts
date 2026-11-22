@@ -8,7 +8,7 @@ import type { AgentRunner, Continuation, ParseOptions, RunningSession } from '@e
 import { heardBy } from '../mana/heard.ts';
 import { deliverAdvisories } from '../memos/advisory.ts';
 import { mergeParts, plotOptionsOf } from '../party/plot.ts';
-import { step } from '../record.ts';
+import { step } from '../quest/record.ts';
 import { checksRunOf, takeChecks } from '../review/checks.ts';
 import { inScratch, judgeMayOpen } from '../review/scratch.ts';
 import { judgeParseOf } from '../review/verdict-file.ts';
@@ -22,7 +22,7 @@ import { clearWrapUp } from './wrap-up.ts';
 import { questSecretsOf, rememberSecrets, secretsLacking } from './secrets.ts';
 import { spawnOf } from './spawn.ts';
 import type { Context } from '../context.ts';
-import type { MovePayload } from '../record.ts';
+import type { MovePayload } from '../quest/record.ts';
 import type { Resume, SessionInput } from './input.ts';
 import type { Running } from './running.ts';
 

@@ -11,7 +11,7 @@ import { wake } from '../mana/step.ts';
 import { answerQuest, decideAmendment } from '../memos/amendment.ts';
 import { decideMemo } from '../memos/decide.ts';
 import { escalate } from '../memos/escalate.ts';
-import { STEWARD } from '../record.ts';
+import { STEWARD } from '../quest/record.ts';
 import { release, suspend } from './character-commands.ts';
 import { reportEscape, resumeDelegation } from './delegation-commands.ts';
 import { setLevel, setModel } from './character-settings.ts';

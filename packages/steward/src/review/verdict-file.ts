@@ -19,7 +19,7 @@ import { issueLines } from '@elvaria/runner-core';
 import type { Character, FailKind, Quest, Result, RitualId, Verdict, VerdictCheck } from '@elvaria/domain';
 import type { ParseOptions } from '@elvaria/runner-core';
 
-import { ritualOf } from '../verdicts.ts';
+import { ritualOf } from './verdicts.ts';
 import type { Context } from '../context.ts';
 
 /** What the verifier's structured output says, as far as a verdict file takes it. */

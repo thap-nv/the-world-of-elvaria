@@ -6,7 +6,7 @@
 import type { InboxCommandOf } from '@elvaria/domain';
 
 import { APPLIED, rejected } from '../inbox/quest-commands.ts';
-import { actorOfCommand } from '../record.ts';
+import { actorOfCommand } from '../quest/record.ts';
 import { writeClosed } from './close.ts';
 import { ownerDecides } from './amendment.ts';
 import { dropObjection } from './objection.ts';

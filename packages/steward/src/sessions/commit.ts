@@ -12,7 +12,7 @@ import { inKingdom, writeFileAtomic } from '@elvaria/store';
 import type { Quest, QuestId } from '@elvaria/domain';
 import type { CommitOutcome } from '@elvaria/runner-core';
 
-import { pathsSaid } from '../infirmary.ts';
+import { pathsSaid } from '../quest/infirmary.ts';
 import type { Context } from '../context.ts';
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));

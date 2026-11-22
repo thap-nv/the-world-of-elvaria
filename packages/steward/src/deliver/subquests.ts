@@ -35,7 +35,7 @@ import {
   partyProblem,
   partyRefusal,
 } from '../party/parts.ts';
-import { STEWARD } from '../record.ts';
+import { STEWARD } from '../quest/record.ts';
 import type { Context } from '../context.ts';
 
 export type Subquests =

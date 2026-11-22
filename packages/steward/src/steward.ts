@@ -9,11 +9,11 @@ import { loadPromptTemplates } from '@elvaria/runner-core';
 import { acquireLock, inKingdom, isLocked } from '@elvaria/store';
 import type { Result } from '@elvaria/domain';
 
-import { createBackground } from './background.ts';
+import { createBackground } from './background/background.ts';
 import { createForgeBook } from './forge/book.ts';
 import { createBaseLooks } from './forge/looks.ts';
-import { createGraphBuilds } from './graph-builds.ts';
-import { loop, wake } from './loop.ts';
+import { createGraphBuilds } from './background/graph-builds.ts';
+import { loop, wake } from './tick/loop.ts';
 import { createJudgeLocks } from './review/exclusive.ts';
 import { createManaBook } from './mana/book.ts';
 import { digestJob } from './schedule/digest.ts';
@@ -25,11 +25,11 @@ import { createScheduler } from './schedule/scheduler.ts';
 import { createSessions } from './sessions/running.ts';
 import { leftSessions, pidsWriter, reapOrphans } from './sessions/pids.ts';
 import type { LeftSession } from './sessions/pids.ts';
-import { recover, tickOf } from './tick.ts';
-import { createVersionBook } from './tribe-versions.ts';
-import { limitsOf } from './world.ts';
+import { recover, tickOf } from './tick/tick.ts';
+import { createVersionBook } from './tick/tribe-versions.ts';
+import { limitsOf } from './tick/world.ts';
 import type { StewardJob } from './schedule/scheduler.ts';
-import type { Held, State } from './steward-state.ts';
+import type { Held, State } from './tick/steward-state.ts';
 import type { StartError, Steward, StewardDeps } from './types.ts';
 
 /** `.state/steward` + proper-lockfile's `.lock` = kingdomLayout.stewardLock(). */

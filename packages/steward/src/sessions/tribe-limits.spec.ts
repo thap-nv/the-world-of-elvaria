@@ -9,7 +9,7 @@ import { openJournal } from '@elvaria/eventlog';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
-import { folderPlots } from '../plots.ts';
+import { folderPlots } from '../plot/folder-plots.ts';
 import { LETTER_REMINDERS_MAX } from './letter.ts';
 import type { Bench } from '../__fixtures__/kingdom.ts';
 import type { Steward, StewardDeps } from '../types.ts';

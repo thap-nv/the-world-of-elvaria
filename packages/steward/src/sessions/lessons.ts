@@ -19,7 +19,7 @@ import type {
   Territory,
 } from '@elvaria/domain';
 
-import type { Scripture } from '../files.ts';
+import type { Scripture } from '../texts/files.ts';
 
 /** A lesson as the Steward knows it: its line, the scripture file it is in (with `/`), and its ref. */
 export interface ScriptureLesson extends ScriptureLine {

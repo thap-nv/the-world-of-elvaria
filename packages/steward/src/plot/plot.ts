@@ -17,8 +17,8 @@ import type {
   ReleasedPlot,
 } from '@elvaria/runner-core';
 
-import type { PlotQueue } from './forge/plot-queue.ts';
-import type { PatrolOptions } from './patrol/ports.ts';
+import type { PlotQueue } from '../forge/plot-queue.ts';
+import type { PatrolOptions } from '../patrol/ports.ts';
 
 /** The quest's own ground, prepared for a session (§3.3): what the quest records, and where the session runs. */
 export interface PreparedPlot {

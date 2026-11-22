@@ -11,7 +11,7 @@ import { POWERSHELL_TIMEOUT_MS, createFakeRunner, hookOutputHead } from '@elvari
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { bench, questPayload, tickUntil, wakesAfter } from '../__fixtures__/kingdom.ts';
-import { folderPlots } from '../plots.ts';
+import { folderPlots } from '../plot/folder-plots.ts';
 import { SESSIONS_FILE, readPids } from './pids.ts';
 import type { Bench, BenchOptions } from '../__fixtures__/kingdom.ts';
 import type { Steward, StewardDeps } from '../types.ts';

@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { GRAPH_BUSY } from '@elvaria/runner-core';
 import { TerritorySchema } from '@elvaria/domain';
 
-import { A, fakeGraphs } from './__fixtures__/graphs.ts';
+import { A, fakeGraphs } from '../__fixtures__/graphs.ts';
 import { createGraphBuilds } from './graph-builds.ts';
 import type { GraphNote } from './graph-builds.ts';
 

@@ -7,8 +7,8 @@ import type { CharacterId, Quest, Result } from '@elvaria/domain';
 import type { RunResult } from '@elvaria/runner-core';
 
 import { fileMemos } from '../memos/file.ts';
-import { moveAndRing } from '../notices.ts';
-import { step } from '../record.ts';
+import { moveAndRing } from '../bell/move-and-ring.ts';
+import { step } from '../quest/record.ts';
 import { judge, runOf, stallWithoutVerdict, verifierLeaves } from '../review/judge.ts';
 import { afterJudge } from '../review/after-judge.ts';
 import { breakAssignee, breakVerifier } from './breaker.ts';

@@ -15,8 +15,8 @@ import { inKingdom } from '@elvaria/store';
 import type { Quest, TribeId } from '@elvaria/domain';
 import type { Follow, Heard, Sequel, SpawnRequest } from '@elvaria/runner-core';
 
-import { handoverPath } from '../files.ts';
-import { STEWARD } from '../record.ts';
+import { handoverPath } from '../texts/files.ts';
+import { STEWARD } from '../quest/record.ts';
 import type { Context } from '../context.ts';
 
 /** As many reminders as the Stop hook gives a session (STOP_BLOCK_LIMIT of packages/hooks, ADR 0010). */

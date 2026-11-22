@@ -6,7 +6,7 @@ import { createHash } from 'node:crypto';
 import { formatDatedId, patrolFollowUpOf, questFromCommand } from '@elvaria/domain';
 import type { QuestId, RedCheck, Territory } from '@elvaria/domain';
 
-import { STEWARD } from '../record.ts';
+import { STEWARD } from '../quest/record.ts';
 import type { Context } from '../context.ts';
 
 const DAY_LENGTH = 'yyyy-mm-dd'.length;

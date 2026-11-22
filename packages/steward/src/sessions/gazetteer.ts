@@ -4,7 +4,7 @@
 import { gazetteerStampOf, gazetteerWithDrift } from '@elvaria/runner-core';
 import type { Quest, Territory } from '@elvaria/domain';
 
-import { readGazetteer } from '../files.ts';
+import { readGazetteer } from '../texts/files.ts';
 import type { Context } from '../context.ts';
 
 export async function gazetteerFor(ctx: Context, quest: Quest, territory: Territory): Promise<string | null> {

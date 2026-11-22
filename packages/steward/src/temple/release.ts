@@ -8,7 +8,7 @@ import { createHash } from 'node:crypto';
 import { lessonIdOf, templeLessonKeyOf, templeReleasesOf } from '@elvaria/domain';
 import type { CharacterId, InboxCommandOf, LessonId } from '@elvaria/domain';
 
-import { step } from '../record.ts';
+import { step } from '../quest/record.ts';
 import { readScriptures, templeStateOf } from './scriptures.ts';
 import type { Context } from '../context.ts';
 

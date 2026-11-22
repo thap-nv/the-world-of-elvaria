@@ -8,7 +8,7 @@
 import { err, infirmaryReasonOf } from '@elvaria/domain';
 import type { CharacterId, Quest, Result } from '@elvaria/domain';
 
-import { moveAndRing } from '../notices.ts';
+import { moveAndRing } from '../bell/move-and-ring.ts';
 import { stallWithoutVerdict } from '../review/judge.ts';
 import { releaseScratch } from '../review/scratch.ts';
 import { cannotOpen } from './breaker.ts';

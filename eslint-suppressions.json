@@ -310,7 +310,7 @@
       "count": 1
     }
   },
-  "packages/steward/src/record.ts": {
+  "packages/steward/src/quest/record.ts": {
     "complexity": {
       "count": 1
     }
@@ -330,7 +330,7 @@
       "count": 1
     }
   },
-  "packages/steward/src/steps.ts": {
+  "packages/steward/src/tick/steps.ts": {
     "complexity": {
       "count": 1
     }

@@ -10,7 +10,7 @@ import { inKingdom } from '@elvaria/store';
 import type { LoadTrace, Memo } from '@elvaria/domain';
 import type { JsonSchema, Screens, SpawnRequest } from '@elvaria/runner-core';
 
-import { handoverPath } from '../files.ts';
+import { handoverPath } from '../texts/files.ts';
 import { sessionGraphOf } from './graph.ts';
 import type { SessionGraph } from './graph.ts';
 import { planGraphFactsOf } from './plan-graph.ts';
