@@ -1,6 +1,8 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { CharacterIdSchema } from '@elvaria/domain';
+import { openKingdom } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { foundKingdom, run, tempDir, testIo } from '../../test/cli.ts';
@@ -159,6 +161,26 @@ describe('elvaria quest list and show', () => {
         `Cancel: elvaria quest cancel ${OTHER_QUEST_ID}`,
       ]),
     );
+    expect(none.printed.out.join('\n')).not.toContain('elvaria character release');
+  });
+
+  it.each([
+    ['en', 'Brom is suspended. Release: elvaria character release brom'],
+    ['vi', 'Brom đang bị đình chỉ. Gỡ đình chỉ: elvaria character release brom'],
+  ])('names the suspended sole knight and how to release them in %s', async (locale, line) => {
+    const args = ['--class', 'knight', '--name', 'Brom', '--kingdom', kingdom];
+    expect(await run(testIo(), 'character', 'add', 'brom', ...args)).toBe(0);
+    const store = openKingdom(kingdom);
+    const brom = await store.characters.read(CharacterIdSchema.parse('brom'));
+    if (!brom.ok) throw new Error('fixture');
+    await store.characters.write({ ...brom.value, status: 'suspended' });
+    await mkdir(path.join(kingdom, '.state'), { recursive: true });
+    const quests = { [QUEST_ID]: { reason: 'no_class', rank: 'D', class: 'knight' } };
+    await writeFile(path.join(kingdom, '.state', 'unclaimable.json'), JSON.stringify({ version: 1, quests }));
+    await plantQuests(kingdom, questFixture('open'));
+    const io = testIo();
+    expect(await run(io, 'quest', 'show', QUEST_ID, '--kingdom', kingdom, '--locale', locale)).toBe(0);
+    expect(io.printed.out).toContain(line);
   });
 
   it("says when the quest's party bars every character of its class, and how to get past it (P1-37 (ii))", async () => {
