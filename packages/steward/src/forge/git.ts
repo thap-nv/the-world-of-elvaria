@@ -2,8 +2,10 @@
 // and the two switches that forbid asking anyone (DELIVERY_GIT_SWITCHES). runner-core's runProgram drops every GIT_*
 // name from a child's env, which is right for a plot's git and wrong here, so a delivery starts its git with
 // startChild. A push runs the territory's pre-push hook, a tree of processes (`pnpm check:fast`): a stop of the
-// Steward or the time limit kills the whole tree (killTree), on Windows and macOS alike.
-import { startChild } from '@elvaria/runner-core';
+// Steward or the time limit kills the whole tree (killTree), on Windows and macOS alike. Before the command, the
+// switches of gitGuard: no fsmonitor, ssh command, askpass or credential helper that the territory's own config
+// names, only the owner's (SEC-02), since a push hands the helpers the token.
+import { gitGuard, startChild } from '@elvaria/runner-core';
 import type { Launch } from '@elvaria/runner-core';
 
 import { DELIVERY_GIT_SWITCHES } from './forge.ts';
@@ -32,8 +34,12 @@ export async function runDeliveryGit(
   const out: string[] = [];
   const err: string[] = [];
   const env = { ...git.env, ...DELIVERY_GIT_SWITCHES };
-  const child = startChild(git.launch, args, { cwd, env, onStderr: (chunk) => err.push(chunk) }, (line) =>
-    out.push(line),
+  const guard = await gitGuard(git.launch, cwd, env);
+  const child = startChild(
+    git.launch,
+    [...guard, ...args],
+    { cwd, env, onStderr: (chunk) => err.push(chunk) },
+    (line) => out.push(line),
   );
   // An object, not a let: the callbacks set it, which TypeScript's narrowing cannot see.
   const killed = { stopped: false };

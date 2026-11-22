@@ -1,13 +1,22 @@
 // Reading a forge credential (PS-08, ADR 0023) against a fake helper: one there, none (no hang: git exits rather
-// than prompt), one that never answers (stopped at the limit), no git at all. The token is only ever compared,
-// never printed by an assertion, so a failing spec cannot leak it either.
+// than prompt), one that never answers (stopped at the limit), no git at all, and (SEC-02) a territory whose own
+// config names a helper that never runs. The token is only ever compared, never printed by an assertion, so a
+// failing spec cannot leak it either.
+import { spawnSync } from 'node:child_process';
 import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { baseEnv, gitRepo, isolatedPath, pathWithoutGit, tempDir, testIo } from '../../test/cli.ts';
-import { FAKE_TOKEN, FAKE_USER, GITHUB_REMOTE, useFakeHelper } from '../../test/credential.ts';
+import {
+  FAKE_TOKEN,
+  FAKE_USER,
+  GITHUB_REMOTE,
+  poisonRepo,
+  poisonRuns,
+  useFakeHelper,
+} from '../../test/credential.ts';
 import { deliveryGitEnv, readCredential } from './credential.ts';
 import { forgeRepoOf } from './remote.ts';
 import type { TempDir } from '../../test/cli.ts';
@@ -33,7 +42,7 @@ describe('readCredential', () => {
     testIo({ env: { ...baseEnv(pathValue ?? (await isolatedPath())), HOME: home, USERPROFILE: home } });
 
   it('gives the stored credential, asking for the https one of the forge host', async () => {
-    const asked = await useFakeHelper(repo, dir.root, 'token');
+    const asked = await useFakeHelper(home, dir.root, 'token');
     const read = await readCredential(await ioWith(), repo, REPO);
     expect(read.ok).toBe(true);
     expect(read.ok && read.value.password === FAKE_TOKEN).toBe(true);
@@ -44,7 +53,7 @@ describe('readCredential', () => {
   });
 
   it('says none when git has nothing, at once instead of prompting', async () => {
-    await useFakeHelper(repo, dir.root, 'nothing');
+    await useFakeHelper(home, dir.root, 'nothing');
     const started = Date.now();
     expect(await readCredential(await ioWith(), repo, REPO, SHORT_LIMIT_MS * 2)).toEqual({
       ok: false,
@@ -54,11 +63,28 @@ describe('readCredential', () => {
   });
 
   it('stops a helper that never answers at the limit, with its process tree', async () => {
-    await useFakeHelper(repo, dir.root, 'hang');
+    await useFakeHelper(home, dir.root, 'hang');
     expect(await readCredential(await ioWith(), repo, REPO, SHORT_LIMIT_MS)).toEqual({
       ok: false,
       error: 'timeout',
     });
+  });
+
+  it("runs no helper the territory's own config names, asking the owner's alone (SEC-02)", async () => {
+    const asked = await useFakeHelper(home, dir.root, 'nothing');
+    const marker = await poisonRepo(repo, dir.root);
+    const io = await ioWith();
+    expect(await readCredential(io, repo, REPO)).toEqual({ ok: false, error: 'none' });
+    expect(await readFile(asked, 'utf8')).toContain('host=github.com');
+    expect(await poisonRuns(marker)).toEqual([]);
+    // The same question without Elvaria's switches: the owner's helper has nothing, so git asks the territory's.
+    spawnSync('git', ['credential', 'fill'], {
+      cwd: repo,
+      env: deliveryGitEnv(io),
+      input: 'protocol=https\nhost=github.com\n\n',
+      stdio: ['pipe', 'ignore', 'ignore'],
+    });
+    expect(await poisonRuns(marker)).toEqual(['helper get']);
   });
 
   it('says no_git without git on PATH', async () => {

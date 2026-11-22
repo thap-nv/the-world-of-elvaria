@@ -27,6 +27,7 @@ In stage 1 the owner merged by hand after the royal seal. In practice the owner 
 
 - Push and open the pull request only, the owner merges (the session's recommendation): it keeps the owner in every delivery. It stays available as mode `pr`.
 - Let the character push: it breaks the fence and puts a credential within a model's reach.
+- (Amended 2026-11-21, SEC-02: threat model A5, V2) Every git of the Steward (plots, deliveries, `credential fill`) runs after the `-c` switches of runner-core's `gitGuard`, read from `git config --list --show-scope` in the same folder just before the call (once per folder for a plot's git): `core.fsmonitor=false`, an empty `core.askPass`, the owner's `core.sshCommand` of system or global config (else `ssh`), and the owner's credential helpers alone, so no program that the territory's own config names runs and the token reaches none. `credential fill` still runs in the territory's folder, as the push does. The territory's hooks still run.
 
 ## Consequences
 

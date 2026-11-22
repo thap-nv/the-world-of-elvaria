@@ -189,6 +189,15 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   (`readContextFiles`, `prompts/context-files.md`, §3.14 `context: prompt`, P1-33): the files the globs name in
   the plot, in their order, each cut at `CONTEXT_FILE_MAX_CHARS` (what agy embeds), and the reminder of an
   unchanged letter (`letterReminderPrompt`, `prompts/letter-reminder.md`).
+- Keeps git from running what a territory's own config names (`gitGuard`, `src/process/git-guard.ts`, SEC-02, threat
+  model A5): before each call of a delivery's git (steward) and of the forge credential's (`apps/cli`), and once
+  per folder for the plot's git (`gitOf` through `gitGuards`), `git config --list --show-scope -z` in that folder,
+  then `-c` switches, which outrank every file: `core.fsmonitor=false`, an empty `core.askPass`, the owner's last
+  `core.sshCommand` of the system or global config (else `ssh`), and `credential.helper=` (which empties git's list)
+  followed by the owner's helpers again, in their order, per-URL ones too. A config git cannot list leaves no helper at all. The territory's hooks still
+  run (they are its code, B4). A read is one more git, about 80 ms on Windows: once per folder, the plot specs take
+  10 % longer than without the switches, against 46 % with a read per call; an edit of the owner's files reaches a
+  plot's git in a folder it has not run in yet, or after a restart.
 - Gives every quest its own ground (`createPlotManager`, implementation-plan §3.3, ADR 0012). On a git territory,
   `prepare` adds `<repo>/<worktree_dir>/<quest-id>` on branch `quest/<quest-id>` (`--no-track`), forked from the
   default branch: origin's after a fetch when it only adds to the local one, else the local one; the main

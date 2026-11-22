@@ -1,6 +1,8 @@
 // git as the PlotManager runs it: the program the composition root resolved, no shell, the host's minimal env
-// without GIT_* (ADR 0013, 0015), and a timeout, so a fetch waiting on credentials cannot hang a tick.
-import { runProgram } from '../process/program.ts';
+// without GIT_* (ADR 0013, 0015), a timeout, so a fetch waiting on credentials cannot hang a tick, and the switches of
+// gitGuard: no fsmonitor, ssh command, askpass or credential helper that the territory's own config names (SEC-02).
+import { childEnvOf, runProgram } from '../process/program.ts';
+import { gitGuards } from '../process/git-guard.ts';
 import type { ProcessHost } from '../process/program.ts';
 
 /** Local git work (worktree add, commit, status) is quick; a fetch talks to the network. */
@@ -19,8 +21,11 @@ export type Git = (cwd: string, args: readonly string[]) => Promise<GitRun>;
 export async function gitOf(host: ProcessHost): Promise<Git | undefined> {
   const launch = await host.resolve('git');
   if (launch === undefined) return undefined;
+  // One read of the config per folder: a plot's work is dozens of calls in the same two (46 % more time otherwise).
+  const guardIn = gitGuards(launch, childEnvOf(host.env));
   return async (cwd, args) => {
-    const run = await runProgram([launch.file, ...launch.args, ...args], {
+    const guard = await guardIn(cwd);
+    const run = await runProgram([launch.file, ...launch.args, ...guard, ...args], {
       cwd,
       env: host.env,
       timeout_ms: GIT_TIMEOUT_MS,
