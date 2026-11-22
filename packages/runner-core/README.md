@@ -34,7 +34,10 @@
   by itself; reads stay allowed, since the hook matches a forbidden path against every word of a shell line), and
   every `ToolPolicy` carries `secret_paths` (`SECRET_PATHS`, SEC-01, threat model V1): the places that hold the owner's
   secrets outside every territory (`.ssh/`, `.git-credentials`, git's credential file, the treasury and the tribes'
-  accounts, the CLIs' folders), which the hook refuses in any tool path or shell word, for every tribe. A fence on the
+  accounts, the CLIs' folders), which the hook refuses in any tool path or shell word, for every tribe.
+  SEC-01b adds `.config/gh/`, `.npmrc`, `.netrc`, `.aws/`, `.docker/config.json` and `gh auth token`.
+  The Steward supplies the configured treasury file and every tribe's `tool.config_dir/**`, resolved and deduplicated
+  with Windows case and separator normalization; explicit paths stay fenced even inside the plot. A fence on the
   command line, not a sandbox: a program the line starts reads what it likes (ADR 0007).
   `forbiddenPathsOf(territory)` is the dotenv files plus `laws.forbidden_paths`, and `forbiddenChangesOf(changed,
 globs)` the changed paths a glob matches at any depth as the hook's do: the Steward reads a plot's changes against

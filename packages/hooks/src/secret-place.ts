@@ -46,16 +46,27 @@ export function secretPlaceViolation(
   laws: Pick<CompiledLaws, 'secretPaths'>,
 ): string | undefined {
   if (laws.secretPaths.length === 0) return undefined;
+  if (/\bgh(?:\.exe)?\s+auth\s+token\b/i.test(call.command ?? '')) {
+    return "gh auth token exposes the owner's secrets: no session reads it";
+  }
   const root = path.resolve(cwd ?? process.cwd());
-  const words = call.command === undefined ? [] : commandWords(call.command);
+  const quoted = [...(call.command ?? '').matchAll(/"([^"]+)"|'([^']+)'/g)].map(
+    (match) => match[1] ?? match[2] ?? '',
+  );
+  const words = [...quoted, ...commandWords(call.command ?? '')];
   const anywhere =
     words.some((word) => FOLDER_CHANGES.has(word.toLowerCase())) || NAMES_HOME.test(call.command ?? '');
   for (const raw of [...call.guarded, ...words]) {
-    if (!anywhere && staysInside(root, raw)) continue;
-    const glob = matchingGlobOf(raw, laws.secretPaths);
+    const paths =
+      !anywhere && staysInside(root, raw) ? laws.secretPaths.filter(alwaysFenced) : laws.secretPaths;
+    const glob = matchingGlobOf(raw, paths) ?? matchingGlobOf(path.resolve(root, raw), paths);
     if (glob !== undefined) {
       return `${raw} names a place that holds the owner's secrets (${glob}): no session reads it, whatever its tools; a quest that needs a secret gets it in its env`;
     }
   }
   return undefined;
 }
+
+/** Explicit places and credential files do not get the repository-config exception. */
+const alwaysFenced = ({ glob }: CompiledLaws['secretPaths'][number]): boolean =>
+  path.isAbsolute(glob) || DRIVE_PATH.test(glob) || glob === '.npmrc' || glob === '.netrc';

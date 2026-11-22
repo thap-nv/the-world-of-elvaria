@@ -13,7 +13,18 @@ import type { ConformanceCheck } from './target.ts';
  * Codex's model (gpt-6-luna, 2026-11-21) refused the whole request once it named git's credentials, so its hook had
  * nothing to refuse; the helper is a law like `git push`, whose refusal `forbidden_command` already shows live.
  */
-const NAMED = ['.codex', 'git credential'] as const;
+const NAMED = [
+  '.codex',
+  'git credential',
+  'vault.json',
+  'tribe-account',
+  'gh auth token',
+  '.config/gh',
+  '.npmrc',
+  '.netrc',
+  '.aws',
+  '.docker/config.json',
+] as const;
 
 export const secretCheck: ConformanceCheck = {
   id: 'secret_place',

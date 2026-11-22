@@ -40,10 +40,15 @@ export const SCRATCH_RULES = ['Edit', 'Write', 'Bash(git status:*)', 'Bash(git r
  * folders where the CLIs keep their sign-in and transcripts, whatever the tribe of the session (a Codex session could
  * read Claude's sign-in as well as its own). The hook matches them at any depth against every path of a tool and every
  * word of a shell line, except a word that stays inside the plot, whose own `.claude/` is the territory's. A fence on the
- * command line, not a sandbox: a program the line starts reads what it likes (ADR 0007). A treasury or a `config_dir`
- * the owner put elsewhere is not on the list yet (§11 of 2026-11-21).
+ * command line, not a sandbox: a program the line starts reads what it likes (ADR 0007). SEC-01b also adds the
+ * configured treasury and every tribe's `config_dir` as absolute paths, including places inside the plot.
  */
 export const SECRET_PATHS = [
+  '.config/gh/**',
+  '.npmrc',
+  '.netrc',
+  '.aws/**',
+  '.docker/config.json',
   '.ssh/**',
   '.git-credentials',
   '.config/git/credentials',
@@ -61,7 +66,7 @@ export const SECRET_PATHS = [
  * under any spelling of git's options, as for push.
  */
 export const NO_CREDENTIAL_RULE = 'Bash(git credential:*)';
-export const NO_CREDENTIAL_COMMAND = String.raw`\bgit(?:\s+-{1,2}[\w-]+(?:[=\s][^\s;&|]+)?)*\s+credential|\bgit-credential`;
+export const NO_CREDENTIAL_COMMAND = String.raw`\bgit(?:\s+-{1,2}[\w-]+(?:[=\s][^\s;&|]+)?)*\s+credential|\bgit-credential|\bgh(?:\.exe)?\s+auth\s+token\b`;
 
 /** Dotenv files are never read nor written, whatever the territory says (§3.9). */
 export const SECRET_FILES = ['.env', '.env.*'] as const;

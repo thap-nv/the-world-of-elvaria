@@ -113,7 +113,10 @@ ELVARIA_MODEL, ELVARIA_TZ`, or from the run's `policy.json` (`--policy`, v1: the
   territory's laws and before the read fence. A word that stays inside the plot is the territory's own (a repo's
   `.claude/`), unless the line changes folder (`cd`, `pushd`, `Set-Location`…) or names the home folder (`~`,
   `$HOME`, `%USERPROFILE%`, `$env:USERPROFILE`, `os.homedir()`…). `git credential` is a law like `git push`
-  (`forbidden_commands`). A fence on the command line, **not a sandbox**: a program the line starts reads what it
+  (`forbidden_commands`). SEC-01b also fences `gh auth token`, `.config/gh/`, `.npmrc`, `.netrc`, `.aws/` and
+  `.docker/config.json`. Configured absolute treasury and tribe account paths remain fenced even inside the plot;
+  `.npmrc` and `.netrc` match whole filenames, including inside the plot.
+  A fence on the command line, **not a sandbox**: a program the line starts reads what it
   likes, and a name built at run time (`'.s' + 'sh'`) gets through (ADR 0007); Codex's sandbox reads the whole disk
   (cli-facts 2026-11-21 §2).
 
