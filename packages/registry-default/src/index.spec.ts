@@ -191,6 +191,20 @@ describe('the default registry', () => {
     expect(scout).toContain('a URL pinned to a commit, with the lines');
   });
 
+  // (397): a refactor quest that moves files keeps their history only with `git mv`, and its done-when runs the
+  // layout, dup and knip gates; without them the dwarf of AH-05 stopped blocked three times.
+  it('lets the dwarf move files and run the layout gates its refactor quests name', () => {
+    const dwarf = registry().classes.find((entry) => entry.id === 'dwarf');
+    expect(dwarf?.tools.allow).toEqual(
+      expect.arrayContaining([
+        'Bash(git mv:*)',
+        'Bash(pnpm layout:*)',
+        'Bash(pnpm dup:*)',
+        'Bash(pnpm knip:*)',
+      ]),
+    );
+  });
+
   it('ships the prompt of every class, opened by a note for the maintainer (P1-15)', () => {
     for (const entry of registry().classes) {
       expect(entry.prompt_file).toBe(`prompts/${entry.id}.md`);
