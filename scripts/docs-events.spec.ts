@@ -44,16 +44,14 @@ describe('renderEvents', () => {
 
   it('lists every type of the v1 catalogue once, under its group', () => {
     for (const type of EVENT_TYPES) expect(text.split(`| \`${type}\` |`)).toHaveLength(2);
-    // PS-08g: quest.escaped joins the quest group; the breaker's two lines make a group of their own.
-    expect(text).toContain('\n## `quest` · 20 type\n');
-    expect(text).toContain('\n## `delegation` · 2 type\n');
-    // fix/run-221-followups: the Chancellor's office says what its sessions spent, a group of its own.
-    expect(text).toContain('\n## `chancellor` · 1 type\n');
-    // PS-12d: the Temple's run, with what its session spent, a group of its own.
-    expect(text).toContain('\n## `temple` · 1 type\n');
-    // PS-28: the Steward's notch of a session's stamina joins the agent group.
-    expect(text).toContain('\n## `agent` · 11 type\n');
-    expect(text).toContain('\n## `sandbox` · 2 type\n');
+    const groups = new Map<string, number>();
+    for (const type of EVENT_TYPES) {
+      const group = type.split('.')[0] ?? type;
+      groups.set(group, (groups.get(group) ?? 0) + 1);
+    }
+    for (const [group, count] of groups) {
+      expect(text).toContain(`\n## \`${group}\` · ${count} type\n`);
+    }
   });
 
   it('describes the envelope and the data of the types that have a schema', () => {
