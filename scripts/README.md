@@ -171,7 +171,7 @@
   reads each one's staged blob (`git show :<path>`), and `scanStaged()` (pure: files and contents in, findings out)
   skips binary files (a NUL byte in the first 8000 bytes) and applies the patterns of
   `packages/eventlog/src/redact-patterns.json`, the file the pre-push scan (PS-08c) reads. A specific shape stops the
-  commit (exit `1`); the three `SHARED_PATTERN_IDS` only warn. It prints `<file>:<line>: <pattern id>` and never the
+  commit (exit `1`); patterns marked `warn_only` in `redact-patterns.json` only warn. It prints `<file>:<line>: <pattern id>` and never the
   matched text. Runs git with the hook's own env, because `GIT_INDEX_FILE` names the index of the commit.
 - `check-changed.mjs` (`check-changed.spec.ts`): `pnpm check:changed` (fix/check-changed). `changedPaths()` lists the
   files that differ from the merge-base with `origin/main` (or `--base <ref>`): tracked changes, committed or not, and
