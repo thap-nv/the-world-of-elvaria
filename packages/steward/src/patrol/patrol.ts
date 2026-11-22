@@ -13,7 +13,7 @@ import type { PatrolLedger, PatrolRanData, PatrolTrigger, RedCheck, Territory } 
 
 import { ring } from '../context.ts';
 import { suspendDelegation } from '../delegation/suspend.ts';
-import { STEWARD } from '../record.ts';
+import { STEWARD } from '../quest/record.ts';
 import { setHealth } from './book.ts';
 import { openPatrolDraft } from './draft.ts';
 import { scansIn } from './scans.ts';

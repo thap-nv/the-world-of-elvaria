@@ -8,7 +8,7 @@ import { GRAPH_BUSY } from '@elvaria/runner-core';
 import type { Territory, TerritoryId } from '@elvaria/domain';
 import type { CodeGraphs, GraphBuild } from '@elvaria/runner-core';
 
-import type { Logger } from './types.ts';
+import type { Logger } from '../types.ts';
 
 /** Writes a `graph.*` line; given by the tick that asked, as a check's lines are. */
 export type GraphNote = (

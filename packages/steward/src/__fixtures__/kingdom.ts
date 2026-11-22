@@ -37,7 +37,7 @@ import type {
 } from '@elvaria/runner-core';
 import type { KingdomStore } from '@elvaria/store';
 
-import { folderPlots } from '../plots.ts';
+import { folderPlots } from '../plot/folder-plots.ts';
 import { createSteward } from '../steward.ts';
 import { rememberingHangs, settling } from './settle.ts';
 import type { Settling } from './settle.ts';

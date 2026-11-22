@@ -9,7 +9,7 @@ import type { Character, Quest, ReviewPrompt } from '@elvaria/domain';
 
 import { userPromptLengthOf } from '../sessions/request.ts';
 import { inScratch } from './scratch.ts';
-import type { CheckedRun } from '../background.ts';
+import type { CheckedRun } from '../background/background.ts';
 import type { Context } from '../context.ts';
 import type { SessionInput } from '../sessions/input.ts';
 

@@ -9,7 +9,7 @@ import { currentRun, runDirOf, wrapUpsIn } from '@elvaria/domain';
 import { inKingdom, readTextFile, writeFileAtomic } from '@elvaria/store';
 import type { Quest, SessionReading, SessionWrapUp } from '@elvaria/domain';
 
-import { STEWARD } from '../record.ts';
+import { STEWARD } from '../quest/record.ts';
 import { ringWrapUp } from './wrap-up-bell.ts';
 import type { Context } from '../context.ts';
 

@@ -6,7 +6,7 @@ import { createFakeRunner } from '@elvaria/runner-core';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
-import { folderPlots } from '../plots.ts';
+import { folderPlots } from '../plot/folder-plots.ts';
 import type { Bench, BenchOptions } from '../__fixtures__/kingdom.ts';
 import type { Steward, StewardDeps } from '../types.ts';
 

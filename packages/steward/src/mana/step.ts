@@ -10,7 +10,7 @@ import type { AgentRunner } from '@elvaria/runner-core';
 
 import { ring } from '../context.ts';
 import { APPLIED, rejected } from '../inbox/quest-commands.ts';
-import { STEWARD } from '../record.ts';
+import { STEWARD } from '../quest/record.ts';
 import { isAsleep } from './book.ts';
 import {
   absorb,

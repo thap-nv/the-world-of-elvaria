@@ -20,7 +20,7 @@ import { fromPortable, inKingdom, writeFileAtomic } from '@elvaria/store';
 import type { Deliverable, Quest, QuestId, Result, Territory, Verdict } from '@elvaria/domain';
 
 import { noticeQuest, ring } from '../context.ts';
-import { readHandover } from '../files.ts';
+import { readHandover } from '../texts/files.ts';
 import { closeContract } from '../party/contract.ts';
 import { copyIntoTerritory } from './copy.ts';
 import { deliveryNote, deliveryNoteOf } from './note.ts';

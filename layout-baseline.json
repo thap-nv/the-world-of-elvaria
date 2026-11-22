@@ -2,8 +2,7 @@
   "version": 1,
   "root_size": {
     "apps/cli/src": 18,
-    "packages/runner-claude/src": 23,
-    "packages/steward/src": 25
+    "packages/runner-claude/src": 23
   },
   "dir_size": {
     "packages/runner-core/src/plot": 31
@@ -20,7 +19,6 @@
     "packages/domain/src/quest/transition + transitions": 1,
     "packages/runner-claude/src/model + models": 1,
     "packages/sandbox/src/scenario + scenarios": 1,
-    "packages/steward/src/forge/look + looks": 1,
-    "packages/steward/src/notice + notices": 1
+    "packages/steward/src/forge/look + looks": 1
   }
 }

@@ -9,7 +9,7 @@ import type { Quest, TerritoryId } from '@elvaria/domain';
 
 import { setSuspension } from '../delegation/book.ts';
 import { suspendDelegation } from '../delegation/suspend.ts';
-import { OWNER } from '../record.ts';
+import { OWNER } from '../quest/record.ts';
 import { APPLIED, rejected } from './quest-commands.ts';
 import type { Context } from '../context.ts';
 import type { Outcome } from './quest-commands.ts';

@@ -19,7 +19,7 @@ import { plotCommitMessage } from '@elvaria/runner-core';
 import type { Character, ManaReading, PoolKey, Quest, ReportedWindow, TribeId } from '@elvaria/domain';
 
 import { ring } from '../context.ts';
-import { STEWARD, step } from '../record.ts';
+import { STEWARD, step } from '../quest/record.ts';
 import { commitPlot, warnUncommitted } from '../sessions/commit.ts';
 import { isAsleep } from './book.ts';
 import { measureShares } from './shares.ts';

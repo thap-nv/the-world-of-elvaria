@@ -12,8 +12,8 @@ import type { Breaker, BreakerTrip, InfirmaryReason, Quest, Result, SessionTrip 
 import type { RunResult } from '@elvaria/runner-core';
 
 import { readAfterSession } from '../mana/read.ts';
-import { moveAndRing } from '../notices.ts';
-import { step } from '../record.ts';
+import { moveAndRing } from '../bell/move-and-ring.ts';
+import { step } from '../quest/record.ts';
 import { runOf } from '../review/judge.ts';
 import { afterJudge } from '../review/after-judge.ts';
 import { commitPlot, forbiddenWip } from './commit.ts';

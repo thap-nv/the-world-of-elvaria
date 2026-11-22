@@ -4,16 +4,16 @@
 import { TribeIdSchema } from '@elvaria/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { bench, characterOf, questPayload, tickUntil } from './__fixtures__/kingdom.ts';
-import { statusIs } from './__fixtures__/review.ts';
-import { capturingPlots } from './__fixtures__/screens.ts';
-import { createForgeBook } from './forge/book.ts';
-import { createPatrolBook } from './patrol/book.ts';
-import { createDelegationBook } from './delegation/book.ts';
-import { noticesOf } from './schedule/digest.ts';
-import { loadWorld } from './world.ts';
-import type { Bench } from './__fixtures__/kingdom.ts';
-import type { Steward } from './types.ts';
+import { bench, characterOf, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
+import { statusIs } from '../__fixtures__/review.ts';
+import { capturingPlots } from '../__fixtures__/screens.ts';
+import { createForgeBook } from '../forge/book.ts';
+import { createPatrolBook } from '../patrol/book.ts';
+import { createDelegationBook } from '../delegation/book.ts';
+import { noticesOf } from '../schedule/digest.ts';
+import { loadWorld } from '../tick/world.ts';
+import type { Bench } from '../__fixtures__/kingdom.ts';
+import type { Steward } from '../types.ts';
 
 let current: Bench | undefined;
 let running: Steward | undefined;

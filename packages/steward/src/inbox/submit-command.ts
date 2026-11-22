@@ -10,8 +10,8 @@ import { findTransition, protectedMarkOf } from '@elvaria/domain';
 import { plotCommitMessage } from '@elvaria/runner-core';
 import type { Quest } from '@elvaria/domain';
 
-import { moveAndRing } from '../notices.ts';
-import { lineOf, submitSealOf } from '../seal.ts';
+import { moveAndRing } from '../bell/move-and-ring.ts';
+import { lineOf, submitSealOf } from '../delegation/seal.ts';
 import { commitPlot, forbiddenWip } from '../sessions/commit.ts';
 import { applyAssigneePatch } from '../sessions/patch.ts';
 import { APPLIED, rejected } from './quest-commands.ts';

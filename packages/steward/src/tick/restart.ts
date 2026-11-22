@@ -8,10 +8,10 @@
 import { QUEST_NOTICE_TYPES, infirmaryReasonOf, reviewStallOf } from '@elvaria/domain';
 import type { Event, Quest, QuestId, ReviewStall } from '@elvaria/domain';
 
-import { moveAndRing } from './notices.ts';
-import type { Context } from './context.ts';
-import type { InfirmaryCause } from './infirmary.ts';
-import type { MovePayload } from './record.ts';
+import { moveAndRing } from '../bell/move-and-ring.ts';
+import type { Context } from '../context.ts';
+import type { InfirmaryCause } from '../quest/infirmary.ts';
+import type { MovePayload } from '../quest/record.ts';
 
 /** What the first tick of a Steward finishes. */
 export interface Restart {

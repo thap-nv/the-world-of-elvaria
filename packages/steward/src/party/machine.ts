@@ -11,7 +11,7 @@
 import { err, ok, protectedMarkOf } from '@elvaria/domain';
 import type { Quest, QuestId, Result } from '@elvaria/domain';
 
-import { moveAndRing } from '../notices.ts';
+import { moveAndRing } from '../bell/move-and-ring.ts';
 import { protectedChangesIn } from '../sessions/commit.ts';
 import { questSecretsOf } from '../sessions/secrets.ts';
 import { mergeParts, plotOptionsOf } from './plot.ts';

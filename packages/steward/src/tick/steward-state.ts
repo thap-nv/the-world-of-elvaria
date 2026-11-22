@@ -4,21 +4,21 @@ import type { JudgeWait, QuestId, StaminaMark, TribeId, TribeLimits, ZonedTime }
 import type { PromptTemplates } from '@elvaria/runner-core';
 import type { HeldLock } from '@elvaria/store';
 
-import type { Background } from './background.ts';
-import type { DelegationBook } from './delegation/book.ts';
-import type { StreakBook } from './temple/streak-book.ts';
-import type { ForgeBook } from './forge/book.ts';
-import type { BaseLooks } from './forge/looks.ts';
-import type { PatrolBook } from './patrol/book.ts';
-import type { GraphBuilds } from './graph-builds.ts';
-import type { JudgeLocks } from './review/exclusive.ts';
-import type { PromptSizes } from './review/prompt-size.ts';
-import type { ManaBook } from './mana/book.ts';
+import type { Background } from '../background/background.ts';
+import type { DelegationBook } from '../delegation/book.ts';
+import type { StreakBook } from '../temple/streak-book.ts';
+import type { ForgeBook } from '../forge/book.ts';
+import type { BaseLooks } from '../forge/looks.ts';
+import type { PatrolBook } from '../patrol/book.ts';
+import type { GraphBuilds } from '../background/graph-builds.ts';
+import type { JudgeLocks } from '../review/exclusive.ts';
+import type { PromptSizes } from '../review/prompt-size.ts';
+import type { ManaBook } from '../mana/book.ts';
 import type { Restart } from './restart.ts';
-import type { Scheduler } from './schedule/scheduler.ts';
-import type { Sessions } from './sessions/running.ts';
+import type { Scheduler } from '../schedule/scheduler.ts';
+import type { Sessions } from '../sessions/running.ts';
 import type { VersionBook } from './tribe-versions.ts';
-import type { Reported } from './unclaimable.ts';
+import type { Reported } from '../waits/unclaimable.ts';
 
 export interface Held {
   readonly lock: HeldLock;

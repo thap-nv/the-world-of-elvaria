@@ -25,7 +25,7 @@ import type { Memo, MemoDraft, MemoId, Quest, QuestId, Territory } from '@elvari
 import { ruleOf } from '@elvaria/runner-core';
 import type { PromptAdvisory } from '@elvaria/runner-core';
 
-import { STEWARD } from '../record.ts';
+import { STEWARD } from '../quest/record.ts';
 import { writeClosed } from './close.ts';
 import type { Context } from '../context.ts';
 

@@ -35,10 +35,10 @@ import type { RefusedWork } from '@elvaria/runner-core';
 import type { KingdomStore } from '@elvaria/store';
 
 import { OUT_OF_ATTEMPTS, infirmaryData } from './infirmary.ts';
-import { describeIssue } from './world.ts';
+import { describeIssue } from '../tick/world.ts';
 import type { InfirmaryCause } from './infirmary.ts';
-import type { Logger } from './types.ts';
-import type { World } from './world.ts';
+import type { Logger } from '../types.ts';
+import type { World } from '../tick/world.ts';
 
 /** A change to a character that a quest move brings along (§2.6), at the time of the move. */
 export type CharacterEdit = (character: Character, at: string) => Result<Character, unknown>;

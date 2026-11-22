@@ -30,12 +30,12 @@ import type {
 } from '@elvaria/domain';
 import { inKingdom, kingdomLayout } from '@elvaria/store';
 
-import { moveAndRing } from '../notices.ts';
+import { moveAndRing } from '../bell/move-and-ring.ts';
 import { plotOptionsOf } from '../party/plot.ts';
-import { STEWARD } from '../record.ts';
+import { STEWARD } from '../quest/record.ts';
 import { secretsBreaker } from '../sessions/breaker.ts';
 import { questSecretsOf, secretsLacking } from '../sessions/secrets.ts';
-import { VERDICT_EVENT, moveOnVerdict, recordVerdict, ritualOf } from '../verdicts.ts';
+import { VERDICT_EVENT, moveOnVerdict, recordVerdict, ritualOf } from '../review/verdicts.ts';
 import { openFollowUp, unitsHandedTo } from './follow-up.ts';
 import { nodeScriptRunner } from './run-script.ts';
 import type { Context } from '../context.ts';

@@ -1,7 +1,7 @@
 // The Steward's loop (implementation-plan §3.1): a tick every dispatch.tick_seconds, or at once when work outside the
 // tick ended (P1-10b). Apart from steward.ts since PS-03.
 import type { State } from './steward-state.ts';
-import type { StewardDeps, TickReport } from './types.ts';
+import type { StewardDeps, TickReport } from '../types.ts';
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 

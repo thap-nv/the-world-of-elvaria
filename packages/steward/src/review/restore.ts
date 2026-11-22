@@ -6,7 +6,7 @@
 // says what went; it carries the judge's session when a judge left it, none after the checks.
 import type { Quest } from '@elvaria/domain';
 
-import { STEWARD } from '../record.ts';
+import { STEWARD } from '../quest/record.ts';
 import type { Context } from '../context.ts';
 
 /** How many of the dropped paths the warning names; the line in the journal has them all. */

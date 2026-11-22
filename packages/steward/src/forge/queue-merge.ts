@@ -14,7 +14,7 @@ import type { QueueRedCheck, QueueStop, QuestId } from '@elvaria/domain';
 import type { CheckRun } from '@elvaria/runner-core';
 
 import { childIdOf } from '../deliver/subquests.ts';
-import { STEWARD } from '../record.ts';
+import { STEWARD } from '../quest/record.ts';
 import { messageOf } from './delivery.ts';
 import type { Context } from '../context.ts';
 import type { Delivery } from './delivery.ts';

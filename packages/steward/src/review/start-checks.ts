@@ -12,7 +12,7 @@ import { currentRun, err, ok } from '@elvaria/domain';
 import type { EventData, Quest, QuestId, Result, Territory } from '@elvaria/domain';
 
 import { mergePartsBeforeChecks } from '../party/plot.ts';
-import { STEWARD } from '../record.ts';
+import { STEWARD } from '../quest/record.ts';
 import { secretsBreaker } from '../sessions/breaker.ts';
 import { questSecretsOf, secretsLacking } from '../sessions/secrets.ts';
 import { checksOf, headOf, lockWaitOf } from './checks.ts';
@@ -20,7 +20,7 @@ import { setAside } from './environment.ts';
 import { restorePlot } from './restore.ts';
 import { inScratch } from './scratch.ts';
 import type { RunChecks } from './checks.ts';
-import type { CheckedRun } from '../background.ts';
+import type { CheckedRun } from '../background/background.ts';
 import type { Context } from '../context.ts';
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));

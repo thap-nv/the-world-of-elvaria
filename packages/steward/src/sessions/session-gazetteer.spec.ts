@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
 import { statusIs } from '../__fixtures__/review.ts';
-import { folderPlots } from '../plots.ts';
+import { folderPlots } from '../plot/folder-plots.ts';
 import type { Bench } from '../__fixtures__/kingdom.ts';
 import type { Plots, Steward } from '../types.ts';
 import type { Drift } from '@elvaria/runner-core';

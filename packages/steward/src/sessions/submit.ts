@@ -11,10 +11,10 @@ import type { PatchOutcome, RefusedWork, RunResult } from '@elvaria/runner-core'
 
 import { fileMemos } from '../memos/file.ts';
 import type { MemoFields } from '../memos/file.ts';
-import { moveAndRing } from '../notices.ts';
-import { step } from '../record.ts';
+import { moveAndRing } from '../bell/move-and-ring.ts';
+import { step } from '../quest/record.ts';
 import { runOf } from '../review/judge.ts';
-import { lineOf, submitSealOf } from '../seal.ts';
+import { lineOf, submitSealOf } from '../delegation/seal.ts';
 import { breakAssignee } from './breaker.ts';
 import { commitPlot } from './commit.ts';
 import { checksLetterAfter, noteUnchangedLetter } from './letter.ts';

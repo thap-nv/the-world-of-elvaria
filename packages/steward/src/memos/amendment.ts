@@ -10,7 +10,7 @@ import type { Actor, BlockedAmendment, CommandPayload, InboxCommandOf, Memo, Que
 
 import { APPLIED, answer, answerWaits, rejected } from '../inbox/quest-commands.ts';
 import { noticeQuest, ring } from '../context.ts';
-import { CHANCELLOR, OWNER } from '../record.ts';
+import { CHANCELLOR, OWNER } from '../quest/record.ts';
 import { writeClosed } from './close.ts';
 import type { Context } from '../context.ts';
 import type { Outcome } from '../inbox/quest-commands.ts';

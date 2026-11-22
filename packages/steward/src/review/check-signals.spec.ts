@@ -12,7 +12,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { NPM_TOKEN, bench, memoryTreasury, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
 import { plotsWith, questOfRun, statusIs, unitFails } from '../__fixtures__/review.ts';
 import type { Bench } from '../__fixtures__/kingdom.ts';
-import type { PlotCheck } from '../plot-types.ts';
+import type { PlotCheck } from '../plot/plot.ts';
 import type { Steward, StewardDeps } from '../types.ts';
 import type { CheckRun } from '@elvaria/runner-core';
 

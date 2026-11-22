@@ -5,10 +5,10 @@ import { ok } from '@elvaria/domain';
 import type { ToolFound, TribeId } from '@elvaria/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { bench, questPayload } from './__fixtures__/kingdom.ts';
+import { bench, questPayload } from '../__fixtures__/kingdom.ts';
 import { VERSION_ASK_MS } from './tribe-versions.ts';
-import type { Bench } from './__fixtures__/kingdom.ts';
-import type { Digest, DigestRequest, Steward } from './types.ts';
+import type { Bench } from '../__fixtures__/kingdom.ts';
+import type { Digest, DigestRequest, Steward } from '../types.ts';
 
 let current: Bench | undefined;
 let running: Steward | undefined;

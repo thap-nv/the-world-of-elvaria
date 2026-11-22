@@ -1,5 +1,5 @@
 // What the review specs share: plots whose answers a spec replaces, a failing check, and how to wait for a quest.
-import { folderPlots } from '../plots.ts';
+import { folderPlots } from '../plot/folder-plots.ts';
 import type { Plots } from '../types.ts';
 import type { Bench } from './kingdom.ts';
 import type { Quest, VerdictId } from '@elvaria/domain';

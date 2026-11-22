@@ -21,13 +21,13 @@ import {
 import type { Character, InboxCommandOf, Quest, QuestEventType, QuestId, Result } from '@elvaria/domain';
 
 import { closeTaken } from '../memos/close.ts';
-import { moveAndRing } from '../notices.ts';
-import { OWNER, actorOfCommand, step } from '../record.ts';
+import { moveAndRing } from '../bell/move-and-ring.ts';
+import { OWNER, actorOfCommand, step } from '../quest/record.ts';
 import { releaseScratch } from '../review/scratch.ts';
 import { openAssignee } from '../sessions/open.ts';
-import { modelsOf } from '../world.ts';
+import { modelsOf } from '../tick/world.ts';
 import type { Context } from '../context.ts';
-import type { Edits } from '../record.ts';
+import type { Edits } from '../quest/record.ts';
 
 export type Outcome =
   /** `quest`: the quest the command.applied line names (`deliver`, PS-08c: forgeOutcomesOf reads it). */

@@ -12,7 +12,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { git, gitPlots, gitRepoWith, onRepo } from '../__fixtures__/git-plots.ts';
 import { FAIL, RM_TEMP, bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
-import { folderPlots } from '../plots.ts';
+import { folderPlots } from '../plot/folder-plots.ts';
 import type { Bench } from '../__fixtures__/kingdom.ts';
 import type { Plots, Steward } from '../types.ts';
 import type { AgentRunner, SpawnRequest } from '@elvaria/runner-core';

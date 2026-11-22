@@ -33,11 +33,11 @@ import type {
 } from '@elvaria/domain';
 
 import { ring } from '../context.ts';
-import { STEWARD } from '../record.ts';
-import { judgingClassesOf } from '../unjudgeable.ts';
+import { STEWARD } from '../quest/record.ts';
+import { judgingClassesOf } from '../waits/unjudgeable.ts';
 import type { Context } from '../context.ts';
-import type { State } from '../steward-state.ts';
-import type { World } from '../world.ts';
+import type { State } from '../tick/steward-state.ts';
+import type { World } from '../tick/world.ts';
 import type { Digest } from './ports.ts';
 import type { StewardJob } from './scheduler.ts';
 

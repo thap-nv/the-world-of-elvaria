@@ -7,7 +7,7 @@
 import { PATCH_FILE } from '@elvaria/runner-core';
 import type { PatchOutcome } from '@elvaria/runner-core';
 
-import { STEWARD } from '../record.ts';
+import { STEWARD } from '../quest/record.ts';
 import type { QuestId } from '@elvaria/domain';
 
 import type { Context } from '../context.ts';

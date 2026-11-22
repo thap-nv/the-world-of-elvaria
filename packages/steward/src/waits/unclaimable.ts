@@ -7,9 +7,9 @@ import { inKingdom, readTextFile, writeFileAtomic } from '@elvaria/store';
 import type { EventData, Quest, QuestId, Unclaimable } from '@elvaria/domain';
 import type { Event } from '@elvaria/domain';
 
-import { noticeQuest, ring } from './context.ts';
-import { STEWARD } from './record.ts';
-import type { Context } from './context.ts';
+import { noticeQuest, ring } from '../context.ts';
+import { STEWARD } from '../quest/record.ts';
+import type { Context } from '../context.ts';
 
 export type UnclaimableNote = EventData<'quest.unclaimable'>;
 /** The notices in force: one per open quest, never with `reason: null`. */

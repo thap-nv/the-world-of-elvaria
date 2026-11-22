@@ -7,8 +7,8 @@ import { openJournal } from '@elvaria/eventlog';
 import type { Quest, Verdict } from '@elvaria/domain';
 import type { Continuation, Memory, RefusedWork } from '@elvaria/runner-core';
 
-import { handoverPath, readHandover, readJournal } from '../files.ts';
-import { refusedPatchOf } from '../infirmary.ts';
+import { handoverPath, readHandover, readJournal } from '../texts/files.ts';
+import { refusedPatchOf } from '../quest/infirmary.ts';
 import { filedMemosOf } from '../memos/filed.ts';
 import { withLogTails } from '../review/log-tail.ts';
 import { apprenticeLeft } from './breaker.ts';
