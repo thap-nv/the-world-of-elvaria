@@ -13,7 +13,7 @@ import type { ScriptRunner } from './script/run-script.ts';
 
 export type { Bell, ManaGaugeNotice, Notice, NoticeQuest } from './bell/notice.ts';
 // The quest's ground (PreparedPlot, ResolvedCheck, Plots; PlotCheck and PlotTrial, what a Plots call takes) lives in
-// plot-types.ts.
+// plot/plot.ts.
 export type { Plots, PreparedPlot, ResolvedCheck } from './plot/plot.ts';
 export type {
   Digest,

@@ -1,5 +1,5 @@
-// The Steward's view of the quest's ground (implementation-plan §3.3): moved out of types.ts to keep it under the
-// 300-line cap; types.ts re-exports all of it, so every import of these types still works.
+// The Steward's view of the quest's ground (implementation-plan §3.3): the plot it prepares, the checks it resolves
+// and runs there, and Plots, what the composition root gives it. types.ts re-exports the public part.
 import type { PartyRole, Quest, Result, Territory, TerritoryTrial } from '@elvaria/domain';
 import type {
   BaseBranch,
