@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.seal.option.note": "A word for the assignee, kept with the seal.",
+    "cli.seal.refused": "Quest {id} is «{status}»: only work waiting for your seal can be sealed.",
+    "cli.seal.sent": "Sent the command to seal quest {id}.",
+    "cli.seal.summary": "Seal work waiting for your seal: the quest is done (seal command; weighs three verdicts)."
+  }
+}

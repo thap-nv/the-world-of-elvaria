@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.seal_raise.protected_paths": "the work changed a protected path",
+    "cli.seal_raise.above_level": "a character above its level's ceiling took it",
+    "cli.seal_raise.out_of_scope": "the work changed files outside its scope",
+    "cli.seal_raise.diff_size": "its diff is over the delegation's line ceiling (or could not be measured)",
+    "cli.seal_raise.same_family_judge": "its judge is of a doer's model family",
+    "cli.seal_raise.machine_judge": "the machine judged it alone",
+    "cli.seal_raise.objection": "its review answered an objection",
+    "cli.seal_raise.rank_above": "its rank is now above the delegation's",
+    "cli.seal_raise.out_of_delegation": "the delegation no longer covers it (removed, its kind dropped, or its territory no longer pr_merge)",
+    "cli.seal_raise.suspended": "the territory's delegation of the seal is suspended"
+  }
+}

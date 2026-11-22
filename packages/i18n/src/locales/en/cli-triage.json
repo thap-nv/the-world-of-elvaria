@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.triage.summary": "The Chancellor triages the letters sent to it that wait: one model call for the batch (at most 20, the oldest first). Within kingdom.delegation the Steward applies its decisions without you; the others come to you with its advice, in the digest. kingdom.schedule.triage runs it each day before the digest.",
+    "cli.triage.none": "No letter waits for the Chancellor.",
+    "cli.triage.listening": "Chancellor {name} reads {count} letters…",
+    "cli.triage.more": "{count} more letters wait for the next triage.",
+    "cli.triage.delegated": "{memo}: {action}. Decided without you.",
+    "cli.triage.escalated": "{memo}: {action}. Yours to decide, because {holds}.",
+    "cli.triage.sent": "{count} commands sent to the Steward; a running Steward applies them at its next tick. What is left for you: elvaria digest",
+    "cli.triage.done": "Triage of {count} letters: {delegated} decided without you, {escalated} sent up to you.",
+    "cli.triage.action.merge": "merge into quest {quest}",
+    "cli.triage.action.new_quest": "a new quest {quest}",
+    "cli.triage.action.shelve": "set aside",
+    "cli.triage.action.owner": "only you can decide",
+    "cli.triage.hold.decision_change": "it changes a recorded decision",
+    "cli.triage.hold.contract_change": "it changes a data contract",
+    "cli.triage.hold.mana_over_budget": "it costs more mana than its rank",
+    "cli.triage.hold.outward_action": "it acts outside this machine",
+    "cli.triage.hold.protected_paths": "it touches protected paths",
+    "cli.triage.hold.above_rank": "the work's rank is above the delegation",
+    "cli.triage.hold.outside_scope": "its files lie outside the work's scope",
+    "cli.triage.hold.scope_held": "the files it opens meet a scope another quest holds",
+    "cli.triage.hold.chancellor_asks": "the Chancellor sends it to you"
+  }
+}

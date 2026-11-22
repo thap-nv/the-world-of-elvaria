@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.registry.gap_entry": "registry/{file}.json: entry {id}",
+    "cli.registry.gap_fields": "registry/{file}.json, entry {id}: field {fields}"
+  }
+}

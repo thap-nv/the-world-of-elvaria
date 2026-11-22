@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.seal_raise.protected_paths": "việc đổi một file vùng bảo vệ",
+    "cli.seal_raise.above_level": "người nhận vượt hạng trần của cấp mình",
+    "cli.seal_raise.out_of_scope": "việc đổi file ngoài vùng của quest",
+    "cli.seal_raise.diff_size": "diff vượt trần dòng của ủy quyền (hay không đo được)",
+    "cli.seal_raise.same_family_judge": "người chấm cùng họ model với một người làm",
+    "cli.seal_raise.machine_judge": "máy chấm một mình",
+    "cli.seal_raise.objection": "lượt chấm trả lời một thư phản biện",
+    "cli.seal_raise.rank_above": "hạng nay vượt hạng cao nhất của ủy quyền",
+    "cli.seal_raise.out_of_delegation": "ủy quyền không còn phủ quest (bỏ phần dấu, bỏ dạng, hay lãnh thổ thôi pr_merge)",
+    "cli.seal_raise.suspended": "ủy quyền dấu của lãnh thổ đang ngừng"
+  }
+}

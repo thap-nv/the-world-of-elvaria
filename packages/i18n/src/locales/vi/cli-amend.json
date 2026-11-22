@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.amend.listening": "Người viết đề của nhiệm vụ {quest} đang đọc thư phản biện {memo}…",
+    "cli.amend.decided": "Thư phản biện {memo} của nhiệm vụ {quest}: {decision}.",
+    "cli.amend.decided_held": "Thư phản biện {memo} của nhiệm vụ {quest}: {decision} (giữ lại cho bạn vì: {holds}).",
+    "cli.amend.failed": "Người viết đề không quyết được thư phản biện ({code}): thư tới bạn.",
+    "cli.amend.cli_error": "Người viết đề không quyết được thư phản biện, phiên kết thúc vì lỗi: {line}. Thư tới bạn.",
+    "cli.amend.no_author": "Không người viết đề nào đọc được (không có Tể tướng, hoặc pháp sư của kế hoạch không còn): bạn quyết."
+  }
+}

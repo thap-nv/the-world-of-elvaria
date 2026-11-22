@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.option.help": "Print this command's help.",
+    "cli.option.here": "Run the command on this code itself, not on the build the kingdom pins (.state/build.json).",
+    "cli.option.kingdom": "Kingdom folder (default: the ELVARIA_KINGDOM variable).",
+    "cli.option.locale": "Output language: vi or en (default: the kingdom's language)."
+  }
+}

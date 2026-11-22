@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.init.done": "Đã lập vương quốc «{name}» tại {dir}.",
+    "cli.init.next": "Bước kế: elvaria territory add <thư mục repo> --kingdom \"{dir}\"",
+    "cli.init.option.name": "Tên vương quốc, tối đa 24 ký tự.",
+    "cli.init.option.profession": "Nghề của bạn: developer, ba, marketing, researcher hoặc other (mặc định developer).",
+    "cli.init.option.treasury": "File kho bảo vật, nằm ngoài vương quốc (mặc định ~/.elvaria/treasury.json).",
+    "cli.init.option.tz": "Múi giờ IANA, ví dụ Asia/Ho_Chi_Minh (mặc định: múi giờ của máy).",
+    "cli.init.summary": "Lập một vương quốc mới: thư mục, registry mặc định và hai tộc.",
+    "cli.init.tribes": "Tộc: {tribes}. Chạy elvaria doctor --kingdom \"{dir}\" để tìm CLI của từng tộc."
+  }
+}

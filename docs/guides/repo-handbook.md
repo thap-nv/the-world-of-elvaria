@@ -20,7 +20,7 @@ Cây đầy đủ và luật phụ thuộc: [docs/implementation-plan.md](../imp
 | `packages/chancellor` | P1-13 | Tể tướng: câu lệnh tự nhiên → quest draft; phân loại thư (`triageMemos`, `triageCommands`, PS-03b) |
 | `packages/sandbox` | P0-10 | Ngày giả sinh bằng chính máy trạng thái của domain (`simulateDay`), lịch phát lại |
 | `packages/herald` | giai đoạn 2 | Sứ giả: HTTP + WebSocket trên localhost, ghi lệnh vào inbox |
-| `packages/i18n` | P0-07 | Chuỗi VI/EN (`src/locales/`), `src/glossary.json` (nguồn thuật ngữ) |
+| `packages/i18n` | P0-07 | Chuỗi VI/EN (`src/locales/<ngôn ngữ>/<namespace>.json`), `src/glossary.json` (nguồn thuật ngữ) |
 | `packages/ui-kit`, `packages/ui` | giai đoạn 2 | Design system (nhập một lần từ `design/`, sau đó là nguồn); thành phần Preact |
 | `apps/cli` | P0-08 | Lệnh `elvaria` — composition root duy nhất. Bảng lệnh `src/commands.ts` sinh cả parse, `--help` và [docs/cli.md](../cli.md) |
 | `apps/world`, `apps/lite` | giai đoạn 3, 2 | Thế giới Three.js; khách nhẹ 2D cho điện thoại |
@@ -51,7 +51,7 @@ pnpm install
 pnpm check               # mọi thứ CI chạy (trừ audit): lint, format:check, typecheck, test, boundaries, layout,
                          #   knip, dup, schemas --check, docs:gen --check, docs:check, i18n:check; xanh trên cây sạch thì đóng dấu HEAD
 pnpm check:fast          # typecheck + test + boundaries (husky pre-push, trừ khi push đúng commit có dấu)
-pnpm check:changed       # giữa chừng: chỉ các check mà bảng "Change impact" đòi cho file đổi so với merge-base với origin/main (commit, chưa commit, file mới); KHÔNG thay `pnpm check`, cổng trước merge vẫn là `pnpm check` đầy đủ (không lint, không format, không package ngoài diff)
+pnpm check:changed       # giữa chừng: chỉ các check mà bảng "Change impact" đòi cho file đổi so với merge-base với origin/main (commit, chưa commit, file mới); KHÔNG thay `pnpm check`, cổng trước merge vẫn là `pnpm check` đầy đủ (không lint, không format; test của package đổi và mọi package phụ thuộc nó, gộp một lần `pnpm --filter ...@elvaria/<key> test`)
 pnpm check:changed --dry-run          # chỉ in đường dẫn đổi, các lệnh sẽ chạy và đường dẫn không có luật
 pnpm check:changed --base <ref>       # nhánh gốc khác origin/main; dừng ở lệnh đỏ đầu tiên; phải gọi qua pnpm (Windows, không shell)
 pnpm lint && pnpm typecheck  # lint tự cho eslint heap 8 GB, không cần NODE_OPTIONS

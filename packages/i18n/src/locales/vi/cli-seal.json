@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.seal.option.note": "Một lời cho người làm, lưu cùng dấu vua.",
+    "cli.seal.refused": "Nhiệm vụ {id} đang «{status}»: chỉ đóng dấu được việc đang chờ dấu vua.",
+    "cli.seal.sent": "Đã gửi lệnh đóng dấu nhiệm vụ {id}.",
+    "cli.seal.summary": "Đóng dấu việc đang chờ dấu vua: nhiệm vụ xong (lệnh seal; nặng bằng ba phán quyết)."
+  }
+}

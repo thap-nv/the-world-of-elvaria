@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.error.absolute_path": "Cần một đường dẫn tuyệt đối: {path}",
+    "cli.error.bad_value": "Tùy chọn {option} thiếu giá trị, hoặc không nhận giá trị.",
+    "cli.error.choice": "{option} chỉ nhận một trong: {choices}.",
+    "cli.error.extra_argument": "Thừa tham số: {value}",
+    "cli.error.locale": "Không có ngôn ngữ «{value}»; chọn một trong: {choices}.",
+    "cli.error.missing_argument": "Thiếu tham số {name}.",
+    "cli.error.missing_option": "Thiếu tùy chọn bắt buộc {option}.",
+    "cli.error.name_length": "Tên phải có từ 1 đến {max} ký tự.",
+    "cli.error.no_kingdom": "Chưa biết vương quốc nào: thêm --kingdom <thư mục> hoặc đặt biến ELVARIA_KINGDOM.",
+    "cli.error.not_a_kingdom": "{dir} chưa phải một vương quốc (không có kingdom.json). Lập mới bằng: elvaria init --kingdom \"{dir}\" --name <tên>",
+    "cli.error.see_command_help": "Xem: elvaria {command} --help",
+    "cli.error.see_help": "Xem: elvaria --help",
+    "cli.error.time_zone": "Múi giờ «{tz}» không có trong danh sách múi giờ IANA.",
+    "cli.error.unexpected": "Lỗi không lường trước: {message}",
+    "cli.error.unknown": "{option} «{value}» không có; chọn một trong: {choices}.",
+    "cli.error.unknown_command": "Không có lệnh «{command}».",
+    "cli.error.unknown_option": "Không có tùy chọn {option}."
+  }
+}

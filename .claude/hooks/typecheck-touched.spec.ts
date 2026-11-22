@@ -26,7 +26,7 @@ describe('tsconfigOf', () => {
 
   it('skips what no program covers: other files, build output, a workspace without tsconfig', () => {
     expect(tsconfigOf('CLAUDE.md', exists)).toBeUndefined();
-    expect(tsconfigOf('packages/i18n/src/locales/vi.json', exists)).toBeUndefined();
+    expect(tsconfigOf('packages/i18n/src/locales/vi/cli.json', exists)).toBeUndefined();
     expect(tsconfigOf('packages/hooks/dist/elvaria-hook.js', exists)).toBeUndefined();
     expect(tsconfigOf('packages/runner-core/src/index.ts', exists)).toBeUndefined();
     expect(tsconfigOf('design/project/app.js', exists)).toBeUndefined();
