@@ -41,8 +41,23 @@ describe('redact-patterns.json', () => {
       expect(entry.id).toMatch(/^[a-z][a-z0-9_]*$/);
       expect(entry.flags).toMatch(/^[imsu]*$/);
       expect(entry.description).not.toBe('');
+      expect(typeof entry.warn_only).toBe('boolean');
     }
     expect(REDACT_PATTERNS.every((pattern) => pattern.global)).toBe(true);
+  });
+
+  it('attaches id and warn_only to compiled patterns, defaulting missing warn_only to false', () => {
+    const compiled = compileRedactPatterns([
+      { id: 'warn_item', description: 'w', regex: 'w', flags: '', warn_only: true },
+      { id: 'block_item', description: 'b', regex: 'b', flags: '', warn_only: false },
+      { id: 'legacy_item', description: 'l', regex: 'l', flags: '' },
+    ]);
+    expect(compiled[0]?.id).toBe('warn_item');
+    expect(compiled[0]?.warn_only).toBe(true);
+    expect(compiled[1]?.id).toBe('block_item');
+    expect(compiled[1]?.warn_only).toBe(false);
+    expect(compiled[2]?.id).toBe('legacy_item');
+    expect(compiled[2]?.warn_only).toBe(false);
   });
 
   it('has a fixture sample for every pattern, so a new pattern comes with proof that it works', () => {

@@ -19,7 +19,8 @@
   `mana.exhausted` without and with `resets_at`; `mana.level` without and with `model`).
 - Tails the log by polling (§6: no `fs.watch`): `EventLog.tail({ from, intervalMs, signal })`.
 - Redacts (ADR 0013): `redact(text, known, patterns)`, `createRedactor`, `redactDeep` for a whole event.
-  Known values are masked exactly, then the patterns of `src/redact-patterns.json` (data, one fixture each).
+  Known values are masked exactly, then the patterns of `src/redact-patterns.json` (data, one fixture each;
+  each pattern defines `warn_only` so pre-commit and pre-push scans share classification).
 - Stamps lines for writers that may not load the domain, the hook (P1-08): `createStamper(format)` gives ULIDs
   that increase within one writer, `tsFormatter(tz)` the ISO 8601 `ts` of an IANA zone through Intl, `localTs`
   the same from `Date` once `process.env.TZ` is that zone (~11 ms cheaper per process). `stamp.spec.ts` holds

@@ -6,7 +6,7 @@ import path from 'node:path';
 import { REDACT_PATTERNS } from '@elvaria/eventlog';
 import { describe, expect, it } from 'vitest';
 
-import { SHARED_PATTERN_COUNT, scanDiff } from './scan.ts';
+import { scanDiff } from './scan.ts';
 
 const PATTERNS_FILE = path.join(
   import.meta.dirname,
@@ -36,15 +36,22 @@ const fileDiff = (file: string, hunk: readonly string[], from = `a/${file}`, to 
 const diffOf = (...files: readonly (readonly string[])[]): string => `${files.flat().join('\n')}\n`;
 
 describe('redact-patterns.json, as the scan splits it', () => {
-  it('lists the three shared patterns last, and REDACT_PATTERNS keeps every one in file order', () => {
-    const file = JSON.parse(readFileSync(PATTERNS_FILE, 'utf8')) as { patterns: { id: string }[] };
-    const ids = file.patterns.map(({ id }) => id);
-    expect(ids.slice(-SHARED_PATTERN_COUNT)).toEqual([
-      'bearer_token',
-      'url_credentials',
-      'secret_assignment',
-    ]);
-    expect(ids).toHaveLength(REDACT_PATTERNS.length);
+  it('classifies warn_only patterns from REDACT_PATTERNS matching the warn_only flag', () => {
+    const file = JSON.parse(readFileSync(PATTERNS_FILE, 'utf8')) as {
+      patterns: { id: string; warn_only?: boolean }[];
+    };
+    const warnIds = file.patterns.filter((entry) => entry.warn_only).map(({ id }) => id);
+    expect(warnIds).toEqual(['bearer_token', 'url_credentials', 'secret_assignment']);
+    const classifiedWarnIds = REDACT_PATTERNS.filter((pattern) => pattern.warn_only).map(
+      (pattern) => pattern.id,
+    );
+    expect(classifiedWarnIds).toEqual(warnIds);
+    const specificIds = file.patterns.filter((entry) => !entry.warn_only).map(({ id }) => id);
+    const classifiedSpecificIds = REDACT_PATTERNS.filter((pattern) => !pattern.warn_only).map(
+      (pattern) => pattern.id,
+    );
+    expect(classifiedSpecificIds).toEqual(specificIds);
+    expect(file.patterns).toHaveLength(REDACT_PATTERNS.length);
   });
 });
 
