@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.option.help": "In hướng dẫn của lệnh.",
+    "cli.option.here": "Chạy lệnh bằng chính mã này, không bằng bản mà vương quốc đang ghim (.state/build.json).",
+    "cli.option.kingdom": "Thư mục vương quốc (mặc định: biến ELVARIA_KINGDOM).",
+    "cli.option.locale": "Ngôn ngữ in ra: vi hoặc en (mặc định: ngôn ngữ của vương quốc)."
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "messages": {
+    "store.issue.exists": "{file} exists: this folder is already a kingdom.",
+    "store.issue.future_version": "{file} was written by a newer Elvaria; left as it is, not read.",
+    "store.issue.id_mismatch": "{file}: the id inside differs from the file name.",
+    "store.issue.invalid": "{file} does not match its schema:",
+    "store.issue.invalid_id": "Not a valid name: {file}.",
+    "store.issue.invalid_json": "{file} is not valid JSON.",
+    "store.issue.locked": "{file} is locked by another process; try again later.",
+    "store.issue.migration_failed": "{file} could not be moved to the current version.",
+    "store.issue.missing_version": "{file} has no \"version\" at the top level.",
+    "store.issue.not_a_folder": "{file} cannot be written: a file stands where its folder must be.",
+    "store.issue.not_found": "There is no file {file}."
+  }
+}

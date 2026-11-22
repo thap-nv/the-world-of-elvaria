@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.migrate.done": "Moved {count} files to the current version; the old text is in {backup}:",
+    "cli.migrate.entries": "Added {count} registry entries this Elvaria ships and the kingdom lacked (entries you have are left as they are); the old files are in {backup}:",
+    "cli.migrate.entries_refused": "Did not add the {count} registry entries this Elvaria ships and the kingdom lacks: with them the registry would not load. Add them by hand from {path}:",
+    "cli.migrate.fields": "Entries you have lack {count} fields this Elvaria ships; migrate never changes an entry you have. Copy a field from {path} if you want it:",
+    "cli.migrate.none": "Every file is at the current version; nothing to migrate.",
+    "cli.migrate.registry": "Copied {count} registry files this Elvaria ships and the kingdom lacked (files you have are left as they are):",
+    "cli.migrate.summary": "Move every old file of the kingdom to the current version, with a backup, and add the registry files and entries this Elvaria ships that the kingdom lacks."
+  }
+}

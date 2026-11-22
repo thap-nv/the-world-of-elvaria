@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.build.unreadable": "{file} cannot be read: which build the kingdom pins is unknown. Fix or delete that file, or add --here to run on this code.",
+    "cli.build.missing": "The kingdom pins build {sha}, but {dir} no longer holds its CLI. elvaria upgrade --rollback goes back to the build before, elvaria upgrade --ref {sha} builds it again, or add --here to run on this code.",
+    "cli.build.doctor_none": "Build: the kingdom pins none, commands run from {root}. elvaria upgrade builds, tries and pins one.",
+    "cli.build.doctor_pinned": "Pinned build {sha}; the build before, {previous}, is kept to go back to.",
+    "cli.build.doctor_pinned_first": "Pinned build {sha}; there is no build before it to go back to.",
+    "cli.build.doctor_pinned_gone": "Pinned build {sha}; the build before, {previous}, is no longer in {dir}, so there is no build to go back to.",
+    "cli.build.doctor_here": "The kingdom pins build {sha}, but this command runs from {root} (--here)."
+  }
+}

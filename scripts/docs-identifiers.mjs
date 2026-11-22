@@ -19,7 +19,7 @@ const SKIPPED = [
   /^packages\/i18n\/src\/glossary\.json$/,
 ];
 /** Display strings are prose in two languages; only their keys are identifiers. */
-const LOCALE_FILE = /^packages\/i18n\/src\/locales\/[^/]+\.json$/;
+const LOCALE_FILE = /^packages\/i18n\/src\/locales\/[^/]+\/[^/]+\.json$/;
 /** A string that could be an id or a key: no whitespace, lowercase start, not a URL. */
 const ID_SHAPED = /^[a-z0-9_@$./-][^\s]*$/;
 

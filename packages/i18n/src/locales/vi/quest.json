@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "messages": {
+    "quest.status.archived": "Lưu trữ",
+    "quest.status.awaiting_seal": "Chờ dấu vua",
+    "quest.status.blocked": "Chờ trả lời",
+    "quest.status.claimed": "Đã nhận",
+    "quest.status.done": "Xong",
+    "quest.status.draft": "Nháp",
+    "quest.status.infirmary": "Trạm quân y",
+    "quest.status.open": "Mở",
+    "quest.status.paused_mana": "Tạm dừng (hết mana)",
+    "quest.status.returned": "Bị trả bài",
+    "quest.status.review": "Chờ nghiệm thu",
+    "quest.status.working": "Đang làm"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.inbox.applied": "Nhiếp chính đã áp dụng lệnh {id}.",
+    "cli.inbox.reason.stale": "nhiệm vụ đã đổi từ lúc bạn đọc nó, nên lệnh sửa không ghi đè; đọc lại bằng elvaria quest show rồi gửi lại (riêng lệnh chỉ đổi ngân sách thì không bị từ chối vì lý do này)",
+    "cli.inbox.rejected": "Nhiếp chính từ chối lệnh {id}: {reason}",
+    "cli.inbox.sent": "Lệnh {id} đã vào hộp thư; Nhiếp chính áp dụng nó ở lượt kế tiếp.",
+    "cli.inbox.unanswered": "Nhiếp chính đang chạy nhưng chưa trả lời lệnh {id}: nó vẫn nằm trong hộp thư (lệnh chờ người rảnh hay chờ mana thì ở lại tới khi làm được); kết quả sẽ là dòng command.applied hay command.rejected trong sổ event."
+  }
+}

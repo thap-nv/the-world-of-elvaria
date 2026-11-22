@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.migrate.done": "Đã chuyển {count} file lên phiên bản hiện tại; bản cũ ở {backup}:",
+    "cli.migrate.entries": "Đã thêm {count} mục registry mà bản Elvaria này có và vương quốc còn thiếu (mục bạn đã có thì để nguyên); bản cũ ở {backup}:",
+    "cli.migrate.entries_refused": "Chưa thêm {count} mục registry mà bản Elvaria này có và vương quốc còn thiếu: thêm vào thì registry không nạp được. Hãy tự thêm từ {path}:",
+    "cli.migrate.fields": "Các mục bạn đã có thiếu {count} trường mà bản Elvaria này có; migrate không bao giờ sửa mục bạn đã có. Muốn dùng thì chép trường từ {path}:",
+    "cli.migrate.none": "Mọi file đã ở phiên bản hiện tại; không có gì để chuyển.",
+    "cli.migrate.registry": "Đã chép {count} file registry mà bản Elvaria này có và vương quốc còn thiếu (file bạn đã có thì để nguyên):",
+    "cli.migrate.summary": "Chuyển mọi file cũ của vương quốc lên phiên bản hiện tại, có sao lưu, và thêm file, mục registry mà bản Elvaria này có và vương quốc còn thiếu."
+  }
+}

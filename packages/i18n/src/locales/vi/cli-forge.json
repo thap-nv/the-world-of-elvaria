@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.forge.stage.update": "cập nhật nhánh (ghép nhánh gốc, chạy lệnh sinh, chạy mọi check)",
+    "cli.forge.stage.scan": "quét secret",
+    "cli.forge.stage.push": "push",
+    "cli.forge.stage.open": "mở PR",
+    "cli.forge.stage.checks": "check của PR",
+    "cli.forge.stage.merge": "merge",
+    "cli.forge.stage.cleanup": "xóa nhánh",
+    "cli.forge.reason.secret": "một dòng mà nhánh hay một commit của nhánh thêm vào có secret (một giá trị của kho bảo vật hay một dạng khóa); push đẩy mọi commit, nên một commit xóa nó sau đó là chưa đủ: gỡ nó khỏi lịch sử của nhánh (ví dụ git reset --soft về nhánh gốc rồi commit lại), đổi secret nếu nó có thể đã lộ, rồi giao lại.",
+    "cli.forge.reason.push_refused": "git hay hook pre-push của lãnh thổ từ chối push; xem log push (.runs/<nhiệm vụ>-delivery/push.log), sửa rồi giao lại.",
+    "cli.forge.reason.no_credential": "git không có credential cho forge; đăng nhập (git credential, Git Credential Manager) rồi giao lại.",
+    "cli.forge.reason.forge_auth": "forge từ chối credential (hết hạn, bị thu hồi, thiếu quyền push hay SSO); đăng nhập lại rồi giao lại.",
+    "cli.forge.reason.forge_error": "forge không trả lời được (mạng, hết giờ, lỗi máy chủ, Nhiếp chính chưa có adapter); thử giao lại sau.",
+    "cli.forge.reason.conflict": "nhánh không ghép được với nhánh gốc (file mà luật shared_paths không gỡ được, hay nhánh gốc vượt nó quá nhiều lần); gỡ conflict trên nhánh rồi giao lại.",
+    "cli.forge.reason.checks_red": "có check đỏ: check bắt buộc của PR, hay check của lãnh thổ trên nhánh đã ghép nhánh gốc (.runs/<nhiệm vụ>-delivery/checks/); xem check rồi giao lại.",
+    "cli.forge.reason.checks_timeout": "check bắt buộc của PR chưa xong khi hết giờ chờ; xem check rồi giao lại.",
+    "cli.forge.reason.head_moved": "đầu nhánh trên forge đã khác đầu Nhiếp chính push; xem ai đã push rồi giao lại.",
+    "cli.forge.reason.generate_failed": "một lệnh của commands.generate lỗi sau khi ghép nhánh gốc; xem log (.runs/<nhiệm vụ>-delivery/generate.log), sửa rồi giao lại.",
+    "cli.forge.reason.update_failed": "git, một hook hay commands.setup từ chối cập nhật nhánh (lần ghép, một commit của Nhiếp chính, git cũ hơn 2.38); xem chi tiết, sửa rồi giao lại."
+  }
+}
