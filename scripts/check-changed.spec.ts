@@ -26,14 +26,29 @@ describe('plan', () => {
     ]);
   });
 
+  it('runs the tests of the package and of every package that depends on it, in one pnpm run', () => {
+    expect(lines(['packages/store/src/a.ts', 'packages/runner-core/src/b.ts', 'docs/cli.md'])).toEqual([
+      '--filter ...@elvaria/store --filter ...@elvaria/runner-core test',
+      'layout',
+      'knip',
+      'dup',
+      'docs:check',
+    ]);
+  });
+
   it('runs one package test for another package, keyed by its folder', () => {
     expect(lines(['packages/runner-core/src/a.ts', 'packages/runner-core/src/b.ts'])).toEqual([
-      '--filter @elvaria/runner-core test',
+      '--filter ...@elvaria/runner-core test',
       'layout',
       'knip',
       'dup',
     ]);
-    expect(lines(['apps/cli/src/cli.ts'])).toEqual(['--filter @elvaria/cli test', 'layout', 'knip', 'dup']);
+    expect(lines(['apps/cli/src/cli.ts'])).toEqual([
+      '--filter ...@elvaria/cli test',
+      'layout',
+      'knip',
+      'dup',
+    ]);
   });
 
   it('lets the full test and typecheck cover the narrower ones', () => {
@@ -64,7 +79,7 @@ describe('plan', () => {
 
   it('checks docs and generated output for i18n', () => {
     expect(lines(['packages/i18n/src/glossary.json'])).toEqual([
-      '--filter @elvaria/i18n test',
+      '--filter ...@elvaria/i18n test',
       'docs:gen --check',
       'docs:check',
       'i18n:check',
@@ -81,7 +96,7 @@ describe('plan', () => {
 
   it('checks the boundaries when a workspace manifest or the boundary table moves', () => {
     expect(lines(['packages/store/package.json'])).toEqual([
-      '--filter @elvaria/store test',
+      '--filter ...@elvaria/store test',
       'boundaries',
       'docs:gen --check',
       'layout',
@@ -107,7 +122,7 @@ describe('plan', () => {
     expect(lines(['knip.json'])).toEqual(['knip']);
     expect(lines(['package.json'])).toEqual(['knip']);
     expect(lines(['packages/store/src/io/atomic.ts'])).toEqual([
-      '--filter @elvaria/store test',
+      '--filter ...@elvaria/store test',
       'layout',
       'knip',
       'dup',

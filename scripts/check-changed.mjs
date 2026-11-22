@@ -31,7 +31,9 @@ export const DEFAULT_BASE = 'origin/main';
 export const RULES = [
   // domain: every package imports it, so every package's tests and types are in play (ADR 0001)
   { pattern: /^packages\/domain\/(?!README\.md$)/, run: [['test'], ['typecheck']] },
-  { pattern: /^(?:packages|apps)\/([^/]+)\/(?!README\.md$)/, run: [['--filter', '@elvaria/$1', 'test']] },
+  // `...` selects the package and every package that depends on it (settlement (382)): a runner-core change once
+  // broke apps/cli specs that only the full check ran
+  { pattern: /^(?:packages|apps)\/([^/]+)\/(?!README\.md$)/, run: [['--filter', '...@elvaria/$1', 'test']] },
   // the same table row as the package tests: new package, boundaries.mjs, dependencies, imports between packages
   {
     pattern: /^packages\/config\/boundaries\.mjs$|^(?:packages|apps)\/[^/]+\/package\.json$/,
@@ -75,7 +77,7 @@ export const RULES = [
 export const SUBSUMES = [
   {
     by: ['test'],
-    covers: (c) => (c[0] === '--filter' && c[2] === 'test') || c.join(' ') === 'exec vitest run',
+    covers: (c) => (c[0] === '--filter' && c.at(-1) === 'test') || c.join(' ') === 'exec vitest run',
   },
   { by: ['typecheck'], covers: (c) => c.join(' ') === 'exec tsc -p tsconfig.json' },
 ];
@@ -144,9 +146,24 @@ export function plan(paths) {
     }
     if (!hit) unmatched.push(path);
   }
-  const all = [...wanted.values()];
+  const all = mergeFilters([...wanted.values()]);
   const commands = all.filter((c) => !SUBSUMES.some((s) => wanted.has(s.by.join(' ')) && s.covers(c)));
   return { commands, unmatched };
+}
+
+/**
+ * The package tests as one `pnpm --filter … --filter … test`, where the first of them stood: two changed packages
+ * often share dependents, and one pnpm run selects each package once.
+ * @param {Command[]} commands
+ * @returns {Command[]}
+ */
+function mergeFilters(commands) {
+  const isFilterTest = (/** @type {Command} */ c) => c[0] === '--filter' && c.at(-1) === 'test';
+  const filters = commands.filter(isFilterTest).flatMap((c) => c.slice(0, -1));
+  const at = commands.findIndex(isFilterTest);
+  if (at < 0) return commands;
+  const rest = commands.filter((c) => !isFilterTest(c));
+  return [...rest.slice(0, at), [...filters, 'test'], ...rest.slice(at)];
 }
 
 /**
