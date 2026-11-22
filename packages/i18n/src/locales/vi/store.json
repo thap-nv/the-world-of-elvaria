@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "messages": {
+    "store.issue.exists": "{file} đã có: thư mục này đã là một vương quốc.",
+    "store.issue.future_version": "{file} do một bản Elvaria mới hơn ghi; để nguyên, không đọc.",
+    "store.issue.id_mismatch": "{file}: id bên trong khác tên file.",
+    "store.issue.invalid": "{file} không khớp schema:",
+    "store.issue.invalid_id": "Tên không hợp lệ: {file}.",
+    "store.issue.invalid_json": "{file} không phải JSON hợp lệ.",
+    "store.issue.locked": "{file} đang bị một tiến trình khác khóa; thử lại sau.",
+    "store.issue.migration_failed": "Không chuyển được {file} lên phiên bản hiện tại.",
+    "store.issue.missing_version": "{file} thiếu trường \"version\" ở cấp cao nhất.",
+    "store.issue.not_a_folder": "Không ghi được {file}: một file đang nằm ở chỗ thư mục của nó.",
+    "store.issue.not_found": "Không có file {file}."
+  }
+}

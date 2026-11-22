@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.help.commands": "Lệnh:",
+    "cli.help.global_options": "Tùy chọn chung:",
+    "cli.help.more": "Xem hướng dẫn của một lệnh: elvaria <lệnh> --help",
+    "cli.help.options": "Tham số và tùy chọn:",
+    "cli.help.required": "(bắt buộc)",
+    "cli.help.usage": "Cách dùng: elvaria <lệnh> [tùy chọn]",
+    "cli.help.usage_command": "Cách dùng: {command} [tùy chọn]",
+    "cli.help.usage_group": "Cách dùng: elvaria {group} <lệnh> [tùy chọn]"
+  }
+}

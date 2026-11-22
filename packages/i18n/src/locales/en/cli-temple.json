@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.temple.evidence.summary": "Print the evidence pack a session of the Monk would read now: the repeated failures of the last 50 judged runs with each verdict's notes (redacted, cut at 600 characters), the lines of scripture with their counts, the Monk's lines worth a review, each territory's checks and the catalog's scripts, cut at the Monk tribe's prompt ceiling (24 000 characters at most). Reads the kingdom only, spends no mana.",
+    "cli.temple.evidence.option.json": "Print the pack as JSON, as the Monk reads it.",
+    "cli.temple.evidence.group": "{kind}: {count} failed runs",
+    "cli.temple.evidence.member": "  {verdict} ({class}, {tribe}, {territory}): {notes}",
+    "cli.temple.evidence.dropped": "Left out at the prompt ceiling, the least repeated first: {kinds}",
+    "cli.temple.evidence.review": "Worth a review: {ref}",
+    "cli.temple.evidence.result": "{groups} repeated failures, {lines} lines of scripture, {reviews} worth a review: {chars} characters.",
+    "cli.temple.evidence.empty": "No repeated failure and no line worth a review: the Temple would call no model ({lines} lines of scripture, {chars} characters).",
+    "cli.temple.run.summary": "Run the Temple once, now: the Monk reads the evidence pack in one session with no tool and its report (operations on single lines of scripture, letters) goes to the inbox, which a running Steward applies at its next tick. Runs whether or not kingdom.schedule.temple is on or due. Costs mana; with no repeated failure and no line worth a review it calls no model.",
+    "cli.temple.run.listening": "Monk {name} reads {groups} repeated failures and {reviews} lines worth a review…",
+    "cli.temple.run.empty": "Nothing for the Temple to decide: no repeated failure and no line worth a review. No model was called.",
+    "cli.temple.run.unchanged": "The Temple's evidence is unchanged since its last model session. No model was called.",
+    "cli.temple.run.sent": "The Temple's report is in the inbox: {operations} operations on scripture, {letters} letters. The Steward applies it at its next tick.",
+    "cli.temple.run.nothing": "The Monk changed no line and wrote no letter.",
+    "cli.temple.run.no_monk": "No Monk can run the Temple: no character of a Monk class that is not suspended and whose tribe works. Add one: elvaria character add <id> --class {class} --model <model>",
+    "cli.temple.run.held": "The Monk's tribe is held by its CLI's version; no session opened:",
+    "cli.temple.run.waiting": "The Monk's tribe runs a session now or its mana is closed: the Temple waits.",
+    "cli.temple.run.stopped": "The Steward stopped while the Monk was answering; the session was ended and nothing was written. The Temple runs again at the next start.",
+    "cli.temple.run.failed": "The Monk gave no reply to use ({why}). Nothing went to the inbox; the session's tokens are counted, and the Temple runs again at its next trigger.",
+    "cli.temple.run.unrecorded": "! The temple.ran line could not be written to the log ({problem}): the Temple may run again, and the mana estimate does not count the session."
+  }
+}

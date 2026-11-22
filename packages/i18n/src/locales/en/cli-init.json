@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.init.done": "Founded the kingdom «{name}» at {dir}.",
+    "cli.init.next": "Next: elvaria territory add <repo folder> --kingdom \"{dir}\"",
+    "cli.init.option.name": "Name of the kingdom, up to 24 characters.",
+    "cli.init.option.profession": "Your profession: developer, ba, marketing, researcher or other (default developer).",
+    "cli.init.option.treasury": "Treasury file, outside the kingdom (default ~/.elvaria/treasury.json).",
+    "cli.init.option.tz": "IANA time zone, e.g. Asia/Ho_Chi_Minh (default: the machine's zone).",
+    "cli.init.summary": "Found a new kingdom: folder, default registry and two tribes.",
+    "cli.init.tribes": "Tribes: {tribes}. Run elvaria doctor --kingdom \"{dir}\" to find each tribe's CLI."
+  }
+}

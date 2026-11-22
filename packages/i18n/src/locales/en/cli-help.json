@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.help.commands": "Commands:",
+    "cli.help.global_options": "Global options:",
+    "cli.help.more": "Help for one command: elvaria <command> --help",
+    "cli.help.options": "Arguments and options:",
+    "cli.help.required": "(required)",
+    "cli.help.usage": "Usage: elvaria <command> [options]",
+    "cli.help.usage_command": "Usage: {command} [options]",
+    "cli.help.usage_group": "Usage: elvaria {group} <command> [options]"
+  }
+}

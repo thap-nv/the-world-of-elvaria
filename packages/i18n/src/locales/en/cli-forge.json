@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.forge.stage.update": "the update of the branch (the base branch merged in, the generators, every check)",
+    "cli.forge.stage.scan": "the secret scan",
+    "cli.forge.stage.push": "the push",
+    "cli.forge.stage.open": "opening the pull request",
+    "cli.forge.stage.checks": "the pull request's checks",
+    "cli.forge.stage.merge": "the merge",
+    "cli.forge.stage.cleanup": "the branch's removal",
+    "cli.forge.reason.secret": "a line the branch or one of its commits adds holds a secret (a treasury value or a key's shape); a push sends every commit, so a later commit that removes it is not enough: take it out of the branch's history (git reset --soft to the base branch, then commit again, for one), change the secret if it may have leaked, then deliver again.",
+    "cli.forge.reason.push_refused": "git or the territory's pre-push hook refused the push; read the push log (.runs/<quest>-delivery/push.log), fix it, then deliver again.",
+    "cli.forge.reason.no_credential": "git has no credential for the forge; sign in (git credential, Git Credential Manager), then deliver again.",
+    "cli.forge.reason.forge_auth": "the forge refused the credential (expired, revoked, no push access, or SSO); sign in again, then deliver again.",
+    "cli.forge.reason.forge_error": "the forge could not answer (the network, the time limit, a server error, no adapter in this Steward); deliver again later.",
+    "cli.forge.reason.conflict": "the branch cannot merge with the base branch (files no rule of shared_paths resolves, or the base branch overtook it too often); resolve the conflict on the branch, then deliver again.",
+    "cli.forge.reason.checks_red": "a check is red: a required check of the pull request, or a check of the territory on the branch with the base branch merged in (.runs/<quest>-delivery/checks/); read it, then deliver again.",
+    "cli.forge.reason.checks_timeout": "a required check of the pull request had not ended in time; read it, then deliver again.",
+    "cli.forge.reason.head_moved": "the branch's head on the forge is not the one the Steward pushed; see who pushed, then deliver again.",
+    "cli.forge.reason.generate_failed": "a command of commands.generate failed after the base branch was merged in; read its log (.runs/<quest>-delivery/generate.log), fix it, then deliver again.",
+    "cli.forge.reason.update_failed": "git, a hook or commands.setup refused the update of the branch (the merge, a commit of the Steward, a git older than 2.38); read the detail, fix it, then deliver again."
+  }
+}

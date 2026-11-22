@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.mana.gauge.pool": "tộc {tribe}, pool {pool}",
+    "cli.mana.gauge.model": "tộc {tribe}, pool {pool}, trần riêng của {model}",
+    "cli.mana.asleep": "Đồng hồ mana đang ngủ: {gauge}. Nhân vật nó ràng không nhận việc tới khi Nhiếp chính thấy mana về.",
+    "cli.mana.asleep_until": "Đồng hồ mana đang ngủ: {gauge}, reset lúc {resets_at}. Nhân vật nó ràng không nhận việc tới khi Nhiếp chính thấy mana về; Nhiếp chính thăm dò ngay sau giờ đó.",
+    "cli.mana.awake": "Đồng hồ mana: {gauge}.",
+    "cli.mana.reading": "Cửa sổ {window}: đã dùng {used_pct}%, reset lúc {resets_at} (đo lúc {observed_at}, nguồn {source}).",
+    "cli.mana.reading_no_reset": "Cửa sổ {window}: đã dùng {used_pct}%, chưa biết giờ reset (đo lúc {observed_at}, nguồn {source}).",
+    "cli.mana.unmeasured": "Chưa đo: nhật ký chưa có số đo nào còn hiệu lực của đồng hồ này.",
+    "cli.mana.share_measured": "Một phiên đã lấy tới {pct}% cửa sổ {window} (đo từ nhật ký).",
+    "cli.mana.share_default": "Phần một phiên của cửa sổ {window} chưa đo được: Nhiếp chính tính {pct}%.",
+    "cli.mana.closed_early": "Đồng hồ mana đóng sớm một phiên: {gauge}. Cửa sổ {window} đang ở {used_pct}%, thêm một phiên ({share}%) sẽ chạm {threshold}%: nhân vật nó ràng không mở phiên mới tới khi cửa sổ reset; phiên đang chạy vẫn chạy tiếp.",
+    "cli.mana.closed_cap": "Đồng hồ mana đã đóng: {gauge}. Cửa sổ {window} đang ở {used_pct}%, đã chạm {threshold}% (mana.cap_pct và phần dự trữ của vua): nhân vật nó ràng không mở phiên mới tới khi cửa sổ reset; phiên đang chạy vẫn chạy tiếp.",
+    "cli.mana.none": "Mana: chưa đo; Nhiếp chính chưa ghi số đo hay đồng hồ ngủ nào (elvaria run đọc mana khi có việc)."
+  }
+}

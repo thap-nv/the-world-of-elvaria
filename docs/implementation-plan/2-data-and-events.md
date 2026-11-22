@@ -389,4 +389,4 @@ Cấp (`domain/src/character/level.ts`, người dùng chốt sau P0-04):
 
 **Quy tắc đặt id** (áp dụng cho mọi dữ liệu và code): id là **tiếng Anh chuẩn**, động từ/danh từ thông dụng; `snake_case` cho khóa và giá trị enum trong JSON, `kebab-case` cho id icon/asset/file (kể cả id script vì nó là tên file), `camelCase`/`PascalCase` trong TS. Không slug tiếng Việt, không từ "màu mè" (`exorcise`, `fortify`, `proclaim`, `divine`, `conquer`). Chất fantasy chỉ nằm ở chuỗi hiển thị (i18n, `title_key` của theme). Tên nghề (`knight`, `scout`, `judge`, `monk`…) và tên vai hệ thống (`chancellor`, `steward`, `herald`) giữ nguyên vì đó là ngôn ngữ chung của sản phẩm (như `pod`, `helm` của Kubernetes); câu hỏi đổi tên nghề sang vai kỹ thuật vẫn mở ở §10. (ADR 0014)
 
-Chuỗi hiển thị trong mockup là tiếng Việt → khi port, mọi chuỗi vào `packages/i18n` (`vi.json` lấy nguyên văn từ mockup, `en.json` dịch), lint `no-literal-string` như dc1.
+Chuỗi hiển thị trong mockup là tiếng Việt → khi port, mọi chuỗi vào `packages/i18n` (`locales/vi/<namespace>.json` lấy nguyên văn từ mockup, `locales/en/` dịch; AH-04), lint `no-literal-string` như dc1.

@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "messages": {
+    "character.status.idle": "Rảnh",
+    "character.status.meditating": "Thiền",
+    "character.status.reviewing": "Nghiệm thu",
+    "character.status.sleeping_mana": "Ngủ (hết mana)",
+    "character.status.suspended": "Đình chỉ",
+    "character.status.swamp": "Sa lầy",
+    "character.status.working": "Làm việc"
+  }
+}

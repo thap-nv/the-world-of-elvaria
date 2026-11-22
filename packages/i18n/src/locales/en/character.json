@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "messages": {
+    "character.status.idle": "Idle",
+    "character.status.meditating": "Meditating",
+    "character.status.reviewing": "Reviewing",
+    "character.status.sleeping_mana": "Asleep (out of mana)",
+    "character.status.suspended": "Suspended",
+    "character.status.swamp": "Bogged down",
+    "character.status.working": "Working"
+  }
+}

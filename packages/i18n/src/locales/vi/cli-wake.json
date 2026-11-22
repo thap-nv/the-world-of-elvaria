@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.wake.arg.tribe": "Tộc cần thăm dò lại tài khoản (một id trong kingdom.json).",
+    "cli.wake.sent": "Đã gửi lệnh đánh thức tộc {tribe}: Nhiếp chính thăm dò mana của tài khoản ở tick kế.",
+    "cli.wake.summary": "Nhờ Nhiếp chính thăm dò mana của một tộc ngay, ví dụ sau khi đăng nhập lại (lệnh wake).",
+    "cli.wake.unknown": "Vương quốc không có tộc {tribe}. Các tộc: {tribes}."
+  }
+}

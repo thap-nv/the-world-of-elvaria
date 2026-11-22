@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.build.unreadable": "{file} không đọc được: không biết vương quốc ghim bản nào. Sửa hay xóa file đó, hoặc thêm --here để chạy bằng mã này.",
+    "cli.build.missing": "Vương quốc ghim bản {sha} nhưng {dir} không còn CLI của bản đó. elvaria upgrade --rollback về bản trước, elvaria upgrade --ref {sha} dựng lại nó, hoặc thêm --here để chạy bằng mã này.",
+    "cli.build.doctor_none": "Bản: vương quốc chưa ghim bản nào, lệnh chạy từ {root}. elvaria upgrade dựng, thử và ghim một bản.",
+    "cli.build.doctor_pinned": "Bản ghim {sha}; bản trước {previous}, còn để lùi về.",
+    "cli.build.doctor_pinned_first": "Bản ghim {sha}; chưa có bản trước để lùi về.",
+    "cli.build.doctor_pinned_gone": "Bản ghim {sha}; bản trước {previous} không còn trong {dir}, nên không có bản để lùi về.",
+    "cli.build.doctor_here": "Vương quốc ghim bản {sha}, nhưng lệnh này chạy từ {root} (--here)."
+  }
+}

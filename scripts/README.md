@@ -52,7 +52,7 @@
   options in Vietnamese through `translator('vi')` from `@elvaria/i18n` so `docs/cli.md` stays in step with the
   command table that drives parsing and `--help` (implementation-plan §5.4). Called by `docs-gen.mjs`. Reads
   `apps/cli/src/commands.ts` (`COMMANDS`), `apps/cli/src/args.ts` (`GLOBAL_OPTIONS`), `apps/cli/src/command.ts`
-  (`EXIT`), `apps/cli/src/help.ts` (`optionLabel`), and `packages/i18n/src/locales/vi.json` (via
+  (`EXIT`), `apps/cli/src/help.ts` (`optionLabel`), and `packages/i18n/src/locales/vi/*.json` (via
   `@elvaria/i18n`); `docs-gen.mjs` writes `docs/cli.md`.
 - `docs-tier-report.mjs` (`docs-tier-report.spec.ts`): `readKingdomEvents(kingdom)` reads every valid event line
   of `<kingdom>/events/YYYY-MM-DD.jsonl` through the CLI's `readMetricsSource` and `openEventLog`, upgrading
@@ -97,7 +97,7 @@
   keys, and id-shaped string literals (`wordsOf`, singular and plural) against `bannedWords(glossary)` (the
   `scan: true` entries of the `banned` and `fancy` tables in `packages/i18n/src/glossary.json`, ADR 0014),
   skipping `node_modules/`, `dist/`, `coverage/`, `__fixtures__/`, `docs/`, `design/`, `*.spec.ts`,
-  `*.config.*`, `packages/i18n/src/glossary.json`, display string values in `packages/i18n/src/locales/*.json`
+  `*.config.*`, `packages/i18n/src/glossary.json`, display string values in `packages/i18n/src/locales/*/*.json`
   (where only keys are scanned), and third-party fixed names in `ALLOWED`. `dataIdProblems` checks JSON data
   files in `packages/registry-default/`, `packages/ui-kit/`, and `themes/` (excluding `package.json` and
   `tsconfig*.json`) so every `id` or `*_id` string value matches `^[a-z0-9_-]+$`. Called by `docs-check.mjs`;
@@ -125,14 +125,18 @@
   `compareLines(before, after, dropped)` counts the non-blank lines of two sets of files with their links resolved
   to repo paths and returns the `lost` and `added` ones. Called by `plan-split.mjs`; reads and writes no files.
 - `i18n-check.mjs` (`i18n-check.spec.ts`): runs `localeProblems` (every locale in `LOCALE_FILES` has the same
-  keys and `{name}` placeholders as `DEFAULT_LOCALE` `vi`, with no empty messages) and `glossaryProblems` (the
-  shape rules of `packages/i18n/src/glossary.json`) from `@elvaria/i18n` (implementation-plan §4.1). Called by
+  keys and `{name}` placeholders as `DEFAULT_LOCALE` `vi`, with no empty messages), `namespaceProblems` (each
+  key sits in the file of its longest namespace, the same namespaces in every locale) and `glossaryProblems` (the
+  shape rules of `packages/i18n/src/glossary.json`) from `@elvaria/i18n` (implementation-plan §4.1), and
+  `folderProblems` (AH-04: no folder under `locales/` that is not a locale, no namespace file that
+  `locales/<locale>.ts` does not load, none over `NAMESPACE_FILE_LIMIT`, 40 KB, and no whole-locale
+  `locales/<locale>.json` that a branch cut before the split brings back). Called by
   `pnpm i18n:check` in the root `package.json`, `pnpm check`, the `checks` job of `.github/workflows/ci.yml`,
   and `.claude/hooks/stop-checks.mjs` (the repo's Claude Code `Stop` hook in `.claude/settings.json`, which runs
-  `node scripts/i18n-check.mjs` when uncommitted changes touch `packages/i18n/src/locales/*.json` or
-  `packages/i18n/src/glossary.json`). Reads `packages/i18n/src/locales/vi.json`,
-  `packages/i18n/src/locales/en.json`, and `packages/i18n/src/glossary.json` (via `@elvaria/i18n`); writes no
-  files.
+  `node scripts/i18n-check.mjs` when uncommitted changes touch `packages/i18n/src/locales/**` or
+  `packages/i18n/src/glossary.json`). Reads `packages/i18n/src/locales/{vi,en}/*.json` and
+  `packages/i18n/src/glossary.json` (via `@elvaria/i18n`), and lists the folders of `packages/i18n/src/locales/`;
+  writes no files.
 - `docs-note.mjs` (`docs-note.spec.ts`): exports `docsNote(commit, staged)` and `stagedFiles()` for the
   `docs-touched` commitlint rule (warning level): a behaviour-changing commit (`feat`, `fix`, or `perf`) must
   stage a file under `docs/` or include `docs: none` in its body (implementation-plan §5.4). Called by the root

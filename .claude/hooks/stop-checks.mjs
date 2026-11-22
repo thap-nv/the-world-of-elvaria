@@ -11,7 +11,8 @@ import { REPO, binOf, git, readPayload, runNode } from './hook-io.mjs';
 const CODE = /^(?:packages|apps)\/[^/]+\/(?!node_modules\/|dist\/).*\.(?:[cm]?ts|tsx|[cm]?js)$/;
 const MANIFEST = /^(?:packages|apps)\/[^/]+\/package\.json$/;
 const BOUNDARY_TABLE = 'packages/config/boundaries.mjs';
-const TRANSLATIONS = /^packages\/i18n\/src\/(?:locales\/[^/]+\.json|glossary\.json)$/;
+// Anything under locales/: a namespace file, or the maps that load them (AH-04).
+const TRANSLATIONS = /^packages\/i18n\/src\/(?:locales\/|glossary\.json$)/;
 /** An import, re-export or require on a line, as a diff line (`+`/`-`) or a line of a new file. */
 const IMPORT_LINE = /^[+-]?\s*(?:import\b|export\b[^\n]*\bfrom\b)|\bimport\(|\brequire\(/m;
 const SHOWN_LINES = 40;

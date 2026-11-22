@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.answer.arg.answer": "Câu trả lời của bạn cho câu hỏi của nhân vật, trong ngoặc kép.",
+    "cli.answer.empty": "Hãy đưa câu trả lời: elvaria answer <nhiệm vụ> \"<câu trả lời>\".",
+    "cli.answer.refused": "Nhiệm vụ {id} đang «{status}»: chỉ trả lời được nhiệm vụ đang chờ câu trả lời của bạn.",
+    "cli.answer.sent": "Đã gửi câu trả lời cho nhiệm vụ {id}.",
+    "cli.answer.summary": "Trả lời câu hỏi của một nhiệm vụ đang chờ bạn (elvaria quest show in câu hỏi), hay thư phản biện đề bài nó đang chờ: người làm tiếp tục với câu trả lời của bạn (lệnh answer)."
+  }
+}

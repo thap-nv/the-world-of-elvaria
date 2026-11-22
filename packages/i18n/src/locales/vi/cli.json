@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.no": "không",
+    "cli.yes": "có"
+  }
+}

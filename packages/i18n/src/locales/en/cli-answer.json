@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "messages": {
+    "cli.answer.arg.answer": "Your answer to the character's question, in quotes.",
+    "cli.answer.empty": "Give an answer: elvaria answer <quest> \"<your answer>\".",
+    "cli.answer.refused": "Quest {id} is «{status}»: only a quest waiting for your answer can be answered.",
+    "cli.answer.sent": "Sent your answer to quest {id}.",
+    "cli.answer.summary": "Answer the question of a quest waiting for you (elvaria quest show prints it), or the amendment it waits on: its assignee goes on with your answer (answer command)."
+  }
+}
