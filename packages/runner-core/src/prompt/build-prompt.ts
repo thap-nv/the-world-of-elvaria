@@ -36,7 +36,7 @@ import { composed } from './prompt-blocks.ts';
 import { protectedChangesBlock } from './protected.ts';
 import { outOfScopeBlock } from './scope.ts';
 import { screensBlock } from './screens.ts';
-import { fenced, fill, sectionsOf } from './templates.ts';
+import { fenced, fill, joinBlocks, sectionsOf } from './templates.ts';
 import type { Continuation, Locale, Memory, PromptLesson } from './blocks.ts';
 import type { PromptCheck } from './checks.ts';
 import type { ScreenPair } from '../checks/screens.ts';
@@ -200,7 +200,13 @@ function assigneePrompt(input: AssigneePromptInput, t: PromptTemplates): PromptW
   });
   const graphText = graphBlock(policy, input.graph, 'assignee', t);
   return composed(systemOf(input, role, characterClass.name_en, graphText, t), [
-    ['quest', questBlock(quest, registry, input.territory, t, termsOf(input), input.vision)],
+    [
+      'quest',
+      joinBlocks([
+        questBlock(quest, registry, input.territory, t, termsOf(input), input.vision),
+        graphText === '' ? '' : t['graph-first'],
+      ]),
+    ],
     ['advisories', advisoriesBlock(input.advisories, t)],
     ['gazetteer', gazetteerBlock(input.territory, input.gazetteer, t)],
     ['scripture', scriptureBlock(input.scriptures, t)],
