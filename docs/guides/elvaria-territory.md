@@ -2,6 +2,61 @@
 
 Ngày 2026-11-12, PS-05 ([kế hoạch giai đoạn 1.5](../plans/phase-1.5.md) mục PS-05, [ADR 0028](../adr/0028-plan-review-and-scope-paths.md)). Ai đọc: chủ nhân, phiên đặt `territory.json` của lãnh thổ `elvaria` (PS-07 đặt danh sách `shared_paths` dưới đây vào vương quốc; PS-05 không sửa vương quốc nào). Mục "Vùng bảo vệ" thêm ngày 2026-11-13, PS-04 ([kế hoạch giai đoạn 1.5](../plans/phase-1.5.md) mục PS-04, [ADR 0026](../adr/0026-guarded-self-change.md)); PS-04 cũng không sửa vương quốc nào: phiên điều phối đặt danh sách `protected_paths` sau khi PS-04 vào `main`, có sao lưu và hỏi chủ nhân.
 
+## Lệnh kiểm hẹp (CM-02)
+
+Lệnh `pnpm check:changed --only <nhóm>` dành cho `checks[].narrow` của lãnh thổ. Nhiếp chính truyền commit gốc qua `ELVARIA_CHECK_BASE`: script diff trực tiếp với commit đó, gồm thay đổi đã commit, chưa commit và file chưa được theo dõi mà git không bỏ qua. Không tính lại merge-base với `origin/main`, để quest dựng trên một quest khác chỉ kiểm phần mình đổi.
+
+Các nhóm: `test`, `typecheck`, `docs` (gồm `docs:check`, `docs:gen --check`), `schemas`, `boundaries`, `layout`, `knip`, `dup`, `i18n`, `lint`, `format`. Mỗi lần `--only` chỉ chạy nhóm được chọn; tên sai trả mã 2. `--dry-run` in lệnh mà không chạy; `--help` mô tả giao diện và mã thoát.
+
+Khi có `ELVARIA_CHECK_BASE` hoặc `--only`, script bật kiểm hẹp: thêm ESLint cho file mã đổi và Prettier `--check` cho file đổi còn tồn tại, chia lô để tránh dòng lệnh quá dài trên Windows; file đã xóa không được truyền cho hai công cụ. Prettier bỏ qua định dạng không hỗ trợ. Đường dẫn không có luật tác động tương ứng được in ra và trả **mã 3**, kể cả với `--only` hoặc `--dry-run`; Nhiếp chính coi là đỏ, cần chạy đủ bộ. Lỗi check trả mã 1; lỗi đối số trả mã 2.
+
+Gõ tay `pnpm check:changed` khi không có env và không có `--only` giữ hành vi cũ: merge-base với `origin/main`, các check theo bảng tác động, chưa thêm lint/format và chỉ thông báo đường dẫn chưa có luật. `--base <ref>` vẫn chọn nhánh dùng để tính merge-base trong trường hợp này. Khi có `ELVARIA_CHECK_BASE`, commit của env được ưu tiên hơn `--base`.
+
+Ví dụ ghép vào danh sách check đang có (CM-01 cung cấp hợp đồng cấu hình; quest này không sửa vương quốc):
+
+```json
+{
+  "checks": [
+    {
+      "id": "test",
+      "when": ["**"],
+      "timeout_minutes": 20,
+      "run": "pnpm test",
+      "narrow": "pnpm check:changed --only test"
+    },
+    {
+      "id": "lint",
+      "when": ["**"],
+      "timeout_minutes": 5,
+      "run": "pnpm lint",
+      "narrow": "pnpm check:changed --only lint"
+    },
+    {
+      "id": "format",
+      "when": ["**"],
+      "timeout_minutes": 5,
+      "run": "pnpm format:check",
+      "narrow": "pnpm check:changed --only format"
+    }
+  ],
+  "check_policy": {
+    "mode": "narrow",
+    "full_when": [
+      "tsconfig*.json",
+      "eslint.config.*",
+      "packages/config/**",
+      "package.json",
+      "pnpm-lock.yaml",
+      "pnpm-workspace.yaml",
+      "scripts/**",
+      ".claude/hooks/**"
+    ]
+  }
+}
+```
+
+Giữ các check khác của lãnh thổ; check không khai `narrow` dùng `run` như cũ. Việc bật chế độ và đặt `when` cho từng check thuộc cấu hình vận hành của chủ nhân.
+
 ## Vùng file và file nóng
 
 Mỗi quest có thể khai `scope_paths`: các glob, tính từ gốc lãnh thổ, của những file nó sẽ sửa (`elvaria quest add --scope <glob>`, lặp lại cho nhiều glob; `quest edit --scope` thay cả vùng; Tể tướng và pháp sư khai khi soạn). Trong một lãnh thổ, Nhiếp chính xếp việc theo ba luật (§3.16.5):
