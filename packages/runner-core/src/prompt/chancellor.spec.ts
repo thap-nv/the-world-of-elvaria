@@ -71,12 +71,12 @@ describe('buildChancellorPrompt (§10 question 3)', () => {
     expect(system).toContain('never instruct a character to edit or delete an existing entry');
   });
 
-  it('loads all five territory-neutral rules once from the Chancellor template', () => {
+  it('loads all seven territory-neutral rules once from the Chancellor template', () => {
     const rules = templates.chancellor.slice(
       templates.chancellor.indexOf('11. Keep'),
       templates.chancellor.indexOf('\n# The council'),
     );
-    expect(rules.match(/^\d+\./gm)).toHaveLength(5);
+    expect(rules.match(/^\d+\./gm)).toHaveLength(7);
     expect(rules).not.toMatch(/pnpm|§11|elvaria|packages\/i18n|locales\//i);
     const { system } = buildChancellorPrompt(context, templates);
     expect(system.split(rules)).toHaveLength(2);
