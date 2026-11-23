@@ -2,7 +2,7 @@
 // reference, and glossary.json keeps the shape docs:gen and docs:check rely on. Since AH-04 the strings sit in one
 // file per namespace and locale; this also reads the folder, which @elvaria/i18n cannot (it runs in the browser),
 // so a namespace file nobody imports, or one grown past the size that keeps it cheap to read, fails here.
-import { readdirSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import process from 'node:process';
 
@@ -17,6 +17,8 @@ import {
   namespaceFile,
   namespaceProblems,
 } from '@elvaria/i18n';
+
+import { duplicateKeys } from './i18n-duplicates.mjs';
 
 /** @typedef {import('@elvaria/i18n').Glossary} Glossary */
 /** @typedef {import('@elvaria/i18n').LocaleFile} LocaleFile */
@@ -49,6 +51,7 @@ export function folderProblems(namespaces, dir = LOCALES_DIR) {
       .filter((file) => file.endsWith('.json'))
       .sort()) {
       const where = `locales/${locale}/${name}`;
+      problems.push(...duplicateKeys(readFileSync(join(dir, locale, name), 'utf8'), where));
       if (!named.has(name)) problems.push(`${where}: no namespace loads it (locales/${locale}.ts)`);
       const { size } = statSync(join(dir, locale, name));
       if (size > NAMESPACE_FILE_LIMIT)
