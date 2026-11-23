@@ -1,7 +1,8 @@
 // `pnpm check:changed` (fix/check-changed, owner's settlement (197)): the checks the "Change impact" table of CLAUDE.md
 // asks for the files this branch changed, and only those, so a session can check its work between commits while
 // several sessions share one machine. `pnpm check` stays the gate before a merge: this is not a smaller `check`,
-// it skips lint, formatting and every package the diff does not reach.
+// by default it skips lint, formatting and every package the diff does not reach. ELVARIA_CHECK_BASE or --only
+// enables the territory's narrow mode, including changed-file lint/format and exit 3 for uncovered paths.
 //
 //   pnpm check:changed                  diff against the merge-base with origin/main, then run the checks
 //   pnpm check:changed --base <ref>     another base (`--base=<ref>` too): a branch, a tag, a sha
@@ -14,6 +15,8 @@ import { realpathSync } from 'node:fs';
 import { resolve } from 'node:path';
 import process from 'node:process';
 import { pathToFileURL } from 'node:url';
+
+import { GROUPS, HELP, narrowCommands, UNCOVERED_EXIT } from './check-changed-narrow.mjs';
 
 /** The checkout the script sits in (`scripts/` is one level under it, in a git worktree too). */
 const REPO = resolve(import.meta.dirname, '..');
@@ -108,19 +111,24 @@ export function toolEnv(env = process.env) {
 
 /**
  * @param {string[]} argv
- * @returns {{ base: string; dryRun: boolean } | { error: string }}
+ * @returns {{ base: string; dryRun: boolean; only?: string } | { error: string }}
  */
 export function parseArgs(argv) {
   let base = DEFAULT_BASE;
   let dryRun = false;
+  let only;
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i] ?? '';
     if (arg === '--dry-run') dryRun = true;
     else if (arg.startsWith('--base=')) base = arg.slice('--base='.length);
     else if (arg === '--base') base = argv[++i] ?? '';
+    else if (arg === '--only') only = argv[++i] ?? '';
+    else if (arg.startsWith('--only=')) only = arg.slice('--only='.length);
     else return { error: `unknown argument ${arg}; usage: check-changed [--base <ref>] [--dry-run]` };
   }
-  return base === '' ? { error: '--base needs a ref' } : { base, dryRun };
+  if (only !== undefined && !GROUPS.includes(only)) return { error: `unknown group ${only}; ${HELP}` };
+  if (base === '') return { error: '--base needs a ref' };
+  return { base, dryRun, ...(only === undefined ? {} : { only }) };
 }
 
 /**
@@ -189,10 +197,11 @@ function git(cwd, args) {
  * count as a delete and an add, so both sides name a package.
  * @param {string} cwd
  * @param {string} base
+ * @param {string | undefined} exactBase
  * @returns {string[]}
  */
-export function changedPaths(cwd, base) {
-  const mergeBase = git(cwd, ['merge-base', base, 'HEAD']).trim();
+export function changedPaths(cwd, base, exactBase = process.env.ELVARIA_CHECK_BASE) {
+  const mergeBase = exactBase || git(cwd, ['merge-base', base, 'HEAD']).trim();
   const tracked = git(cwd, ['diff', '--name-only', '--no-renames', '-z', mergeBase]);
   const untracked = git(cwd, ['ls-files', '--others', '--exclude-standard', '-z']);
   const names = `${tracked}\0${untracked}`.split('\0').filter((name) => name !== '');
@@ -223,15 +232,27 @@ export function pnpmInvocation(command, env, platform) {
  * @returns {number} the exit code
  */
 export function main(argv, cwd, out) {
+  if (argv.length === 1 && argv[0] === '--help') {
+    out(HELP);
+    return 0;
+  }
   const args = parseArgs(argv);
   if ('error' in args) {
     out(args.error);
     return 2;
   }
   const paths = changedPaths(cwd, args.base);
-  const { commands, unmatched } = plan(paths);
-  out(`${paths.length} changed path(s) against the merge-base with ${args.base}`);
+  const planned = plan(paths);
+  const { unmatched } = planned;
+  const exactBase = process.env.ELVARIA_CHECK_BASE;
+  const narrow = Boolean(exactBase || args.only);
+  const commands = narrow ? narrowCommands(planned.commands, paths, cwd, args.only) : planned.commands;
+  out(`${paths.length} changed path(s) against ${exactBase || `the merge-base with ${args.base}`}`);
   for (const path of unmatched) out(`  no rule for ${path}`);
+  if (narrow && unmatched.length > 0) {
+    out('uncovered paths: run full checks (exit 3)');
+    return UNCOVERED_EXIT;
+  }
   if (unmatched.length > 0) out('  (lint, formatting and root configuration are left to `pnpm check`)');
   if (commands.length === 0) {
     out('nothing to check');
@@ -239,6 +260,11 @@ export function main(argv, cwd, out) {
   }
   out(`checks:\n${commands.map((c) => `  pnpm ${c.join(' ')}`).join('\n')}`);
   if (args.dryRun) return 0;
+  return runCommands(commands, cwd, out, narrow);
+}
+
+/** @param {Command[]} commands @param {string} cwd @param {(line: string) => void} out @param {boolean} narrow */
+function runCommands(commands, cwd, out, narrow) {
   for (const command of commands) {
     const start = pnpmInvocation(command, process.env, process.platform);
     if ('error' in start) {
@@ -251,7 +277,7 @@ export function main(argv, cwd, out) {
       out(
         `pnpm ${command.join(' ')} failed (${run.error?.message ?? `exit ${run.status}`}); the checks after it did not run`,
       );
-      return run.status ?? 1;
+      return narrow ? 1 : (run.status ?? 1);
     }
   }
   out('\nchanged-file checks passed; `pnpm check` is still the gate before a merge');
