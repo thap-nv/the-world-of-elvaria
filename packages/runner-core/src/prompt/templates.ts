@@ -14,6 +14,7 @@ export const PROMPT_TEMPLATES = [
   'shell',
   'search',
   'graph',
+  'graph-first',
   'read-only',
   'patch',
   'handover',
