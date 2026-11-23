@@ -2,6 +2,8 @@
 // verdicts, the event log and the handled inbox commands. `elvaria metrics` prints it and docs/metrics-report.md
 // renders it; nothing here writes, so a kingdom is measured without a Steward and without mana.
 import { adviceOf } from './advice.ts';
+import { checkModesOf } from './check-mode/check-modes.ts';
+import type { CheckModes } from './check-mode/check-modes.ts';
 import { afterWrapUpOf } from './after-wrap-up.ts';
 import { REWORK_CAUSES, OWNER_COMMAND_KINDS } from './causes.ts';
 import { failKindRatesOf } from './fail-kind-rates.ts';
@@ -82,6 +84,7 @@ export interface CommandCount {
 }
 
 export interface Metrics {
+  readonly check_modes: CheckModes;
   readonly window: MetricsWindow;
   readonly runs: RunCounts;
   /** Every rework session that started in the window, with its cause. */
@@ -204,6 +207,7 @@ export function metricsOf(input: MetricsInput, window: MetricsWindow = {}): Metr
   );
   return {
     window,
+    check_modes: checkModesOf(input.events, window),
     runs: runCountsOf(trails, input, window),
     rework,
     first_pass: firstPassRatesOf(trails, sessionModelsOf(input.events), window),

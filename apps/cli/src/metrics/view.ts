@@ -13,6 +13,7 @@ import { adviceSection, passByRunSection, statusTimesSection } from './view-wait
 import { failKindsSection, lessonsSection, repeatsSection } from './view-lessons.ts';
 import { limitsSection } from './view-limits.ts';
 import { afterWrapUpSection } from './view-wrap-ups.ts';
+import { checkModesSection } from './view-check-modes.ts';
 import type { MetricsSection } from './section.ts';
 
 export type { MetricsSection } from './section.ts';
@@ -254,6 +255,7 @@ export const metricsSections = (
   escapedSection(t, metrics),
   reportedEscapesSection(t, metrics),
   baseRedSection(t, metrics),
+  checkModesSection(t, metrics),
   sealedSection(t, metrics),
   unsealedSection(t, metrics),
   statusTimesSection(t, metrics),
