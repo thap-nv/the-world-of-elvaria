@@ -41,6 +41,8 @@ export const PROMPT_TEMPLATES = [
   'answer',
   'verifier',
   'plot-rules',
+  // CM-01: what a judge reruns, by the check mode of the run it reads.
+  'rerun-rules',
   'review',
   'partial',
   'objection',

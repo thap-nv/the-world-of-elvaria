@@ -93,6 +93,16 @@ export const DELIVERY_DEFAULTS = {
 export const DELIVERY_DETAIL_MAX_LENGTH = 2000;
 
 /**
+ * territory.check_policy (CM-01, ADR 0032): what a territory checks by when its file names no policy, or names one
+ * without these keys. `full` is the behaviour before CM-01, so no kingdom changes when it upgrades. The train's
+ * numbers are C10 of plans/check-modes.md, read by CM-08.
+ */
+export const CHECK_POLICY_DEFAULTS = {
+  mode: 'full',
+  train: { max_quests: 5, max_wait_minutes: 30 },
+} as const;
+
+/**
  * Ritual steps the verifier prompt knows how to run (glossary §13). A step is code in runner-core's prompt
  * builder, not data, so a ritual naming any other step is rejected when the registry loads.
  */

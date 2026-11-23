@@ -135,6 +135,20 @@
     "cli.territory.check.reason.protected_paths_declared": "laws.protected_paths declared ({count} entries).",
     "cli.territory.check.reason.protected_paths_missing": "laws.protected_paths not declared; with nothing to guard, declare an empty list.",
     "cli.territory.check.reason.few_decided": "The territory has {decided} quests whose first run was decided, {min} at least to measure.",
-    "cli.territory.check.reason.first_pass_rate": "{passed}/{decided} quests passed their first run ({rate} %, at least {min} %)."
+    "cli.territory.check.reason.first_pass_rate": "{passed}/{decided} quests passed their first run ({rate} %, at least {min} %).",
+    "cli.territory.checks.summary": "Show how much of its checks a territory's quests run (check_policy: full, narrow or deferred), or change the mode. 0 mana.",
+    "cli.territory.checks.arg.id": "The territory id.",
+    "cli.territory.checks.option.mode": "full (every check `when` selects runs its run, as before), narrow (each runs its narrow command on the quest's diff; the base branch's patrol is the full run) or deferred (narrow, the heavy checks left to a delivery train; needs pr_merge with merge commits).",
+    "cli.territory.checks.unknown": "There is no territory {id}; see elvaria territory list.",
+    "cli.territory.checks.mode": "Territory {id} checks in mode: {mode}",
+    "cli.territory.checks.unset": "  (territory.json names no check_policy: full, the checks as before)",
+    "cli.territory.checks.full_when": "  full run when a quest touches: {globs}",
+    "cli.territory.checks.none": "none (only a path no check watches)",
+    "cli.territory.checks.train": "  train: departs at {quests} quests or after {minutes} min",
+    "cli.territory.checks.check": "  {id}: {run}",
+    "cli.territory.checks.check_narrow": "  {id}: {run}; narrow: {narrow}",
+    "cli.territory.checks.no_narrow": "No check declares narrow: in this mode every check still runs its run. Add checks[].narrow in territory.json (see docs/guides/operating-a-kingdom.md).",
+    "cli.territory.checks.no_train": "Mode deferred needs territory {id} to deliver by pr_merge with merge_method merge: nothing changed. See elvaria territory delivery {id}.",
+    "cli.territory.checks.saved": "Saved in territory.json; the Steward reads it at its next tick."
   }
 }

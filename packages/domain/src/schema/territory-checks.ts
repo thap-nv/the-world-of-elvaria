@@ -53,6 +53,12 @@ const FlakeSchema = z
 export const CheckSchema = z.strictObject({
   id: CheckIdSchema,
   run: CommandLinesSchema,
+  // CM-01 (ADR 0032): the base reaches it as an env variable, never spliced into the command (C5 of check-modes).
+  narrow: CommandLinesSchema.optional().meta(
+    describe(
+      'The check over what the quest changed alone, in a territory whose check_policy.mode is narrow or deferred: the Steward runs it instead of `run`, with the commit the diff counts from in ELVARIA_CHECK_BASE, and the command reads it there. Absent: `run`, in every mode (a check of seconds over the whole tree needs none).',
+    ),
+  ),
   when: z.array(NonEmptyStringSchema).min(1),
   exclusive: z
     .boolean()

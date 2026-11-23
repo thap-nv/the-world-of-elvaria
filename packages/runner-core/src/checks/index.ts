@@ -13,6 +13,8 @@ export {
 } from './run-checks.ts';
 export type { CheckRun, ChecksOptions, ChecksRequest } from './run-checks.ts';
 export { selectChecks } from './select-checks.ts';
+export { CHECK_BASE_ENV, checkLinesOf, checkModeOf } from './check-mode.ts';
+export type { CheckPass, CheckRunMode, CheckRunOf } from './check-mode.ts';
 export { SCREENS_ENV, SCREENS_FOLDER, clearScreens, screensDirOf, screensOf } from './screens.ts';
 export type { ScreenPair, Screens } from './screens.ts';
 export { COVERAGE_SUMMARY, COVERAGE_TIMEOUT_MS } from './coverage.ts';

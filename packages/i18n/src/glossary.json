@@ -233,6 +233,13 @@
               "used_in": "`baseHealthOf`, `stepPatrol`, mục bản tấu `base_red`, `elvaria metrics` (Nhánh gốc đỏ sau merge)"
             },
             {
+              "vi": "Chế độ kiểm",
+              "en": "Check mode",
+              "id": ["check_policy", "check_mode"],
+              "definition": "Một lãnh thổ chạy bao nhiêu check cho mỗi quest (CM-01, ADR 0032): `full` (mặc định, như trước: mọi check mà `when` chọn chạy lệnh `run`, hàng đợi chạy mọi check), `narrow` (các check đó chạy lệnh `narrow` trên diff của quest, gốc diff trong `ELVARIA_CHECK_BASE`; tuần tra nhánh gốc là lượt đủ bộ) hay `deferred` (như `narrow`, check nặng để cho tàu giao hàng, CM-08). Quest chạm `full_when` hay đường dẫn không check nào canh, quest ghép và quest chấm trong đất nháp luôn chạy như `full`.",
+              "used_in": "`territory.check_policy`, `checks[].narrow`, `checkModeOf`, `mode` của event `check.start`, `check.end`, `elvaria territory checks`"
+            },
+            {
               "vi": "Mùa",
               "en": "Season",
               "id": ["season"],

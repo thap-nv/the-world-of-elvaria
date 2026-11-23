@@ -32,6 +32,7 @@ import type { ScratchMethods } from './scratch-methods.ts';
 import { runSetup } from './setup.ts';
 import type { SetupRun } from './setup.ts';
 import {
+  checkBaseIn,
   commitWorktree,
   releaseWorktree,
   restoreWorktree,
@@ -97,6 +98,8 @@ export interface PlotManager extends ScratchMethods, QueueMethods {
   head(plot: Plot): Promise<string | null>;
   /** Paths the quest changed, relative to the plot with `/`: what `runChecks` selects checks by. */
   touched(plot: Plot): Promise<string[]>;
+  /** (CM-01) The commit `touched` counts from, which a check reads in ELVARIA_CHECK_BASE; null without git. */
+  checkBase?(plot: Plot): Promise<string | null>;
   /**
    * (PS-08b) Lines added and removed since the plot forked, files of the `exclude` globs aside (diffLinesIn); 0 for a
    * plot without git. Throws when git cannot say.
@@ -244,6 +247,7 @@ export function createPlotManager(options: PlotManagerOptions): Required<PlotMan
         return filesIn(inKingdom(options.kingdom, plot.path));
       return [];
     },
+    checkBase: async (plot) => (plot.type === 'worktree' ? checkBaseIn(await git(), worktreeOf(plot)) : null),
     commitAll: async (plot, message, rescue) =>
       plot.type === 'worktree'
         ? commitWorktree(await git(), worktreeOf(plot), message, rescue)

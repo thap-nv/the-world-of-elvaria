@@ -9,7 +9,7 @@ paths:
 
 ## Ghi trạng thái (ADR 0005)
 
-CLI ghi lệnh vào `inbox/<ulid>.json`, không ghi trạng thái quest. Ngoại lệ đã chốt, chỉ ở `apps/cli`: `init`, `doctor` và `tribe add|check|disable|look` ghi `kingdom.json`, `territory add` ghi file lãnh thổ, `territory delivery` sửa trường `delivery` của file lãnh thổ có sẵn (PS-08; Nhiếp chính đọc lại lãnh thổ mỗi nhịp), `territory patrol --on|--off` ghi hay xóa trường `patrol` của file lãnh thổ có sẵn (PS-26, cùng lý do), `character add` tạo file nhân vật mới (chỉ tạo, không ghi đè).
+CLI ghi lệnh vào `inbox/<ulid>.json`, không ghi trạng thái quest. Ngoại lệ đã chốt, chỉ ở `apps/cli`: `init`, `doctor` và `tribe add|check|disable|look` ghi `kingdom.json`, `territory add` ghi file lãnh thổ, `territory delivery` sửa trường `delivery` của file lãnh thổ có sẵn (PS-08; Nhiếp chính đọc lại lãnh thổ mỗi nhịp), `territory patrol --on|--off` ghi hay xóa trường `patrol` của file lãnh thổ có sẵn (PS-26, cùng lý do), `territory checks --mode` ghi trường `check_policy` của file lãnh thổ có sẵn (CM-01, cùng lý do), `character add` tạo file nhân vật mới (chỉ tạo, không ghi đè).
 
 ## Ảnh hưởng thay đổi
 

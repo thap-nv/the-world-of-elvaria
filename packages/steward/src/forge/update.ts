@@ -9,7 +9,9 @@
 // conflict leaves the plot as it was, red checks leave the merge commit on the branch, not pushed, for whoever resolves
 // it. (PS-09b) Those two open the merge queue's merge quest (queue-merge.ts), which a knight resolves on this branch,
 // and `delivery.failed` names it; any other stop is the owner's `deliver`. A Steward that stops records nothing; the
-// next one finds the merge made (the plot's record says it is pending) and runs only what follows it.
+// next one finds the merge made (the plot's record says it is pending) and runs only what follows it. (CM-01, ADR
+// 0032) On a narrow territory the checks are those the quest's diff since the new base selects, narrow commands and
+// all, unless it touched what they cannot vouch for: the base branch's patrol is the full run (check-mode.ts).
 import { environmentFailureOf } from '@elvaria/domain';
 import { createRedactor } from '@elvaria/eventlog';
 import type { DeliveryFailure, QuestId } from '@elvaria/domain';
@@ -17,6 +19,7 @@ import type { BaseUpdate, CheckRun } from '@elvaria/runner-core';
 
 import { plotOptionsOf } from '../party/plot.ts';
 import { STEWARD } from '../quest/record.ts';
+import { checkModeFor, modeMarkOf } from '../review/check-mode.ts';
 import { questSecretsOf } from '../sessions/secrets.ts';
 import { baseRedAt } from './base-trial.ts';
 import { detailOf, messageOf, stopped } from './delivery.ts';
@@ -41,6 +44,8 @@ const failureOf = (d: Delivery, reason: DeliveryFailure, more: Partial<Failure> 
   ...more,
 });
 
+const roleOf = ({ party_role: role }: Delivery['quest']) => (role === undefined ? {} : { party_role: role });
+
 /** A line of the log; one that cannot be written costs the owner a line, never the delivery. */
 async function note(ctx: Context, d: Delivery, line: { type: string; data: Record<string, unknown> }) {
   try {
@@ -51,7 +56,7 @@ async function note(ctx: Context, d: Delivery, line: { type: string; data: Recor
 }
 
 /** What `check.end` says of the queue's checks: what each gave, or that they could not run or were stopped. */
-function endOf(runs: readonly CheckRun[] | undefined, signal: AbortSignal): Record<string, unknown> {
+function endOf(runs: readonly CheckRun[] | undefined, signal: AbortSignal) {
   if (signal.aborted) return { delivery: true, outcome: 'stopped', checks: [] };
   if (runs === undefined) return { delivery: true, outcome: 'error', checks: [] };
   const environment = environmentFailureOf(runs);
@@ -65,7 +70,10 @@ function endOf(runs: readonly CheckRun[] | undefined, signal: AbortSignal): Reco
   };
 }
 
-/** Every check of the territory on the updated branch; red ones stop the delivery, set-aside ones do not. */
+/**
+ * The checks of the updated branch, every one of the territory's unless its check mode is narrow (CM-01); red ones
+ * stop the delivery, set-aside ones do not.
+ */
 async function checkUpdate(
   ctx: Context,
   d: Delivery,
@@ -73,14 +81,17 @@ async function checkUpdate(
   secrets: Secrets,
 ): Promise<Stop | undefined> {
   const request = { plot: d.quest.plot, territory: d.territory, run_dir: deliveryRunOf(d.quest.id) };
-  await note(ctx, d, { type: 'check.start', data: { delivery: true } });
+  const mode = modeMarkOf(await checkModeFor(ctx, d.quest, d.territory, 'queue'));
+  // In full, every check, as a merge quest runs them (K4); a narrow run selects by the quest's diff and role.
+  const role = mode.mode === undefined ? { party_role: 'merge' as const } : roleOf(d.quest);
+  await note(ctx, d, { type: 'check.start', data: { delivery: true, ...mode } });
   let runs: readonly CheckRun[] | undefined;
   try {
-    runs = await ctx.deps.plots.check({ ...request, signal: d.signal, secrets, party_role: 'merge' });
+    runs = await ctx.deps.plots.check({ ...request, signal: d.signal, secrets, ...role, ...mode });
   } catch (error) {
     ctx.deps.log.warn(`steward: ${d.quest.id}: the checks of its update did not run: ${messageOf(error)}`);
   }
-  await note(ctx, d, { type: 'check.end', data: endOf(runs, d.signal) });
+  await note(ctx, d, { type: 'check.end', data: { ...endOf(runs, d.signal), ...mode } });
   if (stopped(d)) return undefined;
   if (runs === undefined) return failureOf(d, 'update_failed', { detail: 'the checks did not run' });
   const red = runs.filter(({ pass }) => !pass);

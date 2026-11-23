@@ -49,6 +49,7 @@ export * from './registry-entries.ts';
 export * from './registry.ts';
 export * from './skill/constants.ts';
 export * from './skill/skill.ts';
+export * from './territory-check-policy.ts';
 export * from './territory-checks.ts';
 export * from './territory-delivery.ts';
 export * from './territory-patrol.ts';

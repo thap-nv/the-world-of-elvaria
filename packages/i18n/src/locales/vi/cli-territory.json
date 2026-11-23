@@ -135,6 +135,20 @@
     "cli.territory.check.reason.protected_paths_declared": "Đã khai laws.protected_paths ({count} mục).",
     "cli.territory.check.reason.protected_paths_missing": "Chưa khai laws.protected_paths; không có gì cần canh thì khai một danh sách rỗng.",
     "cli.territory.check.reason.few_decided": "Mới có {decided} quest của lãnh thổ có phán quyết cho lượt đầu, cần ít nhất {min} để tính.",
-    "cli.territory.check.reason.first_pass_rate": "{passed}/{decided} quest đạt lượt đầu ({rate} %, tối thiểu {min} %)."
+    "cli.territory.check.reason.first_pass_rate": "{passed}/{decided} quest đạt lượt đầu ({rate} %, tối thiểu {min} %).",
+    "cli.territory.checks.summary": "Xem quest của một lãnh thổ chạy bao nhiêu check (check_policy: full, narrow hay deferred), hoặc đổi chế độ. 0 mana.",
+    "cli.territory.checks.arg.id": "Id của lãnh thổ.",
+    "cli.territory.checks.option.mode": "full (mọi check mà `when` chọn chạy lệnh run, như trước), narrow (mỗi check chạy lệnh narrow trên diff của quest; tuần tra nhánh gốc là lượt đủ bộ) hoặc deferred (như narrow, check nặng để cho tàu giao hàng; cần pr_merge với merge commit).",
+    "cli.territory.checks.unknown": "Không có lãnh thổ {id}; xem elvaria territory list.",
+    "cli.territory.checks.mode": "Lãnh thổ {id} kiểm theo chế độ: {mode}",
+    "cli.territory.checks.unset": "  (territory.json không khai check_policy: full, check chạy như trước)",
+    "cli.territory.checks.full_when": "  chạy đủ bộ khi quest chạm: {globs}",
+    "cli.territory.checks.none": "không có (chỉ đường dẫn không check nào canh)",
+    "cli.territory.checks.train": "  tàu: rời ga khi đủ {quests} quest hoặc sau {minutes} phút",
+    "cli.territory.checks.check": "  {id}: {run}",
+    "cli.territory.checks.check_narrow": "  {id}: {run}; narrow: {narrow}",
+    "cli.territory.checks.no_narrow": "Không check nào khai narrow: ở chế độ này mọi check vẫn chạy lệnh run. Thêm checks[].narrow vào territory.json (xem docs/guides/operating-a-kingdom.md).",
+    "cli.territory.checks.no_train": "Chế độ deferred cần lãnh thổ {id} giao hàng theo pr_merge với merge_method merge: không đổi gì. Xem elvaria territory delivery {id}.",
+    "cli.territory.checks.saved": "Đã ghi vào territory.json; Nhiếp chính đọc nó ở nhịp kế."
   }
 }

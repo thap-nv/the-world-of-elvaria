@@ -11,6 +11,7 @@ import { inKingdom } from '@elvaria/store';
 import type { LoadTrace, Memo } from '@elvaria/domain';
 import type { JsonSchema, Screens, SpawnRequest } from '@elvaria/runner-core';
 
+import { narrowChecksFor } from '../review/check-mode.ts';
 import { handoverPath } from '../texts/files.ts';
 import { sessionGraphOf } from './graph.ts';
 import type { SessionGraph } from './graph.ts';
@@ -162,7 +163,12 @@ export async function requestOf(
   const env =
     graph === undefined || ctx.deps.graphs === undefined ? own : ctx.deps.graphs.envFor(own, graph.dir);
   const screens = await screensFor(ctx, input);
-  const given = await givenOf(ctx, input, graph, secretValuesOf({ quest, env }), screens);
+  // The judge of a narrow run: its shell and its law 3 follow that run (CM-01).
+  const narrow = await narrowChecksFor(ctx, input);
+  const given = {
+    ...(await givenOf(ctx, input, graph, secretValuesOf({ quest, env }), screens)),
+    ...(narrow === undefined ? {} : { narrow_checks: narrow }),
+  };
   const { prompt, load_trace: loadTrace, advisories } = await promptOf(ctx, input, given, resume);
   const request: SpawnRequest = {
     role,
@@ -190,6 +196,7 @@ export async function requestOf(
       graph: graph !== undefined,
       // Exactly the screens its prompt lists, outside the plot (PS-11b): never the run folder.
       images: screens?.files,
+      narrow_checks: narrow,
     }),
     budget: budgetOf(ctx, input),
     env,
