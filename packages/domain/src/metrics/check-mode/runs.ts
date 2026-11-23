@@ -1,8 +1,9 @@
 import { isEventOf } from '../../schema/event/event.ts';
+import type { QuestId } from '../../core/ids.ts';
 import type { Event } from '../../schema/event/event.ts';
 
 export interface MeasuredCheckRun {
-  readonly quest: string;
+  readonly quest: QuestId;
   readonly at: string;
   readonly mode: 'full' | 'narrow';
   readonly elapsed_ms: number;
