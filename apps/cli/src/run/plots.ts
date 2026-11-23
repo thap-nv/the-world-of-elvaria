@@ -9,7 +9,9 @@
 import {
   argvOf,
   createPlotManager,
+  commitLinksOf,
   patrolIdOf,
+  probeIdOf,
   runChecks,
   scratchAgain,
   trialInScratch,
@@ -118,11 +120,20 @@ const queueOf = (
  * The patrol (PS-26): the territory's trial (PS-25) under a plot name of its own, so a `territory check` at the same
  * time keeps its plot; the scans run in it before it goes, and its logs go to .runs/patrol-<id>/.
  */
-const patrolPlots = (kingdom: string, host: ProcessHost): Pick<Plots, 'patrol'> => ({
+const patrolPlots = (
+  kingdom: string,
+  host: ProcessHost,
+): Pick<Plots, 'patrol' | 'probe' | 'commitLinks'> => ({
   patrol: async (territory, { signal, scan }) => {
     const name = patrolIdOf(territory.id);
     return (await tryTerritory({ kingdom, territory, host, name, signal, inPlot: scan })).trial;
   },
+  // (CM-04) The probe of a red branch: the same trial under `probe-<id>`, on a commit the patrol fetched, red checks only.
+  probe: async (territory, commit, checks, signal) => {
+    const name = probeIdOf(territory.id);
+    return (await tryTerritory({ kingdom, territory, host, name, signal, commit, checks })).trial;
+  },
+  commitLinks: (territory, head, exclude) => commitLinksOf({ territory, host, head, exclude }),
 });
 
 /**

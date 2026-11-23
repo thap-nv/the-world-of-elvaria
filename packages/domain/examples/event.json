@@ -33,5 +33,46 @@
       "resets_at": "2026-11-06T17:39:17+07:00",
       "source": "rate_limits"
     }
+  },
+  {
+    "v": 2,
+    "id": "01JCF8X4Z6Q3W9N2M5R7T8V0YC",
+    "ts": "2026-11-23T06:45:00+07:00",
+    "type": "check.attributed",
+    "actor": {
+      "kind": "steward"
+    },
+    "territory": "dc1-se-team",
+    "data": {
+      "territory": "dc1-se-team",
+      "source": "patrol",
+      "checks": ["unit"],
+      "runs": [
+        {
+          "commit": "4bc14e9d0c2a7f1e3b5d6a8c9e0f1a2b3c4d5e6f",
+          "pass": true,
+          "duration_ms": 61000
+        },
+        {
+          "commit": "b0b2605a1c3e5f7a9b1d3f5a7c9e1b3d5f7a9c1e",
+          "pass": false,
+          "duration_ms": 60000
+        },
+        {
+          "commit": "b0b2605a1c3e5f7a9b1d3f5a7c9e1b3d5f7a9c1e",
+          "pass": false,
+          "duration_ms": 60500
+        },
+        {
+          "commit": "c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0",
+          "quest": "q_20261106_7k3m2a",
+          "pass": false,
+          "duration_ms": 59000
+        }
+      ],
+      "commit": "b0b2605a1c3e5f7a9b1d3f5a7c9e1b3d5f7a9c1e",
+      "culprit": "q_20261106_7k3m2a",
+      "cause": "own_change"
+    }
   }
 ]

@@ -2,7 +2,7 @@
 // (can wait) for each scan of the latest patrol that did not pass; none for a green branch.
 import { describe, expect, it } from 'vitest';
 
-import { merged, ran } from '../patrol/__fixtures__/patrol-log.ts';
+import { attributed, merged, ran } from '../patrol/__fixtures__/patrol-log.ts';
 import { baseHealthOf } from '../patrol/health.ts';
 import { CAMPAIGNS, CHARACTERS, KINGDOM, TERRITORIES } from './__fixtures__/examples.ts';
 import { attentionQueue } from './attention.ts';
@@ -55,6 +55,13 @@ describe('attentionQueue: the patrol (PS-26)', () => {
       'commit',
       'a'.repeat(40),
     );
+  });
+
+  it('(CM-04) a probed red check names what the probe found: the cause, the step, the quest', () => {
+    const found = { cause: 'own_change', commit: 'b'.repeat(40), culprit: Q1 };
+    const events = [ran(DAY2, [{ id: 'unit', pass: false }]), attributed(DAY2, found)];
+    expect(patrolItems(events)[0]).toMatchObject({ kind: 'base_red', check: 'unit', attribution: found });
+    expect(patrolItems(events.slice(0, 1))[0]).not.toHaveProperty('attribution');
   });
 
   it('a scan that did not pass can wait; a green branch has no item', () => {

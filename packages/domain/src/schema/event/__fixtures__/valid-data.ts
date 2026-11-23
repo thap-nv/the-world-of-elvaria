@@ -129,6 +129,19 @@ export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
   'quest.escaped': { quest: QUEST_VIEW.id, territory: 'elvaria', delegated: true, note: 'broke the login' },
   'delegation.suspended': { territory: 'elvaria', quest: QUEST_VIEW.id, cause: 'base_red', check: 'test' },
   'delegation.resumed': { territory: 'elvaria' },
+  'check.attributed': {
+    territory: 'elvaria',
+    source: 'patrol',
+    checks: ['unit'],
+    runs: [
+      { commit: SHA_OLD, pass: false, duration_ms: 61_000 },
+      { commit: SHA_OLD, pass: false, duration_ms: 60_000 },
+      { commit: SHA_NEW, quest: QUEST_VIEW.id, pass: false, duration_ms: 59_000 },
+    ],
+    commit: SHA_OLD,
+    culprit: QUEST_VIEW.id,
+    cause: 'own_change',
+  },
   'patrol.ran': {
     territory: 'elvaria',
     head: SHA_NEW,

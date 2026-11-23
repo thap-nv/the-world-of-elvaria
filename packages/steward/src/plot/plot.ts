@@ -1,6 +1,6 @@
 // The Steward's view of the quest's ground (implementation-plan §3.3): the plot it prepares, the checks it resolves
 // and runs there, and Plots, what the composition root gives it. types.ts re-exports the public part.
-import type { PartyRole, Quest, Result, Territory, TerritoryTrial } from '@elvaria/domain';
+import type { CommitLink, PartyRole, Quest, Result, Territory, TerritoryTrial } from '@elvaria/domain';
 import type {
   BaseBranch,
   BaseTips,
@@ -164,6 +164,22 @@ export interface Plots extends PlotQueue {
   drift?(plot: Quest['plot'], from: string): Promise<Drift | null>;
   /** The patrol (PS-26): tryTerritory under `patrol-<id>`, then `scan` in its plot. Absent: no patrol runs. */
   patrol?(territory: Territory, options: PatrolOptions): Promise<TerritoryTrial>;
+  /**
+   * (CM-04) One run of the probe of a red default branch: tryTerritory under `probe-<id>` on `commit`, no fetch, with
+   * commands.setup and the checks of `checks` only. Absent: no probe runs.
+   */
+  probe?(
+    territory: Territory,
+    commit: string,
+    checks: readonly string[],
+    signal: AbortSignal,
+  ): Promise<TerritoryTrial>;
+  /** (CM-04) The commits `head` has and `exclude` has not, with their parents; undefined when git cannot say. */
+  commitLinks?(
+    territory: Territory,
+    head: string,
+    exclude: string,
+  ): Promise<readonly CommitLink[] | undefined>;
   /** At archive only: removes a worktree (its branch stays) and what the tribes' CLIs kept about it. */
   release(plot: Quest['plot']): Promise<Result<ReleasedPlot, PlotFailure>>;
   /**

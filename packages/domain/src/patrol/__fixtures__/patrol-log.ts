@@ -77,3 +77,30 @@ export const merged = (
     sealed,
     branch_deleted: true,
   });
+
+const PR = { number: 8, url: 'https://github.com/o/r/pull/8' };
+
+/** (CM-04) `quest`'s branch pushed at `head`, or merged by the Steward as `mergeSha` when given. */
+export const delivered = (ts: string, quest: QuestId, head: string, mergeSha?: string): Event => {
+  const branch = { quest, territory: TERRITORY, branch: `quest/${quest}`, head, pr: PR };
+  return mergeSha === undefined
+    ? lineOf('delivery.pushed', ts, { ...branch, forge: 'github' })
+    : lineOf('delivery.merged', ts, {
+        ...branch,
+        merge_sha: mergeSha,
+        method: 'merge',
+        sealed: true,
+        branch_deleted: true,
+      });
+};
+
+/** (CM-04) A probe's `check.attributed` of the territory's red branch, `data` over a patrol's `unknown`. */
+export const attributed = (ts: string, data: Readonly<Record<string, unknown>> = {}): Event =>
+  lineOf('check.attributed', ts, {
+    territory: TERRITORY,
+    source: 'patrol',
+    checks: ['unit'],
+    runs: [],
+    cause: 'unknown',
+    ...data,
+  });

@@ -16,7 +16,7 @@ import {
 import { GraphBuiltDataSchema, GraphFailedDataSchema } from './graph-data.ts';
 import { PlotMergedDataSchema, PlotPatchedDataSchema, PlotRestoredDataSchema } from './plot-data.ts';
 import { CommandResultDataSchema } from './command-data.ts';
-import { CheckEndDataSchema, CheckStartDataSchema } from './check-data.ts';
+import { CheckAttributedDataSchema, CheckEndDataSchema, CheckStartDataSchema } from './check-data.ts';
 import {
   DeliveryFailedDataSchema,
   DeliveryMergedDataSchema,
@@ -206,6 +206,7 @@ export const EVENT_DATA_SCHEMAS = {
   'agent.subagent.overrun': AgentSubagentOverrunDataSchema,
   'check.start': CheckStartDataSchema,
   'check.end': CheckEndDataSchema,
+  'check.attributed': CheckAttributedDataSchema,
   'mana.signal': ManaSignalDataSchema,
   'mana.level': ManaLevelDataSchema,
   'mana.warning': ManaWarningDataSchema,
