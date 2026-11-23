@@ -4,3 +4,6 @@ export * from './health.ts';
 export * from './report.ts';
 export * from './after-merge.ts';
 export * from './constants.ts';
+export * from './probe-steps.ts';
+export * from './probe.ts';
+export * from './attribution.ts';

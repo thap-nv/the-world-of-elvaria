@@ -5,9 +5,11 @@
 // quests merged since the last patrol that found that check green: the digest's `base_red` items, the bell, the draft
 // quest, the metrics, and later PS-09d (stop taking quests) and PS-08g (the seal delegation's breaker) read it.
 import { isEventOf } from '../schema/event/event.ts';
+import { attributedHealth } from './attribution.ts';
 import type { QuestId, TerritoryId } from '../core/ids.ts';
 import type { Event } from '../schema/event/event.ts';
 import type { PatrolRanData, ScanOutcome } from '../schema/event/patrol-data.ts';
+import type { CheckAttribution } from './attribution.ts';
 
 /** The check a failed commands.setup is red as. */
 export const SETUP_CHECK = 'setup';
@@ -33,6 +35,8 @@ export interface RedCheck {
   readonly green_at?: string;
   /** The quests merged since that green patrol, up to the red one; none without a green patrol. */
   readonly suspects: readonly PatrolSuspect[];
+  /** (CM-04) What the probe after it turned red found (`check.attributed`); absent until one did, kept while it stays red. */
+  readonly attribution?: CheckAttribution;
 }
 
 /** A scan of the latest patrol that did not pass. */
@@ -185,6 +189,15 @@ function stepMerge(ledger: PatrolLedger, event: Event): PatrolLedger {
   return { watches: { ...ledger.watches, [territory]: next } };
 }
 
+/** The ledger after a probe of a territory's red branch (CM-04): the red checks it ran get its finding. */
+function stepAttribution(ledger: PatrolLedger, event: Event): PatrolLedger {
+  if (!isEventOf(event, 'check.attributed')) return ledger;
+  const watch = ledger.watches[event.data.territory];
+  if (watch === undefined) return ledger;
+  const next = { ...watch, health: attributedHealth(watch.health, event.data) };
+  return { watches: { ...ledger.watches, [event.data.territory]: next } };
+}
+
 /** A green-to-red turn of one check, as the metrics list it. */
 export interface RedFlip extends RedCheck {
   readonly territory: TerritoryId;
@@ -194,7 +207,7 @@ export interface RedFlip extends RedCheck {
 function fold(events: readonly Event[], onFlip?: (flip: RedFlip) => void): PatrolLedger {
   let ledger = EMPTY_PATROL_LEDGER;
   for (const event of events) {
-    ledger = stepMerge(ledger, event);
+    ledger = stepAttribution(stepMerge(ledger, event), event);
     if (!isEventOf(event, 'patrol.ran')) continue;
     const step = stepPatrol(ledger, event.ts, event.data);
     ledger = step.ledger;

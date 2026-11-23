@@ -81,6 +81,25 @@ describe('the patrol in the digest and the metrics', () => {
     expect(text).toContain('`elvaria territory patrol do-an`');
   });
 
+  it('(CM-04) `elvaria digest` names what the probe found: the quest whose merge is red on its own', async () => {
+    await openEventLog(kingdom).append([
+      line('2026-11-06T07:00:00+07:00', 'check.attributed', {
+        territory: 'do-an',
+        source: 'patrol',
+        checks: ['unit'],
+        runs: [{ commit: SHA, quest: QUEST_ID, pass: false, duration_ms: 1000 }],
+        commit: SHA,
+        culprit: QUEST_ID,
+        cause: 'own_change',
+      }),
+    ]);
+    const io = testIo();
+    expect(await run(io, 'digest', '--kingdom', kingdom, '--locale', 'en')).toBe(0);
+    expect(io.printed.out.join('\n')).toContain(
+      `Quests merged since the last green patrol: ${QUEST_ID}. The probe: the merge of quest ${QUEST_ID} (commit abcdef123456) is red on its own.`,
+    );
+  });
+
   it('`elvaria metrics` lists the turn to red beside the quest merged before it, unsealed', async () => {
     const io = testIo();
     expect(await run(io, 'metrics', '--kingdom', kingdom, '--locale', 'en')).toBe(0);

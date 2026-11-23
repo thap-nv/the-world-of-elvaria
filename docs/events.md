@@ -4,7 +4,7 @@
 
 Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là một event; log chỉ ghi thêm, không bao giờ viết lại. `type` là `nhóm.hành_động`; reader giữ nguyên type lạ, renderer bỏ qua nó. Hợp đồng đầy đủ: [schemas/event.schema.json](schemas/event.schema.json); nghĩa từng nhóm và các tiền tố dành sẵn: [glossary.md](glossary.md) mục 12.
 
-90 type trong danh mục v1, 78 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
+91 type trong danh mục v1, 79 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
 
 ## Khung một dòng
 
@@ -62,12 +62,13 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 | `agent.compact` | object mở, chưa có schema |
 | `agent.notification` | object mở, chưa có schema |
 
-## `check` · 2 type
+## `check` · 3 type
 
 | Type | `data` |
 |---|---|
 | `check.start` | `delivery` (tùy chọn): `true` — The merge queue's checks of a done quest before its delivery (PS-09), not a run's: no judge reads them. Absent: a run's checks.<br>`mode` (tùy chọn): một trong `narrow` — narrow: the territory's check_policy ran each check's narrow command where it has one, on the diff since the plot's base (CM-01). Absent: the checks `when` selects, each with its `run` (or every check, for the merge queue's). |
 | `check.end` | `delivery` (tùy chọn): `true` — The merge queue's checks of a done quest before its delivery (PS-09), not a run's: no judge reads them. Absent: a run's checks.<br>`mode` (tùy chọn): một trong `narrow` — narrow: the territory's check_policy ran each check's narrow command where it has one, on the diff since the plot's base (CM-01). Absent: the checks `when` selects, each with its `run` (or every check, for the merge queue's).<br>`outcome`: một trong `pass`, `fail`, `error`, `stopped` — pass: every check passed, or none applied; fail: at least one failed; error: they could not run, a later tick runs them again; stopped: killed because the Steward stopped or the quest moved on.<br>`checks`: array of object { id, pass, duration_ms } — The checks that ran, in order (verdict.checks without their logs); empty unless pass or fail.<br>`environment` (tùy chọn): object { check, line } — fail only: the Steward set the run's checks aside because their environment failed (P1-54: Docker down, a container gone), so no judge reads them and they run again later. Without it a restarted Steward, the world and the metrics ledger could not tell such a run from a failing one. |
+| `check.attributed` | `territory`: string (khớp `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$`, khác `global`)<br>`source`: một trong `queue`, `train`, `patrol`<br>`checks`: array of string (khớp `^[a-z][a-z0-9_]*$`) — The red checks the probe ran (`setup` for commands.setup): only those, at each commit.<br>`runs`: array of object { commit, quest?, pass, duration_ms } — In order: the binary search, the rerun of the first red step, the quest's own head.<br>`commit` (tùy chọn): string (khớp `^[0-9a-f]{40}(?:[0-9a-f]{24})?$`) — The first red step of the default branch; absent when the probe could not find it.<br>`culprit` (tùy chọn): string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`) — The quest whose merge is that step (own_change, combination).<br>`cause`: một trong `own_change`, `combination`, `outside`, `flaky`, `unknown` — own_change: the quest's own head is red; combination: its head and the branch before it are green, the merge red; outside: the step is no quest's merge; flaky: red, then green on the same commit; unknown: no green head, too many steps, a run that timed out or could not run. |
 
 ## `verdict` · 3 type
 

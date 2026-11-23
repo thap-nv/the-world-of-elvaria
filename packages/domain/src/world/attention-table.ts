@@ -8,6 +8,7 @@ import type { FailKind, Rank } from '../schema/common.ts';
 import type { SuspensionCause } from '../schema/event/delegation-data.ts';
 import type { DeliveryFailure, DeliveryStage } from '../schema/event/delivery-data.ts';
 import type { ScanOutcome } from '../schema/event/patrol-data.ts';
+import type { CheckAttribution } from '../patrol/attribution.ts';
 import type { TempleBlock } from '../temple/waiting.ts';
 
 export const ATTENTION_GROUPS = ['must', 'can_wait'] as const;
@@ -193,6 +194,8 @@ export interface AttentionSubject {
   readonly commit?: string;
   readonly since?: string;
   readonly suspects?: readonly QuestId[];
+  /** (CM-04) What the probe after it turned red found: why, at which commit, whose merge. Absent until one did. */
+  readonly attribution?: CheckAttribution;
   /** A scan of the latest patrol that did not pass (patrol_scan): the script, how it ended, what it counted. */
   readonly script?: string;
   readonly outcome?: ScanOutcome;

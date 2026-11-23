@@ -155,6 +155,7 @@ function patrolItems(
         ...(check.commit === null ? {} : { commit: check.commit }),
         since: check.since,
         suspects: check.suspects.map(({ quest }) => quest),
+        ...(check.attribution === undefined ? {} : { attribution: check.attribution }),
         ...(hold === undefined ? {} : { waiting: hold.waiting }),
       }),
     ),

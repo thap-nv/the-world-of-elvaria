@@ -8,6 +8,7 @@
 // next one back. The Steward's stop kills the run and records nothing of it: no `schedule.ran`, it runs again at the
 // next start. (PS-09d) One territory's patrol (patrolTerritory) also runs outside the job, with what started it as its
 // `trigger`; every patrol of a territory runs in its lane (runs.ts), and each sets its territory's health in the book.
+// (CM-04) Red checks no probe has attributed are probed after the patrol, in the same lane (probe.ts).
 import { baseRedSuspension, patrolLedgerOf, patrolRanOf, stepPatrol, territoryViewOf } from '@elvaria/domain';
 import type { PatrolLedger, PatrolRanData, PatrolTrigger, RedCheck, Territory } from '@elvaria/domain';
 
@@ -16,6 +17,7 @@ import { suspendDelegation } from '../delegation/suspend.ts';
 import { STEWARD } from '../quest/record.ts';
 import { setHealth } from './book.ts';
 import { openPatrolDraft } from './draft.ts';
+import { probeDue, probeTerritory } from './probe.ts';
 import { scansIn } from './scans.ts';
 import type { Context } from '../context.ts';
 import type { StewardJob } from '../schedule/scheduler.ts';
@@ -84,14 +86,18 @@ async function record(ctx: Context, ledger: PatrolLedger, territory: Territory, 
   return step.ledger;
 }
 
-/** One patrol of `territory` in its lane, its lines written and its health set in the book; nothing once stopped. */
-export function patrolTerritory(
+/**
+ * One patrol of `territory` in its lane, its lines written and its health set in the book, then the probe of its red
+ * checks no probe attributed; nothing once stopped. The merge queue waits on its patrol (`queue`), not on the probe:
+ * that one starts outside, unless a patrol started there already, which probes after it.
+ */
+export async function patrolTerritory(
   ctx: Context,
   territory: Territory,
   trigger: PatrolTrigger,
   signal: AbortSignal,
 ): Promise<void> {
-  return ctx.patrol.runs.exclusive(territory.id, async () => {
+  await ctx.patrol.runs.exclusive(territory.id, async () => {
     if (signal.aborted) return;
     // The merges since each check's last green patrol are the suspects of a check that turns red: the whole log.
     const ledger = patrolLedgerOf((await ctx.deps.events.read()).events);
@@ -100,6 +106,10 @@ export function patrolTerritory(
     const next = await record(ctx, ledger, territory, data);
     setHealth(ctx.patrol, territory.id, next.watches[territory.id]?.health);
   });
+  if (signal.aborted || !probeDue(ctx, territory)) return;
+  if (trigger === 'queue')
+    ctx.patrol.runs.start(territory.id, (stop) => probeTerritory(ctx, territory, stop));
+  else await probeTerritory(ctx, territory, signal);
 }
 
 export const patrolJob = (): StewardJob => ({

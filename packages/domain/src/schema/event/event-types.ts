@@ -35,6 +35,8 @@ export const EVENT_TYPES = [
   'agent.notification',
   'check.start',
   'check.end',
+  // CM-04 (ADR 0032): the probe of a red default branch names the commit, and the quest, that turned it red.
+  'check.attributed',
   'verdict.pass',
   'verdict.fail',
   'verdict.partial',

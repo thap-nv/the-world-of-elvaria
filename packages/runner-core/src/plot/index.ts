@@ -32,6 +32,19 @@ export type { SetupRun } from './setup.ts';
 export type { CommitOutcome, ForgetWorktree, PlotStatus, ReleasedPlot } from './worktree-ops.ts';
 export { SET_ASIDE_DIR, WIP_PATCH_FILE, isScratchFile } from './rescue.ts';
 export type { CommitRescue } from './rescue.ts';
-export { commitsSinceStamp, patrolIdOf, trialIdOf, trialRunDirOf, tryTerritory } from './territory-trial.ts';
-export type { StampCountRequest, TerritoryTrialRequest, TerritoryTrialRun } from './territory-trial.ts';
+export {
+  commitLinksOf,
+  commitsSinceStamp,
+  patrolIdOf,
+  probeIdOf,
+  trialIdOf,
+  trialRunDirOf,
+  tryTerritory,
+} from './territory-trial.ts';
+export type {
+  CommitLinksRequest,
+  StampCountRequest,
+  TerritoryTrialRequest,
+  TerritoryTrialRun,
+} from './territory-trial.ts';
 export type { PlotFailure, PlotFailureReason } from './worktree.ts';
