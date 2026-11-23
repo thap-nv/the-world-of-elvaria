@@ -366,7 +366,12 @@
   of P1-07 in `elvaria run`, outside the tick, its `signal` aborted when nobody waits for them any more), with the
   quest's secrets from the treasury (`PlotCheck.secrets`, `questSecretsOf`, P1-10b), resolved in the tick before
   they start; a quest whose secrets are gone by then goes to the infirmary (`breaker:secrets_missing`) and runs none: their
-  results go into the judge's prompt, the verdict and `quest.checks_run`. The run's next judge (after a partial
+  results go into the judge's prompt, the verdict and `quest.checks_run`. (CM-01, ADR 0032) On a territory whose
+  `check_policy.mode` is not `full` the run's mode comes from `checkModeFor` (`src/review/check-mode.ts`: the plot's
+  touched paths to runner-core's `checkModeOf`; an unread plot runs in full), goes to `Plots.check` as `mode`, and
+  marks both `check.*` lines `mode: narrow`; the merge queue's run does the same on the diff since the new base
+  (narrow: the checks the quest's diff selects; full: every check, as before), and the judge of a narrow run gets
+  the checks that ran (`narrowChecksFor`) for its shell and law 3. The run's next judge (after a partial
   verdict, a breaker or a session without a verdict) gets the same results while the plot's head is the commit they
   ran on (`Plots.head`, P1-38); a moved head and a plot without git get their own run. A judge in a scratch plot
   leaves with its plot: the next one gets a fresh scratch plot (`Plots.prepareScratch`, after `commands.setup`, then

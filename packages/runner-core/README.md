@@ -284,7 +284,14 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   in the hook), one at a time in the plot, each logged to `<run_dir>/checks/<id>.log`; with
   `ChecksRequest.party_role` (P1-18, §3.15) a party's merge quest runs every check and a part skips those marked
   `defer_to_merge`, as does the contract quest (P1-37: an interface written before the code fails any drift check);
-  the blind trial's acceptance part (P1-21) runs none, its tests waiting for the merge quest. An `exclusive` check holds
+  the blind trial's acceptance part (P1-21) runs none, its tests waiting for the merge quest. (CM-01, ADR 0032)
+  `checkModeOf` (`src/checks/check-mode.ts`, pure) says whether a run on a territory whose `check_policy.mode` is
+  `narrow` or `deferred` is narrow: not when the quest touched a path of `full_when` or one no check watches, nor
+  for a merge quest or a quest judged in a scratch plot, nor for the queue of a `deferred` territory before CM-08's
+  train. With `ChecksRequest.mode` `narrow` each check runs its `narrow` command where it has one (`checkLinesOf`);
+  every command of a narrow run gets `ChecksRequest.base` (the plot's `PlotRecord.base`, `PlotManager.checkBase`)
+  as `ELVARIA_CHECK_BASE` in its env, never in argv; a run in full gets none, as before. `toolPolicyOf({ narrow_checks })` gives the judge of a narrow run
+  those checks' commands alone, and prompt law 3 reads `prompts/rerun-rules.md` `narrow`. An `exclusive` check holds
   the territory's lock (`.state/checks/<territory>-exclusive`, `src/checks/exclusive-lock.ts`) so two quests never
   run one at once; a timed-out check runs its `cleanup`, under that lock too (P1-54). The checks that are not
   exclusive run first (P1-54), so a short one never waits out the lock. A check that cannot run (shell syntax, program

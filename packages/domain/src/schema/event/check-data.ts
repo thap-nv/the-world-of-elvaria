@@ -23,8 +23,20 @@ const DeliveryMarkSchema = z
     ),
   );
 
+// Optional and added after v1 (CM-01, ADR 0032): a run in its territory's narrow check mode, for the metrics (CM-09)
+// to tell its minutes apart; a line without it, as every line before CM-01, ran its checks in full.
+const CHECK_RUN_MODES = ['narrow'] as const;
+const CheckRunModeSchema = z
+  .enum(CHECK_RUN_MODES)
+  .optional()
+  .meta(
+    describe(
+      "narrow: the territory's check_policy ran each check's narrow command where it has one, on the diff since the plot's base (CM-01). Absent: the checks `when` selects, each with its `run` (or every check, for the merge queue's).",
+    ),
+  );
+
 export const CheckStartDataSchema = z
-  .strictObject({ delivery: DeliveryMarkSchema })
+  .strictObject({ delivery: DeliveryMarkSchema, mode: CheckRunModeSchema })
   .meta(
     describe(
       'The checks of the run the envelope\'s `attempt` names started, outside the Steward\'s tick (implementation-plan §3.1 "(P1-25)").',
@@ -36,6 +48,7 @@ export type CheckOutcome = (typeof CHECK_OUTCOMES)[number];
 
 export const CheckEndDataSchema = z.strictObject({
   delivery: DeliveryMarkSchema,
+  mode: CheckRunModeSchema,
   outcome: z
     .enum(CHECK_OUTCOMES)
     .meta(

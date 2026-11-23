@@ -17,6 +17,7 @@ import type {
   PlanLink,
   Quest,
   Skill,
+  TerritoryCheck,
   Verdict,
 } from '@elvaria/domain';
 import type {
@@ -101,6 +102,8 @@ interface PromptParts {
   readonly screens?: readonly ScreenPair[];
   /** For an assignee, the advisories its quest has yet to read (PS-09c); none for a judge. */
   readonly advisories: readonly PromptAdvisory[];
+  /** For the judge of a narrow run, that run's checks (CM-01, request.ts); the policy gives its shell the same. */
+  readonly narrow_checks?: readonly TerritoryCheck[];
 }
 
 /** What a judge reads beside the quest: the letter, the checks, the diff, and what the Steward found of the work. */
@@ -123,7 +126,18 @@ async function reviewOf(ctx: Context, input: SessionInput, parts: PromptParts) {
   // A plan's judge reads the sub-quests its graph links (PS-21b): a warning, never a fail.
   const links = parts.plan_links === undefined ? {} : { plan_links: parts.plan_links };
   const screens = parts.screens === undefined ? {} : { screens: parts.screens };
-  return { handover, diff, checks, partial, out_of_scope: outside, objection, ...links, ...screens };
+  const narrow = parts.narrow_checks === undefined ? {} : { narrow_checks: parts.narrow_checks };
+  return {
+    handover,
+    diff,
+    checks,
+    partial,
+    out_of_scope: outside,
+    objection,
+    ...links,
+    ...screens,
+    ...narrow,
+  };
 }
 
 async function builtPromptOf(

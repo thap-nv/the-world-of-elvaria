@@ -5,6 +5,7 @@ import type {
   BaseBranch,
   BaseTips,
   CheckRun,
+  CheckRunMode,
   CommitOutcome,
   CommitRescue,
   DiffScope,
@@ -44,6 +45,8 @@ export interface PlotCheck {
   readonly party_role?: PartyRole;
   /** How long an exclusive check waits for the territory's lock, a judge's session included (P1-20). */
   readonly lock_wait_ms?: number;
+  /** (CM-01) `narrow`: each check runs its narrow command where it has one (checkModeOf); absent: `full`. */
+  readonly mode?: CheckRunMode;
 }
 
 /**

@@ -50,6 +50,7 @@ import type {
   Ritual,
   Skill,
   Territory,
+  TerritoryCheck,
   Verdict,
 } from '@elvaria/domain';
 
@@ -139,6 +140,11 @@ export interface VerifierPromptInput extends PromptBase {
   readonly plan_links?: readonly PlanLink[];
   /** The screens of the review, for a ritual that asks for eyes (PS-11b); absent or empty, no block. */
   readonly screens?: readonly ScreenPair[];
+  /**
+   * (CM-01) The territory's checks of the narrow run this judge reads (ToolPolicyInput.narrow_checks): its shell and
+   * law 3 follow that run. Absent: a run in full, as before.
+   */
+  readonly narrow_checks?: readonly TerritoryCheck[];
 }
 
 /**
@@ -224,7 +230,9 @@ function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): PromptW
   if (ritual === undefined) throw new Error(`registry has no ritual for kind "${quest.kind}"`);
   const scratch = judgedInScratch(quest, registry);
   const plotRule = sectionsOf(t['plot-rules']).get(scratch ? 'scratch_plot' : 'plot');
-  if (plotRule === undefined) throw new Error('prompts/plot-rules.md lacks a section');
+  const rerunRule = sectionsOf(t['rerun-rules']).get(input.narrow_checks === undefined ? 'full' : 'narrow');
+  if (plotRule === undefined || rerunRule === undefined)
+    throw new Error('prompts/plot-rules.md or rerun-rules.md lacks a section');
   const policy = toolPolicyOf({
     role: 'verifier',
     characterClass,
@@ -233,6 +241,7 @@ function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): PromptW
     scratch,
     cli_search: input.cli_search,
     graph: input.graph !== undefined,
+    narrow_checks: input.narrow_checks,
   });
   const role = fill(t.verifier, {
     character: character.name,
@@ -241,6 +250,7 @@ function verifierPrompt(input: VerifierPromptInput, t: PromptTemplates): PromptW
     territory: input.territory.name,
     pass_rule: PASS_RULES[ritual.pass_rule],
     plot_rule: plotRule,
+    rerun_rule: rerunRule,
     fail_kinds: FAIL_KINDS.map((kind) => `\`${kind}\``).join(', '),
     language: LANGUAGE_NAMES[input.locale],
     shell: shellBlock(policy, t, input.shell, input.cli_read),

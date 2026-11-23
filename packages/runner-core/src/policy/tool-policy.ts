@@ -25,7 +25,7 @@ import {
 } from './constants.ts';
 import { forbiddenPathsOf } from './forbidden-changes.ts';
 import { commandLinesOf, GRAPH_COMMANDS } from '@elvaria/domain';
-import type { Character, CharacterClass, Territory } from '@elvaria/domain';
+import type { Character, CharacterClass, Territory, TerritoryCheck } from '@elvaria/domain';
 
 import type { SpawnRole } from '../runner/roles.ts';
 
@@ -103,6 +103,12 @@ export interface ToolPolicyInput {
   readonly graph?: boolean;
   /** The screens of the review a judge reads (PS-11b), native and absolute; ignored for any other role. */
   readonly images?: readonly string[] | undefined;
+  /**
+   * (CM-01, ADR 0032) The territory's checks of the narrow run a judge reads (checkModeOf gave `narrow`): its shell
+   * runs their narrow commands where they have one, never the other checks' commands, nor these checks' `run` the
+   * narrow command stands for. Absent: every check's `run`, as before; ignored for any other role.
+   */
+  readonly narrow_checks?: readonly TerritoryCheck[] | undefined;
 }
 
 const unique = (items: readonly string[]): string[] => [...new Set(items)];
@@ -121,13 +127,18 @@ const plotPath = (glob: string): string => `./${glob.replaceAll('\\', '/').repla
 /**
  * The territory's own check commands, so a character with a shell can rerun what judges it (ADR 0008). An exclusive
  * check (Docker, e2e) holds a lock across quests, so only runChecks may start it, and a judge in its scratch plot,
- * for whom the Steward holds that lock for the whole session (P1-20): `exclusive` says the caller holds it.
+ * for whom the Steward holds that lock for the whole session (P1-20): `exclusive` says the caller holds it. A judge
+ * of a narrow run gets that run's commands alone (`narrow`, CM-01): a whole-tree suite would cost what the run saved.
  */
-function checkRules(territory: ToolPolicyInput['territory'], exclusive: boolean): string[] {
+function checkRules(
+  territory: ToolPolicyInput['territory'],
+  exclusive: boolean,
+  narrow: readonly TerritoryCheck[] | undefined,
+): string[] {
   if (territory === undefined) return [];
-  const checks = territory.checks
+  const checks = (narrow ?? territory.checks)
     .filter((check) => exclusive || !check.exclusive)
-    .flatMap((check) => commandLinesOf(check.run));
+    .flatMap((check) => commandLinesOf(narrow === undefined ? check.run : (check.narrow ?? check.run)));
   const commands = CHECK_COMMANDS.flatMap((name) => territory.commands[name] ?? []);
   return unique([...checks, ...commands]).map((command) => `${SHELL_TOOL}(${command}:*)`);
 }
@@ -226,7 +237,8 @@ export function toolPolicyOf(input: ToolPolicyInput): ToolPolicy {
   const hasShell = tools.includes(SHELL_TOOL);
   // A verifier never regenerates what it judges (ADR 0008), not even in its scratch plot.
   const writes = !verifier && tools.some(isWriteTool);
-  const shell = hasShell ? checkRules(input.territory, scratch && input.exclusive !== false) : [];
+  const narrow = verifier ? input.narrow_checks : undefined;
+  const shell = hasShell ? checkRules(input.territory, scratch && input.exclusive !== false, narrow) : [];
   const generate = hasShell && writes ? generateRules(input.territory) : [];
   const laws = lawsOf(input.territory, scratch);
   const fences = [

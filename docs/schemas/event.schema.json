@@ -1716,6 +1716,12 @@
               "delivery": {
                 "description": "The merge queue's checks of a done quest before its delivery (PS-09), not a run's: no judge reads them. Absent: a run's checks.",
                 "const": true
+              },
+              "mode": {
+                "description": "narrow: the territory's check_policy ran each check's narrow command where it has one, on the diff since the plot's base (CM-01). Absent: the checks `when` selects, each with its `run` (or every check, for the merge queue's).",
+                "enum": [
+                  "narrow"
+                ]
               }
             }
           }
@@ -1743,6 +1749,12 @@
               "delivery": {
                 "description": "The merge queue's checks of a done quest before its delivery (PS-09), not a run's: no judge reads them. Absent: a run's checks.",
                 "const": true
+              },
+              "mode": {
+                "description": "narrow: the territory's check_policy ran each check's narrow command where it has one, on the diff since the plot's base (CM-01). Absent: the checks `when` selects, each with its `run` (or every check, for the merge queue's).",
+                "enum": [
+                  "narrow"
+                ]
               },
               "outcome": {
                 "description": "pass: every check passed, or none applied; fail: at least one failed; error: they could not run, a later tick runs them again; stopped: killed because the Steward stopped or the quest moved on.",

@@ -326,6 +326,12 @@ show` prints the brief apart from the rest of the description and, while the pla
   per run, the gazetteer's commits counted with no fetch), naming under its line which items come from the trial
   and when, which are read now, and why each item read now fails. No quest, event or model; `metrics` prints the
   first-pass rate by territory beside class, tag, model and kind.
+- `territory checks <id> [--mode full|narrow|deferred]` (CM-01, ADR 0032, `src/territory/check-policy.ts`) prints a
+  territory's check mode (the domain's `checkPolicyOf`: no `check_policy` reads as full), its `full_when` and each
+  check's `run` and `narrow`, or writes the mode into `check_policy` under the store's lock (ADR 0005, as `territory
+delivery`), with no event; `deferred` is refused unless the territory delivers by `pr_merge` with merge commits.
+  `Plots.check` hands runChecks the run's `mode` and, for a narrow run, the plot's base (`PlotManager.checkBase`,
+  ELVARIA_CHECK_BASE).
 - `territory delivery <id> [--mode manual|pr|pr_merge] [--merge-method merge|squash] [--required-check <name>]…
 [--timeout <minutes>]` (PS-08, ADR 0023, `src/territory/delivery.ts`) prints how a territory delivers (the
   domain's `deliveryOf`: no `delivery` field reads as manual) or changes it, writing the `delivery` field of

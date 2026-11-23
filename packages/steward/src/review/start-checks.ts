@@ -7,7 +7,8 @@
 // the owner and the world when they start and end (`check.start`, `check.end`): the quest waits in review meanwhile.
 // What their commands wrote in the quest's own plot (a generator) goes once they ended, before the judge opens
 // (P1-47, (b) of P1-44; restore.ts), as it goes after a judge. Checks whose environment failed (P1-54) are set aside
-// for a later run, out of every judge's reach (environment.ts).
+// for a later run, out of every judge's reach (environment.ts). A narrow territory's run is narrow unless the quest
+// touched what its narrow commands cannot vouch for, and both lines say so (CM-01, check-mode.ts).
 import { currentRun, err, ok } from '@elvaria/domain';
 import type { EventData, Quest, QuestId, Result, Territory } from '@elvaria/domain';
 
@@ -15,6 +16,7 @@ import { mergePartsBeforeChecks } from '../party/plot.ts';
 import { STEWARD } from '../quest/record.ts';
 import { secretsBreaker } from '../sessions/breaker.ts';
 import { questSecretsOf, secretsLacking } from '../sessions/secrets.ts';
+import { checkModeFor, modeMarkOf } from './check-mode.ts';
 import { checksOf, headOf, lockWaitOf } from './checks.ts';
 import { setAside } from './environment.ts';
 import { restorePlot } from './restore.ts';
@@ -93,13 +95,14 @@ export async function startChecks(ctx: Context, questId: QuestId): Promise<Resul
       // Stopped while its plot was made again: nobody waits for a trial any more.
       if (reused !== undefined || signal.aborted) return reused;
     }
+    const mode = await checkModeFor(ctx, quest, territory, 'session');
     // The checks start within the tick, the line beside them; the end's line always follows the start's.
-    const started = noteChecks(ctx, quest, 'check.start', {});
+    const started = noteChecks(ctx, quest, 'check.start', modeMarkOf(mode));
     // Read before they run: a commit made while they run makes them stale.
     const head = await headOf(ctx, quest);
-    const checks = await checksOf(ctx, quest, territory, n, { signal, secrets });
+    const checks = await checksOf(ctx, quest, territory, n, { signal, secrets, mode });
     await started;
-    await noteChecks(ctx, quest, 'check.end', endOf(checks, signal));
+    await noteChecks(ctx, quest, 'check.end', { ...endOf(checks, signal), ...modeMarkOf(mode) });
     if (!checks.ok) return undefined;
     // Checks that ran (to their end, or stopped) in the quest's own plot leave it as its commit has it (P1-47); a
     // trial ran in its scratch plot, and checks that could not run touched nothing.

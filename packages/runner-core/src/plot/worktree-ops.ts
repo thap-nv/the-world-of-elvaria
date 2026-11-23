@@ -96,6 +96,11 @@ export async function touchedIn(git: Git, worktree: string): Promise<string[]> {
   return [...new Set([...zList(changed), ...zList(untracked)])].sort();
 }
 
+/** The commit the plot's diff counts from (CM-01): ELVARIA_CHECK_BASE of its checks, what touchedIn diffs against. */
+export async function checkBaseIn(git: Git, worktree: string): Promise<string> {
+  return (await plotRecordOf(git, worktree)).base;
+}
+
 /** The paths of `git status --porcelain -z`; a rename or a copy names its source in the entry after it. */
 function statusPaths(stdout: string): string[] {
   const paths: string[] = [];

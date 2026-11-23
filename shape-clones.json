@@ -34,7 +34,7 @@
     {
       "a": "apps/cli/src/character/suspend.ts",
       "b": "apps/cli/src/quest/lifecycle.ts",
-      "tokens": 306,
+      "tokens": 291,
       "status": "unreviewed"
     },
     {
@@ -46,7 +46,7 @@
     {
       "a": "apps/cli/src/character/suspend.ts",
       "b": "apps/cli/src/quest/hold.ts",
-      "tokens": 251,
+      "tokens": 249,
       "status": "unreviewed"
     },
     {
@@ -136,13 +136,13 @@
     {
       "a": "apps/cli/src/quest/escaped.ts",
       "b": "apps/cli/src/quest/lifecycle.ts",
-      "tokens": 146,
+      "tokens": 144,
       "status": "unreviewed"
     },
     {
       "a": "apps/cli/src/quest/edit.ts",
       "b": "apps/cli/src/quest/escaped.ts",
-      "tokens": 139,
+      "tokens": 137,
       "status": "unreviewed"
     },
     {
@@ -154,7 +154,7 @@
     {
       "a": "apps/cli/src/quest/edit.ts",
       "b": "apps/cli/src/quest/lifecycle.ts",
-      "tokens": 138,
+      "tokens": 87,
       "status": "unreviewed"
     },
     {
@@ -304,12 +304,6 @@
     {
       "a": "apps/cli/src/quest/edit.ts",
       "b": "apps/cli/src/quest/hold.ts",
-      "tokens": 104,
-      "status": "unreviewed"
-    },
-    {
-      "a": "apps/cli/src/quest/lifecycle.ts",
-      "b": "apps/cli/src/tribe/look.ts",
       "tokens": 102,
       "status": "unreviewed"
     },
@@ -328,7 +322,7 @@
     {
       "a": "apps/cli/src/character/suspend.ts",
       "b": "apps/cli/src/quest/reassign.ts",
-      "tokens": 97,
+      "tokens": 95,
       "status": "unreviewed"
     },
     {
@@ -738,6 +732,55 @@
       "b": "packages/steward/src/memos/decide.ts",
       "tokens": 60,
       "status": "unreviewed"
+    },
+    {
+      "a": "apps/cli/src/territory/check-policy.ts",
+      "b": "apps/cli/src/territory/patrol.ts",
+      "tokens": 275,
+      "status": "kept",
+      "reason": "CM-01: the skeleton every `elvaria territory <verb>` command shares (open the kingdom, read the territory `<id>` names, print it or write one field under the store's lock, the CommandSpec); its siblings' pairs are listed unreviewed, and AH-14 gathers the cluster at once rather than one command apart."
+    },
+    {
+      "a": "apps/cli/src/territory/check-policy.ts",
+      "b": "apps/cli/src/territory/delivery.ts",
+      "tokens": 270,
+      "status": "kept",
+      "reason": "CM-01: the skeleton every `elvaria territory <verb>` command shares (open the kingdom, read the territory `<id>` names, print it or write one field under the store's lock, the CommandSpec); its siblings' pairs are listed unreviewed, and AH-14 gathers the cluster at once rather than one command apart."
+    },
+    {
+      "a": "apps/cli/src/territory/check-policy.ts",
+      "b": "apps/cli/src/territory/graph.ts",
+      "tokens": 115,
+      "status": "kept",
+      "reason": "CM-01: the skeleton every `elvaria territory <verb>` command shares (open the kingdom, read the territory `<id>` names, print it or write one field under the store's lock, the CommandSpec); its siblings' pairs are listed unreviewed, and AH-14 gathers the cluster at once rather than one command apart."
+    },
+    {
+      "a": "apps/cli/src/territory/check-policy.ts",
+      "b": "apps/cli/src/territory/delegation.ts",
+      "tokens": 107,
+      "status": "kept",
+      "reason": "CM-01: the skeleton every `elvaria territory <verb>` command shares (open the kingdom, read the territory `<id>` names, print it or write one field under the store's lock, the CommandSpec); its siblings' pairs are listed unreviewed, and AH-14 gathers the cluster at once rather than one command apart."
+    },
+    {
+      "a": "apps/cli/src/quest/escaped.ts",
+      "b": "apps/cli/src/territory/check-policy.ts",
+      "tokens": 61,
+      "status": "kept",
+      "reason": "CM-01: the end of a command that checks one option and writes through the store, then its CommandSpec: too small and too common across apps/cli to gather alone."
+    },
+    {
+      "a": "apps/cli/src/quest/hold.ts",
+      "b": "apps/cli/src/territory/check-policy.ts",
+      "tokens": 61,
+      "status": "kept",
+      "reason": "CM-01: the end of a command that checks one option and writes through the store, then its CommandSpec: too small and too common across apps/cli to gather alone."
+    },
+    {
+      "a": "apps/cli/src/quest/reassign.ts",
+      "b": "apps/cli/src/territory/check-policy.ts",
+      "tokens": 61,
+      "status": "kept",
+      "reason": "CM-01: the end of a command that checks one option and writes through the store, then its CommandSpec: too small and too common across apps/cli to gather alone."
     }
   ]
 }

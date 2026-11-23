@@ -33,6 +33,7 @@ import { TEMPLE_EVIDENCE } from './temple/evidence.ts';
 import { TEMPLE_RUN } from './temple/run.ts';
 import { TERRITORY_ADD } from './territory/add.ts';
 import { TERRITORY_CHECK } from './territory/check.ts';
+import { TERRITORY_CHECKS } from './territory/check-policy.ts';
 import { TERRITORY_DELEGATION } from './territory/delegation.ts';
 import { TERRITORY_DELIVERY } from './territory/delivery.ts';
 import { TERRITORY_PATROL } from './territory/patrol.ts';
@@ -60,6 +61,7 @@ export const COMMANDS: readonly CommandSpec[] = [
   TERRITORY_ADD,
   TERRITORY_LIST,
   TERRITORY_CHECK,
+  TERRITORY_CHECKS,
   TERRITORY_GRAPH,
   TERRITORY_DELIVERY,
   TERRITORY_DELEGATION,

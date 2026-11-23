@@ -54,6 +54,13 @@ describe('EventSchema', () => {
     expect(issuesOf(line(type, data))).toEqual([]);
   });
 
+  it.each([
+    ['check.start', { mode: 'narrow' }],
+    ['check.end', { delivery: true, mode: 'narrow', outcome: 'pass', checks: [] }],
+  ])('accepts %s of a narrow run (CM-01)', (type, data) => {
+    expect(issuesOf(line(type, data))).toEqual([]);
+  });
+
   it('keeps a type newer than the catalogue, with its data, for renderers to skip (forward compatible)', () => {
     const future = line('campaign.declared', { name: 'Release 2.0', units: [1, { nested: true }] });
     expect(isKnownEventType(future.type)).toBe(false);
@@ -140,6 +147,8 @@ describe('EventSchema', () => {
     ['check.start', { checks: [] }, 'data: Unrecognized key: "checks"'],
     ['check.end', { outcome: 'crashed', checks: [] }, 'data.outcome'],
     ['check.end', { outcome: 'pass', checks: [{ id: 'unit', pass: true }] }, 'data.checks.0.duration_ms'],
+    ['check.start', { mode: 'full' }, 'data.mode'],
+    ['check.end', { outcome: 'pass', checks: [], mode: 'deferred' }, 'data.mode'],
     ['mana.signal', { error: 'Rate-Limit', source: 'api_retry' }, 'data.error'],
     ['mana.level', { ...VALID_DATA['mana.level'], used_pct: 101 }, 'data.used_pct'],
     ['mana.level', { ...VALID_DATA['mana.level'], resets_at: 'tomorrow' }, 'data.resets_at'],

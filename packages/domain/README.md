@@ -51,7 +51,7 @@ patrol`); `partyOf` counts the quest a party is named after, `partyStatusOf` and
   waits for no seal, whatever its kind's `seal_default`, as the merge quest always does), `partyStatusOf`
   (`forming`, `parts`, `merging`, `done` or `stuck`, derived, never stored) and `plotBaseOf` (the branches a quest's plot builds on: a part on its
   contract's, a merge quest on the contract's with every part merged in, any quest on a dependency's not merged
-  yet, P1-16 (f), with every dependency merged in when it has two or more, `dependencies`, fix/council-run-gaps (d)). The territory's `checks[].defer_to_merge` (§3.15) leaves a heavy check to the merge quest.
+  yet, P1-16 (f), with every dependency merged in when it has two or more, `dependencies`, fix/council-run-gaps (d)). The territory's `checks[].defer_to_merge` (§3.15) leaves a heavy check to the merge quest. (CM-01, ADR 0032) `territory.check_policy` (`mode` full, narrow or deferred, `full_when`, `train`; `checkPolicyOf`, absent: full) and `checks[].narrow` say how much of the checks a quest runs; `deferred` needs a `pr_merge` delivery by merge commits (`defersWhereItCan`); `check.start`, `check.end` carry `mode: narrow` for a narrow run.
   `machineMergeDue` (P1-18 (h)): a merge quest's first run is the machine's, and only while no run was ever started on it (`attempts = 0` and an empty log, P1-55); the run takes a run number and no attempt (`machineRun`). `planTick` lists it in `merges`
   instead of giving it to a knight; `claim` takes it with no assignee, and the rows `working.submit.by_machine`,
   `working.release.by_machine` (the merge stopped), `review.verdict_fail.machine_retry` and
