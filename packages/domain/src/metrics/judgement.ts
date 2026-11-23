@@ -44,7 +44,10 @@ export const firstPassOf = (trail: QuestTrail): boolean | undefined => runJudgem
 export const firstRunOf = (quest: Quest): Attempt | undefined =>
   quest.attempt_log.find((entry) => isCounted(entry) && entry.role === 'assignee');
 
-/** An escaped defect: the owner returned a run that a judge or the machine had passed. */
+/**
+ * An escaped defect: the owner returned a run that a judge or the machine had passed, or (ADR 0033) a check that
+ * first ran after that pass failed it, a late machine verdict.
+ */
 export interface EscapedDefect {
   readonly quest: QuestId;
   readonly n: number;
@@ -52,19 +55,25 @@ export interface EscapedDefect {
   readonly fail_kind: FailKind | null;
   /** The owner said the judge erred, not the assignee (`elvaria return --rejudge`, P1-40). */
   readonly rejudge: boolean;
+  /** The machine's late verdict found it, not the owner (ADR 0033). */
+  readonly late: boolean;
 }
 
 export function escapedOf(trail: QuestTrail): EscapedDefect[] {
   const passed = (n: number): boolean =>
     trail.verdicts.some(({ attempt, by_human, result }) => attempt === n && !by_human && result === 'pass');
   return trail.verdicts
-    .filter(({ attempt, by_human, result }) => by_human && result === 'fail' && passed(attempt))
+    .filter(
+      ({ attempt, by_human, late, result }) =>
+        (by_human || late === true) && result === 'fail' && passed(attempt),
+    )
     .map((verdict) => ({
       quest: verdict.quest_id,
       n: verdict.attempt,
       at: verdict.created_at,
       fail_kind: verdict.fail_kind ?? null,
       rejudge: verdict.rejudge === true,
+      late: verdict.late === true,
     }));
 }
 

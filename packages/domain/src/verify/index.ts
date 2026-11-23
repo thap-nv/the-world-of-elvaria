@@ -1,6 +1,7 @@
 export * from './environment.ts';
 export * from './evidence.ts';
 export * from './flaky-follow-up.ts';
+export * from './late-verdict.ts';
 export * from './machine-verdict.ts';
 export * from './pass-rule.ts';
 export * from './apart-from-doers.ts';

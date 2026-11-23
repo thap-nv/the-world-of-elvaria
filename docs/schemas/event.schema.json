@@ -3348,7 +3348,7 @@
               "verdict": {
                 "description": "(PS-22) With decision = sustained or overruled: the second judge's verdict.",
                 "type": "string",
-                "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user)?$"
+                "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user|-late)?$"
               }
             }
           }
@@ -3559,7 +3559,7 @@
               },
               "source_verdict": {
                 "type": "string",
-                "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user)?$"
+                "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user|-late)?$"
               },
               "merged_from": {
                 "description": "A merge: the lines this one replaced, each with its own lesson.retired.",

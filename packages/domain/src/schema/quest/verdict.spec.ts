@@ -23,7 +23,18 @@ const pass = {
 const OWNER = { verifier_id: 'user', by_human: true, session_id: undefined };
 const OBJECTION = { memo: 'm_20261106_4k2pqz', verdict: `${QUEST}-1`, judge: 'orin' };
 const ID_ISSUE =
-  "id: the verdict id is <quest_id>-<attempt>, with -p<k> on a partial verdict and -user on the owner's";
+  "id: the verdict id is <quest_id>-<attempt>, with -p<k> on a partial verdict, -user on the owner's and -late on a late one";
+/** ADR 0033: the machine's fail of run 2 after its pass, in a file of its own. */
+const LATE = {
+  id: `${QUEST}-2-late`,
+  verifier_id: 'machine',
+  session_id: undefined,
+  result: 'fail',
+  fail_kind: 'tests_fail',
+  notes: NOTES,
+  late: true,
+};
+const LATE_ISSUE = "late: late marks only the machine's fail of a run already passed";
 
 const issuesOf = (change: object) => {
   const result = VerdictSchema.safeParse({ ...pass, ...change });
@@ -67,6 +78,9 @@ describe('VerdictSchema', () => {
     ['a verdict that says it is no rejudge', { rejudge: false }],
     // PS-22: the second judge's verdict names the objection it answered.
     ['a judge answering an objection', { objection: OBJECTION }],
+    // ADR 0033: a check that first ran after the pass turned red.
+    ['a late machine verdict', LATE],
+    ['a verdict that says it is not late', { late: false }],
   ])('accepts %s', (_, change) => {
     expect(issuesOf(change)).toEqual([]);
   });
@@ -119,6 +133,11 @@ describe('VerdictSchema', () => {
     ['a partial id on a pass', { id: `${QUEST}-2-p1` }, ID_ISSUE],
     ['an owner id on a judge verdict', { id: `${QUEST}-2-user` }, ID_ISSUE],
     ['a run number glued to the attempt', { id: `${QUEST}-21` }, ID_ISSUE],
+    // ADR 0033: a late verdict never takes the file of the review whose pass it overturns, nor anyone else's.
+    ['a late verdict in the file of the review', { ...LATE, id: `${QUEST}-2` }, ID_ISSUE],
+    ['a late id on a verdict not late', { ...LATE, id: `${QUEST}-2-late`, late: undefined }, ID_ISSUE],
+    ['a late verdict by a judge', { ...LATE, verifier_id: 'brann', session_id: pass.session_id }, LATE_ISSUE],
+    ['a late pass', { ...LATE, result: 'pass', fail_kind: undefined }, LATE_ISSUE],
     [
       'a character verdict without session',
       { session_id: undefined },
