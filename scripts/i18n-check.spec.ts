@@ -56,6 +56,35 @@ describe('folderProblems', () => {
     expect(folderProblems(namespaces, dir)).toEqual([]);
   });
 
+  it('reports repeated root and nested keys with the file and repeated occurrence line', async () => {
+    await writeFile(
+      path.join(dir, 'vi', 'cli.json'),
+      '{\n  "version": 1,\n  "version": 1,\n  "messages": {\n    "hello": "one",\n    "hello": "two"\n  }\n}',
+    );
+    expect(run({ namespaces, dir })).toEqual({
+      code: 1,
+      text: [
+        'i18n:check: 2 problems',
+        'locales/vi/cli.json:3: duplicate key "version"',
+        'locales/vi/cli.json:6: duplicate key "hello"',
+      ].join('\n'),
+    });
+  });
+
+  it('keeps separate object scopes and handles quotes, colons and escaped key spellings', async () => {
+    await writeFile(
+      path.join(dir, 'vi', 'cli.json'),
+      String.raw`{
+  "left": {"same": "text with \"key\": and braces {}"},
+  "right": {"same": "ok"},
+  "array": [{"same": 1}, {"same": 2}],
+  "a\"b:c": "first",
+  "a\u0022b:c": "second"
+}`,
+    );
+    expect(folderProblems(namespaces, dir)).toEqual(['locales/vi/cli.json:6: duplicate key "a\\"b:c"']);
+  });
+
   it('reports a file over 40 KB, a JSON file no namespace loads, a folder that is no locale and a whole-locale file', async () => {
     await writeFile(path.join(dir, 'vi', 'cli.json'), 'x'.repeat(40 * 1024 + 1));
     await writeFile(path.join(dir, 'vi', 'cli-quest.json'), '{}');
