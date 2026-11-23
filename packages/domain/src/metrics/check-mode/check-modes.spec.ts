@@ -6,6 +6,7 @@ import { SECOND, check, move } from './__fixtures__/log.ts';
 import { at, lineOf, questOf } from '../__fixtures__/ledger.ts';
 import { merged, ran } from '../../patrol/__fixtures__/patrol-log.ts';
 import { checkModesOf } from './check-modes.ts';
+import { questPeaksOf } from './concurrency.ts';
 import { measuredRunsOf } from './runs.ts';
 import { distributionOf } from './distribution.ts';
 
@@ -174,6 +175,47 @@ describe('check modes ledger (CM-09a)', () => {
     expect(checkModesOf(events.slice(0, 3), { since: '2026-11-09' }).peaks).toEqual([
       { territory: 'another', working: 1, review: 0 },
       { territory: 'elvaria', working: 2, review: 0 },
+    ]);
+  });
+
+  it('handles verifier release, pre-window active quests, and territory migration', () => {
+    const q3 = questOf(3, [], { territory: 'elvaria' });
+    const q3Other = questOf(3, [], { territory: 'another' });
+    const events = [
+      check('check.start', 0),
+      move(1, 'working', FIRST),
+      { ...move(0, 'review', FIRST, true), ts: at(0, '2026-11-09') },
+      { ...move(1, 'review', FIRST, false), ts: at(1, '2026-11-09') },
+      { ...move(2, 'review', SECOND, true), ts: at(2, '2026-11-09') },
+      { ...move(3, 'working', q3), ts: at(3, '2026-11-09') },
+      { ...move(4, 'working', q3Other), ts: at(4, '2026-11-09') },
+      { ...move(5, 'done', q3Other), ts: at(0, '2026-11-10') },
+    ];
+    expect(questPeaksOf(events, { since: '2026-11-09', until: '2026-11-09' })).toEqual([
+      { territory: 'another', working: 1, review: 0 },
+      { territory: 'elvaria', working: 1, review: 1 },
+    ]);
+  });
+
+  it('tracks peaks on a large log with hundreds of overlapping quests across territories', () => {
+    const events: ReturnType<typeof move>[] = [];
+    for (let i = 0; i < 100; i++) {
+      const qE = questOf(100 + i, [], { territory: 'elvaria' });
+      events.push(move(3 * i, 'working', qE));
+      events.push(move(3 * i + 31, 'review', qE, true));
+      events.push(move(3 * i + 47, 'done', qE));
+
+      const qA = questOf(500 + i, [], { territory: 'another' });
+      events.push(move(3 * i + 1, 'working', qA));
+      events.push(move(3 * i + 40, 'review', qA, true));
+      events.push(move(3 * i + 59, 'done', qA));
+    }
+    events.sort((a, b) => Date.parse(a.ts) - Date.parse(b.ts));
+
+    const peaks = questPeaksOf(events, {});
+    expect(peaks).toEqual([
+      { territory: 'another', working: 13, review: 7 },
+      { territory: 'elvaria', working: 11, review: 6 },
     ]);
   });
 });
