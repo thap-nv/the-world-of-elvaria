@@ -20,6 +20,7 @@ task sau thêm vào bảng lệnh thì tự có ở đây.
 | `elvaria territory add <path>` | Gắn một repo hoặc thư mục vào vương quốc (mở cõi). |
 | `elvaria territory list` | Liệt kê các lãnh thổ. |
 | `elvaria territory check <id>` | Chấm một lãnh thổ: thử commands.setup và mọi check trên một đất sạch ở đầu nhánh gốc, rồi in thẻ điểm (0 mana). |
+| `elvaria territory checks <id>` | Xem quest của một lãnh thổ chạy bao nhiêu check (check_policy: full, narrow hay deferred), hoặc đổi chế độ. 0 mana. |
 | `elvaria territory graph <id>` | Dựng đồ thị code của một lãnh thổ ở một commit (0 mana) và hỏi nó một câu. |
 | `elvaria territory delivery <id>` | Xem lãnh thổ giao nhánh của quest xong bằng cách nào (manual, pr, pr_merge), hoặc đổi nó. |
 | `elvaria territory delegation <id>` | Xem ủy quyền dấu trên một lãnh thổ (phạm vi ủy quyền của vương quốc, lãnh thổ có tự merge không, cầu dao có ngừng nó không, từ quest nào và vì sao), hoặc bật lại nó. 0 mana. |
@@ -177,6 +178,15 @@ Chấm một lãnh thổ: thử commands.setup và mọi check trên một đấ
 | Tham số / tùy chọn | Ý nghĩa |
 |---|---|
 | `<id>` | Id của lãnh thổ. |
+
+## `elvaria territory checks`
+
+Xem quest của một lãnh thổ chạy bao nhiêu check (check_policy: full, narrow hay deferred), hoặc đổi chế độ. 0 mana.
+
+| Tham số / tùy chọn | Ý nghĩa |
+|---|---|
+| `<id>` | Id của lãnh thổ. |
+| `--mode <mode>` | full (mọi check mà `when` chọn chạy lệnh run, như trước), narrow (mỗi check chạy lệnh narrow trên diff của quest; tuần tra nhánh gốc là lượt đủ bộ) hoặc deferred (như narrow, check nặng để cho tàu giao hàng; cần pr_merge với merge commit). |
 
 ## `elvaria territory graph`
 

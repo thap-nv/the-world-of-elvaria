@@ -17,8 +17,10 @@ import {
 } from '@elvaria/domain';
 import { toVerdictCheck } from '@elvaria/runner-core';
 import type { EnvironmentFailure, Quest, Result, Territory, VerdictCheck } from '@elvaria/domain';
+import type { CheckRunMode } from '@elvaria/runner-core';
 
 import { partyChecks } from '../party/check.ts';
+import { modeMarkOf } from './check-mode.ts';
 import { deliverableChecks } from './deliverable-checks.ts';
 import { inScratch, trialFor } from './scratch.ts';
 import { screensChecks } from './screens.ts';
@@ -30,6 +32,8 @@ const messageOf = (error: unknown): string => (error instanceof Error ? error.me
 export interface ChecksOptions {
   readonly signal?: AbortSignal;
   readonly secrets?: Readonly<Record<string, string>>;
+  /** (CM-01) The run's check mode (checkModeFor); absent: full. A trial in a scratch plot always runs in full. */
+  readonly mode?: CheckRunMode;
 }
 
 /** What the checks of a run gave, and the first failing one whose environment failed (P1-54). */
@@ -65,7 +69,7 @@ export async function checksOf(
     // Tests as the product: the checks run again in a clean scratch plot, three times, coverage beside (ADR 0022).
     const runs = inScratch(ctx, quest)
       ? await ctx.deps.plots.trial({ ...asked, quest, ...trialFor(ctx, quest) })
-      : await ctx.deps.plots.check({ ...asked, plot: quest.plot });
+      : await ctx.deps.plots.check({ ...asked, plot: quest.plot, ...modeMarkOf(options.mode) });
     // The deliverable's own checks follow the territory's (P1-15: subquests.json of a plan quest), then the party's
     // (P1-18: every part merged into the merge quest), then the screens the territory's left a judge by eye (PS-11b).
     const checks = [

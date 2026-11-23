@@ -125,6 +125,39 @@ const patrolPlots = (kingdom: string, host: ProcessHost): Pick<Plots, 'patrol'> 
   },
 });
 
+/**
+ * The territory's checks (§3.2). The Steward runs them outside its tick and aborts `signal` when nobody waits for them
+ * any more (P1-25); they get the quest's secrets in the host's minimal env, and their logs are masked with them
+ * (P1-10b). A party's merge quest runs every check, its parts leave the `defer_to_merge` ones to it (P1-18). The
+ * commands of a narrow run read the diff's base in ELVARIA_CHECK_BASE (CM-01); a run in full gets none, so a `run`
+ * that reads it (check-changed.mjs turns narrow on it) runs as before CM-01.
+ */
+const checkPlots = (kingdom: string, manager: PlotManager, host: ProcessHost): Pick<Plots, 'check'> => ({
+  check: async ({
+    plot,
+    territory,
+    run_dir,
+    signal,
+    secrets,
+    party_role: role,
+    lock_wait_ms: wait,
+    mode,
+  }) => {
+    const touched = await manager.touched(plot);
+    const base = mode === 'narrow' ? ((await manager.checkBase?.(plot)) ?? undefined) : undefined;
+    const given = {
+      ...(mode === undefined ? {} : { mode }),
+      ...(base === undefined ? {} : { base }),
+      // An exclusive check waits out a judge that holds the lock for its session (P1-20).
+      ...(wait === undefined ? {} : { lock_wait_ms: wait }),
+      ...(signal === undefined ? {} : { signal }),
+      ...(secrets === undefined ? {} : { secrets }),
+      ...(role === undefined ? {} : { party_role: role }),
+    };
+    return runChecks({ kingdom, territory, touched, cwd: cwdOf(kingdom, plot), run_dir, ...given }, host);
+  },
+});
+
 export function plotsOver(kingdom: string, manager: PlotManager, host: ProcessHost): Plots {
   return {
     // `commands.setup` gets the quest's secrets in the host's minimal env, its log masked with them (P1-30); a new
@@ -144,20 +177,7 @@ export function plotsOver(kingdom: string, manager: PlotManager, host: ProcessHo
     restore: (plot) => manager.restore(plot),
     // Before the submit commit: the assignee's patch for laws.patch_paths (P1-28).
     applyPatch: (plot, patchPaths) => manager.applyPatch(plot, patchPaths),
-    // The Steward runs them outside its tick and aborts `signal` when nobody waits for them any more (P1-25); they
-    // get the quest's secrets in the host's minimal env, and their logs are masked with them (P1-10b).
-    // A party's merge quest runs every check, its parts leave the `defer_to_merge` ones to it (P1-18).
-    check: async ({ plot, territory, run_dir, signal, secrets, party_role: role, lock_wait_ms: wait }) => {
-      const touched = await manager.touched(plot);
-      const given = {
-        // An exclusive check waits out a judge that holds the lock for its session (P1-20).
-        ...(wait === undefined ? {} : { lock_wait_ms: wait }),
-        ...(signal === undefined ? {} : { signal }),
-        ...(secrets === undefined ? {} : { secrets }),
-        ...(role === undefined ? {} : { party_role: role }),
-      };
-      return runChecks({ kingdom, territory, touched, cwd: cwdOf(kingdom, plot), run_dir, ...given }, host);
-    },
+    ...checkPlots(kingdom, manager, host),
     // What the checks ran on: the run's next judge reuses them while the branch stays there (P1-38).
     head: (plot) => manager.head(plot),
     // What `check` picks the checks by: a continuing session's prompt names them (P1-43).

@@ -40,6 +40,8 @@ describe('status and touched', () => {
     const { repo, plot, worktree } = await preparedPlot('status repo', 'a2b3c4');
     expect(await plots().status(plot)).toEqual({ dirty: false, ahead: 0, branch: 'quest/q_20261107_a2b3c4' });
     expect(await plots().touched(plot)).toEqual([]);
+    // What a check reads in ELVARIA_CHECK_BASE (CM-01): the fork point, which main moving on does not move.
+    const fork = git(repo, 'rev-parse', 'HEAD');
 
     await commitFile(worktree, 'src/feature.ts', 'export const feature = 1;\n');
     await rm(path.join(worktree, 'README.md'));
@@ -55,6 +57,7 @@ describe('status and touched', () => {
     expect(await plots().touched(plot)).toEqual(['README.md', 'docs/new.md', 'src/app.ts', 'src/feature.ts']);
     // The head is the commit, whatever the worktree holds uncommitted (P1-38).
     expect(await plots().head(plot)).toBe(git(worktree, 'rev-parse', 'HEAD'));
+    expect(await plots().checkBase(plot)).toBe(fork);
   });
 
   it('say nothing for plots without git, and list a folder plot whole', async () => {
@@ -70,6 +73,7 @@ describe('status and touched', () => {
     expect(await plots().touched(folder)).toEqual(['notes/a.md']);
     expect(await plots().touched({ type: 'folder', path: 'quests/q_20261107_c4d5e6/work' })).toEqual([]);
     expect(await plots().touched(none)).toEqual([]);
+    expect(await plots().checkBase(folder)).toBeNull();
     expect(await plots().commitAll(folder, 'submit')).toEqual({ status: 'no_git' });
     expect(await plots().release(none)).toEqual({ ok: true, value: { removed: false, forget_failures: [] } });
   });

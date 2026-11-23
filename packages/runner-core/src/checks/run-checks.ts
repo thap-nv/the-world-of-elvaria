@@ -4,9 +4,12 @@
 // program not found, the exclusive lock never freed) fails rather than vanishing from the verdict. A failing check
 // whose log shows its environment failed (territory.environment_errors) says so (P1-54): its run says nothing of the
 // work. The checks that are not exclusive run first, so a check of seconds never waits out the lock (P1-54). Each
-// gets ELVARIA_SCREENS_DIR, where it leaves the screens its judge reads (PS-11b, screens.ts), emptied once a round.
+// gets ELVARIA_SCREENS_DIR, where it leaves the screens its judge reads (PS-11b, screens.ts), emptied once a round,
+// and, in a narrow run, ELVARIA_CHECK_BASE, the commit the plot's diff counts from (CM-01): what to check.
 import type { PartyRole, Territory, TerritoryCheck, VerdictCheck } from '@elvaria/domain';
 
+import { CHECK_BASE_ENV, checkLinesOf } from './check-mode.ts';
+import type { CheckRunMode } from './check-mode.ts';
 import { withEnvironment } from './environment.ts';
 import { exclusiveWaitOf, underExclusiveLock } from './exclusive-lock.ts';
 import type { LockScope } from './exclusive-lock.ts';
@@ -54,6 +57,16 @@ export interface ChecksRequest {
    * its scratch plot holds it for its whole session. Absent: the longest exclusive timeout + 1 min.
    */
   readonly lock_wait_ms?: number;
+  /**
+   * (CM-01, ADR 0032) `narrow`: each check runs its narrow command where it has one (checkModeOf decides, the Steward
+   * passes it). Absent: `full`, every check its `run`.
+   */
+  readonly mode?: CheckRunMode;
+  /**
+   * The commit the plot's diff counts from (PlotRecord.base), as ELVARIA_CHECK_BASE. The Steward gives it to a narrow
+   * run only: a run in full keeps the env it had before CM-01. Absent: none, as without git.
+   */
+  readonly base?: string;
 }
 
 export interface ChecksOptions {
@@ -143,6 +156,10 @@ async function cleanUp(
   if (!done.ok) await log.write(`${done.error}: the cleanup did not run\n`);
 }
 
+/** The command(s) the check runs in the request's run (CM-01). */
+const linesOf = (check: TerritoryCheck, request: ChecksRequest) =>
+  checkLinesOf(check, request.mode ?? 'full');
+
 /** One check, to its end or its timeout; `cleanup` runs after a timeout (implementation-plan §9.2). */
 export async function runCheck(
   check: TerritoryCheck,
@@ -152,18 +169,20 @@ export async function runCheck(
   options: RunCheckOptions = {},
 ): Promise<CheckRun> {
   const logPath = checkLogOf(request.run_dir, check.id);
+  const lines = linesOf(check, request);
   const given = withSecrets(host, request.secrets);
   const screens = await screensEnvOf(request.kingdom, request.run_dir);
-  const log = await openLog(request.kingdom, logPath, headerOf(check.run), given.known);
+  const base = request.base === undefined ? {} : { [CHECK_BASE_ENV]: request.base };
+  const log = await openLog(request.kingdom, logPath, headerOf(lines), given.known);
   const context = {
     cwd: request.cwd,
-    host: { ...given.host, env: { ...given.host.env, ...screens } },
+    host: { ...given.host, env: { ...given.host.env, ...screens, ...base } },
     ...(request.signal === undefined ? {} : { signal: request.signal }),
   };
   let ran: CheckRun;
   try {
     // A check of several commands stops at the first that fails, as CI's `&&` (P1-20).
-    const run = await runLines(check.run, context, log, timeoutMs);
+    const run = await runLines(lines, context, log, timeoutMs);
     if (run.timed_out && check.cleanup !== undefined)
       await cleanUp(check.cleanup, { request, options }, context, log);
     ran = {
@@ -194,7 +213,7 @@ async function runExclusive(
   );
   if (ran.ok) return ran.value;
   const logPath = checkLogOf(request.run_dir, check.id);
-  const log = await openLog(request.kingdom, logPath, headerOf(check.run));
+  const log = await openLog(request.kingdom, logPath, headerOf(linesOf(check, request)));
   await log.write(`${ran.error}\n`);
   await log.close();
   const run = { id: check.id, pass: false, duration_ms: 0, log_path: logPath, exit_code: null };
