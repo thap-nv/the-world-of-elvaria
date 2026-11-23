@@ -79,12 +79,15 @@ describe('the graph block of the system part (PS-21)', () => {
     );
   const COMMIT = '43566818d835f9acb3c24e8b2acffbfe90133284';
 
-  it('names the commit and how to ask, in the system part, and only there', () => {
+  it('keeps the graph guide in system and ends the user quest with the command to ask first', () => {
     const prompt = assignee('scout', { commit: COMMIT });
     expect(prompt.system).toContain('## Code graph');
     expect(prompt.system).toContain('`43566818d835`');
     expect(prompt.system).toContain("graphify affected '<name>'");
-    expect(prompt.user).not.toContain('graphify');
+    expect(prompt.user).not.toContain('## Code graph');
+    expect(prompt.user).toBe(
+      `${assignee('scout').user}\n\nBefore you open a second file, run \`graphify query '<code names or paths from this quest>'\` and start from the files it names; the Code graph section above says how.`,
+    );
     expect(prompt.blocks.find((block) => block.id === 'graph')?.part).toBe('system');
     expect(prompt.system).not.toContain('As a judge');
   });
