@@ -23,6 +23,7 @@ const GUARD_TEXT: Readonly<Record<QuestGuard, string>> = {
   can_retry: '`tier = session`, có `assignee`, `attempts < max_attempts`',
   machine_retry: '`tier = session`, không có `assignee` (lượt máy của quest ghép), `attempts < max_attempts`',
   out_of_retries: '`tier = script` hoặc `attempts ≥ max_attempts`',
+  session_out_of_retries: '`tier = session`, `attempts ≥ max_attempts` (bậc script không khớp)',
   seal_required: '`seal_required`',
   no_seal: '`!seal_required`',
   has_assignee: 'có `assignee`',
@@ -125,6 +126,12 @@ export const TRANSITION_NOTES: Readonly<Record<string, string>> = {
   'awaiting_seal.reject': 'lệnh `archive`',
   'done.deliver.undelivered':
     'giao hàng theo kind, ghi `deliverable.delivered_at`; không là trạng thái riêng để không nhân đôi',
+  'done.verdict_fail.can_retry':
+    'phán quyết máy muộn (ADR 0033, `verdicts/<quest>-<n>-late.json`, `late: true`): một check chạy sau phán quyết (hàng giao hàng, tàu) đỏ vì chính thay đổi của quest, trước khi nhánh vào nhánh gốc; bỏ `verifier`, `seal` và `deliverable.delivered_at`, giữ nhánh và đất; phiên làm lại đọc check đỏ và đuôi log; đạt lại thì qua dấu lần nữa nếu `seal_required`, rồi giao lại (PR cũ được cập nhật); người chấm đã cho đạt nhận một mục `fail` (`withOverturnedPass`)',
+  'done.verdict_fail.machine_retry':
+    'như trên, với lượt máy của quest ghép: không có người để trả về, quest mở lại cho hiệp sĩ (P1-18)',
+  'done.verdict_fail.session_out_of_retries':
+    'như trên, khi hết lượt: chuông; quest đã vào nhánh gốc ở lại `archived`, Nhiếp chính mở quest sửa (CM-06)',
   'done.archive':
     'lệnh `archive`, hoặc Nhiếp chính khi nhánh quest đã vào nhánh gốc (PS-08d: `delivery.merged`, hay lần dò mỗi 10 phút); xóa worktree khi archive, không sớm hơn',
   'infirmary.retry.no_stalled_review':

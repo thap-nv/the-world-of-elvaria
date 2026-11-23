@@ -1,13 +1,14 @@
 import { isTypedEvent } from '../../schema/event/event.ts';
 import { isQuestLogType } from '../../world/quest-log-type.ts';
 import { dayOf } from '../window.ts';
+import type { QuestId, TerritoryId } from '../../core/ids.ts';
 import type { Event, EventOf } from '../../schema/event/event.ts';
 import type { QuestLogType } from '../../world/quest-log-type.ts';
 import type { QuestView } from '../../world/quest-view.ts';
 import type { MetricsWindow } from '../window.ts';
 
 export interface QuestPeak {
-  readonly territory: string;
+  readonly territory: TerritoryId;
   readonly working: number;
   readonly review: number;
 }
@@ -17,8 +18,8 @@ function viewOf(event: Event): QuestView | undefined {
   return (event as EventOf<QuestLogType>).data.quest;
 }
 
-function record(views: ReadonlyMap<string, QuestView>, peaks: Map<string, QuestPeak>): void {
-  const counts = new Map<string, QuestPeak>();
+function record(views: ReadonlyMap<QuestId, QuestView>, peaks: Map<TerritoryId, QuestPeak>): void {
+  const counts = new Map<TerritoryId, QuestPeak>();
   for (const view of views.values()) {
     const count = counts.get(view.territory) ?? { territory: view.territory, working: 0, review: 0 };
     counts.set(view.territory, {
@@ -39,8 +40,8 @@ function record(views: ReadonlyMap<string, QuestView>, peaks: Map<string, QuestP
 
 /** Replay pre-window views too: a quest already working at midnight still occupies a slot. */
 export function questPeaksOf(events: readonly Event[], window: MetricsWindow): QuestPeak[] {
-  const views = new Map<string, QuestView>();
-  const peaks = new Map<string, QuestPeak>();
+  const views = new Map<QuestId, QuestView>();
+  const peaks = new Map<TerritoryId, QuestPeak>();
   for (const event of events) {
     const day = dayOf(event.ts);
     const view = viewOf(event);

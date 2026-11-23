@@ -2452,7 +2452,7 @@
                       "source_verdict": {
                         "description": "The fail verdict the line comes from; required to apply (no_source_verdict).",
                         "type": "string",
-                        "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user)?$"
+                        "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user|-late)?$"
                       }
                     }
                   },
@@ -2598,7 +2598,7 @@
                       "source_verdict": {
                         "description": "The fail verdict the line comes from; required to apply (no_source_verdict).",
                         "type": "string",
-                        "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user)?$"
+                        "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user|-late)?$"
                       }
                     }
                   }
@@ -2638,7 +2638,7 @@
                   "source_verdict": {
                     "description": "A fail verdict of the repeated failure: the memo's quest and run are that verdict's.",
                     "type": "string",
-                    "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user)?$"
+                    "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user|-late)?$"
                   },
                   "body": {
                     "type": "string",

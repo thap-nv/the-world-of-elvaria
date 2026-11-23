@@ -30,6 +30,11 @@ export const MACHINE_VERIFIER = 'machine';
 export const OWNER_VERDICT_SUFFIX = `-${USER_VERIFIER}`;
 /** After `<quest>-<n>`, then k: the partial verdict the k-th verifier session of run n left (P1-04). */
 export const PARTIAL_VERDICT_MARK = '-p';
+/**
+ * After `<quest>-<n>`: the machine's late verdict on run n (ADR 0033), a check that first ran after the run's pass
+ * turned red; never the file of the review whose pass it overturns.
+ */
+export const LATE_VERDICT_SUFFIX = '-late';
 const PARTIAL_SUFFIX = new RegExp(`^${PARTIAL_VERDICT_MARK}[1-9][0-9]*$`);
 
 const VerdictCheckSchema = z.strictObject({
@@ -95,6 +100,14 @@ const VerdictFieldsSchema = z.strictObject({
         "Only on the owner's return (`elvaria return --rejudge`, P1-40): the quest goes back for a new judgement because the judge erred, not the assignee, so the assignee's reputation and fail streak do not count it.",
       ),
     ),
+  late: z
+    .boolean()
+    .optional()
+    .meta(
+      describe(
+        "(ADR 0033) Only on the machine's fail of a run already passed, file <quest>-<n>-late.json: a check that first ran after the verdict (the delivery queue, a train, the patrol of the base branch) turned red through the quest's own change. The assignee takes it as any fail; the judge who passed the run takes one fail entry; the metrics count it as an escaped defect.",
+      ),
+    ),
   objection: ObjectionSchema.optional().meta(
     describe(
       "(PS-22) The objection this judge answered, from the quest: the verdict is final, and a pass drops the contested verdict from the assignee's reputation and fail streak, as a rejudge does. Never on the owner's verdict.",
@@ -111,11 +124,12 @@ const isFail = (verdict: VerdictFields) => verdict.result === 'fail';
 
 /**
  * `<quest_id>-<attempt>`, the file name saying which run it judges (implementation-plan §2.1); `-p<k>` only on a
- * partial verdict and `-user` only on the owner's, so a run's judgements never share a file. A plain id on a
- * partial or a human verdict stays valid: files written before P1-04 read as they did.
+ * partial verdict, `-user` only on the owner's and `-late` on a late one and only there, so a run's judgements never
+ * share a file. A plain id on a partial or a human verdict stays valid: files written before P1-04 read as they did.
  */
 function idFits(verdict: VerdictFields): boolean {
   const base = `${verdict.quest_id}-${verdict.attempt}`;
+  if (verdict.late === true) return verdict.id === `${base}${LATE_VERDICT_SUFFIX}`;
   if (verdict.id === base) return true;
   if (!verdict.id.startsWith(base)) return false;
   const suffix = verdict.id.slice(base.length);
@@ -202,11 +216,24 @@ const VERDICT_RULES: readonly Rule<VerdictFields>[] = [
       ),
   },
   {
+    // A late verdict is the machine's fail of a run already passed (ADR 0033); no judge or owner writes one.
+    contract: {
+      if: { properties: { late: { const: true } }, required: ['late'] },
+      then: { properties: { verifier_id: { const: MACHINE_VERIFIER }, result: { const: 'fail' } } },
+    },
+    check: (verdict) =>
+      issueIf(
+        verdict.late === true && !(verdict.verifier_id === MACHINE_VERIFIER && isFail(verdict)),
+        ['late'],
+        "late marks only the machine's fail of a run already passed",
+      ),
+  },
+  {
     check: (verdict) =>
       issueIf(
         !idFits(verdict),
         ['id'],
-        "the verdict id is <quest_id>-<attempt>, with -p<k> on a partial verdict and -user on the owner's",
+        "the verdict id is <quest_id>-<attempt>, with -p<k> on a partial verdict, -user on the owner's and -late on a late one",
       ),
   },
   {
@@ -225,8 +252,8 @@ const VERDICT_RULES: readonly Rule<VerdictFields>[] = [
 export const VerdictSchema = VerdictFieldsSchema.superRefine(checkRules(VERDICT_RULES)).meta({
   title: 'Verdict',
   description:
-    'verdicts/<quest>-<n>.json: the judgement on attempt n of a quest. Written by a judge in a fresh session spawned by the Steward, by the Steward itself (`machine`: script tier or verifier_same_family = machine_only), or by the owner (`user`: royal seal or return, weighs 3x in reputation; file <quest>-<n>-user.json). A partial verdict, left by a judge stopped before the end, is <quest>-<n>-p<k>.json, k counting the verifier sessions of run n. Machine checks run before the judge and are the primary judge.',
-  $comment: `${GENERATED_NOTE} Not expressible here, checked by zod: id = quest_id + '-' + attempt, followed by -p<k> only when result = partial and by -user only when by_human = true; a character verdict (verifier_id neither user nor machine) has a session_id. Not checked by this schema because they need the quest or the registry, enforced by validateVerdict in packages/domain: verifier_id is neither the assignee nor anyone who worked the quest; a character verdict is valid only if session_id belongs to a verifier attempt in quest.attempt_log spawned by the Steward (never a sub-agent of the worker); under pass_rule all_checks_and_agent or checks_only, result is never pass while any check has pass = false. Enforced by the Steward when a judge hands a verdict in, not here, so files written before P1-40 stay valid: a judge's pass has notes, and in a scratch plot whose ritual breaks code it has at least two breaks, else it is taken as partial.`,
+    'verdicts/<quest>-<n>.json: the judgement on attempt n of a quest. Written by a judge in a fresh session spawned by the Steward, by the Steward itself (`machine`: script tier or verifier_same_family = machine_only), or by the owner (`user`: royal seal or return, weighs 3x in reputation; file <quest>-<n>-user.json). A partial verdict, left by a judge stopped before the end, is <quest>-<n>-p<k>.json, k counting the verifier sessions of run n. (ADR 0033) A late verdict, the fail the machine gives a run already passed when a check that first ran after the verdict turns red, is <quest>-<n>-late.json. Machine checks run before the judge and are the primary judge.',
+  $comment: `${GENERATED_NOTE} Not expressible here, checked by zod: id = quest_id + '-' + attempt, followed by -p<k> only when result = partial, by -user only when by_human = true, and by -late exactly when late = true; a character verdict (verifier_id neither user nor machine) has a session_id. Not checked by this schema because they need the quest or the registry, enforced by validateVerdict in packages/domain: verifier_id is neither the assignee nor anyone who worked the quest; a character verdict is valid only if session_id belongs to a verifier attempt in quest.attempt_log spawned by the Steward (never a sub-agent of the worker); under pass_rule all_checks_and_agent or checks_only, result is never pass while any check has pass = false. Enforced by the Steward when a judge hands a verdict in, not here, so files written before P1-40 stay valid: a judge's pass has notes, and in a scratch plot whose ritual breaks code it has at least two breaks, else it is taken as partial.`,
   allOf: allOfRules(VERDICT_RULES),
 });
 

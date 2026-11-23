@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { at, questId, questOf } from './__fixtures__/ledger.ts';
+import { at, questId, questOf, verdictOf } from './__fixtures__/ledger.ts';
 import {
   THORN,
   VESPER,
@@ -42,6 +42,19 @@ describe('lessonEvidenceOf: rulings, judge sessions and the window (PS-12b)', ()
       const { runs, judgements } = lessonEvidenceOf(input);
       expect(runs[0]).toMatchObject({ result: 'fail', fail_kind: 'other' });
       expect(judgements).toEqual([{ quest: Q1, n: 1, session: 'v1', at: at(6), lessons: [J], stood: false }]);
+    });
+
+    it('a late machine verdict on a passed run: the run fails, and the judge’s pass did not stand (ADR 0033)', () => {
+      const late = verdictOf(1, 1, 'fail', { late: true, fail_kind: 'tests_fail', minute: 40 });
+      const input = ledgerOf({
+        quests: [quest],
+        verdicts: [judged(1, 'pass', 'v1', 8), late],
+        events: lines,
+        characters: [THORN, VESPER],
+      });
+      const { runs, judgements } = lessonEvidenceOf(input);
+      expect(runs[0]).toMatchObject({ result: 'fail', fail_kind: 'tests_fail', verdict: `${Q1}-1-late` });
+      expect(judgements[0]?.stood).toBe(false);
     });
 
     it('a return with `rejudge`: the judge erred, not the assignee, so the pass left stands for the run', () => {

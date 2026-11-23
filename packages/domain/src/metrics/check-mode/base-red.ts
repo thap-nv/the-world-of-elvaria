@@ -1,12 +1,16 @@
 import { MS_PER_MINUTE } from '../../constants.ts';
 import { isEventOf } from '../../schema/event/event.ts';
 import { dayOf, inWindow } from '../window.ts';
+import { CheckIdSchema } from '../../core/ids.ts';
+import type { CheckId, TerritoryId } from '../../core/ids.ts';
 import type { Event } from '../../schema/event/event.ts';
 import type { MetricsWindow } from '../window.ts';
 
+const SETUP = CheckIdSchema.parse('setup');
+
 export interface BaseRedTime {
-  readonly territory: string;
-  readonly check: string;
+  readonly territory: TerritoryId;
+  readonly check: CheckId;
   readonly since: string;
   readonly until: string | null;
   readonly minutes: number | null;
@@ -15,7 +19,7 @@ export interface BaseRedTime {
 function observe(
   open: Map<string, BaseRedTime>,
   closed: BaseRedTime[],
-  row: { territory: string; check: string; pass: boolean; ts: string },
+  row: { territory: TerritoryId; check: CheckId; pass: boolean; ts: string },
 ): void {
   const key = JSON.stringify([row.territory, row.check]);
   const before = open.get(key);
@@ -41,9 +45,11 @@ export function baseRedTimesOf(events: readonly Event[], window: MetricsWindow):
     if (!isEventOf(event, 'patrol.ran') || event.data.plot_failure !== undefined) continue;
     const { territory, checks, setup } = event.data;
     const results = checks.filter((check) => !check.environment);
-    const all = setup === null ? results : [...results, { id: 'setup', pass: setup.pass }];
+    const all = setup === null ? results : [...results, { id: SETUP, pass: setup.pass }];
     for (const result of all) {
-      observe(open, closed, { territory, check: result.id, pass: result.pass, ts: event.ts });
+      // The patrol schema types `checks[].id` as a bare string; the Steward writes it from a territory check id
+      // (`CheckIdSchema`), so it is a CheckId by construction.
+      observe(open, closed, { territory, check: result.id as CheckId, pass: result.pass, ts: event.ts });
     }
   }
   // Report intervals touching the window with their actual endpoints, rather than inventing a midnight recovery.

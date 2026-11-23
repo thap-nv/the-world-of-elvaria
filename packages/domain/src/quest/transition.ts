@@ -31,12 +31,15 @@ export function findTransition(
 /**
  * The runner speaks for the assignee and the verifier for itself, so each needs someone in that role. The Steward
  * judges only when no verifier holds the quest: a machine verdict never overrides a verifier's session (ADR 0008).
+ * A judge holds a quest only in review; a done quest keeps the judge that passed it, whose pass the Steward's late
+ * verdict overturns (ADR 0033).
  */
 function actorHolds(quest: Quest, event: QuestEvent, actor: QuestActor): boolean {
   if (actor === 'runner') return typeof quest.assignee === 'string';
   if (actor === 'verifier') return typeof quest.verifier === 'string';
   const verdict = event.type === 'verdict_pass' || event.type === 'verdict_fail';
-  return actor !== 'steward' || !verdict || typeof quest.verifier !== 'string';
+  const judging = quest.status === 'review' && typeof quest.verifier === 'string';
+  return actor !== 'steward' || !verdict || !judging;
 }
 
 const issuesOf = (error: z.ZodError): string[] =>

@@ -45,7 +45,9 @@ const matchingRows = (quest: Quest, type: QuestEventType, event?: QuestEvent) =>
 const holds = (quest: Quest, type: QuestEventType, actor: QuestActor): boolean => {
   if (actor === 'runner') return typeof quest.assignee === 'string';
   if (actor === 'verifier') return typeof quest.verifier === 'string';
-  if (actor === 'steward' && type.startsWith('verdict_')) return typeof quest.verifier !== 'string';
+  // A judge holds the quest only in review; the late verdict on a done quest is the Steward's (ADR 0033).
+  if (actor === 'steward' && type.startsWith('verdict_'))
+    return quest.status !== 'review' || typeof quest.verifier !== 'string';
   return true;
 };
 

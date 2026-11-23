@@ -137,6 +137,8 @@ Khảo sát ở `b9386dfd`. Số dòng nối tiếp bảng "Điều code cho th�
 
 ## PS-08f — Check của forge đỏ ⇒ trả bài
 
+(Sửa 2026-11-23 theo C12 khi CM-05 xong, [plans/check-modes.md](check-modes.md), dòng §8 của PS-08f) Ý 1 và "Kèm ADR mới" dưới đây đã được thay: CM-05 thêm ba hàng `done` + `verdict_fail` (`can_retry`, `machine_retry`, `session_out_of_retries`) và phán quyết máy muộn (`verdicts/<quest>-<n>-late.json`, ADR 0033), không có hàng `return` nào; ý 2 chọn phán quyết của máy; ý 3 (lỗi lọt) đã có ở `escapedOf`. PS-08f còn lại phần Nhiếp chính: check của forge đỏ ⇒ `lateVerdictOf` rồi nước `verdict_fail`.
+
 - **Mục tiêu**: như ADR 0023: check bắt buộc của PR đỏ thì quest về người làm kèm log, không cần chủ nhân.
 - **Khi nào mở**: khi một lãnh thổ khai `required_checks` (mục (B)). Hôm nay không lãnh thổ nào có check trên PR, nên trước đó không ca thật nào chạy qua đường này.
 - **Đổi máy trạng thái** (Đọc trước khi sửa: `transitions.ts`, `transition.ts`, `effects.ts`, spec của chúng, §2.5), tối đa ba ý:

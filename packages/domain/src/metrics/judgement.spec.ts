@@ -19,10 +19,12 @@ describe('firstPassOf', () => {
     expect(passOf(JUDGED, [verdictOf(1, 1, 'pass', { minute: 7 }), seal])).toBe(true);
   });
 
-  it('fails a first run with a fail verdict, the owner overturning a pass included', () => {
+  it('fails a first run with a fail verdict, the owner or a late machine verdict overturning a pass included', () => {
     expect(passOf(JUDGED, [verdictOf(1, 1, 'fail', { fail_kind: 'style', minute: 7 })])).toBe(false);
     const returned = verdictOf(1, 1, 'fail', { owner: true, fail_kind: 'style', minute: 20 });
     expect(passOf(JUDGED, [verdictOf(1, 1, 'pass', { minute: 7 }), returned])).toBe(false);
+    const late = verdictOf(1, 1, 'fail', { late: true, fail_kind: 'tests_fail', minute: 90 });
+    expect(passOf(JUDGED, [verdictOf(1, 1, 'pass', { minute: 7 }), late])).toBe(false);
   });
 
   it('fails a first run that ended without a verdict when another run followed', () => {
@@ -60,8 +62,20 @@ describe('escapedOf', () => {
       verdictOf(1, 3, 'fail', { owner: true, fail_kind: 'style', minute: 70 }),
     ];
     expect(escapedOf({ quest: questOf(1, JUDGED), verdicts, trips: [] })).toEqual([
-      { quest: questOf(1, []).id, n: 1, at: at(20), fail_kind: 'wrong_facts', rejudge: true },
-      { quest: questOf(1, []).id, n: 2, at: at(50), fail_kind: null, rejudge: false },
+      { quest: questOf(1, []).id, n: 1, at: at(20), fail_kind: 'wrong_facts', rejudge: true, late: false },
+      { quest: questOf(1, []).id, n: 2, at: at(50), fail_kind: null, rejudge: false, late: false },
+    ]);
+  });
+
+  it('lists a late machine verdict on a passed run beside them, and no machine fail of a run never passed (ADR 0033)', () => {
+    const verdicts = [
+      verdictOf(1, 1, 'pass', { minute: 7 }),
+      verdictOf(1, 1, 'fail', { late: true, fail_kind: 'tests_fail', minute: 90 }),
+      // The machine judging a run alone fails it in review: nothing had passed, nothing escaped.
+      verdictOf(1, 2, 'fail', { machine: true, fail_kind: 'tests_fail', minute: 120 }),
+    ];
+    expect(escapedOf({ quest: questOf(1, JUDGED), verdicts, trips: [] })).toEqual([
+      { quest: questOf(1, []).id, n: 1, at: at(90), fail_kind: 'tests_fail', rejudge: false, late: true },
     ]);
   });
 });
