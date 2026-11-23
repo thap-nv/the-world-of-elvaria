@@ -15,7 +15,7 @@ import {
   snapshot,
   territory,
 } from './__fixtures__/snapshot.ts';
-import { forgeDue } from './forge-due.ts';
+import { forgeDue, queueAtWorkOf } from './forge-due.ts';
 import { planTick } from './plan-tick.ts';
 import type { QuestId } from '../core/ids.ts';
 import type { Quest } from '../schema/quest/quest.ts';
@@ -96,5 +96,36 @@ describe('planTick: forge_deliveries', () => {
   it('lists a done quest not delivered yet for step 7 first, and for its forge in a later tick', () => {
     const plan = planTick(snapshot([done(Q1, {}, false)], [], { territories: [onPr] }), NOW);
     expect(plan).toMatchObject({ deliveries: [Q1], forge_deliveries: [] });
+  });
+});
+
+describe('queueAtWorkOf (CM-03)', () => {
+  const PR_MERGE: TerritoryDelivery = { ...PR, mode: 'pr_merge' };
+  const territories = [
+    { ...territory(TERRITORY), delivery: PR_MERGE },
+    { ...territory(DOCS), delivery: PR },
+  ];
+  const source = (more: Partial<KingdomSnapshot> = {}) => ({ territories, ...more });
+  const sealed = (id: QuestId, fields: Partial<Quest> = {}) => done(id, { seal: { at: at(20) }, ...fields });
+
+  it('names a territory whose delivery is due, runs, or whose sealed pull request waits to be merged', () => {
+    expect(queueAtWorkOf(source(), [done(Q1)])).toEqual([TERRITORY]);
+    expect(
+      queueAtWorkOf(source({ background: { running: [Q4], checked: [] } }), [done(Q4, { territory: DOCS })]),
+    ).toEqual([DOCS]);
+    const waits = source({ forge: [Q1], forge_waits: [{ quest: Q1, since: NOW }] });
+    expect(queueAtWorkOf(waits, [sealed(Q1)])).toEqual([TERRITORY]);
+    // Two at work, by id: the delivery running on the handbook, the one due on dc1-se-team.
+    const both = source({ background: { running: [Q4], checked: [] } });
+    expect(queueAtWorkOf(both, [done(Q4, { territory: DOCS }), done(Q1)])).toEqual([TERRITORY, DOCS]);
+  });
+
+  it('leaves out a territory whose quests are settled, merged or wait for the owner’s merge', () => {
+    expect(queueAtWorkOf(source({ forge: [Q1] }), [done(Q1)])).toEqual([]);
+    expect(queueAtWorkOf(source({ in_base: [Q1] }), [sealed(Q1)])).toEqual([]);
+    // Under `pr` the owner merges: an open pull request holds no lane.
+    const owners = source({ forge: [Q4], forge_waits: [{ quest: Q4, since: NOW }] });
+    expect(queueAtWorkOf(owners, [sealed(Q4, { territory: DOCS })])).toEqual([]);
+    expect(queueAtWorkOf(source(), [])).toEqual([]);
   });
 });

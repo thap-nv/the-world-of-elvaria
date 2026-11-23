@@ -137,4 +137,18 @@ describe('startingNow', () => {
       deliveries: [],
     });
   });
+
+  it('gives a patrol outside the tick a slot, short work beside trials too (CM-03)', () => {
+    const quests = [trial(Q1), short(Q2), short(Q3)];
+    const patrolling = (running: readonly QuestId[], patrols: number) =>
+      sourceOf(quests, running, { background: { running, checked: [], patrols } });
+    // KINGDOM has two slots: the patrol holds one, the first check takes the other.
+    expect(startingNow(patrolling([], 1), [Q2, Q3], [])).toEqual({
+      checks: [Q2],
+      scripts: [],
+      deliveries: [],
+    });
+    // A trial holds the other slot: the patrol is the short work beside it, nothing more starts.
+    expect(startingNow(patrolling([Q1], 1), [Q2], [])).toEqual({ checks: [], scripts: [], deliveries: [] });
+  });
 });

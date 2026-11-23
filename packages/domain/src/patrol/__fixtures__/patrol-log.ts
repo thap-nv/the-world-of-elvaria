@@ -59,14 +59,20 @@ export const ran = (
   extra: Readonly<Record<string, unknown>> = {},
 ): Event => lineOf('patrol.ran', ts, ranData(checks, extra));
 
-export const merged = (ts: string, quest: QuestId, sealed = true, territory = TERRITORY): Event =>
+export const merged = (
+  ts: string,
+  quest: QuestId,
+  sealed = true,
+  territory = TERRITORY,
+  mergeSha = SHA_B,
+): Event =>
   lineOf('delivery.merged', ts, {
     quest,
     territory,
     branch: `quest/${quest}`,
     head: SHA_B,
     pr: { number: 7, url: 'https://github.com/o/r/pull/7' },
-    merge_sha: SHA_B,
+    merge_sha: mergeSha,
     method: 'merge',
     sealed,
     branch_deleted: true,

@@ -132,3 +132,15 @@ export function forgeDeliveries(source: ForgeSource, done: readonly Quest[]): Qu
   }
   return picked;
 }
+
+/**
+ * (CM-03) The territories whose merge queue is at work, by id: a delivery runs or is due there, or a sealed pull
+ * request waits there to be merged. The patrol after a merge waits for them (mergedPatrolOf), so a burst of merges is
+ * patrolled once, at its last head.
+ */
+export function queueAtWorkOf(source: ForgeSource, done: readonly Quest[]): TerritoryId[] {
+  const due = new Set(forgeDeliveries(source, done));
+  const busy = busyOf(source, done, new Set(source.forge_stale));
+  for (const quest of done) if (due.has(quest.id)) busy.add(quest.territory);
+  return [...busy].toSorted((a, b) => a.localeCompare(b));
+}
