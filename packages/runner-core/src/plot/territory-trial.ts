@@ -6,11 +6,12 @@
 // told apart). No branch is made, and the worktree goes, whatever happened, once the trial ends: it leaves only its
 // logs in the kingdom's `.runs/`. 0 mana: no session, no model. (PS-26) The Steward's patrol runs the same trial under a
 // name of its own (`patrol-<territory>`: a `territory check` at the same time keeps its plot), then its scans in the
-// plot before it goes (`inPlot`).
+// plot before it goes (`inPlot`). (CM-04) The probe of a red branch runs it under `probe-<territory>` on a commit it
+// names (no fetch: the patrol fetched it) and with the red checks only.
 import process from 'node:process';
 
 import { commandLinesOf } from '@elvaria/domain';
-import type { Territory, TerritoryTrial, TrialCheck, TrialStep } from '@elvaria/domain';
+import type { CommitLink, Territory, TerritoryTrial, TrialCheck, TrialStep } from '@elvaria/domain';
 import { fromPortable } from '@elvaria/store';
 
 import { withEnvironment } from '../checks/environment.ts';
@@ -35,6 +36,9 @@ export const trialRunDirOf = (territory: string): string => `.runs/${trialIdOf(t
 /** The patrol's plot and run id (PS-26); no quest id starts with it either. */
 export const patrolIdOf = (territory: string): string => `patrol-${territory}`;
 
+/** (CM-04) The probe's plot and run id; no quest id starts with it either. */
+export const probeIdOf = (territory: string): string => `probe-${territory}`;
+
 export interface TerritoryTrialRequest {
   /** The kingdom root, native: the logs and the exclusive lock live there. */
   readonly kingdom: string;
@@ -53,6 +57,10 @@ export interface TerritoryTrialRequest {
   readonly name?: string;
   /** Runs in the plot after the checks and before it goes, unless stopped (PS-26: the patrol's scans). */
   readonly inPlot?: (worktree: string) => Promise<void>;
+  /** (CM-04) The commit to try, already in the repo, instead of the fork point after a fetch. */
+  readonly commit?: string;
+  /** (CM-04) Only these checks of the territory, by id; every one when absent. */
+  readonly checks?: readonly string[];
 }
 
 export interface TerritoryTrialRun {
@@ -120,7 +128,12 @@ async function checkStep(kingdom: string, territory: Territory, run: CheckRun): 
 
 /** Setup, then every check of the territory unless the setup failed, in the trial's plot. */
 async function stepsIn(request: TerritoryTrialRequest, worktree: string) {
-  const { kingdom, territory, host, signal } = request;
+  const { kingdom, host, signal } = request;
+  const only = request.checks;
+  const territory =
+    only === undefined
+      ? request.territory
+      : { ...request.territory, checks: request.territory.checks.filter(({ id }) => only.includes(id)) };
   const setup = await setupStep(request, worktree);
   if (setup !== null && !setup.pass) return { setup, checks: [] };
   // A party's merge quest runs every check whatever it touched (select-checks.ts): so does the trial.
@@ -199,9 +212,12 @@ export async function tryTerritory(request: TerritoryTrialRequest): Promise<Terr
   // What prepare ensures for every quest plot, so the trial's folder stays out of the owner's status.
   await ensurePlotExcludes(common.stdout.trim());
   await ensureLongPaths(git, repo, request.platform ?? process.platform);
-  const fork = await forkPoint({ git, repo, vcs: territory.vcs });
-  if (!fork.ok) return failed(fork.error.detail);
-  const base = fork.value;
+  let base = request.commit;
+  if (base === undefined) {
+    const fork = await forkPoint({ git, repo, vcs: territory.vcs });
+    if (!fork.ok) return failed(fork.error.detail);
+    base = fork.value;
+  }
   const target = { repo, worktree: worktreePathOf(repo, territory.worktree_dir, nameOf(request)) };
   // A trial stopped hard (the terminal closed) left its folder: it goes first, as a judge's scratch plot does.
   const left = await removeScratch(git, target, []);
@@ -216,4 +232,31 @@ export async function tryTerritory(request: TerritoryTrialRequest): Promise<Terr
       run = { ...run, leftover: `${target.worktree}: ${leftover}` };
   }
   return run;
+}
+
+export interface CommitLinksRequest {
+  readonly territory: Territory;
+  readonly host: ProcessHost;
+  readonly head: string;
+  /** The commits it has are left out. */
+  readonly exclude: string;
+}
+
+/**
+ * (CM-04) What the probe of a red branch asks of git besides the trial of a commit: `git rev-list --parents <head>
+ * ^<exclude>`, from which the domain draws its steps and a quest's own head; no fetch, the patrol fetched them.
+ * undefined without git, or when git does not know one of them.
+ */
+export async function commitLinksOf(request: CommitLinksRequest): Promise<CommitLink[] | undefined> {
+  const { territory, host, head, exclude } = request;
+  if (territory.vcs.type !== 'git') return undefined;
+  const git = await gitOf(host);
+  if (git === undefined) return undefined;
+  const args = ['rev-list', '--parents', '--end-of-options', head, `^${exclude}`];
+  const run = await git(fromPortable(territory.path), args);
+  if (run.code !== 0) return undefined;
+  return run.stdout
+    .split('\n')
+    .map((line) => line.trim().split(' '))
+    .flatMap(([commit = '', ...parents]) => (commit === '' ? [] : [{ commit, parents }]));
 }

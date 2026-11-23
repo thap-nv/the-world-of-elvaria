@@ -8,8 +8,10 @@ import process from 'node:process';
 
 import { TerritorySchema, ok } from '@elvaria/domain';
 import {
+  commitLinksOf,
   createPlotManager,
   patrolIdOf,
+  probeIdOf,
   scratchAgain,
   trialInScratch,
   tryTerritory,
@@ -61,7 +63,10 @@ export async function gitRepoWith(folder: string, files: Readonly<Record<string,
  * Plots of PlotManager: worktrees, commits, patches and the looks at the base branch (PS-08d) for real; no check, and
  * nothing to release unless `release` (the specs that archive a quest by its branch in base, PS-08d).
  */
-export function gitPlots(kingdom: string, options: { readonly release?: boolean } = {}): Plots {
+export function gitPlots(
+  kingdom: string,
+  options: { readonly release?: boolean; readonly probe?: boolean } = {},
+): Plots {
   const host = {
     resolve: (name: string) => Promise.resolve({ file: name === 'node' ? process.execPath : name, args: [] }),
     env: childEnv(),
@@ -116,6 +121,16 @@ export function gitPlots(kingdom: string, options: { readonly release?: boolean 
       const name = patrolIdOf(territory.id);
       return (await tryTerritory({ kingdom, territory, host, name, signal, inPlot: scan })).trial;
     },
+    // The probe as `elvaria run` makes it (CM-04), when asked: a spec without it runs no probe.
+    ...(options.probe === true
+      ? {
+          probe: async (territory, commit, checks, signal) => {
+            const name = probeIdOf(territory.id);
+            return (await tryTerritory({ kingdom, territory, host, name, signal, commit, checks })).trial;
+          },
+          commitLinks: (territory, head, exclude) => commitLinksOf({ territory, host, head, exclude }),
+        }
+      : {}),
   };
 }
 

@@ -14,6 +14,8 @@ export * from './event/chancellor-data.ts';
 export * from './event/delegation-data.ts';
 export * from './event/delivery-data.ts';
 export * from './event/patrol-data.ts';
+export { CHECK_CAUSES, CheckAttributedDataSchema, PROBE_SOURCES } from './event/check-data.ts';
+export type { CheckAttributedData, CheckCause, ProbeSource } from './event/check-data.ts';
 export * from './event/event-data.ts';
 export * from './event/event-types.ts';
 export * from './event/event.ts';

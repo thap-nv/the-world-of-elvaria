@@ -2,8 +2,9 @@
 // the size limit (PS-26).
 import { z } from 'zod';
 
-import { REGISTRY_ID_PATTERN } from '../../core/ids.ts';
+import { QuestIdSchema, REGISTRY_ID_PATTERN, TerritoryIdSchema } from '../../core/ids.ts';
 import { NonEmptyStringSchema } from '../common.ts';
+import { CommitShaSchema } from './upgrade-data.ts';
 
 const describe = (description: string) => ({ description });
 const SnakeIdSchema = z.string().regex(REGISTRY_ID_PATTERN);
@@ -79,3 +80,60 @@ export const CheckEndDataSchema = z.strictObject({
       ),
     ),
 });
+
+// (CM-04, ADR 0032) The probe after a red patrol (later the merge queue's and the train's): which commit of the default
+// branch first turned the red checks red, and why. A new type: older readers never meet it in an older log, so `v`
+// stays 2 and nothing migrates (ADR 0003).
+export const PROBE_SOURCES = ['queue', 'train', 'patrol'] as const;
+export type ProbeSource = (typeof PROBE_SOURCES)[number];
+
+export const CHECK_CAUSES = ['own_change', 'combination', 'outside', 'flaky', 'unknown'] as const;
+export type CheckCause = (typeof CHECK_CAUSES)[number];
+
+const ProbeRunSchema = z.strictObject({
+  commit: CommitShaSchema.meta(describe('The commit the checks ran on.')),
+  quest: QuestIdSchema.optional().meta(
+    describe(
+      "Present on the run of a quest's own head, before its newest merge of the base branch (step 4).",
+    ),
+  ),
+  pass: z
+    .boolean()
+    .meta(describe('Every check passed or failed for its environment; false also when a run could not say.')),
+  duration_ms: DurationMsSchema,
+});
+
+export const CheckAttributedDataSchema = z
+  .strictObject({
+    territory: TerritoryIdSchema,
+    source: z.enum(PROBE_SOURCES),
+    checks: z
+      .array(SnakeIdSchema)
+      .min(1)
+      .meta(
+        describe('The red checks the probe ran (`setup` for commands.setup): only those, at each commit.'),
+      ),
+    runs: z
+      .array(ProbeRunSchema)
+      .meta(describe("In order: the binary search, the rerun of the first red step, the quest's own head.")),
+    commit: CommitShaSchema.optional().meta(
+      describe('The first red step of the default branch; absent when the probe could not find it.'),
+    ),
+    culprit: QuestIdSchema.optional().meta(
+      describe('The quest whose merge is that step (own_change, combination).'),
+    ),
+    cause: z
+      .enum(CHECK_CAUSES)
+      .meta(
+        describe(
+          "own_change: the quest's own head is red; combination: its head and the branch before it are green, the merge red; outside: the step is no quest's merge; flaky: red, then green on the same commit; unknown: no green head, too many steps, a run that timed out or could not run.",
+        ),
+      ),
+  })
+  .meta(
+    describe(
+      'The Steward probed a red default branch (CM-04, ADR 0032): the commits from the latest green head, the red checks only, at most PROBE_RUNS_MAX runs. No model, no mana.',
+    ),
+  );
+
+export type CheckAttributedData = z.infer<typeof CheckAttributedDataSchema>;

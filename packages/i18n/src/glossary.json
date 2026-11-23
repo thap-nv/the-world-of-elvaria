@@ -2534,6 +2534,11 @@
               "meaning": "Tuần tra của Nhiếp chính chạy xong trên nhánh gốc của một lãnh thổ (PS-26): đầu nhánh đã thử (`head`), `trigger`, `setup`, từng check (đạt, thời gian, quá giờ, bị gạt vì môi trường, dòng lỗi đầu, log) và từng script quét (kết cục, số mục), hay `plot_failure` khi không dựng được đất. Cùng lúc một dòng `territory.health` mang `ci` và `last_patrol_at` cho tầng thế giới"
             },
             {
+              "group": "Phép dò",
+              "types": ["check.attributed"],
+              "meaning": "Nhiếp chính dò nhánh gốc đỏ sau một lần tuần tra (CM-04, ADR 0032), 0 mana: chỉ chạy các check đỏ, tìm nhị phân trên các commit theo cha thứ nhất từ đầu xanh gần nhất tới đầu đỏ (tối đa `PROBE_RUNS_MAX` lần chạy), rồi ghi `cause` (`own_change`, `combination`, `outside`, `flaky`, `unknown`), bước đỏ đầu (`commit`), quest gây ra (`culprit`) và từng lần chạy (`runs`); `source` là `patrol` (sau này cả `queue`, `train`). Mục bản tấu `base_red` nêu kết luận"
+            },
+            {
               "group": "Ủy quyền dấu",
               "types": ["quest.escaped", "delegation.suspended", "delegation.resumed"],
               "meaning": "Cầu dao của ủy quyền dấu (PS-08g, ADR 0023): `quest.escaped` khi chủ nhân báo một lỗi lọt theo một quest đã vào nhánh gốc (`delegated`: quest được merge không qua dấu; `note` tùy chọn); `delegation.suspended` khi Nhiếp chính ngừng ủy quyền của một lãnh thổ, đúng một lần mỗi lần ngừng, mang `quest` bị nêu, `cause` và `check` (khi `base_red`) hay `note` (khi `escape_reported`); `delegation.resumed` khi chủ nhân bật lại. Lãnh thổ đang ngừng chỉ suy từ hai dòng sau (`sealSuspendedOf`)"

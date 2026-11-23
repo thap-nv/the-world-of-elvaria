@@ -5,12 +5,18 @@
 // quests merged since the last patrol that found that check green: the digest's `base_red` items, the bell, the draft
 // quest, the metrics, and later PS-09d (stop taking quests) and PS-08g (the seal delegation's breaker) read it.
 import { isEventOf } from '../schema/event/event.ts';
+import { SETUP_CHECK } from './constants.ts';
 import type { QuestId, TerritoryId } from '../core/ids.ts';
+import type { CheckAttributedData, CheckCause } from '../schema/event/check-data.ts';
 import type { Event } from '../schema/event/event.ts';
 import type { PatrolRanData, ScanOutcome } from '../schema/event/patrol-data.ts';
 
-/** The check a failed commands.setup is red as. */
-export const SETUP_CHECK = 'setup';
+/** (CM-04) What a probe said of a red check: why it turned red, at which commit, and whose merge that was. */
+export interface CheckAttribution {
+  readonly cause: CheckCause;
+  readonly commit?: string;
+  readonly culprit?: QuestId;
+}
 
 /** A quest merged into the branch between the last green patrol of a check and the patrol that found it red. */
 export interface PatrolSuspect {
@@ -33,6 +39,8 @@ export interface RedCheck {
   readonly green_at?: string;
   /** The quests merged since that green patrol, up to the red one; none without a green patrol. */
   readonly suspects: readonly PatrolSuspect[];
+  /** (CM-04) What the probe after it turned red found (`check.attributed`); absent until one did, kept while it stays red. */
+  readonly attribution?: CheckAttribution;
 }
 
 /** A scan of the latest patrol that did not pass. */
@@ -185,6 +193,34 @@ function stepMerge(ledger: PatrolLedger, event: Event): PatrolLedger {
   return { watches: { ...ledger.watches, [territory]: next } };
 }
 
+/** The patrol's red checks of a territory no probe has attributed yet. */
+export const unattributedOf = (health: TerritoryHealth | undefined): string[] =>
+  (health?.red ?? []).filter(({ attribution }) => attribution === undefined).map(({ check }) => check);
+
+/** The red checks of `health` after a probe of its territory: those it ran and no probe had named get its finding. */
+export function attributedHealth(health: TerritoryHealth, data: CheckAttributedData): TerritoryHealth {
+  if (data.source !== 'patrol' || data.territory !== health.territory) return health;
+  const { cause, commit, culprit } = data;
+  const attribution = {
+    cause,
+    ...(commit === undefined ? {} : { commit }),
+    ...(culprit === undefined ? {} : { culprit }),
+  };
+  const red = health.red.map((check): RedCheck =>
+    check.attribution === undefined && data.checks.includes(check.check) ? { ...check, attribution } : check,
+  );
+  return { ...health, red };
+}
+
+/** The ledger after a probe of a territory's red branch (CM-04): the red checks it ran get its finding. */
+function stepAttribution(ledger: PatrolLedger, event: Event): PatrolLedger {
+  if (!isEventOf(event, 'check.attributed')) return ledger;
+  const watch = ledger.watches[event.data.territory];
+  if (watch === undefined) return ledger;
+  const next = { ...watch, health: attributedHealth(watch.health, event.data) };
+  return { watches: { ...ledger.watches, [event.data.territory]: next } };
+}
+
 /** A green-to-red turn of one check, as the metrics list it. */
 export interface RedFlip extends RedCheck {
   readonly territory: TerritoryId;
@@ -194,7 +230,7 @@ export interface RedFlip extends RedCheck {
 function fold(events: readonly Event[], onFlip?: (flip: RedFlip) => void): PatrolLedger {
   let ledger = EMPTY_PATROL_LEDGER;
   for (const event of events) {
-    ledger = stepMerge(ledger, event);
+    ledger = stepAttribution(stepMerge(ledger, event), event);
     if (!isEventOf(event, 'patrol.ran')) continue;
     const step = stepPatrol(ledger, event.ts, event.data);
     ledger = step.ledger;
