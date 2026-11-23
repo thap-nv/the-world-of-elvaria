@@ -7,7 +7,7 @@ import { isEventOf } from '../schema/event/event.ts';
 import type { QuestId, TerritoryId } from '../core/ids.ts';
 import type { Event } from '../schema/event/event.ts';
 import type { PatrolRanData } from '../schema/event/patrol-data.ts';
-import { SETUP_CHECK } from './health.ts';
+import { SETUP_CHECK } from './constants.ts';
 
 /** A commit and its parents, as `git rev-list --parents` lists it. */
 export interface CommitLink {
