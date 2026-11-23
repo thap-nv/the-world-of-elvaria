@@ -1,6 +1,7 @@
 import { EVENT_VERSION, EventSchema, questViewOf } from '@elvaria/domain';
+import type { Quest } from '@elvaria/domain';
 
-import { OTHER_QUEST_ID, QUEST_ID, questFixture } from '../../../test/quest.ts';
+const QUEST_ID = 'q_20261106_7k3m2a';
 
 let serial = 0;
 const at = (minute: number) => `2026-11-06T08:${String(minute).padStart(2, '0')}:00+07:00`;
@@ -17,10 +18,8 @@ const line = (type: string, minute: number, data: object) => {
     data,
   });
 };
-const view = (status: 'working' | 'review', id = QUEST_ID, judge = false) => ({
-  quest: questViewOf(
-    questFixture(status, id, { attempts: 1, assignee: 'thorn', verifier: judge ? 'vesper' : null }),
-  ),
+const view = (status: 'working' | 'review', quest: Quest, judge = false) => ({
+  quest: { ...questViewOf(quest), status, verifier: judge ? 'vesper' : null },
 });
 const patrol = (minute: number, pass: boolean) =>
   line('patrol.ran', minute, {
@@ -41,10 +40,10 @@ const patrol = (minute: number, pass: boolean) =>
     ],
   });
 
-export const checkLog = () => [
-  line('quest.started', 0, view('working')),
-  line('quest.started', 1, view('working', OTHER_QUEST_ID)),
-  line('quest.submitted', 5, view('review')),
+export const checkLog = (first: Quest, second: Quest) => [
+  line('quest.started', 0, view('working', first)),
+  line('quest.started', 1, view('working', second)),
+  line('quest.submitted', 5, view('review', first)),
   line('check.start', 5, {}),
   line('check.end', 15, { outcome: 'pass', checks: [{ id: 'test', pass: true, duration_ms: 480000 }] }),
   line('check.start', 16, { mode: 'narrow' }),
@@ -53,8 +52,8 @@ export const checkLog = () => [
     outcome: 'pass',
     checks: [{ id: 'test', pass: true, duration_ms: 60000 }],
   }),
-  line('quest.started', 18, view('review', QUEST_ID, true)),
-  line('quest.started', 19, view('review', OTHER_QUEST_ID, true)),
+  line('quest.started', 18, view('review', first, true)),
+  line('quest.started', 19, view('review', second, true)),
   patrol(20, false),
   line('delivery.merged', 25, {
     quest: QUEST_ID,
