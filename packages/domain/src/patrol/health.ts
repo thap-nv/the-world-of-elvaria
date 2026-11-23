@@ -5,14 +5,18 @@
 // quests merged since the last patrol that found that check green: the digest's `base_red` items, the bell, the draft
 // quest, the metrics, and later PS-09d (stop taking quests) and PS-08g (the seal delegation's breaker) read it.
 import { isEventOf } from '../schema/event/event.ts';
-import { attributedHealth } from './attribution.ts';
+import { SETUP_CHECK } from './constants.ts';
 import type { QuestId, TerritoryId } from '../core/ids.ts';
+import type { CheckAttributedData, CheckCause } from '../schema/event/check-data.ts';
 import type { Event } from '../schema/event/event.ts';
 import type { PatrolRanData, ScanOutcome } from '../schema/event/patrol-data.ts';
-import type { CheckAttribution } from './attribution.ts';
 
-/** The check a failed commands.setup is red as. */
-export const SETUP_CHECK = 'setup';
+/** (CM-04) What a probe said of a red check: why it turned red, at which commit, and whose merge that was. */
+export interface CheckAttribution {
+  readonly cause: CheckCause;
+  readonly commit?: string;
+  readonly culprit?: QuestId;
+}
 
 /** A quest merged into the branch between the last green patrol of a check and the patrol that found it red. */
 export interface PatrolSuspect {
@@ -187,6 +191,25 @@ function stepMerge(ledger: PatrolLedger, event: Event): PatrolLedger {
   const merge = { quest, sealed, ts: event.ts, seq: watch.seen };
   const next = { ...watch, merges: [...watch.merges, merge], seen: watch.seen + 1 };
   return { watches: { ...ledger.watches, [territory]: next } };
+}
+
+/** The patrol's red checks of a territory no probe has attributed yet. */
+export const unattributedOf = (health: TerritoryHealth | undefined): string[] =>
+  (health?.red ?? []).filter(({ attribution }) => attribution === undefined).map(({ check }) => check);
+
+/** The red checks of `health` after a probe of its territory: those it ran and no probe had named get its finding. */
+export function attributedHealth(health: TerritoryHealth, data: CheckAttributedData): TerritoryHealth {
+  if (data.source !== 'patrol' || data.territory !== health.territory) return health;
+  const { cause, commit, culprit } = data;
+  const attribution = {
+    cause,
+    ...(commit === undefined ? {} : { commit }),
+    ...(culprit === undefined ? {} : { culprit }),
+  };
+  const red = health.red.map((check): RedCheck =>
+    check.attribution === undefined && data.checks.includes(check.check) ? { ...check, attribution } : check,
+  );
+  return { ...health, red };
 }
 
 /** The ledger after a probe of a territory's red branch (CM-04): the red checks it ran get its finding. */

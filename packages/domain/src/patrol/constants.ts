@@ -17,3 +17,6 @@ export const PROBE_SPLIT = 2;
 
 /** Runs the probe keeps for after its search: the rerun of the first red step, then the quest's own head. */
 export const PROBE_RUNS_AFTER_SEARCH = 2;
+
+/** The check a failed commands.setup is red as (PS-26): the patrol's health, the probe's runs. */
+export const SETUP_CHECK = 'setup';

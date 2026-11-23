@@ -8,7 +8,7 @@ import type { FailKind, Rank } from '../schema/common.ts';
 import type { SuspensionCause } from '../schema/event/delegation-data.ts';
 import type { DeliveryFailure, DeliveryStage } from '../schema/event/delivery-data.ts';
 import type { ScanOutcome } from '../schema/event/patrol-data.ts';
-import type { CheckAttribution } from '../patrol/attribution.ts';
+import type { CheckAttribution } from '../patrol/health.ts';
 import type { TempleBlock } from '../temple/waiting.ts';
 
 export const ATTENTION_GROUPS = ['must', 'can_wait'] as const;

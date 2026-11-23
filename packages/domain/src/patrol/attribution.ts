@@ -1,21 +1,13 @@
 // What a probe reads and writes (CM-04, ADR 0032): one run of the red checks from the trial of a commit, the data of
-// its `check.attributed`, and the red checks of a default branch that line names. A check failed for its environment is
+// its `check.attributed`; the red checks of a default branch that line names are health.ts's (attributedHealth). A check failed for its environment is
 // never red, as in every run (PS-01b); one that ran out of time, a plot that could not be made, a setup that failed for
 // its environment: the run cannot say. A probed check keeps its attribution while it stays red (health.ts); the digest's
 // `base_red` item names its cause and its quest.
-import { SETUP_CHECK } from './health.ts';
+import { SETUP_CHECK } from './constants.ts';
 import type { QuestId, TerritoryId } from '../core/ids.ts';
-import type { CheckAttributedData, CheckCause, ProbeSource } from '../schema/event/check-data.ts';
+import type { CheckAttributedData, ProbeSource } from '../schema/event/check-data.ts';
 import type { TerritoryTrial } from '../scorecard/trial.ts';
-import type { RedCheck, TerritoryHealth } from './health.ts';
 import type { ProbeDone, ProbeRun } from './probe.ts';
-
-/** What a probe said of a red check: why it turned red, at which commit, and whose merge that was. */
-export interface CheckAttribution {
-  readonly cause: CheckCause;
-  readonly commit?: string;
-  readonly culprit?: QuestId;
-}
 
 type Trial = Pick<TerritoryTrial, 'plot_failure' | 'setup' | 'checks'>;
 
@@ -65,23 +57,4 @@ export function attributionOf({ territory, source, checks, runs, done }: Attribu
     ...(culprit === undefined ? {} : { culprit }),
     cause,
   };
-}
-
-/** The patrol's red checks of a territory no probe has attributed yet. */
-export const unattributedOf = (health: TerritoryHealth | undefined): string[] =>
-  (health?.red ?? []).filter(({ attribution }) => attribution === undefined).map(({ check }) => check);
-
-/** The red checks of `health` after a probe of its territory: those it ran and no probe had named get its finding. */
-export function attributedHealth(health: TerritoryHealth, data: CheckAttributedData): TerritoryHealth {
-  if (data.source !== 'patrol' || data.territory !== health.territory) return health;
-  const { cause, commit, culprit } = data;
-  const attribution = {
-    cause,
-    ...(commit === undefined ? {} : { commit }),
-    ...(culprit === undefined ? {} : { culprit }),
-  };
-  const red = health.red.map((check): RedCheck =>
-    check.attribution === undefined && data.checks.includes(check.check) ? { ...check, attribution } : check,
-  );
-  return { ...health, red };
 }
