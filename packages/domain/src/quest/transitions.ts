@@ -16,6 +16,7 @@ export type QuestGuard =
   | 'can_retry'
   | 'machine_retry'
   | 'out_of_retries'
+  | 'session_out_of_retries'
   | 'seal_required'
   | 'no_seal'
   | 'has_assignee'
@@ -75,6 +76,8 @@ export const QUEST_GUARDS: Readonly<Record<QuestGuard, (quest: Quest, event?: Qu
   can_retry: canRetry,
   machine_retry: machineRetry,
   out_of_retries: (quest) => !canRetry(quest) && !machineRetry(quest),
+  // A late fail (ADR 0033) has no row for a script: its red check is the owner's to read (`delivery.failed`).
+  session_out_of_retries: (quest) => quest.tier === 'session' && !underBudget(quest),
   seal_required: (quest) => quest.seal_required,
   no_seal: (quest) => !quest.seal_required,
   has_assignee: (quest) => typeof quest.assignee === 'string',
@@ -194,6 +197,12 @@ export const QUEST_TRANSITIONS: readonly QuestTransitionRow[] = [
   { from: 'awaiting_seal', event: 'return', actors: U, guard: 'merged_by_machine', to: 'open' },
   { from: 'awaiting_seal', event: 'reject', actors: U, to: 'archived' },
   { from: 'done', event: 'deliver', actors: S, guard: 'undelivered', to: 'done' },
+  // A late machine verdict (ADR 0033): a check that first ran after the pass, before the base branch has the work (the
+  // delivery queue, a train), turned red through the quest's own change. The three rows of `review.verdict_fail`, the
+  // Steward's only; a script takes none. A quest already on the base branch stays archived (a fix quest, CM-06).
+  { from: 'done', event: 'verdict_fail', actors: S, guard: 'can_retry', to: 'returned' },
+  { from: 'done', event: 'verdict_fail', actors: S, guard: 'machine_retry', to: 'open' },
+  { from: 'done', event: 'verdict_fail', actors: S, guard: 'session_out_of_retries', to: 'infirmary' },
   { from: 'done', event: 'archive', actors: US, to: 'archived' },
   { from: 'infirmary', event: 'retry', actors: U, guard: 'no_stalled_review', to: 'open' },
   // A review the breakers kept cutting goes on, same run, with a new judge (P1-26): opening it would redo the work.

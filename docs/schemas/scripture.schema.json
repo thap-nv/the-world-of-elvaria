@@ -45,7 +45,7 @@
         "source_verdict": {
           "description": "The fail verdict the lesson comes from; required when source = monk.",
           "type": "string",
-          "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user)?$"
+          "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user|-late)?$"
         },
         "origin": {
           "description": "Where a lesson from outside the kingdom came from (lesson-sharing S4, T9).",

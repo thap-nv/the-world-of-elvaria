@@ -715,6 +715,13 @@
               "used_in": "`verdicts/<quest>-<n>.json`"
             },
             {
+              "vi": "Phán quyết muộn",
+              "en": "Late verdict",
+              "id": ["late"],
+              "definition": "Lần trượt của máy cho một lượt đã đạt, khi một check chạy sau phán quyết (hàng giao hàng, tàu, tuần tra nhánh gốc) đỏ vì chính thay đổi của quest (ADR 0033). Quest còn `done` về người làm, mở lại hay vào trạm quân y; người chấm đã cho đạt nhận một mục trượt, không tính chuỗi trượt.",
+              "used_in": "`verdicts/<quest>-<n>-late.json`, `verdict.late`, `lateVerdictOf`, `withOverturnedPass`, hàng `done.verdict_fail`"
+            },
+            {
               "vi": "Trả bài",
               "en": "Return",
               "id": ["returned", "return"],
@@ -858,7 +865,7 @@
               "vi": "Lỗi lọt",
               "en": "Escaped defect",
               "id": ["escaped"],
-              "definition": "Chủ nhân trả bài một lượt mà người chấm hay máy đã cho đạt.",
+              "definition": "Chủ nhân trả bài một lượt mà người chấm hay máy đã cho đạt, hoặc (ADR 0033) một phán quyết muộn đánh trượt lượt đó (`late`).",
               "used_in": "`escapedOf`, `Metrics.escaped`"
             },
             {

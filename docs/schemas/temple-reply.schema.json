@@ -69,7 +69,7 @@
               "source_verdict": {
                 "description": "A fail verdict of the group: what the line or the letter comes from.",
                 "type": "string",
-                "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user)?$"
+                "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user|-late)?$"
               },
               "body": {
                 "type": "string",
@@ -179,7 +179,7 @@
               "source_verdict": {
                 "description": "A fail verdict of the group: what the line or the letter comes from.",
                 "type": "string",
-                "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user)?$"
+                "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user|-late)?$"
               },
               "replaces": {
                 "description": "The Monk's lines this one merges (two or more): they go out as it comes in.",

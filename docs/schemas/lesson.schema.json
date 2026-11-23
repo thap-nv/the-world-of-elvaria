@@ -44,7 +44,7 @@
     "source_verdict": {
       "description": "Verdict the lesson comes from; required when source = monk.",
       "type": "string",
-      "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user)?$"
+      "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user|-late)?$"
     },
     "scope": {
       "description": "Where a lesson loads (PS-12): every key present must match the session, values of one key are alternatives. Absent, the lesson loads in every session. The CLI version is no filter but where the lesson was measured (cli_version, lesson-sharing S5).",

@@ -1,7 +1,8 @@
 // The ids of a run's verdict files (implementation-plan §2.1, P1-04): `<quest>-<n>` for the verdict that ends the
 // review of run n, `-p<k>` for the partial verdict its k-th verifier session left, `-user` for the owner's seal or
-// return. One run can be judged several times, and each judgement keeps its own file.
-import { OWNER_VERDICT_SUFFIX, PARTIAL_VERDICT_MARK } from '../schema/quest/verdict.ts';
+// return, `-late` for the machine's late verdict on it (ADR 0033). One run can be judged several times, and each
+// judgement keeps its own file.
+import { LATE_VERDICT_SUFFIX, OWNER_VERDICT_SUFFIX, PARTIAL_VERDICT_MARK } from '../schema/quest/verdict.ts';
 import type { VerdictId } from '../core/ids.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 
@@ -14,6 +15,10 @@ export const partialVerdictIdOf = (quest: Pick<Quest, 'id'>, n: number, session:
 
 export const ownerVerdictIdOf = (quest: Pick<Quest, 'id'>, n: number): VerdictId =>
   `${verdictIdOf(quest, n)}${OWNER_VERDICT_SUFFIX}` as VerdictId;
+
+/** The machine's late verdict on run n (ADR 0033): beside the pass it overturns, never in its file. */
+export const lateVerdictIdOf = (quest: Pick<Quest, 'id'>, n: number): VerdictId =>
+  `${verdictIdOf(quest, n)}${LATE_VERDICT_SUFFIX}` as VerdictId;
 
 /** How many verifier sessions run n has had so far: the k of the partial verdict the latest one leaves. */
 export const verifierSessionsOf = (quest: Pick<Quest, 'attempt_log'>, n: number): number =>

@@ -98,17 +98,21 @@ export interface VerdictSpec {
   readonly owner?: boolean;
   readonly machine?: boolean;
   readonly rejudge?: boolean;
+  /** The machine's late verdict on the run (ADR 0033), in its own file. */
+  readonly late?: boolean;
   readonly minute: number;
 }
 
-/** A verdict on run `attempt` of quest `n`: a judge's, the machine's or the owner's. */
+/** A verdict on run `attempt` of quest `n`: a judge's, the machine's (late or not) or the owner's. */
 export function verdictOf(n: number, attempt: number, result: Verdict['result'], spec: VerdictSpec): Verdict {
   const id = questId(n);
   const owner = spec.owner === true;
-  const judge = owner ? 'user' : spec.machine === true ? 'machine' : 'vesper';
+  const late = spec.late === true;
+  const judge = owner ? 'user' : spec.machine === true || late ? 'machine' : 'vesper';
+  const suffix = owner ? '-user' : late ? '-late' : '';
   return {
     version: 1,
-    id: (owner ? `${id}-${attempt}-user` : `${id}-${attempt}`) as Verdict['id'],
+    id: `${id}-${attempt}${suffix}` as Verdict['id'],
     quest_id: id,
     attempt,
     verifier_id: judge,
@@ -119,6 +123,7 @@ export function verdictOf(n: number, attempt: number, result: Verdict['result'],
     ...(result === 'fail' ? { notes: 'The README still names the old command.' } : {}),
     ...(result === 'partial' ? { progress: { checked_until: 'src/a.ts' } } : {}),
     ...(spec.rejudge === undefined ? {} : { rejudge: spec.rejudge }),
+    ...(late ? { late } : {}),
     by_human: owner,
     ...(judge === 'vesper' ? { session_id: `s-${n}-${attempt}` } : {}),
     created_at: at(spec.minute),

@@ -3,6 +3,7 @@
 // breakers.same_fail_suspend counts. The Steward and the sandbox both go through it, so a fake day keeps the books
 // a real one keeps (P1-04). levelChange reads the windows afterwards. (PS-22) A pass that sustains an objection
 // takes the verdict it overturned out of the windows, as the owner's rejudge keeps a judge's error out of them.
+// (ADR 0033) A late machine verdict also reaches the judge who passed the run: one fail entry, no streak.
 import { VERDICT_WINDOW_MAX } from '../schema/character/constants.ts';
 import type { TagId, VerdictId } from '../core/ids.ts';
 import type { Character, VerdictEntry } from '../schema/character/character.ts';
@@ -48,6 +49,22 @@ function streakAfter(character: Character, judgement: Judgement): Character['con
   return { fail_kind: judgement.fail_kind, count };
 }
 
+/** `entry` in the reputation window and the window of each tag, `without` out of them all. */
+function withEntry(
+  character: Character,
+  entry: VerdictEntry,
+  tags: readonly TagId[],
+  without?: VerdictId,
+): Character {
+  const affinity = { ...character.skill_affinity };
+  for (const tag of tags) affinity[tag] = { window: kept(affinity[tag]?.window ?? [], entry, without) };
+  return {
+    ...character,
+    reputation: { window: kept(character.reputation.window, entry, without) },
+    skill_affinity: affinity,
+  };
+}
+
 export function withVerdict(character: Character, judgement: Judgement): Character {
   // In the P1-35 run the owner returned a quest a judge had passed without breaking anything, and the return counted
   // as a fail of the assignee, three times over (by_human); a rejudge does not judge the assignee's work.
@@ -59,13 +76,30 @@ export function withVerdict(character: Character, judgement: Judgement): Charact
     at: judgement.at,
   };
   const overturned = judgement.result === 'pass' ? judgement.overturns : undefined;
-  const affinity = { ...character.skill_affinity };
-  for (const tag of judgement.tags)
-    affinity[tag] = { window: kept(affinity[tag]?.window ?? [], entry, overturned) };
-  return {
-    ...character,
-    reputation: { window: kept(character.reputation.window, entry, overturned) },
-    skill_affinity: affinity,
-    consecutive_fail: streakAfter(character, judgement),
-  };
+  const judged = withEntry(character, entry, judgement.tags, overturned);
+  return { ...judged, consecutive_fail: streakAfter(character, judgement) };
 }
+
+/** A late machine verdict on a run this judge passed (ADR 0033): what the judge's file takes from it. */
+export interface OverturnedPass {
+  /** The late verdict (`<quest>-<n>-late`). */
+  readonly verdict_id: VerdictId;
+  readonly at: string;
+  /** The quest's tags. */
+  readonly tags: readonly TagId[];
+}
+
+/**
+ * The judge whose pass a late machine verdict overturned shares the fail (ADR 0033, owner's C6): one `fail` entry of
+ * weight 1 in its reputation window and the windows of the quest's tags. Its fail streak stays as it was: the streak
+ * sends a doer to the Temple for failing the same way, and the judge did no work that failed. Its level does not move
+ * on it either: the Steward reads levelChange after an assignee's verdict only. The same late verdict twice is one
+ * entry, so a Steward that writes it again after a restart counts it once.
+ */
+export const withOverturnedPass = (character: Character, overturned: OverturnedPass): Character =>
+  withEntry(
+    character,
+    { verdict_id: overturned.verdict_id, result: 'fail', by_human: false, at: overturned.at },
+    overturned.tags,
+    overturned.verdict_id,
+  );
