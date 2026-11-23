@@ -4,7 +4,7 @@ import examples from '../../examples/character.json' with { type: 'json' };
 import { CharacterSchema } from '../schema/character/character.ts';
 import { VERDICT_WINDOW_MAX } from '../schema/character/constants.ts';
 import { failStreakReached } from './fail-streak.ts';
-import { withVerdict } from './with-verdict.ts';
+import { withOverturnedPass, withVerdict } from './with-verdict.ts';
 import type { TagId, VerdictId } from '../core/ids.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Judgement } from './with-verdict.ts';
@@ -94,5 +94,32 @@ describe('withVerdict', () => {
     expect(ids(sustained.skill_affinity[FRONTEND]?.window)).toEqual(kept);
     expect(ids(sustained.skill_affinity[I18N]?.window)).toEqual(kept);
     expect(sustained.consecutive_fail).toEqual({ count: 0 });
+  });
+});
+
+describe('withOverturnedPass', () => {
+  const late = { verdict_id: 'q_20261107_7k3m2a-2-late' as VerdictId, at: AT, tags: [FRONTEND] };
+  const lateEntry = { verdict_id: 'q_20261107_7k3m2a-2-late', result: 'fail', by_human: false, at: AT };
+
+  it('gives the judge one fail of weight 1 in its reputation window and the windows of the quest tags (ADR 0033)', () => {
+    const judge = after([pass(1)]);
+    const shared = withOverturnedPass(judge, late);
+    expect(shared.reputation.window.at(-1)).toEqual(lateEntry);
+    expect(shared.reputation.window).toHaveLength(2);
+    expect(shared.skill_affinity[FRONTEND]?.window.at(-1)).toEqual(lateEntry);
+    expect(shared.skill_affinity[I18N]?.window).toHaveLength(1);
+    expect(CharacterSchema.safeParse(shared).success).toBe(true);
+  });
+
+  it('leaves the fail streak as it was, empty or not', () => {
+    expect(withOverturnedPass(FRESH, late).consecutive_fail).toEqual({ count: 0 });
+    const failing = after([fail('style'), fail('style')]);
+    expect(withOverturnedPass(failing, late).consecutive_fail).toEqual({ fail_kind: 'style', count: 2 });
+  });
+
+  it('counts the same late verdict once when it is written again', () => {
+    const twice = withOverturnedPass(withOverturnedPass(FRESH, late), late);
+    expect(twice.reputation.window).toEqual([lateEntry]);
+    expect(twice.skill_affinity[FRONTEND]?.window).toEqual([lateEntry]);
   });
 });

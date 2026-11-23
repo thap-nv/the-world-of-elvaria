@@ -5,6 +5,7 @@ import { baseRedTimesOf } from './base-red.ts';
 import { questPeaksOf } from './concurrency.ts';
 import { distributionOf } from './distribution.ts';
 import { measuredRunsOf } from './runs.ts';
+import type { QuestId } from '../../core/ids.ts';
 import type { Event } from '../../schema/event/event.ts';
 import type { MetricsWindow } from '../window.ts';
 import type { BaseRedTime } from './base-red.ts';
@@ -15,7 +16,7 @@ export interface CheckModes {
   readonly durations: readonly (CheckDistribution & { readonly mode: 'full' | 'narrow' | 'patrol' })[];
   readonly full_by_day: readonly { readonly day: string; readonly count: number }[];
   readonly merged_cost: {
-    readonly quests: readonly { readonly quest: string; readonly minutes: number }[];
+    readonly quests: readonly { readonly quest: QuestId; readonly minutes: number }[];
     readonly median_minutes: number | null;
     readonly total_minutes: number;
   };
@@ -36,7 +37,7 @@ function fullByDay(events: readonly Event[], window: MetricsWindow): CheckModes[
   return [...days].sort(([a], [b]) => a.localeCompare(b)).map(([day, count]) => ({ day, count }));
 }
 
-function machineCost(events: readonly Event[], quest: string, before: string): number {
+function machineCost(events: readonly Event[], quest: QuestId, before: string): number {
   return events.reduce((sum, event) => {
     if (!isEventOf(event, 'check.end') || event.quest !== quest || Date.parse(event.ts) > Date.parse(before))
       return sum;
@@ -46,8 +47,8 @@ function machineCost(events: readonly Event[], quest: string, before: string): n
 }
 
 function mergedMetrics(events: readonly Event[], window: MetricsWindow) {
-  const submitted = new Map<string, string>();
-  const costs = new Map<string, number>();
+  const submitted = new Map<QuestId, string>();
+  const costs = new Map<QuestId, number>();
   const waits: number[] = [];
   for (const event of events) {
     if (isEventOf(event, 'quest.submitted') && event.quest !== undefined && !submitted.has(event.quest))

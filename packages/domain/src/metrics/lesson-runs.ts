@@ -123,7 +123,10 @@ interface Rulings {
   readonly void: ReadonlySet<VerdictId>;
   /** The fails an objection overturned. */
   readonly overturned: ReadonlySet<VerdictId>;
-  /** `<quest>|<attempt>` of every run the owner returned. */
+  /**
+   * `<quest>|<attempt>` of every run the owner returned, or a late machine verdict failed after its pass (ADR 0033):
+   * the judge's pass of it did not stand.
+   */
   readonly returned: ReadonlySet<string>;
 }
 
@@ -134,7 +137,7 @@ function rulingsOf(verdicts: readonly Verdict[]): Rulings {
   for (const verdict of verdicts) {
     if (verdict.result === 'pass' && verdict.objection !== undefined)
       overturned.add(verdict.objection.verdict);
-    if (verdict.result !== 'fail' || !verdict.by_human) continue;
+    if (verdict.result !== 'fail' || !(verdict.by_human || verdict.late === true)) continue;
     returned.add(`${verdict.quest_id}|${verdict.attempt}`);
     if (verdict.rejudge === true) rejudged.add(verdict.id);
   }

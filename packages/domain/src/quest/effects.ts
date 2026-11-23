@@ -45,6 +45,18 @@ const ending =
   (quest: Quest, event: RunEnd & { readonly at: string }): Result<Quest, never> =>
     ok(dropVerifierInReview(endRun(quest, event, outcome)));
 
+/**
+ * A late machine verdict fails a done quest (ADR 0033): no session holds it, so none ends. The judge who passed it
+ * leaves, and so do the seal (a sealed quest is done or archived, and a pass after the rework is sealed again when the
+ * quest needs it) and the delivery stamp, so `done.deliver` delivers it once more, its pull request updated. The
+ * branch, the plot and `seal_required` stay.
+ */
+function lateFail(quest: Quest): Quest {
+  const { seal: _seal, ...unsealed } = quest;
+  const { delivered_at: _delivered, ...deliverable } = quest.deliverable;
+  return { ...unsealed, verifier: null, deliverable };
+}
+
 /** An assignee session of run `n`: the assignee's, or the Steward's own for a script (character null). */
 const assigneeRun = (quest: Quest, n: number, at: string, session_id: string | undefined) =>
   entryOf(quest, { n, role: 'assignee', character: quest.assignee ?? null, at, session_id });
@@ -220,7 +232,8 @@ const EFFECTS: { readonly [T in QuestEventType]: Effect<T> } = {
   no_session: noSession,
   verdict_pass: (quest, event) => ok(endRun(quest, event, 'submitted')),
   // The next attempt gets a fresh verifier, chosen again once it is submitted.
-  verdict_fail: (quest, event) => ok(withoutVerifier(endRun(quest, event, 'submitted'))),
+  verdict_fail: (quest, event) =>
+    ok(quest.status === 'done' ? lateFail(quest) : withoutVerifier(endRun(quest, event, 'submitted'))),
   // The judge handed in how far it read and leaves; the next one reads on. Its session handed in a verdict, so it
   // ends `partial`, not `crash`: progress, counted apart from a judge that left none (P1-33, P1-42). The Steward's
   // move of a review stalled on partials closes no session.

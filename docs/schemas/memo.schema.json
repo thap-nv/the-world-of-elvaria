@@ -74,7 +74,7 @@
         "verdict": {
           "description": "(PS-22) Of an objection: the fail verdict it contests; absent when its run came back with none.",
           "type": "string",
-          "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user)?$"
+          "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user|-late)?$"
         },
         "refusal": {
           "description": "(PS-22) Of an objection the owner decides: why no second judge reads it. (PS-22b) Of an amendment the owner decides: why no author does.",
@@ -241,7 +241,7 @@
         "verdict": {
           "description": "(PS-22) With decision = sustained or overruled: the second judge's verdict.",
           "type": "string",
-          "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user)?$"
+          "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user|-late)?$"
         },
         "note": {
           "type": "string",

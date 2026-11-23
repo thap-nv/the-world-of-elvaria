@@ -52,5 +52,27 @@
     "notes": "Script link-check: 41 link sống, 1 link chết (đã mở quest con q_20261106_3h7w2x).",
     "by_human": false,
     "created_at": "2026-11-06T10:01:20+07:00"
+  },
+  {
+    "version": 1,
+    "id": "q_20261106_7k3m2a-2-late",
+    "quest_id": "q_20261106_7k3m2a",
+    "attempt": 2,
+    "verifier_id": "machine",
+    "ritual": "build_review",
+    "checks": [
+      {
+        "id": "unit",
+        "pass": false,
+        "duration_ms": 71800,
+        "log_path": ".runs/q_20261106_7k3m2a-2/delivery/checks/unit.log"
+      }
+    ],
+    "result": "fail",
+    "fail_kind": "tests_fail",
+    "notes": "✗ unit: .runs/q_20261106_7k3m2a-2/delivery/checks/unit.log\n  FAIL packages/shared/scoring/effective-level.spec.ts > rounds the level down",
+    "late": true,
+    "by_human": false,
+    "created_at": "2026-11-06T14:12:05+07:00"
   }
 ]
