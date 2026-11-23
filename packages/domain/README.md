@@ -499,6 +499,15 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   patrols know of one commit (the merge queue asks it), `patrolsDue` which red territories to patrol again as their
   tip moved (`base_moved`), `baseHoldsOf` the open quests each keeps waiting (`StewardNotices.base_holds`, the
   `base_red` item's `waiting`). The inbox command `patrol` and the triggers `base_moved`, `owner`, `queue`.
+- The patrol after a merge (CM-03, ADR 0032, the owner's C8; `src/patrol/after-merge.ts`): `mergedPatrolOf` names
+  the one territory to patrol now (trigger `merged`): patrolled, git, `check_policy.mode` `narrow` or `deferred`
+  (`patrolsAfterMerge`; a `full` territory's queue ran every check on the tree it merged), its branch's newest tip
+  neither the commit its latest patrol tried nor one a patrol started for, not red, its merge queue quiet
+  (`queueAtWorkOf` of `src/dispatch/forge-due.ts`: a delivery runs or is due, or a sealed pull request waits), so a
+  burst of merges is patrolled once at its last head; none while a patrol runs (`HEAVY_WORK_MAX`, one in the
+  kingdom) or no slot of `dispatch.max_background` is free. `mergesSincePatrolOf` gives the Steward back the merges
+  since each branch's latest patrol at start. A patrol outside the tick holds a slot (`BackgroundWork.patrols`,
+  `startingNow`), as short work.
 - The digest names the quests the owner holds ((D) of fix/quest-hold): `heldQuestsOf` (`src/quest/hold.ts`), passed
   as `StewardNotices.held`, one `quest_held` item each, in the can-wait group.
 

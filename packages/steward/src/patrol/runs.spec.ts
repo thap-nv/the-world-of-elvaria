@@ -98,4 +98,17 @@ describe('the patrol lanes', () => {
     expect(aborted).toBe(true);
     expect(ends()).toBe(0);
   });
+
+  it('counts the territories a patrol runs or waits on, and the patrols started here (CM-03)', async () => {
+    const { runs } = runsWithLog();
+    const hold = gate();
+    const scheduled = runs.exclusive(B, () => hold.promise);
+    expect([runs.busy(), runs.outside()]).toEqual([1, 0]);
+    runs.start(A, () => runs.exclusive(A, () => hold.promise));
+    // Counted from the start, before the work takes its lane a moment later.
+    expect([runs.busy(), runs.outside()]).toEqual([2, 1]);
+    hold.open();
+    await Promise.all([scheduled, runs.idle()]);
+    expect([runs.busy(), runs.outside()]).toEqual([0, 0]);
+  });
 });

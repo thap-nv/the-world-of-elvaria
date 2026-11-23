@@ -558,6 +558,13 @@
   delivery whose update's checks are red after a clean merge (`forge/base-trial.ts`, `queue`): the base branch red
   at that commit, or the territory red now, the quest stays in the queue with nothing recorded, no merge quest.
   A patrol's end ticks the Steward; its stop aborts them.
+- The patrol after a merge (CM-03, the owner's C8 turns K16 around): the patrol's book keeps the newest head of each
+  default branch the Steward saw (`heads`: the commit of its own merge, `forge/outcome.ts`, or a look's tip,
+  `forge/look.ts`; at start, the merges since each branch's latest patrol). After the plan is carried out, the tick
+  starts the patrol `mergedPatrolOf` names (`patrol/again.ts`, `patrolMerged`, trigger `merged`): a green `narrow`
+  or `deferred` territory whose branch moved, once its merge queue is quiet, when no patrol runs and a slot of
+  `dispatch.max_background` is free. The queue never waits for it. Each patrol started outside the tick holds a
+  slot while it runs (`BackgroundWork.patrols` in the snapshot).
 - Adds the machine check `screens` after the territory's for a quest whose ritual asks for eyes (`judgedByEye`, PS-11b, `src/review/screens.ts`): it fails when the checks captured no screen or one breaks the image contract, its log says why; that quest's judge gets exactly the valid screens of the run, by policy (`ToolPolicy.images`) and in its prompt (`src/sessions/request.ts`).
 
 ## Does not

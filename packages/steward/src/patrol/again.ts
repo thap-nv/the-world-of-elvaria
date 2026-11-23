@@ -2,9 +2,12 @@
 // whose default branch moved since its latest patrol (`base_moved`: a merge of the Steward's, or the look every 10
 // minutes found a new commit; patrolsDue decides), and the owner's `territory patrol <id> --now` (`patrol`, `owner`:
 // a flaky check, or a branch fixed by hand). Each runs outside the tick in its territory's lane (runs.ts); a green
-// branch opens its territory at the next tick, which the run's end calls at once.
-import { patrolsDue } from '@elvaria/domain';
-import type { BaseRed, BaseTip, PatrolTrigger, TerritoryId } from '@elvaria/domain';
+// branch opens its territory at the next tick, which the run's end calls at once. (CM-03, ADR 0032; C8 turns K16
+// around) A green `narrow` or `deferred` territory whose default branch moved since its latest patrol, by a merge of the
+// Steward's or one a look found, is patrolled (`merged`) once its merge queue is quiet, for the newest head: one patrol
+// at a time in the kingdom, in a slot of dispatch.max_background the tick's work left free (mergedPatrolOf).
+import { mergedPatrolOf, patrolsDue, queueAtWorkOf } from '@elvaria/domain';
+import type { BaseRed, BaseTip, KingdomSnapshot, PatrolTrigger, TerritoryId } from '@elvaria/domain';
 
 import { APPLIED, rejected } from '../inbox/quest-commands.ts';
 import { patrolled, patrolTerritory } from './patrol.ts';
@@ -49,4 +52,32 @@ export function patrolMoved(ctx: Context, base: readonly BaseRed[]): void {
     if (refused !== undefined)
       ctx.deps.log.warn(`steward: no patrol of ${territory} after its branch moved: ${refused}`);
   }
+}
+
+/**
+ * (CM-03) The patrol after a merge, after the tick's work started: the queues at work are those of `snapshot`, the
+ * plan's own deliveries among them, and the slots free are those the background and the patrols leave.
+ */
+export function patrolMerged(ctx: Context, snapshot: KingdomSnapshot): void {
+  if (ctx.stopping.aborted) return;
+  const { patrol } = ctx;
+  const done = snapshot.quests.filter(({ status }) => status === 'done');
+  const due = mergedPatrolOf({
+    territories: [...ctx.world.territories.values()],
+    health: patrol.health,
+    tips: [...patrol.heads].map(([territory, head]) => ({ territory, head })),
+    tried: patrol.tried,
+    base_red: snapshot.base_red ?? [],
+    queued: queueAtWorkOf(snapshot, done),
+    patrolling: patrol.runs.busy(),
+    room:
+      ctx.world.kingdom.dispatch.max_background -
+      ctx.background.view().running.length -
+      patrol.runs.outside(),
+  });
+  if (due === undefined) return;
+  patrol.tried.set(due.territory, due.head);
+  const refused = startPatrol(ctx, due.territory, 'merged');
+  if (refused !== undefined)
+    ctx.deps.log.warn(`steward: no patrol of ${due.territory} after its branch moved: ${refused}`);
 }

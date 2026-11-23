@@ -5,7 +5,8 @@
 // here runs outside the tick, as a look at the base branch does (PS-08d); one started for a territory whose last such
 // patrol has not ended is not started twice. `start` does not take the lane itself: the work it starts does
 // (patrolTerritory), and a lane taken twice by one run would wait for itself. The Steward's stop aborts them and
-// records nothing of them.
+// records nothing of them. (CM-03) The tick reads how many run: a patrol after a merge starts only when none does (one
+// heavy job at a time), and each started here holds a slot of dispatch.max_background, as a check does.
 import type { TerritoryId } from '@elvaria/domain';
 
 import type { Logger } from '../types.ts';
@@ -18,6 +19,10 @@ export interface PatrolRuns {
    * `work` takes the territory's lane (exclusive); `signal` aborts when the Steward stops.
    */
   start(territory: TerritoryId, work: (signal: AbortSignal) => Promise<void>): boolean;
+  /** (CM-03) Territories with a patrol running or waiting, in its lane or started here. */
+  busy(): number;
+  /** (CM-03) Patrols started here that have not ended: each holds a slot of dispatch.max_background. */
+  outside(): number;
   /** Resolves once no patrol started here runs or waits. */
   idle(): Promise<void>;
   /** Aborts them and waits for them to end (the Steward stops). */
@@ -62,6 +67,9 @@ export function createPatrolRuns(log: Logger, ended: () => void = () => undefine
       void done.finally(() => live.delete(done));
       return true;
     },
+    // A patrol started here takes its lane a moment later (start): counted from the start.
+    busy: () => new Set([...lanes.keys(), ...started]).size,
+    outside: () => started.size,
     idle: async () => {
       await Promise.all(live);
     },

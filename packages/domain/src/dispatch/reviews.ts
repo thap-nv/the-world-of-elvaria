@@ -35,6 +35,11 @@ export interface BackgroundWork {
    * and they run again once recheckDue says so. Absent: none.
    */
   readonly environment?: readonly EnvironmentHold[];
+  /**
+   * (CM-03) Patrols running outside the tick, of no quest: each holds a slot of dispatch.max_background as a check
+   * does, and is no trial (startingNow). Absent: none.
+   */
+  readonly patrols?: number;
 }
 
 /** Checks of a quest set aside for their environment (environmentFailureOf), ended at `at`. */
