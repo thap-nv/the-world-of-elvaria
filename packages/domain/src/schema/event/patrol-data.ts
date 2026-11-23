@@ -14,9 +14,11 @@ const describe = (description: string) => ({ description });
 /**
  * What started the run: the schedule (PS-26); (PS-09d) the default branch of a red territory moving (`base_moved`), the
  * owner's `territory patrol --now` (`owner`), and the merge queue asking whether the branch it merged is red on its own
- * before it opens a merge quest (`queue`). Values added to a payload enum: older lines still read (ADR 0003).
+ * before it opens a merge quest (`queue`); (CM-03, ADR 0032) the default branch of a green `narrow` or `deferred`
+ * territory moving, by a merge of the Steward's or one a look found, once its merge queue is quiet (`merged`). Values
+ * added to a payload enum: older lines still read (ADR 0003).
  */
-export const PATROL_TRIGGERS = ['schedule', 'base_moved', 'owner', 'queue'] as const;
+export const PATROL_TRIGGERS = ['schedule', 'base_moved', 'owner', 'queue', 'merged'] as const;
 export type PatrolTrigger = (typeof PATROL_TRIGGERS)[number];
 
 /**

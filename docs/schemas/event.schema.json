@@ -3017,7 +3017,8 @@
                   "schedule",
                   "base_moved",
                   "owner",
-                  "queue"
+                  "queue",
+                  "merged"
                 ]
               },
               "plot_failure": {

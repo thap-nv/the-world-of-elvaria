@@ -9,7 +9,7 @@
 // takes a slot too, after the checks and the scripts: the merge queue runs every check of its territory on the updated
 // branch and the push runs its pre-push hook. It is never a trial, so it may run beside trials as short work does; a
 // question to the forge about a pull request takes none (it runs for seconds), though it sits in `running` while it
-// does.
+// does. (CM-03) A patrol outside the tick holds a slot too (BackgroundWork.patrols), never a trial.
 import { judgedInScratch } from '../verify/ritual-of.ts';
 import type { BackgroundWork } from './reviews.ts';
 import type { QuestId } from '../core/ids.ts';
@@ -65,8 +65,10 @@ export function startingNow(
     return { checks: [...checks], scripts: [...scripts], deliveries: [...deliveries] };
   const byId = new Map(source.quests.map((quest) => [quest.id, quest]));
   const trial = (id: QuestId): boolean => isTrial(byId.get(id), source.registry);
-  let room = source.kingdom.dispatch.max_background - background.running.length;
-  let short = background.running.filter((id) => !trial(id)).length;
+  // (CM-03) A patrol outside the tick holds a slot and is short work: no lane is left beside it either.
+  const patrols = background.patrols ?? 0;
+  let room = source.kingdom.dispatch.max_background - background.running.length - patrols;
+  let short = background.running.filter((id) => !trial(id)).length + patrols;
   const fits = (id: QuestId): boolean => {
     if (room > 0 || (!trial(id) && short === 0)) {
       room -= 1;

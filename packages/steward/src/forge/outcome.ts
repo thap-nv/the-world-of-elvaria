@@ -3,6 +3,7 @@
 // delivery), and the bell rung once. A failure is never tried again on its own (ADR 0023): the owner reads it in the
 // digest and sends `deliver`. (PS-08d) A `delivery.merged` under `pr_merge`: the quest is in the base branch, archived
 // at the next tick (forgeArchives), and its territory is looked at again at once for the quests the merge took in.
+// (CM-03) Its commit is the newest head of the base branch the Steward knows, for the patrol after a merge.
 import { DELIVERY_DETAIL_MAX_LENGTH } from '@elvaria/domain';
 import type { EventData, Quest } from '@elvaria/domain';
 
@@ -61,4 +62,5 @@ export async function recordMerged(ctx: Context, quest: Quest, merged: Omit<Merg
   ctx.forge.stale.delete(quest.id);
   // The merge took in the quest and, through a merge quest, its party: the next tick looks at the territory at once.
   ctx.looks.looked.delete(quest.territory);
+  ctx.patrol.heads.set(quest.territory, data.merge_sha);
 }

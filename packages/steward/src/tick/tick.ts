@@ -1,12 +1,12 @@
 // One tick of the Steward (implementation-plan §3.1), and what the log already knows before the first one. Apart from
 // steward.ts since PS-03, which adds the scheduled jobs to both: they run at the end of the tick (§3.16.3).
 import { baseRedOf, planTick, sealPolicyOf } from '@elvaria/domain';
-import type { Instant, KingdomSnapshot, ZonedTime } from '@elvaria/domain';
+import type { BackgroundWork, Instant, KingdomSnapshot, ZonedTime } from '@elvaria/domain';
 
 import { wantedIn } from '../background/background.ts';
 import { mergedOf, recoverForge, settledOf, waitsOf } from '../forge/book.ts';
 import { forgeSizesOf } from '../forge/sizes.ts';
-import { patrolMoved } from '../patrol/again.ts';
+import { patrolMerged, patrolMoved } from '../patrol/again.ts';
 import { recoverPatrol } from '../patrol/book.ts';
 import { recoverDelegation } from '../delegation/book.ts';
 import { recordStreak, recoverStreak } from '../temple/streak-book.ts';
@@ -76,20 +76,14 @@ export async function recover(deps: StewardDeps, state: State): Promise<void> {
  * deliveries settled, the pull requests that wait, the quests in base (found by a look, or merged by the Steward) and
  * the last looks (PS-08c, PS-08d); the merge queue's sizes and the open pull requests the base branch overtook (PS-09);
  * and (PS-09d) the territories whose default branch the latest patrol found red, with the patrol's quests exempt.
+ * (CM-03) A patrol started outside the tick holds a slot of the background.
  */
 async function snapshotFor(ctx: Context, state: State, zone: ZonedTime): Promise<KingdomSnapshot> {
   const { world, deps } = ctx;
   const reviewPrompts = await reviewPromptsOf(ctx, state.promptSizes);
   const claimPrompts = await claimPromptsOf(ctx, state.claimPromptSizes);
   return {
-    ...snapshotOf(
-      world,
-      state.limits,
-      state.mana,
-      state.sessions.held(),
-      state.background.view(),
-      reviewPrompts,
-    ),
+    ...snapshotOf(world, state.limits, state.mana, state.sessions.held(), backgroundOf(state), reviewPrompts),
     claim_prompts: claimPrompts,
     models: modelsOf(deps.runners),
     tools_found: await versionStep(ctx, state.versions),
@@ -106,10 +100,17 @@ async function snapshotFor(ctx: Context, state: State, zone: ZonedTime): Promise
   };
 }
 
+/** The background planTick sees: (CM-03) the patrols started outside the tick hold a slot each. */
+function backgroundOf(state: State): BackgroundWork {
+  const patrols = state.patrol.runs.outside();
+  const view = state.background.view();
+  return patrols === 0 ? view : { ...view, patrols };
+}
+
 /**
  * The plan of the snapshot at `now`, its notices first: a quest someone can take now has its notice withdrawn before
  * the claim that follows (§3.1); then the plan carried out, and (PS-09d) a red territory whose default branch moved
- * patrolled again, outside the tick.
+ * patrolled again, outside the tick; (CM-03) so is a green narrow one, once its queue is quiet and a slot free.
  */
 async function planAndAct(
   ctx: Context,
@@ -124,6 +125,7 @@ async function planAndAct(
   await noteJudgeWaits(ctx, state.judgeWaits, plan.judge_waits);
   await carryOut(ctx, plan);
   patrolMoved(ctx, snapshot.base_red ?? []);
+  patrolMerged(ctx, snapshot);
 }
 
 const recorderFor = (deps: StewardDeps, state: State, held: Held, world: World) =>
