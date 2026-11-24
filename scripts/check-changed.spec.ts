@@ -20,6 +20,7 @@ describe('plan', () => {
     expect(lines(['packages/domain/src/quest/transition.ts'])).toEqual([
       'test',
       'typecheck',
+      'boundaries',
       'layout',
       'knip',
       'dup',
@@ -29,6 +30,7 @@ describe('plan', () => {
   it('runs the tests of the package and of every package that depends on it, in one pnpm run', () => {
     expect(lines(['packages/store/src/a.ts', 'packages/runner-core/src/b.ts', 'docs/cli.md'])).toEqual([
       '--filter ...@elvaria/store --filter ...@elvaria/runner-core test',
+      'boundaries',
       'layout',
       'knip',
       'dup',
@@ -39,12 +41,14 @@ describe('plan', () => {
   it('runs one package test for another package, keyed by its folder', () => {
     expect(lines(['packages/runner-core/src/a.ts', 'packages/runner-core/src/b.ts'])).toEqual([
       '--filter ...@elvaria/runner-core test',
+      'boundaries',
       'layout',
       'knip',
       'dup',
     ]);
     expect(lines(['apps/cli/src/cli.ts'])).toEqual([
       '--filter ...@elvaria/cli test',
+      'boundaries',
       'layout',
       'knip',
       'dup',
@@ -55,6 +59,7 @@ describe('plan', () => {
     expect(lines(['packages/domain/src/a.ts', 'packages/store/src/b.ts', 'scripts/c.mjs'])).toEqual([
       'test',
       'typecheck',
+      'boundaries',
       'layout',
       'knip',
       'dup',
@@ -72,6 +77,7 @@ describe('plan', () => {
       'knip',
       'test',
       'typecheck',
+      'boundaries',
       'layout',
       'dup',
     ]);
@@ -80,6 +86,7 @@ describe('plan', () => {
   it('checks docs and generated output for i18n', () => {
     expect(lines(['packages/i18n/src/glossary.json'])).toEqual([
       '--filter ...@elvaria/i18n test',
+      'boundaries',
       'docs:gen --check',
       'docs:check',
       'i18n:check',
@@ -106,11 +113,25 @@ describe('plan', () => {
     expect(lines(['packages/config/boundaries.mjs'])).toContain('boundaries');
   });
 
+  it('checks the boundaries once for workspace code, where an import cycle inside one package can hide', () => {
+    expect(lines(['packages/domain/src/quest/a.ts'])).toContain('boundaries');
+    expect(lines(['packages/store/src/a.ts', 'packages/steward/src/b.ts', 'apps/cli/src/c.ts'])).toEqual([
+      '--filter ...@elvaria/store --filter ...@elvaria/steward --filter ...@elvaria/cli test',
+      'boundaries',
+      'layout',
+      'knip',
+      'dup',
+    ]);
+    expect(lines(['packages/store/README.md'])).not.toContain('boundaries');
+    expect(lines(['scripts/docs-gen.mjs', 'scripts/check-changed.mjs'])).not.toContain('boundaries');
+  });
+
   it('checks the schemas when a contract or its output moves', () => {
     expect(lines(['docs/schemas/quest.schema.json'])).toEqual(['docs:check', 'schemas --check']);
     expect(lines(['packages/domain/src/schema/quest.ts'])).toEqual([
       'test',
       'typecheck',
+      'boundaries',
       'layout',
       'schemas --check',
       'knip',
@@ -123,6 +144,7 @@ describe('plan', () => {
     expect(lines(['package.json'])).toEqual(['knip']);
     expect(lines(['packages/store/src/io/atomic.ts'])).toEqual([
       '--filter ...@elvaria/store test',
+      'boundaries',
       'layout',
       'knip',
       'dup',
