@@ -613,6 +613,7 @@
   `@elvaria/eventlog` (log, journals, redaction), `@elvaria/runner-core` (`AgentRunner`, prompts, tool policy;
   `startChild` for a delivery's git). The `Forge` port (`src/forge/forge.ts`) is given by `apps/cli`.
 - `@elvaria/config` (dev only: `tsconfig.json` extends its `tsconfig/node.json`).
+- `@elvaria/testkit` (dev only: temporary folders with retrying cleanup and git fixtures without `GIT_*`).
 
 ## How to test
 

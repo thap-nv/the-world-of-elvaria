@@ -1,8 +1,7 @@
 // A throwaway kingdom for the Steward's specs: what `elvaria init` lays out (the default registry, read from
 // packages/registry-default by path because the Steward may not depend on it, implementation-plan §1.3), two
 // territories, a cast, and FakeRunners for both tribes whose verifiers hand in a verdict.
-import { mkdtemp, readdir, rm } from 'node:fs/promises';
-import os from 'node:os';
+import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 
 import {
@@ -15,6 +14,7 @@ import {
 } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import { createFakeRunner } from '@elvaria/runner-core';
+import { tempDir } from '@elvaria/testkit';
 import { initKingdom, openKingdom } from '@elvaria/store';
 import type {
   Character,
@@ -44,13 +44,6 @@ import type { Settling } from './settle.ts';
 import type { Notice, Steward, StewardDeps } from '../types.ts';
 
 const REGISTRY_DIR = path.join(import.meta.dirname, '..', '..', '..', 'registry-default');
-
-/**
- * How a spec removes a temp folder: on Windows a child that just ended (git, a check, a killed tree) or the indexer
- * may hold it a moment longer (EBUSY, EPERM), so rm retries, back-off up to 5.5 s, as the conformance workspace of
- * runner-core does (PR #32). Seen under the load of the pre-push hook (P1-39).
- */
-export const RM_TEMP = { recursive: true, force: true, maxRetries: 10, retryDelay: 100 } as const;
 
 /** The settling of each Steward a bench made: what tickUntil waits on between two ticks (settle.ts). */
 const settlers = new WeakMap<Steward, Settling>();
@@ -309,7 +302,7 @@ export const worldOfFiles = async (store: KingdomStore): Promise<WorldState> =>
   worldStateOf(await sourceOf(store));
 
 export async function bench(options: BenchOptions = {}): Promise<Bench> {
-  const root = await mkdtemp(path.join(os.tmpdir(), 'elvaria steward-'));
+  const { root, remove } = await tempDir('steward');
   // The five files and the class prompts: a registry without them does not load (P1-15).
   const prompts = (await readdir(path.join(REGISTRY_DIR, 'prompts'))).map((file) => `prompts/${file}`);
   const files = [...REGISTRY_FILES.map((file) => `${file}.json`), ...prompts];
@@ -395,7 +388,7 @@ export async function bench(options: BenchOptions = {}): Promise<Bench> {
       if (!read.ok) throw new Error(`fixture: no character ${id}`);
       return read.value;
     },
-    remove: () => rm(root, RM_TEMP),
+    remove,
   };
 }
 

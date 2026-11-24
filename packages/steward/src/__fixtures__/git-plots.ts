@@ -1,11 +1,10 @@
 // Plots over runner-core's PlotManager on real git repos, as `elvaria run` wires them (apps/cli/src/run/plots.ts),
 // without checks: what the patch specs need to see the Steward's commits (P1-28). Git runs without a shell, on the
 // PATH of this process and without its GIT_* variables (husky's pre-push exports GIT_DIR, implementation-plan §6).
-import { execFileSync } from 'node:child_process';
-import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
+import { git } from '@elvaria/testkit';
 import { TerritorySchema, ok } from '@elvaria/domain';
 import {
   commitLinksOf,
@@ -41,24 +40,7 @@ export const childEnv = (): Record<string, string> =>
     PASSED.flatMap((name) => (process.env[name] === undefined ? [] : [[name, process.env[name]]])),
   );
 
-export const git = (cwd: string, ...args: string[]): string =>
-  execFileSync('git', args, { cwd, encoding: 'utf8', env: childEnv() }).trim();
-
-/** A repo on `main` whose first commit holds `files` (path → text). */
-export async function gitRepoWith(folder: string, files: Readonly<Record<string, string>>): Promise<string> {
-  await mkdir(folder, { recursive: true });
-  git(folder, 'init', '-q', '-b', 'main');
-  git(folder, 'config', 'user.name', 'Elvaria Test');
-  git(folder, 'config', 'user.email', 'test@elvaria.invalid');
-  git(folder, 'config', 'core.autocrlf', 'false');
-  for (const [file, text] of Object.entries(files)) {
-    await mkdir(path.dirname(path.join(folder, file)), { recursive: true });
-    await writeFile(path.join(folder, file), text);
-  }
-  git(folder, 'add', '--all');
-  git(folder, 'commit', '-q', '-m', 'first');
-  return folder;
-}
+export { git, gitRepo as gitRepoWith } from '@elvaria/testkit';
 
 /**
  * Plots of PlotManager: worktrees, commits, patches and the looks at the base branch (PS-08d) for real; no check, and

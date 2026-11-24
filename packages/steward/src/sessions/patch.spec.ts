@@ -1,10 +1,11 @@
 // The Steward applies an assignee's patch for laws.patch_paths before the submit commit (P1-28, phase 1 report
 // §5.9): real git repos and PlotManager, FakeRunners whose assignee leaves the patch in its plot. Then (P1-31) the
 // delivery note names what it changed, and the run after a refused one reads why.
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
-import os from 'node:os';
+import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { reduce } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import { PATCH_FILE } from '@elvaria/runner-core';
@@ -13,19 +14,19 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { delivered, leavingRunners, noteOf } from '../__fixtures__/deliver.ts';
 import { git, gitPlots, gitRepoWith, onRepo } from '../__fixtures__/git-plots.ts';
-import { RM_TEMP, bench, questPayload, tickUntil, worldOfFiles } from '../__fixtures__/kingdom.ts';
+import { bench, questPayload, tickUntil, worldOfFiles } from '../__fixtures__/kingdom.ts';
 import type { Bench } from '../__fixtures__/kingdom.ts';
 import type { Steward } from '../types.ts';
 import type { Quest } from '@elvaria/domain';
 
 let current: Bench | undefined;
 let running: Steward | undefined;
-const folders: string[] = [];
+const folders: TempDir[] = [];
 
 afterEach(async () => {
   await running?.stop();
   await current?.remove();
-  await Promise.all(folders.splice(0).map((made) => rm(made, RM_TEMP)));
+  await Promise.all(folders.splice(0).map((folder) => folder.remove()));
   running = undefined;
   current = undefined;
 });
@@ -43,8 +44,9 @@ const PATCH = [
 
 /** dc1-se-team on a git repo with a husky hook, its assignee leaving `patch` (if any) as PATCH_FILE. */
 async function open(patch: string | undefined, patchPaths: readonly string[] = ['.husky/**']) {
-  const repo = await mkdtemp(path.join(os.tmpdir(), 'elvaria patch repo '));
-  folders.push(repo);
+  const folder = await tempDir('patch repo');
+  const repo = folder.root;
+  folders.push(folder);
   await gitRepoWith(repo, { '.husky/pre-push': HOOK, 'src/app.ts': 'export const app = 1;\n' });
   current = await bench();
   await onRepo(current, repo, patchPaths);

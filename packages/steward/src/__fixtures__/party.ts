@@ -1,9 +1,8 @@
 // What the party specs share (P1-18): dc1-se-team on a real git repo with PlotManager, FakeRunners whose assignees
 // leave files in their plot, the drafts of a contract's list, and the quests to wait for.
-import { mkdtemp, rm } from 'node:fs/promises';
-import os from 'node:os';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
 import { fromPortable } from '@elvaria/store';
 import type { Quest } from '@elvaria/domain';
 import { SUBQUESTS_FILE } from '@elvaria/runner-core';
@@ -12,7 +11,7 @@ import type { SpawnRequest } from '@elvaria/runner-core';
 import { leavingRunners } from './deliver.ts';
 import { PLAN_FILE, PLAN_FILE_PATH, templated } from './template.ts';
 import { gitPlots, gitRepoWith, onRepo } from './git-plots.ts';
-import { CAST, RM_TEMP, bench, questPayload } from './kingdom.ts';
+import { CAST, bench, questPayload } from './kingdom.ts';
 import type { Plots, Steward, StewardDeps } from '../types.ts';
 import type { Bench, CastMember, Plays } from './kingdom.ts';
 
@@ -101,7 +100,7 @@ export async function partyBench(
   plays: Plays = {},
   more: BenchMore = {},
 ): Promise<PartyBench> {
-  const repo = await mkdtemp(path.join(os.tmpdir(), 'elvaria party repo '));
+  const { root: repo, remove } = await tempDir('party repo');
   await gitRepoWith(repo, { 'README.md': '# dc1\n' });
   const cast = ['merle', 'morgan', 'mirel', 'mott'].slice(0, mages).map((id) => ({ id, cls: 'mage' }));
   const kingdom = await bench({ cast: [...CAST, ...cast, ...(more.cast ?? [])], plays });
@@ -134,7 +133,7 @@ export async function partyBench(
     remove: async () => {
       await steward.stop();
       await kingdom.remove();
-      await rm(repo, RM_TEMP);
+      await remove();
     },
   };
 }

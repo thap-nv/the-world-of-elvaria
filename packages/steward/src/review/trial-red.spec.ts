@@ -1,10 +1,11 @@
 // The judge of a quest judged in a scratch plot whose checks failed (P1-54, (f) of the P1-50 report): the pass rule
 // fails the quest whatever the judge says, so the judge only reads why. It waits for no exclusive lock (P1-50: 9 to 33
 // minutes of waiting for a session of 11 to 34 seconds) and, holding none, runs none of the exclusive checks.
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
-import os from 'node:os';
+import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { TerritorySchema } from '@elvaria/domain';
 import type { TerritoryId } from '@elvaria/domain';
 import { exclusiveLockOf } from '@elvaria/runner-core';
@@ -14,21 +15,21 @@ import type { HeldLock } from '@elvaria/store';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { gitPlots, gitRepoWith } from '../__fixtures__/git-plots.ts';
-import { RM_TEMP, bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
+import { bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
 import type { Bench } from '../__fixtures__/kingdom.ts';
 import type { Plots, Steward } from '../types.ts';
 
 let current: Bench | undefined;
 let running: Steward | undefined;
 let other: HeldLock | undefined;
-const folders: string[] = [];
+const folders: TempDir[] = [];
 
 afterEach(async () => {
   await other?.release();
   other = undefined;
   await running?.stop();
   await current?.remove();
-  await Promise.all(folders.splice(0).map((made) => rm(made, RM_TEMP)));
+  await Promise.all(folders.splice(0).map((folder) => folder.remove()));
   running = undefined;
   current = undefined;
 });
@@ -67,8 +68,9 @@ describe('the judge after failing checks in a scratch plot', () => {
   // Real git, two quests' scratch plots and the territory's checks run for real: 4 s beside 13 other slow
   // specs on Windows (2026-11-18), room for a busy machine.
   it('opens while another quest keeps the exclusive lock, and runs none of the exclusive checks', async () => {
-    const repo = await mkdtemp(path.join(os.tmpdir(), 'elvaria trial red '));
-    folders.push(repo);
+    const folder = await tempDir('trial red');
+    const repo = folder.root;
+    folders.push(folder);
     await gitRepoWith(repo, { 'src/sum.mjs': 'export const sum = (a, b) => a + b;\n', 'e2e/.keep': '' });
     current = await bench();
     const read = await current.store.territories.read('dc1-se-team' as TerritoryId);
