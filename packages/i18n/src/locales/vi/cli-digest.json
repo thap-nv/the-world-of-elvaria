@@ -44,6 +44,8 @@
     "cli.digest.item.tribe_held": "Tộc {tribe}: CLI {path} giờ là bản {version}, không phải {checked_version}, bản mà lần kiểm gần nhất với CLI thật đã qua; Nhiếp chính không mở phiên mới cho tộc.",
     "cli.digest.item.tribe_gone": "Tộc {tribe}: CLI mà Nhiếp chính chạy cho tộc, {path}, không còn (một bản cập nhật đã dời nó?); Nhiếp chính không mở phiên mới cho tộc.",
     "cli.digest.item.upgrade_available": "Có bản Elvaria mới hơn: {commits} commit trên main chạm vào code từ bản đang ghim {pinned} (main đang ở {latest}).",
+    "cli.digest.item.narrow_escapes": "Lãnh thổ {territory}: {escapes} kết luận lỗi lọt trong {merges} merge gần nhất vượt 1 trên 10 ở chế độ narrow.",
+    "cli.digest.advice.consider_full": "Đọc sổ đo và cân nhắc đưa lãnh thổ về kiểm full: elvaria territory checks <territory> --mode full.",
     "cli.digest.item.character_suspended": "{character} đang chờ ở Đền sau {count} lần trượt liên tiếp ({fail_kind}): chưa dòng kinh mới nào thả nó. Thư của Thầy tu về các lượt của nó: {letters}.",
     "cli.digest.item.temple_no_monk": "Đền chưa chạy được ({reasons}) trong khi {count} kiểu lỗi đang lặp lại.",
     "cli.digest.item.temple_off": "Đền chưa chạy được ({reasons}) trong khi {count} kiểu lỗi đang lặp lại.",

@@ -63,6 +63,7 @@ function summarySection(t: Translate, metrics: Metrics): MetricsSection {
       }),
       t('cli.metrics.line.escaped', {
         count: metrics.escaped.length,
+        late: metrics.escaped.filter((defect) => defect.late).length,
         reported: metrics.reported_escapes.length,
       }),
       t('cli.metrics.line.owner', { count: commands, quests: stepped, worked: metrics.quests.length }),

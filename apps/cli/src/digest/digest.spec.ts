@@ -206,6 +206,28 @@ describe('elvaria digest', () => {
 });
 
 describe('the digest file of the Steward', () => {
+  it('prints narrow escape counts and recommends full checks in both languages', () => {
+    const item: AttentionItem = {
+      kind: 'narrow_escapes',
+      group: 'can_wait',
+      advice: 'consider_full',
+      command: ['metrics'],
+      territory: questFixture('archived').territory,
+      merges: 12,
+      escapes: 2,
+    };
+    const digest = { day: '2026-11-06', name: 'Bình Minh', items: [item] };
+    const english = digestMarkdown(translator('en'), digest);
+    expect(english).toContain('Territory do-an: 2 escaped check conclusions in the latest 12 merges');
+    expect(english).toContain('consider returning the territory to full checks');
+    expect(english).toContain('  `elvaria metrics`');
+    const vietnamese = digestMarkdown(translator('vi'), digest);
+    expect(vietnamese).toContain('Lãnh thổ do-an: 2 kết luận lỗi lọt trong 12 merge gần nhất');
+    expect(vietnamese).toContain('cân nhắc đưa lãnh thổ về kiểm full');
+    expect(english).not.toContain('{escapes}');
+    expect(english).not.toContain('{merges}');
+  });
+
   let dir: TempDir;
   beforeEach(async () => {
     dir = await tempDir();

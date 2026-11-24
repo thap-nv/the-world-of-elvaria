@@ -16,6 +16,7 @@ import {
   templeNoticesOf,
   unopenedReviewsOf,
   unsealedMergesOf,
+  narrowEscapeAlertsOf,
   worldStateOf,
 } from '@elvaria/domain';
 import type {
@@ -175,6 +176,7 @@ export const digestJob = (digest: Digest): StewardJob => ({
     const unsealed = {
       ...run.notices,
       merged_unsealed: unsealedMergesOf(log.events),
+      narrow_escapes: narrowEscapeAlertsOf(log.events, [...ctx.world.territories.values()]),
       ...templeNoticesIn(ctx, memos.items, verdicts.items, log.events),
     };
     const notices = upgrade === undefined ? unsealed : { ...unsealed, upgrade };

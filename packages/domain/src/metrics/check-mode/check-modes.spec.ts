@@ -39,6 +39,8 @@ describe('check modes ledger (CM-09a)', () => {
 
   it('has no invented samples or minutes for an empty log', () => {
     expect(checkModesOf([], {})).toEqual({
+      escapes: [],
+      has_attributions: false,
       durations: [
         { mode: 'full', count: 0, median_minutes: null, p90_minutes: null },
         { mode: 'narrow', count: 0, median_minutes: null, p90_minutes: null },
