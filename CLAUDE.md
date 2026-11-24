@@ -73,7 +73,7 @@ Trước khi sửa các file sau, đọc file đó, test của nó và ADR liên
 |---|---|
 | `packages/domain/**` | `pnpm -r test`, `pnpm typecheck` (mọi package dùng domain) |
 | Package khác | `pnpm --filter ...@elvaria/<key> test` (cả package phụ thuộc); domain, runner-\*, hooks, eventlog, `apps/cli`: bước thêm (schema, event, CLI thật, bản build của hook, `docs/cli.md`…) ở `.claude/rules/` của vùng, tự nạp |
-| Package mới, `boundaries.mjs`, `dependencies`, import giữa package | `pnpm install`, `pnpm boundaries`, `pnpm lint`, `pnpm docs:gen` |
+| Package mới, `boundaries.mjs`, `dependencies`, import (cả trong một package) | `pnpm install`, `pnpm boundaries` (`check:changed` chạy nó), `pnpm lint`, `pnpm docs:gen` |
 | `packages/i18n/**` | `pnpm docs:gen`, `pnpm docs:check`, `pnpm i18n:check` |
 | File mới, đổi tên hay xóa file | `pnpm knip`; trong `packages/`, `apps/` thêm `pnpm layout` (và `pnpm dup`, cả khi chỉ sửa code) |
 | `scripts/**`, `.claude/hooks/**` | `pnpm test`, `pnpm typecheck` (tsconfig gốc, `checkJs`) |
