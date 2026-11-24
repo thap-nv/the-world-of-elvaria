@@ -1,13 +1,13 @@
 // askTemple (PS-12f): one session of the Monk, in role `monk`, with no tool and the Temple's caps, for the evidence
 // pack; its reply held against the contract and the pack. On a tribe without a JSON Schema flag a reply that breaks
 // either is tried once more, and both sessions' tokens are counted.
-import { mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { ClassIdSchema } from '@elvaria/domain';
 import { RETRY_DIR, loadPromptTemplates } from '@elvaria/runner-core';
 import type { TempleContext } from '@elvaria/runner-core';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { CHANCELLOR_CLASS_ENTRY, NATIVE, PARSED } from './__fixtures__/kingdom.ts';
@@ -83,10 +83,12 @@ const LETTER_AND_LINE = {
 };
 
 let dir: string;
+let temp: TempDir;
 beforeEach(async () => {
-  dir = await mkdtemp(path.join(tmpdir(), 'elvaria temple ạ '));
+  temp = await tempDir('temple ạ');
+  dir = temp.root;
 });
-afterEach(() => rm(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }));
+afterEach(() => temp.remove());
 
 function ask(answers: readonly Answer[], choice: ChancellorChoice = NATIVE) {
   const runner = scriptedRunner(answers);

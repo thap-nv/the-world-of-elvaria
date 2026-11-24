@@ -80,6 +80,7 @@ signal)` runs one session with no tool (`buildAmendmentPrompt`; the amendment-de
   `@elvaria/runner-core` (`AgentRunner`, `buildChancellorPrompt`, `toolPolicyOf`, prompt templates, `spawnParsed`
   and the text-reply helpers of `src/structured/`). No third-party package.
 - `@elvaria/config` (dev only: `tsconfig.json` extends its `tsconfig/node.json`).
+- `@elvaria/testkit` (dev only: temporary folders with retrying cleanup).
 
 ## How to test
 
