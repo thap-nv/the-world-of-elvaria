@@ -15,6 +15,18 @@ const verdictOf = (value: object) => {
 };
 
 describe('TribeSchema', () => {
+  it('pins only file adapters with a lowercase SHA-256 without changing version 1', () => {
+    const tribe = { id: 'local', adapter: 'adapters/local.mjs' };
+    const adapter_sha256 = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+    expect(verdictOf({ ...tribe, adapter_sha256 })).toBe('ok');
+    expect(verdictOf({ ...tribe, adapter: 'claude_code', adapter_sha256 })).toBe('adapter_sha256');
+    for (const hash of ['', 'a'.repeat(63), 'a'.repeat(65), 'A'.repeat(64), 'g'.repeat(64)]) {
+      expect(verdictOf({ ...tribe, adapter_sha256: hash })).toBe('adapter_sha256');
+    }
+    expect(KingdomSchema.parse({ ...KINGDOM, tribes: [{ ...base, ...tribe, adapter_sha256 }] }).version).toBe(
+      1,
+    );
+  });
   it('accepts an optional positive integer turn ceiling without changing old tribes', () => {
     const tribe = { ...base, id: 'claude', adapter: 'claude_code' };
     expect(TribeSchema.parse(tribe)).not.toHaveProperty('max_turns');

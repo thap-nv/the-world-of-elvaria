@@ -86,6 +86,8 @@ function timeoutOf(input: CommandInput, live: boolean): number | undefined {
 
 /** What this run checks: the tribe as the runner sees it, the CLI the owner or doctor's search names, the real CLI. */
 interface Tried {
+  /** Bytes actually loaded before the suite, never a new hash read after it passed. */
+  adapterSha256?: string;
   readonly tribe: Tribe;
   /** A CLI in place of the pinned one: `--tool`, or where a moved CLI is now. */
   readonly toolPath?: string;
@@ -167,7 +169,8 @@ async function enable(ctx: KingdomContext, tribe: Tribe): Promise<ExitCode> {
 /** A pass: the real CLI pinned for this tribe, or nothing written for another CLI on a fake run, or the tribe enabled. */
 async function passed(ctx: KingdomContext, named: Tribe, tried: Tried): Promise<ExitCode> {
   if (tried.live !== undefined && named.tool !== undefined) {
-    if (!(await pinChecked(ctx, { ...named, tool: named.tool }, tried.live))) return EXIT.failed;
+    if (!(await pinChecked(ctx, { ...named, tool: named.tool }, tried.live, tried.adapterSha256)))
+      return EXIT.failed;
     ctx.io.out(
       ctx.t(named.enabled ? 'cli.tribe.check.passed' : 'cli.tribe.check.enabled', { tribe: named.id }),
     );
@@ -201,7 +204,13 @@ async function passes(
   run: SuiteRun,
 ): Promise<boolean | 'refused'> {
   const { tribe } = tried;
-  const found = await handOf(tribe, { kingdom: ctx.kingdom, root: ctx.store.root }, ctx.io, tried.toolPath);
+  const found = await handOf(
+    tribe,
+    { kingdom: ctx.kingdom, root: ctx.store.root },
+    ctx.io,
+    tried.toolPath,
+    false,
+  );
   if (found.kind !== 'ready') {
     const key = found.kind === 'none' ? 'cli.tribe.check.no_runner' : 'cli.tribe.check.broken';
     ctx.io.err(ctx.t(key, { tribe: tribe.id, adapter: tribe.adapter }));
@@ -212,6 +221,7 @@ async function passes(
     return 'refused';
   }
   const { runner } = found.hand;
+  if (found.hand.adapterSha256 !== undefined) tried.adapterSha256 = found.hand.adapterSha256;
   capabilityLines(ctx.t, tribe, runner.capabilities).forEach(ctx.io.out);
   const model = await modelToTry(ctx, input, tribe, runner);
   if (model.missing === true) {
@@ -249,7 +259,16 @@ async function runCheck(input: CommandInput, cli: CliContext): Promise<ExitCode>
   const verdict =
     tried === undefined ? 'refused' : await passes(ctx, input, tried, { live, timeout_ms: timeout });
   if (verdict === 'refused') return EXIT.failed;
-  if (verdict && tried !== undefined) return passed(ctx, named, tried);
+  if (verdict && tried !== undefined) {
+    if (live && given === undefined) return passed(ctx, named, tried);
+    ctx.io.out(
+      ctx.t(given === undefined ? 'cli.tribe.check.passed' : 'cli.tribe.check.passed_tool', {
+        tribe: named.id,
+        tool: given ?? '',
+      }),
+    );
+    return EXIT.ok;
+  }
   const key = named.enabled ? 'cli.tribe.check.failed_enabled' : 'cli.tribe.check.failed';
   ctx.io.err(ctx.t(key, { tribe: named.id }));
   return EXIT.failed;

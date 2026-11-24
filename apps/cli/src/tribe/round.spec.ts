@@ -63,7 +63,7 @@ describe('a quest round with an owner adapter file', () => {
       await elvaria(testIo(), 'tribe', 'disable', 'gemini');
       await elvaria(testIo(), 'tribe', 'add', 'lantern', '--adapter', LANTERN_ADAPTER);
       await run(testIo(), 'doctor', '--tool', `lantern=${FAKE_LANTERN}`, '--kingdom', kingdom);
-      await elvaria(testIo(), 'tribe', 'check', 'lantern', '--scenarios');
+      await elvaria(testIo(), 'tribe', 'check', 'lantern', '--model', 'lantern-small');
       // A knight high enough for rank C, and a judge on another model of the same family (different_model).
       const summon = ['--tribe', 'lantern'];
       await elvaria(

@@ -48,9 +48,7 @@ describe('elvaria tribe check, with a temp folder that will not go', () => {
     const io = testIo();
     expect(await elvaria(io, 'tribe', 'check', 'lantern', '--scenarios')).toBe(0);
     expect(io.printed.out).toContain('✓ submit');
-    expect(io.printed.out.at(-1)).toBe(
-      'Tribe lantern passes the conformance suite and is now enabled in kingdom.json.',
-    );
+    expect(io.printed.out.at(-1)).toBe('Tribe lantern passes the conformance suite.');
     // One line per check that played a session, naming the folder it left.
     expect(io.printed.err).toHaveLength(held.length);
     expect(io.printed.err[0]).toBe(

@@ -69,12 +69,12 @@ describe('elvaria tribe check of a second Claude Code account (PS-27)', { timeou
       ({ id }) => id === 'claude_2',
     )?.enabled;
 
-  it('passes the suite in its own folder, and is enabled', async () => {
+  it('passes scenarios in its own folder without enabling the tribe', async () => {
     await tribes(second);
     const { code, io } = await check();
     expect(io.printed.err).toEqual([]);
     expect(code).toBe(0);
-    expect(await enabled()).toBe(true);
+    expect(await enabled()).toBe(false);
     const calls = (await readFile(path.join(second, 'fake-calls.jsonl'), 'utf8'))
       .trim()
       .split('\n')

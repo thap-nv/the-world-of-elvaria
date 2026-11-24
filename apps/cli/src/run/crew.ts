@@ -12,6 +12,7 @@ import type { Kingdom, Tribe, TribeId } from '@elvaria/domain';
 import type { ClaudeToolOptions } from '@elvaria/runner-claude';
 import type { AdapterTool, AgentRunner, ForgetWorktree } from '@elvaria/runner-core';
 import { fromPortable } from '@elvaria/store';
+import { translator } from '@elvaria/i18n';
 
 import { minimalEnv } from '../process/minimal-env.ts';
 import { isAdapterFile, loadAdapterFile } from '../tribe/adapter-file.ts';
@@ -21,6 +22,7 @@ import type { CliIo } from '../io.ts';
 
 /** One tribe's runner and what its CLI must forget when a worktree is released (§3.3). */
 export interface Hand {
+  readonly adapterSha256?: string;
   readonly runner: AgentRunner;
   readonly forget?: ForgetWorktree;
 }
@@ -105,12 +107,18 @@ export async function handOf(
   place: KingdomPlace,
   io: CliIo,
   toolPath?: string,
+  checkPin = true,
 ): Promise<HandOf> {
   if (isAdapterFile(tribe.adapter)) {
-    const loaded = await loadAdapterFile(place.root, tribe, io, toolPath);
-    return loaded.ok
-      ? { kind: 'ready', hand: { runner: loaded.value } }
-      : { kind: 'broken', problems: loaded.error };
+    const loaded = await loadAdapterFile(
+      place.root,
+      tribe,
+      io,
+      translator(place.kingdom.owner.locale),
+      toolPath,
+      checkPin,
+    );
+    return loaded.ok ? { kind: 'ready', hand: loaded.value } : { kind: 'broken', problems: loaded.error };
   }
   const factory = BUILT_IN_ADAPTERS[tribe.adapter]?.hand;
   return factory === undefined

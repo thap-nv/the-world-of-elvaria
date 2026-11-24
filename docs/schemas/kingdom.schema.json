@@ -584,6 +584,11 @@
           "type": "string",
           "pattern": "^(?:[a-z][a-z0-9_]*|adapters/[a-z0-9][a-z0-9-]*\\.mjs)$"
         },
+        "adapter_sha256": {
+          "description": "SHA-256 of the owner adapter file that passed tribe check (SEC-03, K2/V3, B11). Enabled file adapters are refused when absent or different. Optional, so kingdom.json stays version 1.",
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
         "enabled": {
           "type": "boolean",
           "default": true
@@ -748,6 +753,20 @@
         }
       },
       "allOf": [
+        {
+          "if": {
+            "required": [
+              "adapter_sha256"
+            ]
+          },
+          "then": {
+            "properties": {
+              "adapter": {
+                "pattern": "^adapters/[a-z0-9][a-z0-9-]*\\.mjs$"
+              }
+            }
+          }
+        },
         {
           "if": {
             "required": [

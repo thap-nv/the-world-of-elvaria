@@ -1,5 +1,6 @@
 // `elvaria tribe add | check | disable` with an owner adapter file whose CLI is fake (implementation-plan §3.14,
 // P1-19): it passes the conformance suite, the tribe is narrowed to ranks F–D, and no character file changes.
+import { createHash } from 'node:crypto';
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -111,7 +112,7 @@ describe('elvaria tribe', () => {
         ...value,
         tribes: [
           ...(value.tribes as object[]),
-          { id: 'broken', adapter: broken, enabled: true, max_concurrent: 1 },
+          { id: 'broken', adapter: broken, enabled: false, max_concurrent: 1 },
         ],
       }));
       await elvaria(testIo(), 'tribe', 'add', 'lantern', '--adapter', LANTERN_ADAPTER);
@@ -129,9 +130,7 @@ describe('elvaria tribe', () => {
       }));
       const unpinned = testIo();
       await elvaria(unpinned, 'doctor');
-      expect(printed(unpinned)).toContain(
-        '✗ Tribe lantern: the adapter file cannot find or run its CLI: tribe lantern: lantern is not pinned',
-      );
+      expect(printed(unpinned)).toContain('elvaria tribe check lantern');
     });
 
     it('refuses a pinned sign-in the adapter does not run with (checkTribeAuth)', async () => {
@@ -151,7 +150,7 @@ describe('elvaria tribe', () => {
   });
 
   describe('check', () => {
-    it('runs the conformance suite against the adapter file, narrows the tribe to F–D, and enables it', async () => {
+    it('runs all scenarios and reports ranks F–D without enabling the tribe', async () => {
       await addLantern();
       const io = testIo();
       expect(await elvaria(io, 'tribe', 'check', 'lantern', '--scenarios')).toBe(0);
@@ -175,9 +174,9 @@ describe('elvaria tribe', () => {
         '– image (skipped: the adapter does not declare it)',
         '– scratch_commit (skipped: the adapter does not declare it)',
         '✓ ask',
-        'Tribe lantern passes the conformance suite and is now enabled in kingdom.json.',
+        'Tribe lantern passes the conformance suite.',
       ]);
-      expect((await lantern())?.enabled).toBe(true);
+      expect((await lantern())?.enabled).toBe(false);
       const again = testIo();
       expect(await elvaria(again, 'tribe', 'check', 'lantern', '--scenarios')).toBe(0);
       expect(again.printed.out.at(-1)).toBe('Tribe lantern passes the conformance suite.');
@@ -256,11 +255,18 @@ describe('elvaria tribe', () => {
           '',
         ].join('\n'),
       );
+      const pins = await Promise.all(
+        [typo, shy].map(async (adapter) =>
+          createHash('sha256')
+            .update(await readFile(path.join(kingdom, adapter)))
+            .digest('hex'),
+        ),
+      );
       await editKingdom(kingdom, (value) => ({
         ...value,
         tribes: [
-          { id: 'typo', adapter: typo, enabled: true, max_concurrent: 1 },
-          { id: 'shy', adapter: shy, enabled: true, max_concurrent: 1 },
+          { id: 'typo', adapter: typo, enabled: true, max_concurrent: 1, adapter_sha256: pins[0] },
+          { id: 'shy', adapter: shy, enabled: true, max_concurrent: 1, adapter_sha256: pins[1] },
         ],
       }));
       const io = testIo();
@@ -276,7 +282,7 @@ describe('elvaria tribe', () => {
 
     it('keeps an enabled tribe that fails enabled, and says how to stop it', async () => {
       await addLantern();
-      await elvaria(testIo(), 'tribe', 'check', 'lantern', '--scenarios');
+      await elvaria(testIo(), 'tribe', 'check', 'lantern', '--model', 'lantern-small');
       await payWithKey();
       const io = testIo();
       expect(await elvaria(io, 'tribe', 'check', 'lantern', '--model', 'lantern-small')).toBe(1);

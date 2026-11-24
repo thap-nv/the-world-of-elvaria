@@ -1,6 +1,8 @@
 {
   "version": 1,
   "messages": {
+    "cli.tribe.adapter_hash_mismatch": "Adapter {file}: pinned SHA-256 {expected}; actual SHA-256 {actual}. Refusing to load it. Run elvaria tribe check {tribe}; a passing check pins the new hash.",
+    "cli.tribe.adapter_hash_missing": "missing",
     "cli.tribe.add.added": "Tribe {tribe} added (adapter {adapter}), disabled for now.",
     "cli.tribe.add.added_sibling": "Tribe {tribe} added as a sibling of tribe {root} (adapter {adapter}), disabled for now.",
     "cli.tribe.add.arg.id": "The new tribe's id, e.g. codex: lowercase letters, digits and _, starting with a letter.",
