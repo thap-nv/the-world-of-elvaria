@@ -161,7 +161,11 @@ show` prints the brief apart from the rest of the description and, while the pla
   and left for the owner; the check does not fail for it (`onLeftover`, lessons of 2026-11-12). `run` gives the
   Steward `toolFound` (`src/run/tool-found.ts`): the CLI each runner starts and its `--version`, or a file gone;
   `tribeHoldsOf` asks the same for a command run by hand.
-  `tribe disable <id>` stops a tribe taking new work. An owner adapter file is imported only here
+  `tribe disable <id>` stops a tribe taking new work. Enabled owner adapter files require the SHA-256
+  pinned by a passing `tribe check`; missing or changed hashes refuse loading until a new check passes.
+  `--scenarios` still enables a passing tribe but does not pin `adapter_sha256`;
+  `--scenarios --tool` writes nothing. A real CLI check with `--tool` pins that CLI and the adapter hash.
+  An owner adapter file is imported only here
   (`src/tribe/adapter-file.ts`): runner-core's `adapterKitOf` builds its kit (minimal env, the pinned or given CLI,
   `launchOf`, `hookCommand`) and `adapterOfModule` checks what `createAdapter(kit)` returns, so a broken file is a
   list of reasons for `run`, `doctor` and `tribe check`, never a crash. `tribe list` (P1-34, `src/tribe/list.ts`)

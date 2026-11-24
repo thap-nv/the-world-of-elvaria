@@ -1,5 +1,6 @@
 // `elvaria tribe add | check | disable` with an owner adapter file whose CLI is fake (implementation-plan §3.14,
 // P1-19): it passes the conformance suite, the tribe is narrowed to ranks F–D, and no character file changes.
+import { createHash } from 'node:crypto';
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -106,12 +107,14 @@ describe('elvaria tribe', () => {
     });
 
     it('says what is wrong with an adapter file that does not load or cannot find its CLI', async () => {
+      const sha256 = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
       const broken = await writeAdapter(kingdom, 'broken', 'export const createAdapter = 1;\n');
+      const adapter_sha256 = sha256(await readFile(path.join(kingdom, broken)));
       await editKingdom(kingdom, (value) => ({
         ...value,
         tribes: [
           ...(value.tribes as object[]),
-          { id: 'broken', adapter: broken, enabled: true, max_concurrent: 1 },
+          { id: 'broken', adapter: broken, enabled: true, max_concurrent: 1, adapter_sha256 },
         ],
       }));
       await elvaria(testIo(), 'tribe', 'add', 'lantern', '--adapter', LANTERN_ADAPTER);
@@ -121,10 +124,11 @@ describe('elvaria tribe', () => {
       expect(printed(io)).toContain('the file does not export a function createAdapter');
       expect(printed(io)).toContain('✗ Tribe lantern: the path given to --tool is not a file');
       // Turned on by hand before doctor pinned anything.
+      const lanternHash = sha256(await readFile(path.join(kingdom, LANTERN_ADAPTER)));
       await editKingdom(kingdom, (value) => ({
         ...value,
         tribes: (value.tribes as Record<string, unknown>[]).map((tribe) =>
-          tribe.id === 'lantern' ? { ...tribe, enabled: true } : tribe,
+          tribe.id === 'lantern' ? { ...tribe, enabled: true, adapter_sha256: lanternHash } : tribe,
         ),
       }));
       const unpinned = testIo();
@@ -256,11 +260,18 @@ describe('elvaria tribe', () => {
           '',
         ].join('\n'),
       );
+      const pins = await Promise.all(
+        [typo, shy].map(async (adapter) =>
+          createHash('sha256')
+            .update(await readFile(path.join(kingdom, adapter)))
+            .digest('hex'),
+        ),
+      );
       await editKingdom(kingdom, (value) => ({
         ...value,
         tribes: [
-          { id: 'typo', adapter: typo, enabled: true, max_concurrent: 1 },
-          { id: 'shy', adapter: shy, enabled: true, max_concurrent: 1 },
+          { id: 'typo', adapter: typo, enabled: true, max_concurrent: 1, adapter_sha256: pins[0] },
+          { id: 'shy', adapter: shy, enabled: true, max_concurrent: 1, adapter_sha256: pins[1] },
         ],
       }));
       const io = testIo();
@@ -276,7 +287,7 @@ describe('elvaria tribe', () => {
 
     it('keeps an enabled tribe that fails enabled, and says how to stop it', async () => {
       await addLantern();
-      await elvaria(testIo(), 'tribe', 'check', 'lantern', '--scenarios');
+      await elvaria(testIo(), 'tribe', 'check', 'lantern', '--model', 'lantern-small');
       await payWithKey();
       const io = testIo();
       expect(await elvaria(io, 'tribe', 'check', 'lantern', '--model', 'lantern-small')).toBe(1);

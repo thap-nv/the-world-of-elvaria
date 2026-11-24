@@ -16,6 +16,7 @@ import { locateTribeTool } from '../doctor/check-tribe.ts';
 import { findingLines } from '../doctor/finding.ts';
 import { checkedToolOf } from '../doctor/pin-tool.ts';
 import { backupStamp } from '../migrate.ts';
+import { isAdapterFile } from './adapter-file.ts';
 import { refuse, saveTribes } from './save.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
@@ -32,7 +33,12 @@ export async function liveToolOf(
   tribe: Tribe,
   given?: string,
 ): Promise<LiveTool | undefined> {
-  const found = await locateTribeTool(tribe, ctx, given);
+  // Discovery for a recheck must be able to load the changed file too; doctor itself still checks the pin.
+  const found = await locateTribeTool(
+    isAdapterFile(tribe.adapter) ? { ...tribe, enabled: false } : tribe,
+    ctx,
+    given,
+  );
   if (!('problem' in found)) return { path: found.path, version: found.version };
   findingLines(found.problem).forEach(ctx.io.err);
   return undefined;
@@ -46,11 +52,23 @@ export async function pinChecked(
   ctx: KingdomContext,
   tribe: Tribe & { readonly tool: NonNullable<Tribe['tool']> },
   found: LiveTool,
+  adapterSha256?: string,
 ): Promise<boolean> {
   const tool = checkedToolOf(tribe.tool, found);
   const saved = await saveTribes(ctx, (tribes) =>
     tribes.some(({ id }) => id === tribe.id)
-      ? ok(tribes.map((entry) => (entry.id === tribe.id ? { ...entry, tool, enabled: true } : entry)))
+      ? ok(
+          tribes.map((entry) =>
+            entry.id === tribe.id
+              ? {
+                  ...entry,
+                  tool,
+                  enabled: true,
+                  ...(adapterSha256 === undefined ? {} : { adapter_sha256: adapterSha256 }),
+                }
+              : entry,
+          ),
+        )
       : err(
           refuse(
             ctx.t('cli.tribe.unknown', { tribe: tribe.id, tribes: tribes.map(({ id }) => id).join(', ') }),

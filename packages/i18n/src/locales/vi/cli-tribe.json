@@ -1,6 +1,8 @@
 {
   "version": 1,
   "messages": {
+    "cli.tribe.adapter_hash_mismatch": "Adapter {file}: SHA-256 đã ghim {expected}; SHA-256 thực tế {actual}. Từ chối nạp. Chạy elvaria tribe check {tribe}; bộ kiểm đạt sẽ ghim hash mới.",
+    "cli.tribe.adapter_hash_missing": "chưa có",
     "cli.tribe.add.added": "Đã thêm tộc {tribe} (adapter {adapter}), tạm thời tắt.",
     "cli.tribe.add.added_sibling": "Đã thêm tộc {tribe}, chi của tộc {root} (adapter {adapter}), tạm thời tắt.",
     "cli.tribe.add.arg.id": "Id của tộc mới, ví dụ codex: chữ thường, chữ số và _, bắt đầu bằng chữ.",

@@ -130,7 +130,7 @@ describe('a fourth tribe from an adapter file alone', () => {
       await addFlint();
       await elvaria(testIo(), 'tribe', 'disable', 'claude');
       await elvaria(testIo(), 'tribe', 'disable', 'gemini');
-      await elvaria(testIo(), 'tribe', 'check', 'flint', '--scenarios');
+      await elvaria(testIo(), 'tribe', 'check', 'flint', '--model', 'swift');
       const summon = (id: string, cls: string, model: string) =>
         elvaria(testIo(), 'character', 'add', id, '--class', cls, '--tribe', 'flint', '--model', model);
       // Level 4 from the declared model: rank C as a matter of course. The judge is the same maker on another model.

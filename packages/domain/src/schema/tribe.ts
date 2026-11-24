@@ -66,6 +66,14 @@ export const TribeSchema = z
         description:
           'A built-in adapter (claude_code, antigravity, gemini_cli, codex_cli) or an adapter file adapters/<name>.mjs inside the kingdom that exports createAdapter(kit) and passes the conformance suite.',
       }),
+    adapter_sha256: z
+      .string()
+      .regex(/^[a-f0-9]{64}$/)
+      .optional()
+      .meta({
+        description:
+          'SHA-256 of the owner adapter file that passed tribe check (SEC-03, K2/V3, B11). Enabled file adapters are refused when absent or different. Optional, so kingdom.json stays version 1.',
+      }),
     // Required although `elvaria init` writes these defaults: the v1 contract keeps them explicit in the file.
     enabled: z.boolean().meta({ default: true }),
     max_concurrent: z.int().min(1).meta({ default: 1 }),
@@ -118,6 +126,13 @@ export const TribeSchema = z
   // Only rules that hold whatever the adapter: which sign-ins an adapter runs with is its own declaration, checked
   // by checkTribeAuth (tribe/auth.ts), so the core never asks which CLI a tribe runs (ADR 0021; P1-19).
   .superRefine((tribe, ctx) => {
+    if (tribe.adapter_sha256 !== undefined && !ADAPTER_FILE_PATTERN.test(tribe.adapter)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['adapter_sha256'],
+        message: 'adapter_sha256 requires an adapter file',
+      });
+    }
     if (tribe.tool?.auth === 'api_key' && tribe.budget?.usd_week === undefined) {
       ctx.addIssue({
         code: 'custom',
@@ -130,6 +145,10 @@ export const TribeSchema = z
     id: 'tribe',
     // The same rule as the superRefine above, for readers of the JSON contract.
     allOf: [
+      {
+        if: { required: ['adapter_sha256'] },
+        then: { properties: { adapter: { pattern: `^${ADAPTER_FILE}$` } } },
+      },
       {
         if: { required: ['tool'], properties: { tool: { required: ['auth'], ...API_KEY } } },
         then: { required: ['budget'], properties: { budget: { required: ['usd_week'] } } },
