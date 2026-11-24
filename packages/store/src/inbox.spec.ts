@@ -4,9 +4,9 @@ import path from 'node:path';
 import { InboxCommandSchema } from '@elvaria/domain';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { fixture, plant, tempKingdom } from '../test/kingdom.ts';
+import { fixture, plant, tempKingdom } from './__fixtures__/kingdom.ts';
 import { openKingdom } from './kingdom-store.ts';
-import type { TempKingdom } from '../test/kingdom.ts';
+import type { TempKingdom } from './__fixtures__/kingdom.ts';
 import type { InboxStore } from './inbox.ts';
 import type { InboxCommandInput } from '@elvaria/domain';
 

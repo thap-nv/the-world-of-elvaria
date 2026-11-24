@@ -1,25 +1,18 @@
-// Test helpers: throwaway kingdoms in the OS temp folder and the v1 fixtures next to the migrations.
-// The folder name has a space on purpose: real kingdoms live in paths like `D:\Dummy\Tool - Personal\…`.
+// Test helpers: throwaway kingdoms and the v1 fixtures next to the migrations. The folder comes from testkit
+// (a name with a space, a remove that retries; architecture-health V7): the model for the packages of AH-07b.
 import { readFileSync } from 'node:fs';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const MIGRATIONS_DIR = fileURLToPath(new URL('../src/migrations/', import.meta.url));
-// On Windows a child that just ended, or the indexer, may hold a temp folder a moment (EBUSY, EPERM): rm retries,
-// back-off up to 5.5 s (P1-39).
-export const RM_TEMP = { recursive: true, force: true, maxRetries: 10, retryDelay: 100 } as const;
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 
-export interface TempKingdom {
-  readonly root: string;
-  remove(): Promise<void>;
-}
+const MIGRATIONS_DIR = fileURLToPath(new URL('../migrations/', import.meta.url));
 
-export async function tempKingdom(): Promise<TempKingdom> {
-  const root = await mkdtemp(path.join(tmpdir(), 'elvaria kingdom '));
-  return { root, remove: () => rm(root, RM_TEMP) };
-}
+export type TempKingdom = TempDir;
+
+export const tempKingdom = (): Promise<TempKingdom> => tempDir('kingdom');
 
 /** The stored fixture `<contract>/v<version>.json`, as text. */
 export const fixtureText = (contract: string, version = 1): string =>

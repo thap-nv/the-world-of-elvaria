@@ -4,10 +4,10 @@ import path from 'node:path';
 import { KingdomSchema, QuestIdSchema, QuestSchema, TerritorySchema, err, ok } from '@elvaria/domain';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { fixture, plant, tempKingdom } from '../test/kingdom.ts';
+import { fixture, plant, tempKingdom } from './__fixtures__/kingdom.ts';
 import { fileStore } from './entity-store.ts';
 import { openKingdom } from './kingdom-store.ts';
-import type { TempKingdom } from '../test/kingdom.ts';
+import type { TempKingdom } from './__fixtures__/kingdom.ts';
 import type { EntityStore } from './entity-store.ts';
 import type { KingdomStore } from './kingdom-store.ts';
 import type { FileSpec } from './stored-file.ts';

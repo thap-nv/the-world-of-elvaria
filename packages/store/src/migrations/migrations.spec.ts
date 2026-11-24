@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { CONTRACTS } from '@elvaria/domain';
 import { describe, expect, it } from 'vitest';
 
-import { fixture, fixtureText } from '../../test/kingdom.ts';
+import { fixture, fixtureText } from '../__fixtures__/kingdom.ts';
 import { STORED_GROUPS } from '../migrate-kingdom.ts';
 import { decode } from '../stored-file.ts';
 import { MIGRATIONS, STORED_CONTRACTS } from './index.ts';

@@ -114,7 +114,7 @@ describe('the dependency table (implementation-plan §1.3)', () => {
   });
 
   it('makes apps/cli the only composition root (ADR 0006, 0021)', () => {
-    const notInCli = ['config', 'cli', ...BROWSER_SIDE];
+    const notInCli = [...DEV_ONLY, 'cli', ...BROWSER_SIDE];
     expect([...depsOf(WORKSPACES, 'cli')].sort()).toEqual(
       KEYS.filter((key) => !notInCli.includes(key)).sort(),
     );
@@ -126,7 +126,8 @@ describe('the dependency table (implementation-plan §1.3)', () => {
   });
 
   it('never makes a dev-only workspace a runtime dependency', () => {
-    expect(DEV_ONLY).toEqual(['config']);
+    expect(DEV_ONLY).toEqual(['config', 'testkit']);
+    for (const dev of DEV_ONLY) expect(depsOf(WORKSPACES, dev)).toEqual([]);
     expect(NO_NODE_TYPES.filter((key) => !KEYS.includes(key))).toEqual([]);
     for (const key of KEYS) for (const dev of DEV_ONLY) expect(depsOf(WORKSPACES, key)).not.toContain(dev);
   });

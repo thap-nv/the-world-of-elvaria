@@ -46,7 +46,7 @@ describe('the hook start-up gate', () => {
       bare: 100,
       hook: 200,
       stretch: 1.55,
-      busy: false,
+      busy: true,
     });
   });
 
@@ -68,6 +68,18 @@ describe('the hook start-up gate', () => {
     expect(run.calls()).toBe(3);
     expect(gate.note.split('; ')).toHaveLength(3);
     expect(gateOf(measuring(over, over, under).measure, BUDGET, 3).pass).toBe(true);
+  });
+
+  it('reads a machine loaded short of a full suite as busy (2026-11-24, fix/hook-gate-stretch)', () => {
+    // Round 1 of the SEC-03 quest check: bare starts 1.5× their CPU time, the hook 180 ms over with 78 ms of work.
+    const loaded: Pair[] = [
+      { bare: 81, hook: 261, bareCpu: 54, hookCpu: 132 },
+      { bare: 80, hook: 260, bareCpu: 54, hookCpu: 132 },
+      { bare: 82, hook: 262, bareCpu: 54, hookCpu: 132 },
+    ];
+    expect(roundOf(loaded)).toMatchObject({ overhead: 180, cpu: 78, busy: true });
+    expect(gateOf(measuring(loaded).measure, BUDGET, 3).pass).toBe(true);
+    expect(roundOf(under).busy).toBe(false);
   });
 
   it('passes a round over the budget on a busy machine when the hook’s work is under it', () => {

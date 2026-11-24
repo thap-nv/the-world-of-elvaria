@@ -65,6 +65,11 @@ describe('workspace imports follow boundaries.mjs', () => {
       "import { W } from '@elvaria/config/boundaries';",
       'may not import @elvaria/config',
     ],
+    [
+      'packages/store/src/io/remove.ts',
+      "import { tempDir } from '@elvaria/testkit';",
+      'may not import @elvaria/testkit',
+    ],
   ])('%s: %s is an error', (file, code, message) => {
     expect(lint(file, code).join('\n')).toContain(message);
   });
@@ -78,6 +83,8 @@ describe('workspace imports follow boundaries.mjs', () => {
     ['apps/world/src/main.ts', "import type { WorldState } from '@elvaria/domain';"],
     ['packages/domain/src/quest.ts', "import { z } from 'zod'; import { a } from './a.js';"],
     ['packages/store/vitest.config.ts', "import { preset } from '@elvaria/config/vitest';"],
+    ['packages/store/src/io/remove.spec.ts', "import { tempDir } from '@elvaria/testkit';"],
+    ['packages/runner-core/src/__fixtures__/repo.ts', "import { gitRepo } from '@elvaria/testkit';"],
   ])('%s: %s is allowed', (file, code) => {
     expect(lint(file, code)).toEqual([]);
   });

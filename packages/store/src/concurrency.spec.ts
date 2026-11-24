@@ -10,9 +10,9 @@ import { fileURLToPath } from 'node:url';
 import { QuestSchema, ok } from '@elvaria/domain';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { fixture, tempKingdom } from '../test/kingdom.ts';
+import { fixture, tempKingdom } from './__fixtures__/kingdom.ts';
 import { openKingdom } from './kingdom-store.ts';
-import type { TempKingdom } from '../test/kingdom.ts';
+import type { TempKingdom } from './__fixtures__/kingdom.ts';
 import type { KingdomStore } from './kingdom-store.ts';
 import type { StoreIssue } from './issues.ts';
 import type { Quest, Result } from '@elvaria/domain';

@@ -3,9 +3,9 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { FIXTURE_PROMPTS, fixture, plant, plantRegistry, tempKingdom } from '../test/kingdom.ts';
+import { FIXTURE_PROMPTS, fixture, plant, plantRegistry, tempKingdom } from './__fixtures__/kingdom.ts';
 import { loadRegistry, missingRegistryFiles } from './registry.ts';
-import type { TempKingdom } from '../test/kingdom.ts';
+import type { TempKingdom } from './__fixtures__/kingdom.ts';
 import type { Registry } from '@elvaria/domain';
 
 let kingdom: TempKingdom;
