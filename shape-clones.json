@@ -621,12 +621,6 @@
       "status": "unreviewed"
     },
     {
-      "a": "apps/cli/src/run/bell.ts",
-      "b": "packages/steward/src/inbox/apply.ts",
-      "tokens": 65,
-      "status": "unreviewed"
-    },
-    {
       "a": "apps/cli/src/scripture/lint.ts",
       "b": "apps/cli/src/scripture/quest.ts",
       "tokens": 65,
