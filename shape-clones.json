@@ -46,7 +46,7 @@
     {
       "a": "apps/cli/src/character/suspend.ts",
       "b": "apps/cli/src/quest/hold.ts",
-      "tokens": 249,
+      "tokens": 247,
       "status": "unreviewed"
     },
     {
@@ -104,6 +104,34 @@
       "status": "unreviewed"
     },
     {
+      "a": "packages/steward/src/forge/guest-book.ts",
+      "b": "packages/steward/src/forge/looks.ts",
+      "tokens": 150,
+      "status": "kept",
+      "reason": "CM-07: two tables of work outside the tick, one run per territory (start, idle, stop over an AbortController each), as the patrol runs are a third; each keeps what its kind needs beside them (the looks their time and tips, the guests the entries that wait, drawn from the log). A shared runner of outside work gathers the three at once (AH-14), not one pair apart."
+    },
+    {
+      "a": "apps/cli/src/territory/check-policy.ts",
+      "b": "apps/cli/src/territory/enqueue.ts",
+      "tokens": 130,
+      "status": "kept",
+      "reason": "CM-07: `territory enqueue` takes the skeleton every `elvaria territory <verb>` command shares (open the kingdom, read the territory `<id>` names, refuse one that cannot take the verb, the CommandSpec), as its kept siblings of CM-01; AH-14 gathers the cluster at once rather than one command apart."
+    },
+    {
+      "a": "apps/cli/src/territory/enqueue.ts",
+      "b": "apps/cli/src/territory/patrol.ts",
+      "tokens": 130,
+      "status": "kept",
+      "reason": "CM-07: `territory enqueue` takes the skeleton every `elvaria territory <verb>` command shares (open the kingdom, read the territory `<id>` names, refuse one that cannot take the verb, the CommandSpec), as its kept siblings of CM-01; AH-14 gathers the cluster at once rather than one command apart."
+    },
+    {
+      "a": "apps/cli/src/territory/delivery.ts",
+      "b": "apps/cli/src/territory/enqueue.ts",
+      "tokens": 127,
+      "status": "kept",
+      "reason": "CM-07: `territory enqueue` takes the skeleton every `elvaria territory <verb>` command shares (open the kingdom, read the territory `<id>` names, refuse one that cannot take the verb, the CommandSpec), as its kept siblings of CM-01; AH-14 gathers the cluster at once rather than one command apart."
+    },
+    {
       "a": "packages/hooks/src/antigravity/translate.ts",
       "b": "packages/hooks/src/codex/translate.ts",
       "tokens": 109,
@@ -142,7 +170,7 @@
     {
       "a": "apps/cli/src/quest/edit.ts",
       "b": "apps/cli/src/quest/escaped.ts",
-      "tokens": 137,
+      "tokens": 86,
       "status": "unreviewed"
     },
     {
@@ -268,7 +296,7 @@
     {
       "a": "apps/cli/src/character/suspend.ts",
       "b": "apps/cli/src/quest/edit.ts",
-      "tokens": 107,
+      "tokens": 103,
       "status": "unreviewed"
     },
     {
@@ -302,12 +330,6 @@
       "status": "unreviewed"
     },
     {
-      "a": "apps/cli/src/quest/edit.ts",
-      "b": "apps/cli/src/quest/hold.ts",
-      "tokens": 102,
-      "status": "unreviewed"
-    },
-    {
       "a": "packages/chancellor/src/temple.ts",
       "b": "packages/chancellor/src/triage-memos.ts",
       "tokens": 100,
@@ -322,7 +344,7 @@
     {
       "a": "apps/cli/src/character/suspend.ts",
       "b": "apps/cli/src/quest/reassign.ts",
-      "tokens": 95,
+      "tokens": 93,
       "status": "unreviewed"
     },
     {
@@ -404,6 +426,20 @@
       "status": "unreviewed"
     },
     {
+      "a": "packages/steward/src/forge/guest.ts",
+      "b": "packages/steward/src/forge/update.ts",
+      "tokens": 86,
+      "status": "kept",
+      "reason": "CM-07: the check.end of a guest reads a territory trial (commands.setup, a plot that could not be made, the checks), the queue update's a list of check runs; one line shape, two sources the Steward gets from different ports (Plots.guest, Plots.check)."
+    },
+    {
+      "a": "packages/steward/src/forge/guest.ts",
+      "b": "packages/steward/src/review/start-checks.ts",
+      "tokens": 86,
+      "status": "kept",
+      "reason": "CM-07: the check.end of a guest reads a territory trial, a run's checks a list of check runs from Plots.check; one line shape over two ports."
+    },
+    {
       "a": "apps/cli/src/memo/show.ts",
       "b": "apps/cli/src/quest/deliver.ts",
       "tokens": 85,
@@ -450,6 +486,13 @@
       "b": "packages/hooks/src/fit-line.ts",
       "tokens": 81,
       "status": "unreviewed"
+    },
+    {
+      "a": "packages/runner-core/src/guest/guest-trial.ts",
+      "b": "packages/runner-core/src/plot/territory-trial.ts",
+      "tokens": 81,
+      "status": "kept",
+      "reason": "CM-07: the three refusals before any git work (no git, no git program, the repo path); tryGuest asks them before its fetch and merge, then calls tryTerritory, which asks them again for its own plot."
     },
     {
       "a": "apps/cli/src/quest/owner-verdict.ts",
@@ -743,14 +786,14 @@
     {
       "a": "apps/cli/src/territory/check-policy.ts",
       "b": "apps/cli/src/territory/delivery.ts",
-      "tokens": 270,
+      "tokens": 268,
       "status": "kept",
       "reason": "CM-01: the skeleton every `elvaria territory <verb>` command shares (open the kingdom, read the territory `<id>` names, print it or write one field under the store's lock, the CommandSpec); its siblings' pairs are listed unreviewed, and AH-14 gathers the cluster at once rather than one command apart."
     },
     {
       "a": "apps/cli/src/territory/check-policy.ts",
       "b": "apps/cli/src/territory/graph.ts",
-      "tokens": 115,
+      "tokens": 113,
       "status": "kept",
       "reason": "CM-01: the skeleton every `elvaria territory <verb>` command shares (open the kingdom, read the territory `<id>` names, print it or write one field under the store's lock, the CommandSpec); its siblings' pairs are listed unreviewed, and AH-14 gathers the cluster at once rather than one command apart."
     },
@@ -760,27 +803,6 @@
       "tokens": 107,
       "status": "kept",
       "reason": "CM-01: the skeleton every `elvaria territory <verb>` command shares (open the kingdom, read the territory `<id>` names, print it or write one field under the store's lock, the CommandSpec); its siblings' pairs are listed unreviewed, and AH-14 gathers the cluster at once rather than one command apart."
-    },
-    {
-      "a": "apps/cli/src/quest/escaped.ts",
-      "b": "apps/cli/src/territory/check-policy.ts",
-      "tokens": 61,
-      "status": "kept",
-      "reason": "CM-01: the end of a command that checks one option and writes through the store, then its CommandSpec: too small and too common across apps/cli to gather alone."
-    },
-    {
-      "a": "apps/cli/src/quest/hold.ts",
-      "b": "apps/cli/src/territory/check-policy.ts",
-      "tokens": 61,
-      "status": "kept",
-      "reason": "CM-01: the end of a command that checks one option and writes through the store, then its CommandSpec: too small and too common across apps/cli to gather alone."
-    },
-    {
-      "a": "apps/cli/src/quest/reassign.ts",
-      "b": "apps/cli/src/territory/check-policy.ts",
-      "tokens": 61,
-      "status": "kept",
-      "reason": "CM-01: the end of a command that checks one option and writes through the store, then its CommandSpec: too small and too common across apps/cli to gather alone."
     },
     {
       "a": "packages/steward/src/patrol/late-fix.ts",

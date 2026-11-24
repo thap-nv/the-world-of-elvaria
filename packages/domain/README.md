@@ -508,6 +508,12 @@ window)` over quests, verdicts, the event log and the handled inbox commands cou
   kingdom) or no slot of `dispatch.max_background` is free. `mergesSincePatrolOf` gives the Steward back the merges
   since each branch's latest patrol at start. A patrol outside the tick holds a slot (`BackgroundWork.patrols`,
   `startingNow`), as short work.
+- Guest entries of the merge queue (CM-07, ADR 0032; `src/dispatch/guests.ts`): the schema of the inbox command
+  `enqueue_branch` and of `delivery.enqueued`, `delivery.guest_merged`, `delivery.guest_refused`
+  (`src/schema/event/guest-data.ts`), `guest` on `check.start` and `check.end`. `guestsWaitingOf` draws the
+  guests that wait from the log (no file); `guestRunsOf` (`forge-due.ts`) gives each territory's first guest its
+  turn in the lane `busyOf` holds: after the quests delivered before it came (`aheadOfGuest`), before those delivered
+  after it, one at a time, none on a red branch; `TickPlan.guest_runs`, a slot each (`BackgroundWork.guests`).
 - The digest names the quests the owner holds ((D) of fix/quest-hold): `heldQuestsOf` (`src/quest/hold.ts`), passed
   as `StewardNotices.held`, one `quest_held` item each, in the can-wait group.
 

@@ -62,6 +62,7 @@ export async function recover(deps: StewardDeps, state: State): Promise<void> {
   state.restart = restartFromLog(log.events);
   state.scheduler.recover(log);
   recoverForge(state.forge, log.events);
+  state.guests.recover(log.events);
   recoverPatrol(state.patrol, log.events);
   recoverDelegation(state.delegation, log.events);
   recoverStreak(state.streak, log.events);
@@ -76,7 +77,7 @@ export async function recover(deps: StewardDeps, state: State): Promise<void> {
  * deliveries settled, the pull requests that wait, the quests in base (found by a look, or merged by the Steward) and
  * the last looks (PS-08c, PS-08d); the merge queue's sizes and the open pull requests the base branch overtook (PS-09);
  * and (PS-09d) the territories whose default branch the latest patrol found red, with the patrol's quests exempt.
- * (CM-03) A patrol started outside the tick holds a slot of the background.
+ * (CM-03) A patrol started outside the tick holds a slot of the background. (CM-07) The guest entries that wait.
  */
 async function snapshotFor(ctx: Context, state: State, zone: ZonedTime): Promise<KingdomSnapshot> {
   const { world, deps } = ctx;
@@ -90,6 +91,7 @@ async function snapshotFor(ctx: Context, state: State, zone: ZonedTime): Promise
     jobs_due: state.scheduler.due(ctx, zone),
     forge: settledOf(state.forge),
     forge_waits: waitsOf(state.forge),
+    guests: state.guests.waiting(),
     in_base: [...state.looks.found, ...mergedOf(state.forge)],
     base_looks: [...state.looks.looked].map(([territory, at]) => ({ territory, at })),
     forge_sizes: await forgeSizesOf(ctx, state.forge),
@@ -100,11 +102,15 @@ async function snapshotFor(ctx: Context, state: State, zone: ZonedTime): Promise
   };
 }
 
-/** The background planTick sees: (CM-03) the patrols started outside the tick hold a slot each. */
+/**
+ * The background planTick sees: (CM-03) the patrols started outside the tick hold a slot each; (CM-07) so does each
+ * guest being tried, which holds its territory's lane too.
+ */
 function backgroundOf(state: State): BackgroundWork {
   const patrols = state.patrol.runs.outside();
+  const guests = state.guests.running();
   const view = state.background.view();
-  return patrols === 0 ? view : { ...view, patrols };
+  return { ...view, ...(patrols === 0 ? {} : { patrols }), ...(guests.length === 0 ? {} : { guests }) };
 }
 
 /**
@@ -135,6 +141,7 @@ const recorderFor = (deps: StewardDeps, state: State, held: Held, world: World) 
     stamp: () => held.zone.format(deps.clock.now()),
     onEvent: (event) => {
       recordStreak(state.streak, event);
+      state.guests.note(event);
     },
   });
 
@@ -149,7 +156,6 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
   const { sessions, handled, limits, mana, background, judgeLocks, graphs, forge, looks } = state;
   const record = recorderFor(deps, state, held, world);
   const { templates } = held;
-  const stopping = state.stopping.signal;
   const ctx: Context = {
     deps,
     root: deps.store.root,
@@ -160,11 +166,12 @@ async function runTick(deps: StewardDeps, state: State, held: Held): Promise<Tic
     limits,
     mana,
     counts,
-    stopping,
+    stopping: state.stopping.signal,
     background,
     judgeLocks,
     graphs,
     forge,
+    guests: state.guests,
     looks,
     patrol: state.patrol,
     delegation: state.delegation,

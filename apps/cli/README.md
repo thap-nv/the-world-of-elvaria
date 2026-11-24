@@ -372,6 +372,9 @@ delivery`), with no event; `deferred` is refused unless the territory delivers b
 - A red default branch (PS-09d): `territory patrol <id> --now` sends the inbox command `patrol` for a patrolled
   territory; `quest list` and `quest show` mark the open quests that wait for a green branch (`quest/base-wait.ts`,
   `baseRedOf` over the log); `digest` says how many wait in the `base_red` item.
+- A guest entry of the merge queue (CM-07): `territory enqueue <id> --pr <n>` sends the inbox command
+  `enqueue_branch` for a git territory delivered by `pr_merge`; `run` gives the Steward `Plots.guest` (`tryGuest`
+  under `guest-<id>`), and the GitHub adapter's `status` names the pull request's branch.
 - Scripture line by line (PS-12, `src/scripture/`, 0 mana, reads only): `scripture lint` checks every line of the
   temple's scripture and each character's against the grammar and the rules of lesson-sharing T4 (`lintScripture`
   of the domain, the event log's redaction through the Steward's `lessonsIn`), prints `<file>:<line>: <level>:

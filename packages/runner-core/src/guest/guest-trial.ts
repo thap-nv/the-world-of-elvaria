@@ -30,6 +30,8 @@ export interface GuestTrialRequest extends Omit<
   readonly branch: string;
   /** The head the forge gave: the commit tried, which the forge then merges only while it is still the head. */
   readonly head: string;
+  /** Told once the merge is made, right before its checks run, with their mode: the Steward's `check.start`. */
+  readonly started?: (mode: CheckRunMode) => Promise<void>;
 }
 
 export type GuestTrial =
@@ -101,6 +103,7 @@ export async function tryGuest(request: GuestTrialRequest): Promise<GuestTrial> 
   const touched = zList(await gitOut(git, repo, ['diff', '--name-only', '--no-renames', '-z', base, commit]));
   const mode = checkModeOf(territory, touched, { pass: 'queue' });
   const narrow = mode === 'narrow' ? { narrow: { touched, base } } : {};
+  await request.started?.(mode);
   const run = await tryTerritory({ ...request, name: guestIdOf(territory.id), commit, ...narrow });
   return { state: 'tried', base, commit, mode, run };
 }

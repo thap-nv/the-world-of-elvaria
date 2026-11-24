@@ -10,6 +10,7 @@ import type { Reply, Routes } from '../../test/github.ts';
 import type { Fetch } from '../io.ts';
 
 const PR = 7;
+const BRANCH = 'elvaria/q_20261124_spec01';
 const pull = `GET ${at('pulls', String(PR))}`;
 const runs = `GET ${at('commits', HEAD, 'check-runs')}`;
 const statuses = `GET ${at('commits', HEAD, 'status')}`;
@@ -19,7 +20,7 @@ const STATUS_URL = 'https://ci.example.com/build/1';
 const pullBody = (extra: Record<string, unknown>) => ({
   state: 'open',
   merged: false,
-  head: { sha: HEAD },
+  head: { sha: HEAD, ref: BRANCH },
   ...extra,
 });
 const run = (name: string, status: string, conclusion: string | null = null) => ({
@@ -48,7 +49,7 @@ function statusOf(
 
 const stands = (state: string, checks: unknown[] = []) => ({
   ok: true,
-  value: { state, head: HEAD, checks },
+  value: { state, branch: BRANCH, head: HEAD, checks },
 });
 
 describe('githubForge.status', () => {
@@ -62,7 +63,7 @@ describe('githubForge.status', () => {
     const sha = 'b'.repeat(40);
     expect(await statusOf({ merged: true, state: 'closed', merge_commit_sha: sha })).toEqual({
       ok: true,
-      value: { state: 'merged', head: HEAD, checks: [], merge_sha: sha },
+      value: { state: 'merged', branch: BRANCH, head: HEAD, checks: [], merge_sha: sha },
     });
   });
 

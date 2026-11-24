@@ -37,6 +37,7 @@ import { TERRITORY_CHECKS } from './territory/check-policy.ts';
 import { TERRITORY_DELEGATION } from './territory/delegation.ts';
 import { TERRITORY_DELIVERY } from './territory/delivery.ts';
 import { TERRITORY_PATROL } from './territory/patrol.ts';
+import { TERRITORY_ENQUEUE } from './territory/enqueue.ts';
 import { TERRITORY_GRAPH } from './territory/graph.ts';
 import { TERRITORY_LIST } from './territory/list.ts';
 import { TRIAGE } from './triage/triage.ts';
@@ -66,6 +67,7 @@ export const COMMANDS: readonly CommandSpec[] = [
   TERRITORY_DELIVERY,
   TERRITORY_DELEGATION,
   TERRITORY_PATROL,
+  TERRITORY_ENQUEUE,
   CHARACTER_ADD,
   CHARACTER_LIST,
   CHARACTER_SUSPEND,

@@ -51,6 +51,8 @@ export type PullState = (typeof PULL_STATES)[number];
 /** Where a pull request stands for `pr_merge` (PS-08d): its state, the head the forge has, the required checks. */
 export interface PullStatus {
   readonly state: PullState;
+  /** The pull request's branch, as the forge names it: a guest of the merge queue is fetched by it (CM-07). */
+  readonly branch: string;
   readonly head: string;
   readonly checks: readonly ForgeCheck[];
   /** With `merged`: the commit the merge left on the base branch, as the forge says it. */

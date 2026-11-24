@@ -69,14 +69,27 @@ const territory = () =>
     ],
     check_policy: { mode: 'narrow' },
   });
+/** The modes the try told before its checks ran (the Steward's `check.start`). */
+const started: string[] = [];
 const guest = (branch: string, head: string) =>
-  tryGuest({ kingdom, territory: territory(), host: TEST_HOST, branch, head });
+  tryGuest({
+    kingdom,
+    territory: territory(),
+    host: TEST_HOST,
+    branch,
+    head,
+    started: (mode) => {
+      started.push(mode);
+      return Promise.resolve();
+    },
+  });
 
 describe('tryGuest', () => {
   it("tries a clean head merged into origin's main in narrow mode, then removes its plot", async () => {
     const tried = await guest('feat/green', sha.green ?? '');
     if (tried.state !== 'tried') throw new Error(`not tried: ${JSON.stringify(tried)}`);
     expect(tried).toMatchObject({ base: sha.main, mode: 'narrow' });
+    expect(started.splice(0)).toEqual(['narrow']);
     expect(git(repo, 'rev-list', '--parents', '-n', '1', tried.commit).split(' ').slice(1)).toEqual([
       sha.main,
       sha.green,
@@ -93,6 +106,7 @@ describe('tryGuest', () => {
   it('fails the check of a red head', async () => {
     const tried = await guest('feat/red', sha.red ?? '');
     expect(tried.state === 'tried' && tried.run.trial.checks.map(({ pass }) => pass)).toEqual([false]);
+    expect(started.splice(0)).toHaveLength(1);
   });
 
   it("names the files of a head that conflicts with origin's main, and makes no plot", async () => {
@@ -101,6 +115,8 @@ describe('tryGuest', () => {
       base: sha.main,
       paths: ['notes.md'],
     });
+    // No check ran, so none started.
+    expect(started.splice(0)).toEqual([]);
   });
 
   it("fails a head origin's branch does not have, a branch origin does not have, and a territory without git", async () => {

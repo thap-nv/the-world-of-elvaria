@@ -138,16 +138,18 @@ export async function pullStatus(
   const answer = await githubCall(call, 'GET', repoPath(repo, 'pulls', String(pr)));
   if (!answer.ok) return err(answer.problem);
   const head = text(field(answer.body, 'head'), 'sha');
+  const branch = text(field(answer.body, 'head'), 'ref');
   if (field(answer.body, 'merged') === true) {
     const sha = text(answer.body, 'merge_commit_sha');
-    return ok({ state: 'merged', head, checks: [], ...(sha === '' ? {} : { merge_sha: sha }) });
+    return ok({ state: 'merged', branch, head, checks: [], ...(sha === '' ? {} : { merge_sha: sha }) });
   }
-  if (text(answer.body, 'state') === 'closed') return ok({ state: 'closed', head, checks: [] });
+  if (text(answer.body, 'state') === 'closed') return ok({ state: 'closed', branch, head, checks: [] });
   const mergeable = field(answer.body, 'mergeable');
-  if (mergeable === false) return ok({ state: 'conflict', head, checks: [] });
-  if (required.length === 0) return ok({ state: mergeable === true ? 'green' : 'pending', head, checks: [] });
+  if (mergeable === false) return ok({ state: 'conflict', branch, head, checks: [] });
+  if (required.length === 0)
+    return ok({ state: mergeable === true ? 'green' : 'pending', branch, head, checks: [] });
   const seen = await checksOf(call, repo, head);
   if (!seen.ok) return seen;
   const { verdict, checks } = requiredOf(seen.value, required);
-  return ok({ state: verdict === 'green' && mergeable !== true ? 'pending' : verdict, head, checks });
+  return ok({ state: verdict === 'green' && mergeable !== true ? 'pending' : verdict, branch, head, checks });
 }
