@@ -207,7 +207,7 @@ export function metricsOf(input: MetricsInput, window: MetricsWindow = {}): Metr
   );
   return {
     window,
-    check_modes: checkModesOf(input.events, window),
+    check_modes: checkModesOf(input.events, window, input.quests, input.verdicts),
     runs: runCountsOf(trails, input, window),
     rework,
     first_pass: firstPassRatesOf(trails, sessionModelsOf(input.events), window),

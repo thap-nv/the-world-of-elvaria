@@ -17,6 +17,7 @@ import type { ForgeOutcome } from './forge-outcome.ts';
 import type { QuestView } from './quest-view.ts';
 import type { ScopeWaitNotice } from './attention-scope-wait.ts';
 import type { UnsealedMerge } from './unsealed-merges.ts';
+import type { NarrowEscapeAlert } from '../metrics/check-mode/escapes.ts';
 import type { WorldState } from './world-state.ts';
 import type { AttentionItem, AttentionKind, AttentionSubject } from './attention-table.ts';
 
@@ -62,6 +63,7 @@ export interface StewardNotices {
   readonly upgrade?: UpgradeOffer;
   /** (PS-08b) The merges without the seal since the last digest (unsealedMergesOf); from the log as it is made. */
   readonly merged_unsealed?: readonly UnsealedMerge[];
+  readonly narrow_escapes?: readonly NarrowEscapeAlert[];
   /** (PS-08g) The territories whose delegation of the seal the breaker suspended (sealSuspendedOf); from the log. */
   readonly delegation_suspended?: readonly SealSuspension[];
   /** (PS-12g) The characters suspended for a fail streak that the Temple did not free (streakWaitsOf); from the log. */
@@ -235,6 +237,7 @@ export function noticeItems(state: WorldState, notices: StewardNotices): Attenti
       itemOf('scope_wait', { ...aboutId(state, quest), holder, overlap }),
     ),
     ...deliveriesOf(state, notices.deliveries),
+    ...(notices.narrow_escapes ?? []).map((row) => itemOf('narrow_escapes', { ...row })),
     ...(notices.merged_unsealed ?? []).map((merge) =>
       itemOf('merged_unsealed', {
         ...aboutId(state, merge.quest),

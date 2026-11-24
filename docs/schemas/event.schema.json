@@ -3175,7 +3175,7 @@
                   "properties": {
                     "id": {
                       "type": "string",
-                      "minLength": 1
+                      "pattern": "^[a-z][a-z0-9_]*$"
                     },
                     "pass": {
                       "type": "boolean"

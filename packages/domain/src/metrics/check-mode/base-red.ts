@@ -47,9 +47,7 @@ export function baseRedTimesOf(events: readonly Event[], window: MetricsWindow):
     const results = checks.filter((check) => !check.environment);
     const all = setup === null ? results : [...results, { id: SETUP, pass: setup.pass }];
     for (const result of all) {
-      // The patrol schema types `checks[].id` as a bare string; the Steward writes it from a territory check id
-      // (`CheckIdSchema`), so it is a CheckId by construction.
-      observe(open, closed, { territory, check: result.id as CheckId, pass: result.pass, ts: event.ts });
+      observe(open, closed, { territory, check: result.id, pass: result.pass, ts: event.ts });
     }
   }
   // Report intervals touching the window with their actual endpoints, rather than inventing a midnight recovery.
