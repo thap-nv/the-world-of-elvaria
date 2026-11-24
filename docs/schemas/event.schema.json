@@ -1722,6 +1722,11 @@
                 "enum": [
                   "narrow"
                 ]
+              },
+              "guest": {
+                "description": "The pull request number of a guest entry of the merge queue (CM-07), whose checks these are; the envelope names the territory and no quest. Absent: a quest's checks.",
+                "type": "integer",
+                "minimum": 1
               }
             }
           }
@@ -1755,6 +1760,11 @@
                 "enum": [
                   "narrow"
                 ]
+              },
+              "guest": {
+                "description": "The pull request number of a guest entry of the merge queue (CM-07), whose checks these are; the envelope names the territory and no quest. Absent: a quest's checks.",
+                "type": "integer",
+                "minimum": 1
               },
               "outcome": {
                 "description": "pass: every check passed, or none applied; fail: at least one failed; error: they could not run, a later tick runs them again; stopped: killed because the Steward stopped or the quest moved on.",
@@ -2996,6 +3006,208 @@
                 "description": "With conflict or checks_red at update (PS-09b): the merge quest the Steward opened for a knight, or found open for this quest; the quest waits for it and goes into the base branch with it.",
                 "type": "string",
                 "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "delivery.enqueued"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "The owner put a pull request of its own session in the territory's merge queue (`enqueue_branch`): it goes after the quests due there now, in the same lane. Its branch and head are the forge's when its turn comes.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "territory",
+              "pr"
+            ],
+            "properties": {
+              "territory": {
+                "type": "string",
+                "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                "not": {
+                  "enum": [
+                    "global"
+                  ]
+                }
+              },
+              "pr": {
+                "description": "The pull request number on the forge.",
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "delivery.guest_merged"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "The guest's head, merged into the base branch, passed the checks of the territory's check mode, and the Steward merged its pull request through the forge.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "territory",
+              "pr",
+              "branch",
+              "head",
+              "merge_sha",
+              "method"
+            ],
+            "properties": {
+              "territory": {
+                "type": "string",
+                "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                "not": {
+                  "enum": [
+                    "global"
+                  ]
+                }
+              },
+              "pr": {
+                "description": "The pull request number on the forge.",
+                "type": "integer",
+                "minimum": 1
+              },
+              "branch": {
+                "description": "The pull request's branch, as the forge names it.",
+                "type": "string",
+                "minLength": 1
+              },
+              "head": {
+                "description": "The tip of the branch the Steward tried.",
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+              },
+              "merge_sha": {
+                "description": "The commit the merge left on the base branch.",
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+              },
+              "method": {
+                "enum": [
+                  "merge",
+                  "squash"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "delivery.guest_refused"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "description": "The Steward did not merge the guest's pull request. The session merges the base branch into its own branch (or fixes it) and enqueues it again; nothing is tried again on its own.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "territory",
+              "pr",
+              "reason"
+            ],
+            "properties": {
+              "territory": {
+                "type": "string",
+                "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                "not": {
+                  "enum": [
+                    "global"
+                  ]
+                }
+              },
+              "pr": {
+                "description": "The pull request number on the forge.",
+                "type": "integer",
+                "minimum": 1
+              },
+              "reason": {
+                "enum": [
+                  "conflict",
+                  "checks_red",
+                  "head_moved",
+                  "not_open",
+                  "forge_error",
+                  "update_failed"
+                ]
+              },
+              "branch": {
+                "description": "The pull request's branch, as the forge names it.",
+                "type": "string",
+                "minLength": 1
+              },
+              "head": {
+                "description": "The tip of the branch the Steward tried.",
+                "type": "string",
+                "pattern": "^[0-9a-f]{40}(?:[0-9a-f]{24})?$"
+              },
+              "paths": {
+                "description": "With conflict: the files that conflict, relative to the territory root, '/' separators.",
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "checks": {
+                "description": "With checks_red: the red ones.",
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id"
+                  ],
+                  "properties": {
+                    "id": {
+                      "description": "The red check, or `setup` for commands.setup.",
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    },
+                    "timed_out": {
+                      "const": true
+                    },
+                    "line": {
+                      "description": "The line of its log that says why, masked.",
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                }
+              },
+              "detail": {
+                "description": "The forge's or git's message; redacted.",
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2000
               }
             }
           }
@@ -4478,6 +4690,9 @@
         "delivery.pushed",
         "delivery.merged",
         "delivery.failed",
+        "delivery.enqueued",
+        "delivery.guest_merged",
+        "delivery.guest_refused",
         "quest.escaped",
         "delegation.suspended",
         "delegation.resumed",

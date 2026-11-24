@@ -61,6 +61,11 @@ export interface TerritoryTrialRequest {
   readonly commit?: string;
   /** (CM-04) Only these checks of the territory, by id; every one when absent. */
   readonly checks?: readonly string[];
+  /**
+   * (CM-07) A narrow run (the guest entry's try): the checks the paths `touched` since `base` select, each its narrow
+   * command where it has one, `base` as ELVARIA_CHECK_BASE. Absent: every check, its `run`, as a merge quest runs them.
+   */
+  readonly narrow?: { readonly touched: readonly string[]; readonly base: string };
 }
 
 export interface TerritoryTrialRun {
@@ -136,15 +141,19 @@ async function stepsIn(request: TerritoryTrialRequest, worktree: string) {
       : { ...request.territory, checks: request.territory.checks.filter(({ id }) => only.includes(id)) };
   const setup = await setupStep(request, worktree);
   if (setup !== null && !setup.pass) return { setup, checks: [] };
-  // A party's merge quest runs every check whatever it touched (select-checks.ts): so does the trial.
+  // A party's merge quest runs every check whatever it touched (select-checks.ts): so does the trial, unless narrow.
+  const { narrow } = request;
+  const selection =
+    narrow === undefined
+      ? ({ touched: [], party_role: 'merge' } as const)
+      : ({ touched: narrow.touched, mode: 'narrow', base: narrow.base } as const);
   const runs = await runChecks(
     {
       kingdom,
       territory,
-      touched: [],
+      ...selection,
       cwd: worktree,
       run_dir: `.runs/${nameOf(request)}`,
-      party_role: 'merge',
       ...(signal === undefined ? {} : { signal }),
     },
     host,

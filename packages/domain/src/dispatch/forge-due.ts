@@ -11,8 +11,11 @@
 // branch the Steward found with nothing to push) is settled: a failure is never tried again on its own, only by the
 // owner's `deliver` command, which forgets the outcome. (PS-08d) A quest whose branch is in the base branch already
 // (merged by hand) is archived instead, and a sealed quest's pull request under `pr_merge` is merged (mergeDue); (PS-08b)
-// so is one the delegation of the seal still covers (mayMergeUnsealed).
+// so is one the delegation of the seal still covers (mayMergeUnsealed). (CM-07) A guest entry, a pull request of the
+// owner's own session, takes the same lane (guests.ts): after the quests due when it came, before those delivered
+// after it, one at a time, none while the branch is red.
 import { UPDATE_ROUNDS_MAX } from './constants.ts';
+import { aheadOfGuest, firstGuestsOf } from './guests.ts';
 import { mayMergeUnsealed } from '../delegation/seal.ts';
 import { stoppedByBase } from '../patrol/base-red.ts';
 import { deliveryOf } from '../schema/territory-delivery.ts';
@@ -21,6 +24,7 @@ import type { SealPolicy } from '../delegation/seal.ts';
 import type { BaseRed } from '../patrol/base-red.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 import type { Territory } from '../schema/territory.ts';
+import type { GuestEntry } from './guests.ts';
 import type { BackgroundWork } from './reviews.ts';
 
 /** A quest that may go to its forge, the outcome aside: `done`, delivered, on a branch, its territory not manual. */
@@ -65,6 +69,8 @@ export interface ForgeSource {
   readonly base_red?: readonly BaseRed[];
   /** (PS-08b) The delegation of the seal: which done quests without it the Steward merges (mergeDue). Absent: none. */
   readonly seal_policy?: SealPolicy;
+  /** (CM-07) The guest entries that wait, in the order they came (guestsWaitingOf). Absent: none. */
+  readonly guests?: readonly GuestEntry[];
 }
 
 /** How much a done quest's branch changed, from its plot's touched files (PS-09). */
@@ -94,7 +100,10 @@ function queueOrder(sizes: ReadonlyMap<QuestId, ForgeSize>, stale: ReadonlySet<Q
   };
 }
 
-/** Territories whose lane is held: a delivery runs there, or a sealed pull request waits there to be merged. */
+/**
+ * Territories whose lane is held: a delivery runs there, a sealed pull request waits there to be merged, or (CM-07) a
+ * guest entry runs there.
+ */
 function busyOf(source: ForgeSource, done: readonly Quest[], stale: ReadonlySet<QuestId>): Set<TerritoryId> {
   const running = new Set(source.background?.running);
   const waiting = new Set((source.forge_waits ?? []).map(({ quest }) => quest));
@@ -104,7 +113,10 @@ function busyOf(source: ForgeSource, done: readonly Quest[], stale: ReadonlySet<
     (waiting.has(quest.id) &&
       !stale.has(quest.id) &&
       mergeDue(quest, territories.get(quest.territory), source.seal_policy));
-  return new Set(done.filter(holds).map(({ territory }) => territory));
+  return new Set([
+    ...done.filter(holds).map(({ territory }) => territory),
+    ...(source.background?.guests ?? []),
+  ]);
 }
 
 /**
@@ -115,32 +127,63 @@ function busyOf(source: ForgeSource, done: readonly Quest[], stale: ReadonlySet<
  */
 export function forgeDeliveries(source: ForgeSource, done: readonly Quest[]): QuestId[] {
   const stale = new Set(source.forge_stale);
-  const settled = new Set([
-    ...(source.forge ?? []).filter((id) => !stale.has(id)),
-    ...(source.in_base ?? []),
-  ]);
-  const territories = new Map(source.territories.map((territory) => [territory.id, territory]));
   const busy = busyOf(source, done, stale);
   const sizes = new Map((source.forge_sizes ?? []).map((size) => [size.quest, size]));
-  const stopped = stoppedByBase(source.base_red);
+  const guests = firstGuestsOf(source.guests);
   const picked: QuestId[] = [];
-  for (const quest of done.toSorted(queueOrder(sizes, stale))) {
-    if (busy.has(quest.territory) || settled.has(quest.id) || stopped(quest)) continue;
-    if (!forgeDue(quest, territories.get(quest.territory))) continue;
+  for (const quest of pendingOf(source, done).toSorted(queueOrder(sizes, stale))) {
+    const guest = guests.get(quest.territory);
+    if (busy.has(quest.territory) || (guest !== undefined && !aheadOfGuest(quest, guest))) continue;
     busy.add(quest.territory);
     picked.push(quest.id);
   }
   return picked;
 }
 
+/** The done quests the queue still has to deliver: due, not settled, not stopped by a red branch. */
+function pendingOf(source: ForgeSource, done: readonly Quest[]): Quest[] {
+  const stale = new Set(source.forge_stale);
+  const settled = new Set([
+    ...(source.forge ?? []).filter((id) => !stale.has(id)),
+    ...(source.in_base ?? []),
+  ]);
+  const territories = new Map(source.territories.map((territory) => [territory.id, territory]));
+  const stopped = stoppedByBase(source.base_red);
+  return done.filter(
+    (quest) => !settled.has(quest.id) && !stopped(quest) && forgeDue(quest, territories.get(quest.territory)),
+  );
+}
+
+/**
+ * (CM-07) The guest entries that may start now, at most one per territory, the first that came: its lane free, no
+ * quest due before it came still to deliver there, its default branch not red. Whether each starts now is the room's
+ * (startingNow).
+ */
+export function guestRunsOf(source: ForgeSource, done: readonly Quest[]): GuestEntry[] {
+  const busy = busyOf(source, done, new Set(source.forge_stale));
+  const red = new Set((source.base_red ?? []).map(({ territory }) => territory));
+  const pending = pendingOf(source, done);
+  return [...firstGuestsOf(source.guests).values()].filter(
+    (guest) =>
+      !busy.has(guest.territory) &&
+      !red.has(guest.territory) &&
+      !pending.some((quest) => quest.territory === guest.territory && aheadOfGuest(quest, guest)),
+  );
+}
+
+/** (CM-07) The merge queue's deliveries due, then its guests that may start: the room decides which start now. */
+export const forgeQueueOf = (source: ForgeSource, done: readonly Quest[]) =>
+  [forgeDeliveries(source, done), guestRunsOf(source, done)] as const;
+
 /**
  * (CM-03) The territories whose merge queue is at work, by id: a delivery runs or is due there, or a sealed pull
- * request waits there to be merged. The patrol after a merge waits for them (mergedPatrolOf), so a burst of merges is
+ * request waits there to be merged; (CM-07) or a guest entry waits or runs there. The patrol after a merge waits for them (mergedPatrolOf), so a burst of merges is
  * patrolled once, at its last head.
  */
 export function queueAtWorkOf(source: ForgeSource, done: readonly Quest[]): TerritoryId[] {
   const due = new Set(forgeDeliveries(source, done));
   const busy = busyOf(source, done, new Set(source.forge_stale));
   for (const quest of done) if (due.has(quest.id)) busy.add(quest.territory);
+  for (const territory of firstGuestsOf(source.guests).keys()) busy.add(territory);
   return [...busy].toSorted((a, b) => a.localeCompare(b));
 }
