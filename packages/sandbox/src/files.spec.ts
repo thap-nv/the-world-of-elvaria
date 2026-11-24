@@ -1,7 +1,8 @@
-import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { DATE, KINGDOM, REGISTRY } from './__fixtures__/kingdom.ts';
@@ -17,11 +18,13 @@ function play(seed: number): SandboxDay {
 
 describe('day files', () => {
   let kingdom: string;
+  let temp: TempDir;
   // Real kingdoms live in paths with spaces and Vietnamese letters.
   beforeEach(async () => {
-    kingdom = await mkdtemp(path.join(tmpdir(), 'elvaria sa bàn '));
+    temp = await tempDir('sa bàn');
+    kingdom = temp.root;
   });
-  afterEach(() => rm(kingdom, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }));
+  afterEach(() => temp.remove());
 
   it('lives in events/sandbox/<date>.jsonl, apart from the real log', () => {
     expect(path.relative(kingdom, dayFilePath(kingdom, DATE))).toBe(

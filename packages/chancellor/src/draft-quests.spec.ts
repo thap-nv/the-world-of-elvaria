@@ -1,8 +1,9 @@
-import { mkdtemp, rm, stat } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { stat } from 'node:fs/promises';
 import path from 'node:path';
 
 import { RETRY_DIR, loadPromptTemplates } from '@elvaria/runner-core';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { CHANCELLOR_CLASS_ENTRY, CONTEXT, NATIVE, PARSED, reply } from './__fixtures__/kingdom.ts';
@@ -17,10 +18,12 @@ const templates = await loadPromptTemplates();
 const ENV = { ELVARIA_KINGDOM: 'k', ELVARIA_ROLE: 'chancellor' };
 
 let dir: string;
+let temp: TempDir;
 beforeEach(async () => {
-  dir = await mkdtemp(path.join(tmpdir(), 'elvaria chancellor ạ '));
+  temp = await tempDir('chancellor ạ');
+  dir = temp.root;
 });
-afterEach(() => rm(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }));
+afterEach(() => temp.remove());
 
 function speak(answers: readonly Answer[], choice: ChancellorChoice = NATIVE, timeout_ms?: number) {
   const runner = scriptedRunner(answers);

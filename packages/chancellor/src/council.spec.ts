@@ -1,12 +1,12 @@
 // The council in the Chancellor's reply (PS-06, ADR 0028): what the screen sends back, the one second try, the brief
 // in the plan quest's description and its seal, the kind's seal when a draft says none.
-import { mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { BriefSchema, QuestDraftFileSchema, QuestDraftSchema, QuestIdSchema } from '@elvaria/domain';
 import type { QuestDraft } from '@elvaria/domain';
 import { loadPromptTemplates } from '@elvaria/runner-core';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { CHANCELLOR_CLASS_ENTRY, CONTEXT, NATIVE, reply } from './__fixtures__/kingdom.ts';
@@ -98,10 +98,12 @@ describe('screenDrafts and the council (PS-06)', () => {
 
 describe('draftQuests sends a returned reply back once (PS-06)', () => {
   let dir: string;
+  let temp: TempDir;
   beforeEach(async () => {
-    dir = await mkdtemp(path.join(tmpdir(), 'elvaria council ạ '));
+    temp = await tempDir('council ạ');
+    dir = temp.root;
   });
-  afterEach(() => rm(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }));
+  afterEach(() => temp.remove());
 
   function speak(answers: readonly Answer[]) {
     const runner = scriptedRunner(answers);

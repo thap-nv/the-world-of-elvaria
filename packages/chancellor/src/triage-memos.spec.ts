@@ -1,9 +1,9 @@
-import { mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { loadPromptTemplates } from '@elvaria/runner-core';
 import type { TriageContext } from '@elvaria/runner-core';
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { CHANCELLOR_CLASS_ENTRY, CONTEXT, NATIVE, PARSED } from './__fixtures__/kingdom.ts';
@@ -40,10 +40,12 @@ const GOOD = triageOf(
 );
 
 let dir: string;
+let temp: TempDir;
 beforeEach(async () => {
-  dir = await mkdtemp(path.join(tmpdir(), 'elvaria triage ạ '));
+  temp = await tempDir('triage ạ');
+  dir = temp.root;
 });
-afterEach(() => rm(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }));
+afterEach(() => temp.remove());
 
 function triage(answers: readonly Answer[], choice: ChancellorChoice = NATIVE, signal?: AbortSignal) {
   const runner = scriptedRunner(answers);

@@ -127,6 +127,9 @@ importers:
       '@elvaria/config':
         specifier: workspace:*
         version: link:../config
+      '@elvaria/testkit':
+        specifier: workspace:*
+        version: link:../testkit
       '@types/node':
         specifier: ^24.19.2
         version: 24.19.2
@@ -395,6 +398,9 @@ importers:
       '@elvaria/config':
         specifier: workspace:*
         version: link:../config
+      '@elvaria/testkit':
+        specifier: workspace:*
+        version: link:../testkit
       '@types/node':
         specifier: ^24.19.2
         version: 24.19.2
