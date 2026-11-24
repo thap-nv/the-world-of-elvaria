@@ -2,8 +2,9 @@
 // the red checks only. In the territory's patrol lane, the red checks no probe has attributed yet: the steps from the
 // latest patrol that found them green to the head the patrol found them red at (Plots.commitLinks, probeStepsOf), each
 // merge named by its quest from the log, then the runs the domain's plan asks for (probeNextOf) in a plot `probe-<id>`
-// (Plots.probe), and one `check.attributed`, which the book's health and the digest's `base_red` item carry. The quest
-// is not touched (CM-06). The Steward's stop kills the run and its plot goes, nothing is recorded: the red checks stay
+// (Plots.probe), and one `check.attributed`, which the book's health and the digest's `base_red` item carry. (CM-06)
+// Before that line, a conclusion that blames a merged quest writes its late verdict and opens its fix quest
+// (late-fix.ts). The Steward's stop kills the run and its plot goes, nothing is recorded: the red checks stay
 // unattributed and the territory's next patrol probes them again.
 import {
   attributedHealth,
@@ -21,6 +22,7 @@ import type { ProbeDone, ProbeMove, ProbePlan, ProbeRun, QuestStep, Territory } 
 
 import { STEWARD } from '../quest/record.ts';
 import { setHealth } from './book.ts';
+import { lateFixAfter } from './late-fix.ts';
 import type { Context } from '../context.ts';
 import type { Plots } from '../types.ts';
 
@@ -92,6 +94,8 @@ async function attribute(ctx: Context, probe: Probe): Promise<void> {
   if (probed === undefined || stopped(probe)) return;
   const { territory, checks } = probe;
   const data = attributionOf({ territory: territory.id, source: 'patrol', checks, ...probed });
+  // First, so a stop before the line leaves the checks to the next probe, which finds what this wrote.
+  await lateFixAfter(ctx, territory, data, healthOf(ctx, territory)?.red ?? []);
   await ctx.record.note({ type: 'check.attributed', actor: STEWARD, territory: territory.id, data });
   const health = healthOf(ctx, territory);
   if (health !== undefined) setHealth(ctx.patrol, territory.id, attributedHealth(health, data));

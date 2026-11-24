@@ -66,6 +66,7 @@ export const VALID_DATA: Record<TypedEventType, Record<string, unknown>> = {
   'character.swamp': CHARACTER_CHANGE,
   'character.level_up': CHARACTER_CHANGE,
   'character.level_down': CHARACTER_CHANGE,
+  'character.judged': { ...CHARACTER_CHANGE, verdict: 'q_20261106_7k3m2a-1-late', role: 'judge' },
   'character.model_changed': CHARACTER_CHANGE,
   'territory.attached': TERRITORY_CHANGE,
   'territory.surveyed': TERRITORY_CHANGE,

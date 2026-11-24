@@ -11,6 +11,7 @@ import {
   REGISTRY_ID_PATTERN,
   SCRIPT_ID_PATTERN,
   TribeIdSchema,
+  VerdictIdSchema,
 } from '../../core/ids.ts';
 import { INFIRMARY_TRIPS } from '../../quest/events.ts';
 import { INFIRMARY_REASONS, INFIRMARY_REASON_PARAMS } from '../../infirmary/reasons.ts';
@@ -221,6 +222,22 @@ export const QuestUnclaimableDataSchema = z
 
 export const CharacterChangeDataSchema = z.strictObject({
   character: CharacterViewSchema.meta(describe('The character after this event (characterViewOf).')),
+});
+
+/**
+ * (CM-06, ADR 0033) A late verdict on an archived quest enters a character's reputation with no quest move to carry
+ * it: the patrol's probe found the quest's own change red after its merge.
+ */
+export const CharacterJudgedDataSchema = z.strictObject({
+  character: CharacterViewSchema.meta(describe('The character after this event (characterViewOf).')),
+  verdict: VerdictIdSchema.meta(describe('The late verdict (`<quest>-<n>-late`) that entered its windows.')),
+  role: z
+    .enum(['assignee', 'judge'])
+    .meta(
+      describe(
+        "assignee: the quest's doer (withVerdict); judge: whose pass it overturned (withOverturnedPass).",
+      ),
+    ),
 });
 
 export const TerritoryChangeDataSchema = z.strictObject({

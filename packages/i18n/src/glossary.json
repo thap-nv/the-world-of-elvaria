@@ -2494,6 +2494,7 @@
                 "character.swamp",
                 "character.level_up",
                 "character.level_down",
+                "character.judged",
                 "character.model_changed"
               ],
               "meaning": ""

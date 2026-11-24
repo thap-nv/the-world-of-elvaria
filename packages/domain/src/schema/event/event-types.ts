@@ -55,6 +55,7 @@ export const EVENT_TYPES = [
   'character.swamp',
   'character.level_up',
   'character.level_down',
+  'character.judged',
   'character.model_changed',
   'command.received',
   'command.applied',

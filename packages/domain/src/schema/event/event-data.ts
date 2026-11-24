@@ -6,6 +6,7 @@ import { REGISTRY_ID_PATTERN, TribeIdSchema } from '../../core/ids.ts';
 import { DateTimeSchema, NonEmptyStringSchema } from '../common.ts';
 import {
   CharacterChangeDataSchema,
+  CharacterJudgedDataSchema,
   ManaExhaustedDataSchema,
   ManaPoolDataSchema,
   QuestChangeDataSchema,
@@ -221,6 +222,7 @@ export const EVENT_DATA_SCHEMAS = {
   'character.swamp': CharacterChangeDataSchema,
   'character.level_up': CharacterChangeDataSchema,
   'character.level_down': CharacterChangeDataSchema,
+  'character.judged': CharacterJudgedDataSchema,
   'character.model_changed': CharacterChangeDataSchema,
   'command.applied': CommandResultDataSchema,
   'command.rejected': CommandResultDataSchema,
