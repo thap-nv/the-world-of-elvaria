@@ -14,6 +14,7 @@ import { escalate } from '../memos/escalate.ts';
 import { STEWARD } from '../quest/record.ts';
 import { release, suspend } from './character-commands.ts';
 import { reportEscape, resumeDelegation } from './delegation-commands.ts';
+import { enqueueBranch } from './guest-commands.ts';
 import { setLevel, setModel } from './character-settings.ts';
 import { patrolNow } from '../patrol/again.ts';
 import { hold, unhold } from './hold-commands.ts';
@@ -88,6 +89,14 @@ async function onQuest(ctx: Context, command: InboxCommand, quest: Quest): Promi
   }
 }
 
+/** A command on a territory: patrol (PS-09d), resume_delegation (PS-08g), enqueue_branch (CM-07); else undefined. */
+function territoryCommand(ctx: Context, command: InboxCommand): Outcome | Promise<Outcome> | undefined {
+  if (command.kind === 'patrol') return patrolNow(ctx, command.payload.territory);
+  if (command.kind === 'resume_delegation') return resumeDelegation(ctx, command.payload.territory);
+  if (command.kind === 'enqueue_branch') return enqueueBranch(ctx, command);
+  return undefined;
+}
+
 /** What one command does; a command kind of a later task is refused with `unsupported`. */
 export async function applyCommand(ctx: Context, command: InboxCommand): Promise<Outcome> {
   if (LATER.has(command.kind)) return rejected('unsupported');
@@ -100,8 +109,8 @@ export async function applyCommand(ctx: Context, command: InboxCommand): Promise
   if (command.kind === 'decide_memo') return decideMemo(ctx, command);
   if (command.kind === 'escalate_memo') return escalate(ctx, command);
   if (command.kind === 'decide_amendment') return decideAmendment(ctx, command);
-  if (command.kind === 'patrol') return patrolNow(ctx, command.payload.territory);
-  if (command.kind === 'resume_delegation') return resumeDelegation(ctx, command.payload.territory);
+  const onTerritory = territoryCommand(ctx, command);
+  if (onTerritory !== undefined) return onTerritory;
   if (command.kind === 'temple_report') return applyTempleReport(ctx, command);
   const quest = questOf(ctx, command);
   return quest === undefined ? rejected('unknown_quest') : onQuest(ctx, command, quest);

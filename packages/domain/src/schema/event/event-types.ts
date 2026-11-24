@@ -65,6 +65,10 @@ export const EVENT_TYPES = [
   'delivery.pushed',
   'delivery.merged',
   'delivery.failed',
+  // CM-07: a guest entry of the merge queue, a pull request the owner's own session opened.
+  'delivery.enqueued',
+  'delivery.guest_merged',
+  'delivery.guest_refused',
   // PS-08g: the owner's report of a defect that escaped, and the breaker of the seal delegation (ADR 0023).
   'quest.escaped',
   'delegation.suspended',

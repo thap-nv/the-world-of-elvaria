@@ -11,6 +11,7 @@ import type { Result } from '@elvaria/domain';
 
 import { createBackground } from './background/background.ts';
 import { createForgeBook } from './forge/book.ts';
+import { createGuestBook } from './forge/guest-book.ts';
 import { createBaseLooks } from './forge/looks.ts';
 import { createGraphBuilds } from './background/graph-builds.ts';
 import { loop, wake } from './tick/loop.ts';
@@ -88,7 +89,7 @@ const jobsOf = (deps: StewardDeps): StewardJob[] => [
 
 /**
  * Steward.idle(): the checks, scripts and graph builds outside the tick, the scheduled job outside it (PS-03), the
- * looks at the base branches (PS-08d), and the patrols of single territories (PS-09d).
+ * looks at the base branches (PS-08d), the patrols of single territories (PS-09d) and the guests' tries (CM-07).
  */
 const idleOf = async (state: State): Promise<void> => {
   await Promise.all([
@@ -97,6 +98,7 @@ const idleOf = async (state: State): Promise<void> => {
     state.scheduler.idle(),
     state.looks.idle(),
     state.patrol.runs.idle(),
+    state.guests.idle(),
   ]);
 };
 
@@ -120,6 +122,7 @@ const stateOf = (deps: StewardDeps, ended: () => void): State => ({
   versions: createVersionBook(),
   scheduler: createScheduler(jobsOf(deps), deps.onCall),
   forge: createForgeBook(),
+  guests: createGuestBook(deps.log, ended),
   looks: createBaseLooks(deps.log, ended),
   patrol: createPatrolBook(deps.log, ended),
   delegation: createDelegationBook(),
@@ -160,6 +163,7 @@ export function createSteward(deps: StewardDeps): Steward {
       await state.background.stop();
       await state.looks.stop();
       await state.patrol.runs.stop();
+      await state.guests.stop();
       await state.graphs?.stop();
       await state.sessions.close('the Steward stopped');
       await state.sessions.saved();

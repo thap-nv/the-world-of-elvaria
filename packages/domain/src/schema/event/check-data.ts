@@ -36,8 +36,20 @@ const CheckRunModeSchema = z
     ),
   );
 
+// Optional and added after v1 (CM-07, ADR 0032): the checks of a guest entry of the merge queue, a pull request of the
+// owner's own session tried in the plot guest-<territory>; no quest, no run, so they carry `delivery` too and the metrics leave them out.
+const GuestMarkSchema = z
+  .int()
+  .min(1)
+  .optional()
+  .meta(
+    describe(
+      "The pull request number of a guest entry of the merge queue (CM-07), whose checks these are; the envelope names the territory and no quest. Absent: a quest's checks.",
+    ),
+  );
+
 export const CheckStartDataSchema = z
-  .strictObject({ delivery: DeliveryMarkSchema, mode: CheckRunModeSchema })
+  .strictObject({ delivery: DeliveryMarkSchema, mode: CheckRunModeSchema, guest: GuestMarkSchema })
   .meta(
     describe(
       'The checks of the run the envelope\'s `attempt` names started, outside the Steward\'s tick (implementation-plan §3.1 "(P1-25)").',
@@ -50,6 +62,7 @@ export type CheckOutcome = (typeof CHECK_OUTCOMES)[number];
 export const CheckEndDataSchema = z.strictObject({
   delivery: DeliveryMarkSchema,
   mode: CheckRunModeSchema,
+  guest: GuestMarkSchema,
   outcome: z
     .enum(CHECK_OUTCOMES)
     .meta(

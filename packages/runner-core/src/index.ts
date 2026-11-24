@@ -6,6 +6,7 @@ export type { TribeModel } from '@elvaria/domain';
 export * from './checks/index.ts';
 export * from './conformance/index.ts';
 export * from './graph/index.ts';
+export * from './guest/index.ts';
 export * from './kit/index.ts';
 export * from './plot/index.ts';
 export * from './policy/index.ts';

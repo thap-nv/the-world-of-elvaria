@@ -48,6 +48,15 @@ export const ConfirmPayloadSchema = QuestPayloadSchema.extend({
 /** (PS-09d) A territory the owner names: `patrol` asks for its patrol now. */
 export const TerritoryPayloadSchema = z.strictObject({ territory: TerritoryIdSchema });
 
+/**
+ * (CM-07) A pull request the owner's own session opened on the territory's forge: `enqueue_branch` puts it in the
+ * territory's merge queue as a guest entry, tried on the base branch and merged by the Steward when green.
+ */
+export const EnqueueBranchPayloadSchema = z.strictObject({
+  territory: TerritoryIdSchema,
+  pr: z.int().min(1).meta({ description: 'The pull request number on the forge.' }),
+});
+
 export const QuestReasonPayloadSchema = z.strictObject({
   quest: QuestIdSchema,
   reason: z.string().optional(),

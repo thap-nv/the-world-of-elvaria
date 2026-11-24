@@ -160,10 +160,11 @@ export function fakeForge(remote?: string): FakeForge {
         await new Promise((resolve) => signal.addEventListener('abort', resolve, { once: true }));
         return err({ reason: 'forge_error', detail: 'This operation was aborted' });
       }
-      const head = tipOf(branchOf(pr));
+      const branch = branchOf(pr);
+      const head = tipOf(branch);
       const sha = merged.get(pr);
-      if (sha !== undefined) return ok({ state: 'merged', head, checks: [], merge_sha: sha });
-      return ok({ state: answer.state, head, checks: [...(answer.checks ?? [])] });
+      if (sha !== undefined) return ok({ state: 'merged', branch, head, checks: [], merge_sha: sha });
+      return ok({ state: answer.state, branch, head, checks: [...(answer.checks ?? [])] });
     },
     merge: (repo, pr, { method, head }) => {
       calls.push({ method: 'merge', repo });

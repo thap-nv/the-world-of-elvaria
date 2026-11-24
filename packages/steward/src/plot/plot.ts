@@ -10,6 +10,8 @@ import type {
   CommitRescue,
   DiffScope,
   Drift,
+  GuestTrial,
+  GuestTrialRequest,
   MergeOptions,
   MergeOutcome,
   PatchOutcome,
@@ -180,6 +182,16 @@ export interface Plots extends PlotQueue {
     head: string,
     exclude: string,
   ): Promise<readonly CommitLink[] | undefined>;
+  /**
+   * (CM-07) A guest of the merge queue: runner-core's tryGuest, the pull request's head `pull.head` (on origin's
+   * `pull.branch`) merged into origin's default branch and tried under `guest-<id>`, `pull.started` told before its
+   * checks run. Absent: no guest is tried.
+   */
+  guest?(
+    territory: Territory,
+    pull: Pick<GuestTrialRequest, 'branch' | 'head' | 'started'>,
+    signal: AbortSignal,
+  ): Promise<GuestTrial>;
   /** At archive only: removes a worktree (its branch stays) and what the tribes' CLIs kept about it. */
   release(plot: Quest['plot']): Promise<Result<ReleasedPlot, PlotFailure>>;
   /**

@@ -61,12 +61,14 @@ export function mergedPatrolOf(source: MovedSource): BaseTip | undefined {
 
 /**
  * The commit the Steward's latest merge left on each default branch since the latest patrol that tried a commit there
- * (`delivery.merged`, `patrol.ran`), by territory: what it knew of the moves before it stopped, given back at start.
+ * (`delivery.merged`, (CM-07) a guest's `delivery.guest_merged`, `patrol.ran`), by territory: what it knew of the
+ * moves before it stopped, given back at start.
  */
 export function mergesSincePatrolOf(events: readonly Event[]): BaseTip[] {
   const heads = new Map<TerritoryId, string>();
   for (const event of events) {
-    if (isEventOf(event, 'delivery.merged')) heads.set(event.data.territory, event.data.merge_sha);
+    if (isEventOf(event, 'delivery.merged') || isEventOf(event, 'delivery.guest_merged'))
+      heads.set(event.data.territory, event.data.merge_sha);
     else if (isEventOf(event, 'patrol.ran') && event.data.head !== null) heads.delete(event.data.territory);
   }
   return [...heads]

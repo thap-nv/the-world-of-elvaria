@@ -10,7 +10,7 @@ export const SHA_A = 'a'.repeat(40);
 export const SHA_B = 'b'.repeat(40);
 
 let serial = 0;
-const lineOf = (type: string, ts: string, data: Record<string, unknown>): Event => {
+export const lineOf = (type: string, ts: string, data: Record<string, unknown>): Event => {
   serial += 1;
   return EventSchema.parse({
     v: 2,
