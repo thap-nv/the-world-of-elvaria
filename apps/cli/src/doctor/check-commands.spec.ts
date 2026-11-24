@@ -39,6 +39,8 @@ describe('territoryCommands', () => {
       vcs: { type: 'none' },
       commands: {
         setup: 'pnpm install',
+        // Globs, not commands: doctor must not look them up on PATH.
+        setup_when: ['pnpm-lock.yaml', '**/package.json'],
         reset: ['sh init.sh', 'docker compose down -v'],
         generate: ['pnpm schemas'],
       },

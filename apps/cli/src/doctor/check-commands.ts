@@ -20,10 +20,16 @@ export interface TerritoryCommand {
   readonly line: string;
 }
 
+// commands.setup_when holds globs, not command lines (fix/plot-setup-on-lockfile): read as programs, they were
+// "missing from PATH" and turned the kingdom not ready as soon as a territory set them.
+const NOT_COMMANDS: ReadonlySet<string> = new Set(['setup_when']);
+
 /** Every command of the territory, `commands.*` first, then each check's `run` and `cleanup`. */
 export function territoryCommands(territory: Territory): TerritoryCommand[] {
   const commands = Object.entries(territory.commands).flatMap(([name, value]) =>
-    value === undefined ? [] : commandLinesOf(value).map((line) => ({ field: `commands.${name}`, line })),
+    value === undefined || NOT_COMMANDS.has(name)
+      ? []
+      : commandLinesOf(value).map((line) => ({ field: `commands.${name}`, line })),
   );
   const checks = territory.checks.flatMap(({ id, run, cleanup }) => [
     ...commandLinesOf(run).map((line) => ({ field: `checks.${id}.run`, line })),
