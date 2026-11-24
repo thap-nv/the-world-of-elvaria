@@ -1,4 +1,4 @@
-import { EVENT_VERSION, EventSchema, questViewOf } from '@elvaria/domain';
+import { EVENT_VERSION, EventSchema, VerdictSchema, questViewOf } from '@elvaria/domain';
 import type { Quest } from '@elvaria/domain';
 
 const QUEST_ID = 'q_20261106_7k3m2a';
@@ -39,6 +39,39 @@ const patrol = (minute: number, pass: boolean) =>
       },
     ],
   });
+
+export const attributedLog = (first: Quest) => [
+  ...checkLog(first, first),
+  ...['own_change', 'combination', 'flaky', 'outside'].map((cause, index) =>
+    line('check.attributed', 41 + index, {
+      cause,
+      culprit: first.id,
+      territory: first.territory,
+      source: 'patrol',
+      checks: ['test'],
+      runs: [],
+    }),
+  ),
+];
+
+export const lateJudgements = (quest: Quest) =>
+  [false, true].map((late) =>
+    VerdictSchema.parse({
+      quest_id: quest.id,
+      id: `${quest.id}-1${late ? '-late' : ''}`,
+      late: late || undefined,
+      result: late ? 'fail' : 'pass',
+      notes: 'The later full check failed.',
+      fail_kind: late ? 'tests_fail' : undefined,
+      verifier_id: 'machine',
+      created_at: at(late ? 45 : 20),
+      version: 1,
+      ritual: 'build_review',
+      attempt: 1,
+      checks: [],
+      by_human: false,
+    }),
+  );
 
 export const checkLog = (first: Quest, second: Quest) => [
   line('quest.started', 0, view('working', first)),

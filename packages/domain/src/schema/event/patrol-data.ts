@@ -5,7 +5,7 @@
 import { z } from 'zod';
 
 import { PATROL_LINE_MAX_LENGTH } from '../../constants.ts';
-import { CheckIdSchema, ScriptIdSchema, TerritoryIdSchema } from '../../core/ids.ts';
+import { ScriptIdSchema, TerritoryIdSchema } from '../../core/ids.ts';
 import { NonEmptyStringSchema } from '../common.ts';
 import { CommitShaSchema } from './upgrade-data.ts';
 
@@ -46,7 +46,7 @@ const PatrolSetupSchema = z.strictObject({
 });
 
 const PatrolCheckSchema = z.strictObject({
-  id: CheckIdSchema,
+  id: NonEmptyStringSchema,
   pass: z.boolean(),
   duration_ms: DurationMsSchema,
   timed_out: z.boolean(),

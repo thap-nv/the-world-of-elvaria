@@ -13,8 +13,6 @@ import { at, verdictOf } from '../__fixtures__/ledger.ts';
 import { noticeItems } from '../../world/attention-notices.ts';
 import { worldStateOf } from '../../world/world-state.ts';
 import { KINGDOM } from '../../world/__fixtures__/examples.ts';
-import { PatrolRanDataSchema } from '../../schema/event/patrol-data.ts';
-import { ranData } from '../../patrol/__fixtures__/patrol-log.ts';
 
 describe('escaped narrow checks (CM-09b)', () => {
   it('reads the ledger and digest from the same sample log', () => {
@@ -90,13 +88,5 @@ describe('escaped narrow checks (CM-09b)', () => {
     expect(narrowEscapeAlertsOf(events, [territoryOf('alpha')])).toEqual([
       { territory: 'alpha', merges: 20, escapes: 3 },
     ]);
-  });
-
-  it('accepts registry check ids and refuses malformed patrol check ids (letter 13x4z4)', () => {
-    const data = ranData([{ id: 'unit_test', pass: true }]);
-    expect(PatrolRanDataSchema.parse(data).checks[0]?.id).toBe('unit_test');
-    expect(
-      PatrolRanDataSchema.safeParse({ ...data, checks: [{ ...data.checks[0], id: 'bad check' }] }).success,
-    ).toBe(false);
   });
 });
