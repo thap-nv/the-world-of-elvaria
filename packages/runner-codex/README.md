@@ -78,7 +78,10 @@ blocked by PreToolUse hook: <reason>. Command: <command>`) into `tool_blocked` s
   account apart without the id; a home not signed in has no account. An app-server out of time is a note, and fails
   doctor only for a tribe that names a home, which it could not confirm. `askAppServer` keeps `initialize`'s answer
   apart, even when a later call fails. `locateCodex` finds the CLI on PATH, in npm's folder
-  or in the VS Code extension `openai.chatgpt` (`bin/<os-arch>/codex(.exe)`).
+  or in the VS Code extension `openai.chatgpt` (`bin/<os-arch>/codex(.exe)`), declared as runner-core's `ToolSearch`.
+- Runs its session on runner-core's frames (AH-09): `startLineSession` with the stream reader (`streamReaderOf`), the
+  hook's refusals read from stderr and the verdict of `codexEnding` (`src/outcome.ts`), and `withPlotFiles` for
+  `AGENTS.override.md`; the folder variable and the account's hash are runner-core's `configDirEnv` and `accountSaidOf`.
 - Declares `vision` (vision spike 2026-11-17): `view_image` reads any file whatever the sandbox, and no session starts without Elvaria's hook, which keeps a judge to the screens of its review (policy `images`, PS-11b); the fake CLI plays the conformance suite's `image` through that hook (`fixtures/fake-codex-image.mjs`).
 
 ## Does not

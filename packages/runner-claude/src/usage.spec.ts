@@ -3,15 +3,15 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { parseJsonLine } from '@elvaria/runner-core';
+import type { JsonObject } from '@elvaria/runner-core';
 import { FIXTURES } from './__fixtures__/harness.ts';
-import { parseLine } from './json.ts';
 import { rateLimitWindowsOf, rejectionOf, spentWindowOf, usageWindowsOf } from './usage.ts';
-import type { JsonObject } from './json.ts';
 
 const linesOf = (file: string): JsonObject[] =>
   readFileSync(path.join(FIXTURES, file), 'utf8')
     .split(/\r?\n/)
-    .map(parseLine)
+    .map(parseJsonLine)
     .filter((line): line is JsonObject => line !== undefined);
 
 /** 2026-11-06 21:40 in Bangkok, while the spike ran. */

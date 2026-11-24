@@ -4,18 +4,10 @@
 import { countedTokens } from '@elvaria/runner-core';
 import type { SessionTokens } from '@elvaria/runner-core';
 
-import {
-  addTokens,
-  isObject,
-  modelUsageTokens,
-  numberOf,
-  objectOf,
-  objectsOf,
-  textOf,
-  usageTokens,
-} from './json.ts';
+import { isJsonObject, numberOf, objectOf, objectsOf, textOf } from '@elvaria/runner-core';
+import type { JsonObject } from '@elvaria/runner-core';
+import { addTokens, modelUsageTokens, usageTokens } from './json.ts';
 import { rateLimitWindowsOf, rejectionOf, spentWindowOf } from './usage.ts';
-import type { JsonObject } from './json.ts';
 import type { UsageWindow } from './usage.ts';
 
 export type Observation =
@@ -78,7 +70,7 @@ function contentText(block: JsonObject): string {
   if (typeof content === 'string') return content;
   if (!Array.isArray(content)) return '';
   return content
-    .filter(isObject)
+    .filter(isJsonObject)
     .map((part) => textOf(part, 'text') ?? '')
     .join('\n');
 }

@@ -1,18 +1,15 @@
 // The Codex CLI adapter (`codex_cli`, the third tribe; implementation-plan §3.7, §3.14, ADR 0006, 0021; spike
 // Codex 2026-11-12). It turns a SpawnRequest into Codex's argv, env, AGENTS.override.md and `-c` hooks, and Codex's
 // stream into signals and a RunResult; everything else (prompt, policy, plot, checks) is runner-core's.
-import { appendFile } from 'node:fs/promises';
-import path from 'node:path';
 import process from 'node:process';
 
 import {
-  NOTE_PREFIX,
-  STDERR_FILE,
+  childEnvOf,
   contextEnv,
-  openRunLog,
-  openRunOutput,
+  programOf,
   runContextOf,
-  secretValuesOf,
+  startLineSession,
+  withPlotFiles,
 } from '@elvaria/runner-core';
 import type {
   AdapterTool,
@@ -30,10 +27,11 @@ import { doctorCodex } from './doctor.ts';
 import { hooksProblem } from './hooks.ts';
 import { locateCodex } from './locate.ts';
 import { CODEX_MODELS } from './models.ts';
+import { codexEnding } from './outcome.ts';
 import { removeRunFiles, writeRunFiles } from './run-files.ts';
-import { startSession } from './session.ts';
+import { createStreamReader } from './stream.ts';
 import { probeOf } from './usage.ts';
-import type { Launch } from './launch.ts';
+import type { CommandLaunch } from '@elvaria/runner-core';
 
 export const CODEX_ADAPTER = 'codex_cli';
 
@@ -82,9 +80,9 @@ export const CODEX_TOOL: AdapterTool = {
 export interface CodexOptions {
   readonly tribe: AgentRunner['tribe'];
   /** How to start Codex: `{command: tribes[].tool.path, args: []}`, or node and a script for a fake CLI. */
-  readonly launch: Launch;
+  readonly launch: CommandLaunch;
   /** `hookCommand()` of @elvaria/hooks, which apps/cli hands over (an adapter may not import it, §1.3). */
-  readonly hook: Launch;
+  readonly hook: CommandLaunch;
   /** The minimal env (§3.9) for the calls outside a session: `--version`, `login status`, the app-server. */
   readonly env: Readonly<Record<string, string>>;
   /** How long a call outside a session may take; 30 s by default (the app-server answers in ~1 s). */
@@ -120,36 +118,11 @@ export function codexEnv(
   configDir: string | undefined,
   extra: Readonly<Record<string, string>> = {},
 ): Record<string, string> {
-  const base = Object.entries(env).filter(([name]) => !name.toUpperCase().startsWith('GIT_'));
-  return homeEnv({ ...Object.fromEntries(base), ...extra }, configDir);
+  return homeEnv({ ...childEnvOf(env), ...extra }, configDir);
 }
 
-/** The plot without Elvaria's file; one that will not go costs the session nothing but a note (as agy's runner). */
-async function clearPlot(req: SpawnRequest): Promise<void> {
-  try {
-    await removeRunFiles(req.cwd);
-  } catch (error) {
-    const why = error instanceof Error ? error.message : String(error);
-    const note = `${NOTE_PREFIX}AGENTS.override.md stays in the plot: ${why}\n`;
-    await appendFile(path.join(req.run_dir, STDERR_FILE), note, 'utf8').catch(() => undefined);
-  }
-}
-
-/** The session, whose end (wait, kill) settles only once its file left the plot. */
-function clearingOnEnd(session: RunningSession, req: SpawnRequest): RunningSession {
-  const result = session.wait().then(async (end) => {
-    await clearPlot(req);
-    return end;
-  });
-  return {
-    ...session,
-    wait: () => result,
-    kill: async (reason) => {
-      await session.kill(reason);
-      await result;
-    },
-  };
-}
+/** AGENTS.override.md goes when the session ends or never starts; one that will not go costs it nothing but a note. */
+const PLOT_FILES = { remove: removeRunFiles, stay: 'AGENTS.override.md stays' };
 
 async function startCodex(req: SpawnRequest, options: CodexOptions): Promise<RunningSession> {
   const ctx = runContextOf(req);
@@ -171,31 +144,22 @@ async function startCodex(req: SpawnRequest, options: CodexOptions): Promise<Run
   if (!listed.ok) throw new Error(`the session's hooks could not be checked: ${listed.problem}`);
   const problem = hooksProblem(listed.results[0], options.hook, files.policy, windows);
   if (problem !== undefined) throw new Error(problem);
-  // The session's secret values are masked before the patterns in every line the runner writes (§3.9).
-  const known = secretValuesOf(req);
-  return startSession({
-    launch: options.launch,
+  return startLineSession({
+    req,
+    ctx,
+    name: 'codex',
+    turn: 'an action',
+    program: programOf(options.launch),
     args: sessionArgs(req, files, options.hook),
-    cwd: req.cwd,
     env,
-    prompt: req.prompt.user,
-    max_turns: req.budget.max_turns,
-    handover: req.handover,
-    structured: req.structured !== undefined,
-    log: openRunLog(ctx, { known }),
-    output: openRunOutput(req.run_dir, known),
+    stdin: req.prompt.user,
+    reader: createStreamReader(),
+    ...codexEnding(req.structured !== undefined),
   });
 }
 
-async function spawnCodex(req: SpawnRequest, options: CodexOptions): Promise<RunningSession> {
-  try {
-    return clearingOnEnd(await startCodex(req, options), req);
-  } catch (error) {
-    // A session that never started leaves no file behind either.
-    await clearPlot(req);
-    throw error;
-  }
-}
+const spawnCodex = (req: SpawnRequest, options: CodexOptions): Promise<RunningSession> =>
+  withPlotFiles(req, PLOT_FILES, () => startCodex(req, options));
 
 /** The account's windows, 0 mana: `ping: false` changes nothing, no model is ever called. */
 async function probe(options: CodexOptions): Promise<ProbeResult> {

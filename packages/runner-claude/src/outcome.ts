@@ -1,9 +1,8 @@
 // From the last `result` line and the way the process ended to RunResult (implementation-plan §3.7; spike P1-02,
 // "Kết quả phiên → outcome"). The outcome follows `is_error` and `terminal_reason`, never `subtype`: a model that
 // does not exist ends with `subtype: success` and `is_error: true`. A killed process prints no result at all.
-import { numberOf, objectOf, objectsOf, textOf } from './json.ts';
-import type { JsonObject } from './json.ts';
-import type { PermissionDenial, RunOutcome } from '@elvaria/runner-core';
+import { numberOf, objectOf, objectsOf, textOf } from '@elvaria/runner-core';
+import type { JsonObject, PermissionDenial, RunOutcome } from '@elvaria/runner-core';
 
 export interface Ending {
   /** The runner's kill() ended it (breaker, mana pause, the Steward). */

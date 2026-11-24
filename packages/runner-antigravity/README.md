@@ -41,7 +41,8 @@ terms_acknowledged_at, env, pools?, timeout_ms?})`. `hook` is `hookCommand()` of
   run's own steps, since `result.usage` adds up a resumed conversation; `cache_read_tokens` at a tenth through
   runner-core's `countedTokens`, as for Claude, P1-22) and the turn count; refused tool steps
   and `denied_actions` give `tool_blocked` and `permission_denials`. Stops the run when a turn past
-  `budget.max_turns` begins (agy has no `--max-turns`). Outcome: a kill → `killed`, the turn breaker →
+  `budget.max_turns` begins (agy has no `--max-turns`; runner-core's `startLineSession`, with `agyVerdict` of
+  `src/outcome.ts` and `withPlotFiles` for the plot's files, AH-09). Outcome: a kill → `killed`, the turn breaker →
   `max_turns`; `print_timeout` → `budget`; SUCCESS with an answer (text or structured output) and exit 0 →
   `completed`; anything else (a soft-deny, an empty answer, a non-zero exit) → `error`. A quota in `AGY_ERROR` or
   `result.error` ends in `error` with `RunResult.rate_limited`, its `rate_limit` signal carrying `resets_at` from the error's

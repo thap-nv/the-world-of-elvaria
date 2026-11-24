@@ -9,7 +9,7 @@ import type { SpawnRequest } from '@elvaria/runner-core';
 import { hookConfigArgs } from './hooks.ts';
 import { modelOf } from './launch.ts';
 import { sessionWrites } from './run-files.ts';
-import type { Launch } from './launch.ts';
+import type { CommandLaunch } from '@elvaria/runner-core';
 import type { RunFiles } from './run-files.ts';
 
 /** The owner chose it, guarded by the hooks check (ADR 0021, amended 2026-11-12). */
@@ -61,7 +61,7 @@ export function configOf(req: SpawnRequest): string[] {
 }
 
 /** `codex exec …` for a new session, `codex exec resume … <id>` to continue one; `-` reads the prompt on stdin. */
-export function sessionArgs(req: SpawnRequest, files: RunFiles, hook: Launch): string[] {
+export function sessionArgs(req: SpawnRequest, files: RunFiles, hook: CommandLaunch): string[] {
   const common = [
     '--json',
     '--ignore-user-config',
@@ -80,7 +80,7 @@ export function sessionArgs(req: SpawnRequest, files: RunFiles, hook: Launch): s
 }
 
 /** The app-server flags that list the same hooks as the session: its `-c` hooks and the same features off. */
-export function hooksCheckArgs(files: RunFiles, hook: Launch): string[] {
+export function hooksCheckArgs(files: RunFiles, hook: CommandLaunch): string[] {
   return [
     ...FEATURES_OFF.flatMap((feature) => ['--disable', feature]),
     ...hookConfigArgs(hook, files.policy),

@@ -1,41 +1,7 @@
-// Reading the CLI's JSON without trusting its shape: a field of the wrong type reads as absent, never throws.
-// The stream is a contract of one CLI version (fixtures/), and a newer version may add or move fields.
-import type { SessionTokens } from '@elvaria/runner-core';
-
-export type JsonObject = Readonly<Record<string, unknown>>;
-
-export const isObject = (value: unknown): value is JsonObject =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
-export const textOf = (value: JsonObject | undefined, key: string): string | undefined => {
-  const found = value?.[key];
-  return typeof found === 'string' ? found : undefined;
-};
-
-export const numberOf = (value: JsonObject | undefined, key: string): number | undefined => {
-  const found = value?.[key];
-  return typeof found === 'number' && Number.isFinite(found) ? found : undefined;
-};
-
-export const objectOf = (value: JsonObject | undefined, key: string): JsonObject | undefined => {
-  const found = value?.[key];
-  return isObject(found) ? found : undefined;
-};
-
-export const objectsOf = (value: JsonObject | undefined, key: string): JsonObject[] => {
-  const found = value?.[key];
-  return Array.isArray(found) ? found.filter(isObject) : [];
-};
-
-/** One line of output as an object; undefined for anything else (a blank line, a log line, broken JSON). */
-export function parseLine(line: string): JsonObject | undefined {
-  try {
-    const value: unknown = JSON.parse(line);
-    return isObject(value) ? value : undefined;
-  } catch {
-    return undefined;
-  }
-}
+// Claude Code's token counts in its JSON: an API usage object and `result.modelUsage`, read with runner-core's
+// accessors (a field of the wrong type reads as absent, never throws; AH-09 moved them there for every adapter).
+import { isJsonObject, numberOf } from '@elvaria/runner-core';
+import type { JsonObject, SessionTokens } from '@elvaria/runner-core';
 
 const sumOf = (value: JsonObject | undefined, keys: readonly string[]): number =>
   keys.reduce((sum, key) => sum + (numberOf(value, key) ?? 0), 0);
@@ -63,7 +29,7 @@ export const usageTokens = (usage: JsonObject | undefined): SessionTokens => ({
 export const modelUsageTokens = (modelUsage: JsonObject | undefined): SessionTokens =>
   addTokens(
     Object.values(modelUsage ?? {})
-      .filter(isObject)
+      .filter(isJsonObject)
       .map((model) => ({
         tokens: sumOf(model, ['inputTokens', 'outputTokens', 'cacheCreationInputTokens']),
         cache_read: numberOf(model, 'cacheReadInputTokens') ?? 0,

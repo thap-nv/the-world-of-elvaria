@@ -7,8 +7,8 @@ import { createInterface } from 'node:readline';
 
 import { killTree } from '@elvaria/runner-core';
 
-import { programOf } from './launch.ts';
-import type { Launch } from './launch.ts';
+import { programOf } from '@elvaria/runner-core';
+import type { CommandLaunch } from '@elvaria/runner-core';
 
 export interface AppServerCall {
   readonly method: string;
@@ -62,7 +62,7 @@ const errorOf = (answer: Json): string => {
 };
 
 /** The server, without a shell (ADR 0015); its stderr is its log, read and dropped. */
-function startServer(launch: Launch, args: readonly string[], options: AppServerOptions) {
+function startServer(launch: CommandLaunch, args: readonly string[], options: AppServerOptions) {
   const program = programOf(launch);
   const child = spawn(program.file, [...program.args, 'app-server', ...args], {
     cwd: options.cwd,
@@ -81,7 +81,7 @@ function startServer(launch: Launch, args: readonly string[], options: AppServer
  * in order; the first error, a server that leaves early, or `timeout_ms` passing ends it with a problem.
  */
 export function askAppServer(
-  launch: Launch,
+  launch: CommandLaunch,
   args: readonly string[],
   calls: readonly AppServerCall[],
   options: AppServerOptions,

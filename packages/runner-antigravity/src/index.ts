@@ -3,7 +3,6 @@ export { HOOK_EVENTS, hookPlanOf, hooksJson, hooksProblem, shimSource } from './
 export type { HookPlan } from './hook-files.ts';
 export { agyErrorOf, outcomeOf, rateLimitOf } from './outcome.ts';
 export type { AgyError } from './outcome.ts';
-export type { Launch } from './launch.ts';
 export {
   ANTIGRAVITY_ADAPTER,
   ANTIGRAVITY_CAPABILITIES,

@@ -28,10 +28,9 @@ export {
   powershellQuote,
 } from './hooks.ts';
 export type { HookEvent, HookLines } from './hooks.ts';
-export { REASONING_EFFORTS, modelOf, versionOf } from './launch.ts';
-export type { Launch } from './launch.ts';
+export { REASONING_EFFORTS, modelOf } from './launch.ts';
 export { codexCandidates, locateCodex } from './locate.ts';
-export { blockedOf, outcomeOf, rateLimitOf } from './outcome.ts';
+export { blockedOf, codexEnding, outcomeOf, rateLimitOf } from './outcome.ts';
 export {
   CODEX_ADAPTER,
   CODEX_CAPABILITIES,

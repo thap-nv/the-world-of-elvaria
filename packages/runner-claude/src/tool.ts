@@ -3,6 +3,8 @@
 // tribe's config folder when it names one (./account.ts, PS-27).
 import { tmpdir } from 'node:os';
 
+import { childEnvOf } from '@elvaria/runner-core';
+
 import { accountEnv } from './account.ts';
 import { NOT_FOUND } from './doctor.ts';
 import { launchOf } from './launch.ts';
@@ -42,12 +44,9 @@ export interface ClaudeTool {
   launch(): Promise<Launch>;
 }
 
-const withoutGit = (env: Readonly<Record<string, string>>): Record<string, string> =>
-  Object.fromEntries(Object.entries(env).filter(([name]) => !name.startsWith('GIT_')));
-
 export function claudeTool(options: ClaudeToolOptions): ClaudeTool {
   const nodePath = options.nodePath ?? process.execPath;
-  const env = accountEnv(withoutGit(options.env), options.configDir);
+  const env = accountEnv(childEnvOf(options.env), options.configDir);
   let found: Promise<string | undefined> | undefined;
   const executable = () =>
     (found ??=

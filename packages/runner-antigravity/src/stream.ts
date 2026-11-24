@@ -1,7 +1,12 @@
 // agy's stream-json (spike P1-12a §5): `init` names the session, `step_update` lines carry text, token usage and
 // tool results, `result` ends the run. Steps of a sub-agent's conversation are not this session's.
-import { countedTokens } from '@elvaria/runner-core';
-import type { PermissionDenial, RunnerSignal } from '@elvaria/runner-core';
+import { countedTokens, numberOf, objectOf, objectsOf, streamReaderOf, textOf } from '@elvaria/runner-core';
+import type {
+  JsonObject,
+  PermissionDenial,
+  RunnerSignal,
+  StreamReader as CoreReader,
+} from '@elvaria/runner-core';
 
 export interface AgyResult {
   readonly status: string;
@@ -27,43 +32,29 @@ export interface StreamState {
   readonly result: AgyResult | undefined;
 }
 
-export interface StreamReader {
-  /** One stdout line; returns what the Steward should hear about it. Lines that are not JSON are skipped. */
-  read(line: string): RunnerSignal[];
-  readonly state: StreamState;
-}
+export type StreamReader = CoreReader<StreamState>;
 
-type Json = Record<string, unknown>;
-
-const isRecord = (value: unknown): value is Json =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-const recordAt = (value: Json, key: string): Json => (isRecord(value[key]) ? value[key] : {});
-const textAt = (value: Json, key: string): string | undefined =>
-  typeof value[key] === 'string' ? value[key] : undefined;
-const numberAt = (value: Json, key: string): number =>
-  typeof value[key] === 'number' && Number.isFinite(value[key]) ? value[key] : 0;
+const numberAt = (value: JsonObject | undefined, key: string): number => numberOf(value, key) ?? 0;
 
 /** A tool error that is a refusal: by the Elvaria hook, by a deny rule, or by the missing allow rule. */
 const REFUSED = /denied by pre-tool hook|permission check failed|permission denied/i;
 const DETAIL_KEYS = ['CommandLine', 'Path', 'AbsolutePath', 'TargetFile', 'Url', 'Role'];
 
-function detailOf(parameters: Json): string {
+function detailOf(parameters: JsonObject): string {
   const key = DETAIL_KEYS.find((name) => typeof parameters[name] === 'string');
   return key === undefined ? JSON.stringify(parameters).slice(0, 200) : String(parameters[key]);
 }
 
-function resultOf(raw: Json): AgyResult {
-  const denied = (Array.isArray(raw.denied_actions) ? raw.denied_actions.filter(isRecord) : []).map(
-    (action) => ({
-      action: textAt(action, 'action') ?? '',
-      display_name: textAt(action, 'display_name') ?? 'unknown',
-    }),
-  );
-  const finished = textAt(raw, 'finished_reason');
-  const error = textAt(raw, 'error');
+function resultOf(raw: JsonObject): AgyResult {
+  const denied = objectsOf(raw, 'denied_actions').map((action) => ({
+    action: textOf(action, 'action') ?? '',
+    display_name: textOf(action, 'display_name') ?? 'unknown',
+  }));
+  const finished = textOf(raw, 'finished_reason');
+  const error = textOf(raw, 'error');
   return {
-    status: textAt(raw, 'status') ?? '',
-    response: textAt(raw, 'response') ?? '',
+    status: textOf(raw, 'status') ?? '',
+    response: textOf(raw, 'response') ?? '',
     ...('structured_output' in raw ? { structured_output: raw.structured_output } : {}),
     denied_actions: denied,
     ...(finished === undefined ? {} : { finished_reason: finished }),
@@ -92,42 +83,44 @@ function refuse(tally: Tally, tool: string, detail: string, reason: string): Run
   return [{ kind: 'tool_blocked', tool, reason }];
 }
 
-function response(tally: Tally, step: Json, index: number): RunnerSignal[] {
+function response(tally: Tally, step: JsonObject, index: number): RunnerSignal[] {
   // The first line of a step begins a turn; its text stays open in `texts` until its DONE line.
   if (!tally.texts.has(index)) tally.started += 1;
-  tally.texts.set(index, (tally.texts.get(index) ?? '') + (textAt(step, 'text_delta') ?? ''));
-  if (textAt(step, 'state') !== 'DONE') return [];
+  tally.texts.set(index, (tally.texts.get(index) ?? '') + (textOf(step, 'text_delta') ?? ''));
+  if (textOf(step, 'state') !== 'DONE') return [];
   const text = tally.texts.get(index)?.trim() ?? '';
   tally.texts.delete(index);
   tally.turns += 1;
-  const usage = recordAt(step, 'usage');
+  const usage = objectOf(step, 'usage');
   tally.parts.tokens += numberAt(usage, 'total_tokens');
   tally.parts.cache_read += numberAt(usage, 'cache_read_tokens');
   tally.tokens = countedTokens(tally.parts);
   return [...(text === '' ? [] : [{ kind: 'text', text } as const]), { kind: 'usage', tokens: tally.tokens }];
 }
 
-function step(tally: Tally, raw: Json): RunnerSignal[] {
-  if (tally.session !== undefined && textAt(raw, 'conversation_id') !== tally.session) return [];
-  const type = textAt(raw, 'step_type');
-  const errored = textAt(raw, 'state') === 'ERROR';
+function step(tally: Tally, raw: JsonObject): RunnerSignal[] {
+  if (tally.session !== undefined && textOf(raw, 'conversation_id') !== tally.session) return [];
+  const type = textOf(raw, 'step_type');
+  const errored = textOf(raw, 'state') === 'ERROR';
   if (type === 'agent_response') return response(tally, raw, numberAt(raw, 'step_index'));
-  const tool = textAt(raw, 'tool_name') ?? type ?? 'unknown';
-  const info = recordAt(raw, 'tool_info');
+  const tool = textOf(raw, 'tool_name') ?? type ?? 'unknown';
+  const info = objectOf(raw, 'tool_info');
   if (type === 'tool' && errored) {
-    const message = textAt(recordAt(info, 'error'), 'message') ?? '';
-    return REFUSED.test(message) ? refuse(tally, tool, detailOf(recordAt(info, 'parameters')), message) : [];
+    const message = textOf(objectOf(info, 'error'), 'message') ?? '';
+    return REFUSED.test(message)
+      ? refuse(tally, tool, detailOf(objectOf(info, 'parameters') ?? {}), message)
+      : [];
   }
   // A sub-agent the hook denied ends as an ERROR step with no sub-agent and no message (spike M10a).
   if (type === 'subagent' && errored) return refuse(tally, tool, tool, 'sub-agent refused');
   return [];
 }
 
-function result(tally: Tally, raw: Json): RunnerSignal[] {
+function result(tally: Tally, raw: JsonObject): RunnerSignal[] {
   tally.result = resultOf(raw);
-  const id = textAt(raw, 'conversation_id');
+  const id = textOf(raw, 'conversation_id');
   if (id !== '') tally.session ??= id;
-  const usage = recordAt(raw, 'usage');
+  const usage = objectOf(raw, 'usage');
   tally.result_tokens = countedTokens({
     tokens: numberAt(usage, 'total_tokens'),
     cache_read: numberAt(usage, 'cache_read_tokens'),
@@ -135,6 +128,25 @@ function result(tally: Tally, raw: Json): RunnerSignal[] {
   return tally.result.denied_actions.flatMap((denied) =>
     refuse(tally, denied.display_name, denied.action, 'soft-denied: no allow rule, and the run ended'),
   );
+}
+
+/** One line of agy's stream: `init` names the session, `step_update` and `result` carry the rest. */
+function lineOf(tally: Tally, value: JsonObject): RunnerSignal[] {
+  if (value.event === 'init') tally.session ??= textOf(value, 'conversation_id');
+  if (value.event === 'step_update') return step(tally, objectOf(value, 'step_update') ?? {});
+  return value.event === 'result' ? result(tally, objectOf(value, 'result') ?? {}) : [];
+}
+
+function stateOf(tally: Tally): StreamState {
+  const { session, tokens, turns, started, denials } = tally;
+  return {
+    session,
+    tokens: tokens > 0 ? tokens : tally.result_tokens,
+    turns,
+    started,
+    denials,
+    result: tally.result,
+  };
 }
 
 export function createStreamReader(): StreamReader {
@@ -149,30 +161,5 @@ export function createStreamReader(): StreamReader {
     denials: [],
     texts: new Map(),
   };
-  const read = (line: string): RunnerSignal[] => {
-    let value: unknown;
-    try {
-      value = JSON.parse(line);
-    } catch {
-      return [];
-    }
-    if (!isRecord(value)) return [];
-    if (value.event === 'init') tally.session ??= textAt(value, 'conversation_id');
-    if (value.event === 'step_update') return step(tally, recordAt(value, 'step_update'));
-    return value.event === 'result' ? result(tally, recordAt(value, 'result')) : [];
-  };
-  return {
-    read,
-    get state() {
-      const { session, tokens, turns, started, denials } = tally;
-      return {
-        session,
-        tokens: tokens > 0 ? tokens : tally.result_tokens,
-        turns,
-        started,
-        denials,
-        result: tally.result,
-      };
-    },
-  };
+  return streamReaderOf(tally, lineOf, stateOf);
 }

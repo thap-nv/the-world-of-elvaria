@@ -6,7 +6,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { FIXTURES } from './__fixtures__/codex.ts';
-import { blockedOf, lineSplitter, outcomeOf, rateLimitOf } from './outcome.ts';
+import { blockedOf, outcomeOf, rateLimitOf } from './outcome.ts';
 import { createStreamReader } from './stream.ts';
 import type { RunnerSignal } from '@elvaria/runner-core';
 
@@ -110,15 +110,5 @@ describe('the end of a run', () => {
       reason: 'no.',
     });
     expect(blockedOf('Reading additional input from stdin...')).toBeUndefined();
-  });
-
-  it('splits stderr into whole lines across chunks', () => {
-    const lines: string[] = [];
-    const splitter = lineSplitter((line) => lines.push(line));
-    splitter.push('one\r\ntw');
-    splitter.push('o\nthr');
-    splitter.end();
-    splitter.end();
-    expect(lines).toEqual(['one', 'two', 'thr']);
   });
 });

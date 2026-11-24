@@ -1,11 +1,11 @@
 // How a Codex session ended (spike Codex 2026-11-12 §1.4, §1.5, §1.11): its exit code, whether the turn completed
 // or failed, who stopped it, and whether the account ran out of usage. A call the hook refused leaves no line in the
 // stream, only one on stderr (spike §1.5), which is where the run's refusals are read from.
-import type { PermissionDenial, RunOutcome } from '@elvaria/runner-core';
+import { isJsonObject, jsonOfText } from '@elvaria/runner-core';
+import type { LineSessionStart, PermissionDenial, RunOutcome, Stopper } from '@elvaria/runner-core';
 
+import { withoutNulls } from './strict-schema.ts';
 import type { CodexState } from './stream.ts';
-
-export type Stopper = 'killed' | 'max_turns' | undefined;
 
 /**
  * Words of Codex's usage-limit messages and error codes (`You've hit your usage limit.`, `usage_limit_reached`,
@@ -53,18 +53,39 @@ export function blockedOf(line: string): Blocked | undefined {
     : { tool: 'Bash', detail: command, reason };
 }
 
-/** Splits stderr chunks into whole lines, keeping a partial last line for the next chunk. */
-export function lineSplitter(onLine: (line: string) => void): { push(chunk: string): void; end(): void } {
-  let rest = '';
+/**
+ * The answer's JSON object, under `--output-schema` the whole last message (spike §1.9), without the nulls the strict
+ * schema made the model write for the keys it left out (strict-schema.ts): the core sees the shape it asked for.
+ */
+function structuredOf(messages: readonly string[]): unknown {
+  const value = jsonOfText(messages.at(-1));
+  return isJsonObject(value) ? withoutNulls(value) : undefined;
+}
+
+/**
+ * What runner-core's line session leaves to Codex: the hook's refusals, read line by line from stderr (the stream has
+ * no line for them, spike §1.5; the Steward hears each, RunResult lists them), and the verdict of the end.
+ */
+export function codexEnding(
+  structured: boolean,
+): Pick<LineSessionStart<CodexState>, 'stderrLine' | 'verdict'> {
+  const denials: PermissionDenial[] = [];
   return {
-    push(chunk) {
-      const lines = (rest + chunk).split(/\r?\n/);
-      rest = lines.pop() ?? '';
-      lines.forEach(onLine);
+    stderrLine: (line) => {
+      const blocked = blockedOf(line);
+      if (blocked === undefined) return [];
+      denials.push({ tool: blocked.tool, detail: blocked.detail });
+      return [{ kind: 'tool_blocked', tool: blocked.tool, reason: blocked.reason }];
     },
-    end() {
-      if (rest !== '') onLine(rest);
-      rest = '';
+    verdict: ({ state, exit, stopped }) => {
+      const limit = rateLimitOf(state);
+      const answer = structured ? structuredOf(state.messages) : undefined;
+      return {
+        outcome: outcomeOf({ exit_code: exit.code, state, stopped }),
+        ...(limit === undefined ? {} : { rate_limit: { detail: limit } }),
+        ...(answer === undefined ? {} : { structured: answer }),
+        denials,
+      };
     },
   };
 }
