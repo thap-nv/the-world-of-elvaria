@@ -54,6 +54,39 @@ describe('tribe check pins the adapter bytes it checked (SEC-03)', () => {
   });
   afterEach(() => dir.remove());
 
+  it('keeps a missing CLI an error for an enabled built-in tribe', async () => {
+    await editKingdom(root, (value) => ({
+      ...value,
+      tribes: [
+        {
+          id: 'claude',
+          adapter: 'claude_code',
+          enabled: true,
+          max_concurrent: 1,
+          tool: { path: path.join(root, 'missing-cli').replaceAll('\\', '/'), version: '1.0.0' },
+        },
+      ],
+    }));
+    const io = testIo({ env: {}, home: root });
+    expect(
+      await run(
+        io,
+        'tribe',
+        'check',
+        'claude',
+        '--tool',
+        path.join(root, 'missing-cli'),
+        '--model',
+        'test-model',
+        '--kingdom',
+        root,
+        '--locale',
+        'en',
+      ),
+    ).toBe(1);
+    expect(printed(io)).toContain('✗ Tribe claude: the path given to --tool is not a file (claude).');
+  });
+
   it('pins on first success, refuses edits in doctor and run, and repins a successful recheck', async () => {
     const original = await hash();
     expect(await check('--model', 'lantern-small')).toBe(0);

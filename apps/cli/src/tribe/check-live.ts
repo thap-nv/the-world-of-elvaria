@@ -16,6 +16,7 @@ import { locateTribeTool } from '../doctor/check-tribe.ts';
 import { findingLines } from '../doctor/finding.ts';
 import { checkedToolOf } from '../doctor/pin-tool.ts';
 import { backupStamp } from '../migrate.ts';
+import { isAdapterFile } from './adapter-file.ts';
 import { refuse, saveTribes } from './save.ts';
 import type { KingdomContext } from '../kingdom-context.ts';
 
@@ -33,7 +34,11 @@ export async function liveToolOf(
   given?: string,
 ): Promise<LiveTool | undefined> {
   // Discovery for a recheck must be able to load the changed file too; doctor itself still checks the pin.
-  const found = await locateTribeTool({ ...tribe, enabled: false }, ctx, given);
+  const found = await locateTribeTool(
+    isAdapterFile(tribe.adapter) ? { ...tribe, enabled: false } : tribe,
+    ctx,
+    given,
+  );
   if (!('problem' in found)) return { path: found.path, version: found.version };
   findingLines(found.problem).forEach(ctx.io.err);
   return undefined;
