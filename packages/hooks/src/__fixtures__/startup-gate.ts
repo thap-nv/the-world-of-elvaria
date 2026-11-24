@@ -16,9 +16,10 @@ export const CPU_TIME = fileURLToPath(new URL('cpu-time.mjs', import.meta.url));
 /**
  * Bare starts whose wall time, in all, is over this many times their CPU time met a busy machine. Measured on the
  * development machine (Windows, 2026-11-17): 1.07-1.39 quiet, 2.18-15.6 in every round over the budget while test
- * suites ran alongside (§11, fix/timing-flakes).
+ * suites ran alongside (§11, fix/timing-flakes). A quest machine check on 2026-11-24 (fix/hook-gate-stretch) went red
+ * at 1.5-1.7 with the hook’s CPU at 63-78 ms: a machine loaded short of a full suite, so the line sits just above quiet.
  */
-export const BUSY_STRETCH = 1.75;
+export const BUSY_STRETCH = 1.45;
 
 /** A bare `node -e 0` and the hook call right after it: wall time and CPU time (user + system), in ms. */
 export interface Pair {
