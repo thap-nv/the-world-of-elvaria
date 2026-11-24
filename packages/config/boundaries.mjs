@@ -12,8 +12,9 @@
  * @type {Readonly<Record<string, Workspace>>}
  */
 export const WORKSPACES = Object.freeze({
-  // Dev-only tooling (tsconfig, ESLint, Prettier, this table); see DEV_ONLY.
+  // Dev-only tooling (tsconfig, ESLint, Prettier, this table) and test tools (temp folders, git repos); see DEV_ONLY.
   config: { root: 'packages', deps: [] },
+  testkit: { root: 'packages', deps: [] },
 
   // Work engine. Knows quests, characters, worktrees and CLIs; never the renderer.
   domain: { root: 'packages', deps: [] },
@@ -66,10 +67,10 @@ export const WORKSPACES = Object.freeze({
 });
 
 /**
- * Workspaces any other workspace may list in devDependencies and use from config files,
- * but never import from `src/`.
+ * Workspaces any other workspace may list in devDependencies and import from specs, `__fixtures__/` and config
+ * files, but never from running code. testkit is the one home of test tools (architecture-health V7, K6; ADR 0001).
  */
-export const DEV_ONLY = Object.freeze(['config']);
+export const DEV_ONLY = Object.freeze(['config', 'testkit']);
 
 /**
  * Workspaces whose code must not see Node (the domain has no IO; the rest also runs in a browser). Their
