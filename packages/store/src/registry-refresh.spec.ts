@@ -5,10 +5,10 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { fixture, plant, plantRegistry, tempKingdom } from '../test/kingdom.ts';
+import { fixture, plant, plantRegistry, tempKingdom } from './__fixtures__/kingdom.ts';
 import { loadRegistry } from './registry.ts';
 import { refreshRegistryDefaults } from './registry-refresh.ts';
-import type { TempKingdom } from '../test/kingdom.ts';
+import type { TempKingdom } from './__fixtures__/kingdom.ts';
 
 type Entry = Record<string, unknown>;
 const listOf = (contract: string, key: string): Entry[] =>

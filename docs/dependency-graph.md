@@ -7,6 +7,7 @@ Mũi tên `A --> B`: mã chạy của A import B (kể cả `import type`). Bả
 ```mermaid
 flowchart TD
   config["config"]
+  testkit["testkit"]
   domain["domain"]
   store["store"]
   registry_default["registry-default"]
@@ -59,6 +60,7 @@ flowchart TD
 | Workspace | Thư mục | Import thật | Được phép (`boundaries.mjs`) |
 |---|---|---|---|
 | `config` | `packages/config` | — | — (chỉ dùng khi dev) |
+| `testkit` | `packages/testkit` | — | — (chỉ dùng khi dev) |
 | `domain` | `packages/domain` | — | — |
 | `store` | `packages/store` | `domain`, `eventlog` | `domain`, `eventlog` |
 | `registry-default` | `packages/registry-default` | `domain` | `domain` |

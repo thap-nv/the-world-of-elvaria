@@ -8,6 +8,7 @@ import path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 
 import { killTree } from '@elvaria/runner-core';
+import { RM_RETRY } from '@elvaria/store';
 
 import { buildCli, startBuildCli } from './build-cli.ts';
 import { gitRun, outputOf, reasonOf } from './build.ts';
@@ -19,7 +20,6 @@ const POLL_MS = 500;
 /** How long the Steward may take to judge the quest: one tick claims and runs it, the next judges (about 10 s). */
 const MAX_POLLS = 360;
 const CLI_MINUTES = 2;
-const RM_TEMP = { recursive: true, force: true, maxRetries: 10, retryDelay: 100 } as const;
 /** Fixed by the git config of this repo only: the trial's commit is nobody's work. */
 const IDENTITY = ['-c', 'user.name=elvaria', '-c', 'user.email=elvaria@localhost'];
 const TRIAL = 'upgrade-trial';
@@ -149,6 +149,6 @@ export async function scriptTrial(tools: Tools, io: CliIo, build: string): Promi
       await stop(run);
     }
   } finally {
-    await rm(dir, RM_TEMP).catch(() => undefined);
+    await rm(dir, RM_RETRY).catch(() => undefined);
   }
 }

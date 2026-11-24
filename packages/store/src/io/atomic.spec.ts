@@ -12,7 +12,7 @@ vi.mock('node:fs/promises', async (importOriginal) => {
   return { ...actual, rename: vi.fn(actual.rename) };
 });
 
-import { tempKingdom } from '../../test/kingdom.ts';
+import { tempKingdom } from '../__fixtures__/kingdom.ts';
 import {
   TRANSIENT_BUDGET_MS,
   errorCode,
@@ -24,7 +24,7 @@ import {
   tempPathFor,
   writeFileAtomic,
 } from './atomic.ts';
-import type { TempKingdom } from '../../test/kingdom.ts';
+import type { TempKingdom } from '../__fixtures__/kingdom.ts';
 
 const fsError = (code: string): Error => Object.assign(new Error(code), { code });
 

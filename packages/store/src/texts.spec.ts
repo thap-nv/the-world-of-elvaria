@@ -4,11 +4,11 @@ import { MemoSchema, QuestIdSchema, VerdictSchema } from '@elvaria/domain';
 import { journalOf } from '@elvaria/eventlog';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { fixture, plant, tempKingdom } from '../test/kingdom.ts';
+import { fixture, plant, tempKingdom } from './__fixtures__/kingdom.ts';
 import { openKingdom } from './kingdom-store.ts';
 import { kingdomLayout } from './layout.ts';
 import { readClassPrompt, readDecree, redactHandover } from './texts.ts';
-import type { TempKingdom } from '../test/kingdom.ts';
+import type { TempKingdom } from './__fixtures__/kingdom.ts';
 
 const QUEST = QuestIdSchema.parse('q_20261106_7k3m2a');
 /** A treasury value no pattern knows, and a value with a pattern's shape (a GitHub token). */

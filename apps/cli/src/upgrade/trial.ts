@@ -10,6 +10,7 @@ import path from 'node:path';
 
 import type { Tribe, UpgradeStep } from '@elvaria/domain';
 import type { Translate } from '@elvaria/i18n';
+import { RM_RETRY } from '@elvaria/store';
 
 import { UPGRADE_TRIAL_ENV } from '../doctor/held-in-trial.ts';
 import { BUILT_IN_ADAPTERS } from '../run/crew.ts';
@@ -25,7 +26,6 @@ const MIGRATE_MINUTES = 5;
 const DOCTOR_MINUTES = 5;
 const SUITE_MINUTES = 10;
 const MIRROR_PREFIX = 'elvaria upgrade mirror ';
-const RM_TEMP = { recursive: true, force: true, maxRetries: 10, retryDelay: 100 } as const;
 
 /**
  * The fake CLI each built-in adapter's specs play the suite with, inside the build (its package's AdapterTool, PS-23). An adapter not named here (an
@@ -128,7 +128,7 @@ export function buildTrial(tools: Tools, io: CliIo): Trial {
       const failure = await onMirror(place, io, mirror, report);
       if (failure !== undefined) return failure;
     } finally {
-      await rm(dir, RM_TEMP).catch(() => undefined);
+      await rm(dir, RM_RETRY).catch(() => undefined);
     }
     const quest = await step(report, report.t('cli.upgrade.step.trial'), () =>
       scriptTrial(tools, io, place.build),

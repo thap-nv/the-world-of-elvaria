@@ -16,7 +16,8 @@
   locks (ADR 0004, 0015). Windows' transient `EPERM`/`EACCES`/`EBUSY` are retried within a time budget. A
   file standing where an entity's folder must be is an issue (`not_a_folder`), not a throw (P1-15).
   `acquireLock` also serves the long-held `.state/steward.lock` (P1-03); `isLocked` only reads whether a live
-  holder keeps a lock (`elvaria doctor`, P1-11).
+  holder keeps a lock (`elvaria doctor`, P1-11). `RM_RETRY` is how running code removes a folder it made (a
+  build, a throwaway kingdom of `elvaria upgrade`): `rm` retrying while Windows holds a file a moment (P1-39).
 - Holds the migration framework (ADR 0003): one chain per stored contract in `src/migrations/index.ts`, steps in
   `src/migrations/<contract>/v<n>-to-v<n+1>.ts`, fixtures `v<n>.json` beside them (no step yet: all 14 stored
   contracts are at v1, each with its `v1.json`), and `migrateKingdom` for
@@ -70,6 +71,8 @@
 - `@elvaria/eventlog` (`journalOf`, `createRedactor`): one source for the journal's name and the patterns.
 - `proper-lockfile` (file locks that survive a crashed holder, on Windows and macOS).
 - `@elvaria/config` (dev only: `tsconfig.json` extends its `tsconfig/node.json`).
+- `@elvaria/testkit` (dev only: throwaway folders for the specs; `remove.spec.ts` checks its `RM_TEMP` equals
+  `RM_RETRY`).
 
 ## How to test
 
@@ -77,7 +80,7 @@
 pnpm --filter @elvaria/store test
 ```
 
-Tests build throwaway kingdoms in the OS temp folder (`test/kingdom.ts`, folder names with a space).
+Tests build throwaway kingdoms with testkit's `tempDir` (`src/__fixtures__/kingdom.ts`, folder names with a space).
 `concurrency.spec.ts` races writers in one process and in four Node processes (`test/update-worker.ts`, run by
 Node's type stripping) while a reader reads in a loop: no update may be lost and no read may fail.
 `migrations.spec.ts` reads every stored fixture with the current store. `registry-gaps.spec.ts` plays a newer

@@ -5,7 +5,7 @@
 import { readdir, rm } from 'node:fs/promises';
 
 import { gitGuard } from '@elvaria/runner-core';
-import { inKingdom } from '@elvaria/store';
+import { RM_RETRY, inKingdom } from '@elvaria/store';
 
 import { findExecutable } from '../process/find-executable.ts';
 import { launchOf } from '../process/launch.ts';
@@ -19,8 +19,6 @@ import type { ProcessOutcome } from '../process/run-process.ts';
 const MS_PER_MINUTE = 60_000;
 const GIT_MINUTES = 5;
 const INSTALL_MINUTES = 20;
-/** A program that just ended, or the indexer, may hold a file of the build a moment on Windows (P1-39). */
-const RM_BUILD = { recursive: true, force: true, maxRetries: 10, retryDelay: 100 } as const;
 
 /** The programs a build needs, found once on PATH. */
 export interface Tools {
@@ -121,7 +119,7 @@ export async function removeBuild(
 ): Promise<string | undefined> {
   let left: string | undefined;
   try {
-    await rm(dir, RM_BUILD);
+    await rm(dir, RM_RETRY);
   } catch (error) {
     left = `${dir}: ${error instanceof Error && 'code' in error ? String(error.code) : String(error)}`;
   }

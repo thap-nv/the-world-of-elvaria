@@ -4,11 +4,11 @@ import path from 'node:path';
 import { KingdomSchema } from '@elvaria/domain';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { fixture, fixtureText, plant, tempKingdom } from '../test/kingdom.ts';
+import { fixture, fixtureText, plant, tempKingdom } from './__fixtures__/kingdom.ts';
 import { addMissingRegistryFiles, initKingdom } from './init.ts';
 import { openKingdom } from './kingdom-store.ts';
 import { KINGDOM_DIRS } from './layout.ts';
-import type { TempKingdom } from '../test/kingdom.ts';
+import type { TempKingdom } from './__fixtures__/kingdom.ts';
 import type { RegistrySource } from './init.ts';
 import type { Kingdom } from '@elvaria/domain';
 
