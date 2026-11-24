@@ -18,6 +18,7 @@ import { STEWARD } from '../quest/record.ts';
 import { messageOf } from './delivery.ts';
 import type { Context } from '../context.ts';
 import type { Delivery } from './delivery.ts';
+import type { QueueRed } from './late-fail.ts';
 
 /** The end of a red check's log the knight reads: its last lines, cut to a length a prompt carries well. */
 const TAIL_LINES = 30;
@@ -27,10 +28,15 @@ const TAIL_MAX_CHARS = 1500;
 export interface Resolvable {
   readonly stop: QueueStop;
   readonly base: string;
+  /** (CM-06) Checks red after a clean merge: the run, for step 4 of the probe (late-fail.ts). */
+  readonly red?: QueueRed;
 }
 
 /** Each red check with the end of its log, masked; a log that cannot be read leaves the name alone. */
-export async function redChecksOf(ctx: Context, red: readonly CheckRun[]): Promise<QueueRedCheck[]> {
+export async function redChecksOf(
+  ctx: Context,
+  red: readonly Pick<CheckRun, 'id' | 'log_path'>[],
+): Promise<QueueRedCheck[]> {
   const known = Object.values(await ctx.deps.treasury.resolve(await ctx.deps.treasury.names()));
   const mask = createRedactor(known);
   return Promise.all(

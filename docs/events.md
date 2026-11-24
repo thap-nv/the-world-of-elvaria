@@ -4,7 +4,7 @@
 
 Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là một event; log chỉ ghi thêm, không bao giờ viết lại. `type` là `nhóm.hành_động`; reader giữ nguyên type lạ, renderer bỏ qua nó. Hợp đồng đầy đủ: [schemas/event.schema.json](schemas/event.schema.json); nghĩa từng nhóm và các tiền tố dành sẵn: [glossary.md](glossary.md) mục 12.
 
-91 type trong danh mục v1, 79 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
+92 type trong danh mục v1, 80 type có schema cho `data`; type khác ghi `data` là object mở (`{}` khi không có gì).
 
 ## Khung một dòng
 
@@ -89,7 +89,7 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 | `mana.probe` | object mở, chưa có schema |
 | `mana.signal` | `error`: string (khớp `^[a-z][a-z0-9_]*$`)<br>`source`: string (khớp `^[a-z][a-z0-9_]*$`) |
 
-## `character` · 10 type
+## `character` · 11 type
 
 | Type | `data` |
 |---|---|
@@ -102,6 +102,7 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 | `character.swamp` | `character`: object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — The character after this event (characterViewOf). |
 | `character.level_up` | `character`: object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — The character after this event (characterViewOf). |
 | `character.level_down` | `character`: object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — The character after this event (characterViewOf). |
+| `character.judged` | `character`: object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — The character after this event (characterViewOf).<br>`verdict`: string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*\|-user\|-late)?$`) — The late verdict (`<quest>-<n>-late`) that entered its windows.<br>`role`: một trong `assignee`, `judge` — assignee: the quest's doer (withVerdict); judge: whose pass it overturned (withOverturnedPass). |
 | `character.model_changed` | `character`: object { id, name, class, tribe, model, level, status, status_since, current, reputation, title } — The character after this event (characterViewOf). |
 
 ## `command` · 3 type
@@ -125,7 +126,7 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 
 | Type | `data` |
 |---|---|
-| `delegation.suspended` | `territory`: string (khớp `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$`, khác `global`)<br>`quest`: string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`) — The quest merged without the seal that the signal blames.<br>`cause`: một trong `base_red`, `escape_reported`<br>`check` (tùy chọn): string (không rỗng) — With cause base_red: the check that turned red (`setup` for commands.setup).<br>`note` (tùy chọn): string (không rỗng) — The owner's words, as `--note` gave them. |
+| `delegation.suspended` | `territory`: string (khớp `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$`, khác `global`)<br>`quest`: string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`) — The quest merged without the seal that the signal blames.<br>`cause`: một trong `base_red`, `escape_reported`, `late_fail`<br>`check` (tùy chọn): string (không rỗng) — With cause base_red: the check that turned red; with late_fail: the first red check of the late verdict (`setup` for commands.setup).<br>`note` (tùy chọn): string (không rỗng) — The owner's words, as `--note` gave them. |
 | `delegation.resumed` | `territory`: string (khớp `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$`, khác `global`) |
 
 ## `plot` · 3 type

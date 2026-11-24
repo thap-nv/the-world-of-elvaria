@@ -12,9 +12,10 @@ const describe = (description: string) => ({ description });
 /**
  * What suspended a territory's delegation: a check of its default branch turned red with a merge without the seal
  * among the merges since its last green patrol (`base_red`, PS-26), or the owner's report of a defect that escaped with
- * such a merge (`escape_reported`). PS-08f adds a red check of the forge.
+ * such a merge (`escape_reported`), or a late machine verdict the merge queue found on a quest the delegation spared
+ * the seal, before its merge (`late_fail`, CM-06, ADR 0033; added after v2, so an older log still reads).
  */
-export const SUSPENSION_CAUSES = ['base_red', 'escape_reported'] as const;
+export const SUSPENSION_CAUSES = ['base_red', 'escape_reported', 'late_fail'] as const;
 export type SuspensionCause = (typeof SUSPENSION_CAUSES)[number];
 
 const NoteSchema = NonEmptyStringSchema.meta(describe("The owner's words, as `--note` gave them."));
@@ -44,7 +45,9 @@ export const DelegationSuspendedDataSchema = z
     quest: QuestIdSchema.meta(describe('The quest merged without the seal that the signal blames.')),
     cause: z.enum(SUSPENSION_CAUSES),
     check: NonEmptyStringSchema.optional().meta(
-      describe('With cause base_red: the check that turned red (`setup` for commands.setup).'),
+      describe(
+        'With cause base_red: the check that turned red; with late_fail: the first red check of the late verdict (`setup` for commands.setup).',
+      ),
     ),
     note: NoteSchema.optional(),
   })

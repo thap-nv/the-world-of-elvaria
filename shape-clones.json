@@ -781,6 +781,34 @@
       "tokens": 61,
       "status": "kept",
       "reason": "CM-01: the end of a command that checks one option and writes through the store, then its CommandSpec: too small and too common across apps/cli to gather alone."
+    },
+    {
+      "a": "packages/steward/src/patrol/late-fix.ts",
+      "b": "packages/steward/src/review/scratch.ts",
+      "tokens": 102,
+      "status": "kept",
+      "reason": "CM-06: the Steward making a quest of its own (questFromCommand against the kingdom, then record.put, each refusal logged under the quest it stands for), as the flaky and script follow-ups, the patrol draft and the merge queue quest do; their pairs are listed unreviewed, and AH-14 gathers the family into one helper at once rather than the late fix apart."
+    },
+    {
+      "a": "packages/steward/src/patrol/late-fix.ts",
+      "b": "packages/steward/src/script/follow-up.ts",
+      "tokens": 102,
+      "status": "kept",
+      "reason": "CM-06: the Steward making a quest of its own (questFromCommand against the kingdom, then record.put, each refusal logged under the quest it stands for), as the flaky and script follow-ups, the patrol draft and the merge queue quest do; their pairs are listed unreviewed, and AH-14 gathers the family into one helper at once rather than the late fix apart."
+    },
+    {
+      "a": "packages/steward/src/forge/queue-merge.ts",
+      "b": "packages/steward/src/patrol/late-fix.ts",
+      "tokens": 83,
+      "status": "kept",
+      "reason": "CM-06: the Steward making a quest of its own (questFromCommand against the kingdom, then record.put, each refusal logged under the quest it stands for), as the flaky and script follow-ups, the patrol draft and the merge queue quest do; their pairs are listed unreviewed, and AH-14 gathers the family into one helper at once rather than the late fix apart."
+    },
+    {
+      "a": "packages/steward/src/patrol/draft.ts",
+      "b": "packages/steward/src/patrol/late-fix.ts",
+      "tokens": 70,
+      "status": "kept",
+      "reason": "CM-06: the Steward making a quest of its own (questFromCommand against the kingdom, then record.put, each refusal logged under the quest it stands for), as the flaky and script follow-ups, the patrol draft and the merge queue quest do; their pairs are listed unreviewed, and AH-14 gathers the family into one helper at once rather than the late fix apart."
     }
   ]
 }

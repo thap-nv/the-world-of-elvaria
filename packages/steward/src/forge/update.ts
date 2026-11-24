@@ -23,6 +23,7 @@ import { checkModeFor, modeMarkOf } from '../review/check-mode.ts';
 import { questSecretsOf } from '../sessions/secrets.ts';
 import { baseRedAt } from './base-trial.ts';
 import { detailOf, messageOf, stopped } from './delivery.ts';
+import { lateFailAt } from './late-fail.ts';
 import { openQueueMerge, redChecksOf } from './queue-merge.ts';
 import type { Context } from '../context.ts';
 import type { Delivery } from './delivery.ts';
@@ -108,7 +109,8 @@ async function checkUpdate(
     conclusion: timed_out ? 'timed_out' : 'failure',
   }));
   const stop = { reason: 'checks_red', checks: await redChecksOf(ctx, red) } as const;
-  return { ...failureOf(d, 'checks_red', { checks }), resolvable: { stop, base: merged.base } };
+  const resolvable = { stop, base: merged.base, red: { red, mode: mode.mode } };
+  return { ...failureOf(d, 'checks_red', { checks }), resolvable };
 }
 
 /** The generators after the merge, then the `plot.merged` line; a failure when one failed or its commit was refused. */
@@ -177,15 +179,23 @@ async function updateOf(ctx: Context, d: Delivery): Promise<Stop | undefined> {
  * The update before the scan; undefined when the delivery goes on (or the Steward stopped, which records nothing). A
  * stop the merge queue's merge quest resolves opens it (PS-09b) and the failure names it. (PS-09d) Checks red after a
  * clean merge ask the base branch first (baseRedAt): red on its own, the delivery ends with nothing recorded
- * (`base_red`), the merge commit on the branch, and the quest waits in the queue for the branch to be green.
+ * (`base_red`), the merge commit on the branch, and the quest waits in the queue for the branch to be green. (CM-06)
+ * Green there, step 4 of the probe runs the red checks on the quest's own head: red, its own change failed late, the
+ * quest has left `done` and the delivery ends with nothing more recorded (`late_fail`, late-fail.ts).
  */
-export async function updateBranch(ctx: Context, d: Delivery): Promise<Failure | 'base_red' | undefined> {
+export async function updateBranch(
+  ctx: Context,
+  d: Delivery,
+): Promise<Failure | 'base_red' | 'late_fail' | undefined> {
   const outcome = await updateOf(ctx, d);
   if (outcome === undefined || stopped(d)) return undefined;
   const { resolvable, ...failure } = outcome;
   if (resolvable === undefined) return failure;
   if (resolvable.stop.reason === 'checks_red' && (await baseRedAt(ctx, d, resolvable.base)))
     return 'base_red';
+  if (stopped(d)) return undefined;
+  if (resolvable.red !== undefined && (await lateFailAt(ctx, d, resolvable.base, resolvable.red)))
+    return 'late_fail';
   if (stopped(d)) return undefined;
   const merge = await openQueueMerge(ctx, d, resolvable);
   return merge === undefined ? failure : { ...failure, merge_quest: merge };

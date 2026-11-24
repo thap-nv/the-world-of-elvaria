@@ -7,7 +7,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 import { isQueueMerge } from '@elvaria/domain';
-import type { Quest, TerritoryId } from '@elvaria/domain';
+import type { Quest, TerritoryId, VerdictId } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import type { CheckRun } from '@elvaria/runner-core';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -48,29 +48,36 @@ const LEAVES: Leaves = (req) => {
   const quest = req.quest;
   if (quest?.created_by === 'patrol' && quest.party_role === undefined) return { 'state.txt': 'green\n' };
   if (quest?.title === 'Flag') return { ...sourceWithIndex('flag.ts'), 'a.flag': 'a\n' };
+  if (quest?.title === 'Broken') return { ...sourceWithIndex('broken.ts'), 'state.txt': 'red\n' };
   return sourceWithIndex(`${(quest?.title ?? 'x').toLowerCase()}.ts`);
 };
 
-/** The queue's checks as check.mjs runs them, on the merged plot (gitPlots runs none); a session's checks pass. */
-const queueCheck: Plots['check'] = (request) => {
-  const inPlot = (file: string) => path.join(request.plot.path ?? '', file);
-  const red =
-    request.run_dir.endsWith('-delivery') &&
-    (readFileSync(inPlot('state.txt'), 'utf8').trim() === 'red' ||
-      (existsSync(inPlot('a.flag')) && existsSync(inPlot('b.flag'))));
-  const log = `${request.run_dir}/checks/unit.log`;
-  const run = {
-    id: 'unit' as CheckRun['id'],
-    pass: false,
-    duration_ms: 1,
-    log_path: log,
-    exit_code: 1,
-    timed_out: false,
+/**
+ * The queue's checks as check.mjs runs them, on the merged plot (gitPlots runs none). A session's checks pass: none
+ * run, or (`green`) unit green, which the queue's step 4 takes as proof of a combination (CM-06).
+ */
+const queueCheckOf =
+  (green: boolean): Plots['check'] =>
+  (request) => {
+    const inPlot = (file: string) => path.join(request.plot.path ?? '', file);
+    const red =
+      request.run_dir.endsWith('-delivery') &&
+      (readFileSync(inPlot('state.txt'), 'utf8').trim() === 'red' ||
+        (existsSync(inPlot('a.flag')) && existsSync(inPlot('b.flag'))));
+    const log = `${request.run_dir}/checks/unit.log`;
+    const run = {
+      id: 'unit' as CheckRun['id'],
+      pass: false,
+      duration_ms: 1,
+      log_path: log,
+      exit_code: 1,
+      timed_out: false,
+    };
+    if (!request.run_dir.endsWith('-delivery')) return Promise.resolve(green ? [{ ...run, pass: true }] : []);
+    return Promise.resolve(red ? [run] : []);
   };
-  return Promise.resolve(red ? [run] : []);
-};
 
-async function open(followUp = true) {
+async function open(followUp = true, { probe = false, green = false } = {}) {
   const patrol = followUp ? { scans: [], follow_up: FOLLOW_UP } : { scans: [] };
   const bench = await forgeBench({
     delivery: { mode: 'pr_merge' },
@@ -79,7 +86,7 @@ async function open(followUp = true) {
     leaves: LEAVES,
   });
   current = bench;
-  const plots = { ...gitPlots(bench.kingdom.root), check: queueCheck };
+  const plots = { ...gitPlots(bench.kingdom.root, { probe }), check: queueCheckOf(green) };
   return { bench, steward: await bench.start({ plots }), kingdom: bench.kingdom };
 }
 
@@ -199,16 +206,69 @@ describe('a red default branch (PS-09d)', () => {
   }, 600_000);
 
   // Real git and real checks: the queue's update, then its patrol of main.
-  it('opens the merge quest when the update is red and main green on its own', async () => {
-    const { bench, steward, kingdom } = await open(false);
-    await kingdom.command('create_quest', questPayload('Flag', { seal_required: true }));
-    await tickUntil(steward, kingdom.clock, async () => (await statusOf(bench, 'Flag')) === 'awaiting_seal');
-    pushMain(bench, 'b', 'b.flag');
-    await kingdom.command('seal', { quest: (await kingdom.quest('Flag')).id });
-    await tickUntil(steward, kingdom.clock, async () => (await bench.lines('delivery.failed')).length > 0);
-    const [failed] = await bench.lines('delivery.failed');
-    const [merge] = (await kingdom.quests()).filter(isQueueMerge);
-    expect(failed?.data).toMatchObject({ stage: 'update', reason: 'checks_red', merge_quest: merge?.id });
-    expect(await triggers(bench)).toEqual([['queue', true]]);
+  // (CM-06) Step 4 on the quest's own head, a.flag alone: green, the merge of both sides is red (combination); or the
+  // session's own run of unit green with the queue's command, proof enough with nothing run.
+  it.each([
+    ['step 4 finds its own head green', false, [{ pass: true }]],
+    ['its session ran unit green', true, []],
+  ])(
+    'opens the merge quest when the update is red and main green on its own: %s',
+    async (_, green, runs) => {
+      const { bench, steward, kingdom } = await open(false, { probe: true, green });
+      await kingdom.command('create_quest', questPayload('Flag', { seal_required: true }));
+      await tickUntil(
+        steward,
+        kingdom.clock,
+        async () => (await statusOf(bench, 'Flag')) === 'awaiting_seal',
+      );
+      pushMain(bench, 'b', 'b.flag');
+      await kingdom.command('seal', { quest: (await kingdom.quest('Flag')).id });
+      await tickUntil(steward, kingdom.clock, async () => (await bench.lines('delivery.failed')).length > 0);
+      const [failed] = await bench.lines('delivery.failed');
+      const [merge] = (await kingdom.quests()).filter(isQueueMerge);
+      expect(failed?.data).toMatchObject({ stage: 'update', reason: 'checks_red', merge_quest: merge?.id });
+      expect(await triggers(bench)).toEqual([['queue', true]]);
+      const [attributed] = await bench.lines('check.attributed');
+      expect(attributed?.data).toMatchObject({ source: 'queue', cause: 'combination', runs });
+    },
+    300_000,
+  );
+
+  // Real git and real checks: the queue's update, its patrol of main, step 4 on the quest's own head.
+  it('fails the quest late when step 4 finds its own head red: back to its doer, its judge judged, no merge quest', async () => {
+    const { bench, steward, kingdom } = await open(false, { probe: true });
+    await kingdom.command('create_quest', questPayload('Broken', { seal_required: true }));
+    await tickUntil(
+      steward,
+      kingdom.clock,
+      async () => (await statusOf(bench, 'Broken')) === 'awaiting_seal',
+    );
+    pushMain(bench, 'c', 'c.txt');
+    const { id } = await kingdom.quest('Broken');
+    await kingdom.command('seal', { quest: id });
+    const late = `${id}-1-late` as VerdictId;
+    const failedLate = async () =>
+      (await bench.lines('verdict.fail')).some(({ data }) => data.verdict === late);
+    await tickUntil(
+      steward,
+      kingdom.clock,
+      async () => (await failedLate()) && (await statusOf(bench, 'Broken')) !== 'done',
+    );
+    const [attributed] = await bench.lines('check.attributed');
+    expect(attributed?.data).toMatchObject({
+      source: 'queue',
+      cause: 'own_change',
+      culprit: id,
+      runs: [{ quest: id, pass: false }],
+    });
+    const pass = await kingdom.store.verdicts.read(`${id}-1` as VerdictId);
+    const judge = pass.ok ? pass.value.verifier_id : '';
+    const entries = (await kingdom.character(judge)).reputation.window.filter(
+      ({ verdict_id: v }) => v === late,
+    );
+    expect(entries.map(({ result }) => result)).toEqual(['fail']);
+    expect((await kingdom.quests()).filter(isQueueMerge)).toEqual([]);
+    expect(await bench.lines('delivery.failed')).toEqual([]);
+    expect(git(bench.remote, 'show', 'main:state.txt')).toBe('green');
   }, 300_000);
 });

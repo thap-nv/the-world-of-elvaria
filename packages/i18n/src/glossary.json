@@ -2384,8 +2384,8 @@
             },
             {
               "field": "`delegation.suspended.cause`",
-              "values": "`base_red`, `escape_reported`",
-              "meaning": "vì sao cầu dao ngừng ủy quyền dấu của một lãnh thổ (PS-08g): một check của nhánh gốc đổi sang đỏ mà khoảng nghi vấn có merge không qua dấu, hay chủ nhân báo một lỗi lọt trên quest được merge không qua dấu; PS-08f thêm check đỏ của forge"
+              "values": "`base_red`, `escape_reported`, `late_fail`",
+              "meaning": "vì sao cầu dao ngừng ủy quyền dấu của một lãnh thổ (PS-08g): một check của nhánh gốc đổi sang đỏ mà khoảng nghi vấn có merge không qua dấu, hay chủ nhân báo một lỗi lọt trên quest được merge không qua dấu, hay (CM-06) hàng đợi ra phán quyết máy muộn cho một quest được miễn dấu trước khi merge nó (`late_fail`, ADR 0033); PS-08f thêm check đỏ của forge"
             },
             {
               "field": "`inbox-command.source`",
@@ -2494,6 +2494,7 @@
                 "character.swamp",
                 "character.level_up",
                 "character.level_down",
+                "character.judged",
                 "character.model_changed"
               ],
               "meaning": ""

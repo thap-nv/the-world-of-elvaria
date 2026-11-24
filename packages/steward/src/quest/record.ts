@@ -97,12 +97,14 @@ export interface Recorder {
   /**
    * A character change with no quest move: character.swamp, character.level_up, character.level_down, and the
    * owner's character.suspend and character.release, told as the owner's (`actor`; the Steward by default).
+   * (CM-06) `line` names the quest the change is about and adds data beside the view (character.judged).
    */
   change(
     id: CharacterId,
     type: `character.${string}`,
     edit: CharacterEdit,
     actor?: Actor,
+    line?: ChangeLine,
   ): Promise<Result<Character, string>>;
   note(line: Line): Promise<void>;
 }
@@ -232,16 +234,23 @@ async function move(deps: RecorderDeps, request: Move): Promise<Result<Quest, st
   return ok(after.value);
 }
 
+/** What a character's line carries beside its view: the quest it is about, and more data. */
+export interface ChangeLine {
+  readonly quest?: Quest;
+  readonly data?: Readonly<Record<string, unknown>>;
+}
+
 interface Change {
   readonly id: CharacterId;
   readonly type: string;
   readonly edit: CharacterEdit;
   readonly actor: Actor;
+  readonly line?: ChangeLine;
 }
 
 async function change(
   deps: RecorderDeps,
-  { id, type, edit, actor }: Change,
+  { id, type, edit, actor, line = {} }: Change,
 ): Promise<Result<Character, string>> {
   const at = deps.stamp();
   const before = deps.world.characters.get(id);
@@ -250,7 +259,8 @@ async function change(
   if (!after.ok) return err(`${id}:${reasonOf(after.error)}`);
   const saved = await save(deps, undefined, [after.value]);
   if (!saved.ok) return saved;
-  await append(deps, { type, actor, data: { character: characterViewOf(after.value) } }, at);
+  const data = { ...line.data, character: characterViewOf(after.value) };
+  await append(deps, { type, actor, data, ...(line.quest === undefined ? {} : { quest: line.quest }) }, at);
   return ok(after.value);
 }
 
@@ -265,7 +275,7 @@ export function createRecorder(deps: RecorderDeps): Recorder {
       await append(deps, { type, actor, data: { quest: questViewOf(quest) }, quest }, at);
       return ok(quest);
     },
-    change: (id, type, edit, actor = STEWARD) => change(deps, { id, type, edit, actor }),
+    change: (id, type, edit, actor = STEWARD, line = {}) => change(deps, { id, type, edit, actor, line }),
     note: (line) => append(deps, line, deps.stamp()),
   };
 }

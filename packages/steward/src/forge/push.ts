@@ -127,15 +127,26 @@ async function deliverFound(ctx: Context, d: Delivery): Promise<Failure | undefi
   return config ?? deliverChecked(ctx, d);
 }
 
-/** Config is safe to use for the update; check it again after the territory's generators and checks. */
-async function deliverChecked(ctx: Context, d: Delivery): Promise<Failure | undefined> {
-  const updated = await updateBranch(ctx, d);
-  if (updated === 'base_red') {
+/**
+ * The update's ends that record nothing more: `base_red` waits in the queue for its base branch; `late_fail` (CM-06)
+ * left `done`, and its late verdict and its move back say why.
+ */
+function endsQuietly(
+  ctx: Context,
+  d: Delivery,
+  updated: Awaited<ReturnType<typeof updateBranch>>,
+): updated is 'base_red' | 'late_fail' {
+  if (updated === 'base_red')
     ctx.deps.log.warn(
       `steward: ${d.quest.id}: its update's checks are red as its base branch is; it waits for it`,
     );
-    return undefined;
-  }
+  return updated === 'base_red' || updated === 'late_fail';
+}
+
+/** Config is safe to use for the update; check it again after the territory's generators and checks. */
+async function deliverChecked(ctx: Context, d: Delivery): Promise<Failure | undefined> {
+  const updated = await updateBranch(ctx, d);
+  if (endsQuietly(ctx, d, updated)) return undefined;
   if (updated !== undefined || stopped(d)) return stopped(d) ? undefined : updated;
   const base = await baseOf(d);
   const ahead = await localGit(d, ['rev-list', '--count', `${base}..HEAD`]);

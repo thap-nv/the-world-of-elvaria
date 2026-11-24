@@ -5,13 +5,15 @@
 // it to kingdom.delegation.seal, for the Steward and `elvaria digest` alike (fix/run-221-followups). The signals are
 // pure here and the Steward writes their line: a check of the default branch that turned red with a merge without the
 // seal among its suspects, at the patrol that found it (baseRedSuspension), and the owner's report of a defect that
-// escaped with such a quest (escapeSuspension). A red check of the forge comes with PS-08f.
+// escaped with such a quest (escapeSuspension), and (CM-06) a late fail the merge queue finds on a quest it spared
+// (lateFailSuspension). A red check of the forge comes with PS-08f.
 import { isEventOf } from '../schema/event/event.ts';
 import type { TerritoryId } from '../core/ids.ts';
 import type { RedCheck } from '../patrol/health.ts';
 import type { EventData } from '../schema/event/event-data.ts';
 import type { Event } from '../schema/event/event.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
+import type { Quest } from '../schema/quest/quest.ts';
 import type { SealPolicy } from './seal.ts';
 
 /** What a `delegation.suspended` line says: the territory, the quest the signal blames, why. */
@@ -71,6 +73,25 @@ export function baseRedSuspension(
     if (blamed !== undefined) return { territory, quest: blamed.quest, cause: 'base_red', check: red.check };
   }
   return undefined;
+}
+
+/** A done quest the merge queue found a late fail on: whether the delegation spared it the seal, and its first red check. */
+export interface LateFail {
+  readonly quest: Pick<Quest, 'id' | 'territory' | 'seal_required' | 'seal_delegated'>;
+  readonly check: string;
+}
+
+/**
+ * Signal (3) (CM-06, ADR 0033, plans/check-modes.md "Sổ đo"): a late machine verdict on a quest the delegation spared
+ * the seal, found by the merge queue before its merge, suspends the delegation of its territory. A late fail the
+ * patrol finds after a merge needs none: the patrol that turned red with that merge among its suspects already
+ * tripped the breaker (baseRedSuspension), and a second line would blame the same quest twice. None while suspended.
+ */
+export function lateFailSuspension(late: LateFail, suspensions: Suspended): SuspensionData | undefined {
+  const { quest, check } = late;
+  const spared = quest.seal_delegated === true && !quest.seal_required;
+  if (!spared || suspendedOn(quest.territory, suspensions)) return undefined;
+  return { territory: quest.territory, quest: quest.id, cause: 'late_fail', check };
 }
 
 /**

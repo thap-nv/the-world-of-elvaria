@@ -20,6 +20,7 @@ export { PLOT_RECORD_FILE } from './plot-record.ts';
 export type { PlotRecord } from './plot-record.ts';
 export { PLOT_EXCLUDES } from './repo-settings.ts';
 export { SETUP_TIMEOUT_MS, setupLogOf } from './setup.ts';
+export { failureInLogFile } from './trial-log.ts';
 export { DIFF_MAX_CHARS } from './diff.ts';
 export type { DiffScope } from './diff.ts';
 export type { Drift } from './drift.ts';
