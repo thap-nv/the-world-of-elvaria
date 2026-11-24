@@ -109,16 +109,19 @@ describe('tribe check with the real CLI pins it for its tribe alone', () => {
     });
   });
 
-  it('checks the CLI --tool names without replacing the pinned CLI', async () => {
+  it('pins the CLI --tool names once the pinned one is gone, path and version (Codex, 2026-11-14)', async () => {
     await pinOld({ path: path.join(dir.root, 'gone', 'lantern.mjs').replaceAll('\\', '/') });
     const moved = path.join(dir.root, 'new lantern.mjs');
     await copyFile(FAKE_LANTERN, moved);
     const io = testIo();
-    const before = await tribes();
     expect(await elvaria(io, 'tribe', 'check', 'lantern', '--tool', moved, '--model', 'lantern-small')).toBe(
       0,
     );
-    expect(await tribes()).toEqual(before);
+    expect((await lantern())?.tool).toMatchObject({
+      path: moved.replaceAll('\\', '/'),
+      version: '0.4.2',
+      checked_version: '0.4.2',
+    });
   });
 
   it("keeps a failed check's workspace in the kingdom, and pins nothing", async () => {

@@ -77,13 +77,23 @@ describe('tribe check pins the adapter bytes it checked (SEC-03)', () => {
     if (found.kind === 'ready') expect(found.hand.runner.capabilities.usage).toBe(false);
   });
 
-  it('leaves kingdom.json unchanged for --scenarios and --tool', async () => {
+  it('enables with --scenarios without pinning the adapter hash', async () => {
+    expect(await check('--scenarios')).toBe(0);
+    expect((await saved()).tribes[0]).toMatchObject({ enabled: true });
+    expect((await saved()).tribes[0]?.adapter_sha256).toBeUndefined();
+  });
+
+  it('leaves kingdom.json unchanged for --scenarios --tool', async () => {
     const file = path.join(root, 'kingdom.json');
     const before = await readFile(file, 'utf8');
-    expect(await check('--scenarios')).toBe(0);
+    expect(await check('--scenarios', '--tool', FAKE_LANTERN)).toBe(0);
     expect(await readFile(file, 'utf8')).toBe(before);
+  });
+
+  it('pins the adapter hash with a real CLI --tool check', async () => {
+    const original = await hash();
     expect(await check('--tool', FAKE_LANTERN, '--model', 'lantern-small')).toBe(0);
-    expect(await readFile(file, 'utf8')).toBe(before);
+    expect((await saved()).tribes[0]).toMatchObject({ enabled: true, adapter_sha256: original });
   });
 
   it('does not enable or replace the pin after a failed suite', async () => {

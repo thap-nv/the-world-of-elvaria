@@ -48,14 +48,14 @@ describe('elvaria tribe check of a second Codex account (PS-27c)', { timeout: 12
   });
   afterEach(() => dir.remove());
 
-  it('passes scenarios in its own home without enabling the tribe', async () => {
+  it('passes the suite in its own home, and is enabled', async () => {
     const io = testIo({ env: { ...baseEnv(), HOME: home, USERPROFILE: home }, home });
     const args = ['tribe', 'check', 'codex_2', '--scenarios', '--kingdom', kingdom, '--locale', 'en'];
     const code = await run(io, ...args);
     expect(io.printed.err).toEqual([]);
     expect(code).toBe(0);
     const tribes = (await kingdomJson(kingdom)).tribes as { id: string; enabled: boolean }[];
-    expect(tribes.find(({ id }) => id === 'codex_2')?.enabled).toBe(false);
+    expect(tribes.find(({ id }) => id === 'codex_2')?.enabled).toBe(true);
     const calls = (await readFile(path.join(second, 'fake-calls.jsonl'), 'utf8'))
       .trim()
       .split('\n')

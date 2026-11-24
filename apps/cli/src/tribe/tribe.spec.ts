@@ -153,7 +153,7 @@ describe('elvaria tribe', () => {
   });
 
   describe('check', () => {
-    it('runs all scenarios and reports ranks F–D without enabling the tribe', async () => {
+    it('runs the conformance suite against the adapter file, narrows the tribe to F–D, and enables it', async () => {
       await addLantern();
       const io = testIo();
       expect(await elvaria(io, 'tribe', 'check', 'lantern', '--scenarios')).toBe(0);
@@ -177,9 +177,9 @@ describe('elvaria tribe', () => {
         '– image (skipped: the adapter does not declare it)',
         '– scratch_commit (skipped: the adapter does not declare it)',
         '✓ ask',
-        'Tribe lantern passes the conformance suite.',
+        'Tribe lantern passes the conformance suite and is now enabled in kingdom.json.',
       ]);
-      expect((await lantern())?.enabled).toBe(false);
+      expect((await lantern())?.enabled).toBe(true);
       const again = testIo();
       expect(await elvaria(again, 'tribe', 'check', 'lantern', '--scenarios')).toBe(0);
       expect(again.printed.out.at(-1)).toBe('Tribe lantern passes the conformance suite.');

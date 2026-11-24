@@ -259,16 +259,7 @@ async function runCheck(input: CommandInput, cli: CliContext): Promise<ExitCode>
   const verdict =
     tried === undefined ? 'refused' : await passes(ctx, input, tried, { live, timeout_ms: timeout });
   if (verdict === 'refused') return EXIT.failed;
-  if (verdict && tried !== undefined) {
-    if (live && given === undefined) return passed(ctx, named, tried);
-    ctx.io.out(
-      ctx.t(given === undefined ? 'cli.tribe.check.passed' : 'cli.tribe.check.passed_tool', {
-        tribe: named.id,
-        tool: given ?? '',
-      }),
-    );
-    return EXIT.ok;
-  }
+  if (verdict && tried !== undefined) return passed(ctx, named, tried);
   const key = named.enabled ? 'cli.tribe.check.failed_enabled' : 'cli.tribe.check.failed';
   ctx.io.err(ctx.t(key, { tribe: named.id }));
   return EXIT.failed;

@@ -163,7 +163,8 @@ show` prints the brief apart from the rest of the description and, while the pla
   `tribeHoldsOf` asks the same for a command run by hand.
   `tribe disable <id>` stops a tribe taking new work. Enabled owner adapter files require the SHA-256
   pinned by a passing `tribe check`; missing or changed hashes refuse loading until a new check passes.
-  `--scenarios` and `--tool` checks do not write pins or enable tribes.
+  `--scenarios` still enables a passing tribe but does not pin `adapter_sha256`;
+  `--scenarios --tool` writes nothing. A real CLI check with `--tool` pins that CLI and the adapter hash.
   An owner adapter file is imported only here
   (`src/tribe/adapter-file.ts`): runner-core's `adapterKitOf` builds its kit (minimal env, the pinned or given CLI,
   `launchOf`, `hookCommand`) and `adapterOfModule` checks what `createAdapter(kit)` returns, so a broken file is a
