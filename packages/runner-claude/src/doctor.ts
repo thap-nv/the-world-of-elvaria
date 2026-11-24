@@ -6,8 +6,8 @@
 // It also says which config folder and account the CLI runs on, and fails when that is not the tribe's (PS-27).
 import { callNote, doctorNoteOf, hookNote } from '@elvaria/runner-core';
 
+import { parseJsonLine } from '@elvaria/runner-core';
 import { accountOf } from './account.ts';
-import { parseLine } from './json.ts';
 import { launchOf } from './launch.ts';
 import { runOnce } from './run-once.ts';
 import type { Ran, RunOnceOptions } from './run-once.ts';
@@ -79,7 +79,7 @@ export async function doctorClaude(deps: DoctorDeps): Promise<ToolInfo> {
     hookNote(deps.hookScript),
   ]);
   const found = versionOf(version.stdout);
-  const status = parseLine(auth.stdout.trim());
+  const status = parseJsonLine(auth.stdout.trim());
   const authOk = auth.code === 0 && status?.loggedIn === true;
   const ending = authOk ? signInEnding(status.loginExpiresAt, deps.now()) : undefined;
   const { info: account, ignored } = accountOf(status, deps.configDir, deps.platform ?? process.platform);

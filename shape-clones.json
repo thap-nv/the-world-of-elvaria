@@ -4,19 +4,13 @@
     {
       "a": "packages/runner-claude/src/locate.ts",
       "b": "packages/runner-codex/src/locate.ts",
-      "tokens": 560,
+      "tokens": 83,
       "status": "unreviewed"
     },
     {
       "a": "packages/hooks/src/glob.ts",
       "b": "packages/runner-core/src/checks/glob.ts",
       "tokens": 515,
-      "status": "unreviewed"
-    },
-    {
-      "a": "packages/runner-antigravity/src/session.ts",
-      "b": "packages/runner-codex/src/session.ts",
-      "tokens": 471,
       "status": "unreviewed"
     },
     {
@@ -28,7 +22,7 @@
     {
       "a": "packages/runner-antigravity/src/runner.ts",
       "b": "packages/runner-codex/src/runner.ts",
-      "tokens": 312,
+      "tokens": 60,
       "status": "unreviewed"
     },
     {
@@ -47,12 +41,6 @@
       "a": "apps/cli/src/character/suspend.ts",
       "b": "apps/cli/src/quest/hold.ts",
       "tokens": 247,
-      "status": "unreviewed"
-    },
-    {
-      "a": "packages/runner-claude/src/account.ts",
-      "b": "packages/runner-codex/src/account.ts",
-      "tokens": 236,
       "status": "unreviewed"
     },
     {
@@ -83,12 +71,6 @@
       "a": "apps/cli/src/quest/lifecycle.ts",
       "b": "apps/cli/src/quest/reassign.ts",
       "tokens": 198,
-      "status": "unreviewed"
-    },
-    {
-      "a": "packages/runner-antigravity/src/stream.ts",
-      "b": "packages/runner-codex/src/stream.ts",
-      "tokens": 189,
       "status": "unreviewed"
     },
     {
@@ -308,7 +290,7 @@
     {
       "a": "packages/runner-claude/src/model.ts",
       "b": "packages/runner-codex/src/launch.ts",
-      "tokens": 107,
+      "tokens": 106,
       "status": "unreviewed"
     },
     {

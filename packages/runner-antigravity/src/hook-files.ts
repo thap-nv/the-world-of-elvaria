@@ -5,7 +5,7 @@ import { statSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import type { Launch } from './launch.ts';
+import type { CommandLaunch } from '@elvaria/runner-core';
 
 export const AGENTS_DIR = '.agents';
 export const HOOKS_FILE = 'hooks.json';
@@ -33,7 +33,7 @@ export interface HookPlan {
  * Reads `hookCommand()` of @elvaria/hooks (`{command: <node>, args: [...flags, <script>, --policy?]}`), which
  * apps/cli hands to every adapter: the script is the first argument that is not a flag.
  */
-export function hookPlanOf(hook: Launch): HookPlan {
+export function hookPlanOf(hook: CommandLaunch): HookPlan {
   const index = hook.args.findIndex((arg) => !arg.startsWith('-'));
   const script = hook.args[index];
   if (script === undefined) throw new Error('the hook command names no script');

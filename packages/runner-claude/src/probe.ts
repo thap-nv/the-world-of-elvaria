@@ -1,8 +1,8 @@
 // probe(): does the account answer (implementation-plan §3.5, ADR 0009; spike P1-02)? First `claude -p "/usage"`,
 // which calls no model; if a window of the whole account is full, the tribe stays asleep until the latest reset.
 // Otherwise one turn of the cheapest model with no tool, which costs ≈ 0.00005 USD, proves a call goes through.
+import { parseJsonLine, textOf } from '@elvaria/runner-core';
 import { pingArgv, usageArgv } from './argv.ts';
-import { parseLine, textOf } from './json.ts';
 import { runOnce } from './run-once.ts';
 import { createStreamReader } from './stream.ts';
 import { usageWindowsOf } from './usage.ts';
@@ -27,7 +27,7 @@ const FULL_PCT = 100;
 function readStream(ran: Ran): StreamReader {
   const reader = createStreamReader();
   for (const line of ran.stdout.split(/\r?\n/)) {
-    const parsed = parseLine(line);
+    const parsed = parseJsonLine(line);
     if (parsed !== undefined) reader.read(parsed);
   }
   return reader;

@@ -1,9 +1,10 @@
 // How an agy run ended (spike P1-12a §5): exit 0 done (a soft-deny too), 1 configuration, 2 command line, 3 a
 // model or agent error or `--print-timeout`, with `AGY_ERROR: {json}` as a stderr line. Pure, so every row of
 // the table is a test.
-import type { RunOutcome } from '@elvaria/runner-core';
+import type { LineEnd, LineVerdict, RunOutcome, Stopper } from '@elvaria/runner-core';
 
-import type { AgyResult } from './stream.ts';
+import { structuredOf } from './structured.ts';
+import type { AgyResult, StreamState } from './stream.ts';
 
 export interface AgyError {
   readonly status?: string;
@@ -73,7 +74,7 @@ export interface Ending {
   readonly result: AgyResult | undefined;
   readonly error: AgyError | undefined;
   /** Who stopped the run: the Steward (`killed`) or the runner's turn breaker (`max_turns`). */
-  readonly stopped: 'killed' | 'max_turns' | undefined;
+  readonly stopped: Stopper;
   readonly rate_limited: boolean;
 }
 
@@ -93,4 +94,30 @@ export function outcomeOf(ending: Ending): RunOutcome {
   if (result.denied_actions.length > 0) return 'error';
   const answered = result.response.trim() !== '' || result.structured_output !== undefined;
   return answered ? 'completed' : 'error';
+}
+
+/**
+ * The end of an agy session as runner-core's line session reads it: the error and usage limit agy printed on stderr,
+ * the outcome, the answer's last JSON (never a stand-in, P1-56, structured.ts) and the tools the stream says it refused.
+ */
+export function agyVerdict({ state, exit, stderr, stopped }: LineEnd<StreamState>): LineVerdict {
+  const error = agyErrorOf(stderr);
+  const limit = rateLimitOf(error, state.result);
+  const resets = limit === undefined ? undefined : resetsAtOf(limit, Date.now());
+  const structured = structuredOf(state.result);
+  const ending = {
+    exit_code: exit.code,
+    result: state.result,
+    error,
+    stopped,
+    rate_limited: limit !== undefined,
+  };
+  return {
+    outcome: outcomeOf(ending),
+    ...(limit === undefined
+      ? {}
+      : { rate_limit: { detail: limit, ...(resets === undefined ? {} : { resets_at: resets }) } }),
+    ...(structured === undefined ? {} : { structured }),
+    denials: state.denials,
+  };
 }

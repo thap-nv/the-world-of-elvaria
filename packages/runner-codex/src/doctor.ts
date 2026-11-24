@@ -5,18 +5,17 @@
 // It also says which home and account Codex runs on, from one `codex app-server` run that calls no model, and fails
 // when that home is not the tribe's (PS-27c, spike codex-home-2026-11-17).
 import { callNote, doctorNoteOf, hookNote, runToEnd } from '@elvaria/runner-core';
-import type { ChildRun, DoctorNote, ToolInfo } from '@elvaria/runner-core';
+import type { AccountSaid, ChildRun, DoctorNote, ToolInfo } from '@elvaria/runner-core';
 
 import { accountOf } from './account.ts';
 import { askAppServer } from './app-server.ts';
-import { programOf, versionOf } from './launch.ts';
-import type { AccountSaid } from './account.ts';
-import type { Launch } from './launch.ts';
+import { programOf, toolVersionOf } from '@elvaria/runner-core';
+import type { CommandLaunch } from '@elvaria/runner-core';
 
 export interface DoctorInput {
-  readonly launch: Launch;
+  readonly launch: CommandLaunch;
   /** `hookCommand()` of @elvaria/hooks: its script is the built hook. */
-  readonly hook: Launch;
+  readonly hook: CommandLaunch;
   readonly env: Readonly<Record<string, string>>;
   readonly timeout_ms: number;
   /** The tribe's home (PS-27c), already in `env` as CODEX_HOME: doctor fails when Codex reports another. */
@@ -26,7 +25,8 @@ export interface DoctorInput {
 }
 
 /** The hook's script among its arguments: the one that ends in `.js`, `.mjs` or `.ts` (the source, in the specs). */
-const scriptOf = (hook: Launch): string | undefined => hook.args.find((arg) => /\.(?:m?js|ts)$/i.test(arg));
+const scriptOf = (hook: CommandLaunch): string | undefined =>
+  hook.args.find((arg) => /\.(?:m?js|ts)$/i.test(arg));
 
 /**
  * `codex login status` that did not run to its end (stopped at its timeout, never started) says so: on a busy machine
@@ -95,7 +95,7 @@ export async function doctorCodex(input: DoctorInput): Promise<ToolInfo> {
   ];
   return {
     path: input.launch.command,
-    version: versionOf(version.stdout) ?? 'unknown',
+    version: toolVersionOf(version.stdout) ?? 'unknown',
     auth_ok: problems.length === 0,
     ...home.info,
     ...(notes.length === 0 ? {} : { notes }),

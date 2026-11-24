@@ -13,5 +13,8 @@ export * from './policy/index.ts';
 export * from './process/index.ts';
 export * from './prompt/index.ts';
 export * from './runner/index.ts';
+export * from './session/index.ts';
+export * from './stream/index.ts';
 export * from './structured/index.ts';
+export * from './tool/index.ts';
 export * from './treasury/index.ts';

@@ -3,8 +3,8 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { parseJsonLine } from '@elvaria/runner-core';
 import { FIXTURES } from './__fixtures__/harness.ts';
-import { parseLine } from './json.ts';
 import { outcomeOf, permissionDenialsOf, structuredOf, turnsOf } from './outcome.ts';
 import { createStreamReader } from './stream.ts';
 import type { Observation } from './stream.ts';
@@ -14,7 +14,7 @@ function readFixture(file: string) {
   const reader = createStreamReader();
   const seen: Observation[] = [];
   for (const line of readFileSync(path.join(FIXTURES, file), 'utf8').split(/\r?\n/)) {
-    const parsed = parseLine(line);
+    const parsed = parseJsonLine(line);
     if (parsed !== undefined) seen.push(...reader.read(parsed));
   }
   const of = <K extends Observation['kind']>(kind: K) =>

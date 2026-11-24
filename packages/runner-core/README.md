@@ -146,6 +146,19 @@ globs)` the changed paths a glob matches at any depth as the hook's do: the Stew
   its session yielded (`PlaySteps.verify` runs while the workspace is still there), first has its session's process
   tree killed (`killTree`, then the runner's own kill) and its workspace handed to `target.onFailed` before the
   workspace goes (lessons of 2026-11-13: a real agy ran on to 80 369 tokens after its `submit` timed out).
+- Holds what the built-in adapters had copied (AH-09, R7), so a fourth adapter declares data and translates only.
+  `src/tool/`: `locateTool` and `toolCandidates` search PATH, a folder under the home, npm's on Windows and a VS Code
+  extension's binary, newest first, from the adapter's `ToolSearch` (`binary_dir` `*` is every subfolder);
+  `configDirEnv` sets the tribe's folder variable last or removes every spelling of it, and `accountSaidOf` hashes
+  the account's identity and notes a CLI that ran in another folder (PS-27); `CommandLaunch`, `programOf`,
+  `toolVersionOf`. `src/stream/`: the safe JSON accessors (`textOf`, `numberOf`, `objectOf`, `objectsOf`,
+  `parseJsonLine`: a field of the wrong type reads as absent), `streamReaderOf` (the frame of a JSON-lines reader
+  over the adapter's tally) and `lineSplitter`. `src/session/`: `startLineSession`, the session of a CLI that
+  streams JSON lines (Codex, agy): signals as lines come, a stop once a turn past `budget.max_turns` begins,
+  stderr line by line to the adapter, the adapter's verdict, `agent.session.end` written whatever happened, an id
+  `<name>-unstarted-<pid>` for a CLI that never started; `withPlotFiles` takes the files a session keeps in the plot
+  out when it ends or never starts (a note in `stderr.log` when they will not go), with `writeOwnFile` and
+  `removeOwnFile`, which never touch a territory's file of the same name.
 - Hands an owner adapter file its kit (`src/kit/`, P1-19, implementation-plan §3.14, ADR 0021): `adapterKitOf(host)`
   freezes the tribe, the kingdom folder, the minimal env, the CLI to drive (`tool_path`: the path the owner gave,
   else the pinned one), `launchOf`, `hookCommand` and runner-core's shared parts (`process`: `startChild`,

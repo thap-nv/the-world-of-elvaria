@@ -2,8 +2,8 @@
 // `rate_limit_event` (one per session, `utilization` 0-1, `resetsAt` in epoch seconds) and the text of
 // `claude -p "/usage"` (0 mana, adds the weekly cap of one model). Both are pure parsers; the mana gauge that
 // turns windows into ManaReading is P1-05's.
-import { numberOf, objectOf, textOf } from './json.ts';
-import type { JsonObject } from './json.ts';
+import { numberOf, objectOf, textOf } from '@elvaria/runner-core';
+import type { JsonObject } from '@elvaria/runner-core';
 
 export interface UsageWindow {
   readonly window: 'five_hour' | 'weekly';

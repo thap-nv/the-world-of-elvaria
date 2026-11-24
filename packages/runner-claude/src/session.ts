@@ -8,6 +8,7 @@ import { createInterface } from 'node:readline';
 import { setTimeout as sleep } from 'node:timers/promises';
 
 import {
+  childEnvOf,
   createSignalChannel,
   killTree,
   openRunLog,
@@ -27,9 +28,9 @@ import type {
   SpawnRequest,
 } from '@elvaria/runner-core';
 
+import { parseJsonLine } from '@elvaria/runner-core';
 import { accountEnv } from './account.ts';
 import { sessionArgv } from './argv.ts';
-import { parseLine } from './json.ts';
 import { outcomeOf, permissionDenialsOf, structuredOf, turnsOf } from './outcome.ts';
 import { writeRunFiles } from './run-files.ts';
 import { createStreamReader } from './stream.ts';
@@ -188,11 +189,10 @@ function launchChild(
   env: Readonly<Record<string, string>>,
 ) {
   // The Steward builds req.env (minimal list, ELVARIA_*, allowed secrets, §3.9); git variables never pass (§6).
-  const base = Object.fromEntries(Object.entries(req.env).filter(([name]) => !name.startsWith('GIT_')));
   const child = spawn(deps.launch.file, [...deps.launch.args, ...argv], {
     cwd: req.cwd,
     // The tribe's account wins over any CLAUDE_CONFIG_DIR in req.env, a secret named so included (PS-27).
-    env: accountEnv({ ...base, ...env }, deps.configDir),
+    env: accountEnv({ ...childEnvOf(req.env), ...env }, deps.configDir),
     shell: false,
     stdio: ['pipe', 'pipe', 'pipe'],
     windowsHide: true,
@@ -243,7 +243,7 @@ function wire(live: Live, began: number): RunningSession {
   const lines = createInterface({ input: child.stdout });
   lines.on('line', (line) => {
     output.stdout(line);
-    const parsed = parseLine(line);
+    const parsed = parseJsonLine(line);
     for (const seen of parsed === undefined ? [] : reader.read(parsed)) {
       if (seen.kind === 'init') named(seen.session);
       observe(live, seen);

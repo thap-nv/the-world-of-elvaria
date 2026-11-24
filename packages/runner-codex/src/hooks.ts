@@ -3,7 +3,7 @@
 // `--dangerously-bypass-hook-trust` once `hooks/list` shows that every hook Codex would run is one of these (ADR 0021,
 // amended 2026-11-12). Codex runs a hook's command through PowerShell on Windows (`command_windows`) and a POSIX shell
 // elsewhere (`command`, not measured on macOS), so each argument is single-quoted for its shell.
-import type { Launch } from './launch.ts';
+import type { CommandLaunch } from '@elvaria/runner-core';
 
 /** The events the hook handles for Codex (packages/hooks CODEX_HOOK_EVENTS). */
 export const HOOK_EVENTS = ['SessionStart', 'PreToolUse', 'PostToolUse', 'Stop'] as const;
@@ -32,7 +32,7 @@ export interface HookLines {
  * The hook's command for `event`. PreToolUse carries `--event PreToolUse`, so a call whose payload cannot be read is
  * still denied (P1-36); the others name their event in the payload.
  */
-export function hookLinesOf(hook: Launch, policyFile: string, event: HookEvent): HookLines {
+export function hookLinesOf(hook: CommandLaunch, policyFile: string, event: HookEvent): HookLines {
   const argv = [
     hook.command,
     ...hook.args,
@@ -51,7 +51,7 @@ export function hookLinesOf(hook: Launch, policyFile: string, event: HookEvent):
 const toml = (text: string): string => JSON.stringify(text);
 
 /** `-c hooks.<Event>=[…]` for each event: no matcher, so PreToolUse and PostToolUse see every tool. */
-export function hookConfigArgs(hook: Launch, policyFile: string): string[] {
+export function hookConfigArgs(hook: CommandLaunch, policyFile: string): string[] {
   return HOOK_EVENTS.flatMap((event) => {
     const lines = hookLinesOf(hook, policyFile, event);
     const handler = `{type="command",command=${toml(lines.command)},command_windows=${toml(lines.command_windows)},timeout=${HOOK_TIMEOUT_SECONDS}}`;
@@ -85,7 +85,7 @@ function foreignHooks(hooks: readonly Json[]): string[] {
  */
 export function hooksProblem(
   answer: unknown,
-  hook: Launch,
+  hook: CommandLaunch,
   policyFile: string,
   windows: boolean,
 ): string | undefined {

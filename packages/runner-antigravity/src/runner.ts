@@ -1,22 +1,22 @@
 // The Antigravity CLI adapter (`antigravity`, the Gemini tribe's default runner; implementation-plan §3.7,
 // ADR 0006, 0018). It turns a SpawnRequest into agy's argv, env and per-run files, and agy's stream into
 // signals and a RunResult; everything else (prompt, policy, plot, checks) is runner-core's.
-import { appendFile, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
 import {
-  NOTE_PREFIX,
-  STDERR_FILE,
-  contextEnv,
   callNote,
+  childEnvOf,
+  contextEnv,
   doctorNoteOf,
   hookNote,
-  openRunLog,
-  openRunOutput,
+  programOf,
   runContextOf,
   runToEnd,
-  secretValuesOf,
+  startLineSession,
+  toolVersionOf,
+  withPlotFiles,
 } from '@elvaria/runner-core';
 import type {
   AdapterTool,
@@ -24,19 +24,19 @@ import type {
   ChildRun,
   DoctorNote,
   ProbeResult,
-  RunningSession,
   SpawnRequest,
   ToolInfo,
 } from '@elvaria/runner-core';
 
 import { hookPlanOf, hooksProblem } from './hook-files.ts';
 import { ANTIGRAVITY_MODELS } from './models.ts';
-import { WINDOWS_PROMPT_MAX_CHARS, commandLineProblem, programOf } from './launch.ts';
+import { WINDOWS_PROMPT_MAX_CHARS, commandLineProblem } from './launch.ts';
+import { agyVerdict } from './outcome.ts';
 import { removeRunFiles, writeRunFiles } from './run-files.ts';
-import { startSession } from './session.ts';
+import { createStreamReader } from './stream.ts';
 import { probeOf, usageBuckets, windowsOf } from './usage.ts';
 import type { HookPlan } from './hook-files.ts';
-import type { Launch } from './launch.ts';
+import type { CommandLaunch } from '@elvaria/runner-core';
 import type { RunFiles } from './run-files.ts';
 
 export const ANTIGRAVITY_ADAPTER = 'antigravity';
@@ -86,9 +86,9 @@ export const ANTIGRAVITY_TOOL: AdapterTool = {
 export interface AntigravityOptions {
   readonly tribe: AgentRunner['tribe'];
   /** How to start agy: `{command: tribes[].tool.path, args: []}`, or node and a script for a fake CLI. */
-  readonly launch: Launch;
+  readonly launch: CommandLaunch;
   /** `hookCommand()` of @elvaria/hooks, which apps/cli hands over (an adapter may not import it, §1.3). */
-  readonly hook: Launch;
+  readonly hook: CommandLaunch;
   /** `tribes[].tool.terms_acknowledged_at`: without it the tribe does not run (ADR 0018). */
   readonly terms_acknowledged_at: string | undefined;
   /** The minimal env (§3.9) for the calls outside a session: `--version`, `models`, `/usage`. */
@@ -116,8 +116,7 @@ export function agyEnv(
   nodeDir: string | undefined,
   extra: Readonly<Record<string, string>> = {},
 ): Record<string, string> {
-  const base = Object.entries(env).filter(([name]) => !name.toUpperCase().startsWith('GIT_'));
-  const out: Record<string, string> = { ...Object.fromEntries(base), ...extra, ...NO_AUTO_UPDATE };
+  const out: Record<string, string> = { ...childEnvOf(env), ...extra, ...NO_AUTO_UPDATE };
   if (nodeDir === undefined) return out;
   // Windows keeps `Path`; adding `PATH` beside it would give the child two.
   const key = Object.keys(out).find((name) => name.toUpperCase() === 'PATH') ?? 'PATH';
@@ -137,38 +136,8 @@ export function sessionArgs(req: SpawnRequest, files: RunFiles): string[] {
   ];
 }
 
-/** `agy --version` prints `1.5.2`; read on every spawn, since the extension swaps the binary in place. */
-const versionOf = (stdout: string): string | undefined => /\d+\.\d+\.\d+\S*/.exec(stdout)?.[0];
-
-/**
- * The plot without Elvaria's files (P1-23). A file that will not go (a Windows lock past the retries) costs the
- * session nothing: the run folder's stderr.log says so, for the owner whose check then fails on it.
- */
-async function clearPlot(req: SpawnRequest): Promise<void> {
-  try {
-    await removeRunFiles(req.cwd);
-  } catch (error) {
-    const why = error instanceof Error ? error.message : String(error);
-    const note = `${NOTE_PREFIX}the hook files stay in the plot: ${why}\n`;
-    await appendFile(path.join(req.run_dir, STDERR_FILE), note, 'utf8').catch(() => undefined);
-  }
-}
-
-/** The session, whose end (wait, kill) settles only once its files left the plot. */
-function clearingOnEnd(session: RunningSession, req: SpawnRequest): RunningSession {
-  const result = session.wait().then(async (end) => {
-    await clearPlot(req);
-    return end;
-  });
-  return {
-    ...session,
-    wait: () => result,
-    kill: async (reason) => {
-      await session.kill(reason);
-      await result;
-    },
-  };
-}
+/** The plot files go when the session ends or never starts; ones that will not go cost it nothing but a note (P1-23). */
+const PLOT_FILES = { remove: removeRunFiles, stay: 'the hook files stay' };
 
 async function spawnAgy(req: SpawnRequest, options: AntigravityOptions, plan: HookPlan) {
   if (options.terms_acknowledged_at === undefined) throw new Error(TERMS);
@@ -177,14 +146,9 @@ async function spawnAgy(req: SpawnRequest, options: AntigravityOptions, plan: Ho
   const ctx = runContextOf(req);
   const env = agyEnv(req.env, plan.node_dir, contextEnv(ctx));
   const call = { cwd: req.cwd, env, timeout_ms: options.timeout_ms ?? DEFAULT_TIMEOUT_MS };
-  const version = versionOf((await runToEnd(programOf(options.launch), ['--version'], call)).stdout);
-  try {
-    return clearingOnEnd(await startAgy(req, options, plan, { ctx, env, call, version }), req);
-  } catch (error) {
-    // A session that never started leaves no file behind either.
-    await clearPlot(req);
-    throw error;
-  }
+  // `agy --version` prints `1.5.2`; read on every spawn, since the extension swaps the binary in place.
+  const version = toolVersionOf((await runToEnd(programOf(options.launch), ['--version'], call)).stdout);
+  return withPlotFiles(req, PLOT_FILES, () => startAgy(req, options, plan, { ctx, env, call, version }));
 }
 
 interface Prepared {
@@ -219,17 +183,16 @@ async function startAgy(req: SpawnRequest, options: AntigravityOptions, plan: Ho
   const listed = await runToEnd(programOf(options.launch), ['-p', '/hooks', '--output-format', 'json'], call);
   const problem = hooksProblem(listed.stdout, files.hooks);
   if (problem !== undefined) throw new Error(listingFailure(listed) ?? problem);
-  // The session's secret values are masked before the patterns in every line the runner writes (§3.9).
-  const known = secretValuesOf(req);
-  return startSession({
-    launch: options.launch,
+  return startLineSession({
+    req,
+    ctx,
+    name: 'agy',
+    turn: 'a turn',
+    program: programOf(options.launch),
     args,
-    cwd: req.cwd,
     env,
-    max_turns: req.budget.max_turns,
-    handover: req.handover,
-    log: openRunLog(ctx, { known }),
-    output: openRunOutput(req.run_dir, known),
+    reader: createStreamReader(),
+    verdict: agyVerdict,
   });
 }
 
@@ -276,7 +239,7 @@ async function doctor(options: AntigravityOptions, plan: HookPlan): Promise<Tool
   const notes = [...(versionNote === undefined ? [] : [versionNote]), ...problems];
   return {
     path: options.launch.command,
-    version: versionOf(ran.stdout) ?? 'unknown',
+    version: toolVersionOf(ran.stdout) ?? 'unknown',
     auth_ok: problems.length === 0,
     ...(notes.length === 0 ? {} : { notes }),
   };

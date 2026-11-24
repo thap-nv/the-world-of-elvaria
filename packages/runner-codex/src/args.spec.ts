@@ -9,7 +9,7 @@ import type { SpawnRequest } from '@elvaria/runner-core';
 
 import { FAKE_HOOK, TERRITORY, openWorld, request } from './__fixtures__/codex.ts';
 import { BYPASS_HOOK_TRUST, WINDOWS_SANDBOX, configOf, hooksCheckArgs, sessionArgs } from './args.ts';
-import { modelOf, versionOf } from './launch.ts';
+import { modelOf } from './launch.ts';
 import type { World } from './__fixtures__/codex.ts';
 
 const FILES = { policy: 'policy.json', context: 'AGENTS.override.md' };
@@ -129,16 +129,11 @@ describe('configOf', () => {
   });
 });
 
-describe('modelOf and versionOf', () => {
+describe('modelOf', () => {
   it('reads the effort off the end of a slug, and only a known one', () => {
     expect(modelOf('gpt-6-luna-low')).toEqual({ model: 'gpt-6-luna', effort: 'low' });
     expect(modelOf('gpt-6.1-sol-xhigh')).toEqual({ model: 'gpt-6.1-sol', effort: 'xhigh' });
     expect(modelOf('gpt-6.1-sol')).toEqual({ model: 'gpt-6.1-sol' });
     expect(modelOf('-low')).toEqual({ model: '-low' });
-  });
-
-  it('reads the version Codex prints', () => {
-    expect(versionOf('codex-cli 0.167.0-alpha.4.1\n')).toBe('0.167.0-alpha.4.1');
-    expect(versionOf('nothing')).toBeUndefined();
   });
 });
