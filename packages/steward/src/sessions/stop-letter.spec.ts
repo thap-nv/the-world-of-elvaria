@@ -70,6 +70,25 @@ describe('the letter after a refused hook (P1-55)', () => {
     expect(bare).toContain('Nothing was committed. The plot holds the changes of the cut session.');
     expect(bare).not.toContain('A copy of it');
   });
+
+  it('names commands.setup and its log when setup, run again before the commit, failed (fix/plot-setup-on-lockfile)', () => {
+    const setup = { detail: 'pnpm install: ended with 1', log: '.runs/q-setup.log' };
+    const letter = stopLetterOf(QUEST, ODO, {
+      status: 'refused',
+      detail:
+        'commands.setup failed before the commit (pnpm install: ended with 1); its log: .runs/q-setup.log',
+      head: { lines: [], total_lines: 1, errors: 0 },
+      setup,
+    });
+    expect(letter).toContain(
+      'commands.setup, run again before the commit since the work changed a file it reads, failed. That work is in the plot, not committed.',
+    );
+    expect(letter).toContain('commands.setup failed before the commit; its log is .runs/q-setup.log:');
+    expect(letter).toContain(
+      'Fix the files commands.setup reads (a lockfile, a package.json) until it passes',
+    );
+    expect(letter).not.toContain('commit hook');
+  });
 });
 
 describe('the letter after any other cut (gap 23 of PS-07)', () => {

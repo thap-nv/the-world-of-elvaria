@@ -110,8 +110,16 @@
       "additionalProperties": false,
       "properties": {
         "setup": {
-          "description": "Run once when a plot is prepared.",
+          "description": "Run when a plot is prepared, until it succeeds once there; again when a file of setup_when changed since.",
           "type": "string"
+        },
+        "setup_when": {
+          "description": "Globs relative to the territory root, matched as check_policy.full_when's (the lockfile, every package.json): once a file they match differs in a quest's plot from what the last successful commands.setup there read, setup runs again before the Steward commits the work (whose hooks would run on what the old files installed) and before a session. Absent or empty: setup runs once per plot.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
         },
         "test": {
           "type": "string"

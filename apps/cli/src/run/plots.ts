@@ -187,6 +187,8 @@ export function plotsOver(kingdom: string, manager: PlotManager, host: ProcessHo
       return { plot, cwd: cwdOf(kingdom, plot) };
     },
     commit: (plot, message, rescue) => manager.commitAll(plot, message, rescue),
+    // Before each Steward commit: setup again once the work changed a file of commands.setup_when.
+    refreshSetup: (quest, territory, options) => manager.refreshSetup(quest, territory, options),
     // After a judge outside a scratch plot: what its commands left changed there goes (P1-44).
     restore: (plot) => manager.restore(plot),
     // Before the submit commit: the assignee's patch for laws.patch_paths (P1-28).

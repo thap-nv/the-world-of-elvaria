@@ -657,6 +657,7 @@
                       "breaker:turns",
                       "breaker:commit",
                       "breaker:commit_errors",
+                      "breaker:setup",
                       "breaker:patch",
                       "breaker:forbidden_paths",
                       "breaker:secrets_refused",

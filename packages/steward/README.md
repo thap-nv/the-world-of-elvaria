@@ -183,6 +183,11 @@
   `restart:*`, `script:*` or `quest:max_attempts`. `detail.message` carries external output only; new events never
   write `legacy`. Hook refusals keep their first lines, error count and total line count in `breaker:commit*`,
   with the complete output at `.runs/<quest>-<n>/pre-commit.log`. Historical patch refusals remain readable.
+  (fix/plot-setup-on-lockfile) Before each of its commits (`commitPlot`) the Steward asks `Plots.refreshSetup`
+  when the territory has `commands.setup_when`: a quest that changed a file it names (the lockfile, a package.json)
+  gets `commands.setup` again, with its secrets, so the hooks do not run on what the old files installed; a setup
+  that fails commits nothing and is `breaker:setup` (its detail and `.runs/<quest>-setup.log`), and one the
+  Steward's stop cut short lets the commit go on as before.
 - Keeps the pid of every session it holds in `.state/sessions.json` (written before each tick ends, emptied at
   stop); a session that goes on in another process (a reply tried again, a reminder of the letter, P1-33) is
   written again with that process's pid and spawn time (`Sessions.respawned`), and the `quest.*` line that tells

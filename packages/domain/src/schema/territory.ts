@@ -172,7 +172,24 @@ export const TerritorySchema = z
       ),
     commands: z
       .strictObject({
-        setup: z.string().optional().meta(describe('Run once when a plot is prepared.')),
+        setup: z
+          .string()
+          .optional()
+          .meta(
+            describe(
+              'Run when a plot is prepared, until it succeeds once there; again when a file of setup_when changed since.',
+            ),
+          ),
+        // fix/plot-setup-on-lockfile: optional with no default, so a territory.json without it reads as before and a
+        // command that writes the file back adds nothing a build pinned earlier would refuse.
+        setup_when: z
+          .array(NonEmptyStringSchema)
+          .optional()
+          .meta(
+            describe(
+              "Globs relative to the territory root, matched as check_policy.full_when's (the lockfile, every package.json): once a file they match differs in a quest's plot from what the last successful commands.setup there read, setup runs again before the Steward commits the work (whose hooks would run on what the old files installed) and before a session. Absent or empty: setup runs once per plot.",
+            ),
+          ),
         test: z.string().optional(),
         lint: z.string().optional(),
         typecheck: z.string().optional(),
