@@ -108,11 +108,14 @@ describe('elvaria tribe', () => {
 
     it('says what is wrong with an adapter file that does not load or cannot find its CLI', async () => {
       const broken = await writeAdapter(kingdom, 'broken', 'export const createAdapter = 1;\n');
+      const adapter_sha256 = createHash('sha256')
+        .update(await readFile(path.join(kingdom, broken)))
+        .digest('hex');
       await editKingdom(kingdom, (value) => ({
         ...value,
         tribes: [
           ...(value.tribes as object[]),
-          { id: 'broken', adapter: broken, enabled: false, max_concurrent: 1 },
+          { id: 'broken', adapter: broken, enabled: true, max_concurrent: 1, adapter_sha256 },
         ],
       }));
       await elvaria(testIo(), 'tribe', 'add', 'lantern', '--adapter', LANTERN_ADAPTER);
