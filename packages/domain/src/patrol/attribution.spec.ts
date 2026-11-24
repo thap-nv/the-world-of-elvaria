@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { SHA_A, SHA_B, TERRITORY, attributed, ran } from './__fixtures__/patrol-log.ts';
 import { attributionOf, probeChecksOf, probeRunOf } from './attribution.ts';
 import { attributedHealth, baseHealthOf, unattributedOf } from './health.ts';
-import type { QuestId, TerritoryId } from '../core/ids.ts';
+import type { CheckId, QuestId, TerritoryId } from '../core/ids.ts';
 import type { TrialCheck } from '../scorecard/trial.ts';
 
 const Q = 'q_20261123_aaaaa1' as QuestId;
@@ -20,7 +20,7 @@ const step = {
 };
 const check = (fields: Partial<TrialCheck> = {}): TrialCheck => ({
   ...step,
-  id: 'unit',
+  id: 'unit' as CheckId,
   timeout_minutes: 5,
   ...fields,
 });

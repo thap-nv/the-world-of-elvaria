@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { PATROL_LINE_MAX_LENGTH } from '../constants.ts';
 import { PatrolRanDataSchema } from '../schema/event/patrol-data.ts';
 import { patrolRanOf, scanOf } from './report.ts';
-import type { ScriptId, TerritoryId } from '../core/ids.ts';
+import type { CheckId, ScriptId, TerritoryId } from '../core/ids.ts';
 import type { TerritoryTrial, TrialCheck } from '../scorecard/trial.ts';
 
 const TERRITORY = 'elvaria' as TerritoryId;
@@ -12,7 +12,7 @@ const LINK = 'link-check' as ScriptId;
 const step = { command: 'pnpm i', pass: true, duration_ms: 5, timed_out: false, exit_code: 0, log_path: 'l' };
 const check = (extra: Partial<TrialCheck>): TrialCheck => ({
   ...step,
-  id: 'unit',
+  id: 'unit' as CheckId,
   timeout_minutes: 5,
   ...extra,
 });
@@ -25,8 +25,8 @@ describe('patrolRanOf', () => {
       setup: { ...step, pass: false, error_line: '  ' },
       checks: [
         check({ pass: false, exit_code: 1, error_line: long }),
-        check({ id: 'e2e', pass: false, environment: 'Cannot connect to the Docker daemon' }),
-        check({ id: 'lint', environment: 'ignored on a pass' }),
+        check({ id: 'e2e' as CheckId, pass: false, environment: 'Cannot connect to the Docker daemon' }),
+        check({ id: 'lint' as CheckId, environment: 'ignored on a pass' }),
       ],
     };
     const data = patrolRanOf({ territory: TERRITORY, trigger: 'schedule', trial, scans: [] });

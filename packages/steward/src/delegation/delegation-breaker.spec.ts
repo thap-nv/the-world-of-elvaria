@@ -4,7 +4,7 @@
 // owner's resume ends it; only sealed merges among the suspects suspend nothing; the owner's report of an escaped
 // defect suspends on a quest merged without the seal, only counts on a sealed one, and is refused before the merge.
 import { EventSchema, SealDelegationSchema, TerritorySchema } from '@elvaria/domain';
-import type { Event, QuestId, TerritoryId, TerritoryTrial } from '@elvaria/domain';
+import type { CheckId, Event, QuestId, TerritoryId, TerritoryTrial } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -63,7 +63,7 @@ const trial = (): Promise<TerritoryTrial> => {
     setup: null,
     checks: [
       {
-        id: 'unit',
+        id: 'unit' as CheckId,
         command: 'node check.mjs',
         pass,
         duration_ms: 1,

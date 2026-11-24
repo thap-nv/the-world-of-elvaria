@@ -2,6 +2,8 @@
 // the head of its default branch, run the way the Steward runs them (runner-core's tryTerritory). The scorecard reads
 // it; the domain never runs it.
 
+import type { CheckId } from '../core/ids.ts';
+
 /** One command of the trial: commands.setup, or a check. */
 export interface TrialStep {
   /** The command line that ran last: the one that failed, or the step's last line. */
@@ -20,7 +22,7 @@ export interface TrialStep {
 }
 
 export interface TrialCheck extends TrialStep {
-  readonly id: string;
+  readonly id: CheckId;
   /** The check's `timeout_minutes` when it ran. */
   readonly timeout_minutes: number;
 }
