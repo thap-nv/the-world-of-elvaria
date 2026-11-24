@@ -37,6 +37,9 @@ export const RULES = [
   // `...` selects the package and every package that depends on it (settlement (382)): a runner-core change once
   // broke apps/cli specs that only the full check ran
   { pattern: /^(?:packages|apps)\/([^/]+)\/(?!README\.md$)/, run: [['--filter', '...@elvaria/$1', 'test']] },
+  // any workspace code: an import cycle inside one package (`no-circular`) moves no manifest, so only a code rule
+  // catches it before the merge (CM-04, fixed by 4cfbdb89; settlement (480), R1)
+  { pattern: /^(?:packages|apps)\/[^/]+\/(?!README\.md$)/, run: [['boundaries']] },
   // the same table row as the package tests: new package, boundaries.mjs, dependencies, imports between packages
   {
     pattern: /^packages\/config\/boundaries\.mjs$|^(?:packages|apps)\/[^/]+\/package\.json$/,
