@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
 import type { Bench } from '../__fixtures__/kingdom.ts';
 import type { Digest, DigestRequest, Steward } from '../types.ts';
-import { MemoSchema } from '@elvaria/domain';
+import { EVENT_VERSION, EventSchema, MemoSchema, TerritoryIdSchema, TerritorySchema } from '@elvaria/domain';
 import type { Event } from '@elvaria/domain';
 
 let current: Bench | undefined;
@@ -60,7 +60,77 @@ const MEMO = MemoSchema.parse({
   filed_at: '2026-11-07T08:30:00+07:00',
 });
 
+/** History predates today's digest: rolling alerts must not stop at the previous digest. */
+const narrowHistory = (): Event[] =>
+  Array.from({ length: 12 }, (_, n) => {
+    const quest = `q_20261106_${String(n).padStart(6, '0')}`;
+    const envelope = {
+      v: EVENT_VERSION,
+      ts: '2026-11-06T09:00:00+07:00',
+      actor: { kind: 'steward' },
+    };
+    return [
+      EventSchema.parse({
+        ...envelope,
+        id: `01JC00000000000000000001${String(n).padStart(2, '0')}`,
+        type: 'delivery.merged',
+        data: {
+          territory: 'dc1-se-team',
+          quest,
+          branch: `quest/${quest}`,
+          head: 'a'.repeat(40),
+          merge_sha: 'b'.repeat(40),
+          method: 'merge',
+          sealed: true,
+          branch_deleted: true,
+          pr: { number: n + 1, url: 'https://github.com/o/r/pull/1' },
+        },
+      }),
+      EventSchema.parse({
+        ...envelope,
+        id: `01JC00000000000000000002${String(n).padStart(2, '0')}`,
+        type: 'check.attributed',
+        data: {
+          territory: 'dc1-se-team',
+          culprit: quest,
+          source: 'patrol',
+          checks: ['unit'],
+          runs: [],
+          cause: n < 2 ? 'own_change' : 'flaky',
+        },
+      }),
+    ];
+  }).flat();
+
 describe('the digest', () => {
+  it('recommends full checks when narrow escapes exceed one in ten recent merges', async () => {
+    const port = recordingPort();
+    current = await bench({ cast: [] });
+    const code = await current.store.territories.read(TerritoryIdSchema.parse('dc1-se-team'));
+    if (!code.ok) throw new Error('fixture: territory');
+    await current.store.territories.write(
+      TerritorySchema.parse({
+        ...code.value,
+        check_policy: { mode: 'narrow' },
+      }),
+    );
+    await openEventLog(current.root).append(narrowHistory());
+    running = current.steward({ digest: port });
+    expect(await running.start({ loop: false })).toEqual({ ok: true });
+    await running.tick();
+    expect(port.asked[0]?.items.filter(({ kind }) => kind === 'narrow_escapes')).toEqual([
+      {
+        kind: 'narrow_escapes',
+        territory: 'dc1-se-team',
+        merges: 12,
+        escapes: 2,
+        group: 'can_wait',
+        advice: 'consider_full',
+        command: ['metrics'],
+      },
+    ]);
+  });
+
   it('is written once a day, rung once, and never again that day however the clock or the Steward moves', async () => {
     const port = recordingPort();
     const { kingdom, steward } = await open(port);

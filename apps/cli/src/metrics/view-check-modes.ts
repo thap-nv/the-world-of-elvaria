@@ -11,12 +11,21 @@ const minutes = (value: number | null): string => (value === null ? NONE : value
 export function checkModesSection(t: Translate, metrics: Metrics): MetricsSection {
   const data = metrics.check_modes;
   const title = t('cli.metrics.title.check_modes');
-  if (data.full_by_day.length === 0 && data.durations.every((row) => row.count === 0))
-    return { title, lines: [t('cli.metrics.check_modes.none')] };
+  if (
+    data.full_by_day.length === 0 &&
+    data.durations.every((row) => row.count === 0) &&
+    data.escapes.length === 0
+  )
+    return {
+      title,
+      lines: [t('cli.metrics.check_modes.none'), t('cli.metrics.check_modes.no_attributions')],
+    };
   return {
     title,
     lines: [
       t('cli.metrics.check_modes.measure'),
+      ...(data.has_attributions ? [] : [t('cli.metrics.check_modes.no_attributions')]),
+      ...data.escapes.map((row) => t('cli.metrics.check_modes.escapes', { ...row })),
       ...data.durations
         .filter((row) => row.count > 0)
         .map((row) =>

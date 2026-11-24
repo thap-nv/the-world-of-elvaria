@@ -165,7 +165,7 @@ describe('the breaker of the seal delegation at the terminal', () => {
     expect(again.text).toContain(`An escaped defect is already reported for quest ${QUEST_ID}.`);
     const metrics = (await cli('metrics')).text;
     expect(metrics).toContain(
-      'Escaped defects: 0 (the owner returned a passed run), 1 reported after a merge.',
+      'Escaped defects: 0 (owner returns or late machine verdicts, including 0 late), 1 reported after a merge.',
     );
     expect(metrics).toContain(NOTE);
   });

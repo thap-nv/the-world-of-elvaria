@@ -5,6 +5,10 @@ import { baseRedTimesOf } from './base-red.ts';
 import { questPeaksOf } from './concurrency.ts';
 import { distributionOf } from './distribution.ts';
 import { measuredRunsOf } from './runs.ts';
+import { checkEscapesOf } from './escapes.ts';
+import type { TerritoryEscapes } from './escapes.ts';
+import type { Quest } from '../../schema/quest/quest.ts';
+import type { Verdict } from '../../schema/quest/verdict.ts';
 import type { QuestId } from '../../core/ids.ts';
 import type { Event } from '../../schema/event/event.ts';
 import type { MetricsWindow } from '../window.ts';
@@ -13,6 +17,8 @@ import type { QuestPeak } from './concurrency.ts';
 import type { CheckDistribution } from './distribution.ts';
 
 export interface CheckModes {
+  readonly has_attributions: boolean;
+  readonly escapes: readonly TerritoryEscapes[];
   readonly durations: readonly (CheckDistribution & { readonly mode: 'full' | 'narrow' | 'patrol' })[];
   readonly full_by_day: readonly { readonly day: string; readonly count: number }[];
   readonly merged_cost: {
@@ -71,7 +77,12 @@ function mergedMetrics(events: readonly Event[], window: MetricsWindow) {
 }
 
 /** End-day run distributions; merged quests include their historical check cost up to their first merge. */
-export function checkModesOf(events: readonly Event[], window: MetricsWindow): CheckModes {
+export function checkModesOf(
+  events: readonly Event[],
+  window: MetricsWindow,
+  quests: readonly Quest[] = [],
+  verdicts: readonly Verdict[] = [],
+): CheckModes {
   const runs = measuredRunsOf(events);
   const completed = runs.filter((run) => inWindow(window, run.at));
   const patrols = events.filter((event) => isEventOf(event, 'patrol.ran') && inWindow(window, event.ts));
@@ -80,6 +91,10 @@ export function checkModesOf(events: readonly Event[], window: MetricsWindow): C
     return [event.data.checks.reduce((sum, check) => sum + check.duration_ms, 0)];
   });
   return {
+    has_attributions: events.some(
+      (event) => isEventOf(event, 'check.attributed') && inWindow(window, event.ts),
+    ),
+    escapes: checkEscapesOf(events, window, quests, verdicts),
     durations: [
       ...(['full', 'narrow'] as const).map((mode) => ({
         mode,

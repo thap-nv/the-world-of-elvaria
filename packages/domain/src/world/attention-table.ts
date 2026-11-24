@@ -74,6 +74,7 @@ export const ATTENTION_TABLE = {
   // PS-08b: the Steward merged the quest without the royal seal, by the kingdom's delegation; the owner reads it after
   // the fact, and undoes it with the item's `revert` line, which it runs and pushes itself.
   merged_unsealed: { group: 'can_wait', advice: 'read_or_revert', command: ['quest', 'show', '{quest}'] },
+  narrow_escapes: { group: 'can_wait', advice: 'consider_full', command: ['metrics'] },
   // PS-08g: the breaker suspended the territory's delegation of the seal after an escaped defect. The work goes on,
   // only every new quest there waits for the seal again, until the owner reads what escaped and resumes it.
   delegation_suspended: {
@@ -126,6 +127,8 @@ export const ATTENTION_KINDS = Object.keys(ATTENTION_TABLE) as readonly Attentio
 
 /** What an item is about: the fields its line and its command name. */
 export interface AttentionSubject {
+  readonly merges?: number;
+  readonly escapes?: number;
   readonly quest?: QuestId;
   readonly title?: string;
   readonly rank?: Rank;

@@ -98,9 +98,15 @@ const templeOf = (t: Translate, item: AttentionItem) => ({
   reasons: (item.temple_reasons ?? []).map((reason) => t(`cli.digest.temple_reason.${reason}`)).join(', '),
 });
 
+const escapeCountsOf = (item: AttentionItem) => ({
+  merges: item.merges ?? NONE,
+  escapes: item.escapes ?? NONE,
+});
+
 /** What the item is about, in one line; every field the line names is given, `—` when the item has none. */
 function subjectOf(t: Translate, item: AttentionItem): string {
   return t(`cli.digest.item.${item.kind}`, {
+    ...escapeCountsOf(item),
     quest: item.quest ?? NONE,
     title: item.title ?? NONE,
     rank: item.rank ?? NONE,
