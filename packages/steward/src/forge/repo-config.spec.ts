@@ -1,8 +1,9 @@
 // SEC-02b: reading repo config must refuse executable settings without running their values.
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { childEnv, git, gitRepoWith } from '../__fixtures__/git-plots.ts';
@@ -21,15 +22,16 @@ const KEYS = [
   'protocol.test.allow',
   'url.test.insteadof',
 ];
-const RM = { recursive: true, force: true, maxRetries: 10, retryDelay: 100 } as const;
 
 describe('delivery repo config', () => {
+  let folder: TempDir;
   let root: string;
   let repo: string;
   let marker: string;
   let program: string;
   beforeEach(async () => {
-    root = await mkdtemp(path.join(tmpdir(), 'elvaria repo config '));
+    folder = await tempDir('repo config');
+    root = folder.root;
     repo = await gitRepoWith(path.join(root, 'repo'), { 'README.md': '# demo\n' });
     marker = path.join(root, 'ran');
     const script = path.join(root, 'mark.mjs');
@@ -39,7 +41,7 @@ describe('delivery repo config', () => {
     );
     program = [process.execPath, script, marker].map((file) => `"${file.replaceAll('\\', '/')}"`).join(' ');
   });
-  afterEach(async () => rm(root, RM));
+  afterEach(() => folder.remove());
 
   const check = (cwd = repo, env = childEnv()) =>
     repoConfigFailure(

@@ -1,10 +1,10 @@
 // The treasury in the Steward's hands (implementation-plan §3.9, ADR 0013): a quest asks only for what its territory
 // allows, a session gets the minimal env, its context and exactly those secrets, and what a session leaves behind
 // (the letter, the question, the verdict notes) loses their values before the kingdom keeps it.
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
 import { ok } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -13,7 +13,6 @@ import {
   BENCH_ENV,
   KINGDOM,
   NPM_TOKEN,
-  RM_TEMP,
   bench,
   characterOf,
   questPayload,
@@ -211,7 +210,8 @@ describe('a quest that asks for secrets', () => {
 
 describe('maskFinished', () => {
   it('masks the patterns of a session it was told nothing of, and warns when the letter cannot be read', async () => {
-    const root = await mkdtemp(path.join(tmpdir(), 'elvaria mask '));
+    const temp = await tempDir('mask');
+    const { root } = temp;
     try {
       const quest = 'q_20261107_aaaaaa' as Running['quest'];
       // A folder where the letter should be: reading it fails, and the end is recorded all the same.
@@ -234,7 +234,7 @@ describe('maskFinished', () => {
         expect.stringMatching(/^steward: q_20261107_aaaaaa: the handover letter was not masked/),
       ]);
     } finally {
-      await rm(root, RM_TEMP);
+      await temp.remove();
     }
   });
 });

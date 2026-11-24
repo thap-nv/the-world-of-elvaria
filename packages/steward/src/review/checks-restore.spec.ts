@@ -2,16 +2,17 @@
 // drift check (`pnpm api:openapi`, then `git diff --exit-code`) regenerates files in the plot it runs in, and the
 // judge, or a returned assignee, would find them there. Real git repos and PlotManager; a check that writes as such a
 // command does.
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import os from 'node:os';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { openEventLog } from '@elvaria/eventlog';
 import { fromPortable } from '@elvaria/store';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { git, gitPlots, gitRepoWith, onRepo } from '../__fixtures__/git-plots.ts';
-import { RM_TEMP, bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
+import { bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
 import { statusIs } from '../__fixtures__/review.ts';
 import type { Bench } from '../__fixtures__/kingdom.ts';
 import type { Plots, Steward } from '../types.ts';
@@ -19,12 +20,12 @@ import type { AgentRunner, CheckRun, SpawnRequest } from '@elvaria/runner-core';
 
 let current: Bench | undefined;
 let running: Steward | undefined;
-const folders: string[] = [];
+const folders: TempDir[] = [];
 
 afterEach(async () => {
   await running?.stop();
   await current?.remove();
-  await Promise.all(folders.splice(0).map((made) => rm(made, RM_TEMP)));
+  await Promise.all(folders.splice(0).map((folder) => folder.remove()));
   running = undefined;
   current = undefined;
 });
@@ -75,8 +76,9 @@ function watchingJudges(kingdom: Bench, seen: Seen[]): Record<'claude' | 'gemini
 }
 
 async function open(restore?: Plots['restore']) {
-  const repo = await mkdtemp(path.join(os.tmpdir(), 'elvaria checked repo '));
-  folders.push(repo);
+  const folder = await tempDir('checked repo');
+  const repo = folder.root;
+  folders.push(folder);
   await gitRepoWith(repo, { [CONTRACT_FILE]: CONTRACT, 'src/app.ts': 'export const app = 1;\n' });
   current = await bench();
   await onRepo(current, repo, []);

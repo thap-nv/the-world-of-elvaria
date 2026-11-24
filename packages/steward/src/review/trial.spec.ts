@@ -3,11 +3,12 @@
 // that really breaks the code there and runs the quest's test, as the ritual's break_and_expect_red asks. The quest's
 // branch never changes, the scratch plot is gone after the verdict, and a flaky test opens a fix quest.
 import { execFileSync } from 'node:child_process';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import os from 'node:os';
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { NO_HISTORY_COMMAND, exclusiveLockOf, scratchIdOf } from '@elvaria/runner-core';
 import { acquireLock, fromPortable, inKingdom, pathExists } from '@elvaria/store';
 import type { HeldLock } from '@elvaria/store';
@@ -17,19 +18,19 @@ import { TerritorySchema } from '@elvaria/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { git, gitPlots, gitRepoWith } from '../__fixtures__/git-plots.ts';
-import { RM_TEMP, bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
+import { bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
 import { statusIs } from '../__fixtures__/review.ts';
 import type { Bench } from '../__fixtures__/kingdom.ts';
 import type { Plots, Steward } from '../types.ts';
 
 let current: Bench | undefined;
 let running: Steward | undefined;
-const folders: string[] = [];
+const folders: TempDir[] = [];
 
 afterEach(async () => {
   await running?.stop();
   await current?.remove();
-  await Promise.all(folders.splice(0).map((made) => rm(made, RM_TEMP)));
+  await Promise.all(folders.splice(0).map((folder) => folder.remove()));
   running = undefined;
   current = undefined;
 });
@@ -130,8 +131,9 @@ interface Opening {
 }
 
 async function open(files: Record<string, string>, opening: Opening = {}) {
-  const repo = await mkdtemp(path.join(os.tmpdir(), 'elvaria trial repo '));
-  folders.push(repo);
+  const folder = await tempDir('trial repo');
+  const repo = folder.root;
+  folders.push(folder);
   await gitRepoWith(repo, { 'src/sum.mjs': SUM, 'e2e/.keep': '' });
   current = await bench();
   const read = await current.store.territories.read('dc1-se-team' as TerritoryId);
@@ -239,8 +241,9 @@ describe('tests as the product: Thả quái thử thành (ADR 0022)', () => {
   }, 120_000); // real git, the checks run for real in a scratch plot: 6 s beside 13 slow specs (2026-11-18)
 
   it('fails a quest whose test flakes, whatever its judge says, and opens a fix quest', async () => {
-    const counter = path.join(await mkdtemp(path.join(os.tmpdir(), 'elvaria flake ')), 'flaky.count');
-    folders.push(path.dirname(counter));
+    const folder = await tempDir('flake');
+    const counter = path.join(folder.root, 'flaky.count');
+    folders.push(folder);
     const { kingdom, steward } = await open({ 'e2e/sum.test.mjs': flakyTest(counter) });
     await kingdom.command('create_quest', questPayload('Wall of fog', E2E));
     await tickUntil(steward, kingdom.clock, judged(kingdom, 'Wall of fog'));

@@ -2,16 +2,17 @@
 // judge ran a check's generator (`pnpm api:openapi`) in the plot of the part it judged, which dropped the contract
 // from the working tree, 166 lines, uncommitted. Real git repos and PlotManager; FakeRunners whose judge writes in its
 // cwd as such a command would.
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import os from 'node:os';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { openEventLog } from '@elvaria/eventlog';
 import { fromPortable } from '@elvaria/store';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { git, gitPlots, gitRepoWith, onRepo } from '../__fixtures__/git-plots.ts';
-import { FAIL, RM_TEMP, bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
+import { FAIL, bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
 import { folderPlots } from '../plot/folder-plots.ts';
 import type { Bench } from '../__fixtures__/kingdom.ts';
 import type { Plots, Steward } from '../types.ts';
@@ -19,12 +20,12 @@ import type { AgentRunner, SpawnRequest } from '@elvaria/runner-core';
 
 let current: Bench | undefined;
 let running: Steward | undefined;
-const folders: string[] = [];
+const folders: TempDir[] = [];
 
 afterEach(async () => {
   await running?.stop();
   await current?.remove();
-  await Promise.all(folders.splice(0).map((made) => rm(made, RM_TEMP)));
+  await Promise.all(folders.splice(0).map((folder) => folder.remove()));
   running = undefined;
   current = undefined;
 });
@@ -53,8 +54,9 @@ function generatingJudges(kingdom: Bench): Record<'claude' | 'gemini', AgentRunn
 }
 
 async function open(options: Parameters<typeof bench>[0] = {}, plots?: (root: string) => Plots) {
-  const repo = await mkdtemp(path.join(os.tmpdir(), 'elvaria judged repo '));
-  folders.push(repo);
+  const folder = await tempDir('judged repo');
+  const repo = folder.root;
+  folders.push(folder);
   await gitRepoWith(repo, { [CONTRACT_FILE]: CONTRACT, 'src/app.ts': 'export const app = 1;\n' });
   current = await bench(options);
   await onRepo(current, repo, []);

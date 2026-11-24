@@ -3,10 +3,9 @@
 // §15). The Steward reads the plot's changes before each commit and commits none of them then: a submit goes to the
 // infirmary with trip forbidden_paths and the bell, a WIP stays in the plot. Real git repos and PlotManager;
 // FakeRunners whose assignee leaves the files in its plot as such a program would.
-import { mkdtemp, rm } from 'node:fs/promises';
-import os from 'node:os';
-import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { isEventOf } from '@elvaria/domain';
 import { openJournal } from '@elvaria/eventlog';
 import { fromPortable } from '@elvaria/store';
@@ -14,7 +13,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { leavingRunners } from '../__fixtures__/deliver.ts';
 import { git, gitPlots, gitRepoWith, onRepo } from '../__fixtures__/git-plots.ts';
-import { RM_TEMP, bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
+import { bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
 import { plotsWith, statusIs } from '../__fixtures__/review.ts';
 import type { Leaves } from '../__fixtures__/deliver.ts';
 import type { Bench, BenchOptions } from '../__fixtures__/kingdom.ts';
@@ -23,12 +22,12 @@ import type { Quest } from '@elvaria/domain';
 
 let current: Bench | undefined;
 let running: Steward | undefined;
-const folders: string[] = [];
+const folders: TempDir[] = [];
 
 afterEach(async () => {
   await running?.stop();
   await current?.remove();
-  await Promise.all(folders.splice(0).map((made) => rm(made, RM_TEMP)));
+  await Promise.all(folders.splice(0).map((folder) => folder.remove()));
   running = undefined;
   current = undefined;
 });
@@ -38,8 +37,9 @@ const WORK = { 'src/app.ts': 'export const app = 2;\n' };
 
 /** dc1-se-team on a git repo that forbids `infra/secrets/**`, its assignee leaving `leaves` in the plot. */
 async function open(leaves: Leaves, options: BenchOptions = {}) {
-  const repo = await mkdtemp(path.join(os.tmpdir(), 'elvaria forbidden repo '));
-  folders.push(repo);
+  const folder = await tempDir('forbidden repo');
+  const repo = folder.root;
+  folders.push(folder);
   await gitRepoWith(repo, { 'src/app.ts': 'export const app = 1;\n' });
   current = await bench(options);
   await onRepo(current, repo, [], { laws: LAWS });

@@ -3,29 +3,30 @@
 // at the head of the quest's branch after commands.setup, and the first judge's trial, which does not run again.
 // That plot gets the territory's commands.reset once, so the second judge does not meet the database the first
 // one's breaks left (P1-47, (d) of P1-42).
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import os from 'node:os';
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { scratchIdOf, scratchResetLogOf } from '@elvaria/runner-core';
 import type { AgentRunner, FakeRunner, SpawnRequest } from '@elvaria/runner-core';
 import { fromPortable, inKingdom, pathExists } from '@elvaria/store';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { git, gitPlots, gitRepoWith, onRepo } from '../__fixtures__/git-plots.ts';
-import { RM_TEMP, bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
+import { bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
 import { statusIs, verdictIn } from '../__fixtures__/review.ts';
 import type { Bench } from '../__fixtures__/kingdom.ts';
 import type { Plots, Steward } from '../types.ts';
 
 let current: Bench | undefined;
 let running: Steward | undefined;
-const folders: string[] = [];
+const folders: TempDir[] = [];
 
 afterEach(async () => {
   await running?.stop();
   await current?.remove();
-  await Promise.all(folders.splice(0).map((made) => rm(made, RM_TEMP)));
+  await Promise.all(folders.splice(0).map((folder) => folder.remove()));
   running = undefined;
   current = undefined;
 });
@@ -78,8 +79,9 @@ function runnersOf(kingdom: Bench, repo: string, seen: Seen[]) {
 
 /** A quest whose run two judges in a scratch plot judge, on a territory with `commands`; what they saw. */
 async function judgedTwice(title: string, commands: Readonly<Record<string, string>>) {
-  const repo = await mkdtemp(path.join(os.tmpdir(), 'elvaria scratch again '));
-  folders.push(repo);
+  const folder = await tempDir('scratch again');
+  const repo = folder.root;
+  folders.push(folder);
   const files = {
     'src/sum.mjs': 'export const sum = (a, b) => a + b;\n',
     'e2e/.keep': '',

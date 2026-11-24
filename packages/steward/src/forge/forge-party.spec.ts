@@ -1,9 +1,8 @@
 // A party on a territory that delivers by pull request (PS-08c, ADR 0020, 0023): the contract and its parts reach the
 // base branch through the merge quest, so only the merge quest's branch goes to the forge.
-import { mkdtemp, rm } from 'node:fs/promises';
-import os from 'node:os';
-import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { openEventLog } from '@elvaria/eventlog';
 import { SUBQUESTS_FILE } from '@elvaria/runner-core';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -11,7 +10,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { fakeForge } from '../__fixtures__/forge.ts';
 import { FORGE_REMOTE } from '../__fixtures__/forge-bench.ts';
 import { childEnv, git } from '../__fixtures__/git-plots.ts';
-import { RM_TEMP, tickUntil } from '../__fixtures__/kingdom.ts';
+import { tickUntil } from '../__fixtures__/kingdom.ts';
 import {
   CONTRACT,
   contractPayload,
@@ -24,11 +23,11 @@ import {
 import type { PartyBench } from '../__fixtures__/party.ts';
 
 let current: PartyBench | undefined;
-let remote: string | undefined;
+let remote: TempDir | undefined;
 
 afterEach(async () => {
   await current?.remove();
-  if (remote !== undefined) await rm(remote, RM_TEMP);
+  await remote?.remove();
   current = undefined;
   remote = undefined;
 });
@@ -56,8 +55,8 @@ describe('a party on a territory that delivers by pull request', () => {
         deps: { env: childEnv(), forges: { adapters: { github: forge }, git: { file: 'git', args: [] } } },
       },
     );
-    const bare = await mkdtemp(path.join(os.tmpdir(), 'elvaria party remote '));
-    remote = bare;
+    remote = await tempDir('party remote');
+    const bare = remote.root;
     git(bare, 'init', '-q', '--bare', '-b', 'main');
     git(current.repo, 'remote', 'add', 'origin', bare);
     git(current.repo, 'push', '-q', 'origin', 'main');

@@ -1,17 +1,18 @@
 // What the delivery specs share (PS-08c): dc1-se-team on a real git repo whose `origin` is a bare repo in another
 // temp folder, its vcs.remote a GitHub URL for the fake forge to read, git plots, assignees that leave files, this
 // process's env (git and the territory's hooks need its PATH; no GIT_* in it) and the fake forge.
-import { mkdtemp, readFile, readdir, realpath, rm } from 'node:fs/promises';
-import os from 'node:os';
+import { readFile, readdir, realpath } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { openEventLog } from '@elvaria/eventlog';
 import type { Event } from '@elvaria/domain';
 
 import { leavingRunners } from './deliver.ts';
 import { fakeForge } from './forge.ts';
 import { childEnv, git, gitPlots, gitRepoWith, onRepo } from './git-plots.ts';
-import { RM_TEMP, bench } from './kingdom.ts';
+import { bench } from './kingdom.ts';
 import type { Forges } from '../forge/forge.ts';
 import type { Steward, StewardDeps } from '../types.ts';
 import type { Leaves } from './deliver.ts';
@@ -64,12 +65,16 @@ async function kingdomHolds(root: string, text: string): Promise<boolean> {
  * A temp folder by its long path. Git prints worktree paths long, while the TEMP of GitHub's Windows runner is an 8.3
  * path (`C:\Users\RUNNER~1\…`): plot paths under the 8.3 form never match `git worktree list` (fix/ci-red).
  */
-const tempFolder = async (prefix: string): Promise<string> =>
-  realpath(await mkdtemp(path.join(os.tmpdir(), prefix)));
+const tempFolder = async (prefix: string): Promise<TempDir> => {
+  const folder = await tempDir(prefix);
+  return { ...folder, root: await realpath(folder.root) };
+};
 
 export async function forgeBench(options: ForgeBenchOptions = {}): Promise<ForgeBench> {
-  const repo = await tempFolder('elvaria forge repo ');
-  const remote = await tempFolder('elvaria forge remote ');
+  const repoFolder = await tempFolder('forge repo');
+  const remoteFolder = await tempFolder('forge remote');
+  const repo = repoFolder.root;
+  const remote = remoteFolder.root;
   await gitRepoWith(repo, { 'README.md': '# dc1\n', ...options.files });
   git(remote, 'init', '-q', '--bare', '-b', 'main');
   git(repo, 'remote', 'add', 'origin', remote);
@@ -113,7 +118,7 @@ export async function forgeBench(options: ForgeBenchOptions = {}): Promise<Forge
     remove: async () => {
       for (const steward of started) await steward.stop();
       await kingdom.remove();
-      await Promise.all([rm(repo, RM_TEMP), rm(remote, RM_TEMP)]);
+      await Promise.all([repoFolder.remove(), remoteFolder.remove()]);
     },
   };
 }

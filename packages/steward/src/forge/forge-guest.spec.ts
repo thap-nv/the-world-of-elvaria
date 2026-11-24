@@ -3,10 +3,11 @@
 // after the quest whose delivery was due when it came; a guest that conflicts with main and one whose check is red
 // are refused, with the files and the check; the session's branch on the remote never moves; two guests of one
 // territory are never tried at once.
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
-import os from 'node:os';
+import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { openEventLog } from '@elvaria/eventlog';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -18,14 +19,12 @@ import type { ForgeBench } from '../__fixtures__/forge-bench.ts';
 import type { Plots, Steward } from '../types.ts';
 
 let current: ForgeBench | undefined;
-const sessions: string[] = [];
+const sessions: TempDir[] = [];
 
 afterEach(async () => {
   await current?.remove();
   current = undefined;
-  await Promise.all(
-    sessions.splice(0).map((work) => rm(work, { recursive: true, force: true, maxRetries: 5 })),
-  );
+  await Promise.all(sessions.splice(0).map((folder) => folder.remove()));
 });
 
 const TERRITORY = 'dc1-se-team';
@@ -51,8 +50,9 @@ async function guestBench(): Promise<ForgeBench> {
 
 /** A clone of the remote, as the owner's session has it. */
 async function cloneOf(bench: ForgeBench): Promise<string> {
-  const work = await mkdtemp(path.join(os.tmpdir(), 'elvaria guest session '));
-  sessions.push(work);
+  const folder = await tempDir('guest session');
+  const work = folder.root;
+  sessions.push(folder);
   // The checkout keeps LF, as the repo's own files: a CRLF README would conflict with every change of main.
   git(work, 'clone', '-q', '-c', 'core.autocrlf=false', bench.remote, '.');
   return work;

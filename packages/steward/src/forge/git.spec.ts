@@ -2,13 +2,13 @@
 // (SEC-02, threat model A5): a status and a push to a remote that asks for a credential (a local HTTP server
 // answering 401) run none of them, and the push asks the owner's helper alone. git without gitGuard's switches, last,
 // runs the territory's helper, so the case cannot pass on a poison that never worked.
-import { mkdtemp, rm } from 'node:fs/promises';
 import { createServer } from 'node:http';
-import { tmpdir } from 'node:os';
 import path from 'node:path';
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { runToEnd } from '@elvaria/runner-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -17,11 +17,11 @@ import { poisonedGit, runsIn } from '../__fixtures__/poisoned-git.ts';
 import { runDeliveryGit } from './git.ts';
 import type { PoisonedGit } from '../__fixtures__/poisoned-git.ts';
 
-const RM = { recursive: true, force: true, maxRetries: 10, retryDelay: 100 } as const;
 /** A push to a local server: well within the limit on a busy machine. */
 const LIMIT_MS = 60_000;
 
 describe('runDeliveryGit on a poisoned territory', () => {
+  let folder: TempDir;
   let root: string;
   let repo: string;
   let poisoned: PoisonedGit;
@@ -29,7 +29,8 @@ describe('runDeliveryGit on a poisoned territory', () => {
   let remote: string;
 
   beforeAll(async () => {
-    root = await mkdtemp(path.join(tmpdir(), 'elvaria delivery git '));
+    folder = await tempDir('delivery git');
+    root = folder.root;
     repo = await gitRepoWith(path.join(root, 'lãnh thổ'), { 'README.md': '# demo\n' });
     poisoned = await poisonedGit(repo, root);
     // Every request is refused for want of a credential: git asks its helpers, then gives up.
@@ -41,7 +42,7 @@ describe('runDeliveryGit on a poisoned territory', () => {
   });
   afterAll(async () => {
     await new Promise((resolve) => server.close(resolve));
-    await rm(root, RM);
+    await folder.remove();
   });
 
   it("asks the owner's helper alone, and runs none of the territory's programs", async () => {
