@@ -8,6 +8,7 @@ import { DelegationSchema } from '../schema/delegation.ts';
 import {
   baseRedSuspension,
   escapeSuspension,
+  lateFailSuspension,
   sealPolicyOf,
   sealSuspendedOf,
   suspendedTerritoriesOf,
@@ -127,5 +128,29 @@ describe('escapeSuspension', () => {
   it('nothing for a quest that had the seal, nor while the territory is suspended', () => {
     expect(escapeSuspension({ ...escape, delegated: false }, [])).toBeUndefined();
     expect(escapeSuspension(escape, [{ territory: TERRITORY }])).toBeUndefined();
+  });
+});
+
+describe('lateFailSuspension', () => {
+  const spared = { id: Q2, territory: TERRITORY, seal_required: false, seal_delegated: true } as const;
+
+  it('suspends the territory of a quest the delegation spared, blaming it and naming its first red check', () => {
+    expect(lateFailSuspension({ quest: spared, check: 'test' }, [])).toEqual({
+      territory: TERRITORY,
+      quest: Q2,
+      cause: 'late_fail',
+      check: 'test',
+    });
+  });
+
+  it('nothing for a quest with the seal, or spared then raised, nor while the territory is suspended', () => {
+    const { seal_delegated: _spared, ...sealed } = spared;
+    expect(
+      lateFailSuspension({ quest: { ...sealed, seal_required: true }, check: 'test' }, []),
+    ).toBeUndefined();
+    expect(
+      lateFailSuspension({ quest: { ...spared, seal_required: true }, check: 'test' }, []),
+    ).toBeUndefined();
+    expect(lateFailSuspension({ quest: spared, check: 'test' }, [{ territory: TERRITORY }])).toBeUndefined();
   });
 });

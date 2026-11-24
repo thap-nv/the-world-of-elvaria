@@ -125,7 +125,7 @@ Mỗi dòng của `events/YYYY-MM-DD.jsonl` và `quests/<id>/journal.jsonl` là 
 
 | Type | `data` |
 |---|---|
-| `delegation.suspended` | `territory`: string (khớp `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$`, khác `global`)<br>`quest`: string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`) — The quest merged without the seal that the signal blames.<br>`cause`: một trong `base_red`, `escape_reported`<br>`check` (tùy chọn): string (không rỗng) — With cause base_red: the check that turned red (`setup` for commands.setup).<br>`note` (tùy chọn): string (không rỗng) — The owner's words, as `--note` gave them. |
+| `delegation.suspended` | `territory`: string (khớp `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$`, khác `global`)<br>`quest`: string (khớp `^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$`) — The quest merged without the seal that the signal blames.<br>`cause`: một trong `base_red`, `escape_reported`, `late_fail`<br>`check` (tùy chọn): string (không rỗng) — With cause base_red: the check that turned red; with late_fail: the first red check of the late verdict (`setup` for commands.setup).<br>`note` (tùy chọn): string (không rỗng) — The owner's words, as `--note` gave them. |
 | `delegation.resumed` | `territory`: string (khớp `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$`, khác `global`) |
 
 ## `plot` · 3 type

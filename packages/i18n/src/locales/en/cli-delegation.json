@@ -2,6 +2,7 @@
   "version": 1,
   "messages": {
     "cli.delegation.cause.base_red": "check {check} of the default branch turned red with this quest merged without the seal since its last green patrol",
-    "cli.delegation.cause.escape_reported": "the owner reported a defect that escaped with this quest, merged without the seal (note: {note})"
+    "cli.delegation.cause.escape_reported": "the owner reported a defect that escaped with this quest, merged without the seal (note: {note})",
+    "cli.delegation.cause.late_fail": "the merge queue found check {check} red through this quest's own change, before merging it without the seal (a late machine verdict)"
   }
 }

@@ -2928,11 +2928,12 @@
               "cause": {
                 "enum": [
                   "base_red",
-                  "escape_reported"
+                  "escape_reported",
+                  "late_fail"
                 ]
               },
               "check": {
-                "description": "With cause base_red: the check that turned red (`setup` for commands.setup).",
+                "description": "With cause base_red: the check that turned red; with late_fail: the first red check of the late verdict (`setup` for commands.setup).",
                 "type": "string",
                 "minLength": 1
               },
