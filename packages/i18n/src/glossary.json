@@ -240,6 +240,13 @@
               "used_in": "`territory.check_policy`, `checks[].narrow`, `checkModeOf`, `mode` của event `check.start`, `check.end`, `elvaria territory checks`"
             },
             {
+              "vi": "Mục khách",
+              "en": "Guest entry",
+              "id": ["guest_entry"],
+              "definition": "Một pull request do phiên của chính chủ nhân mở, được xếp vào hàng đợi merge của một lãnh thổ `pr_merge` (CM-07, ADR 0032): đi cùng làn với quest, sau các quest đang tới hạn lúc nó vào, mỗi lãnh thổ một mục một lúc, không chạy khi nhánh gốc đỏ. Nhiếp chính hỏi forge nhánh và đầu nhánh, thử ghép khan với nhánh gốc, chạy check của chế độ kiểm trong đất tách rời `guest-<lãnh thổ>`, xanh thì merge PR qua forge; không bao giờ ghi vào nhánh của người. Không quest, không phán quyết, không danh tiếng. Đang chờ hay không chỉ suy từ event (`guestsWaitingOf`).",
+              "used_in": "lệnh `enqueue_branch`, `elvaria territory enqueue`, event `delivery.enqueued`, `delivery.guest_merged`, `delivery.guest_refused`, `guest` của `check.start`, `check.end`"
+            },
+            {
               "vi": "Mùa",
               "en": "Season",
               "id": ["season"],
@@ -1911,6 +1918,12 @@
               "remark": "`elvaria territory delegation <id> --resume` (PS-08g): lãnh thổ mà cầu dao đã ngừng ủy quyền dấu lại được miễn dấu từ quest mới kế tiếp; ghi `delegation.resumed`. Lãnh thổ không ngừng bị từ chối `not_suspended`"
             },
             {
+              "vi": "Xếp mục khách",
+              "id": ["enqueue_branch"],
+              "icon": "—",
+              "remark": "`elvaria territory enqueue <id> --pr <số>` (CM-07): chỉ chủ nhân (nguồn `chancellor`, `monk` bị từ chối `owner_only`); lãnh thổ phải giao hàng theo `pr_merge` (`not_pr_merge`), PR đang chờ thì `already_enqueued`, lãnh thổ lạ `unknown_territory`; ghi `delivery.enqueued`"
+            },
+            {
               "vi": "Tờ trình của Đền",
               "id": ["temple_report"],
               "icon": "—",
@@ -2548,6 +2561,11 @@
               "group": "Giao hàng",
               "types": ["delivery.pushed", "delivery.merged", "delivery.failed"],
               "meaning": "Nhiếp chính giao nhánh của quest `done` tới forge theo `territory.delivery` (ADR 0023; schema ở PS-08, PS-08c và PS-08d ghi): `delivery.pushed` khi nhánh đã push và PR đã có, mỗi đầu nhánh một dòng; `delivery.merged` khi `pr_merge` merge PR, mang `merge_sha`, `sealed`, `branch_deleted`; `delivery.failed` khi dừng ở một bước (`stage`) vì một lý do (`reason`), không tự thử lại. `data` mang `quest` và `territory`. `delivery.sent` (có từ v1, không schema) vẫn ở nhóm Khác"
+            },
+            {
+              "group": "Mục khách",
+              "types": ["delivery.enqueued", "delivery.guest_merged", "delivery.guest_refused"],
+              "meaning": "Mục khách của hàng đợi merge (CM-07, ADR 0032): `delivery.enqueued` khi chủ nhân xếp một PR của phiên mình (`territory`, `pr`); `delivery.guest_merged` khi Nhiếp chính thử xanh và merge PR qua forge (`branch`, `head` đã thử, `merge_sha`, `method`); `delivery.guest_refused` khi không merge (`reason`: `conflict` kèm `paths`, `checks_red` kèm `checks`, `head_moved`, `not_open`, `forge_error`, `update_failed`; `detail`). Không quest; phiên của người tự sửa rồi xếp lại, không gì tự thử lại"
             },
             {
               "group": "Khác",

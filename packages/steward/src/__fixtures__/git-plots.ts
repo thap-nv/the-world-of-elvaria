@@ -14,6 +14,7 @@ import {
   probeIdOf,
   scratchAgain,
   trialInScratch,
+  tryGuest,
   tryTerritory,
 } from '@elvaria/runner-core';
 import { fromPortable, toPortable } from '@elvaria/store';
@@ -131,6 +132,8 @@ export function gitPlots(
           commitLinks: (territory, head, exclude) => commitLinksOf({ territory, host, head, exclude }),
         }
       : {}),
+    // A guest of the merge queue as `elvaria run` tries it (CM-07).
+    guest: (territory, pull, signal) => tryGuest({ kingdom, territory, host, signal, ...pull }),
   };
 }
 

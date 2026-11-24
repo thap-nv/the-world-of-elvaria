@@ -10,6 +10,7 @@ import type { CharacterId, Reassign, TickPlan } from '@elvaria/domain';
 import { ring } from '../context.ts';
 import { deliver } from '../deliver/deliver.ts';
 import { archiveInBase } from '../forge/archive.ts';
+import { startGuest } from '../forge/guest.ts';
 import { startLook } from '../forge/look.ts';
 import { startPoll } from '../forge/merge.ts';
 import { startDelivery } from '../forge/push.ts';
@@ -96,11 +97,12 @@ export async function carryOut(ctx: Context, plan: TickPlan): Promise<void> {
   }
   // Step 7: what is done goes to the owner by its kind's convention (P1-14).
   for (const quest of plan.deliveries) warnIfRefused(ctx, `${quest} deliver`, await deliver(ctx, quest));
-  // Then a delivered quest's branch goes to its territory's forge, outside the tick (PS-08c, ADR 0023).
+  // Then a done quest's branch goes to its forge, outside the tick (PS-08c, ADR 0023); and (CM-07) the guests.
   for (const quest of plan.forge_deliveries) {
     if (ctx.stopping.aborted) break;
     warnIfRefused(ctx, `${quest} forge`, startDelivery(ctx, quest));
   }
+  for (const guest of plan.guest_runs) if (!ctx.stopping.aborted) startGuest(ctx, guest);
   // PS-08d: the pull requests the Steward merges itself, asked about outside the tick; the base branches looked at,
   // outside the tick too; and the done quests found there archived, their plot released.
   for (const poll of plan.forge_polls) {

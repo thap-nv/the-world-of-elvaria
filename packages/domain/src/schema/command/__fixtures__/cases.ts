@@ -197,4 +197,9 @@ export const CASES: Record<InboxCommandKind, { valid: object; invalid: object; i
     invalid: { character: 'sage', operations: [{ op: 'replace', text: 'every line' }], letters: [] },
     issue: 'payload.operations.0.op: Invalid discriminator value',
   },
+  enqueue_branch: {
+    valid: { territory: 'do-an', pr: 7 },
+    invalid: { territory: 'do-an', pr: 0 },
+    issue: 'payload.pr: Too small: expected number to be >=1',
+  },
 };

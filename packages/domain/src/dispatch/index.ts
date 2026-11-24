@@ -2,6 +2,7 @@ export * from './background-room.ts';
 export * from './claim-blocker.ts';
 export * from './forge-due.ts';
 export * from './forge-polls.ts';
+export * from './guests.ts';
 export * from './in-base.ts';
 export * from './judge-waits.ts';
 export * from './new-quest.ts';

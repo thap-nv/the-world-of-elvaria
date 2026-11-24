@@ -58,6 +58,11 @@ function entriesOf(stdout: string): { tree: string; entries: StageEntry[] } {
   return { tree, entries };
 }
 
+/** (CM-07) The files a `git merge-tree --write-tree -z` that ended in conflicts names, once each. */
+export const conflictPathsOf = (stdout: string): string[] => [
+  ...new Set(entriesOf(stdout).entries.map((entry) => entry.path)),
+];
+
 async function blobOf(git: Git, cwd: string, ref: string): Promise<string | null> {
   const run = await git(cwd, ['cat-file', 'blob', ref]);
   return run.code === 0 ? run.stdout : null;
@@ -92,7 +97,7 @@ export async function dryMerge(
   if (run.code === 0) return { state: 'clean' };
   if (run.code !== 1) return { state: 'failed', detail: saidBy(run) };
   const read = entriesOf(run.stdout);
-  const paths = [...new Set(read.entries.map((entry) => entry.path))];
+  const paths = conflictPathsOf(run.stdout);
   if (paths.length === 0) return { state: 'failed', detail: `git merge-tree named no file: ${saidBy(run)}` };
   const files: ConflictedFile[] = [];
   for (const file of paths) files.push(await conflictedOf(git, cwd, read, file, shared));

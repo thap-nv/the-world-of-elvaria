@@ -575,6 +575,16 @@
   late verdict, one `character.judged` line for its doer and one for its judge, and a fix quest claimed for its doer
   (`lateFixOf`, a draft above `delegation.max_rank`); a combination gets the fix quest for anyone. The fix's id
   derives from the quest and the first red commit, so a probe run again opens no second one.
+- Guest entries of the merge queue (CM-07, ADR 0032): the inbox command `enqueue_branch`
+  (`src/inbox/guest-commands.ts`; refused `owner_only` from the Chancellor or the temple, `unknown_territory`,
+  `not_pr_merge`, `already_enqueued`) writes `delivery.enqueued`. The guest book (`src/forge/guest-book.ts`) holds
+  the guests that wait, rebuilt from the log at start and following each line the recorder writes, and the tries
+  running; the snapshot gives planTick `guests` and `BackgroundWork.guests`. Each of `plan.guest_runs`
+  (`src/forge/guest.ts`) runs outside the tick: the forge's `status` (its `branch` and `head`; merged or closed:
+  `not_open`), `Plots.guest` with its `check.start`/`check.end` (`delivery`, `guest`), then the forge's merge
+  at the head tried and `delivery.guest_merged` (the patrol after a merge follows), or `delivery.guest_refused`
+  (`conflict` with the files, `checks_red` with the red checks, `head_moved`, `forge_error`, `update_failed`).
+  The Steward's stop aborts a try and records nothing but the `check.end` of the checks it killed.
 - Adds the machine check `screens` after the territory's for a quest whose ritual asks for eyes (`judgedByEye`, PS-11b, `src/review/screens.ts`): it fails when the checks captured no screen or one breaks the image contract, its log says why; that quest's judge gets exactly the valid screens of the run, by policy (`ToolPolicy.images`) and in its prompt (`src/sessions/request.ts`).
 
 ## Does not

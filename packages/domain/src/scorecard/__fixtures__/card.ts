@@ -1,5 +1,6 @@
 // Builders for the scorecard specs: a territory, a trial, and a ledger with the territory's rows and rates.
 import { metricsOf } from '../../metrics/metrics-of.ts';
+import type { CheckId } from '../../core/ids.ts';
 import { TerritorySchema } from '../../schema/territory.ts';
 import type { Metrics, QuestMetrics } from '../../metrics/metrics-of.ts';
 import type { PassRate } from '../../metrics/rates.ts';
@@ -40,7 +41,7 @@ export const stepOf = (fields: Partial<TrialStep> = {}): TrialStep => ({
 
 export const checkOf = (id: string, fields: Partial<TrialCheck> = {}): TrialCheck => ({
   ...stepOf({ command: `pnpm ${id}`, duration_ms: 12_000, log_path: `.runs/trial-demo/checks/${id}.log` }),
-  id,
+  id: id as CheckId,
   timeout_minutes: 10,
   ...fields,
 });

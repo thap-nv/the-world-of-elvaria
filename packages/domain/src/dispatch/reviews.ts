@@ -12,7 +12,7 @@ import { judgeWaitOf } from './judge-waits.ts';
 import type { JudgeWait, GaugeSource } from './judge-waits.ts';
 import type { Roster } from './roster.ts';
 import type { Instant } from '../core/clock.ts';
-import type { CharacterId, QuestId } from '../core/ids.ts';
+import type { CharacterId, QuestId, TerritoryId } from '../core/ids.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
 import type { Quest } from '../schema/quest/quest.ts';
@@ -40,6 +40,11 @@ export interface BackgroundWork {
    * does, and is no trial (startingNow). Absent: none.
    */
   readonly patrols?: number;
+  /**
+   * (CM-07) Territories whose guest entry of the merge queue runs now, outside the tick: each holds its territory's
+   * lane (busyOf) and a slot of dispatch.max_background, and is no trial (startingNow). Absent: none.
+   */
+  readonly guests?: readonly TerritoryId[];
 }
 
 /** Checks of a quest set aside for their environment (environmentFailureOf), ended at `at`. */

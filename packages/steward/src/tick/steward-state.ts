@@ -8,6 +8,7 @@ import type { Background } from '../background/background.ts';
 import type { DelegationBook } from '../delegation/book.ts';
 import type { StreakBook } from '../temple/streak-book.ts';
 import type { ForgeBook } from '../forge/book.ts';
+import type { GuestBook } from '../forge/guest-book.ts';
 import type { BaseLooks } from '../forge/looks.ts';
 import type { PatrolBook } from '../patrol/book.ts';
 import type { GraphBuilds } from '../background/graph-builds.ts';
@@ -61,6 +62,8 @@ export interface State {
   readonly scheduler: Scheduler;
   /** The quests' deliveries to their forge (PS-08c): rebuilt from the log at start, kept as they are recorded. */
   readonly forge: ForgeBook;
+  /** (CM-07) The guest entries of the merge queues: rebuilt from the log at start, their tries outside the tick. */
+  readonly guests: GuestBook;
   /** The looks at the base branches outside the tick (PS-08d): stop() aborts them, the next start looks again. */
   readonly looks: BaseLooks;
   /** The patrolled territories' health (PS-26): rebuilt from the log at start, set by each patrol. */

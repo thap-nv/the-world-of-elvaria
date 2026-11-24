@@ -16,7 +16,7 @@ import { questFinished } from '../quest/finished.ts';
 import { heldByBase } from '../patrol/base-red.ts';
 import { isHeld } from '../quest/hold.ts';
 import { startingNow } from './background-room.ts';
-import { forgeDeliveries } from './forge-due.ts';
+import { forgeQueueOf } from './forge-due.ts';
 import { forgePolls } from './forge-polls.ts';
 import { baseLooks, forgeArchives } from './in-base.ts';
 import { reassignsOf } from './reassigns.ts';
@@ -41,6 +41,8 @@ import type { CharacterId, QuestId } from '../core/ids.ts';
 import type { Character } from '../schema/character/character.ts';
 import type { Kingdom } from '../schema/kingdom.ts';
 import type { SealPolicy } from '../delegation/seal.ts';
+import type { StartingNow } from './background-room.ts';
+import type { GuestEntry } from './guests.ts';
 import type { Quest } from '../schema/quest/quest.ts';
 
 export type { Claim, Unclaimable } from './tick-steps.ts';
@@ -83,6 +85,8 @@ export interface KingdomSnapshot extends RosterSource, ReviewSource {
   readonly base_red?: readonly BaseRed[];
   /** (PS-08b) The delegation of the seal: done quests without it the forge merges (mergeDue). Absent: none. */
   readonly seal_policy?: SealPolicy;
+  /** (CM-07) The guest entries of the merge queues that wait (guestsWaitingOf). Absent: none. */
+  readonly guests?: readonly GuestEntry[];
 }
 
 export interface TickPlan {
@@ -169,6 +173,8 @@ export interface TickPlan {
   readonly base_looks: readonly BaseLook[];
   /** (PS-08d) Done quests in the base branch: the Steward archives them and releases their plot. */
   readonly forge_archives: readonly QuestId[];
+  /** (CM-07) Guest entries whose try the Steward starts now, outside the tick, in their territory's lane (guestRunsOf). */
+  readonly guest_runs: readonly GuestEntry[];
 }
 
 const rankOrder = (quest: Quest): number => RANKS.indexOf(quest.rank);
@@ -199,9 +205,15 @@ const heldPastBreakers = (
  * the room took (`forge`); then (PS-08d) the pull requests to ask about, the looks at the base branches, and the
  * quests found there.
  */
-const deliveriesOf = (snapshot: KingdomSnapshot, done: readonly Quest[], forge: QuestId[], now: Instant) => ({
+const deliveriesOf = (
+  snapshot: KingdomSnapshot,
+  done: readonly Quest[],
+  room: StartingNow,
+  now: Instant,
+) => ({
   deliveries: done.filter(({ deliverable }) => deliverable.delivered_at === undefined).map(({ id }) => id),
-  forge_deliveries: forge,
+  forge_deliveries: room.deliveries,
+  guest_runs: room.guests,
   forge_polls: forgePolls(snapshot, done, now),
   base_looks: baseLooks(snapshot, done, now),
   forge_archives: forgeArchives(snapshot, done),
@@ -259,7 +271,7 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
   );
   const running = new Set(snapshot.background?.running);
   const scripts = open.filter(({ tier }) => tier === 'script').map(({ id }) => id);
-  const machine = startingNow(snapshot, judged.checks, scripts, forgeDeliveries(snapshot, inStatus('done')));
+  const machine = startingNow(snapshot, judged.checks, scripts, ...forgeQueueOf(snapshot, inStatus('done')));
   return {
     breakers: heldPastBreakers(snapshot, byId, now),
     suspensions: suspended,
@@ -281,6 +293,6 @@ export function planTick(snapshot: KingdomSnapshot, now: Instant): TickPlan {
       .filter(({ tier, id }) => tier === 'script' && !running.has(id))
       .map(({ id }) => id),
     unclaimable: unclaimable(step, openSessions),
-    ...deliveriesOf(snapshot, inStatus('done'), machine.deliveries, now),
+    ...deliveriesOf(snapshot, inStatus('done'), machine, now),
   };
 }

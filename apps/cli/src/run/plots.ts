@@ -15,6 +15,7 @@ import {
   runChecks,
   scratchAgain,
   trialInScratch,
+  tryGuest,
   tryTerritory,
 } from '@elvaria/runner-core';
 import type { ForgetWorktree, PlotManager, ProcessHost } from '@elvaria/runner-core';
@@ -123,7 +124,7 @@ const queueOf = (
 const patrolPlots = (
   kingdom: string,
   host: ProcessHost,
-): Pick<Plots, 'patrol' | 'probe' | 'commitLinks'> => ({
+): Pick<Plots, 'patrol' | 'probe' | 'commitLinks' | 'guest'> => ({
   patrol: async (territory, { signal, scan }) => {
     const name = patrolIdOf(territory.id);
     return (await tryTerritory({ kingdom, territory, host, name, signal, inPlot: scan })).trial;
@@ -134,6 +135,8 @@ const patrolPlots = (
     return (await tryTerritory({ kingdom, territory, host, name, signal, commit, checks })).trial;
   },
   commitLinks: (territory, head, exclude) => commitLinksOf({ territory, host, head, exclude }),
+  // (CM-07) A guest of the merge queue: its head merged into origin's default branch, tried under `guest-<id>`.
+  guest: (territory, pull, signal) => tryGuest({ kingdom, territory, host, signal, ...pull }),
 });
 
 /**
