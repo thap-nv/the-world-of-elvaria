@@ -1,19 +1,20 @@
-import { mkdtemp, rm } from 'node:fs/promises';
-import os from 'node:os';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { acquireLock } from '@elvaria/store';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { QuestId } from '@elvaria/domain';
 
-import { RM_TEMP } from '../__fixtures__/kingdom.ts';
 import { createJudgeLocks } from './exclusive.ts';
 
+let folder: TempDir;
 let dir = '';
 beforeEach(async () => {
-  dir = await mkdtemp(path.join(os.tmpdir(), 'elvaria judge locks '));
+  folder = await tempDir('judge locks');
+  dir = folder.root;
 });
-afterEach(() => rm(dir, RM_TEMP));
+afterEach(() => folder.remove());
 
 const ONE = 'q_20261109_aaaaaa' as QuestId;
 const TWO = 'q_20261109_bbbbbb' as QuestId;

@@ -1,28 +1,29 @@
 // A Steward that stops while a delivery pushes (PS-08c, (L) of PS-08): the push runs the territory's pre-push hook, a
 // tree of processes, and the stop kills the whole tree, on Windows (taskkill /T) and macOS (the process table)
 // alike. Nothing is recorded: the next Steward delivers anew.
-import { chmod, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import os from 'node:os';
+import { chmod, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 import { setTimeout as sleep } from 'node:timers/promises';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { isAlive } from '@elvaria/runner-core';
 import { pathExists, toPortable } from '@elvaria/store';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { delivered } from '../__fixtures__/deliver.ts';
 import { forgeBench } from '../__fixtures__/forge-bench.ts';
-import { RM_TEMP, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
+import { questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
 import type { ForgeBench } from '../__fixtures__/forge-bench.ts';
 
 let current: ForgeBench | undefined;
-const folders: string[] = [];
+const folders: TempDir[] = [];
 
 afterEach(async () => {
   await current?.remove();
   current = undefined;
-  await Promise.all(folders.splice(0).map((made) => rm(made, RM_TEMP)));
+  await Promise.all(folders.splice(0).map((folder) => folder.remove()));
 });
 
 const POLL_MS = 50;
@@ -48,8 +49,9 @@ async function until(holds: () => Promise<boolean> | boolean): Promise<boolean> 
 
 /** The territory repo's pre-push hook (its worktrees share it) runs HOOK_SCRIPT; the grandchild's pid file. */
 async function hangingHook(repo: string): Promise<string> {
-  const folder = await mkdtemp(path.join(os.tmpdir(), 'elvaria forge hook '));
-  folders.push(folder);
+  const temp = await tempDir('forge hook');
+  const folder = temp.root;
+  folders.push(temp);
   const script = path.join(folder, 'hook.mjs');
   const pidFile = path.join(folder, 'grandchild.pid');
   await writeFile(script, HOOK_SCRIPT);

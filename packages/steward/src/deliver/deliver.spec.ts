@@ -1,12 +1,13 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import os from 'node:os';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { reduce } from '@elvaria/domain';
 import { openEventLog } from '@elvaria/eventlog';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { CAST, RM_TEMP, bench, questPayload, tickUntil, worldOfFiles } from '../__fixtures__/kingdom.ts';
+import { CAST, bench, questPayload, tickUntil, worldOfFiles } from '../__fixtures__/kingdom.ts';
 import { delivered, leavingRunners, moveTerritory, noteOf, worktreePlots } from '../__fixtures__/deliver.ts';
 import type { Bench, BenchOptions } from '../__fixtures__/kingdom.ts';
 import type { Leaves } from '../__fixtures__/deliver.ts';
@@ -14,7 +15,7 @@ import type { Steward, StewardDeps } from '../types.ts';
 
 let current: Bench | undefined;
 let running: Steward | undefined;
-const folders: string[] = [];
+const folders: TempDir[] = [];
 
 /** A scout, a bard and a mage join the bench's knights, scribe and judges. */
 const WIDER_CAST = [
@@ -25,8 +26,9 @@ const WIDER_CAST = [
 ];
 
 async function folder(name: string): Promise<string> {
-  const made = await mkdtemp(path.join(os.tmpdir(), `elvaria ${name}-`));
-  folders.push(made);
+  const folder = await tempDir(name);
+  const made = folder.root;
+  folders.push(folder);
   return made;
 }
 
@@ -43,7 +45,7 @@ async function open(
 afterEach(async () => {
   await running?.stop();
   await current?.remove();
-  await Promise.all(folders.splice(0).map((made) => rm(made, RM_TEMP)));
+  await Promise.all(folders.splice(0).map((folder) => folder.remove()));
   running = undefined;
   current = undefined;
 });

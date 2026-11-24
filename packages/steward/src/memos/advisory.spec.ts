@@ -3,17 +3,18 @@
 // files one memo to the quests at work whose scope meets the files it changed (shared paths aside). Each reads it once,
 // in the next prompt of its assignee (a resumed session too), with a memo.delivered line in its journal; a judge never
 // does; nobody answers it and it moves no quest. A Steward that stopped between the memo and the archive files it once.
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import os from 'node:os';
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { openEventLog } from '@elvaria/eventlog';
 import type { Event, Memo, Quest } from '@elvaria/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { leavingRunners } from '../__fixtures__/deliver.ts';
 import { childEnv, git, gitPlots, gitRepoWith, onRepo } from '../__fixtures__/git-plots.ts';
-import { FAIL, RM_TEMP, bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
+import { FAIL, bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
 import type { Leaves } from '../__fixtures__/deliver.ts';
 import type { Bench, Plays } from '../__fixtures__/kingdom.ts';
 import type { Steward, StewardDeps } from '../types.ts';
@@ -45,18 +46,21 @@ interface Landing {
   readonly steward: Steward;
 }
 
+let folder: TempDir | undefined;
 let current: { kingdom: Bench; repo: string; steward?: Steward } | undefined;
 
 afterEach(async () => {
   await current?.steward?.stop();
   await current?.kingdom.remove();
-  if (current !== undefined) await rm(current.repo, RM_TEMP);
+  await folder?.remove();
+  folder = undefined;
   current = undefined;
 });
 
 /** dc1-se-team on a git repo with `docs/shared/**` shared, `manual` delivery; the Steward started without its loop. */
 async function landing(plays: Plays, overrides: (kingdom: Bench) => Partial<StewardDeps> = () => ({})) {
-  const repo = await mkdtemp(path.join(os.tmpdir(), 'elvaria advisory repo '));
+  folder = await tempDir('advisory repo');
+  const repo = folder.root;
   await gitRepoWith(repo, { 'README.md': '# dc1\n' });
   const kingdom = await bench({ plays });
   current = { kingdom, repo };

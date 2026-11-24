@@ -2,10 +2,11 @@
 // file at the plot's root stays out of the submit commit and is set aside in the run's folder; work the territory's
 // hook refuses is copied to a patch there, and a quest whose session left no letter gets a minimal one. Real git repos
 // and PlotManager; FakeRunners whose assignee leaves files in its plot, and a pre-commit hook that refuses.
-import { chmod, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import os from 'node:os';
+import { chmod, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { tempDir } from '@elvaria/testkit';
+import type { TempDir } from '@elvaria/testkit';
 import { WIP_PATCH_FILE } from '@elvaria/runner-core';
 import type { AgentRunner } from '@elvaria/runner-core';
 import { fromPortable, inKingdom, pathExists } from '@elvaria/store';
@@ -13,7 +14,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { leavingRunners } from '../__fixtures__/deliver.ts';
 import { git, gitPlots, gitRepoWith, onRepo } from '../__fixtures__/git-plots.ts';
-import { NPM_TOKEN, RM_TEMP, bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
+import { NPM_TOKEN, bench, questPayload, tickUntil } from '../__fixtures__/kingdom.ts';
 import { statusIs } from '../__fixtures__/review.ts';
 import { handoverPath } from '../texts/files.ts';
 import type { Leaves } from '../__fixtures__/deliver.ts';
@@ -22,12 +23,12 @@ import type { Steward } from '../types.ts';
 
 let current: Bench | undefined;
 let running: Steward | undefined;
-const folders: string[] = [];
+const folders: TempDir[] = [];
 
 afterEach(async () => {
   await running?.stop();
   await current?.remove();
-  await Promise.all(folders.splice(0).map((made) => rm(made, RM_TEMP)));
+  await Promise.all(folders.splice(0).map((folder) => folder.remove()));
   running = undefined;
   current = undefined;
 });
@@ -63,8 +64,9 @@ interface Options {
 
 /** dc1-se-team on a git repo, its assignee leaving `leaves` in the plot. */
 async function open(leaves: Leaves, { hook, letter = true, plays = {} }: Options = {}) {
-  const repo = await mkdtemp(path.join(os.tmpdir(), 'elvaria letter repo '));
-  folders.push(repo);
+  const folder = await tempDir('letter repo');
+  const repo = folder.root;
+  folders.push(folder);
   await gitRepoWith(repo, { 'src/app.ts': 'export const app = 1;\n' });
   if (hook !== undefined) {
     const file = path.join(repo, '.git', 'hooks', 'pre-commit');
