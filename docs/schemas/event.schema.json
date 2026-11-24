@@ -2319,6 +2319,164 @@
       "if": {
         "properties": {
           "type": {
+            "const": "character.judged"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "character",
+              "verdict",
+              "role"
+            ],
+            "properties": {
+              "character": {
+                "description": "The character after this event (characterViewOf).",
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "name",
+                  "class",
+                  "tribe",
+                  "model",
+                  "level",
+                  "status",
+                  "status_since",
+                  "current",
+                  "reputation",
+                  "title"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$",
+                    "not": {
+                      "enum": [
+                        "user",
+                        "machine",
+                        "temple"
+                      ]
+                    }
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 24
+                  },
+                  "class": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*$"
+                  },
+                  "tribe": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*$"
+                  },
+                  "model": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9.-]*$"
+                  },
+                  "level": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10
+                  },
+                  "status": {
+                    "enum": [
+                      "idle",
+                      "working",
+                      "reviewing",
+                      "sleeping_mana",
+                      "meditating",
+                      "suspended",
+                      "swamp"
+                    ]
+                  },
+                  "status_since": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "current": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "additionalProperties": false,
+                    "required": [
+                      "quest",
+                      "role"
+                    ],
+                    "properties": {
+                      "quest": {
+                        "type": "string",
+                        "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}$"
+                      },
+                      "role": {
+                        "enum": [
+                          "assignee",
+                          "verifier"
+                        ]
+                      }
+                    }
+                  },
+                  "reputation": {
+                    "description": "reputationOf(reputation.window): the avatar ring (--rep); pct null before any verdict.",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "verdicts",
+                      "pct"
+                    ],
+                    "properties": {
+                      "verdicts": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "pct": {
+                        "type": [
+                          "number",
+                          "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 100
+                      }
+                    }
+                  },
+                  "title": {
+                    "description": "titleOf(character): the tag shown over the head, if any.",
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "pattern": "^[a-z][a-z0-9_]*$"
+                  }
+                }
+              },
+              "verdict": {
+                "description": "The late verdict (`<quest>-<n>-late`) that entered its windows.",
+                "type": "string",
+                "pattern": "^q_[0-9]{8}_[0-9a-hjkmnp-tv-z]{6}-[1-9][0-9]*(?:-p[1-9][0-9]*|-user|-late)?$"
+              },
+              "role": {
+                "description": "assignee: the quest's doer (withVerdict); judge: whose pass it overturned (withOverturnedPass).",
+                "enum": [
+                  "assignee",
+                  "judge"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
             "enum": [
               "command.applied",
               "command.rejected"
@@ -2928,11 +3086,12 @@
               "cause": {
                 "enum": [
                   "base_red",
-                  "escape_reported"
+                  "escape_reported",
+                  "late_fail"
                 ]
               },
               "check": {
-                "description": "With cause base_red: the check that turned red (`setup` for commands.setup).",
+                "description": "With cause base_red: the check that turned red; with late_fail: the first red check of the late verdict (`setup` for commands.setup).",
                 "type": "string",
                 "minLength": 1
               },
@@ -4310,6 +4469,7 @@
         "character.swamp",
         "character.level_up",
         "character.level_down",
+        "character.judged",
         "character.model_changed",
         "command.received",
         "command.applied",

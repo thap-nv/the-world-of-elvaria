@@ -116,6 +116,7 @@ const HANDLERS: { readonly [T in TypedEventType]?: Handler<T> } = {
   'character.swamp': onCharacter,
   'character.level_up': onCharacter,
   'character.level_down': onCharacter,
+  'character.judged': onCharacter,
   'character.model_changed': onCharacter,
   'territory.attached': onTerritory,
   'territory.surveyed': onTerritory,

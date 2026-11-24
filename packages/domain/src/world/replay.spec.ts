@@ -112,6 +112,7 @@ describe('replaying a fake day', () => {
       'character.suspend',
       'character.release',
       'character.level_down',
+      'character.judged',
       'character.model_changed',
       'plot.patched',
       'plot.merged',

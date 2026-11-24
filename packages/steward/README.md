@@ -565,6 +565,16 @@
   or `deferred` territory whose branch moved, once its merge queue is quiet, when no patrol runs and a slot of
   `dispatch.max_background` is free. The queue never waits for it. Each patrol started outside the tick holds a
   slot while it runs (`BackgroundWork.patrols` in the snapshot).
+- The late fail (CM-06, ADR 0033): a check that first ran after a run's pass turns red through the quest's own change.
+  The merge queue (`src/forge/late-fail.ts`): red checks after a clean merge on a green base branch run first on the
+  quest's own head (step 4 of the probe, a quest of the session tier, in the territory's patrol lane) unless its
+  session ran them green with the same command; red there, a late machine verdict (`src/review/late-verdict.ts`,
+  `<quest>-<n>-late`), `verdict_fail` from `done` with the share of the judge who passed it, the breaker's
+  `late_fail`, and the delivery ends with nothing more recorded; anything else opens the merge quest as before. The
+  patrol's probe (`src/patrol/late-fix.ts`, before its `check.attributed`): an archived quest's own change gets the
+  late verdict, one `character.judged` line for its doer and one for its judge, and a fix quest claimed for its doer
+  (`lateFixOf`, a draft above `delegation.max_rank`); a combination gets the fix quest for anyone. The fix's id
+  derives from the quest and the first red commit, so a probe run again opens no second one.
 - Adds the machine check `screens` after the territory's for a quest whose ritual asks for eyes (`judgedByEye`, PS-11b, `src/review/screens.ts`): it fails when the checks captured no screen or one breaks the image contract, its log says why; that quest's judge gets exactly the valid screens of the run, by policy (`ToolPolicy.images`) and in its prompt (`src/sessions/request.ts`).
 
 ## Does not

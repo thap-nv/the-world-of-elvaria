@@ -7,3 +7,5 @@ export * from './constants.ts';
 export * from './probe-steps.ts';
 export * from './probe.ts';
 export * from './attribution.ts';
+export * from './late-fix.ts';
+export * from './queue-probe.ts';

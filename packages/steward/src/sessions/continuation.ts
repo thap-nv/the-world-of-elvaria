@@ -2,7 +2,14 @@
 // §10 question 4, ADR 0017): why it goes on (a return with its verdict, or a revival), the letter, the journal, what
 // the branch touched, why the Steward refused the last run's patch when it did (P1-31), or its patch or commit while
 // the quest waited on the doer's amendment (fix/session-notes), and the memos its letters filed (PS-02).
-import { currentRun, endedInCut, isEventOf, ownerVerdictIdOf, verdictIdOf } from '@elvaria/domain';
+import {
+  currentRun,
+  endedInCut,
+  isEventOf,
+  lateVerdictIdOf,
+  ownerVerdictIdOf,
+  verdictIdOf,
+} from '@elvaria/domain';
 import { openJournal } from '@elvaria/eventlog';
 import type { Quest, Verdict } from '@elvaria/domain';
 import type { Continuation, Memory, RefusedWork } from '@elvaria/runner-core';
@@ -85,15 +92,16 @@ async function contestedOf(ctx: Context, verdict: Verdict): Promise<{ contested?
 }
 
 /**
- * The verdict a returned quest comes back with: the owner's return (`<quest>-<n>-user`), else the judge's or the
- * machine's fail (`<quest>-<n>`) on the last run; a crash returns with none. Either says why the last run's patch
+ * The verdict a returned quest comes back with: the machine's late fail after its pass (`<quest>-<n>-late`, CM-06:
+ * the red checks the merge queue found, the first line of each log), else the owner's return (`<quest>-<n>-user`),
+ * else the judge's or the machine's fail (`<quest>-<n>`) on the last run; a crash returns with none. Either says why the last run's patch
  * was refused, when it was (P1-31), and a second judge's fail the verdict the objection contested (PS-22).
  */
 export async function continuationOf(ctx: Context, quest: Quest): Promise<Continuation> {
   const n = currentRun(quest);
   const why = await refusedPatchOfRun(ctx, quest, n);
   const refused = why === undefined ? {} : { refused_patch: why };
-  for (const id of [ownerVerdictIdOf(quest, n), verdictIdOf(quest, n)]) {
+  for (const id of [lateVerdictIdOf(quest, n), ownerVerdictIdOf(quest, n), verdictIdOf(quest, n)]) {
     const verdict = await ctx.deps.store.verdicts.read(id);
     if (verdict.ok && verdict.value.result === 'fail')
       return {
