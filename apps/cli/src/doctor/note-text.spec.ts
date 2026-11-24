@@ -1,5 +1,6 @@
 // What `elvaria doctor` prints of an adapter's `doctor()` (contract infirmary-reason-codes §4.4): each coded note in
 // the owner's language, the CLI's own words verbatim. Every code has a key in both locales.
+import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -101,8 +102,20 @@ describe('elvaria doctor --locale vi', () => {
     await fakeTool(bin, 'claude', '2.1.318 (Claude Code)');
     const text = await doctor(
       [
-        { id: 'coded', adapter: 'adapters/coded.mjs', enabled: true, max_concurrent: 1 },
-        { id: 'plain', adapter: 'adapters/plain.mjs', enabled: true, max_concurrent: 1 },
+        {
+          id: 'coded',
+          adapter: 'adapters/coded.mjs',
+          enabled: true,
+          max_concurrent: 1,
+          adapter_sha256: createHash('sha256').update(adapterFile(coded)).digest('hex'),
+        },
+        {
+          id: 'plain',
+          adapter: 'adapters/plain.mjs',
+          enabled: true,
+          max_concurrent: 1,
+          adapter_sha256: createHash('sha256').update(adapterFile(plain)).digest('hex'),
+        },
       ],
       bin,
     );

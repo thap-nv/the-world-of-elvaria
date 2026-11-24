@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -176,7 +177,13 @@ describe('elvaria doctor', () => {
       ...value.tribes,
       { id: 'codex', adapter: 'codex_cli', enabled: false, max_concurrent: 1 },
       { id: 'mine', adapter: 'adapters/mine.mjs', enabled: true, max_concurrent: 1 },
-      { id: 'paid', adapter: 'adapters/paid.mjs', enabled: true, max_concurrent: 1 },
+      {
+        id: 'paid',
+        adapter: 'adapters/paid.mjs',
+        enabled: true,
+        max_concurrent: 1,
+        adapter_sha256: createHash('sha256').update(PAID_ADAPTER).digest('hex'),
+      },
     ];
     await writeKingdom(KingdomSchema.parse({ ...value, tribes }));
     // An adapter file that runs only with a paid key, as runner-gemini will declare (ADR 0018, P1-19).

@@ -3,6 +3,7 @@
 // anything runs; two login tribes of one adapter on one folder or one account are an error for both, and `--enable`
 // leaves them off; an adapter that does not run its CLI in a folder is refused one. The fake Claude Code
 // (runner-claude's fixtures) reports the folder it runs in and an account named after it.
+import { createHash } from 'node:crypto';
 import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -157,7 +158,16 @@ describe('elvaria doctor --config-dir (PS-27)', () => {
 
   it('fails two tribes of an adapter that names no folder, both on its default one', async () => {
     await installLantern(kingdom);
-    const lantern = (id: string) => ({ id, adapter: LANTERN_ADAPTER, enabled: true, max_concurrent: 1 });
+    const adapterSha256 = createHash('sha256')
+      .update(await readFile(path.join(kingdom, LANTERN_ADAPTER)))
+      .digest('hex');
+    const lantern = (id: string) => ({
+      id,
+      adapter: LANTERN_ADAPTER,
+      enabled: true,
+      max_concurrent: 1,
+      adapter_sha256: adapterSha256,
+    });
     await editKingdom(kingdom, (value) => ({ ...value, tribes: [lantern('lantern'), lantern('lantern_2')] }));
     const io = testIo({ env: { ...baseEnv(), HOME: home, USERPROFILE: home }, home });
     const tools = ['--tool', `lantern=${FAKE_LANTERN}`, '--tool', `lantern_2=${FAKE_LANTERN}`];
