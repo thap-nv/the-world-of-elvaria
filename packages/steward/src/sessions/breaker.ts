@@ -123,6 +123,9 @@ function assigneeReason(
     return infirmaryReasonOf('breaker:patch', { file: 'elvaria.patch', why: breaker.patch });
   if (breaker.paths !== undefined)
     return infirmaryReasonOf('breaker:forbidden_paths', { count: breaker.paths.length });
+  // (fix/plot-setup-on-lockfile) commands.setup, run again before the commit, kept it from being made: its own reason.
+  if (breaker.refused?.setup !== undefined)
+    return infirmaryReasonOf('breaker:setup', { ...breaker.refused.setup });
   if (breaker.refused !== undefined) {
     const { head, log } = breaker.refused;
     const dir = runDirOf(quest, running.n, 'assignee');

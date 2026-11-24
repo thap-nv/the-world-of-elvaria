@@ -63,6 +63,7 @@ export function gitPlots(
       return { plot, cwd: fromPortable(plot.path ?? '') };
     },
     commit: (plot, message, rescue) => manager.commitAll(plot, message, rescue),
+    refreshSetup: (quest, territory, options) => manager.refreshSetup(quest, territory, options),
     restore: (plot) => manager.restore(plot),
     applyPatch: (plot, patchPaths) => manager.applyPatch(plot, patchPaths),
     check: () => Promise.resolve([]),

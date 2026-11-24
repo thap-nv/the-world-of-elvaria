@@ -11,14 +11,16 @@
 import { createRedactor } from '@elvaria/eventlog';
 import { writeFileAtomic } from '@elvaria/store';
 import type { Quest } from '@elvaria/domain';
-import type { CommitOutcome } from '@elvaria/runner-core';
 
 import { handoverPath, readHandover } from '../texts/files.ts';
 import type { Context } from '../context.ts';
 import type { PlotCommit } from './commit.ts';
 
-/** A commit the territory's hook refused, as the plot reports it with a rescue folder. */
-export type Refusal = Extract<CommitOutcome, { readonly status: 'refused' }>;
+/**
+ * A commit the territory's hook refused, as the plot reports it with a rescue folder, or that commands.setup, run
+ * again before it, kept from being made (`setup`, fix/plot-setup-on-lockfile).
+ */
+export type Refusal = Extract<PlotCommit, { readonly status: 'refused' }>;
 
 /**
  * What a cut session left, as the Steward found it: the outcome of its WIP commit, or the commit its trip already was
@@ -82,28 +84,44 @@ function letterOf(quest: Pick<Quest, 'id'>, by: Cut, sections: Sections): string
   ].join('\n');
 }
 
-/** The letter after a commit the territory's hook refused (P1-55): the staged files, the copy, the hook's words. */
+/** What refused the commit: the territory's hook, or commands.setup run again before it (fix/plot-setup-on-lockfile). */
+function refuserOf(refusal: Refusal): {
+  readonly where: string;
+  readonly tried: string;
+  readonly next: string;
+} {
+  if (refusal.setup === undefined)
+    return {
+      where:
+        "the territory's commit hook refused the work it left. That work is in the plot, staged and not committed.",
+      tried: "The territory's commit hook refused the commit. The end of its output:",
+      next: 'Fix what the hook complains about in the files above, or finish the work first, then write this letter in full.',
+    };
+  return {
+    where:
+      'commands.setup, run again before the commit since the work changed a file it reads, failed. That work is in the plot, not committed.',
+    tried: `commands.setup failed before the commit; its log is ${refusal.setup.log}:`,
+    next: 'Fix the files commands.setup reads (a lockfile, a package.json) until it passes, then write this letter in full.',
+  };
+}
+
+/** The letter after a commit the Steward could not make (P1-55): the staged files, the copy, the refuser's words. */
 export function stopLetterOf(quest: Pick<Quest, 'id'>, by: Cut, refusal: Refusal): string {
   const { files = [] } = refusal;
   const copy =
     refusal.patch === undefined
       ? ''
       : ` A copy of it as a patch is in ${refusal.patch} (sessions cannot read it).`;
+  const refuser = refuserOf(refusal);
   return letterOf(quest, by, {
-    where: `The session ended (${by.trip}) and the territory's commit hook refused the work it left. That work is in the plot, staged and not committed.${copy}`,
+    where: `The session ended (${by.trip}) and ${refuser.where}${copy}`,
     done:
       files.length === 0
         ? 'Nothing was committed. The plot holds the changes of the cut session.'
         : `Nothing was committed. The plot holds changes to ${String(files.length)} file(s):\n\n${listOf(files)}`,
     notDone: 'Not known: read the quest, then the changes in the plot (`git status`, `git diff --cached`).',
-    tried: [
-      "The territory's commit hook refused the commit. The end of its output:",
-      '',
-      '```text',
-      refusal.detail,
-      '```',
-    ].join('\n'),
-    next: 'Fix what the hook complains about in the files above, or finish the work first, then write this letter in full.',
+    tried: [refuser.tried, '', '```text', refusal.detail, '```'].join('\n'),
+    next: refuser.next,
   });
 }
 

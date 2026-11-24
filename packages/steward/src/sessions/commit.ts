@@ -5,24 +5,31 @@
 // may write there (`node write-secret.mjs`, spike Antigravity §15); the plot's changes are read first, and one such
 // path leaves everything uncommitted. The same read names the paths of laws.protected_paths the work changed (PS-04,
 // ADR 0026): never a refusal, the submit marks the quest for the royal seal and the stronger judge instead.
+// (fix/plot-setup-on-lockfile) commands.setup runs again first when the work changed a file of commands.setup_when:
+// the hooks would otherwise run on what the old lockfile installed, and refuse the work (AH-07b1, AH-07b2).
 import { currentRun, protectedPathsOf, runDirOf } from '@elvaria/domain';
 import { redact } from '@elvaria/eventlog';
-import { forbiddenChangesOf, forbiddenPathsOf, hookOutputHead } from '@elvaria/runner-core';
+import { forbiddenChangesOf, forbiddenPathsOf, hookOutputHead, setupLogOf } from '@elvaria/runner-core';
 import { inKingdom, writeFileAtomic } from '@elvaria/store';
-import type { Quest, QuestId } from '@elvaria/domain';
+import type { Quest, QuestId, Territory } from '@elvaria/domain';
 import type { CommitOutcome } from '@elvaria/runner-core';
 
 import { pathsSaid } from '../quest/infirmary.ts';
+import { questSecretsOf } from './secrets.ts';
 import type { Context } from '../context.ts';
 
 const messageOf = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
 /**
  * What the Steward's commit did: git's outcome, with the protected paths the plot's changes touch when there are any
- * (PS-04), or nothing committed for the forbidden paths the plot changed.
+ * (PS-04), or nothing committed for the forbidden paths the plot changed. A refusal with `setup` is commands.setup's,
+ * run again before the commit (fix/plot-setup-on-lockfile): how it ended and its log, relative to the kingdom.
  */
 export type PlotCommit =
-  | (CommitOutcome & { readonly protected_changes?: readonly string[] })
+  | (CommitOutcome & {
+      readonly protected_changes?: readonly string[];
+      readonly setup?: { readonly detail: string; readonly log: string };
+    })
   | { readonly status: 'forbidden'; readonly paths: readonly string[] };
 
 /** Why a WIP commit was not made: the forbidden paths, for the infirmary's `wip` detail. */
@@ -59,6 +66,25 @@ export async function protectedChangesIn(ctx: Context, quest: Quest): Promise<st
 }
 
 /**
+ * (fix/plot-setup-on-lockfile) commands.setup again before the commit when it is due in the plot (Plots.refreshSetup:
+ * the work changed a file of commands.setup_when since setup last succeeded there), with the quest's secrets as at
+ * prepare (P1-30). A setup that fails is the refusal (breaker:setup), nothing staged; one the Steward's stop cut short
+ * is not, and the commit goes on as it would have. A territory without setup_when reads no treasury here.
+ */
+async function setupRefusal(ctx: Context, quest: Quest, territory: Territory | undefined) {
+  const when = territory?.commands.setup_when ?? [];
+  if (territory?.commands.setup === undefined || when.length === 0) return undefined;
+  if (ctx.deps.plots.refreshSetup === undefined) return undefined;
+  const secrets = await questSecretsOf(ctx, quest, territory);
+  const given = Object.keys(secrets).length === 0 ? {} : { secrets };
+  const ran = await ctx.deps.plots.refreshSetup(quest, territory, { ...given, signal: ctx.stopping });
+  if (ran.ok || ctx.stopping.aborted) return undefined;
+  const setup = { detail: ran.error.detail, log: ran.error.log_path ?? setupLogOf(quest.id) };
+  const said = `commands.setup failed before the commit (${setup.detail}); its log: ${setup.log}`;
+  return { status: 'refused', detail: said, head: hookOutputHead(said), setup } satisfies PlotCommit;
+}
+
+/**
  * `git add --all` + commit in the quest's plot; a failing git is a refusal too, never a bypass. A plot whose
  * changes git cannot list is refused as well: the fence cannot be checked, so nothing is committed. Every Steward
  * commit comes with the run's folder in `.runs/` (P1-55): scratch files at the plot's root that a character cannot
@@ -72,6 +98,8 @@ export async function commitPlot(ctx: Context, questId: QuestId, message: string
     const changed = await ctx.deps.plots.touched(quest.plot);
     const paths = forbiddenChangesOf(changed, forbiddenPathsOf(territory));
     if (paths.length > 0) return { status: 'forbidden', paths };
+    const setup = await setupRefusal(ctx, quest, territory);
+    if (setup !== undefined) return setup;
     // Matched as the forbidden paths are, at any depth: a seal asked for in error costs the owner one look.
     const guarded = forbiddenChangesOf(changed, protectedPathsOf(territory));
     const dir = inKingdom(ctx.root, runDirOf(quest, currentRun(quest), 'assignee'));

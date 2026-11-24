@@ -20,9 +20,14 @@ export interface PlotRecord {
   readonly base: string;
   /**
    * `commands.setup` exited 0 in this worktree; it runs once, and again only until it succeeds (§3.3), or once more
-   * after a merge quest took the base branch in (PS-08e).
+   * after a merge quest took the base branch in (PS-08e), or when the files of setup_when changed (setup_inputs).
    */
   readonly setup_done: boolean;
+  /**
+   * (fix/plot-setup-on-lockfile) The digest of the files of commands.setup_when as the last setup that succeeded here
+   * left them (setup.ts): setup runs again once they differ. Absent: the territory had no setup_when then.
+   */
+  readonly setup_inputs?: string;
   /**
    * The merge queue merged the base branch in (PS-09) and its generators and checks have not passed on the result yet:
    * a Steward stopped there finds the merge made and runs only what follows it. Absent or false: nothing pending.

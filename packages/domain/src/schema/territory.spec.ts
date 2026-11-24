@@ -148,6 +148,7 @@ describe('TerritorySchema', () => {
     ],
     ['an unknown territory kind', { kind: 'library' }, 'kind'],
     ['an empty generator command', { commands: { generate: [''] } }, 'commands.generate.0'],
+    ['an empty setup glob', { commands: { setup_when: [''] } }, 'commands.setup_when.0'],
     ['a check with no command', { checks: [{ ...check('lint'), run: [] }] }, 'checks.0.run'],
     ['an empty reset command', { commands: { reset: ['pnpm db:reset', ''] } }, 'commands.reset'],
     ['an empty read-only glob', { laws: { read_only_paths: [''] } }, 'laws.read_only_paths.0'],
@@ -161,6 +162,13 @@ describe('TerritorySchema', () => {
     const drift = { ...check('openapi'), run: ['pnpm api:openapi', 'git diff --exit-code'] };
     const commands = { reset: 'pnpm db:reset', coverage: ['pnpm test --coverage'] };
     expect(issuesOf({ ...minimal, checks: [drift], commands })).toEqual([]);
+    // fix/plot-setup-on-lockfile: the files setup reads, as globs; absent stays absent.
+    const setup = { setup: 'pnpm install', setup_when: ['pnpm-lock.yaml', '**/package.json'] };
+    expect(issuesOf({ ...minimal, commands: setup })).toEqual([]);
+    expect(TerritorySchema.parse({ ...minimal, commands: setup }).commands.setup_when).toEqual(
+      setup.setup_when,
+    );
+    expect(TerritorySchema.parse(minimal).commands).not.toHaveProperty('setup_when');
     expect(commandLinesOf(drift.run)).toEqual(['pnpm api:openapi', 'git diff --exit-code']);
     expect(commandLinesOf('pnpm lint')).toEqual(['pnpm lint']);
   });

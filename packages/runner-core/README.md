@@ -219,7 +219,10 @@ resume})` puts `replyFormatBlock(schema)` in the system part instead of the flag
   default branch: origin's after a fetch when it only adds to the local one, else the local one; the main
   checkout is never pulled. It is idempotent: a worktree already there is reused, a branch that outlived its
   worktree is checked out again. Each prepare also makes sure of the repo's `.git/info/exclude` lines
-  (`PLOT_EXCLUDES`) and, on Windows, `core.longpaths`, and runs `commands.setup` until it succeeds once, and once more after a merge quest took the base branch in (log in
+  (`PLOT_EXCLUDES`) and, on Windows, `core.longpaths`, and runs `commands.setup` until it succeeds once, once more after a merge quest took the base branch in,
+  and again once a file of `commands.setup_when` differs from what its last success read (fix/plot-setup-on-lockfile:
+  the record keeps a digest of those files, tracked or new, ignored ones aside; `refreshSetup(quest, territory,
+{secrets, signal})` makes the same comparison, for the Steward before each of its commits) (log in
   `.runs/<quest>-setup.log`), with the quest's secrets when the caller passes them (P1-30:
   `prepare(quest, territory, {secrets})`, put in its env over the host's minimal env as a check's are); `{signal}`
   kills it (P1-49: the Steward's stop, so Ctrl+C does not wait for an install), the plot then not set up. A new

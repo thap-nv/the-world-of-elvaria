@@ -29,8 +29,8 @@ import { queueMethods } from './queue-methods.ts';
 import type { QueueMethods } from './queue-methods.ts';
 import { scratchMethods } from './scratch-methods.ts';
 import type { ScratchMethods } from './scratch-methods.ts';
-import { runSetup } from './setup.ts';
-import type { SetupRun } from './setup.ts';
+import { runSetup, setupMethods } from './setup.ts';
+import type { SetupMethods, SetupRun } from './setup.ts';
 import {
   checkBaseIn,
   commitWorktree,
@@ -50,7 +50,7 @@ export interface PreparedPlot {
   readonly plot: Plot;
   /** true when this call made the worktree or the folder. */
   readonly created: boolean;
-  /** `commands.setup` when it ran in this call; null when there is none or it already succeeded. */
+  /** `commands.setup` when it ran in this call; null when there is none or it succeeded on the files it reads now. */
   readonly setup: SetupRun | null;
 }
 
@@ -81,12 +81,13 @@ export interface PrepareOptions {
 
 /**
  * The scratch plot's methods (P1-20, ADR 0022) are ScratchMethods', in scratch-methods.ts; the merge queue's (PS-09)
- * QueueMethods', in queue-methods.ts.
+ * QueueMethods', in queue-methods.ts; the setup again before a commit (fix/plot-setup-on-lockfile) SetupMethods', in
+ * setup.ts.
  */
-export interface PlotManager extends ScratchMethods, QueueMethods {
+export interface PlotManager extends ScratchMethods, QueueMethods, SetupMethods {
   /**
-   * Idempotent: the same quest and territory give the same plot, and setup runs until it succeeds once; a folder
-   * plot has no setup and no branch to start from.
+   * Idempotent: the same quest and territory give the same plot, and setup runs until it succeeds once, and again
+   * once a file of commands.setup_when changed since; a folder plot has no setup and no branch to start from.
    */
   prepare(
     quest: Pick<Quest, 'id'>,
@@ -182,6 +183,7 @@ async function prepareGitPlot(
     record: prepared.value.record,
     command: territory.commands.setup,
     host: options.host,
+    when: { git, globs: territory.commands.setup_when ?? [] },
     ...(secrets === undefined ? {} : { secrets }),
     ...(signal === undefined ? {} : { signal }),
   });
@@ -211,12 +213,20 @@ function baseMethods(
   };
 }
 
-/** The looks at the base branch (PS-08d), the scratch plot (P1-20) and the merge queue (PS-09), each in its file. */
+/**
+ * The looks at the base branch (PS-08d), the scratch plot (P1-20), the merge queue (PS-09) and the setup again before
+ * a commit (fix/plot-setup-on-lockfile), each in its file.
+ */
 const laterMethods = (
   options: PlotManagerOptions,
   findGit: () => Promise<Git | undefined>,
   git: () => Promise<Git>,
-) => ({ ...baseMethods(findGit, git), ...scratchMethods(options, git), ...queueMethods(options, git) });
+) => ({
+  ...baseMethods(findGit, git),
+  ...scratchMethods(options, git),
+  ...queueMethods(options, git),
+  ...setupMethods(options, git),
+});
 
 /** The manager with every optional method: drift, baseTips and inBase are only optional for stand-ins. */
 export function createPlotManager(options: PlotManagerOptions): Required<PlotManager> {

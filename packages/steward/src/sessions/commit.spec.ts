@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
+import { TerritorySchema } from '@elvaria/domain';
 import type { Quest, QuestId } from '@elvaria/domain';
 
 import { tempDir } from '@elvaria/testkit';
@@ -37,5 +38,62 @@ describe('commitPlot errors', () => {
       log: 'pre-commit.log',
     });
     expect(await readFile(path.join(root, `.runs/${id}-0/pre-commit.log`), 'utf8')).toBe(lines.join('\n'));
+  });
+});
+
+describe('commitPlot after commands.setup again (fix/plot-setup-on-lockfile)', () => {
+  const territory = TerritorySchema.parse({
+    version: 1,
+    id: 'elvaria',
+    name: 'Elvaria',
+    path: 'E:/repo',
+    kind: 'code',
+    vcs: { type: 'git', default_branch: 'main' },
+    commands: { setup: 'pnpm install', setup_when: ['pnpm-lock.yaml'] },
+  });
+  const failed = {
+    reason: 'setup_failed',
+    detail: 'pnpm install: ended with 1',
+    log_path: '.runs/q-setup.log',
+  };
+  const ctxWith = (stopping: AbortSignal) =>
+    ({
+      root: 'E:/kingdom',
+      stopping,
+      world: {
+        quests: new Map([[id, { ...quest, secrets_required: [] }]]),
+        territories: new Map([['elvaria', territory]]),
+      },
+      deps: {
+        log: { warn: () => undefined },
+        plots: {
+          touched: () => Promise.resolve(['pnpm-lock.yaml']),
+          refreshSetup: () => Promise.resolve({ ok: false, error: failed }),
+          commit: () => Promise.resolve({ status: 'committed', sha: 'abc' }),
+        },
+      },
+    }) as unknown as Context;
+
+  it('is refused, naming the setup and its log, when setup fails', async () => {
+    expect(await commitPlot(ctxWith(new AbortController().signal), id, 'submit')).toEqual({
+      status: 'refused',
+      detail:
+        'commands.setup failed before the commit (pnpm install: ended with 1); its log: .runs/q-setup.log',
+      head: {
+        lines: [
+          'commands.setup failed before the commit (pnpm install: ended with 1); its log: .runs/q-setup.log',
+        ],
+        errors: 0,
+        total_lines: 1,
+      },
+      setup: { detail: 'pnpm install: ended with 1', log: '.runs/q-setup.log' },
+    });
+  });
+
+  it('goes on to the commit when the Steward stopping cut the setup short', async () => {
+    expect(await commitPlot(ctxWith(AbortSignal.abort()), id, 'submit')).toEqual({
+      status: 'committed',
+      sha: 'abc',
+    });
   });
 });

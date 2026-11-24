@@ -61,6 +61,7 @@ Khóa i18n của mã `<nhóm>:<tên>` là `cli.quest.infirmary.reason.<nhóm>.<t
 | `breaker:turns` | cầu dao (assignee) | `turns`, `limit` | `turns` lượt, trần `limit` |
 | `breaker:commit` | cầu dao, hook từ chối commit | `lines`, `total_lines`, `log` | hook từ chối; vài dòng đầu `lines`, output có `total_lines` dòng, đủ ở `log` |
 | `breaker:commit_errors` | như trên | `lines`, `errors`, `total_lines`, `log` | như trên, thêm `errors` dòng chứa `error` (≥ 1) |
+| `breaker:setup` | cầu dao, `commands.setup` chạy lại trước commit của Nhiếp chính hỏng (fix/plot-setup-on-lockfile) | `detail`, `log` | phần việc đổi một file của `commands.setup_when`, setup chạy lại và hỏng: `detail` là lệnh và cách nó kết thúc, `log` là `.runs/<quest>-setup.log`; không gì được commit |
 | `breaker:patch` | cầu dao, Nhiếp chính không áp bản vá | `file`, `why` | `elvaria.patch` không được áp; `why` nguyên văn |
 | `breaker:forbidden_paths` | cầu dao | `count` | `count` đường dẫn cấm bị đổi (danh sách ở `detail.paths`) |
 | `breaker:secrets_refused` | cầu dao secret | `territory`, `names` | lãnh thổ không cho các secret `names` |

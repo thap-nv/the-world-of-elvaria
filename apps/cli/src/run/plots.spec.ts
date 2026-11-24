@@ -49,6 +49,7 @@ describe("plots' checks with a quest's secrets", () => {
         settle: unused,
         mergesClean: unused,
         diffLines: unused,
+        refreshSetup: unused,
       };
       const territory = TerritorySchema.parse({
         version: 1,
@@ -109,6 +110,7 @@ describe("plots' prepare with a quest's secrets", () => {
       settle: unused,
       mergesClean: unused,
       diffLines: unused,
+      refreshSetup: unused,
     };
     const territory = TerritorySchema.parse({
       version: 1,
@@ -160,6 +162,7 @@ describe("plots' prepare with a quest's secrets", () => {
       settle: unused,
       mergesClean: unused,
       diffLines: unused,
+      refreshSetup: unused,
     };
     const territory = TerritorySchema.parse({
       version: 1,
@@ -229,6 +232,7 @@ describe("plots of a party's quests (P1-18)", () => {
         settle: unused,
         mergesClean: unused,
         diffLines: unused,
+        refreshSetup: unused,
       };
       const territory = TerritorySchema.parse({
         version: 1,

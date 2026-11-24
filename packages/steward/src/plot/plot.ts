@@ -18,6 +18,7 @@ import type {
   PlotFailure,
   PrepareOptions,
   ReleasedPlot,
+  SetupRun,
 } from '@elvaria/runner-core';
 
 import type { PlotQueue } from '../forge/plot-queue.ts';
@@ -106,6 +107,16 @@ export interface Plots extends PlotQueue {
    * of the staged work there.
    */
   commit(plot: Quest['plot'], message: string, rescue?: CommitRescue): Promise<CommitOutcome>;
+  /**
+   * (fix/plot-setup-on-lockfile) commands.setup in the quest's plot when it is due (PlotManager.refreshSetup): never
+   * succeeded there, or a file of commands.setup_when changed since it did. The Steward asks before each of its
+   * commits. Optional for a stand-in of a spec; plotsOver has it.
+   */
+  refreshSetup?(
+    quest: Quest,
+    territory: Territory,
+    options?: Pick<PrepareOptions, 'secrets' | 'signal'>,
+  ): Promise<Result<SetupRun | null, PlotFailure>>;
   /**
    * After a judge outside a scratch plot (P1-44): the plot back to its commit, what is changed or untracked dropped
    * (ignored files stay); the paths dropped, none for a clean plot or one without git (PlotManager.restore).

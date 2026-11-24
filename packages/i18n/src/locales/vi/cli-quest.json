@@ -126,6 +126,7 @@
     "cli.quest.infirmary.reason.breaker.turns": "cầu dao lượt ngắt phiên sau {turns} lượt (trần {limit})",
     "cli.quest.infirmary.reason.breaker.commit": "hook pre-commit từ chối commit, nên nhánh thiếu phần việc; output có {total_lines} dòng (đủ ở {log}), mấy dòng đầu ở dưới\n{lines}",
     "cli.quest.infirmary.reason.breaker.commit_errors": "hook pre-commit từ chối commit, nên nhánh thiếu phần việc; output có {total_lines} dòng, {errors} dòng báo lỗi (đủ ở {log}), mấy dòng đầu ở dưới\n{lines}",
+    "cli.quest.infirmary.reason.breaker.setup": "commands.setup chạy lại trước commit vì phần việc đổi một file của commands.setup_when, và hỏng ({detail}), nên nhánh thiếu phần việc, việc còn trong đất riêng; log ở {log}",
     "cli.quest.infirmary.reason.breaker.patch": "Nhiếp chính không áp bản vá {file}: {why}",
     "cli.quest.infirmary.reason.breaker.forbidden_paths": "phiên để lại {count} đường dẫn cấm bị đổi trong đất riêng, nên không có gì được commit",
     "cli.quest.infirmary.reason.breaker.secrets_refused": "lãnh thổ {territory} không cho các secret {names}, nên không mở được phiên",

@@ -126,6 +126,7 @@
     "cli.quest.infirmary.reason.breaker.turns": "the turn breaker stopped the session after {turns} turns (limit {limit})",
     "cli.quest.infirmary.reason.breaker.commit": "the pre-commit hook refused the commit, so the branch lacks the work; its output has {total_lines} lines (in full at {log}), the first ones below\n{lines}",
     "cli.quest.infirmary.reason.breaker.commit_errors": "the pre-commit hook refused the commit, so the branch lacks the work; its output has {total_lines} lines, {errors} of them with an error (in full at {log}), the first ones below\n{lines}",
+    "cli.quest.infirmary.reason.breaker.setup": "commands.setup ran again before the commit, since the work changed a file of commands.setup_when, and failed ({detail}), so the branch lacks the work, which stays in the plot; its log is at {log}",
     "cli.quest.infirmary.reason.breaker.patch": "the Steward did not apply the patch {file}: {why}",
     "cli.quest.infirmary.reason.breaker.forbidden_paths": "the session left {count} forbidden paths changed in the plot, so nothing was committed",
     "cli.quest.infirmary.reason.breaker.secrets_refused": "territory {territory} does not allow the secrets {names}, so no session can open",
